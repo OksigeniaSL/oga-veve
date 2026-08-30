@@ -44,6 +44,7 @@ export const ES_PY = {
   'tutor.speed': 'Esperá a que corra',
   'tutor.pull': 'Tirá para arriba',
   'tutor.flying': '¡Estás volando!',
+  'tutor.slow': 'Bajá el motor para aterrizar',
 
   'help.title': 'Cómo se vuela',
   'help.pitch': 'Flechas o W A S D — subir, bajar y girar',

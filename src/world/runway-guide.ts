@@ -30,6 +30,21 @@ import {
 } from 'three';
 import type { Scenario } from './scenarios';
 
+/** Cota del terreno en unas coordenadas de mundo. */
+export type GroundSampler = (x: number, z: number) => number;
+
+/**
+ * Margen mínimo entre un aro y el terreno que tiene debajo, en metros.
+ *
+ * Existe porque la primera versión colocaba los aros sobre una senda recta
+ * de cuatro grados sin mirar el relieve, y en el valle algunos quedaban
+ * **dentro de una loma**: el juego dibujaba una guía que llevaba a chocar.
+ * Ahora la senda sube por encima del terreno cuando hace falta, que es
+ * además lo que hace una aproximación de verdad — la trayectoria tiene que
+ * salvar los obstáculos.
+ */
+const RING_TERRAIN_CLEARANCE = 55;
+
 const OCRE = 0xdd923f;
 const TERRACOTA = 0xbe5d38;
 const BEIGE = 0xe4e2da;
@@ -40,7 +55,11 @@ const FIRST_RING_DISTANCE = 3200;
 /** Pendiente de la senda. Cuatro grados: cómoda y perdona el error. */
 const GLIDE_SLOPE = (4 * Math.PI) / 180;
 
-export function createRunwayGuide(scenario: Scenario, runwayElevation: number): Group {
+export function createRunwayGuide(
+  scenario: Scenario,
+  runwayElevation: number,
+  ground: GroundSampler,
+): Group {
   const group = new Group();
   group.name = 'guia-pista';
 
@@ -56,7 +75,7 @@ export function createRunwayGuide(scenario: Scenario, runwayElevation: number): 
 
   group.add(beacon(thresholdX, runwayElevation, thresholdZ));
   group.add(gatePosts(thresholdX, runwayElevation, thresholdZ, runway.width, ax, az));
-  group.add(approachRings(thresholdX, runwayElevation, thresholdZ, ax, az));
+  group.add(approachRings(thresholdX, runwayElevation, thresholdZ, ax, az, ground));
 
   return group;
 }
@@ -130,7 +149,14 @@ function gatePosts(
  * agrandan con la distancia para que el de tres kilómetros se vea desde tres
  * kilómetros: si todos midieran lo mismo, los lejanos serían un punto.
  */
-function approachRings(x: number, y: number, z: number, ax: number, az: number): Group {
+function approachRings(
+  x: number,
+  y: number,
+  z: number,
+  ax: number,
+  az: number,
+  ground: GroundSampler,
+): Group {
   const rings = new Group();
   rings.name = 'aros';
 
@@ -148,7 +174,13 @@ function approachRings(x: number, y: number, z: number, ax: number, az: number):
       new TorusGeometry(radius, radius * 0.075, 6, 24),
       new MeshBasicMaterial({ color: OCRE, transparent: true, opacity: 0.75, depthWrite: false }),
     );
-    ring.position.set(x - ax * distance, y + height, z - az * distance);
+
+    const ringX = x - ax * distance;
+    const ringZ = z - az * distance;
+    // La senda sube lo que haga falta para salvar el relieve. Sin esto los
+    // aros de las lomas quedaban enterrados y guiaban contra la montaña.
+    const floor = ground(ringX, ringZ) + RING_TERRAIN_CLEARANCE + radius;
+    ring.position.set(ringX, Math.max(y + height, floor), ringZ);
     // El aro mira a lo largo del eje de la pista.
     ring.rotation.y = Math.atan2(ax, az);
     ring.renderOrder = 1;

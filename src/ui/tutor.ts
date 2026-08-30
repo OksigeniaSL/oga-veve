@@ -29,7 +29,12 @@ import { t, type TranslationKey } from '../i18n';
 /** Velocidad indicada a partir de la cual conviene rotar, en m/s. */
 const ROTATION_SPEED = 30;
 
-type Step = 'throttle' | 'speed' | 'pull' | 'flying' | 'done';
+type Step = 'throttle' | 'speed' | 'pull' | 'flying' | 'slow' | 'done';
+
+/** Distancia a la cabecera desde la que se avisa de bajar el motor, en metros. */
+const APPROACH_DISTANCE = 2400;
+/** Por encima de este gas no se puede bajar para aterrizar. */
+const APPROACH_THROTTLE = 0.45;
 
 interface StepView {
   /** Qué se dibuja: una tecla con su nombre, o un símbolo suelto. */
@@ -66,6 +71,15 @@ const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
     key: 'tutor.flying',
     progress: () => null,
   },
+  // Volver a la pista era el paso que faltaba: el tutor enseñaba a despegar
+  // y se callaba justo cuando empieza lo difícil. Sin bajar el gas no hay
+  // forma de perder velocidad para posarse, y eso no lo adivina nadie.
+  slow: {
+    cue: { kind: 'key', label: 'Ctrl', wide: true },
+    touchCue: { kind: 'symbol', glyph: '⇣' },
+    key: 'tutor.slow',
+    progress: (_state, throttle) => 1 - throttle,
+  },
 };
 
 export class Tutor {
@@ -77,6 +91,8 @@ export class Tutor {
 
   private step: Step = 'throttle';
   private celebrating = 0;
+  /** Una vez se ha volado, el guion de despegue no vuelve a aparecer. */
+  private hasFlown = false;
 
   /** Devuelve el marcado, para que el HUD lo inserte con el resto. */
   static markup(): string {
@@ -102,12 +118,14 @@ export class Tutor {
   reset(): void {
     this.step = 'throttle';
     this.celebrating = 0;
+    this.hasFlown = false;
   }
 
-  update(state: FlightState, throttle: number, dt: number): void {
+  /** @param distanceToRunway metros hasta la cabecera de pista */
+  update(state: FlightState, throttle: number, dt: number, distanceToRunway: number): void {
     if (!this.root) return;
 
-    this.step = this.nextStep(state, throttle, dt);
+    this.step = this.nextStep(state, throttle, dt, distanceToRunway);
 
     if (this.step === 'done' || state.crashed) {
       this.root.hidden = true;
@@ -132,20 +150,35 @@ export class Tutor {
    * así que si alguien acelera, frena y vuelve a acelerar, el cartel le
    * sigue en vez de quedarse colgado en un paso.
    */
-  private nextStep(state: FlightState, throttle: number, dt: number): Step {
+  private nextStep(
+    state: FlightState,
+    throttle: number,
+    dt: number,
+    distanceToRunway: number,
+  ): Step {
     if (this.step === 'flying') {
       this.celebrating -= dt;
       return this.celebrating > 0 ? 'flying' : 'done';
     }
-    if (this.step === 'done') return 'done';
 
-    if (!state.onGround) {
+    if (state.onGround) {
+      // El guion de despegue solo mientras no se haya volado nunca. Después
+      // de una vuelta completa, quien está rodando ya sabe salir.
+      if (this.hasFlown) return 'done';
+      if (throttle < 0.85) return 'throttle';
+      if (state.airspeed < ROTATION_SPEED) return 'speed';
+      return 'pull';
+    }
+
+    if (!this.hasFlown) {
+      this.hasFlown = true;
       this.celebrating = 2.6;
       return 'flying';
     }
-    if (throttle < 0.85) return 'throttle';
-    if (state.airspeed < ROTATION_SPEED) return 'speed';
-    return 'pull';
+
+    // En el aire y de vuelta hacia la pista.
+    if (distanceToRunway < APPROACH_DISTANCE && throttle > APPROACH_THROTTLE) return 'slow';
+    return 'done';
   }
 }
 

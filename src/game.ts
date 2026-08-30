@@ -98,7 +98,11 @@ export class Game {
     this.scene.add(this.sky.group);
     this.scene.fog = this.sky.fog;
 
-    this.scene.add(createRunwayGuide(this.scenario, this.terrain.runwayElevation));
+    this.scene.add(
+      createRunwayGuide(this.scenario, this.terrain.runwayElevation, (x, z) =>
+        this.terrain.sampleSurface(x, z),
+      ),
+    );
 
     this.aircraftMesh = createAircraftMesh(this.aircraft);
     this.scene.add(this.aircraftMesh.group);
@@ -187,8 +191,8 @@ export class Game {
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
     this.hud.update(this.flight.state, this.input.controls.throttle, dt);
-    this.updateHomeIndicator();
-    this.hud.tutor.update(this.flight.state, this.input.controls.throttle, dt);
+    const toRunway = this.updateHomeIndicator();
+    this.hud.tutor.update(this.flight.state, this.input.controls.throttle, dt, toRunway);
 
     this.renderer.render(this.scene, this.camera);
   };
@@ -200,7 +204,7 @@ export class Game {
    * se entra: seguir la aguja lleva al principio del asfalto, alineado, que
    * es exactamente donde uno quiere aparecer.
    */
-  private updateHomeIndicator(): void {
+  private updateHomeIndicator(): number {
     const { runway } = this.scenario;
     const heading = MathUtils.degToRad(runway.heading);
     const thresholdX = runway.x - Math.sin(heading) * runway.length * 0.5;
@@ -214,7 +218,9 @@ export class Game {
     while (relative > Math.PI) relative -= Math.PI * 2;
     while (relative < -Math.PI) relative += Math.PI * 2;
 
-    this.hud.setHome(relative, Math.hypot(dx, dz));
+    const distance = Math.hypot(dx, dz);
+    this.hud.setHome(relative, distance);
+    return distance;
   }
 
   private syncAircraftMesh(dt: number): void {
