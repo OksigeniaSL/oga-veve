@@ -252,11 +252,33 @@ export class CoefficientFlightModel implements FlightModel {
     // extra y un empujón para nivelar las alas cuando nadie toca nada.
     if (this.assistLevel > 0) {
       const k = this.assistLevel * qS;
-      rollMoment -= k * 0.9 * pHat * ac.wingSpan;
+      rollMoment -= k * 0.5 * pHat * ac.wingSpan;
       pitchMoment -= k * 0.6 * qHat * ac.chord;
       yawMoment -= k * 0.9 * rHat * ac.wingSpan;
-      if (Math.abs(controls.aileron) < 0.05 && !s.onGround) {
-        rollMoment -= this.assistLevel * qS * 0.35 * ac.wingSpan * Math.sin(this.bankAngle());
+
+      // Mantenimiento de actitud al soltar el cabeceo.
+      //
+      // Sin esto, soltar los mandos deja al avión en fugoide: un vaivén
+      // larguísimo en el que cambia altura por velocidad una y otra vez.
+      // Es lo que hace de verdad un avión y está bien que el modo Piloto lo
+      // tenga, pero en Arcade significa que soltar la tecla te manda a un
+      // tobogán de cien metros. Aquí se amortigua llevando el morro al
+      // horizonte, que es lo que haría un piloto sin pensarlo.
+      if (Math.abs(controls.elevator) < 0.08 && !s.onGround) {
+        pitchMoment -= this.assistLevel * qS * a.cmElevator * 1.4 * ac.chord * Math.sin(this.pitchAngle());
+      }
+
+      // Nivelado automático al soltar los alerones. La ganancia está atada a
+      // la autoridad del propio alerón: la versión anterior usaba 0,35 fijo,
+      // que con el alerón ya corregido sería casi el doble del mando a fondo
+      // y devolvería las alas de un latigazo. Así, a treinta grados de
+      // alabeo empuja aproximadamente como medio mando.
+      if (Math.abs(controls.aileron) < 0.08 && !s.onGround) {
+        // A veinte grados de alabeo empuja con cerca de tres cuartos del
+        // mando a fondo: firme, para que las alas vuelvan solas en menos de
+        // un segundo, que es lo que espera quien suelta la tecla asustado.
+        const gain = a.clAileron * 2.5;
+        rollMoment -= this.assistLevel * qS * gain * ac.wingSpan * Math.sin(this.bankAngle());
       }
     }
 
@@ -452,11 +474,30 @@ export class CoefficientFlightModel implements FlightModel {
     this.down.copy(DOWN_LOCAL).applyQuaternion(q);
   }
 
-  /** Ángulo de alabeo respecto al horizonte, rad. Positivo a la derecha. */
+  /** Ángulo de cabeceo respecto al horizonte, rad. Positivo, morro arriba. */
+  private pitchAngle(): number {
+    this.updateBodyAxes();
+    return Math.asin(clamp(this.forward.y, -1, 1));
+  }
+
+  /**
+   * Ángulo de alabeo respecto al horizonte, rad. **Positivo a la derecha**,
+   * en el mismo sentido que `rollRate` y que el mando de alerones.
+   *
+   * El signo importa mucho más de lo que parece. La primera versión devolvía
+   * el contrario —con alerón a la derecha el avión rodaba a la derecha pero
+   * esta función decía menos sesenta grados— y eso invertía en silencio las
+   * dos cosas que la usan: el nivelado automático empujaba *hacia* el
+   * alabeo en vez de contra él, y el enderezado en tierra igual. De ahí que
+   * bastara rozar una flecha para no poder recuperar la horizontal nunca.
+   *
+   * El ala derecha por debajo del horizonte es alabeo a la derecha, y con
+   * ella el eje transversal apunta hacia abajo: de ahí el signo del primer
+   * argumento.
+   */
   private bankAngle(): number {
     this.updateBodyAxes();
-    // El ala derecha por debajo del horizonte significa alabeo a la derecha.
-    return Math.atan2(this.right.y, -this.down.y);
+    return Math.atan2(-this.right.y, -this.down.y);
   }
 
   /**
@@ -470,7 +511,14 @@ export class CoefficientFlightModel implements FlightModel {
     // Timón automático: mantiene la bola centrada. Es lo que separa un viraje
     // que se siente bien de uno que da tumbos, y ningún crío va a pisar
     // pedales.
-    const rudder = clamp(controls.rudder + k * clamp(-beta * 4.5, -1, 1), -1, 1);
+    //
+    // La corrección va **con** el derrape, no contra él. Derrape positivo es
+    // viento entrando por la derecha, y enderezar significa llevar el morro
+    // hacia ese viento, o sea pie derecho: el mismo sentido en el que ya
+    // empuja la estabilidad direccional del avión. La primera versión
+    // restaba, así que peleaba contra la veleta y el derrape crecía hasta
+    // dieciséis grados en vez de irse a cero.
+    const rudder = clamp(controls.rudder + k * clamp(beta * 4.5, -1, 1), -1, 1);
 
     // Limitador de ángulo de ataque: cuanto más cerca de la pérdida, menos
     // autoridad tiene el tirón. No la impide, la hace costar.

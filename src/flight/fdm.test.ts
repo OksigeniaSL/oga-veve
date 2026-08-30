@@ -160,6 +160,35 @@ describe('ayudas de pilotaje', () => {
   });
 });
 
+describe('vuelo con los mandos sueltos', () => {
+  /** Diferencia entre la altura máxima y la mínima en un minuto sin tocar nada. */
+  function heightSwing(assist: number): number {
+    const model = makeModel(assist);
+    model.reset({ position: new Vector3(0, 1000, 0), heading: 0, airspeed: 62 });
+    let min = Infinity;
+    let max = -Infinity;
+    for (let second = 0; second < 60; second++) {
+      fly(model, 1, { throttle: 0.65 });
+      min = Math.min(min, model.state.position.y);
+      max = Math.max(max, model.state.position.y);
+    }
+    return max - min;
+  }
+
+  it('en Arcade el avión se queda donde lo dejas', () => {
+    // Soltar los mandos deja al avión en fugoide: un vaivén larguísimo de
+    // altura contra velocidad. Es lo que hace un avión de verdad, pero para
+    // quien está aprendiendo significa un tobogán de cien metros cada vez
+    // que suelta la tecla. En Arcade se amortigua llevando el morro al
+    // horizonte.
+    expect(heightSwing(1)).toBeLessThan(45);
+  });
+
+  it('en modo Piloto el fugoide sigue ahí, que para eso es el modo', () => {
+    expect(heightSwing(0)).toBeGreaterThan(heightSwing(1) * 2);
+  });
+});
+
 describe('determinismo', () => {
   it('dos simulaciones idénticas dan el mismo resultado', () => {
     const run = (): number[] => {

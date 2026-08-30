@@ -47,14 +47,26 @@ export interface AeroCoefficients {
   clBeta: number;
   /** Amortiguamiento de alabeo. Negativo. */
   clP: number;
-  /** Autoridad de alerones. Positivo. */
+  /**
+   * Autoridad de alerones. Positivo.
+   *
+   * Como `cmElevator`, está expresado **por unidad de mando normalizado**, no
+   * por radián de deflexión. Los valores tabulados en la literatura son por
+   * radián y hay que multiplicarlos por el recorrido máximo del mando —unos
+   * 0,35 rad para un alerón— antes de usarlos aquí. Copiarlos tal cual
+   * triplica la autoridad: el avión rodaba a 250 grados por segundo, ritmo
+   * de caza, y bastaba rozar una flecha para perderlo.
+   *
+   * Regla de calibración: el ritmo estabilizado es clAileron/|clP| · 2V/b.
+   * Para una ligera de escuela debe salir entre 60 y 80 grados por segundo.
+   */
   clAileron: number;
 
   /** Estabilidad direccional (efecto veleta). Positivo. */
   cnBeta: number;
   /** Amortiguamiento de guiñada. Negativo. */
   cnR: number;
-  /** Autoridad del timón. Positivo. */
+  /** Autoridad del timón, por unidad de mando. Ver `clAileron`. */
   cnRudder: number;
   /** Guiñada adversa: los alerones guiñan al contrario. Negativo y pequeño. */
   cnAileron: number;
@@ -131,11 +143,11 @@ export const OGA_172: AircraftConfig = {
     cmElevator: 0.42,
     clBeta: -0.09,
     clP: -0.48,
-    clAileron: 0.23,
+    clAileron: 0.075, // ~73°/s a fondo: lo que rueda una avioneta de escuela
     cnBeta: 0.075,
     cnR: -0.10,
-    cnRudder: 0.075,
-    cnAileron: -0.012,
+    cnRudder: 0.028,
+    cnAileron: -0.004,
   },
 };
 
@@ -178,11 +190,11 @@ export const MAINUMBY: AircraftConfig = {
     cmElevator: 0.52,
     clBeta: -0.07,
     clP: -0.55,
-    clAileron: 0.34, // alerones en las cuatro semialas
+    clAileron: 0.13, // alerones en las cuatro semialas: más ágil, no el doble
     cnBeta: 0.082,
     cnR: -0.12,
-    cnRudder: 0.095,
-    cnAileron: -0.018,
+    cnRudder: 0.036,
+    cnAileron: -0.007,
   },
 };
 

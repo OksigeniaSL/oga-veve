@@ -268,12 +268,16 @@ function closingWithGround(state: FlightState): boolean {
   return state.secondsToImpact < 6;
 }
 
-/** Alabeo respecto al horizonte, a partir del cuaternión del avión. */
+/**
+ * Alabeo respecto al horizonte, positivo a la derecha, igual que en el
+ * modelo de vuelo. El signo estaba invertido aquí también, así que el
+ * horizonte artificial giraba al revés que el avión.
+ */
 function bankAngleOf(state: FlightState): number {
   const q = state.orientation;
-  // Componente Y del eje derecho del avión, rotado. Expandido a mano para no
-  // reservar un Vector3 en cada fotograma del HUD.
-  const y = 2 * (q.x * q.y + q.w * q.z);
+  // Componente Y del eje transversal del avión, rotado, con el signo
+  // cambiado. Expandido a mano para no reservar un Vector3 en cada fotograma.
+  const y = -2 * (q.x * q.y + q.w * q.z);
   return Math.asin(Math.max(-1, Math.min(1, y)));
 }
 
