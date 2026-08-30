@@ -6,7 +6,9 @@
  * equivocado.
  */
 
-import './style.css';
+// La hoja de estilos se enlaza desde index.html y no se importa acá: así el
+// HUD ya está maquetado antes de que el navegador termine de leer el módulo,
+// en vez de aparecer sin estilo durante un instante.
 import { Game } from './game';
 import { detectLocale, setLocale } from './i18n';
 
