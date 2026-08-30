@@ -6,7 +6,7 @@
  * equivocado.
  */
 
-// La hoja de estilos se enlaza desde index.html y no se importa acá: así el
+// La hoja de estilos se enlaza desde index.html y no se importa aquí: así el
 // HUD ya está maquetado antes de que el navegador termine de leer el módulo,
 // en vez de aparecer sin estilo durante un instante.
 import { Game } from './game';
@@ -20,7 +20,7 @@ const creditsRoot = document.querySelector<HTMLElement>('#creditos');
 const touchRoot = document.querySelector<HTMLElement>('#tactil');
 
 if (!canvas || !hudRoot || !creditsRoot || !touchRoot) {
-  throw new Error('Falta algún nodo del documento; revisá index.html');
+  throw new Error('Falta algún nodo del documento; revisa index.html');
 }
 
 const game = new Game({ canvas, hudRoot, creditsRoot, touchRoot });

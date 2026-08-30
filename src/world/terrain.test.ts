@@ -82,7 +82,7 @@ describe('llanura del Chaco', () => {
 describe('emplazamiento de las pistas', () => {
   // Este test existe porque la primera pista del valle cayó dentro del cauce
   // del río: quedaba bajo el agua y no se descubría hasta arrancar el juego.
-  // Un escenario nuevo mal colocado tiene que fallar acá, no en la pantalla.
+  // Un escenario nuevo mal colocado tiene que fallar aquí, no en la pantalla.
   it.each(SCENARIOS.map((s) => [s.id, s] as const))(
     '%s: la pista está en seco y por encima del agua',
     (_id, scenario) => {

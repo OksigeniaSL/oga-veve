@@ -1,7 +1,7 @@
 # Óga Veve
 
-Simulador de vuelo para navegador. Volás sobre Paraguay —el relieve es real,
-el paisaje lo pintamos nosotros— y aterrizás donde puedas.
+Simulador de vuelo para navegador. Se vuela sobre Paraguay —el relieve es
+real, el paisaje lo pintamos nosotros— y se aterriza donde se pueda.
 
 > **Estado**: esqueleto funcional. Modelo de vuelo, terreno procedural, HUD y
 > controles operativos. Sin arte final, sin audio, sin multijugador.
@@ -17,9 +17,14 @@ ver [LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md).
 Porque una niña dijo que quería ser piloto "con las gafas de sol", y porque
 no había ningún simulador que la dejara reconocer su país desde el aire.
 
+Esa niña tiene cuatro años y medio, y eso no es una anécdota: es la
+restricción de diseño más dura del proyecto. **La jugadora más joven todavía
+no sabe leer.** Nada de lo esencial puede depender de un texto.
+
 El objetivo no es la fidelidad de un simulador de entrenamiento. Es que
 volar se sienta bien, que el paisaje se reconozca, y que un chico de ocho
-años pueda despegar en el primer intento sin leer un manual.
+años pueda despegar en el primer intento sin leer un manual —y que uno de
+cuatro pueda hacerlo sin leer nada en absoluto.
 
 ## Arrancar
 
@@ -119,6 +124,6 @@ Procedencia y licencia de cada dependencia y cada dato: [CREDITOS.md](CREDITOS.m
 
 Issues y pull requests, bienvenidos. Antes de mandar código, lee
 [docs/adr/](docs/adr/) para no chocar con una decisión ya tomada, y
-[AGENTS.md](AGENTS.md) si trabajás con herramientas de asistencia.
+[AGENTS.md](AGENTS.md) si trabajas con herramientas de asistencia.
 
-Al contribuir aceptás que tu aportación se publique bajo Apache-2.0.
+Al contribuir aceptas que tu aportación se publique bajo Apache-2.0.

@@ -8,7 +8,7 @@
  * PENDIENTE DE REVISIÓN POR HABLANTE NATIVO antes de publicar la versión
  * jugable. La terminología aeronáutica en guaraní no está fijada y hay que
  * decidir caso por caso si se traduce o se deja el préstamo, que es lo que
- * hace la gente al hablar. Las decisiones se anotan acá cuando se tomen.
+ * hace la gente al hablar. Las decisiones se anotan aquí cuando se tomen.
  */
 
 import type { Dictionary } from './index';
