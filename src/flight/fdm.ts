@@ -48,10 +48,25 @@ const MIN_AIRSPEED = 0.5;
  */
 const CRASH_SINK_RATE = 6.0;
 const CRASH_BANK = 0.5; // ~29°
-/** Por encima de esta velocidad de descenso, la toma rebota y se nota. */
-const FIRM_TOUCHDOWN = 2.4;
-/** Instantes por delante en los que se busca terreno, en segundos. */
-const LOOKAHEAD_SECONDS = [0.8, 1.6, 2.4, 3.4, 4.6, 6] as const;
+/**
+ * Por encima de esta velocidad de descenso, la toma rebota y se nota.
+ *
+ * Está alto a propósito. La primera versión rebotaba a partir de 2,4 m/s y
+ * el efecto fue el contrario del buscado: una toma normalmente firme —la de
+ * cualquiera que esté aprendiendo— devolvía el avión al aire sin velocidad
+ * para volar, y desde ahí solo se podía caer otra vez. Se aterrizaba peor
+ * que antes de añadir el rebote. Ahora solo rebota un golpe de verdad.
+ */
+const FIRM_TOUCHDOWN = 5.5;
+/**
+ * Instantes por delante en los que se busca terreno, en segundos.
+ *
+ * Llegaban hasta seis y el aviso se encendía el 16 % de un vuelo normal a
+ * baja cota sobre las lomas del valle. Un aviso que salta continuamente
+ * deja de ser un aviso. Cuatro segundos a velocidad de crucero son unos
+ * ciento sesenta metros por delante: de sobra para reaccionar.
+ */
+const LOOKAHEAD_SECONDS = [0.7, 1.3, 2, 2.7, 3.4, 4] as const;
 
 const FORWARD_LOCAL = new Vector3(0, 0, -1);
 const RIGHT_LOCAL = new Vector3(1, 0, 0);
@@ -316,7 +331,7 @@ export class CoefficientFlightModel implements FlightModel {
         // Llegada dura pero no rota: rebota. Se ve, se nota que ha salido
         // mal y no castiga. En un juego para chicos, la penalización por
         // aterrizar regular es un bote, no una pantalla roja.
-        s.velocity.y = Math.min(sinkRate * 0.35, 4);
+        s.velocity.y = Math.min(sinkRate * 0.22, 2.5);
       }
     }
 
