@@ -116,6 +116,13 @@ export class InputManager {
       this.controls.throttle = clamp(this.controls.throttle + delta * dt * 0.6, 0, 1);
     }
 
+    // Tocar el acelerador con el teclado le devuelve el mando: en un portátil
+    // con pantalla táctil se puede usar uno u otro sin quedarse encerrado en
+    // el que se tocó primero.
+    if (this.touchThrottle !== null && axisFromKeys(this.keys, KEYS.throttleUp, KEYS.throttleDown) !== 0) {
+      this.touchThrottle = null;
+    }
+
     const braking =
       this.touchBrakes || KEYS.brakes.some((k) => this.keys.has(k)) || (gamepad?.brakes ?? false);
     this.controls.brakes = approach(this.controls.brakes, braking ? 1 : 0, dt * 2);
@@ -201,9 +208,18 @@ export class InputManager {
     }
     if (rudder) bindPad(rudder, (x) => { this.touchRudder = x; });
     if (throttle) {
-      bindPad(throttle, (_x, y) => {
-        this.touchThrottle = clamp((1 - y) / 2, 0, 1);
-      });
+      // Con memoria: la palanca se queda donde la dejas al levantar el dedo,
+      // como una palanca de gases de verdad. Antes compartía el
+      // comportamiento de la palanca de mando, que vuelve al centro al
+      // soltarla, y eso dejaba el motor clavado al 50 % cada vez que
+      // levantabas el dedo. En una tablet era imposible aterrizar.
+      bindPad(
+        throttle,
+        (_x, y) => {
+          this.touchThrottle = clamp((1 - y) / 2, 0, 1);
+        },
+        { springLoaded: false },
+      );
     }
     if (brakes) {
       brakes.addEventListener('pointerdown', () => { this.touchBrakes = true; });
@@ -218,7 +234,12 @@ export class InputManager {
  * normalizadas -1..1 respecto al centro del elemento, y las pone a cero al
  * levantar el dedo.
  */
-function bindPad(element: HTMLElement, onMove: (x: number, y: number) => void): void {
+function bindPad(
+  element: HTMLElement,
+  onMove: (x: number, y: number) => void,
+  options: { springLoaded?: boolean } = {},
+): void {
+  const springLoaded = options.springLoaded ?? true;
   let pointerId: number | null = null;
 
   const emit = (event: PointerEvent): void => {
@@ -241,6 +262,9 @@ function bindPad(element: HTMLElement, onMove: (x: number, y: number) => void): 
   const release = (event: PointerEvent): void => {
     if (event.pointerId !== pointerId) return;
     pointerId = null;
+    // Los mandos con muelle —palanca y timón— vuelven al centro al soltarlos.
+    // El acelerador no: se queda donde estaba.
+    if (!springLoaded) return;
     onMove(0, 0);
     element.style.setProperty('--x', '0');
     element.style.setProperty('--y', '0');
