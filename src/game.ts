@@ -23,6 +23,7 @@ import type { FlightModel } from './flight/model';
 import { Terrain } from './world/terrain';
 import { createSky, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
+import { createRunwayGuide } from './world/runway-guide';
 import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
@@ -96,6 +97,8 @@ export class Game {
     this.sky = createSky(this.scenario);
     this.scene.add(this.sky.group);
     this.scene.fog = this.sky.fog;
+
+    this.scene.add(createRunwayGuide(this.scenario, this.terrain.runwayElevation));
 
     this.aircraftMesh = createAircraftMesh(this.aircraft);
     this.scene.add(this.aircraftMesh.group);
@@ -184,10 +187,35 @@ export class Game {
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
     this.hud.update(this.flight.state, this.input.controls.throttle, dt);
+    this.updateHomeIndicator();
     this.hud.tutor.update(this.flight.state, this.input.controls.throttle, dt);
 
     this.renderer.render(this.scene, this.camera);
   };
+
+  /**
+   * Rumbo y distancia a la cabecera de pista, en coordenadas del piloto.
+   *
+   * Se apunta a la cabecera y no al centro de la pista porque es por donde
+   * se entra: seguir la aguja lleva al principio del asfalto, alineado, que
+   * es exactamente donde uno quiere aparecer.
+   */
+  private updateHomeIndicator(): void {
+    const { runway } = this.scenario;
+    const heading = MathUtils.degToRad(runway.heading);
+    const thresholdX = runway.x - Math.sin(heading) * runway.length * 0.5;
+    const thresholdZ = runway.z - Math.cos(heading) * runway.length * 0.5;
+
+    const dx = thresholdX - this.flight.state.position.x;
+    const dz = thresholdZ - this.flight.state.position.z;
+    const bearing = Math.atan2(dx, -dz);
+
+    let relative = bearing - this.flight.state.heading;
+    while (relative > Math.PI) relative -= Math.PI * 2;
+    while (relative < -Math.PI) relative += Math.PI * 2;
+
+    this.hud.setHome(relative, Math.hypot(dx, dz));
+  }
 
   private syncAircraftMesh(dt: number): void {
     const state = this.flight.state;

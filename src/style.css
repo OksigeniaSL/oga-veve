@@ -224,6 +224,31 @@ body {
   margin-bottom: 2px;
 }
 
+/* Aguja a la pista: gira respecto al morro, arriba es de frente. */
+.casa {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 116px;
+}
+
+.casa__aguja {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ocre);
+  transform-origin: 50% 50%;
+  margin-bottom: 2px;
+}
+
+.casa__distancia {
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+
+.casa--cerca .casa__aguja {
+  color: #8fd07a;
+}
+
 /* Avisos */
 .aviso-hud {
   font-size: 18px;

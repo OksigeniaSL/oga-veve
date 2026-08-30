@@ -27,6 +27,7 @@ export const EN: Dictionary = {
   'hud.brakes': 'Brakes',
   'hud.crashed': 'Something broke. Back to the runway…',
   'hud.ground': 'On the ground',
+  'hud.home': 'Runway',
 
   'mode.label': 'Flight assist',
   'mode.arcade': 'Arcade',

@@ -102,6 +102,37 @@ function bankOf(model: CoefficientFlightModel): number {
   return Math.abs((Math.asin(Math.max(-1, Math.min(1, rightY))) * 180) / Math.PI);
 }
 
+describe('virar de verdad', () => {
+  /** Rumbo ganado, en grados, tras mantener el alerón y soltarlo. */
+  function headingGained(holdSeconds: number): number {
+    const model = new CoefficientFlightModel({ aircraft: OGA_172, ground: () => 0, assist: 1 });
+    model.reset({ position: new Vector3(0, 1200, 0), heading: Math.PI, airspeed: 50 });
+    const start = model.state.heading;
+    const dt = 1 / 240;
+    for (let i = 0; i < holdSeconds * 240; i++) {
+      model.step(dt, { ...neutralControls(), throttle: 0.7, aileron: 1 });
+    }
+    for (let i = 0; i < 8 * 240; i++) {
+      model.step(dt, { ...neutralControls(), throttle: 0.7 });
+    }
+    let delta = ((model.state.heading - start) * 180) / Math.PI;
+    while (delta > 180) delta -= 360;
+    while (delta < -180) delta += 360;
+    return Math.abs(delta);
+  }
+
+  it('mantener el alerón tres segundos gira de verdad', () => {
+    // Guarda el reverso del arreglo del nivelado: con la ayuda demasiado
+    // fuerte el avión se enderezaba en cuanto se soltaba la tecla y no
+    // giraba nada, así que no había forma de volver a la pista.
+    expect(headingGained(3)).toBeGreaterThan(35);
+  });
+
+  it('mantener más tiempo gira más', () => {
+    expect(headingGained(3)).toBeGreaterThan(headingGained(1) * 1.5);
+  });
+});
+
 describe('convención de signos', () => {
   // Este test existe porque el signo del alabeo estaba invertido respecto al
   // del mando, y eso volvía el nivelado automático en un antinivelado.

@@ -18,6 +18,7 @@ export const GUG: Dictionary = {
 
   'hud.altitude': 'Yvate',
   'hud.ground': 'Yvýpe',
+  'hud.home': 'Pista',
 
   'tutor.flying': 'Reveve hína!',
 

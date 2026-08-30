@@ -87,6 +87,9 @@ export class Hud {
   private vspeed!: HTMLElement;
   private throttleFill!: HTMLElement;
   private horizon!: HTMLElement;
+  private homeArrow!: HTMLElement;
+  private homeDistance!: HTMLElement;
+  private home!: HTMLElement;
   private warning!: HTMLElement;
   private warningText!: HTMLElement;
   private warningArrow!: HTMLElement;
@@ -128,6 +131,11 @@ export class Hud {
           <div class="horizonte__cielo" data-hud="horizon"></div>
           <div class="horizonte__cruz"></div>
         </div>
+        <div class="tarjeta casa" data-hud="home">
+          <div class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</div>
+          <span class="casa__distancia" data-hud="home-distance">0</span>
+          <span class="medidor__glosa">${t('hud.home')}</span>
+        </div>
       </div>
       <div class="vineta" data-hud="vignette"></div>
       ${Tutor.markup()}
@@ -146,6 +154,9 @@ export class Hud {
     this.vspeed = pick(this.root, 'vspeed');
     this.throttleFill = pick(this.root, 'throttle');
     this.horizon = pick(this.root, 'horizon');
+    this.home = pick(this.root, 'home');
+    this.homeArrow = pick(this.root, 'home-arrow');
+    this.homeDistance = pick(this.root, 'home-distance');
     this.warning = pick(this.root, 'warning');
     this.warningText = pick(this.root, 'warning-text');
     this.warningArrow = pick(this.root, 'warning-arrow');
@@ -155,6 +166,28 @@ export class Hud {
 
     this.badge.textContent = this.badgeText;
     this.tutor.bind(this.root);
+  }
+
+  /**
+   * Hacia dónde queda la pista y a qué distancia.
+   *
+   * La aguja gira respecto al morro: arriba es de frente. Es el canal que
+   * funciona sin leer — se gira hasta que la flecha apunta arriba y se va
+   * hacia allá. El número está para quien ya lee.
+   *
+   * @param relativeBearing rad, 0 al frente, positivo a la derecha
+   */
+  setHome(relativeBearing: number, metres: number): void {
+    // El glifo apunta a la derecha en reposo, de ahí los noventa grados. La
+    // rotación entera se calcula aquí y no repartida entre CSS y JS: dos
+    // sitios distintos girando el mismo elemento es como nacen los errores
+    // de signo.
+    const degrees = (relativeBearing * 180) / Math.PI - 90;
+    this.homeArrow.style.transform = `rotate(${degrees}deg)`;
+    this.homeDistance.textContent =
+      metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${Math.round(metres)} m`;
+    // Cerca y de frente, se apaga: ya la estás viendo por la ventanilla.
+    this.home.classList.toggle('casa--cerca', metres < 900);
   }
 
   setUnits(name: UnitSystemName): void {

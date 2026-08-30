@@ -20,6 +20,7 @@ export const ES_PY = {
   'hud.brakes': 'Frenos',
   'hud.crashed': 'Se rompió algo. Volvemos a la pista…',
   'hud.ground': 'En tierra',
+  'hud.home': 'Pista',
 
   'mode.label': 'Ayuda de vuelo',
   'mode.arcade': 'Arcade',

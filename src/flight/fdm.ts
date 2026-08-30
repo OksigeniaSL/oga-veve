@@ -49,6 +49,17 @@ const MIN_AIRSPEED = 0.5;
 const CRASH_SINK_RATE = 6.0;
 const CRASH_BANK = 0.5; // ~29°
 /**
+ * Fuerza del nivelado automático, como múltiplo de la autoridad del alerón.
+ *
+ * Es un equilibrio con dos lados. Muy fuerte y las alas vuelven al instante,
+ * pero cancelan el viraje en cuanto se suelta la tecla: quien da toques
+ * cortos —es decir, cualquier crío— no consigue girar para volver a la
+ * pista. Muy flojo y se repite el problema original, no poder recuperar la
+ * horizontal. Calibrado midiendo las dos cosas a la vez: rumbo ganado por
+ * toque de alerón y segundos hasta nivelar.
+ */
+const WING_LEVELLER = 2.0;
+/**
  * Por encima de esta velocidad de descenso, la toma rebota y se nota.
  *
  * Está alto a propósito. La primera versión rebotaba a partir de 2,4 m/s y
@@ -274,11 +285,7 @@ export class CoefficientFlightModel implements FlightModel {
       // y devolvería las alas de un latigazo. Así, a treinta grados de
       // alabeo empuja aproximadamente como medio mando.
       if (Math.abs(controls.aileron) < 0.08 && !s.onGround) {
-        // A veinte grados de alabeo empuja con cerca de tres cuartos del
-        // mando a fondo: firme, para que las alas vuelvan solas en menos de
-        // un segundo, que es lo que espera quien suelta la tecla asustado.
-        const gain = a.clAileron * 2.5;
-        rollMoment -= this.assistLevel * qS * gain * ac.wingSpan * Math.sin(this.bankAngle());
+        rollMoment -= this.assistLevel * qS * a.clAileron * ac.wingSpan * levelling(this.bankAngle());
       }
     }
 
@@ -590,6 +597,20 @@ function postStallDrag(alpha: number, stallAngle: number): number {
   if (excess <= 0) return 0;
   const s = Math.sin(excess);
   return 2.1 * s * s;
+}
+
+/**
+ * Cuánto empuja el nivelado automático, en función del alabeo.
+ *
+ * Progresivo a propósito. Un término lineal en sin(alabeo) obliga a elegir:
+ * fuerte y el avión no vira porque se endereza en cuanto sueltas la tecla,
+ * flojo y no recuperas la horizontal. Mezclando un tramo lineal con otro
+ * cuadrático, un alabeo de veinte grados —el de un viraje querido— apenas se
+ * toca, y uno de sesenta se corrige con ganas.
+ */
+function levelling(bank: number): number {
+  const s = Math.sin(bank);
+  return WING_LEVELLER * s * (0.3 + 0.7 * Math.abs(s));
 }
 
 function clamp(value: number, min: number, max: number): number {
