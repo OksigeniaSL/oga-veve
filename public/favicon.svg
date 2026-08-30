@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Óga Veve">
+  <rect width="64" height="64" rx="14" fill="#2F5243"/>
+  <path d="M32 10c1.8 0 3 1.6 3 3.6v12.9l17 9.6v4.6l-17-5.1v10.2l5.4 3.9v3.8L32 51.2l-8.4 2.3v-3.8l5.4-3.9V35.6l-17 5.1v-4.6l17-9.6V13.6c0-2 1.2-3.6 3-3.6z" fill="#E4E2DA"/>
+  <circle cx="32" cy="17" r="2.6" fill="#DD923F"/>
+</svg>

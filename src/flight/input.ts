@@ -18,6 +18,47 @@ const KEY_CENTRE = 3.4;
 /** Zona muerta de los sticks del mando. */
 const DEADZONE = 0.12;
 
+/**
+ * Teclas por eje, declaradas por intención y no por posición.
+ *
+ * Están así porque la versión anterior pasaba las teclas como argumentos
+ * posicionales de una función `keyAxis(positive, negative, ...)` y se
+ * colaron invertidas: la flecha arriba bajaba el morro y el avión se
+ * clavaba contra la pista. El táctil y el mando estaban bien, así que solo
+ * fallaba el teclado y no se veía en ninguna prueba.
+ *
+ * Flecha arriba sube. En un simulador de verdad la palanca se empuja hacia
+ * delante para bajar, pero quien tiene cinco años espera que arriba sea
+ * arriba, y ese es el público. Un ajuste para invertirlo puede venir después.
+ */
+const KEYS = {
+  pitchUp: ['ArrowUp', 'KeyW'],
+  pitchDown: ['ArrowDown', 'KeyS'],
+  rollRight: ['ArrowRight', 'KeyD'],
+  rollLeft: ['ArrowLeft', 'KeyA'],
+  yawRight: ['KeyE'],
+  yawLeft: ['KeyQ'],
+  throttleUp: ['ShiftLeft', 'ShiftRight'],
+  throttleDown: ['ControlLeft', 'ControlRight'],
+  brakes: ['KeyB'],
+} as const;
+
+/**
+ * Valor de un eje a partir de las teclas pulsadas: +1, 0 o -1.
+ *
+ * Función pura y exportada para poder probarla sin navegador, que es lo que
+ * faltaba cuando se invirtió el cabeceo.
+ */
+export function axisFromKeys(
+  held: ReadonlySet<string>,
+  positive: readonly string[],
+  negative: readonly string[],
+): number {
+  const up = positive.some((code) => held.has(code)) ? 1 : 0;
+  const down = negative.some((code) => held.has(code)) ? 1 : 0;
+  return up - down;
+}
+
 export interface InputActions {
   toggleCamera: () => void;
   toggleAssist: () => void;
@@ -55,9 +96,12 @@ export class InputManager {
   update(dt: number): void {
     const gamepad = this.readGamepad();
 
-    const pitchTarget = gamepad?.pitch ?? this.touchPitch + this.keyAxis('ArrowDown', 'ArrowUp', 'KeyS', 'KeyW');
-    const rollTarget = gamepad?.roll ?? this.touchRoll + this.keyAxis('ArrowRight', 'ArrowLeft', 'KeyD', 'KeyA');
-    const rudderTarget = gamepad?.rudder ?? this.touchRudder + this.keyAxis('KeyE', 'KeyQ');
+    const pitchTarget =
+      gamepad?.pitch ?? this.touchPitch + axisFromKeys(this.keys, KEYS.pitchUp, KEYS.pitchDown);
+    const rollTarget =
+      gamepad?.roll ?? this.touchRoll + axisFromKeys(this.keys, KEYS.rollRight, KEYS.rollLeft);
+    const rudderTarget =
+      gamepad?.rudder ?? this.touchRudder + axisFromKeys(this.keys, KEYS.yawRight, KEYS.yawLeft);
 
     this.controls.elevator = approach(this.controls.elevator, clamp(pitchTarget, -1, 1), dt);
     this.controls.aileron = approach(this.controls.aileron, clamp(rollTarget, -1, 1), dt);
@@ -68,13 +112,15 @@ export class InputManager {
     } else if (gamepad?.throttle !== undefined) {
       this.controls.throttle = gamepad.throttle;
     } else {
-      const delta = (this.held('ShiftLeft', 'ShiftRight') ? 1 : 0) - (this.held('ControlLeft', 'ControlRight') ? 1 : 0);
+      const delta = axisFromKeys(this.keys, KEYS.throttleUp, KEYS.throttleDown);
       this.controls.throttle = clamp(this.controls.throttle + delta * dt * 0.6, 0, 1);
     }
 
-    const braking = this.touchBrakes || this.held('KeyB') || (gamepad?.brakes ?? false);
+    const braking =
+      this.touchBrakes || KEYS.brakes.some((k) => this.keys.has(k)) || (gamepad?.brakes ?? false);
     this.controls.brakes = approach(this.controls.brakes, braking ? 1 : 0, dt * 2);
-    this.controls.flaps = this.held('KeyF') ? 1 : this.controls.flaps;
+    // Los flaps no se leen aquí: son un conmutador, y lo lleva `onKeyDown`.
+    // Forzarlos también desde el bucle impedía apagarlos sin soltar la tecla.
   }
 
   // ── Teclado ───────────────────────────────────────────────────────────
@@ -116,16 +162,6 @@ export class InputManager {
   private onBlur = (): void => {
     this.keys.clear();
   };
-
-  private held(...codes: string[]): boolean {
-    return codes.some((code) => this.keys.has(code));
-  }
-
-  private keyAxis(positive: string, negative: string, positiveAlt?: string, negativeAlt?: string): number {
-    const pos = this.held(positive, ...(positiveAlt ? [positiveAlt] : [])) ? 1 : 0;
-    const neg = this.held(negative, ...(negativeAlt ? [negativeAlt] : [])) ? 1 : 0;
-    return pos - neg;
-  }
 
   // ── Mando ─────────────────────────────────────────────────────────────
 

@@ -17,9 +17,9 @@ redistribuibles sin ataduras.
 
 | Fuente | Resolución | Licencia | Veredicto |
 |---|---|---|---|
-| **NASADEM / SRTM 1"** (NASA JPL, LP DAAC) | ~30 m | **Dominio público**, sin restricciones de reutilización, venta ni redistribución | ✅ Elegida |
-| Copernicus DEM GLO-30 (ESA) | 30 m | Gratuita, pero obliga a un aviso de derechos reservados de DLR y Airbus y añade condiciones de redistribución | ❌ Ataduras innecesarias |
-| Imaginería satelital (Google, Bing, Mapbox, Cesium ion) | variable | Servicio de pago por uso | ❌ Coste recurrente y dependencia |
+| **NASADEM / SRTM 1"** (NASA JPL, LP DAAC) | ~30 m | **Dominio público**, sin restricciones de reutilización, venta ni redistribución | **Elegida** |
+| Copernicus DEM GLO-30 (ESA) | 30 m | Gratuita, pero obliga a un aviso de derechos reservados de DLR y Airbus y añade condiciones de redistribución | Descartada: ataduras innecesarias |
+| Imaginería satelital (Google, Bing, Mapbox, Cesium ion) | variable | Servicio de pago por uso | Descartada: coste recurrente y dependencia |
 
 ## Sobre no usar imaginería satelital
 
