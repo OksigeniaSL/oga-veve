@@ -1,0 +1,46 @@
+# CI de Óga Veve.
+#
+# Comprueba tipos, pasa los tests del modelo de vuelo y verifica que el juego
+# compila, en cada push a main y en cada pull request. Tarda menos de un
+# minuto: si tarda más, deja de mirarse y deja de servir.
+#
+# Node 20 es el mínimo declarado en `package.json`. Se prueba también en 22
+# para que una regresión de runtime no aparezca solo en producción.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verificar:
+    name: Tipos, tests y build (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preparar Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Comprobar tipos
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npx vite build

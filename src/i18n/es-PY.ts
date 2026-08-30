@@ -1,0 +1,59 @@
+/**
+ * Castellano paraguayo. Es el diccionario de referencia: cualquier clave
+ * nueva se añade aquí primero.
+ *
+ * Registro: cercano, de tuteo, sin españolismos y sin tecnicismos. Si una
+ * frase no la entendería Ña Emy, se reescribe (ver AGENTS.md).
+ */
+
+export const ES_PY = {
+  'app.title': 'Óga Veve',
+  'app.tagline': 'Volá sobre Paraguay',
+
+  'hud.speed': 'Velocidad',
+  'hud.altitude': 'Altura',
+  'hud.heading': 'Rumbo',
+  'hud.throttle': 'Motor',
+  'hud.vspeed': 'Subida',
+  'hud.stall': '¡Pérdida! Bajá el morro',
+  'hud.brakes': 'Frenos',
+  'hud.crashed': 'Se rompió algo. Apretá {key} para volver a empezar',
+  'hud.ground': 'En tierra',
+
+  'mode.label': 'Ayuda de vuelo',
+  'mode.arcade': 'Arcade',
+  'mode.pilot': 'Piloto',
+  'mode.changed': 'Ayuda de vuelo: {mode}',
+
+  'units.kmh': 'km/h',
+  'units.metres': 'm',
+  'units.mps': 'm/s',
+
+  'aircraft.oga172.description': 'Avioneta de escuela. Tranquila y perdonadora.',
+  'aircraft.kuarahy.description': 'Biplano fumigador. Ágil y con mucha fuerza.',
+
+  'scenario.valle.name': 'Valle de la Cordillera',
+  'scenario.chaco.name': 'Llanura del Chaco',
+
+  'help.title': 'Cómo se vuela',
+  'help.pitch': 'Flechas o W A S D — subir, bajar y girar',
+  'help.rudder': 'Q y E — timón',
+  'help.throttle': 'Shift y Ctrl — motor',
+  'help.brakes': 'B — frenos',
+  'help.camera': 'C — cambiar cámara',
+  'help.assist': 'M — ayuda de vuelo',
+  'help.reset': 'R — volver a empezar',
+  'help.credits': 'F1 — créditos',
+  'help.start': 'Empujá el motor a tope y tirá suave cuando corra',
+
+  'credits.title': 'Créditos',
+  'credits.madeBy': 'Un producto de Oksigenia SL, bajo la marca Granja Óga.',
+  'credits.educational':
+    'Gratis para siempre para toda la educación paraguaya: colegios, docentes, alumnos y familias. Sin trámites y sin pagar nada.',
+  'credits.terrain': 'Relieve a partir de datos NASADEM (NASA), de dominio público.',
+  'credits.engine': 'Modelo de vuelo: {model}',
+  'credits.licence': 'Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.',
+  'credits.close': 'Cerrar',
+
+  'language.label': 'Idioma',
+} as const;

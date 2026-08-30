@@ -1,0 +1,25 @@
+# ── Dependencias ───────────────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+
+# ── Datos de terreno (pesados, se regeneran) ───────────────────────────
+# Los .hgt de NASADEM son ~25 MB por tesela y son dominio público: se
+# descargan con `scripts/hgt-a-heightmap.mjs`, no se versionan.
+datos/dem/
+public/assets/terreno/*.png
+!public/assets/terreno/.gitkeep
+
+# ── Entornos / secrets ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── IDEs ───────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+
+# ── Sistema ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

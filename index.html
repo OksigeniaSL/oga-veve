@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es-PY">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#2F5243" />
+    <meta name="description" content="Óga Veve — simulador de vuelo para navegador. Volá sobre Paraguay. Un producto de Oksigenia SL bajo la marca Granja Óga." />
+    <title>Óga Veve — Volá sobre Paraguay</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="lienzo"></canvas>
+
+    <div id="hud" class="hud" aria-live="polite"></div>
+
+    <!--
+      Mandos táctiles. Se ocultan por CSS cuando el puntero es fino (ratón),
+      no por detección de "es móvil": un portátil con pantalla táctil tiene
+      que poder usar los dos.
+    -->
+    <div id="tactil" class="tactil">
+      <div class="pad pad--stick" data-touch="stick" aria-label="Palanca">
+        <span class="pad__punto"></span>
+      </div>
+      <div class="pad pad--rudder" data-touch="rudder" aria-label="Timón">
+        <span class="pad__punto"></span>
+      </div>
+      <div class="pad pad--throttle" data-touch="throttle" aria-label="Motor">
+        <span class="pad__punto"></span>
+      </div>
+      <button class="boton-tactil" data-touch="brakes" type="button">Frenos</button>
+    </div>
+
+    <div id="creditos" class="creditos" hidden></div>
+
+    <noscript>
+      <p class="aviso">Óga Veve necesita JavaScript para funcionar.</p>
+    </noscript>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

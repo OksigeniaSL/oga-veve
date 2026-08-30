@@ -1,0 +1,364 @@
+/*
+ * Estilos del juego.
+ *
+ * Paleta de Granja Óga: terracota, ocre, verde bosque y beige. Tipografía
+ * Varela Round si está disponible en el sistema, con una pila de reserva
+ * legible: no cargamos la fuente por red todavía porque el juego tiene que
+ * arrancar rápido en una conexión de colegio.
+ *
+ * Los tamaños del HUD están pensados para leerse de un vistazo mientras se
+ * vuela, no para lucir en una captura.
+ */
+
+:root {
+  --terracota: #be5d38;
+  --ocre: #dd923f;
+  --verde-bosque: #2f5243;
+  --beige: #e4e2da;
+  --sombra: rgba(18, 26, 22, 0.55);
+
+  --hud-fuente: 'Varela Round', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #0f1512;
+  color: var(--beige);
+  font-family: var(--hud-fuente);
+  /* Sin selección de texto: en táctil, arrastrar el dedo sobre el HUD no
+     puede acabar seleccionando el marcador de velocidad. */
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+#lienzo {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── HUD ──────────────────────────────────────────────────────────────── */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+}
+
+.tarjeta {
+  background: var(--sombra);
+  border-radius: 14px;
+  padding: 10px 14px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(228, 226, 218, 0.14);
+}
+
+.medidor {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 116px;
+}
+
+.medidor__etiqueta {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.medidor__valor {
+  font-size: 30px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.medidor__unidad {
+  font-size: 13px;
+  opacity: 0.68;
+  margin-left: 4px;
+}
+
+.hud__izquierda {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+  display: grid;
+  gap: 10px;
+}
+
+.hud__derecha {
+  grid-column: 3;
+  grid-row: 2;
+  align-self: center;
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.hud__arriba {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.hud__abajo {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  justify-self: center;
+  text-align: center;
+}
+
+/* Barra de motor */
+.motor {
+  width: 132px;
+}
+
+.motor__pista {
+  height: 10px;
+  border-radius: 6px;
+  background: rgba(228, 226, 218, 0.18);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.motor__relleno {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--verde-bosque), var(--ocre));
+  transition: width 90ms linear;
+}
+
+/* Horizonte artificial: dos mitades que rotan y se desplazan. */
+.horizonte {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid rgba(228, 226, 218, 0.3);
+  background: #1a2b33;
+}
+
+.horizonte__cielo {
+  position: absolute;
+  inset: -60%;
+  background: linear-gradient(180deg, #5b9ed6 50%, #7a5c3a 50%);
+  transform-origin: center;
+}
+
+.horizonte__cruz {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54px;
+  height: 2px;
+  margin: -1px 0 0 -27px;
+  background: var(--ocre);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Avisos */
+.aviso-hud {
+  font-size: 18px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: var(--terracota);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.aviso-hud--visible {
+  opacity: 1;
+}
+
+.aviso-hud--parpadeo {
+  animation: parpadeo 620ms steps(2, end) infinite;
+}
+
+@keyframes parpadeo {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.insignia {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(47, 82, 67, 0.82);
+  border: 1px solid rgba(228, 226, 218, 0.2);
+}
+
+/* ── Mandos táctiles ──────────────────────────────────────────────────── */
+
+.tactil {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Con ratón no estorban. Con dedo, aparecen. */
+@media (pointer: fine) {
+  .tactil {
+    display: none;
+  }
+}
+
+.pad {
+  position: absolute;
+  pointer-events: auto;
+  border-radius: 50%;
+  background: rgba(18, 26, 22, 0.32);
+  border: 2px solid rgba(228, 226, 218, 0.22);
+  touch-action: none;
+}
+
+.pad__punto {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30%;
+  height: 30%;
+  margin: -15% 0 0 -15%;
+  border-radius: 50%;
+  background: var(--ocre);
+  opacity: 0.85;
+  transform: translate(calc(var(--x, 0) * 34%), calc(var(--y, 0) * 34%));
+}
+
+.pad--stick {
+  left: max(20px, env(safe-area-inset-left));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  width: 150px;
+  height: 150px;
+}
+
+.pad--throttle {
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  width: 74px;
+  height: 190px;
+  border-radius: 40px;
+}
+
+.pad--rudder {
+  left: 50%;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  margin-left: -110px;
+  width: 220px;
+  height: 56px;
+  border-radius: 28px;
+}
+
+.boton-tactil {
+  position: absolute;
+  right: max(110px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  pointer-events: auto;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 2px solid rgba(228, 226, 218, 0.22);
+  background: rgba(190, 93, 56, 0.72);
+  color: var(--beige);
+  font: inherit;
+  font-size: 15px;
+}
+
+/* ── Créditos ─────────────────────────────────────────────────────────── */
+
+.creditos {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 16, 13, 0.86);
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  padding: 24px;
+}
+
+.creditos[hidden] {
+  display: none;
+}
+
+.creditos__panel {
+  max-width: 560px;
+  background: var(--verde-bosque);
+  border: 1px solid rgba(228, 226, 218, 0.2);
+  border-radius: 18px;
+  padding: 28px;
+  line-height: 1.55;
+}
+
+.creditos__panel h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+}
+
+.creditos__panel p {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.creditos__destacado {
+  background: rgba(221, 146, 63, 0.16);
+  border-left: 3px solid var(--ocre);
+  padding: 10px 14px;
+  border-radius: 0 10px 10px 0;
+}
+
+.creditos__panel a {
+  color: var(--ocre);
+}
+
+.creditos__cerrar {
+  margin-top: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  background: var(--terracota);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.aviso {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+/* Quien haya pedido menos movimiento en su sistema no quiere un HUD que
+   parpadea en la cara. */
+@media (prefers-reduced-motion: reduce) {
+  .aviso-hud--parpadeo {
+    animation: none;
+  }
+  .motor__relleno {
+    transition: none;
+  }
+}

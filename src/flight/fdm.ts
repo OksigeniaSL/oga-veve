@@ -1,0 +1,472 @@
+/**
+ * Modelo de vuelo propio, de coeficientes aerodinámicos.
+ *
+ * Cómo funciona, en cuatro pasos por cada instante de simulación:
+ *
+ *   1. Se proyecta la velocidad respecto al aire sobre los ejes del avión y
+ *      se sacan el ángulo de ataque (alpha) y el de derrape (beta).
+ *   2. Con alpha, beta, las velocidades angulares y la posición de los
+ *      mandos se evalúan los coeficientes de la aeronave: sustentación,
+ *      resistencia, fuerza lateral y los tres momentos.
+ *   3. Los coeficientes se multiplican por la presión dinámica y la
+ *      geometría para dar fuerzas en newtons y momentos en newton-metro.
+ *   4. Se integran la segunda ley de Newton y las ecuaciones de Euler del
+ *      sólido rígido.
+ *
+ * Convención de ejes. Dentro del FDM se usan ejes cuerpo aeronáuticos
+ * —x adelante, y a la derecha, z hacia abajo— porque es como están escritas
+ * las ecuaciones en cualquier libro y como vienen tabulados los
+ * coeficientes. La malla de three.js, en cambio, mira hacia -Z con +Y
+ * arriba. La conversión no se hace con matrices sino proyectando sobre los
+ * tres vectores unitarios del avión en coordenadas de mundo, que es más
+ * corto y no se puede equivocar de signo en silencio.
+ *
+ * Simplificación consciente: la transformación de ejes viento a ejes cuerpo
+ * se hace solo con alpha, ignorando beta en las componentes de sustentación
+ * y resistencia. Con derrapes pequeños —los que hace cualquiera que pilote
+ * esto— el error es despreciable, y a cambio el código se lee.
+ */
+
+import { Quaternion, Vector3 } from 'three';
+import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from './atmosphere';
+import type { AircraftConfig } from './aircraft';
+import type {
+  ControlInputs,
+  FlightModel,
+  FlightState,
+  GroundSampler,
+  InitialConditions,
+} from './model';
+
+/** Paso máximo de integración. Por encima, el modelo se vuelve inestable. */
+const MAX_SUBSTEP = 1 / 240;
+/** Por debajo de esta velocidad no hay aerodinámica que valga. */
+const MIN_AIRSPEED = 0.5;
+/** Velocidad vertical de toma a partir de la cual se rompe algo, m/s. */
+const CRASH_SINK_RATE = 6.0;
+
+const FORWARD_LOCAL = new Vector3(0, 0, -1);
+const RIGHT_LOCAL = new Vector3(1, 0, 0);
+const DOWN_LOCAL = new Vector3(0, -1, 0);
+
+export interface FdmOptions {
+  aircraft: AircraftConfig;
+  ground: GroundSampler;
+  /**
+   * Asistencia de vuelo, 0 a 1. 0 = modo Piloto, sin ayudas.
+   * 1 = modo Arcade: timón automático, alas que se enderezan solas,
+   * pérdida indulgente y amortiguamiento extra.
+   */
+  assist?: number;
+}
+
+export class CoefficientFlightModel implements FlightModel {
+  readonly implementationName = 'FDM Óga Veve (coeficientes)';
+
+  readonly state: FlightState;
+
+  private readonly aircraft: AircraftConfig;
+  private readonly ground: GroundSampler;
+  private assistLevel: number;
+
+  // Vectores de trabajo reutilizados: este bucle corre 240 veces por
+  // segundo y no queremos darle basura al recolector.
+  private readonly forward = new Vector3();
+  private readonly right = new Vector3();
+  private readonly down = new Vector3();
+  private readonly force = new Vector3();
+  private readonly omega = new Vector3();
+  private readonly spin = new Quaternion();
+
+  constructor(options: FdmOptions) {
+    this.aircraft = options.aircraft;
+    this.ground = options.ground;
+    this.assistLevel = options.assist ?? 1;
+
+    this.state = {
+      position: new Vector3(),
+      velocity: new Vector3(),
+      orientation: new Quaternion(),
+      rollRate: 0,
+      pitchRate: 0,
+      yawRate: 0,
+      airspeed: 0,
+      alpha: 0,
+      beta: 0,
+      heightAboveGround: 0,
+      verticalSpeed: 0,
+      loadFactor: 1,
+      heading: 0,
+      onGround: true,
+      stalled: false,
+      crashed: false,
+    };
+  }
+
+  get assist(): number {
+    return this.assistLevel;
+  }
+
+  set assist(value: number) {
+    this.assistLevel = Math.max(0, Math.min(1, value));
+  }
+
+  reset(initial: InitialConditions): void {
+    const s = this.state;
+    s.position.copy(initial.position);
+    s.orientation.setFromAxisAngle(new Vector3(0, 1, 0), -initial.heading);
+    this.updateBodyAxes();
+    s.velocity.copy(this.forward).multiplyScalar(initial.airspeed);
+    s.rollRate = 0;
+    s.pitchRate = 0;
+    s.yawRate = 0;
+    s.crashed = false;
+    s.stalled = false;
+    s.loadFactor = 1;
+    this.updateDerived();
+  }
+
+  step(dt: number, controls: ControlInputs): void {
+    // Si la pestaña ha estado en segundo plano llega un dt enorme. Vale más
+    // perder tiempo simulado que integrar un salto y mandar el avión a la
+    // estratosfera.
+    const total = Math.min(dt, 0.1);
+    const substeps = Math.max(1, Math.ceil(total / MAX_SUBSTEP));
+    const h = total / substeps;
+    for (let i = 0; i < substeps; i++) this.integrate(h, controls);
+    this.updateDerived();
+  }
+
+  // ── Núcleo ────────────────────────────────────────────────────────────
+
+  private integrate(dt: number, controls: ControlInputs): void {
+    const s = this.state;
+    const ac = this.aircraft;
+    const a = ac.aero;
+
+    this.updateBodyAxes();
+
+    // Velocidad respecto al aire, en ejes cuerpo. Sin viento todavía: el día
+    // que se añada, se resta aquí el vector de viento y todo lo demás sigue
+    // funcionando igual.
+    const u = s.velocity.dot(this.forward);
+    const v = s.velocity.dot(this.right);
+    const w = s.velocity.dot(this.down);
+    const speed = Math.sqrt(u * u + v * v + w * w);
+
+    const density = airDensity(s.position.y);
+
+    if (speed > MIN_AIRSPEED) {
+      s.alpha = Math.atan2(w, u);
+      s.beta = Math.asin(Math.max(-1, Math.min(1, v / speed)));
+    } else {
+      s.alpha = 0;
+      s.beta = 0;
+    }
+    s.airspeed = speed;
+
+    const assisted = this.applyAssist(controls, s.alpha, s.beta);
+
+    const qDyn = 0.5 * density * speed * speed;
+    const qS = qDyn * ac.wingArea;
+    const aspectRatio = (ac.wingSpan * ac.wingSpan) / ac.wingArea;
+
+    // Alarga la pérdida en modo arcade en vez de eliminarla: el avión sigue
+    // cayendo si insistís, pero perdona el tirón nervioso de un crío.
+    const stallAngle = a.alphaStall * (1 + 0.45 * this.assistLevel);
+    const cl = liftCoefficient(s.alpha, a, stallAngle) + ac.flapsLift * assisted.flaps;
+    const cd =
+      a.cd0 +
+      (cl * cl) / (Math.PI * aspectRatio * a.oswald) +
+      postStallDrag(s.alpha, stallAngle) +
+      ac.flapsDrag * assisted.flaps;
+    const cy = a.cyBeta * s.beta;
+
+    s.stalled = Math.abs(s.alpha) > stallAngle && speed > MIN_AIRSPEED;
+
+    const lift = qS * cl;
+    const drag = qS * cd;
+    const side = qS * cy;
+
+    // Empuje. Cae con la densidad y con la velocidad: una hélice que ya va
+    // rápida muerde menos aire. No es un modelo de hélice de verdad, pero
+    // reproduce lo que se nota al pilotar.
+    const densityRatio = density / SEA_LEVEL_DENSITY;
+    const speedFactor = Math.max(0.2, 1 - speed / (2.4 * ac.cruiseSpeed));
+    const thrust = assisted.throttle * ac.maxThrust * Math.pow(densityRatio, 0.7) * speedFactor;
+
+    const sinA = Math.sin(s.alpha);
+    const cosA = Math.cos(s.alpha);
+    const forceX = thrust - drag * cosA + lift * sinA;
+    const forceY = side;
+    const forceZ = -drag * sinA - lift * cosA;
+
+    // Momentos. Las velocidades angulares se adimensionalizan con la
+    // semi-envergadura y la cuerda partido por la velocidad; a velocidad
+    // baja eso se dispara, así que el divisor tiene suelo.
+    const vRef = Math.max(speed, ac.cruiseSpeed * 0.35);
+    const pHat = (s.rollRate * ac.wingSpan) / (2 * vRef);
+    const qHat = (s.pitchRate * ac.chord) / (2 * vRef);
+    const rHat = (s.yawRate * ac.wingSpan) / (2 * vRef);
+
+    const clMoment =
+      a.clBeta * s.beta + a.clP * pHat + a.clAileron * assisted.aileron;
+    const cmMoment =
+      a.cm0 + a.cmAlpha * s.alpha + a.cmQ * qHat + a.cmElevator * assisted.elevator;
+    const cnMoment =
+      a.cnBeta * s.beta +
+      a.cnR * rHat +
+      a.cnRudder * assisted.rudder +
+      a.cnAileron * assisted.aileron;
+
+    let rollMoment = qS * ac.wingSpan * clMoment;
+    let pitchMoment = qS * ac.chord * cmMoment;
+    let yawMoment = qS * ac.wingSpan * cnMoment;
+
+    // Ayudas que actúan como momentos y no como mandos: amortiguamiento
+    // extra y un empujón para nivelar las alas cuando nadie toca nada.
+    if (this.assistLevel > 0) {
+      const k = this.assistLevel * qS;
+      rollMoment -= k * 0.9 * pHat * ac.wingSpan;
+      pitchMoment -= k * 0.6 * qHat * ac.chord;
+      yawMoment -= k * 0.9 * rHat * ac.wingSpan;
+      if (Math.abs(controls.aileron) < 0.05 && !s.onGround) {
+        rollMoment -= this.assistLevel * qS * 0.35 * ac.wingSpan * Math.sin(this.bankAngle());
+      }
+    }
+
+    // ── Traslación ─────────────────────────────────────────────────────
+    this.force
+      .copy(this.forward)
+      .multiplyScalar(forceX)
+      .addScaledVector(this.right, forceY)
+      .addScaledVector(this.down, forceZ);
+    this.force.y -= ac.mass * GRAVITY;
+
+    // Factor de carga: lo que siente el piloto, sin contar gravedad ni
+    // empuje. Es la componente de la fuerza aerodinámica hacia su cabeza.
+    s.loadFactor = -forceZ / (ac.mass * GRAVITY);
+
+    s.velocity.addScaledVector(this.force, dt / ac.mass);
+    s.position.addScaledVector(s.velocity, dt);
+
+    // ── Rotación ───────────────────────────────────────────────────────
+    // Ecuaciones de Euler: los términos cruzados son los que hacen que un
+    // avión en alabeo rápido guiñe solo. Se notan poco pero están.
+    const { xx, yy, zz } = ac.inertia;
+    const p = s.rollRate;
+    const qq = s.pitchRate;
+    const r = s.yawRate;
+    s.rollRate += (dt * (rollMoment + (yy - zz) * qq * r)) / xx;
+    s.pitchRate += (dt * (pitchMoment + (zz - xx) * r * p)) / yy;
+    s.yawRate += (dt * (yawMoment + (xx - yy) * p * qq)) / zz;
+
+    this.omega
+      .copy(this.forward)
+      .multiplyScalar(s.rollRate)
+      .addScaledVector(this.right, s.pitchRate)
+      .addScaledVector(this.down, s.yawRate);
+
+    // Integración del cuaternión: dq/dt = ½·ω·q, con ω en ejes de mundo.
+    this.spin.set(
+      this.omega.x * dt * 0.5,
+      this.omega.y * dt * 0.5,
+      this.omega.z * dt * 0.5,
+      1,
+    );
+    s.orientation.premultiply(this.spin).normalize();
+
+    this.resolveGround(dt, assisted);
+  }
+
+  // ── Suelo ─────────────────────────────────────────────────────────────
+
+  private resolveGround(dt: number, controls: ControlInputs): void {
+    const s = this.state;
+    const ac = this.aircraft;
+    const terrain = this.ground(s.position.x, s.position.z);
+    const wheelLevel = terrain + ac.gearHeight;
+
+    if (s.position.y > wheelLevel) {
+      s.onGround = false;
+      return;
+    }
+
+    const wasFlying = !s.onGround;
+    const sinkRate = -s.velocity.y;
+    s.onGround = true;
+    s.position.y = wheelLevel;
+
+    if (wasFlying && (sinkRate > CRASH_SINK_RATE || Math.abs(this.bankAngle()) > 0.5)) {
+      s.crashed = true;
+    }
+
+    if (s.velocity.y < 0) s.velocity.y = 0;
+
+    // Ruedas: mucho rozamiento lateral —por eso un avión en tierra va donde
+    // apunta— y poco longitudinal hasta que se pisan los frenos.
+    this.updateBodyAxes();
+    const lateral = s.velocity.dot(this.right);
+    s.velocity.addScaledVector(this.right, -lateral * Math.min(1, dt * 9));
+
+    const rolling = 0.02 + 0.55 * controls.brakes;
+    const longitudinal = s.velocity.dot(this.forward);
+    s.velocity.addScaledVector(
+      this.forward,
+      -Math.sign(longitudinal) * Math.min(Math.abs(longitudinal), rolling * GRAVITY * dt),
+    );
+
+    // El tren de aterrizaje no deja alabear ni guiñar libremente. El cabeceo
+    // sí se respeta: es lo que permite rotar en el despegue.
+    const settle = Math.min(1, dt * 6);
+    s.rollRate *= 1 - settle;
+    s.yawRate *= 1 - settle * 0.5;
+    this.levelWings(settle);
+    this.constrainGroundPitch();
+    // Guiñada en tierra proporcional al timón y a la velocidad: dirigible
+    // rodando, inútil parado, como una rueda de morro de verdad.
+    s.yawRate += controls.rudder * 0.6 * Math.min(1, Math.abs(longitudinal) / 25) * settle;
+  }
+
+  /**
+   * Mantiene el cabeceo dentro de lo que permite el tren de aterrizaje.
+   *
+   * Con las ruedas en el suelo el avión no puede apuntar donde quiera: por
+   * arriba lo frena la cola y por abajo la rueda de morro. Es lo que obliga
+   * a acelerar hasta la velocidad de rotación en vez de despegar tirando de
+   * la palanca desde parado.
+   */
+  private constrainGroundPitch(): void {
+    const s = this.state;
+    this.updateBodyAxes();
+    const pitch = Math.asin(clamp(this.forward.y, -1, 1));
+    const max = this.aircraft.maxGroundPitch;
+    const min = -0.035;
+
+    if (pitch > max) {
+      this.rotateAboutRight(max - pitch);
+      if (s.pitchRate > 0) s.pitchRate = 0;
+    } else if (pitch < min) {
+      this.rotateAboutRight(min - pitch);
+      if (s.pitchRate < 0) s.pitchRate = 0;
+    }
+  }
+
+  /** Gira el avión alrededor de su eje transversal. Positivo: morro arriba. */
+  private rotateAboutRight(angle: number): void {
+    this.spin.setFromAxisAngle(this.right, angle);
+    this.state.orientation.premultiply(this.spin).normalize();
+    this.updateBodyAxes();
+  }
+
+  /** Endereza las alas girando alrededor del eje longitudinal. */
+  private levelWings(amount: number): void {
+    const bank = this.bankAngle();
+    if (Math.abs(bank) < 1e-4) return;
+    this.spin.setFromAxisAngle(this.forward, -bank * amount);
+    this.state.orientation.premultiply(this.spin).normalize();
+  }
+
+  // ── Utilidades ────────────────────────────────────────────────────────
+
+  private updateBodyAxes(): void {
+    const q = this.state.orientation;
+    this.forward.copy(FORWARD_LOCAL).applyQuaternion(q);
+    this.right.copy(RIGHT_LOCAL).applyQuaternion(q);
+    this.down.copy(DOWN_LOCAL).applyQuaternion(q);
+  }
+
+  /** Ángulo de alabeo respecto al horizonte, rad. Positivo a la derecha. */
+  private bankAngle(): number {
+    this.updateBodyAxes();
+    // El ala derecha por debajo del horizonte significa alabeo a la derecha.
+    return Math.atan2(this.right.y, -this.down.y);
+  }
+
+  /**
+   * Aplica las ayudas de pilotaje sobre los mandos antes de que lleguen a
+   * la aerodinámica. Con `assist` a 0 devuelve los mandos tal cual.
+   */
+  private applyAssist(controls: ControlInputs, alpha: number, beta: number): ControlInputs {
+    if (this.assistLevel <= 0) return controls;
+    const k = this.assistLevel;
+
+    // Timón automático: mantiene la bola centrada. Es lo que separa un viraje
+    // que se siente bien de uno que da tumbos, y ningún crío va a pisar
+    // pedales.
+    const rudder = clamp(controls.rudder + k * clamp(-beta * 4.5, -1, 1), -1, 1);
+
+    // Limitador de ángulo de ataque: cuanto más cerca de la pérdida, menos
+    // autoridad tiene el tirón. No la impide, la hace costar.
+    const margin = this.aircraft.aero.alphaStall;
+    const excess = clamp((alpha - margin * 0.82) / (margin * 0.35), 0, 1);
+    const elevator =
+      controls.elevator > 0 ? controls.elevator * (1 - k * 0.75 * excess) : controls.elevator;
+
+    return { ...controls, rudder, elevator };
+  }
+
+  private updateDerived(): void {
+    const s = this.state;
+    this.updateBodyAxes();
+
+    // Se recalculan aquí y no solo dentro de `integrate` para que el estado
+    // sea correcto nada más llamar a `reset()`, antes del primer paso. Quien
+    // lea `airspeed` justo después de reiniciar tiene que ver la velocidad
+    // con la que ha arrancado, no un cero.
+    const u = s.velocity.dot(this.forward);
+    const v = s.velocity.dot(this.right);
+    const w = s.velocity.dot(this.down);
+    s.airspeed = Math.sqrt(u * u + v * v + w * w);
+    if (s.airspeed > MIN_AIRSPEED) {
+      s.alpha = Math.atan2(w, u);
+      s.beta = Math.asin(clamp(v / s.airspeed, -1, 1));
+    } else {
+      s.alpha = 0;
+      s.beta = 0;
+    }
+
+    s.verticalSpeed = s.velocity.y;
+    s.heightAboveGround = s.position.y - this.ground(s.position.x, s.position.z);
+    // Rumbo: proyección del morro sobre el plano horizontal. -Z es el norte.
+    s.heading = Math.atan2(this.forward.x, -this.forward.z);
+    if (s.heading < 0) s.heading += Math.PI * 2;
+  }
+}
+
+// ── Aerodinámica ───────────────────────────────────────────────────────
+
+/**
+ * Curva de sustentación con pérdida.
+ *
+ * Hasta el ángulo de pérdida es una recta. Pasado ese punto se mezcla hacia
+ * el comportamiento de una placa plana, que da mucha menos sustentación. Esa
+ * mezcla es lo que hace que el morro se caiga de verdad en vez de quedarse
+ * flotando con el avión colgado del elevador.
+ */
+export function liftCoefficient(
+  alpha: number,
+  a: { cl0: number; clAlpha: number },
+  stallAngle: number,
+): number {
+  const magnitude = Math.abs(alpha);
+  if (magnitude <= stallAngle) return a.cl0 + a.clAlpha * alpha;
+
+  const sign = Math.sign(alpha) || 1;
+  const clAtStall = a.cl0 * sign + a.clAlpha * stallAngle * sign;
+  const clFlatPlate = 2 * Math.sin(alpha) * Math.cos(alpha);
+  const blend = Math.min(1, (magnitude - stallAngle) / 0.32);
+  return clAtStall * (1 - blend) + clFlatPlate * blend;
+}
+
+/** Resistencia adicional al desprenderse el flujo. */
+function postStallDrag(alpha: number, stallAngle: number): number {
+  const excess = Math.abs(alpha) - stallAngle;
+  if (excess <= 0) return 0;
+  const s = Math.sin(excess);
+  return 2.1 * s * s;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return value < min ? min : value > max ? max : value;
+}
