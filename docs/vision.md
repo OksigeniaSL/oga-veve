@@ -22,7 +22,7 @@ frase:
 
 Cuatro decisiones dentro de esa frase, y ninguna la tiene nadie más:
 
-**Se vuela para servir, no para lucirse.** Correo, vacunas, la pieza del tractor,
+**Se vuela para servir, no para lucirse.** Correo, un traslado sanitario urgente, la pieza del tractor,
 la maestra que va al pueblo, la chipa que todavía humea. Ningún simulador va de
 ser útil; todos van de ser hábil. Y cada encargo obliga a aprender geografía
 paraguaya de verdad, sin que parezca una lección.
