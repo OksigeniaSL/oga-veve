@@ -19,6 +19,8 @@ export const GUG: Dictionary = {
   'hud.altitude': 'Yvate',
   'hud.ground': 'Yvýpe',
 
+  'tutor.flying': 'Reveve hína!',
+
   'help.title': "Mba'éichapa oveve",
 
   'credits.title': 'Aguyje',

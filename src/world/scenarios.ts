@@ -40,6 +40,8 @@ export interface Scenario {
   riverWidth: number;
   bands: readonly TerrainBand[];
   water: number;
+  /** Color del rebote del suelo para el relleno hemisférico. */
+  fill: number;
   sky: { horizon: number; zenith: number };
   fog: { colour: number; density: number };
   /** Dirección del sol en grados: azimut y elevación. */
@@ -67,18 +69,24 @@ export const VALLE_CORDILLERA: Scenario = {
   ridgeMix: 0.35,
   waterLevel: 46,
   riverWidth: 420,
+  // Recorrido de oscuro a claro, no seis verdes parecidos. La versión
+  // anterior tenía cuatro bandas entre #7fa663 y #9a9d5c y el valle entero se
+  // leía como una alfombra: si el color lo ponemos nosotros, tiene que
+  // notarse. De abajo arriba: fondo húmedo de valle, verde de ladera, verde
+  // claro de loma, pastizal seco, ocre y roca.
   bands: [
-    { from: -100, colour: 0x6b8f5a },
-    { from: 60, colour: 0x7fa663 },
-    { from: 140, colour: 0x8fb46a },
-    { from: 240, colour: 0x9a9d5c },
-    { from: 340, colour: 0x8c7f52 },
-    { from: 440, colour: 0x9d8c6d },
+    { from: -100, colour: 0x35603f },
+    { from: 55, colour: 0x4d7f47 },
+    { from: 130, colour: 0x6d9b52 },
+    { from: 215, colour: 0x94ac5e },
+    { from: 305, colour: 0xbba874 },
+    { from: 400, colour: 0xa9968a },
   ],
-  water: 0x3f7f96,
-  sky: { horizon: 0xdfe8ef, zenith: 0x5b9ed6 },
-  fog: { colour: 0xc9dae6, density: 0.000045 },
-  sun: { azimuth: 125, elevation: 42 },
+  water: 0x3e7f9c,
+  fill: 0x4d6b45,
+  sky: { horizon: 0xe6edf2, zenith: 0x4d92d4 },
+  fog: { colour: 0xd2e0ea, density: 0.00005 },
+  sun: { azimuth: 125, elevation: 34 },
   // Emplazamiento elegido buscando el tramo más llano y seco del valle:
   // 142 m de cota, en el llano del norte y a casi tres kilómetros del cauce.
   // Una pista dentro del río no la ve nadie hasta que despega.
@@ -103,15 +111,16 @@ export const CHACO: Scenario = {
   waterLevel: 8,
   riverWidth: 260,
   bands: [
-    { from: -100, colour: 0x9d8f5f },
-    { from: 25, colour: 0xa89a68 },
-    { from: 50, colour: 0xb0a271 },
-    { from: 75, colour: 0xbdae7e },
+    { from: -100, colour: 0x6f7a45 },
+    { from: 22, colour: 0x93924f },
+    { from: 45, colour: 0xb5a468 },
+    { from: 68, colour: 0xd2bd8c },
   ],
-  water: 0x5a8a86,
-  sky: { horizon: 0xf0e6d2, zenith: 0x6ea8d8 },
-  fog: { colour: 0xe4d9c2, density: 0.00006 },
-  sun: { azimuth: 200, elevation: 58 },
+  water: 0x4f8a8c,
+  fill: 0x8a7f52,
+  sky: { horizon: 0xf4e9d4, zenith: 0x62a2d6 },
+  fog: { colour: 0xe8dcc4, density: 0.00006 },
+  sun: { azimuth: 200, elevation: 46 },
   runway: { x: 300, z: -200, heading: 30, length: 1400, width: 34 },
 };
 

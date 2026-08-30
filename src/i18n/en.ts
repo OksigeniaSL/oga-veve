@@ -45,6 +45,11 @@ export const EN: Dictionary = {
   'scenario.valle.name': 'Cordillera Valley',
   'scenario.chaco.name': 'Chaco Plain',
 
+  'tutor.throttle': 'Give it power',
+  'tutor.speed': 'Let her run',
+  'tutor.pull': 'Pull up',
+  'tutor.flying': "You're flying!",
+
   'help.title': 'How to fly',
   'help.pitch': 'Arrows or W A S D — climb, descend and turn',
   'help.rudder': 'Q and E — rudder',

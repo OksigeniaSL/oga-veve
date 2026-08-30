@@ -22,6 +22,7 @@
 import type { FlightState } from '../flight/model';
 import { indicatedAirspeed } from '../flight/atmosphere';
 import { t } from '../i18n';
+import { Tutor } from './tutor';
 
 /**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
@@ -76,6 +77,7 @@ export const UNIT_SYSTEMS = { metric: METRIC, aeronautical: AERONAUTICAL } as co
 export type UnitSystemName = keyof typeof UNIT_SYSTEMS;
 
 export class Hud {
+  readonly tutor = new Tutor();
   private readonly root: HTMLElement;
   private units: UnitSystem = METRIC;
 
@@ -128,6 +130,7 @@ export class Hud {
         </div>
       </div>
       <div class="vineta" data-hud="vignette"></div>
+      ${Tutor.markup()}
       <div class="hud__abajo">
         <div class="aviso-hud" data-hud="warning">
           <span class="aviso-hud__flecha" data-hud="warning-arrow" aria-hidden="true"></span>
@@ -151,6 +154,7 @@ export class Hud {
     this.hint = pick(this.root, 'hint');
 
     this.badge.textContent = this.badgeText;
+    this.tutor.bind(this.root);
   }
 
   setUnits(name: UnitSystemName): void {

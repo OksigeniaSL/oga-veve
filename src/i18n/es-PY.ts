@@ -38,6 +38,11 @@ export const ES_PY = {
   'scenario.valle.name': 'Valle de la Cordillera',
   'scenario.chaco.name': 'Llanura del Chaco',
 
+  'tutor.throttle': 'Dale motor',
+  'tutor.speed': 'Esperá a que corra',
+  'tutor.pull': 'Tirá para arriba',
+  'tutor.flying': '¡Estás volando!',
+
   'help.title': 'Cómo se vuela',
   'help.pitch': 'Flechas o W A S D — subir, bajar y girar',
   'help.rudder': 'Q y E — timón',

@@ -18,11 +18,10 @@ import {
   Color,
   Group,
   Mesh,
-  MeshBasicMaterial,
   MeshLambertMaterial,
   PlaneGeometry,
 } from 'three';
-import { ValueNoise2D, mulberry32 } from './noise';
+import { ValueNoise2D } from './noise';
 import type { Scenario } from './scenarios';
 
 export class Terrain {
@@ -102,7 +101,12 @@ export class Terrain {
     const indices = new Uint32Array(this.scenario.segments * this.scenario.segments * 6);
 
     const tint = new Color();
-    const dither = mulberry32(this.scenario.seed ^ 0x5eed);
+    // Ruido de color, aparte del de relieve y a frecuencia mucho más baja:
+    // produce manchas grandes de tono —un prado más seco, una ladera más
+    // oscura— en vez del grano por vértice de la primera versión, que era
+    // invisible. Es lo que hace que el terreno parezca pintado y no calculado.
+    const patches = new ValueNoise2D(this.scenario.seed ^ 0x5eed);
+    const patchScale = 7.5 / this.scenario.size;
 
     for (let row = 0; row < resolution; row++) {
       for (let col = 0; col < resolution; col++) {
@@ -112,7 +116,12 @@ export class Terrain {
         positions[index * 3 + 1] = height;
         positions[index * 3 + 2] = -half + row * step;
 
-        colourFor(height, this.slopeAt(row, col), this.scenario, dither(), tint);
+        const variation = patches.fbm(
+          positions[index * 3]! * patchScale,
+          positions[index * 3 + 2]! * patchScale,
+          3,
+        );
+        colourFor(height, this.slopeAt(row, col), this.scenario, variation, tint);
         colours[index * 3] = tint.r;
         colours[index * 3 + 1] = tint.g;
         colours[index * 3 + 2] = tint.b;
@@ -174,7 +183,9 @@ export class Terrain {
 
     const surface = new PlaneGeometry(runway.width, runway.length);
     surface.rotateX(-Math.PI / 2);
-    const asphalt = new Mesh(surface, new MeshBasicMaterial({ color: 0x6f6255 }));
+    // Lambert y no Basic: con material sin iluminar la pista no compartía la
+    // luz del paisaje y se leía como una mancha de barro plana pegada encima.
+    const asphalt = new Mesh(surface, new MeshLambertMaterial({ color: 0x7c7268 }));
     group.add(asphalt);
 
     // Marcas del eje. Cinco trazos bastan para dar referencia visual al
@@ -182,7 +193,7 @@ export class Terrain {
     const markCount = 5;
     const markGeometry = new PlaneGeometry(runway.width * 0.06, runway.length * 0.08);
     markGeometry.rotateX(-Math.PI / 2);
-    const markMaterial = new MeshBasicMaterial({ color: 0xe8e2d4 });
+    const markMaterial = new MeshLambertMaterial({ color: 0xe8e2d4 });
     for (let i = 0; i < markCount; i++) {
       const mark = new Mesh(markGeometry, markMaterial);
       mark.position.set(0, 0.05, (i / (markCount - 1) - 0.5) * runway.length * 0.72);
@@ -329,39 +340,63 @@ function smoothFalloff(distance: number, core: number, reach: number): number {
 // ── Color ───────────────────────────────────────────────────────────────
 
 /**
- * Color de un vértice según su altitud y su pendiente.
+ * Color de un vértice según su altitud, su pendiente y la mancha de color
+ * que le toca.
  *
- * Las bandas dan el aspecto ilustrado que buscamos. La pendiente oscurece y
- * desatura hacia roca: es lo que hace que un barranco se lea como barranco
- * sin necesidad de textura. El grano aleatorio rompe el bandeado limpio, que
- * de otro modo canta a degradado de ordenador.
+ * Las bandas de altitud dan el aspecto ilustrado que buscamos, pero solo si
+ * se distinguen: la banda no se elige a secas, se mezcla un poco con la
+ * vecina en el borde para que la transición se lea como pincelada y no como
+ * escalón de mapa topográfico.
+ *
+ * La pendiente desatura hacia roca, que es lo que hace que un barranco se
+ * lea como barranco sin textura ninguna. Y la mancha de baja frecuencia
+ * rompe la uniformidad: sin ella, dos laderas a la misma altura salen
+ * exactamente del mismo color y se nota que lo ha pintado una máquina.
  */
 function colourFor(
   height: number,
   slope: number,
   scenario: Scenario,
-  grain: number,
+  variation: number,
   out: Color,
 ): void {
-  let chosen = scenario.bands[0]?.colour ?? 0x808080;
-  for (const band of scenario.bands) {
-    if (height >= band.from) chosen = band.colour;
+  const bands = scenario.bands;
+  let index = 0;
+  for (let i = 0; i < bands.length; i++) {
+    if (height >= bands[i]!.from) index = i;
   }
-  out.setHex(chosen);
 
-  const rock = Math.pow(slope, 1.3);
-  out.lerp(ROCK, rock * 0.65);
+  const current = bands[index]!;
+  out.setHex(current.colour);
 
-  const shade = 0.94 + grain * 0.12;
+  // Difuminado hacia la banda siguiente en el último tramo antes del salto.
+  const next = bands[index + 1];
+  if (next) {
+    const span = next.from - current.from;
+    const progress = span > 0 ? (height - current.from) / span : 0;
+    if (progress > 0.72) {
+      BLEND.setHex(next.colour);
+      out.lerp(BLEND, (progress - 0.72) / 0.28 * 0.5);
+    }
+  }
+
+  out.lerp(ROCK, Math.pow(slope, 1.15) * 0.8);
+
+  // La mancha mueve la luminosidad arriba y abajo, y de paso empuja un poco
+  // hacia el verde húmedo las zonas bajas de cada mancha.
+  const shade = 0.86 + variation * 0.3;
   out.multiplyScalar(shade);
+  if (variation < 0.42) out.lerp(DAMP, (0.42 - variation) * 0.5);
 
   // Bajo el agua se apaga: no se ve el fondo pero tampoco se ve un prado
   // verde debajo de un río, que es lo que pasaría sin esto.
-  if (height < scenario.waterLevel) out.lerp(DEEP, 0.55);
+  if (height < scenario.waterLevel) out.lerp(DEEP, 0.6);
 }
 
-const ROCK = new Color(0x8a8378);
-const DEEP = new Color(0x2c4f5e);
+const ROCK = new Color(0x9b9186);
+const DEEP = new Color(0x27485a);
+const DAMP = new Color(0x38663f);
+const BLEND = new Color();
 
 function clamp01(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value;

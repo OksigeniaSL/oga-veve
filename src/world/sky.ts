@@ -86,14 +86,21 @@ export function createSky(scenario: Scenario): SkyRig {
     Math.cos(elevation) * Math.cos(azimuth),
   ).normalize();
 
-  const sun = new DirectionalLight(0xfff3e0, 2.1);
+  const sun = new DirectionalLight(0xfff1da, 2.9);
   sun.position.copy(sunDirection).multiplyScalar(scenario.size * 0.4);
   group.add(sun);
   group.add(sun.target);
 
   // Relleno hemisférico: cielo arriba, rebote del suelo abajo. Sin esto las
   // caras en sombra quedan negras y el paisaje parece de noche.
-  const ambient = new HemisphereLight(scenario.sky.zenith, scenario.bands[0]?.colour ?? 0x6b8f5a, 1.15);
+  //
+  // Va flojo y con un azul pálido, no con el azul del cenit. La primera
+  // versión usaba `sky.zenith` a intensidad 1.15 y el resultado era que
+  // media escena se teñía de azul —el avión, que es beige, salía celeste— y
+  // el relieve se aplanaba porque el relleno competía con el sol. La luz
+  // direccional es la que tiene que modelar el terreno; esta solo abre las
+  // sombras.
+  const ambient = new HemisphereLight(0xc2dcf0, scenario.fill, 0.5);
   group.add(ambient);
 
   const fog = new FogExp2(scenario.fog.colour, scenario.fog.density);

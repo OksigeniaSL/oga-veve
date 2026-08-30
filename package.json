@@ -1,7 +1,7 @@
 {
   "name": "oga-veve",
   "version": "0.1.0",
-  "description": "Simulador de vuelo para navegador — volar sobre Paraguay. Producto Oksigenia SL bajo la marca Granja Óga.",
+  "description": "Simulador de vuelo para navegador \u2014 volar sobre Paraguay. Producto Oksigenia SL bajo la marca Granja \u00d3ga.",
   "license": "Apache-2.0",
   "private": false,
   "type": "module",
@@ -9,7 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

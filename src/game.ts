@@ -157,6 +157,7 @@ export class Game {
     this.flight.reset({ position: start, heading, airspeed: 0 });
     this.crashedFor = 0;
     this.input.controls.throttle = 0;
+    this.hud.tutor.reset();
     this.updateBadge();
   }
 
@@ -180,6 +181,7 @@ export class Game {
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
     this.hud.update(this.flight.state, this.input.controls.throttle, dt);
+    this.hud.tutor.update(this.flight.state, this.input.controls.throttle, dt);
 
     this.renderer.render(this.scene, this.camera);
   };
@@ -209,9 +211,12 @@ export class Game {
     }
 
     if (this.cameraMode === 'wing') {
-      this.offset.set(this.aircraft.wingSpan * 0.9, this.aircraft.chord * 0.9, this.aircraft.wingSpan * 0.5);
+      this.offset.set(this.aircraft.wingSpan * 0.9, this.aircraft.chord * 1.4, this.aircraft.wingSpan * 0.5);
     } else {
-      this.offset.set(0, this.aircraft.wingSpan * 0.32, this.aircraft.wingSpan * 1.35);
+      // Más alta y algo más atrás que en la primera versión: estaba a la
+      // altura del avión y el fuselaje tapaba justo el centro de la pantalla,
+      // que es donde uno quiere mirar para saber adónde va.
+      this.offset.set(0, this.aircraft.wingSpan * 0.52, this.aircraft.wingSpan * 1.5);
     }
     this.offset.applyQuaternion(state.orientation);
     this.desiredCamera.copy(state.position).add(this.offset);

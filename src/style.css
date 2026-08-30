@@ -257,6 +257,93 @@ body {
   border: 1px solid rgba(228, 226, 218, 0.2);
 }
 
+/* ── Tutor de despegue ────────────────────────────────────────────────── */
+
+/* Grande, centrado y con el glifo de la tecla como protagonista. Quien no
+   sabe leer tiene que poder mirar el cartel, mirar el teclado y encontrar
+   la tecla. La palabra es un extra. */
+.tutor {
+  position: fixed;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 14px 26px;
+  border-radius: 20px;
+  background: rgba(18, 26, 22, 0.62);
+  border: 2px solid rgba(221, 146, 63, 0.5);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.tutor[hidden] {
+  display: none;
+}
+
+.tutor__glifo {
+  display: inline-block;
+  font-size: 54px;
+  line-height: 1;
+  color: var(--ocre);
+  animation: respirar 1.6s ease-in-out infinite;
+}
+
+/* Tecla dibujada: se compara con el teclado de verdad y se encuentra. La
+   ancha es Shift; la cuadrada, una flecha. Que tengan forma distinta es el
+   punto, no un adorno. */
+.tutor__tecla {
+  display: inline-grid;
+  place-items: center;
+  min-width: 62px;
+  height: 62px;
+  padding: 0 14px;
+  font-size: 27px;
+  color: #1a231d;
+  background: linear-gradient(180deg, #f4f2ea, #cdcabf);
+  border-radius: 12px;
+  border: 2px solid rgba(18, 26, 22, 0.35);
+  box-shadow: 0 4px 0 rgba(18, 26, 22, 0.45);
+  animation: respirar 1.6s ease-in-out infinite;
+}
+
+.tutor__tecla--ancha {
+  min-width: 148px;
+  font-size: 22px;
+}
+
+.tutor__texto {
+  font-size: 19px;
+  color: var(--beige);
+}
+
+.tutor__barra {
+  width: 190px;
+  height: 9px;
+  border-radius: 6px;
+  background: rgba(228, 226, 218, 0.2);
+  overflow: hidden;
+}
+
+.tutor__barra[hidden] {
+  display: none;
+}
+
+.tutor__barra > div {
+  height: 100%;
+  width: 0%;
+  background: var(--ocre);
+  transition: width 120ms linear;
+}
+
+@keyframes respirar {
+  50% {
+    transform: scale(1.14);
+  }
+}
+
 /* ── Mandos táctiles ──────────────────────────────────────────────────── */
 
 .tactil {
@@ -332,6 +419,52 @@ body {
   font-size: 15px;
 }
 
+/* ── Reparto de la pantalla cuando se juega con el dedo ───────────────── */
+
+/*
+ * Con mandos táctiles en pantalla, el HUD y los mandos se disputan las
+ * mismas cuatro esquinas: en una tablet de 1024x600 la palanca de motor
+ * caía justo encima del horizonte artificial y el cartel del tutor sobre la
+ * barra del timón. Aquí se les reserva a los mandos toda la franja de
+ * abajo y los instrumentos se suben.
+ *
+ * Va por `pointer: coarse` y no por ancho de pantalla: lo que manda es si
+ * se juega con el dedo, no cuántos píxeles hay.
+ */
+@media (pointer: coarse) {
+  .hud {
+    padding-bottom: 200px;
+    padding-left: max(190px, env(safe-area-inset-left));
+    padding-right: max(112px, env(safe-area-inset-right));
+  }
+
+  /* Los instrumentos se pegan arriba y dejan libres las dos esquinas
+     inferiores, que son las que alcanzan los pulgares. */
+  .hud__izquierda,
+  .hud__derecha {
+    align-self: start;
+  }
+
+  /* El horizonte encoge para que la columna derecha entre completa en una
+     pantalla de 600 px de alto. */
+  .horizonte {
+    width: 104px;
+    height: 104px;
+  }
+
+  /* El tutor sube por encima de la barra del timón. */
+  .tutor {
+    bottom: auto;
+    top: 44%;
+  }
+
+  /* Frenos, a la izquierda de la palanca de motor y sin solaparla. */
+  .boton-tactil {
+    right: max(112px, env(safe-area-inset-right));
+    bottom: max(24px, env(safe-area-inset-bottom));
+  }
+}
+
 /* ── Créditos ─────────────────────────────────────────────────────────── */
 
 .creditos {
@@ -403,7 +536,9 @@ body {
    parpadea en la cara. */
 @media (prefers-reduced-motion: reduce) {
   .aviso-hud--parpadeo,
-  .vineta--activa {
+  .vineta--activa,
+  .tutor__glifo,
+  .tutor__tecla {
     animation: none;
   }
   .motor__relleno {
