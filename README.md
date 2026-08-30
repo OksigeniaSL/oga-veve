@@ -3,8 +3,11 @@
 Simulador de vuelo para navegador. Se vuela sobre Paraguay —el relieve es
 real, el paisaje lo pintamos nosotros— y se aterriza donde se pueda.
 
+### ▶ [Jugar ahora](https://oksigeniasl.github.io/oga-veve/)
+
 > **Estado**: esqueleto funcional. Modelo de vuelo, terreno procedural, HUD y
-> controles operativos. Sin arte final, sin audio, sin multijugador.
+> controles operativos. Sin arte final, sin audio, sin multijugador. Lo que
+> falta está en los [issues](https://github.com/OksigeniaSL/oga-veve/issues).
 
 Producto de **[Oksigenia SL](https://oksigenia.com)**, publicado bajo la
 marca **Granja Óga**. **Gratis para siempre para la educación paraguaya** —
