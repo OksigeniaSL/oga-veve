@@ -23,6 +23,7 @@ export const EN: Dictionary = {
   'hud.throttle': 'Throttle',
   'hud.vspeed': 'Vertical speed',
   'hud.stall': 'Stall! Lower the nose',
+  'hud.pullUp': 'Ground! Pull up',
   'hud.brakes': 'Brakes',
   'hud.crashed': 'Something broke. Back to the runway…',
   'hud.ground': 'On the ground',
@@ -40,7 +41,7 @@ export const EN: Dictionary = {
   'units.fpm': 'ft/min',
 
   'aircraft.oga172.description': 'Trainer. Steady and forgiving.',
-  'aircraft.kuarahy.description': 'Crop duster biplane. Nimble and strong.',
+  'aircraft.mainumby.description': 'Crop duster biplane. Nimble and strong.',
 
   'scenario.valle.name': 'Cordillera Valley',
   'scenario.chaco.name': 'Chaco Plain',

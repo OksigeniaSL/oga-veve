@@ -32,8 +32,11 @@ import { LOCALE_NAMES, cycleLocale, t } from './i18n';
 const CAMERA_MODES = ['chase', 'cockpit', 'wing'] as const;
 type CameraMode = (typeof CAMERA_MODES)[number];
 
-/** Segundos que se ve el avión roto antes de volver solo a la pista. */
-const CRASH_RESET_DELAY = 3.5;
+/**
+ * Segundos que se ve el avión roto antes de volver solo a la pista. Corto a
+ * propósito: esperar sin poder hacer nada es lo más aburrido que hay.
+ */
+const CRASH_RESET_DELAY = 2.2;
 
 export interface GameOptions {
   canvas: HTMLCanvasElement;

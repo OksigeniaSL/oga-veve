@@ -42,8 +42,16 @@ import type {
 const MAX_SUBSTEP = 1 / 240;
 /** Por debajo de esta velocidad no hay aerodinámica que valga. */
 const MIN_AIRSPEED = 0.5;
-/** Velocidad vertical de toma a partir de la cual se rompe algo, m/s. */
+/**
+ * Umbrales de rotura, en modo Piloto. En Arcade se relajan mucho: ver
+ * `crashLimits`.
+ */
 const CRASH_SINK_RATE = 6.0;
+const CRASH_BANK = 0.5; // ~29°
+/** Por encima de esta velocidad de descenso, la toma rebota y se nota. */
+const FIRM_TOUCHDOWN = 2.4;
+/** Instantes por delante en los que se busca terreno, en segundos. */
+const LOOKAHEAD_SECONDS = [0.8, 1.6, 2.4, 3.4, 4.6, 6] as const;
 
 const FORWARD_LOCAL = new Vector3(0, 0, -1);
 const RIGHT_LOCAL = new Vector3(1, 0, 0);
@@ -100,6 +108,8 @@ export class CoefficientFlightModel implements FlightModel {
       onGround: true,
       stalled: false,
       crashed: false,
+      secondsToImpact: Number.POSITIVE_INFINITY,
+      touchdownSinkRate: 0,
     };
   }
 
@@ -297,8 +307,17 @@ export class CoefficientFlightModel implements FlightModel {
     s.onGround = true;
     s.position.y = wheelLevel;
 
-    if (wasFlying && (sinkRate > CRASH_SINK_RATE || Math.abs(this.bankAngle()) > 0.5)) {
-      s.crashed = true;
+    if (wasFlying) {
+      s.touchdownSinkRate = Math.max(0, sinkRate);
+      const limit = this.crashLimits();
+      if (sinkRate > limit.sink || Math.abs(this.bankAngle()) > limit.bank) {
+        s.crashed = true;
+      } else if (sinkRate > FIRM_TOUCHDOWN) {
+        // Llegada dura pero no rota: rebota. Se ve, se nota que ha salido
+        // mal y no castiga. En un juego para chicos, la penalización por
+        // aterrizar regular es un bote, no una pantalla roja.
+        s.velocity.y = Math.min(sinkRate * 0.35, 4);
+      }
     }
 
     if (s.velocity.y < 0) s.velocity.y = 0;
@@ -357,6 +376,48 @@ export class CoefficientFlightModel implements FlightModel {
     this.spin.setFromAxisAngle(this.right, angle);
     this.state.orientation.premultiply(this.spin).normalize();
     this.updateBodyAxes();
+  }
+
+  /**
+   * Cuánto falta para llegar al suelo, siguiendo la trayectoria actual.
+   *
+   * Se muestrea el terreno unos segundos por delante en vez de dividir
+   * altura entre velocidad de descenso. La diferencia importa: volando en
+   * horizontal contra una ladera no se está bajando nada, y una cuenta
+   * basada solo en el descenso no avisa hasta que ya es tarde. Fue
+   * exactamente lo que pasó en las pruebas — un viraje cerrado a baja cota
+   * terminaba en rotura sin un solo aviso previo.
+   *
+   * Se ignora la gravedad en la extrapolación: a estas escalas de tiempo
+   * cambia poco y ahorra integrar una trayectoria entera cada fotograma.
+   */
+  private timeToImpact(): number {
+    const s = this.state;
+    if (s.onGround || s.velocity.lengthSq() < 1) return Number.POSITIVE_INFINITY;
+
+    for (const t of LOOKAHEAD_SECONDS) {
+      const x = s.position.x + s.velocity.x * t;
+      const y = s.position.y + s.velocity.y * t;
+      const z = s.position.z + s.velocity.z * t;
+      if (y <= this.ground(x, z) + this.aircraft.gearHeight) return t;
+    }
+    return Number.POSITIVE_INFINITY;
+  }
+
+  /**
+   * Hasta dónde aguanta el avión antes de romperse.
+   *
+   * Escalan con la ayuda de vuelo porque antes no lo hacían: los umbrales
+   * eran fijos y en Arcade te estrellabas exactamente igual que en Piloto,
+   * lo cual vacía de sentido el modo. En Arcade se aguantan quince metros
+   * por segundo de descenso y casi sesenta grados de alabeo en la toma; en
+   * Piloto, seis y veintinueve, que es lo que de verdad rompe un tren.
+   */
+  private crashLimits(): { sink: number; bank: number } {
+    return {
+      sink: CRASH_SINK_RATE + this.assistLevel * 14,
+      bank: CRASH_BANK + this.assistLevel * 1.9,
+    };
   }
 
   /** Endereza las alas girando alrededor del eje longitudinal. */
@@ -428,6 +489,7 @@ export class CoefficientFlightModel implements FlightModel {
 
     s.verticalSpeed = s.velocity.y;
     s.heightAboveGround = s.position.y - this.ground(s.position.x, s.position.z);
+    s.secondsToImpact = this.timeToImpact();
     // Rumbo: proyección del morro sobre el plano horizontal. -Z es el norte.
     s.heading = Math.atan2(this.forward.x, -this.forward.z);
     if (s.heading < 0) s.heading += Math.PI * 2;

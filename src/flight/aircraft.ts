@@ -140,15 +140,20 @@ export const OGA_172: AircraftConfig = {
 };
 
 /**
- * Kuarahy — biplano fumigador.
+ * Mainumby — biplano fumigador.
  *
  * Más potencia, más resistencia y mucho más ágil en alabeo. Vuela despacio
  * sin caerse, que es lo que hace falta para pasar rasante sobre un cultivo.
+ *
+ * *Mainumby* es el colibrí: trabaja bajo, entre las plantas, y se queda
+ * quieto en el aire. Para un fumigador no hay mejor nombre. Antes se llamaba
+ * Kuarahy, pero esa raíz está tomada por Kuarahy-memby, la ardilla de Granja
+ * Óga, y dos personajes con el mismo nombre se confunden en vídeo.
  */
-export const KUARAHY: AircraftConfig = {
-  id: 'kuarahy',
-  name: 'Kuarahy',
-  descriptionKey: 'aircraft.kuarahy.description',
+export const MAINUMBY: AircraftConfig = {
+  id: 'mainumby',
+  name: 'Mainumby',
+  descriptionKey: 'aircraft.mainumby.description',
   mass: 1500,
   wingArea: 24.0,
   wingSpan: 12.5,
@@ -181,7 +186,7 @@ export const KUARAHY: AircraftConfig = {
   },
 };
 
-export const AIRCRAFT: readonly AircraftConfig[] = [OGA_172, KUARAHY];
+export const AIRCRAFT: readonly AircraftConfig[] = [OGA_172, MAINUMBY];
 
 export function aircraftById(id: string): AircraftConfig {
   const found = AIRCRAFT.find((a) => a.id === id);

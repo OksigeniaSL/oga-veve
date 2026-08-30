@@ -16,6 +16,7 @@ export const ES_PY = {
   'hud.throttle': 'Motor',
   'hud.vspeed': 'Subida',
   'hud.stall': '¡Pérdida! Bajá el morro',
+  'hud.pullUp': '¡El suelo! Subí',
   'hud.brakes': 'Frenos',
   'hud.crashed': 'Se rompió algo. Volvemos a la pista…',
   'hud.ground': 'En tierra',
@@ -33,7 +34,7 @@ export const ES_PY = {
   'units.fpm': 'ft/min',
 
   'aircraft.oga172.description': 'Avioneta de escuela. Tranquila y perdonadora.',
-  'aircraft.kuarahy.description': 'Biplano fumigador. Ágil y con mucha fuerza.',
+  'aircraft.mainumby.description': 'Biplano fumigador. Ágil y con mucha fuerza.',
 
   'scenario.valle.name': 'Valle de la Cordillera',
   'scenario.chaco.name': 'Llanura del Chaco',

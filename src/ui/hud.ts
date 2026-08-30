@@ -220,6 +220,10 @@ export class Hud {
       text = t('hud.stall');
       arrow = '↓';
       blink = true;
+    } else if (closingWithGround(state)) {
+      text = t('hud.pullUp');
+      arrow = '↑';
+      blink = true;
     }
 
     this.warningText.textContent = text;
@@ -246,6 +250,22 @@ function pick(root: HTMLElement, name: string): HTMLElement {
   const element = root.querySelector<HTMLElement>(`[data-hud="${name}"]`);
   if (!element) throw new Error(`Falta el elemento del HUD: ${name}`);
   return element;
+}
+
+/**
+ * Aviso de proximidad del suelo.
+ *
+ * No avisa por estar bajo —volar rasante sobre el valle es media gracia del
+ * juego— sino por **ir a chocar**: mide cuánto falta para llegar al suelo al
+ * ritmo al que se está bajando. Es como funciona un GPWS de verdad, y tiene
+ * la ventaja de que no salta al pasar rozando una loma en horizontal.
+ *
+ * Va por el mismo canal que la pérdida: flecha, viñeta roja y palabra. Los
+ * dos primeros funcionan sin saber leer.
+ */
+function closingWithGround(state: FlightState): boolean {
+  if (state.onGround || state.crashed) return false;
+  return state.secondsToImpact < 6;
 }
 
 /** Alabeo respecto al horizonte, a partir del cuaternión del avión. */

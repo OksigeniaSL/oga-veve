@@ -74,6 +74,19 @@ export interface FlightState {
   stalled: boolean;
   /** Se pone a true cuando el toque ha sido demasiado violento. */
   crashed: boolean;
+  /**
+   * Segundos que faltan para llegar al suelo si nada cambia, o Infinity si
+   * la trayectoria actual no lleva a ninguna parte peligrosa. Mira por
+   * delante siguiendo la velocidad, así que detecta la ladera contra la que
+   * se va de frente, no solo el descenso vertical.
+   */
+  secondsToImpact: number;
+  /**
+   * Velocidad de descenso del último aterrizaje, m/s. Cero mientras no se
+   * haya tocado nunca. Sirve para afinar los umbrales sin adivinar, y es lo
+   * que necesitará una misión que puntúe la toma.
+   */
+  touchdownSinkRate: number;
 }
 
 export interface InitialConditions {
