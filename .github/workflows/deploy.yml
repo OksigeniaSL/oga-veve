@@ -1,0 +1,62 @@
+# Despliegue de la demo jugable en GitHub Pages.
+#
+# Cada push a main que compile acaba publicado. La idea es que exista
+# siempre un enlace que se abre y vuela: un README no enseña a qué se parece
+# el juego, y esto es tanto producto como escaparate.
+#
+# `base: './'` en vite.config.ts es lo que permite servirlo desde la subruta
+# /oga-veve/ sin recompilar nada distinto para producción.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# El token del despliegue necesita estos tres permisos y ninguno más.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un despliegue a la vez. Si llegan dos push seguidos, gana el último.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construir:
+    name: Construir
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preparar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Construir
+        run: npm run build
+
+      - name: Subir artefacto
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  desplegar:
+    name: Desplegar
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - name: Publicar en Pages
+        id: despliegue
+        uses: actions/deploy-pages@v4
