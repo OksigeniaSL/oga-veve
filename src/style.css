@@ -76,11 +76,13 @@ body {
   min-width: 116px;
 }
 
+/* Abreviatura del instrumento: IAS, ALT, HDG, V/S, THR. Va en grande y
+   opaca porque es lo que se aprende, no un adorno. */
 .medidor__etiqueta {
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.72;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--ocre);
 }
 
 .medidor__valor {
@@ -93,6 +95,16 @@ body {
   font-size: 13px;
   opacity: 0.68;
   margin-left: 4px;
+}
+
+/* La palabra corriente, debajo de la abreviatura aeronáutica. Pequeña y
+   discreta: es la muleta de quien está aprendiendo a leer, no el rótulo
+   principal. Con el tiempo se deja de mirar. */
+.medidor__glosa {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 3px;
+  letter-spacing: 0.02em;
 }
 
 .hud__izquierda {

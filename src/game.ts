@@ -26,7 +26,7 @@ import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
 import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
-import { t } from './i18n';
+import { LOCALE_NAMES, cycleLocale, t } from './i18n';
 
 /** Vistas disponibles, en el orden en que rota la tecla C. */
 const CAMERA_MODES = ['chase', 'cockpit', 'wing'] as const;
@@ -58,7 +58,8 @@ export class Game {
   private readonly flight: CoefficientFlightModel;
   private readonly input: InputManager;
   private readonly hud: Hud;
-  private readonly credits: CreditsScreen;
+  private credits: CreditsScreen;
+  private readonly creditsRoot: HTMLElement;
 
   private cameraMode: CameraMode = 'chase';
   private propellerAngle = 0;
@@ -105,13 +106,15 @@ export class Game {
     });
 
     this.hud = new Hud(options.hudRoot);
-    this.credits = new CreditsScreen(options.creditsRoot, this.flight.implementationName);
+    this.creditsRoot = options.creditsRoot;
+    this.credits = new CreditsScreen(this.creditsRoot, this.flight.implementationName);
 
     this.input = new InputManager(options.touchRoot, {
       toggleCamera: () => this.cycleCamera(),
       toggleAssist: () => this.toggleAssist(),
       resetFlight: () => this.resetFlight(),
       toggleCredits: () => this.credits.toggle(),
+      cycleLanguage: () => this.changeLanguage(),
     });
 
     window.addEventListener('resize', this.onResize);
@@ -234,12 +237,32 @@ export class Game {
     this.cameraMode = CAMERA_MODES[(index + 1) % CAMERA_MODES.length] ?? 'chase';
   }
 
+  /**
+   * Cambia entre Arcade y Piloto.
+   *
+   * El modo arrastra consigo las unidades: en Arcade, km/h y metros; en
+   * Piloto, nudos y pies, que es lo que marca un avión de verdad. Son dos
+   * cosas distintas bajo un solo interruptor a propósito — quien decide que
+   * quiere volar en serio se encuentra con las unidades de verdad en el
+   * mismo gesto, sin tener que descubrir un segundo ajuste.
+   */
   private toggleAssist(): void {
-    this.flight.assist = this.flight.assist > 0.5 ? 0 : 1;
+    const arcade = this.flight.assist <= 0.5;
+    this.flight.assist = arcade ? 1 : 0;
+    this.hud.setUnits(arcade ? 'metric' : 'aeronautical');
     this.updateBadge();
     this.hud.flash(
       t('mode.changed', { mode: this.flight.assist > 0.5 ? t('mode.arcade') : t('mode.pilot') }),
     );
+  }
+
+  /** Pasa al siguiente idioma y repinta todo lo que lleva texto. */
+  private changeLanguage(): void {
+    const locale = cycleLocale();
+    this.hud.render();
+    this.credits = new CreditsScreen(this.creditsRoot, this.flight.implementationName);
+    this.updateBadge();
+    this.hud.flash(t('language.changed', { name: LOCALE_NAMES[locale] }));
   }
 
   private updateBadge(): void {

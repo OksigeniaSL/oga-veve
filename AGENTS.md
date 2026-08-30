@@ -14,7 +14,8 @@ Paraguay, y adultos que quieran volar sin leer un manual.
 1. **Dos registros del castellano, y no se mezclan.**
    - *Texto de producto* —lo que lee quien juega: `src/i18n/es-PY.ts`, el
      título y la descripción de `index.html`— va en **castellano paraguayo**,
-     con voseo y sin españolismos, junto al guaraní (`gug`).
+     con voseo y sin españolismos, junto al guaraní (`gug`) y al inglés
+     (`en`), que está por la aeronáutica y no por los turistas.
    - *Texto de desarrollo* —README, ADR, este fichero, comentarios del
      código, mensajes de commit— lo escribe Oksigenia desde Canarias y va en
      **castellano peninsular**. No hay que fingir un acento que no es el
@@ -23,16 +24,21 @@ Paraguay, y adultos que quieran volar sin leer un manual.
    esencial —despegar, virar, aterrizar, entender que algo va mal— se
    comunica con iconos, color, movimiento y sonido. El texto acompaña, nunca
    es el único canal. Una pantalla que obliga a leer para avanzar está mal.
-3. **Test Ña Emy**: si una abuela paraguaya con WhatsApp como única
+3. **La aeronáutica se aprende en su idioma.** Los rótulos de instrumento
+   (IAS, ALT, HDG, V/S, THR) no se traducen nunca: son los mismos en toda
+   cabina del mundo y quien juegue aquí se los va a encontrar tal cual el día
+   que vuele de verdad. Lo que se traduce es la glosa en pequeño que va
+   debajo. Lo mismo con las unidades: nudos y pies en modo Piloto.
+4. **Test Ña Emy**: si una abuela paraguaya con WhatsApp como única
    referencia no puede usar una pantalla, la pantalla no está terminada.
-4. **Rendimiento primero**: el objetivo es 60 fps en una tablet Android de
+5. **Rendimiento primero**: el objetivo es 60 fps en una tablet Android de
    gama media y en el portátil de un colegio. Antes de añadir un efecto
    visual, se mide.
-5. **Sin telemetría de menores**: este juego no recoge datos personales, no
+6. **Sin telemetría de menores**: este juego no recoge datos personales, no
    pide registro y no lleva analítica de terceros. No se añade ninguna.
-6. **Cada asset se anota en `CREDITOS.md`** con su licencia y su origen,
+7. **Cada asset se anota en `CREDITOS.md`** con su licencia y su origen,
    antes de entrar. Sin licencia verificable, no entra.
-7. **Los comentarios explican el porqué**, no el qué. El código ya dice qué
+8. **Los comentarios explican el porqué**, no el qué. El código ya dice qué
    hace.
 
 ## Convenciones de código

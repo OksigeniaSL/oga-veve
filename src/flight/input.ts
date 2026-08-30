@@ -23,6 +23,7 @@ export interface InputActions {
   toggleAssist: () => void;
   resetFlight: () => void;
   toggleCredits: () => void;
+  cycleLanguage: () => void;
 }
 
 export class InputManager {
@@ -93,6 +94,9 @@ export class InputManager {
         break;
       case 'KeyR':
         this.actions.resetFlight();
+        break;
+      case 'KeyL':
+        this.actions.cycleLanguage();
         break;
       case 'F1':
         event.preventDefault();

@@ -25,6 +25,7 @@ export const GUG: Dictionary = {
   'credits.close': 'Emboty',
 
   'language.label': "Ñe'ẽ",
+  'app.title': 'Óga Veve',
 
   'scenario.chaco.name': 'Chaco Ñu',
 };

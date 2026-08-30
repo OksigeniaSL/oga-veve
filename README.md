@@ -55,6 +55,7 @@ genera por código, sin descargar datos.
 | Cámara | `C` | Botón |
 | Reiniciar vuelo | `R` | Botón |
 | Ayuda de vuelo | `M` | Ajustes |
+| Idioma | `L` | Ajustes |
 
 También funciona con mando (Xbox / PlayStation) por la Gamepad API.
 
@@ -105,11 +106,22 @@ El color **no** sale de imaginería satelital: se pinta por altitud, pendiente
 y bioma con shaders propios. Sale más bonito, no cuesta nada al mes y no nos
 ata a ningún proveedor.
 
-## Idiomas
+## Idiomas e instrumentos
 
-Español paraguayo (`es-PY`) por defecto y guaraní (`gug`). Como en el resto de
-productos de Granja Óga, se aplica el **test Ña Emy**: si una abuela paraguaya
-no puede usar la pantalla, la pantalla no está terminada.
+Tres idiomas, que se pasan con `L`: **español paraguayo** (`es-PY`),
+**guaraní** (`gug`) e **inglés** (`en`). Como en el resto de productos de
+Granja Óga se aplica el **test Ña Emy**: si una abuela paraguaya no puede usar
+la pantalla, la pantalla no está terminada.
+
+Los rótulos de los instrumentos —**IAS, ALT, HDG, V/S, THR**— no se traducen
+en ningún idioma. Son los mismos en cualquier cabina del mundo, y aprenderlos
+es parte de lo que el juego enseña sin proponérselo. Debajo de cada uno va la
+palabra corriente en pequeño, que es la muleta de quien está aprendiendo a
+leer y que con el tiempo se deja de mirar.
+
+Las unidades siguen al modo de vuelo: **Arcade** muestra km/h y metros,
+**Piloto** muestra nudos y pies. Quien decide que quiere volar en serio se
+encuentra con las unidades de verdad en el mismo gesto.
 
 ## Licencia
 

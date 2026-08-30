@@ -28,6 +28,9 @@ export const ES_PY = {
   'units.kmh': 'km/h',
   'units.metres': 'm',
   'units.mps': 'm/s',
+  'units.knots': 'kt',
+  'units.feet': 'ft',
+  'units.fpm': 'ft/min',
 
   'aircraft.oga172.description': 'Avioneta de escuela. Tranquila y perdonadora.',
   'aircraft.kuarahy.description': 'Biplano fumigador. Ágil y con mucha fuerza.',
@@ -44,6 +47,7 @@ export const ES_PY = {
   'help.assist': 'M — ayuda de vuelo',
   'help.reset': 'R — volver a empezar',
   'help.credits': 'F1 — créditos',
+  'help.language': 'L — idioma',
   'help.start': 'Empujá el motor a tope y tirá suave cuando corra',
 
   'credits.title': 'Créditos',
@@ -56,4 +60,5 @@ export const ES_PY = {
   'credits.close': 'Cerrar',
 
   'language.label': 'Idioma',
+  'language.changed': 'Idioma: {name}',
 } as const;
