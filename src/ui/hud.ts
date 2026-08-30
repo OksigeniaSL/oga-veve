@@ -22,6 +22,9 @@ export class Hud {
   private readonly throttleFill: HTMLElement;
   private readonly horizon: HTMLElement;
   private readonly warning: HTMLElement;
+  private readonly warningText: HTMLElement;
+  private readonly warningArrow: HTMLElement;
+  private readonly vignette: HTMLElement;
   private readonly badge: HTMLElement;
   private readonly hint: HTMLElement;
 
@@ -63,8 +66,12 @@ export class Hud {
           <div class="horizonte__cruz"></div>
         </div>
       </div>
+      <div class="vineta" data-hud="vignette"></div>
       <div class="hud__abajo">
-        <div class="aviso-hud" data-hud="warning"></div>
+        <div class="aviso-hud" data-hud="warning">
+          <span class="aviso-hud__flecha" data-hud="warning-arrow" aria-hidden="true"></span>
+          <span data-hud="warning-text"></span>
+        </div>
         <div class="tarjeta insignia" data-hud="hint" style="margin-top:8px"></div>
       </div>
     `;
@@ -76,6 +83,9 @@ export class Hud {
     this.throttleFill = pick(root, 'throttle');
     this.horizon = pick(root, 'horizon');
     this.warning = pick(root, 'warning');
+    this.warningText = pick(root, 'warning-text');
+    this.warningArrow = pick(root, 'warning-arrow');
+    this.vignette = pick(root, 'vignette');
     this.badge = pick(root, 'badge');
     this.hint = pick(root, 'hint');
   }
@@ -117,20 +127,31 @@ export class Hud {
     this.hintTimer = seconds;
   }
 
+  /**
+   * Aviso de peligro, por tres canales a la vez: color en el borde de la
+   * pantalla, una flecha que señala adónde hay que llevar la palanca, y el
+   * texto. Los dos primeros funcionan sin saber leer, que es el caso de la
+   * jugadora más joven. Ver AGENTS.md, regla 2.
+   */
   private setWarning(state: FlightState): void {
     let text = '';
+    let arrow = '';
     let blink = false;
 
     if (state.crashed) {
-      text = t('hud.crashed', { key: 'R' });
+      text = t('hud.crashed');
+      arrow = '↺';
     } else if (state.stalled) {
       text = t('hud.stall');
+      arrow = '↓';
       blink = true;
     }
 
-    this.warning.textContent = text;
+    this.warningText.textContent = text;
+    this.warningArrow.textContent = arrow;
     this.warning.classList.toggle('aviso-hud--visible', text !== '');
     this.warning.classList.toggle('aviso-hud--parpadeo', blink);
+    this.vignette.classList.toggle('vineta--activa', text !== '');
   }
 }
 

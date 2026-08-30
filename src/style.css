@@ -177,6 +177,41 @@ body {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
 
+/* Viñeta de peligro.
+   Es el canal no textual del aviso de pérdida: el borde de la pantalla se
+   tiñe y late. Quien todavía no sabe leer ve que algo va mal y ve hacia
+   dónde tiene que mover la palanca. Ver AGENTS.md, regla 2. */
+.vineta {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(190, 93, 56, 0) 45%,
+    rgba(190, 93, 56, 0.62) 100%
+  );
+}
+
+.vineta--activa {
+  opacity: 1;
+  animation: latido 900ms ease-in-out infinite;
+}
+
+@keyframes latido {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.aviso-hud__flecha {
+  display: block;
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
 /* Avisos */
 .aviso-hud {
   font-size: 18px;
@@ -355,7 +390,8 @@ body {
 /* Quien haya pedido menos movimiento en su sistema no quiere un HUD que
    parpadea en la cara. */
 @media (prefers-reduced-motion: reduce) {
-  .aviso-hud--parpadeo {
+  .aviso-hud--parpadeo,
+  .vineta--activa {
     animation: none;
   }
   .motor__relleno {

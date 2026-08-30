@@ -17,7 +17,7 @@ export const ES_PY = {
   'hud.vspeed': 'Subida',
   'hud.stall': '¡Pérdida! Bajá el morro',
   'hud.brakes': 'Frenos',
-  'hud.crashed': 'Se rompió algo. Apretá {key} para volver a empezar',
+  'hud.crashed': 'Se rompió algo. Volvemos a la pista…',
   'hud.ground': 'En tierra',
 
   'mode.label': 'Ayuda de vuelo',

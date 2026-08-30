@@ -32,6 +32,9 @@ import { t } from './i18n';
 const CAMERA_MODES = ['chase', 'cockpit', 'wing'] as const;
 type CameraMode = (typeof CAMERA_MODES)[number];
 
+/** Segundos que se ve el avión roto antes de volver solo a la pista. */
+const CRASH_RESET_DELAY = 3.5;
+
 export interface GameOptions {
   canvas: HTMLCanvasElement;
   hudRoot: HTMLElement;
@@ -60,6 +63,8 @@ export class Game {
   private cameraMode: CameraMode = 'chase';
   private propellerAngle = 0;
   private running = false;
+  /** Segundos que lleva el avión roto. Ver `frame`. */
+  private crashedFor = 0;
 
   // Vectores de trabajo, reutilizados en el bucle.
   private readonly desiredCamera = new Vector3();
@@ -147,6 +152,7 @@ export class Game {
     );
 
     this.flight.reset({ position: start, heading, airspeed: 0 });
+    this.crashedFor = 0;
     this.input.controls.throttle = 0;
     this.updateBadge();
   }
@@ -157,7 +163,13 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.1);
 
     this.input.update(dt);
-    if (!this.flight.state.crashed) {
+    if (this.flight.state.crashed) {
+      // Vuelve solo a la pista. La alternativa —dejar el avión roto hasta
+      // que alguien pulse una tecla— exige leer un mensaje, y quien juega
+      // puede tener cuatro años. La tecla sigue estando para quien la use.
+      this.crashedFor += dt;
+      if (this.crashedFor > CRASH_RESET_DELAY) this.resetFlight();
+    } else {
       this.flight.step(dt, this.input.controls);
     }
 
