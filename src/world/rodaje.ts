@@ -290,5 +290,17 @@ export function rodajeEntre(
   const b = nudoCercano(grafo, destino);
   if (a.nudo < 0 || b.nudo < 0) return null;
   if (a.distancia > maxSalto || b.distancia > maxSalto) return null;
-  return rutaEntre(grafo, a.nudo, b.nudo);
+  const ruta = rutaEntre(grafo, a.nudo, b.nudo);
+  if (!ruta) return null;
+
+  // **La ruta empieza en las ruedas y acaba en el destino**, no en el nudo más
+  // cercano a cada uno. Un puesto de estacionamiento puede estar a cien metros
+  // de la calle más próxima, y sin estos dos remates la raya verde nacía lejos
+  // del avión: al empezar la partida el juego decía «volvé a la raya verde»
+  // antes de que nadie se hubiera movido.
+  const puntos = [origen, ...ruta.puntos, destino].filter((p, i, todos) => {
+    const anterior = todos[i - 1];
+    return !anterior || Math.hypot(anterior[0] - p[0], anterior[1] - p[1]) > 0.5;
+  });
+  return { ...ruta, puntos, largo: ruta.largo + a.distancia + b.distancia };
 }

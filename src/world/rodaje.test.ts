@@ -53,12 +53,18 @@ describe.each(AERODROMOS)('el grafo de %s', (_nombre, aero) => {
     const ruta = rodajeEntre(grafo, puesto!.xy, espera!.xy);
     expect(ruta).not.toBeNull();
     expect(ruta!.largo).toBeGreaterThan(50);
-    // Y la polilínea empieza y acaba donde toca, no da un salto al vacío.
+
+    // **Empieza en el puesto y acaba en la doble raya**, no en los nudos más
+    // cercanos a cada uno. Un puesto puede estar a cien metros de la calle más
+    // próxima, y con la ruta naciendo en el nudo, el juego decía «volvé a la
+    // raya verde» antes de que nadie se hubiera movido.
     const cerca = (a: readonly number[], b: readonly number[]) =>
       Math.hypot(a[0]! - b[0]!, a[1]! - b[1]!);
-    expect(cerca(ruta!.puntos[0]!, grafo.nudos[nudoCercano(grafo, puesto!.xy).nudo]!)).toBeLessThan(
-      1,
-    );
+    expect(cerca(ruta!.puntos[0]!, puesto!.xy)).toBeLessThan(1);
+    expect(cerca(ruta!.puntos[ruta!.puntos.length - 1]!, espera!.xy)).toBeLessThan(1);
+    // Y el nudo por el que se entra a la red sigue estando cerca del puesto:
+    // si no, es que se ha enganchado a una calle del otro lado del aeropuerto.
+    expect(nudoCercano(grafo, puesto!.xy).distancia).toBeLessThan(220);
   });
 
   it('la ruta se puede recorrer: cada tramo empieza donde acabó el anterior', () => {

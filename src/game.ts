@@ -41,6 +41,7 @@ import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
 import { delante, enEjesDePista, puntoDePista } from './world/rumbo';
+import { PlanDeVuelo } from './world/plan-de-vuelo';
 import { LandingWatcher } from './flight/aterrizaje';
 import { arranqueEnPista } from './world/aerodrome';
 import { KeyScreen } from './ui/teclas';
@@ -115,6 +116,16 @@ export class Game {
 
   /** Reconoce el aterrizaje y su calidad. Ver `flight/aterrizaje.ts`. */
   private readonly landing = new LandingWatcher();
+  /**
+   * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
+   *
+   * Solo existe cuando el escenario tiene un aeródromo de verdad con puestos de
+   * estacionamiento. En una pista inventada no hay de dónde salir ni a dónde
+   * volver, así que se vuela como siempre: alineado en la cabecera.
+   */
+  private plan: PlanDeVuelo | null = null;
+  /** La última fase anunciada, para no repetir el aviso cada fotograma. */
+  private faseAnunciada = '';
 
   private cameraMode: CameraMode = 'chase';
   private propellerAngle = 0;
@@ -158,6 +169,16 @@ export class Game {
 
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
+
+    // El plan de vuelo, si este aeródromo da para uno. Va aquí, justo detrás
+    // del terreno, porque necesita la cota ya aplanada para pintar la ruta a
+    // ras de asfalto.
+    if (this.scenario.aerodrome) {
+      this.plan = new PlanDeVuelo(this.scenario.aerodrome, this.scenario.runway, (x, z) =>
+        this.terrain.sampleHeight(x, z),
+      );
+      this.scene.add(this.plan.grupo);
+    }
 
     this.sky = createSky(this.scenario);
     this.scene.add(this.sky.group);
@@ -303,6 +324,16 @@ export class Game {
    */
   private startPosition(): Vector3 {
     const { runway, aerodrome } = this.scenario;
+    // Con plan de vuelo se sale del puesto de estacionamiento, que es de donde
+    // se sale de verdad. Sin él, de la cabecera, como toda la vida.
+    const puesto = this.plan?.arranque();
+    if (puesto) {
+      return new Vector3(
+        puesto[0],
+        this.terrain.sampleHeight(puesto[0], puesto[1]) + this.aircraft.gearHeight,
+        puesto[1],
+      );
+    }
     // El arranque de un aeródromo real sale de su umbral medido, sesenta
     // metros pista adentro. Lo de abajo es para las pistas inventadas.
     const pista = aerodrome?.runways[0];
@@ -384,10 +415,20 @@ export class Game {
 
   resetFlight(): void {
     const { runway } = this.scenario;
-    const heading = MathUtils.degToRad(runway.heading);
+    // El plan se reinicia **antes** de colocar el avión: es él quien decide si
+    // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
+    // dónde aparece.
+    const rodando = this.plan?.reiniciar() ?? false;
     const start = this.startPosition();
+    const heading = rodando
+      ? this.rumboDeSalida(start)
+      : MathUtils.degToRad(runway.heading);
 
     this.flight.reset({ position: start, heading, airspeed: 0 });
+    // Y con el motor parado, que es como está un avión en su puesto. Arrancarlo
+    // es el primer paso del vuelo y hasta ahora no existía como paso.
+    this.input.controls.engineOn = !rodando;
+    this.faseAnunciada = '';
     if (this.missions.active) {
       this.missions.start(this.missions.active);
       this.hud.setMissionProgress(this.missions.progress);
@@ -402,6 +443,19 @@ export class Game {
     this.input.releaseAll();
     this.hud.tutor.reset();
     this.updateBadge();
+  }
+
+  /**
+   * Hacia dónde mira el avión en su puesto.
+   *
+   * Mirando al primer tramo de la ruta. No es un detalle: un avión que aparece
+   * de espaldas a por donde tiene que irse obliga a maniobrar antes de
+   * entender nada, y lo primero que se hace en un juego es lo que más marca.
+   */
+  private rumboDeSalida(desde: Vector3): number {
+    const hacia = this.plan?.primerPaso();
+    if (!hacia) return MathUtils.degToRad(this.scenario.runway.heading);
+    return Math.atan2(hacia[0] - desde.x, -(hacia[1] - desde.z));
   }
 
   // ── Bucle ─────────────────────────────────────────────────────────────
@@ -463,6 +517,7 @@ export class Game {
       dt,
       this.distanceToRunway(),
     );
+    this.avanzarPlan(dt);
 
     this.renderer.render(this.scene, this.camera);
   };
@@ -478,6 +533,39 @@ export class Game {
   private distanceToRunway(): number {
     const [tx, tz] = this.enLaPista(this.scenario.runway.length * 0.5);
     return Math.hypot(tx - this.flight.state.position.x, tz - this.flight.state.position.z);
+  }
+
+  /**
+   * Un fotograma del vuelo completo.
+   *
+   * Solo se anuncia **al cambiar de fase**, no cada fotograma: un cartel que se
+   * repite sesenta veces por segundo no se lee, parpadea. Lo único que sí se
+   * repite es el aviso de haberse salido de la raya, y con cuentagotas.
+   */
+  private avanzarPlan(dt: number): void {
+    if (!this.plan) return;
+    const suelo = this.flight.state.position.y - this.terrain.sampleHeight(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+    );
+    const vista = this.plan.paso(
+      this.flight.state,
+      suelo,
+      this.input.controls.engineOn,
+      dt,
+    );
+
+    this.hud.setLuzDeTorre(vista.fase === 'esperando' ? 'roja' : vista.luzVerde ? 'verde' : null);
+
+    if (vista.fase !== this.faseAnunciada) {
+      this.faseAnunciada = vista.fase;
+      const letra = vista.letra ? ` · ${vista.letra}` : '';
+      this.hud.flash(`${t(vista.clave as never)}${letra}`, vista.fase === 'apagado' ? 8 : 5);
+      if (vista.fase === 'autorizado') this.audio.cue('success');
+      if (vista.fase === 'apagado') this.audio.cue('success');
+    } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {
+      this.hud.flash(t('vuelo.fuera'), 3);
+    }
   }
 
   private updateHomeIndicator(): void {

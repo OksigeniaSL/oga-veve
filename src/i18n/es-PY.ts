@@ -121,6 +121,30 @@ export const ES_PY = {
     'A Guillermo Ayala, del Parque Nacional del Teide, que lleva cuarenta años enseñando esa montaña a escolares. La regla que gobierna este juego es suya: seguridad, seguridad, seguridad — a partir de ahí, todo lo demás es aprendizaje.',
   'credits.close': 'Cerrar',
 
+  // ── El vuelo completo ──────────────────────────────────────────────────
+  // Una frase por fase, y **todas en imperativo y en segunda persona**: quien
+  // lee esto está haciendo algo, no consultando un manual. Cortas, porque se
+  // leen de reojo y con las manos ocupadas.
+  // La lámpara de la torre. El texto existe porque **un color solo no es
+  // información**: quien no distinga el rojo del verde tiene que poder saberlo.
+  'torre.verde': 'Podés entrar',
+  'torre.roja': 'Esperá acá',
+  'vuelo.estacionado': 'Arrancá el motor',
+  'vuelo.arrancando': 'Soltá el freno y andá despacito',
+  'vuelo.rodando': 'Seguí la raya verde',
+  'vuelo.esperando': 'Pará del todo y esperá la luz',
+  'vuelo.autorizado': '¡Luz verde! Entrá a la pista',
+  'vuelo.alineando': 'Ponete derechito en el eje',
+  'vuelo.despegando': 'Motor a fondo',
+  'vuelo.enVuelo': 'Andá a dar una vuelta',
+  'vuelo.final': 'Bajá suavecito',
+  'vuelo.aterrizado': 'Frená',
+  'vuelo.abandonando': 'Salí de la pista, que viene otro',
+  'vuelo.aPlataforma': 'Volvé a tu lugar',
+  'vuelo.enPuesto': 'Llegaste. Apagá el motor',
+  'vuelo.apagado': '¡Vuelo terminado!',
+  'vuelo.fuera': 'Volvé a la raya verde',
+
   'hangar.donde': '¿A dónde volamos?',
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro
   // modelos de avión, que es exactamente la confusión de la que avisa
