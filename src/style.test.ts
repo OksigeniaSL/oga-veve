@@ -17,10 +17,11 @@
  * para el mismo nombre a secas**, que es siempre un choque y nunca un plan.
  */
 
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-
-const CSS = readFileSync(new URL('./style.css', import.meta.url), 'utf8');
+// Con `?raw`, que lo resuelve Vite: leerla con `node:fs` obliga a meter los
+// tipos de Node en el `tsconfig` de la aplicación, y la aplicación no corre en
+// Node.
+import CSS from './style.css?raw';
 
 /**
  * Los selectores de una sola clase declarados **en el primer nivel**: `.foo {`.
