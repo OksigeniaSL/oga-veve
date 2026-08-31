@@ -142,6 +142,7 @@ export class Hud {
   private progressState: { done: number; total: number } | null = null;
   private soundState = { glyph: '🔊', label: '' };
   private soundHandler: (() => void) | null = null;
+  private keysHandler: (() => void) | null = null;
   private hintTimer = 0;
 
   constructor(root: HTMLElement) {
@@ -186,6 +187,21 @@ export class Hud {
           invisible no es un estado: es un fallo esperando.
         -->
         <button class="sonido" type="button" data-hud="sound" aria-pressed="false"></button>
+        <!--
+          Y el botón que anuncia la pantalla de mandos. Existe porque esa
+          pantalla se abría solo con una tecla, y una pantalla que explica
+          los mandos no puede esconderse detrás de un mando. Menos todavía
+          para quien no lee.
+        -->
+        <button class="sonido teclas-boton" type="button" data-hud="keys"
+                aria-label="${t('teclas.title')}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="2" y="6" width="20" height="13" rx="2.4" />
+            <path d="M6 10h1.6M10.2 10h1.6M14.4 10h1.6M18.6 10h.8
+                     M6 13.4h1.6M10.2 13.4h1.6M14.4 13.4h1.6M18.6 13.4h.8
+                     M7.6 16.6h8.8" />
+          </svg>
+        </button>
       </div>
       <div class="hud__izquierda">
         ${numbers ? gauge('speed', INSTRUMENTS.speed, t('hud.speed'), this.units.speedLabel()) : ''}
@@ -314,6 +330,7 @@ export class Hud {
     this.progress = pick(this.root, 'progress');
     this.sound = pick(this.root, 'sound');
     this.sound.addEventListener('click', () => this.soundHandler?.());
+    pick(this.root, 'keys').addEventListener('click', () => this.keysHandler?.());
     this.paintSound();
     this.paintProgress();
     this.hint = pick(this.root, 'hint');
@@ -535,6 +552,11 @@ export class Hud {
 
   private setBraking(pressed: boolean): void {
     this.brakeHandler?.(pressed);
+  }
+
+  /** Quién abre la pantalla de mandos. */
+  onKeys(handler: () => void): void {
+    this.keysHandler = handler;
   }
 
   onSoundClick(handler: () => void): void {

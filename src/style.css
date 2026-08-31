@@ -1137,3 +1137,185 @@ body {
   max-height: 82vh;
   overflow-y: auto;
 }
+
+/*
+ * El teclado dibujado, para quien no lee.
+ *
+ * Sin una sola palabra: siete teclas grandes con su dibujo, y cada una se
+ * enciende al apretarla de verdad. Ese encendido **es** el tutorial — se
+ * aprieta algo y algo responde, que es como se aprende un mando a los cuatro
+ * años y no leyendo una tabla.
+ */
+/*
+ * El panel se ajusta al teclado y no al revés. Con el ancho del panel de
+ * créditos, la fila de números se salía por la derecha —y justo ahí están el
+ * «−» y el «+» del motor, dos de las teclas que hay que encontrar—.
+ */
+.teclado {
+  padding: 18px;
+  position: relative;
+  width: fit-content;
+  max-width: 96vw;
+}
+
+/*
+ * El botón de cerrar: una marca de visto, ancho y debajo de todo.
+ *
+ * Antes era una cruz flotando arriba a la derecha, y se montaba encima de la
+ * última tecla. Y una cruz dice «cancelar»; aquí no se cancela nada, se dice
+ * «ya está» — que es lo que dice un visto.
+ */
+.teclado__cerrar {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 56px;
+  margin-top: 14px;
+  border: none;
+  border-radius: 16px;
+  background: var(--ocre, #dd923f);
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.teclado__cerrar:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+}
+
+.teclado__cerrar svg {
+  width: 30px;
+  fill: none;
+  stroke: #1a1206;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* El botón del HUD que anuncia la pantalla, al lado del de sonido. */
+.teclas-boton svg {
+  width: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+/*
+ * El teclado entero, dibujado.
+ *
+ * Entero y con las filas escalonadas a propósito: lo que esta pantalla tiene
+ * que conseguir es que alguien mire el dibujo, lo compare con el teclado que
+ * tiene delante y **encuentre la tecla por dónde está**, no por cómo se
+ * llama. Con siete teclas sueltas eso no se puede hacer; hace falta ver el
+ * conjunto para situarse en él.
+ *
+ * Las que no hacen nada salen apagadas, y ahí siguen: quitarlas rompería la
+ * comparación.
+ */
+.teclado__mapa {
+  display: grid;
+  gap: 5px;
+  --tecla: clamp(26px, 3.4vw, 44px);
+}
+
+.teclado__mapa .fila {
+  display: flex;
+  gap: 5px;
+}
+
+.tecla {
+  position: relative;
+  width: var(--tecla);
+  height: var(--tecla);
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+  transition: transform 70ms ease, background 70ms ease, box-shadow 70ms ease;
+}
+
+.tecla__letra {
+  font-size: 12px;
+  opacity: 0.4;
+}
+
+/*
+ * El dibujo se mide **por alto**, no por ancho. Por ancho, en la barra
+ * espaciadora —que mide seis teclas— salía un dibujo de doscientos píxeles
+ * que se desbordaba por debajo y tapaba el botón de cerrar. Una tecla es tan
+ * alta como cualquier otra por ancha que sea, y su dibujo también.
+ */
+.tecla svg {
+  height: 62%;
+  width: auto;
+  fill: #1a1206;
+}
+
+/* La que sí hace algo: encendida, en color, con su dibujo grande. La letra
+   se va a la esquina para no estorbar al dibujo, pero se queda: quien empieza
+   a leer la busca. */
+.tecla--activa {
+  background: var(--ocre, #dd923f);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3), 0 0 14px rgba(221, 146, 63, 0.45);
+}
+
+.tecla--activa .tecla__letra {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 9px;
+  color: #1a1206;
+  opacity: 0.6;
+}
+
+.tecla--activa .cap__helice ellipse {
+  fill: #1a1206;
+}
+
+.tecla--activa .cap__chevron {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Pulsada de verdad: se hunde y se pone terracota. Ese es todo el tutorial —
+   se aprieta algo y algo responde. */
+.tecla--pulsada {
+  background: var(--terracota, #be5d38);
+  transform: translateY(2px);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.tecla--pulsada svg {
+  fill: #fff;
+}
+
+.tecla--pulsada .cap__helice ellipse {
+  fill: #fff;
+}
+
+.tecla--pulsada .tecla__letra {
+  color: #fff;
+  opacity: 0.85;
+}
+
+/* La barra espaciadora y el bloque de flechas, separados como en un teclado. */
+.fila--abajo {
+  align-items: flex-end;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.teclado__espacio .ancha {
+  width: calc(var(--tecla) * 6 + 25px);
+}
+
+.teclado__flechas {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+}

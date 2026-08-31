@@ -201,6 +201,21 @@ export class Game {
     // propósito: el juego tiene que arrancar aunque falte.
     const teclasRoot = document.getElementById('teclas');
     if (teclasRoot) this.keyScreen = new KeyScreen(teclasRoot, this.input.keymap);
+    // Sin letras, teclado dibujado. Con letras, la tabla.
+    this.keyScreen?.setSimple(this.tier.instruments === 'none' || this.tier.instruments === 'pictorial');
+    this.hud.onKeys(() => this.keyScreen?.toggle());
+
+    // La primera vez se abre sola. Una pantalla que explica los mandos no
+    // sirve de nada si hay que saber que existe para encontrarla, y quien no
+    // lee no va a descubrir una tecla por su cuenta.
+    if (this.keyScreen && !localStorage.getItem('oga-veve:teclas-vistas')) {
+      try {
+        localStorage.setItem('oga-veve:teclas-vistas', '1');
+        this.keyScreen.show();
+      } catch {
+        // Sin almacenamiento se abrirá cada vez, que tampoco es un drama.
+      }
+    }
 
     this.hud.onSoundClick(() => this.toggleSound());
     this.hud.onBrake((pressed) => this.input.setTouchBrakes(pressed));
@@ -574,6 +589,7 @@ export class Game {
 
     this.hud.setUnits(next.units);
     this.hud.setInstruments(next.instruments);
+    this.keyScreen?.setSimple(next.instruments === 'none' || next.instruments === 'pictorial');
     this.updateBadge();
     this.hud.flash(`${next.name} · ${next.ages}`, 3);
   }
