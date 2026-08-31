@@ -111,12 +111,20 @@ pendiente · frustradas por cortante y por instrucción de torre.
 2. **Cada avión mantiene su carácter en todos los peldaños.** El entrenador
    es un entrenador con cuatro años y con cuarenta. Lo que cambia es cuánto
    se enseña de él, no lo que es.
-3. **El panel está entero desde el primer día; el peldaño enciende, no
+3. **Las dos escaleras se multiplican, y eso vale también para el dibujo del
+   panel.** El avión decide qué instrumentos **existen** —un entrenador tiene
+   seis esferas porque es un entrenador, no porque lo vuele alguien
+   pequeño—; el peldaño decide cuántos están **vivos**. La consecuencia que
+   más importa: **un niño de cuatro años puede subirse al reactor**. Ve la
+   cabina entera, con sus pantallas y sus palancas, y tres cosas responden.
+   No se le da una versión de juguete: se le da el avión de verdad con casi
+   todo dormido.
+4. **El panel está entero desde el primer día; el peldaño enciende, no
    añade.** Con cuatro años se ve la cabina completa y viven tres
    instrumentos; el resto está ahí, real y quieto. Subir de peldaño no es
    descubrir una pantalla nueva: es que algo que llevabas viendo por fin
    hace algo. Ver #106, y #107 para lo que se gana volando.
-4. **Un tema sin sitio en esta tabla no está terminado de pensar.** Es la
+5. **Un tema sin sitio en esta tabla no está terminado de pensar.** Es la
    prueba que tiene que pasar cualquier idea nueva antes de convertirse en
    trabajo: *¿en qué avión, y en qué peldaño?* Si no hay respuesta, la idea
    todavía no está lista — y eso no la descarta, la devuelve al horno.
