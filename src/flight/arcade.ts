@@ -126,7 +126,8 @@ export class ArcadeFlightModel implements FlightModel {
     // paseara solo por la pista después de frenar — «como que quiere
     // caminar», que es exactamente lo que hacía.
     const floor = this.state.onGround ? 0 : IDLE_SPEED;
-    const wanted = floor + controls.throttle * (cruise - floor);
+    const gas = controls.engineOn ? controls.throttle : 0;
+    const wanted = floor + gas * (cruise - floor);
     // Constante de tiempo de unos cinco segundos y medio. Con la primera,
     // mucho más rápida, el avión llegaba a velocidad de vuelo en menos de dos
     // segundos y despegaba sin carrera: se perdía justo la parte que sí se

@@ -101,6 +101,10 @@ export const ES_PY = {
   'tecla.language': 'Idioma',
   'tecla.credits': 'Créditos',
   'tecla.keys': 'Ver y cambiar las teclas',
+  'tecla.engine': 'Arrancar o apagar el motor',
+  'hud.engineOff': 'Motor apagado',
+  'hud.engineBusy': 'Parate del todo y bajá el motor primero',
+  'hud.engineOn': '¡Motor en marcha!',
   'credits.title': 'Créditos',
   'credits.madeBy': 'Un producto de Oksigenia SL, bajo la marca Granja Óga.',
   'credits.educational':

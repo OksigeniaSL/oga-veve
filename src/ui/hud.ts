@@ -1,6 +1,11 @@
 /**
  * HUD: los cinco números que hacen falta para volar y nada más.
  *
+ * AVISO PARA QUIEN EDITE ESTE FICHERO: nada de acentos graves dentro de los
+ * comentarios HTML de las plantillas. Un acento grave cierra la plantilla y
+ * el fichero deja de compilar con un error que señala a otro sitio. Ha
+ * pasado tres veces.
+ *
  * Es DOM y CSS, no canvas. Un canvas obligaría a redibujar texto a mano, a
  * pelearse con el dpi de cada pantalla y a reimplementar la accesibilidad.
  * El navegador ya sabe pintar texto nítido; que lo haga él.
@@ -24,6 +29,7 @@ import { indicatedAirspeed } from '../flight/atmosphere';
 import { t } from '../i18n';
 import { Tutor } from './tutor';
 import { bankAngleOf, pitchAngleOf } from './actitud';
+import type { Accion } from '../flight/keymap';
 import { SixPack } from './six-pack';
 import { Pictogramas } from './pictogramas';
 import type { Tier } from '../flight/tiers';
@@ -116,6 +122,7 @@ export class Hud {
   private vspeed: HTMLElement | null = null;
   private throttleFill!: HTMLElement;
   private brakes!: HTMLElement;
+  private brakeKey!: HTMLElement;
   private brakesTouch!: HTMLElement;
   private brakeHandler: ((pressed: boolean) => void) | null = null;
   private throttleDown!: HTMLElement;
@@ -254,7 +261,12 @@ export class Hud {
         </button>
         <div class="tarjeta medidor freno" data-hud="brakes" hidden>
           ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.brakes}</span>` : ''}
-          <span class="motor__tecla motor__tecla--ancha" aria-hidden="true">␣</span>
+          <!--
+            La tecla se rellena desde el mapa al actualizar, no aquí. Escrita
+            a mano decía «espacio» mientras el teclado dibujado encendía la B:
+            el mismo fallo que ya tuvo el tutor, y por el mismo motivo.
+          -->
+          <span class="motor__tecla motor__tecla--ancha" data-hud="brake-key" aria-hidden="true"></span>
           ${gauges ? `<span class="medidor__glosa">${t('hud.brakes')}</span>` : ''}
         </div>
         ${numbers ? `<div class="tarjeta horizonte">
@@ -299,6 +311,7 @@ export class Hud {
     this.vspeed = optional(this.root, 'vspeed');
     this.throttleFill = pick(this.root, 'throttle');
     this.brakes = pick(this.root, 'brakes');
+    this.brakeKey = pick(this.root, 'brake-key');
     this.brakesTouch = pick(this.root, 'brakes-touch');
     this.brakesTouch.addEventListener('pointerdown', () => this.setBraking(true));
     // El «soltar» se escucha en la ventana y no en el botón: al despegar, el
@@ -403,6 +416,7 @@ export class Hud {
     braking = 0,
     decisionSpeed = Infinity,
     runwayLeft = Infinity,
+    engineOn = true,
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
@@ -420,7 +434,7 @@ export class Hud {
       // años— movía el avioncito dos píxeles, y el dibujo parecía un adorno.
       // Con la raíz, los primeros cien metros ocupan la mitad de la tarjeta
       // y los cuatrocientos siguen cabiendo arriba.
-      this.pictos.update(ias / 46, Math.sqrt(Math.max(0, state.heightAboveGround) / 400), throttle, dt);
+      this.pictos.update(ias / 46, Math.sqrt(Math.max(0, state.heightAboveGround) / 400), engineOn ? throttle : 0, dt, engineOn);
     }
 
     if (this.pictos.present) {
@@ -459,6 +473,11 @@ export class Hud {
     // Sigue apareciendo al aterrizar, porque ahí el motor está a ralentí y
     // frenar es justo lo que toca.
     const despegando = state.airspeed > decisionSpeed && throttle > 0.55;
+    // La tecla del freno, la que se enseña para la mano elegida.
+    const tecla = this.teclaDe?.('brakes') ?? '';
+    if (tecla && this.brakeKey.textContent !== tecla) this.brakeKey.textContent = tecla;
+    this.brakeKey.classList.toggle('motor__tecla--ancha', tecla.length > 1 || tecla === '␣');
+
     const escondeBoton = !enSuelo || !sinLetras || despegando;
 
     // Y no se esfuma: **se va, y se ve adónde va.**
@@ -564,6 +583,14 @@ export class Hud {
 
   private setBraking(pressed: boolean): void {
     this.brakeHandler?.(pressed);
+  }
+
+  /** De dónde sale el nombre de la tecla que se enseña para cada mando. */
+  private teclaDe: ((accion: Accion) => string) | null = null;
+
+  setKeySource(teclaDe: (accion: Accion) => string): void {
+    this.teclaDe = teclaDe;
+    this.tutor.setKeySource(teclaDe);
   }
 
   /** Quién abre la pantalla de mandos. */

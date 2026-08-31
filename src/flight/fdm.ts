@@ -264,7 +264,7 @@ export class CoefficientFlightModel implements FlightModel {
     // reproduce lo que se nota al pilotar.
     const densityRatio = density / SEA_LEVEL_DENSITY;
     const speedFactor = Math.max(0.2, 1 - speed / (2.4 * ac.cruiseSpeed));
-    const thrust = assisted.throttle * ac.maxThrust * Math.pow(densityRatio, 0.7) * speedFactor;
+    const thrust = (controls.engineOn ? assisted.throttle : 0) * ac.maxThrust * Math.pow(densityRatio, 0.7) * speedFactor;
 
     const sinA = Math.sin(s.alpha);
     const cosA = Math.cos(s.alpha);

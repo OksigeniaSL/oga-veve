@@ -38,7 +38,8 @@ export type Accion =
   | 'sound'
   | 'language'
   | 'credits'
-  | 'keys';
+  | 'keys'
+  | 'engine';
 
 interface Definicion {
   /** Clave de traducción del nombre de la acción. */
@@ -96,6 +97,7 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
   language: { label: 'tecla.language', defecto: ['KeyL'], held: false },
   credits: { label: 'tecla.credits', defecto: ['F1'], held: false },
   keys: { label: 'tecla.keys', defecto: ['KeyK'], held: false },
+  engine: { label: 'tecla.engine', defecto: ['KeyI'], held: false },
 };
 
 export const ORDEN: readonly Accion[] = Object.keys(ACCIONES) as Accion[];

@@ -28,12 +28,21 @@ export interface ControlInputs {
   throttle: number;
   /** Frenos de rueda, 0 a 1. Solo tiene efecto en tierra. */
   brakes: number;
+  /**
+   * ¿Está el motor en marcha?
+   *
+   * Antes no existía: el motor estaba siempre encendido y bajar el gas lo
+   * dejaba a ralentí para siempre. Con el avión parado en la plataforma eso
+   * es justo lo que no debe pasar — y de paso faltaba el sonido que marca el
+   * final de un vuelo, que es el de los motores apagándose.
+   */
+  engineOn: boolean;
   /** Flaps, 0 a 1. */
   flaps: number;
 }
 
 export function neutralControls(): ControlInputs {
-  return { elevator: 0, aileron: 0, rudder: 0, throttle: 0, brakes: 0, flaps: 0 };
+  return { elevator: 0, aileron: 0, rudder: 0, throttle: 0, brakes: 0, flaps: 0, engineOn: true };
 }
 
 /**

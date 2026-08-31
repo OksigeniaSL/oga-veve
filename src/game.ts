@@ -39,6 +39,7 @@ import { missionsFor } from './content/missions';
 import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
+import { nombreDeTecla } from './flight/keymap';
 import { KeyScreen } from './ui/teclas';
 import { LOCALE_NAMES, cycleLocale, t } from './i18n';
 import { Audio } from './audio/audio';
@@ -186,6 +187,7 @@ export class Game {
       toggleAssist: () => this.cycleTier(),
       resetFlight: () => this.resetFlight(),
       toggleKeys: () => this.keyScreen?.toggle(),
+      toggleEngine: () => this.toggleEngine(),
       toggleCredits: () => this.credits.toggle(),
       cycleAircraft: () => this.cycleAircraft(),
       cycleMission: () => this.cycleMission(),
@@ -204,7 +206,7 @@ export class Game {
     // Sin letras, teclado dibujado. Con letras, la tabla.
     this.keyScreen?.setSimple(this.tier.instruments === 'none' || this.tier.instruments === 'pictorial');
     this.hud.onKeys(() => this.keyScreen?.toggle());
-    this.hud.tutor.setKeySource((accion) => this.input.preferredKey(accion));
+    this.hud.setKeySource((accion) => nombreDeTecla(this.input.preferredKey(accion)));
 
     // La primera vez se abre sola. Una pantalla que explica los mandos no
     // sirve de nada si hay que saber que existe para encontrarla, y quien no
@@ -280,6 +282,27 @@ export class Game {
     return hacia >= 0 ? r.length / 2 - along : r.length / 2 + along;
   }
 
+  /**
+   * Arranca o para el motor.
+   *
+   * **Solo con el avión parado y el gas a cero**, que es la regla de verdad:
+   * un motor no se apaga a media carrera ni se arranca con la palanca
+   * puesta. Y así el mando enseña algo en vez de ser un interruptor más.
+   *
+   * En el aire no se puede: apagar el motor volando es una emergencia que se
+   * entrena aparte, no algo que se hace con una tecla sin querer.
+   */
+  private toggleEngine(): void {
+    const s = this.flight.state;
+    const c = this.input.controls;
+    if (!s.onGround || s.airspeed > 2 || c.throttle > 0.05) {
+      this.hud.flash(t('hud.engineBusy'));
+      return;
+    }
+    c.engineOn = !c.engineOn;
+    this.hud.flash(t(c.engineOn ? 'hud.engineOn' : 'hud.engineOff'));
+  }
+
   resetFlight(): void {
     const { runway } = this.scenario;
     const heading = MathUtils.degToRad(runway.heading);
@@ -351,6 +374,7 @@ export class Game {
       this.input.controls.brakes,
       this.aircraft.decisionSpeed,
       this.runwayRemaining(),
+      this.input.controls.engineOn,
     );
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
     // misión en curso la aguja señala el objetivo, y si el tutor mirara ese

@@ -54,6 +54,7 @@ export interface InputActions {
   toggleAssist: () => void;
   resetFlight: () => void;
   toggleKeys: () => void;
+  toggleEngine: () => void;
   toggleCredits: () => void;
   cycleAircraft: () => void;
   cycleMission: () => void;
@@ -252,6 +253,9 @@ export class InputManager {
       case 'credits':
         event.preventDefault();
         this.actions.toggleCredits();
+        break;
+      case 'engine':
+        this.actions.toggleEngine();
         break;
       case 'keys':
         this.actions.toggleKeys();

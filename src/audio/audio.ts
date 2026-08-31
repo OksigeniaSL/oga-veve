@@ -204,7 +204,12 @@ export class Audio {
     // El régimen sigue al gas pero con inercia: un motor de pistón no sube
     // de vueltas instantáneamente, y esa demora es la mitad de su carácter.
     const spec = this.engineSpec;
-    const rpm = spec.idleRpm + controls.throttle * (spec.maxRpm - spec.idleRpm);
+    // Apagado, las vueltas caen a cero y con ellas todo lo demás. La bajada
+    // no es instantánea porque una hélice tiene inercia: sigue girando un
+    // rato, cada vez más despacio, y ese sonido es el que marca el final de
+    // un vuelo.
+    const gas = controls.engineOn ? controls.throttle : 0;
+    const rpm = controls.engineOn ? spec.idleRpm + gas * (spec.maxRpm - spec.idleRpm) : 0;
     // Frecuencia de encendido de un cuatro tiempos: vueltas por segundo, por
     // cilindros, entre dos. Un radial de siete suena a otra cosa que un
     // cuatro cilindros porque este número es otro, no por magia.
@@ -213,14 +218,14 @@ export class Audio {
     this.engineHarmonic?.frequency.setTargetAtTime(firing * 2.02, now, 0.14);
     // El gas cerrado tapa el motor: respuesta inmediata al oído aunque las
     // vueltas todavía estén bajando.
-    this.engineFilter?.frequency.setTargetAtTime(900 + controls.throttle * 3200, now, 0.06);
-    this.engineGain?.gain.setTargetAtTime(0.1 + controls.throttle * 0.14, now, 0.1);
+    this.engineFilter?.frequency.setTargetAtTime(900 + gas * 3200, now, 0.06);
+    this.engineGain?.gain.setTargetAtTime((controls.engineOn ? 0.1 : 0) + gas * 0.14, now, 0.1);
     // La resonancia sube con las vueltas. Es lo que de verdad se oye cambiar
     // en un altavoz pequeño: el fundamental está por debajo de lo que
     // reproduce, así que si el timbre no se mueve, el motor suena plano por
     // mucho que la nota suba.
     this.growl?.frequency.setTargetAtTime(
-      spec.growlHz + controls.throttle * spec.growlRise,
+      spec.growlHz + gas * spec.growlRise,
       now,
       0.12,
     );
@@ -228,8 +233,8 @@ export class Audio {
     // Esfuerzo: el motor canta distinto trepando que en descenso, aunque el
     // gas no se toque. Es carga aerodinámica, y se oye.
     const load = clamp(state.verticalSpeed / 6, -1, 1);
-    this.engineGain?.gain.setTargetAtTime(0.1 + controls.throttle * 0.14 + load * 0.03, now, 0.25);
-    this.propGain?.gain.setTargetAtTime(0.03 + controls.throttle * 0.075, now, 0.1);
+    this.engineGain?.gain.setTargetAtTime((controls.engineOn ? 0.1 : 0) + gas * 0.14 + load * 0.03, now, 1.4);
+    this.propGain?.gain.setTargetAtTime((controls.engineOn ? 0.03 : 0) + gas * 0.075, now, 1.4);
     this.propFilter?.frequency.setTargetAtTime(120 + rpm * 0.08, now, 0.1);
 
     // ── Viento ──────────────────────────────────────────────────────────

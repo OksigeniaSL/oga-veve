@@ -119,7 +119,7 @@ export class Pictogramas {
    * @param throttle 0 a 1
    * @param dt segundos desde el fotograma anterior
    */
-  update(speed: number, height: number, throttle: number, dt: number): void {
+  update(speed: number, height: number, throttle: number, dt: number, engineOn = true): void {
     if (!this.root) return;
 
     this.speedMark?.setAttribute('transform', `translate(${20 + clamp01(speed) * 60} 11)`);
@@ -134,7 +134,11 @@ export class Pictogramas {
     // El centro del giro va dentro del propio `rotate`, y **solo ahí**. Con
     // un `transform-origin` además, el navegador desplaza dos veces y las
     // palas se salen del encuadre: quedaba el buje solo, girando nada.
-    this.spin = (this.spin + (60 + throttle * 900) * dt) % 360;
+    // Con el motor parado, la hélice está parada. Llevaba un giro de base
+    // que representaba el ralentí, y con el motor apagado ese ralentí no
+    // existe: una hélice quieta es la señal de que el avión está apagado, y
+    // es la única que hace falta para entenderlo a los cuatro años.
+    this.spin = engineOn ? (this.spin + (60 + throttle * 900) * dt) % 360 : this.spin;
     this.propeller?.setAttribute('transform', `rotate(${this.spin} 17 17)`);
   }
 

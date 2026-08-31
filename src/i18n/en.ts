@@ -108,6 +108,10 @@ export const EN: Dictionary = {
   'tecla.language': 'Language',
   'tecla.credits': 'Credits',
   'tecla.keys': 'View and change keys',
+  'tecla.engine': 'Start or shut down the engine',
+  'hud.engineOff': 'Engine off',
+  'hud.engineBusy': 'Come to a stop and close the throttle first',
+  'hud.engineOn': 'Engine running',
   'credits.title': 'Credits',
   'credits.madeBy': 'An Oksigenia SL product, under the Granja Óga brand.',
   'credits.educational':
