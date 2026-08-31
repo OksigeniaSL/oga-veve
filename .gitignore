@@ -1,28 +1,25 @@
-# ── Dependencias ───────────────────────────────────────────────────────
-node_modules/
-dist/
-.vite/
 
-# ── Datos de terreno (pesados, se regeneran) ───────────────────────────
-# Los .hgt de NASADEM son ~25 MB por tesela y son dominio público: se
-# descargan con `scripts/hgt-a-heightmap.mjs`, no se versionan.
+# Briefs de diseño para modelos externos: locales, no son parte del juego.
 datos/dem/
-public/assets/terreno/*.png
-!public/assets/terreno/.gitkeep
-
+# ── Datos de terreno (pesados, se regeneran) ───────────────────────────
+# ── Dependencias ───────────────────────────────────────────────────────
+# descargan con `scripts/hgt-a-heightmap.mjs`, no se versionan.
+dist/
+.DS_Store
 # ── Entornos / secrets ─────────────────────────────────────────────────
 .env
 .env.*
 !.env.example
-
-# ── IDEs ───────────────────────────────────────────────────────────────
 .idea/
-.vscode/
+# ── IDEs ───────────────────────────────────────────────────────────────
 *.iml
-
-# ── Sistema ────────────────────────────────────────────────────────────
-.DS_Store
-Thumbs.db
-
-# Briefs de diseño para modelos externos: locales, no son parte del juego.
 .kimi/
+# Los .hgt de NASADEM son ~25 MB por tesela y son dominio público: se
+node_modules/
+!public/assets/terreno/.gitkeep
+public/assets/terreno/*.png
+# Salida de las maquetas de diseño, que se regenera con el lanzador.
+# ── Sistema ────────────────────────────────────────────────────────────
+Thumbs.db
+.vite/
+.vscode/

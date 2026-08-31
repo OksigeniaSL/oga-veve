@@ -1,3 +1,18 @@
+NOTA DE EXCLUSIÓN
+
+Esta licencia Apache-2.0 cubre el código de Óga Veve. NO cubre:
+
+  · data/aerodromes/  — base de datos derivada de OpenStreetMap, bajo Open
+    Database License 1.0. Ver data/aerodromes/LICENSE y su README.
+
+  · assets/ y el contenido del juego — © Oksigenia SL, todos los derechos
+    reservados. Ver LICENSE-CONTENIDO.md.
+
+El extractor scripts/osm-a-aerodromo.mjs sí es Apache-2.0: un programa que
+lee una base de datos no es una obra derivada de ella.
+
+----------------------------------------------------------------------
+
 
                                  Apache License
                            Version 2.0, January 2004
