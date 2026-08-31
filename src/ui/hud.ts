@@ -245,6 +245,20 @@ export class Hud {
     this.badge.textContent = this.badgeText;
     this.sixPack.bind(this.root);
     this.tutor.bind(this.root);
+    this.reserveForPanel();
+  }
+
+  /**
+   * El tutor va fijo sobre el fondo de la pantalla y el cuadro de mandos
+   * también vive abajo, así que sin esto el cartel se planta encima de las
+   * esferas. Se mide el panel y se levanta el tutor exactamente eso: la
+   * altura cambia con el tamaño de pantalla y con la fila única del modo
+   * apaisado, y un número escrito a mano acertaría en un caso y fallaría en
+   * los otros.
+   */
+  private reserveForPanel(): void {
+    const panel = this.root.querySelector<HTMLElement>('[data-hud="sixpack"]');
+    this.root.style.setProperty('--panel-alto', `${panel ? panel.offsetHeight + 10 : 0}px`);
   }
 
   /**

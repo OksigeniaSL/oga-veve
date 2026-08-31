@@ -142,6 +142,9 @@ body {
   grid-row: 3;
   justify-self: center;
   text-align: center;
+  /* Sin esto, un mensaje largo se sale por el lado derecho de la pantalla
+     en vez de partirse en dos líneas. */
+  max-width: min(92vw, 640px);
 }
 
 /* Botón de sonido. Pointer-events propios: el HUD entero los tiene
@@ -444,7 +447,8 @@ body {
 .tutor {
   position: fixed;
   left: 50%;
-  bottom: 8%;
+  /* Sube lo que ocupe el cuadro de mandos, que puede no estar. */
+  bottom: calc(8% + var(--panel-alto, 0px));
   transform: translateX(-50%);
   display: grid;
   justify-items: center;
