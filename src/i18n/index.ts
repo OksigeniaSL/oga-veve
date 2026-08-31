@@ -27,8 +27,16 @@ const DICTIONARIES: Record<Locale, Dictionary> = {
   en: EN,
 };
 
+/**
+ * Cómo se llama cada idioma **en el selector**.
+ *
+ * «Español» y no «castellano», aunque la Constitución paraguaya diga
+ * castellano en su artículo 140: en un selector de idioma manda la costumbre
+ * de los selectores de idioma, que es escribir el nombre que la gente busca
+ * con los ojos. Dentro del juego, el registro sigue siendo el paraguayo.
+ */
 export const LOCALE_NAMES: Record<Locale, string> = {
-  'es-PY': 'Castellano',
+  'es-PY': 'Español',
   gug: 'Guaraní',
   en: 'English',
 };
