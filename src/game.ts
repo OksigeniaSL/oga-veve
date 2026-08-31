@@ -557,6 +557,20 @@ export class Game {
 
     this.hud.setLuzDeTorre(vista.fase === 'esperando' ? 'roja' : vista.luzVerde ? 'verde' : null);
 
+    // Mientras manda el plan, el tutor calla. Vuelve al alinearse, que es
+    // cuando toca despegar y el tutor sí sabe de eso.
+    const rodaje =
+      vista.fase === 'estacionado' ||
+      vista.fase === 'arrancando' ||
+      vista.fase === 'rodando' ||
+      vista.fase === 'esperando' ||
+      vista.fase === 'autorizado' ||
+      vista.fase === 'abandonando' ||
+      vista.fase === 'a-plataforma' ||
+      vista.fase === 'en-puesto' ||
+      vista.fase === 'apagado';
+    this.hud.tutor.silenciar(rodaje);
+
     if (vista.fase !== this.faseAnunciada) {
       this.faseAnunciada = vista.fase;
       const letra = vista.letra ? ` · ${vista.letra}` : '';
