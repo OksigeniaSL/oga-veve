@@ -168,6 +168,17 @@ Por orden de lo que costó descubrir:
 9. ¿El amarillo de las rodaduras se corta al llegar a la pista?
 10. ¿Las letras de las calles se leen del derecho rodando **hacia la pista**?
 11. ¿Se puede aterrizar y el juego lo dice?
+12. ¿Se puede rodar del puesto a la doble raya siguiendo la raya verde?
+
+El punto 12 tiene su propia comprobación, y rueda de verdad:
+
+```
+node scripts/verificar-vuelo.mjs
+```
+
+Arranca el motor, da motor corto y anota todo lo que el juego va diciendo hasta
+que la torre enciende la luz verde. Un vuelo probado solo con pruebas
+unitarias no está probado.
 
 Los puntos 4, 5 y 10 ya no hace falta juzgarlos a ojo:
 
@@ -214,6 +225,36 @@ Asunción:
   semilla y parámetros buscando un Tenerife con mar y **ninguna lo tenía**: el
   ruido fractal hace cordilleras que siguen y siguen. Hay que decir dónde acaba
   la tierra, y para eso está `island` en el escenario.
+
+## 6 ter. El grafo de rodaje, y por qué se rompe
+
+Para que un vuelo empiece en la plataforma hay que saber por dónde se va de un
+sitio a otro. OSM da las calles como polilíneas sueltas —cincuenta y cuatro en
+Silvio Pettirossi— sin decir en ningún sitio cuál empalma con cuál.
+
+**Los empalmes de un aeropuerto son en T, no punta con punta.** Esto no se
+dedujo, se midió, y es el dato más útil de toda esta sección:
+
+| En Tenerife Norte, de 70 puntas de calle… | |
+| --- | --- |
+| caen cerca de la **punta** de otra | 30 |
+| caen sobre el **costado** de otra | **60** |
+
+Una calle de rodaje termina en medio de otra, que es como se construyen los
+aeropuertos. Soldando solo punta con punta, el grafo salía en **diecinueve
+trozos incomunicados** y el mayor tenía siete nudos de cuarenta y cinco: no
+existía ninguna ruta. Con el nodado en T —cada punta que cae sobre el costado
+de otra calle se mete como vértice suyo— los dos aeropuertos pasan a ser una
+sola pieza, el 100 % conectado.
+
+Lo demás que hace falta saber:
+
+- **Soldar por cercanía, no por identidad.** Doce metros. Un empalme dibujado
+  con medio metro de diferencia parte el aeropuerto en dos.
+- **La ruta empieza en las ruedas**, no en el nudo más cercano. Un puesto de
+  estacionamiento puede estar a cien metros de la calle más próxima.
+- **Un aeródromo sin `parking_position` no da para un vuelo completo.** Se
+  comprueba antes de nada: sin puestos no hay de dónde salir.
 
 ## 7. La pintura no se descarga: se genera
 
