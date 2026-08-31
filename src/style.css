@@ -10,14 +10,83 @@
  * vuela, no para lucir en una captura.
  */
 
+/*
+ * ÓGA VEVE · barro barnizado
+ *
+ * La identidad, en una frase: **cerámica de barro barnizada.** Superficies
+ * cálidas y mate, con un filo fino de luz arriba y sombra suave abajo, como
+ * una pieza de barro bien hecha. Ni plástico, ni cristal.
+ *
+ * Y no es solo estética: resuelve dos problemas de golpe.
+ *
+ * Un panel translúcido con desenfoque cuesta milisegundos **por fotograma**
+ * sobre una escena 3D, porque el fondo cambia siempre y hay que rehacer el
+ * cálculo. Ya tumbó una pantalla de esta casa —el panel de música del
+ * proyecto del clima lleva escrito el motivo en su propio código—. El barro
+ * es opaco: se pinta una vez y el compositor solo lo mezcla.
+ *
+ * Y siendo opaco, **el contraste deja de depender de lo que pase por
+ * debajo**. Se calcula una vez, se cumple siempre, y da igual que abajo haya
+ * cielo claro, campo verde o pista gris oscuro.
+ *
+ * La regla de oro, escrita para no volver a discutirla: si algo lleva texto
+ * encima, es opaco. El vidrio es un filo, no una superficie.
+ */
 :root {
+  /* ── Marca Granja Óga ── */
   --terracota: #be5d38;
   --ocre: #dd923f;
   --verde-bosque: #2f5243;
   --beige: #e4e2da;
-  /* Opacidad alta para que el contraste del texto no dependa de lo que haya
-     detrás: una tarjeta translúcida sobre cielo claro no cumple AA. */
-  --sombra: rgba(18, 26, 22, 0.78);
+
+  /* ── Las tres piezas de barro ──
+     Barro oscuro para los instrumentos, que es la cabina de noche. Barro
+     cálido para lo que es tuyo y se toca. Y el verde para los paneles
+     grandes que se abren encima del vuelo. */
+  --barro: #1a2420;
+  --barro-claro: #24312b;
+  --barro-calido: #a94f2f;
+  --panel-verde: #223c31;
+
+  /* ── El barniz: luz arriba, sombra abajo ──
+     Estas tres declaraciones juntas son la identidad. Se pintan una vez y no
+     cuestan nada por fotograma. */
+  --barniz: linear-gradient(rgba(255, 255, 255, 0.055), transparent 30%);
+  --filo: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --poso: 0 5px 16px -6px rgba(0, 0, 0, 0.55);
+
+  --linea: rgba(228, 226, 218, 0.16);
+  --linea-fuerte: rgba(228, 226, 218, 0.3);
+
+  /* ── Tinta ──
+     El ocre de marca se queda en 3,9:1 como texto pequeño sobre el panel y
+     no llega a AA. El gemelo aclarado sí: el color puro rellena agujas y
+     arcos, y este escribe. */
+  --tinta: #f2f1ec;
+  --tinta-suave: #cfd6cd;
+  --ocre-tinta: #f2b05c;
+  --terracota-tinta: #e79070;
+
+  /* ── Semáforo. Un color, un significado. ── */
+  --ok: #7ec86a;
+  --precaucion: #e8b13a;
+  --peligro: #b5372e;
+
+  /* ── Suelo tipográfico ──
+     Por debajo de 16px no hay nada que un prelector pueda usar: no lee
+     letra a letra, reconoce la silueta de la palabra entera, y a 11px esa
+     silueta no se resuelve. */
+  --voz-glosa: 16px;
+  --voz-rotulo: 15px;
+  --voz-cifra: 32px;
+
+  --r-s: 10px;
+  --r-m: 16px;
+  --r-l: 22px;
+  --tacto: 48px;
+
+  /* Compatibilidad: quedaba código apuntando al nombre viejo. */
+  --sombra: var(--barro);
 
   --hud-fuente: 'Varela Round', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
 }
@@ -63,12 +132,18 @@ body {
   gap: 12px;
 }
 
+/*
+ * La pieza de barro. Todo lo que flota sobre el mundo sale de aquí, y por eso
+ * los cuatro peldaños se ven de la misma familia aunque enseñen cosas
+ * distintas: barro oscuro, barniz arriba, filo de luz y poso de sombra.
+ */
 .tarjeta {
-  background: var(--sombra);
-  border-radius: 14px;
-  padding: 10px 14px;
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(228, 226, 218, 0.14);
+  background: var(--barniz), var(--barro);
+  border-radius: var(--r-m);
+  padding: 11px 15px;
+  border: 1px solid var(--linea);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
 }
 
 .medidor {
@@ -80,11 +155,18 @@ body {
 
 /* Abreviatura del instrumento: IAS, ALT, HDG, V/S, THR. Va en grande y
    opaca porque es lo que se aprende, no un adorno. */
+/*
+ * La abreviatura aeronáutica, que es lo que de verdad se aprende aquí.
+ *
+ * En el ocre de marca daba 3,9:1 sobre el panel de antes y no llegaba a AA.
+ * Va en el gemelo aclarado: el ocre puro se queda para rellenar agujas y
+ * arcos, donde es una forma y no una letra.
+ */
 .medidor__etiqueta {
-  font-size: 13px;
+  font-size: var(--voz-rotulo);
   letter-spacing: 0.1em;
   font-weight: 700;
-  color: var(--ocre);
+  color: var(--ocre-tinta);
 }
 
 .medidor__valor {
@@ -104,9 +186,17 @@ body {
    principal. Con el tiempo se deja de mirar. */
 /* Subida del 55 % al 78 %: al 55 sobre la tarjeta translúcida no llegaba a
    4,5:1 contra un cielo claro. */
+/*
+ * La palabra corriente debajo de la abreviatura. Sube de 11 a 16 px, que es
+ * el suelo del proyecto: quien está aprendiendo a leer no lee letra a letra,
+ * reconoce la silueta de la palabra entera, y a 11 px esa silueta no se
+ * resuelve. No invierte la jerarquía —la abreviatura sigue mandando por
+ * peso, mayúsculas y color— pero hace que la muleta sirva mientras haga
+ * falta.
+ */
 .medidor__glosa {
-  font-size: 11px;
-  opacity: 0.78;
+  font-size: var(--voz-glosa);
+  color: var(--tinta-suave);
   margin-top: 3px;
   letter-spacing: 0.02em;
 }
@@ -152,17 +242,23 @@ body {
    pulsarse. */
 .sonido {
   pointer-events: auto;
-  width: 42px;
-  height: 42px;
+  width: var(--tacto);
+  height: var(--tacto);
   border-radius: 50%;
-  border: 1px solid rgba(228, 226, 218, 0.18);
-  background: var(--sombra);
-  color: var(--beige);
-  font-size: 19px;
-  line-height: 1;
+  border: 1px solid var(--linea);
+  background: var(--barniz), var(--barro);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  backdrop-filter: blur(6px);
+  font-size: 20px;
+  padding: 0;
+  transition: transform 90ms ease, border-color 90ms ease;
 }
+
+.sonido:hover { border-color: var(--ocre); }
+.sonido:active { transform: scale(0.93); }
 
 .sonido:hover {
   border-color: var(--ocre);
@@ -407,11 +503,12 @@ body {
    queda por debajo del 4,5:1 que exige AA — y precisamente en el texto más
    crítico del juego. Este par mide 5,58:1, comprobado en el navegador. */
 .aviso-hud {
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 10px;
-  background: #8f3f22;
+  padding: 10px 18px;
+  border-radius: var(--r-m);
+  box-shadow: var(--filo), var(--poso);
+  background: linear-gradient(rgba(255, 255, 255, 0.06), transparent 30%), #8f3f22;
   color: var(--beige);
   opacity: 0;
   transition: opacity 160ms ease;
@@ -455,9 +552,9 @@ body {
   gap: 6px;
   padding: 14px 26px;
   border-radius: 20px;
-  background: rgba(18, 26, 22, 0.62);
-  border: 2px solid rgba(221, 146, 63, 0.5);
-  backdrop-filter: blur(6px);
+  background: var(--barniz), var(--barro);
+  border: 2px solid rgba(221, 146, 63, 0.55);
+  box-shadow: var(--filo), var(--poso);
   pointer-events: none;
   z-index: 5;
 }
@@ -656,7 +753,6 @@ body {
   display: grid;
   place-items: center;
   background: rgba(10, 16, 13, 0.86);
-  backdrop-filter: blur(4px);
   z-index: 10;
   padding: 24px;
 }
@@ -754,9 +850,10 @@ body {
   grid-template-columns: repeat(3, auto);
   gap: 5px;
   padding: 7px;
-  border-radius: 14px;
-  background: rgba(12, 15, 20, 0.66);
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  border-radius: var(--r-m);
+  background: var(--barniz), var(--barro);
+  border: 1px solid var(--linea);
+  box-shadow: var(--filo), var(--poso);
   pointer-events: none;
 }
 
@@ -845,11 +942,14 @@ body {
   stroke-width: 1;
 }
 
+/* Mismo ocre-tinta que las abreviaturas del peldaño anterior: ese es el hilo
+   que cose los dos peldaños de arriba. Y a 8,5 px no se leía en una tablet. */
 .esfera__rotulo {
-  margin-top: 2px;
-  font-size: 8.5px;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.09em;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--ocre-tinta);
 }
 
 /* Horizonte artificial: cielo arriba, tierra abajo, avión fijo en el medio. */
@@ -893,7 +993,7 @@ body {
 /* Pisado: se enciende, y con el mismo ámbar que el resto de los avisos. */
 .freno--pisado {
   border-color: var(--ocre);
-  box-shadow: 0 0 0 2px rgba(221, 146, 63, 0.45);
+  box-shadow: var(--filo), 0 0 0 2px rgba(221, 146, 63, 0.5);
 }
 
 .freno--pisado .motor__tecla--ancha {
@@ -927,11 +1027,16 @@ body {
   pointer-events: none;
 }
 
+/*
+ * Los pictogramas van en barro cálido y con más radio que el resto: son la
+ * cara amable de la familia, y son lo primero que ve alguien de cuatro años.
+ */
 .picto {
-  background: rgba(47, 82, 67, 0.62);
-  border-radius: 16px;
-  padding: 8px 10px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  background: var(--barniz), var(--barro-calido);
+  border: 1px solid var(--linea);
+  border-radius: var(--r-l);
+  padding: 9px 11px;
+  box-shadow: var(--filo), var(--poso);
 }
 
 .picto svg {
@@ -945,18 +1050,19 @@ body {
 }
 
 .picto__bicho {
-  fill: var(--beige, #e4e2da);
-  opacity: 0.72;
+  fill: var(--tinta);
+  opacity: 0.8;
 }
 
 .picto__via {
-  stroke: rgba(228, 226, 218, 0.3);
+  stroke: rgba(255, 255, 255, 0.34);
   stroke-width: 2;
   stroke-linecap: round;
 }
 
+/* El avioncito es SIEMPRE ocre en todo el juego: lo que eres tú, brilla. */
 .picto__avion {
-  stroke: var(--ocre, #dd923f);
+  stroke: #ffd9a0;
   stroke-width: 2.1;
   stroke-linecap: round;
   fill: none;
@@ -965,16 +1071,16 @@ body {
 }
 
 .picto__cerro {
-  fill: rgba(228, 226, 218, 0.26);
+  fill: rgba(255, 255, 255, 0.24);
 }
 
 .picto__helice {
-  fill: var(--beige, #e4e2da);
-  opacity: 0.9;
+  fill: var(--tinta);
+  opacity: 0.94;
 }
 
 .picto__buje {
-  fill: var(--ocre, #dd923f);
+  fill: var(--barro);
 }
 
 /*
@@ -982,15 +1088,18 @@ body {
  * entiende sin rótulo y se toca con el dedo. Sustituye a la tarjeta con la
  * tecla dibujada, nunca convive con ella.
  */
+/* El freno es de otra especie y tiene que parecerlo: es un mando de
+   seguridad, no un accesorio. Rojo, grande, y el único botón del juego que
+   no comparte la receta de los demás. */
 .freno--boton {
   pointer-events: auto;
   margin-top: 10px;
-  width: clamp(64px, 11vmin, 92px);
+  width: clamp(var(--tacto), 11vmin, 92px);
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.85);
-  background: #b5372e;
-  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, #c9483c, var(--peligro) 70%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 0 #7d251d, var(--poso);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -1151,11 +1260,18 @@ body {
  * créditos, la fila de números se salía por la derecha —y justo ahí están el
  * «−» y el «+» del motor, dos de las teclas que hay que encontrar—.
  */
+/* La bandeja del teclado: una pieza de barro verde, opaca y con su barniz.
+   Es un panel que se abre encima del vuelo, así que aquí no hace falta
+   vidrio — hace falta calma. */
 .teclado {
-  padding: 18px;
+  padding: 20px;
   position: relative;
   width: fit-content;
   max-width: 96vw;
+  border-radius: var(--r-l);
+  background: var(--barniz), var(--panel-verde);
+  border: 1px solid var(--linea);
+  box-shadow: var(--filo), var(--poso);
 }
 
 /*
@@ -1170,17 +1286,17 @@ body {
   place-items: center;
   width: 100%;
   height: 56px;
-  margin-top: 14px;
+  margin-top: 16px;
   border: none;
-  border-radius: 16px;
-  background: var(--ocre, #dd923f);
-  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22);
+  border-radius: var(--r-m);
+  background: linear-gradient(180deg, #e8a75c, var(--ocre) 72%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 3px 0 #96551f;
   cursor: pointer;
 }
 
 .teclado__cerrar:active {
-  transform: translateY(2px);
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 #96551f;
 }
 
 .teclado__cerrar svg {
@@ -1224,15 +1340,17 @@ body {
   gap: 5px;
 }
 
+/* Tecla apagada: un hueco en la bandeja. Está para situarse, no para
+   mirarla — por eso se hunde en vez de sobresalir. */
 .tecla {
   position: relative;
   width: var(--tecla);
   height: var(--tecla);
   display: grid;
   place-items: center;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+  border-radius: var(--r-s);
+  background: rgba(0, 0, 0, 0.26);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.35);
   transition: transform 70ms ease, background 70ms ease, box-shadow 70ms ease;
 }
 
@@ -1256,9 +1374,11 @@ body {
 /* La que sí hace algo: encendida, en color, con su dibujo grande. La letra
    se va a la esquina para no estorbar al dibujo, pero se queda: quien empieza
    a leer la busca. */
+/* Tecla útil: una pieza de barro cocido, levantada, con su canto de luz
+   arriba y su base más oscura. Se ve que sobresale y que se puede apretar. */
 .tecla--activa {
-  background: var(--ocre, #dd923f);
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3), 0 0 14px rgba(221, 146, 63, 0.45);
+  background: linear-gradient(180deg, #e8a75c, var(--ocre) 72%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 3px 0 #96551f, var(--poso);
 }
 
 .tecla--activa .tecla__letra {
@@ -1284,10 +1404,12 @@ body {
 
 /* Pulsada de verdad: se hunde y se pone terracota. Ese es todo el tutorial —
    se aprieta algo y algo responde. */
+/* Pulsada: se hunde de verdad, hasta perder su base. Ese hundimiento es todo
+   el tutorial — se aprieta algo y algo responde. */
 .tecla--pulsada {
-  background: var(--terracota, #be5d38);
-  transform: translateY(2px);
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  background: var(--terracota);
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 #96551f;
 }
 
 .tecla--pulsada svg {
