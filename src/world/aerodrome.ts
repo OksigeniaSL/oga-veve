@@ -345,6 +345,35 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
   return grupo;
 }
 
+/**
+ * Un punto a `d` metros del principio de una polilínea, con su dirección.
+ *
+ * Existe para que las luces y las líneas de borde se sitúen sobre **el mismo
+ * eje con el que se dibuja el asfalto**. Las dos veces que se midieron desde
+ * la recta que une los umbrales acabaron en la hierba: son dos rectas
+ * parecidas y no la misma.
+ *
+ * @returns `[x, y, dx, dy]` o `null` si la polilínea es más corta que `d`.
+ */
+function sobreElEje(
+  eje: readonly Punto[],
+  d: number,
+): readonly [number, number, number, number] | null {
+  let recorrido = 0;
+  for (let i = 0; i < eje.length - 1; i++) {
+    const [ax, ay] = eje[i]!;
+    const [bx, by] = eje[i + 1]!;
+    const l = Math.hypot(bx - ax, by - ay);
+    if (l < 0.001) continue;
+    if (recorrido + l >= d) {
+      const t = (d - recorrido) / l;
+      return [ax + (bx - ax) * t, ay + (by - ay) * t, (bx - ax) / l, (by - ay) / l];
+    }
+    recorrido += l;
+  }
+  return null;
+}
+
 /** Hacia dónde va la calle de rodaje más cercana a un punto. */
 function direccionCercana(aero: Aerodrome, punto: Punto): readonly [number, number] | null {
   let mejor = Infinity;
@@ -407,10 +436,20 @@ function luces(pista: Pista, altura: (p: Punto) => number): Group {
 
   const blancas: [number, number, number][] = [];
   const ambares: [number, number, number][] = [];
+
+  // **Sobre el eje del pavimento, no sobre la recta de los umbrales.**
+  //
+  // Mismo desajuste que ya se llevó por delante las líneas de borde: son dos
+  // rectas parecidas y distintas, y con las luces a metro y medio del filo la
+  // diferencia las mandaba a la hierba. Las de verdad van pegadas al borde
+  // —a tres metros como mucho—, no en el campo de al lado.
   for (let d = separacion / 2; d < largo; d += separacion) {
+    const p = sobreElEje(pista.centerline, d);
+    if (!p) continue;
+    const [px, py, ex, ey] = p;
     for (const lado of [-1, 1]) {
-      const cx = ax + ux * d - uy * lado * (ancho / 2 + 2);
-      const cy = ay + uy * d + ux * lado * (ancho / 2 + 2);
+      const cx = px - ey * lado * (ancho / 2 + 1.5);
+      const cy = py + ex * lado * (ancho / 2 + 1.5);
       const punto: [number, number, number] = [cx, altura([cx, cy]) + 0.5, -cy];
       (d >= AMBAR_DESDE ? ambares : blancas).push(punto);
     }
@@ -420,13 +459,16 @@ function luces(pista: Pista, altura: (p: Punto) => number): Group {
   const verdes: [number, number, number][] = [];
   const rojas: [number, number, number][] = [];
   for (const [extremo, destino] of [
-    [0, verdes],
-    [largo, rojas],
+    [2, verdes],
+    [largo - 2, rojas],
   ] as const) {
+    const p = sobreElEje(pista.centerline, extremo);
+    if (!p) continue;
+    const [px, py, ex, ey] = p;
     for (let k = -5; k <= 5; k++) {
       const lado = k * (ancho / 11);
-      const cx = ax + ux * extremo - uy * lado;
-      const cy = ay + uy * extremo + ux * lado;
+      const cx = px - ey * lado;
+      const cy = py + ex * lado;
       destino.push([cx, altura([cx, cy]) + 0.5, -cy]);
     }
   }
