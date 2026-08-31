@@ -30,7 +30,7 @@
 
 import { TIERS, type Tier } from '../flight/tiers';
 import { SCENARIOS, type Scenario } from '../world/scenarios';
-import { getLocale, t } from '../i18n';
+import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from '../i18n';
 
 /** Lo que el hangar devuelve cuando alguien le da al botón de despegar. */
 export interface Eleccion {
@@ -201,20 +201,45 @@ export function caja(escenario: Scenario): Caja {
  * iconos iguales no dirían eso; cuatro planos a escala sí, y sin una palabra.
  */
 function plano(escenario: Scenario, escala: number): string {
-  const { cx, cy } = caja(escenario);
-  const vb = `${cx - escala / 2} ${-cy - escala / 2} ${escala} ${escala}`;
+  const { cx, cy, lado } = caja(escenario);
+  // **Con suelo de escala.** Todas comparten escala para que se vea de un
+  // vistazo cuál es la pista larga, pero sin suelo el valle salía como un
+  // palito perdido en medio de la ficha. Con el suelo al 55 % la diferencia se
+  // sigue leyendo —el valle ocupa la mitad que Asunción— y el pequeño se ve.
+  const v = Math.max(lado, escala * 0.55);
+  const vb = `${cx - v / 2} ${-cy - v / 2} ${v} ${v}`;
   const aero = escenario.aerodrome;
 
+  /** Las dos cabeceras, marcadas. Sin esto una pista corta es una raya y ya. */
+  const umbrales = (
+    a: readonly [number, number],
+    b: readonly [number, number],
+    ancho: number,
+  ): string => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const l = Math.hypot(dx, dy) || 1;
+    const px = (-dy / l) * (ancho / 2);
+    const py = (dx / l) * (ancho / 2);
+    return [a, b]
+      .map(
+        (p) =>
+          `<line class="plano__umbral" x1="${p[0] - px}" y1="${-(p[1] - py)}"
+                 x2="${p[0] + px}" y2="${-(p[1] + py)}" />`,
+      )
+      .join('');
+  };
+
   if (!aero) {
-    const { length, heading } = escenario.runway;
+    const { length, heading, width } = escenario.runway;
     const h = (heading * Math.PI) / 180;
-    const dx = (Math.sin(h) * length) / 2;
-    const dy = (Math.cos(h) * length) / 2;
+    const a: readonly [number, number] = [(-Math.sin(h) * length) / 2, (-Math.cos(h) * length) / 2];
+    const b: readonly [number, number] = [(Math.sin(h) * length) / 2, (Math.cos(h) * length) / 2];
     return `
       <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
            aria-hidden="true">
-        <line class="plano__pista" x1="${-dx}" y1="${dy}" x2="${dx}" y2="${-dy}"
-              stroke-width="${escenario.runway.width}" />
+        <line class="plano__pista" x1="${a[0]}" y1="${-a[1]}" x2="${b[0]}" y2="${-b[1]}" />
+        ${umbrales(a, b, width * 2.6)}
       </svg>`;
   }
 
@@ -232,11 +257,15 @@ function plano(escenario: Scenario, escala: number): string {
 
   const pistas = aero.runways
     .filter((p) => p.centerline.length > 1)
-    .map(
-      (p) =>
-        `<polyline class="plano__pista" points="${p.centerline.map(aPantalla).join(' ')}"
-                   stroke-width="${p.widthM ?? 45}" />`,
-    )
+    .map((p) => {
+      const eje = p.centerline;
+      const a = eje[0]!;
+      const b = eje[eje.length - 1]!;
+      return (
+        `<polyline class="plano__pista" points="${eje.map(aPantalla).join(' ')}" />` +
+        umbrales(a, b, (p.widthM ?? 45) * 2.6)
+      );
+    })
     .join('');
 
   return `
@@ -281,7 +310,7 @@ const idioma = (): string => (getLocale() === 'gug' ? 'es-PY' : getLocale());
 
 const ESCALA = Math.max(...SCENARIOS.map((e) => caja(e).lado));
 
-function tarjetaDeSitio(escenario: Scenario, elegido: boolean): string {
+function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
   const { cielo, suelo } = pieles(escenario);
   // Con la coma decimal que toca. `toFixed` da un punto, y «3.4 km» en un
   // producto para Paraguay está mal escrito.
@@ -289,12 +318,31 @@ function tarjetaDeSitio(escenario: Scenario, elegido: boolean): string {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });
+  const aero = escenario.aerodrome;
+
+  /*
+   * El código OACI, en grande y sobre el plano.
+   *
+   * Es la matrícula de un aeropuerto: cuatro letras que lo identifican en todo
+   * el mundo, y las dos primeras dicen la región —SG es Paraguay, GC son las
+   * Canarias—. Quien aprenda aquí que Asunción es SGAS ha aprendido algo que
+   * usa un comandante todos los días, y no cuesta nada: ya está en el fichero.
+   *
+   * Los escenarios inventados no llevan ninguno, porque inventarse un código
+   * OACI es inventarse el de alguien.
+   */
+  const oaci = aero ? `<span class="plano__oaci">${aero.id}</span>` : '';
+  const cota =
+    aero?.elevationM != null
+      ? `<span class="plano__cota">${Math.round(aero.elevationM)} m</span>`
+      : '';
+
   return `
     <button class="ficha ficha--sitio" type="button" role="radio"
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
             data-sitio="${escenario.id}"
             style="--cielo: ${cielo}; --suelo: ${suelo}">
-      <span class="ficha__lienzo">${plano(escenario, ESCALA)}</span>
+      <span class="ficha__lienzo">${oaci}${cota}${plano(escenario, ESCALA)}</span>
       <span class="ficha__pie">
         <span class="ficha__numero">${designador(escenario)}</span>
         <span class="ficha__nombre">${t(escenario.nameKey as never)}</span>
@@ -313,7 +361,7 @@ function tarjetaDeSitio(escenario: Scenario, elegido: boolean): string {
 const galones = (n: number): string =>
   `<span class="ficha__galones" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
 
-function tarjetaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
+function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
   return `
     <button class="ficha ficha--tramo" type="button" role="radio"
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
@@ -351,19 +399,33 @@ export function abrirHangar(
   const pintar = (): void => {
     root.innerHTML = `
       <div class="hangar__marco">
+        <!--
+          El idioma, aquí y no escondido detrás de una tecla del vuelo.
+          Estaba solo en un atajo de teclado, así que a quien le abría en
+          inglés le abría en inglés para siempre: un mando que no se anuncia
+          no existe, y esta es la segunda vez que nos pasa lo mismo.
+        -->
+        <div class="hangar__idiomas" role="radiogroup" aria-label="${t('language.label')}">
+          ${LOCALES.map(
+            (l) => `
+            <button class="idioma" type="button" role="radio" lang="${l === 'gug' ? 'gn' : l}"
+                    aria-checked="${l === getLocale()}" tabindex="${l === getLocale() ? 0 : -1}"
+                    data-idioma="${l}">${LOCALE_NAMES[l]}</button>`,
+          ).join('')}
+        </div>
         <h1 class="hangar__marca">Óga Veve</h1>
 
         <section class="hangar__bloque" aria-labelledby="hangar-sitio">
           <h2 class="hangar__pregunta" id="hangar-sitio">${t('hangar.donde')}</h2>
           <div class="hangar__fila" role="radiogroup" aria-labelledby="hangar-sitio">
-            ${SCENARIOS.map((e) => tarjetaDeSitio(e, e.id === sitio.id)).join('')}
+            ${SCENARIOS.map((e) => fichaDeSitio(e, e.id === sitio.id)).join('')}
           </div>
         </section>
 
         <section class="hangar__bloque" aria-labelledby="hangar-tramo">
           <h2 class="hangar__pregunta" id="hangar-tramo">${t('hangar.como')}</h2>
           <div class="hangar__fila" role="radiogroup" aria-labelledby="hangar-tramo">
-            ${TIERS.map((tier, i) => tarjetaDeTramo(tier, i, tier.id === tramo.id)).join('')}
+            ${TIERS.map((tier, i) => fichaDeTramo(tier, i, tier.id === tramo.id)).join('')}
           </div>
         </section>
 
@@ -393,6 +455,14 @@ export function abrirHangar(
     root.addEventListener('click', (event) => {
       const boton = (event.target as HTMLElement | null)?.closest('button');
       if (!boton) return;
+
+      const idIdioma = boton.getAttribute('data-idioma');
+      if (idIdioma) {
+        setLocale(idIdioma as (typeof LOCALES)[number]);
+        pintar();
+        root.querySelector<HTMLElement>(`[data-idioma="${idIdioma}"]`)?.focus();
+        return;
+      }
 
       const idSitio = boton.getAttribute('data-sitio');
       if (idSitio) return elegir('data-sitio', idSitio);
