@@ -266,6 +266,15 @@ body {
   width: 96px;
   height: 96px;
   margin: 4px 0 2px;
+}
+
+/* La banda de color va en su propio elemento.
+   La máscara que ahueca el centro afecta a todo el subárbol, así que con la
+   aguja dentro se comía los primeros 58 % de su largo y solo quedaba un
+   trocito de tres píxeles: los instrumentos parecían apagados. */
+.arco__banda {
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
   background:
     conic-gradient(
@@ -283,15 +292,30 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 3px;
-  height: 40px;
-  margin-left: -1.5px;
-  background: var(--beige);
-  border-radius: 2px;
+  width: 4px;
+  height: 42px;
+  margin-left: -2px;
+  background: linear-gradient(180deg, var(--beige) 62%, var(--terracota) 62%);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(18, 26, 22, 0.55);
   transform-origin: 50% 0;
-  /* 200° es el arranque del arco y 140° su recorrido útil. */
+  /* 200° es el arranque de la banda y 140° su recorrido útil. */
   transform: rotate(calc(20deg + var(--v) * 140deg));
   transition: transform 140ms linear;
+}
+
+/* Buje central: remata la aguja y hace que se lea como un instrumento. */
+.arco::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: var(--beige);
+  box-shadow: 0 0 0 2px rgba(18, 26, 22, 0.55);
 }
 
 /* Aguja a la pista: gira respecto al morro, arriba es de frente. */

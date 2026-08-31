@@ -373,7 +373,10 @@ function arcGauge(name: string, instrument: string, gloss: string): string {
   return `
     <div class="tarjeta medidor">
       <span class="medidor__etiqueta">${instrument}</span>
-      <div class="arco" data-hud="${name}"><span class="arco__aguja"></span></div>
+      <div class="arco" data-hud="${name}">
+        <span class="arco__banda"></span>
+        <span class="arco__aguja"></span>
+      </div>
       <span class="medidor__glosa">${gloss}</span>
     </div>
   `;
