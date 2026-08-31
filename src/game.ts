@@ -23,7 +23,7 @@ import {
 } from 'three';
 import { CoefficientFlightModel } from './flight/fdm';
 import { ArcadeFlightModel } from './flight/arcade';
-import { GUYRAMI, TIERS, type Tier } from './flight/tiers';
+import { GUYRAMI, TIERS, rememberTier, rememberedTier, type Tier } from './flight/tiers';
 import { AIRCRAFT, OGA_172, type AircraftConfig } from './flight/aircraft';
 import { InputManager } from './flight/input';
 import type { FlightModel, FlightState } from './flight/model';
@@ -91,7 +91,7 @@ export class Game {
   private aircraft: AircraftConfig;
   private readonly scenario: Scenario;
   private flight: FlightModel;
-  private tier: Tier = GUYRAMI;
+  private tier: Tier = rememberedTier();
   private readonly input: InputManager;
   private readonly audio = new Audio();
   private readonly hud: Hud;
@@ -183,7 +183,7 @@ export class Game {
     window.addEventListener('resize', this.onResize);
     this.onResize();
     this.resetFlight();
-    this.hud.flash(t('help.start'), 6);
+    this.hud.flash(`${t('help.start')} · ${t('help.assist')}`, 8);
   }
 
   start(): void {
@@ -500,13 +500,14 @@ export class Game {
     const carried = { position: position.clone(), heading, airspeed };
 
     this.tier = next;
+    rememberTier(next);
     this.flight = this.buildFlightModel(next);
     this.flight.reset(carried);
 
     this.hud.setUnits(next.units);
     this.hud.setInstruments(next.instruments);
     this.updateBadge();
-    this.hud.flash(next.name, 3);
+    this.hud.flash(`${next.name} · ${next.ages}`, 3);
   }
 
   /**

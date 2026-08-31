@@ -102,6 +102,43 @@ export const TAGUATO_RUVICHA: Tier = {
 
 export const TIERS: readonly Tier[] = [GUYRAMI, TUKA, TAGUATO, TAGUATO_RUVICHA];
 
+/**
+ * Con qué peldaño se abre el juego.
+ *
+ * **Taguato, no el primero.** Quien abre el enlace por primera vez es casi
+ * siempre un adulto —y esta demo es además el escaparate público de la
+ * empresa—, y arrancar en el peldaño de los pequeños le da una pantalla sin
+ * un solo dato y la sensación de que el juego no tiene nada. El tramo
+ * infantil se elige a propósito, normalmente porque un adulto se lo pone a
+ * un niño; el de en medio es el que sirve por defecto a casi todo el mundo.
+ *
+ * Y la elección se recuerda, así que la tablet de un aula abre donde la
+ * dejaron.
+ */
+export const DEFAULT_TIER = TAGUATO;
+
+const STORAGE_KEY = 'oga-veve:tramo';
+
+/** Último tramo elegido, o el de por defecto si no hay ninguno guardado. */
+export function rememberedTier(): Tier {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const found = TIERS.find((tier) => tier.id === saved);
+    if (found) return found;
+  } catch {
+    // Navegación privada o almacenamiento bloqueado: se juega igual.
+  }
+  return DEFAULT_TIER;
+}
+
+export function rememberTier(tier: Tier): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, tier.id);
+  } catch {
+    // Igual que arriba: no poder recordarlo no puede romper nada.
+  }
+}
+
 export function tierById(id: TierId): Tier {
   const found = TIERS.find((tier) => tier.id === id);
   if (!found) throw new Error(`Tramo desconocido: ${id}`);
