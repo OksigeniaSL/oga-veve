@@ -15,7 +15,9 @@
   --ocre: #dd923f;
   --verde-bosque: #2f5243;
   --beige: #e4e2da;
-  --sombra: rgba(18, 26, 22, 0.55);
+  /* Opacidad alta para que el contraste del texto no dependa de lo que haya
+     detrás: una tarjeta translúcida sobre cielo claro no cumple AA. */
+  --sombra: rgba(18, 26, 22, 0.78);
 
   --hud-fuente: 'Varela Round', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
 }
@@ -100,9 +102,11 @@ body {
 /* La palabra corriente, debajo de la abreviatura aeronáutica. Pequeña y
    discreta: es la muleta de quien está aprendiendo a leer, no el rótulo
    principal. Con el tiempo se deja de mirar. */
+/* Subida del 55 % al 78 %: al 55 sobre la tarjeta translúcida no llegaba a
+   4,5:1 contra un cielo claro. */
 .medidor__glosa {
   font-size: 11px;
-  opacity: 0.55;
+  opacity: 0.78;
   margin-top: 3px;
   letter-spacing: 0.02em;
 }
@@ -250,12 +254,16 @@ body {
 }
 
 /* Avisos */
+/* Terracota oscurecida y texto beige. El blanco sobre #BE5D38 da 4,3:1 y se
+   queda por debajo del 4,5:1 que exige AA — y precisamente en el texto más
+   crítico del juego. Este par mide 5,58:1, comprobado en el navegador. */
 .aviso-hud {
-  font-size: 18px;
+  font-size: 19px;
+  font-weight: 600;
   padding: 8px 16px;
   border-radius: 10px;
-  background: var(--terracota);
-  color: #fff;
+  background: #8f3f22;
+  color: var(--beige);
   opacity: 0;
   transition: opacity 160ms ease;
 }
@@ -535,6 +543,13 @@ body {
 
 .creditos__panel a {
   color: var(--ocre);
+}
+
+/* Foco visible en todo lo que se puede enfocar: criterio 2.4.7. */
+:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .creditos__cerrar {

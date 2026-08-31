@@ -140,11 +140,16 @@ export class Hud {
       <div class="vineta" data-hud="vignette"></div>
       ${Tutor.markup()}
       <div class="hud__abajo">
-        <div class="aviso-hud" data-hud="warning">
+        <!--
+          Aquí sí: el aviso es assertive porque interrumpe (pérdida, suelo)
+          y el mensaje efímero es polite porque puede esperar. Son las dos
+          únicas cosas del HUD que un lector de pantalla debe leer.
+        -->
+        <div class="aviso-hud" role="alert" aria-live="assertive" data-hud="warning">
           <span class="aviso-hud__flecha" data-hud="warning-arrow" aria-hidden="true"></span>
           <span data-hud="warning-text"></span>
         </div>
-        <div class="tarjeta insignia" data-hud="hint" style="margin-top:8px"></div>
+        <div class="tarjeta insignia" aria-live="polite" data-hud="hint" style="margin-top:8px"></div>
       </div>
     `;
 
