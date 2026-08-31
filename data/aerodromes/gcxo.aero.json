@@ -52,7 +52,8 @@
           "approachLights": null
         }
       },
-      "markings": null
+      "markings": null,
+      "magneticVariation": 9
     }
   ],
   "taxiways": [

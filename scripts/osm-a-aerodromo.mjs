@@ -240,6 +240,27 @@ async function construir(icao, pistas, aeropuertos) {
       thresholds: a && b ? { [a]: umbral(a), [b]: umbral(b) } : {},
       // Categoría de marcas pintadas: no existe en OSM. Se decide luego.
       markings: null,
+      /**
+       * Declinación magnética deducida, grados (positivo = magnético mayor).
+       *
+       * **El número pintado en una pista es su rumbo MAGNÉTICO**, no el
+       * verdadero. En Asunción el umbral 02 apunta a 10° verdaderos: calcular
+       * el designador desde el rumbo verdadero daría «01» y habríamos pintado
+       * el número equivocado en una pista real.
+       *
+       * No hace falta un modelo magnético mundial para esto: el designador
+       * verdadero lo da OurAirports, así que la diferencia se deduce de los
+       * propios datos y queda anotada para quien la necesite.
+       */
+      magneticVariation: (() => {
+        if (!a || !eje.length) return null;
+        const t = num(suya?.[suya?.le_ident === a ? 'le_heading_degT' : 'he_heading_degT']);
+        if (t === null) return null;
+        let d = Number(a) * 10 - t;
+        while (d > 180) d -= 360;
+        while (d < -180) d += 360;
+        return Math.round(d * 10) / 10;
+      })(),
     };
   });
 

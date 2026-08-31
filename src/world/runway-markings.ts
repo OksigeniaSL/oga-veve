@@ -139,6 +139,25 @@ function addThreshold(
  * Número de pista a partir del rumbo: las decenas, redondeadas, con cero a la
  * izquierda. Rumbo 090 es la pista 09; rumbo 275 es la 27.
  */
+/**
+ * El número pintado en una cabecera, a partir de su rumbo.
+ *
+ * **AVISO: el rumbo que hay que darle es el MAGNÉTICO, no el verdadero.**
+ *
+ * El designador de una pista son los primeros dos dígitos de su rumbo
+ * magnético. Y la diferencia no es un detalle: el umbral 02 de Silvio
+ * Pettirossi apunta a **10° verdaderos**, así que calcularlo desde el rumbo
+ * verdadero daría «01» y habríamos pintado el número equivocado en una pista
+ * de verdad. Con escenarios inventados nunca se nota, porque allí no hay
+ * declinación; con aeródromos reales, sí.
+ *
+ * Para los aeródromos extraídos no hace falta llamar a esta función: el
+ * designador real viene en el propio `.aero.json`, y ahí va también la
+ * declinación deducida. Esto es para el terreno inventado.
+ *
+ * Y la comprobación que sirve siempre: **las dos cabeceras de una pista se
+ * diferencian en 18**, y no hay ninguna por encima de 36.
+ */
 export function designator(heading: number): string {
   const normalised = ((heading % 360) + 360) % 360;
   const tens = Math.round(normalised / 10) || 36;
