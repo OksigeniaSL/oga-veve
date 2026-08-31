@@ -39,6 +39,15 @@ en el regazo de un adulto. Resuelve además el problema difícil —que el tramo
 infantil no aburra al adulto— porque el adulto no juega al juego de la niña:
 juega a ser instructor, que es el juego más profundo que existe.
 
+**Y el efecto visual para los pequeños es probablemente lo más novedoso.**
+No hay simulador de vuelo pensado para alguien que no sabe leer, porque
+todos están hechos para adultos que quieren realismo. Un aro que se ilumina
+al cruzarlo, un haz de luz que dice «ven aquí», instrumentos que son dibujos
+antes de ser cifras: eso no existe en ningún sitio, y es lo que hace que un
+niño de cinco años pueda volar de verdad en vez de mirar volar a otro. Lo
+demás del juego —la física honesta, el catálogo de avisos, la fraseología—
+lo tienen otros. Esto no.
+
 **El mundo es una tela.** El terreno ya se pinta por bandas de color, sin una
 sola fotografía. Eso no es una carencia que disimular: es la dirección de arte.
 Paraguay es el país del ñandutí y del ao po'i, y visto desde el aire es un país
