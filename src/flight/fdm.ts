@@ -59,16 +59,24 @@ const CRASH_BANK = 0.5; // ~29°
  * toque de alerón y segundos hasta nivelar.
  */
 const WING_LEVELLER = 2.0;
-/**
- * Por encima de esta velocidad de descenso, la toma rebota y se nota.
+/*
+ * Aquí vivía un rebote: por encima de cierta velocidad de descenso, una toma
+ * dura devolvía el avión al aire para que se notara que había salido mal.
  *
- * Está alto a propósito. La primera versión rebotaba a partir de 2,4 m/s y
- * el efecto fue el contrario del buscado: una toma normalmente firme —la de
- * cualquiera que esté aprendiendo— devolvía el avión al aire sin velocidad
- * para volar, y desde ahí solo se podía caer otra vez. Se aterrizaba peor
- * que antes de añadir el rebote. Ahora solo rebota un golpe de verdad.
+ * Se ha quitado, y conviene dejar escrito por qué para que no vuelva. Nació
+ * con el umbral demasiado bajo y empeoraba los aterrizajes normales —una toma
+ * firme te devolvía al aire sin velocidad para volar—. Subido el umbral a
+ * donde debía, el compensador automático de Arcade frena las caídas y ya no
+ * se llegaba nunca: con los mandos sueltos la ayuda arresta el descenso, y
+ * volando el avión contra el suelo se pasa de 0,9 m/s a 21 m/s sin escala
+ * intermedia. Cinco intentos de escribirle un test que lo alcanzara y ninguno
+ * lo consiguió, que es la señal de que no se ejecutaba nunca.
+ *
+ * Lo que hacía falta —que una llegada regular se note— ya lo da el sonido:
+ * el toque de ruedas suena distinto por encima de 2,5 m/s de descenso.
  */
-const FIRM_TOUCHDOWN = 5.5;
+/** Cuánto tarda el compensador automático en fijar la actitud, en segundos. */
+const TRIM_SETTLE = 1.1;
 /**
  * Instantes por delante en los que se busca terreno, en segundos.
  *
@@ -102,6 +110,13 @@ export class CoefficientFlightModel implements FlightModel {
   private readonly aircraft: AircraftConfig;
   private readonly ground: GroundSampler;
   private assistLevel: number;
+  /**
+   * Ritmo de ascenso que sostiene el compensador automático, en m/s, o `null`
+   * si el jugador tiene el mando en la mano.
+   */
+  private trimClimb: number | null = null;
+  /** Segundos que le quedan al compensador para fijar el objetivo. */
+  private trimSettle = 0;
 
   // Vectores de trabajo reutilizados: este bucle corre 240 veces por
   // segundo y no queremos darle basura al recolector.
@@ -159,14 +174,18 @@ export class CoefficientFlightModel implements FlightModel {
     s.crashed = false;
     s.stalled = false;
     s.loadFactor = 1;
+    this.trimClimb = null;
+    this.trimSettle = 0;
     this.updateDerived();
   }
 
   step(dt: number, controls: ControlInputs): void {
     // Si la pestaña ha estado en segundo plano llega un dt enorme. Vale más
     // perder tiempo simulado que integrar un salto y mandar el avión a la
-    // estratosfera.
-    const total = Math.min(dt, 0.1);
+    // estratosfera. El tope acompaña al del bucle de juego: con subpasos de
+    // 240 Hz, un cuarto de segundo son sesenta subpasos y se integra igual
+    // de bien.
+    const total = Math.min(dt, 0.25);
     const substeps = Math.max(1, Math.ceil(total / MAX_SUBSTEP));
     const h = total / substeps;
     for (let i = 0; i < substeps; i++) this.integrate(h, controls);
@@ -267,16 +286,72 @@ export class CoefficientFlightModel implements FlightModel {
       pitchMoment -= k * 0.6 * qHat * ac.chord;
       yawMoment -= k * 0.9 * rHat * ac.wingSpan;
 
-      // Mantenimiento de actitud al soltar el cabeceo.
+      // Compensador automático: mantiene **la actitud que dejaste**.
       //
-      // Sin esto, soltar los mandos deja al avión en fugoide: un vaivén
-      // larguísimo en el que cambia altura por velocidad una y otra vez.
-      // Es lo que hace de verdad un avión y está bien que el modo Piloto lo
-      // tenga, pero en Arcade significa que soltar la tecla te manda a un
-      // tobogán de cien metros. Aquí se amortigua llevando el morro al
-      // horizonte, que es lo que haría un piloto sin pensarlo.
+      // La primera versión llevaba el morro al horizonte, y eso está mal por
+      // dos motivos que se notan enseguida al jugar. Peleaba contra
+      // cualquier subida que hubieras establecido —soltabas la tecla y el
+      // avión se empeñaba en nivelarse—, así que costaba ganar altura y no
+      // se apreciaba que subieras. Y como llevar el morro al horizonte no
+      // controla la velocidad, el avión entraba igualmente en fugoide: subía
+      // y bajaba, ganaba y perdía velocidad, sin estabilizarse nunca.
+      //
+      // Lo que hace un piloto de verdad es compensar: pone la actitud que
+      // quiere y suelta, y el avión la mantiene. Eso es lo que hay aquí. Al
+      // soltar el cabeceo se captura la actitud del momento y se sostiene,
+      // con amortiguamiento sobre la velocidad de cabeceo para que llegue
+      // sin rebotar.
       if (Math.abs(controls.elevator) < 0.08 && !s.onGround) {
-        pitchMoment -= this.assistLevel * qS * a.cmElevator * 1.4 * ac.chord * Math.sin(this.pitchAngle());
+        // Se sostiene **la subida**, no la actitud del morro.
+        //
+        // Las dos versiones anteriores intentaron mantener el cabeceo y las
+        // dos fallaron por el mismo motivo: la actitud no determina si subes.
+        // Llevando el morro al horizonte, el avión peleaba contra cualquier
+        // ascenso que hubieras establecido y además entraba en fugoide.
+        // Capturando la actitud al soltar, cogía la foto en mitad del
+        // transitorio —con el morro cayendo— y acababa descendiendo hasta el
+        // suelo. Lo que el jugador percibe y quiere conservar es el ritmo de
+        // ascenso, así que es eso lo que se controla.
+        //
+        // El objetivo se toma al soltar, tras un margen para que el avión se
+        // asiente, y se sostiene con un proporcional sobre el error de
+        // velocidad vertical más amortiguamiento de cabeceo.
+        if (this.trimClimb === null) {
+          this.trimClimb = clamp(s.verticalSpeed, -4, 6);
+          this.trimSettle = TRIM_SETTLE;
+        } else if (this.trimSettle > 0) {
+          this.trimSettle -= dt;
+          this.trimClimb = clamp(s.verticalSpeed, -4, 6);
+        }
+
+        // Protección de velocidad: sostener una subida con el gas fijo acaba
+        // comiéndose la velocidad. Cerca de la pérdida el objetivo se relaja
+        // hasta cero, y el avión baja el morro solo antes de caerse.
+        // Calibrado contra la velocidad de pérdida, no a ojo. La Óga 172
+        // entra en pérdida sobre 25 m/s y sube a unos 30: con el suelo puesto
+        // en 0,48 del crucero —28,8— la protección se comía casi todo el
+        // objetivo justo a la velocidad normal de ascenso, y el avión no
+        // subía. El suelo va por debajo de la pérdida y el margen se abre
+        // antes de llegar a la velocidad de subida.
+        const floor = ac.cruiseSpeed * 0.42;
+        const safe = ac.cruiseSpeed * 0.52;
+        const margin = clamp((speed - floor) / (safe - floor), 0, 1);
+        const wanted = this.trimClimb * margin;
+
+        // La ganancia se programa con la velocidad. El momento disponible
+        // crece con la presión dinámica —o sea con el cuadrado de la
+        // velocidad— mientras que la inercia del avión no cambia, así que una
+        // ganancia fija que va bien a treinta metros por segundo oscila a
+        // sesenta. Se normaliza contra la velocidad de crucero, que es como
+        // programan la ganancia los pilotos automáticos de verdad.
+        const reference = ac.cruiseSpeed * ac.cruiseSpeed;
+        const schedule = Math.min(1, reference / (speed * speed + 1));
+        const authority = this.assistLevel * qS * a.cmElevator * ac.chord * schedule;
+        pitchMoment += authority * ((wanted - s.verticalSpeed) * 0.12 - s.pitchRate * 0.75);
+      } else {
+        // Con el mando en la mano, no hay compensador que valga.
+        this.trimClimb = null;
+        this.trimSettle = 0;
       }
 
       // Nivelado automático al soltar los alerones. La ganancia está atada a
@@ -356,11 +431,6 @@ export class CoefficientFlightModel implements FlightModel {
       const limit = this.crashLimits();
       if (sinkRate > limit.sink || Math.abs(this.bankAngle()) > limit.bank) {
         s.crashed = true;
-      } else if (sinkRate > FIRM_TOUCHDOWN) {
-        // Llegada dura pero no rota: rebota. Se ve, se nota que ha salido
-        // mal y no castiga. En un juego para chicos, la penalización por
-        // aterrizar regular es un bote, no una pantalla roja.
-        s.velocity.y = Math.min(sinkRate * 0.22, 2.5);
       }
     }
 
@@ -479,12 +549,6 @@ export class CoefficientFlightModel implements FlightModel {
     this.forward.copy(FORWARD_LOCAL).applyQuaternion(q);
     this.right.copy(RIGHT_LOCAL).applyQuaternion(q);
     this.down.copy(DOWN_LOCAL).applyQuaternion(q);
-  }
-
-  /** Ángulo de cabeceo respecto al horizonte, rad. Positivo, morro arriba. */
-  private pitchAngle(): number {
-    this.updateBodyAxes();
-    return Math.asin(clamp(this.forward.y, -1, 1));
   }
 
   /**

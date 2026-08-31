@@ -43,10 +43,22 @@ type CameraMode = (typeof CAMERA_MODES)[number];
 /** Campo de visión en reposo y cuánto se abre a velocidad máxima, en grados. */
 const BASE_FOV = 62;
 const FOV_STRETCH = 9;
-/** Velocidad, en m/s, a la que el campo de visión llega a su tope. */
-const FOV_REFERENCE = 70;
+/**
+ * Velocidad, en m/s, a la que el campo de visión llega a su tope.
+ *
+ * Baja a propósito. Con la referencia en setenta, a velocidad de rotación
+ * —treinta— solo se había abierto el cuarenta por ciento, así que toda la
+ * carrera por pista transcurría con el ángulo casi quieto y no se apreciaba
+ * acelerar. Lo que tiene que leerse es el **cambio**, y el cambio importa
+ * justo donde se acelera de verdad, no en crucero.
+ */
+const FOV_REFERENCE = 44;
 /** Amplitud del traqueteo de pista, en metros. */
-const SHAKE_AMPLITUDE = 0.34;
+const SHAKE_AMPLITUDE = 0.42;
+/** Velocidad, en m/s, a la que el traqueteo llega a su máximo. */
+const SHAKE_REFERENCE = 30;
+/** Cuánto retrocede la cámara por cada m/s² de aceleración. */
+const ACCELERATION_LAG = 0.9;
 /** Segundos que tarda el traqueteo en apagarse al despegar. */
 const SHAKE_FADE = 0.2;
 
@@ -92,6 +104,9 @@ export class Game {
   /** Cuánto traqueteo hay ahora mismo, de 0 a 1. Se apaga solo al despegar. */
   private shake = 0;
   private shakeClock = 0;
+  /** Aceleración longitudinal filtrada, para el retroceso de cámara. */
+  private surge = 0;
+  private lastAirspeed = 0;
   private readonly blobShadow: Mesh;
   /** Respeta la preferencia del sistema de reducir movimiento. */
   private readonly reducedMotion =
@@ -217,7 +232,16 @@ export class Game {
   // ── Bucle ─────────────────────────────────────────────────────────────
 
   private frame = (): void => {
-    const dt = Math.min(this.clock.getDelta(), 0.1);
+    // El tope está en un cuarto de segundo y no en una décima.
+    //
+    // Con una décima, un aparato lento no perdía fotogramas: jugaba **a
+    // cámara lenta**. A cuatro fotogramas por segundo cada uno dura 0,25 s
+    // reales y el juego solo avanzaba 0,1, así que la simulación corría al
+    // cuarenta por ciento y el avión tardaba el doble en todo. El modelo de
+    // vuelo ya subdivide internamente a 240 Hz, así que un dt grande es
+    // seguro; lo único que hay que evitar es el salto enorme al volver de
+    // una pestaña en segundo plano, y de eso se encarga `visibilitychange`.
+    const dt = Math.min(this.clock.getDelta(), 0.25);
 
     this.input.update(dt);
     if (this.flight.state.crashed) {
@@ -292,20 +316,29 @@ export class Game {
   private updateBlobShadow(state: FlightState): void {
     const ground = this.terrain.sampleSurface(state.position.x, state.position.z);
     const height = Math.max(0, state.position.y - ground);
-    const fade = Math.max(0, 1 - height / 220);
+    // Se ve hasta cuatrocientos metros. Antes se apagaba a doscientos veinte
+    // y desaparecía justo cuando empezaba a ser útil como referencia de que
+    // se está ganando altura.
+    const fade = Math.max(0, 1 - height / 400);
 
     this.blobShadow.visible = fade > 0.02;
     if (!this.blobShadow.visible) return;
 
     this.blobShadow.position.set(state.position.x, ground + 0.4, state.position.z);
     this.blobShadow.rotation.y = -state.heading;
-    const spread = 1 + height / 130;
+    const spread = 1 + height / 110;
     this.blobShadow.scale.set(spread, 1, spread);
     (this.blobShadow.material as MeshBasicMaterial).opacity = fade * fade * 0.5;
   }
 
   private updateCamera(dt: number): void {
     const state = this.flight.state;
+
+    // Aceleración longitudinal, filtrada. Sin filtrar salta con cada subpaso
+    // del modelo y la cámara temblaría.
+    const rawSurge = dt > 0 ? (state.airspeed - this.lastAirspeed) / dt : 0;
+    this.lastAirspeed = state.airspeed;
+    this.surge += (Math.min(rawSurge, 6) - this.surge) * Math.min(1, dt * 4);
 
     if (this.cameraMode === 'cockpit') {
       // Desde dentro no hay suavizado: la cámara es la cabeza del piloto y
@@ -325,6 +358,11 @@ export class Game {
       // que es donde uno quiere mirar para saber adónde va.
       this.offset.set(0, this.aircraft.wingSpan * 0.52, this.aircraft.wingSpan * 1.5);
     }
+    // Retroceso por aceleración: la cámara se queda un poco atrás cuando el
+    // avión empuja y vuelve a su sitio al estabilizarse. Es el mismo truco
+    // que usa cualquier juego de coches y es lo que hace que se *sienta* la
+    // aceleración en vez de solo verla en el marcador.
+    this.offset.z += ACCELERATION_LAG * Math.max(0, this.surge);
     this.offset.applyQuaternion(state.orientation);
     this.desiredCamera.copy(state.position).add(this.offset);
     this.applyGroundShake(state, dt);
@@ -359,7 +397,12 @@ export class Game {
   private applyGroundShake(state: FlightState, dt: number): void {
     if (this.reducedMotion) return;
 
-    const target = state.onGround ? Math.min(1, state.airspeed / 34) : 0;
+    // Sube con el cuadrado de la velocidad hasta la de rotación: así el
+    // traqueteo crece de verdad durante toda la carrera en vez de saturarse a
+    // media pista, que era lo que hacía que después de arrancar pareciera que
+    // ya no se aceleraba más.
+    const roll = Math.min(1, state.airspeed / SHAKE_REFERENCE);
+    const target = state.onGround ? roll * roll : 0;
     // Sube deprisa y se apaga en SHAKE_FADE segundos.
     const rate = target > this.shake ? dt * 6 : dt / SHAKE_FADE;
     this.shake += Math.max(-rate, Math.min(rate, target - this.shake));

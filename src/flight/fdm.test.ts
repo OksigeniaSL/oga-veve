@@ -161,31 +161,42 @@ describe('ayudas de pilotaje', () => {
 });
 
 describe('vuelo con los mandos sueltos', () => {
-  /** Diferencia entre la altura máxima y la mínima en un minuto sin tocar nada. */
-  function heightSwing(assist: number): number {
+  /**
+   * Cuántas veces cambia de signo la velocidad vertical en un minuto sin
+   * tocar nada.
+   *
+   * Se mide esto y no la diferencia entre altura máxima y mínima, que era lo
+   * que medía la versión anterior de este test. Desde que el compensador
+   * automático sostiene el ritmo de ascenso en vez de nivelar el morro, un
+   * vuelo perfectamente sano puede subir cien metros seguidos, y esa
+   * diferencia no dice nada. Lo que queremos saber es si **oscila**: el
+   * fugoide es un vaivén, y un vaivén cambia de signo.
+   */
+  function oscillations(assist: number): number {
     const model = makeModel(assist);
     model.reset({ position: new Vector3(0, 1000, 0), heading: 0, airspeed: 62 });
-    let min = Infinity;
-    let max = -Infinity;
+
+    let changes = 0;
+    let previous = 0;
     for (let second = 0; second < 60; second++) {
       fly(model, 1, { throttle: 0.65 });
-      min = Math.min(min, model.state.position.y);
-      max = Math.max(max, model.state.position.y);
+      const sign = Math.sign(model.state.verticalSpeed);
+      if (previous !== 0 && sign !== 0 && sign !== previous) changes++;
+      if (sign !== 0) previous = sign;
     }
-    return max - min;
+    return changes;
   }
 
-  it('en Arcade el avión se queda donde lo dejas', () => {
-    // Soltar los mandos deja al avión en fugoide: un vaivén larguísimo de
+  it('en Arcade el vuelo es estable: no da vaivenes', () => {
+    // Soltar los mandos dejaba al avión en fugoide, un vaivén larguísimo de
     // altura contra velocidad. Es lo que hace un avión de verdad, pero para
-    // quien está aprendiendo significa un tobogán de cien metros cada vez
-    // que suelta la tecla. En Arcade se amortigua llevando el morro al
-    // horizonte.
-    expect(heightSwing(1)).toBeLessThan(45);
+    // quien está aprendiendo significa que el avión sube y baja solo y se
+    // siente raro. En Arcade se sostiene el ritmo de ascenso que había.
+    expect(oscillations(1)).toBeLessThanOrEqual(1);
   });
 
   it('en modo Piloto el fugoide sigue ahí, que para eso es el modo', () => {
-    expect(heightSwing(0)).toBeGreaterThan(heightSwing(1) * 2);
+    expect(oscillations(0)).toBeGreaterThan(1);
   });
 });
 

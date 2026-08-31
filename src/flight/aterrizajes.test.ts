@@ -72,27 +72,16 @@ describe('el modo Arcade perdona y el modo Piloto no', () => {
   });
 });
 
-describe('rebote', () => {
+describe('registro de la toma', () => {
   it('una toma normalmente firme se queda en el suelo', () => {
-    // La regresión que guarda este test: con el umbral de rebote demasiado
-    // bajo, la toma firme de cualquiera que esté aprendiendo devolvía el
-    // avión al aire sin velocidad para volar, y desde ahí solo se podía
-    // caer otra vez. Se aterrizaba peor con rebote que sin él.
     const state = drop(5, 1);
     expect(state.crashed).toBe(false);
-    expect(state.touchdownSinkRate).toBeGreaterThan(4);
     expect(state.velocity.y).toBeLessThan(0.1);
   });
 
-  it('un golpe de verdad sí rebota', () => {
-    const state = drop(20, 1);
-    expect(state.crashed).toBe(false);
-    expect(state.touchdownSinkRate).toBeGreaterThan(5.5);
-    expect(state.velocity.y).toBeGreaterThan(1);
-  });
-
   it('registra la velocidad de descenso de la toma', () => {
-    // La necesitará una misión que puntúe el aterrizaje.
-    expect(drop(5, 1).touchdownSinkRate).toBeGreaterThan(drop(0.4, 1).touchdownSinkRate);
+    // La necesita el sonido, que hace sonar distinto una llegada dura, y la
+    // necesitará una misión que puntúe el aterrizaje.
+    expect(drop(12, 0).touchdownSinkRate).toBeGreaterThan(drop(0.4, 0).touchdownSinkRate);
   });
 });
