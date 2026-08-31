@@ -11,7 +11,10 @@
  * espera el FDM y la de cualquier glTF exportado con "forward -Z", así que
  * el reemplazo futuro encaja sin rotaciones sorpresa.
  *
- * Colores de la paleta de Granja Óga: terracota, ocre, verde bosque y beige.
+ * Cada aeronave lleva su silueta y su paleta en `appearance`, dentro de su
+ * propia ficha: un biplano se dibuja con dos alas y montantes entre ellas, y
+ * un ala alta con una sola. Antes todas salían iguales —el biplano parecía
+ * un monoplano— porque la geometría solo miraba las medidas y no la forma.
  */
 
 import {
@@ -23,11 +26,6 @@ import {
   type Object3D,
 } from 'three';
 import type { AircraftConfig } from '../flight/aircraft';
-
-const TERRACOTA = 0xbe5d38;
-const OCRE = 0xdd923f;
-const VERDE_BOSQUE = 0x2f5243;
-const BEIGE = 0xe4e2da;
 
 export interface AircraftMesh {
   group: Group;
@@ -43,9 +41,10 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
   const length = span * 0.78;
   const chord = aircraft.chord;
 
-  const body = new MeshLambertMaterial({ color: BEIGE });
-  const accent = new MeshLambertMaterial({ color: TERRACOTA });
-  const trim = new MeshLambertMaterial({ color: VERDE_BOSQUE });
+  const look = aircraft.appearance;
+  const body = new MeshLambertMaterial({ color: look.body });
+  const accent = new MeshLambertMaterial({ color: look.accent });
+  const trim = new MeshLambertMaterial({ color: look.trim });
   const glass = new MeshLambertMaterial({ color: 0x2a3b45, transparent: true, opacity: 0.72 });
 
   // Fuselaje
@@ -63,21 +62,37 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
   canopy.position.set(0, chord * 0.46, -length * 0.16);
   group.add(canopy);
 
-  // Ala principal. Ala alta: es lo que hace que se vea el suelo desde dentro,
-  // que para este juego importa más que cualquier consideración aerodinámica.
-  const wing = new Mesh(new BoxGeometry(span, chord * 0.14, chord), body);
-  wing.position.set(0, chord * 0.5, -length * 0.05);
-  group.add(wing);
+  const biplane = look.layout === 'biplane';
 
-  const wingStripe = new Mesh(new BoxGeometry(span, chord * 0.16, chord * 0.22), accent);
-  wingStripe.position.set(0, chord * 0.5, -length * 0.05 + chord * 0.32);
-  group.add(wingStripe);
+  // Ala superior. En el ala alta es la única; en el biplano, la de arriba.
+  const upper = new Mesh(new BoxGeometry(span, chord * 0.14, chord), body);
+  upper.position.set(0, chord * (biplane ? 0.95 : 0.5), -length * 0.05);
+  group.add(upper);
 
-  // Montantes del ala
-  for (const side of [-1, 1]) {
-    const strut = new Mesh(new BoxGeometry(chord * 0.08, chord * 0.5, chord * 0.1), trim);
-    strut.position.set(side * span * 0.22, chord * 0.24, -length * 0.02);
-    group.add(strut);
+  const stripe = new Mesh(new BoxGeometry(span, chord * 0.16, chord * 0.22), accent);
+  stripe.position.set(0, upper.position.y, -length * 0.05 + chord * 0.32);
+  group.add(stripe);
+
+  if (biplane) {
+    // Ala inferior, más corta, y los montantes que las unen. Es lo que hace
+    // que un biplano se lea como biplano desde la cámara de persecución.
+    const lower = new Mesh(new BoxGeometry(span * 0.88, chord * 0.13, chord * 0.92), body);
+    lower.position.set(0, -chord * 0.12, -length * 0.02);
+    group.add(lower);
+
+    for (const side of [-1, 1]) {
+      for (const offset of [-chord * 0.3, chord * 0.3]) {
+        const strut = new Mesh(new BoxGeometry(chord * 0.07, chord * 1.07, chord * 0.09), trim);
+        strut.position.set(side * span * 0.3, chord * 0.42, -length * 0.04 + offset);
+        group.add(strut);
+      }
+    }
+  } else {
+    for (const side of [-1, 1]) {
+      const strut = new Mesh(new BoxGeometry(chord * 0.08, chord * 0.5, chord * 0.1), trim);
+      strut.position.set(side * span * 0.22, chord * 0.24, -length * 0.02);
+      group.add(strut);
+    }
   }
 
   // Estabilizador horizontal y deriva
@@ -112,12 +127,15 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
   // Hélice: dos palas y un buje. Gira en el bucle de juego.
   const propeller = new Group();
   propeller.position.z = -length * 0.56;
-  const hub = new Mesh(new CylinderGeometry(chord * 0.1, chord * 0.1, chord * 0.12, 8), new MeshLambertMaterial({ color: OCRE }));
+  const hub = new Mesh(
+    new CylinderGeometry(chord * 0.1, chord * 0.1, chord * 0.12, 8),
+    new MeshLambertMaterial({ color: look.accent }),
+  );
   hub.rotation.x = Math.PI / 2;
   propeller.add(hub);
-  for (const angle of [0, Math.PI / 2]) {
+  for (let i = 0; i < look.blades; i++) {
     const blade = new Mesh(new BoxGeometry(chord * 1.5, chord * 0.11, chord * 0.05), trim);
-    blade.rotation.z = angle;
+    blade.rotation.z = (i * Math.PI) / look.blades;
     propeller.add(blade);
   }
   group.add(propeller);

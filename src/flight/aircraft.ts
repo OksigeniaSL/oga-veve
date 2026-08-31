@@ -72,6 +72,26 @@ export interface AeroCoefficients {
   cnAileron: number;
 }
 
+/**
+ * Cómo se ve una aeronave.
+ *
+ * Está aquí, junto a los coeficientes, porque la forma y la aerodinámica
+ * describen el mismo avión: un biplano tiene dos alas y más resistencia, y
+ * las dos cosas tienen que contarse a la vez o acaban divergiendo. Cuando
+ * entren los modelos en glTF, esto se queda como referencia de silueta y de
+ * paleta.
+ */
+export interface AircraftAppearance {
+  /** Disposición del ala. Es lo que distingue una silueta de otra. */
+  layout: 'high-wing' | 'biplane';
+  /** Colores del fuselaje, del capó y de los detalles. */
+  body: number;
+  accent: number;
+  trim: number;
+  /** Cuántas palas lleva la hélice. */
+  blades: number;
+}
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */
@@ -105,6 +125,7 @@ export interface AircraftConfig {
   flapsLift: number;
   flapsDrag: number;
 
+  appearance: AircraftAppearance;
   aero: AeroCoefficients;
 }
 
@@ -130,6 +151,13 @@ export const OGA_172: AircraftConfig = {
   maxGroundPitch: 0.21, // 12°
   flapsLift: 0.55,
   flapsDrag: 0.06,
+  appearance: {
+    layout: 'high-wing',
+    body: 0xe4e2da,
+    accent: 0xbe5d38,
+    trim: 0x2f5243,
+    blades: 2,
+  },
   aero: {
     cl0: 0.28,
     clAlpha: 5.1,
@@ -177,6 +205,14 @@ export const MAINUMBY: AircraftConfig = {
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
   flapsLift: 0.35,
   flapsDrag: 0.05,
+  appearance: {
+    // Biplano de trabajo: dos alas, ocre y verde, hélice de tres palas.
+    layout: 'biplane',
+    body: 0xdd923f,
+    accent: 0x2f5243,
+    trim: 0x8a5a34,
+    blades: 3,
+  },
   aero: {
     cl0: 0.35,
     clAlpha: 5.4,
