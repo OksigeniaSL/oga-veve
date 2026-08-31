@@ -292,6 +292,18 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
   grupo.name = 'rodadura';
   const piezas: BufferGeometry[] = [];
 
+  // El amarillo **se corta al llegar a la pista**. Una calle de rodaje cruza
+  // una pista en el mapa, pero su línea no se pinta encima del asfalto de la
+  // pista: ahí manda el blanco, y el amarillo pintado a través confundía
+  // justo donde menos conviene confundirse.
+  const enLaPista = (p: Punto) => {
+    for (const pista of aero.runways) {
+      const media = (pista.widthM ?? 45) / 2 + 3;
+      if (aLaPolilinea(p, pista.centerline) < media) return true;
+    }
+    return false;
+  };
+
   for (const calle of aero.taxiways) {
     const eje = calle.path;
     for (let i = 0; i < eje.length - 1; i++) {
@@ -299,6 +311,7 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
       const [bx, by] = eje[i + 1]!;
       const largo = Math.hypot(bx - ax, by - ay);
       if (largo < 1) continue;
+      if (enLaPista([(ax + bx) / 2, (ay + by) / 2])) continue;
       const ux = (bx - ax) / largo;
       const uy = (by - ay) / largo;
       const px = -uy * 0.075;
@@ -343,6 +356,30 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
     }
   }
   return grupo;
+}
+
+/** Distancia de un punto a una polilínea. */
+function aLaPolilinea(p: Punto, eje: readonly Punto[]): number {
+  let mejor = Infinity;
+  for (let i = 0; i < eje.length - 1; i++) {
+    const [ax, ay] = eje[i]!;
+    const [bx, by] = eje[i + 1]!;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const l = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / l));
+    mejor = Math.min(mejor, Math.hypot(p[0] - (ax + t * dx), p[1] - (ay + t * dy)));
+  }
+  return mejor;
+}
+
+/** Lo que mide una polilínea. */
+function longitudDe(eje: readonly Punto[]): number {
+  let total = 0;
+  for (let i = 0; i < eje.length - 1; i++) {
+    total += Math.hypot(eje[i + 1]![0] - eje[i]![0], eje[i + 1]![1] - eje[i]![1]);
+  }
+  return total;
 }
 
 /**
@@ -597,17 +634,34 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   const ax = a.xy![0];
   const ay = a.xy![1];
   const largo = Math.hypot(b.xy![0] - ax, b.xy![1] - ay);
-  // Unitario a lo largo del eje, y su perpendicular.
-  const ux = (b.xy![0] - ax) / largo;
-  const uy = (b.xy![1] - ay) / largo;
-  const px = -uy;
-  const py = ux;
 
   const piezas: BufferGeometry[] = [];
+
+  // **Todo se sitúa sobre el eje del pavimento**, no sobre la recta que une
+  // los umbrales. Son dos rectas parecidas y no la misma —una viene de
+  // OurAirports y la otra de OpenStreetMap—, y medir desde la que no toca
+  // desplaza toda la pintura hacia un lado: el eje discontinuo, el punto de
+  // toma y las teclas de piano salían descentrados respecto al asfalto.
+  //
+  // El eje del fichero puede recorrerse en cualquiera de los dos sentidos, así
+  // que primero se mira por cuál de los dos umbrales empieza.
+  const alRevés =
+    Math.hypot(pista.centerline[0]![0] - ax, pista.centerline[0]![1] - ay) >
+    Math.hypot(pista.centerline[0]![0] - b.xy![0], pista.centerline[0]![1] - b.xy![1]);
+  const largoEje = longitudDe(pista.centerline);
+
   /** Un rectángulo de pintura centrado a `d` metros del umbral A. */
   const raya = (d: number, lado: number, largoM: number, anchoM: number) => {
-    const cx = ax + ux * d + px * lado;
-    const cy = ay + uy * d + py * lado;
+    const p = sobreElEje(pista.centerline, alRevés ? largoEje - d : d);
+    if (!p) return;
+    const [ejeX, ejeY, dirX, dirY] = p;
+    const sentido = alRevés ? -1 : 1;
+    const ux = dirX * sentido;
+    const uy = dirY * sentido;
+    const px = -uy;
+    const py = ux;
+    const cx = ejeX + px * lado;
+    const cy = ejeY + py * lado;
     const contorno: Punto[] = [
       [cx + (ux * largoM + px * anchoM) / 2, cy + (uy * largoM + py * anchoM) / 2],
       [cx + (ux * largoM - px * anchoM) / 2, cy + (uy * largoM - py * anchoM) / 2],
@@ -710,9 +764,14 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     // ángulo del fichero y colocarlo en el mundo es lo que salía espejado —el
     // «20» se leía al revés—, y es el mismo desajuste de marco que ya había
     // aparecido tres veces con los rumbos.
-    geo.rotateY(Math.atan2(-ux, uy) + (d > largo / 2 ? Math.PI : 0));
-    const cx = ax + ux * d;
-    const cy = ay + uy * d;
+    const p = sobreElEje(pista.centerline, alRevés ? largoEje - d : d);
+    if (!p) continue;
+    const sentido = alRevés ? -1 : 1;
+    const dirX = p[2] * sentido;
+    const dirY = p[3] * sentido;
+    geo.rotateY(Math.atan2(-dirX, dirY) + (d > largo / 2 ? Math.PI : 0));
+    const cx = p[0];
+    const cy = p[1];
     geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);
     grupo.add(
       new Mesh(
