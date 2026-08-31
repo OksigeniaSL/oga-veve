@@ -34,6 +34,24 @@ flota tenga sentido y no sea una galería de siluetas.
 **Cómo se lee.** «Es su lección» marca el avión con el que se enseña ese tema
 por primera vez. Los demás pueden tenerlo, pero no es lo suyo.
 
+### Y una columna aparte: el helicóptero
+
+No entra en la tabla de arriba porque no es un avión y no comparte casi nada
+con ellos. Va en su propia familia, fuera de la flota JAZ, con lecciones que
+ninguna otra aeronave puede dar:
+
+| | Qué enseña |
+|---|---|
+| **El estacionario** | Quedarse quieto en el aire. Un avión perdona porque siempre va hacia delante; un helicóptero parado no perdona nada, y sostenerlo diez segundos es un logro de verdad. **Es su lección.** |
+| **El par** | El rotor empuja el aire hacia abajo y el fuselaje quiere girar al revés. Por eso existe el rotor de cola, y es lo primero que se nota al volarlo. |
+| **El efecto suelo** | Cerca del suelo cuesta menos sostenerse. Despegar es salir de esa burbuja, y se siente. |
+| **La autorrotación** | Si se para el motor **no se cae**: el rotor sigue girando con el aire que sube y se puede aterrizar. Es el planeo de #90 contado desde el otro lado. |
+| **Llegar donde no hay pista** | Evacuación médica, trabajo agrícola, estancias lejos de todo. En Paraguay eso es la mitad del país. |
+
+El motor lo admite sin pelea: `FlightModel` es una interfaz y ya tiene dos
+implementaciones detrás. El helicóptero es la tercera, y el resto del juego
+—cámaras, HUD, misiones, terreno, audio, aeródromos— no se entera. Ver #108.
+
 Y el patrón que hay detrás merece decirse: **el avión pequeño enseña más
 física y el grande enseña más procedimiento.** En el entrenador el centrado se
 nota en las manos; en el reactor no se nota y por eso hay que calcularlo. Son
@@ -93,7 +111,12 @@ pendiente · frustradas por cortante y por instrucción de torre.
 2. **Cada avión mantiene su carácter en todos los peldaños.** El entrenador
    es un entrenador con cuatro años y con cuarenta. Lo que cambia es cuánto
    se enseña de él, no lo que es.
-3. **Un tema sin sitio en esta tabla no está terminado de pensar.** Es la
+3. **El panel está entero desde el primer día; el peldaño enciende, no
+   añade.** Con cuatro años se ve la cabina completa y viven tres
+   instrumentos; el resto está ahí, real y quieto. Subir de peldaño no es
+   descubrir una pantalla nueva: es que algo que llevabas viendo por fin
+   hace algo. Ver #106, y #107 para lo que se gana volando.
+4. **Un tema sin sitio en esta tabla no está terminado de pensar.** Es la
    prueba que tiene que pasar cualquier idea nueva antes de convertirse en
    trabajo: *¿en qué avión, y en qué peldaño?* Si no hay respuesta, la idea
    todavía no está lista — y eso no la descarta, la devuelve al horno.
