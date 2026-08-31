@@ -29,16 +29,30 @@ Paraguay, y adultos que quieran volar sin leer un manual.
    cabina del mundo y quien juegue aquí se los va a encontrar tal cual el día
    que vuele de verdad. Lo que se traduce es la glosa en pequeño que va
    debajo. Lo mismo con las unidades: nudos y pies en modo Piloto.
-4. **Test Ña Emy**: si una abuela paraguaya con WhatsApp como única
+4. **Lo que se enseña es real.** Se puede simplificar la presentación tanto
+   como haga falta —un niño de cinco años ve tres cosas en pantalla— pero no
+   se falsea el contenido. Un aeródromo se señaliza como se señaliza uno de
+   verdad; un aviso sonoro solo se pone en un avión que lo llevaría; una
+   pista lleva el número que le corresponde por su rumbo. La prueba es esta:
+   **quien aprenda algo aquí tiene que reconocerlo el día que lo vea de
+   verdad**, y no tener que desaprenderlo. Es lo que separa este juego de un
+   juguete con aviones, y es también lo que lo hace defendible en un aula.
+
+   Corolario incómodo y aceptado: cuando la realidad y la comodidad chocan,
+   gana la realidad y se resuelve simplificando la *presentación*. La
+   explicación popular de Bernoulli es cómoda y es falsa, así que no se
+   enseña ni en el peldaño más bajo.
+
+5. **Test Ña Emy**: si una abuela paraguaya con WhatsApp como única
    referencia no puede usar una pantalla, la pantalla no está terminada.
-5. **Rendimiento primero**: el objetivo es 60 fps en una tablet Android de
+6. **Rendimiento primero**: el objetivo es 60 fps en una tablet Android de
    gama media y en el portátil de un colegio. Antes de añadir un efecto
    visual, se mide.
-6. **Sin telemetría de menores**: este juego no recoge datos personales, no
+7. **Sin telemetría de menores**: este juego no recoge datos personales, no
    pide registro y no lleva analítica de terceros. No se añade ninguna.
-7. **Cada asset se anota en `CREDITOS.md`** con su licencia y su origen,
+8. **Cada asset se anota en `CREDITOS.md`** con su licencia y su origen,
    antes de entrar. Sin licencia verificable, no entra.
-8. **Los comentarios explican el porqué**, no el qué. El código ya dice qué
+9. **Los comentarios explican el porqué**, no el qué. El código ya dice qué
    hace.
 
 ## Convenciones de código

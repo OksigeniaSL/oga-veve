@@ -53,7 +53,7 @@ genera por código, sin descargar datos.
 |---|---|---|
 | Cabeceo / alabeo | Flechas o `W A S D` | Palanca izquierda |
 | Timón | `Q` / `E` | Deslizar en la barra inferior |
-| Motor | `Shift` / `Ctrl` | Palanca derecha |
+| Motor | `+` / `−` (o `Shift` / `Ctrl`) | Palanca derecha |
 | Frenos | `B` | Botón |
 | Cámara | `C` | Botón |
 | Reiniciar vuelo | `R` | Botón |

@@ -199,6 +199,34 @@ body {
   width: 132px;
 }
 
+/* Las dos teclas del motor, flanqueando la barra. El símbolo dice lo que
+   hace: no hay nada que aprender. */
+.motor__fila {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+}
+
+.motor__tecla {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  flex: none;
+  border-radius: 5px;
+  border: 1px solid rgba(228, 226, 218, 0.34);
+  background: rgba(228, 226, 218, 0.12);
+  color: var(--beige);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.motor__fila .motor__pista {
+  flex: 1;
+  margin-top: 0;
+}
+
 .motor__pista {
   height: 10px;
   border-radius: 6px;

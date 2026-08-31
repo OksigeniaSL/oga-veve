@@ -156,9 +156,19 @@ export class Hud {
         ${numbers ? gauge('altitude', INSTRUMENTS.altitude, t('hud.altitude'), this.units.altitudeLabel()) : ''}
         ${numbers ? gauge('heading', INSTRUMENTS.heading, t('hud.heading'), '°') : ''}
         ${pictorial ? arcGauge('altitude', INSTRUMENTS.altitude, t('hud.altitude')) : ''}
+        <!--
+          El motor lleva sus dos teclas dibujadas al lado, y no una sola en
+          el tutor cuando toca. Un mando que solo enseña la mitad de su
+          pareja no se puede deducir: se veía «baja el motor» y no había
+          manera de saber con qué se sube.
+        -->
         <div class="tarjeta medidor motor">
           ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.throttle}</span>` : ''}
-          <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
+          <div class="motor__fila">
+            <span class="motor__tecla" aria-hidden="true">−</span>
+            <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
+            <span class="motor__tecla" aria-hidden="true">+</span>
+          </div>
           ${gauges ? `<span class="medidor__glosa">${t('hud.throttle')}</span>` : ''}
         </div>
         ${numbers ? `<div class="tarjeta horizonte">

@@ -48,7 +48,7 @@ interface StepView {
 
 const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
   throttle: {
-    cue: { kind: 'key', label: 'Shift', wide: true },
+    cue: { kind: 'key', label: '+' },
     touchCue: { kind: 'symbol', glyph: '⇡' },
     key: 'tutor.throttle',
     progress: (_state, throttle) => throttle,
@@ -75,7 +75,7 @@ const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
   // y se callaba justo cuando empieza lo difícil. Sin bajar el gas no hay
   // forma de perder velocidad para posarse, y eso no lo adivina nadie.
   slow: {
-    cue: { kind: 'key', label: 'Ctrl', wide: true },
+    cue: { kind: 'key', label: '−' },
     touchCue: { kind: 'symbol', glyph: '⇣' },
     key: 'tutor.slow',
     progress: (_state, throttle) => 1 - throttle,

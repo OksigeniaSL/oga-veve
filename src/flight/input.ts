@@ -38,8 +38,14 @@ const KEYS = {
   rollLeft: ['ArrowLeft', 'KeyA'],
   yawRight: ['KeyE'],
   yawLeft: ['KeyQ'],
-  throttleUp: ['ShiftLeft', 'ShiftRight'],
-  throttleDown: ['ControlLeft', 'ControlRight'],
+  // Más y menos como mandos principales del motor: **los símbolos dicen lo
+  // que hacen**, así que no hay nada que aprender ni que recordar. Shift y
+  // Control se mantienen porque quien viene de otros simuladores los busca,
+  // pero dejan de ser los únicos: Control en un navegador es además
+  // peligroso —Ctrl+W cierra la pestaña— y no puede ser la única forma de
+  // bajar el gas.
+  throttleUp: ['Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight'],
+  throttleDown: ['Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight'],
   brakes: ['KeyB'],
 } as const;
 
