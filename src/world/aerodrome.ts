@@ -24,6 +24,11 @@
 
 import {
   BufferGeometry,
+  CylinderGeometry,
+  InstancedMesh,
+  Matrix4,
+  MeshBasicMaterial,
+  SphereGeometry,
   Group,
   Mesh,
   MeshLambertMaterial,
@@ -83,6 +88,9 @@ const COLORES: Record<string, ColorRepresentation> = {
   gravel: 0x4a443c,
   grass: 0x4d6136,
 };
+
+/** Amarillo de rodadura. Es el color que dice «esto no es pista». */
+const AMARILLO = 0xd8a521;
 
 /** Cuánto se levanta la pintura sobre el asfalto, m. Ver la nota de `losa`. */
 const PINTURA_ALTURA = 0.2;
@@ -260,7 +268,216 @@ export function createAerodrome(aero: Aerodrome, baseY = 0): Group {
     grupo.add(malla);
   }
 
-  if (principal) grupo.add(marcas(principal, cota));
+  if (principal) {
+    grupo.add(marcas(principal, cota));
+    grupo.add(luces(principal, cota));
+  }
+  grupo.add(rodadura(aero, cota));
+  grupo.add(mangas(aero, cota));
+
+  return grupo;
+}
+
+/**
+ * Las marcas amarillas: eje de las calles de rodaje y puntos de espera.
+ *
+ * El amarillo no es decoración: **es el color que dice «esto no es pista»**.
+ * Un piloto que rueda sigue el amarillo, y cuando llega a las dos rayas
+ * continuas del punto de espera, para y pide permiso. Eso es lo que convierte
+ * rodar en algo que se puede aprender, y no en conducir por una explanada.
+ */
+function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
+  const grupo = new Group();
+  grupo.name = 'rodadura';
+  const piezas: BufferGeometry[] = [];
+
+  for (const calle of aero.taxiways) {
+    const eje = calle.path;
+    for (let i = 0; i < eje.length - 1; i++) {
+      const [ax, ay] = eje[i]!;
+      const [bx, by] = eje[i + 1]!;
+      const largo = Math.hypot(bx - ax, by - ay);
+      if (largo < 1) continue;
+      const ux = (bx - ax) / largo;
+      const uy = (by - ay) / largo;
+      const px = -uy * 0.075;
+      const py = ux * 0.075;
+      const contorno: Punto[] = [
+        [ax + px, ay + py],
+        [bx + px, by + py],
+        [bx - px, by - py],
+        [ax - px, ay - py],
+      ];
+      const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
+      if (geo) piezas.push(geo);
+    }
+  }
+
+  // Puntos de espera: dos barras gruesas cruzando la calle. Se orientan según
+  // la rodadura más cercana, porque OSM da el punto pero no su dirección.
+  for (const punto of aero.holdingPositions) {
+    const dir = direccionCercana(aero, punto);
+    if (!dir) continue;
+    const [ux, uy] = dir;
+    for (const desfase of [-1.5, 1.5]) {
+      const cx = punto[0] + ux * desfase;
+      const cy = punto[1] + uy * desfase;
+      const contorno: Punto[] = [
+        [cx + ux * 0.3 - uy * 11, cy + uy * 0.3 + ux * 11],
+        [cx + ux * 0.3 + uy * 11, cy + uy * 0.3 - ux * 11],
+        [cx - ux * 0.3 + uy * 11, cy - uy * 0.3 - ux * 11],
+        [cx - ux * 0.3 - uy * 11, cy - uy * 0.3 + ux * 11],
+      ];
+      const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
+      if (geo) piezas.push(geo);
+    }
+  }
+
+  if (piezas.length) {
+    const fusionadas = mergeGeometries(piezas, false);
+    if (fusionadas) {
+      const malla = new Mesh(fusionadas, new MeshLambertMaterial({ color: AMARILLO }));
+      malla.name = 'amarillo';
+      grupo.add(malla);
+    }
+  }
+  return grupo;
+}
+
+/** Hacia dónde va la calle de rodaje más cercana a un punto. */
+function direccionCercana(aero: Aerodrome, punto: Punto): readonly [number, number] | null {
+  let mejor = Infinity;
+  let dir: readonly [number, number] | null = null;
+  for (const calle of aero.taxiways) {
+    for (let i = 0; i < calle.path.length - 1; i++) {
+      const [ax, ay] = calle.path[i]!;
+      const [bx, by] = calle.path[i + 1]!;
+      const d = Math.hypot((ax + bx) / 2 - punto[0], (ay + by) / 2 - punto[1]);
+      if (d >= mejor) continue;
+      const largo = Math.hypot(bx - ax, by - ay) || 1;
+      mejor = d;
+      dir = [(bx - ax) / largo, (by - ay) / largo];
+    }
+  }
+  return dir;
+}
+
+/**
+ * Luces de borde de pista y PAPI.
+ *
+ * Todas las luces de borde en **una sola instancia**: son doscientas y pico y
+ * sueltas serían doscientas llamadas de dibujo.
+ *
+ * El PAPI son cuatro luces al costado del umbral que dicen si se viene alto o
+ * bajo en la senda: blancas si vas alto, rojas si vas bajo, y la mezcla que
+ * buscas es dos y dos. Aquí van de momento como cuatro puntos fijos —el
+ * color por ángulo llega con el bloque de aproximación—, pero puestas donde
+ * están y en el lado que les toca.
+ */
+function luces(pista: Pista, altura: (p: Punto) => number): Group {
+  const grupo = new Group();
+  grupo.name = 'luces';
+  if (!pista.lit) return grupo;
+
+  const umbrales = Object.values(pista.thresholds).filter(
+    (u): u is Umbral => u !== null && u.xy !== null,
+  );
+  if (umbrales.length < 2) return grupo;
+
+  const ancho = pista.widthM ?? 45;
+  const [a, b] = umbrales as [Umbral, Umbral];
+  const ax = a.xy![0];
+  const ay = a.xy![1];
+  const largo = Math.hypot(b.xy![0] - ax, b.xy![1] - ay);
+  const ux = (b.xy![0] - ax) / largo;
+  const uy = (b.xy![1] - ay) / largo;
+
+  const separacion = 60;
+  const cuantas = Math.floor(largo / separacion) * 2;
+  const luz = new InstancedMesh(
+    new SphereGeometry(0.55, 6, 4),
+    new MeshBasicMaterial({ color: 0xfff0cc }),
+    cuantas,
+  );
+  luz.name = 'luces-borde';
+  const m = new Matrix4();
+  let i = 0;
+  for (let d = separacion / 2; d < largo && i < cuantas; d += separacion) {
+    for (const lado of [-1, 1]) {
+      const cx = ax + ux * d - uy * lado * (ancho / 2 + 2);
+      const cy = ay + uy * d + ux * lado * (ancho / 2 + 2);
+      m.makeTranslation(cx, altura([cx, cy]) + 0.5, -cy);
+      luz.setMatrixAt(i++, m);
+    }
+  }
+  luz.count = i;
+  grupo.add(luz);
+
+  // PAPI: cuatro luces a la izquierda del umbral por el que se aterriza.
+  const papi = new InstancedMesh(
+    new SphereGeometry(0.8, 6, 4),
+    new MeshBasicMaterial({ color: 0xff5a3c }),
+    4,
+  );
+  papi.name = 'papi';
+  for (let k = 0; k < 4; k++) {
+    const d = 320;
+    const lado = ancho / 2 + 15 + k * 9;
+    const cx = ax + ux * d - uy * lado;
+    const cy = ay + uy * d + ux * lado;
+    m.makeTranslation(cx, altura([cx, cy]) + 0.9, -cy);
+    papi.setMatrixAt(k, m);
+  }
+  grupo.add(papi);
+
+  return grupo;
+}
+
+/**
+ * Las mangas de viento, donde están de verdad.
+ *
+ * OpenStreetMap las trae mapeadas —Tenerife Norte tiene dos— y son el
+ * instrumento más honesto de un aeródromo: se lee mirándola, sin números y sin
+ * saber leer. Un niño que aprende a mirar la manga sabe de dónde viene el
+ * viento antes que muchos adultos.
+ */
+function mangas(aero: Aerodrome, altura: (p: Punto) => number): Group {
+  const grupo = new Group();
+  grupo.name = 'mangas';
+  if (!aero.windsocks.length) return grupo;
+
+  // Dos montones por color, y dos mallas al final. Cada manga son un poste y
+  // cinco tramos de cono; sueltas, dos mangas ya eran doce llamadas de dibujo
+  // y se comían el presupuesto del aeródromo entero.
+  const claro: BufferGeometry[] = [];
+  const naranja: BufferGeometry[] = [];
+
+  for (const [x, y] of aero.windsocks) {
+    const base = altura([x, y]);
+
+    const poste = new CylinderGeometry(0.12, 0.16, 6, 6);
+    poste.translate(x, base + 3, -y);
+    claro.push(poste);
+
+    // El cono, a rayas. Cinco tramos, como las de verdad.
+    for (let k = 0; k < 5; k++) {
+      const tramo = new CylinderGeometry(0.55 - k * 0.07, 0.62 - k * 0.07, 0.7, 8, 1, true);
+      tramo.rotateZ(Math.PI / 2);
+      tramo.translate(x + 0.6 + k * 0.72, base + 6, -y);
+      (k % 2 === 0 ? naranja : claro).push(tramo);
+    }
+  }
+
+  for (const [piezas, color] of [
+    [claro, 0xf2f1ec],
+    [naranja, 0xd94f2f],
+  ] as const) {
+    if (!piezas.length) continue;
+    const fusionada = mergeGeometries(piezas, false);
+    if (fusionada) {
+      grupo.add(new Mesh(fusionada, new MeshLambertMaterial({ color, side: DoubleSide })));
+    }
+  }
 
   return grupo;
 }
@@ -313,13 +530,47 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     if (geo) piezas.push(geo);
   };
 
-  // Eje discontinuo: trazos de 30 m cada 60, con los extremos libres para las
-  // teclas de piano.
-  for (let d = 180; d < largo - 180; d += 60) raya(d, 0, 30, 0.9);
+  // ── Las marcas de una pista, que no son las de una carretera ──────────
+  //
+  // Con solo el eje discontinuo esto parecía una comarcal. Lo que hace que se
+  // lea como pista son **las líneas de borde**: dos trazos continuos de punta
+  // a punta que encierran el asfalto. Y luego las marcas que dicen dónde
+  // posarse, que son las gordas.
 
-  // Teclas de piano en las dos cabeceras.
+  // Líneas de borde, continuas. Van casi en el filo, dejando metro y medio.
+  for (const lado of [-1, 1]) {
+    raya(largo / 2, lado * (ancho / 2 - 1.5), largo - 60, 0.9);
+  }
+
+  // Eje discontinuo: trazo de 30 m y hueco de 20, que es la proporción real.
+  // Con hueco de 30 parecía la línea de una carretera.
+  for (let d = 190; d < largo - 190; d += 50) raya(d, 0, 30, 0.9);
+
+  // Teclas de piano en las dos cabeceras: ocho barras por cabecera en una
+  // pista de esta anchura, y son lo primero que se ve al llegar.
   for (const d of [30, largo - 30]) {
     for (let i = 0; i < 8; i++) raya(d, (i - 3.5) * (ancho * 0.105), 28, ancho * 0.055);
+  }
+
+  // Punto de toma: los dos rectángulos gordos a cuatrocientos metros del
+  // umbral. Son la referencia visual de dónde apuntar en la aproximación, y
+  // en un aeropuerto grande se ven desde muy lejos.
+  for (const desde of [0, largo]) {
+    const sentido = desde === 0 ? 1 : -1;
+    for (const lado of [-1, 1]) {
+      raya(desde + sentido * 400, lado * (ancho * 0.24), 50, 7);
+    }
+  }
+
+  // Zona de toma: parejas de barras cada ciento cincuenta metros a partir de
+  // los ciento cincuenta. Dicen cuánta pista queda gastada mientras se rueda.
+  for (const desde of [0, largo]) {
+    const sentido = desde === 0 ? 1 : -1;
+    for (const d of [150, 550, 700]) {
+      for (const lado of [-1, 1]) {
+        raya(desde + sentido * d, lado * (ancho * 0.24), 22.5, 3);
+      }
+    }
   }
 
   if (piezas.length) {
