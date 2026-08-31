@@ -46,8 +46,25 @@ export interface Scenario {
   fog: { colour: number; density: number };
   /** Dirección del sol en grados: azimut y elevación. */
   sun: { azimuth: number; elevation: number };
-  /** Pista: centro en coordenadas de mundo, rumbo en grados y longitud. */
+  /**
+   * Pista: centro en coordenadas de mundo, rumbo **verdadero** en grados, y
+   * longitud y anchura en metros.
+   */
   runway: { x: number; z: number; heading: number; length: number; width: number };
+  /**
+   * Declinación magnética del escenario: grados que hay que **sumar al rumbo
+   * verdadero para obtener el magnético**.
+   *
+   * Existe porque el número pintado en una pista es su rumbo magnético, y sin
+   * declinación un escenario inventado enseñaría una relación entre rumbo y
+   * designador que no se cumple en ningún sitio del mundo. Los valores son
+   * los de la región que representa el escenario: unos trece grados al oeste
+   * en Paraguay, unos nueve en Canarias.
+   *
+   * En los aeródromos extraídos no se usa esto: allí el designador es el de
+   * verdad y viene en el propio fichero.
+   */
+  magneticVariation: number;
 }
 
 /**
@@ -91,6 +108,8 @@ export const VALLE_CORDILLERA: Scenario = {
   // 142 m de cota, en el llano del norte y a casi tres kilómetros del cauce.
   // Una pista dentro del río no la ve nadie hasta que despega.
   runway: { x: 800, z: 4600, heading: 90, length: 1100, width: 30 },
+  // Paraguay: declinación oeste de unos trece grados.
+  magneticVariation: 13,
 };
 
 /**
@@ -122,6 +141,7 @@ export const CHACO: Scenario = {
   fog: { colour: 0xe8dcc4, density: 0.00006 },
   sun: { azimuth: 200, elevation: 46 },
   runway: { x: 300, z: -200, heading: 30, length: 1400, width: 34 },
+  magneticVariation: 13,
 };
 
 export const SCENARIOS: readonly Scenario[] = [VALLE_CORDILLERA, CHACO];

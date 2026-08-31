@@ -6,6 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { SCENARIOS } from './scenarios';
 import { designator } from './runway-markings';
 
 describe('designador de pista', () => {
@@ -65,4 +66,28 @@ describe('el designador y el norte magnético', () => {
     expect(designator(10)).toBe('01');
     expect(designator(10 + 10)).toBe('02');
   });
+});
+
+describe('todos los escenarios pintan números posibles', () => {
+  /**
+   * La regla vale para los aeródromos reales y para los inventados. Un
+   * escenario sin declinación enseñaría una relación entre rumbo y número que
+   * no se cumple en ningún sitio del mundo, y quien la aprendiera aquí
+   * tendría que desaprenderla.
+   */
+  const magnetico = (s: (typeof SCENARIOS)[number], verdadero: number) =>
+    (verdadero + s.magneticVariation + 360) % 360;
+
+  for (const escenario of SCENARIOS) {
+    it(`${escenario.id}: declara declinación y sus dos cabeceras se diferencian en 18`, () => {
+      expect(Number.isFinite(escenario.magneticVariation)).toBe(true);
+      const a = Number(designator(magnetico(escenario, escenario.runway.heading)));
+      const b = Number(designator(magnetico(escenario, escenario.runway.heading + 180)));
+      expect(Math.abs(a - b)).toBe(18);
+      for (const n of [a, b]) {
+        expect(n).toBeGreaterThanOrEqual(1);
+        expect(n).toBeLessThanOrEqual(36);
+      }
+    });
+  }
 });

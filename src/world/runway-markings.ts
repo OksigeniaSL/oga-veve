@@ -57,8 +57,10 @@ export function createRunwayMarkings(scenario: Scenario): Group {
   // Las dos cabeceras. La de entrada mira al rumbo de la pista; la contraria,
   // al recíproco: la 09 por un lado es la 27 por el otro, y es el mismo
   // trozo de asfalto.
-  addThreshold(group, scenario, material, 1, runway.heading);
-  addThreshold(group, scenario, material, -1, (runway.heading + 180) % 360);
+  // Los rumbos del escenario son verdaderos; el número pintado es magnético.
+  const mag = (verdadero: number) => (verdadero + scenario.magneticVariation + 360) % 360;
+  addThreshold(group, scenario, material, 1, mag(runway.heading));
+  addThreshold(group, scenario, material, -1, mag(runway.heading + 180));
 
   return group;
 }
