@@ -189,14 +189,28 @@ function pistaDe(aero: Aerodrome): Scenario['runway'] {
   if (!a || !b) throw new Error(`${aero.id}: la pista no tiene dos umbrales situados`);
   const [ax, az] = a.xy!;
   const [bx, bz] = b.xy!;
+  // Z invertida: en el fichero la Y apunta al norte y en el mundo del juego el
+  // norte es la Z negativa.
+  const mundoA: readonly [number, number] = [ax, -az];
+  const mundoB: readonly [number, number] = [bx, -bz];
+
   return {
-    x: (ax + bx) / 2,
-    // Z invertida: en el fichero la Y apunta al norte y en el mundo del juego
-    // el norte es la Z negativa.
-    z: -(az + bz) / 2,
-    // El rumbo con el que se despega por la primera cabecera. Verdadero: el
-    // magnético lo pone la declinación del escenario.
-    heading: a.headingTrue ?? 0,
+    x: (mundoA[0] + mundoB[0]) / 2,
+    z: (mundoA[1] + mundoB[1]) / 2,
+    /**
+     * El rumbo **medido entre los dos umbrales**, no el publicado.
+     *
+     * En Silvio Pettirossi el publicado es 190° y el asfalto corre a 192,5°.
+     * Dos grados y medio parecen nada, y en setecientos metros de carrera son
+     * treinta metros de deriva: más de media pista. El avión arrancaba bien
+     * centrado y se salía a la hierba antes de despegar.
+     *
+     * El publicado se redondea y el asfalto no. Para volar hay que seguir al
+     * asfalto; el número redondeado es el que va pintado en la cabecera, y de
+     * eso se encarga el designador.
+     */
+    heading:
+      ((Math.atan2(mundoB[0] - mundoA[0], -(mundoB[1] - mundoA[1])) * 180) / Math.PI + 360) % 360,
     length: Math.round(Math.hypot(bx - ax, bz - az)),
     width: pista.widthM ?? 45,
   };
