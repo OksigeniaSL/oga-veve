@@ -57,7 +57,7 @@ genera por código, sin descargar datos.
 | Frenos | `B` | Botón |
 | Cámara | `C` | Botón |
 | Reiniciar vuelo | `R` | Botón |
-| Ayuda de vuelo | `M` | Ajustes |
+| Nivel de dificultad | `M` | Ajustes |
 | Idioma | `L` | Ajustes |
 | Sonido | `V` | Ajustes |
 
@@ -89,9 +89,27 @@ sustentación, resistencia, fuerza lateral y los tres momentos a partir del
 ángulo de ataque, el derrape y las velocidades angulares, e integra las
 ecuaciones de Euler del sólido rígido. Entra en pérdida de verdad.
 
-Tiene dos modos: **Arcade** (amortiguación extra, timón automático,
-pérdida indulgente) y **Piloto** (sin ayudas). El mismo modelo, distinto
-coeficiente de asistencia.
+## Cuatro niveles, no dos modos
+
+| | Mainumby | Tukã | Taguato | Taguato Ruvicha |
+|---|---|---|---|---|
+| Edad orientativa | 4-6 | 7-9 | 10-13 | 14+ |
+| Modelo de vuelo | sencillo | coeficientes | coeficientes | coeficientes |
+| Pérdida | no existe | protegida | sí | sí |
+| Alas | se enderezan solas | se enderezan solas | las nivelás vos | las nivelás vos |
+| Instrumentos | ninguno | pictóricos | numéricos | seis analógicos |
+| Unidades | km/h y metros | km/h y metros | km/h y metros | nudos y pies |
+
+Lo que cambia entre peldaños **no es el mundo ni el avión**: es cuánta física
+se le confía al jugador. Se cambia de nivel con `M`, incluso en el aire.
+
+El primer peldaño usa **otro modelo de vuelo**, no el mismo con más ayudas
+(`src/flight/arcade.ts`). Pelear con un modelo realista para que se comporte
+de forma sencilla es luchar contra la física que uno mismo eligió: el fugoide
+existe porque un avión intercambia altura por velocidad, y la manera de no
+tenerlo no es amortiguarlo, es no tenerlo. Los otros tres peldaños comparten
+el modelo de coeficientes y se distinguen por qué capas de ayuda llevan
+(`src/flight/assists.ts`).
 
 Está detrás de la interfaz [`FlightModel`](src/flight/model.ts) a propósito:
 **se le puede enchufar [JSBSim](https://github.com/JSBSim-Team/jsbsim)

@@ -29,7 +29,7 @@ export const EN: Dictionary = {
   'hud.ground': 'On the ground',
   'hud.home': 'Runway',
 
-  'mode.label': 'Flight assist',
+  'mode.label': 'Tier',
   'mode.arcade': 'Arcade',
   'mode.pilot': 'Pilot',
   'mode.changed': 'Flight assist: {mode}',
@@ -61,7 +61,7 @@ export const EN: Dictionary = {
   'help.throttle': 'Shift and Ctrl — throttle',
   'help.brakes': 'B — brakes',
   'help.camera': 'C — change view',
-  'help.assist': 'M — flight assist',
+  'help.assist': 'M — difficulty tier',
   'help.reset': 'R — start again',
   'help.credits': 'F1 — credits',
   'help.language': 'L — language',

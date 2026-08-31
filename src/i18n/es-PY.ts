@@ -22,7 +22,7 @@ export const ES_PY = {
   'hud.ground': 'En tierra',
   'hud.home': 'Pista',
 
-  'mode.label': 'Ayuda de vuelo',
+  'mode.label': 'Nivel',
   'mode.arcade': 'Arcade',
   'mode.pilot': 'Piloto',
   'mode.changed': 'Ayuda de vuelo: {mode}',
@@ -54,7 +54,7 @@ export const ES_PY = {
   'help.throttle': 'Shift y Ctrl — motor',
   'help.brakes': 'B — frenos',
   'help.camera': 'C — cambiar cámara',
-  'help.assist': 'M — ayuda de vuelo',
+  'help.assist': 'M — nivel de dificultad',
   'help.reset': 'R — volver a empezar',
   'help.credits': 'F1 — créditos',
   'help.language': 'L — idioma',

@@ -30,6 +30,7 @@
 import { Quaternion, Vector3 } from 'three';
 import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from './atmosphere';
 import type { AircraftConfig } from './aircraft';
+import { type AssistLayers, uniformAssists } from './assists';
 import type {
   ControlInputs,
   FlightModel,
@@ -95,11 +96,11 @@ export interface FdmOptions {
   aircraft: AircraftConfig;
   ground: GroundSampler;
   /**
-   * Asistencia de vuelo, 0 a 1. 0 = modo Piloto, sin ayudas.
-   * 1 = modo Arcade: timón automático, alas que se enderezan solas,
-   * pérdida indulgente y amortiguamiento extra.
+   * Asistencia de vuelo. Se puede dar como un número —todas las capas al
+   * mismo nivel, que es lo que hacía el viejo Arcade/Piloto— o como capas
+   * independientes, que es lo que usan los tramos de dificultad.
    */
-  assist?: number;
+  assist?: number | AssistLayers;
 }
 
 export class CoefficientFlightModel implements FlightModel {
@@ -109,7 +110,7 @@ export class CoefficientFlightModel implements FlightModel {
 
   private readonly aircraft: AircraftConfig;
   private readonly ground: GroundSampler;
-  private assistLevel: number;
+  private layers: AssistLayers;
   /**
    * Ritmo de ascenso que sostiene el compensador automático, en m/s, o `null`
    * si el jugador tiene el mando en la mano.
@@ -130,7 +131,10 @@ export class CoefficientFlightModel implements FlightModel {
   constructor(options: FdmOptions) {
     this.aircraft = options.aircraft;
     this.ground = options.ground;
-    this.assistLevel = options.assist ?? 1;
+    this.layers =
+      typeof options.assist === 'number' || options.assist === undefined
+        ? uniformAssists(options.assist ?? 1)
+        : options.assist;
 
     this.state = {
       position: new Vector3(),
@@ -154,12 +158,21 @@ export class CoefficientFlightModel implements FlightModel {
     };
   }
 
+  /** Nivel medio de asistencia. Sirve para el rótulo del HUD y poco más. */
   get assist(): number {
-    return this.assistLevel;
+    const l = this.layers;
+    return (
+      (l.wingLeveller + l.autoRudder + l.climbHold + l.stallProtection + l.extraDamping) / 5
+    );
   }
 
   set assist(value: number) {
-    this.assistLevel = Math.max(0, Math.min(1, value));
+    this.layers = uniformAssists(value);
+  }
+
+  /** Cambia las ayudas capa a capa. Es lo que hacen los tramos. */
+  setAssists(layers: AssistLayers): void {
+    this.layers = layers;
   }
 
   reset(initial: InitialConditions): void {
@@ -228,7 +241,7 @@ export class CoefficientFlightModel implements FlightModel {
 
     // Alarga la pérdida en modo arcade en vez de eliminarla: el avión sigue
     // cayendo si insistís, pero perdona el tirón nervioso de un crío.
-    const stallAngle = a.alphaStall * (1 + 0.45 * this.assistLevel);
+    const stallAngle = a.alphaStall * (1 + 0.45 * this.layers.stallProtection);
     const cl = liftCoefficient(s.alpha, a, stallAngle) + ac.flapsLift * assisted.flaps;
     const cd =
       a.cd0 +
@@ -280,11 +293,14 @@ export class CoefficientFlightModel implements FlightModel {
 
     // Ayudas que actúan como momentos y no como mandos: amortiguamiento
     // extra y un empujón para nivelar las alas cuando nadie toca nada.
-    if (this.assistLevel > 0) {
-      const k = this.assistLevel * qS;
+    if (this.layers.extraDamping > 0) {
+      const k = this.layers.extraDamping * qS;
       rollMoment -= k * 0.5 * pHat * ac.wingSpan;
       pitchMoment -= k * 0.6 * qHat * ac.chord;
       yawMoment -= k * 0.9 * rHat * ac.wingSpan;
+    }
+
+    {
 
       // Compensador automático: mantiene **la actitud que dejaste**.
       //
@@ -301,7 +317,7 @@ export class CoefficientFlightModel implements FlightModel {
       // soltar el cabeceo se captura la actitud del momento y se sostiene,
       // con amortiguamiento sobre la velocidad de cabeceo para que llegue
       // sin rebotar.
-      if (Math.abs(controls.elevator) < 0.08 && !s.onGround) {
+      if (this.layers.climbHold > 0 && Math.abs(controls.elevator) < 0.08 && !s.onGround) {
         // Se sostiene **la subida**, no la actitud del morro.
         //
         // Las dos versiones anteriores intentaron mantener el cabeceo y las
@@ -363,7 +379,7 @@ export class CoefficientFlightModel implements FlightModel {
         // programan la ganancia los pilotos automáticos de verdad.
         const reference = ac.cruiseSpeed * ac.cruiseSpeed;
         const schedule = Math.min(1, reference / (speed * speed + 1));
-        const authority = this.assistLevel * qS * a.cmElevator * ac.chord * schedule;
+        const authority = this.layers.climbHold * qS * a.cmElevator * ac.chord * schedule;
         pitchMoment += authority * (law - s.pitchRate * 0.75);
       } else {
         // Con el mando en la mano, no hay compensador que valga.
@@ -376,8 +392,9 @@ export class CoefficientFlightModel implements FlightModel {
       // que con el alerón ya corregido sería casi el doble del mando a fondo
       // y devolvería las alas de un latigazo. Así, a treinta grados de
       // alabeo empuja aproximadamente como medio mando.
-      if (Math.abs(controls.aileron) < 0.08 && !s.onGround) {
-        rollMoment -= this.assistLevel * qS * a.clAileron * ac.wingSpan * levelling(this.bankAngle());
+      if (this.layers.wingLeveller > 0 && Math.abs(controls.aileron) < 0.08 && !s.onGround) {
+        rollMoment -=
+          this.layers.wingLeveller * qS * a.clAileron * ac.wingSpan * levelling(this.bankAngle());
       }
     }
 
@@ -546,8 +563,8 @@ export class CoefficientFlightModel implements FlightModel {
    */
   private crashLimits(): { sink: number; bank: number } {
     return {
-      sink: CRASH_SINK_RATE + this.assistLevel * 14,
-      bank: CRASH_BANK + this.assistLevel * 1.9,
+      sink: CRASH_SINK_RATE + this.layers.crashTolerance * 14,
+      bank: CRASH_BANK + this.layers.crashTolerance * 1.9,
     };
   }
 
@@ -593,8 +610,8 @@ export class CoefficientFlightModel implements FlightModel {
    * la aerodinámica. Con `assist` a 0 devuelve los mandos tal cual.
    */
   private applyAssist(controls: ControlInputs, alpha: number, beta: number): ControlInputs {
-    if (this.assistLevel <= 0) return controls;
-    const k = this.assistLevel;
+    const { autoRudder, stallProtection } = this.layers;
+    if (autoRudder <= 0 && stallProtection <= 0) return controls;
 
     // Timón automático: mantiene la bola centrada. Es lo que separa un viraje
     // que se siente bien de uno que da tumbos, y ningún crío va a pisar
@@ -606,14 +623,16 @@ export class CoefficientFlightModel implements FlightModel {
     // empuja la estabilidad direccional del avión. La primera versión
     // restaba, así que peleaba contra la veleta y el derrape crecía hasta
     // dieciséis grados en vez de irse a cero.
-    const rudder = clamp(controls.rudder + k * clamp(beta * 4.5, -1, 1), -1, 1);
+    const rudder = clamp(controls.rudder + autoRudder * clamp(beta * 4.5, -1, 1), -1, 1);
 
     // Limitador de ángulo de ataque: cuanto más cerca de la pérdida, menos
     // autoridad tiene el tirón. No la impide, la hace costar.
     const margin = this.aircraft.aero.alphaStall;
     const excess = clamp((alpha - margin * 0.82) / (margin * 0.35), 0, 1);
     const elevator =
-      controls.elevator > 0 ? controls.elevator * (1 - k * 0.75 * excess) : controls.elevator;
+      controls.elevator > 0
+        ? controls.elevator * (1 - stallProtection * 0.75 * excess)
+        : controls.elevator;
 
     return { ...controls, rudder, elevator };
   }

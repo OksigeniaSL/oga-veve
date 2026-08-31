@@ -22,6 +22,8 @@ import {
   WebGLRenderer,
 } from 'three';
 import { CoefficientFlightModel } from './flight/fdm';
+import { ArcadeFlightModel } from './flight/arcade';
+import { MAINUMBY, TIERS, type Tier } from './flight/tiers';
 import { OGA_172, type AircraftConfig } from './flight/aircraft';
 import { InputManager } from './flight/input';
 import type { FlightModel, FlightState } from './flight/model';
@@ -88,7 +90,8 @@ export class Game {
   private readonly aircraftMesh: AircraftMesh;
   private readonly aircraft: AircraftConfig;
   private readonly scenario: Scenario;
-  private readonly flight: CoefficientFlightModel;
+  private flight: FlightModel;
+  private tier: Tier = MAINUMBY;
   private readonly input: InputManager;
   private readonly audio = new Audio();
   private readonly hud: Hud;
@@ -156,13 +159,7 @@ export class Game {
     this.blobShadow = createBlobShadow(this.aircraft.wingSpan);
     this.scene.add(this.blobShadow);
 
-    this.flight = new CoefficientFlightModel({
-      aircraft: this.aircraft,
-      // El avión flota sobre el agua en vez de hundirse: es un juego para
-      // chicos, y amerizar de morro y desaparecer no le divierte a nadie.
-      ground: (x, z) => this.terrain.sampleSurface(x, z),
-      assist: 1,
-    });
+    this.flight = this.buildFlightModel(this.tier);
 
     this.hud = new Hud(options.hudRoot);
     this.creditsRoot = options.creditsRoot;
@@ -170,7 +167,7 @@ export class Game {
 
     this.input = new InputManager(options.touchRoot, {
       toggleCamera: () => this.cycleCamera(),
-      toggleAssist: () => this.toggleAssist(),
+      toggleAssist: () => this.cycleTier(),
       resetFlight: () => this.resetFlight(),
       toggleCredits: () => this.credits.toggle(),
       cycleLanguage: () => this.changeLanguage(),
@@ -447,22 +444,40 @@ export class Game {
   }
 
   /**
-   * Cambia entre Arcade y Piloto.
+   * Construye el motor de vuelo que le toca a un tramo.
    *
-   * El modo arrastra consigo las unidades: en Arcade, km/h y metros; en
-   * Piloto, nudos y pies, que es lo que marca un avión de verdad. Son dos
-   * cosas distintas bajo un solo interruptor a propósito — quien decide que
-   * quiere volar en serio se encuentra con las unidades de verdad en el
-   * mismo gesto, sin tener que descubrir un segundo ajuste.
+   * El primer peldaño usa un modelo cinemático distinto, no el de
+   * coeficientes con más ayudas. Ver `src/flight/tiers.ts` y
+   * `src/flight/arcade.ts`.
    */
-  private toggleAssist(): void {
-    const arcade = this.flight.assist <= 0.5;
-    this.flight.assist = arcade ? 1 : 0;
-    this.hud.setUnits(arcade ? 'metric' : 'aeronautical');
+  private buildFlightModel(tier: Tier): FlightModel {
+    // El avión flota sobre el agua en vez de hundirse: es un juego para
+    // chicos, y amerizar de morro y desaparecer no le divierte a nadie.
+    const ground = (x: number, z: number): number => this.terrain.sampleSurface(x, z);
+    return tier.model === 'simple'
+      ? new ArcadeFlightModel({ aircraft: this.aircraft, ground })
+      : new CoefficientFlightModel({ aircraft: this.aircraft, ground, assist: tier.assists });
+  }
+
+  /**
+   * Sube o baja un peldaño de la escalera de dificultad.
+   *
+   * Cambia el motor de vuelo si hace falta, las unidades y los instrumentos.
+   * El avión se queda donde estaba: se cambia de tramo en el aire sin que se
+   * caiga nada.
+   */
+  private cycleTier(): void {
+    const next = TIERS[(TIERS.indexOf(this.tier) + 1) % TIERS.length] ?? MAINUMBY;
+    const { position, heading, airspeed } = this.flight.state;
+    const carried = { position: position.clone(), heading, airspeed };
+
+    this.tier = next;
+    this.flight = this.buildFlightModel(next);
+    this.flight.reset(carried);
+
+    this.hud.setUnits(next.units);
     this.updateBadge();
-    this.hud.flash(
-      t('mode.changed', { mode: this.flight.assist > 0.5 ? t('mode.arcade') : t('mode.pilot') }),
-    );
+    this.hud.flash(next.name, 3);
   }
 
   /**
@@ -505,8 +520,9 @@ export class Game {
   }
 
   private updateBadge(): void {
-    const mode = this.flight.assist > 0.5 ? t('mode.arcade') : t('mode.pilot');
-    this.hud.setBadge(`${this.aircraft.name} · ${t(this.scenario.nameKey as never)} · ${mode}`);
+    this.hud.setBadge(
+      `${this.aircraft.name} · ${t(this.scenario.nameKey as never)} · ${this.tier.name}`,
+    );
   }
 
   private onResize = (): void => {
