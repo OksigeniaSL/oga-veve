@@ -57,3 +57,29 @@ describe('el motor no se queda agarrado', () => {
     expect(releasesTouchThrottle(0, 0)).toBe(false);
   });
 });
+
+describe('el motor se maneja en cualquier teclado', () => {
+  /**
+   * El fallo que lo motivó: `event.code` nombra la tecla del teclado
+   * americano. En un teclado español el «−» está donde el americano tiene la
+   * barra, así que reportaba `Slash` y no coincidía con nada. Y el «+»
+   * parecía funcionar de casualidad, porque se escribe con Mayúsculas y
+   * Mayúsculas sube gas. Resultado: en media Europa se podía acelerar y no
+   * se podía frenar el motor.
+   */
+  const SUBE = ['Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight', '+'];
+  const BAJA = ['Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight', '-'];
+
+  it('baja con el carácter, esté donde esté la tecla', () => {
+    expect(axisFromKeys(new Set(['Slash', '-']), SUBE, BAJA)).toBe(-1);
+  });
+
+  it('sube con el carácter', () => {
+    expect(axisFromKeys(new Set(['BracketRight', '+']), SUBE, BAJA)).toBe(1);
+  });
+
+  it('sigue funcionando con la tecla física del teclado americano', () => {
+    expect(axisFromKeys(new Set(['Minus']), SUBE, BAJA)).toBe(-1);
+    expect(axisFromKeys(new Set(['Equal']), SUBE, BAJA)).toBe(1);
+  });
+});

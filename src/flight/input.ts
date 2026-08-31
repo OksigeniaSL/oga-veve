@@ -44,8 +44,19 @@ const KEYS = {
   // pero dejan de ser los únicos: Control en un navegador es además
   // peligroso —Ctrl+W cierra la pestaña— y no puede ser la única forma de
   // bajar el gas.
-  throttleUp: ['Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight'],
-  throttleDown: ['Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight'],
+  //
+  // Y van **por carácter además de por tecla física**, que es lo que
+  // arreglaba de verdad el problema: `event.code` nombra la tecla del
+  // teclado americano, así que en un teclado español el `−` reporta `Slash`
+  // —está donde el americano tiene la barra— y nunca coincidía con `Minus`.
+  // El `+` parecía funcionar por pura casualidad: se escribe con Mayúsculas,
+  // y Mayúsculas sube gas. O sea que en media Europa se podía acelerar y no
+  // frenar el motor.
+  //
+  // Con `event.key` se mira el carácter que sale, que es lo que la persona
+  // ve pintado en la tecla y lo que de verdad quiso pulsar.
+  throttleUp: ['Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight', '+'],
+  throttleDown: ['Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight', '-'],
   // B de *brakes*, y también la barra espaciadora: es la tecla que la mano
   // encuentra sola y la que todo el mundo prueba primero cuando algo no
   // para. Tener frenos y que nadie los encuentre es lo mismo que no
@@ -92,6 +103,9 @@ export class InputManager {
   private touchRoll = 0;
   private touchRudder = 0;
   private touchThrottle: number | null = null;
+  /** Qué carácter dio cada tecla física al pulsarla. Ver `onKeyUp`. */
+  private readonly chars = new Map<string, string>();
+
   private touchBrakes = false;
 
   /** Dirección pedida por los botones de motor de la pantalla. */
@@ -197,6 +211,16 @@ export class InputManager {
     if (event.code.startsWith('Arrow') || event.code === 'Space') event.preventDefault();
     if (event.repeat) return;
     this.keys.add(event.code);
+    // El carácter también: ver la nota de KEYS sobre los teclados que no son
+    // el americano.
+    if (event.key.length === 1) {
+      this.keys.add(event.key);
+      // Se apunta qué carácter dio esta tecla física, porque al soltarla
+      // puede dar otro: si se suelta Mayúsculas antes que el «+», el
+      // `keyup` llega con «=» y el «+» se quedaría pegado para siempre —con
+      // el motor subiendo solo, que es de los peores fallos posibles.
+      this.chars.set(event.code, event.key);
+    }
 
     switch (event.code) {
       case 'KeyC':
@@ -246,11 +270,18 @@ export class InputManager {
 
   private onKeyUp = (event: KeyboardEvent): void => {
     this.keys.delete(event.code);
+    if (event.key.length === 1) this.keys.delete(event.key);
+    const anotado = this.chars.get(event.code);
+    if (anotado !== undefined) {
+      this.keys.delete(anotado);
+      this.chars.delete(event.code);
+    }
   };
 
   /** Al perder el foco se sueltan todas las teclas: si no, se quedan pegadas. */
   private onBlur = (): void => {
     this.keys.clear();
+    this.chars.clear();
   };
 
   // ── Mando ─────────────────────────────────────────────────────────────
