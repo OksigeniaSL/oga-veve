@@ -194,6 +194,7 @@ export class Game {
     this.audio.setEngine(this.aircraft.sound);
     this.hud.setSoundLevel(this.audio.level.glyph, t(`sound.${this.audio.level.id}` as never));
     this.hud.onSoundClick(() => this.toggleSound());
+    this.hud.onBrake((pressed) => this.input.setTouchBrakes(pressed));
 
     window.addEventListener('resize', this.onResize);
     this.onResize();

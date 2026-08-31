@@ -25,6 +25,7 @@ import { t } from '../i18n';
 import { Tutor } from './tutor';
 import { bankAngleOf, pitchAngleOf } from './actitud';
 import { SixPack } from './six-pack';
+import { Pictogramas } from './pictogramas';
 import type { Tier } from '../flight/tiers';
 
 /**
@@ -100,12 +101,20 @@ export class Hud {
    */
   private readonly sixPack = new SixPack();
 
+  /**
+   * Los instrumentos del primer peldaño. Sin agujas y sin números: una
+   * tortuga, un cerro y una hélice que gira.
+   */
+  private readonly pictos = new Pictogramas();
+
   private speed: HTMLElement | null = null;
   private altitude: HTMLElement | null = null;
   private heading: HTMLElement | null = null;
   private vspeed: HTMLElement | null = null;
   private throttleFill!: HTMLElement;
   private brakes!: HTMLElement;
+  private brakesTouch!: HTMLElement;
+  private brakeHandler: ((pressed: boolean) => void) | null = null;
   private horizon: HTMLElement | null = null;
   private homeArrow!: HTMLElement;
   private homeDistance: HTMLElement | null = null;
@@ -140,6 +149,12 @@ export class Hud {
     const gauges = this.instruments !== 'none';
     const pictorial = this.instruments === 'pictorial';
     const panel = this.instruments === 'full';
+    // Los pictogramas cubren los dos peldaños de abajo. En el primero eran
+    // «ningún instrumento», que sobre el papel suena limpio y en la práctica
+    // dejaba a un niño de cuatro años volando a ciegas: sin saber si iba
+    // deprisa, si subía, ni si el motor estaba puesto. Una tortuga no es un
+    // instrumento, es un dibujo, y por eso sí cabe ahí.
+    const pictos = this.instruments === 'none' || pictorial;
     // En el peldaño más alto las cifras sueltas desaparecen: lo que se lee
     // son las seis esferas, que es como se lee una cabina de verdad. Dejar
     // las dos cosas sería enseñar a mirar el número y no el instrumento,
@@ -166,12 +181,10 @@ export class Hud {
       <div class="hud__izquierda">
         ${numbers ? gauge('speed', INSTRUMENTS.speed, t('hud.speed'), this.units.speedLabel()) : ''}
         ${numbers ? gauge('vspeed', INSTRUMENTS.vspeed, t('hud.vspeed'), this.units.vspeedLabel()) : ''}
-        ${pictorial ? arcGauge('speed', INSTRUMENTS.speed, t('hud.speed')) : ''}
       </div>
       <div class="hud__derecha">
         ${numbers ? gauge('altitude', INSTRUMENTS.altitude, t('hud.altitude'), this.units.altitudeLabel()) : ''}
         ${numbers ? gauge('heading', INSTRUMENTS.heading, t('hud.heading'), '°') : ''}
-        ${pictorial ? arcGauge('altitude', INSTRUMENTS.altitude, t('hud.altitude')) : ''}
         <!--
           El motor lleva sus dos teclas dibujadas al lado, y no una sola en
           el tutor cuando toca. Un mando que solo enseña la mitad de su
@@ -194,6 +207,20 @@ export class Hud {
           encontraba: se aterrizaba y el avión rodaba hasta el fin del mundo.
           Un mando que no se anuncia no existe.
         -->
+        <!--
+          Y para quien no lee, el freno no es una tecla dibujada: es un botón
+          rojo grande con una mano. Se toca, y funciona igual con el dedo que
+          con el teclado. Un rótulo que pone «espacio» no sirve de nada a los
+          cuatro años ni en una tablet.
+        -->
+        <button class="freno freno--boton" type="button" data-hud="brakes-touch" hidden
+                aria-label="${t('hud.brakes')}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
+                     a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
+                     v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
+          </svg>
+        </button>
         <div class="tarjeta medidor freno" data-hud="brakes" hidden>
           ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.brakes}</span>` : ''}
           <span class="motor__tecla motor__tecla--ancha" aria-hidden="true">␣</span>
@@ -209,6 +236,7 @@ export class Hud {
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t('hud.home')}</span>` : ''}
         </div>
       </div>
+      ${pictos ? Pictogramas.markup() : ''}
       <div class="vineta" data-hud="vignette"></div>
       ${Tutor.markup()}
       <div class="hud__abajo">
@@ -240,6 +268,10 @@ export class Hud {
     this.vspeed = optional(this.root, 'vspeed');
     this.throttleFill = pick(this.root, 'throttle');
     this.brakes = pick(this.root, 'brakes');
+    this.brakesTouch = pick(this.root, 'brakes-touch');
+    for (const [evento, valor] of [['pointerdown', true], ['pointerup', false], ['pointercancel', false], ['pointerleave', false]] as const) {
+      this.brakesTouch.addEventListener(evento, () => this.brakeHandler?.(valor));
+    }
     this.horizon = optional(this.root, 'horizon');
     this.home = pick(this.root, 'home');
     this.homeArrow = pick(this.root, 'home-arrow');
@@ -259,6 +291,7 @@ export class Hud {
 
     this.badge.textContent = this.badgeText;
     this.sixPack.bind(this.root);
+    this.pictos.bind(this.root);
     this.tutor.bind(this.root);
     this.reserveForPanel();
   }
@@ -322,10 +355,19 @@ export class Hud {
     // la que marcaría el instrumento de un avión real.
     const ias = indicatedAirspeed(state.airspeed, state.position.y);
 
-    if (this.instruments === 'pictorial') {
-      // Sin cifras: la aguja del arco dice deprisa o despacio, alto o bajo.
-      setArc(this.speed, this.units.speed(ias) / 220);
-      setArc(this.altitude, this.units.altitude(state.position.y) / 900);
+    if (this.pictos.present) {
+      // Fracciones, no unidades: aquí no hay nudos ni pies que valgan.
+      // Altura **sobre el suelo**, no sobre el mar. Con la altitud absoluta
+      // el avioncito arrancaba ya a media tarjeta —la pista está a ciento y
+      // pico metros— y apenas se movía al despegar, que es justo lo único
+      // que este dibujo tiene que contar. Y la escala es la del avión que
+      // vuela aquí, no la de un reactor.
+      this.pictos.update(ias / 46, state.heightAboveGround / 260, throttle, dt);
+    }
+
+    if (this.pictos.present) {
+      // Nada más que hacer: los pictogramas ya están actualizados arriba y
+      // estos peldaños no tienen cifras que escribir.
     } else {
       if (this.speed) this.speed.textContent = Math.round(this.units.speed(ias)).toString();
       if (this.altitude) {
@@ -345,8 +387,14 @@ export class Hud {
     this.throttleFill.style.width = `${Math.round(throttle * 100)}%`;
 
     // El freno aparece al tocar suelo y se enciende al pisarlo.
-    this.brakes.hidden = !state.onGround;
-    this.brakes.classList.toggle('freno--pisado', braking > 0.05);
+    // Sin cifras, botón; con cifras, tarjeta con su tecla. Nunca los dos.
+    const enSuelo = state.onGround;
+    const sinLetras = this.instruments === 'none' || this.instruments === 'pictorial';
+    this.brakes.hidden = !enSuelo || sinLetras;
+    this.brakesTouch.hidden = !enSuelo || !sinLetras;
+    const pisado = braking > 0.05;
+    this.brakes.classList.toggle('freno--pisado', pisado);
+    this.brakesTouch.classList.toggle('freno--pisado', pisado);
 
     // Alabeo y cabeceo los quieren dos consumidores —la tarjeta del horizonte
     // y el cuadro de mandos—, y solo uno de los dos existe a la vez. Se
@@ -408,6 +456,11 @@ export class Hud {
   setSoundLevel(glyph: string, label: string): void {
     this.soundState = { glyph, label };
     this.paintSound();
+  }
+
+  /** Quién recibe el botón de freno táctil. */
+  onBrake(handler: (pressed: boolean) => void): void {
+    this.brakeHandler = handler;
   }
 
   onSoundClick(handler: () => void): void {
@@ -483,26 +536,6 @@ function gauge(name: string, instrument: string, gloss: string, unit: string): s
  * byte de imagen. La banda verde marca dónde está bien y la roja dónde no,
  * que es toda la lectura que necesita alguien de siete años.
  */
-function arcGauge(name: string, instrument: string, gloss: string): string {
-  return `
-    <div class="tarjeta medidor">
-      <span class="medidor__etiqueta">${instrument}</span>
-      <div class="arco" data-hud="${name}">
-        <span class="arco__banda"></span>
-        <span class="arco__aguja"></span>
-      </div>
-      <span class="medidor__glosa">${gloss}</span>
-    </div>
-  `;
-}
-
-/** Coloca la aguja de un arco, con la fracción acotada a su recorrido. */
-function setArc(element: HTMLElement | null, fraction: number): void {
-  if (!element) return;
-  const clamped = Math.max(0, Math.min(1, fraction));
-  element.style.setProperty('--v', String(clamped));
-}
-
 function optional(root: HTMLElement, name: string): HTMLElement | null {
   return root.querySelector<HTMLElement>(`[data-hud="${name}"]`);
 }

@@ -910,3 +910,111 @@ body {
   font-style: italic;
   opacity: 0.78;
 }
+
+/*
+ * Los pictogramas del primer peldaño. Arriba y centrados, grandes, y sin una
+ * sola letra ni cifra. Van donde iban las tarjetas de números porque ocupan
+ * el sitio de los instrumentos: son los instrumentos de ese peldaño.
+ */
+.pictos {
+  position: absolute;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.picto {
+  background: rgba(47, 82, 67, 0.62);
+  border-radius: 16px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.picto svg {
+  display: block;
+  height: clamp(40px, 7vmin, 62px);
+}
+
+/* La tarjeta de velocidad es ancha: la tortuga y el pájaro van en los extremos. */
+.picto:first-child svg {
+  width: clamp(118px, 21vmin, 182px);
+}
+
+.picto__bicho {
+  fill: var(--beige, #e4e2da);
+  opacity: 0.72;
+}
+
+.picto__via {
+  stroke: rgba(228, 226, 218, 0.3);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.picto__avion {
+  stroke: var(--ocre, #dd923f);
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  fill: none;
+  /* Se desliza en vez de saltar, que es lo que hace legible el movimiento. */
+  transition: transform 140ms linear;
+}
+
+.picto__cerro {
+  fill: rgba(228, 226, 218, 0.26);
+}
+
+.picto__helice {
+  fill: var(--beige, #e4e2da);
+  opacity: 0.9;
+}
+
+.picto__buje {
+  fill: var(--ocre, #dd923f);
+}
+
+/*
+ * El freno como botón, para quien no lee. Grande, rojo y con una mano: se
+ * entiende sin rótulo y se toca con el dedo. Sustituye a la tarjeta con la
+ * tecla dibujada, nunca convive con ella.
+ */
+.freno--boton {
+  pointer-events: auto;
+  margin-top: 10px;
+  width: clamp(64px, 11vmin, 92px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  background: #b5372e;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.35);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 90ms ease, background 90ms ease;
+}
+
+.freno--boton svg {
+  width: 56%;
+  fill: #fff;
+}
+
+.freno--boton.freno--pisado {
+  background: #d8483c;
+  transform: scale(0.93);
+}
+
+/*
+ * `hidden` gana siempre.
+ *
+ * Cualquier regla nuestra con `display` lo pisa sin avisar, porque el estilo
+ * del navegador para `[hidden]` es de la hoja de agente de usuario y pierde
+ * ante cualquier clase. Pasó con la tarjeta del freno: se marcaba como
+ * oculta, el atributo estaba puesto, y seguía dibujándose en pantalla.
+ */
+[hidden] {
+  display: none !important;
+}

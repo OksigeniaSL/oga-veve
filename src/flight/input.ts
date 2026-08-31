@@ -93,6 +93,17 @@ export class InputManager {
   private touchRudder = 0;
   private touchThrottle: number | null = null;
   private touchBrakes = false;
+
+  /**
+   * Freno desde un botón de la interfaz, no del teclado ni del mando.
+   *
+   * Existe porque el freno del primer peldaño es un botón rojo grande y no
+   * una tecla: a los cuatro años, y en una tablet, un rótulo que pone
+   * «espacio» no sirve de nada.
+   */
+  setTouchBrakes(pressed: boolean): void {
+    this.touchBrakes = pressed;
+  }
   /** Solo se avisa del primer gesto una vez. */
   private gestured = false;
 
