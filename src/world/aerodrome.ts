@@ -24,6 +24,7 @@
 
 import {
   BufferGeometry,
+  Color,
   CylinderGeometry,
   InstancedMesh,
   Matrix4,
@@ -392,28 +393,73 @@ function luces(pista: Pista, altura: (p: Punto) => number): Group {
   const ux = (b.xy![0] - ax) / largo;
   const uy = (b.xy![1] - ay) / largo;
 
+  // ── Los colores de las luces, que no son todos iguales ────────────────
+  //
+  // Las de borde son blancas, **salvo los últimos seiscientos metros**, que
+  // van en ámbar: es el aviso de que la pista se acaba, y se ve desde la
+  // cabina mientras se rueda. Y las cabeceras llevan las suyas — verdes
+  // vistas desde la aproximación, rojas vistas desde dentro de la pista.
+  //
+  // Nada de esto es adorno: un piloto lee el estado de una pista por el color
+  // de sus luces antes de leer ningún instrumento.
   const separacion = 60;
-  const cuantas = Math.floor(largo / separacion) * 2;
-  const luz = new InstancedMesh(
-    new SphereGeometry(0.55, 6, 4),
-    new MeshBasicMaterial({ color: 0xfff0cc }),
-    cuantas,
-  );
-  luz.name = 'luces-borde';
-  const m = new Matrix4();
-  let i = 0;
-  for (let d = separacion / 2; d < largo && i < cuantas; d += separacion) {
+  const AMBAR_DESDE = Math.max(largo - 600, largo / 2);
+
+  const blancas: [number, number, number][] = [];
+  const ambares: [number, number, number][] = [];
+  for (let d = separacion / 2; d < largo; d += separacion) {
     for (const lado of [-1, 1]) {
       const cx = ax + ux * d - uy * lado * (ancho / 2 + 2);
       const cy = ay + uy * d + ux * lado * (ancho / 2 + 2);
-      m.makeTranslation(cx, altura([cx, cy]) + 0.5, -cy);
-      luz.setMatrixAt(i++, m);
+      const punto: [number, number, number] = [cx, altura([cx, cy]) + 0.5, -cy];
+      (d >= AMBAR_DESDE ? ambares : blancas).push(punto);
     }
   }
-  luz.count = i;
-  grupo.add(luz);
 
-  // PAPI: cuatro luces a la izquierda del umbral por el que se aterriza.
+  // Cabeceras: una fila cruzando cada extremo.
+  const verdes: [number, number, number][] = [];
+  const rojas: [number, number, number][] = [];
+  for (const [extremo, destino] of [
+    [0, verdes],
+    [largo, rojas],
+  ] as const) {
+    for (let k = -5; k <= 5; k++) {
+      const lado = k * (ancho / 11);
+      const cx = ax + ux * extremo - uy * lado;
+      const cy = ay + uy * extremo + ux * lado;
+      destino.push([cx, altura([cx, cy]) + 0.5, -cy]);
+    }
+  }
+
+  // **Todas las luces en una sola instancia, con su color por luz.**
+  //
+  // Una malla por color serían cuatro llamadas de dibujo solo en luces, y el
+  // aeródromo entero tiene un presupuesto de doce. `InstancedMesh` admite un
+  // color por instancia, así que el color —que es justo la información que
+  // hay que transmitir— sale gratis.
+  const todas: [[number, number, number], number][] = [
+    ...blancas.map((p) => [p, 0xfff0cc] as [[number, number, number], number]),
+    ...ambares.map((p) => [p, 0xffb03a] as [[number, number, number], number]),
+    ...verdes.map((p) => [p, 0x4ade6a] as [[number, number, number], number]),
+    ...rojas.map((p) => [p, 0xe8402c] as [[number, number, number], number]),
+  ];
+
+  const m = new Matrix4();
+  const tono = new Color();
+  const malla = new InstancedMesh(
+    new SphereGeometry(0.58, 6, 4),
+    new MeshBasicMaterial(),
+    todas.length,
+  );
+  malla.name = 'luces-pista';
+  todas.forEach(([p, color], k) => {
+    m.makeTranslation(p[0], p[1], p[2]);
+    malla.setMatrixAt(k, m);
+    malla.setColorAt(k, tono.setHex(color));
+  });
+  grupo.add(malla);
+
+  // PAPI: cuatro luces al costado, que dicen si se viene alto o bajo.
   const papi = new InstancedMesh(
     new SphereGeometry(0.8, 6, 4),
     new MeshBasicMaterial({ color: 0xff5a3c }),
@@ -537,9 +583,30 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   // a punta que encierran el asfalto. Y luego las marcas que dicen dónde
   // posarse, que son las gordas.
 
-  // Líneas de borde, continuas. Van casi en el filo, dejando metro y medio.
-  for (const lado of [-1, 1]) {
-    raya(largo / 2, lado * (ancho / 2 - 1.5), largo - 60, 0.9);
+  // Líneas de borde, continuas y **sobre el eje que usa el pavimento**.
+  //
+  // Iban medidas desde la recta que une los umbrales, que no es exactamente
+  // la misma que el eje de OpenStreetMap con el que se dibuja el asfalto. Con
+  // unos metros de diferencia y la línea casi en el filo, acababan pintadas
+  // sobre la hierba: los chicos se salieron por fuera.
+  for (let i = 0; i < pista.centerline.length - 1; i++) {
+    const [cax, cay] = pista.centerline[i]!;
+    const [cbx, cby] = pista.centerline[i + 1]!;
+    const l = Math.hypot(cbx - cax, cby - cay);
+    if (l < 1) continue;
+    const ex = (cbx - cax) / l;
+    const ey = (cby - cay) / l;
+    for (const lado of [-1, 1]) {
+      const off = lado * (ancho / 2 - 1.5);
+      const contorno: Punto[] = [
+        [cax - ey * off - ex * 0.45, cay + ex * off - ey * 0.45],
+        [cbx - ey * off + ex * 0.45, cby + ex * off + ey * 0.45],
+        [cbx - ey * off + ex * 0.45 + ey * 0.9, cby + ex * off + ey * 0.45 - ex * 0.9],
+        [cax - ey * off - ex * 0.45 + ey * 0.9, cay + ex * off - ey * 0.45 - ex * 0.9],
+      ];
+      const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
+      if (geo) piezas.push(geo);
+    }
   }
 
   // Eje discontinuo: trazo de 30 m y hueco de 20, que es la proporción real.

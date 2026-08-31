@@ -41,6 +41,7 @@ import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
 import { delante, enEjesDePista } from './world/rumbo';
+import { LandingWatcher } from './flight/aterrizaje';
 import { KeyScreen } from './ui/teclas';
 import { LOCALE_NAMES, cycleLocale, t } from './i18n';
 import { Audio } from './audio/audio';
@@ -110,6 +111,9 @@ export class Game {
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
   private keyScreen: KeyScreen | null = null;
+
+  /** Reconoce el aterrizaje y su calidad. Ver `flight/aterrizaje.ts`. */
+  private readonly landing = new LandingWatcher();
 
   private cameraMode: CameraMode = 'chase';
   private propellerAngle = 0;
@@ -254,6 +258,29 @@ export class Game {
   }
 
   /** Coloca el avión al principio de la pista, parado y con el motor al ralentí. */
+  /** Mira si se ha aterrizado y lo dice. La lógica vive en `aterrizaje.ts`. */
+  private checkLanding(): void {
+    const s = this.flight.state;
+    const veredicto = this.landing.update(
+      s.onGround,
+      s.airspeed,
+      s.touchdownSinkRate,
+      s.crashed,
+      Number.isFinite(this.runwayRemaining()),
+    );
+    if (!veredicto) return;
+    this.hud.flash(
+      t(
+        veredicto === 'suave'
+          ? 'hud.landedSoft'
+          : veredicto === 'firme'
+            ? 'hud.landedFirm'
+            : 'hud.landedOffRunway',
+      ),
+      3.6,
+    );
+  }
+
   /**
    * Dónde arranca el avión: en la cabecera, mirando por la pista.
    *
@@ -347,6 +374,7 @@ export class Game {
       this.updateMissionMarker();
     }
     this.runwayGuide.reset();
+    this.landing.reset();
     this.crashedFor = 0;
     this.wasOnGround = true;
     this.wasStalled = false;
@@ -403,6 +431,7 @@ export class Game {
       this.runwayRemaining(),
       this.input.controls.engineOn,
     );
+    this.checkLanding();
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
     // misión en curso la aguja señala el objetivo, y si el tutor mirara ese
     // número pediría bajar el motor para aterrizar cada vez que uno se
