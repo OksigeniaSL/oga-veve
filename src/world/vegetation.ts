@@ -37,6 +37,7 @@ import {
   Quaternion,
   Vector3,
 } from 'three';
+import { enEjesDePista } from './rumbo';
 import { ValueNoise2D, mulberry32 } from './noise';
 import type { Scenario } from './scenarios';
 
@@ -272,13 +273,7 @@ function slopeAt(ground: GroundSampler, x: number, z: number): number {
  */
 function nearRunway(x: number, z: number, scenario: Scenario): boolean {
   const { runway } = scenario;
-  const heading = (runway.heading * Math.PI) / 180;
-  const sin = Math.sin(heading);
-  const cos = Math.cos(heading);
-  const dx = x - runway.x;
-  const dz = z - runway.z;
-  const along = dx * sin - dz * cos;
-  const across = dx * cos + dz * sin;
+  const { along, across } = enEjesDePista(x, z, runway.x, runway.z, runway.heading);
   // Margen justo: se despeja la pista y su franja de seguridad, pero los
   // árboles llegan cerca. Pasar a ras de ellos es lo que hace que una carrera
   // de despegue se sienta rápida — sin nada cerca, no hay paralaje.

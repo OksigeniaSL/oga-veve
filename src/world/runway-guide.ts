@@ -29,6 +29,7 @@ import {
   TorusGeometry,
   type Vector3,
 } from 'three';
+import { delante } from './rumbo';
 import type { Scenario } from './scenarios';
 
 /** Cota del terreno en unas coordenadas de mundo. */
@@ -153,10 +154,11 @@ function buildGuide(
   group.name = 'guia-pista';
 
   const { runway } = scenario;
-  const heading = (runway.heading * Math.PI) / 180;
-  // Vector unitario que apunta desde la cabecera hacia la pista.
-  const ax = Math.sin(heading);
-  const az = Math.cos(heading);
+  // Hacia dónde se avanza volando este rumbo. Sale de `rumbo.ts` y no de una
+  // cuenta escrita aquí: la versión de aquí tenía el coseno sin negar, que
+  // con 90° acierta por casualidad y con un rumbo cualquiera pone la cabecera
+  // en el lado contrario. Ver la nota de ese fichero.
+  const [ax, az] = delante(runway.heading);
 
   // Umbral: media pista por detrás del centro, que es por donde se entra.
   const thresholdX = runway.x - ax * runway.length * 0.5;

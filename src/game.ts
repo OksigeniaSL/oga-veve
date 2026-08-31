@@ -40,6 +40,7 @@ import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
+import { delante, enEjesDePista } from './world/rumbo';
 import { KeyScreen } from './ui/teclas';
 import { LOCALE_NAMES, cycleLocale, t } from './i18n';
 import { Audio } from './audio/audio';
@@ -301,20 +302,15 @@ export class Game {
   private runwayRemaining(): number {
     const r = this.scenario.runway;
     const p = this.flight.state.position;
-    const rad = (r.heading * Math.PI) / 180;
-    // Ejes de la pista: a lo largo y a lo ancho.
-    const ax = Math.sin(rad);
-    const az = -Math.cos(rad);
-    const dx = p.x - r.x;
-    const dz = p.z - r.z;
-    const along = dx * ax + dz * az;
-    const across = Math.abs(dx * -az + dz * ax);
+    const { along, across: lado } = enEjesDePista(p.x, p.z, r.x, r.z, r.heading);
+    const across = Math.abs(lado);
     if (across > r.width) return Infinity;
     if (Math.abs(along) > r.length / 2) return Infinity;
 
     // Hacia dónde va el avión respecto al eje de la pista.
-    const heading = this.flight.state.heading;
-    const hacia = Math.sin(heading) * ax + -Math.cos(heading) * az;
+    const [fx, fz] = delante((this.flight.state.heading * 180) / Math.PI);
+    const [rx, rz] = delante(r.heading);
+    const hacia = fx * rx + fz * rz;
     return hacia >= 0 ? r.length / 2 - along : r.length / 2 + along;
   }
 
