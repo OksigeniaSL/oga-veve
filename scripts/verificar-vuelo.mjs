@@ -62,34 +62,65 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
   );
   await page.screenshot({ path: `${D}/vuelo-${escenario}-1-puesto.png` });
 
-  // ── Rodar de verdad ─────────────────────────────────────────────────────
-  //
-  // Con un seguidor de línea: motor corto para ir a unos quince por hora, y
-  // timón hacia el punto de la ruta que queda cien metros por delante. No
-  // pretende rodar bonito, pretende **demostrar que la raya lleva a alguna
-  // parte** y que la torre acaba dando luz verde.
-  //
-  // El primer intento fue «dar motor y ya», y el avión despegó de la
-  // plataforma a doscientos por hora sin que la comprobación se enterara: una
-  // prueba que no mira lo que está haciendo no prueba nada.
   if (!RUEDAN.has(escenario)) {
     await page.close();
     continue;
   }
 
-  await page.keyboard.press('KeyI');
-  await page.waitForTimeout(400);
+  // ── Rodar de verdad ─────────────────────────────────────────────────────
+  //
+  // **El bucle va dentro de la página.** Pilotar desde fuera cuesta un viaje de
+  // ida y vuelta al navegador por cada tecla, y así rodar ciento cuarenta
+  // metros tardaba más de tres minutos: la comprobación se quedaba sin tiempo
+  // antes de llegar a la doble raya. Metida dentro, tarda segundos.
+  //
+  // Lo que hace es seguir la línea: timón hacia el punto de la ruta que queda
+  // sesenta metros por delante, y motor corto para ir a paso de rodaje. No
+  // pretende rodar bonito; pretende demostrar que la raya lleva a alguna parte
+  // y que la torre acaba dando luz verde.
+  const resultado = await page.evaluate(async () => {
+    const o = globalThis.__oga;
+    const cuadro = () => new Promise((r) => requestAnimationFrame(() => r()));
+    const hasta = performance.now() + 150000;
 
-  const fases = [];
-  let ultima = '';
-  let despegoSinQuerer = false;
+    const fases = [];
+    let ultima = '';
+    let masRapido = 0;
+    let cerca = Infinity;
+    let arranque = null;
+    let ultimaPos = null;
+    let destino = null;
+    let vecesQueGiro = 0;
 
-  for (let paso = 0; paso < 600; paso++) {
-    const info = await page.evaluate(() => {
-      const o = globalThis.__oga;
+    // **El piloto va enganchado al bucle del juego**, no escribiendo en los
+    // mandos desde fuera. Escribir desde fuera no servía: `input.update()`
+    // reescribe los mandos enteros cada fotograma y le quitaba el timón al
+    // instante, así que el avión salía recto de la plataforma y se alejaba de
+    // su ruta mientras la comprobación anotaba, tan contenta, que rodaba.
+    o.pilotar((c) => {
       const e = o.estado();
       const ruta = o.ruta();
-      // El punto de la ruta cien metros por delante del más cercano.
+      c.engineOn = true;
+      masRapido = Math.max(masRapido, e.airspeed);
+      if (ruta.length < 2) return;
+
+      const fin = ruta[ruta.length - 1];
+      const alFinal = Math.hypot(fin[0] - e.position.x, fin[1] - e.position.z);
+      cerca = Math.min(cerca, alFinal);
+      arranque ??= [Math.round(e.position.x), Math.round(e.position.z)];
+      ultimaPos = [Math.round(e.position.x), Math.round(e.position.z)];
+      destino = [Math.round(fin[0]), Math.round(fin[1])];
+
+      // Parar al llegar: la torre solo mira a quien está parado del todo.
+      if (alFinal < 28) {
+        c.throttle = 0;
+        c.brakes = 1;
+        c.aileron = 0;
+        c.rudder = 0;
+        return;
+      }
+
+      // Timón hacia el punto de la ruta sesenta metros por delante.
       let mejor = Infinity;
       let cual = 0;
       ruta.forEach((p, k) => {
@@ -99,68 +130,95 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
           cual = k;
         }
       });
-      let mira = ruta[ruta.length - 1] ?? null;
+      let mira = fin;
       let acumulado = 0;
       for (let k = cual; k < ruta.length - 1; k++) {
         acumulado += Math.hypot(ruta[k + 1][0] - ruta[k][0], ruta[k + 1][1] - ruta[k][1]);
-        if (acumulado > 100) {
+        if (acumulado > 45) {
           mira = ruta[k + 1];
           break;
         }
       }
       const rumbo = ((e.heading * 180) / Math.PI + 360) % 360;
-      let giro = null;
-      if (mira) {
-        const quiero =
-          ((Math.atan2(mira[0] - e.position.x, -(mira[1] - e.position.z)) * 180) / Math.PI + 360) %
-          360;
-        giro = ((quiero - rumbo + 540) % 360) - 180;
-      }
-      return {
-        vel: e.airspeed,
-        alto: e.position.y,
-        giro,
-        aLaRuta: mejor,
-        aviso: document.querySelector('[data-hud="hint"]')?.textContent?.trim() ?? '',
-        torre: document.querySelector('.torre')?.hidden
-          ? null
-          : document.querySelector('.torre')?.className.includes('verde')
-            ? 'verde'
-            : 'roja',
-      };
+      const quiero =
+        ((Math.atan2(mira[0] - e.position.x, -(mira[1] - e.position.z)) * 180) / Math.PI + 360) %
+        360;
+      const giro = ((quiero - rumbo + 540) % 360) - 180;
+      // **En tierra se gira con el alabeo, no con el timón.** La rueda de morro
+      // va en el eje de alabeo desde que se añadió la dirección en tierra, y el
+      // primer comprobador ponía timón y alabeo a cero: el avión salió del
+      // puesto perfectamente recto y siguió recto sesenta segundos, con el
+      // rumbo clavado en 190 de principio a fin, mientras la comprobación
+      // anotaba que estaba rodando.
+      // **Los mandos se llaman `aileron` y `rudder`.** Escribir en `roll` y
+      // `yaw` no da error: crea dos propiedades que nadie lee, y el avión sale
+      // recto del puesto con el rumbo clavado mientras la comprobación anota
+      // trescientos mandos de giro. Perdí media hora buscando el fallo en el
+      // juego, que estaba bien.
+      const mando = Math.max(-1, Math.min(1, giro / 20));
+      if (Math.abs(mando) > 0.05) vecesQueGiro++;
+      c.aileron = mando;
+      c.rudder = mando * 0.5;
+      c.elevator = 0;
+      // Ocho metros por segundo, unos treinta por hora: es lo que rueda un
+      // avión de verdad por una recta, y a cuatro esta comprobación tardaba
+      // tres minutos y se quedaba sin tiempo antes de llegar.
+      c.throttle = e.airspeed < 8 ? 0.5 : 0;
+      c.brakes = e.airspeed > 11 ? 1 : 0;
     });
 
-    if (info.aviso && info.aviso !== ultima) {
-      ultima = info.aviso;
-      fases.push(`${info.aviso}${info.torre ? `  [luz ${info.torre}]` : ''}`);
-      if (info.torre === 'verde') break;
+    for (;;) {
+      const fase = o.fase();
+      if (fase && fase !== ultima) {
+        ultima = fase;
+        const luz = document.querySelector('.torre');
+        fases.push({
+          fase,
+          luz: luz && !luz.hidden ? (luz.className.includes('verde') ? 'verde' : 'roja') : null,
+          aviso: document.querySelector('[data-hud="hint"]')?.textContent?.trim() ?? '',
+        });
+        if (fase === 'autorizado') break;
+      }
+      if (performance.now() > hasta) break;
+      await cuadro();
     }
-    if (info.vel > 30) despegoSinQuerer = true;
 
-    // Timón hacia la ruta, y motor corto.
-    if (info.giro !== null && Math.abs(info.giro) > 4) {
-      await page.keyboard.down(info.giro > 0 ? 'KeyE' : 'KeyQ');
-      await page.waitForTimeout(40);
-      await page.keyboard.up(info.giro > 0 ? 'KeyE' : 'KeyQ');
-    }
-    if (info.vel < 4) {
-      await page.keyboard.down('ShiftLeft');
-      await page.waitForTimeout(30);
-      await page.keyboard.up('ShiftLeft');
-    } else if (info.vel > 6) {
-      await page.keyboard.down('KeyB');
-      await page.waitForTimeout(30);
-      await page.keyboard.up('KeyB');
-    } else {
-      await page.waitForTimeout(30);
-    }
+    o.pilotar(null);
+    return {
+      fases,
+      masRapido: Math.round(masRapido * 3.6),
+      cerca: Math.round(cerca),
+      arranque,
+      ultimaPos,
+      destino,
+      vecesQueGiro,
+      recorrido:
+        arranque && ultimaPos
+          ? Math.round(Math.hypot(ultimaPos[0] - arranque[0], ultimaPos[1] - arranque[1]))
+          : 0,
+      seQuedoSinTiempo: performance.now() > hasta,
+    };
+  });
+
+  console.log('  rodando, fase a fase:');
+  for (const f of resultado.fases) {
+    console.log(
+      `    · ${f.fase.padEnd(13)} ${f.luz ? `[luz ${f.luz}]` : '         '}  «${f.aviso}»`,
+    );
   }
-
-  console.log('  rodando, lo que fue diciendo el juego:');
-  for (const f of fases) console.log(`    · ${f}`);
   console.log(
-    `  ¿llegó a la luz verde? ${fases.some((f) => f.includes('verde')) ? 'sí ✓' : 'no ✗'}` +
-      `${despegoSinQuerer ? '  ✗ despegó sin querer' : ''}`,
+    `  salió de [${resultado.arranque}] y acabó en [${resultado.ultimaPos}] · destino [${resultado.destino}]`,
+  );
+  console.log(
+    `  se movió ${resultado.recorrido} m en línea recta y pidió timón ${resultado.vecesQueGiro} veces`,
+  );
+  const llego = resultado.fases.some((f) => f.fase === 'autorizado');
+  console.log(
+    `  ¿llegó a la luz verde? ${llego ? 'sí ✓' : 'no ✗'}` +
+      `  · lo más cerca que llegó del final: ${resultado.cerca} m` +
+      `  · lo más rápido que fue: ${resultado.masRapido} km/h` +
+      `${resultado.masRapido > 60 ? ' ✗ eso no es rodar, es despegar' : ''}` +
+      `${resultado.seQuedoSinTiempo ? ' · se acabó el tiempo' : ''}`,
   );
   await page.screenshot({ path: `${D}/vuelo-${escenario}-3-rodando.png` });
   await page.close();

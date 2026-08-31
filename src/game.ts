@@ -40,6 +40,7 @@ import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
+import type { ControlInputs } from './flight/model';
 import { delante, enEjesDePista, puntoDePista } from './world/rumbo';
 import { PlanDeVuelo } from './world/plan-de-vuelo';
 import { LandingWatcher } from './flight/aterrizaje';
@@ -124,6 +125,8 @@ export class Game {
    * volver, así que se vuela como siempre: alineado en la cabecera.
    */
   private plan: PlanDeVuelo | null = null;
+  /** Ver `abrirVentanaDePruebas`. Siempre nulo fuera de desarrollo. */
+  private pilotoDePruebas: ((c: ControlInputs) => void) | null = null;
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   private faseAnunciada = '';
 
@@ -280,6 +283,23 @@ export class Game {
     (globalThis as { __oga?: unknown }).__oga = {
       estado: () => this.flight.state,
       fase: () => this.faseAnunciada,
+      // Los mandos, para poder pilotar desde una comprobación sin pasar por el
+      // teclado: cada tecla enviada desde fuera cuesta un viaje de ida y vuelta
+      // al navegador, y rodar ciento cuarenta metros así tardaba minutos.
+      /**
+       * Un piloto de pruebas: una función que toca los mandos **después** de
+       * que los lea el teclado.
+       *
+       * Hace falta porque escribir en `controls` desde fuera no sirve de nada:
+       * `input.update()` los reescribe enteros cada fotograma, así que el
+       * primer comprobador le ponía timón al avión y el teclado se lo quitaba
+       * al instante. El avión salía recto de la plataforma y se alejaba de su
+       * ruta mientras la comprobación anotaba, tan contenta, que estaba
+       * rodando.
+       */
+      pilotar: (fn: ((c: unknown) => void) | null) => {
+        this.pilotoDePruebas = fn as ((c: typeof this.input.controls) => void) | null;
+      },
       ruta: () => this.plan?.rutaVisible() ?? [],
       pista: () => this.scenario.runway,
     };
@@ -495,6 +515,7 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.25);
 
     this.input.update(dt);
+    this.pilotoDePruebas?.(this.input.controls);
     if (this.flight.state.crashed) {
       // Vuelve solo a la pista. La alternativa —dejar el avión roto hasta
       // que alguien pulse una tecla— exige leer un mensaje, y quien juega
