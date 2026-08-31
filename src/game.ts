@@ -195,6 +195,7 @@ export class Game {
     this.hud.setSoundLevel(this.audio.level.glyph, t(`sound.${this.audio.level.id}` as never));
     this.hud.onSoundClick(() => this.toggleSound());
     this.hud.onBrake((pressed) => this.input.setTouchBrakes(pressed));
+    this.hud.onThrottle((direction) => this.input.setButtonThrottle(direction));
 
     window.addEventListener('resize', this.onResize);
     this.onResize();
@@ -246,7 +247,7 @@ export class Game {
     this.wasOnGround = true;
     this.wasStalled = false;
     this.wasCrashed = false;
-    this.input.controls.throttle = 0;
+    this.input.releaseAll();
     this.hud.tutor.reset();
     this.updateBadge();
   }

@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { axisFromKeys } from './input';
+import { axisFromKeys, releasesTouchThrottle } from './input';
 
 const PITCH_UP = ['ArrowUp', 'KeyW'];
 const PITCH_DOWN = ['ArrowDown', 'KeyS'];
@@ -34,5 +34,26 @@ describe('ejes de teclado', () => {
 
   it('teclas ajenas no mueven nada', () => {
     expect(axisFromKeys(new Set(['KeyZ', 'Space']), PITCH_UP, PITCH_DOWN)).toBe(0);
+  });
+});
+
+describe('el motor no se queda agarrado', () => {
+  it('el teclado le quita el mando a la palanca táctil', () => {
+    expect(releasesTouchThrottle(1, 0)).toBe(true);
+    expect(releasesTouchThrottle(-1, 0)).toBe(true);
+  });
+
+  it('los botones de pantalla también', () => {
+    expect(releasesTouchThrottle(0, 1)).toBe(true);
+    expect(releasesTouchThrottle(0, -1)).toBe(true);
+  });
+
+  /**
+   * Y sin tocar nada, la palanca se queda donde la dejaste. Es lo que la
+   * hace una palanca de gases y no un botón, y es la razón por la que no
+   * basta con soltarla siempre.
+   */
+  it('sin tocar nada, la palanca sigue mandando', () => {
+    expect(releasesTouchThrottle(0, 0)).toBe(false);
   });
 });

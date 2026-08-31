@@ -1018,3 +1018,15 @@ body {
 [hidden] {
   display: none !important;
 }
+
+/* Los signos del motor son botones: se pulsan con el dedo y con el ratón. */
+.motor__tecla {
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.motor__tecla:active {
+  background: var(--ocre, #dd923f);
+  color: #1a1206;
+}

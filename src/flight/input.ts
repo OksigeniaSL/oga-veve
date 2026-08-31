@@ -94,6 +94,9 @@ export class InputManager {
   private touchThrottle: number | null = null;
   private touchBrakes = false;
 
+  /** Dirección pedida por los botones de motor de la pantalla. */
+  private buttonThrottle = 0;
+
   /**
    * Freno desde un botón de la interfaz, no del teclado ni del mando.
    *
@@ -103,6 +106,32 @@ export class InputManager {
    */
   setTouchBrakes(pressed: boolean): void {
     this.touchBrakes = pressed;
+  }
+
+  /**
+   * Motor desde los botones de la pantalla: -1 baja, +1 sube, 0 suelta.
+   *
+   * No fija un valor: empuja en una dirección, exactamente igual que las
+   * teclas. Así el botón y la tecla hacen lo mismo y no se pelean.
+   */
+  /**
+   * Suelta todos los mandos pegajosos y pone el motor a cero.
+   *
+   * Se llama al reiniciar el vuelo. Antes se ponía a cero `controls.throttle`
+   * y nada más, así que si la palanca táctil estaba agarrada volvía a imponer
+   * su valor en el fotograma siguiente y el avión reaparecía en la pista con
+   * el motor a tope y sin forma de bajarlo.
+   */
+  releaseAll(): void {
+    this.touchThrottle = null;
+    this.buttonThrottle = 0;
+    this.touchBrakes = false;
+    this.controls.throttle = 0;
+  }
+
+  setButtonThrottle(direction: number): void {
+    this.buttonThrottle = direction;
+    if (direction !== 0) this.touchThrottle = null;
   }
   /** Solo se avisa del primer gesto una vez. */
   private gestured = false;
@@ -135,20 +164,22 @@ export class InputManager {
     this.controls.aileron = approach(this.controls.aileron, clamp(rollTarget, -1, 1), dt);
     this.controls.rudder = approach(this.controls.rudder, clamp(rudderTarget, -1, 1), dt);
 
+    // Tocar el motor con el teclado o con los botones **suelta la palanca
+    // táctil antes de leer nada**, no después. Yendo después, la palanca
+    // seguía mandando ese fotograma; y si se quedaba agarrada —por ejemplo
+    // porque un botón encima de ella se llevó el `pointerdown` y no el
+    // `pointerup`—, el teclado quedaba anulado del todo y el motor clavado
+    // donde estuviera. Con el gas a tope eso es un avión que no se para.
+    const teclado = axisFromKeys(this.keys, KEYS.throttleUp, KEYS.throttleDown);
+    if (releasesTouchThrottle(teclado, this.buttonThrottle)) this.touchThrottle = null;
+
     if (this.touchThrottle !== null) {
       this.controls.throttle = this.touchThrottle;
     } else if (gamepad?.throttle !== undefined) {
       this.controls.throttle = gamepad.throttle;
     } else {
-      const delta = axisFromKeys(this.keys, KEYS.throttleUp, KEYS.throttleDown);
+      const delta = clamp(teclado + this.buttonThrottle, -1, 1);
       this.controls.throttle = clamp(this.controls.throttle + delta * dt * 0.6, 0, 1);
-    }
-
-    // Tocar el acelerador con el teclado le devuelve el mando: en un portátil
-    // con pantalla táctil se puede usar uno u otro sin quedarse encerrado en
-    // el que se tocó primero.
-    if (this.touchThrottle !== null && axisFromKeys(this.keys, KEYS.throttleUp, KEYS.throttleDown) !== 0) {
-      this.touchThrottle = null;
     }
 
     const braking =
@@ -281,6 +312,19 @@ export class InputManager {
       brakes.addEventListener('pointercancel', () => { this.touchBrakes = false; });
     }
   }
+}
+
+/**
+ * ¿Sueltan el mando del motor la palanca táctil?
+ *
+ * Función aparte y probada porque **es la segunda vez** que la palanca
+ * táctil se queda agarrada y deja el teclado sin efecto: la primera dejaba
+ * el motor clavado al cincuenta por ciento, y la segunda al cien, con un
+ * avión que no había forma de parar. La regla es simple y no admite matices:
+ * **si alguien toca el teclado o los botones, mandan ellos.**
+ */
+export function releasesTouchThrottle(keyboard: number, button: number): boolean {
+  return keyboard !== 0 || button !== 0;
 }
 
 /**

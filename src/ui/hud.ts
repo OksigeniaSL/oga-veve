@@ -115,6 +115,9 @@ export class Hud {
   private brakes!: HTMLElement;
   private brakesTouch!: HTMLElement;
   private brakeHandler: ((pressed: boolean) => void) | null = null;
+  private throttleDown!: HTMLElement;
+  private throttleUp!: HTMLElement;
+  private throttleHandler: ((direction: number) => void) | null = null;
   private horizon: HTMLElement | null = null;
   private homeArrow!: HTMLElement;
   private homeDistance: HTMLElement | null = null;
@@ -193,10 +196,16 @@ export class Hud {
         -->
         <div class="tarjeta medidor motor">
           ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.throttle}</span>` : ''}
+          <!--
+            Y son botones de verdad, no dibujos. Estaban ahí para enseñar qué
+            tecla usar y alguien intentó pulsarlos con el ratón, que es lo
+            más razonable del mundo: si algo tiene forma de botón, se pulsa.
+            Sirven igual con el dedo en una tablet.
+          -->
           <div class="motor__fila">
-            <span class="motor__tecla" aria-hidden="true">−</span>
+            <button class="motor__tecla" type="button" data-hud="throttle-down" aria-label="−">−</button>
             <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
-            <span class="motor__tecla" aria-hidden="true">+</span>
+            <button class="motor__tecla" type="button" data-hud="throttle-up" aria-label="+">+</button>
           </div>
           ${gauges ? `<span class="medidor__glosa">${t('hud.throttle')}</span>` : ''}
         </div>
@@ -269,8 +278,22 @@ export class Hud {
     this.throttleFill = pick(this.root, 'throttle');
     this.brakes = pick(this.root, 'brakes');
     this.brakesTouch = pick(this.root, 'brakes-touch');
-    for (const [evento, valor] of [['pointerdown', true], ['pointerup', false], ['pointercancel', false], ['pointerleave', false]] as const) {
-      this.brakesTouch.addEventListener(evento, () => this.brakeHandler?.(valor));
+    this.brakesTouch.addEventListener('pointerdown', () => this.setBraking(true));
+    // El «soltar» se escucha en la ventana y no en el botón: al despegar, el
+    // botón se oculta con el dedo todavía encima, y un elemento oculto ya no
+    // recibe el `pointerup`. El freno se quedaba puesto para siempre, y al
+    // aterrizar el avión no había forma de moverlo hasta que algo lo
+    // soltaba — y entonces salía disparado con el gas que hubiera puesto.
+    for (const evento of ['pointerup', 'pointercancel'] as const) {
+      window.addEventListener(evento, () => this.setBraking(false));
+    }
+
+    this.throttleDown = pick(this.root, 'throttle-down');
+    this.throttleUp = pick(this.root, 'throttle-up');
+    for (const [boton, paso] of [[this.throttleDown, -1], [this.throttleUp, 1]] as const) {
+      boton.addEventListener('pointerdown', () => this.throttleHandler?.(paso));
+      boton.addEventListener('pointerup', () => this.throttleHandler?.(0));
+      boton.addEventListener('pointerleave', () => this.throttleHandler?.(0));
     }
     this.horizon = optional(this.root, 'horizon');
     this.home = pick(this.root, 'home');
@@ -391,7 +414,10 @@ export class Hud {
     const enSuelo = state.onGround;
     const sinLetras = this.instruments === 'none' || this.instruments === 'pictorial';
     this.brakes.hidden = !enSuelo || sinLetras;
-    this.brakesTouch.hidden = !enSuelo || !sinLetras;
+    const escondeBoton = !enSuelo || !sinLetras;
+    // Al ocultarlo se suelta, por si se ocultó con el dedo encima.
+    if (escondeBoton && !this.brakesTouch.hidden) this.setBraking(false);
+    this.brakesTouch.hidden = escondeBoton;
     const pisado = braking > 0.05;
     this.brakes.classList.toggle('freno--pisado', pisado);
     this.brakesTouch.classList.toggle('freno--pisado', pisado);
@@ -461,6 +487,15 @@ export class Hud {
   /** Quién recibe el botón de freno táctil. */
   onBrake(handler: (pressed: boolean) => void): void {
     this.brakeHandler = handler;
+  }
+
+  /** Quién recibe los botones de motor: -1 baja, +1 sube, 0 suelta. */
+  onThrottle(handler: (direction: number) => void): void {
+    this.throttleHandler = handler;
+  }
+
+  private setBraking(pressed: boolean): void {
+    this.brakeHandler?.(pressed);
   }
 
   onSoundClick(handler: () => void): void {
