@@ -78,7 +78,24 @@ export interface Aerodrome {
   readonly aprons: readonly { readonly polygon: readonly Punto[] }[];
   readonly buildings: readonly { readonly heightM: number | null; readonly polygon: readonly Punto[] }[];
   readonly windsocks: readonly Punto[];
-  readonly holdingPositions: readonly Punto[];
+  /**
+   * Dónde para un avión que rueda antes de pisar la pista.
+   *
+   * `source` dice si el dato está medido o calculado, y no es un detalle
+   * administrativo: Tenerife Norte trae trece mapeados en OpenStreetMap y
+   * Silvio Pettirossi ninguno —que no significa que no existan, significa que
+   * nadie los ha dibujado—. Los que faltan se deducen de dónde cada calle de
+   * rodaje llega a la pista, y se marcan, porque un dato calculado que se hace
+   * pasar por medido es peor que no tenerlo.
+   */
+  readonly holdingPositions: readonly {
+    readonly xy: Punto;
+    readonly ref: string | null;
+    readonly runway?: string | null;
+    readonly source: 'osm' | 'derivado';
+  }[];
+  /** Los puestos de estacionamiento, numerados. De aquí sale y aquí vuelve. */
+  readonly parkingPositions?: readonly { readonly ref: string | null; readonly xy: Punto }[];
 }
 
 /** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */
@@ -342,7 +359,7 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
 
   // Puntos de espera: dos barras gruesas cruzando la calle. Se orientan según
   // la rodadura más cercana, porque OSM da el punto pero no su dirección.
-  for (const punto of aero.holdingPositions) {
+  for (const { xy: punto } of aero.holdingPositions) {
     const dir = direccionCercana(aero, punto);
     if (!dir) continue;
     const [ux, uy] = dir;

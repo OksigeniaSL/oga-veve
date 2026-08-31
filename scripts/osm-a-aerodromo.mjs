@@ -297,7 +297,7 @@ async function construir(icao, pistas, aeropuertos) {
   });
 
   const elev = num(ficha.elevation_ft);
-  return {
+  const salida = {
     id: icao,
     name: ficha.name,
     source: {
@@ -326,13 +326,114 @@ async function construir(icao, pistas, aeropuertos) {
       polygon: camino(w, proj),
     })),
     helipads: de('helipad').map((w) => centro(w)).filter(Boolean).map(([la, lo]) => proj(la, lo)),
-    holdingPositions: de('holding_position').map((n) => centro(n)).filter(Boolean).map(([la, lo]) => proj(la, lo)),
+    /**
+     * Dónde estaciona un avión. Sin esto no hay de dónde salir ni a dónde
+     * volver, y un vuelo que empieza alineado en la pista se salta la mitad de
+     * lo que pasa en un aeropuerto.
+     *
+     * El `ref` es el número del puesto, que es lo que dice la torre por radio
+     * y lo que va pintado en el suelo.
+     */
+    parkingPositions: de('parking_position')
+      .map((n) => ({ ref: n.tags?.ref ?? null, punto: centro(n) }))
+      .filter((p) => p.punto)
+      .map(({ ref, punto }) => ({ ref, xy: proj(punto[0], punto[1]) })),
+    holdingPositions: puntosDeEspera(de('holding_position'), proj),
     windsocks: de('windsock').map((n) => centro(n)).filter(Boolean).map(([la, lo]) => proj(la, lo)),
     // OJO: en OSM `aeroway=navigationaid` son ayudas VISUALES —PAPI, VASI—,
     // no radioayudas. Las radioayudas van con `airmark=beacon`, que es otra
     // consulta. Lo dimos por hecho al revés durante un tiempo.
     visualAids: de('navigationaid').map((n) => centro(n)).filter(Boolean).map(([la, lo]) => proj(la, lo)),
   };
+
+  // Si OSM no trae ninguno, se deducen. Va aquí y no arriba porque hacen falta
+  // las calles de rodaje ya proyectadas, y esas se construyen en el objeto.
+  if (!salida.holdingPositions.length) {
+    salida.holdingPositions = esperaDeducida(salida.taxiways, salida.runways);
+  }
+  return salida;
+}
+
+/**
+ * Los puntos de espera: los de OSM y, si no hay, los deducidos.
+ *
+ * Un punto de espera es la doble raya donde un avión que rueda **para y pide
+ * permiso** antes de pisar la pista. Es la lección de aeropuerto más
+ * importante que hay y no se puede enseñar sin ellos.
+ *
+ * Tenerife Norte tiene trece mapeados en OSM. Silvio Pettirossi, ninguno — y
+ * eso no significa que no existan, significa que nadie los ha dibujado. Así
+ * que cuando faltan se deducen de la geometría, que para esto basta: donde una
+ * calle de rodaje llega a la pista, hay un punto de espera a unos noventa
+ * metros del eje. Noventa es la distancia real para una pista de categoría
+ * grande con aproximaciones de precisión, que es el caso de las dos nuestras.
+ *
+ * Se marcan como `derivado` y no se mezclan con los de verdad: un dato
+ * calculado que se hace pasar por medido es peor que no tenerlo.
+ */
+function puntosDeEspera(nodos, proj) {
+  const deOsm = nodos
+    .map((n) => ({ ref: n.tags?.ref ?? null, punto: centro(n) }))
+    .filter((p) => p.punto)
+    .map(({ ref, punto }) => ({ xy: proj(punto[0], punto[1]), ref, source: 'osm' }));
+  if (deOsm.length) return deOsm;
+  return [];
+}
+
+/**
+ * Deduce los puntos de espera de dónde cada calle de rodaje toca la pista.
+ *
+ * Va aparte porque necesita las calles ya proyectadas, y esas se construyen
+ * después de las pistas.
+ */
+function esperaDeducida(taxiways, runways) {
+  const DEL_EJE = 90;
+  const salida = [];
+
+  for (const pista of runways) {
+    const eje = pista.centerline;
+    if (eje.length < 2) continue;
+    const media = (pista.widthM ?? 45) / 2;
+
+    for (const calle of taxiways) {
+      const camino = calle.path;
+      if (camino.length < 2) continue;
+      // ¿Llega esta calle hasta el asfalto de la pista?
+      const toca = camino.some((p) => aLaLinea(p, eje) < media + 6);
+      if (!toca) continue;
+
+      // Se recorre desde cada extremo hacia dentro y se coge el primer punto
+      // que cruza los noventa metros. Desde los dos, porque una calle puede
+      // tocar la pista por cualquiera de sus dos puntas —o por las dos, si la
+      // atraviesa—.
+      for (const orden of [camino, [...camino].reverse()]) {
+        for (let i = 0; i < orden.length - 1; i++) {
+          const d1 = aLaLinea(orden[i], eje);
+          const d2 = aLaLinea(orden[i + 1], eje);
+          if (d1 <= DEL_EJE || d2 > DEL_EJE) continue;
+          // Interpolación lineal entre los dos vértices que cruzan el umbral.
+          const t = (d1 - DEL_EJE) / (d1 - d2);
+          const xy = [
+            redondear(orden[i][0] + (orden[i + 1][0] - orden[i][0]) * t),
+            redondear(orden[i][1] + (orden[i + 1][1] - orden[i][1]) * t),
+          ];
+          if (salida.some((p) => Math.hypot(p.xy[0] - xy[0], p.xy[1] - xy[1]) < 40)) break;
+          salida.push({ xy, ref: calle.ref ?? null, runway: pista.ref || null, source: 'derivado' });
+          break;
+        }
+      }
+    }
+  }
+  return salida;
+}
+
+/** Distancia de un punto a una polilínea, en el plano del fichero. */
+function aLaLinea(p, linea) {
+  let mejor = Infinity;
+  for (let i = 0; i < linea.length - 1; i++) {
+    mejor = Math.min(mejor, aLaRecta(p, linea[i], linea[i + 1]));
+  }
+  return mejor;
 }
 
 /**
