@@ -21,7 +21,7 @@ const ALTO = 38;
 
 const s = await createServer({ root: process.cwd(), server: { middlewareMode: true } });
 const { SCENARIOS } = await s.ssrLoadModule('/src/world/scenarios.ts');
-const { createAerodrome } = await s.ssrLoadModule('/src/world/aerodrome.ts');
+const { createAerodrome, arranqueEnPista } = await s.ssrLoadModule('/src/world/aerodrome.ts');
 
 const esc = SCENARIOS.find((e) => e.id === id);
 if (!esc?.aerodrome) {
@@ -34,7 +34,13 @@ const grupo = createAerodrome(aero);
 
 // Triángulos del pavimento, en coordenadas de MUNDO (ya convertidas).
 const triangulos = [];
-for (const malla of grupo.children) {
+// Solo el pavimento: las pinturas y las luces se dibujarían encima y el mapa
+// dejaría de decir dónde está el asfalto, que es lo único que se le pregunta.
+const pavimento = [];
+grupo.traverse((o) => {
+  if (o.geometry && o.name?.startsWith('pavimento')) pavimento.push(o);
+});
+for (const malla of pavimento) {
   const pos = malla.geometry.attributes.position.array;
   const idx = malla.geometry.index.array;
   for (let i = 0; i < idx.length; i += 3) {
@@ -95,14 +101,12 @@ for (const [nombre, u] of umbrales) poner(u.xy[0], -u.xy[1], nombre[0]);
 // Centro de pista según el escenario, y punto de arranque según el juego.
 poner(esc.runway.x, esc.runway.z, 'C');
 
-const h = (esc.runway.heading * Math.PI) / 180;
-const umbral = umbrales.find(
-  ([, u]) => Math.abs((((u.headingTrue ?? 0) - esc.runway.heading + 540) % 360) - 180) < 20,
-);
-if (umbral) {
-  const [ux, uy] = umbral[1].xy;
-  poner(ux + Math.sin(h) * 60, -uy - Math.cos(h) * 60, 'A');
-}
+// El arranque sale de la MISMA función que usa el juego. Tenerlo copiado aquí
+// hizo que el mapa siguiera diciendo que estaba descentrado después de
+// arreglarlo: una herramienta de diagnóstico con su propia copia de la lógica
+// miente con toda la confianza del mundo.
+const arranque = arranqueEnPista(pista, esc.runway.heading);
+if (arranque) poner(arranque[0], arranque[1], 'A');
 
 console.log(`\n${aero.name} — visto desde arriba`);
 console.log(`arriba = ${minZ < 0 ? 'norte' : 'sur'} · ${Math.round(maxX - minX)} × ${Math.round(maxZ - minZ)} m\n`);
@@ -128,11 +132,9 @@ const alEje = ([px, pz]) => {
 };
 
 const media = (pista.widthM ?? 45) / 2;
-if (umbral) {
-  const [ux, uy] = umbral[1].xy;
-  const A = [ux + Math.sin(h) * 60, -uy - Math.cos(h) * 60];
-  console.log(`  umbral elegido: ${umbral[0]} · arranque en (${A[0].toFixed(0)}, ${A[1].toFixed(0)})`);
-  const d = alEje(A);
+if (arranque) {
+  console.log(`  arranque en (${arranque[0].toFixed(0)}, ${arranque[1].toFixed(0)})`);
+  const d = alEje(arranque);
   console.log(`  distancia del arranque al eje: ${d.toFixed(1)} m  ${d <= media ? '✓ dentro del asfalto' : `✗ FUERA (media anchura ${media.toFixed(1)} m)`}`);
 }
 const dc = alEje([esc.runway.x, esc.runway.z]);

@@ -42,6 +42,7 @@ import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
 import { delante, enEjesDePista } from './world/rumbo';
 import { LandingWatcher } from './flight/aterrizaje';
+import { arranqueEnPista } from './world/aerodrome';
 import { KeyScreen } from './ui/teclas';
 import { LOCALE_NAMES, cycleLocale, t } from './i18n';
 import { Audio } from './audio/audio';
@@ -301,16 +302,10 @@ export class Game {
 
     const pista = aerodrome?.runways[0];
     if (pista) {
-      // El umbral por el que se despega con este rumbo, y unos metros dentro
-      // de la pista para no arrancar pisando la raya.
-      const umbral = Object.values(pista.thresholds).find(
-        (u) => u?.xy != null && Math.abs(((u.headingTrue ?? 0) - runway.heading + 540) % 360 - 180) < 20,
-      );
-      if (umbral?.xy) {
-        // La Y del fichero apunta al norte y aquí el norte es la Z negativa.
-        const [ux, uy] = umbral.xy;
-        x = ux + Math.sin(heading) * 60;
-        z = -uy - Math.cos(heading) * 60;
+      const p = arranqueEnPista(pista, runway.heading);
+      if (p) {
+        x = p[0];
+        z = p[1];
       }
     }
 

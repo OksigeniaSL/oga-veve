@@ -373,6 +373,54 @@ function aLaPolilinea(p: Punto, eje: readonly Punto[]): number {
   return mejor;
 }
 
+/**
+ * Dónde arranca el avión: en la cabecera, **sobre el eje del pavimento**.
+ *
+ * El umbral que da OurAirports está en la pista pero no exactamente sobre el
+ * eje que dibuja OpenStreetMap — se diferencian en unos metros, como todo lo
+ * demás—, así que el avión aparecía descentrado. Se proyecta el umbral sobre
+ * el eje y se avanza `dentro` metros pista adentro.
+ *
+ * @returns `[x, z]` en coordenadas del mundo, o `null` si no se puede.
+ */
+export function arranqueEnPista(
+  pista: Pista,
+  headingTrue: number,
+  dentro = 60,
+): readonly [number, number] | null {
+  const umbral = Object.values(pista.thresholds).find(
+    (u) => u?.xy != null && Math.abs(((((u.headingTrue ?? 0) - headingTrue + 540) % 360) - 180)) < 20,
+  );
+  if (!umbral?.xy) return null;
+
+  // Distancia recorrida por el eje hasta el punto más cercano al umbral.
+  const eje = pista.centerline;
+  let recorrido = 0;
+  let mejor = Infinity;
+  let dUmbral = 0;
+  for (let i = 0; i < eje.length - 1; i++) {
+    const [ax, ay] = eje[i]!;
+    const [bx, by] = eje[i + 1]!;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const l2 = dx * dx + dy * dy || 1;
+    const l = Math.sqrt(l2);
+    const t = Math.max(0, Math.min(1, ((umbral.xy[0] - ax) * dx + (umbral.xy[1] - ay) * dy) / l2));
+    const d = Math.hypot(umbral.xy[0] - (ax + t * dx), umbral.xy[1] - (ay + t * dy));
+    if (d < mejor) {
+      mejor = d;
+      dUmbral = recorrido + t * l;
+    }
+    recorrido += l;
+  }
+
+  // Y se entra pista adentro, hacia el otro extremo.
+  const total = longitudDe(eje);
+  const haciaDentro = dUmbral < total / 2 ? 1 : -1;
+  const p = sobreElEje(eje, dUmbral + haciaDentro * dentro);
+  return p ? [p[0], -p[1]] : null;
+}
+
 /** Lo que mide una polilínea. */
 function longitudDe(eje: readonly Punto[]): number {
   let total = 0;
