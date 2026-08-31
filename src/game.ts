@@ -9,8 +9,13 @@
  */
 
 import {
+  CanvasTexture,
+  CircleGeometry,
   Clock,
+  DoubleSide,
   MathUtils,
+  Mesh,
+  MeshBasicMaterial,
   PerspectiveCamera,
   Scene,
   Vector3,
@@ -19,7 +24,7 @@ import {
 import { CoefficientFlightModel } from './flight/fdm';
 import { OGA_172, type AircraftConfig } from './flight/aircraft';
 import { InputManager } from './flight/input';
-import type { FlightModel } from './flight/model';
+import type { FlightModel, FlightState } from './flight/model';
 import { Terrain } from './world/terrain';
 import { createSky, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
@@ -33,6 +38,16 @@ import { LOCALE_NAMES, cycleLocale, t } from './i18n';
 /** Vistas disponibles, en el orden en que rota la tecla C. */
 const CAMERA_MODES = ['chase', 'cockpit', 'wing'] as const;
 type CameraMode = (typeof CAMERA_MODES)[number];
+
+/** Campo de visión en reposo y cuánto se abre a velocidad máxima, en grados. */
+const BASE_FOV = 62;
+const FOV_STRETCH = 9;
+/** Velocidad, en m/s, a la que el campo de visión llega a su tope. */
+const FOV_REFERENCE = 70;
+/** Amplitud del traqueteo de pista, en metros. */
+const SHAKE_AMPLITUDE = 0.34;
+/** Segundos que tarda el traqueteo en apagarse al despegar. */
+const SHAKE_FADE = 0.2;
 
 /**
  * Segundos que se ve el avión roto antes de volver solo a la pista. Corto a
@@ -68,6 +83,13 @@ export class Game {
 
   private cameraMode: CameraMode = 'chase';
   private propellerAngle = 0;
+  /** Cuánto traqueteo hay ahora mismo, de 0 a 1. Se apaga solo al despegar. */
+  private shake = 0;
+  private shakeClock = 0;
+  private readonly blobShadow: Mesh;
+  /** Respeta la preferencia del sistema de reducir movimiento. */
+  private readonly reducedMotion =
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
   private running = false;
   /** Segundos que lleva el avión roto. Ver `frame`. */
   private crashedFor = 0;
@@ -109,6 +131,9 @@ export class Game {
 
     this.aircraftMesh = createAircraftMesh(this.aircraft);
     this.scene.add(this.aircraftMesh.group);
+
+    this.blobShadow = createBlobShadow(this.aircraft.wingSpan);
+    this.scene.add(this.blobShadow);
 
     this.flight = new CoefficientFlightModel({
       aircraft: this.aircraft,
@@ -235,6 +260,31 @@ export class Game {
     // se busca que se vea girar y que el ritmo suba al acelerar.
     this.propellerAngle += dt * (6 + this.input.controls.throttle * 96);
     this.aircraftMesh.propeller.rotation.z = this.propellerAngle;
+
+    this.updateBlobShadow(state);
+  }
+
+  /**
+   * Mancha de sombra bajo el avión.
+   *
+   * No hay sombras proyectadas —cuestan fotogramas en una tablet— y sin
+   * ninguna referencia en el suelo es imposible juzgar a qué altura se está
+   * en la rotación y en la toma. Un círculo degradado que crece y se
+   * desvanece con la altura resuelve casi todo eso por un plano.
+   */
+  private updateBlobShadow(state: FlightState): void {
+    const ground = this.terrain.sampleSurface(state.position.x, state.position.z);
+    const height = Math.max(0, state.position.y - ground);
+    const fade = Math.max(0, 1 - height / 220);
+
+    this.blobShadow.visible = fade > 0.02;
+    if (!this.blobShadow.visible) return;
+
+    this.blobShadow.position.set(state.position.x, ground + 0.4, state.position.z);
+    this.blobShadow.rotation.y = -state.heading;
+    const spread = 1 + height / 130;
+    this.blobShadow.scale.set(spread, 1, spread);
+    (this.blobShadow.material as MeshBasicMaterial).opacity = fade * fade * 0.5;
   }
 
   private updateCamera(dt: number): void {
@@ -260,6 +310,7 @@ export class Game {
     }
     this.offset.applyQuaternion(state.orientation);
     this.desiredCamera.copy(state.position).add(this.offset);
+    this.applyGroundShake(state, dt);
 
     // Nunca por debajo del terreno: en un vuelo rasante la cámara de
     // persecución se metería dentro de la loma de atrás.
@@ -273,6 +324,59 @@ export class Game {
 
     this.lookTarget.copy(state.position).addScaledVector(state.velocity, 0.35);
     this.camera.lookAt(this.lookTarget);
+    this.updateFieldOfView(state, dt);
+  }
+
+  /**
+   * Traqueteo de la carrera por pista, y su corte al despegar.
+   *
+   * La velocidad no se ve: se deduce de lo que pasa cerca y de lo que sacude.
+   * Con el avión rodando, la cámara vibra con una amplitud proporcional a la
+   * velocidad en el suelo, con baches sueltos encima para que sea traqueteo y
+   * no un zumbido.
+   *
+   * Y lo que de verdad vende el despegue es lo contrario: **el corte**. En
+   * cuanto las ruedas dejan el suelo la vibración se apaga en dos décimas, y
+   * ese silencio repentino es el momento. No hace falta adornarlo más.
+   */
+  private applyGroundShake(state: FlightState, dt: number): void {
+    if (this.reducedMotion) return;
+
+    const target = state.onGround ? Math.min(1, state.airspeed / 34) : 0;
+    // Sube deprisa y se apaga en SHAKE_FADE segundos.
+    const rate = target > this.shake ? dt * 6 : dt / SHAKE_FADE;
+    this.shake += Math.max(-rate, Math.min(rate, target - this.shake));
+    if (this.shake < 0.002) return;
+
+    this.shakeClock += dt;
+    const t = this.shakeClock;
+    // Tres senos que no comparten periodo: se lee como suelo irregular y no
+    // como una oscilación. Y un cuarto término lento hace los baches.
+    const bump = Math.pow(Math.max(0, Math.sin(t * 5.3)), 8);
+    const amount = SHAKE_AMPLITUDE * this.shake;
+    this.desiredCamera.y += amount * (Math.sin(t * 41) * 0.5 + Math.sin(t * 17.3) * 0.3 + bump * 1.4);
+    this.desiredCamera.x += amount * Math.sin(t * 23.7) * 0.35;
+  }
+
+  /**
+   * Campo de visión atado a la velocidad.
+   *
+   * Abrir el ángulo estira la periferia y da sensación de ir más rápido, que
+   * es el truco más barato que existe. No pasa de setenta y un grados: más
+   * distorsiona y marea. En vista de cabina no se toca, y con movimiento
+   * reducido se queda fijo.
+   */
+  private updateFieldOfView(state: FlightState, dt: number): void {
+    const wanted =
+      this.reducedMotion || this.cameraMode === 'cockpit'
+        ? BASE_FOV
+        : BASE_FOV + FOV_STRETCH * Math.min(1, state.airspeed / FOV_REFERENCE);
+
+    const smoothing = 1 - Math.exp(-dt * 2.5);
+    const next = this.camera.fov + (wanted - this.camera.fov) * smoothing;
+    if (Math.abs(next - this.camera.fov) < 0.01) return;
+    this.camera.fov = next;
+    this.camera.updateProjectionMatrix();
   }
 
   // ── Acciones ──────────────────────────────────────────────────────────
@@ -322,6 +426,53 @@ export class Game {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   };
+}
+
+/**
+ * Círculo oscuro y translúcido que hace de sombra. Se orienta con el avión y
+ * es un óvalo, no un disco: así insinúa la silueta sin modelar nada.
+ */
+function createBlobShadow(wingSpan: number): Mesh {
+  const geometry = new CircleGeometry(wingSpan * 0.62, 20);
+  geometry.rotateX(-Math.PI / 2);
+  geometry.scale(1, 1, 0.72);
+  const mesh = new Mesh(
+    geometry,
+    new MeshBasicMaterial({
+      color: 0xffffff,
+      map: radialFade(),
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: DoubleSide,
+    }),
+  );
+  mesh.name = 'sombra';
+  mesh.renderOrder = 1;
+  return mesh;
+}
+
+/**
+ * Degradado radial generado en un lienzo, para que la sombra se desvanezca
+ * por el borde.
+ *
+ * Con un círculo de color plano la sombra se lee como un charco recortado.
+ * Se dibuja al arrancar, ocupa cero bytes en el paquete y no depende de
+ * ningún fichero externo.
+ */
+function radialFade(): CanvasTexture {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext('2d')!;
+  const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  gradient.addColorStop(0, 'rgba(20,32,26,1)');
+  gradient.addColorStop(0.55, 'rgba(20,32,26,0.72)');
+  gradient.addColorStop(1, 'rgba(20,32,26,0)');
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, size, size);
+  return new CanvasTexture(canvas);
 }
 
 export type { FlightModel };

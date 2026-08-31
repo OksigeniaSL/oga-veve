@@ -16,7 +16,10 @@ import {
   BufferAttribute,
   BufferGeometry,
   Color,
+  CylinderGeometry,
   Group,
+  InstancedMesh,
+  Matrix4,
   Mesh,
   MeshLambertMaterial,
   PlaneGeometry,
@@ -215,17 +218,53 @@ export class Terrain {
     const asphalt = new Mesh(surface, new MeshLambertMaterial({ color: 0x7c7268 }));
     group.add(asphalt);
 
-    // Marcas del eje. Cinco trazos bastan para dar referencia visual al
-    // aterrizar; más serían polígonos gastados en algo que no se mira.
-    const markCount = 5;
-    const markGeometry = new PlaneGeometry(runway.width * 0.06, runway.length * 0.08);
+    // Marcas del eje, cada cincuenta metros como en una pista de verdad.
+    //
+    // Antes eran cinco trazos repartidos por los ochocientos metros centrales,
+    // o sea uno cada doscientos: a treinta metros por segundo, una marca cada
+    // seis segundos y medio. Eso no comunica velocidad ninguna. La velocidad
+    // no se ve, se deduce de lo que pasa cerca, y hacía falta que pasara algo
+    // cada segundo y medio.
+    const markSpacing = 50;
+    const markCount = Math.floor((runway.length * 0.92) / markSpacing);
+    const markGeometry = new PlaneGeometry(runway.width * 0.05, markSpacing * 0.55);
     markGeometry.rotateX(-Math.PI / 2);
-    const markMaterial = new MeshLambertMaterial({ color: 0xe8e2d4 });
+    const marks = new InstancedMesh(
+      markGeometry,
+      new MeshLambertMaterial({ color: 0xe8e2d4 }),
+      markCount,
+    );
+    const placement = new Matrix4();
     for (let i = 0; i < markCount; i++) {
-      const mark = new Mesh(markGeometry, markMaterial);
-      mark.position.set(0, 0.05, (i / (markCount - 1) - 0.5) * runway.length * 0.72);
-      group.add(mark);
+      const along = (i - (markCount - 1) / 2) * markSpacing;
+      placement.makeTranslation(0, 0.05, along);
+      marks.setMatrixAt(i, placement);
     }
+    marks.instanceMatrix.needsUpdate = true;
+    group.add(marks);
+
+    // Postes de borde, a los dos lados. Son la referencia cercana que de
+    // verdad vende la carrera de despegue: pasan a quince metros de la cámara
+    // y a doscientos por hora se ven cruzar.
+    const postSpacing = 40;
+    const postCount = Math.floor((runway.length * 0.98) / postSpacing) * 2;
+    const postGeometry = new CylinderGeometry(0.22, 0.28, 1.9, 4);
+    postGeometry.translate(0, 0.95, 0);
+    const posts = new InstancedMesh(
+      postGeometry,
+      new MeshLambertMaterial({ color: 0xe4e2da }),
+      postCount,
+    );
+    const edge = runway.width * 0.5 + 4;
+    for (let i = 0; i < postCount; i++) {
+      const index = Math.floor(i / 2);
+      const side = i % 2 === 0 ? -1 : 1;
+      const along = (index - postCount / 4 + 0.5) * postSpacing;
+      placement.makeTranslation(side * edge, 0, along);
+      posts.setMatrixAt(i, placement);
+    }
+    posts.instanceMatrix.needsUpdate = true;
+    group.add(posts);
 
     group.position.set(runway.x, this.runwayElevation + 0.15, runway.z);
     group.rotation.y = -(runway.heading * Math.PI) / 180;

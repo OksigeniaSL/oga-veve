@@ -165,9 +165,13 @@ export class Tutor {
       // El guion de despegue solo mientras no se haya volado nunca. Después
       // de una vuelta completa, quien está rodando ya sabe salir.
       if (this.hasFlown) return 'done';
+      // El orden importa: con velocidad de rotación alcanzada, lo que toca es
+      // tirar aunque no se haya llegado al gas máximo. Al revés, el cartel
+      // seguía pidiendo motor a ciento treinta por hora, con el avión ya
+      // listo para volar, y contradecía a la pista que se veía por delante.
+      if (state.airspeed >= ROTATION_SPEED) return 'pull';
       if (throttle < 0.85) return 'throttle';
-      if (state.airspeed < ROTATION_SPEED) return 'speed';
-      return 'pull';
+      return 'speed';
     }
 
     if (!this.hasFlown) {
