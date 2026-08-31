@@ -213,6 +213,11 @@ export class Game {
     // Sin letras, teclado dibujado. Con letras, la tabla.
     this.keyScreen?.setSimple(this.tier.instruments === 'none' || this.tier.instruments === 'pictorial');
     this.hud.onKeys(() => this.keyScreen?.toggle());
+    // Volver al hangar es recargar. Suena brusco y es lo correcto: la elección
+    // ya está guardada, cambiar de aeropuerto es empezar otro vuelo, y así no
+    // hay que inventar el desmontaje en caliente de un escenario entero —que
+    // es donde se quedan las fugas de memoria de los juegos web—.
+    this.hud.onHangar(() => location.reload());
     this.hud.setKeySource((accion) => nombreDeTecla(this.input.preferredKey(accion)));
 
     // La primera vez se abre sola. Una pantalla que explica los mandos no

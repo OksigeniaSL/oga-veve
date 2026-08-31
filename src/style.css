@@ -1500,3 +1500,380 @@ body {
   pointer-events: none;
   transition: opacity 160ms ease;
 }
+
+/*
+ * ══ EL HANGAR ═══════════════════════════════════════════════════════════
+ *
+ * La puerta de entrada. Es la primera pantalla que ve alguien, así que es la
+ * que decide si esto da ganas de jugar o parece un formulario.
+ *
+ * Barro barnizado, como todo lo demás: superficies opacas, filo de luz
+ * arriba, poso de sombra abajo. Nada de desenfoque —ver la nota de la piel—.
+ *
+ * Lo único que se sale de la norma son las tarjetas de sitio, que llevan **su
+ * propio color**, sacado de la paleta del escenario: el cielo de ese sitio
+ * arriba y su suelo abajo. Es la diferencia entre cuatro botones iguales con
+ * texto distinto y cuatro sitios distintos.
+ */
+.hangar {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(120% 90% at 50% -10%, #2c4a3d, transparent 70%),
+    var(--barro);
+  display: grid;
+  place-items: center;
+  padding: clamp(14px, 3vh, 34px) 16px;
+}
+
+.hangar[hidden] {
+  display: none;
+}
+
+.hangar__marco {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.6vh, 28px);
+  width: min(1080px, 100%);
+  padding-bottom: 84px;
+}
+
+.hangar__marca {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(26px, 4.6vw, 40px);
+  letter-spacing: 0.01em;
+  color: var(--tinta);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.hangar__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hangar__pregunta {
+  margin: 0;
+  font-size: clamp(18px, 2.6vw, 23px);
+  font-weight: 700;
+  color: var(--ocre-tinta);
+  text-align: center;
+}
+
+/*
+ * Las tarjetas caben todas de una fila cuando hay sitio y se envuelven cuando
+ * no. Nada de carrusel: lo que no se ve, para quien no lee, no existe.
+ */
+.hangar__fila {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: clamp(10px, 1.6vw, 18px);
+}
+
+/* ── Una tarjeta ─────────────────────────────────────────────────────── */
+
+.tarjeta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-l);
+  background: var(--barro-claro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  font: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease;
+}
+
+.tarjeta:hover {
+  transform: translateY(-3px);
+}
+
+.tarjeta:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.tarjeta:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 3px;
+}
+
+/*
+ * La marca de elegido tiene que verse **sin depender del color**, porque no
+ * todo el mundo distingue el ocre del verde: por eso son tres señales a la
+ * vez —el filo grueso, el galón de arriba y la marca de visto—.
+ */
+.tarjeta[aria-checked='true'] {
+  border-color: var(--ocre);
+}
+
+.tarjeta[aria-checked='true']::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--ocre);
+  box-shadow: var(--filo);
+}
+
+.tarjeta[aria-checked='true']::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 18px;
+  right: 16px;
+  width: 13px;
+  height: 7px;
+  border-left: 3px solid var(--barro);
+  border-bottom: 3px solid var(--barro);
+  transform: rotate(-45deg);
+}
+
+.tarjeta__lienzo {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 2;
+  padding: 10px;
+  background: linear-gradient(var(--cielo, #33413a) 0%, var(--suelo, #24312b) 100%);
+}
+
+.tarjeta__lienzo--ave {
+  background: linear-gradient(#2e4438, #1e2a25);
+}
+
+.tarjeta__pie {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px 11px;
+  background: var(--barro-claro);
+  border-top: 1px solid var(--linea);
+}
+
+.tarjeta--tramo .tarjeta__pie {
+  grid-template-columns: auto 1fr;
+}
+
+/* El número pintado en la cabecera, con la tipografía estrecha de pista. */
+.tarjeta__numero {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--barro);
+  background: var(--tinta-suave);
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tarjeta__nombre {
+  font-size: var(--voz-rotulo);
+  font-weight: 700;
+  text-align: left;
+  line-height: 1.2;
+  /* Sin esto, en columna estrecha el nombre empuja al «3,4 km» y lo parte en
+     dos líneas: «3,4» arriba y «km» debajo. */
+  min-width: 0;
+  text-wrap: balance;
+}
+
+.tarjeta--tramo .tarjeta__nombre {
+  text-align: right;
+}
+
+.tarjeta__dato {
+  font-size: 13px;
+  color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── El plano del aeródromo ──────────────────────────────────────────── */
+
+.tarjeta__plano {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.plano__plataforma {
+  fill: rgba(20, 26, 24, 0.5);
+  stroke: none;
+}
+
+.plano__rodadura {
+  fill: none;
+  stroke: var(--ocre);
+  stroke-width: 22;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+}
+
+.plano__pista {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 45;
+  stroke-linecap: butt;
+}
+
+/* ── El panel de cada tramo ──────────────────────────────────────────── */
+
+.tarjeta__lienzo--panel {
+  background: linear-gradient(#2e4438, #1e2a25);
+}
+
+.tarjeta__panel {
+  width: 94%;
+  height: 94%;
+}
+
+.panel__cielo {
+  fill: #4f86bb;
+}
+
+.panel__tierra {
+  fill: #5b4a35;
+}
+
+.panel__horizonte {
+  stroke: var(--tinta);
+  stroke-width: 2;
+}
+
+/* Los instrumentos son barro, como en la cabina: opacos y con su filo. */
+.panel__caja,
+.panel__reloj {
+  fill: var(--barro);
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1.4;
+}
+
+.panel__pinta {
+  fill: var(--tinta-suave);
+}
+
+.panel__cifra {
+  fill: var(--tinta);
+}
+
+.panel__aguja {
+  fill: var(--ocre);
+  stroke: var(--ocre);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.panel__eje {
+  fill: var(--tinta-suave);
+  stroke: none;
+}
+
+/* ── Los galones ─────────────────────────────────────────────────────── */
+
+.tarjeta__galones {
+  display: flex;
+  gap: 3px;
+}
+
+.tarjeta__galones i {
+  width: 5px;
+  height: 17px;
+  border-radius: 2px;
+  background: var(--ocre);
+  box-shadow: var(--filo);
+}
+
+/* ── El botón de despegar ────────────────────────────────────────────── */
+
+/*
+ * Grande, del color de lo que es tuyo y se toca, y **anclado abajo**.
+ *
+ * Anclado porque medido no cabía: en un portátil de 800 y en un teléfono
+ * quedaba por debajo del borde, y un botón de despegar que hay que buscar
+ * desplazando no es una puerta. Es la única acción de esta pantalla que hace
+ * algo, así que está siempre a mano.
+ */
+.hangar__despegar {
+  position: fixed;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 0 34px;
+  border: none;
+  border-radius: 999px;
+  background: var(--barro-calido);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), 0 8px 20px -8px rgba(0, 0, 0, 0.7);
+  color: var(--tinta);
+  font: inherit;
+  font-size: clamp(19px, 2.8vw, 24px);
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease;
+}
+
+.hangar__despegar:hover {
+  filter: brightness(1.08);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.hangar__despegar:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.hangar__despegar:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 4px;
+}
+
+.hangar__despegar svg {
+  width: 46px;
+  height: 31px;
+  fill: var(--tinta);
+  flex: none;
+}
+
+.despega__pista {
+  fill: none;
+  stroke: rgba(242, 241, 236, 0.5);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta,
+  .hangar__despegar {
+    transition: none;
+  }
+
+  .tarjeta:hover {
+    transform: none;
+  }
+
+  .hangar__despegar:hover {
+    transform: translateX(-50%);
+  }
+}
