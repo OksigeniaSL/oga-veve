@@ -260,7 +260,29 @@ export class Game {
     window.addEventListener('resize', this.onResize);
     this.onResize();
     this.resetFlight();
+    this.abrirVentanaDePruebas();
     this.hud.flash(`${t('help.start')} · ${t('help.assist')}`, 8);
+  }
+
+  /**
+   * Una ventana al estado, **solo en desarrollo**.
+   *
+   * Existe porque comprobar el rodaje desde fuera exige saber dónde está el
+   * avión y por dónde va la ruta, y sin esto la única forma de mirar era una
+   * captura. El primer intento de comprobación automática rodó tan mal que
+   * despegó de la plataforma a doscientos por hora sin que nadie se enterara.
+   *
+   * `import.meta.env.DEV` lo borra del paquete que se publica: no es una
+   * puerta trasera, es un banco de pruebas.
+   */
+  private abrirVentanaDePruebas(): void {
+    if (!import.meta.env.DEV) return;
+    (globalThis as { __oga?: unknown }).__oga = {
+      estado: () => this.flight.state,
+      fase: () => this.faseAnunciada,
+      ruta: () => this.plan?.rutaVisible() ?? [],
+      pista: () => this.scenario.runway,
+    };
   }
 
   start(): void {
@@ -573,8 +595,21 @@ export class Game {
 
     if (vista.fase !== this.faseAnunciada) {
       this.faseAnunciada = vista.fase;
+      // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
+      // el motor» no le sirve de nada a quien no sabe cuál es el motor: la
+      // pantalla de mandos existe justamente porque un mando que no se anuncia
+      // no existe, y esto es lo mismo en pequeño.
+      const tecla =
+        vista.fase === 'estacionado' || vista.fase === 'en-puesto'
+          ? ` · ${nombreDeTecla(this.input.preferredKey('engine'))}`
+          : vista.fase === 'esperando' || vista.fase === 'aterrizado'
+            ? ` · ${nombreDeTecla(this.input.preferredKey('brakes'))}`
+            : '';
       const letra = vista.letra ? ` · ${vista.letra}` : '';
-      this.hud.flash(`${t(vista.clave as never)}${letra}`, vista.fase === 'apagado' ? 8 : 5);
+      this.hud.flash(
+        `${t(vista.clave as never)}${tecla}${letra}`,
+        vista.fase === 'apagado' ? 8 : 5,
+      );
       if (vista.fase === 'autorizado') this.audio.cue('success');
       if (vista.fase === 'apagado') this.audio.cue('success');
     } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {

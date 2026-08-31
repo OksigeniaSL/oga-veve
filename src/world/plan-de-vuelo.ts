@@ -197,6 +197,11 @@ export class PlanDeVuelo {
     return true;
   }
 
+  /** La ruta en coordenadas de mundo. Para las herramientas de comprobación. */
+  rutaVisible(): readonly Punto[] {
+    return this.rutaMundo;
+  }
+
   /** Avanza un fotograma y dice qué hay que enseñar. */
   paso(estado: FlightState, sobreElSuelo: number, motor: boolean, dt: number): Vista {
     const s = this.situacion(estado, sobreElSuelo, motor);
