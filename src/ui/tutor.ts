@@ -151,8 +151,29 @@ export class Tutor {
   }
 
   /** @param distanceToRunway metros hasta la cabecera de pista */
+  /**
+   * Callar mientras manda otro.
+   *
+   * El tutor se escribió cuando el juego empezaba alineado en la cabecera y su
+   * único trabajo era enseñar a despegar. Con el vuelo completo hay un segundo
+   * narrador —el plan, que dice «seguí la raya verde» y «pará en la doble
+   * raya»— y dos voces dando instrucciones a la vez a alguien de cuatro años
+   * es peor que ninguna. Mientras se rueda manda el plan; el tutor vuelve en
+   * cuanto el avión está alineado y toca despegar.
+   */
+  private callado = false;
+
+  silenciar(callado: boolean): void {
+    this.callado = callado;
+    if (callado && this.root) this.root.hidden = true;
+  }
+
   update(state: FlightState, throttle: number, dt: number, distanceToRunway: number): void {
     if (!this.root) return;
+    if (this.callado) {
+      this.root.hidden = true;
+      return;
+    }
 
     this.step = this.nextStep(state, throttle, dt, distanceToRunway);
 

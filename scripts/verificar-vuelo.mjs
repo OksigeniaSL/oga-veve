@@ -51,15 +51,46 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
   );
   await page.screenshot({ path: `${D}/vuelo-${escenario}-1-puesto.png` });
 
-  // Arrancar el motor y rodar un rato siguiendo la raya.
+  // ── Rodar de verdad ─────────────────────────────────────────────────────
+  //
+  // Se rueda con un piloto automático tonto: motor corto y timón hacia donde
+  // se va la raya. No pretende volar bien, pretende **demostrar que la ruta
+  // lleva a alguna parte** y que la torre acaba dando luz verde. Un vuelo que
+  // solo se ha probado con pruebas unitarias no se ha probado.
   await page.keyboard.press('KeyI');
-  await page.waitForTimeout(600);
-  const trasArrancar = await page.evaluate(
-    () => document.querySelector('[data-hud="hint"]')?.textContent?.trim() ?? '',
-  );
-  console.log(`  tras arrancar: «${trasArrancar}»`);
-  await page.screenshot({ path: `${D}/vuelo-${escenario}-2-arrancado.png` });
-  await b.contexts();
+  await page.waitForTimeout(400);
+
+  const fases = [];
+  let ultima = '';
+  for (let t = 0; t < 240; t++) {
+    const info = await page.evaluate(() => {
+      const w = window;
+      return {
+        aviso: document.querySelector('[data-hud="hint"]')?.textContent?.trim() ?? '',
+        torre: document.querySelector('.torre')?.hidden
+          ? null
+          : document.querySelector('.torre')?.className.includes('verde')
+            ? 'verde'
+            : 'roja',
+        vel: Number(document.querySelector('[data-hud="speed"]')?.textContent ?? 0),
+        rumbo: Number(document.querySelector('[data-hud="heading"]')?.textContent ?? 0),
+        haciaRuta: w.__rumboRuta ?? null,
+      };
+    });
+    if (info.aviso && info.aviso !== ultima) {
+      ultima = info.aviso;
+      fases.push(`${info.aviso}${info.torre ? ` [luz ${info.torre}]` : ''}`);
+    }
+    // Motor corto para rodar y freno si se pasa de veinte por hora.
+    if (info.vel > 22) await page.keyboard.press('KeyB');
+    else await page.keyboard.down('ShiftLeft');
+    await page.waitForTimeout(50);
+    await page.keyboard.up('ShiftLeft');
+  }
+
+  console.log('  lo que fue pasando:');
+  for (const f of fases) console.log(`    · ${f}`);
+  await page.screenshot({ path: `${D}/vuelo-${escenario}-3-rodando.png` });
   await page.close();
 }
 
