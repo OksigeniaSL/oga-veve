@@ -143,6 +143,22 @@ export interface AircraftConfig {
   maxThrust: number;
   /** Velocidad de crucero de referencia, m/s. Modula la caída de empuje. */
   cruiseSpeed: number;
+  /**
+   * Velocidad de decisión, m/s. **V1.**
+   *
+   * El último instante de la carrera en que todavía queda pista para
+   * detenerse. Pasada, el despegue está comprometido: se vuela, aunque algo
+   * vaya mal, porque ya no hay dónde parar.
+   *
+   * Por eso el freno deja de ofrecerse justo aquí, y no cuando las ruedas se
+   * despegan del suelo. La desaparición del botón **es** la explicación de
+   * qué significa V1, y llega antes de que haga falta entenderla.
+   *
+   * En un avión de línea es un número calculado para cada despegue —peso,
+   * pista, temperatura—. Aquí es uno por aeronave, que es todo lo que este
+   * simulador puede sostener honestamente.
+   */
+  decisionSpeed: number;
   /** Distancia del centro de gravedad al tren, m. */
   gearHeight: number;
   /**
@@ -178,6 +194,7 @@ export const OGA_172: AircraftConfig = {
   inertia: { xx: 1290, yy: 1830, zz: 2900 },
   maxThrust: 2600,
   cruiseSpeed: 60,
+  decisionSpeed: 26,
   gearHeight: 1.4,
   maxGroundPitch: 0.21, // 12°
   flapsLift: 0.55,
@@ -240,6 +257,7 @@ export const MAINUMBY: AircraftConfig = {
   inertia: { xx: 1600, yy: 2400, zz: 3600 },
   maxThrust: 5200,
   cruiseSpeed: 55,
+  decisionSpeed: 24,
   gearHeight: 1.8,
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
   flapsLift: 0.35,

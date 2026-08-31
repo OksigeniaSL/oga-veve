@@ -33,6 +33,9 @@ import type { Tier } from '../flight/tiers';
  * cualquier cabina del mundo, y aprenderlos es parte de lo que el juego
  * enseña sin proponérselo.
  */
+/** Lo que dura la salida del botón de freno al pasar V1, en segundos. */
+const BRAKE_EXIT = 0.9;
+
 const INSTRUMENTS = {
   speed: 'IAS',
   vspeed: 'V/S',
@@ -118,6 +121,9 @@ export class Hud {
   private throttleDown!: HTMLElement;
   private throttleUp!: HTMLElement;
   private throttleHandler: ((direction: number) => void) | null = null;
+
+  /** Segundos que le quedan a la despedida del freno en V1. */
+  private brakeExit = 0;
   private horizon: HTMLElement | null = null;
   private homeArrow!: HTMLElement;
   private homeDistance: HTMLElement | null = null;
@@ -373,7 +379,7 @@ export class Hud {
     this.render();
   }
 
-  update(state: FlightState, throttle: number, dt: number, braking = 0): void {
+  update(state: FlightState, throttle: number, dt: number, braking = 0, decisionSpeed = Infinity): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
     const ias = indicatedAirspeed(state.airspeed, state.position.y);
@@ -414,10 +420,43 @@ export class Hud {
     const enSuelo = state.onGround;
     const sinLetras = this.instruments === 'none' || this.instruments === 'pictorial';
     this.brakes.hidden = !enSuelo || sinLetras;
-    const escondeBoton = !enSuelo || !sinLetras;
+    // El freno se retira en V1, no al despegar.
+    //
+    // V1 es la velocidad de decisión: el último instante en que queda pista
+    // para pararse. Pasada, el despegue está comprometido y frenar deja de
+    // ser una opción — así que el botón deja de estar. No es una comodidad:
+    // es la única forma de enseñar qué es V1 a quien todavía no lee.
+    //
+    // Sigue apareciendo al aterrizar, porque ahí el motor está a ralentí y
+    // frenar es justo lo que toca.
+    const despegando = state.airspeed > decisionSpeed && throttle > 0.55;
+    const escondeBoton = !enSuelo || !sinLetras || despegando;
+
+    // Y no se esfuma: **se va, y se ve adónde va.**
+    //
+    // Un botón que desaparece de golpe no enseña nada, o enseña que las
+    // cosas se evaporan solas. Al llegar a V1 el freno sale volando hacia
+    // arriba mientras la tarjeta de velocidad se enciende, que es lo más
+    // parecido a decir «ya no puedes frenar, porque vas demasiado deprisa»
+    // sin una sola palabra. Es una primera versión; la buena llevará su
+    // animación y su voz.
+    if (despegando && enSuelo && !this.brakesTouch.hidden && this.brakeExit <= 0) {
+      this.brakeExit = BRAKE_EXIT;
+      this.brakesTouch.classList.add('freno--se-va');
+      this.root.querySelector('.picto')?.classList.add('picto--avisa');
+    }
+    if (this.brakeExit > 0) {
+      this.brakeExit -= dt;
+      if (this.brakeExit <= 0) {
+        this.brakesTouch.classList.remove('freno--se-va');
+        this.root.querySelector('.picto')?.classList.remove('picto--avisa');
+      }
+    }
+
     // Al ocultarlo se suelta, por si se ocultó con el dedo encima.
     if (escondeBoton && !this.brakesTouch.hidden) this.setBraking(false);
-    this.brakesTouch.hidden = escondeBoton;
+    // Mientras dura la despedida sigue en pantalla, aunque ya no frene.
+    this.brakesTouch.hidden = escondeBoton && this.brakeExit <= 0;
     const pisado = braking > 0.05;
     this.brakes.classList.toggle('freno--pisado', pisado);
     this.brakesTouch.classList.toggle('freno--pisado', pisado);

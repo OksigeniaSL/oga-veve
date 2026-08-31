@@ -1030,3 +1030,40 @@ body {
   background: var(--ocre, #dd923f);
   color: #1a1206;
 }
+
+/*
+ * La despedida del freno en V1.
+ *
+ * Sale hacia arriba y se apaga, en vez de desaparecer de golpe. Y a la vez
+ * se enciende la tarjeta de velocidad, que es la que explica el porqué: ya
+ * vas demasiado deprisa para parar. Dicho sin una sola palabra, que es como
+ * hay que decirlo a los cuatro años.
+ */
+.freno--se-va {
+  pointer-events: none;
+  animation: freno-se-va 0.9s ease-in forwards;
+}
+
+@keyframes freno-se-va {
+  0%   { transform: translateY(0) scale(1);      opacity: 1; }
+  25%  { transform: translateY(6px) scale(0.9);  opacity: 1; }
+  100% { transform: translateY(-54px) scale(0.4); opacity: 0; }
+}
+
+/* La tarjeta de velocidad se enciende: ahí está la razón. */
+.picto--avisa {
+  animation: picto-avisa 0.9s ease-out;
+}
+
+@keyframes picto-avisa {
+  0%, 100% { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22); }
+  35%      { box-shadow: 0 0 0 4px var(--ocre, #dd923f), 0 4px 18px rgba(0, 0, 0, 0.3); }
+}
+
+/* Quien pide menos movimiento no ve el vuelo del botón, solo el encendido. */
+@media (prefers-reduced-motion: reduce) {
+  .freno--se-va {
+    animation: none;
+    opacity: 0;
+  }
+}
