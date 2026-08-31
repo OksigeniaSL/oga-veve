@@ -61,6 +61,7 @@ genera por código, sin descargar datos.
 | Idioma | `L` | Ajustes |
 | Sonido | `V` | Ajustes |
 | Cambiar de avión | `P` | Ajustes |
+| Misión | `N` | Ajustes |
 
 También funciona con mando (Xbox / PlayStation) por la Gamepad API.
 

@@ -21,6 +21,7 @@ export const ES_PY = {
   'hud.crashed': 'Se rompió algo. Volvemos a la pista…',
   'hud.ground': 'En tierra',
   'hud.home': 'Pista',
+  'hud.objective': 'Objetivo',
 
   'mode.label': 'Nivel',
   'mode.arcade': 'Arcade',
@@ -38,6 +39,15 @@ export const ES_PY = {
 
   'aircraft.oga172.description': 'Avioneta de escuela. Tranquila y perdonadora.',
   'aircraft.mainumby.description': 'Biplano fumigador. Ágil y con mucha fuerza.',
+
+  'mission.first.name': 'Tu primer vuelo',
+  'mission.valley.name': 'La vuelta al valle',
+  'mission.transfer.name': 'El traslado',
+  'mission.started': '{name}',
+  'mission.step': '¡Bien! Seguí',
+  'mission.done': '¡Misión cumplida!',
+  'mission.none': 'Vuelo libre',
+  'help.mission': 'N — misión',
 
   'scenario.valle.name': 'Valle de la Cordillera',
   'scenario.chaco.name': 'Llanura del Chaco',

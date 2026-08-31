@@ -28,6 +28,7 @@ export const EN: Dictionary = {
   'hud.crashed': 'Something broke. Back to the runway…',
   'hud.ground': 'On the ground',
   'hud.home': 'Runway',
+  'hud.objective': 'Objective',
 
   'mode.label': 'Tier',
   'mode.arcade': 'Arcade',
@@ -45,6 +46,15 @@ export const EN: Dictionary = {
 
   'aircraft.oga172.description': 'Trainer. Steady and forgiving.',
   'aircraft.mainumby.description': 'Crop duster biplane. Nimble and strong.',
+
+  'mission.first.name': 'Your first flight',
+  'mission.valley.name': 'Around the valley',
+  'mission.transfer.name': 'The transfer',
+  'mission.started': '{name}',
+  'mission.step': 'Good! Keep going',
+  'mission.done': 'Mission complete!',
+  'mission.none': 'Free flight',
+  'help.mission': 'N — mission',
 
   'scenario.valle.name': 'Cordillera Valley',
   'scenario.chaco.name': 'Chaco Plain',

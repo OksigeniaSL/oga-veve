@@ -98,15 +98,18 @@ export class Hud {
   private horizon: HTMLElement | null = null;
   private homeArrow!: HTMLElement;
   private homeDistance: HTMLElement | null = null;
+  private homeGloss: HTMLElement | null = null;
   private home!: HTMLElement;
   private warning!: HTMLElement;
   private warningText!: HTMLElement;
   private warningArrow!: HTMLElement;
   private vignette!: HTMLElement;
   private badge!: HTMLElement;
+  private progress!: HTMLElement;
   private hint!: HTMLElement;
 
   private badgeText = '';
+  private progressState: { done: number; total: number } | null = null;
   private hintTimer = 0;
 
   constructor(root: HTMLElement) {
@@ -127,6 +130,12 @@ export class Hud {
     this.root.innerHTML = `
       <div class="hud__arriba">
         <div class="tarjeta insignia" data-hud="badge"></div>
+        <!--
+          Progreso de la misión, en puntos. Sin cifras ni fracciones: se ve
+          cuántos faltan de un vistazo, y funciona igual con cinco años que
+          con cuarenta.
+        -->
+        <div class="progreso" data-hud="progress" hidden></div>
       </div>
       <div class="hud__izquierda">
         ${numbers ? gauge('speed', INSTRUMENTS.speed, t('hud.speed'), this.units.speedLabel()) : ''}
@@ -149,7 +158,7 @@ export class Hud {
         <div class="tarjeta casa" data-hud="home">
           <div class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</div>
           ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ''}
-          ${gauges ? `<span class="medidor__glosa">${t('hud.home')}</span>` : ''}
+          ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t('hud.home')}</span>` : ''}
         </div>
       </div>
       <div class="vineta" data-hud="vignette"></div>
@@ -179,11 +188,14 @@ export class Hud {
     this.home = pick(this.root, 'home');
     this.homeArrow = pick(this.root, 'home-arrow');
     this.homeDistance = optional(this.root, 'home-distance');
+    this.homeGloss = optional(this.root, 'home-gloss');
     this.warning = pick(this.root, 'warning');
     this.warningText = pick(this.root, 'warning-text');
     this.warningArrow = pick(this.root, 'warning-arrow');
     this.vignette = pick(this.root, 'vignette');
     this.badge = pick(this.root, 'badge');
+    this.progress = pick(this.root, 'progress');
+    this.paintProgress();
     this.hint = pick(this.root, 'hint');
 
     this.badge.textContent = this.badgeText;
@@ -198,8 +210,9 @@ export class Hud {
    * hacia allá. El número está para quien ya lee.
    *
    * @param relativeBearing rad, 0 al frente, positivo a la derecha
+   * @param toObjective si señala un objetivo de misión en vez de la pista
    */
-  setHome(relativeBearing: number, metres: number): void {
+  setHome(relativeBearing: number, metres: number, toObjective = false): void {
     // El glifo apunta a la derecha en reposo, de ahí los noventa grados. La
     // rotación entera se calcula aquí y no repartida entre CSS y JS: dos
     // sitios distintos girando el mismo elemento es como nacen los errores
@@ -212,6 +225,11 @@ export class Hud {
     }
     // Cerca y de frente, se apaga: ya la estás viendo por la ventanilla.
     this.home.classList.toggle('casa--cerca', metres < 900);
+    // Y dice a qué apunta: con misión en curso no es la pista.
+    this.home.classList.toggle('casa--objetivo', toObjective);
+    if (this.homeGloss) {
+      this.homeGloss.textContent = t(toObjective ? 'hud.objective' : 'hud.home');
+    }
   }
 
   setUnits(name: UnitSystemName): void {
@@ -266,6 +284,27 @@ export class Hud {
       this.hintTimer -= dt;
       if (this.hintTimer <= 0) this.hint.textContent = '';
     }
+  }
+
+  /**
+   * Cuántos objetivos van y cuántos hay, como una fila de puntos.
+   *
+   * `null` esconde la fila: en vuelo libre no hay nada que contar.
+   */
+  setMissionProgress(progress: { done: number; total: number } | null): void {
+    this.progressState = progress;
+    this.paintProgress();
+  }
+
+  private paintProgress(): void {
+    if (!this.progress) return;
+    const progress = this.progressState;
+    this.progress.hidden = progress === null;
+    if (!progress) return;
+
+    this.progress.innerHTML = Array.from({ length: progress.total }, (_, index) =>
+      `<span class="progreso__punto${index < progress.done ? ' progreso__punto--hecho' : ''}"></span>`,
+    ).join('');
   }
 
   setBadge(text: string): void {

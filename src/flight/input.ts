@@ -65,6 +65,7 @@ export interface InputActions {
   resetFlight: () => void;
   toggleCredits: () => void;
   cycleAircraft: () => void;
+  cycleMission: () => void;
   cycleLanguage: () => void;
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
@@ -163,6 +164,9 @@ export class InputManager {
         break;
       case 'KeyP':
         this.actions.cycleAircraft();
+        break;
+      case 'KeyN':
+        this.actions.cycleMission();
         break;
       case 'F1':
         event.preventDefault();

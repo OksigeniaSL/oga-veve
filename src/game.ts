@@ -32,6 +32,10 @@ import { createSky, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
 import { createRunwayGuide } from './world/runway-guide';
 import { createVegetation } from './world/vegetation';
+import { MissionMarker } from './world/mission-marker';
+import { MissionRunner } from './missions/runner';
+import { objectiveTarget } from './missions/types';
+import { missionsFor } from './content/missions';
 import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
@@ -94,6 +98,10 @@ export class Game {
   private tier: Tier = rememberedTier();
   private readonly input: InputManager;
   private readonly audio = new Audio();
+  private readonly missions = new MissionRunner();
+  private readonly missionMarker = new MissionMarker();
+  /** Índice de la misión de la lista del escenario, o -1 en vuelo libre. */
+  private missionIndex = -1;
   private readonly hud: Hud;
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
@@ -158,6 +166,7 @@ export class Game {
 
     this.blobShadow = createBlobShadow(this.aircraft.wingSpan);
     this.scene.add(this.blobShadow);
+    this.scene.add(this.missionMarker.group);
 
     this.flight = this.buildFlightModel(this.tier);
 
@@ -173,6 +182,7 @@ export class Game {
       resetFlight: () => this.resetFlight(),
       toggleCredits: () => this.credits.toggle(),
       cycleAircraft: () => this.cycleAircraft(),
+      cycleMission: () => this.cycleMission(),
       cycleLanguage: () => this.changeLanguage(),
       toggleSound: () => this.toggleSound(),
       firstGesture: () => this.audio.unlock(),
@@ -220,6 +230,11 @@ export class Game {
     );
 
     this.flight.reset({ position: start, heading, airspeed: 0 });
+    if (this.missions.active) {
+      this.missions.start(this.missions.active);
+      this.hud.setMissionProgress(this.missions.progress);
+      this.updateMissionMarker();
+    }
     this.crashedFor = 0;
     this.wasOnGround = true;
     this.wasStalled = false;
@@ -254,14 +269,25 @@ export class Game {
       this.flight.step(dt, this.input.controls);
     }
 
+    this.missionMarker.update(dt);
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
+    this.advanceMission();
     this.announce(this.flight.state);
     this.audio.update(this.flight.state, this.input.controls);
     this.hud.update(this.flight.state, this.input.controls.throttle, dt);
-    const toRunway = this.updateHomeIndicator();
-    this.hud.tutor.update(this.flight.state, this.input.controls.throttle, dt, toRunway);
+    // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
+    // misión en curso la aguja señala el objetivo, y si el tutor mirara ese
+    // número pediría bajar el motor para aterrizar cada vez que uno se
+    // acercara a un punto de paso. Que es lo que hacía.
+    this.updateHomeIndicator();
+    this.hud.tutor.update(
+      this.flight.state,
+      this.input.controls.throttle,
+      dt,
+      this.distanceToRunway(),
+    );
 
     this.renderer.render(this.scene, this.camera);
   };
@@ -273,23 +299,35 @@ export class Game {
    * se entra: seguir la aguja lleva al principio del asfalto, alineado, que
    * es exactamente donde uno quiere aparecer.
    */
-  private updateHomeIndicator(): number {
+  /** Metros hasta la cabecera de pista, mire donde mire la aguja. */
+  private distanceToRunway(): number {
+    const { runway } = this.scenario;
+    const heading = MathUtils.degToRad(runway.heading);
+    return Math.hypot(
+      runway.x - Math.sin(heading) * runway.length * 0.5 - this.flight.state.position.x,
+      runway.z - Math.cos(heading) * runway.length * 0.5 - this.flight.state.position.z,
+    );
+  }
+
+  private updateHomeIndicator(): void {
     const { runway } = this.scenario;
     const heading = MathUtils.degToRad(runway.heading);
     const thresholdX = runway.x - Math.sin(heading) * runway.length * 0.5;
     const thresholdZ = runway.z - Math.cos(heading) * runway.length * 0.5;
 
-    const dx = thresholdX - this.flight.state.position.x;
-    const dz = thresholdZ - this.flight.state.position.z;
+    // Con misión en curso, la aguja señala el objetivo; sin ella, la pista.
+    // Es la misma aguja: no hay dos cosas que aprender.
+    const objective = this.missions.current;
+    const target = objective ? objectiveTarget(objective) : null;
+    const dx = (target?.x ?? thresholdX) - this.flight.state.position.x;
+    const dz = (target?.z ?? thresholdZ) - this.flight.state.position.z;
     const bearing = Math.atan2(dx, -dz);
 
     let relative = bearing - this.flight.state.heading;
     while (relative > Math.PI) relative -= Math.PI * 2;
     while (relative < -Math.PI) relative += Math.PI * 2;
 
-    const distance = Math.hypot(dx, dz);
-    this.hud.setHome(relative, distance);
-    return distance;
+    this.hud.setHome(relative, Math.hypot(dx, dz), target !== null);
   }
 
   private syncAircraftMesh(dt: number): void {
@@ -533,6 +571,57 @@ export class Game {
     this.wasOnGround = state.onGround;
     this.wasStalled = state.stalled;
     this.wasCrashed = state.crashed;
+  }
+
+  /**
+   * Pasa a la siguiente misión del escenario, o al vuelo libre.
+   *
+   * El vuelo libre está en la rueda a propósito y no escondido en un menú:
+   * volar sin que nadie te mande nada es una forma legítima de jugar, y para
+   * un niño pequeño puede ser la única durante semanas.
+   */
+  private cycleMission(): void {
+    const available = missionsFor(this.scenario.id);
+    if (!available.length) return;
+
+    this.missionIndex = this.missionIndex + 1 >= available.length ? -1 : this.missionIndex + 1;
+    const mission = available[this.missionIndex];
+
+    if (!mission) {
+      this.missions.abandon();
+      this.hud.setMissionProgress(null);
+      this.hud.flash(t('mission.none'), 3);
+    } else {
+      this.missions.start(mission);
+      this.hud.setMissionProgress(this.missions.progress);
+      this.hud.flash(t('mission.started', { name: t(mission.nameKey) }), 4);
+      this.audio.cue('attention');
+    }
+    this.updateMissionMarker();
+  }
+
+  /** Avanza la misión y celebra lo que se haya cumplido. */
+  private advanceMission(): void {
+    if (!this.missions.active) return;
+    const event = this.missions.update(this.flight.state);
+    if (!event.completed) return;
+
+    this.hud.setMissionProgress(this.missions.progress);
+    this.updateMissionMarker();
+
+    if (event.finished) {
+      this.audio.cue('achieved');
+      this.hud.flash(t('mission.done'), 5);
+    } else {
+      this.audio.cue('success');
+      this.hud.flash(t('mission.step'), 2);
+    }
+  }
+
+  private updateMissionMarker(): void {
+    const objective = this.missions.current;
+    const target = objective ? objectiveTarget(objective) : null;
+    this.missionMarker.moveTo(target, target ? this.terrain.sampleSurface(target.x, target.z) : 0);
   }
 
   private toggleSound(): void {
