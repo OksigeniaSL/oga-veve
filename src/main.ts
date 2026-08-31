@@ -12,6 +12,8 @@
 import { Game } from './game';
 import { SCENARIOS } from './world/scenarios';
 import { detectLocale, setLocale } from './i18n';
+import { abrirHangar } from './ui/hangar';
+import { rememberTier, rememberedTier } from './flight/tiers';
 
 setLocale(detectLocale());
 
@@ -27,22 +29,38 @@ if (!canvas || !hudRoot || !creditsRoot || !touchRoot) {
 /**
  * Qué escenario se abre.
  *
- * Por ahora se elige con `?escenario=pettirossi` en la dirección, o se
- * recuerda el último. El selector de verdad —con su hangar y su mapa— va en
- * la concha del juego; esto es lo que permite probar Silvio Pettirossi hoy
- * sin esperar a que exista.
+ * Normalmente lo elige quien juega, en el hangar. `?escenario=tenerife-norte`
+ * en la dirección se lo salta y entra directo, que es como se prueba un
+ * aeródromo nuevo sin dar dos clics cada vez.
  */
-const pedido =
-  new URLSearchParams(location.search).get('escenario') ??
-  localStorage.getItem('oga-veve:escenario') ??
-  undefined;
-const escenario = pedido ? SCENARIOS.find((s) => s.id === pedido) : undefined;
-if (escenario) {
-  try {
-    localStorage.setItem('oga-veve:escenario', escenario.id);
-  } catch {
-    // Sin almacenamiento se juega igual, solo que no se recuerda.
-  }
+const pedido = new URLSearchParams(location.search).get('escenario');
+const directo = pedido ? SCENARIOS.find((s) => s.id === pedido) : undefined;
+
+const recordado =
+  SCENARIOS.find((s) => {
+    try {
+      return s.id === localStorage.getItem('oga-veve:escenario');
+    } catch {
+      return false;
+    }
+  }) ?? SCENARIOS[0]!;
+
+let escenario = directo;
+let tramo = rememberedTier();
+
+if (!escenario) {
+  const hangarRoot = document.querySelector<HTMLElement>('#hangar');
+  if (!hangarRoot) throw new Error('Falta #hangar; revisa index.html');
+  const elegido = await abrirHangar(hangarRoot, { scenario: recordado, tier: tramo });
+  escenario = elegido.scenario;
+  tramo = elegido.tier;
+  rememberTier(tramo);
+}
+
+try {
+  localStorage.setItem('oga-veve:escenario', escenario.id);
+} catch {
+  // Sin almacenamiento se juega igual, solo que no se recuerda.
 }
 
 const game = new Game({ canvas, hudRoot, creditsRoot, touchRoot, scenario: escenario });

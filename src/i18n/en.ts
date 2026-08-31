@@ -128,6 +128,11 @@ export const EN: Dictionary = {
     'For Guillermo Ayala, of Teide National Park, who has spent forty years teaching that mountain to schoolchildren. The rule this game runs on is his: safety, safety, safety — everything after that is learning.',
   'credits.close': 'Close',
 
+  'hangar.donde': 'Where are we flying?',
+  'hangar.como': 'Who with?',
+  'hangar.despegar': 'Take off!',
+  'hangar.volver': 'Pick another place',
+
   'language.label': 'Language',
   'language.changed': 'Language: {name}',
 };

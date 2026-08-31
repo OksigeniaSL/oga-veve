@@ -121,6 +121,11 @@ export const ES_PY = {
     'A Guillermo Ayala, del Parque Nacional del Teide, que lleva cuarenta años enseñando esa montaña a escolares. La regla que gobierna este juego es suya: seguridad, seguridad, seguridad — a partir de ahí, todo lo demás es aprendizaje.',
   'credits.close': 'Cerrar',
 
+  'hangar.donde': '¿A dónde volamos?',
+  'hangar.como': '¿Con quién?',
+  'hangar.despegar': '¡Despegar!',
+  'hangar.volver': 'Elegir otro sitio',
+
   'language.label': 'Idioma',
   'language.changed': 'Idioma: {name}',
 } as const;

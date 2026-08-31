@@ -152,6 +152,7 @@ export class Hud {
   private soundState = { glyph: '🔊', label: '' };
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
+  private hangarHandler: (() => void) | null = null;
   private hintTimer = 0;
 
   constructor(root: HTMLElement) {
@@ -209,6 +210,19 @@ export class Hud {
             <path d="M6 10h1.6M10.2 10h1.6M14.4 10h1.6M18.6 10h.8
                      M6 13.4h1.6M10.2 13.4h1.6M14.4 13.4h1.6M18.6 13.4h.8
                      M7.6 16.6h8.8" />
+          </svg>
+        </button>
+        <!--
+          Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
+          arrancar es un hangar con la puerta tapiada: quien quiera cambiar de
+          aeropuerto tendría que saber recargar la página.
+        -->
+        <button class="sonido teclas-boton" type="button" data-hud="hangar"
+                aria-label="${t('hangar.volver')}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2.6 12.4 A11 11 0 0 1 21.4 12.4" />
+            <path d="M4.4 20.4 v-7.6 M19.6 20.4 v-7.6 M3 20.6 h18" />
+            <path d="M9.6 20.4 v-4.4 h4.8 v4.4" />
           </svg>
         </button>
       </div>
@@ -346,6 +360,7 @@ export class Hud {
     this.sound = pick(this.root, 'sound');
     this.sound.addEventListener('click', () => this.soundHandler?.());
     pick(this.root, 'keys').addEventListener('click', () => this.keysHandler?.());
+    pick(this.root, 'hangar').addEventListener('click', () => this.hangarHandler?.());
     this.paintSound();
     this.paintProgress();
     this.hint = pick(this.root, 'hint');
@@ -612,6 +627,11 @@ export class Hud {
   /** Quién abre la pantalla de mandos. */
   onKeys(handler: () => void): void {
     this.keysHandler = handler;
+  }
+
+  /** Quién vuelve al hangar. */
+  onHangar(handler: () => void): void {
+    this.hangarHandler = handler;
   }
 
   onSoundClick(handler: () => void): void {
