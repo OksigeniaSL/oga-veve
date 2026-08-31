@@ -9,15 +9,15 @@
  *
  * Dos decisiones que mandan sobre todo lo demás:
  *
- * **El plano del aeródromo se dibuja con sus propios datos.** La tarjeta de
+ * **El plano del aeródromo se dibuja con sus propios datos.** La ficha de
  * Silvio Pettirossi no lleva un icono de aeropuerto: lleva Silvio Pettirossi,
  * sus 54 calles de rodaje y su pista de 3,3 km, sacados del mismo fichero que
  * dibuja el juego. Dos aeropuertos no se parecen en nada vistos desde arriba,
  * y esa es exactamente la diferencia que hay que enseñar. Además no puede
- * mentir: si algún día el plano de la tarjeta y el del juego dejan de
+ * mentir: si algún día el plano de la ficha y el del juego dejan de
  * coincidir, es que el fichero cambió.
  *
- * **El color de la tarjeta sale de la paleta del escenario.** El Chaco es
+ * **El color de la ficha sale de la paleta del escenario.** El Chaco es
  * ocre pálido, el valle es verde, Tenerife es azul y roca. Quien no lee
  * distingue los cuatro sitios por el color antes que por el nombre, que es
  * como se distinguen los sitios de verdad.
@@ -53,10 +53,10 @@ export interface Eleccion {
 // Ruvicha, los seis relojes de un avión de verdad.
 //
 // Y de paso resuelve algo que faltaba: hasta ahora nadie sabía qué ganaba al
-// subir de peldaño. La tarjeta se lo enseña antes de elegir.
+// subir de peldaño. La ficha se lo enseña antes de elegir.
 
 const panel = (cuerpo: string): string => `
-  <svg class="tarjeta__panel" viewBox="0 0 120 84" aria-hidden="true">
+  <svg class="ficha__panel" viewBox="0 0 120 84" aria-hidden="true">
     <rect class="panel__cielo" x="0" y="0" width="120" height="40" rx="3" />
     <rect class="panel__tierra" x="0" y="40" width="120" height="44" rx="3" />
     <path class="panel__horizonte" d="M0 40 h120" />
@@ -196,7 +196,7 @@ export function caja(escenario: Scenario): Caja {
  * rodaje y pista, cada cosa con su grosor. Cuando no —los escenarios
  * inventados—, se dibuja su pista y ya, que es lo único que hay.
  *
- * Todos comparten escala, así que **la tarjeta de Silvio Pettirossi se ve más
+ * Todos comparten escala, así que **la ficha de Silvio Pettirossi se ve más
  * grande que la del valle porque lo es**: 3,4 km de pista contra 1,1. Cuatro
  * iconos iguales no dirían eso; cuatro planos a escala sí, y sin una palabra.
  */
@@ -211,7 +211,7 @@ function plano(escenario: Scenario, escala: number): string {
     const dx = (Math.sin(h) * length) / 2;
     const dy = (Math.cos(h) * length) / 2;
     return `
-      <svg class="tarjeta__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
+      <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
            aria-hidden="true">
         <line class="plano__pista" x1="${-dx}" y1="${dy}" x2="${dx}" y2="${-dy}"
               stroke-width="${escenario.runway.width}" />
@@ -240,7 +240,7 @@ function plano(escenario: Scenario, escala: number): string {
     .join('');
 
   return `
-    <svg class="tarjeta__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
+    <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
          aria-hidden="true">
       ${plataformas}${rodaduras}${pistas}
     </svg>`;
@@ -259,7 +259,7 @@ export function designador(escenario: Scenario): string {
 }
 
 /**
- * Los dos colores de la tarjeta, sacados de la paleta del escenario.
+ * Los dos colores de la ficha, sacados de la paleta del escenario.
  *
  * No son colores elegidos a mano: son el cielo y el suelo de ese sitio, los
  * mismos que se van a ver al volar. Por eso el Chaco sale pálido, el valle
@@ -290,15 +290,15 @@ function tarjetaDeSitio(escenario: Scenario, elegido: boolean): string {
     maximumFractionDigits: 1,
   });
   return `
-    <button class="tarjeta tarjeta--sitio" type="button" role="radio"
+    <button class="ficha ficha--sitio" type="button" role="radio"
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
             data-sitio="${escenario.id}"
             style="--cielo: ${cielo}; --suelo: ${suelo}">
-      <span class="tarjeta__lienzo">${plano(escenario, ESCALA)}</span>
-      <span class="tarjeta__pie">
-        <span class="tarjeta__numero">${designador(escenario)}</span>
-        <span class="tarjeta__nombre">${t(escenario.nameKey as never)}</span>
-        <span class="tarjeta__dato">${km} km</span>
+      <span class="ficha__lienzo">${plano(escenario, ESCALA)}</span>
+      <span class="ficha__pie">
+        <span class="ficha__numero">${designador(escenario)}</span>
+        <span class="ficha__nombre">${t(escenario.nameKey as never)}</span>
+        <span class="ficha__dato">${km} km</span>
       </span>
     </button>`;
 }
@@ -311,17 +311,17 @@ function tarjetaDeSitio(escenario: Scenario, elegido: boolean): string {
  * a los cuatro años.
  */
 const galones = (n: number): string =>
-  `<span class="tarjeta__galones" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
+  `<span class="ficha__galones" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
 
 function tarjetaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
   return `
-    <button class="tarjeta tarjeta--tramo" type="button" role="radio"
+    <button class="ficha ficha--tramo" type="button" role="radio"
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
             data-tramo="${tier.id}">
-      <span class="tarjeta__lienzo tarjeta__lienzo--panel">${PANELES[tier.id] ?? GUYRAMI_SVG}</span>
-      <span class="tarjeta__pie">
+      <span class="ficha__lienzo ficha__lienzo--panel">${PANELES[tier.id] ?? GUYRAMI_SVG}</span>
+      <span class="ficha__pie">
         ${galones(indice + 1)}
-        <span class="tarjeta__nombre">${tier.name}</span>
+        <span class="ficha__nombre">${tier.name}</span>
       </span>
     </button>`;
 }
@@ -379,7 +379,7 @@ export function abrirHangar(
   root.hidden = false;
 
   return new Promise<Eleccion>((resolve) => {
-    /** Elegir una tarjeta: repintar y devolverle el foco a la que se eligió. */
+    /** Elegir una ficha: repintar y devolverle el foco a la que se eligió. */
     const elegir = (atributo: 'data-sitio' | 'data-tramo', id: string): void => {
       if (atributo === 'data-sitio') sitio = SCENARIOS.find((e) => e.id === id) ?? sitio;
       else tramo = TIERS.find((x) => x.id === id) ?? tramo;

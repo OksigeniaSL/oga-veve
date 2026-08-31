@@ -6,7 +6,7 @@ const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage({ viewport: { width: 1280, height: 800 } });
 page.on('pageerror', e => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:tramo', 'guyrami'));
-await page.goto('http://localhost:5196/');
+await page.goto('http://localhost:5196/?escenario=valle-cordillera');
 await page.waitForTimeout(2200);
 
 const leer = async () => ({

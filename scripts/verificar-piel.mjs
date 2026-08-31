@@ -20,7 +20,7 @@ for (const tramo of ['guyrami', 'tuka', 'taguato', 'taguato-ruvicha']) {
     localStorage.setItem('oga-veve:tramo', t);
     localStorage.setItem('oga-veve:teclas-vistas', '1');
   }, tramo);
-  await page.goto('http://localhost:5189/');
+  await page.goto('http://localhost:5189/?escenario=valle-cordillera');
   await page.waitForTimeout(2200);
 
   // Contraste medido sobre los elementos de verdad, no sobre valores teóricos.

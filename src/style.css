@@ -137,6 +137,15 @@ body {
  * los cuatro peldaños se ven de la misma familia aunque enseñen cosas
  * distintas: barro oscuro, barniz arriba, filo de luz y poso de sombra.
  */
+/*
+ * OJO: esta `.tarjeta` es la del HUD y lleva aquí desde el principio.
+ *
+ * El hangar declaró otra `.tarjeta` para sus fichas y **le pisó estas
+ * propiedades a todos los medidores del vuelo**: `padding: 0` les sacó los
+ * rótulos fuera de la caja, `overflow: hidden` recortó el horizonte y el
+ * `:hover` con `transform` los hacía temblar al pasar el ratón. Antes de
+ * bautizar una clase con una palabra corriente, buscarla aquí.
+ */
 .tarjeta {
   background: var(--barniz), var(--barro);
   border-radius: var(--r-m);
@@ -319,6 +328,13 @@ body {
   color: var(--beige);
   font-size: 14px;
   line-height: 1;
+  /* Es un botón de verdad: se pulsa con el dedo y no se selecciona el texto
+     al hacerlo. Esto vivía en un segundo bloque `.motor__tecla` doscientas
+     líneas más abajo; junto aquí porque dos declaraciones base de la misma
+     clase son siempre un accidente esperando. */
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
 }
 
 .motor__fila .motor__pista {
@@ -1132,12 +1148,6 @@ body {
 }
 
 /* Los signos del motor son botones: se pulsan con el dedo y con el ratón. */
-.motor__tecla {
-  pointer-events: auto;
-  cursor: pointer;
-  user-select: none;
-}
-
 .motor__tecla:active {
   background: var(--ocre, #dd923f);
   color: #1a1206;
@@ -1574,9 +1584,9 @@ body {
   gap: clamp(10px, 1.6vw, 18px);
 }
 
-/* ── Una tarjeta ─────────────────────────────────────────────────────── */
+/* ── Una ficha ─────────────────────────────────────────────────────── */
 
-.tarjeta {
+.ficha {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1596,15 +1606,15 @@ body {
     border-color 140ms ease;
 }
 
-.tarjeta:hover {
+.ficha:hover {
   transform: translateY(-3px);
 }
 
-.tarjeta:active {
+.ficha:active {
   transform: translateY(0) scale(0.985);
 }
 
-.tarjeta:focus-visible {
+.ficha:focus-visible {
   outline: 3px solid var(--ocre);
   outline-offset: 3px;
 }
@@ -1614,11 +1624,11 @@ body {
  * todo el mundo distingue el ocre del verde: por eso son tres señales a la
  * vez —el filo grueso, el galón de arriba y la marca de visto—.
  */
-.tarjeta[aria-checked='true'] {
+.ficha[aria-checked='true'] {
   border-color: var(--ocre);
 }
 
-.tarjeta[aria-checked='true']::after {
+.ficha[aria-checked='true']::after {
   content: '';
   position: absolute;
   top: 10px;
@@ -1630,7 +1640,7 @@ body {
   box-shadow: var(--filo);
 }
 
-.tarjeta[aria-checked='true']::before {
+.ficha[aria-checked='true']::before {
   content: '';
   position: absolute;
   z-index: 1;
@@ -1643,7 +1653,7 @@ body {
   transform: rotate(-45deg);
 }
 
-.tarjeta__lienzo {
+.ficha__lienzo {
   display: grid;
   place-items: center;
   aspect-ratio: 3 / 2;
@@ -1651,11 +1661,11 @@ body {
   background: linear-gradient(var(--cielo, #33413a) 0%, var(--suelo, #24312b) 100%);
 }
 
-.tarjeta__lienzo--ave {
+.ficha__lienzo--ave {
   background: linear-gradient(#2e4438, #1e2a25);
 }
 
-.tarjeta__pie {
+.ficha__pie {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -1665,12 +1675,12 @@ body {
   border-top: 1px solid var(--linea);
 }
 
-.tarjeta--tramo .tarjeta__pie {
+.ficha--tramo .ficha__pie {
   grid-template-columns: auto 1fr;
 }
 
 /* El número pintado en la cabecera, con la tipografía estrecha de pista. */
-.tarjeta__numero {
+.ficha__numero {
   font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -1681,7 +1691,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.tarjeta__nombre {
+.ficha__nombre {
   font-size: var(--voz-rotulo);
   font-weight: 700;
   text-align: left;
@@ -1692,11 +1702,11 @@ body {
   text-wrap: balance;
 }
 
-.tarjeta--tramo .tarjeta__nombre {
+.ficha--tramo .ficha__nombre {
   text-align: right;
 }
 
-.tarjeta__dato {
+.ficha__dato {
   font-size: 13px;
   color: var(--tinta-suave);
   font-variant-numeric: tabular-nums;
@@ -1705,7 +1715,7 @@ body {
 
 /* ── El plano del aeródromo ──────────────────────────────────────────── */
 
-.tarjeta__plano {
+.ficha__plano {
   width: 100%;
   height: 100%;
   overflow: visible;
@@ -1734,11 +1744,11 @@ body {
 
 /* ── El panel de cada tramo ──────────────────────────────────────────── */
 
-.tarjeta__lienzo--panel {
+.ficha__lienzo--panel {
   background: linear-gradient(#2e4438, #1e2a25);
 }
 
-.tarjeta__panel {
+.ficha__panel {
   width: 94%;
   height: 94%;
 }
@@ -1786,12 +1796,12 @@ body {
 
 /* ── Los galones ─────────────────────────────────────────────────────── */
 
-.tarjeta__galones {
+.ficha__galones {
   display: flex;
   gap: 3px;
 }
 
-.tarjeta__galones i {
+.ficha__galones i {
   width: 5px;
   height: 17px;
   border-radius: 2px;
@@ -1864,12 +1874,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tarjeta,
+  .ficha,
   .hangar__despegar {
     transition: none;
   }
 
-  .tarjeta:hover {
+  .ficha:hover {
     transform: none;
   }
 
