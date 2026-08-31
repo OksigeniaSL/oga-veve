@@ -24,7 +24,17 @@
 
 import type { ControlInputs, FlightState } from '../flight/model';
 
-/** Régimen de ralentí y máximo, en revoluciones por minuto. */
+/**
+ * Régimen de ralentí y máximo, en revoluciones por minuto.
+ *
+ * La frecuencia de encendido que sale de aquí —entre 23 y 90 Hz— está por
+ * debajo o al filo de lo que reproduce el altavoz de un portátil o de una
+ * tablet, que no baja de unos 200 Hz. Un motor de pistón se oye en un
+ * altavoz pequeño **por sus armónicos**, no por su fundamental, y la primera
+ * versión los cortaba con un paso bajo a 320 Hz: el motor sonaba correcto en
+ * unos cascos y era inaudible en cualquier otro sitio. El filtro va ahora
+ * entre 900 y 4100 Hz, que es donde el oído lo encuentra.
+ */
 const IDLE_RPM = 700;
 const MAX_RPM = 2700;
 /** Velocidad indicada, en m/s, a la que el viento llega a su tope. */
@@ -121,7 +131,7 @@ export class Audio {
     this.engineHarmonic?.frequency.setTargetAtTime(firing * 2.02, now, 0.14);
     // El gas cerrado tapa el motor: respuesta inmediata al oído aunque las
     // vueltas todavía estén bajando.
-    this.engineFilter?.frequency.setTargetAtTime(320 + controls.throttle * 1750, now, 0.06);
+    this.engineFilter?.frequency.setTargetAtTime(900 + controls.throttle * 3200, now, 0.06);
     this.engineGain?.gain.setTargetAtTime(0.1 + controls.throttle * 0.14, now, 0.1);
     this.propGain?.gain.setTargetAtTime(0.03 + controls.throttle * 0.075, now, 0.1);
     this.propFilter?.frequency.setTargetAtTime(150 + rpm * 0.08, now, 0.1);
@@ -195,6 +205,16 @@ export class Audio {
     this.engineGain = ctx.createGain();
     this.engineGain.gain.value = 0;
     this.engineFilter.connect(this.engineGain).connect(this.master);
+
+    // Resonancia en la banda en la que el oído sitúa un motor. Sin ella, en
+    // un altavoz pequeño el motor se oye como un soplido sin carácter.
+    const growl = ctx.createBiquadFilter();
+    growl.type = 'peaking';
+    growl.frequency.value = 420;
+    growl.Q.value = 2.2;
+    growl.gain.value = 11;
+    this.engineFilter.disconnect();
+    this.engineFilter.connect(growl).connect(this.engineGain).connect(this.master);
 
     this.engineTone = ctx.createOscillator();
     this.engineTone.type = 'sawtooth';

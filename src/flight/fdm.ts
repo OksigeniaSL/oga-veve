@@ -316,27 +316,44 @@ export class CoefficientFlightModel implements FlightModel {
         // El objetivo se toma al soltar, tras un margen para que el avión se
         // asiente, y se sostiene con un proporcional sobre el error de
         // velocidad vertical más amortiguamiento de cabeceo.
+        // El objetivo nunca es un descenso.
+        //
+        // Capturando la velocidad vertical tal cual, si al soltar el avión
+        // bajaba un poco —cosa normalísima en pleno transitorio— la ayuda
+        // memorizaba ese descenso y lo sostenía indefinidamente. El avión se
+        // iba al suelo despacio y con obstinación. Al soltar, lo que se
+        // memoriza es entre nivelado y subiendo: para bajar hay que empujar
+        // el morro, y mientras se empuja no hay ayuda que valga.
         if (this.trimClimb === null) {
-          this.trimClimb = clamp(s.verticalSpeed, -4, 6);
+          this.trimClimb = clamp(s.verticalSpeed, 0, 5);
           this.trimSettle = TRIM_SETTLE;
         } else if (this.trimSettle > 0) {
           this.trimSettle -= dt;
-          this.trimClimb = clamp(s.verticalSpeed, -4, 6);
+          this.trimClimb = clamp(s.verticalSpeed, 0, 5);
         }
 
-        // Protección de velocidad: sostener una subida con el gas fijo acaba
-        // comiéndose la velocidad. Cerca de la pérdida el objetivo se relaja
-        // hasta cero, y el avión baja el morro solo antes de caerse.
-        // Calibrado contra la velocidad de pérdida, no a ojo. La Óga 172
-        // entra en pérdida sobre 25 m/s y sube a unos 30: con el suelo puesto
-        // en 0,48 del crucero —28,8— la protección se comía casi todo el
-        // objetivo justo a la velocidad normal de ascenso, y el avión no
-        // subía. El suelo va por debajo de la pérdida y el margen se abre
-        // antes de llegar a la velocidad de subida.
+        // Dos leyes que se mezclan, no un interruptor.
+        //
+        // La versión anterior escalaba el objetivo de ascenso con un factor
+        // que iba de 0 a 1 en una banda estrecha de velocidad. Eso creaba un
+        // ciclo límite justo en esa banda: al bajar de ella el objetivo se
+        // anulaba, el morro caía, la velocidad subía, el objetivo volvía, el
+        // morro subía, y vuelta a empezar. Es exactamente el cabeceo con la
+        // velocidad yendo y viniendo que se veía volando despacio.
+        //
+        // Un factor que multiplica no es una realimentación: no corrige, solo
+        // apaga. Así que cuando se va lento, el control **pasa a sostener la
+        // velocidad** —morro abajo proporcional a lo que falte— y se mezcla
+        // suavemente con el control de ascenso. Las dos leyes son estables,
+        // y su mezcla también.
         const floor = ac.cruiseSpeed * 0.42;
-        const safe = ac.cruiseSpeed * 0.52;
-        const margin = clamp((speed - floor) / (safe - floor), 0, 1);
-        const wanted = this.trimClimb * margin;
+        const safe = ac.cruiseSpeed * 0.58;
+        const shortfall = safe - speed;
+        const blend = clamp(shortfall / (safe - floor), 0, 1);
+
+        const climbLaw = (this.trimClimb - s.verticalSpeed) * 0.12;
+        const speedLaw = -shortfall * 0.1;
+        const law = climbLaw * (1 - blend) + speedLaw * blend;
 
         // La ganancia se programa con la velocidad. El momento disponible
         // crece con la presión dinámica —o sea con el cuadrado de la
@@ -347,7 +364,7 @@ export class CoefficientFlightModel implements FlightModel {
         const reference = ac.cruiseSpeed * ac.cruiseSpeed;
         const schedule = Math.min(1, reference / (speed * speed + 1));
         const authority = this.assistLevel * qS * a.cmElevator * ac.chord * schedule;
-        pitchMoment += authority * ((wanted - s.verticalSpeed) * 0.12 - s.pitchRate * 0.75);
+        pitchMoment += authority * (law - s.pitchRate * 0.75);
       } else {
         // Con el mando en la mano, no hay compensador que valga.
         this.trimClimb = null;
