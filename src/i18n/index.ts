@@ -37,7 +37,9 @@ const DICTIONARIES: Record<Locale, Dictionary> = {
  */
 export const LOCALE_NAMES: Record<Locale, string> = {
   'es-PY': 'Español',
-  gug: 'Guaraní',
+  // El nombre del guaraní en guaraní, por el mismo criterio que hace que ahí
+  // ponga «English» y no «Inglés».
+  gug: "Avañe'ẽ",
   en: 'English',
 };
 

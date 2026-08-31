@@ -70,8 +70,52 @@ for (const [ancho, alto, nombre] of [
     // puede quedar fuera de pantalla: si hay que buscarlo, no hay puerta.
     const b = document.querySelector('.hangar__despegar').getBoundingClientRect();
     out.despegarVisible = b.bottom <= window.innerHeight && b.top >= 0;
+
+    // ¿La barra de abajo tapa algo? Se mira al final del desplazamiento, que
+    // es donde la última fila se le mete debajo.
+    // Lo que se desplaza es `.hangar`, no la ventana: tiene `overflow-y` propio.
+    const cajon = document.querySelector('.hangar');
+    cajon.scrollTop = cajon.scrollHeight;
+    const barra = document.querySelector('.hangar__barra').getBoundingClientRect();
+    out.tapadosPorBarra = [];
+    for (const el of document.querySelectorAll('.ficha__nombre, .ficha__galones')) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom > barra.top + 1 && r.top < barra.bottom) {
+        out.tapadosPorBarra.push(el.textContent.trim() || 'galones');
+      }
+    }
     out.alto = Math.round(document.querySelector('.hangar__marco').getBoundingClientRect().height);
     out.planos = document.querySelectorAll('.ficha__plano polyline.plano__pista').length;
+
+    // ¿Se parte algún nombre en dos líneas? Se compara el alto real con el de
+    // un renglón: si cabe más de uno, es que se partió. Mirar capturas para
+    // esto es lo que hace que un «Valle de / la Cordillera» llegue a
+    // producción.
+    // Se cuentan los renglones con un `Range` sobre el texto, no dividiendo
+    // el alto de la caja: un botón con `min-height: 44px` y una línea de texto
+    // parecía tener tres.
+    out.partidos = [];
+    for (const el of document.querySelectorAll('.ficha__nombre, .idioma, .ficha__dato')) {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      const lineas = r.getClientRects().length;
+      if (lineas > 1) out.partidos.push(`${el.textContent.trim()} (${lineas} líneas)`);
+    }
+
+    // ¿Se tapa algo con algo? Se comprueban las esquinas de arriba, que es
+    // donde la marca de elegido pisó a la cota de Tenerife.
+    out.tapados = [];
+    for (const f of document.querySelectorAll('.ficha')) {
+      const p = f.querySelector('.plano__ficha');
+      if (!p) continue;
+      const a = p.getBoundingClientRect();
+      const c = f.getBoundingClientRect();
+      // El visto ocupa 26 px en la esquina superior derecha de la ficha.
+      const visto = { x: c.right - 36, y: c.top + 10, w: 26, h: 26 };
+      if (a.right > visto.x && a.top < visto.y + visto.h) {
+        out.tapados.push(p.textContent.trim());
+      }
+    }
     return out;
   });
 
@@ -80,7 +124,16 @@ for (const [ancho, alto, nombre] of [
   console.log(`  botones: ${m.tactos.length} · por debajo de 44 px: ${chico.length ? JSON.stringify(chico) : 'ninguno ✓'}`);
   console.log(`  desborde horizontal: ${m.desborde} px ${m.desborde <= 0 ? '✓' : '✗'}`);
   console.log(`  botón de despegar a la vista sin desplazar: ${m.despegarVisible ? 'sí ✓' : 'no ✗'}`);
+  console.log(
+    `  tapado por la barra al final del desplazamiento: ${m.tapadosPorBarra.length ? '✗ ' + m.tapadosPorBarra.join(', ') : 'nada ✓'}`,
+  );
   console.log(`  planos de pista dibujados: ${m.planos}`);
+  console.log(
+    `  textos partidos en dos líneas: ${m.partidos.length ? '✗ ' + m.partidos.join(', ') : 'ninguno ✓'}`,
+  );
+  console.log(
+    `  datos tapados por la marca de elegido: ${m.tapados.length ? '✗ ' + m.tapados.join(', ') : 'ninguno ✓'}`,
+  );
   for (const x of m.textos) {
     const r = ratio(rgb(x.color), rgb(x.fondo));
     const exige = x.tam >= 24 ? 3 : 4.5;

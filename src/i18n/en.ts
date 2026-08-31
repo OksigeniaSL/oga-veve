@@ -129,7 +129,7 @@ export const EN: Dictionary = {
   'credits.close': 'Close',
 
   'hangar.donde': 'Where are we flying?',
-  'hangar.como': 'Who with?',
+  'hangar.como': 'Which pilot are you?',
   'hangar.despegar': 'Take off!',
   'hangar.volver': 'Pick another place',
 

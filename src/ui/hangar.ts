@@ -331,22 +331,34 @@ function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
    * Los escenarios inventados no llevan ninguno, porque inventarse un código
    * OACI es inventarse el de alguien.
    */
-  const oaci = aero ? `<span class="plano__oaci">${aero.id}</span>` : '';
-  const cota =
-    aero?.elevationM != null
-      ? `<span class="plano__cota">${Math.round(aero.elevationM)} m</span>`
-      : '';
+  /*
+   * Los dos datos van **en la misma pastilla y arriba a la izquierda**. Iban
+   * uno en cada esquina de arriba y la cota de Tenerife quedaba justo debajo
+   * de la marca de elegido: 633 m tapados por un visto.
+   */
+  const ficha =
+    aero &&
+    `<span class="plano__ficha"><b>${aero.id}</b>${
+      aero.elevationM != null ? `<i>${Math.round(aero.elevationM)} m</i>` : ''
+    }</span>`;
 
   return `
     <button class="ficha ficha--sitio" type="button" role="radio"
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
             data-sitio="${escenario.id}"
             style="--cielo: ${cielo}; --suelo: ${suelo}">
-      <span class="ficha__lienzo">${oaci}${cota}${plano(escenario, ESCALA)}</span>
+      <span class="ficha__lienzo">${ficha || ''}${plano(escenario, ESCALA)}</span>
       <span class="ficha__pie">
-        <span class="ficha__numero">${designador(escenario)}</span>
+        <!--
+          En dos filas. En una sola, «Valle de la Cordillera» y «Llanura del
+          Chaco» se partían en dos líneas y descuadraban la ficha: el nombre
+          necesita el ancho entero y los datos caben de sobra en su renglón.
+        -->
+        <span class="ficha__renglon">
+          <span class="ficha__numero">${designador(escenario)}</span>
+          <span class="ficha__dato">${km} km</span>
+        </span>
         <span class="ficha__nombre">${t(escenario.nameKey as never)}</span>
-        <span class="ficha__dato">${km} km</span>
       </span>
     </button>`;
 }
@@ -368,6 +380,8 @@ function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
             data-tramo="${tier.id}">
       <span class="ficha__lienzo ficha__lienzo--panel">${PANELES[tier.id] ?? GUYRAMI_SVG}</span>
       <span class="ficha__pie">
+        <!-- Dos filas, igual que las de sitio: en columna estrecha «Taguato
+             Ruvicha» no cabe al lado de los galones. -->
         ${galones(indice + 1)}
         <span class="ficha__nombre">${tier.name}</span>
       </span>
@@ -428,7 +442,14 @@ export function abrirHangar(
             ${TIERS.map((tier, i) => fichaDeTramo(tier, i, tier.id === tramo.id)).join('')}
           </div>
         </section>
+      </div>
 
+      <!--
+        El botón va en una barra con fondo, no flotando suelto. Suelto dejaba
+        medio nombre de tramo asomando por debajo, y medio nombre asomando se
+        lee como un fallo aunque se pueda desplazar.
+      -->
+      <div class="hangar__barra">
         <button class="hangar__despegar" type="button" data-despegar>
           ${DESPEGA}
           <span>${t('hangar.despegar')}</span>

@@ -1548,7 +1548,8 @@ body {
   flex-direction: column;
   gap: clamp(14px, 2.6vh, 28px);
   width: min(1080px, 100%);
-  padding-bottom: 84px;
+  /* Hueco para la barra de abajo, que es fija y taparía la última fila. */
+  padding-bottom: 96px;
 }
 
 /*
@@ -1704,16 +1705,22 @@ body {
 
 .ficha__pie {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 8px;
+  gap: 5px;
   padding: 9px 12px 11px;
   background: var(--barro-claro);
   border-top: 1px solid var(--linea);
 }
 
 .ficha--tramo .ficha__pie {
-  grid-template-columns: auto 1fr;
+  justify-items: start;
+}
+
+/* El renglón de datos: el designador a la izquierda, la longitud a la derecha. */
+.ficha__renglon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 /* El número pintado en la cabecera, con la tipografía estrecha de pista. */
@@ -1740,7 +1747,7 @@ body {
 }
 
 .ficha--tramo .ficha__nombre {
-  text-align: right;
+  text-align: left;
 }
 
 .ficha__dato {
@@ -1805,28 +1812,28 @@ body {
  * cielo de la ficha va de azul claro a verde y un texto claro encima no
  * cumpliría contraste en la mitad de su recorrido.
  */
-.plano__oaci,
-.plano__cota {
+.plano__ficha {
   position: absolute;
   top: 7px;
-  padding: 2px 6px;
+  left: 7px;
+  display: flex;
+  gap: 7px;
+  padding: 2px 7px;
   border-radius: 5px;
   background: rgba(16, 22, 19, 0.72);
   font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
   font-size: 12px;
-  line-height: 1.3;
+  line-height: 1.35;
+}
+
+.plano__ficha b {
+  font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--tinta);
 }
 
-.plano__oaci {
-  left: 7px;
-  font-weight: 700;
-}
-
-.plano__cota {
-  right: 7px;
-  letter-spacing: 0.02em;
+.plano__ficha i {
+  font-style: normal;
   color: var(--tinta-suave);
 }
 
@@ -1900,19 +1907,30 @@ body {
 /* ── El botón de despegar ────────────────────────────────────────────── */
 
 /*
- * Grande, del color de lo que es tuyo y se toca, y **anclado abajo**.
+ * La barra de abajo.
  *
- * Anclado porque medido no cabía: en un portátil de 800 y en un teléfono
- * quedaba por debajo del borde, y un botón de despegar que hay que buscar
- * desplazando no es una puerta. Es la única acción de esta pantalla que hace
- * algo, así que está siempre a mano.
+ * Fija, porque medido el botón no cabía: en un portátil de 800 y en un
+ * teléfono quedaba por debajo del borde, y un botón de despegar que hay que
+ * buscar desplazando no es una puerta.
+ *
+ * Y **con fondo**, no flotando suelto sobre el contenido. Suelto dejaba medio
+ * nombre de tramo asomando por debajo, y medio nombre asomando se lee como un
+ * fallo aunque se pueda desplazar para verlo entero.
  */
-.hangar__despegar {
+.hangar__barra {
   position: fixed;
-  left: 50%;
-  bottom: max(14px, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  background: var(--barro);
+  border-top: 1px solid var(--linea);
+}
+
+.hangar__despegar {
   display: inline-flex;
   align-items: center;
   gap: 14px;
@@ -1935,11 +1953,11 @@ body {
 
 .hangar__despegar:hover {
   filter: brightness(1.08);
-  transform: translateX(-50%) translateY(-2px);
+  transform: translateY(-2px);
 }
 
 .hangar__despegar:active {
-  transform: translateX(-50%) scale(0.97);
+  transform: scale(0.97);
 }
 
 .hangar__despegar:focus-visible {
@@ -1972,6 +1990,6 @@ body {
   }
 
   .hangar__despegar:hover {
-    transform: translateX(-50%);
+    transform: none;
   }
 }
