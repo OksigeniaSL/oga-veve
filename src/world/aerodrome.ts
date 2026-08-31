@@ -709,10 +709,24 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   // Con hueco de 30 parecía la línea de una carretera.
   for (let d = 190; d < largo - 190; d += 50) raya(d, 0, 30, 0.9);
 
-  // Teclas de piano en las dos cabeceras: ocho barras por cabecera en una
-  // pista de esta anchura, y son lo primero que se ve al llegar.
-  for (const d of [30, largo - 30]) {
-    for (let i = 0; i < 8; i++) raya(d, (i - 3.5) * (ancho * 0.105), 28, ancho * 0.055);
+  // Teclas de piano, y **el número de barras no es decorativo**: dice el
+  // ancho de la pista de un vistazo. Son pares, con anchura y separación
+  // fijas de metro ochenta, y salen doce en una pista de 45 metros, dieciséis
+  // en una de 60. Iban ocho a ojo, con la anchura escalada con la pista, que
+  // es justo lo que hace que dejen de significar nada.
+  const BARRA = 1.8;
+  const PASO = BARRA * 2;      // barra y hueco, los dos de metro ochenta
+  const HUECO_CENTRAL = 3.6;   // el eje se deja libre
+  // Doce barras en una pista de 45 m, dieciséis en una de 60, ocho en una de
+  // 30. Es lo que sale de repartir con paso fijo, y por eso contarlas dice el
+  // ancho.
+  const barras = Math.max(4, 2 * Math.round(ancho / (2 * PASO * 1.04)));
+  for (const d of [BARRA * 9, largo - BARRA * 9]) {
+    for (let k = 0; k < barras / 2; k++) {
+      const lado = HUECO_CENTRAL / 2 + BARRA / 2 + k * PASO;
+      raya(d, -lado, 30, BARRA);
+      raya(d, lado, 30, BARRA);
+    }
   }
 
   // Punto de toma: los dos rectángulos gordos a cuatrocientos metros del
