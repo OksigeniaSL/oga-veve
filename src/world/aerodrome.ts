@@ -27,12 +27,15 @@ import {
   Group,
   Mesh,
   MeshLambertMaterial,
+  DoubleSide,
+  PlaneGeometry,
   Shape,
   ShapeGeometry,
   Vector2,
   type ColorRepresentation,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { numberTexture } from './runway-markings';
 
 /** Un punto en metros sobre el plano local del aeródromo. */
 export type Punto = readonly [number, number];
@@ -72,11 +75,20 @@ const ANCHO_RODADURA = 23;
 
 /** Colores del pavimento. Mate, como el asfalto de verdad. */
 const COLORES: Record<string, ColorRepresentation> = {
-  asphalt: 0x3d3a37,
-  concrete: 0x565350,
+  // Gris de verdad, no tierra. El primer tono era cálido y bajo el sol de
+  // mediodía leía como tierra roja: muy paraguayo y muy poco aeropuerto
+  // internacional. El asfalto de una pista está gastado y es casi neutro.
+  asphalt: 0x393a3c,
+  concrete: 0x55575a,
   gravel: 0x4a443c,
   grass: 0x4d6136,
 };
+
+/** Cuánto se levanta la pintura sobre el asfalto, m. Ver la nota de `losa`. */
+const PINTURA_ALTURA = 0.2;
+
+/** Blanco de pintura de pista. Gastado, no papel. */
+const PINTURA = 0xd8d6cd;
 
 const color = (superficie: string | null): ColorRepresentation =>
   COLORES[superficie ?? 'asphalt'] ?? COLORES.asphalt!;
@@ -246,6 +258,113 @@ export function createAerodrome(aero: Aerodrome, baseY = 0): Group {
     // que importe: apagarlo es rendimiento gratis.
     malla.castShadow = false;
     grupo.add(malla);
+  }
+
+  if (principal) grupo.add(marcas(principal, cota));
+
+  return grupo;
+}
+
+/**
+ * Las pinturas de la pista: eje, teclas de piano y designador.
+ *
+ * Los rectángulos se construyen con la **misma función que el pavimento**, en
+ * coordenadas del fichero. Se probó a meterlos en un grupo girado al rumbo,
+ * que es como se hacen las marcas del escenario sintético, y ahí desaparecían:
+ * si el resto del aeródromo se dibuja en coordenadas del mundo, las pinturas
+ * también.
+ *
+ * Los números **salen del fichero**, que es donde está el designador de
+ * verdad. Calcularlos del rumbo daría 01 donde pone 02: el número de una
+ * pista es su rumbo magnético, y el geométrico no lo es.
+ */
+function marcas(pista: Pista, altura: (p: Punto) => number): Group {
+  const grupo = new Group();
+  grupo.name = 'marcas';
+
+  const umbrales = Object.entries(pista.thresholds).filter(
+    (e): e is [string, Umbral] => e[1] !== null && e[1].xy !== null,
+  );
+  if (umbrales.length < 2) return grupo;
+
+  const ancho = pista.widthM ?? 45;
+  const [[nombreA, a], [nombreB, b]] = umbrales as [[string, Umbral], [string, Umbral]];
+  const ax = a.xy![0];
+  const ay = a.xy![1];
+  const largo = Math.hypot(b.xy![0] - ax, b.xy![1] - ay);
+  // Unitario a lo largo del eje, y su perpendicular.
+  const ux = (b.xy![0] - ax) / largo;
+  const uy = (b.xy![1] - ay) / largo;
+  const px = -uy;
+  const py = ux;
+
+  const piezas: BufferGeometry[] = [];
+  /** Un rectángulo de pintura centrado a `d` metros del umbral A. */
+  const raya = (d: number, lado: number, largoM: number, anchoM: number) => {
+    const cx = ax + ux * d + px * lado;
+    const cy = ay + uy * d + py * lado;
+    const contorno: Punto[] = [
+      [cx + (ux * largoM + px * anchoM) / 2, cy + (uy * largoM + py * anchoM) / 2],
+      [cx + (ux * largoM - px * anchoM) / 2, cy + (uy * largoM - py * anchoM) / 2],
+      [cx - (ux * largoM + px * anchoM) / 2, cy - (uy * largoM + py * anchoM) / 2],
+      [cx - (ux * largoM - px * anchoM) / 2, cy - (uy * largoM - py * anchoM) / 2],
+    ];
+    const geo = desdePoligono(contorno, (p) => altura(p) + PINTURA_ALTURA);
+    if (geo) piezas.push(geo);
+  };
+
+  // Eje discontinuo: trazos de 30 m cada 60, con los extremos libres para las
+  // teclas de piano.
+  for (let d = 180; d < largo - 180; d += 60) raya(d, 0, 30, 0.9);
+
+  // Teclas de piano en las dos cabeceras.
+  for (const d of [30, largo - 30]) {
+    for (let i = 0; i < 8; i++) raya(d, (i - 3.5) * (ancho * 0.105), 28, ancho * 0.055);
+  }
+
+  if (piezas.length) {
+    const fusionadas = mergeGeometries(piezas, false);
+    if (fusionadas) {
+      const malla = new Mesh(fusionadas, new MeshLambertMaterial({ color: PINTURA }));
+      malla.name = 'pintura';
+      grupo.add(malla);
+    }
+  }
+
+  // Y el designador de cada cabecera. Cada una lee al revés que la otra: es el
+  // mismo asfalto visto desde los dos lados, y por eso una es la 02 y la otra
+  // la 20.
+  //
+  // La orientación va **horneada en la geometría** y no en la malla, por lo
+  // mismo que las rayas: aquí se trabaja en coordenadas del mundo.
+  for (const [nombre, d] of [
+    [nombreA, 100],
+    [nombreB, largo - 100],
+  ] as const) {
+    const textura = numberTexture(nombre);
+    const geo = new PlaneGeometry(ancho * 0.5, ancho * 0.62);
+    geo.rotateX(-Math.PI / 2);
+    // El giro se calcula **en coordenadas del mundo**, que es donde acaba la
+    // geometría: la dirección de la pista allí es `(ux, −uy)`, porque la Y del
+    // fichero apunta al norte y el norte es la Z negativa. Girarlo con el
+    // ángulo del fichero y colocarlo en el mundo es lo que salía espejado —el
+    // «20» se leía al revés—, y es el mismo desajuste de marco que ya había
+    // aparecido tres veces con los rumbos.
+    geo.rotateY(Math.atan2(-ux, uy) + (d > largo / 2 ? Math.PI : 0));
+    const cx = ax + ux * d;
+    const cy = ay + uy * d;
+    geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);
+    grupo.add(
+      new Mesh(
+        geo,
+        new MeshLambertMaterial({
+          map: textura,
+          color: textura ? 0xffffff : PINTURA,
+          transparent: true,
+          side: DoubleSide,
+        }),
+      ),
+    );
   }
 
   return grupo;

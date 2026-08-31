@@ -189,7 +189,7 @@ function slab(
  * tests del terreno y de la senda de aproximación se rompieron justo aquí en
  * cuanto la pista empezó a llevar números.
  */
-function numberTexture(label: string): CanvasTexture | null {
+export function numberTexture(label: string): CanvasTexture | null {
   if (typeof document === 'undefined') return null;
   const size = 256;
   const canvas = document.createElement('canvas');
