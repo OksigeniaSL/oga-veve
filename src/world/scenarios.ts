@@ -14,6 +14,7 @@
 
 import type { Aerodrome } from './aerodrome';
 import SGAS from '../../data/aerodromes/sgas.aero.json';
+import GCXO from '../../data/aerodromes/gcxo.aero.json';
 
 export interface TerrainBand {
   /** Altitud a la que empieza la banda, en metros. */
@@ -68,6 +69,29 @@ export interface Scenario {
    * verdad y viene en el propio fichero.
    */
   magneticVariation: number;
+  /**
+   * Si el escenario es una isla, dónde acaba la tierra.
+   *
+   * Sin esto el relieve es ruido y el ruido no sabe acabarse: se probaron mil
+   * cuatrocientas cuarenta combinaciones de semilla y parámetros buscando un
+   * Tenerife con mar, y ninguna lo tenía. Una isla hay que decir dónde acaba.
+   *
+   * Es una elipse porque las islas volcánicas son alargadas, con su centro
+   * relativo al aeródromo —que casi nunca está en medio— y un borde con algo
+   * de ruido, para que la costa no sea una línea de compás.
+   */
+  island?: {
+    /** Centro de la isla en coordenadas de mundo, m. */
+    centre: readonly [number, number];
+    /** Semieje mayor y menor, m. */
+    radii: readonly [number, number];
+    /** Rumbo verdadero del eje mayor, grados. */
+    heading: number;
+    /** Anchura de la caída al mar, m. */
+    shore: number;
+    /** Cuánto baja el fondo respecto al nivel del agua, m. */
+    depth: number;
+  };
   /**
    * Un aeródromo real extraído, si lo hay.
    *
@@ -227,7 +251,16 @@ export const PETTIROSSI: Scenario = {
   reliefHeight: 150,
   reliefScale: 4.2,
   ridgeMix: 0.12,
-  waterLevel: 40,
+  // Doce, no cuarenta. Con cuarenta, **el treinta y ocho por ciento del
+  // escenario quedaba bajo el agua**: el relieve de Asunción llega a 150 m y su
+  // altura media anda por los cuarenta y cinco, así que la lámina se comía el
+  // llano entero y desde el aire aquello era un archipiélago. Con doce baja al
+  // once por ciento, que para el río Paraguay y sus esteros es razonable.
+  //
+  // Llevaba así desde que existe el escenario y no lo había visto nadie,
+  // porque desde la cabina no se ve: se vio a la primera con
+  // `scripts/verificar-escenario.mjs`, que mira desde arriba y cuenta.
+  waterLevel: 12,
   riverWidth: 900,
   bands: [
     { from: -100, colour: 0x3d6b44 },
@@ -253,7 +286,103 @@ export const PETTIROSSI: Scenario = {
   aerodrome: SGAS as unknown as Aerodrome,
 };
 
-export const SCENARIOS: readonly Scenario[] = [VALLE_CORDILLERA, CHACO, PETTIROSSI];
+/**
+ * Tenerife Norte — el segundo aeródromo real, y el que pone a prueba todo.
+ *
+ * Silvio Pettirossi está en el llano, a 89 metros, con una pista que cae trece.
+ * Tenerife Norte está **en una meseta a seiscientos treinta**, entre el macizo
+ * de Anaga y el Teide, y su 12/30 cae diecisiete metros de una cabecera a la
+ * otra. Todo lo que en Asunción se podía dar por bueno por casualidad —la cota,
+ * el aplanado, el desnivel de la pista— aquí no cuela.
+ *
+ * Lo que trajo el extractor sin tocar nada: pista 12/30 de 3168 metros
+ * medidos, 35 calles de rodaje, **trece puntos de espera** —Asunción no tiene
+ * ninguno mapeado— y **dos mangas de viento**, que son las primeras del juego.
+ *
+ * El relieve sigue siendo procedimental. Es una isla volcánica: crestas duras,
+ * el mar cerca por los dos lados y una meseta en medio. El Teide de verdad
+ * está a treinta kilómetros y no cabe en el escenario; lo que sí cabe, y es lo
+ * que se ve al despegar de la 12, es el macizo y la costa.
+ *
+ * **Ni la semilla ni la isla son números al azar.** El primer intento fue
+ * buscar una semilla con mar: mil cuatrocientas cuarenta combinaciones, y
+ * ninguna lo tenía. El ruido fractal hace cordilleras que siguen y siguen, no
+ * tierra rodeada de agua. Así que la isla se dice —ver `island`— y la semilla
+ * se elige midiendo, con `scripts/buscar-semilla.mjs`.
+ */
+export const TENERIFE_NORTE: Scenario = {
+  id: 'tenerife-norte',
+  nameKey: 'scenario.tenerife.name',
+  // Elegida midiendo con `scripts/buscar-semilla.mjs`: deja el terreno de
+  // alrededor a 641 m, nueve de los 632,8 del aeropuerto, y es de las más
+  // tranquilas del lote. La meseta parece meseta y no un pedestal.
+  seed: 19770966,
+  size: 18000,
+  segments: 416,
+  // Una isla volcánica no tiene lomas: tiene aristas. De ahí que la mezcla de
+  // crestas sea alta y la escala más apretada que en el llano paraguayo.
+  reliefHeight: 2200,
+  // Escala amplia a propósito. Con el ruido más apretado el relieve salía
+  // picado como corteza de árbol: mucho detalle y ninguna forma. Una isla
+  // volcánica tiene barrancos largos que bajan del centro al mar, no grumos.
+  reliefScale: 3.4,
+  ridgeMix: 0.55,
+  waterLevel: 60,
+  // Tenerife no tiene ríos: tiene barrancos, que son otra cosa y no los
+  // excava esto. Mejor ninguno que uno falso.
+  riverWidth: 0,
+  /**
+   * La isla. El aeropuerto está en el cuello del noreste, con el Atlántico a
+   * unos cinco kilómetros a cada lado y la tierra siguiendo hacia el suroeste,
+   * hacia el Teide —que está a treinta kilómetros y no cabe aquí—.
+   *
+   * De ahí los números: eje mayor larguísimo, que se sale del escenario
+   * porque la isla también; eje menor de 4.700 m, que es media anchura del
+   * cuello; y el centro desplazado al suroeste, porque el aeropuerto no está
+   * en el medio de nada.
+   */
+  island: {
+    centre: [-2600, 2200],
+    radii: [26000, 4700],
+    heading: 45,
+    shore: 1400,
+    depth: 260,
+  },
+  bands: [
+    { from: -100, colour: 0x6b6a55 },
+    { from: 200, colour: 0x7a7c5c },
+    { from: 500, colour: 0x3f5d3a },
+    { from: 950, colour: 0x4f6b41 },
+    { from: 1500, colour: 0x6e5f52 },
+    { from: 2050, colour: 0x9c8e7f },
+  ],
+  water: 0x3f6a80,
+  fill: 0x53614a,
+  sky: { horizon: 0xdfe7ea, zenith: 0x4a86c8 },
+  // El aire del Atlántico no es el del Chaco: hay bruma, y se ve.
+  fog: { colour: 0xdae4e8, density: 0.00006 },
+  sun: { azimuth: 108, elevation: 44 },
+  runway: pistaDe(GCXO as unknown as Aerodrome),
+  /**
+   * Nueve grados, y no es la declinación geomagnética de Canarias —que anda
+   * por los cinco al oeste—. Es la que hace que **el número pintado y la
+   * brújula digan lo mismo**: el asfalto corre a 110,7° verdaderos y la
+   * cabecera pone 12.
+   *
+   * Es la misma convención que en Silvio Pettirossi y es deliberada: la
+   * lección regalada de este juego es alinearse con la pista, mirar el rumbo y
+   * ver el número del suelo. Si no coinciden, no hay lección.
+   */
+  magneticVariation: 9,
+  aerodrome: GCXO as unknown as Aerodrome,
+};
+
+export const SCENARIOS: readonly Scenario[] = [
+  VALLE_CORDILLERA,
+  CHACO,
+  PETTIROSSI,
+  TENERIFE_NORTE,
+];
 
 export function scenarioById(id: string): Scenario {
   const found = SCENARIOS.find((s) => s.id === id);

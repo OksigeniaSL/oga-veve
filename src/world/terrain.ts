@@ -26,7 +26,7 @@ import {
 } from 'three';
 import { ValueNoise2D } from './noise';
 import { createRunwayMarkings } from './runway-markings';
-import { createAerodrome, extension, type Aerodrome } from './aerodrome';
+import { aLaPolilinea, createAerodrome, type Aerodrome, type Punto } from './aerodrome';
 import type { Scenario } from './scenarios';
 
 /**
@@ -363,11 +363,64 @@ export function buildHeightfield(scenario: Scenario): Float32Array {
       height -= riverCarve(x, z, scenario, noise);
       // Suelo del cauce. Sin este tope el río excava un cañón de decenas de
       // metros bajo el nivel del agua y el valle deja de parecer un valle.
-      heights[row * resolution + col] = Math.max(height, scenario.waterLevel - 32);
+      height = Math.max(height, scenario.waterLevel - 32);
+      heights[row * resolution + col] = costa(x, z, height, scenario, noise);
     }
   }
 
   return heights;
+}
+
+/**
+ * Hundir el relieve al salir de la isla.
+ *
+ * Se probó primero sin esto: mil cuatrocientas cuarenta combinaciones de
+ * semilla y parámetros de relieve, y **ninguna tenía mar**. Y es lógico: el
+ * ruido fractal con suelo hace cordilleras que siguen y siguen, no un trozo de
+ * tierra rodeado de agua. Una isla no sale de tocar números, hay que decir
+ * dónde acaba.
+ *
+ * La forma es una elipse, y no un círculo, porque las islas volcánicas son
+ * alargadas: en Tenerife el aeropuerto está en el cuello estrecho del noreste,
+ * con el mar a cinco kilómetros a cada lado y la isla siguiendo hacia el Teide.
+ * Un círculo habría puesto costa donde hay macizo.
+ *
+ * El borde no es liso: se le suma un poco de ruido para que la costa tenga
+ * entrantes y salientes. Una línea de playa perfectamente elíptica se ve desde
+ * el aire y canta.
+ */
+function costa(
+  x: number,
+  z: number,
+  height: number,
+  scenario: Scenario,
+  noise: ValueNoise2D,
+): number {
+  const isla = scenario.island;
+  if (!isla) return height;
+
+  const [cx, cz] = isla.centre;
+  const t = (isla.heading * Math.PI) / 180;
+  // Ejes de la isla: el mayor a lo largo de su rumbo.
+  const dx = x - cx;
+  const dz = z - cz;
+  const largo = dx * Math.sin(t) - dz * Math.cos(t);
+  const ancho = dx * Math.cos(t) + dz * Math.sin(t);
+
+  const [a, b] = isla.radii;
+  const d = Math.hypot(largo / a, ancho / b);
+  // Ruido en el borde: ±12 % del radio, que en la escala de Tenerife son unos
+  // quinientos metros de entrantes y salientes.
+  const rugoso = d * (1 + (noise.fbm(x / 900 + 41.7, z / 900 - 18.3, 3) - 0.5) * 0.24);
+
+  const orilla = isla.shore / Math.min(a, b);
+  if (rugoso <= 1) return height;
+  if (rugoso >= 1 + orilla) return scenario.waterLevel - isla.depth;
+
+  // Caída suave de la costa al fondo. Sin suavizar, la orilla es un escalón.
+  const u = (rugoso - 1) / orilla;
+  const s = u * u * (3 - 2 * u);
+  return height * (1 - s) + (scenario.waterLevel - isla.depth) * s;
 }
 
 /**
@@ -464,10 +517,26 @@ function flattenAerodrome(heights: Float32Array, scenario: Scenario, aero: Aerod
   const half = scenario.size / 2;
   const base = aero.elevationM ?? 0;
 
-  // La huella: lo que abarca todo el pavimento, más un margen.
-  const { radio } = extension(aero);
-  const nucleo = radio + step * 2;
-  const alcance = nucleo + 400;
+  // **La huella no es un círculo: es una banda a lo largo de la pista.**
+  //
+  // Aplanando en redondo alrededor del punto de referencia salía un disco liso
+  // de cuatro kilómetros que desde el aire se veía como lo que era: un disco.
+  // Un aeropuerto de verdad es una terraza alargada, porque lo que hubo que
+  // explanar fue la pista y lo que la rodea.
+  //
+  // El ancho de la banda **sale de los datos**, no de un número puesto a mano:
+  // se mide qué es lo más apartado del eje que hay que sostener. En Tenerife
+  // Norte es un edificio a 394 m; en Silvio Pettirossi, una plataforma a 850.
+  const eje = aero.runways[0]?.centerline ?? [];
+  let lateral = 0;
+  const mirar = (pts: readonly Punto[]) => {
+    for (const p of pts) lateral = Math.max(lateral, aLaPolilinea(p, eje));
+  };
+  for (const t of aero.taxiways) mirar(t.path);
+  for (const a of aero.aprons) mirar(a.polygon);
+  for (const b of aero.buildings) mirar(b.polygon);
+  mirar(aero.windsocks);
+  const nucleo = (eje.length ? lateral : 0) + step * 2 + 60;
 
   // Perfil de la pista principal, para la cota a lo largo del eje.
   const pista = aero.runways[0];
@@ -489,6 +558,21 @@ function flattenAerodrome(heights: Float32Array, scenario: Scenario, aero: Aerod
     return a.elevM! + (b.elevM! - a.elevM!) * t;
   };
 
+  // Cuánto tiene que moverse el terreno para recibir al aeródromo. Si el
+  // relieve de alrededor ya estaba a su cota, el margen de cuatrocientos
+  // metros sobra; si el aeródromo está en una meseta a seiscientos metros y
+  // el ruido dejó el llano a doscientos, cuatrocientos metros de mezcla son
+  // **un acantilado de cuatrocientos por cuatrocientos**, y el juego pone un
+  // muro alrededor del aeropuerto.
+  //
+  // Así que la mezcla se estira con el desnivel, a razón de ocho a uno: una
+  // cuesta empinada, de las que hay de verdad subiendo a La Laguna, pero
+  // cuesta y no pared. Con tope, porque estirarla sin límite deja alrededor
+  // del aeropuerto un disco liso que desde el aire canta.
+  const bordeX = nucleo + 400;
+  const desnivel = Math.abs(cota(0, 0) - sampleGrid(heights, resolution, step, half, bordeX, 0));
+  const alcance = nucleo + Math.max(400, Math.min(desnivel * 8, 1800));
+
   for (let row = 0; row < resolution; row++) {
     const mundoZ = -half + row * step;
     for (let col = 0; col < resolution; col++) {
@@ -497,7 +581,8 @@ function flattenAerodrome(heights: Float32Array, scenario: Scenario, aero: Aerod
       // aeropuerto, que está en el (0, 0) del mundo, y su Y apunta al norte.
       const x = mundoX;
       const z = -mundoZ;
-      const d = Math.hypot(x, z);
+      // Distancia **al eje de la pista**, no al punto de referencia.
+      const d = eje.length ? aLaPolilinea([x, z], eje) : Math.hypot(x, z);
       if (d >= alcance) continue;
       const peso = smoothFalloff(d, nucleo, alcance);
       const i = row * resolution + col;
@@ -508,6 +593,21 @@ function flattenAerodrome(heights: Float32Array, scenario: Scenario, aero: Aerod
       heights[i] = heights[i]! * (1 - peso) + (cota(x, z) - RESALTE) * peso;
     }
   }
+}
+
+/** Cota de la malla en un punto del mundo, por vecino más cercano. */
+function sampleGrid(
+  heights: Float32Array,
+  resolution: number,
+  step: number,
+  half: number,
+  x: number,
+  z: number,
+): number {
+  const col = Math.round((x + half) / step);
+  const row = Math.round((z + half) / step);
+  if (col < 0 || row < 0 || col >= resolution || row >= resolution) return 0;
+  return heights[row * resolution + col]!;
 }
 
 function smoothFalloff(distance: number, core: number, reach: number): number {

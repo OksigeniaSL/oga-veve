@@ -181,6 +181,40 @@ porque corre en Node y allí no hay `canvas`—, **mide** la separación de la
 pintura respecto al eje de la pista, y deja dos imágenes: el aeródromo entero
 desde arriba y un acercamiento a un rótulo.
 
+Y para el escenario que lo rodea:
+
+```
+node scripts/verificar-escenario.mjs tenerife-norte
+node scripts/buscar-semilla.mjs tenerife-norte
+```
+
+El primero mira el escenario entero desde dieciocho kilómetros y cuenta: cota
+medida de la pista, terreno alrededor, **qué porcentaje está bajo el agua** y a
+qué distancia queda la costa. Encontró a la primera que el escenario de
+Asunción llevaba desde siempre con **el treinta y ocho por ciento sumergido**,
+cosa que desde la cabina no se ve nunca. El segundo elige la semilla del
+relieve midiendo, en vez de probando: la buena es la que deja el terreno de
+alrededor a la cota del aeródromo, para que la meseta sea meseta y no un
+pedestal.
+
+## 6 bis. El terreno que lo rodea
+
+Tres cosas aprendidas montando Tenerife Norte, que está a 632 m y no a 89 como
+Asunción:
+
+- **El aplanado sigue a la pista, no al punto de referencia.** En redondo salía
+  un disco liso de cuatro kilómetros que desde el aire cantaba. Un aeropuerto
+  es una terraza alargada. El ancho de la banda sale de los datos: lo más
+  apartado del eje que hay que sostener —394 m en Tenerife, 850 en Asunción,
+  que tiene una plataforma muy separada—.
+- **La mezcla se estira con el desnivel.** Si el ruido dejó el llano a 200 m y
+  el aeródromo está a 630, cuatrocientos metros de transición son un
+  acantilado. Va a razón de ocho a uno, con tope.
+- **Una isla no sale de tocar números.** Se probaron 1.440 combinaciones de
+  semilla y parámetros buscando un Tenerife con mar y **ninguna lo tenía**: el
+  ruido fractal hace cordilleras que siguen y siguen. Hay que decir dónde acaba
+  la tierra, y para eso está `island` en el escenario.
+
 ## 7. La pintura no se descarga: se genera
 
 **OpenStreetMap no mapea las marcas pintadas.** Existe un tag `aeroway=marking`

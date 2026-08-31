@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { delante, traves, enEjesDePista } from './rumbo';
+import { delante, traves, enEjesDePista, puntoDePista } from './rumbo';
 
 const cerca = (a: readonly [number, number], b: readonly [number, number]) => {
   expect(a[0]).toBeCloseTo(b[0], 6);
@@ -49,5 +49,39 @@ describe('los ejes de pista', () => {
       expect(across).toBeCloseTo(50, 5);
       expect(along).toBeCloseTo(0, 5);
     }
+  });
+});
+
+describe('la cabecera de una pista', () => {
+  it('queda por detrás del centro, en el eje', () => {
+    // Rumbo 90°: la pista corre hacia el este, así que la cabecera está al
+    // oeste del centro y a la misma Z.
+    const [x, z] = puntoDePista({ x: 0, z: 0, heading: 90 }, 500);
+    expect(x).toBeCloseTo(-500, 6);
+    expect(z).toBeCloseTo(0, 6);
+  });
+
+  it('con rumbos no redondos también, que es donde fallaba', () => {
+    // Tenerife Norte: 110,67° verdaderos. Con el signo del coseno cambiado la
+    // cabecera salía a más de un kilómetro de donde está.
+    const centro = { x: -4, z: 3, heading: 110.67 };
+    const [x, z] = puntoDePista(centro, 1584);
+    expect(x).toBeCloseTo(-4 - Math.sin((110.67 * Math.PI) / 180) * 1584, 3);
+    expect(z).toBeCloseTo(3 + Math.cos((110.67 * Math.PI) / 180) * 1584, 3);
+    // Y está en el eje: proyectada, su separación lateral es cero.
+    const { across, along } = enEjesDePista(x, z, centro.x, centro.z, centro.heading);
+    expect(Math.abs(across)).toBeLessThan(1e-6);
+    expect(along).toBeCloseTo(-1584, 3);
+  });
+
+  it('coincide con el umbral medido de Tenerife Norte', () => {
+    // El umbral 12 del fichero, pasado a coordenadas de mundo (Z invertida).
+    const esperado = [-1485.8, -556.3];
+    const [x, z] = puntoDePista(
+      { x: (-1485.8 + 1477.9) / 2, z: -(556.3 - 562.1) / 2, heading: 110.67 },
+      Math.hypot(1477.9 + 1485.8, -562.1 - 556.3) / 2,
+    );
+    expect(x).toBeCloseTo(esperado[0]!, 0);
+    expect(z).toBeCloseTo(esperado[1]!, 0);
   });
 });
