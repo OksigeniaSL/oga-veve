@@ -1067,3 +1067,73 @@ body {
     opacity: 0;
   }
 }
+
+/*
+ * La pantalla de teclas. Comparte el fondo y el panel de los créditos porque
+ * son la misma clase de cosa: algo que se abre encima del vuelo, se lee y se
+ * cierra.
+ */
+.teclas__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 4px;
+}
+
+.teclas__tabla th {
+  text-align: left;
+  font-weight: 500;
+  padding: 5px 8px 5px 0;
+  font-size: 15px;
+}
+
+.teclas__tabla td {
+  text-align: right;
+  padding: 5px 0;
+}
+
+/* Filas alternas: con dieciocho seguidas, el ojo se pierde sin ellas. */
+.teclas__tabla tr:nth-child(odd) th,
+.teclas__tabla tr:nth-child(odd) td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.teclas__tecla {
+  min-width: 92px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.09);
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.teclas__tecla:hover,
+.teclas__tecla:focus-visible {
+  border-color: var(--ocre, #dd923f);
+}
+
+/* Esperando tecla: se ve de lejos que el juego está pendiente de ti. */
+.teclas__tecla--esperando {
+  background: var(--ocre, #dd923f);
+  color: #1a1206;
+  border-color: var(--ocre, #dd923f);
+}
+
+.teclas__pista {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.teclas__pie {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.teclas__panel {
+  max-height: 82vh;
+  overflow-y: auto;
+}

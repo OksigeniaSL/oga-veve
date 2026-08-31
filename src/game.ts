@@ -39,6 +39,7 @@ import { missionsFor } from './content/missions';
 import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
+import { KeyScreen } from './ui/teclas';
 import { LOCALE_NAMES, cycleLocale, t } from './i18n';
 import { Audio } from './audio/audio';
 
@@ -106,6 +107,7 @@ export class Game {
   private readonly hud: Hud;
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
+  private keyScreen: KeyScreen | null = null;
 
   private cameraMode: CameraMode = 'chase';
   private propellerAngle = 0;
@@ -178,10 +180,12 @@ export class Game {
     this.creditsRoot = options.creditsRoot;
     this.credits = new CreditsScreen(this.creditsRoot, this.flight.implementationName);
 
+
     this.input = new InputManager(options.touchRoot, {
       toggleCamera: () => this.cycleCamera(),
       toggleAssist: () => this.cycleTier(),
       resetFlight: () => this.resetFlight(),
+      toggleKeys: () => this.keyScreen?.toggle(),
       toggleCredits: () => this.credits.toggle(),
       cycleAircraft: () => this.cycleAircraft(),
       cycleMission: () => this.cycleMission(),
@@ -193,6 +197,11 @@ export class Game {
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
     this.hud.setSoundLevel(this.audio.level.glyph, t(`sound.${this.audio.level.id}` as never));
+    // La pantalla de teclas se monta si existe su hueco. Es opcional a
+    // propósito: el juego tiene que arrancar aunque falte.
+    const teclasRoot = document.getElementById('teclas');
+    if (teclasRoot) this.keyScreen = new KeyScreen(teclasRoot, this.input.keymap);
+
     this.hud.onSoundClick(() => this.toggleSound());
     this.hud.onBrake((pressed) => this.input.setTouchBrakes(pressed));
     this.hud.onThrottle((direction) => this.input.setButtonThrottle(direction));
@@ -656,6 +665,7 @@ export class Game {
     const locale = cycleLocale();
     this.hud.render();
     this.credits = new CreditsScreen(this.creditsRoot, this.flight.implementationName);
+
     this.updateBadge();
     this.hud.flash(t('language.changed', { name: LOCALE_NAMES[locale] }));
   }

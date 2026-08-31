@@ -10,6 +10,7 @@
  */
 
 import { neutralControls, type ControlInputs } from './model';
+import { Keymap, type Accion } from './keymap';
 
 /** Velocidad a la que un eje de teclado alcanza el tope, por segundo. */
 const KEY_RAMP = 2.6;
@@ -31,38 +32,6 @@ const DEADZONE = 0.12;
  * delante para bajar, pero quien tiene cinco años espera que arriba sea
  * arriba, y ese es el público. Un ajuste para invertirlo puede venir después.
  */
-const KEYS = {
-  pitchUp: ['ArrowUp', 'KeyW'],
-  pitchDown: ['ArrowDown', 'KeyS'],
-  rollRight: ['ArrowRight', 'KeyD'],
-  rollLeft: ['ArrowLeft', 'KeyA'],
-  yawRight: ['KeyE'],
-  yawLeft: ['KeyQ'],
-  // Más y menos como mandos principales del motor: **los símbolos dicen lo
-  // que hacen**, así que no hay nada que aprender ni que recordar. Shift y
-  // Control se mantienen porque quien viene de otros simuladores los busca,
-  // pero dejan de ser los únicos: Control en un navegador es además
-  // peligroso —Ctrl+W cierra la pestaña— y no puede ser la única forma de
-  // bajar el gas.
-  //
-  // Y van **por carácter además de por tecla física**, que es lo que
-  // arreglaba de verdad el problema: `event.code` nombra la tecla del
-  // teclado americano, así que en un teclado español el `−` reporta `Slash`
-  // —está donde el americano tiene la barra— y nunca coincidía con `Minus`.
-  // El `+` parecía funcionar por pura casualidad: se escribe con Mayúsculas,
-  // y Mayúsculas sube gas. O sea que en media Europa se podía acelerar y no
-  // frenar el motor.
-  //
-  // Con `event.key` se mira el carácter que sale, que es lo que la persona
-  // ve pintado en la tecla y lo que de verdad quiso pulsar.
-  throttleUp: ['Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight', '+'],
-  throttleDown: ['Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight', '-'],
-  // B de *brakes*, y también la barra espaciadora: es la tecla que la mano
-  // encuentra sola y la que todo el mundo prueba primero cuando algo no
-  // para. Tener frenos y que nadie los encuentre es lo mismo que no
-  // tenerlos.
-  brakes: ['KeyB', 'Space'],
-} as const;
 
 /**
  * Valor de un eje a partir de las teclas pulsadas: +1, 0 o -1.
@@ -84,6 +53,7 @@ export interface InputActions {
   toggleCamera: () => void;
   toggleAssist: () => void;
   resetFlight: () => void;
+  toggleKeys: () => void;
   toggleCredits: () => void;
   cycleAircraft: () => void;
   cycleMission: () => void;
@@ -105,6 +75,9 @@ export class InputManager {
   private touchThrottle: number | null = null;
   /** Qué carácter dio cada tecla física al pulsarla. Ver `onKeyUp`. */
   private readonly chars = new Map<string, string>();
+
+  /** Qué tecla hace qué. Se puede cambiar desde la pantalla de teclas. */
+  readonly keymap = new Keymap();
 
   private touchBrakes = false;
 
@@ -136,6 +109,16 @@ export class InputManager {
    * su valor en el fotograma siguiente y el avión reaparecía en la pista con
    * el motor a tope y sin forma de bajarlo.
    */
+  /** Eje a partir de dos acciones: +1, 0 o -1. */
+  private axis(mas: Accion, menos: Accion): number {
+    return axisFromKeys(this.keys, this.keymap.keys(mas), this.keymap.keys(menos));
+  }
+
+  /** ¿Está pulsada alguna tecla de esta acción? */
+  private held(accion: Accion): boolean {
+    return this.keymap.keys(accion).some((k) => this.keys.has(k));
+  }
+
   releaseAll(): void {
     this.touchThrottle = null;
     this.buttonThrottle = 0;
@@ -168,11 +151,11 @@ export class InputManager {
     const gamepad = this.readGamepad();
 
     const pitchTarget =
-      gamepad?.pitch ?? this.touchPitch + axisFromKeys(this.keys, KEYS.pitchUp, KEYS.pitchDown);
+      gamepad?.pitch ?? this.touchPitch + this.axis('pitchUp', 'pitchDown');
     const rollTarget =
-      gamepad?.roll ?? this.touchRoll + axisFromKeys(this.keys, KEYS.rollRight, KEYS.rollLeft);
+      gamepad?.roll ?? this.touchRoll + this.axis('rollRight', 'rollLeft');
     const rudderTarget =
-      gamepad?.rudder ?? this.touchRudder + axisFromKeys(this.keys, KEYS.yawRight, KEYS.yawLeft);
+      gamepad?.rudder ?? this.touchRudder + this.axis('yawRight', 'yawLeft');
 
     this.controls.elevator = approach(this.controls.elevator, clamp(pitchTarget, -1, 1), dt);
     this.controls.aileron = approach(this.controls.aileron, clamp(rollTarget, -1, 1), dt);
@@ -184,7 +167,7 @@ export class InputManager {
     // porque un botón encima de ella se llevó el `pointerdown` y no el
     // `pointerup`—, el teclado quedaba anulado del todo y el motor clavado
     // donde estuviera. Con el gas a tope eso es un avión que no se para.
-    const teclado = axisFromKeys(this.keys, KEYS.throttleUp, KEYS.throttleDown);
+    const teclado = this.axis('throttleUp', 'throttleDown');
     if (releasesTouchThrottle(teclado, this.buttonThrottle)) this.touchThrottle = null;
 
     if (this.touchThrottle !== null) {
@@ -197,7 +180,7 @@ export class InputManager {
     }
 
     const braking =
-      this.touchBrakes || KEYS.brakes.some((k) => this.keys.has(k)) || (gamepad?.brakes ?? false);
+      this.touchBrakes || this.held('brakes') || (gamepad?.brakes ?? false);
     this.controls.brakes = approach(this.controls.brakes, braking ? 1 : 0, dt * 2);
     // Los flaps no se leen aquí: son un conmutador, y lo lleva `onKeyDown`.
     // Forzarlos también desde el bucle impedía apagarlos sin soltar la tecla.
@@ -222,34 +205,43 @@ export class InputManager {
       this.chars.set(event.code, event.key);
     }
 
-    switch (event.code) {
-      case 'KeyC':
+    // Las acciones puntuales salen del mapa de teclas, no de una lista de
+    // códigos escrita a mano: así se pueden cambiar todas, y así la pantalla
+    // de teclas dice la verdad sobre lo que hace cada una.
+    const accion = this.keymap.actionFor(event.code) ?? this.keymap.actionFor(event.key);
+    switch (accion) {
+      case 'camera':
         this.actions.toggleCamera();
         break;
-      case 'KeyM':
+      case 'assist':
         this.actions.toggleAssist();
         break;
-      case 'KeyR':
+      case 'reset':
         this.actions.resetFlight();
         break;
-      case 'KeyL':
+      case 'language':
         this.actions.cycleLanguage();
         break;
-      case 'KeyV':
+      case 'sound':
         this.actions.toggleSound();
         break;
-      case 'KeyP':
+      case 'aircraft':
         this.actions.cycleAircraft();
         break;
-      case 'KeyN':
+      case 'mission':
         this.actions.cycleMission();
         break;
-      case 'F1':
+      case 'credits':
         event.preventDefault();
         this.actions.toggleCredits();
         break;
-      case 'KeyF':
+      case 'keys':
+        this.actions.toggleKeys();
+        break;
+      case 'flaps':
         this.controls.flaps = this.controls.flaps > 0.5 ? 0 : 1;
+        break;
+      default:
         break;
     }
   };
