@@ -288,7 +288,7 @@ export class Game {
     // La bocina avisa al 85 % del ángulo crítico de esta aeronave concreta,
     // que es donde la ponen los fabricantes.
     this.audio.update(this.flight.state, this.input.controls, this.aircraft.aero.alphaStall * 0.85);
-    this.hud.update(this.flight.state, this.input.controls.throttle, dt);
+    this.hud.update(this.flight.state, this.input.controls.throttle, dt, this.input.controls.brakes);
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
     // misión en curso la aguja señala el objetivo, y si el tutor mirara ese
     // número pediría bajar el motor para aterrizar cada vez que uno se

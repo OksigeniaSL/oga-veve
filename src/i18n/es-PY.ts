@@ -63,7 +63,7 @@ export const ES_PY = {
   'help.pitch': 'Flechas o W A S D — subir, bajar y girar',
   'help.rudder': 'Q y E — timón',
   'help.throttle': 'Más y menos — motor',
-  'help.brakes': 'B — frenos',
+  'help.brakes': 'B o espacio — frenos',
   'help.camera': 'C — cambiar cámara',
   'help.assist': 'M — nivel de dificultad',
   'help.reset': 'R — volver a empezar',

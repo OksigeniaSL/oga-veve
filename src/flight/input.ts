@@ -46,7 +46,11 @@ const KEYS = {
   // bajar el gas.
   throttleUp: ['Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight'],
   throttleDown: ['Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight'],
-  brakes: ['KeyB'],
+  // B de *brakes*, y también la barra espaciadora: es la tecla que la mano
+  // encuentra sola y la que todo el mundo prueba primero cuando algo no
+  // para. Tener frenos y que nadie los encuentre es lo mismo que no
+  // tenerlos.
+  brakes: ['KeyB', 'Space'],
 } as const;
 
 /**

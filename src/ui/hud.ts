@@ -38,6 +38,7 @@ const INSTRUMENTS = {
   altitude: 'ALT',
   heading: 'HDG',
   throttle: 'THR',
+  brakes: 'BRK',
 } as const;
 
 /** Conversión y rótulo de unidades para un sistema de medida. */
@@ -104,6 +105,7 @@ export class Hud {
   private heading: HTMLElement | null = null;
   private vspeed: HTMLElement | null = null;
   private throttleFill!: HTMLElement;
+  private brakes!: HTMLElement;
   private horizon: HTMLElement | null = null;
   private homeArrow!: HTMLElement;
   private homeDistance: HTMLElement | null = null;
@@ -185,6 +187,18 @@ export class Hud {
           </div>
           ${gauges ? `<span class="medidor__glosa">${t('hud.throttle')}</span>` : ''}
         </div>
+        <!--
+          El freno. Sale solo cuando se está en el suelo, porque en el aire
+          no sirve de nada y ocuparía sitio; y sale **con su tecla dibujada**,
+          igual que el motor. Estaba conectado desde el principio y nadie lo
+          encontraba: se aterrizaba y el avión rodaba hasta el fin del mundo.
+          Un mando que no se anuncia no existe.
+        -->
+        <div class="tarjeta medidor freno" data-hud="brakes" hidden>
+          ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.brakes}</span>` : ''}
+          <span class="motor__tecla motor__tecla--ancha" aria-hidden="true">␣</span>
+          ${gauges ? `<span class="medidor__glosa">${t('hud.brakes')}</span>` : ''}
+        </div>
         ${numbers ? `<div class="tarjeta horizonte">
           <div class="horizonte__cielo" data-hud="horizon"></div>
           <div class="horizonte__cruz"></div>
@@ -225,6 +239,7 @@ export class Hud {
     this.heading = optional(this.root, 'heading');
     this.vspeed = optional(this.root, 'vspeed');
     this.throttleFill = pick(this.root, 'throttle');
+    this.brakes = pick(this.root, 'brakes');
     this.horizon = optional(this.root, 'horizon');
     this.home = pick(this.root, 'home');
     this.homeArrow = pick(this.root, 'home-arrow');
@@ -302,7 +317,7 @@ export class Hud {
     this.render();
   }
 
-  update(state: FlightState, throttle: number, dt: number): void {
+  update(state: FlightState, throttle: number, dt: number, braking = 0): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
     const ias = indicatedAirspeed(state.airspeed, state.position.y);
@@ -328,6 +343,10 @@ export class Hud {
     }
 
     this.throttleFill.style.width = `${Math.round(throttle * 100)}%`;
+
+    // El freno aparece al tocar suelo y se enciende al pisarlo.
+    this.brakes.hidden = !state.onGround;
+    this.brakes.classList.toggle('freno--pisado', braking > 0.05);
 
     // Alabeo y cabeceo los quieren dos consumidores —la tarjeta del horizonte
     // y el cuadro de mandos—, y solo uno de los dos existe a la vez. Se

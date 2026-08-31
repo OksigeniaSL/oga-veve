@@ -872,3 +872,31 @@ body {
 .tc__bola { fill: #1c1f25; stroke: #f2f4f7; stroke-width: 1.2; }
 .tc__ala { fill: none; stroke: #f2f4f7; stroke-width: 2.2; stroke-linecap: round; }
 .tc__deriva { stroke: rgba(255, 255, 255, 0.45); stroke-width: 1.2; }
+
+/*
+ * El freno. Comparte tarjeta y tipografía con el motor porque son la pareja
+ * que se usa en tierra, y la tecla va dibujada por el mismo motivo: es lo
+ * único que hace descubrible un mando que no se ve.
+ */
+.freno {
+  margin-top: 8px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.motor__tecla--ancha {
+  min-width: 54px;
+  font-size: 15px;
+}
+
+/* Pisado: se enciende, y con el mismo ámbar que el resto de los avisos. */
+.freno--pisado {
+  border-color: var(--ocre);
+  box-shadow: 0 0 0 2px rgba(221, 146, 63, 0.45);
+}
+
+.freno--pisado .motor__tecla--ancha {
+  background: var(--ocre);
+  color: #1a1206;
+}

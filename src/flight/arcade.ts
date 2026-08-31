@@ -42,6 +42,9 @@ import type { AircraftConfig } from './aircraft';
 const CRUISE_FRACTION = 0.62;
 /** Velocidad mínima rodando y a la que se separa del suelo, en m/s. */
 const IDLE_SPEED = 2;
+
+/** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
+const STATIC_GRIP = 1.2;
 /** Ritmo de viraje máximo, en radianes por segundo. */
 const MAX_TURN_RATE = 0.5;
 /** Ritmo de ascenso máximo, en metros por segundo. */
@@ -114,13 +117,29 @@ export class ArcadeFlightModel implements FlightModel {
 
     // La velocidad la lleva el gas, sin más. Nada de empuje contra
     // resistencia: se va hacia la velocidad pedida y ya está.
-    const wanted = IDLE_SPEED + controls.throttle * (cruise - IDLE_SPEED);
+    // En el aire hay un suelo de velocidad, porque un avión no puede
+    // pararse volando. **En tierra no**: con el motor a cero, cero. Ese
+    // suelo aplicado también rodando era lo que hacía que el avión se
+    // paseara solo por la pista después de frenar — «como que quiere
+    // caminar», que es exactamente lo que hacía.
+    const floor = this.state.onGround ? 0 : IDLE_SPEED;
+    const wanted = floor + controls.throttle * (cruise - floor);
     // Constante de tiempo de unos cinco segundos y medio. Con la primera,
     // mucho más rápida, el avión llegaba a velocidad de vuelo en menos de dos
     // segundos y despegaba sin carrera: se perdía justo la parte que sí se
     // lleva uno al peldaño siguiente, que es que hay que correr para volar.
-    const braking = this.state.onGround ? 1 + controls.brakes * 3 : 1;
-    this.speed += (wanted - this.speed) * Math.min(1, step * 0.18 * braking);
+    // Rodando, el freno **baja el objetivo hasta cero**; no se limita a
+    // acelerar el ajuste. Como estaba, frenar solo hacía llegar antes a la
+    // velocidad de ralentí y el avión seguía rodando indefinidamente: se
+    // aterrizaba y no había manera de parar. Un freno que no para el avión
+    // no es un freno.
+    const target = this.state.onGround ? wanted * (1 - controls.brakes) : wanted;
+    const rate = this.state.onGround ? 0.18 * (1 + controls.brakes * 5) : 0.18;
+    this.speed += (target - this.speed) * Math.min(1, step * rate);
+    // Rozamiento estático. Un decaimiento exponencial se acerca a cero para
+    // siempre y nunca llega, y lo que se ve en pantalla es un avión que
+    // repta eternamente después de frenar. Un avión parado está parado.
+    if (this.state.onGround && controls.brakes > 0.5 && this.speed < STATIC_GRIP) this.speed = 0;
 
     // Con poca velocidad los mandos no muerden, que es la única lección de
     // aerodinámica que este peldaño enseña: hay que correr para volar.

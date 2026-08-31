@@ -70,7 +70,7 @@ export const EN: Dictionary = {
   'help.pitch': 'Arrows or W A S D — climb, descend and turn',
   'help.rudder': 'Q and E — rudder',
   'help.throttle': 'Plus and minus — throttle',
-  'help.brakes': 'B — brakes',
+  'help.brakes': 'B or space — brakes',
   'help.camera': 'C — change view',
   'help.assist': 'M — difficulty tier',
   'help.reset': 'R — start again',

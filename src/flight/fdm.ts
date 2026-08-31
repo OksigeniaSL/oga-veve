@@ -78,6 +78,9 @@ const WING_LEVELLER = 2.0;
  */
 /** Cuánto tarda el compensador automático en fijar la actitud, en segundos. */
 const TRIM_SETTLE = 1.1;
+
+/** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
+const STATIC_GRIP = 1.2;
 /**
  * Instantes por delante en los que se busca terreno, en segundos.
  *
@@ -482,6 +485,14 @@ export class CoefficientFlightModel implements FlightModel {
       this.forward,
       -Math.sign(longitudinal) * Math.min(Math.abs(longitudinal), rolling * GRAVITY * dt),
     );
+
+    // Rozamiento estático: con el freno pisado y a paso de peatón, el avión
+    // se queda quieto de verdad en vez de reptar contra el ralentí del
+    // motor. Va después de la fricción y del empuje, que es donde importa:
+    // cada paso el motor empuja un poquito y esto lo anula.
+    if (controls.brakes > 0.5 && Math.abs(longitudinal) < STATIC_GRIP) {
+      s.velocity.addScaledVector(this.forward, -s.velocity.dot(this.forward));
+    }
 
     // El tren de aterrizaje no deja alabear ni guiñar libremente. El cabeceo
     // sí se respeta: es lo que permite rotar en el despegue.
