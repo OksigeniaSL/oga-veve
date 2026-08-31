@@ -153,6 +153,7 @@ export class Hud {
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
+  private torre: HTMLElement | null = null;
   private hintTimer = 0;
 
   constructor(root: HTMLElement) {
@@ -190,6 +191,22 @@ export class Hud {
           con cuarenta.
         -->
         <div class="progreso" data-hud="progress" hidden></div>
+        <!--
+          La lámpara de señales de la torre.
+
+          Verde autoriza, rojo manda parar. **No es un apaño para quien no
+          lee**: es la lámpara de verdad, la que usa una torre para hablar con
+          un avión sin radio, y está en el Anexo 2 de OACI desde siempre. Un
+          niño de cuatro años entiende un semáforo, y resulta que un semáforo es
+          exactamente lo que hay ahí arriba.
+
+          Lleva texto alternativo porque un color solo no es información: quien
+          no distinga el rojo del verde tiene que poder saber si puede entrar.
+        -->
+        <div class="torre" data-hud="torre" hidden role="status">
+          <span class="torre__luz"></span>
+          <span class="torre__texto" data-hud="torre-texto"></span>
+        </div>
         <!--
           Botón de sonido. Es un botón de verdad y no un adorno: se pulsa con
           el dedo, se enfoca con el tabulador y dice su estado. Existe porque
@@ -324,6 +341,7 @@ export class Hud {
     this.speed = optional(this.root, 'speed');
     this.altitude = optional(this.root, 'altitude');
     this.heading = optional(this.root, 'heading');
+    this.torre = optional(this.root, 'torre');
     this.vspeed = optional(this.root, 'vspeed');
     this.throttleFill = pick(this.root, 'throttle');
     this.brakes = pick(this.root, 'brakes');
@@ -627,6 +645,22 @@ export class Hud {
   /** Quién abre la pantalla de mandos. */
   onKeys(handler: () => void): void {
     this.keysHandler = handler;
+  }
+
+  /**
+   * La luz de la torre: verde, roja o apagada.
+   *
+   * Apagada quiere decir que ahora mismo la torre no tiene nada que decirte,
+   * que es lo normal durante casi todo el vuelo.
+   */
+  setLuzDeTorre(luz: 'verde' | 'roja' | null): void {
+    const caja = this.torre;
+    if (!caja) return;
+    caja.hidden = luz === null;
+    caja.classList.toggle('torre--verde', luz === 'verde');
+    caja.classList.toggle('torre--roja', luz === 'roja');
+    const texto = caja.querySelector('[data-hud="torre-texto"]');
+    if (texto) texto.textContent = luz === 'verde' ? t('torre.verde') : luz ? t('torre.roja') : '';
   }
 
   /** Quién vuelve al hangar. */

@@ -33,6 +33,25 @@ export const GUG: Dictionary = {
   'app.title': 'Óga Veve',
   'app.tagline': 'Eveve Paraguay ári',
 
+  // ── El vuelo completo ──────────────────────────────────────────────────
+  'torre.verde': 'Ikatúma reike',
+  'torre.roja': "Eha'arõ ko'ápe",
+  'vuelo.estacionado': 'Emyandy motor',
+  'vuelo.arrancando': 'Epoi freno ha eguata mbegue',
+  'vuelo.rodando': 'Eho raya hovy rupi',
+  'vuelo.esperando': "Epyta porã ha eha'arõ tesape",
+  'vuelo.autorizado': '¡Tesape hovy! Eike pistápe',
+  'vuelo.alineando': 'Eñemboja eje-re',
+  'vuelo.despegando': 'Motor opa peve',
+  'vuelo.enVuelo': 'Tereho eveve',
+  'vuelo.final': 'Eguejy mbeguemi',
+  'vuelo.aterrizado': 'Ejoko',
+  'vuelo.abandonando': 'Esẽ pistágui, oúma ambue',
+  'vuelo.aPlataforma': 'Eho jey nde rendápe',
+  'vuelo.enPuesto': 'Reguahẽma. Embogue motor',
+  'vuelo.apagado': '¡Opáma ne veve!',
+  'vuelo.fuera': 'Eho jey raya hovýpe',
+
   // ── El hangar ──────────────────────────────────────────────────────────
   'hangar.donde': '¿Moõpa javeve?',
   'hangar.como': '¿Mba’eichagua piloto piko nde?',
