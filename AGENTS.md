@@ -33,6 +33,13 @@ En la práctica, tres consecuencias que sí son decisiones concretas:
 - **Las normas se muestran, no se imponen.** Nunca se castiga: se ve la
   consecuencia y se vuelve a intentar. El objetivo es que se entienda el
   porqué, no que se obedezca.
+- **La calma se enseña, y se la llevan puesta.** Para muchos niños este será
+  el primer sonido de alarma de avión que oigan en su vida, y lo que aprendan
+  a sentir aquí les acompañará el día que se suban a uno de verdad. Así que
+  los avisos crecen con quien los oye: ámbar y lenguaje sencillo en los
+  peldaños de abajo, la alarma real en los de arriba. La calma no es lo
+  contrario de la seguridad — **es la forma que tiene la seguridad de
+  funcionar**, porque quien se acelera decide peor.
 - **Los galones no son mando, son responsabilidad.** Si el juego enseña a
   contar las barras de la manga —y las enseña—, tiene que enseñar también
   qué significan: cuatro barras no quieren decir que mandes, quieren decir
