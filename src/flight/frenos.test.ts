@@ -125,3 +125,44 @@ describe('quitar gas', () => {
     expect(model.state.airspeed).toBeLessThan(rapido * 0.45);
   });
 });
+
+describe('la alarma de pérdida', () => {
+  /**
+   * Reportado volando: la alarma cantaba «¡pérdida!» en cuanto se levantaba
+   * un poco el morro, y también subiendo justo después de despegar. Se
+   * marcaba pérdida en el instante en que el ángulo rozaba el umbral, sin
+   * histéresis y sin exigir que se mantuviera, así que parpadeaba.
+   */
+  function volar(elevator: number, seconds: number, throttle = 1) {
+    const model = new CoefficientFlightModel({
+      aircraft: OGA_172,
+      ground: () => 0,
+      assist: TIERS[2]!.assists,
+    });
+    model.reset({ position: new Vector3(0, 500, 0), heading: 0, airspeed: 40 });
+    const input = { ...neutralControls(), throttle, elevator };
+    let avisos = 0;
+    let antes = false;
+    for (let i = 0; i < seconds * 120; i++) {
+      model.step(1 / 120, input);
+      if (model.state.stalled && !antes) avisos++;
+      antes = model.state.stalled;
+    }
+    return { avisos, model };
+  }
+
+  it('no salta en un ascenso normal', () => {
+    // Motor de ascenso y un tirón moderado, que es lo que hace cualquiera
+    // después de despegar. Tirar a fondo veinte segundos seguidos sí acaba en
+    // pérdida, y debe: eso no es un ascenso, es forzar el ala.
+    const { avisos } = volar(0.3, 12);
+    expect(avisos).toBe(0);
+  });
+
+  it('sí salta si de verdad se tira a tope, y una sola vez', () => {
+    const { avisos, model } = volar(1, 20, 0.2);
+    expect(model.state.stalled || avisos > 0).toBe(true);
+    // Una entrada, no un parpadeo: antes daba decenas.
+    expect(avisos).toBeLessThan(4);
+  });
+});

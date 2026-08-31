@@ -81,6 +81,12 @@ const TRIM_SETTLE = 1.1;
 
 /** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
 const STATIC_GRIP = 1.2;
+
+/** Cuánto tiene que aguantar el ángulo pasado para que sea pérdida, s. */
+const STALL_DELAY = 0.35;
+
+/** Cuánto hay que bajar del umbral para salir de ella, rad (~3,5°). */
+const STALL_RECOVERY = 0.06;
 /**
  * Instantes por delante en los que se busca terreno, en segundos.
  *
@@ -113,6 +119,9 @@ export class CoefficientFlightModel implements FlightModel {
 
   private readonly aircraft: AircraftConfig;
   private readonly ground: GroundSampler;
+
+  /** Segundos que lleva el ala pasada de ángulo. Ver la nota de la pérdida. */
+  private stallFor = 0;
   private layers: AssistLayers;
   /**
    * Ritmo de ascenso que sostiene el compensador automático, en m/s, o `null`
@@ -189,6 +198,7 @@ export class CoefficientFlightModel implements FlightModel {
     s.yawRate = 0;
     s.crashed = false;
     s.stalled = false;
+    this.stallFor = 0;
     s.loadFactor = 1;
     this.trimClimb = null;
     this.trimSettle = 0;
@@ -253,7 +263,20 @@ export class CoefficientFlightModel implements FlightModel {
       ac.flapsDrag * assisted.flaps;
     const cy = a.cyBeta * s.beta;
 
-    s.stalled = Math.abs(s.alpha) > stallAngle && speed > MIN_AIRSPEED;
+    // ── Pérdida, con histéresis y con paciencia ──────────────────────────
+    //
+    // Antes se marcaba pérdida en el instante en que el ángulo rozaba el
+    // umbral. Dos consecuencias, las dos malas: la alarma parpadeaba al
+    // entrar y salir, y saltaba **subiendo normalmente después de despegar**,
+    // que es cuando el ala va más cargada y menos falta hace asustar a nadie.
+    //
+    // Un ala no entra en pérdida por tocar un ángulo una décima de segundo.
+    // Así que entra si se mantiene, y no sale hasta bajar bien por debajo —
+    // que además es lo que pasa de verdad: recuperar cuesta más que entrar.
+    const pasado = Math.abs(s.alpha) > stallAngle && speed > MIN_AIRSPEED;
+    this.stallFor = pasado ? this.stallFor + dt : 0;
+    if (!s.stalled && this.stallFor > STALL_DELAY) s.stalled = true;
+    else if (s.stalled && Math.abs(s.alpha) < stallAngle - STALL_RECOVERY) s.stalled = false;
 
     const lift = qS * cl;
     const drag = qS * cd;
