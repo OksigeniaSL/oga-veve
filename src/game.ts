@@ -24,6 +24,7 @@ import { Terrain } from './world/terrain';
 import { createSky, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
 import { createRunwayGuide } from './world/runway-guide';
+import { createVegetation } from './world/vegetation';
 import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
@@ -97,6 +98,8 @@ export class Game {
     this.sky = createSky(this.scenario);
     this.scene.add(this.sky.group);
     this.scene.fog = this.sky.fog;
+
+    this.scene.add(createVegetation(this.scenario, (x, z) => this.terrain.sampleHeight(x, z)));
 
     this.scene.add(
       createRunwayGuide(this.scenario, this.terrain.runwayElevation, (x, z) =>

@@ -24,6 +24,25 @@ import {
 import { ValueNoise2D } from './noise';
 import type { Scenario } from './scenarios';
 
+/**
+ * Dirección desde la que viene la luz, derivada del sol del escenario.
+ *
+ * Se usa para teñir cada vértice según hacia dónde mira su ladera. Es la
+ * mejor relación entre volumen y coste que hay: no hay sombras en el juego
+ * —cuestan fotogramas en una tablet— y sin ellas un relieve se lee plano por
+ * mucho que tenga bandas de color. Esto se calcula una vez, al construir la
+ * malla, y luego es gratis.
+ */
+function sunVector(scenario: Scenario): { x: number; y: number; z: number } {
+  const azimuth = (scenario.sun.azimuth * Math.PI) / 180;
+  const elevation = (scenario.sun.elevation * Math.PI) / 180;
+  return {
+    x: Math.cos(elevation) * Math.sin(azimuth),
+    y: Math.sin(elevation),
+    z: Math.cos(elevation) * Math.cos(azimuth),
+  };
+}
+
 export class Terrain {
   readonly group = new Group();
   /** Cota del terreno en cada nudo de la malla, en metros. */
@@ -107,6 +126,7 @@ export class Terrain {
     // invisible. Es lo que hace que el terreno parezca pintado y no calculado.
     const patches = new ValueNoise2D(this.scenario.seed ^ 0x5eed);
     const patchScale = 7.5 / this.scenario.size;
+    const sun = sunVector(this.scenario);
 
     for (let row = 0; row < resolution; row++) {
       for (let col = 0; col < resolution; col++) {
@@ -121,7 +141,14 @@ export class Terrain {
           positions[index * 3 + 2]! * patchScale,
           3,
         );
-        colourFor(height, this.slopeAt(row, col), this.scenario, variation, tint);
+        colourFor(
+          height,
+          this.slopeAt(row, col),
+          this.scenario,
+          variation,
+          this.sunlightAt(row, col, sun),
+          tint,
+        );
         colours[index * 3] = tint.r;
         colours[index * 3 + 1] = tint.g;
         colours[index * 3 + 2] = tint.b;
@@ -205,6 +232,32 @@ export class Terrain {
     group.updateMatrix();
     group.matrixAutoUpdate = false;
     return group;
+  }
+
+  /**
+   * Cuánto sol recibe la ladera de un nudo, de 0 (a contraluz) a 1 (de cara).
+   *
+   * La normal sale del gradiente del campo de alturas, que ya está en
+   * memoria, así que esto es aritmética y no geometría. El resultado se
+   * mezcla en el color del vértice: laderas al sol más claras y cálidas, en
+   * sombra más oscuras y frías. Es lo que hace que un valle se lea como un
+   * valle sin una sola sombra proyectada.
+   */
+  private sunlightAt(row: number, col: number, sun: { x: number; y: number; z: number }): number {
+    const max = this.resolution - 1;
+    const left = this.heights[row * this.resolution + clampInt(col - 1, 0, max)] ?? 0;
+    const right = this.heights[row * this.resolution + clampInt(col + 1, 0, max)] ?? 0;
+    const up = this.heights[clampInt(row - 1, 0, max) * this.resolution + col] ?? 0;
+    const down = this.heights[clampInt(row + 1, 0, max) * this.resolution + col] ?? 0;
+
+    // Normal sin normalizar: (-dh/dx, 1, -dh/dz) con el paso de malla.
+    const nx = -(right - left) / (2 * this.step);
+    const nz = -(down - up) / (2 * this.step);
+    const length = Math.sqrt(nx * nx + 1 + nz * nz);
+
+    const dot = (nx * sun.x + sun.y + nz * sun.z) / length;
+    // Medio Lambert: nunca llega a negro, que a contraluz quedaría muerto.
+    return clamp01(0.5 + 0.5 * dot);
   }
 
   /** Pendiente aproximada, 0 llano, 1 muy inclinado. */
@@ -358,6 +411,7 @@ function colourFor(
   slope: number,
   scenario: Scenario,
   variation: number,
+  sunlight: number,
   out: Color,
 ): void {
   const bands = scenario.bands;
@@ -388,14 +442,30 @@ function colourFor(
   out.multiplyScalar(shade);
   if (variation < 0.42) out.lerp(DAMP, (0.42 - variation) * 0.5);
 
+  // Y donde la mancha es alta, monte: verde de dosel, más oscuro y más
+  // saturado. Desde tres mil metros un bosque no se ve como árboles sueltos,
+  // se ve como una mancha de color distinta, y eso es lo que pinta esta
+  // línea. Los árboles de verdad solo hacen falta cerca.
+  if (variation > 0.58) out.lerp(CANOPY, (variation - 0.58) * 1.5);
+
+  // Y la orientación al sol, que es lo que da el volumen. La ladera de
+  // enfrente se calienta hacia el ocre; la de espaldas se enfría hacia el
+  // azul de la sombra, que es lo que hace el cielo en un valle de verdad.
+  out.multiplyScalar(0.72 + sunlight * 0.5);
+  if (sunlight > 0.62) out.lerp(WARM, (sunlight - 0.62) * 0.5);
+  else out.lerp(COOL, (0.62 - sunlight) * 0.55);
+
   // Bajo el agua se apaga: no se ve el fondo pero tampoco se ve un prado
   // verde debajo de un río, que es lo que pasaría sin esto.
   if (height < scenario.waterLevel) out.lerp(DEEP, 0.6);
 }
 
+const WARM = new Color(0xd9c48a);
+const COOL = new Color(0x4a6480);
 const ROCK = new Color(0x9b9186);
 const DEEP = new Color(0x27485a);
 const DAMP = new Color(0x38663f);
+const CANOPY = new Color(0x27502e);
 const BLEND = new Color();
 
 function clamp01(value: number): number {

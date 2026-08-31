@@ -34,14 +34,29 @@ const VERTEX_SHADER = /* glsl */ `
 const FRAGMENT_SHADER = /* glsl */ `
   uniform vec3 horizonColour;
   uniform vec3 zenithColour;
+  uniform vec3 sunColour;
+  uniform vec3 sunDirection;
   uniform float offset;
   varying vec3 vWorldPosition;
+
   void main() {
+    vec3 dir = normalize(vWorldPosition + vec3(0.0, offset, 0.0));
+
     // La potencia comprime el degradado hacia el horizonte, que es donde el
     // ojo espera ver la transición. Un lerp lineal se ve plano.
-    float h = normalize(vWorldPosition + vec3(0.0, offset, 0.0)).y;
-    float t = pow(max(h, 0.0), 0.62);
-    gl_FragColor = vec4(mix(horizonColour, zenithColour, t), 1.0);
+    float t = pow(max(dir.y, 0.0), 0.62);
+    vec3 sky = mix(horizonColour, zenithColour, t);
+
+    // Sol y halo. Son dos potencias del mismo coseno: una muy cerrada para el
+    // disco y otra muy abierta para el resplandor que lo rodea. Diez líneas
+    // que cambian por completo la sensación de que hay una hora del día.
+    float toSun = max(dot(dir, normalize(sunDirection)), 0.0);
+    float halo = pow(toSun, 12.0) * 0.55;
+    float disc = smoothstep(0.9986, 0.9994, toSun);
+    sky += sunColour * halo;
+    sky = mix(sky, sunColour, disc);
+
+    gl_FragColor = vec4(sky, 1.0);
   }
 `;
 
@@ -61,6 +76,8 @@ export function createSky(scenario: Scenario): SkyRig {
     uniforms: {
       horizonColour: { value: new Color(scenario.sky.horizon) },
       zenithColour: { value: new Color(scenario.sky.zenith) },
+      sunColour: { value: new Color(0xfff4e2) },
+      sunDirection: { value: new Vector3(0, 1, 0) },
       offset: { value: 0.12 },
     },
     vertexShader: VERTEX_SHADER,
@@ -70,14 +87,6 @@ export function createSky(scenario: Scenario): SkyRig {
     fog: false,
   });
 
-  const dome = new Mesh(geometry, material);
-  // El cielo se escala en el bucle para seguir a la cámara: así nunca se
-  // sale de él por mucho que se suba.
-  dome.scale.setScalar(scenario.size);
-  dome.renderOrder = -1;
-  dome.name = 'cielo';
-  group.add(dome);
-
   const azimuth = (scenario.sun.azimuth * Math.PI) / 180;
   const elevation = (scenario.sun.elevation * Math.PI) / 180;
   const sunDirection = new Vector3(
@@ -85,6 +94,15 @@ export function createSky(scenario: Scenario): SkyRig {
     Math.sin(elevation),
     Math.cos(elevation) * Math.cos(azimuth),
   ).normalize();
+  material.uniforms.sunDirection!.value = sunDirection;
+
+  const dome = new Mesh(geometry, material);
+  // El cielo se escala en el bucle para seguir a la cámara: así nunca se
+  // sale de él por mucho que se suba.
+  dome.scale.setScalar(scenario.size);
+  dome.renderOrder = -1;
+  dome.name = 'cielo';
+  group.add(dome);
 
   const sun = new DirectionalLight(0xfff1da, 2.9);
   sun.position.copy(sunDirection).multiplyScalar(scenario.size * 0.4);
