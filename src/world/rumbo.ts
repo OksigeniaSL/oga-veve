@@ -50,3 +50,24 @@ export function enEjesDePista(
   const dz = z - centroZ;
   return { along: dx * fx + dz * fz, across: dx * tx + dz * tz };
 }
+
+/**
+ * Un punto del eje de una pista, a tantos metros por detrás de su centro.
+ *
+ * Con `0` sale el centro; con media longitud, la cabecera de salida. Existe
+ * porque esta cuenta estaba escrita tres veces en `game.ts` —el arranque del
+ * avión, la distancia a la pista y la aguja que la señala— y **las tres
+ * estaban mal del mismo modo**: `z − cos h` donde toca `z + cos h`.
+ *
+ * Con las pistas sintéticas a 90° no se notaba, porque ahí el coseno es cero y
+ * las dos versiones coinciden. En Tenerife Norte, a 110,7°, la aguja marcaba
+ * 1,1 km de pista estando el avión encima de una de 3,2: señalaba a un punto
+ * de la hierba a más de un kilómetro del asfalto.
+ */
+export function puntoDePista(
+  runway: { readonly x: number; readonly z: number; readonly heading: number },
+  atras: number,
+): readonly [number, number] {
+  const [fx, fz] = delante(runway.heading);
+  return [runway.x - fx * atras, runway.z - fz * atras];
+}

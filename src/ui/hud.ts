@@ -119,6 +119,8 @@ export class Hud {
   private speed: HTMLElement | null = null;
   private altitude: HTMLElement | null = null;
   private heading: HTMLElement | null = null;
+  /** Grados que hay que sumar al rumbo verdadero para obtener el magnético. */
+  private magneticVariation = 0;
   private vspeed: HTMLElement | null = null;
   private throttleFill!: HTMLElement;
   private brakes!: HTMLElement;
@@ -398,6 +400,13 @@ export class Hud {
     }
   }
 
+  /**
+   * La declinación del escenario. Ver por qué en la actualización de HDG.
+   */
+  setMagneticVariation(degrees: number): void {
+    this.magneticVariation = degrees;
+  }
+
   setUnits(name: UnitSystemName): void {
     this.units = UNIT_SYSTEMS[name];
     this.render();
@@ -451,7 +460,14 @@ export class Hud {
           .toFixed(this.units.vspeedDecimals);
       }
       if (this.heading) {
-        const degrees = Math.round((state.heading * 180) / Math.PI) % 360;
+        // **Magnético, no verdadero.** La brújula de un avión apunta al norte
+        // magnético, y el número pintado en la cabecera de una pista es ese
+        // rumbo dividido por diez. Enseñando el verdadero, el HUD decía 111 en
+        // una pista donde pone 12, y ahí se pierde la lección mejor que tiene
+        // este juego: alinearse, mirar el rumbo y reconocer el número del
+        // suelo sin que nadie lo explique.
+        const verdadero = (state.heading * 180) / Math.PI;
+        const degrees = Math.round(verdadero + this.magneticVariation + 720) % 360;
         this.heading.textContent = degrees.toString().padStart(3, '0');
       }
     }

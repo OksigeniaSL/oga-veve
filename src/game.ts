@@ -40,7 +40,7 @@ import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
-import { delante, enEjesDePista } from './world/rumbo';
+import { delante, enEjesDePista, puntoDePista } from './world/rumbo';
 import { LandingWatcher } from './flight/aterrizaje';
 import { arranqueEnPista } from './world/aerodrome';
 import { KeyScreen } from './ui/teclas';
@@ -184,6 +184,7 @@ export class Game {
     this.hud = new Hud(options.hudRoot);
     this.hud.setInstruments(this.tier.instruments);
     this.hud.setUnits(this.tier.units);
+    this.hud.setMagneticVariation(this.scenario.magneticVariation);
     this.creditsRoot = options.creditsRoot;
     this.credits = new CreditsScreen(this.creditsRoot, this.flight.implementationName);
 
@@ -295,22 +296,41 @@ export class Game {
    * supuesta: una pista con pendiente no está a la misma altura en los dos
    * extremos, que es precisamente la gracia.
    */
-  private startPosition(heading: number): Vector3 {
+  private startPosition(): Vector3 {
     const { runway, aerodrome } = this.scenario;
-    let x = runway.x - Math.sin(heading) * runway.length * 0.42;
-    let z = runway.z - Math.cos(heading) * runway.length * 0.42;
-
+    // El arranque de un aeródromo real sale de su umbral medido, sesenta
+    // metros pista adentro. Lo de abajo es para las pistas inventadas.
     const pista = aerodrome?.runways[0];
-    if (pista) {
-      const p = arranqueEnPista(pista, runway.heading);
-      if (p) {
-        x = p[0];
-        z = p[1];
-      }
-    }
-
+    const p = pista ? arranqueEnPista(pista, runway.heading) : null;
+    const [x, z] = p ?? this.enLaPista(runway.length * 0.42);
     return new Vector3(x, this.terrain.sampleHeight(x, z) + this.aircraft.gearHeight, z);
   }
+
+  /**
+   * Un punto del eje de pista a tantos metros por detrás del centro, hacia la
+   * cabecera de salida. Con `0` es el centro; con media longitud, la cabecera.
+   *
+   * **Está aquí y no repartido porque la cuenta se hacía mal en tres sitios**,
+   * y siempre igual: `z − cos h` en lugar de `z + cos h`. El norte es la Z
+   * negativa, así que hacia delante se va con `delante()` y hacia la cabecera
+   * se resta. Con las pistas sintéticas, que van a rumbos redondos, el error
+   * no se veía; en Tenerife Norte la aguja de la pista marcaba 1,1 km estando
+   * el avión encima de una pista de 3,2, porque señalaba a un punto de la
+   * hierba a kilómetro y pico.
+   *
+   * Cuando el aeródromo es real manda su fichero: el umbral medido, no una
+   * cuenta desde el centro.
+   */
+  private enLaPista(atras: number): readonly [number, number] {
+    const { runway, aerodrome } = this.scenario;
+    const pista = aerodrome?.runways[0];
+    if (pista) {
+      const p = arranqueEnPista(pista, runway.heading, runway.length * 0.5 - atras);
+      if (p) return p;
+    }
+    return puntoDePista(runway, atras);
+  }
+
 
   /**
    * Cuántos metros de pista quedan por delante, o infinito si no se está en
@@ -360,7 +380,7 @@ export class Game {
   resetFlight(): void {
     const { runway } = this.scenario;
     const heading = MathUtils.degToRad(runway.heading);
-    const start = this.startPosition(heading);
+    const start = this.startPosition();
 
     this.flight.reset({ position: start, heading, airspeed: 0 });
     if (this.missions.active) {
@@ -451,19 +471,12 @@ export class Game {
    */
   /** Metros hasta la cabecera de pista, mire donde mire la aguja. */
   private distanceToRunway(): number {
-    const { runway } = this.scenario;
-    const heading = MathUtils.degToRad(runway.heading);
-    return Math.hypot(
-      runway.x - Math.sin(heading) * runway.length * 0.5 - this.flight.state.position.x,
-      runway.z - Math.cos(heading) * runway.length * 0.5 - this.flight.state.position.z,
-    );
+    const [tx, tz] = this.enLaPista(this.scenario.runway.length * 0.5);
+    return Math.hypot(tx - this.flight.state.position.x, tz - this.flight.state.position.z);
   }
 
   private updateHomeIndicator(): void {
-    const { runway } = this.scenario;
-    const heading = MathUtils.degToRad(runway.heading);
-    const thresholdX = runway.x - Math.sin(heading) * runway.length * 0.5;
-    const thresholdZ = runway.z - Math.cos(heading) * runway.length * 0.5;
+    const [thresholdX, thresholdZ] = this.enLaPista(this.scenario.runway.length * 0.5);
 
     // Con misión en curso, la aguja señala el objetivo; sin ella, la pista.
     // Es la misma aguja: no hay dos cosas que aprender.

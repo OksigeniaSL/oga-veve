@@ -23,6 +23,7 @@
  */
 
 import {
+  BufferAttribute,
   BufferGeometry,
   Color,
   CylinderGeometry,
@@ -476,7 +477,7 @@ function rumboALaPista(aero: Aerodrome, p: Punto): readonly [number, number] | n
 }
 
 /** Distancia de un punto a una polilínea. */
-function aLaPolilinea(p: Punto, eje: readonly Punto[]): number {
+export function aLaPolilinea(p: Punto, eje: readonly Punto[]): number {
   let mejor = Infinity;
   for (let i = 0; i < eje.length - 1; i++) {
     const [ax, ay] = eje[i]!;
@@ -736,37 +737,53 @@ function mangas(aero: Aerodrome, altura: (p: Punto) => number): Group {
   grupo.name = 'mangas';
   if (!aero.windsocks.length) return grupo;
 
-  // Dos montones por color, y dos mallas al final. Cada manga son un poste y
-  // cinco tramos de cono; sueltas, dos mangas ya eran doce llamadas de dibujo
-  // y se comían el presupuesto del aeródromo entero.
-  const claro: BufferGeometry[] = [];
-  const naranja: BufferGeometry[] = [];
+  // Cada manga son un poste y cinco tramos de cono; sueltas, dos mangas ya eran
+  // doce llamadas de dibujo y se comían el presupuesto del aeródromo entero.
+  //
+  // Y no van en dos mallas, una por color, sino **en una sola con el color en
+  // los vértices**. Es una llamada menos, que suena a poco, pero es que
+  // Tenerife Norte iba por once de doce y todavía faltan las luces de
+  // aproximación y el PAPI.
+  const piezas: BufferGeometry[] = [];
+  const CLARO: readonly [number, number, number] = [0.949, 0.945, 0.925];
+  const NARANJA: readonly [number, number, number] = [0.851, 0.31, 0.184];
+
+  const tiñe = (geo: BufferGeometry, [r, g, b]: readonly [number, number, number]) => {
+    const n = geo.getAttribute('position').count;
+    const col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      col[i * 3] = r;
+      col[i * 3 + 1] = g;
+      col[i * 3 + 2] = b;
+    }
+    geo.setAttribute('color', new BufferAttribute(col, 3));
+    piezas.push(geo);
+  };
 
   for (const [x, y] of aero.windsocks) {
     const base = altura([x, y]);
 
     const poste = new CylinderGeometry(0.12, 0.16, 6, 6);
     poste.translate(x, base + 3, -y);
-    claro.push(poste);
+    tiñe(poste, CLARO);
 
     // El cono, a rayas. Cinco tramos, como las de verdad.
     for (let k = 0; k < 5; k++) {
       const tramo = new CylinderGeometry(0.55 - k * 0.07, 0.62 - k * 0.07, 0.7, 8, 1, true);
       tramo.rotateZ(Math.PI / 2);
       tramo.translate(x + 0.6 + k * 0.72, base + 6, -y);
-      (k % 2 === 0 ? naranja : claro).push(tramo);
+      tiñe(tramo, k % 2 === 0 ? NARANJA : CLARO);
     }
   }
 
-  for (const [piezas, color] of [
-    [claro, 0xf2f1ec],
-    [naranja, 0xd94f2f],
-  ] as const) {
-    if (!piezas.length) continue;
-    const fusionada = mergeGeometries(piezas, false);
-    if (fusionada) {
-      grupo.add(new Mesh(fusionada, new MeshLambertMaterial({ color, side: DoubleSide })));
-    }
+  const fusionada = mergeGeometries(piezas, false);
+  if (fusionada) {
+    const malla = new Mesh(
+      fusionada,
+      new MeshLambertMaterial({ vertexColors: true, side: DoubleSide }),
+    );
+    malla.name = 'mangas';
+    grupo.add(malla);
   }
 
   return grupo;
