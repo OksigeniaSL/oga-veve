@@ -25,6 +25,7 @@ import {
   PlaneGeometry,
 } from 'three';
 import { ValueNoise2D } from './noise';
+import { createRunwayMarkings } from './runway-markings';
 import type { Scenario } from './scenarios';
 
 /**
@@ -265,6 +266,8 @@ export class Terrain {
     }
     posts.instanceMatrix.needsUpdate = true;
     group.add(posts);
+
+    group.add(createRunwayMarkings(this.scenario));
 
     group.position.set(runway.x, this.runwayElevation + 0.15, runway.z);
     group.rotation.y = -(runway.heading * Math.PI) / 180;
