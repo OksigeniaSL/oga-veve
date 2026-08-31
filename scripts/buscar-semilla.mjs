@@ -18,6 +18,41 @@ const base = SCENARIOS.find((s) => s.id === id);
 if (!base) throw new Error(`no hay escenario ${id}`);
 const cota = base.aerodrome?.elevationM ?? 0;
 
+/**
+ * Lo más alto que hay **en la prolongación del eje de pista**, hasta cuatro
+ * kilómetros de cada cabecera, medido respecto a la propia pista.
+ *
+ * Es lo que se ve al despegar y lo que hay que sortear al entrar. Un
+ * aeropuerto de verdad tiene por dónde salir; si aquí sale +658 m a dos
+ * kilómetros y medio —que es lo que salía en el primer Tenerife—, eso no es
+ * un aeropuerto, es un circo de montaña.
+ */
+function muroDelante(heights, esc) {
+  const { x, z, heading, length } = esc.runway;
+  const rad = (heading * Math.PI) / 180;
+  const ux = Math.sin(rad);
+  const uz = -Math.cos(rad);
+  const cota = esc.aerodrome?.elevationM ?? 0;
+  let peor = 0;
+  for (const lado of [1, -1]) {
+    for (let d = length / 2 + 300; d <= length / 2 + 4000; d += 200) {
+      peor = Math.max(peor, sonda(heights, esc, x + ux * d * lado, z + uz * d * lado) - cota);
+    }
+  }
+  return peor;
+}
+
+/** Cota de la malla en un punto del mundo. */
+function sonda(heights, esc, x, z) {
+  const res = esc.segments + 1;
+  const paso = esc.size / esc.segments;
+  const mitad = esc.size / 2;
+  const col = Math.round((x + mitad) / paso);
+  const row = Math.round((z + mitad) / paso);
+  if (col < 0 || row < 0 || col >= res || row >= res) return 0;
+  return heights[row * res + col];
+}
+
 /** Cota media y desviación en un anillo alrededor del origen. */
 function anillo(heights, esc, radio) {
   const res = esc.segments + 1;
@@ -39,20 +74,26 @@ function anillo(heights, esc, radio) {
 // Se barren también los parámetros del relieve, porque la semilla sola no
 // puede con todo: para que quepan el mar y una meseta a seiscientos metros en
 // el mismo mapa hace falta que el relieve tenga recorrido de sobra.
-const VARIANTES = [{ reliefHeight: base.reliefHeight, reliefScale: base.reliefScale }];
+const VARIANTES = [];
+for (const reliefHeight of [1100, 1400, 1700])
+  for (const reliefScale of [3.4, 4.4]) VARIANTES.push({ reliefHeight, reliefScale });
 
 const candidatas = [];
 for (const v of VARIANTES)
-for (let i = 0; i < 260; i++) {
+for (let i = 0; i < 90; i++) {
   const seed = 19770000 + i * 7;
   const esc = { ...base, ...v, seed };
   const h = buildHeightfield(esc);
   const cerca = anillo(h, esc, 2600);
   const lejos = anillo(h, esc, 7000);
-  // Se busca: terreno de alrededor a la cota del aeródromo, y **variedad** a
-  // lo lejos —si todo está igual de alto no hay isla, hay meseta infinita—.
-  const error = Math.abs(cerca.media - cota);
-  candidatas.push({ seed, ...v, error, cerca, lejos, mar: lejos.min < esc.waterLevel });
+  const muro = muroDelante(h, esc);
+  // Dos cosas a la vez, y la segunda pesa más: que el terreno de alrededor
+  // esté a la cota del aeródromo, y que **no haya un muro delante de las
+  // cabeceras**. Un aeropuerto de verdad tiene por dónde entrar y por dónde
+  // salir; si en la prolongación del eje hay seiscientos metros de montaña a
+  // dos kilómetros y medio, eso no es un aeropuerto, es un circo.
+  const error = Math.abs(cerca.media - cota) + Math.max(0, muro - 200) * 1.5;
+  candidatas.push({ seed, ...v, error, muro: Math.round(muro), cerca, lejos, mar: lejos.min < esc.waterLevel });
 }
 
 candidatas.sort((a, b) => a.error - b.error);

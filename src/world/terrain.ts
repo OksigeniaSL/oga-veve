@@ -27,6 +27,7 @@ import {
 import { ValueNoise2D } from './noise';
 import { createRunwayMarkings } from './runway-markings';
 import { aLaPolilinea, createAerodrome, type Aerodrome, type Punto } from './aerodrome';
+import { delante } from './rumbo';
 import type { Scenario } from './scenarios';
 
 /**
@@ -457,9 +458,17 @@ function flattenRunway(heights: Float32Array, scenario: Scenario, elevation: num
   const step = scenario.size / scenario.segments;
   const half = scenario.size / 2;
   const { runway } = scenario;
-  const heading = (runway.heading * Math.PI) / 180;
-  const cos = Math.cos(heading);
-  const sin = Math.sin(heading);
+  // **Los mismos ejes con los que se dibuja la pista.** Aquí ponía
+  // `(sen h, +cos h)` y la pista se dibuja sobre `(sen h, −cos h)`: dos rectas
+  // que se cruzan, así que se aplanaba una franja y se pintaba la pista sobre
+  // otra. En el valle no se veía porque va a 90° y ahí las dos coinciden; en
+  // el Chaco, a 30°, la pista quedaba sobre terreno sin tocar con 43 m de
+  // desnivel a lo largo — enterrada por un extremo y **en el aire por el
+  // otro**, que es justo como se veía.
+  //
+  // Es el fallo que dio origen a `rumbo.ts`, y este era el ejemplar que se
+  // quedó sin corregir.
+  const [sin, cos] = delante(runway.heading);
 
   // El núcleo plano se ensancha hasta cubrir al menos un par de celdas de
   // la malla. Una pista de 30 m sobre una malla de 36 m por celda no llegaría

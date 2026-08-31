@@ -313,15 +313,20 @@ export const PETTIROSSI: Scenario = {
 export const TENERIFE_NORTE: Scenario = {
   id: 'tenerife-norte',
   nameKey: 'scenario.tenerife.name',
-  // Elegida midiendo con `scripts/buscar-semilla.mjs`: deja el terreno de
-  // alrededor a 641 m, nueve de los 632,8 del aeropuerto, y es de las más
-  // tranquilas del lote. La meseta parece meseta y no un pedestal.
-  seed: 19770966,
+  // Elegida midiendo con `scripts/buscar-semilla.mjs`, que puntúa dos cosas:
+  // que el terreno de alrededor esté a la cota del aeropuerto y que **no haya
+  // un muro en la prolongación del eje de pista**. La primera versión tenía
+  // +658 m de montaña a 2,7 km de la cabecera, y eso no es Los Rodeos: es un
+  // circo. Se despega y se entra por donde se entra de verdad.
+  seed: 19770329,
   size: 18000,
   segments: 416,
   // Una isla volcánica no tiene lomas: tiene aristas. De ahí que la mezcla de
   // crestas sea alta y la escala más apretada que en el llano paraguayo.
-  reliefHeight: 2200,
+  // Mil setecientos, no dos mil doscientos. El macizo de Anaga anda por los
+  // mil metros y el aeropuerto está a 632: con el relieve más alto salían
+  // paredes de seiscientos metros a los dos lados de la pista.
+  reliefHeight: 1700,
   // Escala amplia a propósito. Con el ruido más apretado el relieve salía
   // picado como corteza de árbol: mucho detalle y ninguna forma. Una isla
   // volcánica tiene barrancos largos que bajan del centro al mar, no grumos.
@@ -353,8 +358,8 @@ export const TENERIFE_NORTE: Scenario = {
     { from: 200, colour: 0x7a7c5c },
     { from: 500, colour: 0x3f5d3a },
     { from: 950, colour: 0x4f6b41 },
-    { from: 1500, colour: 0x6e5f52 },
-    { from: 2050, colour: 0x9c8e7f },
+    { from: 1200, colour: 0x6e5f52 },
+    { from: 1600, colour: 0x9c8e7f },
   ],
   water: 0x3f6a80,
   fill: 0x53614a,

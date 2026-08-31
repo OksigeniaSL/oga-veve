@@ -79,6 +79,22 @@ const r = await page.evaluate(async (id) => {
       }
     }
   }
+  const { x, z, heading, length } = esc.runway;
+  const rad = (heading * Math.PI) / 180;
+  const ux = Math.sin(rad);
+  const uz = -Math.cos(rad);
+  let muro = 0;
+  let dondeMuro = 0;
+  for (const lado of [1, -1]) {
+    for (let d = length / 2 + 300; d <= length / 2 + 4000; d += 200) {
+      const h = terreno.sampleHeight(x + ux * d * lado, z + uz * d * lado);
+      if (h - terreno.runwayElevation > muro) {
+        muro = h - terreno.runwayElevation;
+        dondeMuro = d;
+      }
+    }
+  }
+
   const anillo = [];
   for (let a = 0; a < 360; a += 10) {
     const t = (a * Math.PI) / 180;
@@ -91,6 +107,8 @@ const r = await page.evaluate(async (id) => {
     cotaFichero: esc.aerodrome?.elevationM ?? null,
     costa: Number.isFinite(costa) ? Math.round(costa) : null,
     mojado: Math.round((mojadas / celdas) * 100),
+    muro: Math.round(muro),
+    dondeMuro: Math.round(dondeMuro),
     radiosConMar: Math.round((bajoAgua / (total / (esc.size / 2 / 100))) * 0),
     anilloMin: Math.round(Math.min(...anillo)),
     anilloMax: Math.round(Math.max(...anillo)),
@@ -102,6 +120,10 @@ console.log(`${id}`);
 console.log(`  cota de la pista medida: ${r.cotaPista.toFixed(1)} m` +
   (r.cotaFichero !== null ? ` · el fichero dice ${r.cotaFichero} m` : ''));
 console.log(`  terreno a 2,6 km: de ${r.anilloMin} a ${r.anilloMax} m, media ${r.anilloMedia} m`);
+console.log(
+  `  lo más alto en la prolongación del eje (4 km): ${r.muro > 0 ? '+' : ''}${r.muro} m` +
+    ` a ${r.dondeMuro} m de la cabecera`,
+);
 console.log(`  bajo el agua: ${r.mojado} % del escenario`);
 console.log(`  costa más cercana: ${r.costa === null ? 'no hay mar en el escenario' : r.costa + ' m'}`);
 writeFileSync(salida, Buffer.from(r.png.split(',')[1], 'base64'));
