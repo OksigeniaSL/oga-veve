@@ -191,6 +191,7 @@ export class Game {
     });
 
     this.audio.prepare();
+    this.audio.setEngine(this.aircraft.sound);
     this.hud.setSoundLevel(this.audio.level.glyph, t(`sound.${this.audio.level.id}` as never));
     this.hud.onSoundClick(() => this.toggleSound());
 
@@ -524,6 +525,7 @@ export class Game {
     const carried = { position: position.clone(), heading, airspeed };
 
     this.aircraft = next;
+    this.audio.setEngine(next.sound);
 
     this.scene.remove(this.aircraftMesh.group);
     this.aircraftMesh = createAircraftMesh(next);

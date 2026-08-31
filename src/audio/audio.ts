@@ -23,6 +23,7 @@
  */
 
 import type { ControlInputs, FlightState } from '../flight/model';
+import type { AircraftSound } from '../flight/aircraft';
 
 /**
  * Régimen de ralentí y máximo, en revoluciones por minuto.
@@ -35,8 +36,14 @@ import type { ControlInputs, FlightState } from '../flight/model';
  * unos cascos y era inaudible en cualquier otro sitio. El filtro va ahora
  * entre 900 y 4100 Hz, que es donde el oído lo encuentra.
  */
-const IDLE_RPM = 700;
-const MAX_RPM = 2700;
+const DEFAULT_ENGINE: AircraftSound = {
+  engine: 'piston',
+  cylinders: 4,
+  idleRpm: 700,
+  maxRpm: 2700,
+  growlHz: 300,
+  growlRise: 320,
+};
 /** Velocidad indicada, en m/s, a la que el viento llega a su tope. */
 const WIND_REFERENCE = 75;
 /** Frecuencia del bataneo de pérdida, en hercios. */
@@ -94,6 +101,8 @@ export class Audio {
    * tablets a medio volumen son un aula; a volumen normal, un aviario.
    */
   private levelIndex = 0;
+  /** Ficha sonora de la aeronave que se está volando. */
+  private engineSpec: AircraftSound = DEFAULT_ENGINE;
 
   // Motor
   private engineGain: GainNode | null = null;
@@ -149,6 +158,11 @@ export class Audio {
     this.build();
   }
 
+  /** Cambia el motor al de otra aeronave. */
+  setEngine(spec: AircraftSound): void {
+    this.engineSpec = spec;
+  }
+
   /** Despierta el contexto. Se llama desde el primer gesto del jugador. */
   unlock(): void {
     if (!this.context) this.prepare();
@@ -189,9 +203,12 @@ export class Audio {
     // ── Motor ───────────────────────────────────────────────────────────
     // El régimen sigue al gas pero con inercia: un motor de pistón no sube
     // de vueltas instantáneamente, y esa demora es la mitad de su carácter.
-    const rpm = IDLE_RPM + controls.throttle * (MAX_RPM - IDLE_RPM);
-    // Frecuencia de encendido de un cuatro cilindros de cuatro tiempos.
-    const firing = rpm / 30;
+    const spec = this.engineSpec;
+    const rpm = spec.idleRpm + controls.throttle * (spec.maxRpm - spec.idleRpm);
+    // Frecuencia de encendido de un cuatro tiempos: vueltas por segundo, por
+    // cilindros, entre dos. Un radial de siete suena a otra cosa que un
+    // cuatro cilindros porque este número es otro, no por magia.
+    const firing = (rpm / 60) * (spec.cylinders / 2);
     this.engineTone?.frequency.setTargetAtTime(firing, now, 0.14);
     this.engineHarmonic?.frequency.setTargetAtTime(firing * 2.02, now, 0.14);
     // El gas cerrado tapa el motor: respuesta inmediata al oído aunque las
@@ -202,14 +219,18 @@ export class Audio {
     // en un altavoz pequeño: el fundamental está por debajo de lo que
     // reproduce, así que si el timbre no se mueve, el motor suena plano por
     // mucho que la nota suba.
-    this.growl?.frequency.setTargetAtTime(300 + controls.throttle * 320, now, 0.12);
+    this.growl?.frequency.setTargetAtTime(
+      spec.growlHz + controls.throttle * spec.growlRise,
+      now,
+      0.12,
+    );
 
     // Esfuerzo: el motor canta distinto trepando que en descenso, aunque el
     // gas no se toque. Es carga aerodinámica, y se oye.
     const load = clamp(state.verticalSpeed / 6, -1, 1);
     this.engineGain?.gain.setTargetAtTime(0.1 + controls.throttle * 0.14 + load * 0.03, now, 0.25);
     this.propGain?.gain.setTargetAtTime(0.03 + controls.throttle * 0.075, now, 0.1);
-    this.propFilter?.frequency.setTargetAtTime(150 + rpm * 0.08, now, 0.1);
+    this.propFilter?.frequency.setTargetAtTime(120 + rpm * 0.08, now, 0.1);
 
     // ── Viento ──────────────────────────────────────────────────────────
     const speed = Math.min(1, state.airspeed / WIND_REFERENCE);

@@ -92,6 +92,36 @@ export interface AircraftAppearance {
   blades: number;
 }
 
+/**
+ * Cómo suena una aeronave.
+ *
+ * Va en su ficha por el mismo motivo que la silueta: un motor de pistón y una
+ * turbina no se parecen en nada, y describir el mismo avión en tres sitios
+ * distintos —aerodinámica, forma y sonido— solo funciona si los tres viven
+ * juntos. Con esto, añadir un motor nuevo es rellenar datos, no escribir
+ * código de audio.
+ */
+export interface AircraftSound {
+  /** Qué clase de motor. Decide qué capas construye el sintetizador. */
+  engine: 'piston' | 'radial' | 'turboprop' | 'turbofan';
+  /**
+   * Cilindros. La frecuencia de encendido de un cuatro tiempos son las
+   * revoluciones por minuto entre sesenta, por cilindros, entre dos: es lo
+   * que hace que un radial de siete cilindros suene grave y golpeado donde
+   * un cuatro cilindros suena a moto.
+   */
+  cylinders: number;
+  idleRpm: number;
+  maxRpm: number;
+  /**
+   * Resonancia característica en reposo, en hercios, y cuánto sube a plena
+   * potencia. Es la banda en la que el oído sitúa el motor, y la única que de
+   * verdad reproduce el altavoz de una tablet.
+   */
+  growlHz: number;
+  growlRise: number;
+}
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */
@@ -126,6 +156,7 @@ export interface AircraftConfig {
   flapsDrag: number;
 
   appearance: AircraftAppearance;
+  sound: AircraftSound;
   aero: AeroCoefficients;
 }
 
@@ -157,6 +188,14 @@ export const OGA_172: AircraftConfig = {
     accent: 0xbe5d38,
     trim: 0x2f5243,
     blades: 2,
+  },
+  sound: {
+    engine: 'piston',
+    cylinders: 4,
+    idleRpm: 700,
+    maxRpm: 2700,
+    growlHz: 300,
+    growlRise: 320,
   },
   aero: {
     cl0: 0.28,
@@ -212,6 +251,16 @@ export const MAINUMBY: AircraftConfig = {
     accent: 0x2f5243,
     trim: 0x8a5a34,
     blades: 3,
+  },
+  sound: {
+    // Radial de fumigador: más cilindros, más lento y mucho más grave. Es el
+    // golpeteo que uno reconoce sin verlo pasar.
+    engine: 'radial',
+    cylinders: 7,
+    idleRpm: 550,
+    maxRpm: 2100,
+    growlHz: 190,
+    growlRise: 210,
   },
   aero: {
     cl0: 0.35,
