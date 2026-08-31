@@ -253,14 +253,32 @@ function slopeAt(ground: GroundSampler, x: number, z: number): number {
   return Math.hypot(dx, dz);
 }
 
-/** Nada crece encima de la pista ni en su franja de seguridad. */
+/**
+ * Nada crece encima de la pista ni en su franja de seguridad.
+ *
+ * Un aeródromo de verdad tiene una **franja de pista** que debe quedar libre
+ * de obstáculos, y se extiende bastante más allá del asfalto. Así que esto no
+ * es solo evitar un dibujo raro: es una norma, y de las que tienen motivo.
+ *
+ * **Y la cuenta estaba mal.** Los ejes de pista se calculaban con
+ * `dx·sen + dz·cos` y `dx·cos − dz·sen`, que con un rumbo de 0° o de 90°
+ * acierta por simetría de los ejes y con cualquier otro **gira el rectángulo
+ * noventa grados**. Con las pistas sintéticas —90° y 30°— no se notaba
+ * apenas; con Silvio Pettirossi, que corre a 192,45°, salían árboles en
+ * mitad del asfalto.
+ *
+ * El delante de un rumbo en este mundo es `(sen h, −cos h)`, y el través es
+ * `(cos h, sen h)`. De ahí salen las dos proyecciones.
+ */
 function nearRunway(x: number, z: number, scenario: Scenario): boolean {
   const { runway } = scenario;
   const heading = (runway.heading * Math.PI) / 180;
+  const sin = Math.sin(heading);
+  const cos = Math.cos(heading);
   const dx = x - runway.x;
   const dz = z - runway.z;
-  const along = dx * Math.sin(heading) + dz * Math.cos(heading);
-  const across = dx * Math.cos(heading) - dz * Math.sin(heading);
+  const along = dx * sin - dz * cos;
+  const across = dx * cos + dz * sin;
   // Margen justo: se despeja la pista y su franja de seguridad, pero los
   // árboles llegan cerca. Pasar a ras de ellos es lo que hace que una carrera
   // de despegue se sienta rápida — sin nada cerca, no hay paralaje.
