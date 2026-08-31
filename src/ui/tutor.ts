@@ -16,6 +16,17 @@
  * De ahí que ahora se dibuje la tecla entera, ancha o cuadrada, que es como
  * se distinguen en el teclado.
  *
+ * **Y las frases no nombran teclas.** Decían «dale motor con el más» y «bajá
+ * el motor con el menos», con la tecla escrita a mano dentro del texto. En
+ * cuanto el dibujo pasó a salir del mapa —y a enseñar la que de verdad usa
+ * quien juega— las dos cosas se contradecían: el cartel dibujaba la Z y
+ * debajo ponía «con el menos».
+ *
+ * No se arregla metiendo el nombre de la tecla en la frase. Se arregla
+ * quitándolo: **la tecla ya está dibujada encima, y las palabras solo tienen
+ * que decir qué pasa.** Menos texto, imposible de contradecir, y una cosa
+ * menos que traducir a tres idiomas.
+ *
  * En táctil las teclas no sirven de nada, así que se enseña el mando de la
  * pantalla y el gesto. La tablet es el aparato que más va a usarse.
  *
