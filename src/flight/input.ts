@@ -79,6 +79,9 @@ export class InputManager {
   /** Qué tecla hace qué. Se puede cambiar desde la pantalla de teclas. */
   readonly keymap = new Keymap();
 
+  /** La última tecla que se usó para cada mando. Ver `preferredKey`. */
+  private readonly ultima = new Map<Accion, string>();
+
   private touchBrakes = false;
 
   /** Dirección pedida por los botones de motor de la pantalla. */
@@ -109,6 +112,23 @@ export class InputManager {
    * su valor en el fotograma siguiente y el avión reaparecía en la pista con
    * el motor a tope y sin forma de bajarlo.
    */
+  /**
+   * Qué tecla enseñar cuando hay que enseñar un mando.
+   *
+   * **La última que usó esta persona**, y si todavía no ha usado ninguna, la
+   * primera de fábrica. Cada mando tiene teclas a los dos lados del teclado
+   * para que cada mano tenga la suya, y enseñar las dos a la vez sale mal:
+   * puestas una al lado de otra se leen como una pareja —«esta sube y esta
+   * baja»— cuando en realidad son dos maneras de hacer lo mismo. A los
+   * cuatro años eso no se aclara con una «o» pequeñita.
+   *
+   * Así que se enseña una, y se enseña la suya. Quien vuela con la
+   * izquierda ve la X; quien vuela con la derecha ve el más.
+   */
+  preferredKey(accion: Accion): string {
+    return this.ultima.get(accion) ?? this.keymap.keys(accion)[0] ?? '';
+  }
+
   /** Eje a partir de dos acciones: +1, 0 o -1. */
   private axis(mas: Accion, menos: Accion): number {
     return axisFromKeys(this.keys, this.keymap.keys(mas), this.keymap.keys(menos));
@@ -196,6 +216,13 @@ export class InputManager {
     this.keys.add(event.code);
     // El carácter también: ver la nota de KEYS sobre los teclados que no son
     // el americano.
+    // Se apunta con qué tecla se usó cada mando, para poder enseñar esa y no
+    // otra. Se mira el código y el carácter, que pueden ser cosas distintas.
+    for (const candidata of [event.code, event.key]) {
+      const accion = this.keymap.actionFor(candidata);
+      if (accion) this.ultima.set(accion, candidata);
+    }
+
     if (event.key.length === 1) {
       this.keys.add(event.key);
       // Se apunta qué carácter dio esta tecla física, porque al soltarla

@@ -24,7 +24,7 @@
  */
 
 import type { FlightState } from '../flight/model';
-import { nombreDeTecla, type Accion, type Keymap } from '../flight/keymap';
+import { nombreDeTecla, type Accion } from '../flight/keymap';
 import { t, type TranslationKey } from '../i18n';
 
 /** Velocidad indicada a partir de la cual conviene rotar, en m/s. */
@@ -96,12 +96,12 @@ export class Tutor {
   private root: HTMLElement | null = null;
   private cue: HTMLElement | null = null;
 
-  /** De dónde salen las teclas que se dibujan. Ver `StepView`. */
-  private keymap: Keymap | null = null;
+  /** De dónde sale la tecla que se dibuja. Ver `renderCue`. */
+  private teclaDe: ((accion: Accion) => string) | null = null;
 
-  /** Se le da el mapa al montar el juego. */
-  setKeymap(keymap: Keymap): void {
-    this.keymap = keymap;
+  /** Se le da al montar el juego. */
+  setKeySource(teclaDe: (accion: Accion) => string): void {
+    this.teclaDe = teclaDe;
   }
   private label: HTMLElement | null = null;
   private bar: HTMLElement | null = null;
@@ -153,7 +153,7 @@ export class Tutor {
     const view = STEPS[this.step];
     this.root.hidden = false;
 
-    if (this.cue) this.cue.innerHTML = renderCue(isTouch() ? view.touchCue : view.cue, this.keymap);
+    if (this.cue) this.cue.innerHTML = renderCue(isTouch() ? view.touchCue : view.cue, this.teclaDe);
     if (this.label) this.label.textContent = t(view.key);
 
     const progress = view.progress(state, throttle);
@@ -204,24 +204,17 @@ export class Tutor {
   }
 }
 
-function renderCue(cue: StepView['cue'], keymap: Keymap | null): string {
+function renderCue(cue: StepView['cue'], teclaDe: ((accion: Accion) => string) | null): string {
   if (cue.kind === 'symbol') return `<span class="tutor__glifo">${cue.glyph}</span>`;
 
   if (cue.kind === 'action') {
-    // Se enseñan **las dos teclas del mando**, la de cada lado del teclado,
-    // separadas por «o». Enseñar solo una obliga a elegir la mano por quien
-    // juega, y el motivo de que haya dos era justamente el contrario.
-    const teclas = (keymap?.keys(cue.accion) ?? [])
-      .map(nombreDeTecla)
-      // Sin modificadores y sin repetidos. Mayúsculas y Control están por
-      // costumbre de otros simuladores y no hay que enseñárselos a nadie;
-      // «=» y «+» son la misma tecla física y enseñar las dos confunde.
-      .filter((n, i, todas) => todas.indexOf(n) === i && n.length <= 2 && n !== '⇧' && n !== '=')
-      .slice(0, 2);
-    if (teclas.length === 0) return '';
-    return teclas
-      .map((n) => `<span class="tutor__tecla">${n}</span>`)
-      .join('<span class="tutor__o">o</span>');
+    // **Una sola tecla, y la que usa quien está jugando.** Se probó a
+    // enseñar las dos —la de cada mano— separadas por una «o», y salió mal:
+    // dos teclas juntas se leen como una pareja, «esta sube y esta baja»,
+    // cuando en realidad son dos maneras de hacer lo mismo. Con cuatro años
+    // eso no lo arregla una «o» pequeña.
+    const tecla = teclaDe?.(cue.accion) ?? '';
+    return tecla ? `<span class="tutor__tecla">${nombreDeTecla(tecla)}</span>` : '';
   }
 
   const wide = cue.wide ? ' tutor__tecla--ancha' : '';
