@@ -1319,3 +1319,11 @@ body {
   gap: 5px;
   justify-items: center;
 }
+
+/* La «o» entre las dos teclas del mismo mando: pequeña y sin peso, que lo
+   que se mira son las teclas. */
+.tutor__o {
+  margin: 0 8px;
+  font-size: 14px;
+  opacity: 0.55;
+}

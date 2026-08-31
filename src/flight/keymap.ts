@@ -71,12 +71,16 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
   // americana y en un teclado español el «−» ni siquiera se llamaba así.
   throttleUp: {
     label: 'tecla.throttleUp',
-    defecto: ['Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight', '+', 'KeyX'],
+    // El orden importa: quien enseña el mando —el tutor, el teclado
+    // dibujado— coge las primeras, así que delante van las dos que se
+    // quieren enseñar, y son las de manos distintas. Detrás, las que están
+    // por compatibilidad y no hacen falta anunciar.
+    defecto: ['+', 'KeyX', 'Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight'],
     held: true,
   },
   throttleDown: {
     label: 'tecla.throttleDown',
-    defecto: ['Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight', '-', 'KeyZ'],
+    defecto: ['-', 'KeyZ', 'Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight'],
     held: true,
   },
   brakes: { label: 'tecla.brakes', defecto: ['KeyB', 'Space'], held: true },

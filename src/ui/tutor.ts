@@ -24,6 +24,7 @@
  */
 
 import type { FlightState } from '../flight/model';
+import { nombreDeTecla, type Accion, type Keymap } from '../flight/keymap';
 import { t, type TranslationKey } from '../i18n';
 
 /** Velocidad indicada a partir de la cual conviene rotar, en m/s. */
@@ -37,8 +38,17 @@ const APPROACH_DISTANCE = 2400;
 const APPROACH_THROTTLE = 0.45;
 
 interface StepView {
-  /** Qué se dibuja: una tecla con su nombre, o un símbolo suelto. */
-  cue: { kind: 'key'; label: string; wide?: boolean } | { kind: 'symbol'; glyph: string };
+  /**
+   * Qué se dibuja. Si es una acción, **la tecla sale del mapa de teclas** y
+   * no de aquí: el tutor dibujaba `+` y `−` fijos, así que en cuanto alguien
+   * reasignaba una tecla el cartel enseñaba una que ya no hacía nada, y
+   * tampoco sabía de las nuevas del lado izquierdo. Un tutor que miente es
+   * peor que no tener tutor.
+   */
+  cue:
+    | { kind: 'action'; accion: Accion }
+    | { kind: 'key'; label: string; wide?: boolean }
+    | { kind: 'symbol'; glyph: string };
   /** Lo mismo, para quien juega con el dedo. */
   touchCue: { kind: 'key'; label: string; wide?: boolean } | { kind: 'symbol'; glyph: string };
   key: TranslationKey;
@@ -48,7 +58,7 @@ interface StepView {
 
 const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
   throttle: {
-    cue: { kind: 'key', label: '+' },
+    cue: { kind: 'action', accion: 'throttleUp' },
     touchCue: { kind: 'symbol', glyph: '⇡' },
     key: 'tutor.throttle',
     progress: (_state, throttle) => throttle,
@@ -60,7 +70,7 @@ const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
     progress: (state) => Math.min(1, state.airspeed / ROTATION_SPEED),
   },
   pull: {
-    cue: { kind: 'key', label: '↑' },
+    cue: { kind: 'action', accion: 'pitchUp' },
     touchCue: { kind: 'symbol', glyph: '⇡' },
     key: 'tutor.pull',
     progress: () => null,
@@ -75,7 +85,7 @@ const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
   // y se callaba justo cuando empieza lo difícil. Sin bajar el gas no hay
   // forma de perder velocidad para posarse, y eso no lo adivina nadie.
   slow: {
-    cue: { kind: 'key', label: '−' },
+    cue: { kind: 'action', accion: 'throttleDown' },
     touchCue: { kind: 'symbol', glyph: '⇣' },
     key: 'tutor.slow',
     progress: (_state, throttle) => 1 - throttle,
@@ -85,6 +95,14 @@ const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
 export class Tutor {
   private root: HTMLElement | null = null;
   private cue: HTMLElement | null = null;
+
+  /** De dónde salen las teclas que se dibujan. Ver `StepView`. */
+  private keymap: Keymap | null = null;
+
+  /** Se le da el mapa al montar el juego. */
+  setKeymap(keymap: Keymap): void {
+    this.keymap = keymap;
+  }
   private label: HTMLElement | null = null;
   private bar: HTMLElement | null = null;
   private fill: HTMLElement | null = null;
@@ -135,7 +153,7 @@ export class Tutor {
     const view = STEPS[this.step];
     this.root.hidden = false;
 
-    if (this.cue) this.cue.innerHTML = renderCue(isTouch() ? view.touchCue : view.cue);
+    if (this.cue) this.cue.innerHTML = renderCue(isTouch() ? view.touchCue : view.cue, this.keymap);
     if (this.label) this.label.textContent = t(view.key);
 
     const progress = view.progress(state, throttle);
@@ -186,8 +204,26 @@ export class Tutor {
   }
 }
 
-function renderCue(cue: StepView['cue']): string {
+function renderCue(cue: StepView['cue'], keymap: Keymap | null): string {
   if (cue.kind === 'symbol') return `<span class="tutor__glifo">${cue.glyph}</span>`;
+
+  if (cue.kind === 'action') {
+    // Se enseñan **las dos teclas del mando**, la de cada lado del teclado,
+    // separadas por «o». Enseñar solo una obliga a elegir la mano por quien
+    // juega, y el motivo de que haya dos era justamente el contrario.
+    const teclas = (keymap?.keys(cue.accion) ?? [])
+      .map(nombreDeTecla)
+      // Sin modificadores y sin repetidos. Mayúsculas y Control están por
+      // costumbre de otros simuladores y no hay que enseñárselos a nadie;
+      // «=» y «+» son la misma tecla física y enseñar las dos confunde.
+      .filter((n, i, todas) => todas.indexOf(n) === i && n.length <= 2 && n !== '⇧' && n !== '=')
+      .slice(0, 2);
+    if (teclas.length === 0) return '';
+    return teclas
+      .map((n) => `<span class="tutor__tecla">${n}</span>`)
+      .join('<span class="tutor__o">o</span>');
+  }
+
   const wide = cue.wide ? ' tutor__tecla--ancha' : '';
   return `<span class="tutor__tecla${wide}">${cue.label}</span>`;
 }

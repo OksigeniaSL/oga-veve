@@ -204,6 +204,7 @@ export class Game {
     // Sin letras, teclado dibujado. Con letras, la tabla.
     this.keyScreen?.setSimple(this.tier.instruments === 'none' || this.tier.instruments === 'pictorial');
     this.hud.onKeys(() => this.keyScreen?.toggle());
+    this.hud.tutor.setKeymap(this.input.keymap);
 
     // La primera vez se abre sola. Una pantalla que explica los mandos no
     // sirve de nada si hay que saber que existe para encontrarla, y quien no
