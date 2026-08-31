@@ -7,7 +7,7 @@ const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage({ viewport: { width: 1280, height: 800 } });
 page.on('pageerror', e => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:tramo', 'taguato-ruvicha'));
-await page.goto('http://localhost:5199/');
+await page.goto('http://localhost:5199/?escenario=valle-cordillera');
 await page.waitForTimeout(2500);
 console.log('esferas:', await page.locator('.esfera').count());
 

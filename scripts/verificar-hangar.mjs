@@ -39,7 +39,7 @@ for (const [ancho, alto, nombre] of [
   const page = await b.newPage({ viewport: { width: ancho, height: alto }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.goto('http://localhost:5199/');
-  await page.waitForSelector('.tarjeta--sitio');
+  await page.waitForSelector('.ficha--sitio');
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${D}/hangar-${nombre}.png` });
 
@@ -49,7 +49,7 @@ for (const [ancho, alto, nombre] of [
       const r = el.getBoundingClientRect();
       out.tactos.push({ q: el.className.split(' ')[0], w: Math.round(r.width), h: Math.round(r.height) });
     }
-    for (const sel of ['.hangar__marca', '.hangar__pregunta', '.tarjeta__nombre', '.tarjeta__dato', '.tarjeta__numero', '.hangar__despegar']) {
+    for (const sel of ['.hangar__marca', '.hangar__pregunta', '.ficha__nombre', '.ficha__dato', '.ficha__numero', '.hangar__despegar']) {
       const el = document.querySelector(sel);
       if (!el) continue;
       let fondo = 'rgb(0,0,0)';
@@ -71,7 +71,7 @@ for (const [ancho, alto, nombre] of [
     const b = document.querySelector('.hangar__despegar').getBoundingClientRect();
     out.despegarVisible = b.bottom <= window.innerHeight && b.top >= 0;
     out.alto = Math.round(document.querySelector('.hangar__marco').getBoundingClientRect().height);
-    out.planos = document.querySelectorAll('.tarjeta__plano polyline.plano__pista').length;
+    out.planos = document.querySelectorAll('.ficha__plano polyline.plano__pista').length;
     return out;
   });
 

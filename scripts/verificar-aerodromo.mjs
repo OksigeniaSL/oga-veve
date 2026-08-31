@@ -28,7 +28,7 @@ await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage();
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
-await page.goto('http://localhost:5191/');
+await page.goto('http://localhost:5191/?escenario=valle-cordillera');
 
 for (const id of ['sgas', 'gcxo']) {
   const r = await page.evaluate(async (id) => {

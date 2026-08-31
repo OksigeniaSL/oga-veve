@@ -9,7 +9,7 @@ for (const tramo of ['guyrami', 'taguato']) {
   const page = await b.newPage({ viewport: { width: 1280, height: 800 } });
   page.on('pageerror', e => console.log('ERROR:', e.message));
   await page.addInitScript(t => localStorage.setItem('oga-veve:tramo', t), tramo);
-  await page.goto('http://localhost:5197/');
+  await page.goto('http://localhost:5197/?escenario=valle-cordillera');
   await page.waitForTimeout(2200);
 
   // Tarjeta de freno: en el suelo debe verse.
