@@ -57,7 +57,45 @@ triángulos y no lo tiene ningún otro juego.
 
 ---
 
-## 2. Cuatro tramos, un solo avión
+## 2. Nadie tiene que montar nada
+
+Hay un producto educativo que conviene tener presente: **Classcraft**. Era una
+web con la que un profesor convertía su clase en un juego de rol — cada alumno
+tenía su avatar de cuerpo entero, cada personaje era fuerte en unas cosas y
+flojo en otras, y había que cooperar para sacar adelante una misión. La idea
+de fondo era excelente y estaba muy bien diseñado.
+
+Y cerró.
+
+No por malo. Cerró porque **pedía demasiado del adulto**: unos doscientos
+dólares al año por grupo, y sobre todo tiempo de montaje, gestión continua y
+una ilusión sostenida por parte de alguien que ya va desbordado. Un producto
+que necesita que un docente se entusiasme y se organice tiene un techo, por
+brillante que sea.
+
+De ahí sale la regla que gobierna todo lo que se añada a Óga Veve:
+
+> **El juego tiene que funcionar entero con una niña sola abriendo una pestaña.**
+
+Nada esencial puede depender de que alguien lo prepare. Sin cuentas que crear,
+sin grupos que dar de alta, sin panel de profesor, sin licencias, sin
+formación previa, sin conexión fiable, sin instalación. Se entra y se vuela.
+
+Eso no excluye al docente: lo **libera**. Todo lo que un profesor pueda hacer
+con esto —proponerlo en clase, montar un reto, usarlo para explicar los
+vientos alisios— es un extra que suma, nunca un requisito. La diferencia entre
+«se puede usar en un aula» y «hay que administrarlo desde un aula» es la
+diferencia entre llegar a mucha gente y no llegar.
+
+Y es también lo que da sentido de verdad a dos decisiones que ya estaban
+tomadas por otros motivos. **Gratis a perpetuidad** quita la primera barrera,
+la del presupuesto. **Cero cuentas y cero telemetría** quitan la segunda, que
+es más silenciosa y mata más: la del trabajo administrativo.
+
+Lo que se hereda de Classcraft es su diseño de personajes y su idea de
+progresión visible. Lo que no se hereda es su dependencia del profesor.
+
+## 3. Cuatro tramos, un solo avión
 
 Arcade y Piloto no bastan: Arcade con cuatro años no es Arcade con siete. Cuatro
 tramos, elegidos con retratos de aves y sin que aparezca nunca una edad en
@@ -83,7 +121,7 @@ esas capas.
 
 ---
 
-## 3. El metajuego: la libreta de vuelo
+## 4. El metajuego: la libreta de vuelo
 
 Ni puntos, ni estrellas, ni monedas. La aviación ya tiene la moneda perfecta:
 **horas de vuelo**. Se ganan por volar, no se pueden suspender, y son lo que
@@ -112,7 +150,7 @@ Cero servidor, cero nombre, cero correo.
 
 ---
 
-## 4. Lo que se enseña, por capas
+## 5. Lo que se enseña, por capas
 
 Regla transversal: **nada se lee que pueda volarse**, y ninguna visualización
 dibuja nada que el motor no haya calculado de verdad. Una flecha bonita que no es
@@ -146,7 +184,7 @@ material del hemisferio norte omite: aquí el sol culmina al norte.
 
 ---
 
-## 5. El mundo
+## 6. El mundo
 
 **Paraguay primero, y se empieza en casa.** El primer escenario es Coronel
 Oviedo, con la propia granja: terreno llano, sin fallo posible y el perro
@@ -171,7 +209,7 @@ comunidades indígenas sin consentimiento libre, previo e informado.
 
 ---
 
-## 6. Cómo suena y cómo se siente
+## 7. Cómo suena y cómo se siente
 
 **El arpa paraguaya es el instrumento de la interfaz**, no solo de la música.
 Cinco notas muestreadas dan todo el idioma de acierto, error, atención y logro,
@@ -194,7 +232,7 @@ es el despegue.
 
 ---
 
-## 7. La arquitectura que hace falta
+## 8. La arquitectura que hace falta
 
 `Game` es hoy un buen ensamblador de 318 líneas, pero no aguanta lo que viene.
 Tres costuras, por orden:
@@ -218,7 +256,7 @@ juego, para poder cumplir de verdad la regla de medir antes de añadir.
 
 ---
 
-## 8. El plan
+## 9. El plan
 
 **0.2 — Que se pueda jugar.** Audio del motor y el viento, iconos en vez de
 palabras, arreglos de accesibilidad y táctil, sensación de velocidad al despegar,
@@ -238,7 +276,7 @@ multimonitor, joystick, y volar acompañados.
 
 ---
 
-## 9. Informes completos
+## 10. Informes completos
 
 | Tema | Documento |
 |---|---|
