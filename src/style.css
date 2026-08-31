@@ -731,3 +731,140 @@ body {
     transition: none;
   }
 }
+
+/*
+ * El cuadro de mandos, solo en el peldaño más alto.
+ *
+ * Va abajo y centrado, que es donde está en un avión: se mira apartando la
+ * vista del horizonte un instante y se vuelve. Si estuviera en una esquina
+ * se leería como un adorno, y esto no es un adorno.
+ *
+ * En dos filas de tres, como el panel real: arriba los tres primarios
+ * —velocidad, actitud, altitud—, abajo los tres de apoyo. Ese orden es un
+ * estándar mundial, y aprenderlo aquí sirve fuera.
+ */
+.seispack {
+  display: grid;
+  width: fit-content;
+  margin: 8px auto 0;
+  grid-template-columns: repeat(3, auto);
+  gap: 5px;
+  padding: 7px;
+  border-radius: 14px;
+  background: rgba(12, 15, 20, 0.66);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+/* Apaisado y bajo —tablet de aula en horizontal—: una sola fila de seis. */
+@media (max-height: 620px) {
+  .seispack {
+    grid-template-columns: repeat(6, auto);
+  }
+}
+
+/*
+ * Cada instrumento es la esfera y su rótulo debajo, apilados. El rótulo iba
+ * superpuesto y se comía el borde de la esfera; en un panel real el nombre
+ * está serigrafiado fuera del cristal, no encima de las agujas.
+ */
+.esfera {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: clamp(52px, 8vmin, 88px);
+}
+
+.esfera svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: visible;
+}
+
+/* Caja y fondo: metal oscuro con un aro claro, como un instrumento montado. */
+.esfera__caja {
+  fill: #2a2f38;
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1.4;
+}
+
+.esfera__fondo {
+  fill: #0d1014;
+}
+
+.esfera__marca {
+  stroke: rgba(255, 255, 255, 0.72);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.esfera__marca--punto {
+  fill: rgba(255, 255, 255, 0.72);
+}
+
+.esfera__cifra {
+  fill: rgba(255, 255, 255, 0.82);
+  font-size: 9px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.esfera__cifra--rumbo {
+  font-size: 11px;
+}
+
+/*
+ * Los arcos del anemómetro. No son decoración: el verde es el margen normal
+ * de operación, el ámbar avisa y el rojo es la velocidad que no se pasa. Un
+ * niño aprende «no salgas del verde» antes de saber qué es un nudo, y eso
+ * es exactamente lo que se le enseña a un piloto de verdad.
+ */
+.esfera__arco {
+  fill: none;
+  stroke-width: 4;
+}
+
+.esfera__arco--verde { stroke: #35c46a; }
+.esfera__arco--ambar { stroke: #e8b13a; }
+.esfera__arco--rojo  { stroke: #e2453c; }
+
+.esfera__aguja {
+  fill: #f2f4f7;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.7));
+}
+
+.esfera__buje {
+  fill: #c9ced6;
+  stroke: #1a1d22;
+  stroke-width: 1;
+}
+
+.esfera__rotulo {
+  margin-top: 2px;
+  font-size: 8.5px;
+  letter-spacing: 0.09em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Horizonte artificial: cielo arriba, tierra abajo, avión fijo en el medio. */
+.ai__cielo { fill: #3d7fd0; }
+.ai__tierra { fill: #8a5a2b; }
+.ai__horizonte { stroke: #ffffff; stroke-width: 1.6; }
+.ai__avion { fill: none; stroke: #ffcf3f; stroke-width: 2.2; stroke-linecap: round; }
+
+/*
+ * Direccional: la rosa gira y el avioncito no, que es lo que hace difícil
+ * de leer este instrumento y por lo que hay que verlo moverse para
+ * entenderlo. La rosa es la cara oscura del disco, no una mancha blanca:
+ * lo que se lee son las marcas y las letras pintadas encima.
+ */
+.dg__rosa { fill: #14181e; }
+.dg__avion { fill: none; stroke: #f2f4f7; stroke-width: 2; stroke-linecap: round; }
+
+/* Bastón y bola. El tubo es cristal, la bola es la que hay que centrar. */
+.tc__tubo { fill: rgba(255, 255, 255, 0.1); stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; }
+.tc__bola { fill: #1c1f25; stroke: #f2f4f7; stroke-width: 1.2; }
+.tc__ala { fill: none; stroke: #f2f4f7; stroke-width: 2.2; stroke-linecap: round; }
+.tc__deriva { stroke: rgba(255, 255, 255, 0.45); stroke-width: 1.2; }

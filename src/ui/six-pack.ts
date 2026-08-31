@@ -204,7 +204,9 @@ function dgCard(): string {
     [0, 'N'],
     [90, 'E'],
     [180, 'S'],
-    [270, 'O'],
+    // W, no O: en una rosa de compás de verdad pone West, y la regla 3 del
+    // AGENTS.md dice que la aeronáutica se aprende en su idioma.
+    [270, 'W'],
   ];
   for (const [degrees, letter] of marks) {
     const angle = (degrees * Math.PI) / 180;

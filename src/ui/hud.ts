@@ -23,6 +23,8 @@ import type { FlightState } from '../flight/model';
 import { indicatedAirspeed } from '../flight/atmosphere';
 import { t } from '../i18n';
 import { Tutor } from './tutor';
+import { bankAngleOf, pitchAngleOf } from './actitud';
+import { SixPack } from './six-pack';
 import type { Tier } from '../flight/tiers';
 
 /**
@@ -90,6 +92,13 @@ export class Hud {
    */
   private instruments: Tier['instruments'] = 'numeric';
 
+  /**
+   * El cuadro de mandos clásico. Solo existe en el peldaño más alto: seis
+   * esferas son ruido para quien todavía está aprendiendo a mantener el
+   * rumbo, y son *la cabina* para quien ya vuela.
+   */
+  private readonly sixPack = new SixPack();
+
   private speed: HTMLElement | null = null;
   private altitude: HTMLElement | null = null;
   private heading: HTMLElement | null = null;
@@ -128,7 +137,12 @@ export class Hud {
   render(): void {
     const gauges = this.instruments !== 'none';
     const pictorial = this.instruments === 'pictorial';
-    const numbers = this.instruments === 'numeric' || this.instruments === 'full';
+    const panel = this.instruments === 'full';
+    // En el peldaño más alto las cifras sueltas desaparecen: lo que se lee
+    // son las seis esferas, que es como se lee una cabina de verdad. Dejar
+    // las dos cosas sería enseñar a mirar el número y no el instrumento,
+    // justo el hábito que este peldaño existe para quitar.
+    const numbers = this.instruments === 'numeric';
 
     this.root.innerHTML = `
       <div class="hud__arriba">
@@ -194,6 +208,13 @@ export class Hud {
           <span data-hud="warning-text"></span>
         </div>
         <div class="tarjeta insignia" aria-live="polite" data-hud="hint" style="margin-top:8px"></div>
+        <!--
+          El cuadro de mandos va aquí y no flotando aparte: compartiendo la
+          franja de abajo se apila con el aviso en vez de taparlo, que es lo
+          que pasaba. Un panel bonito que esconde un «terrain, pull up» es
+          peor que no tener panel.
+        -->
+        ${panel ? SixPack.markup() : ''}
       </div>
     `;
 
@@ -222,6 +243,7 @@ export class Hud {
     this.hint = pick(this.root, 'hint');
 
     this.badge.textContent = this.badgeText;
+    this.sixPack.bind(this.root);
     this.tutor.bind(this.root);
   }
 
@@ -293,11 +315,30 @@ export class Hud {
 
     this.throttleFill.style.width = `${Math.round(throttle * 100)}%`;
 
+    // Alabeo y cabeceo los quieren dos consumidores —la tarjeta del horizonte
+    // y el cuadro de mandos—, y solo uno de los dos existe a la vez. Se
+    // calculan aquí una vez y no dentro de cada rama, que es como se acaba
+    // teniendo dos definiciones del mismo signo.
+    const bank = bankAngleOf(state.orientation);
+    const pitch = pitchAngleOf(state.orientation);
+
+    if (this.sixPack.present) {
+      this.sixPack.update(
+        state,
+        // Nudos y pies, siempre, sin pasar por el selector de unidades: un
+        // anemómetro de verdad marca nudos aunque el resto de la pantalla
+        // esté en kilómetros por hora. La esfera no negocia.
+        ias * 1.94384,
+        state.position.y * 3.28084,
+        state.verticalSpeed * 196.85,
+        bank,
+        pitch,
+      );
+    }
+
     // El horizonte gira al revés que el avión y sube y baja con el cabeceo:
     // así el instrumento representa el mundo, no la máquina.
     if (this.horizon) {
-      const bank = bankAngleOf(state);
-      const pitch = pitchAngleOf(state);
       this.horizon.style.transform = `rotate(${(-bank * 180) / Math.PI}deg) translateY(${((pitch * 180) / Math.PI) * 1.6}px)`;
     }
 
@@ -455,23 +496,3 @@ function closingWithGround(state: FlightState): boolean {
   return state.secondsToImpact < 6;
 }
 
-/**
- * Alabeo respecto al horizonte, positivo a la derecha, igual que en el
- * modelo de vuelo. El signo estaba invertido aquí también, así que el
- * horizonte artificial giraba al revés que el avión.
- */
-function bankAngleOf(state: FlightState): number {
-  const q = state.orientation;
-  // Componente Y del eje transversal del avión, rotado, con el signo
-  // cambiado. Expandido a mano para no reservar un Vector3 en cada fotograma.
-  const y = -2 * (q.x * q.y + q.w * q.z);
-  return Math.asin(Math.max(-1, Math.min(1, y)));
-}
-
-/** Cabeceo respecto al horizonte. */
-function pitchAngleOf(state: FlightState): number {
-  const q = state.orientation;
-  // Componente Y del morro (-Z local) rotado.
-  const y = -(2 * (q.y * q.z + q.w * q.x));
-  return Math.asin(Math.max(-1, Math.min(1, y)));
-}
