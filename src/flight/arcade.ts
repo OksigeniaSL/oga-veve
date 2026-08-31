@@ -137,7 +137,17 @@ export class ArcadeFlightModel implements FlightModel {
     // aterrizaba y no había manera de parar. Un freno que no para el avión
     // no es un freno.
     const target = this.state.onGround ? wanted * (1 - controls.brakes) : wanted;
-    const rate = this.state.onGround ? 0.18 * (1 + controls.brakes * 5) : 0.18;
+    // Acelerar cuesta; frenar, no. Iban al mismo ritmo, y con una constante
+    // de más de cinco segundos eso significa que al quitar gas el avión
+    // seguía corriendo un buen rato: quien lo probaba juraba que aceleraba
+    // solo, y en cierto modo era verdad — todavía estaba llegando al destino
+    // que le habían pedido diez segundos antes.
+    //
+    // En un avión de verdad la asimetría es aún mayor: el empuje tarda en
+    // subir y la resistencia frena en cuanto se suelta.
+    const frenando = target < this.speed;
+    const base = this.state.onGround && frenando ? 0.55 : 0.18;
+    const rate = this.state.onGround ? base * (1 + controls.brakes * 5) : 0.18;
     this.speed += (target - this.speed) * Math.min(1, step * rate);
     // Rozamiento estático. Un decaimiento exponencial se acerca a cero para
     // siempre y nunca llega, y lo que se ve en pantalla es un avión que

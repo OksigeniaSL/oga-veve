@@ -111,3 +111,17 @@ describe('rodar por la pista', () => {
     });
   }
 });
+
+describe('quitar gas', () => {
+  it('el avión pierde velocidad pronto, no diez segundos después', () => {
+    const model = enPista(TIERS[0]!);
+    model.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 0 });
+    rodar(model, 25, 0, 1);
+    const rapido = model.state.airspeed;
+    // Tres segundos a ralentí. Antes seguía casi igual de rápido, porque
+    // subir y bajar iban al mismo ritmo lento y quien lo probaba creía que
+    // el avión aceleraba solo.
+    rodar(model, 3, 0, 0);
+    expect(model.state.airspeed).toBeLessThan(rapido * 0.45);
+  });
+});
