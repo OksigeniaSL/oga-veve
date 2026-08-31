@@ -30,7 +30,7 @@ import type { FlightModel, FlightState } from './flight/model';
 import { Terrain } from './world/terrain';
 import { createSky, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
-import { createRunwayGuide } from './world/runway-guide';
+import { RunwayGuide } from './world/runway-guide';
 import { createVegetation } from './world/vegetation';
 import { MissionMarker } from './world/mission-marker';
 import { MissionRunner } from './missions/runner';
@@ -100,6 +100,7 @@ export class Game {
   private readonly audio = new Audio();
   private readonly missions = new MissionRunner();
   private readonly missionMarker = new MissionMarker();
+  private readonly runwayGuide: RunwayGuide;
   /** Índice de la misión de la lista del escenario, o -1 en vuelo libre. */
   private missionIndex = -1;
   private readonly hud: Hud;
@@ -155,11 +156,12 @@ export class Game {
 
     this.scene.add(createVegetation(this.scenario, (x, z) => this.terrain.sampleHeight(x, z)));
 
-    this.scene.add(
-      createRunwayGuide(this.scenario, this.terrain.runwayElevation, (x, z) =>
-        this.terrain.sampleSurface(x, z),
-      ),
+    this.runwayGuide = new RunwayGuide(
+      this.scenario,
+      this.terrain.runwayElevation,
+      (x: number, z: number) => this.terrain.sampleSurface(x, z),
     );
+    this.scene.add(this.runwayGuide.group);
 
     this.aircraftMesh = createAircraftMesh(this.aircraft);
     this.scene.add(this.aircraftMesh.group);
@@ -237,6 +239,7 @@ export class Game {
       this.hud.setMissionProgress(this.missions.progress);
       this.updateMissionMarker();
     }
+    this.runwayGuide.reset();
     this.crashedFor = 0;
     this.wasOnGround = true;
     this.wasStalled = false;
@@ -272,6 +275,10 @@ export class Game {
     }
 
     this.missionMarker.update(dt);
+    this.runwayGuide.update(dt);
+    // Cruzar un aro de la senda se celebra: destello, salto de escala y una
+    // nota. Es la respuesta visual que pedía cualquiera que no sepa leer.
+    if (this.runwayGuide.check(this.flight.state.position)) this.audio.cue('success');
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);

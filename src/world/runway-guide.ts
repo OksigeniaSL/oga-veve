@@ -27,6 +27,7 @@ import {
   MeshBasicMaterial,
   MeshLambertMaterial,
   TorusGeometry,
+  type Vector3,
 } from 'three';
 import type { Scenario } from './scenarios';
 
@@ -55,7 +56,95 @@ const FIRST_RING_DISTANCE = 3200;
 /** Pendiente de la senda. Cuatro grados: cómoda y perdona el error. */
 const GLIDE_SLOPE = (4 * Math.PI) / 180;
 
-export function createRunwayGuide(
+/**
+ * Guía de aterrizaje viva.
+ *
+ * Los aros dejaron de ser decorado: saben cuál es el siguiente, se encienden
+ * al atravesarlos y se apagan cuando ya han pasado. Es la respuesta a algo
+ * que se pidió jugando —«que al pasar bien por el círculo pase algo»— y es
+ * también la forma más barata de enseñar una senda de planeo a alguien que
+ * no sabe leer: el aro que brilla es el que hay que cruzar, y cruzarlo se
+ * celebra.
+ */
+export class RunwayGuide {
+  readonly group: Group;
+  /** Aros en orden de aproximación, del más lejano al umbral. */
+  private readonly rings: Mesh[] = [];
+  /** Índice del siguiente aro por cruzar. */
+  private next = 0;
+  /** Cuánto le queda de destello a cada aro. */
+  private readonly flash: number[] = [];
+
+  constructor(scenario: Scenario, runwayElevation: number, ground: GroundSampler) {
+    this.group = buildGuide(scenario, runwayElevation, ground);
+    const rings = this.group.getObjectByName('aros');
+    rings?.traverse((object) => {
+      if (object instanceof Mesh) this.rings.push(object);
+    });
+    // Del más lejano al más cercano, que es el orden en que se cruzan.
+    this.rings.sort((a, b) => b.position.y - a.position.y);
+    this.flash = this.rings.map(() => 0);
+    this.highlight();
+  }
+
+  /**
+   * Comprueba si el avión acaba de atravesar el aro que tocaba.
+   *
+   * Solo cuenta el siguiente de la serie: cruzar el último desde el otro
+   * lado, o colarse por el tercero saltándose los dos primeros, no vale. Eso
+   * mantiene la senda como una senda y no como una colección de aros sueltos.
+   *
+   * @returns true si se acaba de cruzar uno
+   */
+  check(position: Vector3): boolean {
+    const ring = this.rings[this.next];
+    if (!ring) return false;
+
+    const radius = (ring.geometry as TorusGeometry).parameters.radius;
+    if (position.distanceTo(ring.position) > radius * 1.15) return false;
+
+    this.flash[this.next] = 1;
+    this.next++;
+    this.highlight();
+    return true;
+  }
+
+  /** Vuelve a empezar la aproximación. */
+  reset(): void {
+    this.next = 0;
+    this.flash.fill(0);
+    this.highlight();
+  }
+
+  update(dt: number): void {
+    for (let i = 0; i < this.rings.length; i++) {
+      if (this.flash[i]! <= 0) continue;
+      this.flash[i] = Math.max(0, this.flash[i]! - dt * 1.6);
+      const ring = this.rings[i]!;
+      const punch = this.flash[i]!;
+      ring.scale.setScalar(1 + punch * 0.45);
+      (ring.material as MeshBasicMaterial).color.setHex(punch > 0.5 ? 0xffffff : OCRE);
+      if (punch === 0) ring.scale.setScalar(1);
+    }
+  }
+
+  /**
+   * El siguiente aro se ve; los ya cruzados se apagan.
+   *
+   * Un aro apagado sigue estando, así que se ve la senda entera y de dónde
+   * se viene, pero solo uno pide que vayas a él.
+   */
+  private highlight(): void {
+    for (let i = 0; i < this.rings.length; i++) {
+      const material = this.rings[i]!.material as MeshBasicMaterial;
+      const done = i < this.next;
+      material.opacity = done ? 0.18 : i === this.next ? 0.95 : 0.55;
+      material.color.setHex(done ? 0x8d9a8a : OCRE);
+    }
+  }
+}
+
+function buildGuide(
   scenario: Scenario,
   runwayElevation: number,
   ground: GroundSampler,
@@ -172,6 +261,8 @@ function approachRings(
       // Gordos y bastante opacos: a dos kilómetros un aro fino no se ve, y
       // un aro que no se ve no guía a nadie.
       new TorusGeometry(radius, radius * 0.075, 6, 24),
+      // Material propio por aro: comparten uno solo y se encienden todos a
+      // la vez, que es exactamente lo contrario de lo que hace falta.
       new MeshBasicMaterial({ color: OCRE, transparent: true, opacity: 0.75, depthWrite: false }),
     );
 

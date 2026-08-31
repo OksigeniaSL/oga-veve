@@ -8,17 +8,17 @@
 
 import { describe, expect, it } from 'vitest';
 import { Mesh, Vector3 } from 'three';
-import { createRunwayGuide } from './runway-guide';
+import { RunwayGuide } from './runway-guide';
 import { Terrain } from './terrain';
 import { CHACO, SCENARIOS, VALLE_CORDILLERA } from './scenarios';
 
 /** Posiciones de los aros de aproximación de un escenario. */
 function ringPositions(scenario = VALLE_CORDILLERA): { terrain: Terrain; rings: Vector3[] } {
   const terrain = new Terrain(scenario);
-  const guide = createRunwayGuide(scenario, terrain.runwayElevation, (x, z) =>
+  const guide = new RunwayGuide(scenario, terrain.runwayElevation, (x, z) =>
     terrain.sampleSurface(x, z),
   );
-  const group = guide.getObjectByName('aros');
+  const group = guide.group.getObjectByName('aros');
   expect(group).toBeDefined();
 
   const rings: Vector3[] = [];
@@ -60,5 +60,44 @@ describe('aros de aproximación', () => {
     const { terrain, rings } = ringPositions(CHACO);
     const clearances = rings.map((r) => r.y - terrain.sampleSurface(r.x, r.z));
     expect(Math.min(...clearances)).toBeGreaterThan(30);
+  });
+});
+
+describe('la senda reacciona', () => {
+  it('cruzar el aro que toca cuenta, y saltarse el orden no', () => {
+    const terrain = new Terrain(VALLE_CORDILLERA);
+    const guide = new RunwayGuide(VALLE_CORDILLERA, terrain.runwayElevation, (x, z) =>
+      terrain.sampleSurface(x, z),
+    );
+    const rings = ringPositions().rings;
+    const ordered = [...rings].sort((a, b) => b.y - a.y);
+
+    // Colarse por el tercero sin haber pasado los dos primeros no vale: la
+    // senda es una senda, no una colección de aros sueltos.
+    expect(guide.check(ordered[2]!)).toBe(false);
+
+    expect(guide.check(ordered[0]!)).toBe(true);
+    expect(guide.check(ordered[1]!)).toBe(true);
+  });
+
+  it('pasar lejos de un aro no cuenta', () => {
+    const terrain = new Terrain(VALLE_CORDILLERA);
+    const guide = new RunwayGuide(VALLE_CORDILLERA, terrain.runwayElevation, (x, z) =>
+      terrain.sampleSurface(x, z),
+    );
+    const first = [...ringPositions().rings].sort((a, b) => b.y - a.y)[0]!;
+    expect(guide.check(first.clone().add(new Vector3(400, 0, 0)))).toBe(false);
+    expect(guide.check(first)).toBe(true);
+  });
+
+  it('reiniciar el vuelo devuelve la senda al principio', () => {
+    const terrain = new Terrain(VALLE_CORDILLERA);
+    const guide = new RunwayGuide(VALLE_CORDILLERA, terrain.runwayElevation, (x, z) =>
+      terrain.sampleSurface(x, z),
+    );
+    const ordered = [...ringPositions().rings].sort((a, b) => b.y - a.y);
+    expect(guide.check(ordered[0]!)).toBe(true);
+    guide.reset();
+    expect(guide.check(ordered[0]!)).toBe(true);
   });
 });
