@@ -575,6 +575,9 @@ body {
    ancha es Shift; la cuadrada, una flecha. Que tengan forma distinta es el
    punto, no un adorno. */
 .tutor__tecla {
+  /* Gruesa a propósito: una X fina y sola se lee como un aspa, no como
+     una letra. El grosor es lo que la devuelve al alfabeto. */
+  font-weight: 700;
   display: inline-grid;
   place-items: center;
   min-width: 62px;
