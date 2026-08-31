@@ -41,7 +41,7 @@ import {
   type ColorRepresentation,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { numberTexture } from './runway-markings';
+import { letreroAtlasTexture, numberTexture } from './runway-markings';
 
 /** Un punto en metros sobre el plano local del aeródromo. */
 export type Punto = readonly [number, number];
@@ -69,7 +69,11 @@ export interface Aerodrome {
   readonly origin: { readonly lat: number; readonly lon: number };
   readonly elevationM: number | null;
   readonly runways: readonly Pista[];
-  readonly taxiways: readonly { readonly widthM: number | null; readonly path: readonly Punto[] }[];
+  readonly taxiways: readonly {
+    readonly ref?: string | null;
+    readonly widthM: number | null;
+    readonly path: readonly Punto[];
+  }[];
   readonly aprons: readonly { readonly polygon: readonly Punto[] }[];
   readonly buildings: readonly { readonly heightM: number | null; readonly polygon: readonly Punto[] }[];
   readonly windsocks: readonly Punto[];
@@ -89,6 +93,14 @@ const COLORES: Record<string, ColorRepresentation> = {
   gravel: 0x4a443c,
   grass: 0x4d6136,
 };
+
+/** Lado del cuadrado de un letrero de rodadura, m. Un rótulo de superficie de
+ * verdad lleva la letra de unos cuatro metros de alto; aquí es algo mayor,
+ * porque quien la lee tiene cuatro años y va mirando por una ventana. */
+const LETRERO_LADO = 9;
+
+/** Longitud mínima de una calle para que merezca rótulo, m. */
+const LETRERO_MINIMO = 90;
 
 /** Amarillo de rodadura. Es el color que dice «esto no es pista». */
 const AMARILLO = 0xd8a521;
@@ -355,7 +367,112 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
       grupo.add(malla);
     }
   }
+
+  const rotulos = letreros(aero, altura, enLaPista);
+  if (rotulos) grupo.add(rotulos);
+
   return grupo;
+}
+
+/**
+ * Las letras pintadas de las calles de rodaje.
+ *
+ * OSM no mapea la pintura —el tag `aeroway=marking` tiene ochocientos usos en
+ * todo el planeta y ni siquiera esquema aprobado—, pero sí trae el `ref` de
+ * cada calle, que es justo el dato que hace falta: la letra. El pintado se
+ * genera, no se descarga.
+ *
+ * **Todas las letras van en una sola malla.** Cada rótulo necesita su propia
+ * textura, y un aeródromo mediano tiene trece calles con nombre: trece mallas
+ * serían trece llamadas de dibujo, más que todo el resto del aeródromo junto.
+ * Así que las letras se hornean en un único atlas y cada cuadrado se queda con
+ * su celda a base de UVs. Trece rótulos, una llamada.
+ */
+function letreros(
+  aero: Aerodrome,
+  altura: (p: Punto) => number,
+  enLaPista: (p: Punto) => boolean,
+): Mesh | null {
+  const conNombre = aero.taxiways.filter(
+    (c) => typeof c.ref === 'string' && c.ref.length > 0 && c.ref.length <= 3,
+  );
+  if (!conNombre.length) return null;
+
+  const refs = [...new Set(conNombre.map((c) => c.ref as string))].sort();
+  const lado = Math.ceil(Math.sqrt(refs.length));
+  const atlas = letreroAtlasTexture(refs, lado);
+  if (!atlas) return null;
+
+  const piezas: BufferGeometry[] = [];
+  for (const calle of conNombre) {
+    const largo = longitudDe(calle.path);
+    // Un tramo corto es un empalme, no una calle: rotularlo llena el asfalto
+    // de letras repetidas justo donde se cruzan tres calles.
+    if (largo < LETRERO_MINIMO) continue;
+    const p = sobreElEje(calle.path, largo / 2);
+    if (!p) continue;
+    const [cx, cy] = p;
+    if (enLaPista([cx, cy])) continue;
+
+    // **El sentido de una calle en OSM es arbitrario.** El de una pista no —va
+    // de un umbral al otro y el número se pinta para quien aterriza—, pero una
+    // calle de rodaje se dibujó en el sentido en que le vino bien a quien la
+    // mapeó, así que la mitad de las letras salían boca abajo.
+    //
+    // Se orientan hacia la pista, que es adonde va quien rueda: el niño sale
+    // del estacionamiento y busca la cabecera. Leyendo en ese sentido, la
+    // letra le dice por dónde va.
+    const haciaPista = rumboALaPista(aero, [cx, cy]);
+    const alReves = haciaPista ? p[2] * haciaPista[0] + p[3] * haciaPista[1] < 0 : false;
+    const dx = alReves ? -p[2] : p[2];
+    const dy = alReves ? -p[3] : p[3];
+
+    const celda = refs.indexOf(calle.ref as string);
+    const u = (celda % lado) / lado;
+    const v = 1 - (Math.floor(celda / lado) + 1) / lado;
+
+    const geo = new PlaneGeometry(LETRERO_LADO, LETRERO_LADO);
+    const uv = geo.getAttribute('uv');
+    for (let i = 0; i < uv.count; i++) {
+      uv.setXY(i, u + uv.getX(i) / lado, v + uv.getY(i) / lado);
+    }
+    geo.rotateX(-Math.PI / 2);
+    geo.rotateY(Math.atan2(-dx, dy));
+    geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);
+    piezas.push(geo);
+  }
+  if (!piezas.length) return null;
+
+  const fusionadas = mergeGeometries(piezas, false);
+  if (!fusionadas) return null;
+  const malla = new Mesh(
+    fusionadas,
+    new MeshLambertMaterial({ map: atlas, transparent: true, side: DoubleSide }),
+  );
+  malla.name = 'letreros';
+  return malla;
+}
+
+/**
+ * Hacia dónde queda la pista desde un punto, normalizado. Se apunta al umbral
+ * más cercano y no al eje: un piloto que rueda no va «a la pista», va a una
+ * cabecera concreta.
+ */
+function rumboALaPista(aero: Aerodrome, p: Punto): readonly [number, number] | null {
+  let mejor: Punto | null = null;
+  let mejorD = Infinity;
+  for (const pista of aero.runways) {
+    for (const u of Object.values(pista.thresholds)) {
+      if (!u?.xy) continue;
+      const d = Math.hypot(u.xy[0] - p[0], u.xy[1] - p[1]);
+      if (d < mejorD) {
+        mejorD = d;
+        mejor = u.xy;
+      }
+    }
+  }
+  if (!mejor || mejorD < 1) return null;
+  return [(mejor[0] - p[0]) / mejorD, (mejor[1] - p[1]) / mejorD];
 }
 
 /** Distancia de un punto a una polilínea. */

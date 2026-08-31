@@ -166,9 +166,54 @@ Por orden de lo que costó descubrir:
 8. ¿Hay árboles en la pista? Si los hay, el rectángulo de la franja está
    girado noventa grados.
 9. ¿El amarillo de las rodaduras se corta al llegar a la pista?
-10. ¿Se puede aterrizar y el juego lo dice?
+10. ¿Las letras de las calles se leen del derecho rodando **hacia la pista**?
+11. ¿Se puede aterrizar y el juego lo dice?
 
-## 7. Lo que no está en ninguna fuente y hay que decidir
+Los puntos 4, 5 y 10 ya no hace falta juzgarlos a ojo:
+
+```
+node scripts/verificar-aerodromo.mjs
+```
+
+Construye cada aeródromo en un navegador de verdad, cuenta las llamadas de
+dibujo —incluidas las mallas con textura, que el test de presupuesto no ve
+porque corre en Node y allí no hay `canvas`—, **mide** la separación de la
+pintura respecto al eje de la pista, y deja dos imágenes: el aeródromo entero
+desde arriba y un acercamiento a un rótulo.
+
+## 7. La pintura no se descarga: se genera
+
+**OpenStreetMap no mapea las marcas pintadas.** Existe un tag `aeroway=marking`
+pero tiene ochocientos usos en todo el planeta y ni siquiera esquema aprobado:
+no se puede construir sobre eso.
+
+Lo que sí trae OSM es la **geometría más el `ref`**, y con eso basta, porque
+las marcas aeronáuticas tienen medidas fijas (Anexo 14 de OACI): el eje amarillo
+de rodaje mide 15 cm, las teclas de piano 1,8 m de ancho, la barra doble del
+punto de espera va cruzando la calle. De ahí sale todo:
+
+| Se pinta | De qué dato sale |
+| --- | --- |
+| Designador de pista («02») | `ref` de la pista |
+| Letra de calle («A») | `ref` de la calle |
+| Punto de espera | nodo `aeroway=holding_position` |
+| Eje amarillo | la propia polilínea de la calle |
+
+Dos trampas del `ref` de las calles:
+
+- **El sentido de una calle en OSM es arbitrario.** El de una pista no —va de
+  un umbral al otro—, pero una calle se dibujó en el sentido que le vino bien a
+  quien la mapeó, así que la mitad de las letras salen boca abajo. Se orientan
+  **hacia la cabecera más cercana**, que es adonde va quien rueda.
+- **Un `ref` se repite en muchos tramos.** Rotularlos todos llena de letras el
+  cruce donde se juntan tres calles: solo se rotulan los tramos largos.
+
+Y una nota de coste: cada rótulo necesita su textura, y trece texturas son
+trece llamadas de dibujo, más que todo el resto del aeródromo junto. Las letras
+van en **un solo atlas** y cada cuadrado se queda con su celda a base de UVs.
+Trece rótulos, una llamada.
+
+## 8. Lo que no está en ninguna fuente y hay que decidir
 
 El extractor deja `null` y **no inventa**: categoría de marcas, PAPI, luces de
 aproximación, altura de edificios. Se rellenan a mano con `"manual": true`,

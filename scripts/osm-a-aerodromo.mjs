@@ -34,6 +34,13 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const OVERPASS = process.env.OVERPASS ?? 'https://overpass-api.de/api/interpreter';
+
+/** Dónde preguntar, por orden. El principal se satura a diario. */
+const ESPEJOS = [
+  OVERPASS,
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter',
+];
 const OURAIRPORTS = 'https://davidmegginson.github.io/ourairports-data';
 const SALIDA = 'data/aerodromes';
 
@@ -45,7 +52,7 @@ const TOLERANCIA = 0.5;
 
 /** Qué se pide a Overpass dentro del área del aeródromo. */
 const COSAS =
-  '^(runway|taxiway|apron|terminal|helipad|windsock|gate|parking_position|holding_position|navigationaid)$';
+  '^(runway|taxiway|taxilane|apron|terminal|helipad|windsock|gate|parking_position|holding_position|navigationaid)$';
 
 // ── Geometría ────────────────────────────────────────────────────────────
 
@@ -97,21 +104,46 @@ function simplificar(puntos, tol = TOLERANCIA) {
 
 // ── Fuentes ──────────────────────────────────────────────────────────────
 
+/**
+ * Overpass es gratuito y lo mantienen voluntarios, así que se satura. Un 504 o
+ * un 429 no significan que la consulta esté mal: significan «ahora no». Se
+ * reintenta con espera creciente y, si el servidor principal sigue sin dar
+ * señales, se prueba en un espejo. Sin esto, extraer un aeródromo era una
+ * tirada de dados a media tarde.
+ */
 async function overpass(query) {
-  // El tipo de contenido y el identificador no son opcionales: sin ellos
-  // Overpass devuelve 406 sin más explicación. Y el identificador es de
-  // cortesía además de obligatorio — es un servicio gratuito de voluntarios.
-  const res = await fetch(OVERPASS, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'oga-veve/0.1 (+https://github.com/OksigeniaSL/oga-veve)',
-    },
-    body: 'data=' + encodeURIComponent(query),
-  });
-  if (!res.ok) throw new Error(`Overpass respondió ${res.status}`);
-  return res.json();
+  let ultimo;
+  for (const servidor of ESPEJOS) {
+    for (let intento = 0; intento < 3; intento++) {
+      if (intento) await esperar(5000 * intento);
+      let res;
+      try {
+        // El tipo de contenido y el identificador no son opcionales: sin ellos
+        // Overpass devuelve 406 sin más explicación. Y el identificador es de
+        // cortesía además de obligatorio.
+        res = await fetch(servidor, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'oga-veve/0.1 (+https://github.com/OksigeniaSL/oga-veve)',
+          },
+          body: 'data=' + encodeURIComponent(query),
+        });
+      } catch (err) {
+        ultimo = err;
+        continue;
+      }
+      if (res.ok) return res.json();
+      ultimo = new Error(`Overpass (${servidor}) respondió ${res.status}`);
+      // Un 400 es culpa de la consulta: reintentar no la va a arreglar.
+      if (res.status === 400) throw ultimo;
+      console.warn(`  ⚠ ${ultimo.message}, reintentando…`);
+    }
+  }
+  throw ultimo;
 }
+
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Lo del aeródromo, dentro de su perímetro.
@@ -277,8 +309,13 @@ async function construir(icao, pistas, aeropuertos) {
     origin: { lat: lat0, lon: lon0 },
     elevationM: elev === null ? null : redondear(elev * 0.3048),
     runways,
-    taxiways: de('taxiway').map((w) => ({
+    // Las `taxilane` son las calles de plataforma, las que llevan de la
+    // rodadura al estacionamiento. Son calle de rodaje a todos los efectos del
+    // juego —se ruedan y se pintan de amarillo—, solo que más estrechas, y
+    // dejarlas fuera partía el amarillo justo donde el avión aparca.
+    taxiways: [...de('taxiway'), ...de('taxilane')].map((w) => ({
       ref: w.tags.ref ?? null,
+      kind: w.tags.aeroway,
       widthM: w.tags.width ? Number(w.tags.width) : null,
       path: camino(w, proj),
     })),
