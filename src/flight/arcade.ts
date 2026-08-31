@@ -45,6 +45,9 @@ const IDLE_SPEED = 2;
 
 /** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
 const STATIC_GRIP = 1.2;
+
+/** Autoridad de la rueda de morro a paso de peatón, rad/s. */
+const GROUND_TURN = 0.75;
 /** Ritmo de viraje máximo, en radianes por segundo. */
 const MAX_TURN_RATE = 0.5;
 /** Ritmo de ascenso máximo, en metros por segundo. */
@@ -145,10 +148,28 @@ export class ArcadeFlightModel implements FlightModel {
     // aerodinámica que este peldaño enseña: hay que correr para volar.
     const bite = clamp01((this.speed - IDLE_SPEED) / (cruise * 0.55));
 
-    // Viraje. El morro gira y el avión se inclina para acompañar; en un avión
-    // de verdad es al revés, pero lo que ve el ojo es lo mismo.
-    this.heading += controls.aileron * MAX_TURN_RATE * bite * step;
-    this.bank += (controls.aileron * VISUAL_BANK * bite - this.bank) * Math.min(1, step * 3.5);
+    if (this.state.onGround) {
+      // **Rodando se gira con la rueda de morro, no con las alas.**
+      //
+      // Faltaba entero: en tierra el viraje se calculaba con la misma cuenta
+      // que en el aire, y esa cuenta se apoya en la velocidad. Parado o
+      // rodando despacio el avión no giraba nada, así que abortar un
+      // despegue y volver a la cabecera era imposible sin reiniciar.
+      //
+      // Y va al revés que en vuelo: la rueda manda mucho a paso de peatón y
+      // deja de mandar cuando se coge carrerilla, que es cuando toma el
+      // relevo el timón. Por eso un avión rodando gira cerrado y en la
+      // carrera de despegue va prácticamente recto.
+      const mando = 1 - clamp01(this.speed / (cruise * 0.6));
+      this.heading += controls.aileron * GROUND_TURN * mando * step;
+      // Y sin inclinar el avión, que en el suelo tiene las ruedas puestas.
+      this.bank += (0 - this.bank) * Math.min(1, step * 5);
+    } else {
+      // Viraje en vuelo. El morro gira y el avión se inclina para acompañar;
+      // en un avión de verdad es al revés, pero lo que ve el ojo es lo mismo.
+      this.heading += controls.aileron * MAX_TURN_RATE * bite * step;
+      this.bank += (controls.aileron * VISUAL_BANK * bite - this.bank) * Math.min(1, step * 3.5);
+    }
 
     // Ascenso. Rodando no se sube hasta tener velocidad para ello.
     const canClimb = !this.state.onGround || bite > 0.88;

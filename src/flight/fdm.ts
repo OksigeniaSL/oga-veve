@@ -503,7 +503,15 @@ export class CoefficientFlightModel implements FlightModel {
     this.constrainGroundPitch();
     // Guiñada en tierra proporcional al timón y a la velocidad: dirigible
     // rodando, inútil parado, como una rueda de morro de verdad.
+    // Timón: dirige más cuanto más deprisa se va, porque es aerodinámico.
     s.yawRate += controls.rudder * 0.6 * Math.min(1, Math.abs(longitudinal) / 25) * settle;
+    // Y rueda de morro, que es al revés: manda a paso de peatón y se queda
+    // sin autoridad al coger carrerilla. Va con el mando de alabeo porque es
+    // el que la mano busca para girar, y en el suelo las alas no sirven de
+    // nada. Sin esto no se podía dar la vuelta en la pista tras abortar un
+    // despegue: el avión seguía recto hiciera uno lo que hiciera.
+    const nosewheel = 1 - Math.min(1, Math.abs(longitudinal) / 22);
+    s.yawRate += controls.aileron * 2.2 * nosewheel * settle;
   }
 
   /**

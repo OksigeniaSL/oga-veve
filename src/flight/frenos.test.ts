@@ -87,3 +87,27 @@ describe('con el motor a cero', () => {
     expect(model.state.airspeed).toBeLessThan(0.5);
   });
 });
+
+describe('rodar por la pista', () => {
+  for (const tier of TIERS) {
+    it(`en ${tier.name} el avión gira parado o rodando despacio`, () => {
+      const model = enPista(tier);
+      model.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 3 });
+      const input = { ...neutralControls(), throttle: 0.12, aileron: 1 };
+      for (let i = 0; i < 8 * 120; i++) model.step(1 / 120, input);
+      // Ocho segundos girando a tope tienen que dar una vuelta apreciable.
+      // Antes daban cero: el viraje se calculaba con la cuenta del vuelo, y
+      // esa cuenta se apoya en la velocidad, así que en tierra no giraba.
+      expect(Math.abs(model.state.heading)).toBeGreaterThan(0.5);
+    });
+
+    it(`en ${tier.name} la carrera de despegue sale casi recta`, () => {
+      const model = enPista(tier);
+      model.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 0 });
+      const input = { ...neutralControls(), throttle: 1 };
+      for (let i = 0; i < 12 * 120; i++) model.step(1 / 120, input);
+      // Sin tocar nada, el avión no se va solo de la pista.
+      expect(Math.abs(model.state.heading)).toBeLessThan(0.08);
+    });
+  }
+});
