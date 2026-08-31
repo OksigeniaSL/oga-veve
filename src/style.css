@@ -228,6 +228,43 @@ body {
   margin-bottom: 2px;
 }
 
+/* Arco con aguja, para el peldaño pictórico. Un `conic-gradient` y una
+   marca girada: sin canvas, sin SVG y sin un byte de imagen. Verde donde
+   está bien, ámbar y rojo donde no. */
+.arco {
+  --v: 0;
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 4px 0 2px;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from 200deg,
+      #7ea85c 0deg 60deg,
+      #c9a94e 60deg 100deg,
+      #b4553a 100deg 140deg,
+      transparent 140deg 360deg
+    );
+  -webkit-mask: radial-gradient(circle, transparent 56%, #000 58%);
+  mask: radial-gradient(circle, transparent 56%, #000 58%);
+}
+
+.arco__aguja {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 40px;
+  margin-left: -1.5px;
+  background: var(--beige);
+  border-radius: 2px;
+  transform-origin: 50% 0;
+  /* 200° es el arranque del arco y 140° su recorrido útil. */
+  transform: rotate(calc(20deg + var(--v) * 140deg));
+  transition: transform 140ms linear;
+}
+
 /* Aguja a la pista: gira respecto al morro, arriba es de frente. */
 .casa {
   display: grid;

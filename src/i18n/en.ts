@@ -66,6 +66,7 @@ export const EN: Dictionary = {
   'help.credits': 'F1 — credits',
   'help.language': 'L — language',
   'help.sound': 'V — sound',
+  'help.aircraft': 'P — change aircraft',
   'help.start': 'Throttle all the way up, then ease back when she runs',
 
   'credits.title': 'Credits',

@@ -7,8 +7,14 @@
  *
  * Los nombres son aves guaraníes y en pantalla se eligen con retratos, sin
  * que aparezca nunca una edad: nadie quiere elegir «el modo de pequeños»,
- * pero todo el mundo elige el colibrí. Las edades de aquí son una guía para
+ * pero todo el mundo elige el pajarito. Las edades de aquí son una guía para
  * quien programa, no una etiqueta para quien juega.
+ *
+ * **Los nombres de tramo no pueden coincidir con los de las aeronaves.** El
+ * primero se llamó Mainumby durante unas horas, que es también el nombre del
+ * biplano fumigador, y la confusión fue inmediata: al leer «Mainumby» en el
+ * rótulo, uno no sabe si le están diciendo en qué nivel está o qué avión
+ * lleva. Antes de bautizar un tramo o una aeronave, mirar la otra lista.
  *
  * El primer peldaño usa **otro modelo de vuelo**, no el mismo con más ayudas.
  * Esa es la lección que costó cuatro intentos: pelear con un modelo realista
@@ -19,7 +25,7 @@
 
 import { type AssistLayers, FULL_ASSISTS, NO_ASSISTS } from './assists';
 
-export type TierId = 'mainumby' | 'tuka' | 'taguato' | 'taguato-ruvicha';
+export type TierId = 'guyrami' | 'tuka' | 'taguato' | 'taguato-ruvicha';
 
 /** Qué motor de vuelo mueve al avión en este tramo. */
 export type FlightModelKind = 'simple' | 'coefficient';
@@ -38,9 +44,9 @@ export interface Tier {
   units: 'metric' | 'aeronautical';
 }
 
-export const MAINUMBY: Tier = {
-  id: 'mainumby',
-  name: 'Mainumby',
+export const GUYRAMI: Tier = {
+  id: 'guyrami',
+  name: 'Guyrami',
   ages: '4-6',
   // Modelo propio y sencillo: el avión va donde apunta el morro. Sin
   // intercambio de energía, sin fugoide, sin pérdida. No es el modelo de
@@ -94,7 +100,7 @@ export const TAGUATO_RUVICHA: Tier = {
   units: 'aeronautical',
 };
 
-export const TIERS: readonly Tier[] = [MAINUMBY, TUKA, TAGUATO, TAGUATO_RUVICHA];
+export const TIERS: readonly Tier[] = [GUYRAMI, TUKA, TAGUATO, TAGUATO_RUVICHA];
 
 export function tierById(id: TierId): Tier {
   const found = TIERS.find((tier) => tier.id === id);

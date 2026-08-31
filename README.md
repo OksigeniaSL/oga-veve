@@ -60,6 +60,7 @@ genera por código, sin descargar datos.
 | Nivel de dificultad | `M` | Ajustes |
 | Idioma | `L` | Ajustes |
 | Sonido | `V` | Ajustes |
+| Cambiar de avión | `P` | Ajustes |
 
 También funciona con mando (Xbox / PlayStation) por la Gamepad API.
 
@@ -91,7 +92,7 @@ ecuaciones de Euler del sólido rígido. Entra en pérdida de verdad.
 
 ## Cuatro niveles, no dos modos
 
-| | Mainumby | Tukã | Taguato | Taguato Ruvicha |
+| | Guyrami | Tukã | Taguato | Taguato Ruvicha |
 |---|---|---|---|---|
 | Edad orientativa | 4-6 | 7-9 | 10-13 | 14+ |
 | Modelo de vuelo | sencillo | coeficientes | coeficientes | coeficientes |

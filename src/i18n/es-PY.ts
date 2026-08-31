@@ -59,6 +59,7 @@ export const ES_PY = {
   'help.credits': 'F1 — créditos',
   'help.language': 'L — idioma',
   'help.sound': 'V — sonido',
+  'help.aircraft': 'P — cambiar de avión',
   'help.start': 'Empujá el motor a tope y tirá suave cuando corra',
 
   'credits.title': 'Créditos',

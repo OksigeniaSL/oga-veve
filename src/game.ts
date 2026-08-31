@@ -23,8 +23,8 @@ import {
 } from 'three';
 import { CoefficientFlightModel } from './flight/fdm';
 import { ArcadeFlightModel } from './flight/arcade';
-import { MAINUMBY, TIERS, type Tier } from './flight/tiers';
-import { OGA_172, type AircraftConfig } from './flight/aircraft';
+import { GUYRAMI, TIERS, type Tier } from './flight/tiers';
+import { AIRCRAFT, OGA_172, type AircraftConfig } from './flight/aircraft';
 import { InputManager } from './flight/input';
 import type { FlightModel, FlightState } from './flight/model';
 import { Terrain } from './world/terrain';
@@ -87,11 +87,11 @@ export class Game {
 
   private readonly terrain: Terrain;
   private readonly sky: SkyRig;
-  private readonly aircraftMesh: AircraftMesh;
-  private readonly aircraft: AircraftConfig;
+  private aircraftMesh: AircraftMesh;
+  private aircraft: AircraftConfig;
   private readonly scenario: Scenario;
   private flight: FlightModel;
-  private tier: Tier = MAINUMBY;
+  private tier: Tier = GUYRAMI;
   private readonly input: InputManager;
   private readonly audio = new Audio();
   private readonly hud: Hud;
@@ -162,6 +162,8 @@ export class Game {
     this.flight = this.buildFlightModel(this.tier);
 
     this.hud = new Hud(options.hudRoot);
+    this.hud.setInstruments(this.tier.instruments);
+    this.hud.setUnits(this.tier.units);
     this.creditsRoot = options.creditsRoot;
     this.credits = new CreditsScreen(this.creditsRoot, this.flight.implementationName);
 
@@ -170,6 +172,7 @@ export class Game {
       toggleAssist: () => this.cycleTier(),
       resetFlight: () => this.resetFlight(),
       toggleCredits: () => this.credits.toggle(),
+      cycleAircraft: () => this.cycleAircraft(),
       cycleLanguage: () => this.changeLanguage(),
       toggleSound: () => this.toggleSound(),
       firstGesture: () => this.audio.unlock(),
@@ -460,6 +463,31 @@ export class Game {
   }
 
   /**
+   * Cambia de aeronave.
+   *
+   * Hasta ahora la flota existía en el código y no había forma de llegar a
+   * ella: se volaba siempre la misma avioneta. Se cambia en tierra o en el
+   * aire, y el avión nuevo aparece donde estaba el anterior.
+   */
+  private cycleAircraft(): void {
+    const next = AIRCRAFT[(AIRCRAFT.indexOf(this.aircraft) + 1) % AIRCRAFT.length] ?? OGA_172;
+    const { position, heading, airspeed } = this.flight.state;
+    const carried = { position: position.clone(), heading, airspeed };
+
+    this.aircraft = next;
+
+    this.scene.remove(this.aircraftMesh.group);
+    this.aircraftMesh = createAircraftMesh(next);
+    this.scene.add(this.aircraftMesh.group);
+
+    this.flight = this.buildFlightModel(this.tier);
+    this.flight.reset(carried);
+
+    this.updateBadge();
+    this.hud.flash(`${next.name} — ${t(next.descriptionKey as never)}`, 3.5);
+  }
+
+  /**
    * Sube o baja un peldaño de la escalera de dificultad.
    *
    * Cambia el motor de vuelo si hace falta, las unidades y los instrumentos.
@@ -467,7 +495,7 @@ export class Game {
    * caiga nada.
    */
   private cycleTier(): void {
-    const next = TIERS[(TIERS.indexOf(this.tier) + 1) % TIERS.length] ?? MAINUMBY;
+    const next = TIERS[(TIERS.indexOf(this.tier) + 1) % TIERS.length] ?? GUYRAMI;
     const { position, heading, airspeed } = this.flight.state;
     const carried = { position: position.clone(), heading, airspeed };
 
@@ -476,6 +504,7 @@ export class Game {
     this.flight.reset(carried);
 
     this.hud.setUnits(next.units);
+    this.hud.setInstruments(next.instruments);
     this.updateBadge();
     this.hud.flash(next.name, 3);
   }

@@ -23,6 +23,7 @@ import type { FlightState } from '../flight/model';
 import { indicatedAirspeed } from '../flight/atmosphere';
 import { t } from '../i18n';
 import { Tutor } from './tutor';
+import type { Tier } from '../flight/tiers';
 
 /**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
@@ -80,15 +81,23 @@ export class Hud {
   readonly tutor = new Tutor();
   private readonly root: HTMLElement;
   private units: UnitSystem = METRIC;
+  /**
+   * Cuántos instrumentos enseña el HUD.
+   *
+   * Es la mitad visible de la escalera de tramos: de ninguno a los cinco. Un
+   * niño de cinco años no necesita saber su rumbo, y enseñárselo solo le
+   * quita paisaje.
+   */
+  private instruments: Tier['instruments'] = 'numeric';
 
-  private speed!: HTMLElement;
-  private altitude!: HTMLElement;
-  private heading!: HTMLElement;
-  private vspeed!: HTMLElement;
+  private speed: HTMLElement | null = null;
+  private altitude: HTMLElement | null = null;
+  private heading: HTMLElement | null = null;
+  private vspeed: HTMLElement | null = null;
   private throttleFill!: HTMLElement;
-  private horizon!: HTMLElement;
+  private horizon: HTMLElement | null = null;
   private homeArrow!: HTMLElement;
-  private homeDistance!: HTMLElement;
+  private homeDistance: HTMLElement | null = null;
   private home!: HTMLElement;
   private warning!: HTMLElement;
   private warningText!: HTMLElement;
@@ -111,30 +120,36 @@ export class Hud {
    * así que la forma barata y sin sorpresas de traducirlos es rehacerlos.
    */
   render(): void {
+    const gauges = this.instruments !== 'none';
+    const pictorial = this.instruments === 'pictorial';
+    const numbers = this.instruments === 'numeric' || this.instruments === 'full';
+
     this.root.innerHTML = `
       <div class="hud__arriba">
         <div class="tarjeta insignia" data-hud="badge"></div>
       </div>
       <div class="hud__izquierda">
-        ${gauge('speed', INSTRUMENTS.speed, t('hud.speed'), this.units.speedLabel())}
-        ${gauge('vspeed', INSTRUMENTS.vspeed, t('hud.vspeed'), this.units.vspeedLabel())}
+        ${numbers ? gauge('speed', INSTRUMENTS.speed, t('hud.speed'), this.units.speedLabel()) : ''}
+        ${numbers ? gauge('vspeed', INSTRUMENTS.vspeed, t('hud.vspeed'), this.units.vspeedLabel()) : ''}
+        ${pictorial ? arcGauge('speed', INSTRUMENTS.speed, t('hud.speed')) : ''}
       </div>
       <div class="hud__derecha">
-        ${gauge('altitude', INSTRUMENTS.altitude, t('hud.altitude'), this.units.altitudeLabel())}
-        ${gauge('heading', INSTRUMENTS.heading, t('hud.heading'), '°')}
+        ${numbers ? gauge('altitude', INSTRUMENTS.altitude, t('hud.altitude'), this.units.altitudeLabel()) : ''}
+        ${numbers ? gauge('heading', INSTRUMENTS.heading, t('hud.heading'), '°') : ''}
+        ${pictorial ? arcGauge('altitude', INSTRUMENTS.altitude, t('hud.altitude')) : ''}
         <div class="tarjeta medidor motor">
-          <span class="medidor__etiqueta">${INSTRUMENTS.throttle}</span>
+          ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.throttle}</span>` : ''}
           <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
-          <span class="medidor__glosa">${t('hud.throttle')}</span>
+          ${gauges ? `<span class="medidor__glosa">${t('hud.throttle')}</span>` : ''}
         </div>
-        <div class="tarjeta horizonte">
+        ${numbers ? `<div class="tarjeta horizonte">
           <div class="horizonte__cielo" data-hud="horizon"></div>
           <div class="horizonte__cruz"></div>
-        </div>
+        </div>` : ''}
         <div class="tarjeta casa" data-hud="home">
           <div class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</div>
-          <span class="casa__distancia" data-hud="home-distance">0</span>
-          <span class="medidor__glosa">${t('hud.home')}</span>
+          ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ''}
+          ${gauges ? `<span class="medidor__glosa">${t('hud.home')}</span>` : ''}
         </div>
       </div>
       <div class="vineta" data-hud="vignette"></div>
@@ -153,15 +168,17 @@ export class Hud {
       </div>
     `;
 
-    this.speed = pick(this.root, 'speed');
-    this.altitude = pick(this.root, 'altitude');
-    this.heading = pick(this.root, 'heading');
-    this.vspeed = pick(this.root, 'vspeed');
+    // Los instrumentos que este peldaño no enseña sencillamente no están en
+    // el DOM, así que la actualización tiene que tolerar su ausencia.
+    this.speed = optional(this.root, 'speed');
+    this.altitude = optional(this.root, 'altitude');
+    this.heading = optional(this.root, 'heading');
+    this.vspeed = optional(this.root, 'vspeed');
     this.throttleFill = pick(this.root, 'throttle');
-    this.horizon = pick(this.root, 'horizon');
+    this.horizon = optional(this.root, 'horizon');
     this.home = pick(this.root, 'home');
     this.homeArrow = pick(this.root, 'home-arrow');
-    this.homeDistance = pick(this.root, 'home-distance');
+    this.homeDistance = optional(this.root, 'home-distance');
     this.warning = pick(this.root, 'warning');
     this.warningText = pick(this.root, 'warning-text');
     this.warningArrow = pick(this.root, 'warning-arrow');
@@ -189,8 +206,10 @@ export class Hud {
     // de signo.
     const degrees = (relativeBearing * 180) / Math.PI - 90;
     this.homeArrow.style.transform = `rotate(${degrees}deg)`;
-    this.homeDistance.textContent =
-      metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${Math.round(metres)} m`;
+    if (this.homeDistance) {
+      this.homeDistance.textContent =
+        metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${Math.round(metres)} m`;
+    }
     // Cerca y de frente, se apaga: ya la estás viendo por la ventanilla.
     this.home.classList.toggle('casa--cerca', metres < 900);
   }
@@ -200,26 +219,46 @@ export class Hud {
     this.render();
   }
 
+  /** Cuántos instrumentos enseña este peldaño de la escalera. */
+  setInstruments(level: Tier['instruments']): void {
+    this.instruments = level;
+    this.render();
+  }
+
   update(state: FlightState, throttle: number, dt: number): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
     const ias = indicatedAirspeed(state.airspeed, state.position.y);
-    this.speed.textContent = Math.round(this.units.speed(ias)).toString();
-    this.altitude.textContent = Math.round(this.units.altitude(state.position.y)).toString();
-    this.vspeed.textContent = this.units
-      .vspeed(state.verticalSpeed)
-      .toFixed(this.units.vspeedDecimals);
 
-    const degrees = Math.round((state.heading * 180) / Math.PI) % 360;
-    this.heading.textContent = degrees.toString().padStart(3, '0');
+    if (this.instruments === 'pictorial') {
+      // Sin cifras: la aguja del arco dice deprisa o despacio, alto o bajo.
+      setArc(this.speed, this.units.speed(ias) / 220);
+      setArc(this.altitude, this.units.altitude(state.position.y) / 900);
+    } else {
+      if (this.speed) this.speed.textContent = Math.round(this.units.speed(ias)).toString();
+      if (this.altitude) {
+        this.altitude.textContent = Math.round(this.units.altitude(state.position.y)).toString();
+      }
+      if (this.vspeed) {
+        this.vspeed.textContent = this.units
+          .vspeed(state.verticalSpeed)
+          .toFixed(this.units.vspeedDecimals);
+      }
+      if (this.heading) {
+        const degrees = Math.round((state.heading * 180) / Math.PI) % 360;
+        this.heading.textContent = degrees.toString().padStart(3, '0');
+      }
+    }
 
     this.throttleFill.style.width = `${Math.round(throttle * 100)}%`;
 
     // El horizonte gira al revés que el avión y sube y baja con el cabeceo:
     // así el instrumento representa el mundo, no la máquina.
-    const bank = bankAngleOf(state);
-    const pitch = pitchAngleOf(state);
-    this.horizon.style.transform = `rotate(${(-bank * 180) / Math.PI}deg) translateY(${((pitch * 180) / Math.PI) * 1.6}px)`;
+    if (this.horizon) {
+      const bank = bankAngleOf(state);
+      const pitch = pitchAngleOf(state);
+      this.horizon.style.transform = `rotate(${(-bank * 180) / Math.PI}deg) translateY(${((pitch * 180) / Math.PI) * 1.6}px)`;
+    }
 
     this.setWarning(state);
 
@@ -282,6 +321,34 @@ function gauge(name: string, instrument: string, gloss: string, unit: string): s
       <span class="medidor__glosa">${gloss}</span>
     </div>
   `;
+}
+
+/**
+ * Arco de aguja para el peldaño pictórico: sin una sola cifra.
+ *
+ * Es un `conic-gradient` de CSS, así que no hay canvas, ni SVG, ni un solo
+ * byte de imagen. La banda verde marca dónde está bien y la roja dónde no,
+ * que es toda la lectura que necesita alguien de siete años.
+ */
+function arcGauge(name: string, instrument: string, gloss: string): string {
+  return `
+    <div class="tarjeta medidor">
+      <span class="medidor__etiqueta">${instrument}</span>
+      <div class="arco" data-hud="${name}"><span class="arco__aguja"></span></div>
+      <span class="medidor__glosa">${gloss}</span>
+    </div>
+  `;
+}
+
+/** Coloca la aguja de un arco, con la fracción acotada a su recorrido. */
+function setArc(element: HTMLElement | null, fraction: number): void {
+  if (!element) return;
+  const clamped = Math.max(0, Math.min(1, fraction));
+  element.style.setProperty('--v', String(clamped));
+}
+
+function optional(root: HTMLElement, name: string): HTMLElement | null {
+  return root.querySelector<HTMLElement>(`[data-hud="${name}"]`);
 }
 
 function pick(root: HTMLElement, name: string): HTMLElement {

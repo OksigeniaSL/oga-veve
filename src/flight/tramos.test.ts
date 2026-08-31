@@ -12,7 +12,7 @@ import { ArcadeFlightModel } from './arcade';
 import { CoefficientFlightModel } from './fdm';
 import { OGA_172 } from './aircraft';
 import { neutralControls, type ControlInputs, type FlightModel } from './model';
-import { MAINUMBY, TAGUATO, TAGUATO_RUVICHA, TIERS, TUKA } from './tiers';
+import { GUYRAMI, TAGUATO, TAGUATO_RUVICHA, TIERS, TUKA } from './tiers';
 
 function build(tier: (typeof TIERS)[number]): FlightModel {
   const ground = () => 0;
@@ -29,7 +29,7 @@ function fly(model: FlightModel, seconds: number, controls: Partial<ControlInput
 
 describe('el primer peldaño usa otro modelo', () => {
   it('Mainumby no entra en pérdida por mucho que se tire', () => {
-    const model = build(MAINUMBY);
+    const model = build(GUYRAMI);
     model.reset({ position: new Vector3(0, 400, 0), heading: 0, airspeed: 30 });
     fly(model, 25, { throttle: 0.3, elevator: 1 });
     expect(model.state.stalled).toBe(false);
@@ -52,7 +52,7 @@ describe('el primer peldaño usa otro modelo', () => {
   });
 
   it('en Mainumby hay que coger velocidad para despegar', () => {
-    const model = build(MAINUMBY);
+    const model = build(GUYRAMI);
     model.reset({ position: new Vector3(0, OGA_172.gearHeight, 0), heading: 0, airspeed: 0 });
     fly(model, 2, { throttle: 1, elevator: 1 });
     expect(model.state.onGround).toBe(true);
@@ -61,7 +61,7 @@ describe('el primer peldaño usa otro modelo', () => {
   });
 
   it('los mandos van en el mismo sentido que en el modelo de verdad', () => {
-    for (const tier of [MAINUMBY, TAGUATO_RUVICHA]) {
+    for (const tier of [GUYRAMI, TAGUATO_RUVICHA]) {
       const model = build(tier);
       model.reset({ position: new Vector3(0, 900, 0), heading: 0, airspeed: 45 });
       // Un segundo y no tres: sin ayudas, tres segundos de alerón a fondo dan
