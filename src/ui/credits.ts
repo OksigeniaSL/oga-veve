@@ -24,6 +24,12 @@ export class CreditsScreen {
         <p>${t('credits.terrain')}</p>
         <p>${t('credits.engine', { model: flightModelName })}</p>
         <p>${t('credits.licence')}</p>
+        <!--
+          La dedicatoria va la última y separada, porque no es un crédito de
+          procedencia: es la única línea de esta pantalla que no está aquí
+          por obligación legal.
+        -->
+        <p class="creditos__dedicatoria">${t('credits.dedication')}</p>
         <button class="creditos__cerrar" type="button">${t('credits.close')}</button>
       </div>
     `;

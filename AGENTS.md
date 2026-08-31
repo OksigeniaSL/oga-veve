@@ -11,14 +11,15 @@ Paraguay, y adultos que quieran volar sin leer un manual.
 
 ## La regla que va antes de las reglas
 
-Viene de un formador de campismo de montaña con menores, y arranca los cursos
-con ella:
+Es de **Guillermo Ayala**, del Parque Nacional del Teide, que lleva cuarenta
+años enseñando esa montaña a escolares y arrancaba los cursos con ella:
 
 > «Lo único que deben aprender conmigo es que se cumple a rajatabla la regla
 > de las tres eses: **Seguridad, Seguridad, Seguridad**. A partir de ahí, todo
 > lo demás es aprendizaje: empezamos.»
 
-Vale igual para volar, y gobierna este juego entero. No es una funcionalidad
+Vale igual para volar, y gobierna este juego entero. La dedicatoria está en
+`CREDITOS.md`. No es una funcionalidad
 ni un módulo: es el criterio con el que se resuelve cualquier duda de diseño
 que no tenga respuesta obvia.
 

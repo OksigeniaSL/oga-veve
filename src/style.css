@@ -900,3 +900,13 @@ body {
   background: var(--ocre);
   color: #1a1206;
 }
+
+/* La dedicatoria de los créditos: separada del resto y en voz baja. */
+.creditos__dedicatoria {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 13px;
+  font-style: italic;
+  opacity: 0.78;
+}

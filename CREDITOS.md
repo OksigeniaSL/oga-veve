@@ -6,6 +6,20 @@ Si no se puede anotar la licencia, el asset no entra.
 
 ---
 
+## Dedicatoria
+
+**A Guillermo Ayala**, del Parque Nacional del Teide.
+
+Lleva cuarenta años enseñando esa montaña a escolares, y arrancaba los cursos
+diciendo que lo único que había que aprender con él era la regla de las tres
+eses: seguridad, seguridad, seguridad, y que a partir de ahí todo lo demás es
+aprendizaje.
+
+Buena parte de lo que esa montaña significa hoy para quien creció cerca de
+ella se lo debe a él. Esa regla gobierna este juego entero.
+
+---
+
 ## Desarrollo
 
 **Óga Veve** es un producto de **Oksigenia SL**, publicado bajo la marca

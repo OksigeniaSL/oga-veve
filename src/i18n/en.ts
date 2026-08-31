@@ -87,6 +87,8 @@ export const EN: Dictionary = {
   'credits.terrain': 'Relief from NASADEM data (NASA), public domain.',
   'credits.engine': 'Flight model: {model}',
   'credits.licence': 'Code free under Apache-2.0. Content and brands, © Oksigenia SL.',
+  'credits.dedication':
+    'For Guillermo Ayala, of Teide National Park, who has spent forty years teaching that mountain to schoolchildren. The rule this game runs on is his: safety, safety, safety — everything after that is learning.',
   'credits.close': 'Close',
 
   'language.label': 'Language',

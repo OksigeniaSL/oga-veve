@@ -80,6 +80,8 @@ export const ES_PY = {
   'credits.terrain': 'Relieve a partir de datos NASADEM (NASA), de dominio público.',
   'credits.engine': 'Modelo de vuelo: {model}',
   'credits.licence': 'Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.',
+  'credits.dedication':
+    'A Guillermo Ayala, del Parque Nacional del Teide, que lleva cuarenta años enseñando esa montaña a escolares. La regla que gobierna este juego es suya: seguridad, seguridad, seguridad — a partir de ahí, todo lo demás es aprendizaje.',
   'credits.close': 'Cerrar',
 
   'language.label': 'Idioma',
