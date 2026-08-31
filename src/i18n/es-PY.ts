@@ -26,6 +26,8 @@ export const ES_PY = {
   'mode.arcade': 'Arcade',
   'mode.pilot': 'Piloto',
   'mode.changed': 'Ayuda de vuelo: {mode}',
+  'sound.on': 'Sonido encendido',
+  'sound.off': 'Sonido apagado',
 
   'units.kmh': 'km/h',
   'units.metres': 'm',
@@ -56,6 +58,7 @@ export const ES_PY = {
   'help.reset': 'R — volver a empezar',
   'help.credits': 'F1 — créditos',
   'help.language': 'L — idioma',
+  'help.sound': 'V — sonido',
   'help.start': 'Empujá el motor a tope y tirá suave cuando corra',
 
   'credits.title': 'Créditos',

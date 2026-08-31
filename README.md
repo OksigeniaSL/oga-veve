@@ -59,6 +59,7 @@ genera por código, sin descargar datos.
 | Reiniciar vuelo | `R` | Botón |
 | Ayuda de vuelo | `M` | Ajustes |
 | Idioma | `L` | Ajustes |
+| Sonido | `V` | Ajustes |
 
 También funciona con mando (Xbox / PlayStation) por la Gamepad API.
 

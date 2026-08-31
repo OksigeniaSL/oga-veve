@@ -33,6 +33,8 @@ export const EN: Dictionary = {
   'mode.arcade': 'Arcade',
   'mode.pilot': 'Pilot',
   'mode.changed': 'Flight assist: {mode}',
+  'sound.on': 'Sound on',
+  'sound.off': 'Sound off',
 
   'units.kmh': 'km/h',
   'units.metres': 'm',
@@ -63,6 +65,7 @@ export const EN: Dictionary = {
   'help.reset': 'R — start again',
   'help.credits': 'F1 — credits',
   'help.language': 'L — language',
+  'help.sound': 'V — sound',
   'help.start': 'Throttle all the way up, then ease back when she runs',
 
   'credits.title': 'Credits',

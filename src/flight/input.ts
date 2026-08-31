@@ -65,6 +65,9 @@ export interface InputActions {
   resetFlight: () => void;
   toggleCredits: () => void;
   cycleLanguage: () => void;
+  toggleSound: () => void;
+  /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
+  firstGesture: () => void;
 }
 
 export class InputManager {
@@ -78,6 +81,8 @@ export class InputManager {
   private touchRudder = 0;
   private touchThrottle: number | null = null;
   private touchBrakes = false;
+  /** Solo se avisa del primer gesto una vez. */
+  private gestured = false;
 
   constructor(target: HTMLElement, actions: InputActions) {
     this.actions = actions;
@@ -133,6 +138,7 @@ export class InputManager {
   // ── Teclado ───────────────────────────────────────────────────────────
 
   private onKeyDown = (event: KeyboardEvent): void => {
+    this.noteGesture();
     // Las flechas hacen scroll de la página si no se les para los pies.
     if (event.code.startsWith('Arrow') || event.code === 'Space') event.preventDefault();
     if (event.repeat) return;
@@ -151,6 +157,9 @@ export class InputManager {
       case 'KeyL':
         this.actions.cycleLanguage();
         break;
+      case 'KeyV':
+        this.actions.toggleSound();
+        break;
       case 'F1':
         event.preventDefault();
         this.actions.toggleCredits();
@@ -160,6 +169,20 @@ export class InputManager {
         break;
     }
   };
+
+  /**
+   * Primer gesto del jugador.
+   *
+   * Los navegadores no dejan que suene nada hasta que alguien toca algo. En
+   * vez de una pantalla de «activa el sonido», que es fea y que hay que leer,
+   * se aprovecha el primer gesto que este juego recibe de todos modos: la
+   * tecla del motor o el dedo en la palanca.
+   */
+  private noteGesture(): void {
+    if (this.gestured) return;
+    this.gestured = true;
+    this.actions.firstGesture();
+  }
 
   private onKeyUp = (event: KeyboardEvent): void => {
     this.keys.delete(event.code);
@@ -199,6 +222,8 @@ export class InputManager {
     const throttle = target.querySelector<HTMLElement>('[data-touch="throttle"]');
     const rudder = target.querySelector<HTMLElement>('[data-touch="rudder"]');
     const brakes = target.querySelector<HTMLElement>('[data-touch="brakes"]');
+
+    window.addEventListener('pointerdown', () => this.noteGesture(), { passive: true });
 
     if (stick) {
       bindPad(stick, (x, y) => {

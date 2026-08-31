@@ -34,6 +34,7 @@ import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { LOCALE_NAMES, cycleLocale, t } from './i18n';
+import { Audio } from './audio/audio';
 
 /** Vistas disponibles, en el orden en que rota la tecla C. */
 const CAMERA_MODES = ['chase', 'cockpit', 'wing'] as const;
@@ -77,12 +78,17 @@ export class Game {
   private readonly scenario: Scenario;
   private readonly flight: CoefficientFlightModel;
   private readonly input: InputManager;
+  private readonly audio = new Audio();
   private readonly hud: Hud;
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
 
   private cameraMode: CameraMode = 'chase';
   private propellerAngle = 0;
+  /** Estado del avión en el fotograma anterior, para detectar los cambios. */
+  private wasOnGround = true;
+  private wasStalled = false;
+  private wasCrashed = false;
   /** Cuánto traqueteo hay ahora mismo, de 0 a 1. Se apaga solo al despegar. */
   private shake = 0;
   private shakeClock = 0;
@@ -153,7 +159,11 @@ export class Game {
       resetFlight: () => this.resetFlight(),
       toggleCredits: () => this.credits.toggle(),
       cycleLanguage: () => this.changeLanguage(),
+      toggleSound: () => this.toggleSound(),
+      firstGesture: () => this.audio.unlock(),
     });
+
+    this.audio.prepare();
 
     window.addEventListener('resize', this.onResize);
     this.onResize();
@@ -165,12 +175,14 @@ export class Game {
     if (this.running) return;
     this.running = true;
     this.clock.start();
+    this.audio.setActive(true);
     this.renderer.setAnimationLoop(this.frame);
   }
 
   stop(): void {
     this.running = false;
     this.renderer.setAnimationLoop(null);
+    this.audio.setActive(false);
   }
 
   dispose(): void {
@@ -194,6 +206,9 @@ export class Game {
 
     this.flight.reset({ position: start, heading, airspeed: 0 });
     this.crashedFor = 0;
+    this.wasOnGround = true;
+    this.wasStalled = false;
+    this.wasCrashed = false;
     this.input.controls.throttle = 0;
     this.hud.tutor.reset();
     this.updateBadge();
@@ -218,6 +233,8 @@ export class Game {
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
+    this.announce(this.flight.state);
+    this.audio.update(this.flight.state, this.input.controls);
     this.hud.update(this.flight.state, this.input.controls.throttle, dt);
     const toRunway = this.updateHomeIndicator();
     this.hud.tutor.update(this.flight.state, this.input.controls.throttle, dt, toRunway);
@@ -403,6 +420,36 @@ export class Game {
     this.hud.flash(
       t('mode.changed', { mode: this.flight.assist > 0.5 ? t('mode.arcade') : t('mode.pilot') }),
     );
+  }
+
+  /**
+   * Convierte cambios de estado en sonido.
+   *
+   * Se hace comparando con el fotograma anterior y no dentro del modelo de
+   * vuelo a propósito: el FDM no sabe que existe el audio y no tiene por qué
+   * saberlo. Cuando entre el bus de eventos, esto se suscribirá a él y esta
+   * función desaparecerá.
+   */
+  private announce(state: FlightState): void {
+    if (state.onGround && !this.wasOnGround) {
+      // Toque de ruedas. Una toma dura suena distinto de una suave, que es lo
+      // que enseña a aterrizar sin necesidad de puntuación ninguna.
+      this.audio.cue(state.touchdownSinkRate > 2.5 ? 'error' : 'touchdown');
+    }
+    if (!state.onGround && this.wasOnGround && !state.crashed) {
+      this.audio.cue('achieved');
+    }
+    if (state.stalled && !this.wasStalled) this.audio.cue('attention');
+    if (state.crashed && !this.wasCrashed) this.audio.cue('error');
+
+    this.wasOnGround = state.onGround;
+    this.wasStalled = state.stalled;
+    this.wasCrashed = state.crashed;
+  }
+
+  private toggleSound(): void {
+    const muted = this.audio.toggleMute();
+    this.hud.flash(t(muted ? 'sound.off' : 'sound.on'));
   }
 
   /** Pasa al siguiente idioma y repinta todo lo que lleva texto. */
