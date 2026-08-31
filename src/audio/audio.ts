@@ -114,6 +114,19 @@ export class Audio {
   /** Rodadura: solo con ruedas en el suelo. */
   private rollGain: GainNode | null = null;
 
+  /**
+   * Bocina de pérdida.
+   *
+   * Es el único aviso sonoro que lleva de verdad una avioneta de escuela: una
+   * lengüeta en el borde de ataque que sopla cuando el ángulo de ataque se
+   * acerca al crítico, y suena **antes** de la pérdida, no durante. Todo lo
+   * demás que se oye en los vídeos de aterrizajes —los cantos de altura, el
+   * «retard», el TCAS, el EGPWS— es equipo de avión de línea y aquí sería
+   * mentira. Ver el issue de la escalera de comunicación.
+   */
+  private hornGain: GainNode | null = null;
+  private hornPulse: OscillatorNode | null = null;
+
   get available(): boolean {
     return this.context !== null;
   }
@@ -164,7 +177,11 @@ export class Audio {
    * hilo de audio: si se escribieran los valores a pelo cada fotograma se
    * oirían escalones, y a 30 fps el motor sonaría a robot.
    */
-  update(state: FlightState, controls: ControlInputs): void {
+  /**
+   * @param stallWarnAt ángulo de ataque, en radianes, al que empieza a sonar
+   *   la bocina de pérdida
+   */
+  update(state: FlightState, controls: ControlInputs, stallWarnAt = 0.24): void {
     const ctx = this.context;
     if (!ctx || ctx.state !== 'running') return;
     const now = ctx.currentTime;
@@ -202,6 +219,12 @@ export class Audio {
     this.windGain?.gain.setTargetAtTime(speed * speed * 0.34 * (1 + slip * 0.5), now, 0.12);
     this.windWhistle?.frequency.setTargetAtTime(600 + speed * 1900, now, 0.12);
     this.windBody?.frequency.setTargetAtTime(420 + slip * 340, now, 0.15);
+
+    // ── Bocina de pérdida ───────────────────────────────────────────────
+    // Suena a partir del ochenta y cinco por ciento del ángulo crítico, que
+    // es donde la pone un fabricante: da unos segundos para bajar el morro.
+    const margin = clamp((Math.abs(state.alpha) - stallWarnAt) / 0.06, 0, 1);
+    this.hornGain?.gain.setTargetAtTime(margin * 0.16, now, 0.05);
 
     // ── Bataneo de pérdida ──────────────────────────────────────────────
     // Late antes de que el HUD avise: el aire tiembla cuando el flujo empieza
@@ -326,6 +349,26 @@ export class Audio {
     this.buffetGain.gain.value = 0;
     this.buffetOscillator.connect(this.buffetGain).connect(this.windGain.gain);
     this.buffetOscillator.start();
+
+    // ── Bocina de pérdida: onda cuadrada pulsada, como una lengüeta ─────
+    const horn = ctx.createOscillator();
+    horn.type = 'square';
+    horn.frequency.value = 800;
+    this.hornGain = ctx.createGain();
+    this.hornGain.gain.value = 0;
+    const hornShape = ctx.createGain();
+    hornShape.gain.value = 0;
+    horn.connect(hornShape).connect(this.hornGain).connect(this.master);
+    horn.start();
+
+    // El pulso: una lengüeta real no da un tono limpio, tiembla.
+    this.hornPulse = ctx.createOscillator();
+    this.hornPulse.frequency.value = 6.5;
+    const pulseDepth = ctx.createGain();
+    pulseDepth.gain.value = 0.5;
+    this.hornPulse.connect(pulseDepth).connect(hornShape.gain);
+    hornShape.gain.value = 0.5;
+    this.hornPulse.start();
 
     // ── Rodadura ────────────────────────────────────────────────────────
     const rollFilter = ctx.createBiquadFilter();

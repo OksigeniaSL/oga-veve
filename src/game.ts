@@ -284,7 +284,9 @@ export class Game {
     updateSky(this.sky, this.camera.position);
     this.advanceMission();
     this.announce(this.flight.state);
-    this.audio.update(this.flight.state, this.input.controls);
+    // La bocina avisa al 85 % del ángulo crítico de esta aeronave concreta,
+    // que es donde la ponen los fabricantes.
+    this.audio.update(this.flight.state, this.input.controls, this.aircraft.aero.alphaStall * 0.85);
     this.hud.update(this.flight.state, this.input.controls.throttle, dt);
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
     // misión en curso la aguja señala el objetivo, y si el tutor mirara ese
