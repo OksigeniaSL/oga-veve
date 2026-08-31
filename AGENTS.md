@@ -9,6 +9,34 @@ Simulador de vuelo para navegador. Producto de **Oksigenia SL**, publicado
 bajo la marca **Granja Óga**. Público objetivo: niños de 4 a 14 años en
 Paraguay, y adultos que quieran volar sin leer un manual.
 
+## La regla que va antes de las reglas
+
+Viene de un formador de campismo de montaña con menores, y arranca los cursos
+con ella:
+
+> «Lo único que deben aprender conmigo es que se cumple a rajatabla la regla
+> de las tres eses: **Seguridad, Seguridad, Seguridad**. A partir de ahí, todo
+> lo demás es aprendizaje: empezamos.»
+
+Vale igual para volar, y gobierna este juego entero. No es una funcionalidad
+ni un módulo: es el criterio con el que se resuelve cualquier duda de diseño
+que no tenga respuesta obvia.
+
+En la práctica, tres consecuencias que sí son decisiones concretas:
+
+- **Renunciar es ganar.** Una aproximación frustrada se **felicita**, y puntúa
+  igual o más que un aterrizaje. Nada de música de tensión ni pantalla roja:
+  no es una emergencia, es una maniobra —a entrenar, eso sí—. Si el juego la
+  dramatiza enseña justo lo contrario de lo que quiere enseñar, que es que
+  abandonar da miedo.
+- **Las normas se muestran, no se imponen.** Nunca se castiga: se ve la
+  consecuencia y se vuelve a intentar. El objetivo es que se entienda el
+  porqué, no que se obedezca.
+- **Los galones no son mando, son responsabilidad.** Si el juego enseña a
+  contar las barras de la manga —y las enseña—, tiene que enseñar también
+  qué significan: cuatro barras no quieren decir que mandes, quieren decir
+  que respondes.
+
 ## Reglas que no se negocian
 
 1. **Dos registros del castellano, y no se mezclan.**
@@ -40,8 +68,13 @@ Paraguay, y adultos que quieran volar sin leer un manual.
 
    Corolario incómodo y aceptado: cuando la realidad y la comodidad chocan,
    gana la realidad y se resuelve simplificando la *presentación*. La
-   explicación popular de Bernoulli es cómoda y es falsa, así que no se
-   enseña ni en el peldaño más bajo.
+   explicación popular de la sustentación —«el aire de arriba tiene más
+   camino y tiene que llegar a la vez»— es cómoda y es falsa, así que no se
+   enseña ni en el peldaño más bajo. Ojo con el matiz: la sustentación **sí**
+   es una diferencia de presión, y el ángulo de ataque y la curvatura del
+   perfil son los que mandan. Lo falso es solo ese *porqué*. Presión y
+   deflexión no son teorías rivales: son la misma cosa vista por los dos
+   lados.
 
 5. **Test Ña Emy**: si una abuela paraguaya con WhatsApp como única
    referencia no puede usar una pantalla, la pantalla no está terminada.
