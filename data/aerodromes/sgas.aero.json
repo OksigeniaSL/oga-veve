@@ -59,6 +59,7 @@
   "taxiways": [
     {
       "ref": "A",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -97,6 +98,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -155,6 +157,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -225,6 +228,7 @@
     },
     {
       "ref": "G",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -239,6 +243,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -269,6 +274,7 @@
     },
     {
       "ref": "M",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -319,6 +325,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -361,6 +368,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -383,6 +391,7 @@
     },
     {
       "ref": "H",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -429,6 +438,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -499,6 +509,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -521,6 +532,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -567,6 +579,7 @@
     },
     {
       "ref": "H",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -581,6 +594,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -639,6 +653,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -693,6 +708,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -751,6 +767,7 @@
     },
     {
       "ref": "D",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -765,6 +782,7 @@
     },
     {
       "ref": "L",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -787,6 +805,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -845,6 +864,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -875,6 +895,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -917,6 +938,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -987,6 +1009,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1013,6 +1036,7 @@
     },
     {
       "ref": "J",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1039,6 +1063,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1065,6 +1090,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1087,6 +1113,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1125,6 +1152,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1139,6 +1167,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1169,6 +1198,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1195,6 +1225,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1225,6 +1256,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1247,6 +1279,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1289,6 +1322,7 @@
     },
     {
       "ref": "B",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1351,6 +1385,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1369,6 +1404,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1383,6 +1419,7 @@
     },
     {
       "ref": "N",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1409,6 +1446,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1423,6 +1461,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1445,6 +1484,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1471,6 +1511,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1489,6 +1530,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1503,6 +1545,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1521,6 +1564,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1539,6 +1583,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1553,6 +1598,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1575,6 +1621,7 @@
     },
     {
       "ref": "E",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1625,6 +1672,7 @@
     },
     {
       "ref": "C",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1639,6 +1687,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1709,6 +1758,7 @@
     },
     {
       "ref": "F",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1723,6 +1773,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1737,6 +1788,7 @@
     },
     {
       "ref": "M",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1811,6 +1863,7 @@
     },
     {
       "ref": "K",
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [
@@ -1825,6 +1878,7 @@
     },
     {
       "ref": null,
+      "kind": "taxiway",
       "widthM": null,
       "path": [
         [

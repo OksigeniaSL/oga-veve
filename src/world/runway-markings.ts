@@ -205,3 +205,44 @@ export function numberTexture(label: string): CanvasTexture | null {
   context.fillText(label, 0, 0);
   return new CanvasTexture(canvas);
 }
+
+/**
+ * El atlas de letreros de calle de rodaje: cada letra en amarillo sobre un
+ * recuadro negro, todas en un mismo lienzo cuadriculado.
+ *
+ * No es un capricho de color. En un aeródromo **el amarillo dice «esto no es
+ * pista»**, y por eso la letra que identifica la calle se pinta en amarillo,
+ * mientras que todo lo que va escrito en la pista es blanco. Quien aprenda
+ * aquí a seguir la A hasta el punto de espera está aprendiendo exactamente lo
+ * que se hace de verdad.
+ *
+ * El recuadro negro tampoco es decorativo: sobre asfalto gris el amarillo solo
+ * no se lee, y por eso los rótulos de superficie llevan siempre fondo oscuro y
+ * orla amarilla.
+ *
+ * Van todas juntas porque cada textura suelta cuesta una llamada de dibujo, y
+ * el aeródromo entero tiene un presupuesto de doce.
+ */
+export function letreroAtlasTexture(labels: readonly string[], lado: number): CanvasTexture | null {
+  if (typeof document === 'undefined') return null;
+  const celda = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = celda * lado;
+  canvas.height = celda * lado;
+  const context = canvas.getContext('2d')!;
+  labels.forEach((label, i) => {
+    const x = (i % lado) * celda;
+    const y = Math.floor(i / lado) * celda;
+    context.fillStyle = '#14140f';
+    context.fillRect(x, y, celda, celda);
+    context.strokeStyle = '#e8b62c';
+    context.lineWidth = celda * 0.05;
+    context.strokeRect(x + celda * 0.07, y + celda * 0.07, celda * 0.86, celda * 0.86);
+    context.fillStyle = '#e8b62c';
+    context.font = `bold ${celda * (label.length > 1 ? 0.42 : 0.6)}px system-ui, sans-serif`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(label, x + celda / 2, y + celda / 2 + celda * 0.02);
+  });
+  return new CanvasTexture(canvas);
+}
