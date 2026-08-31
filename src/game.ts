@@ -254,6 +254,42 @@ export class Game {
 
   /** Coloca el avión al principio de la pista, parado y con el motor al ralentí. */
   /**
+   * Dónde arranca el avión: en la cabecera, mirando por la pista.
+   *
+   * Con un aeródromo real **se usa su umbral**, que es un punto medido. La
+   * cuenta de retroceder media pista a lo largo del eje se escribió para la
+   * pista sintética, y con un rumbo de 190° dejaba el avión a seiscientos
+   * metros del asfalto: los signos que funcionan con un rumbo redondo dejan
+   * de funcionar con uno cualquiera.
+   *
+   * Y la cota se **mide del terreno** en ese punto concreto, no se da por
+   * supuesta: una pista con pendiente no está a la misma altura en los dos
+   * extremos, que es precisamente la gracia.
+   */
+  private startPosition(heading: number): Vector3 {
+    const { runway, aerodrome } = this.scenario;
+    let x = runway.x - Math.sin(heading) * runway.length * 0.42;
+    let z = runway.z - Math.cos(heading) * runway.length * 0.42;
+
+    const pista = aerodrome?.runways[0];
+    if (pista) {
+      // El umbral por el que se despega con este rumbo, y unos metros dentro
+      // de la pista para no arrancar pisando la raya.
+      const umbral = Object.values(pista.thresholds).find(
+        (u) => u?.xy != null && Math.abs(((u.headingTrue ?? 0) - runway.heading + 540) % 360 - 180) < 20,
+      );
+      if (umbral?.xy) {
+        // La Y del fichero apunta al norte y aquí el norte es la Z negativa.
+        const [ux, uy] = umbral.xy;
+        x = ux + Math.sin(heading) * 60;
+        z = -uy - Math.cos(heading) * 60;
+      }
+    }
+
+    return new Vector3(x, this.terrain.sampleHeight(x, z) + this.aircraft.gearHeight, z);
+  }
+
+  /**
    * Cuántos metros de pista quedan por delante, o infinito si no se está en
    * ella.
    *
@@ -306,12 +342,7 @@ export class Game {
   resetFlight(): void {
     const { runway } = this.scenario;
     const heading = MathUtils.degToRad(runway.heading);
-    // Retrocede media pista a lo largo del eje para arrancar en la cabecera.
-    const start = new Vector3(
-      runway.x - Math.sin(heading) * runway.length * 0.42,
-      this.terrain.runwayElevation + this.aircraft.gearHeight,
-      runway.z - Math.cos(heading) * runway.length * 0.42,
-    );
+    const start = this.startPosition(heading);
 
     this.flight.reset({ position: start, heading, airspeed: 0 });
     if (this.missions.active) {

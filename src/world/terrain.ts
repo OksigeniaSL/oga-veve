@@ -26,6 +26,7 @@ import {
 } from 'three';
 import { ValueNoise2D } from './noise';
 import { createRunwayMarkings } from './runway-markings';
+import { createAerodrome, extension, type Aerodrome } from './aerodrome';
 import type { Scenario } from './scenarios';
 
 /**
@@ -65,12 +66,28 @@ export class Terrain {
     this.half = scenario.size / 2;
 
     this.heights = buildHeightfield(scenario);
-    this.runwayElevation = this.sampleHeight(scenario.runway.x, scenario.runway.z);
-    flattenRunway(this.heights, scenario, this.runwayElevation);
+
+    if (scenario.aerodrome) {
+      // Se aplana primero y **se mide después**. La cota del aeródromo es la
+      // de su punto de referencia, y una pista con pendiente no está a esa
+      // cota en ningún punto salvo por casualidad: la de Asunción cae trece
+      // metros, así que el avión aparecía seis metros en el aire y se caía
+      // nada más empezar.
+      flattenAerodrome(this.heights, scenario, scenario.aerodrome);
+      this.runwayElevation = this.sampleHeight(scenario.runway.x, scenario.runway.z);
+    } else {
+      this.runwayElevation = this.sampleHeight(scenario.runway.x, scenario.runway.z);
+      flattenRunway(this.heights, scenario, this.runwayElevation);
+    }
 
     this.group.add(this.buildTerrainMesh());
     this.group.add(this.buildWater());
-    this.group.add(this.buildRunway());
+    // Con aeródromo real no se dibuja la pista de juguete: la pone él.
+    if (scenario.aerodrome) {
+      this.group.add(createAerodrome(scenario.aerodrome, this.runwayElevation));
+    } else {
+      this.group.add(this.buildRunway());
+    }
   }
 
   /**
@@ -425,6 +442,74 @@ function flattenRunway(heights: Float32Array, scenario: Scenario, elevation: num
 }
 
 /** 1 dentro del núcleo, 0 fuera del alcance, transición suave entre medias. */
+/**
+ * Aplana el terreno bajo un aeródromo real, respetando el perfil de su pista.
+ *
+ * Un aeródromo no es una pista suelta: son cincuenta calles de rodaje y
+ * veinte plataformas repartidas por un par de kilómetros. Aplanarlo pista a
+ * pista dejaría lomos por debajo del pavimento, así que se aplana **la huella
+ * entera** con una rampa de mezcla al borde.
+ *
+ * Y la cota objetivo **no es constante**: a lo largo del eje de la pista sigue
+ * su pendiente real —los trece metros de caída de Asunción— y fuera de ella se
+ * queda a la cota del aeródromo. Sin eso, el pavimento con pendiente quedaría
+ * flotando sobre un suelo plano por un extremo y enterrado por el otro.
+ */
+/** Cuánto sobresale el pavimento sobre el terreno aplanado, m. */
+const RESALTE = 0.35;
+
+function flattenAerodrome(heights: Float32Array, scenario: Scenario, aero: Aerodrome): void {
+  const resolution = scenario.segments + 1;
+  const step = scenario.size / scenario.segments;
+  const half = scenario.size / 2;
+  const base = aero.elevationM ?? 0;
+
+  // La huella: lo que abarca todo el pavimento, más un margen.
+  const { radio } = extension(aero);
+  const nucleo = radio + step * 2;
+  const alcance = nucleo + 400;
+
+  // Perfil de la pista principal, para la cota a lo largo del eje.
+  const pista = aero.runways[0];
+  const umbrales = pista
+    ? Object.values(pista.thresholds).filter(
+        (u): u is NonNullable<typeof u> => u !== null && u.xy !== null && u.elevM !== null,
+      )
+    : [];
+  const [a, b] = umbrales;
+
+  const cota = (x: number, z: number): number => {
+    if (!a || !b) return base;
+    const ax = a.xy![0];
+    const ay = a.xy![1];
+    const dx = b.xy![0] - ax;
+    const dy = b.xy![1] - ay;
+    const largo2 = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - ay) * dy) / largo2));
+    return a.elevM! + (b.elevM! - a.elevM!) * t;
+  };
+
+  for (let row = 0; row < resolution; row++) {
+    const mundoZ = -half + row * step;
+    for (let col = 0; col < resolution; col++) {
+      const mundoX = -half + col * step;
+      // Coordenadas del fichero: su origen es el punto de referencia del
+      // aeropuerto, que está en el (0, 0) del mundo, y su Y apunta al norte.
+      const x = mundoX;
+      const z = -mundoZ;
+      const d = Math.hypot(x, z);
+      if (d >= alcance) continue;
+      const peso = smoothFalloff(d, nucleo, alcance);
+      const i = row * resolution + col;
+      // El terreno se aplana un pelín **por debajo** del pavimento. A la
+      // misma cota exacta, el asfalto queda enterrado por el redondeo de la
+      // malla y no se ve nada. Un firme real también sobresale de su
+      // explanada, así que además es lo que toca.
+      heights[i] = heights[i]! * (1 - peso) + (cota(x, z) - RESALTE) * peso;
+    }
+  }
+}
+
 function smoothFalloff(distance: number, core: number, reach: number): number {
   if (distance <= core) return 1;
   if (distance >= reach) return 0;

@@ -59,6 +59,7 @@ export const EN: Dictionary = {
   'help.mission': 'N — mission',
 
   'scenario.valle.name': 'Cordillera Valley',
+  'scenario.pettirossi.name': 'Silvio Pettirossi',
   'scenario.chaco.name': 'Chaco Plain',
 
   'tutor.throttle': 'Add power',

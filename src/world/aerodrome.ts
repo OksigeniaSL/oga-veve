@@ -127,15 +127,24 @@ function desdePoligono(contorno: readonly Punto[], altura: (p: Punto) => number)
   const forma = new Shape(contorno.map(([x, y]) => new Vector2(x, y)));
   const geo = new ShapeGeometry(forma);
 
-  // ShapeGeometry vive en el plano XY. Se tumba a XZ y cada vértice sube a la
-  // cota que le toca, que es lo que da la pendiente de la pista.
+  // ShapeGeometry vive en el plano XY. Se tumba a XZ, cada vértice sube a la
+  // cota que le toca —eso es la pendiente de la pista— y **la Z se invierte**.
+  //
+  // Lo último no es un capricho: en el fichero el eje Y apunta al norte, y en
+  // el mundo del juego el norte es la Z negativa. Sin invertir, el aeropuerto
+  // sale espejado de norte a sur y el avión aparece en el punto simétrico, con
+  // el asfalto a un lado y él en la hierba.
+  //
+  // Y de paso arregla otra cosa: invertir un eje devuelve el sentido de giro
+  // de los triángulos al que tenía, así que ya no hace falta darles la vuelta
+  // a mano para que las caras no miren al suelo.
   const pos = geo.attributes.position!;
   const arr = pos.array as Float32Array;
   for (let i = 0; i < pos.count; i++) {
     const x = arr[i * 3]!;
     const y = arr[i * 3 + 1]!;
     arr[i * 3 + 1] = altura([x, y]);
-    arr[i * 3 + 2] = y;
+    arr[i * 3 + 2] = -y;
   }
   geo.computeVertexNormals();
   return geo;
@@ -205,18 +214,27 @@ export function createAerodrome(aero: Aerodrome, baseY = 0): Group {
     porSuperficie.set(clave, lista);
   };
 
-  for (const pista of aero.runways) {
-    const ancho = pista.widthM ?? 45;
-    anotar(pista.surface, cinta(pista.centerline, ancho, perfil(pista, suelo)));
-  }
+  // **Todo el aeródromo sigue el perfil de la pista principal**, y esto no es
+  // un adorno: el terreno se aplana con ese mismo perfil, así que cualquier
+  // cosa que se dibuje a una cota fija se queda flotando por un extremo y
+  // enterrada por el otro. Con los trece metros de caída de Asunción, las
+  // plataformas quedaban siete metros en el aire.
+  //
+  // El perfil real de cada calle de rodaje no está en ninguna fuente abierta.
+  // Tumbarlas todas al del eje de la pista es una aproximación, pero es una
+  // aproximación coherente: un aeródromo se construye sobre una explanada, y
+  // la explanada acompaña a la pista.
+  const principal = aero.runways[0];
+  const cota = principal ? perfil(principal, suelo) : plano(suelo);
 
-  // Las rodaduras van todas a la cota del aeródromo: su perfil real no está
-  // en ninguna fuente abierta, y fingirlo sería peor que dejarlas planas.
+  for (const pista of aero.runways) {
+    anotar(pista.surface, cinta(pista.centerline, pista.widthM ?? 45, perfil(pista, suelo)));
+  }
   for (const calle of aero.taxiways) {
-    anotar('asphalt', cinta(calle.path, calle.widthM ?? ANCHO_RODADURA, plano(suelo)));
+    anotar('asphalt', cinta(calle.path, calle.widthM ?? ANCHO_RODADURA, cota));
   }
   for (const plataforma of aero.aprons) {
-    anotar('concrete', desdePoligono(plataforma.polygon, plano(suelo)));
+    anotar('concrete', desdePoligono(plataforma.polygon, cota));
   }
 
   for (const [superficie, geos] of porSuperficie) {

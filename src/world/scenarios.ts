@@ -12,6 +12,9 @@
  * juego tiene un aspecto propio y no cuesta nada al mes.
  */
 
+import type { Aerodrome } from './aerodrome';
+import SGAS from '../../data/aerodromes/sgas.aero.json';
+
 export interface TerrainBand {
   /** Altitud a la que empieza la banda, en metros. */
   from: number;
@@ -65,6 +68,15 @@ export interface Scenario {
    * verdad y viene en el propio fichero.
    */
   magneticVariation: number;
+  /**
+   * Un aeródromo real extraído, si lo hay.
+   *
+   * Cuando está, manda él: la cota sale de sus datos medidos, el pavimento lo
+   * dibuja él con sus calles de rodaje y sus plataformas, y la pista de
+   * juguete del escenario no se dibuja. El relieve de alrededor sigue siendo
+   * procedimental hasta que entre el mapa de alturas real.
+   */
+  aerodrome?: Aerodrome;
 }
 
 /**
@@ -144,7 +156,90 @@ export const CHACO: Scenario = {
   magneticVariation: 13,
 };
 
-export const SCENARIOS: readonly Scenario[] = [VALLE_CORDILLERA, CHACO];
+
+/**
+ * Silvio Pettirossi — el primero de verdad.
+ *
+ * Aquí la pista no la ponemos nosotros: sale del extractor, con sus 54 calles
+ * de rodaje, sus 21 plataformas y sus umbrales medidos. La 02/20 tiene 3359
+ * metros y **cae trece de un extremo al otro**, un 0,39 %, y eso se nota al
+ * aterrizar.
+ *
+ * El relieve de alrededor sigue siendo procedimental hasta que entre el mapa
+ * de alturas real: es el llano del río Paraguay, así que un terreno suave y
+ * bajo se parece bastante a lo que hay. Lo que es real es el aeropuerto.
+ *
+ * Y el número pintado en la pista tampoco lo calculamos: viene del propio
+ * fichero, que es donde está el de verdad. El umbral 02 apunta a diez grados
+ * verdaderos — calcularlo nosotros habría pintado un 01.
+ */
+/**
+ * Dónde está la pista de un aeródromo extraído, en el formato que espera un
+ * escenario: centro, rumbo verdadero, longitud y anchura.
+ *
+ * Sale de los umbrales medidos, así que el avión aparece donde aparecería de
+ * verdad y la guía de pista apunta a donde tiene que apuntar.
+ */
+function pistaDe(aero: Aerodrome): Scenario['runway'] {
+  const pista = aero.runways[0]!;
+  const umbrales = Object.values(pista.thresholds).filter(
+    (u): u is NonNullable<typeof u> => u?.xy != null,
+  );
+  const [a, b] = umbrales;
+  if (!a || !b) throw new Error(`${aero.id}: la pista no tiene dos umbrales situados`);
+  const [ax, az] = a.xy!;
+  const [bx, bz] = b.xy!;
+  return {
+    x: (ax + bx) / 2,
+    // Z invertida: en el fichero la Y apunta al norte y en el mundo del juego
+    // el norte es la Z negativa.
+    z: -(az + bz) / 2,
+    // El rumbo con el que se despega por la primera cabecera. Verdadero: el
+    // magnético lo pone la declinación del escenario.
+    heading: a.headingTrue ?? 0,
+    length: Math.round(Math.hypot(bx - ax, bz - az)),
+    width: pista.widthM ?? 45,
+  };
+}
+
+export const PETTIROSSI: Scenario = {
+  id: 'pettirossi',
+  nameKey: 'scenario.pettirossi.name',
+  seed: 19161017,
+  size: 14000,
+  segments: 384,
+  // Asunción está en el llano: nada de cordilleras. Lo más alto de la zona
+  // son lomas suaves, y el aeropuerto está a 89 m.
+  reliefHeight: 150,
+  reliefScale: 4.2,
+  ridgeMix: 0.12,
+  waterLevel: 40,
+  riverWidth: 900,
+  bands: [
+    { from: -100, colour: 0x3d6b44 },
+    { from: 40, colour: 0x55854c },
+    { from: 80, colour: 0x6f9a55 },
+    { from: 120, colour: 0x8fa961 },
+    { from: 170, colour: 0xb5a878 },
+    { from: 240, colour: 0xa89688 },
+  ],
+  water: 0x5b7f6a,
+  fill: 0x4f7048,
+  sky: { horizon: 0xe9eef1, zenith: 0x5397d8 },
+  fog: { colour: 0xd8e3ea, density: 0.000045 },
+  sun: { azimuth: 140, elevation: 52 },
+  // La pista, sacada del propio fichero.
+  //
+  // No vale poner (0, 0): el origen del aeródromo es su **punto de
+  // referencia**, que en Silvio Pettirossi está a casi trescientos metros de
+  // la pista. El avión aparecía en la hierba mirando al asfalto de lejos.
+  runway: pistaDe(SGAS as unknown as Aerodrome),
+  // Deducida de los propios datos: el umbral 02 apunta a 10° verdaderos.
+  magneticVariation: 10,
+  aerodrome: SGAS as unknown as Aerodrome,
+};
+
+export const SCENARIOS: readonly Scenario[] = [VALLE_CORDILLERA, CHACO, PETTIROSSI];
 
 export function scenarioById(id: string): Scenario {
   const found = SCENARIOS.find((s) => s.id === id);

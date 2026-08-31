@@ -52,6 +52,7 @@ export const ES_PY = {
   'help.mission': 'N — misión',
 
   'scenario.valle.name': 'Valle de la Cordillera',
+  'scenario.pettirossi.name': 'Silvio Pettirossi',
   'scenario.chaco.name': 'Llanura del Chaco',
 
   'tutor.throttle': 'Dale motor',
