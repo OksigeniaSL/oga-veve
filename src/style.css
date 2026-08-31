@@ -1452,3 +1452,51 @@ body {
   font-size: 14px;
   opacity: 0.55;
 }
+
+/*
+ * El conmutador de mano, arriba del teclado dibujado.
+ *
+ * Sin palabras: dos manos, se toca la tuya. Es lo primero que hay que decidir
+ * porque de ahí sale qué tecla se enseña en todo el juego, y con cuatro años
+ * no se puede resolver leyendo «diestro / zurdo».
+ */
+.mano {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.mano__opcion {
+  pointer-events: auto;
+  width: var(--tacto);
+  height: var(--tacto);
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-m);
+  border: 2px solid var(--linea);
+  background: rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.mano__opcion svg {
+  width: 26px;
+  fill: var(--tinta-suave);
+}
+
+/* La elegida se enciende como una pieza de barro cocido. */
+.mano__opcion[aria-pressed="true"] {
+  background: linear-gradient(180deg, #e8a75c, var(--ocre) 72%);
+  border-color: var(--ocre);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.mano__opcion[aria-pressed="true"] svg { fill: var(--barro); }
+
+/* Con un aviso en pantalla, el tutor desaparece: manda el aviso. */
+.hud--avisando .tutor {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}

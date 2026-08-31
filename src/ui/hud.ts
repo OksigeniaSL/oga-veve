@@ -396,7 +396,14 @@ export class Hud {
     this.render();
   }
 
-  update(state: FlightState, throttle: number, dt: number, braking = 0, decisionSpeed = Infinity): void {
+  update(
+    state: FlightState,
+    throttle: number,
+    dt: number,
+    braking = 0,
+    decisionSpeed = Infinity,
+    runwayLeft = Infinity,
+  ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
     const ias = indicatedAirspeed(state.airspeed, state.position.y);
@@ -408,7 +415,12 @@ export class Hud {
       // pico metros— y apenas se movía al despegar, que es justo lo único
       // que este dibujo tiene que contar. Y la escala es la del avión que
       // vuela aquí, no la de un reactor.
-      this.pictos.update(ias / 46, state.heightAboveGround / 260, throttle, dt);
+      // La altura no va lineal, va por raíz. Con escala lineal a 260 m, un
+      // vuelo rasante sobre las lomas —que es lo que hace alguien de cuatro
+      // años— movía el avioncito dos píxeles, y el dibujo parecía un adorno.
+      // Con la raíz, los primeros cien metros ocupan la mitad de la tarjeta
+      // y los cuatrocientos siguen cabiendo arriba.
+      this.pictos.update(ias / 46, Math.sqrt(Math.max(0, state.heightAboveGround) / 400), throttle, dt);
     }
 
     if (this.pictos.present) {
@@ -505,7 +517,7 @@ export class Hud {
       this.horizon.style.transform = `rotate(${(-bank * 180) / Math.PI}deg) translateY(${((pitch * 180) / Math.PI) * 1.6}px)`;
     }
 
-    this.setWarning(state);
+    this.setWarning(state, runwayLeft);
 
     if (this.hintTimer > 0) {
       this.hintTimer -= dt;
@@ -587,7 +599,7 @@ export class Hud {
    * texto. Los dos primeros funcionan sin saber leer, que es el caso de la
    * jugadora más joven. Ver AGENTS.md, regla 2.
    */
-  private setWarning(state: FlightState): void {
+  private setWarning(state: FlightState, runwayLeft: number): void {
     let text = '';
     let arrow = '';
     let blink = false;
@@ -603,7 +615,22 @@ export class Hud {
       text = t('hud.pullUp');
       arrow = '↑';
       blink = true;
+    } else if (runningOutOfRunway(state, runwayLeft)) {
+      // Se puede rodar por el campo hasta el fin del mundo sin que pase nada,
+      // que en el peldaño de los pequeños está bien. Pero que no avise es
+      // otra cosa: en un avión de verdad, quedarse sin pista es **la**
+      // decisión, y aquí no se anunciaba de ninguna manera.
+      text = t('hud.runwayEnd');
+      arrow = '↤';
+      blink = true;
     }
+
+    // **Cuando hay un aviso, el tutor se calla.** El cartel del tutor va fijo
+    // sobre el fondo de la pantalla y tapaba el aviso de que se acaba la
+    // pista, que es justo el momento en que hay que mirarlo. Y no se arregla
+    // subiendo capas: dos carteles a la vez son ruido, y de los dos manda el
+    // aviso. La lección puede esperar diez segundos; la pista, no.
+    this.root.classList.toggle('hud--avisando', text !== '');
 
     this.warningText.textContent = text;
     this.warningArrow.textContent = arrow;
@@ -653,6 +680,19 @@ function pick(root: HTMLElement, name: string): HTMLElement {
  * Va por el mismo canal que la pérdida: flecha, viñeta roja y palabra. Los
  * dos primeros funcionan sin saber leer.
  */
+/**
+ * ¿Se está acabando la pista?
+ *
+ * Solo rodando y solo yendo deprisa: parado o a paso de peatón no hay nada
+ * que avisar, y en el aire tampoco. El umbral va en segundos y no en metros,
+ * porque lo que importa es **cuánto queda para llegar**, no cuánto falta.
+ */
+function runningOutOfRunway(state: FlightState, metresLeft: number): boolean {
+  if (!state.onGround || state.crashed) return false;
+  if (state.airspeed < 8) return false;
+  return metresLeft / state.airspeed < 5;
+}
+
 function closingWithGround(state: FlightState): boolean {
   if (state.onGround || state.crashed) return false;
   return state.secondsToImpact < 6;

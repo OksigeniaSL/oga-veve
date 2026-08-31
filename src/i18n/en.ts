@@ -24,6 +24,7 @@ export const EN: Dictionary = {
   'hud.vspeed': 'Vertical speed',
   'hud.stall': 'Stall! Lower the nose',
   'hud.pullUp': 'Ground! Pull up',
+  'hud.runwayEnd': 'Runway ending',
   'hud.brakes': 'Brakes',
   'hud.crashed': 'Something broke. Back to the runway…',
   'hud.ground': 'On the ground',
@@ -81,6 +82,9 @@ export const EN: Dictionary = {
   'help.start': 'Throttle all the way up, then ease back when she runs',
 
   'teclas.title': 'Controls',
+  'teclas.mano': 'Which hand works the throttle',
+  'teclas.zurda': 'Left hand',
+  'teclas.diestra': 'Right hand',
   'teclas.hint': 'Click a key to change it. Escape leaves it alone.',
   'teclas.pulsa': 'Press a key…',
   'teclas.restore': 'Back to default',

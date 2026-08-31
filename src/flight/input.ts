@@ -79,8 +79,6 @@ export class InputManager {
   /** Qué tecla hace qué. Se puede cambiar desde la pantalla de teclas. */
   readonly keymap = new Keymap();
 
-  /** La última tecla que se usó para cada mando. Ver `preferredKey`. */
-  private readonly ultima = new Map<Accion, string>();
 
   private touchBrakes = false;
 
@@ -126,7 +124,7 @@ export class InputManager {
    * izquierda ve la X; quien vuela con la derecha ve el más.
    */
   preferredKey(accion: Accion): string {
-    return this.ultima.get(accion) ?? this.keymap.keys(accion)[0] ?? '';
+    return this.keymap.shownKey(accion);
   }
 
   /** Eje a partir de dos acciones: +1, 0 o -1. */
@@ -216,13 +214,6 @@ export class InputManager {
     this.keys.add(event.code);
     // El carácter también: ver la nota de KEYS sobre los teclados que no son
     // el americano.
-    // Se apunta con qué tecla se usó cada mando, para poder enseñar esa y no
-    // otra. Se mira el código y el carácter, que pueden ser cosas distintas.
-    for (const candidata of [event.code, event.key]) {
-      const accion = this.keymap.actionFor(candidata);
-      if (accion) this.ultima.set(accion, candidata);
-    }
-
     if (event.key.length === 1) {
       this.keys.add(event.key);
       // Se apunta qué carácter dio esta tecla física, porque al soltarla

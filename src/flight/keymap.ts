@@ -59,6 +59,8 @@ interface Definicion {
  * medias, y el motor no tenía ninguna tecla en el lado izquierdo.
  */
 export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
+  // Orden: primero la de la derecha, después la de la izquierda. Ese orden
+  // es lo que hace que `PAREJAS` pueda quedarse con la posición y acertar.
   pitchUp: { label: 'tecla.pitchUp', defecto: ['ArrowUp', 'KeyW'], held: true },
   pitchDown: { label: 'tecla.pitchDown', defecto: ['ArrowDown', 'KeyS'], held: true },
   rollLeft: { label: 'tecla.rollLeft', defecto: ['ArrowLeft', 'KeyA'], held: true },
@@ -98,14 +100,87 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
 
 export const ORDEN: readonly Accion[] = Object.keys(ACCIONES) as Accion[];
 
+/**
+ * Mandos que van en pareja y **tienen que enseñarse con la misma mano**.
+ *
+ * El tutor recordaba qué tecla usaste para cada acción por separado, y si
+ * subías el motor con la X y lo bajabas con el menos te devolvía una de cada
+ * lado del teclado. Fiel a lo que hiciste y completamente incoherente de
+ * leer: parecía que cada mando vivía en un sitio distinto.
+ *
+ * Se recuerda **el lado**, no la tecla. Como las listas de fábrica están
+ * ordenadas por lado —primero la de la derecha, después la de la izquierda—,
+ * basta con quedarse con la posición y usar esa misma en la pareja.
+ */
+export const PAREJAS: readonly (readonly Accion[])[] = [
+  ['throttleUp', 'throttleDown'],
+  ['pitchUp', 'pitchDown'],
+  ['rollLeft', 'rollRight'],
+  ['yawLeft', 'yawRight'],
+];
+
+/** La pareja a la que pertenece una acción, o solo ella misma. */
+export function parejaDe(accion: Accion): readonly Accion[] {
+  return PAREJAS.find((p) => p.includes(accion)) ?? [accion];
+}
+
 const ALMACEN = 'oga-veve:teclas';
+const ALMACEN_MANO = 'oga-veve:mano';
+
+/**
+ * Con qué mano se lleva el motor.
+ *
+ * Cada mando tiene teclas a los dos lados del teclado para que cada mano
+ * tenga la suya. Pero **enseñar las dos confunde**: quien lo probó preguntó
+ * «¿en qué quedamos, es la Z o el más?», y con cuatro años «hay dos teclas
+ * que hacen lo mismo» es peor que «hay una».
+ *
+ * Así que se elige el lado **una vez**, y a partir de ahí el juego enseña una
+ * sola tecla por mando: en el tutor, en el teclado dibujado y en la lista.
+ * Las del otro lado siguen funcionando en silencio — no se rompe nada para
+ * quien ya las tenía en los dedos—, pero no se anuncian.
+ *
+ * La posición en la lista de teclas ES el lado: 0 la derecha, 1 la izquierda.
+ */
+export type Mano = 'derecha' | 'izquierda';
 
 /** Las teclas efectivas: las de fábrica con los cambios de quien juega encima. */
 export class Keymap {
   private readonly cambios = new Map<Accion, string[]>();
 
+  private manoActual: Mano = 'derecha';
+
   constructor() {
     this.load();
+  }
+
+  get mano(): Mano {
+    return this.manoActual;
+  }
+
+  setMano(mano: Mano): void {
+    this.manoActual = mano;
+    try {
+      localStorage.setItem(ALMACEN_MANO, mano);
+    } catch {
+      // Vale para esta partida.
+    }
+  }
+
+  /**
+   * La tecla que se enseña para este mando: la del lado elegido, y si no
+   * tiene, la primera. Una sola, siempre la misma.
+   */
+  shownKey(accion: Accion): string {
+    const teclas = this.keys(accion);
+    const i = this.manoActual === 'izquierda' ? 1 : 0;
+    return teclas[Math.min(i, teclas.length - 1)] ?? '';
+  }
+
+  /** ¿Es esta tecla la que se enseña para su mando? */
+  isShown(key: string): boolean {
+    const accion = this.actionFor(key);
+    return accion !== null && mismaTecla(this.shownKey(accion), key);
   }
 
   keys(accion: Accion): readonly string[] {
@@ -156,6 +231,12 @@ export class Keymap {
 
   private load(): void {
     try {
+      const mano = localStorage.getItem(ALMACEN_MANO);
+      if (mano === 'izquierda' || mano === 'derecha') this.manoActual = mano;
+    } catch {
+      // Sin almacenamiento, mano derecha.
+    }
+    try {
       const crudo = localStorage.getItem(ALMACEN);
       if (!crudo) return;
       const datos = JSON.parse(crudo) as Record<string, string[]>;
@@ -181,6 +262,24 @@ export class Keymap {
       // Igual: si no se puede guardar, los cambios valen para esta partida.
     }
   }
+}
+
+/**
+ * ¿Son la misma tecla del teclado?
+ *
+ * El más y el menos se nombran de varias formas —por carácter, por tecla
+ * física americana, por teclado numérico— y todas son el mismo dedo en el
+ * mismo sitio. Sin esto, el teclado dibujado no encendía el menos: él lo
+ * llama `Minus` y el ajuste guardaba «-».
+ */
+export function mismaTecla(a: string, b: string): boolean {
+  return canonica(a) === canonica(b);
+}
+
+function canonica(key: string): string {
+  if (key === '-' || key === 'Minus' || key === 'NumpadSubtract') return 'menos';
+  if (key === '+' || key === 'Equal' || key === 'NumpadAdd') return 'mas';
+  return key;
 }
 
 /**

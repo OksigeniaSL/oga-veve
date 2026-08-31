@@ -17,6 +17,7 @@ export const ES_PY = {
   'hud.vspeed': 'Subida',
   'hud.stall': '¡Pérdida! Bajá el morro',
   'hud.pullUp': '¡El suelo! Subí',
+  'hud.runwayEnd': '¡Se acaba la pista!',
   'hud.brakes': 'Frenos',
   'hud.crashed': 'Se rompió algo. Volvemos a la pista…',
   'hud.ground': 'En tierra',
@@ -74,6 +75,9 @@ export const ES_PY = {
   'help.start': 'Empujá el motor a tope y tirá suave cuando corra',
 
   'teclas.title': 'Teclas',
+  'teclas.mano': 'Con qué mano manejás el motor',
+  'teclas.zurda': 'Mano izquierda',
+  'teclas.diestra': 'Mano derecha',
   'teclas.hint': 'Tocá una tecla para cambiarla. Escape para dejarlo como está.',
   'teclas.pulsa': 'Apretá una tecla…',
   'teclas.restore': 'Como venía',

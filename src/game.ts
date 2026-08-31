@@ -251,6 +251,35 @@ export class Game {
   }
 
   /** Coloca el avión al principio de la pista, parado y con el motor al ralentí. */
+  /**
+   * Cuántos metros de pista quedan por delante, o infinito si no se está en
+   * ella.
+   *
+   * Se mide **hacia donde apunta el avión**, no en línea recta al final: si
+   * uno rueda hacia atrás por la pista, lo que queda es lo que tiene delante.
+   * Y solo cuenta si está dentro del ancho, porque fuera de la pista no hay
+   * pista que se acabe.
+   */
+  private runwayRemaining(): number {
+    const r = this.scenario.runway;
+    const p = this.flight.state.position;
+    const rad = (r.heading * Math.PI) / 180;
+    // Ejes de la pista: a lo largo y a lo ancho.
+    const ax = Math.sin(rad);
+    const az = -Math.cos(rad);
+    const dx = p.x - r.x;
+    const dz = p.z - r.z;
+    const along = dx * ax + dz * az;
+    const across = Math.abs(dx * -az + dz * ax);
+    if (across > r.width) return Infinity;
+    if (Math.abs(along) > r.length / 2) return Infinity;
+
+    // Hacia dónde va el avión respecto al eje de la pista.
+    const heading = this.flight.state.heading;
+    const hacia = Math.sin(heading) * ax + -Math.cos(heading) * az;
+    return hacia >= 0 ? r.length / 2 - along : r.length / 2 + along;
+  }
+
   resetFlight(): void {
     const { runway } = this.scenario;
     const heading = MathUtils.degToRad(runway.heading);
@@ -321,6 +350,7 @@ export class Game {
       dt,
       this.input.controls.brakes,
       this.aircraft.decisionSpeed,
+      this.runwayRemaining(),
     );
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
     // misión en curso la aguja señala el objetivo, y si el tutor mirara ese

@@ -123,6 +123,10 @@ export class KeyScreen {
         this.capturando = null;
         this.render();
       }
+      if (target.dataset.mano) {
+        this.keymap.setMano(target.dataset.mano as 'izquierda' | 'derecha');
+        this.render();
+      }
       if (target.dataset.cerrar !== undefined) this.hide();
     });
 
@@ -225,7 +229,10 @@ export class KeyScreen {
 
   /** Una tecla del teclado dibujado, encendida si tiene función. */
   private cap(code: string, extra = ''): string {
-    const accion = this.keymap.actionFor(code);
+    // Solo se enciende **la tecla que se enseña**. La del otro lado sigue
+    // funcionando, pero no se dibuja: dos teclas encendidas para el mismo
+    // mando es la pregunta «¿en qué quedamos?» dibujada en pantalla.
+    const accion = this.keymap.isShown(code) ? this.keymap.actionFor(code) : null;
     const glifo = accion ? GLIFOS[accion] : undefined;
     const clases = ['tecla', extra, glifo ? 'tecla--activa' : ''].filter(Boolean).join(' ');
     return `
@@ -302,6 +309,25 @@ export class KeyScreen {
     this.root.innerHTML = `
       <div class="creditos__panel teclado" role="dialog" aria-modal="true"
            aria-label="${t('teclas.title')}">
+        <!--
+          Con qué mano se lleva el motor. Va arriba y con dibujos de mano
+          porque es lo primero que hay que decidir y no hace falta leer para
+          entenderlo: se toca la mano con la que se maneja.
+        -->
+        <div class="mano" role="group" aria-label="${t('teclas.mano')}">
+          ${['izquierda', 'derecha'].map((m) => `
+            <button class="mano__opcion" type="button" data-mano="${m}"
+                    aria-pressed="${this.keymap.mano === m}" aria-label="${t(
+                      m === 'izquierda' ? 'teclas.zurda' : 'teclas.diestra',
+                    )}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"
+                   style="transform:scaleX(${m === 'izquierda' ? -1 : 1})">
+                <path d="M8 21 v-6.4 l-2.6-2.6 a1.5 1.5 0 0 1 2.1-2.1 L9.4 12.4 V4.4
+                         a1.4 1.4 0 0 1 2.8 0 v5.4 V3.8 a1.4 1.4 0 0 1 2.8 0 V9.8
+                         V5 a1.4 1.4 0 0 1 2.8 0 V14.6 A6.4 6.4 0 0 1 11.6 21 Z" />
+              </svg>
+            </button>`).join('')}
+        </div>
         <div class="teclado__mapa">${filas}${abajo}</div>
         <!--
           La cruz iba flotando arriba a la derecha y se montaba encima de la
