@@ -144,6 +144,27 @@ body {
   text-align: center;
 }
 
+/* Botón de sonido. Pointer-events propios: el HUD entero los tiene
+   desactivados para no robar el ratón al vuelo, y este sí tiene que
+   pulsarse. */
+.sonido {
+  pointer-events: auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(228, 226, 218, 0.18);
+  background: var(--sombra);
+  color: var(--beige);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.sonido:hover {
+  border-color: var(--ocre);
+}
+
 /* Progreso de misión: una fila de puntos. Los hechos, en ocre lleno; los
    que faltan, huecos. Cero cifras y cero palabras. */
 .progreso {

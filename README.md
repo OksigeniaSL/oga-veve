@@ -59,7 +59,7 @@ genera por código, sin descargar datos.
 | Reiniciar vuelo | `R` | Botón |
 | Nivel de dificultad | `M` | Ajustes |
 | Idioma | `L` | Ajustes |
-| Sonido | `V` | Ajustes |
+| Sonido | `V` | **Botón en pantalla** |
 | Cambiar de avión | `P` | Ajustes |
 | Misión | `N` | Ajustes |
 

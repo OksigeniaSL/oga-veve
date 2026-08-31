@@ -34,8 +34,9 @@ export const EN: Dictionary = {
   'mode.arcade': 'Arcade',
   'mode.pilot': 'Pilot',
   'mode.changed': 'Flight assist: {mode}',
-  'sound.on': 'Sound on',
-  'sound.off': 'Sound off',
+  'sound.normal': 'Sound on',
+  'sound.bajo': 'Sound low',
+  'sound.mudo': 'Sound off',
 
   'units.kmh': 'km/h',
   'units.metres': 'm',
@@ -75,7 +76,7 @@ export const EN: Dictionary = {
   'help.reset': 'R — start again',
   'help.credits': 'F1 — credits',
   'help.language': 'L — language',
-  'help.sound': 'V — sound',
+  'help.sound': 'V — sound (or the button)',
   'help.aircraft': 'P — change aircraft',
   'help.start': 'Throttle all the way up, then ease back when she runs',
 

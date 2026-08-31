@@ -189,6 +189,8 @@ export class Game {
     });
 
     this.audio.prepare();
+    this.hud.setSoundLevel(this.audio.level.glyph, t(`sound.${this.audio.level.id}` as never));
+    this.hud.onSoundClick(() => this.toggleSound());
 
     window.addEventListener('resize', this.onResize);
     this.onResize();
@@ -625,8 +627,9 @@ export class Game {
   }
 
   private toggleSound(): void {
-    const muted = this.audio.toggleMute();
-    this.hud.flash(t(muted ? 'sound.off' : 'sound.on'));
+    const level = this.audio.cycleLevel();
+    this.hud.setSoundLevel(level.glyph, t(`sound.${level.id}` as never));
+    this.hud.flash(t(`sound.${level.id}` as never));
   }
 
   /** Pasa al siguiente idioma y repinta todo lo que lleva texto. */

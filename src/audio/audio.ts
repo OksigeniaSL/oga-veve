@@ -45,15 +45,61 @@ const BUFFET_HZ = 10.5;
 /** Motivos cortos del idioma sonoro. Ver `cue`. */
 export type Cue = 'success' | 'achieved' | 'error' | 'attention' | 'touchdown';
 
+export interface AudioLevel {
+  id: 'normal' | 'bajo' | 'mudo';
+  gain: number;
+  /** Glifo para el botón: se lee sin saber leer. */
+  glyph: string;
+}
+
+const LEVELS: readonly AudioLevel[] = [
+  { id: 'normal', gain: 0.85, glyph: '🔊' },
+  { id: 'bajo', gain: 0.3, glyph: '🔉' },
+  { id: 'mudo', gain: 0, glyph: '🔇' },
+];
+
+const STORAGE_KEY = 'oga-veve:volumen';
+
+function clamp(value: number, min: number, max: number): number {
+  return value < min ? min : value > max ? max : value;
+}
+
+function restoreLevel(): number {
+  try {
+    const saved = LEVELS.findIndex((level) => level.id === localStorage.getItem(STORAGE_KEY));
+    if (saved >= 0) return saved;
+  } catch {
+    // Sin almacenamiento se arranca con el volumen normal.
+  }
+  return 0;
+}
+
+function persistLevel(index: number): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, LEVELS[index]!.id);
+  } catch {
+    // No poder recordarlo no puede romper nada.
+  }
+}
+
 export class Audio {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
-  private muted = false;
+  /**
+   * Volumen en tres pasos, no un deslizador.
+   *
+   * Un deslizador exige precisión con el dedo y no dice de un vistazo dónde
+   * está. Tres estados —normal, bajo, mudo— se recorren pulsando y se leen
+   * en el icono. El aula necesita el paso «bajo» tanto como el mudo: veinte
+   * tablets a medio volumen son un aula; a volumen normal, un aviario.
+   */
+  private levelIndex = 0;
 
   // Motor
   private engineGain: GainNode | null = null;
   private engineFilter: BiquadFilterNode | null = null;
   private engineTone: OscillatorNode | null = null;
+  private growl: BiquadFilterNode | null = null;
   private engineHarmonic: OscillatorNode | null = null;
   private propGain: GainNode | null = null;
   private propFilter: BiquadFilterNode | null = null;
@@ -72,8 +118,8 @@ export class Audio {
     return this.context !== null;
   }
 
-  get isMuted(): boolean {
-    return this.muted;
+  get level(): AudioLevel {
+    return LEVELS[this.levelIndex]!;
   }
 
   /**
@@ -96,10 +142,12 @@ export class Audio {
     void this.context?.resume().catch(() => undefined);
   }
 
-  toggleMute(): boolean {
-    this.muted = !this.muted;
+  /** Pasa al siguiente paso de volumen y devuelve el que ha quedado. */
+  cycleLevel(): AudioLevel {
+    this.levelIndex = (this.levelIndex + 1) % LEVELS.length;
     this.applyMasterGain();
-    return this.muted;
+    persistLevel(this.levelIndex);
+    return this.level;
   }
 
   /** Silencia al ocultar la pestaña y devuelve el sonido al volver. */
@@ -133,13 +181,27 @@ export class Audio {
     // vueltas todavía estén bajando.
     this.engineFilter?.frequency.setTargetAtTime(900 + controls.throttle * 3200, now, 0.06);
     this.engineGain?.gain.setTargetAtTime(0.1 + controls.throttle * 0.14, now, 0.1);
+    // La resonancia sube con las vueltas. Es lo que de verdad se oye cambiar
+    // en un altavoz pequeño: el fundamental está por debajo de lo que
+    // reproduce, así que si el timbre no se mueve, el motor suena plano por
+    // mucho que la nota suba.
+    this.growl?.frequency.setTargetAtTime(300 + controls.throttle * 320, now, 0.12);
+
+    // Esfuerzo: el motor canta distinto trepando que en descenso, aunque el
+    // gas no se toque. Es carga aerodinámica, y se oye.
+    const load = clamp(state.verticalSpeed / 6, -1, 1);
+    this.engineGain?.gain.setTargetAtTime(0.1 + controls.throttle * 0.14 + load * 0.03, now, 0.25);
     this.propGain?.gain.setTargetAtTime(0.03 + controls.throttle * 0.075, now, 0.1);
     this.propFilter?.frequency.setTargetAtTime(150 + rpm * 0.08, now, 0.1);
 
     // ── Viento ──────────────────────────────────────────────────────────
     const speed = Math.min(1, state.airspeed / WIND_REFERENCE);
-    this.windGain?.gain.setTargetAtTime(speed * speed * 0.34, now, 0.12);
+    // El viento sube con la velocidad y además con el derrape: volar de lado
+    // hace más ruido, y es la única pista sonora de que el viraje va sucio.
+    const slip = Math.min(1, Math.abs(state.beta) * 5);
+    this.windGain?.gain.setTargetAtTime(speed * speed * 0.34 * (1 + slip * 0.5), now, 0.12);
     this.windWhistle?.frequency.setTargetAtTime(600 + speed * 1900, now, 0.12);
+    this.windBody?.frequency.setTargetAtTime(420 + slip * 340, now, 0.15);
 
     // ── Bataneo de pérdida ──────────────────────────────────────────────
     // Late antes de que el HUD avise: el aire tiembla cuando el flujo empieza
@@ -192,6 +254,7 @@ export class Audio {
     compressor.knee.value = 12;
 
     this.master = ctx.createGain();
+    this.levelIndex = restoreLevel();
     this.applyMasterGain();
     this.master.connect(compressor);
     compressor.connect(ctx.destination);
@@ -213,8 +276,9 @@ export class Audio {
     growl.frequency.value = 420;
     growl.Q.value = 2.2;
     growl.gain.value = 11;
+    this.growl = growl;
     this.engineFilter.disconnect();
-    this.engineFilter.connect(growl).connect(this.engineGain).connect(this.master);
+    this.engineFilter.connect(growl).connect(this.engineGain);
 
     this.engineTone = ctx.createOscillator();
     this.engineTone.type = 'sawtooth';
@@ -309,6 +373,6 @@ export class Audio {
 
   private applyMasterGain(): void {
     if (!this.master || !this.context) return;
-    this.master.gain.setTargetAtTime(this.muted ? 0 : 0.85, this.context.currentTime, 0.05);
+    this.master.gain.setTargetAtTime(this.level.gain, this.context.currentTime, 0.05);
   }
 }

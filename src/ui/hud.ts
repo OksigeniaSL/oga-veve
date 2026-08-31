@@ -106,10 +106,13 @@ export class Hud {
   private vignette!: HTMLElement;
   private badge!: HTMLElement;
   private progress!: HTMLElement;
+  private sound!: HTMLElement;
   private hint!: HTMLElement;
 
   private badgeText = '';
   private progressState: { done: number; total: number } | null = null;
+  private soundState = { glyph: '🔊', label: '' };
+  private soundHandler: (() => void) | null = null;
   private hintTimer = 0;
 
   constructor(root: HTMLElement) {
@@ -136,6 +139,13 @@ export class Hud {
           con cuarenta.
         -->
         <div class="progreso" data-hud="progress" hidden></div>
+        <!--
+          Botón de sonido. Es un botón de verdad y no un adorno: se pulsa con
+          el dedo, se enfoca con el tabulador y dice su estado. Existe porque
+          la tecla V silenciaba sin dejar rastro en pantalla, y un estado
+          invisible no es un estado: es un fallo esperando.
+        -->
+        <button class="sonido" type="button" data-hud="sound" aria-pressed="false"></button>
       </div>
       <div class="hud__izquierda">
         ${numbers ? gauge('speed', INSTRUMENTS.speed, t('hud.speed'), this.units.speedLabel()) : ''}
@@ -195,6 +205,9 @@ export class Hud {
     this.vignette = pick(this.root, 'vignette');
     this.badge = pick(this.root, 'badge');
     this.progress = pick(this.root, 'progress');
+    this.sound = pick(this.root, 'sound');
+    this.sound.addEventListener('click', () => this.soundHandler?.());
+    this.paintSound();
     this.paintProgress();
     this.hint = pick(this.root, 'hint');
 
@@ -305,6 +318,23 @@ export class Hud {
     this.progress.innerHTML = Array.from({ length: progress.total }, (_, index) =>
       `<span class="progreso__punto${index < progress.done ? ' progreso__punto--hecho' : ''}"></span>`,
     ).join('');
+  }
+
+  /** Estado del sonido: glifo y etiqueta accesible. */
+  setSoundLevel(glyph: string, label: string): void {
+    this.soundState = { glyph, label };
+    this.paintSound();
+  }
+
+  onSoundClick(handler: () => void): void {
+    this.soundHandler = handler;
+  }
+
+  private paintSound(): void {
+    if (!this.sound) return;
+    this.sound.textContent = this.soundState.glyph;
+    this.sound.setAttribute('aria-label', this.soundState.label);
+    this.sound.setAttribute('aria-pressed', String(this.soundState.glyph === '🔇'));
   }
 
   setBadge(text: string): void {
