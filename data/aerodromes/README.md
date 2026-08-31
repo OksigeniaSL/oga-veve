@@ -75,3 +75,101 @@ Esa pendiente de SGAS son trece metros de caída, y se notan al aterrizar. Y
 esos 633 metros de GCXO son la razón de que allí se aterrice tan a menudo sin
 ver la pista hasta el último momento: el aeropuerto está **a la altura del
 mar de nubes**, no debajo.
+
+---
+
+# Añadir un aeródromo nuevo
+
+Silvio Pettirossi costó una tarde entera y seis fallos del mismo tipo. Esto es
+lo que se aprendió, en orden, para que el siguiente cueste una hora.
+
+## 1. Extraer
+
+```
+node scripts/osm-a-aerodromo.mjs GCXO
+```
+
+Y **mirar la salida antes de seguir**: cuántas rodaduras, cuántas plataformas,
+cuántas mangas, cuántos puntos de espera. Si sale con cero pistas, el
+aeródromo no está mapeado como relación con su código OACI y hay que ir a
+mirar OpenStreetMap a mano.
+
+## 2. Comprobar los datos, no confiar
+
+```
+node scripts/mapa-aerodromo.mjs <escenario>
+```
+
+Dibuja el aeródromo desde arriba con el pavimento, los umbrales, el centro y
+el punto de arranque, y **da las distancias en metros**. Esta herramienta
+existe porque cuatro intentos de deducir un fallo desde capturas de la cabina
+no bastaron y desde arriba se vio en dos minutos.
+
+Lo que hay que ver en verde: el arranque dentro del asfalto, y el rumbo del
+eje medido coincidiendo con el del escenario.
+
+## 3. Los tres números de una pista, que son tres y distintos
+
+Esto es lo que más confusión causó, y conviene tenerlo claro antes de empezar:
+
+| | Qué es | De dónde sale |
+|---|---|---|
+| **Rumbo geométrico** | Por dónde corre el asfalto de verdad | Se **mide** entre los dos umbrales |
+| **Rumbo magnético** | El geométrico más la declinación | Se deduce del designador |
+| **Designador** | El número **pintado** | Viene del fichero, tal cual |
+
+En Silvio Pettirossi son 192,45°, 202° y «20». Usar el que no toca:
+
+- **Volar con el publicado** en vez del medido: dos grados y medio de error, y
+  el avión se sale de la pista en setecientos metros de carrera.
+- **Calcular el designador del rumbo verdadero**: pinta un 01 donde va un 02.
+
+## 4. El fallo que va a volver: dos marcos parecidos
+
+Seis veces en una tarde. Cada vez con otra cara y siempre lo mismo:
+
+- **La Y del fichero apunta al norte; en el mundo el norte es la Z negativa.**
+  Si algo sale espejado de norte a sur, es esto.
+- **Delante de un rumbo es `(sen h, −cos h)`, no `(sen h, cos h)`.** Con 0° y
+  90° las dos aciertan, así que no se nota hasta que hay un aeródromo real.
+  Está en `src/world/rumbo.ts` — **usarlo, no rehacer la cuenta**.
+- **La recta que une los umbrales NO es el eje del pavimento.** Una viene de
+  OurAirports y la otra de OpenStreetMap, se diferencian en metros, y
+  cualquier cosa que vaya cerca del filo acaba en la hierba. Todo lo que se
+  sitúe sobre la pista pasa por `sobreElEje()`.
+- **Y el eje puede venir recorrido en cualquiera de los dos sentidos.** Hay que
+  mirar por cuál umbral empieza antes de medir distancias desde él.
+
+## 5. Colocar el avión
+
+- El arranque va **en el umbral del fichero**, no en una cuenta desde el
+  centro. La de retroceder media pista funciona con pistas sintéticas y falla
+  con rumbos cualesquiera.
+- La cota se **mide del terreno aplanado**, no se toma del aeródromo: una
+  pista con pendiente no está a la cota del aeropuerto en ningún punto salvo
+  por casualidad. Si el avión aparece en el aire y se cae, es esto.
+
+## 6. Lo que hay que revisar mirando
+
+Por orden de lo que costó descubrir:
+
+1. ¿Se ve el pavimento? Si no, mira el sentido de giro de los triángulos y si
+   el terreno está aplanado **un poco por debajo** (`RESALTE`).
+2. ¿Está el avión sobre el asfalto al empezar?
+3. ¿Se mantiene en la pista durante la carrera, sin tocar nada?
+4. ¿Las líneas de borde están sobre el asfalto y no en la hierba?
+5. ¿La pintura está centrada respecto al asfalto?
+6. ¿El designador se lee del derecho **desde la aproximación**? Desde la pista
+   mirando hacia fuera se ve invertido, y eso es correcto.
+7. ¿Las luces están al borde y con sus colores? Blancas, ámbar los últimos 600
+   metros, verdes en la cabecera de llegada y rojas en la de salida.
+8. ¿Hay árboles en la pista? Si los hay, el rectángulo de la franja está
+   girado noventa grados.
+9. ¿El amarillo de las rodaduras se corta al llegar a la pista?
+10. ¿Se puede aterrizar y el juego lo dice?
+
+## 7. Lo que no está en ninguna fuente y hay que decidir
+
+El extractor deja `null` y **no inventa**: categoría de marcas, PAPI, luces de
+aproximación, altura de edificios. Se rellenan a mano con `"manual": true`,
+que el extractor respeta.
