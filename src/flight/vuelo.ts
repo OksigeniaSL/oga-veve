@@ -194,6 +194,14 @@ export class Vuelo {
   /** Ha usado un permiso. Entrar en pista después de eso no es saltarse nada. */
   private uso = false;
 
+  /**
+   * Si la torre no autoriza nunca. Lo pone la lección de rodar.
+   *
+   * Ver `flight/lecciones.ts`: es lo que convierte «rodar» en una lección con
+   * principio y final.
+   */
+  acabaEnLaEspera = false;
+
   /** Empieza un vuelo. `desdePista` arranca ya alineado, para el modo de siempre. */
   reiniciar(desdePista = false): void {
     this.fase = desdePista ? 'despegando' : 'estacionado';
@@ -352,6 +360,11 @@ export class Vuelo {
    * a toda velocidad y la lección desaparecía.
    */
   private atenderALaTorre(s: Situacion, dt: number): void {
+    // En la lección de rodar la torre no autoriza nunca, y eso es lo que le da
+    // final: del puesto a la doble raya, parar encima, y ya está. Sin esto,
+    // aprender a rodar no se acaba nunca — o se acaba despegando, que es otra
+    // lección.
+    if (this.acabaEnLaEspera) return;
     if (this.haVolado || this.verde) return;
     const enLaRaya = s.restante < LLEGADA && !s.enPista && s.sobreElSuelo <= EN_EL_AIRE;
     if (!enLaRaya) {

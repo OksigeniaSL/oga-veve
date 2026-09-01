@@ -32,6 +32,16 @@ import { createSky, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
 import { RunwayGuide } from './world/runway-guide';
 import { createVegetation, zonaDeAeropuerto } from './world/vegetation';
+import { LECCION_POR_DEFECTO, type Leccion } from './flight/lecciones';
+
+/** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
+const APROXIMACION = 3000;
+/** Y a qué altura sobre la pista: senda de tres grados y medio. */
+const ALTURA_DE_FINAL = 180;
+/** Lo menos que se pasa por encima del terreno de debajo, m. */
+const SUELO_MINIMO = 150;
+/** Y a qué velocidad. La de aproximación de un ligero, en metros por segundo. */
+const VELOCIDAD_DE_FINAL = 33;
 import { crearCiudad } from './world/ciudad';
 import { MissionMarker } from './world/mission-marker';
 import { MissionRunner } from './missions/runner';
@@ -90,9 +100,13 @@ export interface GameOptions {
   touchRoot: HTMLElement;
   scenario?: Scenario;
   aircraft?: AircraftConfig;
+  /** A qué se juega hoy. Ver `flight/lecciones.ts`. */
+  leccion?: Leccion;
 }
 
 export class Game {
+  /** Qué se está enseñando hoy: de aquí sale qué guía se enciende. */
+  private readonly leccion: Leccion;
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
@@ -167,6 +181,7 @@ export class Game {
 
   constructor(options: GameOptions) {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
+    this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
     this.aircraft = options.aircraft ?? OGA_172;
 
     this.renderer = new WebGLRenderer({
@@ -193,13 +208,22 @@ export class Game {
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
 
-    // El plan de vuelo, si este aeródromo da para uno. Va aquí, justo detrás
-    // del terreno, porque necesita la cota ya aplanada para pintar la ruta a
-    // ras de asfalto.
-    if (this.scenario.aerodrome) {
+    /*
+     * El plan de vuelo, si este aeródromo da para uno **y la lección lo pide**.
+     *
+     * Va aquí, justo detrás del terreno, porque necesita la cota ya aplanada
+     * para pintar la ruta a ras de asfalto.
+     *
+     * Y lo de la lección no es un detalle: quien eligió «dar una vuelta» no
+     * quiere una raya verde, una diana ni una doble raya. Antes salían siempre,
+     * y sin haberlas pedido son cosas raras en el suelo: «las señales de
+     * aterrizaje en principio no se sabe para qué está eso ahí».
+     */
+    if (this.scenario.aerodrome && this.leccion.guiaEnTierra) {
       this.plan = new PlanDeVuelo(this.scenario.aerodrome, this.scenario.runway, (x, z) =>
         this.terrain.sampleHeight(x, z),
       );
+      this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
       this.scene.add(this.plan.grupo);
     }
 
@@ -404,6 +428,42 @@ export class Game {
    */
   private startPosition(): Vector3 {
     const { runway, aerodrome } = this.scenario;
+
+    /*
+     * **La lección de aterrizar empieza en el aire, en final.**
+     *
+     * Empezar en el puesto para practicar aterrizajes significaría rodar dos
+     * kilómetros, despegar y dar una vuelta entera antes de cada intento. Nadie
+     * practica así, y menos alguien de seis años: se practica **repitiendo lo
+     * que cuesta**, no lo que ya sale.
+     *
+     * Tres kilómetros de la cabecera y ciento ochenta metros de altura, que es
+     * una senda de tres grados y medio — la de verdad es de tres, y esto es un
+     * pelín más alto a propósito: sobra siempre más fácil de arreglar que
+     * falta.
+     */
+    if (this.leccion.arranque === 'aire') {
+      const [x, z] = puntoDePista(runway, runway.length / 2 + APROXIMACION);
+      /*
+       * **La altura se mide desde la pista, no desde el suelo de debajo.**
+       *
+       * Medida desde el suelo de debajo, en Tenerife Norte el avión aparecía a
+       * quinientos sesenta metros con la pista a seiscientos veinte: sesenta
+       * metros **por debajo** de su destino, apuntando a una ladera. Tres
+       * kilómetros antes de una cabecera el terreno puede estar mucho más bajo
+       * —o más alto— que el aeropuerto, y lo que importa para una aproximación
+       * es la altura sobre la pista.
+       *
+       * Y con un mínimo sobre el terreno de debajo, por si la aproximación
+       * pasa por encima de algo: entrar directamente contra una loma tampoco
+       * es una lección.
+       */
+      const y = Math.max(
+        this.terrain.runwayElevation + ALTURA_DE_FINAL,
+        this.terrain.sampleHeight(x, z) + SUELO_MINIMO,
+      );
+      return new Vector3(x, y, z);
+    }
     // Con plan de vuelo se sale del puesto de estacionamiento, que es de donde
     // se sale de verdad. Sin él, de la cabecera, como toda la vida.
     const puesto = this.plan?.arranque();
@@ -495,6 +555,7 @@ export class Game {
 
   resetFlight(): void {
     const { runway } = this.scenario;
+    if (this.leccion.arranque === 'aire') return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
     // dónde aparece.
@@ -518,6 +579,36 @@ export class Game {
     this.landing.reset();
     this.crashedFor = 0;
     this.wasOnGround = true;
+    this.wasStalled = false;
+    this.wasCrashed = false;
+    this.input.releaseAll();
+    this.hud.tutor.reset();
+    this.instructor.callar();
+    this.updateBadge();
+  }
+
+  /**
+   * Empezar ya volando, en final, para la lección de aterrizar.
+   *
+   * Con motor, con velocidad de aproximación y mirando a la pista. El plan de
+   * vuelo se reinicia igual —hace falta para la raya de vuelta al puesto cuando
+   * se haya tomado tierra—, pero la máquina de fases arranca en el aire.
+   */
+  private reiniciarEnFinal(): void {
+    const { runway } = this.scenario;
+    this.plan?.reiniciar();
+    this.flight.reset({
+      position: this.startPosition(),
+      heading: MathUtils.degToRad(runway.heading),
+      airspeed: VELOCIDAD_DE_FINAL,
+    });
+    this.input.controls.engineOn = true;
+    this.input.controls.throttle = 0.45;
+    this.faseAnunciada = '';
+    this.runwayGuide.reset();
+    this.landing.reset();
+    this.crashedFor = 0;
+    this.wasOnGround = false;
     this.wasStalled = false;
     this.wasCrashed = false;
     this.input.releaseAll();
@@ -687,7 +778,8 @@ export class Game {
     // es lo que se mira desde el punto de espera. En el aire no hay lámpara que
     // mirar, y dejarla encendida decía algo que ya no era verdad.
     const enTierraEsperando =
-      vista.fase === 'esperando' || vista.fase === 'autorizado' || vista.fase === 'alineando';
+      this.leccion.torre &&
+      (vista.fase === 'esperando' || vista.fase === 'autorizado' || vista.fase === 'alineando');
     this.hud.setLuzDeTorre(
       !enTierraEsperando ? null : vista.fase === 'esperando' ? 'roja' : vista.luzVerde ? 'verde' : null,
     );
@@ -722,7 +814,19 @@ export class Game {
           : vista.fase === 'esperando' || vista.fase === 'aterrizado'
             ? ` · ${nombreDeTecla(this.input.preferredKey('brakes'))}`
             : '';
-      const frase = t(vista.clave as never);
+      /*
+       * **En la lección de aterrizar, volar no es el premio: es el camino.**
+       *
+       * La fase «en vuelo» dice «andá a dar una vuelta», que es lo que toca
+       * cuando se acaba de despegar y el mundo es tuyo. Pero quien eligió
+       * aprender a aterrizar aparece ya volando y a tres kilómetros de la
+       * cabecera: decirle que se dé una vuelta es mandarlo al sitio contrario.
+       */
+      const clave =
+        this.leccion.id === 'aterrizaje' && vista.fase === 'en-vuelo'
+          ? 'vuelo.enVueloAterrizando'
+          : vista.clave;
+      const frase = t(clave as never);
 
       // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La
       // voz no la oye quien juega en silencio ni quien no oye; el texto no lo

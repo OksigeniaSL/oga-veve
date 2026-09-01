@@ -44,6 +44,7 @@ export const GUG: Dictionary = {
   'vuelo.alineando': 'Eñemboja eje-re',
   'vuelo.despegando': 'Motor opa peve',
   'vuelo.enVuelo': 'Tereho eveve',
+  'vuelo.enVueloAterrizando': 'Tereho pistápe',
   'vuelo.final': 'Eguejy mbeguemi',
   'vuelo.aterrizado': 'Ejoko',
   'vuelo.abandonando': 'Esẽ pistágui, oúma ambue',
@@ -60,6 +61,11 @@ export const GUG: Dictionary = {
   'hangar.despegar': '¡Javeve!',
   'hangar.volver': 'Eiporavo ambue tenda',
   'mapa.title': 'Ehecha mapa',
+  'hangar.aque': '¿Mba’épe reñembosarái?',
+  'leccion.vuelta': 'Reho reguata',
+  'leccion.rodaje': 'Reguata yvýpe',
+  'leccion.despegue': 'Repu’ã',
+  'leccion.aterrizaje': 'Reguejy',
 
   // ── Instrumentos ───────────────────────────────────────────────────────
   // Los rótulos cortos (IAS, ALT, HDG…) no están aquí a propósito: no se

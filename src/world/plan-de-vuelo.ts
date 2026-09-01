@@ -292,6 +292,11 @@ export class PlanDeVuelo {
     this.grafo = construirGrafo(aero);
   }
 
+  /** Que la torre no autorice nunca: es la lección de rodar. */
+  set soloRodaje(si: boolean) {
+    this.vuelo.acabaEnLaEspera = si;
+  }
+
   /** Dónde empieza el vuelo: el puesto de estacionamiento, si lo hay. */
   arranque(): readonly [number, number] | null {
     const puesto = this.puestoDeSalida();

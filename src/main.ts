@@ -11,6 +11,7 @@
 // en vez de aparecer sin estilo durante un instante.
 import { Game } from './game';
 import { SCENARIOS, type Scenario } from './world/scenarios';
+import { leccionPorId, leccionRecordada, recordarLeccion, type Leccion } from './flight/lecciones';
 import { conRelieve } from './world/relieve';
 import { cargarCiudad } from './world/ciudades';
 import { conViento } from './world/scenarios';
@@ -81,7 +82,8 @@ if (!canvas || !hudRoot || !creditsRoot || !touchRoot) {
  * en la dirección se lo salta y entra directo, que es como se prueba un
  * aeródromo nuevo sin dar dos clics cada vez.
  */
-const pedido = new URLSearchParams(location.search).get('escenario');
+const params = new URLSearchParams(location.search);
+const pedido = params.get('escenario');
 const directo = pedido ? SCENARIOS.find((s) => s.id === pedido) : undefined;
 
 const recordado =
@@ -95,14 +97,21 @@ const recordado =
 
 let escenario = directo;
 let tramo = rememberedTier();
+// `?leccion=aterrizaje` salta el hangar y va directo, que es lo que permite
+// comprobarlas desde fuera sin pulsar cuatro fichas.
+let leccion: Leccion = params.get('leccion')
+  ? leccionPorId(params.get('leccion'))
+  : leccionRecordada();
 
 if (!escenario) {
   const hangarRoot = document.querySelector<HTMLElement>('#hangar');
   if (!hangarRoot) throw new Error('Falta #hangar; revisa index.html');
-  const elegido = await abrirHangar(hangarRoot, { scenario: recordado, tier: tramo });
+  const elegido = await abrirHangar(hangarRoot, { scenario: recordado, tier: tramo, leccion });
   escenario = elegido.scenario;
   tramo = elegido.tier;
+  leccion = elegido.leccion;
   rememberTier(tramo);
+  recordarLeccion(leccion);
 }
 
 /*
@@ -126,7 +135,7 @@ try {
   // Sin almacenamiento se juega igual, solo que no se recuerda.
 }
 
-const game = new Game({ canvas, hudRoot, creditsRoot, touchRoot, scenario: escenario });
+const game = new Game({ canvas, hudRoot, creditsRoot, touchRoot, scenario: escenario, leccion });
 game.start();
 
 // Al ocultar la pestaña se para el bucle: no tiene sentido gastar batería
