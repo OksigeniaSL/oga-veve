@@ -29,6 +29,7 @@
  */
 
 import { TIERS, type Tier } from '../flight/tiers';
+import { LECCIONES, type Leccion } from '../flight/lecciones';
 import { SCENARIOS, type Scenario } from '../world/scenarios';
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from '../i18n';
 
@@ -36,6 +37,7 @@ import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from '../i18n';
 export interface Eleccion {
   readonly scenario: Scenario;
   readonly tier: Tier;
+  readonly leccion: Leccion;
 }
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
@@ -388,6 +390,79 @@ function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
     </button>`;
 }
 
+
+/**
+ * Los cuatro dibujos de lección.
+ *
+ * Cada uno tiene que decir la lección entera **sin una palabra**, porque esto
+ * lo elige quien no lee. Así que ninguno es un símbolo: los cuatro son la misma
+ * avioneta en cuatro sitios distintos, que es lo único que un niño de cuatro
+ * años necesita comparar.
+ *
+ * Se dibujan sobre el mismo lienzo que las fichas de tramo —cielo arriba,
+ * tierra abajo— para que las tres filas del hangar se lean como tres preguntas
+ * sobre la misma cosa y no como tres pantallas distintas.
+ */
+const AVION = (t: string): string =>
+  `<path class="leccion__avion" transform="${t}"
+     d="M-11 0.6 L-1.2 -0.4 V-7 a1 1 0 0 1 2 0 v6.6 L11 0.6 v2.4 L0.8 4 v3.8
+        l2.4 1.4 v1.2 L0 9.6 L-3.2 10.4 V9.2 L-0.8 7.8 V4 L-11 3 Z" />`;
+
+const escena = (cuerpo: string): string => `
+  <svg class="ficha__panel" viewBox="0 0 120 84" aria-hidden="true">
+    <rect class="panel__cielo" x="0" y="0" width="120" height="46" rx="3" />
+    <rect class="panel__tierra" x="0" y="42" width="120" height="42" rx="3" />
+    ${cuerpo}
+  </svg>
+`;
+
+/** Dar una vuelta: el avión arriba, y nada más. El paisaje es el premio. */
+const LEC_VUELTA = escena(`
+  <path class="leccion__loma" d="M0 62 q22-12 40-2 q18 10 34-4 q16-13 46 2 v26 H0 Z" />
+  ${AVION('translate(60 26) rotate(-8)')}
+`);
+
+/** Rodar: el avión sobre la raya amarilla, camino de la doble raya. */
+const LEC_RODAJE = escena(`
+  <path class="leccion__asfalto" d="M14 84 L44 46 h30 L58 84 Z" />
+  <path class="leccion__amarilla" d="M40 84 L58 47" />
+  <path class="leccion__doble" d="M22 74 h34 M26 79 h34" />
+  ${AVION('translate(52 60) rotate(-38) scale(1.15)')}
+`);
+
+/** Despegar: el avión subiendo desde la pista. */
+const LEC_DESPEGUE = escena(`
+  <path class="leccion__asfalto" d="M0 84 L34 50 h26 L26 84 Z" />
+  <path class="leccion__estela" d="M22 72 q26-14 52-34" />
+  ${AVION('translate(84 26) rotate(-26) scale(1.05)')}
+`);
+
+/** Aterrizar: el avión bajando a la pista, con su senda. */
+const LEC_ATERRIZAJE = escena(`
+  <path class="leccion__asfalto" d="M52 84 L86 50 h26 L78 84 Z" />
+  <path class="leccion__estela" d="M14 22 q34 18 70 34" />
+  ${AVION('translate(34 30) rotate(24) scale(1.05)')}
+`);
+
+const DIBUJOS_LECCION: Record<string, string> = {
+  vuelta: LEC_VUELTA,
+  rodaje: LEC_RODAJE,
+  despegue: LEC_DESPEGUE,
+  aterrizaje: LEC_ATERRIZAJE,
+};
+
+function fichaDeLeccion(leccion: Leccion, elegida: boolean): string {
+  return `
+    <button class="ficha ficha--leccion" type="button" role="radio"
+            aria-checked="${elegida}" tabindex="${elegida ? 0 : -1}"
+            data-leccion="${leccion.id}">
+      <span class="ficha__lienzo ficha__lienzo--panel">${DIBUJOS_LECCION[leccion.id] ?? ''}</span>
+      <span class="ficha__pie">
+        <span class="ficha__nombre">${t(`leccion.${leccion.id}` as never)}</span>
+      </span>
+    </button>`;
+}
+
 /** El avión despegando del botón de despegar. */
 const DESPEGA = `
   <svg viewBox="0 0 48 32" aria-hidden="true">
@@ -405,10 +480,11 @@ const DESPEGA = `
  */
 export function abrirHangar(
   root: HTMLElement,
-  inicial: { scenario: Scenario; tier: Tier },
+  inicial: { scenario: Scenario; tier: Tier; leccion: Leccion },
 ): Promise<Eleccion> {
   let sitio = inicial.scenario;
   let tramo = inicial.tier;
+  let leccion = inicial.leccion;
 
   const pintar = (): void => {
     root.innerHTML = `
@@ -433,6 +509,25 @@ export function abrirHangar(
           <h2 class="hangar__pregunta" id="hangar-sitio">${t('hangar.donde')}</h2>
           <div class="hangar__fila" role="radiogroup" aria-labelledby="hangar-sitio">
             ${SCENARIOS.map((e) => fichaDeSitio(e, e.id === sitio.id)).join('')}
+          </div>
+        </section>
+
+        <!--
+          **La segunda pregunta, y no la tercera.**
+
+          Hasta ahora el juego siempre estaba dando la misma clase y nunca la
+          había ofrecido: arrancabas y ya había raya verde, diana y doble raya.
+          Va aquí arriba porque **a qué se juega manda más que cuánta ayuda se
+          recibe**, y porque el tramo se elige una vez y se olvida, mientras que
+          esto se cambia en cada partida.
+
+          Y muy práctico: en una pantalla de portátil solo caben dos filas sin
+          desplazar. Las dos que se ven tienen que ser las dos que se tocan.
+        -->
+        <section class="hangar__bloque" aria-labelledby="hangar-leccion">
+          <h2 class="hangar__pregunta" id="hangar-leccion">${t('hangar.aque')}</h2>
+          <div class="hangar__fila" role="radiogroup" aria-labelledby="hangar-leccion">
+            ${LECCIONES.map((l) => fichaDeLeccion(l, l.id === leccion.id)).join('')}
           </div>
         </section>
 
@@ -463,9 +558,13 @@ export function abrirHangar(
 
   return new Promise<Eleccion>((resolve) => {
     /** Elegir una ficha: repintar y devolverle el foco a la que se eligió. */
-    const elegir = (atributo: 'data-sitio' | 'data-tramo', id: string): void => {
+    const elegir = (
+      atributo: 'data-sitio' | 'data-tramo' | 'data-leccion',
+      id: string,
+    ): void => {
       if (atributo === 'data-sitio') sitio = SCENARIOS.find((e) => e.id === id) ?? sitio;
-      else tramo = TIERS.find((x) => x.id === id) ?? tramo;
+      else if (atributo === 'data-tramo') tramo = TIERS.find((x) => x.id === id) ?? tramo;
+      else leccion = LECCIONES.find((x) => x.id === id) ?? leccion;
       pintar();
       // Sin esto, quien navega con teclado se queda tirado al principio del
       // documento cada vez que elige algo, porque el nodo que tenía el foco
@@ -491,10 +590,13 @@ export function abrirHangar(
       const idTramo = boton.getAttribute('data-tramo');
       if (idTramo) return elegir('data-tramo', idTramo);
 
+      const idLeccion = boton.getAttribute('data-leccion');
+      if (idLeccion) return elegir('data-leccion', idLeccion);
+
       if (boton.hasAttribute('data-despegar')) {
         root.hidden = true;
         root.innerHTML = '';
-        resolve({ scenario: sitio, tier: tramo });
+        resolve({ scenario: sitio, tier: tramo, leccion });
       }
     });
 
@@ -518,7 +620,11 @@ export function abrirHangar(
       const i = tarjetas.indexOf(boton as HTMLElement);
       // Da la vuelta al llegar al final, que es lo que hace un grupo de radio.
       const siguiente = tarjetas[(i + paso + tarjetas.length) % tarjetas.length];
-      const atributo = siguiente?.hasAttribute('data-sitio') ? 'data-sitio' : 'data-tramo';
+      const atributo = siguiente?.hasAttribute('data-sitio')
+        ? 'data-sitio'
+        : siguiente?.hasAttribute('data-leccion')
+          ? 'data-leccion'
+          : 'data-tramo';
       const id = siguiente?.getAttribute(atributo);
       if (id) elegir(atributo, id);
     });

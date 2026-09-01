@@ -1546,7 +1546,7 @@ body {
 .hangar__marco {
   display: flex;
   flex-direction: column;
-  gap: clamp(14px, 2.6vh, 28px);
+  gap: clamp(10px, 1.8vh, 20px);
   width: min(1080px, 100%);
   /* Hueco para la barra de abajo, que es fija y taparía la última fila. */
   padding-bottom: 96px;
@@ -1615,10 +1615,29 @@ body {
  * Las tarjetas caben todas de una fila cuando hay sitio y se envuelven cuando
  * no. Nada de carrusel: lo que no se ve, para quien no lee, no existe.
  */
+/*
+ * Las fichas se estrechan porque **ahora hay tres preguntas**, no dos.
+ *
+ * Con el mínimo en 150 px y tres filas, la tercera —a qué se juega, que es la
+ * que más manda— quedaba entera por debajo del borde de la pantalla, y una
+ * pregunta que hay que desplazar para ver no se ha hecho. Con 118 px caben las
+ * tres, y la ficha sigue siendo mucho más grande que el dedo de un niño.
+ */
 .hangar__fila {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: clamp(10px, 1.6vw, 18px);
+  /*
+   * **Con tope de ancho**, no `1fr`.
+   *
+   * Con `1fr` las cuatro fichas se repartían los mil ochenta píxeles del marco
+   * y se ponían a doscientos sesenta cada una; con la proporción del lienzo,
+   * eso son fichas altas, y tres filas de fichas altas no caben en una pantalla
+   * de portátil. La tercera pregunta —a qué se juega, que es la que más manda—
+   * quedaba entera por debajo del borde, y una pregunta que hay que desplazar
+   * para ver no se ha hecho.
+   */
+  grid-template-columns: repeat(auto-fit, minmax(118px, 186px));
+  justify-content: center;
+  gap: clamp(8px, 1.2vw, 14px);
 }
 
 /* ── Una ficha ─────────────────────────────────────────────────────── */
@@ -1694,8 +1713,9 @@ body {
   position: relative;
   display: grid;
   place-items: center;
-  aspect-ratio: 3 / 2;
-  padding: 10px;
+  /* Más apaisado que antes —era 3/2— por lo mismo: tres filas en una pantalla. */
+  aspect-ratio: 5 / 3;
+  padding: 8px;
   background: linear-gradient(var(--cielo, #33413a) 0%, var(--suelo, #24312b) 100%);
 }
 
@@ -2330,4 +2350,46 @@ body {
     top: 84px;
     right: 10px;
   }
+}
+
+/*
+ * ── Los dibujos de lección ───────────────────────────────────────────────
+ *
+ * Van sobre el mismo lienzo que las fichas de tramo —cielo arriba, tierra
+ * abajo— para que las tres preguntas del hangar se lean como tres preguntas
+ * sobre la misma cosa y no como tres pantallas distintas.
+ */
+.leccion__avion {
+  fill: var(--tinta);
+}
+
+.leccion__loma {
+  fill: rgba(0, 0, 0, 0.14);
+}
+
+.leccion__asfalto {
+  fill: #3a3d3c;
+}
+
+.leccion__amarilla {
+  stroke: var(--ocre-tinta);
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.leccion__doble {
+  stroke: var(--ocre-tinta);
+  stroke-width: 1.4;
+  fill: none;
+  opacity: 0.85;
+}
+
+.leccion__estela {
+  stroke: var(--tinta);
+  stroke-width: 1.6;
+  stroke-dasharray: 3 3.4;
+  fill: none;
+  opacity: 0.5;
+  stroke-linecap: round;
 }
