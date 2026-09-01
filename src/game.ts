@@ -148,6 +148,7 @@ export class Game {
   /** El mundo de verdad, si hay clave y aeródromo. */
   private readonly teselas: Teselas | null;
   private mundoRealPuesto = false;
+  private sueloMoldeado = false;
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
@@ -436,14 +437,22 @@ export class Game {
       /** Los mandos, para poder mirarlos desde una comprobación. */
       controles: () => this.input.controls,
       /** El estado del mundo de verdad, para las comprobaciones. */
-      mundoReal: () =>
-        this.teselas
-          ? {
-              asentado: this.teselas.asentado,
-              desfase: this.teselas.desfase,
-              visibles: this.teselas.visibles,
-            }
-          : null,
+      mundoReal: () => {
+        if (!this.teselas) return null;
+        const s = this.flight.state;
+        // Lo único que de verdad importa: ¿están las ruedas encima del asfalto
+        // de la fotografía, o dentro de él?
+        const foto = this.teselas.alturaEn(s.position.x, s.position.z);
+        return {
+          asentado: this.teselas.asentado,
+          desfase: this.teselas.desfase,
+          visibles: this.teselas.visibles,
+          nuestroSuelo: this.terrain.sampleHeight(s.position.x, s.position.z),
+          suSuelo: foto,
+          ruedas: s.position.y - this.aircraft.gearHeight,
+          hundido: foto === null ? null : s.position.y - this.aircraft.gearHeight - foto,
+        };
+      },
       /**
        * Un piloto de pruebas: una función que toca los mandos **después** de
        * que los lea el teclado.
@@ -732,6 +741,18 @@ export class Game {
     fuera(this.terrain.group.getObjectByName('horizonte'));
     fuera(this.terrain.group.getObjectByName('agua'));
     fuera(this.vegetacion);
+    /*
+     * Y la ciudad de cajas. Se veía exacto: «hay cubos en el aire flotando».
+     *
+     * Están colocadas sobre nuestro mapa de alturas, así que sobre la foto
+     * quedan flotando; y en Tenerife además sobran, porque la fotogrametría ya
+     * trae los edificios de verdad con su volumen y su sombra.
+     *
+     * En Asunción **sí harían falta** —allí la foto es una alfombra plana— pero
+     * puestas sobre el suelo de la foto, no sobre el nuestro. Eso está probado
+     * en `spike/aerodromo-real.js` y es lo siguiente.
+     */
+    fuera(this.scene.getObjectByName('ciudad'));
 
     const aero = this.scenario.aerodrome;
     if (!aero) return;
@@ -898,10 +919,51 @@ export class Game {
      * tierra.
      */
     if (this.teselas) {
-      this.teselas.update(this.camera, this.renderer);
+      this.teselas.update(this.camera, this.renderer, dt);
       if (this.teselas.asentado && !this.mundoRealPuesto) {
         this.mundoRealPuesto = true;
         this.apagarElMundoDeMentira();
+      }
+      /*
+       * Y se copia el suelo de la foto al nuestro, de una pasada.
+       *
+       * Seis kilómetros alrededor del aeródromo, que es donde se rueda, se
+       * despega y se aterriza y donde un metro se ve. Es medio segundo de tirón
+       * al empezar y a cambio **el suelo que se pisa y el que se ve son el
+       * mismo**, no dos que se parecen con un número entre medias.
+       *
+       * Y después se recoloca el avión, porque el suelo bajo sus ruedas acaba
+       * de cambiar.
+       */
+      if (this.mundoRealPuesto && !this.sueloMoldeado) {
+        this.sueloMoldeado = true;
+        /*
+         * **Y se descarta lo que no cuadre con el desfase que ya se midió.**
+         *
+         * Un rayo que golpea una tesela basta —de las que aún no han llegado en
+         * fino, sobre todo en el borde de la zona— devuelve una cota decenas de
+         * metros alta, y creérsela deja cráteres y mesetas en el suelo. La
+         * primera versión filtraba solo por «no más de cuatrocientos metros» y
+         * escribió valores setenta y tres metros altos: el avión pasó de topo a
+         * flotar.
+         *
+         * Pero el desfase entre los dos suelos ya está medido sobre la pista, y
+         * es constante. Así que cualquier cota que se aparte más de cuarenta
+         * metros de lo que predice **no es el suelo**, es una tesela sin
+         * terminar de cargar, y se deja el nuestro.
+         */
+        const esperado = this.teselas.desfase ?? 0;
+        const escritos = this.terrain.moldearDesde(
+          (x, z) => {
+            const suyo = this.teselas!.alturaEn(x, z);
+            if (suyo === null) return null;
+            const prevision = this.terrain.sampleHeight(x, z) + esperado;
+            return Math.abs(suyo - prevision) < 40 ? suyo : null;
+          },
+          [0, 0],
+          6000,
+        );
+        if (escritos > 0) this.resetFlight();
       }
     }
     this.advanceMission();

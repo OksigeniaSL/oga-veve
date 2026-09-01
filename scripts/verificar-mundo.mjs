@@ -19,9 +19,8 @@ const b = await chromium.launch({
 });
 
 for (const [escenario, leccion] of [
-  ['tenerife-norte', 'aterrizaje'],
+  ['pettirossi', 'despegue'],
   ['tenerife-norte', 'despegue'],
-  ['pettirossi', 'aterrizaje'],
 ]) {
   const page = await b.newPage({ viewport: { width: 1280, height: 800 }, locale: 'es-PY' });
   const fallos = [];
@@ -42,9 +41,18 @@ for (const [escenario, leccion] of [
   console.log(
     `${escenario}/${leccion}  ` +
       (r.mundo
-        ? `desfase ${r.mundo.desfase?.toFixed(1) ?? '—'} m · ${r.mundo.visibles} teselas · asentado=${r.mundo.asentado}`
+        ? `desfase ${r.mundo.desfase?.toFixed(1) ?? '—'} m · ${r.mundo.visibles} teselas\n` +
+          `        nuestro suelo ${r.mundo.nuestroSuelo?.toFixed(1)} m · el de la foto ${r.mundo.suSuelo?.toFixed(1) ?? '—'} m · ` +
+          `ruedas a ${r.mundo.ruedas?.toFixed(1)} m → ${
+            r.mundo.hundido === null
+              ? 'sin medir'
+              : r.mundo.hundido < -0.5
+                ? `HUNDIDO ${(-r.mundo.hundido).toFixed(1)} m`
+                : r.mundo.hundido > 1.5
+                  ? `FLOTANDO ${r.mundo.hundido.toFixed(1)} m`
+                  : 'encima ✓'
+          }`
         : 'sin mundo real') +
-      ` · avión a ${r.y} m (${r.agl} sobre el suelo)` +
       (fallos.length ? `  ⚠ ${fallos[0]}` : ''),
   );
   await page.screenshot({ path: `${D}/mundo-${escenario}-${leccion}.png` });

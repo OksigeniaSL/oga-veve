@@ -320,6 +320,37 @@ export class PlanDeVuelo {
    * quien juega se lo aprende, y un aeropuerto que te cambia el puesto cada
    * partida no se aprende nunca.
    */
+  /**
+   * Todos los puestos, del mejor al peor.
+   *
+   * Existe porque el mejor puede estar ocupado. En la fotogrametría están
+   * congelados los aviones que había el día que Google voló, y el puesto que
+   * sale de esta cuenta en Tenerife tiene encima un avión de línea: el nuestro
+   * aparecía dentro de él. Con la lista se puede ir bajando hasta encontrar uno
+   * libre.
+   */
+  puestosPorOrden(): readonly { ref: string | null; xy: Punto }[] {
+    const puestos = this.aero.parkingPositions;
+    if (!puestos?.length) return [];
+    const cabecera = this.cabeceraDeSalida();
+    return [...puestos].sort(
+      (a, b) =>
+        Math.hypot(a.xy[0] - cabecera[0], a.xy[1] - cabecera[1]) -
+        Math.hypot(b.xy[0] - cabecera[0], b.xy[1] - cabecera[1]),
+    );
+  }
+
+  /** Empieza el vuelo desde un puesto concreto, no del que toca por cercanía. */
+  reiniciarDesde(puesto: Punto): boolean {
+    const espera = this.esperaDeSalida();
+    if (!espera) return false;
+    this.vuelo.reiniciar(false);
+    this.destino = 'espera';
+    this.ultimaPos = puesto;
+    this.ponerRuta(rodajeEntre(this.grafo, puesto, espera));
+    return this.ruta !== null;
+  }
+
   private puestoDeSalida(): { ref: string | null; xy: Punto } | null {
     const puestos = this.aero.parkingPositions;
     if (!puestos?.length) return null;
