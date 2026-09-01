@@ -62,8 +62,10 @@ describe('un vuelo entero', () => {
         0.5,
       ),
     );
-    // Vuela un rato y vuelve.
-    anotar(durante(v, con({ motor: true, sobreElSuelo: 700, alEjeDePista: 900 }), 1));
+    // Vuela un rato y vuelve. **Un rato de verdad**: hay que subir a altura de
+    // circuito y estar en el aire un mínimo antes de poder volver a entrar, o
+    // un salto de rana contaría como vuelo completo.
+    anotar(durante(v, con({ motor: true, sobreElSuelo: 700, alEjeDePista: 900 }), 20));
     anotar(
       durante(
         v,
@@ -165,7 +167,7 @@ describe('las trampas', () => {
     // «Ya aterricé y esto gasta queroseno» es una razón válida para terminar.
     const v = new Vuelo();
     v.reiniciar(true);
-    durante(v, con({ motor: true, enPista: true, sobreElSuelo: 80 }), 0.5);
+    durante(v, con({ motor: true, enPista: true, sobreElSuelo: 400 }), 20);
     expect(v.actual).toBe('en-vuelo');
     durante(
       v,
@@ -182,12 +184,33 @@ describe('las trampas', () => {
     expect(fase).toBe('apagado');
   });
 
+  it('un salto de rana no cuenta como vuelo: no se puede aterrizar recién despegado', () => {
+    // Sin esta regla, el avión despegaba, subía quince metros, se asentaba un
+    // instante y a los dos segundos el juego lo daba por aproximación final.
+    // Catorce fases en veinte segundos y ni una vuelta.
+    const v = new Vuelo();
+    v.reiniciar(true);
+    durante(v, con({ motor: true, enPista: true, sobreElSuelo: 20 }), 1);
+    expect(v.actual).toBe('en-vuelo');
+    const fase = durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 18,
+        alEjeDePista: 5,
+        estado: { airspeed: 32, verticalSpeed: -1 } as never,
+      }),
+      5,
+    );
+    expect(fase).toBe('en-vuelo');
+  });
+
   it('quien se pasa de largo en final vuelve a en-vuelo y puede repetir', () => {
     // Una frustrada. No es un fallo: es una maniobra, y hay que poder hacerla
     // sin que el juego se quede colgado esperando un aterrizaje que no llega.
     const v = new Vuelo();
     v.reiniciar(true);
-    durante(v, con({ motor: true, enPista: true, sobreElSuelo: 80 }), 0.5);
+    durante(v, con({ motor: true, enPista: true, sobreElSuelo: 400 }), 20);
     durante(
       v,
       con({

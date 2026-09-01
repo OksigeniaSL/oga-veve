@@ -95,6 +95,27 @@ const RODANDO_YA = 2;
 /** Altura a la que se da por despegado, m. */
 const EN_EL_AIRE = 12;
 
+/** Altura que hay que alcanzar antes de poder volver a aterrizar, m. */
+const ALTURA_DE_CIRCUITO = 120;
+
+/** Y tiempo mínimo en el aire, s. Ver la nota de la fase «en-vuelo». */
+const TIEMPO_MINIMO_EN_VUELO = 15;
+
+/**
+ * A cuántos metros del final de la ruta se considera que ya se ha llegado.
+ *
+ * Cuarenta y cinco, no veinticinco. Con veinticinco, alguien que frena un poco
+ * antes de la doble raya —que es lo prudente— se quedaba fuera de la ventana:
+ * el avión parado, la ruta terminada delante de las ruedas, y el juego sin
+ * pasar de fase ni encender la luz. Pasó en la primera comprobación que rodó
+ * hasta el final: se detuvo a veintiocho metros y ahí se quedó dos minutos.
+ *
+ * Un punto de espera de verdad se marca con una raya de treinta centímetros y
+ * nadie para al centímetro. La generosidad va en la distancia; lo que no se
+ * perdona es no pararse.
+ */
+const LLEGADA = 45;
+
 /** Cuánto hay que estar quieto en la doble raya antes de que la torre mire, s. */
 const ESPERA_MINIMA = 1.5;
 
@@ -121,6 +142,8 @@ export class Vuelo {
   private verde = false;
   /** Hace falta recordar si voló para no dar por aterrizado al que no despegó. */
   private volo = false;
+  /** Lo más alto que se ha estado desde el despegue, m sobre el suelo. */
+  private techo = 0;
 
   /** Empieza un vuelo. `enPista` arranca ya alineado, para el modo de siempre. */
   reiniciar(desdePista = false): void {
@@ -130,6 +153,7 @@ export class Vuelo {
     this.mirando = 0;
     this.verde = desdePista;
     this.volo = false;
+    this.techo = 0;
   }
 
   get actual(): Fase {
@@ -158,6 +182,7 @@ export class Vuelo {
     const antes = this.fase;
     this.desde += dt;
     if (s.sobreElSuelo > EN_EL_AIRE) this.volo = true;
+    this.techo = Math.max(this.techo, s.sobreElSuelo);
 
     switch (this.fase) {
       case 'estacionado':
@@ -171,7 +196,7 @@ export class Vuelo {
         break;
 
       case 'rodando':
-        if (s.restante < 25 && s.estado.airspeed < RODANDO_YA) this.ir('esperando');
+        if (s.restante < LLEGADA && s.estado.airspeed < RODANDO_YA) this.ir('esperando');
         break;
 
       case 'esperando': {
@@ -200,6 +225,17 @@ export class Vuelo {
         break;
 
       case 'en-vuelo':
+        // **Un salto de rana no es un vuelo.** Sin esto, el avión despegaba,
+        // subía quince metros, se asentaba un instante —velocidad vertical
+        // negativa, alineado con la pista, bajo— y el juego lo daba por
+        // aproximación final a los dos segundos de despegar. Se veía en la
+        // primera comprobación que voló el circuito entero: catorce fases en
+        // veinte segundos y ni una vuelta.
+        //
+        // Para volver hay que haberse ido: altura de circuito y un rato en el
+        // aire. Los dos, porque uno solo se engaña — se puede subir mucho en
+        // poco tiempo y se puede estar mucho tiempo a ras de suelo.
+        if (this.techo < ALTURA_DE_CIRCUITO || this.desde < TIEMPO_MINIMO_EN_VUELO) break;
         // Final: bajando, alineado con la pista y por debajo de trescientos.
         if (
           s.sobreElSuelo < 300 &&
@@ -227,7 +263,7 @@ export class Vuelo {
         break;
 
       case 'a-plataforma':
-        if (s.restante < 25 && s.estado.airspeed < PARADO) this.ir('en-puesto');
+        if (s.restante < LLEGADA && s.estado.airspeed < PARADO) this.ir('en-puesto');
         break;
 
       case 'en-puesto':

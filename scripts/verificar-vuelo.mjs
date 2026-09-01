@@ -30,7 +30,15 @@ const RUEDAN = new Set(['tenerife-norte']);
 for (const escenario of ['pettirossi', 'tenerife-norte']) {
   const page = await b.newPage({ viewport: { width: 1280, height: 800 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
-  await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
+  await page.addInitScript(() => {
+    localStorage.setItem('oga-veve:teclas-vistas', '1');
+    // **Con la física de verdad.** El modelo sencillo de Guyrami sube solo
+    // por encima de cierta velocidad y con un piloto automático corriente no
+    // se le saca un ascenso: es a propósito —ese peldaño enseña que hay que
+    // correr para volar— pero para comprobar un circuito completo hace falta
+    // el modelo de coeficientes, donde una ley de mando normal funciona.
+    localStorage.setItem('oga-veve:tramo', 'taguato-ruvicha');
+  });
   await page.goto(`http://localhost:5213/?escenario=${escenario}`);
   await page.waitForTimeout(3000);
 
@@ -105,8 +113,16 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
     const fases = [];
     let ultima = '';
     let etapa = 'salida';
+    let desdeEtapa = performance.now();
+    const irA = (nueva) => {
+      etapa = nueva;
+      desdeEtapa = performance.now();
+    };
+    /** Segundos en la etapa actual. Ninguna puede durar para siempre. */
+    const enEtapa = () => (performance.now() - desdeEtapa) / 1000;
     let masAlto = 0;
     let toque = null;
+    const rastro = [];
 
     o.pilotar((c) => {
       const e = o.estado();
@@ -114,7 +130,7 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
       const ruta = o.ruta();
       const { along, across } = enEjes(e.position.x, e.position.z);
       const suelo = e.position.y;
-      masAlto = Math.max(masAlto, suelo);
+      masAlto = Math.max(masAlto, e.heightAboveGround ?? 0);
 
       c.engineOn = fase !== 'en-puesto';
       c.aileron = 0;
@@ -127,7 +143,7 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         if (ruta.length < 2) return;
         const fin = ruta[ruta.length - 1];
         const alFinal = Math.hypot(fin[0] - e.position.x, fin[1] - e.position.z);
-        if (alFinal < 28) {
+        if (alFinal < 15) {
           c.throttle = 0;
           c.brakes = 1;
           return;
@@ -177,9 +193,18 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         // inclinación, que es lo que se usa en un circuito de verdad.
         c.aileron = Math.max(-0.6, Math.min(0.6, giro / 30));
         c.rudder = c.aileron * 0.25;
-        // Cabeceo por velocidad vertical: se pide una y se corrige la que hay.
-        c.elevator = Math.max(-0.5, Math.min(0.6, (subida - e.verticalSpeed) * 0.09));
-        c.throttle = gas;
+
+        // **Protección de velocidad, que es lo que hace un piloto.** La primera
+        // versión pedía seis metros por segundo de ascenso nada más despegar y
+        // tiraba del morro a ciento doce por hora: el avión entraba en pérdida
+        // a quince metros y se estrellaba, y el juego lo reiniciaba solo. Antes
+        // de subir hay que tener velocidad; si falta, se baja el morro aunque
+        // se pierda altura.
+        const V_SEGURA = 36;
+        const pedida = e.airspeed < V_SEGURA ? Math.min(subida, -0.5) : subida;
+        // Y con ganancia suave: un mando de cabeceo nervioso es un fugoide.
+        c.elevator = Math.max(-0.35, Math.min(0.35, (pedida - e.verticalSpeed) * 0.05));
+        c.throttle = e.airspeed < V_SEGURA ? 1 : gas;
       };
 
       switch (fase) {
@@ -200,10 +225,23 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         }
 
         case 'alineando': {
-          const giro = error(pista.heading, rumboDe(e));
+          // **Apuntar al eje, no al rumbo.** Corrigiendo solo el rumbo, el
+          // avión entraba a la pista por el borde, se ponía paralelo al eje a
+          // veintidós metros de él y rodaba así hasta el final sin alinearse
+          // nunca: el rumbo era perfecto y el desvío no se tocaba.
+          const [fx, fz] = delante(pista.heading);
+          const [tx, tz] = traves(pista.heading);
+          const d = along + 180;
+          const objetivoX = pista.x + fx * d + tx * 0;
+          const objetivoZ = pista.z + fz * d + tz * 0;
+          const quiero =
+            ((Math.atan2(objetivoX - e.position.x, -(objetivoZ - e.position.z)) * 180) / Math.PI +
+              360) %
+            360;
+          const giro = error(quiero, rumboDe(e));
           c.aileron = Math.max(-1, Math.min(1, giro / 12));
           c.rudder = c.aileron * 0.5;
-          c.throttle = e.airspeed < 4 ? 0.35 : 0;
+          c.throttle = e.airspeed < 5 ? 0.4 : 0;
           break;
         }
 
@@ -219,35 +257,51 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         }
 
         case 'en-vuelo': {
-          const alturaSuelo = suelo - (pista.elev ?? 0);
+          // **La altura es sobre el suelo, no sobre el mar.** La primera
+          // versión pedía «pasar de cuatrocientos metros» y el aeropuerto está
+          // a seiscientos veinticuatro: la condición era cierta desde antes de
+          // despegar y la de después nunca llegaba. El avión se pasó siete
+          // minutos subiendo en línea recta.
+          const alto = e.heightAboveGround ?? 0;
+
           if (etapa === 'salida') {
-            volarA(pista.heading, 6, 1);
-            if (along > 2500 && suelo > masAlto - 5 && suelo > 400) etapa = 'vuelta1';
+            volarA(pista.heading, 4, 1);
+            // Se sale hasta pasar la cabecera contraria con altura de
+            // circuito, o a los cincuenta segundos, lo que llegue antes.
+            if ((along > pista.length / 2 + 800 && alto > 250) || enEtapa() > 50) irA('vuelta1');
           } else if (etapa === 'vuelta1') {
-            // Primer viraje de ciento ochenta.
-            volarA((pista.heading + 180) % 360, 0, 0.8);
-            if (Math.abs(error((pista.heading + 180) % 360, rumboDe(e))) < 12) etapa = 'volviendo';
+            volarA((pista.heading + 180) % 360, 0, 0.85);
+            if (Math.abs(error((pista.heading + 180) % 360, rumboDe(e))) < 15 || enEtapa() > 60) {
+              irA('volviendo');
+            }
           } else if (etapa === 'volviendo') {
-            volarA((pista.heading + 180) % 360, 0, 0.8);
-            // Se vuelve hasta cinco kilómetros por detrás de la cabecera.
-            if (along < -pista.length / 2 - 4500) etapa = 'vuelta2';
+            // Se vuelve por un lado, no por encima de la pista: así el segundo
+            // viraje deja al avión alineado en vez de cruzado.
+            const quiere = across > 0 ? 900 : -900;
+            const correccion = Math.max(-20, Math.min(20, (quiere - across) / 60));
+            volarA((pista.heading + 180 + correccion + 360) % 360, 0, 0.85);
+            if (along < -pista.length / 2 - 5000 || enEtapa() > 120) irA('vuelta2');
           } else if (etapa === 'vuelta2') {
-            volarA(pista.heading, 0, 0.7);
-            if (Math.abs(error(pista.heading, rumboDe(e))) < 12) etapa = 'entrando';
+            volarA(pista.heading, -1, 0.6);
+            if (Math.abs(error(pista.heading, rumboDe(e))) < 15 || enEtapa() > 60) irA('entrando');
           } else {
-            // Entrando: corrige el desvío lateral y baja hacia la cabecera.
-            const correccion = Math.max(-25, Math.min(25, -across / 40));
-            volarA((pista.heading + correccion + 360) % 360, -3.5, 0.35);
+            // Entrando: se corrige el desvío lateral y se baja hacia la
+            // cabecera con una senda de unos tres grados.
+            const correccion = Math.max(-25, Math.min(25, -across / 50));
+            const quiereAlto = Math.max(20, (Math.abs(along) - pista.length / 2) * 0.05);
+            const subida = alto > quiereAlto ? -4 : 0;
+            volarA((pista.heading + correccion + 360) % 360, subida, 0.35);
           }
-          void alturaSuelo;
           break;
         }
 
         case 'final': {
-          const correccion = Math.max(-20, Math.min(20, -across / 30));
-          // Se afloja la bajada cerca del suelo, que es la recogida.
-          const bajada = suelo - (o.estado().position.y - 0) < 0 ? -3 : -3;
-          volarA((pista.heading + correccion + 360) % 360, bajada, 0.3);
+          const alto = e.heightAboveGround ?? 0;
+          const correccion = Math.max(-20, Math.min(20, -across / 40));
+          // La recogida: cerca del suelo se afloja la bajada, que es lo que
+          // convierte un impacto en un aterrizaje.
+          const subida = alto < 12 ? -0.8 : alto < 40 ? -2 : -3.5;
+          volarA((pista.heading + correccion + 360) % 360, subida, alto < 30 ? 0.15 : 0.3);
           break;
         }
 
@@ -308,6 +362,19 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         });
         if (fase === 'apagado') break;
       }
+      if (rastro.length < 200 && (rastro.length === 0 || performance.now() - rastro[rastro.length - 1].t > 4000)) {
+        const e = o.estado();
+        const { along, across } = enEjes(e.position.x, e.position.z);
+        rastro.push({
+          t: performance.now(),
+          fase: o.fase(),
+          etapa,
+          alto: Math.round(e.heightAboveGround ?? 0),
+          vel: Math.round(e.airspeed * 3.6),
+          along: Math.round(along),
+          across: Math.round(across),
+        });
+      }
       if (performance.now() > hasta) break;
       await cuadro();
     }
@@ -318,6 +385,7 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
       etapa,
       toque,
       masAlto: Math.round(masAlto),
+      rastro: rastro.map((r) => ({ ...r, t: undefined })),
       seQuedoSinTiempo: performance.now() > hasta,
     };
   });
@@ -337,8 +405,17 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
       ` · volvió al puesto: ${llego('en-puesto') ? '✓' : '✗'}` +
       ` · apagó: ${llego('apagado') ? '✓' : '✗'}`,
   );
+  if (!resultado.fases.some((f) => f.fase === 'apagado')) {
+    console.log('  por dónde anduvo (cada 4 s):');
+    for (const r of resultado.rastro.slice(-32)) {
+      console.log(
+        `    ${String(r.fase).padEnd(12)} ${String(r.etapa).padEnd(10)} ` +
+          `${String(r.alto).padStart(5)} m  ${String(r.vel).padStart(3)} km/h  eje ${String(r.along).padStart(6)} / ${String(r.across).padStart(5)}`,
+      );
+    }
+  }
   console.log(
-    `  subió a ${resultado.masAlto} m · se quedó en la etapa «${resultado.etapa}»` +
+    `  subió a ${resultado.masAlto} m sobre el suelo · se quedó en la etapa «${resultado.etapa}»` +
       `${resultado.seQuedoSinTiempo ? ' · se acabó el tiempo' : ''}`,
   );
   await page.screenshot({ path: `${D}/vuelo-${escenario}-3-rodando.png` });
