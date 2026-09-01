@@ -12,6 +12,21 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 
 const D = process.argv[2] ?? '/tmp';
+
+/**
+ * Con `--circuito` vuela el circuito entero; sin él, para después de despegar.
+ *
+ * Por defecto se queda en lo que **sale siempre**: rodar del puesto a la doble
+ * raya, parar, esperar la luz, entrar, alinearse y despegar. Eso son tres
+ * minutos y detecta todo lo del aeropuerto, que es lo que se toca a diario.
+ *
+ * El circuito completo son veinte minutos y **el piloto automático todavía se
+ * cae en los virajes**, así que como comprobación de andar por casa no vale:
+ * una que falla por su culpa y no por la del juego se acaba ignorando, y una
+ * comprobación ignorada es peor que ninguna. Queda a mano para cuando se toque
+ * la física o las fases de vuelo. Ver el issue del piloto.
+ */
+const CIRCUITO = process.argv.includes('--circuito');
 const server = await createServer({ root: process.cwd(), server: { port: 5213 } });
 await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
@@ -60,13 +75,15 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
     return {
       aviso: document.querySelector('[data-hud="hint"]')?.textContent?.trim() ?? '',
       rumboRuta: rumboRuta === null ? null : Math.round(rumboRuta),
-      hdg: document.querySelector('[data-hud="heading"]')?.textContent ?? '',
+      // Del estado, no del HUD: el rótulo del rumbo no existe en todos los
+      // peldaños —Guyrami no tiene instrumentos— y salía vacío.
+      hdg: Math.round(((o.estado().heading * 180) / Math.PI + 360) % 360),
     };
   });
   console.log(`\n── ${escenario}`);
   console.log(`  al empezar: «${inicio.aviso}»`);
   console.log(
-    `  el avión mira a HDG ${inicio.hdg} y la ruta se va a ${inicio.rumboRuta}° verdaderos`,
+    `  el avión mira a ${inicio.hdg}° y la ruta se va a ${inicio.rumboRuta}° verdaderos`,
   );
   await page.screenshot({ path: `${D}/vuelo-${escenario}-1-puesto.png` });
 
@@ -88,10 +105,14 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
   // ochenta y se vuelve a entrar **por la misma cabecera y en el mismo
   // sentido**. Un rectángulo de tráfico haría lo mismo con cuatro virajes en
   // vez de dos; la lágrima prueba lo mismo y cabe en menos código.
-  const resultado = await page.evaluate(async () => {
+  const resultado = await page.evaluate(async (circuito) => {
     const o = globalThis.__oga;
     const cuadro = () => new Promise((r) => requestAnimationFrame(() => r()));
-    const hasta = performance.now() + 780000;
+    // Veinte minutos. Un circuito completo con una avioneta **dura eso**: ciento
+    // cincuenta segundos de rodaje, minuto y medio de subida, las dos patas del
+    // circuito y la vuelta al puesto. Recortarlo era lo que dejaba la
+    // comprobación a medias justo cuando el avión ya tenía la cabecera delante.
+    const hasta = performance.now() + (circuito ? 1200000 : 260000);
     const pista = o.pista();
 
     const rad = (g) => (g * Math.PI) / 180;
@@ -265,12 +286,16 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         );
         c.rudder = Math.max(-0.35, Math.min(0.35, alabeo * 0.5));
 
-        // Y la velocidad, entre la de seguridad y la de crucero. A dos cientos
-        // por hora una avioneta no vuela un circuito: va de paso.
+        // Y la velocidad. **En el viraje hace falta más gas, no menos**: un
+        // avión inclinado necesita más sustentación para el mismo peso, y
+        // quitándole potencia justo ahí se hunde. Perdía doscientos cincuenta
+        // metros en cada vuelta y una vez llegó a tocar el suelo.
         const V_MIN = 34;
-        const V_MAX = 46;
+        const V_MAX = 48;
+        const enViraje = Math.abs(alabeo) > rad(8);
+        const suelo = enViraje ? Math.max(gas, 0.75) : gas;
         c.throttle =
-          e.airspeed < V_MIN ? 1 : e.airspeed > V_MAX ? Math.max(0, gas - 0.4) : gas;
+          e.airspeed < V_MIN ? 1 : e.airspeed > V_MAX ? Math.max(suelo - 0.25, 0.35) : suelo;
       };
 
       switch (fase) {
@@ -345,12 +370,12 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
           } else if (etapa === 'vuelta1') {
             // Primer viraje: a la recíproca, apartándose mil doscientos metros
             // para no volver por encima de la pista.
-            volarA((pista.heading + 180) % 360, 300, 0.7);
+            volarA((pista.heading + 180) % 360, 300, 0.85);
             if (Math.abs(error((pista.heading + 180) % 360, rumboDe(e))) < 20) irA('volviendo');
           } else if (etapa === 'volviendo') {
             const quiere = 1200;
             const correccion = Math.max(-25, Math.min(25, (quiere - across) / 50));
-            volarA((pista.heading + 180 + correccion + 360) % 360, 300, 0.7);
+            volarA((pista.heading + 180 + correccion + 360) % 360, 300, 0.75);
             if (along < -pista.length / 2 - 2200) irA('vuelta2');
           } else if (etapa === 'vuelta2') {
             // Segundo viraje: a rumbo de pista, cerrando el desvío lateral **de
@@ -359,7 +384,7 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
             // avión pasaba de largo por un lado, cruzaba el aeropuerto entero y
             // se estrellaba cuatro kilómetros más allá.
             const correccion = Math.max(-45, Math.min(45, -across / 22));
-            volarA((pista.heading + correccion + 360) % 360, 260, 0.6);
+            volarA((pista.heading + correccion + 360) % 360, 260, 0.75);
             if (Math.abs(across) < 120 && Math.abs(error(pista.heading, rumboDe(e))) < 15) {
               irA('entrando');
             }
@@ -447,6 +472,9 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
           aviso: document.querySelector('[data-hud="hint"]')?.textContent?.trim() ?? '',
         });
         if (fase === 'apagado') break;
+        // Sin `--circuito`, se para en cuanto el avión está en el aire: eso es
+        // lo que sale siempre y son tres minutos en vez de veinte.
+        if (!circuito && fase === 'en-vuelo') break;
       }
       if (rastro.length < 200 && (rastro.length === 0 || performance.now() - rastro[rastro.length - 1].t > 4000)) {
         const e = o.estado();
@@ -474,7 +502,7 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
       rastro: rastro.map((r) => ({ ...r, t: undefined })),
       seQuedoSinTiempo: performance.now() > hasta,
     };
-  });
+  }, CIRCUITO);
 
   console.log('  el vuelo entero, fase a fase:');
   for (const f of resultado.fases) {
@@ -485,13 +513,19 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
   }
   const llego = (f) => resultado.fases.some((x) => x.fase === f);
   console.log(
-    `  despegó: ${llego('en-vuelo') ? '✓' : '✗'}` +
-      ` · aterrizó: ${llego('aterrizado') ? '✓' : '✗'}` +
-      ` · abandonó la pista: ${llego('a-plataforma') ? '✓' : '✗'}` +
-      ` · volvió al puesto: ${llego('en-puesto') ? '✓' : '✗'}` +
-      ` · apagó: ${llego('apagado') ? '✓' : '✗'}`,
+    CIRCUITO
+      ? `  despegó: ${llego('en-vuelo') ? '✓' : '✗'}` +
+          ` · aterrizó: ${llego('aterrizado') ? '✓' : '✗'}` +
+          ` · abandonó la pista: ${llego('a-plataforma') ? '✓' : '✗'}` +
+          ` · volvió al puesto: ${llego('en-puesto') ? '✓' : '✗'}` +
+          ` · apagó: ${llego('apagado') ? '✓' : '✗'}`
+      : `  rodó y esperó: ${llego('esperando') ? '✓' : '✗'}` +
+          ` · la torre autorizó: ${llego('autorizado') ? '✓' : '✗'}` +
+          ` · se alineó: ${llego('alineando') ? '✓' : '✗'}` +
+          ` · despegó: ${llego('en-vuelo') ? '✓' : '✗'}` +
+          `   (con --circuito vuela el circuito entero)`,
   );
-  if (!resultado.fases.some((f) => f.fase === 'apagado')) {
+  if (CIRCUITO && !resultado.fases.some((f) => f.fase === 'apagado')) {
     console.log('  por dónde anduvo (cada 4 s):');
     for (const r of resultado.rastro.slice(-32)) {
       console.log(

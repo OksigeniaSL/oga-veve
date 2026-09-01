@@ -173,12 +173,20 @@ Por orden de lo que costó descubrir:
 El punto 12 tiene su propia comprobación, y rueda de verdad:
 
 ```
-node scripts/verificar-vuelo.mjs
+node scripts/verificar-vuelo.mjs              # tres minutos
+node scripts/verificar-vuelo.mjs --circuito   # veinte
 ```
 
-Arranca el motor, da motor corto y anota todo lo que el juego va diciendo hasta
-que la torre enciende la luz verde. Un vuelo probado solo con pruebas
-unitarias no está probado.
+Un piloto automático que rueda del puesto a la doble raya siguiendo la raya
+verde, para, espera la luz, entra en pista, se alinea y despega. Un vuelo
+probado solo con pruebas unitarias no está probado: esto encontró cinco fallos
+que ninguna prueba unitaria puede ver, porque ahí las situaciones se le dan a
+la máquina ya masticadas.
+
+Por defecto para al despegar, que es lo que sale siempre. `--circuito` vuela
+además la vuelta entera hasta apagar el motor, pero **el piloto todavía se cae
+en los virajes** (issue abierto): una comprobación que falla por culpa del
+comprobador se acaba ignorando, y una ignorada es peor que ninguna.
 
 Los puntos 4, 5 y 10 ya no hace falta juzgarlos a ojo:
 
