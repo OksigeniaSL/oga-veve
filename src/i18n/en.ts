@@ -152,6 +152,7 @@ export const EN: Dictionary = {
   'hangar.como': 'Which pilot are you?',
   'hangar.despegar': 'Take off!',
   'hangar.volver': 'Pick another place',
+  'mapa.title': 'See the map',
 
   'language.label': 'Language',
   'language.changed': 'Language: {name}',

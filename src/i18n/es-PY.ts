@@ -158,6 +158,7 @@ export const ES_PY = {
   'hangar.como': '¿Qué piloto sos?',
   'hangar.despegar': '¡Despegar!',
   'hangar.volver': 'Elegir otro sitio',
+  'mapa.title': 'Ver el mapa',
 
   'language.label': 'Idioma',
   'language.changed': 'Idioma: {name}',

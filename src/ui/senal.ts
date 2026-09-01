@@ -55,20 +55,40 @@ const VERDE = icono(`
   <path class="senal__hueco" d="M12 5.5 L18 14 H14.4 V19.5 H9.6 V14 H6 Z" />
 `);
 
-/** El eje de la pista: ponerse derecho. */
+/**
+ * Ponerse en el eje de la pista: **la pista con un avión encima**.
+ *
+ * El primero era la pista en perspectiva con su eje discontinuo, sin más. Quien
+ * lo probó no vio una pista: «un icono como de una mirilla de escopeta que a mí
+ * no me dice nada». Y tenía razón — dos rectas que convergen con tres rayas en
+ * medio son un retículo de puntería mirado sin contexto.
+ *
+ * Lo que faltaba era el avión. Con el avión dentro, la pista se lee como pista
+ * y el dibujo dice lo que hay que hacer en vez de describir un sitio: **ponte
+ * ahí**.
+ */
 const EJE = icono(`
-  <path d="M3.5 21 L10 3 h4 l6.5 18 h-4.2 L12 8.6 L7.7 21 Z" opacity="0.45" />
-  <rect x="11" y="3" width="2" height="4" rx="1" />
-  <rect x="11" y="9" width="2" height="4" rx="1" />
-  <rect x="11" y="15" width="2" height="4" rx="1" />
+  <path d="M4 22 L9.6 3 h4.8 L20 22 Z" opacity="0.3" />
+  <rect x="11.2" y="4" width="1.6" height="3" rx="0.8" opacity="0.75" />
+  <rect x="11.2" y="8.4" width="1.6" height="3" rx="0.8" opacity="0.75" />
+  <path d="M4.2 16.6 L11.2 15.8 V12 a0.8 0.8 0 0 1 1.6 0 v3.8 l7 0.8 v1.7 l-7 0.8 v2.4
+           l1.9 1.1 v1 L12 20.7 L8.3 21.4 v-1 l1.9-1.1 v-2.4 l-6-0.8 Z" />
 `);
 
-/** Motor a fondo: la palanca arriba del todo. */
+/**
+ * Despegar: **el avión saliendo, con las rayas de velocidad detrás**.
+ *
+ * Era la palanca de gases a tope, que es lo que hay que hacer pero no lo que
+ * pasa. Una palanca no se reconoce a los cuatro años; un avión saliendo
+ * disparado, sí. Y la palanca ya está dibujada en su propio mando, con su
+ * flecha, que es donde tiene sentido.
+ */
 const MOTOR = icono(`
-  <rect x="4" y="18" width="16" height="3.4" rx="1.7" />
-  <rect x="10.6" y="4" width="2.8" height="14" rx="1.4" />
-  <circle cx="12" cy="4.6" r="3.2" />
-  <path d="M17 10 L20.5 6.5 L20.5 13.5 Z" />
+  <path d="M2.6 13.4 L11.2 12.5 V6 a0.9 0.9 0 0 1 1.8 0 v6.4 l8.4 0.9 v2 l-8.4 0.9 v3.2
+           l2.1 1.2 v1.1 L12 20.9 L6.9 21.7 v-1.1 l2.1-1.2 v-3.2 l-6.4-0.9 Z"
+        transform="translate(1.4 -2.6) rotate(-30 12 14)" />
+  <rect x="1.6" y="18.4" width="9" height="1.7" rx="0.85" opacity="0.85" />
+  <rect x="4.4" y="21" width="7.5" height="1.7" rx="0.85" opacity="0.55" />
 `);
 
 /** El ala: ya estás volando. */
@@ -85,14 +105,25 @@ const SENDA = icono(`
   <path d="M6.4 3 L2.4 6.4 L7.4 7.6 Z" />
 `);
 
-/** El freno. */
+/**
+ * Frenar: **el avión y la raya donde se para**.
+ *
+ * Era un disco con cuatro marcas alrededor, o sea un freno de disco visto de
+ * frente. A quien lo probó le pareció otra cosa: «un icono como de una mirilla
+ * de escopeta que a mí no me dice nada». Y es que un freno de disco es un
+ * dibujo de mecánico, no de piloto — y desde luego no de alguien de cuatro
+ * años.
+ *
+ * Ahora es lo que de verdad pasa: el avión llegando y una barra gorda delante
+ * que dice hasta aquí. Es el mismo lenguaje que la mano de parar, pero para
+ * cuando ya se está en el suelo rodando.
+ */
 const FRENO = icono(`
-  <circle cx="12" cy="12" r="9.2" />
-  <circle class="senal__hueco" cx="12" cy="12" r="4.4" />
-  <rect x="11" y="1.4" width="2" height="4" />
-  <rect x="11" y="18.6" width="2" height="4" />
-  <rect x="1.4" y="11" width="4" height="2" />
-  <rect x="18.6" y="11" width="4" height="2" />
+  <rect x="2.4" y="3.2" width="19.2" height="3" rx="1.5" />
+  <path d="M2.6 16.6 L11.2 15.8 V9.6 a0.9 0.9 0 0 1 1.8 0 v6.2 l8.4 0.9 v2 l-8.4 0.9 v3
+           l2.1 1.2 v1 L12 24 L6.9 24.2 v-1 l2.1-1.2 v-3 l-6.4-0.9 Z"
+        transform="translate(0 -1.6)" />
+  <path d="M9.4 9.4 L12 6.2 L14.6 9.4 Z" opacity="0.55" />
 `);
 
 /** Salir de la pista: la flecha que se va a un lado. */

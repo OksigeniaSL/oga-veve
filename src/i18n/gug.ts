@@ -59,6 +59,7 @@ export const GUG: Dictionary = {
   'hangar.como': '¿Mba’eichagua piloto piko nde?',
   'hangar.despegar': '¡Javeve!',
   'hangar.volver': 'Eiporavo ambue tenda',
+  'mapa.title': 'Ehecha mapa',
 
   // ── Instrumentos ───────────────────────────────────────────────────────
   // Los rótulos cortos (IAS, ALT, HDG…) no están aquí a propósito: no se

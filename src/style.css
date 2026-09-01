@@ -2286,3 +2286,48 @@ body {
 .senal__texto:empty {
   display: none;
 }
+
+/*
+ * ── El mapa ──────────────────────────────────────────────────────────────
+ *
+ * Dos lienzos apilados: el mundo debajo, pintado una sola vez, y la flecha
+ * encima, repintada cada fotograma. Va arriba a la derecha porque abajo a la
+ * izquierda están los mandos táctiles y abajo a la derecha el motor y el freno.
+ *
+ * Misma piel que todo: barro, barniz y filo de luz. Nada de `backdrop-filter`,
+ * que en una tablet cuesta fotogramas y aquí no compra nada.
+ */
+.mapa {
+  position: fixed;
+  top: 96px;
+  right: 18px;
+  width: 300px;
+  height: 300px;
+  z-index: 6;
+  padding: 6px;
+  border-radius: var(--r-l);
+  background: var(--barro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), var(--poso);
+  /* Se mira, no se toca: los mandos de debajo tienen que seguir respondiendo. */
+  pointer-events: none;
+}
+
+.mapa__fondo,
+.mapa__encima {
+  position: absolute;
+  inset: 6px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  border-radius: var(--r-m);
+}
+
+/* En pantalla estrecha el mapa se comía media ventana. */
+@media (max-width: 720px) {
+  .mapa {
+    width: 188px;
+    height: 188px;
+    top: 84px;
+    right: 10px;
+  }
+}

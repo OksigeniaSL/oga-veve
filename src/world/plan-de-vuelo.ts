@@ -29,7 +29,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { Aerodrome, Punto } from './aerodrome';
 import { aLaPolilinea } from './aerodrome';
 import { construirGrafo, rodajeEntre, type Grafo, type Ruta } from './rodaje';
-import { delante, enEjesDePista } from './rumbo';
+import { delante, enEjesDePista, puntoDePista } from './rumbo';
 import { GUION, Vuelo, type Fase, type Paso, type Situacion } from '../flight/vuelo';
 import type { FlightState } from '../flight/model';
 
@@ -151,6 +151,14 @@ const MARGEN = 1.6;
  * pasado, la ayuda manda girar a buscarlo eternamente.
  */
 const LLEGADA_SIN_AYUDA = 25;
+
+/**
+ * A qué distancia de la raya la ayuda de dirección deja de ayudar, m.
+ *
+ * Una calle de rodaje y su margen. Más lejos que eso, uno no se ha desviado:
+ * está en otro sitio, y llevarlo de vuelta a la fuerza no es ayudar.
+ */
+const SIN_AYUDA_FUERA = 60;
 
 export interface Vista {
   readonly fase: Fase;
@@ -435,6 +443,22 @@ export class PlanDeVuelo {
      */
     if (this.restanteHasta(p) < LLEGADA_SIN_AYUDA) return 0;
 
+    /*
+     * **Y la ayuda mantiene en la raya; no arrastra hasta ella.**
+     *
+     * Solo miraba la altura y la velocidad, así que a quinientos metros de la
+     * ruta —aterrizado en la hierba, fuera del aeropuerto— seguía tirando del
+     * avión hacia una raya que no se veía. Quien lo probó lo describió exacto:
+     * «pulso las flechas derecha/izquierda y parece como que quiere ir a alguna
+     * parte prefijada y está fuera de control».
+     *
+     * Sesenta metros es más o menos una calle de rodaje y su margen. De ahí
+     * para fuera uno está donde no debería y **eso también hay que poder
+     * hacerlo**: el juego avisa con la señal de volver a la raya, que es lo que
+     * enseña, y no con el mando, que es lo que quita las ganas.
+     */
+    if (aLaPolilinea(p, this.rutaMundo) > SIN_AYUDA_FUERA) return 0;
+
     // El punto de la ruta más cercano, y hacia dónde va la raya allí.
     let mejor = Infinity;
     let cual = 0;
@@ -575,7 +599,16 @@ export class PlanDeVuelo {
     }
     // Desde donde esté el avión, y con margen ancho: quien vuelve de volar
     // puede haber tomado tierra lejos de cualquier calle.
-    this.ponerRuta(rodajeEntre(this.grafo, this.ultimaPos, meta, 600));
+    //
+    // **Y si acaba de aterrizar, saliendo por delante.** El camino más corto al
+    // puesto puede empezar dando media vuelta, y eso en una pista no se hace ni
+    // se enseña: se abandona por la primera salida que quede por delante. Con
+    // la ruta más corta, la raya salía hacia atrás —fuera de la pantalla, que
+    // mira adelante— y quien acababa de aterrizar no tenía nada que seguir:
+    // «al aterrizar no tuve línea de regreso al hangar».
+    const salida = quiere === 'puesto' ? this.salidaPorDelante() : null;
+    const ruta = rodajeEntre(this.grafo, salida ?? this.ultimaPos, meta, 600);
+    this.ponerRuta(salida && ruta ? { ...ruta, puntos: [this.ultimaPos, ...ruta.puntos] } : ruta);
   }
 
   /**
@@ -589,13 +622,40 @@ export class PlanDeVuelo {
    * cinco metros de ancha y tres kilómetros de larga.
    */
   private entradaEnPista(): Ruta {
-    const cab = this.cabeceraDeSalida();
-    const [ux, uy] = delante(this.pista.heading);
-    // El fichero tiene la Y al norte y `delante` da coordenadas de mundo, donde
-    // el norte es la Z negativa. Al pasar a coordenadas de fichero se invierte.
-    const dentro: Punto = [cab[0] + ux * 60, cab[1] - uy * 60];
-    const lejos: Punto = [cab[0] + ux * 460, cab[1] - uy * 460];
-    const puntos: Punto[] = [this.ultimaPos, dentro, lejos];
+    const x = this.ultimaPos[0];
+    const z = -this.ultimaPos[1];
+
+    /*
+     * **Se entra por donde se está, no por la cabecera.**
+     *
+     * El primer intento tiraba una recta desde el avión hasta un punto sesenta
+     * metros pasada la cabecera de salida. Y una recta entre dos sitios del
+     * aeropuerto no pasa por el asfalto: la doble raya está al costado de la
+     * pista, así que esa recta cortaba por la hierba —«la entrada en pista no
+     * va bien por encima del asfalto y el avión toca hierba»— y, si uno paraba
+     * un poco pasado el punto de espera, apuntaba hacia atrás y la ayuda le
+     * daba la vuelta entera: «da un giro de 360º como si tuvieras que empezar
+     * por narices desde donde habías marcado el punto».
+     *
+     * Lo que hace un piloto es entrar **de costado, por donde está**, y girar
+     * ya sobre el eje. Así que el punto de entrada es la proyección del avión
+     * sobre el eje de la pista: se cruza el borde por lo más corto y se gira
+     * una vez dentro.
+     */
+    const { along } = enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
+    const mitad = this.largoDePista / 2;
+    // Nunca antes del umbral —eso es entrar por fuera de la pista— ni tan
+    // adelante que no quede pista para despegar.
+    const dentroDelEje = Math.max(-mitad + 40, Math.min(along, mitad - 700));
+    const entrada = puntoDePista(this.pista, -dentroDelEje);
+    const rodada = puntoDePista(this.pista, -Math.min(mitad - 60, dentroDelEje + 500));
+
+    // De mundo a fichero: el norte del fichero es la Z negativa del mundo.
+    const puntos: Punto[] = [
+      this.ultimaPos,
+      [entrada[0], -entrada[1]],
+      [rodada[0], -rodada[1]],
+    ];
     let largo = 0;
     for (let i = 1; i < puntos.length; i++) {
       largo += Math.hypot(puntos[i]![0] - puntos[i - 1]![0], puntos[i]![1] - puntos[i - 1]![1]);
@@ -603,6 +663,58 @@ export class PlanDeVuelo {
     // Sin letras: en la pista no se anuncia una calle, se anuncia la pista, y
     // de eso ya se encarga el designador pintado en la cabecera.
     return { tramos: [{ ref: null, puntos }], puntos, largo, letras: [] };
+  }
+
+  /**
+   * El primer nudo de rodaje que queda **por delante** en la pista.
+   *
+   * Se mira solo entre los que están cerca del eje —treinta y cinco metros de
+   * media anchura de pista más un margen— y por delante en el sentido de la
+   * carrera. De esos, el más cercano: la primera salida, que es exactamente lo
+   * que se hace en un aeropuerto de verdad y lo que deja la raya delante de
+   * los ojos.
+   *
+   * Si no hay ninguna por delante —se ha aterrizado muy largo, o fuera de la
+   * pista— devuelve `null` y la ruta sale del sitio donde esté el avión, que es
+   * lo que hacía antes.
+   */
+  private salidaPorDelante(): Punto | null {
+    const x = this.ultimaPos[0];
+    const z = -this.ultimaPos[1];
+    const aqui = enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
+    // Fuera de la pista no hay «por delante» que valga.
+    if (Math.abs(aqui.across) > this.pista.width) return null;
+
+    let mejor: Punto | null = null;
+    let cerca = Infinity;
+    for (const nudo of this.grafo.nudos) {
+      const { along, across } = enEjesDePista(
+        nudo[0],
+        -nudo[1],
+        this.pista.x,
+        this.pista.z,
+        this.pista.heading,
+      );
+      if (Math.abs(across) > this.pista.width * 1.6) continue;
+      const adelante = along - aqui.along;
+      if (adelante < 60) continue;
+      if (adelante < cerca) {
+        cerca = adelante;
+        mejor = nudo;
+      }
+    }
+    return mejor;
+  }
+
+  /** El largo de la pista, medido entre umbrales. */
+  private get largoDePista(): number {
+    const p = this.aero.runways[0];
+    const u = p
+      ? Object.values(p.thresholds).flatMap((t) => (t?.xy ? [t.xy as Punto] : []))
+      : [];
+    const [a, b] = u;
+    if (!a || !b) return 2000;
+    return Math.hypot(a[0] - b[0], a[1] - b[1]);
   }
 
   /** A dónde va ahora mismo. Sirve para no recalcular la misma ruta cada fase. */
