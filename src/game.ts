@@ -263,7 +263,16 @@ export class Game {
       this.terrain.runwayElevation,
       (x: number, z: number) => this.terrain.sampleSurface(x, z),
     );
-    this.scene.add(this.runwayGuide.group);
+    /*
+     * **Y solo cuando toca.** El haz de luz, los postes y los aros de la senda
+     * son el material de la lección de aterrizar; en cualquier otra son cosas
+     * raras flotando en el aire. Quien pidió despegar los estaba viendo igual:
+     * «se ven los aros y el faro del ejercicio de aterrizaje y pedí despegar».
+     *
+     * El objeto se construye de todas formas porque hay código que lo reinicia
+     * y lo consulta; lo que no entra en la escena es su geometría.
+     */
+    if (this.leccion.id === 'aterrizaje') this.scene.add(this.runwayGuide.group);
 
     this.aircraftMesh = createAircraftMesh(this.aircraft);
     this.scene.add(this.aircraftMesh.group);

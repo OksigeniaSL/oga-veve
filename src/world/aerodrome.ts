@@ -272,6 +272,8 @@ export function createAerodrome(
   aero: Aerodrome,
   baseY = 0,
   viento: { readonly de: number | null; readonly kt: number } = { de: null, kt: 0 },
+  /** Por qué cabecera se opera hoy. De ahí sale de qué color es cada extremo. */
+  cabeceraEnUso: string | null = null,
 ): Group {
   const grupo = new Group();
   grupo.name = `aerodromo:${aero.id}`;
@@ -325,7 +327,7 @@ export function createAerodrome(
 
   if (principal) {
     grupo.add(marcas(principal, cota));
-    grupo.add(luces(principal, cota));
+    grupo.add(luces(principal, cota, cabeceraEnUso));
   }
   grupo.add(rodadura(aero, cota));
   grupo.add(mangas(aero, cota, viento));
@@ -590,6 +592,35 @@ export function arranqueEnPista(
 }
 
 /** Lo que mide una polilínea. */
+/**
+ * A cuántos metros del principio del eje cae un punto, medido sobre el eje.
+ *
+ * Se proyecta sobre cada tramo y se queda con el más cercano. Hace falta para
+ * casar dos medidas que vienen de sitios distintos: los umbrales los da
+ * OurAirports y el trazado del asfalto OpenStreetMap, y ninguno de los dos sabe
+ * del otro.
+ */
+function alLargoDelEje(eje: readonly Punto[], punto: Punto): number {
+  let acumulado = 0;
+  let mejor = 0;
+  let cerca = Infinity;
+  for (let i = 0; i < eje.length - 1; i++) {
+    const [ax, ay] = eje[i]!;
+    const [bx, by] = eje[i + 1]!;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const l2 = dx * dx + dy * dy;
+    const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((punto[0] - ax) * dx + (punto[1] - ay) * dy) / l2));
+    const d = Math.hypot(punto[0] - (ax + t * dx), punto[1] - (ay + t * dy));
+    if (d < cerca) {
+      cerca = d;
+      mejor = acumulado + t * Math.sqrt(l2);
+    }
+    acumulado += Math.sqrt(l2);
+  }
+  return mejor;
+}
+
 function longitudDe(eje: readonly Punto[]): number {
   let total = 0;
   for (let i = 0; i < eje.length - 1; i++) {
@@ -657,17 +688,19 @@ function direccionCercana(aero: Aerodrome, punto: Punto): readonly [number, numb
  * color por ángulo llega con el bloque de aproximación—, pero puestas donde
  * están y en el lado que les toca.
  */
-function luces(pista: Pista, altura: (p: Punto) => number): Group {
+function luces(pista: Pista, altura: (p: Punto) => number, salida?: string | null): Group {
   const grupo = new Group();
   grupo.name = 'luces';
   if (!pista.lit) return grupo;
 
-  const umbrales = Object.values(pista.thresholds).filter(
-    (u): u is Umbral => u !== null && u.xy !== null,
+  const conNombre = Object.entries(pista.thresholds).filter(
+    (e): e is [string, Umbral] => e[1] !== null && e[1].xy !== null,
   );
+  const umbrales = conNombre.map((e) => e[1]);
   if (umbrales.length < 2) return grupo;
 
   const ancho = pista.widthM ?? 45;
+  const nombreA = conNombre[0]![0];
   const [a, b] = umbrales as [Umbral, Umbral];
   const ax = a.xy![0];
   const ay = a.xy![1];
@@ -708,12 +741,28 @@ function luces(pista: Pista, altura: (p: Punto) => number): Group {
     }
   }
 
-  // Cabeceras: una fila cruzando cada extremo.
+  /*
+   * Cabeceras: una fila cruzando cada umbral, **en el umbral de verdad**.
+   *
+   * Iban a dos metros de cada punta del eje de OpenStreetMap, y ese eje es más
+   * largo que la pista: en Tenerife, 3.390 metros contra 3.168 entre umbrales.
+   * Resultado, la fila roja caía ochenta y ocho metros **dentro** de la pista,
+   * así que alineado para despegar por la 30 se veía una barrera de luces rojas
+   * doscientos metros por delante. Mismo fallo que el eje discontinuo y por el
+   * mismo motivo: dos ejes parecidos que no coinciden.
+   *
+   * Verdes en la cabecera por la que se sale y rojas en la contraria, que es lo
+   * que ve un piloto desde su puesto: verde por delante quiere decir pista, rojo
+   * quiere decir que ahí se acaba.
+   */
   const verdes: [number, number, number][] = [];
   const rojas: [number, number, number][] = [];
+  const dA = alLargoDelEje(pista.centerline, a.xy!);
+  const dB = alLargoDelEje(pista.centerline, b.xy!);
+  const salidaEsA = salida ? nombreA === salida : dA < dB;
   for (const [extremo, destino] of [
-    [2, verdes],
-    [largo - 2, rojas],
+    [salidaEsA ? dA : dB, verdes],
+    [salidaEsA ? dB : dA, rojas],
   ] as const) {
     const p = sobreElEje(pista.centerline, extremo);
     if (!p) continue;
@@ -911,9 +960,29 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     Math.hypot(pista.centerline[0]![0] - b.xy![0], pista.centerline[0]![1] - b.xy![1]);
   const largoEje = longitudDe(pista.centerline);
 
+  /*
+   * **Dónde cae el umbral A sobre el eje del pavimento.**
+   *
+   * Las distancias de las marcas se cuentan desde el umbral, pero `sobreElEje`
+   * las cuenta desde donde empieza la polilínea de OpenStreetMap, y esas dos
+   * cosas no son la misma. En Tenerife Norte el eje mide 3.390 metros y los
+   * umbrales están a 3.168: sobran 223 de asfalto —calles de acceso, apartaderos,
+   * lo que haya mapeado como parte de la pista— y el umbral 12 empieza en el
+   * metro 86.
+   *
+   * Sin corregirlo, el eje discontinuo se pintaba de 190 a 2.978 contados desde
+   * el principio del eje, y **los últimos 413 metros se quedaban en blanco**:
+   * justo el extremo de la 30, que es por donde se despega. Se veía exacto —«las
+   * líneas van desapareciendo a medida que avanzo por la pista»— porque no
+   * desaparecían, es que nunca estuvieron pintadas ahí.
+   *
+   * Es el mismo fallo de siempre: dos ejes parecidos que no coinciden.
+   */
+  const desdeElUmbral = alLargoDelEje(pista.centerline, [ax, ay]);
+
   /** Un rectángulo de pintura centrado a `d` metros del umbral A. */
   const raya = (d: number, lado: number, largoM: number, anchoM: number) => {
-    const p = sobreElEje(pista.centerline, alRevés ? largoEje - d : d);
+    const p = sobreElEje(pista.centerline, alRevés ? desdeElUmbral - d : desdeElUmbral + d);
     if (!p) return;
     const [ejeX, ejeY, dirX, dirY] = p;
     const sentido = alRevés ? -1 : 1;

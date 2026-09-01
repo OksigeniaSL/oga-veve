@@ -49,6 +49,29 @@ function sunVector(scenario: Scenario): { x: number; y: number; z: number } {
   };
 }
 
+/**
+ * Por qué cabecera se opera, sacada del rumbo que ya tiene el escenario.
+ *
+ * La elige el viento en `conViento`, pero lo que queda guardado es el rumbo, no
+ * el nombre. Se recupera comparando: la que apunta a menos de noventa grados
+ * del rumbo de salida es la de salida.
+ */
+function cabeceraEnUso(escenario: Scenario): string | null {
+  const pista = escenario.aerodrome?.runways[0];
+  if (!pista) return null;
+  for (const [nombre, u] of Object.entries(pista.thresholds)) {
+    if (!u?.xy) continue;
+    const otro = Object.values(pista.thresholds).find((v) => v?.xy && v !== u);
+    if (!otro?.xy) continue;
+    // El rumbo de salida desde este umbral es el que va hacia el otro.
+    const rumbo =
+      ((Math.atan2(otro.xy[0] - u.xy[0], -(-otro.xy[1] - -u.xy[1])) * 180) / Math.PI + 360) % 360;
+    const diferencia = Math.abs(((rumbo - escenario.runway.heading + 540) % 360) - 180);
+    if (diferencia < 90) return nombre;
+  }
+  return null;
+}
+
 export class Terrain {
   readonly group = new Group();
   /** Cota del terreno en cada nudo de la malla, en metros. */
@@ -89,10 +112,12 @@ export class Terrain {
     // Con aeródromo real no se dibuja la pista de juguete: la pone él.
     if (scenario.aerodrome) {
       this.group.add(
-        createAerodrome(scenario.aerodrome, this.runwayElevation, {
-          de: scenario.meteo?.vientoDe ?? null,
-          kt: scenario.meteo?.vientoKt ?? 0,
-        }),
+        createAerodrome(
+          scenario.aerodrome,
+          this.runwayElevation,
+          { de: scenario.meteo?.vientoDe ?? null, kt: scenario.meteo?.vientoKt ?? 0 },
+          cabeceraEnUso(scenario),
+        ),
       );
     } else {
       this.group.add(this.buildRunway());
@@ -126,10 +151,12 @@ export class Terrain {
       this.group.remove(viejo);
     }
     this.group.add(
-      createAerodrome(escenario.aerodrome, this.runwayElevation, {
-        de: escenario.meteo?.vientoDe ?? null,
-        kt: escenario.meteo?.vientoKt ?? 0,
-      }),
+      createAerodrome(
+        escenario.aerodrome,
+        this.runwayElevation,
+        { de: escenario.meteo?.vientoDe ?? null, kt: escenario.meteo?.vientoKt ?? 0 },
+        cabeceraEnUso(escenario),
+      ),
     );
   }
 

@@ -65,6 +65,22 @@ const GROUND_FULL = 8;
 
 /** Y en estos metros por segundo más se queda sin autoridad. */
 const GROUND_FADE = 20;
+
+/**
+ * Lo que **nunca** se pierde de autoridad en el suelo.
+ *
+ * Se apagaba del todo a los veintiocho metros por segundo, que es justo la
+ * velocidad de la carrera de despegue: «no puedo moverme en pista acelerando a
+ * derecha e izquierda, no puedo entonces corregir ángulo de ladeo en carrera».
+ * Y tenía razón — un avión de verdad no se queda sin dirección al acelerar,
+ * cambia de mando: deja de mandar la rueda de morro y empieza a mandar el
+ * timón, que a esa velocidad va sobrado de aire.
+ *
+ * Doce centésimas de la autoridad plena son unos trece grados por segundo:
+ * bastante para enderezar una desviación en la carrera, poco para tirarse a la
+ * hierba de un toque.
+ */
+const MANDO_MINIMO = 0.12;
 /** Ritmo de viraje máximo, en radianes por segundo. */
 const MAX_TURN_RATE = 0.5;
 /** Ritmo de ascenso máximo, en metros por segundo. */
@@ -197,7 +213,10 @@ export class ArcadeFlightModel implements FlightModel {
       // rodaje y solo deja de mandar al coger carrerilla. Así que va plena
       // hasta ocho metros por segundo y se apaga a los veintiocho, que es
       // cuando ya toma el relevo el timón.
-      const mando = 1 - clamp01((this.speed - GROUND_FULL) / GROUND_FADE);
+      const mando = Math.max(
+        MANDO_MINIMO,
+        1 - clamp01((this.speed - GROUND_FULL) / GROUND_FADE),
+      );
       this.heading += controls.aileron * GROUND_TURN * mando * step;
       // Y sin inclinar el avión, que en el suelo tiene las ruedas puestas.
       this.bank += (0 - this.bank) * Math.min(1, step * 5);
