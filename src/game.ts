@@ -44,6 +44,22 @@ import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from './world/meteo';
  */
 const PROXY_METEO: string | null = import.meta.env.VITE_METEO ?? null;
 
+/**
+ * La hora a la que arranca el juego si nadie pide otra.
+ *
+ * Las cuatro de la tarde, y el número está medido, no elegido a ojo. Con el
+ * modelo de sol de `sky.ts` —amanecer a las seis, ocaso a las dieciocho— eso
+ * pone el sol a **veintidós grados**: luz cálida, sombras largas y ladera al
+ * sol contra ladera en sombra, que es lo que hace que un relieve se lea como
+ * relieve.
+ *
+ * Se probó primero con las cinco y media, que es la hora que dice el ADR 0006 y
+ * la que da el atardecer más bonito. Y es demasiado oscura para jugar: a esa
+ * hora el sol está a cinco grados y **quien está rodando no ve las letras
+ * pintadas en el asfalto**. El atardecer se elige; no se impone.
+ */
+const HORA_BUENA = 16;
+
 /** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
 const APROXIMACION = 3000;
 /** Y a qué altura sobre la pista: senda de tres grados y medio. */
@@ -238,6 +254,14 @@ export class Game {
     }
 
     this.sky = createSky(this.scenario);
+    /*
+     * **Las cinco y media de la tarde**, y no el mediodía.
+     *
+     * Es la hora a la que un relieve se lee como relieve: sol bajo, sombras
+     * largas, ladera al sol y ladera en sombra. El mediodía es la única hora
+     * del día en la que un paisaje no tiene forma, y era la que estaba fijada.
+     */
+    this.sky.ponerHora(this.horaPedida());
     this.scene.add(this.sky.group);
     this.scene.fog = this.sky.fog;
 
@@ -321,6 +345,7 @@ export class Game {
     // es donde se quedan las fugas de memoria de los juegos web—.
     this.hud.onHangar(() => location.reload());
     this.hud.ponerMapa(this.scenario, (x, z) => this.terrain.sampleHeight(x, z));
+    this.hud.ponerHora(this.horaPedida(), (h) => this.ponerHora(h));
     this.hud.ponerTiempo(
       this.scenario.meteo ?? TIEMPO_DE_CASA,
       (m) => this.ponerTiempo(m),
@@ -609,6 +634,25 @@ export class Game {
     this.hud.tutor.reset();
     this.instructor.callar();
     this.updateBadge();
+  }
+
+  /**
+   * Qué hora se juega. `?hora=6.5` para el amanecer, `?hora=22` para la noche.
+   *
+   * Va por la dirección hasta que exista el sol que se arrastra por un arco,
+   * que es como se elegirá de verdad — un reloj no lo lee quien tiene cuatro
+   * años, y un sol que se mueve por el cielo sí, porque es literalmente lo que
+   * ve todos los días.
+   */
+  private horaPedida(): number {
+    const q = new URLSearchParams(location.search).get('hora');
+    const h = q === null ? NaN : Number(q);
+    return Number.isFinite(h) ? h : HORA_BUENA;
+  }
+
+  /** Pone una hora del día. Lo llama el panel del tiempo. */
+  ponerHora(hora: number): void {
+    this.sky.ponerHora(hora);
   }
 
   /**

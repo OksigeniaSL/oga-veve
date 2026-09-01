@@ -157,6 +157,7 @@ export const EN: Dictionary = {
   'mapa.cerca': 'Zoom in',
   'mapa.lejos': 'Zoom out',
   'tiempo.title': 'Weather',
+  'tiempo.hora': 'Time of day',
   'tiempo.viento': 'Where the wind comes from and how hard',
   'tiempo.calma': 'No wind',
   'tiempo.real': 'Live weather',
