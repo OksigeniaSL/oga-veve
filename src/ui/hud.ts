@@ -32,6 +32,7 @@ import { bankAngleOf, pitchAngleOf } from './actitud';
 import type { Accion } from '../flight/keymap';
 import { SixPack } from './six-pack';
 import { Pictogramas } from './pictogramas';
+import { Senal } from './senal';
 import type { Tier } from '../flight/tiers';
 
 /**
@@ -131,6 +132,7 @@ export class Hud {
    * tortuga, un cerro y una hélice que gira.
    */
   private readonly pictos = new Pictogramas();
+  readonly senal = new Senal();
 
   private speed: HTMLElement | null = null;
   private altitude: HTMLElement | null = null;
@@ -329,6 +331,19 @@ export class Hud {
         </div>
       </div>
       ${pictos ? Pictogramas.markup() : ''}
+      <!--
+        La señal del vuelo: qué toca hacer ahora, dibujado. Va en **todos** los
+        peldaños y no solo en los que llevan texto — hay quien juega en
+        silencio, hay quien tiene la pestaña muteada y hay quien no oye. Un
+        juego que solo se puede seguir con sonido excluye por diseño.
+      -->
+      ${Senal.markup()}
+      <!--
+        La señal del vuelo: qué toca hacer ahora, dibujado. Va en todos los
+        peldaños, no solo en los que llevan texto — hay quien juega en
+        silencio, hay quien tiene la pestaña muteada y hay quien no oye.
+      -->
+      ${Senal.markup()}
       <div class="vineta" data-hud="vignette"></div>
       ${Tutor.markup()}
       <div class="hud__abajo">
@@ -402,6 +417,7 @@ export class Hud {
     this.badge.textContent = this.badgeText;
     this.sixPack.bind(this.root);
     this.pictos.bind(this.root);
+    this.senal.bind(this.root);
     this.tutor.bind(this.root);
     this.reserveForPanel();
   }

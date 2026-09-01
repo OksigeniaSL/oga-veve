@@ -40,6 +40,7 @@ import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
+import { elegirInstructor, type Instructor } from './audio/instructor';
 import type { ControlInputs } from './flight/model';
 import { delante, enEjesDePista, puntoDePista } from './world/rumbo';
 import { PlanDeVuelo } from './world/plan-de-vuelo';
@@ -127,6 +128,14 @@ export class Game {
   private plan: PlanDeVuelo | null = null;
   /** Ver `abrirVentanaDePruebas`. Siempre nulo fuera de desarrollo. */
   private pilotoDePruebas: ((c: ControlInputs) => void) | null = null;
+  /**
+   * La voz que dice qué toca.
+   *
+   * Hoy es la del navegador y suena a robot; mañana serán trozos grabados por
+   * una persona. El juego pide «di esto» y no sabe quién contesta, que es lo
+   * que permitirá cambiarla sin tocar nada de aquí.
+   */
+  private readonly instructor: Instructor = elegirInstructor();
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   private faseAnunciada = '';
 
@@ -484,6 +493,7 @@ export class Game {
     this.wasCrashed = false;
     this.input.releaseAll();
     this.hud.tutor.reset();
+    this.instructor.callar();
     this.updateBadge();
   }
 
@@ -561,6 +571,7 @@ export class Game {
       this.distanceToRunway(),
     );
     this.avanzarPlan(dt);
+    this.hud.senal.update(dt);
 
     this.renderer.render(this.scene, this.camera);
   };
@@ -623,34 +634,40 @@ export class Game {
     if (vista.fase !== this.faseAnunciada) {
       this.faseAnunciada = vista.fase;
       // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
-      // el motor» no le sirve de nada a quien no sabe cuál es el motor: la
-      // pantalla de mandos existe justamente porque un mando que no se anuncia
-      // no existe, y esto es lo mismo en pequeño.
+      // el motor» no le sirve de nada a quien no sabe cuál es el motor.
       const tecla =
         vista.fase === 'estacionado' || vista.fase === 'en-puesto'
           ? ` · ${nombreDeTecla(this.input.preferredKey('engine'))}`
           : vista.fase === 'esperando' || vista.fase === 'aterrizado'
             ? ` · ${nombreDeTecla(this.input.preferredKey('brakes'))}`
             : '';
-      const letra = vista.letra ? ` · ${vista.letra}` : '';
+      const frase = t(vista.clave as never);
+
+      // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La
+      // voz no la oye quien juega en silencio ni quien no oye; el texto no lo
+      // lee quien tiene cuatro años. El dibujo lo entiende todo el mundo.
+      this.hud.senal.mostrar(
+        vista.icono,
+        conLetras ? frase : '',
+        vista.letra,
+        vista.fase === 'apagado' ? 9 : 6,
+      );
+      this.instructor.decir(frase);
       if (conLetras) {
-        this.hud.flash(
-          `${t(vista.clave as never)}${tecla}${letra}`,
-          vista.fase === 'apagado' ? 8 : 5,
-        );
+        this.hud.flash(`${frase}${tecla}${vista.letra ? ` · ${vista.letra}` : ''}`, 5);
       }
-      if (vista.fase === 'autorizado') this.audio.cue('success');
-      if (vista.fase === 'apagado') this.audio.cue('success');
-    } else if (vista.fuera && conLetras && this.plan.avisarDeSalida(dt)) {
-      this.hud.flash(t('vuelo.fuera'), 3);
+      if (vista.fase === 'autorizado' || vista.fase === 'apagado') this.audio.cue('success');
+    } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {
+      this.hud.senal.mostrar('amarillo', conLetras ? t('vuelo.fuera') : '', vista.letra, 4);
+      this.instructor.decir(t('vuelo.fuera'));
+      if (conLetras) this.hud.flash(t('vuelo.fuera'), 3);
     }
 
-    // Entrar en pista sin permiso. **Se dice, no se castiga**: aquí se aprende
-    // haciendo, y reiniciar el vuelo enseñaría que no se puede cuando lo que
-    // hay que enseñar es que no se hace. Se avisa una vez por vuelo.
     if (vista.saltoLaLuz) {
       // El sonido sí, siempre: es la mitad del aviso que no necesita leerse.
       this.audio.cue('attention');
+      this.hud.senal.mostrar('mano', conLetras ? t('vuelo.sinPermiso') : '', null, 7);
+      this.instructor.decir(t('vuelo.sinPermiso'));
       if (conLetras) this.hud.flash(t('vuelo.sinPermiso'), 7);
     }
   }
