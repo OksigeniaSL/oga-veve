@@ -154,6 +154,8 @@ export const EN: Dictionary = {
   'hangar.despegar': 'Take off!',
   'hangar.volver': 'Pick another place',
   'mapa.title': 'See the map',
+  'mapa.cerca': 'Zoom in',
+  'mapa.lejos': 'Zoom out',
   'tiempo.title': 'Weather',
   'tiempo.viento': 'Where the wind comes from and how hard',
   'tiempo.calma': 'No wind',
