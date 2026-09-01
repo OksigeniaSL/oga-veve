@@ -218,50 +218,59 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         );
 
       /**
-       * Volar a un rumbo, subiendo o bajando lo que se le pida.
+       * Volar a un rumbo y a una altura.
        *
-       * **Control de actitud, no mando a golpes.** La primera versión ponía el
-       * elevador según la velocidad —cero por debajo de treinta y dos, un
-       * tercio por encima— y como la velocidad oscilaba justo en ese umbral, el
-       * mando castañeteaba: el avión entraba en fugoide, el ángulo de ataque
-       * paseaba entre cuatro y once grados y el factor de carga entre 0,57 y
-       * 1,29. Subía, pero a tirones y a tres metros por segundo de media.
+       * **Se le pide una altura, no una velocidad vertical.** Pedir velocidad
+       * vertical deja la altura sin nadie que la vigile: el avión salía a
+       * cuatrocientos metros, se iba a doscientos, volvía a cuatrocientos y
+       * acabó en el suelo a doscientos por hora. Con la altura cerrada, el
+       * error se corrige solo.
        *
-       * Así es como se pilota de verdad: se elige una **actitud** —cuánto morro
-       * arriba— y se mantiene, amortiguando con la velocidad de cabeceo para
-       * que no se pase. La velocidad vertical se pide moviendo esa actitud,
-       * despacio, en un lazo de fuera.
+       * Tres lazos, de fuera adentro, que es como se hace:
+       *   altura → velocidad vertical → actitud → mando
+       *
+       * Y el mando de actitud va amortiguado con la velocidad de cabeceo. Sin
+       * eso vuelve el fugoide, que ya costó una tarde.
        */
-      const volarA = (rumbo, subida, gas) => {
+      const volarA = (rumbo, altObjetivo, gas) => {
+        const alt = e.heightAboveGround ?? 0;
         const cabeceo = pitchAngleOf(e.orientation);
         const alabeo = bankAngleOf(e.orientation);
 
-        // Lazo de fuera: la actitud que hace falta para la subida pedida.
-        const objetivoCabeceo = Math.max(
-          rad(-6),
-          Math.min(rad(11), rad(subida * 1.4) + (subida - e.verticalSpeed) * 0.02),
+        const vsQuiero = Math.max(-4.5, Math.min(4.5, (altObjetivo - alt) * 0.06));
+        // **Anticipar, no perseguir.** El cabeceo que hace falta para una senda
+        // es el ángulo de la senda más el ángulo de ataque; sabiéndolo, se pone
+        // de una vez en vez de buscarlo a tientas. Persiguiendo el error, la
+        // altura oscilaba doscientos metros arriba y abajo y en un viraje el
+        // avión llegó a tocar el suelo.
+        const senda = Math.asin(
+          Math.max(-0.25, Math.min(0.25, vsQuiero / Math.max(22, e.airspeed))),
         );
-        // Lazo de dentro: mando proporcional al error, amortiguado con la
-        // velocidad de cabeceo. Sin la amortiguación esto vuelve a oscilar.
+        const cabQuiero = Math.max(
+          rad(-8),
+          Math.min(rad(12), senda + e.alpha + (vsQuiero - e.verticalSpeed) * 0.012),
+        );
         c.elevator = Math.max(
           -0.45,
-          Math.min(0.45, (objetivoCabeceo - cabeceo) * 2.2 - e.pitchRate * 0.9),
+          Math.min(0.45, (cabQuiero - cabeceo) * 2.2 - e.pitchRate * 0.9),
         );
 
-        // Lo mismo con el alabeo: se elige una inclinación y se mantiene. Un
-        // circuito se vuela a veinte grados, no a tumbo limpio.
+        // Alabeo: se elige una inclinación y se mantiene. Un circuito se vuela
+        // a veinte grados, no a tumbo limpio.
         const giro = error(rumbo, rumboDe(e));
-        const objetivoAlabeo = Math.max(rad(-22), Math.min(rad(22), rad(giro * 1.1)));
+        const alabeoQuiero = Math.max(rad(-22), Math.min(rad(22), rad(giro * 1.1)));
         c.aileron = Math.max(
           -0.6,
-          Math.min(0.6, (objetivoAlabeo - alabeo) * 2.0 - e.rollRate * 0.7),
+          Math.min(0.6, (alabeoQuiero - alabeo) * 2.0 - e.rollRate * 0.7),
         );
-        // Timón para coordinar el viraje, poquito.
         c.rudder = Math.max(-0.35, Math.min(0.35, alabeo * 0.5));
 
-        // Y protección de velocidad: antes de subir hay que tener con qué.
-        const V_SEGURA = 34;
-        c.throttle = e.airspeed < V_SEGURA ? 1 : gas;
+        // Y la velocidad, entre la de seguridad y la de crucero. A dos cientos
+        // por hora una avioneta no vuela un circuito: va de paso.
+        const V_MIN = 34;
+        const V_MAX = 46;
+        c.throttle =
+          e.airspeed < V_MIN ? 1 : e.airspeed > V_MAX ? Math.max(0, gas - 0.4) : gas;
       };
 
       switch (fase) {
@@ -332,24 +341,31 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
             c.aileron = ladeoA(pista.heading);
             c.rudder = 0;
             c.elevator = subirA(alto < 60 ? 8 : 6);
-            if (along > pista.length / 2 + 500 && alto > 220) irA('vuelta1');
+            if (along > pista.length / 2 + 200 && alto > 200) irA('vuelta1');
           } else if (etapa === 'vuelta1') {
             // Primer viraje: a la recíproca, apartándose mil doscientos metros
             // para no volver por encima de la pista.
-            volarA((pista.heading + 180) % 360, 0, 0.8);
+            volarA((pista.heading + 180) % 360, 300, 0.7);
             if (Math.abs(error((pista.heading + 180) % 360, rumboDe(e))) < 20) irA('volviendo');
           } else if (etapa === 'volviendo') {
             const quiere = 1200;
             const correccion = Math.max(-25, Math.min(25, (quiere - across) / 50));
-            volarA((pista.heading + 180 + correccion + 360) % 360, 0, 0.8);
-            if (along < -pista.length / 2 - 3000) irA('vuelta2');
+            volarA((pista.heading + 180 + correccion + 360) % 360, 300, 0.7);
+            if (along < -pista.length / 2 - 2200) irA('vuelta2');
           } else if (etapa === 'vuelta2') {
-            // Segundo viraje: a rumbo de pista, cerrando el desvío lateral.
-            const correccion = Math.max(-30, Math.min(30, -across / 60));
-            volarA((pista.heading + correccion + 360) % 360, -1.5, 0.55);
-            if (Math.abs(across) < 250 && Math.abs(error(pista.heading, rumboDe(e))) < 20) {
+            // Segundo viraje: a rumbo de pista, cerrando el desvío lateral **de
+            // verdad**. Con la corrección suave de antes, mil cien metros de
+            // desvío tardaban más en cerrarse que lo que dura la pista: el
+            // avión pasaba de largo por un lado, cruzaba el aeropuerto entero y
+            // se estrellaba cuatro kilómetros más allá.
+            const correccion = Math.max(-45, Math.min(45, -across / 22));
+            volarA((pista.heading + correccion + 360) % 360, 260, 0.6);
+            if (Math.abs(across) < 120 && Math.abs(error(pista.heading, rumboDe(e))) < 15) {
               irA('entrando');
             }
+            // Y si se llega al centro de la pista sin haberse alineado, se
+            // vuelve a empezar: eso es una frustrada, no un aterrizaje.
+            if (along > 0) irA('salida');
           } else {
             // Entrando: senda de unos tres grados hacia la cabecera. Y si se
             // pasa de largo, **frustrada**: se vuelve a empezar el circuito,
@@ -361,7 +377,7 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
             const faltan = -pista.length / 2 - along;
             const quiereAlto = Math.max(15, faltan * 0.052);
             const correccion = Math.max(-25, Math.min(25, -across / 40));
-            volarA((pista.heading + correccion + 360) % 360, alto > quiereAlto ? -3.5 : -1, 0.3);
+            volarA((pista.heading + correccion + 360) % 360, quiereAlto, 0.35);
           }
           break;
         }
@@ -369,10 +385,12 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         case 'final': {
           const alto = e.heightAboveGround ?? 0;
           const correccion = Math.max(-20, Math.min(20, -across / 40));
-          // La recogida: cerca del suelo se afloja la bajada, que es lo que
-          // convierte un impacto en un aterrizaje.
-          const subida = alto < 12 ? -0.8 : alto < 40 ? -2 : -3.5;
-          volarA((pista.heading + correccion + 360) % 360, subida, alto < 30 ? 0.15 : 0.3);
+          // La recogida: cerca del suelo se pide altura cero pero con muy poca
+          // ganancia efectiva, que es lo que convierte un impacto en un
+          // aterrizaje. Y el gas fuera.
+          const faltan = Math.max(0, -pista.length / 2 - along);
+          const quiereAlto = alto < 15 ? 0 : Math.max(0, faltan * 0.052);
+          volarA((pista.heading + correccion + 360) % 360, quiereAlto, alto < 40 ? 0.1 : 0.3);
           break;
         }
 
