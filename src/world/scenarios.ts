@@ -70,28 +70,17 @@ export interface Scenario {
    */
   magneticVariation: number;
   /**
-   * Si el escenario es una isla, dónde acaba la tierra.
+   * El relieve medido, si lo hay.
    *
-   * Sin esto el relieve es ruido y el ruido no sabe acabarse: se probaron mil
-   * cuatrocientas cuarenta combinaciones de semilla y parámetros buscando un
-   * Tenerife con mar, y ninguna lo tenía. Una isla hay que decir dónde acaba.
+   * Cuando está, **manda él**: no se genera ruido, ni se excava río, ni se
+   * dibuja isla, ni hace falta buscar semilla. Lo rellena `main.ts` antes de
+   * construir el juego, porque son trescientos kilobytes que no tienen por qué
+   * ir en el paquete inicial.
    *
-   * Es una elipse porque las islas volcánicas son alargadas, con su centro
-   * relativo al aeródromo —que casi nunca está en medio— y un borde con algo
-   * de ruido, para que la costa no sea una línea de compás.
+   * Sale de Copernicus DEM GLO-30, que se puede usar comercialmente con
+   * atribución. Ver `docs/adr/0005-que-se-puede-comprar.md`.
    */
-  island?: {
-    /** Centro de la isla en coordenadas de mundo, m. */
-    centre: readonly [number, number];
-    /** Semieje mayor y menor, m. */
-    radii: readonly [number, number];
-    /** Rumbo verdadero del eje mayor, grados. */
-    heading: number;
-    /** Anchura de la caída al mar, m. */
-    shore: number;
-    /** Cuánto baja el fondo respecto al nivel del agua, m. */
-    depth: number;
-  };
+  relieve?: { readonly datos: Int16Array; readonly resolucion: number };
   /**
    * Un aeródromo real extraído, si lo hay.
    *
@@ -251,24 +240,23 @@ export const PETTIROSSI: Scenario = {
   reliefHeight: 150,
   reliefScale: 4.2,
   ridgeMix: 0.12,
-  // Doce, no cuarenta. Con cuarenta, **el treinta y ocho por ciento del
-  // escenario quedaba bajo el agua**: el relieve de Asunción llega a 150 m y su
-  // altura media anda por los cuarenta y cinco, así que la lámina se comía el
-  // llano entero y desde el aire aquello era un archipiélago. Con doce baja al
-  // once por ciento, que para el río Paraguay y sus esteros es razonable.
-  //
-  // Llevaba así desde que existe el escenario y no lo había visto nadie,
-  // porque desde la cabina no se ve: se vio a la primera con
-  // `scripts/verificar-escenario.mjs`, que mira desde arriba y cuenta.
-  waterLevel: 12,
+  // **Cero.** Con relieve medido esto deja de ser una perilla: el río Paraguay
+  // queda a quince kilómetros de Silvio Pettirossi y no entra en el escenario,
+  // así que aquí no hay agua ninguna. Antes hubo que bajarlo de cuarenta a doce
+  // porque la lámina se comía el llano y el treinta y ocho por ciento del mapa
+  // salía sumergido; ahora el terreno es el que hay y no se inunda nada.
+  waterLevel: 0,
   riverWidth: 900,
+  // Ajustadas al relieve **medido**, que en estos catorce kilómetros va de 54 a
+  // 161 m. Con las bandas del relieve inventado —que llegaban a 240— todo salía
+  // del mismo verde y no se distinguía una loma de un valle.
   bands: [
-    { from: -100, colour: 0x3d6b44 },
-    { from: 40, colour: 0x55854c },
-    { from: 80, colour: 0x6f9a55 },
-    { from: 120, colour: 0x8fa961 },
-    { from: 170, colour: 0xb5a878 },
-    { from: 240, colour: 0xa89688 },
+    { from: -20, colour: 0x3d6b44 },
+    { from: 60, colour: 0x55854c },
+    { from: 85, colour: 0x6f9a55 },
+    { from: 110, colour: 0x8fa961 },
+    { from: 140, colour: 0xb5a878 },
+    { from: 165, colour: 0xa89688 },
   ],
   water: 0x5b7f6a,
   fill: 0x4f7048,
@@ -332,34 +320,26 @@ export const TENERIFE_NORTE: Scenario = {
   // volcánica tiene barrancos largos que bajan del centro al mar, no grumos.
   reliefScale: 3.4,
   ridgeMix: 0.55,
-  waterLevel: 60,
+  // **El nivel del mar es el nivel del mar.** Con relieve medido esto deja de
+  // ser una perilla que se toca hasta que quede bonito y pasa a ser un dato: el
+  // Atlántico está a cero. Antes hubo que inventarse una isla —una elipse
+  // escrita a mano con su centro, sus semiejes y su rumbo— porque de mil
+  // cuatrocientas cuarenta combinaciones de semilla y parámetros ninguna daba
+  // un Tenerife con mar. Ahora el mar viene en los datos.
+  waterLevel: 2,
   // Tenerife no tiene ríos: tiene barrancos, que son otra cosa y no los
   // excava esto. Mejor ninguno que uno falso.
   riverWidth: 0,
-  /**
-   * La isla. El aeropuerto está en el cuello del noreste, con el Atlántico a
-   * unos cinco kilómetros a cada lado y la tierra siguiendo hacia el suroeste,
-   * hacia el Teide —que está a treinta kilómetros y no cabe aquí—.
-   *
-   * De ahí los números: eje mayor larguísimo, que se sale del escenario
-   * porque la isla también; eje menor de 4.700 m, que es media anchura del
-   * cuello; y el centro desplazado al suroeste, porque el aeropuerto no está
-   * en el medio de nada.
-   */
-  island: {
-    centre: [-2600, 2200],
-    radii: [26000, 4700],
-    heading: 45,
-    shore: 1400,
-    depth: 260,
-  },
+
   bands: [
-    { from: -100, colour: 0x6b6a55 },
-    { from: 200, colour: 0x7a7c5c },
-    { from: 500, colour: 0x3f5d3a },
-    { from: 950, colour: 0x4f6b41 },
-    { from: 1200, colour: 0x6e5f52 },
-    { from: 1600, colour: 0x9c8e7f },
+    // Ajustadas al relieve **medido**: de cero a 1.671 m. La laurisilva del
+    // norte, el pinar por encima, y la roca desnuda arriba del todo.
+    { from: -50, colour: 0x6b6a55 },
+    { from: 120, colour: 0x7a7c5c },
+    { from: 400, colour: 0x3f5d3a },
+    { from: 800, colour: 0x4f6b41 },
+    { from: 1150, colour: 0x6e5f52 },
+    { from: 1450, colour: 0x9c8e7f },
   ],
   water: 0x3f6a80,
   fill: 0x53614a,

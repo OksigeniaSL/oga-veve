@@ -11,6 +11,7 @@
 // en vez de aparecer sin estilo durante un instante.
 import { Game } from './game';
 import { SCENARIOS } from './world/scenarios';
+import { conRelieve } from './world/relieve';
 import { detectLocale, setLocale } from './i18n';
 import { abrirHangar } from './ui/hangar';
 import { rememberTier, rememberedTier } from './flight/tiers';
@@ -56,6 +57,8 @@ if (!escenario) {
   tramo = elegido.tier;
   rememberTier(tramo);
 }
+
+escenario = await conRelieve(escenario);
 
 try {
   localStorage.setItem('oga-veve:escenario', escenario.id);

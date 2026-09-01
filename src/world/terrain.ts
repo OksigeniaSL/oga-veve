@@ -342,7 +342,61 @@ export class Terrain {
  * es lo que aplana los valles y deja el relieve concentrado arriba: sin él,
  * el terreno parece una manta arrugada uniforme y no un paisaje.
  */
+/**
+ * El relieve de verdad, si lo hay.
+ *
+ * Cuando el escenario trae un mapa de alturas medido, **manda él y no se genera
+ * nada**: ni ruido, ni río excavado a mano, ni isla dibujada con una elipse, ni
+ * semilla elegida probando mil combinaciones a ver cuál dejaba el aeropuerto a
+ * su cota. El terreno es el que hay.
+ *
+ * Media docena de problemas que llevábamos días parcheando desaparecen de
+ * golpe: el escenario de Asunción tenía el treinta y ocho por ciento bajo el
+ * agua porque la lámina se comía el llano, y Tenerife necesitaba una elipse
+ * escrita a mano para tener costa. Con Copernicus, Asunción va de 54 a 161 m y
+ * Tenerife de −2 a 1.671: el mar sale solo.
+ */
 export function buildHeightfield(scenario: Scenario): Float32Array {
+  if (scenario.relieve) return desdeRelieve(scenario);
+  return generarHeightfield(scenario);
+}
+
+/**
+ * Remuestrea el mapa medido a la malla del escenario.
+ *
+ * Casi siempre coinciden —el fichero se extrae con la resolución del escenario
+ * a propósito—, pero se interpola igual: cambiar `segments` sin volver a
+ * extraer es lo primero que va a pasar, y no puede romper nada.
+ */
+function desdeRelieve(scenario: Scenario): Float32Array {
+  const { datos, resolucion } = scenario.relieve!;
+  const resolution = scenario.segments + 1;
+  const heights = new Float32Array(resolution * resolution);
+  const escala = (resolucion - 1) / (resolution - 1);
+
+  const muestra = (col: number, fila: number): number => {
+    const c = Math.max(0, Math.min(resolucion - 1, col));
+    const f = Math.max(0, Math.min(resolucion - 1, fila));
+    return datos[f * resolucion + c]!;
+  };
+
+  for (let fila = 0; fila < resolution; fila++) {
+    const fy = fila * escala;
+    const f0 = Math.floor(fy);
+    const ty = fy - f0;
+    for (let col = 0; col < resolution; col++) {
+      const fx = col * escala;
+      const c0 = Math.floor(fx);
+      const tx = fx - c0;
+      const a = muestra(c0, f0) * (1 - tx) + muestra(c0 + 1, f0) * tx;
+      const b = muestra(c0, f0 + 1) * (1 - tx) + muestra(c0 + 1, f0 + 1) * tx;
+      heights[fila * resolution + col] = a * (1 - ty) + b * ty;
+    }
+  }
+  return heights;
+}
+
+function generarHeightfield(scenario: Scenario): Float32Array {
   const resolution = scenario.segments + 1;
   const heights = new Float32Array(resolution * resolution);
   const noise = new ValueNoise2D(scenario.seed);
@@ -364,64 +418,11 @@ export function buildHeightfield(scenario: Scenario): Float32Array {
       height -= riverCarve(x, z, scenario, noise);
       // Suelo del cauce. Sin este tope el río excava un cañón de decenas de
       // metros bajo el nivel del agua y el valle deja de parecer un valle.
-      height = Math.max(height, scenario.waterLevel - 32);
-      heights[row * resolution + col] = costa(x, z, height, scenario, noise);
+      heights[row * resolution + col] = Math.max(height, scenario.waterLevel - 32);
     }
   }
 
   return heights;
-}
-
-/**
- * Hundir el relieve al salir de la isla.
- *
- * Se probó primero sin esto: mil cuatrocientas cuarenta combinaciones de
- * semilla y parámetros de relieve, y **ninguna tenía mar**. Y es lógico: el
- * ruido fractal con suelo hace cordilleras que siguen y siguen, no un trozo de
- * tierra rodeado de agua. Una isla no sale de tocar números, hay que decir
- * dónde acaba.
- *
- * La forma es una elipse, y no un círculo, porque las islas volcánicas son
- * alargadas: en Tenerife el aeropuerto está en el cuello estrecho del noreste,
- * con el mar a cinco kilómetros a cada lado y la isla siguiendo hacia el Teide.
- * Un círculo habría puesto costa donde hay macizo.
- *
- * El borde no es liso: se le suma un poco de ruido para que la costa tenga
- * entrantes y salientes. Una línea de playa perfectamente elíptica se ve desde
- * el aire y canta.
- */
-function costa(
-  x: number,
-  z: number,
-  height: number,
-  scenario: Scenario,
-  noise: ValueNoise2D,
-): number {
-  const isla = scenario.island;
-  if (!isla) return height;
-
-  const [cx, cz] = isla.centre;
-  const t = (isla.heading * Math.PI) / 180;
-  // Ejes de la isla: el mayor a lo largo de su rumbo.
-  const dx = x - cx;
-  const dz = z - cz;
-  const largo = dx * Math.sin(t) - dz * Math.cos(t);
-  const ancho = dx * Math.cos(t) + dz * Math.sin(t);
-
-  const [a, b] = isla.radii;
-  const d = Math.hypot(largo / a, ancho / b);
-  // Ruido en el borde: ±12 % del radio, que en la escala de Tenerife son unos
-  // quinientos metros de entrantes y salientes.
-  const rugoso = d * (1 + (noise.fbm(x / 900 + 41.7, z / 900 - 18.3, 3) - 0.5) * 0.24);
-
-  const orilla = isla.shore / Math.min(a, b);
-  if (rugoso <= 1) return height;
-  if (rugoso >= 1 + orilla) return scenario.waterLevel - isla.depth;
-
-  // Caída suave de la costa al fondo. Sin suavizar, la orilla es un escalón.
-  const u = (rugoso - 1) / orilla;
-  const s = u * u * (3 - 2 * u);
-  return height * (1 - s) + (scenario.waterLevel - isla.depth) * s;
 }
 
 /**
