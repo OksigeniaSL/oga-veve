@@ -145,6 +145,7 @@ export const EN: Dictionary = {
   'vuelo.enPuesto': 'You made it. Shut the engine down',
   'vuelo.apagado': 'Flight complete!',
   'vuelo.fuera': 'Back to the green line',
+  'vuelo.sinPermiso': 'You went in without the green light. Wait for it next time',
 
   'hangar.donde': 'Where are we flying?',
   'hangar.como': 'Which pilot are you?',

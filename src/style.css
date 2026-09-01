@@ -1998,26 +1998,38 @@ body {
  * ══ LA LÁMPARA DE LA TORRE ══════════════════════════════════════════════
  *
  * Verde autoriza, rojo manda parar. Es la lámpara de señales de verdad —la que
- * usa una torre para hablar con un avión sin radio— y por eso es un círculo
+ * usa una torre para hablar con un avión sin radio— y por eso es una luz
  * grande y no un icono: lo que se ve desde una cabina a doscientos metros es
- * una luz, no un dibujo.
+ * una luz.
  *
- * Lleva texto al lado porque **un color solo no es información**. Quien no
- * distinga el rojo del verde tiene que poder saber si puede entrar, y eso no
- * se arregla con un tono más saturado.
+ * **Y va en medio de la pantalla, no en un rincón.** La primera versión era
+ * una pastilla pequeña arriba a la derecha, entre los botones, y quien la
+ * probó preguntó literalmente «¿y cómo sé que tengo autorización para
+ * despegar?» teniéndola puesta. Una señal que hay que buscar no es una señal.
+ *
+ * Lleva texto al lado, pero **el texto es el acompañante, no el mensaje**:
+ * quien no distinga el rojo del verde tiene que poder saber si puede entrar, y
+ * quien no lea tiene que enterarse igual. Por eso además del color hay forma:
+ * la mano abierta de parar y la flecha de seguir. Tres señales para lo mismo.
  */
 .torre {
+  position: fixed;
+  left: 50%;
+  top: 14%;
+  transform: translateX(-50%);
+  z-index: 6;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px 8px 10px;
+  gap: 14px;
+  padding: 12px 22px 12px 14px;
   border-radius: 999px;
   background: var(--barro);
   background-image: var(--barniz);
   box-shadow: var(--filo), var(--poso);
   color: var(--tinta);
-  font-size: var(--voz-rotulo);
+  font-size: clamp(16px, 2.4vw, 21px);
   font-weight: 700;
+  pointer-events: none;
 }
 
 .torre[hidden] {
@@ -2025,25 +2037,70 @@ body {
 }
 
 .torre__luz {
-  width: 26px;
-  height: 26px;
+  position: relative;
+  width: clamp(44px, 6vw, 60px);
+  height: clamp(44px, 6vw, 60px);
   border-radius: 50%;
   flex: none;
+  display: grid;
+  place-items: center;
   background: #3a423d;
-  /* El halo es lo que la hace parecer una luz encendida y no una pegatina. */
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* La forma dentro de la luz: mano de parar o flecha de seguir. */
+.torre__luz svg {
+  width: 58%;
+  height: 58%;
+  fill: rgba(16, 22, 19, 0.85);
 }
 
 .torre--verde .torre__luz {
   background: var(--ok);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 0 14px 2px rgba(126, 200, 106, 0.75);
+    0 0 22px 4px rgba(126, 200, 106, 0.7);
 }
 
 .torre--roja .torre__luz {
   background: var(--peligro);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    0 0 14px 2px rgba(181, 55, 46, 0.7);
+    0 0 22px 4px rgba(181, 55, 46, 0.65);
+}
+
+/*
+ * El verde late despacio. Una luz fija se confunde con un adorno; una que
+ * respira dice «esto es para ti, ahora». El rojo no late: quieto quiere decir
+ * quieto.
+ */
+.torre--verde .torre__luz {
+  animation: torre-late 1.6s ease-in-out infinite;
+}
+
+@keyframes torre-late {
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      0 0 34px 9px rgba(126, 200, 106, 0.85);
+  }
+}
+
+/*
+ * En el peldaño de los pequeños, **ni una palabra**. Empiezan a los cuatro
+ * años y no leen: un cartel de texto es un cartel en blanco. Queda la luz, que
+ * es lo que se entiende sin saber leer.
+ */
+.hud--sin-letras .torre__texto {
+  display: none;
+}
+
+.hud--sin-letras .torre {
+  padding-right: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .torre--verde .torre__luz {
+    animation: none;
+  }
 }
