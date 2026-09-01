@@ -48,6 +48,7 @@ import {
 import { TilesRenderer, WGS84_ELLIPSOID } from '3d-tiles-renderer';
 import { GoogleCloudAuthPlugin } from '3d-tiles-renderer/core/plugins';
 import { createAerodrome } from '../src/world/aerodrome';
+import { crearCiudad } from '../src/world/ciudad';
 
 const AERODROMOS = {
   gcxo: { fichero: 'gcxo', cabecera: '30' },
@@ -143,6 +144,7 @@ if (q.get('tinte') === '1') {
 let asentado = false;
 let cotaMedida = null;
 let anterior = null;
+let ciudadPuesta = false;
 
 /**
  * Los puntos donde se mide el suelo: **sobre la pista, y varios**.
@@ -241,6 +243,81 @@ const camaraEn = (x, y, z, haciaX, haciaY, haciaZ) => {
 const vista = q.get('vista') ?? 'aproximacion';
 const altura = Number(q.get('alt') ?? 260);
 
+/** Cuántas casas propias se han levantado. Solo para el rótulo. */
+let cuantasCasas = 0;
+
+/**
+ * Los edificios de Asunción, encima del suelo de verdad.
+ *
+ * Google no tiene fotogrametría allí: a ciento ochenta metros da veintinueve mil
+ * triángulos contra los trescientos diecinueve mil de Madrid. Lo que hay es una
+ * alfombra fotográfica pegada al relieve —el río, la bahía, las calles y el
+ * aeropuerto, todo real y todo plano—.
+ *
+ * La pieza que falta ya existía por casualidad: la rejilla de ciudad de
+ * `data/cities/`, noventa y seis por noventa y seis celdas de uso del suelo y
+ * densidad sacadas de OpenStreetMap. **Google pone el suelo verdadero y nosotros
+ * el volumen.** Se construyó por otro motivo y encaja aquí.
+ *
+ * ## Cuarenta mil rayos no, gracias
+ *
+ * Cada casa necesita saber a qué altura está su trozo de suelo, y son cuarenta
+ * mil casas. Lanzar un rayo por cada una contra un cuarto de millón de
+ * triángulos congela el navegador varios segundos.
+ *
+ * Así que se lanza una **rejilla gruesa** —sesenta y cuatro por sesenta y
+ * cuatro, cuatro mil rayos— y se interpola entre sus cuatro esquinas. Un
+ * edificio mal puesto por medio metro no lo nota nadie desde el aire; cuatro mil
+ * rayos tardan medio segundo.
+ */
+async function levantarCiudad() {
+  const { cargarCiudad } = await import('../src/world/ciudades');
+  const ciudad = await cargarCiudad(q.get('sitio') === 'sgas' ? 'pettirossi' : 'tenerife-norte');
+  if (!ciudad) return;
+
+  const REJILLA = 64;
+  const lado = ciudad.tamanoM;
+  const paso = lado / (REJILLA - 1);
+  const cotas = new Float32Array(REJILLA * REJILLA);
+  const base = cotaMedida ?? COTA_DEL_FICHERO;
+
+  for (let f = 0; f < REJILLA; f++) {
+    for (let c = 0; c < REJILLA; c++) {
+      const x = -lado / 2 + c * paso;
+      const z = -lado / 2 + f * paso;
+      const golpe = cotaDelMundo(x, z);
+      // Donde el rayo no llega —tesela sin cargar, o fuera del mundo— se usa la
+      // del aeródromo. Es mejor una casa a la altura equivocada que un agujero.
+      cotas[f * REJILLA + c] =
+        golpe !== null && Math.abs(golpe - base) < 900 ? golpe : base;
+    }
+  }
+
+  /** La cota interpolada entre las cuatro esquinas de su celda. */
+  const cotaDeLaRejilla = (x, z) => {
+    const fx = Math.max(0, Math.min(REJILLA - 1.001, (x + lado / 2) / paso));
+    const fz = Math.max(0, Math.min(REJILLA - 1.001, (z + lado / 2) / paso));
+    const c0 = Math.floor(fx);
+    const f0 = Math.floor(fz);
+    const tx = fx - c0;
+    const tz = fz - f0;
+    const v = (f, c) => cotas[f * REJILLA + c];
+    const a = v(f0, c0) * (1 - tx) + v(f0, c0 + 1) * tx;
+    const b = v(f0 + 1, c0) * (1 - tx) + v(f0 + 1, c0 + 1) * tx;
+    return a * (1 - tz) + b * tz;
+  };
+
+  const { zonaDeAeropuerto } = await import('../src/world/vegetation');
+  const { SCENARIOS } = await import('../src/world/scenarios');
+  const esc = SCENARIOS.find((e) => e.aerodrome?.id === aero.id);
+  const dentro = esc ? zonaDeAeropuerto(esc, 200) : () => false;
+
+  const grupo = crearCiudad(ciudad, cotaDeLaRejilla, dentro, -9999);
+  grupo.name = 'ciudad-real';
+  escena.add(grupo);
+  cuantasCasas = grupo.children.reduce((n, m) => n + (m.count ?? 0), 0);
+}
+
 let fps = 0;
 let cuadros = 0;
 let desde = performance.now();
@@ -288,6 +365,12 @@ function bucle() {
     anterior = cota;
   }
 
+  // Y la ciudad, una vez posado el aeropuerto.
+  if (asentado && !ciudadPuesta && q.get('ciudad') !== '0') {
+    ciudadPuesta = true;
+    void levantarCiudad();
+  }
+
   colocarCamara();
   renderer.render(escena, camara);
 
@@ -305,7 +388,8 @@ function bucle() {
     `${fps} fps · teselas ${s.visible ?? '?'} de ${s.active ?? '?'}\n` +
     `cota del mundo bajo la ARP: ${cotaMedida === null ? 'esperando teselas…' : cotaMedida.toFixed(1) + ' m'}\n` +
     `el fichero dice: ${aero.elevationM ?? '?'} m\n` +
-    `vista: ${vista}`;
+    `vista: ${vista}\n` +
+    `edificios propios: ${cuantasCasas || '—'}`;
 
   const attr = teselas.getAttributions?.() ?? [];
   credito.textContent = attr.map((a) => a.value).join(' · ');
@@ -329,8 +413,16 @@ function colocarCamara() {
   } else if (vista === 'cabecera') {
     camaraEn(a[0] - ux * 90, suelo + 22, a[1] - uz * 90, a[0] + ux * 900, suelo, a[1] + uz * 900);
   } else {
-    // Cenital, para ver si el asfalto casa con el de la foto.
-    camaraEn(0, suelo + altura * 4, 0.01, 0, suelo, 0);
+    /*
+     * Cenital, para ver si el asfalto casa con el de la foto. **Inclinada un
+     * poco**, no a plomo: con la cámara mirando exactamente hacia abajo, la
+     * dirección de vista y el vector de arriba son la misma recta, la matriz
+     * degenera y el cargador de teselas se queda en «cero de cero». Se veía
+     * como un aeropuerto flotando en negro absoluto, que parece un fallo del
+     * mundo y era un fallo de la cámara.
+     */
+    const desvio = altura * 0.35;
+    camaraEn(desvio, suelo + altura * 3.4, desvio, 0, suelo, 0);
   }
 }
 
