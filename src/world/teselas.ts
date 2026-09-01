@@ -104,7 +104,23 @@ export interface Teselas {
  * Hace falta clave y un aeródromo con coordenadas: sin sitio en el planeta no
  * hay nada que pedirle a Google.
  */
-export function crearTeselas(escenario: Scenario, clave: string | null): Teselas | null {
+export function crearTeselas(
+  escenario: Scenario,
+  clave: string | null,
+  /**
+   * La cota de **nuestro** suelo. Es contra esto contra lo que se compara.
+   *
+   * Y es una función, no un número del fichero. El primer intento comparaba
+   * contra `elevationM` —lo que dice OurAirports— y nuestro terreno aplanado
+   * está trece metros por debajo de eso en Tenerife: el mundo quedaba trece
+   * metros alto y el avión aparecía **dentro** del suelo de la fotografía,
+   * viendo el domo del cielo por debajo del horizonte.
+   *
+   * Es exactamente el error que este proyecto lleva toda la semana cazando:
+   * fiarse del dato en vez de medir lo que hay.
+   */
+  cotaNuestra: (x: number, z: number) => number,
+): Teselas | null {
   const aero = escenario.aerodrome;
   if (!clave || !aero) return null;
 
@@ -116,31 +132,48 @@ export function crearTeselas(escenario: Scenario, clave: string | null): Teselas
 
   const teselas = new TilesRenderer();
   teselas.registerPlugin(new GoogleCloudAuthPlugin({ apiToken: clave }));
+  /*
+   * La matriz se pone a mano y **el desfase se compone dentro de ella**.
+   *
+   * El primer intento bajaba el mundo con `group.position.y`, y este grupo tiene
+   * `matrixAutoUpdate = false` porque su matriz la ponemos nosotros: tocar la
+   * posición no hace absolutamente nada. Se veía a doscientos metros de altura
+   * —donde treinta y cuatro metros de error no se notan— y se caía al llegar al
+   * puesto de estacionamiento: el avión quedaba **dentro** del terreno y lo que
+   * se veía era el domo del cielo por debajo del horizonte.
+   */
+  const aLoNuestro = matrizDelMundo(aero.origin.lat, aero.origin.lon);
+  const ponerDesfase = (metros: number): void => {
+    teselas.group.matrix.makeTranslation(0, -metros, 0).multiply(aLoNuestro);
+    teselas.group.matrixWorldNeedsUpdate = true;
+  };
   teselas.group.matrixAutoUpdate = false;
-  teselas.group.matrix.copy(matrizDelMundo(aero.origin.lat, aero.origin.lon));
+  ponerDesfase(0);
   grupo.add(teselas.group);
 
   const rayo = new Raycaster();
   const catas = puntosDeCata(escenario);
-  const nuestraCota = cotaNuestraEnLaPista(escenario);
+  // Solo para saber desde dónde tirar el rayo y qué cotas son plausibles.
+  const referencia = aero.elevationM ?? 0;
 
   let asentado = false;
   let desfase: number | null = null;
   let anterior: number | null = null;
 
-  /** La cota que da el mundo bajo un punto local, o `null` si aún no llega. */
-  const cotaDelMundo = (x: number, z: number): number | null => {
-    rayo.set(new Vector3(x, nuestraCota + 9000, z), new Vector3(0, -1, 0));
+  /** Cuánto está el mundo por encima del nuestro en un punto, o `null`. */
+  const diferenciaEn = (x: number, z: number): number | null => {
+    rayo.set(new Vector3(x, referencia + 9000, z), new Vector3(0, -1, 0));
     const golpes = rayo.intersectObject(teselas.group, true);
     if (!golpes.length) return null;
-    const y = golpes[0]!.point.y;
-    return Math.abs(y - nuestraCota) < MARGEN_PLAUSIBLE ? y : null;
+    const suyo = golpes[0]!.point.y;
+    if (Math.abs(suyo - referencia) > MARGEN_PLAUSIBLE) return null;
+    return suyo - cotaNuestra(x, z);
   };
 
-  /** La mediana de las catas, o `null` si no hay suficientes. */
+  /** La mediana de las diferencias, o `null` si no hay suficientes catas. */
   const medir = (): number | null => {
     const valores = catas
-      .map(([x, z]) => cotaDelMundo(x, z))
+      .map(([x, z]) => diferenciaEn(x, z))
       .filter((c): c is number => c !== null);
     if (valores.length < 4) return null;
     valores.sort((a, b) => a - b);
@@ -177,10 +210,10 @@ export function crearTeselas(escenario: Scenario, clave: string | null): Teselas
 
       const cota = medir();
       if (cota !== null && anterior !== null && Math.abs(cota - anterior) < 1) {
-        desfase = cota - nuestraCota;
+        desfase = cota;
         // Se baja el mundo ese desfase: así el suelo que se ve y el suelo con
         // el que choca el avión son el mismo.
-        teselas.group.position.y = -desfase;
+        ponerDesfase(desfase);
         grupo.visible = true;
         asentado = true;
       }
@@ -234,15 +267,4 @@ function puntosDeCata(escenario: Scenario): readonly (readonly [number, number])
     // Del fichero al mundo: la Y del norte es la Z negativa.
     return [a[0] + (b[0] - a[0]) * s, -(a[1] + (b[1] - a[1]) * s)] as const;
   });
-}
-
-/**
- * La cota que dice **nuestro** suelo en mitad de la pista.
- *
- * Es contra esto contra lo que se compara. Y es la cota del aeródromo aplanado,
- * no la del fichero: el terreno se aplana al construirlo y lo que importa es
- * dónde acaba estando, no dónde decía OurAirports que estaba.
- */
-function cotaNuestraEnLaPista(escenario: Scenario): number {
-  return escenario.aerodrome?.elevationM ?? 0;
 }

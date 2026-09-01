@@ -80,6 +80,7 @@ export const ES_PY = {
   'help.start': 'Empujá el motor a tope y tirá suave cuando corra',
 
   'teclas.title': 'Teclas',
+  'teclas.cambiar': 'Cambiar las teclas',
   'teclas.mano': 'Con qué mano manejás el motor',
   'teclas.zurda': 'Mano izquierda',
   'teclas.diestra': 'Mano derecha',

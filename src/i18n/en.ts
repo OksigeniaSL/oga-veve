@@ -87,6 +87,7 @@ export const EN: Dictionary = {
   'help.start': 'Throttle all the way up, then ease back when she runs',
 
   'teclas.title': 'Controls',
+  'teclas.cambiar': 'Change the keys',
   'teclas.mano': 'Which hand works the throttle',
   'teclas.zurda': 'Left hand',
   'teclas.diestra': 'Right hand',
