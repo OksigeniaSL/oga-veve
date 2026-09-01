@@ -33,6 +33,16 @@ import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
 import { RunwayGuide } from './world/runway-guide';
 import { createVegetation, zonaDeAeropuerto } from './world/vegetation';
 import { LECCION_POR_DEFECTO, type Leccion } from './flight/lecciones';
+import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from './world/meteo';
+
+/**
+ * El proxy del parte meteorológico. Ver `workers/meteo.js`.
+ *
+ * Sin configurar no se pide nada y se vuela con el tiempo de casa, que es a
+ * propósito: quien juega en un colegio con la conexión caída tiene que poder
+ * despegar.
+ */
+const PROXY_METEO: string | null = import.meta.env.VITE_METEO ?? null;
 
 /** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
 const APROXIMACION = 3000;
@@ -47,7 +57,7 @@ import { MissionMarker } from './world/mission-marker';
 import { MissionRunner } from './missions/runner';
 import { objectiveTarget } from './missions/types';
 import { missionsFor } from './content/missions';
-import { VALLE_CORDILLERA, VECES_LEJOS, type Scenario } from './world/scenarios';
+import { conViento, VALLE_CORDILLERA, VECES_LEJOS, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
@@ -116,7 +126,7 @@ export class Game {
   private readonly sky: SkyRig;
   private aircraftMesh: AircraftMesh;
   private aircraft: AircraftConfig;
-  private readonly scenario: Scenario;
+  private scenario: Scenario;
   private flight: FlightModel;
   private tier: Tier = rememberedTier();
   private readonly input: InputManager;
@@ -302,6 +312,11 @@ export class Game {
     // es donde se quedan las fugas de memoria de los juegos web—.
     this.hud.onHangar(() => location.reload());
     this.hud.ponerMapa(this.scenario, (x, z) => this.terrain.sampleHeight(x, z));
+    this.hud.ponerTiempo(
+      this.scenario.meteo ?? TIEMPO_DE_CASA,
+      (m) => this.ponerTiempo(m),
+      () => void this.tiempoDeVerdad(),
+    );
     this.hud.setKeySource((accion) => nombreDeTecla(this.input.preferredKey(accion)));
 
     // La primera vez se abre sola. Una pantalla que explica los mandos no
@@ -585,6 +600,46 @@ export class Game {
     this.hud.tutor.reset();
     this.instructor.callar();
     this.updateBadge();
+  }
+
+  /**
+   * Cambiar el tiempo, y con él el aeropuerto.
+   *
+   * **Cambiar el viento reinicia el vuelo, y no es una limitación: es lo que
+   * es.** La cabecera en uso la elige el viento, así que darle la vuelta cambia
+   * el puesto de estacionamiento, la ruta de rodaje, la aproximación y el número
+   * pintado en el asfalto. Cambiar de cabecera es empezar otro vuelo, igual que
+   * cambiar de aeropuerto.
+   *
+   * Y es justamente la lección: por qué una pista tiene dos números, contada sin
+   * una palabra y en un segundo.
+   *
+   * El terreno no se toca —lo aplanado del aeródromo no depende de por dónde se
+   * despegue— así que se rehacen solo las tres cosas que sí: la geometría del
+   * aeródromo con su manga, el plan de vuelo y el vuelo en sí.
+   */
+  ponerTiempo(meteo: Meteo): void {
+    this.scenario = conViento(this.scenario, meteo);
+    this.terrain.rehacerAerodromo(this.scenario);
+    if (this.plan) {
+      this.scene.remove(this.plan.grupo);
+      this.plan = new PlanDeVuelo(this.scenario.aerodrome!, this.scenario.runway, (x, z) =>
+        this.terrain.sampleHeight(x, z),
+      );
+      this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
+      this.scene.add(this.plan.grupo);
+    }
+    this.hud.mapa.rehacer(this.scenario);
+    this.resetFlight();
+  }
+
+  /** Vuelve a pedir el parte de verdad y lo pone. */
+  private async tiempoDeVerdad(): Promise<void> {
+    const icao = this.scenario.aerodrome?.id;
+    if (!icao) return;
+    const meteo = await pedirMetar(icao, PROXY_METEO);
+    this.hud.tiempo.poner(meteo);
+    this.ponerTiempo(meteo);
   }
 
   /**
