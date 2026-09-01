@@ -324,19 +324,46 @@ export const PETTIROSSI: Scenario = {
   id: 'pettirossi',
   nameKey: 'scenario.pettirossi.name',
   seed: 19161017,
-  size: 14000,
+  /*
+   * **Veintidós kilómetros, y son por el río.**
+   *
+   * Con catorce, el mundo llegaba a siete kilómetros de la pista y el río
+   * Paraguay se quedaba fuera: el puente Remanso está a 10,7 km, la bahía a
+   * 11,6 y el centro de Asunción a 12,5. Quien lo probó salió a buscarlo y se
+   * perdió — «estoy buscando el río Paraguay, el que pasa por debajo del puente
+   * del Chaco, pero estoy desorientado»—, y es que estaba buscando algo que no
+   * existía.
+   *
+   * Y el río no es un adorno de Asunción: **es lo que se reconoce desde el
+   * aire**. Antes que la pista, antes que la ciudad.
+   *
+   * El paso de relieve sube de 36 a 57 metros, y aquí eso da igual: en estos
+   * veintidós kilómetros el terreno va de cincuenta a ciento sesenta metros y
+   * es llano de verdad. Donde el paso importaría —el aeródromo— el terreno se
+   * aplana de todos modos y el asfalto lo dibuja OpenStreetMap.
+   */
+  size: 22000,
   segments: 384,
   // Asunción está en el llano: nada de cordilleras. Lo más alto de la zona
   // son lomas suaves, y el aeropuerto está a 89 m.
   reliefHeight: 150,
   reliefScale: 4.2,
   ridgeMix: 0.12,
-  // **Cero.** Con relieve medido esto deja de ser una perilla: el río Paraguay
-  // queda a quince kilómetros de Silvio Pettirossi y no entra en el escenario,
-  // así que aquí no hay agua ninguna. Antes hubo que bajarlo de cuarenta a doce
-  // porque la lámina se comía el llano y el treinta y ocho por ciento del mapa
-  // salía sumergido; ahora el terreno es el que hay y no se inunda nada.
-  waterLevel: 0,
+  /*
+   * **Cincuenta y seis metros: la lámina del río Paraguay.**
+   *
+   * No es una perilla ni un número bonito, es una cota medida. Con el mapa
+   * ensanchado a veintidós kilómetros el río entra, y en el relieve de
+   * Copernicus se ve solo: por debajo de cincuenta y seis metros aparece una
+   * cinta estrecha y continua que baja del noroeste al sur, serpenteando. Por
+   * debajo de sesenta ya no es el río, es toda la llanura de inundación.
+   *
+   * El aeropuerto está a ochenta y tres, así que ni se entera. Y el borde de la
+   * lámina lo pone el terreno de verdad, con sus meandros y sus islas, que es
+   * exactamente lo que no consigue un río dibujado a mano — el de antes era un
+   * archipiélago de charcos.
+   */
+  waterLevel: 56,
   riverWidth: 900,
   // Ajustadas al relieve **medido**, que en estos catorce kilómetros va de 54 a
   // 161 m. Con las bandas del relieve inventado —que llegaban a 240— todo salía
