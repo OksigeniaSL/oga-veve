@@ -123,6 +123,26 @@ const LETRERO_MINIMO = 90;
 /** Amarillo de rodadura. Es el color que dice «esto no es pista». */
 const AMARILLO = 0xd8a521;
 
+/**
+ * Cómo se ponen las cosas planas unas encima de otras sin que se peleen.
+ *
+ * Subirlas no basta. El fondo de profundidad se reparte entre sesenta
+ * centímetros y veintidós kilómetros, así que a doscientos metros ya no
+ * distingue veinte centímetros: la pintura y el asfalto empiezan a ganar
+ * alternativamente fotograma a fotograma y se ve **temblar el suelo con
+ * parches**, que es exactamente como lo describió quien lo jugó.
+ *
+ * El desplazamiento de polígono resuelve eso de raíz: le dice a la tarjeta
+ * gráfica «esta superficie va delante de aquella», sin depender de la
+ * distancia. La altura se queda solo para que no se entierre de cerca.
+ *
+ * El orden, de abajo arriba: asfalto, pintura de pista, letras de rodadura.
+ * La raya verde de la ruta va entre la pintura y las letras, porque la ayuda
+ * no puede tapar la lección.
+ */
+export const ENCIMA_PINTURA = { polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 };
+export const ENCIMA_LETRAS = { polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 };
+
 /** Cuánto se levanta la pintura sobre el asfalto, m. Ver la nota de `losa`. */
 const PINTURA_ALTURA = 0.2;
 
@@ -380,7 +400,10 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
   if (piezas.length) {
     const fusionadas = mergeGeometries(piezas, false);
     if (fusionadas) {
-      const malla = new Mesh(fusionadas, new MeshLambertMaterial({ color: AMARILLO }));
+      const malla = new Mesh(
+        fusionadas,
+        new MeshLambertMaterial({ color: AMARILLO, ...ENCIMA_PINTURA }),
+      );
       malla.name = 'amarillo';
       grupo.add(malla);
     }
@@ -465,7 +488,13 @@ function letreros(
   if (!fusionadas) return null;
   const malla = new Mesh(
     fusionadas,
-    new MeshLambertMaterial({ map: atlas, transparent: true, side: DoubleSide }),
+    new MeshLambertMaterial({
+      map: atlas,
+      transparent: true,
+      side: DoubleSide,
+      // Las letras van encima de todo: son lo que hay que leer.
+      ...ENCIMA_LETRAS,
+    }),
   );
   malla.name = 'letreros';
   return malla;
@@ -952,7 +981,10 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   if (piezas.length) {
     const fusionadas = mergeGeometries(piezas, false);
     if (fusionadas) {
-      const malla = new Mesh(fusionadas, new MeshLambertMaterial({ color: PINTURA }));
+      const malla = new Mesh(
+        fusionadas,
+        new MeshLambertMaterial({ color: PINTURA, ...ENCIMA_PINTURA }),
+      );
       malla.name = 'pintura';
       grupo.add(malla);
     }
@@ -994,6 +1026,7 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
           color: textura ? 0xffffff : PINTURA,
           transparent: true,
           side: DoubleSide,
+          ...ENCIMA_LETRAS,
         }),
       ),
     );

@@ -27,6 +27,19 @@ export interface AssistLayers {
   extraDamping: number;
   /** Cuánto aguanta el avión antes de romperse en una toma. */
   crashTolerance: number;
+  /**
+   * Cuánto empuja el juego hacia la raya verde mientras se rueda, 0 a 1.
+   *
+   * Es el *Smart Steering* de Mario Kart, y Nintendo lo puso ahí exactamente
+   * para los niños que no consiguen mantenerse en la pista. **No es hacer
+   * trampa**: es la misma idea que gobierna toda esta escalera —lo que cambia
+   * de un peldaño al siguiente no es el mundo ni el avión, es cuánta física se
+   * te confía—, y la dirección en tierra es física.
+   *
+   * Y solo actúa cuando hace falta: quien va por la raya no nota nada, porque
+   * no hay nada que corregir. Ver el issue de los patrones de conducción.
+   */
+  taxiAssist: number;
 }
 
 export const NO_ASSISTS: AssistLayers = {
@@ -36,6 +49,7 @@ export const NO_ASSISTS: AssistLayers = {
   stallProtection: 0,
   extraDamping: 0,
   crashTolerance: 0,
+  taxiAssist: 0,
 };
 
 /** Todas las capas al máximo. Es lo que era el viejo `assist = 1`. */
@@ -46,6 +60,7 @@ export const FULL_ASSISTS: AssistLayers = {
   stallProtection: 1,
   extraDamping: 1,
   crashTolerance: 1,
+  taxiAssist: 1,
 };
 
 /** Un solo número para todas las capas, que es como se pedía antes. */
@@ -58,5 +73,6 @@ export function uniformAssists(level: number): AssistLayers {
     stallProtection: value,
     extraDamping: value,
     crashTolerance: value,
+    taxiAssist: value,
   };
 }

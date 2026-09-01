@@ -527,7 +527,12 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.25);
 
     this.input.update(dt);
+    // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
+    // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
+    // mando del jugador borraba la asistencia y los cuatro peldaños daban
+    // exactamente el mismo número.
     this.pilotoDePruebas?.(this.input.controls);
+    this.asistirRodaje(dt);
     if (this.flight.state.crashed) {
       // Vuelve solo a la pista. La alternativa —dejar el avión roto hasta
       // que alguien pulse una tecla— exige leer un mensaje, y quien juega
@@ -589,6 +594,40 @@ export class Game {
   private distanceToRunway(): number {
     const [tx, tz] = this.enLaPista(this.scenario.runway.length * 0.5);
     return Math.hypot(tx - this.flight.state.position.x, tz - this.flight.state.position.z);
+  }
+
+  /**
+   * La asistencia de dirección en tierra.
+   *
+   * Es el *Smart Steering* que Nintendo puso en Mario Kart para los niños que
+   * no consiguen mantenerse en la pista, y aquí encaja en la escalera que ya
+   * gobierna el juego: **lo que cambia de un peldaño al siguiente no es el
+   * mundo ni el avión, es cuánta física se te confía**. La dirección en tierra
+   * es física.
+   *
+   * Dos reglas hacen que no se sienta como que el juego pilota por ti:
+   *
+   * - **Quien va por la raya no nota nada**, porque no hay nada que corregir.
+   * - **Quien está girando manda.** Si hay mando puesto, la ayuda se aparta en
+   *   la misma medida. Sin esto, intentar salirse de la calle a propósito —que
+   *   es una cosa que un niño va a hacer— se sentiría como pelear contra el
+   *   juego, y eso es exactamente lo contrario de lo que se quiere enseñar.
+   */
+  private asistirRodaje(dt: number): void {
+    void dt;
+    const fuerza = this.tier.assists.taxiAssist;
+    if (!this.plan || fuerza <= 0) return;
+    const s = this.flight.state;
+    if (!s.onGround) return;
+
+    const suelo = s.position.y - this.terrain.sampleHeight(s.position.x, s.position.z);
+    const sugerido = this.plan.asistencia(s, suelo);
+    if (sugerido === 0) return;
+
+    const c = this.input.controls;
+    const mando = Math.abs(c.aileron);
+    const peso = fuerza * (1 - Math.min(1, mando * 1.6));
+    c.aileron = Math.max(-1, Math.min(1, c.aileron + sugerido * peso));
   }
 
   /**
