@@ -439,6 +439,9 @@ export class Game {
       /** El estado del mundo de verdad, para las comprobaciones. */
       mundoReal: () => {
         if (!this.teselas) return null;
+        const libres = (this.plan?.puestosPorOrden() ?? []).map((p) =>
+          this.teselas!.libre(p.xy[0], -p.xy[1]),
+        );
         const s = this.flight.state;
         // Lo único que de verdad importa: ¿están las ruedas encima del asfalto
         // de la fotografía, o dentro de él?
@@ -451,6 +454,8 @@ export class Game {
           suSuelo: foto,
           ruedas: s.position.y - this.aircraft.gearHeight,
           hundido: foto === null ? null : s.position.y - this.aircraft.gearHeight - foto,
+          puestosLibres: `${libres.filter(Boolean).length} de ${libres.length}`,
+          primeroLibre: libres.indexOf(true),
         };
       },
       /**
@@ -766,6 +771,63 @@ export class Game {
     fuera(recinto.getObjectByName('rodadura')?.getObjectByName('amarillo'));
   }
 
+  /**
+   * Recoloca el avión cuando el suelo cambia bajo sus ruedas.
+   *
+   * **Y sin quitarle el mando a nadie.** La primera versión llamaba a
+   * `resetFlight`, y eso pasaba de ser correcto a ser inaceptable en cuanto se
+   * probó jugando: el mundo tarda unos segundos en asentarse, así que quien
+   * pulsaba la tecla del motor nada más abrir se encontraba con que un segundo
+   * después el juego le apagaba el motor y le teletransportaba. «Pulso la I…
+   * no pasa nada, está frenado.»
+   *
+   * Si todavía no ha empezado —motor parado y quieto— se reinicia entero, que
+   * es lo limpio. Si ya está jugando, **solo se le sube al suelo nuevo**: ni se
+   * mueve de sitio, ni se le apaga nada, ni se le cambia la fase.
+   */
+  private recolocarTrasElMoldeado(): void {
+    const s = this.flight.state;
+    const empezado = this.input.controls.engineOn || s.airspeed > 0.5;
+    if (!empezado) {
+      this.resetFlight();
+      return;
+    }
+    if (!s.onGround) return;
+    const suelo = this.terrain.sampleHeight(s.position.x, s.position.z);
+    this.flight.reset({
+      position: new Vector3(s.position.x, suelo + this.aircraft.gearHeight, s.position.z),
+      heading: s.heading,
+      airspeed: s.airspeed,
+    });
+    // `reset` apaga el motor, y quien lo tenía encendido lo tenía por algo.
+    this.input.controls.engineOn = true;
+  }
+
+  /**
+   * Busca un puesto de estacionamiento que no tenga un avión encima.
+   *
+   * En la fotogrametría están congelados los aviones que había el día que
+   * Google voló, y el puesto que elige el plan en Tenerife tiene encima un
+   * Boeing: el nuestro aparecía dentro de él. «Me comió un 737-800.»
+   *
+   * Se recorren los puestos del mejor al peor —el mejor es el más cercano a la
+   * cabecera de salida— y se coge el primero libre. Si no hay ninguno, se deja
+   * el que había: es mejor salir dentro de un avión que no salir.
+   */
+  private buscarPuestoLibre(): void {
+    if (!this.teselas || !this.plan || this.leccion.arranque !== 'puesto') return;
+    const puestos = this.plan.puestosPorOrden();
+    if (puestos.length < 2) return;
+
+    for (const puesto of puestos) {
+      // Del fichero al mundo: la Y del norte es la Z negativa.
+      if (!this.teselas.libre(puesto.xy[0], -puesto.xy[1])) continue;
+      if (puesto === puestos[0]) return;
+      this.plan.reiniciarDesde(puesto.xy);
+      return;
+    }
+  }
+
   /** Pone una hora del día. Lo llama el panel del tiempo. */
   ponerHora(hora: number): void {
     this.sky.ponerHora(hora);
@@ -963,7 +1025,8 @@ export class Game {
           [0, 0],
           6000,
         );
-        if (escritos > 0) this.resetFlight();
+        this.buscarPuestoLibre();
+        if (escritos > 0) this.recolocarTrasElMoldeado();
       }
     }
     this.advanceMission();
