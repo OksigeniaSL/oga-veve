@@ -159,6 +159,7 @@ export class CoefficientFlightModel implements FlightModel {
       alpha: 0,
       beta: 0,
       heightAboveGround: 0,
+      onRunway: false,
       verticalSpeed: 0,
       loadFactor: 1,
       heading: 0,
@@ -185,6 +186,10 @@ export class CoefficientFlightModel implements FlightModel {
   /** Cambia las ayudas capa a capa. Es lo que hacen los tramos. */
   setAssists(layers: AssistLayers): void {
     this.layers = layers;
+  }
+
+  setOnRunway(enPista: boolean): void {
+    this.state.onRunway = enPista;
   }
 
   reset(initial: InitialConditions): void {
