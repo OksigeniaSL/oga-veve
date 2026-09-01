@@ -43,6 +43,9 @@ const CRUISE_FRACTION = 0.62;
 /** Velocidad mínima rodando y a la que se separa del suelo, en m/s. */
 const IDLE_SPEED = 2;
 
+/** Cuánta holgura se permite para considerar que las ruedas siguen tocando, m. */
+const PEGADO_AL_SUELO = 1;
+
 /** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
 const STATIC_GRIP = 1.2;
 
@@ -229,6 +232,38 @@ export class ArcadeFlightModel implements FlightModel {
     const wheelLevel = ground + this.aircraft.gearHeight;
 
     const wasFlying = !s.onGround;
+
+    /*
+     * **Rodando, el avión sigue al suelo también cuando el suelo baja.**
+     *
+     * Este modelo no tiene gravedad: sube y baja lo que le pida el mando, y ya.
+     * Con eso basta en el aire, pero en tierra faltaba la otra mitad: se pegaba
+     * al suelo **hacia arriba** —si el terreno subía, lo empujaba— y no hacia
+     * abajo. Sobre terreno que desciende, el avión se quedaba a su altura y el
+     * suelo se iba cayendo debajo.
+     *
+     * Con el relieve inventado nunca se notó, porque el aeródromo se aplanaba
+     * entero. Con el relieve real, la calle de rodaje de Silvio Pettirossi baja
+     * siete metros y medio de la plataforma a la cabecera: quien rodaba por ahí
+     * **despegaba sin tocar nada**, se le escondía el botón de freno porque el
+     * juego lo daba por volando, y tenía que hacer filigranas para volver a
+     * posarlo. Se vio jugando.
+     *
+     * Solo se despega cuando se pide subir. Sin mando, las ruedas en el suelo.
+     *
+     * Y **solo si ya venía tocando**: la primera versión miraba nada más el
+     * `onGround` del fotograma anterior, que arranca valiendo `true`, así que
+     * un avión colocado a novecientos metros se estampaba contra el suelo en
+     * el primer paso. Lo cazó una prueba que reinicia en el aire.
+     *
+     * Un metro de holgura es de sobra: rodando a treinta por hora sobre una
+     * pendiente del uno por ciento, el suelo baja trece centímetros por
+     * fotograma.
+     */
+    const rodando =
+      s.onGround && this.climb <= 0 && s.position.y - wheelLevel < PEGADO_AL_SUELO;
+    if (rodando) s.position.y = wheelLevel;
+
     if (s.position.y <= wheelLevel) {
       if (wasFlying) s.touchdownSinkRate = Math.max(0, -this.climb);
       s.position.y = wheelLevel;
