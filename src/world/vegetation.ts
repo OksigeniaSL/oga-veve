@@ -120,6 +120,29 @@ export function createVegetation(scenario: Scenario, ground: GroundSampler): Gro
   // El mapa de lo pavimentado se pinta una vez y se consulta miles.
   const pavimento = scenario.aerodrome ? mapaDePavimento(scenario.aerodrome) : null;
 
+  /**
+   * Y donde hay ciudad tampoco hay monte.
+   *
+   * Es la otra mitad de «estoy sobrevolando Luque en el Pleistoceno, todo
+   * árboles»: no bastaba con poner casas, había que quitar el bosque de debajo.
+   * Un barrio con un árbol cada quince metros no es un barrio, es una selva con
+   * tejados.
+   *
+   * No se vacía del todo: en las celdas con ciudad se deja **uno de cada
+   * ocho**, que son los del parque, los de la avenida y el del patio. Una
+   * ciudad sin un solo árbol se lee tan artificial como un bosque con casas.
+   */
+  const rejilla = scenario.ciudad?.rejilla ?? null;
+  const pasoCiudad = rejilla ? scenario.size / rejilla.lado : 0;
+  const hayCiudad = (x: number, z: number): boolean => {
+    if (!rejilla) return false;
+    const col = Math.floor((x + scenario.size / 2) / pasoCiudad);
+    // El fichero tiene la Y al norte y el mundo el norte en la Z negativa.
+    const fila = Math.floor((-z + scenario.size / 2) / pasoCiudad);
+    if (col < 0 || col >= rejilla.lado || fila < 0 || fila >= rejilla.lado) return false;
+    return rejilla.clase[fila * rejilla.lado + col]! > 0;
+  };
+
   const random = mulberry32(scenario.seed ^ 0x7ee5);
   const clumps = new ValueNoise2D(scenario.seed ^ 0xb05c);
   const clumpScale = 11 / scenario.size;
@@ -148,6 +171,7 @@ export function createVegetation(scenario: Scenario, ground: GroundSampler): Gro
     // calle de rodaje tiene su franja libre de obstáculos igual que la pista:
     // un avión tiene envergadura y las alas sobresalen mucho del tren.
     if (pavimento?.hay(x, z)) continue;
+    if (hayCiudad(x, z) && random() > 0.125) continue;
 
     // Manchas de bosque. La cuarta potencia es lo que separa el bosque del
     // claro: con un exponente suave sale un espolvoreado uniforme, y un
@@ -279,13 +303,37 @@ function slopeAt(ground: GroundSampler, x: number, z: number): number {
  * El delante de un rumbo en este mundo es `(sen h, −cos h)`, y el través es
  * `(cos h, sen h)`. De ahí salen las dos proyecciones.
  */
-function nearRunway(x: number, z: number, scenario: Scenario): boolean {
+function nearRunway(x: number, z: number, scenario: Scenario, margen = 0): boolean {
   const { runway } = scenario;
   const { along, across } = enEjesDePista(x, z, runway.x, runway.z, runway.heading);
   // Margen justo: se despeja la pista y su franja de seguridad, pero los
   // árboles llegan cerca. Pasar a ras de ellos es lo que hace que una carrera
   // de despegue se sienta rápida — sin nada cerca, no hay paralaje.
-  return Math.abs(along) < runway.length * 0.5 + 90 && Math.abs(across) < runway.width * 0.5 + 55;
+  return (
+    Math.abs(along) < runway.length * 0.5 + 90 + margen &&
+    Math.abs(across) < runway.width * 0.5 + 55 + margen
+  );
+}
+
+/**
+ * ¿Está esto dentro del aeropuerto? Pista, calles de rodaje y plataformas.
+ *
+ * Vive aquí porque aquí está el mapa de pavimento, que es la parte cara: se
+ * rasteriza una vez el aeródromo entero y luego se consulta miles de veces. Lo
+ * usan los árboles y **también las casas** —una nave industrial en mitad de la
+ * pista no es un despiste, es un accidente— y tener dos versiones de esta
+ * pregunta era garantizar que una de las dos se quedara atrás.
+ *
+ * `margen` es lo que se pide de más: los árboles llegan cerca a propósito,
+ * porque son lo que da sensación de velocidad al despegar; un edificio de
+ * treinta metros al lado de la pista, no.
+ */
+export function zonaDeAeropuerto(
+  scenario: Scenario,
+  margen = 0,
+): (x: number, z: number) => boolean {
+  const pavimento = scenario.aerodrome ? mapaDePavimento(scenario.aerodrome) : null;
+  return (x, z) => nearRunway(x, z, scenario, margen) || !!pavimento?.hay(x, z);
 }
 
 /**

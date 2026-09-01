@@ -12,6 +12,7 @@
 import { Game } from './game';
 import { SCENARIOS } from './world/scenarios';
 import { conRelieve } from './world/relieve';
+import { cargarCiudad } from './world/ciudades';
 import { detectLocale, setLocale } from './i18n';
 import { abrirHangar } from './ui/hangar';
 import { rememberTier, rememberedTier } from './flight/tiers';
@@ -58,7 +59,13 @@ if (!escenario) {
   rememberTier(tramo);
 }
 
-escenario = await conRelieve(escenario);
+// El relieve y la ciudad van a la vez: son dos ficheros que no dependen el
+// uno del otro y encadenarlos duplicaba la espera del arranque.
+const [conMapa, ciudad] = await Promise.all([
+  conRelieve(escenario),
+  cargarCiudad(escenario.id),
+]);
+escenario = ciudad ? { ...conMapa, ciudad } : conMapa;
 
 try {
   localStorage.setItem('oga-veve:escenario', escenario.id);

@@ -31,7 +31,8 @@ import { Terrain } from './world/terrain';
 import { createSky, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
 import { RunwayGuide } from './world/runway-guide';
-import { createVegetation } from './world/vegetation';
+import { createVegetation, zonaDeAeropuerto } from './world/vegetation';
+import { crearCiudad } from './world/ciudad';
 import { MissionMarker } from './world/mission-marker';
 import { MissionRunner } from './missions/runner';
 import { objectiveTarget } from './missions/types';
@@ -206,6 +207,21 @@ export class Game {
     this.scene.add(this.sky.group);
     this.scene.fog = this.sky.fog;
 
+    // La ciudad antes que la vegetación: la vegetación pregunta por ella para
+    // no plantar un bosque donde hay un barrio.
+    if (this.scenario.ciudad) {
+      this.scene.add(
+        crearCiudad(
+          this.scenario.ciudad,
+          (x, z) => this.terrain.sampleHeight(x, z),
+          // Con doscientos metros de margen: un edificio pegado a la pista es
+          // un obstáculo, y un aeropuerto de verdad tiene a su alrededor
+          // justamente eso, un vacío.
+          zonaDeAeropuerto(this.scenario, 200),
+          this.scenario.waterLevel,
+        ),
+      );
+    }
     this.scene.add(createVegetation(this.scenario, (x, z) => this.terrain.sampleHeight(x, z)));
 
     this.runwayGuide = new RunwayGuide(
@@ -660,7 +676,14 @@ export class Game {
       dt,
     );
 
-    this.hud.setLuzDeTorre(vista.fase === 'esperando' ? 'roja' : vista.luzVerde ? 'verde' : null);
+    // La lámpara de la torre solo tiene sentido en tierra y antes de despegar:
+    // es lo que se mira desde el punto de espera. En el aire no hay lámpara que
+    // mirar, y dejarla encendida decía algo que ya no era verdad.
+    const enTierraEsperando =
+      vista.fase === 'esperando' || vista.fase === 'autorizado' || vista.fase === 'alineando';
+    this.hud.setLuzDeTorre(
+      !enTierraEsperando ? null : vista.fase === 'esperando' ? 'roja' : vista.luzVerde ? 'verde' : null,
+    );
 
     // Mientras manda el plan, el tutor calla. Vuelve al alinearse, que es
     // cuando toca despegar y el tutor sí sabe de eso.

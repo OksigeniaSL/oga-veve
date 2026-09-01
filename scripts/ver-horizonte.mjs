@@ -42,7 +42,7 @@ const tz = -(((objetivo.lat - lat0) * (R * Math.PI)) / 180);
 // Colocarlo una sola vez no sirve: la física lo suelta y en tres segundos se ha
 // caído doscientos metros y ha cambiado de rumbo.
 const medido = await page.evaluate(
-  async ({ tx, tz }) => {
+  async ({ tx, tz, ALTURA }) => {
     const THREE = await import('/node_modules/three/build/three.module.js');
     const o = globalThis.__oga;
     const s0 = o.estado();
@@ -51,7 +51,7 @@ const medido = await page.evaluate(
     const rumbo = Math.atan2(tx - px, -(tz - pz));
     o.pilotar((c) => {
       const s = o.estado();
-      s.position.set(px, 1700, pz);
+      s.position.set(px, ALTURA, pz);
       s.orientation.setFromEuler(new THREE.Euler(0, -rumbo, 0, 'YXZ'));
       s.velocity.set(0, 0, 0);
       c.throttle = 0;
@@ -63,7 +63,7 @@ const medido = await page.evaluate(
       km: Math.hypot(tx - px, tz - pz) / 1000,
     };
   },
-  { tx, tz },
+  { tx, tz, ALTURA: Number(process.argv[4] ?? 1700) },
 );
 console.log(
   `${ESC}: ${objetivo.nombre} a ${medido.km.toFixed(1)} km · rumbo pedido ${medido.rumboPedido.toFixed(0)}° · el avión mira a ${medido.rumboReal.toFixed(0)}°`,
