@@ -315,7 +315,9 @@ export class Game {
      * ha medido su desfase contra nuestro suelo, porque aparecer cuarenta metros
      * desplazado y luego dar un salto es peor que tardar un segundo más.
      */
-    this.teselas = crearTeselas(this.scenario, this.claveDeTeselas());
+    this.teselas = crearTeselas(this.scenario, this.claveDeTeselas(), (x, z) =>
+      this.terrain.sampleHeight(x, z),
+    );
     if (this.teselas) this.scene.add(this.teselas.grupo);
 
     this.runwayGuide = new RunwayGuide(

@@ -2625,3 +2625,50 @@ body {
 .sol--luna .sol__halo {
   opacity: 0.08;
 }
+
+/*
+ * ── La pantalla de teclas ────────────────────────────────────────────────
+ *
+ * El teclado dibujado manda y la tabla de cambiar teclas va debajo, plegada.
+ * Estaba al revés: el dibujo solo para quien no lee y una tabla de dieciséis
+ * filas de texto para todos los demás, o sea para casi todo el mundo.
+ */
+.teclas__cambiar {
+  width: 100%;
+  margin-top: 4px;
+  border-top: 1px solid var(--linea);
+  padding-top: 10px;
+}
+
+.teclas__cambiar > summary {
+  cursor: pointer;
+  padding: 6px 2px;
+  font-size: 15px;
+  color: var(--tinta-suave);
+  list-style-position: inside;
+}
+
+.teclas__cambiar > summary:hover {
+  color: var(--tinta);
+}
+
+.teclas__cambiar[open] > summary {
+  color: var(--ocre-tinta);
+}
+
+/* El botón de restaurar es secundario: no puede competir con el de cerrar. */
+.teclas__pie [data-todo='restaurar'] {
+  border: 1px solid var(--linea);
+  border-radius: var(--r-m);
+  background: transparent;
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.teclas__pie [data-todo='restaurar']:hover {
+  border-color: var(--ocre-tinta);
+  color: var(--tinta);
+}

@@ -164,6 +164,7 @@ export const GUG: Dictionary = {
 
   // ── La pantalla de mandos ──────────────────────────────────────────────
   'teclas.title': 'Tecla kuéra',
+  'teclas.cambiar': 'Emoambue umi tecla',
   'teclas.mano': 'Mba’e pópa remboguata motor',
   'teclas.zurda': 'Po asu',
   'teclas.diestra': 'Po akatúa',

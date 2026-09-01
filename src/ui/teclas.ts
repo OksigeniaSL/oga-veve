@@ -56,11 +56,27 @@ const MANO = `
   </svg>
 `;
 
+/** La llave de contacto, la misma que la tarjeta de «arrancá el motor». */
+const LLAVE = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="8" cy="8" r="4.6" />
+    <circle cx="8" cy="8" r="1.7" fill="rgba(0,0,0,.55)" />
+    <path d="M11 9.6 L20.5 19.1 L18.4 21.2 L16.6 19.4 L15.2 20.8 L13.4 19 L14.8 17.6 L12.9 15.7
+             L11.5 17.1 L9.7 15.3 L11.1 13.9 L9.2 12 Z" />
+  </svg>
+`;
+
 /**
  * Qué dibujo lleva cada mando en el teclado pintado. Solo los que un niño
  * necesita: nada de flaps, ni de idioma, ni de créditos.
+ *
+ * **Y el motor, que faltaba.** Es la primera tecla que se pulsa en toda la
+ * partida —la tarjeta lo pide antes que nada— y era la única que no salía
+ * marcada: el juego decía «pulsá la I» y en el mapa de teclas la I estaba
+ * apagada como cualquier otra letra.
  */
 const GLIFOS: Partial<Record<Accion, string>> = {
+  engine: LLAVE,
   pitchUp: FLECHA_ARR,
   pitchDown: FLECHA_ABA,
   rollLeft: FLECHA_IZQ,
@@ -243,9 +259,46 @@ export class KeyScreen {
     `;
   }
 
+  /**
+   * **El teclado dibujado sale siempre, y la tabla va debajo.**
+   *
+   * Estaba al revés: el dibujo solo para los peldaños que no leen y, para todos
+   * los demás, una tabla de dieciséis filas de texto. O sea que casi nadie veía
+   * el dibujo, y quien lo vio se lo dijo así: «no me puedo creer que en lugar de
+   * mejorar la imagen del teclado hayas vuelto a esto».
+   *
+   * Y tenía razón por partida doble. Un teclado dibujado no es una versión
+   * simplificada para niños: **es la única forma de encontrar una tecla por
+   * dónde está en vez de por cómo se llama**, y eso sirve igual a los cuarenta
+   * años. La tabla no sobra —hay que poder cambiar una tecla— pero es una
+   * pantalla de ajustes, no una explicación.
+   */
   private render(): void {
-    if (this.simple) return this.renderSimple();
+    const teclado = this.mapaDeTeclas();
+    const tabla = this.simple ? '' : this.tablaDeCambios();
+    this.root.innerHTML = `
+      <div class="creditos__panel teclado" role="dialog" aria-modal="true"
+           aria-label="${t('teclas.title')}">
+        ${teclado}
+        ${tabla}
+        <!--
+          La cruz iba flotando arriba a la derecha y se montaba encima de la
+          última tecla. Va debajo, ancha y centrada: hay que poder darle sin
+          apuntar.
+        -->
+        <div class="teclas__pie">
+          ${this.simple ? '' : `<button type="button" data-todo="restaurar">${t('teclas.restore')}</button>`}
+          <button class="teclado__cerrar" type="button" data-cerrar aria-label="${t('teclas.close')}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 L10 17 L19 7" /></svg>
+          </button>
+        </div>
+      </div>
+    `;
+    this.paintPressed();
+  }
 
+  /** La tabla de cambiar teclas. Ajustes, no explicación: va debajo y discreta. */
+  private tablaDeCambios(): string {
     const filas = ORDEN.map((accion) => {
       const esperando = this.capturando === accion;
       const teclas = this.keymap
@@ -268,16 +321,12 @@ export class KeyScreen {
       `;
     }).join('');
 
-    this.root.innerHTML = `
-      <div class="creditos__panel teclas__panel" role="dialog" aria-modal="true" aria-label="${t('teclas.title')}">
-        <h2>${t('teclas.title')}</h2>
+    return `
+      <details class="teclas__cambiar">
+        <summary>${t('teclas.cambiar')}</summary>
         <p class="teclas__pista">${t('teclas.hint')}</p>
         <table class="teclas__tabla"><tbody>${filas}</tbody></table>
-        <div class="teclas__pie">
-          <button type="button" data-todo="restaurar">${t('teclas.restore')}</button>
-          <button type="button" data-cerrar>${t('teclas.close')}</button>
-        </div>
-      </div>
+      </details>
     `;
   }
 
@@ -288,7 +337,8 @@ export class KeyScreen {
    * derecha—, porque enseñar solo una obliga a elegir por quien juega, y el
    * motivo de todo esto era justamente que cada mano tenga su lado.
    */
-  private renderSimple(): void {
+  /** El teclado dibujado: el mapa, con la mano y los mandos encima. */
+  private mapaDeTeclas(): string {
     const filas = FILAS.map(
       ({ sangria, teclas }) =>
         `<div class="fila" style="padding-left:${sangria * 2.6}em">${teclas.map((k) => this.cap(k)).join('')}</div>`,
@@ -306,9 +356,7 @@ export class KeyScreen {
       </div>
     `;
 
-    this.root.innerHTML = `
-      <div class="creditos__panel teclado" role="dialog" aria-modal="true"
-           aria-label="${t('teclas.title')}">
+    return `
         <!--
           Con qué mano se lleva el motor. Va arriba y con dibujos de mano
           porque es lo primero que hay que decidir y no hace falta leer para
@@ -329,16 +377,6 @@ export class KeyScreen {
             </button>`).join('')}
         </div>
         <div class="teclado__mapa">${filas}${abajo}</div>
-        <!--
-          La cruz iba flotando arriba a la derecha y se montaba encima de la
-          última tecla. Va debajo, ancha y centrada: es el único botón de
-          esta pantalla y hay que poder darle sin apuntar.
-        -->
-        <button class="teclado__cerrar" type="button" data-cerrar aria-label="${t('teclas.close')}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 L10 17 L19 7" /></svg>
-        </button>
-      </div>
     `;
-    this.paintPressed();
   }
 }
