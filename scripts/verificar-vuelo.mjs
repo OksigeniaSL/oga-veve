@@ -91,10 +91,11 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
   const resultado = await page.evaluate(async () => {
     const o = globalThis.__oga;
     const cuadro = () => new Promise((r) => requestAnimationFrame(() => r()));
-    const hasta = performance.now() + 420000;
+    const hasta = performance.now() + 780000;
     const pista = o.pista();
 
     const rad = (g) => (g * Math.PI) / 180;
+    const { pitchAngleOf, bankAngleOf } = await import('/src/ui/actitud.ts');
     const delante = (g) => [Math.sin(rad(g)), -Math.cos(rad(g))];
     const traves = (g) => [Math.cos(rad(g)), Math.sin(rad(g))];
 
@@ -169,41 +170,97 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
         const quiero =
           ((Math.atan2(mira[0] - e.position.x, -(mira[1] - e.position.z)) * 180) / Math.PI + 360) %
           360;
-        const giro = error(quiero, rumboDe(e));
-        c.aileron = Math.max(-1, Math.min(1, giro / 20));
+        c.aileron = mandoDeTierra(error(quiero, rumboDe(e)));
         c.rudder = c.aileron * 0.5;
         c.throttle = e.airspeed < 8 ? 0.5 : 0;
         c.brakes = e.airspeed > 11 ? 1 : 0;
       };
 
+      /**
+       * El mando de dirección en tierra, **amortiguado**.
+       *
+       * Proporcional a secas no vale desde que la rueda de morro tiene la
+       * autoridad que le hacía falta para tomar curvas: el avión serpenteaba
+       * por el eje de la pista con el rumbo oscilando más de ocho grados, y el
+       * juego —que pide menos de ocho para dar por alineado— no lo daba nunca.
+       * Se quedaba rodando por la pista para siempre.
+       *
+       * Restar la velocidad de guiñada es lo que frena el volantazo antes de
+       * pasarse. Es lo mismo que hace una mano.
+       */
+      const mandoDeTierra = (giro) =>
+        Math.max(-1, Math.min(1, giro / 20 - (e.yawRate * 180) / Math.PI / 45));
+
       /** Rodar hacia un punto concreto del mundo. */
       const rodarHacia = (x, z, vel = 8) => {
         const quiero = ((Math.atan2(x - e.position.x, -(z - e.position.z)) * 180) / Math.PI + 360) % 360;
-        const giro = error(quiero, rumboDe(e));
-        c.aileron = Math.max(-1, Math.min(1, giro / 20));
+        c.aileron = mandoDeTierra(error(quiero, rumboDe(e)));
         c.rudder = c.aileron * 0.5;
         c.throttle = e.airspeed < vel ? 0.5 : 0;
         c.brakes = e.airspeed > vel + 3 ? 1 : 0;
       };
 
-      /** Volar a un rumbo, subiendo o bajando lo que se le pida. */
-      const volarA = (rumbo, subida, gas) => {
+      /** Mantener un rumbo con las alas, sin tocar el cabeceo. */
+      const ladeoA = (rumbo) => {
         const giro = error(rumbo, rumboDe(e));
-        // Alabeo proporcional al error de rumbo, con tope de treinta grados de
-        // inclinación, que es lo que se usa en un circuito de verdad.
-        c.aileron = Math.max(-0.6, Math.min(0.6, giro / 30));
-        c.rudder = c.aileron * 0.25;
+        const objetivo = Math.max(rad(-18), Math.min(rad(18), rad(giro * 1.1)));
+        return Math.max(
+          -0.5,
+          Math.min(0.5, (objetivo - bankAngleOf(e.orientation)) * 2.0 - e.rollRate * 0.7),
+        );
+      };
 
-        // **Protección de velocidad, que es lo que hace un piloto.** La primera
-        // versión pedía seis metros por segundo de ascenso nada más despegar y
-        // tiraba del morro a ciento doce por hora: el avión entraba en pérdida
-        // a quince metros y se estrellaba, y el juego lo reiniciaba solo. Antes
-        // de subir hay que tener velocidad; si falta, se baja el morro aunque
-        // se pierda altura.
-        const V_SEGURA = 36;
-        const pedida = e.airspeed < V_SEGURA ? Math.min(subida, -0.5) : subida;
-        // Y con ganancia suave: un mando de cabeceo nervioso es un fugoide.
-        c.elevator = Math.max(-0.35, Math.min(0.35, (pedida - e.verticalSpeed) * 0.05));
+      /** Mantener una actitud de morro, en grados. Amortiguada. */
+      const subirA = (grados) =>
+        Math.max(
+          -0.45,
+          Math.min(0.45, (rad(grados) - pitchAngleOf(e.orientation)) * 2.2 - e.pitchRate * 0.9),
+        );
+
+      /**
+       * Volar a un rumbo, subiendo o bajando lo que se le pida.
+       *
+       * **Control de actitud, no mando a golpes.** La primera versión ponía el
+       * elevador según la velocidad —cero por debajo de treinta y dos, un
+       * tercio por encima— y como la velocidad oscilaba justo en ese umbral, el
+       * mando castañeteaba: el avión entraba en fugoide, el ángulo de ataque
+       * paseaba entre cuatro y once grados y el factor de carga entre 0,57 y
+       * 1,29. Subía, pero a tirones y a tres metros por segundo de media.
+       *
+       * Así es como se pilota de verdad: se elige una **actitud** —cuánto morro
+       * arriba— y se mantiene, amortiguando con la velocidad de cabeceo para
+       * que no se pase. La velocidad vertical se pide moviendo esa actitud,
+       * despacio, en un lazo de fuera.
+       */
+      const volarA = (rumbo, subida, gas) => {
+        const cabeceo = pitchAngleOf(e.orientation);
+        const alabeo = bankAngleOf(e.orientation);
+
+        // Lazo de fuera: la actitud que hace falta para la subida pedida.
+        const objetivoCabeceo = Math.max(
+          rad(-6),
+          Math.min(rad(11), rad(subida * 1.4) + (subida - e.verticalSpeed) * 0.02),
+        );
+        // Lazo de dentro: mando proporcional al error, amortiguado con la
+        // velocidad de cabeceo. Sin la amortiguación esto vuelve a oscilar.
+        c.elevator = Math.max(
+          -0.45,
+          Math.min(0.45, (objetivoCabeceo - cabeceo) * 2.2 - e.pitchRate * 0.9),
+        );
+
+        // Lo mismo con el alabeo: se elige una inclinación y se mantiene. Un
+        // circuito se vuela a veinte grados, no a tumbo limpio.
+        const giro = error(rumbo, rumboDe(e));
+        const objetivoAlabeo = Math.max(rad(-22), Math.min(rad(22), rad(giro * 1.1)));
+        c.aileron = Math.max(
+          -0.6,
+          Math.min(0.6, (objetivoAlabeo - alabeo) * 2.0 - e.rollRate * 0.7),
+        );
+        // Timón para coordinar el viraje, poquito.
+        c.rudder = Math.max(-0.35, Math.min(0.35, alabeo * 0.5));
+
+        // Y protección de velocidad: antes de subir hay que tener con qué.
+        const V_SEGURA = 34;
         c.throttle = e.airspeed < V_SEGURA ? 1 : gas;
       };
 
@@ -238,8 +295,7 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
             ((Math.atan2(objetivoX - e.position.x, -(objetivoZ - e.position.z)) * 180) / Math.PI +
               360) %
             360;
-          const giro = error(quiero, rumboDe(e));
-          c.aileron = Math.max(-1, Math.min(1, giro / 12));
+          c.aileron = mandoDeTierra(error(quiero, rumboDe(e)));
           c.rudder = c.aileron * 0.5;
           c.throttle = e.airspeed < 5 ? 0.4 : 0;
           break;
@@ -247,50 +303,65 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
 
         case 'despegando': {
           c.throttle = 1;
-          const giro = error(pista.heading, rumboDe(e));
-          c.aileron = Math.max(-0.5, Math.min(0.5, giro / 15));
+          c.aileron = mandoDeTierra(error(pista.heading, rumboDe(e))) * 0.6;
           c.rudder = c.aileron * 0.6;
-          // Rotar a partir de treinta y dos metros por segundo, que es
-          // velocidad de rotación de una avioneta.
-          c.elevator = e.airspeed > 32 ? 0.45 : 0;
+          // Rotar a treinta y dos metros por segundo y **mantener ocho grados
+          // de morro arriba**. Es la misma ley que usa la subida inicial, y es
+          // a propósito: con una ley distinta a cada lado de los doce metros,
+          // el avión rebotaba en ese límite —doce, uno, treinta y dos, uno—
+          // porque cada vez que cruzaba cambiaba de mando.
+          c.elevator = e.airspeed > 32 ? subirA(8) : 0;
           break;
         }
 
         case 'en-vuelo': {
-          // **La altura es sobre el suelo, no sobre el mar.** La primera
-          // versión pedía «pasar de cuatrocientos metros» y el aeropuerto está
-          // a seiscientos veinticuatro: la condición era cierta desde antes de
-          // despegar y la de después nunca llegaba. El avión se pasó siete
-          // minutos subiendo en línea recta.
           const alto = e.heightAboveGround ?? 0;
+          // **Las etapas avanzan por dónde está el avión, no por reloj.** Con
+          // relojes, si una etapa no se cumplía la siguiente empezaba igual: el
+          // avión acabó a siete kilómetros y medio del aeropuerto, alejándose,
+          // en la etapa de «entrando». El reloj queda solo de red de
+          // seguridad, y lo que hace es **abortar**, no avanzar.
+          if (enEtapa() > 200) {
+            irA('salida');
+            break;
+          }
 
           if (etapa === 'salida') {
-            volarA(pista.heading, 4, 1);
-            // Se sale hasta pasar la cabecera contraria con altura de
-            // circuito, o a los cincuenta segundos, lo que llegue antes.
-            if ((along > pista.length / 2 + 800 && alto > 250) || enEtapa() > 50) irA('vuelta1');
+            // Subida inicial con la misma ley que el despegue.
+            c.throttle = 1;
+            c.aileron = ladeoA(pista.heading);
+            c.rudder = 0;
+            c.elevator = subirA(alto < 60 ? 8 : 6);
+            if (along > pista.length / 2 + 500 && alto > 220) irA('vuelta1');
           } else if (etapa === 'vuelta1') {
-            volarA((pista.heading + 180) % 360, 0, 0.85);
-            if (Math.abs(error((pista.heading + 180) % 360, rumboDe(e))) < 15 || enEtapa() > 60) {
-              irA('volviendo');
-            }
+            // Primer viraje: a la recíproca, apartándose mil doscientos metros
+            // para no volver por encima de la pista.
+            volarA((pista.heading + 180) % 360, 0, 0.8);
+            if (Math.abs(error((pista.heading + 180) % 360, rumboDe(e))) < 20) irA('volviendo');
           } else if (etapa === 'volviendo') {
-            // Se vuelve por un lado, no por encima de la pista: así el segundo
-            // viraje deja al avión alineado en vez de cruzado.
-            const quiere = across > 0 ? 900 : -900;
-            const correccion = Math.max(-20, Math.min(20, (quiere - across) / 60));
-            volarA((pista.heading + 180 + correccion + 360) % 360, 0, 0.85);
-            if (along < -pista.length / 2 - 5000 || enEtapa() > 120) irA('vuelta2');
+            const quiere = 1200;
+            const correccion = Math.max(-25, Math.min(25, (quiere - across) / 50));
+            volarA((pista.heading + 180 + correccion + 360) % 360, 0, 0.8);
+            if (along < -pista.length / 2 - 3000) irA('vuelta2');
           } else if (etapa === 'vuelta2') {
-            volarA(pista.heading, -1, 0.6);
-            if (Math.abs(error(pista.heading, rumboDe(e))) < 15 || enEtapa() > 60) irA('entrando');
+            // Segundo viraje: a rumbo de pista, cerrando el desvío lateral.
+            const correccion = Math.max(-30, Math.min(30, -across / 60));
+            volarA((pista.heading + correccion + 360) % 360, -1.5, 0.55);
+            if (Math.abs(across) < 250 && Math.abs(error(pista.heading, rumboDe(e))) < 20) {
+              irA('entrando');
+            }
           } else {
-            // Entrando: se corrige el desvío lateral y se baja hacia la
-            // cabecera con una senda de unos tres grados.
-            const correccion = Math.max(-25, Math.min(25, -across / 50));
-            const quiereAlto = Math.max(20, (Math.abs(along) - pista.length / 2) * 0.05);
-            const subida = alto > quiereAlto ? -4 : 0;
-            volarA((pista.heading + correccion + 360) % 360, subida, 0.35);
+            // Entrando: senda de unos tres grados hacia la cabecera. Y si se
+            // pasa de largo, **frustrada**: se vuelve a empezar el circuito,
+            // que es exactamente lo que se hace de verdad.
+            if (along > -pista.length / 2 + 200) {
+              irA('salida');
+              break;
+            }
+            const faltan = -pista.length / 2 - along;
+            const quiereAlto = Math.max(15, faltan * 0.052);
+            const correccion = Math.max(-25, Math.min(25, -across / 40));
+            volarA((pista.heading + correccion + 360) % 360, alto > quiereAlto ? -3.5 : -1, 0.3);
           }
           break;
         }
@@ -309,11 +380,8 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
           toque ??= Math.round(along);
           c.throttle = 0;
           c.brakes = 1;
-          {
-            const giro = error(pista.heading, rumboDe(e));
-            c.aileron = Math.max(-0.6, Math.min(0.6, giro / 15));
-            c.rudder = c.aileron * 0.5;
-          }
+          c.aileron = mandoDeTierra(error(pista.heading, rumboDe(e))) * 0.6;
+          c.rudder = c.aileron * 0.5;
           break;
 
         case 'abandonando': {

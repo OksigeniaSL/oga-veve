@@ -364,3 +364,44 @@ describe('saltarse la luz de la torre', () => {
     expect(avisos).toBe(0);
   });
 });
+
+describe('el salto de rana, por sus dos puertas', () => {
+  it('rebotar en la carrera de despegue no mete al juego en modo de vuelta', () => {
+    // Doce metros de rebote bastaban para que el juego se creyera que ya
+    // habías volado: pasaba a «salí de la pista, volvé a tu lugar» **en mitad
+    // del despegue**. Se vio volando el circuito entero con el piloto
+    // automático: catorce fases completas y un vuelo de catorce metros.
+    const v = new Vuelo();
+    v.reiniciar(true);
+    const enPista = { motor: true, enPista: true, alEjeDePista: 4 };
+    durante(v, con({ ...enPista, sobreElSuelo: 20, estado: { airspeed: 42 } as never }), 2);
+    expect(v.actual).toBe('en-vuelo');
+    // Vuelve al asfalto: sigue despegando, no aterrizando.
+    const fase = durante(
+      v,
+      con({ ...enPista, sobreElSuelo: 1, estado: { airspeed: 42 } as never }),
+      2,
+    );
+    expect(fase).toBe('despegando');
+    expect(v.vuelve).toBe(false);
+  });
+
+  it('un vuelo de verdad sí cuenta', () => {
+    const v = new Vuelo();
+    v.reiniciar(true);
+    durante(v, con({ motor: true, sobreElSuelo: 400, estado: { airspeed: 42 } as never }), 20);
+    expect(v.vuelve).toBe(true);
+    const fase = durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 1,
+        alEjeDePista: 4,
+        enPista: true,
+        estado: { airspeed: 42 } as never,
+      }),
+      1,
+    );
+    expect(fase).toBe('aterrizado');
+  });
+});

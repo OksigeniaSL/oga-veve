@@ -256,6 +256,26 @@ Lo demás que hace falta saber:
 - **Un aeródromo sin `parking_position` no da para un vuelo completo.** Se
   comprueba antes de nada: sin puestos no hay de dónde salir.
 
+## 6 quater. Volar un circuito con un piloto automático
+
+Hace falta uno para comprobar el vuelo completo, y las cuatro cosas que costó
+sirven para cualquier otro que se escriba:
+
+- **Actitud, no velocidad.** El primer mando era «si vas a más de treinta y dos,
+  tira del morro». La velocidad oscilaba justo en ese umbral, el elevador
+  castañeteaba y el avión entraba en **fugoide**: alpha paseando entre 4° y 11°,
+  factor de carga entre 0,57 y 1,29, subiendo a tirones. Con control de actitud
+  —elegir ocho grados de morro arriba y mantenerlos, amortiguando con la
+  velocidad de cabeceo— sale clavado: alpha 3,5°, carga 1,00, sin oscilar.
+- **En tierra se dirige con el alabeo**, no con el timón: la rueda de morro va
+  en ese eje. Poner el timón y el alabeo a cero hace que el avión salga
+  perfectamente recto del puesto y siga recto para siempre.
+- **Los mandos se llaman `aileron`, `elevator`, `rudder`.** Escribir en `roll`,
+  `pitch` o `yaw` no da error: crea propiedades que nadie lee.
+- **Frenar del todo al llegar.** La torre solo mira a quien está parado, que es
+  justamente la lección; un piloto que se acerca despacio pero no se detiene
+  nunca recibe el permiso.
+
 ## 7. La pintura no se descarga: se genera
 
 **OpenStreetMap no mapea las marcas pintadas.** Existe un tag `aeroway=marking`
