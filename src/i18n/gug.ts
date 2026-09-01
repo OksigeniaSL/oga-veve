@@ -189,7 +189,9 @@ export const GUG: Dictionary = {
   'credits.madeBy': "Oksigenia SL mba'e, Granja Óga rérape.",
   'credits.educational':
     "Reipuru reíta opa ára Paraguay mbo'ehao kuérape: mbo'ehao, mbo'ehára, temimbo'e ha ogaygua. Ndaipóri trámite ha ndaipóri jehepyme'ẽ.",
-  'credits.terrain': "Yvy NASADEM (NASA) mba'ekuaarã guive, opavave mba'e.",
+  // La parte legal va en el idioma en que la exige la licencia: traducir una
+  // atribución obligatoria es dejar de cumplirla.
+  'credits.terrain': 'Yvy Copernicus DEM GLO-30 guive. © DLR e.V. 2010-2014 ha © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.',
   'credits.engine': 'Veve modelo: {model}',
   'credits.licence': "Código sãso Apache-2.0 guýpe. Mba'ekuaa ha marca, © Oksigenia SL.",
   'credits.dedication':
