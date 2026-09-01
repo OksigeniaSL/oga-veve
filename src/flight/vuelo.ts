@@ -172,8 +172,8 @@ export class Vuelo {
   /** Segundos desde que la torre te vio parado. */
   private mirando = 0;
   private verde = false;
-  /** Hace falta recordar si voló para saber si va o si vuelve. */
-  private volo = false;
+  /** Ha estado en el aire alguna vez, aunque sea un salto. */
+  private despego = false;
   /** Lo más alto que se ha estado, m sobre el suelo. */
   private techo = 0;
   /** Segundos en el aire desde el despegue. */
@@ -192,7 +192,7 @@ export class Vuelo {
     this.quieto = 0;
     this.mirando = 0;
     this.verde = desdePista;
-    this.volo = false;
+    this.despego = false;
     this.techo = 0;
     this.enElAire = 0;
     this.avisadoDeLaLuz = false;
@@ -207,9 +207,23 @@ export class Vuelo {
     return this.verde;
   }
 
-  /** ¿Va hacia la pista o vuelve de volar? Lo usa el plan para elegir la ruta. */
+  /**
+   * ¿Va hacia la pista o vuelve de volar?
+   *
+   * **Un salto de rana no cuenta.** Que las ruedas se despeguen doce metros no
+   * significa haber volado: con eso bastando, un rebote en la carrera de
+   * despegue metía al juego en modo de vuelta —«salí de la pista, volvé a tu
+   * lugar»— en mitad del despegue. Para haberse ido hay que haber subido a
+   * altura de circuito **y** haber estado un rato arriba; uno solo se engaña,
+   * porque se puede subir mucho en poco rato y se puede estar mucho rato a ras
+   * de suelo.
+   */
   get vuelve(): boolean {
-    return this.volo;
+    return this.haVolado;
+  }
+
+  private get haVolado(): boolean {
+    return this.techo >= ALTURA_DE_CIRCUITO && this.enElAire >= TIEMPO_MINIMO_EN_VUELO;
   }
 
   /** Segundos que se lleva en la fase actual. Sirve para no atosigar con avisos. */
@@ -220,7 +234,7 @@ export class Vuelo {
   paso(s: Situacion, dt: number): Paso {
     this.desde += dt;
     if (s.sobreElSuelo > EN_EL_AIRE) {
-      this.volo = true;
+      this.despego = true;
       this.enElAire += dt;
     }
     this.techo = Math.max(this.techo, s.sobreElSuelo);
@@ -267,13 +281,9 @@ export class Vuelo {
 
     // ── En el aire ───────────────────────────────────────────────────────
     if (!enTierra) {
-      // **Un salto de rana no es un vuelo.** Para volver hay que haberse ido:
-      // altura de circuito y un rato arriba. Los dos, porque uno solo se
-      // engaña — se puede subir mucho en poco rato y se puede estar mucho rato
-      // a ras de suelo.
-      const haVolado = this.techo >= ALTURA_DE_CIRCUITO && this.enElAire >= TIEMPO_MINIMO_EN_VUELO;
+      // **Un salto de rana no es un vuelo.** Ver `vuelve`.
       const enFinal =
-        haVolado &&
+        this.haVolado &&
         s.sobreElSuelo < 300 &&
         s.estado.verticalSpeed < 0 &&
         Math.abs(s.desalineado) < 30 &&
@@ -287,11 +297,11 @@ export class Vuelo {
       // Es a propósito: «ya aterricé y esto gasta queroseno» es una razón
       // perfectamente válida para terminar, y obligar a rodar hasta el puesto
       // sería un juego, no un simulador.
-      return this.volo ? 'apagado' : 'estacionado';
+      return this.despego ? 'apagado' : 'estacionado';
     }
 
     // ── En el suelo, volviendo de volar ──────────────────────────────────
-    if (this.volo) {
+    if (this.haVolado) {
       // Mientras corra a velocidad de carrera, sigue aterrizando.
       if (s.estado.airspeed >= 12) return 'aterrizado';
       // La pista hay que dejarla libre: hay otro detrás.
@@ -322,7 +332,7 @@ export class Vuelo {
    * a toda velocidad y la lección desaparecía.
    */
   private atenderALaTorre(s: Situacion, dt: number): void {
-    if (this.volo || this.verde) return;
+    if (this.haVolado || this.verde) return;
     const enLaRaya = s.restante < LLEGADA && !s.enPista && s.sobreElSuelo <= EN_EL_AIRE;
     if (!enLaRaya) {
       this.quieto = 0;
@@ -344,7 +354,7 @@ export class Vuelo {
    * bien recibía la reprimenda.
    */
   private vigilarLaLuz(s: Situacion): boolean {
-    if (this.volo || this.verde || this.uso || this.avisadoDeLaLuz) return false;
+    if (this.haVolado || this.verde || this.uso || this.avisadoDeLaLuz) return false;
     if (!s.enPista || s.sobreElSuelo > EN_EL_AIRE) return false;
     this.avisadoDeLaLuz = true;
     return true;
