@@ -287,7 +287,7 @@ export class PlanDeVuelo {
     const z = estado.position.z;
     this.ultimaPos = [x, -z];
 
-    const { across } = enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
+    const { along, across } = enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
     const alEjeDePista = Math.abs(across);
 
     let alaRuta = 0;
@@ -307,6 +307,7 @@ export class PlanDeVuelo {
       alaRuta,
       restante,
       alEjeDePista,
+      alLargoDePista: along,
       enPista: alEjeDePista < this.pista.width / 2 + 3,
       sobreElSuelo,
       motor,

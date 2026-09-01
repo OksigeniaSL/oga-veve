@@ -16,6 +16,7 @@ const EN_TIERRA: Situacion = {
   alaRuta: 0,
   restante: 500,
   alEjeDePista: 500,
+  alLargoDePista: -900,
   enPista: false,
   sobreElSuelo: 0,
   motor: false,
@@ -403,5 +404,48 @@ describe('el salto de rana, por sus dos puertas', () => {
       1,
     );
     expect(fase).toBe('aterrizado');
+  });
+});
+
+describe('la aproximación final', () => {
+  it('no se declara pasado el otro extremo de la pista', () => {
+    // Bajando, alineado y cerca del eje prolongado, pero cuatro kilómetros
+    // pasado el extremo contrario y alejándose. El juego decía «bajá
+    // suavecito» mientras el avión se iba al monte.
+    const v = new Vuelo();
+    v.reiniciar(true);
+    durante(v, con({ motor: true, sobreElSuelo: 400, estado: { airspeed: 45 } as never }), 20);
+    const fase = durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 200,
+        alEjeDePista: 100,
+        alLargoDePista: 4000,
+        desalineado: 3,
+        estado: { airspeed: 45, verticalSpeed: -3 } as never,
+      }),
+      2,
+    );
+    expect(fase).toBe('en-vuelo');
+  });
+
+  it('sí se declara viniendo hacia la cabecera', () => {
+    const v = new Vuelo();
+    v.reiniciar(true);
+    durante(v, con({ motor: true, sobreElSuelo: 400, estado: { airspeed: 45 } as never }), 20);
+    const fase = durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 200,
+        alEjeDePista: 100,
+        alLargoDePista: -3000,
+        desalineado: 3,
+        estado: { airspeed: 45, verticalSpeed: -3 } as never,
+      }),
+      2,
+    );
+    expect(fase).toBe('final');
   });
 });

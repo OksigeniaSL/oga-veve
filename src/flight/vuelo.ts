@@ -76,6 +76,17 @@ export interface Situacion {
   readonly restante: number;
   /** Metros del avión al eje de la pista. */
   readonly alEjeDePista: number;
+  /**
+   * Metros a lo largo de la pista desde su centro. Negativo antes de la
+   * cabecera de salida, positivo pasado el otro extremo.
+   *
+   * Hace falta para saber si se está **entrando o saliendo**. Sin esto, un
+   * avión cuatro kilómetros pasado el extremo contrario, alejándose y bajando,
+   * cumplía las tres condiciones de aproximación final —alineado, descendiendo
+   * y cerca del eje prolongado— y el juego decía «bajá suavecito» mientras se
+   * iba al monte.
+   */
+  readonly alLargoDePista: number;
   /** ¿Está el avión sobre el asfalto de la pista? */
   readonly enPista: boolean;
   /** Metros de altura sobre el terreno. */
@@ -284,6 +295,9 @@ export class Vuelo {
       // **Un salto de rana no es un vuelo.** Ver `vuelve`.
       const enFinal =
         this.haVolado &&
+        // Antes del centro de la pista: quien la ha pasado ya no está
+        // entrando, está yéndose.
+        s.alLargoDePista < 0 &&
         s.sobreElSuelo < 300 &&
         s.estado.verticalSpeed < 0 &&
         Math.abs(s.desalineado) < 30 &&
