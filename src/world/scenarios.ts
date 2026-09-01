@@ -16,6 +16,7 @@ import type { Aerodrome } from './aerodrome';
 import SGAS from '../../data/aerodromes/sgas.aero.json';
 import GCXO from '../../data/aerodromes/gcxo.aero.json';
 import type { Ciudad } from './ciudad';
+import { deFrente, type Meteo } from './meteo';
 
 export interface TerrainBand {
   /** Altitud a la que empieza la banda, en metros. */
@@ -114,6 +115,9 @@ export interface Scenario {
    * carreteras. Ver `ciudad.ts`, que explica por qué no son casas de verdad.
    */
   ciudad?: Ciudad;
+
+  /** El tiempo que hace. Lo pone `conViento`, y de él sale la cabecera en uso. */
+  meteo?: Meteo;
   /**
    * Un aeródromo real extraído, si lo hay.
    *
@@ -226,6 +230,39 @@ export const CHACO: Scenario = {
  * Sale de los umbrales medidos, así que el avión aparece donde aparecería de
  * verdad y la guía de pista apunta a donde tiene que apuntar.
  */
+/**
+ * La cabecera que toca con este viento.
+ *
+ * Se opera por la que da más viento de frente, que es la regla de verdad y la
+ * única que hace falta: el viento de cara acorta la carrera de despegue y la de
+ * aterrizaje, y el de cola las alarga. Con viento variable o en calma se queda
+ * la que venga escrita, porque **un aeropuerto que cambia de cabecera cada
+ * partida no se aprende**, y aprenderse un sitio es de lo que va esto.
+ */
+export function conViento(esc: Scenario, meteo: Meteo): Scenario {
+  const aero = esc.aerodrome;
+  if (!aero || meteo.vientoDe === null) return { ...esc, meteo };
+  const pista = aero.runways[0];
+  const nombres = pista
+    ? Object.entries(pista.thresholds)
+        .filter((e) => e[1]?.xy)
+        .map((e) => e[0])
+    : [];
+  if (nombres.length < 2) return { ...esc, meteo };
+
+  let mejor = nombres[0]!;
+  let masFrente = -Infinity;
+  for (const nombre of nombres) {
+    const r = pistaDe(aero as unknown as Aerodrome, nombre);
+    const f = deFrente(r.heading, meteo);
+    if (f > masFrente) {
+      masFrente = f;
+      mejor = nombre;
+    }
+  }
+  return { ...esc, runway: pistaDe(aero as unknown as Aerodrome, mejor), meteo };
+}
+
 function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario['runway'] {
   const pista = aero.runways[0]!;
   const umbrales = Object.entries(pista.thresholds).filter(

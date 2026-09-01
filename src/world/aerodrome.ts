@@ -268,7 +268,11 @@ export function extension(aero: Aerodrome): { radio: number } {
  * @param aero lo que salió del extractor
  * @param baseY cota del terreno donde se planta, m
  */
-export function createAerodrome(aero: Aerodrome, baseY = 0): Group {
+export function createAerodrome(
+  aero: Aerodrome,
+  baseY = 0,
+  viento: { readonly de: number | null; readonly kt: number } = { de: null, kt: 0 },
+): Group {
   const grupo = new Group();
   grupo.name = `aerodromo:${aero.id}`;
 
@@ -324,7 +328,7 @@ export function createAerodrome(aero: Aerodrome, baseY = 0): Group {
     grupo.add(luces(principal, cota));
   }
   grupo.add(rodadura(aero, cota));
-  grupo.add(mangas(aero, cota));
+  grupo.add(mangas(aero, cota, viento));
 
   return grupo;
 }
@@ -778,7 +782,11 @@ function luces(pista: Pista, altura: (p: Punto) => number): Group {
  * saber leer. Un niño que aprende a mirar la manga sabe de dónde viene el
  * viento antes que muchos adultos.
  */
-function mangas(aero: Aerodrome, altura: (p: Punto) => number): Group {
+function mangas(
+  aero: Aerodrome,
+  altura: (p: Punto) => number,
+  viento: { readonly de: number | null; readonly kt: number },
+): Group {
   const grupo = new Group();
   grupo.name = 'mangas';
   if (!aero.windsocks.length) return grupo;
@@ -806,6 +814,26 @@ function mangas(aero: Aerodrome, altura: (p: Punto) => number): Group {
     piezas.push(geo);
   };
 
+  /*
+   * **La manga dice el viento, y ese es el instrumento entero.**
+   *
+   * Apunta a donde va el viento —o sea, al contrario de donde viene— y cae
+   * tanto como flojo sopla: tumbada del todo a partir de quince nudos, colgando
+   * casi a plomo en calma. Es exactamente lo que hace una de verdad, y es el
+   * único instrumento de este juego que se lee sin instrucciones, sin números y
+   * sin saber leer. Un niño mira la manga y sabe por dónde despegar.
+   *
+   * Sin dirección —calma o viento variable— se queda colgando, que es lo que
+   * hace una manga cuando no hay nada que contar.
+   */
+  const hacia = viento.de === null ? 0 : ((viento.de + 180) % 360) * (Math.PI / 180);
+  // Cero es colgando a plomo; uno es horizontal. Quince nudos la ponen tiesa.
+  const tiesa = Math.min(1, viento.kt / 15);
+  const caida = (1 - tiesa) * (Math.PI / 2);
+  const ux = Math.sin(hacia) * Math.cos(caida);
+  const uz = -Math.cos(hacia) * Math.cos(caida);
+  const uy = -Math.sin(caida);
+
   for (const [x, y] of aero.windsocks) {
     const base = altura([x, y]);
 
@@ -815,9 +843,14 @@ function mangas(aero: Aerodrome, altura: (p: Punto) => number): Group {
 
     // El cono, a rayas. Cinco tramos, como las de verdad.
     for (let k = 0; k < 5; k++) {
-      const tramo = new CylinderGeometry(0.55 - k * 0.07, 0.62 - k * 0.07, 0.7, 8, 1, true);
+      const largo = 0.7;
+      const d = 0.6 + k * 0.72;
+      const tramo = new CylinderGeometry(0.55 - k * 0.07, 0.62 - k * 0.07, largo, 8, 1, true);
+      // El cilindro nace con el eje en Y; se tumba al eje X y se gira al viento.
       tramo.rotateZ(Math.PI / 2);
-      tramo.translate(x + 0.6 + k * 0.72, base + 6, -y);
+      tramo.rotateZ(-caida);
+      tramo.rotateY(-hacia);
+      tramo.translate(x + ux * d, base + 6 + uy * d, -y + uz * d);
       tiñe(tramo, k % 2 === 0 ? NARANJA : CLARO);
     }
   }

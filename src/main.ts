@@ -10,9 +10,55 @@
 // HUD ya está maquetado antes de que el navegador termine de leer el módulo,
 // en vez de aparecer sin estilo durante un instante.
 import { Game } from './game';
-import { SCENARIOS } from './world/scenarios';
+import { SCENARIOS, type Scenario } from './world/scenarios';
 import { conRelieve } from './world/relieve';
 import { cargarCiudad } from './world/ciudades';
+import { conViento } from './world/scenarios';
+import { leerMetar, pedirMetar, TIEMPO_DE_CASA, type Meteo } from './world/meteo';
+
+/**
+ * De dónde sale el tiempo de esta partida.
+ *
+ * Por orden: lo que se pida a mano en la dirección, lo que diga el METAR de
+ * verdad, y si no, el tiempo de casa.
+ *
+ * `?viento=290/14` pone el viento a mano —del 290 a catorce nudos— y sirve para
+ * probar una cabecera concreta sin esperar a que el tiempo cambie. Se hizo
+ * primero eso y no un panel porque **el panel hay que diseñarlo para quien no
+ * lee**, y eso es otro trabajo; esto ya deja ensayar cualquier situación hoy.
+ *
+ * `?metar=...` acepta un METAR entero, por si se quiere reproducir un día
+ * concreto.
+ */
+async function tiempoPedido(esc: Scenario): Promise<Meteo> {
+  const q = new URLSearchParams(location.search);
+
+  const crudo = q.get('metar');
+  if (crudo) return { ...(leerMetar(crudo) ?? TIEMPO_DE_CASA), fuente: 'mano' };
+
+  const viento = q.get('viento');
+  if (viento) {
+    const m = /^(\d{1,3})\/(\d{1,3})$/.exec(viento);
+    if (m) {
+      const kt = Number(m[2]);
+      return {
+        ...TIEMPO_DE_CASA,
+        vientoDe: kt === 0 ? null : Number(m[1]) % 360,
+        vientoKt: kt,
+        fuente: 'mano',
+      };
+    }
+  }
+
+  // El identificador OACI es el `id` del aeródromo: así se llama el fichero y
+  // así lo llama el METAR.
+  const icao = esc.aerodrome?.id;
+  if (!icao) return TIEMPO_DE_CASA;
+  // El proxy se configura al construir; sin él no se pide nada. Ver
+  // `workers/meteo.js`, que es el que hace falta y son diez líneas.
+  const proxy = q.get('meteo') ?? import.meta.env.VITE_METEO ?? null;
+  return pedirMetar(icao, proxy);
+}
 import { detectLocale, setLocale } from './i18n';
 import { abrirHangar } from './ui/hangar';
 import { rememberTier, rememberedTier } from './flight/tiers';
@@ -59,13 +105,20 @@ if (!escenario) {
   rememberTier(tramo);
 }
 
-// El relieve y la ciudad van a la vez: son dos ficheros que no dependen el
-// uno del otro y encadenarlos duplicaba la espera del arranque.
-const [conMapa, ciudad] = await Promise.all([
+/*
+ * El relieve, la ciudad y el tiempo van a la vez.
+ *
+ * Son tres cosas que no dependen unas de otras y encadenarlas triplicaba la
+ * espera del arranque. El tiempo además puede no llegar nunca —no hay red, el
+ * proxy no está puesto— y eso no puede dejar a nadie sin volar: `pedirMetar`
+ * devuelve el tiempo de casa y el juego ni se entera.
+ */
+const [conMapa, ciudad, meteo] = await Promise.all([
   conRelieve(escenario),
   cargarCiudad(escenario.id),
+  tiempoPedido(escenario),
 ]);
-escenario = ciudad ? { ...conMapa, ciudad } : conMapa;
+escenario = conViento(ciudad ? { ...conMapa, ciudad } : conMapa, meteo);
 
 try {
   localStorage.setItem('oga-veve:escenario', escenario.id);
