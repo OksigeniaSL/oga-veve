@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Óga Veve · nuestro aeropuerto encima</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b1310; overflow: hidden; }
+  canvas { display: block; }
+  #estado {
+    position: fixed; left: 12px; top: 12px; z-index: 5;
+    font: 13px/1.5 ui-monospace, monospace; color: #f2f1ec;
+    background: rgba(10,16,13,.78); padding: 10px 14px; border-radius: 10px;
+    white-space: pre;
+  }
+  #credito {
+    position: fixed; right: 12px; bottom: 10px; z-index: 5;
+    font: 11px/1.4 system-ui, sans-serif; color: #e8e6df;
+    text-shadow: 0 1px 3px rgba(0,0,0,.8); max-width: 60vw; text-align: right;
+  }
+</style>
+<div id="estado">cargando…</div>
+<div id="credito"></div>
+<script type="module" src="/spike/aerodromo-real.js"></script>
