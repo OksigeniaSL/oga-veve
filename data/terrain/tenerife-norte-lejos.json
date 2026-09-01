@@ -1,0 +1,13 @@
+{
+  "id": "tenerife-norte-lejos",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "origen": {
+    "lat": 28.482752,
+    "lon": -16.341707
+  },
+  "tamanoM": 108000,
+  "resolucion": 417,
+  "minM": 0,
+  "maxM": 3695
+}

@@ -193,15 +193,36 @@ export const CHACO: Scenario = {
  * Sale de los umbrales medidos, así que el avión aparece donde aparecería de
  * verdad y la guía de pista apunta a donde tiene que apuntar.
  */
-function pistaDe(aero: Aerodrome): Scenario['runway'] {
+function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario['runway'] {
   const pista = aero.runways[0]!;
-  const umbrales = Object.values(pista.thresholds).filter(
-    (u): u is NonNullable<typeof u> => u?.xy != null,
+  const umbrales = Object.entries(pista.thresholds).filter(
+    (e): e is [string, NonNullable<(typeof e)[1]>] => e[1]?.xy != null,
   );
-  const [a, b] = umbrales;
-  if (!a || !b) throw new Error(`${aero.id}: la pista no tiene dos umbrales situados`);
-  const [ax, az] = a.xy!;
-  const [bx, bz] = b.xy!;
+  if (umbrales.length < 2) throw new Error(`${aero.id}: la pista no tiene dos umbrales situados`);
+
+  /*
+   * **Por qué cabecera se opera.**
+   *
+   * No es un detalle: la elige el viento, y de ahí sale todo lo demás —de qué
+   * punta se despega, por dónde se entra, qué número va pintado delante y qué
+   * puesto de estacionamiento queda cerca—.
+   *
+   * En Tenerife Norte la preferente es la 30, y eso no lo dice un dato: lo dijo
+   * quien trabaja al lado de la cabecera. Operando por la 12 se aterrizaba con
+   * viento sur, que allí es raro.
+   *
+   * Lo que falta para hacerlo bien es viento de verdad, y con él la lección de
+   * la manga —que ya se extrae, dos en Tenerife—. Queda apuntado.
+   */
+  const [salida, llegada] = despegaPor
+    ? [
+        umbrales.find(([n]) => n === despegaPor) ?? umbrales[0]!,
+        umbrales.find(([n]) => n !== despegaPor) ?? umbrales[1]!,
+      ]
+    : [umbrales[0]!, umbrales[1]!];
+
+  const [ax, az] = salida[1].xy!;
+  const [bx, bz] = llegada[1].xy!;
   // Z invertida: en el fichero la Y apunta al norte y en el mundo del juego el
   // norte es la Z negativa.
   const mundoA: readonly [number, number] = [ax, -az];
@@ -347,7 +368,8 @@ export const TENERIFE_NORTE: Scenario = {
   // El aire del Atlántico no es el del Chaco: hay bruma, y se ve.
   fog: { colour: 0xdae4e8, density: 0.00006 },
   sun: { azimuth: 108, elevation: 44 },
-  runway: pistaDe(GCXO as unknown as Aerodrome),
+  // Se opera por la 30, que es la preferente de verdad.
+  runway: pistaDe(GCXO as unknown as Aerodrome, '30'),
   /**
    * Nueve grados, y no es la declinación geomagnética de Canarias —que anda
    * por los cinco al oeste—. Es la que hace que **el número pintado y la

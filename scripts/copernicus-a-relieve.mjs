@@ -250,10 +250,30 @@ if (!esc.aerodrome) {
   process.exit(1);
 }
 
+/*
+ * **El anillo lejano**, con `--lejos`.
+ *
+ * El mapa normal de Tenerife mide dieciocho kilómetros de lado, o sea que llega
+ * a nueve de la pista. El Teide está a treinta y siete y medio: sencillamente
+ * no cabía, y lo que se veía al fondo —y se confundía con él— era la Cumbre de
+ * Tigaiga, mil seiscientos setenta y un metros a once kilómetros y medio.
+ *
+ * Ensanchar el mapa fino no sirve: con las mismas muestras repartidas en cien
+ * kilómetros, cada una cubre doscientos cuarenta metros y el aeropuerto se
+ * queda sin relieve alrededor. Así que son dos mapas. Uno fino y pequeño donde
+ * se vuela, y uno basto y enorme para el horizonte, con un agujero en medio.
+ * Es lo que hace cualquier motor de terreno, y aquí sale gratis: el mismo
+ * número de muestras, el mismo peso de fichero, otra escala.
+ */
+const LEJOS = process.argv.includes('--lejos');
+const VECES = 6;
+
 const { lat: lat0, lon: lon0 } = esc.aerodrome.origin;
 const res = esc.segments + 1;
-const paso = esc.size / esc.segments;
-const mitad = esc.size / 2;
+const tamano = LEJOS ? esc.size * VECES : esc.size;
+const sufijo = LEJOS ? '-lejos' : '';
+const paso = tamano / esc.segments;
+const mitad = tamano / 2;
 
 // La inversa de la proyección del extractor de aeródromos, para que el relieve
 // y el asfalto caigan en el mismo sitio. Si estas dos cuentas se separan, el
@@ -265,7 +285,7 @@ const aLatLon = (x, y) => [
 ];
 
 console.log(`${esc.id} · ${esc.aerodrome.name}`);
-console.log(`  centro ${lat0.toFixed(5)}, ${lon0.toFixed(5)} · ${esc.size / 1000} km · ${res}×${res} muestras`);
+console.log(`  centro ${lat0.toFixed(5)}, ${lon0.toFixed(5)} · ${tamano / 1000} km · ${res}×${res} muestras · ${(paso).toFixed(0)} m por muestra`);
 
 // Qué grados hacen falta.
 const esquinas = [
@@ -309,17 +329,17 @@ for (let fila = 0; fila < res; fila++) {
 console.log(`\r  muestreando… 100 %          `);
 
 mkdirSync(SALIDA, { recursive: true });
-writeFileSync(`${SALIDA}/${esc.id}.bin`, Buffer.from(alturas.buffer));
+writeFileSync(`${SALIDA}/${esc.id}${sufijo}.bin`, Buffer.from(alturas.buffer));
 writeFileSync(
-  `${SALIDA}/${esc.id}.json`,
+  `${SALIDA}/${esc.id}${sufijo}.json`,
   `${JSON.stringify(
     {
-      id: esc.id,
+      id: `${esc.id}${sufijo}`,
       fuente: 'Copernicus DEM GLO-30',
       atribucion:
         '© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved',
       origen: { lat: lat0, lon: lon0 },
-      tamanoM: esc.size,
+      tamanoM: tamano,
       resolucion: res,
       minM: min,
       maxM: max,
@@ -330,4 +350,4 @@ writeFileSync(
 );
 
 const kb = (alturas.byteLength / 1024).toFixed(0);
-console.log(`  cotas de ${min} a ${max} m · ${kb} KB → ${SALIDA}/${esc.id}.bin`);
+console.log(`  cotas de ${min} a ${max} m · ${kb} KB → ${SALIDA}/${esc.id}${sufijo}.bin`);

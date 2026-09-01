@@ -77,7 +77,7 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
       rumboRuta: rumboRuta === null ? null : Math.round(rumboRuta),
       // Del estado, no del HUD: el rótulo del rumbo no existe en todos los
       // peldaños —Guyrami no tiene instrumentos— y salía vacío.
-      hdg: Math.round(((o.estado().heading * 180) / Math.PI + 360) % 360),
+      hdg: Math.round(((globalThis.__oga.estado().heading * 180) / Math.PI + 360) % 360),
     };
   });
   console.log(`\n── ${escenario}`);
