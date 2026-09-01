@@ -306,8 +306,18 @@ export class PlanDeVuelo {
     this.vuelo.acabaEnLaEspera = si;
   }
 
+  /**
+   * El puesto que se está usando de verdad, si no es el que tocaba por cercanía.
+   *
+   * Lo pone `reiniciarDesde` cuando el juego encuentra que el mejor puesto tiene
+   * un avión aparcado encima en la fotografía. Sin esto, la ruta salía del
+   * puesto nuevo y el avión aparecía en el viejo — dentro del Boeing.
+   */
+  private puestoElegido: Punto | null = null;
+
   /** Dónde empieza el vuelo: el puesto de estacionamiento, si lo hay. */
   arranque(): readonly [number, number] | null {
+    if (this.puestoElegido) return [this.puestoElegido[0], -this.puestoElegido[1]];
     const puesto = this.puestoDeSalida();
     return puesto ? [puesto.xy[0], -puesto.xy[1]] : null;
   }
@@ -344,6 +354,7 @@ export class PlanDeVuelo {
   reiniciarDesde(puesto: Punto): boolean {
     const espera = this.esperaDeSalida();
     if (!espera) return false;
+    this.puestoElegido = puesto;
     this.vuelo.reiniciar(false);
     this.destino = 'espera';
     this.ultimaPos = puesto;

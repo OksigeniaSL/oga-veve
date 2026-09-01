@@ -36,6 +36,7 @@ for (const [escenario, leccion] of [
       y: Math.round(s.position.y),
       agl: Math.round(s.heightAboveGround),
       mundo: o.mundoReal?.() ?? null,
+      puesto: [Math.round(s.position.x), Math.round(s.position.z)],
     };
   });
   console.log(
@@ -51,7 +52,8 @@ for (const [escenario, leccion] of [
                 : r.mundo.hundido > 1.5
                   ? `FLOTANDO ${r.mundo.hundido.toFixed(1)} m`
                   : 'encima ✓'
-          }`
+          }\n` +
+          `        puestos libres: ${r.mundo.puestosLibres} · se usa el ${r.mundo.primeroLibre}`
         : 'sin mundo real') +
       (fallos.length ? `  ⚠ ${fallos[0]}` : ''),
   );

@@ -115,6 +115,19 @@ export interface Teselas {
    * momentos concretos, nunca por fotograma.
    */
   alturaEn(x: number, z: number): number | null;
+  /**
+   * ¿Está libre ese trozo de plataforma, o hay algo aparcado encima?
+   *
+   * En la fotogrametría están congelados los aviones que había el día que
+   * Google voló. El puesto que elige el juego en Tenerife tiene encima un
+   * Boeing, y el nuestro aparecía dentro: «me comió un 737-800».
+   *
+   * No hay dato que consultar —la foto es una malla, no una lista de aviones—
+   * pero sí se puede **medir el bulto**: si el centro del puesto está varios
+   * metros por encima del asfalto de alrededor, ahí hay algo. Un avión de línea
+   * son diez metros de fuselaje; el ruido de la fotogrametría, medio.
+   */
+  libre(x: number, z: number): boolean;
   dispose(): void;
 }
 
@@ -262,6 +275,32 @@ export function crearTeselas(
       if (!golpes.length) return null;
       const y = golpes[0]!.point.y;
       return Math.abs(y - referencia) < MARGEN_PLAUSIBLE ? y : null;
+    },
+    libre(x: number, z: number) {
+      const centro = this.alturaEn(x, z);
+      if (centro === null) return true;
+      /*
+       * Doce catas en corro a **setenta** metros, y se compara con la más baja.
+       *
+       * Con cuarenta el corro seguía encima del avión —un 737 tiene treinta y
+       * seis metros de envergadura— y la mediana salía a la altura del ala: el
+       * puesto parecía libre y el nuestro aparecía dentro igual.
+       *
+       * Y con la más baja del corro, no con la mediana: lo más bajo de una
+       * plataforma **es la plataforma**. La mediana se contamina en cuanto la
+       * mitad del corro cae sobre el avión de al lado, que en una terminal es lo
+       * normal.
+       */
+      const alrededor: number[] = [];
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        const h = this.alturaEn(x + Math.sin(a) * 70, z + Math.cos(a) * 70);
+        if (h !== null) alrededor.push(h);
+      }
+      if (alrededor.length < 6) return true;
+      alrededor.sort((p, q) => p - q);
+      const suelo = alrededor[1]!;
+      return centro - suelo < 3;
     },
     get visibles() {
       return (teselas as unknown as ConEstadisticas).stats?.visible ?? 0;
