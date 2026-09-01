@@ -170,7 +170,26 @@ const PISTA_LIBRE = 75;
 const HISTERESIS = 0.5;
 
 /** Las fases que no esperan: cuando pasan, pasan. */
-const INMEDIATAS: ReadonlySet<Fase> = new Set<Fase>(['en-vuelo', 'apagado', 'aterrizado']);
+/*
+ * Las fases que no esperan a la histéresis.
+ *
+ * La histéresis existe para que el juego no cambie de cartel cada vez que una
+ * medida tiembla medio segundo. Pero hay fases que no son una medida: son un
+ * interruptor. **El motor está en marcha o no lo está**, y hacer que la tarjeta
+ * de «arrancá el motor» siga ahí medio segundo después de arrancarlo es decirle
+ * a quien acaba de acertar que no ha pasado nada.
+ *
+ * Se vio jugando: «pulso la I y no se quita de la pantalla el icono». La I sí
+ * arrancaba el motor —está medido— y el cartel se quedaba. Lo que falla en un
+ * juego para prelectores no es que la respuesta llegue tarde: es que quien
+ * pulsó no sepa si ha hecho algo.
+ */
+const INMEDIATAS: ReadonlySet<Fase> = new Set<Fase>([
+  'arrancando',
+  'en-vuelo',
+  'apagado',
+  'aterrizado',
+]);
 
 export class Vuelo {
   private fase: Fase = 'estacionado';
