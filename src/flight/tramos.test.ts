@@ -54,10 +54,27 @@ describe('el primer peldaño usa otro modelo', () => {
   it('en Mainumby hay que coger velocidad para despegar', () => {
     const model = build(GUYRAMI);
     model.reset({ position: new Vector3(0, OGA_172.gearHeight, 0), heading: 0, airspeed: 0 });
+    // En la pista: el modelo sencillo no deja rotar desde una plataforma, y eso
+    // es a propósito. Lo que se comprueba aquí es que además hace falta
+    // velocidad.
+    model.setOnRunway(true);
     fly(model, 2, { throttle: 1, elevator: 1 });
     expect(model.state.onGround).toBe(true);
     fly(model, 12, { throttle: 1, elevator: 1 });
     expect(model.state.onGround).toBe(false);
+  });
+
+  it('no despega desde la plataforma, por mucha velocidad que coja', () => {
+    const model = build(GUYRAMI);
+    model.reset({ position: new Vector3(0, OGA_172.gearHeight, 0), heading: 0, airspeed: 0 });
+    // Fuera de la pista. Es la situación de quien pone gas en su puesto de
+    // estacionamiento: «de nada que le dé potencia y se mueva, elevo y vuelo».
+    model.setOnRunway(false);
+    fly(model, 20, { throttle: 1, elevator: 1 });
+    expect(model.state.onGround, 'sigue en el suelo').toBe(true);
+    // Y no es que no corra: corre de sobra para volar. Lo que no puede es
+    // rotar, que es la regla del juego.
+    expect(model.state.airspeed).toBeGreaterThan(25);
   });
 
   it('los mandos van en el mismo sentido que en el modelo de verdad', () => {

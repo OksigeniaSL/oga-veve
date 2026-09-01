@@ -73,6 +73,14 @@ export interface FlightState {
   beta: number;
   /** Altura sobre el terreno, m. */
   heightAboveGround: number;
+  /**
+   * Si las ruedas están sobre la pista. Lo pone el juego cada fotograma.
+   *
+   * Lo usa el modelo sencillo para no dejar despegar desde una plataforma. No
+   * es física: es la regla del juego —**los aviones despegan de pistas**—, y
+   * ese es exactamente el peldaño en el que hay que enseñarla.
+   */
+  onRunway: boolean;
   /** Velocidad vertical, m/s. Positiva hacia arriba. */
   verticalSpeed: number;
   /** Factor de carga, en g. */
@@ -119,6 +127,14 @@ export type GroundSampler = (x: number, z: number) => number;
  */
 export interface FlightModel {
   readonly state: Readonly<FlightState>;
+  /**
+   * Dice si las ruedas están sobre la pista. Lo llama el juego cada fotograma.
+   *
+   * Va como método y no como campo escribible porque `state` es de solo
+   * lectura a propósito: el estado lo produce el modelo y lo consume todo lo
+   * demás. Esto es lo único que va en sentido contrario, y por eso se ve.
+   */
+  setOnRunway(enPista: boolean): void;
   /** Nombre legible de la implementación, para la pantalla de créditos. */
   readonly implementationName: string;
   reset(initial: InitialConditions): void;

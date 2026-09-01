@@ -26,6 +26,7 @@ function state(partial: Partial<FlightState>): FlightState {
     alpha: 0,
     beta: 0,
     heightAboveGround: 0,
+  onRunway: true,
     verticalSpeed: 0,
     loadFactor: 1,
     heading: 0,

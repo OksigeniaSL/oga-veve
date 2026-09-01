@@ -123,6 +123,7 @@ export class ArcadeFlightModel implements FlightModel {
       alpha: 0,
       beta: 0,
       heightAboveGround: 0,
+      onRunway: false,
       verticalSpeed: 0,
       loadFactor: 1,
       heading: 0,
@@ -132,6 +133,10 @@ export class ArcadeFlightModel implements FlightModel {
       secondsToImpact: Number.POSITIVE_INFINITY,
       touchdownSinkRate: 0,
     };
+  }
+
+  setOnRunway(enPista: boolean): void {
+    this.state.onRunway = enPista;
   }
 
   reset(initial: InitialConditions): void {
@@ -227,8 +232,25 @@ export class ArcadeFlightModel implements FlightModel {
       this.bank += (controls.aileron * VISUAL_BANK * bite - this.bank) * Math.min(1, step * 3.5);
     }
 
-    // Ascenso. Rodando no se sube hasta tener velocidad para ello.
-    const canClimb = !this.state.onGround || bite > 0.88;
+    /*
+     * Ascenso. **Rodando no se sube hasta tener velocidad para ello, y solo
+     * desde la pista.**
+     *
+     * Lo segundo no es física: es la regla del juego. Con solo la velocidad,
+     * desde la plataforma de Tenerife se llegaba a los setenta y dos por hora
+     * en unos segundos y se despegaba de allí mismo — «de nada que le dé
+     * potencia y se mueva, elevo y vuelo; ni la calle de rodadura tengo que
+     * alcanzar». Eso rompe la lección entera: el rodaje, la doble raya, la
+     * torre y la cabecera dejan de tener sentido si se puede saltar todo.
+     *
+     * Y la regla es de las que se entienden a los cuatro años sin explicarla:
+     * **los aviones despegan de las pistas.**
+     *
+     * Va solo en este modelo, que es el de los peldaños de abajo. En el de
+     * coeficientes manda la física, y allí un avión que consiga volar desde una
+     * calle de rodaje ha volado — lo que le espera es que la torre se lo diga.
+     */
+    const canClimb = !this.state.onGround || (bite > 0.88 && this.state.onRunway);
     const wantedClimb = canClimb ? controls.elevator * MAX_CLIMB * bite : 0;
     this.climb += (wantedClimb - this.climb) * Math.min(1, step * 2.2);
 

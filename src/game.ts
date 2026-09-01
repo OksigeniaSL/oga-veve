@@ -708,6 +708,23 @@ export class Game {
     // una pestaña en segundo plano, y de eso se encarga `visibilitychange`.
     const dt = Math.min(this.clock.getDelta(), 0.25);
 
+    /*
+     * Si las ruedas están sobre la pista, y no en la plataforma ni en la
+     * hierba. Lo mira el modelo sencillo para no dejar despegar desde
+     * cualquier sitio. Ver `arcade.ts`: no es física, es la regla del juego.
+     */
+    const r = this.scenario.runway;
+    const ejes = enEjesDePista(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+      r.x,
+      r.z,
+      r.heading,
+    );
+    this.flight.setOnRunway(
+      Math.abs(ejes.along) < r.length / 2 + 30 && Math.abs(ejes.across) < r.width / 2 + 6,
+    );
+
     this.input.update(dt);
     // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
     // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
