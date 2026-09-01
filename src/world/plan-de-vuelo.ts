@@ -76,6 +76,8 @@ export interface Vista {
    */
   readonly fuera: boolean;
   readonly cambio: boolean;
+  /** Se acaba de entrar en la pista sin permiso. */
+  readonly saltoLaLuz: boolean;
 }
 
 /** A cuántos metros de la raya verde se considera que uno se ha salido. */
@@ -156,10 +158,13 @@ export class PlanDeVuelo {
     const espera = this.esperaDeSalida();
     if (!puesto || !espera) {
       this.vuelo.reiniciar(true);
+      this.destino = null;
       this.ponerRuta(null);
       return false;
     }
     this.vuelo.reiniciar(false);
+    this.destino = 'espera';
+    this.ultimaPos = puesto.xy;
     this.ponerRuta(rodajeEntre(this.grafo, puesto.xy, espera));
     return this.ruta !== null;
   }
@@ -218,6 +223,7 @@ export class PlanDeVuelo {
       restante: s.restante,
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
+      saltoLaLuz: p.saltoLaLuz,
       fuera:
         (p.fase === 'rodando' || p.fase === 'a-plataforma') &&
         this.rutaMundo.length > 1 &&
@@ -228,22 +234,51 @@ export class PlanDeVuelo {
   }
 
   /**
-   * Al pasar de fase, a veces cambia a dónde hay que ir.
+   * A dónde hay que ir ahora, y por dónde.
    *
-   * Es lo único que hace que esto sea un vuelo y no una lista de comprobación:
-   * la ruta de vuelta a la plataforma no existe hasta que el avión ha
-   * abandonado la pista, porque hasta entonces no se sabe por dónde va a salir.
+   * **Se recalcula por lo que hace falta, no por la fase que se acaba de
+   * cruzar.** La primera versión ponía la ruta de vuelta en el instante en que
+   * la fase pasaba a «a plataforma», y si esa fase no llegaba nunca —porque
+   * alguien despegó en travesía y volvió por donde le pareció— no había ruta y
+   * el juego se quedaba mudo.
+   *
+   * Ahora es como un GPS: cada vez que cambia el destino, se traza el camino
+   * desde donde esté el avión. Da igual cómo haya llegado ahí.
    */
   private alCambiarDeFase(fase: Fase): void {
-    if (fase === 'alineando' || fase === 'despegando') this.ponerRuta(null);
-    if (fase === 'a-plataforma') {
-      const puesto = this.puestoDeSalida();
-      if (puesto) {
-        const [x, z] = [this.ultimaPos[0], -this.ultimaPos[1]] as const;
-        this.ponerRuta(rodajeEntre(this.grafo, [x, z], puesto.xy, 400));
-      }
+    // Volando no hay nada que rodar.
+    if (fase === 'alineando' || fase === 'despegando' || fase === 'en-vuelo' || fase === 'final') {
+      this.ponerRuta(null);
+      this.destino = null;
+      return;
     }
+
+    const quiere: 'espera' | 'puesto' | null =
+      fase === 'aterrizado' || fase === 'abandonando' || fase === 'a-plataforma'
+        ? 'puesto'
+        : fase === 'apagado' || fase === 'en-puesto'
+          ? null
+          : 'espera';
+
+    if (quiere === this.destino) return;
+    this.destino = quiere;
+    if (quiere === null) {
+      this.ponerRuta(null);
+      return;
+    }
+
+    const meta = quiere === 'puesto' ? this.puestoDeSalida()?.xy : this.esperaDeSalida();
+    if (!meta) {
+      this.ponerRuta(null);
+      return;
+    }
+    // Desde donde esté el avión, y con margen ancho: quien vuelve de volar
+    // puede haber tomado tierra lejos de cualquier calle.
+    this.ponerRuta(rodajeEntre(this.grafo, this.ultimaPos, meta, 600));
   }
+
+  /** A dónde va ahora mismo. Sirve para no recalcular la misma ruta cada fase. */
+  private destino: 'espera' | 'puesto' | null = null;
 
   private ultimaPos: Punto = [0, 0];
 

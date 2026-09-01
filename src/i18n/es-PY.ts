@@ -144,6 +144,9 @@ export const ES_PY = {
   'vuelo.enPuesto': 'Llegaste. Apagá el motor',
   'vuelo.apagado': '¡Vuelo terminado!',
   'vuelo.fuera': 'Volvé a la raya verde',
+  // Se dice una vez y sin regañar. Lo que hay que aprender no es que el juego
+  // te lo impida: es que en un aeropuerto de verdad ahí puede venir otro.
+  'vuelo.sinPermiso': 'Entraste sin la luz verde. La próxima, esperala',
 
   'hangar.donde': '¿A dónde volamos?',
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro

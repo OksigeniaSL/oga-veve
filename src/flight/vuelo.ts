@@ -6,33 +6,47 @@
  * medio. Lo que pasa antes y después es la mitad de lo que hace un piloto y
  * **es la parte que se puede enseñar sin saber volar**.
  *
- * Doce fases. Cada una sabe tres cosas: qué hay que hacer, cuándo se ha hecho,
- * y qué pasa si te la saltas.
+ * ── Lo que esto NO es ────────────────────────────────────────────────────
  *
- *     ESTACIONADO   el avión está en su puesto, con el motor parado
- *     ARRANCANDO    se enciende el motor
- *     RODANDO       se sigue la línea amarilla hasta la doble raya
- *     ESPERANDO     se para en la doble raya y se pide permiso
- *     AUTORIZADO    la torre da luz verde
- *     ALINEANDO     se entra en la pista y se pone recto
- *     DESPEGANDO    motor a tope
- *     EN_VUELO      lo de siempre
- *     FINAL         alineado con la pista y bajando
- *     ATERRIZADO    ruedas en el suelo, frenando
- *     ABANDONANDO   se sale de la pista, que hay otro detrás
- *     A_PLATAFORMA  se vuelve al puesto
- *     EN_PUESTO     ya está en su sitio, con el motor todavía en marcha
- *     APAGADO       se para el motor. Fin.
+ * La primera versión era una lista de comprobación: catorce fases y cada una
+ * daba paso a la siguiente. Duró exactamente hasta que alguien jugó:
  *
- * **La torre habla con luces, no con palabras.** Verde autoriza, rojo manda
- * parar. No es un apaño para quien no lee: es la lámpara de señales de verdad,
- * la que usa una torre con un avión sin radio, y está en el Anexo 2 de OACI
- * desde siempre. Un niño de cuatro años entiende un semáforo, y resulta que un
- * semáforo es exactamente lo que hay.
+ *   «Nada me impide salirme, despegar de manera transversal, y al volver ya
+ *    no puedo aterrizar para retomar la guía por la calle de rodadura, ya
+ *    estoy en vuelo.»
+ *
+ * Y era verdad. Una lista tacha pasos en orden y **no sabe qué hacer si te
+ * saltas uno**: quien se salía del guion se quedaba fuera para siempre.
+ *
+ * ── Lo que es ────────────────────────────────────────────────────────────
+ *
+ * Un navegador. Un GPS de coche no se queda colgado cuando te pasas la
+ * salida: **recalcula**. Así que la fase no se avanza, **se deduce**: cada
+ * fotograma se mira dónde está el avión, si vuela, si ha volado ya, si está
+ * en la pista y si tiene permiso, y de ahí sale qué toca ahora. Despegar en
+ * travesía desde una calle de rodaje es algo que se puede hacer, y al volver
+ * se retoma por donde se esté.
+ *
+ * Lo que llevó a la lista era un problema real —deducir cada fotograma hace
+ * parpadear la fase en los límites— y se resuelve como se resuelve siempre,
+ * igual que con la alarma de pérdida: **una fase nueva tiene que sostenerse
+ * un tiempo antes de sustituir a la vieja**. No hace falta prohibir el
+ * retroceso; hace falta que no tiemble.
+ *
+ * ── Y la torre ───────────────────────────────────────────────────────────
+ *
+ * **La torre habla con luces.** Verde autoriza, rojo manda parar. No es un
+ * apaño para quien no lee: es la lámpara de señales de verdad, la que usa una
+ * torre con un avión sin radio, y está en el Anexo 2 de OACI desde siempre.
+ * Un niño de cuatro años entiende un semáforo, y resulta que un semáforo es
+ * exactamente lo que hay.
+ *
+ * Y saltársela **se nota**. No se castiga —aquí se aprende haciendo y nadie
+ * va a reiniciar un vuelo por eso—, pero queda dicho, que es distinto de que
+ * no se pueda.
  *
  * Esto es lógica pura: no sabe de three.js, ni del DOM, ni de sonido. Recibe
- * dónde está el avión y devuelve en qué fase va. Así se prueba entera sin
- * navegador.
+ * dónde está el avión y devuelve en qué fase va.
  */
 
 import type { FlightState } from './model';
@@ -76,14 +90,16 @@ export interface Paso {
   readonly fase: Fase;
   /** Se acaba de cambiar de fase en este fotograma. */
   readonly cambio: boolean;
-  /**
-   * La torre tiene el semáforo en verde.
-   *
-   * Está aquí y no en el juego porque **quién manda es la fase**: la luz no se
-   * enciende porque haya pasado un tiempo, se enciende cuando el avión ha
-   * hecho lo que tenía que hacer, que es pararse del todo antes de la raya.
-   */
+  /** La torre tiene el semáforo en verde. */
   readonly luzVerde: boolean;
+  /**
+   * Se ha entrado en la pista sin permiso, y se acaba de detectar.
+   *
+   * Es la respuesta a «¿y qué pasa si me salto la luz?»: pasa que **se nota**.
+   * Ni muro invisible ni vuelo reiniciado — eso sería enseñar que no se puede,
+   * cuando lo que hay que enseñar es que no se hace.
+   */
+  readonly saltoLaLuz: boolean;
 }
 
 /** Quieto de verdad, m/s. Por debajo de esto un avión está parado. */
@@ -107,12 +123,9 @@ const TIEMPO_MINIMO_EN_VUELO = 15;
  * Cuarenta y cinco, no veinticinco. Con veinticinco, alguien que frena un poco
  * antes de la doble raya —que es lo prudente— se quedaba fuera de la ventana:
  * el avión parado, la ruta terminada delante de las ruedas, y el juego sin
- * pasar de fase ni encender la luz. Pasó en la primera comprobación que rodó
- * hasta el final: se detuvo a veintiocho metros y ahí se quedó dos minutos.
- *
- * Un punto de espera de verdad se marca con una raya de treinta centímetros y
- * nadie para al centímetro. La generosidad va en la distancia; lo que no se
- * perdona es no pararse.
+ * pasar de fase ni encender la luz. Un punto de espera de verdad se marca con
+ * una raya de treinta centímetros y nadie para al centímetro. La generosidad
+ * va en la distancia; lo que no se perdona es no pararse.
  */
 const LLEGADA = 45;
 
@@ -132,28 +145,58 @@ const TORRE_TARDA = 2.2;
  */
 const PISTA_LIBRE = 75;
 
+/**
+ * Cuánto tiene que sostenerse una fase nueva para sustituir a la vieja, s.
+ *
+ * Es lo que permite deducir la fase cada fotograma sin que parpadee. Sin esto,
+ * un avión oscilando en el filo de un umbral —parado y no parado, dentro y
+ * fuera de la pista— hace que el juego se contradiga varias veces por segundo,
+ * que fue exactamente el motivo por el que la primera versión solo avanzaba.
+ *
+ * Medio segundo basta: lo justo para filtrar el temblor y lo bastante poco
+ * para que la respuesta se sienta inmediata.
+ */
+const HISTERESIS = 0.5;
+
+/** Las fases que no esperan: cuando pasan, pasan. */
+const INMEDIATAS: ReadonlySet<Fase> = new Set<Fase>(['en-vuelo', 'apagado', 'aterrizado']);
+
 export class Vuelo {
   private fase: Fase = 'estacionado';
   private desde = 0;
+  /** La fase que el mundo está pidiendo, y desde cuándo. */
+  private candidato: Fase = 'estacionado';
+  private candidatoDesde = 0;
   /** Segundos parado en la doble raya. */
   private quieto = 0;
   /** Segundos desde que la torre te vio parado. */
   private mirando = 0;
   private verde = false;
-  /** Hace falta recordar si voló para no dar por aterrizado al que no despegó. */
+  /** Hace falta recordar si voló para saber si va o si vuelve. */
   private volo = false;
-  /** Lo más alto que se ha estado desde el despegue, m sobre el suelo. */
+  /** Lo más alto que se ha estado, m sobre el suelo. */
   private techo = 0;
+  /** Segundos en el aire desde el despegue. */
+  private enElAire = 0;
+  /** Ya se ha avisado de que se saltó la luz. Se avisa una vez por vuelo. */
+  private avisadoDeLaLuz = false;
+  /** Ha usado un permiso. Entrar en pista después de eso no es saltarse nada. */
+  private uso = false;
 
-  /** Empieza un vuelo. `enPista` arranca ya alineado, para el modo de siempre. */
+  /** Empieza un vuelo. `desdePista` arranca ya alineado, para el modo de siempre. */
   reiniciar(desdePista = false): void {
     this.fase = desdePista ? 'despegando' : 'estacionado';
+    this.candidato = this.fase;
     this.desde = 0;
+    this.candidatoDesde = 0;
     this.quieto = 0;
     this.mirando = 0;
     this.verde = desdePista;
     this.volo = false;
     this.techo = 0;
+    this.enElAire = 0;
+    this.avisadoDeLaLuz = false;
+    this.uso = desdePista;
   }
 
   get actual(): Fase {
@@ -164,138 +207,147 @@ export class Vuelo {
     return this.verde;
   }
 
+  /** ¿Va hacia la pista o vuelve de volar? Lo usa el plan para elegir la ruta. */
+  get vuelve(): boolean {
+    return this.volo;
+  }
+
   /** Segundos que se lleva en la fase actual. Sirve para no atosigar con avisos. */
   get enFase(): number {
     return this.desde;
   }
 
-  /**
-   * Avanza un fotograma.
-   *
-   * Las fases solo van hacia delante. Se probó a dejarlas volver —que rodar
-   * hacia atrás desde la doble raya devolviera a «rodando»— y el resultado fue
-   * un tutor que se contradecía cada dos segundos en cuanto el avión oscilaba
-   * en el límite. Si alguien se sale de la ruta, la fase no cambia: cambia lo
-   * que le dice el tutor, que para eso está.
-   */
   paso(s: Situacion, dt: number): Paso {
-    const antes = this.fase;
     this.desde += dt;
-    if (s.sobreElSuelo > EN_EL_AIRE) this.volo = true;
+    if (s.sobreElSuelo > EN_EL_AIRE) {
+      this.volo = true;
+      this.enElAire += dt;
+    }
     this.techo = Math.max(this.techo, s.sobreElSuelo);
 
-    switch (this.fase) {
-      case 'estacionado':
-        if (s.motor) this.ir('arrancando');
-        break;
+    this.atenderALaTorre(s, dt);
+    const saltoLaLuz = this.vigilarLaLuz(s);
 
-      case 'arrancando':
-        // Basta con que empiece a moverse: arrancar y soltar el freno es una
-        // sola cosa para quien juega.
-        if (s.estado.airspeed > RODANDO_YA) this.ir('rodando');
-        break;
+    // ── Deducir, no avanzar ────────────────────────────────────────────────
+    const pedida = this.deducir(s);
+    if (pedida !== this.candidato) {
+      this.candidato = pedida;
+      this.candidatoDesde = 0;
+    } else {
+      this.candidatoDesde += dt;
+    }
 
-      case 'rodando':
-        if (s.restante < LLEGADA && s.estado.airspeed < RODANDO_YA) this.ir('esperando');
-        break;
-
-      case 'esperando': {
-        // **La torre mira si estás parado, no si has llegado.** Lo primero que
-        // se probó fue autorizar al llegar a la raya, y entonces no hacía falta
-        // parar: se cruzaba a toda velocidad y la lección desaparecía.
-        this.quieto = s.estado.airspeed < PARADO ? this.quieto + dt : 0;
-        if (this.quieto > ESPERA_MINIMA) this.mirando += dt;
-        if (this.mirando > TORRE_TARDA) {
-          this.verde = true;
-          this.ir('autorizado');
-        }
-        break;
+    const antes = this.fase;
+    const yaVale = INMEDIATAS.has(pedida) || this.candidatoDesde >= HISTERESIS;
+    if (pedida !== this.fase && yaVale) {
+      this.fase = pedida;
+      this.desde = 0;
+      // El permiso se gasta al usarlo: sirve para una entrada en pista y no
+      // para todo el rato. Sin esto, quien abandona la pista y vuelve a entrar
+      // lo hace con un verde de hace diez minutos.
+      if (pedida === 'despegando') {
+        this.verde = false;
+        this.uso = true;
       }
-
-      case 'autorizado':
-        if (s.enPista) this.ir('alineando');
-        break;
-
-      case 'alineando':
-        if (Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12) this.ir('despegando');
-        break;
-
-      case 'despegando':
-        if (s.sobreElSuelo > EN_EL_AIRE) this.ir('en-vuelo');
-        break;
-
-      case 'en-vuelo':
-        // **Un salto de rana no es un vuelo.** Sin esto, el avión despegaba,
-        // subía quince metros, se asentaba un instante —velocidad vertical
-        // negativa, alineado con la pista, bajo— y el juego lo daba por
-        // aproximación final a los dos segundos de despegar. Se veía en la
-        // primera comprobación que voló el circuito entero: catorce fases en
-        // veinte segundos y ni una vuelta.
-        //
-        // Para volver hay que haberse ido: altura de circuito y un rato en el
-        // aire. Los dos, porque uno solo se engaña — se puede subir mucho en
-        // poco tiempo y se puede estar mucho tiempo a ras de suelo.
-        if (this.techo < ALTURA_DE_CIRCUITO || this.desde < TIEMPO_MINIMO_EN_VUELO) break;
-        // Final: bajando, alineado con la pista y por debajo de trescientos.
-        if (
-          s.sobreElSuelo < 300 &&
-          s.estado.verticalSpeed < 0 &&
-          Math.abs(s.desalineado) < 30 &&
-          s.alEjeDePista < 400
-        ) {
-          this.ir('final');
-        }
-        break;
-
-      case 'final':
-        if (this.volo && s.sobreElSuelo < 3 && s.estado.airspeed < 40) this.ir('aterrizado');
-        else if (s.sobreElSuelo > 400) this.ir('en-vuelo');
-        break;
-
-      case 'aterrizado':
-        // Se abandona la pista cuando se rueda despacio: mientras vaya a
-        // velocidad de carrera, sigue aterrizando.
-        if (s.estado.airspeed < 12) this.ir('abandonando');
-        break;
-
-      case 'abandonando':
-        if (s.alEjeDePista > PISTA_LIBRE) this.ir('a-plataforma');
-        break;
-
-      case 'a-plataforma':
-        if (s.restante < LLEGADA && s.estado.airspeed < PARADO) this.ir('en-puesto');
-        break;
-
-      case 'en-puesto':
-        // Aquí no se hace nada más que apagar, y de eso se encarga la regla de
-        // abajo. Se queda como fase propia porque **decirle a alguien «ya
-        // llegaste, ahora apagá» es un paso**, y sin él el vuelo termina sin
-        // que nadie sepa que terminó.
-        break;
-
-      default:
-        break;
     }
 
-    // Apagar el motor en el suelo termina el vuelo, se esté donde se esté. Es
-    // la única transición que no sigue el orden, y es a propósito: «ya aterricé
-    // y esto gasta queroseno» es una razón perfectamente válida para terminar,
-    // y castigarla obligando a rodar hasta el puesto sería un juego, no un
-    // simulador.
-    if (!s.motor && this.fase !== 'estacionado' && s.sobreElSuelo < 3 && this.volo) {
-      this.ir('apagado');
-    }
-
-    return { fase: this.fase, cambio: this.fase !== antes, luzVerde: this.verde };
+    return { fase: this.fase, cambio: this.fase !== antes, luzVerde: this.verde, saltoLaLuz };
   }
 
-  private ir(fase: Fase): void {
-    this.fase = fase;
-    this.desde = 0;
-    // El permiso se gasta al usarlo: sirve para una entrada en pista y no para
-    // todo el rato. Sin esto, quien abandona la pista y vuelve a entrar lo hace
-    // con un verde de hace diez minutos.
-    if (fase === 'alineando') this.verde = false;
+  /**
+   * Qué fase pide el mundo ahora mismo.
+   *
+   * Se lee de arriba abajo y la primera que encaja gana. El orden es el de la
+   * realidad: primero si vuela, después si el motor está parado, y solo al
+   * final las distinciones finas de lo que pasa rodando.
+   */
+  private deducir(s: Situacion): Fase {
+    const parado = s.estado.airspeed < PARADO;
+    const enTierra = s.sobreElSuelo <= EN_EL_AIRE;
+
+    // ── En el aire ───────────────────────────────────────────────────────
+    if (!enTierra) {
+      // **Un salto de rana no es un vuelo.** Para volver hay que haberse ido:
+      // altura de circuito y un rato arriba. Los dos, porque uno solo se
+      // engaña — se puede subir mucho en poco rato y se puede estar mucho rato
+      // a ras de suelo.
+      const haVolado = this.techo >= ALTURA_DE_CIRCUITO && this.enElAire >= TIEMPO_MINIMO_EN_VUELO;
+      const enFinal =
+        haVolado &&
+        s.sobreElSuelo < 300 &&
+        s.estado.verticalSpeed < 0 &&
+        Math.abs(s.desalineado) < 30 &&
+        s.alEjeDePista < 400;
+      return enFinal ? 'final' : 'en-vuelo';
+    }
+
+    // ── En el suelo, con el motor parado ─────────────────────────────────
+    if (!s.motor) {
+      // Apagar el motor en el suelo termina el vuelo, se esté donde se esté.
+      // Es a propósito: «ya aterricé y esto gasta queroseno» es una razón
+      // perfectamente válida para terminar, y obligar a rodar hasta el puesto
+      // sería un juego, no un simulador.
+      return this.volo ? 'apagado' : 'estacionado';
+    }
+
+    // ── En el suelo, volviendo de volar ──────────────────────────────────
+    if (this.volo) {
+      // Mientras corra a velocidad de carrera, sigue aterrizando.
+      if (s.estado.airspeed >= 12) return 'aterrizado';
+      // La pista hay que dejarla libre: hay otro detrás.
+      if (s.alEjeDePista <= PISTA_LIBRE) return 'abandonando';
+      if (parado && s.restante < LLEGADA) return 'en-puesto';
+      return 'a-plataforma';
+    }
+
+    // ── En el suelo, yendo hacia la pista ────────────────────────────────
+    if (s.enPista) {
+      const alineado = Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12;
+      return alineado ? 'despegando' : 'alineando';
+    }
+    if (parado && s.restante < LLEGADA) return this.verde ? 'autorizado' : 'esperando';
+    if (this.verde) return 'autorizado';
+    if (s.estado.airspeed > RODANDO_YA) return 'rodando';
+    // Motor en marcha, quieto y lejos de la doble raya: acaba de arrancar. Y
+    // si ya venía rodando, sigue rodando: un semáforo en rojo a mitad de calle
+    // no te devuelve al puesto.
+    return this.fase === 'rodando' ? 'rodando' : 'arrancando';
+  }
+
+  /**
+   * La torre mira, y contesta.
+   *
+   * **Mira si estás parado, no si has llegado.** Lo primero que se probó fue
+   * autorizar al llegar a la raya, y entonces no hacía falta parar: se cruzaba
+   * a toda velocidad y la lección desaparecía.
+   */
+  private atenderALaTorre(s: Situacion, dt: number): void {
+    if (this.volo || this.verde) return;
+    const enLaRaya = s.restante < LLEGADA && !s.enPista && s.sobreElSuelo <= EN_EL_AIRE;
+    if (!enLaRaya) {
+      this.quieto = 0;
+      this.mirando = 0;
+      return;
+    }
+    this.quieto = s.estado.airspeed < PARADO ? this.quieto + dt : 0;
+    if (this.quieto > ESPERA_MINIMA) this.mirando += dt;
+    if (this.mirando > TORRE_TARDA) this.verde = true;
+  }
+
+  /**
+   * ¿Se ha metido en la pista sin permiso? Se avisa una vez por vuelo.
+   *
+   * Hay que mirar también si **ya usó un permiso**, no solo si lo tiene ahora:
+   * el verde se gasta al entrar en pista, así que un fotograma después de
+   * usarlo legítimamente el avión está en la pista y sin permiso, que es
+   * exactamente la pinta de habérselo saltado. Sin esto, quien hacía las cosas
+   * bien recibía la reprimenda.
+   */
+  private vigilarLaLuz(s: Situacion): boolean {
+    if (this.volo || this.verde || this.uso || this.avisadoDeLaLuz) return false;
+    if (!s.enPista || s.sobreElSuelo > EN_EL_AIRE) return false;
+    this.avisadoDeLaLuz = true;
+    return true;
   }
 }
 

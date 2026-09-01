@@ -90,6 +90,22 @@ const AERONAUTICAL: UnitSystem = {
 export const UNIT_SYSTEMS = { metric: METRIC, aeronautical: AERONAUTICAL } as const;
 export type UnitSystemName = keyof typeof UNIT_SYSTEMS;
 
+/** La mano abierta de parar. La misma que el botón de freno, a propósito. */
+const MANO_PARAR = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
+             a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
+             v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
+  </svg>
+`;
+
+/** La flecha de seguir. */
+const FLECHA_SEGUIR = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 3 L20 13 H15.4 V21 H8.6 V13 H4 Z" />
+  </svg>
+`;
+
 export class Hud {
   readonly tutor = new Tutor();
   private readonly root: HTMLElement;
@@ -204,7 +220,7 @@ export class Hud {
           no distinga el rojo del verde tiene que poder saber si puede entrar.
         -->
         <div class="torre" data-hud="torre" hidden role="status">
-          <span class="torre__luz"></span>
+          <span class="torre__luz" data-hud="torre-luz"></span>
           <span class="torre__texto" data-hud="torre-texto"></span>
         </div>
         <!--
@@ -448,6 +464,9 @@ export class Hud {
   /** Cuántos instrumentos enseña este peldaño de la escalera. */
   setInstruments(level: Tier['instruments']): void {
     this.instruments = level;
+    // Sin instrumentos es el peldaño de los pequeños, y ahí no va ni una
+    // palabra: empiezan a los cuatro años y no leen.
+    this.root.classList.toggle('hud--sin-letras', level === 'none');
     this.render();
   }
 
@@ -661,6 +680,12 @@ export class Hud {
     caja.classList.toggle('torre--roja', luz === 'roja');
     const texto = caja.querySelector('[data-hud="torre-texto"]');
     if (texto) texto.textContent = luz === 'verde' ? t('torre.verde') : luz ? t('torre.roja') : '';
+    // **Y una forma dentro de la luz**, no solo un color: la mano abierta de
+    // parar o la flecha de seguir. Quien no distinga el rojo del verde —que es
+    // uno de cada doce niños— tiene que enterarse igual, y quien no lea
+    // también.
+    const bombilla = caja.querySelector('[data-hud="torre-luz"]');
+    if (bombilla) bombilla.innerHTML = luz === 'verde' ? FLECHA_SEGUIR : luz ? MANO_PARAR : '';
   }
 
   /** Quién vuelve al hangar. */

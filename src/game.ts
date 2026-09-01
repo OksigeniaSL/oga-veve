@@ -614,6 +614,12 @@ export class Game {
       vista.fase === 'apagado';
     this.hud.tutor.silenciar(rodaje);
 
+    // **En el peldaño de los pequeños, ni una palabra.** No leen, así que un
+    // cartel de texto es un cartel en blanco que además tapa el mundo. Ahí
+    // manda la luz de la torre y la raya verde del suelo, que se entienden sin
+    // saber leer; el instructor de voz vendrá a llenar este hueco.
+    const conLetras = this.tier.instruments !== 'none';
+
     if (vista.fase !== this.faseAnunciada) {
       this.faseAnunciada = vista.fase;
       // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
@@ -627,14 +633,25 @@ export class Game {
             ? ` · ${nombreDeTecla(this.input.preferredKey('brakes'))}`
             : '';
       const letra = vista.letra ? ` · ${vista.letra}` : '';
-      this.hud.flash(
-        `${t(vista.clave as never)}${tecla}${letra}`,
-        vista.fase === 'apagado' ? 8 : 5,
-      );
+      if (conLetras) {
+        this.hud.flash(
+          `${t(vista.clave as never)}${tecla}${letra}`,
+          vista.fase === 'apagado' ? 8 : 5,
+        );
+      }
       if (vista.fase === 'autorizado') this.audio.cue('success');
       if (vista.fase === 'apagado') this.audio.cue('success');
-    } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {
+    } else if (vista.fuera && conLetras && this.plan.avisarDeSalida(dt)) {
       this.hud.flash(t('vuelo.fuera'), 3);
+    }
+
+    // Entrar en pista sin permiso. **Se dice, no se castiga**: aquí se aprende
+    // haciendo, y reiniciar el vuelo enseñaría que no se puede cuando lo que
+    // hay que enseñar es que no se hace. Se avisa una vez por vuelo.
+    if (vista.saltoLaLuz) {
+      // El sonido sí, siempre: es la mitad del aviso que no necesita leerse.
+      this.audio.cue('attention');
+      if (conLetras) this.hud.flash(t('vuelo.sinPermiso'), 7);
     }
   }
 
