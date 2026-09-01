@@ -2145,11 +2145,75 @@ body {
   background-image: var(--barniz);
   box-shadow: var(--filo), var(--poso);
   color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  border: 2px solid transparent;
   pointer-events: none;
 }
 
 .senal[hidden] {
   display: none;
+}
+
+/*
+ * Cuando la tarjeta **hace** lo que dice, se nota que se puede tocar.
+ *
+ * Es la única forma de arrancar el motor con el dedo: los mandos táctiles son
+ * palanca, timón, gas y freno, y el contacto no estaba por ningún lado. En una
+ * tablet, sin esto, el avión no arranca.
+ */
+.senal--pulsable {
+  pointer-events: auto;
+  cursor: pointer;
+  border: 2px solid var(--ocre);
+  animation: senal-llama 1.8s ease-in-out infinite;
+}
+
+.senal--pulsable:hover {
+  filter: brightness(1.08);
+}
+
+.senal--pulsable:active {
+  transform: scale(0.97);
+}
+
+.senal--pulsable:focus-visible {
+  outline: 3px solid var(--ocre);
+  outline-offset: 3px;
+}
+
+@keyframes senal-llama {
+  50% {
+    box-shadow: var(--filo), var(--poso), 0 0 0 5px rgba(221, 146, 63, 0.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .senal--pulsable {
+    animation: none;
+  }
+}
+
+/*
+ * La tecla, dibujada como una tecla.
+ *
+ * La misma pinta que tiene en la pantalla de mandos, a propósito: quien la haya
+ * visto una vez ahí la reconoce aquí sin leer una palabra.
+ */
+.senal__tecla {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  flex: none;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(228, 226, 218, 0.34);
+  background: rgba(228, 226, 218, 0.12);
+  color: var(--beige);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .senal__dibujo {

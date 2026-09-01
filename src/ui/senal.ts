@@ -130,16 +130,31 @@ export class Senal {
   private dibujo: HTMLElement | null = null;
   private texto: HTMLElement | null = null;
   private letra: HTMLElement | null = null;
+  private tecla: HTMLElement | null = null;
   private actual = '';
   private queda = 0;
+  private accion: (() => void) | null = null;
 
+  /**
+   * Es un **botón**, siempre, aunque a veces no haga nada.
+   *
+   * Cuando lo que toca es apretar una tecla —arrancar el motor, apagarlo—, la
+   * tarjeta hace esa misma cosa al tocarla. Y no es un adorno: **en una tablet
+   * no había ninguna forma de arrancar el motor**, ni una. Los mandos táctiles
+   * son palanca, timón, gas y freno; el contacto no estaba.
+   *
+   * Además es lo más directo que hay para quien no lee: la instrucción y el
+   * mando son el mismo objeto. No hay que aprender a qué tecla corresponde el
+   * dibujo, porque el dibujo se pulsa.
+   */
   static markup(): string {
     return `
-      <div class="senal" data-hud="senal" hidden role="status">
+      <button class="senal" data-hud="senal" hidden type="button" disabled>
         <span class="senal__dibujo" data-hud="senal-dibujo"></span>
+        <span class="senal__tecla" data-hud="senal-tecla" hidden></span>
         <span class="senal__letra" data-hud="senal-letra" hidden></span>
         <span class="senal__texto" data-hud="senal-texto"></span>
-      </div>
+      </button>
     `;
   }
 
@@ -149,6 +164,8 @@ export class Senal {
     this.dibujo = raiz.querySelector('[data-hud="senal-dibujo"]');
     this.texto = raiz.querySelector('[data-hud="senal-texto"]');
     this.letra = raiz.querySelector('[data-hud="senal-letra"]');
+    this.tecla = raiz.querySelector('[data-hud="senal-tecla"]');
+    this.caja?.addEventListener('click', () => this.accion?.());
   }
 
   /**
@@ -158,12 +175,25 @@ export class Senal {
    * la tarjeta se queda solo con el dibujo, que es lo que se entiende sin
    * saber leer.
    */
-  mostrar(dibujo: string, texto: string, letra: string | null, segundos = 6): void {
+  mostrar(
+    dibujo: string,
+    texto: string,
+    letra: string | null,
+    opciones: {
+      /** Segundos que dura. `Infinity` para que se quede hasta que cambie. */
+      readonly segundos?: number;
+      /** El nombre de la tecla que hay que apretar, si hay una. */
+      readonly tecla?: string | null;
+      /** Qué hace la tarjeta al tocarla. Si hay algo, es un botón de verdad. */
+      readonly accion?: (() => void) | null;
+    } = {},
+  ): void {
     if (!this.caja || !this.dibujo) return;
     this.actual = dibujo;
-    this.queda = segundos;
+    this.queda = opciones.segundos ?? 6;
     this.caja.hidden = false;
     this.dibujo.innerHTML = DIBUJOS[dibujo] ?? '';
+
     if (this.texto) {
       this.texto.textContent = texto;
       this.texto.hidden = !texto;
@@ -175,11 +205,26 @@ export class Senal {
       this.letra.textContent = letra ?? '';
       this.letra.hidden = !letra;
     }
+    if (this.tecla) {
+      // La tecla, dibujada como una tecla. Es la misma pinta que tiene en la
+      // pantalla de mandos, para que se reconozca sin leer una palabra.
+      this.tecla.textContent = opciones.tecla ?? '';
+      this.tecla.hidden = !opciones.tecla;
+    }
+
+    this.accion = opciones.accion ?? null;
+    const boton = this.caja as HTMLButtonElement;
+    boton.disabled = !this.accion;
+    boton.classList.toggle('senal--pulsable', !!this.accion);
   }
 
   /** El aviso se apaga solo. Un cartel permanente deja de mirarse. */
   update(dt: number): void {
     if (!this.caja || this.caja.hidden) return;
+    // `Infinity` quiere decir «hasta que cambie»: lo que está pendiente de
+    // que alguien haga algo no puede desaparecer solo. Es lo que dejó a quien
+    // lo probó mirando un avión parado sin saber qué hacer: la llave salía,
+    // se apagaba a los seis segundos, y ya no había forma de enterarse.
     this.queda -= dt;
     if (this.queda <= 0) {
       this.caja.hidden = true;
