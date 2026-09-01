@@ -43,6 +43,18 @@ jobs:
 
       - name: Construir
         run: npm run build
+        env:
+          # La clave de las teselas fotorrealistas. Va como secreto del
+          # repositorio porque **acaba dentro del paquete que se descarga
+          # cualquiera**: no es un secreto que se pueda guardar, y lo que la
+          # protege no es esconderla sino tenerla restringida en la consola de
+          # Google a los dominios del juego y a la Map Tiles API. El secreto
+          # sirve para no escribirla en el repositorio, que es otra cosa.
+          #
+          # Sin ella, la web desplegada vuela con el mundo de polígonos.
+          VITE_GOOGLE_TILES: ${{ secrets.GOOGLE_TILES }}
+          # Y el proxy del parte meteorológico, si algún día se despliega.
+          VITE_METEO: ${{ secrets.METEO_PROXY }}
 
       - name: Subir artefacto
         uses: actions/upload-pages-artifact@v3
