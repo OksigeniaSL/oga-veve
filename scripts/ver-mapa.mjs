@@ -13,8 +13,7 @@ for (const esc of ['pettirossi', 'tenerife-norte']) {
   await page.waitForTimeout(4500);
   await page.click('[data-hud="mapa-boton"]');
   await page.waitForTimeout(600);
-  const caja = await page.$('[data-hud="mapa"]');
-  await caja.screenshot({ path: `${D}/mapa-${esc}.png` });
+  await page.screenshot({ path: `${D}/mapa-${esc}.png` });
   console.log(`${esc} → ${D}/mapa-${esc}.png`);
   await page.close();
 }

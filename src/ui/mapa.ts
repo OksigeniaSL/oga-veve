@@ -28,10 +28,10 @@ import type { Scenario } from '../world/scenarios';
 import { puntoDePista } from '../world/rumbo';
 
 /** Lado del lienzo, en píxeles. */
-const LADO = 300;
+const LADO = 460;
 
 /** Cuántas muestras de relieve se pintan por lado. */
-const MUESTRAS = 150;
+const MUESTRAS = 230;
 
 export class Mapa {
   private caja: HTMLElement | null = null;
@@ -45,8 +45,10 @@ export class Mapa {
   static markup(): string {
     return `
       <div class="mapa" data-hud="mapa" hidden>
-        <canvas class="mapa__fondo" data-hud="mapa-fondo" width="${LADO}" height="${LADO}"></canvas>
-        <canvas class="mapa__encima" data-hud="mapa-encima" width="${LADO}" height="${LADO}"></canvas>
+        <div class="mapa__lienzos">
+          <canvas class="mapa__fondo" data-hud="mapa-fondo" width="${LADO}" height="${LADO}"></canvas>
+          <canvas class="mapa__encima" data-hud="mapa-encima" width="${LADO}" height="${LADO}"></canvas>
+        </div>
       </div>
     `;
   }
@@ -71,12 +73,49 @@ export class Mapa {
     this.fondo = raiz.querySelector('[data-hud="mapa-fondo"]');
     this.encima = raiz.querySelector('[data-hud="mapa-encima"]');
     raiz.querySelector('[data-hud="mapa-boton"]')?.addEventListener('click', () => this.alternar());
+    // Tocando el fondo se cierra. Es lo que espera cualquiera que haya abierto
+    // una lámina encima de algo, y para quien no lee es la única salida obvia:
+    // no hay ninguna equis que buscar.
+    this.caja?.addEventListener('pointerdown', (e) => {
+      if (e.target === this.caja) this.cerrar();
+    });
+  }
+
+  /**
+   * Otro escenario, otro mapa.
+   *
+   * Lo llama el panel del tiempo: cambiar el viento cambia la cabecera en uso, y
+   * la pista del mapa es la que se está usando. Con la barra blanca de la
+   * cabecera vieja, el mapa mentiría justo en lo que se mira cuando uno se ha
+   * perdido.
+   */
+  rehacer(escenario: Scenario): void {
+    this.escenario = escenario;
+    this.pintado = false;
+    if (this.abierto) {
+      this.pintarFondo();
+      this.pintado = true;
+    }
+  }
+
+  private alAbrir: (() => void) | null = null;
+
+  /** A quién avisar al abrirse, para que se aparte. */
+  onAbrir(handler: () => void): void {
+    this.alAbrir = handler;
+  }
+
+  cerrar(): void {
+    if (!this.caja || !this.abierto) return;
+    this.abierto = false;
+    this.caja.hidden = true;
   }
 
   alternar(): void {
     if (!this.caja) return;
     this.abierto = !this.abierto;
     this.caja.hidden = !this.abierto;
+    if (this.abierto) this.alAbrir?.();
     if (this.abierto && !this.pintado) {
       this.pintarFondo();
       this.pintado = true;

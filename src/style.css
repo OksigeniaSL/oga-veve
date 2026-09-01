@@ -2319,37 +2319,43 @@ body {
  */
 .mapa {
   position: fixed;
-  top: 96px;
-  right: 18px;
-  width: 300px;
-  height: 300px;
-  z-index: 6;
-  padding: 6px;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  /*
+   * **Centrado y encima de todo, no en una esquina.**
+   *
+   * En una esquina tapaba los instrumentos —altura, rumbo, motor y la aguja de
+   * la pista, justo los cuatro que se miran al volar—, y encogerlo hasta que
+   * cupiera lo dejaba en un sello ilegible. Un mapa se abre, se mira y se
+   * cierra; mientras está abierto no hace falta nada más.
+   *
+   * El fondo se oscurece un poco para que se lea como una lámina puesta
+   * encima y no como algo que ha aparecido dentro del mundo.
+   */
+  background: rgba(10, 14, 12, 0.55);
+  pointer-events: auto;
+}
+
+.mapa__lienzos {
+  position: relative;
+  width: min(78vmin, 460px);
+  height: min(78vmin, 460px);
+  padding: 8px;
   border-radius: var(--r-l);
   background: var(--barro);
   background-image: var(--barniz);
   box-shadow: var(--filo), var(--poso);
-  /* Se mira, no se toca: los mandos de debajo tienen que seguir respondiendo. */
-  pointer-events: none;
 }
 
 .mapa__fondo,
 .mapa__encima {
   position: absolute;
-  inset: 6px;
-  width: calc(100% - 12px);
-  height: calc(100% - 12px);
+  inset: 8px;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
   border-radius: var(--r-m);
-}
-
-/* En pantalla estrecha el mapa se comía media ventana. */
-@media (max-width: 720px) {
-  .mapa {
-    width: 188px;
-    height: 188px;
-    top: 84px;
-    right: 10px;
-  }
 }
 
 /*
@@ -2393,3 +2399,125 @@ body {
   opacity: 0.5;
   stroke-linecap: round;
 }
+
+/*
+ * ── El panel del tiempo ──────────────────────────────────────────────────
+ *
+ * Debajo del mapa y con su misma piel. Sin un solo número: lo que se mira para
+ * saber cuánto viento hay es la manga del aeropuerto, que se mueve a la vez que
+ * la flecha. Esa relación —arrastro esto, se mueve aquello— es la que enseña a
+ * leer una manga, y no hay forma de contarla con letras.
+ */
+.tiempo {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 14, 12, 0.55);
+  /*
+   * **Sí se toca.** El HUD entero es transparente al puntero para que no se
+   * coma los clics del vuelo, y cada mando reactiva el suyo. Sin esta línea el
+   * panel se abría, se pintaba y no respondía a nada: la flecha se quedaba
+   * clavada en el norte por mucho que se arrastrara.
+   */
+  pointer-events: auto;
+}
+
+.tiempo__caja {
+  display: grid;
+  gap: 12px;
+  width: min(74vmin, 320px);
+  padding: 16px;
+  border-radius: var(--r-l);
+  background: var(--barro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), var(--poso);
+}
+
+.tiempo__rosa {
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: grab;
+}
+
+.rosa__fondo {
+  fill: rgba(0, 0, 0, 0.3);
+  stroke: var(--linea);
+  stroke-width: 2;
+}
+
+.rosa__anillo {
+  fill: none;
+  stroke: var(--linea);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 6;
+}
+
+.rosa__norte {
+  fill: var(--tinta-suave);
+}
+
+.rosa__cruz path {
+  stroke: var(--linea-fuerte);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.rosa__viento {
+  transition: opacity 160ms ease;
+}
+
+.rosa__caña {
+  stroke: var(--ocre-tinta);
+  stroke-width: 5;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.rosa__punta {
+  fill: var(--ocre-tinta);
+}
+
+.rosa__tirador {
+  fill: var(--barro-calido);
+  stroke: var(--ocre-tinta);
+  stroke-width: 2.5;
+}
+
+.tiempo__botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tiempo__boton {
+  display: grid;
+  place-items: center;
+  min-height: var(--tacto);
+  border: 1px solid transparent;
+  border-radius: var(--r-m);
+  background: var(--barro-claro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.tiempo__boton:hover,
+.tiempo__boton:focus-visible {
+  border-color: var(--ocre-tinta);
+}
+
+.tiempo__boton svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+

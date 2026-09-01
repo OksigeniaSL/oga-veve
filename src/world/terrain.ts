@@ -100,6 +100,40 @@ export class Terrain {
   }
 
   /**
+   * Vuelve a dibujar el aeródromo con otro tiempo.
+   *
+   * Lo único que cambia es la manga, que apunta a donde va el viento. Podría
+   * moverse la malla existente, pero la manga está fundida con el poste y con
+   * el resto del aeródromo en una sola geometría —para no gastar llamadas de
+   * dibujo— y separarla costaría más de lo que cuesta rehacerlo entero: son mil
+   * triángulos y pasa una vez, cuando alguien toca el viento.
+   *
+   * El relieve **no** se toca: lo aplanado del aeródromo no depende de por
+   * dónde se despegue.
+   */
+  rehacerAerodromo(escenario: Scenario): void {
+    if (!escenario.aerodrome) return;
+    const viejo = this.group.getObjectByName(`aerodromo:${escenario.aerodrome.id}`);
+    if (viejo) {
+      viejo.traverse((o) => {
+        if (o instanceof Mesh) {
+          o.geometry.dispose();
+          const m = o.material;
+          if (Array.isArray(m)) m.forEach((x) => x.dispose());
+          else m.dispose();
+        }
+      });
+      this.group.remove(viejo);
+    }
+    this.group.add(
+      createAerodrome(escenario.aerodrome, this.runwayElevation, {
+        de: escenario.meteo?.vientoDe ?? null,
+        kt: escenario.meteo?.vientoKt ?? 0,
+      }),
+    );
+  }
+
+  /**
    * Cota del terreno en unas coordenadas de mundo, con interpolación
    * bilineal. La llama el modelo de vuelo en cada subpaso —240 veces por
    * segundo— así que no reserva memoria ni hace nada caro.

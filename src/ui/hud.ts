@@ -34,6 +34,7 @@ import { SixPack } from './six-pack';
 import { Pictogramas } from './pictogramas';
 import { Senal } from './senal';
 import { Mapa } from './mapa';
+import { PanelDelTiempo } from './tiempo';
 import type { Tier } from '../flight/tiers';
 
 /**
@@ -111,6 +112,7 @@ const FLECHA_SEGUIR = `
 export class Hud {
   readonly tutor = new Tutor();
   readonly mapa = new Mapa();
+  readonly tiempo = new PanelDelTiempo();
   private readonly root: HTMLElement;
   private units: UnitSystem = METRIC;
   /**
@@ -173,6 +175,11 @@ export class Hud {
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
+  private tiempoAtado: {
+    meteo: import('../world/meteo').Meteo;
+    cambio: (m: import('../world/meteo').Meteo) => void;
+    deVerdad: () => void;
+  } | null = null;
   private mapaAtado: {
     esc: import('../world/scenarios').Scenario;
     cota: (x: number, z: number) => number;
@@ -254,6 +261,7 @@ export class Hud {
           </svg>
         </button>
         ${Mapa.boton(t('mapa.title'))}
+        ${PanelDelTiempo.boton(t('tiempo.title'))}
         <!--
           Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
           arrancar es un hangar con la puerta tapiada: quien quiera cambiar de
@@ -346,6 +354,7 @@ export class Hud {
       -->
       ${Senal.markup()}
       ${Mapa.markup()}
+      ${PanelDelTiempo.markup()}
       <div class="vineta" data-hud="vignette"></div>
       ${Tutor.markup()}
       <div class="hud__abajo">
@@ -416,6 +425,18 @@ export class Hud {
     // se rehace entero al cambiar de idioma y los oyentes viejos se van con el
     // marcado viejo.
     if (this.mapaAtado) this.mapa.bind(this.root, this.mapaAtado.esc, this.mapaAtado.cota);
+    // El panel del tiempo se reata igual, y hay que devolverle sus oyentes:
+    // el marcado es nuevo y los de antes se fueron con el viejo.
+    this.tiempo.bind(this.root);
+    // Uno u otro, nunca los dos: son dos láminas a pantalla completa y la
+    // segunda taparía a la primera sin que nadie entendiera por qué.
+    this.mapa.onAbrir(() => this.tiempo.cerrar());
+    this.tiempo.onAbrir(() => this.mapa.cerrar());
+    if (this.tiempoAtado) {
+      this.tiempo.onCambio(this.tiempoAtado.cambio);
+      this.tiempo.onDeVerdad(this.tiempoAtado.deVerdad);
+      this.tiempo.poner(this.tiempoAtado.meteo);
+    }
     this.paintSound();
     this.paintProgress();
     this.hint = pick(this.root, 'hint');
@@ -717,6 +738,18 @@ export class Hud {
   ): void {
     this.mapaAtado = { esc, cota };
     this.mapa.bind(this.root, esc, cota);
+  }
+
+  /** De dónde saca el panel del tiempo lo que enseña y a quién avisa. */
+  ponerTiempo(
+    meteo: import('../world/meteo').Meteo,
+    cambio: (m: import('../world/meteo').Meteo) => void,
+    deVerdad: () => void,
+  ): void {
+    this.tiempoAtado = { meteo, cambio, deVerdad };
+    this.tiempo.onCambio(cambio);
+    this.tiempo.onDeVerdad(deVerdad);
+    this.tiempo.poner(meteo);
   }
 
   /** Quién vuelve al hangar. */
