@@ -121,7 +121,7 @@ export const EN: Dictionary = {
   'credits.madeBy': 'An Oksigenia SL product, under the Granja Óga brand.',
   'credits.educational':
     'Free forever for Paraguayan education: schools, teachers, pupils and families. No paperwork, no payment.',
-  'credits.terrain': 'Relief from NASADEM data (NASA), public domain.',
+  'credits.terrain': 'Relief from Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.',
   'credits.engine': 'Flight model: {model}',
   'credits.licence': 'Code free under Apache-2.0. Content and brands, © Oksigenia SL.',
   'credits.dedication':

@@ -29,12 +29,39 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 
 | Fuente | Uso | Licencia |
 |---|---|---|
-| [NASADEM / SRTM 1 arcosegundo](https://www.earthdata.nasa.gov/data/catalog/lpcloud-nasadem-shhp-001) — NASA JPL / LP DAAC | Relieve real de Paraguay y del resto de escenarios | **Dominio público.** Los productos del LP DAAC no tienen restricciones de reutilización, venta ni redistribución |
+| [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve real de Silvio Pettirossi y Tenerife Norte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
+| [OpenStreetMap](https://www.openstreetmap.org) | Pistas, calles de rodaje, plataformas y estacionamientos | **ODbL** |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data) | Coordenadas, pistas y elevación de aeropuertos | **Unlicense** (dominio público) |
 
-Descartamos **Copernicus DEM GLO-30** pese a ser gratuito: su licencia
-obliga a mostrar un aviso de derechos reservados de DLR y Airbus y añade
-condiciones de redistribución. NASADEM da la misma resolución sin ataduras.
+La atribución de Copernicus va **literal y sin resumir** en los créditos del
+juego, en los tres idiomas, y no se puede quitar:
+
+> © DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided
+> under COPERNICUS by the European Union and ESA; all rights reserved.
+
+### Por qué esto cambió
+
+Este documento decía antes que descartábamos Copernicus **precisamente** por
+esa obligación, y que NASADEM daba la misma resolución sin ataduras. El
+razonamiento era bueno y sigue siéndolo: para un producto que se redistribuye,
+dominio público sin condiciones gana a gratuito con aviso obligatorio.
+
+Se cambió al comprobar dos cosas:
+
+- **NASADEM exige cuenta de Earthdata** para descargar. Es gratis, pero hay que
+  crearla, y sin ella el pipeline no se puede automatizar.
+- **El espejo de AWS no es SRTM puro.** Las teselas de `elevation-tiles-prod`
+  mezclan fuentes con atribuciones distintas —incluida EU-DEM, que es
+  Copernicus—, así que usarlo como «dominio público» sería incorrecto.
+
+Copernicus se descarga sin registro y su única condición es una línea de texto.
+**Si se prefiere volver a NASADEM, basta con una cuenta de Earthdata y un lector
+de `.hgt`**, que son cuarenta líneas: el formato es Int16 crudo en big-endian.
+El resto del pipeline no cambia.
+
+No usamos imaginería satelital de ningún proveedor: el terreno se pinta con
+shaders propios. Es más bonito para lo que queremos y no genera ni coste
+recurrente ni dependencia de licencia.
 
 No usamos imaginería satelital de ningún proveedor: el terreno se pinta con
 shaders propios. Es más bonito para lo que queremos y no genera ni coste

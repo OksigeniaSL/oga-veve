@@ -101,6 +101,21 @@ proyecto no es la simulación, es la enseñanza.** Ninguna licencia del mundo
 vende una señal que entienda alguien de cuatro años que no sabe leer. Eso hay
 que hacerlo, y es lo que lo hace valer.
 
+## Una corrección, porque esto ya se había decidido
+
+`CREDITOS.md` decía desde antes que **descartábamos Copernicus** justamente por
+su atribución obligatoria, y que NASADEM daba la misma resolución sin ataduras.
+Ese razonamiento era bueno, y esta ADR lo contradijo sin haberlo mirado.
+
+Se mantiene Copernicus, pero por un motivo distinto del original y comprobado:
+NASADEM exige cuenta de Earthdata para descargar —gratis, pero hay que crearla—
+y el espejo de AWS que no la exige **no es SRTM puro**: mezcla fuentes con
+atribuciones distintas, incluida EU-DEM, que es Copernicus de todos modos.
+
+Es una decisión reversible y barata de revertir: con una cuenta de Earthdata y
+un lector de `.hgt` —cuarenta líneas, Int16 crudo en big-endian— el resto del
+pipeline se queda igual.
+
 ## Lo que no se pudo comprobar
 
 - El precio real de una licencia comercial de openAIP: hay que preguntarles.

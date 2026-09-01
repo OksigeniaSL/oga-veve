@@ -114,7 +114,9 @@ export const ES_PY = {
   'credits.madeBy': 'Un producto de Oksigenia SL, bajo la marca Granja Óga.',
   'credits.educational':
     'Gratis para siempre para toda la educación paraguaya: colegios, docentes, alumnos y familias. Sin trámites y sin pagar nada.',
-  'credits.terrain': 'Relieve a partir de datos NASADEM (NASA), de dominio público.',
+  // **Literal y sin resumir**: la licencia de Copernicus exige esta frase
+  // exacta, y por eso no se traduce la parte legal.
+  'credits.terrain': 'Relieve a partir de Copernicus DEM GLO-30. © DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.',
   'credits.engine': 'Modelo de vuelo: {model}',
   'credits.licence': 'Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.',
   'credits.dedication':
