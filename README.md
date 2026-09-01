@@ -156,6 +156,24 @@ encuentra con las unidades de verdad en el mismo gesto.
 
 Procedencia y licencia de cada dependencia y cada dato: [CREDITOS.md](CREDITOS.md).
 
+## Que esto siga existiendo
+
+**Gratis para siempre para toda la educación paraguaya.** Eso está firmado en
+[LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md) y no depende de que haya dinero:
+mientras Óga Veve exista, a un colegio no se le cobra.
+
+Lo que no está firmado es que vaya a existir siempre. Esto lo mantiene una
+empresa pequeña, no tiene ingresos y **puede dar pérdidas y cerrarse**. Conviene
+decirlo aquí y no en la letra pequeña, porque quien monte una clase encima de
+esto tiene derecho a saberlo: el código es Apache-2.0 y los datos son de
+OpenStreetMap y de dominio público, así que si un día esto se apaga, cualquiera
+puede volver a encenderlo.
+
+Si quieres que dure, [Liberapay](https://liberapay.com/Oksigenia) y
+[PayPal](https://www.paypal.com/donate/?business=paypal@oksigenia.cc&currency_code=EUR).
+Lo que llegue va a lo que de verdad cuesta dinero: las teselas del mundo real,
+que se pagan por vuelo.
+
 ## Contribuir
 
 Issues y pull requests, bienvenidos. Antes de mandar código, lee
