@@ -13,7 +13,12 @@ for (const esc of ['pettirossi', 'tenerife-norte']) {
   await page.waitForTimeout(4500);
   await page.click('[data-hud="mapa-boton"]');
   await page.waitForTimeout(600);
-  await page.screenshot({ path: `${D}/mapa-${esc}.png` });
+  // Los cuatro alcances, que es lo que hay que mirar.
+  for (let z = 0; z < 4; z++) {
+    if (z) await page.click('[data-hud="mapa-cerca"]');
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${D}/mapa-${esc}-z${z}.png` });
+  }
   console.log(`${esc} → ${D}/mapa-${esc}.png`);
   await page.close();
 }

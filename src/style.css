@@ -2521,3 +2521,49 @@ body {
 }
 
 
+
+/*
+ * Las lupas del mapa. Dentro del propio mapa y grandes: fuera se leerían como
+ * mandos del juego, y pequeñas no se aciertan con un dedo de cuatro años.
+ */
+.mapa__lupas {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.mapa__lupa {
+  display: grid;
+  place-items: center;
+  width: var(--tacto);
+  height: var(--tacto);
+  border: 1px solid var(--linea);
+  border-radius: var(--r-m);
+  background: rgba(20, 29, 25, 0.9);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 140ms ease;
+}
+
+.mapa__lupa:hover,
+.mapa__lupa:focus-visible {
+  border-color: var(--ocre-tinta);
+  transform: scale(1.06);
+}
+
+.mapa__lupa:active {
+  transform: scale(0.94);
+}
+
+.mapa__lupa svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
