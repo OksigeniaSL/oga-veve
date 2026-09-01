@@ -53,9 +53,34 @@ const ANCHO = 2;
  */
 const ALTURA = 0.7;
 
-/** Verde de «por aquí». No es el amarillo de rodadura: aquello es el aeropuerto,
- *  esto es tu ruta de hoy. Confundirlos sería enseñar mal. */
-const VERDE = 0x53c66b;
+/**
+ * Los tres colores de la raya: **la línea de conducción**.
+ *
+ * Es el patrón de los juegos de coches —la *braking line* de Forza, la de Gran
+ * Turismo— y contesta dos preguntas con una sola cosa: por dónde se va y a qué
+ * velocidad. Verde donde se puede rodar, ámbar donde hay que aflojar, rojo
+ * donde hay que parar.
+ *
+ * Sin esto, la raya era verde de punta a punta y quien la seguía no tenía
+ * **ninguna** forma de saber si iba rápido o lento, ni que se acercaba a la
+ * doble raya. Se lo preguntó la primera persona que jugó: «¿quién me indica si
+ * voy muy rápido o lento en rodadura?». Nadie.
+ *
+ * No es el amarillo de rodadura: aquello es el aeropuerto y esto es tu ruta de
+ * hoy. Confundirlos sería enseñar mal.
+ */
+const VERDE: readonly [number, number, number] = [0.325, 0.776, 0.42];
+const AMBAR: readonly [number, number, number] = [0.91, 0.694, 0.23];
+const ROJO: readonly [number, number, number] = [0.79, 0.29, 0.24];
+
+/** Velocidad de rodaje cómoda en recta, m/s. Unos treinta por hora. */
+const CRUCERO = 8;
+
+/** Deceleración cómoda, m/s². Con esto se calcula dónde hay que ir aflojando. */
+const FRENADA = 0.9;
+
+/** Por encima de esto respecto a lo que toca, se avisa de que se va rápido. */
+const MARGEN = 1.6;
 
 export interface Vista {
   readonly fase: Fase;
@@ -64,6 +89,10 @@ export interface Vista {
   readonly luzVerde: boolean;
   /** La letra de la calle por la que toca ir, si la hay. */
   readonly letra: string | null;
+  /** A qué velocidad habría que ir aquí, m/s. */
+  readonly velocidadSugerida: number;
+  /** Va bastante más rápido de lo que toca. */
+  readonly rapido: boolean;
   /** Metros que faltan para el final del tramo actual. */
   readonly restante: number;
   /**
@@ -211,6 +240,7 @@ export class PlanDeVuelo {
   paso(estado: FlightState, sobreElSuelo: number, motor: boolean, dt: number): Vista {
     const s = this.situacion(estado, sobreElSuelo, motor);
     const p: Paso = this.vuelo.paso(s, dt);
+    const sugerida = this.velocidadAqui([estado.position.x, estado.position.z]);
 
     if (p.cambio) this.alCambiarDeFase(p.fase);
 
@@ -220,6 +250,8 @@ export class PlanDeVuelo {
       icono: GUION[p.fase].icono,
       luzVerde: p.luzVerde,
       letra: this.letraActual(estado),
+      velocidadSugerida: sugerida,
+      rapido: sobreElSuelo < 3 && this.rutaMundo.length > 1 && estado.airspeed > sugerida * MARGEN + 1,
       restante: s.restante,
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
@@ -315,6 +347,69 @@ export class PlanDeVuelo {
     };
   }
 
+  /**
+   * A qué velocidad habría que ir en cada punto de la ruta, m/s.
+   *
+   * Dos cosas la bajan, y son las dos que hay de verdad rodando:
+   *
+   * - **Lo que falta hasta el final.** Se calcula hacia atrás desde la doble
+   *   raya con una deceleración cómoda, que es la cuenta de toda la vida:
+   *   `v = √(2·a·d)`. A cuarenta y cinco metros salen nueve por segundo, a
+   *   diez salen cuatro, y en la raya, cero.
+   * - **Lo cerrada que viene la curva.** El ángulo entre un tramo y el
+   *   siguiente: una curva de noventa grados se toma a paso de peatón.
+   *
+   * Se calcula una vez, al trazar la ruta, y luego solo se consulta.
+   */
+  private velocidades: number[] = [];
+
+  private calcularVelocidades(): void {
+    const n = this.rutaMundo.length;
+    this.velocidades = new Array<number>(n).fill(CRUCERO);
+    if (n < 2) return;
+
+    // Por curvatura: el ángulo que se gira en cada vértice.
+    for (let i = 1; i < n - 1; i++) {
+      const a = this.rutaMundo[i - 1]!;
+      const b = this.rutaMundo[i]!;
+      const c = this.rutaMundo[i + 1]!;
+      const a1 = Math.atan2(b[0] - a[0], b[1] - a[1]);
+      const a2 = Math.atan2(c[0] - b[0], c[1] - b[1]);
+      const giro = Math.abs(((a2 - a1 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+      const grados = (giro * 180) / Math.PI;
+      // Noventa grados → tres metros por segundo. Recto → crucero.
+      this.velocidades[i] = Math.max(3, CRUCERO * (1 - Math.min(1, grados / 90) * 0.65));
+    }
+
+    // Y hacia atrás desde el final, que es lo que hace que se vaya aflojando
+    // antes de llegar en vez de frenar de golpe encima de la raya.
+    this.velocidades[n - 1] = 0;
+    let acumulado = 0;
+    for (let i = n - 2; i >= 0; i--) {
+      acumulado += Math.hypot(
+        this.rutaMundo[i + 1]![0] - this.rutaMundo[i]![0],
+        this.rutaMundo[i + 1]![1] - this.rutaMundo[i]![1],
+      );
+      const porLaParada = Math.sqrt(2 * FRENADA * acumulado);
+      this.velocidades[i] = Math.min(this.velocidades[i]!, porLaParada);
+    }
+  }
+
+  /** La velocidad que toca donde está el avión ahora. */
+  private velocidadAqui(p: Punto): number {
+    if (this.velocidades.length < 2) return CRUCERO;
+    let mejor = Infinity;
+    let cual = 0;
+    for (let i = 0; i < this.rutaMundo.length; i++) {
+      const d = Math.hypot(this.rutaMundo[i]![0] - p[0], this.rutaMundo[i]![1] - p[1]);
+      if (d < mejor) {
+        mejor = d;
+        cual = i;
+      }
+    }
+    return this.velocidades[cual] ?? CRUCERO;
+  }
+
   /** Metros de ruta que quedan desde el punto más cercano al avión. */
   private restanteHasta(p: Punto): number {
     // Primero el total, y luego cuánto se lleva recorrido hasta el punto de la
@@ -369,6 +464,7 @@ export class PlanDeVuelo {
   private ponerRuta(ruta: Ruta | null): void {
     this.ruta = ruta;
     this.rutaMundo = ruta ? ruta.puntos.map((p) => [p[0], -p[1]] as Punto) : [];
+    this.calcularVelocidades();
     this.pintar();
   }
 
@@ -381,6 +477,10 @@ export class PlanDeVuelo {
       (m.material as { dispose?: () => void })?.dispose?.();
     }
     if (this.rutaMundo.length < 2) return;
+
+    /** De la velocidad que toca al color que se pinta. */
+    const colorDe = (v: number): readonly [number, number, number] =>
+      v < 3.5 ? ROJO : v < 6 ? AMBAR : VERDE;
 
     const piezas: BufferGeometry[] = [];
     for (let i = 0; i < this.rutaMundo.length - 1; i++) {
@@ -406,8 +506,23 @@ export class PlanDeVuelo {
         pos[k * 3 + 1] = this.cota(qx, qz) + ALTURA;
         pos[k * 3 + 2] = qz;
       });
+
+      // El color va **en los vértices**, no en el material: así la raya entera
+      // sigue siendo una sola llamada de dibujo y a la vez cambia de color a lo
+      // largo, que es de lo que se trata. Un tramo por color habría multiplicado
+      // por tres las mallas.
+      const cA = colorDe(this.velocidades[i] ?? CRUCERO);
+      const cB = colorDe(this.velocidades[i + 1] ?? CRUCERO);
+      const col = new Float32Array(12);
+      [cA, cB, cB, cA].forEach(([r, g, b], k) => {
+        col[k * 3] = r;
+        col[k * 3 + 1] = g;
+        col[k * 3 + 2] = b;
+      });
+
       const geo = new BufferGeometry();
       geo.setAttribute('position', new Float32BufferAttribute(pos, 3));
+      geo.setAttribute('color', new Float32BufferAttribute(col, 3));
       geo.setIndex([0, 1, 2, 0, 2, 3]);
       geo.computeVertexNormals();
       piezas.push(geo);
@@ -415,7 +530,7 @@ export class PlanDeVuelo {
 
     const fusionada = piezas.length ? mergeGeometries(piezas, false) : null;
     if (fusionada) {
-      const malla = new Mesh(fusionada, new MeshLambertMaterial({ color: VERDE }));
+      const malla = new Mesh(fusionada, new MeshLambertMaterial({ vertexColors: true }));
       malla.name = 'ruta';
       this.grupo.add(malla);
     }
@@ -424,7 +539,8 @@ export class PlanDeVuelo {
     const fin = this.rutaMundo[this.rutaMundo.length - 1]!;
     const aro = new Mesh(
       new RingGeometry(9, 12, 32),
-      new MeshBasicMaterial({ color: VERDE, transparent: true, opacity: 0.85 }),
+      // La diana del final es roja: ahí se para.
+      new MeshBasicMaterial({ color: 0xc94a3d, transparent: true, opacity: 0.85 }),
     );
     aro.rotation.x = -Math.PI / 2;
     aro.position.set(fin[0], this.cota(fin[0], fin[1]) + ALTURA + 0.02, fin[1]);

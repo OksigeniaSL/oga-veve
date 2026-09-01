@@ -675,6 +675,16 @@ export class Game {
         this.hud.flash(`${frase}${tecla}${vista.letra ? ` · ${vista.letra}` : ''}`, 5);
       }
       if (vista.fase === 'autorizado' || vista.fase === 'apagado') this.audio.cue('success');
+    } else if (vista.rapido && this.plan.avisarDeSalida(dt)) {
+      // **«¿Quién me indica si voy muy rápido o lento en rodadura?»** Nadie, y
+      // esa era la respuesta honesta: el indicador de tortuga y pájaro está
+      // calibrado para velocidad de vuelo, así que rodando se queda clavado en
+      // la tortuga sin decir nada. Ahora lo dice la raya —que se pone ámbar y
+      // roja donde hay que aflojar— y además se avisa.
+      this.hud.senal.mostrar('freno', conLetras ? t('vuelo.despacio') : '', vista.letra, {
+        segundos: 3.5,
+      });
+      this.instructor.decir(t('vuelo.despacio'));
     } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {
       this.hud.senal.mostrar('amarillo', conLetras ? t('vuelo.fuera') : '', vista.letra, {
         segundos: 4,
