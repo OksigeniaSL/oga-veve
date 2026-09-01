@@ -13,9 +13,11 @@ import {
   CircleGeometry,
   Clock,
   DoubleSide,
+  Group,
   MathUtils,
   Mesh,
   MeshBasicMaterial,
+  Object3D,
   PerspectiveCamera,
   Scene,
   Vector3,
@@ -74,6 +76,16 @@ import { MissionRunner } from './missions/runner';
 import { objectiveTarget } from './missions/types';
 import { missionsFor } from './content/missions';
 import { conViento, VALLE_CORDILLERA, VECES_LEJOS, type Scenario } from './world/scenarios';
+import { crearTeselas, type Teselas } from './world/teselas';
+
+/**
+ * La clave de las teselas fotorrealistas. Ver `workers/meteo.js` y `.env.example`.
+ *
+ * Sin ella el juego pinta su mundo de polígonos, que es el de siempre y el que
+ * arranca en cualquier máquina. Eso no es un modo degradado: es el suelo sobre
+ * el que se construye todo lo demás.
+ */
+const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
@@ -133,6 +145,9 @@ export interface GameOptions {
 export class Game {
   /** Qué se está enseñando hoy: de aquí sale qué guía se enciende. */
   private readonly leccion: Leccion;
+  /** El mundo de verdad, si hay clave y aeródromo. */
+  private readonly teselas: Teselas | null;
+  private mundoRealPuesto = false;
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
@@ -148,6 +163,7 @@ export class Game {
   private readonly input: InputManager;
   private readonly audio = new Audio();
   private readonly missions = new MissionRunner();
+  private vegetacion: Group | null = null;
   private readonly missionMarker = new MissionMarker();
   private readonly runwayGuide: RunwayGuide;
   /** Índice de la misión de la lista del escenario, o -1 en vuelo libre. */
@@ -228,7 +244,18 @@ export class Game {
       62,
       1,
       0.6,
-      this.scenario.size * (this.scenario.relieveLejano ? VECES_LEJOS * 0.8 : 1.6),
+      /*
+       * Con el mundo de verdad puesto, el plano lejano sube a **ciento veinte
+       * kilómetros**. No es capricho: las teselas se cargan por error de
+       * pantalla, así que lo que queda fuera del plano no se pide, y con
+       * veintiocho kilómetros el horizonte se cortaba a la mitad del mar.
+       *
+       * Alejarlo casi no cuesta precisión de profundidad —la que importa la fija
+       * el plano cercano, que no se toca— y es lo que deja ver una isla entera.
+       */
+      this.claveDeTeselas()
+        ? 120000
+        : this.scenario.size * (this.scenario.relieveLejano ? VECES_LEJOS * 0.8 : 1.6),
     );
 
     this.terrain = new Terrain(this.scenario);
@@ -280,7 +307,16 @@ export class Game {
         ),
       );
     }
-    this.scene.add(createVegetation(this.scenario, (x, z) => this.terrain.sampleHeight(x, z)));
+    this.vegetacion = createVegetation(this.scenario, (x, z) => this.terrain.sampleHeight(x, z));
+    this.scene.add(this.vegetacion);
+
+    /*
+     * Y el mundo de verdad, si lo hay. Se añade apagado: no se enseña hasta que
+     * ha medido su desfase contra nuestro suelo, porque aparecer cuarenta metros
+     * desplazado y luego dar un salto es peor que tardar un segundo más.
+     */
+    this.teselas = crearTeselas(this.scenario, this.claveDeTeselas());
+    if (this.teselas) this.scene.add(this.teselas.grupo);
 
     this.runwayGuide = new RunwayGuide(
       this.scenario,
@@ -397,6 +433,15 @@ export class Game {
       // al navegador, y rodar ciento cuarenta metros así tardaba minutos.
       /** Los mandos, para poder mirarlos desde una comprobación. */
       controles: () => this.input.controls,
+      /** El estado del mundo de verdad, para las comprobaciones. */
+      mundoReal: () =>
+        this.teselas
+          ? {
+              asentado: this.teselas.asentado,
+              desfase: this.teselas.desfase,
+              visibles: this.teselas.visibles,
+            }
+          : null,
       /**
        * Un piloto de pruebas: una función que toca los mandos **después** de
        * que los lea el teclado.
@@ -650,6 +695,54 @@ export class Game {
     return Number.isFinite(h) ? h : HORA_BUENA;
   }
 
+  /**
+   * La clave de las teselas: la de la construcción, o la de la dirección.
+   *
+   * `?teselas=...` existe para poder probarlo sin reconstruir. `?teselas=0` lo
+   * apaga, que es como se compara con el mundo de polígonos sin tocar nada.
+   */
+  private claveDeTeselas(): string | null {
+    const q = new URLSearchParams(location.search).get('teselas');
+    if (q === '0') return null;
+    return q || CLAVE_TESELAS;
+  }
+
+  /**
+   * Cuando el mundo de verdad se posa, se apaga el de mentira.
+   *
+   * No se borra: se esconde. El terreno de polígonos **sigue siendo el suelo
+   * con el que choca el avión** —`sampleHeight` se llama doscientas cuarenta
+   * veces por segundo— y lo único que sobra es su malla. Y la vegetación entera,
+   * porque los árboles ya están en la fotografía: era justo lo que se veía como
+   * «estoy sobrevolando Luque en el Pleistoceno, todo árboles».
+   *
+   * Del aeródromo se apaga **el pavimento y las marcas**, que es el hallazgo de
+   * la prueba: donde hay fotogrametría la pista ya viene pintada, con su
+   * designador y sus teclas de piano, mejor de lo que la pintamos nosotros. Lo
+   * que se queda es lo que la foto no puede dar — las luces, la manga, los
+   * rótulos de calle y la raya de guía.
+   */
+  private apagarElMundoDeMentira(): void {
+    const fuera = (o: Object3D | undefined | null): void => {
+      if (o) o.visible = false;
+    };
+    fuera(this.terrain.group.getObjectByName('terreno'));
+    fuera(this.terrain.group.getObjectByName('horizonte'));
+    fuera(this.terrain.group.getObjectByName('agua'));
+    fuera(this.vegetacion);
+
+    const aero = this.scenario.aerodrome;
+    if (!aero) return;
+    const recinto = this.terrain.group.getObjectByName(`aerodromo:${aero.id}`);
+    if (!recinto) return;
+    for (const nombre of ['marcas', 'luces-pista']) fuera(recinto.getObjectByName(nombre));
+    recinto.traverse((o) => {
+      if (o.name.startsWith('pavimento:')) o.visible = false;
+    });
+    // Y el eje amarillo de las calles, que en la foto ya está pintado.
+    fuera(recinto.getObjectByName('rodadura')?.getObjectByName('amarillo'));
+  }
+
   /** Pone una hora del día. Lo llama el panel del tiempo. */
   ponerHora(hora: number): void {
     this.sky.ponerHora(hora);
@@ -794,6 +887,21 @@ export class Game {
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
+
+    /*
+     * El mundo de verdad. Va **después** de mover la cámara y antes de pintar:
+     * el cargador elige el detalle según dónde está la cámara, y pedirle teselas
+     * con la cámara del fotograma anterior es pedir el sitio equivocado. Eso ya
+     * nos costó una prueba entera con la cámara treinta y cuatro kilómetros bajo
+     * tierra.
+     */
+    if (this.teselas) {
+      this.teselas.update(this.camera, this.renderer);
+      if (this.teselas.asentado && !this.mundoRealPuesto) {
+        this.mundoRealPuesto = true;
+        this.apagarElMundoDeMentira();
+      }
+    }
     this.advanceMission();
     this.announce(this.flight.state);
     // La bocina avisa al 85 % del ángulo crítico de esta aeronave concreta,
