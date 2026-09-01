@@ -277,6 +277,7 @@ export class Game {
     // hay que inventar el desmontaje en caliente de un escenario entero —que
     // es donde se quedan las fugas de memoria de los juegos web—.
     this.hud.onHangar(() => location.reload());
+    this.hud.ponerMapa(this.scenario, (x, z) => this.terrain.sampleHeight(x, z));
     this.hud.setKeySource((accion) => nombreDeTecla(this.input.preferredKey(accion)));
 
     // La primera vez se abre sola. Una pantalla que explica los mandos no
@@ -582,6 +583,12 @@ export class Game {
     // La bocina avisa al 85 % del ángulo crítico de esta aeronave concreta,
     // que es donde la ponen los fabricantes.
     this.audio.update(this.flight.state, this.input.controls, this.aircraft.aero.alphaStall * 0.85);
+    // El mapa, si está abierto. Solo mueve la flecha: el mundo ya está pintado.
+    this.hud.mapa.update(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+      this.flight.state.heading,
+    );
     this.hud.update(
       this.flight.state,
       this.input.controls.throttle,

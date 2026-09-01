@@ -33,6 +33,7 @@ import type { Accion } from '../flight/keymap';
 import { SixPack } from './six-pack';
 import { Pictogramas } from './pictogramas';
 import { Senal } from './senal';
+import { Mapa } from './mapa';
 import type { Tier } from '../flight/tiers';
 
 /**
@@ -109,6 +110,7 @@ const FLECHA_SEGUIR = `
 
 export class Hud {
   readonly tutor = new Tutor();
+  readonly mapa = new Mapa();
   private readonly root: HTMLElement;
   private units: UnitSystem = METRIC;
   /**
@@ -171,6 +173,10 @@ export class Hud {
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
+  private mapaAtado: {
+    esc: import('../world/scenarios').Scenario;
+    cota: (x: number, z: number) => number;
+  } | null = null;
   private torre: HTMLElement | null = null;
   private hintTimer = 0;
 
@@ -247,6 +253,7 @@ export class Hud {
                      M7.6 16.6h8.8" />
           </svg>
         </button>
+        ${Mapa.boton(t('mapa.title'))}
         <!--
           Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
           arrancar es un hangar con la puerta tapiada: quien quiera cambiar de
@@ -338,12 +345,7 @@ export class Hud {
         juego que solo se puede seguir con sonido excluye por diseño.
       -->
       ${Senal.markup()}
-      <!--
-        La señal del vuelo: qué toca hacer ahora, dibujado. Va en todos los
-        peldaños, no solo en los que llevan texto — hay quien juega en
-        silencio, hay quien tiene la pestaña muteada y hay quien no oye.
-      -->
-      ${Senal.markup()}
+      ${Mapa.markup()}
       <div class="vineta" data-hud="vignette"></div>
       ${Tutor.markup()}
       <div class="hud__abajo">
@@ -410,6 +412,10 @@ export class Hud {
     this.sound.addEventListener('click', () => this.soundHandler?.());
     pick(this.root, 'keys').addEventListener('click', () => this.keysHandler?.());
     pick(this.root, 'hangar').addEventListener('click', () => this.hangarHandler?.());
+    // El mapa se vuelve a atar en cada `render()`, como todo lo demás: el HUD
+    // se rehace entero al cambiar de idioma y los oyentes viejos se van con el
+    // marcado viejo.
+    if (this.mapaAtado) this.mapa.bind(this.root, this.mapaAtado.esc, this.mapaAtado.cota);
     this.paintSound();
     this.paintProgress();
     this.hint = pick(this.root, 'hint');
@@ -702,6 +708,15 @@ export class Hud {
     // también.
     const bombilla = caja.querySelector('[data-hud="torre-luz"]');
     if (bombilla) bombilla.innerHTML = luz === 'verde' ? FLECHA_SEGUIR : luz ? MANO_PARAR : '';
+  }
+
+  /** De dónde saca el mapa el mundo que pinta. */
+  ponerMapa(
+    esc: import('../world/scenarios').Scenario,
+    cota: (x: number, z: number) => number,
+  ): void {
+    this.mapaAtado = { esc, cota };
+    this.mapa.bind(this.root, esc, cota);
   }
 
   /** Quién vuelve al hangar. */

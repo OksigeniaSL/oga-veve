@@ -214,8 +214,25 @@ export class Audio {
     // cilindros, entre dos. Un radial de siete suena a otra cosa que un
     // cuatro cilindros porque este número es otro, no por magia.
     const firing = (rpm / 60) * (spec.cylinders / 2);
-    this.engineTone?.frequency.setTargetAtTime(firing, now, 0.14);
-    this.engineHarmonic?.frequency.setTargetAtTime(firing * 2.02, now, 0.14);
+
+    /*
+     * **El viraje se oye.**
+     *
+     * En un viraje mantenido el ala tiene que sostener más peso que el del
+     * avión —a cuarenta y cinco grados de alabeo, un cuarenta por ciento más—,
+     * y eso es más resistencia. Con el gas quieto, un motor de hélice de paso
+     * fijo pierde vueltas: la nota baja un pelo y el motor se oye trabajar. Es
+     * pequeño y es de las cosas que se notan sin saber que se notan.
+     *
+     * Se pide sin bajar de cero por si un descenso pronunciado deja el factor
+     * de carga por debajo de uno; ahí el motor no se alivia, sencillamente no
+     * pasa nada.
+     */
+    const carga = clamp(state.loadFactor - 1, 0, 1.2);
+    // Un dos por ciento a 1,4 g, que es lo que pierde de vueltas de verdad.
+    const enViraje = firing * (1 - carga * 0.05);
+    this.engineTone?.frequency.setTargetAtTime(enViraje, now, 0.14);
+    this.engineHarmonic?.frequency.setTargetAtTime(enViraje * 2.02, now, 0.14);
     // El gas cerrado tapa el motor: respuesta inmediata al oído aunque las
     // vueltas todavía estén bajando.
     this.engineFilter?.frequency.setTargetAtTime(900 + gas * 3200, now, 0.06);
@@ -225,7 +242,8 @@ export class Audio {
     // reproduce, así que si el timbre no se mueve, el motor suena plano por
     // mucho que la nota suba.
     this.growl?.frequency.setTargetAtTime(
-      spec.growlHz + gas * spec.growlRise,
+      // Y el timbre se abre un poco en el viraje: es el motor cargado.
+      spec.growlHz + gas * spec.growlRise + carga * 26,
       now,
       0.12,
     );
@@ -233,7 +251,11 @@ export class Audio {
     // Esfuerzo: el motor canta distinto trepando que en descenso, aunque el
     // gas no se toque. Es carga aerodinámica, y se oye.
     const load = clamp(state.verticalSpeed / 6, -1, 1);
-    this.engineGain?.gain.setTargetAtTime((controls.engineOn ? 0.1 : 0) + gas * 0.14 + load * 0.03, now, 1.4);
+    this.engineGain?.gain.setTargetAtTime(
+      (controls.engineOn ? 0.1 : 0) + gas * 0.14 + load * 0.03 + carga * 0.02,
+      now,
+      1.4,
+    );
     this.propGain?.gain.setTargetAtTime((controls.engineOn ? 0.03 : 0) + gas * 0.075, now, 1.4);
     this.propFilter?.frequency.setTargetAtTime(120 + rpm * 0.08, now, 0.1);
 
