@@ -36,22 +36,29 @@ import type { FlightState } from '../flight/model';
 /**
  * Ancho de la raya que marca la ruta, m.
  *
- * Dos metros. Con cuatro no parecía una línea a seguir, parecía un río verde
- * de orilla a orilla de la calle: se veía perfectamente y no se entendía que
- * había que ir **encima**.
+ * Uno y medio. Con cuatro parecía un río verde de orilla a orilla de la calle;
+ * con dos **tapaba las letras pintadas en el asfalto**, que son justo lo que
+ * hay que aprender a leer ahí: «la línea a seguir es gruesa y tapa las marcas
+ * de la pista (las letras) y creo que eso es un elemento que el jugador debe
+ * ver». Tiene razón: la ayuda no puede esconder la lección.
  */
-const ANCHO = 2;
+const ANCHO = 1.5;
 
 /**
  * Cuánto se levanta la raya sobre el **terreno**, m.
  *
- * Setenta centímetros, que parecen muchos y no lo son: el pavimento del
- * aeródromo ya sobresale treinta y cinco del terreno aplanado —ver `RESALTE`—
- * y su pintura otros veinte encima. Con los veinticuatro que tenía al
- * principio, la raya quedaba **enterrada bajo el asfalto** y no se veía
- * ninguna. Es el mismo error que enterró el pavimento entero la primera vez.
+ * Cuarenta y cinco centímetros: justo por encima del pavimento, que sobresale
+ * treinta y cinco del terreno aplanado.
+ *
+ * **Lo que la mantiene visible no es la altura, es el desplazamiento de
+ * polígono.** Separar cosas coplanares subiéndolas funciona de cerca y falla
+ * de lejos: con el fondo de profundidad repartido entre sesenta centímetros y
+ * veintidós kilómetros, a doscientos metros ya no distingue medio metro y las
+ * superficies se pelean fotograma a fotograma. Es lo que se veía como «el
+ * suelo tiembla y salen parches», y subir más la raya no lo arregla — solo la
+ * despega del asfalto y la deja flotando.
  */
-const ALTURA = 0.7;
+const ALTURA = 0.45;
 
 /**
  * Los tres colores de la raya: **la línea de conducción**.
@@ -73,8 +80,20 @@ const VERDE: readonly [number, number, number] = [0.325, 0.776, 0.42];
 const AMBAR: readonly [number, number, number] = [0.91, 0.694, 0.23];
 const ROJO: readonly [number, number, number] = [0.79, 0.29, 0.24];
 
-/** Velocidad de rodaje cómoda en recta, m/s. Unos treinta por hora. */
-const CRUCERO = 8;
+/**
+ * Velocidad de rodaje cómoda en recta, m/s. Unos cuarenta por hora.
+ *
+ * Un avión rueda en recta hasta a treinta nudos —cincuenta y cinco por hora—,
+ * así que cuarenta es realista y no es un atajo. Con treinta, los dos
+ * kilómetros de plataforma a cabecera de Silvio Pettirossi eran cuatro minutos
+ * de reloj por cada sentido, y eso a un niño de cuatro años se le hace
+ * eterno: «es mucho rato en rodadura salir y entrar, la verdad».
+ *
+ * La otra mitad del problema no se arregla con velocidad sino con viento: la
+ * cabecera en uso la elige el viento, y en Silvio Pettirossi la contraria está
+ * al lado de la plataforma. Eso está apuntado aparte.
+ */
+const CRUCERO = 11;
 
 /** Deceleración cómoda, m/s². Con esto se calcula dónde hay que ir aflojando. */
 const FRENADA = 0.9;
@@ -146,17 +165,30 @@ export class PlanDeVuelo {
   private puestoDeSalida(): { ref: string | null; xy: Punto } | null {
     const puestos = this.aero.parkingPositions;
     if (!puestos?.length) return null;
-    const terminal = this.aero.buildings[0]?.polygon;
-    if (!terminal?.length) return puestos[0]!;
-    const centro: Punto = [
-      terminal.reduce((a, p) => a + p[0], 0) / terminal.length,
-      terminal.reduce((a, p) => a + p[1], 0) / terminal.length,
-    ];
+
+    // **El más cercano a la cabecera de salida**, no el más cercano a la
+    // terminal. Silvio Pettirossi tiene sesenta y dos puestos repartidos por
+    // un kilómetro y medio de plataforma, y saliendo del que toca a la
+    // terminal el rodaje eran quince minutos entre ir y volver: «es mucho rato
+    // en rodadura salir y entrar, la verdad». Un aeropuerto de verdad asigna
+    // el puesto por muchas cosas; un juego para prelectores lo asigna por que
+    // se pueda jugar.
+    //
+    // Sigue siendo el mismo siempre, que es lo que importa: quien juega se
+    // aprende su sitio, y un aeropuerto que te cambia el puesto cada partida
+    // no se aprende nunca.
+    const cabecera = this.cabeceraDeSalida();
     return [...puestos].sort(
       (a, b) =>
-        Math.hypot(a.xy[0] - centro[0], a.xy[1] - centro[1]) -
-        Math.hypot(b.xy[0] - centro[0], b.xy[1] - centro[1]),
+        Math.hypot(a.xy[0] - cabecera[0], a.xy[1] - cabecera[1]) -
+        Math.hypot(b.xy[0] - cabecera[0], b.xy[1] - cabecera[1]),
     )[0]!;
+  }
+
+  /** La cabecera por la que se despega, en coordenadas de fichero. */
+  private cabeceraDeSalida(): Punto {
+    const [fx, fz] = delante(this.pista.heading);
+    return [this.pista.x - fx * 1600, -(this.pista.z - fz * 1600)];
   }
 
   /**
@@ -169,11 +201,7 @@ export class PlanDeVuelo {
    */
   private esperaDeSalida(): Punto | null {
     if (!this.aero.holdingPositions.length) return null;
-    const [fx, fz] = delante(this.pista.heading);
-    const cabecera: Punto = [
-      this.pista.x - fx * 1600,
-      -(this.pista.z - fz * 1600),
-    ];
+    const cabecera = this.cabeceraDeSalida();
     return [...this.aero.holdingPositions].sort(
       (a, b) =>
         Math.hypot(a.xy[0] - cabecera[0], a.xy[1] - cabecera[1]) -
@@ -231,6 +259,63 @@ export class PlanDeVuelo {
     return true;
   }
 
+  /**
+   * Cuánto alerón haría falta para volver a la raya, de −1 a 1.
+   *
+   * Es el *Smart Steering* de los juegos de conducción para niños. Devuelve el
+   * mando que hace falta, no lo aplica: quién y cuánto lo aplica lo decide el
+   * peldaño, que es donde vive esa escalera.
+   *
+   * Dos términos, como cualquier seguidor de línea que funcione:
+   *
+   * - **Cuánto te has desviado**, que dice hacia dónde hay que apuntar.
+   * - **Cuánto te falta para apuntar ahí**, que es lo que evita que el avión
+   *   serpentee cruzando la raya una y otra vez. Sin este segundo término el
+   *   remedio es peor que la enfermedad, y ya lo aprendimos con el piloto de
+   *   pruebas.
+   *
+   * Devuelve cero si no hay ruta, si se va en el aire o si se va demasiado
+   * deprisa para estar rodando: en la carrera de despegue nadie debe empujar
+   * el volante salvo quien pilota.
+   */
+  asistencia(estado: FlightState, sobreElSuelo: number): number {
+    if (this.rutaMundo.length < 2) return 0;
+    if (sobreElSuelo > 4 || estado.airspeed > 18) return 0;
+
+    const p: Punto = [estado.position.x, estado.position.z];
+    // El punto de la ruta más cercano, y hacia dónde va la raya allí.
+    let mejor = Infinity;
+    let cual = 0;
+    for (let i = 0; i < this.rutaMundo.length; i++) {
+      const d = Math.hypot(this.rutaMundo[i]![0] - p[0], this.rutaMundo[i]![1] - p[1]);
+      if (d < mejor) {
+        mejor = d;
+        cual = i;
+      }
+    }
+    // Se mira treinta metros por delante: apuntar al punto más cercano hace
+    // que el avión persiga su propia sombra y no se estabilice nunca.
+    let mira = this.rutaMundo[this.rutaMundo.length - 1]!;
+    let acumulado = 0;
+    for (let i = cual; i < this.rutaMundo.length - 1; i++) {
+      acumulado += Math.hypot(
+        this.rutaMundo[i + 1]![0] - this.rutaMundo[i]![0],
+        this.rutaMundo[i + 1]![1] - this.rutaMundo[i]![1],
+      );
+      if (acumulado > 30) {
+        mira = this.rutaMundo[i + 1]!;
+        break;
+      }
+    }
+
+    const rumbo = ((estado.heading * 180) / Math.PI + 360) % 360;
+    const quiero =
+      ((Math.atan2(mira[0] - p[0], -(mira[1] - p[1])) * 180) / Math.PI + 360) % 360;
+    const error = ((quiero - rumbo + 540) % 360) - 180;
+    const giro = error / 22 - ((estado.yawRate * 180) / Math.PI) / 40;
+    return Math.max(-1, Math.min(1, giro));
+  }
+
   /** La ruta en coordenadas de mundo. Para las herramientas de comprobación. */
   rutaVisible(): readonly Punto[] {
     return this.rutaMundo;
@@ -251,7 +336,16 @@ export class PlanDeVuelo {
       luzVerde: p.luzVerde,
       letra: this.letraActual(estado),
       velocidadSugerida: sugerida,
-      rapido: sobreElSuelo < 3 && this.rutaMundo.length > 1 && estado.airspeed > sugerida * MARGEN + 1,
+      // **Y no se avisa junto a la doble raya.** Ahí la velocidad que toca baja
+      // hasta cero, así que cualquier movimiento pasaba de sobra el margen y el
+      // juego pedía ir más despacio a quien ya estaba parando: «hay señales
+      // para ayudarte a bajar velocidad (se pasa de lento)». Frenar para parar
+      // no es ir rápido.
+      rapido:
+        sobreElSuelo < 3 &&
+        this.rutaMundo.length > 1 &&
+        sugerida > 3 &&
+        estado.airspeed > sugerida * MARGEN + 2,
       restante: s.restante,
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
@@ -377,8 +471,13 @@ export class PlanDeVuelo {
       const a2 = Math.atan2(c[0] - b[0], c[1] - b[1]);
       const giro = Math.abs(((a2 - a1 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
       const grados = (giro * 180) / Math.PI;
-      // Noventa grados → tres metros por segundo. Recto → crucero.
-      this.velocidades[i] = Math.max(3, CRUCERO * (1 - Math.min(1, grados / 90) * 0.65));
+      // Noventa grados → cuatro y medio por segundo. Recto → crucero.
+      //
+      // Cuatro y medio y no tres, porque tres cae en rojo y **una curva no es
+      // una parada**: se veía la raya ponerse roja en cada codo de la
+      // rodadura, que dice «pará» donde en realidad dice «aflojá». El rojo se
+      // reserva para la doble raya.
+      this.velocidades[i] = Math.max(4.5, CRUCERO * (1 - Math.min(1, grados / 90) * 0.62));
     }
 
     // Y hacia atrás desde el final, que es lo que hace que se vaya aflojando
@@ -480,7 +579,7 @@ export class PlanDeVuelo {
 
     /** De la velocidad que toca al color que se pinta. */
     const colorDe = (v: number): readonly [number, number, number] =>
-      v < 3.5 ? ROJO : v < 6 ? AMBAR : VERDE;
+      v < 3.5 ? ROJO : v < 7.5 ? AMBAR : VERDE;
 
     const piezas: BufferGeometry[] = [];
     for (let i = 0; i < this.rutaMundo.length - 1; i++) {
@@ -530,7 +629,18 @@ export class PlanDeVuelo {
 
     const fusionada = piezas.length ? mergeGeometries(piezas, false) : null;
     if (fusionada) {
-      const malla = new Mesh(fusionada, new MeshLambertMaterial({ vertexColors: true }));
+      const malla = new Mesh(
+        fusionada,
+        new MeshLambertMaterial({
+          vertexColors: true,
+          // Gana siempre contra el asfalto, esté a la distancia que esté. Y con
+          // menos prioridad que las letras del suelo: la ayuda va debajo de la
+          // lección, no encima.
+          polygonOffset: true,
+          polygonOffsetFactor: -4,
+          polygonOffsetUnits: -4,
+        }),
+      );
       malla.name = 'ruta';
       this.grupo.add(malla);
     }
@@ -540,7 +650,14 @@ export class PlanDeVuelo {
     const aro = new Mesh(
       new RingGeometry(9, 12, 32),
       // La diana del final es roja: ahí se para.
-      new MeshBasicMaterial({ color: 0xc94a3d, transparent: true, opacity: 0.85 }),
+      new MeshBasicMaterial({
+        color: 0xc94a3d,
+        transparent: true,
+        opacity: 0.85,
+        polygonOffset: true,
+        polygonOffsetFactor: -5,
+        polygonOffsetUnits: -5,
+      }),
     );
     aro.rotation.x = -Math.PI / 2;
     aro.position.set(fin[0], this.cota(fin[0], fin[1]) + ALTURA + 0.02, fin[1]);

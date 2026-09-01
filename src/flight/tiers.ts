@@ -64,7 +64,11 @@ export const TUKA: Tier = {
   model: 'coefficient',
   // Física de verdad, pero con red completa: no se puede entrar en pérdida,
   // las alas vuelven solas y el viraje se coordina.
-  assists: FULL_ASSISTS,
+  //
+  // En tierra la red se afloja un poco: la asistencia de rodaje empuja hacia
+  // la raya, pero ya no lleva de la mano. Es el primer peldaño en el que uno
+  // se puede salir de la calle si se despista.
+  assists: { ...FULL_ASSISTS, taxiAssist: 0.65 },
   instruments: 'pictorial',
   units: 'metric',
 };
@@ -85,6 +89,9 @@ export const TAGUATO: Tier = {
     stallProtection: 0,
     extraDamping: 0.35,
     crashTolerance: 0.4,
+    // Un empujón de nada, solo para que una curva cerrada no te eche a la
+    // hierba por un pelo. Girar es cosa tuya.
+    taxiAssist: 0.25,
   },
   instruments: 'numeric',
   units: 'metric',
