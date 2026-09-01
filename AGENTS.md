@@ -102,8 +102,16 @@ En la práctica, tres consecuencias que sí son decisiones concretas:
   documentación en **castellano**. Es un repositorio público que aspira a
   recibir contribuciones de fuera, pero el equipo piensa en castellano.
 - TypeScript estricto. `noUncheckedIndexedAccess` está activo a propósito.
+- **Dependencias: pocas, y por un motivo.** Durante meses este proyecto se
+  comportó como si tuviera una regla de cero dependencias, y esa regla no
+  existía en ninguna parte — era una costumbre, y una costumbre sin escribir no
+  se puede discutir, solo obedecer. Escrita, es esta: se admite una dependencia
+  cuando resuelve un problema que **no es el nuestro** —leer un formato de
+  teselas 3D no es el oficio de este proyecto; enseñar a volar sí—, con licencia
+  compatible con Apache-2.0, anotada en `CREDITOS.md`, y prefiriendo siempre la
+  que no arrastra un árbol detrás. Ver el ADR 0006.
 - Sin framework de UI: el HUD es DOM y CSS. Añadir React aquí sería pagar
-  200 KB por un marcador de velocidad.
+  200 KB por un marcador de velocidad, y eso sigue en pie.
 - Unidades **SI dentro del modelo de vuelo** (metros, m/s, newtons, radianes)
   y conversión a nudos/pies/km-h **solo en la capa de presentación**. Mezclar
   unidades dentro del FDM es la forma más rápida de romperlo.

@@ -6,6 +6,17 @@ Si no se puede anotar la licencia, el asset no entra.
 
 ---
 
+## Mundo fotorrealista
+
+| Qué | De quién | Licencia |
+| --- | --- | --- |
+| [`3d-tiles-renderer`](https://github.com/NASA-AMMOS/3DTilesRendererJS) | NASA-AMMOS | Apache-2.0 |
+| Teselas 3D fotorrealistas | Google Maps Platform | De pago por uso, atribución obligatoria |
+
+La atribución de Google **no es opcional y cambia con cada tesela**: la recoge
+el propio renderizador y se pinta siempre en pantalla. Es la condición de uso, y
+además es justo — esa ciudad la fotografió otro.
+
 ## Dedicatoria
 
 **A Guillermo Ayala**, del Parque Nacional del Teide.
