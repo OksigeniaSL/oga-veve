@@ -160,6 +160,8 @@ export const ES_PY = {
   'hangar.despegar': '¡Despegar!',
   'hangar.volver': 'Elegir otro sitio',
   'mapa.title': 'Ver el mapa',
+  'mapa.cerca': 'Ver más de cerca',
+  'mapa.lejos': 'Ver más lejos',
   'tiempo.title': 'El tiempo',
   'tiempo.viento': 'De dónde viene el viento y cuánto sopla',
   'tiempo.calma': 'Sin viento',
