@@ -143,6 +143,15 @@ const PASO_MAXIMO = 25;
 /** Por encima de esto respecto a lo que toca, se avisa de que se va rápido. */
 const MARGEN = 1.6;
 
+/**
+ * A cuántos metros del final la ayuda de dirección suelta el mando, m.
+ *
+ * De aquí adentro ya se ve la doble raya pintada en el suelo y parar encima es
+ * lo que hay que aprender. Y sobre todo: apuntando a un punto que ya se ha
+ * pasado, la ayuda manda girar a buscarlo eternamente.
+ */
+const LLEGADA_SIN_AYUDA = 25;
+
 export interface Vista {
   readonly fase: Fase;
   readonly clave: string;
@@ -410,6 +419,22 @@ export class PlanDeVuelo {
     if (sobreElSuelo > 4 || estado.airspeed > 18) return 0;
 
     const p: Punto = [estado.position.x, estado.position.z];
+
+    /*
+     * **Al llegar, la ayuda se calla.**
+     *
+     * Apuntaba siempre a un punto de la ruta por delante, y sobre el final de
+     * la ruta ese punto es el propio final: en cuanto se pasa un metro, queda
+     * detrás, la ayuda manda girar a buscarlo, se pasa otra vez y vuelta a
+     * empezar. El avión se quedaba dando vueltas sobre sí mismo encima de la
+     * diana sin poder terminar los últimos metros, y en Guyrami —donde la ayuda
+     * manda del todo— no había forma de salir de ahí.
+     *
+     * Veinticinco metros es donde ya se ve la doble raya pintada en el suelo.
+     * De ahí adentro se para solo, que es justamente lo que hay que aprender.
+     */
+    if (this.restanteHasta(p) < LLEGADA_SIN_AYUDA) return 0;
+
     // El punto de la ruta más cercano, y hacia dónde va la raya allí.
     let mejor = Infinity;
     let cual = 0;
@@ -434,6 +459,10 @@ export class PlanDeVuelo {
         break;
       }
     }
+
+    // Y si aun así el punto al que se mira ha quedado encima, no hay rumbo que
+    // sacar de él: dos puntos a un metro dan un ángulo cualquiera.
+    if (Math.hypot(mira[0] - p[0], mira[1] - p[1]) < 6) return 0;
 
     const rumbo = ((estado.heading * 180) / Math.PI + 360) % 360;
     const quiero =
@@ -499,8 +528,27 @@ export class PlanDeVuelo {
    * desde donde esté el avión. Da igual cómo haya llegado ahí.
    */
   private alCambiarDeFase(fase: Fase): void {
+    /*
+     * **Alinearse también se guía.**
+     *
+     * Antes esta fase borraba la raya, y ahí se quedaba quien la seguía: con la
+     * luz verde dada, la doble raya detrás y ciento cuarenta y cinco metros
+     * hasta la pista sin nada que seguir. «No me deja terminar lo poquito que
+     * me queda hasta la cabecera», y después, a fuerza de motor, despegando por
+     * la calle de rodaje.
+     *
+     * Es la maniobra más delicada del rodaje —hay que entrar en la pista y
+     * ponerse en su eje— y era justo la única sin ayuda.
+     */
+    if (fase === 'alineando') {
+      if (this.destino === 'pista') return;
+      this.destino = 'pista';
+      this.ponerRuta(this.entradaEnPista());
+      return;
+    }
+
     // Volando no hay nada que rodar.
-    if (fase === 'alineando' || fase === 'despegando' || fase === 'en-vuelo' || fase === 'final') {
+    if (fase === 'despegando' || fase === 'en-vuelo' || fase === 'final') {
       this.ponerRuta(null);
       this.destino = null;
       return;
@@ -530,8 +578,35 @@ export class PlanDeVuelo {
     this.ponerRuta(rodajeEntre(this.grafo, this.ultimaPos, meta, 600));
   }
 
+  /**
+   * La entrada en pista: de donde esté el avión al eje, y eje abajo.
+   *
+   * No sale del grafo de rodaje —la pista no es una calle de rodaje— sino de la
+   * geometría de la propia pista: se entra por la cabecera de salida, se pone
+   * el morro en el eje y se apunta pista abajo. Los cuatrocientos metros
+   * finales no son para rodarlos: son para que la raya diga **hacia dónde**,
+   * que es lo que se pierde en cuanto uno se mete en una pista de cuarenta y
+   * cinco metros de ancha y tres kilómetros de larga.
+   */
+  private entradaEnPista(): Ruta {
+    const cab = this.cabeceraDeSalida();
+    const [ux, uy] = delante(this.pista.heading);
+    // El fichero tiene la Y al norte y `delante` da coordenadas de mundo, donde
+    // el norte es la Z negativa. Al pasar a coordenadas de fichero se invierte.
+    const dentro: Punto = [cab[0] + ux * 60, cab[1] - uy * 60];
+    const lejos: Punto = [cab[0] + ux * 460, cab[1] - uy * 460];
+    const puntos: Punto[] = [this.ultimaPos, dentro, lejos];
+    let largo = 0;
+    for (let i = 1; i < puntos.length; i++) {
+      largo += Math.hypot(puntos[i]![0] - puntos[i - 1]![0], puntos[i]![1] - puntos[i - 1]![1]);
+    }
+    // Sin letras: en la pista no se anuncia una calle, se anuncia la pista, y
+    // de eso ya se encarga el designador pintado en la cabecera.
+    return { tramos: [{ ref: null, puntos }], puntos, largo, letras: [] };
+  }
+
   /** A dónde va ahora mismo. Sirve para no recalcular la misma ruta cada fase. */
-  private destino: 'espera' | 'puesto' | null = null;
+  private destino: 'espera' | 'puesto' | 'pista' | null = null;
 
   private ultimaPos: Punto = [0, 0];
 

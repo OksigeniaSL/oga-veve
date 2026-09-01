@@ -270,7 +270,13 @@ export class Vuelo {
       // El permiso se gasta al usarlo: sirve para una entrada en pista y no
       // para todo el rato. Sin esto, quien abandona la pista y vuelve a entrar
       // lo hace con un verde de hace diez minutos.
-      if (pedida === 'despegando') {
+      //
+      // **Y también al verse volando**, aunque no se haya pasado por despegar.
+      // Quien se salta la pista y despega de la calle de rodaje no pasa por esa
+      // fase, así que el permiso no se gastaba nunca y la lámpara de la torre se
+      // quedaba encendida el resto del vuelo: «despegué, pero esa flecha verde
+      // sigue ahí… como no lo hice en pista está despistado».
+      if (pedida === 'despegando' || pedida === 'en-vuelo') {
         this.verde = false;
         this.uso = true;
       }

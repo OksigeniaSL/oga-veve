@@ -15,6 +15,7 @@
 import type { Aerodrome } from './aerodrome';
 import SGAS from '../../data/aerodromes/sgas.aero.json';
 import GCXO from '../../data/aerodromes/gcxo.aero.json';
+import type { Ciudad } from './ciudad';
 
 export interface TerrainBand {
   /** Altitud a la que empieza la banda, en metros. */
@@ -107,6 +108,12 @@ export interface Scenario {
    * se queda sin relieve alrededor, que es justo donde hace falta.
    */
   relieveLejano?: { readonly datos: Int16Array; readonly resolucion: number };
+
+  /**
+   * La ciudad de alrededor, si la hay: dónde hay casas y por dónde van las
+   * carreteras. Ver `ciudad.ts`, que explica por qué no son casas de verdad.
+   */
+  ciudad?: Ciudad;
   /**
    * Un aeródromo real extraído, si lo hay.
    *
