@@ -61,6 +61,8 @@ export const GUG: Dictionary = {
   'hangar.despegar': '¡Javeve!',
   'hangar.volver': 'Eiporavo ambue tenda',
   'mapa.title': 'Ehecha mapa',
+  'mapa.cerca': 'Ehecha hi’aguĩve',
+  'mapa.lejos': 'Ehecha mombyryve',
   'tiempo.title': 'Ára',
   'tiempo.viento': 'Moõguipa ou yvytu ha mboýpa ipoguasu',
   'tiempo.calma': "Yvytu'ỹre",
