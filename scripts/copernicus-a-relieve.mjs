@@ -34,7 +34,7 @@
 
 import { inflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { SCENARIOS } from '../src/world/scenarios.ts';
+import { SCENARIOS, VECES_LEJOS } from '../src/world/scenarios.ts';
 
 const BASE = 'https://copernicus-dem-30m.s3.amazonaws.com';
 const SALIDA = 'data/terrain';
@@ -266,11 +266,10 @@ if (!esc.aerodrome) {
  * número de muestras, el mismo peso de fichero, otra escala.
  */
 const LEJOS = process.argv.includes('--lejos');
-const VECES = 6;
 
 const { lat: lat0, lon: lon0 } = esc.aerodrome.origin;
 const res = esc.segments + 1;
-const tamano = LEJOS ? esc.size * VECES : esc.size;
+const tamano = LEJOS ? esc.size * VECES_LEJOS : esc.size;
 const sufijo = LEJOS ? '-lejos' : '';
 const paso = tamano / esc.segments;
 const mitad = tamano / 2;

@@ -23,6 +23,17 @@ export interface TerrainBand {
   colour: number;
 }
 
+/**
+ * Cuántas veces más ancho es el mapa del horizonte que el de al lado.
+ *
+ * Seis. Con los dieciocho kilómetros de Tenerife son ciento ocho, y el Teide
+ * —que está a treinta y siete y medio— entra con sitio de sobra. Lo usan el
+ * extractor y el terreno, y **tienen que estar de acuerdo**: si no, el anillo
+ * se dibuja a otra escala que el agujero que deja el mapa fino y aparece un
+ * escalón de trescientos metros alrededor del aeropuerto.
+ */
+export const VECES_LEJOS = 6;
+
 export interface Scenario {
   id: string;
   nameKey: string;
@@ -81,6 +92,21 @@ export interface Scenario {
    * atribución. Ver `docs/adr/0005-que-se-puede-comprar.md`.
    */
   relieve?: { readonly datos: Int16Array; readonly resolucion: number };
+
+  /**
+   * El relieve del horizonte, si lo hay: el mismo sitio, seis veces más ancho.
+   *
+   * Existe porque **el Teide no cabía**. El mapa fino de Tenerife Norte mide
+   * dieciocho kilómetros de lado y llega a nueve de la pista; el Teide está a
+   * treinta y siete y medio. Lo que se veía al fondo y se confundía con él era
+   * la Cumbre de Tigaiga: mil seiscientos setenta y un metros a once
+   * kilómetros y medio, en la dirección exacta de la cabecera 30.
+   *
+   * Ensanchar el mapa fino no valía. Con las mismas muestras repartidas en
+   * cien kilómetros, cada una cubre doscientos sesenta metros y el aeródromo
+   * se queda sin relieve alrededor, que es justo donde hace falta.
+   */
+  relieveLejano?: { readonly datos: Int16Array; readonly resolucion: number };
   /**
    * Un aeródromo real extraído, si lo hay.
    *
@@ -365,8 +391,17 @@ export const TENERIFE_NORTE: Scenario = {
   water: 0x3f6a80,
   fill: 0x53614a,
   sky: { horizon: 0xdfe7ea, zenith: 0x4a86c8 },
-  // El aire del Atlántico no es el del Chaco: hay bruma, y se ve.
-  fog: { colour: 0xdae4e8, density: 0.00006 },
+  /*
+   * Bruma, pero **poca**: el aire del Atlántico no es el del Chaco, y desde La
+   * Laguna se ve el Teide.
+   *
+   * Con seis cienmilésimas, a los treinta y siete kilómetros del Teide quedaba
+   * medio punto porcentual de montaña sin comerse la niebla, o sea nada: el
+   * horizonte que se acaba de traer no se habría visto. Con dieciocho
+   * millonésimas queda en el sesenta por ciento, que es exactamente la pinta
+   * que tiene un volcán a esa distancia — azulado y ahí.
+   */
+  fog: { colour: 0xdae4e8, density: 0.000018 },
   sun: { azimuth: 108, elevation: 44 },
   // Se opera por la 30, que es la preferente de verdad.
   runway: pistaDe(GCXO as unknown as Aerodrome, '30'),

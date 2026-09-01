@@ -58,8 +58,22 @@ export async function cargarRelieve(id: string): Promise<Scenario['relieve']> {
   }
 }
 
-/** El escenario con su relieve puesto, si lo tiene. */
+/**
+ * El escenario con sus dos relieves puestos, si los tiene.
+ *
+ * Los dos se piden a la vez y no uno detrás de otro: son dos ficheros de
+ * trescientos y pico kilobytes que no dependen entre sí, y encadenarlos era
+ * duplicar la espera del arranque sin ningún motivo.
+ */
 export async function conRelieve(escenario: Scenario): Promise<Scenario> {
-  const relieve = await cargarRelieve(escenario.id);
-  return relieve ? { ...escenario, relieve } : escenario;
+  const [relieve, relieveLejano] = await Promise.all([
+    cargarRelieve(escenario.id),
+    cargarRelieve(`${escenario.id}-lejos`),
+  ]);
+  if (!relieve && !relieveLejano) return escenario;
+  return {
+    ...escenario,
+    ...(relieve ? { relieve } : {}),
+    ...(relieveLejano ? { relieveLejano } : {}),
+  };
 }

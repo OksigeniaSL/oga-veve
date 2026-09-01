@@ -36,7 +36,7 @@ import { MissionMarker } from './world/mission-marker';
 import { MissionRunner } from './missions/runner';
 import { objectiveTarget } from './missions/types';
 import { missionsFor } from './content/missions';
-import { VALLE_CORDILLERA, type Scenario } from './world/scenarios';
+import { VALLE_CORDILLERA, VECES_LEJOS, type Scenario } from './world/scenarios';
 import { Hud } from './ui/hud';
 import { CreditsScreen } from './ui/credits';
 import { nombreDeTecla } from './flight/keymap';
@@ -177,7 +177,17 @@ export class Game {
     // de los fotogramas. Ver AGENTS.md, regla de rendimiento.
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    this.camera = new PerspectiveCamera(62, 1, 0.6, this.scenario.size * 1.6);
+    // El plano lejano llega hasta donde llegue el terreno. Con horizonte lejano
+    // eso son ochenta y seis kilómetros: el Teide está a treinta y siete y medio
+    // y con los veintiocho de antes se cortaba antes de llegar a él. Alejar el
+    // plano lejano casi no cuesta precisión —la que importa la fija el cercano,
+    // que no se toca— y es lo que deja ver una isla entera.
+    this.camera = new PerspectiveCamera(
+      62,
+      1,
+      0.6,
+      this.scenario.size * (this.scenario.relieveLejano ? VECES_LEJOS * 0.8 : 1.6),
+    );
 
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
