@@ -4,24 +4,28 @@
  * Esto es lo que saca al juego del mundo de cubos. Lo probado en `spike/` y
  * decidido en el ADR 0006, enchufado al juego.
  *
- * ## Lo que **no** hace, que es la mitad del diseño
+ * ## El mundo no se mueve: se copia
  *
- * **No toca la física.** El suelo con el que choca el avión sigue siendo el
- * mapa de alturas de Copernicus que ya había: `Terrain.sampleHeight` se llama
- * doscientas cuarenta veces por segundo y lanzar un rayo contra un cuarto de
- * millón de triángulos en cada llamada es impensable.
+ * Hubo una versión que bajaba las teselas un desfase medido para casarlas con
+ * nuestro mapa de alturas de Copernicus. Funcionaba en el aire y fallaba en el
+ * suelo, porque **nuestro aeropuerto es una meseta aplanada y el de verdad
+ * tiene pendiente**: un solo número casa los dos en el centro de la pista y
+ * entierra el avión cinco metros y medio en la plataforma.
  *
- * Y no hace falta, porque **la prueba midió que la diferencia entre los dos
- * suelos es constante**: cuarenta y siete metros y medio en una cabecera de
- * Tenerife y cuarenta y nueve y tres en la otra, que es la separación entre el
- * geoide —donde vive Copernicus— y el elipsoide —donde vive Google—. Si la
- * diferencia es constante, casarlos es restar.
+ * El arreglo fue moldear nuestro suelo con el de la foto. Y entonces las dos
+ * correcciones se pelearon: el desfase mueve el mundo, el moldeado mueve
+ * nuestro suelo, y cada una invalida la medida de la otra. Salió flotando
+ * setenta y tres metros.
  *
- * Así que las teselas se bajan ese desfase y quedan encima del mismo suelo con
- * el que choca el avión. Lo que se ve y lo que se toca coinciden sin que el
- * modelo de vuelo se entere de nada.
+ * Así que **el desfase se ha quitado del todo**. Las teselas van donde van, y
+ * `Terrain` copia sus alturas alrededor del aeródromo. Nuestro suelo pasa a
+ * ser el suyo, sin reconciliación de datums, porque adoptar su datum es más
+ * barato que traducirlo. Dos cosas que hacían lo mismo eran una de más.
  *
- * ## Y el desfase se mide, no se calcula
+ * Lo que sigue midiéndose aquí es solo **cuándo hay mundo suficiente para
+ * copiarlo**, y para eso vale la misma cuenta.
+ *
+ * ## Cuándo se da por asentado
  *
  * Siete rayos repartidos por la pista, y la mediana. Sobre la pista no hay
  * edificios por definición —el primer intento medía en el punto de referencia
@@ -85,16 +89,32 @@ const CATAS = [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3];
  */
 const MARGEN_PLAUSIBLE = 400;
 
+/**
+ * Cuántos segundos tiene que estar la medida quieta antes de creérsela.
+ *
+ * No es un margen de seguridad: es el tiempo que tardan en llegar las teselas
+ * finas. Con menos, se mide sobre el planeta a brochazos.
+ */
+const ESPERA_A_LA_VERDAD = 3;
+
 export interface Teselas {
   readonly grupo: Group;
   /** Se llama cada fotograma. Decide qué teselas hacen falta y las pide. */
-  update(camara: PerspectiveCamera, renderizador: WebGLRenderer): void;
+  update(camara: PerspectiveCamera, renderizador: WebGLRenderer, dt: number): void;
   /** Si ya se ha posado sobre nuestro suelo. Hasta entonces, no se enseña. */
   readonly asentado: boolean;
   /** El desfase medido, en metros. `null` mientras no se haya podido medir. */
   readonly desfase: number | null;
   /** Cuántas teselas se ven ahora mismo. Para las comprobaciones. */
   readonly visibles: number;
+  /**
+   * La altura del mundo fotografiado en un punto, o `null` si no llega el rayo.
+   *
+   * Sirve para preguntarle a la foto qué hay en un sitio. Es caro —un rayo
+   * contra un cuarto de millón de triángulos— así que se usa a puñados y en
+   * momentos concretos, nunca por fotograma.
+   */
+  alturaEn(x: number, z: number): number | null;
   dispose(): void;
 }
 
@@ -133,6 +153,24 @@ export function crearTeselas(
   const teselas = new TilesRenderer();
   teselas.registerPlugin(new GoogleCloudAuthPlugin({ apiToken: clave }));
   /*
+   * **Cuánto detalle se pide**, en píxeles de error admitido.
+   *
+   * Es el número que decide si la fotografía se ve nítida o pastosa. De fábrica
+   * viene en seis, que a trescientos metros de altura está bien y a ras de suelo
+   * convierte el asfalto en una acuarela: «esa mezcla entre realidad y
+   * fotografía borrosa parece el holocausto zombie».
+   *
+   * En dos se piden teselas de un nivel más fino. Cuesta memoria y descargas, no
+   * fotogramas —el detalle que no se ve no se dibuja—, y es la diferencia entre
+   * rodar sobre una foto y rodar sobre una mancha.
+   *
+   * Lo que **no** arregla, y conviene saberlo: la fotogrametría aérea se toma
+   * desde un avión, así que a la altura de los ojos no hay más detalle que
+   * pedir. Nítida sí; con la nariz pegada al suelo, siempre va a ser una foto
+   * vista muy de cerca.
+   */
+  teselas.errorTarget = 2;
+  /*
    * La matriz se pone a mano y **el desfase se compone dentro de ella**.
    *
    * El primer intento bajaba el mundo con `group.position.y`, y este grupo tiene
@@ -143,12 +181,9 @@ export function crearTeselas(
    * se veía era el domo del cielo por debajo del horizonte.
    */
   const aLoNuestro = matrizDelMundo(aero.origin.lat, aero.origin.lon);
-  const ponerDesfase = (metros: number): void => {
-    teselas.group.matrix.makeTranslation(0, -metros, 0).multiply(aLoNuestro);
-    teselas.group.matrixWorldNeedsUpdate = true;
-  };
   teselas.group.matrixAutoUpdate = false;
-  ponerDesfase(0);
+  teselas.group.matrix.copy(aLoNuestro);
+  teselas.group.matrixWorldNeedsUpdate = true;
   grupo.add(teselas.group);
 
   const rayo = new Raycaster();
@@ -159,6 +194,8 @@ export function crearTeselas(
   let asentado = false;
   let desfase: number | null = null;
   let anterior: number | null = null;
+  /** Cuánto tiempo lleva la medida sin moverse. Ver abajo. */
+  let quieta = 0;
 
   /** Cuánto está el mundo por encima del nuestro en un punto, o `null`. */
   const diferenciaEn = (x: number, z: number): number | null => {
@@ -170,13 +207,44 @@ export function crearTeselas(
     return suyo - cotaNuestra(x, z);
   };
 
-  /** La mediana de las diferencias, o `null` si no hay suficientes catas. */
+  /**
+   * La mediana de las diferencias, o `null` si **falta alguna cata**.
+   *
+   * Se exigen las siete, no cuatro de siete. El primer criterio era «espera a
+   * que el cargador se calle», y eso dejó de valer al pedir teselas más finas:
+   * con el detalle alto **el cargador no se calla nunca** —siempre hay algo más
+   * fino que traer— así que el desfase no se aplicaba jamás y el avión se
+   * quedaba diecinueve metros bajo tierra.
+   *
+   * Exigir las siete catas es mejor criterio y no depende de nadie: si las
+   * siete golpean, es que hay teselas cargadas en toda la pista. Y encima se
+   * pide que dos medidas seguidas coincidan, que descarta el instante en que
+   * acaba de llegar una tesela basta.
+   */
   const medir = (): number | null => {
     const valores = catas
       .map(([x, z]) => diferenciaEn(x, z))
       .filter((c): c is number => c !== null);
-    if (valores.length < 4) return null;
+    if (valores.length < catas.length) return null;
     valores.sort((a, b) => a - b);
+
+    /*
+     * **Y las siete tienen que parecerse entre ellas.**
+     *
+     * Este es el criterio que faltaba, y su ausencia costó media noche. Los
+     * anteriores comprobaban que la medida fuera **estable** —dos lecturas
+     * seguidas iguales— y una tesela basta, de esas que cubren medio país con
+     * cuatro triángulos, es **estabilísima**: se mide dos veces, sale lo mismo,
+     * y el juego se cree un desfase de setenta y cinco metros donde son trece.
+     *
+     * Estable no es correcto. Lo correcto se comprueba con algo que sepamos del
+     * mundo, y sabemos esto: **una pista de aterrizaje es plana.** Si las siete
+     * catas repartidas por ella difieren más de veinticinco metros entre sí, lo
+     * que hay debajo no es una pista — es una tesela sin terminar de cargar.
+     */
+    const rango = valores[valores.length - 1]! - valores[0]!;
+    if (rango > 25) return null;
+
     return valores[Math.floor(valores.length / 2)]!;
   };
 
@@ -188,10 +256,17 @@ export function crearTeselas(
     get desfase() {
       return desfase;
     },
+    alturaEn(x: number, z: number) {
+      rayo.set(new Vector3(x, referencia + 9000, z), new Vector3(0, -1, 0));
+      const golpes = rayo.intersectObject(teselas.group, true);
+      if (!golpes.length) return null;
+      const y = golpes[0]!.point.y;
+      return Math.abs(y - referencia) < MARGEN_PLAUSIBLE ? y : null;
+    },
     get visibles() {
       return (teselas as unknown as ConEstadisticas).stats?.visible ?? 0;
     },
-    update(camara: PerspectiveCamera, renderizador: WebGLRenderer) {
+    update(camara: PerspectiveCamera, renderizador: WebGLRenderer, dt: number) {
       teselas.setCamera(camara);
       /*
        * **Y la resolución de la pantalla**, que es de donde sale el error con el
@@ -203,19 +278,35 @@ export function crearTeselas(
       teselas.update();
 
       if (asentado) return;
-      const s = (teselas as unknown as ConEstadisticas).stats;
-      // Se mide con el cargador callado. Ver la cabecera de este fichero.
-      if ((s?.downloading ?? 1) !== 0 || (s?.parsing ?? 1) !== 0 || (s?.queued ?? 1) !== 0)
-        return;
 
+      /*
+       * **Y hay que darle tiempo a que llegue la verdad.**
+       *
+       * Este es el fallo que costó la noche, y los tres intentos anteriores
+       * fallaron por lo mismo sin que se viera. El criterio era «dos medidas
+       * seguidas iguales», y una tesela basta —de las que cubren medio país con
+       * cuatro triángulos— da la misma medida mil veces seguidas: es
+       * **estabilísima**. Se medía a los dos fotogramas de abrir el juego,
+       * cuando lo único cargado es el planeta a brochazos, y el desfase salía
+       * de setenta y cinco metros donde son trece.
+       *
+       * Estable no es correcto. Y comprobar que la pista sale plana tampoco
+       * vale, porque un triángulo del tamaño de un país **también es plano**.
+       *
+       * Lo que hace falta es esperar: las teselas finas llegan unos segundos
+       * después y cambian la respuesta. Tres segundos sin que la medida se
+       * mueva medio metro es que ya ha llegado lo que tenía que llegar.
+       */
       const cota = medir();
-      if (cota !== null && anterior !== null && Math.abs(cota - anterior) < 1) {
-        desfase = cota;
-        // Se baja el mundo ese desfase: así el suelo que se ve y el suelo con
-        // el que choca el avión son el mismo.
-        ponerDesfase(desfase);
-        grupo.visible = true;
-        asentado = true;
+      if (cota !== null && anterior !== null && Math.abs(cota - anterior) < 0.5) {
+        quieta += dt;
+        if (quieta >= ESPERA_A_LA_VERDAD) {
+          desfase = cota;
+          grupo.visible = true;
+          asentado = true;
+        }
+      } else {
+        quieta = 0;
       }
       anterior = cota;
     },

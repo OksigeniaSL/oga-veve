@@ -125,6 +125,53 @@ export class Terrain {
   }
 
   /**
+   * Reescribe el mapa de alturas con lo que diga otra fuente. De una pasada.
+   *
+   * Existe porque **nuestro aeropuerto es una meseta y el de verdad no lo es.**
+   * `flattenAerodrome` aplana el recinto entero a una cota para que la pista de
+   * polígonos quede plana, y eso está bien cuando el suelo lo dibujamos
+   * nosotros. Con la fotogrametría debajo, un desfase constante casa los dos
+   * suelos en el centro de la pista y **entierra el avión cinco metros y medio
+   * en la plataforma** — o lo va hundiendo y sacando según rueda, que fue como
+   * se describió: «convertido mi avioneta en un topo».
+   *
+   * Así que se le pregunta a la foto nodo a nodo y se escribe. A partir de ahí
+   * el suelo con el que choca el avión y el que se ve **son el mismo**, no dos
+   * que se parecen, y no hay desfase que mantener.
+   *
+   * **De una pasada y no a plazos.** La primera versión repartía los rayos
+   * entre fotogramas para no congelar nada, y sencillamente no llegaba a
+   * terminar: el avión seguía diecinueve metros bajo tierra y no había forma de
+   * ver por qué. Nueve mil rayos de golpe son medio segundo de tirón al empezar
+   * —una vez, con el juego recién abierto— y funcionan. Lo elegante puede
+   * esperar a que lo correcto esté hecho.
+   *
+   * Devuelve cuántos nodos se han escrito, que es lo único que dice si ha hecho
+   * algo.
+   */
+  moldearDesde(
+    cota: (x: number, z: number) => number | null,
+    centro: readonly [number, number],
+    lado: number,
+  ): number {
+    const { resolution, step, half } = this;
+    const desde = (v: number): number => Math.max(0, Math.floor((v - lado / 2 + half) / step));
+    const hasta = (v: number): number =>
+      Math.min(resolution - 1, Math.ceil((v + lado / 2 + half) / step));
+
+    let escritos = 0;
+    for (let fila = desde(centro[1]); fila <= hasta(centro[1]); fila++) {
+      for (let col = desde(centro[0]); col <= hasta(centro[0]); col++) {
+        const y = cota(-half + col * step, -half + fila * step);
+        if (y === null) continue;
+        this.heights[fila * resolution + col] = y;
+        escritos++;
+      }
+    }
+    return escritos;
+  }
+
+  /**
    * Vuelve a dibujar el aeródromo con otro tiempo.
    *
    * Lo único que cambia es la manga, que apunta a donde va el viento. Podría
