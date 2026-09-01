@@ -98,6 +98,48 @@ const CRUCERO = 11;
 /** Deceleración cómoda, m/s². Con esto se calcula dónde hay que ir aflojando. */
 const FRENADA = 0.9;
 
+/**
+ * El radio con el que se redondean los codos de la ruta, m.
+ *
+ * El grafo de rodaje da esquinas de verdad: dos rectas que se encuentran en un
+ * punto y giran noventa grados de golpe. Un avión no hace eso, y la raya
+ * tampoco debería pedirlo. Dieciocho metros es un giro que un ligero toma
+ * cómodo, y es lo que hace que la curva **se pueda seguir** en vez de tener que
+ * adivinarla.
+ */
+const RADIO_CURVA = 18;
+
+/**
+ * Aceleración lateral cómoda en tierra, m/s².
+ *
+ * De aquí sale la velocidad de cada curva: `v = √(a·r)`. Es la misma cuenta que
+ * usa un coche para saber a qué velocidad entra en un peralte, y tiene la
+ * ventaja de que **no depende de cómo esté troceada la ruta**. Antes la
+ * velocidad salía del ángulo de cada vértice, y eso significaba que redondear
+ * un codo —repartir el mismo giro entre veinte puntos— lo convertía en recta a
+ * ojos del cálculo. El radio no se deja engañar.
+ */
+const LATERAL = 1.2;
+
+/** Lo más despacio que se pide rodar. Por debajo, una curva parece una parada. */
+const MINIMO_EN_CURVA = 4.5;
+
+/**
+ * Lo más largo que se deja un tramo de la raya, m.
+ *
+ * El color va en los vértices y la tarjeta gráfica lo interpola por el medio,
+ * así que **un tramo largo es una degradación larga**. En Tenerife el último
+ * iba de un vértice al siguiente en novecientos treinta y cinco metros: el rojo
+ * de la doble raya se repartía por casi un kilómetro de rodadura y lo que se
+ * veía no era ni verde ni rojo, era un salmón uniforme que no dice nada. El
+ * aviso de parar tiene que aparecer donde hay que parar.
+ *
+ * Veinticinco metros es también lo que hace que el color se lea como un semáforo
+ * y no como un degradado. Cuesta unos ochenta vértices por ruta, que a estas
+ * alturas no es nada.
+ */
+const PASO_MAXIMO = 25;
+
 /** Por encima de esto respecto a lo que toca, se avisa de que se va rápido. */
 const MARGEN = 1.6;
 
@@ -131,6 +173,89 @@ export interface Vista {
 /** A cuántos metros de la raya verde se considera que uno se ha salido. */
 const FUERA_DE_RUTA = 30;
 
+/**
+ * Redondea los codos de una polilínea y dice el radio de cada punto.
+ *
+ * Cada esquina interior se sustituye por un filete: se retrocede un poco por
+ * cada tramo y se une con una Bézier cuadrática, que a estos radios es un arco
+ * a todos los efectos y no obliga a resolver el centro del círculo.
+ *
+ * El filete nunca se come más del cuarenta y cinco por ciento de ninguno de los
+ * dos tramos que une. Sin ese tope, dos codos seguidos y cercanos —que en una
+ * plataforma los hay— se solapaban y la raya se cruzaba consigo misma.
+ *
+ * Devuelve también el radio en cada punto porque **quien pinta y quien calcula
+ * la velocidad necesitan lo mismo**, y calcularlo dos veces era justo lo que
+ * hacía que no coincidieran.
+ */
+function redondear(pts: readonly Punto[], radio: number): { puntos: Punto[]; radios: number[] } {
+  if (pts.length < 3) return { puntos: pts.map((p) => [...p] as Punto), radios: pts.map(() => Infinity) };
+
+  const puntos: Punto[] = [[...pts[0]!] as Punto];
+  const radios: number[] = [Infinity];
+
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = pts[i - 1]!;
+    const b = pts[i]!;
+    const c = pts[i + 1]!;
+    const l1 = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const l2 = Math.hypot(c[0] - b[0], c[1] - b[1]);
+    if (l1 < 0.01 || l2 < 0.01) continue;
+
+    const u1: Punto = [(b[0] - a[0]) / l1, (b[1] - a[1]) / l1];
+    const u2: Punto = [(c[0] - b[0]) / l2, (c[1] - b[1]) / l2];
+    const giro = Math.acos(Math.max(-1, Math.min(1, u1[0] * u2[0] + u1[1] * u2[1])));
+
+    // Casi recto: no hay codo que redondear y meter puntos solo gasta.
+    if (giro < 0.05) {
+      puntos.push([...b] as Punto);
+      radios.push(Infinity);
+      continue;
+    }
+
+    const media = Math.tan(giro / 2);
+    const retroceso = Math.min(radio * media, l1 * 0.45, l2 * 0.45);
+    const r = retroceso / media;
+    const p1: Punto = [b[0] - u1[0] * retroceso, b[1] - u1[1] * retroceso];
+    const p2: Punto = [b[0] + u2[0] * retroceso, b[1] + u2[1] * retroceso];
+
+    // Un punto cada quince grados de giro, y nunca menos de dos.
+    const pasos = Math.max(2, Math.round(giro / 0.26));
+    for (let k = 0; k <= pasos; k++) {
+      const t = k / pasos;
+      const m = (1 - t) * (1 - t);
+      puntos.push([
+        m * p1[0] + 2 * (1 - t) * t * b[0] + t * t * p2[0],
+        m * p1[1] + 2 * (1 - t) * t * b[1] + t * t * p2[1],
+      ] as Punto);
+      radios.push(r);
+    }
+  }
+
+  puntos.push([...pts[pts.length - 1]!] as Punto);
+  radios.push(Infinity);
+
+  // Y se trocean las rectas largas. Los puntos que se meten van con radio
+  // infinito porque están sobre una recta: solo sirven para que el color
+  // cambie donde toca en vez de degradarse durante un kilómetro.
+  const densos: Punto[] = [puntos[0]!];
+  const densosRadios: number[] = [radios[0]!];
+  for (let i = 1; i < puntos.length; i++) {
+    const a = puntos[i - 1]!;
+    const b = puntos[i]!;
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const trozos = Math.ceil(l / PASO_MAXIMO);
+    for (let k = 1; k < trozos; k++) {
+      const t = k / trozos;
+      densos.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t] as Punto);
+      densosRadios.push(Infinity);
+    }
+    densos.push(b);
+    densosRadios.push(radios[i]!);
+  }
+  return { puntos: densos, radios: densosRadios };
+}
+
 export class PlanDeVuelo {
   readonly grupo = new Group();
   private readonly grafo: Grafo;
@@ -138,6 +263,8 @@ export class PlanDeVuelo {
   private ruta: Ruta | null = null;
   /** La ruta en coordenadas de mundo, que es donde vive el avión. */
   private rutaMundo: Punto[] = [];
+  /** El radio de giro en cada punto de la ruta. `Infinity` donde va recta. */
+  private radios: number[] = [];
 
   constructor(
     private readonly aero: Aerodrome,
@@ -462,22 +589,17 @@ export class PlanDeVuelo {
     this.velocidades = new Array<number>(n).fill(CRUCERO);
     if (n < 2) return;
 
-    // Por curvatura: el ángulo que se gira en cada vértice.
-    for (let i = 1; i < n - 1; i++) {
-      const a = this.rutaMundo[i - 1]!;
-      const b = this.rutaMundo[i]!;
-      const c = this.rutaMundo[i + 1]!;
-      const a1 = Math.atan2(b[0] - a[0], b[1] - a[1]);
-      const a2 = Math.atan2(c[0] - b[0], c[1] - b[1]);
-      const giro = Math.abs(((a2 - a1 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
-      const grados = (giro * 180) / Math.PI;
-      // Noventa grados → cuatro y medio por segundo. Recto → crucero.
-      //
-      // Cuatro y medio y no tres, porque tres cae en rojo y **una curva no es
-      // una parada**: se veía la raya ponerse roja en cada codo de la
-      // rodadura, que dice «pará» donde en realidad dice «aflojá». El rojo se
-      // reserva para la doble raya.
-      this.velocidades[i] = Math.max(4.5, CRUCERO * (1 - Math.min(1, grados / 90) * 0.62));
+    // **Por el radio de la curva, no por el ángulo del vértice.**
+    //
+    // `v = √(a·r)` es la cuenta de toda la vida: la velocidad a la que una
+    // curva de radio `r` se toma con una aceleración lateral de `a`. Y como
+    // mira el radio y no el troceado, redondear los codos no la engaña. Con el
+    // ángulo de cada vértice sí lo hacía: repartir un giro de noventa grados
+    // entre veinte puntos lo dejaba en cuatro grados por punto, o sea recta.
+    for (let i = 0; i < n; i++) {
+      const r = this.radios[i] ?? Infinity;
+      if (!Number.isFinite(r)) continue;
+      this.velocidades[i] = Math.max(MINIMO_EN_CURVA, Math.min(CRUCERO, Math.sqrt(LATERAL * r)));
     }
 
     // Y hacia atrás desde el final, que es lo que hace que se vaya aflojando
@@ -562,7 +684,10 @@ export class PlanDeVuelo {
 
   private ponerRuta(ruta: Ruta | null): void {
     this.ruta = ruta;
-    this.rutaMundo = ruta ? ruta.puntos.map((p) => [p[0], -p[1]] as Punto) : [];
+    const crudos = ruta ? ruta.puntos.map((p) => [p[0], -p[1]] as Punto) : [];
+    const { puntos, radios } = redondear(crudos, RADIO_CURVA);
+    this.rutaMundo = puntos;
+    this.radios = radios;
     this.calcularVelocidades();
     this.pintar();
   }
@@ -581,51 +706,90 @@ export class PlanDeVuelo {
     const colorDe = (v: number): readonly [number, number, number] =>
       v < 3.5 ? ROJO : v < 7.5 ? AMBAR : VERDE;
 
-    const piezas: BufferGeometry[] = [];
-    for (let i = 0; i < this.rutaMundo.length - 1; i++) {
-      const [ax, az] = this.rutaMundo[i]!;
-      const [bx, bz] = this.rutaMundo[i + 1]!;
-      const largo = Math.hypot(bx - ax, bz - az);
-      if (largo < 0.5) continue;
-      const ux = (bx - ax) / largo;
-      const uz = (bz - az) / largo;
-      const px = (-uz * ANCHO) / 2;
-      const pz = (ux * ANCHO) / 2;
-      const esquinas: readonly [number, number][] = [
-        [ax + px, az + pz],
-        [bx + px, bz + pz],
-        [bx - px, bz - pz],
-        [ax - px, az - pz],
+    /*
+     * **Una sola tira, cosida por los vértices.**
+     *
+     * Antes era un rectángulo suelto por tramo, cada uno con sus extremos
+     * cortados en perpendicular a su propia dirección. En recta no se nota; en
+     * un codo, los dos rectángulos se encuentran en ángulo y dejan una cuña de
+     * asfalto por fuera y un solape por dentro. Eso es lo que se veía: «fíjate
+     * en cómo se quiebra a veces». No era un fallo de los datos ni del terreno,
+     * era la costura.
+     *
+     * El arreglo es el inglete de toda la vida: en cada vértice el borde se
+     * desplaza por la **bisectriz** de los dos tramos, y se alarga lo justo
+     * —`1/cos(θ/2)`— para que la esquina exterior cierre. El tope de dos y
+     * medio es para que un giro casi en horquilla no dispare una púa de
+     * cincuenta metros.
+     */
+    const n = this.rutaMundo.length;
+    const bordes: { ix: number; iz: number; dx: number; dz: number }[] = [];
+    for (let i = 0; i < n; i++) {
+      const previo = this.rutaMundo[Math.max(0, i - 1)]!;
+      const actual = this.rutaMundo[i]!;
+      const siguiente = this.rutaMundo[Math.min(n - 1, i + 1)]!;
+
+      /** La normal a la izquierda de un tramo, o `null` si el tramo es nulo. */
+      const izquierdaDe = (a: Punto, b: Punto): Punto | null => {
+        const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        return l < 1e-6 ? null : [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+      };
+      const n1 = izquierdaDe(previo, actual);
+      const n2 = izquierdaDe(actual, siguiente);
+      const base = n1 ?? n2;
+      if (!base) {
+        bordes.push({ ix: actual[0], iz: actual[1], dx: 0, dz: 0 });
+        continue;
+      }
+
+      const sx = (n1?.[0] ?? base[0]) + (n2?.[0] ?? base[0]);
+      const sz = (n1?.[1] ?? base[1]) + (n2?.[1] ?? base[1]);
+      const l = Math.hypot(sx, sz);
+      const bx = l < 1e-6 ? base[0] : sx / l;
+      const bz = l < 1e-6 ? base[1] : sz / l;
+      // Cuánto hay que alargar por la bisectriz para que la esquina cierre.
+      const coseno = Math.max(0.4, bx * base[0] + bz * base[1]);
+      const escala = Math.min(2.5, 1 / coseno) * (ANCHO / 2);
+      bordes.push({ ix: actual[0], iz: actual[1], dx: bx * escala, dz: bz * escala });
+    }
+
+    const pos = new Float32Array(n * 2 * 3);
+    const col = new Float32Array(n * 2 * 3);
+    const indices: number[] = [];
+    for (let i = 0; i < n; i++) {
+      const b = bordes[i]!;
+      const c = colorDe(this.velocidades[i] ?? CRUCERO);
+      // Izquierda y derecha del mismo vértice, en ese orden.
+      const lados: readonly [number, number][] = [
+        [b.ix + b.dx, b.iz + b.dz],
+        [b.ix - b.dx, b.iz - b.dz],
       ];
-      const pos = new Float32Array(12);
-      esquinas.forEach(([qx, qz], k) => {
-        pos[k * 3] = qx;
+      lados.forEach(([qx, qz], lado) => {
+        const k = (i * 2 + lado) * 3;
+        pos[k] = qx;
         // La cota se muestrea en cada esquina y no una vez por tramo: sobre una
         // pista con pendiente, una raya plana se entierra por un extremo.
-        pos[k * 3 + 1] = this.cota(qx, qz) + ALTURA;
-        pos[k * 3 + 2] = qz;
+        pos[k + 1] = this.cota(qx, qz) + ALTURA;
+        pos[k + 2] = qz;
+        // El color va **en los vértices**, no en el material: así la raya
+        // entera sigue siendo una sola llamada de dibujo y a la vez cambia de
+        // color a lo largo, que es de lo que se trata.
+        col[k] = c[0];
+        col[k + 1] = c[1];
+        col[k + 2] = c[2];
       });
-
-      // El color va **en los vértices**, no en el material: así la raya entera
-      // sigue siendo una sola llamada de dibujo y a la vez cambia de color a lo
-      // largo, que es de lo que se trata. Un tramo por color habría multiplicado
-      // por tres las mallas.
-      const cA = colorDe(this.velocidades[i] ?? CRUCERO);
-      const cB = colorDe(this.velocidades[i + 1] ?? CRUCERO);
-      const col = new Float32Array(12);
-      [cA, cB, cB, cA].forEach(([r, g, b], k) => {
-        col[k * 3] = r;
-        col[k * 3 + 1] = g;
-        col[k * 3 + 2] = b;
-      });
-
-      const geo = new BufferGeometry();
-      geo.setAttribute('position', new Float32BufferAttribute(pos, 3));
-      geo.setAttribute('color', new Float32BufferAttribute(col, 3));
-      geo.setIndex([0, 1, 2, 0, 2, 3]);
-      geo.computeVertexNormals();
-      piezas.push(geo);
+      if (i < n - 1) {
+        const a = i * 2;
+        indices.push(a, a + 2, a + 3, a, a + 3, a + 1);
+      }
     }
+
+    const geo = new BufferGeometry();
+    geo.setAttribute('position', new Float32BufferAttribute(pos, 3));
+    geo.setAttribute('color', new Float32BufferAttribute(col, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    const piezas: BufferGeometry[] = [geo];
 
     const fusionada = piezas.length ? mergeGeometries(piezas, false) : null;
     if (fusionada) {
