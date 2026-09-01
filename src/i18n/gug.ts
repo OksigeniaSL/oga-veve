@@ -64,6 +64,7 @@ export const GUG: Dictionary = {
   'mapa.cerca': 'Ehecha hi’aguĩve',
   'mapa.lejos': 'Ehecha mombyryve',
   'tiempo.title': 'Ára',
+  'tiempo.hora': 'Mba’e óra',
   'tiempo.viento': 'Moõguipa ou yvytu ha mboýpa ipoguasu',
   'tiempo.calma': "Yvytu'ỹre",
   'tiempo.real': 'Ára ko’ág̃agua',

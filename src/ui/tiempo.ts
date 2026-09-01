@@ -80,6 +80,23 @@ export class PanelDelTiempo {
             <circle class="rosa__tirador" cx="0" cy="-60" r="13" />
           </g>
         </svg>
+        <!--
+          **El sol se arrastra por un círculo**, no por una barra ni por un
+          reloj. El círculo es el cielo: arriba es mediodía, abajo medianoche, y
+          la raya del medio es el horizonte. Eso lo entiende alguien de cuatro
+          años porque es literalmente lo que ve todos los días — un reloj, no.
+        -->
+        <svg class="tiempo__sol" data-hud="tiempo-sol" viewBox="-110 -110 220 220"
+             role="application" aria-label="${t('tiempo.hora')}">
+          <path class="sol__noche" d="M-92 0 A92 92 0 0 0 92 0 Z" />
+          <circle class="sol__orbita" cx="0" cy="0" r="92" />
+          <path class="sol__horizonte" d="M-104 0 H104" />
+          <g data-hud="tiempo-astro">
+            <circle class="sol__halo" cx="0" cy="-92" r="26" />
+            <circle class="sol__disco" cx="0" cy="-92" r="14" />
+          </g>
+        </svg>
+
         <div class="tiempo__botones">
           <button class="tiempo__boton" type="button" data-hud="tiempo-calma"
                   aria-label="${t('tiempo.calma')}">
@@ -138,6 +155,56 @@ export class PanelDelTiempo {
     this.rosa?.addEventListener('pointermove', (e) => {
       if (e.buttons) mover(e);
     });
+
+    // El sol, igual: se agarra en cualquier parte del círculo.
+    const arco = raiz.querySelector<SVGSVGElement>('[data-hud="tiempo-sol"]');
+    const moverSol = (e: PointerEvent): void => {
+      if (!arco) return;
+      const r = arco.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * 220 - 110;
+      const y = ((e.clientY - r.top) / r.height) * 220 - 110;
+      // Arriba es mediodía y se avanza hacia el oeste, que es como va el sol.
+      const angulo = (Math.atan2(x, -y) * 180) / Math.PI;
+      this.ponerHora(((angulo / 360) * 24 + 12 + 24) % 24);
+    };
+    arco?.addEventListener('pointerdown', (e) => {
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+      moverSol(e);
+    });
+    arco?.addEventListener('pointermove', (e) => {
+      if (e.buttons) moverSol(e);
+    });
+  }
+
+  private horaActual = 16;
+  private alCambiarHora: ((h: number) => void) | null = null;
+
+  /** Quién se entera de que ha cambiado la hora. */
+  onHora(handler: (h: number) => void): void {
+    this.alCambiarHora = handler;
+  }
+
+  /** Pone la hora sin avisar: es pintar, no cambiar. */
+  ponerHoraSinAvisar(hora: number): void {
+    this.horaActual = hora;
+    this.pintarSol();
+  }
+
+  private ponerHora(hora: number): void {
+    if (Math.abs(hora - this.horaActual) < 0.02) return;
+    this.horaActual = hora;
+    this.pintarSol();
+    this.alCambiarHora?.(hora);
+  }
+
+  private pintarSol(): void {
+    const astro = this.raiz?.querySelector<SVGGElement>('[data-hud="tiempo-astro"]');
+    if (!astro) return;
+    astro.setAttribute('transform', `rotate(${((this.horaActual - 12) / 24) * 360})`);
+    // De noche el sol se apaga y queda la luna, que es el mismo disco más
+    // pequeño y frío. Una luna aparte serían dos cosas que mantener sincronizadas.
+    const deNoche = this.horaActual < 6 || this.horaActual > 18;
+    astro.classList.toggle('sol--luna', deNoche);
   }
 
   /** Quién se entera de que ha cambiado el tiempo. */

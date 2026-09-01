@@ -175,6 +175,7 @@ export class Hud {
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
+  private horaAtada: { hora: number; cambio: (h: number) => void } | null = null;
   private tiempoAtado: {
     meteo: import('../world/meteo').Meteo;
     cambio: (m: import('../world/meteo').Meteo) => void;
@@ -436,6 +437,10 @@ export class Hud {
       this.tiempo.onCambio(this.tiempoAtado.cambio);
       this.tiempo.onDeVerdad(this.tiempoAtado.deVerdad);
       this.tiempo.poner(this.tiempoAtado.meteo);
+    }
+    if (this.horaAtada) {
+      this.tiempo.onHora(this.horaAtada.cambio);
+      this.tiempo.ponerHoraSinAvisar(this.horaAtada.hora);
     }
     this.paintSound();
     this.paintProgress();
@@ -750,6 +755,13 @@ export class Hud {
     this.tiempo.onCambio(cambio);
     this.tiempo.onDeVerdad(deVerdad);
     this.tiempo.poner(meteo);
+  }
+
+  /** Quién se entera de que se ha movido el sol. */
+  ponerHora(hora: number, cambio: (h: number) => void): void {
+    this.horaAtada = { hora, cambio };
+    this.tiempo.onHora(cambio);
+    this.tiempo.ponerHoraSinAvisar(hora);
   }
 
   /** Quién vuelve al hangar. */

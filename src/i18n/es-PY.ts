@@ -163,6 +163,7 @@ export const ES_PY = {
   'mapa.cerca': 'Ver más de cerca',
   'mapa.lejos': 'Ver más lejos',
   'tiempo.title': 'El tiempo',
+  'tiempo.hora': 'La hora del día',
   'tiempo.viento': 'De dónde viene el viento y cuánto sopla',
   'tiempo.calma': 'Sin viento',
   'tiempo.real': 'El tiempo de ahora mismo',

@@ -2426,8 +2426,14 @@ body {
 
 .tiempo__caja {
   display: grid;
-  gap: 12px;
-  width: min(74vmin, 320px);
+  /*
+   * Los dos círculos lado a lado, no apilados. Apilados el panel medía más que
+   * la pantalla de un portátil y el sol se salía por abajo — y un mando que hay
+   * que desplazar para ver no se ha hecho.
+   */
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 14px;
+  width: min(88vmin, 380px);
   padding: 16px;
   border-radius: var(--r-l);
   background: var(--barro);
@@ -2487,6 +2493,7 @@ body {
 }
 
 .tiempo__botones {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -2566,4 +2573,55 @@ body {
   stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
+}
+
+/*
+ * El sol que se arrastra. Mismo lenguaje que la rosa del viento: un círculo que
+ * se agarra por cualquier parte, sin un solo número.
+ */
+.tiempo__sol {
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: grab;
+}
+
+.sol__noche {
+  fill: rgba(0, 0, 0, 0.42);
+}
+
+.sol__orbita {
+  fill: rgba(255, 255, 255, 0.04);
+  stroke: var(--linea);
+  stroke-width: 2;
+}
+
+.sol__horizonte {
+  stroke: var(--linea-fuerte);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.sol__halo {
+  fill: var(--ocre-tinta);
+  opacity: 0.22;
+  transition: opacity 200ms ease;
+}
+
+.sol__disco {
+  fill: var(--ocre-tinta);
+  stroke: var(--barro);
+  stroke-width: 2;
+  transition: fill 220ms ease, r 220ms ease;
+}
+
+/* De noche el mismo disco se enfría y encoge: es la luna. */
+.sol--luna .sol__disco {
+  fill: #cfd6cd;
+  r: 10;
+}
+
+.sol--luna .sol__halo {
+  opacity: 0.08;
 }
