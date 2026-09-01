@@ -28,8 +28,13 @@ const r = await page.evaluate(async (id) => {
   const THREE = await import('/node_modules/three/build/three.module.js');
   const { SCENARIOS } = await import('/src/world/scenarios.ts');
   const { Terrain } = await import('/src/world/terrain.ts');
-  const esc = SCENARIOS.find((s) => s.id === id);
-  if (!esc) throw new Error(`no hay escenario ${id}`);
+  const { conRelieve } = await import('/src/world/relieve.ts');
+  const crudo = SCENARIOS.find((s) => s.id === id);
+  if (!crudo) throw new Error(`no hay escenario ${id}`);
+  // **Con el relieve medido puesto**, igual que lo carga el juego. Sin esto la
+  // comprobación miraba el terreno generado y seguía diciendo que Asunción
+  // tenía el once por ciento bajo el agua después de haberlo arreglado.
+  const esc = await conRelieve(crudo);
 
   const terreno = new Terrain(esc);
   const escena = new THREE.Scene();
@@ -104,6 +109,7 @@ const r = await page.evaluate(async (id) => {
   return {
     png,
     cotaPista: terreno.runwayElevation,
+    real: !!esc.relieve,
     cotaFichero: esc.aerodrome?.elevationM ?? null,
     costa: Number.isFinite(costa) ? Math.round(costa) : null,
     mojado: Math.round((mojadas / celdas) * 100),
@@ -116,7 +122,7 @@ const r = await page.evaluate(async (id) => {
   };
 }, id);
 
-console.log(`${id}`);
+console.log(`${id}${r.real ? '  (relieve medido)' : '  (relieve generado)'}`);
 console.log(`  cota de la pista medida: ${r.cotaPista.toFixed(1)} m` +
   (r.cotaFichero !== null ? ` · el fichero dice ${r.cotaFichero} m` : ''));
 console.log(`  terreno a 2,6 km: de ${r.anilloMin} a ${r.anilloMax} m, media ${r.anilloMedia} m`);
