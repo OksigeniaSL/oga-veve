@@ -28,7 +28,7 @@ import { ValueNoise2D } from './noise';
 import { createRunwayMarkings } from './runway-markings';
 import { aLaPolilinea, createAerodrome, type Aerodrome, type Punto } from './aerodrome';
 import { delante } from './rumbo';
-import type { Scenario } from './scenarios';
+import { VECES_LEJOS, type Scenario } from './scenarios';
 
 /**
  * Dirección desde la que viene la luz, derivada del sol del escenario.
@@ -81,6 +81,9 @@ export class Terrain {
       flattenRunway(this.heights, scenario, this.runwayElevation);
     }
 
+    // El horizonte primero: va detrás de todo y así el mapa fino lo tapa.
+    const horizonte = this.buildFarMesh();
+    if (horizonte) this.group.add(horizonte);
     this.group.add(this.buildTerrainMesh());
     this.group.add(this.buildWater());
     // Con aeródromo real no se dibuja la pista de juguete: la pone él.
@@ -207,8 +210,128 @@ export class Terrain {
     return mesh;
   }
 
+  /**
+   * El horizonte: el mismo sitio, seis veces más ancho, con un agujero en medio.
+   *
+   * **Por qué existe.** El mapa fino llega a nueve kilómetros de la pista y el
+   * Teide está a treinta y siete y medio, así que no salía. Lo que se veía al
+   * fondo desde la cabecera 30 y se tomaba por él era la Cumbre de Tigaiga:
+   * mil seiscientos setenta y un metros a once kilómetros y medio, y
+   * justamente en esa dirección. Con el mapa ancho el Teide sale a tres mil
+   * seiscientos noventa y cinco, que es lo que mide.
+   *
+   * **Por qué con agujero.** Los dos mapas se solapan en los dieciocho
+   * kilómetros centrales, y dos superficies a la misma cota se pelean por el
+   * fondo de profundidad. Se quitan los cuadros cuyo centro cae dentro del
+   * mapa fino y ya no hay con qué pelearse. Los del borde se quedan: el fino
+   * los tapa por delante y así no queda ranura entre uno y otro.
+   *
+   * **Y sin aplanar el aeropuerto**, que aquí no hace falta y a doscientos
+   * sesenta metros por muestra sería aplanar medio valle.
+   */
+  private buildFarMesh(): Mesh | null {
+    const lejos = this.scenario.relieveLejano;
+    if (!lejos) return null;
+
+    /*
+     * **Se dibuja una muestra de cada dos.**
+     *
+     * El fichero trae cuatrocientas diecisiete por lado, y mallarlas todas son
+     * trescientos cuarenta y seis mil triángulos: tantos como el mapa fino
+     * entero, o sea el doble de terreno para pintar el fondo. Con una de cada
+     * dos son ochenta y siete mil, medio kilómetro por cuadro y, a treinta y
+     * siete kilómetros, exactamente la misma montaña.
+     *
+     * El fichero se queda a resolución completa a propósito: si algún día hay
+     * que subir la calidad, se cambia este número y no hay que volver a bajar
+     * nada.
+     */
+    const SALTO = 2;
+    const res = Math.floor((lejos.resolucion - 1) / SALTO) + 1;
+    const tamano = this.scenario.size * VECES_LEJOS;
+    const paso = (tamano / (lejos.resolucion - 1)) * SALTO;
+    const mitad = tamano / 2;
+
+    const posiciones = new Float32Array(res * res * 3);
+    const colores = new Float32Array(res * res * 3);
+    const tinte = new Color();
+    const manchas = new ValueNoise2D(this.scenario.seed ^ 0x5eed);
+    const escala = 7.5 / tamano;
+    const sol = sunVector(this.scenario);
+
+    /*
+     * La cota de un nudo, **con el mar hundido treinta metros**.
+     *
+     * El mapa lejano da cero en el océano y el agua se dibuja a dos, así que a
+     * cuarenta kilómetros esos dos metros no los distingue el fondo de
+     * profundidad y el mar entero centellea. Hundir lo que ya está bajo el agua
+     * no se ve —está debajo— y quita el problema de raíz.
+     */
+    const hundido = this.scenario.waterLevel - 30;
+    const ancho = lejos.resolucion;
+    const cota = (fila: number, col: number): number => {
+      const f = clampInt(fila, 0, res - 1) * SALTO;
+      const c = clampInt(col, 0, res - 1) * SALTO;
+      const h = lejos.datos[f * ancho + c] ?? 0;
+      return h <= this.scenario.waterLevel ? hundido : h;
+    };
+
+    for (let fila = 0; fila < res; fila++) {
+      for (let col = 0; col < res; col++) {
+        const i = fila * res + col;
+        const h = cota(fila, col);
+        const x = -mitad + col * paso;
+        const z = -mitad + fila * paso;
+        posiciones[i * 3] = x;
+        posiciones[i * 3 + 1] = h;
+        posiciones[i * 3 + 2] = z;
+
+        // La pendiente a esta escala, que es la que decide si se pinta de
+        // roca o de hierba. Con el paso del mapa fino salían acantilados por
+        // todas partes.
+        const dx = (cota(fila, col + 1) - cota(fila, col - 1)) / (2 * paso);
+        const dz = (cota(fila + 1, col) - cota(fila - 1, col)) / (2 * paso);
+        const pendiente = Math.min(1, Math.hypot(dx, dz));
+        const luz = clamp01(0.55 + (-dx * sol.x - dz * sol.z + sol.y) * 0.45);
+        colourFor(h, pendiente, this.scenario, manchas.fbm(x * escala, z * escala, 3), luz, tinte);
+        colores[i * 3] = tinte.r;
+        colores[i * 3 + 1] = tinte.g;
+        colores[i * 3 + 2] = tinte.b;
+      }
+    }
+
+    const indices: number[] = [];
+    const dentro = this.half - paso;
+    for (let fila = 0; fila < res - 1; fila++) {
+      for (let col = 0; col < res - 1; col++) {
+        const cx = -mitad + (col + 0.5) * paso;
+        const cz = -mitad + (fila + 0.5) * paso;
+        if (Math.abs(cx) < dentro && Math.abs(cz) < dentro) continue;
+        const a = fila * res + col;
+        indices.push(a, a + res, a + 1, a + 1, a + res, a + res + 1);
+      }
+    }
+
+    const geo = new BufferGeometry();
+    geo.setAttribute('position', new BufferAttribute(posiciones, 3));
+    geo.setAttribute('color', new BufferAttribute(colores, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    geo.computeBoundingSphere();
+
+    const malla = new Mesh(geo, new MeshLambertMaterial({ vertexColors: true }));
+    malla.name = 'horizonte';
+    malla.matrixAutoUpdate = false;
+    return malla;
+  }
+
   private buildWater(): Mesh {
-    const geometry = new PlaneGeometry(this.scenario.size * 1.4, this.scenario.size * 1.4);
+    // Hasta donde llegue el terreno que haya: con horizonte lejano, el mar del
+    // mapa fino se acababa a doce kilómetros y a partir de ahí el océano era
+    // una llanura verde.
+    const lado =
+      this.scenario.size * (this.scenario.relieveLejano ? VECES_LEJOS * 1.05 : 1.4);
+    const geometry = new PlaneGeometry(lado, lado);
     geometry.rotateX(-Math.PI / 2);
     const mesh = new Mesh(
       geometry,
