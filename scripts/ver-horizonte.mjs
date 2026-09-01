@@ -29,7 +29,8 @@ const MIRAR = {
   // La cumbre del Teide.
   'tenerife-norte': { nombre: 'el Teide', lat: 28.2724, lon: -16.6425, origen: [28.482752, -16.341707] },
   // El cerro Peró, lo más alto de la cordillera de los Altos.
-  pettirossi: { nombre: 'la cordillera', lat: -25.4667, lon: -56.9, origen: [-25.239834, -57.518543] },
+  // El puente Remanso, el del Chaco, sobre el río Paraguay.
+  pettirossi: { nombre: 'el puente Remanso', lat: -25.2003, lon: -57.6156, origen: [-25.24016, -57.51923] },
 };
 const objetivo = MIRAR[ESC] ?? MIRAR['tenerife-norte'];
 const R = 6371000;
@@ -48,10 +49,12 @@ const medido = await page.evaluate(
     const s0 = o.estado();
     const px = -287;
     const pz = -372;
+    const PX = px;
+    const PZ = pz;
     const rumbo = Math.atan2(tx - px, -(tz - pz));
     o.pilotar((c) => {
       const s = o.estado();
-      s.position.set(px, ALTURA, pz);
+      s.position.set(PX, ALTURA, PZ);
       s.orientation.setFromEuler(new THREE.Euler(0, -rumbo, 0, 'YXZ'));
       s.velocity.set(0, 0, 0);
       c.throttle = 0;
