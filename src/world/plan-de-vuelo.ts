@@ -144,6 +144,15 @@ const PASO_MAXIMO = 25;
 const MARGEN = 1.6;
 
 /**
+ * El colchón de la cuenta de frenada, m.
+ *
+ * Sin él, el aviso salta exactamente cuando ya no queda margen, que es tarde:
+ * hay que enterarse, decidir y mover la mano. Quince metros a velocidad de
+ * rodaje son un segundo y medio.
+ */
+const HOLGURA = 15;
+
+/**
  * A cuántos metros del final la ayuda de dirección suelta el mando, m.
  *
  * De aquí adentro ya se ve la doble raya pintada en el suelo y parar encima es
@@ -521,16 +530,28 @@ export class PlanDeVuelo {
       luzVerde: p.luzVerde,
       letra: this.letraActual(estado),
       velocidadSugerida: sugerida,
-      // **Y no se avisa junto a la doble raya.** Ahí la velocidad que toca baja
-      // hasta cero, así que cualquier movimiento pasaba de sobra el margen y el
-      // juego pedía ir más despacio a quien ya estaba parando: «hay señales
-      // para ayudarte a bajar velocidad (se pasa de lento)». Frenar para parar
-      // no es ir rápido.
+      /*
+       * **Vas rápido para lo que te queda**, que no es lo mismo que ir rápido.
+       *
+       * Primero se comparaba con la velocidad que tocaba en ese punto, y junto
+       * a la doble raya esa velocidad baja a cero: cualquier movimiento pasaba
+       * el margen y el juego le pedía ir más despacio a quien ya estaba
+       * parando. Se tapó exigiendo que la velocidad sugerida fuera mayor que
+       * tres, y con eso el aviso **desapareció justo donde más falta hacía**:
+       * «al llegar al círculo rojo de espera no me viene avisando de bajar
+       * velocidad, si he parado es porque yo ya sabía la dinámica».
+       *
+       * Lo que hay que mirar no es la velocidad: es si se puede parar. La
+       * distancia de frenada es `v²/2a`, y si no cabe en lo que queda de ruta,
+       * hay que aflojar ya. Eso avisa **ochenta metros antes** de la doble raya
+       * a velocidad de rodaje, que es cuando sirve de algo, y no avisa nunca a
+       * quien va frenando bien.
+       */
       rapido:
         sobreElSuelo < 3 &&
         this.rutaMundo.length > 1 &&
-        sugerida > 3 &&
-        estado.airspeed > sugerida * MARGEN + 2,
+        (estado.airspeed > sugerida * MARGEN + 2 ||
+          (estado.airspeed * estado.airspeed) / (2 * FRENADA) > s.restante - HOLGURA),
       restante: s.restante,
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
