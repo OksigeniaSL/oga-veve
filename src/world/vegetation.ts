@@ -40,6 +40,7 @@ import {
 import { enEjesDePista } from './rumbo';
 import { ValueNoise2D, mulberry32 } from './noise';
 import type { Scenario } from './scenarios';
+import type { Aerodrome } from './aerodrome';
 
 /** Cota del terreno en unas coordenadas de mundo. */
 export type GroundSampler = (x: number, z: number) => number;
@@ -116,6 +117,9 @@ export function createVegetation(scenario: Scenario, ground: GroundSampler): Gro
   const group = new Group();
   group.name = 'vegetacion';
 
+  // El mapa de lo pavimentado se pinta una vez y se consulta miles.
+  const pavimento = scenario.aerodrome ? mapaDePavimento(scenario.aerodrome) : null;
+
   const random = mulberry32(scenario.seed ^ 0x7ee5);
   const clumps = new ValueNoise2D(scenario.seed ^ 0xb05c);
   const clumpScale = 11 / scenario.size;
@@ -140,6 +144,10 @@ export function createVegetation(scenario: Scenario, ground: GroundSampler): Gro
     if (height <= scenario.waterLevel + 1.5) continue;
     if (slopeAt(ground, x, z) > MAX_SLOPE) continue;
     if (nearRunway(x, z, scenario)) continue;
+    // Y tampoco encima de las calles de rodaje ni de las plataformas. Una
+    // calle de rodaje tiene su franja libre de obstáculos igual que la pista:
+    // un avión tiene envergadura y las alas sobresalen mucho del tren.
+    if (pavimento?.hay(x, z)) continue;
 
     // Manchas de bosque. La cuarta potencia es lo que separa el bosque del
     // claro: con un exponente suave sale un espolvoreado uniforme, y un
@@ -278,6 +286,160 @@ function nearRunway(x: number, z: number, scenario: Scenario): boolean {
   // árboles llegan cerca. Pasar a ras de ellos es lo que hace que una carrera
   // de despegue se sienta rápida — sin nada cerca, no hay paralaje.
   return Math.abs(along) < runway.length * 0.5 + 90 && Math.abs(across) < runway.width * 0.5 + 55;
+}
+
+/**
+ * Un mapa de lo pavimentado, para que no crezcan árboles encima.
+ *
+ * La exclusión de la pista se hacía con una cuenta directa, y con una sola
+ * pista eso basta. Con un aeródromo real hay cincuenta y cuatro calles de
+ * rodaje y veintiuna plataformas, y comprobar cada árbol contra todas ellas
+ * es medir miles de distancias a miles de segmentos.
+ *
+ * Así que se pinta una vez una rejilla de seis metros con todo lo que es
+ * pavimento —o está lo bastante cerca de serlo— y después cada árbol es una
+ * consulta y ya. **No es una optimización prematura: sin esto, cargar Silvio
+ * Pettirossi tardaba lo suyo y salían árboles en mitad de las calles de
+ * rodaje**, que además de feo impide rodar.
+ *
+ * El margen no es estético. Una calle de rodaje tiene su propia franja libre
+ * de obstáculos, igual que la pista: un avión tiene envergadura y las alas
+ * sobresalen mucho del tren.
+ */
+const CELDA = 6;
+
+/** Margen libre a cada lado del eje de una calle de rodaje, m. */
+const MARGEN_RODADURA = 30;
+
+/** Margen libre alrededor de una plataforma, m. */
+const MARGEN_PLATAFORMA = 15;
+
+class Pavimento {
+  private readonly mapa: Uint8Array;
+
+  constructor(
+    private readonly minX: number,
+    private readonly minZ: number,
+    private readonly anchoCeldas: number,
+    private readonly altoCeldas: number,
+  ) {
+    this.mapa = new Uint8Array(anchoCeldas * altoCeldas);
+  }
+
+  /** ¿Hay pavimento —o su franja— en este punto del mundo? */
+  hay(x: number, z: number): boolean {
+    const cx = Math.floor((x - this.minX) / CELDA);
+    const cz = Math.floor((z - this.minZ) / CELDA);
+    if (cx < 0 || cz < 0 || cx >= this.anchoCeldas || cz >= this.altoCeldas) return false;
+    return this.mapa[cz * this.anchoCeldas + cx] === 1;
+  }
+
+  /** Marca un disco. Es como se pintan las calles: un disco por cada tramo. */
+  disco(x: number, z: number, radio: number): void {
+    const c0 = Math.max(0, Math.floor((x - radio - this.minX) / CELDA));
+    const c1 = Math.min(this.anchoCeldas - 1, Math.ceil((x + radio - this.minX) / CELDA));
+    const f0 = Math.max(0, Math.floor((z - radio - this.minZ) / CELDA));
+    const f1 = Math.min(this.altoCeldas - 1, Math.ceil((z + radio - this.minZ) / CELDA));
+    const r2 = radio * radio;
+    for (let f = f0; f <= f1; f++) {
+      const pz = this.minZ + (f + 0.5) * CELDA;
+      for (let c = c0; c <= c1; c++) {
+        const px = this.minX + (c + 0.5) * CELDA;
+        if ((px - x) ** 2 + (pz - z) ** 2 <= r2) this.mapa[f * this.anchoCeldas + c] = 1;
+      }
+    }
+  }
+
+  /** Marca un segmento, con su franja a los lados. */
+  franja(ax: number, az: number, bx: number, bz: number, radio: number): void {
+    const largo = Math.hypot(bx - ax, bz - az);
+    const pasos = Math.max(1, Math.ceil(largo / (CELDA * 0.8)));
+    for (let i = 0; i <= pasos; i++) {
+      const t = i / pasos;
+      this.disco(ax + (bx - ax) * t, az + (bz - az) * t, radio);
+    }
+  }
+}
+
+/**
+ * Construye el mapa de pavimento de un aeródromo real.
+ *
+ * Las plataformas se rellenan de verdad, con el algoritmo del rayo: contar
+ * cuántas veces cruza el borde una semirrecta que sale del punto. Se probó a
+ * marcar solo su contorno y quedaban árboles **dentro** de la plataforma,
+ * rodeados de asfalto, que es todavía más raro que tenerlos fuera.
+ */
+function mapaDePavimento(aero: Aerodrome): Pavimento | null {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  const mirar = (x: number, z: number) => {
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minZ = Math.min(minZ, z);
+    maxZ = Math.max(maxZ, z);
+  };
+  // Del fichero al mundo: la Y del norte es la Z negativa.
+  for (const c of aero.taxiways) for (const p of c.path) mirar(p[0], -p[1]);
+  for (const a of aero.aprons) for (const p of a.polygon) mirar(p[0], -p[1]);
+  if (!Number.isFinite(minX)) return null;
+
+  const margen = MARGEN_RODADURA + CELDA * 2;
+  minX -= margen;
+  minZ -= margen;
+  maxX += margen;
+  maxZ += margen;
+  const pav = new Pavimento(
+    minX,
+    minZ,
+    Math.ceil((maxX - minX) / CELDA),
+    Math.ceil((maxZ - minZ) / CELDA),
+  );
+
+  for (const calle of aero.taxiways) {
+    const radio = (calle.widthM ?? 23) / 2 + MARGEN_RODADURA;
+    for (let i = 0; i < calle.path.length - 1; i++) {
+      const a = calle.path[i]!;
+      const b = calle.path[i + 1]!;
+      pav.franja(a[0], -a[1], b[0], -b[1], radio);
+    }
+  }
+
+  for (const plat of aero.aprons) {
+    const poli = plat.polygon.map((p) => [p[0], -p[1]] as const);
+    if (poli.length < 3) continue;
+    // El contorno, con su margen…
+    for (let i = 0; i < poli.length; i++) {
+      const a = poli[i]!;
+      const b = poli[(i + 1) % poli.length]!;
+      pav.franja(a[0], a[1], b[0], b[1], MARGEN_PLATAFORMA);
+    }
+    // …y el relleno, con el algoritmo del rayo.
+    let pminX = Infinity;
+    let pmaxX = -Infinity;
+    let pminZ = Infinity;
+    let pmaxZ = -Infinity;
+    for (const [x, z] of poli) {
+      pminX = Math.min(pminX, x);
+      pmaxX = Math.max(pmaxX, x);
+      pminZ = Math.min(pminZ, z);
+      pmaxZ = Math.max(pmaxZ, z);
+    }
+    for (let z = pminZ; z <= pmaxZ; z += CELDA) {
+      for (let x = pminX; x <= pmaxX; x += CELDA) {
+        let dentro = false;
+        for (let i = 0, j = poli.length - 1; i < poli.length; j = i++) {
+          const [xi, zi] = poli[i]!;
+          const [xj, zj] = poli[j]!;
+          if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) dentro = !dentro;
+        }
+        if (dentro) pav.disco(x, z, CELDA);
+      }
+    }
+  }
+
+  return pav;
 }
 
 function clamp01(value: number): number {

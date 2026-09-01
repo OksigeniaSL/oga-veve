@@ -67,117 +67,246 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
     continue;
   }
 
-  // ── Rodar de verdad ─────────────────────────────────────────────────────
+  // ── El vuelo entero, volado ──────────────────────────────────────────────
   //
-  // **El bucle va dentro de la página.** Pilotar desde fuera cuesta un viaje de
-  // ida y vuelta al navegador por cada tecla, y así rodar ciento cuarenta
-  // metros tardaba más de tres minutos: la comprobación se quedaba sin tiempo
-  // antes de llegar a la doble raya. Metida dentro, tarda segundos.
+  // Un piloto automático que hace lo que hay que hacer en cada fase. No
+  // pretende volar bonito: pretende **demostrar que las catorce fases se
+  // encadenan de verdad**, con un avión de verdad y la física de verdad, y no
+  // solo en una prueba unitaria que le da a la máquina de estados las
+  // situaciones ya masticadas.
   //
-  // Lo que hace es seguir la línea: timón hacia el punto de la ruta que queda
-  // sesenta metros por delante, y motor corto para ir a paso de rodaje. No
-  // pretende rodar bonito; pretende demostrar que la raya lleva a alguna parte
-  // y que la torre acaba dando luz verde.
+  // El circuito es una lágrima y no un rectángulo, y es a propósito: se
+  // despega en el rumbo de la pista, se sube, se dan dos virajes de ciento
+  // ochenta y se vuelve a entrar **por la misma cabecera y en el mismo
+  // sentido**. Un rectángulo de tráfico haría lo mismo con cuatro virajes en
+  // vez de dos; la lágrima prueba lo mismo y cabe en menos código.
   const resultado = await page.evaluate(async () => {
     const o = globalThis.__oga;
     const cuadro = () => new Promise((r) => requestAnimationFrame(() => r()));
-    const hasta = performance.now() + 150000;
+    const hasta = performance.now() + 420000;
+    const pista = o.pista();
+
+    const rad = (g) => (g * Math.PI) / 180;
+    const delante = (g) => [Math.sin(rad(g)), -Math.cos(rad(g))];
+    const traves = (g) => [Math.cos(rad(g)), Math.sin(rad(g))];
+
+    /** Dónde está el avión en ejes de pista: cuánto por delante y cuánto de lado. */
+    const enEjes = (x, z) => {
+      const [fx, fz] = delante(pista.heading);
+      const [tx, tz] = traves(pista.heading);
+      const dx = x - pista.x;
+      const dz = z - pista.z;
+      return { along: dx * fx + dz * fz, across: dx * tx + dz * tz };
+    };
+
+    const rumboDe = (e) => ((e.heading * 180) / Math.PI + 360) % 360;
+    const error = (quiero, tengo) => ((quiero - tengo + 540) % 360) - 180;
 
     const fases = [];
     let ultima = '';
-    let masRapido = 0;
-    let cerca = Infinity;
-    let arranque = null;
-    let ultimaPos = null;
-    let destino = null;
-    let vecesQueGiro = 0;
+    let etapa = 'salida';
+    let masAlto = 0;
+    let toque = null;
 
-    // **El piloto va enganchado al bucle del juego**, no escribiendo en los
-    // mandos desde fuera. Escribir desde fuera no servía: `input.update()`
-    // reescribe los mandos enteros cada fotograma y le quitaba el timón al
-    // instante, así que el avión salía recto de la plataforma y se alejaba de
-    // su ruta mientras la comprobación anotaba, tan contenta, que rodaba.
     o.pilotar((c) => {
       const e = o.estado();
+      const fase = o.fase();
       const ruta = o.ruta();
-      c.engineOn = true;
-      masRapido = Math.max(masRapido, e.airspeed);
-      if (ruta.length < 2) return;
+      const { along, across } = enEjes(e.position.x, e.position.z);
+      const suelo = e.position.y;
+      masAlto = Math.max(masAlto, suelo);
 
-      const fin = ruta[ruta.length - 1];
-      const alFinal = Math.hypot(fin[0] - e.position.x, fin[1] - e.position.z);
-      cerca = Math.min(cerca, alFinal);
-      arranque ??= [Math.round(e.position.x), Math.round(e.position.z)];
-      ultimaPos = [Math.round(e.position.x), Math.round(e.position.z)];
-      destino = [Math.round(fin[0]), Math.round(fin[1])];
+      c.engineOn = fase !== 'en-puesto';
+      c.aileron = 0;
+      c.elevator = 0;
+      c.rudder = 0;
+      c.brakes = 0;
 
-      // Parar al llegar: la torre solo mira a quien está parado del todo.
-      if (alFinal < 28) {
-        c.throttle = 0;
-        c.brakes = 1;
-        c.aileron = 0;
-        c.rudder = 0;
-        return;
-      }
-
-      // Timón hacia el punto de la ruta sesenta metros por delante.
-      let mejor = Infinity;
-      let cual = 0;
-      ruta.forEach((p, k) => {
-        const d = Math.hypot(p[0] - e.position.x, p[1] - e.position.z);
-        if (d < mejor) {
-          mejor = d;
-          cual = k;
+      /** Rodar siguiendo la raya verde hasta su final, y parar allí. */
+      const seguirLaRaya = () => {
+        if (ruta.length < 2) return;
+        const fin = ruta[ruta.length - 1];
+        const alFinal = Math.hypot(fin[0] - e.position.x, fin[1] - e.position.z);
+        if (alFinal < 28) {
+          c.throttle = 0;
+          c.brakes = 1;
+          return;
         }
-      });
-      let mira = fin;
-      let acumulado = 0;
-      for (let k = cual; k < ruta.length - 1; k++) {
-        acumulado += Math.hypot(ruta[k + 1][0] - ruta[k][0], ruta[k + 1][1] - ruta[k][1]);
-        if (acumulado > 45) {
-          mira = ruta[k + 1];
+        let mejor = Infinity;
+        let cual = 0;
+        ruta.forEach((p, k) => {
+          const d = Math.hypot(p[0] - e.position.x, p[1] - e.position.z);
+          if (d < mejor) {
+            mejor = d;
+            cual = k;
+          }
+        });
+        let mira = fin;
+        let acumulado = 0;
+        for (let k = cual; k < ruta.length - 1; k++) {
+          acumulado += Math.hypot(ruta[k + 1][0] - ruta[k][0], ruta[k + 1][1] - ruta[k][1]);
+          if (acumulado > 45) {
+            mira = ruta[k + 1];
+            break;
+          }
+        }
+        const quiero =
+          ((Math.atan2(mira[0] - e.position.x, -(mira[1] - e.position.z)) * 180) / Math.PI + 360) %
+          360;
+        const giro = error(quiero, rumboDe(e));
+        c.aileron = Math.max(-1, Math.min(1, giro / 20));
+        c.rudder = c.aileron * 0.5;
+        c.throttle = e.airspeed < 8 ? 0.5 : 0;
+        c.brakes = e.airspeed > 11 ? 1 : 0;
+      };
+
+      /** Rodar hacia un punto concreto del mundo. */
+      const rodarHacia = (x, z, vel = 8) => {
+        const quiero = ((Math.atan2(x - e.position.x, -(z - e.position.z)) * 180) / Math.PI + 360) % 360;
+        const giro = error(quiero, rumboDe(e));
+        c.aileron = Math.max(-1, Math.min(1, giro / 20));
+        c.rudder = c.aileron * 0.5;
+        c.throttle = e.airspeed < vel ? 0.5 : 0;
+        c.brakes = e.airspeed > vel + 3 ? 1 : 0;
+      };
+
+      /** Volar a un rumbo, subiendo o bajando lo que se le pida. */
+      const volarA = (rumbo, subida, gas) => {
+        const giro = error(rumbo, rumboDe(e));
+        // Alabeo proporcional al error de rumbo, con tope de treinta grados de
+        // inclinación, que es lo que se usa en un circuito de verdad.
+        c.aileron = Math.max(-0.6, Math.min(0.6, giro / 30));
+        c.rudder = c.aileron * 0.25;
+        // Cabeceo por velocidad vertical: se pide una y se corrige la que hay.
+        c.elevator = Math.max(-0.5, Math.min(0.6, (subida - e.verticalSpeed) * 0.09));
+        c.throttle = gas;
+      };
+
+      switch (fase) {
+        case 'estacionado':
+        case 'arrancando':
+        case 'rodando':
+        case 'esperando':
+          seguirLaRaya();
+          break;
+
+        case 'autorizado': {
+          // Entrar a la pista: se rueda al eje, ciento cincuenta metros pista
+          // adentro desde la cabecera de salida.
+          const [fx, fz] = delante(pista.heading);
+          const d = -pista.length / 2 + 150;
+          rodarHacia(pista.x + fx * d, pista.z + fz * d, 7);
           break;
         }
+
+        case 'alineando': {
+          const giro = error(pista.heading, rumboDe(e));
+          c.aileron = Math.max(-1, Math.min(1, giro / 12));
+          c.rudder = c.aileron * 0.5;
+          c.throttle = e.airspeed < 4 ? 0.35 : 0;
+          break;
+        }
+
+        case 'despegando': {
+          c.throttle = 1;
+          const giro = error(pista.heading, rumboDe(e));
+          c.aileron = Math.max(-0.5, Math.min(0.5, giro / 15));
+          c.rudder = c.aileron * 0.6;
+          // Rotar a partir de treinta y dos metros por segundo, que es
+          // velocidad de rotación de una avioneta.
+          c.elevator = e.airspeed > 32 ? 0.45 : 0;
+          break;
+        }
+
+        case 'en-vuelo': {
+          const alturaSuelo = suelo - (pista.elev ?? 0);
+          if (etapa === 'salida') {
+            volarA(pista.heading, 6, 1);
+            if (along > 2500 && suelo > masAlto - 5 && suelo > 400) etapa = 'vuelta1';
+          } else if (etapa === 'vuelta1') {
+            // Primer viraje de ciento ochenta.
+            volarA((pista.heading + 180) % 360, 0, 0.8);
+            if (Math.abs(error((pista.heading + 180) % 360, rumboDe(e))) < 12) etapa = 'volviendo';
+          } else if (etapa === 'volviendo') {
+            volarA((pista.heading + 180) % 360, 0, 0.8);
+            // Se vuelve hasta cinco kilómetros por detrás de la cabecera.
+            if (along < -pista.length / 2 - 4500) etapa = 'vuelta2';
+          } else if (etapa === 'vuelta2') {
+            volarA(pista.heading, 0, 0.7);
+            if (Math.abs(error(pista.heading, rumboDe(e))) < 12) etapa = 'entrando';
+          } else {
+            // Entrando: corrige el desvío lateral y baja hacia la cabecera.
+            const correccion = Math.max(-25, Math.min(25, -across / 40));
+            volarA((pista.heading + correccion + 360) % 360, -3.5, 0.35);
+          }
+          void alturaSuelo;
+          break;
+        }
+
+        case 'final': {
+          const correccion = Math.max(-20, Math.min(20, -across / 30));
+          // Se afloja la bajada cerca del suelo, que es la recogida.
+          const bajada = suelo - (o.estado().position.y - 0) < 0 ? -3 : -3;
+          volarA((pista.heading + correccion + 360) % 360, bajada, 0.3);
+          break;
+        }
+
+        case 'aterrizado':
+          toque ??= Math.round(along);
+          c.throttle = 0;
+          c.brakes = 1;
+          {
+            const giro = error(pista.heading, rumboDe(e));
+            c.aileron = Math.max(-0.6, Math.min(0.6, giro / 15));
+            c.rudder = c.aileron * 0.5;
+          }
+          break;
+
+        case 'abandonando': {
+          // Salir de la pista: se rueda perpendicular hasta dejarla libre.
+          const [tx, tz] = traves(pista.heading);
+          const lado = across >= 0 ? 1 : -1;
+          rodarHacia(
+            e.position.x + tx * lado * 200,
+            e.position.z + tz * lado * 200,
+            6,
+          );
+          break;
+        }
+
+        case 'a-plataforma':
+          seguirLaRaya();
+          break;
+
+        case 'en-puesto':
+          c.throttle = 0;
+          c.brakes = 1;
+          c.engineOn = false;
+          break;
+
+        default:
+          c.throttle = 0;
+          c.brakes = 1;
+          break;
       }
-      const rumbo = ((e.heading * 180) / Math.PI + 360) % 360;
-      const quiero =
-        ((Math.atan2(mira[0] - e.position.x, -(mira[1] - e.position.z)) * 180) / Math.PI + 360) %
-        360;
-      const giro = ((quiero - rumbo + 540) % 360) - 180;
-      // **En tierra se gira con el alabeo, no con el timón.** La rueda de morro
-      // va en el eje de alabeo desde que se añadió la dirección en tierra, y el
-      // primer comprobador ponía timón y alabeo a cero: el avión salió del
-      // puesto perfectamente recto y siguió recto sesenta segundos, con el
-      // rumbo clavado en 190 de principio a fin, mientras la comprobación
-      // anotaba que estaba rodando.
-      // **Los mandos se llaman `aileron` y `rudder`.** Escribir en `roll` y
-      // `yaw` no da error: crea dos propiedades que nadie lee, y el avión sale
-      // recto del puesto con el rumbo clavado mientras la comprobación anota
-      // trescientos mandos de giro. Perdí media hora buscando el fallo en el
-      // juego, que estaba bien.
-      const mando = Math.max(-1, Math.min(1, giro / 20));
-      if (Math.abs(mando) > 0.05) vecesQueGiro++;
-      c.aileron = mando;
-      c.rudder = mando * 0.5;
-      c.elevator = 0;
-      // Ocho metros por segundo, unos treinta por hora: es lo que rueda un
-      // avión de verdad por una recta, y a cuatro esta comprobación tardaba
-      // tres minutos y se quedaba sin tiempo antes de llegar.
-      c.throttle = e.airspeed < 8 ? 0.5 : 0;
-      c.brakes = e.airspeed > 11 ? 1 : 0;
     });
 
     for (;;) {
       const fase = o.fase();
       if (fase && fase !== ultima) {
         ultima = fase;
-        const luz = document.querySelector('.torre');
+        const e = o.estado();
+        const { along, across } = enEjes(e.position.x, e.position.z);
         fases.push({
           fase,
-          luz: luz && !luz.hidden ? (luz.className.includes('verde') ? 'verde' : 'roja') : null,
+          etapa,
+          alto: Math.round(e.position.y),
+          vel: Math.round(e.airspeed * 3.6),
+          along: Math.round(along),
+          across: Math.round(across),
           aviso: document.querySelector('[data-hud="hint"]')?.textContent?.trim() ?? '',
         });
-        if (fase === 'autorizado') break;
+        if (fase === 'apagado') break;
       }
       if (performance.now() > hasta) break;
       await cuadro();
@@ -186,38 +315,30 @@ for (const escenario of ['pettirossi', 'tenerife-norte']) {
     o.pilotar(null);
     return {
       fases,
-      masRapido: Math.round(masRapido * 3.6),
-      cerca: Math.round(cerca),
-      arranque,
-      ultimaPos,
-      destino,
-      vecesQueGiro,
-      recorrido:
-        arranque && ultimaPos
-          ? Math.round(Math.hypot(ultimaPos[0] - arranque[0], ultimaPos[1] - arranque[1]))
-          : 0,
+      etapa,
+      toque,
+      masAlto: Math.round(masAlto),
       seQuedoSinTiempo: performance.now() > hasta,
     };
   });
 
-  console.log('  rodando, fase a fase:');
+  console.log('  el vuelo entero, fase a fase:');
   for (const f of resultado.fases) {
     console.log(
-      `    · ${f.fase.padEnd(13)} ${f.luz ? `[luz ${f.luz}]` : '         '}  «${f.aviso}»`,
+      `    · ${f.fase.padEnd(13)} ${String(f.alto).padStart(4)} m  ${String(f.vel).padStart(3)} km/h` +
+        `  eje ${String(f.along).padStart(6)} / ${String(f.across).padStart(5)} m   «${f.aviso}»`,
     );
   }
+  const llego = (f) => resultado.fases.some((x) => x.fase === f);
   console.log(
-    `  salió de [${resultado.arranque}] y acabó en [${resultado.ultimaPos}] · destino [${resultado.destino}]`,
+    `  despegó: ${llego('en-vuelo') ? '✓' : '✗'}` +
+      ` · aterrizó: ${llego('aterrizado') ? '✓' : '✗'}` +
+      ` · abandonó la pista: ${llego('a-plataforma') ? '✓' : '✗'}` +
+      ` · volvió al puesto: ${llego('en-puesto') ? '✓' : '✗'}` +
+      ` · apagó: ${llego('apagado') ? '✓' : '✗'}`,
   );
   console.log(
-    `  se movió ${resultado.recorrido} m en línea recta y pidió timón ${resultado.vecesQueGiro} veces`,
-  );
-  const llego = resultado.fases.some((f) => f.fase === 'autorizado');
-  console.log(
-    `  ¿llegó a la luz verde? ${llego ? 'sí ✓' : 'no ✗'}` +
-      `  · lo más cerca que llegó del final: ${resultado.cerca} m` +
-      `  · lo más rápido que fue: ${resultado.masRapido} km/h` +
-      `${resultado.masRapido > 60 ? ' ✗ eso no es rodar, es despegar' : ''}` +
+    `  subió a ${resultado.masAlto} m · se quedó en la etapa «${resultado.etapa}»` +
       `${resultado.seQuedoSinTiempo ? ' · se acabó el tiempo' : ''}`,
   );
   await page.screenshot({ path: `${D}/vuelo-${escenario}-3-rodando.png` });

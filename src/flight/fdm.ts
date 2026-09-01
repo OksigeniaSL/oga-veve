@@ -533,7 +533,11 @@ export class CoefficientFlightModel implements FlightModel {
     // el que la mano busca para girar, y en el suelo las alas no sirven de
     // nada. Sin esto no se podía dar la vuelta en la pista tras abortar un
     // despegue: el avión seguía recto hiciera uno lo que hiciera.
-    const nosewheel = 1 - Math.min(1, Math.abs(longitudinal) / 22);
+    // Igual que en el modelo sencillo: plena hasta ocho metros por segundo y
+    // apagándose a los veintiocho. Decayendo desde parado, a treinta por hora
+    // el radio de giro se iba a cincuenta y cinco metros y las curvas de las
+    // calles de rodaje no se podían tomar.
+    const nosewheel = 1 - clamp(( Math.abs(longitudinal) - 8) / 20, 0, 1);
     s.yawRate += controls.aileron * 2.2 * nosewheel * settle;
   }
 

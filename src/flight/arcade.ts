@@ -46,8 +46,22 @@ const IDLE_SPEED = 2;
 /** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
 const STATIC_GRIP = 1.2;
 
-/** Autoridad de la rueda de morro a paso de peatón, rad/s. */
-const GROUND_TURN = 0.75;
+/**
+ * Autoridad de la rueda de morro a paso de peatón, rad/s.
+ *
+ * El número está **ajustado contra una medida**, no elegido: a treinta por
+ * hora, que es una velocidad de rodaje corriente, el radio de giro tiene que
+ * dejar tomar la curva de una calle de rodaje. Con 0,75 salían cincuenta y dos
+ * metros y las curvas no se podían tomar; el objetivo son veinte, que es lo
+ * que gira una avioneta rodando.
+ */
+const GROUND_TURN = 1.9;
+
+/** Hasta esta velocidad la rueda de morro manda entera, m/s. */
+const GROUND_FULL = 8;
+
+/** Y en estos metros por segundo más se queda sin autoridad. */
+const GROUND_FADE = 20;
 /** Ritmo de viraje máximo, en radianes por segundo. */
 const MAX_TURN_RATE = 0.5;
 /** Ritmo de ascenso máximo, en metros por segundo. */
@@ -171,7 +185,16 @@ export class ArcadeFlightModel implements FlightModel {
       // deja de mandar cuando se coge carrerilla, que es cuando toma el
       // relevo el timón. Por eso un avión rodando gira cerrado y en la
       // carrera de despegue va prácticamente recto.
-      const mando = 1 - clamp01(this.speed / (cruise * 0.6));
+      // **La autoridad no se apaga desde el primer metro.** Antes decaía desde
+      // parado, así que a treinta por hora —una velocidad de rodaje de lo más
+      // normal— el radio de giro era de cincuenta y cinco metros y las curvas
+      // de las calles de rodaje sencillamente no se podían tomar. Medido.
+      //
+      // Una rueda de morro de verdad manda entera hasta bien entrado el
+      // rodaje y solo deja de mandar al coger carrerilla. Así que va plena
+      // hasta ocho metros por segundo y se apaga a los veintiocho, que es
+      // cuando ya toma el relevo el timón.
+      const mando = 1 - clamp01((this.speed - GROUND_FULL) / GROUND_FADE);
       this.heading += controls.aileron * GROUND_TURN * mando * step;
       // Y sin inclinar el avión, que en el suelo tiene las ruedas puestas.
       this.bank += (0 - this.bank) * Math.min(1, step * 5);
