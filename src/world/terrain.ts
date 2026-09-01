@@ -88,7 +88,12 @@ export class Terrain {
     this.group.add(this.buildWater());
     // Con aeródromo real no se dibuja la pista de juguete: la pone él.
     if (scenario.aerodrome) {
-      this.group.add(createAerodrome(scenario.aerodrome, this.runwayElevation));
+      this.group.add(
+        createAerodrome(scenario.aerodrome, this.runwayElevation, {
+          de: scenario.meteo?.vientoDe ?? null,
+          kt: scenario.meteo?.vientoKt ?? 0,
+        }),
+      );
     } else {
       this.group.add(this.buildRunway());
     }
