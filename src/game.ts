@@ -295,6 +295,8 @@ export class Game {
       // Los mandos, para poder pilotar desde una comprobación sin pasar por el
       // teclado: cada tecla enviada desde fuera cuesta un viaje de ida y vuelta
       // al navegador, y rodar ciento cuarenta metros así tardaba minutos.
+      /** Los mandos, para poder mirarlos desde una comprobación. */
+      controles: () => this.input.controls,
       /**
        * Un piloto de pruebas: una función que toca los mandos **después** de
        * que los lea el teclado.
@@ -646,19 +648,37 @@ export class Game {
       // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La
       // voz no la oye quien juega en silencio ni quien no oye; el texto no lo
       // lee quien tiene cuatro años. El dibujo lo entiende todo el mundo.
-      this.hud.senal.mostrar(
-        vista.icono,
-        conLetras ? frase : '',
-        vista.letra,
-        vista.fase === 'apagado' ? 9 : 6,
-      );
+      //
+      // Y hay fases que **esperan a que alguien haga algo** —arrancar el
+      // motor, apagarlo, esperar la luz—. Esas no pueden desaparecer solas: la
+      // primera persona que lo jugó se quedó mirando un avión parado en Silvio
+      // Pettirossi porque la llave salió, se apagó a los seis segundos, y ya no
+      // había forma de enterarse de qué hacía falta.
+      const pendiente = vista.fase === 'estacionado' || vista.fase === 'en-puesto';
+      const esperando = vista.fase === 'esperando';
+      this.hud.senal.mostrar(vista.icono, conLetras ? frase : '', vista.letra, {
+        segundos: pendiente || esperando ? Infinity : vista.fase === 'apagado' ? 9 : 6,
+        // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
+        // ninguna manera de saber que el contacto es la I.
+        tecla: pendiente
+          ? nombreDeTecla(this.input.preferredKey('engine'))
+          : esperando
+            ? nombreDeTecla(this.input.preferredKey('brakes'))
+            : null,
+        // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
+        // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
+        // timón, gas y freno, y el contacto no estaba por ningún lado.
+        accion: pendiente ? () => this.toggleEngine() : null,
+      });
       this.instructor.decir(frase);
       if (conLetras) {
         this.hud.flash(`${frase}${tecla}${vista.letra ? ` · ${vista.letra}` : ''}`, 5);
       }
       if (vista.fase === 'autorizado' || vista.fase === 'apagado') this.audio.cue('success');
     } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {
-      this.hud.senal.mostrar('amarillo', conLetras ? t('vuelo.fuera') : '', vista.letra, 4);
+      this.hud.senal.mostrar('amarillo', conLetras ? t('vuelo.fuera') : '', vista.letra, {
+        segundos: 4,
+      });
       this.instructor.decir(t('vuelo.fuera'));
       if (conLetras) this.hud.flash(t('vuelo.fuera'), 3);
     }
@@ -666,7 +686,7 @@ export class Game {
     if (vista.saltoLaLuz) {
       // El sonido sí, siempre: es la mitad del aviso que no necesita leerse.
       this.audio.cue('attention');
-      this.hud.senal.mostrar('mano', conLetras ? t('vuelo.sinPermiso') : '', null, 7);
+      this.hud.senal.mostrar('mano', conLetras ? t('vuelo.sinPermiso') : '', null, { segundos: 7 });
       this.instructor.decir(t('vuelo.sinPermiso'));
       if (conLetras) this.hud.flash(t('vuelo.sinPermiso'), 7);
     }
