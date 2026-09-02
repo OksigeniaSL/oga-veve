@@ -113,6 +113,17 @@ const COLORES: Record<string, ColorRepresentation> = {
   // que es el tono que trae la ortofoto, el corte se lee como lo que es —el
   // filo del pavimento— y no como un parche pegado encima.
   asphalt: 0x4e4f51,
+  /*
+   * **La rodadura, más clara que la pista.** No es un capricho: es lo que pasa
+   * de verdad —una pista se tiñe de goma en las tomas y una calle de rodaje
+   * no— y sobre todo es lo que hace que se distingan.
+   *
+   * Con las dos del mismo gris, la pista y su calle paralela pegada al lado se
+   * leen desde la cabina como **una sola pista del doble de ancha**, con la
+   * pintura ocupando solo la mitad. Se dijo tal cual: «media pista sin pintar».
+   * Y no faltaba pintura ninguna: sobraba asfalto indistinguible.
+   */
+  rodadura: 0x5d6063,
   concrete: 0x646669,
   gravel: 0x5a5348,
   grass: 0x4d6136,
@@ -368,7 +379,7 @@ export function createAerodrome(
     );
   }
   for (const calle of aero.taxiways) {
-    anotar('asphalt', cinta(calle.path, calle.widthM ?? ANCHO_RODADURA, cota));
+    anotar('rodadura', cinta(calle.path, calle.widthM ?? ANCHO_RODADURA, cota));
   }
   for (const plataforma of aero.aprons) {
     anotar('concrete', desdePoligono(plataforma.polygon, cota));
