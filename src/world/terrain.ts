@@ -80,8 +80,15 @@ export class Terrain {
   private readonly step: number;
   private readonly half: number;
   readonly scenario: Scenario;
+  /** Cuánto se ha subido el mundo desde que se construyó. Ver `subirTodo`. */
+  private runwayElevationMovida = 0;
+
   /** Cota de la pista. La necesita el juego para colocar el avión. */
-  readonly runwayElevation: number;
+  get runwayElevation(): number {
+    return this.runwayElevationBase + this.runwayElevationMovida;
+  }
+
+  private readonly runwayElevationBase: number;
 
   constructor(scenario: Scenario) {
     this.scenario = scenario;
@@ -98,9 +105,9 @@ export class Terrain {
       // metros, así que el avión aparecía seis metros en el aire y se caía
       // nada más empezar.
       flattenAerodrome(this.heights, scenario, scenario.aerodrome);
-      this.runwayElevation = this.sampleHeight(scenario.runway.x, scenario.runway.z);
+      this.runwayElevationBase = this.sampleHeight(scenario.runway.x, scenario.runway.z);
     } else {
-      this.runwayElevation = this.sampleHeight(scenario.runway.x, scenario.runway.z);
+      this.runwayElevationBase = this.sampleHeight(scenario.runway.x, scenario.runway.z);
       flattenRunway(this.heights, scenario, this.runwayElevation);
     }
 
@@ -169,6 +176,23 @@ export class Terrain {
       }
     }
     return escritos;
+  }
+
+  /**
+   * Sube o baja el mapa de alturas entero.
+   *
+   * Fuera del trozo que se moldea con rayos, nuestro terreno de Copernicus
+   * **tiene la forma bien y el datum mal**: es la misma ladera, cuarenta y ocho
+   * metros más abajo. Sumarle el desfase medido la pone donde va, y con eso el
+   * mundo entero casa con la fotografía en vez de solo los seis kilómetros de
+   * alrededor del aeropuerto — que era una isla correcta dentro de un mapa
+   * desplazado, con su escalón en el borde.
+   *
+   * Cuesta una pasada sin un solo rayo, así que sale gratis.
+   */
+  subirTodo(metros: number): void {
+    for (let i = 0; i < this.heights.length; i++) this.heights[i]! += metros;
+    this.runwayElevationMovida += metros;
   }
 
   /**

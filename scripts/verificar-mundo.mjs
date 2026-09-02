@@ -53,7 +53,8 @@ for (const [escenario, leccion] of [
                   ? `FLOTANDO ${r.mundo.hundido.toFixed(1)} m`
                   : 'encima ✓'
           }\n` +
-          `        puestos libres: ${r.mundo.puestosLibres} · se usa el ${r.mundo.primeroLibre} · ${r.mundo.bultos} bultos quitados del suelo`
+          `        puestos libres: ${r.mundo.puestosLibres} · se usa el ${r.mundo.primeroLibre} · ${r.mundo.bultos} bultos quitados\n` +
+          `        la foto tiene volumen: ${r.mundo.volumen ? 'sí' : 'NO'} · casas nuestras: ${r.mundo.casas}`
         : 'sin mundo real') +
       (fallos.length ? `  ⚠ ${fallos[0]}` : ''),
   );
