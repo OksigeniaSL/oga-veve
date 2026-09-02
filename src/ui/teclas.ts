@@ -67,6 +67,22 @@ const LLAVE = `
 `;
 
 /**
+ * El ojo: cambiar el punto de vista.
+ *
+ * Un ojo y no una cámara. Una cámara es un aparato y hay que saber para qué
+ * sirve; un ojo es desde dónde se mira, que es literalmente lo que hace esta
+ * tecla — persecución, cabina, ala. Y quien juega no lee, así que el dibujo es
+ * la explicación entera.
+ */
+const OJO = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 5.4c-4.6 0-8.2 3.3-9.6 6.6 1.4 3.3 5 6.6 9.6 6.6s8.2-3.3
+             9.6-6.6C20.2 8.7 16.6 5.4 12 5.4Z" />
+    <circle cx="12" cy="12" r="3.4" fill="rgba(0,0,0,.55)" />
+  </svg>
+`;
+
+/**
  * Qué dibujo lleva cada mando en el teclado pintado. Solo los que un niño
  * necesita: nada de flaps, ni de idioma, ni de créditos.
  *
@@ -84,6 +100,14 @@ const GLIFOS: Partial<Record<Accion, string>> = {
   throttleUp: HELICE_MAS,
   throttleDown: HELICE_MENOS,
   brakes: MANO,
+  /*
+   * **Y el punto de vista, que faltaba.** La tecla existe desde hace tiempo y
+   * cicla tres cámaras —persecución, cabina, ala—, pero en el teclado dibujado
+   * salía apagada como cualquier letra sin función. Es la tercera vez que pasa
+   * lo mismo: antes fue el motor y después el gas. Un mando que no se anuncia
+   * no existe, y la vista desde la cabina es de las cosas que más se piden.
+   */
+  camera: OJO,
 };
 
 /**
