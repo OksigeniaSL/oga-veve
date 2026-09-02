@@ -850,11 +850,21 @@ export class Game {
    * porque los árboles ya están en la fotografía: era justo lo que se veía como
    * «estoy sobrevolando Luque en el Pleistoceno, todo árboles».
    *
-   * Del aeródromo se apaga **el pavimento y las marcas**, que es el hallazgo de
-   * la prueba: donde hay fotogrametría la pista ya viene pintada, con su
-   * designador y sus teclas de piano, mejor de lo que la pintamos nosotros. Lo
-   * que se queda es lo que la foto no puede dar — las luces, la manga, los
-   * rótulos de calle y la raya de guía.
+   * Del aeródromo **no se apaga nada**, y eso es una vuelta atrás a conciencia.
+   *
+   * Durante un tiempo se apagaban el pavimento y las marcas, con el argumento
+   * de que donde hay fotogrametría la pista ya viene pintada y mejor de lo que
+   * la pintamos nosotros. Es verdad a mil metros y es falso a dos.
+   *
+   * La fotogrametría se captura desde un avión, y a ras de suelo es papilla en
+   * todas partes del mundo: no hay dataset que arregle eso ni pagándolo. Y a ras
+   * de suelo es donde se pasa el rodaje entero y la carrera de despegue. Así que
+   * el trato es el que hacen los simuladores de verdad — **campo cercano
+   * nuestro, campo lejano fotográfico**: nuestro asfalto y nuestra pintura, que
+   * son nítidos, sobre el suelo de la foto, y la foto de ahí al horizonte.
+   *
+   * Lo que sí se apaga es el suelo inventado: el relieve, el horizonte, el agua
+   * y la vegetación de mentira. Eso la foto lo da mejor y sin discusión.
    */
   /**
    * Monta —o vuelve a montar— las luces de aproximación y el PAPI.
@@ -898,16 +908,6 @@ export class Game {
      */
     fuera(this.scene.getObjectByName('ciudad'));
 
-    const aero = this.scenario.aerodrome;
-    if (!aero) return;
-    const recinto = this.terrain.group.getObjectByName(`aerodromo:${aero.id}`);
-    if (!recinto) return;
-    for (const nombre of ['marcas', 'luces-pista']) fuera(recinto.getObjectByName(nombre));
-    recinto.traverse((o) => {
-      if (o.name.startsWith('pavimento:')) o.visible = false;
-    });
-    // Y el eje amarillo de las calles, que en la foto ya está pintado.
-    fuera(recinto.getObjectByName('rodadura')?.getObjectByName('amarillo'));
   }
 
   /**
@@ -1344,6 +1344,15 @@ export class Game {
         let bultos = 0;
         for (let i = 0; i < 2; i++) bultos += this.terrain.alisarPicos([0, 0], 6000, 6);
         this.bultosQuitados = bultos;
+        /*
+         * Y se rehace el aeródromo **con el datum de la foto**.
+         *
+         * Todo él está construido sobre `elevationM`, que es la cota sobre el
+         * nivel del mar; la foto está en otro cero. Sin rehacerlo, el asfalto y
+         * la pintura quedan cuarenta y siete metros bajo el suelo en Tenerife y
+         * trece y medio en Asunción, que es por lo que se apagaban.
+         */
+        this.terrain.rehacerAerodromo(this.scenario);
         this.buscarPuestoLibre();
         this.ponerAproximacion();
         if (escritos > 0) this.recolocarTrasElMoldeado();
