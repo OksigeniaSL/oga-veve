@@ -100,6 +100,18 @@ export function crearCiudad(
   cota: (x: number, z: number) => number,
   enElAeropuerto: (x: number, z: number) => boolean,
   nivelDelAgua: number,
+  /**
+   * Si se pintan las calles.
+   *
+   * Sobre la fotografía **no**: la foto ya trae las calles, con su asfalto, sus
+   * coches y sus árboles. Encima de eso, nuestra malla de viario es una losa
+   * gris que tapa la ciudad de verdad — «¿estoy construyendo un metro en
+   * Asunción?», y era exactamente eso.
+   *
+   * Sin foto sí, porque entonces no hay nada debajo y las calles son lo que
+   * hace que un montón de cajas parezca una ciudad.
+   */
+  conCalles = true,
 ): Group {
   const grupo = new Group();
   grupo.name = 'ciudad';
@@ -113,7 +125,7 @@ export function crearCiudad(
   // Una sola malla para todas: son mil setecientos tramos y mil setecientas
   // llamadas de dibujo serían más que todo el resto del juego junto.
   const trozos: BufferGeometry[] = [];
-  for (const via of ciudad.vias) {
+  for (const via of conCalles ? ciudad.vias : []) {
     const ancho = ANCHO_VIA[via.nivel] ?? 7;
     for (let i = 0; i < via.puntos.length - 1; i++) {
       const [ax, ay] = via.puntos[i]!;

@@ -56,7 +56,7 @@ function sunVector(scenario: Scenario): { x: number; y: number; z: number } {
  * el nombre. Se recupera comparando: la que apunta a menos de noventa grados
  * del rumbo de salida es la de salida.
  */
-function cabeceraEnUso(escenario: Scenario): string | null {
+export function cabeceraEnUso(escenario: Scenario): string | null {
   const pista = escenario.aerodrome?.runways[0];
   if (!pista) return null;
   for (const [nombre, u] of Object.entries(pista.thresholds)) {

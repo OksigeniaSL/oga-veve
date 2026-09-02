@@ -29,7 +29,8 @@ import { GUYRAMI, TIERS, rememberTier, rememberedTier, type Tier } from './fligh
 import { AIRCRAFT, OGA_172, type AircraftConfig } from './flight/aircraft';
 import { InputManager } from './flight/input';
 import type { FlightModel, FlightState } from './flight/model';
-import { Terrain } from './world/terrain';
+import { Terrain, cabeceraEnUso } from './world/terrain';
+import { crearAproximacion, type Aproximacion } from './world/aproximacion';
 import { createSky, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
 import { RunwayGuide } from './world/runway-guide';
@@ -149,9 +150,35 @@ export class Game {
   private readonly teselas: Teselas | null;
   private mundoRealPuesto = false;
   private sueloMoldeado = false;
+  /**
+   * Las luces de aproximación y el PAPI.
+   *
+   * Van aparte del resto del aeródromo, y a propósito: se montan **después** de
+   * moldear el suelo con la fotografía. Las luces de borde, que se montan con
+   * el aeródromo, quedan enterradas cuarenta y siete metros cuando llega el
+   * datum de la foto —por eso se apagan—; estas llegan cuando el suelo ya es el
+   * que es y se quedan donde tienen que estar.
+   */
+  private aproximacion: Aproximacion | null = null;
   /** Cuántos nudos eran tejado y no suelo. Para las comprobaciones. */
   private bultosQuitados = 0;
   private ciudadSobreLaFoto = false;
+  /**
+   * Segundos desde la última vez que se preguntó por los edificios de la foto.
+   *
+   * Se pregunta cada tres, y se sigue preguntando hasta tener respuesta. No hay
+   * plazo: volando, el detalle de la ciudad se afina solo, y la respuesta puede
+   * tardar en llegar lo que tarde el jugador en subir.
+   */
+  private esperaDeCiudad = 0;
+  /**
+   * Los desniveles medidos sobre manzanas, acumulados a lo largo del vuelo.
+   *
+   * No se decide con una tanda. La cata solo vale cerca del avión —el árbol de
+   * teselas afina lo que la cámara mira y nada más—, así que cada tanda trae
+   * pocas medidas y de un solo barrio. Se juntan hasta tener con qué.
+   */
+  private saltosDeCiudad: number[] = [];
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
@@ -441,6 +468,24 @@ export class Game {
       controles: () => this.input.controls,
       /** La cota que da la foto sin filtrar, para comprobar lejos del aeropuerto. */
       cotaCruda: (x: number, z: number) => this.teselas?.medidaDirecta(x, z) ?? null,
+      aristas: (puntos: [number, number][]) =>
+        puntos.map(([x, z]) => {
+          const d = this.teselas?.detalleEn(x, z);
+          return d ? [d.arista, d.error] : null;
+        }),
+      dondeCiudad: () =>
+        this.scenario.ciudad ? this.dondeHayCiudad(this.scenario.ciudad) : [],
+      casas: () => {
+        const o = [...this.saltosDeCiudad].sort((a, b) => a - b);
+        return {
+          medidas: o.length,
+          salto: o.length ? o[Math.floor(o.length / 2)]! : null,
+          q1: o.length ? o[Math.floor(o.length * 0.25)]! : null,
+          q3: o.length ? o[Math.floor(o.length * 0.75)]! : null,
+          decidido: this.ciudadSobreLaFoto,
+          levantadas: this.scene.getObjectByName('ciudad')?.children.length ?? 0,
+        };
+      },
       /** El estado del mundo de verdad, para las comprobaciones. */
       mundoReal: () => {
         if (!this.teselas) return null;
@@ -461,9 +506,7 @@ export class Game {
           hundido: foto === null ? null : s.position.y - this.aircraft.gearHeight - foto,
           puestosLibres: `${libres.filter(Boolean).length} de ${libres.length}`,
           bultos: this.bultosQuitados,
-          volumen: this.scenario.ciudad
-            ? this.teselas.tieneVolumen(this.dondeHayCiudad(this.scenario.ciudad))
-            : null,
+          volumen: this.saltosDeCiudad.length,
           casas: (this.scene.getObjectByName('ciudad')?.visible ?? false)
             ? (this.scene.getObjectByName('ciudad')!.children as { count?: number }[]).reduce(
                 (n, m) => n + (m.count ?? 0),
@@ -753,6 +796,27 @@ export class Game {
    * que se queda es lo que la foto no puede dar — las luces, la manga, los
    * rótulos de calle y la raya de guía.
    */
+  /**
+   * Monta —o vuelve a montar— las luces de aproximación y el PAPI.
+   *
+   * Se llama después de moldear el suelo y cada vez que cambia la cabecera en
+   * uso, porque las luces van en la cabecera por la que se entra y si el viento
+   * gira hay que mudarlas al otro extremo.
+   */
+  private ponerAproximacion(): void {
+    const pista = this.scenario.aerodrome?.runways[0];
+    if (!pista) return;
+    if (this.aproximacion) {
+      this.scene.remove(this.aproximacion.grupo);
+      this.aproximacion.dispose();
+      this.aproximacion = null;
+    }
+    this.aproximacion = crearAproximacion(pista, cabeceraEnUso(this.scenario), (p) =>
+      this.terrain.sampleHeight(p[0], -p[1]),
+    );
+    if (this.aproximacion) this.scene.add(this.aproximacion.grupo);
+  }
+
   private apagarElMundoDeMentira(): void {
     const fuera = (o: Object3D | undefined | null): void => {
       if (o) o.visible = false;
@@ -790,25 +854,40 @@ export class Game {
    * Los sitios más poblados de la rejilla, para preguntarle a la foto si allí
    * tiene edificios. Medir en el aeropuerto no vale: allí no hay ninguno.
    */
+  /**
+   * Dónde catar para saber si la foto trae los edificios: **manzanas que estén
+   * cerca del avión**.
+   *
+   * El primer intento cataba las doscientas celdas más densas de la ciudad, y
+   * no daba respuesta nunca: las teselas de un barrio a ocho kilómetros y a la
+   * espalda de la cámara son gruesas siempre, porque el árbol de teselas solo
+   * afina lo que se está mirando. Salían doscientas catas de doscientas
+   * descartadas, tanda tras tanda.
+   *
+   * Cerca sí hay detalle, siempre. Y en la plataforma «cerca» ya es la
+   * terminal, que es un edificio como otro cualquiera: si la fotogrametría de
+   * esta ciudad tiene volumen, ahí se ve desde el primer momento.
+   */
   private dondeHayCiudad(ciudad: NonNullable<Scenario['ciudad']>): (readonly [number, number])[] {
-    const { lado, clase, densidad } = ciudad.rejilla;
+    const { lado, clase } = ciudad.rejilla;
     const paso = ciudad.tamanoM / lado;
-    const celdas: { x: number; z: number; d: number }[] = [];
+    const s = this.flight.state.position;
+    const ALCANCE = 1500;
+    const cerca: (readonly [number, number])[] = [];
     for (let f = 0; f < lado; f++) {
       for (let c = 0; c < lado; c++) {
-        const i = f * lado + c;
-        if (!clase[i]) continue;
-        celdas.push({
-          x: -ciudad.tamanoM / 2 + (c + 0.5) * paso,
-          // El fichero tiene la Y al norte y el mundo el norte en la Z negativa.
-          z: -(-ciudad.tamanoM / 2 + (f + 0.5) * paso),
-          d: densidad[i]!,
-        });
+        if (!clase[f * lado + c]) continue;
+        const x = -ciudad.tamanoM / 2 + (c + 0.5) * paso;
+        // El fichero tiene la Y al norte y el mundo el norte en la Z negativa.
+        const z = -(-ciudad.tamanoM / 2 + (f + 0.5) * paso);
+        if (Math.hypot(x - s.x, z - s.z) > ALCANCE) continue;
+        cerca.push([x, z] as const);
+        if (cerca.length >= 40) return cerca;
       }
     }
-    celdas.sort((a, b) => b.d - a.d);
-    return celdas.slice(0, 60).map((c) => [c.x, c.z] as const);
+    return cerca;
   }
+
 
   /**
    * Nuestras casas encima de la foto, **solo donde la foto no las trae**.
@@ -827,19 +906,52 @@ export class Game {
     if (!this.teselas || !ciudad || this.ciudadSobreLaFoto) return;
 
     /*
-     * **Apagado por defecto hasta poder comprobarlo en condiciones.**
+     * **No se decide de golpe: se junta.**
      *
-     * La detección de volumen funciona sobre el papel y dos ejecuciones seguidas
-     * dan resultados contradictorios: la carga de teselas es irregular y medir
-     * antes de tiempo devuelve lo que sea. Y el fallo no es simétrico — si se
-     * equivoca en Asunción faltan casas, y si se equivoca en Tenerife planta
-     * veintinueve mil cajas encima de los edificios de verdad.
+     * Cada tanda cata las manzanas que caigan a menos de kilómetro y medio, que
+     * son las únicas donde la fotografía está a resolución de edificio. Son
+     * pocas, y todas del mismo barrio, así que una sola tanda no basta para
+     * hablar de una ciudad. Se guardan y se sigue volando.
      *
-     * Ante un fallo así, apagado. `?casas=1` para probarlo.
+     * Mientras no haya sesenta medidas no se toca nada — y **no tocar nada es
+     * el lado seguro**: si nos equivocamos en Asunción faltan casas, y si nos
+     * equivocamos en Tenerife plantamos veintinueve mil cajas encima de las
+     * de verdad. Ante la duda, no plantar.
      */
-    if (new URLSearchParams(location.search).get('casas') !== '1') return;
-    if (this.teselas.tieneVolumen(this.dondeHayCiudad(ciudad))) return;
+    this.saltosDeCiudad.push(...this.teselas.catarVolumen(this.dondeHayCiudad(ciudad)));
+    if (this.saltosDeCiudad.length < 60) return;
     this.ciudadSobreLaFoto = true;
+
+    /*
+     * **Una manzana de cada cuatro con más de cinco metros de desnivel.**
+     *
+     * No es la mediana, y eso importa. Medido en los dos aeródromos:
+     *
+     * | | mediana | q1 | q3 |
+     * |---|---|---|---|
+     * | Tenerife, la foto trae edificios | 5,3 m | 2,1 | **8,0** |
+     * | Asunción, la foto es una sábana  | 2,5 m | 2,2 | **3,4** |
+     *
+     * La mediana casi no las distingue, porque en cualquier ciudad la mitad de
+     * las catas caen en descampados, patios y calles anchas. El tercer cuartil
+     * sí: en Asunción **todas** las manzanas dan lo mismo —entre dos y tres
+     * metros y medio, que es la pendiente del terreno—, y en Tenerife hay una
+     * cuarta parte que se va por encima de ocho. Eso son edificios.
+     *
+     * El corte en cinco no sale de ninguna teoría: sale de esos dos números y
+     * está puesto **a propósito más cerca de Asunción que de Tenerife**. Los dos
+     * errores no cuestan igual. Equivocarse hacia «la foto los trae» deja una
+     * ciudad sin casas, que se nota y se arregla; equivocarse hacia «hay que
+     * ponerlos» planta veintinueve mil cajas encima de los edificios de verdad.
+     * Con dos aeropuertos medidos esto es lo que hay, y el margen se lo lleva el
+     * fallo barato.
+     */
+    const orden = [...this.saltosDeCiudad].sort((a, b) => a - b);
+    if (orden[Math.floor(orden.length * 0.75)]! > 5) {
+      // La foto los trae. Nuestras cajas sobran, y el mundo de mentira ya está
+      // apagado, así que aquí no hay nada más que hacer.
+      return;
+    }
 
     /*
      * Cuarenta mil casas necesitan cuarenta mil alturas, y un rayo por casa
@@ -874,7 +986,8 @@ export class Game {
 
     const vieja = this.scene.getObjectByName('ciudad');
     if (vieja) this.scene.remove(vieja);
-    const grupo = crearCiudad(ciudad, cota, zonaDeAeropuerto(this.scenario, 200), -9999);
+    // Sin calles: la foto ya las trae, y las nuestras encima son una losa.
+    const grupo = crearCiudad(ciudad, cota, zonaDeAeropuerto(this.scenario, 200), -9999, false);
     grupo.name = 'ciudad';
     this.scene.add(grupo);
   }
@@ -1169,8 +1282,17 @@ export class Game {
         for (let i = 0; i < 2; i++) bultos += this.terrain.alisarPicos([0, 0], 6000, 6);
         this.bultosQuitados = bultos;
         this.buscarPuestoLibre();
-        void this.levantarCiudadSobreLaFoto();
+        this.ponerAproximacion();
         if (escritos > 0) this.recolocarTrasElMoldeado();
+      }
+      // Y los edificios, en cuanto la ciudad se vea con suficiente detalle para
+      // poder decir si están o no. Puede ser ahora o puede ser a mil pies.
+      if (!this.ciudadSobreLaFoto) {
+        this.esperaDeCiudad += dt;
+        if (this.esperaDeCiudad >= 3) {
+          this.esperaDeCiudad = 0;
+          void this.levantarCiudadSobreLaFoto();
+        }
       }
     }
     this.advanceMission();
@@ -1179,6 +1301,16 @@ export class Game {
     // que es donde la ponen los fabricantes.
     this.audio.update(this.flight.state, this.input.controls, this.aircraft.aero.alphaStall * 0.85);
     // El mapa, si está abierto. Solo mueve la flecha: el mundo ya está pintado.
+    /*
+     * El PAPI mira al avión. Es lo único del aeródromo que cambia cada
+     * fotograma, y es el instrumento que enseña a aterrizar sin una palabra:
+     * rojo por debajo, blanco por encima, dos y dos en la senda.
+     */
+    this.aproximacion?.mirarDesde(
+      this.flight.state.position.x,
+      this.flight.state.position.y,
+      this.flight.state.position.z,
+    );
     this.hud.mapa.update(
       this.flight.state.position.x,
       this.flight.state.position.z,

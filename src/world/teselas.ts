@@ -50,6 +50,8 @@ import {
   Matrix4,
   Raycaster,
   Vector3,
+  type Mesh,
+  type Object3D,
   type PerspectiveCamera,
   type WebGLRenderer,
 } from 'three';
@@ -98,6 +100,11 @@ const MARGEN_PLAUSIBLE = 400;
 const ESPERA_A_LA_VERDAD = 3;
 
 /** El parche de suelo que sigue al avión fuera del escenario: lado y nudos. */
+/**
+ * Error geométrico máximo, en metros, para que una tesela sirva para hablar de
+ * casas: por encima de esto la malla no distingue un edificio del suelo.
+ */
+const DETALLE_DE_CIUDAD = 20;
 const PARCHE_LADO = 8000;
 const PARCHE_N = 33;
 
@@ -145,7 +152,22 @@ export interface Teselas {
    * un tejado y otro en la calle y se llevan varios metros; en una alfombra, el
    * relieve del terreno y poco más.
    */
-  tieneVolumen(puntos: readonly (readonly [number, number])[]): boolean;
+  /**
+   * Cuánto sobresale la fotografía en unos puntos, **descartando lo que esté
+   * lejos**. Devuelve un desnivel por punto útil, en metros.
+   *
+   * De aquí sale si hay que levantar edificios o si la foto ya los trae, pero
+   * la decisión no se toma con una tanda: se acumulan a lo largo del vuelo.
+   *
+   * Dos cosas se aprendieron por las malas. La primera, que **lo liso no es
+   * lo mismo que lo vacío**: una tesela continental a medio cargar es lisa, y
+   * confundirla con «aquí no hay edificios» planta veintinueve mil cajas encima
+   * de Santa Cruz. Por eso solo cuentan las teselas cuyo error geométrico baje
+   * de veinte metros. La segunda, que **el árbol de teselas solo afina lo que
+   * la cámara mira**: preguntarle por un barrio a ocho kilómetros a la espalda
+   * no da respuesta hoy ni la va a dar nunca. Por eso se cata cerca del avión.
+   */
+  catarVolumen(puntos: readonly (readonly [number, number])[]): number[];
   /**
    * La cota del mundo lejos del aeródromo, de un parche que se va rellenando.
    *
@@ -175,6 +197,8 @@ export interface Teselas {
    * casa siempre, tenga el valor que tenga. Esto lanza el rayo de nuevo.
    */
   medidaDirecta(x: number, z: number): number | null;
+  /** La cota, la arista del triángulo y el error geométrico de la tesela. */
+  detalleEn(x: number, z: number): { y: number; arista: number; error: number } | null;
   /** Mueve y rellena el parche. Se llama cada fotograma, con presupuesto. */
   seguirAlAvion(x: number, z: number): void;
   dispose(): void;
@@ -295,12 +319,75 @@ export function crearTeselas(
     cotas: new Float32Array(PARCHE_N * PARCHE_N),
   };
 
-  /** Cuánto está el mundo por encima del nuestro en un punto, o `null`. */
   /** La cota que devuelve el rayo, sin juzgarla. */
   const alturaCruda = (x: number, z: number): number | null => {
     rayo.set(new Vector3(x, referencia + 9000, z), new Vector3(0, -1, 0));
     const golpes = rayo.intersectObject(teselas.group, true);
     return golpes.length ? golpes[0]!.point.y : null;
+  };
+
+  /**
+   * La cota **y el tamaño del triángulo que se ha golpeado**, en metros.
+   *
+   * El segundo dato es el que faltaba. Una tesela continental a medio cargar es
+   * lisa, y liso quiere decir «aquí no hay edificios» — pero también quiere
+   * decir «esto está a cuatro niveles de detalle de distancia y todavía no he
+   * visto nada». Las dos cosas se miden igual y no son la misma.
+   *
+   * El triángulo las separa. La fotogrametría de una manzana trae aristas de
+   * dos o tres metros; una tesela de las gruesas las trae de kilómetros. Si la
+   * arista es grande, la medida no dice nada de la ciudad: dice que hay que
+   * esperar.
+   */
+  /**
+   * De cada tesela cargada, **su error geométrico**: los metros de detalle que
+   * se pierden si no se dibuja. Es el número que el propio árbol de teselas usa
+   * para decidir si baja un nivel más, así que es la respuesta directa a «¿esto
+   * está a la resolución de un edificio o es el planeta visto de lejos?».
+   *
+   * La arista del triángulo no servía para esto y me costó una tarde verlo: un
+   * tejado plano se malla con triángulos enormes por muy fina que sea la tesela.
+   * Estaba midiendo llanura y llamándolo falta de detalle.
+   */
+  const errorPorEscena = new Map<object, number>();
+  const refrescarErrores = (): void => {
+    errorPorEscena.clear();
+    teselas.forEachLoadedModel((escena: object, tesela: { geometricError?: number }) => {
+      errorPorEscena.set(escena, tesela.geometricError ?? Infinity);
+    });
+  };
+  /** El error geométrico de la tesela a la que pertenece un objeto golpeado. */
+  const errorDe = (obj: Object3D | null): number => {
+    for (let o = obj; o; o = o.parent) {
+      const e = errorPorEscena.get(o);
+      if (e !== undefined) return e;
+    }
+    return Infinity;
+  };
+
+  const bordes = [new Vector3(), new Vector3(), new Vector3()];
+  const medidaFina = (
+    x: number,
+    z: number,
+  ): { y: number; arista: number; error: number } | null => {
+    rayo.set(new Vector3(x, referencia + 9000, z), new Vector3(0, -1, 0));
+    const golpes = rayo.intersectObject(teselas.group, true);
+    const g = golpes[0];
+    if (!g) return null;
+    const error = errorDe(g.object);
+    const malla = g.object as Mesh;
+    const pos = malla.geometry?.getAttribute?.('position');
+    if (!g.face || !pos) return { y: g.point.y, arista: Infinity, error };
+    const idx = [g.face.a, g.face.b, g.face.c];
+    for (let i = 0; i < 3; i++) {
+      bordes[i]!.fromBufferAttribute(pos as never, idx[i]!).applyMatrix4(malla.matrixWorld);
+    }
+    const arista = Math.max(
+      bordes[0]!.distanceTo(bordes[1]!),
+      bordes[1]!.distanceTo(bordes[2]!),
+      bordes[2]!.distanceTo(bordes[0]!),
+    );
+    return { y: g.point.y, arista, error };
   };
 
   const diferenciaEn = (x: number, z: number): number | null => {
@@ -400,29 +487,43 @@ export function crearTeselas(
       const suelo = alrededor[1]!;
       return centro - suelo < 3;
     },
-    tieneVolumen(puntos: readonly (readonly [number, number])[]) {
-      /*
-       * **Y se mide donde hay ciudad, no alrededor del aeropuerto.**
-       *
-       * El primer intento tiraba las catas en un círculo con centro en la pista,
-       * y un aeropuerto es explanada, hierba y fincas: salía «sin volumen» hasta
-       * en Tenerife, donde la fotogrametría trae los edificios con su sombra. Se
-       * estaba midiendo el único sitio del mapa donde no hay edificios.
-       *
-       * Los puntos los pone quien llama, y son los de las celdas con más
-       * densidad de la rejilla de ciudad — que es exactamente donde nuestras
-       * cajas irían.
-       */
+    catarVolumen(puntos: readonly (readonly [number, number])[]) {
+      refrescarErrores();
       const saltos: number[] = [];
       for (const [x, z] of puntos) {
-        const uno = this.alturaEn(x, z);
-        const otro = this.alturaEn(x + 15, z + 15);
-        if (uno !== null && otro !== null) saltos.push(Math.abs(uno - otro));
+        const centro = medidaFina(x, z);
+        if (!centro || centro.error > DETALLE_DE_CIUDAD) continue;
+        /*
+         * Lo que se mide es **cuánto se mueve el suelo dentro de una manzana**:
+         * el más alto menos el más bajo de un corro de cuarenta y cinco metros.
+         *
+         * No vale medir el centro contra la calle, que fue el primer intento.
+         * El centro de una celda cae en la calle casi siempre, así que el salto
+         * salía en dos metros y Tenerife —que sí trae los edificios en la foto—
+         * quedaba como ciudad plana. Da igual dónde caiga cada cata: si en esos
+         * noventa metros hay un edificio, alguno de los nueve puntos está en su
+         * tejado y otro en el asfalto, y la diferencia es la altura del
+         * edificio. Sin volumen, la diferencia es la pendiente del terreno.
+         */
+        let alto = centro.y;
+        let bajo = centro.y;
+        let vale = 0;
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const c = medidaFina(x + Math.sin(a) * 45, z + Math.cos(a) * 45);
+          if (!c || c.error > DETALLE_DE_CIUDAD) continue;
+          vale++;
+          if (c.y > alto) alto = c.y;
+          if (c.y < bajo) bajo = c.y;
+        }
+        // Con menos de cinco puntos del corro no hay manzana que medir.
+        if (vale >= 5) saltos.push(alto - bajo);
       }
-      if (saltos.length < 20) return true;
-      saltos.sort((p, q) => p - q);
-      // La mediana del salto. Con volumen sube de tres metros; sin él, no.
-      return saltos[Math.floor(saltos.length / 2)]! > 3;
+      return saltos;
+    },
+    detalleEn(x: number, z: number) {
+      refrescarErrores();
+      return medidaFina(x, z);
     },
     medidaDirecta(x: number, z: number) {
       const y = alturaCruda(x, z);
