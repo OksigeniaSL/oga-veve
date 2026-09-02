@@ -209,9 +209,19 @@ export class Mapa {
      * entonces el fondo hay que repintarlo cuando uno se aleja lo suficiente.
      */
     const movido = Math.hypot(x - this.avionX, z - this.avionZ);
+    const anchoAntes = this.metrosPorLado();
     this.avionX = x;
     this.avionZ = z;
-    if (this.abierto && this.alcance > 0 && movido > this.metrosPorLado() * 0.08) {
+    const anchoAhora = this.metrosPorLado();
+    /*
+     * Se repinta el fondo cuando hace falta, y hacen falta dos cosas distintas.
+     * De cerca, porque el mapa sigue al avión y el encuadre se queda atrás. De
+     * lejos, porque **el mapa se estira si el avión se ha ido fuera** y el
+     * dibujo tiene que estirarse con él: sin esto, quien sale a mar abierto veía
+     * el mismo cuadrado de siempre con la flecha clavada en un borde.
+     */
+    const estirado = Math.abs(anchoAhora - anchoAntes) > anchoAntes * 0.08;
+    if (this.abierto && (estirado || (this.alcance > 0 && movido > anchoAhora * 0.08))) {
       this.pintarFondo();
     }
     if (!this.abierto || !this.encima || !this.escenario) return;
@@ -224,13 +234,62 @@ export class Mapa {
     const px = LADO / 2 + (x - c[0]) * escala;
     const py = LADO / 2 + (z - c[1]) * escala;
 
+    /*
+     * **Y si estás fuera del recuadro, la flecha se queda en el borde.**
+     *
+     * Volando sobre el mar camino de Gran Canaria, la flecha se salía del
+     * lienzo y el mapa se quedaba en blanco azul sin nada: «estoy fuera de este
+     * mapa y el mapa me da esto». Un mapa que no sabe que puedes estar fuera de
+     * él no es un mapa, es un cuadro.
+     *
+     * Se pega al borde, apuntando a donde vas, y se le pone un aro para que se
+     * distinga de estar dentro. Es lo que hace cualquier navegador con un punto
+     * que se sale, y para quien no lee es lo único que se entiende: **por ahí
+     * está lo que buscas**.
+     */
+    const margen = 14;
+    const fuera = px < margen || py < margen || px > LADO - margen || py > LADO - margen;
+    const cx = Math.max(margen, Math.min(LADO - margen, px));
+    const cy = Math.max(margen, Math.min(LADO - margen, py));
+
+    if (fuera) {
+      /*
+       * Una línea de puntos desde el centro hasta la flecha.
+       *
+       * La flecha pegada al borde se queda a veces detrás de las lupas, y
+       * moverlas solo cambia de sitio el problema: el avión puede salir del
+       * mundo por cualquier lado. La línea se lee igual aunque un botón le
+       * tape la punta, y además dice lo único que hace falta saber ahí —**por
+       * dónde has salido**— sin una palabra.
+       */
+      g.save();
+      g.setLineDash([4, 5]);
+      g.strokeStyle = 'rgba(232, 118, 44, 0.75)';
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(LADO / 2, LADO / 2);
+      g.lineTo(cx, cy);
+      g.stroke();
+      g.restore();
+    }
+
     g.save();
-    g.translate(px, py);
+    g.translate(cx, cy);
     // El rumbo del avión y el norte del mapa son el mismo cero: arriba.
     g.rotate(rumboRad);
     g.fillStyle = '#e8762c';
     g.strokeStyle = '#2a2622';
     g.lineWidth = 1.6;
+    if (fuera) {
+      // El aro dice «estás fuera, esto es por dónde».
+      g.beginPath();
+      g.arc(0, 0, 13, 0, Math.PI * 2);
+      g.strokeStyle = '#e8762c';
+      g.lineWidth = 2.4;
+      g.stroke();
+      g.strokeStyle = '#2a2622';
+      g.lineWidth = 1.6;
+    }
     g.beginPath();
     g.moveTo(0, -9);
     g.lineTo(6.5, 8);
@@ -242,9 +301,20 @@ export class Mapa {
     g.restore();
   }
 
-  /** Cuántos metros de mundo caben de lado a lado con el alcance de ahora. */
+  /**
+   * Cuántos metros de mundo caben de lado a lado con el alcance de ahora.
+   *
+   * En el alcance más ancho, **si el avión se ha ido fuera del escenario, el
+   * mapa se estira hasta alcanzarlo**. El mundo del juego mide dieciocho o
+   * veintidós kilómetros y con las teselas se puede volar mucho más lejos: sin
+   * esto, quien sale a mar abierto ve un cuadrado con la flecha pegada a un
+   * borde y no sabe si le queda cerca o lejos.
+   */
   private metrosPorLado(): number {
-    return (this.escenario?.size ?? 1) * ALCANCES[this.alcance]!;
+    const base = (this.escenario?.size ?? 1) * ALCANCES[this.alcance]!;
+    if (this.alcance > 0) return base;
+    const lejos = Math.max(Math.abs(this.avionX), Math.abs(this.avionZ)) * 2.3;
+    return Math.max(base, lejos);
   }
 
   /** El centro del encuadre: el escenario de lejos, el avión de cerca. */
@@ -275,7 +345,18 @@ export class Mapa {
       for (let col = 0; col < MUESTRAS; col++) {
         const x = cx - lado / 2 + (col + 0.5) * paso;
         const z = cz - lado / 2 + (fila + 0.5) * paso;
-        const h = cota(x, z);
+        /*
+         * **Fuera del escenario, mar.**
+         *
+         * El mapa de alturas solo cubre el mundo del juego, y consultarlo fuera
+         * devuelve el borde repetido: al estirar el mapa para alcanzar a quien
+         * se ha ido volando, alrededor aparecía una franja con el color de la
+         * última fila de terreno, como si la isla se prolongara. Los dos
+         * aeródromos están junto al agua y lo que hay más allá es agua; el día
+         * que haya uno de interior, esto se cambia por lo que corresponda.
+         */
+        const dentro = Math.abs(x) <= esc.size / 2 && Math.abs(z) <= esc.size / 2;
+        const h = dentro ? cota(x, z) : esc.waterLevel;
         g.fillStyle = h <= esc.waterLevel ? colorHex(esc.water) : colorDeCota(esc, h);
         g.fillRect(col * px, fila * px, px + 1, px + 1);
       }

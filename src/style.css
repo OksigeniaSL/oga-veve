@@ -2533,12 +2533,23 @@ body {
  * Las lupas del mapa. Dentro del propio mapa y grandes: fuera se leerían como
  * mandos del juego, y pequeñas no se aciertan con un dedo de cuatro años.
  */
+/*
+ * **Las lupas van fuera del mapa, encima.**
+ *
+ * Estaban dentro, en una esquina, y le tapaban la flecha del avión. Y no hay
+ * esquina buena: desde que el mapa se estira para alcanzar a quien se ha ido
+ * volando, el avión puede aparecer en cualquier parte del recuadro.
+ *
+ * Debajo tampoco, que ahí vive la tarjeta que dice qué hacer. Encima, que es la
+ * única banda libre — y siguen igual de grandes para un dedo.
+ */
 .mapa__lupas {
   position: absolute;
-  right: 14px;
-  bottom: 14px;
-  display: grid;
-  gap: 8px;
+  left: 50%;
+  top: -14px;
+  transform: translate(-50%, -100%);
+  display: flex;
+  gap: 10px;
 }
 
 .mapa__lupa {
