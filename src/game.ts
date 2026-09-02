@@ -964,6 +964,133 @@ export class Game {
     const aero = this.scenario.aerodrome;
     if (!aero || !this.teselas) return;
     const datum = this.teselas.desfase ?? 0;
+
+    /*
+     * **El perfil de la pista, sacado de la propia fotografía.**
+     *
+     * Se cata el eje cada cien metros y se suaviza con una media móvil de siete
+     * catas —setecientos metros—, que es lo que separa la rasante de verdad del
+     * ruido de la rejilla.
+     *
+     * Es el término medio entre los dos extremos que fallaron. Una recta entre
+     * las cotas de los umbrales no sigue la pista: en Tenerife Norte se aparta
+     * más de metro y medio en la sexta parte de los puntos, y taparla obligaba
+     * a levantar el aeródromo dos metros, con su escalón en el filo del
+     * asfalto. Y la superficie cruda de la foto sigue la pista demasiado bien:
+     * conserva saltos de metros entre nudos y el avión sale despedido rodando
+     * —medido, seiscientos cincuenta y seis de cada novecientos fotogramas en
+     * el aire en Asunción—.
+     *
+     * Una curva lisa que sí sube y baja con la pista no tiene ninguno de los
+     * dos problemas.
+     */
+    const perfilDeLaFoto = ((): ((t: number) => number) | null => {
+      const pista = aero.runways[0];
+      const umbrales = pista
+        ? Object.values(pista.thresholds).filter((u): u is NonNullable<typeof u> => !!u?.xy)
+        : [];
+      const a = umbrales[0]?.xy;
+      const b = umbrales[1]?.xy;
+      if (!pista || !a || !b) return null;
+      const largo = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const catas = Math.max(8, Math.round(largo / 100));
+
+      /*
+       * **Se cata sobre el eje de OpenStreetMap, no sobre la recta que une los
+       * umbrales.** Son dos rectas parecidas y no la misma, y la diferencia son
+       * metros: catando la segunda se cae fuera del asfalto y se mide el arcén,
+       * que baja. El primer intento salió con la fotografía medio metro por
+       * encima de nuestra pista —un hundimiento donde antes había un escalón—
+       * y la causa era ésta.
+       *
+       * Es la cuarta vez esta semana que dos ejes parecidos se llevan algo por
+       * delante: el eje discontinuo, las luces de cabecera, el designador, y
+       * ahora la rasante.
+       */
+      const eje = pista.centerline;
+      const largoEje = (() => {
+        let d = 0;
+        for (let i = 0; i < eje.length - 1; i++) {
+          d += Math.hypot(eje[i + 1]![0] - eje[i]![0], eje[i + 1]![1] - eje[i]![1]);
+        }
+        return d;
+      })();
+      const sobreElEje = (d: number): [number, number] | null => {
+        let visto = 0;
+        for (let i = 0; i < eje.length - 1; i++) {
+          const [ax, ay] = eje[i]!;
+          const [bx, by] = eje[i + 1]!;
+          const l = Math.hypot(bx - ax, by - ay);
+          if (l < 0.001) continue;
+          if (visto + l >= d) {
+            const k = (d - visto) / l;
+            return [ax + (bx - ax) * k, ay + (by - ay) * k];
+          }
+          visto += l;
+        }
+        return null;
+      };
+      // Dónde caen los dos umbrales sobre ese eje: las marcas van de umbral a
+      // umbral, y el eje del fichero es más largo que la pista.
+      const alLargo = (p: readonly [number, number]): number => {
+        let visto = 0;
+        let mejor = 0;
+        let cerca = Infinity;
+        for (let i = 0; i < eje.length - 1; i++) {
+          const [ax, ay] = eje[i]!;
+          const [bx, by] = eje[i + 1]!;
+          const l = Math.hypot(bx - ax, by - ay) || 1;
+          const k = Math.max(0, Math.min(1, ((p[0] - ax) * (bx - ax) + (p[1] - ay) * (by - ay)) / (l * l)));
+          const d = Math.hypot(ax + (bx - ax) * k - p[0], ay + (by - ay) * k - p[1]);
+          if (d < cerca) {
+            cerca = d;
+            mejor = visto + k * l;
+          }
+          visto += l;
+        }
+        return mejor;
+      };
+      const dA = alLargo(a);
+      const dB = alLargo(b);
+      void largoEje;
+
+      const crudo: (number | null)[] = [];
+      for (let i = 0; i <= catas; i++) {
+        const t = i / catas;
+        const p = sobreElEje(dA + (dB - dA) * t);
+        crudo.push(p ? this.teselas!.alturaEn(p[0], -p[1]) : null);
+      }
+      if (crudo.filter((c) => c !== null).length < catas * 0.6) return null;
+
+      // Los huecos se rellenan con el vecino: una cata perdida no puede abrir
+      // un agujero en la rasante.
+      for (let i = 0; i < crudo.length; i++) {
+        if (crudo[i] !== null) continue;
+        const antes = crudo.slice(0, i).reverse().find((c) => c !== null);
+        const despues = crudo.slice(i + 1).find((c) => c !== null);
+        crudo[i] = (antes ?? despues ?? null) as number | null;
+      }
+
+      const VENTANA = 3;
+      const liso = crudo.map((_, i) => {
+        let suma = 0;
+        let n = 0;
+        for (let k = -VENTANA; k <= VENTANA; k++) {
+          const v = crudo[Math.min(crudo.length - 1, Math.max(0, i + k))];
+          if (v !== null && v !== undefined) {
+            suma += v;
+            n++;
+          }
+        }
+        return n ? suma / n : 0;
+      });
+
+      return (t: number): number => {
+        const f = Math.max(0, Math.min(catas - 0.001, t * catas));
+        const i = Math.floor(f);
+        return liso[i]! + (liso[i + 1]! - liso[i]!) * (f - i);
+      };
+    })();
     /*
      * Primero, liso y con el datum. A partir de aquí `sampleHeight` en el
      * aeródromo es nuestra superficie, y ya se puede comparar con la foto.
@@ -982,7 +1109,9 @@ export class Game {
      * cada paso. El escalón es un problema de aspecto; esto es un problema de
      * jugar, y gana el de jugar.
      */
-    this.terrain.reasentarAerodromo(this.scenario, datum);
+    // Con perfil de la foto el datum ya está dentro de las catas; sin él, hay
+    // que sumarlo a mano porque las cotas de los umbrales van sobre el mar.
+    this.terrain.reasentarAerodromo(this.scenario, perfilDeLaFoto ? 0 : datum, perfilDeLaFoto);
 
     const puntos: [number, number][] = [];
     const pista = aero.runways[0];
@@ -1040,10 +1169,21 @@ export class Game {
      * Los quince centímetros de holgura son menos que el grosor de la pintura
      * y no se ven.
      */
-    const alzado = datum + Math.min(1.5, Math.max(0, p85)) + 0.15;
-    this.terrain.reasentarAerodromo(this.scenario, alzado);
+    /*
+     * **El tope no baja aunque el perfil salga de la fotografía.**
+     *
+     * Se probó bajarlo a medio metro, con el argumento de que siguiendo ya la
+     * forma de la foto lo único que queda por tapar es su rugosidad. Medido:
+     * el aeródromo quedaba **sesenta centímetros por debajo** de la foto. El
+     * escalón cambiaba de signo y se convertía en un hundimiento, que es el
+     * lado malo — entre ver el filo del asfalto y que la pista se te trague, se
+     * ve el filo.
+     */
+    const tope = 1.5;
+    const alzado = (perfilDeLaFoto ? 0 : datum) + Math.min(tope, Math.max(0, p85)) + 0.15;
+    this.terrain.reasentarAerodromo(this.scenario, alzado, perfilDeLaFoto);
     this.terrain.rehacerAerodromo(this.scenario);
-    this.alzadoDelAerodromo = alzado - datum;
+    this.alzadoDelAerodromo = alzado - (perfilDeLaFoto ? 0 : datum);
   }
 
   /** Cuánto hubo que subir el aeródromo sobre el datum. Para poder mirarlo. */
