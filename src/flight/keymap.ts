@@ -185,6 +185,30 @@ export class Keymap {
     return accion !== null && mismaTecla(this.shownKey(accion), key);
   }
 
+  /**
+   * Las teclas que se anuncian de un mando: **la de cada mano**.
+   *
+   * `shownKey` da una sola, la del lado elegido, y para la tarjeta del tutor
+   * está bien —ahí se enseña un gesto y hay que enseñar uno—. Pero el teclado
+   * dibujado se compara con el teclado de verdad, y ahí esconder la mitad de
+   * los mandos es mentir: la Z y la X mueven el gas desde siempre y en el
+   * dibujo salían apagadas como cualquier letra sin función.
+   *
+   * Son las dos primeras porque el orden de `defecto` es exactamente ese —
+   * primero la de la derecha, después la de la izquierda—, y detrás van las
+   * que están por compatibilidad y no hace falta anunciar.
+   */
+  announcedKeys(accion: Accion): readonly string[] {
+    return this.keys(accion).slice(0, 2);
+  }
+
+  /** ¿Se anuncia esta tecla en el teclado dibujado? */
+  isAnnounced(key: string): boolean {
+    const accion = this.actionFor(key);
+    if (accion === null) return false;
+    return this.announcedKeys(accion).some((k) => mismaTecla(k, key));
+  }
+
   keys(accion: Accion): readonly string[] {
     return this.cambios.get(accion) ?? ACCIONES[accion].defecto;
   }

@@ -146,8 +146,20 @@ const AMARILLO = 0xd8a521;
  * La raya verde de la ruta va entre la pintura y las letras, porque la ayuda
  * no puede tapar la lección.
  */
-export const ENCIMA_PINTURA = { polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 };
-export const ENCIMA_LETRAS = { polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 };
+/**
+ * Con qué fuerza gana la pintura el empate contra el asfalto de debajo.
+ *
+ * **Tiene que ser más fuerte que la del pavimento**, y eso ahora importa. Al
+ * poner nuestro asfalto sobre la fotografía hubo que darle su propio empujón
+ * para ganarle a la foto, y se le dio uno mayor que este: el asfalto pasó a
+ * taparle la pintura a sí mismo. Se veía exacto — el «30» estaba, y al llegar
+ * el avión y mirarlo a ras de suelo, desaparecía.
+ *
+ * El orden es foto < pavimento < pintura, y hay que leerlo así de seguido.
+ */
+export const ENCIMA_PINTURA = { polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -9 };
+/** Y las letras y números por encima de la pintura, con el mismo orden. */
+export const ENCIMA_LETRAS = { polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -15 };
 
 /** Cuánto se levanta la pintura sobre el asfalto, m. Ver la nota de `losa`. */
 const PINTURA_ALTURA = 0.2;
@@ -377,8 +389,8 @@ export function createAerodrome(
          * canto por los bordes.
          */
         polygonOffset: true,
-        polygonOffsetFactor: -2,
-        polygonOffsetUnits: -6,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -3,
       }),
     );
     malla.name = `pavimento:${superficie}`;

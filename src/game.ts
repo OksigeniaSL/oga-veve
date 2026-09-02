@@ -78,6 +78,7 @@ import { objectiveTarget } from './missions/types';
 import { missionsFor } from './content/missions';
 import { conViento, VALLE_CORDILLERA, VECES_LEJOS, type Scenario } from './world/scenarios';
 import { crearTeselas, type Teselas } from './world/teselas';
+import { mundoElegido } from './ui/mundo';
 
 /**
  * La clave de las teselas fotorrealistas. Ver `workers/meteo.js` y `.env.example`.
@@ -838,6 +839,7 @@ export class Game {
   private claveDeTeselas(): string | null {
     const q = new URLSearchParams(location.search).get('teselas');
     if (q === '0') return null;
+    if (!q && mundoElegido() === 'dibujado') return null;
     return q || CLAVE_TESELAS;
   }
 
