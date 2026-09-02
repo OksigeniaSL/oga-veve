@@ -277,6 +277,16 @@ export class Terrain {
         this.runwayElevation,
         { de: escenario.meteo?.vientoDe ?? null, kt: escenario.meteo?.vientoKt ?? 0 },
         cabeceraEnUso(escenario),
+        // Lo que haya subido el mundo al llegar la fotografía. Sin esto, el
+        // aeródromo se reconstruye en el datum viejo y queda enterrado.
+        this.runwayElevationMovida,
+        /*
+         * Y, si el suelo ya viene de la fotografía, que se construya sobre él.
+         * El aeródromo tiene la Y al norte y el mundo el norte en la Z negativa.
+         */
+        this.sueloLejano || this.runwayElevationMovida !== 0
+          ? (p) => this.sampleHeight(p[0], -p[1])
+          : null,
       ),
     );
   }

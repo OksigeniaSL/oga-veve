@@ -106,9 +106,15 @@ const COLORES: Record<string, ColorRepresentation> = {
   // Gris de verdad, no tierra. El primer tono era cálido y bajo el sol de
   // mediodía leía como tierra roja: muy paraguayo y muy poco aeropuerto
   // internacional. El asfalto de una pista está gastado y es casi neutro.
-  asphalt: 0x393a3c,
-  concrete: 0x55575a,
-  gravel: 0x4a443c,
+  //
+  // Y aclarado desde entonces, porque ahora **se ve junto al de la fotografía**
+  // en el mismo encuadre: nuestro asfalto acaba donde acaba la pista y la foto
+  // sigue. Con el gris casi negro de antes el borde era un escalón; con este,
+  // que es el tono que trae la ortofoto, el corte se lee como lo que es —el
+  // filo del pavimento— y no como un parche pegado encima.
+  asphalt: 0x4e4f51,
+  concrete: 0x646669,
+  gravel: 0x5a5348,
   grass: 0x4d6136,
 };
 
@@ -274,12 +280,38 @@ export function createAerodrome(
   viento: { readonly de: number | null; readonly kt: number } = { de: null, kt: 0 },
   /** Por qué cabecera se opera hoy. De ahí sale de qué color es cada extremo. */
   cabeceraEnUso: string | null = null,
+  /**
+   * Cuánto hay que subir el aeródromo entero, en metros.
+   *
+   * Todo esto se construye sobre `elevationM`, que es la cota que da
+   * OurAirports sobre el nivel del mar. Cuando llega la fotografía, el suelo
+   * pasa a estar en **otro datum** —cuarenta y siete metros y medio más arriba
+   * en Tenerife, trece y medio en Asunción— y el aeródromo se queda enterrado
+   * entero. No hay que recalcular nada: la forma es la misma y solo cambia el
+   * cero, así que se sube en bloque por lo que se haya medido.
+   */
+  alzado = 0,
+  /**
+   * El suelo de verdad, si lo hay: la cota de la fotografía en cada punto.
+   *
+   * Cuando se le pasa, **el aeródromo se construye sobre ella** en vez de sobre
+   * un plano deducido de `elevationM`. Y hace falta de verdad: subir el
+   * aeródromo entero por un solo número no vale, porque ese número se mide en
+   * la pista y la plataforma está a otra cota. En Silvio Pettirossi eso dejaba
+   * el asfalto tres metros y medio por debajo de la foto — enterrado, que es
+   * como si no estuviera.
+   *
+   * Seguir la foto no es solo más exacto: es que la foto **es** la explanada,
+   * con su pendiente y sus rampas, y ya se le han quitado los bultos que no son
+   * suelo. Es mejor referencia que cualquier plano que podamos deducir.
+   */
+  sueloReal: ((p: Punto) => number | null) | null = null,
 ): Group {
   const grupo = new Group();
   grupo.name = `aerodromo:${aero.id}`;
 
-  // La cota de referencia: la del aeródromo si la sabemos.
-  const suelo = aero.elevationM ?? baseY;
+  // La cota de referencia: la del aeródromo si la sabemos, más el datum.
+  const suelo = (aero.elevationM ?? baseY) + alzado;
 
   /** Geometrías agrupadas por superficie, para fusionar cada grupo. */
   const porSuperficie = new Map<string, BufferGeometry[]>();
@@ -302,10 +334,26 @@ export function createAerodrome(
   // aproximación coherente: un aeródromo se construye sobre una explanada, y
   // la explanada acompaña a la pista.
   const principal = aero.runways[0];
-  const cota = principal ? perfil(principal, suelo) : plano(suelo);
+  const deducida = principal ? perfil(principal, suelo) : plano(suelo);
+  /*
+   * Sobre la foto, y si la foto no sabe qué hay en ese punto, sobre el plano
+   * deducido. Y un dedo por encima: dos superficies exactamente en el mismo
+   * plano parpadean una sobre otra, y aunque el `polygonOffset` lo resuelve
+   * casi siempre, cinco centímetros no se ven y no dejan lugar a dudas.
+   */
+  const sobreLaFoto =
+    (base: (p: Punto) => number) =>
+    (p: Punto): number => {
+      const y = sueloReal?.(p);
+      return y === null || y === undefined ? base(p) : y + 0.05;
+    };
+  const cota = sobreLaFoto(deducida);
 
   for (const pista of aero.runways) {
-    anotar(pista.surface, cinta(pista.centerline, pista.widthM ?? 45, perfil(pista, suelo)));
+    anotar(
+      pista.surface,
+      cinta(pista.centerline, pista.widthM ?? 45, sobreLaFoto(perfil(pista, suelo))),
+    );
   }
   for (const calle of aero.taxiways) {
     anotar('asphalt', cinta(calle.path, calle.widthM ?? ANCHO_RODADURA, cota));
@@ -317,7 +365,22 @@ export function createAerodrome(
   for (const [superficie, geos] of porSuperficie) {
     const fusionada = geos.length === 1 ? geos[0]! : mergeGeometries(geos, false);
     if (!fusionada) continue;
-    const malla = new Mesh(fusionada, new MeshLambertMaterial({ color: color(superficie) }));
+    const malla = new Mesh(
+      fusionada,
+      new MeshLambertMaterial({
+        color: color(superficie),
+        /*
+         * Nuestro asfalto y el de la fotografía quedan casi en el mismo plano
+         * —es la misma pista medida dos veces—, y dos planos casi iguales
+         * parpadean uno sobre otro según el ángulo. Con esto el nuestro gana
+         * siempre el empate, sin tener que levantarlo y sin que se le vea el
+         * canto por los bordes.
+         */
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -6,
+      }),
+    );
     malla.name = `pavimento:${superficie}`;
     // El pavimento no proyecta sombra sobre sí mismo y no la recibe de nada
     // que importe: apagarlo es rendimiento gratis.
