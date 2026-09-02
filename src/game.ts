@@ -162,9 +162,6 @@ export class Game {
    * que es y se quedan donde tienen que estar.
    */
   private aproximacion: Aproximacion | null = null;
-  /** Cuántos nudos eran tejado y no suelo. Para las comprobaciones. */
-  private bultosQuitados = 0;
-  private ciudadSobreLaFoto = false;
   /**
    * Segundos desde la última vez que se preguntó por los edificios de la foto.
    *
@@ -172,15 +169,8 @@ export class Game {
    * plazo: volando, el detalle de la ciudad se afina solo, y la respuesta puede
    * tardar en llegar lo que tarde el jugador en subir.
    */
-  private esperaDeCiudad = 0;
-  /**
-   * Los desniveles medidos sobre manzanas, acumulados a lo largo del vuelo.
-   *
-   * No se decide con una tanda. La cata solo vale cerca del avión —el árbol de
-   * teselas afina lo que la cámara mira y nada más—, así que cada tanda trae
-   * pocas medidas y de un solo barrio. Se juntan hasta tener con qué.
-   */
-  private saltosDeCiudad: number[] = [];
+  /** Cuántos bultos se le quitaron al suelo copiado de la foto. Para mirarlo. */
+  private bultosQuitados = 0;
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
@@ -662,24 +652,6 @@ export class Game {
           cabecera: nombre,
         };
       },
-      aristas: (puntos: [number, number][]) =>
-        puntos.map(([x, z]) => {
-          const d = this.teselas?.detalleEn(x, z);
-          return d ? [d.arista, d.error] : null;
-        }),
-      dondeCiudad: () =>
-        this.scenario.ciudad ? this.dondeHayCiudad(this.scenario.ciudad) : [],
-      casas: () => {
-        const o = [...this.saltosDeCiudad].sort((a, b) => a - b);
-        return {
-          medidas: o.length,
-          salto: o.length ? o[Math.floor(o.length / 2)]! : null,
-          q1: o.length ? o[Math.floor(o.length * 0.25)]! : null,
-          q3: o.length ? o[Math.floor(o.length * 0.75)]! : null,
-          decidido: this.ciudadSobreLaFoto,
-          levantadas: this.scene.getObjectByName('ciudad')?.children.length ?? 0,
-        };
-      },
       /** El estado del mundo de verdad, para las comprobaciones. */
       mundoReal: () => {
         if (!this.teselas) return null;
@@ -696,7 +668,6 @@ export class Game {
           ruedas: s.position.y - this.aircraft.gearHeight,
           hundido: foto === null ? null : s.position.y - this.aircraft.gearHeight - foto,
           bultos: this.bultosQuitados,
-          volumen: this.saltosDeCiudad.length,
           casas: (this.scene.getObjectByName('ciudad')?.visible ?? false)
             ? (this.scene.getObjectByName('ciudad')!.children as { count?: number }[]).reduce(
                 (n, m) => n + (m.count ?? 0),
@@ -1292,7 +1263,14 @@ export class Game {
     fuera(this.terrain.group.getObjectByName('agua'));
     fuera(this.vegetacion);
     /*
-     * Y la ciudad de cajas. Se veía exacto: «hay cubos en el aire flotando».
+     * Y la ciudad de cajas, que sobre la fotografía no vuelve.
+     *
+     * Se veía exacto: «hay cubos en el aire flotando». Y aunque se pusieran
+     * bien —sobre el suelo de la foto y no sobre el nuestro—, que se intentó y
+     * se midió, siguen restando: a mil metros no se ven, y a trescientos son
+     * cubos sueltos encima de una fotografía que ya tiene manzanas, calles y
+     * tejados. Es lo que se pidió no hacer: «no quiero ver cubitos tirados por
+     * ahí».
      *
      * Están colocadas sobre nuestro mapa de alturas, así que sobre la foto
      * quedan flotando; y en Tenerife además sobran, porque la fotogrametría ya
@@ -1310,143 +1288,35 @@ export class Game {
    * Los sitios más poblados de la rejilla, para preguntarle a la foto si allí
    * tiene edificios. Medir en el aeropuerto no vale: allí no hay ninguno.
    */
-  /**
-   * Dónde catar para saber si la foto trae los edificios: **manzanas que estén
-   * cerca del avión**.
+  /*
+   * **Aquí vivía el levantar las casas sobre la fotografía, y ya no.**
    *
-   * El primer intento cataba las doscientas celdas más densas de la ciudad, y
-   * no daba respuesta nunca: las teselas de un barrio a ocho kilómetros y a la
-   * espalda de la cámara son gruesas siempre, porque el árbol de teselas solo
-   * afina lo que se está mirando. Salían doscientas catas de doscientas
-   * descartadas, tanda tras tanda.
+   * La idea era razonable: donde la foto es una alfombra plana —Asunción— hacen
+   * falta edificios, y donde trae volumen —Tenerife— sobran. Se llegó a medirlo
+   * bien, catando cuánto se mueve el suelo dentro de una manzana:
    *
-   * Cerca sí hay detalle, siempre. Y en la plataforma «cerca» ya es la
-   * terminal, que es un edificio como otro cualquiera: si la fotogrametría de
-   * esta ciudad tiene volumen, ahí se ve desde el primer momento.
+   *   Tenerife, la foto los trae · q3 8,0 m
+   *   Asunción, la foto es plana · q3 3,1 m
+   *
+   * El veredicto acertaba en los dos. Lo que fallaba era la premisa.
+   *
+   * Mirándolo volando, las cajas sobre la fotografía **restan a cualquier
+   * altura**. A mil metros no se ven y lo que se ve es Asunción con su río. A
+   * trescientos son cubos sueltos y dispersos encima de una fotografía que ya
+   * tiene manzanas, calles y tejados: no forman una ciudad, forman escombro
+   * esparcido sobre una. Es literalmente lo que se pidió no hacer — «no quiero
+   * ver cubitos tirados por ahí».
+   *
+   * Las casas se quedan donde sí construyen algo: en el mundo dibujado, que no
+   * tiene nada debajo y donde son lo que hace que un descampado parezca una
+   * ciudad.
+   *
+   * Si algún día se quieren de vuelta, lo que habría que arreglar no es su
+   * aspecto sino **su densidad**: el problema no es que sean cajas, es que son
+   * pocas y sueltas. Una manzana entera de cajas pegadas se leería como una
+   * manzana.
    */
-  private dondeHayCiudad(ciudad: NonNullable<Scenario['ciudad']>): (readonly [number, number])[] {
-    const { lado, clase } = ciudad.rejilla;
-    const paso = ciudad.tamanoM / lado;
-    const s = this.flight.state.position;
-    const ALCANCE = 1500;
-    const cerca: (readonly [number, number])[] = [];
-    for (let f = 0; f < lado; f++) {
-      for (let c = 0; c < lado; c++) {
-        if (!clase[f * lado + c]) continue;
-        const x = -ciudad.tamanoM / 2 + (c + 0.5) * paso;
-        // El fichero tiene la Y al norte y el mundo el norte en la Z negativa.
-        const z = -(-ciudad.tamanoM / 2 + (f + 0.5) * paso);
-        if (Math.hypot(x - s.x, z - s.z) > ALCANCE) continue;
-        cerca.push([x, z] as const);
-        if (cerca.length >= 40) return cerca;
-      }
-    }
-    return cerca;
-  }
 
-
-  /**
-   * Nuestras casas encima de la foto, **solo donde la foto no las trae**.
-   *
-   * En Tenerife la fotogrametría tiene edificios de verdad, con su volumen y su
-   * sombra, y añadir cajas encima es ruido. En Asunción no: allí es una foto
-   * aérea pegada al relieve —el río, la bahía y las calles reales, y las casas
-   * planas— y la rejilla de `data/cities/` es justo la pieza que falta.
-   *
-   * Cuál de las dos cosas es no se escribe a mano por aeropuerto: se mide. Y la
-   * altura de cada casa sale de una rejilla de rayos contra la foto, no de
-   * nuestro mapa: por eso salían «cubos en el aire flotando».
-   */
-  private async levantarCiudadSobreLaFoto(): Promise<void> {
-    const ciudad = this.scenario.ciudad;
-    if (!this.teselas || !ciudad || this.ciudadSobreLaFoto) return;
-
-    /*
-     * **No se decide de golpe: se junta.**
-     *
-     * Cada tanda cata las manzanas que caigan a menos de kilómetro y medio, que
-     * son las únicas donde la fotografía está a resolución de edificio. Son
-     * pocas, y todas del mismo barrio, así que una sola tanda no basta para
-     * hablar de una ciudad. Se guardan y se sigue volando.
-     *
-     * Mientras no haya sesenta medidas no se toca nada — y **no tocar nada es
-     * el lado seguro**: si nos equivocamos en Asunción faltan casas, y si nos
-     * equivocamos en Tenerife plantamos veintinueve mil cajas encima de las
-     * de verdad. Ante la duda, no plantar.
-     */
-    this.saltosDeCiudad.push(...this.teselas.catarVolumen(this.dondeHayCiudad(ciudad)));
-    if (this.saltosDeCiudad.length < 60) return;
-    this.ciudadSobreLaFoto = true;
-
-    /*
-     * **Una manzana de cada cuatro con más de cinco metros de desnivel.**
-     *
-     * No es la mediana, y eso importa. Medido en los dos aeródromos:
-     *
-     * | | mediana | q1 | q3 |
-     * |---|---|---|---|
-     * | Tenerife, la foto trae edificios | 5,3 m | 2,1 | **8,0** |
-     * | Asunción, la foto es una sábana  | 2,5 m | 2,2 | **3,4** |
-     *
-     * La mediana casi no las distingue, porque en cualquier ciudad la mitad de
-     * las catas caen en descampados, patios y calles anchas. El tercer cuartil
-     * sí: en Asunción **todas** las manzanas dan lo mismo —entre dos y tres
-     * metros y medio, que es la pendiente del terreno—, y en Tenerife hay una
-     * cuarta parte que se va por encima de ocho. Eso son edificios.
-     *
-     * El corte en cinco no sale de ninguna teoría: sale de esos dos números y
-     * está puesto **a propósito más cerca de Asunción que de Tenerife**. Los dos
-     * errores no cuestan igual. Equivocarse hacia «la foto los trae» deja una
-     * ciudad sin casas, que se nota y se arregla; equivocarse hacia «hay que
-     * ponerlos» planta veintinueve mil cajas encima de los edificios de verdad.
-     * Con dos aeropuertos medidos esto es lo que hay, y el margen se lo lleva el
-     * fallo barato.
-     */
-    const orden = [...this.saltosDeCiudad].sort((a, b) => a - b);
-    if (orden[Math.floor(orden.length * 0.75)]! > 5) {
-      // La foto los trae. Nuestras cajas sobran, y el mundo de mentira ya está
-      // apagado, así que aquí no hay nada más que hacer.
-      return;
-    }
-
-    /*
-     * Cuarenta mil casas necesitan cuarenta mil alturas, y un rayo por casa
-     * contra un cuarto de millón de triángulos congela el navegador varios
-     * segundos. Una rejilla gruesa —sesenta y cuatro por sesenta y cuatro— y se
-     * interpola: un edificio mal puesto por medio metro no lo nota nadie desde
-     * el aire.
-     */
-    const N = 64;
-    const lado = ciudad.tamanoM;
-    const paso = lado / (N - 1);
-    const cotas = new Float32Array(N * N);
-    for (let f = 0; f < N; f++) {
-      for (let c = 0; c < N; c++) {
-        const x = -lado / 2 + c * paso;
-        const z = -lado / 2 + f * paso;
-        cotas[f * N + c] = this.teselas.alturaEn(x, z) ?? this.terrain.sampleHeight(x, z);
-      }
-    }
-    const cota = (x: number, z: number): number => {
-      const fx = Math.max(0, Math.min(N - 1.001, (x + lado / 2) / paso));
-      const fz = Math.max(0, Math.min(N - 1.001, (z + lado / 2) / paso));
-      const c0 = Math.floor(fx);
-      const f0 = Math.floor(fz);
-      const tx = fx - c0;
-      const tz = fz - f0;
-      const v = (f: number, c: number): number => cotas[f * N + c]!;
-      const a = v(f0, c0) * (1 - tx) + v(f0, c0 + 1) * tx;
-      const b = v(f0 + 1, c0) * (1 - tx) + v(f0 + 1, c0 + 1) * tx;
-      return a * (1 - tz) + b * tz;
-    };
-
-    const vieja = this.scene.getObjectByName('ciudad');
-    if (vieja) this.scene.remove(vieja);
-    // Sin calles: la foto ya las trae, y las nuestras encima son una losa.
-    const grupo = crearCiudad(ciudad, cota, zonaDeAeropuerto(this.scenario, 200), -9999, false);
-    grupo.name = 'ciudad';
-    this.scene.add(grupo);
-  }
 
   /**
    * Recoloca el avión cuando el suelo cambia bajo sus ruedas.
@@ -1814,15 +1684,6 @@ export class Game {
         this.rehacerPlanDeVuelo();
         this.ponerAproximacion();
         if (escritos > 0) this.recolocarTrasElMoldeado();
-      }
-      // Y los edificios, en cuanto la ciudad se vea con suficiente detalle para
-      // poder decir si están o no. Puede ser ahora o puede ser a mil pies.
-      if (!this.ciudadSobreLaFoto) {
-        this.esperaDeCiudad += dt;
-        if (this.esperaDeCiudad >= 3) {
-          this.esperaDeCiudad = 0;
-          void this.levantarCiudadSobreLaFoto();
-        }
       }
     }
     this.advanceMission();
