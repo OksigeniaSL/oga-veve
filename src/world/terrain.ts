@@ -172,6 +172,56 @@ export class Terrain {
   }
 
   /**
+   * Quita del suelo lo que no es suelo: aviones, hangares, terminal, árboles.
+   *
+   * Copiar las alturas de la fotogrametría trae **todo** lo que hay ahí, y en un
+   * aeropuerto hay bastante: el rayo que cae sobre la terminal devuelve la
+   * altura del tejado, y el suelo con el que choca el avión acaba con un
+   * chichón de veinte metros en mitad de la plataforma. Rodando cerca de la
+   * terminal, el avión se le sube encima.
+   *
+   * Se arregla con la cuenta de siempre: un nudo que está mucho más alto que
+   * **la mediana de sus ocho vecinos** no es terreno, es un bulto. Se le pone la
+   * mediana y ya está. La mediana y no la media, porque un edificio grande
+   * arrastra la media y no arrastra la mediana.
+   *
+   * Lo que sobrevive es lo que debe: una ladera de verdad sube poco a poco y
+   * cada nudo se parece a sus vecinos, así que ninguna montaña se aplana.
+   */
+  alisarPicos(centro: readonly [number, number], lado: number, umbral: number): number {
+    const { resolution, step, half, heights } = this;
+    const desde = (v: number): number => Math.max(1, Math.floor((v - lado / 2 + half) / step));
+    const hasta = (v: number): number =>
+      Math.min(resolution - 2, Math.ceil((v + lado / 2 + half) / step));
+
+    // Sobre una copia: si se lee de lo que ya se está escribiendo, un edificio
+    // se va corriendo hacia un lado nudo a nudo.
+    const antes = Float32Array.from(heights);
+    const vecinos: number[] = [];
+    let quitados = 0;
+
+    for (let fila = desde(centro[1]); fila <= hasta(centro[1]); fila++) {
+      for (let col = desde(centro[0]); col <= hasta(centro[0]); col++) {
+        vecinos.length = 0;
+        for (let df = -1; df <= 1; df++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (df === 0 && dc === 0) continue;
+            vecinos.push(antes[(fila + df) * resolution + (col + dc)]!);
+          }
+        }
+        vecinos.sort((a, b) => a - b);
+        const mediana = (vecinos[3]! + vecinos[4]!) / 2;
+        const i = fila * resolution + col;
+        if (antes[i]! - mediana > umbral) {
+          heights[i] = mediana;
+          quitados++;
+        }
+      }
+    }
+    return quitados;
+  }
+
+  /**
    * Vuelve a dibujar el aeródromo con otro tiempo.
    *
    * Lo único que cambia es la manga, que apunta a donde va el viento. Podría
