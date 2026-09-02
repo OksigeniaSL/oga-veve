@@ -551,7 +551,7 @@ export class Game {
       mundoReal: () => {
         if (!this.teselas) return null;
         const libres = (this.plan?.puestosPorOrden() ?? []).map((p) =>
-          this.teselas!.libre(p.xy[0], -p.xy[1]),
+          this.teselas!.estorboEn(p.xy[0], -p.xy[1]),
         );
         const s = this.flight.state;
         // Lo único que de verdad importa: ¿están las ruedas encima del asfalto
@@ -565,7 +565,8 @@ export class Game {
           suSuelo: foto,
           ruedas: s.position.y - this.aircraft.gearHeight,
           hundido: foto === null ? null : s.position.y - this.aircraft.gearHeight - foto,
-          puestosLibres: `${libres.filter(Boolean).length} de ${libres.length}`,
+          puestos: libres.map((e) => (e === null ? '—' : e.toFixed(1))).join(' '),
+          puestoElegido: this.puestoElegido,
           bultos: this.bultosQuitados,
           volumen: this.saltosDeCiudad.length,
           casas: (this.scene.getObjectByName('ciudad')?.visible ?? false)
@@ -574,7 +575,10 @@ export class Game {
                 0,
               )
             : 0,
-          primeroLibre: libres.indexOf(true),
+          masDespejado: libres.reduce<number>(
+            (mejor, e, i) => (e !== null && (mejor < 0 || e < (libres[mejor] ?? Infinity)) ? i : mejor),
+            -1,
+          ),
         };
       },
       /**
@@ -1102,14 +1106,47 @@ export class Game {
     const puestos = this.plan.puestosPorOrden();
     if (puestos.length < 2) return;
 
-    for (const puesto of puestos) {
-      // Del fichero al mundo: la Y del norte es la Z negativa.
-      if (!this.teselas.libre(puesto.xy[0], -puesto.xy[1])) continue;
-      if (puesto === puestos[0]) return;
-      this.plan.reiniciarDesde(puesto.xy);
-      return;
-    }
+    /*
+     * **Se elige el más despejado, no el primero que pase una prueba.**
+     *
+     * La versión anterior preguntaba a cada puesto «¿estás libre?» y se
+     * quedaba con el primer sí. Dos problemas: la pregunta no detectaba al
+     * avión de al lado —solo lo que estuviera justo debajo—, y cuando no se
+     * podía medir contestaba que sí. Con eso, el primer puesto de la lista
+     * salía «libre» siempre y ahí es donde aparecíamos, dentro del 737.
+     *
+     * Comparar es más honesto que juzgar: entre varios puestos, el que menos
+     * cosas tenga alrededor. Los que no se pueden medir se quedan fuera de la
+     * comparación en vez de colarse como buenos.
+     */
+    const medidos = puestos
+      .map((puesto) => ({
+        puesto,
+        // Del fichero al mundo: la Y del norte es la Z negativa.
+        estorbo: this.teselas!.estorboEn(puesto.xy[0], -puesto.xy[1]),
+      }))
+      .filter((m): m is { puesto: (typeof puestos)[number]; estorbo: number } => m.estorbo !== null);
+    if (!medidos.length) return;
+
+    medidos.sort((a, b) => a.estorbo - b.estorbo);
+    const mejor = medidos[0]!;
+    this.puestoElegido = mejor.estorbo;
+    /*
+     * Metro y medio: una plataforma vacía es plana y lo que sobresalga de eso
+     * es una farola, un carro o un avión. Si el primero de la lista ya está
+     * así de limpio, se queda — mover el arranque sin motivo desorienta a quien
+     * ya conoce su aeropuerto.
+     */
+    const primero = medidos.find((m) => m.puesto === puestos[0]);
+    if (primero && primero.estorbo <= 1.5) return;
+    if (mejor.puesto === puestos[0]) return;
+    this.plan.reiniciarDesde(mejor.puesto.xy);
   }
+
+  /** Lo que estorbaba en el puesto elegido, en metros. Para poder mirarlo. */
+  private puestoElegido: number | null = null;
+  /** Segundos desde el último intento de encontrar un puesto despejado. */
+  private esperaDePuesto = 0;
 
   /** Pone una hora del día. Lo llama el panel del tiempo. */
   ponerHora(hora: number): void {
@@ -1359,6 +1396,27 @@ export class Game {
         this.ponerAproximacion();
         if (escritos > 0) this.recolocarTrasElMoldeado();
       }
+      /*
+       * El puesto, hasta que se pueda medir de verdad.
+       *
+       * En el momento de moldear, las teselas de la plataforma pueden seguir
+       * siendo gruesas, y sobre teselas gruesas no hay avión que valga: todo
+       * sale despejado. Medido a los noventa segundos, los cuatro primeros
+       * puestos de Tenerife dan entre tres y siete metros de estorbo —son los
+       * que tienen aviones de línea aparcados— y en el moldeado no daban nada.
+       *
+       * **Solo mientras no se haya empezado a volar.** Mover el avión de sitio
+       * a alguien que ya está rodando es peor que dejarlo mal puesto.
+       */
+      if (this.puestoElegido === null && !this.input.controls.engineOn && this.flight.state.airspeed <= 0.5) {
+        this.esperaDePuesto += dt;
+        if (this.esperaDePuesto >= 2) {
+          this.esperaDePuesto = 0;
+          this.buscarPuestoLibre();
+          if (this.puestoElegido !== null) this.recolocarTrasElMoldeado();
+        }
+      }
+
       // Y los edificios, en cuanto la ciudad se vea con suficiente detalle para
       // poder decir si están o no. Puede ser ahora o puede ser a mil pies.
       if (!this.ciudadSobreLaFoto) {
