@@ -128,6 +128,20 @@ export interface Teselas {
    * son diez metros de fuselaje; el ruido de la fotogrametría, medio.
    */
   libre(x: number, z: number): boolean;
+  /**
+   * ¿Trae la fotografía edificios con volumen, o es una alfombra plana?
+   *
+   * En Madrid hay fotogrametría de verdad —tejados, patios, la torre de una
+   * iglesia— y en Asunción no: es una foto aérea preciosa pegada al relieve, con
+   * el río y las calles reales y las casas planas. Eso decide si nuestras cajas
+   * sobran o hacen falta, y **no puede escribirse a mano por aeropuerto**: la
+   * cobertura de Google cambia y el juego va camino de tener ochenta mil pistas.
+   *
+   * Se mide. En una ciudad con volumen, dos puntos a quince metros caen uno en
+   * un tejado y otro en la calle y se llevan varios metros; en una alfombra, el
+   * relieve del terreno y poco más.
+   */
+  tieneVolumen(puntos: readonly (readonly [number, number])[]): boolean;
   dispose(): void;
 }
 
@@ -301,6 +315,30 @@ export function crearTeselas(
       alrededor.sort((p, q) => p - q);
       const suelo = alrededor[1]!;
       return centro - suelo < 3;
+    },
+    tieneVolumen(puntos: readonly (readonly [number, number])[]) {
+      /*
+       * **Y se mide donde hay ciudad, no alrededor del aeropuerto.**
+       *
+       * El primer intento tiraba las catas en un círculo con centro en la pista,
+       * y un aeropuerto es explanada, hierba y fincas: salía «sin volumen» hasta
+       * en Tenerife, donde la fotogrametría trae los edificios con su sombra. Se
+       * estaba midiendo el único sitio del mapa donde no hay edificios.
+       *
+       * Los puntos los pone quien llama, y son los de las celdas con más
+       * densidad de la rejilla de ciudad — que es exactamente donde nuestras
+       * cajas irían.
+       */
+      const saltos: number[] = [];
+      for (const [x, z] of puntos) {
+        const uno = this.alturaEn(x, z);
+        const otro = this.alturaEn(x + 15, z + 15);
+        if (uno !== null && otro !== null) saltos.push(Math.abs(uno - otro));
+      }
+      if (saltos.length < 20) return true;
+      saltos.sort((p, q) => p - q);
+      // La mediana del salto. Con volumen sube de tres metros; sin él, no.
+      return saltos[Math.floor(saltos.length / 2)]! > 3;
     },
     get visibles() {
       return (teselas as unknown as ConEstadisticas).stats?.visible ?? 0;

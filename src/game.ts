@@ -151,6 +151,7 @@ export class Game {
   private sueloMoldeado = false;
   /** Cuántos nudos eran tejado y no suelo. Para las comprobaciones. */
   private bultosQuitados = 0;
+  private ciudadSobreLaFoto = false;
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
@@ -458,6 +459,15 @@ export class Game {
           hundido: foto === null ? null : s.position.y - this.aircraft.gearHeight - foto,
           puestosLibres: `${libres.filter(Boolean).length} de ${libres.length}`,
           bultos: this.bultosQuitados,
+          volumen: this.scenario.ciudad
+            ? this.teselas.tieneVolumen(this.dondeHayCiudad(this.scenario.ciudad))
+            : null,
+          casas: (this.scene.getObjectByName('ciudad')?.visible ?? false)
+            ? (this.scene.getObjectByName('ciudad')!.children as { count?: number }[]).reduce(
+                (n, m) => n + (m.count ?? 0),
+                0,
+              )
+            : 0,
           primeroLibre: libres.indexOf(true),
         };
       },
@@ -775,6 +785,99 @@ export class Game {
   }
 
   /**
+   * Los sitios más poblados de la rejilla, para preguntarle a la foto si allí
+   * tiene edificios. Medir en el aeropuerto no vale: allí no hay ninguno.
+   */
+  private dondeHayCiudad(ciudad: NonNullable<Scenario['ciudad']>): (readonly [number, number])[] {
+    const { lado, clase, densidad } = ciudad.rejilla;
+    const paso = ciudad.tamanoM / lado;
+    const celdas: { x: number; z: number; d: number }[] = [];
+    for (let f = 0; f < lado; f++) {
+      for (let c = 0; c < lado; c++) {
+        const i = f * lado + c;
+        if (!clase[i]) continue;
+        celdas.push({
+          x: -ciudad.tamanoM / 2 + (c + 0.5) * paso,
+          // El fichero tiene la Y al norte y el mundo el norte en la Z negativa.
+          z: -(-ciudad.tamanoM / 2 + (f + 0.5) * paso),
+          d: densidad[i]!,
+        });
+      }
+    }
+    celdas.sort((a, b) => b.d - a.d);
+    return celdas.slice(0, 60).map((c) => [c.x, c.z] as const);
+  }
+
+  /**
+   * Nuestras casas encima de la foto, **solo donde la foto no las trae**.
+   *
+   * En Tenerife la fotogrametría tiene edificios de verdad, con su volumen y su
+   * sombra, y añadir cajas encima es ruido. En Asunción no: allí es una foto
+   * aérea pegada al relieve —el río, la bahía y las calles reales, y las casas
+   * planas— y la rejilla de `data/cities/` es justo la pieza que falta.
+   *
+   * Cuál de las dos cosas es no se escribe a mano por aeropuerto: se mide. Y la
+   * altura de cada casa sale de una rejilla de rayos contra la foto, no de
+   * nuestro mapa: por eso salían «cubos en el aire flotando».
+   */
+  private async levantarCiudadSobreLaFoto(): Promise<void> {
+    const ciudad = this.scenario.ciudad;
+    if (!this.teselas || !ciudad || this.ciudadSobreLaFoto) return;
+
+    /*
+     * **Apagado por defecto hasta poder comprobarlo en condiciones.**
+     *
+     * La detección de volumen funciona sobre el papel y dos ejecuciones seguidas
+     * dan resultados contradictorios: la carga de teselas es irregular y medir
+     * antes de tiempo devuelve lo que sea. Y el fallo no es simétrico — si se
+     * equivoca en Asunción faltan casas, y si se equivoca en Tenerife planta
+     * veintinueve mil cajas encima de los edificios de verdad.
+     *
+     * Ante un fallo así, apagado. `?casas=1` para probarlo.
+     */
+    if (new URLSearchParams(location.search).get('casas') !== '1') return;
+    if (this.teselas.tieneVolumen(this.dondeHayCiudad(ciudad))) return;
+    this.ciudadSobreLaFoto = true;
+
+    /*
+     * Cuarenta mil casas necesitan cuarenta mil alturas, y un rayo por casa
+     * contra un cuarto de millón de triángulos congela el navegador varios
+     * segundos. Una rejilla gruesa —sesenta y cuatro por sesenta y cuatro— y se
+     * interpola: un edificio mal puesto por medio metro no lo nota nadie desde
+     * el aire.
+     */
+    const N = 64;
+    const lado = ciudad.tamanoM;
+    const paso = lado / (N - 1);
+    const cotas = new Float32Array(N * N);
+    for (let f = 0; f < N; f++) {
+      for (let c = 0; c < N; c++) {
+        const x = -lado / 2 + c * paso;
+        const z = -lado / 2 + f * paso;
+        cotas[f * N + c] = this.teselas.alturaEn(x, z) ?? this.terrain.sampleHeight(x, z);
+      }
+    }
+    const cota = (x: number, z: number): number => {
+      const fx = Math.max(0, Math.min(N - 1.001, (x + lado / 2) / paso));
+      const fz = Math.max(0, Math.min(N - 1.001, (z + lado / 2) / paso));
+      const c0 = Math.floor(fx);
+      const f0 = Math.floor(fz);
+      const tx = fx - c0;
+      const tz = fz - f0;
+      const v = (f: number, c: number): number => cotas[f * N + c]!;
+      const a = v(f0, c0) * (1 - tx) + v(f0, c0 + 1) * tx;
+      const b = v(f0 + 1, c0) * (1 - tx) + v(f0 + 1, c0 + 1) * tx;
+      return a * (1 - tz) + b * tz;
+    };
+
+    const vieja = this.scene.getObjectByName('ciudad');
+    if (vieja) this.scene.remove(vieja);
+    const grupo = crearCiudad(ciudad, cota, zonaDeAeropuerto(this.scenario, 200), -9999);
+    grupo.name = 'ciudad';
+    this.scene.add(grupo);
+  }
+
+  /**
    * Recoloca el avión cuando el suelo cambia bajo sus ruedas.
    *
    * **Y sin quitarle el mando a nadie.** La primera versión llamaba a
@@ -1003,6 +1106,18 @@ export class Game {
       if (this.mundoRealPuesto && !this.sueloMoldeado) {
         this.sueloMoldeado = true;
         /*
+         * **Primero el mundo entero, y luego el aeropuerto con precisión.**
+         *
+         * Fuera del trozo que se moldea con rayos, nuestro terreno tiene la
+         * forma bien y el datum mal: es la misma ladera, cuarenta y ocho metros
+         * más abajo. Subirlo el desfase medido lo pone donde va, y eso quita el
+         * escalón que quedaba en el borde de la zona moldeada — una isla
+         * correcta dentro de un mapa desplazado.
+         *
+         * Y no cuesta ni un rayo: es una pasada por el mapa de alturas.
+         */
+        this.terrain.subirTodo(this.teselas.desfase ?? 0);
+        /*
          * **Y se descarta lo que no cuadre con el desfase que ya se midió.**
          *
          * Un rayo que golpea una tesela basta —de las que aún no han llegado en
@@ -1038,6 +1153,7 @@ export class Game {
         for (let i = 0; i < 2; i++) bultos += this.terrain.alisarPicos([0, 0], 6000, 6);
         this.bultosQuitados = bultos;
         this.buscarPuestoLibre();
+        void this.levantarCiudadSobreLaFoto();
         if (escritos > 0) this.recolocarTrasElMoldeado();
       }
     }
