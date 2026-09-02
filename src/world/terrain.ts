@@ -955,16 +955,7 @@ function flattenAerodrome(
   // El ancho de la banda **sale de los datos**, no de un número puesto a mano:
   // se mide qué es lo más apartado del eje que hay que sostener. En Tenerife
   // Norte es un edificio a 394 m; en Silvio Pettirossi, una plataforma a 850.
-  const eje = aero.runways[0]?.centerline ?? [];
-  let lateral = 0;
-  const mirar = (pts: readonly Punto[]) => {
-    for (const p of pts) lateral = Math.max(lateral, aLaPolilinea(p, eje));
-  };
-  for (const t of aero.taxiways) mirar(t.path);
-  for (const a of aero.aprons) mirar(a.polygon);
-  for (const b of aero.buildings) mirar(b.polygon);
-  mirar(aero.windsocks);
-  const nucleo = (eje.length ? lateral : 0) + step * 2 + 60;
+  const { eje, nucleo } = bandaDelAerodromo(aero, step);
 
   // Perfil de la pista principal, para la cota a lo largo del eje.
   const pista = aero.runways[0];
@@ -1021,6 +1012,35 @@ function flattenAerodrome(
       heights[i] = heights[i]! * (1 - peso) + (cota(x, z) - RESALTE) * peso;
     }
   }
+}
+
+/**
+ * La huella del aeródromo: su eje y hasta dónde llega el núcleo llano.
+ *
+ * **No es un círculo: es una banda a lo largo de la pista.** Aplanando en
+ * redondo alrededor del punto de referencia sale un disco liso de cuatro
+ * kilómetros que desde el aire se ve como lo que es. Un aeropuerto de verdad
+ * es una terraza alargada, porque lo que hubo que explanar fue la pista y lo
+ * que la rodea.
+ *
+ * El ancho sale de los datos, no de un número a mano: se mide qué es lo más
+ * apartado del eje que hay que sostener. En Tenerife Norte es un edificio a
+ * 394 m; en Silvio Pettirossi, una plataforma a 850.
+ */
+function bandaDelAerodromo(
+  aero: Aerodrome,
+  step: number,
+): { eje: readonly Punto[]; nucleo: number } {
+  const eje = aero.runways[0]?.centerline ?? [];
+  let lateral = 0;
+  const mirar = (pts: readonly Punto[]) => {
+    for (const p of pts) lateral = Math.max(lateral, aLaPolilinea(p, eje));
+  };
+  for (const t of aero.taxiways) mirar(t.path);
+  for (const a of aero.aprons) mirar(a.polygon);
+  for (const b of aero.buildings) mirar(b.polygon);
+  mirar(aero.windsocks);
+  return { eje, nucleo: (eje.length ? lateral : 0) + step * 2 + 60 };
 }
 
 /** Cota de la malla en un punto del mundo, por vecino más cercano. */
