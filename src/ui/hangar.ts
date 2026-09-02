@@ -524,7 +524,7 @@ const PASO_VOLVER = trazo('<path d="M15 5 8 12l7 7" />');
  */
 const ALMACEN_RECIENTES = 'oga-veve:recientes';
 
-function recientes(elegido: Scenario): Scenario[] {
+export function recientes(elegido: Scenario): Scenario[] {
   let ids: string[] = [];
   try {
     ids = JSON.parse(localStorage.getItem(ALMACEN_RECIENTES) ?? '[]') as string[];
