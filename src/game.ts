@@ -908,9 +908,24 @@ export class Game {
     const aero = this.scenario.aerodrome;
     if (!aero || !this.teselas) return;
     const datum = this.teselas.desfase ?? 0;
-
-    // Primero, liso y con el datum. A partir de aquí `sampleHeight` en el
-    // aeródromo es nuestra superficie, y ya se puede comparar con la foto.
+    /*
+     * Primero, liso y con el datum. A partir de aquí `sampleHeight` en el
+     * aeródromo es nuestra superficie, y ya se puede comparar con la foto.
+     *
+     * **Y liso de verdad, no la forma de la foto alisada.** Se probó lo otro
+     * —conservar la pendiente real de la fotografía y quitarle solo los
+     * escalones— porque deja el aeródromo dos metros más bajo y sin escalón en
+     * el filo del asfalto. Medido rodando quince segundos:
+     *
+     *   perfil recto        · Tenerife  26 de 900 fotogramas en el aire
+     *   forma de la foto    · Tenerife 312, **Asunción 656**
+     *
+     * Asunción pasaba de cero a seiscientos cincuenta y seis. Por muy alisada
+     * que esté, una superficie fotogramétrica sobre una rejilla de cincuenta y
+     * siete metros conserva variación de metros, y el avión sale despedido a
+     * cada paso. El escalón es un problema de aspecto; esto es un problema de
+     * jugar, y gana el de jugar.
+     */
     this.terrain.reasentarAerodromo(this.scenario, datum);
 
     const puntos: [number, number][] = [];
@@ -925,14 +940,18 @@ export class Game {
         for (const lado of [-15, 0, 15]) puntos.push([x + lado, -(y + lado)]);
       }
     }
-    for (const calle of aero.taxiways) {
-      for (const p of calle.path) puntos.push([p[0], -p[1]]);
-    }
     /*
-     * **Y las plataformas no se catan.** Una plataforma tiene aviones
-     * aparcados, pasarelas y farolas, y la foto los trae con su volumen: catar
-     * ahí no mide el desajuste del suelo, mide la altura de un Boeing. La pista
-     * y las calles de rodaje sí son asfalto y nada más.
+     * **Solo el eje de la pista.** Ni plataformas ni calles de rodaje.
+     *
+     * Una plataforma tiene aviones aparcados, pasarelas y farolas, y la foto
+     * los trae con su volumen: catar ahí no mide el desajuste del suelo, mide
+     * la altura de un Boeing. Con las calles pasa lo mismo un nivel más abajo
+     * —pasan pegadas a hangares y el rayo devuelve el tejado—, y se vio igual:
+     * el percentil se quedaba clavado en el tope aunque la forma ya fuera la de
+     * la foto.
+     *
+     * El eje de una pista es lo único de un aeropuerto donde se puede
+     * garantizar que no hay nada encima. Es la única cata que no miente.
      */
 
     const sobresale: number[] = [];
@@ -943,7 +962,10 @@ export class Game {
     }
     if (sobresale.length < 20) return;
     sobresale.sort((a, b) => a - b);
-    const p85 = sobresale[Math.floor(sobresale.length * 0.85)]!;
+    // El percentil noventa y cinco: ahora que la forma es la de la foto, lo
+    // que queda por tapar es su rugosidad y no la diferencia con una recta.
+    // Se puede ser exigente sin que el número se dispare.
+    const p85 = sobresale[Math.floor(sobresale.length * 0.95)]!;
 
     /*
      * **Con tope de metro y medio**, y el tope no es prudencia: es la lección.
@@ -954,8 +976,8 @@ export class Game {
      * eso la pista quedaba flotando cuatro metros y medio sobre la fotografía,
      * que es un escalón que se ve desde el aire.
      *
-     * Este alzado está para salvar el desajuste entre dos formas de describir
-     * la misma superficie —decímetros—, no para salvar un edificio. Si hace
+     * Este alzado está para salvar la rugosidad que le queda a la fotografía
+     * después de alisarla —decímetros—, no para salvar un edificio. Si hace
      * falta más de metro y medio, lo que hay debajo no es suelo y taparlo
      * subiendo el aeropuerto entero sería el remedio equivocado.
      *

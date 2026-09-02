@@ -1044,7 +1044,6 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   const alRevés =
     Math.hypot(pista.centerline[0]![0] - ax, pista.centerline[0]![1] - ay) >
     Math.hypot(pista.centerline[0]![0] - b.xy![0], pista.centerline[0]![1] - b.xy![1]);
-  const largoEje = longitudDe(pista.centerline);
 
   /*
    * **Dónde cae el umbral A sobre el eje del pavimento.**
@@ -1197,7 +1196,20 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     // ángulo del fichero y colocarlo en el mundo es lo que salía espejado —el
     // «20» se leía al revés—, y es el mismo desajuste de marco que ya había
     // aparecido tres veces con los rumbos.
-    const p = sobreElEje(pista.centerline, alRevés ? largoEje - d : d);
+    /*
+     * **Desde el umbral, como todo lo demás.**
+     *
+     * Aquí se medía desde el principio de la polilínea de OpenStreetMap, y esa
+     * no empieza en el umbral: en Tenerife Norte el eje mide 3.390 metros, los
+     * umbrales están a 3.168 y el 12 empieza en el metro 86. Con eso, el «12»
+     * caía a catorce metros de su umbral —encima de las teclas de piano— y el
+     * «30» a ciento ochenta y seis del suyo, pasada la zona de toma. Los cien
+     * metros son los de verdad, y son los que ya usaban las rayas.
+     *
+     * Es el mismo desajuste de dos ejes parecidos que ya se llevó por delante
+     * el eje discontinuo y las luces de cabecera. Van tres.
+     */
+    const p = sobreElEje(pista.centerline, alRevés ? desdeElUmbral - d : desdeElUmbral + d);
     if (!p) continue;
     const sentido = alRevés ? -1 : 1;
     const dirX = p[2] * sentido;
