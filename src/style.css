@@ -1580,7 +1580,6 @@ body {
  */
 .hangar__idiomas {
   display: flex;
-  justify-content: center;
   gap: 6px;
   flex-wrap: wrap;
 }
@@ -1590,13 +1589,15 @@ body {
  * mismo peso: son dos ajustes que se eligen una vez, no dos preguntas de la
  * partida.
  */
+/*
+ * Los dos mundos ya no van pegados arriba a la derecha: **viven en Ajustes**,
+ * que es donde va lo que se decide una vez. Estaban ahí arriba porque no había
+ * otro sitio, y era exactamente el síntoma de que el panel no tenía sitio para
+ * nada nuevo.
+ */
 .hangar__mundos {
-  position: absolute;
-  top: 14px;
-  right: 14px;
   display: flex;
   gap: 6px;
-  z-index: 2;
 }
 
 .mundo {
@@ -2000,20 +2001,172 @@ body {
  * nombre de tramo asomando por debajo, y medio nombre asomando se lee como un
  * fallo aunque se pueda desplazar para verlo entero.
  */
+/*
+ * ── La barra de abajo: el estado, no un menú ───────────────────────────
+ *
+ * Dice qué está elegido ahora mismo, y de paso deja entrar a cambiarlo. Quien
+ * tiene cuatro años ve fichas y un botón naranja; quien tiene cuarenta ve la
+ * partida entera configurada de un vistazo.
+ *
+ * Y **no crece**: da igual que haya cuatro aeropuertos o cuarenta, aquí siempre
+ * hay cuatro pasos y un botón. Eso es lo que ha permitido sacar de la pantalla
+ * las tres preguntas apiladas que ya no cabían en un portátil.
+ */
 .hangar__barra {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 2;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 12px 16px max(12px, env(safe-area-inset-bottom));
   background: var(--barro);
   border-top: 1px solid var(--linea);
 }
 
+.hangar__pasos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .hangar__pasos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.paso {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 8px 11px;
+  border: 1px solid rgb(228 226 218 / 0.14);
+  border-radius: var(--r-m);
+  background: transparent;
+  color: rgb(228 226 218 / 0.68);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.paso:hover,
+.paso:focus-visible {
+  color: var(--tinta);
+  border-color: var(--ocre);
+}
+
+.paso--volver {
+  flex: none;
+}
+
+.paso__icono {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  color: var(--ocre);
+}
+
+.paso__texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.paso__que {
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.paso__valor {
+  font-size: 13.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * La rejilla de una pantalla de detalle. **Se desplaza, y aquí está bien**:
+ * quien entra en ella ya sabe lo que busca. Lo que no puede desplazarse es la
+ * pantalla de inicio, y por eso las preguntas salieron de ella.
+ *
+ * Y la barra de desplazamiento va en la paleta del juego, sin flechas ni
+ * relieve: se ve siempre, porque es la que avisa de que hay más debajo.
+ */
+.hangar__rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+  overflow-y: auto;
+  max-height: min(54vh, 470px);
+  padding-right: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ocre) rgb(228 226 218 / 0.09);
+}
+
+.hangar__rejilla::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hangar__rejilla::-webkit-scrollbar-track {
+  background: rgb(228 226 218 / 0.09);
+  border-radius: 999px;
+}
+
+.hangar__rejilla::-webkit-scrollbar-thumb {
+  background: var(--ocre);
+  border-radius: 999px;
+}
+
+.hangar__rejilla::-webkit-scrollbar-button {
+  display: none;
+}
+
+.hangar__fila--tres {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.hangar__reposo {
+  margin: 6px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: rgb(228 226 218 / 0.55);
+}
+
+.hangar__ajustes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.ajuste {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--r-m);
+  background: rgb(228 226 218 / 0.05);
+}
+
+.ajuste__titulo {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(228 226 218 / 0.6);
+}
+
+/* Despegar siempre a la derecha, esté sola o con los cuatro pasos al lado. */
 .hangar__despegar {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 14px;

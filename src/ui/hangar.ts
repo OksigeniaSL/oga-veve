@@ -479,6 +479,80 @@ const DESPEGA = `
  * escenario, y así no hay que inventar un mecanismo para cambiárselo en
  * caliente. Cambiar de aeropuerto es empezar otro vuelo, que es lo que es.
  */
+/*
+ * Los dibujos de los cuatro pasos. Trazo y no relleno: al lado de las fichas
+ * —que son ilustraciones llenas de color— un icono relleno compite, y uno de
+ * línea acompaña.
+ */
+const trazo = (d: string): string =>
+  `<svg class="paso__icono" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true">${d}</svg>`;
+
+const PASO_DONDE = trazo(
+  '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" /><circle cx="12" cy="10" r="2.6" />',
+);
+const PASO_QUE = trazo(
+  '<path d="M3 17h18" /><path d="M5 13.5 12.5 6l2.6 2.6-4.2 4.9Z" /><path d="M15 6.4 17.3 4l2.7 2.7-2.4 2.3Z" />',
+);
+const PASO_QUIEN = trazo(
+  '<circle cx="12" cy="8.4" r="3.6" /><path d="M4.8 20c.7-3.7 3.6-5.6 7.2-5.6s6.5 1.9 7.2 5.6" />',
+);
+const PASO_AJUSTES = trazo(
+  '<circle cx="12" cy="12" r="3.1" /><path d="M12 2.6v3M12 18.4v3M21.4 12h-3M5.6 12h-3M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1M18.6 18.6l-2.1-2.1M7.5 7.5 5.4 5.4" />',
+);
+const PASO_VOLVER = trazo('<path d="M15 5 8 12l7 7" />');
+
+/**
+ * Los últimos sitios jugados, del más reciente al más antiguo.
+ *
+ * La pantalla de inicio enseña **dónde se estuvo**, no un catálogo, y para eso
+ * hace falta acordarse. Sin historial —primera partida, ventana privada— se
+ * enseñan los primeros del catálogo, que es lo más parecido a «lo de siempre»
+ * que se puede decir sin saber nada.
+ */
+const ALMACEN_RECIENTES = 'oga-veve:recientes';
+
+function recientes(): Scenario[] {
+  let ids: string[] = [];
+  try {
+    ids = JSON.parse(localStorage.getItem(ALMACEN_RECIENTES) ?? '[]') as string[];
+  } catch {
+    ids = [];
+  }
+  const vistos = ids
+    .map((id) => SCENARIOS.find((e) => e.id === id))
+    .filter((e): e is Scenario => e !== undefined);
+  for (const e of SCENARIOS) {
+    if (vistos.length >= 3) break;
+    if (!vistos.some((v) => v.id === e.id)) vistos.push(e);
+  }
+  return vistos.slice(0, 3);
+}
+
+function apuntarReciente(id: string): void {
+  try {
+    const ids = JSON.parse(localStorage.getItem(ALMACEN_RECIENTES) ?? '[]') as string[];
+    const nuevos = [id, ...ids.filter((x) => x !== id)].slice(0, 6);
+    localStorage.setItem(ALMACEN_RECIENTES, JSON.stringify(nuevos));
+  } catch {
+    // Vale para esta partida.
+  }
+}
+
+/**
+ * Cuánto se espera sin tocar nada antes de volver a la pantalla de inicio.
+ *
+ * Dos minutos. No es una medida de seguridad ni de rendimiento: es que una
+ * tablet compartida —un aula, una feria, la mesa de casa— tiene que quedar
+ * lista para el siguiente **sin que nadie la ordene**. Quien se levantó a medio
+ * elegir no deja su elección a medias encima de la mesa.
+ */
+const REPOSO_MS = 120000;
+
+/** Las pantallas del hangar. Una cada vez, y la de inicio no crece nunca. */
+type Pantalla = 'inicio' | 'donde' | 'que' | 'quien' | 'ajustes';
+
 export function abrirHangar(
   root: HTMLElement,
   inicial: { scenario: Scenario; tier: Tier; leccion: Leccion },
@@ -486,6 +560,8 @@ export function abrirHangar(
   let sitio = inicial.scenario;
   let tramo = inicial.tier;
   let leccion = inicial.leccion;
+  let pantalla: Pantalla = 'inicio';
+  let reposo: ReturnType<typeof setTimeout> | null = null;
 
   /*
    * Los dos mundos, dibujados. El de la foto es una loma con su textura y sus
@@ -518,78 +594,163 @@ export function abrirHangar(
           inglés le abría en inglés para siempre: un mando que no se anuncia
           no existe, y esta es la segunda vez que nos pasa lo mismo.
         -->
-        <div class="hangar__idiomas" role="radiogroup" aria-label="${t('language.label')}">
-          ${LOCALES.map(
-            (l) => `
-            <button class="idioma" type="button" role="radio" lang="${l === 'gug' ? 'gn' : l}"
-                    aria-checked="${l === getLocale()}" tabindex="${l === getLocale() ? 0 : -1}"
-                    data-idioma="${l}">${LOCALE_NAMES[l]}</button>`,
-          ).join('')}
-        </div>
-        <!--
-          **El mundo, arriba y junto al idioma.**
-
-          No baja a una pregunta más porque no es una pregunta de partida: se
-          elige una vez, como el idioma, y se queda. Y va con dibujo y sin
-          palabra porque quien juega no lee — la foto es una foto y el otro es
-          un dibujo, y eso se ve mirando los dos botones.
-        -->
-        <div class="hangar__mundos" role="radiogroup" aria-label="${t('mundo.label')}">
-          ${(['foto', 'dibujado'] as const)
-            .map(
-              (m) => `
-            <button class="mundo" type="button" role="radio" data-mundo="${m}"
-                    aria-checked="${m === mundoElegido()}"
-                    tabindex="${m === mundoElegido() ? 0 : -1}"
-                    aria-label="${t(m === 'foto' ? 'mundo.foto' : 'mundo.dibujado')}"
-                    title="${t(m === 'foto' ? 'mundo.foto' : 'mundo.dibujado')}">
-              ${m === 'foto' ? MUNDO_FOTO : MUNDO_DIBUJADO}
-            </button>`,
-            )
-            .join('')}
-        </div>
         <h1 class="hangar__marca">Óga Veve</h1>
 
+        ${
+          pantalla === 'inicio'
+            ? `
+        <!--
+          **Se abre listo para volar, no preguntando.**
+
+          Antes esto era un formulario: tres preguntas apiladas que había que
+          contestar antes de jugar, y en un portátil la tercera ya no cabía. Lo
+          que se enseña ahora es **dónde se estuvo**, con el botón a mano;
+          cambiar algo es entrar a cambiarlo.
+        -->
+        <section class="hangar__bloque" aria-labelledby="hangar-seguimos">
+          <h2 class="hangar__pregunta" id="hangar-seguimos">${t('hangar.seguimos')}</h2>
+          <div class="hangar__fila hangar__fila--tres" role="radiogroup"
+               aria-labelledby="hangar-seguimos">
+            ${recientes()
+              .map((e) => fichaDeSitio(e, e.id === sitio.id))
+              .join('')}
+          </div>
+          <p class="hangar__reposo">${t('hangar.reposo')}</p>
+        </section>`
+            : ''
+        }
+
+        ${
+          pantalla === 'donde'
+            ? `
         <section class="hangar__bloque" aria-labelledby="hangar-sitio">
           <h2 class="hangar__pregunta" id="hangar-sitio">${t('hangar.donde')}</h2>
-          <div class="hangar__fila" role="radiogroup" aria-labelledby="hangar-sitio">
+          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-sitio">
             ${SCENARIOS.map((e) => fichaDeSitio(e, e.id === sitio.id)).join('')}
           </div>
-        </section>
+        </section>`
+            : ''
+        }
 
+        ${
+          pantalla === 'que'
+            ? `
         <!--
-          **La segunda pregunta, y no la tercera.**
+          **A qué se juega dice también desde dónde se empieza.**
 
-          Hasta ahora el juego siempre estaba dando la misma clase y nunca la
-          había ofrecido: arrancabas y ya había raya verde, diana y doble raya.
-          Va aquí arriba porque **a qué se juega manda más que cuánta ayuda se
-          recibe**, y porque el tramo se elige una vez y se olvida, mientras que
-          esto se cambia en cada partida.
-
-          Y muy práctico: en una pantalla de portátil solo caben dos filas sin
-          desplazar. Las dos que se ven tienen que ser las dos que se tocan.
+          Aterrizar arranca ya volando, en final; despegar, en el puesto. No
+          hace falta preguntarlo aparte: ya está dicho al elegir a qué se juega.
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
           <h2 class="hangar__pregunta" id="hangar-leccion">${t('hangar.aque')}</h2>
-          <div class="hangar__fila" role="radiogroup" aria-labelledby="hangar-leccion">
+          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-leccion">
             ${LECCIONES.map((l) => fichaDeLeccion(l, l.id === leccion.id)).join('')}
           </div>
-        </section>
+        </section>`
+            : ''
+        }
 
+        ${
+          pantalla === 'quien'
+            ? `
         <section class="hangar__bloque" aria-labelledby="hangar-tramo">
           <h2 class="hangar__pregunta" id="hangar-tramo">${t('hangar.como')}</h2>
-          <div class="hangar__fila" role="radiogroup" aria-labelledby="hangar-tramo">
+          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-tramo">
             ${TIERS.map((tier, i) => fichaDeTramo(tier, i, tier.id === tramo.id)).join('')}
           </div>
-        </section>
+        </section>`
+            : ''
+        }
+
+        ${
+          pantalla === 'ajustes'
+            ? `
+        <!--
+          **Lo que se decide una vez, fuera del camino.**
+
+          Idioma y mundo no son preguntas de partida. Estaban arriba a la
+          derecha porque no había otro sitio; ahora lo hay, y quien tiene cuatro
+          años no entra aquí nunca.
+        -->
+        <section class="hangar__bloque" aria-labelledby="hangar-ajustes">
+          <h2 class="hangar__pregunta" id="hangar-ajustes">${t('hangar.ajustes')}</h2>
+          <div class="hangar__ajustes">
+            <div class="ajuste">
+              <span class="ajuste__titulo">${t('language.label')}</span>
+              <div class="hangar__idiomas" role="radiogroup" aria-label="${t('language.label')}">
+                ${LOCALES.map(
+                  (l) => `
+                <button class="idioma" type="button" role="radio" lang="${l === 'gug' ? 'gn' : l}"
+                        aria-checked="${l === getLocale()}" tabindex="${l === getLocale() ? 0 : -1}"
+                        data-idioma="${l}">${LOCALE_NAMES[l]}</button>`,
+                ).join('')}
+              </div>
+            </div>
+            <div class="ajuste">
+              <span class="ajuste__titulo">${t('mundo.label')}</span>
+              <div class="hangar__mundos" role="radiogroup" aria-label="${t('mundo.label')}">
+                ${(['foto', 'dibujado'] as const)
+                  .map(
+                    (m) => `
+                <button class="mundo" type="button" role="radio" data-mundo="${m}"
+                        aria-checked="${m === mundoElegido()}"
+                        tabindex="${m === mundoElegido() ? 0 : -1}"
+                        aria-label="${t(m === 'foto' ? 'mundo.foto' : 'mundo.dibujado')}"
+                        title="${t(m === 'foto' ? 'mundo.foto' : 'mundo.dibujado')}">
+                  ${m === 'foto' ? MUNDO_FOTO : MUNDO_DIBUJADO}
+                </button>`,
+                  )
+                  .join('')}
+              </div>
+            </div>
+          </div>
+        </section>`
+            : ''
+        }
       </div>
 
       <!--
-        El botón va en una barra con fondo, no flotando suelto. Suelto dejaba
-        medio nombre de tramo asomando por debajo, y medio nombre asomando se
-        lee como un fallo aunque se pueda desplazar.
+        **La barra de abajo no es un menú: es el estado.**
+
+        Dice qué está elegido ahora mismo, y de paso deja entrar a cambiarlo.
+        Quien tiene cuatro años ve fichas y un botón naranja; quien tiene
+        cuarenta ve la partida entera configurada de un vistazo.
+
+        Y no crece: da igual que haya cuatro aeropuertos o cuarenta, aquí
+        siempre hay cuatro pasos y un botón. Lo que crece son las pantallas de
+        detalle, que sí pueden desplazarse.
       -->
       <div class="hangar__barra">
+        ${
+          pantalla === 'inicio'
+            ? `
+        <div class="hangar__pasos">
+          ${[
+            ['donde', t('hangar.donde'), t(sitio.nameKey as never), PASO_DONDE],
+            ['que', t('hangar.aque'), t(`leccion.${leccion.id}` as never), PASO_QUE],
+            ['quien', t('hangar.como'), tramo.name, PASO_QUIEN],
+            ['ajustes', t('hangar.ajustes'), LOCALE_NAMES[getLocale()], PASO_AJUSTES],
+          ]
+            .map(
+              ([id, que, valor, icono]) => `
+          <button class="paso" type="button" data-pantalla="${id}">
+            ${icono}
+            <span class="paso__texto">
+              <span class="paso__que">${que}</span>
+              <span class="paso__valor">${valor}</span>
+            </span>
+          </button>`,
+            )
+            .join('')}
+        </div>`
+            : `
+        <button class="paso paso--volver" type="button" data-pantalla="inicio">
+          ${PASO_VOLVER}
+          <span class="paso__texto">
+            <span class="paso__valor">${t('hangar.atras')}</span>
+          </span>
+        </button>`
+        }
         <button class="hangar__despegar" type="button" data-despegar>
           ${DESPEGA}
           <span>${t('hangar.despegar')}</span>
@@ -617,9 +778,36 @@ export function abrirHangar(
       root.querySelector<HTMLElement>(`[${atributo}="${id}"]`)?.focus();
     };
 
+    /*
+     * El reposo: si nadie toca nada, el hangar se recompone solo.
+     *
+     * No es limpieza ni ahorro: una tablet compartida tiene que quedar lista
+     * para el siguiente sin que nadie la ordene. Quien se levantó a medio
+     * elegir no deja su elección a medias encima de la mesa.
+     */
+    const aplazarReposo = (): void => {
+      if (reposo !== null) clearTimeout(reposo);
+      reposo = setTimeout(() => {
+        if (pantalla !== 'inicio') {
+          pantalla = 'inicio';
+          pintar();
+        }
+      }, REPOSO_MS);
+    };
+    aplazarReposo();
+    root.addEventListener('pointerdown', aplazarReposo);
+    root.addEventListener('keydown', aplazarReposo);
+
     root.addEventListener('click', (event) => {
       const boton = (event.target as HTMLElement | null)?.closest('button');
       if (!boton) return;
+
+      const aDonde = boton.getAttribute('data-pantalla');
+      if (aDonde) {
+        pantalla = aDonde as Pantalla;
+        pintar();
+        return;
+      }
 
       const idIdioma = boton.getAttribute('data-idioma');
       if (idIdioma) {
@@ -636,15 +824,38 @@ export function abrirHangar(
         pintar();
         return;
       }
-      if (idSitio) return elegir('data-sitio', idSitio);
+      if (idSitio) {
+        elegir('data-sitio', idSitio);
+        if (pantalla === 'donde') {
+          pantalla = 'inicio';
+          pintar();
+        }
+        return;
+      }
 
       const idTramo = boton.getAttribute('data-tramo');
-      if (idTramo) return elegir('data-tramo', idTramo);
+      if (idTramo) {
+        elegir('data-tramo', idTramo);
+        if (pantalla === 'quien') {
+          pantalla = 'inicio';
+          pintar();
+        }
+        return;
+      }
 
       const idLeccion = boton.getAttribute('data-leccion');
-      if (idLeccion) return elegir('data-leccion', idLeccion);
+      if (idLeccion) {
+        elegir('data-leccion', idLeccion);
+        if (pantalla === 'que') {
+          pantalla = 'inicio';
+          pintar();
+        }
+        return;
+      }
 
       if (boton.hasAttribute('data-despegar')) {
+        if (reposo !== null) clearTimeout(reposo);
+        apuntarReciente(sitio.id);
         root.hidden = true;
         root.innerHTML = '';
         resolve({ scenario: sitio, tier: tramo, leccion });
