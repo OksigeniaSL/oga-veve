@@ -528,11 +528,67 @@ export class Game {
           sobreElSuelo: alturas[Math.floor(alturas.length / 2)]!,
         };
       },
-      /** Qué pavimentos hay montados y cuáles se están viendo. */
+      /**
+       * El tronco de la cámara y **cuántos bits tiene el búfer de
+       * profundidad**, que es de donde sale que la pintura se vea o no.
+       */
+      camara: () => {
+        const gl = this.renderer.getContext();
+        return {
+          near: this.camera.near,
+          far: this.camera.far,
+          bits: gl.getParameter(gl.DEPTH_BITS) as number,
+          logaritmico: this.renderer.capabilities.logarithmicDepthBuffer,
+        };
+      },
+      /**
+       * A qué altura está cada malla del aeródromo **respecto del suelo**.
+       *
+       * Existir y estar encendida no basta: una malla puede estar
+       * perfectamente montada y enterrada. Es lo que le pasó a la raya verde, y
+       * es lo único que queda por descartar con la pintura de la pista.
+       */
+      alturaDeLasMallas: () => {
+        const aero = this.scenario.aerodrome;
+        const recinto = aero ? this.terrain.group.getObjectByName(`aerodromo:${aero.id}`) : null;
+        const salida: string[] = [];
+        recinto?.traverse((o) => {
+          const pos = (
+            o as { geometry?: { attributes?: { position?: {
+              count: number; getX(i: number): number; getY(i: number): number; getZ(i: number): number;
+            } } } }
+          ).geometry?.attributes?.position;
+          if (!pos || pos.count === 0) return;
+          const d: number[] = [];
+          for (let i = 0; i < pos.count; i += Math.max(1, Math.floor(pos.count / 40))) {
+            d.push(pos.getY(i) - this.terrain.sampleHeight(pos.getX(i), pos.getZ(i)));
+          }
+          d.sort((a, b) => a - b);
+          salida.push(
+            `${o.name || '(sin nombre)'}: ${d[Math.floor(d.length / 2)]!.toFixed(2)} m ` +
+              `(de ${d[0]!.toFixed(2)} a ${d[d.length - 1]!.toFixed(2)})`,
+          );
+        });
+        return salida;
+      },
+      /** Qué hay montado en el aeródromo y qué se está viendo. */
       pavimentos: () => {
         const salida: string[] = [];
-        this.terrain.group.traverse((o) => {
-          if (o.name.startsWith('pavimento:')) salida.push(`${o.name} ${o.visible ? 'VISIBLE' : 'apagado'}`);
+        const aero = this.scenario.aerodrome;
+        const recinto = aero
+          ? this.terrain.group.getObjectByName(`aerodromo:${aero.id}`)
+          : null;
+        recinto?.traverse((o) => {
+          const geo = (o as { geometry?: { attributes?: { position?: { count: number } } } })
+            .geometry;
+          if (!geo?.attributes?.position) return;
+          const mat = (o as { material?: { polygonOffsetFactor?: number; polygonOffsetUnits?: number } })
+            .material;
+          salida.push(
+            `${o.name || '(sin nombre)'} ${o.visible ? 'VISIBLE' : 'apagado'}` +
+              ` ${geo.attributes.position.count}v` +
+              ` off ${mat?.polygonOffsetFactor ?? 0}/${mat?.polygonOffsetUnits ?? 0}`,
+          );
         });
         return salida;
       },

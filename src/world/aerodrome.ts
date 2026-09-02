@@ -189,8 +189,47 @@ const color = (superficie: string | null): ColorRepresentation =>
  * ni se monte. No hace falta más: una calle de rodaje no tiene curvas
  * cerradas y, cuando las tiene, OSM ya las trae partidas en tramos.
  */
-function cinta(eje: readonly Punto[], ancho: number, altura: (p: Punto) => number): BufferGeometry | null {
-  if (eje.length < 2) return null;
+/**
+ * Mete puntos intermedios en una polilínea hasta que ningún tramo pase de
+ * `paso` metros.
+ *
+ * **Sin esto, una pista es un plano.** El eje de Tenerife Norte que trae
+ * OpenStreetMap son dos puntos, así que la cinta salía con cuatro vértices: un
+ * cuadrilátero plano de tres kilómetros y medio para una pista que **cae
+ * diecisiete metros** de una cabecera a la otra. Un plano no puede seguir una
+ * pendiente: la corta por el medio.
+ *
+ * Y lo que pasa entonces se vio jugando durante horas sin dar con ello. Por la
+ * mitad donde el plano queda por encima, el asfalto tapa su propia pintura —
+ * «las líneas siguen desapareciendo, el 30 se quiere dejar ver pero
+ * desaparece»— y el avión se hunde en él. Por la otra mitad asoma el terreno.
+ *
+ * Cincuenta metros: con diecisiete de caída en tres mil cuatrocientos, cada
+ * tramo se aparta de la rasante menos de un centímetro.
+ */
+function densificar(eje: readonly Punto[], paso = 50): Punto[] {
+  const salida: Punto[] = [];
+  for (let i = 0; i < eje.length - 1; i++) {
+    const [ax, ay] = eje[i]!;
+    const [bx, by] = eje[i + 1]!;
+    const largo = Math.hypot(bx - ax, by - ay);
+    const trozos = Math.max(1, Math.ceil(largo / paso));
+    for (let k = 0; k < trozos; k++) {
+      const t = k / trozos;
+      salida.push([ax + (bx - ax) * t, ay + (by - ay) * t]);
+    }
+  }
+  salida.push(eje[eje.length - 1]!);
+  return salida;
+}
+
+function cinta(
+  ejeCrudo: readonly Punto[],
+  ancho: number,
+  altura: (p: Punto) => number,
+): BufferGeometry | null {
+  if (ejeCrudo.length < 2) return null;
+  const eje = densificar(ejeCrudo);
   const medio = ancho / 2;
   const izq: Punto[] = [];
   const der: Punto[] = [];
@@ -390,19 +429,27 @@ export function createAerodrome(
     if (!fusionada) continue;
     const malla = new Mesh(
       fusionada,
-      new MeshLambertMaterial({
-        color: color(superficie),
-        /*
-         * Nuestro asfalto y el de la fotografía quedan casi en el mismo plano
-         * —es la misma pista medida dos veces—, y dos planos casi iguales
-         * parpadean uno sobre otro según el ángulo. Con esto el nuestro gana
-         * siempre el empate, sin tener que levantarlo y sin que se le vea el
-         * canto por los bordes.
-         */
-        polygonOffset: true,
-        polygonOffsetFactor: -1,
-        polygonOffsetUnits: -3,
-      }),
+      /*
+       * **El pavimento va sin `polygonOffset`, y quitarlo fue el arreglo.**
+       *
+       * Lo llevaba porque nuestro asfalto y el de la fotografía quedaban casi
+       * en el mismo plano y parpadeaban uno sobre otro. Eso dejó de ser verdad
+       * en cuanto el aeródromo se reasienta por encima de la foto: hoy está
+       * metro y medio más arriba y no tiene con quién empatar.
+       *
+       * Y lo que sobra, estorba. El empujón del `polygonOffset` escala con la
+       * pendiente de profundidad del polígono, así que **mirando la pista a ras
+       * de suelo se vuelve enorme** y el asfalto se adelanta a su propia
+       * pintura. Se veía exacto: «las líneas siguen desapareciendo, el 30 se
+       * quiere dejar ver pero desaparece».
+       *
+       * Costó cuatro hipótesis falsas —el orden de los empujones, el eje, el
+       * búfer de profundidad y la altura— y lo que lo resolvió fue medir dónde
+       * estaba cada malla: la pintura estaba veinte centímetros por encima del
+       * asfalto, encendida y bien puesta. Si está bien puesta y no se ve, lo
+       * que sobra es un empujón.
+       */
+      new MeshLambertMaterial({ color: color(superficie) }),
     );
     malla.name = `pavimento:${superficie}`;
     // El pavimento no proyecta sombra sobre sí mismo y no la recibe de nada
