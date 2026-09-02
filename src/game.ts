@@ -414,6 +414,14 @@ export class Game {
     // es donde se quedan las fugas de memoria de los juegos web—.
     this.hud.onHangar(() => location.reload());
     this.hud.ponerMapa(this.scenario, (x, z) => this.terrain.sampleHeight(x, z));
+    /*
+     * Las luces de aproximación y el PAPI, ya desde el principio.
+     *
+     * Se vuelven a montar al moldear el suelo con la fotografía, pero tienen
+     * que existir antes: **sin clave de teselas no hay foto y no habría
+     * moldeado**, y el juego sin clave tiene que seguir siendo el juego.
+     */
+    this.ponerAproximacion();
     this.hud.ponerHora(this.horaPedida(), (h) => this.ponerHora(h));
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
@@ -476,6 +484,16 @@ export class Game {
       controles: () => this.input.controls,
       /** La cota que da la foto sin filtrar, para comprobar lejos del aeropuerto. */
       cotaCruda: (x: number, z: number) => this.teselas?.medidaDirecta(x, z) ?? null,
+      /** De qué color se ven las cuatro del PAPI ahora mismo. */
+      papi: () => {
+        const m = this.aproximacion?.grupo.getObjectByName('papi') as
+          | { instanceColor?: { array: ArrayLike<number> } }
+          | undefined;
+        const a = m?.instanceColor?.array;
+        if (!a) return null;
+        // Azul alto es blanco; azul bajo es rojo. Es la separación que hay.
+        return Array.from({ length: 4 }, (_, k) => (a[k * 3 + 2]! > 0.5 ? 'blanca' : 'roja'));
+      },
       /** Cómo está el banco de nubes: si se ve, a qué altura y cuánto tapa. */
       nubes: () => {
         const banco = this.sky?.group.getObjectByName('nubes');
@@ -1115,6 +1133,9 @@ export class Game {
   ponerTiempo(meteo: Meteo): void {
     this.scenario = conViento(this.scenario, meteo);
     this.terrain.rehacerAerodromo(this.scenario);
+    // Y las luces de aproximación, que van en la cabecera por la que se entra:
+    // si el viento gira, se mudan al otro extremo con todo lo demás.
+    this.ponerAproximacion();
     if (this.plan) {
       this.scene.remove(this.plan.grupo);
       this.plan = new PlanDeVuelo(this.scenario.aerodrome!, this.scenario.runway, (x, z) =>
