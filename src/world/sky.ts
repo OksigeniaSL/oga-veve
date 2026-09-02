@@ -461,12 +461,24 @@ export function createSky(scenario: Scenario): SkyRig {
   return rig;
 }
 
-/** Enciende o apaga el banco de nubes, y a qué altura se pone. */
-export function ponerNubes(rig: SkyRig, alturaM: number | null): void {
+/**
+ * Enciende o apaga el banco de nubes: a qué altura, y cuánto tapa.
+ *
+ * `tapadura` va de cero a uno y es lo que separa «hay cuatro nubes sueltas» de
+ * «no se ve el suelo». No basta con subirlas o bajarlas: unas nubes muy altas y
+ * muy opacas siguen siendo un techo, y unas bajas y transparentes siguen siendo
+ * un día claro. Lo que cuenta es cuánto tapan.
+ */
+export function ponerNubes(rig: SkyRig, alturaM: number | null, tapadura = 0.5): void {
   const banco = rig.group.getObjectByName('nubes');
   if (!banco) return;
   banco.visible = alturaM !== null;
-  if (alturaM !== null) banco.position.y = alturaM;
+  if (alturaM === null) return;
+  banco.position.y = alturaM;
+  for (const capa of banco.children) {
+    const mat = (capa as Mesh).material as MeshBasicMaterial;
+    mat.opacity = 0.18 + tapadura * 0.62;
+  }
 }
 
 /** El domo sigue a la cámara para que el horizonte no se acerque nunca. */

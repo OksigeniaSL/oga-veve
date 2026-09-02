@@ -176,6 +176,10 @@ export class Hud {
   private keysHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
   private horaAtada: { hora: number; cambio: (h: number) => void } | null = null;
+  private cieloAtado: {
+    cielo: number;
+    cambio: (alturaM: number | null, tapadura: number) => void;
+  } | null = null;
   private tiempoAtado: {
     meteo: import('../world/meteo').Meteo;
     cambio: (m: import('../world/meteo').Meteo) => void;
@@ -441,6 +445,10 @@ export class Hud {
     if (this.horaAtada) {
       this.tiempo.onHora(this.horaAtada.cambio);
       this.tiempo.ponerHoraSinAvisar(this.horaAtada.hora);
+    }
+    if (this.cieloAtado) {
+      this.tiempo.onNubes(this.cieloAtado.cambio);
+      this.tiempo.ponerCieloSinAvisar(this.cieloAtado.cielo);
     }
     this.paintSound();
     this.paintProgress();
@@ -762,6 +770,13 @@ export class Hud {
     this.horaAtada = { hora, cambio };
     this.tiempo.onHora(cambio);
     this.tiempo.ponerHoraSinAvisar(hora);
+  }
+
+  /** Quién se entera de que han cambiado las nubes. */
+  ponerCielo(cielo: number, cambio: (alturaM: number | null, tapadura: number) => void): void {
+    this.cieloAtado = { cielo, cambio };
+    this.tiempo.onNubes(cambio);
+    this.tiempo.ponerCieloSinAvisar(cielo);
   }
 
   /** Quién vuelve al hangar. */

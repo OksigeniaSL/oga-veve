@@ -2530,6 +2530,52 @@ body {
 
 
 /*
+ * Los tres cielos.
+ *
+ * Del tamaño del tacto y con el dibujo grande dentro: se elige un cielo
+ * mirándolo, no leyendo su nombre, así que el dibujo **es** el botón. El que
+ * está puesto se hunde y se calienta, que es como se ve que está elegido sin
+ * necesidad de una marca aparte.
+ */
+.tiempo__cielos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.tiempo__cielo {
+  display: grid;
+  place-items: center;
+  min-height: var(--tacto);
+  padding: 6px 2px;
+  border: 1px solid transparent;
+  border-radius: var(--r-m);
+  background: var(--barro-claro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.tiempo__cielo:hover,
+.tiempo__cielo:focus-visible {
+  border-color: var(--ocre-tinta);
+}
+
+.tiempo__cielo--puesto {
+  border-color: var(--ocre-tinta);
+  background: var(--barro-calido);
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.28);
+}
+
+.tiempo__cielo svg {
+  width: 38px;
+  height: 28px;
+  stroke: none;
+}
+
+/*
  * Las lupas del mapa. Dentro del propio mapa y grandes: fuera se leerían como
  * mandos del juego, y pequeñas no se aciertan con un dedo de cuatro años.
  */

@@ -123,6 +123,53 @@ export class PanelDelTiempo {
         </svg>
 
         </div>
+        <div class="tiempo__mando">
+          <span class="tiempo__rotulo" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M6.5 18h11a4 4 0 0 0 .4-8 5.6 5.6 0 0 0-10.6-1.3A3.6 3.6 0 0 0 6.5 18Z"
+                    fill="currentColor" />
+            </svg>
+          </span>
+          <!--
+            **Tres botones con dibujo, no una barra.**
+
+            La cantidad de nube no es una magnitud que alguien de cuatro años
+            quiera afinar: es una elección entre tres cielos que ha visto. Sol,
+            sol con nubes, y tapado. Y el dibujo es el propio cielo, no un
+            símbolo de nada — se elige mirando cuál se parece al día que quieres.
+          -->
+          <div class="tiempo__cielos" role="group" aria-label="${t('tiempo.nubes')}">
+            <button class="tiempo__cielo" type="button" data-hud="tiempo-nubes" data-nubes="0"
+                    aria-label="${t('tiempo.despejado')}" aria-pressed="false">
+              <svg viewBox="0 0 32 24" aria-hidden="true">
+                <circle cx="16" cy="12" r="5.4" fill="currentColor" />
+                <path d="M16 1.4 v3.2 M16 19.4 v3.2 M5.4 12 h3.2 M23.4 12 h3.2
+                         M8.4 4.4 l2.3 2.3 M21.3 17.3 l2.3 2.3
+                         M23.6 4.4 l-2.3 2.3 M10.7 17.3 l-2.3 2.3"
+                      stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+              </svg>
+            </button>
+            <button class="tiempo__cielo" type="button" data-hud="tiempo-nubes" data-nubes="1"
+                    aria-label="${t('tiempo.algunas')}" aria-pressed="false">
+              <svg viewBox="0 0 32 24" aria-hidden="true">
+                <circle cx="11" cy="9" r="4.4" fill="currentColor" />
+                <path d="M11 1.6 v2.6 M3.2 9 h2.6 M5.6 3.6 l1.9 1.9 M16.4 3.6 l-1.9 1.9"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path d="M13.5 20h11a3.4 3.4 0 0 0 .3-6.8 4.8 4.8 0 0 0-9-1.1A3.1 3.1 0 0 0 13.5 20Z"
+                      fill="currentColor" />
+              </svg>
+            </button>
+            <button class="tiempo__cielo" type="button" data-hud="tiempo-nubes" data-nubes="2"
+                    aria-label="${t('tiempo.cubierto')}" aria-pressed="false">
+              <svg viewBox="0 0 32 24" aria-hidden="true">
+                <path d="M8 12h13a3.1 3.1 0 0 0 .3-6.2A4.4 4.4 0 0 0 13 4.8 2.9 2.9 0 0 0 8 12Z"
+                      fill="currentColor" opacity="0.55" />
+                <path d="M5.5 21h17a3.6 3.6 0 0 0 .3-7.2 5.1 5.1 0 0 0-9.6-1.2A3.3 3.3 0 0 0 5.5 21Z"
+                      fill="currentColor" />
+              </svg>
+            </button>
+          </div>
+        </div>
         <div class="tiempo__botones">
           <button class="tiempo__boton" type="button" data-hud="tiempo-calma"
                   aria-label="${t('tiempo.calma')}">
@@ -200,10 +247,58 @@ export class PanelDelTiempo {
     arco?.addEventListener('pointermove', (e) => {
       if (e.buttons) moverSol(e);
     });
+
+    this.raiz?.querySelectorAll<HTMLButtonElement>('[data-hud="tiempo-nubes"]').forEach((b) => {
+      b.addEventListener('click', () => this.ponerCielo(Number(b.dataset.nubes ?? 0)));
+    });
+    this.pintarCielos();
   }
 
   private horaActual = 16;
   private alCambiarHora: ((h: number) => void) | null = null;
+
+  /**
+   * Los tres cielos, y a qué se traducen.
+   *
+   * La altura importa tanto como lo que tapan: un techo bajo es el que se
+   * atraviesa despegando, y ese es el momento por el que existe todo esto.
+   * Setecientos metros son mil quinientos pies, que es un día tapado de verdad.
+   */
+  private static readonly CIELOS: readonly { alturaM: number | null; tapadura: number }[] = [
+    { alturaM: null, tapadura: 0 },
+    { alturaM: 1500, tapadura: 0.35 },
+    { alturaM: 700, tapadura: 0.9 },
+  ];
+  private cieloActual = 0;
+  private alCambiarNubes: ((alturaM: number | null, tapadura: number) => void) | null = null;
+
+  /** Quién se entera de que han cambiado las nubes. */
+  onNubes(handler: (alturaM: number | null, tapadura: number) => void): void {
+    this.alCambiarNubes = handler;
+  }
+
+  /** Pone el cielo sin avisar: es pintar, no cambiar. */
+  ponerCieloSinAvisar(indice: number): void {
+    this.cieloActual = Math.max(0, Math.min(PanelDelTiempo.CIELOS.length - 1, indice));
+    this.pintarCielos();
+  }
+
+  private ponerCielo(indice: number): void {
+    if (indice === this.cieloActual) return;
+    this.cieloActual = indice;
+    this.pintarCielos();
+    const c = PanelDelTiempo.CIELOS[indice]!;
+    this.alCambiarNubes?.(c.alturaM, c.tapadura);
+  }
+
+  private pintarCielos(): void {
+    const botones = this.raiz?.querySelectorAll<HTMLButtonElement>('[data-hud="tiempo-nubes"]');
+    botones?.forEach((b) => {
+      const suyo = Number(b.dataset.nubes ?? 0) === this.cieloActual;
+      b.setAttribute('aria-pressed', String(suyo));
+      b.classList.toggle('tiempo__cielo--puesto', suyo);
+    });
+  }
 
   /** Quién se entera de que ha cambiado la hora. */
   onHora(handler: (h: number) => void): void {
