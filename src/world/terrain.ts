@@ -318,9 +318,13 @@ export class Terrain {
    * Quien elige el `alzado` mide cuánto hay que subirla para que se quede
    * debajo **en todas partes**, no de media.
    */
-  reasentarAerodromo(escenario: Scenario, alzado: number): void {
+  reasentarAerodromo(
+    escenario: Scenario,
+    alzado: number,
+    perfil: ((t: number) => number) | null = null,
+  ): void {
     if (!escenario.aerodrome) return;
-    flattenAerodrome(this.heights, escenario, escenario.aerodrome, alzado);
+    flattenAerodrome(this.heights, escenario, escenario.aerodrome, alzado, perfil);
   }
 
   rehacerAerodromo(escenario: Scenario): void {
@@ -939,6 +943,18 @@ function flattenAerodrome(
   aero: Aerodrome,
   /** Cuánto se sube todo el aeródromo, en metros. Ver `reasentarAerodromo`. */
   alzado = 0,
+  /**
+   * El perfil de la pista a lo largo, si se conoce mejor que las cotas de los
+   * umbrales: recibe cuánto se lleva recorrido de umbral a umbral, de 0 a 1, y
+   * devuelve la cota.
+   *
+   * Existe porque **una pista no es una recta**. Interpolando entre las dos
+   * cotas de OurAirports, la fotografía de Tenerife Norte se aparta más de
+   * metro y medio en la sexta parte de los puntos, y taparla obligaba a subir
+   * el aeródromo entero dos metros: quedaba flotando, con un escalón de dos
+   * metros en el filo del asfalto.
+   */
+  perfil: ((t: number) => number) | null = null,
 ): void {
   const resolution = scenario.segments + 1;
   const step = scenario.size / scenario.segments;
@@ -974,6 +990,7 @@ function flattenAerodrome(
     const dy = b.xy![1] - ay;
     const largo2 = dx * dx + dy * dy || 1;
     const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - ay) * dy) / largo2));
+    if (perfil) return perfil(t) + alzado;
     return a.elevM! + (b.elevM! - a.elevM!) * t + alzado;
   };
 
