@@ -50,6 +50,50 @@ const CARPETA = 'assets/aeronaves';
 const NOMBRES_DE_HELICE = ['prop', 'helice', 'hélice', 'propeller', 'spinner', 'blade'];
 
 /**
+ * Junta las piezas de la hélice en un eje que gira sobre su propio centro.
+ *
+ * Hacía falta al enchufar el primer modelo de verdad: buscaba **un** nodo y en
+ * ese avión la hélice son tres —`prop.002`, `prop.003` y `spinner.001`—, así
+ * que habría girado una pala sola y dejado las otras quietas. Y aunque fueran
+ * una, girar el nodo tal cual lo haría alrededor del origen del avión, no del
+ * buje: la hélice describiría un círculo de dos metros por delante del morro.
+ *
+ * Así que se crea un eje **en el centro de las piezas**, se cuelgan de él y se
+ * las descuenta esa posición. A partir de ahí, girar el eje es girar la hélice.
+ */
+function ejeDeHelice(raiz: Object3D): Object3D {
+  const piezas: Object3D[] = [];
+  raiz.traverse((o) => {
+    const nombre = o.name.toLowerCase();
+    if (!NOMBRES_DE_HELICE.some((n) => nombre.includes(n))) return;
+    // Solo la de más arriba de cada rama: si se cogen padre e hijo, el hijo
+    // acaba girando dos veces.
+    if (piezas.some((p) => esAncestro(p, o))) return;
+    piezas.push(o);
+  });
+  if (!piezas.length) return new Group();
+
+  const centro = new Box3();
+  for (const p of piezas) centro.expandByObject(p);
+  const medio = centro.getCenter(new Vector3());
+
+  const eje = new Group();
+  eje.name = 'helice';
+  eje.position.copy(medio);
+  raiz.add(eje);
+  for (const p of piezas) {
+    p.position.sub(medio);
+    eje.add(p);
+  }
+  return eje;
+}
+
+function esAncestro(posible: Object3D, hijo: Object3D): boolean {
+  for (let o: Object3D | null = hijo.parent; o; o = o.parent) if (o === posible) return true;
+  return false;
+}
+
+/**
  * Carga el modelo de una aeronave, o `null` si no lo hay.
  *
  * Devuelve lo mismo que `createAircraftMesh` para que quien lo use no tenga que
@@ -96,11 +140,16 @@ export async function cargarModelo(
   }
 
   /*
-   * El morro a la Z negativa. Un avión es más largo que ancho salvo en los
-   * planeadores, así que si el modelo viene más largo en X que en Z, está
-   * atravesado y se gira un cuarto de vuelta.
+   * **Las alas a lo ancho.** En este mundo la X es el eje de las alas y la Z el
+   * del morro, así que la dimensión mayor del modelo tiene que acabar en la X.
+   *
+   * Y la mayor es la envergadura, no el largo: un 172 mide once metros de
+   * punta a punta de ala y ocho y medio de morro a cola. El primer intento
+   * daba por hecho lo contrario —«un avión es más largo que ancho»—, que es
+   * verdad en un caza y mentira en una avioneta, y el modelo entró en el juego
+   * cruzado en la calle de rodaje.
    */
-  if (tam.x > tam.z) raiz.rotation.y = Math.PI / 2;
+  if (tam.z > tam.x) raiz.rotation.y = Math.PI / 2;
 
   /*
    * Y las ruedas al origen. El juego coloca la aeronave por su tren —
@@ -114,12 +163,5 @@ export async function cargarModelo(
 
   group.add(raiz);
 
-  let propeller: Object3D = new Group();
-  raiz.traverse((o) => {
-    const nombre = o.name.toLowerCase();
-    if (NOMBRES_DE_HELICE.some((n) => nombre.includes(n))) propeller = o;
-  });
-  if (!propeller.parent) group.add(propeller);
-
-  return { group, propeller };
+  return { group, propeller: ejeDeHelice(raiz) };
 }

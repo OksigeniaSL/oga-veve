@@ -89,20 +89,48 @@ recurrente ni dependencia de licencia.
 
 ## Assets artísticos
 
-Por ahora **todo el arte es original de Oksigenia SL**. La geometría de las
-aeronaves y del terreno se genera por código; no hay modelos importados.
+El terreno, el aeródromo y la ciudad se generan por código, y son originales
+de Oksigenia SL. La aeronave ya no.
 
-Si en el futuro se incorpora arte de terceros, las únicas fuentes aceptadas
-son de licencia verificable:
+### La aeronave
+
+| Qué | De quién | Licencia |
+|---|---|---|
+| [Cessna 172Kr (with cockpit) (ver III)](https://sketchfab.com/3d-models/cessna-172kr-with-cockpit-ver-iii-e104f0a64da5499d9b8b9d60dc896cf8) | TonyWony, en Sketchfab | **CC Attribution 4.0** |
+
+La atribución, tal y como la pide el autor:
+
+> "Cessna 172Kr (with cockpit) (ver III)" by TonyWony is licensed under
+> Creative Commons Attribution.
+
+Y por qué esta y no otra: **CC-BY convive con Apache-2.0 sin contagiar nada**,
+y la ficha de descarga lo dice sin rodeos — «Author must be credited.
+Commercial use is allowed.» Eso último importa aquí más de lo que parece,
+porque el juego es también un gancho de la Granja Óga, y eso cuenta como uso
+comercial por mucho que se regale.
+
+Se usa **la forma, no el nombre**. La avioneta del juego se llama Óga 172; ver
+el apartado de marcas registradas más abajo. En el modelo hay además un panel
+G1000 dibujado en la textura, que es obra del autor bajo su misma licencia.
+
+Se descargó la versión **GLB con texturas de 1K**, que son dos megas y medio.
+La de 4K pesa más y no se distingue en una tablet.
+
+### Si se incorpora más arte
+
+Las únicas fuentes aceptadas son de licencia verificable:
 
 - [Kenney](https://kenney.nl) — CC0.
 - [Poly Pizza](https://poly.pizza) — CC0 y CC-BY; **hay que mirar modelo a
   modelo**, no todo el catálogo es CC0.
+- [Sketchfab](https://sketchfab.com) — **solo con el filtro de licencia puesto
+  en CC BY o CC0**, y comprobando la ficha de descarga, que es donde la
+  licencia aparece escrita sin ambigüedad.
 - [OpenGameArt](https://opengameart.org) — licencias mixtas, se revisa uno a uno.
 
-**Vetado**: aeronaves de FlightGear (GPL-2.0, contaminaría el producto) y
-cualquier modelo de Sketchfab u otro sitio sin licencia explícita en la
-ficha. "Estaba disponible para descargar" no es una licencia.
+**Vetado**: aeronaves de FlightGear, que son GPL-2.0 y contaminarían el
+producto, y cualquier modelo sin licencia explícita en su ficha. "Estaba
+disponible para descargar" no es una licencia.
 
 ## Nombres de aeronaves y marcas registradas
 

@@ -528,6 +528,11 @@ export class Game {
           sobreElSuelo: alturas[Math.floor(alturas.length / 2)]!,
         };
       },
+      /** La aeronave montada: para saber si vuela el modelo o las cajas. */
+      aeronave: () => ({
+        grupo: this.aircraftMesh.group,
+        helice: this.aircraftMesh.propeller.name || '(sin nombre)',
+      }),
       /**
        * El tronco de la cámara y **cuántos bits tiene el búfer de
        * profundidad**, que es de donde sale que la pintura se vea o no.
