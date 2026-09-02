@@ -495,6 +495,34 @@ export class Game {
         // Azul alto es blanco; azul bajo es rojo. Es la separación que hay.
         return Array.from({ length: 4 }, (_, k) => (a[k * 3 + 2]! > 0.5 ? 'blanca' : 'roja'));
       },
+      /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
+      suelo: (x: number, z: number) => this.terrain.sampleHeight(x, z),
+      /** El eje de la pista y las calles de rodaje, en coordenadas del mundo. */
+      caminos: () => {
+        const aero = this.scenario.aerodrome;
+        if (!aero) return [];
+        const enElMundo = (p: readonly [number, number]) => [p[0], -p[1]] as [number, number];
+        /*
+         * Y las plataformas, que es donde se empieza a rodar y donde se vio el
+         * problema. De cada una se recorre su contorno y además las cuerdas
+         * que unen vértices opuestos, que es la forma barata de cruzarla por
+         * dentro sin ponerse a rellenar polígonos.
+         */
+        const plataformas = aero.aprons.map((a) => {
+          const c = a.polygon.map(enElMundo);
+          const cruces: [number, number][] = [];
+          const mitad = Math.floor(c.length / 2);
+          for (let i = 0; i < mitad; i++) {
+            cruces.push(c[i]!, c[i + mitad]!);
+          }
+          return { que: 'plataforma', puntos: [...c, c[0]!, ...cruces] };
+        });
+        return [
+          ...aero.runways.map((r) => ({ que: 'pista', puntos: r.centerline.map(enElMundo) })),
+          ...aero.taxiways.map((t) => ({ que: 'rodadura', puntos: t.path.map(enElMundo) })),
+          ...plataformas,
+        ];
+      },
       /** Cuánto se subió el aeródromo sobre el datum para librar la foto. */
       alzado: () => this.alzadoDelAerodromo,
       /** Cómo está el banco de nubes: si se ve, a qué altura y cuánto tapa. */
