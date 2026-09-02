@@ -97,6 +97,10 @@ const MARGEN_PLAUSIBLE = 400;
  */
 const ESPERA_A_LA_VERDAD = 3;
 
+/** El parche de suelo que sigue al avión fuera del escenario: lado y nudos. */
+const PARCHE_LADO = 8000;
+const PARCHE_N = 33;
+
 export interface Teselas {
   readonly grupo: Group;
   /** Se llama cada fotograma. Decide qué teselas hacen falta y las pide. */
@@ -142,6 +146,37 @@ export interface Teselas {
    * relieve del terreno y poco más.
    */
   tieneVolumen(puntos: readonly (readonly [number, number])[]): boolean;
+  /**
+   * La cota del mundo lejos del aeródromo, de un parche que se va rellenando.
+   *
+   * El mapa de alturas de Copernicus solo cubre el escenario —dieciocho o
+   * veintidós kilómetros— y fuera devuelve el borde repetido: un suelo invisible
+   * y plano. Pero las teselas **son el planeta entero**, así que volando a Gran
+   * Canaria se ve la isla y se choca contra una llanura que no está.
+   *
+   * No se puede lanzar un rayo por consulta: `sampleHeight` se llama doscientas
+   * cuarenta veces por segundo. Así que se mantiene un parche que sigue al
+   * avión —ocho kilómetros, doscientos cincuenta metros entre nudos— y se
+   * rellena a plazos según se vuela. Doscientos cincuenta metros es basto para
+   * aterrizar y de sobra para no atravesar una montaña, que es de lo que se
+   * trata aquí.
+   *
+   * Devuelve `null` mientras el parche no cubra ese punto.
+   */
+  cotaLejana(x: number, z: number): number | null;
+
+  /**
+   * La misma medida que `cotaLejana`, pero **preguntándoselo a la foto en el
+   * momento**, sin pasar por la rejilla del parche.
+   *
+   * Está para que la comprobación no se mienta a sí misma. `cotaLejana` lee de
+   * una rejilla que se rellena a ratos, se recentra y se interpola; si el
+   * comprobador la usa como patrón está comparando la rejilla consigo misma y
+   * casa siempre, tenga el valor que tenga. Esto lanza el rayo de nuevo.
+   */
+  medidaDirecta(x: number, z: number): number | null;
+  /** Mueve y rellena el parche. Se llama cada fotograma, con presupuesto. */
+  seguirAlAvion(x: number, z: number): void;
   dispose(): void;
 }
 
@@ -224,7 +259,50 @@ export function crearTeselas(
   /** Cuánto tiempo lleva la medida sin moverse. Ver abajo. */
   let quieta = 0;
 
+  /**
+   * El suelo de fuera del escenario, en un cuadrado que sigue al avión.
+   *
+   * `fila` es por dónde va el relleno; mientras no llegue al final, el parche
+   * anterior sigue sirviendo. `listo` se queda en `true` desde el primer relleno
+   * completo: un parche viejo a doscientos cincuenta metros de resolución es
+   * mucho mejor que ninguno.
+   */
+  /**
+   * Dónde está la superficie del mar en un punto, en nuestras coordenadas.
+   *
+   * Hace falta porque **las teselas de Google traen batimetría**: el rayo que
+   * cae sobre el Atlántico no encuentra el agua, encuentra el fondo. A veinte
+   * kilómetros de Tenerife eso son mil seiscientos metros bajo el nivel del mar,
+   * y son correctos —lo pone en la atribución: GEBCO, la NOAA, la Marina de los
+   * Estados Unidos—, pero para volar el suelo del mar es la superficie.
+   *
+   * Y la superficie **no es plana en nuestras coordenadas**. El mundo del juego
+   * es un plano tangente a la Tierra en el aeródromo, así que el mar se aleja
+   * hacia abajo con la curvatura: `d²/2R`, once metros a doce kilómetros y
+   * ciento diez a ochenta. Sin esa cuenta, volando lejos el mar sube y se
+   * traga la isla.
+   */
+  const R_TIERRA = 6371000;
+  const nivelDelMar = (x: number, z: number): number =>
+    (escenario.waterLevel ?? 0) + (desfase ?? 0) - (x * x + z * z) / (2 * R_TIERRA);
+
+  const parchePaso = PARCHE_LADO / (PARCHE_N - 1);
+  const parche = {
+    x: 0,
+    z: 0,
+    fila: 0,
+    listo: false,
+    cotas: new Float32Array(PARCHE_N * PARCHE_N),
+  };
+
   /** Cuánto está el mundo por encima del nuestro en un punto, o `null`. */
+  /** La cota que devuelve el rayo, sin juzgarla. */
+  const alturaCruda = (x: number, z: number): number | null => {
+    rayo.set(new Vector3(x, referencia + 9000, z), new Vector3(0, -1, 0));
+    const golpes = rayo.intersectObject(teselas.group, true);
+    return golpes.length ? golpes[0]!.point.y : null;
+  };
+
   const diferenciaEn = (x: number, z: number): number | null => {
     rayo.set(new Vector3(x, referencia + 9000, z), new Vector3(0, -1, 0));
     const golpes = rayo.intersectObject(teselas.group, true);
@@ -284,10 +362,16 @@ export function crearTeselas(
       return desfase;
     },
     alturaEn(x: number, z: number) {
-      rayo.set(new Vector3(x, referencia + 9000, z), new Vector3(0, -1, 0));
-      const golpes = rayo.intersectObject(teselas.group, true);
-      if (!golpes.length) return null;
-      const y = golpes[0]!.point.y;
+      const y = alturaCruda(x, z);
+      /*
+       * El filtro de cordura **solo vale cerca del aeródromo**, que es para lo
+       * que está: descartar teselas continentales a medio cargar cuando se mide
+       * el desfase. Lejos no vale, y de la peor manera — Tenerife Norte está a
+       * seiscientos treinta y tres metros y el mar a cero, así que descartar lo
+       * que se aparte cuatrocientos de la cota del aeropuerto **descarta el
+       * Atlántico entero**. Por eso el suelo lejano salía sin medir.
+       */
+      if (y === null) return null;
       return Math.abs(y - referencia) < MARGEN_PLAUSIBLE ? y : null;
     },
     libre(x: number, z: number) {
@@ -340,6 +424,56 @@ export function crearTeselas(
       // La mediana del salto. Con volumen sube de tres metros; sin él, no.
       return saltos[Math.floor(saltos.length / 2)]! > 3;
     },
+    medidaDirecta(x: number, z: number) {
+      const y = alturaCruda(x, z);
+      return y === null ? null : Math.max(y, nivelDelMar(x, z));
+    },
+    cotaLejana(x: number, z: number) {
+      if (!parche.listo) return null;
+      const fx = (x - parche.x + PARCHE_LADO / 2) / parchePaso;
+      const fz = (z - parche.z + PARCHE_LADO / 2) / parchePaso;
+      if (fx < 0 || fz < 0 || fx > PARCHE_N - 1.001 || fz > PARCHE_N - 1.001) return null;
+      const c0 = Math.floor(fx);
+      const f0 = Math.floor(fz);
+      const tx = fx - c0;
+      const tz = fz - f0;
+      const v = (f: number, c: number): number => parche.cotas[f * PARCHE_N + c]!;
+      const a = v(f0, c0) * (1 - tx) + v(f0, c0 + 1) * tx;
+      const b = v(f0 + 1, c0) * (1 - tx) + v(f0 + 1, c0 + 1) * tx;
+      return a * (1 - tz) + b * tz;
+    },
+
+    seguirAlAvion(x: number, z: number) {
+      // Se recentra cuando el avión se acerca al borde del parche.
+      if (parche.fila >= PARCHE_N && Math.hypot(x - parche.x, z - parche.z) > PARCHE_LADO * 0.3) {
+        parche.x = x;
+        parche.z = z;
+        parche.fila = 0;
+      }
+      // Y se rellena a filas por fotograma: un rayo cuesta, y trescientos de
+      // golpe se notan como un tirón justo cuando se está volando.
+      let filas = 0;
+      while (parche.fila < PARCHE_N && filas < 3) {
+        const f = parche.fila;
+        for (let c = 0; c < PARCHE_N; c++) {
+          const px = parche.x - PARCHE_LADO / 2 + c * parchePaso;
+          const pz = parche.z - PARCHE_LADO / 2 + f * parchePaso;
+          /*
+           * Sin filtro: aquí lo que devuelve el rayo **es** el dato. A setenta
+           * kilómetros de Tenerife lo que hay es mar a cero metros, y filtrarlo
+           * contra la cota del aeropuerto lo tiraba a la basura.
+           */
+          parche.cotas[f * PARCHE_N + c] = Math.max(
+            alturaCruda(px, pz) ?? -9999,
+            nivelDelMar(px, pz),
+          );
+        }
+        parche.fila++;
+        filas++;
+      }
+      if (parche.fila >= PARCHE_N) parche.listo = true;
+    },
+
     get visibles() {
       return (teselas as unknown as ConEstadisticas).stats?.visible ?? 0;
     },

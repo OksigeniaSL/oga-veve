@@ -439,6 +439,8 @@ export class Game {
       // al navegador, y rodar ciento cuarenta metros así tardaba minutos.
       /** Los mandos, para poder mirarlos desde una comprobación. */
       controles: () => this.input.controls,
+      /** La cota que da la foto sin filtrar, para comprobar lejos del aeropuerto. */
+      cotaCruda: (x: number, z: number) => this.teselas?.medidaDirecta(x, z) ?? null,
       /** El estado del mundo de verdad, para las comprobaciones. */
       mundoReal: () => {
         if (!this.teselas) return null;
@@ -1088,6 +1090,18 @@ export class Game {
      */
     if (this.teselas) {
       this.teselas.update(this.camera, this.renderer, dt);
+      /*
+       * Y el parche de suelo lejano sigue al avión. Solo hace falta cuando ya
+       * se ha salido del escenario o anda cerca del borde: dentro manda el mapa
+       * de alturas, que es exacto y no cuesta rayos.
+       */
+      if (this.mundoRealPuesto) {
+        const s = this.flight.state;
+        const borde = this.scenario.size / 2;
+        if (Math.abs(s.position.x) > borde * 0.7 || Math.abs(s.position.z) > borde * 0.7) {
+          this.teselas.seguirAlAvion(s.position.x, s.position.z);
+        }
+      }
       if (this.teselas.asentado && !this.mundoRealPuesto) {
         this.mundoRealPuesto = true;
         this.apagarElMundoDeMentira();
@@ -1117,6 +1131,8 @@ export class Game {
          * Y no cuesta ni un rayo: es una pasada por el mapa de alturas.
          */
         this.terrain.subirTodo(this.teselas.desfase ?? 0);
+        // Y a partir de aquí, fuera del escenario manda la fotografía.
+        this.terrain.ponerSueloLejano((x, z) => this.teselas?.cotaLejana(x, z) ?? null);
         /*
          * **Y se descarta lo que no cuadre con el desfase que ya se midió.**
          *
