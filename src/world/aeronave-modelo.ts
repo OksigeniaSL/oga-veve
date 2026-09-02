@@ -58,8 +58,17 @@ const NOMBRES_DE_HELICE = ['prop', 'helice', 'hélice', 'propeller', 'spinner', 
  * una, girar el nodo tal cual lo haría alrededor del origen del avión, no del
  * buje: la hélice describiría un círculo de dos metros por delante del morro.
  *
- * Así que se crea un eje **en el centro de las piezas**, se cuelgan de él y se
- * las descuenta esa posición. A partir de ahí, girar el eje es girar la hélice.
+ * Así que se crea un eje **en el centro de las piezas** y se cuelgan de él con
+ * `attach`, que conserva la posición de cada una en el mundo. A partir de ahí,
+ * girar el eje es girar la hélice.
+ *
+ * Lo de `attach` no es un detalle: el primer intento restaba a mano el centro
+ * —medido en coordenadas del mundo— de la posición de cada pieza, que está en
+ * coordenadas de su padre. Con el modelo escalado y girado, esas dos no son la
+ * misma cosa, así que el buje quedaba desplazado y las palas **orbitaban
+ * alrededor del avión** en vez de girar sobre sí mismas. Se describió mejor de
+ * lo que yo lo escribiría: «tiene una cosa dándole vueltas en sentido
+ * antihorario alrededor, parece una polilla cojonera».
  */
 function ejeDeHelice(raiz: Object3D): Object3D {
   const piezas: Object3D[] = [];
@@ -73,18 +82,20 @@ function ejeDeHelice(raiz: Object3D): Object3D {
   });
   if (!piezas.length) return new Group();
 
+  raiz.updateWorldMatrix(true, true);
   const centro = new Box3();
   for (const p of piezas) centro.expandByObject(p);
-  const medio = centro.getCenter(new Vector3());
+  const medioEnElMundo = centro.getCenter(new Vector3());
 
   const eje = new Group();
   eje.name = 'helice';
-  eje.position.copy(medio);
   raiz.add(eje);
-  for (const p of piezas) {
-    p.position.sub(medio);
-    eje.add(p);
-  }
+  // El centro, traído a las coordenadas del padre. `worldToLocal` necesita las
+  // matrices al día, y por eso el `updateWorldMatrix` de arriba.
+  eje.position.copy(raiz.worldToLocal(medioEnElMundo.clone()));
+  // Y `attach`, no `add`: conserva dónde está cada pieza en el mundo, así que
+  // colgarlas del eje no las mueve ni un milímetro.
+  for (const p of piezas) eje.attach(p);
   return eje;
 }
 
@@ -150,6 +161,31 @@ export async function cargarModelo(
    * cruzado en la calle de rodaje.
    */
   if (tam.z > tam.x) raiz.rotation.y = Math.PI / 2;
+
+  /*
+   * **Y el morro hacia delante, que lo dice la hélice.**
+   *
+   * Poner las alas a lo ancho deja el fuselaje en el eje correcto pero no dice
+   * hacia qué lado mira: puede quedar igual de bien con el morro a +Z que a −Z,
+   * y salió al revés. Se vio enseguida — «no sabía que los aviones sabían volar
+   * marcha atrás».
+   *
+   * No hace falta adivinarlo: **la hélice está en el morro**, y ya se sabe cuál
+   * es porque hay que encontrarla igualmente para hacerla girar. Si su centro
+   * cae en la Z positiva, el avión está del revés y se le da media vuelta.
+   */
+  raiz.updateWorldMatrix(true, true);
+  const morro = new Box3();
+  let hayHelice = false;
+  raiz.traverse((o) => {
+    if (!NOMBRES_DE_HELICE.some((n) => o.name.toLowerCase().includes(n))) return;
+    morro.expandByObject(o);
+    hayHelice = true;
+  });
+  if (hayHelice) {
+    const centroAvion = new Box3().setFromObject(raiz).getCenter(new Vector3());
+    if (morro.getCenter(new Vector3()).z > centroAvion.z) raiz.rotation.y += Math.PI;
+  }
 
   /*
    * Y las ruedas al origen. El juego coloca la aeronave por su tren —
