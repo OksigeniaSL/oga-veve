@@ -389,7 +389,36 @@ export class PlanDeVuelo {
     // aprende su sitio, y un aeropuerto que te cambia el puesto cada partida
     // no se aprende nunca.
     const cabecera = this.cabeceraDeSalida();
-    return [...puestos].sort(
+    const cerca = (p: Punto): number => {
+      let d = Infinity;
+      for (const e of this.aero.buildings ?? []) {
+        for (const q of e.polygon) d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1]));
+      }
+      return d;
+    };
+
+    /*
+     * **Los puestos pegados a un edificio son pasarelas, y ahí no aparca una
+     * avioneta.**
+     *
+     * Esto costó dos intentos de medir la fotografía —cuánto sobresale en cada
+     * puesto, si hay algo alto al lado— para acabar en el sitio de siempre:
+     * bajo el ala de un 737 de Iberia Express, partida tras partida. Se dijo
+     * con toda la razón: «¿es tan difícil empezar el juego en otro punto del
+     * aeropuerto? Que mira que es grande».
+     *
+     * Y no hacía falta medir nada. OpenStreetMap trae los edificios, y en
+     * cualquier aeropuerto del mundo los puestos de las aeronaves grandes están
+     * pegados a la terminal y los de aviación general, lejos. Sesenta metros es
+     * más que la envergadura de un 737 y menos que la distancia a la que queda
+     * una plataforma de aviación general.
+     *
+     * De los que quedan se sigue cogiendo el más cercano a la cabecera de
+     * salida, que es lo que evita quince minutos de rodaje.
+     */
+    const lejos = puestos.filter((p) => cerca(p.xy) > 60);
+    const donde = lejos.length ? lejos : puestos;
+    return [...donde].sort(
       (a, b) =>
         Math.hypot(a.xy[0] - cabecera[0], a.xy[1] - cabecera[1]) -
         Math.hypot(b.xy[0] - cabecera[0], b.xy[1] - cabecera[1]),
