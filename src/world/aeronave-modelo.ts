@@ -99,6 +99,49 @@ function ejeDeHelice(raiz: Object3D): Object3D {
   return eje;
 }
 
+/**
+ * Dónde se sienta el piloto, preguntándoselo al modelo.
+ *
+ * La vista de cabina se colocaba con una fórmula sobre la cuerda del ala, y con
+ * las cajas valía porque dentro no había nada. Con una cabina de verdad se
+ * notó enseguida: la cámara quedaba detrás de los asientos, mirando el interior
+ * entero en vez de mirar por el parabrisas.
+ *
+ * Y no hay que estimarlo. Este modelo trae los asientos como piezas con nombre,
+ * igual que la hélice, así que el sitio del piloto es **el asiento de más
+ * adelante**, con los ojos un poco por encima del respaldo.
+ *
+ * Si el modelo no trae asientos se devuelve `undefined` y manda la fórmula de
+ * siempre, que es lo que hacen las cajas.
+ */
+function ojoDePiloto(
+  raiz: Object3D,
+  grupo: Object3D,
+): { x: number; y: number; z: number } | undefined {
+  const asientos = new Box3();
+  let hay = false;
+  raiz.traverse((o) => {
+    const n = o.name.toLowerCase();
+    if (!n.includes('chair') && !n.includes('seat') && !n.includes('asiento')) return;
+    asientos.expandByObject(o);
+    hay = true;
+  });
+  if (!hay) return undefined;
+
+  grupo.updateWorldMatrix(true, true);
+  const centro = asientos.getCenter(new Vector3());
+  const local = grupo.worldToLocal(centro);
+  const alto = asientos.max.y - asientos.min.y;
+  return {
+    x: 0,
+    // Los ojos por encima del respaldo, no a la altura del cojín.
+    y: local.y + alto * 0.55,
+    // Y medio metro adelante, que es de donde se mira: pegado al panel, no
+    // desde el centro del asiento.
+    z: local.z - 0.5,
+  };
+}
+
 function esAncestro(posible: Object3D, hijo: Object3D): boolean {
   for (let o: Object3D | null = hijo.parent; o; o = o.parent) if (o === posible) return true;
   return false;
@@ -199,5 +242,5 @@ export async function cargarModelo(
 
   group.add(raiz);
 
-  return { group, propeller: ejeDeHelice(raiz) };
+  return { group, propeller: ejeDeHelice(raiz), ojo: ojoDePiloto(raiz, group) };
 }
