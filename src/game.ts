@@ -532,6 +532,7 @@ export class Game {
       aeronave: () => ({
         grupo: this.aircraftMesh.group,
         helice: this.aircraftMesh.propeller.name || '(sin nombre)',
+        ojo: this.aircraftMesh.ojo ?? null,
       }),
       /**
        * El tronco de la cámara y **cuántos bits tiene el búfer de
@@ -2193,7 +2194,13 @@ export class Game {
     if (this.cameraMode === 'cockpit') {
       // Desde dentro no hay suavizado: la cámara es la cabeza del piloto y
       // va rígidamente unida al avión.
-      this.offset.set(0, this.aircraft.chord * 0.55, -this.aircraft.chord * 0.4);
+      //
+      // Y si la aeronave es un modelo de verdad, el sitio lo dice él: sus
+      // asientos. La fórmula sobre la cuerda del ala es para las cajas, donde
+      // no hay cabina y da igual dónde te pongas.
+      const ojo = this.aircraftMesh.ojo;
+      if (ojo) this.offset.set(ojo.x, ojo.y, ojo.z);
+      else this.offset.set(0, this.aircraft.chord * 0.55, -this.aircraft.chord * 0.4);
       this.offset.applyQuaternion(state.orientation);
       this.camera.position.copy(state.position).add(this.offset);
       this.camera.quaternion.copy(state.orientation);
@@ -2329,6 +2336,16 @@ export class Game {
 
     this.scene.remove(this.aircraftMesh.group);
     this.aircraftMesh = createAircraftMesh(next);
+    /*
+     * Y se vuelve a buscar el modelo, que si no se pierde para siempre.
+     *
+     * Cargarlo solo al arrancar la partida dejaba un agujero: cambiar de
+     * aeronave montaba las cajas y ya no volvía a mirar, así que quien tocara
+     * la tecla se quedaba con los cubos hasta recargar. Se encontró sin
+     * buscarlo — «sin querer pulsé una tecla y me aparecieron las avionetas de
+     * cubos, pero ya solo podía elegir entre esas dos».
+     */
+    void this.ponerModeloSiLoHay();
     this.scene.add(this.aircraftMesh.group);
 
     this.flight = this.buildFlightModel(this.tier);

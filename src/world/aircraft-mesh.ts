@@ -31,6 +31,16 @@ export interface AircraftMesh {
   group: Group;
   /** Se hace girar con el motor. */
   propeller: Object3D;
+  /**
+   * Dónde están los ojos del piloto, en coordenadas de la aeronave.
+   *
+   * Sin modelo no hay cabina que valga y la vista se coloca con una fórmula
+   * sobre la cuerda del ala, que es lo que había. Con modelo, la cabina existe
+   * de verdad y hay que ponerse **donde se sienta uno**: un palmo por detrás
+   * del panel y a la altura de la cabeza, no flotando entre los asientos
+   * traseros mirando el salón.
+   */
+  ojo?: { x: number; y: number; z: number };
 }
 
 export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
