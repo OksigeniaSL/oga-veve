@@ -32,6 +32,7 @@ import { TIERS, type Tier } from '../flight/tiers';
 import { LECCIONES, type Leccion } from '../flight/lecciones';
 import { SCENARIOS, type Scenario } from '../world/scenarios';
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from '../i18n';
+import { elegirMundo, mundoElegido } from './mundo';
 
 /** Lo que el hangar devuelve cuando alguien le da al botón de despegar. */
 export interface Eleccion {
@@ -486,6 +487,28 @@ export function abrirHangar(
   let tramo = inicial.tier;
   let leccion = inicial.leccion;
 
+  /*
+   * Los dos mundos, dibujados. El de la foto es una loma con su textura y sus
+   * casas; el dibujado, la misma loma en tres planos planos. Es literalmente
+   * lo que se ve al elegir uno u otro.
+   */
+  const MUNDO_FOTO = `
+    <svg viewBox="0 0 28 20" aria-hidden="true">
+      <rect x="1" y="1" width="26" height="18" rx="3" fill="currentColor" opacity=".22" />
+      <path d="M1 14 L8 8 L13 12 L19 5 L27 13 V17 a2 2 0 0 1-2 2 H3 a2 2 0 0 1-2-2 Z"
+            fill="currentColor" />
+      <circle cx="21" cy="5.5" r="2.4" fill="currentColor" />
+      <path d="M4 16 h4 M11 16.5 h6" stroke="currentColor" stroke-width="1.1"
+            stroke-linecap="round" opacity=".55" />
+    </svg>`;
+  const MUNDO_DIBUJADO = `
+    <svg viewBox="0 0 28 20" aria-hidden="true">
+      <rect x="1" y="1" width="26" height="18" rx="3" fill="currentColor" opacity=".22" />
+      <path d="M1 17 L9 7 L15 17 Z" fill="currentColor" />
+      <path d="M12 17 L20 9 L27 17 Z" fill="currentColor" opacity=".7" />
+      <circle cx="22" cy="5.5" r="2.2" fill="currentColor" />
+    </svg>`;
+
   const pintar = (): void => {
     root.innerHTML = `
       <div class="hangar__marco">
@@ -502,6 +525,28 @@ export function abrirHangar(
                     aria-checked="${l === getLocale()}" tabindex="${l === getLocale() ? 0 : -1}"
                     data-idioma="${l}">${LOCALE_NAMES[l]}</button>`,
           ).join('')}
+        </div>
+        <!--
+          **El mundo, arriba y junto al idioma.**
+
+          No baja a una pregunta más porque no es una pregunta de partida: se
+          elige una vez, como el idioma, y se queda. Y va con dibujo y sin
+          palabra porque quien juega no lee — la foto es una foto y el otro es
+          un dibujo, y eso se ve mirando los dos botones.
+        -->
+        <div class="hangar__mundos" role="radiogroup" aria-label="${t('mundo.label')}">
+          ${(['foto', 'dibujado'] as const)
+            .map(
+              (m) => `
+            <button class="mundo" type="button" role="radio" data-mundo="${m}"
+                    aria-checked="${m === mundoElegido()}"
+                    tabindex="${m === mundoElegido() ? 0 : -1}"
+                    aria-label="${t(m === 'foto' ? 'mundo.foto' : 'mundo.dibujado')}"
+                    title="${t(m === 'foto' ? 'mundo.foto' : 'mundo.dibujado')}">
+              ${m === 'foto' ? MUNDO_FOTO : MUNDO_DIBUJADO}
+            </button>`,
+            )
+            .join('')}
         </div>
         <h1 class="hangar__marca">Óga Veve</h1>
 
@@ -585,6 +630,12 @@ export function abrirHangar(
       }
 
       const idSitio = boton.getAttribute('data-sitio');
+      const idMundo = boton.getAttribute('data-mundo');
+      if (idMundo === 'foto' || idMundo === 'dibujado') {
+        elegirMundo(idMundo);
+        pintar();
+        return;
+      }
       if (idSitio) return elegir('data-sitio', idSitio);
 
       const idTramo = boton.getAttribute('data-tramo');

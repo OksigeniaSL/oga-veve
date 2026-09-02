@@ -618,12 +618,31 @@ body {
   color: var(--beige);
 }
 
+/*
+ * La barra del tutor es **el mando**, no lo que llevas hecho.
+ *
+ * Sube cuando sube el gas y baja cuando baja, y el listón dice dónde hay que
+ * dejarlo. Es la diferencia entre «reduce» y «reduce hasta aquí», y la segunda
+ * se entiende sin leer.
+ */
 .tutor__barra {
+  position: relative;
   width: 190px;
   height: 9px;
   border-radius: 6px;
   background: rgba(228, 226, 218, 0.2);
   overflow: hidden;
+}
+
+.tutor__liston {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--crema, #e4e2da);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35);
 }
 
 .tutor__barra[hidden] {
@@ -1544,6 +1563,8 @@ body {
 }
 
 .hangar__marco {
+  /* Ancla de los dos mundos, que van fijos arriba a la derecha. */
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.8vh, 20px);
@@ -1563,6 +1584,48 @@ body {
   gap: 6px;
   flex-wrap: wrap;
 }
+
+/*
+ * Los dos mundos, arriba a la derecha y en espejo del idioma. Mismo tamaño y
+ * mismo peso: son dos ajustes que se eligen una vez, no dos preguntas de la
+ * partida.
+ */
+.hangar__mundos {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.mundo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--r-s, 8px);
+  background: rgba(228, 226, 218, 0.08);
+  color: var(--crema, #e4e2da);
+  cursor: pointer;
+}
+
+.mundo:hover,
+.mundo:focus-visible {
+  border-color: var(--ocre, #d9a441);
+}
+
+.mundo[aria-checked='true'] {
+  border-color: var(--ocre, #d9a441);
+  background: rgba(217, 164, 65, 0.22);
+}
+
+.mundo svg {
+  width: 26px;
+  height: 19px;
+}
+
 
 .idioma {
   min-height: 44px;

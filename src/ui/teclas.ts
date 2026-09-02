@@ -245,10 +245,12 @@ export class KeyScreen {
 
   /** Una tecla del teclado dibujado, encendida si tiene función. */
   private cap(code: string, extra = ''): string {
-    // Solo se enciende **la tecla que se enseña**. La del otro lado sigue
-    // funcionando, pero no se dibuja: dos teclas encendidas para el mismo
-    // mando es la pregunta «¿en qué quedamos?» dibujada en pantalla.
-    const accion = this.keymap.isShown(code) ? this.keymap.actionFor(code) : null;
+    // **Se encienden las dos, la de cada mano.** Antes solo se encendía una,
+    // por no plantar la pregunta «¿en qué quedamos?» en pantalla. Pero es que
+    // no hay dos respuestas: el gas se mueve con «+/−» y con «X/Z» desde
+    // siempre, y esta pantalla existe para compararla con el teclado de
+    // verdad. Enseñar la mitad de lo que funciona es lo que confunde.
+    const accion = this.keymap.isAnnounced(code) ? this.keymap.actionFor(code) : null;
     const glifo = accion ? GLIFOS[accion] : undefined;
     const clases = ['tecla', extra, glifo ? 'tecla--activa' : ''].filter(Boolean).join(' ');
     return `

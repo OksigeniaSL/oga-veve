@@ -63,8 +63,21 @@ interface StepView {
   /** Lo mismo, para quien juega con el dedo. */
   touchCue: { kind: 'key'; label: string; wide?: boolean } | { kind: 'symbol'; glyph: string };
   key: TranslationKey;
-  /** Progreso de 0 a 1 para la barra, o null si no aplica. */
+  /**
+   * Lo que marca la barra, de 0 a 1, o `null` si este paso no lleva barra.
+   *
+   * **Es la magnitud, no lo hecho.** Los dos se parecen mientras hay que subir
+   * algo y se separan en cuanto hay que bajarlo: el paso de aflojar el motor
+   * marcaba «uno menos el gas», así que al obedecer —al bajar la potencia— la
+   * barra se **llenaba**. Se pide reducir y la respuesta correcta hace crecer
+   * la barra: exactamente al revés de lo que dice el gesto.
+   *
+   * Ahora la barra es el mando: sube cuando sube el gas y baja cuando baja, y
+   * lo que se mueve es la marca de dónde hay que llegar.
+   */
   progress: (state: FlightState, throttle: number) => number | null;
+  /** Dónde está el listón, de 0 a 1, para pintarlo en la barra. */
+  objetivo?: (state: FlightState, throttle: number) => number | null;
 }
 
 const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
@@ -99,13 +112,15 @@ const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
     cue: { kind: 'action', accion: 'throttleDown' },
     touchCue: { kind: 'symbol', glyph: '⇣' },
     key: 'tutor.slow',
-    progress: (_state, throttle) => 1 - throttle,
+    progress: (_state, throttle) => throttle,
+    objetivo: () => APPROACH_THROTTLE,
   },
 };
 
 export class Tutor {
   private root: HTMLElement | null = null;
   private cue: HTMLElement | null = null;
+  private liston: HTMLElement | null = null;
 
   /** De dónde sale la tecla que se dibuja. Ver `renderCue`. */
   private teclaDe: ((accion: Accion) => string) | null = null;
@@ -129,7 +144,10 @@ export class Tutor {
       <div class="tutor" data-hud="tutor" hidden>
         <div class="tutor__pista" data-hud="tutor-cue" aria-hidden="true"></div>
         <div class="tutor__texto" data-hud="tutor-text"></div>
-        <div class="tutor__barra" data-hud="tutor-bar"><div data-hud="tutor-fill"></div></div>
+        <div class="tutor__barra" data-hud="tutor-bar">
+          <div data-hud="tutor-fill"></div>
+          <div class="tutor__liston" data-hud="tutor-liston" hidden></div>
+        </div>
       </div>
     `;
   }
@@ -141,6 +159,7 @@ export class Tutor {
     this.label = root.querySelector('[data-hud="tutor-text"]');
     this.bar = root.querySelector('[data-hud="tutor-bar"]');
     this.fill = root.querySelector('[data-hud="tutor-fill"]');
+    this.liston = root.querySelector('[data-hud="tutor-liston"]');
   }
 
   /** Vuelve al principio: al reiniciar el vuelo hay que volver a explicar. */
@@ -192,6 +211,14 @@ export class Tutor {
     if (this.bar) this.bar.hidden = progress === null;
     if (this.fill && progress !== null) {
       this.fill.style.width = `${Math.round(Math.min(1, Math.max(0, progress)) * 100)}%`;
+    }
+    // Y el listón, que es lo que convierte «baja el gas» en «baja hasta aquí».
+    const meta = view.objetivo?.(state, throttle) ?? null;
+    if (this.liston) {
+      this.liston.hidden = meta === null || progress === null;
+      if (meta !== null) {
+        this.liston.style.left = `${Math.round(Math.min(1, Math.max(0, meta)) * 100)}%`;
+      }
     }
   }
 
