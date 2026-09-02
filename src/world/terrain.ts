@@ -286,7 +286,29 @@ export class Terrain {
    * bilineal. La llama el modelo de vuelo en cada subpaso —240 veces por
    * segundo— así que no reserva memoria ni hace nada caro.
    */
+  /**
+   * De dónde sale el suelo **fuera del escenario**, si hay quien lo sepa.
+   *
+   * El mapa de alturas cubre dieciocho o veintidós kilómetros y fuera devuelve
+   * el borde repetido, que es un suelo invisible y plano. Con el mundo
+   * fotorrealista puesto se puede volar mucho más lejos —Gran Canaria está a
+   * setenta kilómetros— y verlo perfectamente mientras se choca contra una
+   * llanura que no existe.
+   */
+  private sueloLejano: ((x: number, z: number) => number | null) | null = null;
+
+  ponerSueloLejano(fuente: ((x: number, z: number) => number | null) | null): void {
+    this.sueloLejano = fuente;
+  }
+
   sampleHeight(x: number, z: number): number {
+    // Fuera del mapa, si hay quien sepa qué hay ahí, se le pregunta. Dentro no
+    // se pregunta nunca: esto se llama doscientas cuarenta veces por segundo.
+    if (this.sueloLejano && (Math.abs(x) > this.half || Math.abs(z) > this.half)) {
+      const fuera = this.sueloLejano(x, z);
+      if (fuera !== null) return fuera;
+    }
+
     const gx = (x + this.half) / this.step;
     const gz = (z + this.half) / this.step;
     const max = this.resolution - 1;
