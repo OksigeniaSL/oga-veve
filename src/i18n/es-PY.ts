@@ -179,6 +179,7 @@ export const ES_PY = {
   'hangar.seguimos': '¿Seguimos donde lo dejaste?',
   'hangar.ajustes': 'Ajustes',
   'hangar.atras': 'Volver',
+  'hangar.proximamente': 'Próximamente',
   'hangar.reposo': 'Si nadie juega, vuelve acá',
   'leccion.vuelta': 'Dar una vuelta',
   'leccion.rodaje': 'Rodar',

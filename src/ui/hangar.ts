@@ -31,6 +31,7 @@
 import { TIERS, type Tier } from '../flight/tiers';
 import { LECCIONES, type Leccion } from '../flight/lecciones';
 import { SCENARIOS, type Scenario } from '../world/scenarios';
+import { PROXIMAMENTE } from '../world/proximamente';
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from '../i18n';
 import { elegirMundo, mundoElegido } from './mundo';
 
@@ -479,6 +480,25 @@ const DESPEGA = `
  * escenario, y así no hay que inventar un mecanismo para cambiárselo en
  * caliente. Cambiar de aeropuerto es empezar otro vuelo, que es lo que es.
  */
+/**
+ * La ficha de un sitio que todavía no está.
+ *
+ * Sin dibujo de pista, y eso importa: dibujar una pista inventada para un sitio
+ * que no está construido sería enseñar un dato que no tenemos. Lo que hay es el
+ * nombre de la ciudad y la palabra.
+ */
+function fichaProximamente(ciudad: string): string {
+  return `
+    <div class="ficha ficha--proyecto" aria-disabled="true">
+      <span class="ficha__lienzo ficha__lienzo--proyecto">
+        <span class="ficha__proximamente">${t('hangar.proximamente')}</span>
+      </span>
+      <span class="ficha__pie">
+        <span class="ficha__nombre">${ciudad}</span>
+      </span>
+    </div>`;
+}
+
 /*
  * Los dibujos de los cuatro pasos. Trazo y no relleno: al lado de las fichas
  * —que son ilustraciones llenas de color— un icono relleno compite, y uno de
@@ -638,6 +658,7 @@ export function abrirHangar(
           <h2 class="hangar__pregunta" id="hangar-sitio">${t('hangar.donde')}</h2>
           <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-sitio">
             ${SCENARIOS.map((e) => fichaDeSitio(e, e.id === sitio.id)).join('')}
+            ${PROXIMAMENTE.map((p) => fichaProximamente(p.ciudad)).join('')}
           </div>
         </section>`
             : ''

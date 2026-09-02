@@ -173,6 +173,7 @@ export const EN: Dictionary = {
   'hangar.seguimos': 'Carry on where you left off?',
   'hangar.ajustes': 'Settings',
   'hangar.atras': 'Back',
+  'hangar.proximamente': 'Coming soon',
   'hangar.reposo': 'If nobody plays, it comes back here',
   'leccion.vuelta': 'Go for a ride',
   'leccion.rodaje': 'Taxi',
