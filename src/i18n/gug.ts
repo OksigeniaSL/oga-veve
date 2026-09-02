@@ -79,6 +79,7 @@ export const GUG: Dictionary = {
   'hangar.seguimos': '¿Jaseguipa upe rehejahágui?',
   'hangar.ajustes': 'Ñemboheko',
   'hangar.atras': 'Jevy',
+  'hangar.proximamente': 'Oútava',
   'hangar.reposo': 'Avave noñembosaráiri ramo, ou jey ko’ápe',
   'leccion.vuelta': 'Reho reguata',
   'leccion.rodaje': 'Reguata yvýpe',

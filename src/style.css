@@ -2002,6 +2002,41 @@ body {
  * fallo aunque se pueda desplazar para verlo entero.
  */
 /*
+ * ── Los sitios que todavía no están ────────────────────────────────────
+ *
+ * Se ven, y se ve que no están. Apagados y con la palabra escrita: el dibujo
+ * apagado solo diría «éste es distinto», y lo que hay que decir es «éste
+ * llega, todavía no».
+ *
+ * Y sin dibujo de pista, que no es un descuido: inventar una pista para un
+ * sitio que no está construido sería enseñar un dato que no tenemos.
+ */
+.ficha--proyecto {
+  cursor: default;
+  opacity: 0.62;
+}
+
+.ficha__lienzo--proyecto {
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgb(228 226 218 / 0.05) 0 10px,
+    rgb(228 226 218 / 0.02) 10px 20px
+  );
+}
+
+.ficha__proximamente {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: var(--r-s, 6px);
+  background: var(--terracota, #bf6238);
+  color: #fdf6ee;
+}
+
+/*
  * ── La barra de abajo: el estado, no un menú ───────────────────────────
  *
  * Dice qué está elegido ahora mismo, y de paso deja entrar a cambiarlo. Quien
