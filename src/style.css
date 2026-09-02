@@ -2672,3 +2672,29 @@ body {
   border-color: var(--ocre-tinta);
   color: var(--tinta);
 }
+
+/*
+ * Cada mando del panel del tiempo con su dibujo encima: la manga para el
+ * viento, el sol para la hora. Sin esto el panel eran dos círculos sin
+ * explicación — «esto no se sabe para qué es»— y un mando que no dice qué hace
+ * no es un mando.
+ */
+.tiempo__mando {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.tiempo__rotulo {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--ocre-tinta);
+}
+
+.tiempo__rotulo svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+}

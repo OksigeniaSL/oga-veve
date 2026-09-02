@@ -149,6 +149,8 @@ export class Game {
   private readonly teselas: Teselas | null;
   private mundoRealPuesto = false;
   private sueloMoldeado = false;
+  /** Cuántos nudos eran tejado y no suelo. Para las comprobaciones. */
+  private bultosQuitados = 0;
   private readonly renderer: WebGLRenderer;
   private readonly scene = new Scene();
   private readonly camera: PerspectiveCamera;
@@ -455,6 +457,7 @@ export class Game {
           ruedas: s.position.y - this.aircraft.gearHeight,
           hundido: foto === null ? null : s.position.y - this.aircraft.gearHeight - foto,
           puestosLibres: `${libres.filter(Boolean).length} de ${libres.length}`,
+          bultos: this.bultosQuitados,
           primeroLibre: libres.indexOf(true),
         };
       },
@@ -1025,6 +1028,15 @@ export class Game {
           [0, 0],
           6000,
         );
+        /*
+         * Y se le quitan los bultos. Copiar la foto trae la terminal, los
+         * hangares y los aviones aparcados, y eso no es suelo: es lo que hay
+         * **encima** del suelo. Dos pasadas, porque un edificio grande ocupa
+         * más de un nudo y la primera solo le quita el borde.
+         */
+        let bultos = 0;
+        for (let i = 0; i < 2; i++) bultos += this.terrain.alisarPicos([0, 0], 6000, 6);
+        this.bultosQuitados = bultos;
         this.buscarPuestoLibre();
         if (escritos > 0) this.recolocarTrasElMoldeado();
       }

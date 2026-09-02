@@ -61,6 +61,20 @@ export class PanelDelTiempo {
       <div class="tiempo" data-hud="tiempo" hidden role="group"
            aria-label="${t('tiempo.title')}">
         <div class="tiempo__caja">
+        <!--
+          **Cada mando dice qué es, y lo dice con un dibujo.**
+          Quien lo probó abrió el panel y dijo «esto no se sabe para qué es»: dos
+          círculos sin una palabra ni un icono no son un mando, son un adorno. La
+          manga de viento y el sol son los dos objetos que ya significan
+          exactamente eso en el mundo, así que no hay nada que aprender.
+        -->
+        <div class="tiempo__mando">
+          <span class="tiempo__rotulo" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 5.4 v13.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <path d="M4.4 6.6 L20 9 v3.4 L4.4 14.6 Z" fill="currentColor" opacity="0.85" />
+            </svg>
+          </span>
         <svg class="tiempo__rosa" data-hud="tiempo-rosa" viewBox="-110 -110 220 220"
              role="application" aria-label="${t('tiempo.viento')}">
           <circle class="rosa__fondo" cx="0" cy="0" r="${RADIO}" />
@@ -80,6 +94,17 @@ export class PanelDelTiempo {
             <circle class="rosa__tirador" cx="0" cy="-60" r="13" />
           </g>
         </svg>
+        </div>
+        <div class="tiempo__mando">
+          <span class="tiempo__rotulo" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="4.6" fill="currentColor" />
+              <path d="M12 1.6 v3 M12 19.4 v3 M1.6 12 h3 M19.4 12 h3
+                       M4.6 4.6 l2.1 2.1 M17.3 17.3 l2.1 2.1
+                       M19.4 4.6 l-2.1 2.1 M6.7 17.3 l-2.1 2.1"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </span>
         <!--
           **El sol se arrastra por un círculo**, no por una barra ni por un
           reloj. El círculo es el cielo: arriba es mediodía, abajo medianoche, y
@@ -97,6 +122,7 @@ export class PanelDelTiempo {
           </g>
         </svg>
 
+        </div>
         <div class="tiempo__botones">
           <button class="tiempo__boton" type="button" data-hud="tiempo-calma"
                   aria-label="${t('tiempo.calma')}">
