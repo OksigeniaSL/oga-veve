@@ -495,6 +495,34 @@ export class Game {
         // Azul alto es blanco; azul bajo es rojo. Es la separación que hay.
         return Array.from({ length: 4 }, (_, k) => (a[k * 3 + 2]! > 0.5 ? 'blanca' : 'roja'));
       },
+      /**
+       * Dónde está la cinta verde respecto del suelo, en metros.
+       *
+       * Existir no basta: sus cotas van horneadas, así que puede estar
+       * perfectamente construida y **enterrada** bajo el asfalto. Un número
+       * cerca de cero es que se ve; muy negativo, que está debajo.
+       */
+      cintaGuia: () => {
+        const g = this.plan?.grupo;
+        if (!g) return null;
+        const alturas: number[] = [];
+        g.traverse((o) => {
+          const geo = (o as { geometry?: { attributes?: { position?: never } } }).geometry;
+          const pos = geo?.attributes?.position as
+            | { count: number; getX(i: number): number; getY(i: number): number; getZ(i: number): number }
+            | undefined;
+          if (!pos) return;
+          for (let i = 0; i < pos.count; i += 7) {
+            alturas.push(pos.getY(i) - this.terrain.sampleHeight(pos.getX(i), pos.getZ(i)));
+          }
+        });
+        if (!alturas.length) return { vertices: 0, sobreElSuelo: null };
+        alturas.sort((a, b) => a - b);
+        return {
+          vertices: alturas.length,
+          sobreElSuelo: alturas[Math.floor(alturas.length / 2)]!,
+        };
+      },
       /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
       suelo: (x: number, z: number) => this.terrain.sampleHeight(x, z),
       /** El eje de la pista y las calles de rodaje, en coordenadas del mundo. */
@@ -1282,6 +1310,23 @@ export class Game {
     }
   }
 
+  /**
+   * Vuelve a montar la cinta de guía con las alturas que haya ahora.
+   *
+   * Sus cotas van horneadas en la geometría, así que cualquier cosa que mueva
+   * el suelo la deja enterrada o flotando. La usan el cambio de viento —que
+   * cambia la cabecera y con ella la ruta entera— y la llegada de la foto.
+   */
+  private rehacerPlanDeVuelo(): void {
+    if (!this.plan || !this.scenario.aerodrome) return;
+    this.scene.remove(this.plan.grupo);
+    this.plan = new PlanDeVuelo(this.scenario.aerodrome, this.scenario.runway, (x, z) =>
+      this.terrain.sampleHeight(x, z),
+    );
+    this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
+    this.scene.add(this.plan.grupo);
+  }
+
   /** Lo que estorbaba en el puesto elegido, en metros. Para poder mirarlo. */
   private puestoElegido: number | null = null;
   /** Segundos desde el último intento de encontrar un puesto despejado. */
@@ -1314,14 +1359,7 @@ export class Game {
     // Y las luces de aproximación, que van en la cabecera por la que se entra:
     // si el viento gira, se mudan al otro extremo con todo lo demás.
     this.ponerAproximacion();
-    if (this.plan) {
-      this.scene.remove(this.plan.grupo);
-      this.plan = new PlanDeVuelo(this.scenario.aerodrome!, this.scenario.runway, (x, z) =>
-        this.terrain.sampleHeight(x, z),
-      );
-      this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
-      this.scene.add(this.plan.grupo);
-    }
+    this.rehacerPlanDeVuelo();
     this.hud.mapa.rehacer(this.scenario);
     this.resetFlight();
   }
@@ -1548,6 +1586,22 @@ export class Game {
          * metros, y en cada cruce el avión se hundía en el asfalto.
          */
         this.asentarAerodromoSobreLaFoto();
+        /*
+         * **Y se rehace el plan de vuelo, que si no se queda enterrado.**
+         *
+         * La cinta verde se construye al arrancar la partida y sus alturas van
+         * horneadas en la geometría. Cuando llega la fotografía el suelo sube
+         * el datum —cuarenta y siete metros en Tenerife Norte, trece y medio en
+         * Asunción— y la cinta se queda donde estaba: debajo del asfalto. Se vio
+         * jugando, «sin línea guía», y desconcertaba porque a veces sí salía —
+         * salía justo cuando se cambiaba de puesto, porque cambiar de puesto la
+         * volvía a construir con las alturas nuevas.
+         *
+         * Va **antes** de buscar el puesto, que es quien puede volver a
+         * construirla, y después de asentar el aeródromo, que es quien deja las
+         * alturas definitivas.
+         */
+        this.rehacerPlanDeVuelo();
         this.buscarPuestoLibre();
         this.ponerAproximacion();
         if (escritos > 0) this.recolocarTrasElMoldeado();
