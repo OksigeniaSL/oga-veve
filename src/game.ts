@@ -33,6 +33,7 @@ import { Terrain, cabeceraEnUso } from './world/terrain';
 import { crearAproximacion, type Aproximacion } from './world/aproximacion';
 import { createSky, ponerNubes, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
+import { cargarModelo } from './world/aeronave-modelo';
 import { RunwayGuide } from './world/runway-guide';
 import { createVegetation, zonaDeAeropuerto } from './world/vegetation';
 import { LECCION_POR_DEFECTO, type Leccion } from './flight/lecciones';
@@ -370,6 +371,10 @@ export class Game {
 
     this.aircraftMesh = createAircraftMesh(this.aircraft);
     this.scene.add(this.aircraftMesh.group);
+    // Y si hay un modelo de verdad, se cambia por él cuando termine de cargar.
+    // Las cajas se ponen primero a propósito: nadie espera mirando un cielo
+    // vacío a que llegue un fichero.
+    void this.ponerModeloSiLoHay();
 
     this.blobShadow = createBlobShadow(this.aircraft.wingSpan);
     this.scene.add(this.blobShadow);
@@ -522,6 +527,14 @@ export class Game {
           vertices: alturas.length,
           sobreElSuelo: alturas[Math.floor(alturas.length / 2)]!,
         };
+      },
+      /** Qué pavimentos hay montados y cuáles se están viendo. */
+      pavimentos: () => {
+        const salida: string[] = [];
+        this.terrain.group.traverse((o) => {
+          if (o.name.startsWith('pavimento:')) salida.push(`${o.name} ${o.visible ? 'VISIBLE' : 'apagado'}`);
+        });
+        return salida;
       },
       /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
       suelo: (x: number, z: number) => this.terrain.sampleHeight(x, z),
@@ -1183,6 +1196,34 @@ export class Game {
     const alzado = (perfilDeLaFoto ? 0 : datum) + Math.min(tope, Math.max(0, p85)) + 0.15;
     this.terrain.reasentarAerodromo(this.scenario, alzado, perfilDeLaFoto);
     this.terrain.rehacerAerodromo(this.scenario);
+
+    /*
+     * **Y se apaga el hormigón de las plataformas, que aquí el argumento se da
+     * la vuelta.**
+     *
+     * En la pista aportamos pintura nítida sobre una ortofoto borrosa, y por
+     * eso nuestro asfalto se queda. En la plataforma no aportamos nada: es una
+     * losa de color plano sobre un sitio donde la fotografía tiene terminal,
+     * pasarelas, aviones aparcados y sus marcas. Y como el aeródromo va subido
+     * para no hundirse en la foto, esa losa además entierra metro y medio de
+     * todo lo que hay debajo.
+     *
+     * Se vio jugando en Tenerife Norte y la descripción fue exacta: «ha caído
+     * la del pulpo sobre Los Rodeos y tenemos todas las aeronaves sepultadas
+     * bajo un lodazal».
+     *
+     * El suelo no se toca: el avión sigue rodando sobre nuestra superficie
+     * lisa. Lo que se quita es la manta.
+     *
+     * Va aquí y no en `apagarElMundoDeMentira` porque el aeródromo se acaba de
+     * reconstruir en la línea de arriba, y la reconstrucción se lleva por
+     * delante cualquier cosa que se hubiera apagado antes.
+     */
+    this.terrain.group
+      .getObjectByName(`aerodromo:${aero.id}`)
+      ?.traverse((o) => {
+        if (o.name === 'pavimento:concrete') o.visible = false;
+      });
     this.alzadoDelAerodromo = alzado - (perfilDeLaFoto ? 0 : datum);
   }
 
@@ -1448,6 +1489,25 @@ export class Game {
         return;
       }
     }
+  }
+
+  /**
+   * Cambia las cajas por el modelo de verdad, si lo hay.
+   *
+   * Se hace después de montar las cajas y no en su lugar: cargar un glTF tarda,
+   * y nadie tiene que esperar mirando un cielo vacío. Si el fichero no está o
+   * está roto, esto no hace nada y el juego se queda con las cajas — la misma
+   * regla que con las teselas, que **faltar un recurso externo no puede dejar a
+   * nadie sin volar**.
+   */
+  private async ponerModeloSiLoHay(): Promise<void> {
+    const idAlPedir = this.aircraft.id;
+    const modelo = await cargarModelo(this.aircraft);
+    // Puede haberse cambiado de aeronave mientras cargaba.
+    if (!modelo || this.aircraft.id !== idAlPedir) return;
+    this.scene.remove(this.aircraftMesh.group);
+    this.aircraftMesh = modelo;
+    this.scene.add(this.aircraftMesh.group);
   }
 
   /**
