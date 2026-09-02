@@ -80,6 +80,12 @@ const WING_LEVELLER = 2.0;
 const TRIM_SETTLE = 1.1;
 
 /** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
+/**
+ * Holgura, en metros, antes de considerar que el avión ha dejado el suelo.
+ * Un palmo: menos que el recorrido de una amortiguación de verdad.
+ */
+const PEGADO_AL_SUELO = 0.2;
+
 const STATIC_GRIP = 1.2;
 
 /** Cuánto tiene que aguantar el ángulo pasado para que sea pérdida, s. */
@@ -481,7 +487,20 @@ export class CoefficientFlightModel implements FlightModel {
     const terrain = this.ground(s.position.x, s.position.z);
     const wheelLevel = terrain + ac.gearHeight;
 
-    if (s.position.y > wheelLevel) {
+    /*
+     * **Un palmo de holgura antes de dar el avión por volando.**
+     *
+     * Sin ella, cualquier empujón de la sustentación de unos centímetros
+     * apagaba `onGround`, y con él se encendía el aviso «¡el suelo, subí!»
+     * mientras se rodaba tan tranquilo. Se dijo tal cual: «claro que estoy en
+     * el suelo, estoy rodando». Y también: «de nada que le soples se levanta».
+     *
+     * El modelo sencillo ya lo tenía —un metro entero, ver `PEGADO_AL_SUELO`
+     * en `arcade.ts`— y por eso el peldaño de los pequeños se comportaba y este
+     * no. Aquí basta con un palmo, porque este modelo sí tiene que dejar
+     * despegar de verdad en cuanto se rota.
+     */
+    if (s.position.y > wheelLevel + PEGADO_AL_SUELO) {
       s.onGround = false;
       return;
     }
@@ -489,7 +508,20 @@ export class CoefficientFlightModel implements FlightModel {
     const wasFlying = !s.onGround;
     const sinkRate = -s.velocity.y;
     s.onGround = true;
-    s.position.y = wheelLevel;
+    /*
+     * **Se pega al suelo solo si está por debajo**, no si está dentro de la
+     * holgura.
+     *
+     * Pegarlo siempre es un trinquete: dentro del palmo de holgura, cada paso
+     * lo devolvía al suelo, así que la subida no podía acumularse y el avión
+     * no despegaba nunca. Lo cazó la prueba de la carrera de despegue, y es el
+     * segundo trinquete del mismo arreglo — el primero fue anular la velocidad
+     * de subida en cada paso, con el mismo resultado y por el mismo motivo.
+     *
+     * Es lo que ya hacía el modelo sencillo: allí solo se pega cuando no se
+     * está pidiendo subir.
+     */
+    if (s.position.y < wheelLevel) s.position.y = wheelLevel;
 
     if (wasFlying) {
       s.touchdownSinkRate = Math.max(0, sinkRate);
@@ -499,6 +531,17 @@ export class CoefficientFlightModel implements FlightModel {
       }
     }
 
+    /*
+     * Solo se anula la velocidad hacia abajo, y **la de subida se respeta**.
+     *
+     * Hubo un intento de anular también la de subida por debajo de medio metro
+     * por segundo, para que el tren se comiera los botes pequeños. Lo cazó la
+     * prueba de la carrera de despegue: la velocidad se reconstruye de las
+     * fuerzas en cada paso, así que anularla cada paso impide que se acumule y
+     * el avión no despegaba **nunca**. La holgura de posición de arriba hace el
+     * mismo trabajo sin ese efecto: mientras el bote quepa en un palmo, el
+     * avión sigue en el suelo; en cuanto la subida es de verdad, sale.
+     */
     if (s.velocity.y < 0) s.velocity.y = 0;
 
     // Ruedas: mucho rozamiento lateral —por eso un avión en tierra va donde
