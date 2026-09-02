@@ -106,12 +106,6 @@ const ESPERA_A_LA_VERDAD = 3;
  */
 const DETALLE_DE_CIUDAD = 20;
 
-/**
- * Y el que hace falta para ver un avión aparcado. Más fino que el de ciudad:
- * una manzana se nota con veinte metros de error, pero un puesto de
- * estacionamiento mide treinta de ancho y ahí veinte metros no distinguen nada.
- */
-const DETALLE_DE_PUESTO = 8;
 const PARCHE_LADO = 8000;
 const PARCHE_N = 33;
 
@@ -145,22 +139,6 @@ export interface Teselas {
    * metros por encima del asfalto de alrededor, ahí hay algo. Un avión de línea
    * son diez metros de fuselaje; el ruido de la fotogrametría, medio.
    */
-  /**
-   * Cuánto sobresale del suelo lo más alto que haya cerca de un punto, en
-   * metros — o `null` si ahí no se puede medir todavía.
-   *
-   * Sustituye a un `libre()` que preguntaba mal dos veces. Preguntaba si el
-   * puesto tenía algo **encima**, cuando lo que arruina un puesto es tener algo
-   * **al lado**: un 737 en la plaza contigua no levanta el suelo bajo nuestras
-   * ruedas y pasaba la prueba entera. Y cuando no podía medir contestaba
-   * «libre», que es resolver «no lo sé» como «sí» — el error que este proyecto
-   * lleva cometiendo de todas las formas posibles.
-   *
-   * Ahora devuelve un número, no un veredicto, y quien llama compara: entre
-   * varios puestos se coge el más despejado, que es una pregunta que siempre
-   * tiene respuesta.
-   */
-  estorboEn(x: number, z: number): number | null;
   /**
    * ¿Trae la fotografía edificios con volumen, o es una alfombra plana?
    *
@@ -482,59 +460,6 @@ export function crearTeselas(
        */
       if (y === null) return null;
       return Math.abs(y - referencia) < MARGEN_PLAUSIBLE ? y : null;
-    },
-    estorboEn(x: number, z: number) {
-      refrescarErrores();
-      /*
-       * Veintiuna catas: el centro, ocho a doce metros y doce a veintiséis.
-       *
-       * Veintiséis metros es lo que hace falta para que quepa la avioneta con
-       * holgura y para tropezar con el avión de al lado si lo hay — la punta
-       * del ala de un 737 está a diecisiete metros y medio de su eje.
-       *
-       * El corro de antes era de setenta metros y solo miraba el centro contra
-       * lo más bajo del corro, así que medía «¿estoy subido a algo?». La
-       * pregunta buena es «¿hay algo alto aquí al lado?», y esa se contesta con
-       * el más alto de todas las catas, no con el del medio.
-       */
-      const puntos: [number, number][] = [[x, z]];
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2;
-        puntos.push([x + Math.sin(a) * 12, z + Math.cos(a) * 12]);
-      }
-      for (let i = 0; i < 12; i++) {
-        const a = ((i + 0.5) / 12) * Math.PI * 2;
-        puntos.push([x + Math.sin(a) * 26, z + Math.cos(a) * 26]);
-      }
-      /*
-       * Y un tercer corro a treinta y cuatro, que es el que caza **al avión de
-       * la plaza de al lado**. Con veintiséis se elegía un puesto limpio y
-       * aparecías con un ala ajena encima del parabrisas: los puestos están a
-       * unos cuarenta y cinco metros y la punta del ala de un 737 sobresale
-       * diecisiete y medio de su eje, así que el estorbo caía justo por fuera
-       * del corro.
-       */
-      for (let i = 0; i < 14; i++) {
-        const a = ((i + 0.25) / 14) * Math.PI * 2;
-        puntos.push([x + Math.sin(a) * 34, z + Math.cos(a) * 34]);
-      }
-
-      let alto = -Infinity;
-      let bajo = Infinity;
-      let finas = 0;
-      for (const [px, pz] of puntos) {
-        const m = medidaFina(px, pz);
-        // Sobre teselas gruesas no hay avión que valga: una plataforma a medio
-        // cargar es lisa, y lisa no quiere decir vacía.
-        if (!m || m.error > DETALLE_DE_PUESTO) continue;
-        finas++;
-        if (m.y > alto) alto = m.y;
-        if (m.y < bajo) bajo = m.y;
-      }
-      // Con menos de dos tercios de las catas finas no se contesta. Antes esto
-      // devolvía «libre» y por eso el avión aparecía dentro de un 737.
-      if (finas < 23) return null;
-      return alto - bajo;
     },
     catarVolumen(puntos: readonly (readonly [number, number])[]) {
       refrescarErrores();
