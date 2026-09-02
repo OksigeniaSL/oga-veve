@@ -212,6 +212,50 @@ export class Terrain {
    * Lo que sobrevive es lo que debe: una ladera de verdad sube poco a poco y
    * cada nudo se parece a sus vecinos, así que ninguna montaña se aplana.
    */
+  /**
+   * Suaviza el relieve copiado de la fotografía: una media de nueve nudos.
+   *
+   * `alisarPicos` quita lo que **sobresale** —una terminal, un hangar, un avión
+   * aparcado— comparando cada nudo con la mediana de sus vecinos. No quita lo
+   * otro: los **escalones**. Copiar una superficie fotogramétrica sobre una
+   * rejilla de cincuenta y siete metros deja saltos de uno o dos metros entre
+   * nudo y nudo, y un salto de dos metros a treinta por hora es una rampa: el
+   * avión sale despedido, el juego lo da por volando y grita «¡el suelo!».
+   *
+   * Se vio midiendo. Rodando quince segundos en Tenerife Norte, el avión pasaba
+   * **trescientos treinta y uno de novecientos fotogramas en el aire** sin que
+   * nadie hubiera tocado el mando de subir. En Asunción, que es llano, cero.
+   *
+   * Una pasada de media a nueve no toca la forma del terreno —una montaña
+   * sigue siendo una montaña, porque sus nudos ya se parecen entre sí— y se
+   * lleva por delante justo lo que sobra.
+   */
+  suavizar(centro: readonly [number, number], lado: number, pasadas = 1): void {
+    const { resolution, step, half, heights } = this;
+    const desde = (v: number): number => Math.max(1, Math.floor((v - lado / 2 + half) / step));
+    const hasta = (v: number): number =>
+      Math.min(resolution - 2, Math.ceil((v + lado / 2 + half) / step));
+    const c0 = desde(centro[0]);
+    const c1 = hasta(centro[0]);
+    const f0 = desde(centro[1]);
+    const f1 = hasta(centro[1]);
+
+    for (let p = 0; p < pasadas; p++) {
+      // Se lee de una copia: suavizar sobre el mismo array arrastra el
+      // resultado en la dirección del recorrido y deja el terreno peinado.
+      const antes = heights.slice();
+      for (let f = f0; f <= f1; f++) {
+        for (let c = c0; c <= c1; c++) {
+          let suma = 0;
+          for (let df = -1; df <= 1; df++) {
+            for (let dc = -1; dc <= 1; dc++) suma += antes[(f + df) * resolution + (c + dc)]!;
+          }
+          heights[f * resolution + c] = suma / 9;
+        }
+      }
+    }
+  }
+
   alisarPicos(centro: readonly [number, number], lado: number, umbral: number): number {
     const { resolution, step, half, heights } = this;
     const desde = (v: number): number => Math.max(1, Math.floor((v - lado / 2 + half) / step));
@@ -257,6 +301,28 @@ export class Terrain {
    * El relieve **no** se toca: lo aplanado del aeródromo no depende de por
    * dónde se despegue.
    */
+  /**
+   * Vuelve a asentar el aeródromo en el mapa de alturas, subido `alzado`.
+   *
+   * **Es lo que pone de acuerdo lo que se ve con lo que se pisa.** Al llegar la
+   * fotografía, el terreno del aeródromo pasa a copiarse de ella, y la copia se
+   * hace sobre una rejilla de cincuenta y siete metros: entre nudo y nudo
+   * interpola una recta donde la foto tiene su superficie de verdad. Las dos se
+   * cruzan, y en los cruces pasa todo lo que se vio jugando — el avión se hunde
+   * en el asfalto, la pista de la foto y la nuestra se mezclan a trozos, la
+   * pintura se borra a lo lejos y, al rodar, el juego cree que estás en el aire
+   * y grita «¡el suelo, subí!».
+   *
+   * Con esto el aeródromo vuelve a ser **una sola superficie lisa**, la que
+   * sale de los umbrales de OpenStreetMap, y la fotografía se queda debajo.
+   * Quien elige el `alzado` mide cuánto hay que subirla para que se quede
+   * debajo **en todas partes**, no de media.
+   */
+  reasentarAerodromo(escenario: Scenario, alzado: number): void {
+    if (!escenario.aerodrome) return;
+    flattenAerodrome(this.heights, escenario, escenario.aerodrome, alzado);
+  }
+
   rehacerAerodromo(escenario: Scenario): void {
     if (!escenario.aerodrome) return;
     const viejo = this.group.getObjectByName(`aerodromo:${escenario.aerodrome.id}`);
@@ -281,12 +347,16 @@ export class Terrain {
         // aeródromo se reconstruye en el datum viejo y queda enterrado.
         this.runwayElevationMovida,
         /*
-         * Y, si el suelo ya viene de la fotografía, que se construya sobre él.
-         * El aeródromo tiene la Y al norte y el mundo el norte en la Z negativa.
+         * **Y sobre el mapa de alturas, que es lo que se pisa.**
+         *
+         * Hubo un intento de construirlo siguiendo la fotografía punto a punto.
+         * Es más exacto respecto a la foto y es peor: la física lee el mapa de
+         * alturas, así que el asfalto que se ve y el que se pisa dejaban de ser
+         * el mismo y el avión se hundía. Ahora el mapa de alturas del aeródromo
+         * se reasienta liso —ver `reasentarAerodromo`— y el pavimento se apoya
+         * en él. Una superficie, no dos.
          */
-        this.sueloLejano || this.runwayElevationMovida !== 0
-          ? (p) => this.sampleHeight(p[0], -p[1])
-          : null,
+        (p) => this.sampleHeight(p[0], -p[1]),
       ),
     );
   }
@@ -863,11 +933,17 @@ function flattenRunway(heights: Float32Array, scenario: Scenario, elevation: num
 /** Cuánto sobresale el pavimento sobre el terreno aplanado, m. */
 const RESALTE = 0.35;
 
-function flattenAerodrome(heights: Float32Array, scenario: Scenario, aero: Aerodrome): void {
+function flattenAerodrome(
+  heights: Float32Array,
+  scenario: Scenario,
+  aero: Aerodrome,
+  /** Cuánto se sube todo el aeródromo, en metros. Ver `reasentarAerodromo`. */
+  alzado = 0,
+): void {
   const resolution = scenario.segments + 1;
   const step = scenario.size / scenario.segments;
   const half = scenario.size / 2;
-  const base = aero.elevationM ?? 0;
+  const base = (aero.elevationM ?? 0) + alzado;
 
   // **La huella no es un círculo: es una banda a lo largo de la pista.**
   //
@@ -907,7 +983,7 @@ function flattenAerodrome(heights: Float32Array, scenario: Scenario, aero: Aerod
     const dy = b.xy![1] - ay;
     const largo2 = dx * dx + dy * dy || 1;
     const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - ay) * dy) / largo2));
-    return a.elevM! + (b.elevM! - a.elevM!) * t;
+    return a.elevM! + (b.elevM! - a.elevM!) * t + alzado;
   };
 
   // Cuánto tiene que moverse el terreno para recibir al aeródromo. Si el

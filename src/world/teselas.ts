@@ -506,6 +506,18 @@ export function crearTeselas(
         const a = ((i + 0.5) / 12) * Math.PI * 2;
         puntos.push([x + Math.sin(a) * 26, z + Math.cos(a) * 26]);
       }
+      /*
+       * Y un tercer corro a treinta y cuatro, que es el que caza **al avión de
+       * la plaza de al lado**. Con veintiséis se elegía un puesto limpio y
+       * aparecías con un ala ajena encima del parabrisas: los puestos están a
+       * unos cuarenta y cinco metros y la punta del ala de un 737 sobresale
+       * diecisiete y medio de su eje, así que el estorbo caía justo por fuera
+       * del corro.
+       */
+      for (let i = 0; i < 14; i++) {
+        const a = ((i + 0.25) / 14) * Math.PI * 2;
+        puntos.push([x + Math.sin(a) * 34, z + Math.cos(a) * 34]);
+      }
 
       let alto = -Infinity;
       let bajo = Infinity;
@@ -521,7 +533,7 @@ export function crearTeselas(
       }
       // Con menos de dos tercios de las catas finas no se contesta. Antes esto
       // devolvía «libre» y por eso el avión aparecía dentro de un 737.
-      if (finas < 14) return null;
+      if (finas < 23) return null;
       return alto - bajo;
     },
     catarVolumen(puntos: readonly (readonly [number, number])[]) {

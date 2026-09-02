@@ -495,6 +495,8 @@ export class Game {
         // Azul alto es blanco; azul bajo es rojo. Es la separación que hay.
         return Array.from({ length: 4 }, (_, k) => (a[k * 3 + 2]! > 0.5 ? 'blanca' : 'roja'));
       },
+      /** Cuánto se subió el aeródromo sobre el datum para librar la foto. */
+      alzado: () => this.alzadoDelAerodromo,
       /** Cómo está el banco de nubes: si se ve, a qué altura y cuánto tapa. */
       nubes: () => {
         const banco = this.sky?.group.getObjectByName('nubes');
@@ -892,6 +894,82 @@ export class Game {
     );
     if (this.aproximacion) this.scene.add(this.aproximacion.grupo);
   }
+
+  /**
+   * Sube el aeródromo hasta quedar justo por encima de la fotografía.
+   *
+   * Se mide, no se supone: se cata la foto en un enjambre de puntos repartidos
+   * por la pista, las calles y las plataformas, y se coge el **percentil
+   * noventa** de lo que sobresale. No la media —que deja medio aeródromo por
+   * debajo— y no el máximo, que lo levantaría por culpa de una farola o de un
+   * avión aparcado que la limpieza de bultos no cazó.
+   */
+  private asentarAerodromoSobreLaFoto(): void {
+    const aero = this.scenario.aerodrome;
+    if (!aero || !this.teselas) return;
+    const datum = this.teselas.desfase ?? 0;
+
+    // Primero, liso y con el datum. A partir de aquí `sampleHeight` en el
+    // aeródromo es nuestra superficie, y ya se puede comparar con la foto.
+    this.terrain.reasentarAerodromo(this.scenario, datum);
+
+    const puntos: [number, number][] = [];
+    const pista = aero.runways[0];
+    if (pista) {
+      for (let i = 0; i <= 40; i++) {
+        const t = i / 40;
+        const a = pista.centerline[0]!;
+        const b = pista.centerline[pista.centerline.length - 1]!;
+        const x = a[0] + (b[0] - a[0]) * t;
+        const y = a[1] + (b[1] - a[1]) * t;
+        for (const lado of [-15, 0, 15]) puntos.push([x + lado, -(y + lado)]);
+      }
+    }
+    for (const calle of aero.taxiways) {
+      for (const p of calle.path) puntos.push([p[0], -p[1]]);
+    }
+    /*
+     * **Y las plataformas no se catan.** Una plataforma tiene aviones
+     * aparcados, pasarelas y farolas, y la foto los trae con su volumen: catar
+     * ahí no mide el desajuste del suelo, mide la altura de un Boeing. La pista
+     * y las calles de rodaje sí son asfalto y nada más.
+     */
+
+    const sobresale: number[] = [];
+    for (const [x, z] of puntos) {
+      const foto = this.teselas.alturaEn(x, z);
+      if (foto === null) continue;
+      sobresale.push(foto - this.terrain.sampleHeight(x, z));
+    }
+    if (sobresale.length < 20) return;
+    sobresale.sort((a, b) => a - b);
+    const p85 = sobresale[Math.floor(sobresale.length * 0.85)]!;
+
+    /*
+     * **Con tope de metro y medio**, y el tope no es prudencia: es la lección.
+     *
+     * El primer intento usaba el percentil noventa sin tope y subió Tenerife
+     * Norte **cuatro metros**, porque entre las catas cayó algo de veintitrés
+     * —un edificio, una torre, lo que fuera— y el percentil se lo tragó. Con
+     * eso la pista quedaba flotando cuatro metros y medio sobre la fotografía,
+     * que es un escalón que se ve desde el aire.
+     *
+     * Este alzado está para salvar el desajuste entre dos formas de describir
+     * la misma superficie —decímetros—, no para salvar un edificio. Si hace
+     * falta más de metro y medio, lo que hay debajo no es suelo y taparlo
+     * subiendo el aeropuerto entero sería el remedio equivocado.
+     *
+     * Los quince centímetros de holgura son menos que el grosor de la pintura
+     * y no se ven.
+     */
+    const alzado = datum + Math.min(1.5, Math.max(0, p85)) + 0.15;
+    this.terrain.reasentarAerodromo(this.scenario, alzado);
+    this.terrain.rehacerAerodromo(this.scenario);
+    this.alzadoDelAerodromo = alzado - datum;
+  }
+
+  /** Cuánto hubo que subir el aeródromo sobre el datum. Para poder mirarlo. */
+  private alzadoDelAerodromo = 0;
 
   private apagarElMundoDeMentira(): void {
     const fuera = (o: Object3D | undefined | null): void => {
@@ -1393,16 +1471,33 @@ export class Game {
          */
         let bultos = 0;
         for (let i = 0; i < 2; i++) bultos += this.terrain.alisarPicos([0, 0], 6000, 6);
+        /*
+         * Y una pasada de suavizado, que es otra cosa distinta de quitar
+         * bultos. Los bultos son lo que sobresale; esto son los **escalones**
+         * que deja copiar una superficie fotogramétrica sobre una rejilla de
+         * cincuenta y siete metros. Un salto de dos metros es una rampa, y con
+         * ella el avión sale despedido rodando: medido, trescientos treinta y
+         * uno de cada novecientos fotogramas en el aire sin tocar el mando.
+         */
+        this.terrain.suavizar([0, 0], 6000, 2);
         this.bultosQuitados = bultos;
         /*
-         * Y se rehace el aeródromo **con el datum de la foto**.
+         * Y se reasienta el aeródromo **por encima de la fotografía**.
          *
-         * Todo él está construido sobre `elevationM`, que es la cota sobre el
-         * nivel del mar; la foto está en otro cero. Sin rehacerlo, el asfalto y
-         * la pintura quedan cuarenta y siete metros bajo el suelo en Tenerife y
-         * trece y medio en Asunción, que es por lo que se apagaban.
+         * Dos pasos, y hacen falta los dos. Primero se devuelve el aeródromo a
+         * su superficie lisa —la que sale de los umbrales— subida por el datum
+         * de la foto. Después se mide cuánto le falta para quedar por encima
+         * de la foto **en todas partes**, y se vuelve a asentar con esa cuenta.
+         *
+         * Medir es lo que no se puede saltar. El primer intento subió el
+         * aeródromo por un solo número, el desfase medido en la pista, y en
+         * Asunción dejó la plataforma tres metros y medio por debajo. El
+         * segundo lo construyó siguiendo la foto punto a punto, y entonces lo
+         * que se veía y lo que se pisaba dejaron de ser lo mismo: la física lee
+         * el mapa de alturas, que interpola entre nudos de cincuenta y siete
+         * metros, y en cada cruce el avión se hundía en el asfalto.
          */
-        this.terrain.rehacerAerodromo(this.scenario);
+        this.asentarAerodromoSobreLaFoto();
         this.buscarPuestoLibre();
         this.ponerAproximacion();
         if (escritos > 0) this.recolocarTrasElMoldeado();
