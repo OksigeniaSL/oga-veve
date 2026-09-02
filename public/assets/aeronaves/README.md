@@ -1,7 +1,10 @@
 # Modelos de aeronave
 
-Un fichero glTF binario por aeronave, con el nombre de su identificador:
-`oga172.glb`, `mainumby.glb`.
+Un fichero glTF binario por aeronave, con **el identificador exacto** de la
+aeronave: `oga-172.glb`, `mainumby.glb`. Con guion, tal y como está escrito en
+`src/flight/aircraft.ts` — al enchufar el primero se llamó `oga172.glb` y el
+juego siguió volando en cajas sin decir nada, que es justo lo que hace cuando
+no encuentra el fichero.
 
 **Si no hay ninguno, el juego vuela igual.** Monta la aeronave con cajas, que
 es lo que ha hecho siempre. Es la misma regla que con las teselas de Google:
