@@ -510,24 +510,35 @@ const PASO_VOLVER = trazo('<path d="M15 5 8 12l7 7" />');
  * hace falta acordarse. Sin historial —primera partida, ventana privada— se
  * enseñan los primeros del catálogo, que es lo más parecido a «lo de siempre»
  * que se puede decir sin saber nada.
+ *
+ * Y **el sitio elegido va siempre el primero**, aunque no esté en el historial.
+ * Sin eso el panel se contradecía: la barra de abajo decía «Tenerife Norte» y
+ * arriba había tres fichas entre las que no estaba, ninguna marcada. Se ve al
+ * primer vistazo y no hay forma de entenderlo.
+ *
+ * El relleno, cuando falta historial, **empieza por los aeródromos de verdad**.
+ * Por orden de fichero se caía Silvio Pettirossi de la portada en cuanto se
+ * elegía Tenerife, y ése es el aeropuerto del que va este juego. Un valle y una
+ * llanura inventados son sitios para practicar; un aeropuerto con su
+ * designador, su cota y su nombre es un sitio al que se va.
  */
 const ALMACEN_RECIENTES = 'oga-veve:recientes';
 
-function recientes(): Scenario[] {
+function recientes(elegido: Scenario): Scenario[] {
   let ids: string[] = [];
   try {
     ids = JSON.parse(localStorage.getItem(ALMACEN_RECIENTES) ?? '[]') as string[];
   } catch {
     ids = [];
   }
-  const vistos = ids
-    .map((id) => SCENARIOS.find((e) => e.id === id))
-    .filter((e): e is Scenario => e !== undefined);
-  for (const e of SCENARIOS) {
-    if (vistos.length >= 3) break;
-    if (!vistos.some((v) => v.id === e.id)) vistos.push(e);
-  }
-  return vistos.slice(0, 3);
+  const vistos = [elegido];
+  const anadir = (e: Scenario | undefined): void => {
+    if (e && vistos.length < 3 && !vistos.some((v) => v.id === e.id)) vistos.push(e);
+  };
+  for (const id of ids) anadir(SCENARIOS.find((e) => e.id === id));
+  for (const e of SCENARIOS) if (e.aerodrome) anadir(e);
+  for (const e of SCENARIOS) anadir(e);
+  return vistos;
 }
 
 function apuntarReciente(id: string): void {
@@ -611,7 +622,7 @@ export function abrirHangar(
           <h2 class="hangar__pregunta" id="hangar-seguimos">${t('hangar.seguimos')}</h2>
           <div class="hangar__fila hangar__fila--tres" role="radiogroup"
                aria-labelledby="hangar-seguimos">
-            ${recientes()
+            ${recientes(sitio)
               .map((e) => fichaDeSitio(e, e.id === sitio.id))
               .join('')}
           </div>
