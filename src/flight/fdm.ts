@@ -680,10 +680,28 @@ export class CoefficientFlightModel implements FlightModel {
     // autoridad tiene el tirón. No la impide, la hace costar.
     const margin = this.aircraft.aero.alphaStall;
     const excess = clamp((alpha - margin * 0.82) / (margin * 0.35), 0, 1);
-    const elevator =
+    const limitado =
       controls.elevator > 0
         ? controls.elevator * (1 - stallProtection * 0.75 * excess)
         : controls.elevator;
+
+    /*
+     * **Con las ruedas fuera de la pista, el morro no sube.**
+     *
+     * Esto era regla solo del modelo sencillo, y aquí ponía que en el de
+     * coeficientes «manda la física, y un avión que consiga volar desde una
+     * calle de rodaje ha volado». Es defendible como física y es malo como
+     * juego: la mitad de lo que este juego enseña es *ir hasta la pista*, y si
+     * se puede saltar ese trámite tirando del morro en la plataforma, no se
+     * enseña. Se probó jugando y se pidió cambiarlo.
+     *
+     * No se bloquea el vuelo, se bloquea **la orden de subir**: quien ya está
+     * en el aire manda como siempre, y quien está rodando rueda. Y si el
+     * terreno se le cae por debajo seguirá quedándose sin ruedas un instante,
+     * porque eso no es despegar y no lo arregla esta regla.
+     */
+    const enElSuelo = this.state.onGround && !this.state.onRunway;
+    const elevator = enElSuelo ? Math.min(0, limitado) : limitado;
 
     return { ...controls, rudder, elevator };
   }

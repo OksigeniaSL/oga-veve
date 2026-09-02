@@ -78,12 +78,18 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
     // dibujado— coge las primeras, así que delante van las dos que se
     // quieren enseñar, y son las de manos distintas. Detrás, las que están
     // por compatibilidad y no hacen falta anunciar.
-    defecto: ['+', 'KeyX', 'Equal', 'NumpadAdd', 'ShiftLeft', 'ShiftRight'],
+    // **Sin mayúsculas.** Estaban «por costumbre de otros simuladores» y la
+    // costumbre sale cara aquí: Shift es la tecla con la que se hace una
+    // selección al capturar la pantalla, así que al ir a sacar una foto del
+    // juego el avión se aceleraba y se escapaba justo lo que se quería
+    // fotografiar. Un mando de más que estorba vale menos que no tenerlo.
+    defecto: ['+', 'KeyX', 'Equal', 'NumpadAdd'],
     held: true,
   },
   throttleDown: {
     label: 'tecla.throttleDown',
-    defecto: ['-', 'KeyZ', 'Minus', 'NumpadSubtract', 'ControlLeft', 'ControlRight'],
+    // Y sin Control, por lo mismo: es media docena de atajos del navegador.
+    defecto: ['-', 'KeyZ', 'Minus', 'NumpadSubtract'],
     held: true,
   },
   brakes: { label: 'tecla.brakes', defecto: ['KeyB', 'Space'], held: true },

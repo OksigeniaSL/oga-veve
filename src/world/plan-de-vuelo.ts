@@ -354,12 +354,23 @@ export class PlanDeVuelo {
   reiniciarDesde(puesto: Punto): boolean {
     const espera = this.esperaDeSalida();
     if (!espera) return false;
+    /*
+     * **Primero se busca la ruta y solo después se cambia nada.**
+     *
+     * Antes se apuntaba el puesto nuevo y se pedía la ruta a continuación; si
+     * no había —hay puestos de OpenStreetMap que no llegan a conectar con
+     * ninguna calle de rodaje—, el juego se quedaba arrancando de un sitio del
+     * que no sabía salir: el avión aparecía allí y **la raya verde no se
+     * pintaba**. Se vio en Tenerife Norte, en un puesto por lo demás perfecto.
+     */
+    const ruta = rodajeEntre(this.grafo, puesto, espera);
+    if (!ruta) return false;
     this.puestoElegido = puesto;
     this.vuelo.reiniciar(false);
     this.destino = 'espera';
     this.ultimaPos = puesto;
-    this.ponerRuta(rodajeEntre(this.grafo, puesto, espera));
-    return this.ruta !== null;
+    this.ponerRuta(ruta);
+    return true;
   }
 
   private puestoDeSalida(): { ref: string | null; xy: Punto } | null {
