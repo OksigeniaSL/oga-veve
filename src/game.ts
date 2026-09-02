@@ -31,7 +31,7 @@ import { InputManager } from './flight/input';
 import type { FlightModel, FlightState } from './flight/model';
 import { Terrain, cabeceraEnUso } from './world/terrain';
 import { crearAproximacion, type Aproximacion } from './world/aproximacion';
-import { createSky, updateSky, type SkyRig } from './world/sky';
+import { createSky, ponerNubes, updateSky, type SkyRig } from './world/sky';
 import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
 import { RunwayGuide } from './world/runway-guide';
 import { createVegetation, zonaDeAeropuerto } from './world/vegetation';
@@ -415,6 +415,14 @@ export class Game {
     this.hud.onHangar(() => location.reload());
     this.hud.ponerMapa(this.scenario, (x, z) => this.terrain.sampleHeight(x, z));
     this.hud.ponerHora(this.horaPedida(), (h) => this.ponerHora(h));
+    /*
+     * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
+     * de lo que va esto; las nubes se eligen cuando se quieren, y entonces se
+     * atraviesan despegando, que es el momento por el que están.
+     */
+    this.hud.ponerCielo(0, (alturaM, tapadura) => {
+      if (this.sky) ponerNubes(this.sky, alturaM, tapadura);
+    });
     this.hud.ponerTiempo(
       this.scenario.meteo ?? TIEMPO_DE_CASA,
       (m) => this.ponerTiempo(m),
@@ -468,6 +476,40 @@ export class Game {
       controles: () => this.input.controls,
       /** La cota que da la foto sin filtrar, para comprobar lejos del aeropuerto. */
       cotaCruda: (x: number, z: number) => this.teselas?.medidaDirecta(x, z) ?? null,
+      /** Cómo está el banco de nubes: si se ve, a qué altura y cuánto tapa. */
+      nubes: () => {
+        const banco = this.sky?.group.getObjectByName('nubes');
+        if (!banco) return null;
+        const capa = banco.children[0] as { material?: { opacity?: number } } | undefined;
+        return {
+          visible: banco.visible,
+          altura: Math.round(banco.position.y),
+          opacidad: capa?.material?.opacity ?? null,
+        };
+      },
+      /** Un punto en final, a `d` metros del umbral en uso y sobre el eje. */
+      puntoDeFinal: (d: number) => {
+        const pista = this.scenario.aerodrome?.runways[0];
+        if (!pista) return null;
+        const nombre = cabeceraEnUso(this.scenario);
+        const con = Object.entries(pista.thresholds).filter((e) => e[1]?.xy);
+        if (con.length < 2) return null;
+        const i = nombre ? con.findIndex(([n]) => n === nombre) : 0;
+        const entrada = con[i >= 0 ? i : 0]![1]!.xy!;
+        const salida = con[(i >= 0 ? i : 0) === 0 ? 1 : 0]![1]!.xy!;
+        const l = Math.hypot(salida[0] - entrada[0], salida[1] - entrada[1]) || 1;
+        const ux = (salida[0] - entrada[0]) / l;
+        const uy = (salida[1] - entrada[1]) / l;
+        const x = entrada[0] - ux * d;
+        const y = entrada[1] - uy * d;
+        return {
+          x,
+          z: -y,
+          h: (Math.atan2(ux, uy) + 2 * Math.PI) % (2 * Math.PI),
+          suelo: this.terrain.sampleHeight(x, -y),
+          cabecera: nombre,
+        };
+      },
       aristas: (puntos: [number, number][]) =>
         puntos.map(([x, z]) => {
           const d = this.teselas?.detalleEn(x, z);
