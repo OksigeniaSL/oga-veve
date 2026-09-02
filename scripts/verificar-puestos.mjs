@@ -32,6 +32,10 @@ for (const esc of ['tenerife-norte', 'pettirossi']) {
   console.log('  estorbo por puesto (m):', m?.puestos ?? '—');
   console.log('  el más despejado es el nº', m?.masDespejado ?? '—');
   console.log('  estorbo del elegido:', m?.puestoElegido ?? '—');
+  // Y que del puesto elegido se pueda salir: sin ruta no hay raya verde que
+  // seguir, y un puesto limpio del que no se sale no sirve de nada.
+  const ruta = await page.evaluate(() => (globalThis.__oga.ruta?.() ?? []).length);
+  console.log('  ruta de rodaje:', ruta ? `${ruta} puntos` : 'NO HAY');
   await page.close();
 }
 

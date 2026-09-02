@@ -1129,8 +1129,6 @@ export class Game {
     if (!medidos.length) return;
 
     medidos.sort((a, b) => a.estorbo - b.estorbo);
-    const mejor = medidos[0]!;
-    this.puestoElegido = mejor.estorbo;
     /*
      * Metro y medio: una plataforma vacía es plana y lo que sobresalga de eso
      * es una farola, un carro o un avión. Si el primero de la lista ya está
@@ -1138,9 +1136,22 @@ export class Game {
      * ya conoce su aeropuerto.
      */
     const primero = medidos.find((m) => m.puesto === puestos[0]);
-    if (primero && primero.estorbo <= 1.5) return;
-    if (mejor.puesto === puestos[0]) return;
-    this.plan.reiniciarDesde(mejor.puesto.xy);
+    if (primero && primero.estorbo <= 1.5) {
+      this.puestoElegido = primero.estorbo;
+      return;
+    }
+    /*
+     * Y de los despejados, **el primero del que se pueda salir rodando**. Un
+     * puesto sin ruta hasta el punto de espera no vale por muy limpio que
+     * esté: el avión aparece allí y no hay raya verde que seguir. Es lo que
+     * pasó al elegir bien el puesto por primera vez.
+     */
+    for (const { puesto, estorbo } of medidos) {
+      if (puesto === puestos[0] || this.plan.reiniciarDesde(puesto.xy)) {
+        this.puestoElegido = estorbo;
+        return;
+      }
+    }
   }
 
   /** Lo que estorbaba en el puesto elegido, en metros. Para poder mirarlo. */
