@@ -1904,7 +1904,10 @@ export class Game {
         this.aircraft.approachSpeed,
       );
     this.hud.setBandaDeVelocidad(banda);
-    this.hud.mostrarFps(dt);
+    this.hud.mostrarFps(dt, {
+      llamadas: this.renderer.info.render.calls,
+      triangulos: this.renderer.info.render.triangles,
+    });
     if (banda === "lento" || banda === "rapido") {
       this.fueraDeBanda += dt;
       if (this.fueraDeBanda > 3 && this.dichoDeBanda !== banda) {
