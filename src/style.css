@@ -1556,6 +1556,20 @@ body {
   display: grid;
   place-items: center;
   padding: clamp(14px, 3vh, 34px) 16px;
+
+  /*
+   * Lo que le queda de alto a la lista de tarjetas.
+   *
+   * Estaba puesto a `min(54vh, 470px)`, y ese 470 era el problema: en una
+   * pantalla de mil píxeles la lista se cortaba —había que rodarla para ver
+   * España— **con doscientos cincuenta píxeles de pantalla vacía debajo**. Un
+   * tope fijo no sabe cuánta pantalla hay.
+   *
+   * Los 360 son lo que ocupa todo lo que no es la lista: el título, la
+   * pregunta, los huecos de arriba y la barra fija de abajo. Y el `max` es el
+   * suelo, para que en una pantalla muy baja la lista no se quede en nada.
+   */
+  --hangar-lista: max(220px, calc(100dvh - 300px));
 }
 
 .hangar[hidden] {
@@ -1568,7 +1582,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.8vh, 20px);
-  width: min(1080px, 100%);
+  /*
+   * Mil ochenta se quedó corto al agrupar por país: con seis tarjetas,
+   * Paraguay partía en dos filas y ya no cabían los tres grupos. A 1280 entran
+   * seis por fila y cada país ocupa una.
+   */
+  width: min(1280px, 100%);
   /* Hueco para la barra de abajo, que es fija y taparía la última fila. */
   padding-bottom: 96px;
 }
@@ -1777,7 +1796,16 @@ body {
   position: relative;
   display: grid;
   place-items: center;
-  /* Más apaisado que antes —era 3/2— por lo mismo: tres filas en una pantalla. */
+  /*
+   * Más apaisado que antes —era 3/2— por lo mismo: tres filas en una pantalla.
+   *
+   * Y el `min-height: 0` es lo que hace que ese 5/3 sirva de algo. Sin él no
+   * servía de nada: el plano es un SVG cuadrado, el mínimo automático de una
+   * caja `grid` es su contenido, y la tarjeta salía cuadrada —270 px en vez de
+   * 190— por mucho que aquí pusiera 5/3. Se vio al agrupar por país, cuando
+   * tres filas de tarjetas dejaron de caber en una pantalla de mil píxeles.
+   */
+  min-height: 0;
   aspect-ratio: 5 / 3;
   padding: 8px;
   background: linear-gradient(var(--cielo, #33413a) 0%, var(--suelo, #24312b) 100%);
@@ -1846,7 +1874,9 @@ body {
 .ficha__plano {
   width: 100%;
   height: 100%;
-  overflow: visible;
+  /* Recorta, que es el seguro: si algún día un aeródromo se sale de su propia
+     ventana, se queda dentro de la tarjeta en vez de pintar sobre el nombre. */
+  overflow: hidden;
 }
 
 .plano__plataforma {
@@ -2142,7 +2172,7 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 12px;
   overflow-y: auto;
-  max-height: min(54vh, 470px);
+  max-height: var(--hangar-lista);
   padding-right: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--ocre) rgb(228 226 218 / 0.09);
@@ -2159,7 +2189,7 @@ body {
   flex-direction: column;
   gap: 20px;
   overflow-y: auto;
-  max-height: min(54vh, 470px);
+  max-height: var(--hangar-lista);
   padding-right: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--ocre) rgb(228 226 218 / 0.09);
