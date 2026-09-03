@@ -32,13 +32,14 @@
  *    su tren de aterrizaje y no por su centro.
  */
 
-import { Box3, Group, Vector3, type Object3D } from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import type { AircraftConfig } from '../flight/aircraft';
-import type { AircraftMesh } from './aircraft-mesh';
+import { Box3, Group, Vector3, type Object3D } from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import type { AircraftConfig } from "../flight/aircraft";
+import type { AircraftMesh } from "./aircraft-mesh";
+import { encenderPantallas } from "./pantallas-cabina";
 
 /** Dónde se dejan los modelos. Uno por aeronave, con su identificador. */
-const CARPETA = 'assets/aeronaves';
+const CARPETA = "assets/aeronaves";
 
 /**
  * Nombres por los que se reconoce la hélice dentro del modelo.
@@ -47,7 +48,14 @@ const CARPETA = 'assets/aeronaves';
  * forma de decir «esto gira». Si no aparece ninguno, la hélice se queda quieta
  * y el avión vuela igual — es un adorno, no un mando.
  */
-const NOMBRES_DE_HELICE = ['prop', 'helice', 'hélice', 'propeller', 'spinner', 'blade'];
+const NOMBRES_DE_HELICE = [
+  "prop",
+  "helice",
+  "hélice",
+  "propeller",
+  "spinner",
+  "blade",
+];
 
 /**
  * Junta las piezas de la hélice en un eje que gira sobre su propio centro.
@@ -88,7 +96,7 @@ function ejeDeHelice(raiz: Object3D): Object3D {
   const medioEnElMundo = centro.getCenter(new Vector3());
 
   const eje = new Group();
-  eje.name = 'helice';
+  eje.name = "helice";
   raiz.add(eje);
   // El centro, traído a las coordenadas del padre. `worldToLocal` necesita las
   // matrices al día, y por eso el `updateWorldMatrix` de arriba.
@@ -122,7 +130,8 @@ function ojoDePiloto(
   let hay = false;
   raiz.traverse((o) => {
     const n = o.name.toLowerCase();
-    if (!n.includes('chair') && !n.includes('seat') && !n.includes('asiento')) return;
+    if (!n.includes("chair") && !n.includes("seat") && !n.includes("asiento"))
+      return;
     asientos.expandByObject(o);
     hay = true;
   });
@@ -154,7 +163,8 @@ function ojoDePiloto(
 }
 
 function esAncestro(posible: Object3D, hijo: Object3D): boolean {
-  for (let o: Object3D | null = hijo.parent; o; o = o.parent) if (o === posible) return true;
+  for (let o: Object3D | null = hijo.parent; o; o = o.parent)
+    if (o === posible) return true;
   return false;
 }
 
@@ -166,14 +176,14 @@ function esAncestro(posible: Object3D, hijo: Object3D): boolean {
  */
 export async function cargarModelo(
   aircraft: AircraftConfig,
-  base = import.meta.env.BASE_URL ?? '/',
+  base = import.meta.env.BASE_URL ?? "/",
 ): Promise<AircraftMesh | null> {
-  const url = `${base}${base.endsWith('/') ? '' : '/'}${CARPETA}/${aircraft.id}.glb`;
+  const url = `${base}${base.endsWith("/") ? "" : "/"}${CARPETA}/${aircraft.id}.glb`;
 
   try {
     // Se pregunta antes de cargar: `GLTFLoader` con un 404 escupe un error de
     // análisis que parece un fichero corrupto, y no lo es — es que no está.
-    const hay = await fetch(url, { method: 'HEAD' });
+    const hay = await fetch(url, { method: "HEAD" });
     if (!hay.ok) return null;
   } catch {
     return null;
@@ -232,13 +242,15 @@ export async function cargarModelo(
   const morro = new Box3();
   let hayHelice = false;
   raiz.traverse((o) => {
-    if (!NOMBRES_DE_HELICE.some((n) => o.name.toLowerCase().includes(n))) return;
+    if (!NOMBRES_DE_HELICE.some((n) => o.name.toLowerCase().includes(n)))
+      return;
     morro.expandByObject(o);
     hayHelice = true;
   });
   if (hayHelice) {
     const centroAvion = new Box3().setFromObject(raiz).getCenter(new Vector3());
-    if (morro.getCenter(new Vector3()).z > centroAvion.z) raiz.rotation.y += Math.PI;
+    if (morro.getCenter(new Vector3()).z > centroAvion.z)
+      raiz.rotation.y += Math.PI;
   }
 
   /*
@@ -253,5 +265,11 @@ export async function cargarModelo(
 
   group.add(raiz);
 
-  return { group, propeller: ejeDeHelice(raiz), ojo: ojoDePiloto(raiz, group) };
+  return {
+    group,
+    propeller: ejeDeHelice(raiz),
+    ojo: ojoDePiloto(raiz, group),
+    // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
+    pantallas: encenderPantallas(raiz),
+  };
 }
