@@ -501,17 +501,35 @@ function ruta(escenario: Scenario, mision: Mission): [number, number][] {
     // dibujo. Despegar y aterrizar no son un sitio: pasan de largo.
     if (p) puntos.push([p.x, p.z]);
   }
-  // Y de vuelta a casa, que toda misión acaba donde empezó.
-  puntos.push(casa);
+  /*
+   * **La vuelta a casa no se dibuja, aunque se vuele.**
+   *
+   * Se dibujaba, y era un error que se veía enseguida: «El traslado» salía con
+   * la línea entera y los otros dos a rayas. La ruta se pintaba de ida y
+   * vuelta sobre sí misma, y al volver las rayas caen en los huecos de la ida
+   * y los rellenan — que salga a rayas o entero depende de si la distancia da
+   * un número par de rayas, o sea, de la suerte.
+   *
+   * Dibujar solo la ida lo arregla y además se lee mejor: la tarjeta enseña
+   * **a dónde vas**, que es lo que distingue una misión de otra. Que luego hay
+   * que volver lo sabe cualquiera que haya volado una vez.
+   */
   return puntos;
 }
 
-/** Cuánto se vuela, en kilómetros. Es lo que dice si es un paseo o un viaje. */
+/**
+ * Cuánto se vuela, en kilómetros, **contando la vuelta**.
+ *
+ * El dibujo enseña la ida y el número dice el viaje entero, y eso no es una
+ * incoherencia: el número tiene que decir en qué te estás metiendo.
+ */
 function largoDeRuta(puntos: readonly [number, number][]): number {
   let d = 0;
   for (let i = 1; i < puntos.length; i++) {
     d += Math.hypot(puntos[i]![0] - puntos[i - 1]![0], puntos[i]![1] - puntos[i - 1]![1]);
   }
+  const ultimo = puntos[puntos.length - 1]!;
+  d += Math.hypot(ultimo[0] - puntos[0]![0], ultimo[1] - puntos[0]![1]);
   return d / 1000;
 }
 
@@ -533,7 +551,7 @@ function planoDeMision(puntos: readonly [number, number][]): string {
       <polyline class="mision__ruta" fill="none"
                 points="${puntos.map((p) => `${p[0]},${p[1]}`).join(' ')}" />
       ${puntos
-        .slice(1, -1)
+        .slice(1)
         .map((p) => `<circle class="mision__parada" cx="${p[0]}" cy="${p[1]}" r="${r}" />`)
         .join('')}
       <circle class="mision__casa" cx="${casa[0]}" cy="${casa[1]}" r="${r * 1.5}" />
