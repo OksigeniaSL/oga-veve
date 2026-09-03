@@ -31,7 +31,7 @@ import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
 import { SixPack } from "./six-pack";
-import { Pictogramas } from "./pictogramas";
+import { PAJARO, Pictogramas, TORTUGA } from "./pictogramas";
 import { Senal } from "./senal";
 import { Mapa } from "./mapa";
 import { PanelDelTiempo } from "./tiempo";
@@ -332,10 +332,20 @@ export class Hud {
             más razonable del mundo: si algo tiene forma de botón, se pulsa.
             Sirven igual con el dedo en una tablet.
           -->
+          <!--
+            En los peldaños con dibujos, los botones **hablan el idioma de los
+            dibujos**: la tortuga y el pájaro, los mismos de la cinta de
+            arriba. Estaban con un menos y un más mientras la cinta hablaba de
+            tortugas, así que en pantalla había dos mandos de gas contándose en
+            dos idiomas distintos — y uno de los dos, con signos que a los
+            cuatro años no significan nada.
+          -->
           <div class="motor__fila">
-            <button class="motor__tecla" type="button" data-hud="throttle-down" aria-label="−">−</button>
+            <button class="motor__tecla" type="button" data-hud="throttle-down"
+                    aria-label="${t("hud.throttleDown")}">${pictos ? TORTUGA : "−"}</button>
             <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
-            <button class="motor__tecla" type="button" data-hud="throttle-up" aria-label="+">+</button>
+            <button class="motor__tecla" type="button" data-hud="throttle-up"
+                    aria-label="${t("hud.throttleUp")}">${pictos ? PAJARO : "+"}</button>
           </div>
           ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
         </div>

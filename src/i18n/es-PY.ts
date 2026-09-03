@@ -13,6 +13,8 @@ export const ES_PY = {
   'hud.speed': 'Velocidad',
   'hud.altitude': 'Altura',
   'hud.heading': 'Rumbo',
+  'hud.throttleDown': 'Menos motor',
+  'hud.throttleUp': 'Más motor',
   'hud.throttle': 'Motor',
   'hud.vspeed': 'Subida',
   'hud.stall': '¡Pérdida! Bajá el morro',
