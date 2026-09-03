@@ -45,6 +45,9 @@ export const ES_PY = {
   'aircraft.oga172.description': 'Avioneta de escuela. Tranquila y perdonadora.',
   'aircraft.mainumby.description': 'Biplano fumigador. Ágil y con mucha fuerza.',
 
+  'mission.rio.name': 'Ver el río',
+  'mission.ciudad.name': 'Sobre la ciudad',
+  'mission.lomas.name': 'A las lomas',
   'mission.first.name': 'Tu primer vuelo',
   'mission.valley.name': 'La vuelta al valle',
   'mission.transfer.name': 'El traslado',
