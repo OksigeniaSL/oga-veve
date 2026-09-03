@@ -117,21 +117,29 @@ export const VER_EL_RIO: Mission = {
 };
 
 /**
- * Sobre la ciudad. El río bajo y luego los tejados.
+ * Seguir el río. Dos tramos del cauce, y bajo.
  *
- * El primer punto pide volar bajo sobre el agua, que es la lección de
- * navegación de siempre: un río es una carretera que no se borra. El segundo
- * es la mancha más edificada que cabe en el mapa — desde arriba, un cambio de
- * color y de textura que se ve venir de lejos.
+ * **Aquí había una misión que iba «sobre la ciudad», y estaba mal pensada.**
+ * La idea era mandar al punto más edificado del mapa, y al medirlo en serio
+ * salió que no existe tal punto: el centro de masas de lo más denso cae a
+ * seiscientos metros del aeropuerto. Asunción **rodea** a Silvio Pettirossi,
+ * igual que La Laguna rodea a Los Rodeos. Ir a la ciudad desde un aeropuerto
+ * que ya está en la ciudad no es ir a ningún lado.
+ *
+ * Lo que sí es un sitio al que ir es el río, así que esta va de seguirlo: dos
+ * puntos del cauce con altura máxima, que obliga a bajar y a llevarlo debajo.
+ * Es la lección de navegación de siempre — un río es una carretera que no se
+ * borra— y es la que el propio escenario dice que hay que aprender aquí.
  */
-export const SOBRE_LA_CIUDAD: Mission = {
-  id: 'sobre-la-ciudad',
-  nameKey: 'mission.ciudad.name',
+export const RIO_ABAJO: Mission = {
+  id: 'rio-abajo',
+  nameKey: 'mission.rioabajo.name',
   scenario: 'pettirossi',
   objectives: [
     { kind: 'takeoff' },
+    // Donde el cauce corre al oeste, y luego río arriba hacia el norte.
     { kind: 'reach', x: -5500, z: -2250, radius: 450, maxHeight: 300 },
-    { kind: 'reach', x: -9510, z: -4698, radius: 550 },
+    { kind: 'reach', x: -2292, z: -6750, radius: 450, maxHeight: 300 },
     { kind: 'land' },
   ],
 };
@@ -155,13 +163,91 @@ export const A_LAS_LOMAS: Mission = {
   ],
 };
 
+/*
+ * ## Las misiones de Tenerife Norte
+ *
+ * Medidas igual que las de Asunción, sobre `data/terrain/tenerife-norte.bin`,
+ * y aquí el relieve cuenta una historia clarísima en cuanto se mira por
+ * cuadrantes desde el aeropuerto, con el mundo llegando a nueve kilómetros:
+ *
+ *   nordeste  ·  984 m a 7,9 km   ·  el macizo de Anaga
+ *   suroeste  · 1351 m a 8,4 km   ·  la cumbre, camino del Teide
+ *   nornoroeste ·  mar a 7,4 km   ·  la costa del norte
+ *   estesureste ·  mar a 8,0 km   ·  la otra costa
+ *
+ * Eso es Los Rodeos: **una meseta a seiscientos treinta metros con montaña a
+ * los dos lados y mar a los otros dos**, y en un cuarto de hora de vuelo se
+ * tocan las cuatro cosas. El Teide no entra —está a dieciocho kilómetros y el
+ * mundo llega a nueve—, así que no se promete lo que no se puede enseñar.
+ */
+
+/**
+ * Salir al mar. La primera de Tenerife.
+ *
+ * Nueve minutos al norte y ya no hay isla debajo. Es la primera vez que el
+ * juego pone agua de verdad bajo el avión, y no hace falta explicar nada:
+ * cuando se acaba la tierra se entiende solo.
+ */
+export const SALIR_AL_MAR: Mission = {
+  id: 'salir-al-mar',
+  nameKey: 'mission.mar.name',
+  scenario: 'tenerife-norte',
+  objectives: [
+    { kind: 'takeoff' },
+    // La costa del norte, a 7,4 km. Lo primero que hay a nivel del mar.
+    { kind: 'reach', x: -2337, z: -7010, radius: 600 },
+    { kind: 'land' },
+  ],
+};
+
+/**
+ * A Anaga. La montaña del nordeste, y la primera subida de verdad.
+ *
+ * El aeropuerto está a 633 metros y la cumbre de Anaga a 984: hay que subir
+ * trescientos cincuenta metros y volver a bajarlos. Es poco en un mapa y es
+ * mucho en una avioneta que acaba de despegar.
+ */
+export const A_ANAGA: Mission = {
+  id: 'a-anaga',
+  nameKey: 'mission.anaga.name',
+  scenario: 'tenerife-norte',
+  objectives: [
+    { kind: 'takeoff' },
+    { kind: 'reach', x: 5625, z: -5538, radius: 600 },
+    { kind: 'land' },
+  ],
+};
+
+/**
+ * A la cumbre. Cruzar la isla de costa a cumbre, y volver con cuidado.
+ *
+ * La larga: primero al mar del este, luego a los 1351 metros del suroeste
+ * —setecientos por encima del aeropuerto, y es la dirección en la que sigue
+ * subiendo el Teide— y de vuelta a casa con una toma cuidada. Veintinueve
+ * kilómetros, que en esta isla es cruzarla.
+ */
+export const A_LA_CUMBRE: Mission = {
+  id: 'a-la-cumbre',
+  nameKey: 'mission.cumbre.name',
+  scenario: 'tenerife-norte',
+  objectives: [
+    { kind: 'takeoff' },
+    { kind: 'reach', x: 6750, z: 4370, radius: 600 },
+    { kind: 'reach', x: -5712, z: 6101, radius: 650 },
+    { kind: 'land', gentle: 2 },
+  ],
+};
+
 export const MISSIONS: readonly Mission[] = [
   PRIMER_VUELO,
   VUELTA_AL_VALLE,
   EL_TRASLADO,
   VER_EL_RIO,
-  SOBRE_LA_CIUDAD,
+  RIO_ABAJO,
   A_LAS_LOMAS,
+  SALIR_AL_MAR,
+  A_ANAGA,
+  A_LA_CUMBRE,
 ];
 
 export function missionsFor(scenarioId: string): readonly Mission[] {
