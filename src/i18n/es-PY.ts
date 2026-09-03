@@ -70,6 +70,8 @@ export const ES_PY = {
   'tutor.speed': 'Esperá a que corra',
   'tutor.pull': 'Tirá para arriba',
   'tutor.flying': '¡Estás volando!',
+  'tutor.frenar': 'Frená',
+  'tutor.salir': 'Seguí la raya y salí de la pista',
   'tutor.slow': 'Bajá el motor',
 
   'help.title': 'Cómo se vuela',

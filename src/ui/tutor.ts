@@ -34,19 +34,35 @@
  * se reinicia el vuelo.
  */
 
-import type { FlightState } from '../flight/model';
-import { nombreDeTecla, type Accion } from '../flight/keymap';
-import { t, type TranslationKey } from '../i18n';
+import type { FlightState } from "../flight/model";
+import { nombreDeTecla, type Accion } from "../flight/keymap";
+import { t, type TranslationKey } from "../i18n";
 
 /** Velocidad indicada a partir de la cual conviene rotar, en m/s. */
 const ROTATION_SPEED = 30;
 
-type Step = 'throttle' | 'speed' | 'pull' | 'flying' | 'slow' | 'done';
+type Step =
+  | "throttle"
+  | "speed"
+  | "pull"
+  | "flying"
+  | "slow"
+  | "frenar"
+  | "salir"
+  | "done";
 
 /** Distancia a la cabecera desde la que se avisa de bajar el motor, en metros. */
 const APPROACH_DISTANCE = 2400;
 /** Por encima de este gas no se puede bajar para aterrizar. */
 const APPROACH_THROTTLE = 0.45;
+
+/**
+ * Por debajo de esta velocidad se ha acabado la carrera de aterrizaje, m/s.
+ *
+ * Doce metros por segundo son cuarenta y tres por hora: velocidad de rodaje.
+ * A partir de ahí lo que toca ya no es frenar, es buscar la salida.
+ */
+const RODAJE = 12;
 
 interface StepView {
   /**
@@ -57,11 +73,13 @@ interface StepView {
    * peor que no tener tutor.
    */
   cue:
-    | { kind: 'action'; accion: Accion }
-    | { kind: 'key'; label: string; wide?: boolean }
-    | { kind: 'symbol'; glyph: string };
+    | { kind: "action"; accion: Accion }
+    | { kind: "key"; label: string; wide?: boolean }
+    | { kind: "symbol"; glyph: string };
   /** Lo mismo, para quien juega con el dedo. */
-  touchCue: { kind: 'key'; label: string; wide?: boolean } | { kind: 'symbol'; glyph: string };
+  touchCue:
+    | { kind: "key"; label: string; wide?: boolean }
+    | { kind: "symbol"; glyph: string };
   key: TranslationKey;
   /**
    * Lo que marca la barra, de 0 a 1, o `null` si este paso no lleva barra.
@@ -80,40 +98,69 @@ interface StepView {
   objetivo?: (state: FlightState, throttle: number) => number | null;
 }
 
-const STEPS: Record<Exclude<Step, 'done'>, StepView> = {
+const STEPS: Record<Exclude<Step, "done">, StepView> = {
   throttle: {
-    cue: { kind: 'action', accion: 'throttleUp' },
-    touchCue: { kind: 'symbol', glyph: '⇡' },
-    key: 'tutor.throttle',
+    cue: { kind: "action", accion: "throttleUp" },
+    touchCue: { kind: "symbol", glyph: "⇡" },
+    key: "tutor.throttle",
     progress: (_state, throttle) => throttle,
   },
   speed: {
-    cue: { kind: 'symbol', glyph: '⏱' },
-    touchCue: { kind: 'symbol', glyph: '⏱' },
-    key: 'tutor.speed',
+    cue: { kind: "symbol", glyph: "⏱" },
+    touchCue: { kind: "symbol", glyph: "⏱" },
+    key: "tutor.speed",
     progress: (state) => Math.min(1, state.airspeed / ROTATION_SPEED),
   },
   pull: {
-    cue: { kind: 'action', accion: 'pitchUp' },
-    touchCue: { kind: 'symbol', glyph: '⇡' },
-    key: 'tutor.pull',
+    cue: { kind: "action", accion: "pitchUp" },
+    touchCue: { kind: "symbol", glyph: "⇡" },
+    key: "tutor.pull",
     progress: () => null,
   },
   flying: {
-    cue: { kind: 'symbol', glyph: '✦' },
-    touchCue: { kind: 'symbol', glyph: '✦' },
-    key: 'tutor.flying',
+    cue: { kind: "symbol", glyph: "✦" },
+    touchCue: { kind: "symbol", glyph: "✦" },
+    key: "tutor.flying",
     progress: () => null,
   },
   // Volver a la pista era el paso que faltaba: el tutor enseñaba a despegar
   // y se callaba justo cuando empieza lo difícil. Sin bajar el gas no hay
   // forma de perder velocidad para posarse, y eso no lo adivina nadie.
   slow: {
-    cue: { kind: 'action', accion: 'throttleDown' },
-    touchCue: { kind: 'symbol', glyph: '⇣' },
-    key: 'tutor.slow',
+    cue: { kind: "action", accion: "throttleDown" },
+    touchCue: { kind: "symbol", glyph: "⇣" },
+    key: "tutor.slow",
     progress: (_state, throttle) => throttle,
     objetivo: () => APPROACH_THROTTLE,
+  },
+  /*
+   * ── Y después de tocar ─────────────────────────────────────────────────
+   *
+   * Aquí el tutor se callaba. Enseñaba a despegar, enseñaba a bajar el gas
+   * para aproximar, y en cuanto las ruedas tocaban decía «listo» y se
+   * apagaba — justo cuando quedan por hacer las tres cosas que nadie adivina:
+   * frenar, salir de la pista y llegar al puesto.
+   *
+   * «No tengo control de velocidad en tierra, no sé dónde tengo que ir.
+   * Aterricé a toda la velocidad de la avioneta.»
+   *
+   * Un vuelo termina cuando el avión está parado en su sitio, no cuando toca
+   * el suelo.
+   */
+  frenar: {
+    cue: { kind: "action", accion: "brakes" },
+    touchCue: { kind: "symbol", glyph: "✋" },
+    key: "tutor.frenar",
+    // La barra baja según se frena: de la velocidad de toma a la de rodaje.
+    progress: (state) => Math.max(0, Math.min(1, state.airspeed / 45)),
+  },
+  salir: {
+    // La raya verde ya está en el suelo y ya lleva a la salida: lo único que
+    // falta es decir que se siga, y eso es un dibujo, no una tecla.
+    cue: { kind: "symbol", glyph: "⤳" },
+    touchCue: { kind: "symbol", glyph: "⤳" },
+    key: "tutor.salir",
+    progress: () => null,
   },
 };
 
@@ -133,7 +180,7 @@ export class Tutor {
   private bar: HTMLElement | null = null;
   private fill: HTMLElement | null = null;
 
-  private step: Step = 'throttle';
+  private step: Step = "throttle";
   private celebrating = 0;
   /** Una vez se ha volado, el guion de despegue no vuelve a aparecer. */
   private hasFlown = false;
@@ -164,7 +211,7 @@ export class Tutor {
 
   /** Vuelve al principio: al reiniciar el vuelo hay que volver a explicar. */
   reset(): void {
-    this.step = 'throttle';
+    this.step = "throttle";
     this.celebrating = 0;
     this.hasFlown = false;
   }
@@ -187,7 +234,12 @@ export class Tutor {
     if (callado && this.root) this.root.hidden = true;
   }
 
-  update(state: FlightState, throttle: number, dt: number, distanceToRunway: number): void {
+  update(
+    state: FlightState,
+    throttle: number,
+    dt: number,
+    distanceToRunway: number,
+  ): void {
     if (!this.root) return;
     if (this.callado) {
       this.root.hidden = true;
@@ -196,7 +248,7 @@ export class Tutor {
 
     this.step = this.nextStep(state, throttle, dt, distanceToRunway);
 
-    if (this.step === 'done' || state.crashed) {
+    if (this.step === "done" || state.crashed) {
       this.root.hidden = true;
       return;
     }
@@ -204,7 +256,11 @@ export class Tutor {
     const view = STEPS[this.step];
     this.root.hidden = false;
 
-    if (this.cue) this.cue.innerHTML = renderCue(isTouch() ? view.touchCue : view.cue, this.teclaDe);
+    if (this.cue)
+      this.cue.innerHTML = renderCue(
+        isTouch() ? view.touchCue : view.cue,
+        this.teclaDe,
+      );
     if (this.label) this.label.textContent = t(view.key);
 
     const progress = view.progress(state, throttle);
@@ -233,50 +289,61 @@ export class Tutor {
     dt: number,
     distanceToRunway: number,
   ): Step {
-    if (this.step === 'flying') {
+    if (this.step === "flying") {
       this.celebrating -= dt;
-      return this.celebrating > 0 ? 'flying' : 'done';
+      return this.celebrating > 0 ? "flying" : "done";
     }
 
     if (state.onGround) {
-      // El guion de despegue solo mientras no se haya volado nunca. Después
-      // de una vuelta completa, quien está rodando ya sabe salir.
-      if (this.hasFlown) return 'done';
+      if (this.hasFlown) {
+        // La carrera de aterrizaje: frenar hasta rodaje, y luego salir.
+        if (state.airspeed > RODAJE) return "frenar";
+        // Ya despacio, lo que falta es dejar la pista libre. Fuera de ella el
+        // tutor calla: la raya verde sigue guiando y no hace falta un cartel.
+        return state.onRunway ? "salir" : "done";
+      }
       // El orden importa: con velocidad de rotación alcanzada, lo que toca es
       // tirar aunque no se haya llegado al gas máximo. Al revés, el cartel
       // seguía pidiendo motor a ciento treinta por hora, con el avión ya
       // listo para volar, y contradecía a la pista que se veía por delante.
-      if (state.airspeed >= ROTATION_SPEED) return 'pull';
-      if (throttle < 0.85) return 'throttle';
-      return 'speed';
+      if (state.airspeed >= ROTATION_SPEED) return "pull";
+      if (throttle < 0.85) return "throttle";
+      return "speed";
     }
 
     if (!this.hasFlown) {
       this.hasFlown = true;
       this.celebrating = 2.6;
-      return 'flying';
+      return "flying";
     }
 
     // En el aire y de vuelta hacia la pista.
-    if (distanceToRunway < APPROACH_DISTANCE && throttle > APPROACH_THROTTLE) return 'slow';
-    return 'done';
+    if (distanceToRunway < APPROACH_DISTANCE && throttle > APPROACH_THROTTLE)
+      return "slow";
+    return "done";
   }
 }
 
-function renderCue(cue: StepView['cue'], teclaDe: ((accion: Accion) => string) | null): string {
-  if (cue.kind === 'symbol') return `<span class="tutor__glifo">${cue.glyph}</span>`;
+function renderCue(
+  cue: StepView["cue"],
+  teclaDe: ((accion: Accion) => string) | null,
+): string {
+  if (cue.kind === "symbol")
+    return `<span class="tutor__glifo">${cue.glyph}</span>`;
 
-  if (cue.kind === 'action') {
+  if (cue.kind === "action") {
     // **Una sola tecla, y la que usa quien está jugando.** Se probó a
     // enseñar las dos —la de cada mano— separadas por una «o», y salió mal:
     // dos teclas juntas se leen como una pareja, «esta sube y esta baja»,
     // cuando en realidad son dos maneras de hacer lo mismo. Con cuatro años
     // eso no lo arregla una «o» pequeña.
-    const tecla = teclaDe?.(cue.accion) ?? '';
-    return tecla ? `<span class="tutor__tecla">${nombreDeTecla(tecla)}</span>` : '';
+    const tecla = teclaDe?.(cue.accion) ?? "";
+    return tecla
+      ? `<span class="tutor__tecla">${nombreDeTecla(tecla)}</span>`
+      : "";
   }
 
-  const wide = cue.wide ? ' tutor__tecla--ancha' : '';
+  const wide = cue.wide ? " tutor__tecla--ancha" : "";
   return `<span class="tutor__tecla${wide}">${cue.label}</span>`;
 }
 
@@ -285,5 +352,5 @@ function renderCue(cue: StepView['cue'], teclaDe: ((accion: Accion) => string) |
  * un portátil con pantalla táctil puede cambiar de uno a otro sin recargar.
  */
 function isTouch(): boolean {
-  return window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  return window.matchMedia?.("(pointer: coarse)").matches ?? false;
 }

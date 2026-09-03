@@ -77,6 +77,8 @@ export const EN: Dictionary = {
   'tutor.speed': 'Let her run',
   'tutor.pull': 'Pull up',
   'tutor.flying': "You're flying!",
+  'tutor.frenar': 'Brake',
+  'tutor.salir': 'Follow the line off the runway',
   'tutor.slow': 'Ease the power',
 
   'help.title': 'How to fly',
