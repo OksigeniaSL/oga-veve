@@ -1735,6 +1735,16 @@ export class Game {
       heading: MathUtils.degToRad(runway.heading),
       airspeed: VELOCIDAD_DE_FINAL,
     });
+    /*
+     * **Soltar los mandos primero, y después poner el gas.**
+     *
+     * Estaba al revés: se ponía el gas al cuarenta y cinco por ciento y ocho
+     * líneas más abajo `releaseAll()` lo borraba a cero. Resultado: la lección
+     * de aterrizar empezaba en el aire y **parada**, planeando sin motor desde
+     * el primer segundo y sin que nadie dijera nada. «Mal empezamos, el juego
+     * empieza parado en el aire.»
+     */
+    this.input.releaseAll();
     this.input.controls.engineOn = true;
     this.input.controls.throttle = 0.45;
     this.faseAnunciada = "";
@@ -1744,7 +1754,6 @@ export class Game {
     this.wasOnGround = false;
     this.wasStalled = false;
     this.wasCrashed = false;
-    this.input.releaseAll();
     this.hud.tutor.reset();
     this.instructor.callar();
     this.updateBadge();
@@ -1877,7 +1886,7 @@ export class Game {
       x: this.flight.state.position.x,
       z: this.flight.state.position.z,
     });
-    this.runwayGuide.update(dt);
+    this.runwayGuide.update(dt, this.flight.state.position);
     // Cruzar un aro de la senda se celebra: destello, salto de escala y una
     // nota. Es la respuesta visual que pedía cualquiera que no sepa leer.
     if (this.runwayGuide.check(this.flight.state.position))

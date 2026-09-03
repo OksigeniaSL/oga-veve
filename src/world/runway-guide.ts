@@ -20,6 +20,7 @@
  */
 
 import {
+  Color,
   CylinderGeometry,
   DoubleSide,
   Group,
@@ -28,9 +29,9 @@ import {
   MeshLambertMaterial,
   TorusGeometry,
   type Vector3,
-} from 'three';
-import { delante } from './rumbo';
-import type { Scenario } from './scenarios';
+} from "three";
+import { delante } from "./rumbo";
+import type { Scenario } from "./scenarios";
 
 /** Cota del terreno en unas coordenadas de mundo. */
 export type GroundSampler = (x: number, z: number) => number;
@@ -48,6 +49,15 @@ export type GroundSampler = (x: number, z: number) => number;
 const RING_TERRAIN_CLEARANCE = 55;
 
 const OCRE = 0xdd923f;
+
+/**
+ * El color del aro cuando ya lo tienes encima.
+ *
+ * Del ocre de «ahí está» al verde de «vas bien». No hay que aprenderse ninguna
+ * escala: es un objeto que se enciende, y encenderse se entiende sin que nadie
+ * lo explique.
+ */
+const CERCA = 0x7ef07a;
 const TERRACOTA = 0xbe5d38;
 const BEIGE = 0xe4e2da;
 
@@ -76,9 +86,13 @@ export class RunwayGuide {
   /** Cuánto le queda de destello a cada aro. */
   private readonly flash: number[] = [];
 
-  constructor(scenario: Scenario, runwayElevation: number, ground: GroundSampler) {
+  constructor(
+    scenario: Scenario,
+    runwayElevation: number,
+    ground: GroundSampler,
+  ) {
     this.group = buildGuide(scenario, runwayElevation, ground);
-    const rings = this.group.getObjectByName('aros');
+    const rings = this.group.getObjectByName("aros");
     rings?.traverse((object) => {
       if (object instanceof Mesh) this.rings.push(object);
     });
@@ -106,6 +120,8 @@ export class RunwayGuide {
 
     this.flash[this.next] = 1;
     this.next++;
+    // El siguiente empieza apagado: todavía no te has acercado a él.
+    this.encendido = 0;
     this.highlight();
     return true;
   }
@@ -113,18 +129,55 @@ export class RunwayGuide {
   /** Vuelve a empezar la aproximación. */
   reset(): void {
     this.next = 0;
+    this.encendido = 0;
     this.flash.fill(0);
     this.highlight();
   }
 
-  update(dt: number): void {
+  /** Cuánto se ha encendido el aro que toca, de 0 a 1. Suavizado. */
+  private encendido = 0;
+
+  /**
+   * Anima los aros, y **enciende el que toca según te acercas**.
+   *
+   * Destellaban al cruzarlos y nada más, así que hasta el último instante el
+   * aro estaba igual de apagado viniendo bien que viniendo fatal: la
+   * celebración llegaba cuando ya no hacía falta. «Los aros deberían hacer
+   * algo, brillar o algo que ayude a entender que vas bien.»
+   *
+   * Ahora el siguiente responde a la distancia desde cuatro veces su radio:
+   * sube el brillo y se ensancha un pelo, y muy cerca late. Es la misma idea
+   * que el aro de misión y por el mismo motivo — lo que hay que decir es «vas
+   * bien» **mientras** vas, no cuando ya llegaste.
+   */
+  update(dt: number, avion?: Vector3): void {
+    const siguiente = this.rings[this.next];
+    if (siguiente && avion) {
+      const radio = (siguiente.geometry as TorusGeometry).parameters.radius;
+      const d = avion.distanceTo(siguiente.position);
+      const cerca = Math.max(0, Math.min(1, (radio * 5 - d) / (radio * 4)));
+      // Suavizado: sin esto, entrar y salir del borde hace parpadear el aro.
+      this.encendido += (cerca - this.encendido) * Math.min(1, dt * 2);
+      const e = this.encendido;
+      const late = e > 0.9 ? 0.09 * Math.sin(performance.now() / 90) : 0;
+      const mat = siguiente.material as MeshBasicMaterial;
+      // Solo si no está destellando: el destello de haberlo cruzado manda.
+      if ((this.flash[this.next] ?? 0) <= 0) {
+        mat.opacity = Math.min(1, 0.55 + e * 0.45 + late);
+        mat.color.setHex(OCRE).lerp(new Color(CERCA), e);
+        siguiente.scale.setScalar(1 + e * 0.08 + late);
+      }
+    }
+
     for (let i = 0; i < this.rings.length; i++) {
       if (this.flash[i]! <= 0) continue;
       this.flash[i] = Math.max(0, this.flash[i]! - dt * 1.6);
       const ring = this.rings[i]!;
       const punch = this.flash[i]!;
       ring.scale.setScalar(1 + punch * 0.45);
-      (ring.material as MeshBasicMaterial).color.setHex(punch > 0.5 ? 0xffffff : OCRE);
+      (ring.material as MeshBasicMaterial).color.setHex(
+        punch > 0.5 ? 0xffffff : OCRE,
+      );
       if (punch === 0) ring.scale.setScalar(1);
     }
   }
@@ -151,7 +204,7 @@ function buildGuide(
   ground: GroundSampler,
 ): Group {
   const group = new Group();
-  group.name = 'guia-pista';
+  group.name = "guia-pista";
 
   const { runway } = scenario;
   // Hacia dónde se avanza volando este rumbo. Sale de `rumbo.ts` y no de una
@@ -165,8 +218,12 @@ function buildGuide(
   const thresholdZ = runway.z - az * runway.length * 0.5;
 
   group.add(beacon(thresholdX, runwayElevation, thresholdZ));
-  group.add(gatePosts(thresholdX, runwayElevation, thresholdZ, runway.width, ax, az));
-  group.add(approachRings(thresholdX, runwayElevation, thresholdZ, ax, az, ground));
+  group.add(
+    gatePosts(thresholdX, runwayElevation, thresholdZ, runway.width, ax, az),
+  );
+  group.add(
+    approachRings(thresholdX, runwayElevation, thresholdZ, ax, az, ground),
+  );
 
   return group;
 }
@@ -195,7 +252,7 @@ function beacon(x: number, y: number, z: number): Mesh {
   );
   mesh.position.set(x, y + height / 2, z);
   mesh.renderOrder = 2;
-  mesh.name = 'faro';
+  mesh.name = "faro";
   return mesh;
 }
 
@@ -220,14 +277,22 @@ function gatePosts(
       new CylinderGeometry(0.55, 0.8, height, 6),
       new MeshLambertMaterial({ color: side < 0 ? TERRACOTA : BEIGE }),
     );
-    post.position.set(x + px * reach * side, y + height / 2, z + pz * reach * side);
+    post.position.set(
+      x + px * reach * side,
+      y + height / 2,
+      z + pz * reach * side,
+    );
     posts.add(post);
 
     const cap = new Mesh(
       new CylinderGeometry(1.7, 1.7, 2.2, 8),
       new MeshBasicMaterial({ color: OCRE }),
     );
-    cap.position.set(x + px * reach * side, y + height + 1, z + pz * reach * side);
+    cap.position.set(
+      x + px * reach * side,
+      y + height + 1,
+      z + pz * reach * side,
+    );
     posts.add(cap);
   }
   return posts;
@@ -249,7 +314,7 @@ function approachRings(
   ground: GroundSampler,
 ): Group {
   const rings = new Group();
-  rings.name = 'aros';
+  rings.name = "aros";
 
   for (let i = 0; i < RING_COUNT; i++) {
     // Reparto cuadrático: más juntos cerca del umbral, que es donde hace
@@ -265,7 +330,12 @@ function approachRings(
       new TorusGeometry(radius, radius * 0.075, 6, 24),
       // Material propio por aro: comparten uno solo y se encienden todos a
       // la vez, que es exactamente lo contrario de lo que hace falta.
-      new MeshBasicMaterial({ color: OCRE, transparent: true, opacity: 0.75, depthWrite: false }),
+      new MeshBasicMaterial({
+        color: OCRE,
+        transparent: true,
+        opacity: 0.75,
+        depthWrite: false,
+      }),
     );
 
     const ringX = x - ax * distance;
