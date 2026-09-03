@@ -52,6 +52,22 @@ const IDLE_SPEED = 2;
  */
 const MINIMA_DE_VUELO = 0.9;
 
+/**
+ * El gas que sostiene el vuelo nivelado, de 0 a 1.
+ *
+ * Por encima se sube sin tocar la palanca, por debajo se planea. Es el punto
+ * de equilibrio del peldaño sencillo, y ponerlo por debajo de la mitad tiene
+ * su motivo: quien juega aquí lleva el gas alto casi siempre, y lo que hay que
+ * hacer notorio es **quitarlo**.
+ */
+const MOTOR_QUE_SOSTIENE = 0.55;
+
+/** Lo que se baja con el motor al ralentí, m/s. El planeo de una avioneta. */
+const CAIDA_SIN_MOTOR = 3.5;
+
+/** Y lo que se sube a todo gas sin tocar la palanca, m/s. */
+const SUBIDA_CON_MOTOR = 2.5;
+
 /** Cuánta holgura se permite para considerar que las ruedas siguen tocando, m. */
 const PEGADO_AL_SUELO = 1;
 
@@ -304,7 +320,38 @@ export class ArcadeFlightModel implements FlightModel {
      */
     const canClimb =
       !this.state.onGround || (bite > 0.88 && this.state.onRunway);
-    const wantedClimb = canClimb ? controls.elevator * MAX_CLIMB * bite : 0;
+
+    /*
+     * **El motor también manda en la altura, y esa es la mitad que faltaba.**
+     *
+     * Aquí la altura la llevaba solo la palanca: con el motor a cero y la
+     * palanca centrada el avión seguía nivelado indefinidamente. «Motor a 0,
+     * se queda flotando en el aire; digo yo que una avioneta no se queda
+     * recta.»
+     *
+     * Y tiene razón, porque es **el** hecho de volar: un avión se sostiene
+     * porque avanza, y avanza porque el motor tira. Quitar motor es empezar a
+     * bajar. Es lo único que hay que llevarse de este peldaño al siguiente, y
+     * hasta hoy no estaba.
+     *
+     * No es física de verdad —eso es el peldaño de Taguato Ruvicha, donde el
+     * empuje pelea contra la resistencia y la velocidad de equilibrio sale de
+     * la actitud—. Es **una recta**: por encima del gas que sostiene el nivel
+     * se sube, por debajo se planea, y en medio se vuela recto. Un niño de
+     * cuatro años puede descubrir eso solo, moviendo el mando y mirando.
+     *
+     * Sigue sin poder caerse: la palanca puede compensar el planeo entero, así
+     * que quien tire y no entienda por qué baja, deja de bajar. Lo que ya no
+     * puede es no enterarse.
+     */
+    const planeo =
+      gas >= MOTOR_QUE_SOSTIENE
+        ? ((gas - MOTOR_QUE_SOSTIENE) / (1 - MOTOR_QUE_SOSTIENE)) *
+          SUBIDA_CON_MOTOR
+        : ((gas - MOTOR_QUE_SOSTIENE) / MOTOR_QUE_SOSTIENE) * CAIDA_SIN_MOTOR;
+    const wantedClimb = canClimb
+      ? (controls.elevator * MAX_CLIMB + planeo) * bite
+      : 0;
     this.climb += (wantedClimb - this.climb) * Math.min(1, step * 2.2);
 
     // El morro apunta a donde se va, más un pelín para que se vea la
