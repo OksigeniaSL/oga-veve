@@ -112,6 +112,8 @@ import { arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
+import { AvisosDeAltura } from "./flight/avisos-de-altura";
+import { callar, decir, permitirVoz } from "./audio/voz";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 
@@ -217,6 +219,14 @@ export class Game {
   private readonly runwayGuide: RunwayGuide;
   /** Índice de la misión de la lista del escenario, o -1 en vuelo libre. */
   private missionIndex = -1;
+  /**
+   * La cuenta atrás de la toma: *one hundred… fifty, thirty, twenty, ten*.
+   *
+   * Vive en el juego y no en el HUD porque no es un adorno de pantalla: es lo
+   * que enseña el ritmo de la recogida, y se dice **y** se dibuja.
+   */
+  private readonly avisosDeAltura = new AvisosDeAltura();
+
   /** La misión elegida en el hangar, hasta que arranca. Ver `start`. */
   private misionInicial: Mission | null;
   private readonly hud: Hud;
@@ -1040,6 +1050,9 @@ export class Game {
   }
 
   resetFlight(): void {
+    // Una cuenta atrás a medias de un vuelo que ya no existe.
+    this.avisosDeAltura.reiniciar();
+    callar();
     const { runway } = this.scenario;
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
@@ -1810,7 +1823,25 @@ export class Game {
       this.flight.step(dt, this.input.controls);
     }
 
-    this.missionMarker.update(dt);
+    /*
+     * Los avisos de la toma. Se dicen **y** se enseñan, siempre: hay quien
+     * juega en silencio, hay quien tiene la pestaña muteada y hay quien no
+     * oye. La voz acompaña; el número manda.
+     */
+    const aviso = this.avisosDeAltura.paso(
+      this.flight.state.heightAboveGround,
+      !this.flight.state.onGround,
+    );
+    if (aviso) {
+      decir(aviso.dice);
+      this.hud.flash(`${aviso.metros}`, 1.6);
+    }
+
+    // Y el aro, que se enciende según te acercas: necesita saber dónde estás.
+    this.missionMarker.update(dt, {
+      x: this.flight.state.position.x,
+      z: this.flight.state.position.z,
+    });
     this.runwayGuide.update(dt);
     // Cruzar un aro de la senda se celebra: destello, salto de escala y una
     // nota. Es la respuesta visual que pedía cualquiera que no sepa leer.
@@ -2621,6 +2652,10 @@ export class Game {
 
   private toggleSound(): void {
     const level = this.audio.cycleLevel();
+    // La voz obedece al mismo botón que el resto del sonido. Quien pone el
+    // juego en mudo lo pone en mudo entero, y una voz que sigue hablando con
+    // el altavoz tachado es exactamente lo que nadie espera.
+    permitirVoz(level.id !== "mudo");
     this.hud.setSoundLevel(level.glyph, t(`sound.${level.id}` as never));
     this.hud.flash(t(`sound.${level.id}` as never));
   }
