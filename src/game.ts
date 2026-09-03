@@ -1439,10 +1439,47 @@ export class Game {
      * reconstruir en la línea de arriba, y la reconstrucción se lleva por
      * delante cualquier cosa que se hubiera apagado antes.
      */
+    /*
+     * **Sobre la fotografía, la pista es la de la fotografía.**
+     *
+     * Empezó apagando solo el hormigón de las plataformas, porque una losa de
+     * color plano sobre una terminal fotografiada era «la del pulpo sobre Los
+     * Rodeos». El resto se dejaba con el argumento de que nuestra pista es
+     * nítida y la de la foto no. Jugando se vio que ese argumento no se
+     * sostiene: la foto de Tenerife Norte trae la 12/30 **con sus marcas de
+     * verdad**, y lo que hacíamos era taparla con una losa nuestra, más
+     * oscura, descentrada y metro y medio en el aire — con su pared y todo.
+     * «Asfalto mezclado con tierra marrón.» «Ocurre en el último kilómetro.»
+     *
+     * Así que sobre la foto se apaga todo lo que la foto ya trae: el asfalto,
+     * las cintas de rodadura, el eje, las teclas de piano, el designador y el
+     * amarillo de las calles.
+     *
+     * **Y se queda lo que la foto no trae**, que es justo lo que enseña:
+     *
+     *   las luces         · borde, umbral, aproximación y PAPI
+     *   las letras        · las de la foto no se leen desde el aire
+     *   la raya verde     · la ruta, que es del juego y no del aeropuerto
+     *   las mangas        · el viento de hoy, no el del día de la foto
+     *
+     * El suelo no se toca: el avión sigue rodando sobre nuestra superficie
+     * lisa. Lo que se quita es la manta, y ahora entera.
+     *
+     * En el mundo dibujado no se apaga nada: allí no hay foto que respetar y
+     * nuestra pista es la única que hay.
+     */
+    const DE_LA_FOTO = new Set([
+      "pavimento:asphalt",
+      "pavimento:rodadura",
+      "pavimento:concrete",
+      "pintura",
+      "designador",
+      "amarillo",
+    ]);
     this.terrain.group
       .getObjectByName(`aerodromo:${aero.id}`)
       ?.traverse((o) => {
-        if (o.name === "pavimento:concrete") o.visible = false;
+        if (DE_LA_FOTO.has(o.name)) o.visible = false;
       });
     this.alzadoDelAerodromo = alzado - (perfilDeLaFoto ? 0 : datum);
   }
