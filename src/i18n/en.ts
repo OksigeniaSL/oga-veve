@@ -53,7 +53,10 @@ export const EN: Dictionary = {
   'aircraft.mainumby.description': 'Crop duster biplane. Nimble and strong.',
 
   'mission.rio.name': 'See the river',
-  'mission.ciudad.name': 'Over the city',
+  'mission.rioabajo.name': 'Follow the river',
+  'mission.mar.name': 'Out to sea',
+  'mission.anaga.name': 'To Anaga',
+  'mission.cumbre.name': 'To the summit',
   'mission.lomas.name': 'To the hills',
   'mission.first.name': 'Your first flight',
   'mission.valley.name': 'Around the valley',

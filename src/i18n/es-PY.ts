@@ -46,7 +46,10 @@ export const ES_PY = {
   'aircraft.mainumby.description': 'Biplano fumigador. Ágil y con mucha fuerza.',
 
   'mission.rio.name': 'Ver el río',
-  'mission.ciudad.name': 'Sobre la ciudad',
+  'mission.rioabajo.name': 'Seguir el río',
+  'mission.mar.name': 'Salir al mar',
+  'mission.anaga.name': 'A Anaga',
+  'mission.cumbre.name': 'A la cumbre',
   'mission.lomas.name': 'A las lomas',
   'mission.first.name': 'Tu primer vuelo',
   'mission.valley.name': 'La vuelta al valle',
