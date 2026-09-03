@@ -1904,10 +1904,22 @@ export class Game {
       z: this.flight.state.position.z,
     });
     this.runwayGuide.update(dt, this.flight.state.position);
-    // Cruzar un aro de la senda se celebra: destello, salto de escala y una
-    // nota. Es la respuesta visual que pedía cualquiera que no sepa leer.
-    if (this.runwayGuide.check(this.flight.state.position))
-      this.audio.cue("success");
+    /*
+     * Cruzar un aro se celebra: destello, salto de escala y una nota. Y
+     * **fallarlo también dice algo**, que era lo que faltaba: hasta ahora
+     * pasar por encima o por fuera no producía ninguna reacción, así que el
+     * aro no enseñaba nada — «algunos aros los pasé por encima sin que me
+     * dijera nada».
+     *
+     * Perderlo no se castiga y no suena a error. Suena distinto y nada más,
+     * porque perder un aro **no es un fallo**: es información, y quien no lee
+     * necesita enterarse de que eso de ahí contaba. Lo que sí se hace es
+     * seguir adelante: el siguiente aro pasa a ser el siguiente y la senda
+     * sigue guiando, en vez de quedarse esperando a uno que ya no volverá.
+     */
+    const aro = this.runwayGuide.check(this.flight.state.position);
+    if (aro === "cruzado") this.audio.cue("success");
+    else if (aro === "perdido") this.audio.cue("attention");
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
