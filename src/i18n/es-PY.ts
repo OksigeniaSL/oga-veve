@@ -153,6 +153,9 @@ export const ES_PY = {
   // te lo impida: es que en un aeropuerto de verdad ahí puede venir otro.
   'vuelo.sinPermiso': 'Entraste sin la luz verde. La próxima, esperala',
 
+  'hangar.pais.py': 'Paraguay',
+  'hangar.pais.es': 'España',
+  'hangar.pais.inventado': 'Inventados',
   'hangar.donde': '¿A dónde volamos?',
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro
   // modelos de avión, que es exactamente la confusión de la que avisa

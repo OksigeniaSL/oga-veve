@@ -39,6 +39,18 @@ export const VECES_LEJOS = 6;
 export interface Scenario {
   id: string;
   nameKey: string;
+  /**
+   * De qué país es, para agruparlos en el hangar.
+   *
+   * Cuatro sitios caben en una fila y no hace falta agrupar nada. Veinte no
+   * caben de ninguna manera, y agruparlos por país es lo que un niño reconoce
+   * sin leer, porque la bandera se reconoce antes que el nombre.
+   *
+   * `inventado` es su propio grupo a propósito: el Valle de la Cordillera y la
+   * Llanura del Chaco son sitios paraguayos de nombre pero no son ningún
+   * aeropuerto de verdad, y mezclarlos con Silvio Pettirossi diría que existen.
+   */
+  pais: 'py' | 'es' | 'inventado';
   /** Semilla del generador. Cambiarla cambia el relieve por completo. */
   seed: number;
   /** Lado del terreno, en metros. */
@@ -140,6 +152,7 @@ export interface Scenario {
 export const VALLE_CORDILLERA: Scenario = {
   id: 'valle-cordillera',
   nameKey: 'scenario.valle.name',
+  pais: 'inventado',
   seed: 19540514,
   size: 14000,
   segments: 384,
@@ -183,6 +196,7 @@ export const VALLE_CORDILLERA: Scenario = {
 export const CHACO: Scenario = {
   id: 'chaco',
   nameKey: 'scenario.chaco.name',
+  pais: 'inventado',
   seed: 18701201,
   size: 16000,
   segments: 320,
@@ -323,6 +337,7 @@ function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario['runway'] {
 export const PETTIROSSI: Scenario = {
   id: 'pettirossi',
   nameKey: 'scenario.pettirossi.name',
+  pais: 'py',
   seed: 19161017,
   /*
    * **Veintidós kilómetros, y son por el río.**
@@ -419,6 +434,7 @@ export const PETTIROSSI: Scenario = {
 export const TENERIFE_NORTE: Scenario = {
   id: 'tenerife-norte',
   nameKey: 'scenario.tenerife.name',
+  pais: 'es',
   // Elegida midiendo con `scripts/buscar-semilla.mjs`, que puntúa dos cosas:
   // que el terreno de alrededor esté a la cota del aeropuerto y que **no haya
   // un muro en la prolongación del eje de pista**. La primera versión tenía

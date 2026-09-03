@@ -509,6 +509,69 @@ const trazo = (d: string): string =>
         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
         aria-hidden="true">${d}</svg>`;
 
+/*
+ * ## Los sitios, agrupados por país
+ *
+ * Cuatro sitios caben en una fila y agruparlos no aporta nada. Pero el plan
+ * son veinte, y veinte tarjetas seguidas no son una lista: son un muro. La
+ * bandera parte ese muro en trozos que se reconocen de un vistazo.
+ *
+ * Y aquí hay que ser honesto con para quién es esto: **el grupo no es para el
+ * niño de cuatro años**, que navega por la foto de la tarjeta y no lee el
+ * rótulo. Es para el adulto que está al lado, y es lo que hace que quepan
+ * veinte aeropuertos sin que la pantalla se vuelva inmanejable. Lo que sí es
+ * para el niño es la bandera, que se reconoce mucho antes que el nombre.
+ *
+ * El grupo de los inventados va primero porque son los dos mundos dibujados,
+ * los que se juegan sin clave de teselas y por donde se empieza a aprender. Y
+ * va aparte, con su marco de rayas en vez de bandera, porque el Valle de la
+ * Cordillera y la Llanura del Chaco tienen nombre paraguayo pero no son
+ * ningún aeropuerto de verdad: meterlos con Silvio Pettirossi sería decir que
+ * existen.
+ */
+
+/** Los grupos, en el orden en que se leen. */
+const PAISES = ['inventado', 'py', 'es'] as const;
+
+/**
+ * Las banderas, dibujadas a mano y no con emojis.
+ *
+ * Un emoji de bandera no se ve igual en todas partes —en Windows sale la
+ * pareja de letras, «PY»— y una bandera que a veces es texto no sirve para
+ * quien no lee. Tres bandas de color son tres bandas de color en cualquier
+ * pantalla.
+ *
+ * El escudo del centro de la paraguaya no se dibuja: a este tamaño sería una
+ * mancha, y las bandas con el nombre al lado ya la identifican.
+ */
+const BANDERAS: Record<(typeof PAISES)[number], string> = {
+  py: `<rect width="24" height="5.33" y="0" fill="#d52b1e" /><rect width="24" height="5.34" y="5.33" fill="#fff" /><rect width="24" height="5.33" y="10.67" fill="#0038a8" />`,
+  es: `<rect width="24" height="4" y="0" fill="#aa151b" /><rect width="24" height="8" y="4" fill="#f1bf00" /><rect width="24" height="4" y="12" fill="#aa151b" />`,
+  // Los inventados no tienen bandera porque no tienen país. Un marco de rayas
+  // dice «esto es de mentira» sin tener que escribirlo.
+  inventado: `<rect x="0.75" y="0.75" width="22.5" height="14.5" rx="2" fill="none"
+      stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2.5" opacity="0.6" />`,
+};
+
+/** Un grupo de sitios con su bandera, o nada si ese país no tiene ninguno. */
+function grupoDeSitios(pais: (typeof PAISES)[number], elegido: string): string {
+  const hechos = SCENARIOS.filter((e) => e.pais === pais);
+  const pronto = PROXIMAMENTE.filter((p) => p.pais === pais);
+  if (!hechos.length && !pronto.length) return '';
+  return `
+      <section class="hangar__pais">
+        <h3 class="hangar__pais-nombre">
+          <svg class="hangar__bandera" viewBox="0 0 24 16" width="24" height="16"
+               aria-hidden="true" focusable="false">${BANDERAS[pais]}</svg>
+          ${t(`hangar.pais.${pais}` as never)}
+        </h3>
+        <div class="hangar__rejilla hangar__rejilla--suelta">
+          ${hechos.map((e) => fichaDeSitio(e, e.id === elegido)).join('')}
+          ${pronto.map((p) => fichaProximamente(p.ciudad)).join('')}
+        </div>
+      </section>`;
+}
+
 const PASO_DONDE = trazo(
   '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" /><circle cx="12" cy="10" r="2.6" />',
 );
@@ -656,9 +719,8 @@ export function abrirHangar(
             ? `
         <section class="hangar__bloque" aria-labelledby="hangar-sitio">
           <h2 class="hangar__pregunta" id="hangar-sitio">${t('hangar.donde')}</h2>
-          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-sitio">
-            ${SCENARIOS.map((e) => fichaDeSitio(e, e.id === sitio.id)).join('')}
-            ${PROXIMAMENTE.map((p) => fichaProximamente(p.ciudad)).join('')}
+          <div class="hangar__paises" role="radiogroup" aria-labelledby="hangar-sitio">
+            ${PAISES.map((p) => grupoDeSitios(p, sitio.id)).join('')}
           </div>
         </section>`
             : ''
