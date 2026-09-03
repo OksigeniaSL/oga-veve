@@ -13,15 +13,26 @@
  */
 
 import {
+  Color,
   CylinderGeometry,
   DoubleSide,
   Group,
   Mesh,
   MeshBasicMaterial,
   TorusGeometry,
-} from 'three';
+} from "three";
 
 const OBJECTIVE_COLOUR = 0x7ec86a;
+
+/**
+ * Los dos colores del aro: lejos y encima.
+ *
+ * Del ocre apagado al verde de «bien». No es una escala de colores que haya
+ * que aprender —eso ya lo hace el PAPI y con eso basta—: es un solo objeto que
+ * se enciende, y encenderse se entiende sin que nadie lo explique.
+ */
+const APAGADO = 0xc98a3a;
+const ENCENDIDO = 0x7ef07a;
 /** Alto de la columna, en metros. Tiene que verse por encima de las lomas. */
 const BEAM_HEIGHT = 520;
 
@@ -29,9 +40,13 @@ export class MissionMarker {
   readonly group = new Group();
   private readonly ring: Mesh;
   private spin = 0;
+  /** Radio de aceptación del objetivo, m. De él sale «cerca». */
+  private radio = 400;
+  /** Cuánto se ha encendido, de 0 a 1. Se suaviza para que no parpadee. */
+  private encendido = 0;
 
   constructor() {
-    this.group.name = 'objetivo';
+    this.group.name = "objetivo";
     this.group.visible = false;
 
     const beam = new Mesh(
@@ -65,19 +80,68 @@ export class MissionMarker {
   }
 
   /** Coloca la señal, o la esconde si no hay objetivo con sitio. */
-  moveTo(target: { x: number; z: number } | null, groundHeight: number): void {
+  moveTo(
+    target: { x: number; z: number } | null,
+    groundHeight: number,
+    radio = 400,
+  ): void {
     if (!target) {
       this.group.visible = false;
       return;
     }
+    this.radio = radio;
     this.group.visible = true;
     this.group.position.set(target.x, groundHeight, target.z);
     this.ring.position.y = 90;
   }
 
-  update(dt: number): void {
+  /**
+   * Gira el aro, y **lo enciende cuando vas bien**.
+   *
+   * Girar despacio bastaba para que el ojo lo encontrara, pero no decía nada
+   * más: el aro estaba igual de apagado a diez kilómetros que a punto de
+   * atravesarlo. «Los aros deberían hacer algo, brillar o algo que ayude a
+   * entender que vas bien.»
+   *
+   * Ahora responde a la distancia, que es la única pregunta que tiene un aro:
+   * ¿me estoy acercando? Se enciende progresivamente desde cuatro veces su
+   * radio de aceptación —brillo, grosor de color y velocidad de giro suben a
+   * la vez— y dentro del radio late. Tres señales de la misma cosa, porque a
+   * los cuatro años una sola se pierde.
+   *
+   * Lo que **no** hace es esperar a que aciertes para avisar. Un aro que solo
+   * se enciende al atravesarlo llega tarde: para entonces ya no hacía falta.
+   */
+  update(dt: number, avion?: { x: number; z: number }): void {
     if (!this.group.visible) return;
-    this.spin += dt * 0.6;
+
+    if (avion) {
+      const d = Math.hypot(
+        avion.x - this.group.position.x,
+        avion.z - this.group.position.z,
+      );
+      // Cero a cuatro radios, uno dentro del radio.
+      const cerca = Math.max(
+        0,
+        Math.min(1, (this.radio * 4 - d) / (this.radio * 3)),
+      );
+      // Suavizado: sin esto, volar en el borde hace parpadear el aro.
+      this.encendido += (cerca - this.encendido) * Math.min(1, dt * 2);
+    }
+
+    const e = this.encendido;
+    // El latido, solo cuando ya estás dentro. Fuera sería ruido.
+    const late = e > 0.92 ? 0.12 * Math.sin(this.spin * 7) : 0;
+    for (const hijo of this.group.children) {
+      const mat = (hijo as Mesh).material as MeshBasicMaterial;
+      const base = hijo === this.ring ? 0.72 : 0.3;
+      mat.opacity = Math.min(1, base * (0.55 + e * 0.9) + late);
+      mat.color.setHex(APAGADO).lerp(new Color(ENCENDIDO), e);
+    }
+    this.ring.scale.setScalar(1 + late * 1.6);
+
+    // Y gira más deprisa cuanto más cerca: el movimiento también informa.
+    this.spin += dt * (0.6 + e * 2.4);
     this.ring.rotation.z = this.spin;
   }
 
