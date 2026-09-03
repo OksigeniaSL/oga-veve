@@ -54,10 +54,27 @@ import {
   type Object3D,
   type PerspectiveCamera,
   type WebGLRenderer,
-} from 'three';
-import { TilesRenderer, WGS84_ELLIPSOID } from '3d-tiles-renderer';
-import { GoogleCloudAuthPlugin } from '3d-tiles-renderer/core/plugins';
-import type { Scenario } from './scenarios';
+} from "three";
+import { TilesRenderer, WGS84_ELLIPSOID } from "3d-tiles-renderer";
+import { GoogleCloudAuthPlugin } from "3d-tiles-renderer/core/plugins";
+import type { Scenario } from "./scenarios";
+
+/**
+ * Cuánto detalle se pide a la fotografía, arriba y abajo.
+ *
+ * Es el `errorTarget` del cargador de teselas: cuanto más bajo, más fino y más
+ * caro. De fábrica viene en seis.
+ *
+ * **Abajo, dos.** Rodando con la nariz a dos metros del asfalto, el seis
+ * convierte la pista en una acuarela — «esa mezcla entre realidad y fotografía
+ * borrosa parece el holocausto zombie».
+ *
+ * **Arriba, el de fábrica.** A quinientos metros ese detalle no se ve y solo
+ * cuesta: cada tesela hay que bajarla y descomprimirla en el mismo hilo que
+ * dibuja, y eso es lo que hacía que el mundo se moviera a tirones.
+ */
+const DETALLE_ABAJO = 2;
+const DETALLE_ARRIBA = 6;
 
 /**
  * Lo que el renderizador expone en marcha pero no en sus tipos.
@@ -106,7 +123,11 @@ const PARCHE_N = 33;
 export interface Teselas {
   readonly grupo: Group;
   /** Se llama cada fotograma. Decide qué teselas hacen falta y las pide. */
-  update(camara: PerspectiveCamera, renderizador: WebGLRenderer, dt: number): void;
+  update(
+    camara: PerspectiveCamera,
+    renderizador: WebGLRenderer,
+    dt: number,
+  ): void;
   /** Si ya se ha posado sobre nuestro suelo. Hasta entonces, no se enseña. */
   readonly asentado: boolean;
   /** El desfase medido, en metros. `null` mientras no se haya podido medir. */
@@ -176,7 +197,10 @@ export interface Teselas {
    */
   medidaDirecta(x: number, z: number): number | null;
   /** La cota, la arista del triángulo y el error geométrico de la tesela. */
-  detalleEn(x: number, z: number): { y: number; arista: number; error: number } | null;
+  detalleEn(
+    x: number,
+    z: number,
+  ): { y: number; arista: number; error: number } | null;
   /** Mueve y rellena el parche. Se llama cada fotograma, con presupuesto. */
   seguirAlAvion(x: number, z: number): void;
   dispose(): void;
@@ -209,7 +233,7 @@ export function crearTeselas(
   if (!clave || !aero) return null;
 
   const grupo = new Group();
-  grupo.name = 'mundo-real';
+  grupo.name = "mundo-real";
   // Hasta que no se ha medido el desfase no se enseña: aparecer cuarenta metros
   // desplazado y luego dar un salto es peor que tardar un segundo más.
   grupo.visible = false;
@@ -233,7 +257,7 @@ export function crearTeselas(
    * pedir. Nítida sí; con la nariz pegada al suelo, siempre va a ser una foto
    * vista muy de cerca.
    */
-  teselas.errorTarget = 2;
+  teselas.errorTarget = DETALLE_ABAJO;
   /*
    * La matriz se pone a mano y **el desfase se compone dentro de ella**.
    *
@@ -286,7 +310,9 @@ export function crearTeselas(
    */
   const R_TIERRA = 6371000;
   const nivelDelMar = (x: number, z: number): number =>
-    (escenario.waterLevel ?? 0) + (desfase ?? 0) - (x * x + z * z) / (2 * R_TIERRA);
+    (escenario.waterLevel ?? 0) +
+    (desfase ?? 0) -
+    (x * x + z * z) / (2 * R_TIERRA);
 
   const parchePaso = PARCHE_LADO / (PARCHE_N - 1);
   const parche = {
@@ -330,9 +356,11 @@ export function crearTeselas(
   const errorPorEscena = new Map<object, number>();
   const refrescarErrores = (): void => {
     errorPorEscena.clear();
-    teselas.forEachLoadedModel((escena: object, tesela: { geometricError?: number }) => {
-      errorPorEscena.set(escena, tesela.geometricError ?? Infinity);
-    });
+    teselas.forEachLoadedModel(
+      (escena: object, tesela: { geometricError?: number }) => {
+        errorPorEscena.set(escena, tesela.geometricError ?? Infinity);
+      },
+    );
   };
   /** El error geométrico de la tesela a la que pertenece un objeto golpeado. */
   const errorDe = (obj: Object3D | null): number => {
@@ -354,11 +382,13 @@ export function crearTeselas(
     if (!g) return null;
     const error = errorDe(g.object);
     const malla = g.object as Mesh;
-    const pos = malla.geometry?.getAttribute?.('position');
+    const pos = malla.geometry?.getAttribute?.("position");
     if (!g.face || !pos) return { y: g.point.y, arista: Infinity, error };
     const idx = [g.face.a, g.face.b, g.face.c];
     for (let i = 0; i < 3; i++) {
-      bordes[i]!.fromBufferAttribute(pos as never, idx[i]!).applyMatrix4(malla.matrixWorld);
+      bordes[i]!.fromBufferAttribute(pos as never, idx[i]!).applyMatrix4(
+        malla.matrixWorld,
+      );
     }
     const arista = Math.max(
       bordes[0]!.distanceTo(bordes[1]!),
@@ -451,12 +481,14 @@ export function crearTeselas(
       if (!parche.listo) return null;
       const fx = (x - parche.x + PARCHE_LADO / 2) / parchePaso;
       const fz = (z - parche.z + PARCHE_LADO / 2) / parchePaso;
-      if (fx < 0 || fz < 0 || fx > PARCHE_N - 1.001 || fz > PARCHE_N - 1.001) return null;
+      if (fx < 0 || fz < 0 || fx > PARCHE_N - 1.001 || fz > PARCHE_N - 1.001)
+        return null;
       const c0 = Math.floor(fx);
       const f0 = Math.floor(fz);
       const tx = fx - c0;
       const tz = fz - f0;
-      const v = (f: number, c: number): number => parche.cotas[f * PARCHE_N + c]!;
+      const v = (f: number, c: number): number =>
+        parche.cotas[f * PARCHE_N + c]!;
       const a = v(f0, c0) * (1 - tx) + v(f0, c0 + 1) * tx;
       const b = v(f0 + 1, c0) * (1 - tx) + v(f0 + 1, c0 + 1) * tx;
       return a * (1 - tz) + b * tz;
@@ -464,7 +496,10 @@ export function crearTeselas(
 
     seguirAlAvion(x: number, z: number) {
       // Se recentra cuando el avión se acerca al borde del parche.
-      if (parche.fila >= PARCHE_N && Math.hypot(x - parche.x, z - parche.z) > PARCHE_LADO * 0.3) {
+      if (
+        parche.fila >= PARCHE_N &&
+        Math.hypot(x - parche.x, z - parche.z) > PARCHE_LADO * 0.3
+      ) {
         parche.x = x;
         parche.z = z;
         parche.fila = 0;
@@ -497,6 +532,42 @@ export function crearTeselas(
       return (teselas as unknown as ConEstadisticas).stats?.visible ?? 0;
     },
     update(camara: PerspectiveCamera, renderizador: WebGLRenderer, dt: number) {
+      /*
+       * **El detalle que se pide depende de lo alto que se vaya.**
+       *
+       * `errorTarget` estaba clavado en dos —el valor de fábrica es seis— y el
+       * comentario de más arriba decía que eso cuesta memoria y descargas
+       * «no fotogramas». Medido jugando, con la fotografía puesta: **veintiún
+       * fotogramas por segundo, cuatrocientas llamadas de dibujo y ciento
+       * treinta mil triángulos.**
+       *
+       * Ciento treinta mil triángulos no son nada para una tarjeta de hoy, y
+       * cuatrocientas llamadas tampoco matan. O sea que el tiempo **no se iba
+       * en dibujar**: se iba en traer y descomprimir teselas, que ocurre en el
+       * mismo hilo. Pedir tres veces más detalle del de fábrica multiplica esa
+       * cuenta, y por eso el mundo se movía a tirones — que es exactamente lo
+       * que se venía notando como «va como una tortuga».
+       *
+       * Pero el dos no era un capricho: rodando con la nariz a dos metros del
+       * asfalto, el seis convierte la pista en una acuarela. Las dos cosas son
+       * verdad y no se contradicen, porque **no pasan a la vez**: el detalle
+       * fino hace falta abajo y despacio, y arriba no se ve.
+       *
+       * Así que el detalle acompaña a la altura. En el suelo, el dos de antes;
+       * a doscientos metros ya se puede aflojar; a quinientos, el de fábrica.
+       * Se mueve poco a poco para que no se note el escalón.
+       */
+      const suelo = alturaCruda(camara.position.x, camara.position.z);
+      const alto = camara.position.y - (suelo ?? 0);
+      const quiere =
+        alto < 50
+          ? DETALLE_ABAJO
+          : alto > 500
+            ? DETALLE_ARRIBA
+            : DETALLE_ABAJO +
+              ((alto - 50) / 450) * (DETALLE_ARRIBA - DETALLE_ABAJO);
+      teselas.errorTarget += (quiere - teselas.errorTarget) * Math.min(1, dt);
+
       teselas.setCamera(camara);
       /*
        * **Y la resolución de la pantalla**, que es de donde sale el error con el
@@ -528,7 +599,11 @@ export function crearTeselas(
        * mueva medio metro es que ya ha llegado lo que tenía que llegar.
        */
       const cota = medir();
-      if (cota !== null && anterior !== null && Math.abs(cota - anterior) < 0.5) {
+      if (
+        cota !== null &&
+        anterior !== null &&
+        Math.abs(cota - anterior) < 0.5
+      ) {
         quieta += dt;
         if (quieta >= ESPERA_A_LA_VERDAD) {
           desfase = cota;
@@ -566,17 +641,26 @@ function matrizDelMundo(lat: number, lon: number): Matrix4 {
   const origen = new Vector3();
   WGS84_ELLIPSOID.getCartographicToPosition(la, lo, 0, origen);
 
-  const arriba = new Vector3(Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la));
+  const arriba = new Vector3(
+    Math.cos(la) * Math.cos(lo),
+    Math.cos(la) * Math.sin(lo),
+    Math.sin(la),
+  );
   const este = new Vector3(-Math.sin(lo), Math.cos(lo), 0);
   const norte = new Vector3().crossVectors(arriba, este).normalize();
   // En el juego el norte es la Z **negativa**, así que la Z local es el sur.
   const sur = norte.clone().negate();
 
-  return new Matrix4().makeBasis(este, arriba, sur).setPosition(origen).invert();
+  return new Matrix4()
+    .makeBasis(este, arriba, sur)
+    .setPosition(origen)
+    .invert();
 }
 
 /** Los siete puntos de cata, repartidos por la pista, en coordenadas de mundo. */
-function puntosDeCata(escenario: Scenario): readonly (readonly [number, number])[] {
+function puntosDeCata(
+  escenario: Scenario,
+): readonly (readonly [number, number])[] {
   const pista = escenario.aerodrome?.runways[0];
   const umbrales = pista
     ? Object.values(pista.thresholds).flatMap((t) => (t?.xy ? [t.xy] : []))
