@@ -24,14 +24,20 @@ import {
   MeshBasicMaterial,
   MeshLambertMaterial,
   RingGeometry,
-} from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import type { Aerodrome, Punto } from './aerodrome';
-import { aLaPolilinea } from './aerodrome';
-import { construirGrafo, rodajeEntre, type Grafo, type Ruta } from './rodaje';
-import { delante, enEjesDePista, puntoDePista } from './rumbo';
-import { GUION, Vuelo, type Fase, type Paso, type Situacion } from '../flight/vuelo';
-import type { FlightState } from '../flight/model';
+} from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import type { Aerodrome, Punto } from "./aerodrome";
+import { aLaPolilinea } from "./aerodrome";
+import { construirGrafo, rodajeEntre, type Grafo, type Ruta } from "./rodaje";
+import { delante, enEjesDePista, puntoDePista } from "./rumbo";
+import {
+  GUION,
+  Vuelo,
+  type Fase,
+  type Paso,
+  type Situacion,
+} from "../flight/vuelo";
+import type { FlightState } from "../flight/model";
 
 /**
  * Ancho de la raya que marca la ruta, m.
@@ -214,8 +220,15 @@ const FUERA_DE_RUTA = 30;
  * la velocidad necesitan lo mismo**, y calcularlo dos veces era justo lo que
  * hacía que no coincidieran.
  */
-function redondear(pts: readonly Punto[], radio: number): { puntos: Punto[]; radios: number[] } {
-  if (pts.length < 3) return { puntos: pts.map((p) => [...p] as Punto), radios: pts.map(() => Infinity) };
+function redondear(
+  pts: readonly Punto[],
+  radio: number,
+): { puntos: Punto[]; radios: number[] } {
+  if (pts.length < 3)
+    return {
+      puntos: pts.map((p) => [...p] as Punto),
+      radios: pts.map(() => Infinity),
+    };
 
   const puntos: Punto[] = [[...pts[0]!] as Punto];
   const radios: number[] = [Infinity];
@@ -230,7 +243,9 @@ function redondear(pts: readonly Punto[], radio: number): { puntos: Punto[]; rad
 
     const u1: Punto = [(b[0] - a[0]) / l1, (b[1] - a[1]) / l1];
     const u2: Punto = [(c[0] - b[0]) / l2, (c[1] - b[1]) / l2];
-    const giro = Math.acos(Math.max(-1, Math.min(1, u1[0] * u2[0] + u1[1] * u2[1])));
+    const giro = Math.acos(
+      Math.max(-1, Math.min(1, u1[0] * u2[0] + u1[1] * u2[1])),
+    );
 
     // Casi recto: no hay codo que redondear y meter puntos solo gasta.
     if (giro < 0.05) {
@@ -273,7 +288,10 @@ function redondear(pts: readonly Punto[], radio: number): { puntos: Punto[]; rad
     const trozos = Math.ceil(l / PASO_MAXIMO);
     for (let k = 1; k < trozos; k++) {
       const t = k / trozos;
-      densos.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t] as Punto);
+      densos.push([
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t,
+      ] as Punto);
       densosRadios.push(Infinity);
     }
     densos.push(b);
@@ -294,10 +312,16 @@ export class PlanDeVuelo {
 
   constructor(
     private readonly aero: Aerodrome,
-    private readonly pista: { x: number; z: number; heading: number; width: number },
+    private readonly pista: {
+      x: number;
+      z: number;
+      heading: number;
+      width: number;
+      length: number;
+    },
     private readonly cota: (x: number, z: number) => number,
   ) {
-    this.grupo.name = 'plan-de-vuelo';
+    this.grupo.name = "plan-de-vuelo";
     this.grafo = construirGrafo(aero);
   }
 
@@ -317,7 +341,8 @@ export class PlanDeVuelo {
 
   /** Dónde empieza el vuelo: el puesto de estacionamiento, si lo hay. */
   arranque(): readonly [number, number] | null {
-    if (this.puestoElegido) return [this.puestoElegido[0], -this.puestoElegido[1]];
+    if (this.puestoElegido)
+      return [this.puestoElegido[0], -this.puestoElegido[1]];
     const puesto = this.puestoDeSalida();
     return puesto ? [puesto.xy[0], -puesto.xy[1]] : null;
   }
@@ -367,7 +392,7 @@ export class PlanDeVuelo {
     if (!ruta) return false;
     this.puestoElegido = puesto;
     this.vuelo.reiniciar(false);
-    this.destino = 'espera';
+    this.destino = "espera";
     this.ultimaPos = puesto;
     this.ponerRuta(ruta);
     return true;
@@ -392,7 +417,8 @@ export class PlanDeVuelo {
     const cerca = (p: Punto): number => {
       let d = Infinity;
       for (const e of this.aero.buildings ?? []) {
-        for (const q of e.polygon) d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1]));
+        for (const q of e.polygon)
+          d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1]));
       }
       return d;
     };
@@ -460,7 +486,7 @@ export class PlanDeVuelo {
       return false;
     }
     this.vuelo.reiniciar(false);
-    this.destino = 'espera';
+    this.destino = "espera";
     this.ultimaPos = puesto.xy;
     this.ponerRuta(rodajeEntre(this.grafo, puesto.xy, espera));
     return this.ruta !== null;
@@ -559,7 +585,10 @@ export class PlanDeVuelo {
     let mejor = Infinity;
     let cual = 0;
     for (let i = 0; i < this.rutaMundo.length; i++) {
-      const d = Math.hypot(this.rutaMundo[i]![0] - p[0], this.rutaMundo[i]![1] - p[1]);
+      const d = Math.hypot(
+        this.rutaMundo[i]![0] - p[0],
+        this.rutaMundo[i]![1] - p[1],
+      );
       if (d < mejor) {
         mejor = d;
         cual = i;
@@ -586,9 +615,10 @@ export class PlanDeVuelo {
 
     const rumbo = ((estado.heading * 180) / Math.PI + 360) % 360;
     const quiero =
-      ((Math.atan2(mira[0] - p[0], -(mira[1] - p[1])) * 180) / Math.PI + 360) % 360;
+      ((Math.atan2(mira[0] - p[0], -(mira[1] - p[1])) * 180) / Math.PI + 360) %
+      360;
     const error = ((quiero - rumbo + 540) % 360) - 180;
-    const giro = error / 22 - ((estado.yawRate * 180) / Math.PI) / 40;
+    const giro = error / 22 - (estado.yawRate * 180) / Math.PI / 40;
     return Math.max(-1, Math.min(1, giro));
   }
 
@@ -598,7 +628,12 @@ export class PlanDeVuelo {
   }
 
   /** Avanza un fotograma y dice qué hay que enseñar. */
-  paso(estado: FlightState, sobreElSuelo: number, motor: boolean, dt: number): Vista {
+  paso(
+    estado: FlightState,
+    sobreElSuelo: number,
+    motor: boolean,
+    dt: number,
+  ): Vista {
     const s = this.situacion(estado, sobreElSuelo, motor);
     const p: Paso = this.vuelo.paso(s, dt);
     const sugerida = this.velocidadAqui([estado.position.x, estado.position.z]);
@@ -633,13 +668,14 @@ export class PlanDeVuelo {
         sobreElSuelo < 3 &&
         this.rutaMundo.length > 1 &&
         (estado.airspeed > sugerida * MARGEN + 2 ||
-          (estado.airspeed * estado.airspeed) / (2 * FRENADA) > s.restante - HOLGURA),
+          (estado.airspeed * estado.airspeed) / (2 * FRENADA) >
+            s.restante - HOLGURA),
       restante: s.restante,
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
       saltoLaLuz: p.saltoLaLuz,
       fuera:
-        (p.fase === 'rodando' || p.fase === 'a-plataforma') &&
+        (p.fase === "rodando" || p.fase === "a-plataforma") &&
         this.rutaMundo.length > 1 &&
         s.alaRuta > FUERA_DE_RUTA &&
         sobreElSuelo < 3,
@@ -672,26 +708,31 @@ export class PlanDeVuelo {
      * Es la maniobra más delicada del rodaje —hay que entrar en la pista y
      * ponerse en su eje— y era justo la única sin ayuda.
      */
-    if (fase === 'alineando') {
-      if (this.destino === 'pista') return;
-      this.destino = 'pista';
+    if (fase === "alineando") {
+      if (this.destino === "pista") return;
+      this.destino = "pista";
       this.ponerRuta(this.entradaEnPista());
       return;
     }
 
     // Volando no hay nada que rodar.
-    if (fase === 'despegando' || fase === 'en-vuelo' || fase === 'final') {
+    if (
+      fase === "despegando" ||
+      fase === "comprometido" ||
+      fase === "en-vuelo" ||
+      fase === "final"
+    ) {
       this.ponerRuta(null);
       this.destino = null;
       return;
     }
 
-    const quiere: 'espera' | 'puesto' | null =
-      fase === 'aterrizado' || fase === 'abandonando' || fase === 'a-plataforma'
-        ? 'puesto'
-        : fase === 'apagado' || fase === 'en-puesto'
+    const quiere: "espera" | "puesto" | null =
+      fase === "aterrizado" || fase === "abandonando" || fase === "a-plataforma"
+        ? "puesto"
+        : fase === "apagado" || fase === "en-puesto"
           ? null
-          : 'espera';
+          : "espera";
 
     if (quiere === this.destino) return;
     this.destino = quiere;
@@ -700,7 +741,8 @@ export class PlanDeVuelo {
       return;
     }
 
-    const meta = quiere === 'puesto' ? this.puestoDeSalida()?.xy : this.esperaDeSalida();
+    const meta =
+      quiere === "puesto" ? this.puestoDeSalida()?.xy : this.esperaDeSalida();
     if (!meta) {
       this.ponerRuta(null);
       return;
@@ -714,9 +756,13 @@ export class PlanDeVuelo {
     // la ruta más corta, la raya salía hacia atrás —fuera de la pantalla, que
     // mira adelante— y quien acababa de aterrizar no tenía nada que seguir:
     // «al aterrizar no tuve línea de regreso al hangar».
-    const salida = quiere === 'puesto' ? this.salidaPorDelante() : null;
+    const salida = quiere === "puesto" ? this.salidaPorDelante() : null;
     const ruta = rodajeEntre(this.grafo, salida ?? this.ultimaPos, meta, 600);
-    this.ponerRuta(salida && ruta ? { ...ruta, puntos: [this.ultimaPos, ...ruta.puntos] } : ruta);
+    this.ponerRuta(
+      salida && ruta
+        ? { ...ruta, puntos: [this.ultimaPos, ...ruta.puntos] }
+        : ruta,
+    );
   }
 
   /**
@@ -750,13 +796,22 @@ export class PlanDeVuelo {
      * sobre el eje de la pista: se cruza el borde por lo más corto y se gira
      * una vez dentro.
      */
-    const { along } = enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
+    const { along } = enEjesDePista(
+      x,
+      z,
+      this.pista.x,
+      this.pista.z,
+      this.pista.heading,
+    );
     const mitad = this.largoDePista / 2;
     // Nunca antes del umbral —eso es entrar por fuera de la pista— ni tan
     // adelante que no quede pista para despegar.
     const dentroDelEje = Math.max(-mitad + 40, Math.min(along, mitad - 700));
     const entrada = puntoDePista(this.pista, -dentroDelEje);
-    const rodada = puntoDePista(this.pista, -Math.min(mitad - 60, dentroDelEje + 500));
+    const rodada = puntoDePista(
+      this.pista,
+      -Math.min(mitad - 60, dentroDelEje + 500),
+    );
 
     // De mundo a fichero: el norte del fichero es la Z negativa del mundo.
     const puntos: Punto[] = [
@@ -766,7 +821,10 @@ export class PlanDeVuelo {
     ];
     let largo = 0;
     for (let i = 1; i < puntos.length; i++) {
-      largo += Math.hypot(puntos[i]![0] - puntos[i - 1]![0], puntos[i]![1] - puntos[i - 1]![1]);
+      largo += Math.hypot(
+        puntos[i]![0] - puntos[i - 1]![0],
+        puntos[i]![1] - puntos[i - 1]![1],
+      );
     }
     // Sin letras: en la pista no se anuncia una calle, se anuncia la pista, y
     // de eso ya se encarga el designador pintado en la cabecera.
@@ -789,7 +847,13 @@ export class PlanDeVuelo {
   private salidaPorDelante(): Punto | null {
     const x = this.ultimaPos[0];
     const z = -this.ultimaPos[1];
-    const aqui = enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
+    const aqui = enEjesDePista(
+      x,
+      z,
+      this.pista.x,
+      this.pista.z,
+      this.pista.heading,
+    );
     // Fuera de la pista no hay «por delante» que valga.
     if (Math.abs(aqui.across) > this.pista.width) return null;
 
@@ -818,7 +882,9 @@ export class PlanDeVuelo {
   private get largoDePista(): number {
     const p = this.aero.runways[0];
     const u = p
-      ? Object.values(p.thresholds).flatMap((t) => (t?.xy ? [t.xy as Punto] : []))
+      ? Object.values(p.thresholds).flatMap((t) =>
+          t?.xy ? [t.xy as Punto] : [],
+        )
       : [];
     const [a, b] = u;
     if (!a || !b) return 2000;
@@ -826,16 +892,26 @@ export class PlanDeVuelo {
   }
 
   /** A dónde va ahora mismo. Sirve para no recalcular la misma ruta cada fase. */
-  private destino: 'espera' | 'puesto' | 'pista' | null = null;
+  private destino: "espera" | "puesto" | "pista" | null = null;
 
   private ultimaPos: Punto = [0, 0];
 
-  private situacion(estado: FlightState, sobreElSuelo: number, motor: boolean): Situacion {
+  private situacion(
+    estado: FlightState,
+    sobreElSuelo: number,
+    motor: boolean,
+  ): Situacion {
     const x = estado.position.x;
     const z = estado.position.z;
     this.ultimaPos = [x, -z];
 
-    const { along, across } = enEjesDePista(x, z, this.pista.x, this.pista.z, this.pista.heading);
+    const { along, across } = enEjesDePista(
+      x,
+      z,
+      this.pista.x,
+      this.pista.z,
+      this.pista.heading,
+    );
     const alEjeDePista = Math.abs(across);
 
     let alaRuta = 0;
@@ -857,6 +933,7 @@ export class PlanDeVuelo {
       alEjeDePista,
       alLargoDePista: along,
       enPista: alEjeDePista < this.pista.width / 2 + 3,
+      pistaRestante: Math.max(0, this.pista.length / 2 - along),
       sobreElSuelo,
       motor,
       desalineado,
@@ -894,7 +971,10 @@ export class PlanDeVuelo {
     for (let i = 0; i < n; i++) {
       const r = this.radios[i] ?? Infinity;
       if (!Number.isFinite(r)) continue;
-      this.velocidades[i] = Math.max(MINIMO_EN_CURVA, Math.min(CRUCERO, Math.sqrt(LATERAL * r)));
+      this.velocidades[i] = Math.max(
+        MINIMO_EN_CURVA,
+        Math.min(CRUCERO, Math.sqrt(LATERAL * r)),
+      );
     }
 
     // Y hacia atrás desde el final, que es lo que hace que se vaya aflojando
@@ -917,7 +997,10 @@ export class PlanDeVuelo {
     let mejor = Infinity;
     let cual = 0;
     for (let i = 0; i < this.rutaMundo.length; i++) {
-      const d = Math.hypot(this.rutaMundo[i]![0] - p[0], this.rutaMundo[i]![1] - p[1]);
+      const d = Math.hypot(
+        this.rutaMundo[i]![0] - p[0],
+        this.rutaMundo[i]![1] - p[1],
+      );
       if (d < mejor) {
         mejor = d;
         cual = i;
@@ -949,7 +1032,10 @@ export class PlanDeVuelo {
       const dy = b[1] - a[1];
       const l2 = dx * dx + dy * dy || 1;
       const largo = Math.sqrt(l2);
-      const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
+      const t = Math.max(
+        0,
+        Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
+      );
       const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
       if (d < mejor) {
         mejor = d;
@@ -1045,7 +1131,12 @@ export class PlanDeVuelo {
       // Cuánto hay que alargar por la bisectriz para que la esquina cierre.
       const coseno = Math.max(0.4, bx * base[0] + bz * base[1]);
       const escala = Math.min(2.5, 1 / coseno) * (ANCHO / 2);
-      bordes.push({ ix: actual[0], iz: actual[1], dx: bx * escala, dz: bz * escala });
+      bordes.push({
+        ix: actual[0],
+        iz: actual[1],
+        dx: bx * escala,
+        dz: bz * escala,
+      });
     }
 
     const pos = new Float32Array(n * 2 * 3);
@@ -1080,8 +1171,8 @@ export class PlanDeVuelo {
     }
 
     const geo = new BufferGeometry();
-    geo.setAttribute('position', new Float32BufferAttribute(pos, 3));
-    geo.setAttribute('color', new Float32BufferAttribute(col, 3));
+    geo.setAttribute("position", new Float32BufferAttribute(pos, 3));
+    geo.setAttribute("color", new Float32BufferAttribute(col, 3));
     geo.setIndex(indices);
     geo.computeVertexNormals();
     const piezas: BufferGeometry[] = [geo];
@@ -1100,7 +1191,7 @@ export class PlanDeVuelo {
           polygonOffsetUnits: -4,
         }),
       );
-      malla.name = 'ruta';
+      malla.name = "ruta";
       this.grupo.add(malla);
     }
 
@@ -1120,7 +1211,7 @@ export class PlanDeVuelo {
     );
     aro.rotation.x = -Math.PI / 2;
     aro.position.set(fin[0], this.cota(fin[0], fin[1]) + ALTURA + 0.02, fin[1]);
-    aro.name = 'diana';
+    aro.name = "diana";
     this.grupo.add(aro);
   }
 }

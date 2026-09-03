@@ -144,6 +144,7 @@ export const ES_PY = {
   'vuelo.esperando': 'Pará del todo y esperá la luz',
   'vuelo.autorizado': '¡Luz verde! Entrá a la pista',
   'vuelo.alineando': 'Ponete derechito en el eje',
+  'vuelo.comprometido': '¡Ya no se puede frenar, volá!',
   'vuelo.despegando': 'Motor a fondo',
   'vuelo.enVuelo': 'Andá a dar una vuelta',
   'vuelo.enVueloAterrizando': 'Andá a la pista',
