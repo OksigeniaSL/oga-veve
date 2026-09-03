@@ -149,6 +149,15 @@ export class Hud {
   /** La tarjeta de la velocidad, para poder encenderla en la aproximación. */
   private tarjetaVelocidad: HTMLElement | null = null;
   private fps: HTMLElement | null = null;
+  /**
+   * Si se ha pedido el contador.
+   *
+   * Va como bandera y no como un `hidden` quitado a mano porque **el HUD se
+   * vuelve a dibujar entero** cada vez que cambia el idioma o el peldaño, y
+   * ahí el nodo se recrea con el `hidden` de la plantilla. Encenderlo una vez
+   * no bastaba: al primer repintado desaparecía.
+   */
+  private conFps = false;
   /** Media móvil de fotogramas por segundo. Ver `mostrarFps`. */
   private fpsMedia = 0;
   private vspeed: HTMLElement | null = null;
@@ -412,6 +421,8 @@ export class Hud {
     // el DOM, así que la actualización tiene que tolerar su ausencia.
     this.speed = optional(this.root, "speed");
     this.tarjetaVelocidad = optional(this.root, "tarjeta-speed");
+    this.fps = optional(this.root, "fps");
+    if (this.fps) this.fps.hidden = !this.conFps;
     this.altitude = optional(this.root, "altitude");
     this.heading = optional(this.root, "heading");
     this.torre = optional(this.root, "torre");
@@ -881,6 +892,7 @@ export class Hud {
 
   /** Enciende el contador. Lo llama el juego si se pidió por la dirección. */
   pedirFps(): void {
+    this.conFps = true;
     if (this.fps) this.fps.hidden = false;
   }
 
