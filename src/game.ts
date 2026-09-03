@@ -685,6 +685,8 @@ export class Game {
         });
         return salida;
       },
+      /** Cómo va el aro que toca de la senda: para poder medir si se enciende. */
+      aros: () => this.runwayGuide.sonda(),
       /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
       suelo: (x: number, z: number) => this.terrain.sampleHeight(x, z),
       /** El eje de la pista y las calles de rodaje, en coordenadas del mundo. */
@@ -1762,7 +1764,8 @@ export class Game {
       this.aircraft.approachSpeed,
     );
     this.faseAnunciada = "";
-    this.runwayGuide.reset();
+    // Con la posición: se empieza en final y hay aros que ya quedan detrás.
+    this.runwayGuide.reset(this.flight.state.position);
     this.landing.reset();
     this.crashedFor = 0;
     this.wasOnGround = false;
