@@ -126,9 +126,57 @@ export class RunwayGuide {
     return true;
   }
 
+  /**
+   * Cómo está el aro que toca. Solo para las comprobaciones.
+   *
+   * Existe porque «los aros no hacen nada» se había mirado tres veces a ojo y
+   * dos de ellas mal. Un número no se discute.
+   */
+  sonda(): {
+    i: number;
+    opacidad: number;
+    verde: number;
+    escala: number;
+  } | null {
+    const r = this.rings[this.next];
+    if (!r) return null;
+    const m = r.material as MeshBasicMaterial;
+    return {
+      i: this.next,
+      opacidad: +m.opacity.toFixed(2),
+      verde: +m.color.g.toFixed(2),
+      escala: +r.scale.x.toFixed(2),
+    };
+  }
+
   /** Vuelve a empezar la aproximación. */
-  reset(): void {
+  /**
+   * Vuelve a empezar la aproximación, **desde donde esté el avión**.
+   *
+   * Y ese «desde donde esté» es el arreglo. La lección de aterrizar empieza en
+   * final, o sea **por delante de los primeros aros**, y `next` se ponía a
+   * cero: la senda apuntaba al aro más lejano, que queda a la espalda y no se
+   * va a cruzar nunca. Resultado: el índice no avanzaba jamás y ningún aro se
+   * encendía, se destellaba ni se apagaba. «Los aros siguen sin hacer nada»,
+   * tres veces, y las dos primeras las busqué en el brillo — que era el sitio
+   * equivocado, porque el brillo estaba bien y el aro al que se lo ponía no.
+   *
+   * Se saltan los que ya quedan detrás: los que están más lejos del umbral
+   * que el propio avión. La referencia es el último aro, que es el más
+   * cercano a la pista, así que no hace falta saber dónde está el umbral.
+   */
+  reset(avion?: Vector3): void {
     this.next = 0;
+    const ultimo = this.rings[this.rings.length - 1];
+    if (avion && ultimo) {
+      const delAvion = avion.distanceTo(ultimo.position);
+      while (
+        this.next < this.rings.length - 1 &&
+        this.rings[this.next]!.position.distanceTo(ultimo.position) > delAvion
+      ) {
+        this.next++;
+      }
+    }
     this.encendido = 0;
     this.flash.fill(0);
     this.highlight();
@@ -162,9 +210,16 @@ export class RunwayGuide {
        * nada». Ahora se enciende **a lo largo de todo el tramo** entre un aro
        * y el siguiente, que es el trozo de aproximación al que corresponde.
        */
-      const anterior = this.rings[this.next - 1];
-      const tramo = anterior
-        ? anterior.position.distanceTo(siguiente.position)
+      /*
+       * El tramo: del aro anterior a este, y si es el primero, del siguiente
+       * a este —que es la misma separación—. Antes el primero caía en un
+       * respaldo de cinco radios, unos trescientos metros en una aproximación
+       * de dos kilómetros: el aro se encendía en el último suspiro y quien
+       * empezaba la lección no veía nada durante todo el primer tramo.
+       */
+      const vecino = this.rings[this.next - 1] ?? this.rings[this.next + 1];
+      const tramo = vecino
+        ? vecino.position.distanceTo(siguiente.position)
         : (siguiente.geometry as TorusGeometry).parameters.radius * 5;
       const d = avion.distanceTo(siguiente.position);
       const cerca = Math.max(0, Math.min(1, 1 - d / Math.max(1, tramo)));
@@ -175,11 +230,21 @@ export class RunwayGuide {
       const mat = siguiente.material as MeshBasicMaterial;
       // Solo si no está destellando: el destello de haberlo cruzado manda.
       if ((this.flash[this.next] ?? 0) <= 0) {
-        // Sin sutilezas: de medio apagado a encendido del todo, y del ocre al
-        // verde entero. Un cambio que hay que buscar no es una señal.
-        mat.opacity = Math.min(1, 0.45 + e * 0.55 + late);
+        /*
+         * **Y se parte del brillo que ya tenía, no de menos.**
+         *
+         * Esto es lo que hacía que «los aros sigan sin hacer nada»: el aro que
+         * toca ya estaba a 0,95 por `highlight`, y aquí se le ponía
+         * `0,45 + encendido·0,55`, que empieza en 0,45. Es decir, **los dejé
+         * más apagados que antes** y solo recuperaban el brillo original al
+         * llegar encima. Un arreglo que empeora lo que arregla.
+         *
+         * Ahora el encendido **suma**: del 0,75 de siempre al 1 pegado, y el
+         * color y el tamaño acompañan.
+         */
+        mat.opacity = Math.min(1, 0.75 + e * 0.25 + late);
         mat.color.setHex(OCRE).lerp(new Color(CERCA), e * e);
-        siguiente.scale.setScalar(1 + e * 0.16 + late);
+        siguiente.scale.setScalar(1 + e * 0.22 + late);
       }
     }
 
