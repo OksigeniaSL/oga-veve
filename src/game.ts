@@ -113,6 +113,7 @@ import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
 import { AvisosDeAltura } from "./flight/avisos-de-altura";
+import { bandaDeVelocidad } from "./flight/velocidad-de-aproximacion";
 import { callar, decir, permitirVoz } from "./audio/voz";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
@@ -226,6 +227,10 @@ export class Game {
    * que enseña el ritmo de la recogida, y se dice **y** se dibuja.
    */
   private readonly avisosDeAltura = new AvisosDeAltura();
+  /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
+  private fueraDeBanda = 0;
+  /** Qué se dijo la última vez, para no repetirlo mientras siga igual. */
+  private dichoDeBanda: "lento" | "rapido" | null = null;
 
   /** La misión elegida en el hangar, hasta que arranca. Ver `start`. */
   private misionInicial: Mission | null;
@@ -1835,6 +1840,36 @@ export class Game {
     if (aviso) {
       decir(aviso.dice);
       this.hud.flash(`${aviso.metros}`, 1.6);
+    }
+
+    /*
+     * La velocidad de la aproximación, en la tarjeta de siempre.
+     *
+     * Y la voz solo si se sostiene: un aviso hablado que salta cada vez que la
+     * aguja roza el borde de la banda es ruido, y el ruido se aprende a no
+     * oír. Tres segundos fuera es una tendencia, no un bache.
+     */
+    const banda = bandaDeVelocidad(
+      {
+        sobreElSuelo: this.flight.state.heightAboveGround,
+        enElSuelo: this.flight.state.onGround,
+        vertical: this.flight.state.verticalSpeed,
+        velocidad: this.flight.state.airspeed,
+      },
+      this.aircraft.approachSpeed,
+    );
+    this.hud.setBandaDeVelocidad(banda);
+    if (banda === "lento" || banda === "rapido") {
+      this.fueraDeBanda += dt;
+      if (this.fueraDeBanda > 3 && this.dichoDeBanda !== banda) {
+        this.dichoDeBanda = banda;
+        // «Airspeed» es lo que dice una cabina de verdad, y dice las dos
+        // cosas: que mires la velocidad. Cuál de las dos ya lo dice el color.
+        decir("airspeed");
+      }
+    } else {
+      this.fueraDeBanda = 0;
+      this.dichoDeBanda = null;
     }
 
     // Y el aro, que se enciende según te acercas: necesita saber dónde estás.

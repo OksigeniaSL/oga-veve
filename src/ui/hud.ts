@@ -24,18 +24,18 @@
  * decide que quiere volar en serio, y no antes.
  */
 
-import type { FlightState } from '../flight/model';
-import { indicatedAirspeed } from '../flight/atmosphere';
-import { t } from '../i18n';
-import { Tutor } from './tutor';
-import { bankAngleOf, pitchAngleOf } from './actitud';
-import type { Accion } from '../flight/keymap';
-import { SixPack } from './six-pack';
-import { Pictogramas } from './pictogramas';
-import { Senal } from './senal';
-import { Mapa } from './mapa';
-import { PanelDelTiempo } from './tiempo';
-import type { Tier } from '../flight/tiers';
+import type { FlightState } from "../flight/model";
+import { indicatedAirspeed } from "../flight/atmosphere";
+import { t } from "../i18n";
+import { Tutor } from "./tutor";
+import { bankAngleOf, pitchAngleOf } from "./actitud";
+import type { Accion } from "../flight/keymap";
+import { SixPack } from "./six-pack";
+import { Pictogramas } from "./pictogramas";
+import { Senal } from "./senal";
+import { Mapa } from "./mapa";
+import { PanelDelTiempo } from "./tiempo";
+import type { Tier } from "../flight/tiers";
 
 /**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
@@ -46,12 +46,12 @@ import type { Tier } from '../flight/tiers';
 const BRAKE_EXIT = 0.9;
 
 const INSTRUMENTS = {
-  speed: 'IAS',
-  vspeed: 'V/S',
-  altitude: 'ALT',
-  heading: 'HDG',
-  throttle: 'THR',
-  brakes: 'BRK',
+  speed: "IAS",
+  vspeed: "V/S",
+  altitude: "ALT",
+  heading: "HDG",
+  throttle: "THR",
+  brakes: "BRK",
 } as const;
 
 /** Conversión y rótulo de unidades para un sistema de medida. */
@@ -71,26 +71,29 @@ interface UnitSystem {
 
 const METRIC: UnitSystem = {
   speed: (v) => v * 3.6,
-  speedLabel: () => t('units.kmh'),
+  speedLabel: () => t("units.kmh"),
   altitude: (h) => h,
-  altitudeLabel: () => t('units.metres'),
+  altitudeLabel: () => t("units.metres"),
   vspeed: (v) => v,
-  vspeedLabel: () => t('units.mps'),
+  vspeedLabel: () => t("units.mps"),
   vspeedDecimals: 1,
 };
 
 /** Nudos, pies y pies por minuto. Lo que marca un avión de verdad. */
 const AERONAUTICAL: UnitSystem = {
   speed: (v) => v * 1.943844,
-  speedLabel: () => t('units.knots'),
+  speedLabel: () => t("units.knots"),
   altitude: (h) => h * 3.28084,
-  altitudeLabel: () => t('units.feet'),
+  altitudeLabel: () => t("units.feet"),
   vspeed: (v) => v * 196.8504,
-  vspeedLabel: () => t('units.fpm'),
+  vspeedLabel: () => t("units.fpm"),
   vspeedDecimals: 0,
 };
 
-export const UNIT_SYSTEMS = { metric: METRIC, aeronautical: AERONAUTICAL } as const;
+export const UNIT_SYSTEMS = {
+  metric: METRIC,
+  aeronautical: AERONAUTICAL,
+} as const;
 export type UnitSystemName = keyof typeof UNIT_SYSTEMS;
 
 /** La mano abierta de parar. La misma que el botón de freno, a propósito. */
@@ -122,7 +125,7 @@ export class Hud {
    * niño de cinco años no necesita saber su rumbo, y enseñárselo solo le
    * quita paisaje.
    */
-  private instruments: Tier['instruments'] = 'numeric';
+  private instruments: Tier["instruments"] = "numeric";
 
   /**
    * El cuadro de mandos clásico. Solo existe en el peldaño más alto: seis
@@ -143,6 +146,8 @@ export class Hud {
   private heading: HTMLElement | null = null;
   /** Grados que hay que sumar al rumbo verdadero para obtener el magnético. */
   private magneticVariation = 0;
+  /** La tarjeta de la velocidad, para poder encenderla en la aproximación. */
+  private tarjetaVelocidad: HTMLElement | null = null;
   private vspeed: HTMLElement | null = null;
   private throttleFill!: HTMLElement;
   private brakes!: HTMLElement;
@@ -169,24 +174,25 @@ export class Hud {
   private sound!: HTMLElement;
   private hint!: HTMLElement;
 
-  private badgeText = '';
+  private badgeText = "";
   private progressState: { done: number; total: number } | null = null;
-  private soundState = { glyph: '🔊', label: '' };
+  private soundState = { glyph: "🔊", label: "" };
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
-  private horaAtada: { hora: number; cambio: (h: number) => void } | null = null;
+  private horaAtada: { hora: number; cambio: (h: number) => void } | null =
+    null;
   private cieloAtado: {
     cielo: number;
     cambio: (alturaM: number | null, tapadura: number) => void;
   } | null = null;
   private tiempoAtado: {
-    meteo: import('../world/meteo').Meteo;
-    cambio: (m: import('../world/meteo').Meteo) => void;
+    meteo: import("../world/meteo").Meteo;
+    cambio: (m: import("../world/meteo").Meteo) => void;
     deVerdad: () => void;
   } | null = null;
   private mapaAtado: {
-    esc: import('../world/scenarios').Scenario;
+    esc: import("../world/scenarios").Scenario;
     cota: (x: number, z: number) => number;
   } | null = null;
   private torre: HTMLElement | null = null;
@@ -203,20 +209,20 @@ export class Hud {
    * así que la forma barata y sin sorpresas de traducirlos es rehacerlos.
    */
   render(): void {
-    const gauges = this.instruments !== 'none';
-    const pictorial = this.instruments === 'pictorial';
-    const panel = this.instruments === 'full';
+    const gauges = this.instruments !== "none";
+    const pictorial = this.instruments === "pictorial";
+    const panel = this.instruments === "full";
     // Los pictogramas cubren los dos peldaños de abajo. En el primero eran
     // «ningún instrumento», que sobre el papel suena limpio y en la práctica
     // dejaba a un niño de cuatro años volando a ciegas: sin saber si iba
     // deprisa, si subía, ni si el motor estaba puesto. Una tortuga no es un
     // instrumento, es un dibujo, y por eso sí cabe ahí.
-    const pictos = this.instruments === 'none' || pictorial;
+    const pictos = this.instruments === "none" || pictorial;
     // En el peldaño más alto las cifras sueltas desaparecen: lo que se lee
     // son las seis esferas, que es como se lee una cabina de verdad. Dejar
     // las dos cosas sería enseñar a mirar el número y no el instrumento,
     // justo el hábito que este peldaño existe para quitar.
-    const numbers = this.instruments === 'numeric';
+    const numbers = this.instruments === "numeric";
 
     this.root.innerHTML = `
       <div class="hud__arriba">
@@ -257,7 +263,7 @@ export class Hud {
           para quien no lee.
         -->
         <button class="sonido teclas-boton" type="button" data-hud="keys"
-                aria-label="${t('teclas.title')}">
+                aria-label="${t("teclas.title")}">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <rect x="2" y="6" width="20" height="13" rx="2.4" />
             <path d="M6 10h1.6M10.2 10h1.6M14.4 10h1.6M18.6 10h.8
@@ -265,15 +271,15 @@ export class Hud {
                      M7.6 16.6h8.8" />
           </svg>
         </button>
-        ${Mapa.boton(t('mapa.title'))}
-        ${PanelDelTiempo.boton(t('tiempo.title'))}
+        ${Mapa.boton(t("mapa.title"))}
+        ${PanelDelTiempo.boton(t("tiempo.title"))}
         <!--
           Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
           arrancar es un hangar con la puerta tapiada: quien quiera cambiar de
           aeropuerto tendría que saber recargar la página.
         -->
         <button class="sonido teclas-boton" type="button" data-hud="hangar"
-                aria-label="${t('hangar.volver')}">
+                aria-label="${t("hangar.volver")}">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M2.6 12.4 A11 11 0 0 1 21.4 12.4" />
             <path d="M4.4 20.4 v-7.6 M19.6 20.4 v-7.6 M3 20.6 h18" />
@@ -282,12 +288,12 @@ export class Hud {
         </button>
       </div>
       <div class="hud__izquierda">
-        ${numbers ? gauge('speed', INSTRUMENTS.speed, t('hud.speed'), this.units.speedLabel()) : ''}
-        ${numbers ? gauge('vspeed', INSTRUMENTS.vspeed, t('hud.vspeed'), this.units.vspeedLabel()) : ''}
+        ${numbers ? gauge("speed", INSTRUMENTS.speed, t("hud.speed"), this.units.speedLabel()) : ""}
+        ${numbers ? gauge("vspeed", INSTRUMENTS.vspeed, t("hud.vspeed"), this.units.vspeedLabel()) : ""}
       </div>
       <div class="hud__derecha">
-        ${numbers ? gauge('altitude', INSTRUMENTS.altitude, t('hud.altitude'), this.units.altitudeLabel()) : ''}
-        ${numbers ? gauge('heading', INSTRUMENTS.heading, t('hud.heading'), '°') : ''}
+        ${numbers ? gauge("altitude", INSTRUMENTS.altitude, t("hud.altitude"), this.units.altitudeLabel()) : ""}
+        ${numbers ? gauge("heading", INSTRUMENTS.heading, t("hud.heading"), "°") : ""}
         <!--
           El motor lleva sus dos teclas dibujadas al lado, y no una sola en
           el tutor cuando toca. Un mando que solo enseña la mitad de su
@@ -295,7 +301,7 @@ export class Hud {
           manera de saber con qué se sube.
         -->
         <div class="tarjeta medidor motor">
-          ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.throttle}</span>` : ''}
+          ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.throttle}</span>` : ""}
           <!--
             Y son botones de verdad, no dibujos. Estaban ahí para enseñar qué
             tecla usar y alguien intentó pulsarlos con el ratón, que es lo
@@ -307,7 +313,7 @@ export class Hud {
             <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
             <button class="motor__tecla" type="button" data-hud="throttle-up" aria-label="+">+</button>
           </div>
-          ${gauges ? `<span class="medidor__glosa">${t('hud.throttle')}</span>` : ''}
+          ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
         </div>
         <!--
           El freno. Sale solo cuando se está en el suelo, porque en el aire
@@ -323,7 +329,7 @@ export class Hud {
           cuatro años ni en una tablet.
         -->
         <button class="freno freno--boton" type="button" data-hud="brakes-touch" hidden
-                aria-label="${t('hud.brakes')}">
+                aria-label="${t("hud.brakes")}">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
                      a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
@@ -331,26 +337,30 @@ export class Hud {
           </svg>
         </button>
         <div class="tarjeta medidor freno" data-hud="brakes" hidden>
-          ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.brakes}</span>` : ''}
+          ${gauges ? `<span class="medidor__etiqueta">${INSTRUMENTS.brakes}</span>` : ""}
           <!--
             La tecla se rellena desde el mapa al actualizar, no aquí. Escrita
             a mano decía «espacio» mientras el teclado dibujado encendía la B:
             el mismo fallo que ya tuvo el tutor, y por el mismo motivo.
           -->
           <span class="motor__tecla motor__tecla--ancha" data-hud="brake-key" aria-hidden="true"></span>
-          ${gauges ? `<span class="medidor__glosa">${t('hud.brakes')}</span>` : ''}
+          ${gauges ? `<span class="medidor__glosa">${t("hud.brakes")}</span>` : ""}
         </div>
-        ${numbers ? `<div class="tarjeta horizonte">
+        ${
+          numbers
+            ? `<div class="tarjeta horizonte">
           <div class="horizonte__cielo" data-hud="horizon"></div>
           <div class="horizonte__cruz"></div>
-        </div>` : ''}
+        </div>`
+            : ""
+        }
         <div class="tarjeta casa" data-hud="home">
           <div class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</div>
-          ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ''}
-          ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t('hud.home')}</span>` : ''}
+          ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ""}
+          ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
         </div>
       </div>
-      ${pictos ? Pictogramas.markup() : ''}
+      ${pictos ? Pictogramas.markup() : ""}
       <!--
         La señal del vuelo: qué toca hacer ahora, dibujado. Va en **todos** los
         peldaños y no solo en los que llevan texto — hay quien juega en
@@ -379,57 +389,68 @@ export class Hud {
           que pasaba. Un panel bonito que esconde un «terrain, pull up» es
           peor que no tener panel.
         -->
-        ${panel ? SixPack.markup() : ''}
+        ${panel ? SixPack.markup() : ""}
       </div>
     `;
 
     // Los instrumentos que este peldaño no enseña sencillamente no están en
     // el DOM, así que la actualización tiene que tolerar su ausencia.
-    this.speed = optional(this.root, 'speed');
-    this.altitude = optional(this.root, 'altitude');
-    this.heading = optional(this.root, 'heading');
-    this.torre = optional(this.root, 'torre');
-    this.vspeed = optional(this.root, 'vspeed');
-    this.throttleFill = pick(this.root, 'throttle');
-    this.brakes = pick(this.root, 'brakes');
-    this.brakeKey = pick(this.root, 'brake-key');
-    this.brakesTouch = pick(this.root, 'brakes-touch');
-    this.brakesTouch.addEventListener('pointerdown', () => this.setBraking(true));
+    this.speed = optional(this.root, "speed");
+    this.tarjetaVelocidad = optional(this.root, "tarjeta-speed");
+    this.altitude = optional(this.root, "altitude");
+    this.heading = optional(this.root, "heading");
+    this.torre = optional(this.root, "torre");
+    this.vspeed = optional(this.root, "vspeed");
+    this.throttleFill = pick(this.root, "throttle");
+    this.brakes = pick(this.root, "brakes");
+    this.brakeKey = pick(this.root, "brake-key");
+    this.brakesTouch = pick(this.root, "brakes-touch");
+    this.brakesTouch.addEventListener("pointerdown", () =>
+      this.setBraking(true),
+    );
     // El «soltar» se escucha en la ventana y no en el botón: al despegar, el
     // botón se oculta con el dedo todavía encima, y un elemento oculto ya no
     // recibe el `pointerup`. El freno se quedaba puesto para siempre, y al
     // aterrizar el avión no había forma de moverlo hasta que algo lo
     // soltaba — y entonces salía disparado con el gas que hubiera puesto.
-    for (const evento of ['pointerup', 'pointercancel'] as const) {
+    for (const evento of ["pointerup", "pointercancel"] as const) {
       window.addEventListener(evento, () => this.setBraking(false));
     }
 
-    this.throttleDown = pick(this.root, 'throttle-down');
-    this.throttleUp = pick(this.root, 'throttle-up');
-    for (const [boton, paso] of [[this.throttleDown, -1], [this.throttleUp, 1]] as const) {
-      boton.addEventListener('pointerdown', () => this.throttleHandler?.(paso));
-      boton.addEventListener('pointerup', () => this.throttleHandler?.(0));
-      boton.addEventListener('pointerleave', () => this.throttleHandler?.(0));
+    this.throttleDown = pick(this.root, "throttle-down");
+    this.throttleUp = pick(this.root, "throttle-up");
+    for (const [boton, paso] of [
+      [this.throttleDown, -1],
+      [this.throttleUp, 1],
+    ] as const) {
+      boton.addEventListener("pointerdown", () => this.throttleHandler?.(paso));
+      boton.addEventListener("pointerup", () => this.throttleHandler?.(0));
+      boton.addEventListener("pointerleave", () => this.throttleHandler?.(0));
     }
-    this.horizon = optional(this.root, 'horizon');
-    this.home = pick(this.root, 'home');
-    this.homeArrow = pick(this.root, 'home-arrow');
-    this.homeDistance = optional(this.root, 'home-distance');
-    this.homeGloss = optional(this.root, 'home-gloss');
-    this.warning = pick(this.root, 'warning');
-    this.warningText = pick(this.root, 'warning-text');
-    this.warningArrow = pick(this.root, 'warning-arrow');
-    this.vignette = pick(this.root, 'vignette');
-    this.badge = pick(this.root, 'badge');
-    this.progress = pick(this.root, 'progress');
-    this.sound = pick(this.root, 'sound');
-    this.sound.addEventListener('click', () => this.soundHandler?.());
-    pick(this.root, 'keys').addEventListener('click', () => this.keysHandler?.());
-    pick(this.root, 'hangar').addEventListener('click', () => this.hangarHandler?.());
+    this.horizon = optional(this.root, "horizon");
+    this.home = pick(this.root, "home");
+    this.homeArrow = pick(this.root, "home-arrow");
+    this.homeDistance = optional(this.root, "home-distance");
+    this.homeGloss = optional(this.root, "home-gloss");
+    this.warning = pick(this.root, "warning");
+    this.warningText = pick(this.root, "warning-text");
+    this.warningArrow = pick(this.root, "warning-arrow");
+    this.vignette = pick(this.root, "vignette");
+    this.badge = pick(this.root, "badge");
+    this.progress = pick(this.root, "progress");
+    this.sound = pick(this.root, "sound");
+    this.sound.addEventListener("click", () => this.soundHandler?.());
+    pick(this.root, "keys").addEventListener("click", () =>
+      this.keysHandler?.(),
+    );
+    pick(this.root, "hangar").addEventListener("click", () =>
+      this.hangarHandler?.(),
+    );
     // El mapa se vuelve a atar en cada `render()`, como todo lo demás: el HUD
     // se rehace entero al cambiar de idioma y los oyentes viejos se van con el
     // marcado viejo.
-    if (this.mapaAtado) this.mapa.bind(this.root, this.mapaAtado.esc, this.mapaAtado.cota);
+    if (this.mapaAtado)
+      this.mapa.bind(this.root, this.mapaAtado.esc, this.mapaAtado.cota);
     // El panel del tiempo se reata igual, y hay que devolverle sus oyentes:
     // el marcado es nuevo y los de antes se fueron con el viejo.
     this.tiempo.bind(this.root);
@@ -452,7 +473,7 @@ export class Hud {
     }
     this.paintSound();
     this.paintProgress();
-    this.hint = pick(this.root, 'hint');
+    this.hint = pick(this.root, "hint");
 
     this.badge.textContent = this.badgeText;
     this.sixPack.bind(this.root);
@@ -472,7 +493,10 @@ export class Hud {
    */
   private reserveForPanel(): void {
     const panel = this.root.querySelector<HTMLElement>('[data-hud="sixpack"]');
-    this.root.style.setProperty('--panel-alto', `${panel ? panel.offsetHeight + 10 : 0}px`);
+    this.root.style.setProperty(
+      "--panel-alto",
+      `${panel ? panel.offsetHeight + 10 : 0}px`,
+    );
   }
 
   /**
@@ -494,14 +518,18 @@ export class Hud {
     this.homeArrow.style.transform = `rotate(${degrees}deg)`;
     if (this.homeDistance) {
       this.homeDistance.textContent =
-        metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${Math.round(metres)} m`;
+        metres >= 1000
+          ? `${(metres / 1000).toFixed(1)} km`
+          : `${Math.round(metres)} m`;
     }
     // Cerca y de frente, se apaga: ya la estás viendo por la ventanilla.
-    this.home.classList.toggle('casa--cerca', metres < 900);
+    this.home.classList.toggle("casa--cerca", metres < 900);
     // Y dice a qué apunta: con misión en curso no es la pista.
-    this.home.classList.toggle('casa--objetivo', toObjective);
+    this.home.classList.toggle("casa--objetivo", toObjective);
     if (this.homeGloss) {
-      this.homeGloss.textContent = t(toObjective ? 'hud.objective' : 'hud.home');
+      this.homeGloss.textContent = t(
+        toObjective ? "hud.objective" : "hud.home",
+      );
     }
   }
 
@@ -518,11 +546,11 @@ export class Hud {
   }
 
   /** Cuántos instrumentos enseña este peldaño de la escalera. */
-  setInstruments(level: Tier['instruments']): void {
+  setInstruments(level: Tier["instruments"]): void {
     this.instruments = level;
     // Sin instrumentos es el peldaño de los pequeños, y ahí no va ni una
     // palabra: empiezan a los cuatro años y no leen.
-    this.root.classList.toggle('hud--sin-letras', level === 'none');
+    this.root.classList.toggle("hud--sin-letras", level === "none");
     this.render();
   }
 
@@ -551,16 +579,25 @@ export class Hud {
       // años— movía el avioncito dos píxeles, y el dibujo parecía un adorno.
       // Con la raíz, los primeros cien metros ocupan la mitad de la tarjeta
       // y los cuatrocientos siguen cabiendo arriba.
-      this.pictos.update(ias / 46, Math.sqrt(Math.max(0, state.heightAboveGround) / 400), engineOn ? throttle : 0, dt, engineOn);
+      this.pictos.update(
+        ias / 46,
+        Math.sqrt(Math.max(0, state.heightAboveGround) / 400),
+        engineOn ? throttle : 0,
+        dt,
+        engineOn,
+      );
     }
 
     if (this.pictos.present) {
       // Nada más que hacer: los pictogramas ya están actualizados arriba y
       // estos peldaños no tienen cifras que escribir.
     } else {
-      if (this.speed) this.speed.textContent = Math.round(this.units.speed(ias)).toString();
+      if (this.speed)
+        this.speed.textContent = Math.round(this.units.speed(ias)).toString();
       if (this.altitude) {
-        this.altitude.textContent = Math.round(this.units.altitude(state.position.y)).toString();
+        this.altitude.textContent = Math.round(
+          this.units.altitude(state.position.y),
+        ).toString();
       }
       if (this.vspeed) {
         this.vspeed.textContent = this.units
@@ -575,8 +612,9 @@ export class Hud {
         // este juego: alinearse, mirar el rumbo y reconocer el número del
         // suelo sin que nadie lo explique.
         const verdadero = (state.heading * 180) / Math.PI;
-        const degrees = Math.round(verdadero + this.magneticVariation + 720) % 360;
-        this.heading.textContent = degrees.toString().padStart(3, '0');
+        const degrees =
+          Math.round(verdadero + this.magneticVariation + 720) % 360;
+        this.heading.textContent = degrees.toString().padStart(3, "0");
       }
     }
 
@@ -585,7 +623,8 @@ export class Hud {
     // El freno aparece al tocar suelo y se enciende al pisarlo.
     // Sin cifras, botón; con cifras, tarjeta con su tecla. Nunca los dos.
     const enSuelo = state.onGround;
-    const sinLetras = this.instruments === 'none' || this.instruments === 'pictorial';
+    const sinLetras =
+      this.instruments === "none" || this.instruments === "pictorial";
     this.brakes.hidden = !enSuelo || sinLetras;
     // El freno se retira en V1, no al despegar.
     //
@@ -598,9 +637,13 @@ export class Hud {
     // frenar es justo lo que toca.
     const despegando = state.airspeed > decisionSpeed && throttle > 0.55;
     // La tecla del freno, la que se enseña para la mano elegida.
-    const tecla = this.teclaDe?.('brakes') ?? '';
-    if (tecla && this.brakeKey.textContent !== tecla) this.brakeKey.textContent = tecla;
-    this.brakeKey.classList.toggle('motor__tecla--ancha', tecla.length > 1 || tecla === '␣');
+    const tecla = this.teclaDe?.("brakes") ?? "";
+    if (tecla && this.brakeKey.textContent !== tecla)
+      this.brakeKey.textContent = tecla;
+    this.brakeKey.classList.toggle(
+      "motor__tecla--ancha",
+      tecla.length > 1 || tecla === "␣",
+    );
 
     const escondeBoton = !enSuelo || !sinLetras || despegando;
 
@@ -612,16 +655,21 @@ export class Hud {
     // parecido a decir «ya no puedes frenar, porque vas demasiado deprisa»
     // sin una sola palabra. Es una primera versión; la buena llevará su
     // animación y su voz.
-    if (despegando && enSuelo && !this.brakesTouch.hidden && this.brakeExit <= 0) {
+    if (
+      despegando &&
+      enSuelo &&
+      !this.brakesTouch.hidden &&
+      this.brakeExit <= 0
+    ) {
       this.brakeExit = BRAKE_EXIT;
-      this.brakesTouch.classList.add('freno--se-va');
-      this.root.querySelector('.picto')?.classList.add('picto--avisa');
+      this.brakesTouch.classList.add("freno--se-va");
+      this.root.querySelector(".picto")?.classList.add("picto--avisa");
     }
     if (this.brakeExit > 0) {
       this.brakeExit -= dt;
       if (this.brakeExit <= 0) {
-        this.brakesTouch.classList.remove('freno--se-va');
-        this.root.querySelector('.picto')?.classList.remove('picto--avisa');
+        this.brakesTouch.classList.remove("freno--se-va");
+        this.root.querySelector(".picto")?.classList.remove("picto--avisa");
       }
     }
 
@@ -630,8 +678,8 @@ export class Hud {
     // Mientras dura la despedida sigue en pantalla, aunque ya no frene.
     this.brakesTouch.hidden = escondeBoton && this.brakeExit <= 0;
     const pisado = braking > 0.05;
-    this.brakes.classList.toggle('freno--pisado', pisado);
-    this.brakesTouch.classList.toggle('freno--pisado', pisado);
+    this.brakes.classList.toggle("freno--pisado", pisado);
+    this.brakesTouch.classList.toggle("freno--pisado", pisado);
 
     // Alabeo y cabeceo los quieren dos consumidores —la tarjeta del horizonte
     // y el cuadro de mandos—, y solo uno de los dos existe a la vez. Se
@@ -664,7 +712,7 @@ export class Hud {
 
     if (this.hintTimer > 0) {
       this.hintTimer -= dt;
-      if (this.hintTimer <= 0) this.hint.textContent = '';
+      if (this.hintTimer <= 0) this.hint.textContent = "";
     }
   }
 
@@ -684,9 +732,11 @@ export class Hud {
     this.progress.hidden = progress === null;
     if (!progress) return;
 
-    this.progress.innerHTML = Array.from({ length: progress.total }, (_, index) =>
-      `<span class="progreso__punto${index < progress.done ? ' progreso__punto--hecho' : ''}"></span>`,
-    ).join('');
+    this.progress.innerHTML = Array.from(
+      { length: progress.total },
+      (_, index) =>
+        `<span class="progreso__punto${index < progress.done ? " progreso__punto--hecho" : ""}"></span>`,
+    ).join("");
   }
 
   /** Estado del sonido: glifo y etiqueta accesible. */
@@ -728,25 +778,29 @@ export class Hud {
    * Apagada quiere decir que ahora mismo la torre no tiene nada que decirte,
    * que es lo normal durante casi todo el vuelo.
    */
-  setLuzDeTorre(luz: 'verde' | 'roja' | null): void {
+  setLuzDeTorre(luz: "verde" | "roja" | null): void {
     const caja = this.torre;
     if (!caja) return;
     caja.hidden = luz === null;
-    caja.classList.toggle('torre--verde', luz === 'verde');
-    caja.classList.toggle('torre--roja', luz === 'roja');
+    caja.classList.toggle("torre--verde", luz === "verde");
+    caja.classList.toggle("torre--roja", luz === "roja");
     const texto = caja.querySelector('[data-hud="torre-texto"]');
-    if (texto) texto.textContent = luz === 'verde' ? t('torre.verde') : luz ? t('torre.roja') : '';
+    if (texto)
+      texto.textContent =
+        luz === "verde" ? t("torre.verde") : luz ? t("torre.roja") : "";
     // **Y una forma dentro de la luz**, no solo un color: la mano abierta de
     // parar o la flecha de seguir. Quien no distinga el rojo del verde —que es
     // uno de cada doce niños— tiene que enterarse igual, y quien no lea
     // también.
     const bombilla = caja.querySelector('[data-hud="torre-luz"]');
-    if (bombilla) bombilla.innerHTML = luz === 'verde' ? FLECHA_SEGUIR : luz ? MANO_PARAR : '';
+    if (bombilla)
+      bombilla.innerHTML =
+        luz === "verde" ? FLECHA_SEGUIR : luz ? MANO_PARAR : "";
   }
 
   /** De dónde saca el mapa el mundo que pinta. */
   ponerMapa(
-    esc: import('../world/scenarios').Scenario,
+    esc: import("../world/scenarios").Scenario,
     cota: (x: number, z: number) => number,
   ): void {
     this.mapaAtado = { esc, cota };
@@ -755,8 +809,8 @@ export class Hud {
 
   /** De dónde saca el panel del tiempo lo que enseña y a quién avisa. */
   ponerTiempo(
-    meteo: import('../world/meteo').Meteo,
-    cambio: (m: import('../world/meteo').Meteo) => void,
+    meteo: import("../world/meteo").Meteo,
+    cambio: (m: import("../world/meteo").Meteo) => void,
     deVerdad: () => void,
   ): void {
     this.tiempoAtado = { meteo, cambio, deVerdad };
@@ -773,7 +827,10 @@ export class Hud {
   }
 
   /** Quién se entera de que han cambiado las nubes. */
-  ponerCielo(cielo: number, cambio: (alturaM: number | null, tapadura: number) => void): void {
+  ponerCielo(
+    cielo: number,
+    cambio: (alturaM: number | null, tapadura: number) => void,
+  ): void {
     this.cieloAtado = { cielo, cambio };
     this.tiempo.onNubes(cambio);
     this.tiempo.ponerCieloSinAvisar(cielo);
@@ -784,6 +841,24 @@ export class Hud {
     this.hangarHandler = handler;
   }
 
+  /**
+   * Enciende la tarjeta de velocidad según se vaya en la aproximación.
+   *
+   * `null` la apaga, que es lo normal: fuera de la aproximación la velocidad
+   * no tiene un valor «bueno» y pintarla de colores sería mentir.
+   *
+   * Y va en la tarjeta que ya existe en vez de en un instrumento nuevo porque
+   * es la misma información: no hay que aprender a mirar otro sitio, hay que
+   * mirar el de siempre y ver que ha cambiado de color.
+   */
+  setBandaDeVelocidad(estado: "lento" | "bien" | "rapido" | null): void {
+    const c = this.tarjetaVelocidad?.classList;
+    if (!c) return;
+    c.toggle("medidor--lento", estado === "lento");
+    c.toggle("medidor--bien", estado === "bien");
+    c.toggle("medidor--rapido", estado === "rapido");
+  }
+
   onSoundClick(handler: () => void): void {
     this.soundHandler = handler;
   }
@@ -791,8 +866,11 @@ export class Hud {
   private paintSound(): void {
     if (!this.sound) return;
     this.sound.textContent = this.soundState.glyph;
-    this.sound.setAttribute('aria-label', this.soundState.label);
-    this.sound.setAttribute('aria-pressed', String(this.soundState.glyph === '🔇'));
+    this.sound.setAttribute("aria-label", this.soundState.label);
+    this.sound.setAttribute(
+      "aria-pressed",
+      String(this.soundState.glyph === "🔇"),
+    );
   }
 
   setBadge(text: string): void {
@@ -813,28 +891,28 @@ export class Hud {
    * jugadora más joven. Ver AGENTS.md, regla 2.
    */
   private setWarning(state: FlightState, runwayLeft: number): void {
-    let text = '';
-    let arrow = '';
+    let text = "";
+    let arrow = "";
     let blink = false;
 
     if (state.crashed) {
-      text = t('hud.crashed');
-      arrow = '↺';
+      text = t("hud.crashed");
+      arrow = "↺";
     } else if (state.stalled) {
-      text = t('hud.stall');
-      arrow = '↓';
+      text = t("hud.stall");
+      arrow = "↓";
       blink = true;
     } else if (closingWithGround(state)) {
-      text = t('hud.pullUp');
-      arrow = '↑';
+      text = t("hud.pullUp");
+      arrow = "↑";
       blink = true;
     } else if (runningOutOfRunway(state, runwayLeft)) {
       // Se puede rodar por el campo hasta el fin del mundo sin que pase nada,
       // que en el peldaño de los pequeños está bien. Pero que no avise es
       // otra cosa: en un avión de verdad, quedarse sin pista es **la**
       // decisión, y aquí no se anunciaba de ninguna manera.
-      text = t('hud.runwayEnd');
-      arrow = '↤';
+      text = t("hud.runwayEnd");
+      arrow = "↤";
       blink = true;
     }
 
@@ -843,20 +921,25 @@ export class Hud {
     // pista, que es justo el momento en que hay que mirarlo. Y no se arregla
     // subiendo capas: dos carteles a la vez son ruido, y de los dos manda el
     // aviso. La lección puede esperar diez segundos; la pista, no.
-    this.root.classList.toggle('hud--avisando', text !== '');
+    this.root.classList.toggle("hud--avisando", text !== "");
 
     this.warningText.textContent = text;
     this.warningArrow.textContent = arrow;
-    this.warning.classList.toggle('aviso-hud--visible', text !== '');
-    this.warning.classList.toggle('aviso-hud--parpadeo', blink);
-    this.vignette.classList.toggle('vineta--activa', text !== '');
+    this.warning.classList.toggle("aviso-hud--visible", text !== "");
+    this.warning.classList.toggle("aviso-hud--parpadeo", blink);
+    this.vignette.classList.toggle("vineta--activa", text !== "");
   }
 }
 
 /** Una tarjeta de instrumento: abreviatura, número, unidad y glosa. */
-function gauge(name: string, instrument: string, gloss: string, unit: string): string {
+function gauge(
+  name: string,
+  instrument: string,
+  gloss: string,
+  unit: string,
+): string {
   return `
-    <div class="tarjeta medidor">
+    <div class="tarjeta medidor" data-hud="tarjeta-${name}">
       <span class="medidor__etiqueta">${instrument}</span>
       <span class="medidor__valor"><span data-hud="${name}">0</span
         ><span class="medidor__unidad">${unit}</span></span>
@@ -910,4 +993,3 @@ function closingWithGround(state: FlightState): boolean {
   if (state.onGround || state.crashed) return false;
   return state.secondsToImpact < 6;
 }
-

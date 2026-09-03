@@ -83,7 +83,7 @@ export interface AeroCoefficients {
  */
 export interface AircraftAppearance {
   /** Disposición del ala. Es lo que distingue una silueta de otra. */
-  layout: 'high-wing' | 'biplane';
+  layout: "high-wing" | "biplane";
   /** Colores del fuselaje, del capó y de los detalles. */
   body: number;
   accent: number;
@@ -103,7 +103,7 @@ export interface AircraftAppearance {
  */
 export interface AircraftSound {
   /** Qué clase de motor. Decide qué capas construye el sintetizador. */
-  engine: 'piston' | 'radial' | 'turboprop' | 'turbofan';
+  engine: "piston" | "radial" | "turboprop" | "turbofan";
   /**
    * Cilindros. La frecuencia de encendido de un cuatro tiempos son las
    * revoluciones por minuto entre sesenta, por cilindros, entre dos: es lo
@@ -143,6 +143,19 @@ export interface AircraftConfig {
   maxThrust: number;
   /** Velocidad de crucero de referencia, m/s. Modula la caída de empuje. */
   cruiseSpeed: number;
+  /**
+   * Velocidad de aproximación, m/s. **Vref.**
+   *
+   * A la que hay que cruzar el umbral. Es el número que más veces estropea un
+   * aterrizaje y el que menos se dice: rápido, el avión no quiere posarse y se
+   * come la pista; lento, se cae los últimos metros.
+   *
+   * Va por aeronave porque **es** de la aeronave: sale de su velocidad de
+   * pérdida, y una avioneta y un avión grande no se parecen en nada aquí. Un
+   * número por avión es todo lo que este simulador puede sostener
+   * honestamente — el de verdad depende además del peso de ese día.
+   */
+  approachSpeed: number;
   /**
    * Velocidad de decisión, m/s. **V1.**
    *
@@ -184,9 +197,9 @@ export interface AircraftConfig {
  * pérdida sobre 25 m/s (~49 kt) y crucero sobre 60 m/s (~117 kt).
  */
 export const OGA_172: AircraftConfig = {
-  id: 'oga-172',
-  name: 'Óga 172',
-  descriptionKey: 'aircraft.oga172.description',
+  id: "oga-172",
+  name: "Óga 172",
+  descriptionKey: "aircraft.oga172.description",
   mass: 1100,
   wingArea: 16.2,
   wingSpan: 11.0,
@@ -194,20 +207,22 @@ export const OGA_172: AircraftConfig = {
   inertia: { xx: 1290, yy: 1830, zz: 2900 },
   maxThrust: 2600,
   cruiseSpeed: 60,
+  // 33 m/s son 119 km/h, que es la corta final de un 172 de verdad.
+  approachSpeed: 33,
   decisionSpeed: 26,
   gearHeight: 1.4,
   maxGroundPitch: 0.21, // 12°
   flapsLift: 0.55,
   flapsDrag: 0.06,
   appearance: {
-    layout: 'high-wing',
+    layout: "high-wing",
     body: 0xe4e2da,
     accent: 0xbe5d38,
     trim: 0x2f5243,
     blades: 2,
   },
   sound: {
-    engine: 'piston',
+    engine: "piston",
     cylinders: 4,
     idleRpm: 700,
     maxRpm: 2700,
@@ -229,7 +244,7 @@ export const OGA_172: AircraftConfig = {
     clP: -0.48,
     clAileron: 0.075, // ~73°/s a fondo: lo que rueda una avioneta de escuela
     cnBeta: 0.075,
-    cnR: -0.10,
+    cnR: -0.1,
     cnRudder: 0.028,
     cnAileron: -0.004,
   },
@@ -247,9 +262,9 @@ export const OGA_172: AircraftConfig = {
  * Óga, y dos personajes con el mismo nombre se confunden en vídeo.
  */
 export const MAINUMBY: AircraftConfig = {
-  id: 'mainumby',
-  name: 'Mainumby',
-  descriptionKey: 'aircraft.mainumby.description',
+  id: "mainumby",
+  name: "Mainumby",
+  descriptionKey: "aircraft.mainumby.description",
   mass: 1500,
   wingArea: 24.0,
   wingSpan: 12.5,
@@ -257,6 +272,7 @@ export const MAINUMBY: AircraftConfig = {
   inertia: { xx: 1600, yy: 2400, zz: 3600 },
   maxThrust: 5200,
   cruiseSpeed: 55,
+  approachSpeed: 29,
   decisionSpeed: 24,
   gearHeight: 1.8,
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
@@ -264,7 +280,7 @@ export const MAINUMBY: AircraftConfig = {
   flapsDrag: 0.05,
   appearance: {
     // Biplano de trabajo: dos alas, ocre y verde, hélice de tres palas.
-    layout: 'biplane',
+    layout: "biplane",
     body: 0xdd923f,
     accent: 0x2f5243,
     trim: 0x8a5a34,
@@ -273,7 +289,7 @@ export const MAINUMBY: AircraftConfig = {
   sound: {
     // Radial de fumigador: más cilindros, más lento y mucho más grave. Es el
     // golpeteo que uno reconoce sin verlo pasar.
-    engine: 'radial',
+    engine: "radial",
     cylinders: 7,
     idleRpm: 550,
     maxRpm: 2100,
@@ -285,7 +301,7 @@ export const MAINUMBY: AircraftConfig = {
     clAlpha: 5.4,
     alphaStall: 0.31, // ~18°, el biplano aguanta más
     cd0: 0.055, // dos alas y muchos tirantes: paga en resistencia
-    oswald: 0.70,
+    oswald: 0.7,
     cyBeta: -0.36,
     cm0: 0.05,
     cmAlpha: -1.05,

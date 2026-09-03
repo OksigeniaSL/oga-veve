@@ -203,6 +203,41 @@ body {
  * peso, mayúsculas y color— pero hace que la muleta sirva mientras haga
  * falta.
  */
+/*
+ * ── La velocidad en la aproximación ──────────────────────────────────────
+ *
+ * Tres estados y un solo sitio: la tarjeta de siempre, que cambia de color.
+ * No es un instrumento nuevo — es el mismo, diciendo algo más. Quien no lee
+ * tiene que aprender a mirar un sitio, no cuatro.
+ *
+ * El verde es «así», y los otros dos no son rojo los dos: **lento es lo que
+ * mata** y por eso va en ámbar de aviso, mientras que rápido es incómodo y va
+ * en azul frío. Dos maneras distintas de ir mal merecen dos colores distintos.
+ */
+.medidor--bien {
+  box-shadow: var(--filo), 0 0 0 2px #79e08a inset;
+}
+
+.medidor--lento {
+  box-shadow: var(--filo), 0 0 0 2px #ffb347 inset;
+}
+
+.medidor--rapido {
+  box-shadow: var(--filo), 0 0 0 2px #7fb6e8 inset;
+}
+
+.medidor--bien .medidor__valor {
+  color: #9df0aa;
+}
+
+.medidor--lento .medidor__valor {
+  color: #ffc978;
+}
+
+.medidor--rapido .medidor__valor {
+  color: #a8d4ff;
+}
+
 .medidor__glosa {
   font-size: var(--voz-glosa);
   color: var(--tinta-suave);
