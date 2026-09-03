@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  bandaDeRodaje,
   bandaDeVelocidad,
   type Aproximando,
 } from "./velocidad-de-aproximacion";
@@ -56,5 +57,28 @@ describe("la banda de velocidad", () => {
   it("cada avión con la suya: lo que es bien para uno es rápido para otro", () => {
     expect(bandaDeVelocidad(bajando({ velocidad: 33 }), 33)).toBe("bien");
     expect(bandaDeVelocidad(bajando({ velocidad: 33 }), 29)).toBe("rapido");
+  });
+});
+
+describe("la banda de rodaje", () => {
+  it("a paso de rodaje, bien", () => {
+    expect(bandaDeRodaje(9, true, false)).toBe("bien");
+  });
+
+  it("pasado de vueltas, aviso", () => {
+    expect(bandaDeRodaje(20, true, false)).toBe("rapido");
+  });
+
+  it("no hay banda de lento: ir despacio rodando no tiene nada de malo", () => {
+    expect(bandaDeRodaje(4, true, false)).toBe("bien");
+  });
+
+  it("se calla en la pista, que es donde toca correr", () => {
+    expect(bandaDeRodaje(60, true, true)).toBeNull();
+  });
+
+  it("se calla en el aire y estando parado", () => {
+    expect(bandaDeRodaje(60, false, false)).toBeNull();
+    expect(bandaDeRodaje(0.5, true, false)).toBeNull();
   });
 });
