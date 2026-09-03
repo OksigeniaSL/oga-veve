@@ -40,9 +40,9 @@ import {
   ShapeGeometry,
   Vector2,
   type ColorRepresentation,
-} from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { letreroAtlasTexture, numberTexture } from './runway-markings';
+} from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 
 /** Un punto en metros sobre el plano local del aeródromo. */
 export type Punto = readonly [number, number];
@@ -76,7 +76,10 @@ export interface Aerodrome {
     readonly path: readonly Punto[];
   }[];
   readonly aprons: readonly { readonly polygon: readonly Punto[] }[];
-  readonly buildings: readonly { readonly heightM: number | null; readonly polygon: readonly Punto[] }[];
+  readonly buildings: readonly {
+    readonly heightM: number | null;
+    readonly polygon: readonly Punto[];
+  }[];
   readonly windsocks: readonly Punto[];
   /**
    * Dónde para un avión que rueda antes de pisar la pista.
@@ -92,10 +95,13 @@ export interface Aerodrome {
     readonly xy: Punto;
     readonly ref: string | null;
     readonly runway?: string | null;
-    readonly source: 'osm' | 'derivado';
+    readonly source: "osm" | "derivado";
   }[];
   /** Los puestos de estacionamiento, numerados. De aquí sale y aquí vuelve. */
-  readonly parkingPositions?: readonly { readonly ref: string | null; readonly xy: Punto }[];
+  readonly parkingPositions?: readonly {
+    readonly ref: string | null;
+    readonly xy: Punto;
+  }[];
 }
 
 /** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */
@@ -128,6 +134,9 @@ const COLORES: Record<string, ColorRepresentation> = {
   gravel: 0x5a5348,
   grass: 0x4d6136,
 };
+
+/** Cada cuánto se repite la letra a lo largo de una calle de rodaje, m. */
+const PASO_LETRERO = 200;
 
 /** Lado del cuadrado de un letrero de rodadura, m. Un rótulo de superficie de
  * verdad lleva la letra de unos cuatro metros de alto; aquí es algo mayor,
@@ -168,9 +177,17 @@ const AMARILLO = 0xd8a521;
  *
  * El orden es foto < pavimento < pintura, y hay que leerlo así de seguido.
  */
-export const ENCIMA_PINTURA = { polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -9 };
+export const ENCIMA_PINTURA = {
+  polygonOffset: true,
+  polygonOffsetFactor: -3,
+  polygonOffsetUnits: -9,
+};
 /** Y las letras y números por encima de la pintura, con el mismo orden. */
-export const ENCIMA_LETRAS = { polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -15 };
+export const ENCIMA_LETRAS = {
+  polygonOffset: true,
+  polygonOffsetFactor: -6,
+  polygonOffsetUnits: -15,
+};
 
 /** Cuánto se levanta la pintura sobre el asfalto, m. Ver la nota de `losa`. */
 const PINTURA_ALTURA = 0.2;
@@ -179,7 +196,7 @@ const PINTURA_ALTURA = 0.2;
 const PINTURA = 0xd8d6cd;
 
 const color = (superficie: string | null): ColorRepresentation =>
-  COLORES[superficie ?? 'asphalt'] ?? COLORES.asphalt!;
+  COLORES[superficie ?? "asphalt"] ?? COLORES.asphalt!;
 
 /**
  * Una cinta de pavimento a partir de un eje y una anchura.
@@ -261,7 +278,10 @@ function cinta(
  * La triangulación la hace three con `ShapeGeometry`, que ya lleva un
  * *earcut* dentro. No hacía falta escribir uno.
  */
-function desdePoligono(contorno: readonly Punto[], altura: (p: Punto) => number): BufferGeometry | null {
+function desdePoligono(
+  contorno: readonly Punto[],
+  altura: (p: Punto) => number,
+): BufferGeometry | null {
   if (contorno.length < 3) return null;
   const forma = new Shape(contorno.map(([x, y]) => new Vector2(x, y)));
   const geo = new ShapeGeometry(forma);
@@ -313,7 +333,10 @@ function perfil(pista: Pista, base: number): (p: Punto) => number {
   const largo2 = dx * dx + dy * dy || 1;
 
   return ([x, y]) => {
-    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / largo2));
+    const t = Math.max(
+      0,
+      Math.min(1, ((x - ax) * dx + (y - ay) * dy) / largo2),
+    );
     return a.elevM! + (b.elevM! - a.elevM!) * t;
   };
 }
@@ -339,7 +362,10 @@ export function extension(aero: Aerodrome): { radio: number } {
 export function createAerodrome(
   aero: Aerodrome,
   baseY = 0,
-  viento: { readonly de: number | null; readonly kt: number } = { de: null, kt: 0 },
+  viento: { readonly de: number | null; readonly kt: number } = {
+    de: null,
+    kt: 0,
+  },
   /** Por qué cabecera se opera hoy. De ahí sale de qué color es cada extremo. */
   cabeceraEnUso: string | null = null,
   /**
@@ -379,7 +405,7 @@ export function createAerodrome(
   const porSuperficie = new Map<string, BufferGeometry[]>();
   const anotar = (superficie: string | null, geo: BufferGeometry | null) => {
     if (!geo) return;
-    const clave = superficie ?? 'asphalt';
+    const clave = superficie ?? "asphalt";
     const lista = porSuperficie.get(clave) ?? [];
     lista.push(geo);
     porSuperficie.set(clave, lista);
@@ -414,18 +440,23 @@ export function createAerodrome(
   for (const pista of aero.runways) {
     anotar(
       pista.surface,
-      cinta(pista.centerline, pista.widthM ?? 45, sobreLaFoto(perfil(pista, suelo))),
+      cinta(
+        pista.centerline,
+        pista.widthM ?? 45,
+        sobreLaFoto(perfil(pista, suelo)),
+      ),
     );
   }
   for (const calle of aero.taxiways) {
-    anotar('rodadura', cinta(calle.path, calle.widthM ?? ANCHO_RODADURA, cota));
+    anotar("rodadura", cinta(calle.path, calle.widthM ?? ANCHO_RODADURA, cota));
   }
   for (const plataforma of aero.aprons) {
-    anotar('concrete', desdePoligono(plataforma.polygon, cota));
+    anotar("concrete", desdePoligono(plataforma.polygon, cota));
   }
 
   for (const [superficie, geos] of porSuperficie) {
-    const fusionada = geos.length === 1 ? geos[0]! : mergeGeometries(geos, false);
+    const fusionada =
+      geos.length === 1 ? geos[0]! : mergeGeometries(geos, false);
     if (!fusionada) continue;
     const malla = new Mesh(
       fusionada,
@@ -478,7 +509,7 @@ export function createAerodrome(
  */
 function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
   const grupo = new Group();
-  grupo.name = 'rodadura';
+  grupo.name = "rodadura";
   const piezas: BufferGeometry[] = [];
 
   // El amarillo **se corta al llegar a la pista**. Una calle de rodaje cruza
@@ -494,7 +525,24 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
   };
 
   for (const calle of aero.taxiways) {
-    const eje = calle.path;
+    /*
+     * **Partido en trozos cortos antes de cortar.**
+     *
+     * El recorte de arriba miraba el punto medio de cada tramo del fichero, y
+     * los tramos del fichero son largos: una salida rápida entra en la pista
+     * con un solo tramo de cien metros cuyo medio cae fuera del asfalto, así
+     * que el tramo entero se daba por bueno y se pintaba amarillo **por
+     * dentro de la pista**. En Tenerife Norte salían cientos de metros de raya
+     * amarilla a lo largo de la 12/30, y quien despegaba la tomaba por el eje
+     * y se pasaba la carrera corrigiendo hacia ella: «esta línea atrapa a la
+     * avioneta y hay que estar dando golpes de timón para ponerla en el
+     * centro».
+     *
+     * Con trozos de dos metros el punto medio ya dice la verdad, y el amarillo
+     * se corta donde empieza el asfalto de la pista, que es donde se corta de
+     * verdad.
+     */
+    const eje = densificar(calle.path, 2);
     for (let i = 0; i < eje.length - 1; i++) {
       const [ax, ay] = eje[i]!;
       const [bx, by] = eje[i + 1]!;
@@ -543,7 +591,7 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
         fusionadas,
         new MeshLambertMaterial({ color: AMARILLO, ...ENCIMA_PINTURA }),
       );
-      malla.name = 'amarillo';
+      malla.name = "amarillo";
       grupo.add(malla);
     }
   }
@@ -574,7 +622,7 @@ function letreros(
   enLaPista: (p: Punto) => boolean,
 ): Mesh | null {
   const conNombre = aero.taxiways.filter(
-    (c) => typeof c.ref === 'string' && c.ref.length > 0 && c.ref.length <= 3,
+    (c) => typeof c.ref === "string" && c.ref.length > 0 && c.ref.length <= 3,
   );
   if (!conNombre.length) return null;
 
@@ -589,37 +637,56 @@ function letreros(
     // Un tramo corto es un empalme, no una calle: rotularlo llena el asfalto
     // de letras repetidas justo donde se cruzan tres calles.
     if (largo < LETRERO_MINIMO) continue;
-    const p = sobreElEje(calle.path, largo / 2);
-    if (!p) continue;
-    const [cx, cy] = p;
-    if (enLaPista([cx, cy])) continue;
 
-    // **El sentido de una calle en OSM es arbitrario.** El de una pista no —va
-    // de un umbral al otro y el número se pinta para quien aterriza—, pero una
-    // calle de rodaje se dibujó en el sentido en que le vino bien a quien la
-    // mapeó, así que la mitad de las letras salían boca abajo.
-    //
-    // Se orientan hacia la pista, que es adonde va quien rueda: el niño sale
-    // del estacionamiento y busca la cabecera. Leyendo en ese sentido, la
-    // letra le dice por dónde va.
-    const haciaPista = rumboALaPista(aero, [cx, cy]);
-    const alReves = haciaPista ? p[2] * haciaPista[0] + p[3] * haciaPista[1] < 0 : false;
-    const dx = alReves ? -p[2] : p[2];
-    const dy = alReves ? -p[3] : p[3];
+    /*
+     * **Una letra cada doscientos metros, no una por calle.**
+     *
+     * Se pintaba una sola en el centro de cada calle, y en una calle de
+     * rodaje paralela a la pista eso es una letra en mil setecientos metros:
+     * no la ves nunca. Y mientras tanto el cartel de la señal te dice que vas
+     * por la R, así que la letra que te está guiando no está escrita en
+     * ninguna parte. «R, sí, pero el jugador no entiende qué es eso de R. No
+     * hay una R, no se explica nada.»
+     *
+     * En un aeropuerto de verdad los carteles de posición se repiten a lo
+     * largo de la calle por este mismo motivo. Doscientos metros es lo que se
+     * ve rodando: no llenas el asfalto de letras y no te quedas sin ninguna.
+     */
+    for (let d = PASO_LETRERO / 2; d < largo; d += PASO_LETRERO) {
+      const p = sobreElEje(calle.path, d);
+      if (!p) continue;
+      const [cx, cy] = p;
+      if (enLaPista([cx, cy])) continue;
 
-    const celda = refs.indexOf(calle.ref as string);
-    const u = (celda % lado) / lado;
-    const v = 1 - (Math.floor(celda / lado) + 1) / lado;
+      // **El sentido de una calle en OSM es arbitrario.** El de una pista no —va
+      // de un umbral al otro y el número se pinta para quien aterriza—, pero una
+      // calle de rodaje se dibujó en el sentido en que le vino bien a quien la
+      // mapeó, así que la mitad de las letras salían boca abajo.
+      //
+      // Se orientan hacia la pista, que es adonde va quien rueda: el niño sale
+      // del estacionamiento y busca la cabecera. Leyendo en ese sentido, la
+      // letra le dice por dónde va.
+      const haciaPista = rumboALaPista(aero, [cx, cy]);
+      const alReves = haciaPista
+        ? p[2] * haciaPista[0] + p[3] * haciaPista[1] < 0
+        : false;
+      const dx = alReves ? -p[2] : p[2];
+      const dy = alReves ? -p[3] : p[3];
 
-    const geo = new PlaneGeometry(LETRERO_LADO, LETRERO_LADO);
-    const uv = geo.getAttribute('uv');
-    for (let i = 0; i < uv.count; i++) {
-      uv.setXY(i, u + uv.getX(i) / lado, v + uv.getY(i) / lado);
+      const celda = refs.indexOf(calle.ref as string);
+      const u = (celda % lado) / lado;
+      const v = 1 - (Math.floor(celda / lado) + 1) / lado;
+
+      const geo = new PlaneGeometry(LETRERO_LADO, LETRERO_LADO);
+      const uv = geo.getAttribute("uv");
+      for (let i = 0; i < uv.count; i++) {
+        uv.setXY(i, u + uv.getX(i) / lado, v + uv.getY(i) / lado);
+      }
+      geo.rotateX(-Math.PI / 2);
+      geo.rotateY(Math.atan2(-dx, dy));
+      geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);
+      piezas.push(geo);
     }
-    geo.rotateX(-Math.PI / 2);
-    geo.rotateY(Math.atan2(-dx, dy));
-    geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);
-    piezas.push(geo);
   }
   if (!piezas.length) return null;
 
@@ -635,7 +702,7 @@ function letreros(
       ...ENCIMA_LETRAS,
     }),
   );
-  malla.name = 'letreros';
+  malla.name = "letreros";
   return malla;
 }
 
@@ -644,7 +711,10 @@ function letreros(
  * más cercano y no al eje: un piloto que rueda no va «a la pista», va a una
  * cabecera concreta.
  */
-function rumboALaPista(aero: Aerodrome, p: Punto): readonly [number, number] | null {
+function rumboALaPista(
+  aero: Aerodrome,
+  p: Punto,
+): readonly [number, number] | null {
   let mejor: Punto | null = null;
   let mejorD = Infinity;
   for (const pista of aero.runways) {
@@ -670,8 +740,14 @@ export function aLaPolilinea(p: Punto, eje: readonly Punto[]): number {
     const dx = bx - ax;
     const dy = by - ay;
     const l = dx * dx + dy * dy || 1;
-    const t = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / l));
-    mejor = Math.min(mejor, Math.hypot(p[0] - (ax + t * dx), p[1] - (ay + t * dy)));
+    const t = Math.max(
+      0,
+      Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / l),
+    );
+    mejor = Math.min(
+      mejor,
+      Math.hypot(p[0] - (ax + t * dx), p[1] - (ay + t * dy)),
+    );
   }
   return mejor;
 }
@@ -692,7 +768,9 @@ export function arranqueEnPista(
   dentro = 60,
 ): readonly [number, number] | null {
   const umbral = Object.values(pista.thresholds).find(
-    (u) => u?.xy != null && Math.abs(((((u.headingTrue ?? 0) - headingTrue + 540) % 360) - 180)) < 20,
+    (u) =>
+      u?.xy != null &&
+      Math.abs((((u.headingTrue ?? 0) - headingTrue + 540) % 360) - 180) < 20,
   );
   if (!umbral?.xy) return null;
 
@@ -708,8 +786,14 @@ export function arranqueEnPista(
     const dy = by - ay;
     const l2 = dx * dx + dy * dy || 1;
     const l = Math.sqrt(l2);
-    const t = Math.max(0, Math.min(1, ((umbral.xy[0] - ax) * dx + (umbral.xy[1] - ay) * dy) / l2));
-    const d = Math.hypot(umbral.xy[0] - (ax + t * dx), umbral.xy[1] - (ay + t * dy));
+    const t = Math.max(
+      0,
+      Math.min(1, ((umbral.xy[0] - ax) * dx + (umbral.xy[1] - ay) * dy) / l2),
+    );
+    const d = Math.hypot(
+      umbral.xy[0] - (ax + t * dx),
+      umbral.xy[1] - (ay + t * dy),
+    );
     if (d < mejor) {
       mejor = d;
       dUmbral = recorrido + t * l;
@@ -743,7 +827,13 @@ function alLargoDelEje(eje: readonly Punto[], punto: Punto): number {
     const dx = bx - ax;
     const dy = by - ay;
     const l2 = dx * dx + dy * dy;
-    const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((punto[0] - ax) * dx + (punto[1] - ay) * dy) / l2));
+    const t =
+      l2 === 0
+        ? 0
+        : Math.max(
+            0,
+            Math.min(1, ((punto[0] - ax) * dx + (punto[1] - ay) * dy) / l2),
+          );
     const d = Math.hypot(punto[0] - (ax + t * dx), punto[1] - (ay + t * dy));
     if (d < cerca) {
       cerca = d;
@@ -757,7 +847,10 @@ function alLargoDelEje(eje: readonly Punto[], punto: Punto): number {
 function longitudDe(eje: readonly Punto[]): number {
   let total = 0;
   for (let i = 0; i < eje.length - 1; i++) {
-    total += Math.hypot(eje[i + 1]![0] - eje[i]![0], eje[i + 1]![1] - eje[i]![1]);
+    total += Math.hypot(
+      eje[i + 1]![0] - eje[i]![0],
+      eje[i + 1]![1] - eje[i]![1],
+    );
   }
   return total;
 }
@@ -784,7 +877,12 @@ function sobreElEje(
     if (l < 0.001) continue;
     if (recorrido + l >= d) {
       const t = (d - recorrido) / l;
-      return [ax + (bx - ax) * t, ay + (by - ay) * t, (bx - ax) / l, (by - ay) / l];
+      return [
+        ax + (bx - ax) * t,
+        ay + (by - ay) * t,
+        (bx - ax) / l,
+        (by - ay) / l,
+      ];
     }
     recorrido += l;
   }
@@ -792,7 +890,10 @@ function sobreElEje(
 }
 
 /** Hacia dónde va la calle de rodaje más cercana a un punto. */
-function direccionCercana(aero: Aerodrome, punto: Punto): readonly [number, number] | null {
+function direccionCercana(
+  aero: Aerodrome,
+  punto: Punto,
+): readonly [number, number] | null {
   let mejor = Infinity;
   let dir: readonly [number, number] | null = null;
   for (const calle of aero.taxiways) {
@@ -821,9 +922,13 @@ function direccionCercana(aero: Aerodrome, punto: Punto): readonly [number, numb
  * color por ángulo llega con el bloque de aproximación—, pero puestas donde
  * están y en el lado que les toca.
  */
-function luces(pista: Pista, altura: (p: Punto) => number, salida?: string | null): Group {
+function luces(
+  pista: Pista,
+  altura: (p: Punto) => number,
+  salida?: string | null,
+): Group {
   const grupo = new Group();
-  grupo.name = 'luces';
+  grupo.name = "luces";
   if (!pista.lit) return grupo;
 
   const conNombre = Object.entries(pista.thresholds).filter(
@@ -928,7 +1033,7 @@ function luces(pista: Pista, altura: (p: Punto) => number, salida?: string | nul
     new MeshBasicMaterial(),
     todas.length,
   );
-  malla.name = 'luces-pista';
+  malla.name = "luces-pista";
   todas.forEach(([p, color], k) => {
     m.makeTranslation(p[0], p[1], p[2]);
     malla.setMatrixAt(k, m);
@@ -942,7 +1047,7 @@ function luces(pista: Pista, altura: (p: Punto) => number, salida?: string | nul
     new MeshBasicMaterial({ color: 0xff5a3c }),
     4,
   );
-  papi.name = 'papi';
+  papi.name = "papi";
   for (let k = 0; k < 4; k++) {
     const d = 320;
     const lado = ancho / 2 + 15 + k * 9;
@@ -970,7 +1075,7 @@ function mangas(
   viento: { readonly de: number | null; readonly kt: number },
 ): Group {
   const grupo = new Group();
-  grupo.name = 'mangas';
+  grupo.name = "mangas";
   if (!aero.windsocks.length) return grupo;
 
   // Cada manga son un poste y cinco tramos de cono; sueltas, dos mangas ya eran
@@ -984,15 +1089,18 @@ function mangas(
   const CLARO: readonly [number, number, number] = [0.949, 0.945, 0.925];
   const NARANJA: readonly [number, number, number] = [0.851, 0.31, 0.184];
 
-  const tiñe = (geo: BufferGeometry, [r, g, b]: readonly [number, number, number]) => {
-    const n = geo.getAttribute('position').count;
+  const tiñe = (
+    geo: BufferGeometry,
+    [r, g, b]: readonly [number, number, number],
+  ) => {
+    const n = geo.getAttribute("position").count;
     const col = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
       col[i * 3] = r;
       col[i * 3 + 1] = g;
       col[i * 3 + 2] = b;
     }
-    geo.setAttribute('color', new BufferAttribute(col, 3));
+    geo.setAttribute("color", new BufferAttribute(col, 3));
     piezas.push(geo);
   };
 
@@ -1008,7 +1116,8 @@ function mangas(
    * Sin dirección —calma o viento variable— se queda colgando, que es lo que
    * hace una manga cuando no hay nada que contar.
    */
-  const hacia = viento.de === null ? 0 : ((viento.de + 180) % 360) * (Math.PI / 180);
+  const hacia =
+    viento.de === null ? 0 : ((viento.de + 180) % 360) * (Math.PI / 180);
   // Cero es colgando a plomo; uno es horizontal. Quince nudos la ponen tiesa.
   const tiesa = Math.min(1, viento.kt / 15);
   const caida = (1 - tiesa) * (Math.PI / 2);
@@ -1027,7 +1136,14 @@ function mangas(
     for (let k = 0; k < 5; k++) {
       const largo = 0.7;
       const d = 0.6 + k * 0.72;
-      const tramo = new CylinderGeometry(0.55 - k * 0.07, 0.62 - k * 0.07, largo, 8, 1, true);
+      const tramo = new CylinderGeometry(
+        0.55 - k * 0.07,
+        0.62 - k * 0.07,
+        largo,
+        8,
+        1,
+        true,
+      );
       // El cilindro nace con el eje en Y; se tumba al eje X y se gira al viento.
       tramo.rotateZ(Math.PI / 2);
       tramo.rotateZ(-caida);
@@ -1043,7 +1159,7 @@ function mangas(
       fusionada,
       new MeshLambertMaterial({ vertexColors: true, side: DoubleSide }),
     );
-    malla.name = 'mangas';
+    malla.name = "mangas";
     grupo.add(malla);
   }
 
@@ -1065,7 +1181,7 @@ function mangas(
  */
 function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   const grupo = new Group();
-  grupo.name = 'marcas';
+  grupo.name = "marcas";
 
   const umbrales = Object.entries(pista.thresholds).filter(
     (e): e is [string, Umbral] => e[1] !== null && e[1].xy !== null,
@@ -1073,7 +1189,10 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   if (umbrales.length < 2) return grupo;
 
   const ancho = pista.widthM ?? 45;
-  const [[nombreA, a], [nombreB, b]] = umbrales as [[string, Umbral], [string, Umbral]];
+  const [[nombreA, a], [nombreB, b]] = umbrales as [
+    [string, Umbral],
+    [string, Umbral],
+  ];
   const ax = a.xy![0];
   const ay = a.xy![1];
   const largo = Math.hypot(b.xy![0] - ax, b.xy![1] - ay);
@@ -1090,7 +1209,10 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   // que primero se mira por cuál de los dos umbrales empieza.
   const alRevés =
     Math.hypot(pista.centerline[0]![0] - ax, pista.centerline[0]![1] - ay) >
-    Math.hypot(pista.centerline[0]![0] - b.xy![0], pista.centerline[0]![1] - b.xy![1]);
+    Math.hypot(
+      pista.centerline[0]![0] - b.xy![0],
+      pista.centerline[0]![1] - b.xy![1],
+    );
 
   /*
    * **Dónde cae el umbral A sobre el eje del pavimento.**
@@ -1114,7 +1236,10 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
 
   /** Un rectángulo de pintura centrado a `d` metros del umbral A. */
   const raya = (d: number, lado: number, largoM: number, anchoM: number) => {
-    const p = sobreElEje(pista.centerline, alRevés ? desdeElUmbral - d : desdeElUmbral + d);
+    const p = sobreElEje(
+      pista.centerline,
+      alRevés ? desdeElUmbral - d : desdeElUmbral + d,
+    );
     if (!p) return;
     const [ejeX, ejeY, dirX, dirY] = p;
     const sentido = alRevés ? -1 : 1;
@@ -1125,10 +1250,22 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     const cx = ejeX + px * lado;
     const cy = ejeY + py * lado;
     const contorno: Punto[] = [
-      [cx + (ux * largoM + px * anchoM) / 2, cy + (uy * largoM + py * anchoM) / 2],
-      [cx + (ux * largoM - px * anchoM) / 2, cy + (uy * largoM - py * anchoM) / 2],
-      [cx - (ux * largoM + px * anchoM) / 2, cy - (uy * largoM + py * anchoM) / 2],
-      [cx - (ux * largoM - px * anchoM) / 2, cy - (uy * largoM - py * anchoM) / 2],
+      [
+        cx + (ux * largoM + px * anchoM) / 2,
+        cy + (uy * largoM + py * anchoM) / 2,
+      ],
+      [
+        cx + (ux * largoM - px * anchoM) / 2,
+        cy + (uy * largoM - py * anchoM) / 2,
+      ],
+      [
+        cx - (ux * largoM + px * anchoM) / 2,
+        cy - (uy * largoM + py * anchoM) / 2,
+      ],
+      [
+        cx - (ux * largoM - px * anchoM) / 2,
+        cy - (uy * largoM - py * anchoM) / 2,
+      ],
     ];
     const geo = desdePoligono(contorno, (p) => altura(p) + PINTURA_ALTURA);
     if (geo) piezas.push(geo);
@@ -1159,8 +1296,14 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
       const contorno: Punto[] = [
         [cax - ey * off - ex * 0.45, cay + ex * off - ey * 0.45],
         [cbx - ey * off + ex * 0.45, cby + ex * off + ey * 0.45],
-        [cbx - ey * off + ex * 0.45 + ey * 0.9, cby + ex * off + ey * 0.45 - ex * 0.9],
-        [cax - ey * off - ex * 0.45 + ey * 0.9, cay + ex * off - ey * 0.45 - ex * 0.9],
+        [
+          cbx - ey * off + ex * 0.45 + ey * 0.9,
+          cby + ex * off + ey * 0.45 - ex * 0.9,
+        ],
+        [
+          cax - ey * off - ex * 0.45 + ey * 0.9,
+          cay + ex * off - ey * 0.45 - ex * 0.9,
+        ],
       ];
       const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
       if (geo) piezas.push(geo);
@@ -1177,8 +1320,8 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   // en una de 60. Iban ocho a ojo, con la anchura escalada con la pista, que
   // es justo lo que hace que dejen de significar nada.
   const BARRA = 1.8;
-  const PASO = BARRA * 2;      // barra y hueco, los dos de metro ochenta
-  const HUECO_CENTRAL = 3.6;   // el eje se deja libre
+  const PASO = BARRA * 2; // barra y hueco, los dos de metro ochenta
+  const HUECO_CENTRAL = 3.6; // el eje se deja libre
   // Doce barras en una pista de 45 m, dieciséis en una de 60, ocho en una de
   // 30. Es lo que sale de repartir con paso fijo, y por eso contarlas dice el
   // ancho.
@@ -1219,7 +1362,7 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
         fusionadas,
         new MeshLambertMaterial({ color: PINTURA, ...ENCIMA_PINTURA }),
       );
-      malla.name = 'pintura';
+      malla.name = "pintura";
       grupo.add(malla);
     }
   }
@@ -1256,7 +1399,10 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
      * Es el mismo desajuste de dos ejes parecidos que ya se llevó por delante
      * el eje discontinuo y las luces de cabecera. Van tres.
      */
-    const p = sobreElEje(pista.centerline, alRevés ? desdeElUmbral - d : desdeElUmbral + d);
+    const p = sobreElEje(
+      pista.centerline,
+      alRevés ? desdeElUmbral - d : desdeElUmbral + d,
+    );
     if (!p) continue;
     const sentido = alRevés ? -1 : 1;
     const dirX = p[2] * sentido;
