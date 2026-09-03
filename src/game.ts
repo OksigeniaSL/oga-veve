@@ -1011,7 +1011,27 @@ export class Game {
   private toggleEngine(): void {
     const s = this.flight.state;
     const c = this.input.controls;
-    if (!s.onGround || s.airspeed > 2 || c.throttle > 0.05) {
+    /*
+     * **Y si el gas estaba abierto, se cierra aquí mismo.**
+     *
+     * No arrancar con gas es lista de comprobación de verdad y por eso está
+     * prohibido. Pero prohibirlo sin más era una trampa sin salida: el juego
+     * te dice «arrancá el motor», tú tocas el gas antes que la llave —que es
+     * lo que hace cualquiera que aún no sabe el orden— y a partir de ahí la
+     * llave ya no responde nunca. «Si pulso la X antes de la I, el juego ya no
+     * sigue aunque luego le dé a la I; es como si se quedara bloqueado.»
+     *
+     * Cerrarlo por él no le quita la lección: el aviso sigue saliendo y dice
+     * qué pasó. Lo que le quita es el callejón, porque a la segunda pulsación
+     * ya arranca. Dejar a un chico de cuatro años delante de una tecla que no
+     * hace nada es peor que moverle un mando y contárselo.
+     */
+    if (s.onGround && s.airspeed <= 2 && c.throttle > 0.05) {
+      c.throttle = 0;
+      this.hud.flash(t("hud.engineBusy"));
+      return;
+    }
+    if (!s.onGround || s.airspeed > 2) {
       this.hud.flash(t("hud.engineBusy"));
       return;
     }
