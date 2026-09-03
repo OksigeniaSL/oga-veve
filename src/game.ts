@@ -864,6 +864,7 @@ export class Game {
       s.touchdownSinkRate,
       s.crashed,
       Number.isFinite(this.runwayRemaining()),
+      this.aircraft.approachSpeed,
     );
     if (!veredicto) return;
     this.hud.flash(
@@ -872,7 +873,9 @@ export class Game {
           ? "hud.landedSoft"
           : veredicto === "firme"
             ? "hud.landedFirm"
-            : "hud.landedOffRunway",
+            : veredicto === "rapido"
+              ? "hud.landedFast"
+              : "hud.landedOffRunway",
       ),
       3.6,
     );

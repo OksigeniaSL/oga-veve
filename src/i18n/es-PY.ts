@@ -19,6 +19,7 @@ export const ES_PY = {
   'hud.pullUp': '¡El suelo! Subí',
   'hud.runwayEnd': '¡Se acaba la pista!',
   'hud.landedSoft': '¡Qué aterrizaje! Suavecito',
+  'hud.landedFast': '¡Muy rápido! Bajá el motor antes de tocar',
   'hud.landedFirm': 'Aterrizaje firme. Ya estás abajo',
   'hud.landedOffRunway': 'Bajaste fuera de la pista, pero bajaste',
   'hud.brakes': 'Frenos',

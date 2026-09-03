@@ -26,6 +26,7 @@ export const EN: Dictionary = {
   'hud.pullUp': 'Ground! Pull up',
   'hud.runwayEnd': 'Runway ending',
   'hud.landedSoft': 'Beautiful landing. Smooth as it gets',
+  'hud.landedFast': 'Too fast! Ease off the power before touching down',
   'hud.landedFirm': 'Firm landing. You are down',
   'hud.landedOffRunway': 'You landed off the runway, but you landed',
   'hud.brakes': 'Brakes',
