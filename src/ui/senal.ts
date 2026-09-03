@@ -49,6 +49,26 @@ const MANO = icono(`
            v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
 `);
 
+/**
+ * Ya no se puede parar: **la mano de parar, tachada**.
+ *
+ * Es el punto de no retorno del despegue, y se dibuja con la misma mano del
+ * freno para que se lea sin palabras: lo que hasta ahora podías hacer —parar—
+ * ya no. Un dibujo nuevo diría «esto es otra cosa»; la mano tachada dice
+ * «esto de aquí, ya no».
+ *
+ * Retirar la mano y ya está no bastaba: «no basta con que se retire la mano,
+ * algo debe hacer entender que estás en V1, que ya no puedes abortar».
+ * Desaparecer no se ve; tacharse, sí.
+ */
+const NO_PARAR = icono(`
+  <path d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
+           a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
+           v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
+  <path class="senal__tachon" d="M3.4 3.4 L20.6 20.6" fill="none" stroke="currentColor"
+        stroke-width="2.8" stroke-linecap="round" />
+`);
+
 /** La luz verde: adelante. */
 const VERDE = icono(`
   <circle cx="12" cy="12" r="9.5" />
@@ -139,6 +159,7 @@ const DIBUJOS: Record<string, string> = {
   helice: HELICE,
   amarillo: RAYA,
   mano: MANO,
+  nopara: NO_PARAR,
   verde: VERDE,
   eje: EJE,
   motor: MOTOR,
@@ -162,7 +183,7 @@ export class Senal {
   private texto: HTMLElement | null = null;
   private letra: HTMLElement | null = null;
   private tecla: HTMLElement | null = null;
-  private actual = '';
+  private actual = "";
   private queda = 0;
   private accion: (() => void) | null = null;
 
@@ -196,7 +217,7 @@ export class Senal {
     this.texto = raiz.querySelector('[data-hud="senal-texto"]');
     this.letra = raiz.querySelector('[data-hud="senal-letra"]');
     this.tecla = raiz.querySelector('[data-hud="senal-tecla"]');
-    this.caja?.addEventListener('click', () => this.accion?.());
+    this.caja?.addEventListener("click", () => this.accion?.());
   }
 
   /**
@@ -223,7 +244,7 @@ export class Senal {
     this.actual = dibujo;
     this.queda = opciones.segundos ?? 6;
     this.caja.hidden = false;
-    this.dibujo.innerHTML = DIBUJOS[dibujo] ?? '';
+    this.dibujo.innerHTML = DIBUJOS[dibujo] ?? "";
 
     if (this.texto) {
       this.texto.textContent = texto;
@@ -233,20 +254,20 @@ export class Senal {
       // La letra de la calle es un dato, no una palabra: una «A» pintada en el
       // suelo se reconoce sin leer, igual que se reconoce el número de la
       // pista. Por eso se queda incluso donde no hay texto.
-      this.letra.textContent = letra ?? '';
+      this.letra.textContent = letra ?? "";
       this.letra.hidden = !letra;
     }
     if (this.tecla) {
       // La tecla, dibujada como una tecla. Es la misma pinta que tiene en la
       // pantalla de mandos, para que se reconozca sin leer una palabra.
-      this.tecla.textContent = opciones.tecla ?? '';
+      this.tecla.textContent = opciones.tecla ?? "";
       this.tecla.hidden = !opciones.tecla;
     }
 
     this.accion = opciones.accion ?? null;
     const boton = this.caja as HTMLButtonElement;
     boton.disabled = !this.accion;
-    boton.classList.toggle('senal--pulsable', !!this.accion);
+    boton.classList.toggle("senal--pulsable", !!this.accion);
   }
 
   /** El aviso se apaga solo. Un cartel permanente deja de mirarse. */
@@ -259,7 +280,7 @@ export class Senal {
     this.queda -= dt;
     if (this.queda <= 0) {
       this.caja.hidden = true;
-      this.actual = '';
+      this.actual = "";
     }
   }
 

@@ -2643,6 +2643,13 @@ body {
 
 /* Los huecos de un dibujo —el agujero de la llave, el centro del freno— se
    pintan del color de la caja, no de blanco: así se ven como huecos. */
+/* El tachón del «ya no se puede parar»: hueco a los lados para que se lea
+   como una raya encima y no como parte de la mano. */
+.senal__tachon {
+  stroke: currentcolor;
+  paint-order: stroke;
+}
+
 .senal__hueco {
   fill: var(--barro-calido);
 }

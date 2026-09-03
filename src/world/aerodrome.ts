@@ -447,8 +447,44 @@ export function createAerodrome(
       ),
     );
   }
+  /*
+   * **La rodadura se corta donde empieza la pista.**
+   *
+   * Una calle de rodaje cruza la pista en el mapa, y su cinta se dibujaba
+   * entera: encima del asfalto de la pista quedaba un trozo de otro gris con
+   * los bordes en pico, justo donde se juntan las salidas rápidas. «No queda
+   * muy mal, pero hay un trozo de asfalto llegando al final.» Sobre la
+   * fotografía canta más todavía, porque ahí el trozo es nuestro y lo de
+   * alrededor es la foto.
+   *
+   * Y no hace falta pintarlo: debajo está la pista, que es asfalto también y
+   * del bueno. Es el mismo recorte que ya se le hace al amarillo, y por el
+   * mismo motivo — en la pista manda la pista.
+   */
+  const cortarEnLaPista = (camino: readonly Punto[]): Punto[][] => {
+    const trozos: Punto[][] = [];
+    let actual: Punto[] = [];
+    for (const p of densificar(camino, 5)) {
+      // Sin margen, al filo: así la cinta llega a tocar el borde del asfalto
+      // de la pista y no queda una costura de tierra entre las dos.
+      const dentro = aero.runways.some(
+        (pista) => aLaPolilinea(p, pista.centerline) < (pista.widthM ?? 45) / 2,
+      );
+      if (dentro) {
+        if (actual.length > 1) trozos.push(actual);
+        actual = [];
+      } else {
+        actual.push(p);
+      }
+    }
+    if (actual.length > 1) trozos.push(actual);
+    return trozos;
+  };
+
   for (const calle of aero.taxiways) {
-    anotar("rodadura", cinta(calle.path, calle.widthM ?? ANCHO_RODADURA, cota));
+    for (const trozo of cortarEnLaPista(calle.path)) {
+      anotar("rodadura", cinta(trozo, calle.widthM ?? ANCHO_RODADURA, cota));
+    }
   }
   for (const plataforma of aero.aprons) {
     anotar("concrete", desdePoligono(plataforma.polygon, cota));

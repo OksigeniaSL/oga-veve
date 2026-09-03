@@ -49,23 +49,24 @@
  * dónde está el avión y devuelve en qué fase va.
  */
 
-import type { FlightState } from './model';
+import type { FlightState } from "./model";
 
 export type Fase =
-  | 'estacionado'
-  | 'arrancando'
-  | 'rodando'
-  | 'esperando'
-  | 'autorizado'
-  | 'alineando'
-  | 'despegando'
-  | 'en-vuelo'
-  | 'final'
-  | 'aterrizado'
-  | 'abandonando'
-  | 'a-plataforma'
-  | 'en-puesto'
-  | 'apagado';
+  | "estacionado"
+  | "arrancando"
+  | "rodando"
+  | "esperando"
+  | "autorizado"
+  | "alineando"
+  | "despegando"
+  | "comprometido"
+  | "en-vuelo"
+  | "final"
+  | "aterrizado"
+  | "abandonando"
+  | "a-plataforma"
+  | "en-puesto"
+  | "apagado";
 
 /** Lo que el juego le cuenta a la máquina en cada fotograma. */
 export interface Situacion {
@@ -89,6 +90,12 @@ export interface Situacion {
   readonly alLargoDePista: number;
   /** ¿Está el avión sobre el asfalto de la pista? */
   readonly enPista: boolean;
+  /**
+   * Metros de pista que quedan por delante. Cero pasado el final.
+   *
+   * Es lo que decide el punto de no retorno del despegue. Ver `yaNoSePuedeParar`.
+   */
+  readonly pistaRestante: number;
   /** Metros de altura sobre el terreno. */
   readonly sobreElSuelo: number;
   /** ¿Está el motor en marcha? */
@@ -111,6 +118,44 @@ export interface Paso {
    * cuando lo que hay que enseñar es que no se hace.
    */
   readonly saltoLaLuz: boolean;
+}
+
+/*
+ * ## El punto de no retorno del despegue
+ *
+ * En aviación se llama V1, y es la velocidad pasada la cual ya no se aborta:
+ * si algo va mal a partir de ahí, se despega y se resuelve en el aire, porque
+ * frenando no cabes en lo que queda de pista.
+ *
+ * **No es un número fijo, y ese es justo el interés.** Depende de lo que
+ * pesas, de lo rápido que vas y de la pista que te queda — «en avioneta,
+ * además, esto ocurre más tarde, supongo; depende del tamaño del avión». Así
+ * que aquí no se pone un número: se calcula lo que se tarda en parar y se
+ * compara con lo que queda de asfalto. En los tres kilómetros y medio de
+ * Tenerife Norte una avioneta no llega a comprometerse casi nunca, y eso es
+ * verdad y está bien que se note; en una pista corta llega enseguida.
+ *
+ * La frenada es la de un avión ligero frenando fuerte en asfalto seco. El
+ * margen es lo que se deja de sobra, porque el punto de no retorno se cruza
+ * antes de que la cuenta salga justa: cuando ya no sobra, es que era tarde.
+ */
+const FRENADA = 2.5;
+const MARGEN_DE_PARADA = 1.4;
+/**
+ * Lo que se tarda en decidir, en segundos.
+ *
+ * Va en la cuenta porque va en la de verdad: entre que algo falla y que el pie
+ * está en el freno pasa tiempo, y a cien por hora ese tiempo son treinta
+ * metros. Tres segundos es generoso para un piloto y corto para un niño de
+ * cuatro años, que es quien va a estar mirando.
+ */
+const REACCION = 3;
+
+function yaNoSePuedeParar(s: Situacion): boolean {
+  const v = s.estado.airspeed;
+  if (v < RODANDO_YA) return false;
+  const paraParar = (v * REACCION + (v * v) / (2 * FRENADA)) * MARGEN_DE_PARADA;
+  return paraParar > Math.max(0, s.pistaRestante);
 }
 
 /** Quieto de verdad, m/s. Por debajo de esto un avión está parado. */
@@ -185,17 +230,17 @@ const HISTERESIS = 0.5;
  * pulsó no sepa si ha hecho algo.
  */
 const INMEDIATAS: ReadonlySet<Fase> = new Set<Fase>([
-  'arrancando',
-  'en-vuelo',
-  'apagado',
-  'aterrizado',
+  "arrancando",
+  "en-vuelo",
+  "apagado",
+  "aterrizado",
 ]);
 
 export class Vuelo {
-  private fase: Fase = 'estacionado';
+  private fase: Fase = "estacionado";
   private desde = 0;
   /** La fase que el mundo está pidiendo, y desde cuándo. */
-  private candidato: Fase = 'estacionado';
+  private candidato: Fase = "estacionado";
   private candidatoDesde = 0;
   /** Segundos parado en la doble raya. */
   private quieto = 0;
@@ -223,7 +268,7 @@ export class Vuelo {
 
   /** Empieza un vuelo. `desdePista` arranca ya alineado, para el modo de siempre. */
   reiniciar(desdePista = false): void {
-    this.fase = desdePista ? 'despegando' : 'estacionado';
+    this.fase = desdePista ? "despegando" : "estacionado";
     this.candidato = this.fase;
     this.desde = 0;
     this.candidatoDesde = 0;
@@ -261,7 +306,10 @@ export class Vuelo {
   }
 
   private get haVolado(): boolean {
-    return this.techo >= ALTURA_DE_CIRCUITO && this.enElAire >= TIEMPO_MINIMO_EN_VUELO;
+    return (
+      this.techo >= ALTURA_DE_CIRCUITO &&
+      this.enElAire >= TIEMPO_MINIMO_EN_VUELO
+    );
   }
 
   /** Segundos que se lleva en la fase actual. Sirve para no atosigar con avisos. */
@@ -303,13 +351,22 @@ export class Vuelo {
       // fase, así que el permiso no se gastaba nunca y la lámpara de la torre se
       // quedaba encendida el resto del vuelo: «despegué, pero esa flecha verde
       // sigue ahí… como no lo hice en pista está despistado».
-      if (pedida === 'despegando' || pedida === 'en-vuelo') {
+      if (
+        pedida === "despegando" ||
+        pedida === "comprometido" ||
+        pedida === "en-vuelo"
+      ) {
         this.verde = false;
         this.uso = true;
       }
     }
 
-    return { fase: this.fase, cambio: this.fase !== antes, luzVerde: this.verde, saltoLaLuz };
+    return {
+      fase: this.fase,
+      cambio: this.fase !== antes,
+      luzVerde: this.verde,
+      saltoLaLuz,
+    };
   }
 
   /**
@@ -335,7 +392,7 @@ export class Vuelo {
         s.estado.verticalSpeed < 0 &&
         Math.abs(s.desalineado) < 30 &&
         s.alEjeDePista < 400;
-      return enFinal ? 'final' : 'en-vuelo';
+      return enFinal ? "final" : "en-vuelo";
     }
 
     // ── En el suelo, con el motor parado ─────────────────────────────────
@@ -344,31 +401,33 @@ export class Vuelo {
       // Es a propósito: «ya aterricé y esto gasta queroseno» es una razón
       // perfectamente válida para terminar, y obligar a rodar hasta el puesto
       // sería un juego, no un simulador.
-      return this.despego ? 'apagado' : 'estacionado';
+      return this.despego ? "apagado" : "estacionado";
     }
 
     // ── En el suelo, volviendo de volar ──────────────────────────────────
     if (this.haVolado) {
       // Mientras corra a velocidad de carrera, sigue aterrizando.
-      if (s.estado.airspeed >= 12) return 'aterrizado';
+      if (s.estado.airspeed >= 12) return "aterrizado";
       // La pista hay que dejarla libre: hay otro detrás.
-      if (s.alEjeDePista <= PISTA_LIBRE) return 'abandonando';
-      if (parado && s.restante < LLEGADA) return 'en-puesto';
-      return 'a-plataforma';
+      if (s.alEjeDePista <= PISTA_LIBRE) return "abandonando";
+      if (parado && s.restante < LLEGADA) return "en-puesto";
+      return "a-plataforma";
     }
 
     // ── En el suelo, yendo hacia la pista ────────────────────────────────
     if (s.enPista) {
       const alineado = Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12;
-      return alineado ? 'despegando' : 'alineando';
+      if (!alineado) return "alineando";
+      return yaNoSePuedeParar(s) ? "comprometido" : "despegando";
     }
-    if (parado && s.restante < LLEGADA) return this.verde ? 'autorizado' : 'esperando';
-    if (this.verde) return 'autorizado';
-    if (s.estado.airspeed > RODANDO_YA) return 'rodando';
+    if (parado && s.restante < LLEGADA)
+      return this.verde ? "autorizado" : "esperando";
+    if (this.verde) return "autorizado";
+    if (s.estado.airspeed > RODANDO_YA) return "rodando";
     // Motor en marcha, quieto y lejos de la doble raya: acaba de arrancar. Y
     // si ya venía rodando, sigue rodando: un semáforo en rojo a mitad de calle
     // no te devuelve al puesto.
-    return this.fase === 'rodando' ? 'rodando' : 'arrancando';
+    return this.fase === "rodando" ? "rodando" : "arrancando";
   }
 
   /**
@@ -385,7 +444,8 @@ export class Vuelo {
     // lección.
     if (this.acabaEnLaEspera) return;
     if (this.haVolado || this.verde) return;
-    const enLaRaya = s.restante < LLEGADA && !s.enPista && s.sobreElSuelo <= EN_EL_AIRE;
+    const enLaRaya =
+      s.restante < LLEGADA && !s.enPista && s.sobreElSuelo <= EN_EL_AIRE;
     if (!enLaRaya) {
       this.quieto = 0;
       this.mirando = 0;
@@ -406,7 +466,8 @@ export class Vuelo {
    * bien recibía la reprimenda.
    */
   private vigilarLaLuz(s: Situacion): boolean {
-    if (this.haVolado || this.verde || this.uso || this.avisadoDeLaLuz) return false;
+    if (this.haVolado || this.verde || this.uso || this.avisadoDeLaLuz)
+      return false;
     if (!s.enPista || s.sobreElSuelo > EN_EL_AIRE) return false;
     this.avisadoDeLaLuz = true;
     return true;
@@ -420,19 +481,23 @@ export class Vuelo {
  * la frase que se le dice a alguien en cada momento del vuelo es contenido, y
  * tenerla junto a la máquina de estados evita que las dos se separen.
  */
-export const GUION: Record<Fase, { readonly clave: string; readonly icono: string }> = {
-  estacionado: { clave: 'vuelo.estacionado', icono: 'llave' },
-  arrancando: { clave: 'vuelo.arrancando', icono: 'helice' },
-  rodando: { clave: 'vuelo.rodando', icono: 'amarillo' },
-  esperando: { clave: 'vuelo.esperando', icono: 'mano' },
-  autorizado: { clave: 'vuelo.autorizado', icono: 'verde' },
-  alineando: { clave: 'vuelo.alineando', icono: 'eje' },
-  despegando: { clave: 'vuelo.despegando', icono: 'motor' },
-  'en-vuelo': { clave: 'vuelo.enVuelo', icono: 'ala' },
-  final: { clave: 'vuelo.final', icono: 'senda' },
-  aterrizado: { clave: 'vuelo.aterrizado', icono: 'freno' },
-  abandonando: { clave: 'vuelo.abandonando', icono: 'salida' },
-  'a-plataforma': { clave: 'vuelo.aPlataforma', icono: 'amarillo' },
-  'en-puesto': { clave: 'vuelo.enPuesto', icono: 'llave' },
-  apagado: { clave: 'vuelo.apagado', icono: 'llave' },
+export const GUION: Record<
+  Fase,
+  { readonly clave: string; readonly icono: string }
+> = {
+  estacionado: { clave: "vuelo.estacionado", icono: "llave" },
+  arrancando: { clave: "vuelo.arrancando", icono: "helice" },
+  rodando: { clave: "vuelo.rodando", icono: "amarillo" },
+  esperando: { clave: "vuelo.esperando", icono: "mano" },
+  autorizado: { clave: "vuelo.autorizado", icono: "verde" },
+  alineando: { clave: "vuelo.alineando", icono: "eje" },
+  despegando: { clave: "vuelo.despegando", icono: "motor" },
+  comprometido: { clave: "vuelo.comprometido", icono: "nopara" },
+  "en-vuelo": { clave: "vuelo.enVuelo", icono: "ala" },
+  final: { clave: "vuelo.final", icono: "senda" },
+  aterrizado: { clave: "vuelo.aterrizado", icono: "freno" },
+  abandonando: { clave: "vuelo.abandonando", icono: "salida" },
+  "a-plataforma": { clave: "vuelo.aPlataforma", icono: "amarillo" },
+  "en-puesto": { clave: "vuelo.enPuesto", icono: "llave" },
+  apagado: { clave: "vuelo.apagado", icono: "llave" },
 };

@@ -8,15 +8,16 @@
  * para siempre.
  */
 
-import { describe, expect, it } from 'vitest';
-import { Vuelo, type Fase, type Situacion } from './vuelo';
+import { describe, expect, it } from "vitest";
+import { Vuelo, type Fase, type Situacion } from "./vuelo";
 
 const EN_TIERRA: Situacion = {
-  estado: { airspeed: 0, verticalSpeed: 0 } as Situacion['estado'],
+  estado: { airspeed: 0, verticalSpeed: 0 } as Situacion["estado"],
   alaRuta: 0,
   restante: 500,
   alEjeDePista: 500,
   alLargoDePista: -900,
+  pistaRestante: 2400,
   enPista: false,
   sobreElSuelo: 0,
   motor: false,
@@ -44,8 +45,8 @@ function durante(v: Vuelo, s: Situacion, segundos: number): Fase {
   return fase;
 }
 
-describe('un vuelo entero', () => {
-  it('recorre las fases en orden, de estacionado a apagado', () => {
+describe("un vuelo entero", () => {
+  it("recorre las fases en orden, de estacionado a apagado", () => {
     const v = new Vuelo();
     v.reiniciar();
     const vistas: Fase[] = [v.actual];
@@ -54,15 +55,27 @@ describe('un vuelo entero', () => {
     };
 
     anotar(durante(v, con({ motor: true }), 1));
-    anotar(durante(v, con({ motor: true, estado: { airspeed: 6 } as never }), 1));
     anotar(
-      durante(v, con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }), 1),
+      durante(v, con({ motor: true, estado: { airspeed: 6 } as never }), 1),
+    );
+    anotar(
+      durante(
+        v,
+        con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }),
+        1,
+      ),
     );
     // Parado en la raya: la torre tarda en mirar y en contestar.
     anotar(durante(v, con({ motor: true, restante: 10 }), 5));
-    anotar(durante(v, con({ motor: true, enPista: true, alEjeDePista: 30 }), 1));
     anotar(
-      durante(v, con({ motor: true, enPista: true, alEjeDePista: 2, desalineado: 1 }), 1),
+      durante(v, con({ motor: true, enPista: true, alEjeDePista: 30 }), 1),
+    );
+    anotar(
+      durante(
+        v,
+        con({ motor: true, enPista: true, alEjeDePista: 2, desalineado: 1 }),
+        1,
+      ),
     );
     anotar(
       durante(
@@ -74,7 +87,13 @@ describe('un vuelo entero', () => {
     // Vuela un rato y vuelve. **Un rato de verdad**: hay que subir a altura de
     // circuito y estar en el aire un mínimo antes de poder volver a entrar, o
     // un salto de rana contaría como vuelo completo.
-    anotar(durante(v, con({ motor: true, sobreElSuelo: 700, alEjeDePista: 900 }), 20));
+    anotar(
+      durante(
+        v,
+        con({ motor: true, sobreElSuelo: 700, alEjeDePista: 900 }),
+        20,
+      ),
+    );
     anotar(
       durante(
         v,
@@ -102,39 +121,52 @@ describe('un vuelo entero', () => {
       ),
     );
     anotar(
-      durante(v, con({ motor: true, alEjeDePista: 5, estado: { airspeed: 6 } as never }), 1),
-    );
-    anotar(durante(v, con({ motor: true, alEjeDePista: 120, restante: 400 }), 1));
-    anotar(
       durante(
         v,
-        con({ motor: true, alEjeDePista: 200, restante: 5, estado: { airspeed: 0 } as never }),
+        con({ motor: true, alEjeDePista: 5, estado: { airspeed: 6 } as never }),
         1,
       ),
     );
-    anotar(durante(v, con({ motor: false, alEjeDePista: 200, restante: 5 }), 1));
+    anotar(
+      durante(v, con({ motor: true, alEjeDePista: 120, restante: 400 }), 1),
+    );
+    anotar(
+      durante(
+        v,
+        con({
+          motor: true,
+          alEjeDePista: 200,
+          restante: 5,
+          estado: { airspeed: 0 } as never,
+        }),
+        1,
+      ),
+    );
+    anotar(
+      durante(v, con({ motor: false, alEjeDePista: 200, restante: 5 }), 1),
+    );
 
     expect(vistas).toEqual([
-      'estacionado',
-      'arrancando',
-      'rodando',
-      'esperando',
-      'autorizado',
-      'alineando',
-      'despegando',
-      'en-vuelo',
-      'final',
-      'aterrizado',
-      'abandonando',
-      'a-plataforma',
-      'en-puesto',
-      'apagado',
+      "estacionado",
+      "arrancando",
+      "rodando",
+      "esperando",
+      "autorizado",
+      "alineando",
+      "despegando",
+      "en-vuelo",
+      "final",
+      "aterrizado",
+      "abandonando",
+      "a-plataforma",
+      "en-puesto",
+      "apagado",
     ]);
   });
 });
 
-describe('las trampas', () => {
-  it('no autoriza a quien no para en la doble raya', () => {
+describe("las trampas", () => {
+  it("no autoriza a quien no para en la doble raya", () => {
     // Es la lección entera: si se autoriza por llegar y no por parar, cruzar
     // la raya a toda velocidad sale gratis y no se aprende nada.
     const v = new Vuelo();
@@ -142,25 +174,37 @@ describe('las trampas', () => {
     durante(v, con({ motor: true }), 1);
     durante(v, con({ motor: true, estado: { airspeed: 6 } as never }), 1);
     // Llega a la raya pero sin frenar del todo.
-    const fase = durante(v, con({ motor: true, restante: 5, estado: { airspeed: 5 } as never }), 8);
-    expect(fase).toBe('rodando');
+    const fase = durante(
+      v,
+      con({ motor: true, restante: 5, estado: { airspeed: 5 } as never }),
+      8,
+    );
+    expect(fase).toBe("rodando");
     expect(v.autorizado).toBe(false);
   });
 
-  it('el permiso se gasta al entrar en pista', () => {
+  it("el permiso se gasta al entrar en pista", () => {
     const v = new Vuelo();
     v.reiniciar();
     durante(v, con({ motor: true }), 1);
     durante(v, con({ motor: true, estado: { airspeed: 6 } as never }), 1);
-    durante(v, con({ motor: true, restante: 5, estado: { airspeed: 0 } as never }), 1);
+    durante(
+      v,
+      con({ motor: true, restante: 5, estado: { airspeed: 0 } as never }),
+      1,
+    );
     durante(v, con({ motor: true, restante: 5 }), 5);
     expect(v.autorizado).toBe(true);
-    durante(v, con({ motor: true, enPista: true, alEjeDePista: 2, desalineado: 1 }), 1);
+    durante(
+      v,
+      con({ motor: true, enPista: true, alEjeDePista: 2, desalineado: 1 }),
+      1,
+    );
     // Ya se usó: no queda un verde colgado para la próxima vez.
     expect(v.autorizado).toBe(false);
   });
 
-  it('no da por aterrizado a quien nunca despegó', () => {
+  it("no da por aterrizado a quien nunca despegó", () => {
     const v = new Vuelo();
     v.reiniciar(true);
     // Arranca en pista, no llega a subir, y se para. No hay aterrizaje.
@@ -175,15 +219,15 @@ describe('las trampas', () => {
       }),
       6,
     );
-    expect(fase).toBe('despegando');
+    expect(fase).toBe("despegando");
   });
 
-  it('apagar el motor en el suelo termina el vuelo se esté donde se esté', () => {
+  it("apagar el motor en el suelo termina el vuelo se esté donde se esté", () => {
     // «Ya aterricé y esto gasta queroseno» es una razón válida para terminar.
     const v = new Vuelo();
     v.reiniciar(true);
     durante(v, con({ motor: true, enPista: true, sobreElSuelo: 400 }), 20);
-    expect(v.actual).toBe('en-vuelo');
+    expect(v.actual).toBe("en-vuelo");
     durante(
       v,
       con({
@@ -196,17 +240,17 @@ describe('las trampas', () => {
       1,
     );
     const fase = durante(v, con({ motor: false, sobreElSuelo: 1 }), 0.5);
-    expect(fase).toBe('apagado');
+    expect(fase).toBe("apagado");
   });
 
-  it('un salto de rana no cuenta como vuelo: no se puede aterrizar recién despegado', () => {
+  it("un salto de rana no cuenta como vuelo: no se puede aterrizar recién despegado", () => {
     // Sin esta regla, el avión despegaba, subía quince metros, se asentaba un
     // instante y a los dos segundos el juego lo daba por aproximación final.
     // Catorce fases en veinte segundos y ni una vuelta.
     const v = new Vuelo();
     v.reiniciar(true);
     durante(v, con({ motor: true, enPista: true, sobreElSuelo: 20 }), 1);
-    expect(v.actual).toBe('en-vuelo');
+    expect(v.actual).toBe("en-vuelo");
     const fase = durante(
       v,
       con({
@@ -217,10 +261,10 @@ describe('las trampas', () => {
       }),
       5,
     );
-    expect(fase).toBe('en-vuelo');
+    expect(fase).toBe("en-vuelo");
   });
 
-  it('quien se pasa de largo en final vuelve a en-vuelo y puede repetir', () => {
+  it("quien se pasa de largo en final vuelve a en-vuelo y puede repetir", () => {
     // Una frustrada. No es un fallo: es una maniobra, y hay que poder hacerla
     // sin que el juego se quede colgado esperando un aterrizaje que no llega.
     const v = new Vuelo();
@@ -236,24 +280,24 @@ describe('las trampas', () => {
       }),
       1.5,
     );
-    expect(v.actual).toBe('final');
+    expect(v.actual).toBe("final");
     const fase = durante(v, con({ motor: true, sobreElSuelo: 600 }), 0.5);
-    expect(fase).toBe('en-vuelo');
+    expect(fase).toBe("en-vuelo");
   });
 });
 
-describe('recuperarse de haberse salido del guion', () => {
+describe("recuperarse de haberse salido del guion", () => {
   // Estas tres pruebas son la razón de que la máquina deduzca en vez de
   // avanzar. Con la versión de lista, las tres se quedaban colgadas para
   // siempre — y las tres las encontró alguien jugando, no un test.
 
-  it('despegar en travesía desde una calle de rodaje se reconoce como vuelo', () => {
+  it("despegar en travesía desde una calle de rodaje se reconoce como vuelo", () => {
     // «Nada me impide salirme, despegar de manera transversal.» Pues no, nada
     // se lo impide, y ahora el juego se entera.
     const v = new Vuelo();
     v.reiniciar();
     durante(v, con({ motor: true, estado: { airspeed: 8 } as never }), 1);
-    expect(v.actual).toBe('rodando');
+    expect(v.actual).toBe("rodando");
     // Se sale de la calle, acelera y se va al aire, sin pasar por la pista.
     const fase = durante(
       v,
@@ -266,48 +310,65 @@ describe('recuperarse de haberse salido del guion', () => {
       }),
       2,
     );
-    expect(fase).toBe('en-vuelo');
+    expect(fase).toBe("en-vuelo");
   });
 
-  it('al volver a tierra fuera de la pista, retoma y manda a la plataforma', () => {
+  it("al volver a tierra fuera de la pista, retoma y manda a la plataforma", () => {
     // «Al volver ya no puedo aterrizar para retomar la guía por la calle de
     // rodadura, ya estoy en vuelo.» Ahora sí puede.
     const v = new Vuelo();
     v.reiniciar();
-    durante(v, con({ motor: true, sobreElSuelo: 400, estado: { airspeed: 40 } as never }), 20);
-    expect(v.actual).toBe('en-vuelo');
+    durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 400,
+        estado: { airspeed: 40 } as never,
+      }),
+      20,
+    );
+    expect(v.actual).toBe("en-vuelo");
     // Toma tierra lejos de la pista y frena.
     durante(
       v,
-      con({ motor: true, sobreElSuelo: 1, alEjeDePista: 800, estado: { airspeed: 30 } as never }),
+      con({
+        motor: true,
+        sobreElSuelo: 1,
+        alEjeDePista: 800,
+        estado: { airspeed: 30 } as never,
+      }),
       1,
     );
-    expect(v.actual).toBe('aterrizado');
+    expect(v.actual).toBe("aterrizado");
     const fase = durante(
       v,
       con({ motor: true, sobreElSuelo: 1, alEjeDePista: 800, restante: 900 }),
       2,
     );
-    expect(fase).toBe('a-plataforma');
+    expect(fase).toBe("a-plataforma");
   });
 
-  it('rodar hacia atrás desde la doble raya no deja al tutor colgado', () => {
+  it("rodar hacia atrás desde la doble raya no deja al tutor colgado", () => {
     // Lo que motivó la máquina de un solo sentido. Ahora se puede retroceder y
     // la fase lo sigue, sin parpadear: la histéresis la sostiene medio segundo.
     const v = new Vuelo();
     v.reiniciar();
     durante(v, con({ motor: true, estado: { airspeed: 8 } as never }), 1);
-    durante(v, con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }), 1);
-    expect(v.actual).toBe('esperando');
+    durante(
+      v,
+      con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }),
+      1,
+    );
+    expect(v.actual).toBe("esperando");
     const fase = durante(
       v,
       con({ motor: true, restante: 400, estado: { airspeed: 8 } as never }),
       2,
     );
-    expect(fase).toBe('rodando');
+    expect(fase).toBe("rodando");
   });
 
-  it('no parpadea cuando el avión oscila en el filo de un umbral', () => {
+  it("no parpadea cuando el avión oscila en el filo de un umbral", () => {
     // Un fotograma sí y otro no, justo en el límite de «parado». Sin
     // histéresis esto cambiaba de fase varias veces por segundo.
     const v = new Vuelo();
@@ -319,7 +380,11 @@ describe('recuperarse de haberse salido del guion', () => {
     for (let i = 0; i < 60; i++) {
       const rapido = i % 2 === 0;
       const f = v.paso(
-        con({ motor: true, restante: 10, estado: { airspeed: rapido ? 3 : 0 } as never }),
+        con({
+          motor: true,
+          restante: 10,
+          estado: { airspeed: rapido ? 3 : 0 } as never,
+        }),
         0.05,
       ).fase;
       if (f !== previa) cambios++;
@@ -329,8 +394,8 @@ describe('recuperarse de haberse salido del guion', () => {
   });
 });
 
-describe('saltarse la luz de la torre', () => {
-  it('se nota, y se avisa una sola vez', () => {
+describe("saltarse la luz de la torre", () => {
+  it("se nota, y se avisa una sola vez", () => {
     // «¿Y qué pasaría si me salto la luz esa?» Pasa que se nota. No hay muro
     // invisible ni vuelo reiniciado: eso enseñaría que no se puede, y lo que
     // hay que enseñar es que no se hace.
@@ -340,7 +405,12 @@ describe('saltarse la luz de la torre', () => {
     let avisos = 0;
     for (let i = 0; i < 40; i++) {
       const p = v.paso(
-        con({ motor: true, enPista: true, alEjeDePista: 5, estado: { airspeed: 8 } as never }),
+        con({
+          motor: true,
+          enPista: true,
+          alEjeDePista: 5,
+          estado: { airspeed: 8 } as never,
+        }),
         0.05,
       );
       if (p.saltoLaLuz) avisos++;
@@ -348,16 +418,25 @@ describe('saltarse la luz de la torre', () => {
     expect(avisos).toBe(1);
   });
 
-  it('quien espera la luz no recibe el aviso', () => {
+  it("quien espera la luz no recibe el aviso", () => {
     const v = new Vuelo();
     v.reiniciar();
     durante(v, con({ motor: true, estado: { airspeed: 8 } as never }), 1);
-    durante(v, con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }), 6);
+    durante(
+      v,
+      con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }),
+      6,
+    );
     expect(v.autorizado).toBe(true);
     let avisos = 0;
     for (let i = 0; i < 40; i++) {
       const p = v.paso(
-        con({ motor: true, enPista: true, alEjeDePista: 5, estado: { airspeed: 8 } as never }),
+        con({
+          motor: true,
+          enPista: true,
+          alEjeDePista: 5,
+          estado: { airspeed: 8 } as never,
+        }),
         0.05,
       );
       if (p.saltoLaLuz) avisos++;
@@ -366,8 +445,8 @@ describe('saltarse la luz de la torre', () => {
   });
 });
 
-describe('el salto de rana, por sus dos puertas', () => {
-  it('rebotar en la carrera de despegue no mete al juego en modo de vuelta', () => {
+describe("el salto de rana, por sus dos puertas", () => {
+  it("rebotar en la carrera de despegue no mete al juego en modo de vuelta", () => {
     // Doce metros de rebote bastaban para que el juego se creyera que ya
     // habías volado: pasaba a «salí de la pista, volvé a tu lugar» **en mitad
     // del despegue**. Se vio volando el circuito entero con el piloto
@@ -375,22 +454,34 @@ describe('el salto de rana, por sus dos puertas', () => {
     const v = new Vuelo();
     v.reiniciar(true);
     const enPista = { motor: true, enPista: true, alEjeDePista: 4 };
-    durante(v, con({ ...enPista, sobreElSuelo: 20, estado: { airspeed: 42 } as never }), 2);
-    expect(v.actual).toBe('en-vuelo');
+    durante(
+      v,
+      con({ ...enPista, sobreElSuelo: 20, estado: { airspeed: 42 } as never }),
+      2,
+    );
+    expect(v.actual).toBe("en-vuelo");
     // Vuelve al asfalto: sigue despegando, no aterrizando.
     const fase = durante(
       v,
       con({ ...enPista, sobreElSuelo: 1, estado: { airspeed: 42 } as never }),
       2,
     );
-    expect(fase).toBe('despegando');
+    expect(fase).toBe("despegando");
     expect(v.vuelve).toBe(false);
   });
 
-  it('un vuelo de verdad sí cuenta', () => {
+  it("un vuelo de verdad sí cuenta", () => {
     const v = new Vuelo();
     v.reiniciar(true);
-    durante(v, con({ motor: true, sobreElSuelo: 400, estado: { airspeed: 42 } as never }), 20);
+    durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 400,
+        estado: { airspeed: 42 } as never,
+      }),
+      20,
+    );
     expect(v.vuelve).toBe(true);
     const fase = durante(
       v,
@@ -403,18 +494,26 @@ describe('el salto de rana, por sus dos puertas', () => {
       }),
       1,
     );
-    expect(fase).toBe('aterrizado');
+    expect(fase).toBe("aterrizado");
   });
 });
 
-describe('la aproximación final', () => {
-  it('no se declara pasado el otro extremo de la pista', () => {
+describe("la aproximación final", () => {
+  it("no se declara pasado el otro extremo de la pista", () => {
     // Bajando, alineado y cerca del eje prolongado, pero cuatro kilómetros
     // pasado el extremo contrario y alejándose. El juego decía «bajá
     // suavecito» mientras el avión se iba al monte.
     const v = new Vuelo();
     v.reiniciar(true);
-    durante(v, con({ motor: true, sobreElSuelo: 400, estado: { airspeed: 45 } as never }), 20);
+    durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 400,
+        estado: { airspeed: 45 } as never,
+      }),
+      20,
+    );
     const fase = durante(
       v,
       con({
@@ -427,13 +526,21 @@ describe('la aproximación final', () => {
       }),
       2,
     );
-    expect(fase).toBe('en-vuelo');
+    expect(fase).toBe("en-vuelo");
   });
 
-  it('sí se declara viniendo hacia la cabecera', () => {
+  it("sí se declara viniendo hacia la cabecera", () => {
     const v = new Vuelo();
     v.reiniciar(true);
-    durante(v, con({ motor: true, sobreElSuelo: 400, estado: { airspeed: 45 } as never }), 20);
+    durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 400,
+        estado: { airspeed: 45 } as never,
+      }),
+      20,
+    );
     const fase = durante(
       v,
       con({
@@ -446,6 +553,60 @@ describe('la aproximación final', () => {
       }),
       2,
     );
-    expect(fase).toBe('final');
+    expect(fase).toBe("final");
+  });
+});
+
+/**
+ * El punto de no retorno del despegue.
+ *
+ * Lo que se comprueba no es un número: es que **la cuenta dependa de la
+ * pista**. La misma avioneta a la misma velocidad está comprometida en una
+ * pista corta y no lo está en una larga, que es exactamente lo que pasa de
+ * verdad y lo que hace que en Tenerife Norte casi nunca llegue a saltar.
+ */
+describe("ya no se puede parar", () => {
+  const rodando = (kmh: number, pistaRestante: number): Fase => {
+    const v = new Vuelo();
+    const s = con({
+      estado: { airspeed: kmh / 3.6, verticalSpeed: 0 } as Situacion["estado"],
+      motor: true,
+      enPista: true,
+      alEjeDePista: 4,
+      sobreElSuelo: 1,
+      desalineado: 0,
+      pistaRestante,
+    });
+    // Un segundo: una fase nueva tiene que sostenerse antes de sustituir a la
+    // vieja, como explica `durante`.
+    return durante(v, s, 1);
+  };
+
+  it("con pista de sobra se sigue despegando sin más", () => {
+    expect(rodando(100, 3000)).toBe("despegando");
+  });
+
+  it("con la pista acabándose ya no se puede parar", () => {
+    expect(rodando(100, 200)).toBe("comprometido");
+  });
+
+  it("parado no compromete a nadie, quede la pista que quede", () => {
+    expect(rodando(0, 0)).not.toBe("comprometido");
+  });
+
+  it("la misma velocidad compromete antes en pista corta que en larga", () => {
+    expect(rodando(80, 200)).toBe("comprometido");
+    expect(rodando(80, 1500)).toBe("despegando");
+  });
+
+  /*
+   * El número, escrito para que se pueda discutir: a cien por hora una
+   * avioneta necesita unos trescientos cincuenta metros entre reaccionar y
+   * parar. En los 3390 de Tenerife Norte eso no llega nunca, y está bien que
+   * no llegue: con esa pista por delante siempre se puede abortar. Donde sí
+   * salta es en las pistas de kilómetro, que son las que hay que respetar.
+   */
+  it("en una pista de tres kilómetros y medio no se llega a comprometer", () => {
+    expect(rodando(100, 3390 - 600)).toBe("despegando");
   });
 });
