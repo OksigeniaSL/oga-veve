@@ -1530,18 +1530,20 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     const cx = p[0];
     const cy = p[1];
     geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);
-    grupo.add(
-      new Mesh(
-        geo,
-        new MeshLambertMaterial({
-          map: textura,
-          color: textura ? 0xffffff : PINTURA,
-          transparent: true,
-          side: DoubleSide,
-          ...ENCIMA_LETRAS,
-        }),
-      ),
+    const numero = new Mesh(
+      geo,
+      new MeshLambertMaterial({
+        map: textura,
+        color: textura ? 0xffffff : PINTURA,
+        transparent: true,
+        side: DoubleSide,
+        ...ENCIMA_LETRAS,
+      }),
     );
+    // Con nombre, para poder apagarlo: sobre la fotografía el número de la
+    // pista ya está pintado en el asfalto de verdad. Ver `game.ts`.
+    numero.name = "designador";
+    grupo.add(numero);
   }
 
   return grupo;
