@@ -36,6 +36,8 @@ import {
   MeshLambertMaterial,
   DoubleSide,
   PlaneGeometry,
+  Points,
+  PointsMaterial,
   Shape,
   ShapeGeometry,
   Vector2,
@@ -1159,6 +1161,55 @@ function luces(
     malla.setColorAt(k, tono.setHex(color));
   });
   grupo.add(malla);
+
+  /*
+   * **Y las mismas luces otra vez, como puntos que no encogen.**
+   *
+   * Las de arriba son esferas de cincuenta y ocho centímetros, y a dos
+   * kilómetros cincuenta y ocho centímetros no llegan a un píxel: desde el
+   * aire la pista se quedaba sin sus luces justo cuando hacen falta. Se vio en
+   * cuanto la pista pasó a ser la de la fotografía y dejamos de pintar encima
+   * nuestro asfalto negro: «uf, difícil ver la pista ahora».
+   *
+   * Una luz de verdad no encoge con la distancia. Se ve desde millas porque es
+   * **una luz y no un objeto**: lo que llega es su brillo, no su tamaño. Por
+   * eso un aeropuerto de noche se reconoce antes que de día, y por eso lo
+   * primero que se ve de una pista son sus bordes.
+   *
+   * Así que van dos veces: la esfera, que manda de cerca y tiene volumen, y
+   * una capa de puntos sin atenuación por distancia, que mantiene cuatro
+   * píxeles pase lo que pase. De cerca la esfera es mayor y se come al punto;
+   * de lejos solo queda el punto, que es justo lo que se ve en la realidad.
+   */
+  const sitios = new Float32Array(todas.length * 3);
+  const colores = new Float32Array(todas.length * 3);
+  todas.forEach(([p, color], k) => {
+    sitios[k * 3] = p[0];
+    sitios[k * 3 + 1] = p[1];
+    sitios[k * 3 + 2] = p[2];
+    tono.setHex(color);
+    colores[k * 3] = tono.r;
+    colores[k * 3 + 1] = tono.g;
+    colores[k * 3 + 2] = tono.b;
+  });
+  const geoPuntos = new BufferGeometry();
+  geoPuntos.setAttribute("position", new BufferAttribute(sitios, 3));
+  geoPuntos.setAttribute("color", new BufferAttribute(colores, 3));
+  const puntos = new Points(
+    geoPuntos,
+    new PointsMaterial({
+      size: 4,
+      // Lo importante de todo esto: sin atenuación, el tamaño es en píxeles de
+      // pantalla y no en metros de mundo.
+      sizeAttenuation: false,
+      vertexColors: true,
+      // Ni tapan ni son tapadas por el aire: son luces.
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  puntos.name = "luces-pista-lejos";
+  grupo.add(puntos);
 
   // PAPI: cuatro luces al costado, que dicen si se viene alto o bajo.
   const papi = new InstancedMesh(
