@@ -148,6 +148,9 @@ export class Hud {
   private magneticVariation = 0;
   /** La tarjeta de la velocidad, para poder encenderla en la aproximación. */
   private tarjetaVelocidad: HTMLElement | null = null;
+  private fps: HTMLElement | null = null;
+  /** Media móvil de fotogramas por segundo. Ver `mostrarFps`. */
+  private fpsMedia = 0;
   private vspeed: HTMLElement | null = null;
   private throttleFill!: HTMLElement;
   private brakes!: HTMLElement;
@@ -227,6 +230,18 @@ export class Hud {
     this.root.innerHTML = `
       <div class="hud__arriba">
         <div class="tarjeta insignia" data-hud="badge"></div>
+        <!--
+          El contador de fotogramas, oculto salvo con fps=1 en la dirección.
+
+          No es un adorno de programador: existe porque «va como una tortuga»
+          y «no avanza en proporción a su velocidad» se dijeron cinco veces y
+          las cinco tuve que pedir datos en vez de darlos. Un juego que se
+          siente lento puede tener el reloj mal —ya pasó, tres veces— o
+          simplemente ir a diez fotogramas por segundo, y esas dos cosas se
+          arreglan en sitios opuestos. Con el número delante no hay que
+          adivinar cuál de las dos es.
+        -->
+        <div class="tarjeta insignia" data-hud="fps" hidden></div>
         <!--
           Progreso de la misión, en puntos. Sin cifras ni fracciones: se ve
           cuántos faltan de un vistazo, y funciona igual con cinco años que
@@ -851,6 +866,24 @@ export class Hud {
    * es la misma información: no hay que aprender a mirar otro sitio, hay que
    * mirar el de siempre y ver que ha cambiado de color.
    */
+  /**
+   * Enseña los fotogramas por segundo, si se han pedido con fps=1.
+   *
+   * Media móvil y no el instante: el número crudo baila tanto que no se puede
+   * leer, y lo que hace falta saber es si esto va a sesenta o a diez.
+   */
+  mostrarFps(dt: number): void {
+    if (!this.fps || this.fps.hidden) return;
+    const ahora = dt > 0 ? 1 / dt : 0;
+    this.fpsMedia += (ahora - this.fpsMedia) * Math.min(1, dt * 3);
+    this.fps.textContent = `${Math.round(this.fpsMedia)} fps`;
+  }
+
+  /** Enciende el contador. Lo llama el juego si se pidió por la dirección. */
+  pedirFps(): void {
+    if (this.fps) this.fps.hidden = false;
+  }
+
   setBandaDeVelocidad(estado: "lento" | "bien" | "rapido" | null): void {
     const c = this.tarjetaVelocidad?.classList;
     if (!c) return;
