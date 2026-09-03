@@ -39,6 +39,7 @@ const BEAM_HEIGHT = 520;
 export class MissionMarker {
   readonly group = new Group();
   private readonly ring: Mesh;
+  private beam: Mesh | null = null;
   private spin = 0;
   /** Radio de aceptación del objetivo, m. De él sale «cerca». */
   private radio = 400;
@@ -74,6 +75,7 @@ export class MissionMarker {
     beam.position.y = BEAM_HEIGHT / 2;
     beam.renderOrder = 2;
     this.group.add(beam);
+    this.beam = beam;
 
     // El aro gira despacio: un objeto quieto en un paisaje quieto se pierde,
     // y el movimiento es lo que hace que el ojo lo encuentre.
@@ -141,10 +143,33 @@ export class MissionMarker {
       this.encendido += (cerca - this.encendido) * Math.min(1, dt * 2);
     }
 
+    /*
+     * **La columna solo existe de lejos.**
+     *
+     * Darle la vuelta al cono no bastó, y el motivo es más de fondo: cerca del
+     * objetivo, **cualquier cosa vertical se lee como «arriba»**. Da igual la
+     * forma — hay una raya que sube, y quien la mira entiende que hay que
+     * subir. «¿Me pide subir? ¿Que tengo que ir por encima del aro?»
+     *
+     * Y la columna solo sirve para una cosa: encontrar el sitio desde lejos.
+     * Encima del aro ya no hace falta y solo puede confundir, así que se
+     * apaga. Lo que queda cerca es el aro, que es por donde hay que pasar.
+     */
+    if (this.beam) {
+      const d = avion
+        ? Math.hypot(
+            avion.x - this.group.position.x,
+            avion.z - this.group.position.z,
+          )
+        : Infinity;
+      this.beam.visible = d > this.radio * 6;
+    }
+
     const e = this.encendido;
     // El latido, solo cuando ya estás dentro. Fuera sería ruido.
     const late = e > 0.92 ? 0.12 * Math.sin(this.spin * 7) : 0;
     for (const hijo of this.group.children) {
+      if (!hijo.visible) continue;
       const mat = (hijo as Mesh).material as MeshBasicMaterial;
       const base = hijo === this.ring ? 0.72 : 0.3;
       mat.opacity = Math.min(1, base * (0.55 + e * 0.9) + late);

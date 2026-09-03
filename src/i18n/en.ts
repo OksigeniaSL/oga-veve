@@ -20,6 +20,8 @@ export const EN: Dictionary = {
   'hud.speed': 'Airspeed',
   'hud.altitude': 'Altitude',
   'hud.heading': 'Heading',
+  'hud.throttleDown': 'Less power',
+  'hud.throttleUp': 'More power',
   'hud.throttle': 'Throttle',
   'hud.vspeed': 'Vertical speed',
   'hud.stall': 'Stall! Lower the nose',

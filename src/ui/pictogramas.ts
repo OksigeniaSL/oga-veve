@@ -23,14 +23,14 @@
  */
 
 /** Silueta de tortuga: caparazón, cabeza y patas. Despacio. */
-const TORTUGA = `
+export const TORTUGA = `
   <path d="M3 13 h2.2 v2 H3.4 Z M9.4 13 h2.2 v2 H9.6 Z" />
   <path d="M2.2 12.6 a5.6 4.4 0 0 1 11.2 0 Z" />
   <path d="M13.6 9.4 a1.9 1.9 0 1 1 0 3.2 h-1.2 v-3.2 Z" />
 `;
 
 /** Silueta de pájaro en vuelo, alas abiertas. Deprisa. */
-const PAJARO = `
+export const PAJARO = `
   <path d="M1 11.4 C4 7.6 6.4 6.6 8 9.6 C9.6 6.6 12 7.6 15 11.4
            C12 9.8 9.8 10.4 8 12.6 C6.2 10.4 4 9.8 1 11.4 Z" />
 `;
@@ -104,9 +104,9 @@ export class Pictogramas {
 
   bind(root: HTMLElement): void {
     this.root = root.querySelector('[data-hud="pictos"]');
-    this.speedMark = this.pick('speed');
-    this.altPlane = this.pick('altitude');
-    this.propeller = this.pick('prop');
+    this.speedMark = this.pick("speed");
+    this.altPlane = this.pick("altitude");
+    this.propeller = this.pick("prop");
   }
 
   get present(): boolean {
@@ -119,14 +119,26 @@ export class Pictogramas {
    * @param throttle 0 a 1
    * @param dt segundos desde el fotograma anterior
    */
-  update(speed: number, height: number, throttle: number, dt: number, engineOn = true): void {
+  update(
+    speed: number,
+    height: number,
+    throttle: number,
+    dt: number,
+    engineOn = true,
+  ): void {
     if (!this.root) return;
 
-    this.speedMark?.setAttribute('transform', `translate(${20 + clamp01(speed) * 60} 11)`);
+    this.speedMark?.setAttribute(
+      "transform",
+      `translate(${20 + clamp01(speed) * 60} 11)`,
+    );
 
     // El avión sube por la tarjeta. Se queda a media pieza del borde de
     // arriba para que no parezca que se sale, y apoyado en el cerro abajo.
-    this.altPlane?.setAttribute('transform', `translate(9 ${22 - clamp01(height) * 19})`);
+    this.altPlane?.setAttribute(
+      "transform",
+      `translate(9 ${22 - clamp01(height) * 19})`,
+    );
 
     // La hélice gira de verdad. A ralentí se mueve despacio y se distingue;
     // a tope se convierte en un disco, que es exactamente lo que hace una
@@ -138,12 +150,16 @@ export class Pictogramas {
     // que representaba el ralentí, y con el motor apagado ese ralentí no
     // existe: una hélice quieta es la señal de que el avión está apagado, y
     // es la única que hace falta para entenderlo a los cuatro años.
-    this.spin = engineOn ? (this.spin + (60 + throttle * 900) * dt) % 360 : this.spin;
-    this.propeller?.setAttribute('transform', `rotate(${this.spin} 17 17)`);
+    this.spin = engineOn
+      ? (this.spin + (60 + throttle * 900) * dt) % 360
+      : this.spin;
+    this.propeller?.setAttribute("transform", `rotate(${this.spin} 17 17)`);
   }
 
   private pick(name: string): SVGElement | null {
-    return this.root?.querySelector<SVGElement>(`[data-picto="${name}"]`) ?? null;
+    return (
+      this.root?.querySelector<SVGElement>(`[data-picto="${name}"]`) ?? null
+    );
   }
 }
 
