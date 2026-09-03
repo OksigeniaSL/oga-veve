@@ -135,6 +135,37 @@ const COLORES: Record<string, ColorRepresentation> = {
   grass: 0x4d6136,
 };
 
+/**
+ * Hacia qué lado queda el umbral de pista más cercano, normalizado.
+ *
+ * Los umbrales son los dos extremos del eje de cada pista. Se mira al más
+ * cercano y no al centro porque a un aeródromo se rueda **para despegar por un
+ * extremo**, y ese extremo es lo que da un adelante y un atrás a una calle de
+ * rodaje que va paralela a la pista.
+ */
+function haciaElUmbralMasCerca(
+  aero: Aerodrome,
+  p: Punto,
+): [number, number] | null {
+  let mejor: [number, number] | null = null;
+  let masCerca = Infinity;
+  for (const pista of aero.runways) {
+    for (const extremo of [
+      pista.centerline[0],
+      pista.centerline[pista.centerline.length - 1],
+    ]) {
+      if (!extremo) continue;
+      const dx = extremo[0] - p[0];
+      const dy = extremo[1] - p[1];
+      const d = Math.hypot(dx, dy);
+      if (d < 1 || d >= masCerca) continue;
+      masCerca = d;
+      mejor = [dx / d, dy / d];
+    }
+  }
+  return mejor;
+}
+
 /** ¿Está este punto a menos de `margen` metros del asfalto de una pista? */
 function cercaDeLaPista(aero: Aerodrome, p: Punto, margen: number): boolean {
   return aero.runways.some(
@@ -142,6 +173,9 @@ function cercaDeLaPista(aero: Aerodrome, p: Punto, margen: number): boolean {
       aLaPolilinea(p, pista.centerline) < (pista.widthM ?? 45) / 2 + margen,
   );
 }
+
+/** Cuánto se corre la letra a un costado del eje, m. Ver `letreros`. */
+const DESVIO_LETRERO = 8;
 
 /** Cada cuánto se repite la letra a lo largo de una calle de rodaje, m. */
 const PASO_LETRERO = 200;
@@ -697,37 +731,29 @@ function letreros(
      * ve rodando: no llenas el asfalto de letras y no te quedas sin ninguna.
      */
     /*
-     * **El sentido se decide una vez por calle, no letra a letra.**
+     * **El sentido se decide una vez por calle, y mirando al umbral.**
      *
-     * Se decidía en cada letra, mirando hacia dónde cae la pista desde ese
-     * punto. En una calle que **cruza** la pista eso funciona; en una que va
-     * paralela —la R de Tenerife Norte, mil setecientos metros al costado de
-     * la 12/30— la pista queda siempre de lado, el producto que decide el
-     * signo ronda el cero y lo resuelven los decimales. Resultado: unas
-     * letras al derecho y otras del revés en la misma calle. «No siempre está
-     * al revés la R; las de más adelante van viéndose al derecho.»
+     * Van dos intentos y los dos median contra **la pista**: hacia dónde cae
+     * el asfalto desde ese punto. En una calle que cruza la pista eso
+     * funciona; en una que va paralela —la R de Tenerife Norte, mil
+     * setecientos metros al costado de la 12/30— la pista queda siempre de
+     * lado, el producto ronda el cero y lo resuelven los decimales. Primero
+     * salieron mezcladas, después todas al revés menos una: lo que cambiaba
+     * no era el criterio, era el ruido.
      *
-     * Con una sola decisión por calle todas se leen igual, que es lo que hace
-     * un aeropuerto: el rótulo del suelo se lee en un sentido, y si vas al
-     * otro lo ves del revés y no pasa nada.
+     * La referencia buena no es la pista, **es el umbral**. Quien rueda no va
+     * «hacia el asfalto», va a un extremo concreto a despegar, y desde
+     * cualquier punto de una calle paralela ese extremo está *adelante o
+     * atrás*, no de lado. El producto pasa a estar bien condicionado, que era
+     * todo el problema.
      */
     const medio = sobreElEje(calle.path, largo / 2);
-    const haciaPistaEnMedio = medio
-      ? rumboALaPista(aero, [medio[0], medio[1]])
+    const alUmbral = medio
+      ? haciaElUmbralMasCerca(aero, [medio[0], medio[1]])
       : null;
-    /*
-     * Y el signo, al revés de como estaba. Se leen **yendo hacia la pista**,
-     * que es el viaje que hace quien sale del puesto: «el E5 al final de
-     * rodadura también está al revés».
-     *
-     * Con pintura en el suelo no hay forma de contentar a los dos sentidos —un
-     * aeropuerto de verdad lo resuelve con carteles de pie, que se leen por
-     * las dos caras—. Así que se elige el sentido de la ida, que es el que se
-     * hace con dudas; a la vuelta ya sabes dónde estás.
-     */
     const alRevesLaCalle =
-      medio && haciaPistaEnMedio
-        ? medio[2] * haciaPistaEnMedio[0] + medio[3] * haciaPistaEnMedio[1] > 0
+      medio && alUmbral
+        ? medio[2] * alUmbral[0] + medio[3] * alUmbral[1] < 0
         : false;
 
     for (let d = PASO_LETRERO / 2; d < largo; d += PASO_LETRERO) {
@@ -765,9 +791,20 @@ function letreros(
       for (let i = 0; i < uv.count; i++) {
         uv.setXY(i, u + uv.getX(i) / lado, v + uv.getY(i) / lado);
       }
+      /*
+       * **Al lado de la raya, no encima.**
+       *
+       * Se pintaba en el eje de la calle, y el eje de la calle es justo por
+       * donde va la raya amarilla: se tapaban por construcción. «Todas están
+       * tapadas por la línea amarilla.» Se corre a un costado lo justo para
+       * que la raya pase limpia por al lado, que además es donde se pintan de
+       * verdad.
+       */
+      const lx = cx - dy * DESVIO_LETRERO;
+      const ly = cy + dx * DESVIO_LETRERO;
       geo.rotateX(-Math.PI / 2);
       geo.rotateY(Math.atan2(-dx, dy));
-      geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);
+      geo.translate(lx, altura([lx, ly]) + PINTURA_ALTURA + 0.02, -ly);
       piezas.push(geo);
     }
   }
@@ -789,30 +826,6 @@ function letreros(
   return malla;
 }
 
-/**
- * Hacia dónde queda la pista desde un punto, normalizado. Se apunta al umbral
- * más cercano y no al eje: un piloto que rueda no va «a la pista», va a una
- * cabecera concreta.
- */
-function rumboALaPista(
-  aero: Aerodrome,
-  p: Punto,
-): readonly [number, number] | null {
-  let mejor: Punto | null = null;
-  let mejorD = Infinity;
-  for (const pista of aero.runways) {
-    for (const u of Object.values(pista.thresholds)) {
-      if (!u?.xy) continue;
-      const d = Math.hypot(u.xy[0] - p[0], u.xy[1] - p[1]);
-      if (d < mejorD) {
-        mejorD = d;
-        mejor = u.xy;
-      }
-    }
-  }
-  if (!mejor || mejorD < 1) return null;
-  return [(mejor[0] - p[0]) / mejorD, (mejor[1] - p[1]) / mejorD];
-}
 
 /** Distancia de un punto a una polilínea. */
 export function aLaPolilinea(p: Punto, eje: readonly Punto[]): number {
