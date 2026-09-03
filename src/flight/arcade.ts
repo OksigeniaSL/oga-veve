@@ -60,6 +60,14 @@ const MINIMA_DE_VUELO = 0.9;
  * su motivo: quien juega aquí lleva el gas alto casi siempre, y lo que hay que
  * hacer notorio es **quitarlo**.
  */
+/**
+ * Por debajo de esta velocidad, una toma se da por acabada, m/s.
+ *
+ * Es velocidad de rodaje: a partir de ahí lo que venga es un despegue nuevo y
+ * no el rebote del anterior.
+ */
+const RODANDO_TRAS_TOMAR = 12;
+
 const MOTOR_QUE_SOSTIENE = 0.55;
 
 /** Lo que se baja con el motor al ralentí, m/s. El planeo de una avioneta. */
@@ -127,6 +135,10 @@ export class ArcadeFlightModel implements FlightModel {
 
   private heading = 0;
   private speed = 0;
+  /** Ha tocado tierra viniendo de volar y todavía no ha rodado despacio. */
+  private haTocado = false;
+  /** Si el fotograma anterior estaba volando. Para ver el instante del contacto. */
+  private enElAire = false;
   private climb = 0;
   private bank = 0;
   private pitch = 0;
@@ -318,8 +330,35 @@ export class ArcadeFlightModel implements FlightModel {
      * coeficientes manda la física, y allí un avión que consiga volar desde una
      * calle de rodaje ha volado — lo que le espera es que la torre se lo diga.
      */
+    /*
+     * **Aterrizado es aterrizado: no se vuelve a despegar rebotando.**
+     *
+     * La regla de arriba —se despega de las pistas y con velocidad— vale para
+     * un despegue, y después de una toma se volvía en contra: quien aterriza
+     * con el motor puesto sigue teniendo velocidad de sobra y asfalto debajo,
+     * así que el avión se levantaba otra vez solo. «El avión se vuela después
+     * de haber aterrizado.»
+     *
+     * Y no es una manía: una toma se termina **parando**. Si lo que se quiere
+     * es no aterrizar, eso se decide en el aire y se llama frustrada; una vez
+     * que las ruedas tocan, lo que toca es bajar el gas y frenar.
+     *
+     * Así que tras tocar se bloquea el vuelo hasta haber rodado de verdad. A
+     * partir de ahí vuelve a ser un despegue normal y se puede volver a
+     * volar, que es lo que hace falta para encadenar despegue y aterrizaje sin
+     * pasar por el hangar.
+     */
+    if (this.state.onGround) {
+      // Acaba de tocar viniendo de volar: la toma empieza aquí.
+      if (this.enElAire) this.haTocado = true;
+      // Y se acaba al rodar despacio: a partir de ahí, despegue nuevo.
+      if (this.speed < RODANDO_TRAS_TOMAR) this.haTocado = false;
+    }
+    this.enElAire = !this.state.onGround;
+
     const canClimb =
-      !this.state.onGround || (bite > 0.88 && this.state.onRunway);
+      !this.state.onGround ||
+      (bite > 0.88 && this.state.onRunway && !this.haTocado);
 
     /*
      * **El motor también manda en la altura, y esa es la mitad que faltaba.**

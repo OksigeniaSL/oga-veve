@@ -48,3 +48,45 @@ describe("el motor y la altura", () => {
     expect(volandoCon(0)).toBeLessThan(volandoCon(0.3));
   });
 });
+
+describe("después de tomar tierra", () => {
+  /** Vuela, toca con motor puesto y sigue con el gas donde estaba. */
+  function tocarConMotor(): { toco: boolean; volvioAVolar: boolean } {
+    const m = new ArcadeFlightModel({ aircraft: OGA_172, ground: () => 0 });
+    m.reset({
+      position: new Vector3(0, 40, 0),
+      heading: 0,
+      airspeed: OGA_172.cruiseSpeed * 0.62,
+    });
+    m.setOnRunway(true);
+    // A todo gas y bajando: la toma que se hace sin saber que hay que frenar.
+    const abajo = {
+      ...neutralControls(),
+      engineOn: true,
+      throttle: 1,
+      elevator: -1,
+    };
+    let toco = false;
+    for (let t = 0; t < 40 && !toco; t += 0.05) {
+      m.step(0.05, abajo);
+      toco = m.state.onGround;
+    }
+    // Y a partir de aquí, la palanca atrás: si el avión se levanta, mal.
+    const arriba = {
+      ...neutralControls(),
+      engineOn: true,
+      throttle: 1,
+      elevator: 1,
+    };
+    const yTocado = m.state.position.y;
+    for (let t = 0; t < 5; t += 0.05) m.step(0.05, arriba);
+    return { toco, volvioAVolar: m.state.position.y > yTocado + 3 };
+  }
+
+  it("no se vuelve a levantar aunque se tire con el motor puesto", () => {
+    const r = tocarConMotor();
+    // Que la prueba haya aterrizado de verdad es parte de la prueba.
+    expect(r.toco).toBe(true);
+    expect(r.volvioAVolar).toBe(false);
+  });
+});
