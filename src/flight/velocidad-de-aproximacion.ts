@@ -63,3 +63,50 @@ export function bandaDeVelocidad(
   if (s.velocidad > vref * (1 + MARGEN_RAPIDO)) return "rapido";
   return "bien";
 }
+
+/*
+ * ## Y la de rodaje
+ *
+ * El mismo problema en el otro extremo del vuelo: los mandos están —gas y
+ * freno— pero nadie dice a qué velocidad se rueda, así que se rueda a la que
+ * sea. «No tengo control de velocidad en tierra.»
+ *
+ * Rodar deprisa es de las cosas que peor salen y que menos se avisan: no hay
+ * nada que te frene, la calle parece ancha, y la curva llega cuando llega. En
+ * un aeropuerto de verdad se rueda a paso de bicicleta y se sale de la curva
+ * más despacio todavía.
+ *
+ * **Y aquí sí es una constante, a diferencia de la de aproximación.** La
+ * velocidad de rodaje no es del avión: es de la calle. Una avioneta y un
+ * reactor ruedan a la misma velocidad porque el ancho de la calle, el radio de
+ * la curva y el tiempo de reacción de quien va a los mandos son los mismos.
+ * Lo que cambia entre ellos es lo que cuesta parar, y de eso ya avisa el
+ * freno.
+ */
+
+/** A lo que se rueda, m/s. Nueve metros por segundo son treinta y dos por hora. */
+const RODAJE = 9;
+
+/** Por debajo de esto no se está rodando, se está saliendo o llegando. */
+const APENAS_SE_MUEVE = 2;
+
+/** Cuánto se puede pasar de la de rodaje antes de avisar. */
+const MARGEN_RODAJE = 0.35;
+
+/**
+ * En qué banda va la velocidad rodando, o `null` si esto no es rodar.
+ *
+ * No hay banda de «lento»: rodar despacio no tiene nada de malo, y a los
+ * cuatro años ir despacio es exactamente lo que hay que poder hacer sin que
+ * nadie te riña. Solo se avisa de ir pasado.
+ */
+export function bandaDeRodaje(
+  velocidad: number,
+  enElSuelo: boolean,
+  enPista: boolean,
+): BandaDeVelocidad {
+  // En la pista se corre: ahí la velocidad la manda el despegue o la toma.
+  if (!enElSuelo || enPista) return null;
+  if (velocidad < APENAS_SE_MUEVE) return null;
+  return velocidad > RODAJE * (1 + MARGEN_RODAJE) ? "rapido" : "bien";
+}

@@ -111,7 +111,10 @@ import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
 import { AvisosDeAltura } from "./flight/avisos-de-altura";
-import { bandaDeVelocidad } from "./flight/velocidad-de-aproximacion";
+import {
+  bandaDeRodaje,
+  bandaDeVelocidad,
+} from "./flight/velocidad-de-aproximacion";
 import { callar, decir, permitirVoz } from "./audio/voz";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
@@ -1875,23 +1878,33 @@ export class Game {
      * aguja roza el borde de la banda es ruido, y el ruido se aprende a no
      * oír. Tres segundos fuera es una tendencia, no un bache.
      */
-    const banda = bandaDeVelocidad(
-      {
-        sobreElSuelo: this.flight.state.heightAboveGround,
-        enElSuelo: this.flight.state.onGround,
-        vertical: this.flight.state.verticalSpeed,
-        velocidad: this.flight.state.airspeed,
-      },
-      this.aircraft.approachSpeed,
-    );
+    const banda =
+      bandaDeRodaje(
+        this.flight.state.airspeed,
+        this.flight.state.onGround,
+        this.flight.state.onRunway,
+      ) ??
+      bandaDeVelocidad(
+        {
+          sobreElSuelo: this.flight.state.heightAboveGround,
+          enElSuelo: this.flight.state.onGround,
+          vertical: this.flight.state.verticalSpeed,
+          velocidad: this.flight.state.airspeed,
+        },
+        this.aircraft.approachSpeed,
+      );
     this.hud.setBandaDeVelocidad(banda);
     if (banda === "lento" || banda === "rapido") {
       this.fueraDeBanda += dt;
       if (this.fueraDeBanda > 3 && this.dichoDeBanda !== banda) {
         this.dichoDeBanda = banda;
-        // «Airspeed» es lo que dice una cabina de verdad, y dice las dos
-        // cosas: que mires la velocidad. Cuál de las dos ya lo dice el color.
-        decir("airspeed");
+        /*
+         * Rodando no se dice «airspeed», que es palabra de vuelo: se dice lo
+         * que diría cualquiera en una calle de rodaje. Y en el aire,
+         * «airspeed» es lo que dice una cabina de verdad — dice las dos cosas
+         * a la vez, «mira la velocidad»; cuál de las dos ya lo dice el color.
+         */
+        decir(this.flight.state.onGround ? "slow down" : "airspeed");
       }
     } else {
       this.fueraDeBanda = 0;
