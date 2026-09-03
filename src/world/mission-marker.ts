@@ -49,8 +49,20 @@ export class MissionMarker {
     this.group.name = "objetivo";
     this.group.visible = false;
 
+    /*
+     * **La columna se abre hacia arriba, no se afila.**
+     *
+     * Estaba al revés —ancha abajo y estrecha arriba— y eso es exactamente el
+     * dibujo de una flecha apuntando al cielo: «¿me pide subir? ¿que tengo que
+     * ir por encima del aro?». Lo contrario de lo que hace falta, porque el
+     * sitio al que hay que ir es el aro y hay que pasar **por dentro**.
+     *
+     * Abriéndose hacia arriba se lee como lo que es: un haz de luz que sale
+     * del suelo para que lo encuentres desde lejos. Eso no apunta a ninguna
+     * parte — señala un punto.
+     */
     const beam = new Mesh(
-      new CylinderGeometry(11, 26, BEAM_HEIGHT, 10, 1, true),
+      new CylinderGeometry(26, 11, BEAM_HEIGHT, 10, 1, true),
       new MeshBasicMaterial({
         color: OBJECTIVE_COLOUR,
         transparent: true,
