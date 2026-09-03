@@ -1198,7 +1198,14 @@ function luces(
   const puntos = new Points(
     geoPuntos,
     new PointsMaterial({
-      size: 4,
+      /*
+       * Ocho píxeles, no cuatro. Con cuatro seguían sin dibujar la pista desde
+       * el aire: un punto pequeño y claro contra un cielo del atardecer no
+       * destaca, y lo que tiene que pasar es que **la fila de luces dibuje el
+       * rectángulo de la pista** desde lejos. Ocho lo hace y de cerca lo tapa
+       * la esfera igual.
+       */
+      size: 8,
       // Lo importante de todo esto: sin atenuación, el tamaño es en píxeles de
       // pantalla y no en metros de mundo.
       sizeAttenuation: false,
