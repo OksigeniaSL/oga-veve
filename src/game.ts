@@ -114,8 +114,19 @@ import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 
-/** Vistas disponibles, en el orden en que rota la tecla C. */
-const CAMERA_MODES = ["chase", "cockpit", "wing"] as const;
+/**
+ * Vistas disponibles, en el orden en que rota la tecla C.
+ *
+ * `pajaro` es la cabina **sin avión**: la cámara va donde los ojos del piloto
+ * y la aeronave no se dibuja, así que lo único que hay delante es el mundo.
+ * «En algunos juegos recuerdo que había una opción para ocultar la aeronave,
+ * era como si tú fueras el pájaro.»
+ *
+ * Va la última del ciclo a propósito. Es la vista más bonita y la que menos
+ * enseña —sin panel, sin morro, sin nada que diga cómo va el avión—, así que
+ * se llega a ella después de las tres que sí enseñan.
+ */
+const CAMERA_MODES = ["chase", "cockpit", "wing", "pajaro"] as const;
 type CameraMode = (typeof CAMERA_MODES)[number];
 
 /** Campo de visión en reposo y cuánto se abre a velocidad máxima, en grados. */
@@ -2220,7 +2231,11 @@ export class Game {
     this.lastAirspeed = state.airspeed;
     this.surge += (Math.min(rawSurge, 6) - this.surge) * Math.min(1, dt * 4);
 
-    if (this.cameraMode === "cockpit") {
+    // El avión, escondido solo en la vista de pájaro. Va aquí y no al cambiar
+    // de vista para que valga también cuando el modelo se carga o se cambia.
+    this.aircraftMesh.group.visible = this.cameraMode !== "pajaro";
+
+    if (this.cameraMode === "cockpit" || this.cameraMode === "pajaro") {
       // Desde dentro no hay suavizado: la cámara es la cabeza del piloto y
       // va rígidamente unida al avión.
       //

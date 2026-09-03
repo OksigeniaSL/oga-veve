@@ -135,6 +135,14 @@ const COLORES: Record<string, ColorRepresentation> = {
   grass: 0x4d6136,
 };
 
+/** ¿Está este punto a menos de `margen` metros del asfalto de una pista? */
+function cercaDeLaPista(aero: Aerodrome, p: Punto, margen: number): boolean {
+  return aero.runways.some(
+    (pista) =>
+      aLaPolilinea(p, pista.centerline) < (pista.widthM ?? 45) / 2 + margen,
+  );
+}
+
 /** Cada cuánto se repite la letra a lo largo de una calle de rodaje, m. */
 const PASO_LETRERO = 200;
 
@@ -688,11 +696,54 @@ function letreros(
      * largo de la calle por este mismo motivo. Doscientos metros es lo que se
      * ve rodando: no llenas el asfalto de letras y no te quedas sin ninguna.
      */
+    /*
+     * **El sentido se decide una vez por calle, no letra a letra.**
+     *
+     * Se decidía en cada letra, mirando hacia dónde cae la pista desde ese
+     * punto. En una calle que **cruza** la pista eso funciona; en una que va
+     * paralela —la R de Tenerife Norte, mil setecientos metros al costado de
+     * la 12/30— la pista queda siempre de lado, el producto que decide el
+     * signo ronda el cero y lo resuelven los decimales. Resultado: unas
+     * letras al derecho y otras del revés en la misma calle. «No siempre está
+     * al revés la R; las de más adelante van viéndose al derecho.»
+     *
+     * Con una sola decisión por calle todas se leen igual, que es lo que hace
+     * un aeropuerto: el rótulo del suelo se lee en un sentido, y si vas al
+     * otro lo ves del revés y no pasa nada.
+     */
+    const medio = sobreElEje(calle.path, largo / 2);
+    const haciaPistaEnMedio = medio
+      ? rumboALaPista(aero, [medio[0], medio[1]])
+      : null;
+    /*
+     * Y el signo, al revés de como estaba. Se leen **yendo hacia la pista**,
+     * que es el viaje que hace quien sale del puesto: «el E5 al final de
+     * rodadura también está al revés».
+     *
+     * Con pintura en el suelo no hay forma de contentar a los dos sentidos —un
+     * aeropuerto de verdad lo resuelve con carteles de pie, que se leen por
+     * las dos caras—. Así que se elige el sentido de la ida, que es el que se
+     * hace con dudas; a la vuelta ya sabes dónde estás.
+     */
+    const alRevesLaCalle =
+      medio && haciaPistaEnMedio
+        ? medio[2] * haciaPistaEnMedio[0] + medio[3] * haciaPistaEnMedio[1] > 0
+        : false;
+
     for (let d = PASO_LETRERO / 2; d < largo; d += PASO_LETRERO) {
       const p = sobreElEje(calle.path, d);
       if (!p) continue;
       const [cx, cy] = p;
-      if (enLaPista([cx, cy])) continue;
+      /*
+       * Y bien lejos del asfalto de la pista. El recorte era el borde justo, y
+       * una letra mide nueve metros de lado: puesta a diez del borde se sale
+       * media encima —«tapada por la línea amarilla», y sobre el asfalto de la
+       * pista, que es donde no pinta nada—. Con `LETRERO_LADO` de margen no
+       * hay letra que asome, y de paso deja limpia la boca de las salidas
+       * rápidas.
+       */
+      if (enLaPista([cx, cy]) || cercaDeLaPista(aero, [cx, cy], LETRERO_LADO))
+        continue;
 
       // **El sentido de una calle en OSM es arbitrario.** El de una pista no —va
       // de un umbral al otro y el número se pinta para quien aterriza—, pero una
@@ -702,12 +753,8 @@ function letreros(
       // Se orientan hacia la pista, que es adonde va quien rueda: el niño sale
       // del estacionamiento y busca la cabecera. Leyendo en ese sentido, la
       // letra le dice por dónde va.
-      const haciaPista = rumboALaPista(aero, [cx, cy]);
-      const alReves = haciaPista
-        ? p[2] * haciaPista[0] + p[3] * haciaPista[1] < 0
-        : false;
-      const dx = alReves ? -p[2] : p[2];
-      const dy = alReves ? -p[3] : p[3];
+      const dx = alRevesLaCalle ? -p[2] : p[2];
+      const dy = alRevesLaCalle ? -p[3] : p[3];
 
       const celda = refs.indexOf(calle.ref as string);
       const u = (celda % lado) / lado;
