@@ -27,20 +27,43 @@
  * esto— el error es despreciable, y a cambio el código se lee.
  */
 
-import { Quaternion, Vector3 } from 'three';
-import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from './atmosphere';
-import type { AircraftConfig } from './aircraft';
-import { type AssistLayers, uniformAssists } from './assists';
+import { Quaternion, Vector3 } from "three";
+import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
+import type { AircraftConfig } from "./aircraft";
+import { type AssistLayers, uniformAssists } from "./assists";
 import type {
   ControlInputs,
   FlightModel,
   FlightState,
   GroundSampler,
   InitialConditions,
-} from './model';
+} from "./model";
 
 /** Paso máximo de integración. Por encima, el modelo se vuelve inestable. */
 const MAX_SUBSTEP = 1 / 240;
+
+/**
+ * Lo máximo que se simula de una vez, en segundos.
+ *
+ * **Vive aquí y la usa también el bucle del juego**, y eso es el arreglo: eran
+ * dos topes distintos que tenían que valer lo mismo y no lo valían. El bucle
+ * dejaba pasar un cuarto de segundo y aquí se recortaba otra vez a un cuarto,
+ * así que subir el del bucle no servía de nada — el recorte de verdad estaba
+ * en esta línea, dos ficheros más allá.
+ *
+ * Lo que provocaba: por debajo de este ritmo el juego no pierde fotogramas,
+ * **va a cámara lenta**. Medido con reloj de verdad a dos fotogramas por
+ * segundo, el avión marcaba 18,4 m/s y avanzaba 7,3 — marcaba cien por hora y
+ * se movía a cuarenta. De ahí salía todo lo que se notaba jugando: la avioneta
+ * de juguete sobre un aeropuerto de verdad, la pista que no se acaba y el
+ * rodaje eterno.
+ *
+ * Un segundo cubre hasta un fotograma por segundo. Más allá vale más perder
+ * tiempo simulado que integrar un salto y mandar el avión a la estratosfera,
+ * que es de lo que protege este tope; del salto grande al volver de una
+ * pestaña en segundo plano se encarga `visibilitychange`.
+ */
+export const MAX_PASO = 1;
 /** Por debajo de esta velocidad no hay aerodinámica que valga. */
 const MIN_AIRSPEED = 0.5;
 /**
@@ -119,7 +142,7 @@ export interface FdmOptions {
 }
 
 export class CoefficientFlightModel implements FlightModel {
-  readonly implementationName = 'FDM Óga Veve (coeficientes)';
+  readonly implementationName = "FDM Óga Veve (coeficientes)";
 
   readonly state: FlightState;
 
@@ -150,7 +173,7 @@ export class CoefficientFlightModel implements FlightModel {
     this.aircraft = options.aircraft;
     this.ground = options.ground;
     this.layers =
-      typeof options.assist === 'number' || options.assist === undefined
+      typeof options.assist === "number" || options.assist === undefined
         ? uniformAssists(options.assist ?? 1)
         : options.assist;
 
@@ -181,7 +204,12 @@ export class CoefficientFlightModel implements FlightModel {
   get assist(): number {
     const l = this.layers;
     return (
-      (l.wingLeveller + l.autoRudder + l.climbHold + l.stallProtection + l.extraDamping) / 5
+      (l.wingLeveller +
+        l.autoRudder +
+        l.climbHold +
+        l.stallProtection +
+        l.extraDamping) /
+      5
     );
   }
 
@@ -217,12 +245,8 @@ export class CoefficientFlightModel implements FlightModel {
   }
 
   step(dt: number, controls: ControlInputs): void {
-    // Si la pestaña ha estado en segundo plano llega un dt enorme. Vale más
-    // perder tiempo simulado que integrar un salto y mandar el avión a la
-    // estratosfera. El tope acompaña al del bucle de juego: con subpasos de
-    // 240 Hz, un cuarto de segundo son sesenta subpasos y se integra igual
-    // de bien.
-    const total = Math.min(dt, 0.25);
+    // El tope, uno solo y compartido con el bucle del juego. Ver `MAX_PASO`.
+    const total = Math.min(dt, MAX_PASO);
     const substeps = Math.max(1, Math.ceil(total / MAX_SUBSTEP));
     const h = total / substeps;
     for (let i = 0; i < substeps; i++) this.integrate(h, controls);
@@ -266,7 +290,8 @@ export class CoefficientFlightModel implements FlightModel {
     // Alarga la pérdida en modo arcade en vez de eliminarla: el avión sigue
     // cayendo si insistís, pero perdona el tirón nervioso de un crío.
     const stallAngle = a.alphaStall * (1 + 0.45 * this.layers.stallProtection);
-    const cl = liftCoefficient(s.alpha, a, stallAngle) + ac.flapsLift * assisted.flaps;
+    const cl =
+      liftCoefficient(s.alpha, a, stallAngle) + ac.flapsLift * assisted.flaps;
     const cd =
       a.cd0 +
       (cl * cl) / (Math.PI * aspectRatio * a.oswald) +
@@ -287,7 +312,8 @@ export class CoefficientFlightModel implements FlightModel {
     const pasado = Math.abs(s.alpha) > stallAngle && speed > MIN_AIRSPEED;
     this.stallFor = pasado ? this.stallFor + dt : 0;
     if (!s.stalled && this.stallFor > STALL_DELAY) s.stalled = true;
-    else if (s.stalled && Math.abs(s.alpha) < stallAngle - STALL_RECOVERY) s.stalled = false;
+    else if (s.stalled && Math.abs(s.alpha) < stallAngle - STALL_RECOVERY)
+      s.stalled = false;
 
     const lift = qS * cl;
     const drag = qS * cd;
@@ -298,7 +324,11 @@ export class CoefficientFlightModel implements FlightModel {
     // reproduce lo que se nota al pilotar.
     const densityRatio = density / SEA_LEVEL_DENSITY;
     const speedFactor = Math.max(0.2, 1 - speed / (2.4 * ac.cruiseSpeed));
-    const thrust = (controls.engineOn ? assisted.throttle : 0) * ac.maxThrust * Math.pow(densityRatio, 0.7) * speedFactor;
+    const thrust =
+      (controls.engineOn ? assisted.throttle : 0) *
+      ac.maxThrust *
+      Math.pow(densityRatio, 0.7) *
+      speedFactor;
 
     const sinA = Math.sin(s.alpha);
     const cosA = Math.cos(s.alpha);
@@ -317,7 +347,10 @@ export class CoefficientFlightModel implements FlightModel {
     const clMoment =
       a.clBeta * s.beta + a.clP * pHat + a.clAileron * assisted.aileron;
     const cmMoment =
-      a.cm0 + a.cmAlpha * s.alpha + a.cmQ * qHat + a.cmElevator * assisted.elevator;
+      a.cm0 +
+      a.cmAlpha * s.alpha +
+      a.cmQ * qHat +
+      a.cmElevator * assisted.elevator;
     const cnMoment =
       a.cnBeta * s.beta +
       a.cnR * rHat +
@@ -338,7 +371,6 @@ export class CoefficientFlightModel implements FlightModel {
     }
 
     {
-
       // Compensador automático: mantiene **la actitud que dejaste**.
       //
       // La primera versión llevaba el morro al horizonte, y eso está mal por
@@ -354,7 +386,11 @@ export class CoefficientFlightModel implements FlightModel {
       // soltar el cabeceo se captura la actitud del momento y se sostiene,
       // con amortiguamiento sobre la velocidad de cabeceo para que llegue
       // sin rebotar.
-      if (this.layers.climbHold > 0 && Math.abs(controls.elevator) < 0.08 && !s.onGround) {
+      if (
+        this.layers.climbHold > 0 &&
+        Math.abs(controls.elevator) < 0.08 &&
+        !s.onGround
+      ) {
         // Se sostiene **la subida**, no la actitud del morro.
         //
         // Las dos versiones anteriores intentaron mantener el cabeceo y las
@@ -416,7 +452,8 @@ export class CoefficientFlightModel implements FlightModel {
         // programan la ganancia los pilotos automáticos de verdad.
         const reference = ac.cruiseSpeed * ac.cruiseSpeed;
         const schedule = Math.min(1, reference / (speed * speed + 1));
-        const authority = this.layers.climbHold * qS * a.cmElevator * ac.chord * schedule;
+        const authority =
+          this.layers.climbHold * qS * a.cmElevator * ac.chord * schedule;
         pitchMoment += authority * (law - s.pitchRate * 0.75);
       } else {
         // Con el mando en la mano, no hay compensador que valga.
@@ -429,9 +466,17 @@ export class CoefficientFlightModel implements FlightModel {
       // que con el alerón ya corregido sería casi el doble del mando a fondo
       // y devolvería las alas de un latigazo. Así, a treinta grados de
       // alabeo empuja aproximadamente como medio mando.
-      if (this.layers.wingLeveller > 0 && Math.abs(controls.aileron) < 0.08 && !s.onGround) {
+      if (
+        this.layers.wingLeveller > 0 &&
+        Math.abs(controls.aileron) < 0.08 &&
+        !s.onGround
+      ) {
         rollMoment -=
-          this.layers.wingLeveller * qS * a.clAileron * ac.wingSpan * levelling(this.bankAngle());
+          this.layers.wingLeveller *
+          qS *
+          a.clAileron *
+          ac.wingSpan *
+          levelling(this.bankAngle());
       }
     }
 
@@ -554,7 +599,8 @@ export class CoefficientFlightModel implements FlightModel {
     const longitudinal = s.velocity.dot(this.forward);
     s.velocity.addScaledVector(
       this.forward,
-      -Math.sign(longitudinal) * Math.min(Math.abs(longitudinal), rolling * GRAVITY * dt),
+      -Math.sign(longitudinal) *
+        Math.min(Math.abs(longitudinal), rolling * GRAVITY * dt),
     );
 
     // Rozamiento estático: con el freno pisado y a paso de peatón, el avión
@@ -575,7 +621,8 @@ export class CoefficientFlightModel implements FlightModel {
     // Guiñada en tierra proporcional al timón y a la velocidad: dirigible
     // rodando, inútil parado, como una rueda de morro de verdad.
     // Timón: dirige más cuanto más deprisa se va, porque es aerodinámico.
-    s.yawRate += controls.rudder * 0.6 * Math.min(1, Math.abs(longitudinal) / 25) * settle;
+    s.yawRate +=
+      controls.rudder * 0.6 * Math.min(1, Math.abs(longitudinal) / 25) * settle;
     // Y rueda de morro, que es al revés: manda a paso de peatón y se queda
     // sin autoridad al coger carrerilla. Va con el mando de alabeo porque es
     // el que la mano busca para girar, y en el suelo las alas no sirven de
@@ -585,7 +632,7 @@ export class CoefficientFlightModel implements FlightModel {
     // apagándose a los veintiocho. Decayendo desde parado, a treinta por hora
     // el radio de giro se iba a cincuenta y cinco metros y las curvas de las
     // calles de rodaje no se podían tomar.
-    const nosewheel = 1 - clamp(( Math.abs(longitudinal) - 8) / 20, 0, 1);
+    const nosewheel = 1 - clamp((Math.abs(longitudinal) - 8) / 20, 0, 1);
     s.yawRate += controls.aileron * 2.2 * nosewheel * settle;
   }
 
@@ -635,7 +682,8 @@ export class CoefficientFlightModel implements FlightModel {
    */
   private timeToImpact(): number {
     const s = this.state;
-    if (s.onGround || s.velocity.lengthSq() < 1) return Number.POSITIVE_INFINITY;
+    if (s.onGround || s.velocity.lengthSq() < 1)
+      return Number.POSITIVE_INFINITY;
 
     for (const t of LOOKAHEAD_SECONDS) {
       const x = s.position.x + s.velocity.x * t;
@@ -703,7 +751,11 @@ export class CoefficientFlightModel implements FlightModel {
    * Aplica las ayudas de pilotaje sobre los mandos antes de que lleguen a
    * la aerodinámica. Con `assist` a 0 devuelve los mandos tal cual.
    */
-  private applyAssist(controls: ControlInputs, alpha: number, beta: number): ControlInputs {
+  private applyAssist(
+    controls: ControlInputs,
+    alpha: number,
+    beta: number,
+  ): ControlInputs {
     const { autoRudder, stallProtection } = this.layers;
     if (autoRudder <= 0 && stallProtection <= 0) return controls;
 
@@ -717,7 +769,11 @@ export class CoefficientFlightModel implements FlightModel {
     // empuja la estabilidad direccional del avión. La primera versión
     // restaba, así que peleaba contra la veleta y el derrape crecía hasta
     // dieciséis grados en vez de irse a cero.
-    const rudder = clamp(controls.rudder + autoRudder * clamp(beta * 4.5, -1, 1), -1, 1);
+    const rudder = clamp(
+      controls.rudder + autoRudder * clamp(beta * 4.5, -1, 1),
+      -1,
+      1,
+    );
 
     // Limitador de ángulo de ataque: cuanto más cerca de la pérdida, menos
     // autoridad tiene el tirón. No la impide, la hace costar.
@@ -770,7 +826,8 @@ export class CoefficientFlightModel implements FlightModel {
     }
 
     s.verticalSpeed = s.velocity.y;
-    s.heightAboveGround = s.position.y - this.ground(s.position.x, s.position.z);
+    s.heightAboveGround =
+      s.position.y - this.ground(s.position.x, s.position.z);
     s.secondsToImpact = this.timeToImpact();
     // Rumbo: proyección del morro sobre el plano horizontal. -Z es el norte.
     s.heading = Math.atan2(this.forward.x, -this.forward.z);

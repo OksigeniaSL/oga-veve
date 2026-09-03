@@ -112,6 +112,7 @@ import { arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
+import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 
 /**
@@ -1676,16 +1677,32 @@ export class Game {
   // ── Bucle ─────────────────────────────────────────────────────────────
 
   private frame = (): void => {
-    // El tope está en un cuarto de segundo y no en una décima.
-    //
-    // Con una décima, un aparato lento no perdía fotogramas: jugaba **a
-    // cámara lenta**. A cuatro fotogramas por segundo cada uno dura 0,25 s
-    // reales y el juego solo avanzaba 0,1, así que la simulación corría al
-    // cuarenta por ciento y el avión tardaba el doble en todo. El modelo de
-    // vuelo ya subdivide internamente a 240 Hz, así que un dt grande es
-    // seguro; lo único que hay que evitar es el salto enorme al volver de
-    // una pestaña en segundo plano, y de eso se encarga `visibilitychange`.
-    const dt = Math.min(this.clock.getDelta(), 0.25);
+    /*
+     * **El tope está en un segundo**, y cada vez que se ha subido ha sido por
+     * el mismo motivo: por debajo de él, un aparato lento no pierde
+     * fotogramas — **juega a cámara lenta**, y sin avisar.
+     *
+     * Empezó en 0,1 s y se subió a 0,25 s con este razonamiento: a cuatro
+     * fotogramas por segundo cada uno dura 0,25 s reales y solo se avanzaba
+     * 0,1. Se quedó corto. Midiendo la carrera de despegue con reloj de
+     * verdad, a dos fotogramas por segundo salió esto:
+     *
+     *   velocidad indicada  18,4 m/s
+     *   avance real          7,3 m/s
+     *   razón                2,53
+     *
+     * Es decir: el avión marcaba cien por hora y se movía a cuarenta. Todo lo
+     * que se notaba jugando venía de ahí — «esta avioneta parece de juguete
+     * sobre un aeropuerto de verdad», «a cien por hora no tardas tanto en
+     * hacer una pista», «los aviones no tardan tanto en rodar»—: no era la
+     * escala ni la física, era que el reloj del juego iba más lento que el de
+     * la pared.
+     *
+     * El tope vive en `fdm.ts` y se comparte, que es lo que hacía falta: eran
+     * dos, tenían que valer lo mismo, y subir este solo no arreglaba nada
+     * porque el modelo de vuelo recortaba otra vez por su cuenta.
+     */
+    const dt = Math.min(this.clock.getDelta(), MAX_PASO);
 
     /*
      * Si las ruedas están sobre la pista, y no en la plataforma ni en la
