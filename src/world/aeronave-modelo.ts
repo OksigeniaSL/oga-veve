@@ -134,8 +134,19 @@ function ojoDePiloto(
   const alto = asientos.max.y - asientos.min.y;
   return {
     x: 0,
-    // Los ojos por encima del respaldo, no a la altura del cojín.
-    y: local.y + alto * 0.55,
+    /*
+     * Los ojos por encima del cojín, no por encima del respaldo.
+     *
+     * Se probaron los dos extremos. Con `0.55` se miraba el panel **desde
+     * arriba**, como quien se asoma; con `0.35`, el panel llenaba el centro y
+     * apenas quedaba una cuarta parte de pantalla para mirar fuera. Y de un
+     * avión hay que ver fuera: el panel es un instrumento, la ventana es el
+     * juego.
+     *
+     * `0.45` deja lo que se ve desde un 172 de verdad — el panel en el tercio
+     * de abajo, el capó, y el horizonte por encima del capó.
+     */
+    y: local.y + alto * 0.45,
     // Y medio metro adelante, que es de donde se mira: pegado al panel, no
     // desde el centro del asiento.
     z: local.z - 0.5,
