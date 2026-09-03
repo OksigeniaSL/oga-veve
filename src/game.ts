@@ -22,22 +22,28 @@ import {
   Scene,
   Vector3,
   WebGLRenderer,
-} from 'three';
-import { CoefficientFlightModel } from './flight/fdm';
-import { ArcadeFlightModel } from './flight/arcade';
-import { GUYRAMI, TIERS, rememberTier, rememberedTier, type Tier } from './flight/tiers';
-import { AIRCRAFT, OGA_172, type AircraftConfig } from './flight/aircraft';
-import { InputManager } from './flight/input';
-import type { FlightModel, FlightState } from './flight/model';
-import { Terrain, cabeceraEnUso } from './world/terrain';
-import { crearAproximacion, type Aproximacion } from './world/aproximacion';
-import { createSky, ponerNubes, updateSky, type SkyRig } from './world/sky';
-import { createAircraftMesh, type AircraftMesh } from './world/aircraft-mesh';
-import { cargarModelo } from './world/aeronave-modelo';
-import { RunwayGuide } from './world/runway-guide';
-import { createVegetation, zonaDeAeropuerto } from './world/vegetation';
-import { LECCION_POR_DEFECTO, type Leccion } from './flight/lecciones';
-import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from './world/meteo';
+} from "three";
+import { CoefficientFlightModel } from "./flight/fdm";
+import { ArcadeFlightModel } from "./flight/arcade";
+import {
+  GUYRAMI,
+  TIERS,
+  rememberTier,
+  rememberedTier,
+  type Tier,
+} from "./flight/tiers";
+import { AIRCRAFT, OGA_172, type AircraftConfig } from "./flight/aircraft";
+import { InputManager } from "./flight/input";
+import type { FlightModel, FlightState } from "./flight/model";
+import { Terrain, cabeceraEnUso } from "./world/terrain";
+import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
+import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
+import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
+import { cargarModelo } from "./world/aeronave-modelo";
+import { RunwayGuide } from "./world/runway-guide";
+import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
+import { LECCION_POR_DEFECTO, type Leccion } from "./flight/lecciones";
+import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from "./world/meteo";
 
 /**
  * El proxy del parte meteorológico. Ver `workers/meteo.js`.
@@ -72,14 +78,19 @@ const ALTURA_DE_FINAL = 180;
 const SUELO_MINIMO = 150;
 /** Y a qué velocidad. La de aproximación de un ligero, en metros por segundo. */
 const VELOCIDAD_DE_FINAL = 33;
-import { crearCiudad } from './world/ciudad';
-import { MissionMarker } from './world/mission-marker';
-import { MissionRunner } from './missions/runner';
-import { objectiveTarget, type Mission } from './missions/types';
-import { missionsFor } from './content/missions';
-import { conViento, VALLE_CORDILLERA, VECES_LEJOS, type Scenario } from './world/scenarios';
-import { crearTeselas, type Teselas } from './world/teselas';
-import { mundoElegido } from './ui/mundo';
+import { crearCiudad } from "./world/ciudad";
+import { MissionMarker } from "./world/mission-marker";
+import { MissionRunner } from "./missions/runner";
+import { objectiveTarget, type Mission } from "./missions/types";
+import { missionsFor } from "./content/missions";
+import {
+  conViento,
+  VALLE_CORDILLERA,
+  VECES_LEJOS,
+  type Scenario,
+} from "./world/scenarios";
+import { crearTeselas, type Teselas } from "./world/teselas";
+import { mundoElegido } from "./ui/mundo";
 
 /**
  * La clave de las teselas fotorrealistas. Ver `workers/meteo.js` y `.env.example`.
@@ -89,21 +100,21 @@ import { mundoElegido } from './ui/mundo';
  * el que se construye todo lo demás.
  */
 const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
-import { Hud } from './ui/hud';
-import { CreditsScreen } from './ui/credits';
-import { nombreDeTecla } from './flight/keymap';
-import { elegirInstructor, type Instructor } from './audio/instructor';
-import type { ControlInputs } from './flight/model';
-import { delante, enEjesDePista, puntoDePista } from './world/rumbo';
-import { PlanDeVuelo } from './world/plan-de-vuelo';
-import { LandingWatcher } from './flight/aterrizaje';
-import { arranqueEnPista } from './world/aerodrome';
-import { KeyScreen } from './ui/teclas';
-import { LOCALE_NAMES, cycleLocale, t } from './i18n';
-import { Audio } from './audio/audio';
+import { Hud } from "./ui/hud";
+import { CreditsScreen } from "./ui/credits";
+import { nombreDeTecla } from "./flight/keymap";
+import { elegirInstructor, type Instructor } from "./audio/instructor";
+import type { ControlInputs } from "./flight/model";
+import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
+import { PlanDeVuelo } from "./world/plan-de-vuelo";
+import { LandingWatcher } from "./flight/aterrizaje";
+import { arranqueEnPista } from "./world/aerodrome";
+import { KeyScreen } from "./ui/teclas";
+import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
+import { Audio } from "./audio/audio";
 
 /** Vistas disponibles, en el orden en que rota la tecla C. */
-const CAMERA_MODES = ['chase', 'cockpit', 'wing'] as const;
+const CAMERA_MODES = ["chase", "cockpit", "wing"] as const;
 type CameraMode = (typeof CAMERA_MODES)[number];
 
 /** Campo de visión en reposo y cuánto se abre a velocidad máxima, en grados. */
@@ -221,9 +232,9 @@ export class Game {
    */
   private readonly instructor: Instructor = elegirInstructor();
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
-  private faseAnunciada = '';
+  private faseAnunciada = "";
 
-  private cameraMode: CameraMode = 'chase';
+  private cameraMode: CameraMode = "chase";
   private propellerAngle = 0;
   /** Estado del avión en el fotograma anterior, para detectar los cambios. */
   private wasOnGround = true;
@@ -238,7 +249,7 @@ export class Game {
   private readonly blobShadow: Mesh;
   /** Respeta la preferencia del sistema de reducir movimiento. */
   private readonly reducedMotion =
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
   private running = false;
   /** Segundos que lleva el avión roto. Ver `frame`. */
   private crashedFor = 0;
@@ -257,7 +268,7 @@ export class Game {
     this.renderer = new WebGLRenderer({
       canvas: options.canvas,
       antialias: true,
-      powerPreference: 'high-performance',
+      powerPreference: "high-performance",
     });
     // Tope de 2: por encima no se distingue y en una tablet cuesta la mitad
     // de los fotogramas. Ver AGENTS.md, regla de rendimiento.
@@ -283,7 +294,8 @@ export class Game {
        */
       this.claveDeTeselas()
         ? 120000
-        : this.scenario.size * (this.scenario.relieveLejano ? VECES_LEJOS * 0.8 : 1.6),
+        : this.scenario.size *
+            (this.scenario.relieveLejano ? VECES_LEJOS * 0.8 : 1.6),
     );
 
     this.terrain = new Terrain(this.scenario);
@@ -301,8 +313,10 @@ export class Game {
      * aterrizaje en principio no se sabe para qué está eso ahí».
      */
     if (this.scenario.aerodrome && this.leccion.guiaEnTierra) {
-      this.plan = new PlanDeVuelo(this.scenario.aerodrome, this.scenario.runway, (x, z) =>
-        this.terrain.sampleHeight(x, z),
+      this.plan = new PlanDeVuelo(
+        this.scenario.aerodrome,
+        this.scenario.runway,
+        (x, z) => this.terrain.sampleHeight(x, z),
       );
       this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
       this.scene.add(this.plan.grupo);
@@ -335,7 +349,9 @@ export class Game {
         ),
       );
     }
-    this.vegetacion = createVegetation(this.scenario, (x, z) => this.terrain.sampleHeight(x, z));
+    this.vegetacion = createVegetation(this.scenario, (x, z) =>
+      this.terrain.sampleHeight(x, z),
+    );
     this.scene.add(this.vegetacion);
 
     /*
@@ -362,7 +378,8 @@ export class Game {
      * El objeto se construye de todas formas porque hay código que lo reinicia
      * y lo consulta; lo que no entra en la escena es su geometría.
      */
-    if (this.leccion.id === 'aterrizaje') this.scene.add(this.runwayGuide.group);
+    if (this.leccion.id === "aterrizaje")
+      this.scene.add(this.runwayGuide.group);
 
     this.aircraftMesh = createAircraftMesh(this.aircraft);
     this.scene.add(this.aircraftMesh.group);
@@ -382,8 +399,10 @@ export class Game {
     this.hud.setUnits(this.tier.units);
     this.hud.setMagneticVariation(this.scenario.magneticVariation);
     this.creditsRoot = options.creditsRoot;
-    this.credits = new CreditsScreen(this.creditsRoot, this.flight.implementationName);
-
+    this.credits = new CreditsScreen(
+      this.creditsRoot,
+      this.flight.implementationName,
+    );
 
     this.input = new InputManager(options.touchRoot, {
       toggleCamera: () => this.cycleCamera(),
@@ -401,20 +420,28 @@ export class Game {
 
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
-    this.hud.setSoundLevel(this.audio.level.glyph, t(`sound.${this.audio.level.id}` as never));
+    this.hud.setSoundLevel(
+      this.audio.level.glyph,
+      t(`sound.${this.audio.level.id}` as never),
+    );
     // La pantalla de teclas se monta si existe su hueco. Es opcional a
     // propósito: el juego tiene que arrancar aunque falte.
-    const teclasRoot = document.getElementById('teclas');
-    if (teclasRoot) this.keyScreen = new KeyScreen(teclasRoot, this.input.keymap);
+    const teclasRoot = document.getElementById("teclas");
+    if (teclasRoot)
+      this.keyScreen = new KeyScreen(teclasRoot, this.input.keymap);
     // Sin letras, teclado dibujado. Con letras, la tabla.
-    this.keyScreen?.setSimple(this.tier.instruments === 'none' || this.tier.instruments === 'pictorial');
+    this.keyScreen?.setSimple(
+      this.tier.instruments === "none" || this.tier.instruments === "pictorial",
+    );
     this.hud.onKeys(() => this.keyScreen?.toggle());
     // Volver al hangar es recargar. Suena brusco y es lo correcto: la elección
     // ya está guardada, cambiar de aeropuerto es empezar otro vuelo, y así no
     // hay que inventar el desmontaje en caliente de un escenario entero —que
     // es donde se quedan las fugas de memoria de los juegos web—.
     this.hud.onHangar(() => location.reload());
-    this.hud.ponerMapa(this.scenario, (x, z) => this.terrain.sampleHeight(x, z));
+    this.hud.ponerMapa(this.scenario, (x, z) =>
+      this.terrain.sampleHeight(x, z),
+    );
     /*
      * Las luces de aproximación y el PAPI, ya desde el principio.
      *
@@ -437,14 +464,16 @@ export class Game {
       (m) => this.ponerTiempo(m),
       () => void this.tiempoDeVerdad(),
     );
-    this.hud.setKeySource((accion) => nombreDeTecla(this.input.preferredKey(accion)));
+    this.hud.setKeySource((accion) =>
+      nombreDeTecla(this.input.preferredKey(accion)),
+    );
 
     // La primera vez se abre sola. Una pantalla que explica los mandos no
     // sirve de nada si hay que saber que existe para encontrarla, y quien no
     // lee no va a descubrir una tecla por su cuenta.
-    if (this.keyScreen && !localStorage.getItem('oga-veve:teclas-vistas')) {
+    if (this.keyScreen && !localStorage.getItem("oga-veve:teclas-vistas")) {
       try {
-        localStorage.setItem('oga-veve:teclas-vistas', '1');
+        localStorage.setItem("oga-veve:teclas-vistas", "1");
         this.keyScreen.show();
       } catch {
         // Sin almacenamiento se abrirá cada vez, que tampoco es un drama.
@@ -455,11 +484,11 @@ export class Game {
     this.hud.onBrake((pressed) => this.input.setTouchBrakes(pressed));
     this.hud.onThrottle((direction) => this.input.setButtonThrottle(direction));
 
-    window.addEventListener('resize', this.onResize);
+    window.addEventListener("resize", this.onResize);
     this.onResize();
     this.resetFlight();
     this.abrirVentanaDePruebas();
-    this.hud.flash(`${t('help.start')} · ${t('help.assist')}`, 8);
+    this.hud.flash(`${t("help.start")} · ${t("help.assist")}`, 8);
   }
 
   /**
@@ -484,16 +513,18 @@ export class Game {
       /** Los mandos, para poder mirarlos desde una comprobación. */
       controles: () => this.input.controls,
       /** La cota que da la foto sin filtrar, para comprobar lejos del aeropuerto. */
-      cotaCruda: (x: number, z: number) => this.teselas?.medidaDirecta(x, z) ?? null,
+      cotaCruda: (x: number, z: number) =>
+        this.teselas?.medidaDirecta(x, z) ?? null,
       /** De qué color se ven las cuatro del PAPI ahora mismo. */
       papi: () => {
-        const m = this.aproximacion?.grupo.getObjectByName('papi') as
-          | { instanceColor?: { array: ArrayLike<number> } }
-          | undefined;
+        const m = this.aproximacion?.grupo.getObjectByName("papi") as
+          { instanceColor?: { array: ArrayLike<number> } } | undefined;
         const a = m?.instanceColor?.array;
         if (!a) return null;
         // Azul alto es blanco; azul bajo es rojo. Es la separación que hay.
-        return Array.from({ length: 4 }, (_, k) => (a[k * 3 + 2]! > 0.5 ? 'blanca' : 'roja'));
+        return Array.from({ length: 4 }, (_, k) =>
+          a[k * 3 + 2]! > 0.5 ? "blanca" : "roja",
+        );
       },
       /**
        * Dónde está la cinta verde respecto del suelo, en metros.
@@ -507,13 +538,22 @@ export class Game {
         if (!g) return null;
         const alturas: number[] = [];
         g.traverse((o) => {
-          const geo = (o as { geometry?: { attributes?: { position?: never } } }).geometry;
+          const geo = (
+            o as { geometry?: { attributes?: { position?: never } } }
+          ).geometry;
           const pos = geo?.attributes?.position as
-            | { count: number; getX(i: number): number; getY(i: number): number; getZ(i: number): number }
+            | {
+                count: number;
+                getX(i: number): number;
+                getY(i: number): number;
+                getZ(i: number): number;
+              }
             | undefined;
           if (!pos) return;
           for (let i = 0; i < pos.count; i += 7) {
-            alturas.push(pos.getY(i) - this.terrain.sampleHeight(pos.getX(i), pos.getZ(i)));
+            alturas.push(
+              pos.getY(i) - this.terrain.sampleHeight(pos.getX(i), pos.getZ(i)),
+            );
           }
         });
         if (!alturas.length) return { vertices: 0, sobreElSuelo: null };
@@ -526,7 +566,7 @@ export class Game {
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
       aeronave: () => ({
         grupo: this.aircraftMesh.group,
-        helice: this.aircraftMesh.propeller.name || '(sin nombre)',
+        helice: this.aircraftMesh.propeller.name || "(sin nombre)",
         ojo: this.aircraftMesh.ojo ?? null,
       }),
       /**
@@ -551,22 +591,39 @@ export class Game {
        */
       alturaDeLasMallas: () => {
         const aero = this.scenario.aerodrome;
-        const recinto = aero ? this.terrain.group.getObjectByName(`aerodromo:${aero.id}`) : null;
+        const recinto = aero
+          ? this.terrain.group.getObjectByName(`aerodromo:${aero.id}`)
+          : null;
         const salida: string[] = [];
         recinto?.traverse((o) => {
           const pos = (
-            o as { geometry?: { attributes?: { position?: {
-              count: number; getX(i: number): number; getY(i: number): number; getZ(i: number): number;
-            } } } }
+            o as {
+              geometry?: {
+                attributes?: {
+                  position?: {
+                    count: number;
+                    getX(i: number): number;
+                    getY(i: number): number;
+                    getZ(i: number): number;
+                  };
+                };
+              };
+            }
           ).geometry?.attributes?.position;
           if (!pos || pos.count === 0) return;
           const d: number[] = [];
-          for (let i = 0; i < pos.count; i += Math.max(1, Math.floor(pos.count / 40))) {
-            d.push(pos.getY(i) - this.terrain.sampleHeight(pos.getX(i), pos.getZ(i)));
+          for (
+            let i = 0;
+            i < pos.count;
+            i += Math.max(1, Math.floor(pos.count / 40))
+          ) {
+            d.push(
+              pos.getY(i) - this.terrain.sampleHeight(pos.getX(i), pos.getZ(i)),
+            );
           }
           d.sort((a, b) => a - b);
           salida.push(
-            `${o.name || '(sin nombre)'}: ${d[Math.floor(d.length / 2)]!.toFixed(2)} m ` +
+            `${o.name || "(sin nombre)"}: ${d[Math.floor(d.length / 2)]!.toFixed(2)} m ` +
               `(de ${d[0]!.toFixed(2)} a ${d[d.length - 1]!.toFixed(2)})`,
           );
         });
@@ -580,13 +637,22 @@ export class Game {
           ? this.terrain.group.getObjectByName(`aerodromo:${aero.id}`)
           : null;
         recinto?.traverse((o) => {
-          const geo = (o as { geometry?: { attributes?: { position?: { count: number } } } })
-            .geometry;
+          const geo = (
+            o as {
+              geometry?: { attributes?: { position?: { count: number } } };
+            }
+          ).geometry;
           if (!geo?.attributes?.position) return;
-          const mat = (o as { material?: { polygonOffsetFactor?: number; polygonOffsetUnits?: number } })
-            .material;
+          const mat = (
+            o as {
+              material?: {
+                polygonOffsetFactor?: number;
+                polygonOffsetUnits?: number;
+              };
+            }
+          ).material;
           salida.push(
-            `${o.name || '(sin nombre)'} ${o.visible ? 'VISIBLE' : 'apagado'}` +
+            `${o.name || "(sin nombre)"} ${o.visible ? "VISIBLE" : "apagado"}` +
               ` ${geo.attributes.position.count}v` +
               ` off ${mat?.polygonOffsetFactor ?? 0}/${mat?.polygonOffsetUnits ?? 0}`,
           );
@@ -599,7 +665,8 @@ export class Game {
       caminos: () => {
         const aero = this.scenario.aerodrome;
         if (!aero) return [];
-        const enElMundo = (p: readonly [number, number]) => [p[0], -p[1]] as [number, number];
+        const enElMundo = (p: readonly [number, number]) =>
+          [p[0], -p[1]] as [number, number];
         /*
          * Y las plataformas, que es donde se empieza a rodar y donde se vio el
          * problema. De cada una se recorre su contorno y además las cuerdas
@@ -613,11 +680,17 @@ export class Game {
           for (let i = 0; i < mitad; i++) {
             cruces.push(c[i]!, c[i + mitad]!);
           }
-          return { que: 'plataforma', puntos: [...c, c[0]!, ...cruces] };
+          return { que: "plataforma", puntos: [...c, c[0]!, ...cruces] };
         });
         return [
-          ...aero.runways.map((r) => ({ que: 'pista', puntos: r.centerline.map(enElMundo) })),
-          ...aero.taxiways.map((t) => ({ que: 'rodadura', puntos: t.path.map(enElMundo) })),
+          ...aero.runways.map((r) => ({
+            que: "pista",
+            puntos: r.centerline.map(enElMundo),
+          })),
+          ...aero.taxiways.map((t) => ({
+            que: "rodadura",
+            puntos: t.path.map(enElMundo),
+          })),
           ...plataformas,
         ];
       },
@@ -625,9 +698,10 @@ export class Game {
       alzado: () => this.alzadoDelAerodromo,
       /** Cómo está el banco de nubes: si se ve, a qué altura y cuánto tapa. */
       nubes: () => {
-        const banco = this.sky?.group.getObjectByName('nubes');
+        const banco = this.sky?.group.getObjectByName("nubes");
         if (!banco) return null;
-        const capa = banco.children[0] as { material?: { opacity?: number } } | undefined;
+        const capa = banco.children[0] as
+          { material?: { opacity?: number } } | undefined;
         return {
           visible: banco.visible,
           altura: Math.round(banco.position.y),
@@ -644,7 +718,8 @@ export class Game {
         const i = nombre ? con.findIndex(([n]) => n === nombre) : 0;
         const entrada = con[i >= 0 ? i : 0]![1]!.xy!;
         const salida = con[(i >= 0 ? i : 0) === 0 ? 1 : 0]![1]!.xy!;
-        const l = Math.hypot(salida[0] - entrada[0], salida[1] - entrada[1]) || 1;
+        const l =
+          Math.hypot(salida[0] - entrada[0], salida[1] - entrada[1]) || 1;
         const ux = (salida[0] - entrada[0]) / l;
         const uy = (salida[1] - entrada[1]) / l;
         const x = entrada[0] - ux * d;
@@ -671,14 +746,19 @@ export class Game {
           nuestroSuelo: this.terrain.sampleHeight(s.position.x, s.position.z),
           suSuelo: foto,
           ruedas: s.position.y - this.aircraft.gearHeight,
-          hundido: foto === null ? null : s.position.y - this.aircraft.gearHeight - foto,
+          hundido:
+            foto === null
+              ? null
+              : s.position.y - this.aircraft.gearHeight - foto,
           bultos: this.bultosQuitados,
-          casas: (this.scene.getObjectByName('ciudad')?.visible ?? false)
-            ? (this.scene.getObjectByName('ciudad')!.children as { count?: number }[]).reduce(
-                (n, m) => n + (m.count ?? 0),
-                0,
-              )
-            : 0,
+          casas:
+            (this.scene.getObjectByName("ciudad")?.visible ?? false)
+              ? (
+                  this.scene.getObjectByName("ciudad")!.children as {
+                    count?: number;
+                  }[]
+                ).reduce((n, m) => n + (m.count ?? 0), 0)
+              : 0,
         };
       },
       /**
@@ -693,7 +773,8 @@ export class Game {
        * rodando.
        */
       pilotar: (fn: ((c: unknown) => void) | null) => {
-        this.pilotoDePruebas = fn as ((c: typeof this.input.controls) => void) | null;
+        this.pilotoDePruebas = fn as
+          ((c: typeof this.input.controls) => void) | null;
       },
       ruta: () => this.plan?.rutaVisible() ?? [],
       pista: () => this.scenario.runway,
@@ -723,11 +804,13 @@ export class Game {
     const mision = this.misionInicial;
     if (!mision) return;
     this.misionInicial = null;
-    this.missionIndex = missionsFor(this.scenario.id).findIndex((m) => m.id === mision.id);
+    this.missionIndex = missionsFor(this.scenario.id).findIndex(
+      (m) => m.id === mision.id,
+    );
     this.missions.start(mision);
     this.hud.setMissionProgress(this.missions.progress);
-    this.hud.flash(t('mission.started', { name: t(mision.nameKey) }), 4);
-    this.audio.cue('attention');
+    this.hud.flash(t("mission.started", { name: t(mision.nameKey) }), 4);
+    this.audio.cue("attention");
     this.updateMissionMarker();
   }
 
@@ -739,7 +822,7 @@ export class Game {
 
   dispose(): void {
     this.stop();
-    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener("resize", this.onResize);
     this.input.dispose();
     this.terrain.dispose();
     this.renderer.dispose();
@@ -759,11 +842,11 @@ export class Game {
     if (!veredicto) return;
     this.hud.flash(
       t(
-        veredicto === 'suave'
-          ? 'hud.landedSoft'
-          : veredicto === 'firme'
-            ? 'hud.landedFirm'
-            : 'hud.landedOffRunway',
+        veredicto === "suave"
+          ? "hud.landedSoft"
+          : veredicto === "firme"
+            ? "hud.landedFirm"
+            : "hud.landedOffRunway",
       ),
       3.6,
     );
@@ -798,7 +881,7 @@ export class Game {
      * pelín más alto a propósito: sobra siempre más fácil de arreglar que
      * falta.
      */
-    if (this.leccion.arranque === 'aire') {
+    if (this.leccion.arranque === "aire") {
       const [x, z] = puntoDePista(runway, runway.length / 2 + APROXIMACION);
       /*
        * **La altura se mide desde la pista, no desde el suelo de debajo.**
@@ -826,7 +909,8 @@ export class Game {
     if (puesto) {
       return new Vector3(
         puesto[0],
-        this.terrain.sampleHeight(puesto[0], puesto[1]) + this.aircraft.gearHeight,
+        this.terrain.sampleHeight(puesto[0], puesto[1]) +
+          this.aircraft.gearHeight,
         puesto[1],
       );
     }
@@ -835,7 +919,11 @@ export class Game {
     const pista = aerodrome?.runways[0];
     const p = pista ? arranqueEnPista(pista, runway.heading) : null;
     const [x, z] = p ?? this.enLaPista(runway.length * 0.42);
-    return new Vector3(x, this.terrain.sampleHeight(x, z) + this.aircraft.gearHeight, z);
+    return new Vector3(
+      x,
+      this.terrain.sampleHeight(x, z) + this.aircraft.gearHeight,
+      z,
+    );
   }
 
   /**
@@ -857,12 +945,15 @@ export class Game {
     const { runway, aerodrome } = this.scenario;
     const pista = aerodrome?.runways[0];
     if (pista) {
-      const p = arranqueEnPista(pista, runway.heading, runway.length * 0.5 - atras);
+      const p = arranqueEnPista(
+        pista,
+        runway.heading,
+        runway.length * 0.5 - atras,
+      );
       if (p) return p;
     }
     return puntoDePista(runway, atras);
   }
-
 
   /**
    * Cuántos metros de pista quedan por delante, o infinito si no se está en
@@ -876,7 +967,13 @@ export class Game {
   private runwayRemaining(): number {
     const r = this.scenario.runway;
     const p = this.flight.state.position;
-    const { along, across: lado } = enEjesDePista(p.x, p.z, r.x, r.z, r.heading);
+    const { along, across: lado } = enEjesDePista(
+      p.x,
+      p.z,
+      r.x,
+      r.z,
+      r.heading,
+    );
     const across = Math.abs(lado);
     if (across > r.width) return Infinity;
     if (Math.abs(along) > r.length / 2) return Infinity;
@@ -902,16 +999,16 @@ export class Game {
     const s = this.flight.state;
     const c = this.input.controls;
     if (!s.onGround || s.airspeed > 2 || c.throttle > 0.05) {
-      this.hud.flash(t('hud.engineBusy'));
+      this.hud.flash(t("hud.engineBusy"));
       return;
     }
     c.engineOn = !c.engineOn;
-    this.hud.flash(t(c.engineOn ? 'hud.engineOn' : 'hud.engineOff'));
+    this.hud.flash(t(c.engineOn ? "hud.engineOn" : "hud.engineOff"));
   }
 
   resetFlight(): void {
     const { runway } = this.scenario;
-    if (this.leccion.arranque === 'aire') return this.reiniciarEnFinal();
+    if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
     // dónde aparece.
@@ -925,7 +1022,7 @@ export class Game {
     // Y con el motor parado, que es como está un avión en su puesto. Arrancarlo
     // es el primer paso del vuelo y hasta ahora no existía como paso.
     this.input.controls.engineOn = !rodando;
-    this.faseAnunciada = '';
+    this.faseAnunciada = "";
     if (this.missions.active) {
       this.missions.start(this.missions.active);
       this.hud.setMissionProgress(this.missions.progress);
@@ -952,7 +1049,7 @@ export class Game {
    * ve todos los días.
    */
   private horaPedida(): number {
-    const q = new URLSearchParams(location.search).get('hora');
+    const q = new URLSearchParams(location.search).get("hora");
     const h = q === null ? NaN : Number(q);
     return Number.isFinite(h) ? h : HORA_BUENA;
   }
@@ -964,9 +1061,9 @@ export class Game {
    * apaga, que es como se compara con el mundo de polígonos sin tocar nada.
    */
   private claveDeTeselas(): string | null {
-    const q = new URLSearchParams(location.search).get('teselas');
-    if (q === '0') return null;
-    if (!q && mundoElegido() === 'dibujado') return null;
+    const q = new URLSearchParams(location.search).get("teselas");
+    if (q === "0") return null;
+    if (!q && mundoElegido() === "dibujado") return null;
     return q || CLAVE_TESELAS;
   }
 
@@ -1010,8 +1107,10 @@ export class Game {
       this.aproximacion.dispose();
       this.aproximacion = null;
     }
-    this.aproximacion = crearAproximacion(pista, cabeceraEnUso(this.scenario), (p) =>
-      this.terrain.sampleHeight(p[0], -p[1]),
+    this.aproximacion = crearAproximacion(
+      pista,
+      cabeceraEnUso(this.scenario),
+      (p) => this.terrain.sampleHeight(p[0], -p[1]),
     );
     if (this.aproximacion) this.scene.add(this.aproximacion.grupo);
   }
@@ -1052,7 +1151,9 @@ export class Game {
     const perfilDeLaFoto = ((): ((t: number) => number) | null => {
       const pista = aero.runways[0];
       const umbrales = pista
-        ? Object.values(pista.thresholds).filter((u): u is NonNullable<typeof u> => !!u?.xy)
+        ? Object.values(pista.thresholds).filter(
+            (u): u is NonNullable<typeof u> => !!u?.xy,
+          )
         : [];
       const a = umbrales[0]?.xy;
       const b = umbrales[1]?.xy;
@@ -1076,7 +1177,10 @@ export class Game {
       const largoEje = (() => {
         let d = 0;
         for (let i = 0; i < eje.length - 1; i++) {
-          d += Math.hypot(eje[i + 1]![0] - eje[i]![0], eje[i + 1]![1] - eje[i]![1]);
+          d += Math.hypot(
+            eje[i + 1]![0] - eje[i]![0],
+            eje[i + 1]![1] - eje[i]![1],
+          );
         }
         return d;
       })();
@@ -1105,8 +1209,17 @@ export class Game {
           const [ax, ay] = eje[i]!;
           const [bx, by] = eje[i + 1]!;
           const l = Math.hypot(bx - ax, by - ay) || 1;
-          const k = Math.max(0, Math.min(1, ((p[0] - ax) * (bx - ax) + (p[1] - ay) * (by - ay)) / (l * l)));
-          const d = Math.hypot(ax + (bx - ax) * k - p[0], ay + (by - ay) * k - p[1]);
+          const k = Math.max(
+            0,
+            Math.min(
+              1,
+              ((p[0] - ax) * (bx - ax) + (p[1] - ay) * (by - ay)) / (l * l),
+            ),
+          );
+          const d = Math.hypot(
+            ax + (bx - ax) * k - p[0],
+            ay + (by - ay) * k - p[1],
+          );
           if (d < cerca) {
             cerca = d;
             mejor = visto + k * l;
@@ -1131,7 +1244,10 @@ export class Game {
       // un agujero en la rasante.
       for (let i = 0; i < crudo.length; i++) {
         if (crudo[i] !== null) continue;
-        const antes = crudo.slice(0, i).reverse().find((c) => c !== null);
+        const antes = crudo
+          .slice(0, i)
+          .reverse()
+          .find((c) => c !== null);
         const despues = crudo.slice(i + 1).find((c) => c !== null);
         crudo[i] = (antes ?? despues ?? null) as number | null;
       }
@@ -1176,7 +1292,11 @@ export class Game {
      */
     // Con perfil de la foto el datum ya está dentro de las catas; sin él, hay
     // que sumarlo a mano porque las cotas de los umbrales van sobre el mar.
-    this.terrain.reasentarAerodromo(this.scenario, perfilDeLaFoto ? 0 : datum, perfilDeLaFoto);
+    this.terrain.reasentarAerodromo(
+      this.scenario,
+      perfilDeLaFoto ? 0 : datum,
+      perfilDeLaFoto,
+    );
 
     const puntos: [number, number][] = [];
     const pista = aero.runways[0];
@@ -1245,7 +1365,8 @@ export class Game {
      * ve el filo.
      */
     const tope = 1.5;
-    const alzado = (perfilDeLaFoto ? 0 : datum) + Math.min(tope, Math.max(0, p85)) + 0.15;
+    const alzado =
+      (perfilDeLaFoto ? 0 : datum) + Math.min(tope, Math.max(0, p85)) + 0.15;
     this.terrain.reasentarAerodromo(this.scenario, alzado, perfilDeLaFoto);
     this.terrain.rehacerAerodromo(this.scenario);
 
@@ -1274,7 +1395,7 @@ export class Game {
     this.terrain.group
       .getObjectByName(`aerodromo:${aero.id}`)
       ?.traverse((o) => {
-        if (o.name === 'pavimento:concrete') o.visible = false;
+        if (o.name === "pavimento:concrete") o.visible = false;
       });
     this.alzadoDelAerodromo = alzado - (perfilDeLaFoto ? 0 : datum);
   }
@@ -1286,9 +1407,9 @@ export class Game {
     const fuera = (o: Object3D | undefined | null): void => {
       if (o) o.visible = false;
     };
-    fuera(this.terrain.group.getObjectByName('terreno'));
-    fuera(this.terrain.group.getObjectByName('horizonte'));
-    fuera(this.terrain.group.getObjectByName('agua'));
+    fuera(this.terrain.group.getObjectByName("terreno"));
+    fuera(this.terrain.group.getObjectByName("horizonte"));
+    fuera(this.terrain.group.getObjectByName("agua"));
     fuera(this.vegetacion);
     /*
      * Y la ciudad de cajas, que sobre la fotografía no vuelve.
@@ -1308,8 +1429,7 @@ export class Game {
      * puestas sobre el suelo de la foto, no sobre el nuestro. Eso está probado
      * en `spike/aerodromo-real.js` y es lo siguiente.
      */
-    fuera(this.scene.getObjectByName('ciudad'));
-
+    fuera(this.scene.getObjectByName("ciudad"));
   }
 
   /**
@@ -1345,7 +1465,6 @@ export class Game {
    * manzana.
    */
 
-
   /**
    * Recoloca el avión cuando el suelo cambia bajo sus ruedas.
    *
@@ -1370,7 +1489,11 @@ export class Game {
     if (!s.onGround) return;
     const suelo = this.terrain.sampleHeight(s.position.x, s.position.z);
     this.flight.reset({
-      position: new Vector3(s.position.x, suelo + this.aircraft.gearHeight, s.position.z),
+      position: new Vector3(
+        s.position.x,
+        suelo + this.aircraft.gearHeight,
+        s.position.z,
+      ),
       heading: s.heading,
       airspeed: s.airspeed,
     });
@@ -1402,7 +1525,6 @@ export class Game {
    * luego me traga el Iberia y luego voy al sitio nuevo».
    */
 
-
   /**
    * Cambia las cajas por el modelo de verdad, si lo hay.
    *
@@ -1432,13 +1554,14 @@ export class Game {
   private rehacerPlanDeVuelo(): void {
     if (!this.plan || !this.scenario.aerodrome) return;
     this.scene.remove(this.plan.grupo);
-    this.plan = new PlanDeVuelo(this.scenario.aerodrome, this.scenario.runway, (x, z) =>
-      this.terrain.sampleHeight(x, z),
+    this.plan = new PlanDeVuelo(
+      this.scenario.aerodrome,
+      this.scenario.runway,
+      (x, z) => this.terrain.sampleHeight(x, z),
     );
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
     this.scene.add(this.plan.grupo);
   }
-
 
   /** Pone una hora del día. Lo llama el panel del tiempo. */
   ponerHora(hora: number): void {
@@ -1512,7 +1635,7 @@ export class Game {
     });
     this.input.controls.engineOn = true;
     this.input.controls.throttle = 0.45;
-    this.faseAnunciada = '';
+    this.faseAnunciada = "";
     this.runwayGuide.reset();
     this.landing.reset();
     this.crashedFor = 0;
@@ -1566,7 +1689,8 @@ export class Game {
       r.heading,
     );
     this.flight.setOnRunway(
-      Math.abs(ejes.along) < r.length / 2 + 30 && Math.abs(ejes.across) < r.width / 2 + 6,
+      Math.abs(ejes.along) < r.length / 2 + 30 &&
+        Math.abs(ejes.across) < r.width / 2 + 6,
     );
 
     this.input.update(dt);
@@ -1590,7 +1714,8 @@ export class Game {
     this.runwayGuide.update(dt);
     // Cruzar un aro de la senda se celebra: destello, salto de escala y una
     // nota. Es la respuesta visual que pedía cualquiera que no sepa leer.
-    if (this.runwayGuide.check(this.flight.state.position)) this.audio.cue('success');
+    if (this.runwayGuide.check(this.flight.state.position))
+      this.audio.cue("success");
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
@@ -1612,7 +1737,10 @@ export class Game {
       if (this.mundoRealPuesto) {
         const s = this.flight.state;
         const borde = this.scenario.size / 2;
-        if (Math.abs(s.position.x) > borde * 0.7 || Math.abs(s.position.z) > borde * 0.7) {
+        if (
+          Math.abs(s.position.x) > borde * 0.7 ||
+          Math.abs(s.position.z) > borde * 0.7
+        ) {
           this.teselas.seguirAlAvion(s.position.x, s.position.z);
         }
       }
@@ -1646,7 +1774,9 @@ export class Game {
          */
         this.terrain.subirTodo(this.teselas.desfase ?? 0);
         // Y a partir de aquí, fuera del escenario manda la fotografía.
-        this.terrain.ponerSueloLejano((x, z) => this.teselas?.cotaLejana(x, z) ?? null);
+        this.terrain.ponerSueloLejano(
+          (x, z) => this.teselas?.cotaLejana(x, z) ?? null,
+        );
         /*
          * **Y se descarta lo que no cuadre con el desfase que ya se midió.**
          *
@@ -1680,7 +1810,8 @@ export class Game {
          * más de un nudo y la primera solo le quita el borde.
          */
         let bultos = 0;
-        for (let i = 0; i < 2; i++) bultos += this.terrain.alisarPicos([0, 0], 6000, 6);
+        for (let i = 0; i < 2; i++)
+          bultos += this.terrain.alisarPicos([0, 0], 6000, 6);
         /*
          * Y una pasada de suavizado, que es otra cosa distinta de quitar
          * bultos. Los bultos son lo que sobresale; esto son los **escalones**
@@ -1732,7 +1863,11 @@ export class Game {
     this.announce(this.flight.state);
     // La bocina avisa al 85 % del ángulo crítico de esta aeronave concreta,
     // que es donde la ponen los fabricantes.
-    this.audio.update(this.flight.state, this.input.controls, this.aircraft.aero.alphaStall * 0.85);
+    this.audio.update(
+      this.flight.state,
+      this.input.controls,
+      this.aircraft.aero.alphaStall * 0.85,
+    );
     // El mapa, si está abierto. Solo mueve la flecha: el mundo ya está pintado.
     /*
      * El PAPI mira al avión. Es lo único del aeródromo que cambia cada
@@ -1744,10 +1879,14 @@ export class Game {
       this.flight.state.position.y,
       this.flight.state.position.z,
     );
+    // Y a dónde se va, si se va a algún sitio: el objetivo de la misión, que
+    // es lo único del mundo que es «otro lugar concreto».
+    const objetivo = this.missions.current;
     this.hud.mapa.update(
       this.flight.state.position.x,
       this.flight.state.position.z,
       this.flight.state.heading,
+      objetivo ? objectiveTarget(objetivo) : null,
     );
     this.hud.update(
       this.flight.state,
@@ -1786,7 +1925,10 @@ export class Game {
   /** Metros hasta la cabecera de pista, mire donde mire la aguja. */
   private distanceToRunway(): number {
     const [tx, tz] = this.enLaPista(this.scenario.runway.length * 0.5);
-    return Math.hypot(tx - this.flight.state.position.x, tz - this.flight.state.position.z);
+    return Math.hypot(
+      tx - this.flight.state.position.x,
+      tz - this.flight.state.position.z,
+    );
   }
 
   /**
@@ -1813,7 +1955,8 @@ export class Game {
     const s = this.flight.state;
     if (!s.onGround) return;
 
-    const suelo = s.position.y - this.terrain.sampleHeight(s.position.x, s.position.z);
+    const suelo =
+      s.position.y - this.terrain.sampleHeight(s.position.x, s.position.z);
     const sugerido = this.plan.asistencia(s, suelo);
     if (sugerido === 0) return;
 
@@ -1832,10 +1975,12 @@ export class Game {
    */
   private avanzarPlan(dt: number): void {
     if (!this.plan) return;
-    const suelo = this.flight.state.position.y - this.terrain.sampleHeight(
-      this.flight.state.position.x,
-      this.flight.state.position.z,
-    );
+    const suelo =
+      this.flight.state.position.y -
+      this.terrain.sampleHeight(
+        this.flight.state.position.x,
+        this.flight.state.position.z,
+      );
     const vista = this.plan.paso(
       this.flight.state,
       suelo,
@@ -1848,41 +1993,49 @@ export class Game {
     // mirar, y dejarla encendida decía algo que ya no era verdad.
     const enTierraEsperando =
       this.leccion.torre &&
-      (vista.fase === 'esperando' || vista.fase === 'autorizado' || vista.fase === 'alineando');
+      (vista.fase === "esperando" ||
+        vista.fase === "autorizado" ||
+        vista.fase === "alineando");
     this.hud.setLuzDeTorre(
-      !enTierraEsperando ? null : vista.fase === 'esperando' ? 'roja' : vista.luzVerde ? 'verde' : null,
+      !enTierraEsperando
+        ? null
+        : vista.fase === "esperando"
+          ? "roja"
+          : vista.luzVerde
+            ? "verde"
+            : null,
     );
 
     // Mientras manda el plan, el tutor calla. Vuelve al alinearse, que es
     // cuando toca despegar y el tutor sí sabe de eso.
     const rodaje =
-      vista.fase === 'estacionado' ||
-      vista.fase === 'arrancando' ||
-      vista.fase === 'rodando' ||
-      vista.fase === 'esperando' ||
-      vista.fase === 'autorizado' ||
-      vista.fase === 'abandonando' ||
-      vista.fase === 'a-plataforma' ||
-      vista.fase === 'en-puesto' ||
-      vista.fase === 'apagado';
+      vista.fase === "estacionado" ||
+      vista.fase === "arrancando" ||
+      vista.fase === "rodando" ||
+      vista.fase === "esperando" ||
+      vista.fase === "autorizado" ||
+      vista.fase === "abandonando" ||
+      vista.fase === "a-plataforma" ||
+      vista.fase === "en-puesto" ||
+      vista.fase === "apagado";
     this.hud.tutor.silenciar(rodaje);
 
     // **En el peldaño de los pequeños, ni una palabra.** No leen, así que un
     // cartel de texto es un cartel en blanco que además tapa el mundo. Ahí
     // manda la luz de la torre y la raya verde del suelo, que se entienden sin
     // saber leer; el instructor de voz vendrá a llenar este hueco.
-    const conLetras = this.tier.instruments !== 'none';
+    const conLetras = this.tier.instruments !== "none";
 
     if (vista.fase !== this.faseAnunciada) {
       this.faseAnunciada = vista.fase;
       // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
       // el motor» no le sirve de nada a quien no sabe cuál es el motor.
       const tecla =
-        vista.fase === 'estacionado' || vista.fase === 'en-puesto'
-          ? ` · ${nombreDeTecla(this.input.preferredKey('engine'))}`
-          : vista.fase === 'esperando' || vista.fase === 'aterrizado'
-            ? ` · ${nombreDeTecla(this.input.preferredKey('brakes'))}`
-            : '';
+        vista.fase === "estacionado" || vista.fase === "en-puesto"
+          ? ` · ${nombreDeTecla(this.input.preferredKey("engine"))}`
+          : vista.fase === "esperando" || vista.fase === "aterrizado"
+            ? ` · ${nombreDeTecla(this.input.preferredKey("brakes"))}`
+            : "";
       /*
        * **En la lección de aterrizar, volar no es el premio: es el camino.**
        *
@@ -1892,8 +2045,8 @@ export class Game {
        * cabecera: decirle que se dé una vuelta es mandarlo al sitio contrario.
        */
       const clave =
-        this.leccion.id === 'aterrizaje' && vista.fase === 'en-vuelo'
-          ? 'vuelo.enVueloAterrizando'
+        this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
+          ? "vuelo.enVueloAterrizando"
           : vista.clave;
       const frase = t(clave as never);
 
@@ -1906,16 +2059,18 @@ export class Game {
       // primera persona que lo jugó se quedó mirando un avión parado en Silvio
       // Pettirossi porque la llave salió, se apagó a los seis segundos, y ya no
       // había forma de enterarse de qué hacía falta.
-      const pendiente = vista.fase === 'estacionado' || vista.fase === 'en-puesto';
-      const esperando = vista.fase === 'esperando';
-      this.hud.senal.mostrar(vista.icono, conLetras ? frase : '', vista.letra, {
-        segundos: pendiente || esperando ? Infinity : vista.fase === 'apagado' ? 9 : 6,
+      const pendiente =
+        vista.fase === "estacionado" || vista.fase === "en-puesto";
+      const esperando = vista.fase === "esperando";
+      this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", vista.letra, {
+        segundos:
+          pendiente || esperando ? Infinity : vista.fase === "apagado" ? 9 : 6,
         // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
         // ninguna manera de saber que el contacto es la I.
         tecla: pendiente
-          ? nombreDeTecla(this.input.preferredKey('engine'))
+          ? nombreDeTecla(this.input.preferredKey("engine"))
           : esperando
-            ? nombreDeTecla(this.input.preferredKey('brakes'))
+            ? nombreDeTecla(this.input.preferredKey("brakes"))
             : null,
         // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
         // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
@@ -1924,38 +2079,59 @@ export class Game {
       });
       this.instructor.decir(frase);
       if (conLetras) {
-        this.hud.flash(`${frase}${tecla}${vista.letra ? ` · ${vista.letra}` : ''}`, 5);
+        this.hud.flash(
+          `${frase}${tecla}${vista.letra ? ` · ${vista.letra}` : ""}`,
+          5,
+        );
       }
-      if (vista.fase === 'autorizado' || vista.fase === 'apagado') this.audio.cue('success');
+      if (vista.fase === "autorizado" || vista.fase === "apagado")
+        this.audio.cue("success");
     } else if (vista.rapido && this.plan.avisarDeSalida(dt)) {
       // **«¿Quién me indica si voy muy rápido o lento en rodadura?»** Nadie, y
       // esa era la respuesta honesta: el indicador de tortuga y pájaro está
       // calibrado para velocidad de vuelo, así que rodando se queda clavado en
       // la tortuga sin decir nada. Ahora lo dice la raya —que se pone ámbar y
       // roja donde hay que aflojar— y además se avisa.
-      this.hud.senal.mostrar('freno', conLetras ? t('vuelo.despacio') : '', vista.letra, {
-        segundos: 3.5,
-      });
-      this.instructor.decir(t('vuelo.despacio'));
+      this.hud.senal.mostrar(
+        "freno",
+        conLetras ? t("vuelo.despacio") : "",
+        vista.letra,
+        {
+          segundos: 3.5,
+        },
+      );
+      this.instructor.decir(t("vuelo.despacio"));
     } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {
-      this.hud.senal.mostrar('amarillo', conLetras ? t('vuelo.fuera') : '', vista.letra, {
-        segundos: 4,
-      });
-      this.instructor.decir(t('vuelo.fuera'));
-      if (conLetras) this.hud.flash(t('vuelo.fuera'), 3);
+      this.hud.senal.mostrar(
+        "amarillo",
+        conLetras ? t("vuelo.fuera") : "",
+        vista.letra,
+        {
+          segundos: 4,
+        },
+      );
+      this.instructor.decir(t("vuelo.fuera"));
+      if (conLetras) this.hud.flash(t("vuelo.fuera"), 3);
     }
 
     if (vista.saltoLaLuz) {
       // El sonido sí, siempre: es la mitad del aviso que no necesita leerse.
-      this.audio.cue('attention');
-      this.hud.senal.mostrar('mano', conLetras ? t('vuelo.sinPermiso') : '', null, { segundos: 7 });
-      this.instructor.decir(t('vuelo.sinPermiso'));
-      if (conLetras) this.hud.flash(t('vuelo.sinPermiso'), 7);
+      this.audio.cue("attention");
+      this.hud.senal.mostrar(
+        "mano",
+        conLetras ? t("vuelo.sinPermiso") : "",
+        null,
+        { segundos: 7 },
+      );
+      this.instructor.decir(t("vuelo.sinPermiso"));
+      if (conLetras) this.hud.flash(t("vuelo.sinPermiso"), 7);
     }
   }
 
   private updateHomeIndicator(): void {
-    const [thresholdX, thresholdZ] = this.enLaPista(this.scenario.runway.length * 0.5);
+    const [thresholdX, thresholdZ] = this.enLaPista(
+      this.scenario.runway.length * 0.5,
+    );
 
     // Con misión en curso, la aguja señala el objetivo; sin ella, la pista.
     // Es la misma aguja: no hay dos cosas que aprender.
@@ -1994,7 +2170,10 @@ export class Game {
    * desvanece con la altura resuelve casi todo eso por un plano.
    */
   private updateBlobShadow(state: FlightState): void {
-    const ground = this.terrain.sampleSurface(state.position.x, state.position.z);
+    const ground = this.terrain.sampleSurface(
+      state.position.x,
+      state.position.z,
+    );
     const height = Math.max(0, state.position.y - ground);
     // Se ve hasta cuatrocientos metros. Antes se apagaba a doscientos veinte
     // y desaparecía justo cuando empezaba a ser útil como referencia de que
@@ -2004,7 +2183,11 @@ export class Game {
     this.blobShadow.visible = fade > 0.02;
     if (!this.blobShadow.visible) return;
 
-    this.blobShadow.position.set(state.position.x, ground + 0.4, state.position.z);
+    this.blobShadow.position.set(
+      state.position.x,
+      ground + 0.4,
+      state.position.z,
+    );
     this.blobShadow.rotation.y = -state.heading;
     const spread = 1 + height / 110;
     this.blobShadow.scale.set(spread, 1, spread);
@@ -2020,7 +2203,7 @@ export class Game {
     this.lastAirspeed = state.airspeed;
     this.surge += (Math.min(rawSurge, 6) - this.surge) * Math.min(1, dt * 4);
 
-    if (this.cameraMode === 'cockpit') {
+    if (this.cameraMode === "cockpit") {
       // Desde dentro no hay suavizado: la cámara es la cabeza del piloto y
       // va rígidamente unida al avión.
       //
@@ -2029,20 +2212,33 @@ export class Game {
       // no hay cabina y da igual dónde te pongas.
       const ojo = this.aircraftMesh.ojo;
       if (ojo) this.offset.set(ojo.x, ojo.y, ojo.z);
-      else this.offset.set(0, this.aircraft.chord * 0.55, -this.aircraft.chord * 0.4);
+      else
+        this.offset.set(
+          0,
+          this.aircraft.chord * 0.55,
+          -this.aircraft.chord * 0.4,
+        );
       this.offset.applyQuaternion(state.orientation);
       this.camera.position.copy(state.position).add(this.offset);
       this.camera.quaternion.copy(state.orientation);
       return;
     }
 
-    if (this.cameraMode === 'wing') {
-      this.offset.set(this.aircraft.wingSpan * 0.9, this.aircraft.chord * 1.4, this.aircraft.wingSpan * 0.5);
+    if (this.cameraMode === "wing") {
+      this.offset.set(
+        this.aircraft.wingSpan * 0.9,
+        this.aircraft.chord * 1.4,
+        this.aircraft.wingSpan * 0.5,
+      );
     } else {
       // Más alta y algo más atrás que en la primera versión: estaba a la
       // altura del avión y el fuselaje tapaba justo el centro de la pantalla,
       // que es donde uno quiere mirar para saber adónde va.
-      this.offset.set(0, this.aircraft.wingSpan * 0.52, this.aircraft.wingSpan * 1.5);
+      this.offset.set(
+        0,
+        this.aircraft.wingSpan * 0.52,
+        this.aircraft.wingSpan * 1.5,
+      );
     }
     // Retroceso por aceleración: la cámara se queda un poco atrás cuando el
     // avión empuja y vuelve a su sitio al estabilizarse. Es el mismo truco
@@ -2055,7 +2251,9 @@ export class Game {
 
     // Nunca por debajo del terreno: en un vuelo rasante la cámara de
     // persecución se metería dentro de la loma de atrás.
-    const floor = this.terrain.sampleSurface(this.desiredCamera.x, this.desiredCamera.z) + 3;
+    const floor =
+      this.terrain.sampleSurface(this.desiredCamera.x, this.desiredCamera.z) +
+      3;
     if (this.desiredCamera.y < floor) this.desiredCamera.y = floor;
 
     // Suavizado exponencial independiente de la tasa de fotogramas: sin el
@@ -2100,7 +2298,8 @@ export class Game {
     // como una oscilación. Y un cuarto término lento hace los baches.
     const bump = Math.pow(Math.max(0, Math.sin(t * 5.3)), 8);
     const amount = SHAKE_AMPLITUDE * this.shake;
-    this.desiredCamera.y += amount * (Math.sin(t * 41) * 0.5 + Math.sin(t * 17.3) * 0.3 + bump * 1.4);
+    this.desiredCamera.y +=
+      amount * (Math.sin(t * 41) * 0.5 + Math.sin(t * 17.3) * 0.3 + bump * 1.4);
     this.desiredCamera.x += amount * Math.sin(t * 23.7) * 0.35;
   }
 
@@ -2114,7 +2313,7 @@ export class Game {
    */
   private updateFieldOfView(state: FlightState, dt: number): void {
     const wanted =
-      this.reducedMotion || this.cameraMode === 'cockpit'
+      this.reducedMotion || this.cameraMode === "cockpit"
         ? BASE_FOV
         : BASE_FOV + FOV_STRETCH * Math.min(1, state.airspeed / FOV_REFERENCE);
 
@@ -2129,7 +2328,8 @@ export class Game {
 
   private cycleCamera(): void {
     const index = CAMERA_MODES.indexOf(this.cameraMode);
-    this.cameraMode = CAMERA_MODES[(index + 1) % CAMERA_MODES.length] ?? 'chase';
+    this.cameraMode =
+      CAMERA_MODES[(index + 1) % CAMERA_MODES.length] ?? "chase";
   }
 
   /**
@@ -2142,10 +2342,15 @@ export class Game {
   private buildFlightModel(tier: Tier): FlightModel {
     // El avión flota sobre el agua en vez de hundirse: es un juego para
     // chicos, y amerizar de morro y desaparecer no le divierte a nadie.
-    const ground = (x: number, z: number): number => this.terrain.sampleSurface(x, z);
-    return tier.model === 'simple'
+    const ground = (x: number, z: number): number =>
+      this.terrain.sampleSurface(x, z);
+    return tier.model === "simple"
       ? new ArcadeFlightModel({ aircraft: this.aircraft, ground })
-      : new CoefficientFlightModel({ aircraft: this.aircraft, ground, assist: tier.assists });
+      : new CoefficientFlightModel({
+          aircraft: this.aircraft,
+          ground,
+          assist: tier.assists,
+        });
   }
 
   /**
@@ -2156,7 +2361,9 @@ export class Game {
    * aire, y el avión nuevo aparece donde estaba el anterior.
    */
   private cycleAircraft(): void {
-    const next = AIRCRAFT[(AIRCRAFT.indexOf(this.aircraft) + 1) % AIRCRAFT.length] ?? OGA_172;
+    const next =
+      AIRCRAFT[(AIRCRAFT.indexOf(this.aircraft) + 1) % AIRCRAFT.length] ??
+      OGA_172;
     const { position, heading, airspeed } = this.flight.state;
     const carried = { position: position.clone(), heading, airspeed };
 
@@ -2192,7 +2399,8 @@ export class Game {
    * caiga nada.
    */
   private cycleTier(): void {
-    const next = TIERS[(TIERS.indexOf(this.tier) + 1) % TIERS.length] ?? GUYRAMI;
+    const next =
+      TIERS[(TIERS.indexOf(this.tier) + 1) % TIERS.length] ?? GUYRAMI;
     const { position, heading, airspeed } = this.flight.state;
     const carried = { position: position.clone(), heading, airspeed };
 
@@ -2203,7 +2411,9 @@ export class Game {
 
     this.hud.setUnits(next.units);
     this.hud.setInstruments(next.instruments);
-    this.keyScreen?.setSimple(next.instruments === 'none' || next.instruments === 'pictorial');
+    this.keyScreen?.setSimple(
+      next.instruments === "none" || next.instruments === "pictorial",
+    );
     this.updateBadge();
     this.hud.flash(`${next.name} · ${next.ages}`, 3);
   }
@@ -2220,13 +2430,13 @@ export class Game {
     if (state.onGround && !this.wasOnGround) {
       // Toque de ruedas. Una toma dura suena distinto de una suave, que es lo
       // que enseña a aterrizar sin necesidad de puntuación ninguna.
-      this.audio.cue(state.touchdownSinkRate > 2.5 ? 'error' : 'touchdown');
+      this.audio.cue(state.touchdownSinkRate > 2.5 ? "error" : "touchdown");
     }
     if (!state.onGround && this.wasOnGround && !state.crashed) {
-      this.audio.cue('achieved');
+      this.audio.cue("achieved");
     }
-    if (state.stalled && !this.wasStalled) this.audio.cue('attention');
-    if (state.crashed && !this.wasCrashed) this.audio.cue('error');
+    if (state.stalled && !this.wasStalled) this.audio.cue("attention");
+    if (state.crashed && !this.wasCrashed) this.audio.cue("error");
 
     this.wasOnGround = state.onGround;
     this.wasStalled = state.stalled;
@@ -2244,18 +2454,19 @@ export class Game {
     const available = missionsFor(this.scenario.id);
     if (!available.length) return;
 
-    this.missionIndex = this.missionIndex + 1 >= available.length ? -1 : this.missionIndex + 1;
+    this.missionIndex =
+      this.missionIndex + 1 >= available.length ? -1 : this.missionIndex + 1;
     const mission = available[this.missionIndex];
 
     if (!mission) {
       this.missions.abandon();
       this.hud.setMissionProgress(null);
-      this.hud.flash(t('mission.none'), 3);
+      this.hud.flash(t("mission.none"), 3);
     } else {
       this.missions.start(mission);
       this.hud.setMissionProgress(this.missions.progress);
-      this.hud.flash(t('mission.started', { name: t(mission.nameKey) }), 4);
-      this.audio.cue('attention');
+      this.hud.flash(t("mission.started", { name: t(mission.nameKey) }), 4);
+      this.audio.cue("attention");
     }
     this.updateMissionMarker();
   }
@@ -2270,18 +2481,21 @@ export class Game {
     this.updateMissionMarker();
 
     if (event.finished) {
-      this.audio.cue('achieved');
-      this.hud.flash(t('mission.done'), 5);
+      this.audio.cue("achieved");
+      this.hud.flash(t("mission.done"), 5);
     } else {
-      this.audio.cue('success');
-      this.hud.flash(t('mission.step'), 2);
+      this.audio.cue("success");
+      this.hud.flash(t("mission.step"), 2);
     }
   }
 
   private updateMissionMarker(): void {
     const objective = this.missions.current;
     const target = objective ? objectiveTarget(objective) : null;
-    this.missionMarker.moveTo(target, target ? this.terrain.sampleSurface(target.x, target.z) : 0);
+    this.missionMarker.moveTo(
+      target,
+      target ? this.terrain.sampleSurface(target.x, target.z) : 0,
+    );
   }
 
   private toggleSound(): void {
@@ -2294,10 +2508,13 @@ export class Game {
   private changeLanguage(): void {
     const locale = cycleLocale();
     this.hud.render();
-    this.credits = new CreditsScreen(this.creditsRoot, this.flight.implementationName);
+    this.credits = new CreditsScreen(
+      this.creditsRoot,
+      this.flight.implementationName,
+    );
 
     this.updateBadge();
-    this.hud.flash(t('language.changed', { name: LOCALE_NAMES[locale] }));
+    this.hud.flash(t("language.changed", { name: LOCALE_NAMES[locale] }));
   }
 
   private updateBadge(): void {
@@ -2334,7 +2551,7 @@ function createBlobShadow(wingSpan: number): Mesh {
       side: DoubleSide,
     }),
   );
-  mesh.name = 'sombra';
+  mesh.name = "sombra";
   mesh.renderOrder = 1;
   return mesh;
 }
@@ -2349,14 +2566,21 @@ function createBlobShadow(wingSpan: number): Mesh {
  */
 function radialFade(): CanvasTexture {
   const size = 64;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
-  const context = canvas.getContext('2d')!;
-  const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(20,32,26,1)');
-  gradient.addColorStop(0.55, 'rgba(20,32,26,0.72)');
-  gradient.addColorStop(1, 'rgba(20,32,26,0)');
+  const context = canvas.getContext("2d")!;
+  const gradient = context.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2,
+  );
+  gradient.addColorStop(0, "rgba(20,32,26,1)");
+  gradient.addColorStop(0.55, "rgba(20,32,26,0.72)");
+  gradient.addColorStop(1, "rgba(20,32,26,0)");
   context.fillStyle = gradient;
   context.fillRect(0, 0, size, size);
   return new CanvasTexture(canvas);

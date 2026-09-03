@@ -24,9 +24,9 @@
  * el río está al oeste siempre, no «a la izquierda ahora mismo».
  */
 
-import { t } from '../i18n';
-import type { Scenario } from '../world/scenarios';
-import { puntoDePista } from '../world/rumbo';
+import { t } from "../i18n";
+import type { Scenario } from "../world/scenarios";
+import { puntoDePista } from "../world/rumbo";
 
 /** Lado del lienzo, en píxeles. */
 const LADO = 460;
@@ -73,14 +73,14 @@ export class Mapa {
           -->
           <div class="mapa__lupas">
             <button class="mapa__lupa" type="button" data-hud="mapa-lejos"
-                    aria-label="${t('mapa.lejos')}">
+                    aria-label="${t("mapa.lejos")}">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="10.5" cy="10.5" r="6.6" />
                 <path d="M15.4 15.4 L21 21 M7 10.5 h7" />
               </svg>
             </button>
             <button class="mapa__lupa" type="button" data-hud="mapa-cerca"
-                    aria-label="${t('mapa.cerca')}">
+                    aria-label="${t("mapa.cerca")}">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="10.5" cy="10.5" r="6.6" />
                 <path d="M15.4 15.4 L21 21 M7 10.5 h7 M10.5 7 v7" />
@@ -105,32 +105,46 @@ export class Mapa {
     `;
   }
 
-  bind(raiz: HTMLElement, escenario: Scenario, cota: (x: number, z: number) => number): void {
+  bind(
+    raiz: HTMLElement,
+    escenario: Scenario,
+    cota: (x: number, z: number) => number,
+  ): void {
     this.escenario = escenario;
     this.cota = cota;
     this.raiz = raiz;
     this.caja = raiz.querySelector('[data-hud="mapa"]');
     this.fondo = raiz.querySelector('[data-hud="mapa-fondo"]');
     this.encima = raiz.querySelector('[data-hud="mapa-encima"]');
-    raiz.querySelector('[data-hud="mapa-boton"]')?.addEventListener('click', () => this.alternar());
-    raiz.querySelector('[data-hud="mapa-cerca"]')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.acercar(1);
-    });
-    raiz.querySelector('[data-hud="mapa-lejos"]')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.acercar(-1);
-    });
+    raiz
+      .querySelector('[data-hud="mapa-boton"]')
+      ?.addEventListener("click", () => this.alternar());
+    raiz
+      .querySelector('[data-hud="mapa-cerca"]')
+      ?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.acercar(1);
+      });
+    raiz
+      .querySelector('[data-hud="mapa-lejos"]')
+      ?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.acercar(-1);
+      });
     // Y la rueda del ratón, para quien la tenga. No sustituye a los botones:
     // los acompaña.
-    this.caja?.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      this.acercar(e.deltaY < 0 ? 1 : -1);
-    }, { passive: false });
+    this.caja?.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        this.acercar(e.deltaY < 0 ? 1 : -1);
+      },
+      { passive: false },
+    );
     // Tocando el fondo se cierra. Es lo que espera cualquiera que haya abierto
     // una lámina encima de algo, y para quien no lee es la única salida obvia:
     // no hay ninguna equis que buscar.
-    this.caja?.addEventListener('pointerdown', (e) => {
+    this.caja?.addEventListener("pointerdown", (e) => {
       if (e.target === this.caja) this.cerrar();
     });
   }
@@ -172,7 +186,10 @@ export class Mapa {
    */
   private acercar(paso: number): void {
     const antes = this.alcance;
-    this.alcance = Math.max(0, Math.min(ALCANCES.length - 1, this.alcance + paso));
+    this.alcance = Math.max(
+      0,
+      Math.min(ALCANCES.length - 1, this.alcance + paso),
+    );
     if (this.alcance === antes) return;
     this.pintarFondo();
   }
@@ -204,7 +221,7 @@ export class Mapa {
    * en medio y no hay que apartar nada.
    */
   private avisarAlHud(): void {
-    this.raiz?.classList.toggle('hud--con-mapa', this.abierto);
+    this.raiz?.classList.toggle("hud--con-mapa", this.abierto);
   }
 
   get visible(): boolean {
@@ -215,8 +232,25 @@ export class Mapa {
   private avionX = 0;
   private avionZ = 0;
 
-  /** Mueve la flecha. Se llama cada fotograma, así que no pinta el mundo. */
-  update(x: number, z: number, rumboRad: number): void {
+  /** A dónde se va ahora mismo, si se va a algún sitio. Ver `update`. */
+  private destino: { x: number; z: number } | null = null;
+
+  /**
+   * Mueve la flecha. Se llama cada fotograma, así que no pinta el mundo.
+   *
+   * `destino` es el objetivo de la misión, si hay misión. Es la respuesta a
+   * «¿cómo sé que voy bien hacia otro lugar concreto?»: la aguja del HUD dice
+   * el rumbo, pero un rumbo es un número y no dice **por dónde**. En el mapa
+   * se ve la raya del avión al sitio, y si el sitio no cabe en el encuadre la
+   * raya se sale por donde hay que ir.
+   */
+  update(
+    x: number,
+    z: number,
+    rumboRad: number,
+    destino: { x: number; z: number } | null = null,
+  ): void {
+    this.destino = destino;
     /*
      * **Al acercarse, el mapa sigue al avión; de lejos, no.**
      *
@@ -238,11 +272,14 @@ export class Mapa {
      * el mismo cuadrado de siempre con la flecha clavada en un borde.
      */
     const estirado = Math.abs(anchoAhora - anchoAntes) > anchoAntes * 0.08;
-    if (this.abierto && (estirado || (this.alcance > 0 && movido > anchoAhora * 0.08))) {
+    if (
+      this.abierto &&
+      (estirado || (this.alcance > 0 && movido > anchoAhora * 0.08))
+    ) {
       this.pintarFondo();
     }
     if (!this.abierto || !this.encima || !this.escenario) return;
-    const g = this.encima.getContext('2d');
+    const g = this.encima.getContext("2d");
     if (!g) return;
     g.clearRect(0, 0, LADO, LADO);
 
@@ -265,7 +302,8 @@ export class Mapa {
      * está lo que buscas**.
      */
     const margen = 14;
-    const fuera = px < margen || py < margen || px > LADO - margen || py > LADO - margen;
+    const fuera =
+      px < margen || py < margen || px > LADO - margen || py > LADO - margen;
     const cx = Math.max(margen, Math.min(LADO - margen, px));
     const cy = Math.max(margen, Math.min(LADO - margen, py));
 
@@ -281,7 +319,7 @@ export class Mapa {
        */
       g.save();
       g.setLineDash([4, 5]);
-      g.strokeStyle = 'rgba(232, 118, 44, 0.75)';
+      g.strokeStyle = "rgba(232, 118, 44, 0.75)";
       g.lineWidth = 2;
       g.beginPath();
       g.moveTo(LADO / 2, LADO / 2);
@@ -290,21 +328,49 @@ export class Mapa {
       g.restore();
     }
 
+    /*
+     * La raya al sitio al que se va. Va **debajo** de la flecha, para que la
+     * flecha se siga viendo entera: lo que se mira es dónde estoy, y la raya
+     * es el extra.
+     */
+    if (this.destino) {
+      const dx = LADO / 2 + (this.destino.x - c[0]) * escala;
+      const dz = LADO / 2 + (this.destino.z - c[1]) * escala;
+      g.save();
+      g.strokeStyle = "#ffd27a";
+      g.lineWidth = 2.2;
+      g.setLineDash([7, 5]);
+      g.beginPath();
+      g.moveTo(cx, cy);
+      g.lineTo(dx, dz);
+      g.stroke();
+      g.setLineDash([]);
+      // Y el sitio, con un aro. Si cae fuera del recuadro no se dibuja: ya lo
+      // dice la raya, que sale por ese lado.
+      if (dx > 0 && dx < LADO && dz > 0 && dz < LADO) {
+        g.beginPath();
+        g.arc(dx, dz, 6.5, 0, Math.PI * 2);
+        g.lineWidth = 2.6;
+        g.stroke();
+      }
+      g.restore();
+    }
+
     g.save();
     g.translate(cx, cy);
     // El rumbo del avión y el norte del mapa son el mismo cero: arriba.
     g.rotate(rumboRad);
-    g.fillStyle = '#e8762c';
-    g.strokeStyle = '#2a2622';
+    g.fillStyle = "#e8762c";
+    g.strokeStyle = "#2a2622";
     g.lineWidth = 1.6;
     if (fuera) {
       // El aro dice «estás fuera, esto es por dónde».
       g.beginPath();
       g.arc(0, 0, 13, 0, Math.PI * 2);
-      g.strokeStyle = '#e8762c';
+      g.strokeStyle = "#e8762c";
       g.lineWidth = 2.4;
       g.stroke();
-      g.strokeStyle = '#2a2622';
+      g.strokeStyle = "#2a2622";
       g.lineWidth = 1.6;
     }
     g.beginPath();
@@ -343,7 +409,7 @@ export class Mapa {
     const esc = this.escenario;
     const cota = this.cota;
     if (!this.fondo || !esc || !cota) return;
-    const g = this.fondo.getContext('2d');
+    const g = this.fondo.getContext("2d");
     if (!g) return;
 
     const lado = this.metrosPorLado();
@@ -372,9 +438,11 @@ export class Mapa {
          * aeródromos están junto al agua y lo que hay más allá es agua; el día
          * que haya uno de interior, esto se cambia por lo que corresponda.
          */
-        const dentro = Math.abs(x) <= esc.size / 2 && Math.abs(z) <= esc.size / 2;
+        const dentro =
+          Math.abs(x) <= esc.size / 2 && Math.abs(z) <= esc.size / 2;
         const h = dentro ? cota(x, z) : esc.waterLevel;
-        g.fillStyle = h <= esc.waterLevel ? colorHex(esc.water) : colorDeCota(esc, h);
+        g.fillStyle =
+          h <= esc.waterLevel ? colorHex(esc.water) : colorDeCota(esc, h);
         g.fillRect(col * px, fila * px, px + 1, px + 1);
       }
     }
@@ -399,15 +467,15 @@ export class Mapa {
           const qy = LADO / 2 + (mz - cz) * escala;
           if (qx < -cp || qy < -cp || qx > LADO || qy > LADO) continue;
           g.globalAlpha = 0.3 + d * 0.55;
-          g.fillStyle = c === 3 ? '#8e8577' : c === 2 ? '#9aa09a' : '#c3b394';
+          g.fillStyle = c === 3 ? "#8e8577" : c === 2 ? "#9aa09a" : "#c3b394";
           g.fillRect(qx, qy, cp + 1, cp + 1);
         }
       }
       g.globalAlpha = 1;
 
       // ── Las carreteras ────────────────────────────────────────────────
-      g.strokeStyle = '#5a5a5e';
-      g.lineCap = 'round';
+      g.strokeStyle = "#5a5a5e";
+      g.lineCap = "round";
       for (const via of ciudad.vias) {
         g.lineWidth = via.nivel <= 1 ? 1.8 : via.nivel === 2 ? 1.3 : 0.8;
         g.beginPath();
@@ -437,7 +505,7 @@ export class Mapa {
         LADO / 2 + (-py - cz) * escala,
       ];
 
-      g.fillStyle = '#3f4442';
+      g.fillStyle = "#3f4442";
       for (const plat of aero.aprons ?? []) {
         if (plat.polygon.length < 3) continue;
         g.beginPath();
@@ -450,9 +518,9 @@ export class Mapa {
         g.fill();
       }
 
-      g.strokeStyle = '#3f4442';
-      g.lineCap = 'round';
-      g.lineJoin = 'round';
+      g.strokeStyle = "#3f4442";
+      g.lineCap = "round";
+      g.lineJoin = "round";
       for (const calle of aero.taxiways ?? []) {
         if (calle.path.length < 2) continue;
         g.lineWidth = Math.max(2, (calle.widthM ?? 23) * escala);
@@ -466,7 +534,7 @@ export class Mapa {
       }
 
       // El eje amarillo por encima, que es la marca que se sigue rodando.
-      g.strokeStyle = '#c99b3a';
+      g.strokeStyle = "#c99b3a";
       for (const calle of aero.taxiways ?? []) {
         if (calle.path.length < 2) continue;
         g.lineWidth = Math.max(0.8, 1.6 * escala * 10);
@@ -487,20 +555,20 @@ export class Mapa {
     const media = esc.runway.length / 2;
     const a = puntoDePista(esc.runway, media);
     const b = puntoDePista(esc.runway, -media);
-    g.strokeStyle = '#1d1b19';
+    g.strokeStyle = "#1d1b19";
     g.lineWidth = Math.max(5, 5 * (LADO / this.metrosPorLado()) * 4);
-    g.lineCap = 'butt';
+    g.lineCap = "butt";
     g.beginPath();
     g.moveTo(LADO / 2 + (a[0] - cx) * escala, LADO / 2 + (a[1] - cz) * escala);
     g.lineTo(LADO / 2 + (b[0] - cx) * escala, LADO / 2 + (b[1] - cz) * escala);
     g.stroke();
-    g.strokeStyle = '#f4efe6';
+    g.strokeStyle = "#f4efe6";
     g.lineWidth = Math.max(2.6, 2.6 * (LADO / this.metrosPorLado()) * 4);
     g.stroke();
   }
 }
 
-const colorHex = (n: number): string => `#${n.toString(16).padStart(6, '0')}`;
+const colorHex = (n: number): string => `#${n.toString(16).padStart(6, "0")}`;
 
 /** El color que le toca a una cota, con las mismas bandas que el terreno. */
 function colorDeCota(esc: Scenario, h: number): string {
