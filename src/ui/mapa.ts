@@ -108,6 +108,7 @@ export class Mapa {
   bind(raiz: HTMLElement, escenario: Scenario, cota: (x: number, z: number) => number): void {
     this.escenario = escenario;
     this.cota = cota;
+    this.raiz = raiz;
     this.caja = raiz.querySelector('[data-hud="mapa"]');
     this.fondo = raiz.querySelector('[data-hud="mapa-fondo"]');
     this.encima = raiz.querySelector('[data-hud="mapa-encima"]');
@@ -151,6 +152,9 @@ export class Mapa {
     }
   }
 
+  /** La raíz del HUD, para marcarla mientras el mapa está abierto. */
+  private raiz: HTMLElement | null = null;
+
   private alAbrir: (() => void) | null = null;
 
   /** A quién avisar al abrirse, para que se aparte. */
@@ -177,17 +181,30 @@ export class Mapa {
     if (!this.caja || !this.abierto) return;
     this.abierto = false;
     this.caja.hidden = true;
+    this.avisarAlHud();
   }
 
   alternar(): void {
     if (!this.caja) return;
     this.abierto = !this.abierto;
     this.caja.hidden = !this.abierto;
+    this.avisarAlHud();
     if (this.abierto) this.alAbrir?.();
     if (this.abierto && !this.pintado) {
       this.pintarFondo();
       this.pintado = true;
     }
+  }
+
+  /**
+   * Le dice al HUD que el mapa está abierto, para que aparte lo que estorbe.
+   *
+   * Va por una clase en la raíz y no tocando estilos desde aquí porque quién
+   * se aparta y cuánto es cosa del CSS: en pantalla estrecha el mapa se pone
+   * en medio y no hay que apartar nada.
+   */
+  private avisarAlHud(): void {
+    this.raiz?.classList.toggle('hud--con-mapa', this.abierto);
   }
 
   get visible(): boolean {

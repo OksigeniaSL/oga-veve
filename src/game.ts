@@ -1469,7 +1469,21 @@ export class Game {
     this.ponerAproximacion();
     this.rehacerPlanDeVuelo();
     this.hud.mapa.rehacer(this.scenario);
-    this.resetFlight();
+    /*
+     * **Y sin tirar el vuelo.** Aquí había un `resetFlight` y era el mismo
+     * error que ya se había arreglado una vez para el moldeado del terreno:
+     * tocar el viento o la hora te devolvía al puesto con el motor parado,
+     * llevaras el tiempo que llevaras volando. «Se reinicia el juego y eso
+     * molesta cuando llevo ya toda la maniobra de despegue y estoy volando
+     * hace rato.»
+     *
+     * `recolocarTrasElMoldeado` es exactamente lo que hace falta, y ya estaba
+     * escrito: si no has empezado te reinicia entero —que es lo limpio,
+     * porque el viento puede haber cambiado la cabecera en uso y hay que
+     * llevarte a la otra punta—, y si ya estás jugando solo te sube al suelo
+     * nuevo y no te toca nada más.
+     */
+    this.recolocarTrasElMoldeado();
   }
 
   /** Vuelve a pedir el parte de verdad y lo pone. */

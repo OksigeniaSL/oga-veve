@@ -2699,18 +2699,28 @@ body {
   display: grid;
   place-items: center;
   /*
-   * **Centrado y encima de todo, no en una esquina.**
+   * **Centrado en pantalla pequeña, a un lado cuando hay sitio.**
    *
-   * En una esquina tapaba los instrumentos —altura, rumbo, motor y la aguja de
-   * la pista, justo los cuatro que se miran al volar—, y encogerlo hasta que
-   * cupiera lo dejaba en un sello ilegible. Un mapa se abre, se mira y se
-   * cierra; mientras está abierto no hace falta nada más.
+   * Estuvo centrado y tapándolo todo, y el motivo escrito aquí era que en una
+   * esquina tapaba los instrumentos. Era verdad y era la respuesta a la
+   * pregunta equivocada, porque un mapa centrado sirve para *mirar dónde
+   * estoy* y no para *ver por dónde voy*: mientras está abierto no se ve el
+   * mundo, así que hay que cerrarlo para volar y abrirlo para orientarse, una
+   * y otra vez. «Mi idea de mapa no era que se pusiera en medio, sino poder
+   * tenerlo a un lado y ver por dónde voy.»
    *
-   * El fondo se oscurece un poco para que se lea como una lámina puesta
-   * encima y no como algo que ha aparecido dentro del mundo.
+   * Lo de los instrumentos se resuelve apartándolos, que es lo que hace
+   * `.hud--con-mapa` unos bloques más abajo.
+   *
+   * En pantalla estrecha o táctil se queda como estaba: ahí no hay hueco para
+   * dos cosas a la vez y un mapa al lado sería un sello ilegible.
    */
   background: rgba(10, 14, 12, 0.55);
   pointer-events: auto;
+}
+
+.hud__izquierda {
+  transition: transform 160ms ease;
 }
 
 .mapa__lienzos {
@@ -2731,6 +2741,43 @@ body {
   width: calc(100% - 16px);
   height: calc(100% - 16px);
   border-radius: var(--r-m);
+}
+
+@media (min-width: 900px) and (pointer: fine) {
+  .mapa {
+    /* Pegado al borde izquierdo, y solo el ancho que ocupa. */
+    inset: 0 auto 0 0;
+    width: min(38vh, 330px);
+    padding-left: 16px;
+    /* Nada de oscurecer el mundo: el mundo es justo lo que hay que ver. */
+    background: none;
+    /* El hueco de al lado no come el ratón; solo lo comen el mapa y sus lupas. */
+    pointer-events: none;
+  }
+
+  .mapa__lienzos,
+  .mapa__lupas {
+    pointer-events: auto;
+  }
+
+  .mapa__lienzos {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  /*
+   * Los instrumentos de la izquierda, apartados mientras el mapa está abierto.
+   *
+   * Un desplazamiento y no un hueco: `transform` no rehace la rejilla del HUD,
+   * así que abrir el mapa no mueve ni el rótulo de arriba ni los instrumentos
+   * de la derecha. Solo se corre la columna que estorba, y vuelve sola al
+   * cerrar.
+   */
+  .hud--con-mapa .hud__izquierda {
+    transform: translateX(calc(min(38vh, 330px) + 24px));
+    transition: transform 160ms ease;
+  }
 }
 
 /*
