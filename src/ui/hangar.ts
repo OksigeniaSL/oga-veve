@@ -210,8 +210,17 @@ function plano(escenario: Scenario, escala: number): string {
   // vistazo cuál es la pista larga, pero sin suelo el valle salía como un
   // palito perdido en medio de la ficha. Con el suelo al 55 % la diferencia se
   // sigue leyendo —el valle ocupa la mitad que Asunción— y el pequeño se ve.
-  const v = Math.max(lado, escala * 0.55);
-  const vb = `${cx - v / 2} ${-cy - v / 2} ${v} ${v}`;
+  const v = Math.max(lado, escala * 0.55) * 1.15;
+  /*
+   * **La ventana es apaisada, como la tarjeta.** Era cuadrada, y mientras la
+   * tarjeta también lo era no se notaba; al dejarla en 5/3 el plano se salía
+   * por abajo y las calles de rodaje de Asunción se dibujaban encima del
+   * nombre. Con la ventana de la misma proporción que el hueco, lo que se
+   * dibuja cae dentro. El 1,15 es el margen: `lado` mide el aeródromo, y las
+   * marcas de cabecera y el grosor del trazo se salen un poco de esa medida.
+   */
+  const ancho = (v * 5) / 3;
+  const vb = `${cx - ancho / 2} ${-cy - v / 2} ${ancho} ${v}`;
   const aero = escenario.aerodrome;
 
   /** Las dos cabeceras, marcadas. Sin esto una pista corta es una raya y ya. */
