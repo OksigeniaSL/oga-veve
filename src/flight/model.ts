@@ -14,7 +14,7 @@
  * la capa de presentación.
  */
 
-import type { Quaternion, Vector3 } from 'three';
+import type { Quaternion, Vector3 } from "three";
 
 /** Posición de los mandos, en intención de piloto, no en deflexión física. */
 export interface ControlInputs {
@@ -42,7 +42,15 @@ export interface ControlInputs {
 }
 
 export function neutralControls(): ControlInputs {
-  return { elevator: 0, aileron: 0, rudder: 0, throttle: 0, brakes: 0, flaps: 0, engineOn: true };
+  return {
+    elevator: 0,
+    aileron: 0,
+    rudder: 0,
+    throttle: 0,
+    brakes: 0,
+    flaps: 0,
+    engineOn: true,
+  };
 }
 
 /**
@@ -140,4 +148,14 @@ export interface FlightModel {
   reset(initial: InitialConditions): void;
   /** Avanza la simulación `dt` segundos. */
   step(dt: number, controls: ControlInputs): void;
+  /**
+   * Qué gas hace falta, volando, para sostener esta velocidad.
+   *
+   * Lo pregunta quien coloca el avión en el aire —la lección de aterrizar
+   * empieza en final— y lo contesta cada modelo a su manera, porque la
+   * relación entre el mando y la velocidad **es** el modelo. Antes había un
+   * número fijo del cuarenta y cinco por ciento que valía para uno de los dos
+   * y dejaba al otro a media velocidad.
+   */
+  gasPara(velocidad: number): number;
 }

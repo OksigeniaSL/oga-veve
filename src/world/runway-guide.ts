@@ -153,9 +153,21 @@ export class RunwayGuide {
   update(dt: number, avion?: Vector3): void {
     const siguiente = this.rings[this.next];
     if (siguiente && avion) {
-      const radio = (siguiente.geometry as TorusGeometry).parameters.radius;
+      /*
+       * **Desde el aro anterior, no desde cinco radios.**
+       *
+       * Con cinco radios el encendido duraba los últimos trescientos metros:
+       * a la velocidad de aproximación son nueve segundos, y en un cambio
+       * suave de color eso pasa desapercibido — «los aros siguen sin hacer
+       * nada». Ahora se enciende **a lo largo de todo el tramo** entre un aro
+       * y el siguiente, que es el trozo de aproximación al que corresponde.
+       */
+      const anterior = this.rings[this.next - 1];
+      const tramo = anterior
+        ? anterior.position.distanceTo(siguiente.position)
+        : (siguiente.geometry as TorusGeometry).parameters.radius * 5;
       const d = avion.distanceTo(siguiente.position);
-      const cerca = Math.max(0, Math.min(1, (radio * 5 - d) / (radio * 4)));
+      const cerca = Math.max(0, Math.min(1, 1 - d / Math.max(1, tramo)));
       // Suavizado: sin esto, entrar y salir del borde hace parpadear el aro.
       this.encendido += (cerca - this.encendido) * Math.min(1, dt * 2);
       const e = this.encendido;
@@ -163,9 +175,11 @@ export class RunwayGuide {
       const mat = siguiente.material as MeshBasicMaterial;
       // Solo si no está destellando: el destello de haberlo cruzado manda.
       if ((this.flash[this.next] ?? 0) <= 0) {
-        mat.opacity = Math.min(1, 0.55 + e * 0.45 + late);
-        mat.color.setHex(OCRE).lerp(new Color(CERCA), e);
-        siguiente.scale.setScalar(1 + e * 0.08 + late);
+        // Sin sutilezas: de medio apagado a encendido del todo, y del ocre al
+        // verde entero. Un cambio que hay que buscar no es una señal.
+        mat.opacity = Math.min(1, 0.45 + e * 0.55 + late);
+        mat.color.setHex(OCRE).lerp(new Color(CERCA), e * e);
+        siguiente.scale.setScalar(1 + e * 0.16 + late);
       }
     }
 

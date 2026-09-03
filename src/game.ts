@@ -76,8 +76,6 @@ const APROXIMACION = 3000;
 const ALTURA_DE_FINAL = 180;
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
-/** Y a qué velocidad. La de aproximación de un ligero, en metros por segundo. */
-const VELOCIDAD_DE_FINAL = 33;
 import { crearCiudad } from "./world/ciudad";
 import { MissionMarker } from "./world/mission-marker";
 import { MissionRunner } from "./missions/runner";
@@ -1733,7 +1731,7 @@ export class Game {
     this.flight.reset({
       position: this.startPosition(),
       heading: MathUtils.degToRad(runway.heading),
-      airspeed: VELOCIDAD_DE_FINAL,
+      airspeed: this.aircraft.approachSpeed,
     });
     /*
      * **Soltar los mandos primero, y después poner el gas.**
@@ -1746,7 +1744,20 @@ export class Game {
      */
     this.input.releaseAll();
     this.input.controls.engineOn = true;
-    this.input.controls.throttle = 0.45;
+    /*
+     * **El gas que sostiene la velocidad de aproximación, no un 0,45 mágico.**
+     *
+     * Ese cuarenta y cinco por ciento venía de probar con el modelo completo,
+     * y en el de Guyrami apunta a diecisiete metros por segundo — la mitad de
+     * la aproximación. Así que la lección arrancaba a 33 y frenaba hasta 64
+     * por hora mientras las casas pasaban despacio por debajo: «no es un modo
+     * muy natural de sobrevolar la aproximación».
+     *
+     * Ahora se pide la velocidad y que cada modelo diga qué gas hace falta.
+     */
+    this.input.controls.throttle = this.flight.gasPara(
+      this.aircraft.approachSpeed,
+    );
     this.faseAnunciada = "";
     this.runwayGuide.reset();
     this.landing.reset();

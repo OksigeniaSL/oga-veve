@@ -44,6 +44,14 @@ const CRUISE_FRACTION = 0.62;
 /** Velocidad mínima rodando y a la que se separa del suelo, en m/s. */
 const IDLE_SPEED = 2;
 
+/**
+ * Lo más lento que vuela, como fracción de la velocidad de aproximación.
+ *
+ * Nueve décimas: un poco por debajo de la que se cruza el umbral, que es
+ * justo lo que significa «lo más lento que vuela».
+ */
+const MINIMA_DE_VUELO = 0.9;
+
 /** Cuánta holgura se permite para considerar que las ruedas siguen tocando, m. */
 const PEGADO_AL_SUELO = 1;
 
@@ -153,6 +161,17 @@ export class ArcadeFlightModel implements FlightModel {
     this.apply(0);
   }
 
+  /**
+   * Aquí la cuenta es exacta, porque el gas **es** la velocidad: se despeja de
+   * la misma recta que usa `step` para saber a qué velocidad ir.
+   */
+  gasPara(velocidad: number): number {
+    const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
+    const floor = this.aircraft.approachSpeed * MINIMA_DE_VUELO;
+    if (cruise <= floor) return 1;
+    return Math.max(0, Math.min(1, (velocidad - floor) / (cruise - floor)));
+  }
+
   step(dt: number, controls: ControlInputs): void {
     // El mismo tope que el modelo completo y que el bucle del juego, y por el
     // mismo motivo. Eran **tres** copias del mismo número: se arreglaron dos y
@@ -168,7 +187,26 @@ export class ArcadeFlightModel implements FlightModel {
     // suelo aplicado también rodando era lo que hacía que el avión se
     // paseara solo por la pista después de frenar — «como que quiere
     // caminar», que es exactamente lo que hacía.
-    const floor = this.state.onGround ? 0 : IDLE_SPEED;
+    /*
+     * **En el aire, el suelo de velocidad es el de vuelo, no el de peatón.**
+     *
+     * Estaba en `IDLE_SPEED`, dos metros por segundo, y eso quiere decir que
+     * quitando gas el avión frenaba hasta siete kilómetros por hora **y se
+     * quedaba ahí, volando**. «Si pongo la velocidad mínima, me paro en el
+     * aire.» «Esto va como una tortuga.»
+     *
+     * Un avión no puede ir despacio. Ese es el hecho que este peldaño tiene
+     * que enseñar aunque no haya pérdida: no te caes —a los cuatro años no
+     * puedes caerte del cielo— pero **tampoco puedes pararte**. El mando del
+     * gas en el aire recorre de la velocidad mínima de vuelo al crucero, y
+     * fuera de ese rango no hay nada que recorrer.
+     *
+     * Sale de la ficha del avión, de su velocidad de aproximación: un poco por
+     * debajo de la que se cruza el umbral es lo más lento que vuela.
+     */
+    const floor = this.state.onGround
+      ? 0
+      : this.aircraft.approachSpeed * MINIMA_DE_VUELO;
     const gas = controls.engineOn ? controls.throttle : 0;
     const wanted = floor + gas * (cruise - floor);
     // Constante de tiempo de unos cinco segundos y medio. Con la primera,
