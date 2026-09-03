@@ -1269,8 +1269,22 @@ export class Game {
       const liso = crudo.map((_, i) => {
         let suma = 0;
         let n = 0;
+        /*
+         * **La ventana encoge en los bordes, no repite la muestra del filo.**
+         *
+         * Antes se pinzaba el índice, así que en las siete últimas catas se
+         * contaba siete veces la misma cota: la del final de la pista. En una
+         * pista que baja diecisiete metros de una cabecera a la otra eso tira
+         * del perfil **hacia arriba** justo donde el terreno sigue cayendo, y
+         * nuestro asfalto emerge de la fotografía con su pared y todo.
+         *
+         * La firma era inconfundible: «ocurre en el último kilómetro». Una
+         * media móvil que pinza los extremos siempre falla en los extremos.
+         */
         for (let k = -VENTANA; k <= VENTANA; k++) {
-          const v = crudo[Math.min(crudo.length - 1, Math.max(0, i + k))];
+          const j = i + k;
+          if (j < 0 || j >= crudo.length) continue;
+          const v = crudo[j];
           if (v !== null && v !== undefined) {
             suma += v;
             n++;
