@@ -28,15 +28,16 @@
  * Ver `src/flight/tiers.ts`.
  */
 
-import { Euler, Quaternion, Vector3 } from 'three';
+import { Euler, Quaternion, Vector3 } from "three";
+import { MAX_PASO } from "./fdm";
 import type {
   ControlInputs,
   FlightModel,
   FlightState,
   GroundSampler,
   InitialConditions,
-} from './model';
-import type { AircraftConfig } from './aircraft';
+} from "./model";
+import type { AircraftConfig } from "./aircraft";
 
 /** Velocidad de crucero cómoda, como fracción de la del avión. */
 const CRUISE_FRACTION = 0.62;
@@ -94,7 +95,7 @@ export interface ArcadeOptions {
 }
 
 export class ArcadeFlightModel implements FlightModel {
-  readonly implementationName = 'Modelo sencillo Óga Veve';
+  readonly implementationName = "Modelo sencillo Óga Veve";
   readonly state: FlightState;
 
   private readonly aircraft: AircraftConfig;
@@ -106,7 +107,7 @@ export class ArcadeFlightModel implements FlightModel {
   private bank = 0;
   private pitch = 0;
 
-  private readonly euler = new Euler(0, 0, 0, 'YXZ');
+  private readonly euler = new Euler(0, 0, 0, "YXZ");
   private readonly forward = new Vector3();
 
   constructor(options: ArcadeOptions) {
@@ -153,7 +154,11 @@ export class ArcadeFlightModel implements FlightModel {
   }
 
   step(dt: number, controls: ControlInputs): void {
-    const step = Math.min(dt, 0.25);
+    // El mismo tope que el modelo completo y que el bucle del juego, y por el
+    // mismo motivo. Eran **tres** copias del mismo número: se arreglaron dos y
+    // esta se quedó, que es justo la del primer peldaño — el que más se juega.
+    // Ver `MAX_PASO`.
+    const step = Math.min(dt, MAX_PASO);
     const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
 
     // La velocidad la lleva el gas, sin más. Nada de empuje contra
@@ -175,7 +180,9 @@ export class ArcadeFlightModel implements FlightModel {
     // velocidad de ralentí y el avión seguía rodando indefinidamente: se
     // aterrizaba y no había manera de parar. Un freno que no para el avión
     // no es un freno.
-    const target = this.state.onGround ? wanted * (1 - controls.brakes) : wanted;
+    const target = this.state.onGround
+      ? wanted * (1 - controls.brakes)
+      : wanted;
     // Acelerar cuesta; frenar, no. Iban al mismo ritmo, y con una constante
     // de más de cinco segundos eso significa que al quitar gas el avión
     // seguía corriendo un buen rato: quien lo probaba juraba que aceleraba
@@ -191,7 +198,12 @@ export class ArcadeFlightModel implements FlightModel {
     // Rozamiento estático. Un decaimiento exponencial se acerca a cero para
     // siempre y nunca llega, y lo que se ve en pantalla es un avión que
     // repta eternamente después de frenar. Un avión parado está parado.
-    if (this.state.onGround && controls.brakes > 0.5 && this.speed < STATIC_GRIP) this.speed = 0;
+    if (
+      this.state.onGround &&
+      controls.brakes > 0.5 &&
+      this.speed < STATIC_GRIP
+    )
+      this.speed = 0;
 
     // Con poca velocidad los mandos no muerden, que es la única lección de
     // aerodinámica que este peldaño enseña: hay que correr para volar.
@@ -229,7 +241,9 @@ export class ArcadeFlightModel implements FlightModel {
       // Viraje en vuelo. El morro gira y el avión se inclina para acompañar;
       // en un avión de verdad es al revés, pero lo que ve el ojo es lo mismo.
       this.heading += controls.aileron * MAX_TURN_RATE * bite * step;
-      this.bank += (controls.aileron * VISUAL_BANK * bite - this.bank) * Math.min(1, step * 3.5);
+      this.bank +=
+        (controls.aileron * VISUAL_BANK * bite - this.bank) *
+        Math.min(1, step * 3.5);
     }
 
     /*
@@ -250,14 +264,17 @@ export class ArcadeFlightModel implements FlightModel {
      * coeficientes manda la física, y allí un avión que consiga volar desde una
      * calle de rodaje ha volado — lo que le espera es que la torre se lo diga.
      */
-    const canClimb = !this.state.onGround || (bite > 0.88 && this.state.onRunway);
+    const canClimb =
+      !this.state.onGround || (bite > 0.88 && this.state.onRunway);
     const wantedClimb = canClimb ? controls.elevator * MAX_CLIMB * bite : 0;
     this.climb += (wantedClimb - this.climb) * Math.min(1, step * 2.2);
 
     // El morro apunta a donde se va, más un pelín para que se vea la
     // intención. Sin ángulo de ataque: aquí no existe.
-    const path = this.speed > 1 ? Math.asin(clamp(this.climb / this.speed, -1, 1)) : 0;
-    this.pitch += (path + controls.elevator * 0.06 - this.pitch) * Math.min(1, step * 4);
+    const path =
+      this.speed > 1 ? Math.asin(clamp(this.climb / this.speed, -1, 1)) : 0;
+    this.pitch +=
+      (path + controls.elevator * 0.06 - this.pitch) * Math.min(1, step * 4);
 
     this.state.position.x += Math.sin(this.heading) * this.speed * step;
     this.state.position.z += -Math.cos(this.heading) * this.speed * step;
@@ -302,7 +319,9 @@ export class ArcadeFlightModel implements FlightModel {
      * fotograma.
      */
     const rodando =
-      s.onGround && this.climb <= 0 && s.position.y - wheelLevel < PEGADO_AL_SUELO;
+      s.onGround &&
+      this.climb <= 0 &&
+      s.position.y - wheelLevel < PEGADO_AL_SUELO;
     if (rodando) s.position.y = wheelLevel;
 
     if (s.position.y <= wheelLevel) {
