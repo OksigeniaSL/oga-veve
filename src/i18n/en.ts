@@ -52,6 +52,9 @@ export const EN: Dictionary = {
   'aircraft.oga172.description': 'Trainer. Steady and forgiving.',
   'aircraft.mainumby.description': 'Crop duster biplane. Nimble and strong.',
 
+  'mission.rio.name': 'See the river',
+  'mission.ciudad.name': 'Over the city',
+  'mission.lomas.name': 'To the hills',
   'mission.first.name': 'Your first flight',
   'mission.valley.name': 'Around the valley',
   'mission.transfer.name': 'The transfer',
