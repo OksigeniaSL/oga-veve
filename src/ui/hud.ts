@@ -883,11 +883,28 @@ export class Hud {
    * Media móvil y no el instante: el número crudo baila tanto que no se puede
    * leer, y lo que hace falta saber es si esto va a sesenta o a diez.
    */
-  mostrarFps(dt: number): void {
+  mostrarFps(
+    dt: number,
+    coste?: { llamadas: number; triangulos: number },
+  ): void {
     if (!this.fps || this.fps.hidden) return;
     const ahora = dt > 0 ? 1 / dt : 0;
     this.fpsMedia += (ahora - this.fpsMedia) * Math.min(1, dt * 3);
-    this.fps.textContent = `${Math.round(this.fpsMedia)} fps`;
+    /*
+     * Y con lo que cuesta cada cuadro, que es lo que dice **por dónde** se va
+     * el tiempo. Los fotogramas solos dicen que va lento; las llamadas de
+     * dibujo y los triángulos dicen si es por dibujar demasiadas cosas o por
+     * dibujar cosas demasiado gordas, y son arreglos distintos.
+     */
+    const n = (v: number): string =>
+      v >= 1e6
+        ? `${(v / 1e6).toFixed(1)}M`
+        : v >= 1e3
+          ? `${Math.round(v / 1e3)}k`
+          : `${v}`;
+    this.fps.textContent = coste
+      ? `${Math.round(this.fpsMedia)} fps · ${coste.llamadas} dibujos · ${n(coste.triangulos)} △`
+      : `${Math.round(this.fpsMedia)} fps`;
   }
 
   /** Enciende el contador. Lo llama el juego si se pidió por la dirección. */
