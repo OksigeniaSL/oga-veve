@@ -153,6 +153,8 @@ export const EN: Dictionary = {
   'hangar.pais.py': 'Paraguay',
   'hangar.pais.es': 'Spain',
   'hangar.pais.inventado': 'Made up',
+  'hangar.tramos': 'Learning to fly',
+  'hangar.misiones': 'Going somewhere',
   'hangar.donde': 'Where are we flying?',
   'hangar.como': 'Which pilot are you?',
   'hangar.despegar': 'Take off!',

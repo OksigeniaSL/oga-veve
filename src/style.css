@@ -1871,6 +1871,36 @@ body {
 
 /* ── El plano del aeródromo ──────────────────────────────────────────── */
 
+/*
+ * La ruta de una misión: el aeródromo, las paradas y el camino entre ellas.
+ * Trazo en píxeles y no en metros, como el resto del plano, para que una ruta
+ * larga no salga con la línea más fina que una corta.
+ */
+.mision__ruta {
+  stroke: var(--ocre);
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 7 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.mision__parada {
+  fill: var(--ocre);
+}
+
+/* El aeródromo, con un aro para que se distinga de una parada cualquiera. */
+.mision__casa {
+  fill: var(--barro);
+  stroke: #fff;
+  stroke-width: 2.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.ficha__lienzo--mision {
+  background: linear-gradient(#33413a, #202b26);
+}
+
 .ficha__plano {
   width: 100%;
   height: 100%;
@@ -2184,7 +2214,7 @@ body {
  * su propia barra dentro de la barra grande, y habría que rodar dos veces para
  * llegar al de abajo.
  */
-.hangar__paises {
+.hangar__grupos {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -2195,13 +2225,13 @@ body {
   scrollbar-color: var(--ocre) rgb(228 226 218 / 0.09);
 }
 
-.hangar__pais {
+.hangar__grupo {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.hangar__pais-nombre {
+.hangar__grupo-nombre {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -2215,7 +2245,7 @@ body {
 }
 
 /* Una línea que llega hasta el final, para que el grupo se lea como un bloque. */
-.hangar__pais-nombre::after {
+.hangar__grupo-nombre::after {
   content: '';
   flex: 1;
   height: 1px;
@@ -2238,24 +2268,24 @@ body {
   padding-right: 0;
 }
 
-.hangar__paises::-webkit-scrollbar,
+.hangar__grupos::-webkit-scrollbar,
 .hangar__rejilla::-webkit-scrollbar {
   width: 8px;
 }
 
-.hangar__paises::-webkit-scrollbar-track,
+.hangar__grupos::-webkit-scrollbar-track,
 .hangar__rejilla::-webkit-scrollbar-track {
   background: rgb(228 226 218 / 0.09);
   border-radius: 999px;
 }
 
-.hangar__paises::-webkit-scrollbar-thumb,
+.hangar__grupos::-webkit-scrollbar-thumb,
 .hangar__rejilla::-webkit-scrollbar-thumb {
   background: var(--ocre);
   border-radius: 999px;
 }
 
-.hangar__paises::-webkit-scrollbar-button,
+.hangar__grupos::-webkit-scrollbar-button,
 .hangar__rejilla::-webkit-scrollbar-button {
   display: none;
 }

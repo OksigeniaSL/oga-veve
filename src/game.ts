@@ -75,7 +75,7 @@ const VELOCIDAD_DE_FINAL = 33;
 import { crearCiudad } from './world/ciudad';
 import { MissionMarker } from './world/mission-marker';
 import { MissionRunner } from './missions/runner';
-import { objectiveTarget } from './missions/types';
+import { objectiveTarget, type Mission } from './missions/types';
 import { missionsFor } from './content/missions';
 import { conViento, VALLE_CORDILLERA, VECES_LEJOS, type Scenario } from './world/scenarios';
 import { crearTeselas, type Teselas } from './world/teselas';
@@ -143,6 +143,8 @@ export interface GameOptions {
   aircraft?: AircraftConfig;
   /** A qué se juega hoy. Ver `flight/lecciones.ts`. */
   leccion?: Leccion;
+  /** La misión elegida en el hangar, si se eligió una. */
+  mision?: Mission | null;
 }
 
 export class Game {
@@ -191,6 +193,8 @@ export class Game {
   private readonly runwayGuide: RunwayGuide;
   /** Índice de la misión de la lista del escenario, o -1 en vuelo libre. */
   private missionIndex = -1;
+  /** La misión elegida en el hangar, hasta que arranca. Ver `start`. */
+  private misionInicial: Mission | null;
   private readonly hud: Hud;
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
@@ -247,6 +251,7 @@ export class Game {
   constructor(options: GameOptions) {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
+    this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? OGA_172;
 
     this.renderer = new WebGLRenderer({
@@ -701,6 +706,29 @@ export class Game {
     this.clock.start();
     this.audio.setActive(true);
     this.renderer.setAnimationLoop(this.frame);
+    this.empezarMisionElegida();
+  }
+
+  /**
+   * Arranca la misión que se eligió en el hangar, si se eligió alguna.
+   *
+   * Va aquí y no en el constructor porque el aviso de la misión es un mensaje
+   * en pantalla y un sonido, y antes de `start` no hay ni pantalla que los
+   * muestre ni audio despierto.
+   *
+   * Y se apunta el índice para que la tecla de cambiar de misión siga
+   * funcionando desde donde estás, en vez de empezar la lista otra vez.
+   */
+  private empezarMisionElegida(): void {
+    const mision = this.misionInicial;
+    if (!mision) return;
+    this.misionInicial = null;
+    this.missionIndex = missionsFor(this.scenario.id).findIndex((m) => m.id === mision.id);
+    this.missions.start(mision);
+    this.hud.setMissionProgress(this.missions.progress);
+    this.hud.flash(t('mission.started', { name: t(mision.nameKey) }), 4);
+    this.audio.cue('attention');
+    this.updateMissionMarker();
   }
 
   stop(): void {

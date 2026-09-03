@@ -156,6 +156,8 @@ export const ES_PY = {
   'hangar.pais.py': 'Paraguay',
   'hangar.pais.es': 'España',
   'hangar.pais.inventado': 'Inventados',
+  'hangar.tramos': 'Aprender a volar',
+  'hangar.misiones': 'Ir a algún lado',
   'hangar.donde': '¿A dónde volamos?',
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro
   // modelos de avión, que es exactamente la confusión de la que avisa
