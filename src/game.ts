@@ -2615,6 +2615,7 @@ export class Game {
     this.missionMarker.moveTo(
       target,
       target ? this.terrain.sampleSurface(target.x, target.z) : 0,
+      objective && objective.kind === "reach" ? objective.radius : undefined,
     );
   }
 
