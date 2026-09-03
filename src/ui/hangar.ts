@@ -29,7 +29,9 @@
  */
 
 import { TIERS, type Tier } from '../flight/tiers';
-import { LECCIONES, type Leccion } from '../flight/lecciones';
+import { LECCIONES, VUELTA, type Leccion } from '../flight/lecciones';
+import { missionsFor } from '../content/missions';
+import { objectiveTarget, type Mission } from '../missions/types';
 import { SCENARIOS, type Scenario } from '../world/scenarios';
 import { PROXIMAMENTE } from '../world/proximamente';
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from '../i18n';
@@ -40,6 +42,16 @@ export interface Eleccion {
   readonly scenario: Scenario;
   readonly tier: Tier;
   readonly leccion: Leccion;
+  /**
+   * La misión elegida, si se eligió una.
+   *
+   * Va aparte de la lección porque son dos cosas distintas: la lección es
+   * **qué se practica** —rodar, despegar, aterrizar— y la misión es **a dónde
+   * se va**. Elegir una misión implica una lección, la de dar una vuelta, que
+   * es la que deja el avión en la pista sin guías por medio; pero elegir una
+   * lección no implica ninguna misión.
+   */
+  readonly mision: Mission | null;
 }
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
@@ -462,6 +474,94 @@ const DIBUJOS_LECCION: Record<string, string> = {
   aterrizaje: LEC_ATERRIZAJE,
 };
 
+/*
+ * ## La misión, dibujada como lo que es: un camino
+ *
+ * Las misiones existían desde hace mucho y no se podía llegar a ellas más que
+ * pulsando una tecla. Para el público de este juego eso es lo mismo que no
+ * existir: un niño de cuatro años no descubre una tecla, y el adulto que está
+ * al lado tampoco si nadie se lo cuenta.
+ *
+ * Así que se eligen aquí, y se dibujan como un camino sobre el aeropuerto,
+ * porque eso es lo que las distingue de un tramo de vuelo. Un tramo enseña a
+ * hacer algo —rodar, despegar, aterrizar— y su dibujo es un avión haciéndolo.
+ * Una misión es ir a un sitio y volver, y su dibujo es la ruta.
+ */
+
+/** El sitio del aeródromo y cada punto de paso, en coordenadas del plano. */
+function ruta(escenario: Scenario, mision: Mission): [number, number][] {
+  const { cx, cy } = caja(escenario);
+  // El aeródromo. La Y del fichero mira al norte y el dibujo la tiene al
+  // revés, igual que en `plano`.
+  const casa: [number, number] = [cx, -cy];
+  const puntos: [number, number][] = [casa];
+  for (const o of mision.objectives) {
+    const p = objectiveTarget(o);
+    // Los objetivos vienen en coordenadas del mundo, donde la Z ya es la Y del
+    // dibujo. Despegar y aterrizar no son un sitio: pasan de largo.
+    if (p) puntos.push([p.x, p.z]);
+  }
+  // Y de vuelta a casa, que toda misión acaba donde empezó.
+  puntos.push(casa);
+  return puntos;
+}
+
+/** Cuánto se vuela, en kilómetros. Es lo que dice si es un paseo o un viaje. */
+function largoDeRuta(puntos: readonly [number, number][]): number {
+  let d = 0;
+  for (let i = 1; i < puntos.length; i++) {
+    d += Math.hypot(puntos[i]![0] - puntos[i - 1]![0], puntos[i]![1] - puntos[i - 1]![1]);
+  }
+  return d / 1000;
+}
+
+function planoDeMision(puntos: readonly [number, number][]): string {
+  const xs = puntos.map((p) => p[0]);
+  const ys = puntos.map((p) => p[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  // La ventana cuadra con el hueco de la tarjeta y deja un 20 % de margen,
+  // para que un punto de paso no quede pegado al borde.
+  const alto = Math.max(Math.max(...ys) - Math.min(...ys), (Math.max(...xs) - Math.min(...xs)) * 0.6, 500) * 1.35;
+  const ancho = (alto * 5) / 3;
+  const vb = `${cx - ancho / 2} ${cy - alto / 2} ${ancho} ${alto}`;
+  const r = alto / 26;
+  const casa = puntos[0]!;
+  return `
+    <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
+         aria-hidden="true" focusable="false">
+      <polyline class="mision__ruta" fill="none"
+                points="${puntos.map((p) => `${p[0]},${p[1]}`).join(' ')}" />
+      ${puntos
+        .slice(1, -1)
+        .map((p) => `<circle class="mision__parada" cx="${p[0]}" cy="${p[1]}" r="${r}" />`)
+        .join('')}
+      <circle class="mision__casa" cx="${casa[0]}" cy="${casa[1]}" r="${r * 1.5}" />
+    </svg>`;
+}
+
+function fichaDeMision(
+  escenario: Scenario,
+  mision: Mission,
+  numero: number,
+  elegida: boolean,
+): string {
+  const puntos = ruta(escenario, mision);
+  return `
+    <button class="ficha ficha--mision" type="button" role="radio"
+            aria-checked="${elegida}" tabindex="${elegida ? 0 : -1}"
+            data-mision="${mision.id}">
+      <span class="ficha__lienzo ficha__lienzo--mision">${planoDeMision(puntos)}</span>
+      <span class="ficha__pie">
+        <span class="ficha__renglon">
+          <span class="ficha__numero">${numero}</span>
+          <span class="ficha__dato">${largoDeRuta(puntos).toFixed(1).replace('.', ',')} km</span>
+        </span>
+        <span class="ficha__nombre">${t(mision.nameKey)}</span>
+      </span>
+    </button>`;
+}
+
 function fichaDeLeccion(leccion: Leccion, elegida: boolean): string {
   return `
     <button class="ficha ficha--leccion" type="button" role="radio"
@@ -562,23 +662,38 @@ const BANDERAS: Record<(typeof PAISES)[number], string> = {
       stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2.5" opacity="0.6" />`,
 };
 
+/**
+ * Un grupo de tarjetas con su rótulo, o nada si está vacío.
+ *
+ * Lo usan las dos pantallas que agrupan: los sitios por país y lo que se juega
+ * —tramos de vuelo por un lado, misiones por otro—. Un grupo vacío no se
+ * dibuja: en Asunción todavía no hay misiones y un rótulo sobre un hueco solo
+ * dice que falta algo.
+ */
+function grupo(marca: string, titulo: string, tarjetas: string): string {
+  if (!tarjetas) return '';
+  return `
+      <section class="hangar__grupo">
+        <h3 class="hangar__grupo-nombre">${marca}${titulo}</h3>
+        <div class="hangar__rejilla hangar__rejilla--suelta">${tarjetas}</div>
+      </section>`;
+}
+
+/** La bandera de un país, para el rótulo de su grupo. */
+const bandera = (pais: (typeof PAISES)[number]): string =>
+  `<svg class="hangar__bandera" viewBox="0 0 24 16" width="24" height="16"
+        aria-hidden="true" focusable="false">${BANDERAS[pais]}</svg>`;
+
 /** Un grupo de sitios con su bandera, o nada si ese país no tiene ninguno. */
 function grupoDeSitios(pais: (typeof PAISES)[number], elegido: string): string {
   const hechos = SCENARIOS.filter((e) => e.pais === pais);
   const pronto = PROXIMAMENTE.filter((p) => p.pais === pais);
-  if (!hechos.length && !pronto.length) return '';
-  return `
-      <section class="hangar__pais">
-        <h3 class="hangar__pais-nombre">
-          <svg class="hangar__bandera" viewBox="0 0 24 16" width="24" height="16"
-               aria-hidden="true" focusable="false">${BANDERAS[pais]}</svg>
-          ${t(`hangar.pais.${pais}` as never)}
-        </h3>
-        <div class="hangar__rejilla hangar__rejilla--suelta">
-          ${hechos.map((e) => fichaDeSitio(e, e.id === elegido)).join('')}
-          ${pronto.map((p) => fichaProximamente(p.ciudad)).join('')}
-        </div>
-      </section>`;
+  return grupo(
+    bandera(pais),
+    t(`hangar.pais.${pais}` as never),
+    hechos.map((e) => fichaDeSitio(e, e.id === elegido)).join('') +
+      pronto.map((p) => fichaProximamente(p.ciudad)).join(''),
+  );
 }
 
 const PASO_DONDE = trazo(
@@ -594,6 +709,17 @@ const PASO_AJUSTES = trazo(
   '<circle cx="12" cy="12" r="3.1" /><path d="M12 2.6v3M12 18.4v3M21.4 12h-3M5.6 12h-3M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1M18.6 18.6l-2.1-2.1M7.5 7.5 5.4 5.4" />',
 );
 const PASO_VOLVER = trazo('<path d="M15 5 8 12l7 7" />');
+
+/*
+ * Las marcas de los dos grupos de «¿A qué jugás?». Dicen la diferencia sin
+ * palabras: un tramo es una maniobra —el avión subiendo—, y una misión es un
+ * camino con paradas.
+ */
+const MARCA_TRAMOS = trazo('<path d="M3 19 q7-3 11-8 t7-7" /><path d="M14 4h7v7" />');
+const MARCA_MISIONES = trazo(
+  '<circle cx="5" cy="18" r="2.2" /><circle cx="19" cy="6" r="2.2" />' +
+    '<path d="M7 17q5 1 6-4t6-6" stroke-dasharray="3 2.5" />',
+);
 
 /**
  * Los últimos sitios jugados, del más reciente al más antiguo.
@@ -663,6 +789,7 @@ export function abrirHangar(
   let sitio = inicial.scenario;
   let tramo = inicial.tier;
   let leccion = inicial.leccion;
+  let mision: Mission | null = null;
   let pantalla: Pantalla = 'inicio';
   let reposo: ReturnType<typeof setTimeout> | null = null;
 
@@ -728,7 +855,7 @@ export function abrirHangar(
             ? `
         <section class="hangar__bloque" aria-labelledby="hangar-sitio">
           <h2 class="hangar__pregunta" id="hangar-sitio">${t('hangar.donde')}</h2>
-          <div class="hangar__paises" role="radiogroup" aria-labelledby="hangar-sitio">
+          <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-sitio">
             ${PAISES.map((p) => grupoDeSitios(p, sitio.id)).join('')}
           </div>
         </section>`
@@ -746,8 +873,19 @@ export function abrirHangar(
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
           <h2 class="hangar__pregunta" id="hangar-leccion">${t('hangar.aque')}</h2>
-          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-leccion">
-            ${LECCIONES.map((l) => fichaDeLeccion(l, l.id === leccion.id)).join('')}
+          <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-leccion">
+            ${grupo(
+              MARCA_TRAMOS,
+              t('hangar.tramos'),
+              LECCIONES.map((l) => fichaDeLeccion(l, !mision && l.id === leccion.id)).join(''),
+            )}
+            ${grupo(
+              MARCA_MISIONES,
+              t('hangar.misiones'),
+              missionsFor(sitio.id)
+                .map((m, i) => fichaDeMision(sitio, m, i + 1, mision?.id === m.id))
+                .join(''),
+            )}
           </div>
         </section>`
             : ''
@@ -830,7 +968,12 @@ export function abrirHangar(
         <div class="hangar__pasos">
           ${[
             ['donde', t('hangar.donde'), t(sitio.nameKey as never), PASO_DONDE],
-            ['que', t('hangar.aque'), t(`leccion.${leccion.id}` as never), PASO_QUE],
+            [
+              'que',
+              t('hangar.aque'),
+              mision ? t(mision.nameKey) : t(`leccion.${leccion.id}` as never),
+              PASO_QUE,
+            ],
             ['quien', t('hangar.como'), tramo.name, PASO_QUIEN],
             ['ajustes', t('hangar.ajustes'), LOCALE_NAMES[getLocale()], PASO_AJUSTES],
           ]
@@ -871,9 +1014,18 @@ export function abrirHangar(
       atributo: 'data-sitio' | 'data-tramo' | 'data-leccion',
       id: string,
     ): void => {
-      if (atributo === 'data-sitio') sitio = SCENARIOS.find((e) => e.id === id) ?? sitio;
+      if (atributo === 'data-sitio') {
+        sitio = SCENARIOS.find((e) => e.id === id) ?? sitio;
+        // Una misión es de un sitio. Al cambiar de aeropuerto deja de valer, y
+        // dejarla puesta sería mandar a alguien a un cerro que no está ahí.
+        mision = null;
+      }
       else if (atributo === 'data-tramo') tramo = TIERS.find((x) => x.id === id) ?? tramo;
-      else leccion = LECCIONES.find((x) => x.id === id) ?? leccion;
+      else {
+        leccion = LECCIONES.find((x) => x.id === id) ?? leccion;
+        // Elegir un tramo es elegir practicar, no viajar.
+        mision = null;
+      }
       pintar();
       // Sin esto, quien navega con teclado se queda tirado al principio del
       // documento cada vez que elige algo, porque el nodo que tenía el foco
@@ -946,6 +1098,18 @@ export function abrirHangar(
         return;
       }
 
+      const idMision = boton.getAttribute('data-mision');
+      if (idMision) {
+        mision = missionsFor(sitio.id).find((m) => m.id === idMision) ?? null;
+        // Una misión empieza despegando, así que se vuela con la lección de
+        // dar una vuelta: en la pista, con el motor en marcha y sin guías por
+        // medio. Lo que guía en una misión es la misión.
+        if (mision) leccion = VUELTA;
+        pantalla = 'inicio';
+        pintar();
+        return;
+      }
+
       const idLeccion = boton.getAttribute('data-leccion');
       if (idLeccion) {
         elegir('data-leccion', idLeccion);
@@ -961,7 +1125,7 @@ export function abrirHangar(
         apuntarReciente(sitio.id);
         root.hidden = true;
         root.innerHTML = '';
-        resolve({ scenario: sitio, tier: tramo, leccion });
+        resolve({ scenario: sitio, tier: tramo, leccion, mision });
       }
     });
 

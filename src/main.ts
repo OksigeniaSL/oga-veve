@@ -62,6 +62,7 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
 }
 import { detectLocale, setLocale } from './i18n';
 import { abrirHangar } from './ui/hangar';
+import type { Mission } from './missions/types';
 import { rememberTier, rememberedTier } from './flight/tiers';
 
 setLocale(detectLocale());
@@ -102,6 +103,12 @@ let tramo = rememberedTier();
 let leccion: Leccion = params.get('leccion')
   ? leccionPorId(params.get('leccion'))
   : leccionRecordada();
+/*
+ * La misión, si se eligió una en el hangar. No se recuerda de una partida a
+ * otra a propósito: una misión se acaba, y volver a entrar y encontrártela
+ * puesta otra vez sería empezar por donde ya estuviste.
+ */
+let mision: Mission | null = null;
 
 if (!escenario) {
   const hangarRoot = document.querySelector<HTMLElement>('#hangar');
@@ -110,6 +117,7 @@ if (!escenario) {
   escenario = elegido.scenario;
   tramo = elegido.tier;
   leccion = elegido.leccion;
+  mision = elegido.mision;
   rememberTier(tramo);
   recordarLeccion(leccion);
 }
@@ -135,7 +143,15 @@ try {
   // Sin almacenamiento se juega igual, solo que no se recuerda.
 }
 
-const game = new Game({ canvas, hudRoot, creditsRoot, touchRoot, scenario: escenario, leccion });
+const game = new Game({
+  canvas,
+  hudRoot,
+  creditsRoot,
+  touchRoot,
+  scenario: escenario,
+  leccion,
+  mision,
+});
 game.start();
 
 // Al ocultar la pestaña se para el bucle: no tiene sentido gastar batería
