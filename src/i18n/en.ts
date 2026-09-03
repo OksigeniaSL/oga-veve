@@ -150,6 +150,9 @@ export const EN: Dictionary = {
   'vuelo.despacio': 'Slow down',
   'vuelo.sinPermiso': 'You went in without the green light. Wait for it next time',
 
+  'hangar.pais.py': 'Paraguay',
+  'hangar.pais.es': 'Spain',
+  'hangar.pais.inventado': 'Made up',
   'hangar.donde': 'Where are we flying?',
   'hangar.como': 'Which pilot are you?',
   'hangar.despegar': 'Take off!',

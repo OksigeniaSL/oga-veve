@@ -56,6 +56,7 @@ export const GUG: Dictionary = {
   'vuelo.sinPermiso': "Reike tesape hovy'ỹre. Ambuévape eha'arõ",
 
   // ── El hangar ──────────────────────────────────────────────────────────
+  'hangar.pais.py': 'Paraguái',
   'hangar.donde': '¿Moõpa javeve?',
   'hangar.como': '¿Mba’eichagua piloto piko nde?',
   'hangar.despegar': '¡Javeve!',

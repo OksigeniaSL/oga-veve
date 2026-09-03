@@ -18,12 +18,14 @@ export interface Proximamente {
   readonly id: string;
   /** El nombre de la ciudad, que es lo que se reconoce en un mapa. */
   readonly ciudad: string;
+  /** De qué país, para que salga en su grupo del hangar. */
+  readonly pais: 'py' | 'es' | 'inventado';
 }
 
 export const PROXIMAMENTE: readonly Proximamente[] = [
-  { id: 'encarnacion', ciudad: 'Encarnación' },
-  { id: 'ciudad-del-este', ciudad: 'Ciudad del Este' },
-  { id: 'concepcion', ciudad: 'Concepción' },
-  { id: 'pilar', ciudad: 'Pilar' },
-  { id: 'mariscal-estigarribia', ciudad: 'Mariscal Estigarribia' },
+  { id: 'encarnacion', ciudad: 'Encarnación', pais: 'py' },
+  { id: 'ciudad-del-este', ciudad: 'Ciudad del Este', pais: 'py' },
+  { id: 'concepcion', ciudad: 'Concepción', pais: 'py' },
+  { id: 'pilar', ciudad: 'Pilar', pais: 'py' },
+  { id: 'mariscal-estigarribia', ciudad: 'Mariscal Estigarribia', pais: 'py' },
 ];
