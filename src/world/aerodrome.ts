@@ -709,6 +709,37 @@ function letreros(
   const atlas = letreroAtlasTexture(refs, lado);
   if (!atlas) return null;
 
+  /*
+   * **Un sentido por nombre, no por tramo.**
+   *
+   * OSM parte una misma calle en varios trozos, y en Tenerife Norte la R son
+   * dos: mil setecientos metros y mil doscientos. Cada trozo decidía su
+   * sentido por su cuenta y salían opuestos — «todas las R bien, menos la
+   * primera, que es la que ahora está al revés».
+   *
+   * Se decide una sola vez para cada letra del aeródromo, y se decide con el
+   * **tramo más largo** de esa letra: es el que tiene una dirección clara. Un
+   * empalme de treinta metros apunta a donde le viene bien y no representa a
+   * la calle.
+   */
+  const sentidoPorNombre = new Map<string, boolean>();
+  for (const ref of refs) {
+    const trozos = conNombre.filter((c) => c.ref === ref);
+    const masLargo = trozos.reduce((a, b) =>
+      longitudDe(b.path) > longitudDe(a.path) ? b : a,
+    );
+    const medio = sobreElEje(masLargo.path, longitudDe(masLargo.path) / 2);
+    const alUmbral = medio
+      ? haciaElUmbralMasCerca(aero, [medio[0], medio[1]])
+      : null;
+    sentidoPorNombre.set(
+      ref,
+      medio && alUmbral
+        ? medio[2] * alUmbral[0] + medio[3] * alUmbral[1] < 0
+        : false,
+    );
+  }
+
   const piezas: BufferGeometry[] = [];
   for (const calle of conNombre) {
     const largo = longitudDe(calle.path);
@@ -747,14 +778,7 @@ function letreros(
      * atrás*, no de lado. El producto pasa a estar bien condicionado, que era
      * todo el problema.
      */
-    const medio = sobreElEje(calle.path, largo / 2);
-    const alUmbral = medio
-      ? haciaElUmbralMasCerca(aero, [medio[0], medio[1]])
-      : null;
-    const alRevesLaCalle =
-      medio && alUmbral
-        ? medio[2] * alUmbral[0] + medio[3] * alUmbral[1] < 0
-        : false;
+    const alRevesLaCalle = sentidoPorNombre.get(calle.ref as string) ?? false;
 
     for (let d = PASO_LETRERO / 2; d < largo; d += PASO_LETRERO) {
       const p = sobreElEje(calle.path, d);
@@ -825,7 +849,6 @@ function letreros(
   malla.name = "letreros";
   return malla;
 }
-
 
 /** Distancia de un punto a una polilínea. */
 export function aLaPolilinea(p: Punto, eje: readonly Punto[]): number {
