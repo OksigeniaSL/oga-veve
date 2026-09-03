@@ -132,6 +132,13 @@ import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
  * se llega a ella después de las tres que sí enseñan.
  */
 const CAMERA_MODES = ["chase", "cockpit", "wing", "pajaro"] as const;
+
+/**
+ * Las fases en las que se corre por el asfalto y la banda de rodaje se calla.
+ *
+ * Todo lo demás en el suelo es rodar, y rodando hay una velocidad correcta.
+ */
+const CORRIENDO = new Set(["despegando", "comprometido", "aterrizado"]);
 type CameraMode = (typeof CAMERA_MODES)[number];
 
 /** Campo de visión en reposo y cuánto se abre a velocidad máxima, en grados. */
@@ -510,6 +517,8 @@ export class Game {
     }
 
     this.hud.onSoundClick(() => this.toggleSound());
+    // `?fps=1` enciende el contador de fotogramas. Ver `Hud.mostrarFps`.
+    if (new URLSearchParams(location.search).get("fps")) this.hud.pedirFps();
     this.hud.onBrake((pressed) => this.input.setTouchBrakes(pressed));
     this.hud.onThrottle((direction) => this.input.setButtonThrottle(direction));
 
@@ -1882,7 +1891,8 @@ export class Game {
       bandaDeRodaje(
         this.flight.state.airspeed,
         this.flight.state.onGround,
-        this.flight.state.onRunway,
+        // Correr es despegar o aterrizar. Lo demás, en el suelo, es rodar.
+        CORRIENDO.has(this.faseAnunciada),
       ) ??
       bandaDeVelocidad(
         {
@@ -1894,6 +1904,7 @@ export class Game {
         this.aircraft.approachSpeed,
       );
     this.hud.setBandaDeVelocidad(banda);
+    this.hud.mostrarFps(dt);
     if (banda === "lento" || banda === "rapido") {
       this.fueraDeBanda += dt;
       if (this.fueraDeBanda > 3 && this.dichoDeBanda !== banda) {

@@ -103,10 +103,20 @@ const MARGEN_RODAJE = 0.35;
 export function bandaDeRodaje(
   velocidad: number,
   enElSuelo: boolean,
-  enPista: boolean,
+  corriendo: boolean,
 ): BandaDeVelocidad {
-  // En la pista se corre: ahí la velocidad la manda el despegue o la toma.
-  if (!enElSuelo || enPista) return null;
+  /*
+   * **Lo que calla la banda es la maniobra, no el sitio.**
+   *
+   * El primer intento se callaba «en la pista», pensando en el despegue y en
+   * la toma. Pero por la pista también se **rueda** —para ir a la cabecera,
+   * para salir por una calle del otro extremo— y ahí quedaba mudo justo
+   * donde más deprisa se puede ir: «a todo gas, y nadie me detiene».
+   *
+   * Así que lo pregunta el juego, que es quien sabe en qué fase va: correr es
+   * despegar o aterrizar; todo lo demás en el suelo es rodar.
+   */
+  if (!enElSuelo || corriendo) return null;
   if (velocidad < APENAS_SE_MUEVE) return null;
   return velocidad > RODAJE * (1 + MARGEN_RODAJE) ? "rapido" : "bien";
 }
