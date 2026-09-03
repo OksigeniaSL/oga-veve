@@ -9,13 +9,23 @@
 // La hoja de estilos se enlaza desde index.html y no se importa aquí: así el
 // HUD ya está maquetado antes de que el navegador termine de leer el módulo,
 // en vez de aparecer sin estilo durante un instante.
-import { Game } from './game';
-import { SCENARIOS, type Scenario } from './world/scenarios';
-import { leccionPorId, leccionRecordada, recordarLeccion, type Leccion } from './flight/lecciones';
-import { conRelieve } from './world/relieve';
-import { cargarCiudad } from './world/ciudades';
-import { conViento } from './world/scenarios';
-import { leerMetar, pedirMetar, TIEMPO_DE_CASA, type Meteo } from './world/meteo';
+import { Game } from "./game";
+import { SCENARIOS, type Scenario } from "./world/scenarios";
+import {
+  leccionPorId,
+  leccionRecordada,
+  recordarLeccion,
+  type Leccion,
+} from "./flight/lecciones";
+import { conRelieve } from "./world/relieve";
+import { cargarCiudad } from "./world/ciudades";
+import { conViento } from "./world/scenarios";
+import {
+  leerMetar,
+  pedirMetar,
+  TIEMPO_DE_CASA,
+  type Meteo,
+} from "./world/meteo";
 
 /**
  * De dónde sale el tiempo de esta partida.
@@ -34,10 +44,10 @@ import { leerMetar, pedirMetar, TIEMPO_DE_CASA, type Meteo } from './world/meteo
 async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   const q = new URLSearchParams(location.search);
 
-  const crudo = q.get('metar');
-  if (crudo) return { ...(leerMetar(crudo) ?? TIEMPO_DE_CASA), fuente: 'mano' };
+  const crudo = q.get("metar");
+  if (crudo) return { ...(leerMetar(crudo) ?? TIEMPO_DE_CASA), fuente: "mano" };
 
-  const viento = q.get('viento');
+  const viento = q.get("viento");
   if (viento) {
     const m = /^(\d{1,3})\/(\d{1,3})$/.exec(viento);
     if (m) {
@@ -46,7 +56,7 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
         ...TIEMPO_DE_CASA,
         vientoDe: kt === 0 ? null : Number(m[1]) % 360,
         vientoKt: kt,
-        fuente: 'mano',
+        fuente: "mano",
       };
     }
   }
@@ -57,23 +67,23 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   if (!icao) return TIEMPO_DE_CASA;
   // El proxy se configura al construir; sin él no se pide nada. Ver
   // `workers/meteo.js`, que es el que hace falta y son diez líneas.
-  const proxy = q.get('meteo') ?? import.meta.env.VITE_METEO ?? null;
+  const proxy = q.get("meteo") ?? import.meta.env.VITE_METEO ?? null;
   return pedirMetar(icao, proxy);
 }
-import { detectLocale, setLocale } from './i18n';
-import { abrirHangar } from './ui/hangar';
-import type { Mission } from './missions/types';
-import { rememberTier, rememberedTier } from './flight/tiers';
+import { detectLocale, setLocale } from "./i18n";
+import { abrirHangar } from "./ui/hangar";
+import type { Mission } from "./missions/types";
+import { rememberTier, rememberedTier } from "./flight/tiers";
 
 setLocale(detectLocale());
 
-const canvas = document.querySelector<HTMLCanvasElement>('#lienzo');
-const hudRoot = document.querySelector<HTMLElement>('#hud');
-const creditsRoot = document.querySelector<HTMLElement>('#creditos');
-const touchRoot = document.querySelector<HTMLElement>('#tactil');
+const canvas = document.querySelector<HTMLCanvasElement>("#lienzo");
+const hudRoot = document.querySelector<HTMLElement>("#hud");
+const creditsRoot = document.querySelector<HTMLElement>("#creditos");
+const touchRoot = document.querySelector<HTMLElement>("#tactil");
 
 if (!canvas || !hudRoot || !creditsRoot || !touchRoot) {
-  throw new Error('Falta algún nodo del documento; revisa index.html');
+  throw new Error("Falta algún nodo del documento; revisa index.html");
 }
 
 /**
@@ -84,13 +94,13 @@ if (!canvas || !hudRoot || !creditsRoot || !touchRoot) {
  * aeródromo nuevo sin dar dos clics cada vez.
  */
 const params = new URLSearchParams(location.search);
-const pedido = params.get('escenario');
+const pedido = params.get("escenario");
 const directo = pedido ? SCENARIOS.find((s) => s.id === pedido) : undefined;
 
 const recordado =
   SCENARIOS.find((s) => {
     try {
-      return s.id === localStorage.getItem('oga-veve:escenario');
+      return s.id === localStorage.getItem("oga-veve:escenario");
     } catch {
       return false;
     }
@@ -100,8 +110,8 @@ let escenario = directo;
 let tramo = rememberedTier();
 // `?leccion=aterrizaje` salta el hangar y va directo, que es lo que permite
 // comprobarlas desde fuera sin pulsar cuatro fichas.
-let leccion: Leccion = params.get('leccion')
-  ? leccionPorId(params.get('leccion'))
+let leccion: Leccion = params.get("leccion")
+  ? leccionPorId(params.get("leccion"))
   : leccionRecordada();
 /*
  * La misión, si se eligió una en el hangar. No se recuerda de una partida a
@@ -111,9 +121,13 @@ let leccion: Leccion = params.get('leccion')
 let mision: Mission | null = null;
 
 if (!escenario) {
-  const hangarRoot = document.querySelector<HTMLElement>('#hangar');
-  if (!hangarRoot) throw new Error('Falta #hangar; revisa index.html');
-  const elegido = await abrirHangar(hangarRoot, { scenario: recordado, tier: tramo, leccion });
+  const hangarRoot = document.querySelector<HTMLElement>("#hangar");
+  if (!hangarRoot) throw new Error("Falta #hangar; revisa index.html");
+  const elegido = await abrirHangar(hangarRoot, {
+    scenario: recordado,
+    tier: tramo,
+    leccion,
+  });
   escenario = elegido.scenario;
   tramo = elegido.tier;
   leccion = elegido.leccion;
@@ -138,7 +152,7 @@ const [conMapa, ciudad, meteo] = await Promise.all([
 escenario = conViento(ciudad ? { ...conMapa, ciudad } : conMapa, meteo);
 
 try {
-  localStorage.setItem('oga-veve:escenario', escenario.id);
+  localStorage.setItem("oga-veve:escenario", escenario.id);
 } catch {
   // Sin almacenamiento se juega igual, solo que no se recuerda.
 }
@@ -154,9 +168,25 @@ const game = new Game({
 });
 game.start();
 
-// Al ocultar la pestaña se para el bucle: no tiene sentido gastar batería
-// simulando un avión que nadie mira, y evita el salto de tiempo al volver.
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) game.stop();
-  else game.start();
-});
+/*
+ * **Se para cuando nadie mira, y «nadie mira» son dos cosas distintas.**
+ *
+ * Estaba solo `visibilitychange`, que salta al ocultar la pestaña. Pero
+ * cambiar a otra ventana en la misma pantalla —abrir el correo, escribir en
+ * otro sitio— **no oculta la pestaña**: salta `blur` y nada más. Así que el
+ * juego seguía corriendo a pleno rendimiento con el avión rodando y nadie a
+ * los mandos. «Solté la tecla, cambié de pantalla para escribir, volví al
+ * juego y la avioneta estaba sobrevolando el Padre Anchieta.»
+ *
+ * El teclado ya se suelta solo al perder el foco —eso estaba—, pero soltar las
+ * teclas no para un avión: el gas es un mando que se queda donde lo dejas, que
+ * es lo que hace un gas de verdad. Lo que hay que parar es el reloj.
+ */
+const mirando = (): boolean => !document.hidden && document.hasFocus();
+const atender = (): void => {
+  if (mirando()) game.start();
+  else game.stop();
+};
+document.addEventListener("visibilitychange", atender);
+window.addEventListener("blur", atender);
+window.addEventListener("focus", atender);
