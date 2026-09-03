@@ -24,8 +24,8 @@ import {
   Mesh,
   MeshLambertMaterial,
   type Object3D,
-} from 'three';
-import type { AircraftConfig } from '../flight/aircraft';
+} from "three";
+import type { AircraftConfig } from "../flight/aircraft";
 
 export interface AircraftMesh {
   group: Group;
@@ -40,6 +40,8 @@ export interface AircraftMesh {
    * del panel y a la altura de la cabeza, no flotando entre los asientos
    * traseros mirando el salón.
    */
+  /** Las pantallas de la cabina, si el modelo las trae. */
+  pantallas?: import("./pantallas-cabina").Pantallas | null;
   ojo?: { x: number; y: number; z: number };
 }
 
@@ -55,62 +57,97 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
   const body = new MeshLambertMaterial({ color: look.body });
   const accent = new MeshLambertMaterial({ color: look.accent });
   const trim = new MeshLambertMaterial({ color: look.trim });
-  const glass = new MeshLambertMaterial({ color: 0x2a3b45, transparent: true, opacity: 0.72 });
+  const glass = new MeshLambertMaterial({
+    color: 0x2a3b45,
+    transparent: true,
+    opacity: 0.72,
+  });
 
   // Fuselaje
-  const fuselage = new Mesh(new BoxGeometry(chord * 0.72, chord * 0.8, length), body);
+  const fuselage = new Mesh(
+    new BoxGeometry(chord * 0.72, chord * 0.8, length),
+    body,
+  );
   fuselage.position.z = length * 0.08;
   group.add(fuselage);
 
   // Morro y capó del motor
-  const nose = new Mesh(new BoxGeometry(chord * 0.6, chord * 0.62, length * 0.2), accent);
+  const nose = new Mesh(
+    new BoxGeometry(chord * 0.6, chord * 0.62, length * 0.2),
+    accent,
+  );
   nose.position.z = -length * 0.45;
   group.add(nose);
 
   // Cabina
-  const canopy = new Mesh(new BoxGeometry(chord * 0.6, chord * 0.42, length * 0.26), glass);
+  const canopy = new Mesh(
+    new BoxGeometry(chord * 0.6, chord * 0.42, length * 0.26),
+    glass,
+  );
   canopy.position.set(0, chord * 0.46, -length * 0.16);
   group.add(canopy);
 
-  const biplane = look.layout === 'biplane';
+  const biplane = look.layout === "biplane";
 
   // Ala superior. En el ala alta es la única; en el biplano, la de arriba.
   const upper = new Mesh(new BoxGeometry(span, chord * 0.14, chord), body);
   upper.position.set(0, chord * (biplane ? 0.95 : 0.5), -length * 0.05);
   group.add(upper);
 
-  const stripe = new Mesh(new BoxGeometry(span, chord * 0.16, chord * 0.22), accent);
+  const stripe = new Mesh(
+    new BoxGeometry(span, chord * 0.16, chord * 0.22),
+    accent,
+  );
   stripe.position.set(0, upper.position.y, -length * 0.05 + chord * 0.32);
   group.add(stripe);
 
   if (biplane) {
     // Ala inferior, más corta, y los montantes que las unen. Es lo que hace
     // que un biplano se lea como biplano desde la cámara de persecución.
-    const lower = new Mesh(new BoxGeometry(span * 0.88, chord * 0.13, chord * 0.92), body);
+    const lower = new Mesh(
+      new BoxGeometry(span * 0.88, chord * 0.13, chord * 0.92),
+      body,
+    );
     lower.position.set(0, -chord * 0.12, -length * 0.02);
     group.add(lower);
 
     for (const side of [-1, 1]) {
       for (const offset of [-chord * 0.3, chord * 0.3]) {
-        const strut = new Mesh(new BoxGeometry(chord * 0.07, chord * 1.07, chord * 0.09), trim);
-        strut.position.set(side * span * 0.3, chord * 0.42, -length * 0.04 + offset);
+        const strut = new Mesh(
+          new BoxGeometry(chord * 0.07, chord * 1.07, chord * 0.09),
+          trim,
+        );
+        strut.position.set(
+          side * span * 0.3,
+          chord * 0.42,
+          -length * 0.04 + offset,
+        );
         group.add(strut);
       }
     }
   } else {
     for (const side of [-1, 1]) {
-      const strut = new Mesh(new BoxGeometry(chord * 0.08, chord * 0.5, chord * 0.1), trim);
+      const strut = new Mesh(
+        new BoxGeometry(chord * 0.08, chord * 0.5, chord * 0.1),
+        trim,
+      );
       strut.position.set(side * span * 0.22, chord * 0.24, -length * 0.02);
       group.add(strut);
     }
   }
 
   // Estabilizador horizontal y deriva
-  const tailplane = new Mesh(new BoxGeometry(span * 0.36, chord * 0.1, chord * 0.6), body);
+  const tailplane = new Mesh(
+    new BoxGeometry(span * 0.36, chord * 0.1, chord * 0.6),
+    body,
+  );
   tailplane.position.set(0, chord * 0.24, length * 0.42);
   group.add(tailplane);
 
-  const fin = new Mesh(new BoxGeometry(chord * 0.1, chord * 1.1, chord * 0.7), accent);
+  const fin = new Mesh(
+    new BoxGeometry(chord * 0.1, chord * 1.1, chord * 0.7),
+    accent,
+  );
   fin.position.set(0, chord * 0.78, length * 0.44);
   group.add(fin);
 
@@ -121,7 +158,10 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
     [span * 0.13, -length * 0.08],
     [0, -length * 0.4],
   ] as const) {
-    const leg = new Mesh(new BoxGeometry(chord * 0.07, aircraft.gearHeight * 0.7, chord * 0.07), trim);
+    const leg = new Mesh(
+      new BoxGeometry(chord * 0.07, aircraft.gearHeight * 0.7, chord * 0.07),
+      trim,
+    );
     leg.position.set(x, gearY + aircraft.gearHeight * 0.35, z);
     group.add(leg);
 
@@ -144,7 +184,10 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
   hub.rotation.x = Math.PI / 2;
   propeller.add(hub);
   for (let i = 0; i < look.blades; i++) {
-    const blade = new Mesh(new BoxGeometry(chord * 1.5, chord * 0.11, chord * 0.05), trim);
+    const blade = new Mesh(
+      new BoxGeometry(chord * 1.5, chord * 0.11, chord * 0.05),
+      trim,
+    );
     blade.rotation.z = (i * Math.PI) / look.blades;
     propeller.add(blade);
   }

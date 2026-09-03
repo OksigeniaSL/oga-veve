@@ -112,6 +112,7 @@ import { arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
+import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 
 /** Vistas disponibles, en el orden en que rota la tecla C. */
 const CAMERA_MODES = ["chase", "cockpit", "wing"] as const;
@@ -1879,6 +1880,22 @@ export class Game {
       this.flight.state.position.y,
       this.flight.state.position.z,
     );
+    // Las pantallas de la cabina, si el avión las trae. Van aquí y no en el
+    // HUD porque son parte del avión: se ven desde dentro y desde fuera, y se
+    // apagan solas cuando se cambia a un modelo que no las tiene.
+    this.aircraftMesh.pantallas?.actualizar(
+      {
+        velocidad: this.flight.state.airspeed,
+        altura: this.flight.state.position.y,
+        vertical: this.flight.state.verticalSpeed,
+        rumbo: this.flight.state.heading,
+        declinacion: this.scenario.magneticVariation ?? 0,
+        cabeceo: pitchAngleOf(this.flight.state.orientation),
+        alabeo: bankAngleOf(this.flight.state.orientation),
+      },
+      dt,
+    );
+
     // Y a dónde se va, si se va a algún sitio: el objetivo de la misión, que
     // es lo único del mundo que es «otro lugar concreto».
     const objetivo = this.missions.current;
