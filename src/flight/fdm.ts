@@ -244,6 +244,20 @@ export class CoefficientFlightModel implements FlightModel {
     this.updateDerived();
   }
 
+  /**
+   * Aquí no hay cuenta exacta: el empuje pelea contra la resistencia y la
+   * velocidad de equilibrio depende de la actitud, del alabeo y de si se sube
+   * o se baja. Se estima con la proporción al crucero, que en el rango de la
+   * aproximación se queda cerca, y el modelo termina de ajustarla en unos
+   * segundos como haría un piloto con la palanca.
+   */
+  gasPara(velocidad: number): number {
+    return Math.max(
+      0.15,
+      Math.min(1, (velocidad / this.aircraft.cruiseSpeed) * 0.8),
+    );
+  }
+
   step(dt: number, controls: ControlInputs): void {
     // El tope, uno solo y compartido con el bucle del juego. Ver `MAX_PASO`.
     const total = Math.min(dt, MAX_PASO);
