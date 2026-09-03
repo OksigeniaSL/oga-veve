@@ -21,6 +21,7 @@
 
 import {
   Color,
+  Vector3,
   CylinderGeometry,
   DoubleSide,
   Group,
@@ -28,7 +29,6 @@ import {
   MeshBasicMaterial,
   MeshLambertMaterial,
   TorusGeometry,
-  type Vector3,
 } from "three";
 import { delante } from "./rumbo";
 import type { Scenario } from "./scenarios";
@@ -77,6 +77,15 @@ const GLIDE_SLOPE = (4 * Math.PI) / 180;
  * no sabe leer: el aro que brilla es el que hay que cruzar, y cruzarlo se
  * celebra.
  */
+/**
+ * Qué pasó con el aro que tocaba.
+ *
+ * `perdido` no es un fracaso y no se castiga: es información. Un aro que no
+ * reacciona cuando lo fallas enseña la mitad, porque quien no lee necesita
+ * saber que **eso de ahí contaba**.
+ */
+export type PasoDeAro = "cruzado" | "perdido" | null;
+
 export class RunwayGuide {
   readonly group: Group;
   /** Aros en orden de aproximación, del más lejano al umbral. */
@@ -96,8 +105,24 @@ export class RunwayGuide {
     rings?.traverse((object) => {
       if (object instanceof Mesh) this.rings.push(object);
     });
-    // Del más lejano al más cercano, que es el orden en que se cruzan.
-    this.rings.sort((a, b) => b.position.y - a.position.y);
+    /*
+     * **Del más lejano al más cercano, y eso se mide en distancia al umbral.**
+     *
+     * Se ordenaban por altura, dando por hecho que una senda baja
+     * monótonamente. Y no lo hace: los aros **se suben para salvar el
+     * relieve**, así que en cuanto hay una loma por delante el orden se
+     * descoloca — en el Valle de la Cordillera el primero de la lista estaba
+     * más cerca de la pista que el segundo.
+     *
+     * Con el orden mal, `next` apunta a un aro cualquiera y todo lo que se
+     * apoya en él —qué aro se enciende, cuál se da por cruzado, cuál por
+     * perdido— deja de tener sentido.
+     */
+    this.rings.sort(
+      (a, b) =>
+        ((b.userData.distancia as number) ?? 0) -
+        ((a.userData.distancia as number) ?? 0),
+    );
     this.flash = this.rings.map(() => 0);
     this.highlight();
   }
@@ -111,19 +136,54 @@ export class RunwayGuide {
    *
    * @returns true si se acaba de cruzar uno
    */
-  check(position: Vector3): boolean {
-    const ring = this.rings[this.next];
-    if (!ring) return false;
+  check(position: Vector3): PasoDeAro {
+    const aro = this.rings[this.next];
+    if (!aro) return null;
 
-    const radius = (ring.geometry as TorusGeometry).parameters.radius;
-    if (position.distanceTo(ring.position) > radius * 1.15) return false;
+    const radio = (aro.geometry as TorusGeometry).parameters.radius;
 
-    this.flash[this.next] = 1;
+    /*
+     * **Se mira el plano del aro, no la cercanía a su centro.**
+     *
+     * Antes se daba por cruzado si se pasaba a menos de radio × 1,15 del
+     * centro, y si no, no pasaba nada de nada: pasar por encima, por debajo o
+     * por fuera no producía ninguna reacción. «Algunos aros los pasé por
+     * encima sin que me dijera nada.»
+     *
+     * Y había algo peor que el silencio: **el índice no avanzaba**. Un aro
+     * fallado se quedaba como el siguiente para siempre, así que la senda
+     * entera dejaba de funcionar a partir del primer error. El mismo fallo
+     * que ya tenía el arranque en final, en otro sitio.
+     *
+     * Ahora se mira si se ha pasado su plano —el eje va de este aro al
+     * siguiente, o al anterior si es el último— y se resuelve con **lo más
+     * cerca que se llegó a estar**, que es la pregunta de verdad: no importa
+     * dónde estabas al cruzar la raya, importa si pasaste por dentro.
+     */
+    const vecino = this.rings[this.next + 1] ?? this.rings[this.next - 1];
+    if (!vecino) return null;
+    const eje = new Vector3()
+      .subVectors(vecino.position, aro.position)
+      .normalize();
+    // Si el vecino es el anterior, el eje apunta al revés: se da la vuelta.
+    if (!this.rings[this.next + 1]) eje.negate();
+
+    const relativo = new Vector3().subVectors(position, aro.position);
+    const alLargo = relativo.dot(eje);
+    // Lo perpendicular: lo que decide si se pasó por dentro del aro.
+    const dentro = relativo.clone().addScaledVector(eje, -alLargo).length();
+    this.masCerca = Math.min(this.masCerca, dentro);
+
+    // Todavía por delante del plano del aro: no hay veredicto.
+    if (alLargo < 0) return null;
+
+    const cruzado = this.masCerca <= radio;
+    this.flash[this.next] = cruzado ? 1 : 0;
     this.next++;
-    // El siguiente empieza apagado: todavía no te has acercado a él.
+    this.masCerca = Infinity;
     this.encendido = 0;
     this.highlight();
-    return true;
+    return cruzado ? "cruzado" : "perdido";
   }
 
   /**
@@ -167,6 +227,7 @@ export class RunwayGuide {
    */
   reset(avion?: Vector3): void {
     this.next = 0;
+    this.masCerca = Infinity;
     const ultimo = this.rings[this.rings.length - 1];
     if (avion && ultimo) {
       const delAvion = avion.distanceTo(ultimo.position);
@@ -184,6 +245,8 @@ export class RunwayGuide {
 
   /** Cuánto se ha encendido el aro que toca, de 0 a 1. Suavizado. */
   private encendido = 0;
+  /** Lo más cerca del eje del aro que se ha llegado a estar, m. */
+  private masCerca = Infinity;
 
   /**
    * Anima los aros, y **enciende el que toca según te acercas**.
@@ -417,6 +480,9 @@ function approachRings(
       }),
     );
 
+    // La distancia al umbral, apuntada en el propio aro: es el orden de la
+    // senda, y no se puede deducir de dónde acaba estando. Ver el constructor.
+    ring.userData.distancia = distance;
     const ringX = x - ax * distance;
     const ringZ = z - az * distance;
     // La senda sube lo que haga falta para salvar el relieve. Sin esto los
