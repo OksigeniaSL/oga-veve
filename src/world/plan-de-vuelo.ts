@@ -442,8 +442,28 @@ export class PlanDeVuelo {
      * De los que quedan se sigue cogiendo el más cercano a la cabecera de
      * salida, que es lo que evita quince minutos de rodaje.
      */
-    const lejos = puestos.filter((p) => cerca(p.xy) > 60);
-    const donde = lejos.length ? lejos : puestos;
+    /*
+     * **Y el corte no puede ser un número fijo, porque cada aeropuerto tiene
+     * los suyos.** Medido:
+     *
+     *   Silvio Pettirossi · 62 puestos · 43 a más de 300 m de un edificio
+     *   Tenerife Norte    · 32 puestos · **ninguno** más allá de 130 m
+     *
+     * En Asunción hay plataforma de aviación general y se ve en los datos. En
+     * Tenerife Norte no la hay —o no está en OpenStreetMap, que para nosotros
+     * es lo mismo—, así que con un corte de sesenta metros se elegía un puesto
+     * de la fila de los grandes: «que me suba a la chepa del Iberia».
+     *
+     * Así que el corte es **relativo**: se ordenan por lo lejos que están de
+     * cualquier edificio y se coge el tercio de arriba. Donde hay aviación
+     * general, se va a ella; donde no la hay, se va a la punta de la
+     * plataforma, que es lo más parecido que ese aeropuerto puede ofrecer. Y
+     * de ese grupo se sigue eligiendo el más cercano a la cabecera, que es lo
+     * que evita quince minutos de rodaje.
+     */
+    const porLejania = [...puestos].sort((a, b) => cerca(b.xy) - cerca(a.xy));
+    const cuantos = Math.max(1, Math.ceil(porLejania.length / 3));
+    const donde = porLejania.slice(0, cuantos);
     return [...donde].sort(
       (a, b) =>
         Math.hypot(a.xy[0] - cabecera[0], a.xy[1] - cabecera[1]) -
