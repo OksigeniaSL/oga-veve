@@ -88,6 +88,7 @@ import {
   type Scenario,
 } from "./world/scenarios";
 import { crearTeselas, type Teselas } from "./world/teselas";
+import type { Ortofoto } from "./world/ortofoto";
 import { mundoElegido } from "./ui/mundo";
 
 /**
@@ -199,6 +200,15 @@ export interface GameOptions {
   leccion?: Leccion;
   /** La misión elegida en el hangar, si se eligió una. */
   mision?: Mission | null;
+  /**
+   * La ortofoto del escenario, si la hay.
+   *
+   * Va por las opciones y no por un método aparte porque **el terreno y la
+   * ciudad se construyen en el constructor**, y los dos la necesitan: uno para
+   * llevarla puesta y otra para teñir sus casas con el color del suelo.
+   * Pasarla después obligaba a rehacer la ciudad entera.
+   */
+  ortofoto?: Ortofoto;
 }
 
 export class Game {
@@ -393,6 +403,9 @@ export class Game {
 
     // La ciudad antes que la vegetación: la vegetación pregunta por ella para
     // no plantar un bosque donde hay un barrio.
+    // La manta del mundo, antes que nada de lo que va encima.
+    if (options.ortofoto) this.terrain.ponerOrtofoto(options.ortofoto);
+
     if (this.scenario.ciudad) {
       this.scene.add(
         crearCiudad(
@@ -403,6 +416,11 @@ export class Game {
           // justamente eso, un vacío.
           zonaDeAeropuerto(this.scenario, 200),
           this.scenario.waterLevel,
+          // Sobre la fotografía, sin calles: la foto ya las trae.
+          !options.ortofoto,
+          options.ortofoto
+            ? (x, z) => options.ortofoto!.color(x, z)
+            : undefined,
         ),
       );
     }
@@ -857,17 +875,6 @@ export class Game {
       ruta: () => this.plan?.rutaVisible() ?? [],
       pista: () => this.scenario.runway,
     };
-  }
-
-  /**
-   * Le pasa la ortofoto al terreno.
-   *
-   * Se llama desde el arranque, después de construir el juego y antes de
-   * empezar: el terreno ya existe y todavía no se ha dibujado ni un fotograma,
-   * así que nadie llega a ver el mundo sin su manta.
-   */
-  ponerOrtofoto(orto: Parameters<Terrain["ponerOrtofoto"]>[0]): void {
-    this.terrain.ponerOrtofoto(orto);
   }
 
   start(): void {
