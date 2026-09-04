@@ -24,6 +24,16 @@ const IDIOMA = "en-US";
 
 let permitido = true;
 
+/**
+ * ¿Se puede hablar ahora mismo?
+ *
+ * Lo pregunta el instructor, que tiene su propia voz y su propio ritmo pero
+ * obedece al mismo botón: quien pone el juego en mudo lo pone en mudo entero.
+ */
+export function vozPermitida(): boolean {
+  return permitido;
+}
+
 /** Apaga o enciende la voz. La usa el botón de sonido del HUD. */
 export function permitirVoz(si: boolean): void {
   permitido = si;

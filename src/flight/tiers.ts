@@ -143,8 +143,22 @@ export const DEFAULT_TIER = TAGUATO;
 
 const STORAGE_KEY = 'oga-veve:tramo';
 
-/** Último tramo elegido, o el de por defecto si no hay ninguno guardado. */
+/**
+ * Último tramo elegido, o el de por defecto si no hay ninguno guardado.
+ *
+ * Y `?tramo=guyrami` en la dirección manda sobre lo guardado, igual que
+ * `?escenario=` y `?leccion=`. No existía, y varios guiones de comprobación lo
+ * pasaban creyendo que funcionaba: se probaban en Taguato mientras el informe
+ * decía Guyrami. Un banco de pruebas que miente es peor que no tener banco.
+ */
 export function rememberedTier(): Tier {
+  try {
+    const pedido = new URLSearchParams(location.search).get('tramo');
+    const directo = pedido ? TIERS.find((t) => t.id === pedido) : undefined;
+    if (directo) return directo;
+  } catch {
+    // Sin `location` —una prueba, por ejemplo— manda lo guardado.
+  }
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     const found = TIERS.find((tier) => tier.id === saved);

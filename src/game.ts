@@ -622,6 +622,7 @@ export class Game {
       this.tier.instruments === "none" || this.tier.instruments === "pictorial",
     );
     this.hud.onKeys(() => this.keyScreen?.toggle());
+    this.hud.onCredits(() => this.credits.toggle());
     // Volver al hangar es recargar. Suena brusco y es lo correcto: la elección
     // ya está guardada, cambiar de aeropuerto es empezar otro vuelo, y así no
     // hay que inventar el desmontaje en caliente de un escenario entero —que
@@ -3170,7 +3171,16 @@ export class Game {
       next.instruments === "none" || next.instruments === "pictorial",
     );
     this.updateBadge();
-    this.hud.flash(`${next.name} · ${next.ages}`, 3);
+    /*
+     * El nombre del peldaño, y **no la edad**.
+     *
+     * `tiers.ts` lo dice con todas las letras —«guía de edad, para quien
+     * programa; nunca se muestra al jugar»— y el hangar lo respeta. Aquí se
+     * enseñaba «Taguato · 10-13» a quien acababa de subir, que es la manera
+     * más rápida de decirle a alguien de nueve años que se ha equivocado de
+     * sitio.
+     */
+    this.hud.flash(next.name, 3);
   }
 
   /**
@@ -3260,6 +3270,8 @@ export class Game {
     // juego en mudo lo pone en mudo entero, y una voz que sigue hablando con
     // el altavoz tachado es exactamente lo que nadie espera.
     permitirVoz(level.id !== "mudo");
+    // Y al instructor se le calla ahora mismo, no en la frase siguiente.
+    if (level.id === "mudo") this.instructor.callar();
     this.hud.setSoundLevel(level.glyph, t(`sound.${level.id}` as never));
     this.hud.flash(t(`sound.${level.id}` as never));
   }

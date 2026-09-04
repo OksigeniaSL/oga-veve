@@ -41,6 +41,7 @@
  */
 
 import { getLocale } from '../i18n';
+import { vozPermitida } from './voz';
 
 export interface Instructor {
   /** Dice algo. `texto` ya viene traducido y listo para leer. */
@@ -102,6 +103,16 @@ export class VozDelNavegador implements Instructor {
 
   decir(texto: string): void {
     if (!this.voz || !texto) return;
+    /*
+     * **Y el mudo del juego también le calla a él.**
+     *
+     * El botón del altavoz llamaba a `permitirVoz`, que solo afecta a los
+     * avisos de cabina de `voz.ts`; el instructor habla por su cuenta y
+     * `speechSynthesis` no pasa por el mezclador. Resultado: juego en mudo,
+     * altavoz tachado en pantalla, y una voz siguiendo la lección. Que es
+     * exactamente lo que promete que no pasa el comentario del botón.
+     */
+    if (!vozPermitida()) return;
     // No repetir lo mismo dos veces seguidas en menos de diez segundos: la
     // fase puede parpadear y un instructor que se repite se ignora.
     const ahora = performance.now();
