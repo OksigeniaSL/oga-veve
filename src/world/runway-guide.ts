@@ -21,6 +21,7 @@
 
 import {
   Color,
+  SphereGeometry,
   Vector3,
   CylinderGeometry,
   DoubleSide,
@@ -104,6 +105,19 @@ export class RunwayGuide {
     ground: GroundSampler,
   ) {
     this.group = buildGuide(scenario, runwayElevation, ground);
+
+    this.mira = new Mesh(
+      new SphereGeometry(6, 10, 8),
+      new MeshBasicMaterial({
+        color: CERCA,
+        transparent: true,
+        depthWrite: false,
+      }),
+    );
+    this.mira.name = "mira";
+    this.mira.renderOrder = 3;
+    this.mira.visible = false;
+    this.group.add(this.mira);
     const rings = this.group.getObjectByName("aros");
     rings?.traverse((object) => {
       if (object instanceof Mesh) this.rings.push(object);
@@ -263,6 +277,21 @@ export class RunwayGuide {
 
   /** Cuánto se ha encendido el aro que toca, de 0 a 1. Suavizado. */
   private encendido = 0;
+  /**
+   * El punto que dice **dónde estás respecto del aro que toca**.
+   *
+   * El aro apagado dice «vas mal» y ahí se acaba: no dice si te has ido por
+   * arriba, por abajo o por el lado, que es justo lo que hace falta para
+   * corregir. Un aro que solo dice que no es media ayuda.
+   *
+   * Así que se dibuja tu desvío **dentro del aro**, como una mira: el punto
+   * está donde estás tú, escalado al radio, y llevarlo al centro es llevar el
+   * avión al centro. Cuando el punto está en medio, pasas por dentro.
+   *
+   * Es exactamente cómo se lee un director de vuelo, y se entiende sin
+   * palabras a los cuatro años: hay que meter la bolita en el agujero.
+   */
+  private readonly mira: Mesh;
   /** Lo más cerca del eje del aro que se ha llegado a estar, m. */
   private masCerca = Infinity;
   /** Cuáles se perdieron, para que destellen en rojo. */
@@ -334,6 +363,27 @@ export class RunwayGuide {
       const d = avion.distanceTo(siguiente.position);
       const acercarse = Math.max(0, Math.min(1, 1 - d / Math.max(1, tramo)));
       const cerca = acercarse * centrado;
+
+      /*
+       * La mira: donde estás tú, dibujado dentro del aro. Solo cuando ya te
+       * estás acercando —de lejos no hay nada que corregir todavía— y solo si
+       * te has ido de verdad, porque una mira clavada en el centro es ruido.
+       */
+      const desvio = rel.clone().addScaledVector(eje, -rel.dot(eje));
+      const verla = acercarse > 0.25 && fuera > radio * 0.1;
+      this.mira.visible = verla;
+      if (verla) {
+        // Recortada al borde del aro: si te has ido muy lejos, se queda en el
+        // filo por el lado por el que te fuiste, que sigue diciendo por dónde.
+        const tope = Math.min(1, (radio * 0.86) / Math.max(1, fuera));
+        this.mira.position
+          .copy(siguiente.position)
+          .addScaledVector(desvio, tope);
+        const m = this.mira.material as MeshBasicMaterial;
+        m.color.setHex(FALLADO).lerp(new Color(CERCA), centrado);
+        m.opacity = 0.55 + 0.45 * acercarse;
+        this.mira.scale.setScalar(0.7 + radio / 60);
+      }
       // Suavizado: sin esto, entrar y salir del borde hace parpadear el aro.
       this.encendido += (cerca - this.encendido) * Math.min(1, dt * 2);
       const e = this.encendido;
