@@ -192,6 +192,55 @@ const SALIDA = icono(`
   <path d="M9.4 21.4 L16 19 L11.6 14.6 Z" />
 `);
 
+/**
+ * El señor de los bastones, dibujado en la tarjeta.
+ *
+ * Existe porque el de verdad **no se ve**. Está ahí, con sus gestos y su
+ * lateralidad medida al grado, a catorce metros por delante del morro — y
+ * desde la cámara de persecución es una figura de metro ochenta a cuarenta
+ * metros: unos cuarenta y cinco píxeles, medio tapados por el ala. «Señor de
+ * los bastones, ¿qué señor?»
+ *
+ * Así que el gesto se repite en la tarjeta, que es donde el juego ya pone lo
+ * que hay que hacer ahora. Y se dibuja **lo que ve quien pilota**: el señalero
+ * mira al avión, así que su derecha es la izquierda de la cabina, y en la
+ * tarjeta el bastón extendido sale del lado hacia el que hay que girar. Lo que
+ * está en el cristal y lo que está en la tarjeta son el mismo dibujo.
+ */
+const senalero = (brazos: string): string =>
+  icono(`
+    <circle cx="12" cy="4.4" r="2.1" />
+    <path d="M10.7 7 h2.6 v7.6 h-2.6 Z" />
+    <path d="M11 14.6 L9.6 21.8 M13 14.6 L14.4 21.8"
+          stroke="currentColor" stroke-width="1.7" fill="none"
+          stroke-linecap="round" />
+    ${brazos}
+  `);
+
+/** Los dos brazos, del hombro a la punta del bastón. */
+const brazos = (
+  ix: number,
+  iy: number,
+  dx: number,
+  dy: number,
+): string => `
+  <path d="M10.9 8.2 L${ix} ${iy} M13.1 8.2 L${dx} ${dy}"
+        stroke="currentColor" stroke-width="2.4" fill="none"
+        stroke-linecap="round" />
+`;
+
+/** Vení: los dos bastones arriba, en uve. */
+const SENALERO_ADELANTE = senalero(brazos(7.4, 2.4, 16.6, 2.4));
+/** Alto: los dos bastones cruzados en aspa sobre la cabeza. Es **el** gesto. */
+const SENALERO_ALTO = senalero(brazos(16.1, 1.6, 7.9, 1.6));
+/** Girá a tu izquierda: el bastón clavado sale por la izquierda de la cabina. */
+const SENALERO_IZQUIERDA = senalero(brazos(2.2, 8.6, 16.6, 2.4));
+const SENALERO_DERECHA = senalero(brazos(7.4, 2.4, 21.8, 8.6));
+/** Más despacio: los dos brazos abiertos y bajos. */
+const SENALERO_DESPACIO = senalero(brazos(4.2, 14.6, 19.8, 14.6));
+/** Frenos puestos: el aspa, pero abajo. Ya está, llegaste. */
+const SENALERO_FRENOS = senalero(brazos(16.4, 15.4, 7.6, 15.4));
+
 const DIBUJOS: Record<string, string> = {
   llave: LLAVE,
   helice: HELICE,
@@ -207,6 +256,12 @@ const DIBUJOS: Record<string, string> = {
   salida: SALIDA,
   acasa: A_CASA,
   terreno: TERRENO,
+  "senalero-adelante": SENALERO_ADELANTE,
+  "senalero-alto": SENALERO_ALTO,
+  "senalero-izquierda": SENALERO_IZQUIERDA,
+  "senalero-derecha": SENALERO_DERECHA,
+  "senalero-despacio": SENALERO_DESPACIO,
+  "senalero-frenos": SENALERO_FRENOS,
 };
 
 /**

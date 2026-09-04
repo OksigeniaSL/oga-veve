@@ -120,6 +120,7 @@ import type { ControlInputs } from "./flight/model";
 import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { Senalero } from "./world/senalero";
+import type { Gesto } from "./flight/senalero";
 import { Sigueme } from "./world/sigueme";
 import { techoSobreLaPista } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
@@ -323,6 +324,8 @@ export class Game {
   private vistaActual: Vista | null = null;
   /** Si ahora mismo la pantalla está pidiendo freno. Ver `avanzarPlan`. */
   private pidiendoFreno = false;
+  /** El gesto del señalero que se está enseñando en la tarjeta, si hay uno. */
+  private gestoEnPantalla: Gesto = null;
   /** El señor de los bastones, esperando en el puesto. Ver `world/senalero.ts`. */
   private readonly senalero = new Senalero();
   /** Y el coche del «sígame», en los dos peldaños de abajo. Ver `world/sigueme.ts`. */
@@ -2394,6 +2397,32 @@ export class Game {
       },
       volviendo,
     );
+
+    /*
+     * **Y el gesto se repite en la tarjeta, porque al señalero no se le ve.**
+     *
+     * Está ahí, con los bastones y la lateralidad medida al grado, y desde la
+     * cámara de persecución es una figura de metro ochenta a cuarenta metros:
+     * cuarenta y cinco píxeles, medio tapados por el ala. «Señor de los
+     * bastones, ¿qué señor?» — descripción exacta de lo que se ve.
+     *
+     * La tarjeta ya es el sitio donde el juego dice qué toca ahora, y el
+     * dibujo que se pone es **el mismo señalero**, con los brazos donde los
+     * tiene él. Lo del cristal y lo de la pantalla son la misma cosa.
+     *
+     * Al acabarse el gesto se borra la fase anunciada y la tarjeta que tocara
+     * vuelve sola, que es el mismo mecanismo del aviso de freno.
+     */
+    if (gesto !== this.gestoEnPantalla) {
+      this.gestoEnPantalla = gesto;
+      if (gesto) {
+        this.hud.senal.mostrar(`senalero-${gesto}`, "", null, {
+          segundos: Infinity,
+        });
+      } else {
+        this.faseAnunciada = "";
+      }
+    }
 
     /*
      * Y el coche del «sígame», que va por la misma ruta y se aparta cuando

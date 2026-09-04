@@ -48,11 +48,27 @@ const OSCURO = 0x23262c;
 /** El ámbar de la baliza y el ocre del galón, que son el mismo idioma. */
 const AMBAR = 0xff9c2a;
 
-/** Cuánto va por delante del avión, medido sobre la ruta, m. */
-const ADELANTO = 45;
+/**
+ * Cuánto va por delante del avión, medido sobre la ruta, m.
+ *
+ * Eran cuarenta y cinco, y con la cámara de persecución dieciséis metros por
+ * detrás eso deja el coche a sesenta: un vehículo de metro y medio de alto a
+ * esa distancia son veinticinco píxeles de amarillo sobre gris. Se le puede
+ * seguir, pero hay que buscarlo. A treinta se ve sin buscarlo, y sigue estando
+ * lo bastante lejos como para que uno vaya **detrás** y no encima.
+ */
+const ADELANTO = 30;
 
-/** Lo más rápido que se mueve, m/s. Cuarenta y cinco por hora en plataforma. */
-const VELOCIDAD = 12.5;
+/**
+ * Lo más rápido que se mueve, m/s.
+ *
+ * **Y no puede pasarse de lo que el propio juego considera rodar deprisa.**
+ * Iban doce y medio, y la banda de rodaje avisa a partir de doce y cuarto: el
+ * coche que te lleva iba justo por encima del límite que el juego te riñe por
+ * pasar, así que seguirle disparaba «más despacio» y estropeaba el galón de la
+ * velocidad. Once, que es la velocidad de crucero de rodaje que ya usa el plan.
+ */
+const VELOCIDAD = 11;
 
 /** Cuánto se queda corto del final de la ruta, m. Ver la cabecera. */
 const NO_LLEGA = 30;
@@ -85,6 +101,9 @@ function construir(): {
   const grupo = new Group();
   grupo.name = "sigueme";
   grupo.visible = false;
+  // Un pelo más grande de lo real, por lo mismo que el señalero: lo que hay
+  // que conservar es que se vea, no la escala.
+  grupo.scale.setScalar(1.4);
 
   const chasis = new Mesh(
     new BoxGeometry(1.8, 0.55, 4.3),
@@ -193,9 +212,11 @@ export class Sigueme {
         this.acumulado[i - 1]! + Math.hypot(b[0] - a[0], b[1] - a[1]),
       );
     }
-    // Ruta nueva, coche al principio y ya por delante: si apareciera al lado
-    // del avión, lo primero que haría sería salir corriendo.
-    this.s = Math.min(ADELANTO, this.largo);
+    // Ruta nueva: el coche se coloca por delante **de donde esté el avión**,
+    // no al principio de la ruta. Naciendo en el metro cero, en la ruta de
+    // vuelta —que empieza donde tocaste tierra— aparecía trescientos metros a
+    // la espalda y ya no lo alcanzabas nunca.
+    this.s = -1;
     this.aparte = 0;
   }
 
@@ -229,6 +250,9 @@ export class Sigueme {
       alLlegar + ADELANTO,
       Math.max(0, this.largo - NO_LLEGA),
     );
+    // Primer fotograma con esta ruta: se planta donde toca en vez de correr
+    // hasta allí desde el kilómetro cero.
+    if (this.s < 0) this.s = objetivo;
     // Hacia delante y nada más: un sígame no da marcha atrás. Ver la cabecera.
     this.s = Math.max(this.s, Math.min(objetivo, this.s + VELOCIDAD * dt));
 

@@ -204,6 +204,19 @@ export class Senalero {
   constructor() {
     this.grupo.name = "senalero";
     this.grupo.visible = false;
+    /*
+     * **Y va a escala uno y ocho, que es una mentira a propósito.**
+     *
+     * A escala real es una figura de metro ochenta a cuarenta metros de la
+     * cámara de persecución: cuarenta y cinco píxeles en una pantalla de mil
+     * ochenta, medio tapados por el ala. «Señor de los bastones, ¿qué señor?»
+     *
+     * Es la misma decisión que ya se tomó con la manga de viento, con las
+     * luces de la pista y con los propios bastones: en un simulador que se
+     * juega a los cuatro años, de la realidad se conserva **el significado**,
+     * no la escala. Un señalero que no se ve no significa nada.
+     */
+    this.grupo.scale.setScalar(1.8);
 
     const piernas = new Mesh(
       new BoxGeometry(0.42, 0.9, 0.28),
