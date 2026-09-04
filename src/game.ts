@@ -2327,10 +2327,28 @@ export class Game {
       // primera persona que lo jugó se quedó mirando un avión parado en Silvio
       // Pettirossi porque la llave salió, se apagó a los seis segundos, y ya no
       // había forma de enterarse de qué hacía falta.
+      /*
+       * **La letra de la calle solo cuando la calle importa.**
+       *
+       * Se pegaba a todos los mensajes: parado en el puesto con el motor
+       * apagado salía «arrancá el motor · R», y en el punto de espera «frená ·
+       * R». La R es un dato de por dónde se rueda, y quien está parado no rueda
+       * por ninguna parte — ahí es una letra suelta que no significa nada, y
+       * ya costó una vez enterarse de qué era.
+       *
+       * Se enseña en las fases en las que uno va por una calle y le sirve
+       * saber cuál: yendo a la pista, saliendo de ella y volviendo a casa.
+       */
+      const rodando =
+        vista.fase === "rodando" ||
+        vista.fase === "abandonando" ||
+        vista.fase === "a-plataforma";
+      const letra = rodando ? vista.letra : null;
+
       const pendiente =
         vista.fase === "estacionado" || vista.fase === "en-puesto";
       const esperando = vista.fase === "esperando";
-      this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", vista.letra, {
+      this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", letra, {
         segundos:
           pendiente || esperando ? Infinity : vista.fase === "apagado" ? 9 : 6,
         // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
@@ -2347,10 +2365,7 @@ export class Game {
       });
       this.instructor.decir(frase);
       if (conLetras) {
-        this.hud.flash(
-          `${frase}${tecla}${vista.letra ? ` · ${vista.letra}` : ""}`,
-          5,
-        );
+        this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
       }
       if (vista.fase === "autorizado" || vista.fase === "apagado")
         this.audio.cue("success");
