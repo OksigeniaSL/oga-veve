@@ -616,8 +616,23 @@ export class Terrain {
         // suelo. Si escribiera, se taparía a sí misma con su propio borde
         // desvanecido.
         depthWrite: false,
+        /*
+         * **Empujón constante, no proporcional a la pendiente.**
+         *
+         * Llevaba `factor: -2`, y el factor escala con la pendiente de
+         * profundidad del polígono: mirando la pista desde la cabina, a ras de
+         * suelo, un píxel cubre decenas de metros de asfalto y ese −2 se
+         * convierte en un empujón enorme. La manta le ganaba al pavimento a lo
+         * lejos y lo perdía de cerca, así que **la pista se iba pintando de
+         * gris según avanzabas** — con la foto y nuestro asfalto turnándose,
+         * y con los dos «30» ligeramente descolocados entre sí.
+         *
+         * Es el mismo mecanismo que ya obligó a quitarle el `polygonOffset` al
+         * pavimento, repetido desde arriba. Con solo unidades, el empate exacto
+         * contra el relieve se resuelve igual y no crece con el ángulo.
+         */
         polygonOffset: true,
-        polygonOffsetFactor: -2,
+        polygonOffsetFactor: 0,
         polygonOffsetUnits: -4,
       }),
     );
@@ -1192,8 +1207,16 @@ function flattenRunway(
  * queda a la cota del aeródromo. Sin eso, el pavimento con pendiente quedaría
  * flotando sobre un suelo plano por un extremo y enterrado por el otro.
  */
-/** Cuánto sobresale el pavimento sobre el terreno aplanado, m. */
-const RESALTE = 0.35;
+/**
+ * Cuánto sobresale el pavimento sobre el terreno aplanado, m.
+ *
+ * Se exporta porque **el aeródromo tiene que usar este mismo número** cuando se
+ * rehace sobre el suelo real. Tenía uno propio de cinco centímetros, y a la
+ * primera racha de viento el pavimento aterrizaba justo encima de la manta de
+ * la fotografía: dos superficies en el mismo plano, y la pista se iba pintando
+ * de gris según se recorría.
+ */
+export const RESALTE = 0.35;
 
 function flattenAerodrome(
   heights: Float32Array,

@@ -765,6 +765,21 @@ export class PlanDeVuelo {
           ? null
           : "espera";
 
+    /*
+     * **Y al dejar la pista se vuelve a trazar, aunque el destino no cambie.**
+     *
+     * La ruta de vuelta se trazaba una sola vez, al saltar «aterrizado», que
+     * ocurre **con el avión todavía en el aire**: a doce metros del suelo, a
+     * treinta metros por segundo y treinta y seis metros antes del umbral. Con
+     * esos datos se elegía por dónde salir y ahí se quedaba, porque las fases
+     * siguientes querían el mismo destino y la comparación de abajo cortaba.
+     *
+     * Al dejar la pista ya se sabe de verdad dónde se está y a qué velocidad,
+     * que es cuando la pregunta «¿por dónde vuelvo?» tiene una respuesta
+     * buena.
+     */
+    if (fase === "abandonando") this.destino = null;
+
     if (quiere === this.destino) return;
     this.destino = quiere;
     if (quiere === null) {
@@ -807,12 +822,7 @@ export class PlanDeVuelo {
      * ruta directa, que es mejor que quedarse sin raya.
      */
     if (salida) {
-      const hastaLaSalida = rodajeEntre(
-        this.grafo,
-        this.ultimaPos,
-        salida,
-        600,
-      );
+      const hastaLaSalida = this.porLaPistaHasta(salida);
       const desdeLaSalida = rodajeEntre(this.grafo, salida, meta, 600);
       if (hastaLaSalida && desdeLaSalida) {
         this.ponerRuta({
@@ -930,7 +940,28 @@ export class PlanDeVuelo {
         this.pista.z,
         this.pista.heading,
       );
-      if (Math.abs(across) > this.pista.width * 1.6) continue;
+      /*
+       * **Dentro del asfalto, no «cerca» del asfalto.**
+       *
+       * El margen era ancho de pista × 1,6, o sea setenta y dos metros del
+       * eje. En Tenerife Norte, E4 tiene un codo **a sesenta y dos metros del
+       * eje** y otro nudo en la boca de verdad, sobre el eje, doscientos
+       * metros más adelante. Ganaba el codo, porque estaba antes — y ese codo
+       * no está en la pista: está en la hierba. Toda la ruta salía de ahí.
+       */
+      if (Math.abs(across) > this.pista.width / 2) continue;
+      /*
+       * **Y tiene que haber una calle colgando.**
+       *
+       * Un nudo en mitad de la pista del que solo sale más pista no es una
+       * salida: es un punto del eje. Sin esta condición, «la primera salida
+       * por delante» podía ser un trozo de la propia pista.
+       */
+      const i = this.grafo.nudos.indexOf(nudo);
+      const tieneCalle = (this.grafo.desde[i] ?? []).some(
+        (t) => !this.grafo.tramos[t]!.pista,
+      );
+      if (!tieneCalle) continue;
       const adelante = along - aqui.along;
       if (adelante < 60) continue;
       if (adelante < cerca) {
@@ -939,6 +970,49 @@ export class PlanDeVuelo {
       }
     }
     return mejor;
+  }
+
+  /**
+   * El tramo que va del avión a la salida, **por la pista y a mano**.
+   *
+   * Es la misma decisión que ya se tomó para entrar en pista, y por el mismo
+   * motivo. Este trozo se pedía al buscador de caminos, y el buscador engancha
+   * por el nudo más cercano: recién aterrizado, en la zona de toma, el nudo
+   * más cercano es **el extremo de atrás de la pista**, sesenta metros a la
+   * espalda. Desde ahí, ir por la pista hasta la salida cuesta seis veces su
+   * longitud —la penalización que mantiene a los aviones fuera del asfalto— y
+   * el buscador prefería dar la vuelta por la calle paralela.
+   *
+   * Resultado medido: con el avión parado a doscientos cincuenta metros del
+   * umbral, la raya empezaba **doscientos ochenta y seis metros por detrás** y
+   * se iba por E5 y por R. Ni un punto de la ruta por delante del morro, en
+   * ningún fotograma. Eso es «no me señala el camino, entré por E4 porque
+   * sabía dónde estaba».
+   *
+   * En la pista no hay que buscar camino: la pista **es** el camino. Se va
+   * recto por el eje hasta la salida, que es lo que hace cualquiera.
+   */
+  private porLaPistaHasta(salida: Punto): Ruta {
+    const x = this.ultimaPos[0];
+    const z = -this.ultimaPos[1];
+    const { along } = enEjesDePista(
+      x,
+      z,
+      this.pista.x,
+      this.pista.z,
+      this.pista.heading,
+    );
+    const enElEje = puntoDePista(this.pista, -along);
+    // De mundo a fichero: el norte del fichero es la Z negativa del mundo.
+    const puntos: Punto[] = [this.ultimaPos, [enElEje[0], -enElEje[1]], salida];
+    let largo = 0;
+    for (let i = 1; i < puntos.length; i++) {
+      largo += Math.hypot(
+        puntos[i]![0] - puntos[i - 1]![0],
+        puntos[i]![1] - puntos[i - 1]![1],
+      );
+    }
+    return { tramos: [{ ref: null, puntos }], puntos, largo, letras: [] };
   }
 
   /** El largo de la pista, medido entre umbrales. */

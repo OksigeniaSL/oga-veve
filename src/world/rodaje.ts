@@ -48,6 +48,13 @@ export interface Tramo {
   /** La geometría, para pintarla. Va de `a` a `b`. */
   readonly puntos: readonly Punto[];
   /**
+   * Si esto es la pista y no una calle de rodaje.
+   *
+   * Hace falta fuera: para elegir una salida de pista hay que saber qué nudos
+   * tienen de verdad una calle colgando, y no solo más pista.
+   */
+  readonly pista: boolean;
+  /**
    * Lo que **cuesta** recorrerlo, que no siempre es lo que mide.
    *
    * Existe por la pista: está en el grafo porque después de aterrizar se rueda
@@ -227,6 +234,7 @@ export function construirGrafo(aero: Aerodrome): Grafo {
       largo,
       ref: t.ref,
       puntos: t.path,
+      pista: !!t.pista,
       coste: t.pista ? largo * PENALIZACION_PISTA : largo,
     });
   }
