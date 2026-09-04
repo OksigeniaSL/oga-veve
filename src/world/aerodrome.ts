@@ -138,37 +138,6 @@ const COLORES: Record<string, ColorRepresentation> = {
   grass: 0x4d6136,
 };
 
-/**
- * Hacia qué lado queda el umbral de pista más cercano, normalizado.
- *
- * Los umbrales son los dos extremos del eje de cada pista. Se mira al más
- * cercano y no al centro porque a un aeródromo se rueda **para despegar por un
- * extremo**, y ese extremo es lo que da un adelante y un atrás a una calle de
- * rodaje que va paralela a la pista.
- */
-function haciaElUmbralMasCerca(
-  aero: Aerodrome,
-  p: Punto,
-): [number, number] | null {
-  let mejor: [number, number] | null = null;
-  let masCerca = Infinity;
-  for (const pista of aero.runways) {
-    for (const extremo of [
-      pista.centerline[0],
-      pista.centerline[pista.centerline.length - 1],
-    ]) {
-      if (!extremo) continue;
-      const dx = extremo[0] - p[0];
-      const dy = extremo[1] - p[1];
-      const d = Math.hypot(dx, dy);
-      if (d < 1 || d >= masCerca) continue;
-      masCerca = d;
-      mejor = [dx / d, dy / d];
-    }
-  }
-  return mejor;
-}
-
 /** ¿Está este punto a menos de `margen` metros del asfalto de una pista? */
 function cercaDeLaPista(aero: Aerodrome, p: Punto, margen: number): boolean {
   return aero.runways.some(
@@ -720,35 +689,13 @@ function letreros(
   if (!atlas) return null;
 
   /*
-   * **Un sentido por nombre, no por tramo.**
+   * **Aquí se elegía un sentido de lectura por calle, y ya no hace falta.**
    *
-   * OSM parte una misma calle en varios trozos, y en Tenerife Norte la R son
-   * dos: mil setecientos metros y mil doscientos. Cada trozo decidía su
-   * sentido por su cuenta y salían opuestos — «todas las R bien, menos la
-   * primera, que es la que ahora está al revés».
-   *
-   * Se decide una sola vez para cada letra del aeródromo, y se decide con el
-   * **tramo más largo** de esa letra: es el que tiene una dirección clara. Un
-   * empalme de treinta metros apunta a donde le viene bien y no representa a
-   * la calle.
+   * Costó tres intentos —por tramo, por nombre, mirando al umbral más
+   * cercano— y ninguno podía funcionar: por una calle de rodaje se pasa en los
+   * dos sentidos, así que cualquier elección deja la mitad de los vuelos
+   * leyendo del revés. Ahora se pintan los dos. Ver el bucle de abajo.
    */
-  const sentidoPorNombre = new Map<string, boolean>();
-  for (const ref of refs) {
-    const trozos = conNombre.filter((c) => c.ref === ref);
-    const masLargo = trozos.reduce((a, b) =>
-      longitudDe(b.path) > longitudDe(a.path) ? b : a,
-    );
-    const medio = sobreElEje(masLargo.path, longitudDe(masLargo.path) / 2);
-    const alUmbral = medio
-      ? haciaElUmbralMasCerca(aero, [medio[0], medio[1]])
-      : null;
-    sentidoPorNombre.set(
-      ref,
-      medio && alUmbral
-        ? medio[2] * alUmbral[0] + medio[3] * alUmbral[1] < 0
-        : false,
-    );
-  }
 
   const piezas: BufferGeometry[] = [];
   for (const calle of conNombre) {
@@ -788,7 +735,6 @@ function letreros(
      * atrás*, no de lado. El producto pasa a estar bien condicionado, que era
      * todo el problema.
      */
-    const alRevesLaCalle = sentidoPorNombre.get(calle.ref as string) ?? false;
 
     for (let d = PASO_LETRERO / 2; d < largo; d += PASO_LETRERO) {
       const p = sobreElEje(calle.path, d);
@@ -805,41 +751,53 @@ function letreros(
       if (enLaPista([cx, cy]) || cercaDeLaPista(aero, [cx, cy], LETRERO_LADO))
         continue;
 
-      // **El sentido de una calle en OSM es arbitrario.** El de una pista no —va
-      // de un umbral al otro y el número se pinta para quien aterriza—, pero una
-      // calle de rodaje se dibujó en el sentido en que le vino bien a quien la
-      // mapeó, así que la mitad de las letras salían boca abajo.
-      //
-      // Se orientan hacia la pista, que es adonde va quien rueda: el niño sale
-      // del estacionamiento y busca la cabecera. Leyendo en ese sentido, la
-      // letra le dice por dónde va.
-      const dx = alRevesLaCalle ? -p[2] : p[2];
-      const dy = alRevesLaCalle ? -p[3] : p[3];
-
+      /*
+       * **Dos rótulos por sitio, uno para cada sentido de marcha.**
+       *
+       * Antes había uno solo y había que **elegir** hacia dónde se leía. Se
+       * eligió hacia la pista, que es lo correcto saliendo a despegar, y por
+       * eso volviendo al puesto salían todas giradas: «la R sale al revés»,
+       * «el E5 al final de rodadura también está al revés». No era un espejo,
+       * era media vuelta — y con un solo rótulo no había forma de acertar,
+       * porque por una calle de rodaje se pasa en los dos sentidos.
+       *
+       * Un aeropuerto de verdad tampoco elige: pinta el cartel **a los dos
+       * lados del eje**, cada uno legible para quien viene de frente. Se hace
+       * igual. Cuesta el doble de cuadrados en la misma malla y ni una llamada
+       * de dibujo más.
+       *
+       * Y cada uno se corre a **su** izquierda, que son lados opuestos del
+       * eje: no se pisan entre ellos y siguen dejando limpia la raya amarilla.
+       */
       const celda = refs.indexOf(calle.ref as string);
       const u = (celda % lado) / lado;
       const v = 1 - (Math.floor(celda / lado) + 1) / lado;
 
-      const geo = new PlaneGeometry(LETRERO_LADO, LETRERO_LADO);
-      const uv = geo.getAttribute("uv");
-      for (let i = 0; i < uv.count; i++) {
-        uv.setXY(i, u + uv.getX(i) / lado, v + uv.getY(i) / lado);
+      for (const sentido of [1, -1] as const) {
+        const dx = p[2] * sentido;
+        const dy = p[3] * sentido;
+
+        const geo = new PlaneGeometry(LETRERO_LADO, LETRERO_LADO);
+        const uv = geo.getAttribute("uv");
+        for (let i = 0; i < uv.count; i++) {
+          uv.setXY(i, u + uv.getX(i) / lado, v + uv.getY(i) / lado);
+        }
+        /*
+         * **Al lado de la raya, no encima.**
+         *
+         * Se pintaba en el eje de la calle, y el eje de la calle es justo por
+         * donde va la raya amarilla: se tapaban por construcción. «Todas están
+         * tapadas por la línea amarilla.» Se corre a un costado lo justo para
+         * que la raya pase limpia por al lado, que además es donde se pintan
+         * de verdad.
+         */
+        const lx = cx - dy * DESVIO_LETRERO;
+        const ly = cy + dx * DESVIO_LETRERO;
+        geo.rotateX(-Math.PI / 2);
+        geo.rotateY(Math.atan2(-dx, dy));
+        geo.translate(lx, altura([lx, ly]) + PINTURA_ALTURA + 0.02, -ly);
+        piezas.push(geo);
       }
-      /*
-       * **Al lado de la raya, no encima.**
-       *
-       * Se pintaba en el eje de la calle, y el eje de la calle es justo por
-       * donde va la raya amarilla: se tapaban por construcción. «Todas están
-       * tapadas por la línea amarilla.» Se corre a un costado lo justo para
-       * que la raya pase limpia por al lado, que además es donde se pintan de
-       * verdad.
-       */
-      const lx = cx - dy * DESVIO_LETRERO;
-      const ly = cy + dx * DESVIO_LETRERO;
-      geo.rotateX(-Math.PI / 2);
-      geo.rotateY(Math.atan2(-dx, dy));
-      geo.translate(lx, altura([lx, ly]) + PINTURA_ALTURA + 0.02, -ly);
-      piezas.push(geo);
     }
   }
   if (!piezas.length) return null;
@@ -1072,8 +1030,6 @@ function luces(
   const ax = a.xy![0];
   const ay = a.xy![1];
   const largo = Math.hypot(b.xy![0] - ax, b.xy![1] - ay);
-  const ux = (b.xy![0] - ax) / largo;
-  const uy = (b.xy![1] - ay) / largo;
 
   // ── Los colores de las luces, que no son todos iguales ────────────────
   //
@@ -1085,7 +1041,27 @@ function luces(
   // Nada de esto es adorno: un piloto lee el estado de una pista por el color
   // de sus luces antes de leer ningún instrumento.
   const separacion = 60;
-  const AMBAR_DESDE = Math.max(largo - 600, largo / 2);
+
+  /*
+   * **El ámbar va donde se acaba la pista para quien la usa, no al final de la
+   * polilínea de OpenStreetMap.**
+   *
+   * `d` se cuenta desde el principio del eje que trae OSM, y el ámbar se ponía
+   * en sus últimos seiscientos metros sin mirar por qué cabecera se opera. En
+   * Tenerife Norte se despega por la 30, que es el otro extremo: el aviso de
+   * «se acaba» quedaba **a la espalda** desde el primer metro, y donde de
+   * verdad se acababa la pista las luces eran blancas.
+   *
+   * Ahora se mide contra el extremo rojo, que es el que se tiene por delante.
+   * Y son seiscientos metros o un tercio de la pista, lo que sea menos: es lo
+   * que dice OACI, y un tercio de una pista de mil cien metros ya es bastante
+   * aviso.
+   */
+  const dCabeceraA = alLargoDelEje(pista.centerline, a.xy!);
+  const dCabeceraB = alLargoDelEje(pista.centerline, b.xy!);
+  const seSalePorA = salida ? nombreA === salida : dCabeceraA < dCabeceraB;
+  const finRojo = seSalePorA ? dCabeceraB : dCabeceraA;
+  const AMBAR_DESDE = Math.min(600, largo / 3);
 
   const blancas: [number, number, number][] = [];
   const ambares: [number, number, number][] = [];
@@ -1104,7 +1080,7 @@ function luces(
       const cx = px - ey * lado * (ancho / 2 + 1.5);
       const cy = py + ex * lado * (ancho / 2 + 1.5);
       const punto: [number, number, number] = [cx, altura([cx, cy]) + 0.5, -cy];
-      (d >= AMBAR_DESDE ? ambares : blancas).push(punto);
+      (Math.abs(d - finRojo) < AMBAR_DESDE ? ambares : blancas).push(punto);
     }
   }
 
@@ -1124,12 +1100,9 @@ function luces(
    */
   const verdes: [number, number, number][] = [];
   const rojas: [number, number, number][] = [];
-  const dA = alLargoDelEje(pista.centerline, a.xy!);
-  const dB = alLargoDelEje(pista.centerline, b.xy!);
-  const salidaEsA = salida ? nombreA === salida : dA < dB;
   for (const [extremo, destino] of [
-    [salidaEsA ? dA : dB, verdes],
-    [salidaEsA ? dB : dA, rojas],
+    [seSalePorA ? dCabeceraA : dCabeceraB, verdes],
+    [finRojo, rojas],
   ] as const) {
     const p = sobreElEje(pista.centerline, extremo);
     if (!p) continue;
@@ -1226,22 +1199,19 @@ function luces(
   puntos.name = "luces-pista-lejos";
   grupo.add(puntos);
 
-  // PAPI: cuatro luces al costado, que dicen si se viene alto o bajo.
-  const papi = new InstancedMesh(
-    new SphereGeometry(0.8, 6, 4),
-    new MeshBasicMaterial({ color: 0xff5a3c }),
-    4,
-  );
-  papi.name = "papi";
-  for (let k = 0; k < 4; k++) {
-    const d = 320;
-    const lado = ancho / 2 + 15 + k * 9;
-    const cx = ax + ux * d - uy * lado;
-    const cy = ay + uy * d + ux * lado;
-    m.makeTranslation(cx, altura([cx, cy]) + 0.9, -cy);
-    papi.setMatrixAt(k, m);
-  }
-  grupo.add(papi);
+  /*
+   * **Aquí había un segundo PAPI, y estaba siempre en rojo.**
+   *
+   * Cuatro esferas fijas de color rojo junto a la **primera** cabecera del
+   * fichero, puestas «de momento» antes de que existiera el PAPI de verdad. El
+   * de verdad —`world/aproximacion.ts`— se monta en la cabecera en uso y
+   * cambia de color con el ángulo, que es lo que hace un PAPI.
+   *
+   * Operando por la 30 en Tenerife Norte, esto eran **cuatro rojas
+   * permanentes pintadas en la 12**: *red over red* en el suelo, por sistema,
+   * en un juego que existe para enseñar a leer justamente eso. Y operando por
+   * la 12, dos PAPI superpuestos con separaciones distintas, uno siempre rojo.
+   */
 
   return grupo;
 }
