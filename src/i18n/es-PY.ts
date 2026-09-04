@@ -156,6 +156,7 @@ export const ES_PY = {
   'vuelo.final': 'Bajá suavecito',
   'vuelo.aterrizado': 'Frená',
   'vuelo.abandonando': 'Salí de la pista, que viene otro',
+  'vuelo.pistaLibre': '¡Pista libre! Bien hecho',
   'vuelo.aPlataforma': 'Volvé a tu lugar',
   'vuelo.enPuesto': 'Llegaste. Apagá el motor',
   'vuelo.apagado': '¡Vuelo terminado!',

@@ -69,6 +69,27 @@ const NO_PARAR = icono(`
         stroke-width="2.8" stroke-linecap="round" />
 `);
 
+/**
+ * Volver a casa: **la raya que entra en un sitio**.
+ *
+ * Rodar para despegar y rodar porque acabas de aterrizar usaban el mismo
+ * dibujo —la raya amarilla—, así que para quien no lee eran la misma cosa. Y
+ * no lo son: «no es lo mismo rodar porque vas a despegar que rodar porque
+ * aterrizaste». Ir es seguir la raya hasta la cabecera; volver es meter el
+ * avión en su hueco.
+ *
+ * Por eso este lleva la raya **y el hueco**: dos rayas cortas a los lados y la
+ * de rodaje entrando entre ellas, que es exactamente lo que hay pintado en un
+ * estacionamiento de verdad.
+ */
+const A_CASA = icono(`
+  <path d="M12 22 q0-6 0-9" stroke-width="3" fill="none" stroke="currentColor"
+        stroke-linecap="round" />
+  <path d="M6 3 v9 M18 3 v9" stroke-width="2.6" fill="none" stroke="currentColor"
+        stroke-linecap="round" />
+  <path d="M12 13 L9 17 h6 Z" />
+`);
+
 /** La luz verde: adelante. */
 const VERDE = icono(`
   <circle cx="12" cy="12" r="9.5" />
@@ -167,6 +188,7 @@ const DIBUJOS: Record<string, string> = {
   senda: SENDA,
   freno: FRENO,
   salida: SALIDA,
+  acasa: A_CASA,
 };
 
 /**

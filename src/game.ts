@@ -2274,7 +2274,28 @@ export class Game {
     const conLetras = this.tier.instruments !== "none";
 
     if (vista.fase !== this.faseAnunciada) {
+      const antes = this.faseAnunciada;
       this.faseAnunciada = vista.fase;
+      /*
+       * **Dejar la pista libre es una victoria, y hay que decirlo.**
+       *
+       * Es el momento que enseña por qué había prisa: hasta ahí el juego pide
+       * salir «que viene otro», y en cuanto se sale no pasaba nada — el aviso
+       * cambiaba a «volvé a tu lugar» como si tal cosa. Sin premio, la prisa
+       * no se entiende: parece una manía del juego y no una regla del sitio.
+       *
+       * Y es la mitad de la diferencia que faltaba entre los dos rodajes: «no
+       * es lo mismo rodar porque vas a despegar que rodar porque aterrizaste».
+       * Al ir, la lección es la doble raya y esperar el verde; al volver, es
+       * dejar la pista libre y meter el avión en su hueco.
+       */
+      if (
+        antes === "abandonando" &&
+        (vista.fase === "a-plataforma" || vista.fase === "en-puesto")
+      ) {
+        this.audio.cue("success");
+        if (conLetras) this.hud.flash(t("vuelo.pistaLibre"), 3.2);
+      }
       // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
       // el motor» no le sirve de nada a quien no sabe cuál es el motor.
       const tecla =

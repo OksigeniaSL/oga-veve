@@ -497,7 +497,7 @@ export const GUION: Record<
   final: { clave: "vuelo.final", icono: "senda" },
   aterrizado: { clave: "vuelo.aterrizado", icono: "freno" },
   abandonando: { clave: "vuelo.abandonando", icono: "salida" },
-  "a-plataforma": { clave: "vuelo.aPlataforma", icono: "amarillo" },
+  "a-plataforma": { clave: "vuelo.aPlataforma", icono: "acasa" },
   "en-puesto": { clave: "vuelo.enPuesto", icono: "llave" },
   apagado: { clave: "vuelo.apagado", icono: "llave" },
 };
