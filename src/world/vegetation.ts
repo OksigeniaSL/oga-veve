@@ -41,6 +41,7 @@ import { enEjesDePista } from './rumbo';
 import { ValueNoise2D, mulberry32 } from './noise';
 import type { Scenario } from './scenarios';
 import type { Aerodrome } from './aerodrome';
+import { techoSobreLaPista } from './superficie-de-aproximacion';
 
 /** Cota del terreno en unas coordenadas de mundo. */
 export type GroundSampler = (x: number, z: number) => number;
@@ -113,7 +114,24 @@ const SPECIES = [LAPACHO, SAMUU, KARANDAY];
 const FLOWERING = 0.16;
 const FLOWER_COLOUR = 0xd97aa8;
 
-export function createVegetation(scenario: Scenario, ground: GroundSampler): Group {
+export function createVegetation(
+  scenario: Scenario,
+  ground: GroundSampler,
+  /**
+   * De qué color es la fotografía del suelo ahí, si hay ortofoto.
+   *
+   * **Sobre una foto aérea no se plantan árboles de mentira.** Con la
+   * ortofoto puesta, la vegetación procedimental seguía sembrando: árboles de
+   * cuatro caras encima de carreteras fotografiadas y de tejados
+   * fotografiados, uno de cada ocho hasta en pleno casco urbano. En el camino
+   * de las teselas esto se apagaba entero; aquí se quedó encendido.
+   *
+   * No se apaga del todo, porque la foto es plana y un árbol da volumen y
+   * paralaje. Lo que se hace es plantar **solo donde la foto dice que hay
+   * verde**, que es donde de verdad hay algo que sobresalga.
+   */
+  colorDelSuelo?: (x: number, z: number) => { r: number; g: number; b: number } | null,
+): Group {
   const group = new Group();
   group.name = 'vegetacion';
 
@@ -158,6 +176,8 @@ export function createVegetation(scenario: Scenario, ground: GroundSampler): Gro
   const rotation = new Quaternion();
   const scale = new Vector3();
   const up = new Vector3(0, 1, 0);
+  // La cota de la pista, que es de donde salen las superficies de obstáculos.
+  const runwayY = ground(scenario.runway.x, scenario.runway.z);
 
   for (let i = 0; i < CANDIDATES; i++) {
     const x = (random() - 0.5) * scenario.size * 0.98;
@@ -172,6 +192,25 @@ export function createVegetation(scenario: Scenario, ground: GroundSampler): Gro
     // un avión tiene envergadura y las alas sobresalen mucho del tren.
     if (pavimento?.hay(x, z)) continue;
     if (hayCiudad(x, z) && random() > 0.125) continue;
+    /*
+     * Y sobre la fotografía, solo donde la fotografía es verde. Un tejado
+     * fotografiado con un árbol de cuatro caras encima no es un árbol: es un
+     * error que se ve desde el aire.
+     */
+    const suelo = colorDelSuelo?.(x, z);
+    if (suelo && !esVerde(suelo)) continue;
+
+    /*
+     * **Y nada que asome por encima de las superficies de obstáculos.**
+     *
+     * La franja de pista ya estaba despejada, pero un lapacho de veinte metros
+     * a trescientos del umbral está bajo un techo de seis: sigue siendo un
+     * obstáculo en la aproximación aunque esté fuera de la franja. Ver
+     * `superficie-de-aproximacion.ts`.
+     */
+    const techo = techoSobreLaPista(x, z, scenario.runway);
+    if (Number.isFinite(techo) && height + ALTURA_TIPICA > runwayY + techo)
+      continue;
 
     // Manchas de bosque. La cuarta potencia es lo que separa el bosque del
     // claro: con un exponente suave sale un espolvoreado uniforme, y un
@@ -303,6 +342,22 @@ function slopeAt(ground: GroundSampler, x: number, z: number): number {
  * El delante de un rumbo en este mundo es `(sen h, −cos h)`, y el través es
  * `(cos h, sen h)`. De ahí salen las dos proyecciones.
  */
+/**
+ * Lo que mide un árbol de los de aquí, m. Para compararlo con el techo.
+ *
+ * Es una media generosa a propósito: más vale dejar un claro de más cerca del
+ * umbral que un lapacho asomando en la senda.
+ */
+const ALTURA_TIPICA = 14;
+
+/** ¿Es verde este trozo de fotografía? */
+function esVerde(c: { r: number; g: number; b: number }): boolean {
+  // El verde de una foto aérea al atardecer es oscuro y poco saturado, así que
+  // no se pide un verde de rotulador: se pide que el verde gane a los otros
+  // dos, que es lo que distingue un descampado de un tejado o de un asfalto.
+  return c.g > c.r * 1.02 && c.g > c.b * 1.02;
+}
+
 function nearRunway(x: number, z: number, scenario: Scenario, margen = 0): boolean {
   const { runway } = scenario;
   const { along, across } = enEjesDePista(x, z, runway.x, runway.z, runway.heading);
