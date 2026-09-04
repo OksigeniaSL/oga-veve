@@ -226,6 +226,8 @@ export function crearTeselas(
    * fiarse del dato en vez de medir lo que hay.
    */
   cotaNuestra: (x: number, z: number) => number,
+  /** A quién avisar si la fotografía no llega. Ver el `load-error` de abajo. */
+  alFallar?: (motivo: string) => void,
 ): Teselas | null {
   const aero = escenario.aerodrome;
   if (!clave || !aero) return null;
@@ -238,6 +240,34 @@ export function crearTeselas(
 
   const teselas = new TilesRenderer();
   teselas.registerPlugin(new GoogleCloudAuthPlugin({ apiToken: clave }));
+
+  /*
+   * **Y si la fotografía no llega, hay que decirlo.**
+   *
+   * Sin teselas el juego cae al mundo dibujado, y eso está bien —que falte un
+   * recurso externo no puede dejar a nadie sin volar—. Pero caía **en
+   * silencio**, y un juego que se degrada sin avisar no parece degradado:
+   * parece roto. Se perdió una tarde buscando en el código un fallo que no
+   * estaba ahí:
+   *
+   *     403 · satellite tiles and 3D tiles are not available
+   *           for your account and region
+   *
+   * O sea, ni la clave ni el ajuste ni el código: Google diciendo que no. Eso
+   * hay que saberlo desde dentro del juego, porque desde fuera es
+   * indistinguible de un fallo nuestro.
+   *
+   * Se avisa **una vez** y se sigue volando. Un error de red por tesela suelta
+   * es normal y no interesa a nadie; lo que interesa es que la fotografía no
+   * va a venir.
+   */
+  let avisado = false;
+  teselas.addEventListener("load-error", (e: unknown) => {
+    if (avisado) return;
+    avisado = true;
+    const error = (e as { error?: { message?: string } }).error;
+    alFallar?.(error?.message ?? "no se pudo cargar la fotografía");
+  });
   /*
    * **Cuánto detalle se pide**, en píxeles de error admitido.
    *

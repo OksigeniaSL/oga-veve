@@ -28,14 +28,14 @@
  * siguiente. Nadie quiere elegir el modo de pequeños.
  */
 
-import { TIERS, type Tier } from '../flight/tiers';
-import { LECCIONES, VUELTA, type Leccion } from '../flight/lecciones';
-import { missionsFor } from '../content/missions';
-import { objectiveTarget, type Mission } from '../missions/types';
-import { SCENARIOS, type Scenario } from '../world/scenarios';
-import { PROXIMAMENTE } from '../world/proximamente';
-import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from '../i18n';
-import { elegirMundo, mundoElegido } from './mundo';
+import { TIERS, type Tier } from "../flight/tiers";
+import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
+import { missionsFor } from "../content/missions";
+import { objectiveTarget, type Mission } from "../missions/types";
+import { SCENARIOS, type Scenario } from "../world/scenarios";
+import { PROXIMAMENTE } from "../world/proximamente";
+import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
+import { elegirMundo, mundoElegido } from "./mundo";
 
 /** Lo que el hangar devuelve cuando alguien le da al botón de despegar. */
 export interface Eleccion {
@@ -81,7 +81,7 @@ const panel = (cuerpo: string): string => `
 `;
 
 /** Guyrami: la ventanilla y nada más. Se vuela mirando fuera. */
-const GUYRAMI_SVG = panel('');
+const GUYRAMI_SVG = panel("");
 
 /**
  * Tukã: dibujos. Cada instrumento es una imagen, no un número.
@@ -136,14 +136,14 @@ const RUVICHA_SVG = panel(
       <path class="panel__aguja"
             d="M${cx} ${cy} l${(Math.sin(a) * 6.5).toFixed(1)} ${(-Math.cos(a) * 6.5).toFixed(1)}" />
       <circle class="panel__eje" cx="${cx}" cy="${cy}" r="1.5" />`;
-  }).join(''),
+  }).join(""),
 );
 
 const PANELES: Record<string, string> = {
   guyrami: GUYRAMI_SVG,
   tuka: TUKA_SVG,
   taguato: TAGUATO_SVG,
-  'taguato-ruvicha': RUVICHA_SVG,
+  "taguato-ruvicha": RUVICHA_SVG,
 };
 
 // ── El plano del aeródromo ───────────────────────────────────────────────
@@ -196,7 +196,8 @@ export function caja(escenario: Scenario): Caja {
     ]);
   }
 
-  if (!Number.isFinite(minX)) return { cx: 0, cy: 0, lado: escenario.runway.length };
+  if (!Number.isFinite(minX))
+    return { cx: 0, cy: 0, lado: escenario.runway.length };
   return {
     cx: (minX + maxX) / 2,
     cy: (minY + maxY) / 2,
@@ -252,14 +253,20 @@ function plano(escenario: Scenario, escala: number): string {
           `<line class="plano__umbral" x1="${p[0] - px}" y1="${-(p[1] - py)}"
                  x2="${p[0] + px}" y2="${-(p[1] + py)}" />`,
       )
-      .join('');
+      .join("");
   };
 
   if (!aero) {
     const { length, heading, width } = escenario.runway;
     const h = (heading * Math.PI) / 180;
-    const a: readonly [number, number] = [(-Math.sin(h) * length) / 2, (-Math.cos(h) * length) / 2];
-    const b: readonly [number, number] = [(Math.sin(h) * length) / 2, (Math.cos(h) * length) / 2];
+    const a: readonly [number, number] = [
+      (-Math.sin(h) * length) / 2,
+      (-Math.cos(h) * length) / 2,
+    ];
+    const b: readonly [number, number] = [
+      (Math.sin(h) * length) / 2,
+      (Math.cos(h) * length) / 2,
+    ];
     return `
       <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
            aria-hidden="true">
@@ -270,15 +277,19 @@ function plano(escenario: Scenario, escala: number): string {
 
   const rodaduras = aero.taxiways
     .filter((c) => c.path.length > 1)
-    .map((c) => `<polyline class="plano__rodadura" points="${c.path.map(aPantalla).join(' ')}" />`)
-    .join('');
+    .map(
+      (c) =>
+        `<polyline class="plano__rodadura" points="${c.path.map(aPantalla).join(" ")}" />`,
+    )
+    .join("");
 
   const plataformas = aero.aprons
     .filter((p) => p.polygon.length > 2)
     .map(
-      (p) => `<polygon class="plano__plataforma" points="${p.polygon.map(aPantalla).join(' ')}" />`,
+      (p) =>
+        `<polygon class="plano__plataforma" points="${p.polygon.map(aPantalla).join(" ")}" />`,
     )
-    .join('');
+    .join("");
 
   const pistas = aero.runways
     .filter((p) => p.centerline.length > 1)
@@ -287,11 +298,11 @@ function plano(escenario: Scenario, escala: number): string {
       const a = eje[0]!;
       const b = eje[eje.length - 1]!;
       return (
-        `<polyline class="plano__pista" points="${eje.map(aPantalla).join(' ')}" />` +
+        `<polyline class="plano__pista" points="${eje.map(aPantalla).join(" ")}" />` +
         umbrales(a, b, (p.widthM ?? 45) * 2.6)
       );
     })
-    .join('');
+    .join("");
 
   return `
     <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
@@ -302,14 +313,17 @@ function plano(escenario: Scenario, escala: number): string {
 
 /** El designador pintado en la cabecera, si el aeródromo lo trae. */
 export function designador(escenario: Scenario): string {
-  const nombres = Object.keys(escenario.aerodrome?.runways[0]?.thresholds ?? {});
+  const nombres = Object.keys(
+    escenario.aerodrome?.runways[0]?.thresholds ?? {},
+  );
   if (nombres.length >= 2) return `${nombres[0]}/${nombres[1]}`;
   // Los escenarios inventados sí calculan el número: es su rumbo magnético
   // partido por diez, que es de donde sale el número de una pista.
-  const mag = (escenario.runway.heading + escenario.magneticVariation + 360) % 360;
+  const mag =
+    (escenario.runway.heading + escenario.magneticVariation + 360) % 360;
   const n = Math.round(mag / 10) || 36;
   const otro = ((n + 17) % 36) + 1;
-  return `${String(n).padStart(2, '0')}/${String(otro).padStart(2, '0')}`;
+  return `${String(n).padStart(2, "0")}/${String(otro).padStart(2, "0")}`;
 }
 
 /**
@@ -320,7 +334,7 @@ export function designador(escenario: Scenario): string {
  * verde y Tenerife azul y roca, y por eso quien no lee los distingue.
  */
 function pieles(escenario: Scenario): { cielo: string; suelo: string } {
-  const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
+  const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
   const bandas = escenario.bands;
   return {
     cielo: hex(escenario.sky.zenith),
@@ -329,7 +343,7 @@ function pieles(escenario: Scenario): { cielo: string; suelo: string } {
 }
 
 /** El idioma en el formato que entiende `Intl`. */
-const idioma = (): string => (getLocale() === 'gug' ? 'es-PY' : getLocale());
+const idioma = (): string => (getLocale() === "gug" ? "es-PY" : getLocale());
 
 // ── La pantalla ──────────────────────────────────────────────────────────
 
@@ -364,7 +378,7 @@ function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
   const ficha =
     aero &&
     `<span class="plano__ficha"><b>${aero.id}</b>${
-      aero.elevationM != null ? `<i>${Math.round(aero.elevationM)} m</i>` : ''
+      aero.elevationM != null ? `<i>${Math.round(aero.elevationM)} m</i>` : ""
     }</span>`;
 
   return `
@@ -372,7 +386,7 @@ function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
             data-sitio="${escenario.id}"
             style="--cielo: ${cielo}; --suelo: ${suelo}">
-      <span class="ficha__lienzo">${ficha || ''}${plano(escenario, ESCALA)}</span>
+      <span class="ficha__lienzo">${ficha || ""}${plano(escenario, ESCALA)}</span>
       <span class="ficha__pie">
         <!--
           En dos filas. En una sola, «Valle de la Cordillera» y «Llanura del
@@ -396,7 +410,7 @@ function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
  * a los cuatro años.
  */
 const galones = (n: number): string =>
-  `<span class="ficha__galones" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
+  `<span class="ficha__galones" aria-hidden="true">${"<i></i>".repeat(n)}</span>`;
 
 function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
   return `
@@ -412,7 +426,6 @@ function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
       </span>
     </button>`;
 }
-
 
 /**
  * Los cuatro dibujos de lección.
@@ -442,7 +455,7 @@ const escena = (cuerpo: string): string => `
 /** Dar una vuelta: el avión arriba, y nada más. El paisaje es el premio. */
 const LEC_VUELTA = escena(`
   <path class="leccion__loma" d="M0 62 q22-12 40-2 q18 10 34-4 q16-13 46 2 v26 H0 Z" />
-  ${AVION('translate(60 26) rotate(-8)')}
+  ${AVION("translate(60 26) rotate(-8)")}
 `);
 
 /** Rodar: el avión sobre la raya amarilla, camino de la doble raya. */
@@ -450,21 +463,21 @@ const LEC_RODAJE = escena(`
   <path class="leccion__asfalto" d="M14 84 L44 46 h30 L58 84 Z" />
   <path class="leccion__amarilla" d="M40 84 L58 47" />
   <path class="leccion__doble" d="M22 74 h34 M26 79 h34" />
-  ${AVION('translate(52 60) rotate(-38) scale(1.15)')}
+  ${AVION("translate(52 60) rotate(-38) scale(1.15)")}
 `);
 
 /** Despegar: el avión subiendo desde la pista. */
 const LEC_DESPEGUE = escena(`
   <path class="leccion__asfalto" d="M0 84 L34 50 h26 L26 84 Z" />
   <path class="leccion__estela" d="M22 72 q26-14 52-34" />
-  ${AVION('translate(84 26) rotate(-26) scale(1.05)')}
+  ${AVION("translate(84 26) rotate(-26) scale(1.05)")}
 `);
 
 /** Aterrizar: el avión bajando a la pista, con su senda. */
 const LEC_ATERRIZAJE = escena(`
   <path class="leccion__asfalto" d="M52 84 L86 50 h26 L78 84 Z" />
   <path class="leccion__estela" d="M14 22 q34 18 70 34" />
-  ${AVION('translate(34 30) rotate(24) scale(1.05)')}
+  ${AVION("translate(34 30) rotate(24) scale(1.05)")}
 `);
 
 const DIBUJOS_LECCION: Record<string, string> = {
@@ -526,7 +539,10 @@ function ruta(escenario: Scenario, mision: Mission): [number, number][] {
 function largoDeRuta(puntos: readonly [number, number][]): number {
   let d = 0;
   for (let i = 1; i < puntos.length; i++) {
-    d += Math.hypot(puntos[i]![0] - puntos[i - 1]![0], puntos[i]![1] - puntos[i - 1]![1]);
+    d += Math.hypot(
+      puntos[i]![0] - puntos[i - 1]![0],
+      puntos[i]![1] - puntos[i - 1]![1],
+    );
   }
   const ultimo = puntos[puntos.length - 1]!;
   d += Math.hypot(ultimo[0] - puntos[0]![0], ultimo[1] - puntos[0]![1]);
@@ -540,7 +556,12 @@ function planoDeMision(puntos: readonly [number, number][]): string {
   const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
   // La ventana cuadra con el hueco de la tarjeta y deja un 20 % de margen,
   // para que un punto de paso no quede pegado al borde.
-  const alto = Math.max(Math.max(...ys) - Math.min(...ys), (Math.max(...xs) - Math.min(...xs)) * 0.6, 500) * 1.35;
+  const alto =
+    Math.max(
+      Math.max(...ys) - Math.min(...ys),
+      (Math.max(...xs) - Math.min(...xs)) * 0.6,
+      500,
+    ) * 1.35;
   const ancho = (alto * 5) / 3;
   const vb = `${cx - ancho / 2} ${cy - alto / 2} ${ancho} ${alto}`;
   const r = alto / 26;
@@ -549,11 +570,14 @@ function planoDeMision(puntos: readonly [number, number][]): string {
     <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
          aria-hidden="true" focusable="false">
       <polyline class="mision__ruta" fill="none"
-                points="${puntos.map((p) => `${p[0]},${p[1]}`).join(' ')}" />
+                points="${puntos.map((p) => `${p[0]},${p[1]}`).join(" ")}" />
       ${puntos
         .slice(1)
-        .map((p) => `<circle class="mision__parada" cx="${p[0]}" cy="${p[1]}" r="${r}" />`)
-        .join('')}
+        .map(
+          (p) =>
+            `<circle class="mision__parada" cx="${p[0]}" cy="${p[1]}" r="${r}" />`,
+        )
+        .join("")}
       <circle class="mision__casa" cx="${casa[0]}" cy="${casa[1]}" r="${r * 1.5}" />
     </svg>`;
 }
@@ -573,7 +597,7 @@ function fichaDeMision(
       <span class="ficha__pie">
         <span class="ficha__renglon">
           <span class="ficha__numero">${numero}</span>
-          <span class="ficha__dato">${largoDeRuta(puntos).toFixed(1).replace('.', ',')} km</span>
+          <span class="ficha__dato">${largoDeRuta(puntos).toFixed(1).replace(".", ",")} km</span>
         </span>
         <span class="ficha__nombre">${t(mision.nameKey)}</span>
       </span>
@@ -585,7 +609,7 @@ function fichaDeLeccion(leccion: Leccion, elegida: boolean): string {
     <button class="ficha ficha--leccion" type="button" role="radio"
             aria-checked="${elegida}" tabindex="${elegida ? 0 : -1}"
             data-leccion="${leccion.id}">
-      <span class="ficha__lienzo ficha__lienzo--panel">${DIBUJOS_LECCION[leccion.id] ?? ''}</span>
+      <span class="ficha__lienzo ficha__lienzo--panel">${DIBUJOS_LECCION[leccion.id] ?? ""}</span>
       <span class="ficha__pie">
         <span class="ficha__nombre">${t(`leccion.${leccion.id}` as never)}</span>
       </span>
@@ -618,7 +642,7 @@ function fichaProximamente(ciudad: string): string {
   return `
     <div class="ficha ficha--proyecto" aria-disabled="true">
       <span class="ficha__lienzo ficha__lienzo--proyecto">
-        <span class="ficha__proximamente">${t('hangar.proximamente')}</span>
+        <span class="ficha__proximamente">${t("hangar.proximamente")}</span>
       </span>
       <span class="ficha__pie">
         <span class="ficha__nombre">${ciudad}</span>
@@ -658,7 +682,7 @@ const trazo = (d: string): string =>
  */
 
 /** Los grupos, en el orden en que se leen. */
-const PAISES = ['inventado', 'py', 'es'] as const;
+const PAISES = ["inventado", "py", "es"] as const;
 
 /**
  * Las banderas, dibujadas a mano y no con emojis.
@@ -689,7 +713,7 @@ const BANDERAS: Record<(typeof PAISES)[number], string> = {
  * dice que falta algo.
  */
 function grupo(marca: string, titulo: string, tarjetas: string): string {
-  if (!tarjetas) return '';
+  if (!tarjetas) return "";
   return `
       <section class="hangar__grupo">
         <h3 class="hangar__grupo-nombre">${marca}${titulo}</h3>
@@ -709,8 +733,8 @@ function grupoDeSitios(pais: (typeof PAISES)[number], elegido: string): string {
   return grupo(
     bandera(pais),
     t(`hangar.pais.${pais}` as never),
-    hechos.map((e) => fichaDeSitio(e, e.id === elegido)).join('') +
-      pronto.map((p) => fichaProximamente(p.ciudad)).join(''),
+    hechos.map((e) => fichaDeSitio(e, e.id === elegido)).join("") +
+      pronto.map((p) => fichaProximamente(p.ciudad)).join(""),
   );
 }
 
@@ -733,7 +757,9 @@ const PASO_VOLVER = trazo('<path d="M15 5 8 12l7 7" />');
  * palabras: un tramo es una maniobra —el avión subiendo—, y una misión es un
  * camino con paradas.
  */
-const MARCA_TRAMOS = trazo('<path d="M3 19 q7-3 11-8 t7-7" /><path d="M14 4h7v7" />');
+const MARCA_TRAMOS = trazo(
+  '<path d="M3 19 q7-3 11-8 t7-7" /><path d="M14 4h7v7" />',
+);
 const MARCA_MISIONES = trazo(
   '<circle cx="5" cy="18" r="2.2" /><circle cx="19" cy="6" r="2.2" />' +
     '<path d="M7 17q5 1 6-4t6-6" stroke-dasharray="3 2.5" />',
@@ -758,18 +784,21 @@ const MARCA_MISIONES = trazo(
  * llanura inventados son sitios para practicar; un aeropuerto con su
  * designador, su cota y su nombre es un sitio al que se va.
  */
-const ALMACEN_RECIENTES = 'oga-veve:recientes';
+const ALMACEN_RECIENTES = "oga-veve:recientes";
 
 export function recientes(elegido: Scenario): Scenario[] {
   let ids: string[] = [];
   try {
-    ids = JSON.parse(localStorage.getItem(ALMACEN_RECIENTES) ?? '[]') as string[];
+    ids = JSON.parse(
+      localStorage.getItem(ALMACEN_RECIENTES) ?? "[]",
+    ) as string[];
   } catch {
     ids = [];
   }
   const vistos = [elegido];
   const anadir = (e: Scenario | undefined): void => {
-    if (e && vistos.length < 3 && !vistos.some((v) => v.id === e.id)) vistos.push(e);
+    if (e && vistos.length < 3 && !vistos.some((v) => v.id === e.id))
+      vistos.push(e);
   };
   for (const id of ids) anadir(SCENARIOS.find((e) => e.id === id));
   for (const e of SCENARIOS) if (e.aerodrome) anadir(e);
@@ -779,7 +808,9 @@ export function recientes(elegido: Scenario): Scenario[] {
 
 function apuntarReciente(id: string): void {
   try {
-    const ids = JSON.parse(localStorage.getItem(ALMACEN_RECIENTES) ?? '[]') as string[];
+    const ids = JSON.parse(
+      localStorage.getItem(ALMACEN_RECIENTES) ?? "[]",
+    ) as string[];
     const nuevos = [id, ...ids.filter((x) => x !== id)].slice(0, 6);
     localStorage.setItem(ALMACEN_RECIENTES, JSON.stringify(nuevos));
   } catch {
@@ -798,7 +829,7 @@ function apuntarReciente(id: string): void {
 const REPOSO_MS = 120000;
 
 /** Las pantallas del hangar. Una cada vez, y la de inicio no crece nunca. */
-type Pantalla = 'inicio' | 'donde' | 'que' | 'quien' | 'ajustes';
+type Pantalla = "inicio" | "donde" | "que" | "quien" | "ajustes";
 
 export function abrirHangar(
   root: HTMLElement,
@@ -808,7 +839,7 @@ export function abrirHangar(
   let tramo = inicial.tier;
   let leccion = inicial.leccion;
   let mision: Mission | null = null;
-  let pantalla: Pantalla = 'inicio';
+  let pantalla: Pantalla = "inicio";
   let reposo: ReturnType<typeof setTimeout> | null = null;
 
   /*
@@ -816,21 +847,33 @@ export function abrirHangar(
    * casas; el dibujado, la misma loma en tres planos planos. Es literalmente
    * lo que se ve al elegir uno u otro.
    */
+  /*
+   * **Los dos mundos, y tienen que distinguirse a un vistazo.**
+   *
+   * Eran dos rectángulos con un monte dentro y solo cambiaba el detalle: a
+   * veinticuatro píxeles y en gris, el mismo dibujo dos veces. «Los iconos
+   * tampoco ayudan a entender.»
+   *
+   * Lo que los separa no es el detalle del monte: es **de qué está hecho el
+   * mundo**. Uno es una fotografía —con su marco de foto y su sol— y el otro
+   * son polígonos, así que se dibuja con los triángulos a la vista y las
+   * aristas marcadas. Distinto contorno, distinta silueta, distinta idea.
+   */
   const MUNDO_FOTO = `
     <svg viewBox="0 0 28 20" aria-hidden="true">
-      <rect x="1" y="1" width="26" height="18" rx="3" fill="currentColor" opacity=".22" />
-      <path d="M1 14 L8 8 L13 12 L19 5 L27 13 V17 a2 2 0 0 1-2 2 H3 a2 2 0 0 1-2-2 Z"
-            fill="currentColor" />
-      <circle cx="21" cy="5.5" r="2.4" fill="currentColor" />
-      <path d="M4 16 h4 M11 16.5 h6" stroke="currentColor" stroke-width="1.1"
-            stroke-linecap="round" opacity=".55" />
+      <rect x="1" y="1" width="26" height="18" rx="2" fill="none"
+            stroke="currentColor" stroke-width="1.6" />
+      <path d="M2.5 15.5 L9 9 L13.5 13 L18.5 7.5 L25.5 14.5 V16.6
+               a1 1 0 0 1-1 1 H3.5 a1 1 0 0 1-1-1 Z" fill="currentColor" />
+      <circle cx="20.5" cy="5.5" r="2.2" fill="currentColor" />
     </svg>`;
   const MUNDO_DIBUJADO = `
     <svg viewBox="0 0 28 20" aria-hidden="true">
-      <rect x="1" y="1" width="26" height="18" rx="3" fill="currentColor" opacity=".22" />
-      <path d="M1 17 L9 7 L15 17 Z" fill="currentColor" />
-      <path d="M12 17 L20 9 L27 17 Z" fill="currentColor" opacity=".7" />
-      <circle cx="22" cy="5.5" r="2.2" fill="currentColor" />
+      <path d="M2 17 L9 5 L16 17 Z M13 17 L19.5 8 L26 17 Z"
+            fill="none" stroke="currentColor" stroke-width="1.7"
+            stroke-linejoin="round" />
+      <path d="M9 5 L9 17 M19.5 8 L19.5 17" stroke="currentColor"
+            stroke-width="1.1" opacity=".5" />
     </svg>`;
 
   const pintar = (): void => {
@@ -845,7 +888,7 @@ export function abrirHangar(
         <h1 class="hangar__marca">Óga Veve</h1>
 
         ${
-          pantalla === 'inicio'
+          pantalla === "inicio"
             ? `
         <!--
           **Se abre listo para volar, no preguntando.**
@@ -856,32 +899,32 @@ export function abrirHangar(
           cambiar algo es entrar a cambiarlo.
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-seguimos">
-          <h2 class="hangar__pregunta" id="hangar-seguimos">${t('hangar.seguimos')}</h2>
+          <h2 class="hangar__pregunta" id="hangar-seguimos">${t("hangar.seguimos")}</h2>
           <div class="hangar__fila hangar__fila--tres" role="radiogroup"
                aria-labelledby="hangar-seguimos">
             ${recientes(sitio)
               .map((e) => fichaDeSitio(e, e.id === sitio.id))
-              .join('')}
+              .join("")}
           </div>
-          <p class="hangar__reposo">${t('hangar.reposo')}</p>
+          <p class="hangar__reposo">${t("hangar.reposo")}</p>
         </section>`
-            : ''
+            : ""
         }
 
         ${
-          pantalla === 'donde'
+          pantalla === "donde"
             ? `
         <section class="hangar__bloque" aria-labelledby="hangar-sitio">
-          <h2 class="hangar__pregunta" id="hangar-sitio">${t('hangar.donde')}</h2>
+          <h2 class="hangar__pregunta" id="hangar-sitio">${t("hangar.donde")}</h2>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-sitio">
-            ${PAISES.map((p) => grupoDeSitios(p, sitio.id)).join('')}
+            ${PAISES.map((p) => grupoDeSitios(p, sitio.id)).join("")}
           </div>
         </section>`
-            : ''
+            : ""
         }
 
         ${
-          pantalla === 'que'
+          pantalla === "que"
             ? `
         <!--
           **A qué se juega dice también desde dónde se empieza.**
@@ -890,39 +933,43 @@ export function abrirHangar(
           hace falta preguntarlo aparte: ya está dicho al elegir a qué se juega.
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-leccion">
-          <h2 class="hangar__pregunta" id="hangar-leccion">${t('hangar.aque')}</h2>
+          <h2 class="hangar__pregunta" id="hangar-leccion">${t("hangar.aque")}</h2>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-leccion">
             ${grupo(
               MARCA_TRAMOS,
-              t('hangar.tramos'),
-              LECCIONES.map((l) => fichaDeLeccion(l, !mision && l.id === leccion.id)).join(''),
+              t("hangar.tramos"),
+              LECCIONES.map((l) =>
+                fichaDeLeccion(l, !mision && l.id === leccion.id),
+              ).join(""),
             )}
             ${grupo(
               MARCA_MISIONES,
-              t('hangar.misiones'),
+              t("hangar.misiones"),
               missionsFor(sitio.id)
-                .map((m, i) => fichaDeMision(sitio, m, i + 1, mision?.id === m.id))
-                .join(''),
+                .map((m, i) =>
+                  fichaDeMision(sitio, m, i + 1, mision?.id === m.id),
+                )
+                .join(""),
             )}
           </div>
         </section>`
-            : ''
+            : ""
         }
 
         ${
-          pantalla === 'quien'
+          pantalla === "quien"
             ? `
         <section class="hangar__bloque" aria-labelledby="hangar-tramo">
-          <h2 class="hangar__pregunta" id="hangar-tramo">${t('hangar.como')}</h2>
+          <h2 class="hangar__pregunta" id="hangar-tramo">${t("hangar.como")}</h2>
           <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-tramo">
-            ${TIERS.map((tier, i) => fichaDeTramo(tier, i, tier.id === tramo.id)).join('')}
+            ${TIERS.map((tier, i) => fichaDeTramo(tier, i, tier.id === tramo.id)).join("")}
           </div>
         </section>`
-            : ''
+            : ""
         }
 
         ${
-          pantalla === 'ajustes'
+          pantalla === "ajustes"
             ? `
         <!--
           **Lo que se decide una vez, fuera del camino.**
@@ -932,39 +979,39 @@ export function abrirHangar(
           años no entra aquí nunca.
         -->
         <section class="hangar__bloque" aria-labelledby="hangar-ajustes">
-          <h2 class="hangar__pregunta" id="hangar-ajustes">${t('hangar.ajustes')}</h2>
+          <h2 class="hangar__pregunta" id="hangar-ajustes">${t("hangar.ajustes")}</h2>
           <div class="hangar__ajustes">
             <div class="ajuste">
-              <span class="ajuste__titulo">${t('language.label')}</span>
-              <div class="hangar__idiomas" role="radiogroup" aria-label="${t('language.label')}">
+              <span class="ajuste__titulo">${t("language.label")}</span>
+              <div class="hangar__idiomas" role="radiogroup" aria-label="${t("language.label")}">
                 ${LOCALES.map(
                   (l) => `
-                <button class="idioma" type="button" role="radio" lang="${l === 'gug' ? 'gn' : l}"
+                <button class="idioma" type="button" role="radio" lang="${l === "gug" ? "gn" : l}"
                         aria-checked="${l === getLocale()}" tabindex="${l === getLocale() ? 0 : -1}"
                         data-idioma="${l}">${LOCALE_NAMES[l]}</button>`,
-                ).join('')}
+                ).join("")}
               </div>
             </div>
             <div class="ajuste">
-              <span class="ajuste__titulo">${t('mundo.label')}</span>
-              <div class="hangar__mundos" role="radiogroup" aria-label="${t('mundo.label')}">
-                ${(['foto', 'dibujado'] as const)
+              <span class="ajuste__titulo">${t("mundo.label")}</span>
+              <div class="hangar__mundos" role="radiogroup" aria-label="${t("mundo.label")}">
+                ${(["foto", "dibujado"] as const)
                   .map(
                     (m) => `
                 <button class="mundo" type="button" role="radio" data-mundo="${m}"
                         aria-checked="${m === mundoElegido()}"
                         tabindex="${m === mundoElegido() ? 0 : -1}"
-                        aria-label="${t(m === 'foto' ? 'mundo.foto' : 'mundo.dibujado')}"
-                        title="${t(m === 'foto' ? 'mundo.foto' : 'mundo.dibujado')}">
-                  ${m === 'foto' ? MUNDO_FOTO : MUNDO_DIBUJADO}
+                        aria-label="${t(m === "foto" ? "mundo.foto" : "mundo.dibujado")}"
+                        title="${t(m === "foto" ? "mundo.foto" : "mundo.dibujado")}">
+                  ${m === "foto" ? MUNDO_FOTO : MUNDO_DIBUJADO}
                 </button>`,
                   )
-                  .join('')}
+                  .join("")}
               </div>
             </div>
           </div>
         </section>`
-            : ''
+            : ""
         }
       </div>
 
@@ -981,19 +1028,24 @@ export function abrirHangar(
       -->
       <div class="hangar__barra">
         ${
-          pantalla === 'inicio'
+          pantalla === "inicio"
             ? `
         <div class="hangar__pasos">
           ${[
-            ['donde', t('hangar.donde'), t(sitio.nameKey as never), PASO_DONDE],
+            ["donde", t("hangar.donde"), t(sitio.nameKey as never), PASO_DONDE],
             [
-              'que',
-              t('hangar.aque'),
+              "que",
+              t("hangar.aque"),
               mision ? t(mision.nameKey) : t(`leccion.${leccion.id}` as never),
               PASO_QUE,
             ],
-            ['quien', t('hangar.como'), tramo.name, PASO_QUIEN],
-            ['ajustes', t('hangar.ajustes'), LOCALE_NAMES[getLocale()], PASO_AJUSTES],
+            ["quien", t("hangar.como"), tramo.name, PASO_QUIEN],
+            [
+              "ajustes",
+              t("hangar.ajustes"),
+              LOCALE_NAMES[getLocale()],
+              PASO_AJUSTES,
+            ],
           ]
             .map(
               ([id, que, valor, icono]) => `
@@ -1005,19 +1057,19 @@ export function abrirHangar(
             </span>
           </button>`,
             )
-            .join('')}
+            .join("")}
         </div>`
             : `
         <button class="paso paso--volver" type="button" data-pantalla="inicio">
           ${PASO_VOLVER}
           <span class="paso__texto">
-            <span class="paso__valor">${t('hangar.atras')}</span>
+            <span class="paso__valor">${t("hangar.atras")}</span>
           </span>
         </button>`
         }
         <button class="hangar__despegar" type="button" data-despegar>
           ${DESPEGA}
-          <span>${t('hangar.despegar')}</span>
+          <span>${t("hangar.despegar")}</span>
         </button>
       </div>
     `;
@@ -1029,16 +1081,16 @@ export function abrirHangar(
   return new Promise<Eleccion>((resolve) => {
     /** Elegir una ficha: repintar y devolverle el foco a la que se eligió. */
     const elegir = (
-      atributo: 'data-sitio' | 'data-tramo' | 'data-leccion',
+      atributo: "data-sitio" | "data-tramo" | "data-leccion",
       id: string,
     ): void => {
-      if (atributo === 'data-sitio') {
+      if (atributo === "data-sitio") {
         sitio = SCENARIOS.find((e) => e.id === id) ?? sitio;
         // Una misión es de un sitio. Al cambiar de aeropuerto deja de valer, y
         // dejarla puesta sería mandar a alguien a un cerro que no está ahí.
         mision = null;
-      }
-      else if (atributo === 'data-tramo') tramo = TIERS.find((x) => x.id === id) ?? tramo;
+      } else if (atributo === "data-tramo")
+        tramo = TIERS.find((x) => x.id === id) ?? tramo;
       else {
         leccion = LECCIONES.find((x) => x.id === id) ?? leccion;
         // Elegir un tramo es elegir practicar, no viajar.
@@ -1061,28 +1113,28 @@ export function abrirHangar(
     const aplazarReposo = (): void => {
       if (reposo !== null) clearTimeout(reposo);
       reposo = setTimeout(() => {
-        if (pantalla !== 'inicio') {
-          pantalla = 'inicio';
+        if (pantalla !== "inicio") {
+          pantalla = "inicio";
           pintar();
         }
       }, REPOSO_MS);
     };
     aplazarReposo();
-    root.addEventListener('pointerdown', aplazarReposo);
-    root.addEventListener('keydown', aplazarReposo);
+    root.addEventListener("pointerdown", aplazarReposo);
+    root.addEventListener("keydown", aplazarReposo);
 
-    root.addEventListener('click', (event) => {
-      const boton = (event.target as HTMLElement | null)?.closest('button');
+    root.addEventListener("click", (event) => {
+      const boton = (event.target as HTMLElement | null)?.closest("button");
       if (!boton) return;
 
-      const aDonde = boton.getAttribute('data-pantalla');
+      const aDonde = boton.getAttribute("data-pantalla");
       if (aDonde) {
         pantalla = aDonde as Pantalla;
         pintar();
         return;
       }
 
-      const idIdioma = boton.getAttribute('data-idioma');
+      const idIdioma = boton.getAttribute("data-idioma");
       if (idIdioma) {
         setLocale(idIdioma as (typeof LOCALES)[number]);
         pintar();
@@ -1090,59 +1142,59 @@ export function abrirHangar(
         return;
       }
 
-      const idSitio = boton.getAttribute('data-sitio');
-      const idMundo = boton.getAttribute('data-mundo');
-      if (idMundo === 'foto' || idMundo === 'dibujado') {
+      const idSitio = boton.getAttribute("data-sitio");
+      const idMundo = boton.getAttribute("data-mundo");
+      if (idMundo === "foto" || idMundo === "dibujado") {
         elegirMundo(idMundo);
         pintar();
         return;
       }
       if (idSitio) {
-        elegir('data-sitio', idSitio);
-        if (pantalla === 'donde') {
-          pantalla = 'inicio';
+        elegir("data-sitio", idSitio);
+        if (pantalla === "donde") {
+          pantalla = "inicio";
           pintar();
         }
         return;
       }
 
-      const idTramo = boton.getAttribute('data-tramo');
+      const idTramo = boton.getAttribute("data-tramo");
       if (idTramo) {
-        elegir('data-tramo', idTramo);
-        if (pantalla === 'quien') {
-          pantalla = 'inicio';
+        elegir("data-tramo", idTramo);
+        if (pantalla === "quien") {
+          pantalla = "inicio";
           pintar();
         }
         return;
       }
 
-      const idMision = boton.getAttribute('data-mision');
+      const idMision = boton.getAttribute("data-mision");
       if (idMision) {
         mision = missionsFor(sitio.id).find((m) => m.id === idMision) ?? null;
         // Una misión empieza despegando, así que se vuela con la lección de
         // dar una vuelta: en la pista, con el motor en marcha y sin guías por
         // medio. Lo que guía en una misión es la misión.
         if (mision) leccion = VUELTA;
-        pantalla = 'inicio';
+        pantalla = "inicio";
         pintar();
         return;
       }
 
-      const idLeccion = boton.getAttribute('data-leccion');
+      const idLeccion = boton.getAttribute("data-leccion");
       if (idLeccion) {
-        elegir('data-leccion', idLeccion);
-        if (pantalla === 'que') {
-          pantalla = 'inicio';
+        elegir("data-leccion", idLeccion);
+        if (pantalla === "que") {
+          pantalla = "inicio";
           pintar();
         }
         return;
       }
 
-      if (boton.hasAttribute('data-despegar')) {
+      if (boton.hasAttribute("data-despegar")) {
         if (reposo !== null) clearTimeout(reposo);
         apuntarReciente(sitio.id);
         root.hidden = true;
-        root.innerHTML = '';
+        root.innerHTML = "";
         resolve({ scenario: sitio, tier: tramo, leccion, mision });
       }
     });
@@ -1155,23 +1207,28 @@ export function abrirHangar(
      * tarjetas aunque ya sepa cuál quiere. Con flechas son dos: elegir sitio,
      * tabular, elegir tramo, tabular.
      */
-    root.addEventListener('keydown', (event) => {
-      const paso = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+    root.addEventListener("keydown", (event) => {
+      const paso = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[
+        event.key
+      ];
       if (paso === undefined) return;
-      const boton = (event.target as HTMLElement | null)?.closest('button');
+      const boton = (event.target as HTMLElement | null)?.closest("button");
       const grupo = boton?.closest('[role="radiogroup"]');
       if (!boton || !grupo) return;
       event.preventDefault();
 
-      const tarjetas = [...grupo.querySelectorAll<HTMLElement>('[role="radio"]')];
+      const tarjetas = [
+        ...grupo.querySelectorAll<HTMLElement>('[role="radio"]'),
+      ];
       const i = tarjetas.indexOf(boton as HTMLElement);
       // Da la vuelta al llegar al final, que es lo que hace un grupo de radio.
-      const siguiente = tarjetas[(i + paso + tarjetas.length) % tarjetas.length];
-      const atributo = siguiente?.hasAttribute('data-sitio')
-        ? 'data-sitio'
-        : siguiente?.hasAttribute('data-leccion')
-          ? 'data-leccion'
-          : 'data-tramo';
+      const siguiente =
+        tarjetas[(i + paso + tarjetas.length) % tarjetas.length];
+      const atributo = siguiente?.hasAttribute("data-sitio")
+        ? "data-sitio"
+        : siguiente?.hasAttribute("data-leccion")
+          ? "data-leccion"
+          : "data-tramo";
       const id = siguiente?.getAttribute(atributo);
       if (id) elegir(atributo, id);
     });

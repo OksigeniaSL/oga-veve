@@ -22,6 +22,7 @@ export const EN: Dictionary = {
   'hud.heading': 'Heading',
   'hud.throttleDown': 'Less power',
   'hud.throttleUp': 'More power',
+  'hud.sinFoto': 'No world photos today. You are flying the drawn world.',
   'hud.throttle': 'Throttle',
   'hud.vspeed': 'Vertical speed',
   'hud.stall': 'Stall! Lower the nose',
