@@ -42,6 +42,15 @@ export interface Tier {
   instruments: 'none' | 'pictorial' | 'numeric' | 'full';
   /** Unidades: métricas para los pequeños, aeronáuticas para los mayores. */
   units: 'metric' | 'aeronautical';
+  /**
+   * Si sale el coche del «sígame» a llevarte por las calles de rodaje.
+   *
+   * Es la versión de cuatro años del rodaje complicado: **no hay que leer un
+   * plano, hay que seguir a un coche**. Y la versión de catorce es que el
+   * coche ya no viene y hay que saber ir solo, que es exactamente lo que pasa
+   * en un aeropuerto de verdad cuando el piloto conoce el campo.
+   */
+  sigueme: boolean;
 }
 
 export const GUYRAMI: Tier = {
@@ -55,6 +64,7 @@ export const GUYRAMI: Tier = {
   assists: FULL_ASSISTS,
   instruments: 'none',
   units: 'metric',
+  sigueme: true,
 };
 
 export const TUKA: Tier = {
@@ -71,6 +81,9 @@ export const TUKA: Tier = {
   assists: { ...FULL_ASSISTS, taxiAssist: 0.65 },
   instruments: 'pictorial',
   units: 'metric',
+  // Todavía viene, pero aquí ya hay raya amarilla y letras que leer: el coche
+  // es la red, no el camino.
+  sigueme: true,
 };
 
 export const TAGUATO: Tier = {
@@ -95,6 +108,9 @@ export const TAGUATO: Tier = {
   },
   instruments: 'numeric',
   units: 'metric',
+  // Aquí se acabó: el plano de rodaje es la lección, y con un coche delante no
+  // hay plano que aprender.
+  sigueme: false,
 };
 
 export const TAGUATO_RUVICHA: Tier = {
@@ -105,6 +121,7 @@ export const TAGUATO_RUVICHA: Tier = {
   assists: NO_ASSISTS,
   instruments: 'full',
   units: 'aeronautical',
+  sigueme: false,
 };
 
 export const TIERS: readonly Tier[] = [GUYRAMI, TUKA, TAGUATO, TAGUATO_RUVICHA];
