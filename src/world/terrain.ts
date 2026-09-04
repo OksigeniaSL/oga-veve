@@ -13,6 +13,7 @@
  */
 
 import {
+  type Texture,
   BufferAttribute,
   BufferGeometry,
   Color,
@@ -23,12 +24,17 @@ import {
   Mesh,
   MeshLambertMaterial,
   PlaneGeometry,
-} from 'three';
-import { ValueNoise2D } from './noise';
-import { createRunwayMarkings } from './runway-markings';
-import { aLaPolilinea, createAerodrome, type Aerodrome, type Punto } from './aerodrome';
-import { delante } from './rumbo';
-import { VECES_LEJOS, type Scenario } from './scenarios';
+} from "three";
+import { ValueNoise2D } from "./noise";
+import { createRunwayMarkings } from "./runway-markings";
+import {
+  aLaPolilinea,
+  createAerodrome,
+  type Aerodrome,
+  type Punto,
+} from "./aerodrome";
+import { delante } from "./rumbo";
+import { VECES_LEJOS, type Scenario } from "./scenarios";
 
 /**
  * Dirección desde la que viene la luz, derivada del sol del escenario.
@@ -65,8 +71,13 @@ export function cabeceraEnUso(escenario: Scenario): string | null {
     if (!otro?.xy) continue;
     // El rumbo de salida desde este umbral es el que va hacia el otro.
     const rumbo =
-      ((Math.atan2(otro.xy[0] - u.xy[0], -(-otro.xy[1] - -u.xy[1])) * 180) / Math.PI + 360) % 360;
-    const diferencia = Math.abs(((rumbo - escenario.runway.heading + 540) % 360) - 180);
+      ((Math.atan2(otro.xy[0] - u.xy[0], -(-otro.xy[1] - -u.xy[1])) * 180) /
+        Math.PI +
+        360) %
+      360;
+    const diferencia = Math.abs(
+      ((rumbo - escenario.runway.heading + 540) % 360) - 180,
+    );
     if (diferencia < 90) return nombre;
   }
   return null;
@@ -105,9 +116,15 @@ export class Terrain {
       // metros, así que el avión aparecía seis metros en el aire y se caía
       // nada más empezar.
       flattenAerodrome(this.heights, scenario, scenario.aerodrome);
-      this.runwayElevationBase = this.sampleHeight(scenario.runway.x, scenario.runway.z);
+      this.runwayElevationBase = this.sampleHeight(
+        scenario.runway.x,
+        scenario.runway.z,
+      );
     } else {
-      this.runwayElevationBase = this.sampleHeight(scenario.runway.x, scenario.runway.z);
+      this.runwayElevationBase = this.sampleHeight(
+        scenario.runway.x,
+        scenario.runway.z,
+      );
       flattenRunway(this.heights, scenario, this.runwayElevation);
     }
 
@@ -122,7 +139,10 @@ export class Terrain {
         createAerodrome(
           scenario.aerodrome,
           this.runwayElevation,
-          { de: scenario.meteo?.vientoDe ?? null, kt: scenario.meteo?.vientoKt ?? 0 },
+          {
+            de: scenario.meteo?.vientoDe ?? null,
+            kt: scenario.meteo?.vientoKt ?? 0,
+          },
           cabeceraEnUso(scenario),
         ),
       );
@@ -162,7 +182,8 @@ export class Terrain {
     lado: number,
   ): number {
     const { resolution, step, half } = this;
-    const desde = (v: number): number => Math.max(0, Math.floor((v - lado / 2 + half) / step));
+    const desde = (v: number): number =>
+      Math.max(0, Math.floor((v - lado / 2 + half) / step));
     const hasta = (v: number): number =>
       Math.min(resolution - 1, Math.ceil((v + lado / 2 + half) / step));
 
@@ -232,7 +253,8 @@ export class Terrain {
    */
   suavizar(centro: readonly [number, number], lado: number, pasadas = 1): void {
     const { resolution, step, half, heights } = this;
-    const desde = (v: number): number => Math.max(1, Math.floor((v - lado / 2 + half) / step));
+    const desde = (v: number): number =>
+      Math.max(1, Math.floor((v - lado / 2 + half) / step));
     const hasta = (v: number): number =>
       Math.min(resolution - 2, Math.ceil((v + lado / 2 + half) / step));
     const c0 = desde(centro[0]);
@@ -248,7 +270,8 @@ export class Terrain {
         for (let c = c0; c <= c1; c++) {
           let suma = 0;
           for (let df = -1; df <= 1; df++) {
-            for (let dc = -1; dc <= 1; dc++) suma += antes[(f + df) * resolution + (c + dc)]!;
+            for (let dc = -1; dc <= 1; dc++)
+              suma += antes[(f + df) * resolution + (c + dc)]!;
           }
           heights[f * resolution + c] = suma / 9;
         }
@@ -256,9 +279,14 @@ export class Terrain {
     }
   }
 
-  alisarPicos(centro: readonly [number, number], lado: number, umbral: number): number {
+  alisarPicos(
+    centro: readonly [number, number],
+    lado: number,
+    umbral: number,
+  ): number {
     const { resolution, step, half, heights } = this;
-    const desde = (v: number): number => Math.max(1, Math.floor((v - lado / 2 + half) / step));
+    const desde = (v: number): number =>
+      Math.max(1, Math.floor((v - lado / 2 + half) / step));
     const hasta = (v: number): number =>
       Math.min(resolution - 2, Math.ceil((v + lado / 2 + half) / step));
 
@@ -324,12 +352,20 @@ export class Terrain {
     perfil: ((t: number) => number) | null = null,
   ): void {
     if (!escenario.aerodrome) return;
-    flattenAerodrome(this.heights, escenario, escenario.aerodrome, alzado, perfil);
+    flattenAerodrome(
+      this.heights,
+      escenario,
+      escenario.aerodrome,
+      alzado,
+      perfil,
+    );
   }
 
   rehacerAerodromo(escenario: Scenario): void {
     if (!escenario.aerodrome) return;
-    const viejo = this.group.getObjectByName(`aerodromo:${escenario.aerodrome.id}`);
+    const viejo = this.group.getObjectByName(
+      `aerodromo:${escenario.aerodrome.id}`,
+    );
     if (viejo) {
       viejo.traverse((o) => {
         if (o instanceof Mesh) {
@@ -345,7 +381,10 @@ export class Terrain {
       createAerodrome(
         escenario.aerodrome,
         this.runwayElevation,
-        { de: escenario.meteo?.vientoDe ?? null, kt: escenario.meteo?.vientoKt ?? 0 },
+        {
+          de: escenario.meteo?.vientoDe ?? null,
+          kt: escenario.meteo?.vientoKt ?? 0,
+        },
         cabeceraEnUso(escenario),
         // Lo que haya subido el mundo al llegar la fotografía. Sin esto, el
         // aeródromo se reconstruye en el datum viejo y queda enterrado.
@@ -381,14 +420,19 @@ export class Terrain {
    */
   private sueloLejano: ((x: number, z: number) => number | null) | null = null;
 
-  ponerSueloLejano(fuente: ((x: number, z: number) => number | null) | null): void {
+  ponerSueloLejano(
+    fuente: ((x: number, z: number) => number | null) | null,
+  ): void {
     this.sueloLejano = fuente;
   }
 
   sampleHeight(x: number, z: number): number {
     // Fuera del mapa, si hay quien sepa qué hay ahí, se le pregunta. Dentro no
     // se pregunta nunca: esto se llama doscientas cuarenta veces por segundo.
-    if (this.sueloLejano && (Math.abs(x) > this.half || Math.abs(z) > this.half)) {
+    if (
+      this.sueloLejano &&
+      (Math.abs(x) > this.half || Math.abs(z) > this.half)
+    ) {
       const fuera = this.sueloLejano(x, z);
       if (fuera !== null) return fuera;
     }
@@ -417,6 +461,40 @@ export class Terrain {
     return Math.max(this.sampleHeight(x, z), this.scenario.waterLevel);
   }
 
+  /**
+   * Le pone al terreno la ortofoto encima.
+   *
+   * Se calculan las coordenadas de textura **desde la posición de cada
+   * vértice**, no desde un índice de rejilla: el terreno se moldea y se
+   * reasienta, así que lo único de fiar es dónde ha acabado cada punto.
+   *
+   * Y se apagan los colores por vértice. Si se dejaran, el color del relieve
+   * multiplicaría a la fotografía y el mundo saldría teñido de verde — que es
+   * exactamente lo que se quiere quitar.
+   *
+   * Si no hay ortofoto no se llama a esto y el terreno sigue con sus bandas,
+   * que es lo que había antes y sigue funcionando.
+   */
+  ponerOrtofoto(orto: {
+    textura: Texture;
+    uv(x: number, z: number): { u: number; v: number };
+  }): void {
+    const malla = this.group.getObjectByName("terreno") as Mesh | undefined;
+    if (!malla) return;
+    const pos = malla.geometry.getAttribute("position");
+    const uvs = new Float32Array(pos.count * 2);
+    for (let i = 0; i < pos.count; i++) {
+      const { u, v } = orto.uv(pos.getX(i), pos.getZ(i));
+      uvs[i * 2] = u;
+      uvs[i * 2 + 1] = v;
+    }
+    malla.geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
+    const mat = malla.material as MeshLambertMaterial;
+    mat.map = orto.textura;
+    mat.vertexColors = false;
+    mat.needsUpdate = true;
+  }
+
   dispose(): void {
     this.group.traverse((object) => {
       if (object instanceof Mesh) {
@@ -435,7 +513,9 @@ export class Terrain {
     const vertexCount = resolution * resolution;
     const positions = new Float32Array(vertexCount * 3);
     const colours = new Float32Array(vertexCount * 3);
-    const indices = new Uint32Array(this.scenario.segments * this.scenario.segments * 6);
+    const indices = new Uint32Array(
+      this.scenario.segments * this.scenario.segments * 6,
+    );
 
     const tint = new Color();
     // Ruido de color, aparte del de relieve y a frecuencia mucho más baja:
@@ -491,14 +571,17 @@ export class Terrain {
     }
 
     const geometry = new BufferGeometry();
-    geometry.setAttribute('position', new BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new BufferAttribute(colours, 3));
+    geometry.setAttribute("position", new BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new BufferAttribute(colours, 3));
     geometry.setIndex(new BufferAttribute(indices, 1));
     geometry.computeVertexNormals();
     geometry.computeBoundingSphere();
 
-    const mesh = new Mesh(geometry, new MeshLambertMaterial({ vertexColors: true }));
-    mesh.name = 'terreno';
+    const mesh = new Mesh(
+      geometry,
+      new MeshLambertMaterial({ vertexColors: true }),
+    );
+    mesh.name = "terreno";
     mesh.matrixAutoUpdate = false;
     return mesh;
   }
@@ -586,7 +669,14 @@ export class Terrain {
         const dz = (cota(fila + 1, col) - cota(fila - 1, col)) / (2 * paso);
         const pendiente = Math.min(1, Math.hypot(dx, dz));
         const luz = clamp01(0.55 + (-dx * sol.x - dz * sol.z + sol.y) * 0.45);
-        colourFor(h, pendiente, this.scenario, manchas.fbm(x * escala, z * escala, 3), luz, tinte);
+        colourFor(
+          h,
+          pendiente,
+          this.scenario,
+          manchas.fbm(x * escala, z * escala, 3),
+          luz,
+          tinte,
+        );
         colores[i * 3] = tinte.r;
         colores[i * 3 + 1] = tinte.g;
         colores[i * 3 + 2] = tinte.b;
@@ -606,14 +696,17 @@ export class Terrain {
     }
 
     const geo = new BufferGeometry();
-    geo.setAttribute('position', new BufferAttribute(posiciones, 3));
-    geo.setAttribute('color', new BufferAttribute(colores, 3));
+    geo.setAttribute("position", new BufferAttribute(posiciones, 3));
+    geo.setAttribute("color", new BufferAttribute(colores, 3));
     geo.setIndex(indices);
     geo.computeVertexNormals();
     geo.computeBoundingSphere();
 
-    const malla = new Mesh(geo, new MeshLambertMaterial({ vertexColors: true }));
-    malla.name = 'horizonte';
+    const malla = new Mesh(
+      geo,
+      new MeshLambertMaterial({ vertexColors: true }),
+    );
+    malla.name = "horizonte";
     malla.matrixAutoUpdate = false;
     return malla;
   }
@@ -623,7 +716,8 @@ export class Terrain {
     // mapa fino se acababa a doce kilómetros y a partir de ahí el océano era
     // una llanura verde.
     const lado =
-      this.scenario.size * (this.scenario.relieveLejano ? VECES_LEJOS * 1.05 : 1.4);
+      this.scenario.size *
+      (this.scenario.relieveLejano ? VECES_LEJOS * 1.05 : 1.4);
     const geometry = new PlaneGeometry(lado, lado);
     geometry.rotateX(-Math.PI / 2);
     const mesh = new Mesh(
@@ -635,7 +729,7 @@ export class Terrain {
       }),
     );
     mesh.position.y = this.scenario.waterLevel;
-    mesh.name = 'agua';
+    mesh.name = "agua";
     mesh.matrixAutoUpdate = false;
     mesh.updateMatrix();
     return mesh;
@@ -644,13 +738,16 @@ export class Terrain {
   private buildRunway(): Group {
     const { runway } = this.scenario;
     const group = new Group();
-    group.name = 'pista';
+    group.name = "pista";
 
     const surface = new PlaneGeometry(runway.width, runway.length);
     surface.rotateX(-Math.PI / 2);
     // Lambert y no Basic: con material sin iluminar la pista no compartía la
     // luz del paisaje y se leía como una mancha de barro plana pegada encima.
-    const asphalt = new Mesh(surface, new MeshLambertMaterial({ color: 0x7c7268 }));
+    const asphalt = new Mesh(
+      surface,
+      new MeshLambertMaterial({ color: 0x7c7268 }),
+    );
     group.add(asphalt);
 
     // Marcas del eje, cada cincuenta metros como en una pista de verdad.
@@ -662,7 +759,10 @@ export class Terrain {
     // cada segundo y medio.
     const markSpacing = 50;
     const markCount = Math.floor((runway.length * 0.92) / markSpacing);
-    const markGeometry = new PlaneGeometry(runway.width * 0.05, markSpacing * 0.55);
+    const markGeometry = new PlaneGeometry(
+      runway.width * 0.05,
+      markSpacing * 0.55,
+    );
     markGeometry.rotateX(-Math.PI / 2);
     const marks = new InstancedMesh(
       markGeometry,
@@ -719,12 +819,20 @@ export class Terrain {
    * sombra más oscuras y frías. Es lo que hace que un valle se lea como un
    * valle sin una sola sombra proyectada.
    */
-  private sunlightAt(row: number, col: number, sun: { x: number; y: number; z: number }): number {
+  private sunlightAt(
+    row: number,
+    col: number,
+    sun: { x: number; y: number; z: number },
+  ): number {
     const max = this.resolution - 1;
-    const left = this.heights[row * this.resolution + clampInt(col - 1, 0, max)] ?? 0;
-    const right = this.heights[row * this.resolution + clampInt(col + 1, 0, max)] ?? 0;
-    const up = this.heights[clampInt(row - 1, 0, max) * this.resolution + col] ?? 0;
-    const down = this.heights[clampInt(row + 1, 0, max) * this.resolution + col] ?? 0;
+    const left =
+      this.heights[row * this.resolution + clampInt(col - 1, 0, max)] ?? 0;
+    const right =
+      this.heights[row * this.resolution + clampInt(col + 1, 0, max)] ?? 0;
+    const up =
+      this.heights[clampInt(row - 1, 0, max) * this.resolution + col] ?? 0;
+    const down =
+      this.heights[clampInt(row + 1, 0, max) * this.resolution + col] ?? 0;
 
     // Normal sin normalizar: (-dh/dx, 1, -dh/dz) con el paso de malla.
     const nx = -(right - left) / (2 * this.step);
@@ -739,10 +847,14 @@ export class Terrain {
   /** Pendiente aproximada, 0 llano, 1 muy inclinado. */
   private slopeAt(row: number, col: number): number {
     const max = this.resolution - 1;
-    const left = this.heights[row * this.resolution + clampInt(col - 1, 0, max)] ?? 0;
-    const right = this.heights[row * this.resolution + clampInt(col + 1, 0, max)] ?? 0;
-    const up = this.heights[clampInt(row - 1, 0, max) * this.resolution + col] ?? 0;
-    const down = this.heights[clampInt(row + 1, 0, max) * this.resolution + col] ?? 0;
+    const left =
+      this.heights[row * this.resolution + clampInt(col - 1, 0, max)] ?? 0;
+    const right =
+      this.heights[row * this.resolution + clampInt(col + 1, 0, max)] ?? 0;
+    const up =
+      this.heights[clampInt(row - 1, 0, max) * this.resolution + col] ?? 0;
+    const down =
+      this.heights[clampInt(row + 1, 0, max) * this.resolution + col] ?? 0;
     const gradient = Math.hypot(right - left, down - up) / (2 * this.step);
     return Math.min(1, gradient * 1.6);
   }
@@ -828,13 +940,17 @@ function generarHeightfield(scenario: Scenario): Float32Array {
 
       const rolling = noise.fbm(nx * 4 + 3.1, nz * 4 + 7.9, 6);
       const ridges = noise.ridged(nx * 5.5 - 11.3, nz * 5.5 + 2.7, 5);
-      const mixed = rolling * (1 - scenario.ridgeMix) + ridges * scenario.ridgeMix;
+      const mixed =
+        rolling * (1 - scenario.ridgeMix) + ridges * scenario.ridgeMix;
 
       let height = Math.pow(clamp01(mixed), 1.45) * scenario.reliefHeight;
       height -= riverCarve(x, z, scenario, noise);
       // Suelo del cauce. Sin este tope el río excava un cañón de decenas de
       // metros bajo el nivel del agua y el valle deja de parecer un valle.
-      heights[row * resolution + col] = Math.max(height, scenario.waterLevel - 32);
+      heights[row * resolution + col] = Math.max(
+        height,
+        scenario.waterLevel - 32,
+      );
     }
   }
 
@@ -848,7 +964,12 @@ function generarHeightfield(scenario: Scenario): Float32Array {
  * que no se note el seno. El corte es una campana: hondo en el centro y
  * difuminado en los bordes, que es como se ve un valle fluvial desde arriba.
  */
-function riverCarve(x: number, z: number, scenario: Scenario, noise: ValueNoise2D): number {
+function riverCarve(
+  x: number,
+  z: number,
+  scenario: Scenario,
+  noise: ValueNoise2D,
+): number {
   if (scenario.riverWidth <= 0) return 0;
 
   const t = x / scenario.size;
@@ -870,7 +991,11 @@ function riverCarve(x: number, z: number, scenario: Scenario, noise: ValueNoise2
  * qué cota está el terreno donde va la pista. El difuminado del borde evita
  * el escalón de meseta que delataría el truco.
  */
-function flattenRunway(heights: Float32Array, scenario: Scenario, elevation: number): void {
+function flattenRunway(
+  heights: Float32Array,
+  scenario: Scenario,
+  elevation: number,
+): void {
   const resolution = scenario.segments + 1;
   const step = scenario.size / scenario.segments;
   const half = scenario.size / 2;
@@ -905,7 +1030,8 @@ function flattenRunway(heights: Float32Array, scenario: Scenario, elevation: num
       // Coordenadas locales de pista: a lo largo y a lo ancho.
       const along = x * sin + z * cos;
       const across = x * cos - z * sin;
-      if (Math.abs(along) > alongReach || Math.abs(across) > acrossReach) continue;
+      if (Math.abs(along) > alongReach || Math.abs(across) > acrossReach)
+        continue;
 
       const weight = Math.min(
         smoothFalloff(Math.abs(along), alongCore, alongReach),
@@ -977,7 +1103,8 @@ function flattenAerodrome(
   const pista = aero.runways[0];
   const umbrales = pista
     ? Object.values(pista.thresholds).filter(
-        (u): u is NonNullable<typeof u> => u !== null && u.xy !== null && u.elevM !== null,
+        (u): u is NonNullable<typeof u> =>
+          u !== null && u.xy !== null && u.elevM !== null,
       )
     : [];
   const [a, b] = umbrales;
@@ -989,7 +1116,10 @@ function flattenAerodrome(
     const dx = b.xy![0] - ax;
     const dy = b.xy![1] - ay;
     const largo2 = dx * dx + dy * dy || 1;
-    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - ay) * dy) / largo2));
+    const t = Math.max(
+      0,
+      Math.min(1, ((x - ax) * dx + (z - ay) * dy) / largo2),
+    );
     if (perfil) return perfil(t) + alzado;
     return a.elevM! + (b.elevM! - a.elevM!) * t + alzado;
   };
@@ -1006,7 +1136,9 @@ function flattenAerodrome(
   // cuesta y no pared. Con tope, porque estirarla sin límite deja alrededor
   // del aeropuerto un disco liso que desde el aire canta.
   const bordeX = nucleo + 400;
-  const desnivel = Math.abs(cota(0, 0) - sampleGrid(heights, resolution, step, half, bordeX, 0));
+  const desnivel = Math.abs(
+    cota(0, 0) - sampleGrid(heights, resolution, step, half, bordeX, 0),
+  );
   const alcance = nucleo + Math.max(400, Math.min(desnivel * 8, 1800));
 
   for (let row = 0; row < resolution; row++) {
@@ -1122,7 +1254,7 @@ function colourFor(
     const progress = span > 0 ? (height - current.from) / span : 0;
     if (progress > 0.72) {
       BLEND.setHex(next.colour);
-      out.lerp(BLEND, (progress - 0.72) / 0.28 * 0.5);
+      out.lerp(BLEND, ((progress - 0.72) / 0.28) * 0.5);
     }
   }
 
