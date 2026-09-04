@@ -114,12 +114,25 @@ const GROUND_FADE = 20;
  * hierba de un toque.
  */
 const MANDO_MINIMO = 0.12;
-/** Ritmo de viraje máximo, en radianes por segundo. */
-const MAX_TURN_RATE = 0.5;
+/**
+ * Ritmo de viraje máximo, en radianes por segundo.
+ *
+ * **Y tiene que cuadrar con la inclinación que se dibuja**, o el ojo aprende
+ * una cosa aquí y descubre otra en el peldaño siguiente. Iban medio radián por
+ * segundo —dieciséis grados por segundo— con el avión enseñando treinta de
+ * alabeo; con esa inclinación la física da siete, y para girar a dieciséis
+ * harían falta cuarenta y seis. O sea que aquí se aprendía que treinta grados
+ * es un giro rápido, y en Tukã se descubría lo contrario.
+ *
+ * Un cuarto de radián son catorce grados por segundo, que a velocidad de
+ * crucero de este modelo salen de unos cuarenta y tres de alabeo: eso sí se
+ * parece a lo que hace el avión de al lado.
+ */
+const MAX_TURN_RATE = 0.25;
 /** Ritmo de ascenso máximo, en metros por segundo. */
 const MAX_CLIMB = 7;
-/** Inclinación aparente en viraje a fondo, en radianes. */
-const VISUAL_BANK = 0.52;
+/** Inclinación aparente en viraje a fondo, en radianes. Ver `MAX_TURN_RATE`. */
+const VISUAL_BANK = 0.75;
 
 export interface ArcadeOptions {
   aircraft: AircraftConfig;
@@ -193,6 +206,16 @@ export class ArcadeFlightModel implements FlightModel {
    * Aquí la cuenta es exacta, porque el gas **es** la velocidad: se despeja de
    * la misma recta que usa `step` para saber a qué velocidad ir.
    */
+  /**
+   * Aquí no hay vez y media de nada: el abanico entero va de nueve décimas de
+   * la velocidad de aproximación a dos tercios del crucero. Se entra por
+   * arriba de ese abanico, que es lo más rápido que este modelo sabe volar, y
+   * así el avión **se sostiene** en vez de frenar solo hasta su techo.
+   */
+  velocidadDeEntradaEnFinal(): number {
+    return this.aircraft.cruiseSpeed * CRUISE_FRACTION * 0.94;
+  }
+
   gasPara(velocidad: number): number {
     const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
     const floor = this.aircraft.approachSpeed * MINIMA_DE_VUELO;

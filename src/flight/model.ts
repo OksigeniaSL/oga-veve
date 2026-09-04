@@ -158,4 +158,19 @@ export interface FlightModel {
    * y dejaba al otro a media velocidad.
    */
   gasPara(velocidad: number): number;
+  /**
+   * A qué velocidad se entra en final, en metros por segundo.
+   *
+   * También la contesta el modelo, y por lo mismo que `gasPara`: **cada modelo
+   * tiene su propio abanico de velocidades**. La lección de aterrizar arrancaba
+   * a vez y media la velocidad de aproximación, que en el modelo de
+   * coeficientes se sostiene bien y en el sencillo **no existe**: ahí el avión
+   * no pasa de dos tercios de su crucero, así que arrancaba con el gas pinzado
+   * al cien por cien, frenaba solo cuarenta y cuatro kilómetros por hora sin
+   * que nadie tocara nada, y encima subía. Medido.
+   *
+   * Un número que uno de los dos modelos no puede sostener no es una velocidad
+   * de entrada: es una postura inicial que se deshace sola.
+   */
+  velocidadDeEntradaEnFinal(vref: number): number;
 }
