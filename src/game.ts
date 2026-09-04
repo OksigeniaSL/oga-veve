@@ -2001,8 +2001,8 @@ export class Game {
      * sigue guiando, en vez de quedarse esperando a uno que ya no volverá.
      */
     const aro = this.runwayGuide.check(this.flight.state.position);
-    if (aro === "cruzado") this.audio.cue("success");
-    else if (aro === "perdido") this.audio.cue("attention");
+    if (aro === "cruzado") this.audio.cue("aro");
+    else if (aro === "perdido") this.audio.cue("aroFallado");
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
@@ -2404,9 +2404,30 @@ export class Game {
       const pendiente =
         vista.fase === "estacionado" || vista.fase === "en-puesto";
       const esperando = vista.fase === "esperando";
+      /*
+       * **La carrera de aterrizaje también espera a que alguien haga algo.**
+       *
+       * «Frená» y «Salí de la pista» duraban seis segundos y luego la pantalla
+       * se quedaba vacía hasta que cambiara la fase. Pero esas dos fases duran
+       * lo que tarde quien juega en frenar y en encontrar la salida —que puede
+       * ser un minuto largo—, así que el aviso desaparecía justo cuando hacía
+       * falta: «en pista, ya aterrizado, nadie me indica por dónde abandonar la
+       * pista para ir al hangar».
+       *
+       * Es el mismo fallo que ya tuvo la llave de contacto, y se arregla igual:
+       * lo que está pendiente de que alguien haga algo **no puede apagarse
+       * solo**. La diferencia con `pendiente` es que aquí no hay tecla que
+       * pulsar ni tarjeta que tocar; solo hay que seguir viéndolo.
+       */
+      const seQueda =
+        vista.fase === "aterrizado" || vista.fase === "abandonando";
       this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", letra, {
         segundos:
-          pendiente || esperando ? Infinity : vista.fase === "apagado" ? 9 : 6,
+          pendiente || esperando || seQueda
+            ? Infinity
+            : vista.fase === "apagado"
+              ? 9
+              : 6,
         // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
         // ninguna manera de saber que el contacto es la I.
         tecla: pendiente

@@ -22,8 +22,8 @@
  *    que en este juego llegan de todos modos.
  */
 
-import type { ControlInputs, FlightState } from '../flight/model';
-import type { AircraftSound } from '../flight/aircraft';
+import type { ControlInputs, FlightState } from "../flight/model";
+import type { AircraftSound } from "../flight/aircraft";
 
 /**
  * Régimen de ralentí y máximo, en revoluciones por minuto.
@@ -37,7 +37,7 @@ import type { AircraftSound } from '../flight/aircraft';
  * entre 900 y 4100 Hz, que es donde el oído lo encuentra.
  */
 const DEFAULT_ENGINE: AircraftSound = {
-  engine: 'piston',
+  engine: "piston",
   cylinders: 4,
   idleRpm: 700,
   maxRpm: 2700,
@@ -50,22 +50,45 @@ const WIND_REFERENCE = 75;
 const BUFFET_HZ = 10.5;
 
 /** Motivos cortos del idioma sonoro. Ver `cue`. */
-export type Cue = 'success' | 'achieved' | 'error' | 'attention' | 'touchdown';
+export type Cue =
+  | "success"
+  | "achieved"
+  | "error"
+  | "attention"
+  | "touchdown"
+  /**
+   * Un aro de la senda, cruzado por dentro. Dos notas que suben.
+   *
+   * Va aparte de `success` porque **un aro no es un logro**: pasa muchas veces
+   * seguidas en una aproximación, y el sonido de haber conseguido algo repetido
+   * ocho veces deja de significar nada. Este es más corto y más agudo: un
+   * «tic» de que vas por el sitio.
+   */
+  | "aro"
+  /**
+   * Y un aro que se ha perdido. Dos notas que bajan.
+   *
+   * **No suena a error.** Perder un aro no es un fallo, es información: te
+   * dice que eso de ahí contaba y se te escapó. Suena distinto y ya está — la
+   * misma pareja de notas del bueno, en orden inverso, que es lo que hace que
+   * se reconozcan como las dos caras de la misma cosa.
+   */
+  | "aroFallado";
 
 export interface AudioLevel {
-  id: 'normal' | 'bajo' | 'mudo';
+  id: "normal" | "bajo" | "mudo";
   gain: number;
   /** Glifo para el botón: se lee sin saber leer. */
   glyph: string;
 }
 
 const LEVELS: readonly AudioLevel[] = [
-  { id: 'normal', gain: 0.85, glyph: '🔊' },
-  { id: 'bajo', gain: 0.3, glyph: '🔉' },
-  { id: 'mudo', gain: 0, glyph: '🔇' },
+  { id: "normal", gain: 0.85, glyph: "🔊" },
+  { id: "bajo", gain: 0.3, glyph: "🔉" },
+  { id: "mudo", gain: 0, glyph: "🔇" },
 ];
 
-const STORAGE_KEY = 'oga-veve:volumen';
+const STORAGE_KEY = "oga-veve:volumen";
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
@@ -73,7 +96,9 @@ function clamp(value: number, min: number, max: number): number {
 
 function restoreLevel(): number {
   try {
-    const saved = LEVELS.findIndex((level) => level.id === localStorage.getItem(STORAGE_KEY));
+    const saved = LEVELS.findIndex(
+      (level) => level.id === localStorage.getItem(STORAGE_KEY),
+    );
     if (saved >= 0) return saved;
   } catch {
     // Sin almacenamiento se arranca con el volumen normal.
@@ -195,9 +220,13 @@ export class Audio {
    * @param stallWarnAt ángulo de ataque, en radianes, al que empieza a sonar
    *   la bocina de pérdida
    */
-  update(state: FlightState, controls: ControlInputs, stallWarnAt = 0.24): void {
+  update(
+    state: FlightState,
+    controls: ControlInputs,
+    stallWarnAt = 0.24,
+  ): void {
     const ctx = this.context;
-    if (!ctx || ctx.state !== 'running') return;
+    if (!ctx || ctx.state !== "running") return;
     const now = ctx.currentTime;
 
     // ── Motor ───────────────────────────────────────────────────────────
@@ -209,7 +238,9 @@ export class Audio {
     // rato, cada vez más despacio, y ese sonido es el que marca el final de
     // un vuelo.
     const gas = controls.engineOn ? controls.throttle : 0;
-    const rpm = controls.engineOn ? spec.idleRpm + gas * (spec.maxRpm - spec.idleRpm) : 0;
+    const rpm = controls.engineOn
+      ? spec.idleRpm + gas * (spec.maxRpm - spec.idleRpm)
+      : 0;
     // Frecuencia de encendido de un cuatro tiempos: vueltas por segundo, por
     // cilindros, entre dos. Un radial de siete suena a otra cosa que un
     // cuatro cilindros porque este número es otro, no por magia.
@@ -236,7 +267,11 @@ export class Audio {
     // El gas cerrado tapa el motor: respuesta inmediata al oído aunque las
     // vueltas todavía estén bajando.
     this.engineFilter?.frequency.setTargetAtTime(900 + gas * 3200, now, 0.06);
-    this.engineGain?.gain.setTargetAtTime((controls.engineOn ? 0.1 : 0) + gas * 0.14, now, 0.1);
+    this.engineGain?.gain.setTargetAtTime(
+      (controls.engineOn ? 0.1 : 0) + gas * 0.14,
+      now,
+      0.1,
+    );
     // La resonancia sube con las vueltas. Es lo que de verdad se oye cambiar
     // en un altavoz pequeño: el fundamental está por debajo de lo que
     // reproduce, así que si el timbre no se mueve, el motor suena plano por
@@ -256,7 +291,11 @@ export class Audio {
       now,
       1.4,
     );
-    this.propGain?.gain.setTargetAtTime((controls.engineOn ? 0.03 : 0) + gas * 0.075, now, 1.4);
+    this.propGain?.gain.setTargetAtTime(
+      (controls.engineOn ? 0.03 : 0) + gas * 0.075,
+      now,
+      1.4,
+    );
     this.propFilter?.frequency.setTargetAtTime(120 + rpm * 0.08, now, 0.1);
 
     // ── Viento ──────────────────────────────────────────────────────────
@@ -264,7 +303,11 @@ export class Audio {
     // El viento sube con la velocidad y además con el derrape: volar de lado
     // hace más ruido, y es la única pista sonora de que el viraje va sucio.
     const slip = Math.min(1, Math.abs(state.beta) * 5);
-    this.windGain?.gain.setTargetAtTime(speed * speed * 0.34 * (1 + slip * 0.5), now, 0.12);
+    this.windGain?.gain.setTargetAtTime(
+      speed * speed * 0.34 * (1 + slip * 0.5),
+      now,
+      0.12,
+    );
     this.windWhistle?.frequency.setTargetAtTime(600 + speed * 1900, now, 0.12);
     this.windBody?.frequency.setTargetAtTime(420 + slip * 340, now, 0.15);
 
@@ -295,7 +338,7 @@ export class Audio {
    */
   cue(kind: Cue): void {
     const ctx = this.context;
-    if (!ctx || ctx.state !== 'running' || !this.master) return;
+    if (!ctx || ctx.state !== "running" || !this.master) return;
 
     const patterns: Record<Cue, number[]> = {
       success: [523.25, 783.99],
@@ -303,12 +346,28 @@ export class Audio {
       error: [440, 349.23],
       attention: [659.25, 659.25],
       touchdown: [130.81],
+      aro: [880, 1174.66],
+      aroFallado: [1174.66, 880],
     };
 
     const notes = patterns[kind];
-    const step = kind === 'achieved' ? 0.11 : 0.14;
+    // Los aros van más rápidos: suenan al vuelo y no pueden entretenerse.
+    const step =
+      kind === "achieved"
+        ? 0.11
+        : kind === "aro" || kind === "aroFallado"
+          ? 0.07
+          : 0.14;
     notes.forEach((frequency, index) => {
-      this.pluck(frequency, ctx.currentTime + index * step, kind === 'touchdown' ? 0.5 : 0.35);
+      this.pluck(
+        frequency,
+        ctx.currentTime + index * step,
+        kind === "touchdown"
+          ? 0.5
+          : kind === "aro" || kind === "aroFallado"
+            ? 0.18
+            : 0.35,
+      );
     });
   }
 
@@ -334,7 +393,7 @@ export class Audio {
 
     // ── Motor: dos tonos y una capa de ruido de hélice ──────────────────
     this.engineFilter = ctx.createBiquadFilter();
-    this.engineFilter.type = 'lowpass';
+    this.engineFilter.type = "lowpass";
     this.engineFilter.Q.value = 1.1;
     this.engineGain = ctx.createGain();
     this.engineGain.gain.value = 0;
@@ -343,7 +402,7 @@ export class Audio {
     // Resonancia en la banda en la que el oído sitúa un motor. Sin ella, en
     // un altavoz pequeño el motor se oye como un soplido sin carácter.
     const growl = ctx.createBiquadFilter();
-    growl.type = 'peaking';
+    growl.type = "peaking";
     growl.frequency.value = 420;
     growl.Q.value = 2.2;
     growl.gain.value = 11;
@@ -352,25 +411,28 @@ export class Audio {
     this.engineFilter.connect(growl).connect(this.engineGain);
 
     this.engineTone = ctx.createOscillator();
-    this.engineTone.type = 'sawtooth';
+    this.engineTone.type = "sawtooth";
     this.engineTone.connect(this.engineFilter);
     this.engineTone.start();
 
     // Un segundo tono ligeramente desafinado: sin él suena a sierra y no a
     // motor. El batido entre los dos es lo que da la aspereza.
     this.engineHarmonic = ctx.createOscillator();
-    this.engineHarmonic.type = 'square';
+    this.engineHarmonic.type = "square";
     const harmonicGain = ctx.createGain();
     harmonicGain.gain.value = 0.32;
     this.engineHarmonic.connect(harmonicGain).connect(this.engineFilter);
     this.engineHarmonic.start();
 
     this.propFilter = ctx.createBiquadFilter();
-    this.propFilter.type = 'bandpass';
+    this.propFilter.type = "bandpass";
     this.propFilter.Q.value = 1.6;
     this.propGain = ctx.createGain();
     this.propGain.gain.value = 0;
-    this.loopNoise(noise).connect(this.propFilter).connect(this.propGain).connect(this.master);
+    this.loopNoise(noise)
+      .connect(this.propFilter)
+      .connect(this.propGain)
+      .connect(this.master);
 
     // ── Viento: cuerpo grave y silbido agudo ────────────────────────────
     this.windGain = ctx.createGain();
@@ -378,17 +440,20 @@ export class Audio {
     this.windGain.connect(this.master);
 
     this.windBody = ctx.createBiquadFilter();
-    this.windBody.type = 'bandpass';
+    this.windBody.type = "bandpass";
     this.windBody.frequency.value = 520;
     this.windBody.Q.value = 0.7;
 
     this.windWhistle = ctx.createBiquadFilter();
-    this.windWhistle.type = 'peaking';
+    this.windWhistle.type = "peaking";
     this.windWhistle.Q.value = 7;
     this.windWhistle.gain.value = 14;
 
     const windSource = this.loopNoise(noise);
-    windSource.connect(this.windBody).connect(this.windWhistle).connect(this.windGain);
+    windSource
+      .connect(this.windBody)
+      .connect(this.windWhistle)
+      .connect(this.windGain);
 
     // Bataneo: un oscilador lento que modula la ganancia del viento.
     this.buffetOscillator = ctx.createOscillator();
@@ -400,7 +465,7 @@ export class Audio {
 
     // ── Bocina de pérdida: onda cuadrada pulsada, como una lengüeta ─────
     const horn = ctx.createOscillator();
-    horn.type = 'square';
+    horn.type = "square";
     horn.frequency.value = 800;
     this.hornGain = ctx.createGain();
     this.hornGain.gain.value = 0;
@@ -420,11 +485,14 @@ export class Audio {
 
     // ── Rodadura ────────────────────────────────────────────────────────
     const rollFilter = ctx.createBiquadFilter();
-    rollFilter.type = 'lowpass';
+    rollFilter.type = "lowpass";
     rollFilter.frequency.value = 260;
     this.rollGain = ctx.createGain();
     this.rollGain.gain.value = 0;
-    this.loopNoise(noise).connect(rollFilter).connect(this.rollGain).connect(this.master);
+    this.loopNoise(noise)
+      .connect(rollFilter)
+      .connect(this.rollGain)
+      .connect(this.master);
   }
 
   /** Dos segundos de ruido blanco generados en memoria. Cero bytes de red. */
@@ -449,7 +517,7 @@ export class Audio {
   private pluck(frequency: number, at: number, duration: number): void {
     const ctx = this.context!;
     const oscillator = ctx.createOscillator();
-    oscillator.type = 'triangle';
+    oscillator.type = "triangle";
     oscillator.frequency.value = frequency;
 
     const gain = ctx.createGain();
@@ -464,6 +532,10 @@ export class Audio {
 
   private applyMasterGain(): void {
     if (!this.master || !this.context) return;
-    this.master.gain.setTargetAtTime(this.level.gain, this.context.currentTime, 0.05);
+    this.master.gain.setTargetAtTime(
+      this.level.gain,
+      this.context.currentTime,
+      0.05,
+    );
   }
 }
