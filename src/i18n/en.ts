@@ -14,7 +14,6 @@
 import type { Dictionary } from './index';
 
 export const EN: Dictionary = {
-  'app.title': 'Óga Veve',
   'app.tagline': 'Fly over Paraguay',
 
   'hud.speed': 'Airspeed',
@@ -34,14 +33,8 @@ export const EN: Dictionary = {
   'hud.landedOffRunway': 'You landed off the runway, but you landed',
   'hud.brakes': 'Brakes',
   'hud.crashed': 'Something broke. Back to the runway…',
-  'hud.ground': 'On the ground',
   'hud.home': 'Runway',
   'hud.objective': 'Objective',
-
-  'mode.label': 'Tier',
-  'mode.arcade': 'Arcade',
-  'mode.pilot': 'Pilot',
-  'mode.changed': 'Flight assist: {mode}',
   'sound.normal': 'Sound on',
   'sound.bajo': 'Sound low',
   'sound.mudo': 'Sound off',
@@ -69,7 +62,6 @@ export const EN: Dictionary = {
   'mission.step': 'Good! Keep going',
   'mission.done': 'Mission complete!',
   'mission.none': 'Free flight',
-  'help.mission': 'N — mission',
 
   'scenario.valle.name': 'Cordillera Valley',
   'scenario.pettirossi.name': 'Silvio Pettirossi',
@@ -83,19 +75,7 @@ export const EN: Dictionary = {
   'tutor.frenar': 'Brake',
   'tutor.salir': 'Follow the line off the runway',
   'tutor.slow': 'Ease the power',
-
-  'help.title': 'How to fly',
-  'help.pitch': 'Arrows or W A S D — climb, descend and turn',
-  'help.rudder': 'Q and E — rudder',
-  'help.throttle': 'Plus and minus — throttle',
-  'help.brakes': 'B or space — brakes',
-  'help.camera': 'C — change view',
   'help.assist': 'M — difficulty tier',
-  'help.reset': 'R — start again',
-  'help.credits': 'F1 — credits',
-  'help.language': 'L — language',
-  'help.sound': 'V — sound (or the button)',
-  'help.aircraft': 'P — change aircraft',
   'help.start': 'Throttle all the way up, then ease back when she runs',
 
   'teclas.title': 'Controls',

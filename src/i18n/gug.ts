@@ -30,7 +30,6 @@
 import type { Dictionary } from './index';
 
 export const GUG: Dictionary = {
-  'app.title': 'Óga Veve',
   'app.tagline': 'Eveve Paraguay ári',
 
   // ── El vuelo completo ──────────────────────────────────────────────────
@@ -106,7 +105,6 @@ export const GUG: Dictionary = {
   'hud.throttle': 'Motor',
   'hud.vspeed': 'Jupi',
   'hud.brakes': 'Freno',
-  'hud.ground': 'Yvýpe',
   'hud.home': 'Pista',
   'hud.objective': 'Jehupytyrã',
 
@@ -131,10 +129,6 @@ export const GUG: Dictionary = {
   'tutor.flying': 'Reveve hína!',
 
   // ── Nivel y sonido ─────────────────────────────────────────────────────
-  'mode.label': 'Nivel',
-  'mode.arcade': 'Arcade',
-  'mode.pilot': 'Piloto',
-  'mode.changed': 'Pytyvõ: {mode}',
   'sound.normal': 'Tyapu normal',
   'sound.bajo': 'Tyapu mbegue',
   'sound.mudo': 'Tyapu’ỹre',
@@ -170,20 +164,8 @@ export const GUG: Dictionary = {
   'scenario.tenerife.name': 'Tenerife Norte',
 
   // ── Ayuda ──────────────────────────────────────────────────────────────
-  'help.title': "Mba'éichapa oveve",
   'help.start': 'Emombarete motor opa peve ha emopu’ã mbeguemi oñani vove',
-  'help.pitch': 'Flecha térã W A S D — ejupi, eguejy ha ejere',
-  'help.rudder': 'Q ha E — timón',
-  'help.throttle': 'Más ha menos — motor',
-  'help.brakes': 'B térã espacio — freno',
-  'help.camera': 'C — emoambue cámara',
   'help.assist': 'M — nivel',
-  'help.reset': 'R — eñepyrũ jey',
-  'help.credits': 'F1 — aguyje',
-  'help.language': "L — ñe'ẽ",
-  'help.sound': 'V — tyapu (térã botón)',
-  'help.aircraft': 'P — emoambue avión',
-  'help.mission': 'N — misión',
 
   // ── La pantalla de mandos ──────────────────────────────────────────────
   'teclas.title': 'Tecla kuéra',
