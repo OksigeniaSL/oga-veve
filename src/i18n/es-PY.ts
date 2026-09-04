@@ -7,7 +7,6 @@
  */
 
 export const ES_PY = {
-  'app.title': 'Óga Veve',
   'app.tagline': 'Volá sobre Paraguay',
 
   'hud.speed': 'Velocidad',
@@ -27,14 +26,8 @@ export const ES_PY = {
   'hud.landedOffRunway': 'Bajaste fuera de la pista, pero bajaste',
   'hud.brakes': 'Frenos',
   'hud.crashed': 'Se rompió algo. Volvemos a la pista…',
-  'hud.ground': 'En tierra',
   'hud.home': 'Pista',
   'hud.objective': 'Objetivo',
-
-  'mode.label': 'Nivel',
-  'mode.arcade': 'Arcade',
-  'mode.pilot': 'Piloto',
-  'mode.changed': 'Ayuda de vuelo: {mode}',
   'sound.normal': 'Sonido normal',
   'sound.bajo': 'Sonido bajo',
   'sound.mudo': 'Sin sonido',
@@ -62,7 +55,6 @@ export const ES_PY = {
   'mission.step': '¡Bien! Seguí',
   'mission.done': '¡Misión cumplida!',
   'mission.none': 'Vuelo libre',
-  'help.mission': 'N — misión',
 
   'scenario.valle.name': 'Valle de la Cordillera',
   'scenario.pettirossi.name': 'Silvio Pettirossi',
@@ -76,19 +68,7 @@ export const ES_PY = {
   'tutor.frenar': 'Frená',
   'tutor.salir': 'Seguí la raya y salí de la pista',
   'tutor.slow': 'Bajá el motor',
-
-  'help.title': 'Cómo se vuela',
-  'help.pitch': 'Flechas o W A S D — subir, bajar y girar',
-  'help.rudder': 'Q y E — timón',
-  'help.throttle': 'Más y menos — motor',
-  'help.brakes': 'B o espacio — frenos',
-  'help.camera': 'C — cambiar cámara',
   'help.assist': 'M — nivel de dificultad',
-  'help.reset': 'R — volver a empezar',
-  'help.credits': 'F1 — créditos',
-  'help.language': 'L — idioma',
-  'help.sound': 'V — sonido (o el botón)',
-  'help.aircraft': 'P — cambiar de avión',
   'help.start': 'Empujá el motor a tope y tirá suave cuando corra',
 
   'teclas.title': 'Teclas',
