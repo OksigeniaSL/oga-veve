@@ -112,6 +112,19 @@ export function crearCiudad(
    * hace que un montón de cajas parezca una ciudad.
    */
   conCalles = true,
+  /**
+   * De qué color es el suelo ahí, si hay ortofoto.
+   *
+   * **Las casas toman el color de lo que hay debajo.** Sin esto, la ciudad
+   * procedimental son cajas claras de paleta propia sobre una fotografía
+   * aérea, y un barrio blanco encima de tejados rojos se ve a un kilómetro:
+   * dos ciudades superpuestas que no se parecen.
+   *
+   * Tomando el color del suelo, la caja deja de ser un añadido y pasa a ser
+   * **el volumen de lo que ya se veía plano**. No es un truco de pintor: la
+   * fotografía sabe de qué color es ese tejado y nosotros no.
+   */
+  colorDelSuelo?: (x: number, z: number) => { r: number; g: number; b: number } | null,
 ): Group {
   const grupo = new Group();
   grupo.name = 'ciudad';
@@ -252,9 +265,28 @@ export function crearCiudad(
         matrices[cual]!.push(new Matrix4().compose(posicion, giro, escala));
         // Un poco de variación de tono por casa, que es lo que evita que un
         // barrio parezca una hoja de cálculo.
-        tinte.setHex(perfil.color);
-        const v = 0.86 + sorteo() * 0.28;
-        tintes[cual]!.push(new Color(tinte.r * v, tinte.g * v, tinte.b * v));
+        const delSuelo = colorDelSuelo?.(x, z);
+        if (delSuelo) {
+          /*
+           * Del suelo, y **un poco más claro**: una fachada vista desde arriba
+           * recibe más luz que el tejado que la fotografía retrató, y una caja
+           * exactamente del color del suelo desaparece — que es lo contrario
+           * de lo que se busca. Se quiere volumen, no camuflaje.
+           */
+          tinte.setRGB(delSuelo.r, delSuelo.g, delSuelo.b);
+          const v = 1.12 + sorteo() * 0.2;
+          tintes[cual]!.push(
+            new Color(
+              Math.min(1, tinte.r * v),
+              Math.min(1, tinte.g * v),
+              Math.min(1, tinte.b * v),
+            ),
+          );
+        } else {
+          tinte.setHex(perfil.color);
+          const v = 0.86 + sorteo() * 0.28;
+          tintes[cual]!.push(new Color(tinte.r * v, tinte.g * v, tinte.b * v));
+        }
       }
     }
   }

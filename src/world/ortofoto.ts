@@ -60,6 +60,16 @@ export interface Ortofoto {
    * `x` y `z` en metros del marco local del juego, con la Z hacia el sur.
    */
   uv(x: number, z: number): { u: number; v: number };
+  /**
+   * De qué color es la fotografía en ese punto del mundo, o `null` fuera.
+   *
+   * Sirve para que lo que se dibuja **encima** del terreno pegue con lo que
+   * hay debajo: las casas de la ciudad procedimental eran cajas claras sobre
+   * una fotografía, y un barrio blanco sobre un tejado rojo se ve a un
+   * kilómetro. Tomando el color del suelo, la caja deja de ser un añadido y
+   * pasa a ser el volumen de lo que ya se veía plano.
+   */
+  color(x: number, z: number): { r: number; g: number; b: number } | null;
 }
 
 /*
@@ -158,7 +168,48 @@ export async function cargarOrtofoto(
       v: 1 - (centro.y - esquinaY + z / mpp) / ficha.pixeles.alto,
     });
 
-    return { textura, ficha, uv };
+    /*
+     * **Y una copia pequeña en un lienzo, para poder mirarla desde el código.**
+     *
+     * La textura vive en la tarjeta gráfica y desde JavaScript no se lee. Para
+     * saber de qué color es el suelo en un punto hace falta una copia en un
+     * lienzo, y no hace falta que sea grande: se usa para teñir casas, no para
+     * pintar el mundo. A doscientos cincuenta y seis de lado son dos décimas
+     * de mega y basta y sobra — el color medio de una manzana no cambia porque
+     * se mire con más detalle.
+     */
+    const LADO = 256;
+    let datos: ImageData | null = null;
+    try {
+      const lienzo = document.createElement("canvas");
+      lienzo.width = LADO;
+      lienzo.height = LADO;
+      const g = lienzo.getContext("2d", { willReadFrequently: true });
+      if (g && textura.image) {
+        g.drawImage(textura.image as CanvasImageSource, 0, 0, LADO, LADO);
+        datos = g.getImageData(0, 0, LADO, LADO);
+      }
+    } catch {
+      // Sin lienzo se sigue: lo que se dibuja encima usa sus colores de siempre.
+    }
+
+    const color = (x: number, z: number) => {
+      if (!datos) return null;
+      const { u, v } = uv(x, z);
+      if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+      const cx = Math.min(LADO - 1, Math.max(0, Math.floor(u * LADO)));
+      // La V del mundo de las texturas va de abajo arriba; la de un lienzo, al
+      // revés. Aquí sí se muerden, así que hay que darle la vuelta.
+      const cy = Math.min(LADO - 1, Math.max(0, Math.floor((1 - v) * LADO)));
+      const i = (cy * LADO + cx) * 4;
+      return {
+        r: datos.data[i]! / 255,
+        g: datos.data[i + 1]! / 255,
+        b: datos.data[i + 2]! / 255,
+      };
+    };
+
+    return { textura, ficha, uv, color };
   } catch {
     // Sin ortofoto se vuela igual. Ver la cabecera.
     return undefined;

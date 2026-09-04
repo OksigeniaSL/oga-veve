@@ -178,8 +178,8 @@ const game = new Game({
   scenario: escenario,
   leccion,
   mision,
+  ortofoto,
 });
-if (ortofoto) game.ponerOrtofoto(ortofoto);
 game.start();
 
 /*
