@@ -60,21 +60,19 @@ import { GoogleCloudAuthPlugin } from "3d-tiles-renderer/core/plugins";
 import type { Scenario } from "./scenarios";
 
 /**
- * Cuánto detalle se pide a la fotografía, arriba y abajo.
+ * Cuánto detalle se pide a la fotografía.
  *
  * Es el `errorTarget` del cargador de teselas: cuanto más bajo, más fino y más
- * caro. De fábrica viene en seis.
+ * caro. De fábrica viene en seis; aquí, dos.
  *
- * **Abajo, dos.** Rodando con la nariz a dos metros del asfalto, el seis
- * convierte la pista en una acuarela — «esa mezcla entre realidad y fotografía
- * borrosa parece el holocausto zombie».
+ * Rodando con la nariz a dos metros del asfalto, el seis convierte la pista en
+ * una acuarela — «esa mezcla entre realidad y fotografía borrosa parece el
+ * holocausto zombie».
  *
- * **Arriba, el de fábrica.** A quinientos metros ese detalle no se ve y solo
- * cuesta: cada tesela hay que bajarla y descomprimirla en el mismo hilo que
- * dibuja, y eso es lo que hacía que el mundo se moviera a tirones.
+ * Se probó a moverlo con la altura, para que arriba costara menos, y **la
+ * fotografía dejó de verse**. Ver la nota en `update`.
  */
-const DETALLE_ABAJO = 2;
-const DETALLE_ARRIBA = 6;
+const DETALLE = 2;
 
 /**
  * Lo que el renderizador expone en marcha pero no en sus tipos.
@@ -257,7 +255,7 @@ export function crearTeselas(
    * pedir. Nítida sí; con la nariz pegada al suelo, siempre va a ser una foto
    * vista muy de cerca.
    */
-  teselas.errorTarget = DETALLE_ABAJO;
+  teselas.errorTarget = DETALLE;
   /*
    * La matriz se pone a mano y **el desfase se compone dentro de ella**.
    *
@@ -533,61 +531,24 @@ export function crearTeselas(
     },
     update(camara: PerspectiveCamera, renderizador: WebGLRenderer, dt: number) {
       /*
-       * **El detalle que se pide depende de lo alto que se vaya.**
+       * **Aquí hubo un detalle que acompañaba a la altura, y se ha quitado.**
        *
-       * `errorTarget` estaba clavado en dos —el valor de fábrica es seis— y el
-       * comentario de más arriba decía que eso cuesta memoria y descargas
-       * «no fotogramas». Medido jugando, con la fotografía puesta: **veintiún
-       * fotogramas por segundo, cuatrocientas llamadas de dibujo y ciento
-       * treinta mil triángulos.**
+       * La idea era buena y el dato que la motivó también: con la fotografía
+       * puesta salían veintiún fotogramas por segundo, y con solo ciento
+       * treinta mil triángulos el tiempo no se iba en dibujar sino en traer y
+       * descomprimir teselas. Pedir tres veces más detalle del de fábrica
+       * multiplica esa cuenta.
        *
-       * Ciento treinta mil triángulos no son nada para una tarjeta de hoy, y
-       * cuatrocientas llamadas tampoco matan. O sea que el tiempo **no se iba
-       * en dibujar**: se iba en traer y descomprimir teselas, que ocurre en el
-       * mismo hilo. Pedir tres veces más detalle del de fábrica multiplica esa
-       * cuenta, y por eso el mundo se movía a tirones — que es exactamente lo
-       * que se venía notando como «va como una tortuga».
+       * Pero al ponerlo **desapareció la fotografía entera**, en los dos
+       * escenarios y durante un día. Se le puso una red contra `NaN` y siguió
+       * sin verse. Y aquí no hay discusión posible: el mundo fotográfico es el
+       * juego, y unos fotogramas de más no valen perderlo.
        *
-       * Pero el dos no era un capricho: rodando con la nariz a dos metros del
-       * asfalto, el seis convierte la pista en una acuarela. Las dos cosas son
-       * verdad y no se contradicen, porque **no pasan a la vez**: el detalle
-       * fino hace falta abajo y despacio, y arriba no se ve.
-       *
-       * Así que el detalle acompaña a la altura. En el suelo, el dos de antes;
-       * a doscientos metros ya se puede aflojar; a quinientos, el de fábrica.
-       * Se mueve poco a poco para que no se note el escalón.
+       * Vuelve el valor fijo. El rendimiento se atacará por donde no ponga en
+       * riesgo lo que ya funciona: cuántas teselas se descargan a la vez y
+       * cuántas se descomprimen por cuadro, que son perillas del cargador y no
+       * del criterio de detalle.
        */
-      /*
-       * **Y con la red puesta, porque un `NaN` aquí apaga la fotografía.**
-       *
-       * `alturaCruda` devuelve `number | null`, y `?? 0` solo atrapa el
-       * `null`. Si alguna vez sale `NaN` —una tesela a medio cargar, un rayo
-       * que no da con nada— el `NaN` se propaga a `errorTarget`, y un cargador
-       * de teselas sin criterio **no refina nunca**: se queda en la tesela
-       * raíz y el mundo entero se ve a brochazos. «No se ve el mapa de Google
-       * en ninguno de los dos escenarios.»
-       *
-       * Es la misma clase de fallo que ya nos costó una noche —el desfase que
-       * se medía antes de que llegara la verdad— y por eso ahora todo lo que
-       * entra en esta cuenta se comprueba antes de usarse.
-       */
-      const suelo = alturaCruda(camara.position.x, camara.position.z);
-      const alto =
-        camara.position.y - (Number.isFinite(suelo) ? (suelo as number) : 0);
-      if (Number.isFinite(alto)) {
-        const quiere =
-          alto < 50
-            ? DETALLE_ABAJO
-            : alto > 500
-              ? DETALLE_ARRIBA
-              : DETALLE_ABAJO +
-                ((alto - 50) / 450) * (DETALLE_ARRIBA - DETALLE_ABAJO);
-        const paso =
-          teselas.errorTarget +
-          (quiere - teselas.errorTarget) * Math.min(1, dt);
-        if (Number.isFinite(paso)) teselas.errorTarget = paso;
-      }
-
       teselas.setCamera(camara);
       /*
        * **Y la resolución de la pantalla**, que es de donde sale el error con el
