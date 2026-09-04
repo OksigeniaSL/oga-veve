@@ -43,6 +43,16 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve real de Silvio Pettirossi y Tenerife Norte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
 | [OpenStreetMap](https://www.openstreetmap.org) | Pistas, calles de rodaje, plataformas y estacionamientos | **ODbL** |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data) | Coordenadas, pistas y elevación de aeropuertos | **Unlicense** (dominio público) |
+| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España | Ortofoto de Tenerife Norte, sobre el relieve | **CC BY 4.0** · scne.es |
+
+La ortofoto del PNOA entró el día que las teselas fotorrealistas de Google
+dejaron de servirse — «no disponibles para tu cuenta y tu región»— y el juego
+se quedó sin mundo por una decisión de una cuenta ajena. Es la razón por la
+que este proyecto prefiere el dato abierto y anotado aunque cueste más
+trabajo: **nadie puede apagarlo un martes.**
+
+El «scne.es» de la licencia no es adorno: es la atribución que pide el
+Sistema Cartográfico Nacional y va donde vayan los créditos.
 
 La atribución de Copernicus va **literal y sin resumir** en los créditos del
 juego, en los tres idiomas, y no se puede quitar:

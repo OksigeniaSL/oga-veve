@@ -1,0 +1,24 @@
+{
+  "id": "tenerife-norte",
+  "encuadre": "cerca",
+  "fuente": "PNOA · Instituto Geográfico Nacional de España",
+  "licencia": "CC BY 4.0 · scne.es",
+  "servicio": "https://www.ign.es/wmts/pnoa-ma",
+  "capa": "OI.OrthoimageCoverage",
+  "esquina": {
+    "col": 59580,
+    "fila": 54704
+  },
+  "origen": {
+    "lat": 28.482752,
+    "lon": -16.341707
+  },
+  "tamanoM": 3000,
+  "zoom": 17,
+  "metrosPorPixel": 1.05,
+  "pixeles": {
+    "ancho": 3072,
+    "alto": 3072
+  },
+  "huecos": 0
+}
