@@ -28,7 +28,7 @@
  * partir por vértices compartidos y soldar por cercanía.
  */
 
-import type { Aerodrome, Punto } from './aerodrome';
+import type { Aerodrome, Punto } from "./aerodrome";
 
 /** A cuánto se consideran el mismo sitio dos puntas de calle, m. */
 const SOLDADURA = 12;
@@ -47,6 +47,18 @@ export interface Tramo {
   readonly ref: string | null;
   /** La geometría, para pintarla. Va de `a` a `b`. */
   readonly puntos: readonly Punto[];
+  /**
+   * Lo que **cuesta** recorrerlo, que no siempre es lo que mide.
+   *
+   * Existe por la pista: está en el grafo porque después de aterrizar se rueda
+   * por ella hasta la salida, pero no debe usarse como atajo para ir de un
+   * lado del aeropuerto al otro. Con un coste alto el buscador solo la elige
+   * cuando no hay otra, que es exactamente cuando estás encima.
+   *
+   * Sin esto, un aeropuerto con una calle paralela larga mandaba a todo el
+   * mundo por la pista, que es de las cosas que más asustan a una torre.
+   */
+  readonly coste?: number;
 }
 
 export interface Grafo {
@@ -56,13 +68,25 @@ export interface Grafo {
   readonly desde: readonly (readonly number[])[];
 }
 
+/**
+ * Cuánto se encarece rodar por la pista frente a rodar por una calle.
+ *
+ * Seis: lo bastante para que cualquier rodeo razonable por calles gane, y no
+ * tanto como para que el buscador se rinda cuando el único camino es la pista
+ * —que es lo que pasa nada más aterrizar—.
+ */
+const PENALIZACION_PISTA = 6;
+
 const clave = (p: Punto): string =>
   `${Math.round(p[0] / REJILLA)},${Math.round(p[1] / REJILLA)}`;
 
 const largoDe = (puntos: readonly Punto[]): number => {
   let total = 0;
   for (let i = 0; i < puntos.length - 1; i++) {
-    total += Math.hypot(puntos[i + 1]![0] - puntos[i]![0], puntos[i + 1]![1] - puntos[i]![1]);
+    total += Math.hypot(
+      puntos[i + 1]![0] - puntos[i]![0],
+      puntos[i + 1]![1] - puntos[i]![1],
+    );
   }
   return total;
 };
@@ -75,9 +99,37 @@ const largoDe = (puntos: readonly Punto[]): number => {
  * que solo se pasa con permiso, pero por la que se pasa—.
  */
 export function construirGrafo(aero: Aerodrome): Grafo {
-  const crudas = aero.taxiways
-    .filter((c) => c.path.length > 1)
-    .map((c) => ({ ref: c.ref ?? null, path: [...c.path] as Punto[] }));
+  /*
+   * **Y la pista también es un camino por el que se rueda.**
+   *
+   * Estaba fuera del grafo, así que quien aterrizaba se encontraba con que la
+   * ruta a casa **saltaba en línea recta** desde donde estaba hasta la calle
+   * más cercana —hasta doscientos veinte metros—, cruzando la hierba: «lo de
+   * salir por E4 me saca de la pista de asfalto».
+   *
+   * Y no era que la salida estuviera mal: es que no había manera de llegar a
+   * ella rodando, porque el trozo de pista que hay entre las ruedas y la boca
+   * de la salida no existía para el buscador.
+   *
+   * Va con un coste alto —ver `Tramo.coste`— para que se use solo cuando no
+   * hay otra, que es justo cuando estás encima de ella.
+   */
+  const crudas = [
+    ...aero.taxiways
+      .filter((c) => c.path.length > 1)
+      .map((c) => ({
+        ref: c.ref ?? null,
+        path: [...c.path] as Punto[],
+        pista: false,
+      })),
+    ...aero.runways
+      .filter((p) => p.centerline.length > 1)
+      .map((p) => ({
+        ref: p.ref ?? null,
+        path: [...p.centerline] as Punto[],
+        pista: true,
+      })),
+  ];
 
   // ── Nodado: meter cada punta ajena en el costado sobre el que cae ────────
   //
@@ -111,7 +163,8 @@ export function construirGrafo(aero: Aerodrome): Grafo {
         encima.sort((x, y) => x.t - y.t);
         for (const { p } of encima) {
           const ultimo = nuevo[nuevo.length - 1]!;
-          if (Math.hypot(ultimo[0] - p[0], ultimo[1] - p[1]) > 0.5) nuevo.push(p);
+          if (Math.hypot(ultimo[0] - p[0], ultimo[1] - p[1]) > 0.5)
+            nuevo.push(p);
         }
       }
       nuevo.push(b);
@@ -132,18 +185,23 @@ export function construirGrafo(aero: Aerodrome): Grafo {
   }
 
   // ── Partir por los cruces ────────────────────────────────────────────────
-  const trozos: { ref: string | null; path: readonly Punto[] }[] = [];
+  const trozos: {
+    ref: string | null;
+    path: readonly Punto[];
+    pista: boolean;
+  }[] = [];
   for (const calle of crudas) {
     let trozo: Punto[] = [];
     for (let i = 0; i < calle.path.length; i++) {
       const p = calle.path[i]!;
       trozo.push(p);
       if (i > 0 && i < calle.path.length - 1 && (usos.get(clave(p)) ?? 0) > 1) {
-        trozos.push({ ref: calle.ref, path: trozo });
+        trozos.push({ ref: calle.ref, path: trozo, pista: calle.pista });
         trozo = [p];
       }
     }
-    if (trozo.length > 1) trozos.push({ ref: calle.ref, path: trozo });
+    if (trozo.length > 1)
+      trozos.push({ ref: calle.ref, path: trozo, pista: calle.pista });
   }
 
   // ── Soldar los nudos ─────────────────────────────────────────────────────
@@ -162,7 +220,15 @@ export function construirGrafo(aero: Aerodrome): Grafo {
     const a = nudoDe(t.path[0]!);
     const b = nudoDe(t.path[t.path.length - 1]!);
     if (a === b) continue;
-    tramos.push({ a, b, largo: largoDe(t.path), ref: t.ref, puntos: t.path });
+    const largo = largoDe(t.path);
+    tramos.push({
+      a,
+      b,
+      largo,
+      ref: t.ref,
+      puntos: t.path,
+      coste: t.pista ? largo * PENALIZACION_PISTA : largo,
+    });
   }
 
   const desde: number[][] = nudos.map(() => []);
@@ -175,7 +241,10 @@ export function construirGrafo(aero: Aerodrome): Grafo {
 }
 
 /** El nudo más cercano a un punto, y a cuánto está. */
-export function nudoCercano(grafo: Grafo, p: Punto): { nudo: number; distancia: number } {
+export function nudoCercano(
+  grafo: Grafo,
+  p: Punto,
+): { nudo: number; distancia: number } {
   let nudo = -1;
   let distancia = Infinity;
   grafo.nudos.forEach((n, i) => {
@@ -190,7 +259,10 @@ export function nudoCercano(grafo: Grafo, p: Punto): { nudo: number; distancia: 
 
 export interface Ruta {
   /** Los tramos por los que se pasa, en orden y ya orientados. */
-  readonly tramos: readonly { readonly ref: string | null; readonly puntos: readonly Punto[] }[];
+  readonly tramos: readonly {
+    readonly ref: string | null;
+    readonly puntos: readonly Punto[];
+  }[];
   /** La polilínea completa, de principio a fin. */
   readonly puntos: readonly Punto[];
   /** Metros de rodaje. */
@@ -205,8 +277,13 @@ export interface Ruta {
  * Dijkstra y no A*: un aeropuerto tiene decenas de nudos, no millones, y aquí
  * la sencillez vale más que los microsegundos que ahorraría la heurística.
  */
-export function rutaEntre(grafo: Grafo, desdeNudo: number, hastaNudo: number): Ruta | null {
-  if (desdeNudo === hastaNudo) return { tramos: [], puntos: [], largo: 0, letras: [] };
+export function rutaEntre(
+  grafo: Grafo,
+  desdeNudo: number,
+  hastaNudo: number,
+): Ruta | null {
+  if (desdeNudo === hastaNudo)
+    return { tramos: [], puntos: [], largo: 0, letras: [] };
 
   const coste = new Array<number>(grafo.nudos.length).fill(Infinity);
   const porTramo = new Array<number>(grafo.nudos.length).fill(-1);
@@ -229,7 +306,7 @@ export function rutaEntre(grafo: Grafo, desdeNudo: number, hastaNudo: number): R
     for (const iTramo of grafo.desde[actual]!) {
       const t = grafo.tramos[iTramo]!;
       const otro = t.a === actual ? t.b : t.a;
-      const nuevo = mejor + t.largo;
+      const nuevo = mejor + (t.coste ?? t.largo);
       if (nuevo < coste[otro]!) {
         coste[otro] = nuevo;
         porTramo[otro] = iTramo;
@@ -259,14 +336,16 @@ export function rutaEntre(grafo: Grafo, desdeNudo: number, hastaNudo: number): R
   for (const paso of pasos) {
     for (const p of paso.puntos) {
       const ultimo = puntos[puntos.length - 1];
-      if (ultimo && Math.hypot(ultimo[0] - p[0], ultimo[1] - p[1]) < 0.5) continue;
+      if (ultimo && Math.hypot(ultimo[0] - p[0], ultimo[1] - p[1]) < 0.5)
+        continue;
       puntos.push(p);
     }
   }
 
   const letras: string[] = [];
   for (const paso of pasos) {
-    if (paso.ref && paso.ref !== letras[letras.length - 1]) letras.push(paso.ref);
+    if (paso.ref && paso.ref !== letras[letras.length - 1])
+      letras.push(paso.ref);
   }
 
   return { tramos: pasos, puntos, largo: coste[hastaNudo]!, letras };
@@ -300,7 +379,9 @@ export function rodajeEntre(
   // antes de que nadie se hubiera movido.
   const puntos = [origen, ...ruta.puntos, destino].filter((p, i, todos) => {
     const anterior = todos[i - 1];
-    return !anterior || Math.hypot(anterior[0] - p[0], anterior[1] - p[1]) > 0.5;
+    return (
+      !anterior || Math.hypot(anterior[0] - p[0], anterior[1] - p[1]) > 0.5
+    );
   });
   return { ...ruta, puntos, largo: ruta.largo + a.distancia + b.distancia };
 }
