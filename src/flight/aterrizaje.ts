@@ -18,14 +18,19 @@ export type Aterrizaje = "suave" | "firme" | "rapido" | "fuera" | null;
 const SUAVE = 1.2;
 
 /**
- * A qué velocidad se felicita (m/s).
+ * Cuánto se espera desde el contacto para dar el veredicto, s.
  *
- * Se felicita a paso de rodaje, no en seco. Con el umbral en tres metros por
- * segundo había que esperar a la parada total, y una pista de tres kilómetros
- * sin frenar es un minuto largo de silencio justo después de lo único que
- * había que celebrar.
+ * **Se esperaba a bajar de velocidad de rodaje, y eso puede tardar un minuto.**
+ * Medido: sin frenar, en una pista de tres kilómetros, el veredicto salía
+ * cincuenta y cuatro segundos y mil ciento veintinueve metros después de tocar
+ * tierra. Para entonces ya nadie lo relaciona con la toma, que es lo único que
+ * el veredicto juzga.
+ *
+ * Dos segundos: lo que tarda el avión en asentarse sobre el tren y lo que dura
+ * la sensación de haber tocado. Se dice cuando todavía se está hablando de
+ * eso.
  */
-const YA_FRENADO = 12;
+const DESDE_EL_CONTACTO = 2;
 
 /**
  * Cuánto se puede pasar de la velocidad de aproximación y seguir contando.
@@ -46,6 +51,8 @@ export class LandingWatcher {
   private pendiente = false;
   private enPista = false;
   private descenso = 0;
+  /** Segundos desde que las ruedas tocaron. */
+  private desdeQueToco = 0;
   /** A qué velocidad se tocó. Al frenar ya no se sabría. */
   private velocidadAlTocar = 0;
 
@@ -67,6 +74,7 @@ export class LandingWatcher {
     crashed: boolean,
     onRunway: boolean,
     vref: number,
+    dt = 0,
   ): Aterrizaje {
     if (!onGround) {
       this.volando = true;
@@ -80,10 +88,13 @@ export class LandingWatcher {
       this.descenso = sinkRate;
       this.velocidadAlTocar = airspeed;
       this.enPista = onRunway;
+      this.desdeQueToco = 0;
       return null;
     }
 
-    if (!this.pendiente || crashed || airspeed > YA_FRENADO) return null;
+    this.desdeQueToco += dt;
+    if (!this.pendiente || crashed || this.desdeQueToco < DESDE_EL_CONTACTO)
+      return null;
     this.pendiente = false;
     if (!this.enPista) return "fuera";
     /*
@@ -101,5 +112,6 @@ export class LandingWatcher {
   reset(): void {
     this.volando = false;
     this.pendiente = false;
+    this.desdeQueToco = 0;
   }
 }

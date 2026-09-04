@@ -13,12 +13,20 @@ function volarYAterrizar(
 ) {
   const w = new LandingWatcher();
   const veredictos = [];
-  veredictos.push(w.update(true, 0, 0, false, true, VREF)); // parado al principio
+  const paso = 0.5;
+  veredictos.push(w.update(true, 0, 0, false, true, VREF, paso)); // parado al principio
   for (let i = 0; i < 5; i++)
-    veredictos.push(w.update(false, VREF, 0, false, false, VREF));
-  veredictos.push(w.update(true, alTocar, sink, crashed, enPista, VREF)); // contacto
-  for (let i = 0; i < 5; i++)
-    veredictos.push(w.update(true, 40 - i * 8, 0, crashed, enPista, VREF));
+    veredictos.push(w.update(false, VREF, 0, false, false, VREF, paso));
+  // El contacto.
+  veredictos.push(w.update(true, alTocar, sink, crashed, enPista, VREF, paso));
+  /*
+   * Y la carrera. **El veredicto ya no espera a frenar, espera dos segundos.**
+   * Esperar a bajar de velocidad de rodaje podía tardar un minuto entero en
+   * una pista de tres kilómetros, y para entonces ya nadie lo relaciona con la
+   * toma. Aquí se rueda medio segundo por paso, así que sale al quinto.
+   */
+  for (let i = 0; i < 6; i++)
+    veredictos.push(w.update(true, 40 - i * 4, 0, crashed, enPista, VREF, paso));
   return veredictos.filter(Boolean);
 }
 
@@ -41,11 +49,11 @@ describe("el aterrizaje se reconoce y se dice", () => {
 
   it("se dice una sola vez, no una por fotograma", () => {
     const w = new LandingWatcher();
-    w.update(false, 50, 0, false, false, VREF);
-    w.update(true, 40, 0.5, false, true, VREF);
+    w.update(false, 50, 0, false, false, VREF, 0.2);
+    w.update(true, 40, 0.5, false, true, VREF, 0.2);
     const dichos = [];
     for (let i = 0; i < 30; i++) {
-      const v = w.update(true, 5, 0, false, true, VREF);
+      const v = w.update(true, 5, 0, false, true, VREF, 0.2);
       if (v) dichos.push(v);
     }
     expect(dichos).toEqual(["suave"]);
