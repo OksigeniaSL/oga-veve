@@ -31,17 +31,51 @@
       no por detección de "es móvil": un portátil con pantalla táctil tiene
       que poder usar los dos.
     -->
+    <!--
+      Y cada mando lleva dibujado lo que hace. Eran tres círculos grises
+      idénticos con un punto ocre y un botón con la palabra «Frenos» escrita
+      a pelo en castellano: en el aparato del aula, y para un público que no
+      lee, tres mandos iguales y una palabra no dicen absolutamente nada.
+
+      Los dibujos son los mismos que ya usa el juego en otras pantallas, para
+      que se reconozcan: la silueta del avión de la señal, las dos hélices de
+      las teclas de motor y los dos pedales del timón, que es lo que mueve un
+      timón de verdad.
+
+      El botón de freno se fue: había dos a la vez —este y la mano roja del
+      HUD, que sale en los peldaños sin letras— y de los dos ganaba la mano.
+      Queda la mano, que además es un dibujo y no una palabra.
+    -->
     <div id="tactil" class="tactil">
-      <div class="pad pad--stick" data-touch="stick" aria-label="Palanca">
+      <div class="pad pad--stick" data-touch="stick" data-i18n-label="tactil.palanca">
+        <svg class="pad__dibujo" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.6 L13.4 9.4 L22 12.6 v1.8 l-8.6-1.6 v4.4 l2.6 2 v1.4
+                   L12 19.6 L7.9 20.6 v-1.4 l2.6-2 v-4.4 L2 14.4 v-1.8 l8.6-3.2 Z" />
+        </svg>
         <span class="pad__punto"></span>
       </div>
-      <div class="pad pad--rudder" data-touch="rudder" aria-label="Timón">
+      <div class="pad pad--rudder" data-touch="rudder" data-i18n-label="tactil.timon">
+        <svg class="pad__dibujo pad__dibujo--ancho" viewBox="0 0 48 24" aria-hidden="true">
+          <rect x="6" y="4" width="13" height="16" rx="3" />
+          <rect x="29" y="4" width="13" height="16" rx="3" />
+          <path d="M6 12 h13 M29 12 h13" stroke="rgba(18,26,22,0.55)"
+                stroke-width="2" fill="none" />
+        </svg>
         <span class="pad__punto"></span>
       </div>
-      <div class="pad pad--throttle" data-touch="throttle" aria-label="Motor">
+      <div class="pad pad--throttle" data-touch="throttle" data-i18n-label="tactil.motor">
+        <svg class="pad__dibujo pad__dibujo--alto" viewBox="0 0 24 60" aria-hidden="true">
+          <ellipse cx="12" cy="6.5" rx="2.4" ry="6" />
+          <ellipse cx="12" cy="19.5" rx="2.4" ry="6" />
+          <ellipse cx="5.2" cy="13" rx="6" ry="2.4" />
+          <ellipse cx="18.8" cy="13" rx="6" ry="2.4" />
+          <ellipse cx="12" cy="45" rx="1.3" ry="3.4" />
+          <ellipse cx="12" cy="52" rx="1.3" ry="3.4" />
+          <ellipse cx="8.4" cy="48.5" rx="3.4" ry="1.3" />
+          <ellipse cx="15.6" cy="48.5" rx="3.4" ry="1.3" />
+        </svg>
         <span class="pad__punto"></span>
       </div>
-      <button class="boton-tactil" data-touch="brakes" type="button">Frenos</button>
     </div>
 
     <!--

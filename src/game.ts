@@ -575,6 +575,23 @@ export class Game {
       this.flight.implementationName,
     );
 
+    /*
+     * Las etiquetas de los mandos táctiles, traducidas.
+     *
+     * Estaban escritas en el HTML y en castellano fijo —«Palanca», «Timón»,
+     * «Motor»—, así que quien juega en guaraní o en inglés y usa lector de
+     * pantalla oía castellano. El marcado es estático, así que se rellenan
+     * aquí, que es donde ya vive el diccionario.
+     */
+    for (const mando of options.touchRoot.querySelectorAll<HTMLElement>(
+      "[data-i18n-label]",
+    )) {
+      mando.setAttribute(
+        "aria-label",
+        t(mando.dataset.i18nLabel as never),
+      );
+    }
+
     this.input = new InputManager(options.touchRoot, {
       toggleCamera: () => this.cycleCamera(),
       toggleAssist: () => this.cycleTier(),
@@ -639,10 +656,26 @@ export class Game {
       nombreDeTecla(this.input.preferredKey(accion)),
     );
 
-    // La primera vez se abre sola. Una pantalla que explica los mandos no
-    // sirve de nada si hay que saber que existe para encontrarla, y quien no
-    // lee no va a descubrir una tecla por su cuenta.
-    if (this.keyScreen && !localStorage.getItem("oga-veve:teclas-vistas")) {
+    /*
+     * La primera vez se abre sola. Una pantalla que explica los mandos no
+     * sirve de nada si hay que saber que existe para encontrarla, y quien no
+     * lee no va a descubrir una tecla por su cuenta.
+     *
+     * **Pero solo con teclado.** Se abría también en tablet, y ahí es un
+     * teclado QWERTY dibujado que no existe: tapa el juego en el primer
+     * segundo, anuncia mandos que no están y calla los cuatro que sí. Encima
+     * el truco que la hace útil —la tecla se enciende al pulsarla— cuelga de
+     * `keydown`, así que con el dedo no se enciende nunca nada.
+     *
+     * Con el dedo, los mandos ya dicen lo que hacen: cada uno lleva su dibujo
+     * dentro. Ver `index.html`.
+     */
+    const conTeclado = matchMedia("(pointer: fine)").matches;
+    if (
+      conTeclado &&
+      this.keyScreen &&
+      !localStorage.getItem("oga-veve:teclas-vistas")
+    ) {
       try {
         localStorage.setItem("oga-veve:teclas-vistas", "1");
         this.keyScreen.show();

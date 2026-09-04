@@ -211,6 +211,9 @@ export const ES_PY = {
    * Los galones. Solo los ve quien usa lector de pantalla: en la pantalla un
    * galón es un dibujo y no lleva ni una palabra, que para eso se inventó.
    */
+  'tactil.palanca': 'Palanca',
+  'tactil.timon': 'Timón',
+  'tactil.motor': 'Motor',
   'galon.manga': 'Los galones de este vuelo',
   'galon.aproximacion': 'Galón de la aproximación',
   'galon.toma': 'Galón del aterrizaje',

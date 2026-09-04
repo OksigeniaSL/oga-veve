@@ -791,6 +791,30 @@ body {
   touch-action: none;
 }
 
+/* Lo que hace cada mando, dibujado dentro. Tres círculos grises idénticos con
+   un punto no dicen nada, y menos a los cuatro años. Va tenue: es la etiqueta
+   del mando, no el mando. */
+.pad__dibujo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44%;
+  height: 44%;
+  transform: translate(-50%, -50%);
+  fill: rgba(228, 226, 218, 0.34);
+  pointer-events: none;
+}
+
+.pad__dibujo--ancho {
+  width: 62%;
+  height: 52%;
+}
+
+.pad__dibujo--alto {
+  width: 46%;
+  height: 78%;
+}
+
 .pad__punto {
   position: absolute;
   left: 50%;
@@ -840,6 +864,16 @@ body {
   color: var(--beige);
   font: inherit;
   font-size: 15px;
+}
+
+/* Con el dedo, los botones del motor pasan a medida de tacto. Con ratón
+   pueden quedarse pequeños: un ratón acierta en diecinueve píxeles y un dedo
+   de cuatro años no. */
+@media (pointer: coarse) {
+  .motor__tecla {
+    min-width: var(--tacto);
+    min-height: var(--tacto);
+  }
 }
 
 /* ── Reparto de la pantalla cuando se juega con el dedo ───────────────── */
