@@ -201,6 +201,7 @@ export const EN: Dictionary = {
   'leccion.despegue': 'Take off',
   'leccion.aterrizaje': 'Land',
 
+  'galon.manga': 'This flight\u2019s stripes',
   'galon.aproximacion': 'Approach stripe',
   'galon.toma': 'Landing stripe',
   'galon.aros': 'Rings stripe',
