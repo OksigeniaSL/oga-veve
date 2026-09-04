@@ -40,7 +40,7 @@ import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
-import { RunwayGuide } from "./world/runway-guide";
+import { RunwayGuide, type PasoDeAro } from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
 import { LECCION_POR_DEFECTO, type Leccion } from "./flight/lecciones";
 import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from "./world/meteo";
@@ -105,8 +105,9 @@ import { nombreDeTecla } from "./flight/keymap";
 import { elegirInstructor, type Instructor } from "./audio/instructor";
 import type { ControlInputs } from "./flight/model";
 import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
-import { PlanDeVuelo } from "./world/plan-de-vuelo";
-import { LandingWatcher } from "./flight/aterrizaje";
+import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
+import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
+import { Galones } from "./flight/galones";
 import { arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
@@ -116,6 +117,7 @@ import { avisoDeTerreno } from "./flight/aviso-de-terreno";
 import {
   bandaDeRodaje,
   bandaDeVelocidad,
+  type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
 import { callar, decir, permitirVoz } from "./audio/voz";
 import { MAX_PASO } from "./flight/fdm";
@@ -289,6 +291,10 @@ export class Game {
 
   /** Reconoce el aterrizaje y su calidad. Ver `flight/aterrizaje.ts`. */
   private readonly landing = new LandingWatcher();
+  /** Los cinco galones de este vuelo. Ver `flight/galones.ts`. */
+  private readonly galones = new Galones();
+  /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
+  private vistaActual: Vista | null = null;
   /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
@@ -946,8 +952,15 @@ export class Game {
   }
 
   /** Coloca el avión al principio de la pista, parado y con el motor al ralentí. */
-  /** Mira si se ha aterrizado y lo dice. La lógica vive en `aterrizaje.ts`. */
-  private checkLanding(): void {
+  /**
+   * Mira si se ha aterrizado y lo dice. La lógica vive en `aterrizaje.ts`.
+   *
+   * Devuelve el veredicto porque lo necesitan **dos** cosas: el cartel de
+   * siempre y los galones, que cierran ahí el de la toma y el de la
+   * aproximación. Llega en un solo fotograma y por eso no vale con mirarlo
+   * desde fuera después.
+   */
+  private checkLanding(): Aterrizaje {
     const s = this.flight.state;
     const veredicto = this.landing.update(
       s.onGround,
@@ -957,7 +970,7 @@ export class Game {
       Number.isFinite(this.runwayRemaining()),
       this.aircraft.approachSpeed,
     );
-    if (!veredicto) return;
+    if (!veredicto) return null;
     this.hud.flash(
       t(
         veredicto === "suave"
@@ -970,6 +983,7 @@ export class Game {
       ),
       3.6,
     );
+    return veredicto;
   }
 
   /**
@@ -1173,6 +1187,7 @@ export class Game {
     }
     this.runwayGuide.reset();
     this.landing.reset();
+    this.reiniciarGalones();
     this.crashedFor = 0;
     this.wasOnGround = true;
     this.wasStalled = false;
@@ -1856,6 +1871,7 @@ export class Game {
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
     this.runwayGuide.reset(this.flight.state.position);
     this.landing.reset();
+    this.reiniciarGalones();
     this.crashedFor = 0;
     this.wasOnGround = false;
     this.wasStalled = false;
@@ -2256,7 +2272,7 @@ export class Game {
       this.runwayRemaining(),
       this.input.controls.engineOn,
     );
-    this.checkLanding();
+    const toma = this.checkLanding();
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
     // misión en curso la aguja señala el objetivo, y si el tutor mirara ese
     // número pediría bajar el motor para aterrizar cada vez que uno se
@@ -2269,10 +2285,59 @@ export class Game {
       this.distanceToRunway(),
     );
     this.avanzarPlan(dt);
+    this.contarGalones(dt, banda, aro, toma);
     this.hud.senal.update(dt);
 
     this.renderer.render(this.scene, this.camera);
   };
+
+  /**
+   * Otro vuelo, otros galones.
+   *
+   * **Sí se borran al reiniciar, y eso no contradice el «ganado es ganado».**
+   * Lo que no se puede quitar es un galón *dentro* de un vuelo; entre un vuelo
+   * y el siguiente hay que empezar de cero, porque si no la manga se llena
+   * sola a base de repetir y deja de decir nada. La libreta de vuelo (#25) es
+   * el sitio donde lo ganado se guarda de verdad.
+   */
+  private reiniciarGalones(): void {
+    this.galones.reiniciar();
+    this.hud.setGalones([]);
+  }
+
+  /**
+   * Los galones del vuelo, contados y celebrados.
+   *
+   * Va al final del fotograma, cuando ya han hablado todos los que miden: la
+   * banda de velocidad, el aro que se acaba de cruzar, el veredicto de la toma
+   * y la fase del plan. Aquí no se mide nada nuevo — **todo esto ya estaba
+   * medido y nadie lo juntaba**, que era exactamente el problema.
+   *
+   * Y se celebra con las cuatro notas que suben, no con un cartel: un galón se
+   * gana muchas veces mientras se está haciendo otra cosa —cruzando el
+   * penúltimo aro, rodando hacia el puesto— y un cartel ahí tapa la lección
+   * que se está dando. El sonido y el chevrón que aparece bastan.
+   */
+  private contarGalones(
+    dt: number,
+    banda: BandaDeVelocidad,
+    aro: PasoDeAro,
+    toma: Aterrizaje,
+  ): void {
+    const ganado = this.galones.paso(
+      {
+        fase: this.vistaActual?.fase ?? "en-vuelo",
+        banda,
+        fuera: this.vistaActual?.fuera ?? false,
+        aro,
+        toma,
+      },
+      dt,
+    );
+    if (!ganado) return;
+    this.hud.setGalones(this.galones.lista);
+    this.audio.cue("achieved");
+  }
 
   /**
    * Rumbo y distancia a la cabecera de pista, en coordenadas del piloto.
@@ -2346,6 +2411,7 @@ export class Game {
       this.input.controls.engineOn,
       dt,
     );
+    this.vistaActual = vista;
 
     // La lámpara de la torre solo tiene sentido en tierra y antes de despegar:
     // es lo que se mira desde el punto de espera. En el aire no hay lámpara que

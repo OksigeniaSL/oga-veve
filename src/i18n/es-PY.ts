@@ -207,6 +207,16 @@ export const ES_PY = {
   'leccion.despegue': 'Despegar',
   'leccion.aterrizaje': 'Aterrizar',
 
+  /*
+   * Los galones. Solo los ve quien usa lector de pantalla: en la pantalla un
+   * galón es un dibujo y no lleva ni una palabra, que para eso se inventó.
+   */
+  'galon.aproximacion': 'Galón de la aproximación',
+  'galon.toma': 'Galón del aterrizaje',
+  'galon.aros': 'Galón de los aros',
+  'galon.velocidad': 'Galón de la velocidad',
+  'galon.rodaje': 'Galón del rodaje',
+
   'language.label': 'Idioma',
   'language.changed': 'Idioma: {name}',
 } as const;
