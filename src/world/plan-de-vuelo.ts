@@ -777,12 +777,44 @@ export class PlanDeVuelo {
     // mira adelante— y quien acababa de aterrizar no tenía nada que seguir:
     // «al aterrizar no tuve línea de regreso al hangar».
     const salida = quiere === "puesto" ? this.salidaPorDelante() : null;
-    const ruta = rodajeEntre(this.grafo, salida ?? this.ultimaPos, meta, 600);
-    this.ponerRuta(
-      salida && ruta
-        ? { ...ruta, puntos: [this.ultimaPos, ...ruta.puntos] }
-        : ruta,
-    );
+
+    /*
+     * **Y hasta esa salida se va rodando, no en línea recta.**
+     *
+     * Aquí se trazaba la ruta *desde la salida* y después se le pegaba delante
+     * la posición del avión. O sea: **una recta desde donde estabas hasta la
+     * boca de la salida**, por encima de lo que hubiera en medio. Eso es lo
+     * que se veía jugando — «salgo por E4 atravesando los jardines», «todavía
+     * voy por los jardines»— y no era la salida la que estaba mal, era el
+     * primer tramo, que no era un camino sino un atajo dibujado.
+     *
+     * Ahora son dos rutas encadenadas y las dos salen del grafo: de las ruedas
+     * a la salida —por la pista, que desde hace poco está en el grafo— y de la
+     * salida al puesto. Sin rectas por el campo en ningún trozo.
+     *
+     * Y si el primer tramo no sale —una toma muy lejos de todo—, se cae a la
+     * ruta directa, que es mejor que quedarse sin raya.
+     */
+    if (salida) {
+      const hastaLaSalida = rodajeEntre(
+        this.grafo,
+        this.ultimaPos,
+        salida,
+        600,
+      );
+      const desdeLaSalida = rodajeEntre(this.grafo, salida, meta, 600);
+      if (hastaLaSalida && desdeLaSalida) {
+        this.ponerRuta({
+          ...desdeLaSalida,
+          puntos: [...hastaLaSalida.puntos, ...desdeLaSalida.puntos],
+          largo: hastaLaSalida.largo + desdeLaSalida.largo,
+          letras: [...hastaLaSalida.letras, ...desdeLaSalida.letras],
+        });
+        return;
+      }
+    }
+
+    this.ponerRuta(rodajeEntre(this.grafo, this.ultimaPos, meta, 600));
   }
 
   /**

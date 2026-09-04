@@ -197,3 +197,57 @@ describe("salir de la pista", () => {
     expect(ruta!.letras).not.toContain(pista.ref);
   });
 });
+
+/**
+ * Y el camino entero desde la toma, que es donde se veía la hierba.
+ *
+ * Se comprueba lo mismo que antes —cada punto sobre un camino— pero desde
+ * varios sitios de la pista, porque el fallo dependía de dónde se tocara: la
+ * ruta se trazaba desde la salida y se le pegaba delante la posición del
+ * avión, así que el primer tramo era una recta por encima de lo que hubiera.
+ */
+describe("desde cualquier punto de la pista se sale por asfalto", () => {
+  const aero = gcxo as unknown as Aerodrome;
+  const grafo = construirGrafo(aero);
+  const pista = aero.runways[0]!;
+  const caminos: Punto[][] = [
+    ...aero.taxiways.map((c) => c.path as Punto[]),
+    ...aero.runways.map((p) => p.centerline as Punto[]),
+  ];
+  const alCamino = (p: Punto): number => {
+    let d = Infinity;
+    for (const camino of caminos) {
+      for (let i = 0; i < camino.length - 1; i++) {
+        const a = camino[i]!;
+        const b = camino[i + 1]!;
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const l2 = dx * dx + dy * dy || 1;
+        const t = Math.max(
+          0,
+          Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
+        );
+        d = Math.min(d, Math.hypot(a[0] + dx * t - p[0], a[1] + dy * t - p[1]));
+      }
+    }
+    return d;
+  };
+
+  /** Cinco puntos repartidos por el eje: se puede tomar en cualquiera. */
+  const sitios = [0.2, 0.35, 0.5, 0.65, 0.8].map((t) => {
+    const a = pista.centerline[0]!;
+    const b = pista.centerline[pista.centerline.length - 1]!;
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t] as Punto;
+  });
+
+  it.each(sitios.map((p, i) => [i, p] as const))(
+    "tomando en el punto %i, la ruta al puesto no cruza el campo",
+    (_i, desde) => {
+      const puesto = aero.parkingPositions![0]!.xy;
+      const ruta = rodajeEntre(grafo, desde, puesto, 600);
+      expect(ruta).not.toBeNull();
+      for (const p of ruta!.puntos.slice(0, -1))
+        expect(alCamino(p)).toBeLessThan(30);
+    },
+  );
+});
