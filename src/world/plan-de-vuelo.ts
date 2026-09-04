@@ -601,44 +601,55 @@ export class PlanDeVuelo {
      */
     if (aLaPolilinea(p, this.rutaMundo) > SIN_AYUDA_FUERA) return 0;
 
-    // El punto de la ruta más cercano, y hacia dónde va la raya allí.
+    /*
+     * **La ayuda corrige la deriva. No toma las curvas.**
+     *
+     * Aquí se apuntaba a un punto treinta metros por delante de la ruta y se
+     * giraba hacia él, que es lo que hace un piloto automático: **conducir**.
+     * Y en una curva eso significa que el juego gira por ti. «Ese giro del
+     * final no lo di yo, el juego me obliga moviendo el avión; parece que hay
+     * una línea oculta que me imanta la aeronave.»
+     *
+     * Es exactamente lo contrario de lo que dice el comentario de arriba —«la
+     * ayuda mantiene en la raya; no arrastra hasta ella»— y de lo que hace el
+     * *Smart Steering* del que salió la idea, que no toma curvas: evita que te
+     * salgas.
+     *
+     * Ahora la cuenta sale de **lo desviado que vas del eje**, con su signo, y
+     * de nada más. Sobre la raya vale cero, así que en una curva la ayuda calla
+     * y giras tú; si te vas yendo, tira suavemente hacia dentro. Con el
+     * amortiguador de guiñada para que no oscile.
+     */
     let mejor = Infinity;
-    let cual = 0;
-    for (let i = 0; i < this.rutaMundo.length; i++) {
-      const d = Math.hypot(
-        this.rutaMundo[i]![0] - p[0],
-        this.rutaMundo[i]![1] - p[1],
+    let desvio = 0;
+    for (let i = 0; i < this.rutaMundo.length - 1; i++) {
+      const a = this.rutaMundo[i]!;
+      const b = this.rutaMundo[i + 1]!;
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const l2 = dx * dx + dy * dy;
+      if (l2 < 1) continue;
+      const t = Math.max(
+        0,
+        Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
       );
-      if (d < mejor) {
-        mejor = d;
-        cual = i;
-      }
+      const cx = a[0] + dx * t;
+      const cy = a[1] + dy * t;
+      const d = Math.hypot(cx - p[0], cy - p[1]);
+      if (d >= mejor) continue;
+      mejor = d;
+      // El signo: a qué lado de la raya se está, mirando en su sentido.
+      const l = Math.sqrt(l2);
+      desvio = ((p[0] - cx) * -dy + (p[1] - cy) * dx) / l;
     }
-    // Se mira treinta metros por delante: apuntar al punto más cercano hace
-    // que el avión persiga su propia sombra y no se estabilice nunca.
-    let mira = this.rutaMundo[this.rutaMundo.length - 1]!;
-    let acumulado = 0;
-    for (let i = cual; i < this.rutaMundo.length - 1; i++) {
-      acumulado += Math.hypot(
-        this.rutaMundo[i + 1]![0] - this.rutaMundo[i]![0],
-        this.rutaMundo[i + 1]![1] - this.rutaMundo[i]![1],
-      );
-      if (acumulado > 30) {
-        mira = this.rutaMundo[i + 1]!;
-        break;
-      }
-    }
+    if (!Number.isFinite(desvio)) return 0;
 
-    // Y si aun así el punto al que se mira ha quedado encima, no hay rumbo que
-    // sacar de él: dos puntos a un metro dan un ángulo cualquiera.
-    if (Math.hypot(mira[0] - p[0], mira[1] - p[1]) < 6) return 0;
-
-    const rumbo = ((estado.heading * 180) / Math.PI + 360) % 360;
-    const quiero =
-      ((Math.atan2(mira[0] - p[0], -(mira[1] - p[1])) * 180) / Math.PI + 360) %
-      360;
-    const error = ((quiero - rumbo + 540) % 360) - 180;
-    const giro = error / 22 - (estado.yawRate * 180) / Math.PI / 40;
+    /*
+     * Seis metros de holgura: medio ancho de calle. Dentro de eso no se toca
+     * nada, porque ahí no hay deriva que corregir — hay un avión rodando.
+     */
+    const fuera = Math.abs(desvio) < 6 ? 0 : desvio - Math.sign(desvio) * 6;
+    const giro = -fuera / 14 - (estado.yawRate * 180) / Math.PI / 40;
     return Math.max(-1, Math.min(1, giro));
   }
 

@@ -116,8 +116,19 @@ export class RunwayGuide {
     );
     this.mira.name = "mira";
     this.mira.renderOrder = 3;
+    /*
+     * **Y apagada.** Se probó jugando y la respuesta fue inmediata: «esas
+     * bolas de colores son un peligro». Tenía razón — una bola flotando en
+     * mitad de la aproximación se lee como algo del mundo contra lo que se
+     * puede chocar, no como un instrumento, y encima aparece justo en el
+     * momento de más carga.
+     *
+     * El problema que venía a resolver sigue ahí y es bueno: el aro apagado
+     * dice «vas mal» y no dice hacia dónde. Pero la respuesta no es meter un
+     * objeto más en el cielo. Queda para pensarlo en el HUD, que es donde van
+     * los instrumentos, y no en el mundo, que es donde van las cosas.
+     */
     this.mira.visible = false;
-    this.group.add(this.mira);
     const rings = this.group.getObjectByName("aros");
     rings?.traverse((object) => {
       if (object instanceof Mesh) this.rings.push(object);
@@ -364,26 +375,6 @@ export class RunwayGuide {
       const acercarse = Math.max(0, Math.min(1, 1 - d / Math.max(1, tramo)));
       const cerca = acercarse * centrado;
 
-      /*
-       * La mira: donde estás tú, dibujado dentro del aro. Solo cuando ya te
-       * estás acercando —de lejos no hay nada que corregir todavía— y solo si
-       * te has ido de verdad, porque una mira clavada en el centro es ruido.
-       */
-      const desvio = rel.clone().addScaledVector(eje, -rel.dot(eje));
-      const verla = acercarse > 0.25 && fuera > radio * 0.1;
-      this.mira.visible = verla;
-      if (verla) {
-        // Recortada al borde del aro: si te has ido muy lejos, se queda en el
-        // filo por el lado por el que te fuiste, que sigue diciendo por dónde.
-        const tope = Math.min(1, (radio * 0.86) / Math.max(1, fuera));
-        this.mira.position
-          .copy(siguiente.position)
-          .addScaledVector(desvio, tope);
-        const m = this.mira.material as MeshBasicMaterial;
-        m.color.setHex(FALLADO).lerp(new Color(CERCA), centrado);
-        m.opacity = 0.55 + 0.45 * acercarse;
-        this.mira.scale.setScalar(0.7 + radio / 60);
-      }
       // Suavizado: sin esto, entrar y salir del borde hace parpadear el aro.
       this.encendido += (cerca - this.encendido) * Math.min(1, dt * 2);
       const e = this.encendido;
