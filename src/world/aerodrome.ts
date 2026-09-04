@@ -43,6 +43,7 @@ import {
   Vector2,
   type ColorRepresentation,
 } from "three";
+import { RESALTE } from "./terrain";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 
@@ -470,14 +471,21 @@ export function createAerodrome(
   /*
    * Sobre la foto, y si la foto no sabe qué hay en ese punto, sobre el plano
    * deducido. Y un dedo por encima: dos superficies exactamente en el mismo
-   * plano parpadean una sobre otra, y aunque el `polygonOffset` lo resuelve
-   * casi siempre, cinco centímetros no se ven y no dejan lugar a dudas.
+   * plano parpadean una sobre otra.
+   *
+   * **Ese dedo tiene que ser el mismo con el que se aplana el relieve.** Eran
+   * cinco centímetros aquí y treinta y cinco allí (`RESALTE`, en
+   * `terrain.ts`), cada número escrito sin saber del otro. Al arrancar no se
+   * notaba porque el aeródromo se construye con la cota deducida; en cuanto
+   * cambiaba el viento y se rehacía con el suelo real, el pavimento se plantaba
+   * a cinco centímetros **exactamente donde ya estaba la manta de la
+   * fotografía**, y a empate exacto gana el que lleva empujón.
    */
   const sobreLaFoto =
     (base: (p: Punto) => number) =>
     (p: Punto): number => {
       const y = sueloReal?.(p);
-      return y === null || y === undefined ? base(p) : y + 0.05;
+      return y === null || y === undefined ? base(p) : y + RESALTE;
     };
   const cota = sobreLaFoto(deducida);
 
