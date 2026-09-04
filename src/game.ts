@@ -1014,7 +1014,7 @@ export class Game {
    * aproximación. Llega en un solo fotograma y por eso no vale con mirarlo
    * desde fuera después.
    */
-  private checkLanding(): Aterrizaje {
+  private checkLanding(dt: number): Aterrizaje {
     const s = this.flight.state;
     const veredicto = this.landing.update(
       s.onGround,
@@ -1023,6 +1023,7 @@ export class Game {
       s.crashed,
       Number.isFinite(this.runwayRemaining()),
       this.aircraft.approachSpeed,
+      dt,
     );
     if (!veredicto) return null;
     this.hud.flash(
@@ -1037,6 +1038,21 @@ export class Game {
       ),
       3.6,
     );
+    /*
+     * **Y suena, porque hasta ahora el veredicto era solo texto.**
+     *
+     * `hud.flash` escribe una frase, y en los dos peldaños de abajo no hay
+     * nadie que la lea. El único canal no escrito era el golpe de las ruedas,
+     * que suena igual de bien en una toma buena que en una toma rápida — y una
+     * toma rápida sale **más suave**, que es justo la trampa. Así que quien
+     * aterrizaba a doscientos por hora oía un éxito.
+     */
+    if (veredicto === "suave" || veredicto === "firme") {
+      this.audio.cue("success");
+    } else {
+      this.audio.cue("attention");
+      decir(veredicto === "rapido" ? "too fast" : "off the runway");
+    }
     return veredicto;
   }
 
@@ -2329,7 +2345,7 @@ export class Game {
       this.runwayRemaining(),
       this.input.controls.engineOn,
     );
-    const toma = this.checkLanding();
+    const toma = this.checkLanding(dt);
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
     // misión en curso la aguja señala el objetivo, y si el tutor mirara ese
     // número pediría bajar el motor para aterrizar cada vez que uno se
