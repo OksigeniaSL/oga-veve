@@ -1200,6 +1200,15 @@ body {
 }
 
 /* El avioncito es SIEMPRE ocre en todo el juego: lo que eres tú, brilla. */
+/* El avioncito de la escala de velocidad, teñido con la banda.
+
+   Es el único sitio donde la banda se ve en los peldaños sin cifras, y son
+   los mismos tres colores que usa la tarjeta numérica de Taguato: la lección
+   es la misma, cambia el instrumento. */
+.picto__avion--bien { fill: #79e08a; }
+.picto__avion--lento { fill: #ffb347; }
+.picto__avion--rapido { fill: #7fb6e8; }
+
 .picto__avion {
   stroke: #ffd9a0;
   stroke-width: 2.1;

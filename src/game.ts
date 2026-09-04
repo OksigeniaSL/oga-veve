@@ -3203,6 +3203,9 @@ export class Game {
     this.hud.setBadge(
       `${this.aircraft.name} · ${t(this.scenario.nameKey as never)} · ${this.tier.name}`,
     );
+    // Y con la insignia va la escala del pictograma de velocidad, que es de
+    // la aeronave y cambia con ella. Ver `Hud.setAeronave`.
+    this.hud.setAeronave(this.aircraft.approachSpeed);
   }
 
   private onResize = (): void => {

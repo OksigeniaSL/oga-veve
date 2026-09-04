@@ -609,7 +609,21 @@ export class CoefficientFlightModel implements FlightModel {
     const lateral = s.velocity.dot(this.right);
     s.velocity.addScaledVector(this.right, -lateral * Math.min(1, dt * 9));
 
-    const rolling = 0.02 + 0.55 * controls.brakes;
+    /*
+     * **Y el freno frenaba como el de un coche.**
+     *
+     * Cero coma cincuenta y cinco de coeficiente son cinco metros y medio por
+     * segundo al cuadrado sobre todo el peso: desde velocidad de aproximación,
+     * parada en noventa y cuatro metros. Una Cessna necesita ciento setenta y
+     * cinco, y frena a dos y medio o tres. El propio juego lo sabía y calculaba
+     * con dos y medio en dos sitios —el aviso de fin de pista y la fase de «ya
+     * no se puede parar»—, así que la física iba por un lado y las cuentas por
+     * otro.
+     *
+     * Cero coma veintiocho son unos tres metros por segundo al cuadrado y
+     * ciento ochenta de parada: lo de verdad, y lo que las cuentas ya suponían.
+     */
+    const rolling = 0.02 + 0.28 * controls.brakes;
     const longitudinal = s.velocity.dot(this.forward);
     s.velocity.addScaledVector(
       this.forward,
