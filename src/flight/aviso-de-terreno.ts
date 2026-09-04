@@ -36,6 +36,20 @@ const URGENTE = 60;
 /** Bajando de verdad, m/s. Un descenso suave no dispara nada. */
 const BAJANDO = -1.5;
 
+/**
+ * Por debajo de esto no se avisa de nada, m.
+ *
+ * **Porque a esa altura ya no hay aviso que dar.** El primer intento se
+ * callaba solo con `enElSuelo`, y en la carrera de aterrizaje el contacto
+ * parpadea —las ruedas botan, el suelo se pierde por veinte centímetros— así
+ * que el avión salía «en el aire» a un metro del asfalto y bajando: «en pista,
+ * ya aterrizado, me advierte que voy a chocar».
+ *
+ * Un radioaltímetro de verdad inhibe estos avisos por debajo de treinta pies
+ * por el mismo motivo. Quince metros aquí.
+ */
+const YA_ES_TARDE = 15;
+
 export type AvisoDeTerreno = "bajo" | "sube" | null;
 
 export interface Cerca {
@@ -56,7 +70,7 @@ export interface Cerca {
 /** Qué hay que decir, o `null` si no hay nada que decir. */
 export function avisoDeTerreno(s: Cerca): AvisoDeTerreno {
   if (s.enElSuelo || s.enFinal) return null;
-  if (s.sobreElSuelo > ATENCION) return null;
+  if (s.sobreElSuelo > ATENCION || s.sobreElSuelo < YA_ES_TARDE) return null;
   // Subiendo no se avisa: quien sube ya está haciendo lo que había que hacer.
   if (s.vertical >= 0) return null;
   if (s.sobreElSuelo < URGENTE && s.vertical < BAJANDO) return "sube";
