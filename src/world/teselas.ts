@@ -557,16 +557,36 @@ export function crearTeselas(
        * a doscientos metros ya se puede aflojar; a quinientos, el de fábrica.
        * Se mueve poco a poco para que no se note el escalón.
        */
+      /*
+       * **Y con la red puesta, porque un `NaN` aquí apaga la fotografía.**
+       *
+       * `alturaCruda` devuelve `number | null`, y `?? 0` solo atrapa el
+       * `null`. Si alguna vez sale `NaN` —una tesela a medio cargar, un rayo
+       * que no da con nada— el `NaN` se propaga a `errorTarget`, y un cargador
+       * de teselas sin criterio **no refina nunca**: se queda en la tesela
+       * raíz y el mundo entero se ve a brochazos. «No se ve el mapa de Google
+       * en ninguno de los dos escenarios.»
+       *
+       * Es la misma clase de fallo que ya nos costó una noche —el desfase que
+       * se medía antes de que llegara la verdad— y por eso ahora todo lo que
+       * entra en esta cuenta se comprueba antes de usarse.
+       */
       const suelo = alturaCruda(camara.position.x, camara.position.z);
-      const alto = camara.position.y - (suelo ?? 0);
-      const quiere =
-        alto < 50
-          ? DETALLE_ABAJO
-          : alto > 500
-            ? DETALLE_ARRIBA
-            : DETALLE_ABAJO +
-              ((alto - 50) / 450) * (DETALLE_ARRIBA - DETALLE_ABAJO);
-      teselas.errorTarget += (quiere - teselas.errorTarget) * Math.min(1, dt);
+      const alto =
+        camara.position.y - (Number.isFinite(suelo) ? (suelo as number) : 0);
+      if (Number.isFinite(alto)) {
+        const quiere =
+          alto < 50
+            ? DETALLE_ABAJO
+            : alto > 500
+              ? DETALLE_ARRIBA
+              : DETALLE_ABAJO +
+                ((alto - 50) / 450) * (DETALLE_ARRIBA - DETALLE_ABAJO);
+        const paso =
+          teselas.errorTarget +
+          (quiere - teselas.errorTarget) * Math.min(1, dt);
+        if (Number.isFinite(paso)) teselas.errorTarget = paso;
+      }
 
       teselas.setCamera(camara);
       /*
