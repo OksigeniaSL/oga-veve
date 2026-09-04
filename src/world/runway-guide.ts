@@ -65,6 +65,43 @@ const FALLADO = 0xe8624a;
 const TERRACOTA = 0xbe5d38;
 const BEIGE = 0xe4e2da;
 
+/**
+ * Dónde se apaga del todo el haz de la cabecera y dónde vuelve a estar entero, m.
+ *
+ * **El faro es para encontrar la pista, no para aterrizar en ella.** Es un
+ * cilindro de cuatrocientos veinte metros plantado en el umbral, y visto desde
+ * dos kilómetros es la torre naranja que dice «es allí». Visto desde
+ * trescientos metros en final es **una pared translúcida delante de la pista**:
+ * lo tiñe todo de ocre, borra la pintura del asfalto y, al cruzarlo, deja la
+ * pantalla naranja entera durante segundos.
+ *
+ * Eso se vio jugando y se describió exacto: «la pista se va pintando a medida
+ * que la recorro, pero no veo las líneas de marcas de pista». No era que
+ * faltaran las marcas — estaban debajo del faro.
+ *
+ * Así que se desvanece: entero más allá de mil ochocientos metros, apagado por
+ * debajo de seiscientos. A seiscientos metros la pista ya se ve sola, con su
+ * número, su umbral y sus luces, y no hace falta nadie que la señale.
+ */
+const FARO_APAGADO = 600;
+const FARO_ENTERO = 1800;
+
+/**
+ * Cuántos radios hay que tener por delante para ver un aro entero.
+ *
+ * Un aro es un donut de setenta metros, y al cruzarlo **la cámara se queda
+ * dentro**: la geometría rodea el punto de vista y la pantalla se llena de un
+ * color plano. El destello de haberlo cruzado empeoraba justo eso, porque lo
+ * pone blanco y lo hace un cuarenta y cinco por ciento más grande.
+ *
+ * La celebración tiene que verse **desde fuera**, no desde dentro. Así que
+ * cada aro se apaga según te lo comes: entero a tres radios y medio, nada a
+ * uno. Lo que queda es lo que hay que enseñar — el aro se enciende, lo pasás y
+ * ya no está— y el sonido, que ese sí llega igual.
+ */
+const AROS_ENTERO = 3.5;
+const AROS_APAGADO = 1;
+
 /** Cuántos aros dibujan la senda y desde qué distancia arrancan. */
 const RING_COUNT = 7;
 const FIRST_RING_DISTANCE = 3200;
@@ -98,6 +135,8 @@ export class RunwayGuide {
   private next = 0;
   /** Cuánto le queda de destello a cada aro. */
   private readonly flash: number[] = [];
+  /** El haz de la cabecera, para poder apagarlo de cerca. */
+  private readonly faro: Mesh | null;
 
   constructor(
     scenario: Scenario,
@@ -105,6 +144,7 @@ export class RunwayGuide {
     ground: GroundSampler,
   ) {
     this.group = buildGuide(scenario, runwayElevation, ground);
+    this.faro = (this.group.getObjectByName("faro") as Mesh | undefined) ?? null;
 
     this.mira = new Mesh(
       new SphereGeometry(6, 10, 8),
@@ -432,6 +472,53 @@ export class RunwayGuide {
         punch > 0.5 ? vivo : OCRE,
       );
       if (punch === 0) ring.scale.setScalar(1);
+    }
+
+    if (avion) this.apagarLoQueTapa(avion);
+  }
+
+  /**
+   * Apaga lo que se te viene encima: el haz y el aro que estás cruzando.
+   *
+   * Las dos ayudas de esta clase están hechas para verse **de lejos**, y de
+   * cerca las dos hacen lo contrario de ayudar: el haz es una pared naranja
+   * delante de la pista y el aro es un donut que rodea la cámara y llena la
+   * pantalla de color. Ver `FARO_APAGADO` y `AROS_ENTERO`.
+   *
+   * Va al final del fotograma, después de que el encendido y el destello hayan
+   * puesto sus opacidades: esto las **multiplica**, no las sustituye. Así el
+   * aro sigue encendiéndose y destellando como siempre, solo que se lo lleva
+   * el viento cuando lo tenés encima.
+   */
+  private apagarLoQueTapa(avion: Vector3): void {
+    if (this.faro) {
+      // En horizontal: el faro sube cuatrocientos metros y la distancia en
+      // vertical no dice nada de si te está tapando la pista.
+      const d = Math.hypot(
+        avion.x - this.faro.position.x,
+        avion.z - this.faro.position.z,
+      );
+      const f = Math.max(
+        0,
+        Math.min(1, (d - FARO_APAGADO) / (FARO_ENTERO - FARO_APAGADO)),
+      );
+      (this.faro.material as MeshBasicMaterial).opacity = 0.34 * f;
+      this.faro.visible = f > 0.02;
+    }
+
+    for (const aro of this.rings) {
+      const radio = (aro.geometry as TorusGeometry).parameters.radius;
+      const d = avion.distanceTo(aro.position);
+      const f = Math.max(
+        0,
+        Math.min(
+          1,
+          (d - radio * AROS_APAGADO) / (radio * (AROS_ENTERO - AROS_APAGADO)),
+        ),
+      );
+      const mat = aro.material as MeshBasicMaterial;
+      mat.opacity *= f;
+      aro.visible = mat.opacity > 0.02;
     }
   }
 
