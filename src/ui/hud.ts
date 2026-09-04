@@ -114,18 +114,30 @@ const FLECHA_SEGUIR = `
 `;
 
 /**
- * Un galón: el chevrón de la manga.
+ * La manga con sus galones.
  *
- * No es una estrella y no es una medalla, y eso está elegido. Una estrella es
- * la moneda de los juegos de móvil y trae consigo lo que trae —repetir hasta
- * sacar las tres—; el galón es lo que lleva en la manga quien vuela, y se
- * reconoce sin que nadie lo explique porque va apilado: uno, dos, tres.
+ * No es una estrella y no es una medalla, y eso está elegido: una estrella es
+ * la moneda de los juegos de móvil y trae consigo lo que trae, repetir hasta
+ * sacar las tres. Esto es lo que lleva en la manga quien vuela.
+ *
+ * **Y no es un chevrón.** El primer intento eran uves invertidas de diecisiete
+ * píxeles apiladas al lado de la insignia, y a tamaño real de pantalla dos de
+ * ellas se leen exactamente como lo que se dijo al verlas: «las insignias
+ * parecen las orejas de un murciélago». Además un chevrón es de sargento; un
+ * galón de piloto son **barras horizontales alrededor del puño**, que es lo
+ * que ya dibuja el hangar para los peldaños. Dos dibujos para la misma palabra
+ * eran uno de más.
+ *
+ * Así que se dibuja la manga entera: el azul marino del uniforme —el único
+ * sitio del juego con ese color, a propósito— con su puño, y las barras
+ * apareciendo de abajo arriba. Una manga vacía no se enseña: hasta que no hay
+ * un galón, no hay manga.
  */
-const CHEVRON = `
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M12 4 L22.5 14.5 L19 18 L12 11 L5 18 L1.5 14.5 Z" />
-  </svg>
-`;
+const MANGA_ALTO = 32;
+
+/** Dónde cae la barra número `n`, de abajo arriba, en el lienzo de la manga. */
+const barraDeGalon = (n: number): string =>
+  `<rect class="manga__barra" x="9" y="${21 - n * 5.5}" width="30" height="3.6" rx="1.8" />`;
 
 export class Hud {
   readonly tutor = new Tutor();
@@ -853,20 +865,35 @@ export class Hud {
     if (!this.galones) return;
     const lista = this.galonesState;
     this.galones.hidden = lista.length === 0;
-    // Al rehacer el HUD —cambio de idioma, cambio de tramo— la fila viene
-    // vacía y hay que repintarla entera. En vuelo solo se añade el último.
-    if (this.galones.childElementCount > lista.length) {
+    if (!lista.length) {
       this.galones.innerHTML = "";
+      return;
     }
-    for (let i = this.galones.childElementCount; i < lista.length; i++) {
-      const galon = document.createElement("span");
-      galon.className = "galon";
-      // El nombre solo para quien usa lector de pantalla: en la pantalla, un
-      // galón es un dibujo y no lleva palabra ninguna.
-      galon.setAttribute("role", "img");
-      galon.setAttribute("aria-label", t(`galon.${lista[i]!}`));
-      galon.innerHTML = CHEVRON;
-      this.galones.append(galon);
+
+    const svg = this.galones.querySelector("svg");
+    const puestas = svg?.querySelectorAll(".manga__barra").length ?? 0;
+    /*
+     * **Las barras que ya estaban no se vuelven a dibujar.**
+     *
+     * La que llega entra con su animación, y rehacer la manga entera haría
+     * saltar a las cinco a la vez, que es lo contrario de «aparecen de una en
+     * una». Al rehacer el HUD —cambio de idioma o de peldaño— sí se repinta
+     * todo, y ahí no hay animación que perder.
+     */
+    if (!svg || puestas > lista.length) {
+      this.galones.innerHTML = `
+        <svg viewBox="0 0 48 ${MANGA_ALTO}" role="img" aria-label="${t(
+          "galon.manga",
+        )}">
+          <rect class="manga__tela" x="4" y="2" width="40" height="28" rx="6" />
+          <rect class="manga__puno" x="4" y="24" width="40" height="6" rx="3" />
+          ${lista.map((_, i) => barraDeGalon(i)).join("")}
+        </svg>
+      `;
+      return;
+    }
+    for (let i = puestas; i < lista.length; i++) {
+      svg.insertAdjacentHTML("beforeend", barraDeGalon(i));
     }
   }
 

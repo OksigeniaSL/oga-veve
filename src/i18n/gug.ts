@@ -87,6 +87,7 @@ export const GUG: Dictionary = {
   'leccion.despegue': 'Repu’ã',
   'leccion.aterrizaje': 'Reguejy',
 
+  'galon.manga': 'Ko veve rechaukaha',
   'galon.aproximacion': 'Reguejy porã rechaukaha',
   'galon.toma': 'Ejoko porã rechaukaha',
   'galon.aros': 'Umi aro rechaukaha',
