@@ -1121,11 +1121,35 @@ function pick(root: HTMLElement, name: string): HTMLElement {
  * que avisar, y en el aire tampoco. El umbral va en segundos y no en metros,
  * porque lo que importa es **cuánto queda para llegar**, no cuánto falta.
  */
+/**
+ * ¿Se acaba la pista antes de que se pueda parar?
+ *
+ * **No es una cuenta de segundos, es una cuenta de frenada**, y ese fue el
+ * error. Avisaba cuando quedaban cinco segundos de pista: a ciento cincuenta
+ * por hora son doscientos metros, y en doscientos metros una avioneta a esa
+ * velocidad **no para**. Un aviso que llega cuando ya no se puede hacer nada
+ * no es un aviso, es un epitafio — y en el vídeo se ve exactamente eso: la
+ * pista entera consumida y el avión saliéndose por el final.
+ *
+ * La cuenta buena es la de siempre: lo que se recorre mientras uno reacciona,
+ * más `v²/2a`. Y se avisa con un tercio de margen encima, porque quien está a
+ * los mandos tiene cinco años y el freno hay que encontrarlo.
+ */
 function runningOutOfRunway(state: FlightState, metresLeft: number): boolean {
   if (!state.onGround || state.crashed) return false;
   if (state.airspeed < 8) return false;
-  return metresLeft / state.airspeed < 5;
+  const v = state.airspeed;
+  return metresLeft < (v * REACCION + (v * v) / (2 * FRENADA)) * MARGEN_PISTA;
 }
+
+/** Lo que se tarda en reaccionar y encontrar el freno, s. */
+const REACCION = 1.5;
+
+/** Lo que frena una avioneta en asfalto seco, m/s². */
+const FRENADA = 2.5;
+
+/** Y cuánto antes se avisa de lo justo. */
+const MARGEN_PISTA = 1.35;
 
 function closingWithGround(state: FlightState): boolean {
   if (state.onGround || state.crashed) return false;

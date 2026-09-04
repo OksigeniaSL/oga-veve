@@ -225,6 +225,16 @@ export interface GameOptions {
   ortofotoFina?: Ortofoto;
 }
 
+/**
+ * A partir de qué velocidad se sigue considerando que se corre, m/s.
+ *
+ * Doce metros por segundo son cuarenta y tres por hora: por debajo de eso ya
+ * se rueda, y rodar no es correr. Es el mismo número que usa la máquina de
+ * fases para dar por terminada la carrera de aterrizaje, y tiene que serlo:
+ * dos umbrales parecidos para lo mismo son dos verdades distintas.
+ */
+const RODAJE_DE_VERDAD = 12;
+
 export class Game {
   /** Qué se está enseñando hoy: de aquí sale qué guía se enciende. */
   private readonly leccion: Leccion;
@@ -298,6 +308,8 @@ export class Game {
   private readonly galones = new Galones();
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
   private vistaActual: Vista | null = null;
+  /** Si ahora mismo la pantalla está pidiendo freno. Ver `avanzarPlan`. */
+  private pidiendoFreno = false;
   /** El señor de los bastones, esperando en el puesto. Ver `world/senalero.ts`. */
   private readonly senalero = new Senalero();
   /** Y el coche del «sígame», en los dos peldaños de abajo. Ver `world/sigueme.ts`. */
@@ -2709,6 +2721,57 @@ export class Game {
       );
       this.instructor.decir(t("vuelo.fuera"));
       if (conLetras) this.hud.flash(t("vuelo.fuera"), 3);
+    }
+
+    /*
+     * **Frená.** Y no como tarjeta de fase, sino mientras haga falta.
+     *
+     * Se grabó un aterrizaje entero y al tocar tierra **no salió ninguna
+     * tarjeta**: ni «frená» ni nada, hasta la de salir por E4 quince segundos
+     * después. La tarjeta de la fase «aterrizado» existe y está bien escrita,
+     * pero depende de que la fase **cambie** y de que se vea el cambio; con
+     * una toma larga y suave la fase pasa por ahí de refilón y la tarjeta se
+     * la lleva la siguiente. Resultado: tres kilómetros y medio de pista
+     * consumidos sin que nadie dijera nada, y el avión fuera por el final.
+     *
+     * Así que esto no cuelga de un cambio de fase: cuelga de **la condición**.
+     * Mientras se corra por el suelo después de haber volado, la tarjeta del
+     * freno está puesta, con su tecla dibujada, y no se va sola. Cuando se baja
+     * a velocidad de rodaje se borra la fase anunciada, y con eso la tarjeta
+     * que tocara vuelve sola por el camino de siempre.
+     */
+    /*
+     * **Y quien dice que se está en el suelo es la fase, no `onGround`.**
+     *
+     * Se puso `onGround` de más y con eso la tarjeta no salía: en la toma, el
+     * contacto parpadea —las ruedas botan, el suelo se pierde por veinte
+     * centímetros— y el aviso se caía justo en los segundos en los que hace
+     * falta. La máquina de fases ya resolvió eso midiendo la altura sobre el
+     * terreno, y «aterrizado» y «abandonando» **significan** estar en el suelo
+     * después de haber volado. Preguntarlo dos veces era discutirle a quien
+     * sabe. Es el mismo fallo que ya tuvo el aviso de terreno en la pista.
+     */
+    const corriendo =
+      (vista.fase === "aterrizado" || vista.fase === "abandonando") &&
+      this.flight.state.airspeed > RODAJE_DE_VERDAD;
+    if (corriendo !== this.pidiendoFreno) {
+      this.pidiendoFreno = corriendo;
+      if (corriendo) {
+        this.hud.senal.mostrar(
+          "freno",
+          conLetras ? t("vuelo.aterrizado") : "",
+          null,
+          {
+            segundos: Infinity,
+            tecla: nombreDeTecla(this.input.preferredKey("brakes")),
+          },
+        );
+        this.audio.cue("attention");
+        this.instructor.decir(t("vuelo.aterrizado"));
+      } else {
+        // Que la fase vuelva a anunciarse sola en el próximo fotograma.
+        this.faseAnunciada = "";
+      }
     }
 
     if (vista.saltoLaLuz) {

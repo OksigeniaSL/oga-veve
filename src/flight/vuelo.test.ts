@@ -610,3 +610,75 @@ describe("ya no se puede parar", () => {
     expect(rodando(100, 3390 - 600)).toBe("despegando");
   });
 });
+
+/**
+ * La carrera de aterrizaje, que es donde el juego se quedó callado.
+ *
+ * Se grabó un aterrizaje entero en Tenerife Norte y **al tocar tierra no salió
+ * ninguna tarjeta**: ni «frená», ni nada, hasta que apareció la de salir por
+ * E4 quince segundos después. Con tres kilómetros y medio de pista por delante
+ * y sin nadie diciendo que hay que frenar, el avión se la comió entera y se
+ * salió por el final.
+ *
+ * La pregunta que responden estas pruebas es la primera que había que hacerse:
+ * ¿llega la máquina de fases a «aterrizado»? Porque si no llega, la tarjeta no
+ * puede salir y el problema no está en la tarjeta.
+ */
+describe("la carrera de aterrizaje", () => {
+  /** Un vuelo ya hecho: hace falta para que el juego dé la vuelta por buena. */
+  const yaVoló = (): Vuelo => {
+    const v = new Vuelo();
+    v.reiniciar();
+    durante(v, con({ motor: true, enPista: true, alEjeDePista: 2 }), 1);
+    durante(
+      v,
+      con({
+        motor: true,
+        enPista: true,
+        alEjeDePista: 2,
+        estado: { airspeed: 40 } as never,
+      }),
+      3,
+    );
+    durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 300,
+        estado: { airspeed: 55, verticalSpeed: 4 } as never,
+      }),
+      25,
+    );
+    return v;
+  };
+
+  /** Posado en el eje, rodando deprisa: lo que pasa justo tras la toma. */
+  const enLaCarrera = (velocidad: number) =>
+    con({
+      motor: true,
+      enPista: true,
+      alEjeDePista: 1,
+      alLargoDePista: -1400,
+      pistaRestante: 3000,
+      restante: 3000,
+      sobreElSuelo: 0,
+      estado: { airspeed: velocidad } as never,
+    });
+
+  it("al tocar tierra deprisa, la fase es «aterrizado»", () => {
+    const v = yaVoló();
+    expect(durante(v, enLaCarrera(40), 1)).toBe("aterrizado");
+  });
+
+  it("y se queda ahí mientras siga corriendo", () => {
+    const v = yaVoló();
+    durante(v, enLaCarrera(40), 1);
+    expect(durante(v, enLaCarrera(30), 6)).toBe("aterrizado");
+  });
+
+  it("al bajar de velocidad de rodaje, toca dejar la pista libre", () => {
+    const v = yaVoló();
+    durante(v, enLaCarrera(40), 1);
+    expect(durante(v, enLaCarrera(8), 2)).toBe("abandonando");
+  });
+});
