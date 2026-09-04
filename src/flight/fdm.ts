@@ -251,6 +251,15 @@ export class CoefficientFlightModel implements FlightModel {
    * aproximación se queda cerca, y el modelo termina de ajustarla en unos
    * segundos como haría un piloto con la palanca.
    */
+  /**
+   * Vez y media la de aproximación: rápido para posarse, y lo bastante lento
+   * como para que la aproximación sea una aproximación. Medido, este modelo la
+   * sostiene nivelada durante el minuto entero que dura la senda.
+   */
+  velocidadDeEntradaEnFinal(vref: number): number {
+    return vref * 1.5;
+  }
+
   gasPara(velocidad: number): number {
     return Math.max(
       0.15,

@@ -205,6 +205,18 @@ export const OGA_172: AircraftConfig = {
   wingSpan: 11.0,
   chord: 1.5,
   inertia: { xx: 1290, yy: 1830, zz: 2900 },
+  /*
+   * Empuje estático, N.
+   *
+   * Se probó a bajarlo a dos mil doscientos, que es la relación empuje-peso
+   * de una Cessna 172 de verdad —0,19 contra el 0,24 de aquí— y **empeoró lo
+   * que estaba bien**: con dos mil seiscientos la rodadura de despegue mide
+   * doscientos setenta y nueve metros contra los doscientos noventa y tres
+   * reales, y bajándolo el avión tardaba veinticinco segundos y medio en
+   * rotar en vez de los diecinueve de verdad. Lo que está pasado no es el
+   * empuje: es el ascenso justo después de rotar, y eso se arregla en cómo
+   * cae el empuje con la velocidad, no aquí.
+   */
   maxThrust: 2600,
   cruiseSpeed: 60,
   // 33 m/s son 119 km/h, que es la corta final de un 172 de verdad.
