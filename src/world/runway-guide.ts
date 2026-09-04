@@ -58,6 +58,9 @@ const OCRE = 0xdd923f;
  * lo explique.
  */
 const CERCA = 0x7ef07a;
+
+/** Y el de haberlo perdido. Ni castigo ni drama: un rojo que se apaga solo. */
+const FALLADO = 0xe8624a;
 const TERRACOTA = 0xbe5d38;
 const BEIGE = 0xe4e2da;
 
@@ -178,7 +181,21 @@ export class RunwayGuide {
     if (alLargo < 0) return null;
 
     const cruzado = this.masCerca <= radio;
-    this.flash[this.next] = cruzado ? 1 : 0;
+    /*
+     * **Fallarlo también destella, y en rojo.**
+     *
+     * Antes solo destellaba el que se cruzaba; el que se perdía no hacía
+     * absolutamente nada visible, así que pasar por encima o por debajo era
+     * indistinguible de no haber pasado. «Me puedo pasar por arriba y por
+     * abajo los aros sin problemas.»
+     *
+     * Perder un aro no es un fracaso y no se castiga, pero **tiene que
+     * verse**: quien no lee necesita enterarse de que eso de ahí contaba y de
+     * que se le escapó. El destello dura lo mismo y el color es lo único que
+     * cambia — que es exactamente la diferencia que hay que aprender.
+     */
+    this.flash[this.next] = 1;
+    this.fallado[this.next] = !cruzado;
     this.next++;
     this.masCerca = Infinity;
     this.encendido = 0;
@@ -240,6 +257,7 @@ export class RunwayGuide {
     }
     this.encendido = 0;
     this.flash.fill(0);
+    this.fallado.fill(false);
     this.highlight();
   }
 
@@ -247,6 +265,8 @@ export class RunwayGuide {
   private encendido = 0;
   /** Lo más cerca del eje del aro que se ha llegado a estar, m. */
   private masCerca = Infinity;
+  /** Cuáles se perdieron, para que destellen en rojo. */
+  private readonly fallado: boolean[] = [];
 
   /**
    * Anima los aros, y **enciende el que toca según te acercas**.
@@ -345,8 +365,10 @@ export class RunwayGuide {
       const ring = this.rings[i]!;
       const punch = this.flash[i]!;
       ring.scale.setScalar(1 + punch * 0.45);
+      // Blanco al cruzarlo, rojo al perderlo. Y vuelve al ocre al apagarse.
+      const vivo = this.fallado[i] ? FALLADO : 0xffffff;
       (ring.material as MeshBasicMaterial).color.setHex(
-        punch > 0.5 ? 0xffffff : OCRE,
+        punch > 0.5 ? vivo : OCRE,
       );
       if (punch === 0) ring.scale.setScalar(1);
     }

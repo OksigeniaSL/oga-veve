@@ -154,6 +154,8 @@ export const ES_PY = {
   'vuelo.enVuelo': 'Andá a dar una vuelta',
   'vuelo.enVueloAterrizando': 'Andá a la pista',
   'vuelo.final': 'Bajá suavecito',
+  'vuelo.terrenoBajo': 'Vas muy bajo',
+  'vuelo.terrenoSube': '¡Subí!',
   'vuelo.aterrizado': 'Frená',
   'vuelo.abandonando': 'Salí de la pista, que viene otro',
   'vuelo.pistaLibre': '¡Pista libre! Bien hecho',

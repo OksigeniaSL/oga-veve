@@ -111,6 +111,7 @@ import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
 import { AvisosDeAltura } from "./flight/avisos-de-altura";
+import { avisoDeTerreno } from "./flight/aviso-de-terreno";
 import {
   bandaDeRodaje,
   bandaDeVelocidad,
@@ -257,6 +258,8 @@ export class Game {
   private fueraDeBanda = 0;
   /** Qué se dijo la última vez, para no repetirlo mientras siga igual. */
   private dichoDeBanda: "lento" | "rapido" | null = null;
+  /** El último aviso de terreno dicho, para no repetirlo cada fotograma. */
+  private terrenoDicho: "bajo" | "sube" | null = null;
 
   /** La misión elegida en el hangar, hasta que arranca. Ver `start`. */
   private misionInicial: Mission | null;
@@ -1941,6 +1944,41 @@ export class Game {
     } else {
       this.fueraDeBanda = 0;
       this.dichoDeBanda = null;
+    }
+
+    /*
+     * **El aviso de terreno**, que es el que salva.
+     *
+     * Se hicieron maniobras malas a propósito para ver si el juego decía algo
+     * —volar bajísimo sobre el pueblo, pasar rozando un edificio— y la
+     * pantalla se quedaba callada. El propio HUD tenía escrita la advertencia
+     * y sin cumplir: «un panel bonito que esconde un terrain, pull up es peor
+     * que no tener panel».
+     *
+     * Va aquí y no en el bloque de fases porque **no es una fase**: es algo
+     * que puede pasar en cualquiera de ellas y que manda sobre todas.
+     */
+    const terreno = avisoDeTerreno({
+      sobreElSuelo: this.flight.state.heightAboveGround,
+      vertical: this.flight.state.verticalSpeed,
+      enElSuelo: this.flight.state.onGround,
+      enFinal: this.faseAnunciada === "final",
+    });
+    if (terreno && terreno !== this.terrenoDicho) {
+      this.terrenoDicho = terreno;
+      this.hud.senal.mostrar(
+        "terreno",
+        this.tier.instruments !== "none"
+          ? t(terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo")
+          : "",
+        null,
+        { segundos: 3 },
+      );
+      this.audio.cue(terreno === "sube" ? "error" : "attention");
+      // En inglés aeronáutico, como el resto de la voz de cabina.
+      decir(terreno === "sube" ? "terrain, pull up" : "too low");
+    } else if (!terreno) {
+      this.terrenoDicho = null;
     }
 
     // Y el aro, que se enciende según te acercas: necesita saber dónde estás.
