@@ -107,6 +107,7 @@ import type { ControlInputs } from "./flight/model";
 import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { Senalero } from "./world/senalero";
+import { Sigueme } from "./world/sigueme";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { arranqueEnPista } from "./world/aerodrome";
@@ -298,6 +299,8 @@ export class Game {
   private vistaActual: Vista | null = null;
   /** El señor de los bastones, esperando en el puesto. Ver `world/senalero.ts`. */
   private readonly senalero = new Senalero();
+  /** Y el coche del «sígame», en los dos peldaños de abajo. Ver `world/sigueme.ts`. */
+  private readonly sigueme = new Sigueme();
   /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
@@ -413,6 +416,7 @@ export class Game {
        * y una persona plantada en la plataforma sin motivo es un adorno raro.
        */
       this.scene.add(this.senalero.grupo);
+      this.scene.add(this.sigueme.grupo);
     }
 
     this.sky = createSky(this.scenario);
@@ -2318,12 +2322,15 @@ export class Game {
    * sitio donde aparcar.
    */
   private colocarSenalero(): void {
+    // Los dos se borran siempre, haya puesto o no: un coche del vuelo anterior
+    // rodando por su cuenta es peor que no tener coche.
+    this.senalero.reiniciar();
+    this.sigueme.reiniciar();
     const puesto = this.plan?.arranque();
     if (!puesto) return;
     this.senalero.colocar(puesto, this.plan?.primerPaso() ?? null, (x, z) =>
       this.terrain.sampleHeight(x, z),
     );
-    this.senalero.reiniciar();
   }
 
   /**
@@ -2343,7 +2350,7 @@ export class Game {
       fase === "a-plataforma" ||
       fase === "en-puesto";
     const s = this.flight.state;
-    this.senalero.paso(
+    const gesto = this.senalero.paso(
       dt,
       {
         x: s.position.x,
@@ -2353,6 +2360,41 @@ export class Game {
       },
       volviendo,
     );
+
+    /*
+     * Y el coche del «sígame», que va por la misma ruta y se aparta cuando
+     * empieza a señalar el de los bastones. En la plataforma manda él.
+     *
+     * Sale rodando —de ida y de vuelta— y no en la carrera de despegue ni en
+     * el puesto: un coche en la pista mientras despegás sería exactamente lo
+     * contrario de lo que hay que enseñar.
+     */
+    if (this.plan && this.tier.sigueme) {
+      this.sigueme.ponerRuta(this.plan.rutaVisible());
+      /*
+       * **Está antes de arrancar, y eso importa.**
+       *
+       * El primer intento lo sacaba solo al empezar a rodar, y así el coche
+       * aparecía de la nada cuando ya ibas andando. Un sígame de verdad llega
+       * **antes**, se pone delante y espera: quien lo ve ahí parado ya sabe,
+       * sin que nadie se lo diga, que hay que ir detrás de él.
+       */
+      const rodando =
+        fase === "estacionado" ||
+        fase === "arrancando" ||
+        fase === "rodando" ||
+        fase === "esperando" ||
+        fase === "autorizado" ||
+        fase === "abandonando" ||
+        fase === "a-plataforma";
+      this.sigueme.paso(
+        dt,
+        { x: s.position.x, z: s.position.z },
+        rodando && s.onGround,
+        gesto !== null,
+        (x, z) => this.terrain.sampleHeight(x, z),
+      );
+    }
   }
 
   /**
