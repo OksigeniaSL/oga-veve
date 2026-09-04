@@ -90,6 +90,23 @@ const A_CASA = icono(`
   <path d="M12 13 L9 17 h6 Z" />
 `);
 
+/**
+ * *Terrain, pull up*: **el cerro y la flecha de subir**.
+ *
+ * Es el único dibujo del juego que dice «esto va mal». Los demás enseñan qué
+ * hacer; este enseña qué está pasando, y por eso lleva las dos cosas: el
+ * relieve que viene por delante y la flecha que sale de él hacia arriba.
+ *
+ * A los cuatro años no hace falta saber qué es un radioaltímetro para
+ * entender un cerro y una flecha que sube.
+ */
+const TERRENO = icono(`
+  <path d="M1 21 L7 12 L11 17 L16 8 L23 21 Z" />
+  <path class="senal__hueco" d="M12 20 V11 M12 9 L8.5 13 M12 9 L15.5 13"
+        stroke="currentColor" stroke-width="2.2" fill="none"
+        stroke-linecap="round" stroke-linejoin="round" />
+`);
+
 /** La luz verde: adelante. */
 const VERDE = icono(`
   <circle cx="12" cy="12" r="9.5" />
@@ -189,6 +206,7 @@ const DIBUJOS: Record<string, string> = {
   freno: FRENO,
   salida: SALIDA,
   acasa: A_CASA,
+  terreno: TERRENO,
 };
 
 /**

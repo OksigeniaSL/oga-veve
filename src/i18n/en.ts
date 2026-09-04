@@ -153,6 +153,8 @@ export const EN: Dictionary = {
   'vuelo.enVuelo': 'Go for a fly',
   'vuelo.enVueloAterrizando': 'Head for the runway',
   'vuelo.final': 'Come down gently',
+  'vuelo.terrenoBajo': 'You are very low',
+  'vuelo.terrenoSube': 'Pull up!',
   'vuelo.aterrizado': 'Brake',
   'vuelo.abandonando': 'Vacate the runway, someone is behind you',
   'vuelo.pistaLibre': 'Runway clear! Well done',
