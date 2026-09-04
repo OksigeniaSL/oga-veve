@@ -106,6 +106,7 @@ import { elegirInstructor, type Instructor } from "./audio/instructor";
 import type { ControlInputs } from "./flight/model";
 import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
+import { Senalero } from "./world/senalero";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { arranqueEnPista } from "./world/aerodrome";
@@ -295,6 +296,8 @@ export class Game {
   private readonly galones = new Galones();
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
   private vistaActual: Vista | null = null;
+  /** El señor de los bastones, esperando en el puesto. Ver `world/senalero.ts`. */
+  private readonly senalero = new Senalero();
   /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
@@ -402,6 +405,14 @@ export class Game {
       );
       this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
       this.scene.add(this.plan.grupo);
+      /*
+       * Y con el plan, quien te espera al final de él.
+       *
+       * Va atado al plan y no al aeródromo porque **sin ruta no hay puesto al
+       * que volver**: quien eligió dar una vuelta no tiene a nadie esperándole,
+       * y una persona plantada en la plataforma sin motivo es un adorno raro.
+       */
+      this.scene.add(this.senalero.grupo);
     }
 
     this.sky = createSky(this.scenario);
@@ -684,6 +695,8 @@ export class Game {
           sobreElSuelo: alturas[Math.floor(alturas.length / 2)]!,
         };
       },
+      /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
+      senalero: () => this.senalero,
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
       aeronave: () => ({
         grupo: this.aircraftMesh.group,
@@ -1170,6 +1183,7 @@ export class Game {
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
     // dónde aparece.
     const rodando = this.plan?.reiniciar() ?? false;
+    this.colocarSenalero();
     const start = this.startPosition();
     const heading = rodando
       ? this.rumboDeSalida(start)
@@ -1770,6 +1784,7 @@ export class Game {
     );
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
     this.scene.add(this.plan.grupo);
+    this.colocarSenalero();
   }
 
   /** Pone una hora del día. Lo llama el panel del tiempo. */
@@ -1837,6 +1852,7 @@ export class Game {
   private reiniciarEnFinal(): void {
     const { runway } = this.scenario;
     this.plan?.reiniciar();
+    this.colocarSenalero();
     this.flight.reset({
       position: this.startPosition(),
       heading: MathUtils.degToRad(runway.heading),
@@ -2285,11 +2301,59 @@ export class Game {
       this.distanceToRunway(),
     );
     this.avanzarPlan(dt);
+    this.atenderAlSenalero(dt);
     this.contarGalones(dt, banda, aro, toma);
     this.hud.senal.update(dt);
 
     this.renderer.render(this.scene, this.camera);
   };
+
+  /**
+   * Dónde se planta el señalero, y mirando a dónde.
+   *
+   * Sale de la ruta de salida, que es la que hay al empezar la partida: el
+   * avión **vuelve por donde se fue**, así que con el puesto y el primer paso
+   * de la ida ya se sabe por dónde va a llegar. Se rehace en cada reinicio
+   * porque el puesto cambia con el viento — otra cabecera, otra ruta, otro
+   * sitio donde aparcar.
+   */
+  private colocarSenalero(): void {
+    const puesto = this.plan?.arranque();
+    if (!puesto) return;
+    this.senalero.colocar(puesto, this.plan?.primerPaso() ?? null, (x, z) =>
+      this.terrain.sampleHeight(x, z),
+    );
+    this.senalero.reiniciar();
+  }
+
+  /**
+   * El señalero, un fotograma.
+   *
+   * Solo señala **de vuelta**: al salir no hay nadie con bastones delante del
+   * morro, porque al salir no hace falta nadie — de eso se encarga la raya
+   * amarilla y la torre. Aparece cuando el vuelo ya se hizo y toca meter el
+   * avión en su hueco, que es cuando un aeropuerto de verdad saca a alguien a
+   * la plataforma.
+   */
+  private atenderAlSenalero(dt: number): void {
+    const fase = this.vistaActual?.fase;
+    const volviendo =
+      fase === "aterrizado" ||
+      fase === "abandonando" ||
+      fase === "a-plataforma" ||
+      fase === "en-puesto";
+    const s = this.flight.state;
+    this.senalero.paso(
+      dt,
+      {
+        x: s.position.x,
+        z: s.position.z,
+        velocidad: s.airspeed,
+        enElSuelo: s.onGround,
+      },
+      volviendo,
+    );
+  }
 
   /**
    * Otro vuelo, otros galones.
