@@ -149,6 +149,16 @@ export class Pictogramas {
     throttle: number,
     dt: number,
     engineOn = true,
+    /**
+     * En qué banda va la velocidad, o `null` si aquí no hay banda que juzgar.
+     *
+     * **Es el único sitio donde la banda se puede ver en los peldaños de
+     * abajo.** El color de la banda se pintaba en la tarjeta de cifras, y esa
+     * tarjeta solo existe en Taguato: en Guyrami y en Tukã la banda se
+     * calculaba, se pasaba al HUD y no la veía nadie. «Ni la velocidad me la
+     * indica nadie», y era literal.
+     */
+    banda: "lento" | "bien" | "rapido" | null = null,
   ): void {
     if (!this.root) return;
 
@@ -156,6 +166,12 @@ export class Pictogramas {
       "transform",
       `translate(${20 + clamp01(speed) * 60} 11)`,
     );
+    // El avioncito de la escala se tiñe con la banda. Verde es «así», y los
+    // otros dos dicen hacia dónde hay que moverlo sin decir una palabra.
+    const marca = this.speedMark?.classList;
+    marca?.toggle("picto__avion--lento", banda === "lento");
+    marca?.toggle("picto__avion--bien", banda === "bien");
+    marca?.toggle("picto__avion--rapido", banda === "rapido");
 
     // El avión sube por la tarjeta. Se queda a media pieza del borde de
     // arriba para que no parezca que se sale, y apoyado en el cerro abajo.

@@ -356,9 +356,26 @@ export class ArcadeFlightModel implements FlightModel {
     }
     this.enElAire = !this.state.onGround;
 
+    /*
+     * **Y en el suelo hay que tirar para despegar.**
+     *
+     * El umbral era `bite > 0,88`, que con este modelo son veinte metros por
+     * segundo: setenta y dos por hora, **menos que la velocidad de pérdida de
+     * una avioneta de verdad**. Y como el motor a tope suma dos metros y medio
+     * de ascenso por su cuenta, el avión se despegaba solo a los cuarenta y
+     * nueve metros de carrera sin que nadie tocara la palanca — mientras el
+     * tutor decía «esperá a que corra» y «tirá para arriba».
+     *
+     * Se aprendía que los aviones suben solos. Ahora el listón sale de la
+     * ficha de la aeronave, no de un número suelto, y es el mismo sitio donde
+     * el tutor pide rotar. Rodar, coger velocidad y **tirar**, que es lo que
+     * hay que llevarse al peldaño siguiente.
+     */
     const canClimb =
       !this.state.onGround ||
-      (bite > 0.88 && this.state.onRunway && !this.haTocado);
+      (this.speed >= this.aircraft.approachSpeed * 0.85 &&
+        this.state.onRunway &&
+        !this.haTocado);
 
     /*
      * **El motor también manda en la altura, y esa es la mitad que faltaba.**
@@ -388,9 +405,22 @@ export class ArcadeFlightModel implements FlightModel {
         ? ((gas - MOTOR_QUE_SOSTIENE) / (1 - MOTOR_QUE_SOSTIENE)) *
           SUBIDA_CON_MOTOR
         : ((gas - MOTOR_QUE_SOSTIENE) / MOTOR_QUE_SOSTIENE) * CAIDA_SIN_MOTOR;
-    const wantedClimb = canClimb
-      ? (controls.elevator * MAX_CLIMB + planeo) * bite
-      : 0;
+    /*
+     * **Y sin motor no se puede volar recto, por mucho que se tire.**
+     *
+     * La palanca daba siete metros por segundo de ascenso siempre, así que
+     * media palanca —tres y medio— compensaba exactamente el planeo del motor
+     * al ralentí. Resultado medido: gas a cero, palanca a la mitad, y el avión
+     * se queda nivelado indefinidamente a ciento siete por hora. «Motor a 0,
+     * se queda flotando en el aire.»
+     *
+     * Ahora la autoridad de la palanca **crece con el gas**: sin motor llega a
+     * dos y ocho, que no alcanza para anular la caída de tres y medio. Se
+     * puede alargar mucho el planeo —eso es lo que hace un piloto— pero no
+     * cancelarlo. Sigue sin poder caerse nadie: aquí no hay pérdida ni rotura.
+     */
+    const mando = controls.elevator * MAX_CLIMB * (0.4 + 0.6 * gas);
+    const wantedClimb = canClimb ? (mando + planeo) * bite : 0;
     this.climb += (wantedClimb - this.climb) * Math.min(1, step * 2.2);
 
     // El morro apunta a donde se va, más un pelín para que se vea la

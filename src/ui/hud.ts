@@ -203,6 +203,16 @@ export class Hud {
   private hint!: HTMLElement;
 
   private badgeText = "";
+  /** La última banda de velocidad, para poder pintarla en el pictograma. */
+  private bandaActual: "lento" | "bien" | "rapido" | null = null;
+  /**
+   * La velocidad de aproximación de la aeronave que vuela hoy.
+   *
+   * Es la referencia de la escala del pictograma de velocidad. La pone el
+   * juego al montar el avión: una avioneta y un biplano no se parecen en nada
+   * aquí, y una escala fija los pintaba a los dos mal.
+   */
+  private vref = 33;
   private galonesState: readonly Galon[] = [];
   private progressState: { done: number; total: number } | null = null;
   private soundState = { glyph: "🔊", label: "" };
@@ -647,12 +657,31 @@ export class Hud {
       // años— movía el avioncito dos píxeles, y el dibujo parecía un adorno.
       // Con la raíz, los primeros cien metros ocupan la mitad de la tarjeta
       // y los cuatrocientos siguen cabiendo arriba.
+      /*
+       * **Y la escala sale de la aeronave, no de un cuarenta y seis suelto.**
+       *
+       * Cuarenta y seis metros por segundo no es el crucero de ningún avión
+       * del juego: la avioneta cruza a sesenta y se aproxima a treinta y tres.
+       * Con esa escala, en aproximación el avioncito iba al setenta y dos por
+       * ciento del recorrido hacia el pájaro mientras el velocímetro numérico
+       * marcaba el cincuenta y cinco por ciento del crucero. Los dos
+       * instrumentos decían cosas distintas del mismo avión, y así se vio
+       * jugando: «la tortuga y el ave dicen que estoy casi a tope y el
+       * velocímetro está por debajo de la mitad».
+       *
+       * Ahora la tortuga es un pelo por debajo de la velocidad de
+       * aproximación —por ahí abajo está el peligro— y el pájaro, bastante por
+       * encima. De la ficha del avión, como todo lo demás.
+       */
+      const lenta = this.vref * 0.8;
+      const rapida = this.vref * 1.6;
       this.pictos.update(
-        ias / 46,
+        (ias - lenta) / (rapida - lenta),
         Math.sqrt(Math.max(0, state.heightAboveGround) / 400),
         engineOn ? throttle : 0,
         dt,
         engineOn,
+        this.bandaActual,
       );
     }
 
@@ -990,6 +1019,9 @@ export class Hud {
   }
 
   setBandaDeVelocidad(estado: "lento" | "bien" | "rapido" | null): void {
+    // Se guarda para el pictograma, que es lo único que se ve en los peldaños
+    // sin cifras. La tarjeta de abajo solo existe en Taguato.
+    this.bandaActual = estado;
     const c = this.tarjetaVelocidad?.classList;
     if (!c) return;
     c.toggle("medidor--lento", estado === "lento");
@@ -1009,6 +1041,11 @@ export class Hud {
       "aria-pressed",
       String(this.soundState.glyph === "🔇"),
     );
+  }
+
+  /** La aeronave que vuela hoy: de ella sale la escala del pictograma. */
+  setAeronave(vref: number): void {
+    this.vref = vref;
   }
 
   setBadge(text: string): void {
