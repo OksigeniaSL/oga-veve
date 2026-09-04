@@ -859,6 +859,17 @@ export class Game {
     };
   }
 
+  /**
+   * Le pasa la ortofoto al terreno.
+   *
+   * Se llama desde el arranque, después de construir el juego y antes de
+   * empezar: el terreno ya existe y todavía no se ha dibujado ni un fotograma,
+   * así que nadie llega a ver el mundo sin su manta.
+   */
+  ponerOrtofoto(orto: Parameters<Terrain["ponerOrtofoto"]>[0]): void {
+    this.terrain.ponerOrtofoto(orto);
+  }
+
   start(): void {
     if (this.running) return;
     this.running = true;

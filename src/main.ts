@@ -18,6 +18,8 @@ import {
   type Leccion,
 } from "./flight/lecciones";
 import { conRelieve } from "./world/relieve";
+import { cargarOrtofoto } from "./world/ortofoto";
+import { mundoElegido } from "./ui/mundo";
 import { cargarCiudad } from "./world/ciudades";
 import { conViento } from "./world/scenarios";
 import {
@@ -144,10 +146,20 @@ if (!escenario) {
  * proxy no está puesto— y eso no puede dejar a nadie sin volar: `pedirMetar`
  * devuelve el tiempo de casa y el juego ni se entera.
  */
-const [conMapa, ciudad, meteo] = await Promise.all([
+const [conMapa, ciudad, meteo, ortofoto] = await Promise.all([
   conRelieve(escenario),
   cargarCiudad(escenario.id),
   tiempoPedido(escenario),
+  /*
+   * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.
+   *
+   * Va aquí con los demás y no dentro del juego porque es lo mismo que el
+   * relieve y la ciudad: un fichero que hay que tener antes de construir el
+   * mundo, y encadenarlo triplicaría la espera del arranque.
+   */
+  mundoElegido() === "foto"
+    ? cargarOrtofoto(escenario.id, "lejos")
+    : Promise.resolve(undefined),
 ]);
 escenario = conViento(ciudad ? { ...conMapa, ciudad } : conMapa, meteo);
 
@@ -157,6 +169,7 @@ try {
   // Sin almacenamiento se juega igual, solo que no se recuerda.
 }
 
+// Y la ortofoto al terreno, si la hay. Ver `Terrain.ponerOrtofoto`.
 const game = new Game({
   canvas,
   hudRoot,
@@ -166,6 +179,7 @@ const game = new Game({
   leccion,
   mision,
 });
+if (ortofoto) game.ponerOrtofoto(ortofoto);
 game.start();
 
 /*
