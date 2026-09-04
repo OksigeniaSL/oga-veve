@@ -306,12 +306,27 @@ function slopeAt(ground: GroundSampler, x: number, z: number): number {
 function nearRunway(x: number, z: number, scenario: Scenario, margen = 0): boolean {
   const { runway } = scenario;
   const { along, across } = enEjesDePista(x, z, runway.x, runway.z, runway.heading);
-  // Margen justo: se despeja la pista y su franja de seguridad, pero los
-  // árboles llegan cerca. Pasar a ras de ellos es lo que hace que una carrera
-  // de despegue se sienta rápida — sin nada cerca, no hay paralaje.
+  /*
+   * **Y el margen era demasiado justo.**
+   *
+   * Eran noventa metros por delante del umbral y cincuenta y cinco al lado del
+   * borde: con eso los árboles llegaban hasta ciento veinte metros del asfalto
+   * y se veían pegados a la pista desde la cabina —«árboles a los lados de la
+   * pista»—. La franja de una pista de verdad son ciento cincuenta metros a
+   * cada lado del eje y sesenta más allá de cada umbral, y ahí no hay ni un
+   * arbusto: **un avión que se sale de la pista tiene que poder pararse sin
+   * chocar con nada**, y esa es toda la razón de que la franja exista.
+   *
+   * Se despeja algo más que la franja hacia delante —doscientos cincuenta
+   * metros— porque por ahí se pasa a diez metros de altura, y un árbol ahí no
+   * es paralaje: es un obstáculo en la aproximación.
+   *
+   * Sigue habiendo vegetación cerca para que la carrera de despegue se sienta
+   * rápida; solo que ahora empieza donde empieza de verdad.
+   */
   return (
-    Math.abs(along) < runway.length * 0.5 + 90 + margen &&
-    Math.abs(across) < runway.width * 0.5 + 55 + margen
+    Math.abs(along) < runway.length * 0.5 + 250 + margen &&
+    Math.abs(across) < runway.width * 0.5 + 130 + margen
   );
 }
 

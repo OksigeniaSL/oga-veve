@@ -108,6 +108,7 @@ import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { Senalero } from "./world/senalero";
 import { Sigueme } from "./world/sigueme";
+import { techoSobreLaPista } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { arranqueEnPista } from "./world/aerodrome";
@@ -463,6 +464,14 @@ export class Game {
                 options.ortofotoFina?.color(x, z) ??
                 options.ortofoto!.color(x, z)
             : undefined,
+          /*
+           * Y el techo de obstáculos, que es una norma y no un gusto: nada
+           * puede asomar por encima de las superficies que salen de la pista.
+           * Ver `world/superficie-de-aproximacion.ts`.
+           */
+          (x, z) =>
+            this.terrain.runwayElevation +
+            techoSobreLaPista(x, z, this.scenario.runway),
         ),
       );
     }

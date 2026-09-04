@@ -95,6 +95,14 @@ const ASFALTO = 0x4a4a4d;
  * construye, y no por realismo sino porque una nave de veinte metros en mitad
  * de la pista es un accidente.
  */
+/**
+ * Lo más bajita que se deja una casa recortada, m.
+ *
+ * Una planta. Por debajo de eso ya no es un edificio, es una mancha en el
+ * suelo, y la fotografía de debajo lo cuenta mejor que una caja de medio metro.
+ */
+const BAJITA = 3;
+
 export function crearCiudad(
   ciudad: Ciudad,
   cota: (x: number, z: number) => number,
@@ -125,6 +133,22 @@ export function crearCiudad(
    * fotografía sabe de qué color es ese tejado y nosotros no.
    */
   colorDelSuelo?: (x: number, z: number) => { r: number; g: number; b: number } | null,
+  /**
+   * Lo más alto que puede llegar un edificio ahí, en cota absoluta.
+   *
+   * Sale de las superficies de OACI —ver `superficie-de-aproximacion.ts`— y
+   * existe porque esta ciudad no sabe nada de aeropuertos: plantaba bloques de
+   * treinta metros justo debajo de la senda de planeo. «Edificios altos en la
+   * línea de entrada del aeropuerto, eso no existe, no se permite», y es
+   * verdad: un avión que llega no puede esquivar nada.
+   *
+   * Donde el propio terreno ya pasa del techo no se borra el barrio —eso
+   * dejaría una calva en mitad de la ladera, que se ve peor que las torres—:
+   * se deja la casa más baja que hay. La ciudad se va achatando según se
+   * acerca al umbral, que es exactamente lo que se ve desde el aire en un
+   * aeropuerto de verdad.
+   */
+  techoDeObstaculos?: (x: number, z: number) => number,
 ): Group {
   const grupo = new Group();
   grupo.name = 'ciudad';
@@ -256,7 +280,10 @@ export function crearCiudad(
 
         const ancho = perfil.ancho[0] + sorteo() * (perfil.ancho[1] - perfil.ancho[0]);
         const fondo = ancho * (0.7 + sorteo() * 0.6);
-        const alto = perfil.alto[0] + sorteo() * (perfil.alto[1] - perfil.alto[0]);
+        const libre = perfil.alto[0] + sorteo() * (perfil.alto[1] - perfil.alto[0]);
+        // Recortado contra la superficie de obstáculos, si aquí manda alguna.
+        const techo = techoDeObstaculos?.(x, z) ?? Infinity;
+        const alto = Math.max(BAJITA, Math.min(libre, techo - suelo));
         posicion.set(x, suelo + alto / 2, z);
         // Alineadas a la trama, no al azar: cuatro orientaciones y un pelo de
         // desvío. Un barrio de casas giradas al azar se lee como escombrera.
