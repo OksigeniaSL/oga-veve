@@ -416,8 +416,25 @@ export class Game {
      * ha medido su desfase contra nuestro suelo, porque aparecer cuarenta metros
      * desplazado y luego dar un salto es peor que tardar un segundo más.
      */
-    this.teselas = crearTeselas(this.scenario, this.claveDeTeselas(), (x, z) =>
-      this.terrain.sampleHeight(x, z),
+    this.teselas = crearTeselas(
+      this.scenario,
+      this.claveDeTeselas(),
+      (x, z) => this.terrain.sampleHeight(x, z),
+      /*
+       * Si la fotografía no llega, se dice **una vez** y se sigue volando en
+       * el mundo dibujado. Caer en silencio es lo que hizo perder una tarde
+       * buscando en el código un 403 de Google.
+       *
+       * Va con retraso porque en el arranque el HUD todavía no existe: el
+       * error puede llegar antes de que haya pantalla donde escribirlo.
+       */
+      (motivo) => {
+        setTimeout(() => {
+          this.hud.flash(t("hud.sinFoto"), 7);
+          // eslint-disable-next-line no-console
+          console.warn("[óga veve] la fotografía no está disponible:", motivo);
+        }, 2500);
+      },
     );
     if (this.teselas) this.scene.add(this.teselas.grupo);
 

@@ -15,6 +15,7 @@ export const ES_PY = {
   'hud.heading': 'Rumbo',
   'hud.throttleDown': 'Menos motor',
   'hud.throttleUp': 'Más motor',
+  'hud.sinFoto': 'Hoy no hay fotos del mundo. Volás el mundo dibujado.',
   'hud.throttle': 'Motor',
   'hud.vspeed': 'Subida',
   'hud.stall': '¡Pérdida! Bajá el morro',
