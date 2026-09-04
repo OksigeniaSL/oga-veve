@@ -87,6 +87,12 @@ export const GUG: Dictionary = {
   'leccion.despegue': 'Repu’ã',
   'leccion.aterrizaje': 'Reguejy',
 
+  'galon.aproximacion': 'Reguejy porã rechaukaha',
+  'galon.toma': 'Ejoko porã rechaukaha',
+  'galon.aros': 'Umi aro rechaukaha',
+  'galon.velocidad': 'Pya’e rechaukaha',
+  'galon.rodaje': 'Reguata yvýpe rechaukaha',
+
   // ── Instrumentos ───────────────────────────────────────────────────────
   // Los rótulos cortos (IAS, ALT, HDG…) no están aquí a propósito: no se
   // traducen. Esto son las glosas de debajo, que sí explican.

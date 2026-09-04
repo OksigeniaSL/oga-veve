@@ -36,6 +36,7 @@ import { Senal } from "./senal";
 import { Mapa } from "./mapa";
 import { PanelDelTiempo } from "./tiempo";
 import type { Tier } from "../flight/tiers";
+import type { Galon } from "../flight/galones";
 
 /**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
@@ -112,6 +113,20 @@ const FLECHA_SEGUIR = `
   </svg>
 `;
 
+/**
+ * Un galón: el chevrón de la manga.
+ *
+ * No es una estrella y no es una medalla, y eso está elegido. Una estrella es
+ * la moneda de los juegos de móvil y trae consigo lo que trae —repetir hasta
+ * sacar las tres—; el galón es lo que lleva en la manga quien vuela, y se
+ * reconoce sin que nadie lo explique porque va apilado: uno, dos, tres.
+ */
+const CHEVRON = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 4 L22.5 14.5 L19 18 L12 11 L5 18 L1.5 14.5 Z" />
+  </svg>
+`;
+
 export class Hud {
   readonly tutor = new Tutor();
   readonly mapa = new Mapa();
@@ -182,11 +197,13 @@ export class Hud {
   private warningArrow!: HTMLElement;
   private vignette!: HTMLElement;
   private badge!: HTMLElement;
+  private galones!: HTMLElement;
   private progress!: HTMLElement;
   private sound!: HTMLElement;
   private hint!: HTMLElement;
 
   private badgeText = "";
+  private galonesState: readonly Galon[] = [];
   private progressState: { done: number; total: number } | null = null;
   private soundState = { glyph: "🔊", label: "" };
   private soundHandler: (() => void) | null = null;
@@ -239,6 +256,16 @@ export class Hud {
     this.root.innerHTML = `
       <div class="hud__arriba">
         <div class="tarjeta insignia" data-hud="badge"></div>
+        <!--
+          Los galones del vuelo, apareciendo de uno en uno.
+
+          Van al lado de la insignia porque es donde se lleva un galón: en la
+          manga, a la vista, sin ocupar sitio. Y **no hay huecos**: lo que
+          todavía no se ha ganado no se enseña apagado. Un hueco vacío es un
+          reproche y un galón que aparece es un premio, y a los cuatro años
+          esa diferencia es toda la diferencia.
+        -->
+        <div class="galones" data-hud="galones" hidden></div>
         <!--
           El contador de fotogramas, oculto salvo con fps=1 en la dirección.
 
@@ -476,6 +503,7 @@ export class Hud {
     this.warningArrow = pick(this.root, "warning-arrow");
     this.vignette = pick(this.root, "vignette");
     this.badge = pick(this.root, "badge");
+    this.galones = pick(this.root, "galones");
     this.progress = pick(this.root, "progress");
     this.sound = pick(this.root, "sound");
     this.sound.addEventListener("click", () => this.soundHandler?.());
@@ -512,6 +540,7 @@ export class Hud {
     }
     this.paintSound();
     this.paintProgress();
+    this.paintGalones();
     this.hint = pick(this.root, "hint");
 
     this.badge.textContent = this.badgeText;
@@ -776,6 +805,40 @@ export class Hud {
       (_, index) =>
         `<span class="progreso__punto${index < progress.done ? " progreso__punto--hecho" : ""}"></span>`,
     ).join("");
+  }
+
+  /**
+   * Los galones ganados en este vuelo.
+   *
+   * Se le da la lista entera y él añade los que falten: **los que ya estaban
+   * no se vuelven a dibujar**, porque el galón nuevo entra con su animación y
+   * rehacer la fila entera haría saltar a los cinco a la vez, que es
+   * exactamente lo contrario de «aparecen de uno en uno».
+   */
+  setGalones(lista: readonly Galon[]): void {
+    this.galonesState = lista;
+    this.paintGalones();
+  }
+
+  private paintGalones(): void {
+    if (!this.galones) return;
+    const lista = this.galonesState;
+    this.galones.hidden = lista.length === 0;
+    // Al rehacer el HUD —cambio de idioma, cambio de tramo— la fila viene
+    // vacía y hay que repintarla entera. En vuelo solo se añade el último.
+    if (this.galones.childElementCount > lista.length) {
+      this.galones.innerHTML = "";
+    }
+    for (let i = this.galones.childElementCount; i < lista.length; i++) {
+      const galon = document.createElement("span");
+      galon.className = "galon";
+      // El nombre solo para quien usa lector de pantalla: en la pantalla, un
+      // galón es un dibujo y no lleva palabra ninguna.
+      galon.setAttribute("role", "img");
+      galon.setAttribute("aria-label", t(`galon.${lista[i]!}`));
+      galon.innerHTML = CHEVRON;
+      this.galones.append(galon);
+    }
   }
 
   /** Estado del sonido: glifo y etiqueta accesible. */

@@ -201,6 +201,12 @@ export const EN: Dictionary = {
   'leccion.despegue': 'Take off',
   'leccion.aterrizaje': 'Land',
 
+  'galon.aproximacion': 'Approach stripe',
+  'galon.toma': 'Landing stripe',
+  'galon.aros': 'Rings stripe',
+  'galon.velocidad': 'Speed stripe',
+  'galon.rodaje': 'Taxi stripe',
+
   'language.label': 'Language',
   'language.changed': 'Language: {name}',
 };
