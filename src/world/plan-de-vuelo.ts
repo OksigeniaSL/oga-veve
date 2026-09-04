@@ -175,6 +175,25 @@ const LLEGADA_SIN_AYUDA = 25;
  */
 const SIN_AYUDA_FUERA = 60;
 
+/**
+ * Lo más que puede mandar la ayuda de dirección, de 0 a 1.
+ *
+ * Sin tope, este proporcional pedía **alerón a fondo a veinte metros de la
+ * raya**, y en una curva con el mando suelto el desvío crece solo: corregir el
+ * desvío y girar por ti pasaban a ser la misma cosa.
+ *
+ * El número salió de medir con `scripts/verificar-asistencia.mjs`, que rueda
+ * sin tocar nada y anota cuánto se aparta cada peldaño. Con y sin tope,
+ * Guyrami da el mismo desvío —catorce metros de máximo, once al final—, así
+ * que el tope no le quita nada a quien lo necesita: lo que quita es el alerón
+ * a fondo del que se ha ido lejos, que es de donde salía la sensación del imán.
+ *
+ * Y de paso quedó medido que **Guyrami no cumple su promesa**: catorce metros
+ * es fuera de la calle, y ese peldaño existe para llevarte. Eso es otro
+ * arreglo y tiene su issue.
+ */
+const TOPE_DE_AYUDA = 0.7;
+
 export interface Vista {
   readonly fase: Fase;
   readonly clave: string;
@@ -650,7 +669,21 @@ export class PlanDeVuelo {
      */
     const fuera = Math.abs(desvio) < 6 ? 0 : desvio - Math.sign(desvio) * 6;
     const giro = -fuera / 14 - (estado.yawRate * 180) / Math.PI / 40;
-    return Math.max(-1, Math.min(1, giro));
+    /*
+     * **Y con tope, que es lo que separa «te sujeta» de «te lleva».**
+     *
+     * Esto es un proporcional sobre el desvío sin techo: a veinte metros de la
+     * raya mandaba alerón a fondo. Y en una curva, con el mando suelto, el
+     * desvío crece solo — así que corregir el desvío y girar por ti pasaban a
+     * ser la misma cosa. «Ese giro del final no lo di yo, el juego me obliga
+     * moviendo el avión, parece que hay una línea oculta que me imanta la
+     * aeronave»: era exactamente esto.
+     *
+     * Con el tope, la ayuda empuja hacia la raya y nunca da la vuelta al
+     * avión: el giro sigue siendo de quien pilota. Cuánto se aplica de esto lo
+     * decide el peldaño, que es donde vive esa escalera.
+     */
+    return Math.max(-TOPE_DE_AYUDA, Math.min(TOPE_DE_AYUDA, giro));
   }
 
   /** La ruta en coordenadas de mundo. Para las herramientas de comprobación. */
