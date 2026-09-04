@@ -31,7 +31,7 @@ import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
 import { SixPack } from "./six-pack";
-import { PAJARO, Pictogramas, TORTUGA } from "./pictogramas";
+import { Pictogramas, helice } from "./pictogramas";
 import { Senal } from "./senal";
 import { Mapa } from "./mapa";
 import { PanelDelTiempo } from "./tiempo";
@@ -333,19 +333,22 @@ export class Hud {
             Sirven igual con el dedo en una tablet.
           -->
           <!--
-            En los peldaños con dibujos, los botones **hablan el idioma de los
-            dibujos**: la tortuga y el pájaro, los mismos de la cinta de
-            arriba. Estaban con un menos y un más mientras la cinta hablaba de
-            tortugas, así que en pantalla había dos mandos de gas contándose en
-            dos idiomas distintos — y uno de los dos, con signos que a los
-            cuatro años no significan nada.
+            En los peldaños con dibujos, los botones llevan **la hélice**:
+            pequeña para menos motor, grande para más.
+
+            Llevaron un día la tortuga y el pájaro, y fue un error de bulto:
+            esos dos son los extremos del velocímetro, no del gas. En pantalla
+            quedaban dos escalas con los mismos dibujos midiendo cosas
+            distintas, y en cuanto discrepaban —que es siempre, porque el motor
+            manda y la velocidad obedece con retraso— parecía que una de las
+            dos mentía.
           -->
           <div class="motor__fila">
             <button class="motor__tecla" type="button" data-hud="throttle-down"
-                    aria-label="${t("hud.throttleDown")}">${pictos ? TORTUGA : "−"}</button>
+                    aria-label="${t("hud.throttleDown")}">${pictos ? helice(7) : "−"}</button>
             <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
             <button class="motor__tecla" type="button" data-hud="throttle-up"
-                    aria-label="${t("hud.throttleUp")}">${pictos ? PAJARO : "+"}</button>
+                    aria-label="${t("hud.throttleUp")}">${pictos ? helice(11) : "+"}</button>
           </div>
           ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
         </div>

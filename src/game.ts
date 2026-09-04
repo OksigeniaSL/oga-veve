@@ -139,6 +139,24 @@ const CAMERA_MODES = ["chase", "cockpit", "wing", "pajaro"] as const;
  * Todo lo demás en el suelo es rodar, y rodando hay una velocidad correcta.
  */
 const CORRIENDO = new Set(["despegando", "comprometido", "aterrizado"]);
+
+/**
+ * A cuánto de la velocidad de aproximación se entra en final.
+ *
+ * **Uno y medio, no uno.** La lección de aterrizar arrancaba justo a Vref, que
+ * es la velocidad **más lenta a la que vuela el avión**: aparecías en el aire
+ * a media palanca y con la sensación de estar parado. «Esto empieza a mitad de
+ * gas.» «Va leeeeento.»
+ *
+ * Y además era falso. A tres kilómetros del umbral nadie va a Vref: se llega
+ * deprisa y se va frenando, y cruzar el umbral a la velocidad justa **es la
+ * maniobra**. Empezar ya frenado es empezar con la lección hecha.
+ *
+ * Con uno y medio se entra a ciento ochenta por hora y hay que quitar motor
+ * para posarse, que es exactamente lo que el tutor pide desde hace tiempo y
+ * hasta ahora no hacía falta obedecer.
+ */
+const ENTRADA_EN_FINAL = 1.5;
 type CameraMode = (typeof CAMERA_MODES)[number];
 
 /** Campo de visión en reposo y cuánto se abre a velocidad máxima, en grados. */
@@ -1748,7 +1766,7 @@ export class Game {
     this.flight.reset({
       position: this.startPosition(),
       heading: MathUtils.degToRad(runway.heading),
-      airspeed: this.aircraft.approachSpeed,
+      airspeed: this.aircraft.approachSpeed * ENTRADA_EN_FINAL,
     });
     /*
      * **Soltar los mandos primero, y después poner el gas.**
@@ -1773,7 +1791,7 @@ export class Game {
      * Ahora se pide la velocidad y que cada modelo diga qué gas hace falta.
      */
     this.input.controls.throttle = this.flight.gasPara(
-      this.aircraft.approachSpeed,
+      this.aircraft.approachSpeed * ENTRADA_EN_FINAL,
     );
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.

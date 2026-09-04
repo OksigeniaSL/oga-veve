@@ -22,15 +22,39 @@
  * regla de siempre: si hace falta explicarlo, no vale para este peldaño.
  */
 
+/**
+ * La hélice del gas, en dos tamaños.
+ *
+ * **El gas no es la velocidad**, y confundirlos fue un error de bulto: los
+ * botones del motor llevaron un día la tortuga y el pájaro, que son los
+ * extremos del **velocímetro**. En pantalla quedaban dos cosas con los mismos
+ * dibujos midiendo magnitudes distintas, y en cuanto discrepaban —que es
+ * siempre, porque el motor manda y la velocidad obedece con retraso— parecía
+ * que una de las dos mentía. «La tortuga, avión y ave dicen que estoy casi a
+ * tope y el velocímetro está por debajo de la mitad.»
+ *
+ * El motor tiene su propio dibujo en este juego desde el principio: la hélice.
+ * Así que menos motor es una hélice pequeña y más motor una hélice grande, y
+ * ya no hay dos escalas que se puedan contradecir.
+ */
+export const helice = (r: number): string =>
+  `<svg viewBox="0 0 24 24" aria-hidden="true">
+     <ellipse cx="12" cy="${12 - r * 0.55}" rx="${r * 0.19}" ry="${r * 0.55}" />
+     <ellipse cx="12" cy="${12 + r * 0.55}" rx="${r * 0.19}" ry="${r * 0.55}" />
+     <ellipse cx="${12 - r * 0.55}" cy="12" rx="${r * 0.55}" ry="${r * 0.19}" />
+     <ellipse cx="${12 + r * 0.55}" cy="12" rx="${r * 0.55}" ry="${r * 0.19}" />
+     <circle cx="12" cy="12" r="${r * 0.22}" />
+   </svg>`;
+
 /** Silueta de tortuga: caparazón, cabeza y patas. Despacio. */
-export const TORTUGA = `
+const TORTUGA = `
   <path d="M3 13 h2.2 v2 H3.4 Z M9.4 13 h2.2 v2 H9.6 Z" />
   <path d="M2.2 12.6 a5.6 4.4 0 0 1 11.2 0 Z" />
   <path d="M13.6 9.4 a1.9 1.9 0 1 1 0 3.2 h-1.2 v-3.2 Z" />
 `;
 
 /** Silueta de pájaro en vuelo, alas abiertas. Deprisa. */
-export const PAJARO = `
+const PAJARO = `
   <path d="M1 11.4 C4 7.6 6.4 6.6 8 9.6 C9.6 6.6 12 7.6 15 11.4
            C12 9.8 9.8 10.4 8 12.6 C6.2 10.4 4 9.8 1 11.4 Z" />
 `;
