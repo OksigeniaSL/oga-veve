@@ -346,8 +346,18 @@ export class Audio {
       error: [440, 349.23],
       attention: [659.25, 659.25],
       touchdown: [130.81],
-      aro: [880, 1174.66],
-      aroFallado: [1174.66, 880],
+      /*
+       * **Y los dos aros no se distinguen solo por el orden.**
+       *
+       * Eran las mismas dos notas al derecho y al revés, 0,25 s en total, con
+       * el motor debajo: separar el contorno de dos notas tan cortas exige
+       * atención dirigida, y quien juega está mirando la pista. Ahora son dos
+       * gestos distintos: el bueno sube en tres saltos y el perdido son dos
+       * notas más graves, más largas y hacia abajo. Sigue sin ser un castigo
+       * —el timbre de `error` no se toca— pero ya no hay que adivinarlo.
+       */
+      aro: [659.25, 880, 1174.66],
+      aroFallado: [440, 349.23],
     };
 
     const notes = patterns[kind];
@@ -355,18 +365,22 @@ export class Audio {
     const step =
       kind === "achieved"
         ? 0.11
-        : kind === "aro" || kind === "aroFallado"
+        : kind === "aro"
           ? 0.07
-          : 0.14;
+          : kind === "aroFallado"
+            ? 0.16
+            : 0.14;
     notes.forEach((frequency, index) => {
       this.pluck(
         frequency,
         ctx.currentTime + index * step,
         kind === "touchdown"
           ? 0.5
-          : kind === "aro" || kind === "aroFallado"
+          : kind === "aro"
             ? 0.18
-            : 0.35,
+            : kind === "aroFallado"
+              ? 0.3
+              : 0.35,
       );
     });
   }

@@ -40,7 +40,11 @@ import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
-import { RunwayGuide, type PasoDeAro } from "./world/runway-guide";
+import {
+  GLIDE_SLOPE,
+  RunwayGuide,
+  type PasoDeAro,
+} from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
 import { LECCION_POR_DEFECTO, type Leccion } from "./flight/lecciones";
 import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from "./world/meteo";
@@ -72,8 +76,17 @@ const HORA_BUENA = 16;
 
 /** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
 const APROXIMACION = 3000;
-/** Y a qué altura sobre la pista: senda de tres grados y medio. */
-const ALTURA_DE_FINAL = 180;
+/**
+ * Y a qué altura sobre la pista: **la que da la senda a esa distancia**.
+ *
+ * Estaba en ciento ochenta metros, o sea tres grados y medio, mientras los
+ * aros dibujaban cuatro y el PAPI marcaba tres. Tres sendas distintas en la
+ * misma pantalla, y quien seguía una veía a las otras dos decirle que iba mal.
+ * Ahora sale de la misma constante que colocan los aros, así que la lección
+ * empieza **exactamente sobre la senda**: el primer aro está donde tiene que
+ * estar desde el primer fotograma.
+ */
+const ALTURA_DE_FINAL = APROXIMACION * Math.tan(GLIDE_SLOPE);
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
 import { crearCiudad } from "./world/ciudad";
