@@ -326,7 +326,12 @@ export class InputManager {
     const stick = target.querySelector<HTMLElement>('[data-touch="stick"]');
     const throttle = target.querySelector<HTMLElement>('[data-touch="throttle"]');
     const rudder = target.querySelector<HTMLElement>('[data-touch="rudder"]');
-    const brakes = target.querySelector<HTMLElement>('[data-touch="brakes"]');
+    /*
+     * El freno táctil **no vive aquí**: es el botón rojo con la mano del HUD.
+     * Había dos a la vez —aquel y un botón con la palabra «Frenos» escrita a
+     * pelo en castellano— y de los dos ganaba la mano, que además es un dibujo
+     * y no una palabra. Se quedó uno.
+     */
 
     window.addEventListener('pointerdown', () => this.noteGesture(), { passive: true });
 
@@ -350,11 +355,6 @@ export class InputManager {
         },
         { springLoaded: false },
       );
-    }
-    if (brakes) {
-      brakes.addEventListener('pointerdown', () => { this.touchBrakes = true; });
-      brakes.addEventListener('pointerup', () => { this.touchBrakes = false; });
-      brakes.addEventListener('pointercancel', () => { this.touchBrakes = false; });
     }
   }
 }

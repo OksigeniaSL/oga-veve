@@ -87,6 +87,9 @@ export const GUG: Dictionary = {
   'leccion.despegue': 'Repu’ã',
   'leccion.aterrizaje': 'Reguejy',
 
+  'tactil.palanca': 'Poka',
+  'tactil.timon': 'Sãmbyhyha',
+  'tactil.motor': 'Mba’epu',
   'galon.manga': 'Ko veve rechaukaha',
   'galon.aproximacion': 'Reguejy porã rechaukaha',
   'galon.toma': 'Ejoko porã rechaukaha',
