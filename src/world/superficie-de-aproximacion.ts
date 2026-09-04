@@ -46,17 +46,42 @@ const DIVERGENCIA = 0.15;
 /** Y hasta dónde llega, m. */
 const LARGO_APROXIMACION = 3000;
 
-/** Medio ancho de la superficie pegada al umbral, m. */
-const SEMIANCHO_INTERIOR = 75;
+/**
+ * Medio ancho de la superficie pegada al umbral, m.
+ *
+ * Ciento cuarenta, que es el de una pista instrumental de precisión de clave
+ * cuatro — la clase de Tenerife Norte y de Silvio Pettirossi. Setenta y cinco
+ * es el de una pista visual pequeña, y con ese número la superficie de
+ * transición no llegaba a actuar nunca: la ciudad ya se excluye a más
+ * distancia que eso, así que la regla existía y no tocaba una sola casa.
+ */
+const SEMIANCHO_INTERIOR = 140;
 
 /** Medio ancho de la franja de pista, m. Dentro de ella no crece nada. */
-const SEMIANCHO_FRANJA = 75;
-
-/** Y hasta dónde llega la transición a los lados, m. */
-const SEMIANCHO_TRANSICION = 150;
+const SEMIANCHO_FRANJA = 140;
 
 /** Cuánto sube la superficie de transición: 1 de cada 7. */
 const PENDIENTE_TRANSICION = 1 / 7;
+
+/**
+ * A qué altura sobre la pista deja de subir la transición, m.
+ *
+ * Cuarenta y cinco: ahí empieza la superficie horizontal interna, que es
+ * plana. Por encima de eso el Anexo 14 sigue teniendo cosas que decir, pero ya
+ * no a la escala de una casa.
+ */
+const TECHO_HORIZONTAL = 45;
+
+/**
+ * Y hasta dónde llega la transición **medida desde el borde**, m.
+ *
+ * Sale de las dos constantes de arriba: subiendo uno de cada siete, los
+ * cuarenta y cinco metros se alcanzan a trescientos quince del borde. Era un
+ * medio ancho absoluto de ciento cincuenta, y con la franja en ciento cuarenta
+ * eso dejaba una banda de transición de diez metros: la regla existía y no
+ * tocaba nada.
+ */
+const ALCANCE_TRANSICION = TECHO_HORIZONTAL / PENDIENTE_TRANSICION;
 
 export interface Pista {
   readonly x: number;
@@ -101,15 +126,30 @@ export function techoSobreLaPista(x: number, z: number, pista: Pista): number {
   const fuera = Math.abs(along) - media;
   const lado = Math.abs(across);
 
+  /**
+   * La transición: sube uno de cada siete desde el borde de lo que sea y se
+   * planta a cuarenta y cinco metros.
+   *
+   * **Y fuera del cono no se acaba el mundo.** Se devolvía `Infinity` en
+   * cuanto uno se salía a lo ancho, así que un bloque de treinta metros a
+   * quinientos del umbral y doscientos del eje pasaba sin más — justo al lado
+   * de la senda.
+   */
+  const transicion = (desdeElBorde: number, base: number): number =>
+    desdeElBorde > ALCANCE_TRANSICION
+      ? Infinity
+      : base + desdeElBorde * PENDIENTE_TRANSICION;
+
   // Por delante de los umbrales: la superficie de aproximación, que se abre.
   if (fuera > 0) {
     if (fuera > LARGO_APROXIMACION) return Infinity;
     const semiancho = SEMIANCHO_INTERIOR + DIVERGENCIA * fuera;
-    if (lado > semiancho) return Infinity;
-    return fuera * PENDIENTE_APROXIMACION;
+    const alturaDelCono = fuera * PENDIENTE_APROXIMACION;
+    return lado > semiancho
+      ? transicion(lado - semiancho, alturaDelCono)
+      : alturaDelCono;
   }
 
   // Al costado de la pista: la franja, y la transición subiendo desde su borde.
-  if (lado > SEMIANCHO_TRANSICION) return Infinity;
-  return Math.max(0, (lado - SEMIANCHO_FRANJA) * PENDIENTE_TRANSICION);
+  return lado > SEMIANCHO_FRANJA ? transicion(lado - SEMIANCHO_FRANJA, 0) : 0;
 }

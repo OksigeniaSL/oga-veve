@@ -471,7 +471,15 @@ export class Game {
           // Con doscientos metros de margen: un edificio pegado a la pista es
           // un obstáculo, y un aeropuerto de verdad tiene a su alrededor
           // justamente eso, un vacío.
-          zonaDeAeropuerto(this.scenario, 200),
+          /*
+           * El margen baja de doscientos metros a la franja de pista. Con
+           * doscientos, la ciudad se excluía a trescientos cincuenta del eje
+           * y la superficie de transición —que llega a ciento cuarenta— no
+           * tocaba una sola casa: quedaba una calva de setecientos metros de
+           * ancho donde la foto enseña un barrio. Ahora la calva es la franja
+           * de verdad y lo demás lo achata la superficie, que es lo bonito.
+           */
+          zonaDeAeropuerto(this.scenario, 60),
           this.scenario.waterLevel,
           // Sobre la fotografía, sin calles: la foto ya las trae.
           !options.ortofoto,
@@ -498,8 +506,15 @@ export class Game {
         ),
       );
     }
-    this.vegetacion = createVegetation(this.scenario, (x, z) =>
-      this.terrain.sampleHeight(x, z),
+    this.vegetacion = createVegetation(
+      this.scenario,
+      (x, z) => this.terrain.sampleHeight(x, z),
+      // Sobre la fotografía, solo donde la fotografía es verde. Ver
+      // `createVegetation`.
+      options.ortofoto
+        ? (x, z) =>
+            options.ortofotoFina?.color(x, z) ?? options.ortofoto!.color(x, z)
+        : undefined,
     );
     this.scene.add(this.vegetacion);
 

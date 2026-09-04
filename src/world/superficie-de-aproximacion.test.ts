@@ -21,16 +21,21 @@ const umbral = 1000;
 describe("las superficies de aproximación", () => {
   it("en la propia franja de pista no cabe nada", () => {
     expect(techoSobreLaPista(0, 0, PISTA)).toBe(0);
-    expect(techoSobreLaPista(60, 0, PISTA)).toBe(0);
+    expect(techoSobreLaPista(120, 0, PISTA)).toBe(0);
   });
 
   it("a los lados, la transición sube uno de cada siete", () => {
-    // A ciento veinte metros del eje: cuarenta y cinco pasado el borde.
-    expect(techoSobreLaPista(120, 0, PISTA)).toBeCloseTo(45 / 7, 5);
+    // A doscientos diez metros del eje: setenta pasado el borde de la franja.
+    expect(techoSobreLaPista(210, 0, PISTA)).toBeCloseTo(70 / 7, 5);
+  });
+
+  it("y sube hasta los cuarenta y cinco metros, que es donde deja de mandar", () => {
+    // Trescientos quince pasado el borde: uno de cada siete, cuarenta y cinco.
+    expect(techoSobreLaPista(140 + 315, 0, PISTA)).toBeCloseTo(45, 5);
   });
 
   it("y más allá de la transición ya no manda nadie", () => {
-    expect(techoSobreLaPista(400, 0, PISTA)).toBe(Infinity);
+    expect(techoSobreLaPista(600, 0, PISTA)).toBe(Infinity);
   });
 
   it("por delante del umbral el techo sube al dos por ciento", () => {
@@ -43,11 +48,14 @@ describe("las superficies de aproximación", () => {
     expect(techoSobreLaPista(0, -(umbral + 1000), PISTA)).toBeCloseTo(20, 5);
   });
 
-  it("el cono se abre: lo que estorba cerca, lejos ya no", () => {
-    // A doscientos metros del umbral el cono mide ciento cinco de semiancho.
-    expect(techoSobreLaPista(100, umbral + 200, PISTA)).toBeCloseTo(4, 5);
-    expect(techoSobreLaPista(110, umbral + 200, PISTA)).toBe(Infinity);
-    // Y a dos kilómetros, trescientos setenta y cinco.
+  it("el cono se abre, y a su lado sigue habiendo transición", () => {
+    // A doscientos metros del umbral el cono mide ciento setenta de semiancho.
+    expect(techoSobreLaPista(150, umbral + 200, PISTA)).toBeCloseTo(4, 5);
+    // Justo fuera del cono no se acaba el mundo: la transición sube desde ahí.
+    expect(techoSobreLaPista(180, umbral + 200, PISTA)).toBeCloseTo(4 + 10 / 7, 5);
+    // Y lejos del cono, ya no manda nadie.
+    expect(techoSobreLaPista(600, umbral + 200, PISTA)).toBe(Infinity);
+    // A dos kilómetros el cono mide cuatrocientos cuarenta.
     expect(techoSobreLaPista(300, umbral + 2000, PISTA)).toBeCloseTo(40, 5);
   });
 
