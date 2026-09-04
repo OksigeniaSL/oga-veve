@@ -44,6 +44,7 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [OpenStreetMap](https://www.openstreetmap.org) | Pistas, calles de rodaje, plataformas y estacionamientos | **ODbL** |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data) | Coordenadas, pistas y elevación de aeropuertos | **Unlicense** (dominio público) |
 | [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España | Ortofoto de Tenerife Norte, sobre el relieve | **CC BY 4.0** · scne.es |
+| [Sentinel-2 cloudless](https://s2maps.eu) — EOX IT Services, sobre datos Copernicus/ESA | Ortofoto de Silvio Pettirossi, sobre el relieve | **CC BY 4.0** · EOX y contribuidores |
 
 La ortofoto del PNOA entró el día que las teselas fotorrealistas de Google
 dejaron de servirse — «no disponibles para tu cuenta y tu región»— y el juego
@@ -53,6 +54,12 @@ trabajo: **nadie puede apagarlo un martes.**
 
 El «scne.es» de la licencia no es adorno: es la atribución que pide el
 Sistema Cartográfico Nacional y va donde vayan los créditos.
+
+Que Canarias tenga cuarenta veces más detalle que Asunción —veinticinco
+centímetros por píxel frente a diez metros— **no es una preferencia, es lo que
+hay**: España publica ortofoto nacional abierta y Paraguay todavía no, o no de
+forma que se pueda alcanzar. El día que la publique, esta tabla cambia y el
+mundo paraguayo lo pondrá Paraguay, que es como tiene que ser.
 
 La atribución de Copernicus va **literal y sin resumir** en los créditos del
 juego, en los tres idiomas, y no se puede quitar:

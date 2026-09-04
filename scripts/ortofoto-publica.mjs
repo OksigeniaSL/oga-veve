@@ -1,10 +1,16 @@
 /**
  * Ortofoto pública → `data/ortho/<escenario>-<encuadre>.jpg`.
  *
- * La manta que va encima del relieve. Sale del **PNOA del IGN de España**, que
- * publica todo el país a veinticinco centímetros por píxel bajo **CC BY 4.0**
- * —lo dice el propio servicio en sus `AccessConstraints`— y no pide cuenta, ni
- * clave, ni tarjeta.
+ * La manta que va encima del relieve, de fuentes abiertas y sin cuenta de
+ * nadie. Cada escenario tiene la mejor que hay para su sitio:
+ *
+ *   Tenerife Norte     · PNOA del IGN de España  · hasta 25 cm/píxel · CC BY 4.0
+ *   Silvio Pettirossi  · Sentinel-2 cloudless    ·       10 m/píxel  · CC BY 4.0
+ *
+ * Que Canarias tenga cuarenta veces más detalle que Asunción no es una
+ * decisión: es que España publica ortofoto nacional y Paraguay todavía no —o
+ * no de forma que se pueda alcanzar—. Diez metros por píxel es poco para
+ * rodar y de sobra para volar, y el aeródromo lo pinta el juego encima.
  *
  * Existe porque las teselas fotorrealistas de Google dejaron de servirse una
  * tarde con un «no disponible para tu cuenta y tu región», y con ellas se fue
@@ -45,11 +51,38 @@ import { fileURLToPath } from 'node:url';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** El servicio, su capa y su licencia. Los tres van juntos a propósito. */
-const SERVICIO = 'https://www.ign.es/wmts/pnoa-ma';
-const CAPA = 'OI.OrthoimageCoverage';
-const FUENTE = 'PNOA · Instituto Geográfico Nacional de España';
-const LICENCIA = 'CC BY 4.0 · scne.es';
+/**
+ * Los proveedores, cada uno con su servicio, su licencia y su límite.
+ *
+ * El `tope` es el nivel más allá del cual **no hay más información que pedir**:
+ * en Sentinel-2 el píxel mide diez metros de verdad, así que pedir más zoom
+ * solo devuelve el mismo dato ampliado. Un extractor que finge detalle es peor
+ * que uno que dice cuánto hay.
+ */
+const PROVEEDORES = {
+  pnoa: {
+    fuente: 'PNOA · Instituto Geográfico Nacional de España',
+    licencia: 'CC BY 4.0 · scne.es',
+    servicio: 'https://www.ign.es/wmts/pnoa-ma',
+    capa: 'OI.OrthoimageCoverage',
+    tope: 19,
+    url: (z, col, fila) =>
+      'https://www.ign.es/wmts/pnoa-ma?service=WMTS&request=GetTile&version=1.0.0' +
+      '&layer=OI.OrthoimageCoverage&style=default&format=image/jpeg' +
+      `&tilematrixset=EPSG:3857&TileMatrix=${z}&TileRow=${fila}&TileCol=${col}`,
+  },
+  sentinel: {
+    fuente: 'Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA',
+    licencia: 'CC BY 4.0 · EOX & contribuidores, datos Copernicus Sentinel',
+    servicio: 'https://tiles.maps.eox.at/wmts',
+    capa: 's2cloudless-2020_3857',
+    // Diez metros de píxel: a z14 ya se está pidiendo el dato entero.
+    tope: 14,
+    url: (z, col, fila) =>
+      'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default' +
+      `/GoogleMapsCompatible/${z}/${fila}/${col}.jpg`,
+  },
+};
 
 /** Lado de una tesela WMTS, píxeles. Es el estándar y no se negocia. */
 const TESELA = 256;
@@ -66,12 +99,15 @@ const TESELA = 256;
  * JPEG son décimas de mega y una textura que cualquier tableta traga.
  */
 const ENCUADRES = {
-  lejos: { lado: 18000, zoom: 14 },
+  lejos: { zoom: 14 },
   cerca: { lado: 3000, zoom: 17 },
 };
 
-/** Qué fichero de aeródromo le toca a cada escenario. */
-const AERODROMO = { 'tenerife-norte': 'gcxo', pettirossi: 'sgas' };
+/** Qué aeródromo y qué proveedor le toca a cada escenario. */
+const ESCENARIOS = {
+  'tenerife-norte': { aero: 'gcxo', proveedor: 'pnoa', lado: 18000 },
+  pettirossi: { aero: 'sgas', proveedor: 'sentinel', lado: 22000 },
+};
 
 /** De grados a la tesela que le toca en el mosaico de Web Mercator. */
 function aTesela(lat, lon, z) {
@@ -87,12 +123,8 @@ function aTesela(lat, lon, z) {
 const metrosPorPixel = (lat, z) =>
   (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** z;
 
-async function teselaJpeg(z, col, fila) {
-  const url =
-    `${SERVICIO}?service=WMTS&request=GetTile&version=1.0.0` +
-    `&layer=${CAPA}&style=default&format=image/jpeg` +
-    `&tilematrixset=EPSG:3857&TileMatrix=${z}&TileRow=${fila}&TileCol=${col}`;
-  const res = await fetch(url);
+async function teselaJpeg(prov, z, col, fila) {
+  const res = await fetch(prov.url(z, col, fila));
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return Buffer.from(await res.arrayBuffer());
 }
@@ -108,18 +140,33 @@ const ffmpeg = (args) =>
 
 async function main() {
   const [id, ...opciones] = process.argv.slice(2);
-  if (!id || !AERODROMO[id]) {
-    console.error('uso: node scripts/pnoa-a-ortofoto.mjs <escenario> [--cerca]');
-    console.error(`escenarios: ${Object.keys(AERODROMO).join(', ')}`);
+  if (!id || !ESCENARIOS[id]) {
+    console.error('uso: node scripts/ortofoto-publica.mjs <escenario> [--cerca]');
+    console.error(`escenarios: ${Object.keys(ESCENARIOS).join(', ')}`);
     process.exit(1);
   }
   const cual = opciones.includes('--cerca') ? 'cerca' : 'lejos';
-  const { lado, zoom } = ENCUADRES[cual];
+  const escenario = ESCENARIOS[id];
+  const prov = PROVEEDORES[escenario.proveedor];
+  const lado = cual === 'cerca' ? ENCUADRES.cerca.lado : escenario.lado;
+
+  /*
+   * **El zoom se recorta al tope del proveedor**, y se dice.
+   *
+   * Con Sentinel-2 la capa fina no puede ser más fina que el dato: pedir z17
+   * a un satélite de diez metros devuelve el mismo píxel ampliado cuatro
+   * veces. Antes que fabricar detalle que no existe, se avisa y se baja.
+   */
+  const pedido = ENCUADRES[cual].zoom;
+  const zoom = Math.min(pedido, prov.tope);
+  if (zoom !== pedido) {
+    console.log(`  (z${pedido} pedido, z${zoom} es todo lo que da ${escenario.proveedor})`);
+  }
 
   // El origen sale del propio aeródromo, que es de donde sale todo lo demás.
   const aero = JSON.parse(
     await readFile(
-      join(RAIZ, 'data', 'aerodromes', `${AERODROMO[id]}.aero.json`),
+      join(RAIZ, 'data', 'aerodromes', `${escenario.aero}.aero.json`),
       'utf8',
     ),
   );
@@ -175,7 +222,7 @@ async function main() {
         `${String(f - fila0).padStart(3, '0')}_${String(c - col0).padStart(3, '0')}.jpg`,
       );
       try {
-        await writeFile(nombre, await teselaJpeg(zoom, c, f));
+        await writeFile(nombre, await teselaJpeg(prov, zoom, c, f));
       } catch {
         await writeFile(nombre, NEGRA);
         huecos++;
@@ -203,10 +250,10 @@ async function main() {
       {
         id,
         encuadre: cual,
-        fuente: FUENTE,
-        licencia: LICENCIA,
-        servicio: SERVICIO,
-        capa: CAPA,
+        fuente: prov.fuente,
+        licencia: prov.licencia,
+        servicio: prov.servicio,
+        capa: prov.capa,
         /*
          * La esquina del mosaico, en teselas. Hace falta porque **el centro de
          * la imagen no es el aeródromo**: es el centro del mosaico, que cae
