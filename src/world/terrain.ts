@@ -45,6 +45,21 @@ import { VECES_LEJOS, type Scenario } from "./scenarios";
  * mucho que tenga bandas de color. Esto se calcula una vez, al construir la
  * malla, y luego es gratis.
  */
+/**
+ * Nudos por lado de la manta fina.
+ *
+ * Ciento sesenta y uno sobre seis kilómetros son treinta y siete metros entre
+ * nudo y nudo, algo más fino que la rejilla del relieve: así la manta sigue al
+ * terreno en vez de cortarlo por los cerros.
+ */
+const NUDOS_MANTA = 161;
+
+/** Qué fracción del borde de la manta se va en transparencia. */
+const DESVANECIDO_MANTA = 0.12;
+
+/** Cuánto se levanta la manta sobre el relieve, m. */
+const ALZADO_MANTA = 0.05;
+
 function sunVector(scenario: Scenario): { x: number; y: number; z: number } {
   const azimuth = (scenario.sun.azimuth * Math.PI) / 180;
   const elevation = (scenario.sun.elevation * Math.PI) / 180;
@@ -493,6 +508,123 @@ export class Terrain {
     mat.map = orto.textura;
     mat.vertexColors = false;
     mat.needsUpdate = true;
+  }
+
+  /**
+   * Le pone encima la fotografía **fina**, recortada sobre el aeródromo.
+   *
+   * La ancha cubre dieciocho kilómetros a ocho metros por píxel, que desde
+   * arriba está bien y a ras de suelo es una acuarela: rodando se ve el color
+   * de la manzana, no la manzana. La fina cubre seis kilómetros a dos, y seis
+   * kilómetros son la pista entera de Tenerife Norte con sus dos
+   * aproximaciones — o sea, justo el trozo de mundo donde pasa la lección.
+   *
+   * Va en su propia malla y no en la del relieve porque son dos encuadres
+   * distintos de la misma foto: una malla no puede llevar dos texturas sin
+   * escribir un shader, y aquí no hace falta ninguno.
+   *
+   * ## El borde se desvanece
+   *
+   * Un recorte cuadrado de foto nítida sobre foto borrosa deja un cuadrado
+   * dibujado en el suelo, y desde el aire se ve perfectamente. Por eso los
+   * últimos metros se van en transparencia: la nitidez se acaba sin que se vea
+   * dónde. Es el mismo truco que usan los simuladores para sus zonas de
+   * detalle.
+   *
+   * ## Y por debajo de lo que se pisa
+   *
+   * Se levanta cinco centímetros sobre el relieve —lo justo para que la
+   * interpolación de la malla no la muerda— y el pavimento del aeródromo está
+   * metro y medio más arriba, así que la manta nunca tapa la pista ni su
+   * pintura. La física no la ve: esto es una fotografía, no un suelo.
+   */
+  ponerOrtofotoFina(orto: {
+    textura: Texture;
+    uv(x: number, z: number): { u: number; v: number };
+    limites: { x0: number; x1: number; z0: number; z1: number };
+  }): void {
+    const vieja = this.group.getObjectByName("manta-fina");
+    if (vieja) {
+      if (vieja instanceof Mesh) {
+        vieja.geometry.dispose();
+        (vieja.material as MeshLambertMaterial).dispose();
+      }
+      this.group.remove(vieja);
+    }
+
+    const { x0, x1, z0, z1 } = orto.limites;
+    const n = NUDOS_MANTA;
+    const pos = new Float32Array(n * n * 3);
+    const uvs = new Float32Array(n * n * 2);
+    // Cuatro componentes: el blanco no cambia nada y la cuarta es el
+    // desvanecido del borde. Es la manera de tener transparencia por vértice
+    // sin material propio.
+    const col = new Float32Array(n * n * 4);
+
+    for (let fz = 0; fz < n; fz++) {
+      const tz = fz / (n - 1);
+      const z = z0 + (z1 - z0) * tz;
+      for (let fx = 0; fx < n; fx++) {
+        const tx = fx / (n - 1);
+        const x = x0 + (x1 - x0) * tx;
+        const i = fz * n + fx;
+        pos[i * 3] = x;
+        pos[i * 3 + 1] = this.sampleHeight(x, z) + ALZADO_MANTA;
+        pos[i * 3 + 2] = z;
+        const { u, v } = orto.uv(x, z);
+        uvs[i * 2] = u;
+        uvs[i * 2 + 1] = v;
+        col[i * 4] = 1;
+        col[i * 4 + 1] = 1;
+        col[i * 4 + 2] = 1;
+        const alBorde = Math.min(tx, 1 - tx, tz, 1 - tz);
+        col[i * 4 + 3] = Math.min(1, alBorde / DESVANECIDO_MANTA);
+      }
+    }
+
+    const indices = new Uint32Array((n - 1) * (n - 1) * 6);
+    let k = 0;
+    for (let fz = 0; fz < n - 1; fz++) {
+      for (let fx = 0; fx < n - 1; fx++) {
+        const a = fz * n + fx;
+        const b = a + 1;
+        const c = a + n;
+        const d = c + 1;
+        indices[k++] = a;
+        indices[k++] = c;
+        indices[k++] = b;
+        indices[k++] = b;
+        indices[k++] = c;
+        indices[k++] = d;
+      }
+    }
+
+    const geo = new BufferGeometry();
+    geo.setAttribute("position", new BufferAttribute(pos, 3));
+    geo.setAttribute("uv", new BufferAttribute(uvs, 2));
+    geo.setAttribute("color", new BufferAttribute(col, 4));
+    geo.setIndex(new BufferAttribute(indices, 1));
+    geo.computeVertexNormals();
+
+    const malla = new Mesh(
+      geo,
+      new MeshLambertMaterial({
+        map: orto.textura,
+        vertexColors: true,
+        transparent: true,
+        // No escribe profundidad: es una calcomanía sobre el relieve, no un
+        // suelo. Si escribiera, se taparía a sí misma con su propio borde
+        // desvanecido.
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -4,
+      }),
+    );
+    malla.name = "manta-fina";
+    malla.castShadow = false;
+    malla.receiveShadow = false;
+    this.group.add(malla);
   }
 
   dispose(): void {

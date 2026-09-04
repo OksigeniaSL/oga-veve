@@ -97,10 +97,21 @@ const TESELA = 256;
  *
  * Los niveles salen de un presupuesto: unos tres mil píxeles de lado, que en
  * JPEG son décimas de mega y una textura que cualquier tableta traga.
+ *
+ * **Y el encuadre fino tiene que caber el aeródromo entero.** El primero eran
+ * tres kilómetros a un metro por píxel, muy nítido y demasiado pequeño: la
+ * pista de Tenerife Norte mide tres mil cuatrocientos metros, así que la foto
+ * fina se acababa antes que la propia pista y las dos cabeceras quedaban
+ * fuera. Seis kilómetros a dos metros por píxel cogen la pista, sus dos
+ * aproximaciones y el circuito, con los mismos tres mil píxeles de lado. Se
+ * pierde nitidez y se gana que la lección entera pase sobre la foto buena.
+ *
+ * La pintura de la pista no se pierde por bajar a dos metros: la dibuja el
+ * juego encima con su geometría, no sale de la fotografía.
  */
 const ENCUADRES = {
   lejos: { zoom: 14 },
-  cerca: { lado: 3000, zoom: 17 },
+  cerca: { lado: 6000, zoom: 16 },
 };
 
 /** Qué aeródromo y qué proveedor le toca a cada escenario. */

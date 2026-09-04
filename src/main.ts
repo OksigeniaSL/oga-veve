@@ -146,7 +146,7 @@ if (!escenario) {
  * proxy no está puesto— y eso no puede dejar a nadie sin volar: `pedirMetar`
  * devuelve el tiempo de casa y el juego ni se entera.
  */
-const [conMapa, ciudad, meteo, ortofoto] = await Promise.all([
+const [conMapa, ciudad, meteo, ortofoto, ortofotoFina] = await Promise.all([
   conRelieve(escenario),
   cargarCiudad(escenario.id),
   tiempoPedido(escenario),
@@ -159,6 +159,14 @@ const [conMapa, ciudad, meteo, ortofoto] = await Promise.all([
    */
   mundoElegido() === "foto"
     ? cargarOrtofoto(escenario.id, "lejos")
+    : Promise.resolve(undefined),
+  /*
+   * Y la fina del aeródromo, que puede no existir: hay proveedores que no
+   * tienen más detalle que dar —Sentinel-2 se acaba a ocho metros por píxel—
+   * y entonces solo hay una capa y no pasa nada.
+   */
+  mundoElegido() === "foto"
+    ? cargarOrtofoto(escenario.id, "cerca")
     : Promise.resolve(undefined),
 ]);
 escenario = conViento(ciudad ? { ...conMapa, ciudad } : conMapa, meteo);
@@ -179,6 +187,7 @@ const game = new Game({
   leccion,
   mision,
   ortofoto,
+  ortofotoFina,
 });
 game.start();
 

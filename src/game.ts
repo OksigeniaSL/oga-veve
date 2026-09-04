@@ -209,6 +209,15 @@ export interface GameOptions {
    * Pasarla después obligaba a rehacer la ciudad entera.
    */
   ortofoto?: Ortofoto;
+  /**
+   * Y la fina, sobre el aeródromo, si la hay.
+   *
+   * La ancha se estira sobre el escenario entero y a ras de suelo es una
+   * acuarela. Esta cubre solo los seis kilómetros donde se rueda, se despega y
+   * se aterriza, que es donde se mira el suelo de cerca. Ver
+   * `Terrain.ponerOrtofotoFina`.
+   */
+  ortofotoFina?: Ortofoto;
 }
 
 export class Game {
@@ -405,6 +414,9 @@ export class Game {
     // no plantar un bosque donde hay un barrio.
     // La manta del mundo, antes que nada de lo que va encima.
     if (options.ortofoto) this.terrain.ponerOrtofoto(options.ortofoto);
+    if (options.ortofotoFina) {
+      this.terrain.ponerOrtofotoFina(options.ortofotoFina);
+    }
 
     if (this.scenario.ciudad) {
       this.scene.add(
@@ -418,8 +430,17 @@ export class Game {
           this.scenario.waterLevel,
           // Sobre la fotografía, sin calles: la foto ya las trae.
           !options.ortofoto,
+          /*
+           * El color del suelo, preguntando primero a la foto fina.
+           *
+           * Donde llega, es la que sabe: a dos metros por píxel un tejado es
+           * un tejado, y a ocho es la media de la manzana con su calle. Fuera
+           * de su recorte devuelve `null` y contesta la ancha.
+           */
           options.ortofoto
-            ? (x, z) => options.ortofoto!.color(x, z)
+            ? (x, z) =>
+                options.ortofotoFina?.color(x, z) ??
+                options.ortofoto!.color(x, z)
             : undefined,
         ),
       );

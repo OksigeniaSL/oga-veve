@@ -70,6 +70,19 @@ export interface Ortofoto {
    * pasa a ser el volumen de lo que ya se veía plano.
    */
   color(x: number, z: number): { r: number; g: number; b: number } | null;
+  /**
+   * Hasta dónde llega la fotografía, en metros del mundo.
+   *
+   * Lo necesita la capa fina: se dibuja como una manta recortada sobre el
+   * aeródromo, y una manta hay que saber dónde acaba. La ancha no lo usa
+   * porque se estira sobre el relieve entero.
+   */
+  readonly limites: {
+    readonly x0: number;
+    readonly x1: number;
+    readonly z0: number;
+    readonly z1: number;
+  };
 }
 
 /*
@@ -209,7 +222,24 @@ export async function cargarOrtofoto(
       };
     };
 
-    return { textura, ficha, uv, color };
+    /*
+     * **Los bordes, deshaciendo la cuenta de arriba.**
+     *
+     * La esquina del mosaico cae donde cae —es un borde de tesela, no el
+     * aeródromo— así que la imagen no está centrada en el origen y no vale
+     * suponer «medio lado a cada lado». Se despeja de la misma fórmula: la Z
+     * pequeña es el norte, que en la imagen es la fila cero.
+     */
+    const dx = centro.x - esquinaX;
+    const dy = centro.y - esquinaY;
+    const limites = {
+      x0: -dx * mpp,
+      x1: (ficha.pixeles.ancho - dx) * mpp,
+      z0: -dy * mpp,
+      z1: (ficha.pixeles.alto - dy) * mpp,
+    };
+
+    return { textura, ficha, uv, color, limites };
   } catch {
     // Sin ortofoto se vuela igual. Ver la cabecera.
     return undefined;
