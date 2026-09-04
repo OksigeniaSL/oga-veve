@@ -230,6 +230,7 @@ export class Hud {
   private soundState = { glyph: "🔊", label: "" };
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
+  private creditsHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
   private horaAtada: { hora: number; cambio: (h: number) => void } | null =
     null;
@@ -346,6 +347,23 @@ export class Hud {
         </button>
         ${Mapa.boton(t("mapa.title"))}
         ${PanelDelTiempo.boton(t("tiempo.title"))}
+        <!--
+          Los créditos, y **esto no es cortesía: es una obligación**. El
+          relieve es de Copernicus y las ortofotos son CC BY del PNOA y de
+          Sentinel-2; las tres licencias exigen atribución visible. Estaban
+          solo detrás de F1, o sea inalcanzables en una tablet, que es el
+          aparato del aula. Y ahí dentro va también la promesa que da sentido
+          al proyecto: gratis para siempre para la educación paraguaya.
+        -->
+        <button class="sonido" type="button" data-hud="credits"
+                aria-label="${t("credits.title")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9.4" fill="none" stroke="currentColor"
+                    stroke-width="1.9" />
+            <circle cx="12" cy="7.4" r="1.35" />
+            <rect x="10.75" y="10.4" width="2.5" height="7.2" rx="1.25" />
+          </svg>
+        </button>
         <!--
           Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
           arrancar es un hangar con la puerta tapiada: quien quiera cambiar de
@@ -531,6 +549,9 @@ export class Hud {
     this.sound.addEventListener("click", () => this.soundHandler?.());
     pick(this.root, "keys").addEventListener("click", () =>
       this.keysHandler?.(),
+    );
+    pick(this.root, "credits").addEventListener("click", () =>
+      this.creditsHandler?.(),
     );
     pick(this.root, "hangar").addEventListener("click", () =>
       this.hangarHandler?.(),
@@ -1054,6 +1075,11 @@ export class Hud {
     c.toggle("medidor--lento", estado === "lento");
     c.toggle("medidor--bien", estado === "bien");
     c.toggle("medidor--rapido", estado === "rapido");
+  }
+
+  /** Quién abre los créditos. Ver el botón en el marcado. */
+  onCredits(handler: () => void): void {
+    this.creditsHandler = handler;
   }
 
   onSoundClick(handler: () => void): void {

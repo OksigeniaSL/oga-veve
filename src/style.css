@@ -801,7 +801,9 @@ body {
   width: 44%;
   height: 44%;
   transform: translate(-50%, -50%);
-  fill: rgba(228, 226, 218, 0.34);
+  /* Medio velado: es la etiqueta del mando, no el mando. Pero al treinta y
+     cuatro por ciento sobre el gris del pad no se veía ninguno. */
+  fill: rgba(228, 226, 218, 0.5);
   pointer-events: none;
 }
 
@@ -819,12 +821,14 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 30%;
-  height: 30%;
-  margin: -15% 0 0 -15%;
+  /* Más pequeño de lo que era: al 30 % tapaba el dibujo del mando, que es lo
+     que dice para qué sirve. El punto es dónde tienes el dedo, no el mando. */
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
   border-radius: 50%;
   background: var(--ocre);
-  opacity: 0.85;
+  opacity: 0.9;
   transform: translate(calc(var(--x, 0) * 34%), calc(var(--y, 0) * 34%));
 }
 
@@ -874,6 +878,24 @@ body {
     min-width: var(--tacto);
     min-height: var(--tacto);
   }
+}
+
+/* Y con el dedo, la tarjeta de la señal sube por encima de la barra del
+   timón. Estaban las dos abajo en el centro —la señal al 9 % y el timón a
+   veinte píxeles con cincuenta y seis de alto— y en una pantalla de seiscientos
+   se pisan. La señal es además la única forma de arrancar el motor con el
+   dedo, así que la que se aparta es ella y no el mando. */
+@media (pointer: coarse) {
+  .senal {
+    bottom: calc(20px + 56px + 34px + env(safe-area-inset-bottom));
+  }
+}
+
+/* En el peldaño sin palabras, el aviso es solo el dibujo y la viñeta.
+   El texto se escribía igual —«¡Pérdida! Bajá el morro»— en la pantalla de
+   quien no lee, ocupando sitio y sin decir nada. */
+.hud--sin-letras [data-hud="warning-text"] {
+  display: none;
 }
 
 /* ── Reparto de la pantalla cuando se juega con el dedo ───────────────── */

@@ -109,6 +109,8 @@ const recordado =
   }) ?? SCENARIOS[0]!;
 
 let escenario = directo;
+// `?tramo=guyrami` entra directo en ese peldaño; lo resuelve `rememberedTier`,
+// que es a quien pregunta también el juego.
 let tramo = rememberedTier();
 // `?leccion=aterrizaje` salta el hangar y va directo, que es lo que permite
 // comprobarlas desde fuera sin pulsar cuatro fichas.
