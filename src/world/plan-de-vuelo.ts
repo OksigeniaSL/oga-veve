@@ -1332,15 +1332,33 @@ export class PlanDeVuelo {
       this.grupo.add(malla);
     }
 
-    // La diana del final: un aro, que se ve de lejos y no tapa nada.
+    /*
+     * La diana del final: un aro, que se ve de lejos y no tapa nada.
+     *
+     * **Ni tan grande ni rojo, que las dos cosas estaban mal.** Eran
+     * veinticuatro metros de diámetro —más del doble de la envergadura— y a
+     * ras de suelo con la cámara detrás llenaban media pantalla al llegar; y
+     * encima tapaban una banda de tres metros de las marcas de puesto de la
+     * fotografía, o la doble raya de espera cuando la ruta acaba ahí, que es
+     * justo lo que hay que aprender a respetar.
+     *
+     * Y el rojo ya está cogido. En este juego significa «pará» o «esto salió
+     * mal»: la lámpara de la torre, el aro de la senda que se escapó, el
+     * extremo donde se acaba la pista. Premiar la llegada con un rojo gigante
+     * es enseñar dos cosas contrarias con el mismo color, en un juego que se
+     * apoya en el color justamente para no tener que escribir.
+     *
+     * Ahora es del tamaño de la envergadura y del mismo ocre que los aros de
+     * la senda cuando todavía te faltan: «esto es lo que te queda». Quien dice
+     * «pará aquí» es el señor de los bastones, que para eso está.
+     */
     const fin = this.rutaMundo[this.rutaMundo.length - 1]!;
     const aro = new Mesh(
-      new RingGeometry(9, 12, 32),
-      // La diana del final es roja: ahí se para.
+      new RingGeometry(5, 6.4, 32),
       new MeshBasicMaterial({
-        color: 0xc94a3d,
+        color: 0xdd923f,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.8,
         polygonOffset: true,
         polygonOffsetFactor: -5,
         polygonOffsetUnits: -5,
