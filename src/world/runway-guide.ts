@@ -361,10 +361,30 @@ export class RunwayGuide {
 
     for (let i = 0; i < this.rings.length; i++) {
       if (this.flash[i]! <= 0) continue;
-      this.flash[i] = Math.max(0, this.flash[i]! - dt * 1.6);
+      // El fallado dura más y se apaga más despacio: hay que darle tiempo a
+      // parpadear tres veces, que es lo que lo hace inconfundible.
+      this.flash[i] = Math.max(
+        0,
+        this.flash[i]! - dt * (this.fallado[i] ? 0.8 : 1.6),
+      );
       const ring = this.rings[i]!;
       const punch = this.flash[i]!;
-      ring.scale.setScalar(1 + punch * 0.45);
+      /*
+       * **El bueno crece; el fallado parpadea.**
+       *
+       * Dos maneras distintas de llamar la atención para dos cosas distintas,
+       * porque un cambio de color solo no basta cuando la pantalla ya tiene
+       * ocres y verdes por todas partes. Crecer es un premio; parpadear es un
+       * «eh, mira». Y el parpadeo es lo que hace cualquier señal del mundo que
+       * quiere decir «esto no ha salido».
+       */
+      const parpadeo = this.fallado[i]
+        ? 0.5 + 0.5 * Math.sign(Math.sin(performance.now() / 70))
+        : 1;
+      ring.scale.setScalar(this.fallado[i] ? 1 : 1 + punch * 0.45);
+      (ring.material as MeshBasicMaterial).opacity = this.fallado[i]
+        ? 0.25 + 0.75 * parpadeo * punch
+        : Math.min(1, 0.75 + punch * 0.25);
       // Blanco al cruzarlo, rojo al perderlo. Y vuelve al ocre al apagarse.
       const vivo = this.fallado[i] ? FALLADO : 0xffffff;
       (ring.material as MeshBasicMaterial).color.setHex(
