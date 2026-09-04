@@ -284,8 +284,36 @@ export class RunwayGuide {
       const tramo = vecino
         ? vecino.position.distanceTo(siguiente.position)
         : (siguiente.geometry as TorusGeometry).parameters.radius * 5;
+      /*
+       * **Y no basta con estar cerca: hay que ir por dentro.**
+       *
+       * El encendido salía solo de la distancia, y la distancia sola premia
+       * una aproximación mala: el aro se ponía verde brillante mientras el
+       * avión iba a pasarle **por debajo**. Se vio en un vuelo grabado a
+       * propósito — «no me corrige en el aro al que paso por debajo»— y es lo
+       * contrario de lo que tiene que enseñar. Un aro que se pone verde cuando
+       * vas mal no es una ayuda, es un aplauso equivocado.
+       *
+       * Ahora son dos cosas multiplicadas: **lo cerca que estás** y **lo
+       * centrado que vas**. Fuera del aro, por arriba, por abajo o por el
+       * lado, no se enciende por mucho que te acerques; y en el eje se
+       * enciende desde lejos. Que es lo que significa «vas bien».
+       */
+      const radio = (siguiente.geometry as TorusGeometry).parameters.radius;
+      // Sin vecino no hay eje que valga: un solo aro no tiene senda.
+      const eje = vecino
+        ? new Vector3()
+            .subVectors(siguiente.position, vecino.position)
+            .normalize()
+        : new Vector3(0, 0, 1);
+      const rel = new Vector3().subVectors(avion, siguiente.position);
+      const fuera = rel.clone().addScaledVector(eje, -rel.dot(eje)).length();
+      // Uno en el centro, cero en el borde del aro y más allá.
+      const centrado = Math.max(0, 1 - fuera / radio);
+
       const d = avion.distanceTo(siguiente.position);
-      const cerca = Math.max(0, Math.min(1, 1 - d / Math.max(1, tramo)));
+      const acercarse = Math.max(0, Math.min(1, 1 - d / Math.max(1, tramo)));
+      const cerca = acercarse * centrado;
       // Suavizado: sin esto, entrar y salir del borde hace parpadear el aro.
       this.encendido += (cerca - this.encendido) * Math.min(1, dt * 2);
       const e = this.encendido;
