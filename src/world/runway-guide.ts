@@ -38,16 +38,31 @@ import type { Scenario } from "./scenarios";
 export type GroundSampler = (x: number, z: number) => number;
 
 /**
- * Margen mínimo entre un aro y el terreno que tiene debajo, en metros.
+ * Margen entre el **borde de abajo** del aro y el terreno, en metros.
  *
- * Existe porque la primera versión colocaba los aros sobre una senda recta
- * de cuatro grados sin mirar el relieve, y en el valle algunos quedaban
- * **dentro de una loma**: el juego dibujaba una guía que llevaba a chocar.
- * Ahora la senda sube por encima del terreno cuando hace falta, que es
- * además lo que hace una aproximación de verdad — la trayectoria tiene que
- * salvar los obstáculos.
+ * Existe porque la primera versión colocaba los aros sobre una senda recta sin
+ * mirar el relieve, y en el valle algunos quedaban **dentro de una loma**: el
+ * juego dibujaba una guía que llevaba a chocar.
+ *
+ * **Y estaba en cincuenta y cinco metros medidos al centro, más el radio.**
+ * Eso son ochenta o ciento diez metros de altura obligatoria, y como la senda
+ * de verdad baja a nueve metros en el último aro, la condición se disparaba en
+ * la mitad de los aros **incluso en terreno llano**. La senda dejaba de ser
+ * una recta y pasaba a ser un palo de hockey: cuatro grados hasta la mitad y
+ * luego una plataforma a ochenta metros. Medido en el Chaco, que es una mesa:
+ * cuatro de los siete aros levantados. En Tenerife Norte la fila iba 338 →
+ * 175 → **255** → 91 → 58 → **80** → 75; una montaña rusa.
+ *
+ * Peor todavía: quien volaba la senda buena **fallaba los últimos aros**, y
+ * quien seguía los aros tenía que subir antes de tocar. De ahí «¿me pide
+ * subir? ¿que tengo que ir por encima del aro?», que era exactamente lo que
+ * el juego estaba pidiendo.
+ *
+ * Ahora son seis metros y se miden **al borde de abajo del toro**, no al
+ * centro: en llano no levanta ningún aro y en un cerro sigue subiendo lo justo
+ * para pasarlo.
  */
-const RING_TERRAIN_CLEARANCE = 55;
+const RING_TERRAIN_CLEARANCE = 6;
 
 const OCRE = 0xdd923f;
 
@@ -95,18 +110,42 @@ const FARO_ENTERO = 1800;
  * pone blanco y lo hace un cuarenta y cinco por ciento más grande.
  *
  * La celebración tiene que verse **desde fuera**, no desde dentro. Así que
- * cada aro se apaga según te lo comes: entero a tres radios y medio, nada a
- * uno. Lo que queda es lo que hay que enseñar — el aro se enciende, lo pasás y
- * ya no está— y el sonido, que ese sí llega igual.
+ * cada aro se apaga según su plano se te echa encima: entero a algo más de un
+ * radio y medio de su plano, nada justo en él. Lo que queda es lo que hay que
+ * enseñar — el aro se enciende, lo pasás y ya no está.
  */
-const AROS_ENTERO = 3.5;
-const AROS_APAGADO = 1;
+const AL_PLANO = 1.6;
 
-/** Cuántos aros dibujan la senda y desde qué distancia arrancan. */
+/** Cuántos aros dibujan la senda y entre qué distancias del umbral. */
 const RING_COUNT = 7;
 const FIRST_RING_DISTANCE = 3200;
-/** Pendiente de la senda. Cuatro grados: cómoda y perdona el error. */
-const GLIDE_SLOPE = (4 * Math.PI) / 180;
+
+/**
+ * Y dónde se acaban, m del umbral.
+ *
+ * **El último aro estaba a ciento cuarenta metros y era imposible.** Sobre
+ * cualquier senda de verdad su centro cae a diez metros del suelo, y un toro
+ * de veintiocho de radio a diez metros de altura está enterrado hasta la
+ * mitad. El código lo levantaba para desenterrarlo y lo dejaba a setenta y
+ * cinco metros: a ciento cuarenta del umbral, eso son veintiocho grados de
+ * pendiente. La senda pedía subir justo antes de tocar.
+ *
+ * Los últimos quinientos metros no necesitan aro: ahí ya están los dos postes
+ * del umbral, las luces de aproximación y la propia pista, que a esa distancia
+ * llena media pantalla.
+ */
+const LAST_RING_DISTANCE = 500;
+
+/**
+ * Pendiente de la senda. **Tres grados, que es la de verdad y la del PAPI.**
+ *
+ * Estaba a cuatro «porque perdona el error», y con eso el juego se contradecía
+ * a sí mismo: siguiendo los aros, el PAPI —que es el instrumento real, y que
+ * está calibrado a tres— decía «venís alto» durante toda la aproximación. En
+ * un juego cuya regla es que gana lo real, tener dos sendas distintas en la
+ * misma pantalla es enseñar que una de las dos miente.
+ */
+export const GLIDE_SLOPE = (3 * Math.PI) / 180;
 
 /**
  * Guía de aterrizaje viva.
@@ -137,6 +176,21 @@ export class RunwayGuide {
   private readonly flash: number[] = [];
   /** El haz de la cabecera, para poder apagarlo de cerca. */
   private readonly faro: Mesh | null;
+  /**
+   * Dónde estaba el avión el fotograma anterior.
+   *
+   * Es lo que permite resolver el cruce **en el punto por donde se cruzó** y
+   * no con lo más cerca que se estuvo alguna vez. Ver `check`.
+   */
+  private previa: Vector3 | null = null;
+  /**
+   * La dirección de la senda, del aro lejano al umbral.
+   *
+   * Se calcula una vez: la usan el desvanecido y cualquiera que necesite saber
+   * si un aro está por delante o por detrás. Todos los aros comparten eje
+   * salvo por la altura, y para esto eso no cambia nada.
+   */
+  private readonly ejeSenda = new Vector3(0, 0, 1);
 
   constructor(
     scenario: Scenario,
@@ -192,6 +246,12 @@ export class RunwayGuide {
         ((a.userData.distancia as number) ?? 0),
     );
     this.flash = this.rings.map(() => 0);
+    // El eje de la senda: del aro más lejano al más cercano al umbral.
+    const lejano = this.rings[0];
+    const cercano = this.rings[this.rings.length - 1];
+    if (lejano && cercano && lejano !== cercano) {
+      this.ejeSenda.subVectors(cercano.position, lejano.position).normalize();
+    }
     this.highlight();
   }
 
@@ -211,22 +271,28 @@ export class RunwayGuide {
     const radio = (aro.geometry as TorusGeometry).parameters.radius;
 
     /*
-     * **Se mira el plano del aro, no la cercanía a su centro.**
+     * **Se resuelve en el punto exacto por donde se cruzó el plano.**
      *
      * Antes se daba por cruzado si se pasaba a menos de radio × 1,15 del
      * centro, y si no, no pasaba nada de nada: pasar por encima, por debajo o
      * por fuera no producía ninguna reacción. «Algunos aros los pasé por
      * encima sin que me dijera nada.»
      *
-     * Y había algo peor que el silencio: **el índice no avanzaba**. Un aro
-     * fallado se quedaba como el siguiente para siempre, así que la senda
-     * entera dejaba de funcionar a partir del primer error. El mismo fallo
-     * que ya tenía el arranque en final, en otro sitio.
+     * Se arregló mirando el plano del aro… y resolviendo con **lo más cerca
+     * que se llegó a estar en todo el tramo**, que parecía generoso y era otra
+     * cosa: la distancia se medía a la **recta infinita** del eje, así que
+     * bastaba estar alineado un solo fotograma en cualquier punto del tramo
+     * —normalmente el primero, nada más cruzar el aro anterior— para que el
+     * siguiente quedara resuelto como cruzado pasara por donde pasara después.
+     * Y como los aros son colineales, cruzar uno bien te dejaba alineado para
+     * el siguiente: una cadena de regalos. Medido: pasando **ciento dieciocho
+     * metros por encima** de un aro de cincuenta y seis de radio, veredicto
+     * «cruzado», destello blanco y notas que suben. Eso es, literalmente, «me
+     * puedo pasar por arriba y por abajo los aros sin problemas».
      *
-     * Ahora se mira si se ha pasado su plano —el eje va de este aro al
-     * siguiente, o al anterior si es el último— y se resuelve con **lo más
-     * cerca que se llegó a estar**, que es la pregunta de verdad: no importa
-     * dónde estabas al cruzar la raya, importa si pasaste por dentro.
+     * Ahora se guarda dónde estaba el avión el fotograma anterior y, cuando se
+     * cruza el plano, se interpola el punto de cruce y se mira si **ese** punto
+     * cae dentro del aro. Que es la pregunta de verdad, y la única.
      */
     const vecino = this.rings[this.next + 1] ?? this.rings[this.next - 1];
     if (!vecino) return null;
@@ -238,14 +304,24 @@ export class RunwayGuide {
 
     const relativo = new Vector3().subVectors(position, aro.position);
     const alLargo = relativo.dot(eje);
-    // Lo perpendicular: lo que decide si se pasó por dentro del aro.
-    const dentro = relativo.clone().addScaledVector(eje, -alLargo).length();
-    this.masCerca = Math.min(this.masCerca, dentro);
+    // Dónde estaba el fotograma anterior respecto del mismo plano.
+    const desde = this.previa ? this.previa.clone() : position.clone();
+    const antes = new Vector3().subVectors(desde, aro.position).dot(eje);
+    this.previa = position.clone();
 
     // Todavía por delante del plano del aro: no hay veredicto.
     if (alLargo < 0) return null;
 
-    const cruzado = this.masCerca <= radio;
+    /*
+     * El punto de cruce, interpolado entre los dos fotogramas. Si aparecemos
+     * ya pasados —el primer fotograma tras un reinicio— se usa la posición de
+     * ahora, que es lo único que hay.
+     */
+    const t = antes < 0 ? antes / (antes - alLargo) : 1;
+    const cruce = desde.clone().lerp(position, t);
+    const rel = new Vector3().subVectors(cruce, aro.position);
+    const fuera = rel.addScaledVector(eje, -rel.dot(eje)).length();
+    const cruzado = fuera <= radio;
     /*
      * **Fallarlo también destella, y en rojo.**
      *
@@ -259,10 +335,26 @@ export class RunwayGuide {
      * que se le escapó. El destello dura lo mismo y el color es lo único que
      * cambia — que es exactamente la diferencia que hay que aprender.
      */
-    this.flash[this.next] = 1;
-    this.fallado[this.next] = !cruzado;
+    /*
+     * **Y el destello se pone en el aro que se está mirando, no en el que se
+     * acaba de cruzar.**
+     *
+     * Porque el que se acaba de cruzar no se ve. Si se pasó por dentro, la
+     * cámara está literalmente dentro del toro y el aro se ha desvanecido; si
+     * se pasó por fuera, al fotograma siguiente queda ochenta grados fuera del
+     * encuadre, a la espalda. Se medió: no hay **ni un solo fotograma** en el
+     * que el destello del aro cruzado sea visible. Se estaba celebrando y
+     * regañando a puerta cerrada, y lo único que llegaba era el sonido.
+     *
+     * El veredicto se pinta entonces donde están los ojos: el aro siguiente,
+     * el que ya llena la vista. Blanco que crece si el anterior entró; rojo
+     * que parpadea si se escapó. Y cuando no hay siguiente —el último de la
+     * serie— se queda en el suyo, que para entonces ya está por delante.
+     */
+    const aviso = this.next + 1 < this.rings.length ? this.next + 1 : this.next;
+    this.flash[aviso] = 1;
+    this.fallado[aviso] = !cruzado;
     this.next++;
-    this.masCerca = Infinity;
     this.encendido = 0;
     this.highlight();
     return cruzado ? "cruzado" : "perdido";
@@ -309,7 +401,7 @@ export class RunwayGuide {
    */
   reset(avion?: Vector3): void {
     this.next = 0;
-    this.masCerca = Infinity;
+    this.previa = null;
     const ultimo = this.rings[this.rings.length - 1];
     if (avion && ultimo) {
       const delAvion = avion.distanceTo(ultimo.position);
@@ -343,8 +435,6 @@ export class RunwayGuide {
    * palabras a los cuatro años: hay que meter la bolita en el agujero.
    */
   private readonly mira: Mesh;
-  /** Lo más cerca del eje del aro que se ha llegado a estar, m. */
-  private masCerca = Infinity;
   /** Cuáles se perdieron, para que destellen en rojo. */
   private readonly fallado: boolean[] = [];
 
@@ -409,10 +499,36 @@ export class RunwayGuide {
       const rel = new Vector3().subVectors(avion, siguiente.position);
       const fuera = rel.clone().addScaledVector(eje, -rel.dot(eje)).length();
       // Uno en el centro, cero en el borde del aro y más allá.
-      const centrado = Math.max(0, 1 - fuera / radio);
+      /*
+       * **Y el centrado no es lineal: tiene un codo.**
+       *
+       * Era `1 − fuera/radio`, que a mitad de radio da 0,5. Multiplicado por
+       * el acercamiento, el aro no llegaba ni a la mitad de su encendido con
+       * un error de medio radio, que es una aproximación **buena** para
+       * alguien de cinco años con teclado. Con el cuadrado, medio radio vale
+       * 0,75: el que va casi bien ve casi todo el premio, y el que va fuera
+       * sigue sin ver nada.
+       */
+      const centrado = Math.max(0, 1 - (fuera / radio) ** 2);
 
+      /*
+       * **El acercamiento tiene que llegar a uno antes de que el aro empiece a
+       * desvanecerse**, o el verde de verdad no se ve nunca.
+       *
+       * Iba de cero a uno a lo largo de todo el tramo, así que al empezar el
+       * desvanecido —a algo más de un radio y medio del plano— valía 0,6 o 0,7.
+       * O sea: el aro alcanzaba su mejor color **con la opacidad ya cayendo**,
+       * y el verde `CERCA` no llegaba a verse en ningún fotograma. Medido en
+       * el vídeo de hoy: noventa segundos de aproximación sin que un solo aro
+       * pasara del ocre.
+       */
       const d = avion.distanceTo(siguiente.position);
-      const acercarse = Math.max(0, Math.min(1, 1 - d / Math.max(1, tramo)));
+      const desdeDondeSeApaga = radio * AL_PLANO;
+      const recorrido = Math.max(1, tramo - desdeDondeSeApaga);
+      const acercarse = Math.max(
+        0,
+        Math.min(1, (tramo - d) / recorrido),
+      );
       const cerca = acercarse * centrado;
 
       // Suavizado: sin esto, entrar y salir del borde hace parpadear el aro.
@@ -435,7 +551,10 @@ export class RunwayGuide {
          * color y el tamaño acompañan.
          */
         mat.opacity = Math.min(1, 0.75 + e * 0.25 + late);
-        mat.color.setHex(OCRE).lerp(new Color(CERCA), e * e);
+        // Con `e²` el camino de color iba muy por detrás del encendido: a
+        // mitad de camino, un cuarto de color. Lineal, lo que se ve es lo que
+        // se ha conseguido.
+        mat.color.setHex(OCRE).lerp(new Color(CERCA), e);
         siguiente.scale.setScalar(1 + e * 0.22 + late);
       }
     }
@@ -506,17 +625,32 @@ export class RunwayGuide {
       this.faro.visible = f > 0.02;
     }
 
-    for (const aro of this.rings) {
+    /*
+     * **Y el desvanecido se mide a lo largo de la senda, no en línea recta.**
+     *
+     * Con la distancia en línea recta, un aro que estás fallando por cien
+     * metros por encima se apagaba a la mitad **antes de llegar a su plano**:
+     * o sea, justo el aro que hay que ver fallar era el que se borraba. Lo que
+     * tapa la pantalla no es estar cerca del aro, es estar **en su plano**, que
+     * es cuando el toro rodea la cámara. Así que se mide eso.
+     *
+     * Y lo que está destellando no se toca: el destello es el veredicto, y un
+     * veredicto medio borrado no es un veredicto.
+     */
+    for (let i = 0; i < this.rings.length; i++) {
+      const aro = this.rings[i]!;
+      const mat = aro.material as MeshBasicMaterial;
+      if ((this.flash[i] ?? 0) > 0) {
+        aro.visible = true;
+        continue;
+      }
       const radio = (aro.geometry as TorusGeometry).parameters.radius;
-      const d = avion.distanceTo(aro.position);
-      const f = Math.max(
-        0,
-        Math.min(
-          1,
-          (d - radio * AROS_APAGADO) / (radio * (AROS_ENTERO - AROS_APAGADO)),
+      const alLargo = Math.abs(
+        this.ejeSenda.dot(
+          new Vector3().subVectors(avion, aro.position),
         ),
       );
-      const mat = aro.material as MeshBasicMaterial;
+      const f = Math.max(0, Math.min(1, alLargo / (radio * AL_PLANO)));
       mat.opacity *= f;
       aro.visible = mat.opacity > 0.02;
     }
@@ -660,9 +794,23 @@ function approachRings(
     // Reparto cuadrático: más juntos cerca del umbral, que es donde hace
     // falta precisión, y más separados lejos.
     const fraction = ((i + 1) / RING_COUNT) ** 1.6;
-    const distance = FIRST_RING_DISTANCE * fraction;
+    const distance =
+      LAST_RING_DISTANCE + (FIRST_RING_DISTANCE - LAST_RING_DISTANCE) * fraction;
     const height = distance * Math.tan(GLIDE_SLOPE);
-    const radius = 26 + distance * 0.016;
+    /*
+     * El radio, y por qué encoge.
+     *
+     * Un aro lejano tiene que ser grande para verse; uno cercano tiene que
+     * caber **entre la senda y el suelo**, porque a seiscientos metros del
+     * umbral la senda va a treinta y dos metros de altura y un aro de treinta
+     * y seis de radio no cabe sin enterrarse o sin levantar la senda.
+     *
+     * Era `26 + 0,016·d`, calculado para una senda de cuatro grados que ya no
+     * existe. Con tres grados hay menos sitio abajo, así que la base baja a
+     * dieciocho: el aro más cercano queda con veintiocho de radio, que sigue
+     * siendo una puerta de cincuenta y seis metros de ancho.
+     */
+    const radius = 18 + distance * 0.016;
 
     const ring = new Mesh(
       // Gordos y bastante opacos: a dos kilómetros un aro fino no se ve, y
@@ -684,7 +832,9 @@ function approachRings(
     const ringX = x - ax * distance;
     const ringZ = z - az * distance;
     // La senda sube lo que haga falta para salvar el relieve. Sin esto los
-    // aros de las lomas quedaban enterrados y guiaban contra la montaña.
+    // aros de las lomas quedaban enterrados y guiaban contra la montaña. El
+    // margen va al borde de abajo del toro, así que hay que sumarle el radio
+    // para llevarlo al centro. Ver `RING_TERRAIN_CLEARANCE`.
     const floor = ground(ringX, ringZ) + RING_TERRAIN_CLEARANCE + radius;
     ring.position.set(ringX, Math.max(y + height, floor), ringZ);
     // El aro mira a lo largo del eje de la pista.
