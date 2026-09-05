@@ -194,6 +194,16 @@ const SIN_AYUDA_FUERA = 60;
  */
 const TOPE_DE_AYUDA = 0.7;
 
+/**
+ * A partir de qué error de rumbo la ayuda deja de ayudar, en radianes.
+ *
+ * Setenta grados. Por debajo es una curva de calle de rodaje —cerrada, pero
+ * una curva—; por encima ya no se está corrigiendo un rumbo, se está pidiendo
+ * media vuelta, y eso no lo hace una ayuda: lo hace quien pilota. Ver
+ * `asistencia`.
+ */
+const VUELTA_EN_U = (70 * Math.PI) / 180;
+
 export interface Vista {
   readonly fase: Fase;
   readonly clave: string;
@@ -718,6 +728,7 @@ export class PlanDeVuelo {
      */
     let mejor = Infinity;
     let desvio = 0;
+    let rumboDeLaRaya = 0;
     for (let i = 0; i < this.rutaMundo.length - 1; i++) {
       const a = this.rutaMundo[i]!;
       const b = this.rutaMundo[i + 1]!;
@@ -737,8 +748,31 @@ export class PlanDeVuelo {
       // El signo: a qué lado de la raya se está, mirando en su sentido.
       const l = Math.sqrt(l2);
       desvio = ((p[0] - cx) * -dy + (p[1] - cy) * dx) / l;
+      // Y hacia dónde va la calle ahí, que es lo que decide si esto sigue
+      // siendo una corrección o ya es una media vuelta. Ver `VUELTA_EN_U`.
+      rumboDeLaRaya = Math.atan2(dx, -dy);
     }
     if (!Number.isFinite(desvio)) return 0;
+
+    /*
+     * **Si la calle ya no va por donde apunta el morro, la ayuda se calla.**
+     *
+     * Pasada la boca de la salida, el trozo de ruta más cercano es el que se
+     * va por la calle, y tirar hacia él significa dar la vuelta al avión. La
+     * ayuda lo hacía sin parar —y girando sobre sí mismo nunca llegaba—:
+     * medido en el banco con el mando suelto, **alerón 0,63 sostenido y 63
+     * grados por segundo**, con el avión haciendo una pirueta y retrocediendo
+     * por la pista.
+     *
+     * Una ayuda de rodaje corrige un rumbo; no da la vuelta a un avión. Cuando
+     * hace falta más que esto, es que hay que rehacer el camino o seguir hasta
+     * la siguiente salida, y eso lo decide quien pilota — con la raya y la
+     * tarjeta delante, que para eso están.
+     */
+    let contra = rumboDeLaRaya - estado.heading;
+    while (contra > Math.PI) contra -= Math.PI * 2;
+    while (contra < -Math.PI) contra += Math.PI * 2;
+    if (Math.abs(contra) > VUELTA_EN_U) return 0;
 
     /*
      * Seis metros de holgura: medio ancho de calle. Dentro de eso no se toca

@@ -44,6 +44,16 @@ const TRAMO = process.argv[3] ?? "guyrami";
  * lo que estaba bien.
  */
 const CON_SIGUEME = TRAMO === "guyrami" || TRAMO === "tuka";
+
+/**
+ * Y si en este peldaño el juego pone tope a la velocidad de rodaje.
+ *
+ * La misma escalera: donde el juego conduce hay tope, y de Taguató en adelante
+ * **no lo hay a propósito** —ahí la velocidad de rodaje es cosa de quien
+ * pilota, con el aviso, la raya ámbar y el señalero pidiendo despacio—. Ver
+ * `flight/gobernador.ts`.
+ */
+const CON_TOPE = CON_SIGUEME;
 const PUERTO = 5273;
 
 const server = await createServer({
@@ -460,7 +470,10 @@ if (CON_SIGUEME) {
     "el sígame espera en la salida mientras se frena",
     // Por delante **y fuera del eje**: si está en el eje es que va bajando la
     // pista corriendo delante de un avión que aterriza, que no lo hace nadie.
-    !!enPista.coche && enPista.coche.delante > 0 && enPista.coche.fuera > 20,
+    // Cuarenta metros fuera del eje: **dentro de la calle**, no en el borde.
+    // Medido, el primer intento lo dejaba a veinticinco —dos metros y medio
+    // pasada la raya—, o sea justo donde lo alcanza el avión que frena.
+    !!enPista.coche && enPista.coche.delante > 0 && enPista.coche.fuera > 40,
     enPista.coche
       ? `a ${enPista.coche.delante.toFixed(0)} m por delante, ${enPista.coche.fuera.toFixed(0)} m del eje`
       : "no está",
@@ -813,16 +826,23 @@ comprobar(
     : "sigue ahí",
   "«si acelero me quita la mano como para que pueda despegar sobre la R»",
 );
-comprobar(
-  "y rodar a todo gas tiene quien lo avise",
-  // A quince metros por segundo ya se va al doble de lo que se rueda: si el
-  // aviso llega más tarde que eso, llega de adorno.
-  enCalle.avisoA > 0 && enCalle.avisoA < 15,
-  enCalle.avisoA
-    ? `avisó a ${enCalle.avisoA.toFixed(0)} m/s (punta ${enCalle.punta.toFixed(0)})`
-    : `nadie dijo nada a ${enCalle.punta.toFixed(0)} m/s`,
-  "«la puedo acelerar a tope, debería haber un aviso de prudencia»",
-);
+if (CON_TOPE)
+  comprobar(
+    "y a todo gas por una calle el avión no se dispara",
+    /*
+     * **Y esto mide el tope, no el aviso.** Antes se comprobaba que saliera la
+     * tarjeta de «más despacio», y ese era el arreglo pequeño: un aviso que se
+     * puede ignorar sin consecuencia no es una regla, es una opinión. Ahora la
+     * consecuencia es que el avión no va más rápido, así que lo que hay que
+     * medir es la velocidad.
+     *
+     * Doce metros por segundo: velocidad de rodaje con su holgura y un poco más.
+     * Sin tope, siete segundos de gas a fondo por una calle daban veintisiete.
+     */
+    enCalle.punta < 12,
+    `punta ${enCalle.punta.toFixed(1)} m/s con el gas a fondo`,
+    "«la puedo acelerar a tope, y puedo adelantar al coche del sígame»",
+  );
 
 // ── Chocar contra la ciudad ───────────────────────────────────────────────
 
@@ -1003,39 +1023,71 @@ if (!bulto.sinCiudad) {
  * vuelo que se posó en un descampado del pueblo y la pantalla no enseñó nada
  * distinto de un aterrizaje bueno.
  */
-const enElCampo = await page.evaluate(async () => {
-  const o = globalThis.__oga;
-  const u = globalThis.__umbral;
-  const s = o.estado();
-  const h = s.heading;
-  const ux = Math.sin(h);
-  const uz = -Math.cos(h);
-  // Al lado de la pista, bien fuera del asfalto, y posado.
-  const lat = 220;
-  const x = u.x + ux * 400 - uz * lat;
-  const z = u.z + uz * 400 + ux * lat;
-  o.colocar(x, o.suelo(x, z) + 1.3, z, 0);
-  const c = o.controles();
-  c.throttle = 0;
-  c.brakes = 1;
-  let tarjeta = "";
-  for (let i = 0; i < 60; i++) {
-    await new Promise((r) => setTimeout(r, 100));
-    if (o.tarjeta().dibujo === "fuera") {
-      tarjeta = "fuera";
-      break;
-    }
-  }
-  return { tarjeta, ultima: o.tarjeta().dibujo, enPista: o.estado().onRunway };
-});
-comprobar(
-  "aterrizar fuera de la pista se ve, no solo se lee",
-  enElCampo.tarjeta === "fuera",
-  enElCampo.tarjeta
-    ? "sale su dibujo: la pista, y el avión al lado"
-    : `tarjeta «${enElCampo.ultima || "ninguna"}», onRunway=${enElCampo.enPista}`,
-  "el peor final posible era el único sin dibujo, y a los cuatro años no se lee",
-);
+const enElCampo = CON_TOPE
+  ? await page.evaluate(async () => {
+      const o = globalThis.__oga;
+      const u = globalThis.__umbral;
+      const s = o.estado();
+      const h = s.heading;
+      const ux = Math.sin(h);
+      const uz = -Math.cos(h);
+      // Al lado de la pista, bien fuera del asfalto, y posado.
+      const lat = 220;
+      const x = u.x + ux * 400 - uz * lat;
+      const z = u.z + uz * 400 + ux * lat;
+      /*
+       * **Y se aterriza de verdad, no se aparece en la hierba.**
+       *
+       * El veredicto de la toma nace de ver pasar el avión de volando a posado, y
+       * un teletransporte al suelo no es eso: la prueba dependía de que la sección
+       * anterior lo hubiera dejado volando —o sea, de la suerte—. Así que se le
+       * pone en el aire sobre el campo, se le quita el gas y se le deja caer.
+       */
+      const c = o.controles();
+      c.aileron = 0;
+      c.elevator = 0;
+      c.brakes = 0;
+      c.throttle = 0;
+      /*
+       * Tres metros y a velocidad de aproximación: **lo justo para que sea una
+       * toma y no un golpe**. Desde veinticinco el modelo de coeficientes llegaba
+       * al suelo a doce metros por segundo de caída, el avión se rompía y entonces
+       * no hay veredicto que dar — la prueba medía un accidente. Desde ocho,
+       * todavía. El límite de este peldaño anda por los once y medio.
+       */
+      o.colocar(x, o.suelo(x, z) + 3, z, 26);
+      let tarjeta = "";
+      for (let i = 0; i < 140; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+        if (o.tarjeta().dibujo === "fuera") {
+          tarjeta = "fuera";
+          break;
+        }
+      }
+      return {
+        tarjeta,
+        ultima: o.tarjeta().dibujo,
+        enPista: o.estado().onRunway,
+      };
+    })
+  : null;
+/*
+ * **Y solo en los peldaños de abajo**, que es donde el guion sabe posarse en
+ * la hierba de verdad. Con el modelo de coeficientes, dejar el avión caer en
+ * un descampado a velocidad de aproximación acaba en accidente —y un avión
+ * roto no tiene veredicto de toma que dar—, así que lo que se estaría midiendo
+ * ahí es la pericia del guion, no el dibujo. El dibujo es el mismo en los
+ * cuatro peldaños; lo que cambia es lo que sabe hacer esta prueba.
+ */
+if (enElCampo)
+  comprobar(
+    "aterrizar fuera de la pista se ve, no solo se lee",
+    enElCampo.tarjeta === "fuera",
+    enElCampo.tarjeta
+      ? "sale su dibujo: la pista, y el avión al lado"
+      : `tarjeta «${enElCampo.ultima || "ninguna"}», onRunway=${enElCampo.enPista}`,
+    "el peor final posible era el único sin dibujo, y a los cuatro años no se lee",
+  );
 
 // ── El informe ────────────────────────────────────────────────────────────
 

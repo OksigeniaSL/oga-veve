@@ -185,6 +185,8 @@ import { techoSobreLaPista } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
+import { topeDeRodaje } from "./flight/gobernador";
+import type { Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import { arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
@@ -304,6 +306,59 @@ export interface GameOptions {
  * dos umbrales parecidos para lo mismo son dos verdades distintas.
  */
 const RODAJE_DE_VERDAD = 12;
+
+/**
+ * La velocidad de rodaje, m/s, para cuando el plan no sugiere ninguna.
+ *
+ * Nueve. Es el mismo número que usan la banda de velocidad y el plan, y por
+ * eso está escrito con su nombre y no suelto: es **el** número.
+ */
+const RODAJE = 9;
+
+/**
+ * Cuánto se mete el coche del «sígame» en la calle de salida al esperar, m.
+ *
+ * **Cuarenta, y son cuarenta por una razón vista jugando.** El primer intento
+ * lo plantaba en el primer punto de la ruta que ya no pisaba asfalto de pista,
+ * y eso resultó ser el propio borde: medido, veinticinco metros del eje de una
+ * pista de cuarenta y cinco de ancho — o sea, dos metros y medio pasada la
+ * raya. Ahí no espera nadie: ahí lo alcanza el avión que está frenando y le
+ * pasa por encima, que es exactamente lo que se grabó.
+ *
+ * Un sígame de verdad espera **dentro** de la calle, donde se le ve por delante
+ * y a la derecha y no estorba a quien todavía viene por la pista.
+ */
+const BIEN_FUERA_DE_LA_PISTA = 40;
+
+/**
+ * A partir de cuánta ayuda de rodaje se considera que el juego conduce.
+ *
+ * Medio. Por debajo —Taguató y Taguató Ruvicha— la ayuda solo evita que te
+ * salgas, y ahí la velocidad es cosa tuya. Sale de la misma escalera de
+ * `tiers.ts` para no añadir otro mando que se pueda desafinar por su cuenta.
+ */
+const CONDUCE_EL_JUEGO = 0.5;
+
+/**
+ * Las fases en las que se rueda, que son en las que hay tope de velocidad.
+ *
+ * La ida al punto de espera y la vuelta a casa, que son justo los dos sitios
+ * donde se dijo el problema —«puedo acelerar a tope en rodadura» y «puedo
+ * adelantar al coche del sígame»—. No están ni el despegue ni la carrera de
+ * aterrizaje: ahí un avión va rápido en el suelo porque tiene que ir rápido.
+ *
+ * Y no basta con la fase: hace falta además que la torre no haya dado el
+ * verde. Ver `limitarElRodaje`.
+ */
+const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
+  "estacionado",
+  "arrancando",
+  "rodando",
+  "esperando",
+  "abandonando",
+  "a-plataforma",
+  "en-puesto",
+]);
 
 export class Game {
   /** Qué se está enseñando hoy: de aquí sale qué guía se enciende. */
@@ -1411,8 +1466,8 @@ export class Game {
     for (const [x, z] of ruta) {
       const ejes = enEjesDePista(x, z, r.x, r.z, r.heading);
       if (
-        Math.abs(ejes.across) > r.width / 2 ||
-        Math.abs(ejes.along) > r.length / 2
+        Math.abs(ejes.across) > r.width / 2 + BIEN_FUERA_DE_LA_PISTA ||
+        Math.abs(ejes.along) > r.length / 2 + BIEN_FUERA_DE_LA_PISTA
       )
         return { x, z };
     }
@@ -2426,6 +2481,7 @@ export class Game {
     // mando del jugador borraba la asistencia y los cuatro peldaños daban
     // exactamente el mismo número.
     this.pilotoDePruebas?.(this.input.controls);
+    this.limitarElRodaje();
     this.asistirRodaje(dt);
     if (this.flight.state.crashed) {
       // Vuelve solo a la pista. La alternativa —dejar el avión roto hasta
@@ -3015,6 +3071,81 @@ export class Game {
    *   es una cosa que un niño va a hacer— se sentiría como pelear contra el
    *   juego, y eso es exactamente lo contrario de lo que se quiere enseñar.
    */
+  /**
+   * El tope de velocidad en tierra, donde el juego conduce.
+   *
+   * «No hay control de velocidad en pista, mil veces dicho.» Y era verdad: en
+   * el suelo el gas no tenía techo, así que se podía rodar a treinta metros por
+   * segundo, **adelantar al coche del sígame y pasarle por encima**, y llegar a
+   * la salida tan rápido que no había forma de tomarla.
+   *
+   * Había un aviso —«más despacio», con dibujo y voz— y no bastaba: un aviso
+   * que se puede ignorar sin consecuencia no es una regla, es una opinión.
+   *
+   * ## Dónde actúa y dónde no
+   *
+   * Donde el juego conduce, que es la escalera de siempre: Guyrami y Tukã
+   * llevan tope, y de Taguató para arriba la velocidad de rodaje es cosa tuya
+   * —ahí quedan el aviso, la raya ámbar y el señalero pidiendo despacio, que es
+   * lo que hay en un aeropuerto de verdad—.
+   *
+   * Y **solo rodando**: la carrera de despegue y la de aterrizaje no se tocan,
+   * que ahí un avión va rápido en el suelo porque tiene que ir rápido. Un tope
+   * ahí sería impedir volar.
+   *
+   * La cuenta vive aparte, en `flight/gobernador.ts`, que es donde se puede
+   * comprobar sin volar.
+   */
+  private limitarElRodaje(): void {
+    if (this.tier.assists.taxiAssist < CONDUCE_EL_JUEGO) return;
+    const s = this.flight.state;
+    /*
+     * **En la pista no se limita nunca; en las calles, siempre.**
+     *
+     * El primer intento se apoyaba en la fase del plan de vuelo, y la fase es
+     * mal portero: la carrera de despegue empieza mientras el juego todavía
+     * dice «autorizado» o «alineando», así que el tope cerraba el gas y el
+     * avión salía volando a catorce metros por segundo tras cuatrocientos
+     * cincuenta de pista —medido; sin tope son treinta y tres tras doscientos
+     * cuarenta y ocho—.
+     *
+     * `onRunway` dice lo único que hace falta saber y no se equivoca: en una
+     * pista la velocidad **es** el asunto —se despega, se aterriza, se hace un
+     * retroceso— y en una calle de rodaje nunca lo es.
+     */
+    if (!s.onGround || s.onRunway) return;
+    /*
+     * **Y el portero es la luz de la torre**, que costó tres intentos.
+     *
+     * Los dos primeros se apoyaron en la fase del plan y los dos rompieron el
+     * despegue, cada uno en un aeródromo distinto: la carrera empieza **antes
+     * de pisar la pista** —se sale del punto de espera con el gas ya puesto— y
+     * en qué fase se está exactamente al hacerlo depende de dónde caiga el
+     * punto de espera. Medido: despegaba a catorce metros por segundo tras
+     * cuatrocientos sesenta en Tenerife, y en Silvio Pettirossi directamente no
+     * despegaba.
+     *
+     * La luz verde no depende de la geometría de ningún aeródromo: **mientras
+     * no te han autorizado, se rueda; autorizado, mandás vos**. Y se apaga sola
+     * al despegar, así que la vuelta a casa vuelve a tener tope — que es donde
+     * está el coche del sígame al que se le podía pasar por encima.
+     */
+    const vista = this.vistaActual;
+    if (!vista || vista.luzVerde || !RODANDO_DE_VERDAD.has(vista.fase)) return;
+
+    const tope = topeDeRodaje({
+      velocidad: s.airspeed,
+      // La velocidad de rodaje de **este sitio**, que el plan ya calcula: en
+      // una curva cerrada es menor que en una recta larga.
+      rodaje: this.vistaActual?.velocidadSugerida || RODAJE,
+    });
+    const c = this.input.controls;
+    // Límites, no mandos: se coge lo más restrictivo de lo que pide quien
+    // juega y lo que deja el tope, así esto nunca acelera ni suelta el freno.
+    c.throttle = Math.min(c.throttle, tope.gas);
+    c.brakes = Math.max(c.brakes, tope.freno);
+  }
+
   private asistirRodaje(dt: number): void {
     void dt;
     const fuerza = this.tier.assists.taxiAssist;
