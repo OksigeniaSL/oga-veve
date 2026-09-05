@@ -143,6 +143,19 @@ export interface FlightModel {
    * demás. Esto es lo único que va en sentido contrario, y por eso se ve.
    */
   setOnRunway(enPista: boolean): void;
+  /**
+   * Rompe el avión. Lo llama el juego cuando se ha metido en un edificio.
+   *
+   * Va aquí y por el mismo motivo que `setOnRunway`: `state` es de solo
+   * lectura a propósito —lo produce el modelo y lo consume todo lo demás—, y
+   * chocar contra un bulto es de las poquísimas cosas que van en sentido
+   * contrario. El modelo no sabe nada de la ciudad y no tiene por qué: el
+   * mundo lo construye el juego. Ver `world/obstaculos.ts`.
+   *
+   * El modelo sencillo puede ignorarlo, y lo ignora: en ese peldaño no se
+   * puede perder, y quien lo llama ya lo sabe.
+   */
+  romper(): void;
   /** Nombre legible de la implementación, para la pantalla de créditos. */
   readonly implementationName: string;
   reset(initial: InitialConditions): void;

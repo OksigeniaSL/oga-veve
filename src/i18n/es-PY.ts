@@ -139,6 +139,7 @@ export const ES_PY = {
   'vuelo.terrenoSube': '¡Subí!',
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   'vuelo.frustrada': '¡Bien hecho! Te fuiste al aire. Probá de nuevo',
+  'vuelo.bulto': 'Por ahí no se pasa: hay un edificio',
   'vuelo.aterrizado': 'Frená',
   'vuelo.abandonando': 'Salí de la pista, que viene otro',
   'vuelo.pistaLibre': '¡Pista libre! Bien hecho',
