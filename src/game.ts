@@ -2646,7 +2646,18 @@ export class Game {
 
     const suelo =
       s.position.y - this.terrain.sampleHeight(s.position.x, s.position.z);
-    const sugerido = this.plan.asistencia(s, suelo);
+    /*
+     * **Cuánto anticipa la ayuda sale del peldaño, y no es lo mismo que su
+     * fuerza.**
+     *
+     * `taxiAssist` dice cuánto se aplica; esto dice de qué clase es. Guyrami
+     * conduce —a los cuatro años nadie hila dos kilómetros de calle de
+     * rodaje—, Tukã ayuda un poco en las curvas, y de Taguató para arriba la
+     * ayuda solo evita que te salgas: la curva es tuya. Sale de la misma
+     * escalera para no añadir otro mando que se pueda desafinar por su cuenta.
+     */
+    const anticipa = Math.max(0, (fuerza - 0.5) * 2);
+    const sugerido = this.plan.asistencia(s, suelo, anticipa);
     if (sugerido === 0) return;
 
     const c = this.input.controls;
