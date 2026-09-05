@@ -1089,6 +1089,132 @@ if (enElCampo)
     "el peor final posible era el único sin dibujo, y a los cuatro años no se lee",
   );
 
+// ── Y que la ruta de vuelta se pueda seguir de verdad ────────────────────
+
+/*
+ * **Rodando, no teletransportando.**
+ *
+ * El banco recorría la ruta de vuelta poniendo el avión en cada punto, que
+ * comprueba que la ruta existe pero no que se pueda seguir. Y lo que se dijo
+ * jugando es justo lo otro: «se pasa un poco de frenada y tengo que girar
+ * antes si quiero entrar bien» en la salida A4.
+ *
+ * Es además la promesa entera del peldaño de los pequeños (#145): a los cuatro
+ * años nadie hila dos kilómetros de calle de rodaje, así que si soltando los
+ * mandos el avión no se queda en la raya, el peldaño no cumple lo que promete.
+ *
+ * Con el gas a fondo a propósito, que es lo que hace quien tiene cuatro años:
+ * el tope de rodaje es quien decide la velocidad. Ver `flight/gobernador.ts`.
+ */
+if (CON_TOPE) {
+  const deVuelta = await page.evaluate(async () => {
+    const o = globalThis.__oga;
+    const u = globalThis.__umbral;
+    const s = o.estado();
+    const h = s.heading;
+    const ux = Math.sin(h);
+    const uz = -Math.cos(h);
+    /*
+     * Posado en el eje y **ya a velocidad de rodaje**, que es lo que se está
+     * probando: el camino a casa. A nueve metros por segundo la fase sigue
+     * siendo la carrera de aterrizaje —que no lleva tope a propósito— y con el
+     * gas a fondo el avión volvía a despegar: treinta y siete metros por
+     * segundo y sesenta y tres metros fuera de la raya. No era un fallo del
+     * rodaje: era una prueba que empezaba antes de que hubiera rodaje.
+     */
+    o.colocar(
+      u.x + ux * 900,
+      o.suelo(u.x + ux * 900, u.z + uz * 900) + 1.3,
+      u.z + uz * 900,
+      6,
+    );
+    await new Promise((r) => setTimeout(r, 2500));
+
+    const c = o.controles();
+    // **Sin tocar nada.** El alerón a cero es la prueba: si el avión llega, lo
+    // lleva el juego; si no, la promesa del peldaño no se cumple.
+    c.aileron = 0;
+    c.elevator = 0;
+    c.brakes = 0;
+
+    /** Lo lejos que se está de la raya, en metros. */
+    const aLaRaya = (x, z, ruta) => {
+      let mejor = Infinity;
+      for (let i = 0; i < ruta.length - 1; i++) {
+        const [ax, ay] = ruta[i];
+        const [bx, by] = ruta[i + 1];
+        const dx = bx - ax;
+        const dy = by - ay;
+        const l2 = dx * dx + dy * dy;
+        if (l2 < 1) continue;
+        const t = Math.max(
+          0,
+          Math.min(1, ((x - ax) * dx + (z - ay) * dy) / l2),
+        );
+        mejor = Math.min(
+          mejor,
+          Math.hypot(x - (ax + dx * t), z - (ay + dy * t)),
+        );
+      }
+      return mejor;
+    };
+
+    let lejos = 0;
+    let punta = 0;
+    /*
+     * **El avance se mide en metros, no en puntos de ruta.** Contar los puntos
+     * que quedan no vale: la ruta se rehace sola según se avanza, así que su
+     * longitud no baja de forma ordenada y salía cero aunque el avión hubiera
+     * recorrido medio aeropuerto.
+     */
+    const desde = {
+      x: o.estado().position.x,
+      z: o.estado().position.z,
+    };
+    let avance = 0;
+    for (let i = 0; i < 600; i++) {
+      /*
+       * La velocidad la sostiene la prueba, y no el gas a fondo, **porque en
+       * la pista no hay tope a propósito**: ahí un avión va rápido porque
+       * tiene que ir rápido, así que con el gas clavado el avión volvía a
+       * despegar y lo que se medía era un despegue. Lo que se prueba aquí es
+       * la dirección; del tope se ocupa su propia comprobación.
+       */
+      const v = o.estado().airspeed;
+      c.throttle = v < 9 ? 0.4 : 0;
+      await new Promise((r) => setTimeout(r, 100));
+      const st = o.estado();
+      punta = Math.max(punta, st.airspeed);
+      const ruta = o.ruta();
+      if (ruta.length < 2) break;
+      lejos = Math.max(lejos, aLaRaya(st.position.x, st.position.z, ruta));
+      avance = Math.hypot(st.position.x - desde.x, st.position.z - desde.z);
+      if (lejos > 60) break;
+    }
+    c.throttle = 0;
+    c.brakes = 1;
+    return { lejos, punta, avance, fase: o.fase() };
+  });
+  comprobar(
+    "soltando los mandos, el avión se queda en la raya",
+    /*
+     * Veinte metros: el ancho de una calle de rodaje con su margen. Más que
+     * eso ya no es ir por la raya, es ir por el campo de al lado.
+     */
+    deVuelta.lejos < 20,
+    `se separó ${deVuelta.lejos.toFixed(0)} m de la raya como mucho, a ${deVuelta.punta.toFixed(1)} m/s de punta`,
+    "«se pasa un poco de frenada y tengo que girar antes si quiero entrar bien»",
+  );
+  comprobar(
+    "y avanza de verdad, no se queda dando vueltas",
+    // Doscientos metros: lo que se recorre en veinte segundos a paso de rodaje.
+    // Menos que eso es no haberse movido de la boca de la salida.
+    deVuelta.avance > 200,
+    `recorrió ${deVuelta.avance.toFixed(0)} m, fase «${deVuelta.fase}»`,
+    "la ayuda daba una pirueta en la boca de la salida y el avión no avanzaba",
+  );
+}
+
 // ── El informe ────────────────────────────────────────────────────────────
 
 console.log(`\n  ${ESCENARIO} · ${TRAMO}\n`);
