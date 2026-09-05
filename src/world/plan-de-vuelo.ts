@@ -549,6 +549,56 @@ export class PlanDeVuelo {
   }
 
   /**
+   * Un punto de la ruta a `adelanto` metros por delante de donde estoy.
+   *
+   * «Por delante» se mide **sobre la propia ruta**, no en línea recta: en una
+   * curva cerrada el punto en línea recta cae por dentro del codo, y la ayuda
+   * cortaría la curva en vez de tomarla.
+   */
+  private puntoDeLaRutaTrasMi(p: Punto, adelanto: number): Punto | null {
+    if (this.rutaMundo.length < 2) return null;
+    // Dónde estoy sobre la ruta, en metros recorridos.
+    let mejor = Infinity;
+    let recorrido = 0;
+    let acumulado = 0;
+    for (let i = 0; i < this.rutaMundo.length - 1; i++) {
+      const a = this.rutaMundo[i]!;
+      const b = this.rutaMundo[i + 1]!;
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const l2 = dx * dx + dy * dy;
+      const largo = Math.sqrt(l2);
+      if (l2 > 1) {
+        const t = Math.max(
+          0,
+          Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
+        );
+        const d = Math.hypot(a[0] + dx * t - p[0], a[1] + dy * t - p[1]);
+        if (d < mejor) {
+          mejor = d;
+          recorrido = acumulado + largo * t;
+        }
+      }
+      acumulado += largo;
+    }
+
+    // Y el punto que queda a `adelanto` metros más allá.
+    const meta = recorrido + adelanto;
+    let anda = 0;
+    for (let i = 0; i < this.rutaMundo.length - 1; i++) {
+      const a = this.rutaMundo[i]!;
+      const b = this.rutaMundo[i + 1]!;
+      const largo = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (anda + largo >= meta) {
+        const t = largo > 0 ? (meta - anda) / largo : 0;
+        return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      }
+      anda += largo;
+    }
+    return this.rutaMundo[this.rutaMundo.length - 1] ?? null;
+  }
+
+  /**
    * ¿Toca repetir el aviso de que se ha salido de la raya?
    *
    * Con cuentagotas: cada seis segundos. Un aviso que se repite sin parar deja
@@ -583,7 +633,31 @@ export class PlanDeVuelo {
    * deprisa para estar rodando: en la carrera de despegue nadie debe empujar
    * el volante salvo quien pilota.
    */
-  asistencia(estado: FlightState, sobreElSuelo: number): number {
+  asistencia(
+    estado: FlightState,
+    sobreElSuelo: number,
+    /**
+     * Cuánto **anticipa** la ayuda, de 0 a 1. Lo dice el peldaño.
+     *
+     * Es la diferencia entre sujetar y conducir, y las dos cosas son correctas
+     * en sitios distintos. Con cero, la ayuda solo corrige la deriva: sobre la
+     * raya calla y en una curva giras tú. Con uno, además apunta a un punto de
+     * la ruta por delante, o sea **toma la curva**.
+     *
+     * Hizo falta separarlo porque las dos versiones estuvieron mal por
+     * separado. Apuntando siempre por delante, el juego giraba por ti en todos
+     * los peldaños: «ese giro del final no lo di yo, parece que hay una línea
+     * oculta que me imanta la aeronave». Y solo con la deriva, el banco de
+     * pruebas demostró lo contrario: **en Guyrami, rodando sin tocar nada, el
+     * avión no llega nunca al punto de espera** — se sale en la primera curva.
+     * Y ese peldaño es de cuatro a seis años y su promesa entera es llevarte:
+     * nadie de cuatro años va a hilar dos kilómetros de calle de rodaje.
+     *
+     * Así que no es una cosa ni la otra: es la escalera. Abajo se conduce,
+     * arriba solo se sujeta.
+     */
+    anticipa = 0,
+  ): number {
     if (this.rutaMundo.length < 2) return 0;
     if (sobreElSuelo > 4 || estado.airspeed > 18) return 0;
 
@@ -634,10 +708,13 @@ export class PlanDeVuelo {
      * *Smart Steering* del que salió la idea, que no toma curvas: evita que te
      * salgas.
      *
-     * Ahora la cuenta sale de **lo desviado que vas del eje**, con su signo, y
+     * La cuenta base sale de **lo desviado que vas del eje**, con su signo, y
      * de nada más. Sobre la raya vale cero, así que en una curva la ayuda calla
      * y giras tú; si te vas yendo, tira suavemente hacia dentro. Con el
      * amortiguador de guiñada para que no oscile.
+     *
+     * Y encima, **solo en los peldaños de abajo**, la anticipación: apuntar a
+     * un punto de la ruta por delante. Ver el parámetro `anticipa`.
      */
     let mejor = Infinity;
     let desvio = 0;
@@ -668,7 +745,29 @@ export class PlanDeVuelo {
      * nada, porque ahí no hay deriva que corregir — hay un avión rodando.
      */
     const fuera = Math.abs(desvio) < 6 ? 0 : desvio - Math.sign(desvio) * 6;
-    const giro = -fuera / 14 - (estado.yawRate * 180) / Math.PI / 40;
+    let giro = -fuera / 14 - (estado.yawRate * 180) / Math.PI / 40;
+
+    /*
+     * **La anticipación: mirar a dónde va la calle, no dónde estoy.**
+     *
+     * Se apunta a un punto de la ruta **dos segundos por delante** —y nunca a
+     * menos de quince metros, que a paso de tortuga si no el punto se pega al
+     * morro y la ayuda tiembla— y se corrige el rumbo hacia él. Es lo que hace
+     * cualquiera que conduce: se mira a la salida de la curva.
+     */
+    if (anticipa > 0) {
+      const mira = this.puntoDeLaRutaTrasMi(
+        p,
+        Math.max(15, estado.airspeed * 2),
+      );
+      if (mira) {
+        const quiero = Math.atan2(mira[0] - p[0], -(mira[1] - p[1]));
+        let error = quiero - estado.heading;
+        while (error > Math.PI) error -= Math.PI * 2;
+        while (error < -Math.PI) error += Math.PI * 2;
+        giro += anticipa * (error / 0.7);
+      }
+    }
     /*
      * **Y con tope, que es lo que separa «te sujeta» de «te lleva».**
      *
@@ -772,7 +871,19 @@ export class PlanDeVuelo {
      * Es la maniobra más delicada del rodaje —hay que entrar en la pista y
      * ponerse en su eje— y era justo la única sin ayuda.
      */
-    if (fase === "alineando") {
+    /*
+     * **Y la raya entra en la pista en cuanto la torre autoriza, no cuando ya
+     * estás dentro.**
+     *
+     * Esto solo miraba «alineando», y esa fase exige estar **ya sobre el
+     * asfalto**. O sea: con la luz verde dada, la raya seguía acabándose en la
+     * doble raya y los ciento cuarenta y cinco metros que van de ahí a la
+     * pista eran el único trozo del rodaje sin nada que seguir — justo la
+     * maniobra más delicada, y justo después de que el juego te diga que
+     * pases. Lo encontró el banco de pruebas: con el verde dado, el avión se
+     * quedaba en el punto de espera sin ruta a la que agarrarse.
+     */
+    if (fase === "alineando" || fase === "autorizado") {
       if (this.destino === "pista") return;
       this.destino = "pista";
       this.ponerRuta(this.entradaEnPista());
