@@ -212,6 +212,11 @@ export class ArcadeFlightModel implements FlightModel {
    * arriba de ese abanico, que es lo más rápido que este modelo sabe volar, y
    * así el avión **se sostiene** en vez de frenar solo hasta su techo.
    */
+  /** Dos tercios del crucero, que es donde este modelo se planta. */
+  velocidadMaxima(): number {
+    return this.aircraft.cruiseSpeed * CRUISE_FRACTION;
+  }
+
   velocidadDeEntradaEnFinal(): number {
     return this.aircraft.cruiseSpeed * CRUISE_FRACTION * 0.94;
   }

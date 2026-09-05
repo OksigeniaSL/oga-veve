@@ -326,6 +326,58 @@ comprobar(
   'la tarjeta del gesto del señalero se quedaba puesta y tapaba la llave',
 );
 
+// ── La ciudad ─────────────────────────────────────────────────────────────
+
+const ciudad = await page.evaluate(() => {
+  const o = globalThis.__oga;
+  const vias = o.vias().filter((v) => v.nivel <= 2);
+  if (!vias.length) return { sinCiudad: true };
+  const casas = [];
+  globalThis.__raiz.getObjectByName('ciudad')?.traverse((n) => {
+    if (!n.isInstancedMesh) return;
+    const a = n.instanceMatrix.array;
+    for (let i = 0; i < n.count; i++) {
+      // Del mundo al fichero: el norte del fichero es la Z negativa.
+      casas.push([a[i * 16 + 12], -a[i * 16 + 14]]);
+    }
+  });
+  // Distancia de cada casa al viario ancho, por fuerza bruta sobre una
+  // muestra: mirar cuarenta mil casas contra dos mil tramos aquí sería eterno.
+  const muestra = casas.filter((_, i) => i % 17 === 0);
+  const anchos = [22, 18, 13];
+  let encima = 0;
+  for (const [cx, cy] of muestra) {
+    for (const via of vias) {
+      const semi = anchos[via.nivel] / 2;
+      let cerca = false;
+      for (let i = 0; i < via.puntos.length - 1 && !cerca; i++) {
+        const [ax, ay] = via.puntos[i];
+        const [bx, by] = via.puntos[i + 1];
+        const dx = bx - ax;
+        const dy = by - ay;
+        const l2 = dx * dx + dy * dy;
+        if (l2 < 1) continue;
+        const t = Math.max(0, Math.min(1, ((cx - ax) * dx + (cy - ay) * dy) / l2));
+        const d = Math.hypot(cx - (ax + dx * t), cy - (ay + dy * t));
+        if (d < semi) cerca = true;
+      }
+      if (cerca) {
+        encima++;
+        break;
+      }
+    }
+  }
+  return { muestra: muestra.length, encima };
+});
+if (!ciudad.sinCiudad) {
+  comprobar(
+    'no hay casas plantadas sobre las autovías',
+    ciudad.encima === 0,
+    `${ciudad.encima} de ${ciudad.muestra} casas de la muestra`,
+    'la ciudad se siembra por densidad y no sabía nada del viario',
+  );
+}
+
 // ── Y lo que no puede pasar en una calle de rodaje ────────────────────────
 
 const enCalle = await page.evaluate(async () => {
