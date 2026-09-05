@@ -46,6 +46,14 @@ const DESDE_EL_CONTACTO = 2;
  */
 const DEMASIADO_RAPIDO = 1.25;
 
+/**
+ * Y qué parte de lo que el modelo puede volar ya es demasiado para posarse.
+ *
+ * Noventa y tres centésimas: si llegás casi al tope de lo que el avión sabe
+ * hacer, no estás aterrizando, estás pasando por encima de la pista.
+ */
+const CASI_A_TOPE = 0.93;
+
 export class LandingWatcher {
   private volando = false;
   private pendiente = false;
@@ -75,6 +83,15 @@ export class LandingWatcher {
     onRunway: boolean,
     vref: number,
     dt = 0,
+    /**
+     * Lo más rápido que sabe volar el modelo de hoy.
+     *
+     * Sin esto, el umbral de toma rápida —vez y cuarto la de aproximación— era
+     * inalcanzable en el peldaño de los pequeños, cuyo modelo no pasa de
+     * treinta y siete metros por segundo. La toma rápida no existía ahí, y se
+     * podía llegar a tope de gas y oír «suave». Ver `velocidadMaxima`.
+     */
+    vmax = Infinity,
   ): Aterrizaje {
     if (!onGround) {
       this.volando = true;
@@ -105,7 +122,8 @@ export class LandingWatcher {
      * pluma— y luego se come dos kilómetros de pista. Premiar la suavidad ahí
      * sería enseñar exactamente lo contrario de lo que hay que aprender.
      */
-    if (this.velocidadAlTocar > vref * DEMASIADO_RAPIDO) return "rapido";
+    const listón = Math.min(vref * DEMASIADO_RAPIDO, vmax * CASI_A_TOPE);
+    if (this.velocidadAlTocar > listón) return "rapido";
     return this.descenso < SUAVE ? "suave" : "firme";
   }
 

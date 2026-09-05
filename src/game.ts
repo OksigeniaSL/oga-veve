@@ -798,6 +798,8 @@ export class Game {
           heading: this.flight.state.heading,
           airspeed: velocidad,
         }),
+      /** El viario de la ciudad, para comprobar que no se construye encima. */
+      vias: () => this.scenario.ciudad?.vias ?? [],
       /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
       senalero: () => this.senalero,
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
@@ -1086,6 +1088,7 @@ export class Game {
       Number.isFinite(this.runwayRemaining()),
       this.aircraft.approachSpeed,
       dt,
+      this.flight.velocidadMaxima(),
     );
     if (!veredicto) return null;
     this.hud.flash(

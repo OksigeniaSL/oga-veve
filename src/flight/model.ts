@@ -173,4 +173,17 @@ export interface FlightModel {
    * de entrada: es una postura inicial que se deshace sola.
    */
   velocidadDeEntradaEnFinal(vref: number): number;
+  /**
+   * Lo más rápido que sabe volar este modelo, en metros por segundo.
+   *
+   * Hace falta para juzgar una toma. «Puedo aterrizar a la velocidad que me dé
+   * la gana», y era literal: el umbral de toma rápida era vez y cuarto la
+   * velocidad de aproximación —cuarenta y un metros por segundo— y el modelo
+   * sencillo **no pasa de treinta y siete**. O sea que en el peldaño de los
+   * pequeños la toma rápida no existía: se podía llegar a tope de gas y con la
+   * palanca a fondo y el juego decía «suave».
+   *
+   * Un listón que el mundo no puede alcanzar no es un listón.
+   */
+  velocidadMaxima(): number;
 }

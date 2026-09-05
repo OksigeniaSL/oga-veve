@@ -256,6 +256,14 @@ export class CoefficientFlightModel implements FlightModel {
    * como para que la aproximación sea una aproximación. Medido, este modelo la
    * sostiene nivelada durante el minuto entero que dura la senda.
    */
+  /**
+   * El crucero de la ficha. Aquí el modelo llega bastante más arriba en
+   * picado, pero como listón de «esto ya es demasiado» el crucero es honesto.
+   */
+  velocidadMaxima(): number {
+    return this.aircraft.cruiseSpeed;
+  }
+
   velocidadDeEntradaEnFinal(vref: number): number {
     return vref * 1.5;
   }

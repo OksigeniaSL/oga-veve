@@ -89,3 +89,38 @@ describe("la velocidad de la toma", () => {
     expect(volarYAterrizar(0.2, true, false, VREF * 1.1)).toEqual(["suave"]);
   });
 });
+
+/**
+ * Y el listón de «rápido» tiene que existir en el mundo donde se juega.
+ *
+ * «Puedo aterrizar a la velocidad que me dé la gana», y era literal: el umbral
+ * era vez y cuarto la velocidad de aproximación —cuarenta y un metros por
+ * segundo— y el modelo del peldaño de los pequeños no pasa de treinta y siete.
+ * La toma rápida no existía ahí: se podía llegar a tope de gas y con la
+ * palanca a fondo y el juego contestaba «suave».
+ */
+describe("el listón de la toma rápida es alcanzable", () => {
+  /** Lo que puede volar el modelo sencillo: dos tercios de su crucero. */
+  const VMAX_ARCADE = 37.2;
+
+  const conTope = (alTocar: number) => {
+    const w = new LandingWatcher();
+    const paso = 0.5;
+    w.update(false, VREF, 0, false, false, VREF, paso, VMAX_ARCADE);
+    w.update(true, alTocar, 0.4, false, true, VREF, paso, VMAX_ARCADE);
+    const dichos = [];
+    for (let i = 0; i < 6; i++) {
+      const v = w.update(true, 10, 0, false, true, VREF, paso, VMAX_ARCADE);
+      if (v) dichos.push(v);
+    }
+    return dichos;
+  };
+
+  it("tocar a lo más que da el modelo cuenta como rápido", () => {
+    expect(conTope(VMAX_ARCADE)).toEqual(["rapido"]);
+  });
+
+  it("y a velocidad de aproximación sigue siendo una toma buena", () => {
+    expect(conTope(VREF)).toEqual(["suave"]);
+  });
+});

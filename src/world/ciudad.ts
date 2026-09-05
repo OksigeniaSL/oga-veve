@@ -96,6 +96,80 @@ const ASFALTO = 0x4a4a4d;
  * de la pista es un accidente.
  */
 /**
+ * Un mapa de por dónde pasan las calles, para no construir encima.
+ *
+ * **Se veían casas plantadas sobre las autovías.** La ciudad se siembra a
+ * partir de una rejilla de densidad y no sabía nada del viario: sobre la
+ * fotografía, donde las calles no se dibujan porque ya están en la foto, las
+ * cajas caían encima de la autopista fotografiada. Desde el aire es de lo
+ * primero que se ve, porque una autovía es recta y una casa encima rompe la
+ * recta.
+ *
+ * Se pinta una rejilla de diez metros con el viario ancho —autovías, primarias
+ * y secundarias, que son las que se ven— y después cada casa es una consulta.
+ * Es lo mismo que ya se hace con el pavimento del aeródromo y por el mismo
+ * motivo: comprobar miles de casas contra miles de tramos es medir millones de
+ * distancias.
+ *
+ * Las calles estrechas no entran: una casa en una calle de barrio de siete
+ * metros no se ve desde el aire, y excluirlas dejaría la ciudad hecha un
+ * encaje.
+ */
+const CELDA_VIARIO = 10;
+
+/** Hasta qué nivel de vía se respeta. Ver `ANCHO_VIA`. */
+const VIARIO_ANCHO = 2;
+
+class Viario {
+  private readonly mapa: Uint8Array;
+  private readonly lado: number;
+
+  constructor(
+    private readonly mitad: number,
+    vias: Ciudad['vias'],
+  ) {
+    this.lado = Math.ceil((mitad * 2) / CELDA_VIARIO) + 1;
+    this.mapa = new Uint8Array(this.lado * this.lado);
+    for (const via of vias) {
+      if (via.nivel > VIARIO_ANCHO) continue;
+      const margen = (ANCHO_VIA[via.nivel] ?? 7) / 2 + 6;
+      for (let i = 0; i < via.puntos.length - 1; i++) {
+        const [ax, ay] = via.puntos[i]!;
+        const [bx, by] = via.puntos[i + 1]!;
+        const largo = Math.hypot(bx - ax, by - ay);
+        const pasos = Math.max(1, Math.ceil(largo / (CELDA_VIARIO / 2)));
+        for (let k = 0; k <= pasos; k++) {
+          const t = k / pasos;
+          this.marcar(ax + (bx - ax) * t, ay + (by - ay) * t, margen);
+        }
+      }
+    }
+  }
+
+  private marcar(x: number, y: number, margen: number): void {
+    const r = Math.ceil(margen / CELDA_VIARIO);
+    const cx = Math.round((x + this.mitad) / CELDA_VIARIO);
+    const cy = Math.round((y + this.mitad) / CELDA_VIARIO);
+    for (let j = -r; j <= r; j++) {
+      for (let i = -r; i <= r; i++) {
+        const px = cx + i;
+        const py = cy + j;
+        if (px < 0 || py < 0 || px >= this.lado || py >= this.lado) continue;
+        this.mapa[py * this.lado + px] = 1;
+      }
+    }
+  }
+
+  /** `x` e `y` en coordenadas del fichero, con la Y al norte. */
+  hay(x: number, y: number): boolean {
+    const px = Math.round((x + this.mitad) / CELDA_VIARIO);
+    const py = Math.round((y + this.mitad) / CELDA_VIARIO);
+    if (px < 0 || py < 0 || px >= this.lado || py >= this.lado) return false;
+    return this.mapa[py * this.lado + px] === 1;
+  }
+}
+
+/**
  * Lo más bajita que se deja una casa recortada, m.
  *
  * Una planta. Por debajo de eso ya no es un edificio, es una mancha en el
@@ -251,6 +325,7 @@ export function crearCiudad(
     }
   }
 
+  const viario = new Viario(mitad, ciudad.vias);
   const posicion = new Vector3();
   const giro = new Quaternion();
   const escala = new Vector3();
@@ -275,6 +350,8 @@ export function crearCiudad(
         // El fichero tiene la Y al norte: la fila crece al norte y la Z al sur.
         const z = -(-mitad + (fila + sorteo()) * paso);
         if (enElAeropuerto(x, z)) continue;
+        // Y no encima de una autovía. Ver `Viario`.
+        if (viario.hay(x, -z)) continue;
         const suelo = cota(x, z);
         if (suelo <= nivelDelAgua + 1) continue;
 
