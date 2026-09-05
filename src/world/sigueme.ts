@@ -121,7 +121,10 @@ function construir(): {
   const gomas = new CylinderGeometry(0.33, 0.33, 0.24, 10);
   for (const x of [-0.88, 0.88]) {
     for (const z of [-1.4, 1.4]) {
-      const rueda = new Mesh(gomas, new MeshLambertMaterial({ color: 0x1a1c20 }));
+      const rueda = new Mesh(
+        gomas,
+        new MeshLambertMaterial({ color: 0x1a1c20 }),
+      );
       rueda.position.set(x, 0.33, z);
       rueda.rotation.z = Math.PI / 2;
       ruedas.add(rueda);
@@ -230,6 +233,10 @@ export class Sigueme {
    * `activo` lo dice el juego: si esto es un rodaje y si el tramo lo trae. Y
    * `cediendo` es que el señalero ya está señalando, que es cuando el coche se
    * aparta.
+   *
+   * `esperaEn` es hasta dónde puede llegar, si hay un tope. Se usa en la
+   * carrera de aterrizaje: **un sígame no se mete en una pista activa**, te
+   * espera en la salida. Ver `paso` en `game.ts`.
    */
   paso(
     dt: number,
@@ -237,6 +244,7 @@ export class Sigueme {
     activo: boolean,
     cediendo: boolean,
     cota: (x: number, z: number) => number,
+    esperaEn?: { x: number; z: number } | null,
   ): void {
     if (!activo || this.ruta.length < 2 || this.largo < ADELANTO) {
       this.grupo.visible = false;
@@ -246,17 +254,32 @@ export class Sigueme {
     this.t += dt;
 
     const alLlegar = this.enLaRuta(avion);
-    const objetivo = Math.min(
-      alLlegar + ADELANTO,
-      Math.max(0, this.largo - NO_LLEGA),
-    );
+    /*
+     * **El tope, cuando lo hay: la boca de la calle de salida.**
+     *
+     * «El vehículo Followme se ve bien, pero desaparece en la pista de
+     * aterrizaje.» Desaparecía porque en la carrera de aterrizaje no estaba
+     * activo, y ponerlo a correr delante del avión por la pista habría sido
+     * peor: por una pista en uso no circula nadie. Lo que hace uno de verdad
+     * es **esperarte en la salida**, con la baliza encendida, que además es la
+     * forma de enseñar por dónde hay que abandonar.
+     */
+    const hastaDondeLlega = Math.max(0, this.largo - NO_LLEGA);
+    const objetivo = esperaEn
+      ? // Esperando: se planta **en la salida**, no treinta metros por delante
+        // del morro. Puesto por delante sin más, el coche baja la pista
+        // corriendo delante de un avión que aterriza, que es peor que no
+        // estar: por una pista en uso no circula nadie.
+        Math.min(this.enLaRuta(esperaEn), hastaDondeLlega)
+      : Math.min(alLlegar + ADELANTO, hastaDondeLlega);
     // Primer fotograma con esta ruta: se planta donde toca en vez de correr
     // hasta allí desde el kilómetro cero.
     if (this.s < 0) this.s = objetivo;
     // Hacia delante y nada más: un sígame no da marcha atrás. Ver la cabecera.
     this.s = Math.max(this.s, Math.min(objetivo, this.s + VELOCIDAD * dt));
 
-    const deja = cediendo || this.largo - alLlegar < CEDE_AL_FINAL;
+    const deja =
+      !esperaEn && (cediendo || this.largo - alLlegar < CEDE_AL_FINAL);
     this.aparte = deja
       ? Math.min(1, this.aparte + dt / TARDA_EN_APARTARSE)
       : this.aparte;
