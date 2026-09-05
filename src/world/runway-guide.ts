@@ -268,6 +268,14 @@ export class RunwayGuide {
    *
    * @returns true si se acaba de cruzar uno
    */
+  /**
+   * Por dónde se escapó el último aro perdido, o `null`.
+   *
+   * Va aparte del veredicto y no dentro porque quien cuenta galones no
+   * necesita saberlo —un aro perdido es un aro perdido— y quien corrige, sí.
+   */
+  porDonde: "alto" | "bajo" | "ancho" | null = null;
+
   check(position: Vector3): PasoDeAro {
     const aro = this.rings[this.next];
     if (!aro) return null;
@@ -326,6 +334,26 @@ export class RunwayGuide {
     const rel = new Vector3().subVectors(cruce, aro.position);
     const fuera = rel.addScaledVector(eje, -rel.dot(eje)).length();
     const cruzado = fuera <= radio;
+    /*
+     * **Y por dónde se escapó**, que es lo único que sirve para corregir.
+     *
+     * «Supero el aro y nadie me corrige.» Perder un aro sonaba y destellaba en
+     * rojo, y con eso quien juega se entera de que se le escapó — pero no de
+     * **qué hacer**, que es la mitad que enseña. Pasar cincuenta metros por
+     * encima y pasar cincuenta por debajo son el mismo pitido, y son la
+     * lección contraria.
+     *
+     * Se mira la altura del cruce respecto al centro del aro. Si la diferencia
+     * de altura no explica el fallo, es que se pasó ancho: se fue por un lado.
+     */
+    const desnivel = cruce.y - aro.position.y;
+    this.porDonde = cruzado
+      ? null
+      : Math.abs(desnivel) > radio
+        ? desnivel > 0
+          ? "alto"
+          : "bajo"
+        : "ancho";
     /*
      * **Fallarlo también destella, y en rojo.**
      *

@@ -61,7 +61,22 @@ export const GUYRAMI: Tier = {
   // intercambio de energía, sin fugoide, sin pérdida. No es el modelo de
   // coeficientes con ayudas: es otro modelo.
   model: 'simple',
-  assists: FULL_ASSISTS,
+  /*
+   * Todo al máximo **menos la dirección en tierra**, que es la única capa que
+   * no protege de nada: conduce.
+   *
+   * Estaba a uno, y a uno el juego se lleva el avión de la mano por la raya
+   * amarilla, curva incluida. «Aquí también pusieron imanes, no tiene mucho
+   * sentido que el juego conduzca por el jugador.» «Y si todo se hace solo,
+   * vaya aburrimiento.»
+   *
+   * Medio es exactamente el punto en el que se apaga la anticipación —ver
+   * `asistirRodaje`—: la asistencia deja de meter el avión en la curva antes
+   * de llegar y se queda haciendo lo único que tiene que hacer, que es tirar
+   * hacia la raya cuando te vas de ella. Girar es de quien juega, en los
+   * cuatro peldaños; lo que cambia con la edad es cuánto perdona salirse.
+   */
+  assists: { ...FULL_ASSISTS, taxiAssist: 0.5 },
   instruments: 'none',
   units: 'metric',
   sigueme: true,
@@ -77,8 +92,9 @@ export const TUKA: Tier = {
   //
   // En tierra la red se afloja un poco: la asistencia de rodaje empuja hacia
   // la raya, pero ya no lleva de la mano. Es el primer peldaño en el que uno
-  // se puede salir de la calle si se despista.
-  assists: { ...FULL_ASSISTS, taxiAssist: 0.65 },
+  // se puede salir de la calle si se despista. Y como en Guyrami, no anticipa
+  // las curvas: el volante es tuyo desde el primer día.
+  assists: { ...FULL_ASSISTS, taxiAssist: 0.35 },
   instruments: 'pictorial',
   units: 'metric',
   // Todavía viene, pero aquí ya hay raya amarilla y letras que leer: el coche

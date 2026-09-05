@@ -139,6 +139,8 @@ export const ES_PY = {
   'vuelo.terrenoSube': '¡Subí!',
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   'vuelo.frustrada': '¡Bien hecho! Te fuiste al aire. Probá de nuevo',
+  'vuelo.aroAlto': 'Pasaste por encima del aro. Bajá un poco',
+  'vuelo.aroBajo': 'Pasaste por debajo del aro. Subí un poco',
   'vuelo.bulto': 'Por ahí no se pasa: hay un edificio',
   // El final del vuelo. Ninguno es un reproche: ver flight/reconocimiento.ts.
   'fin.llegaste': '¡Llegaste! Ya estás en casa',
@@ -154,6 +156,9 @@ export const ES_PY = {
   'vuelo.apagado': '¡Vuelo terminado!',
   'vuelo.fuera': 'Volvé a la raya verde',
   'vuelo.despacio': 'Más despacio',
+  // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la
+  // tecla del freno. Sin eso, el gesto dice qué pero no cómo.
+  'vuelo.alto': 'Pará acá',
   // Se dice una vez y sin regañar. Lo que hay que aprender no es que el juego
   // te lo impida: es que en un aeropuerto de verdad ahí puede venir otro.
   'vuelo.sinPermiso': 'Entraste sin la luz verde. La próxima, esperala',

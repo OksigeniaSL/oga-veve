@@ -236,6 +236,17 @@ export class Hud {
    * aquí, y una escala fija los pintaba a los dos mal.
    */
   private vref = 33;
+  /**
+   * Lo más rápido que sabe volar el modelo de hoy, m/s.
+   *
+   * **Y hace falta, porque una escala que promete una velocidad imposible
+   * miente.** El pájaro estaba a vez y seis décimas de la de aproximación —52,8
+   * en el Óga 172— y el modelo sencillo no pasa de 37,2: a tope de gas la
+   * marca se quedaba en el 41 % del recorrido y ahí se quedaba para siempre.
+   * «A toda velocidad la señal entre la tortuga y el ave están a mitad», y era
+   * literal: el ave estaba pintada en un sitio al que no se llega.
+   */
+  private vmax = Infinity;
   private galonesState: readonly Galon[] = [];
   private progressState: { done: number; total: number } | null = null;
   private soundState = { glyph: "🔊", label: "" };
@@ -445,10 +456,27 @@ export class Hud {
         -->
         <button class="freno freno--boton" type="button" data-hud="brakes-touch" hidden
                 aria-label="${t("hud.brakes")}">
+          <!--
+            **La mano sobre una rueda**, y no una mano a secas.
+            
+            La mano sola es «alto», y en este juego el alto lo dice el señalero,
+            lo dice la tarjeta de parar y lo decía también este botón: el mismo
+            dibujo para tres cosas. «El freno no se entiende con una mano que se
+            usa también para el despegue antes de V1 y durante toda la fase de
+            rodaje.» Exacto — un botón de freno que hay que deducir está mal
+            dibujado, y a los cuatro años, peor.
+            
+            Con la rueda debajo ya no hay nada que deducir: se ve **qué** se
+            está parando. Y conserva el parentesco con el alto del señalero, que
+            es la mano, así que no hay que aprender un símbolo nuevo.
+          -->
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
-                     a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
-                     v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
+            <circle cx="12" cy="17.6" r="5" fill="none" stroke="currentColor"
+                    stroke-width="2.2" />
+            <circle cx="12" cy="17.6" r="1.5" />
+            <path d="M6.4 12.8 v-4 l-1.7-1.7 a1.1 1.1 0 0 1 1.6-1.6 L7.6 6.8 V2.4
+                     a1.05 1.05 0 0 1 2.1 0 v3.9 V1.9 a1.05 1.05 0 0 1 2.1 0 V6.3
+                     V2.9 a1.05 1.05 0 0 1 2.1 0 V9.4 a4.6 4.6 0 0 1-1.4 3.4 Z" />
           </svg>
         </button>
         <div class="tarjeta medidor freno" data-hud="brakes" hidden>
@@ -721,6 +749,14 @@ export class Hud {
     decisionSpeed = Infinity,
     runwayLeft = Infinity,
     engineOn = true,
+    /**
+     * Si esto es una **carrera de despegue** y no otra cosa.
+     *
+     * Lo dice el plan de vuelo, que es quien sabe, y hace falta porque el
+     * despegue y la carrera de aterrizaje se parecen demasiado vistos solo con
+     * la velocidad: en pista, rápido y con gas. Ver `despegando`.
+     */
+    enDespegue = true,
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
@@ -755,7 +791,8 @@ export class Hud {
        * encima. De la ficha del avión, como todo lo demás.
        */
       const lenta = this.vref * 0.8;
-      const rapida = this.vref * 1.6;
+      // El pájaro, donde de verdad se llega. Ver `vmax`.
+      const rapida = Math.min(this.vref * 1.6, this.vmax);
       this.pictos.update(
         (ias - lenta) / (rapida - lenta),
         Math.sqrt(Math.max(0, state.heightAboveGround) / 400),
@@ -823,8 +860,25 @@ export class Hud {
      * freno a quien va rápido por una calle es exactamente lo contrario de lo
      * que hace falta.
      */
+    /*
+     * **Y solo si esto es un despegue.**
+     *
+     * «¿Por qué la retira si aumento la velocidad si lo que estoy haciendo es
+     * aterrizar? Me marca V1 cuando debería decirme que bajara la velocidad.»
+     * Exacto: en pista, rápido y con gas describe igual de bien una carrera de
+     * despegue que una de aterrizaje en la que alguien acelera — y en la
+     * segunda quitar el freno es justo lo contrario de lo que hace falta.
+     *
+     * **En un aterrizaje no hay V1.** V1 es el punto a partir del cual ya no
+     * se puede abortar un despegue; después de tomar tierra no hay nada que
+     * abortar, hay una pista que se acaba. Quién está en qué lo sabe el plan
+     * de vuelo, no la velocidad.
+     */
     const despegando =
-      state.onRunway && state.airspeed > decisionSpeed && throttle > 0.55;
+      enDespegue &&
+      state.onRunway &&
+      state.airspeed > decisionSpeed &&
+      throttle > 0.55;
     // La tecla del freno, la que se enseña para la mano elegida.
     const tecla = this.teclaDe?.("brakes") ?? "";
     if (tecla && this.brakeKey.textContent !== tecla)
@@ -1215,9 +1269,16 @@ export class Hud {
     );
   }
 
-  /** La aeronave que vuela hoy: de ella sale la escala del pictograma. */
-  setAeronave(vref: number): void {
+  /**
+   * La aeronave y el modelo que vuelan hoy: de ellos sale la escala.
+   *
+   * Los dos, y no solo la aeronave: el mismo avión en el peldaño de los
+   * pequeños y en el de los mayores tiene techos distintos, y la escala tiene
+   * que acabar donde acaba el avión que se está volando.
+   */
+  setAeronave(vref: number, vmax = Infinity): void {
     this.vref = vref;
+    this.vmax = vmax;
   }
 
   setBadge(text: string): void {

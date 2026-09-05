@@ -221,6 +221,65 @@ comprobar(
   "el haz de la cabecera pintaba la pista de ocre y borraba sus marcas",
 );
 
+// ── Pasar por encima de un aro ───────────────────────────────────────────
+
+/*
+ * **«Supero el aro y nadie me corrige.»**
+ *
+ * Perder un aro sonaba y destellaba en rojo, o sea decía *que* se escapó — y
+ * no decía **hacia dónde**, que es la mitad que enseña. Pasar cincuenta metros
+ * por encima y pasar cincuenta por debajo eran el mismo pitido, y son la
+ * lección contraria.
+ */
+const porEncima = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const raiz = globalThis.__raiz;
+  // El aro que toca ahora, y su altura.
+  const aros = [];
+  raiz.getObjectByName("aros").traverse((n) => {
+    if (n.isMesh) aros.push({ y: n.position.y, d: n.userData.distancia ?? 0 });
+  });
+  if (!aros.length) return { sinAros: true };
+  aros.sort((a, b) => b.d - a.d);
+  const u = globalThis.__umbral;
+  const s = o.estado();
+  const h = s.heading;
+  const ux = Math.sin(h);
+  const uz = -Math.cos(h);
+
+  /*
+   * Se cruza el plano de un aro **muy por encima**: cincuenta metros sobre su
+   * centro, que es lo que se ve en la grabación. La distancia se toma de un
+   * aro de en medio, para que quede senda por delante y por detrás.
+   */
+  const cual = aros[Math.floor(aros.length / 2)];
+  const d = cual.d;
+  const alto = cual.y + 50;
+  o.colocar(u.x - ux * (d + 90), alto, u.z - uz * (d + 90), 34);
+  await new Promise((r) => setTimeout(r, 400));
+
+  let tarjeta = "";
+  for (let i = 0; i < 120; i++) {
+    await new Promise((r) => setTimeout(r, 50));
+    const puesta = o.tarjeta().dibujo;
+    if (puesta === "aro-alto" || puesta === "aro-bajo") {
+      tarjeta = puesta;
+      break;
+    }
+  }
+  return { tarjeta, ultima: o.tarjeta().dibujo };
+});
+if (!porEncima.sinAros) {
+  comprobar(
+    "pasar por encima de un aro tiene quien lo corrija",
+    porEncima.tarjeta === "aro-alto",
+    porEncima.tarjeta
+      ? `dice «${porEncima.tarjeta}»`
+      : `tarjeta «${porEncima.ultima || "ninguna"}»`,
+    "«supero el aro y nadie me corrige»: sonaba, pero no decía hacia dónde",
+  );
+}
+
 // ── Bajo de verdad en la senda ────────────────────────────────────────────
 
 /*
@@ -465,6 +524,47 @@ comprobar(
   `${enPista.fueraDelEje} puntos fuera del medio ancho`,
   "iba en diagonal desde el avión hasta la boca de la salida",
 );
+/*
+ * **Y a todo gas en la carrera de aterrizaje no se acelera.**
+ *
+ * «A toda leche me pasé E5 y nada me avisó: puedo ir a la velocidad que me da
+ * la gana por la pista después de un aterrizaje.» Y el freno tiene que seguir
+ * ahí: **en un aterrizaje no hay V1** —V1 es el punto en el que ya no se puede
+ * abortar un despegue, y después de tomar tierra no hay nada que abortar—.
+ */
+if (CON_TOPE) {
+  const traLaToma = await page.evaluate(async () => {
+    const o = globalThis.__oga;
+    const c = o.controles();
+    const antes = o.estado().airspeed;
+    c.brakes = 0;
+    c.throttle = 1;
+    let punta = 0;
+    let sinFreno = false;
+    for (let i = 0; i < 50; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      punta = Math.max(punta, o.estado().airspeed);
+      sinFreno ||= !!document.querySelector('[data-hud="brakes-touch"]')
+        ?.hidden;
+    }
+    c.throttle = 0;
+    c.brakes = 1;
+    return { antes, punta, sinFreno, fase: o.fase() };
+  });
+  comprobar(
+    "acelerar tras tomar tierra no relanza el avión",
+    traLaToma.punta <= traLaToma.antes + 1,
+    `de ${traLaToma.antes.toFixed(0)} a ${traLaToma.punta.toFixed(0)} m/s con el gas a fondo, fase «${traLaToma.fase}»`,
+    "«puedo ir a la velocidad que me da la gana por la pista tras aterrizar»",
+  );
+  comprobar(
+    "y el freno no se va: en un aterrizaje no hay V1",
+    !traLaToma.sinFreno,
+    traLaToma.sinFreno ? "se escondió" : "sigue ahí",
+    "«me marca V1 cuando debería decirme que bajara la velocidad»",
+  );
+}
+
 if (CON_SIGUEME) {
   comprobar(
     "el sígame espera en la salida mientras se frena",
@@ -1100,8 +1200,9 @@ if (enElCampo)
  * antes si quiero entrar bien» en la salida A4.
  *
  * Es además la promesa entera del peldaño de los pequeños (#145): a los cuatro
- * años nadie hila dos kilómetros de calle de rodaje, así que si soltando los
- * mandos el avión no se queda en la raya, el peldaño no cumple lo que promete.
+ * años nadie hila dos kilómetros de calle de rodaje, así que la raya tiene que
+ * poder seguirse: quien gira hacia ella llega, sin pelearse con el avión. Lo
+ * que **no** hace el juego es girar por vos. Ver `flight/tiers.ts`.
  *
  * Con el gas a fondo a propósito, que es lo que hace quien tiene cuatro años:
  * el tope de rodaje es quien decide la velocidad. Ver `flight/gobernador.ts`.
@@ -1110,8 +1211,19 @@ if (CON_TOPE) {
   const deVuelta = await page.evaluate(async () => {
     const o = globalThis.__oga;
     const u = globalThis.__umbral;
-    const s = o.estado();
-    const h = s.heading;
+    /*
+     * **El rumbo de la pista, no el que trajera el avión.**
+     *
+     * Esto decía `const h = o.estado().heading`, y con eso los novecientos
+     * metros «pista adelante» salían en la dirección en la que el morro
+     * hubiera quedado al acabar la prueba anterior — de lado, mirando al
+     * campo. El avión aparecía fuera del eje y atravesado, y lo que se medía
+     * después no era seguir la raya de la salida: era enderezar un atravesado
+     * que nadie había hecho. Medido: veintisiete metros de separación y
+     * ochenta y cuatro de avance, con el timón haciendo lo correcto todo el
+     * rato.
+     */
+    const h = (o.pista().heading * Math.PI) / 180;
     const ux = Math.sin(h);
     const uz = -Math.cos(h);
     /*
@@ -1122,20 +1234,77 @@ if (CON_TOPE) {
      * segundo y sesenta y tres metros fuera de la raya. No era un fallo del
      * rodaje: era una prueba que empezaba antes de que hubiera rodaje.
      */
+    /*
+     * Y **mirando por donde se rueda**, que es la mitad de estar posado en el
+     * eje. Sin el rumbo, el avión se quedaba con el morro donde lo hubiera
+     * dejado la prueba anterior —de lado, mirando al campo— y lo que se medía
+     * después no era seguir la raya de la salida: era enderezar un atravesado
+     * que nadie había hecho. Medido: treinta metros de separación y ciento
+     * treinta de avance, con el timón haciendo lo correcto todo el rato.
+     */
     o.colocar(
       u.x + ux * 900,
       o.suelo(u.x + ux * 900, u.z + uz * 900) + 1.3,
       u.z + uz * 900,
       6,
+      h,
     );
     await new Promise((r) => setTimeout(r, 2500));
 
     const c = o.controles();
-    // **Sin tocar nada.** El alerón a cero es la prueba: si el avión llega, lo
-    // lleva el juego; si no, la promesa del peldaño no se cumple.
-    c.aileron = 0;
+    /*
+     * **Con el timón en la mano**, que es la promesa de ahora.
+     *
+     * Esta prueba nació al revés: el alerón a cero y a ver si el juego llevaba
+     * el avión hasta casa. Y lo llevaba, porque la ayuda de rodaje estaba a
+     * tope — o sea, conducía. «Aquí también pusieron imanes, no tiene mucho
+     * sentido que el juego conduzca por el jugador. Y si todo se hace solo,
+     * vaya aburrimiento.»
+     *
+     * Así que lo que hay que medir es lo otro: que **la raya se pueda seguir**
+     * — que quien gira hacia ella llegue sin pelearse con el avión. El piloto
+     * mira quince metros por delante y gira, igual que en el banco de
+     * despegue; si con eso no se queda en la calle, la culpa es del juego.
+     */
     c.elevator = 0;
     c.brakes = 0;
+    const MIRA = 15;
+    const timon = (st, ruta) => {
+      if (!ruta.length) return 0;
+      let cerca = 0;
+      let mejor = Infinity;
+      for (let i = 0; i < ruta.length; i++) {
+        const d = Math.hypot(
+          ruta[i][0] - st.position.x,
+          ruta[i][1] - st.position.z,
+        );
+        if (d < mejor) {
+          mejor = d;
+          cerca = i;
+        }
+      }
+      let mira = ruta[ruta.length - 1];
+      for (let i = cerca; i < ruta.length; i++) {
+        const d = Math.hypot(
+          ruta[i][0] - st.position.x,
+          ruta[i][1] - st.position.z,
+        );
+        if (d > MIRA) {
+          mira = ruta[i];
+          break;
+        }
+      }
+      const rumbo = Math.atan2(
+        mira[0] - st.position.x,
+        -(mira[1] - st.position.z),
+      );
+      let e = rumbo - st.heading;
+      while (e > Math.PI) e -= 2 * Math.PI;
+      while (e < -Math.PI) e += 2 * Math.PI;
+      return { mando: Math.max(-1, Math.min(1, e * 2)), error: e };
+    };
+    // Lo último que pidió el timón, para aflojar el gas en la curva.
+    let giro = 0;
 
     /** Lo lejos que se está de la raya, en metros. */
     const aLaRaya = (x, z, ruta) => {
@@ -1161,13 +1330,25 @@ if (CON_TOPE) {
 
     let lejos = 0;
     let punta = 0;
+    // Cuántas vueltas se dieron de verdad: si la prueba se corta antes de
+    // tiempo, el avance sale pequeño sin que el avión tenga la culpa.
+    let pasos = 0;
     /*
      * **El avance se mide en metros, no en puntos de ruta.** Contar los puntos
      * que quedan no vale: la ruta se rehace sola según se avanza, así que su
      * longitud no baja de forma ordenada y salía cero aunque el avión hubiera
      * recorrido medio aeropuerto.
      */
-    const desde = {
+    /*
+     * **Y el camino se mide sumando pasos, no en línea recta.**
+     *
+     * Se medía la distancia al punto de partida, y en un aeropuerto eso no
+     * mide avanzar: se sale de la pista, se da la vuelta y se vuelve por la
+     * calle paralela, que va **al lado** de la pista. El avión recorría medio
+     * kilómetro y la prueba veía ciento diecinueve metros — y llamaba a eso
+     * «se queda dando vueltas».
+     */
+    let antes = {
       x: o.estado().position.x,
       z: o.estado().position.z,
     };
@@ -1180,23 +1361,38 @@ if (CON_TOPE) {
        * despegar y lo que se medía era un despegue. Lo que se prueba aquí es
        * la dirección; del tope se ocupa su propia comprobación.
        */
+      /*
+       * **Y se afloja para girar.** La salida de una pista es una horquilla:
+       * se rueda pista adelante y se vuelve por la calle paralela, así que hay
+       * un momento de más de noventa grados. Tomarlo a velocidad de rodaje es
+       * pasarse, y eso es exactamente lo que se dijo jugando —«se pasa un poco
+       * de frenada y tengo que girar antes si quiero entrar bien»—. Quien
+       * conduce afloja antes de la curva; el banco también.
+       */
       const v = o.estado().airspeed;
-      c.throttle = v < 9 ? 0.4 : 0;
+      const quiere = giro > 0.5 ? 4 : 9;
+      c.throttle = v < quiere ? 0.4 : 0;
+      c.brakes = v > quiere * 1.6 ? 1 : 0;
       await new Promise((r) => setTimeout(r, 100));
       const st = o.estado();
       punta = Math.max(punta, st.airspeed);
       const ruta = o.ruta();
       if (ruta.length < 2) break;
+      const t = timon(st, ruta);
+      c.aileron = t.mando;
+      giro = Math.abs(t.error);
       lejos = Math.max(lejos, aLaRaya(st.position.x, st.position.z, ruta));
-      avance = Math.hypot(st.position.x - desde.x, st.position.z - desde.z);
+      avance += Math.hypot(st.position.x - antes.x, st.position.z - antes.z);
+      antes = { x: st.position.x, z: st.position.z };
+      pasos = i + 1;
       if (lejos > 60) break;
     }
     c.throttle = 0;
     c.brakes = 1;
-    return { lejos, punta, avance, fase: o.fase() };
+    return { lejos, punta, avance, fase: o.fase(), pasos };
   });
   comprobar(
-    "soltando los mandos, el avión se queda en la raya",
+    "siguiendo la raya con el timón, el avión se queda en la raya",
     /*
      * Veinte metros: el ancho de una calle de rodaje con su margen. Más que
      * eso ya no es ir por la raya, es ir por el campo de al lado.
@@ -1207,10 +1403,10 @@ if (CON_TOPE) {
   );
   comprobar(
     "y avanza de verdad, no se queda dando vueltas",
-    // Doscientos metros: lo que se recorre en veinte segundos a paso de rodaje.
-    // Menos que eso es no haberse movido de la boca de la salida.
-    deVuelta.avance > 200,
-    `recorrió ${deVuelta.avance.toFixed(0)} m, fase «${deVuelta.fase}»`,
+    // Trescientos metros de camino: la salida de la pista y un buen trozo de
+    // la calle de vuelta. Menos que eso es haberse quedado en la boca.
+    deVuelta.avance > 300,
+    `recorrió ${deVuelta.avance.toFixed(0)} m de camino en ${(deVuelta.pasos / 10).toFixed(0)} s, fase «${deVuelta.fase}»`,
     "la ayuda daba una pirueta en la boca de la salida y el avión no avanzaba",
   );
 }

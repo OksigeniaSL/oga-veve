@@ -109,3 +109,34 @@ describe("girar rodando", () => {
     expect(radioRodando(9)).toBeLessThan(20);
   });
 });
+
+/**
+ * Y el gas que sostiene una velocidad de rodaje.
+ *
+ * El tope de rodaje habla en metros por segundo y el juego lo traduce a gas
+ * preguntándole al modelo. La primera vez se preguntó con `gasPara`, que está
+ * calibrado para volar: contestó **cero** —para volar a nueve metros por
+ * segundo hace falta un gas negativo— y el avión se quedó clavado en el puesto
+ * con el motor en marcha. Lo cazó el banco: «fase arrancando a 0.0 m/s,
+ * quedan 2034 m».
+ */
+describe("el gas de rodar", () => {
+  it("sostiene la velocidad que se le pide", () => {
+    const m = new ArcadeFlightModel({ aircraft: OGA_172, ground: () => 0 });
+    m.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 0 });
+    const mandos = {
+      ...neutralControls(),
+      engineOn: true,
+      throttle: m.gasParaRodar(10.35),
+    };
+    for (let t = 0; t < 60; t += 0.02) m.step(0.02, mandos);
+    expect(m.state.airspeed).toBeCloseTo(10.35, 0);
+  });
+
+  it("y no es cero para una velocidad de rodaje", () => {
+    // El fallo, en una línea: preguntar por rodar con la cuenta de volar.
+    const m = new ArcadeFlightModel({ aircraft: OGA_172, ground: () => 0 });
+    expect(m.gasPara(9)).toBe(0);
+    expect(m.gasParaRodar(9)).toBeGreaterThan(0.1);
+  });
+});

@@ -172,6 +172,19 @@ export interface FlightModel {
    */
   gasPara(velocidad: number): number;
   /**
+   * Y qué gas hace falta **rodando**, que no es lo mismo ni de lejos.
+   *
+   * `gasPara` está calibrado para volar: su abanico va de la mínima de vuelo
+   * al crucero, así que preguntarle por la velocidad de rodaje devuelve cero
+   * —o sea, «pará»—. Se preguntó y el avión se quedó clavado en el puesto: el
+   * tope de rodaje le pedía el gas de nueve metros por segundo y el modelo
+   * contestaba que para volar a nueve hace falta un gas negativo.
+   *
+   * En tierra la pregunta es otra —cuánto empuje sostiene esta velocidad de
+   * rodaje— y cada modelo la contesta a su manera, igual que la de arriba.
+   */
+  gasParaRodar(velocidad: number): number;
+  /**
    * A qué velocidad se entra en final, en metros por segundo.
    *
    * También la contesta el modelo, y por lo mismo que `gasPara`: **cada modelo

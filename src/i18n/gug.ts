@@ -52,6 +52,7 @@ export const GUG: Dictionary = {
   'vuelo.apagado': '¡Opáma ne veve!',
   'vuelo.fuera': 'Eho jey raya hovýpe',
   'vuelo.despacio': 'Mbeguekatu',
+  'vuelo.alto': 'Epyta ko’ápe',
   'vuelo.sinPermiso': "Reike tesape hovy'ỹre. Ambuévape eha'arõ",
 
   // ── El hangar ──────────────────────────────────────────────────────────
