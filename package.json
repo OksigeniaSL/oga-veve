@@ -14,7 +14,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "terreno": "node scripts/hgt-a-heightmap.mjs"
+    "terreno": "node scripts/hgt-a-heightmap.mjs",
+    "vuelo": "node scripts/verificar-vuelo.mjs tenerife-norte guyrami && node scripts/verificar-vuelo.mjs pettirossi taguato"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",
