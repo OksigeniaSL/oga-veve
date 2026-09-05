@@ -19,6 +19,10 @@
  * dejar despegar fuera de la pista —«no es física, es la regla del juego»— y
  * se lee igual de bien desde la cabina: pisás el gas y el avión se planta.
  *
+ * Lo que este tope **no hace** es frenar. Se probó y estaba mal: el avión se
+ * paraba solo mientras la pantalla seguía pidiendo el freno. Frenar es de
+ * quien juega —ver abajo—, y un juego que se para solo no enseña a parar.
+ *
  * ## Y por qué solo abajo
  *
  * Porque es la escalera de siempre. Donde el juego conduce —Guyrami, y Tukã
@@ -57,40 +61,46 @@ export interface Rodaje {
  */
 const HOLGURA = 1.15;
 
-/** Y a partir de cuánto exceso se frena del todo. */
-const YA_ES_DEMASIADO = 1.6;
-
 export interface Tope {
-  /** Lo más que puede pedir el gas, de 0 a 1. */
-  readonly gas: number;
-  /** Y cuánto freno pone el juego por su cuenta, de 0 a 1. */
-  readonly freno: number;
+  /** Lo más rápido que el juego deja ir ahora mismo, m/s. */
+  readonly velocidad: number;
 }
 
 /**
- * El tope de gas y el freno que toca, rodando.
+ * Lo más rápido que se puede ir rodando, m/s.
  *
- * Devuelve **límites**, no mandos: quien llama compara con lo que pide quien
- * juega y se queda con lo más restrictivo. Así el tope nunca acelera a nadie.
+ * Devuelve un **límite**, no un mando: quien llama compara con lo que pide
+ * quien juega y se queda con lo más restrictivo. Así el tope nunca acelera a
+ * nadie, y sobre todo **nunca frena por su cuenta**.
  *
- * No es un interruptor: el gas se va cerrando según se pasa del rodaje, y el
- * freno entra después. Un tope de golpe se siente como un fallo del juego;
- * este se siente como un avión que no da más de sí, que es lo que es.
+ * ## Por qué un tope de velocidad y no un tope de gas
+ *
+ * El primer intento devolvía cuánto gas cabía, con su rampa: el gas se iba
+ * cerrando según se pasaba del rodaje y llegaba a cero a mitad de camino. En
+ * el modelo del peldaño de abajo **el gas es la velocidad**, así que cerrar el
+ * gas del todo no es «no aceleres más»: es «pará». Y como además entraba el
+ * freno, el avión se clavaba en cero solo. «Que deje el avión a 0 y siga
+ * diciendo que frene es una exageración.»
+ *
+ * Lo que hay que decir es lo que se quería decir desde el principio —**no vas
+ * más rápido que esto**— y eso se dice en metros por segundo. Quien llama lo
+ * traduce a gas con `gasPara`, que es la pregunta que cada modelo sabe
+ * contestar a su manera. El avión se planta a la velocidad de rodaje en vez de
+ * pararse, que es exactamente lo que hace un avión al que no le das más.
+ *
+ * ## Y por qué el freno se fue de aquí
+ *
+ * Porque frenar es la lección, y el juego no puede dar la lección por vos.
+ * «Si durante todo el rato del aterrizaje el juego está moviendo y controlando
+ * la velocidad de la aeronave, ahora el niño cree que se va a parar sola. Y si
+ * todo se hace solo, vaya aburrimiento.»
+ *
+ * El tope se queda porque es una **regla del sitio** —en un aeropuerto no se
+ * rueda a cien, igual que no se despega fuera de la pista— y las reglas del
+ * sitio las pone el mundo. Parar el avión no es una regla del sitio: es lo que
+ * tiene que aprender a hacer quien juega, con el freno, y por eso lo pide la
+ * tarjeta, lo pide la voz y lo pide el señor de los bastones.
  */
 export function topeDeRodaje(s: Rodaje): Tope {
-  const limite = s.rodaje * HOLGURA;
-  if (s.velocidad <= limite) return { gas: 1, freno: 0 };
-
-  const exceso =
-    (s.velocidad - limite) / (s.rodaje * (YA_ES_DEMASIADO - HOLGURA));
-  return {
-    gas: Math.max(0, 1 - exceso * 2),
-    /*
-     * El freno entra **cuando cerrar el gas ya no basta**, no a la vez: el gas
-     * llega a cero en la mitad de la rampa y de ahí en adelante empieza a
-     * frenar. Y nunca a fondo — esto sujeta, no clava; un frenazo automático
-     * tira de morro y se lee como un fallo del juego.
-     */
-    freno: Math.max(0, Math.min(0.6, (exceso - 0.5) * 1.2)),
-  };
+  return { velocidad: s.rodaje * HOLGURA };
 }

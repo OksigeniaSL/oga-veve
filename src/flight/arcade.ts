@@ -263,6 +263,17 @@ export class ArcadeFlightModel implements FlightModel {
     return Math.max(0, Math.min(1, (velocidad - floor) / (cruise - floor)));
   }
 
+  /**
+   * Rodando la cuenta es exacta y además es otra: en el suelo el abanico del
+   * gas no arranca en la mínima de vuelo —ahí no hay mínima de vuelo, hay
+   * cero—, así que el gas es la fracción del crucero y ya está. Es la misma
+   * recta que usa `step` cuando `onGround`.
+   */
+  gasParaRodar(velocidad: number): number {
+    const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
+    return Math.max(0, Math.min(1, velocidad / cruise));
+  }
+
   step(dt: number, controls: ControlInputs): void {
     // El mismo tope que el modelo completo y que el bucle del juego, y por el
     // mismo motivo. Eran **tres** copias del mismo número: se arreglaron dos y

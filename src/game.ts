@@ -103,6 +103,14 @@ const SE_QUEDA_LA_FRUSTRADA = 4.5;
 const SE_QUEDA_EL_BULTO = 3;
 
 /**
+ * Cuánto se queda en pantalla la corrección de un aro perdido, s.
+ *
+ * Dos segundos y medio: lo que hay entre un aro y el siguiente a velocidad de
+ * aproximación. Más sería que la corrección de un aro tapara la del que viene.
+ */
+const SE_QUEDA_EL_ARO = 2.5;
+
+/**
  * Los escalones de importancia de la señal. Ver `ui/senal.ts`.
  *
  * Son dos y no diez a propósito: lo que se está ordenando es «esto no puede
@@ -350,6 +358,38 @@ const CONDUCE_EL_JUEGO = 0.5;
  * Y no basta con la fase: hace falta además que la torre no haya dado el
  * verde. Ver `limitarElRodaje`.
  */
+/**
+ * Las fases en las que se está despegando, que son en las que existe V1.
+ *
+ * «¿Por qué la retira si aumento la velocidad si lo que estoy haciendo es
+ * aterrizar?» Porque el HUD lo deducía de la velocidad, y en pista rápido y
+ * con gas describe igual de bien las dos carreras. En un aterrizaje no hay V1:
+ * V1 es el punto a partir del cual ya no se puede abortar un despegue, y
+ * después de tomar tierra no hay nada que abortar — hay una pista que se
+ * acaba, que es otra cosa y necesita el freno puesto.
+ */
+const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
+  "alineando",
+  "despegando",
+  "comprometido",
+]);
+
+/**
+ * Las fases cuya tarjeta **espera a que alguien haga algo**, y por eso no
+ * caduca: arrancar, parar en la doble raya, frenar, salir de la pista, apagar.
+ *
+ * Están aquí arriba porque hacen falta en dos sitios: para ponerlas con
+ * `Infinity` y para **devolverlas** cuando un aviso de paso se las lleva por
+ * delante. Ver `avanzarPlan`.
+ */
+const SE_QUEDAN: ReadonlySet<Fase> = new Set<Fase>([
+  "estacionado",
+  "en-puesto",
+  "esperando",
+  "aterrizado",
+  "abandonando",
+]);
+
 const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
   "estacionado",
   "arrancando",
@@ -439,6 +479,12 @@ export class Game {
   private readonly antesDelPaso = new Vector3();
   /** Segundos que le quedan al aviso del bulto, para no repetirlo cada paso. */
   private avisandoDelBulto = 0;
+  /**
+   * Lo más rápido que se puede ir ya en esta carrera de aterrizaje, m/s.
+   *
+   * Un trinquete: baja con el avión y nunca sube. Ver `limitarElRodaje`.
+   */
+  private techoDeLaCarrera = Infinity;
   /** Si este vuelo ya terminó, para no enseñar el final dos veces. */
   private vueloTerminado = false;
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
@@ -922,10 +968,24 @@ export class Game {
        * Esto llama al `reset` del modelo, que es lo que usa el propio juego
        * para colocar el avión al empezar una lección.
        */
-      colocar: (x: number, y: number, z: number, velocidad: number) =>
+      /*
+       * Y **el rumbo, si se pide**: sin él, colocar el avión en un sitio nuevo
+       * le dejaba el morro donde lo tuviera de antes. En el banco eso ponía el
+       * avión en el eje de la pista mirando al campo, y lo que se medía luego
+       * —seguir la raya de la salida— era en realidad recuperarse de un
+       * atravesado que nadie había hecho. Sin argumento se comporta como
+       * siempre.
+       */
+      colocar: (
+        x: number,
+        y: number,
+        z: number,
+        velocidad: number,
+        rumbo?: number,
+      ) =>
         this.flight.reset({
           position: new Vector3(x, y, z),
-          heading: this.flight.state.heading,
+          heading: rumbo ?? this.flight.state.heading,
           airspeed: velocidad,
         }),
       /** El viario de la ciudad, para comprobar que no se construye encima. */
@@ -2635,9 +2695,48 @@ export class Game {
      * seguir adelante: el siguiente aro pasa a ser el siguiente y la senda
      * sigue guiando, en vez de quedarse esperando a uno que ya no volverá.
      */
-    const aro = this.runwayGuide.check(this.flight.state.position);
+    /*
+     * **Y todo esto, volando.** En tierra no hay senda que seguir.
+     *
+     * Sin esa condición, la primera señal de una lección de despegue era
+     * «pasaste por debajo del aro, subí un poco» —con el avión parado en su
+     * puesto y el motor apagado—: los aros de aproximación quedan por delante
+     * de la cabecera, así que desde la plataforma ya se han «perdido» todos.
+     * Medido en el banco: la tarjeta de arrancar el motor no llegaba a verse,
+     * porque el aro se la comía y se iba a los dos segundos y medio dejando la
+     * pantalla en blanco. «En el modo despegue, esta es la primera señal que
+     * aparece.»
+     */
+    const aro = this.flight.state.onGround
+      ? null
+      : this.runwayGuide.check(this.flight.state.position);
     if (aro === "cruzado") this.audio.cue("aro");
-    else if (aro === "perdido") this.audio.cue("aroFallado");
+    else if (aro === "perdido") {
+      this.audio.cue("aroFallado");
+      /*
+       * **Y se dice por dónde se escapó, que es lo único que sirve.**
+       *
+       * «Supero el aro y nadie me corrige.» Sonaba y destellaba en rojo —o
+       * sea, decía *que* se escapó— y no decía **hacia dónde**: pasar
+       * cincuenta metros por encima y pasar cincuenta por debajo eran el mismo
+       * pitido, y son la lección contraria.
+       *
+       * Solo cuando el fallo es de altura. Pasar ancho ya se ve —el aro te
+       * queda al lado— y para eso está la raya de la senda.
+       */
+      const donde = this.runwayGuide.porDonde;
+      if (donde === "alto" || donde === "bajo") {
+        this.hud.senal.mostrar(
+          donde === "alto" ? "aro-alto" : "aro-bajo",
+          this.tier.instruments !== "none"
+            ? t(donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo")
+            : "",
+          null,
+          { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+        );
+        decir(donde === "alto" ? "too high, come down" : "too low, climb");
+      }
+    }
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
@@ -2834,6 +2933,12 @@ export class Game {
       this.aircraft.decisionSpeed,
       this.runwayRemaining(),
       this.input.controls.engineOn,
+      /*
+       * Y si esto es una carrera de **despegue**, que es lo que decide si hay
+       * V1 o no. Lo sabe el plan de vuelo y no la velocidad: en pista, rápido
+       * y con gas describe igual de bien las dos carreras. Ver `hud.update`.
+       */
+      EN_DESPEGUE.has(this.vistaActual?.fase ?? "en-vuelo"),
     );
     const toma = this.checkLanding(dt);
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una
@@ -2935,9 +3040,32 @@ export class Game {
     if (enPantalla !== this.gestoEnPantalla) {
       this.gestoEnPantalla = enPantalla;
       if (enPantalla) {
+        /*
+         * **Y el «alto» lleva el freno dibujado, que es lo que hay que hacer.**
+         *
+         * «Aparte del señor, algo debe decirme que pare. Si durante todo el
+         * rato del aterrizaje el juego está moviendo y controlando la
+         * velocidad de la aeronave, ahora el niño cree que se va a parar
+         * sola.» El señalero dice **qué** —no te muevas más— y hasta ahí
+         * llegaba la pantalla; lo que faltaba era el **cómo**, que es la misma
+         * tecla del freno que ya sale en el punto de espera y al tomar tierra.
+         *
+         * Es la tercera vez que aparece la misma pareja —dibujo que se
+         * entiende sin leer, tecla dibujada al lado— y a propósito: quien la
+         * vio en la doble raya la reconoce aquí.
+         */
+        const parando = enPantalla === "alto" || enPantalla === "despacio";
         this.hud.senal.mostrar(`senalero-${enPantalla}`, "", null, {
           segundos: Infinity,
+          tecla: parando
+            ? nombreDeTecla(this.input.preferredKey("brakes"))
+            : null,
         });
+        if (parando) {
+          this.instructor.decir(
+            t(enPantalla === "alto" ? "vuelo.alto" : "vuelo.despacio"),
+          );
+        }
       } else {
         this.faseAnunciada = "";
       }
@@ -2974,13 +3102,23 @@ export class Game {
         fase === "aterrizado" ||
         fase === "abandonando" ||
         fase === "a-plataforma";
+      /*
+       * **Y si estamos frenando en la pista pero no hay salida que esperar, el
+       * coche no sale.**
+       *
+       * Sin esto, cuando `bocaDeLaSalida` no encuentra punto —ruta corta,
+       * salida todavía sin calcular— el tope desaparecía y el coche volvía a
+       * ponerse treinta metros por delante del morro **en la pista**, que es
+       * justo lo que se arregló: se le acaba pasando por encima.
+       */
+      const espera = fase === "aterrizado" ? this.bocaDeLaSalida() : null;
       this.sigueme.paso(
         dt,
         { x: s.position.x, z: s.position.z },
-        rodando && s.onGround,
+        rodando && s.onGround && !(fase === "aterrizado" && !espera),
         gesto !== null,
         (x, z) => this.terrain.sampleHeight(x, z),
-        fase === "aterrizado" ? this.bocaDeLaSalida() : null,
+        espera,
       );
     }
   }
@@ -3113,7 +3251,47 @@ export class Game {
      * pista la velocidad **es** el asunto —se despega, se aterriza, se hace un
      * retroceso— y en una calle de rodaje nunca lo es.
      */
-    if (!s.onGround || s.onRunway) return;
+    if (!s.onGround) return;
+
+    /*
+     * **Y en la pista, después de aterrizar, tampoco se acelera.**
+     *
+     * «A toda leche me pasé E5 y nada me avisó: puedo ir a la velocidad que me
+     * da la gana por la pista después de un aterrizaje.» Y era verdad: el tope
+     * se apagaba en cuanto había asfalto de pista debajo, porque ahí es donde
+     * se despega. Pero una vez tomado tierra la pista deja de ser el sitio
+     * donde se coge velocidad y pasa a ser **el camino a casa**, y quien
+     * acelera ahí se pasa la salida.
+     *
+     * Con una diferencia importante: en la carrera de aterrizaje el tope
+     * **solo cierra el gas y no toca el freno**. Frenar es la lección, y
+     * quitársela sería enseñar lo contrario; lo que se quita es la posibilidad
+     * de echar más leña.
+     */
+    const enLaCarrera = this.vistaActual?.fase === "aterrizado";
+    if (s.onRunway && !enLaCarrera) return;
+
+    /*
+     * **En la carrera de aterrizaje el tope es un trinquete, no un tijeretazo.**
+     *
+     * El primer intento cerraba el gas a la velocidad de rodaje en cuanto
+     * tocaba tierra, y en el modelo sencillo **el gas es la velocidad**: el
+     * avión frenó en seco. «No veas el frenazo que dio al tomar tierra, sin que
+     * yo tocara nada, casi se pone en cero. Digo, porque a ver cómo explico que
+     * dejé las paletas en el parabrisas.»
+     *
+     * La regla no es «te quito el gas»: es **no puedes añadir velocidad**. El
+     * techo baja con el avión y nunca sube, así que frenar es cosa tuya —y se
+     * puede— y acelerar, no.
+     */
+    if (enLaCarrera) {
+      this.techoDeLaCarrera = Math.min(
+        this.techoDeLaCarrera,
+        Math.max(RODAJE, s.airspeed),
+      );
+    } else {
+      this.techoDeLaCarrera = Infinity;
+    }
     /*
      * **Y el portero es la luz de la torre**, que costó tres intentos.
      *
@@ -3131,19 +3309,60 @@ export class Game {
      * está el coche del sígame al que se le podía pasar por encima.
      */
     const vista = this.vistaActual;
-    if (!vista || vista.luzVerde || !RODANDO_DE_VERDAD.has(vista.fase)) return;
+    if (!vista || vista.luzVerde) return;
+    if (!enLaCarrera && !RODANDO_DE_VERDAD.has(vista.fase)) return;
+    const c = this.input.controls;
+
+    /*
+     * **Y el trinquete no lleva holgura.**
+     *
+     * Rodando, el tope deja un quince por ciento por encima de la velocidad de
+     * rodaje para que se pueda seguir al coche del sígame sin que esté todo el
+     * rato metiendo mano. En la carrera de aterrizaje esa misma holgura es un
+     * agujero: el techo baja con el avión, así que un quince por ciento de
+     * margen es un quince por ciento de gas nuevo cada vez que se frena un
+     * poco. Medido en el banco: «de 29 a 31 m/s con el gas a fondo».
+     *
+     * Aquí el techo es el techo: lo que llevabas, y ni un metro más.
+     */
+    if (enLaCarrera) {
+      c.throttle = Math.min(
+        c.throttle,
+        this.flight.gasParaRodar(this.techoDeLaCarrera),
+      );
+      return;
+    }
 
     const tope = topeDeRodaje({
       velocidad: s.airspeed,
-      // La velocidad de rodaje de **este sitio**, que el plan ya calcula: en
-      // una curva cerrada es menor que en una recta larga.
-      rodaje: this.vistaActual?.velocidadSugerida || RODAJE,
+      /*
+       * La velocidad de rodaje de **este sitio**, que el plan ya calcula: en
+       * una curva cerrada es menor que en una recta larga.
+       */
+      rodaje: vista.velocidadSugerida || RODAJE,
     });
-    const c = this.input.controls;
-    // Límites, no mandos: se coge lo más restrictivo de lo que pide quien
-    // juega y lo que deja el tope, así esto nunca acelera ni suelta el freno.
-    c.throttle = Math.min(c.throttle, tope.gas);
-    c.brakes = Math.max(c.brakes, tope.freno);
+    /*
+     * Límites, no mandos: se coge lo más restrictivo de lo que pide quien
+     * juega y lo que deja el tope, así esto nunca acelera ni suelta el freno.
+     *
+     * Y el tope llega en metros por segundo, no en gas: se le pregunta al
+     * modelo qué gas sostiene esa velocidad. Cerrar el gas «a la mitad» no
+     * significa lo mismo en los dos modelos —en el sencillo el gas **es** la
+     * velocidad—, y por eso la primera versión de esto dejaba el avión clavado
+     * en cero mientras la pantalla seguía pidiendo freno: «es una
+     * exageración». La velocidad sí significa lo mismo en los dos.
+     */
+    c.throttle = Math.min(c.throttle, this.flight.gasParaRodar(tope.velocidad));
+    /*
+     * Y el freno **no se toca**, ni aquí ni en la carrera de aterrizaje.
+     *
+     * Lo hacía: por encima de cierto exceso el juego frenaba por su cuenta. Se
+     * probó rodando y el avión acababa clavado en cero con la tarjeta del
+     * freno puesta. Pero el fallo de fondo no era la exageración, era la
+     * lección: «si durante todo el rato del aterrizaje el juego está moviendo
+     * y controlando la velocidad de la aeronave, ahora el niño cree que se va
+     * a parar sola. Y si todo se hace solo, vaya aburrimiento».
+     */
   }
 
   private asistirRodaje(dt: number): void {
@@ -3197,6 +3416,24 @@ export class Game {
       dt,
     );
     this.vistaActual = vista;
+
+    /*
+     * **Una orden que espera a que hagas algo no puede perderse por el camino.**
+     *
+     * Las tarjetas de esas fases se ponen con `Infinity` justamente para eso,
+     * pero eso solo las protege de su propio reloj: cualquier aviso de paso
+     * —un aro, un edificio, el señalero— las tapa, dura sus dos segundos y al
+     * apagarse deja la pantalla **en blanco**, con la orden perdida hasta el
+     * siguiente cambio de fase, que puede no llegar nunca.
+     *
+     * Se vio en el peor sitio posible: la primera pantalla de una lección de
+     * despegue, sin la llave y sin nada. Así que si la señal está apagada y la
+     * fase de ahora es de las que esperan, se vuelve a anunciar. No hace falta
+     * saber quién se la llevó.
+     */
+    if (!this.hud.senal.visible && SE_QUEDAN.has(vista.fase)) {
+      this.faseAnunciada = "";
+    }
 
     // La lámpara de la torre solo tiene sentido en tierra y antes de despegar:
     // es lo que se mira desde el punto de espera. En el aire no hay lámpara que
@@ -3326,8 +3563,7 @@ export class Game {
        * solo**. La diferencia con `pendiente` es que aquí no hay tecla que
        * pulsar ni tarjeta que tocar; solo hay que seguir viéndolo.
        */
-      const seQueda =
-        vista.fase === "aterrizado" || vista.fase === "abandonando";
+      const seQueda = SE_QUEDAN.has(vista.fase);
       this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", letra, {
         segundos:
           pendiente || esperando || seQueda
@@ -3864,7 +4100,11 @@ export class Game {
     );
     // Y con la insignia va la escala del pictograma de velocidad, que es de
     // la aeronave y cambia con ella. Ver `Hud.setAeronave`.
-    this.hud.setAeronave(this.aircraft.approachSpeed);
+    this.hud.setAeronave(
+      this.aircraft.approachSpeed,
+      // Y el techo del modelo de hoy, que es donde tiene que estar el pájaro.
+      this.flight.velocidadMaxima(),
+    );
   }
 
   private onResize = (): void => {

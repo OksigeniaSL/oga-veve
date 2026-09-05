@@ -280,6 +280,20 @@ export class CoefficientFlightModel implements FlightModel {
     );
   }
 
+  /**
+   * Aquí el gas es empuje, no velocidad, así que no hay cuenta exacta: rodar a
+   * nueve metros por segundo se sostiene con muy poco empuje —lo único que hay
+   * que vencer es la rodadura— y lo que importa de este número es que **deje
+   * salir del puesto** y no dé para una carrera. Un quinto de gas por cada
+   * treinta metros por segundo, con suelo para arrancar parado.
+   */
+  gasParaRodar(velocidad: number): number {
+    return Math.max(
+      0.2,
+      Math.min(1, velocidad / (this.aircraft.cruiseSpeed * 0.5)),
+    );
+  }
+
   step(dt: number, controls: ControlInputs): void {
     // El tope, uno solo y compartido con el bucle del juego. Ver `MAX_PASO`.
     const total = Math.min(dt, MAX_PASO);

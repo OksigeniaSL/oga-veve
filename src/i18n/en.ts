@@ -137,6 +137,8 @@ export const EN: Dictionary = {
   'vuelo.terrenoBajo': 'You are very low',
   'vuelo.terrenoSube': 'Pull up!',
   'vuelo.frustrada': 'Well done! You went around. Try again',
+  'vuelo.aroAlto': 'You went over the ring. Come down a little',
+  'vuelo.aroBajo': 'You went under the ring. Climb a little',
   'vuelo.bulto': 'No way through: there is a building',
   'fin.llegaste': 'You made it! You are home',
   'fin.bien': 'Good flight!',
@@ -151,6 +153,7 @@ export const EN: Dictionary = {
   'vuelo.apagado': 'Flight complete!',
   'vuelo.fuera': 'Back to the green line',
   'vuelo.despacio': 'Slow down',
+  'vuelo.alto': 'Stop here',
   'vuelo.sinPermiso': 'You went in without the green light. Wait for it next time',
 
   'hangar.pais.py': 'Paraguay',

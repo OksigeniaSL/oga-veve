@@ -185,6 +185,49 @@ const rodando = await page.evaluate(async () => {
   const desvios = [];
   const fases = [];
   /*
+   * **Y este piloto sí lleva el timón.**
+   *
+   * Hasta hoy no lo tocaba: daba gas y dejaba que la ayuda de rodaje —que en
+   * Guyrami estaba a tope— le hiciera las curvas. Eso medía el juego que había
+   * y no el que queremos: «no tiene mucho sentido que el juego conduzca por el
+   * jugador». Con la ayuda bajada a la mitad, el mismo piloto se comía la
+   * primera curva, se plantaba en la pista y despegaba sin querer — que es
+   * exactamente lo que le pasaría a un niño si nadie llevara el timón.
+   *
+   * Así que lo lleva: mira un punto de la ruta quince metros por delante y
+   * gira hacia él. Es lo que hace quien sigue una raya pintada, y deja al
+   * banco midiendo lo que tiene que medir — si la raya se puede seguir.
+   */
+  const MIRA = 15;
+  const timon = (s, ruta) => {
+    if (!ruta.length) return 0;
+    let cerca = 0;
+    let mejor = Infinity;
+    for (let i = 0; i < ruta.length; i++) {
+      const d = Math.hypot(ruta[i][0] - s.position.x, ruta[i][1] - s.position.z);
+      if (d < mejor) {
+        mejor = d;
+        cerca = i;
+      }
+    }
+    let mira = ruta[ruta.length - 1];
+    for (let i = cerca; i < ruta.length; i++) {
+      const d = Math.hypot(ruta[i][0] - s.position.x, ruta[i][1] - s.position.z);
+      if (d > MIRA) {
+        mira = ruta[i];
+        break;
+      }
+    }
+    // El rumbo del juego: x crece con el seno y z decrece con el coseno.
+    const rumbo = Math.atan2(mira[0] - s.position.x, -(mira[1] - s.position.z));
+    let e = rumbo - s.heading;
+    while (e > Math.PI) e -= 2 * Math.PI;
+    while (e < -Math.PI) e += 2 * Math.PI;
+    return Math.max(-1, Math.min(1, e * 2));
+  };
+  // Se guarda para la entrada en pista, que es otra `evaluate` y otro ámbito.
+  globalThis.__timon = timon;
+  /*
    * Doscientos segundos. La ruta de salida de Tenerife Norte son dos
    * kilómetros de calle a velocidad de rodaje: el primer intento le dio
    * treinta segundos y **el banco se declaraba roto porque no había llegado
@@ -211,6 +254,7 @@ const rodando = await page.evaluate(async () => {
     const llegando = alFinal < 45;
     c.throttle = !llegando && s.airspeed < RODAJE ? 0.5 : 0;
     c.brakes = llegando || s.airspeed > RODAJE * 1.25 ? 1 : 0;
+    c.aileron = timon(s, ruta);
     desvios.push(s.airspeed);
     fases.push(o.fase());
     if (o.fase() === 'esperando' || o.fase() === 'autorizado') break;
@@ -287,20 +331,68 @@ const despegue = await page.evaluate(async () => {
    * decía «no despega» y lo que pasaba es que estaba en la hierba.
    */
   c.brakes = 0;
+  /*
+   * **Y la entrada también se hace con el timón**, que la curva del punto de
+   * espera a la pista es la más cerrada de todo el rodaje.
+   *
+   * Iba con el alerón a cero, apoyada en la ayuda de rodaje: con la ayuda a
+   * tope el avión entraba solo. Bajada a la mitad, en Silvio Pettirossi el
+   * avión se quedaba en la boca —«no llegó a despegar»— y el banco culpaba al
+   * empuje. Mientras queda raya, se sigue la raya; ya en el asfalto, se apunta
+   * al eje de la pista.
+   */
+  const rumboPista = (pista.heading * Math.PI) / 180;
+  const alRumbo = (s, rumbo) => {
+    let e = rumbo - s.heading;
+    while (e > Math.PI) e -= 2 * Math.PI;
+    while (e < -Math.PI) e += 2 * Math.PI;
+    return Math.max(-1, Math.min(1, e * 2));
+  };
   for (let i = 0; i < 200; i++) {
     await new Promise((r) => setTimeout(r, 200));
     const s = o.estado();
     c.throttle = s.airspeed < 8 ? 0.5 : 0;
+    /*
+     * Tres tramos, y en este orden: mientras quede raya por delante se sigue
+     * la raya; agotada la raya —en la doble raya la ruta termina, y seguir
+     * mirando su último punto es dar vueltas alrededor de él— se apunta al eje
+     * de la pista; y ya en el asfalto, se pone el morro en el eje.
+     */
+    const ruta = o.ruta();
+    const fin = ruta.length ? ruta[ruta.length - 1] : null;
+    const alFin = fin
+      ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z)
+      : 0;
+    if (s.onRunway) {
+      // El rumbo de la pista o el contrario: el que se parezca más al morro,
+      // que por dónde se despega depende del aeródromo y del día.
+      const directo = alRumbo(s, rumboPista);
+      const inverso = alRumbo(s, rumboPista + Math.PI);
+      c.aileron = Math.abs(directo) < Math.abs(inverso) ? directo : inverso;
+    } else if (ruta.length > 1 && alFin > 30) {
+      c.aileron = globalThis.__timon(s, ruta);
+    } else {
+      c.aileron = alRumbo(
+        s,
+        Math.atan2(pista.x - s.position.x, -(pista.z - s.position.z)),
+      );
+    }
     if (s.onRunway && o.fase() === 'despegando') break;
     if (s.onRunway && Math.abs(s.airspeed) < 12 && o.fase() === 'alineando') {
       // Ya en el eje: se acabó el rodaje.
       if (i > 12) break;
     }
   }
+  // Y el timón se suelta para la carrera: lo que se mide ahí es el empuje.
+  c.aileron = 0;
   c.throttle = 1;
   let frenoSeFue = null;
   let enElAire = null;
   let usado = 0;
+  // Desde dónde se empieza la carrera y hasta dónde se llega: si no despega,
+  // esto dice si el problema es el empuje o el sitio.
+  const partida = { pista: o.estado().onRunway, fase: o.fase() };
+  let alto = 0;
   const inicio = o.estado().position.clone
     ? { x: o.estado().position.x, z: o.estado().position.z }
     : null;
@@ -314,6 +406,7 @@ const despegue = await page.evaluate(async () => {
     if (inicio) {
       usado = Math.hypot(s.position.x - inicio.x, s.position.z - inicio.z);
     }
+    alto = Math.max(alto, s.heightAboveGround);
     if (!s.onGround && s.heightAboveGround > 15) {
       enElAire = { v: s.airspeed, usado };
       break;
@@ -324,6 +417,9 @@ const despegue = await page.evaluate(async () => {
     frenoSeFue,
     largoDePista: pista.length,
     fase: o.fase(),
+    partida,
+    alto,
+    usado,
   };
 });
 
@@ -332,7 +428,7 @@ comprobar(
   despegue.enElAire !== null,
   despegue.enElAire
     ? `a ${despegue.enElAire.v.toFixed(1)} m/s tras ${despegue.enElAire.usado.toFixed(0)} m`
-    : 'no llegó a despegar',
+    : `no llegó a despegar: empezó ${despegue.partida.pista ? 'en pista' : 'fuera de pista'} en fase «${despegue.partida.fase}», subió ${despegue.alto.toFixed(0)} m en ${despegue.usado.toFixed(0)} m`,
   'con el empuje mal el avión tardaba veinticinco segundos en rotar',
 );
 if (despegue.enElAire) {

@@ -175,6 +175,33 @@ const FUERA_DE_PISTA = icono(`
   </g>
 `);
 
+/**
+ * Se escapó el aro por arriba: **bajá al aro**.
+ *
+ * «Supero el aro y nadie me corrige.» El aro perdido sonaba y destellaba en
+ * rojo —o sea, decía *que* se escapó— y no decía **hacia dónde**, que es la
+ * mitad que enseña: pasar por encima y pasar por debajo eran el mismo pitido y
+ * son la lección contraria.
+ *
+ * El dibujo es el aro y el avión fuera de él, con la flecha del lado que toca.
+ * Sin tachón y sin rojo: perder un aro no es un fracaso, es información —y el
+ * aro siguiente ya está ahí para volver a intentarlo—.
+ */
+const ARO_ALTO = icono(`
+  <circle cx="12" cy="16.5" r="5.6" fill="none" stroke="currentColor" stroke-width="2.4" />
+  <path d="M6.6 4.6 h10.8 M12 3 v5.6" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round" fill="none" />
+  <path d="M12 11.6 L8.8 7.4 h6.4 Z" />
+`);
+
+/** Y por debajo: **subí al aro**. El mismo dibujo, del revés. */
+const ARO_BAJO = icono(`
+  <circle cx="12" cy="7.5" r="5.6" fill="none" stroke="currentColor" stroke-width="2.4" />
+  <path d="M6.6 19.4 h10.8 M12 15.4 v5.6" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round" fill="none" />
+  <path d="M12 12.4 L8.8 16.6 h6.4 Z" />
+`);
+
 /** La luz verde: adelante. */
 const VERDE = icono(`
   <circle cx="12" cy="12" r="9.5" />
@@ -322,6 +349,8 @@ const DIBUJOS: Record<string, string> = {
   frustrada: FRUSTRADA,
   edificio: EDIFICIO,
   fuera: FUERA_DE_PISTA,
+  "aro-alto": ARO_ALTO,
+  "aro-bajo": ARO_BAJO,
   "senalero-adelante": SENALERO_ADELANTE,
   "senalero-alto": SENALERO_ALTO,
   "senalero-izquierda": SENALERO_IZQUIERDA,
