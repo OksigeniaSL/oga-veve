@@ -89,4 +89,33 @@ describe("los obstáculos", () => {
     const o = bloque();
     expect(o.chocaEnElCamino(0, 40, 0, 0, 25, 0)).toBe(true);
   });
+
+  it("sabe por dónde se sale: el tejado de lo que te tiene dentro", () => {
+    const o = bloque();
+    expect(o.techoEn(0, 15, 0)).toBe(30);
+    expect(o.techoEn(40, 15, 0)).toBe(-Infinity);
+  });
+
+  it("y si hay dos encajados, el de arriba, que es el que te saca de los dos", () => {
+    const o = bloque();
+    o.anadir(0, 0, 14, 14, 0, 55);
+    expect(o.techoEn(0, 15, 0)).toBe(55);
+  });
+
+  it("dice dónde se topa y dónde estaba libre, que es lo que hace falta", () => {
+    const golpe = bloque().primerChoque(0, 15, -40, 0, 15, 40)!;
+    expect(golpe).not.toBeNull();
+    // Se topa al entrar en la caja encogida y el último libre queda fuera.
+    expect(golpe.dentro.z).toBeGreaterThan(-10);
+    expect(golpe.libre.z).toBeLessThan(golpe.dentro.z);
+    expect(bloque().choca(golpe.libre.x, golpe.libre.y, golpe.libre.z)).toBe(
+      false,
+    );
+  });
+
+  it("y partiendo de dentro lo dice en el primer punto: no hay sitio libre", () => {
+    const golpe = bloque().primerChoque(0, 15, 0, 0, 15, 40)!;
+    expect(golpe).not.toBeNull();
+    expect(golpe.dentro.z).toBe(0);
+  });
 });

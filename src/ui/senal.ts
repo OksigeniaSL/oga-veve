@@ -322,6 +322,26 @@ export class Senal {
   private tecla: HTMLElement | null = null;
   private actual = "";
   private queda = 0;
+  /**
+   * Lo importante que es lo que hay puesto ahora. Ver `mostrar`.
+   *
+   * **Existe porque la señal es una y los que escriben en ella son cinco**: el
+   * plan de vuelo, el señalero, el aviso de terreno, la celebración de la
+   * frustrada y el aviso de bulto. Sin orden entre ellos gana el último que
+   * habla, y el último que habla no es el que más falta hace: se midió
+   * volando contra un edificio y la tarjeta que salía era la de «frená».
+   */
+  private prioridad = 0;
+  /**
+   * La tarjeta de espera que no ha podido salir todavía, si hay alguna.
+   *
+   * **Las de espera no se descartan, se guardan.** Una tarjeta de `Infinity`
+   * está pidiéndole algo a quien juega —arrancá, frená, salí de la pista— y
+   * perderla deja a alguien parado sin saber qué toca, que es un fallo que ya
+   * costó caro. Así que cuando llega tapada por algo más urgente se pone en
+   * cola y vuelve sola en cuanto lo urgente se apaga.
+   */
+  private enEspera: (() => void) | null = null;
   private accion: (() => void) | null = null;
 
   /**
@@ -375,9 +395,39 @@ export class Senal {
       readonly tecla?: string | null;
       /** Qué hace la tarjeta al tocarla. Si hay algo, es un botón de verdad. */
       readonly accion?: (() => void) | null;
+      /**
+       * Cuánta falta hace esto, de cero a lo que sea. Cero por defecto.
+       *
+       * Una tarjeta no puede tapar a otra que importe más mientras esta dure.
+       * La excepción son las que **esperan a que alguien haga algo** —las de
+       * `Infinity`—: esas siempre entran, porque si no se queda uno parado sin
+       * saber qué toca, que es un fallo que ya costó caro una vez.
+       */
+      readonly prioridad?: number;
     } = {},
   ): void {
     if (!this.caja || !this.dibujo) return;
+    const prioridad = opciones.prioridad ?? 0;
+    const espera = opciones.segundos === Infinity;
+    /*
+     * **Y esto vale también para las de espera**, que era el agujero.
+     *
+     * Se dejaba entrar a cualquier tarjeta de `Infinity` sin mirar la
+     * prioridad, con el argumento de que quien espera una orden no puede
+     * quedarse sin ella. Pero como esas no caducan, la primera que entrara se
+     * quedaba puesta para siempre: se midió volando contra un edificio y la
+     * tarjeta que había era la de «frená» de la carrera de aterrizaje
+     * anterior, tapando el aviso de bulto que sí estaba saliendo.
+     *
+     * La orden no se pierde: se pone en cola. Ver `enEspera`.
+     */
+    if (prioridad < this.prioridad && this.queda > 0) {
+      if (espera)
+        this.enEspera = () => this.mostrar(dibujo, texto, letra, opciones);
+      return;
+    }
+    if (!espera) this.enEspera = null;
+    this.prioridad = prioridad;
     this.actual = dibujo;
     this.queda = opciones.segundos ?? 6;
     this.caja.hidden = false;
@@ -408,6 +458,27 @@ export class Senal {
   }
 
   /** El aviso se apaga solo. Un cartel permanente deja de mirarse. */
+  /**
+   * Retira esa tarjeta si es la que está puesta.
+   *
+   * Es para lo que deja de ser verdad: un aviso de edificio o de terreno se
+   * apaga en cuanto el avión toca tierra, porque ya no hay nada que esquivar.
+   * Sin esto, la orden que venía detrás —«frená»— se quedaba en la cola
+   * esperando a que caducara un aviso que ya no significaba nada.
+   */
+  caducar(dibujo: string): void {
+    if (this.actual === dibujo) this.queda = 0;
+  }
+
+  /** Qué hay puesto y cuánto le queda. Para el banco de pruebas. */
+  get puesto(): { dibujo: string; queda: number; prioridad: number } {
+    return {
+      dibujo: this.actual,
+      queda: this.queda,
+      prioridad: this.prioridad,
+    };
+  }
+
   update(dt: number): void {
     if (!this.caja || this.caja.hidden) return;
     // `Infinity` quiere decir «hasta que cambie»: lo que está pendiente de
@@ -418,6 +489,11 @@ export class Senal {
     if (this.queda <= 0) {
       this.caja.hidden = true;
       this.actual = "";
+      this.prioridad = 0;
+      // Y si algo se quedó esperando turno, ahora es su turno.
+      const vuelve = this.enEspera;
+      this.enEspera = null;
+      vuelve?.();
     }
   }
 

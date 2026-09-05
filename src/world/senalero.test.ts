@@ -79,9 +79,9 @@ describe("el señalero", () => {
     const s = puesto();
     const suyo = donde(s);
     rato(s, { x: suyo.x, z: suyo.z, velocidad: 0 }, 4);
-    expect(
-      Math.hypot(donde(s).x - suyo.x, donde(s).z - suyo.z),
-    ).toBeLessThan(0.5);
+    expect(Math.hypot(donde(s).x - suyo.x, donde(s).z - suyo.z)).toBeLessThan(
+      0.5,
+    );
   });
 
   it("y cuando pasa el peligro vuelve a su sitio", () => {
