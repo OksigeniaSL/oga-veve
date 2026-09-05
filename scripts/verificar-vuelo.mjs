@@ -34,6 +34,16 @@ import { createServer } from 'vite';
 
 const ESCENARIO = process.argv[2] ?? 'tenerife-norte';
 const TRAMO = process.argv[3] ?? 'guyrami';
+
+/**
+ * Si en este peldaño viene el coche del «sígame».
+ *
+ * De Taguató en adelante **no viene, y es a propósito**: ahí la lección es el
+ * plano de rodaje, y con un coche delante no hay plano que aprender. Ver
+ * `flight/tiers.ts`. Sin esta distinción, la prueba del sígame daba por roto
+ * lo que estaba bien.
+ */
+const CON_SIGUEME = TRAMO === 'guyrami' || TRAMO === 'tuka';
 const PUERTO = 5273;
 
 const server = await createServer({
@@ -312,6 +322,17 @@ const enPista = await page.evaluate(() => {
      * había en su lugar en vez de un hueco.
      */
     tarjeta: o.tarjeta().dibujo,
+    /*
+     * Y el coche del «sígame», que aquí desaparecía: «se ve bien, pero
+     * desaparece en la pista de aterrizaje, no va delante de mí hasta el
+     * final». Tiene que estar, y **por delante**, esperando en la salida.
+     */
+    coche: (() => {
+      const c = globalThis.__raiz.getObjectByName('sigueme');
+      if (!c?.visible) return null;
+      const suyo = ejes(c.position.x, c.position.z);
+      return { delante: suyo.along - yo.along, fuera: Math.abs(suyo.across) };
+    })(),
   };
 });
 comprobar(
@@ -326,6 +347,18 @@ comprobar(
   `${enPista.fueraDelEje} puntos fuera del medio ancho`,
   'iba en diagonal desde el avión hasta la boca de la salida',
 );
+if (CON_SIGUEME) {
+  comprobar(
+    'el sígame espera en la salida mientras se frena',
+    // Por delante **y fuera del eje**: si está en el eje es que va bajando la
+    // pista corriendo delante de un avión que aterriza, que no lo hace nadie.
+    !!enPista.coche && enPista.coche.delante > 0 && enPista.coche.fuera > 20,
+    enPista.coche
+      ? `a ${enPista.coche.delante.toFixed(0)} m por delante, ${enPista.coche.fuera.toFixed(0)} m del eje`
+      : 'no está',
+    '«se ve bien, pero desaparece en la pista de aterrizaje»',
+  );
+}
 comprobar(
   'y la tarjeta pide frenar con su tecla',
   enPista.tarjeta === 'freno',

@@ -1355,6 +1355,28 @@ export class Game {
     }, TARDA_EL_FINAL * 1000);
   }
 
+  /**
+   * Por dónde se sale de la pista, en coordenadas del mundo.
+   *
+   * Es el primer punto de la ruta de vuelta que ya no pisa asfalto de pista.
+   * Sirve para plantar ahí el coche del «sígame» mientras se frena: enseña por
+   * dónde hay que abandonar sin decir una palabra, que es exactamente para lo
+   * que sirve un sígame.
+   */
+  private bocaDeLaSalida(): { x: number; z: number } | null {
+    const ruta = this.plan?.rutaVisible() ?? [];
+    const r = this.scenario.runway;
+    for (const [x, z] of ruta) {
+      const ejes = enEjesDePista(x, z, r.x, r.z, r.heading);
+      if (
+        Math.abs(ejes.across) > r.width / 2 ||
+        Math.abs(ejes.along) > r.length / 2
+      )
+        return { x, z };
+    }
+    return null;
+  }
+
   /** El aviso del bulto, con su antirrebote. Ver `SE_QUEDA_EL_BULTO`. */
   private avisarDelBulto(dibujo: string): void {
     if (this.avisandoDelBulto > 0) return;
@@ -2832,6 +2854,11 @@ export class Game {
         fase === "rodando" ||
         fase === "esperando" ||
         fase === "autorizado" ||
+        // **Y frenando en la pista, que es donde desaparecía.** «Se ve bien,
+        // pero desaparece en la pista de aterrizaje»: en esa fase el coche no
+        // estaba activo, así que justo cuando hay que decidir por dónde salir
+        // no había nadie delante. Ahora está, esperando en la salida.
+        fase === "aterrizado" ||
         fase === "abandonando" ||
         fase === "a-plataforma";
       this.sigueme.paso(
@@ -2840,6 +2867,7 @@ export class Game {
         rodando && s.onGround,
         gesto !== null,
         (x, z) => this.terrain.sampleHeight(x, z),
+        fase === "aterrizado" ? this.bocaDeLaSalida() : null,
       );
     }
   }
