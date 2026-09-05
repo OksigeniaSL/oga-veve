@@ -128,6 +128,14 @@ const ALCANCE_MINIMO_DEL_AVISO = 120;
  * Tres: lo justo para estar fuera y no lo bastante para que parezca un salto.
  */
 const POR_ENCIMA_DEL_TEJADO = 3;
+
+/**
+ * Cuánto se tarda en enseñar el final tras apagar el motor, s.
+ *
+ * Medio segundo. Apagar tiene su sonido y su hélice frenando, y encimarle la
+ * pantalla le quita el momento a las dos cosas.
+ */
+const TARDA_EL_FINAL = 0.5;
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
 import { crearCiudad } from "./world/ciudad";
@@ -168,6 +176,7 @@ import { techoSobreLaPista } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
+import { reconocer } from "./flight/reconocimiento";
 import { arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
@@ -366,6 +375,8 @@ export class Game {
   private readonly antesDelPaso = new Vector3();
   /** Segundos que le quedan al aviso del bulto, para no repetirlo cada paso. */
   private avisandoDelBulto = 0;
+  /** Si este vuelo ya terminó, para no enseñar el final dos veces. */
+  private vueloTerminado = false;
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
   private vistaActual: Vista | null = null;
   /** Si ahora mismo la pantalla está pidiendo freno. Ver `avanzarPlan`. */
@@ -861,6 +872,8 @@ export class Game {
       avisoDeBulto: () => this.avisandoDelBulto,
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
+      /** Si está puesta la pantalla de fin de vuelo. Para el banco. */
+      finDeVuelo: () => this.hud.finPuesto,
       /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
       senalero: () => this.senalero,
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
@@ -1308,6 +1321,38 @@ export class Game {
     )
       return;
     this.avisarDelBulto("edificio");
+  }
+
+  /**
+   * Se acabó el vuelo: se enseña lo que se llevó puesto.
+   *
+   * «Se echa en falta un reconocimiento en función de los galones logrados.»
+   * Los galones se ganaban uno a uno con su sonido y su barra, y al apagar el
+   * motor no pasaba nada: el vuelo terminaba como termina una pestaña que se
+   * cierra.
+   *
+   * Va con medio segundo de retraso a propósito. Apagar el motor tiene su
+   * propio sonido y su propia hélice parándose, y encimarle una pantalla le
+   * quita el momento a las dos cosas.
+   *
+   * La regla de qué se dice —y que ningún final sea un reproche— vive en
+   * `flight/reconocimiento.ts`, que es donde se puede probar.
+   */
+  private terminarElVuelo(): void {
+    if (this.vueloTerminado) return;
+    this.vueloTerminado = true;
+    window.setTimeout(() => {
+      if (!this.vueloTerminado) return;
+      const final = reconocer(this.galones.lista);
+      this.hud.mostrarFinDeVuelo(
+        this.galones.lista,
+        // Sin palabras donde todavía no se lee: las barras son el mensaje.
+        this.tier.instruments === "none"
+          ? ""
+          : t(`fin.${final.nivel}` as never),
+      );
+      this.audio.cue("achieved");
+    }, TARDA_EL_FINAL * 1000);
   }
 
   /** El aviso del bulto, con su antirrebote. Ver `SE_QUEDA_EL_BULTO`. */
@@ -2811,6 +2856,9 @@ export class Game {
   private reiniciarGalones(): void {
     this.galones.reiniciar();
     this.hud.setGalones([]);
+    // Y se quita el final del vuelo anterior, que ya no habla de este.
+    this.vueloTerminado = false;
+    this.hud.cerrarFinDeVuelo();
   }
 
   /**
@@ -3089,6 +3137,9 @@ export class Game {
       }
       if (vista.fase === "autorizado" || vista.fase === "apagado")
         this.audio.cue("success");
+      // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
+      // decir qué te llevás. Ver `terminarElVuelo`.
+      if (vista.fase === "apagado") this.terminarElVuelo();
     } else if (vista.rapido && this.plan.avisarDeSalida(dt)) {
       // **«¿Quién me indica si voy muy rápido o lento en rodadura?»** Nadie, y
       // esa era la respuesta honesta: el indicador de tortuga y pájaro está

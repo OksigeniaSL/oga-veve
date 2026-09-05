@@ -96,6 +96,10 @@ export const GUG: Dictionary = {
   'galon.velocidad': 'Pya’e rechaukaha',
   'galon.rodaje': 'Reguata yvýpe rechaukaha',
   'galon.frustrada': 'Rejupi jey rechaukaha',
+  'fin.llegaste': '¡Reguahẽma! Reĩma nde rógape',
+  'fin.bien': '¡Reveve porã!',
+  'fin.muyBien': '¡Reveve iporãitereí!',
+  'fin.redondo': '¡Reveve ipotĩmbaite!',
 
   // ── Instrumentos ───────────────────────────────────────────────────────
   // Los rótulos cortos (IAS, ALT, HDG…) no están aquí a propósito: no se

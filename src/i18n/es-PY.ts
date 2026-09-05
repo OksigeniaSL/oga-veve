@@ -140,6 +140,11 @@ export const ES_PY = {
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   'vuelo.frustrada': '¡Bien hecho! Te fuiste al aire. Probá de nuevo',
   'vuelo.bulto': 'Por ahí no se pasa: hay un edificio',
+  // El final del vuelo. Ninguno es un reproche: ver flight/reconocimiento.ts.
+  'fin.llegaste': '¡Llegaste! Ya estás en casa',
+  'fin.bien': '¡Buen vuelo!',
+  'fin.muyBien': '¡Gran vuelo!',
+  'fin.redondo': '¡Vuelo redondo! No se puede hacer mejor',
   'vuelo.aterrizado': 'Frená',
   'vuelo.abandonando': 'Salí de la pista, que viene otro',
   'vuelo.pistaLibre': '¡Pista libre! Bien hecho',
