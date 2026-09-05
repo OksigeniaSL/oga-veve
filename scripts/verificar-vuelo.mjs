@@ -107,6 +107,33 @@ async function poner(d, alto, lateral = 0) {
   await page.waitForTimeout(260);
 }
 
+/**
+ * Igual, pero midiendo la altura **desde el suelo de ahí**, no desde la pista.
+ *
+ * Hace falta porque los dos escenarios no se parecen: Tenerife Norte está en
+ * una meseta y a un kilómetro del umbral el terreno ha caído setenta metros,
+ * mientras que Silvio Pettirossi es llano. Una altura medida sobre la pista
+ * ponía el avión a ciento cuarenta metros del suelo en uno y bajo tierra en el
+ * otro, y la prueba medía cosas distintas en cada sitio.
+ */
+async function ponerSobreElSuelo(d, alto) {
+  await page.evaluate(
+    ({ d, alto }) => {
+      const o = globalThis.__oga;
+      const s = o.estado();
+      const h = s.heading;
+      const ux = Math.sin(h);
+      const uz = -Math.cos(h);
+      const u = globalThis.__umbral;
+      const x = u.x - ux * d;
+      const z = u.z - uz * d;
+      o.colocar(x, o.suelo(x, z) + alto, z, s.airspeed);
+    },
+    { d, alto },
+  );
+  await page.waitForTimeout(260);
+}
+
 // El umbral en uso, que es de donde se mide todo. Sale del haz de la cabecera,
 // que está plantado exactamente ahí.
 await page.evaluate(() => {
@@ -179,6 +206,82 @@ comprobar(
   enCorta.faro < 0.05,
   `opacidad del haz ${enCorta.faro.toFixed(2)}`,
   'el haz de la cabecera pintaba la pista de ocre y borraba sus marcas',
+);
+
+// ── Bajo de verdad en la senda ────────────────────────────────────────────
+
+/*
+ * **«Final» no puede ser una excusa para callarse.**
+ *
+ * El aviso de terreno se calla en la aproximación final a propósito: ahí estar
+ * bajo y bajando es lo que toca. Pero la fase dice «final» con estar alineado,
+ * por delante del umbral y bajando —no mira la altura—, así que quien viene a
+ * dos kilómetros y a quince metros del suelo también está «en final».
+ *
+ * Grabado volando: aproximación larga sobre la ciudad, el avión bajando entre
+ * los edificios y la pantalla muda hasta posarse en un descampado.
+ */
+/*
+ * Treinta y cinco metros **sobre el suelo** a kilómetro y medio del umbral, y
+ * no una altura medida sobre la pista: los dos escenarios no se parecen. A esa
+ * distancia la senda va por setenta y ocho metros sobre la pista, así que esto
+ * queda menos de la mitad en los dos — y entre los quince metros por debajo de
+ * los cuales ya no hay aviso que dar y los ciento veinte por encima de los
+ * cuales no hay nada que avisar.
+ */
+await ponerSobreElSuelo(1500, 35);
+const bajoEnLaSenda = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const c = o.controles();
+  /*
+   * **Morro abajo de verdad y gas corto.** Con un toque suave, en el modelo de
+   * coeficientes el avión a veces se sostenía y la prueba salía distinta cada
+   * vez: pasaba sola en un escenario y fallaba en el otro sin que nada
+   * estuviera roto. Lo que se está probando es si alguien habla, no si el
+   * avión sabe bajar.
+   */
+  c.throttle = 0.12;
+  /*
+   * Un par de segundos para que la máquina de fases se entere de dónde está.
+   * Una fase nueva tiene que sostenerse medio segundo antes de sustituir a la
+   * vieja, y sin esta espera el aviso salía **antes** de que el juego dijera
+   * «final»: la prueba medía el fotograma anterior.
+   */
+  await new Promise((r) => setTimeout(r, 2000));
+  let aviso = '';
+  let fase = '';
+  let alto = 0;
+  for (let i = 0; i < 200; i++) {
+    c.elevator = -0.35;
+    await new Promise((r) => setTimeout(r, 50));
+    alto = o.estado().heightAboveGround;
+    /*
+     * **Las dos cosas a la vez, y el aviso vivo, no su tarjeta.**
+     *
+     * La tarjeta dura tres segundos y se queda puesta cuando el aviso ya se
+     * apagó: mirándola, la prueba pasaba igual con el arreglo puesto que
+     * quitado. Y la fase tiene que ser «final» **en ese mismo instante**,
+     * porque fuera de final este aviso siempre habló.
+     */
+    if (o.fase() === 'final' && o.avisoDeTerreno()) {
+      aviso = o.avisoDeTerreno();
+      fase = o.fase();
+      break;
+    }
+    if (o.estado().onGround) break;
+  }
+  const ultimaFase = o.fase();
+  c.elevator = 0;
+  c.throttle = 0;
+  return { fase, aviso, alto, ultimaFase };
+});
+comprobar(
+  'volando bajísimo en final, alguien lo dice',
+  !!bajoEnLaSenda.aviso && bajoEnLaSenda.fase === 'final',
+  bajoEnLaSenda.aviso
+    ? `«${bajoEnLaSenda.aviso}» a ${bajoEnLaSenda.alto.toFixed(0)} m del suelo, en fase «${bajoEnLaSenda.fase}»`
+    : `nadie dijo nada a ${bajoEnLaSenda.alto.toFixed(0)} m, fase «${bajoEnLaSenda.ultimaFase}»`,
+  'la fase decía «final» y con eso el aviso de terreno se callaba',
 );
 
 // ── La frustrada ──────────────────────────────────────────────────────────
@@ -503,6 +606,23 @@ comprobar(
     : `nada, fase «${final.fase}»`,
   'el vuelo terminaba como termina una pestaña que se cierra',
 );
+
+/*
+ * **Y se puede salir de ahí.** «Vale, pero habrá que salir de aquí»: el HUD
+ * entero deja pasar el puntero para no comerse los clics del mundo, así que la
+ * pantalla del final no recibía ni uno. Se veía perfecta y no se cerraba.
+ */
+if (final.puesta) {
+  await page.click('[data-hud="fin"]', { position: { x: 40, y: 40 } });
+  await page.waitForTimeout(300);
+  const cerrada = await page.evaluate(() => !globalThis.__oga.finDeVuelo());
+  comprobar(
+    'y se puede salir de esa pantalla',
+    cerrada,
+    cerrada ? 'se cierra al tocarla' : 'no se cierra ni tocándola',
+    '«vale, pero habrá que salir de aquí»: el HUD no dejaba pasar el clic',
+  );
+}
 
 // ── Y que al señalero no se le atropella ──────────────────────────────────
 

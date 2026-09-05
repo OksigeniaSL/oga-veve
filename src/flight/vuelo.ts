@@ -202,6 +202,30 @@ const TORRE_TARDA = 2.2;
 const PISTA_LIBRE = 75;
 
 /**
+ * La velocidad a la que se deja de estar aterrizando, m/s. **Dos números.**
+ *
+ * Era uno solo, doce, y con un solo número la fase se pone a parpadear: en la
+ * carrera de aterrizaje el avión frena y se queda un buen rato rondando
+ * justo ese valor, así que cruzaba la raya arriba y abajo cada pocos
+ * segundos. Grabado y contado sobre el vídeo: **treinta segundos alternando**
+ * entre «frená» y «salí por E4», una orden distinta cada vez. Quien lo mira
+ * no ve una duda del juego: ve dos órdenes que se contradicen.
+ *
+ * Con dos números la cosa se lee sola y además significa algo:
+ *
+ * - **Se sigue aterrizando** mientras se vaya más rápido de lo que se rueda.
+ * - **Se empieza a salir** cuando ya se va a velocidad de rodaje, que es
+ *   justo cuando se puede girar hacia una calle sin salirse.
+ *
+ * Y entre los dos hay una banda muerta: una vez que el juego ha dicho «salí»,
+ * no vuelve a decir «frená» porque el avión rebote un metro por segundo.
+ */
+const AÚN_ATERRIZANDO = 12;
+
+/** Y por debajo de esto ya se rueda, así que toca dejar la pista. */
+const YA_ES_RODAJE = 9;
+
+/**
  * Cuánto tiene que sostenerse una fase nueva para sustituir a la vieja, s.
  *
  * Es lo que permite deducir la fase cada fotograma sin que parpadee. Sin esto,
@@ -406,8 +430,14 @@ export class Vuelo {
 
     // ── En el suelo, volviendo de volar ──────────────────────────────────
     if (this.haVolado) {
-      // Mientras corra a velocidad de carrera, sigue aterrizando.
-      if (s.estado.airspeed >= 12) return "aterrizado";
+      /*
+       * Mientras corra a velocidad de carrera, sigue aterrizando. Con
+       * histéresis: para **entrar** hace falta ir deprisa y para **salir**
+       * hace falta bajar a velocidad de rodaje. Ver `AÚN_ATERRIZANDO`.
+       */
+      const liston =
+        this.fase === "aterrizado" ? YA_ES_RODAJE : AÚN_ATERRIZANDO;
+      if (s.estado.airspeed >= liston) return "aterrizado";
       // La pista hay que dejarla libre: hay otro detrás.
       if (s.alEjeDePista <= PISTA_LIBRE) return "abandonando";
       if (parado && s.restante < LLEGADA) return "en-puesto";

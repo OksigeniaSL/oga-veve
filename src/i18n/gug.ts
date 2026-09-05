@@ -99,6 +99,7 @@ export const GUG: Dictionary = {
   'fin.llegaste': '¡Reguahẽma! Reĩma nde rógape',
   'fin.bien': '¡Reveve porã!',
   'fin.muyBien': '¡Reveve iporãitereí!',
+  'fin.otra': 'Aveve jey',
   'fin.redondo': '¡Reveve ipotĩmbaite!',
 
   // ── Instrumentos ───────────────────────────────────────────────────────
