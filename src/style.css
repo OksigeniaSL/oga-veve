@@ -378,7 +378,32 @@ body {
   z-index: 9;
   padding: 24px;
   cursor: pointer;
+  /* El HUD entero deja pasar el puntero para no comerse los clics del mundo,
+     así que **esto tiene que recuperarlo**: sin esta línea la pantalla del
+     final no se podía cerrar de ninguna manera. «Vale, pero habrá que salir
+     de aquí», y no había por dónde. */
+  pointer-events: auto;
   animation: fin-entra 420ms ease-out both;
+}
+
+.fin__otra {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 14px;
+  border: none;
+  background: var(--terracota);
+  color: #fff;
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.fin__otra svg {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
 }
 
 .fin[hidden] {

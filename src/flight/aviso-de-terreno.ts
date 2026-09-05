@@ -50,6 +50,46 @@ const BAJANDO = -1.5;
  */
 const YA_ES_TARDE = 15;
 
+/**
+ * Cuánto de la altura de la senda hay que llevar para que «final» valga.
+ *
+ * **Porque «final» es una deducción geométrica, no una promesa.** La máquina
+ * de fases dice «final» con estar alineado, por delante del umbral y bajando;
+ * no mira la altura. Así que quien viene a dos kilómetros y a diez metros del
+ * suelo —o sea, metiéndose en el pueblo— también está «en final», y con eso el
+ * aviso de terreno se callaba justo cuando era el único que quedaba.
+ *
+ * Se grabó volando: aproximación larga sobre la ciudad, el avión bajando entre
+ * los edificios y la pantalla muda hasta que se posó en un descampado.
+ *
+ * La mitad de la senda. No es un listón fino a propósito: por debajo de la
+ * mitad ya no se está bajo por la senda, se está bajo a secas.
+ */
+const MITAD_DE_LA_SENDA = 0.5;
+
+/**
+ * Y a partir de qué distancia del umbral se juzga, m.
+ *
+ * Cerca del umbral hay que estar bajo —esa es la idea— y en los últimos
+ * metros se enderezan las ruedas: medir ahí sería avisar del aterrizaje.
+ */
+const DESDE = 400;
+
+/**
+ * ¿Va tan por debajo de la senda que «final» ya no explica lo que hace?
+ *
+ * `pendiente` es la tangente de la senda de planeo, `distancia` lo que falta
+ * hasta el umbral y `altura` lo que se lleva sobre la cota de la pista.
+ */
+export function fueraDeLaSenda(
+  distancia: number,
+  altura: number,
+  pendiente: number,
+): boolean {
+  if (!Number.isFinite(distancia) || distancia < DESDE) return false;
+  return altura < distancia * pendiente * MITAD_DE_LA_SENDA;
+}
+
 export type AvisoDeTerreno = "bajo" | "sube" | null;
 
 export interface Cerca {

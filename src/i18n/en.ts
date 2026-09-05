@@ -141,6 +141,7 @@ export const EN: Dictionary = {
   'fin.llegaste': 'You made it! You are home',
   'fin.bien': 'Good flight!',
   'fin.muyBien': 'Great flight!',
+  'fin.otra': 'Fly again',
   'fin.redondo': 'A perfect flight. It does not get better',
   'vuelo.aterrizado': 'Brake',
   'vuelo.abandonando': 'Vacate the runway, someone is behind you',

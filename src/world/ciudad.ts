@@ -49,6 +49,54 @@ export interface Ciudad {
   readonly vias: readonly { readonly nivel: number; readonly puntos: readonly Punto[] }[];
 }
 
+/**
+ * Lo más oscura que puede quedar una fachada, en luz de 0 a 1.
+ *
+ * **Las casas toman el color de la foto que pisan, y la foto tiene sombras.**
+ * Donde el barrio salió en sombra en la ortofoto, la caja salía casi negra:
+ * grabado en vuelo, un suburbio entero de losas negras al atardecer, que no
+ * se lee como casas sino como agujeros. Y de noche o a contraluz, peor.
+ *
+ * El tinte sigue viniendo de la foto —eso es lo que hace que la ciudad no
+ * parezca dos ciudades superpuestas—, pero con un suelo: por debajo de aquí se
+ * sube el brillo conservando el tono, así que una casa de tejado rojo oscuro
+ * sigue siendo rojiza, no gris. Un tercio, que es lo que distingue una pared
+ * en sombra de un agujero.
+ */
+const FACHADA_MINIMA = 0.34;
+
+/**
+ * El color de una fachada a partir del suelo que pisa.
+ *
+ * Va aparte y exportado porque es lo único de aquí que se puede comprobar sin
+ * ojos: que aclara, que nunca deja una casa negra y que no le cambia el tono.
+ *
+ * @param realce cuánto se aclara respecto al suelo. Una fachada vista desde
+ * arriba recibe más luz que el tejado que la fotografía retrató, y una caja
+ * exactamente del color del suelo desaparece — se quiere volumen, no
+ * camuflaje.
+ */
+export function tinteDeFachada(
+  r: number,
+  g: number,
+  b: number,
+  realce: number,
+): { r: number; g: number; b: number } {
+  let R = r * realce;
+  let G = g * realce;
+  let B = b * realce;
+  const luz = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+  if (luz <= 0.001) {
+    R = G = B = FACHADA_MINIMA;
+  } else if (luz < FACHADA_MINIMA) {
+    const k = FACHADA_MINIMA / luz;
+    R *= k;
+    G *= k;
+    B *= k;
+  }
+  return { r: Math.min(1, R), g: Math.min(1, G), b: Math.min(1, B) };
+}
+
 /** Cuántas casas caben en una celda a densidad máxima. */
 const POR_CELDA = 16;
 
@@ -403,21 +451,10 @@ export function crearCiudad(
         // barrio parezca una hoja de cálculo.
         const delSuelo = colorDelSuelo?.(x, z);
         if (delSuelo) {
-          /*
-           * Del suelo, y **un poco más claro**: una fachada vista desde arriba
-           * recibe más luz que el tejado que la fotografía retrató, y una caja
-           * exactamente del color del suelo desaparece — que es lo contrario
-           * de lo que se busca. Se quiere volumen, no camuflaje.
-           */
-          tinte.setRGB(delSuelo.r, delSuelo.g, delSuelo.b);
-          const v = 1.12 + sorteo() * 0.2;
-          tintes[cual]!.push(
-            new Color(
-              Math.min(1, tinte.r * v),
-              Math.min(1, tinte.g * v),
-              Math.min(1, tinte.b * v),
-            ),
-          );
+          // Del suelo, más claro y **nunca negra**. Ver `tinteDeFachada`.
+          const c = tinteDeFachada(delSuelo.r, delSuelo.g, delSuelo.b, 1.12 + sorteo() * 0.2);
+          tinte.setRGB(c.r, c.g, c.b);
+          tintes[cual]!.push(tinte.clone());
         } else {
           tinte.setHex(perfil.color);
           const v = 0.86 + sorteo() * 0.28;

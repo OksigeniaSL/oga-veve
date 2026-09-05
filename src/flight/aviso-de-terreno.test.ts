@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { avisoDeTerreno, type Cerca } from "./aviso-de-terreno";
+import { avisoDeTerreno, fueraDeLaSenda, type Cerca } from "./aviso-de-terreno";
 
 const volando = (c: Partial<Cerca> = {}): Cerca => ({
   sobreElSuelo: 400,
@@ -60,5 +60,40 @@ describe("el aviso de terreno", () => {
     expect(avisoDeTerreno(volando({ sobreElSuelo: 25, vertical: -2 }))).toBe(
       "sube",
     );
+  });
+});
+
+/*
+ * **Y cuándo deja de valer «final» como excusa.**
+ *
+ * Grabado volando: aproximación larga sobre la ciudad, el avión bajando entre
+ * los edificios y la pantalla muda hasta que se posó en un descampado. La
+ * máquina de fases decía «final» —alineado, por delante del umbral, bajando—
+ * y con eso el aviso de terreno se callaba justo cuando era el único que
+ * quedaba. Ver `fueraDeLaSenda`.
+ */
+describe("cuándo «final» deja de explicar lo que se está haciendo", () => {
+  /** Tres grados, que es la senda de este juego. */
+  const TRES = Math.tan((3 * Math.PI) / 180);
+
+  it("en la senda, no pasa nada", () => {
+    // A dos kilómetros la senda va por ciento cinco metros.
+    expect(fueraDeLaSenda(2000, 105, TRES)).toBe(false);
+  });
+
+  it("un poco bajo tampoco: una senda no es un raíl", () => {
+    expect(fueraDeLaSenda(2000, 70, TRES)).toBe(false);
+  });
+
+  it("pero a diez metros y a dos kilómetros, eso ya no es una senda", () => {
+    expect(fueraDeLaSenda(2000, 10, TRES)).toBe(true);
+  });
+
+  it("y cerca del umbral no se juzga, que ahí hay que estar bajo", () => {
+    expect(fueraDeLaSenda(200, 2, TRES)).toBe(false);
+  });
+
+  it("sin distancia conocida, no se opina", () => {
+    expect(fueraDeLaSenda(Infinity, 0, TRES)).toBe(false);
   });
 });

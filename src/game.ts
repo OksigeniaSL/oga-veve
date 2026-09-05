@@ -182,7 +182,7 @@ import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
 import { AvisosDeAltura } from "./flight/avisos-de-altura";
-import { avisoDeTerreno } from "./flight/aviso-de-terreno";
+import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
   bandaDeRodaje,
   bandaDeVelocidad,
@@ -762,6 +762,8 @@ export class Game {
     this.hud.onSoundClick(() => this.toggleSound());
     // `?fps=1` enciende el contador de fotogramas. Ver `Hud.mostrarFps`.
     if (new URLSearchParams(location.search).get("fps")) this.hud.pedirFps();
+    // Y el botón del final: otro vuelo, que es lo que uno quiere hacer ahí.
+    this.hud.onOtroVuelo(() => this.resetFlight());
     this.hud.onBrake((pressed) => this.input.setTouchBrakes(pressed));
     this.hud.onThrottle((direction) => this.input.setButtonThrottle(direction));
 
@@ -874,6 +876,16 @@ export class Game {
       tarjeta: () => this.hud.senal.puesto,
       /** Si está puesta la pantalla de fin de vuelo. Para el banco. */
       finDeVuelo: () => this.hud.finPuesto,
+      /**
+       * El aviso de terreno vigente, o `null`.
+       *
+       * Se mira **esto y no la tarjeta**: la tarjeta dura tres segundos y se
+       * queda puesta después de que el aviso se apague, así que una prueba que
+       * mirase la tarjeta daba por bueno un aviso de hace tres segundos —y así
+       * pasaba igual con el arreglo puesto que quitado, que es la definición
+       * de una prueba que no prueba nada.
+       */
+      avisoDeTerreno: () => this.terrenoDicho,
       /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
       senalero: () => this.senalero,
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
@@ -2473,7 +2485,22 @@ export class Game {
       sobreElSuelo: this.flight.state.heightAboveGround,
       vertical: this.flight.state.verticalSpeed,
       enElSuelo: this.flight.state.onGround,
-      enFinal: this.faseAnunciada === "final",
+      /*
+       * **Y «final» deja de valer como excusa si se va muy por debajo.**
+       *
+       * La fase dice «final» con estar alineado, por delante del umbral y
+       * bajando; no mira la altura. Grabado volando: aproximación larga sobre
+       * la ciudad, el avión bajando entre los edificios y la pantalla muda
+       * hasta posarse en un descampado, porque el aviso de terreno se calla en
+       * final a propósito. Ver `fueraDeLaSenda`.
+       */
+      enFinal:
+        this.faseAnunciada === "final" &&
+        !fueraDeLaSenda(
+          this.distanceToRunway(),
+          this.flight.state.position.y - this.terrain.runwayElevation,
+          Math.tan(GLIDE_SLOPE),
+        ),
     };
     const terreno = avisoDeTerreno(cerca);
 

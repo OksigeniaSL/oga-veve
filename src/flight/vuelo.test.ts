@@ -681,4 +681,33 @@ describe("la carrera de aterrizaje", () => {
     durante(v, enLaCarrera(40), 1);
     expect(durante(v, enLaCarrera(8), 2)).toBe("abandonando");
   });
+
+  /*
+   * **Y no parpadea, que es lo que hacía.**
+   *
+   * Con un solo listón —doce— la fase cruzaba la raya arriba y abajo mientras
+   * el avión frenaba, y con ella la orden de la pantalla. Contado sobre un
+   * vídeo: treinta segundos alternando «frená · B» y «salí por E4», cada pocos
+   * segundos una orden distinta. Ver `AÚN_ATERRIZANDO`.
+   */
+  it("y frenando alrededor del listón no se pone a parpadear", () => {
+    const v = yaVoló();
+    durante(v, enLaCarrera(40), 1);
+    const vistas = new Set();
+    // Frenando de verdad, pasando justo por el listón que antes hacía saltar
+    // la fase de una a otra.
+    for (const velocidad of [14, 11, 13, 10, 12, 11, 13, 10]) {
+      vistas.add(durante(v, enLaCarrera(velocidad), 1));
+    }
+    expect([...vistas]).toEqual(["aterrizado"]);
+  });
+
+  it("pero cuando de verdad se rueda, sí cambia", () => {
+    const v = yaVoló();
+    durante(v, enLaCarrera(40), 1);
+    durante(v, enLaCarrera(11), 3);
+    expect(durante(v, enLaCarrera(7), 2)).toBe("abandonando");
+    // Y ya no vuelve atrás por un rebote de un metro por segundo.
+    expect(durante(v, enLaCarrera(10), 2)).toBe("abandonando");
+  });
 });

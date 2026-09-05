@@ -518,6 +518,19 @@ export class Hud {
         <div class="fin__panel">
           <div class="fin__manga" data-hud="fin-manga"></div>
           <p class="fin__frase" data-hud="fin-frase"></p>
+          <!--
+            Y la salida, que la primera versión no tenía: «vale, pero habrá
+            que salir de aquí». La flecha que vuelve a empezar se entiende sin
+            leer; el texto solo aparece donde ya se lee.
+          -->
+          <button type="button" class="fin__otra" data-hud="fin-otra">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5 a7 7 0 1 0 6.6 4.7" fill="none" stroke="currentColor"
+                    stroke-width="2.6" stroke-linecap="round" />
+              <path d="M11.2 1.6 L17 5 L11.2 8.4 Z" />
+            </svg>
+            <span data-hud="fin-otra-texto"></span>
+          </button>
         </div>
       </div>
     `;
@@ -612,8 +625,14 @@ export class Hud {
     this.hint = pick(this.root, "hint");
     this.fin = pick(this.root, "fin");
     // Se cierra tocando en cualquier parte: a los cuatro años no se busca una
-    // equis. Y con el teclado, con la tecla de siempre para cerrar cosas.
+    // equis.
     this.fin.addEventListener("click", () => this.cerrarFinDeVuelo());
+    // Y el botón vuelve a volar, que es lo que uno quiere hacer justo ahí.
+    pick(this.root, "fin-otra").addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.cerrarFinDeVuelo();
+      this.otroVuelo?.();
+    });
 
     this.badge.textContent = this.badgeText;
     this.sixPack.bind(this.root);
@@ -995,6 +1014,9 @@ export class Hud {
     const texto = pick(this.root, "fin-frase");
     texto.textContent = frase;
     texto.hidden = !frase;
+    const otra = pick(this.root, "fin-otra");
+    otra.setAttribute("aria-label", t("fin.otra"));
+    pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
     this.fin.hidden = false;
   }
 
@@ -1013,6 +1035,13 @@ export class Hud {
     this.soundState = { glyph, label };
     this.paintSound();
   }
+
+  /** Quién vuelve a empezar cuando se toca el botón del final. */
+  onOtroVuelo(handler: () => void): void {
+    this.otroVuelo = handler;
+  }
+
+  private otroVuelo: (() => void) | null = null;
 
   /** Quién recibe el botón de freno táctil. */
   onBrake(handler: (pressed: boolean) => void): void {

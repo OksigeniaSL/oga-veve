@@ -144,6 +144,7 @@ export const ES_PY = {
   'fin.llegaste': '¡Llegaste! Ya estás en casa',
   'fin.bien': '¡Buen vuelo!',
   'fin.muyBien': '¡Gran vuelo!',
+  'fin.otra': 'Otro vuelo',
   'fin.redondo': '¡Vuelo redondo! No se puede hacer mejor',
   'vuelo.aterrizado': 'Frená',
   'vuelo.abandonando': 'Salí de la pista, que viene otro',
