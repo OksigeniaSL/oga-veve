@@ -40,11 +40,7 @@ import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
-import {
-  GLIDE_SLOPE,
-  RunwayGuide,
-  type PasoDeAro,
-} from "./world/runway-guide";
+import { GLIDE_SLOPE, RunwayGuide, type PasoDeAro } from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
 import { LECCION_POR_DEFECTO, type Leccion } from "./flight/lecciones";
 import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from "./world/meteo";
@@ -105,6 +101,33 @@ const SE_QUEDA_LA_FRUSTRADA = 4.5;
  * por segundo y el sonido con él.
  */
 const SE_QUEDA_EL_BULTO = 3;
+
+/**
+ * Los escalones de importancia de la señal. Ver `ui/senal.ts`.
+ *
+ * Son dos y no diez a propósito: lo que se está ordenando es «esto no puede
+ * taparlo un mensaje de tránsito», no una jerarquía de oficina.
+ */
+const IMPORTANTE = 1;
+const URGENTE = 2;
+
+/**
+ * Cuántos segundos de vuelo se sondean por delante para avisar.
+ *
+ * Cuatro. Es el tiempo que hace falta para que el aviso sirva de algo: girar
+ * o subir. Menos es contarlo cuando ya no se puede hacer nada.
+ */
+const SEGUNDOS_DE_AVISO = 4;
+
+/** Y lo menos que se mira por delante, m, aunque se vaya despacio. */
+const ALCANCE_MINIMO_DEL_AVISO = 120;
+
+/**
+ * Cuánto se sale por encima del tejado al quedarse dentro de un edificio, m.
+ *
+ * Tres: lo justo para estar fuera y no lo bastante para que parezca un salto.
+ */
+const POR_ENCIMA_DEL_TEJADO = 3;
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
 import { crearCiudad } from "./world/ciudad";
@@ -323,15 +346,6 @@ export class Game {
   private dichoDeBanda: "lento" | "rapido" | null = null;
   /** El último aviso de terreno dicho, para no repetirlo cada fotograma. */
   private terrenoDicho: "bajo" | "sube" | null = null;
-  /**
-   * Segundos que le quedan a la tarjeta de la frustrada en pantalla.
-   *
-   * Existe porque la señal es **una sola** y el plan de vuelo también escribe
-   * en ella: al irse al aire la fase pasa de «final» a «en vuelo», y el plan
-   * pintaba encima «andá a dar una vuelta» en el mismo segundo en que se
-   * acababa de celebrar la mejor decisión del vuelo. Ver `avanzarPlan`.
-   */
-  private celebrandoFrustrada = 0;
 
   /** La misión elegida en el hangar, hasta que arranca. Ver `start`. */
   private misionInicial: Mission | null;
@@ -638,10 +652,7 @@ export class Game {
     for (const mando of options.touchRoot.querySelectorAll<HTMLElement>(
       "[data-i18n-label]",
     )) {
-      mando.setAttribute(
-        "aria-label",
-        t(mando.dataset.i18nLabel as never),
-      );
+      mando.setAttribute("aria-label", t(mando.dataset.i18nLabel as never));
     }
 
     this.input = new InputManager(options.touchRoot, {
@@ -846,6 +857,10 @@ export class Game {
       galones: () => this.galones.lista,
       /** Los bultos con los que se choca, para poder apuntarles desde el banco. */
       bultos: () => this.bultos,
+      /** Segundos que le quedan al aviso de bulto. Para el banco. */
+      avisoDeBulto: () => this.avisandoDelBulto,
+      /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
+      tarjeta: () => this.hud.senal.puesto,
       /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
       senalero: () => this.senalero,
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
@@ -1196,17 +1211,15 @@ export class Game {
      * varios metros: una casa estrecha se cruzaría entera sin que ni la salida
      * ni la llegada cayeran dentro. Ver `chocaEnElCamino`.
      */
-    if (
-      !this.bultos.chocaEnElCamino(
-        a.x,
-        a.y,
-        a.z,
-        s.position.x,
-        s.position.y,
-        s.position.z,
-      )
-    )
-      return;
+    const golpe = this.bultos.primerChoque(
+      a.x,
+      a.y,
+      a.z,
+      s.position.x,
+      s.position.y,
+      s.position.z,
+    );
+    if (!golpe) return;
 
     if (this.tier.model !== "simple") {
       this.flight.romper();
@@ -1214,21 +1227,98 @@ export class Game {
     }
 
     /*
-     * **El peldaño de los pequeños: el mundo te lo impide.**
+     * **El peldaño de los pequeños: el mundo te lo impide, pero no te encierra.**
      *
-     * Devolver el avión a donde estaba antes del paso es, fotograma a
-     * fotograma, exactamente una pared: se avanza, se descubre que ahí hay
-     * bulto, y se vuelve. El motor sigue, el avión sigue entero y quien juega
-     * solo tiene que girar. Nada que leer y nada que perder.
+     * El primer intento devolvía el avión a donde estaba antes del paso, que
+     * es una pared perfecta y también una trampa: si el punto de partida ya
+     * estaba dentro del bulto, cada paso lo devolvía al mismo sitio y no había
+     * salida por ningún lado. Se probó jugando y salió esto, con razón: «no
+     * puedo zafarme de ahí, estoy atrapado».
+     *
+     * Así que hay dos casos y no uno:
+     *
+     * - **Dentro del edificio**: se sale por arriba, justo por encima del
+     *   tejado. Por encima de un tejado nunca hay bulto —eso lo garantiza
+     *   `techoEn`—, así que esta salida siempre existe. Y se lee bien: por ahí
+     *   no se pasa, se pasa por encima, que es lo que hace un avión.
+     * - **Lo atravesó de un salto** —una casa estrecha con un paso largo—: se
+     *   deja en el último punto libre, que es justo antes de la fachada.
      */
-    s.position.copy(a);
+    const techo = this.bultos.techoEn(s.position.x, s.position.y, s.position.z);
+    if (techo > -Infinity) s.position.y = techo + POR_ENCIMA_DEL_TEJADO;
+    else s.position.set(golpe.libre.x, golpe.libre.y, golpe.libre.z);
+
+    this.avisarDelBulto("edificio");
+  }
+
+  /**
+   * **El aviso, que es la mitad que enseña.**
+   *
+   * «Ni me avisó.» Y era verdad: la primera versión solo decía algo cuando el
+   * avión ya estaba metido en el edificio, y eso no es un aviso, es un parte.
+   * Un avión de verdad avisa **antes** —es lo que hace el `terrain, pull up`—
+   * y aquí hace más falta todavía, porque quien juega puede tener cuatro años
+   * y no ve venir un bloque de pisos en una fotografía aérea.
+   *
+   * Así que se sondea por delante del morro lo que se va a recorrer en los
+   * próximos segundos, y si ahí hay bulto, se dice. Con dibujo, con sonido y
+   * con voz, como todo lo demás.
+   */
+  private avisarDeLosBultos(dt: number): void {
+    this.avisandoDelBulto = Math.max(0, this.avisandoDelBulto - dt);
+    /*
+     * **Al tocar tierra, los avisos de vuelo se apagan.**
+     *
+     * Un aviso de edificio o de terreno deja de ser verdad en cuanto hay
+     * ruedas en el suelo, y mientras dure tapa lo que sí toca. Se vio en el
+     * banco: la tarjeta de «frená» de la carrera de aterrizaje llegaba tarde
+     * porque venía en la cola detrás de avisos del final que ya no valían.
+     */
+    if (this.flight.state.onGround) {
+      this.avisandoDelBulto = 0;
+      this.hud.senal.caducar("edificio");
+      this.hud.senal.caducar("terreno");
+      // Y la celebración de la frustrada, que con ruedas en el suelo ya no
+      // describe lo que pasó: quien toca tierra no renunció a nada.
+      this.hud.senal.caducar("frustrada");
+      return;
+    }
+    if (!this.bultos.cuantos) return;
+    const s = this.flight.state;
+    /*
+     * Lo que se recorre en `SEGUNDOS_DE_AVISO`, con un mínimo: a poca
+     * velocidad el sondeo se quedaría en nada y el aviso llegaría con el morro
+     * pegado a la fachada, que es exactamente lo que se está arreglando.
+     */
+    const alcance = Math.max(
+      ALCANCE_MINIMO_DEL_AVISO,
+      s.airspeed * SEGUNDOS_DE_AVISO,
+    );
+    const v = s.velocity;
+    const largo = Math.hypot(v.x, v.y, v.z) || 1;
+    if (
+      !this.bultos.chocaEnElCamino(
+        s.position.x,
+        s.position.y,
+        s.position.z,
+        s.position.x + (v.x / largo) * alcance,
+        s.position.y + (v.y / largo) * alcance,
+        s.position.z + (v.z / largo) * alcance,
+      )
+    )
+      return;
+    this.avisarDelBulto("edificio");
+  }
+
+  /** El aviso del bulto, con su antirrebote. Ver `SE_QUEDA_EL_BULTO`. */
+  private avisarDelBulto(dibujo: string): void {
     if (this.avisandoDelBulto > 0) return;
     this.avisandoDelBulto = SE_QUEDA_EL_BULTO;
     this.hud.senal.mostrar(
-      "edificio",
+      dibujo,
       this.tier.instruments !== "none" ? t("vuelo.bulto") : "",
       null,
-      { segundos: SE_QUEDA_EL_BULTO },
+      { segundos: SE_QUEDA_EL_BULTO, prioridad: URGENTE },
     );
     this.audio.cue("attention");
     decir("obstacle ahead");
@@ -1246,12 +1336,11 @@ export class Game {
    * acaba de pasar. Ver `flight/frustrada.ts` para el porqué de todo esto.
    */
   private celebrarLaFrustrada(): void {
-    this.celebrandoFrustrada = SE_QUEDA_LA_FRUSTRADA;
     this.hud.senal.mostrar(
       "frustrada",
       this.tier.instruments !== "none" ? t("vuelo.frustrada") : "",
       null,
-      { segundos: SE_QUEDA_LA_FRUSTRADA },
+      { segundos: SE_QUEDA_LA_FRUSTRADA, prioridad: URGENTE },
     );
     this.audio.cue("achieved");
     // En inglés aeronáutico, como el resto de la voz de cabina: «going around»
@@ -2240,7 +2329,7 @@ export class Game {
       this.flight.step(dt, this.input.controls);
       this.mirarSiChocaConAlgo();
     }
-    this.avisandoDelBulto = Math.max(0, this.avisandoDelBulto - dt);
+    this.avisarDeLosBultos(dt);
 
     /*
      * Los avisos de la toma. Se dicen **y** se enseñan, siempre: hay quien
@@ -2336,7 +2425,9 @@ export class Game {
           ? t(terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo")
           : "",
         null,
-        { segundos: 3 },
+        // Por debajo del aviso de bulto: los dos saltan a la vez volando bajo
+        // sobre la ciudad, y el que dice qué hacer es el que nombra el bulto.
+        { segundos: 3, prioridad: IMPORTANTE },
       );
       this.audio.cue(terreno === "sube" ? "error" : "attention");
       // En inglés aeronáutico, como el resto de la voz de cabina.
@@ -2580,7 +2671,6 @@ export class Game {
     this.atenderAlSenalero(dt);
     this.contarGalones(dt, banda, aro, toma, renuncio);
     this.hud.senal.update(dt);
-    this.celebrandoFrustrada = Math.max(0, this.celebrandoFrustrada - dt);
 
     this.renderer.render(this.scene, this.camera);
   };
@@ -2974,35 +3064,25 @@ export class Game {
        */
       const seQueda =
         vista.fase === "aterrizado" || vista.fase === "abandonando";
-      /*
-       * **Salvo que se acabe de celebrar una frustrada.** Irse al aire cambia
-       * la fase de «final» a «en vuelo», así que el plan quería pintar «andá a
-       * dar una vuelta» encima de la celebración medio segundo después de
-       * ponerla. Lo que espera a que alguien haga algo sí manda, porque si no
-       * se queda uno parado sin saber qué toca; un mensaje de tránsito, no.
-       */
-      const tapaLaFrustrada =
-        this.celebrandoFrustrada > 0 && !pendiente && !esperando && !seQueda;
-      if (!tapaLaFrustrada)
-        this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", letra, {
-          segundos:
-            pendiente || esperando || seQueda
-              ? Infinity
-              : vista.fase === "apagado"
-                ? 9
-                : 6,
-          // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
-          // ninguna manera de saber que el contacto es la I.
-          tecla: pendiente
-            ? nombreDeTecla(this.input.preferredKey("engine"))
-            : esperando
-              ? nombreDeTecla(this.input.preferredKey("brakes"))
-              : null,
-          // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
-          // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
-          // timón, gas y freno, y el contacto no estaba por ningún lado.
-          accion: pendiente ? () => this.toggleEngine() : null,
-        });
+      this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", letra, {
+        segundos:
+          pendiente || esperando || seQueda
+            ? Infinity
+            : vista.fase === "apagado"
+              ? 9
+              : 6,
+        // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
+        // ninguna manera de saber que el contacto es la I.
+        tecla: pendiente
+          ? nombreDeTecla(this.input.preferredKey("engine"))
+          : esperando
+            ? nombreDeTecla(this.input.preferredKey("brakes"))
+            : null,
+        // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
+        // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
+        // timón, gas y freno, y el contacto no estaba por ningún lado.
+        accion: pendiente ? () => this.toggleEngine() : null,
+      });
       this.instructor.decir(frase);
       if (conLetras) {
         this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);

@@ -49,6 +49,34 @@ const A_UN_LADO = 7;
 /** Y cuánto por delante del morro parado, m. */
 const POR_DELANTE = 14;
 
+/**
+ * A qué distancia se quita de en medio, m.
+ *
+ * «Lo atropello sin problemas.» Y era verdad: se quedaba clavado en su sitio
+ * dejándose pasar por encima. Un señalero de carne y hueso ve venir un avión
+ * hacia él y se aparta, que es lo que hace cualquiera.
+ *
+ * **Y esta es la respuesta buena, no una caja de colisión.** Un avión que
+ * choca contra una persona no se puede enseñar a los cuatro años, y castigar
+ * por ello tampoco: aquí no se castiga, se ve la consecuencia. La consecuencia
+ * de ir a por el señalero es que el señalero se va —y te lo dice con el alto
+ * en la mano—, que es exactamente lo que pasaría en una plataforma de verdad.
+ *
+ * Doce metros: la mitad de lo que hay del puesto a su sitio, así que solo se
+ * mueve cuando el avión de verdad se le viene encima y no cada vez que alguien
+ * rueda un poco desviado.
+ */
+const SE_APARTA = 12;
+
+/** Cuánto se quita, m. Lo bastante para que el ala pase por su lado. */
+const A_SALVO = 9;
+
+/** Y a qué velocidad se mueve, m/s. Un paso vivo de persona. */
+const AL_QUITARSE = 4;
+
+/** Por debajo de esta velocidad el avión no viene a por nadie, m/s. */
+const RODANDO = 1.5;
+
 /** De grados a radianes, que aquí se escriben muchos ángulos. */
 const g = (grados: number): number => (grados * Math.PI) / 180;
 
@@ -192,6 +220,14 @@ export class Senalero {
   private readonly der = brazo(-1);
   /** El punto donde hay que parar y hacia dónde se llega, en mundo. */
   private parada: { x: number; z: number } | null = null;
+  /** Su sitio de trabajo, al que vuelve en cuanto puede. */
+  private suSitio: { x: number; z: number } | null = null;
+  /** Y la cota del terreno, que la necesita para andar sin enterrarse. */
+  private cota: ((x: number, z: number) => number) | null = null;
+  /** Cuánto lleva apartado, de 0 a 1. Ver `SE_APARTA`. */
+  private apartado = 0;
+  /** Hacia dónde se quitó, unitario. Se congela mientras dura el susto. */
+  private huida = { x: 1, z: 0 };
   private hacia = { x: 0, z: 1 };
   private t = 0;
   private gesto: Gesto = null;
@@ -271,6 +307,9 @@ export class Senalero {
     const izquierdaZ = -hacia.x;
     const x = puesto[0] + hacia.x * POR_DELANTE + izquierdaX * A_UN_LADO;
     const z = puesto[1] + hacia.z * POR_DELANTE + izquierdaZ * A_UN_LADO;
+    this.suSitio = { x, z };
+    this.cota = cota;
+    this.apartado = 0;
     this.grupo.position.set(x, cota(x, z), z);
     // Mirando por donde viene el avión: la figura se construye mirando a +Z.
     this.grupo.rotation.y = Math.atan2(-hacia.x, -hacia.z);
@@ -317,8 +356,21 @@ export class Senalero {
      * empieza a señalar, ya llevaba un rato ahí de pie. Una persona que se
      * materializa a treinta metros no es una persona, es un cartel.
      */
+    /*
+     * Se quita si el avión se le viene encima, y vuelve andando cuando pasa.
+     *
+     * **Va antes de mirar si se le ve**, y no es indiferente: en cuanto el
+     * avión se aleja, el señalero deja de estar a la vista, y si el paso de
+     * volver a su sitio viviera dentro del `if` se quedaría plantado a nueve
+     * metros de donde trabaja — para reaparecer ahí en el siguiente vuelo.
+     * Lo cazó la prueba de que vuelve a su sitio. Ver `apartarse`.
+     */
+    const quitandose = this.apartarse(dt, avion);
+
     this.grupo.visible = volviendo && restante < 220 && restante > -40;
     if (!this.grupo.visible) return null;
+
+    if (quitandose) this.gesto = "alto";
 
     return this.animar(dt, this.gesto);
   }
@@ -337,6 +389,53 @@ export class Senalero {
   }
 
   private posado: Gesto = null;
+
+  /**
+   * Se quita de en medio si hace falta, y vuelve cuando pasa el peligro.
+   *
+   * Devuelve `true` mientras está apartándose o apartado, porque entonces el
+   * gesto es **el alto** y ninguno de los otros: un señalero que se está
+   * quitando del paso no te está diciendo que sigas a la izquierda.
+   *
+   * Anda, no se teletransporta. Un señalero que salta nueve metros en un
+   * fotograma no es una persona asustada, es un fallo de dibujo.
+   */
+  private apartarse(
+    dt: number,
+    avion: { x: number; z: number; velocidad: number },
+  ): boolean {
+    const sitio = this.suSitio;
+    if (!sitio) return false;
+
+    const dx = sitio.x - avion.x;
+    const dz = sitio.z - avion.z;
+    const cerca = Math.hypot(dx, dz);
+    /*
+     * **Un avión parado no asusta a nadie**, y es importante: el señalero
+     * trabaja a doce metros del morro de un avión que acaba de llegar. Si se
+     * apartara por estar cerca sin más, se iría justo cuando toca cruzar los
+     * bastones y decir «ya está».
+     */
+    const viene = cerca < SE_APARTA && avion.velocidad > RODANDO;
+
+    if (viene) {
+      // La dirección se congela al empezar: si se recalculara cada paso,
+      // el señalero iría girando alrededor del avión en vez de irse.
+      if (this.apartado === 0 && cerca > 0.01) {
+        this.huida = { x: dx / cerca, z: dz / cerca };
+      }
+      this.apartado = Math.min(1, this.apartado + (dt * AL_QUITARSE) / A_SALVO);
+    } else {
+      this.apartado = Math.max(0, this.apartado - (dt * AL_QUITARSE) / A_SALVO);
+    }
+
+    if (this.apartado > 0 || viene) {
+      const x = sitio.x + this.huida.x * A_SALVO * this.apartado;
+      const z = sitio.z + this.huida.z * A_SALVO * this.apartado;
+      this.grupo.position.set(x, this.cota?.(x, z) ?? this.grupo.position.y, z);
+    }
+    return this.apartado > 0;
+  }
 
   private animar(dt: number, gesto: Gesto): Gesto {
     this.t += dt;
@@ -367,5 +466,11 @@ export class Senalero {
     this.gesto = null;
     this.t = 0;
     this.grupo.visible = false;
+    // Y de vuelta a su sitio: el susto no se hereda del vuelo anterior.
+    this.apartado = 0;
+    if (this.suSitio) {
+      const { x, z } = this.suSitio;
+      this.grupo.position.set(x, this.cota?.(x, z) ?? this.grupo.position.y, z);
+    }
   }
 }

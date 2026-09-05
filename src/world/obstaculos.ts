@@ -130,17 +130,30 @@ export class Obstaculos {
 
   /** Si ese punto está dentro de algún edificio. */
   choca(x: number, y: number, z: number): boolean {
+    return this.techoEn(x, y, z) > -Infinity;
+  }
+
+  /**
+   * El tejado más alto de los edificios que contienen ese punto.
+   *
+   * `-Infinity` si ahí no hay ninguno. **Es la salida de emergencia**: por
+   * encima de ese número, en esa vertical, no hay bulto que valga, y eso es lo
+   * que garantiza que no se pueda quedar nadie encerrado. Ver
+   * `Game.mirarSiChocaConAlgo`.
+   */
+  techoEn(x: number, y: number, z: number): number {
     const lista = this.celdas.get(
       Math.floor(x / CELDA) * 100003 + Math.floor(z / CELDA),
     );
-    if (!lista) return false;
+    if (!lista) return -Infinity;
+    let techo = -Infinity;
     for (const c of lista) {
       if (y < c.base || y > c.cima) continue;
       if (Math.abs(x - c.x) > c.semiX) continue;
       if (Math.abs(z - c.z) > c.semiZ) continue;
-      return true;
+      if (c.cima > techo) techo = c.cima;
     }
-    return false;
+    return techo;
   }
 
   /**
@@ -157,15 +170,50 @@ export class Obstaculos {
     y1: number,
     z1: number,
   ): boolean {
+    return this.primerChoque(x0, y0, z0, x1, y1, z1) !== null;
+  }
+
+  /**
+   * Dónde se topa el camino con el primer bulto, y **dónde estaba libre**.
+   *
+   * Devuelve las dos cosas porque hacen falta las dos: el punto de dentro para
+   * saber por dónde sacarlo, y el último punto de fuera para poder pararlo ahí
+   * en vez de devolverlo al fotograma anterior.
+   *
+   * **Devolverlo al fotograma anterior fue el primer intento y estuvo mal.**
+   * Se probó jugando y salió esto: «no puedo zafarme de ahí, estoy atrapado».
+   * Claro: si el punto de partida ya estaba dentro —o dentro del margen—, cada
+   * paso lo devolvía al mismo sitio y no había salida por ningún lado. Una
+   * pared que encierra no es una pared, es una trampa.
+   */
+  primerChoque(
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+  ): { dentro: Punto; libre: Punto } | null {
     const largo = Math.hypot(x1 - x0, y1 - y0, z1 - z0);
     const pasos = Math.max(1, Math.ceil(largo / PASO_DEL_CAMINO));
-    for (let k = 1; k <= pasos; k++) {
+    let libre: Punto = { x: x0, y: y0, z: z0 };
+    for (let k = 0; k <= pasos; k++) {
       const t = k / pasos;
-      if (
-        this.choca(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z0 + (z1 - z0) * t)
-      )
-        return true;
+      const p: Punto = {
+        x: x0 + (x1 - x0) * t,
+        y: y0 + (y1 - y0) * t,
+        z: z0 + (z1 - z0) * t,
+      };
+      if (this.choca(p.x, p.y, p.z)) return { dentro: p, libre };
+      libre = p;
     }
-    return false;
+    return null;
   }
+}
+
+/** Un punto del mundo. */
+export interface Punto {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
 }

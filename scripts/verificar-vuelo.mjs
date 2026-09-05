@@ -297,7 +297,7 @@ const enPista = await page.evaluate(() => {
     (p) => Math.abs(p.across) < pista.width && Math.abs(p.along) < pista.length / 2,
   );
   return {
-    fase: o.fase(),
+    fase: `${o.fase()} av=${globalThis.__av ?? 0}`,
     delante: enAsfalto.filter((p) => (p.along - yo.along) * Math.sign(1) > 0).length,
     // Los últimos puntos son el giro a la calle de salida: ahí hay que
     // cruzar el borde, para eso es una salida. Lo que no puede es cruzarlo
@@ -306,14 +306,12 @@ const enPista = await page.evaluate(() => {
       .slice(0, Math.max(0, enAsfalto.length - 6))
       .filter((p) => Math.abs(p.across) > pista.width / 2).length,
     /*
-     * La tarjeta del freno se reconoce por su dibujo, no por su tecla: en los
-     * peldaños de arriba la tecla va en otra tarjeta, y comprobar la tecla
-     * hacía fallar la prueba en Taguató por un motivo que no era el fallo.
+     * La tarjeta se pregunta **por su nombre**, no rebuscando en el SVG. Se
+     * miraba un trozo de `path` porque no había otra forma; ahora la señal
+     * sabe decir qué tiene puesto, y de paso, cuando esto falla, dice qué
+     * había en su lugar en vez de un hueco.
      */
-    tarjeta: (document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? '')
-      .includes('x="2.4"')
-      ? 'freno'
-      : '',
+    tarjeta: o.tarjeta().dibujo,
   };
 });
 comprobar(
@@ -330,8 +328,8 @@ comprobar(
 );
 comprobar(
   'y la tarjeta pide frenar con su tecla',
-  enPista.tarjeta.length > 0,
-  `tecla «${enPista.tarjeta}»`,
+  enPista.tarjeta === 'freno',
+  `tarjeta «${enPista.tarjeta || 'ninguna'}»`,
   'al tocar tierra no salía ninguna tarjeta durante seis segundos',
 );
 
@@ -406,7 +404,7 @@ const alFinal = await page.evaluate(async () => {
   const senalero = raiz.getObjectByName('senalero');
   const dibujo = document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? '';
   return {
-    fase: o.fase(),
+    fase: `${o.fase()} av=${globalThis.__av ?? 0}`,
     cinta: cintaRodando,
     cocheVisible: !!coche?.visible,
     senaleroVisible: !!senalero?.visible,
@@ -439,6 +437,48 @@ comprobar(
   alFinal.pideApagar ? 'la llave' : `fase «${alFinal.fase}», v=${alFinal.v}`,
   'la tarjeta del gesto del señalero se quedaba puesta y tapaba la llave',
 );
+
+// ── Y que al señalero no se le atropella ──────────────────────────────────
+
+/*
+ * «Lo atropello sin problemas.» Y era verdad: se quedaba clavado en su sitio.
+ *
+ * La respuesta no es una caja de colisión —un avión que choca contra una
+ * persona no se le enseña a nadie de cuatro años, y castigar por ello tampoco—
+ * sino la de la plataforma de verdad: el señalero ve venir el avión y se
+ * quita, andando y con el alto en la mano.
+ *
+ * La lógica ya tiene sus pruebas; lo que se comprueba aquí es **el cableado**:
+ * que el juego le pasa dónde está el avión y a qué velocidad va, y que la
+ * figura del mundo se mueve de verdad.
+ */
+const senalero = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const figura = globalThis.__raiz.getObjectByName('senalero');
+  if (!figura) return { sinSenalero: true };
+  const antes = { x: figura.position.x, z: figura.position.z };
+  // El avión, rodando derecho a por él.
+  o.colocar(antes.x, o.suelo(antes.x, antes.z) + 1.3, antes.z, 6);
+  const c = o.controles();
+  c.brakes = 0;
+  c.throttle = 0.4;
+  await new Promise((r) => setTimeout(r, 2600));
+  const seFue = Math.hypot(
+    figura.position.x - antes.x,
+    figura.position.z - antes.z,
+  );
+  c.throttle = 0;
+  c.brakes = 1;
+  return { seFue };
+});
+if (!senalero.sinSenalero) {
+  comprobar(
+    'el señalero se quita de en medio',
+    senalero.seFue > 3,
+    `se apartó ${senalero.seFue.toFixed(1)} m`,
+    '«lo atropello sin problemas»: se quedaba clavado dejándose pasar por encima',
+  );
+}
 
 // ── La ciudad ─────────────────────────────────────────────────────────────
 
@@ -595,11 +635,16 @@ const bulto = await page.evaluate(async () => {
   c.throttle = 0.7;
 
   let roto = false;
-  let tarjeta = false;
+  let avisoA = 0;
   let cerca = Infinity;
   let masAlla = -Infinity;
   let quieto = 0;
+  let dentro = 0;
   let antes = -LEJOS;
+  const laTarjeta = () =>
+    (document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? '').includes(
+      'M4 21 V6',
+    );
   for (let i = 0; i < 240; i++) {
     /*
      * Un piloto automático de altura de tres líneas. No es adorno: sin él, lo
@@ -613,25 +658,61 @@ const bulto = await page.evaluate(async () => {
     const dx = s.position.x - casa.x;
     const dz = s.position.z - casa.z;
     const along = dx * fx + dz * fz;
-    cerca = Math.min(cerca, Math.hypot(dx, dz));
+    const d = Math.hypot(dx, dz);
+    cerca = Math.min(cerca, d);
     masAlla = Math.max(masAlla, along);
     roto ||= s.crashed;
-    tarjeta ||= (
-      document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? ''
-    ).includes('M4 21 V6');
+    // **Dentro de un edificio, ni un fotograma.** Es la forma honesta de decir
+    // «no lo atraviesa» ahora que en este peldaño se sale por encima del
+    // tejado: mirar si avanzó no vale, porque pasar por encima es avanzar.
+    if (o.bultos().choca(s.position.x, s.position.y, s.position.z)) dentro++;
+    // A qué distancia del edificio salió el aviso por primera vez. «Ni me
+    // avisó»: el aviso tiene que llegar con sitio para girar, no al chocar.
+    if (!avisoA && laTarjeta()) avisoA = d;
     // Parado contra la pared: el avión deja de avanzar y ahí se queda.
     quieto = along - antes < 0.5 ? quieto + 1 : 0;
     antes = along;
     if (roto || along > semi || quieto > 30) break;
   }
+
+  /*
+   * **Y ahora lo que faltaba: que se pueda salir.**
+   *
+   * «No puedo zafarme de ahí, estoy atrapado.» El primer intento devolvía el
+   * avión al fotograma anterior en cada paso, y eso no es una pared, es una
+   * trampa. Aquí se gira y se sube, que es lo que haría cualquiera, y se mira
+   * si el avión se aleja de verdad.
+   */
+  const dondeQuedo = (() => {
+    const s = o.estado();
+    return Math.hypot(s.position.x - casa.x, s.position.z - casa.z);
+  })();
+  let escape = 0;
+  if (!roto) {
+    c.throttle = 1;
+    c.aileron = 1;
+    c.elevator = 0.3;
+    for (let i = 0; i < 200; i++) {
+      await dormir(50);
+      const s = o.estado();
+      escape = Math.max(
+        escape,
+        Math.hypot(s.position.x - casa.x, s.position.z - casa.z) - dondeQuedo,
+      );
+      if (escape > 120) break;
+    }
+  }
   c.throttle = 0;
   c.elevator = 0;
+  c.aileron = 0;
   return {
     roto,
-    tarjeta,
+    avisoA,
     cerca,
     masAlla,
     semi,
+    escape,
+    dentro,
     alto: casa.sy,
   };
 });
@@ -644,13 +725,29 @@ if (!bulto.sinCiudad) {
     'sin llegar, esta prueba pasaría sola y no estaría probando nada',
   );
   comprobar(
+    'avisa antes, con sitio para girar',
+    bulto.avisoA > bulto.semi + 20,
+    bulto.avisoA
+      ? `avisó a ${bulto.avisoA.toFixed(0)} m del centro (el bloque mide ${bulto.semi.toFixed(0)} de semiancho)`
+      : 'no avisó',
+    '«ni me avisó»: solo hablaba con el avión ya metido dentro',
+  );
+  comprobar(
     'y no lo atraviesa',
-    bulto.roto || bulto.masAlla < bulto.semi,
+    bulto.roto || bulto.dentro === 0,
     bulto.roto
       ? 'se rompió, que es lo que toca en este peldaño'
-      : `se paró ${(bulto.semi - bulto.masAlla).toFixed(0)} m antes del centro`,
+      : `${bulto.dentro} fotogramas dentro del edificio`,
     '«aterricé sobre la facultad de Biología, atravesé la de Farmacia»',
   );
+  if (!bulto.roto) {
+    comprobar(
+      'y se puede salir de ahí',
+      bulto.escape > 60,
+      `se alejó ${bulto.escape.toFixed(0)} m girando`,
+      '«no puedo zafarme de ahí, estoy atrapado»: la pared encerraba',
+    );
+  }
 }
 
 // ── El informe ────────────────────────────────────────────────────────────
