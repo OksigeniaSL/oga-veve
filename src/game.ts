@@ -108,6 +108,15 @@ const SE_QUEDA_EL_BULTO = 3;
  * Son dos y no diez a propósito: lo que se está ordenando es «esto no puede
  * taparlo un mensaje de tránsito», no una jerarquía de oficina.
  */
+/**
+ * Cuánto se queda el dibujo de una toma mala, s.
+ *
+ * Cinco. Más que un aviso corriente porque no es un aviso: es el juicio de lo
+ * que se acaba de hacer, y llega justo cuando quien juega está mirando por la
+ * ventanilla a ver dónde ha ido a parar.
+ */
+const SE_QUEDA_EL_VEREDICTO = 5;
+
 const IMPORTANTE = 1;
 const URGENTE = 2;
 
@@ -1203,6 +1212,27 @@ export class Game {
     } else {
       this.audio.cue("attention");
       decir(veredicto === "rapido" ? "too fast" : "off the runway");
+      /*
+       * **Y con dibujo**, que es lo que faltaba.
+       *
+       * Los dos veredictos malos se decían con un texto y una voz, y en el
+       * peldaño de los cuatro años no hay nadie que lea el texto. Se grabó un
+       * vuelo que se posó en un descampado del pueblo y la pantalla no enseñó
+       * nada distinto de un aterrizaje bueno: el peor final posible era el
+       * único sin dibujo.
+       *
+       * «Rápido» reaprovecha la mano del freno a propósito — lo que hay que
+       * entender ahí no es un concepto nuevo, es «llegaste con demasiada
+       * velocidad»— y «fuera» tiene el suyo: la pista, y el avión al lado.
+       */
+      this.hud.senal.mostrar(
+        veredicto === "rapido" ? "freno" : "fuera",
+        this.tier.instruments !== "none"
+          ? t(veredicto === "rapido" ? "hud.landedFast" : "hud.landedOffRunway")
+          : "",
+        null,
+        { segundos: SE_QUEDA_EL_VEREDICTO, prioridad: URGENTE },
+      );
     }
     return veredicto;
   }

@@ -152,6 +152,29 @@ const EDIFICIO = icono(`
   </g>
 `);
 
+/**
+ * Aterrizar fuera de la pista: **la pista, y el avión al lado**.
+ *
+ * Es hermano del dibujo del eje a propósito, y con la misma pista de fondo: en
+ * aquel el avión está encima, en este está fuera. Puestos uno al lado del otro
+ * se leen sin una palabra, que es lo que hacía falta.
+ *
+ * Porque hasta hoy **el peor final posible era el único sin dibujo**. El
+ * veredicto de la toma decía «aterrizaste fuera de la pista» con un texto y
+ * una voz, y en el peldaño de los cuatro años no hay nadie que lea el texto:
+ * se grabó un vuelo que se posó en un descampado del pueblo y la pantalla no
+ * enseñó nada distinto de un aterrizaje bueno.
+ */
+const FUERA_DE_PISTA = icono(`
+  <path d="M8 22 L12.6 3 h4.4 L22 22 Z" opacity="0.3" />
+  <rect class="senal__hueco" x="14.4" y="5" width="1.3" height="2.6" rx="0.65" opacity="0.75" />
+  <rect class="senal__hueco" x="14.4" y="9" width="1.3" height="2.6" rx="0.65" opacity="0.75" />
+  <g transform="translate(-6.6 0.6) scale(0.86)">
+    <path d="M4.2 16.6 L11.2 15.8 V12 a0.8 0.8 0 0 1 1.6 0 v3.8 l7 0.8 v1.7 l-7 0.8 v2.4
+             l1.9 1.1 v1 L12 20.7 L8.3 21.4 v-1 l1.9-1.1 v-2.4 l-6-0.8 Z" />
+  </g>
+`);
+
 /** La luz verde: adelante. */
 const VERDE = icono(`
   <circle cx="12" cy="12" r="9.5" />
@@ -298,6 +321,7 @@ const DIBUJOS: Record<string, string> = {
   terreno: TERRENO,
   frustrada: FRUSTRADA,
   edificio: EDIFICIO,
+  fuera: FUERA_DE_PISTA,
   "senalero-adelante": SENALERO_ADELANTE,
   "senalero-alto": SENALERO_ALTO,
   "senalero-izquierda": SENALERO_IZQUIERDA,

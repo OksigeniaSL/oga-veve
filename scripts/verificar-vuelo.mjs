@@ -29,11 +29,11 @@
  *
  * Uso: `node scripts/verificar-vuelo.mjs [escenario] [tramo]`
  */
-import { chromium } from 'playwright';
-import { createServer } from 'vite';
+import { chromium } from "playwright";
+import { createServer } from "vite";
 
-const ESCENARIO = process.argv[2] ?? 'tenerife-norte';
-const TRAMO = process.argv[3] ?? 'guyrami';
+const ESCENARIO = process.argv[2] ?? "tenerife-norte";
+const TRAMO = process.argv[3] ?? "guyrami";
 
 /**
  * Si en este peldaño viene el coche del «sígame».
@@ -43,7 +43,7 @@ const TRAMO = process.argv[3] ?? 'guyrami';
  * `flight/tiers.ts`. Sin esta distinción, la prueba del sígame daba por roto
  * lo que estaba bien.
  */
-const CON_SIGUEME = TRAMO === 'guyrami' || TRAMO === 'tuka';
+const CON_SIGUEME = TRAMO === "guyrami" || TRAMO === "tuka";
 const PUERTO = 5273;
 
 const server = await createServer({
@@ -53,8 +53,8 @@ const server = await createServer({
 await server.listen();
 
 const navegador = await chromium.launch({
-  executablePath: '/usr/bin/google-chrome',
-  args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
+  executablePath: "/usr/bin/google-chrome",
+  args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
 });
 /*
  * Se prueba **con el dedo**, que es el aparato del aula. No es un detalle de
@@ -68,10 +68,10 @@ const page = await navegador.newPage({
   isMobile: true,
 });
 const errores = [];
-page.on('pageerror', (e) => errores.push(e.message.slice(0, 160)));
+page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
 
 await page.addInitScript(() => {
-  localStorage.setItem('oga-veve:teclas-vistas', '1');
+  localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
 await page.goto(
   `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=aterrizaje&tramo=${TRAMO}`,
@@ -139,7 +139,7 @@ async function ponerSobreElSuelo(d, alto) {
 await page.evaluate(() => {
   let raiz = globalThis.__oga.aeronave().grupo;
   while (raiz.parent) raiz = raiz.parent;
-  const faro = raiz.getObjectByName('faro');
+  const faro = raiz.getObjectByName("faro");
   globalThis.__umbral = {
     x: faro.position.x,
     y: faro.position.y - 210,
@@ -159,24 +159,27 @@ const senda = await page.evaluate(() => {
   const pista = globalThis.__oga.pista();
   const suelo = globalThis.__oga.suelo(pista.x, pista.z);
   const aros = [];
-  raiz.getObjectByName('aros').traverse((o) => {
+  raiz.getObjectByName("aros").traverse((o) => {
     if (o.isMesh) aros.push({ y: o.position.y, d: o.userData.distancia ?? 0 });
   });
   return aros
     .sort((a, b) => b.d - a.d)
-    .map((a) => ({ d: a.d, grados: (Math.atan2(a.y - suelo, a.d) * 180) / Math.PI }));
+    .map((a) => ({
+      d: a.d,
+      grados: (Math.atan2(a.y - suelo, a.d) * 180) / Math.PI,
+    }));
 });
 const pendientes = senda.map((a) => a.grados);
 const maxDesvio = Math.max(...pendientes.map((g) => Math.abs(g - 3)));
 comprobar(
-  'la senda es una recta de tres grados',
+  "la senda es una recta de tres grados",
   maxDesvio < 1.2,
   `desvío máximo ${maxDesvio.toFixed(2)}°`,
-  'los aros dibujaban un palo de hockey: los últimos a 80 m sobre la pista',
+  "los aros dibujaban un palo de hockey: los últimos a 80 m sobre la pista",
 );
 
 const hilo = await page.evaluate(() => {
-  const h = globalThis.__raiz.getObjectByName('hilo');
+  const h = globalThis.__raiz.getObjectByName("hilo");
   if (!h) return { puntos: 0, hastaElUmbral: Infinity };
   const p = h.geometry.attributes.position;
   const u = globalThis.__umbral;
@@ -187,10 +190,10 @@ const hilo = await page.evaluate(() => {
   return { puntos: p.count, hastaElUmbral: cerca };
 });
 comprobar(
-  'la senda está dibujada y llega hasta el umbral',
+  "la senda está dibujada y llega hasta el umbral",
   hilo.puntos > 40 && hilo.hastaElUmbral < 90,
   `${hilo.puntos} puntos, el último a ${hilo.hastaElUmbral.toFixed(0)} m del umbral`,
-  'entre aro y aro no había nada que dijera si vas alto o bajo',
+  "entre aro y aro no había nada que dijera si vas alto o bajo",
 );
 
 // ── Corta final ───────────────────────────────────────────────────────────
@@ -198,14 +201,14 @@ comprobar(
 await poner(400, 24);
 const enCorta = await page.evaluate(() => {
   const raiz = globalThis.__raiz;
-  const faro = raiz.getObjectByName('faro');
+  const faro = raiz.getObjectByName("faro");
   return { faro: faro.visible ? faro.material.opacity : 0 };
 });
 comprobar(
-  'en corta final no hay nada tapando la pista',
+  "en corta final no hay nada tapando la pista",
   enCorta.faro < 0.05,
   `opacidad del haz ${enCorta.faro.toFixed(2)}`,
-  'el haz de la cabecera pintaba la pista de ocre y borraba sus marcas',
+  "el haz de la cabecera pintaba la pista de ocre y borraba sus marcas",
 );
 
 // ── Bajo de verdad en la senda ────────────────────────────────────────────
@@ -248,8 +251,8 @@ const bajoEnLaSenda = await page.evaluate(async () => {
    * «final»: la prueba medía el fotograma anterior.
    */
   await new Promise((r) => setTimeout(r, 2000));
-  let aviso = '';
-  let fase = '';
+  let aviso = "";
+  let fase = "";
   let alto = 0;
   for (let i = 0; i < 200; i++) {
     c.elevator = -0.35;
@@ -263,7 +266,7 @@ const bajoEnLaSenda = await page.evaluate(async () => {
      * quitado. Y la fase tiene que ser «final» **en ese mismo instante**,
      * porque fuera de final este aviso siempre habló.
      */
-    if (o.fase() === 'final' && o.avisoDeTerreno()) {
+    if (o.fase() === "final" && o.avisoDeTerreno()) {
       aviso = o.avisoDeTerreno();
       fase = o.fase();
       break;
@@ -276,12 +279,12 @@ const bajoEnLaSenda = await page.evaluate(async () => {
   return { fase, aviso, alto, ultimaFase };
 });
 comprobar(
-  'volando bajísimo en final, alguien lo dice',
-  !!bajoEnLaSenda.aviso && bajoEnLaSenda.fase === 'final',
+  "volando bajísimo en final, alguien lo dice",
+  !!bajoEnLaSenda.aviso && bajoEnLaSenda.fase === "final",
   bajoEnLaSenda.aviso
     ? `«${bajoEnLaSenda.aviso}» a ${bajoEnLaSenda.alto.toFixed(0)} m del suelo, en fase «${bajoEnLaSenda.fase}»`
     : `nadie dijo nada a ${bajoEnLaSenda.alto.toFixed(0)} m, fase «${bajoEnLaSenda.ultimaFase}»`,
-  'la fase decía «final» y con eso el aviso de terreno se callaba',
+  "la fase decía «final» y con eso el aviso de terreno se callaba",
 );
 
 // ── La frustrada ──────────────────────────────────────────────────────────
@@ -304,9 +307,9 @@ const frustrada = await page.evaluate(async () => {
   const o = globalThis.__oga;
   const c = o.controles();
   const dibujo = () =>
-    document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? '';
+    document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
   // El trazo de la senda que baja y se vuelve a ir arriba. Ver `ui/senal.ts`.
-  const ESA = 'Q 12 20';
+  const ESA = "Q 12 20";
 
   // Bajar por la senda hasta ponerse cerca del suelo, sin llegar a tocar.
   c.throttle = 0.2;
@@ -316,7 +319,7 @@ const frustrada = await page.evaluate(async () => {
     c.elevator = -0.35;
     await new Promise((r) => setTimeout(r, 50));
     const s = o.estado();
-    enFinal ||= o.fase() === 'final';
+    enFinal ||= o.fase() === "final";
     masBajo = Math.min(masBajo, s.heightAboveGround);
     if (s.onGround || s.heightAboveGround < 40) break;
   }
@@ -358,26 +361,26 @@ const frustrada = await page.evaluate(async () => {
 });
 
 comprobar(
-  'la aproximación llega a contar como final',
+  "la aproximación llega a contar como final",
   frustrada.enFinal && !frustrada.toco,
-  `${frustrada.enFinal ? 'sí' : 'nunca'}, lo más bajo ${frustrada.masBajo.toFixed(0)} m${
-    frustrada.toco ? ' (tocó tierra)' : ''
+  `${frustrada.enFinal ? "sí" : "nunca"}, lo más bajo ${frustrada.masBajo.toFixed(0)} m${
+    frustrada.toco ? " (tocó tierra)" : ""
   }`,
-  'sin final no hay frustrada que valga: el banco estaría probando otra cosa',
+  "sin final no hay frustrada que valga: el banco estaría probando otra cosa",
 );
 comprobar(
-  'irse al aire se reconoce y se celebra',
+  "irse al aire se reconoce y se celebra",
   frustrada.cuando < 12,
   frustrada.cuando === Infinity
     ? `nada tras subir ${frustrada.subido.toFixed(0)} m`
     : `${frustrada.cuando.toFixed(1)} s`,
-  'el juego no detectaba la frustrada en absoluto, siendo su regla número uno',
+  "el juego no detectaba la frustrada en absoluto, siendo su regla número uno",
 );
 comprobar(
-  'y vale un galón, como un aterrizaje',
-  frustrada.galones.includes('frustrada'),
-  `galones: ${frustrada.galones.join(', ') || 'ninguno'}`,
-  'renunciar tenía que valer tanto como posarse, y no valía nada',
+  "y vale un galón, como un aterrizaje",
+  frustrada.galones.includes("frustrada"),
+  `galones: ${frustrada.galones.join(", ") || "ninguno"}`,
+  "renunciar tenía que valer tanto como posarse, y no valía nada",
 );
 
 // ── La carrera de aterrizaje ──────────────────────────────────────────────
@@ -407,11 +410,13 @@ const enPista = await page.evaluate(() => {
   const ruta = o.ruta().map(([x, z]) => ejes(x, z));
   // Los puntos de la ruta que caen sobre el asfalto de la pista.
   const enAsfalto = ruta.filter(
-    (p) => Math.abs(p.across) < pista.width && Math.abs(p.along) < pista.length / 2,
+    (p) =>
+      Math.abs(p.across) < pista.width && Math.abs(p.along) < pista.length / 2,
   );
   return {
     fase: `${o.fase()} av=${globalThis.__av ?? 0}`,
-    delante: enAsfalto.filter((p) => (p.along - yo.along) * Math.sign(1) > 0).length,
+    delante: enAsfalto.filter((p) => (p.along - yo.along) * Math.sign(1) > 0)
+      .length,
     // Los últimos puntos son el giro a la calle de salida: ahí hay que
     // cruzar el borde, para eso es una salida. Lo que no puede es cruzarlo
     // antes, que es lo que hacía la diagonal.
@@ -431,7 +436,7 @@ const enPista = await page.evaluate(() => {
      * final». Tiene que estar, y **por delante**, esperando en la salida.
      */
     coche: (() => {
-      const c = globalThis.__raiz.getObjectByName('sigueme');
+      const c = globalThis.__raiz.getObjectByName("sigueme");
       if (!c?.visible) return null;
       const suyo = ejes(c.position.x, c.position.z);
       return { delante: suyo.along - yo.along, fuera: Math.abs(suyo.across) };
@@ -439,34 +444,34 @@ const enPista = await page.evaluate(() => {
   };
 });
 comprobar(
-  'la ruta de vuelta tiene pista por delante',
+  "la ruta de vuelta tiene pista por delante",
   enPista.delante > 3,
   `${enPista.delante} puntos por delante`,
-  'la ruta nacía 286 m por detrás del avión y se iba por la calle paralela',
+  "la ruta nacía 286 m por detrás del avión y se iba por la calle paralela",
 );
 comprobar(
-  'y va por el eje, no pegada al borde',
+  "y va por el eje, no pegada al borde",
   enPista.fueraDelEje === 0,
   `${enPista.fueraDelEje} puntos fuera del medio ancho`,
-  'iba en diagonal desde el avión hasta la boca de la salida',
+  "iba en diagonal desde el avión hasta la boca de la salida",
 );
 if (CON_SIGUEME) {
   comprobar(
-    'el sígame espera en la salida mientras se frena',
+    "el sígame espera en la salida mientras se frena",
     // Por delante **y fuera del eje**: si está en el eje es que va bajando la
     // pista corriendo delante de un avión que aterriza, que no lo hace nadie.
     !!enPista.coche && enPista.coche.delante > 0 && enPista.coche.fuera > 20,
     enPista.coche
       ? `a ${enPista.coche.delante.toFixed(0)} m por delante, ${enPista.coche.fuera.toFixed(0)} m del eje`
-      : 'no está',
-    '«se ve bien, pero desaparece en la pista de aterrizaje»',
+      : "no está",
+    "«se ve bien, pero desaparece en la pista de aterrizaje»",
   );
 }
 comprobar(
-  'y la tarjeta pide frenar con su tecla',
-  enPista.tarjeta === 'freno',
-  `tarjeta «${enPista.tarjeta || 'ninguna'}»`,
-  'al tocar tierra no salía ninguna tarjeta durante seis segundos',
+  "y la tarjeta pide frenar con su tecla",
+  enPista.tarjeta === "freno",
+  `tarjeta «${enPista.tarjeta || "ninguna"}»`,
+  "al tocar tierra no salía ninguna tarjeta durante seis segundos",
 );
 
 // ── El veredicto de la toma ───────────────────────────────────────────────
@@ -488,17 +493,21 @@ const veredicto = await page.evaluate(async () => {
   s.position.z = u.z + uz * 200;
   const t0 = performance.now();
   const hint = document.querySelector('[data-hud="hint"]');
+  let segundos = Infinity;
   for (let i = 0; i < 60; i++) {
     await new Promise((r) => setTimeout(r, 100));
-    if (hint?.textContent) return { segundos: (performance.now() - t0) / 1000 };
+    if (hint?.textContent) {
+      segundos = (performance.now() - t0) / 1000;
+      break;
+    }
   }
-  return { segundos: Infinity };
+  return { segundos };
 });
 comprobar(
-  'el veredicto de la toma llega enseguida',
+  "el veredicto de la toma llega enseguida",
   veredicto.segundos < 4,
-  `${veredicto.segundos === Infinity ? 'nunca' : veredicto.segundos.toFixed(1) + ' s'}`,
-  'esperaba a bajar de velocidad de rodaje: 54 s y 1129 m después de tocar',
+  `${veredicto.segundos === Infinity ? "nunca" : veredicto.segundos.toFixed(1) + " s"}`,
+  "esperaba a bajar de velocidad de rodaje: 54 s y 1129 m después de tocar",
 );
 
 // ── El rodaje de vuelta y el puesto ───────────────────────────────────────
@@ -536,42 +545,46 @@ const alFinal = await page.evaluate(async () => {
   o.colocar(fin[0], o.suelo(fin[0], fin[1]) + 1.3, fin[1], 0);
   await new Promise((r) => setTimeout(r, 2000));
   const raiz = globalThis.__raiz;
-  const coche = raiz.getObjectByName('sigueme');
-  const senalero = raiz.getObjectByName('senalero');
-  const dibujo = document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? '';
+  const coche = raiz.getObjectByName("sigueme");
+  const senalero = raiz.getObjectByName("senalero");
+  const dibujo =
+    document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
   return {
     fase: `${o.fase()} av=${globalThis.__av ?? 0}`,
     cinta: cintaRodando,
     cocheVisible: !!coche?.visible,
     senaleroVisible: !!senalero?.visible,
     senaleroDistancia: senalero
-      ? Math.hypot(senalero.position.x - s.position.x, senalero.position.z - s.position.z)
+      ? Math.hypot(
+          senalero.position.x - s.position.x,
+          senalero.position.z - s.position.z,
+        )
       : Infinity,
     // La llave lleva un círculo con un hueco; el señalero, una figura con brazos.
-    pideApagar: dibujo.includes('senal__hueco'),
+    pideApagar: dibujo.includes("senal__hueco"),
     dibujo: dibujo.slice(0, 40),
     v: o.estado().airspeed.toFixed(1),
-    restante: o.cintaGuia() ? 'hay ruta' : 'sin ruta',
+    restante: o.cintaGuia() ? "hay ruta" : "sin ruta",
   };
 });
 
 comprobar(
-  'la cinta guía se ve sobre el suelo',
+  "la cinta guía se ve sobre el suelo",
   alFinal.cinta !== null && alFinal.cinta > 0 && alFinal.cinta < 1.5,
-  `${alFinal.cinta === null ? 'no hay cinta' : alFinal.cinta.toFixed(2) + ' m'}`,
-  'sus cotas van horneadas y cualquier cambio del suelo la entierra',
+  `${alFinal.cinta === null ? "no hay cinta" : alFinal.cinta.toFixed(2) + " m"}`,
+  "sus cotas van horneadas y cualquier cambio del suelo la entierra",
 );
 comprobar(
-  'el señalero está a la vista al llegar',
+  "el señalero está a la vista al llegar",
   alFinal.senaleroVisible && alFinal.senaleroDistancia < 60,
-  `${alFinal.senaleroVisible ? alFinal.senaleroDistancia.toFixed(0) + ' m' : 'no se ve'}`,
-  '«señor de los bastones, ¿qué señor?»: medía treinta píxeles',
+  `${alFinal.senaleroVisible ? alFinal.senaleroDistancia.toFixed(0) + " m" : "no se ve"}`,
+  "«señor de los bastones, ¿qué señor?»: medía treinta píxeles",
 );
 comprobar(
-  'y al parar, la pantalla dice apagar el motor',
+  "y al parar, la pantalla dice apagar el motor",
   alFinal.pideApagar,
-  alFinal.pideApagar ? 'la llave' : `fase «${alFinal.fase}», v=${alFinal.v}`,
-  'la tarjeta del gesto del señalero se quedaba puesta y tapaba la llave',
+  alFinal.pideApagar ? "la llave" : `fase «${alFinal.fase}», v=${alFinal.v}`,
+  "la tarjeta del gesto del señalero se quedaba puesta y tapaba la llave",
 );
 
 /*
@@ -599,12 +612,10 @@ const final = await page.evaluate(async () => {
   return { puesta, galones: antes, fase: o.fase() };
 });
 comprobar(
-  'y al apagar el motor hay reconocimiento',
+  "y al apagar el motor hay reconocimiento",
   final.puesta,
-  final.puesta
-    ? `con ${final.galones} galones`
-    : `nada, fase «${final.fase}»`,
-  'el vuelo terminaba como termina una pestaña que se cierra',
+  final.puesta ? `con ${final.galones} galones` : `nada, fase «${final.fase}»`,
+  "el vuelo terminaba como termina una pestaña que se cierra",
 );
 
 /*
@@ -617,10 +628,10 @@ if (final.puesta) {
   await page.waitForTimeout(300);
   const cerrada = await page.evaluate(() => !globalThis.__oga.finDeVuelo());
   comprobar(
-    'y se puede salir de esa pantalla',
+    "y se puede salir de esa pantalla",
     cerrada,
-    cerrada ? 'se cierra al tocarla' : 'no se cierra ni tocándola',
-    '«vale, pero habrá que salir de aquí»: el HUD no dejaba pasar el clic',
+    cerrada ? "se cierra al tocarla" : "no se cierra ni tocándola",
+    "«vale, pero habrá que salir de aquí»: el HUD no dejaba pasar el clic",
   );
 }
 
@@ -640,7 +651,7 @@ if (final.puesta) {
  */
 const senalero = await page.evaluate(async () => {
   const o = globalThis.__oga;
-  const figura = globalThis.__raiz.getObjectByName('senalero');
+  const figura = globalThis.__raiz.getObjectByName("senalero");
   if (!figura) return { sinSenalero: true };
   const antes = { x: figura.position.x, z: figura.position.z };
   const c = o.controles();
@@ -657,7 +668,7 @@ const senalero = await page.evaluate(async () => {
      */
     o.colocar(antes.x, o.suelo(antes.x, antes.z) + 1.3, antes.z, 6);
     await new Promise((r) => setTimeout(r, 100));
-    pidioDespacio ||= o.tarjeta().dibujo.startsWith('senalero-');
+    pidioDespacio ||= o.tarjeta().dibujo.startsWith("senalero-");
   }
   const seFue = Math.hypot(
     figura.position.x - antes.x,
@@ -669,16 +680,16 @@ const senalero = await page.evaluate(async () => {
 });
 if (!senalero.sinSenalero) {
   comprobar(
-    'el señalero se quita de en medio',
+    "el señalero se quita de en medio",
     senalero.seFue > 6,
     `se apartó ${senalero.seFue.toFixed(1)} m`,
-    '«lo atropello sin problemas»: se quedaba clavado dejándose pasar por encima',
+    "«lo atropello sin problemas»: se quedaba clavado dejándose pasar por encima",
   );
   comprobar(
-    'y lo dice con los bastones antes de tener que quitarse',
+    "y lo dice con los bastones antes de tener que quitarse",
     senalero.pidioDespacio,
-    senalero.pidioDespacio ? 'señaló' : 'no señaló nada',
-    'ir a por él a toda velocidad no tenía quien lo avisara',
+    senalero.pidioDespacio ? "señaló" : "no señaló nada",
+    "ir a por él a toda velocidad no tenía quien lo avisara",
   );
 }
 
@@ -689,7 +700,7 @@ const ciudad = await page.evaluate(() => {
   const vias = o.vias().filter((v) => v.nivel <= 2);
   if (!vias.length) return { sinCiudad: true };
   const casas = [];
-  globalThis.__raiz.getObjectByName('ciudad')?.traverse((n) => {
+  globalThis.__raiz.getObjectByName("ciudad")?.traverse((n) => {
     if (!n.isInstancedMesh) return;
     const a = n.instanceMatrix.array;
     for (let i = 0; i < n.count; i++) {
@@ -713,7 +724,10 @@ const ciudad = await page.evaluate(() => {
         const dy = by - ay;
         const l2 = dx * dx + dy * dy;
         if (l2 < 1) continue;
-        const t = Math.max(0, Math.min(1, ((cx - ax) * dx + (cy - ay) * dy) / l2));
+        const t = Math.max(
+          0,
+          Math.min(1, ((cx - ax) * dx + (cy - ay) * dy) / l2),
+        );
         const d = Math.hypot(cx - (ax + dx * t), cy - (ay + dy * t));
         if (d < semi) cerca = true;
       }
@@ -727,10 +741,10 @@ const ciudad = await page.evaluate(() => {
 });
 if (!ciudad.sinCiudad) {
   comprobar(
-    'no hay casas plantadas sobre las autovías',
+    "no hay casas plantadas sobre las autovías",
     ciudad.encima === 0,
     `${ciudad.encima} de ${ciudad.muestra} casas de la muestra`,
-    'la ciudad se siembra por densidad y no sabía nada del viario',
+    "la ciudad se siembra por densidad y no sabía nada del viario",
   );
 }
 
@@ -780,7 +794,7 @@ const enCalle = await page.evaluate(async () => {
     await new Promise((r) => setTimeout(r, 100));
     const v = o.estado().airspeed;
     punta = Math.max(punta, v);
-    if (!avisoA && o.tarjeta().dibujo === 'freno') avisoA = v;
+    if (!avisoA && o.tarjeta().dibujo === "freno") avisoA = v;
   }
   const freno = document.querySelector('[data-hud="brakes-touch"]');
   return {
@@ -792,22 +806,22 @@ const enCalle = await page.evaluate(async () => {
   };
 });
 comprobar(
-  'el freno no desaparece por acelerar fuera de la pista',
+  "el freno no desaparece por acelerar fuera de la pista",
   !enCalle.frenoEscondido,
   enCalle.frenoEscondido
     ? `se escondió (onRunway=${enCalle.enPista}, v=${enCalle.v.toFixed(0)})`
-    : 'sigue ahí',
-  '«si acelero me quita la mano como para que pueda despegar sobre la R»',
+    : "sigue ahí",
+  "«si acelero me quita la mano como para que pueda despegar sobre la R»",
 );
 comprobar(
-  'y rodar a todo gas tiene quien lo avise',
+  "y rodar a todo gas tiene quien lo avise",
   // A quince metros por segundo ya se va al doble de lo que se rueda: si el
   // aviso llega más tarde que eso, llega de adorno.
   enCalle.avisoA > 0 && enCalle.avisoA < 15,
   enCalle.avisoA
     ? `avisó a ${enCalle.avisoA.toFixed(0)} m/s (punta ${enCalle.punta.toFixed(0)})`
     : `nadie dijo nada a ${enCalle.punta.toFixed(0)} m/s`,
-  '«la puedo acelerar a tope, debería haber un aviso de prudencia»',
+  "«la puedo acelerar a tope, debería haber un aviso de prudencia»",
 );
 
 // ── Chocar contra la ciudad ───────────────────────────────────────────────
@@ -828,7 +842,7 @@ const bulto = await page.evaluate(async () => {
 
   // El edificio más alto que haya, que es el más fácil de apuntar.
   const casas = [];
-  globalThis.__raiz.getObjectByName('ciudad')?.traverse((n) => {
+  globalThis.__raiz.getObjectByName("ciudad")?.traverse((n) => {
     if (!n.isInstancedMesh) return;
     const a = n.instanceMatrix.array;
     for (let i = 0; i < n.count; i++) {
@@ -844,7 +858,9 @@ const bulto = await page.evaluate(async () => {
     }
   });
   if (!casas.length) return { sinCiudad: true };
-  casas.sort((a, b) => b.sy * Math.min(b.sx, b.sz) - a.sy * Math.min(a.sx, a.sz));
+  casas.sort(
+    (a, b) => b.sy * Math.min(b.sx, b.sz) - a.sy * Math.min(a.sx, a.sz),
+  );
   const casa = casas[0];
   const semi = Math.max(casa.sx, casa.sz) / 2;
 
@@ -869,9 +885,9 @@ const bulto = await page.evaluate(async () => {
   let dentro = 0;
   let antes = -LEJOS;
   const laTarjeta = () =>
-    (document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? '').includes(
-      'M4 21 V6',
-    );
+    (
+      document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? ""
+    ).includes("M4 21 V6");
   for (let i = 0; i < 240; i++) {
     /*
      * Un piloto automático de altura de tres líneas. No es adorno: sin él, lo
@@ -946,36 +962,80 @@ const bulto = await page.evaluate(async () => {
 
 if (!bulto.sinCiudad) {
   comprobar(
-    'el avión llega hasta el edificio',
+    "el avión llega hasta el edificio",
     bulto.cerca < 70,
     `se quedó a ${bulto.cerca.toFixed(0)} m del centro de un bloque de ${bulto.alto.toFixed(0)} m`,
-    'sin llegar, esta prueba pasaría sola y no estaría probando nada',
+    "sin llegar, esta prueba pasaría sola y no estaría probando nada",
   );
   comprobar(
-    'avisa antes, con sitio para girar',
+    "avisa antes, con sitio para girar",
     bulto.avisoA > bulto.semi + 20,
     bulto.avisoA
       ? `avisó a ${bulto.avisoA.toFixed(0)} m del centro (el bloque mide ${bulto.semi.toFixed(0)} de semiancho)`
-      : 'no avisó',
-    '«ni me avisó»: solo hablaba con el avión ya metido dentro',
+      : "no avisó",
+    "«ni me avisó»: solo hablaba con el avión ya metido dentro",
   );
   comprobar(
-    'y no lo atraviesa',
+    "y no lo atraviesa",
     bulto.roto || bulto.dentro === 0,
     bulto.roto
-      ? 'se rompió, que es lo que toca en este peldaño'
+      ? "se rompió, que es lo que toca en este peldaño"
       : `${bulto.dentro} fotogramas dentro del edificio`,
-    '«aterricé sobre la facultad de Biología, atravesé la de Farmacia»',
+    "«aterricé sobre la facultad de Biología, atravesé la de Farmacia»",
   );
   if (!bulto.roto) {
     comprobar(
-      'y se puede salir de ahí',
+      "y se puede salir de ahí",
       bulto.escape > 60,
       `se alejó ${bulto.escape.toFixed(0)} m girando`,
-      '«no puedo zafarme de ahí, estoy atrapado»: la pared encerraba',
+      "«no puedo zafarme de ahí, estoy atrapado»: la pared encerraba",
     );
   }
 }
+
+// ── Aterrizar donde no es ────────────────────────────────────────────────
+
+/*
+ * **El peor final posible era el único sin dibujo.**
+ *
+ * El veredicto decía «aterrizaste fuera de la pista» con un texto y una voz, y
+ * en el peldaño de los cuatro años no hay nadie que lea el texto. Se grabó un
+ * vuelo que se posó en un descampado del pueblo y la pantalla no enseñó nada
+ * distinto de un aterrizaje bueno.
+ */
+const enElCampo = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const u = globalThis.__umbral;
+  const s = o.estado();
+  const h = s.heading;
+  const ux = Math.sin(h);
+  const uz = -Math.cos(h);
+  // Al lado de la pista, bien fuera del asfalto, y posado.
+  const lat = 220;
+  const x = u.x + ux * 400 - uz * lat;
+  const z = u.z + uz * 400 + ux * lat;
+  o.colocar(x, o.suelo(x, z) + 1.3, z, 0);
+  const c = o.controles();
+  c.throttle = 0;
+  c.brakes = 1;
+  let tarjeta = "";
+  for (let i = 0; i < 60; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+    if (o.tarjeta().dibujo === "fuera") {
+      tarjeta = "fuera";
+      break;
+    }
+  }
+  return { tarjeta, ultima: o.tarjeta().dibujo, enPista: o.estado().onRunway };
+});
+comprobar(
+  "aterrizar fuera de la pista se ve, no solo se lee",
+  enElCampo.tarjeta === "fuera",
+  enElCampo.tarjeta
+    ? "sale su dibujo: la pista, y el avión al lado"
+    : `tarjeta «${enElCampo.ultima || "ninguna"}», onRunway=${enElCampo.enPista}`,
+  "el peor final posible era el único sin dibujo, y a los cuatro años no se lee",
+);
 
 // ── El informe ────────────────────────────────────────────────────────────
 
@@ -983,7 +1043,7 @@ console.log(`\n  ${ESCENARIO} · ${TRAMO}\n`);
 let fallos = 0;
 for (const r of resultados) {
   if (!r.ok) fallos++;
-  console.log(`  ${r.ok ? '✓' : '✗'} ${r.nombre}  —  ${r.detalle}`);
+  console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
   if (!r.ok) console.log(`      volvió: ${r.porque}`);
 }
 if (errores.length) {
