@@ -96,9 +96,19 @@ const ALTURA_DE_FINAL = APROXIMACION * Math.tan(GLIDE_SLOPE);
  * subiendo y mirando fuera, que es exactamente el momento en el que pasa.
  */
 const SE_QUEDA_LA_FRUSTRADA = 4.5;
+
+/**
+ * Y cuánto tarda en volver a avisar de un bulto, s.
+ *
+ * Tres segundos. Es un antirrebote, no una duración: contra una pared se
+ * choca **en todos los fotogramas**, y sin esto el aviso saldría sesenta veces
+ * por segundo y el sonido con él.
+ */
+const SE_QUEDA_EL_BULTO = 3;
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
 import { crearCiudad } from "./world/ciudad";
+import { Obstaculos } from "./world/obstaculos";
 import { MissionMarker } from "./world/mission-marker";
 import { MissionRunner } from "./missions/runner";
 import { objectiveTarget, type Mission } from "./missions/types";
@@ -336,6 +346,12 @@ export class Game {
   private readonly galones = new Galones();
   /** Reconoce cuándo se renuncia a una aproximación. Ver `flight/frustrada.ts`. */
   private readonly frustrada = new Frustrada();
+  /** Contra qué se choca además del suelo. Ver `world/obstaculos.ts`. */
+  private readonly bultos = new Obstaculos();
+  /** Dónde estaba el avión antes de este paso, para mirar el camino entero. */
+  private readonly antesDelPaso = new Vector3();
+  /** Segundos que le quedan al aviso del bulto, para no repetirlo cada paso. */
+  private avisandoDelBulto = 0;
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
   private vistaActual: Vista | null = null;
   /** Si ahora mismo la pantalla está pidiendo freno. Ver `avanzarPlan`. */
@@ -524,6 +540,11 @@ export class Game {
           (x, z) =>
             this.terrain.runwayElevation +
             techoSobreLaPista(x, z, this.scenario.runway),
+          /*
+           * Y el índice de bultos, que es lo que hace que la ciudad **esté**.
+           * Hasta hoy se atravesaba entera. Ver `world/obstaculos.ts`.
+           */
+          this.bultos,
         ),
       );
     }
@@ -823,6 +844,8 @@ export class Game {
       vias: () => this.scenario.ciudad?.vias ?? [],
       /** Los galones ganados en este vuelo, para comprobarlos desde el banco. */
       galones: () => this.galones.lista,
+      /** Los bultos con los que se choca, para poder apuntarles desde el banco. */
+      bultos: () => this.bultos,
       /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
       senalero: () => this.senalero,
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
@@ -1142,6 +1165,73 @@ export class Game {
       decir(veredicto === "rapido" ? "too fast" : "off the runway");
     }
     return veredicto;
+  }
+
+  /**
+   * ¿Se ha metido el avión en un edificio? Y si sí, qué pasa.
+   *
+   * **Y qué pasa no es lo mismo en los cuatro peldaños**, que es la parte
+   * difícil de esto y la única que hay que pensar:
+   *
+   * - En el de los pequeños, el mundo te lo impide y ya está. No hay muerte ni
+   *   castigo: el avión no atraviesa el edificio, se queda ahí, y quien juega
+   *   descubre que por ahí no se pasa. Es la misma regla que el resto del
+   *   peldaño —«ni pérdida ni choque: en este peldaño no se puede perder»— y no
+   *   se rompe por un bloque de pisos.
+   * - De Tukã para arriba, el avión se rompe, porque **ahí la lección es que un
+   *   avión se rompe**. Y se rompe por el mismo camino que ya existía para una
+   *   toma dura: `crashed`, el sonido, el mensaje y la vuelta a la pista.
+   *
+   * Sin esto, todas las lecciones de seguridad de este juego —la senda, la
+   * altura mínima, el circuito— eran manías del profesor: existen porque hay
+   * cosas contra las que chocar, y no había ninguna.
+   */
+  private mirarSiChocaConAlgo(): void {
+    if (!this.bultos.cuantos) return;
+    const s = this.flight.state;
+    const a = this.antesDelPaso;
+    /*
+     * El **camino** del paso, no el punto de llegada. A ciento cincuenta por
+     * hora y con la pestaña de fondo, entre un fotograma y el siguiente caben
+     * varios metros: una casa estrecha se cruzaría entera sin que ni la salida
+     * ni la llegada cayeran dentro. Ver `chocaEnElCamino`.
+     */
+    if (
+      !this.bultos.chocaEnElCamino(
+        a.x,
+        a.y,
+        a.z,
+        s.position.x,
+        s.position.y,
+        s.position.z,
+      )
+    )
+      return;
+
+    if (this.tier.model !== "simple") {
+      this.flight.romper();
+      return;
+    }
+
+    /*
+     * **El peldaño de los pequeños: el mundo te lo impide.**
+     *
+     * Devolver el avión a donde estaba antes del paso es, fotograma a
+     * fotograma, exactamente una pared: se avanza, se descubre que ahí hay
+     * bulto, y se vuelve. El motor sigue, el avión sigue entero y quien juega
+     * solo tiene que girar. Nada que leer y nada que perder.
+     */
+    s.position.copy(a);
+    if (this.avisandoDelBulto > 0) return;
+    this.avisandoDelBulto = SE_QUEDA_EL_BULTO;
+    this.hud.senal.mostrar(
+      "edificio",
+      this.tier.instruments !== "none" ? t("vuelo.bulto") : "",
+      null,
+      { segundos: SE_QUEDA_EL_BULTO },
+    );
+    this.audio.cue("attention");
+    decir("obstacle ahead");
   }
 
   /**
@@ -2146,8 +2236,11 @@ export class Game {
       this.crashedFor += dt;
       if (this.crashedFor > CRASH_RESET_DELAY) this.resetFlight();
     } else {
+      this.antesDelPaso.copy(this.flight.state.position);
       this.flight.step(dt, this.input.controls);
+      this.mirarSiChocaConAlgo();
     }
+    this.avisandoDelBulto = Math.max(0, this.avisandoDelBulto - dt);
 
     /*
      * Los avisos de la toma. Se dicen **y** se enseñan, siempre: hay quien

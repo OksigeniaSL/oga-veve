@@ -543,6 +543,116 @@ comprobar(
   '«si acelero me quita la mano como para que pueda despegar sobre la R»',
 );
 
+// ── Chocar contra la ciudad ───────────────────────────────────────────────
+
+/*
+ * «Aterricé sobre la facultad de Biología, atravesé la de Farmacia, crucé San
+ * Francisco de Paula.» Hasta que existió esto, **lo único que paraba el avión
+ * era el suelo**: la ciudad entera se atravesaba.
+ *
+ * Y lo que tiene que pasar al chocar **no es lo mismo en los cuatro
+ * peldaños**, así que esto comprueba las dos respuestas a la vez: o el avión
+ * se rompe —de Tukã para arriba— o el mundo se lo impide —en Guyrami—. Lo
+ * que no puede es pasar de largo.
+ */
+const bulto = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // El edificio más alto que haya, que es el más fácil de apuntar.
+  const casas = [];
+  globalThis.__raiz.getObjectByName('ciudad')?.traverse((n) => {
+    if (!n.isInstancedMesh) return;
+    const a = n.instanceMatrix.array;
+    for (let i = 0; i < n.count; i++) {
+      const m = a.slice(i * 16, i * 16 + 16);
+      casas.push({
+        x: m[12],
+        y: m[13],
+        z: m[14],
+        sx: Math.hypot(m[0], m[1], m[2]),
+        sy: Math.hypot(m[4], m[5], m[6]),
+        sz: Math.hypot(m[8], m[9], m[10]),
+      });
+    }
+  });
+  if (!casas.length) return { sinCiudad: true };
+  casas.sort((a, b) => b.sy * Math.min(b.sx, b.sz) - a.sy * Math.min(a.sx, a.sz));
+  const casa = casas[0];
+  const semi = Math.max(casa.sx, casa.sz) / 2;
+
+  // Se apunta con el rumbo que ya lleva el avión: se le pone el edificio
+  // delante, no se le gira la cabeza.
+  const h = o.estado().heading;
+  const fx = Math.sin(h);
+  const fz = -Math.cos(h);
+  const LEJOS = 110;
+  o.colocar(casa.x - fx * LEJOS, casa.y, casa.z - fz * LEJOS, 38);
+
+  const c = o.controles();
+  c.aileron = 0;
+  c.brakes = 0;
+  c.throttle = 0.7;
+
+  let roto = false;
+  let tarjeta = false;
+  let cerca = Infinity;
+  let masAlla = -Infinity;
+  let quieto = 0;
+  let antes = -LEJOS;
+  for (let i = 0; i < 240; i++) {
+    /*
+     * Un piloto automático de altura de tres líneas. No es adorno: sin él, lo
+     * que se estaría midiendo es si el avión aguanta el nivel cinco segundos,
+     * que es otra prueba y ya tiene la suya. Aquí lo que se mira es si la
+     * ciudad para al avión.
+     */
+    const s = o.estado();
+    c.elevator = Math.max(-0.6, Math.min(0.6, (casa.y - s.position.y) * 0.08));
+    await dormir(50);
+    const dx = s.position.x - casa.x;
+    const dz = s.position.z - casa.z;
+    const along = dx * fx + dz * fz;
+    cerca = Math.min(cerca, Math.hypot(dx, dz));
+    masAlla = Math.max(masAlla, along);
+    roto ||= s.crashed;
+    tarjeta ||= (
+      document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? ''
+    ).includes('M4 21 V6');
+    // Parado contra la pared: el avión deja de avanzar y ahí se queda.
+    quieto = along - antes < 0.5 ? quieto + 1 : 0;
+    antes = along;
+    if (roto || along > semi || quieto > 30) break;
+  }
+  c.throttle = 0;
+  c.elevator = 0;
+  return {
+    roto,
+    tarjeta,
+    cerca,
+    masAlla,
+    semi,
+    alto: casa.sy,
+  };
+});
+
+if (!bulto.sinCiudad) {
+  comprobar(
+    'el avión llega hasta el edificio',
+    bulto.cerca < 70,
+    `se quedó a ${bulto.cerca.toFixed(0)} m del centro de un bloque de ${bulto.alto.toFixed(0)} m`,
+    'sin llegar, esta prueba pasaría sola y no estaría probando nada',
+  );
+  comprobar(
+    'y no lo atraviesa',
+    bulto.roto || bulto.masAlla < bulto.semi,
+    bulto.roto
+      ? 'se rompió, que es lo que toca en este peldaño'
+      : `se paró ${(bulto.semi - bulto.masAlla).toFixed(0)} m antes del centro`,
+    '«aterricé sobre la facultad de Biología, atravesé la de Farmacia»',
+  );
+}
+
 // ── El informe ────────────────────────────────────────────────────────────
 
 console.log(`\n  ${ESCENARIO} · ${TRAMO}\n`);

@@ -40,6 +40,7 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { mulberry32 } from './noise';
 import type { Punto } from './aerodrome';
+import type { Obstaculos } from './obstaculos';
 
 export interface Ciudad {
   readonly id: string;
@@ -223,6 +224,19 @@ export function crearCiudad(
    * aeropuerto de verdad.
    */
   techoDeObstaculos?: (x: number, z: number) => number,
+  /**
+   * Dónde apuntar los bultos, para que el avión no los atraviese.
+   *
+   * **La ciudad es lo único de este mundo que puede parar a un avión además
+   * del suelo**, y hasta hoy no paraba nada: «aterricé sobre la facultad de
+   * Biología, atravesé la de Farmacia». Se apunta aquí y no se deduce después
+   * porque el sitio, el tamaño y el giro de cada casa solo existen dentro de
+   * este bucle: al salir se han fundido en una matriz de instancia.
+   *
+   * Es opcional a propósito. Quien solo quiere pintar la ciudad —una prueba,
+   * una vista previa— no tiene por qué pagar el índice.
+   */
+  bultos?: Obstaculos,
 ): Group {
   const grupo = new Group();
   grupo.name = 'ciudad';
@@ -367,6 +381,24 @@ export function crearCiudad(
         giro.setFromAxisAngle(arriba, Math.floor(sorteo() * 4) * (Math.PI / 2) + (sorteo() - 0.5) * 0.25);
         escala.set(ancho, alto, fondo);
         matrices[cual]!.push(new Matrix4().compose(posicion, giro, escala));
+        /*
+         * Y su bulto, si alguien lo está apuntando. Se guarda la caja recta
+         * que envuelve a la girada —ver `obstaculos.ts`—, que con un giro de
+         * un octavo de radián se diferencia de la de verdad en centímetros.
+         */
+        if (bultos) {
+          const a = Math.atan2(2 * (giro.w * giro.y), 1 - 2 * (giro.y * giro.y));
+          const cos = Math.abs(Math.cos(a));
+          const sen = Math.abs(Math.sin(a));
+          bultos.anadir(
+            x,
+            z,
+            (ancho / 2) * cos + (fondo / 2) * sen,
+            (ancho / 2) * sen + (fondo / 2) * cos,
+            suelo,
+            suelo + alto,
+          );
+        }
         // Un poco de variación de tono por casa, que es lo que evita que un
         // barrio parezca una hoja de cálculo.
         const delSuelo = colorDelSuelo?.(x, z);

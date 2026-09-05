@@ -226,6 +226,11 @@ export class CoefficientFlightModel implements FlightModel {
     this.state.onRunway = enPista;
   }
 
+  /** Se rompió: por el mismo camino que una toma dura. */
+  romper(): void {
+    this.state.crashed = true;
+  }
+
   reset(initial: InitialConditions): void {
     const s = this.state;
     s.position.copy(initial.position);

@@ -126,6 +126,32 @@ const FRUSTRADA = icono(`
   <path d="M22.5 4.6 L18.7 6.2 L21.7 8.9 Z" />
 `);
 
+/**
+ * Un edificio: **por ahí no se pasa**.
+ *
+ * Sale cuando el avión se mete en la ciudad en el peldaño de los pequeños,
+ * donde el mundo te lo impide en vez de romperte el avión. Y por eso es un
+ * edificio a secas y no un edificio tachado ni una señal de peligro: lo que
+ * hay que entender no es «has hecho algo malo», es **qué es eso** contra lo
+ * que te acabás de parar. A los cuatro años, un bloque con ventanas es un
+ * edificio y no hace falta más.
+ */
+const EDIFICIO = icono(`
+  <path d="M4 21 V6 a1 1 0 0 1 1-1 h6 a1 1 0 0 1 1 1 v4 h7 a1 1 0 0 1 1 1 v10 Z" />
+  <g class="senal__hueco">
+    <rect x="5.6" y="7" width="2.2" height="2.2" />
+    <rect x="9" y="7" width="2.2" height="2.2" />
+    <rect x="5.6" y="10.6" width="2.2" height="2.2" />
+    <rect x="9" y="10.6" width="2.2" height="2.2" />
+    <rect x="5.6" y="14.2" width="2.2" height="2.2" />
+    <rect x="9" y="14.2" width="2.2" height="2.2" />
+    <rect x="13.6" y="12.6" width="2.2" height="2.2" />
+    <rect x="17" y="12.6" width="2.2" height="2.2" />
+    <rect x="13.6" y="16.2" width="2.2" height="2.2" />
+    <rect x="17" y="16.2" width="2.2" height="2.2" />
+  </g>
+`);
+
 /** La luz verde: adelante. */
 const VERDE = icono(`
   <circle cx="12" cy="12" r="9.5" />
@@ -271,6 +297,7 @@ const DIBUJOS: Record<string, string> = {
   acasa: A_CASA,
   terreno: TERRENO,
   frustrada: FRUSTRADA,
+  edificio: EDIFICIO,
   "senalero-adelante": SENALERO_ADELANTE,
   "senalero-alto": SENALERO_ALTO,
   "senalero-izquierda": SENALERO_IZQUIERDA,

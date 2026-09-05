@@ -189,6 +189,15 @@ export class ArcadeFlightModel implements FlightModel {
     this.state.onRunway = enPista;
   }
 
+  /**
+   * Aquí no se rompe nada, y es a propósito.
+   *
+   * Este peldaño empieza a los cuatro años y su regla es que no se puede
+   * perder. Contra un edificio, el juego se encarga: el avión no lo atraviesa
+   * y se queda ahí. Ver `Game.mirarSiChocaConAlgo`.
+   */
+  romper(): void {}
+
   reset(initial: InitialConditions): void {
     this.heading = initial.heading;
     this.speed = initial.airspeed;

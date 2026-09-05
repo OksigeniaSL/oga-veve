@@ -137,6 +137,7 @@ export const EN: Dictionary = {
   'vuelo.terrenoBajo': 'You are very low',
   'vuelo.terrenoSube': 'Pull up!',
   'vuelo.frustrada': 'Well done! You went around. Try again',
+  'vuelo.bulto': 'No way through: there is a building',
   'vuelo.aterrizado': 'Brake',
   'vuelo.abandonando': 'Vacate the runway, someone is behind you',
   'vuelo.pistaLibre': 'Runway clear! Well done',
