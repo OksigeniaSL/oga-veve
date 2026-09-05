@@ -139,6 +139,15 @@ const MANGA_ALTO = 32;
 const barraDeGalon = (n: number): string =>
   `<rect class="manga__barra" x="9" y="${21 - n * 5.5}" width="30" height="3.6" rx="1.8" />`;
 
+/**
+ * ¿Se juega con el dedo?
+ *
+ * Se pregunta una vez: el aparato no cambia a mitad de vuelo, y `matchMedia`
+ * en cada fotograma es trabajo tirado.
+ */
+const ESTO_ES_TACTIL =
+  typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+
 export class Hud {
   readonly tutor = new Tutor();
   readonly mapa = new Mapa();
@@ -765,7 +774,18 @@ export class Hud {
     //
     // Sigue apareciendo al aterrizar, porque ahí el motor está a ralentí y
     // frenar es justo lo que toca.
-    const despegando = state.airspeed > decisionSpeed && throttle > 0.55;
+    /*
+     * **Y esto solo pasa en la pista.**
+     *
+     * Faltaba mirar dónde está el avión, así que acelerando por una calle de
+     * rodaje el freno se iba con la misma despedida que en la carrera de
+     * despegue: «rodadura donde si acelero me quita la mano como para que
+     * pueda despegar sobre pista R». Ahí no hay V1 que valga y quitarle el
+     * freno a quien va rápido por una calle es exactamente lo contrario de lo
+     * que hace falta.
+     */
+    const despegando =
+      state.onRunway && state.airspeed > decisionSpeed && throttle > 0.55;
     // La tecla del freno, la que se enseña para la mano elegida.
     const tecla = this.teclaDe?.("brakes") ?? "";
     if (tecla && this.brakeKey.textContent !== tecla)
@@ -775,7 +795,18 @@ export class Hud {
       tecla.length > 1 || tecla === "␣",
     );
 
-    const escondeBoton = !enSuelo || !sinLetras || despegando;
+    /*
+     * **Y con el dedo, el botón rojo sale en todos los peldaños.**
+     *
+     * Estaba atado a «no hay letras», porque en Taguató y arriba la idea era
+     * enseñar la tarjeta con la tecla dibujada en vez del botón. Con teclado
+     * eso está bien; con el dedo dejaba a esos dos peldaños **sin ninguna
+     * forma de frenar**, y desde que se quitó el botón de texto de la capa
+     * táctil —que decía «Frenos» en castellano fijo— eso pasó de discutible a
+     * agujero. Un mando de seguridad no puede depender del peldaño.
+     */
+    const escondeBoton =
+      !enSuelo || (!sinLetras && !ESTO_ES_TACTIL) || despegando;
 
     // Y no se esfuma: **se va, y se ve adónde va.**
     //

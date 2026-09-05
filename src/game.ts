@@ -780,6 +780,24 @@ export class Game {
           sobreElSuelo: alturas[Math.floor(alturas.length / 2)]!,
         };
       },
+      /**
+       * Pone el avión en un sitio, de verdad.
+       *
+       * **Y hace falta que sea el modelo quien lo ponga.** Escribir en
+       * `estado()` mueve el avión y le deja la velocidad puesta: el banco de
+       * pruebas colocaba la avioneta en el puesto y allí seguía a treinta
+       * metros por segundo, así que la máquina de fases no daba el vuelo por
+       * terminado y una comprobación buena salía en rojo por culpa del banco.
+       *
+       * Esto llama al `reset` del modelo, que es lo que usa el propio juego
+       * para colocar el avión al empezar una lección.
+       */
+      colocar: (x: number, y: number, z: number, velocidad: number) =>
+        this.flight.reset({
+          position: new Vector3(x, y, z),
+          heading: this.flight.state.heading,
+          airspeed: velocidad,
+        }),
       /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
       senalero: () => this.senalero,
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
@@ -2475,10 +2493,23 @@ export class Game {
      * Al acabarse el gesto se borra la fase anunciada y la tarjeta que tocara
      * vuelve sola, que es el mismo mecanismo del aviso de freno.
      */
-    if (gesto !== this.gestoEnPantalla) {
-      this.gestoEnPantalla = gesto;
-      if (gesto) {
-        this.hud.senal.mostrar(`senalero-${gesto}`, "", null, {
+    /*
+     * **Menos el de «frenos», que es el final y no una instrucción.**
+     *
+     * Ese gesto se queda puesto mientras el avión está parado en el puesto, y
+     * con él puesta se quedaba también su tarjeta — tapando la única que ahí
+     * hace falta, que es la llave de «apagá el motor». Se vio jugando: «no hay
+     * señal de apagado sino la del señor que cruzó las señales bajo su
+     * cintura, pero no dice de apagar».
+     *
+     * El señalero sigue cruzando los bastones en el mundo, que es donde ese
+     * gesto significa «ya está». La pantalla pasa a lo siguiente.
+     */
+    const enPantalla = gesto === "frenos" ? null : gesto;
+    if (enPantalla !== this.gestoEnPantalla) {
+      this.gestoEnPantalla = enPantalla;
+      if (enPantalla) {
+        this.hud.senal.mostrar(`senalero-${enPantalla}`, "", null, {
           segundos: Infinity,
         });
       } else {
