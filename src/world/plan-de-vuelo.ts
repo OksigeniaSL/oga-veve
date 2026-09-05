@@ -1036,8 +1036,34 @@ export class PlanDeVuelo {
       this.pista.heading,
     );
     const enElEje = puntoDePista(this.pista, -along);
+    /*
+     * **Y por el eje hasta estar a la altura de la salida, no en diagonal.**
+     *
+     * Faltaba este punto. Se iba de la proyección del avión sobre el eje
+     * directamente a la boca de la salida, y eso son quinientos metros de
+     * diagonal: la raya salía del eje poco a poco y acababa pegada al borde
+     * del asfalto. «Línea de guía verde hacia E4 que se va hacia fuera de
+     * pista» — era exactamente eso, y era mío de anoche.
+     *
+     * Un avión que acaba de aterrizar rueda **por el eje** hasta la salida y
+     * gira allí. Así que el camino son tres tramos: hasta el eje, por el eje,
+     * y el giro a la calle.
+     */
+    const salidaEnEjes = enEjesDePista(
+      salida[0],
+      -salida[1],
+      this.pista.x,
+      this.pista.z,
+      this.pista.heading,
+    );
+    const frenteALaSalida = puntoDePista(this.pista, -salidaEnEjes.along);
     // De mundo a fichero: el norte del fichero es la Z negativa del mundo.
-    const puntos: Punto[] = [this.ultimaPos, [enElEje[0], -enElEje[1]], salida];
+    const puntos: Punto[] = [
+      this.ultimaPos,
+      [enElEje[0], -enElEje[1]],
+      [frenteALaSalida[0], -frenteALaSalida[1]],
+      salida,
+    ];
     let largo = 0;
     for (let i = 1; i < puntos.length; i++) {
       largo += Math.hypot(
