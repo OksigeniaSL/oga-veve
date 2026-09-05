@@ -100,6 +100,32 @@ const GROUND_FULL = 8;
 const GROUND_FADE = 20;
 
 /**
+ * Lo más que se puede tirar de lado rodando, m/s².
+ *
+ * **Es el número que faltaba, y sin él un avión giraba como un karting.**
+ * Medido en el banco: a doce metros por segundo, con la ayuda de rodaje
+ * mandando alerón, el avión giraba a cincuenta y cinco grados por segundo —o
+ * sea, un radio de doce metros a cuarenta y tres por hora, más de un g de
+ * lado—. Un avión así se sale de la calle o se apoya en un ala.
+ *
+ * El fallo era que la autoridad de la rueda de morro no dependía de la
+ * velocidad más que para apagarse, así que el **radio** de giro se encogía
+ * según se frenaba: al revés de como funciona cualquier cosa con ruedas.
+ *
+ * Seis, y el número está medido contra **la maniobra más cerrada que el juego
+ * pide de verdad**: alinearse en la cabecera desde el punto de espera. Se
+ * empezó en cuatro —el que sale de la calibración escrita más arriba, veinte
+ * metros de radio a velocidad de rodaje— y en Silvio Pettirossi el avión no
+ * llegaba a meterse en la pista: el banco de despegues lo cazó a la primera.
+ *
+ * Sigue siendo la mitad de lo que había, que era **más de un g**, y trae
+ * consigo la lección de verdad, que no hacía falta inventar: **para girar hay
+ * que ir despacio**. A paso de peatón el avión pivota; lanzado, no gira, y el
+ * que se pasa la salida se pasa la salida.
+ */
+const DE_LADO_RODANDO = 6;
+
+/**
  * Lo que **nunca** se pierde de autoridad en el suelo.
  *
  * Se apagaba del todo a los veintiocho metros por segundo, que es justo la
@@ -337,7 +363,18 @@ export class ArcadeFlightModel implements FlightModel {
         MANDO_MINIMO,
         1 - clamp01((this.speed - GROUND_FULL) / GROUND_FADE),
       );
-      this.heading += controls.aileron * GROUND_TURN * mando * step;
+      /*
+       * Y con el tope de lo que se puede tirar de lado: `v²/R = a`, o sea que
+       * la velocidad de giro no puede pasar de `a/v`. Ver `DE_LADO_RODANDO`.
+       * A paso de peatón no muerde —ahí manda la rueda— y lanzado es lo único
+       * que manda.
+       */
+      const tope = Math.min(
+        GROUND_TURN,
+        DE_LADO_RODANDO / Math.max(1, this.speed),
+      );
+      const giro = clamp(controls.aileron * GROUND_TURN * mando, -tope, tope);
+      this.heading += giro * step;
       // Y sin inclinar el avión, que en el suelo tiene las ruedas puestas.
       this.bank += (0 - this.bank) * Math.min(1, step * 5);
     } else {
