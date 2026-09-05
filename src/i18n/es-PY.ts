@@ -137,6 +137,8 @@ export const ES_PY = {
   'vuelo.final': 'Bajá suavecito',
   'vuelo.terrenoBajo': 'Vas muy bajo',
   'vuelo.terrenoSube': '¡Subí!',
+  // Irse al aire no es fallar: es la decisión buena, y así se dice.
+  'vuelo.frustrada': '¡Bien hecho! Te fuiste al aire. Probá de nuevo',
   'vuelo.aterrizado': 'Frená',
   'vuelo.abandonando': 'Salí de la pista, que viene otro',
   'vuelo.pistaLibre': '¡Pista libre! Bien hecho',
@@ -200,6 +202,7 @@ export const ES_PY = {
   'galon.aros': 'Galón de los aros',
   'galon.velocidad': 'Galón de la velocidad',
   'galon.rodaje': 'Galón del rodaje',
+  'galon.frustrada': 'Galón de la frustrada',
 
   'language.label': 'Idioma',
   'language.changed': 'Idioma: {name}',

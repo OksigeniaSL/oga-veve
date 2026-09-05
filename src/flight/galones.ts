@@ -1,5 +1,5 @@
 /**
- * Los galones: cinco por vuelo, ganados por partes y sin castigo.
+ * Los galones: seis por vuelo, ganados por partes y sin castigo.
  *
  * Es lo que convierte un vuelo en un ejercicio con nota. El juego ya sabía
  * medirlo todo —el veredicto de la toma, los aros cruzados y perdidos, la
@@ -8,7 +8,7 @@
  *
  * ## Se ganan, no se pierden
  *
- * Cinco galones que se encienden **durante** el vuelo, uno a uno, no una nota
+ * Seis galones que se encienden **durante** el vuelo, uno a uno, no una nota
  * al final. Encenderse mientras haces las cosas enseña qué las hizo bien; una
  * nota al aterrizar solo dice que algo salió regular.
  *
@@ -38,17 +38,18 @@ import type { Aterrizaje } from "./aterrizaje";
 import type { BandaDeVelocidad } from "./velocidad-de-aproximacion";
 import type { Fase } from "./vuelo";
 
-/** Un galón por cada parte del vuelo que se puede hacer bien. */
+/**
+ * Un galón por cada parte del vuelo que se puede hacer bien.
+ *
+ * Y uno de ellos —`frustrada`— por la parte que se hace bien **no haciéndola**.
+ */
 export type Galon =
-  | "aproximacion"
-  | "toma"
-  | "aros"
-  | "velocidad"
-  | "rodaje";
+  "aproximacion" | "frustrada" | "toma" | "aros" | "velocidad" | "rodaje";
 
 /** El orden en que se llevan en la manga. El de las partes de un vuelo. */
 export const GALONES: readonly Galon[] = [
   "aproximacion",
+  "frustrada",
   "toma",
   "aros",
   "velocidad",
@@ -66,6 +67,8 @@ export interface Fotograma {
   readonly aro: "cruzado" | "perdido" | null;
   /** Y el veredicto de la toma, que llega una sola vez. */
   readonly toma: Aterrizaje;
+  /** Si **en este fotograma** se ha reconocido una frustrada. Llega una vez. */
+  readonly frustrada: boolean;
 }
 
 /*
@@ -108,7 +111,7 @@ const RODAJE_MINIMO = 12;
 const RODAJE_FUERA = 5;
 
 /**
- * La cuenta de los cinco galones de un vuelo.
+ * La cuenta de los galones de un vuelo.
  *
  * Se le da un fotograma y devuelve el galón que se acaba de ganar, o `null`.
  * Uno por fotograma: dos premios a la vez no se ven como dos premios.
@@ -129,6 +132,13 @@ export class Galones {
    * ganaba nunca. Se queda guardado hasta el próximo vuelo.
    */
   private veredicto: Aterrizaje = null;
+
+  /**
+   * Si en este vuelo se renunció a una aproximación, guardado.
+   *
+   * Igual que el veredicto: llega en un fotograma y lo miran dos galones.
+   */
+  private renuncio = false;
 
   private enFinal = 0;
   private enFinalBien = 0;
@@ -160,6 +170,7 @@ export class Galones {
   reiniciar(): void {
     this.ganados.length = 0;
     this.veredicto = null;
+    this.renuncio = false;
     this.cruzados = 0;
     this.perdidos = 0;
     this.enFinal = 0;
@@ -172,6 +183,7 @@ export class Galones {
 
   private contar(f: Fotograma, dt: number): void {
     if (f.toma) this.veredicto = f.toma;
+    if (f.frustrada) this.renuncio = true;
     if (f.aro === "cruzado") this.cruzados++;
     else if (f.aro === "perdido") this.perdidos++;
 
@@ -208,11 +220,30 @@ export class Galones {
        */
       case "aproximacion":
         return (
-          this.veredicto !== null &&
-          this.veredicto !== "fuera" &&
+          /*
+           * **Y una frustrada cierra la aproximación igual que una toma.**
+           *
+           * La aproximación se juzga cuando ha terminado de contar, y termina
+           * de las dos maneras: posándose o yéndose. Quien vuela una final
+           * buena y decide no aterrizar ha hecho la aproximación bien —
+           * exigirle además una toma sería pedirle que se quede.
+           */
+          (this.renuncio ||
+            (this.veredicto !== null && this.veredicto !== "fuera")) &&
           this.enFinal >= FINAL_MINIMO &&
           this.enFinalBien >= this.enFinal * FINAL_BIEN
         );
+
+      /*
+       * **La frustrada, que es la regla número uno de este juego.**
+       *
+       * Sin listón: haberla hecho ya es haberla ganado. No hay una frustrada
+       * bien y otra mal — irse al aire cuando la cosa no sale es siempre la
+       * decisión buena, y el galón dice exactamente eso. Es el único que se
+       * gana renunciando, y por eso vale lo mismo que el de la toma.
+       */
+      case "frustrada":
+        return this.renuncio;
 
       /*
        * La toma. Suave y firme valen las dos: firme es como se posa un avión

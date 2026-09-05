@@ -107,6 +107,25 @@ const TERRENO = icono(`
         stroke-linecap="round" stroke-linejoin="round" />
 `);
 
+/**
+ * La frustrada: **la senda que baja y se vuelve a ir arriba**.
+ *
+ * Es hermano del dibujo de la senda a propósito, y con el mismo vocabulario:
+ * el suelo abajo y una trayectoria encima. La senda baja recta hasta el suelo;
+ * esta baja, cambia de idea y sube. Puestos uno al lado del otro se leen sin
+ * una palabra, y dicen justo lo que se quiere decir — que hay dos finales
+ * buenos para una aproximación y no uno.
+ *
+ * Va sin tachón y sin nada rojo. Este dibujo no avisa de un error: celebra una
+ * decisión, que es la regla número uno de este juego.
+ */
+const FRUSTRADA = icono(`
+  <path d="M2 21 h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none" />
+  <path d="M2.5 4.5 Q 12 20 21.5 6.5" stroke="currentColor" stroke-width="2.4"
+        fill="none" stroke-linecap="round" />
+  <path d="M22.5 4.6 L18.7 6.2 L21.7 8.9 Z" />
+`);
+
 /** La luz verde: adelante. */
 const VERDE = icono(`
   <circle cx="12" cy="12" r="9.5" />
@@ -218,12 +237,7 @@ const senalero = (brazos: string): string =>
   `);
 
 /** Los dos brazos, del hombro a la punta del bastón. */
-const brazos = (
-  ix: number,
-  iy: number,
-  dx: number,
-  dy: number,
-): string => `
+const brazos = (ix: number, iy: number, dx: number, dy: number): string => `
   <path d="M10.9 8.2 L${ix} ${iy} M13.1 8.2 L${dx} ${dy}"
         stroke="currentColor" stroke-width="2.4" fill="none"
         stroke-linecap="round" />
@@ -256,6 +270,7 @@ const DIBUJOS: Record<string, string> = {
   salida: SALIDA,
   acasa: A_CASA,
   terreno: TERRENO,
+  frustrada: FRUSTRADA,
   "senalero-adelante": SENALERO_ADELANTE,
   "senalero-alto": SENALERO_ALTO,
   "senalero-izquierda": SENALERO_IZQUIERDA,
