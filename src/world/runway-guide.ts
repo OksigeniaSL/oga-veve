@@ -20,7 +20,9 @@
  */
 
 import {
+  BufferGeometry,
   Color,
+  Float32BufferAttribute,
   SphereGeometry,
   Vector3,
   CylinderGeometry,
@@ -29,6 +31,8 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshLambertMaterial,
+  Points,
+  PointsMaterial,
   TorusGeometry,
 } from "three";
 import { delante } from "./rumbo";
@@ -698,9 +702,80 @@ function buildGuide(
   group.add(
     approachRings(thresholdX, runwayElevation, thresholdZ, ax, az, ground),
   );
+  group.add(
+    hiloDeLaSenda(thresholdX, runwayElevation, thresholdZ, ax, az, ground),
+  );
 
   return group;
 }
+
+/**
+ * El hilo de la senda: la trayectoria dibujada punto a punto.
+ *
+ * **Los aros dicen si lo hiciste bien; esto dice hacia dónde ir.** Y esa era
+ * la mitad que faltaba. Un aro solo habla cuando ya lo tenés encima: se
+ * enciende si vas centrado y se apaga si no, pero entre aro y aro —que son
+ * cientos de metros— no hay nada que diga si vas alto o bajo. «Sigo superando
+ * los aros por arriba y por abajo sin tener casi señales de nada.»
+ *
+ * Un hilo de puntos no tiene ese problema: **está siempre**, y en cada
+ * fotograma se ve si te queda por encima o por debajo del morro. Eso es
+ * exactamente lo que un piloto lee en la senda, y no hay que aprender nada
+ * para entenderlo.
+ *
+ * ## Por qué puntos y no una bola
+ *
+ * Ya hubo una mira —una bolita que marcaba tu desvío— y se apagó por una
+ * razón buena: «esas bolas de colores son un peligro», porque un objeto
+ * flotante suelto se lee como algo contra lo que se puede chocar. Una fila de
+ * puntos finos no: el juego ya dibuja rayas en el suelo para decir «por aquí»,
+ * y esto es la misma gramática levantada del suelo.
+ *
+ * ## Y llega hasta el umbral
+ *
+ * Los aros se acaban a quinientos metros. El hilo sigue hasta la cabecera,
+ * que es justo el trozo donde no había ninguna referencia y donde se decide
+ * la toma.
+ */
+function hiloDeLaSenda(
+  x: number,
+  y: number,
+  z: number,
+  ax: number,
+  az: number,
+  ground: GroundSampler,
+): Points {
+  const puntos: number[] = [];
+  for (let d = FIRST_RING_DISTANCE; d > 30; d -= PASO_DEL_HILO) {
+    const px = x - ax * d;
+    const pz = z - az * d;
+    // La misma cuenta que coloca los aros: si el terreno sube, el hilo sube.
+    const suelo = ground(px, pz) + RING_TERRAIN_CLEARANCE;
+    puntos.push(px, Math.max(y + d * Math.tan(GLIDE_SLOPE), suelo), pz);
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute("position", new Float32BufferAttribute(puntos, 3));
+  const hilo = new Points(
+    geo,
+    new PointsMaterial({
+      color: OCRE,
+      // Tamaño fijo en pantalla, como las luces de la pista: un punto que se
+      // encoge con la distancia deja de verse justo cuando más falta hace,
+      // que es al principio de la aproximación.
+      size: 5,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+    }),
+  );
+  hilo.name = "hilo";
+  hilo.renderOrder = 1;
+  return hilo;
+}
+
+/** Cada cuánto se pone un punto del hilo, m. */
+const PASO_DEL_HILO = 45;
 
 /**
  * Haz de luz vertical sobre la cabecera.
