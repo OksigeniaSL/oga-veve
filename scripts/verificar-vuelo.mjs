@@ -438,6 +438,39 @@ comprobar(
   'la tarjeta del gesto del señalero se quedaba puesta y tapaba la llave',
 );
 
+/*
+ * **Y al apagar, el vuelo termina diciendo qué te llevás.**
+ *
+ * «Se echa en falta un reconocimiento en función de los galones logrados»: se
+ * ganaban uno a uno con su sonido y al apagar el motor no pasaba nada.
+ */
+const final = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const antes = o.galones().length;
+  o.controles().engineOn = false;
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+    if (o.finDeVuelo()) break;
+  }
+  const puesta = o.finDeVuelo();
+  /*
+   * Y se vuelve a arrancar: lo que viene detrás en este banco necesita un
+   * avión vivo, y con el motor parado la máquina de fases da el vuelo por
+   * cerrado y el señalero deja de señalar.
+   */
+  o.controles().engineOn = true;
+  await new Promise((r) => setTimeout(r, 600));
+  return { puesta, galones: antes, fase: o.fase() };
+});
+comprobar(
+  'y al apagar el motor hay reconocimiento',
+  final.puesta,
+  final.puesta
+    ? `con ${final.galones} galones`
+    : `nada, fase «${final.fase}»`,
+  'el vuelo terminaba como termina una pestaña que se cierra',
+);
+
 // ── Y que al señalero no se le atropella ──────────────────────────────────
 
 /*
@@ -457,26 +490,42 @@ const senalero = await page.evaluate(async () => {
   const figura = globalThis.__raiz.getObjectByName('senalero');
   if (!figura) return { sinSenalero: true };
   const antes = { x: figura.position.x, z: figura.position.z };
-  // El avión, rodando derecho a por él.
-  o.colocar(antes.x, o.suelo(antes.x, antes.z) + 1.3, antes.z, 6);
   const c = o.controles();
   c.brakes = 0;
   c.throttle = 0.4;
-  await new Promise((r) => setTimeout(r, 2600));
+  let pidioDespacio = false;
+  for (let i = 0; i < 26; i++) {
+    /*
+     * El avión, encima de él y **sin dejar de estarlo**. Se ponía una vez y
+     * salía rodando, así que a veces se alejaba antes de que al señalero le
+     * diera tiempo a apartarse del todo y la medida salía distinta cada vez:
+     * 3,1 m, 8,5 m, 2,8 m. Lo que se quiere probar es que se quita cuando le
+     * vienen encima, no cuánto tarda un avión en irse solo.
+     */
+    o.colocar(antes.x, o.suelo(antes.x, antes.z) + 1.3, antes.z, 6);
+    await new Promise((r) => setTimeout(r, 100));
+    pidioDespacio ||= o.tarjeta().dibujo.startsWith('senalero-');
+  }
   const seFue = Math.hypot(
     figura.position.x - antes.x,
     figura.position.z - antes.z,
   );
   c.throttle = 0;
   c.brakes = 1;
-  return { seFue };
+  return { seFue, pidioDespacio };
 });
 if (!senalero.sinSenalero) {
   comprobar(
     'el señalero se quita de en medio',
-    senalero.seFue > 3,
+    senalero.seFue > 6,
     `se apartó ${senalero.seFue.toFixed(1)} m`,
     '«lo atropello sin problemas»: se quedaba clavado dejándose pasar por encima',
+  );
+  comprobar(
+    'y lo dice con los bastones antes de tener que quitarse',
+    senalero.pidioDespacio,
+    senalero.pidioDespacio ? 'señaló' : 'no señaló nada',
+    'ir a por él a toda velocidad no tenía quien lo avisara',
   );
 }
 
@@ -566,11 +615,26 @@ const enCalle = await page.evaluate(async () => {
   const c = o.controles();
   c.brakes = 0;
   c.throttle = 1;
-  await new Promise((r) => setTimeout(r, 7000));
+  /*
+   * Y de paso se mira **si el juego dice algo**. «La velocidad en tierra por
+   * pista de rodadura la puedo acelerar a tope, debería haber un aviso de
+   * prudencia»: acelerar a fondo por una calle de rodaje es de las cosas que
+   * un aeropuerto no perdona, y el juego se lo callaba.
+   */
+  let avisoA = 0;
+  let punta = 0;
+  for (let i = 0; i < 70; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+    const v = o.estado().airspeed;
+    punta = Math.max(punta, v);
+    if (!avisoA && o.tarjeta().dibujo === 'freno') avisoA = v;
+  }
   const freno = document.querySelector('[data-hud="brakes-touch"]');
   return {
     frenoEscondido: !!freno?.hidden,
     v: o.estado().airspeed,
+    punta,
+    avisoA,
     enPista: o.estado().onRunway,
   };
 });
@@ -581,6 +645,16 @@ comprobar(
     ? `se escondió (onRunway=${enCalle.enPista}, v=${enCalle.v.toFixed(0)})`
     : 'sigue ahí',
   '«si acelero me quita la mano como para que pueda despegar sobre la R»',
+);
+comprobar(
+  'y rodar a todo gas tiene quien lo avise',
+  // A quince metros por segundo ya se va al doble de lo que se rueda: si el
+  // aviso llega más tarde que eso, llega de adorno.
+  enCalle.avisoA > 0 && enCalle.avisoA < 15,
+  enCalle.avisoA
+    ? `avisó a ${enCalle.avisoA.toFixed(0)} m/s (punta ${enCalle.punta.toFixed(0)})`
+    : `nadie dijo nada a ${enCalle.punta.toFixed(0)} m/s`,
+  '«la puedo acelerar a tope, debería haber un aviso de prudencia»',
 );
 
 // ── Chocar contra la ciudad ───────────────────────────────────────────────

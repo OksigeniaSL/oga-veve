@@ -37,6 +37,7 @@ import { Mapa } from "./mapa";
 import { PanelDelTiempo } from "./tiempo";
 import type { Tier } from "../flight/tiers";
 import type { Galon } from "../flight/galones";
+import { reconocer } from "../flight/reconocimiento";
 
 /**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
@@ -219,6 +220,7 @@ export class Hud {
   private vignette!: HTMLElement;
   private badge!: HTMLElement;
   private galones!: HTMLElement;
+  private fin!: HTMLElement;
   private progress!: HTMLElement;
   private sound!: HTMLElement;
   private hint!: HTMLElement;
@@ -504,6 +506,20 @@ export class Hud {
         -->
         ${panel ? SixPack.markup() : ""}
       </div>
+      <!--
+        El final del vuelo.
+
+        Va dentro del HUD y no en una pantalla aparte porque no es un menú: es
+        el último cuadro de lo que acabás de hacer, y lo que enseña es **la
+        manga con lo que te llevaste**. Sin cifras, sin «dos de seis» y sin
+        huecos apagados. Ver flight/reconocimiento.ts.
+      -->
+      <div class="fin" data-hud="fin" hidden>
+        <div class="fin__panel">
+          <div class="fin__manga" data-hud="fin-manga"></div>
+          <p class="fin__frase" data-hud="fin-frase"></p>
+        </div>
+      </div>
     `;
 
     // Los instrumentos que este peldaño no enseña sencillamente no están en
@@ -594,6 +610,10 @@ export class Hud {
     this.paintProgress();
     this.paintGalones();
     this.hint = pick(this.root, "hint");
+    this.fin = pick(this.root, "fin");
+    // Se cierra tocando en cualquier parte: a los cuatro años no se busca una
+    // equis. Y con el teclado, con la tecla de siempre para cerrar cosas.
+    this.fin.addEventListener("click", () => this.cerrarFinDeVuelo());
 
     this.badge.textContent = this.badgeText;
     this.sixPack.bind(this.root);
@@ -947,6 +967,45 @@ export class Hud {
     for (let i = puestas; i < lista.length; i++) {
       svg.insertAdjacentHTML("beforeend", barraDeGalon(i));
     }
+  }
+
+  /**
+   * El final del vuelo, con lo que se llevó puesto.
+   *
+   * Se enseña al apagar el motor, que es cuando un vuelo termina de verdad.
+   * La manga va grande —es lo único que hay que mirar— y la frase solo aparece
+   * en los peldaños que leen: en Guyrami las barras **son** el mensaje.
+   */
+  mostrarFinDeVuelo(lista: readonly Galon[], frase: string): void {
+    if (!this.fin) return;
+    const final = reconocer(lista);
+    const manga = pick(this.root, "fin-manga");
+    manga.hidden = !final.manga;
+    manga.innerHTML = final.manga
+      ? `
+        <svg viewBox="0 0 48 ${MANGA_ALTO}" role="img" aria-label="${t(
+          "galon.manga",
+        )}">
+          <rect class="manga__tela" x="4" y="2" width="40" height="28" rx="6" />
+          <rect class="manga__puno" x="4" y="24" width="40" height="6" rx="3" />
+          ${lista.map((_, i) => barraDeGalon(i)).join("")}
+        </svg>
+      `
+      : "";
+    const texto = pick(this.root, "fin-frase");
+    texto.textContent = frase;
+    texto.hidden = !frase;
+    this.fin.hidden = false;
+  }
+
+  /** Y se quita. Otro vuelo, otra manga. */
+  cerrarFinDeVuelo(): void {
+    if (this.fin) this.fin.hidden = true;
+  }
+
+  /** Si está puesto ahora mismo. Para el banco de pruebas. */
+  get finPuesto(): boolean {
+    return !!this.fin && !this.fin.hidden;
   }
 
   /** Estado del sonido: glifo y etiqueta accesible. */
