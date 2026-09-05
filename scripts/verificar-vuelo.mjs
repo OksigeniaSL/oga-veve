@@ -138,6 +138,24 @@ comprobar(
   'los aros dibujaban un palo de hockey: los últimos a 80 m sobre la pista',
 );
 
+const hilo = await page.evaluate(() => {
+  const h = globalThis.__raiz.getObjectByName('hilo');
+  if (!h) return { puntos: 0, hastaElUmbral: Infinity };
+  const p = h.geometry.attributes.position;
+  const u = globalThis.__umbral;
+  let cerca = Infinity;
+  for (let i = 0; i < p.count; i++) {
+    cerca = Math.min(cerca, Math.hypot(p.getX(i) - u.x, p.getZ(i) - u.z));
+  }
+  return { puntos: p.count, hastaElUmbral: cerca };
+});
+comprobar(
+  'la senda está dibujada y llega hasta el umbral',
+  hilo.puntos > 40 && hilo.hastaElUmbral < 90,
+  `${hilo.puntos} puntos, el último a ${hilo.hastaElUmbral.toFixed(0)} m del umbral`,
+  'entre aro y aro no había nada que dijera si vas alto o bajo',
+);
+
 // ── Corta final ───────────────────────────────────────────────────────────
 
 await poner(400, 24);
