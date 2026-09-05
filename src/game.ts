@@ -87,6 +87,15 @@ const APROXIMACION = 3000;
  * estar desde el primer fotograma.
  */
 const ALTURA_DE_FINAL = APROXIMACION * Math.tan(GLIDE_SLOPE);
+
+/**
+ * Cuánto se queda en pantalla la celebración de la frustrada, s.
+ *
+ * Cuatro y medio, que es más de lo que dura un aviso corriente. Es a
+ * propósito: hay que darle tiempo a llegar mientras quien juega está ocupado
+ * subiendo y mirando fuera, que es exactamente el momento en el que pasa.
+ */
+const SE_QUEDA_LA_FRUSTRADA = 4.5;
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
 import { crearCiudad } from "./world/ciudad";
@@ -125,6 +134,7 @@ import { Sigueme } from "./world/sigueme";
 import { techoSobreLaPista } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
+import { Frustrada } from "./flight/frustrada";
 import { arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
@@ -303,6 +313,15 @@ export class Game {
   private dichoDeBanda: "lento" | "rapido" | null = null;
   /** El último aviso de terreno dicho, para no repetirlo cada fotograma. */
   private terrenoDicho: "bajo" | "sube" | null = null;
+  /**
+   * Segundos que le quedan a la tarjeta de la frustrada en pantalla.
+   *
+   * Existe porque la señal es **una sola** y el plan de vuelo también escribe
+   * en ella: al irse al aire la fase pasa de «final» a «en vuelo», y el plan
+   * pintaba encima «andá a dar una vuelta» en el mismo segundo en que se
+   * acababa de celebrar la mejor decisión del vuelo. Ver `avanzarPlan`.
+   */
+  private celebrandoFrustrada = 0;
 
   /** La misión elegida en el hangar, hasta que arranca. Ver `start`. */
   private misionInicial: Mission | null;
@@ -313,8 +332,10 @@ export class Game {
 
   /** Reconoce el aterrizaje y su calidad. Ver `flight/aterrizaje.ts`. */
   private readonly landing = new LandingWatcher();
-  /** Los cinco galones de este vuelo. Ver `flight/galones.ts`. */
+  /** Los galones de este vuelo. Ver `flight/galones.ts`. */
   private readonly galones = new Galones();
+  /** Reconoce cuándo se renuncia a una aproximación. Ver `flight/frustrada.ts`. */
+  private readonly frustrada = new Frustrada();
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
   private vistaActual: Vista | null = null;
   /** Si ahora mismo la pantalla está pidiendo freno. Ver `avanzarPlan`. */
@@ -800,6 +821,8 @@ export class Game {
         }),
       /** El viario de la ciudad, para comprobar que no se construye encima. */
       vias: () => this.scenario.ciudad?.vias ?? [],
+      /** Los galones ganados en este vuelo, para comprobarlos desde el banco. */
+      galones: () => this.galones.lista,
       /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
       senalero: () => this.senalero,
       /** La aeronave montada: para saber si vuela el modelo o las cajas. */
@@ -1122,6 +1145,31 @@ export class Game {
   }
 
   /**
+   * Se ha ido al aire, y aquí eso se celebra.
+   *
+   * **Igual que un aterrizaje, y por el mismo canal.** Se celebra con dibujo,
+   * sonido y voz, que son los tres caminos del juego, porque quien se lo dice
+   * a un niño de cuatro años tiene que decírselo sin letras.
+   *
+   * Y con el sonido de haber ganado algo, no con el de haber hecho algo bien
+   * a secas: el mismo que suena al ganar un galón, porque justo eso es lo que
+   * acaba de pasar. Ver `flight/frustrada.ts` para el porqué de todo esto.
+   */
+  private celebrarLaFrustrada(): void {
+    this.celebrandoFrustrada = SE_QUEDA_LA_FRUSTRADA;
+    this.hud.senal.mostrar(
+      "frustrada",
+      this.tier.instruments !== "none" ? t("vuelo.frustrada") : "",
+      null,
+      { segundos: SE_QUEDA_LA_FRUSTRADA },
+    );
+    this.audio.cue("achieved");
+    // En inglés aeronáutico, como el resto de la voz de cabina: «going around»
+    // es lo que se dice por radio, y lo demás es del instructor.
+    decir("going around. good decision");
+  }
+
+  /**
    * Dónde arranca el avión: en la cabecera, mirando por la pista.
    *
    * Con un aeródromo real **se usa su umbral**, que es un punto medido. La
@@ -1323,6 +1371,7 @@ export class Game {
     }
     this.runwayGuide.reset();
     this.landing.reset();
+    this.frustrada.reiniciar();
     this.reiniciarGalones();
     this.crashedFor = 0;
     this.wasOnGround = true;
@@ -2011,6 +2060,7 @@ export class Game {
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
     this.runwayGuide.reset(this.flight.state.position);
     this.landing.reset();
+    this.frustrada.reiniciar();
     this.reiniciarGalones();
     this.crashedFor = 0;
     this.wasOnGround = false;
@@ -2170,12 +2220,21 @@ export class Game {
      * Va aquí y no en el bloque de fases porque **no es una fase**: es algo
      * que puede pasar en cualquiera de ellas y que manda sobre todas.
      */
-    const terreno = avisoDeTerreno({
+    const cerca = {
       sobreElSuelo: this.flight.state.heightAboveGround,
       vertical: this.flight.state.verticalSpeed,
       enElSuelo: this.flight.state.onGround,
       enFinal: this.faseAnunciada === "final",
-    });
+    };
+    const terreno = avisoDeTerreno(cerca);
+
+    /*
+     * **Y la frustrada**, que mira exactamente lo mismo para decir lo
+     * contrario: el aviso de terreno dice que algo va mal, y esto dice que
+     * alguien lo ha resuelto. Ver `flight/frustrada.ts`.
+     */
+    const renuncio = this.frustrada.paso(cerca);
+    if (renuncio) this.celebrarLaFrustrada();
     if (terreno && terreno !== this.terrenoDicho) {
       this.terrenoDicho = terreno;
       this.hud.senal.mostrar(
@@ -2426,8 +2485,9 @@ export class Game {
     );
     this.avanzarPlan(dt);
     this.atenderAlSenalero(dt);
-    this.contarGalones(dt, banda, aro, toma);
+    this.contarGalones(dt, banda, aro, toma, renuncio);
     this.hud.senal.update(dt);
+    this.celebrandoFrustrada = Math.max(0, this.celebrandoFrustrada - dt);
 
     this.renderer.render(this.scene, this.camera);
   };
@@ -2588,6 +2648,7 @@ export class Game {
     banda: BandaDeVelocidad,
     aro: PasoDeAro,
     toma: Aterrizaje,
+    frustrada: boolean,
   ): void {
     const ganado = this.galones.paso(
       {
@@ -2596,6 +2657,7 @@ export class Game {
         fuera: this.vistaActual?.fuera ?? false,
         aro,
         toma,
+        frustrada,
       },
       dt,
     );
@@ -2819,25 +2881,35 @@ export class Game {
        */
       const seQueda =
         vista.fase === "aterrizado" || vista.fase === "abandonando";
-      this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", letra, {
-        segundos:
-          pendiente || esperando || seQueda
-            ? Infinity
-            : vista.fase === "apagado"
-              ? 9
-              : 6,
-        // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
-        // ninguna manera de saber que el contacto es la I.
-        tecla: pendiente
-          ? nombreDeTecla(this.input.preferredKey("engine"))
-          : esperando
-            ? nombreDeTecla(this.input.preferredKey("brakes"))
-            : null,
-        // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
-        // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
-        // timón, gas y freno, y el contacto no estaba por ningún lado.
-        accion: pendiente ? () => this.toggleEngine() : null,
-      });
+      /*
+       * **Salvo que se acabe de celebrar una frustrada.** Irse al aire cambia
+       * la fase de «final» a «en vuelo», así que el plan quería pintar «andá a
+       * dar una vuelta» encima de la celebración medio segundo después de
+       * ponerla. Lo que espera a que alguien haga algo sí manda, porque si no
+       * se queda uno parado sin saber qué toca; un mensaje de tránsito, no.
+       */
+      const tapaLaFrustrada =
+        this.celebrandoFrustrada > 0 && !pendiente && !esperando && !seQueda;
+      if (!tapaLaFrustrada)
+        this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", letra, {
+          segundos:
+            pendiente || esperando || seQueda
+              ? Infinity
+              : vista.fase === "apagado"
+                ? 9
+                : 6,
+          // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
+          // ninguna manera de saber que el contacto es la I.
+          tecla: pendiente
+            ? nombreDeTecla(this.input.preferredKey("engine"))
+            : esperando
+              ? nombreDeTecla(this.input.preferredKey("brakes"))
+              : null,
+          // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
+          // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
+          // timón, gas y freno, y el contacto no estaba por ningún lado.
+          accion: pendiente ? () => this.toggleEngine() : null,
+        });
       this.instructor.decir(frase);
       if (conLetras) {
         this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);

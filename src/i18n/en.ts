@@ -136,6 +136,7 @@ export const EN: Dictionary = {
   'vuelo.final': 'Come down gently',
   'vuelo.terrenoBajo': 'You are very low',
   'vuelo.terrenoSube': 'Pull up!',
+  'vuelo.frustrada': 'Well done! You went around. Try again',
   'vuelo.aterrizado': 'Brake',
   'vuelo.abandonando': 'Vacate the runway, someone is behind you',
   'vuelo.pistaLibre': 'Runway clear! Well done',
@@ -190,6 +191,7 @@ export const EN: Dictionary = {
   'galon.aros': 'Rings stripe',
   'galon.velocidad': 'Speed stripe',
   'galon.rodaje': 'Taxi stripe',
+  'galon.frustrada': 'Go-around stripe',
 
   'language.label': 'Language',
   'language.changed': 'Language: {name}',

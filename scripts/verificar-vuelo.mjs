@@ -171,6 +171,102 @@ comprobar(
   'el haz de la cabecera pintaba la pista de ocre y borraba sus marcas',
 );
 
+// ── La frustrada ──────────────────────────────────────────────────────────
+
+/*
+ * **Y esta se vuela de verdad, no se coloca.**
+ *
+ * Es la única forma de comprobarla: la frustrada se reconoce por lo que hace
+ * el avión —bajar hacia la pista y volver a subir— y colocarlo no le da
+ * régimen de descenso ni de ascenso. Así que aquí el guion pilota: baja por la
+ * senda, se planta cerca del suelo, y entonces mete gas y tira.
+ *
+ * Es también la regla número uno de este juego —renunciar es ganar— y hasta
+ * que existió esto el juego **no la detectaba en absoluto**: `grep frustrad
+ * src/flight/` no devolvía una sola línea. Se podía hacer la maniobra que
+ * salva vidas y la pantalla se quedaba callada.
+ */
+await poner(1500, 82);
+const frustrada = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const c = o.controles();
+  const dibujo = () =>
+    document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? '';
+  // El trazo de la senda que baja y se vuelve a ir arriba. Ver `ui/senal.ts`.
+  const ESA = 'Q 12 20';
+
+  // Bajar por la senda hasta ponerse cerca del suelo, sin llegar a tocar.
+  c.throttle = 0.2;
+  let enFinal = false;
+  let masBajo = Infinity;
+  for (let i = 0; i < 400; i++) {
+    c.elevator = -0.35;
+    await new Promise((r) => setTimeout(r, 50));
+    const s = o.estado();
+    enFinal ||= o.fase() === 'final';
+    masBajo = Math.min(masBajo, s.heightAboveGround);
+    if (s.onGround || s.heightAboveGround < 40) break;
+  }
+  const toco = o.estado().onGround;
+
+  // Y la decisión: gas a tope y arriba.
+  const t0 = performance.now();
+  c.throttle = 1;
+  let cuando = Infinity;
+  let subido = 0;
+  for (let i = 0; i < 400; i++) {
+    c.elevator = 0.9;
+    await new Promise((r) => setTimeout(r, 50));
+    subido = o.estado().heightAboveGround - masBajo;
+    if (dibujo().includes(ESA)) {
+      cuando = (performance.now() - t0) / 1000;
+      break;
+    }
+    if (subido > 220) break;
+  }
+  /*
+   * **Y se devuelven los mandos donde estaban.** Esto vuela de verdad, así que
+   * deja el avión subiendo a tope de gas: sin soltarlo, la carrera de
+   * aterrizaje de la sección siguiente no llegaba a posarse y fallaba una
+   * comprobación que no tenía nada que ver.
+   */
+  c.elevator = 0;
+  c.throttle = 0;
+  // Y los galones, que es donde la frustrada tiene que valer lo que vale.
+  await new Promise((r) => setTimeout(r, 400));
+  return {
+    enFinal,
+    toco,
+    masBajo,
+    subido,
+    cuando,
+    galones: o.galones(),
+  };
+});
+
+comprobar(
+  'la aproximación llega a contar como final',
+  frustrada.enFinal && !frustrada.toco,
+  `${frustrada.enFinal ? 'sí' : 'nunca'}, lo más bajo ${frustrada.masBajo.toFixed(0)} m${
+    frustrada.toco ? ' (tocó tierra)' : ''
+  }`,
+  'sin final no hay frustrada que valga: el banco estaría probando otra cosa',
+);
+comprobar(
+  'irse al aire se reconoce y se celebra',
+  frustrada.cuando < 12,
+  frustrada.cuando === Infinity
+    ? `nada tras subir ${frustrada.subido.toFixed(0)} m`
+    : `${frustrada.cuando.toFixed(1)} s`,
+  'el juego no detectaba la frustrada en absoluto, siendo su regla número uno',
+);
+comprobar(
+  'y vale un galón, como un aterrizaje',
+  frustrada.galones.includes('frustrada'),
+  `galones: ${frustrada.galones.join(', ') || 'ninguno'}`,
+  'renunciar tenía que valer tanto como posarse, y no valía nada',
+);
+
 // ── La carrera de aterrizaje ──────────────────────────────────────────────
 
 await poner(-350, 1.4);

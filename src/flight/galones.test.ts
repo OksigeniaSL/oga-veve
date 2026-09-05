@@ -17,6 +17,7 @@ const volando = (f: Partial<Fotograma> = {}): Fotograma => ({
   fuera: false,
   aro: null,
   toma: null,
+  frustrada: false,
   ...f,
 });
 
@@ -155,5 +156,20 @@ describe("los galones", () => {
     for (let i = 0; i < 4; i++) g.paso(volando({ aro: "cruzado" }), 0.1);
     g.reiniciar();
     expect(g.lista).toEqual([]);
+  });
+
+  it("irse al aire gana su galón, sin liston: renunciar es ganar", () => {
+    const g = new Galones();
+    rato(g, volando({ fase: "final", banda: "bien" }), 20);
+    expect(g.paso(volando({ fase: "final", frustrada: true }), 0.1)).toBe(
+      "aproximacion",
+    );
+    // Los dos: la aproximación se cerró yéndose, que es una manera de cerrarla.
+    expect(g.paso(volando({ fase: "en-vuelo" }), 0.1)).toBe("frustrada");
+  });
+
+  it("y se gana aunque la aproximación fuera un desastre", () => {
+    const g = new Galones();
+    expect(g.paso(volando({ frustrada: true }), 0.1)).toBe("frustrada");
   });
 });
