@@ -695,8 +695,9 @@ describe("la carrera de aterrizaje", () => {
     durante(v, enLaCarrera(40), 1);
     const vistas = new Set();
     // Frenando de verdad, pasando justo por el listón que antes hacía saltar
-    // la fase de una a otra.
-    for (const velocidad of [14, 11, 13, 10, 12, 11, 13, 10]) {
+    // la fase de una a otra. Los números siguen la velocidad de rodaje: se
+    // subió de nueve a trece y con ella los dos listones. Ver `vuelo.ts`.
+    for (const velocidad of [22, 19, 21, 17, 20, 18, 21, 17]) {
       vistas.add(durante(v, enLaCarrera(velocidad), 1));
     }
     expect([...vistas]).toEqual(["aterrizado"]);
@@ -705,9 +706,9 @@ describe("la carrera de aterrizaje", () => {
   it("pero cuando de verdad se rueda, sí cambia", () => {
     const v = yaVoló();
     durante(v, enLaCarrera(40), 1);
-    durante(v, enLaCarrera(11), 3);
-    expect(durante(v, enLaCarrera(7), 2)).toBe("abandonando");
+    durante(v, enLaCarrera(19), 3);
+    expect(durante(v, enLaCarrera(13), 2)).toBe("abandonando");
     // Y ya no vuelve atrás por un rebote de un metro por segundo.
-    expect(durante(v, enLaCarrera(10), 2)).toBe("abandonando");
+    expect(durante(v, enLaCarrera(17), 2)).toBe("abandonando");
   });
 });

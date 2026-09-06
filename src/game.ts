@@ -421,6 +421,24 @@ const SE_QUEDAN: ReadonlySet<Fase> = new Set<Fase>([
   "esperando",
   "aterrizado",
   "abandonando",
+  /*
+   * **Y rodar también se queda puesto**, que costó verlo.
+   *
+   * «Seguí la raya verde» y «volvé a tu lugar» duraban seis segundos y después
+   * la pantalla se quedaba en blanco: en el banco del vuelo entero, **sesenta
+   * y ocho segundos seguidos** rodando hacia la plataforma sin una sola
+   * tarjeta. No es una fase de paso como despegar o virar: es una orden que
+   * sigue siendo verdad durante todo el rato que dura, igual que «frená».
+   */
+  "rodando",
+  "a-plataforma",
+  /*
+   * Y las dos de entrar en pista: «luz verde, entrá» y «ponete derechito en el
+   * eje» duran lo que tarde quien juega en hacerlo, que es la maniobra más
+   * delicada del rodaje. También se quedaban en blanco a los seis segundos.
+   */
+  "autorizado",
+  "alineando",
 ]);
 
 const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
@@ -3110,11 +3128,17 @@ export class Game {
    */
   private atenderAlSenalero(dt: number): void {
     const fase = this.vistaActual?.fase;
+    /*
+     * **Y no mientras se corre por la pista.**
+     *
+     * «Aterrizado» estaba en esta lista, y con el puesto elegido cerca de la
+     * zona de toma el señalero empezaba a hacer gestos **con el avión todavía
+     * rodando por la pista a treinta metros por segundo**: su tarjeta tapaba
+     * la del freno, que es la única que ahí importa. Un señalero de verdad no
+     * señala a nadie que está aterrizando; espera en su puesto.
+     */
     const volviendo =
-      fase === "aterrizado" ||
-      fase === "abandonando" ||
-      fase === "a-plataforma" ||
-      fase === "en-puesto";
+      fase === "abandonando" || fase === "a-plataforma" || fase === "en-puesto";
     const s = this.flight.state;
     const gesto = this.senalero.paso(
       dt,

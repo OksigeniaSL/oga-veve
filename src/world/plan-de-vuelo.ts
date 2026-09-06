@@ -151,6 +151,23 @@ const SALTO_A_LA_ESPERA = 40;
  */
 const LO_MINIMO_QUE_SE_RUEDA = 200;
 
+/**
+ * Dónde se da por hecho que el avión ha dejado de correr al aterrizar, m.
+ *
+ * Mil metros pasado el umbral. La Óga 172 para en bastante menos, pero lo que
+ * se busca con este número no es una toma concreta: es el sitio desde el que
+ * se mide **cuánto se rueda hasta casa** al elegir el puesto.
+ */
+const TRAS_TOMAR_TIERRA = 1000;
+
+/**
+ * Lo más que se rueda para ir a despegar, m.
+ *
+ * Setecientos: a velocidad de rodaje, minuto y medio largo. Es lo que aguanta
+ * la paciencia de quien tiene cuatro años y todavía no ha volado.
+ */
+const LO_MAXIMO_DE_IDA = 700;
+
 /** Cada cuánto se mira si la raya sigue sirviendo, s. */
 const CADA_CUANTO_SE_REHACE = 2;
 
@@ -162,8 +179,18 @@ const CADA_CUANTO_SE_REHACE = 2;
  */
 const LEJOS_DE_LA_RAYA = 25;
 
-/** Deceleración cómoda, m/s². Con esto se calcula dónde hay que ir aflojando. */
-const FRENADA = 0.9;
+/**
+ * Aceleración y frenada cómodas rodando, m/s².
+ *
+ * Estaba en 0,9, que es una cifra de autobús con gente de pie, y con las dos
+ * pasadas del perfil de velocidad eso se nota mucho: para volver de un codo a
+ * velocidad de crucero hacían falta setenta y cuatro metros, así que en una
+ * plataforma con codos cada treinta el avión no levantaba de los seis metros
+ * por segundo en todo el rodaje. Con 1,6 —lo que frena un coche sin que se
+ * caiga nada del asiento— son cuarenta metros, y entre codo y codo se
+ * recupera.
+ */
+const FRENADA = 1.6;
 
 /**
  * El radio con el que se redondean los codos de la ruta, m.
@@ -614,8 +641,33 @@ export class PlanDeVuelo {
     if (this.par !== undefined) return this.par;
     this.par = null;
     const esperas = this.esperasPosibles();
-    let corto = Infinity;
+    /*
+     * **Y se cuenta el viaje entero: la ida y la vuelta.**
+     *
+     * Contando solo la ida sale un puesto pegado a su entrada y a dos
+     * kilómetros de donde se toma tierra: 34 segundos de ida y **227 de
+     * vuelta**, que es la misma queja de siempre con el reloj al revés. Lo que
+     * cansa no es salir: es el viaje.
+     *
+     * La vuelta se estima desde donde un avión ligero ha dejado de correr —mil
+     * metros pasado el umbral— hasta el puesto. No hace falta más precisión:
+     * lo que se está comparando son puestos entre sí.
+     */
+    const dondeSePara = puntoDePista(
+      this.pista,
+      this.pista.length / 2 - TRAS_TOMAR_TIERRA,
+    );
+    const traeDeVuelta: Punto = [dondeSePara[0], -dondeSePara[1]];
+
+    const pares: {
+      puesto: { ref: string | null; xy: Punto };
+      espera: Punto;
+      ida: number;
+      viaje: number;
+    }[] = [];
     for (const puesto of this.puestosCandidatos()) {
+      const vuelta = rodajeEntre(this.grafo, traeDeVuelta, puesto.xy, 600);
+      const casa = vuelta ? vuelta.largo : 0;
       for (const espera of esperas) {
         const ruta = rodajeEntre(this.grafo, puesto.xy, espera);
         /*
@@ -627,12 +679,33 @@ export class PlanDeVuelo {
          * mejor de todas, y por el campo. Sin esto, el optimizador la elegía.
          */
         if (!ruta || ruta.puntos.length < 5) continue;
-        if (ruta.largo < LO_MINIMO_QUE_SE_RUEDA || ruta.largo >= corto)
-          continue;
-        corto = ruta.largo;
-        this.par = { puesto, espera };
+        if (ruta.largo < LO_MINIMO_QUE_SE_RUEDA) continue;
+        pares.push({
+          puesto,
+          espera,
+          ida: ruta.largo,
+          viaje: ruta.largo + casa,
+        });
       }
     }
+    if (!pares.length) return this.par;
+
+    /*
+     * **La ida manda, y por eso tiene tope propio.**
+     *
+     * Sumando ida y vuelta a secas sale un puesto que está al lado de donde se
+     * toma tierra y lejísimos de cualquier entrada: la suma baja y **lo
+     * primero que hace quien juega son mil quinientos metros de calle**.
+     * Medido: 350 segundos y ni siquiera llegó. El viaje de ida es el que se
+     * hace con la ilusión de despegar, así que se acota; de los que caben,
+     * gana el que además vuelve pronto. Y si ninguno cabe, gana el viaje más
+     * corto, que es mejor que rendirse.
+     */
+    const cortos = pares.filter((p) => p.ida <= LO_MAXIMO_DE_IDA);
+    const donde = (cortos.length ? cortos : pares).sort(
+      (a, b) => a.viaje - b.viaje,
+    )[0]!;
+    this.par = { puesto: donde.puesto, espera: donde.espera };
     return this.par;
   }
 
@@ -1490,8 +1563,26 @@ export class PlanDeVuelo {
       if (!tieneCalle) continue;
       const adelante = along - aqui.along;
       if (adelante < 60) continue;
-      if (adelante < cerca) {
-        cerca = adelante;
+      /*
+       * **Y no la primera: la que deja el camino más corto a casa.**
+       *
+       * Se cogía la primera por delante, que suena a lo que hace un avión de
+       * verdad y en un aeropuerto grande es exactamente lo contrario: se sale
+       * por la que va a donde vas. Medido en el banco del vuelo entero: 2753
+       * metros y 255 segundos de rodaje de vuelta —cuatro minutos y cuarto,
+       * la misma queja que motivó acortar el de ida— porque el avión salía por
+       * la primera boca y luego deshacía media pista por la calle paralela.
+       *
+       * Lo que se compara es la suma: lo que queda de pista hasta esa salida
+       * más lo que se rueda desde ella hasta el puesto. Rodar doscientos
+       * metros más de pista para ahorrar un kilómetro de calle es lo que hace
+       * cualquiera que conozca el campo.
+       */
+      const casa = this.puestoDeSalida()?.xy;
+      const hasta = casa ? rodajeEntre(this.grafo, nudo, casa, 600) : null;
+      const coste = adelante + (hasta ? hasta.largo : 0);
+      if (coste < cerca) {
+        cerca = coste;
         mejor = nudo;
       }
     }
@@ -1668,17 +1759,47 @@ export class PlanDeVuelo {
       );
     }
 
-    // Y hacia atrás desde el final, que es lo que hace que se vaya aflojando
-    // antes de llegar en vez de frenar de golpe encima de la raya.
-    this.velocidades[n - 1] = 0;
-    let acumulado = 0;
-    for (let i = n - 2; i >= 0; i--) {
-      acumulado += Math.hypot(
+    /*
+     * ── Y dos pasadas para que el perfil se pueda **conducir** ─────────────
+     *
+     * Con la velocidad de cada punto sacada solo de su curva, el resultado es
+     * una sierra: trece, seis, trece, seis, cada veinte metros, porque una
+     * calle de rodaje es una sucesión de codos cortos. Y una sierra no se
+     * conduce: el avión pasa el rodaje entero acelerando y frenando. En la
+     * traza del vuelo entero se lee tal cual —«6/6, 13/13, 6/6, 13/13»— y en
+     * la cabina eso es un tirón detrás de otro.
+     *
+     * Es el perfil de velocidad de toda la vida, el de cualquier robot que
+     * sigue un camino:
+     *
+     * - **hacia atrás**, para llegar a cada curva ya frenado —incluida la
+     *   última, que es la parada—;
+     * - **hacia delante**, porque tampoco se acelera de golpe al salir.
+     *
+     * Con las dos, entre dos codos cercanos la velocidad ya no sube: se queda
+     * en la del codo, que es exactamente lo que hace quien conduce.
+     */
+    const tramo = (i: number): number =>
+      Math.hypot(
         this.rutaMundo[i + 1]![0] - this.rutaMundo[i]![0],
         this.rutaMundo[i + 1]![1] - this.rutaMundo[i]![1],
       );
-      const porLaParada = Math.sqrt(2 * FRENADA * acumulado);
-      this.velocidades[i] = Math.min(this.velocidades[i]!, porLaParada);
+
+    // El final de la ruta es una parada: ahí está el puesto o la doble raya.
+    this.velocidades[n - 1] = 0;
+    for (let i = n - 2; i >= 0; i--) {
+      const cabe = Math.sqrt(
+        this.velocidades[i + 1]! * this.velocidades[i + 1]! +
+          2 * FRENADA * tramo(i),
+      );
+      this.velocidades[i] = Math.min(this.velocidades[i]!, cabe);
+    }
+    for (let i = 1; i < n; i++) {
+      const cabe = Math.sqrt(
+        this.velocidades[i - 1]! * this.velocidades[i - 1]! +
+          2 * FRENADA * tramo(i - 1),
+      );
+      this.velocidades[i] = Math.min(this.velocidades[i]!, cabe);
     }
   }
 
