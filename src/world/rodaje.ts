@@ -114,6 +114,41 @@ const largoDe = (puntos: readonly Punto[]): number => {
  * poder salir de ella, y para el grafo la pista es una calle más —una por la
  * que solo se pasa con permiso, pero por la que se pasa—.
  */
+/**
+ * Cada cuánto se pone un nudo a lo largo de la pista, m.
+ *
+ * **Una pista de tres kilómetros tenía dos nudos y los de sus cruces con las
+ * calles, y nada más.** Como el buscador de rutas se agarra al nudo más
+ * cercano y no al punto más cercano, pedirle que llevara a un sitio del eje
+ * que cayera entre dos cruces era pedirle un imposible: en Tenerife Norte, el
+ * punto por donde había que entrar en la pista quedaba a ciento veintiún
+ * metros del nudo más próximo, así que contestaba «no hay camino» y el juego
+ * caía a la recta de emergencia — la que cruza la hierba. «Me sale
+ * atravesando el jardín, pues ya ves.»
+ *
+ * Ochenta metros: la pista pasa a tener cuarenta nudos en vez de dos, cualquier
+ * punto de ella queda a menos de cuarenta de uno, y el camino sale por el
+ * asfalto. Cuarenta nudos más en un grafo de cientos no se nota en ninguna
+ * parte.
+ */
+const PASO_DE_PISTA = 80;
+
+/** Parte una polilínea en trozos de como mucho `paso` metros. */
+function densificar(path: Punto[], paso: number): Punto[] {
+  const salida: Punto[] = [path[0]!];
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1]!;
+    const b = path[i]!;
+    const largo = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const trozos = Math.max(1, Math.ceil(largo / paso));
+    for (let k = 1; k <= trozos; k++) {
+      const t = k / trozos;
+      salida.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+    }
+  }
+  return salida;
+}
+
 export function construirGrafo(aero: Aerodrome): Grafo {
   /*
    * **Y la pista también es un camino por el que se rueda.**
@@ -142,7 +177,8 @@ export function construirGrafo(aero: Aerodrome): Grafo {
       .filter((p) => p.centerline.length > 1)
       .map((p) => ({
         ref: p.ref ?? null,
-        path: [...p.centerline] as Punto[],
+        // **Partida en trozos**, y no de punta a punta. Ver `PASO_DE_PISTA`.
+        path: densificar([...p.centerline] as Punto[], PASO_DE_PISTA),
         pista: true,
       })),
   ];
@@ -267,7 +303,19 @@ export function construirGrafo(aero: Aerodrome): Grafo {
     for (let i = 0; i < calle.path.length; i++) {
       const p = calle.path[i]!;
       trozo.push(p);
-      if (i > 0 && i < calle.path.length - 1 && (usos.get(clave(p)) ?? 0) > 1) {
+      /*
+       * Se parte en los cruces y, **en la pista, en cada vértice**.
+       *
+       * Los nudos del grafo son las puntas de los trozos, así que partir solo
+       * por los cruces dejaba la pista entera como un trozo único: tres
+       * kilómetros con un nudo en cada punta. Y como el buscador se agarra al
+       * nudo más cercano, entrar en la pista por un sitio que no fuera un
+       * cruce era imposible — ciento veintiún metros hasta el nudo más
+       * próximo, medido en Tenerife Norte. Partida cada ochenta metros, se
+       * entra por donde toca. Ver `PASO_DE_PISTA`.
+       */
+      const corta = calle.pista || (usos.get(clave(p)) ?? 0) > 1;
+      if (i > 0 && i < calle.path.length - 1 && corta) {
         trozos.push({ ref: calle.ref, path: trozo, pista: calle.pista });
         trozo = [p];
       }

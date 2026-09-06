@@ -30,6 +30,7 @@ import type { Aerodrome, Punto } from "./aerodrome";
 import { aLaPolilinea } from "./aerodrome";
 import {
   construirGrafo,
+  nudoCercano,
   rodajeEntre,
   type Grafo,
   type Ruta,
@@ -198,6 +199,25 @@ const CADA_CUANTO_SE_REHACE = 2;
  * torcido, que no es motivo para recalcular nada.
  */
 const LEJOS_DE_LA_RAYA = 25;
+
+/**
+ * Cuánto puede estar el avión de una calle para que valga la ruta de entrada, m.
+ *
+ * Cuarenta: medio ancho de calle y un margen. Si está más lejos, el primer
+ * tramo de la ruta sería un salto por el campo, y para eso ya está la recta
+ * de emergencia — que al menos apunta al sitio correcto. Ver `entradaEnPista`.
+ */
+const LEJOS_DE_LA_CALLE = 40;
+
+/**
+ * Y cuánto se le perdona al **destino** de la ruta de entrada, m.
+ *
+ * Cuatrocientos, que es mucho a propósito: el destino es un punto del eje de
+ * la pista y los nudos de la pista solo están donde se le cose una calle, así
+ * que puede quedar a doscientos metros del más cercano. El trozo que los une
+ * va por el eje, o sea por asfalto, y por eso aquí sí se puede ser generoso.
+ */
+const HASTA_EL_EJE = 400;
 
 /**
  * Aceleración y frenada cómodas rodando, m/s².
@@ -1559,7 +1579,28 @@ export class PlanDeVuelo {
      * desde que se cosieron las calles—, así que se le pregunta. Si no
      * contesta, se cae a la recta de antes, que guía peor pero guía.
      */
-    const porLaCalle = rodajeEntre(this.grafo, this.ultimaPos, enElEje, 120);
+    /*
+     * **Y se le pregunta con el salto largo, no con el corto.**
+     *
+     * Iba con ciento veinte metros de salto máximo, y ese número mata la
+     * respuesta buena: el punto al que se va —la proyección del avión sobre el
+     * eje— cae **entre** dos nudos de la pista, porque la pista solo tiene
+     * nudos donde se le cose una calle. Medido en Tenerife Norte: el nudo más
+     * cercano estaba a ciento veintiún metros, uno más que el tope, así que el
+     * buscador devolvía «no hay camino» y entraba la recta de emergencia — que
+     * es justo la que cruza la hierba. «Me sale atravesando el jardín.»
+     *
+     * Con el salto largo la respuesta es buena **y sigue siendo asfalto**: el
+     * último nudo está en el eje de la pista y el punto al que se va también,
+     * así que el trozo que los une va por el eje. Lo que no puede ser largo es
+     * el salto **de salida**, que sí cruzaría campo: por eso se mira aparte y
+     * se exige que el avión esté pegado a una calle.
+     */
+    const desdeElAvion = nudoCercano(this.grafo, this.ultimaPos);
+    const porLaCalle =
+      desdeElAvion.distancia <= LEJOS_DE_LA_CALLE
+        ? rodajeEntre(this.grafo, this.ultimaPos, enElEje, HASTA_EL_EJE)
+        : null;
     const puntos: Punto[] =
       porLaCalle && porLaCalle.puntos.length > 2
         ? [...porLaCalle.puntos, ejeAbajo]
