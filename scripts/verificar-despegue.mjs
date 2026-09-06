@@ -162,6 +162,28 @@ const rutaPorAsfalto = await mirar(() => {
     const along = Math.abs(dx * Math.sin(h) - dz * Math.cos(h));
     return across < 150 && along < pista.length / 2 + 150;
   };
+  /*
+   * Y se deja instalada la medida, que hace falta dos veces: para la ruta del
+   * puesto al punto de espera y para la de entrar en la pista. La segunda no
+   * se medía, y es justo donde volvió a salir lo mismo: «me sale atravesando
+   * el jardín».
+   */
+  globalThis.__medirAsfalto = (ruta) => {
+    const distancias = ruta.map(([x, z]) => alCamino(x, z));
+    const limite = (i) => (cercaDeLaPista(ruta[i][0], ruta[i][1]) ? 40 : 20);
+    return {
+      fuera: distancias.filter((c, i) => c.d > limite(i)).length,
+      total: ruta.length,
+      dondes: distancias
+        .map((c, i) =>
+          c.d > limite(i)
+            ? `${i}:${c.d.toFixed(0)}m·${c.que}@${ruta[i][0].toFixed(0)},${ruta[i][1].toFixed(0)}`
+            : null,
+        )
+        .filter(Boolean)
+        .join(" "),
+    };
+  };
   const ruta = o.ruta();
   const distancias = ruta.map(([x, z]) => alCamino(x, z));
   const fuera = distancias.filter(
@@ -420,6 +442,35 @@ comprobar(
     ? `nunca dio verde (fase «${torre.fase}», lámpara «${torre.luz}»)`
     : `verde a los ${torre.verde.toFixed(1)} s`,
   "la torre miraba si habías llegado, no si estabas parado: se cruzaba a toda velocidad",
+);
+
+/*
+ * **Y con el verde dado, la raya que mete en la pista también es asfalto.**
+ *
+ * Esto no se medía. La ruta del puesto al punto de espera sí, desde que
+ * «salgo por E4 atravesando los jardines»; la de los últimos cien metros —del
+ * punto de espera al eje de la pista— no, y ahí volvió a pasar lo mismo en
+ * Tenerife Norte: «me sale atravesando el jardín, pues ya ves». Son los cien
+ * metros más delicados del rodaje, porque es donde la calle se junta con la
+ * pista.
+ */
+const entrada = await page.evaluate(() => {
+  const o = globalThis.__oga;
+  const ruta = o.ruta();
+  return {
+    ...globalThis.__medirAsfalto(ruta),
+    fase: o.fase(),
+    avion: [o.estado().position.x, o.estado().position.z],
+    primeros: ruta.slice(0, 8).map((p) => [Math.round(p[0]), Math.round(p[1])]),
+  };
+});
+comprobar(
+  "y la raya que mete en la pista va por el asfalto",
+  entrada.fuera <= 1 && entrada.total > 1,
+  `${entrada.fuera} de ${entrada.total} puntos fuera en «${entrada.fase}»${
+    entrada.dondes ? ` (${entrada.dondes})` : ""
+  } · avión ${entrada.avion.map(Math.round).join(",")} · ${entrada.primeros.map((p) => p.join(",")).join(" → ")}`,
+  "«me sale atravesando el jardín»: del punto de espera al eje se tiraba una recta",
 );
 
 // ── La carrera de despegue ────────────────────────────────────────────────
