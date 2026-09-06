@@ -127,6 +127,20 @@ export class LandingWatcher {
     return this.descenso < SUAVE ? "suave" : "firme";
   }
 
+  /**
+   * A qué régimen de descenso se tocó, m/s.
+   *
+   * Lo guarda al tocar, que es el único instante en que se sabe: dos segundos
+   * después el avión ya rueda y su caída es cero. Lo pregunta el juego para
+   * decidir si aquello fue un aterrizaje o un golpe — y preguntarle al estado
+   * del vuelo en ese momento devuelve otra cosa, que es exactamente el fallo
+   * que hacía saltar el percance en tomas buenas: «pero si aterricé al mínimo
+   * de velocidad».
+   */
+  get caidaAlTocar(): number {
+    return this.descenso;
+  }
+
   reset(): void {
     this.volando = false;
     this.pendiente = false;

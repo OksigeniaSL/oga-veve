@@ -210,7 +210,27 @@ const sigueme = await mirar(() => {
       : Infinity,
   };
 });
-if (TRAMO === "guyrami" || TRAMO === "tuka") {
+/*
+ * **Y en un campo particular no hay coche.**
+ *
+ * «Me sale hasta el coche follow-me, que está bien que salga, pero en un
+ * aeródromo particular es raro.» Y es verdad: ese coche existe porque un
+ * aeropuerto tiene cincuenta calles y aviones grandes moviéndose. Lo dice el
+ * fichero del aeródromo, no el peldaño.
+ */
+const CON_COCHE =
+  (TRAMO === "guyrami" || TRAMO === "tuka") && ESCENARIO !== "yvytu-rape";
+if (!CON_COCHE && (TRAMO === "guyrami" || TRAMO === "tuka")) {
+  comprobar(
+    "en un campo particular no sale el coche del sígame",
+    !sigueme.visible,
+    sigueme.visible
+      ? `salió, a ${sigueme.d.toFixed(0)} m`
+      : "no sale, como debe",
+    "«en un aeródromo particular es raro»: ese coche es de aeropuerto grande",
+  );
+}
+if (CON_COCHE) {
   comprobar(
     "el coche del sígame espera delante antes de arrancar",
     sigueme.visible && sigueme.d < 70,

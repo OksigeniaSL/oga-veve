@@ -171,6 +171,16 @@ const TRAS_TOMAR_TIERRA = 1000;
 const HUECO_PARA_GIRAR = 25;
 
 /**
+ * Pista que se procura dejar por delante al entrar, m.
+ *
+ * Cuatrocientos: la Óga 172 despega en doscientos sesenta medidos en el banco,
+ * así que esto es esa carrera con la mitad de propina. En una pista corta se
+ * usa el cuarenta por ciento de lo que haya, que es lo que se puede prometer
+ * sin empujar la entrada fuera del asfalto.
+ */
+const PARA_DESPEGAR = 400;
+
+/**
  * Lo más que se rueda para ir a despegar, m.
  *
  * Setecientos: a velocidad de rodaje, minuto y medio largo. Es lo que aguanta
@@ -1509,7 +1519,22 @@ export class PlanDeVuelo {
     const mitad = this.largoDePista / 2;
     // Nunca antes del umbral —eso es entrar por fuera de la pista— ni tan
     // adelante que no quede pista para despegar.
-    const dentroDelEje = Math.max(-mitad + 40, Math.min(along, mitad - 700));
+    /*
+     * **Y lo que hay que dejar por delante no son setecientos metros.**
+     *
+     * Ese número es de aeropuerto grande, y en una pista de novecientos es más
+     * que la mitad: el tope empujaba el punto de entrada **doscientos cincuenta
+     * metros por detrás del avión**, así que la raya de entrada salía hacia
+     * atrás y cruzaba el campo en diagonal. «Sigue marcándome fuera de la
+     * pista por el césped.» La Óga 172 despega en doscientos sesenta metros
+     * medidos, así que lo que hay que dejar es eso con margen — y en una pista
+     * corta, lo que se pueda sin salirse de ella.
+     */
+    const paraDespegar = Math.min(PARA_DESPEGAR, this.largoDePista * 0.4);
+    const dentroDelEje = Math.max(
+      -mitad + 40,
+      Math.min(along, mitad - paraDespegar),
+    );
     const entrada = puntoDePista(this.pista, -dentroDelEje);
     const rodada = puntoDePista(
       this.pista,

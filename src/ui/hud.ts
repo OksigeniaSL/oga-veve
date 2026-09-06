@@ -157,6 +157,7 @@ export class Hud {
   private units: UnitSystem = METRIC;
   /** Si ya se marcó V1 en esta carrera de despegue. Ver `update`. */
   private dijoV1 = false;
+  private cuadernoHandler: (() => void) | null = null;
   /**
    * Cuántos instrumentos enseña el HUD.
    *
@@ -407,6 +408,23 @@ export class Hud {
           </svg>
         </button>
         <!--
+          El cuaderno de vuelo: las horas, lo hecho y el grado.
+
+          La hombrera con sus galones es el icono, y no hace falta más: es lo
+          que hay dentro, y quien ha visto una vez sus galones al terminar un
+          vuelo sabe qué es esto sin que nadie se lo diga.
+        -->
+        <button class="sonido" type="button" data-hud="cuaderno"
+                aria-label="${t("cuaderno.title")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="4" width="16" height="13" rx="3" fill="none"
+                  stroke="currentColor" stroke-width="1.8" />
+            <rect x="4" y="15.5" width="16" height="3.5" rx="1.75" />
+            <path d="M7.5 8.4 h9 M7.5 11.6 h9" stroke="currentColor"
+                  stroke-width="1.8" stroke-linecap="round" fill="none" />
+          </svg>
+        </button>
+        <!--
           Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
           arrancar es un hangar con la puerta tapiada: quien quiera cambiar de
           aeropuerto tendría que saber recargar la página.
@@ -649,6 +667,9 @@ export class Hud {
     );
     pick(this.root, "credits").addEventListener("click", () =>
       this.creditsHandler?.(),
+    );
+    pick(this.root, "cuaderno").addEventListener("click", () =>
+      this.cuadernoHandler?.(),
     );
     pick(this.root, "hangar").addEventListener("click", () =>
       this.hangarHandler?.(),
@@ -947,9 +968,16 @@ export class Hud {
     if (despegando && !this.dijoV1) {
       this.dijoV1 = true;
       this.marcarV1();
-    } else if (!enSuelo || !state.onRunway || throttle < 0.3) {
-      // Se rearma en cuanto se deja de correr por la pista: cada despegue
-      // tiene su V1, y solo uno.
+    } else if (
+      /*
+       * Y se rearma cuando de verdad se ha dejado de despegar: bien arriba, o
+       * parado en el suelo. Con «en cuanto no toca la pista» bastaba un rebote
+       * en la rotación para que V1 saliera dos veces en la misma carrera, y V1
+       * hay uno por despegue — esa es toda su gracia.
+       */
+      (!enSuelo && state.heightAboveGround > 40) ||
+      (enSuelo && state.airspeed < 5)
+    ) {
       this.dijoV1 = false;
     }
 
@@ -1352,6 +1380,11 @@ export class Hud {
   /** Quién abre los créditos. Ver el botón en el marcado. */
   onCredits(handler: () => void): void {
     this.creditsHandler = handler;
+  }
+
+  /** Y quién abre el cuaderno de vuelo. */
+  onCuaderno(handler: () => void): void {
+    this.cuadernoHandler = handler;
   }
 
   onSoundClick(handler: () => void): void {

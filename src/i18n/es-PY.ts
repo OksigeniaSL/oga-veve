@@ -173,6 +173,18 @@ export const ES_PY = {
   "percance.golpe": "Llegaste dando un golpe",
   "percance.pasada": "Te pasaste del final de la pista",
   "percance.sinpermiso": "Entraste en la pista sin la luz verde",
+  "grado.aprendiz": "Aprendiz",
+  "grado.piloto": "Piloto",
+  "grado.comandante": "Comandante",
+  "grado.instructora": "Instructora",
+  "cuaderno.title": "Mi cuaderno de vuelo",
+  "cuaderno.horas": "horas",
+  "cuaderno.despegues": "despegues",
+  "cuaderno.aterrizajes": "aterrizajes",
+  "cuaderno.frustradas": "frustradas",
+  "cuaderno.aerodromos": "aeródromos",
+  "cuaderno.falta": "Para {grado} te falta:",
+  "cuaderno.completo": "¡Ya está todo! A seguir volando",
   // Se dice una vez y sin regañar. Lo que hay que aprender no es que el juego
   // te lo impida: es que en un aeropuerto de verdad ahí puede venir otro.
   "vuelo.sinPermiso": "Entraste sin la luz verde. La próxima, esperala",

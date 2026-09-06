@@ -201,7 +201,13 @@ import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
 import { topeDeRodaje } from "./flight/gobernador";
 import { GOLPE, ROCE, type Percance } from "./flight/percance";
+import {
+  guardarCuaderno,
+  leerCuaderno,
+  type Cuaderno,
+} from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
+import { CuadernoScreen } from "./ui/cuaderno";
 import type { Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
@@ -289,6 +295,9 @@ const SHAKE_FADE = 0.2;
  * rota.
  */
 const VUELVE_SOLO = 8;
+
+/** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
+const CADA_CUANTO_SE_APUNTA = 30;
 
 export interface GameOptions {
   canvas: HTMLCanvasElement;
@@ -579,6 +588,19 @@ export class Game {
    * que queda por hacer es volver a empezar. Ver `flight/percance.ts`.
    */
   private percance: Percance | null = null;
+  /**
+   * El cuaderno de vuelo: lo que se lleva hecho, entre partidas.
+   *
+   * Se lee del aparato al empezar y se guarda cada vez que pasa algo digno de
+   * apuntarse. Ver `flight/cuaderno.ts`.
+   */
+  private cuaderno: Cuaderno = leerCuaderno();
+  /** La página donde se ve. Solo existe si el HTML trae su hueco. */
+  private cuadernoUI: CuadernoScreen | null = null;
+  /** Segundos volando desde el último apunte, para no escribir cada fotograma. */
+  private sinApuntar = 0;
+  /** Lo que se distaba del umbral el fotograma anterior. Ver los aros. */
+  private antesAlUmbral = Infinity;
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
   private vistaActual: Vista | null = null;
   /** Si ahora mismo la pantalla está pidiendo freno. Ver `avanzarPlan`. */
@@ -926,6 +948,19 @@ export class Game {
       toggleSound: () => this.toggleSound(),
       firstGesture: () => this.audio.unlock(),
     });
+
+    /*
+     * El cuaderno de vuelo, si el HTML trae su hueco.
+     *
+     * Va aquí y no dentro del HUD porque es una página que se abre encima del
+     * vuelo, como los créditos o la pantalla de mandos: el HUD es lo que se
+     * mira volando, y esto es justo lo contrario.
+     */
+    const hueco = document.getElementById("cuaderno");
+    if (hueco) {
+      this.cuadernoUI = new CuadernoScreen(hueco, this.cuaderno);
+      this.hud.onCuaderno(() => this.cuadernoUI?.toggle());
+    }
 
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
@@ -1408,6 +1443,8 @@ export class Game {
           // Del fichero al mundo: la Y del norte es la Z negativa.
           puntos: e.polygon.map(([x, y]) => [x, -y] as [number, number]),
         })),
+      /** A qué caída se tocó, m/s. Para el banco y para las sondas. */
+      caida: () => this.landing.caidaAlTocar,
       /** Los pares puesto + espera que se consideraron, con sus metros. */
       pares: () => this.plan?.paresVistos ?? [],
       /**
@@ -1550,7 +1587,12 @@ export class Game {
      */
     if (veredicto === "fuera") this.sufrirPercance("fuera");
     // Y llegar dando un golpe, aunque sea sobre el asfalto.
-    else if (s.touchdownSinkRate > GOLPE) this.sufrirPercance("golpe");
+    else if (this.landing.caidaAlTocar > GOLPE) this.sufrirPercance("golpe");
+    else {
+      // Un aterrizaje en la pista, que es lo que cuenta en el cuaderno.
+      this.apuntar({ aterrizajes: this.cuaderno.aterrizajes + 1 });
+      this.apuntarElSitio();
+    }
     return veredicto;
   }
 
@@ -1719,6 +1761,7 @@ export class Game {
   private sufrirPercance(tipo: Percance): void {
     if (this.percance || this.vueloTerminado) return;
     this.percance = tipo;
+    this.apuntar({ percances: this.cuaderno.percances + 1 });
     // Y la tarjeta que hubiera, fuera: lo que pedía ya no se puede hacer.
     this.hud.senal.limpiar();
     // El avión se planta: ni gas ni ganas. Los frenos, puestos.
@@ -1737,9 +1780,29 @@ export class Game {
     }, TARDA_EL_FINAL * 1000);
   }
 
+  /**
+   * Apunta algo en el cuaderno y lo guarda.
+   *
+   * Todas las cuentas suben y ninguna baja: los grados se ganan por cosas
+   * hechas y no por no fallar. Ver `flight/cuaderno.ts`.
+   */
+  private apuntar(cambio: Partial<Cuaderno>): void {
+    this.cuaderno = { ...this.cuaderno, ...cambio };
+    guardarCuaderno(this.cuaderno);
+    this.cuadernoUI?.ponerCuaderno(this.cuaderno);
+  }
+
+  /** Y el aeródromo de hoy, que cuenta como sitio visitado. */
+  private apuntarElSitio(): void {
+    const id = this.scenario.aerodrome?.id ?? this.scenario.id;
+    if (this.cuaderno.aerodromos.includes(id)) return;
+    this.apuntar({ aerodromos: [...this.cuaderno.aerodromos, id] });
+  }
+
   private terminarElVuelo(): void {
     if (this.vueloTerminado) return;
     this.vueloTerminado = true;
+    this.apuntar({ completos: this.cuaderno.completos + 1 });
     window.setTimeout(() => {
       if (!this.vueloTerminado) return;
       const final = reconocer(this.galones.lista);
@@ -1809,6 +1872,8 @@ export class Game {
       { segundos: SE_QUEDA_LA_FRUSTRADA, prioridad: URGENTE },
     );
     this.audio.cue("achieved");
+    // Y va al cuaderno: renunciar es ganar, y el grado más alto lo pide.
+    this.apuntar({ frustradas: this.cuaderno.frustradas + 1 });
     // En inglés aeronáutico, como el resto de la voz de cabina: «going around»
     // es lo que se dice por radio, y lo demás es del instructor.
     decir("going around. good decision");
@@ -2825,6 +2890,21 @@ export class Game {
      * avión no está roto en ningún sentido que el modelo entienda— sino la
      * regla del juego, igual que no dejar despegar fuera de la pista.
      */
+    /*
+     * **Las horas de vuelo, que es de lo que va un cuaderno.**
+     *
+     * Se cuentan con las ruedas en el aire y se guardan cada medio minuto: no
+     * hace falta más precisión —nadie mira los segundos— y escribir en el
+     * almacenamiento sesenta veces por segundo sería absurdo.
+     */
+    if (!this.flight.state.onGround) {
+      this.sinApuntar += dt;
+      if (this.sinApuntar > CADA_CUANTO_SE_APUNTA) {
+        this.apuntar({ segundos: this.cuaderno.segundos + this.sinApuntar });
+        this.sinApuntar = 0;
+      }
+    }
+
     if (this.percance) {
       this.syncAircraftMesh(dt);
       this.updateCamera(dt);
@@ -3085,9 +3165,36 @@ export class Game {
      * pantalla en blanco. «En el modo despegue, esta es la primera señal que
      * aparece.»
      */
-    const aro = this.flight.state.onGround
-      ? null
-      : this.runwayGuide.check(this.flight.state.position);
+    /*
+     * **Y solo bajando**, que los aros son de la aproximación.
+     *
+     * Con el avión en el aire bastaba: se despegaba, se cruzaba el plano de un
+     * aro subiendo y salía «pasaste por debajo, subí un poco» en mitad de una
+     * carrera de despegue. «¿Por qué el símbolo del aro en el despegue? Eso no
+     * es para el aterrizaje?» Sí lo es: un aro dice por dónde bajar, y quien
+     * está subiendo no está bajando por ninguna senda.
+     */
+    /*
+     * **Y solo acercándose**, que los aros son de la aproximación.
+     *
+     * Con el avión en el aire bastaba: se despegaba, se cruzaba el plano de un
+     * aro subiendo y salía «pasaste por debajo, subí un poco» en mitad de una
+     * carrera de despegue. «¿Por qué el símbolo del aro en el despegue? Eso no
+     * es para el aterrizaje?» Sí lo es: un aro dice por dónde bajar.
+     *
+     * Se miró primero si el avión subía, y no vale: en una aproximación se
+     * corrige, se sube un poco y se vuelve a bajar, así que el instante en que
+     * se cruza el aro puede pillarte subiendo — el banco lo enseñó a la
+     * primera. Lo que distingue de verdad un despegue de una aproximación es
+     * hacia dónde vas: **acercándote al umbral o alejándote de él**.
+     */
+    const alUmbral = this.distanceToRunway();
+    const acercandose = alUmbral < this.antesAlUmbral - 0.05;
+    this.antesAlUmbral = alUmbral;
+    const aro =
+      this.flight.state.onGround || !acercandose
+        ? null
+        : this.runwayGuide.check(this.flight.state.position);
     if (aro === "cruzado") this.audio.cue("aro");
     else if (aro === "perdido") {
       this.audio.cue("aroFallado");
@@ -3498,7 +3605,12 @@ export class Game {
      * el puesto: un coche en la pista mientras despegás sería exactamente lo
      * contrario de lo que hay que enseñar.
      */
-    if (this.plan && this.tier.sigueme) {
+    /*
+     * Y en un campo particular no hay coche: no lo hay de verdad. El sígame
+     * existe porque un aeropuerto tiene cincuenta calles y aviones grandes
+     * moviéndose, no porque sí. Ver `Aerodrome.privado`.
+     */
+    if (this.plan && this.tier.sigueme && !this.scenario.aerodrome?.privado) {
       this.sigueme.ponerRuta(this.plan.rutaVisible());
       /*
        * **Está antes de arrancar, y eso importa.**
@@ -3971,6 +4083,18 @@ export class Game {
        * Al ir, la lección es la doble raya y esperar el verde; al volver, es
        * dejar la pista libre y meter el avión en su hueco.
        */
+      /*
+       * **Un despegue, al cuaderno.** Se cuenta al verse volando viniendo de
+       * la carrera, que es cuando ha pasado de verdad: antes de eso hay un
+       * avión corriendo por una pista, que no es lo mismo.
+       */
+      if (
+        (antes === "despegando" || antes === "comprometido") &&
+        vista.fase === "en-vuelo"
+      ) {
+        this.apuntar({ despegues: this.cuaderno.despegues + 1 });
+        this.apuntarElSitio();
+      }
       if (
         antes === "abandonando" &&
         (vista.fase === "a-plataforma" || vista.fase === "en-puesto")

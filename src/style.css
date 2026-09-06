@@ -475,6 +475,74 @@ body {
   }
 }
 
+/*
+ * El cuaderno de vuelo: la hombrera grande, las cuentas y lo que falta.
+ *
+ * Comparte la caja de los créditos —misma manera de abrirse y de cerrarse— y
+ * cambia lo de dentro. La hombrera va arriba y grande porque es lo que se
+ * enseña: «mira, ya soy comandante».
+ */
+.cuaderno__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 36px;
+  border-radius: 22px;
+  background: var(--verde-bosque);
+  border: 1px solid rgba(228, 226, 218, 0.2);
+  max-width: 520px;
+}
+
+.cuaderno__manga svg {
+  display: block;
+  height: 132px;
+  width: auto;
+}
+
+.cuaderno__grado {
+  margin: 0;
+  font-size: 30px;
+  color: var(--beige);
+}
+
+/*
+ * Las cuentas, en fila y con la cifra grande encima de su palabra. Sin barras
+ * de progreso ni porcentajes: lo que se enseña son **cosas hechas**.
+ */
+.cuaderno__datos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 22px;
+}
+
+.cuaderno__dato {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 74px;
+}
+
+.cuaderno__cifra {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ocre-tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+.cuaderno__glosa {
+  font-size: 13px;
+  color: rgba(228, 226, 218, 0.72);
+}
+
+.cuaderno__falta {
+  margin: 0;
+  text-align: center;
+  color: rgba(228, 226, 218, 0.85);
+  font-size: 15px;
+}
+
 .fin {
   position: fixed;
   inset: 0;
