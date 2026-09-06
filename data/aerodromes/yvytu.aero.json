@@ -1,6 +1,7 @@
 {
   "id": "SGOG",
   "name": "Yvytu Rape",
+  "privado": true,
   "source": {
     "osm": null,
     "extracted": "2026-09-06",

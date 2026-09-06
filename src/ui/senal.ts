@@ -188,18 +188,28 @@ const FUERA_DE_PISTA = icono(`
  * aro siguiente ya está ahí para volver a intentarlo—.
  */
 const ARO_ALTO = icono(`
-  <circle cx="12" cy="16.5" r="5.6" fill="none" stroke="currentColor" stroke-width="2.4" />
-  <path d="M6.6 4.6 h10.8 M12 3 v5.6" stroke="currentColor" stroke-width="2.2"
-        stroke-linecap="round" fill="none" />
-  <path d="M12 11.6 L8.8 7.4 h6.4 Z" />
+  <ellipse cx="12" cy="17" rx="7.4" ry="3.2" fill="none" stroke="currentColor"
+           stroke-width="2.2" />
+  <path d="M12 4 v7" stroke="currentColor" stroke-width="2.4"
+        stroke-linecap="round" fill="none" stroke-dasharray="2.6 2.4" />
+  <path d="M12 14 L8.4 8.8 h7.2 Z" />
 `);
 
-/** Y por debajo: **subí al aro**. El mismo dibujo, del revés. */
+/**
+ * Y por debajo: **subí al aro**. El mismo dibujo, con la flecha al revés.
+ *
+ * El aro se dibuja **en perspectiva**, como se ve desde la cabina —una elipse,
+ * no un círculo— y con la flecha saliendo de él hacia donde hay que ir. La
+ * primera versión era un círculo con un palito y una raya, y a la vista rápida
+ * eso no era un aro: «¿por qué el símbolo del aro en el despegue?», y quien lo
+ * miraba veía cualquier otra cosa antes que una senda de planeo.
+ */
 const ARO_BAJO = icono(`
-  <circle cx="12" cy="7.5" r="5.6" fill="none" stroke="currentColor" stroke-width="2.4" />
-  <path d="M6.6 19.4 h10.8 M12 15.4 v5.6" stroke="currentColor" stroke-width="2.2"
-        stroke-linecap="round" fill="none" />
-  <path d="M12 12.4 L8.8 16.6 h6.4 Z" />
+  <ellipse cx="12" cy="7" rx="7.4" ry="3.2" fill="none" stroke="currentColor"
+           stroke-width="2.2" />
+  <path d="M12 20 v-7" stroke="currentColor" stroke-width="2.4"
+        stroke-linecap="round" fill="none" stroke-dasharray="2.6 2.4" />
+  <path d="M12 10 L15.6 15.2 h-7.2 Z" />
 `);
 
 /** La luz verde: adelante. */

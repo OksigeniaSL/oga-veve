@@ -61,6 +61,18 @@ export const GUG: Dictionary = {
   "percance.golpe": "Reguejy hatã",
   "percance.pasada": "Rehasapa pista paha",
   "percance.sinpermiso": "Reike pistape tesape hovy'ỹre",
+  "grado.aprendiz": "Temimbo'e",
+  "grado.piloto": "Piloto",
+  "grado.comandante": "Comandante",
+  "grado.instructora": "Mbo'ehára",
+  "cuaderno.title": "Che kuatia jeguata",
+  "cuaderno.horas": "aravo",
+  "cuaderno.despegues": "jeveve",
+  "cuaderno.aterrizajes": "jeguejy",
+  "cuaderno.frustradas": "jeykeko",
+  "cuaderno.aerodromos": "aeródromo",
+  "cuaderno.falta": "{grado} peve oĩ gueteri:",
+  "cuaderno.completo": "Opaite oĩma. Eveve katu",
   "vuelo.sinPermiso": "Reike tesape hovy'ỹre. Ambuévape eha'arõ",
 
   // ── El hangar ──────────────────────────────────────────────────────────

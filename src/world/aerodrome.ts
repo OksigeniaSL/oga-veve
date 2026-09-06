@@ -72,6 +72,16 @@ export interface Pista {
 export interface Aerodrome {
   readonly id: string;
   readonly name: string;
+  /**
+   * Si es un campo particular, sin servicios de plataforma.
+   *
+   * **Lo que cambia es quién sale a buscarte.** En un aeropuerto hay un coche
+   * de «sígame» y un señalero con bastones; en un campo de una granja no hay
+   * nada de eso — «me sale hasta el coche follow-me, que está bien que salga,
+   * pero en un aeródromo particular es raro»—. Y tiene razón: ese coche existe
+   * porque hay cincuenta calles y aviones grandes moviéndose, no porque sí.
+   */
+  readonly privado?: boolean;
   readonly origin: { readonly lat: number; readonly lon: number };
   readonly elevationM: number | null;
   readonly runways: readonly Pista[];
