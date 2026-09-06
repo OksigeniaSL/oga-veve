@@ -641,6 +641,18 @@ body {
   stroke: none;
 }
 
+/*
+ * El nombre del grado nuevo, cuando se sube.
+ *
+ * Más grande y en ocre: es lo único que hay que leer en esa pantalla, y solo
+ * pasa una vez por grado en toda la vida del cuaderno.
+ */
+.fin__frase--ascenso {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--ocre-tinta);
+}
+
 .fin__frase {
   margin: 0;
   font-size: 22px;

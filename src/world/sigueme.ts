@@ -37,6 +37,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshLambertMaterial,
+  SphereGeometry,
 } from "three";
 import { CRUCERO } from "./plan-de-vuelo";
 
@@ -79,6 +80,15 @@ const ADELANTO = 30;
  * con eso siempre se le alcanza, y seguirle es exactamente ir bien.
  */
 const VELOCIDAD = CRUCERO;
+
+/**
+ * Y en bici, lo que pedalea alguien con ganas: siete metros por segundo.
+ *
+ * Veinticinco por hora. Menos que el avión, así que en la plataforma se le
+ * alcanza — y por eso la bici se aparta en cuanto la tienes cerca, en vez de
+ * dejarse atropellar como el coche.
+ */
+const EN_BICI = 7;
 
 /** Cuánto se queda corto del final de la ruta, m. Ver la cabecera. */
 const NO_LLEGA = 30;
@@ -189,6 +199,79 @@ function construir(): {
   return { grupo, baliza: balizas };
 }
 
+/**
+ * Y la otra manera de que alguien salga a buscarte: **en bicicleta**.
+ *
+ * En un campo particular no hay coche de sígame — «está bien que salga, pero
+ * en un aeródromo particular es raro; como mucho que salta Jazlyn en bicicleta
+ * a buscarme»—. Y hace exactamente el mismo trabajo: va delante, enseña por
+ * dónde y espera. Lo que cambia es que **a esta no se la puede atropellar**:
+ * un coche que se lleva un golpe es un chiste; una persona en bici, no. Se
+ * aparta siempre, y de eso se encarga el juego.
+ *
+ * Va con banderín naranja, que es lo que lleva una bici que quiere que la
+ * vean, y es además el mismo galón que ya se gana en la manga.
+ */
+function construirBici(): { grupo: Group; baliza: Group } {
+  const grupo = new Group();
+  grupo.name = "sigueme";
+  grupo.visible = false;
+  // Más grande que la de verdad, como todo lo que aquí tiene que verse desde
+  // una cabina a treinta metros.
+  grupo.scale.setScalar(1.6);
+
+  const negro = new MeshLambertMaterial({ color: 0x1a1c20 });
+  const ruedas = new Group();
+  const goma = new CylinderGeometry(0.34, 0.34, 0.06, 12);
+  for (const z of [-0.52, 0.52]) {
+    const rueda = new Mesh(goma, negro);
+    rueda.position.set(0, 0.34, z);
+    rueda.rotation.z = Math.PI / 2;
+    ruedas.add(rueda);
+  }
+
+  const cuadro = new Mesh(
+    new BoxGeometry(0.08, 0.1, 1.05),
+    new MeshLambertMaterial({ color: CARROCERIA }),
+  );
+  cuadro.position.set(0, 0.62, 0);
+
+  const manillar = new Mesh(new BoxGeometry(0.52, 0.07, 0.07), negro);
+  manillar.position.set(0, 0.92, -0.45);
+
+  // Quien pedalea: sin cara y sin detalles, como el señalero. Lo que tiene que
+  // leerse desde el aire es que **hay alguien**, no quién es.
+  const cuerpo = new Mesh(
+    new BoxGeometry(0.34, 0.62, 0.24),
+    new MeshLambertMaterial({ color: 0x3f7d63 }),
+  );
+  cuerpo.position.set(0, 1.16, 0.06);
+  const cabeza = new Mesh(
+    new SphereGeometry(0.17, 10, 8),
+    new MeshLambertMaterial({ color: 0xd9a06b }),
+  );
+  cabeza.position.set(0, 1.56, 0.02);
+  const casco = new Mesh(
+    new SphereGeometry(0.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+    new MeshLambertMaterial({ color: AMBAR }),
+  );
+  casco.position.set(0, 1.6, 0.02);
+
+  // El banderín, que es la baliza de esta versión: lo que destella.
+  const banderin = new Group();
+  const asta = new Mesh(new BoxGeometry(0.04, 0.9, 0.04), negro);
+  asta.position.set(0.16, 1.1, 0.4);
+  const tela = new Mesh(
+    new BoxGeometry(0.36, 0.24, 0.03),
+    new MeshBasicMaterial({ color: AMBAR }),
+  );
+  tela.position.set(0.35, 1.44, 0.4);
+  banderin.add(asta, tela);
+
+  grupo.add(ruedas, cuadro, manillar, cuerpo, cabeza, casco, banderin);
+  return { grupo, baliza: banderin };
+}
+
 export class Sigueme {
   readonly grupo: Group;
 
@@ -215,8 +298,12 @@ export class Sigueme {
   private aparte = 0;
   private t = 0;
 
-  constructor() {
-    const { grupo, baliza } = construir();
+  /** Si quien sale a buscarte va en bici. Ver `construirBici`. */
+  readonly enBici: boolean;
+
+  constructor(enBici = false) {
+    this.enBici = enBici;
+    const { grupo, baliza } = enBici ? construirBici() : construir();
     this.grupo = grupo;
     this.baliza = baliza;
   }
@@ -300,7 +387,8 @@ export class Sigueme {
     // hasta allí desde el kilómetro cero.
     if (this.s < 0) this.s = objetivo;
     // Hacia delante y nada más: un sígame no da marcha atrás. Ver la cabecera.
-    this.s = Math.max(this.s, Math.min(objetivo, this.s + VELOCIDAD * dt));
+    const paso = (this.enBici ? EN_BICI : VELOCIDAD) * dt;
+    this.s = Math.max(this.s, Math.min(objetivo, this.s + paso));
 
     const deja =
       !esperaEn && (cediendo || this.largo - alLlegar < CEDE_AL_FINAL);
