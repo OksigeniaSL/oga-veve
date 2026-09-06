@@ -38,6 +38,7 @@ import {
   MeshBasicMaterial,
   MeshLambertMaterial,
 } from "three";
+import { CRUCERO } from "./plan-de-vuelo";
 
 /** El amarillo de los vehículos de plataforma. */
 const CARROCERIA = 0xf0c53a;
@@ -67,8 +68,17 @@ const ADELANTO = 30;
  * coche que te lleva iba justo por encima del límite que el juego te riñe por
  * pasar, así que seguirle disparaba «más despacio» y estropeaba el galón de la
  * velocidad. Once, que es la velocidad de crucero de rodaje que ya usa el plan.
+ *
+ * **Y ahora no es un número de aquí: es la velocidad de crucero del plan.**
+ *
+ * Iba a once cuando el tope dejaba rodar a 10,35: medio metro por segundo son
+ * cuarenta metros por minuto, así que en una calle larga el coche se marchaba
+ * y no había manera de alcanzarlo — «el coche casi que se escapa». Escribirlo
+ * otra vez aquí, con otro número, era pedir que volviera a pasar. El coche va
+ * a lo que el juego te pide ir, y el tope te deja un quince por ciento más:
+ * con eso siempre se le alcanza, y seguirle es exactamente ir bien.
  */
-const VELOCIDAD = 11;
+const VELOCIDAD = CRUCERO;
 
 /** Cuánto se queda corto del final de la ruta, m. Ver la cabecera. */
 const NO_LLEGA = 30;

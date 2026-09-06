@@ -81,6 +81,13 @@ const arranque = await mirar(() => {
     motor: o.controles().engineOn,
     v: s.airspeed,
     ruta: o.ruta().length,
+    largo: o
+      .ruta()
+      .reduce(
+        (t, p, i, r) =>
+          i ? t + Math.hypot(p[0] - r[i - 1][0], p[1] - r[i - 1][1]) : 0,
+        0,
+      ),
     tecla: document.querySelector('[data-hud="senal-tecla"]')?.textContent ?? '',
     // Los pavimentos del aeródromo, para saber si la ruta va por asfalto.
   };
@@ -101,7 +108,7 @@ comprobar(
 comprobar(
   'hay ruta desde el puesto hasta el punto de espera',
   arranque.ruta > 4,
-  `${arranque.ruta} puntos`,
+  `${arranque.ruta} puntos, ${arranque.largo.toFixed(0)} m`,
   'hay puestos de OSM que no conectan con ninguna calle y el avión salía sin raya',
 );
 
@@ -112,7 +119,8 @@ const rutaPorAsfalto = await mirar(() => {
   const caminos = o.caminos();
   const alCamino = (px, pz) => {
     let mejor = Infinity;
-    for (const { puntos: linea } of caminos) {
+    let deQue = "";
+    for (const { puntos: linea, que } of caminos) {
       for (let i = 0; i < linea.length - 1; i++) {
         const [ax, az] = linea[i];
         const [bx, bz] = linea[i + 1];
@@ -121,15 +129,54 @@ const rutaPorAsfalto = await mirar(() => {
         const l2 = dx * dx + dz * dz;
         if (l2 < 1) continue;
         const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2));
-        mejor = Math.min(mejor, Math.hypot(px - (ax + dx * t), pz - (az + dz * t)));
+        const d = Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
+        if (d < mejor) {
+          mejor = d;
+          deQue = que;
+        }
       }
     }
-    return mejor;
+    return { d: mejor, que: deQue };
   };
   // Media anchura de calle de rodaje y un margen: fuera de eso es el campo.
+  /*
+   * **Y cerca de la pista el listón es otro, porque el asfalto es otro.**
+   *
+   * Veinte metros es media calle de rodaje y vale en una calle. Donde una
+   * calle se une a la pista hay boca, acuerdos y zona de espera: cuarenta
+   * metros del eje de la calle siguen siendo asfalto en cualquier aeropuerto
+   * del mundo, y en los datos de OpenStreetMap ese trozo muchas veces no está
+   * dibujado como calle. Medir ahí con el listón de una recta es medir
+   * nuestros datos, no el juego.
+   */
+  const pista = o.pista();
+  const cercaDeLaPista = (x, z) => {
+    const dx = x - pista.x;
+    const dz = z - pista.z;
+    const h = (pista.heading * Math.PI) / 180;
+    const across = Math.abs(dx * Math.cos(h) + dz * Math.sin(h));
+    const along = Math.abs(dx * Math.sin(h) - dz * Math.cos(h));
+    return across < 150 && along < pista.length / 2 + 150;
+  };
   const ruta = o.ruta();
-  const fuera = ruta.filter(([x, z]) => alCamino(x, z) > 20).length;
-  return { fuera, total: ruta.length };
+  const distancias = ruta.map(([x, z]) => alCamino(x, z));
+  const fuera = distancias.filter(
+    (c, i) => c.d > (cercaDeLaPista(ruta[i][0], ruta[i][1]) ? 40 : 20),
+  ).length;
+  return {
+    fuera,
+    total: ruta.length,
+    // Dónde y cuánto, que «cuatro puntos fuera» no dice si es el puesto o un
+    // atajo por la hierba.
+    dondes: distancias
+      .map((c, i) =>
+        c.d > (cercaDeLaPista(ruta[i][0], ruta[i][1]) ? 40 : 20)
+          ? `${i}:${c.d.toFixed(0)}m·${c.que}@${ruta[i][0].toFixed(0)},${ruta[i][1].toFixed(0)}`
+          : null,
+      )
+      .filter(Boolean)
+      .join(' '),
+  };
 });
 comprobar(
   'y va por el asfalto, no por el campo',
@@ -140,7 +187,7 @@ comprobar(
    * fuera del asfalto.
    */
   rutaPorAsfalto.fuera <= 1,
-  `${rutaPorAsfalto.fuera} de ${rutaPorAsfalto.total} puntos fuera`,
+  `${rutaPorAsfalto.fuera} de ${rutaPorAsfalto.total} puntos fuera${rutaPorAsfalto.dondes ? ` (${rutaPorAsfalto.dondes})` : ''}`,
   '«salgo por E4 atravesando los jardines»',
 );
 
@@ -181,7 +228,14 @@ const rodando = await page.evaluate(async () => {
    * nadie rodaría mide otra cosa. Aquí se sostiene la velocidad de rodaje,
    * como haría quien hace caso al juego.
    */
-  const RODAJE = 9;
+  /*
+   * **La velocidad de rodaje la dice el juego, no este guion.**
+   *
+   * Estaba escrita a mano —nueve— y con eso el banco rodaba a nueve aunque el
+   * plan pidiera trece: subir la velocidad de crucero no cambiaba ni el tiempo
+   * medido ni nada. El plan la calcula curva a curva; aquí se pregunta.
+   */
+  const RODAJE = () => Math.max(4, o.rodaje?.() || 9);
   const desvios = [];
   const fases = [];
   /*
@@ -252,8 +306,9 @@ const rodando = await page.evaluate(async () => {
       ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z)
       : Infinity;
     const llegando = alFinal < 45;
-    c.throttle = !llegando && s.airspeed < RODAJE ? 0.5 : 0;
-    c.brakes = llegando || s.airspeed > RODAJE * 1.25 ? 1 : 0;
+    const quiere = RODAJE();
+    c.throttle = !llegando && s.airspeed < quiere ? 0.6 : 0;
+    c.brakes = llegando || s.airspeed > quiere * 1.3 ? 1 : 0;
     c.aileron = timon(s, ruta);
     desvios.push(s.airspeed);
     fases.push(o.fase());
@@ -265,6 +320,7 @@ const rodando = await page.evaluate(async () => {
   return {
     fase: o.fase(),
     v: s.airspeed,
+    segundos: fases.length * 0.25,
     maxV: Math.max(...desvios),
     // Cuánto queda de ruta: si el avión avanza pero no llega, esto lo dice.
     alFinal: fin ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z) : -1,
@@ -275,8 +331,23 @@ const rodando = await page.evaluate(async () => {
 comprobar(
   'rodando se llega al punto de espera y el juego lo sabe',
   rodando.fase === 'esperando' || rodando.fase === 'autorizado',
-  `fase «${rodando.fase}» a ${rodando.v.toFixed(1)} m/s, quedan ${rodando.alFinal.toFixed(0)} m · vistas: ${rodando.fases}`,
+  `fase «${rodando.fase}» a ${rodando.v.toFixed(1)} m/s en ${rodando.segundos.toFixed(0)} s, quedan ${rodando.alFinal.toFixed(0)} m · vistas: ${rodando.fases}`,
   'la máquina de fases se quedaba pegada y la lección no avanzaba',
+);
+/*
+ * **Y que no se haga eterno**, que es la otra mitad de lo mismo.
+ *
+ * «Voy a una velocidad absurdamente lenta, es aburrido pasarse cuatro minutos
+ * en una pista, eso un niño no lo aguanta, se aburre.» Noventa segundos del
+ * puesto al punto de espera: lo que dura la paciencia de quien tiene cuatro
+ * años, y lo que se tarda de verdad en una avioneta que sale por la
+ * intersección que le toca.
+ */
+comprobar(
+  'y del puesto a la pista se llega antes de aburrirse',
+  rodando.segundos <= 90,
+  `${rodando.segundos.toFixed(0)} s de rodaje`,
+  '«es aburrido pasarse cuatro minutos en una pista, eso un niño no lo aguanta»',
 );
 comprobar(
   'y no se rueda como un cohete',
@@ -378,13 +449,11 @@ const despegue = await page.evaluate(async () => {
       );
     }
     if (s.onRunway && o.fase() === 'despegando') break;
-    if (s.onRunway && Math.abs(s.airspeed) < 12 && o.fase() === 'alineando') {
-      // Ya en el eje: se acabó el rodaje.
-      if (i > 12) break;
-    }
+    // Ya en el eje: se acabó el rodaje. (Sin mirar la velocidad: entrando a
+    // trece metros por segundo, el listón de doce no se cruzaba nunca y el
+    // banco se pasaba cuarenta segundos dando vueltas por la pista.)
+    if (s.onRunway && o.fase() === 'alineando' && i > 12) break;
   }
-  // Y el timón se suelta para la carrera: lo que se mide ahí es el empuje.
-  c.aileron = 0;
   c.throttle = 1;
   let frenoSeFue = null;
   let enElAire = null;
@@ -393,12 +462,29 @@ const despegue = await page.evaluate(async () => {
   // esto dice si el problema es el empuje o el sitio.
   const partida = { pista: o.estado().onRunway, fase: o.fase() };
   let alto = 0;
+  let punta = 0;
   const inicio = o.estado().position.clone
     ? { x: o.estado().position.x, z: o.estado().position.z }
     : null;
   for (let i = 0; i < 200; i++) {
     await new Promise((r) => setTimeout(r, 200));
     const s = o.estado();
+    /*
+     * **Y en la carrera el timón sigue en la mano.**
+     *
+     * Se soltaba —«lo que se mide aquí es el empuje»— y eso es falso: un avión
+     * que no se mantiene en el eje se sale de la pista, y fuera de la pista
+     * este modelo **no deja despegar**, a propósito. El banco marcaba «no
+     * llegó a despegar» con el avión a treinta y siete metros por segundo
+     * rodando por la hierba a doscientos por hora.
+     */
+    if (s.onGround) {
+      const directo = alRumbo(s, rumboPista);
+      const inverso = alRumbo(s, rumboPista + Math.PI);
+      c.aileron = Math.abs(directo) < Math.abs(inverso) ? directo : inverso;
+    } else {
+      c.aileron = 0;
+    }
     // Un empujón de palanca cuando ya corre, que es lo que pide el tutor.
     if (s.airspeed > 27) c.elevator = 0.5;
     const boton = document.querySelector('[data-hud="brakes-touch"]');
@@ -407,6 +493,7 @@ const despegue = await page.evaluate(async () => {
       usado = Math.hypot(s.position.x - inicio.x, s.position.z - inicio.z);
     }
     alto = Math.max(alto, s.heightAboveGround);
+    punta = Math.max(punta, s.airspeed);
     if (!s.onGround && s.heightAboveGround > 15) {
       enElAire = { v: s.airspeed, usado };
       break;
@@ -419,6 +506,7 @@ const despegue = await page.evaluate(async () => {
     fase: o.fase(),
     partida,
     alto,
+    punta,
     usado,
   };
 });
@@ -428,7 +516,7 @@ comprobar(
   despegue.enElAire !== null,
   despegue.enElAire
     ? `a ${despegue.enElAire.v.toFixed(1)} m/s tras ${despegue.enElAire.usado.toFixed(0)} m`
-    : `no llegó a despegar: empezó ${despegue.partida.pista ? 'en pista' : 'fuera de pista'} en fase «${despegue.partida.fase}», subió ${despegue.alto.toFixed(0)} m en ${despegue.usado.toFixed(0)} m`,
+    : `no llegó a despegar: empezó ${despegue.partida.pista ? 'en pista' : 'fuera de pista'} en fase «${despegue.partida.fase}», subió ${despegue.alto.toFixed(0)} m en ${despegue.usado.toFixed(0)} m, punta ${despegue.punta.toFixed(1)} m/s`,
   'con el empuje mal el avión tardaba veinticinco segundos en rotar',
 );
 if (despegue.enElAire) {
