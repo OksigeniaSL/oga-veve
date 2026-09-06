@@ -55,6 +55,11 @@ export const GUG: Dictionary = {
   "vuelo.alto": "Epyta ko’ápe",
   "vuelo.teLoPasaste": "Rehasapa. Ejoko ha eju jey",
   "vuelo.yaPodesTocar": "Ikatuma repoko",
+  "percance.coche": "Rehasa mymbakuéra ári",
+  "percance.edificio": "Rejoko peteĩ óga rehe",
+  "percance.fuera": "Reguejy pista okápe",
+  "percance.golpe": "Reguejy hatã",
+  "percance.pasada": "Rehasapa pista paha",
   "vuelo.sinPermiso": "Reike tesape hovy'ỹre. Ambuévape eha'arõ",
 
   // ── El hangar ──────────────────────────────────────────────────────────

@@ -88,7 +88,8 @@
   /* Compatibilidad: quedaba código apuntando al nombre viejo. */
   --sombra: var(--barro);
 
-  --hud-fuente: 'Varela Round', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  --hud-fuente:
+    "Varela Round", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
 }
 
 * {
@@ -124,8 +125,9 @@ body {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
-    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  padding: max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto 1fr auto;
@@ -215,15 +217,21 @@ body {
  * en azul frío. Dos maneras distintas de ir mal merecen dos colores distintos.
  */
 .medidor--bien {
-  box-shadow: var(--filo), 0 0 0 2px #79e08a inset;
+  box-shadow:
+    var(--filo),
+    0 0 0 2px #79e08a inset;
 }
 
 .medidor--lento {
-  box-shadow: var(--filo), 0 0 0 2px #ffb347 inset;
+  box-shadow:
+    var(--filo),
+    0 0 0 2px #ffb347 inset;
 }
 
 .medidor--rapido {
-  box-shadow: var(--filo), 0 0 0 2px #7fb6e8 inset;
+  box-shadow:
+    var(--filo),
+    0 0 0 2px #7fb6e8 inset;
 }
 
 .medidor--bien .medidor__valor {
@@ -298,11 +306,17 @@ body {
   cursor: pointer;
   font-size: 20px;
   padding: 0;
-  transition: transform 90ms ease, border-color 90ms ease;
+  transition:
+    transform 90ms ease,
+    border-color 90ms ease;
 }
 
-.sonido:hover { border-color: var(--ocre); }
-.sonido:active { transform: scale(0.93); }
+.sonido:hover {
+  border-color: var(--ocre);
+}
+.sonido:active {
+  transform: scale(0.93);
+}
 
 .sonido:hover {
   border-color: var(--ocre);
@@ -337,8 +351,12 @@ body {
 
 /* El azul marino del uniforme. Es el único sitio del juego con este color, y
    es a propósito: nada más significa «lo que llevás puesto». */
-.manga__tela { fill: #1f2a3f; }
-.manga__puno { fill: #2c3a55; }
+.manga__tela {
+  fill: #1f2a3f;
+}
+.manga__puno {
+  fill: #2c3a55;
+}
 
 .manga__barra {
   fill: #f2b05c;
@@ -369,13 +387,35 @@ body {
    Lo último que se ve de una partida, y por eso no lleva ni una cifra: la
    manga con lo que te llevaste, grande, y nada más. Ver
    flight/reconocimiento.ts. */
+/*
+ * **Y mientras el final está puesto, los mandos se apartan.**
+ *
+ * No es estética: el botón del freno y la tarjeta del tutor viven por encima
+ * del panel y se veían encima de él, pidiendo frenar un avión que ya no se
+ * mueve. Lo que hay que hacer cuando la partida ha terminado es una sola cosa
+ * —volver a empezar—, y todo lo que sugiera otra es ruido.
+ */
+.hud--fin .tutor,
+.hud--fin .freno--boton,
+.hud--fin .senal {
+  display: none !important;
+}
+
 .fin {
   position: fixed;
   inset: 0;
   display: grid;
   place-items: center;
   background: rgba(10, 16, 13, 0.82);
-  z-index: 9;
+  /*
+   * **Por encima de todo lo que vuela.**
+   *
+   * Estaba en 9, y las tarjetas del vuelo —el freno, el veredicto de la toma—
+   * viven en 8 y en 10: al aparecer la pantalla del final se veían **encima**
+   * de ella, pidiendo frenar un avión que ya no se mueve. Un final que deja
+   * asomar la partida por debajo no es un final.
+   */
+  z-index: 12;
   padding: 24px;
   cursor: pointer;
   /* El HUD entero deja pasar el puntero para no comerse los clics del mundo,
@@ -433,6 +473,32 @@ body {
   display: none;
 }
 
+/*
+ * El dibujo del percance, en el sitio de la manga.
+ *
+ * Va en el ocre de los avisos y no en el verde de los galones: es lo mismo que
+ * hace el resto del juego —lo que sale mal es ámbar, lo que sale bien es
+ * verde— y así, antes de mirar el dibujo, el color ya ha dicho de qué va esto.
+ */
+.percance {
+  display: block;
+  height: 168px;
+  width: auto;
+  fill: var(--ocre);
+  stroke: none;
+}
+
+/*
+ * Los huecos del dibujo —los ojos del conductor, la puerta del hangar, las
+ * rayas de la pista— van **del color del panel** y no en blanco: así se leen
+ * como agujeros del dibujo y no como piezas sueltas encima. Es el mismo truco
+ * que usan las tarjetas con `senal__hueco`.
+ */
+.percance .percance__hueco {
+  fill: var(--verde-bosque);
+  stroke: none;
+}
+
 .fin__frase {
   margin: 0;
   font-size: 22px;
@@ -444,8 +510,12 @@ body {
 }
 
 @keyframes fin-entra {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -666,7 +736,8 @@ body {
   padding: 10px 18px;
   border-radius: var(--r-m);
   box-shadow: var(--filo), var(--poso);
-  background: linear-gradient(rgba(255, 255, 255, 0.06), transparent 30%), #8f3f22;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.06), transparent 30%), #8f3f22;
   color: var(--beige);
   opacity: 0;
   transition: opacity 160ms ease;
@@ -1163,9 +1234,15 @@ body {
   stroke-width: 4;
 }
 
-.esfera__arco--verde { stroke: #35c46a; }
-.esfera__arco--ambar { stroke: #e8b13a; }
-.esfera__arco--rojo  { stroke: #e2453c; }
+.esfera__arco--verde {
+  stroke: #35c46a;
+}
+.esfera__arco--ambar {
+  stroke: #e8b13a;
+}
+.esfera__arco--rojo {
+  stroke: #e2453c;
+}
 
 .esfera__aguja {
   fill: #f2f4f7;
@@ -1189,10 +1266,22 @@ body {
 }
 
 /* Horizonte artificial: cielo arriba, tierra abajo, avión fijo en el medio. */
-.ai__cielo { fill: #3d7fd0; }
-.ai__tierra { fill: #8a5a2b; }
-.ai__horizonte { stroke: #ffffff; stroke-width: 1.6; }
-.ai__avion { fill: none; stroke: #ffcf3f; stroke-width: 2.2; stroke-linecap: round; }
+.ai__cielo {
+  fill: #3d7fd0;
+}
+.ai__tierra {
+  fill: #8a5a2b;
+}
+.ai__horizonte {
+  stroke: #ffffff;
+  stroke-width: 1.6;
+}
+.ai__avion {
+  fill: none;
+  stroke: #ffcf3f;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
 
 /*
  * Direccional: la rosa gira y el avioncito no, que es lo que hace difícil
@@ -1200,14 +1289,37 @@ body {
  * entenderlo. La rosa es la cara oscura del disco, no una mancha blanca:
  * lo que se lee son las marcas y las letras pintadas encima.
  */
-.dg__rosa { fill: #14181e; }
-.dg__avion { fill: none; stroke: #f2f4f7; stroke-width: 2; stroke-linecap: round; }
+.dg__rosa {
+  fill: #14181e;
+}
+.dg__avion {
+  fill: none;
+  stroke: #f2f4f7;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
 
 /* Bastón y bola. El tubo es cristal, la bola es la que hay que centrar. */
-.tc__tubo { fill: rgba(255, 255, 255, 0.1); stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; }
-.tc__bola { fill: #1c1f25; stroke: #f2f4f7; stroke-width: 1.2; }
-.tc__ala { fill: none; stroke: #f2f4f7; stroke-width: 2.2; stroke-linecap: round; }
-.tc__deriva { stroke: rgba(255, 255, 255, 0.45); stroke-width: 1.2; }
+.tc__tubo {
+  fill: rgba(255, 255, 255, 0.1);
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1;
+}
+.tc__bola {
+  fill: #1c1f25;
+  stroke: #f2f4f7;
+  stroke-width: 1.2;
+}
+.tc__ala {
+  fill: none;
+  stroke: #f2f4f7;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.tc__deriva {
+  stroke: rgba(255, 255, 255, 0.45);
+  stroke-width: 1.2;
+}
 
 /*
  * El freno. Comparte tarjeta y tipografía con el motor porque son la pareja
@@ -1229,7 +1341,9 @@ body {
 /* Pisado: se enciende, y con el mismo ámbar que el resto de los avisos. */
 .freno--pisado {
   border-color: var(--ocre);
-  box-shadow: var(--filo), 0 0 0 2px rgba(221, 146, 63, 0.5);
+  box-shadow:
+    var(--filo),
+    0 0 0 2px rgba(221, 146, 63, 0.5);
 }
 
 .freno--pisado .motor__tecla--ancha {
@@ -1302,9 +1416,15 @@ body {
    Es el único sitio donde la banda se ve en los peldaños sin cifras, y son
    los mismos tres colores que usa la tarjeta numérica de Taguato: la lección
    es la misma, cambia el instrumento. */
-.picto__avion--bien { fill: #79e08a; }
-.picto__avion--lento { fill: #ffb347; }
-.picto__avion--rapido { fill: #7fb6e8; }
+.picto__avion--bien {
+  fill: #79e08a;
+}
+.picto__avion--lento {
+  fill: #ffb347;
+}
+.picto__avion--rapido {
+  fill: #7fb6e8;
+}
 
 .picto__avion {
   stroke: #ffd9a0;
@@ -1344,11 +1464,16 @@ body {
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.9);
   background: linear-gradient(180deg, #c9483c, var(--peligro) 70%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 0 #7d251d, var(--poso);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 4px 0 #7d251d,
+    var(--poso);
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 90ms ease, background 90ms ease;
+  transition:
+    transform 90ms ease,
+    background 90ms ease;
 }
 
 .freno--boton svg {
@@ -1393,9 +1518,18 @@ body {
 }
 
 @keyframes freno-se-va {
-  0%   { transform: translateY(0) scale(1);      opacity: 1; }
-  25%  { transform: translateY(6px) scale(0.9);  opacity: 1; }
-  100% { transform: translateY(-54px) scale(0.4); opacity: 0; }
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(6px) scale(0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-54px) scale(0.4);
+    opacity: 0;
+  }
 }
 
 /* La tarjeta de velocidad se enciende: ahí está la razón. */
@@ -1404,8 +1538,15 @@ body {
 }
 
 @keyframes picto-avisa {
-  0%, 100% { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22); }
-  35%      { box-shadow: 0 0 0 4px var(--ocre, #dd923f), 0 4px 18px rgba(0, 0, 0, 0.3); }
+  0%,
+  100% {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  }
+  35% {
+    box-shadow:
+      0 0 0 4px var(--ocre, #dd923f),
+      0 4px 18px rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* Quien pide menos movimiento no ve el vuelo del botón, solo el encendido. */
@@ -1529,13 +1670,17 @@ body {
   border: none;
   border-radius: var(--r-m);
   background: linear-gradient(180deg, #e8a75c, var(--ocre) 72%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 3px 0 #96551f;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 3px 0 #96551f;
   cursor: pointer;
 }
 
 .teclado__cerrar:active {
   transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 #96551f;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 #96551f;
 }
 
 .teclado__cerrar svg {
@@ -1590,7 +1735,10 @@ body {
   border-radius: var(--r-s);
   background: rgba(0, 0, 0, 0.26);
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.35);
-  transition: transform 70ms ease, background 70ms ease, box-shadow 70ms ease;
+  transition:
+    transform 70ms ease,
+    background 70ms ease,
+    box-shadow 70ms ease;
 }
 
 .tecla__letra {
@@ -1617,7 +1765,10 @@ body {
    arriba y su base más oscura. Se ve que sobresale y que se puede apretar. */
 .tecla--activa {
   background: linear-gradient(180deg, #e8a75c, var(--ocre) 72%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 3px 0 #96551f, var(--poso);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 3px 0 #96551f,
+    var(--poso);
 }
 
 .tecla--activa .tecla__letra {
@@ -1648,7 +1799,9 @@ body {
 .tecla--pulsada {
   background: var(--terracota);
   transform: translateY(3px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 0 0 #96551f;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 #96551f;
 }
 
 .tecla--pulsada svg {
@@ -1708,7 +1861,9 @@ body {
   border: 2px solid var(--linea);
   background: rgba(0, 0, 0, 0.22);
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
 }
 
 .mano__opcion svg {
@@ -1723,7 +1878,9 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
-.mano__opcion[aria-pressed="true"] svg { fill: var(--barro); }
+.mano__opcion[aria-pressed="true"] svg {
+  fill: var(--barro);
+}
 
 /* Con un aviso en pantalla, el tutor desaparece: manda el aviso. */
 .hud--avisando .tutor {
@@ -1838,7 +1995,7 @@ body {
   border-color: var(--ocre, #d9a441);
 }
 
-.mundo[aria-checked='true'] {
+.mundo[aria-checked="true"] {
   border-color: var(--ocre, #d9a441);
   background: rgba(217, 164, 65, 0.22);
 }
@@ -1847,7 +2004,6 @@ body {
   width: 26px;
   height: 19px;
 }
-
 
 .idioma {
   min-height: 44px;
@@ -1862,7 +2018,7 @@ body {
   cursor: pointer;
 }
 
-.idioma[aria-checked='true'] {
+.idioma[aria-checked="true"] {
   border-color: var(--ocre);
   color: var(--tinta);
   font-weight: 700;
@@ -1965,12 +2121,12 @@ body {
  * todo el mundo distingue el ocre del verde: por eso son tres señales a la
  * vez —el filo grueso, el galón de arriba y la marca de visto—.
  */
-.ficha[aria-checked='true'] {
+.ficha[aria-checked="true"] {
   border-color: var(--ocre);
 }
 
-.ficha[aria-checked='true']::after {
-  content: '';
+.ficha[aria-checked="true"]::after {
+  content: "";
   position: absolute;
   top: 10px;
   right: 10px;
@@ -1981,8 +2137,8 @@ body {
   box-shadow: var(--filo);
 }
 
-.ficha[aria-checked='true']::before {
-  content: '';
+.ficha[aria-checked="true"]::before {
+  content: "";
   position: absolute;
   z-index: 1;
   top: 18px;
@@ -2010,9 +2166,11 @@ body {
   min-height: 0;
   aspect-ratio: 5 / 3;
   padding: 8px;
-  background: linear-gradient(var(--cielo, #33413a) 0%, var(--suelo, #24312b) 100%);
+  background: linear-gradient(
+    var(--cielo, #33413a) 0%,
+    var(--suelo, #24312b) 100%
+  );
 }
-
 
 .ficha__pie {
   display: grid;
@@ -2164,7 +2322,8 @@ body {
   padding: 2px 7px;
   border-radius: 5px;
   background: rgba(16, 22, 19, 0.72);
-  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
+  font-family:
+    ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
   font-size: 12px;
   line-height: 1.35;
 }
@@ -2445,7 +2604,7 @@ body {
 
 /* Una línea que llega hasta el final, para que el grupo se lea como un bloque. */
 .hangar__grupo-nombre::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: currentcolor;
@@ -2534,7 +2693,9 @@ body {
   border-radius: 999px;
   background: var(--barro-calido);
   background-image: var(--barniz);
-  box-shadow: var(--filo), 0 8px 20px -8px rgba(0, 0, 0, 0.7);
+  box-shadow:
+    var(--filo),
+    0 8px 20px -8px rgba(0, 0, 0, 0.7);
   color: var(--tinta);
   font: inherit;
   font-size: clamp(19px, 2.8vw, 24px);
@@ -2790,7 +2951,10 @@ body {
 
 @keyframes senal-llama {
   50% {
-    box-shadow: var(--filo), var(--poso), 0 0 0 5px rgba(221, 146, 63, 0.18);
+    box-shadow:
+      var(--filo),
+      var(--poso),
+      0 0 0 5px rgba(221, 146, 63, 0.18);
   }
 }
 
@@ -3155,8 +3319,6 @@ body {
   stroke-linejoin: round;
 }
 
-
-
 /*
  * Los tres cielos.
  *
@@ -3238,7 +3400,9 @@ body {
   box-shadow: var(--filo), var(--poso);
   color: var(--tinta);
   cursor: pointer;
-  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 140ms ease;
+  transition:
+    transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 140ms ease;
 }
 
 .mapa__lupa:hover,
@@ -3298,7 +3462,9 @@ body {
   fill: var(--ocre-tinta);
   stroke: var(--barro);
   stroke-width: 2;
-  transition: fill 220ms ease, r 220ms ease;
+  transition:
+    fill 220ms ease,
+    r 220ms ease;
 }
 
 /* De noche el mismo disco se enfría y encoge: es la luna. */
@@ -3342,7 +3508,7 @@ body {
 }
 
 /* El botón de restaurar es secundario: no puede competir con el de cerrar. */
-.teclas__pie [data-todo='restaurar'] {
+.teclas__pie [data-todo="restaurar"] {
   border: 1px solid var(--linea);
   border-radius: var(--r-m);
   background: transparent;
@@ -3353,7 +3519,7 @@ body {
   cursor: pointer;
 }
 
-.teclas__pie [data-todo='restaurar']:hover {
+.teclas__pie [data-todo="restaurar"]:hover {
   border-color: var(--ocre-tinta);
   color: var(--tinta);
 }

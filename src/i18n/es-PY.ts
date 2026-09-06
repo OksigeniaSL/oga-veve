@@ -167,6 +167,11 @@ export const ES_PY = {
   "vuelo.alto": "Pará acá",
   "vuelo.teLoPasaste": "Te pasaste. Frená y volvé",
   "vuelo.yaPodesTocar": "Ya podés tocar",
+  "percance.coche": "Le pasaste por encima al coche",
+  "percance.edificio": "Chocaste con un edificio",
+  "percance.fuera": "Tocaste tierra fuera de la pista",
+  "percance.golpe": "Llegaste dando un golpe",
+  "percance.pasada": "Te pasaste del final de la pista",
   // Se dice una vez y sin regañar. Lo que hay que aprender no es que el juego
   // te lo impida: es que en un aeropuerto de verdad ahí puede venir otro.
   "vuelo.sinPermiso": "Entraste sin la luz verde. La próxima, esperala",

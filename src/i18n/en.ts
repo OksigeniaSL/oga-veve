@@ -159,6 +159,11 @@ export const EN: Dictionary = {
   "vuelo.alto": "Stop here",
   "vuelo.teLoPasaste": "You went past. Brake and come back",
   "vuelo.yaPodesTocar": "You can touch down now",
+  "percance.coche": "You ran over the follow-me car",
+  "percance.edificio": "You hit a building",
+  "percance.fuera": "You touched down off the runway",
+  "percance.golpe": "That landing was a thump",
+  "percance.pasada": "You ran off the end of the runway",
   "vuelo.sinPermiso":
     "You went in without the green light. Wait for it next time",
 

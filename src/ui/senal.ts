@@ -544,6 +544,22 @@ export class Senal {
     if (this.actual === dibujo) this.queda = 0;
   }
 
+  /**
+   * Quita lo que haya, sea lo que sea.
+   *
+   * Para cuando el vuelo se acaba de golpe: con un percance, la tarjeta que
+   * hubiera puesta —«frená», «salí de la pista»— deja de tener sentido en ese
+   * mismo instante, y dejarla pidiendo cosas debajo de la pantalla del final
+   * es pedirle a alguien que pilote un avión que ya no se mueve.
+   */
+  limpiar(): void {
+    this.queda = 0;
+    this.prioridad = 0;
+    this.enEspera = null;
+    if (this.caja) this.caja.hidden = true;
+    this.actual = "";
+  }
+
   /** Qué hay puesto y cuánto le queda. Para el banco de pruebas. */
   get puesto(): { dibujo: string; queda: number; prioridad: number } {
     return {

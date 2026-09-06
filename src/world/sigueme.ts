@@ -191,6 +191,20 @@ function construir(): {
 
 export class Sigueme {
   readonly grupo: Group;
+
+  /**
+   * Dónde está el coche ahora, o `null` si hoy no ha salido.
+   *
+   * Lo pregunta el juego para saber si se le ha pasado por encima. Va aquí y
+   * no se deduce de la escena porque el coche sabe dónde está mucho mejor que
+   * quien mira su grupo: cuando no está activo, su malla se queda donde la
+   * dejaron.
+   */
+  get donde(): { readonly x: number; readonly z: number } | null {
+    return this.grupo.visible
+      ? { x: this.grupo.position.x, z: this.grupo.position.z }
+      : null;
+  }
   private readonly baliza: Group;
   private ruta: readonly Punto[] = [];
   /** Distancia acumulada hasta cada punto de la ruta. */
