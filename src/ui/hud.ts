@@ -155,6 +155,8 @@ export class Hud {
   readonly tiempo = new PanelDelTiempo();
   private readonly root: HTMLElement;
   private units: UnitSystem = METRIC;
+  /** Si ya se marcó V1 en esta carrera de despegue. Ver `update`. */
+  private dijoV1 = false;
   /**
    * Cuántos instrumentos enseña el HUD.
    *
@@ -563,6 +565,14 @@ export class Hud {
         manga con lo que te llevaste**. Sin cifras, sin «dos de seis» y sin
         huecos apagados. Ver flight/reconocimiento.ts.
       -->
+      <!--
+        V1, en grande y tenue.
+
+        Ocupa media pantalla y no tapa nada porque no tiene fondo ni recoge
+        clics: es un destello, como el de un aro cruzado. Fuera de la carrera
+        de despegue no existe.
+      -->
+      <div class="v1" data-hud="v1" aria-hidden="true">V1</div>
       <div class="fin" data-hud="fin" hidden>
         <div class="fin__panel">
           <div class="fin__manga" data-hud="fin-manga"></div>
@@ -919,6 +929,30 @@ export class Hud {
      * táctil —que decía «Frenos» en castellano fijo— eso pasó de discutible a
      * agujero. Un mando de seguridad no puede depender del peldaño.
      */
+    /*
+     * **Y el momento se marca en la pantalla, en grande y tenue.**
+     *
+     * V1 es el punto a partir del cual ya no se puede abortar un despegue: si
+     * falla algo, se vuela y se resuelve en el aire. Es de los conceptos más
+     * bonitos que tiene la aviación y hasta hoy solo se contaba quitando el
+     * botón del freno, que se entiende **después**, no en el instante.
+     *
+     * «Ese V1 sí se podría mostrar incluso a los pequeños, pensaba en un V1
+     * que parpadeara un poco en grande en casi toda la pantalla pero tenue.»
+     * Y sí: no está ahí para leerse —a los cuatro años no se lee— sino para
+     * marcar un momento, como el destello de un aro. Quien juegue esto durante
+     * meses acabará sabiendo qué es V1, igual que acaba sabiendo qué es la I
+     * del contacto o para qué sirve la manga.
+     */
+    if (despegando && !this.dijoV1) {
+      this.dijoV1 = true;
+      this.marcarV1();
+    } else if (!enSuelo || !state.onRunway || throttle < 0.3) {
+      // Se rearma en cuanto se deja de correr por la pista: cada despegue
+      // tiene su V1, y solo uno.
+      this.dijoV1 = false;
+    }
+
     const escondeBoton =
       !enSuelo || (!sinLetras && !ESTO_ES_TACTIL) || despegando;
 
@@ -1120,6 +1154,22 @@ export class Hud {
     pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
     this.fin.hidden = false;
     this.root.classList.add("hud--fin");
+  }
+
+  /**
+   * El destello de V1: dos letras enormes y translúcidas, y se van.
+   *
+   * Va por CSS —se pone la clase y se quita al acabar la animación— porque lo
+   * único que hace es aparecer y desaparecer, y para eso el navegador ya sabe
+   * hacerlo mejor que nosotros con un temporizador.
+   */
+  private marcarV1(): void {
+    const v1 = this.root.querySelector('[data-hud="v1"]');
+    if (!v1) return;
+    v1.classList.remove("v1--suena");
+    // Forzar el reflujo, que si no la animación no vuelve a empezar.
+    void (v1 as HTMLElement).offsetWidth;
+    v1.classList.add("v1--suena");
   }
 
   /** Y se quita. Otro vuelo, otra manga. */

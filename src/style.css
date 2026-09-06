@@ -401,6 +401,80 @@ body {
   display: none !important;
 }
 
+/*
+ * V1: el punto de no retorno del despegue, dicho con dos letras enormes.
+ *
+ * **Tenue y por encima de todo**, que es lo que se pidió: «un V1 que
+ * parpadeara un poco en grande en casi toda la pantalla pero tenue, en algunos
+ * juegos he visto algo así». No es un cartel para leer —a los cuatro años no
+ * se lee— sino un destello que marca un instante, como el que da un aro al
+ * cruzarlo. Y por eso no lleva fondo, no recoge clics y dura menos de dos
+ * segundos: si se quedara puesto sería un obstáculo.
+ */
+.v1 {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 11;
+  pointer-events: none;
+  font-size: min(38vw, 44vh);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--beige);
+  opacity: 0;
+  /* El filo oscuro es lo que lo hace legible sobre cielo claro y sobre asfalto
+     oscuro sin subir la opacidad, que es lo que lo volvería un estorbo. */
+  text-shadow: 0 0 40px rgba(10, 16, 13, 0.55);
+}
+
+.v1--suena {
+  animation: v1-destello 1.6s ease-out 1;
+}
+
+@keyframes v1-destello {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  18% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  38% {
+    opacity: 0.12;
+  }
+  58% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+/*
+ * Con movimiento reducido, ni escala ni parpadeo: aparece y se va. La
+ * información —«ya no se puede frenar»— es la misma; lo que se quita es el
+ * baile, que es exactamente lo que pide ese ajuste del sistema.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .v1--suena {
+    animation: v1-quieto 1.4s ease-out 1;
+  }
+
+  @keyframes v1-quieto {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    20%,
+    70% {
+      opacity: 0.22;
+    }
+  }
+}
+
 .fin {
   position: fixed;
   inset: 0;
