@@ -26,11 +26,11 @@
  *
  * Uso: `node scripts/verificar-despegue.mjs [escenario] [tramo]`
  */
-import { chromium } from 'playwright';
-import { createServer } from 'vite';
+import { chromium } from "playwright";
+import { createServer } from "vite";
 
-const ESCENARIO = process.argv[2] ?? 'tenerife-norte';
-const TRAMO = process.argv[3] ?? 'guyrami';
+const ESCENARIO = process.argv[2] ?? "tenerife-norte";
+const TRAMO = process.argv[3] ?? "guyrami";
 const PUERTO = 5281;
 
 const server = await createServer({
@@ -40,8 +40,8 @@ const server = await createServer({
 await server.listen();
 
 const navegador = await chromium.launch({
-  executablePath: '/usr/bin/google-chrome',
-  args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
+  executablePath: "/usr/bin/google-chrome",
+  args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
 });
 const page = await navegador.newPage({
   viewport: { width: 1000, height: 620 },
@@ -49,9 +49,9 @@ const page = await navegador.newPage({
   isMobile: true,
 });
 const errores = [];
-page.on('pageerror', (e) => errores.push(e.message.slice(0, 160)));
+page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
 await page.addInitScript(() => {
-  localStorage.setItem('oga-veve:teclas-vistas', '1');
+  localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
 await page.goto(
   `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue&tramo=${TRAMO}`,
@@ -65,7 +65,7 @@ const comprobar = (nombre, ok, detalle, porque) =>
 const mirar = (fn) => page.evaluate(fn);
 const dibujoDeLaSenal = () =>
   page.evaluate(
-    () => document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? '',
+    () => document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "",
   );
 
 // ── En el puesto ──────────────────────────────────────────────────────────
@@ -88,28 +88,29 @@ const arranque = await mirar(() => {
           i ? t + Math.hypot(p[0] - r[i - 1][0], p[1] - r[i - 1][1]) : 0,
         0,
       ),
-    tecla: document.querySelector('[data-hud="senal-tecla"]')?.textContent ?? '',
+    tecla:
+      document.querySelector('[data-hud="senal-tecla"]')?.textContent ?? "",
     // Los pavimentos del aeródromo, para saber si la ruta va por asfalto.
   };
 });
 
 comprobar(
-  'se empieza en el puesto, parado y con el motor apagado',
-  arranque.fase === 'estacionado' && !arranque.motor && arranque.v < 1,
-  `fase «${arranque.fase}», motor ${arranque.motor ? 'en marcha' : 'parado'}`,
-  'arrancar el motor es el primer paso del vuelo y no existía como paso',
+  "se empieza en el puesto, parado y con el motor apagado",
+  arranque.fase === "estacionado" && !arranque.motor && arranque.v < 1,
+  `fase «${arranque.fase}», motor ${arranque.motor ? "en marcha" : "parado"}`,
+  "arrancar el motor es el primer paso del vuelo y no existía como paso",
 );
 comprobar(
-  'y la pantalla pide arrancar, con su tecla dibujada',
+  "y la pantalla pide arrancar, con su tecla dibujada",
   arranque.tecla.length > 0,
   `tecla «${arranque.tecla}»`,
-  '«pulso la I y no se quita de la pantalla el icono»: un mando que no se anuncia no existe',
+  "«pulso la I y no se quita de la pantalla el icono»: un mando que no se anuncia no existe",
 );
 comprobar(
-  'hay ruta desde el puesto hasta el punto de espera',
+  "hay ruta desde el puesto hasta el punto de espera",
   arranque.ruta > 4,
   `${arranque.ruta} puntos, ${arranque.largo.toFixed(0)} m`,
-  'hay puestos de OSM que no conectan con ninguna calle y el avión salía sin raya',
+  "hay puestos de OSM que no conectan con ninguna calle y el avión salía sin raya",
 );
 
 // La ruta de salida, ¿va por el asfalto?
@@ -128,7 +129,10 @@ const rutaPorAsfalto = await mirar(() => {
         const dz = bz - az;
         const l2 = dx * dx + dz * dz;
         if (l2 < 1) continue;
-        const t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2));
+        const t = Math.max(
+          0,
+          Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2),
+        );
         const d = Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
         if (d < mejor) {
           mejor = d;
@@ -175,11 +179,11 @@ const rutaPorAsfalto = await mirar(() => {
           : null,
       )
       .filter(Boolean)
-      .join(' '),
+      .join(" "),
   };
 });
 comprobar(
-  'y va por el asfalto, no por el campo',
+  "y va por el asfalto, no por el campo",
   /*
    * Se tolera un punto: el propio puesto de estacionamiento cae en mitad de
    * una plataforma, y de una plataforma solo se conocen su contorno y sus
@@ -187,28 +191,31 @@ comprobar(
    * fuera del asfalto.
    */
   rutaPorAsfalto.fuera <= 1,
-  `${rutaPorAsfalto.fuera} de ${rutaPorAsfalto.total} puntos fuera${rutaPorAsfalto.dondes ? ` (${rutaPorAsfalto.dondes})` : ''}`,
-  '«salgo por E4 atravesando los jardines»',
+  `${rutaPorAsfalto.fuera} de ${rutaPorAsfalto.total} puntos fuera${rutaPorAsfalto.dondes ? ` (${rutaPorAsfalto.dondes})` : ""}`,
+  "«salgo por E4 atravesando los jardines»",
 );
 
 // ── El sígame ─────────────────────────────────────────────────────────────
 
 const sigueme = await mirar(() => {
-  const coche = globalThis.__raiz.getObjectByName('sigueme');
+  const coche = globalThis.__raiz.getObjectByName("sigueme");
   const s = globalThis.__oga.estado();
   return {
     visible: !!coche?.visible,
     d: coche
-      ? Math.hypot(coche.position.x - s.position.x, coche.position.z - s.position.z)
+      ? Math.hypot(
+          coche.position.x - s.position.x,
+          coche.position.z - s.position.z,
+        )
       : Infinity,
   };
 });
-if (TRAMO === 'guyrami' || TRAMO === 'tuka') {
+if (TRAMO === "guyrami" || TRAMO === "tuka") {
   comprobar(
-    'el coche del sígame espera delante antes de arrancar',
+    "el coche del sígame espera delante antes de arrancar",
     sigueme.visible && sigueme.d < 70,
-    sigueme.visible ? `a ${sigueme.d.toFixed(0)} m` : 'no se ve',
-    'salía cuando ya ibas rodando, y aparecer de la nada no enseña nada',
+    sigueme.visible ? `a ${sigueme.d.toFixed(0)} m` : "no se ve",
+    "salía cuando ya ibas rodando, y aparecer de la nada no enseña nada",
   );
 }
 
@@ -258,7 +265,10 @@ const rodando = await page.evaluate(async () => {
     let cerca = 0;
     let mejor = Infinity;
     for (let i = 0; i < ruta.length; i++) {
-      const d = Math.hypot(ruta[i][0] - s.position.x, ruta[i][1] - s.position.z);
+      const d = Math.hypot(
+        ruta[i][0] - s.position.x,
+        ruta[i][1] - s.position.z,
+      );
       if (d < mejor) {
         mejor = d;
         cerca = i;
@@ -266,7 +276,10 @@ const rodando = await page.evaluate(async () => {
     }
     let mira = ruta[ruta.length - 1];
     for (let i = cerca; i < ruta.length; i++) {
-      const d = Math.hypot(ruta[i][0] - s.position.x, ruta[i][1] - s.position.z);
+      const d = Math.hypot(
+        ruta[i][0] - s.position.x,
+        ruta[i][1] - s.position.z,
+      );
       if (d > MIRA) {
         mira = ruta[i];
         break;
@@ -312,7 +325,7 @@ const rodando = await page.evaluate(async () => {
     c.aileron = timon(s, ruta);
     desvios.push(s.airspeed);
     fases.push(o.fase());
-    if (o.fase() === 'esperando' || o.fase() === 'autorizado') break;
+    if (o.fase() === "esperando" || o.fase() === "autorizado") break;
   }
   const s = o.estado();
   const ruta = o.ruta();
@@ -323,16 +336,18 @@ const rodando = await page.evaluate(async () => {
     segundos: fases.length * 0.25,
     maxV: Math.max(...desvios),
     // Cuánto queda de ruta: si el avión avanza pero no llega, esto lo dice.
-    alFinal: fin ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z) : -1,
+    alFinal: fin
+      ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z)
+      : -1,
     puntos: ruta.length,
-    fases: [...new Set(fases)].join(' '),
+    fases: [...new Set(fases)].join(" "),
   };
 });
 comprobar(
-  'rodando se llega al punto de espera y el juego lo sabe',
-  rodando.fase === 'esperando' || rodando.fase === 'autorizado',
+  "rodando se llega al punto de espera y el juego lo sabe",
+  rodando.fase === "esperando" || rodando.fase === "autorizado",
   `fase «${rodando.fase}» a ${rodando.v.toFixed(1)} m/s en ${rodando.segundos.toFixed(0)} s, quedan ${rodando.alFinal.toFixed(0)} m · vistas: ${rodando.fases}`,
-  'la máquina de fases se quedaba pegada y la lección no avanzaba',
+  "la máquina de fases se quedaba pegada y la lección no avanzaba",
 );
 /*
  * **Y que no se haga eterno**, que es la otra mitad de lo mismo.
@@ -344,16 +359,16 @@ comprobar(
  * intersección que le toca.
  */
 comprobar(
-  'y del puesto a la pista se llega antes de aburrirse',
+  "y del puesto a la pista se llega antes de aburrirse",
   rodando.segundos <= 90,
   `${rodando.segundos.toFixed(0)} s de rodaje`,
-  '«es aburrido pasarse cuatro minutos en una pista, eso un niño no lo aguanta»',
+  "«es aburrido pasarse cuatro minutos en una pista, eso un niño no lo aguanta»",
 );
 comprobar(
-  'y no se rueda como un cohete',
+  "y no se rueda como un cohete",
   rodando.maxV < 22,
   `máxima ${rodando.maxV.toFixed(1)} m/s rodando`,
-  'rodar a noventa por hora no es rodar, y nadie avisaba',
+  "rodar a noventa por hora no es rodar, y nadie avisaba",
 );
 
 // ── La torre ──────────────────────────────────────────────────────────────
@@ -364,14 +379,14 @@ const torre = await page.evaluate(async () => {
   c.throttle = 0;
   c.brakes = 1;
   let verde = null;
-  let vistas = '';
+  let vistas = "";
   for (let i = 0; i < 60; i++) {
     await new Promise((r) => setTimeout(r, 250));
     // La clase del verde vive en la caja, no en la bombilla.
     const caja = document.querySelector('[data-hud="torre"]');
-    const clases = caja?.className ?? '';
+    const clases = caja?.className ?? "";
     vistas = clases;
-    if (clases.includes('torre--verde')) {
+    if (clases.includes("torre--verde")) {
       verde = i * 0.25;
       break;
     }
@@ -379,12 +394,12 @@ const torre = await page.evaluate(async () => {
   return { verde, fase: o.fase(), luz: vistas };
 });
 comprobar(
-  'parando en la doble raya, la torre acaba autorizando',
+  "parando en la doble raya, la torre acaba autorizando",
   torre.verde !== null && torre.verde < 12,
   torre.verde === null
     ? `nunca dio verde (fase «${torre.fase}», lámpara «${torre.luz}»)`
     : `verde a los ${torre.verde.toFixed(1)} s`,
-  'la torre miraba si habías llegado, no si estabas parado: se cruzaba a toda velocidad',
+  "la torre miraba si habías llegado, no si estabas parado: se cruzaba a toda velocidad",
 );
 
 // ── La carrera de despegue ────────────────────────────────────────────────
@@ -435,11 +450,19 @@ const despegue = await page.evaluate(async () => {
       ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z)
       : 0;
     if (s.onRunway) {
-      // El rumbo de la pista o el contrario: el que se parezca más al morro,
-      // que por dónde se despega depende del aeródromo y del día.
-      const directo = alRumbo(s, rumboPista);
-      const inverso = alRumbo(s, rumboPista + Math.PI);
-      c.aileron = Math.abs(directo) < Math.abs(inverso) ? directo : inverso;
+      /*
+       * **Y siempre en el rumbo de la pista, no en el que se parezca al
+       * morro.**
+       *
+       * Se elegía entre el rumbo y su contrario según hacia dónde mirase el
+       * avión al entrar, y entrando por una intersección casi de costado eso
+       * es una moneda al aire: en Silvio Pettirossi salió cruz y el banco puso
+       * al avión a despegar hacia el final de la pista, con treinta y cinco
+       * metros por delante. Por dónde se despega no lo decide el morro: lo
+       * decide el aeródromo, y es lo que el propio juego pinta con la raya de
+       * entrada en pista.
+       */
+      c.aileron = alRumbo(s, rumboPista);
     } else if (ruta.length > 1 && alFin > 30) {
       c.aileron = globalThis.__timon(s, ruta);
     } else {
@@ -448,19 +471,32 @@ const despegue = await page.evaluate(async () => {
         Math.atan2(pista.x - s.position.x, -(pista.z - s.position.z)),
       );
     }
-    if (s.onRunway && o.fase() === 'despegando') break;
+    if (s.onRunway && o.fase() === "despegando") break;
     // Ya en el eje: se acabó el rodaje. (Sin mirar la velocidad: entrando a
     // trece metros por segundo, el listón de doce no se cruzaba nunca y el
     // banco se pasaba cuarenta segundos dando vueltas por la pista.)
-    if (s.onRunway && o.fase() === 'alineando' && i > 12) break;
+    if (s.onRunway && o.fase() === "alineando" && i > 12) break;
   }
+  // La carrera va por donde va la pista. Ver arriba.
+  const rumboDeLaCarrera = rumboPista;
   c.throttle = 1;
   let frenoSeFue = null;
   let enElAire = null;
   let usado = 0;
   // Desde dónde se empieza la carrera y hasta dónde se llega: si no despega,
   // esto dice si el problema es el empuje o el sitio.
-  const partida = { pista: o.estado().onRunway, fase: o.fase() };
+  const ini = o.estado();
+  const partida = {
+    pista: ini.onRunway,
+    fase: o.fase(),
+    // Cuánta pista queda por delante donde empieza la carrera: si el avión se
+    // sale por el final, el problema es dónde le han hecho entrar.
+    queda: (
+      pista.length / 2 -
+      ((ini.position.x - pista.x) * Math.sin(rumboDeLaCarrera) -
+        (ini.position.z - pista.z) * Math.cos(rumboDeLaCarrera))
+    ).toFixed(0),
+  };
   let alto = 0;
   let punta = 0;
   const inicio = o.estado().position.clone
@@ -478,10 +514,28 @@ const despegue = await page.evaluate(async () => {
      * llegó a despegar» con el avión a treinta y siete metros por segundo
      * rodando por la hierba a doscientos por hora.
      */
+    /*
+     * **Y no basta con poner el morro en el rumbo de la pista: hay que ir al
+     * eje.**
+     *
+     * Con solo el rumbo, un avión que entra por una calle y queda pegado al
+     * borde sale de la pista por el costado sin dejar de apuntar bien — y
+     * fuera de la pista este modelo no deja despegar, a propósito. Medido en
+     * Silvio Pettirossi: 37,2 m/s, mil trescientos metros de carrera y un
+     * metro de altura. Se apunta a un punto del eje trescientos metros por
+     * delante, que es lo que hace quien despega.
+     */
     if (s.onGround) {
-      const directo = alRumbo(s, rumboPista);
-      const inverso = alRumbo(s, rumboPista + Math.PI);
-      c.aileron = Math.abs(directo) < Math.abs(inverso) ? directo : inverso;
+      const dx = s.position.x - pista.x;
+      const dz = s.position.z - pista.z;
+      const along =
+        dx * Math.sin(rumboDeLaCarrera) - dz * Math.cos(rumboDeLaCarrera);
+      const tx = pista.x + Math.sin(rumboDeLaCarrera) * (along + 300);
+      const tz = pista.z - Math.cos(rumboDeLaCarrera) * (along + 300);
+      c.aileron = alRumbo(
+        s,
+        Math.atan2(tx - s.position.x, -(tz - s.position.z)),
+      );
     } else {
       c.aileron = 0;
     }
@@ -499,7 +553,13 @@ const despegue = await page.evaluate(async () => {
       break;
     }
   }
+  const fin = o.estado();
+  const dxf = fin.position.x - pista.x;
+  const dzf = fin.position.z - pista.z;
+  const across =
+    dxf * Math.cos(rumboDeLaCarrera) + dzf * Math.sin(rumboDeLaCarrera);
   return {
+    acabo: `${fin.onRunway ? "en pista" : "fuera"}, a ${Math.abs(across).toFixed(0)} m del eje, ${fin.airspeed.toFixed(1)} m/s`,
     enElAire,
     frenoSeFue,
     largoDePista: pista.length,
@@ -512,27 +572,27 @@ const despegue = await page.evaluate(async () => {
 });
 
 comprobar(
-  'a todo gas el avión despega',
+  "a todo gas el avión despega",
   despegue.enElAire !== null,
   despegue.enElAire
     ? `a ${despegue.enElAire.v.toFixed(1)} m/s tras ${despegue.enElAire.usado.toFixed(0)} m`
-    : `no llegó a despegar: empezó ${despegue.partida.pista ? 'en pista' : 'fuera de pista'} en fase «${despegue.partida.fase}», subió ${despegue.alto.toFixed(0)} m en ${despegue.usado.toFixed(0)} m, punta ${despegue.punta.toFixed(1)} m/s`,
-  'con el empuje mal el avión tardaba veinticinco segundos en rotar',
+    : `no llegó a despegar: empezó ${despegue.partida.pista ? "en pista" : "fuera de pista"} en fase «${despegue.partida.fase}» con ${despegue.partida.queda} m por delante, subió ${despegue.alto.toFixed(0)} m en ${despegue.usado.toFixed(0)} m, punta ${despegue.punta.toFixed(1)} m/s, acabó ${despegue.acabo}`,
+  "con el empuje mal el avión tardaba veinticinco segundos en rotar",
 );
 if (despegue.enElAire) {
   comprobar(
-    'y le sobra pista de largo',
+    "y le sobra pista de largo",
     despegue.enElAire.usado < despegue.largoDePista * 0.6,
     `${despegue.enElAire.usado.toFixed(0)} m de ${despegue.largoDePista.toFixed(0)}`,
-    'una carrera que se come la pista entera no es una carrera, es un susto',
+    "una carrera que se come la pista entera no es una carrera, es un susto",
   );
   comprobar(
-    'el freno se despide al pasar el punto de no retorno',
+    "el freno se despide al pasar el punto de no retorno",
     despegue.frenoSeFue !== null && despegue.frenoSeFue > 15,
     despegue.frenoSeFue === null
-      ? 'no se fue'
+      ? "no se fue"
       : `se fue a ${despegue.frenoSeFue.toFixed(1)} m/s`,
-    'se iba también rodando por una calle, donde no hay V1 que valga',
+    "se iba también rodando por una calle, donde no hay V1 que valga",
   );
 }
 
@@ -552,16 +612,16 @@ const enVuelo = await page.evaluate(async () => {
   };
 });
 comprobar(
-  'en el aire sigue subiendo con el motor a tope',
+  "en el aire sigue subiendo con el motor a tope",
   enVuelo.subiendo > 0.5,
   `${enVuelo.subiendo.toFixed(1)} m/s a ${enVuelo.alto.toFixed(0)} m`,
-  'soltando los mandos el avión se quedaba nivelado con el gas a tope',
+  "soltando los mandos el avión se quedaba nivelado con el gas a tope",
 );
 comprobar(
-  'y la raya de rodaje desaparece, que volando no hay nada que rodar',
+  "y la raya de rodaje desaparece, que volando no hay nada que rodar",
   enVuelo.ruta === 0,
   `${enVuelo.ruta} puntos de ruta`,
-  'la raya se quedaba pintada en el suelo mientras se volaba',
+  "la raya se quedaba pintada en el suelo mientras se volaba",
 );
 
 // ── El informe ────────────────────────────────────────────────────────────
@@ -570,7 +630,7 @@ console.log(`\n  despegue · ${ESCENARIO} · ${TRAMO}\n`);
 let fallos = 0;
 for (const r of resultados) {
   if (!r.ok) fallos++;
-  console.log(`  ${r.ok ? '✓' : '✗'} ${r.nombre}  —  ${r.detalle}`);
+  console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
   if (!r.ok) console.log(`      volvió: ${r.porque}`);
 }
 if (errores.length) {
