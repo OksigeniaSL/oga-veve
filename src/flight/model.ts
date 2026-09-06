@@ -212,4 +212,20 @@ export interface FlightModel {
    * Un listón que el mundo no puede alcanzar no es un listón.
    */
   velocidadMaxima(): number;
+
+  /**
+   * A qué régimen de descenso al tocar deja de ser un aterrizaje, m/s.
+   *
+   * Existe porque el juego llegó a tener **dos** límites para lo mismo: el
+   * modelo rompía el avión a partir de seis metros por segundo —hasta veinte
+   * con las ayudas puestas— y la pantalla de percance salía a partir de
+   * cuatro, escrito aparte. Resultado: una toma firme dejaba el avión entero,
+   * volando tan tranquilo, y encima salía el dibujo de la avioneta con la
+   * hélice torcida. «Aterricé bien otra vez y me vuelve a decir que estrellé
+   * la avioneta.»
+   *
+   * El límite es uno y lo dice quien simula el avión, que es el único que sabe
+   * cuánto aguanta el tren con las ayudas de este peldaño puestas.
+   */
+  limiteDeCaida(): number;
 }

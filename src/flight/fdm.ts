@@ -269,6 +269,11 @@ export class CoefficientFlightModel implements FlightModel {
     return this.aircraft.cruiseSpeed;
   }
 
+  /** El mismo con el que se rompe de verdad. Ver `crashLimits`. */
+  limiteDeCaida(): number {
+    return this.crashLimits().sink;
+  }
+
   velocidadDeEntradaEnFinal(vref: number): number {
     return vref * 1.5;
   }
