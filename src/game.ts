@@ -40,7 +40,12 @@ import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
-import { GLIDE_SLOPE, RunwayGuide, type PasoDeAro } from "./world/runway-guide";
+import {
+  ENTRADA_EN_FINAL,
+  GLIDE_SLOPE,
+  RunwayGuide,
+  type PasoDeAro,
+} from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
 import { LECCION_POR_DEFECTO, type Leccion } from "./flight/lecciones";
 import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from "./world/meteo";
@@ -71,7 +76,8 @@ const PROXY_METEO: string | null = import.meta.env.VITE_METEO ?? null;
 const HORA_BUENA = 16;
 
 /** A qué distancia de la cabecera empieza la lección de aterrizar, m. */
-const APROXIMACION = 3000;
+/** A cuántos metros del umbral empieza la lección de aterrizar. */
+const APROXIMACION = ENTRADA_EN_FINAL;
 /**
  * Y a qué altura sobre la pista: **la que da la senda a esa distancia**.
  *
@@ -1165,6 +1171,15 @@ export class Game {
       },
       /** Cómo va el aro que toca de la senda: para poder medir si se enciende. */
       aros: () => this.runwayGuide.sonda(),
+      /**
+       * Vuelve a armar la senda desde donde está el avión.
+       *
+       * Para el banco: colocar el avión no rearma los aros, así que una prueba
+       * que teletransporta hereda el índice de la prueba anterior y mide un
+       * aro que ya no toca. Con esto, cada prueba de aros empieza en un sitio
+       * conocido en vez de en el que dejó la de antes.
+       */
+      reiniciarSenda: () => this.runwayGuide.reset(this.flight.state.position),
       /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
       suelo: (x: number, z: number) => this.terrain.sampleHeight(x, z),
       /** El eje de la pista y las calles de rodaje, en coordenadas del mundo. */

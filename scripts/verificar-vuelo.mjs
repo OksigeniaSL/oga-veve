@@ -93,6 +93,16 @@ await page.goto(
  * subido a altura de circuito **y** se ha estado un rato arriba, y sin eso
  * nada de lo que viene después —la vuelta al puesto, el señalero— existe.
  */
+/*
+ * **Y primero se espera a que el juego exista, no a que pase un rato.**
+ *
+ * Con la máquina cargada, el guion entraba a preguntarle a `__oga` antes de
+ * que existiera y reventaba con «cannot read properties of undefined», que
+ * parece un fallo del juego y es un fallo del reloj.
+ */
+await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
+  timeout: 60000,
+});
 await page.waitForTimeout(22000);
 
 /** Coloca el avión respecto al umbral: `d` metros antes, `alto` sobre la pista. */
@@ -206,6 +216,72 @@ comprobar(
   "entre aro y aro no había nada que dijera si vas alto o bajo",
 );
 
+// ── Ni un árbol dentro del aeropuerto ─────────────────────────────────────
+
+/*
+ * «Los árboles que a veces plantas en mitad del aeropuerto. No hay árboles en
+ * los aeropuertos. Y ni macetas con rosales.» Y no es jardinería: un árbol al
+ * lado de una calle de rodaje es un obstáculo, y los pájaros que viven en él
+ * son otro. Se excluía el pavimento y quedaban bosquecillos en los huecos
+ * entre calles, que es donde en un aeropuerto de verdad hay hierba segada.
+ */
+const arboles = await page.evaluate(() => {
+  const puntos = [];
+  for (const c of globalThis.__oga.caminos()) {
+    if (c.que === "plataforma" || c.que === "pista") puntos.push(...c.puntos);
+  }
+  if (puntos.length < 3) return { dentro: 0, total: 0 };
+  // La envolvente convexa de pistas y plataformas: el recinto, a ojo.
+  const p = [...puntos].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cruz = (o, a, b) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const media = (lista) => {
+    const s = [];
+    for (const q of lista) {
+      while (s.length >= 2 && cruz(s[s.length - 2], s[s.length - 1], q) <= 0) {
+        s.pop();
+      }
+      s.push(q);
+    }
+    s.pop();
+    return s;
+  };
+  const poli = [...media(p), ...media([...p].reverse())];
+  const dentroDe = (x, z) => {
+    let dentro = false;
+    for (let i = 0, j = poli.length - 1; i < poli.length; j = i++) {
+      const [xi, zi] = poli[i];
+      const [xj, zj] = poli[j];
+      if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) {
+        dentro = !dentro;
+      }
+    }
+    return dentro;
+  };
+  let dentro = 0;
+  let total = 0;
+  const m = new (globalThis.THREE?.Matrix4 ?? Object)();
+  globalThis.__raiz.getObjectByName("vegetacion")?.traverse((n) => {
+    if (!n.isInstancedMesh) return;
+    for (let i = 0; i < n.count; i++) {
+      // La posición de cada instancia son los tres últimos de su matriz.
+      const a = n.instanceMatrix.array;
+      const x = a[i * 16 + 12];
+      const z = a[i * 16 + 14];
+      total += 1;
+      if (dentroDe(x, z)) dentro += 1;
+    }
+  });
+  void m;
+  return { dentro, total };
+});
+comprobar(
+  "no hay un solo árbol dentro del aeropuerto",
+  arboles.dentro === 0,
+  `${arboles.dentro} de ${arboles.total} árboles dentro del recinto`,
+  "«no hay árboles en los aeropuertos, y ni macetas con rosales»",
+);
+
 // ── Corta final ───────────────────────────────────────────────────────────
 
 await poner(400, 24);
@@ -297,6 +373,9 @@ const porEncima = await page.evaluate(async () => {
    */
   const sitio = o.puntoDeFinal(d + 60);
   o.colocar(sitio.x, alto, sitio.z, 34, sitio.h);
+  // Y se rearma la senda desde aquí: colocar el avión no lo hace, así que sin
+  // esto la prueba hereda el índice de aros de lo que hubiera pasado antes.
+  o.reiniciarSenda();
   await new Promise((r) => setTimeout(r, 400));
 
   let tarjeta = "";
@@ -687,6 +766,25 @@ comprobar(
 
 const alFinal = await page.evaluate(async () => {
   const o = globalThis.__oga;
+  /*
+   * **Primero se aterriza, y después se mide el camino a casa.**
+   *
+   * Esta sección heredaba el avión de la prueba anterior —que lo estrella en
+   * un descampado a propósito, para ver el veredicto— y desde ahí puede no
+   * haber ruta a ninguna parte: el buscador engancha a seiscientos metros y en
+   * mitad del campo no llega. Cuando eso pasaba, las tres comprobaciones de
+   * aquí abajo salían en rojo hablando de la cinta, del señalero y de la
+   * llave, que no tenían nada que ver.
+   *
+   * Así que se pone el avión donde estaría de verdad: en la pista, ochocientos
+   * metros pasado el umbral y a paso de rodaje, que es de donde sale el camino
+   * al puesto.
+   */
+  const p = o.puntoDeFinal(-800);
+  o.colocar(p.x, o.suelo(p.x, p.z) + 1.3, p.z, 6, p.h);
+  for (let i = 0; i < 40 && o.ruta().length < 2; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+  }
   const ruta = o.ruta();
   if (ruta.length < 2) return { sinRuta: true };
   const s = o.estado();
@@ -743,8 +841,14 @@ const alFinal = await page.evaluate(async () => {
 
 comprobar(
   "la cinta guía se ve sobre el suelo",
-  alFinal.cinta !== null && alFinal.cinta > 0 && alFinal.cinta < 1.5,
-  `${alFinal.cinta === null ? "no hay cinta" : alFinal.cinta.toFixed(2) + " m"}`,
+  typeof alFinal.cinta === "number" && alFinal.cinta > 0 && alFinal.cinta < 1.5,
+  // Y si no hay ruta, se dice: antes esto reventaba el guion entero con un
+  // «no se puede leer toFixed de undefined», que no explica nada.
+  typeof alFinal.cinta === "number"
+    ? `${alFinal.cinta.toFixed(2)} m`
+    : alFinal.sinRuta
+      ? "el plan no tenía ruta que medir"
+      : "no hay cinta",
   "sus cotas van horneadas y cualquier cambio del suelo la entierra",
 );
 comprobar(

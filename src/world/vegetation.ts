@@ -36,12 +36,12 @@ import {
   OctahedronGeometry,
   Quaternion,
   Vector3,
-} from 'three';
-import { enEjesDePista } from './rumbo';
-import { ValueNoise2D, mulberry32 } from './noise';
-import type { Scenario } from './scenarios';
-import type { Aerodrome } from './aerodrome';
-import { techoSobreLaPista } from './superficie-de-aproximacion';
+} from "three";
+import { enEjesDePista } from "./rumbo";
+import { ValueNoise2D, mulberry32 } from "./noise";
+import type { Scenario } from "./scenarios";
+import type { Aerodrome, Punto } from "./aerodrome";
+import { techoSobreLaPista } from "./superficie-de-aproximacion";
 
 /** Cota del terreno en unas coordenadas de mundo. */
 export type GroundSampler = (x: number, z: number) => number;
@@ -69,8 +69,19 @@ const MAX_SLOPE = 0.42;
 
 interface Species {
   name: string;
-  trunk: { colour: number; height: number; radiusTop: number; radiusBottom: number };
-  crown: { colour: number; radius: number; height: number; detail: number; lift: number };
+  trunk: {
+    colour: number;
+    height: number;
+    radiusTop: number;
+    radiusBottom: number;
+  };
+  crown: {
+    colour: number;
+    radius: number;
+    height: number;
+    detail: number;
+    lift: number;
+  };
   /** Peso relativo y franja de altitud preferida, en fracción del relieve. */
   weight: number;
   bandFrom: number;
@@ -79,7 +90,7 @@ interface Species {
 }
 
 const LAPACHO: Species = {
-  name: 'lapacho',
+  name: "lapacho",
   trunk: { colour: 0x6b5540, height: 6, radiusTop: 0.5, radiusBottom: 0.95 },
   crown: { colour: 0x477a41, radius: 5.6, height: 0.86, detail: 0, lift: 5.6 },
   weight: 0.5,
@@ -89,7 +100,7 @@ const LAPACHO: Species = {
 };
 
 const SAMUU: Species = {
-  name: 'samuu',
+  name: "samuu",
   trunk: { colour: 0x8a8f63, height: 8, radiusTop: 0.55, radiusBottom: 2.2 },
   crown: { colour: 0x5c8a4b, radius: 4.4, height: 0.62, detail: 0, lift: 7.6 },
   weight: 0.28,
@@ -99,7 +110,7 @@ const SAMUU: Species = {
 };
 
 const KARANDAY: Species = {
-  name: 'karanday',
+  name: "karanday",
   trunk: { colour: 0x7d6b4e, height: 11, radiusTop: 0.42, radiusBottom: 0.6 },
   crown: { colour: 0x7d9c4c, radius: 3.9, height: 0.42, detail: 0, lift: 10.6 },
   weight: 0.22,
@@ -130,13 +141,18 @@ export function createVegetation(
    * paralaje. Lo que se hace es plantar **solo donde la foto dice que hay
    * verde**, que es donde de verdad hay algo que sobresalga.
    */
-  colorDelSuelo?: (x: number, z: number) => { r: number; g: number; b: number } | null,
+  colorDelSuelo?: (
+    x: number,
+    z: number,
+  ) => { r: number; g: number; b: number } | null,
 ): Group {
   const group = new Group();
-  group.name = 'vegetacion';
+  group.name = "vegetacion";
 
   // El mapa de lo pavimentado se pinta una vez y se consulta miles.
-  const pavimento = scenario.aerodrome ? mapaDePavimento(scenario.aerodrome) : null;
+  const pavimento = scenario.aerodrome
+    ? mapaDePavimento(scenario.aerodrome)
+    : null;
 
   /**
    * Y donde hay ciudad tampoco hay monte.
@@ -157,7 +173,8 @@ export function createVegetation(
     const col = Math.floor((x + scenario.size / 2) / pasoCiudad);
     // El fichero tiene la Y al norte y el mundo el norte en la Z negativa.
     const fila = Math.floor((-z + scenario.size / 2) / pasoCiudad);
-    if (col < 0 || col >= rejilla.lado || fila < 0 || fila >= rejilla.lado) return false;
+    if (col < 0 || col >= rejilla.lado || fila < 0 || fila >= rejilla.lado)
+      return false;
     return rejilla.clase[fila * rejilla.lado + col]! > 0;
   };
 
@@ -168,7 +185,9 @@ export function createVegetation(
 
   // Un sorteo, un reparto: se recorren candidatos y cada uno acaba en su
   // especie o en la basura. Así el coste no depende del número de especies.
-  const placements = new Map<string, Matrix4[]>(SPECIES.map((s) => [s.name, []]));
+  const placements = new Map<string, Matrix4[]>(
+    SPECIES.map((s) => [s.name, []]),
+  );
   const flowering: Matrix4[] = [];
   let placed = 0;
 
@@ -178,6 +197,9 @@ export function createVegetation(
   const up = new Vector3(0, 1, 0);
   // La cota de la pista, que es de donde salen las superficies de obstáculos.
   const runwayY = ground(scenario.runway.x, scenario.runway.z);
+  const recinto = scenario.aerodrome
+    ? recintoDelAerodromo(scenario.aerodrome)
+    : null;
 
   for (let i = 0; i < CANDIDATES; i++) {
     const x = (random() - 0.5) * scenario.size * 0.98;
@@ -191,6 +213,13 @@ export function createVegetation(
     // calle de rodaje tiene su franja libre de obstáculos igual que la pista:
     // un avión tiene envergadura y las alas sobresalen mucho del tren.
     if (pavimento?.hay(x, z)) continue;
+    /*
+     * **Y tampoco en los huecos entre calles.** Excluyendo solo el pavimento
+     * quedaban bosquecillos en el césped de dentro del campo —veintidós
+     * árboles medidos en Silvio Pettirossi—, y ahí no los hay: «no hay árboles
+     * en los aeropuertos. Y ni macetas con rosales». Ver `recintoDelAerodromo`.
+     */
+    if (recinto && dentroDelPoligono(recinto, x, z)) continue;
     if (hayCiudad(x, z) && random() > 0.125) continue;
     /*
      * Y sobre la fotografía, solo donde la fotografía es verde. Un tejado
@@ -216,14 +245,19 @@ export function createVegetation(
     // claro: con un exponente suave sale un espolvoreado uniforme, y un
     // espolvoreado uniforme sobre ciento noventa kilómetros cuadrados no se
     // ve. Aquí, o hay monte o no hay nada.
-    const density = clumps.fbm((x + half) * clumpScale, (z + half) * clumpScale, 3);
+    const density = clumps.fbm(
+      (x + half) * clumpScale,
+      (z + half) * clumpScale,
+      3,
+    );
     if (random() > Math.pow(density, 4) * 5.5) continue;
 
     const band = clamp01(height / scenario.reliefHeight);
     const species = pickSpecies(band, random());
     if (!species) continue;
 
-    const size = species.scale[0] + random() * (species.scale[1] - species.scale[0]);
+    const size =
+      species.scale[0] + random() * (species.scale[1] - species.scale[0]);
     position.set(x, height, z);
     rotation.setFromAxisAngle(up, random() * Math.PI * 2);
     scale.set(size, size, size);
@@ -236,16 +270,20 @@ export function createVegetation(
 
   for (const species of SPECIES) {
     const matrices = placements.get(species.name)!;
-    if (matrices.length) group.add(buildSpecies(species, matrices, species.crown.colour));
+    if (matrices.length)
+      group.add(buildSpecies(species, matrices, species.crown.colour));
   }
-  if (flowering.length) group.add(buildSpecies(LAPACHO, flowering, FLOWER_COLOUR));
+  if (flowering.length)
+    group.add(buildSpecies(LAPACHO, flowering, FLOWER_COLOUR));
 
   return group;
 }
 
 /** Elige especie según la franja de altitud, con un sorteo ponderado. */
 function pickSpecies(band: number, roll: number): Species | null {
-  const eligible = SPECIES.filter((s) => band >= s.bandFrom && band <= s.bandTo);
+  const eligible = SPECIES.filter(
+    (s) => band >= s.bandFrom && band <= s.bandTo,
+  );
   if (!eligible.length) return null;
   const total = eligible.reduce((sum, s) => sum + s.weight, 0);
   let cursor = roll * total;
@@ -260,7 +298,11 @@ function pickSpecies(band: number, roll: number): Species | null {
  * Un árbol son dos mallas instanciadas, tronco y copa, que comparten las
  * mismas matrices. Se agrupan para poder moverlas juntas si hiciera falta.
  */
-function buildSpecies(species: Species, matrices: Matrix4[], crownColour: number): Group {
+function buildSpecies(
+  species: Species,
+  matrices: Matrix4[],
+  crownColour: number,
+): Group {
   const group = new Group();
   group.name = `arboles:${species.name}`;
 
@@ -279,7 +321,10 @@ function buildSpecies(species: Species, matrices: Matrix4[], crownColour: number
 
   // Octaedro y no icosaedro: ocho triángulos en vez de veinte, y facetado
   // grande, que es justo el aspecto que busca la dirección de arte.
-  const crownGeometry = new OctahedronGeometry(species.crown.radius, species.crown.detail);
+  const crownGeometry = new OctahedronGeometry(
+    species.crown.radius,
+    species.crown.detail,
+  );
   crownGeometry.scale(1, species.crown.height, 1);
   crownGeometry.translate(0, species.crown.lift, 0);
 
@@ -304,7 +349,7 @@ function buildSpecies(species: Species, matrices: Matrix4[], crownColour: number
   for (let i = 0; i < matrices.length; i++) {
     trunk.setMatrixAt(i, matrices[i]!);
     crown.setMatrixAt(i, matrices[i]!);
-    const shade = 0.82 + ((i * 2654435761) % 1000) / 1000 * 0.42;
+    const shade = 0.82 + (((i * 2654435761) % 1000) / 1000) * 0.42;
     tint.setRGB(shade, shade * 1.02, shade * 0.96);
     crown.setColorAt(i, tint);
   }
@@ -358,9 +403,20 @@ function esVerde(c: { r: number; g: number; b: number }): boolean {
   return c.g > c.r * 1.02 && c.g > c.b * 1.02;
 }
 
-function nearRunway(x: number, z: number, scenario: Scenario, margen = 0): boolean {
+function nearRunway(
+  x: number,
+  z: number,
+  scenario: Scenario,
+  margen = 0,
+): boolean {
   const { runway } = scenario;
-  const { along, across } = enEjesDePista(x, z, runway.x, runway.z, runway.heading);
+  const { along, across } = enEjesDePista(
+    x,
+    z,
+    runway.x,
+    runway.z,
+    runway.heading,
+  );
   /*
    * **Y el margen era demasiado justo.**
    *
@@ -402,8 +458,85 @@ export function zonaDeAeropuerto(
   scenario: Scenario,
   margen = 0,
 ): (x: number, z: number) => boolean {
-  const pavimento = scenario.aerodrome ? mapaDePavimento(scenario.aerodrome) : null;
-  return (x, z) => nearRunway(x, z, scenario, margen) || !!pavimento?.hay(x, z);
+  const pavimento = scenario.aerodrome
+    ? mapaDePavimento(scenario.aerodrome)
+    : null;
+  const recinto = scenario.aerodrome
+    ? recintoDelAerodromo(scenario.aerodrome)
+    : null;
+  return (x, z) =>
+    nearRunway(x, z, scenario, margen) ||
+    !!pavimento?.hay(x, z) ||
+    (!!recinto && dentroDelPoligono(recinto, x, z));
+}
+
+/**
+ * El recinto del aeródromo: la envolvente de todo lo que hay dentro.
+ *
+ * **En un aeropuerto no hay árboles.** Ni en el asfalto ni entre las calles:
+ * el suelo entre una calle y otra es hierba segada, y por una razón que no es
+ * de jardinería —un árbol al lado de una calle de rodaje es un obstáculo, y
+ * los pájaros que vive en él son otro—. Excluir solo el pavimento dejaba
+ * bosquecillos en los huecos: «los árboles que a veces plantas en mitad del
+ * aeropuerto. No hay árboles en los aeropuertos. Y ni macetas con rosales».
+ *
+ * OpenStreetMap no nos da el vallado, así que el recinto se deduce: la
+ * envolvente convexa de pistas, calles, plataformas y edificios. Es de sobra
+ * para lo que hace falta, porque un aeródromo **es** aproximadamente convexo:
+ * lo delimita una valla que rodea todo eso.
+ */
+function recintoDelAerodromo(aero: Aerodrome): readonly Punto[] | null {
+  const puntos: Punto[] = [];
+  // Del fichero al mundo: la Y del norte es la Z negativa.
+  for (const p of aero.runways)
+    for (const q of p.centerline) puntos.push([q[0], -q[1]]);
+  for (const c of aero.taxiways)
+    for (const q of c.path) puntos.push([q[0], -q[1]]);
+  for (const a of aero.aprons)
+    for (const q of a.polygon) puntos.push([q[0], -q[1]]);
+  for (const e of aero.buildings)
+    for (const q of e.polygon) puntos.push([q[0], -q[1]]);
+  if (puntos.length < 3) return null;
+  return envolvente(puntos);
+}
+
+/** La envolvente convexa, por el método de la cadena monótona. */
+function envolvente(puntos: readonly Punto[]): Punto[] {
+  const p = [...puntos].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cruz = (o: Punto, a: Punto, b: Punto) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const media = (lista: readonly Punto[]) => {
+    const salida: Punto[] = [];
+    for (const q of lista) {
+      while (
+        salida.length >= 2 &&
+        cruz(salida[salida.length - 2]!, salida[salida.length - 1]!, q) <= 0
+      ) {
+        salida.pop();
+      }
+      salida.push(q);
+    }
+    salida.pop();
+    return salida;
+  };
+  return [...media(p), ...media([...p].reverse())];
+}
+
+/** El algoritmo del rayo, el mismo que rellena las plataformas. */
+function dentroDelPoligono(
+  poli: readonly Punto[],
+  x: number,
+  z: number,
+): boolean {
+  let dentro = false;
+  for (let i = 0, j = poli.length - 1; i < poli.length; j = i++) {
+    const [xi, zi] = poli[i]!;
+    const [xj, zj] = poli[j]!;
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) {
+      dentro = !dentro;
+    }
+  }
+  return dentro;
 }
 
 /**
@@ -448,22 +581,30 @@ class Pavimento {
   hay(x: number, z: number): boolean {
     const cx = Math.floor((x - this.minX) / CELDA);
     const cz = Math.floor((z - this.minZ) / CELDA);
-    if (cx < 0 || cz < 0 || cx >= this.anchoCeldas || cz >= this.altoCeldas) return false;
+    if (cx < 0 || cz < 0 || cx >= this.anchoCeldas || cz >= this.altoCeldas)
+      return false;
     return this.mapa[cz * this.anchoCeldas + cx] === 1;
   }
 
   /** Marca un disco. Es como se pintan las calles: un disco por cada tramo. */
   disco(x: number, z: number, radio: number): void {
     const c0 = Math.max(0, Math.floor((x - radio - this.minX) / CELDA));
-    const c1 = Math.min(this.anchoCeldas - 1, Math.ceil((x + radio - this.minX) / CELDA));
+    const c1 = Math.min(
+      this.anchoCeldas - 1,
+      Math.ceil((x + radio - this.minX) / CELDA),
+    );
     const f0 = Math.max(0, Math.floor((z - radio - this.minZ) / CELDA));
-    const f1 = Math.min(this.altoCeldas - 1, Math.ceil((z + radio - this.minZ) / CELDA));
+    const f1 = Math.min(
+      this.altoCeldas - 1,
+      Math.ceil((z + radio - this.minZ) / CELDA),
+    );
     const r2 = radio * radio;
     for (let f = f0; f <= f1; f++) {
       const pz = this.minZ + (f + 0.5) * CELDA;
       for (let c = c0; c <= c1; c++) {
         const px = this.minX + (c + 0.5) * CELDA;
-        if ((px - x) ** 2 + (pz - z) ** 2 <= r2) this.mapa[f * this.anchoCeldas + c] = 1;
+        if ((px - x) ** 2 + (pz - z) ** 2 <= r2)
+          this.mapa[f * this.anchoCeldas + c] = 1;
       }
     }
   }
@@ -550,7 +691,8 @@ function mapaDePavimento(aero: Aerodrome): Pavimento | null {
         for (let i = 0, j = poli.length - 1; i < poli.length; j = i++) {
           const [xi, zi] = poli[i]!;
           const [xj, zj] = poli[j]!;
-          if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) dentro = !dentro;
+          if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi)
+            dentro = !dentro;
         }
         if (dentro) pav.disco(x, z, CELDA);
       }
