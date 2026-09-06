@@ -1480,10 +1480,17 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
   const ux = (b.xy![0] - a.xy![0]) / largo;
   const uy = (b.xy![1] - a.xy![1]) / largo;
 
-  /** Cada cuánto va una baliza, m. */
-  const PASO = 50;
   /**
-   * Y lo que mide cada una: ochenta centímetros de ancho por uno de alto.
+   * Cada cuánto va una baliza, m.
+   *
+   * Cuarenta, y estuvieron en cincuenta: lo que hace que una pista se lea
+   * desde el aire no es una tablilla, son **dos hileras de puntos que
+   * convergen**, y para eso hacen falta puntos suficientes. Con cincuenta, a
+   * trescientos metros del umbral no se distinguía ninguno.
+   */
+  const PASO = 40;
+  /**
+   * Y lo que mide cada una: un metro de ancho por metro y cuarenta de alto.
    *
    * Más grande que la tablilla de verdad, como todo lo que este juego tiene
    * que verse desde el aire: a media tablilla real no se distingue nada a
@@ -1493,7 +1500,7 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
   const cuantas = Math.max(2, Math.round(largo / PASO));
   const total = (cuantas + 1) * 2;
   const malla = new InstancedMesh(
-    new BoxGeometry(0.8, 1, 0.8),
+    new BoxGeometry(1, 1.4, 1),
     new MeshLambertMaterial({ color: PINTURA }),
     total,
   );
@@ -1512,6 +1519,106 @@ function balizas(pista: Pista, altura: (p: Punto) => number): Group {
   malla.count = k;
   malla.instanceMatrix.needsUpdate = true;
   grupo.add(malla);
+
+  /*
+   * **Y dónde empieza la pista, y dónde hay que posarse.**
+   *
+   * «A ver si veo dónde tengo que tomar tierra.» Con la hilera de tablillas
+   * sola no había manera: son todas iguales cada cincuenta metros, así que la
+   * pista se veía entera pero **la cabecera no se veía en ninguna parte**, y
+   * en un campo de hierba el césped de antes del umbral es el mismo césped que
+   * el de después. Tocar veinte metros corto y tocar veinte metros dentro se
+   * ven igual, y solo uno de los dos vale.
+   *
+   * Se marcan las dos cosas que un piloto mira al llegar, y las dos existen:
+   *
+   * - **La cabecera**, con una fila de tablillas cruzada delante del umbral.
+   *   Es lo que lleva un campo de verdad: la puerta por la que se entra.
+   * - **El punto de mira**, dos tablillas más grandes a los lados, ciento
+   *   cincuenta metros dentro. Es la marca gorda que el asfalto lleva pintada
+   *   —a ciento cincuenta metros justos en las pistas de menos de kilómetro y
+   *   pico, que es esta— traducida a tablillas, que es lo único que se puede
+   *   plantar en un prado. Ahí es donde se ponen las ruedas.
+   *
+   * Las dos van **fuera** de la pista, como las de verdad: lo que se planta en
+   * un sitio donde aterrizan aviones es algo con lo que se choca.
+   */
+  const RUMBO = Math.atan2(ux, -uy);
+  /** A cuánto del umbral va el punto de mira, m. Ver arriba. */
+  const PUNTO_DE_MIRA = 150;
+  /**
+   * Y cuánto antes del umbral va la fila de la cabecera, m.
+   *
+   * Ocho, y no tres: la fila cruza la pista de lado a lado, así que a tres
+   * metros el avión alineado para despegar se sienta encima de sus propias
+   * tablillas. Ocho dejan sitio para la cola y siguen leyéndose como la puerta
+   * por la que se entra.
+   */
+  const ANTES = 8;
+  /** Cuántas tablillas cruzan la cabecera. */
+  const CRUZANDO = 5;
+
+  /*
+   * **Y la cabecera va en naranja, que es lo que se ve de lejos.**
+   *
+   * Los tableros de las cabeceras de los campos de hierba son de verdad
+   * naranjas —o naranjas y blancos a cuadros—, y no por gusto: sobre un prado
+   * verde a la última hora de la tarde, el blanco se apaga y el naranja no. Y
+   * aquí, además, el naranja ya quiere decir «aquí» en el resto del juego: la
+   * flecha del sígame, los bastones del señalero, los galones.
+   */
+  const puerta = new InstancedMesh(
+    new BoxGeometry(2.6, 1.6, 0.5),
+    new MeshLambertMaterial({ color: 0xe8752e }),
+    CRUZANDO * 2,
+  );
+  puerta.name = "cabeceras";
+  const mira = new InstancedMesh(
+    new BoxGeometry(1.1, 1.6, 6),
+    new MeshLambertMaterial({ color: PINTURA }),
+    4,
+  );
+  mira.name = "puntos-de-mira";
+
+  const plantar = (
+    malla: InstancedMesh,
+    i: number,
+    d: number,
+    lado: number,
+  ) => {
+    const x = a.xy![0] + ux * d - uy * lado;
+    const y = a.xy![1] + uy * d + ux * lado;
+    m.makeRotationY(RUMBO);
+    m.setPosition(x, altura([x, y]) + 0.6, -y);
+    malla.setMatrixAt(i, m);
+  };
+
+  let p = 0;
+  let q = 0;
+  for (const desde of [0, largo]) {
+    const dentro = desde === 0 ? 1 : -1;
+    for (let i = 0; i < CRUZANDO; i++) {
+      const lado = (i / (CRUZANDO - 1) - 0.5) * (ancho + 3);
+      plantar(puerta, p++, desde - dentro * ANTES, lado);
+    }
+    // El punto de mira solo cabe si la pista da para él.
+    if (largo > PUNTO_DE_MIRA * 2.5) {
+      for (const lado of [-1, 1]) {
+        plantar(
+          mira,
+          q++,
+          desde + dentro * PUNTO_DE_MIRA,
+          lado * (ancho / 2 + 2.5),
+        );
+      }
+    }
+  }
+  puerta.count = p;
+  puerta.instanceMatrix.needsUpdate = true;
+  mira.count = q;
+  mira.instanceMatrix.needsUpdate = true;
+  grupo.add(puerta);
+  if (q) grupo.add(mira);
   return grupo;
 }
 
