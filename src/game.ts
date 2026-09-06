@@ -1284,6 +1284,8 @@ export class Game {
       },
       ruta: () => this.plan?.rutaVisible() ?? [],
       pista: () => this.scenario.runway,
+      /** Los pares puesto + espera que se consideraron, con sus metros. */
+      pares: () => this.plan?.paresVistos ?? [],
       /**
        * A qué velocidad pide el juego que se ruede **aquí**, m/s.
        *

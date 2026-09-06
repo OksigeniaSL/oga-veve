@@ -462,6 +462,12 @@ export class PlanDeVuelo {
    * puesto nuevo y el avión aparecía en el viejo — dentro del Boeing.
    */
   private puestoElegido: Punto | null = null;
+  /**
+   * Todos los pares que se consideraron, con sus metros. **Para medir**: sin
+   * esto, discutir si el rodaje se puede acortar es discutir de memoria.
+   */
+  paresVistos: readonly { ref: string | null; ida: number; viaje: number }[] =
+    [];
   /** El par puesto + espera con el que menos se rueda. Ver `parDeSalida`. */
   private par:
     | { puesto: { ref: string | null; xy: Punto }; espera: Punto }
@@ -701,6 +707,11 @@ export class PlanDeVuelo {
      * gana el que además vuelve pronto. Y si ninguno cabe, gana el viaje más
      * corto, que es mejor que rendirse.
      */
+    this.paresVistos = pares.map((p) => ({
+      ref: p.puesto.ref,
+      ida: Math.round(p.ida),
+      viaje: Math.round(p.viaje),
+    }));
     const cortos = pares.filter((p) => p.ida <= LO_MAXIMO_DE_IDA);
     const donde = (cortos.length ? cortos : pares).sort(
       (a, b) => a.viaje - b.viaje,
