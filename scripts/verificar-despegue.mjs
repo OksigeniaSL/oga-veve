@@ -525,6 +525,7 @@ const despegue = await page.evaluate(async () => {
   let punta = 0;
   let desvio = 0;
   let enPistaPasos = 0;
+  let destelloV1 = 0;
   const inicio = o.estado().position.clone
     ? { x: o.estado().position.x, z: o.estado().position.z }
     : null;
@@ -574,6 +575,12 @@ const despegue = await page.evaluate(async () => {
     }
     alto = Math.max(alto, s.heightAboveGround);
     punta = Math.max(punta, s.airspeed);
+    // El destello de V1, que es lo que marca el punto de no retorno.
+    {
+      const el = document.querySelector('[data-hud="v1"]');
+      const op = el ? Number(getComputedStyle(el).opacity) : 0;
+      if (op > destelloV1) destelloV1 = op;
+    }
     // Y lo que se separa del eje, que en una pista de hierba de dieciocho
     // metros es la diferencia entre despegar y correr por el campo.
     {
@@ -608,6 +615,7 @@ const despegue = await page.evaluate(async () => {
     punta,
     desvio: +desvio.toFixed(0),
     enPistaPasos,
+    destelloV1: +destelloV1.toFixed(2),
     usado,
   };
 });
@@ -626,6 +634,23 @@ if (despegue.enElAire) {
     despegue.enElAire.usado < despegue.largoDePista * 0.6,
     `${despegue.enElAire.usado.toFixed(0)} m de ${despegue.largoDePista.toFixed(0)}`,
     "una carrera que se come la pista entera no es una carrera, es un susto",
+  );
+  /*
+   * **Y V1 se ve, en grande y tenue.**
+   *
+   * «Ese V1 sí se podría mostrar incluso a los pequeños, pensaba en un V1 que
+   * parpadeara un poco en grande en casi toda la pantalla pero tenue.» No está
+   * para leerse —a los cuatro años no se lee— sino para marcar un instante,
+   * como el destello de un aro: son señales que van quedando en la memoria
+   * visual y que significan algo de verdad en aviación.
+   */
+  comprobar(
+    "y V1 se marca en la pantalla",
+    despegue.destelloV1 > 0.05,
+    despegue.destelloV1
+      ? `destelló hasta ${despegue.destelloV1}`
+      : "no se vio nada",
+    "V1 solo se contaba quitando el botón del freno, que se entiende después",
   );
   comprobar(
     "el freno se despide al pasar el punto de no retorno",
