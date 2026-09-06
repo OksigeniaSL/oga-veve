@@ -237,7 +237,14 @@ const porEncima = await page.evaluate(async () => {
   // El aro que toca ahora, y su altura.
   const aros = [];
   raiz.getObjectByName("aros").traverse((n) => {
-    if (n.isMesh) aros.push({ y: n.position.y, d: n.userData.distancia ?? 0 });
+    if (n.isMesh) {
+      aros.push({
+        y: n.position.y,
+        d: n.userData.distancia ?? 0,
+        // El radio, que es la mitad de esta prueba: ver más abajo.
+        r: n.geometry?.parameters?.radius ?? 0,
+      });
+    }
   });
   if (!aros.length) return { sinAros: true };
   aros.sort((a, b) => b.d - a.d);
@@ -252,9 +259,26 @@ const porEncima = await page.evaluate(async () => {
    * centro, que es lo que se ve en la grabación. La distancia se toma de un
    * aro de en medio, para que quede senda por delante y por detrás.
    */
-  const cual = aros[Math.floor(aros.length / 2)];
+  /*
+   * **Y el aro que se prueba es el que el juego tiene pendiente**, no el de en
+   * medio. La senda avanza sola según se vuela, y a estas alturas del guion el
+   * avión ya ha pasado por delante de media aproximación: apuntar al tercero
+   * cuando el juego va por el sexto es probar un aro que ya no existe. La
+   * sonda dice cuál toca.
+   */
+  const pendiente = o.aros()?.i ?? Math.floor(aros.length / 2);
+  const cual = aros[Math.min(pendiente, aros.length - 1)];
   const d = cual.d;
-  const alto = cual.y + 50;
+  /*
+   * **Por encima del aro de verdad, no cincuenta metros a ojo.**
+   *
+   * Estaban escritos cincuenta, y los aros de lejos miden hasta cincuenta y
+   * seis de radio: la prueba pasaba **por dentro** del aro y el juego, con
+   * toda la razón, lo daba por cruzado y no corregía nada. Y como el aro que
+   * toca depende de la lección y del escenario, el número no puede ser fijo:
+   * se le pregunta al aro.
+   */
+  const alto = cual.y + cual.r + 40;
   /*
    * Sesenta metros por delante del aro, y diez segundos de margen. Estaban en
    * noventa y seis, y a treinta y cuatro metros por segundo eso son 2,6
@@ -262,7 +286,17 @@ const porEncima = await page.evaluate(async () => {
    * plazo y la prueba iba y venía sin que nadie tocara el juego. Una prueba
    * que depende de cuánto tarda un navegador en pintar no mide nada.
    */
-  o.colocar(u.x - ux * (d + 60), alto, u.z - uz * (d + 60), 34);
+  /*
+   * **Y colocado sobre el eje de verdad, con el rumbo de la pista.**
+   *
+   * Se medían los metros «antes del umbral» en la dirección del morro, y el
+   * morro viene de la prueba anterior: el avión aparecía descentrado y cruzaba
+   * el plano del aro por un costado, que es «ancho» y no «alto» — la prueba
+   * salía bien o mal según lo que hubiera pasado antes. `puntoDeFinal` da el
+   * punto y el rumbo de la cabecera en uso.
+   */
+  const sitio = o.puntoDeFinal(d + 60);
+  o.colocar(sitio.x, alto, sitio.z, 34, sitio.h);
   await new Promise((r) => setTimeout(r, 400));
 
   let tarjeta = "";
@@ -278,7 +312,7 @@ const porEncima = await page.evaluate(async () => {
   return {
     tarjeta,
     ultima: o.tarjeta().dibujo,
-    como: `aro a ${d.toFixed(0)} m y ${cual.y.toFixed(0)} de alto · ${aros.length} aros · acabó a ${Math.hypot(e.position.x - u.x, e.position.z - u.z).toFixed(0)} m del umbral, ${e.onGround ? "posado" : "volando"}`,
+    como: `aro ${pendiente}→${o.aros()?.i ?? "-"} a ${d.toFixed(0)} m, ${cual.y.toFixed(0)} de alto y ${cual.r.toFixed(0)} de radio · ${aros.length} aros · acabó a ${Math.hypot(e.position.x - u.x, e.position.z - u.z).toFixed(0)} m del umbral, ${e.onGround ? "posado" : "volando"}`,
   };
 });
 if (!porEncima.sinAros) {
@@ -1528,6 +1562,54 @@ comprobar(
   umbral.terreno === "nada",
   umbral.terreno === "nada" ? "callado" : `dijo «${umbral.terreno}»`,
   "«me avisa que voy a terrain cuando ya estoy sobre la cabecera de la pista»",
+);
+
+// ── La ciudad delante de la cabecera ──────────────────────────────────────
+
+/*
+ * **Nada alto delante del umbral**, que es una norma y no un gusto.
+ *
+ * «Hay hasta prismas que representan edificaciones altas llegando a la cabecera
+ * de pista, eso no ocurre en un aeropuerto. Al menos no existe en el de
+ * Tenerife: está prohibido subir de dos plantas de altura en esa zona de
+ * influencia del aeródromo.»
+ *
+ * Se pregunta por el índice de bultos, que es el que sabe dónde hay volumen:
+ * se barre el corredor de aproximación a la altura de un tercer piso y no
+ * puede haber nada.
+ */
+const corredor = await page.evaluate(() => {
+  const o = globalThis.__oga;
+  const bultos = o.bultos();
+  const u = globalThis.__umbral;
+  // Doce metros sobre la cota de la pista: por encima de dos plantas y su
+  // tejado, y muy por debajo de lo que permitiría la superficie de OACI.
+  const altura = u.y + 12;
+  let choques = 0;
+  let donde = "";
+  for (let d = 200; d <= 2000; d += 40) {
+    const p = o.puntoDeFinal(d);
+    if (!p) break;
+    // El través del rumbo: si delante es (sen h, −cos h), el costado es
+    // (cos h, sen h).
+    const ex = Math.cos(p.h);
+    const ez = Math.sin(p.h);
+    for (let lado = -300; lado <= 300; lado += 30) {
+      if (bultos.choca(p.x + ex * lado, altura, p.z + ez * lado)) {
+        choques += 1;
+        if (!donde) donde = `${d} m del umbral, ${lado} m del eje`;
+      }
+    }
+  }
+  return { choques, donde };
+});
+comprobar(
+  "delante de la cabecera no hay nada alto",
+  corredor.choques === 0,
+  corredor.choques
+    ? `${corredor.choques} sondeos con edificio a 12 m, el primero a ${corredor.donde}`
+    : "corredor limpio, dos kilómetros",
+  "«prismas que representan edificaciones altas llegando a la cabecera»",
 );
 
 // ── El informe ────────────────────────────────────────────────────────────

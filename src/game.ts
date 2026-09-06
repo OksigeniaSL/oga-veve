@@ -189,7 +189,7 @@ import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
 import { Sigueme } from "./world/sigueme";
-import { techoSobreLaPista } from "./world/superficie-de-aproximacion";
+import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
@@ -711,7 +711,7 @@ export class Game {
            */
           (x, z) =>
             this.terrain.runwayElevation +
-            techoSobreLaPista(x, z, this.scenario.runway),
+            techoDeLoQueSeConstruye(x, z, this.scenario.runway),
           /*
            * Y el índice de bultos, que es lo que hace que la ciudad **esté**.
            * Hasta hoy se atravesaba entera. Ver `world/obstaculos.ts`.

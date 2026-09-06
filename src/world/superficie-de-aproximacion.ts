@@ -83,6 +83,25 @@ const TECHO_HORIZONTAL = 45;
  */
 const ALCANCE_TRANSICION = TECHO_HORIZONTAL / PENDIENTE_TRANSICION;
 
+/**
+ * Lo que mide una casa de dos plantas con su tejado, m.
+ *
+ * Ocho. No sale de ninguna norma aeronáutica: sale del planeamiento del suelo
+ * que rodea a un aeródromo, que en casi todas partes limita la altura mucho
+ * antes de que lo haga la aviación.
+ */
+const DOS_PLANTAS = 8;
+
+/**
+ * Hasta dónde llega ese barrio bajo, contado desde el final de la pista, m.
+ *
+ * Dos kilómetros y medio por delante de cada umbral y ochocientos a cada lado:
+ * lo que se ve por la ventanilla en el minuto anterior a tomar tierra, que es
+ * exactamente donde se notaba el fallo.
+ */
+const ZONA_DE_INFLUENCIA = 2500;
+const ANCHO_DE_INFLUENCIA = 800;
+
 export interface Pista {
   readonly x: number;
   readonly z: number;
@@ -152,4 +171,37 @@ export function techoSobreLaPista(x: number, z: number, pista: Pista): number {
 
   // Al costado de la pista: la franja, y la transición subiendo desde su borde.
   return lado > SEMIANCHO_FRANJA ? transicion(lado - SEMIANCHO_FRANJA, 0) : 0;
+}
+
+/**
+ * Lo más alto que se **construye** ahí, en metros sobre la pista.
+ *
+ * No es lo mismo que `techoSobreLaPista`, y separarlas importa: aquella es
+ * la norma aeronáutica —lo que no puede asomar— y esta es lo que de verdad
+ * hay construido alrededor de un aeródromo, que es bastante más bajo.
+ *
+ * Las superficies de OACI son el mínimo legal, y con solo ellas a quinientos
+ * metros del umbral cabe un bloque de diez metros: legal y falso. Lo que hay
+ * delante de una cabecera son naves bajas, casas de dos plantas y campo,
+ * porque el planeamiento del suelo lo limita mucho antes de que lo haga la
+ * aviación. «Hay hasta prismas que representan edificaciones altas llegando a
+ * la cabecera de pista, eso no ocurre en un aeropuerto. Al menos no existe en
+ * el de Tenerife: está prohibido subir de dos plantas de altura en esa zona de
+ * influencia del aeródromo.»
+ *
+ * Solo **por delante de los umbrales**, que es por donde se entra y por donde
+ * se mira. A los costados manda la transición y ya está: ahí hay hangares,
+ * torres y terminales, y son de verdad.
+ */
+export function techoDeLoQueSeConstruye(
+  x: number,
+  z: number,
+  pista: Pista,
+): number {
+  const techo = techoSobreLaPista(x, z, pista);
+  const { along, across } = enEjes(x, z, pista);
+  const fuera = Math.abs(along) - pista.length / 2;
+  if (fuera <= 0 || fuera > ZONA_DE_INFLUENCIA) return techo;
+  if (Math.abs(across) > ANCHO_DE_INFLUENCIA) return techo;
+  return Math.min(DOS_PLANTAS, techo);
 }

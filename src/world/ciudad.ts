@@ -36,17 +36,24 @@ import {
   MeshLambertMaterial,
   Quaternion,
   Vector3,
-} from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { mulberry32 } from './noise';
-import type { Punto } from './aerodrome';
-import type { Obstaculos } from './obstaculos';
+} from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { mulberry32 } from "./noise";
+import type { Punto } from "./aerodrome";
+import type { Obstaculos } from "./obstaculos";
 
 export interface Ciudad {
   readonly id: string;
   readonly tamanoM: number;
-  readonly rejilla: { readonly lado: number; readonly clase: Uint8Array; readonly densidad: Uint8Array };
-  readonly vias: readonly { readonly nivel: number; readonly puntos: readonly Punto[] }[];
+  readonly rejilla: {
+    readonly lado: number;
+    readonly clase: Uint8Array;
+    readonly densidad: Uint8Array;
+  };
+  readonly vias: readonly {
+    readonly nivel: number;
+    readonly puntos: readonly Punto[];
+  }[];
 }
 
 /**
@@ -110,9 +117,27 @@ const POR_CELDA = 16;
  */
 const CLASES = [
   null,
-  { nombre: 'residencial', ancho: [9, 19], alto: [4, 9], color: 0xd8cbb4, tejado: 0x9c5a44 },
-  { nombre: 'industrial', ancho: [22, 46], alto: [6, 11], color: 0xc2c4bd, tejado: 0x8f9490 },
-  { nombre: 'comercial', ancho: [12, 26], alto: [9, 30], color: 0xcfcabe, tejado: 0x7e7a72 },
+  {
+    nombre: "residencial",
+    ancho: [9, 19],
+    alto: [4, 9],
+    color: 0xd8cbb4,
+    tejado: 0x9c5a44,
+  },
+  {
+    nombre: "industrial",
+    ancho: [22, 46],
+    alto: [6, 11],
+    color: 0xc2c4bd,
+    tejado: 0x8f9490,
+  },
+  {
+    nombre: "comercial",
+    ancho: [12, 26],
+    alto: [9, 30],
+    color: 0xcfcabe,
+    tejado: 0x7e7a72,
+  },
   /*
    * El cuarto no es una clase de suelo: es **la otra mitad del barrio**.
    *
@@ -126,7 +151,13 @@ const CLASES = [
    * geometría, así que dos tejados son dos geometrías; a cambio, veinte mil
    * casas siguen siendo cuatro llamadas.
    */
-  { nombre: 'azotea', ancho: [8, 17], alto: [4, 8], color: 0xd2cdc0, tejado: 0xc8c3b6 },
+  {
+    nombre: "azotea",
+    ancho: [8, 17],
+    alto: [4, 8],
+    color: 0xd2cdc0,
+    tejado: 0xc8c3b6,
+  },
 ] as const;
 
 /** De qué clase se construye de verdad, tirando el dado. */
@@ -175,7 +206,7 @@ class Viario {
 
   constructor(
     private readonly mitad: number,
-    vias: Ciudad['vias'],
+    vias: Ciudad["vias"],
   ) {
     this.lado = Math.ceil((mitad * 2) / CELDA_VIARIO) + 1;
     this.mapa = new Uint8Array(this.lado * this.lado);
@@ -255,7 +286,10 @@ export function crearCiudad(
    * **el volumen de lo que ya se veía plano**. No es un truco de pintor: la
    * fotografía sabe de qué color es ese tejado y nosotros no.
    */
-  colorDelSuelo?: (x: number, z: number) => { r: number; g: number; b: number } | null,
+  colorDelSuelo?: (
+    x: number,
+    z: number,
+  ) => { r: number; g: number; b: number } | null,
   /**
    * Lo más alto que puede llegar un edificio ahí, en cota absoluta.
    *
@@ -287,7 +321,7 @@ export function crearCiudad(
   bultos?: Obstaculos,
 ): Group {
   const grupo = new Group();
-  grupo.name = 'ciudad';
+  grupo.name = "ciudad";
 
   const { lado, clase, densidad } = ciudad.rejilla;
   const paso = ciudad.tamanoM / lado;
@@ -334,7 +368,7 @@ export function crearCiudad(
       });
       if (sumergida) continue;
       const g = new BufferGeometry();
-      g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+      g.setAttribute("position", new Float32BufferAttribute(pos, 3));
       g.setIndex([0, 1, 2, 0, 2, 3]);
       g.computeVertexNormals();
       trozos.push(g);
@@ -342,8 +376,11 @@ export function crearCiudad(
   }
   const fusionadas = trozos.length ? mergeGeometries(trozos, false) : null;
   if (fusionadas) {
-    const malla = new Mesh(fusionadas, new MeshLambertMaterial({ color: ASFALTO }));
-    malla.name = 'viario';
+    const malla = new Mesh(
+      fusionadas,
+      new MeshLambertMaterial({ color: ASFALTO }),
+    );
+    malla.name = "viario";
     malla.matrixAutoUpdate = false;
     grupo.add(malla);
   }
@@ -416,17 +453,40 @@ export function crearCiudad(
         if (viario.hay(x, -z)) continue;
         const suelo = cota(x, z);
         if (suelo <= nivelDelAgua + 1) continue;
+        /*
+         * **Y donde la foto enseña campo, no se construye.**
+         *
+         * El reparto de casas sale de un mapa de densidad, que dice dónde hay
+         * ciudad pero no dónde hay **una casa**: dentro de una celda poblada
+         * se siembra al azar, y sobre la fotografía eso pone prismas en mitad
+         * de una finca o de un pinar. «Unos prismas tirados de aquella manera
+         * por la isla.»
+         *
+         * La foto sí lo sabe. Es la misma pregunta que ya se hace la
+         * vegetación al revés —ella solo planta donde es verde— y con el mismo
+         * listón: que el verde gane a los otros dos canales. Un tejado, una
+         * calle o un patio no lo cumplen; un campo, sí.
+         */
+        if (colorDelSuelo) {
+          const c = colorDelSuelo(x, z);
+          if (c && c.g > c.r * 1.02 && c.g > c.b * 1.02) continue;
+        }
 
-        const ancho = perfil.ancho[0] + sorteo() * (perfil.ancho[1] - perfil.ancho[0]);
+        const ancho =
+          perfil.ancho[0] + sorteo() * (perfil.ancho[1] - perfil.ancho[0]);
         const fondo = ancho * (0.7 + sorteo() * 0.6);
-        const libre = perfil.alto[0] + sorteo() * (perfil.alto[1] - perfil.alto[0]);
+        const libre =
+          perfil.alto[0] + sorteo() * (perfil.alto[1] - perfil.alto[0]);
         // Recortado contra la superficie de obstáculos, si aquí manda alguna.
         const techo = techoDeObstaculos?.(x, z) ?? Infinity;
         const alto = Math.max(BAJITA, Math.min(libre, techo - suelo));
         posicion.set(x, suelo + alto / 2, z);
         // Alineadas a la trama, no al azar: cuatro orientaciones y un pelo de
         // desvío. Un barrio de casas giradas al azar se lee como escombrera.
-        giro.setFromAxisAngle(arriba, Math.floor(sorteo() * 4) * (Math.PI / 2) + (sorteo() - 0.5) * 0.25);
+        giro.setFromAxisAngle(
+          arriba,
+          Math.floor(sorteo() * 4) * (Math.PI / 2) + (sorteo() - 0.5) * 0.25,
+        );
         escala.set(ancho, alto, fondo);
         matrices[cual]!.push(new Matrix4().compose(posicion, giro, escala));
         /*
@@ -435,7 +495,10 @@ export function crearCiudad(
          * un octavo de radián se diferencia de la de verdad en centímetros.
          */
         if (bultos) {
-          const a = Math.atan2(2 * (giro.w * giro.y), 1 - 2 * (giro.y * giro.y));
+          const a = Math.atan2(
+            2 * (giro.w * giro.y),
+            1 - 2 * (giro.y * giro.y),
+          );
           const cos = Math.abs(Math.cos(a));
           const sen = Math.abs(Math.sin(a));
           bultos.anadir(
@@ -452,7 +515,12 @@ export function crearCiudad(
         const delSuelo = colorDelSuelo?.(x, z);
         if (delSuelo) {
           // Del suelo, más claro y **nunca negra**. Ver `tinteDeFachada`.
-          const c = tinteDeFachada(delSuelo.r, delSuelo.g, delSuelo.b, 1.12 + sorteo() * 0.2);
+          const c = tinteDeFachada(
+            delSuelo.r,
+            delSuelo.g,
+            delSuelo.b,
+            1.12 + sorteo() * 0.2,
+          );
           tinte.setRGB(c.r, c.g, c.b);
           tintes[cual]!.push(tinte.clone());
         } else {
@@ -501,7 +569,7 @@ export function crearCiudad(
  */
 function cajaConTejado(fachada: number, tejado: number): BufferGeometry {
   const geo = new BoxGeometry(1, 1, 1);
-  const pos = geo.getAttribute('position');
+  const pos = geo.getAttribute("position");
   const colores = new Float32Array(pos.count * 3);
   const base = new Color(fachada);
   const arriba = new Color(tejado);
@@ -514,6 +582,6 @@ function cajaConTejado(fachada: number, tejado: number): BufferGeometry {
     const esTejado = pos.getY(i) > 0.49;
     for (let k = 0; k < 3; k++) colores[i * 3 + k] = esTejado ? razon[k]! : 1;
   }
-  geo.setAttribute('color', new Float32BufferAttribute(colores, 3));
+  geo.setAttribute("color", new Float32BufferAttribute(colores, 3));
   return geo;
 }
