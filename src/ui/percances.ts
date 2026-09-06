@@ -109,12 +109,31 @@ const PASADA = lienzo(`
   ${HUMO}
 `);
 
+/**
+ * Entrar en pista sin permiso: la doble raya cruzada y la luz en rojo.
+ *
+ * El dibujo es el sitio donde había que parar, y por eso no lleva avión roto:
+ * aquí no se rompió nada, y lo que hay que entender no es «te has hecho daño»
+ * sino «has pasado por donde no se pasa». La lámpara al lado, encendida en la
+ * de arriba, dice qué era lo que había que mirar.
+ */
+const SIN_PERMISO = lienzo(`
+  <path d="M6 26 h40 M6 34 h40" stroke="currentColor" stroke-width="4"
+        stroke-linecap="round" fill="none" />
+  <path d="M14 14 l24 32 M38 14 l-24 32" stroke="currentColor" stroke-width="3"
+        stroke-linecap="round" fill="none" opacity="0.85" />
+  <rect x="50" y="14" width="10" height="26" rx="5" opacity="0.35" />
+  <circle cx="55" cy="21" r="3.4" />
+  <circle class="percance__hueco" cx="55" cy="33" r="3.4" />
+`);
+
 const DIBUJOS: Record<Percance, string> = {
   coche: COCHE,
   edificio: EDIFICIO,
   fuera: FUERA,
   golpe: GOLPE,
   pasada: PASADA,
+  sinpermiso: SIN_PERMISO,
 };
 
 export const dibujoDePercance = (p: Percance): string => DIBUJOS[p];

@@ -3513,7 +3513,15 @@ export class Game {
         fase === "arrancando" ||
         fase === "rodando" ||
         fase === "esperando" ||
-        fase === "autorizado" ||
+        /*
+         * **Y no en «autorizado»: un sígame no entra en la pista.**
+         *
+         * Con la luz verde dada, el coche volvía a salir y se ponía delante
+         * para llevarte al eje — «el coche se vuelve a mostrar después de
+         * haberme dado paso, para guiarme por encima del césped»—. Un coche de
+         * plataforma deja al avión en el punto de espera y se aparta: de ahí
+         * en adelante manda la torre, y en la pista no hay más que aviones.
+         */
         // **Y frenando en la pista, que es donde desaparecía.** «Se ve bien,
         // pero desaparece en la pista de aterrizaje»: en esa fase el coche no
         // estaba activo, así que justo cuando hay que decidir por dónde salir
@@ -4145,18 +4153,21 @@ export class Game {
       }
     }
 
-    if (vista.saltoLaLuz) {
-      // El sonido sí, siempre: es la mitad del aviso que no necesita leerse.
-      this.audio.cue("attention");
-      this.hud.senal.mostrar(
-        "mano",
-        conLetras ? t("vuelo.sinPermiso") : "",
-        null,
-        { segundos: 7 },
-      );
-      this.instructor.decir(t("vuelo.sinPermiso"));
-      if (conLetras) this.hud.flash(t("vuelo.sinPermiso"), 7);
-    }
+    /*
+     * **Entrar en pista sin la luz verde para el vuelo.**
+     *
+     * Tenía aviso —sonido, tarjeta y voz— y ahí se acababa: se podía cruzar la
+     * doble raya con la luz en rojo, despegar y no pasaba nada. «Y si no paro a
+     * esperar que me den permiso para despegar, ¿no pasa nada? Ya podría el
+     * controlador aéreo pararme y echarme la bronca.»
+     *
+     * Podría y debe: en un aeropuerto de verdad esto tiene nombre propio
+     * —**incursión en pista**— y es de las cosas más graves que pueden pasar en
+     * tierra, porque la pista puede tener a alguien aterrizando encima. Es
+     * justo para lo que existe el punto de espera, la doble raya pintada y la
+     * lámpara de la torre; sin consecuencia, los tres eran adorno.
+     */
+    if (vista.saltoLaLuz) this.sufrirPercance("sinpermiso");
   }
 
   private updateHomeIndicator(): void {

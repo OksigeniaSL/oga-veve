@@ -1517,11 +1517,28 @@ export class PlanDeVuelo {
     );
 
     // De mundo a fichero: el norte del fichero es la Z negativa del mundo.
-    const puntos: Punto[] = [
-      this.ultimaPos,
-      [entrada[0], -entrada[1]],
-      [rodada[0], -rodada[1]],
-    ];
+    const enElEje: Punto = [entrada[0], -entrada[1]];
+    const ejeAbajo: Punto = [rodada[0], -rodada[1]];
+
+    /*
+     * **Y hasta el eje se va por la calle, si hay calle.**
+     *
+     * Esto tiraba una recta desde el avión hasta su proyección en el eje, y en
+     * Tenerife Norte cuela porque el punto de espera está pegado al asfalto de
+     * la pista. En un campo donde la calle entra en diagonal, esa recta cruza
+     * la hierba: «sigue enviándome sobre la hierba cuando ya estaba casi
+     * llegando a la pista». Y detrás iba el coche del sígame, guiando por el
+     * césped.
+     *
+     * El grafo ya sabe ir del punto de espera a la pista —la pista está en él
+     * desde que se cosieron las calles—, así que se le pregunta. Si no
+     * contesta, se cae a la recta de antes, que guía peor pero guía.
+     */
+    const porLaCalle = rodajeEntre(this.grafo, this.ultimaPos, enElEje, 120);
+    const puntos: Punto[] =
+      porLaCalle && porLaCalle.puntos.length > 2
+        ? [...porLaCalle.puntos, ejeAbajo]
+        : [this.ultimaPos, enElEje, ejeAbajo];
     let largo = 0;
     for (let i = 1; i < puntos.length; i++) {
       largo += Math.hypot(

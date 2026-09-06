@@ -39,7 +39,16 @@ export type Percance =
   /** Llegó al suelo dando un golpe. */
   | "golpe"
   /** Se salió por el final de la pista, rodando. */
-  | "pasada";
+  | "pasada"
+  /**
+   * Entró en la pista sin autorización.
+   *
+   * En un aeropuerto de verdad esto tiene nombre propio —**incursión en
+   * pista**— y es de las cosas más graves que pueden pasar en tierra, porque
+   * la pista puede tener a alguien aterrizando encima. Es justo para lo que
+   * existen el punto de espera, la doble raya y la lámpara de la torre.
+   */
+  | "sinpermiso";
 
 /**
  * A qué velocidad un contacto deja de ser un roce y pasa a ser un percance,

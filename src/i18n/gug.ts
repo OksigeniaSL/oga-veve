@@ -60,6 +60,7 @@ export const GUG: Dictionary = {
   "percance.fuera": "Reguejy pista okápe",
   "percance.golpe": "Reguejy hatã",
   "percance.pasada": "Rehasapa pista paha",
+  "percance.sinpermiso": "Reike pistape tesape hovy'ỹre",
   "vuelo.sinPermiso": "Reike tesape hovy'ỹre. Ambuévape eha'arõ",
 
   // ── El hangar ──────────────────────────────────────────────────────────
