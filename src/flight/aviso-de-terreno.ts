@@ -105,11 +105,25 @@ export interface Cerca {
    * enseñar lo contrario.
    */
   readonly enFinal: boolean;
+  /**
+   * Si el avión está sobre la pista o encima de su cabecera.
+   *
+   * **Ahí no hay aviso que dar, y darlo es mentir.** «Eso de que me avise que
+   * voy a *terrain* cuando ya estoy sobre la cabecera de la pista.» Y tenía
+   * razón: sobre el asfalto, ir bajo no es un peligro, es el plan. Los
+   * sistemas de verdad hacen lo mismo —el aviso se inhibe cuando la pista está
+   * debajo—, y por el mismo motivo: un aviso que salta cuando todo va bien
+   * enseña a ignorar los avisos.
+   *
+   * Es distinto de `enFinal`, que mira la senda de planeo: se puede estar
+   * sobre la cabecera habiéndose salido de la senda hace rato.
+   */
+  readonly sobreLaPista: boolean;
 }
 
 /** Qué hay que decir, o `null` si no hay nada que decir. */
 export function avisoDeTerreno(s: Cerca): AvisoDeTerreno {
-  if (s.enElSuelo || s.enFinal) return null;
+  if (s.enElSuelo || s.enFinal || s.sobreLaPista) return null;
   if (s.sobreElSuelo > ATENCION || s.sobreElSuelo < YA_ES_TARDE) return null;
   // Subiendo no se avisa: quien sube ya está haciendo lo que había que hacer.
   if (s.vertical >= 0) return null;

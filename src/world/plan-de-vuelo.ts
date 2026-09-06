@@ -151,6 +151,17 @@ const SALTO_A_LA_ESPERA = 40;
  */
 const LO_MINIMO_QUE_SE_RUEDA = 200;
 
+/** Cada cuánto se mira si la raya sigue sirviendo, s. */
+const CADA_CUANTO_SE_REHACE = 2;
+
+/**
+ * A partir de cuántos metros de la raya se considera que ya no vas por ella, m.
+ *
+ * Veinticinco: más de media calle de rodaje. Menos que eso es ir por la raya
+ * torcido, que no es motivo para recalcular nada.
+ */
+const LEJOS_DE_LA_RAYA = 25;
+
 /** Deceleración cómoda, m/s². Con esto se calcula dónde hay que ir aflojando. */
 const FRENADA = 0.9;
 
@@ -1127,6 +1138,7 @@ export class PlanDeVuelo {
     const sugerida = this.velocidadAqui([estado.position.x, estado.position.z]);
 
     if (p.cambio) this.alCambiarDeFase(p.fase);
+    else this.rehacerSiHaceFalta(p.fase, dt);
 
     return {
       fase: p.fase,
@@ -1305,6 +1317,51 @@ export class PlanDeVuelo {
     }
 
     this.ponerRuta(rodajeEntre(this.grafo, this.ultimaPos, meta, 600));
+  }
+
+  /**
+   * Rehace la ruta si el avión ya no va por ella. Un GPS, vamos.
+   *
+   * **La raya se trazaba solo al cambiar de fase**, y eso deja dos agujeros que
+   * se vieron los dos en el mismo vuelo. Uno: si el trazado falla —una toma
+   * lejos de todo, una salida que el grafo no sabía coser— la raya se borra y
+   * no vuelve hasta el siguiente cambio de fase, que puede tardar un minuto.
+   * «Cuando doy el giro dejo de ver la línea verde… la línea verde había
+   * desaparecido hasta A3.» Y dos: si la raya se queda dibujada por donde ya
+   * no vas, la ayuda de rodaje sigue tirando hacia ella — «hay un efecto imán
+   * que intenta meterme en la A3 cuando ya estoy por la R».
+   *
+   * Las dos son el mismo fallo: una ruta que se calcula una vez y se cree
+   * eterna. Un GPS recalcula cuando te sales, y aquí se hace igual, con su
+   * intervalo para no ponerse a buscar caminos sesenta veces por segundo.
+   */
+  private rehacerSiHaceFalta(fase: Fase, dt: number): void {
+    if (this.destino === null) return;
+    // En el aire no hay nada que rodar, y entrando en pista la raya es
+    // geometría de la pista y no del grafo: ahí no se recalcula.
+    if (fase === "alineando" || fase === "autorizado") return;
+    this.desdeElUltimoTrazado += dt;
+    if (this.desdeElUltimoTrazado < CADA_CUANTO_SE_REHACE) return;
+    this.desdeElUltimoTrazado = 0;
+
+    const hayRaya = this.rutaMundo.length > 1;
+    const fuera = hayRaya
+      ? aLaPolilinea(
+          [this.ultimaPos[0], this.ultimaPos[1]],
+          this.rutaMundo.map((q) => [q[0], -q[1]] as Punto),
+        ) > LEJOS_DE_LA_RAYA
+      : true;
+    if (!fuera) return;
+
+    const meta =
+      this.destino === "puesto"
+        ? this.puestoDeSalida()?.xy
+        : this.esperaDeSalida();
+    if (!meta) return;
+    const ruta = rodajeEntre(this.grafo, this.ultimaPos, meta, 600);
+    // Y si no sale, **se deja la que había**: una raya vieja guía peor que una
+    // nueva, pero infinitamente mejor que ninguna.
+    if (ruta) this.ponerRuta(ruta);
   }
 
   /**
@@ -1525,6 +1582,8 @@ export class PlanDeVuelo {
 
   /** A dónde va ahora mismo. Sirve para no recalcular la misma ruta cada fase. */
   private destino: "espera" | "puesto" | "pista" | null = null;
+  /** Segundos desde el último trazado. Ver `rehacerSiHaceFalta`. */
+  private desdeElUltimoTrazado = 0;
 
   private ultimaPos: Punto = [0, 0];
 

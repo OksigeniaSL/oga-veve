@@ -313,6 +313,39 @@ export interface GameOptions {
  * fases para dar por terminada la carrera de aterrizaje, y tiene que serlo:
  * dos umbrales parecidos para lo mismo son dos verdades distintas.
  */
+/**
+ * Metros antes del umbral donde el aviso de terreno ya se calla.
+ *
+ * Trescientos: a la pendiente de planeo son quince metros de altura, o sea el
+ * último tramo en el que ya no se hace otra cosa que aterrizar.
+ */
+/**
+ * Metros que hay que pasarse del puesto para que el juego lo diga, m.
+ *
+ * Diez: un avión de nueve metros de largo entero por delante de su sitio. Menos
+ * que eso es pararse un poco largo, y de eso no se avisa.
+ */
+const SE_PASO_DEL_PUESTO = 10;
+
+/**
+ * Altura sobre la pista a la que el juego dice que ya se puede tocar, m.
+ *
+ * Dieciocho: el umbral se cruza a quince por la senda de planeo, y los tres de
+ * propina son para que quien llega un poco alto lo oiga igual. Es el momento en
+ * el que se deja de volar y se empieza a aterrizar.
+ */
+const ALTURA_DE_TOMA = 18;
+
+const ANTES_DEL_UMBRAL = 300;
+
+/**
+ * Cuánto se perdona de desvío lateral para seguir «sobre la pista», m.
+ *
+ * Cuarenta a cada lado del asfalto: quien cruza el umbral un poco descentrado
+ * sigue aterrizando, no sobrevolando el campo.
+ */
+const A_UN_LADO_DEL_EJE = 40;
+
 const RODAJE_DE_VERDAD = 12;
 
 /**
@@ -491,6 +524,10 @@ export class Game {
   private vistaActual: Vista | null = null;
   /** Si ahora mismo la pantalla está pidiendo freno. Ver `avanzarPlan`. */
   private pidiendoFreno = false;
+  /** Si ya se avisó de esta pasada de largo. Ver `atenderAlSenalero`. */
+  private avisadoDeLaPasada = false;
+  /** Si ya se dijo en esta aproximación que se puede tocar. */
+  private dichoDeLaToma = false;
   /** El gesto del señalero que se está enseñando en la tarjeta, si hay uno. */
   private gestoEnPantalla: Gesto = null;
   /** El señor de los bastones, esperando en el puesto. Ver `world/senalero.ts`. */
@@ -987,7 +1024,7 @@ export class Game {
           position: new Vector3(x, y, z),
           heading: rumbo ?? this.flight.state.heading,
           airspeed: velocidad,
-        }),
+        }) ?? (this.dichoDeLaToma = false),
       /** El viario de la ciudad, para comprobar que no se construye encima. */
       vias: () => this.scenario.ciudad?.vias ?? [],
       /** Los galones ganados en este vuelo, para comprobarlos desde el banco. */
@@ -1460,6 +1497,9 @@ export class Game {
       // Y la celebración de la frustrada, que con ruedas en el suelo ya no
       // describe lo que pasó: quien toca tierra no renunció a nada.
       this.hud.senal.caducar("frustrada");
+      // Y «ya podés tocar», que con las ruedas en el suelo ya se tocó: si se
+      // queda puesta, tapa la que toca ahora, que es la del freno.
+      this.hud.senal.caducar("toma");
       return;
     }
     if (!this.bultos.cuantos) return;
@@ -1756,6 +1796,8 @@ export class Game {
   }
 
   resetFlight(): void {
+    this.dichoDeLaToma = false;
+    this.avisadoDeLaPasada = false;
     // Una cuenta atrás a medias de un vuelo que ya no existe.
     this.avisosDeAltura.reiniciar();
     callar();
@@ -2656,8 +2698,75 @@ export class Game {
           this.flight.state.position.y - this.terrain.runwayElevation,
           Math.tan(GLIDE_SLOPE),
         ),
+      /*
+       * **Y sobre la pista, ni una palabra.** Ver `Cerca.sobreLaPista`.
+       *
+       * Se mira el rectángulo de la pista con su margen por delante y por
+       * detrás, porque cruzar la cabecera a diez metros es exactamente lo que
+       * hay que hacer y el avión todavía no pisa nada.
+       */
+      sobreLaPista: this.sobreLaPista(),
     };
     const terreno = avisoDeTerreno(cerca);
+
+    /*
+     * **Y lo contrario del aviso de terreno: ya podés tocar.**
+     *
+     * «No me indica lo contrario, que ya debo tomar tierra.» Todo el vuelo
+     * avisando de que se va bajo y en el único momento en el que ir bajo es lo
+     * que hay que hacer —cruzando el umbral a quince metros— la pantalla se
+     * queda muda. A quien no lee, el juego tiene que decirle **cuándo**.
+     *
+     * Una vez por aproximación: se rearma al despegar o al alejarse.
+     */
+    const puedeTocar =
+      !this.flight.state.onGround &&
+      cerca.sobreLaPista &&
+      /*
+       * **La altura sobre la pista, no sobre el terreno.** Antes del umbral el
+       * suelo puede estar mucho más abajo —en Tenerife Norte cae setenta
+       * metros en un kilómetro— y la altura sobre el terreno diría que se va
+       * altísimo justo cuando se está cruzando la valla.
+       */
+      this.flight.state.position.y - this.terrain.runwayElevation <
+        ALTURA_DE_TOMA &&
+      this.flight.state.verticalSpeed < 1;
+    if (puedeTocar && !this.dichoDeLaToma) {
+      this.dichoDeLaToma = true;
+      this.hud.senal.mostrar(
+        "toma",
+        this.tier.instruments !== "none" ? t("vuelo.yaPodesTocar") : "",
+        null,
+        /*
+         * **Con prioridad de aviso, y caducando al tocar.**
+         *
+         * Las dos cosas hacen falta. Sin prioridad, cualquier tarjeta vieja
+         * —«volvé a la raya», un veredicto de hace cinco segundos— tapa lo
+         * único que importa en ese instante. Y sin caducarla al tocar tierra,
+         * este consejo tapaba a su vez la orden de frenar, que es la que hay
+         * que obedecer: lo cazó el banco en Silvio Pettirossi. Ver
+         * `avisarDeLosBultos`.
+         */
+        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+      );
+      this.instructor.decir(t("vuelo.yaPodesTocar"));
+    } else if (
+      this.dichoDeLaToma &&
+      /*
+       * **Se rearma al subirse otra vez**, cuatro veces la altura de la toma.
+       *
+       * Se probó rearmarlo también al tocar el suelo, y sale mal donde más
+       * importa: en una toma con rebote el contacto parpadea, el aviso se
+       * rearma y vuelve a salir «ya podés tocar» **encima de la tarjeta del
+       * freno**, que es la que hay que obedecer. Un consejo no puede tapar una
+       * orden. Quien vuelve a volar lo vuelve a oír; quien reinicia también,
+       * porque colocar el avión lo rearma.
+       */
+      this.flight.state.position.y - this.terrain.runwayElevation >
+        ALTURA_DE_TOMA * 4
+    ) {
+      this.dichoDeLaToma = false;
+    }
 
     /*
      * **Y la frustrada**, que mira exactamente lo mismo para decir lo
@@ -3019,6 +3128,41 @@ export class Game {
     );
 
     /*
+     * **Y pasarse del puesto tiene que doler un poco.**
+     *
+     * «Llego al señor que señaliza y juego a pasarme de largo. Se aparta, sí,
+     * pero no hay avisos.» El señalero cruzaba los bastones —hace lo que
+     * tiene que hacer— y el juego se quedaba tan tranquilo: la misma tarjeta
+     * silenciosa que ya estaba puesta desde hacía diez segundos, sin sonido y
+     * sin cambio. Un aviso que no cambia cuando cambia la situación no es un
+     * aviso.
+     *
+     * No se castiga —aquí no se castiga nada— pero suena, sale con prioridad
+     * de urgencia y lo dice la voz. Y una sola vez por pasada: se rearma al
+     * volver a acercarse.
+     */
+    const pasado = this.senalero.pasado;
+    if (volviendo && pasado > SE_PASO_DEL_PUESTO && s.airspeed > 2) {
+      if (!this.avisadoDeLaPasada) {
+        this.avisadoDeLaPasada = true;
+        this.hud.senal.mostrar(
+          "senalero-alto",
+          this.tier.instruments !== "none" ? t("vuelo.teLoPasaste") : "",
+          null,
+          {
+            segundos: SE_QUEDA_EL_BULTO,
+            prioridad: URGENTE,
+            tecla: nombreDeTecla(this.input.preferredKey("brakes")),
+          },
+        );
+        this.audio.cue("error");
+        this.instructor.decir(t("vuelo.teLoPasaste"));
+      }
+    } else if (pasado < SE_PASO_DEL_PUESTO / 2) {
+      this.avisadoDeLaPasada = false;
+    }
+
+    /*
      * **Y el gesto se repite en la tarjeta, porque al señalero no se le ve.**
      *
      * Está ahí, con los bastones y la lateralidad medida al grado, y desde la
@@ -3193,6 +3337,32 @@ export class Game {
    * es exactamente donde uno quiere aparecer.
    */
   /** Metros hasta la cabecera de pista, mire donde mire la aguja. */
+  /**
+   * ¿Está el avión sobre la pista o a punto de cruzar una de sus cabeceras?
+   *
+   * **Se mide sobre el rectángulo de la pista, no contra un umbral.** El
+   * primer intento usaba `distanceToRunway`, que apunta a la cabecera **de
+   * salida**; en Silvio Pettirossi se despega por la 02 y se aterriza por
+   * donde toque, así que llegando por la otra punta la distancia daba tres
+   * kilómetros y el juego se creía en mitad del campo — con el avión a ocho
+   * metros sobre el umbral. Un rectángulo no tiene ese problema: se está
+   * dentro o no se está, se venga por donde se venga.
+   */
+  private sobreLaPista(): boolean {
+    const r = this.scenario.runway;
+    const { along, across } = enEjesDePista(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+      r.x,
+      r.z,
+      r.heading,
+    );
+    return (
+      Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
+      Math.abs(along) < r.length / 2 + ANTES_DEL_UMBRAL
+    );
+  }
+
   private distanceToRunway(): number {
     const [tx, tz] = this.enLaPista(this.scenario.runway.length * 0.5);
     return Math.hypot(
