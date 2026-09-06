@@ -259,6 +259,36 @@ const CAMERA_MODES = [
   "pajaro",
 ] as const;
 
+/** Dónde se guarda la vista elegida. */
+const ALMACEN_VISTA = "oga-veve:vista";
+
+/**
+ * La vista con la que se abrió la última vez.
+ *
+ * Va con el escenario, el peldaño y la lección, que ya se recuerdan: quien
+ * vuela desde la cabina quiere volar desde la cabina mañana también, y volver
+ * a la de detrás cada vez que se abre el juego es hacerle repetir el mismo
+ * clic para siempre.
+ */
+function vistaRecordada(): CameraMode {
+  try {
+    const guardada = localStorage.getItem(ALMACEN_VISTA);
+    const vale = CAMERA_MODES.find((v) => v === guardada);
+    if (vale) return vale;
+  } catch {
+    // Navegación privada o almacenamiento bloqueado: se vuela igual.
+  }
+  return "chase";
+}
+
+function recordarVista(vista: CameraMode): void {
+  try {
+    localStorage.setItem(ALMACEN_VISTA, vista);
+  } catch {
+    // Igual que arriba: no poder recordarlo no puede romper nada.
+  }
+}
+
 /**
  * Las fases en las que se corre por el asfalto y la banda de rodaje se calla.
  *
@@ -693,7 +723,7 @@ export class Game {
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   private faseAnunciada = "";
 
-  private cameraMode: CameraMode = "chase";
+  private cameraMode: CameraMode = vistaRecordada();
   private propellerAngle = 0;
   /** Estado del avión en el fotograma anterior, para detectar los cambios. */
   private wasOnGround = true;
@@ -4778,6 +4808,7 @@ export class Game {
     const index = CAMERA_MODES.indexOf(this.cameraMode);
     this.cameraMode =
       CAMERA_MODES[(index + 1) % CAMERA_MODES.length] ?? "chase";
+    recordarVista(this.cameraMode);
   }
 
   /**
