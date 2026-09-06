@@ -219,11 +219,26 @@ const PISTA_LIBRE = 75;
  *
  * Y entre los dos hay una banda muerta: una vez que el juego ha dicho «salí»,
  * no vuelve a decir «frená» porque el avión rebote un metro por segundo.
+ *
+ * ## Y los dos van por encima de la velocidad de rodaje, siempre
+ *
+ * Estaban en doce y nueve, calibrados cuando se rodaba a nueve. Al subir el
+ * rodaje a trece —«es aburrido pasarse cuatro minutos en una pista»— el avión
+ * volvía a casa a once o doce, o sea **por encima del listón**, y la máquina
+ * se quedaba clavada en «aterrizado» todo el camino de vuelta: ni «salí de la
+ * pista», ni señalero, ni «volvé a tu lugar», y la tarjeta del freno puesta
+ * hasta el puesto. Lo cazó el banco del vuelo entero a la primera; ninguna de
+ * las pruebas por trozos podía verlo, porque ninguna rodaba de vuelta después
+ * de haber aterrizado de verdad.
+ *
+ * Así que estos dos números **no son independientes** de la velocidad de
+ * rodaje: tienen que quedar por encima de ella con holgura, y hay una prueba
+ * que lo sujeta. Ver `vuelo-y-rodaje.test.ts`.
  */
-const AÚN_ATERRIZANDO = 12;
+export const AÚN_ATERRIZANDO = 20;
 
 /** Y por debajo de esto ya se rueda, así que toca dejar la pista. */
-const YA_ES_RODAJE = 9;
+export const YA_ES_RODAJE = 16;
 
 /**
  * Cuánto tiene que sostenerse una fase nueva para sustituir a la vieja, s.

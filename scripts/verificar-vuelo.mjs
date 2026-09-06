@@ -506,7 +506,21 @@ await page.evaluate(() => {
   const h = s.heading;
   s.velocity?.set(Math.sin(h) * 28, 0, -Math.cos(h) * 28);
 });
-await page.waitForTimeout(2200);
+/*
+ * Y se espera **a que toque de verdad**, no dos segundos y pico.
+ *
+ * El avión se pone a metro y medio sobre la pista, así que hasta que se posa
+ * el juego dice «ya podés tocar» —que es lo correcto ahí— y esta prueba,
+ * mirando el reloj en vez de las ruedas, leía esa tarjeta y decía que faltaba
+ * la del freno. Lo que se comprueba es lo que pasa **después** de tocar.
+ */
+await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  for (let i = 0; i < 100 && !o.estado().onGround; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  await new Promise((r) => setTimeout(r, 1500));
+});
 
 const enPista = await page.evaluate(() => {
   const o = globalThis.__oga;

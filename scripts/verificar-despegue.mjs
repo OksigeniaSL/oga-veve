@@ -242,7 +242,7 @@ const rodando = await page.evaluate(async () => {
    * plan pidiera trece: subir la velocidad de crucero no cambiaba ni el tiempo
    * medido ni nada. El plan la calcula curva a curva; aquí se pregunta.
    */
-  const RODAJE = () => Math.max(4, o.rodaje?.() || 9);
+  const RODAJE = () => o.rodaje?.() ?? 9;
   const desvios = [];
   const fases = [];
   /*
@@ -305,23 +305,23 @@ const rodando = await page.evaluate(async () => {
   for (let i = 0; i < 1400; i++) {
     await new Promise((r) => setTimeout(r, 250));
     const s = o.estado();
-    /*
-     * El acelerador de quien mira el indicador: gas si voy lento, freno si no.
-     * Y **frenando al ver la doble raya**, que es la lección de este trozo: el
-     * juego pone la luz roja y la tarjeta de parar, y quien no frena se planta
-     * en la pista sin permiso. El primer piloto de este banco no frenaba, se
-     * pasaba el punto de espera de largo y se perdía por el campo — y el banco
-     * decía que el juego estaba roto.
-     */
     const ruta = o.ruta();
     const fin = ruta[ruta.length - 1];
     const alFinal = fin
       ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z)
       : Infinity;
-    const llegando = alFinal < 45;
+    /*
+     * **La velocidad la pide el juego, y al final de la ruta pide cero.**
+     *
+     * Antes este piloto frenaba «al ver la doble raya» —a cuarenta y cinco
+     * metros del final— y eso era hacerle el trabajo al plan, que ya calcula
+     * la frenada punto a punto y termina en cero. Con el perfil de velocidad
+     * bien hecho, el avión se para solo encima de la raya; con el freno de
+     * antes se paraba cuarenta metros antes y la fase no llegaba nunca.
+     */
     const quiere = RODAJE();
-    c.throttle = !llegando && s.airspeed < quiere ? 0.6 : 0;
-    c.brakes = llegando || s.airspeed > quiere * 1.3 ? 1 : 0;
+    c.throttle = s.airspeed < quiere ? 0.6 : 0;
+    c.brakes = s.airspeed > quiere + 2 ? 1 : 0;
     c.aileron = timon(s, ruta);
     desvios.push(s.airspeed);
     fases.push(o.fase());
