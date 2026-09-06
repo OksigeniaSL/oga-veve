@@ -1988,6 +1988,134 @@ if (percance) {
   );
 }
 
+// ── El aterrizaje volado ──────────────────────────────────────────────────
+
+/*
+ * **Y aquí el banco aterriza volando, que hasta hoy no lo hacía nunca.**
+ *
+ * Todo lo demás de este guion coloca el avión y mira qué contesta el juego, y
+ * está bien explicado por qué. Pero eso deja un agujero con la forma exacta de
+ * la toma: **nadie bajaba nunca por la senda hasta tocar**, así que lo único
+ * que no se probaba era lo que el juego hace con un aterrizaje de verdad. Y
+ * ahí estaban los dos fallos que se vieron jugando en Yvytu Rape:
+ *
+ * - «Me salió esto y aterricé bien»: la pantalla de la avioneta rota salía a
+ *   partir de cuatro metros por segundo de caída, y bajando por la senda con
+ *   el gas al mínimo este juego se posa a tres. Cualquier aproximación un poco
+ *   más viva era un accidente.
+ * - Y tocar corto sacaba el dibujo de **salirse por el final**, que es lo
+ *   contrario de lo que había pasado.
+ *
+ * Solo en el peldaño de los pequeños: su modelo baja sostenido con el gas al
+ * mínimo y toca donde se calcula. Los de coeficientes planean, y lo que se
+ * mediría sería la pericia del guion.
+ */
+const volado =
+  TRAMO !== "guyrami"
+    ? null
+    : await page.evaluate(async () => {
+        const o = globalThis.__oga;
+        const c = o.controles();
+        const r = o.pista();
+        const rad = (r.heading * Math.PI) / 180;
+        /*
+         * El dibujo que hay en la pantalla de fin **si la pantalla está
+         * puesta**. La condición no sobra: el dibujo se queda escrito en el
+         * hueco cuando la pantalla se cierra, así que leerlo a secas devolvía
+         * el percance de la sección anterior y esta prueba daba por roto un
+         * aterrizaje que había ido bien.
+         */
+        const dibujo = () =>
+          o.finDeVuelo()
+            ? (document.querySelector('[data-hud="fin-manga"]')?.innerHTML ??
+              "")
+            : "";
+        // Los dos trazos que distinguen un dibujo del otro. Ver `ui/percances.ts`.
+        const FUERA = "M10 8 h12 v48";
+        const PASADA = "M6 40 h30";
+
+        /** Baja desde `alto` sobre la pista, con `mando`, hasta tocar. */
+        const bajar = async (alto, mando) => {
+          o.reiniciar();
+          await new Promise((res) => setTimeout(res, 600));
+          // En el eje, novecientos metros antes del umbral.
+          const d = r.length / 2 + 900;
+          const x = r.x - Math.sin(rad) * d;
+          const z = r.z + Math.cos(rad) * d;
+          o.colocar(x, o.suelo(r.x, r.z) + alto, z, 30, rad);
+          await new Promise((res) => setTimeout(res, 400));
+          c.throttle = 0.18;
+          for (let i = 0; i < 900; i++) {
+            c.elevator = mando;
+            await new Promise((res) => setTimeout(res, 50));
+            const s = o.estado();
+            if (s.onGround) {
+              c.elevator = 0;
+              c.throttle = 0;
+              /*
+               * **Dónde tocó se mide al tocar.** Medido después de esperar el
+               * veredicto, el avión ya ha rodado sesenta metros y la prueba
+               * contaba un aterrizaje corto de noventa metros como uno de
+               * veintisiete: el mismo error de siempre, medir tarde.
+               */
+              const dx = s.position.x - r.x;
+              const dz = s.position.z - r.z;
+              const along = dx * Math.sin(rad) - dz * Math.cos(rad);
+              // Y ahora sí, que el veredicto tarda dos segundos.
+              for (let j = 0; j < 60; j++)
+                await new Promise((res) => setTimeout(res, 50));
+              return {
+                caida: o.caida(),
+                along,
+                dibujo: dibujo(),
+                galones: o.galones(),
+              };
+            }
+          }
+          return null;
+        };
+
+        // Una llegada firme: se pica de verdad contra la pista.
+        const firme = await bajar(200, -0.9);
+        // Y una que se queda corta: la misma senda, empezando más baja.
+        const corta = await bajar(80, -0.3);
+        o.reiniciar();
+        await new Promise((res) => setTimeout(res, 400));
+        return { firme, corta, FUERA, PASADA, medio: r.length / 2 };
+      });
+if (volado?.firme) {
+  comprobar(
+    "una llegada firme no rompe la avioneta",
+    volado.firme.caida > 4 && !volado.firme.dibujo,
+    `tocó a ${volado.firme.caida.toFixed(1)} m/s${
+      volado.firme.dibujo ? " y salió la pantalla del percance" : ", y siguió"
+    }`,
+    "«me salió esto y aterricé bien»: el percance saltaba a 4 m/s y la senda se posa a 3",
+  );
+  comprobar(
+    "y cuenta como aterrizaje",
+    volado.firme.galones.includes("toma"),
+    `galones: ${volado.firme.galones.join(", ") || "ninguno"}`,
+    "un aterrizaje que no se apunta es un aterrizaje que no ha pasado",
+  );
+}
+if (volado?.corta) {
+  comprobar(
+    "tocar antes del umbral se cuenta como corto, no como pasarse de largo",
+    !volado.corta.dibujo.includes(volado.PASADA),
+    volado.corta.dibujo.includes(volado.PASADA)
+      ? "salió el dibujo de salirse por el final"
+      : `tocó ${Math.abs(-volado.corta.along - volado.medio).toFixed(0)} m ${
+          -volado.corta.along > volado.medio ? "antes del" : "pasado el"
+        } umbral: ${
+          volado.corta.dibujo.includes(volado.FUERA)
+            ? "fuera de pista, que es lo suyo"
+            : "y se dio por aterrizaje"
+        }`,
+    "se medía la distancia al centro de la pista en valor absoluto, y corto salía «pasada»",
+  );
+}
+
 // ── El informe ────────────────────────────────────────────────────────────
 
 console.log(`\n  ${ESCENARIO} · ${TRAMO}\n`);

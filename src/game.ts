@@ -200,7 +200,7 @@ import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
 import { topeDeRodaje } from "./flight/gobernador";
-import { GOLPE, ROCE, type Percance } from "./flight/percance";
+import { ROCE, type Percance } from "./flight/percance";
 import {
   barrasDe,
   grado,
@@ -383,6 +383,22 @@ const FINAL_DE_PISTA = 40;
 const ALTURA_DE_TOMA = 18;
 
 const ANTES_DEL_UMBRAL = 300;
+
+/**
+ * Cuánto campo hay antes del umbral y después del final, m.
+ *
+ * Una pista de verdad no acaba donde acaba el asfalto: lleva alrededor una
+ * **franja** allanada y despejada, y la norma la manda de sesenta metros por
+ * cada punta. Está justamente para esto, para que quien toque un poco corto o
+ * un poco largo se lleve un susto y no un accidente.
+ *
+ * Aquí hacía falta por lo mismo y por algo más: en Yvytu Rape la pista es de
+ * hierba **y el campo de al lado también**, así que tocar veinte metros antes
+ * del umbral se ve exactamente igual que tocar veinte después, y el juego lo
+ * daba por aterrizar en un descampado y terminaba el vuelo. Dentro de la
+ * franja se aterrizó en el aeródromo; fuera de ella, en el campo.
+ */
+const LA_FRANJA = 60;
 
 /**
  * Cuánto se perdona de desvío lateral para seguir «sobre la pista», m.
@@ -1535,7 +1551,7 @@ export class Game {
       s.airspeed,
       s.touchdownSinkRate,
       s.crashed,
-      Number.isFinite(this.runwayRemaining()),
+      this.tocoEnElCampoDeVuelo(),
       this.aircraft.approachSpeed,
       dt,
       this.flight.velocidadMaxima(),
@@ -1599,8 +1615,21 @@ export class Game {
      * bueno. Ver `flight/percance.ts`.
      */
     if (veredicto === "fuera") this.sufrirPercance("fuera");
-    // Y llegar dando un golpe, aunque sea sobre el asfalto.
-    else if (this.landing.caidaAlTocar > GOLPE) this.sufrirPercance("golpe");
+    /*
+     * Y llegar dando un golpe, aunque sea sobre el asfalto.
+     *
+     * **El listón lo pone el modelo de vuelo, no este fichero.** Había uno
+     * escrito aquí —cuatro metros por segundo— mientras el modelo rompía el
+     * avión a partir de seis, y con las ayudas puestas a partir de veinte. O
+     * sea que en el peldaño de los pequeños el avión quedaba entero y la
+     * pantalla enseñaba igualmente la avioneta rota: «aterricé bien otra vez y
+     * me vuelve a decir que estrellé la avioneta». Y no era un caso raro —
+     * bajando por la senda con el gas al mínimo, este juego se posa a tres
+     * metros por segundo—, así que cualquier aproximación un poco más viva
+     * terminaba en accidente. Ver `FlightModel.limiteDeCaida`.
+     */
+    else if (this.landing.caidaAlTocar > this.flight.limiteDeCaida())
+      this.sufrirPercance("golpe");
     else {
       // Un aterrizaje en la pista, que es lo que cuenta en el cuaderno.
       this.apuntar({ aterrizajes: this.cuaderno.aterrizajes + 1 });
@@ -2907,11 +2936,22 @@ export class Game {
      * que enseña para qué sirve el freno que la tarjeta lleva pidiendo desde
      * que se tocó tierra.
      */
+    /*
+     * **Y «pasarse del final» es pasarse por delante.** Se medía con el valor
+     * absoluto de la distancia al centro de la pista, así que tocar corto
+     * —sesenta metros antes del umbral, que es un aterrizaje malo pero es lo
+     * contrario de este— sacaba el dibujo de la pista que se acaba con el
+     * avión saliéndose por la punta. Lo que cuenta es hacia dónde se va: si el
+     * avión mira al otro extremo, quedarse corto no es salirse.
+     */
+    const [fx, fz] = delante((this.flight.state.heading * 180) / Math.PI);
+    const [rx, rz] = delante(r.heading);
+    const avance = fx * rx + fz * rz >= 0 ? ejes.along : -ejes.along;
     if (
       this.flight.state.onGround &&
       this.vistaActual?.fase === "aterrizado" &&
       this.flight.state.airspeed > ROCE &&
-      Math.abs(ejes.along) > r.length / 2 + FINAL_DE_PISTA
+      avance > r.length / 2 + FINAL_DE_PISTA
     ) {
       this.sufrirPercance("pasada");
     }
@@ -3811,6 +3851,29 @@ export class Game {
    * metros sobre el umbral. Un rectángulo no tiene ese problema: se está
    * dentro o no se está, se venga por donde se venga.
    */
+  /**
+   * ¿Las ruedas están sobre la pista o sobre su franja?
+   *
+   * Es lo que decide si una toma cuenta como aterrizaje o como «te posaste en
+   * el campo», y por eso no usa `runwayRemaining`: aquella mide **cuánta pista
+   * queda**, que es otra pregunta, y fuera del asfalto contesta infinito. Con
+   * ella, tocar un metro antes del umbral era aterrizar en un descampado.
+   * Ver `LA_FRANJA`.
+   */
+  private tocoEnElCampoDeVuelo(): boolean {
+    const r = this.scenario.runway;
+    const { along, across } = enEjesDePista(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+      r.x,
+      r.z,
+      r.heading,
+    );
+    return (
+      Math.abs(across) < r.width && Math.abs(along) < r.length / 2 + LA_FRANJA
+    );
+  }
+
   private sobreLaPista(): boolean {
     const r = this.scenario.runway;
     const { along, across } = enEjesDePista(

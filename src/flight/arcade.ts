@@ -252,6 +252,25 @@ export class ArcadeFlightModel implements FlightModel {
     return this.aircraft.cruiseSpeed * CRUISE_FRACTION;
   }
 
+  /**
+   * Ocho metros por segundo, y aquí sí hay un número escrito a mano.
+   *
+   * Este modelo no rompe el avión nunca —es el peldaño de los cuatro años, y
+   * ahí romperlo por una toma firme sería castigar justo lo que se está
+   * aprendiendo—, así que su límite no sale de ninguna cuenta de estructuras:
+   * es el punto a partir del cual aquello ya no fue aterrizar sino **meter el
+   * avión contra el suelo**. Ocho por segundo son mil seiscientos pies por
+   * minuto: eso no se hace sin querer.
+   *
+   * Y ha de ser holgado de verdad. Bajando por la senda con el gas al mínimo,
+   * este modelo se posa a tres metros por segundo sin que nadie haga nada
+   * raro, que es lo normal en un avión sin recogida: un límite en cuatro
+   * convertía en accidente el aterrizaje corriente de cualquier crío.
+   */
+  limiteDeCaida(): number {
+    return 8;
+  }
+
   velocidadDeEntradaEnFinal(): number {
     return this.aircraft.cruiseSpeed * CRUISE_FRACTION * 0.94;
   }
