@@ -122,7 +122,25 @@ const AL_PLANO = 1.6;
 
 /** Cuántos aros dibujan la senda y entre qué distancias del umbral. */
 const RING_COUNT = 7;
-const FIRST_RING_DISTANCE = 3200;
+export const FIRST_RING_DISTANCE = 3200;
+
+/**
+ * A qué distancia del umbral se entra en final, m.
+ *
+ * **Por delante del primer aro, y ahí estaba el fallo.** La lección empezaba a
+ * tres mil metros y el primer aro se planta a 3200: el avión aparecía ya
+ * pasado, y para cuando la escena termina de cargar ha volado medio kilómetro
+ * más, así que el segundo —a 2610— también quedaba atrás. Los dos primeros
+ * aros no eran de quien juega: el juego se los daba por perdidos antes de que
+ * nadie tocara nada. «Paso por arriba sin que el juego me diga nada para
+ * corregir, lo hago especialmente en el primer y segundo aro.»
+ *
+ * Cuatrocientos metros de margen, que además es lo que hace una aproximación
+ * de verdad: uno se establece en la senda **antes** del primer punto de
+ * control, no encima. Vive aquí y no en el juego porque es una relación entre
+ * dos números de la senda, y separados se vuelven a desacoplar.
+ */
+export const ENTRADA_EN_FINAL = FIRST_RING_DISTANCE + 400;
 
 /**
  * Y dónde se acaban, m del umbral.
@@ -202,7 +220,8 @@ export class RunwayGuide {
     ground: GroundSampler,
   ) {
     this.group = buildGuide(scenario, runwayElevation, ground);
-    this.faro = (this.group.getObjectByName("faro") as Mesh | undefined) ?? null;
+    this.faro =
+      (this.group.getObjectByName("faro") as Mesh | undefined) ?? null;
 
     this.mira = new Mesh(
       new SphereGeometry(6, 10, 8),
@@ -557,10 +576,7 @@ export class RunwayGuide {
       const d = avion.distanceTo(siguiente.position);
       const desdeDondeSeApaga = radio * AL_PLANO;
       const recorrido = Math.max(1, tramo - desdeDondeSeApaga);
-      const acercarse = Math.max(
-        0,
-        Math.min(1, (tramo - d) / recorrido),
-      );
+      const acercarse = Math.max(0, Math.min(1, (tramo - d) / recorrido));
       const cerca = acercarse * centrado;
 
       // Suavizado: sin esto, entrar y salir del borde hace parpadear el aro.
@@ -678,9 +694,7 @@ export class RunwayGuide {
       }
       const radio = (aro.geometry as TorusGeometry).parameters.radius;
       const alLargo = Math.abs(
-        this.ejeSenda.dot(
-          new Vector3().subVectors(avion, aro.position),
-        ),
+        this.ejeSenda.dot(new Vector3().subVectors(avion, aro.position)),
       );
       const f = Math.max(0, Math.min(1, alLargo / (radio * AL_PLANO)));
       mat.opacity *= f;
@@ -898,7 +912,8 @@ function approachRings(
     // falta precisión, y más separados lejos.
     const fraction = ((i + 1) / RING_COUNT) ** 1.6;
     const distance =
-      LAST_RING_DISTANCE + (FIRST_RING_DISTANCE - LAST_RING_DISTANCE) * fraction;
+      LAST_RING_DISTANCE +
+      (FIRST_RING_DISTANCE - LAST_RING_DISTANCE) * fraction;
     const height = distance * Math.tan(GLIDE_SLOPE);
     /*
      * El radio, y por qué encoge.
