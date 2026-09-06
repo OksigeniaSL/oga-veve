@@ -238,9 +238,22 @@ import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
  *
  * Va la última del ciclo a propósito. Es la vista más bonita y la que menos
  * enseña —sin panel, sin morro, sin nada que diga cómo va el avión—, así que
- * se llega a ella después de las tres que sí enseñan.
+ * se llega a ella después de las que sí enseñan.
+ *
+ * `wing` mira desde el ala derecha e `izquierda` desde la otra, y las dos
+ * están porque se pidieron: desde el costado se ve **a la vez** el avión y
+ * hacia dónde va, que es justo lo que la cámara de detrás no deja ver. La
+ * izquierda es además el lado desde el que se mira en un avión de verdad —el
+ * comandante se sienta a la izquierda—, y es la que enseña la pista en el
+ * circuito, que se vuela con las vueltas a la izquierda.
  */
-const CAMERA_MODES = ["chase", "cockpit", "wing", "pajaro"] as const;
+const CAMERA_MODES = [
+  "chase",
+  "cockpit",
+  "wing",
+  "izquierda",
+  "pajaro",
+] as const;
 
 /**
  * Las fases en las que se corre por el asfalto y la banda de rodaje se calla.
@@ -265,6 +278,8 @@ type CameraMode = (typeof CAMERA_MODES)[number];
 
 /** Campo de visión en reposo y cuánto se abre a velocidad máxima, en grados. */
 const BASE_FOV = 62;
+/** Y el de la cabina, que es más cerrado. Ver `updateFieldOfView`. */
+const FOV_DE_CABINA = 50;
 const FOV_STRETCH = 9;
 /**
  * Velocidad, en m/s, a la que el campo de visión llega a su tope.
@@ -4516,9 +4531,11 @@ export class Game {
       return;
     }
 
-    if (this.cameraMode === "wing") {
+    if (this.cameraMode === "wing" || this.cameraMode === "izquierda") {
+      // El mismo sitio a un lado y al otro: lo único que cambia es de qué
+      // costado se mira.
       this.offset.set(
-        this.aircraft.wingSpan * 0.9,
+        this.aircraft.wingSpan * 0.9 * (this.cameraMode === "wing" ? 1 : -1),
         this.aircraft.chord * 1.4,
         this.aircraft.wingSpan * 0.5,
       );
@@ -4528,8 +4545,8 @@ export class Game {
       // que es donde uno quiere mirar para saber adónde va.
       this.offset.set(
         0,
-        this.aircraft.wingSpan * 0.52,
-        this.aircraft.wingSpan * 1.5,
+        this.aircraft.wingSpan * 0.6,
+        this.aircraft.wingSpan * 1.6,
       );
     }
     // Retroceso por aceleración: la cámara se queda un poco atrás cuando el
@@ -4553,7 +4570,42 @@ export class Game {
     const smoothing = 1 - Math.exp(-dt * 7);
     this.camera.position.lerp(this.desiredCamera, smoothing);
 
-    this.lookTarget.copy(state.position).addScaledVector(state.velocity, 0.35);
+    /*
+     * **Y la cámara de detrás mira lejos, no al avión.**
+     *
+     * Miraba a donde el avión estaría un tercio de segundo después —diez
+     * metros—, o sea prácticamente al avión, y eso lo dejaba clavado en el
+     * centro de la pantalla **encima justo de la pista**: en corta final, un
+     * fuselaje a dieciséis metros tapa exactamente los quince píxeles que mide
+     * una pista de hierba de dieciocho metros de ancha a medio kilómetro. «No
+     * se ve dónde tengo que tomar tierra», y no se veía porque lo tapaba la
+     * propia avioneta.
+     *
+     * Mirando lejos, la línea de visión se levanta y el avión baja al tercio
+     * de abajo del cuadro: sigue viéndose entero —hace falta para saber cómo
+     * va— y por encima de él aparece hacia dónde va, que es lo que hay que
+     * mirar para aterrizar. Es lo que hace la cámara de cualquier juego de
+     * conducción, y por lo mismo.
+     *
+     * La distancia crece con la velocidad porque la cabeza mira más lejos
+     * cuanto más deprisa se va, y tiene suelo para que rodando por la
+     * plataforma —donde lo que importa está a veinte metros— la cámara no se
+     * vaya al horizonte.
+     */
+    const MIRA_LEJOS = 2.4;
+    const MIRA_LO_MINIMO = 32;
+    const lejos = Math.max(MIRA_LO_MINIMO, state.airspeed * MIRA_LEJOS);
+    if (this.cameraMode === "chase" && state.velocity.lengthSq() > 1) {
+      this.lookTarget
+        .copy(state.velocity)
+        .normalize()
+        .multiplyScalar(lejos)
+        .add(state.position);
+    } else {
+      this.lookTarget
+        .copy(state.position)
+        .addScaledVector(state.velocity, 0.35);
+    }
     this.camera.lookAt(this.lookTarget);
     this.updateFieldOfView(state, dt);
   }
@@ -4604,10 +4656,22 @@ export class Game {
    * reducido se queda fijo.
    */
   private updateFieldOfView(state: FlightState, dt: number): void {
+    /*
+     * **Y desde dentro el ángulo se cierra.**
+     *
+     * Sesenta y dos grados en una pantalla son los que hacen falta volando por
+     * fuera, y dentro de la cabina meten en el cuadro el techo, los montantes
+     * y los dos respaldos: el mundo se ve por una rendija rodeada de avión.
+     * Cincuenta —un objetivo un poco más largo— dejan el parabrisas ocupando
+     * lo que ocupa cuando uno va sentado ahí de verdad.
+     */
     const wanted =
-      this.reducedMotion || this.cameraMode === "cockpit"
-        ? BASE_FOV
-        : BASE_FOV + FOV_STRETCH * Math.min(1, state.airspeed / FOV_REFERENCE);
+      this.cameraMode === "cockpit"
+        ? FOV_DE_CABINA
+        : this.reducedMotion
+          ? BASE_FOV
+          : BASE_FOV +
+            FOV_STRETCH * Math.min(1, state.airspeed / FOV_REFERENCE);
 
     const smoothing = 1 - Math.exp(-dt * 2.5);
     const next = this.camera.fov + (wanted - this.camera.fov) * smoothing;

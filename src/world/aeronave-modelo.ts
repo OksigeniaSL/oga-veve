@@ -117,7 +117,8 @@ function ejeDeHelice(raiz: Object3D): Object3D {
  *
  * Y no hay que estimarlo. Este modelo trae los asientos como piezas con nombre,
  * igual que la hélice, así que el sitio del piloto es **el asiento de más
- * adelante**, con los ojos un poco por encima del respaldo.
+ * adelante** —el de delante del todo, no la media de los cuatro—, con los ojos
+ * un poco por encima del cojín.
  *
  * Si el modelo no trae asientos se devuelve `undefined` y manda la fórmula de
  * siempre, que es lo que hacen las cajas.
@@ -126,39 +127,70 @@ function ojoDePiloto(
   raiz: Object3D,
   grupo: Object3D,
 ): { x: number; y: number; z: number } | undefined {
-  const asientos = new Box3();
-  let hay = false;
+  /*
+   * **El asiento de delante, no la media de los cuatro.**
+   *
+   * Esto metía todos los asientos en una misma caja y se sentaba en su centro,
+   * y un 172 lleva cuatro: el centro de esa caja cae en mitad de la cabina,
+   * medio metro por detrás del piloto. De ahí venía todo lo demás — «cuando
+   * estás dentro de la cabina solo se ven los mandos, no veo por dónde estoy
+   * volando»—: desde el asiento de atrás, el parabrisas es una rendija y el
+   * marco se come el mundo. Y empujar la cabeza hacia delante a ojo no
+   * arreglaba nada, porque diez centímetros de más la sacaban del avión.
+   *
+   * Ahora se busca **el que está más adelante**, que en un avión es el del
+   * piloto. Se mide asiento a asiento, y el de la Z más pequeña gana: en este
+   * modelo, como en three.js, el morro mira al menos Z.
+   */
+  grupo.updateWorldMatrix(true, true);
+  const caja = new Box3();
+  const centro = new Vector3();
+  let mejor: { z: number; alto: number } | null = null;
   raiz.traverse((o) => {
     const n = o.name.toLowerCase();
     if (!n.includes("chair") && !n.includes("seat") && !n.includes("asiento"))
       return;
-    asientos.expandByObject(o);
-    hay = true;
+    caja.setFromObject(o);
+    if (caja.isEmpty()) return;
+    caja.getCenter(centro);
+    const local = grupo.worldToLocal(centro.clone());
+    const alto = grupo.worldToLocal(caja.max.clone()).y;
+    if (mejor && local.z >= mejor.z) return;
+    mejor = { z: local.z, alto };
   });
-  if (!hay) return undefined;
+  if (!mejor) return undefined;
+  const asiento: { z: number; alto: number } = mejor;
 
-  grupo.updateWorldMatrix(true, true);
-  const centro = asientos.getCenter(new Vector3());
-  const local = grupo.worldToLocal(centro);
-  const alto = asientos.max.y - asientos.min.y;
   return {
     x: 0,
     /*
-     * Los ojos por encima del cojín, no por encima del respaldo.
+     * **Los ojos por encima del respaldo, no a su altura.**
      *
-     * Se probaron los dos extremos. Con `0.55` se miraba el panel **desde
-     * arriba**, como quien se asoma; con `0.35`, el panel llenaba el centro y
-     * apenas quedaba una cuarta parte de pantalla para mirar fuera. Y de un
-     * avión hay que ver fuera: el panel es un instrumento, la ventana es el
-     * juego.
+     * Estaban a la altura del cojín más media silla, y eso los dejaba justo a
+     * la altura del borde de arriba del panel: se veía el panel entero
+     * llenando media pantalla y por el parabrisas quedaba una rendija. «Cuando
+     * estás dentro de la cabina solo se ven los mandos, no veo por dónde estoy
+     * volando.» Y es exactamente lo que le pasa a quien es bajito y no sube el
+     * asiento: en un avión de verdad el panel se mira **desde arriba**, no de
+     * frente, y por eso los asientos suben.
      *
-     * `0.45` deja lo que se ve desde un 172 de verdad — el panel en el tercio
-     * de abajo, el capó, y el horizonte por encima del capó.
+     * Justo en el borde de arriba del respaldo, que es donde tiene la cabeza
+     * quien va sentado. Desde ahí el borde de arriba del panel cae un par de
+     * grados por debajo de la horizontal, así que el panel se queda en el tercio de abajo, el capó
+     * debajo del horizonte y el mundo por encima: lo que se ve desde un 172.
      */
-    y: local.y + alto * 0.45,
-    // Y medio metro adelante, que es de donde se mira: pegado al panel, no
-    // desde el centro del asiento.
-    z: local.z - 0.5,
+    y: asiento.alto - 0.02,
+    /*
+     * Y un palmo adelante del respaldo, que es donde va la cabeza.
+     *
+     * Poco, y a propósito: sentado en el sitio del piloto, el panel ya está a
+     * medio metro escaso. Los sesenta centímetros que llegó a haber aquí eran
+     * para compensar que la cámara nacía en mitad de la cabina —se metían los
+     * cuatro asientos en la misma caja y se sentaba en su centro—, y con el
+     * asiento bien elegido sacan la cabeza por el parabrisas: se veía el capó
+     * desde fuera y ni rastro del panel.
+     */
+    z: asiento.z - 0.08,
   };
 }
 
