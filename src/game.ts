@@ -1988,6 +1988,23 @@ export class Game {
   private ponerAproximacion(): void {
     const pista = this.scenario.aerodrome?.runways[0];
     if (!pista) return;
+    /*
+     * **Y solo donde las hay.**
+     *
+     * Esto se montaba en cualquier aeródromo, y en un campo de hierba de
+     * novecientos metros aparecían las luces de aproximación y un PAPI —cuatro
+     * luces grandes al costado del umbral— que ahí no existen ni de lejos. Se
+     * vio jugando en Yvytu Rape: «las luces blanco, blanco, blanco… rojo,
+     * ¿significan algo? Yo ya tenía autorización para despegar». Significan
+     * algo, sí, pero para aterrizar de noche en un aeropuerto con luces, y ese
+     * campo no lo es.
+     *
+     * Lo dice el propio fichero: `lit`. Una pista con luces de borde tiene
+     * detrás toda la instalación —balizamiento, PAPI, luces de aproximación—
+     * y una pista sin ellas no tiene ninguna. Un campo de hierba se queda con
+     * su manga, que es lo que tiene de verdad.
+     */
+    if (!pista.lit) return;
     if (this.aproximacion) {
       this.scene.remove(this.aproximacion.grupo);
       this.aproximacion.dispose();

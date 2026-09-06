@@ -649,6 +649,7 @@ const frustrada = await page.evaluate(async () => {
   const t0 = performance.now();
   c.throttle = 1;
   let cuando = Infinity;
+  let alSubir = Infinity;
   let subido = 0;
   for (let i = 0; i < 400; i++) {
     c.elevator = 0.9;
@@ -656,6 +657,11 @@ const frustrada = await page.evaluate(async () => {
     subido = o.estado().heightAboveGround - masBajo;
     if (dibujo().includes(ESA)) {
       cuando = (performance.now() - t0) / 1000;
+      // Y **cuántos metros** hacían falta, que es lo que de verdad se mide.
+      // El reloj depende del terreno: donde el suelo cae —Tenerife Norte—, la
+      // altura sobre él sube sola y la frustrada salta antes sin que el avión
+      // haya hecho nada distinto. En llano tarda lo que tarda subir.
+      alSubir = subido;
       break;
     }
     if (subido > 220) break;
@@ -676,6 +682,7 @@ const frustrada = await page.evaluate(async () => {
     masBajo,
     subido,
     cuando,
+    alSubir,
     galones: o.galones(),
   };
 });
@@ -690,10 +697,10 @@ comprobar(
 );
 comprobar(
   "irse al aire se reconoce y se celebra",
-  frustrada.cuando < 12,
+  frustrada.alSubir < 80,
   frustrada.cuando === Infinity
     ? `nada tras subir ${frustrada.subido.toFixed(0)} m`
-    : `${frustrada.cuando.toFixed(1)} s`,
+    : `a los ${frustrada.alSubir.toFixed(0)} m de subida, ${frustrada.cuando.toFixed(1)} s`,
   "el juego no detectaba la frustrada en absoluto, siendo su regla número uno",
 );
 comprobar(
