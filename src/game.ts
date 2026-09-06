@@ -202,7 +202,7 @@ import { Frustrada } from "./flight/frustrada";
 import { topeDeRodaje } from "./flight/gobernador";
 import type { Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
-import { arranqueEnPista } from "./world/aerodrome";
+import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
@@ -744,6 +744,47 @@ export class Game {
         ),
       );
     }
+    /*
+     * **Y los edificios del aeródromo también paran a un avión.**
+     *
+     * La terminal, la torre y los hangares se dibujan desde hoy —ver
+     * `edificios` en `world/aerodrome.ts`— y sin apuntarlos aquí serían
+     * decorado: se atravesarían como se atravesaba la ciudad antes de que
+     * existiera este índice. Y son los bultos que más importan, porque están
+     * justo donde se rueda.
+     *
+     * Se apunta la caja de cada uno, que para un prisma recto es exacta.
+     */
+    const aero = this.scenario.aerodrome;
+    if (aero) {
+      for (const e of aero.buildings) {
+        if (e.polygon.length < 3) continue;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minZ = Infinity;
+        let maxZ = -Infinity;
+        for (const [px, py] of e.polygon) {
+          // Del fichero al mundo: la Y del norte es la Z negativa.
+          minX = Math.min(minX, px);
+          maxX = Math.max(maxX, px);
+          minZ = Math.min(minZ, -py);
+          maxZ = Math.max(maxZ, -py);
+        }
+        const suelo = this.terrain.sampleHeight(
+          (minX + maxX) / 2,
+          (minZ + maxZ) / 2,
+        );
+        this.bultos.anadir(
+          (minX + maxX) / 2,
+          (minZ + maxZ) / 2,
+          (maxX - minX) / 2,
+          (maxZ - minZ) / 2,
+          suelo,
+          suelo + alturaDeEdificio(e),
+        );
+      }
+    }
+
     this.vegetacion = createVegetation(
       this.scenario,
       (x, z) => this.terrain.sampleHeight(x, z),
@@ -1299,6 +1340,19 @@ export class Game {
       },
       ruta: () => this.plan?.rutaVisible() ?? [],
       pista: () => this.scenario.runway,
+      /**
+       * Los edificios del aeródromo, con su planta y su altura.
+       *
+       * Para el banco: comprobar que están dibujados **y** que paran a un
+       * avión hace falta saber dónde están, y eso solo lo sabe el fichero del
+       * aeródromo.
+       */
+      edificios: () =>
+        (this.scenario.aerodrome?.buildings ?? []).map((e) => ({
+          alto: alturaDeEdificio(e),
+          // Del fichero al mundo: la Y del norte es la Z negativa.
+          puntos: e.polygon.map(([x, y]) => [x, -y] as [number, number]),
+        })),
       /** Los pares puesto + espera que se consideraron, con sus metros. */
       pares: () => this.plan?.paresVistos ?? [],
       /**

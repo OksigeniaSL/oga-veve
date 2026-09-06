@@ -35,6 +35,7 @@ import {
   Mesh,
   MeshLambertMaterial,
   DoubleSide,
+  ExtrudeGeometry,
   PlaneGeometry,
   Points,
   PointsMaterial,
@@ -552,7 +553,121 @@ export function createAerodrome(
   }
   grupo.add(rodadura(aero, cota));
   grupo.add(mangas(aero, cota, viento));
+  grupo.add(edificios(aero, cota));
 
+  return grupo;
+}
+
+/**
+ * Lo que mide de alto un edificio del aeródromo, m.
+ *
+ * OpenStreetMap trae la altura de algunos y de la mayoría no. Cuando no está,
+ * **se deduce de la planta**, que es lo que hace cualquiera mirando un plano:
+ * una nave de cuatro mil metros cuadrados es un hangar y tiene una altura de
+ * hangar; una caseta de cincuenta es una caseta. No es adivinar por adivinar:
+ * el volumen de un edificio de aeropuerto va con su función y su función va
+ * con su tamaño.
+ *
+ * Vive aparte porque hace falta en dos sitios —para dibujarlo y para que el
+ * avión no lo atraviese— y dos alturas distintas para el mismo edificio serían
+ * un edificio que se ve donde no está.
+ */
+export function alturaDeEdificio(e: {
+  readonly heightM: number | null;
+  readonly polygon: readonly Punto[];
+}): number {
+  if (e.heightM && e.heightM > 2) return e.heightM;
+  const area = Math.abs(areaDe(e.polygon));
+  if (area > 3000) return 12; // Hangar o terminal.
+  if (area > 600) return 8; // Nave de servicio, taller.
+  return 5; // Caseta, subestación, cuartelillo.
+}
+
+/** El área con signo de un polígono, por la fórmula del cordón de zapato. */
+function areaDe(poli: readonly Punto[]): number {
+  let a = 0;
+  for (let i = 0, j = poli.length - 1; i < poli.length; j = i++) {
+    a += (poli[j]![0] + poli[i]![0]) * (poli[j]![1] - poli[i]![1]);
+  }
+  return a / 2;
+}
+
+/**
+ * Los edificios del aeródromo: la terminal, la torre, los hangares.
+ *
+ * **Faltaban, y se notaba más que ninguna otra cosa.** El aeropuerto era una
+ * explanada pelada con la ciudad procedimental asomando por los bordes, así
+ * que la terminal de Tenerife Norte se veía como «dos cuadraditos, como si
+ * alguien hubiera construido una cabaña encima»: no era la terminal, eran
+ * casas del generador cayendo dentro del recinto.
+ *
+ * Salen de OpenStreetMap con su planta de verdad, así que no hay nada que
+ * inventar en la forma. Se levantan como prismas rectos, sin ventanas ni
+ * tejados a dos aguas, y es a propósito: **desde el aire un edificio de
+ * aeropuerto es un volumen**, y a la altura a la que se vuela aquí lo que
+ * cuenta es la silueta y la sombra. Un tejado dibujado que nadie va a ver de
+ * cerca cuesta triángulos y no aporta nada.
+ *
+ * El color es el del hormigón, un punto más claro en las cubiertas, que es lo
+ * que devuelve una foto aérea de cualquier aeropuerto del mundo.
+ */
+function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
+  const grupo = new Group();
+  grupo.name = "edificios-aerodromo";
+  if (!aero.buildings.length) return grupo;
+
+  const paredes: BufferGeometry[] = [];
+  const cubiertas: BufferGeometry[] = [];
+  for (const e of aero.buildings) {
+    if (e.polygon.length < 3) continue;
+    const alto = alturaDeEdificio(e);
+    /*
+     * La cota, la del punto más bajo de la planta. Un edificio no se dobla
+     * con el terreno: se apoya y se rellena, así que si se toma la media
+     * queda una esquina en el aire.
+     */
+    let base = Infinity;
+    for (const p of e.polygon) base = Math.min(base, altura(p));
+
+    const forma = new Shape(e.polygon.map((p) => new Vector2(p[0], p[1])));
+    /*
+     * Se extruye en el plano XY y se tumba: el `-90°` lleva la Y del fichero
+     * —que apunta al norte— a la Z del mundo, que apunta al sur. Es la misma
+     * conversión que hace todo lo demás de este fichero, escrita como giro.
+     */
+    const cuerpo = new ExtrudeGeometry(forma, {
+      depth: alto,
+      bevelEnabled: false,
+    });
+    cuerpo.rotateX(-Math.PI / 2);
+    cuerpo.translate(0, base, 0);
+    paredes.push(cuerpo);
+
+    // Y la cubierta, en su color, un dedo por encima del prisma.
+    const tapa = new ShapeGeometry(forma);
+    tapa.rotateX(-Math.PI / 2);
+    tapa.translate(0, base + alto + 0.05, 0);
+    cubiertas.push(tapa);
+  }
+
+  const pared = mergeGeometries(paredes, false);
+  if (pared) {
+    const malla = new Mesh(pared, new MeshLambertMaterial({ color: 0xc9c6bd }));
+    malla.name = "edificios:paredes";
+    malla.castShadow = true;
+    malla.receiveShadow = true;
+    grupo.add(malla);
+  }
+  const cubierta = mergeGeometries(cubiertas, false);
+  if (cubierta) {
+    const malla = new Mesh(
+      cubierta,
+      new MeshLambertMaterial({ color: 0xdad7cd, side: DoubleSide }),
+    );
+    malla.name = "edificios:cubiertas";
+    malla.receiveShadow = true;
+    grupo.add(malla);
+  }
   return grupo;
 }
 
