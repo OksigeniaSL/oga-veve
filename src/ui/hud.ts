@@ -1093,11 +1093,39 @@ export class Hud {
     otra.setAttribute("aria-label", t("fin.otra"));
     pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
     this.fin.hidden = false;
+    this.root.classList.add("hud--fin");
+  }
+
+  /**
+   * El otro final: el percance.
+   *
+   * **Misma caja y mismo botón que el final bueno**, y eso es deliberado: un
+   * niño aprende un sitio, no dos. Lo que cambia es el dibujo —la avioneta con
+   * la hélice torcida, el del coche con cara de circunstancias— y que aquí no
+   * hay manga que enseñar, porque el vuelo no llegó a su sitio.
+   *
+   * Los galones ganados **no se tocan**: se quedan en su rincón del HUD. Ver
+   * `flight/percance.ts`.
+   */
+  mostrarPercance(dibujo: string, frase: string): void {
+    if (!this.fin) return;
+    const manga = pick(this.root, "fin-manga");
+    manga.hidden = false;
+    manga.innerHTML = dibujo;
+    const texto = pick(this.root, "fin-frase");
+    texto.textContent = frase;
+    texto.hidden = !frase;
+    const otra = pick(this.root, "fin-otra");
+    otra.setAttribute("aria-label", t("fin.otra"));
+    pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
+    this.fin.hidden = false;
+    this.root.classList.add("hud--fin");
   }
 
   /** Y se quita. Otro vuelo, otra manga. */
   cerrarFinDeVuelo(): void {
     if (this.fin) this.fin.hidden = true;
+    this.root.classList.remove("hud--fin");
   }
 
   /** Si está puesto ahora mismo. Para el banco de pruebas. */

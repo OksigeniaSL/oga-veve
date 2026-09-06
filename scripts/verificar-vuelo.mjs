@@ -1888,6 +1888,106 @@ comprobar(
   "«prismas que representan edificaciones altas llegando a la cabecera»",
 );
 
+// ── El percance ───────────────────────────────────────────────────────────
+
+/*
+ * **Aterrizar donde no es termina el intento.**
+ *
+ * «¿Qué pasa si cae a tierra o si aterriza y tiene un fuera de pista? El avión
+ * no debe seguir, pero se le presenta con algo gracioso pero significativo,
+ * que entienda que metió la pata.» Hasta hoy el juego decía «fuera de pista»
+ * con un dibujo y a los cinco segundos seguía como si nada: se podía rodar por
+ * el campo hasta el fin del mundo. Ver `flight/percance.ts`.
+ */
+/*
+ * **Y solo en los peldaños de abajo**, por lo mismo que la prueba de la toma
+ * en el campo: con el modelo de coeficientes, soltar el avión a velocidad de
+ * aproximación sobre un descampado no acaba en una toma sino en un planeo —se
+ * va volando, medido— y lo que se estaría probando es la pericia del guion, no
+ * el juego. El percance es el mismo en los cuatro peldaños; lo que cambia es
+ * lo que sabe hacer esta prueba.
+ */
+const percance = !CON_TOPE
+  ? null
+  : await page.evaluate(async () => {
+      const o = globalThis.__oga;
+      /*
+       * **Primero se empieza un vuelo limpio.**
+       *
+       * Esta sección va la última del guion, y para entonces el vuelo anterior
+       * puede haber terminado —con su `vueloTerminado` puesto—, y un vuelo que ya
+       * terminó no puede tener un percance: no hay nada que interrumpir. Colocar
+       * el avión no basta, porque lo que hay que rearmar es la partida.
+       */
+      o.reiniciar();
+      await new Promise((r) => setTimeout(r, 600));
+      const p = o.puntoDeFinal(-300);
+      // Doscientos metros al costado de la pista: el descampado de al lado.
+      const x = p.x + Math.cos(p.h) * 220;
+      const z = p.z + Math.sin(p.h) * 220;
+      const c = o.controles();
+      c.throttle = 0;
+      // Morro abajo: a velocidad de aproximación el modelo de coeficientes vuela,
+      // así que soltado a tres metros no toca tierra — se va planeando y lo que se
+      // mediría es otra cosa. Se le pone donde toca y se le empuja al suelo.
+      c.elevator = -0.25;
+      c.brakes = 0;
+      o.colocar(x, o.suelo(x, z) + 1.5, z, 26, p.h);
+      for (let i = 0; i < 150 && !o.finDeVuelo(); i++) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      const antes = { ...o.estado().position };
+      // Y con el gas a fondo: el avión no puede seguir.
+      c.throttle = 1;
+      for (let i = 0; i < 20; i++) await new Promise((r) => setTimeout(r, 100));
+      const s = o.estado();
+      const parado = {
+        pantalla: o.finDeVuelo(),
+        corrio: Math.hypot(s.position.x - antes.x, s.position.z - antes.z),
+        v: s.airspeed,
+      };
+      /*
+       * **Y se sale por donde se sale de verdad: tocando el botón.**
+       *
+       * No hay otra puerta, y comprobarla aquí sirve para dos cosas: que el
+       * percance se pueda dejar atrás —«y que tenga que volver a empezar la
+       * maniobra»— y que las pruebas de más abajo encuentren un avión que vuela y
+       * no uno congelado.
+       */
+      document.querySelector('[data-hud="fin-otra"]')?.click();
+      for (let i = 0; i < 40 && o.finDeVuelo(); i++) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      return {
+        ...parado,
+        salio: !o.finDeVuelo(),
+        // Para saber por qué, cuando no salta: dónde acabó y cómo.
+        como: `${s.onGround ? "posado" : "volando"}, ${s.onRunway ? "en pista" : "fuera"}, fase ${o.fase()}, caída ${s.touchdownSinkRate?.toFixed?.(1) ?? "?"}`,
+      };
+    });
+if (percance) {
+  comprobar(
+    "aterrizar fuera de la pista termina el intento",
+    percance.pantalla,
+    percance.pantalla
+      ? "sale la pantalla del percance"
+      : `no salió nada · ${percance.como}`,
+    "se tocaba tierra en un descampado y el vuelo seguía como si nada",
+  );
+  comprobar(
+    "y el avión no sigue, aunque le des gas",
+    percance.corrio < 5,
+    `recorrió ${percance.corrio.toFixed(0)} m con el gas a fondo`,
+    "«el avión no debe seguir»: un percance que se puede ignorar no es un percance",
+  );
+  comprobar(
+    "y se vuelve a empezar tocando el botón",
+    percance.salio,
+    percance.salio ? "la pantalla se va y se vuela" : "no se pudo salir",
+    "«vale, pero habrá que salir de aquí»: la primera pantalla de fin no tenía puerta",
+  );
+}
+
 // ── El informe ────────────────────────────────────────────────────────────
 
 console.log(`\n  ${ESCENARIO} · ${TRAMO}\n`);

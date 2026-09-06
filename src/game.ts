@@ -200,6 +200,8 @@ import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
 import { topeDeRodaje } from "./flight/gobernador";
+import { GOLPE, ROCE, type Percance } from "./flight/percance";
+import { dibujoDePercance } from "./ui/percances";
 import type { Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
@@ -275,10 +277,18 @@ const ACCELERATION_LAG = 0.9;
 const SHAKE_FADE = 0.2;
 
 /**
- * Segundos que se ve el avión roto antes de volver solo a la pista. Corto a
- * propósito: esperar sin poder hacer nada es lo más aburrido que hay.
+ * Segundos que se espera antes de reiniciar solo tras romper el avión.
+ *
+ * **Eran 2,2 y volvía solo a la pista sin decir nada**, con el argumento de
+ * que esperar sin poder hacer nada es lo más aburrido que hay. Y es verdad,
+ * pero lo que había no era esperar: era que el avión se rompía, la pantalla
+ * parpadeaba y de repente estabas otra vez en la cabecera sin saber qué había
+ * pasado. Ahora sale la pantalla del percance, con su dibujo y su botón, y
+ * esto se queda de red: si nadie lo toca en ocho segundos, el juego reinicia
+ * solo. A los cuatro años, una pantalla que no se va nunca es una pantalla
+ * rota.
  */
-const CRASH_RESET_DELAY = 2.2;
+const VUELVE_SOLO = 8;
 
 export interface GameOptions {
   canvas: HTMLCanvasElement;
@@ -332,6 +342,24 @@ export interface GameOptions {
  * que eso es pararse un poco largo, y de eso no se avisa.
  */
 const SE_PASO_DEL_PUESTO = 10;
+
+/**
+ * A qué distancia del coche del sígame se considera que se le ha atropellado.
+ *
+ * Ocho metros de centro a centro. La Óga 172 tiene once de envergadura y el
+ * coche mide cuatro de largo, así que esto es tocarlo con el tren y no pasarle
+ * cerca — que rodando en una plataforma es lo normal.
+ */
+const ATROPELLO = 8;
+
+/**
+ * Cuánto se perdona pasado el final de la pista antes de darlo por salida, m.
+ *
+ * Cuarenta. Una pista tiene detrás una franja de seguridad, así que rodar unos
+ * metros más allá del asfalto no es todavía el incidente; a cuarenta metros ya
+ * se está en el campo.
+ */
+const FINAL_DE_PISTA = 40;
 
 /**
  * Altura sobre la pista a la que el juego dice que ya se puede tocar, m.
@@ -544,6 +572,13 @@ export class Game {
   private techoDeLaCarrera = Infinity;
   /** Si este vuelo ya terminó, para no enseñar el final dos veces. */
   private vueloTerminado = false;
+  /**
+   * El percance que ha parado este vuelo, si lo hay.
+   *
+   * Mientras esté puesto, el avión no se mueve: el intento se acabó y lo único
+   * que queda por hacer es volver a empezar. Ver `flight/percance.ts`.
+   */
+  private percance: Percance | null = null;
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
   private vistaActual: Vista | null = null;
   /** Si ahora mismo la pantalla está pidiendo freno. Ver `avanzarPlan`. */
@@ -1089,7 +1124,19 @@ export class Game {
           position: new Vector3(x, y, z),
           heading: rumbo ?? this.flight.state.heading,
           airspeed: velocidad,
-        }) ?? (this.dichoDeLaToma = false),
+        }) ??
+        (() => {
+          this.dichoDeLaToma = false;
+          /*
+           * Y se levanta el percance, si lo había: colocar el avión en otro
+           * sitio es empezar otra situación, y una partida congelada no puede
+           * sobrevivir a un teletransporte. Sin esto, una prueba del banco que
+           * termina en percance dejaba **todas las de después** midiendo un
+           * avión que no se mueve.
+           */
+          this.percance = null;
+          this.hud.cerrarFinDeVuelo();
+        })(),
       /** El viario de la ciudad, para comprobar que no se construye encima. */
       vias: () => this.scenario.ciudad?.vias ?? [],
       /** Los galones ganados en este vuelo, para comprobarlos desde el banco. */
@@ -1220,6 +1267,14 @@ export class Game {
        * aro que ya no toca. Con esto, cada prueba de aros empieza en un sitio
        * conocido en vez de en el que dejó la de antes.
        */
+      /**
+       * Empieza otro vuelo, como el botón de la pantalla de fin.
+       *
+       * Para el banco: hay pruebas que necesitan un vuelo limpio —el percance
+       * no puede saltar en un vuelo que ya terminó— y colocar el avión no
+       * basta, porque lo que hay que rearmar es la partida, no la posición.
+       */
+      reiniciar: () => this.resetFlight(),
       reiniciarSenda: () => this.runwayGuide.reset(this.flight.state.position),
       /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
       suelo: (x: number, z: number) => this.terrain.sampleHeight(x, z),
@@ -1484,6 +1539,18 @@ export class Game {
         { segundos: SE_QUEDA_EL_VEREDICTO, prioridad: URGENTE },
       );
     }
+    /*
+     * **Y tomar tierra donde no es termina el intento.**
+     *
+     * Un avión posado en un descampado no sigue rodando hasta su puesto: se
+     * queda ahí y viene alguien a buscarlo. Hasta hoy el juego decía «fuera de
+     * pista» con un dibujo y a los cinco segundos seguía como si nada, que es
+     * lo que hace que el peor final posible no se distinga de un aterrizaje
+     * bueno. Ver `flight/percance.ts`.
+     */
+    if (veredicto === "fuera") this.sufrirPercance("fuera");
+    // Y llegar dando un golpe, aunque sea sobre el asfalto.
+    else if (s.touchdownSinkRate > GOLPE) this.sufrirPercance("golpe");
     return veredicto;
   }
 
@@ -1525,6 +1592,15 @@ export class Game {
       s.position.z,
     );
     if (!golpe) return;
+
+    /*
+     * **Y si se llega con velocidad, el intento se acabó.**
+     *
+     * Arrimarse despacio a un hangar no es un accidente —es lo que se hace en
+     * una plataforma— y por eso hay un listón: por debajo de `ROCE` el mundo
+     * sigue impidiendo el paso y ya está. Por encima, esto ha sido un choque.
+     */
+    if (s.airspeed > ROCE) this.sufrirPercance("edificio");
 
     if (this.tier.model !== "simple") {
       this.flight.romper();
@@ -1633,6 +1709,34 @@ export class Game {
    * La regla de qué se dice —y que ningún final sea un reproche— vive en
    * `flight/reconocimiento.ts`, que es donde se puede probar.
    */
+  /**
+   * Algo salió mal: se para el vuelo y se cuenta con un dibujo.
+   *
+   * **Y se para de verdad.** Hasta hoy se podía atropellar al coche, meter el
+   * avión en un hangar o tomar tierra en un descampado y seguir volando como
+   * si tal cosa, que es lo que enseña que da igual. Ver `flight/percance.ts`.
+   */
+  private sufrirPercance(tipo: Percance): void {
+    if (this.percance || this.vueloTerminado) return;
+    this.percance = tipo;
+    // Y la tarjeta que hubiera, fuera: lo que pedía ya no se puede hacer.
+    this.hud.senal.limpiar();
+    // El avión se planta: ni gas ni ganas. Los frenos, puestos.
+    this.input.controls.throttle = 0;
+    this.input.controls.brakes = 1;
+    this.input.releaseAll();
+    this.audio.cue("error");
+    decir("we have a problem");
+    window.setTimeout(() => {
+      if (this.percance !== tipo) return;
+      this.hud.mostrarPercance(
+        dibujoDePercance(tipo),
+        // Sin palabras donde todavía no se lee: el dibujo es el mensaje.
+        this.tier.instruments === "none" ? "" : t(`percance.${tipo}` as never),
+      );
+    }, TARDA_EL_FINAL * 1000);
+  }
+
   private terminarElVuelo(): void {
     if (this.vueloTerminado) return;
     this.vueloTerminado = true;
@@ -1885,6 +1989,8 @@ export class Game {
   }
 
   resetFlight(): void {
+    this.percance = null;
+    this.hud.cerrarFinDeVuelo();
     this.dichoDeLaToma = false;
     this.avisadoDeLaPasada = false;
     // Una cuenta atrás a medias de un vuelo que ya no existe.
@@ -2692,6 +2798,42 @@ export class Game {
         Math.abs(ejes.across) < r.width / 2 + 6,
     );
 
+    /*
+     * **Y pasarse del final de la pista rodando también se acabó.**
+     *
+     * Es el final de una carrera de aterrizaje que no frenó a tiempo, y hasta
+     * hoy no pasaba nada: el avión salía al campo a ciento cincuenta por hora
+     * y seguía rodando entre los matorrales. En un aeropuerto eso es un
+     * incidente con nombre propio —salida de pista por el final— y aquí es lo
+     * que enseña para qué sirve el freno que la tarjeta lleva pidiendo desde
+     * que se tocó tierra.
+     */
+    if (
+      this.flight.state.onGround &&
+      this.vistaActual?.fase === "aterrizado" &&
+      this.flight.state.airspeed > ROCE &&
+      Math.abs(ejes.along) > r.length / 2 + FINAL_DE_PISTA
+    ) {
+      this.sufrirPercance("pasada");
+    }
+
+    /*
+     * **Con un percance puesto, el avión no se mueve.**
+     *
+     * El intento se acabó: lo único que queda es mirar el dibujo y volver a
+     * empezar. Se para aquí y no en el modelo de vuelo porque no es física —el
+     * avión no está roto en ningún sentido que el modelo entienda— sino la
+     * regla del juego, igual que no dejar despegar fuera de la pista.
+     */
+    if (this.percance) {
+      this.syncAircraftMesh(dt);
+      this.updateCamera(dt);
+      updateSky(this.sky, this.camera.position);
+      this.hud.senal.update(dt);
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
+
     this.input.update(dt);
     // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
     // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
@@ -2701,11 +2843,23 @@ export class Game {
     this.limitarElRodaje();
     this.asistirRodaje(dt);
     if (this.flight.state.crashed) {
-      // Vuelve solo a la pista. La alternativa —dejar el avión roto hasta
-      // que alguien pulse una tecla— exige leer un mensaje, y quien juega
-      // puede tener cuatro años. La tecla sigue estando para quien la use.
+      /*
+       * **Romper el avión es un percance como los demás.**
+       *
+       * Antes volvía solo a la pista a los dos segundos, sin decir nada: el
+       * avión se rompía, la pantalla parpadeaba y de repente estabas otra vez
+       * en la cabecera sin saber muy bien qué había pasado. Con la pantalla —el
+       * dibujo del golpe y el botón de volver a empezar— se entiende **qué**
+       * pasó y quién decide seguir, que es lo que se pidió: «el avión no debe
+       * seguir, pero se le presenta con algo gracioso pero significativo».
+       *
+       * Y la vuelta automática se queda de red: si nadie toca el botón en
+       * ocho segundos, el juego reinicia solo. A los cuatro años, una pantalla
+       * que no se va nunca es una pantalla rota.
+       */
       this.crashedFor += dt;
-      if (this.crashedFor > CRASH_RESET_DELAY) this.resetFlight();
+      this.sufrirPercance("golpe");
+      if (this.crashedFor > VUELVE_SOLO) this.resetFlight();
     } else {
       this.antesDelPaso.copy(this.flight.state.position);
       this.flight.step(dt, this.input.controls);
@@ -3385,6 +3539,24 @@ export class Game {
         (x, z) => this.terrain.sampleHeight(x, z),
         espera,
       );
+
+      /*
+       * **Y si se le pasa por encima, se acabó el vuelo.**
+       *
+       * «Con el avión puedo adelantar al coche. Le paso por encima.» Se
+       * arregló que no se pudiera adelantar —el tope de rodaje— pero un coche
+       * al que se puede atravesar sigue siendo un decorado. Ahora está: es lo
+       * único que se mueve por la plataforma además del avión, y atropellarlo
+       * termina el intento con su dibujo.
+       *
+       * Ocho metros: la envergadura de la Óga 172 son once, así que esto es
+       * tocarlo con el tren, no pasarle cerca.
+       */
+      const coche = this.sigueme.donde;
+      if (coche && s.onGround && s.airspeed > ROCE) {
+        const d = Math.hypot(coche.x - s.position.x, coche.z - s.position.z);
+        if (d < ATROPELLO) this.sufrirPercance("coche");
+      }
     }
   }
 
