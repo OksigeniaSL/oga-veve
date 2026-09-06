@@ -379,11 +379,29 @@ export class Hud {
         -->
         <button class="sonido" type="button" data-hud="credits"
                 aria-label="${t("credits.title")}">
+          <!--
+            **Y cabe dentro del botón, con aire alrededor.**
+
+            El círculo medía 9,4 de radio en un lienzo de 24, o sea que tocaba
+            el borde: al lado de los demás iconos —que son formas pequeñas con
+            margen— no se leía como un icono sino como un **aro alrededor del
+            botón**, más gordo y más brillante que todo lo que tenía al lado.
+            «Este icono habría que mejorarlo, no encaja con el resto.»
+
+            Y el motivo, mirando la fila entera: **el icono repetía el botón**.
+            Todos los botones de la barra son un círculo oscuro con un dibujo
+            abierto dentro —un teclado, un mapa plegado, una nube, un hangar—;
+            este metía otro círculo dentro del círculo, y lo que se veía era
+            una diana, más gorda y más brillante que sus vecinos. Se probó
+            encogerlo y afinarle el trazo y seguía siendo una diana.
+
+            Sin el aro es la «i» y nada más, que es lo que son los demás: un
+            dibujo dentro de un botón redondo.
+          -->
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="9.4" fill="none" stroke="currentColor"
-                    stroke-width="1.9" />
-            <circle cx="12" cy="7.4" r="1.35" />
-            <rect x="10.75" y="10.4" width="2.5" height="7.2" rx="1.25" />
+            <circle cx="12" cy="5.4" r="1.35" />
+            <path d="M12 9.4 v9" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" fill="none" />
           </svg>
         </button>
         <!--
@@ -457,26 +475,29 @@ export class Hud {
         <button class="freno freno--boton" type="button" data-hud="brakes-touch" hidden
                 aria-label="${t("hud.brakes")}">
           <!--
-            **La mano sobre una rueda**, y no una mano a secas.
-            
-            La mano sola es «alto», y en este juego el alto lo dice el señalero,
-            lo dice la tarjeta de parar y lo decía también este botón: el mismo
-            dibujo para tres cosas. «El freno no se entiende con una mano que se
-            usa también para el despegue antes de V1 y durante toda la fase de
-            rodaje.» Exacto — un botón de freno que hay que deducir está mal
-            dibujado, y a los cuatro años, peor.
-            
-            Con la rueda debajo ya no hay nada que deducir: se ve **qué** se
-            está parando. Y conserva el parentesco con el alto del señalero, que
-            es la mano, así que no hay que aprender un símbolo nuevo.
+            **El avión y la barra donde se para** — el mismo dibujo que la
+            tarjeta que pide frenar.
+
+            Aquí hubo una mano, y la mano estaba mal: es «alto», y el alto lo
+            dice el señalero y lo dice la tarjeta de parar. «El freno no se
+            entiende con una mano que se usa también para el despegue antes de
+            V1 y durante toda la fase de rodaje.» Se le puso una rueda debajo
+            para desambiguar y tampoco: «le pones un circulito pequeño debajo
+            pensando que eso deja claro el mensaje, pero no se trata de eso».
+
+            Y no se trataba de eso. Lo que hace que un botón se entienda sin
+            leer no es afinar su símbolo: es que sea **el mismo dibujo** que
+            aparece cuando el juego te pide esa acción. La tarjeta dice «frená»
+            con el avión y una barra gorda delante; el botón que frena lleva
+            eso mismo. Se ve una vez en la pantalla, se busca en los mandos, y
+            está. Ver el dibujo FRENO de ui/senal.ts.
           -->
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="17.6" r="5" fill="none" stroke="currentColor"
-                    stroke-width="2.2" />
-            <circle cx="12" cy="17.6" r="1.5" />
-            <path d="M6.4 12.8 v-4 l-1.7-1.7 a1.1 1.1 0 0 1 1.6-1.6 L7.6 6.8 V2.4
-                     a1.05 1.05 0 0 1 2.1 0 v3.9 V1.9 a1.05 1.05 0 0 1 2.1 0 V6.3
-                     V2.9 a1.05 1.05 0 0 1 2.1 0 V9.4 a4.6 4.6 0 0 1-1.4 3.4 Z" />
+            <rect x="2.4" y="3.2" width="19.2" height="3" rx="1.5" />
+            <path d="M2.6 16.6 L11.2 15.8 V9.6 a0.9 0.9 0 0 1 1.8 0 v6.2 l8.4 0.9 v2
+                     l-8.4 0.9 v3 l2.1 1.2 v1 L12 24 L6.9 24.2 v-1 l2.1-1.2 v-3
+                     l-6.4-0.9 Z"
+                  transform="translate(0 -1.6)" />
           </svg>
         </button>
         <div class="tarjeta medidor freno" data-hud="brakes" hidden>
