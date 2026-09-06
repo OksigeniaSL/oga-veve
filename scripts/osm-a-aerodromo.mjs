@@ -29,20 +29,21 @@
  * extracción.
  */
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
-const OVERPASS = process.env.OVERPASS ?? 'https://overpass-api.de/api/interpreter';
+const OVERPASS =
+  process.env.OVERPASS ?? "https://overpass-api.de/api/interpreter";
 
 /** Dónde preguntar, por orden. El principal se satura a diario. */
 const ESPEJOS = [
   OVERPASS,
-  'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass.osm.ch/api/interpreter',
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.osm.ch/api/interpreter",
 ];
-const OURAIRPORTS = 'https://davidmegginson.github.io/ourairports-data';
-const SALIDA = 'data/aerodromes';
+const OURAIRPORTS = "https://davidmegginson.github.io/ourairports-data";
+const SALIDA = "data/aerodromes";
 
 /** Radio terrestre medio, m. */
 const R = 6371008;
@@ -52,7 +53,7 @@ const TOLERANCIA = 0.5;
 
 /** Qué se pide a Overpass dentro del área del aeródromo. */
 const COSAS =
-  '^(runway|taxiway|taxilane|apron|terminal|helipad|windsock|gate|parking_position|holding_position|navigationaid)$';
+  "^(runway|taxiway|taxilane|apron|terminal|helipad|windsock|gate|parking_position|holding_position|navigationaid)$";
 
 // ── Geometría ────────────────────────────────────────────────────────────
 
@@ -79,7 +80,10 @@ function aLaRecta([px, py], [ax, ay], [bx, by]) {
   const dx = bx - ax;
   const dy = by - ay;
   const largo = dx * dx + dy * dy;
-  const t = largo === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / largo));
+  const t =
+    largo === 0
+      ? 0
+      : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / largo));
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
@@ -122,12 +126,13 @@ async function overpass(query) {
         // Overpass devuelve 406 sin más explicación. Y el identificador es de
         // cortesía además de obligatorio.
         res = await fetch(servidor, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'oga-veve/0.1 (+https://github.com/OksigeniaSL/oga-veve)',
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent":
+              "oga-veve/0.1 (+https://github.com/OksigeniaSL/oga-veve)",
           },
-          body: 'data=' + encodeURIComponent(query),
+          body: "data=" + encodeURIComponent(query),
         });
       } catch (err) {
         ultimo = err;
@@ -156,7 +161,8 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const consultaArea = (icao) => `[out:json][timeout:180];
 nwr["aeroway"="aerodrome"]["icao"="${icao}"];
 map_to_area->.a;
-(nwr(area.a)["aeroway"~"${COSAS}"];);
+(nwr(area.a)["aeroway"~"${COSAS}"];
+ nwr(area.a)["building"];);
 out tags geom;`;
 
 /**
@@ -166,13 +172,14 @@ out tags geom;`;
  */
 const consultaCerca = (icao) => `[out:json][timeout:120];
 nwr["aeroway"="aerodrome"]["icao"="${icao}"];
-(nwr["aeroway"~"${COSAS}"](around:2500););
+(nwr["aeroway"~"${COSAS}"](around:2500);
+ nwr["building"](around:1200););
 out tags geom;`;
 
 /** Una línea de CSV, respetando las comillas. */
 function celdas(linea) {
   const out = [];
-  let campo = '';
+  let campo = "";
   let comillas = false;
   for (let i = 0; i < linea.length; i++) {
     const c = linea[i];
@@ -181,9 +188,9 @@ function celdas(linea) {
         campo += '"';
         i++;
       } else comillas = !comillas;
-    } else if (c === ',' && !comillas) {
+    } else if (c === "," && !comillas) {
       out.push(campo);
-      campo = '';
+      campo = "";
     } else campo += c;
   }
   out.push(campo);
@@ -192,13 +199,16 @@ function celdas(linea) {
 
 async function csv(nombre) {
   const res = await fetch(`${OURAIRPORTS}/${nombre}.csv`);
-  if (!res.ok) throw new Error(`OurAirports respondió ${res.status} para ${nombre}`);
-  const lineas = (await res.text()).split('\n').filter(Boolean);
+  if (!res.ok)
+    throw new Error(`OurAirports respondió ${res.status} para ${nombre}`);
+  const lineas = (await res.text()).split("\n").filter(Boolean);
   const cab = celdas(lineas[0]);
-  return lineas.slice(1).map((l) => Object.fromEntries(celdas(l).map((v, i) => [cab[i], v])));
+  return lineas
+    .slice(1)
+    .map((l) => Object.fromEntries(celdas(l).map((v, i) => [cab[i], v])));
 }
 
-const num = (v) => (v === '' || v === undefined ? null : Number(v));
+const num = (v) => (v === "" || v === undefined ? null : Number(v));
 
 // ── Montaje ──────────────────────────────────────────────────────────────
 
@@ -220,8 +230,8 @@ async function construir(icao, pistas, aeropuertos) {
 
   let datos = await overpass(consultaArea(icao));
   let elementos = datos.elements ?? [];
-  if (!elementos.some((e) => e.tags?.aeroway === 'runway')) {
-    process.stdout.write('  sin perímetro mapeado, se busca alrededor\n');
+  if (!elementos.some((e) => e.tags?.aeroway === "runway")) {
+    process.stdout.write("  sin perímetro mapeado, se busca alrededor\n");
     datos = await overpass(consultaCerca(icao));
     elementos = datos.elements ?? [];
   }
@@ -234,15 +244,17 @@ async function construir(icao, pistas, aeropuertos) {
 
   const de = (tipo) => elementos.filter((e) => e.tags?.aeroway === tipo);
 
-  const runways = de('runway').map((w) => {
-    const ref = w.tags.ref ?? '';
-    const [a, b] = ref.split('/');
+  const runways = de("runway").map((w) => {
+    const ref = w.tags.ref ?? "";
+    const [a, b] = ref.split("/");
     const eje = camino(w, proj);
     const suyas = pistas.filter((p) => p.airport_ident === icao);
     const umbral = (designador) => {
-      const p = suyas.find((r) => r.le_ident === designador || r.he_ident === designador);
+      const p = suyas.find(
+        (r) => r.le_ident === designador || r.he_ident === designador,
+      );
       if (!p) return null;
-      const lado = p.le_ident === designador ? 'le' : 'he';
+      const lado = p.le_ident === designador ? "le" : "he";
       const lat = num(p[`${lado}_latitude_deg`]);
       const lon = num(p[`${lado}_longitude_deg`]);
       const pies = num(p[`${lado}_elevation_ft`]);
@@ -260,14 +272,19 @@ async function construir(icao, pistas, aeropuertos) {
         approachLights: null,
       };
     };
-    const suya = suyas.find((r) => `${r.le_ident}/${r.he_ident}` === ref) ?? suyas[0];
+    const suya =
+      suyas.find((r) => `${r.le_ident}/${r.he_ident}` === ref) ?? suyas[0];
     const anchoPies = suya ? num(suya.width_ft) : null;
     return {
       ref,
       // OSM casi nunca trae la anchura; OurAirports sí.
-      widthM: w.tags.width ? Number(w.tags.width) : anchoPies === null ? null : redondear(anchoPies * 0.3048),
+      widthM: w.tags.width
+        ? Number(w.tags.width)
+        : anchoPies === null
+          ? null
+          : redondear(anchoPies * 0.3048),
       surface: w.tags.surface ?? suya?.surface ?? null,
-      lit: w.tags.lit === 'yes' || suya?.lighted === '1',
+      lit: w.tags.lit === "yes" || suya?.lighted === "1",
       centerline: eje,
       thresholds: a && b ? { [a]: umbral(a), [b]: umbral(b) } : {},
       // Categoría de marcas pintadas: no existe en OSM. Se decide luego.
@@ -286,7 +303,9 @@ async function construir(icao, pistas, aeropuertos) {
        */
       magneticVariation: (() => {
         if (!a || !eje.length) return null;
-        const t = num(suya?.[suya?.le_ident === a ? 'le_heading_degT' : 'he_heading_degT']);
+        const t = num(
+          suya?.[suya?.le_ident === a ? "le_heading_degT" : "he_heading_degT"],
+        );
         if (t === null) return null;
         let d = Number(a) * 10 - t;
         while (d > 180) d -= 360;
@@ -301,10 +320,10 @@ async function construir(icao, pistas, aeropuertos) {
     id: icao,
     name: ficha.name,
     source: {
-      osm: 'overpass',
+      osm: "overpass",
       extracted: new Date().toISOString().slice(0, 10),
       ourairports: ficha.id,
-      note: 'Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README.',
+      note: "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README.",
     },
     origin: { lat: lat0, lon: lon0 },
     elevationM: elev === null ? null : redondear(elev * 0.3048),
@@ -313,19 +332,52 @@ async function construir(icao, pistas, aeropuertos) {
     // rodadura al estacionamiento. Son calle de rodaje a todos los efectos del
     // juego —se ruedan y se pintan de amarillo—, solo que más estrechas, y
     // dejarlas fuera partía el amarillo justo donde el avión aparca.
-    taxiways: [...de('taxiway'), ...de('taxilane')].map((w) => ({
+    taxiways: [...de("taxiway"), ...de("taxilane")].map((w) => ({
       ref: w.tags.ref ?? null,
       kind: w.tags.aeroway,
       widthM: w.tags.width ? Number(w.tags.width) : null,
       path: camino(w, proj),
     })),
-    aprons: de('apron').map((w) => ({ surface: w.tags.surface ?? null, polygon: camino(w, proj) })),
-    buildings: de('terminal').map((w) => ({
-      kind: 'terminal',
-      heightM: w.tags.height ? Number(w.tags.height) : null,
+    aprons: de("apron").map((w) => ({
+      surface: w.tags.surface ?? null,
       polygon: camino(w, proj),
     })),
-    helipads: de('helipad').map((w) => centro(w)).filter(Boolean).map(([la, lo]) => proj(la, lo)),
+    /*
+     * **Los edificios del campo, no solo la terminal.**
+     *
+     * Esto pedía `aeroway=terminal` y nada más, así que de Tenerife Norte
+     * salía **un** edificio y de Silvio Pettirossi también uno: el aeropuerto
+     * se dibujaba como una explanada pelada, y lo que se veía en su sitio eran
+     * casas del generador de ciudad cayendo dentro del recinto — «se ve la
+     * terminal como dos cuadraditos, como si alguien hubiera construido una
+     * cabaña encima».
+     *
+     * Un aeropuerto tiene hangares, torre, bloque técnico, parque de bomberos
+     * y cuartelillos, y en OpenStreetMap casi ninguno lleva `aeroway`: llevan
+     * `building`. Se cogen todos los del recinto, con su etiqueta para saber
+     * qué son, y se ordenan de mayor a menor para que la terminal —que casi
+     * siempre es el más grande— quede la primera.
+     */
+    buildings: [
+      ...de("terminal"),
+      ...elementos.filter(
+        (e) => e.tags?.building && e.tags?.aeroway !== "terminal",
+      ),
+    ]
+      .map((w) => ({
+        kind: w.tags.aeroway ?? w.tags.building ?? "yes",
+        heightM: w.tags.height
+          ? Number(w.tags.height)
+          : w.tags["building:levels"]
+            ? Number(w.tags["building:levels"]) * 3.2 + 1.5
+            : null,
+        polygon: camino(w, proj),
+      }))
+      .filter((e) => e.polygon.length >= 4),
+    helipads: de("helipad")
+      .map((w) => centro(w))
+      .filter(Boolean)
+      .map(([la, lo]) => proj(la, lo)),
     /**
      * Dónde estaciona un avión. Sin esto no hay de dónde salir ni a dónde
      * volver, y un vuelo que empieza alineado en la pista se salta la mitad de
@@ -334,16 +386,22 @@ async function construir(icao, pistas, aeropuertos) {
      * El `ref` es el número del puesto, que es lo que dice la torre por radio
      * y lo que va pintado en el suelo.
      */
-    parkingPositions: de('parking_position')
+    parkingPositions: de("parking_position")
       .map((n) => ({ ref: n.tags?.ref ?? null, punto: centro(n) }))
       .filter((p) => p.punto)
       .map(({ ref, punto }) => ({ ref, xy: proj(punto[0], punto[1]) })),
-    holdingPositions: puntosDeEspera(de('holding_position'), proj),
-    windsocks: de('windsock').map((n) => centro(n)).filter(Boolean).map(([la, lo]) => proj(la, lo)),
+    holdingPositions: puntosDeEspera(de("holding_position"), proj),
+    windsocks: de("windsock")
+      .map((n) => centro(n))
+      .filter(Boolean)
+      .map(([la, lo]) => proj(la, lo)),
     // OJO: en OSM `aeroway=navigationaid` son ayudas VISUALES —PAPI, VASI—,
     // no radioayudas. Las radioayudas van con `airmark=beacon`, que es otra
     // consulta. Lo dimos por hecho al revés durante un tiempo.
-    visualAids: de('navigationaid').map((n) => centro(n)).filter(Boolean).map(([la, lo]) => proj(la, lo)),
+    visualAids: de("navigationaid")
+      .map((n) => centro(n))
+      .filter(Boolean)
+      .map(([la, lo]) => proj(la, lo)),
   };
 
   // Si OSM no trae ninguno, se deducen. Va aquí y no arriba porque hacen falta
@@ -375,7 +433,11 @@ function puntosDeEspera(nodos, proj) {
   const deOsm = nodos
     .map((n) => ({ ref: n.tags?.ref ?? null, punto: centro(n) }))
     .filter((p) => p.punto)
-    .map(({ ref, punto }) => ({ xy: proj(punto[0], punto[1]), ref, source: 'osm' }));
+    .map(({ ref, punto }) => ({
+      xy: proj(punto[0], punto[1]),
+      ref,
+      source: "osm",
+    }));
   if (deOsm.length) return deOsm;
   return [];
 }
@@ -417,8 +479,18 @@ function esperaDeducida(taxiways, runways) {
             redondear(orden[i][0] + (orden[i + 1][0] - orden[i][0]) * t),
             redondear(orden[i][1] + (orden[i + 1][1] - orden[i][1]) * t),
           ];
-          if (salida.some((p) => Math.hypot(p.xy[0] - xy[0], p.xy[1] - xy[1]) < 40)) break;
-          salida.push({ xy, ref: calle.ref ?? null, runway: pista.ref || null, source: 'derivado' });
+          if (
+            salida.some(
+              (p) => Math.hypot(p.xy[0] - xy[0], p.xy[1] - xy[1]) < 40,
+            )
+          )
+            break;
+          salida.push({
+            xy,
+            ref: calle.ref ?? null,
+            runway: pista.ref || null,
+            source: "derivado",
+          });
           break;
         }
       }
@@ -444,36 +516,46 @@ function aLaLinea(p, linea) {
  * extracción, y nadie volvería a ejecutar el extractor.
  */
 function conservarManual(nuevo, viejo) {
-  if (viejo === null || typeof viejo !== 'object') return nuevo;
+  if (viejo === null || typeof viejo !== "object") return nuevo;
   if (viejo.manual === true) return viejo;
   if (Array.isArray(viejo) && Array.isArray(nuevo)) {
     return nuevo.map((n, i) => conservarManual(n, viejo[i] ?? null));
   }
-  if (Array.isArray(nuevo) || typeof nuevo !== 'object' || nuevo === null) return nuevo;
+  if (Array.isArray(nuevo) || typeof nuevo !== "object" || nuevo === null)
+    return nuevo;
   const out = { ...nuevo };
-  for (const clave of Object.keys(nuevo)) out[clave] = conservarManual(nuevo[clave], viejo[clave] ?? null);
+  for (const clave of Object.keys(nuevo))
+    out[clave] = conservarManual(nuevo[clave], viejo[clave] ?? null);
   return out;
 }
 
 const icaos = process.argv.slice(2).map((s) => s.toUpperCase());
 if (icaos.length === 0) {
-  console.error('Uso: node scripts/osm-a-aerodromo.mjs SGAS GCXO');
+  console.error("Uso: node scripts/osm-a-aerodromo.mjs SGAS GCXO");
   process.exit(1);
 }
 
 await mkdir(SALIDA, { recursive: true });
-process.stdout.write('Descargando OurAirports…\n');
-const [pistas, aeropuertos] = await Promise.all([csv('runways'), csv('airports')]);
+process.stdout.write("Descargando OurAirports…\n");
+const [pistas, aeropuertos] = await Promise.all([
+  csv("runways"),
+  csv("airports"),
+]);
 
 for (const icao of icaos) {
   const ficha = await construir(icao, pistas, aeropuertos);
   const destino = join(SALIDA, `${icao.toLowerCase()}.aero.json`);
-  const previo = existsSync(destino) ? JSON.parse(await readFile(destino, 'utf8')) : null;
-  await writeFile(destino, JSON.stringify(conservarManual(ficha, previo), null, 2) + '\n');
+  const previo = existsSync(destino)
+    ? JSON.parse(await readFile(destino, "utf8"))
+    : null;
+  await writeFile(
+    destino,
+    JSON.stringify(conservarManual(ficha, previo), null, 2) + "\n",
+  );
   const r = ficha.runways[0];
   process.stdout.write(
     `  ${ficha.name}\n` +
-      `  pista ${r?.ref ?? '—'} · ${r?.widthM ?? '?'} m de ancho · ${r?.surface ?? '?'}\n` +
+      `  pista ${r?.ref ?? "—"} · ${r?.widthM ?? "?"} m de ancho · ${r?.surface ?? "?"}\n` +
       `  ${ficha.taxiways.length} rodaduras · ${ficha.aprons.length} plataformas · ` +
       `${ficha.windsocks.length} mangas · ${ficha.holdingPositions.length} puntos de espera\n` +
       `  → ${destino}\n`,

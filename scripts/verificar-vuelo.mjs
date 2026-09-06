@@ -282,6 +282,132 @@ comprobar(
   "«no hay árboles en los aeropuertos, y ni macetas con rosales»",
 );
 
+// ── Los edificios del aeródromo ──────────────────────────────────────────
+
+/*
+ * **La terminal, la torre y los hangares.**
+ *
+ * No existían, y lo que se veía en su sitio eran casas del generador de ciudad
+ * cayendo dentro del recinto: «se ve la terminal como dos cuadraditos, como si
+ * alguien hubiera construido una cabaña encima». Ahora salen de OpenStreetMap
+ * con su planta de verdad, y **paran a un avión**: un edificio que se atraviesa
+ * es decorado, no un edificio.
+ */
+const edificios = await page.evaluate(() => {
+  const o = globalThis.__oga;
+  const lista = o.edificios();
+  const bultos = o.bultos();
+  let solidos = 0;
+  for (const e of lista) {
+    let x = 0;
+    let z = 0;
+    for (const p of e.puntos) {
+      x += p[0] / e.puntos.length;
+      z += p[1] / e.puntos.length;
+    }
+    // A media altura del edificio, en su centro: ahí tiene que haber bulto.
+    if (bultos.choca(x, o.suelo(x, z) + e.alto / 2, z)) solidos += 1;
+  }
+  const grupo = globalThis.__raiz.getObjectByName("edificios-aerodromo");
+  let mallas = 0;
+  grupo?.traverse((n) => {
+    if (n.isMesh) mallas += 1;
+  });
+  return { cuantos: lista.length, solidos, mallas };
+});
+if (edificios.cuantos) {
+  comprobar(
+    "los edificios del aeródromo están dibujados",
+    edificios.mallas > 0,
+    `${edificios.cuantos} edificios en ${edificios.mallas} mallas`,
+    "«se ve la terminal como dos cuadraditos, como si fuera una cabaña»",
+  );
+  comprobar(
+    "y paran a un avión, que no son decorado",
+    edificios.solidos === edificios.cuantos,
+    `${edificios.solidos} de ${edificios.cuantos} tienen bulto`,
+    "la ciudad se atravesaba entera hasta que existió el índice de bultos",
+  );
+}
+
+/*
+ * **Y dentro del recinto no hay más casas que las suyas.**
+ *
+ * Lo que se veía como terminal eran casas del generador de ciudad plantadas
+ * dentro del campo. Se barre el recinto —la envolvente de pistas y
+ * plataformas— y no puede haber bulto ninguno lejos de los edificios del
+ * aeródromo, que son los únicos que ahí tienen derecho a estar.
+ */
+const casasDentro = await page.evaluate(() => {
+  const o = globalThis.__oga;
+  const bultos = o.bultos();
+  const suyos = o.edificios();
+  const puntos = [];
+  for (const c of o.caminos()) {
+    if (c.que === "plataforma" || c.que === "pista") puntos.push(...c.puntos);
+  }
+  if (puntos.length < 3) return { dentro: 0, sondas: 0 };
+  const p = [...puntos].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cruz = (o2, a, b) =>
+    (a[0] - o2[0]) * (b[1] - o2[1]) - (a[1] - o2[1]) * (b[0] - o2[0]);
+  const media = (lista) => {
+    const s2 = [];
+    for (const q of lista) {
+      while (
+        s2.length >= 2 &&
+        cruz(s2[s2.length - 2], s2[s2.length - 1], q) <= 0
+      ) {
+        s2.pop();
+      }
+      s2.push(q);
+    }
+    s2.pop();
+    return s2;
+  };
+  const poli = [...media(p), ...media([...p].reverse())];
+  const dentroDe = (x, z) => {
+    let d = false;
+    for (let i = 0, j = poli.length - 1; i < poli.length; j = i++) {
+      const [xi, zi] = poli[i];
+      const [xj, zj] = poli[j];
+      if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi)
+        d = !d;
+    }
+    return d;
+  };
+  // Lejos de los edificios del propio aeródromo, que sí tienen que estar.
+  const suyoCerca = (x, z) =>
+    suyos.some((e) =>
+      e.puntos.some((q) => Math.hypot(q[0] - x, q[1] - z) < 60),
+    );
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  for (const [x, z] of poli) {
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minZ = Math.min(minZ, z);
+    maxZ = Math.max(maxZ, z);
+  }
+  let dentro = 0;
+  let sondas = 0;
+  for (let x = minX; x <= maxX; x += 25) {
+    for (let z = minZ; z <= maxZ; z += 25) {
+      if (!dentroDe(x, z) || suyoCerca(x, z)) continue;
+      sondas += 1;
+      if (bultos.choca(x, o.suelo(x, z) + 3, z)) dentro += 1;
+    }
+  }
+  return { dentro, sondas };
+});
+comprobar(
+  "y no hay casas del pueblo dentro del aeropuerto",
+  casasDentro.dentro === 0,
+  `${casasDentro.dentro} bultos ajenos en ${casasDentro.sondas} sondeos del recinto`,
+  "«se ve la terminal como dos cuadraditos, como si fuera una cabaña»",
+);
+
 // ── Corta final ───────────────────────────────────────────────────────────
 
 await poner(400, 24);
