@@ -164,6 +164,7 @@ export const EN: Dictionary = {
   "percance.fuera": "You touched down off the runway",
   "percance.golpe": "That landing was a thump",
   "percance.pasada": "You ran off the end of the runway",
+  "percance.sinpermiso": "You entered the runway without clearance",
   "vuelo.sinPermiso":
     "You went in without the green light. Wait for it next time",
 
