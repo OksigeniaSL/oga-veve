@@ -36,7 +36,11 @@ import { AIRCRAFT, OGA_172, type AircraftConfig } from "./flight/aircraft";
 import { InputManager } from "./flight/input";
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraEnUso } from "./world/terrain";
-import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
+import {
+  blancasDePapi,
+  crearAproximacion,
+  type Aproximacion,
+} from "./world/aproximacion";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
@@ -635,6 +639,16 @@ export class Game {
   private gradoAlEmpezar: Grado = grado(leerCuaderno());
   /** Segundos volando desde el último apunte, para no escribir cada fotograma. */
   private sinApuntar = 0;
+  /**
+   * La última lectura del PAPI que se enseñó, o `null` si todavía ninguna.
+   *
+   * Se guarda para no repetir la tarjeta sesenta veces por segundo: el PAPI
+   * habla cuando **cambia** lo que dice, que es exactamente cuando hay algo
+   * nuevo que hacer. Ver `explicarElPapi`.
+   */
+  private papiEnPantalla: number | null = null;
+  /** Si la pista de hoy tiene PAPI. Un campo de hierba no tiene. */
+  private hayPapi = false;
   /** Lo que se distaba del umbral el fotograma anterior. Ver los aros. */
   private antesAlUmbral = Infinity;
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
@@ -1654,6 +1668,59 @@ export class Game {
   }
 
   /**
+   * El PAPI, explicado mientras se usa.
+   *
+   * En el mundo lleva desde el principio: cuatro luces al costado del umbral
+   * que se ven blancas si venís alto y rojas si venís bajo. Es el instrumento
+   * más bonito que tiene la aviación —no hay número, no hay texto, no hay que
+   * saber nada— y estaba ahí **sin que nadie dijera qué era**: cuatro bolitas
+   * que cambiaban de color.
+   *
+   * Ahora, en final, la pantalla enseña las luces que estás viendo y una
+   * flecha con lo que hay que hacer. Y habla cuando cambia lo que dicen, que
+   * es cuando hay algo nuevo que hacer; con dos y dos sale una vez, con su
+   * visto, porque acertar también se cuenta.
+   *
+   * Solo donde hay PAPI de verdad. Un campo de hierba no tiene, y ponerle uno
+   * en la pantalla sería enseñar un instrumento que no está.
+   */
+  private explicarElPapi(acercandose: boolean): void {
+    if (!this.hayPapi || !acercandose) return;
+    const s = this.flight.state;
+    if (s.onGround) return;
+    const alto = s.position.y - this.terrain.runwayElevation;
+    // De quince metros para abajo ya no se corrige nada: se toca. Y por encima
+    // de trescientos todavía no se está en final, se está llegando.
+    if (alto < 15 || alto > 300) return;
+    const [ux, uz] = this.enLaPista(this.scenario.runway.length * 0.5);
+    const suelo = Math.hypot(s.position.x - ux, s.position.z - uz);
+    // Muy cerca del umbral el ángulo se dispara y el PAPI de verdad tampoco
+    // sirve: se mira hasta la valla y a partir de ahí se mira la pista.
+    if (suelo < 150 || suelo > 6000) return;
+    const blancas = blancasDePapi((Math.atan2(alto, suelo) * 180) / Math.PI);
+    if (blancas === this.papiEnPantalla) return;
+    // La primera lectura no se anuncia si ya venís bien: la tarjeta es para
+    // enseñar a corregir, no para felicitar a quien todavía no ha hecho nada.
+    const primera = this.papiEnPantalla === null;
+    this.papiEnPantalla = blancas;
+    if (primera && blancas === 2) return;
+    this.hud.senal.mostrar(
+      `papi${blancas}`,
+      this.tier.instruments === "none"
+        ? ""
+        : t(
+            blancas >= 3
+              ? "vuelo.papiAlto"
+              : blancas <= 1
+                ? "vuelo.papiBajo"
+                : "vuelo.papiBien",
+          ),
+      null,
+      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+    );
+  }
+
+  /**
    * ¿Se ha metido el avión en un edificio? Y si sí, qué pasa.
    *
    * **Y qué pasa no es lo mismo en los cuatro peldaños**, que es la parte
@@ -2265,6 +2332,12 @@ export class Game {
       (p) => this.terrain.sampleHeight(p[0], -p[1]),
     );
     if (this.aproximacion) this.scene.add(this.aproximacion.grupo);
+    /*
+     * Y si esta pista tiene PAPI, la pantalla puede explicarlo. Se pregunta
+     * aquí y no cada fotograma porque la respuesta no cambia en todo el vuelo.
+     */
+    this.hayPapi = !!this.aproximacion?.grupo.getObjectByName("papi");
+    this.papiEnPantalla = null;
   }
 
   /**
@@ -3311,6 +3384,7 @@ export class Game {
         decir(donde === "alto" ? "too high, come down" : "too low, climb");
       }
     }
+    this.explicarElPapi(acercandose);
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
@@ -4208,6 +4282,24 @@ export class Game {
       const antes = this.faseAnunciada;
       this.faseAnunciada = vista.fase;
       /*
+       * **Y alineado en la pista, su número.**
+       *
+       * El número de una pista es lo primero que un piloto lee en su vida y
+       * lo único que hay escrito en el suelo de un aeropuerto: son las dos
+       * primeras cifras del rumbo magnético al que apunta —la 09 mira al
+       * este, la 27 al oeste—, y por eso las dos cabeceras de la misma pista
+       * se llaman distinto y suman dieciocho.
+       *
+       * Sale en el mismo destello grande y tenue que V1 y Vr, y en el mismo
+       * momento en que sale de verdad: cuando ya estás en el eje, mirando
+       * hacia donde vas a despegar. A los cuatro años eso son dos cifras que
+       * aparecen siempre en el mismo sitio; a los diez, un rumbo.
+       */
+      if (vista.fase === "alineando") {
+        const cabecera = cabeceraEnUso(this.scenario);
+        if (cabecera) this.hud.destellar(cabecera);
+      }
+      /*
        * **Dejar la pista libre es una victoria, y hay que decirlo.**
        *
        * Es el momento que enseña por qué había prisa: hasta ahí el juego pide
@@ -4899,6 +4991,9 @@ export class Game {
       this.aircraft.approachSpeed,
       // Y el techo del modelo de hoy, que es donde tiene que estar el pájaro.
       this.flight.velocidadMaxima(),
+      // Y la velocidad de rotación, que es la que se marca en la pantalla en
+      // mitad de la carrera. Ver `Hud.destellar`.
+      this.aircraft.rotationSpeed,
     );
   }
 

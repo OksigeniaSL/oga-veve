@@ -172,6 +172,20 @@ export interface AircraftConfig {
    * simulador puede sostener honestamente.
    */
   decisionSpeed: number;
+  /**
+   * Velocidad de rotación, m/s. **Vr.**
+   *
+   * La velocidad a la que se tira de los mandos para levantar el morro. Es, de
+   * todas las uves, la única que un piloto de avioneta usa cada vez que vuela
+   * —V1 es de aviones grandes—, y es además la que se puede enseñar sin
+   * palabras: llega el momento, se marca en la pantalla, y lo que hay que
+   * hacer es tirar.
+   *
+   * Cincuenta y cinco nudos en un 172 de verdad, que son veintiocho metros por
+   * segundo. Va un par por encima de la de decisión, como en el avión real: se
+   * pasa el punto de no retorno y enseguida se rota.
+   */
+  rotationSpeed: number;
   /** Distancia del centro de gravedad al tren, m. */
   gearHeight: number;
   /**
@@ -222,6 +236,8 @@ export const OGA_172: AircraftConfig = {
   // 33 m/s son 119 km/h, que es la corta final de un 172 de verdad.
   approachSpeed: 33,
   decisionSpeed: 26,
+  // 28 m/s son 55 nudos: la velocidad de rotación de un 172 de verdad.
+  rotationSpeed: 28,
   gearHeight: 1.4,
   maxGroundPitch: 0.21, // 12°
   flapsLift: 0.55,
@@ -286,6 +302,7 @@ export const MAINUMBY: AircraftConfig = {
   cruiseSpeed: 55,
   approachSpeed: 29,
   decisionSpeed: 24,
+  rotationSpeed: 26,
   gearHeight: 1.8,
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
   flapsLift: 0.35,

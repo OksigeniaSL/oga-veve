@@ -178,6 +178,23 @@ export function createVegetation(
     return rejilla.clase[fila * rejilla.lado + col]! > 0;
   };
 
+  /*
+   * **De qué a qué va el terreno de este escenario**, que es lo que decide
+   * qué especie va dónde.
+   *
+   * Se dividía la cota por `reliefHeight`, y eso solo vale mientras el
+   * relieve se invente: el generado va de cero a ese número, así que la
+   * división daba justo «lo alto que está esto comparado con lo más alto que
+   * hay». Con relieve medido no vale nada — el terreno de Yvytu Rape va de
+   * ciento ochenta y cuatro a trescientos sesenta y siete metros, y dividir
+   * por ciento noventa daba **más de uno en todo el mapa**: ninguna especie
+   * llega tan arriba, así que el campo salía pelado, sin un solo árbol.
+   *
+   * Con las cotas de verdad la regla vuelve a decir lo que decía: abajo el
+   * monte, arriba el pelado, y en medio lo que haya.
+   */
+  const franja = franjaDeCotas(scenario);
+
   const random = mulberry32(scenario.seed ^ 0x7ee5);
   const clumps = new ValueNoise2D(scenario.seed ^ 0xb05c);
   const clumpScale = 11 / scenario.size;
@@ -252,7 +269,7 @@ export function createVegetation(
     );
     if (random() > Math.pow(density, 4) * 5.5) continue;
 
-    const band = clamp01(height / scenario.reliefHeight);
+    const band = clamp01((height - franja.desde) / franja.cuanto);
     const species = pickSpecies(band, random());
     if (!species) continue;
 
@@ -277,6 +294,28 @@ export function createVegetation(
     group.add(buildSpecies(LAPACHO, flowering, FLOWER_COLOUR));
 
   return group;
+}
+
+/**
+ * De qué cota a qué cota va el terreno de un escenario.
+ *
+ * Con relieve medido se miran los datos —una pasada por ciento cincuenta mil
+ * enteros, una vez por partida—; sin él, el generado va de cero a
+ * `reliefHeight` por construcción, que es lo que se venía suponiendo.
+ */
+function franjaDeCotas(scenario: Scenario): { desde: number; cuanto: number } {
+  const datos = scenario.relieve?.datos;
+  if (!datos || !datos.length)
+    return { desde: 0, cuanto: scenario.reliefHeight };
+  let min = Infinity;
+  let max = -Infinity;
+  for (let i = 0; i < datos.length; i++) {
+    const v = datos[i]!;
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }
+  // Un escenario llano de verdad no puede dividir por cero.
+  return { desde: min, cuanto: Math.max(1, max - min) };
 }
 
 /** Elige especie según la franja de altitud, con un sorteo ponderado. */

@@ -44,6 +44,15 @@ import { reconocer } from "../flight/reconocimiento";
  * cualquier cabina del mundo, y aprenderlos es parte de lo que el juego
  * enseña sin proponérselo.
  */
+/**
+ * Lo que dura un destello de pantalla, en segundos. Ver `destellar`.
+ *
+ * Y sirve para dos cosas: para que la animación no se pise a sí misma y para
+ * que dos destellos seguidos —V1 y Vr, que en una avioneta van a un segundo
+ * uno del otro— salgan uno después del otro y no encima.
+ */
+const DURA_EL_DESTELLO = 1.6;
+
 /** Lo que dura la salida del botón de freno al pasar V1, en segundos. */
 const BRAKE_EXIT = 0.9;
 
@@ -157,6 +166,12 @@ export class Hud {
   private units: UnitSystem = METRIC;
   /** Si ya se marcó V1 en esta carrera de despegue. Ver `update`. */
   private dijoV1 = false;
+  /** Y si ya se marcó Vr, que va justo detrás. */
+  private dijoVr = false;
+  /** Velocidad de rotación de la aeronave de hoy, m/s. Ver `setAeronave`. */
+  private vr = Infinity;
+  /** Lo que le queda al destello de pantalla, s. Ver `destellar`. */
+  private destelloRestante = 0;
   private cuadernoHandler: (() => void) | null = null;
   /**
    * Cuántos instrumentos enseña el HUD.
@@ -965,9 +980,29 @@ export class Hud {
      * meses acabará sabiendo qué es V1, igual que acaba sabiendo qué es la I
      * del contacto o para qué sirve la manga.
      */
+    this.destelloRestante = Math.max(0, this.destelloRestante - dt);
     if (despegando && !this.dijoV1) {
       this.dijoV1 = true;
-      this.marcarV1();
+      this.destellar("V1");
+    } else if (
+      /*
+       * **Y detrás de V1 viene Vr, que es la que se usa de verdad.**
+       *
+       * V1 es de aviones grandes; en una avioneta la uve que se dice en voz
+       * alta cada vez que se despega es esta: la velocidad a la que se tira
+       * para levantar el morro. Cincuenta y cinco nudos en un 172, dos por
+       * encima de la de decisión — o sea que llegan a un segundo una de otra,
+       * y por eso Vr espera a que se apague el destello de V1 en vez de
+       * salir encima. Ver `DURA_EL_DESTELLO`.
+       */
+      despegando &&
+      this.dijoV1 &&
+      !this.dijoVr &&
+      ias >= this.vr &&
+      this.destelloRestante <= 0
+    ) {
+      this.dijoVr = true;
+      this.destellar("Vr");
     } else if (
       /*
        * Y se rearma cuando de verdad se ha dejado de despegar: bien arriba, o
@@ -979,6 +1014,7 @@ export class Hud {
       (enSuelo && state.airspeed < 5)
     ) {
       this.dijoV1 = false;
+      this.dijoVr = false;
     }
 
     const escondeBoton =
@@ -1220,15 +1256,21 @@ export class Hud {
   }
 
   /**
-   * El destello de V1: dos letras enormes y translúcidas, y se van.
+   * El destello grande y tenue, con lo que se le diga.
    *
    * Va por CSS —se pone la clase y se quita al acabar la animación— porque lo
    * único que hace es aparecer y desaparecer, y para eso el navegador ya sabe
    * hacerlo mejor que nosotros con un temporizador.
    */
-  private marcarV1(): void {
+  destellar(texto: string): void {
     const v1 = this.root.querySelector('[data-hud="v1"]');
-    if (!v1) return;
+    if (!v1 || !texto) return;
+    v1.textContent = texto;
+    // Dos letras ocupan media pantalla; cuatro no caben. El tamaño sale del
+    // largo para que «09» y «Vr» se lean igual de grandes sin desbordar.
+    (v1 as HTMLElement).style.fontSize =
+      texto.length > 2 ? "min(24vw, 30vh)" : "";
+    this.destelloRestante = DURA_EL_DESTELLO;
     v1.classList.remove("v1--suena");
     // Forzar el reflujo, que si no la animación no vuelve a empezar.
     void (v1 as HTMLElement).offsetWidth;
@@ -1444,9 +1486,10 @@ export class Hud {
    * pequeños y en el de los mayores tiene techos distintos, y la escala tiene
    * que acabar donde acaba el avión que se está volando.
    */
-  setAeronave(vref: number, vmax = Infinity): void {
+  setAeronave(vref: number, vmax = Infinity, vr = Infinity): void {
     this.vref = vref;
     this.vmax = vmax;
+    this.vr = vr;
   }
 
   setBadge(text: string): void {

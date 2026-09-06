@@ -3172,6 +3172,20 @@ body {
 }
 
 /*
+ * La luz roja del PAPI.
+ *
+ * Oscura y con filo claro, no roja brillante: la tarjeta tiene fondo
+ * terracota y un rojo sobre terracota no se ve. Y así la diferencia entre una
+ * luz y otra es de claro a oscuro además de ser de color, que es lo único que
+ * funciona para quien no distingue el rojo. Ver `papi` en `ui/senal.ts`.
+ */
+.senal__roja {
+  fill: #5c1712;
+  stroke: var(--tinta);
+  stroke-width: 0.7;
+}
+
+/*
  * La letra de la calle es un dato, no una palabra.
  *
  * Una «A» pintada en el suelo se reconoce sin saber leer, igual que el número
