@@ -255,11 +255,18 @@ const porEncima = await page.evaluate(async () => {
   const cual = aros[Math.floor(aros.length / 2)];
   const d = cual.d;
   const alto = cual.y + 50;
-  o.colocar(u.x - ux * (d + 90), alto, u.z - uz * (d + 90), 34);
+  /*
+   * Sesenta metros por delante del aro, y diez segundos de margen. Estaban en
+   * noventa y seis, y a treinta y cuatro metros por segundo eso son 2,6
+   * segundos de vuelo con 6 de reloj: cruzar el aro caía justo en el filo del
+   * plazo y la prueba iba y venía sin que nadie tocara el juego. Una prueba
+   * que depende de cuánto tarda un navegador en pintar no mide nada.
+   */
+  o.colocar(u.x - ux * (d + 60), alto, u.z - uz * (d + 60), 34);
   await new Promise((r) => setTimeout(r, 400));
 
   let tarjeta = "";
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 200; i++) {
     await new Promise((r) => setTimeout(r, 50));
     const puesta = o.tarjeta().dibujo;
     if (puesta === "aro-alto" || puesta === "aro-bajo") {
@@ -267,7 +274,12 @@ const porEncima = await page.evaluate(async () => {
       break;
     }
   }
-  return { tarjeta, ultima: o.tarjeta().dibujo };
+  const e = o.estado();
+  return {
+    tarjeta,
+    ultima: o.tarjeta().dibujo,
+    como: `aro a ${d.toFixed(0)} m y ${cual.y.toFixed(0)} de alto · ${aros.length} aros · acabó a ${Math.hypot(e.position.x - u.x, e.position.z - u.z).toFixed(0)} m del umbral, ${e.onGround ? "posado" : "volando"}`,
+  };
 });
 if (!porEncima.sinAros) {
   comprobar(
@@ -275,7 +287,7 @@ if (!porEncima.sinAros) {
     porEncima.tarjeta === "aro-alto",
     porEncima.tarjeta
       ? `dice «${porEncima.tarjeta}»`
-      : `tarjeta «${porEncima.ultima || "ninguna"}»`,
+      : `tarjeta «${porEncima.ultima || "ninguna"}» · ${porEncima.como}`,
     "«supero el aro y nadie me corrige»: sonaba, pero no decía hacia dónde",
   );
 }
@@ -541,7 +553,7 @@ if (CON_TOPE) {
     c.throttle = 1;
     let punta = 0;
     let sinFreno = false;
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 25; i++) {
       await new Promise((r) => setTimeout(r, 100));
       punta = Math.max(punta, o.estado().airspeed);
       sinFreno ||= !!document.querySelector('[data-hud="brakes-touch"]')
@@ -1333,6 +1345,8 @@ if (CON_TOPE) {
     // Cuántas vueltas se dieron de verdad: si la prueba se corta antes de
     // tiempo, el avance sale pequeño sin que el avión tenga la culpa.
     let pasos = 0;
+    /** Décimas de segundo sin raya verde que seguir. */
+    let sinRaya = 0;
     /*
      * **El avance se mide en metros, no en puntos de ruta.** Contar los puntos
      * que quedan no vale: la ruta se rehace sola según se avanza, así que su
@@ -1377,7 +1391,18 @@ if (CON_TOPE) {
       const st = o.estado();
       punta = Math.max(punta, st.airspeed);
       const ruta = o.ruta();
-      if (ruta.length < 2) break;
+      /*
+       * **Sin raya no se sale del bucle: se apunta.**
+       *
+       * Antes, quedarse sin raya cortaba la prueba y el banco daba por bueno
+       * lo poco que hubiera medido. Y quedarse sin raya es exactamente lo que
+       * se vio jugando: «cuando doy el giro dejo de ver la línea verde… la
+       * línea verde había desaparecido hasta A3».
+       */
+      if (ruta.length < 2) {
+        sinRaya += 1;
+        continue;
+      }
       const t = timon(st, ruta);
       c.aileron = t.mando;
       giro = Math.abs(t.error);
@@ -1389,7 +1414,7 @@ if (CON_TOPE) {
     }
     c.throttle = 0;
     c.brakes = 1;
-    return { lejos, punta, avance, fase: o.fase(), pasos };
+    return { lejos, punta, avance, fase: o.fase(), pasos, sinRaya };
   });
   comprobar(
     "siguiendo la raya con el timón, el avión se queda en la raya",
@@ -1402,6 +1427,14 @@ if (CON_TOPE) {
     "«se pasa un poco de frenada y tengo que girar antes si quiero entrar bien»",
   );
   comprobar(
+    "y la raya verde no se pierde por el camino",
+    deVuelta.sinRaya === 0,
+    deVuelta.sinRaya
+      ? `${(deVuelta.sinRaya / 10).toFixed(1)} s sin raya`
+      : "raya puesta todo el rato",
+    "«cuando doy el giro dejo de ver la línea verde… había desaparecido hasta A3»",
+  );
+  comprobar(
     "y avanza de verdad, no se queda dando vueltas",
     // Trescientos metros de camino: la salida de la pista y un buen trozo de
     // la calle de vuelta. Menos que eso es haberse quedado en la boca.
@@ -1410,6 +1443,92 @@ if (CON_TOPE) {
     "la ayuda daba una pirueta en la boca de la salida y el avión no avanzaba",
   );
 }
+
+// ── Cruzando el umbral ────────────────────────────────────────────────────
+
+/*
+ * **Lo que hay que decir cuando ya solo queda aterrizar**, y lo que no.
+ *
+ * Las dos cosas se vieron en el mismo vuelo y son la misma: «eso de que me
+ * avise que voy a *terrain* cuando ya estoy sobre la cabecera de la pista. No
+ * me indica lo contrario, que ya debo tomar tierra».
+ */
+const umbral = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  /*
+   * **Colocado con el rumbo de la pista, no con el que trajera el avión.**
+   *
+   * `poner` mide los metros «antes del umbral» en la dirección del morro, y
+   * después de las pruebas anteriores el morro mira donde mira: el avión
+   * aparecía a doscientos metros del umbral pero de lado, y el juego —con toda
+   * la razón— no decía que se pudiera tocar nada. `puntoDeFinal` sabe cuál es
+   * la cabecera en uso y devuelve el punto y el rumbo, que es lo que hace
+   * falta: en Silvio Pettirossi, restar a ojo en la dirección de la pista
+   * ponía el avión pasado el otro extremo, aterrizando en el campo.
+   */
+  /*
+   * **Primero se sube a volar, y después se entra en final.**
+   *
+   * Esta comprobación va al final del guion, y para entonces el avión lleva
+   * media tarde aterrizando en descampados: la máquina de fases está en
+   * «aterrizado» y en pantalla hay un veredicto de toma fuera de pista que no
+   * caduca. Colocar el avión no borra nada de eso. Un paso por el aire, alto y
+   * lejos, deja la lección donde tiene que estar para poder medir la entrada.
+   */
+  const alto = o.puntoDeFinal(2500);
+  o.colocar(alto.x, globalThis.__umbral.y + 320, alto.z, 34, alto.h);
+  await new Promise((r) => setTimeout(r, 1200));
+  // Y se espera a que la pantalla quede libre: el veredicto de la toma
+  // anterior dura cinco segundos con prioridad de urgencia, y mide lo de
+  // antes, no lo de ahora.
+  for (let i = 0; i < 70 && o.tarjeta().queda > 0; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  const p = o.puntoDeFinal(80);
+  o.colocar(p.x, globalThis.__umbral.y + 10, p.z, 30, p.h);
+  await new Promise((r) => setTimeout(r, 400));
+  const puesto = (() => {
+    const e = o.estado();
+    const u = globalThis.__umbral;
+    return `puesto a ${Math.hypot(e.position.x - u.x, e.position.z - u.z).toFixed(0)} m del umbral, cabecera ${p.cabecera}, enPista ${e.onRunway}`;
+  })();
+  const c = o.controles();
+  c.throttle = 0.35;
+  // Un pelo de morro abajo: nivelado se va para arriba —y lo que salta es la
+  // tarjeta de la frustrada, que es otra prueba y muy buena— y con mucho se
+  // planta en el campo antes de llegar al umbral.
+  c.elevator = -0.04;
+  let tarjeta = "";
+  let terreno = "nada";
+  for (let i = 0; i < 50; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+    if (o.avisoDeTerreno()) terreno = o.avisoDeTerreno();
+    if (o.tarjeta().dibujo === "toma") tarjeta = "toma";
+  }
+  const s = o.estado();
+  return {
+    tarjeta,
+    terreno,
+    ultima: o.tarjeta().dibujo,
+    // Para saber por qué, si no sale: altura sobre la pista, caída y suelo.
+    como: `${puesto} · alto ${(s.position.y - globalThis.__umbral.y).toFixed(0)} m · vs ${s.verticalSpeed.toFixed(1)} · ${s.onGround ? "posado" : "volando"} · fase ${o.fase()}`,
+  };
+});
+comprobar(
+  "cruzando el umbral bajo, el juego dice que ya se puede tocar",
+  umbral.tarjeta === "toma",
+  umbral.tarjeta
+    ? "sale su dibujo: el avión con las ruedas sobre la raya"
+    : `tarjeta «${umbral.ultima || "ninguna"}» · ${umbral.como}`,
+  "«no me indica lo contrario, que ya debo tomar tierra»",
+);
+comprobar(
+  "y ahí no salta el aviso de terreno, que sería mentir",
+  umbral.terreno === "nada",
+  umbral.terreno === "nada" ? "callado" : `dijo «${umbral.terreno}»`,
+  "«me avisa que voy a terrain cuando ya estoy sobre la cabecera de la pista»",
+);
 
 // ── El informe ────────────────────────────────────────────────────────────
 

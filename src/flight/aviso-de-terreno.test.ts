@@ -14,6 +14,7 @@ const volando = (c: Partial<Cerca> = {}): Cerca => ({
   vertical: 0,
   enElSuelo: false,
   enFinal: false,
+  sobreLaPista: false,
   ...c,
 });
 
@@ -95,5 +96,23 @@ describe("cuándo «final» deja de explicar lo que se está haciendo", () => {
 
   it("sin distancia conocida, no se opina", () => {
     expect(fueraDeLaSenda(Infinity, 0, TRES)).toBe(false);
+  });
+});
+
+describe("sobre la pista", () => {
+  it("no se avisa, aunque se vaya bajo y bajando", () => {
+    // «Eso de que me avise que voy a terrain cuando ya estoy sobre la cabecera
+    // de la pista.» Ahí ir bajo no es un peligro: es el plan.
+    expect(
+      avisoDeTerreno(
+        volando({ sobreElSuelo: 20, vertical: -3, sobreLaPista: true }),
+      ),
+    ).toBe(null);
+  });
+
+  it("y fuera de ella el mismo caso sí avisa", () => {
+    expect(
+      avisoDeTerreno(volando({ sobreElSuelo: 20, vertical: -3 })),
+    ).not.toBe(null);
   });
 });

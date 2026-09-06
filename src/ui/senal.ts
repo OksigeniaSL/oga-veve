@@ -280,6 +280,26 @@ const FRENO = icono(`
 `);
 
 /** Salir de la pista: la flecha que se va a un lado. */
+/**
+ * **Ya podés tocar**: el avión, con las ruedas justo encima de la pista.
+ *
+ * Es el reverso del aviso de terreno, y faltaba: «no me indica lo contrario,
+ * que ya debo tomar tierra». Todo el vuelo diciéndote que vas bajo, y en el
+ * único momento en el que ir bajo es exactamente lo que hay que hacer, nadie
+ * dice nada.
+ *
+ * El dibujo se lee sin saber leer porque es lo que se ve por la ventanilla en
+ * ese segundo: la raya del suelo debajo y el avión encima, apuntando a ella.
+ */
+const TOMA = icono(`
+  <path d="M2 21 h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none" />
+  <path d="M4.6 8.4 L19.4 12.4" stroke="currentColor" stroke-width="2.6"
+        stroke-linecap="round" fill="none" />
+  <path d="M11 5.6 L13.4 11 L10.2 13.4 Z" />
+  <path d="M8.6 14.2 v2.6 M15 15.9 v2.6" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" fill="none" />
+`);
+
 const SALIDA = icono(`
   <path d="M2 6 h20 v3.2 H2 Z" opacity="0.45" />
   <path d="M6 9.2 q0 6 5 8" stroke="currentColor" stroke-width="3" fill="none"
@@ -344,6 +364,7 @@ const DIBUJOS: Record<string, string> = {
   senda: SENDA,
   freno: FRENO,
   salida: SALIDA,
+  toma: TOMA,
   acasa: A_CASA,
   terreno: TERRENO,
   frustrada: FRUSTRADA,

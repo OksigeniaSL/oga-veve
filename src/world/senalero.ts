@@ -231,6 +231,19 @@ export class Senalero {
   private hacia = { x: 0, z: 1 };
   private t = 0;
   private gesto: Gesto = null;
+  /**
+   * Metros que faltan hasta el puesto, a lo largo de la raya de entrada.
+   *
+   * Negativo cuando el avión **ya se pasó**, que es el caso que hacía falta
+   * mirar desde fuera: «llego al señor que señaliza y juego a pasarme de
+   * largo. Se aparta, sí, pero no hay avisos».
+   */
+  private restante = Infinity;
+
+  /** Metros que se ha pasado del puesto, o cero si todavía no ha llegado. */
+  get pasado(): number {
+    return Number.isFinite(this.restante) ? Math.max(0, -this.restante) : 0;
+  }
   /** Los ángulos de ahora, que persiguen a los de la postura que toca. */
   private angulos = {
     izq: { x: ESPERANDO.izq.x, z: ESPERANDO.izq.z },
@@ -340,6 +353,7 @@ export class Senalero {
      * y aquí se mide del sitio al avión, no al revés — de ahí los signos.
      */
     const lateral = vx * this.hacia.z - vz * this.hacia.x;
+    this.restante = restante;
 
     this.gesto = gestoDeSenalero({
       restante,
