@@ -202,9 +202,12 @@ import { Frustrada } from "./flight/frustrada";
 import { topeDeRodaje } from "./flight/gobernador";
 import { GOLPE, ROCE, type Percance } from "./flight/percance";
 import {
+  barrasDe,
+  grado,
   guardarCuaderno,
   leerCuaderno,
   type Cuaderno,
+  type Grado,
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
@@ -597,6 +600,8 @@ export class Game {
   private cuaderno: Cuaderno = leerCuaderno();
   /** La página donde se ve. Solo existe si el HTML trae su hueco. */
   private cuadernoUI: CuadernoScreen | null = null;
+  /** El grado que se tenía al empezar, para saber si se ha subido. */
+  private gradoAlEmpezar: Grado = grado(leerCuaderno());
   /** Segundos volando desde el último apunte, para no escribir cada fotograma. */
   private sinApuntar = 0;
   /** Lo que se distaba del umbral el fotograma anterior. Ver los aros. */
@@ -613,8 +618,15 @@ export class Game {
   private gestoEnPantalla: Gesto = null;
   /** El señor de los bastones, esperando en el puesto. Ver `world/senalero.ts`. */
   private readonly senalero = new Senalero();
-  /** Y el coche del «sígame», en los dos peldaños de abajo. Ver `world/sigueme.ts`. */
-  private readonly sigueme = new Sigueme();
+  /**
+   * Y quien sale a buscarte, en los dos peldaños de abajo. Ver `world/sigueme.ts`.
+   *
+   * En un aeropuerto es el coche amarillo del «sígame». En un campo particular
+   * no hay coche —«en un aeródromo particular es raro; como mucho que salta
+   * Jazlyn en bicicleta a buscarme»—, así que sale ella en bici. Se decide una
+   * vez, en el constructor, porque el aeródromo no cambia dentro de un vuelo.
+   */
+  private readonly sigueme: Sigueme;
   /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
@@ -663,6 +675,7 @@ export class Game {
 
   constructor(options: GameOptions) {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
+    this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
     this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? OGA_172;
@@ -1805,6 +1818,27 @@ export class Game {
     this.apuntar({ completos: this.cuaderno.completos + 1 });
     window.setTimeout(() => {
       if (!this.vueloTerminado) return;
+      /*
+       * **Y si en este vuelo se ha subido de grado, eso es lo que se enseña.**
+       *
+       * Manda sobre los galones del vuelo, y con razón: los galones del vuelo
+       * se ganan cada tarde y el grado se gana una vez. Hasta hoy esto pasaba
+       * en silencio —se entraba al cuaderno un día cualquiera y ya ponía otra
+       * cosa—, que es tirar el único momento del juego que de verdad
+       * significa algo.
+       */
+      const ahora = grado(this.cuaderno);
+      if (ahora !== this.gradoAlEmpezar) {
+        this.gradoAlEmpezar = ahora;
+        this.hud.mostrarAscenso(
+          barrasDe(ahora),
+          // El nombre del grado se lee o no se lee, pero las barras son el
+          // mensaje: en Guyrami se enseñan igual y sin una palabra.
+          this.tier.instruments === "none" ? "" : t(`grado.${ahora}` as never),
+        );
+        this.audio.cue("achieved");
+        return;
+      }
       const final = reconocer(this.galones.lista);
       this.hud.mostrarFinDeVuelo(
         this.galones.lista,
@@ -3609,8 +3643,13 @@ export class Game {
      * Y en un campo particular no hay coche: no lo hay de verdad. El sígame
      * existe porque un aeropuerto tiene cincuenta calles y aviones grandes
      * moviéndose, no porque sí. Ver `Aerodrome.privado`.
+     *
+     * Pero sí hay quien te sale a buscar. Allí es una bici, y una bici no se
+     * pone delante de un avión que va a despegar: **solo sale a la vuelta**,
+     * cuando ya tocaste tierra y hay que llegar hasta el puesto. Ir de ida por
+     * un campo que se ve entero desde el puesto no necesita guía.
      */
-    if (this.plan && this.tier.sigueme && !this.scenario.aerodrome?.privado) {
+    if (this.plan && this.tier.sigueme) {
       this.sigueme.ponerRuta(this.plan.rutaVisible());
       /*
        * **Está antes de arrancar, y eso importa.**
@@ -3620,27 +3659,32 @@ export class Game {
        * **antes**, se pone delante y espera: quien lo ve ahí parado ya sabe,
        * sin que nadie se lo diga, que hay que ir detrás de él.
        */
-      const rodando =
-        fase === "estacionado" ||
-        fase === "arrancando" ||
-        fase === "rodando" ||
-        fase === "esperando" ||
-        /*
-         * **Y no en «autorizado»: un sígame no entra en la pista.**
-         *
-         * Con la luz verde dada, el coche volvía a salir y se ponía delante
-         * para llevarte al eje — «el coche se vuelve a mostrar después de
-         * haberme dado paso, para guiarme por encima del césped»—. Un coche de
-         * plataforma deja al avión en el punto de espera y se aparta: de ahí
-         * en adelante manda la torre, y en la pista no hay más que aviones.
-         */
-        // **Y frenando en la pista, que es donde desaparecía.** «Se ve bien,
-        // pero desaparece en la pista de aterrizaje»: en esa fase el coche no
-        // estaba activo, así que justo cuando hay que decidir por dónde salir
-        // no había nadie delante. Ahora está, esperando en la salida.
-        fase === "aterrizado" ||
-        fase === "abandonando" ||
-        fase === "a-plataforma";
+      const enBici = this.sigueme.enBici;
+      const rodando = enBici
+        ? // La bici, solo de vuelta. Ver arriba.
+          fase === "aterrizado" ||
+          fase === "abandonando" ||
+          fase === "a-plataforma"
+        : fase === "estacionado" ||
+          fase === "arrancando" ||
+          fase === "rodando" ||
+          fase === "esperando" ||
+          /*
+           * **Y no en «autorizado»: un sígame no entra en la pista.**
+           *
+           * Con la luz verde dada, el coche volvía a salir y se ponía delante
+           * para llevarte al eje — «el coche se vuelve a mostrar después de
+           * haberme dado paso, para guiarme por encima del césped»—. Un coche de
+           * plataforma deja al avión en el punto de espera y se aparta: de ahí
+           * en adelante manda la torre, y en la pista no hay más que aviones.
+           */
+          // **Y frenando en la pista, que es donde desaparecía.** «Se ve bien,
+          // pero desaparece en la pista de aterrizaje»: en esa fase el coche no
+          // estaba activo, así que justo cuando hay que decidir por dónde salir
+          // no había nadie delante. Ahora está, esperando en la salida.
+          fase === "aterrizado" ||
+          fase === "abandonando" ||
+          fase === "a-plataforma";
       /*
        * **Y si estamos frenando en la pista pero no hay salida que esperar, el
        * coche no sale.**
@@ -3651,11 +3695,26 @@ export class Game {
        * justo lo que se arregló: se le acaba pasando por encima.
        */
       const espera = fase === "aterrizado" ? this.bocaDeLaSalida() : null;
+      const donde = this.sigueme.donde;
+      const aQue = donde
+        ? Math.hypot(donde.x - s.position.x, donde.z - s.position.z)
+        : Infinity;
+      /*
+       * **Y a la bici se le deja sitio siempre.**
+       *
+       * El coche se deja atropellar porque es un chiste y porque enseña algo:
+       * en una plataforma no se adelanta. Una persona en bicicleta, no. Así
+       * que en cuanto la tenés encima —el doble de lo que sería atropello— se
+       * echa a un lado y te deja pasar, y el percance de más abajo no se le
+       * aplica. Lo que aprende quien juega sigue siendo lo mismo: detrás de
+       * quien te guía, no encima.
+       */
+      const cede = gesto !== null || (enBici && aQue < ATROPELLO * 2.5);
       this.sigueme.paso(
         dt,
         { x: s.position.x, z: s.position.z },
         rodando && s.onGround && !(fase === "aterrizado" && !espera),
-        gesto !== null,
+        cede,
         (x, z) => this.terrain.sampleHeight(x, z),
         espera,
       );
@@ -3672,7 +3731,7 @@ export class Game {
        * Ocho metros: la envergadura de la Óga 172 son once, así que esto es
        * tocarlo con el tren, no pasarle cerca.
        */
-      const coche = this.sigueme.donde;
+      const coche = enBici ? null : this.sigueme.donde;
       if (coche && s.onGround && s.airspeed > ROCE) {
         const d = Math.hypot(coche.x - s.position.x, coche.z - s.position.z);
         if (d < ATROPELLO) this.sufrirPercance("coche");

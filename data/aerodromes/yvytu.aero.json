@@ -5,11 +5,11 @@
   "source": {
     "osm": null,
     "extracted": "2026-09-06",
-    "note": "Aeródromo inventado, dibujado a mano para Granja Óga. No sale de OpenStreetMap: no hay geometría de terceros en este fichero."
+    "note": "Aeródromo inventado, dibujado a mano para Granja Óga. No sale de OpenStreetMap: no hay geometría de terceros en este fichero. El origen es el punto real de la granja, en San José Obrero (Capiibary, Santaní)."
   },
   "origin": {
-    "lat": -25.3,
-    "lon": -57.32
+    "lat": -24.830009,
+    "lon": -56.147041
   },
   "elevationM": 138.0,
   "runways": [

@@ -1159,6 +1159,41 @@ export class Hud {
   }
 
   /**
+   * Y el final que más importa: **has subido de grado**.
+   *
+   * Se enseña en la misma caja, con la hombrera del grado nuevo —no la de los
+   * galones del vuelo— y su nombre. Hasta hoy esto pasaba en silencio: se
+   * entraba al cuaderno un día cualquiera y ya ponía «Comandante», que es
+   * tirar a la basura el único momento del juego que de verdad significa algo.
+   *
+   * Va con la manga grande y sin cifras, como todo lo demás de esta pantalla:
+   * la barra nueva **es** el mensaje.
+   */
+  mostrarAscenso(barras: number, nombre: string): void {
+    if (!this.fin) return;
+    const manga = pick(this.root, "fin-manga");
+    manga.hidden = false;
+    manga.innerHTML = `
+      <svg viewBox="0 0 48 ${MANGA_ALTO}" role="img" aria-label="${t(
+        "galon.manga",
+      )}">
+        <rect class="manga__tela" x="4" y="2" width="40" height="28" rx="6" />
+        <rect class="manga__puno" x="4" y="24" width="40" height="6" rx="3" />
+        ${Array.from({ length: barras }, (_, i) => barraDeGalon(i)).join("")}
+      </svg>
+    `;
+    const texto = pick(this.root, "fin-frase");
+    texto.textContent = nombre;
+    texto.hidden = !nombre;
+    texto.classList.add("fin__frase--ascenso");
+    const otra = pick(this.root, "fin-otra");
+    otra.setAttribute("aria-label", t("fin.otra"));
+    pick(this.root, "fin-otra-texto").textContent = nombre ? t("fin.otra") : "";
+    this.fin.hidden = false;
+    this.root.classList.add("hud--fin");
+  }
+
+  /**
    * El otro final: el percance.
    *
    * **Misma caja y mismo botón que el final bueno**, y eso es deliberado: un
@@ -1203,6 +1238,7 @@ export class Hud {
   /** Y se quita. Otro vuelo, otra manga. */
   cerrarFinDeVuelo(): void {
     if (this.fin) this.fin.hidden = true;
+    pick(this.root, "fin-frase").classList.remove("fin__frase--ascenso");
     this.root.classList.remove("hud--fin");
   }
 
