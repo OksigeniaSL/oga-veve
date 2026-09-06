@@ -51,6 +51,19 @@ export interface Tier {
    * en un aeropuerto de verdad cuando el piloto conoce el campo.
    */
   sigueme: boolean;
+  /**
+   * Si se dibuja el circuito de tráfico en el aire.
+   *
+   * La misma escalera de siempre: en los dos peldaños de abajo la vuelta va
+   * dibujada con su hilo de puntos y se sigue como se sigue una raya en el
+   * suelo; de Taguato en adelante **hay que saberla**, que es exactamente lo
+   * que pasa en un aeropuerto de verdad — el circuito no está pintado en el
+   * cielo, está en la cabeza del piloto y en la carta del campo.
+   *
+   * Lo que no cambia con el peldaño es el circuito: se vuela igual en los
+   * cuatro. Ver `world/circuito.ts`.
+   */
+  circuito: boolean;
 }
 
 export const GUYRAMI: Tier = {
@@ -80,6 +93,7 @@ export const GUYRAMI: Tier = {
   instruments: "none",
   units: "metric",
   sigueme: true,
+  circuito: true,
 };
 
 export const TUKA: Tier = {
@@ -100,6 +114,7 @@ export const TUKA: Tier = {
   // Todavía viene, pero aquí ya hay raya amarilla y letras que leer: el coche
   // es la red, no el camino.
   sigueme: true,
+  circuito: true,
 };
 
 export const TAGUATO: Tier = {
@@ -127,6 +142,7 @@ export const TAGUATO: Tier = {
   // Aquí se acabó: el plano de rodaje es la lección, y con un coche delante no
   // hay plano que aprender.
   sigueme: false,
+  circuito: false,
 };
 
 export const TAGUATO_RUVICHA: Tier = {
@@ -138,6 +154,7 @@ export const TAGUATO_RUVICHA: Tier = {
   instruments: "full",
   units: "aeronautical",
   sigueme: false,
+  circuito: false,
 };
 
 export const TIERS: readonly Tier[] = [GUYRAMI, TUKA, TAGUATO, TAGUATO_RUVICHA];

@@ -41,6 +41,11 @@ import {
   crearAproximacion,
   type Aproximacion,
 } from "./world/aproximacion";
+import {
+  crearCircuito,
+  type Circuito,
+  type TramoDeCircuito,
+} from "./world/circuito";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
@@ -431,6 +436,14 @@ const FINAL_DE_PISTA = 40;
  */
 const ALTURA_DE_TOMA = 18;
 
+/**
+ * Por debajo de qué altura sobre la pista el circuito se calla, m.
+ *
+ * Sesenta: por debajo de eso se está despegando o aterrizando, y las dos
+ * cosas tienen su propia lección en la pantalla. Ver `seguirElCircuito`.
+ */
+const ALTO_PARA_EL_CIRCUITO = 60;
+
 const ANTES_DEL_UMBRAL = 300;
 
 /**
@@ -579,6 +592,16 @@ export class Game {
    * que es y se quedan donde tienen que estar.
    */
   private aproximacion: Aproximacion | null = null;
+  /**
+   * El circuito de tráfico dibujado en el aire, si este peldaño lo dibuja.
+   *
+   * Se rehace con la aproximación, y por el mismo motivo: los dos cuelgan de
+   * **qué cabecera está en uso**, y eso lo decide el viento. Ver
+   * `world/circuito.ts`.
+   */
+  private circuito: Circuito | null = null;
+  /** En qué tramo del circuito se dijo por última vez que estaba. */
+  private tramoDelCircuito: TramoDeCircuito | null = null;
   /**
    * Segundos desde la última vez que se preguntó por los edificios de la foto.
    *
@@ -1531,6 +1554,8 @@ export class Game {
           // Del fichero al mundo: la Y del norte es la Z negativa.
           puntos: e.polygon.map(([x, y]) => [x, -y] as [number, number]),
         })),
+      /** Los cinco vértices del circuito de tráfico, si lo hay. */
+      circuito: () => this.circuito?.vertices ?? null,
       /** A qué caída se tocó, m/s. Para el banco y para las sondas. */
       caida: () => this.landing.caidaAlTocar,
       /** Los pares puesto + espera que se consideraron, con sus metros. */
@@ -2335,6 +2360,15 @@ export class Game {
     const pista = this.scenario.aerodrome?.runways[0];
     if (!pista) return;
     /*
+     * **El circuito, primero de todo.**
+     *
+     * Va antes de la puerta de las luces porque no depende de ellas: un campo
+     * de hierba sin balizas ni PAPI **también tiene circuito** —de hecho es
+     * donde más se nota, porque no hay nada más que mirar—. Estaba después y
+     * en Yvytu Rape no salía ninguno.
+     */
+    this.ponerCircuito();
+    /*
      * **Y solo donde las hay.**
      *
      * Esto se montaba en cualquier aeródromo, y en un campo de hierba de
@@ -2368,6 +2402,86 @@ export class Game {
      */
     this.hayPapi = !!this.aproximacion?.grupo.getObjectByName("papi");
     this.papiEnPantalla = null;
+  }
+
+  /**
+   * El circuito de tráfico de la cabecera en uso.
+   *
+   * Se monta con la aproximación porque depende de lo mismo —qué cabecera se
+   * está usando— y se rehace cuando cambia el viento: un circuito dibujado
+   * para la otra punta de la pista es un circuito que lleva al revés.
+   */
+  private ponerCircuito(): void {
+    if (this.circuito) {
+      this.scene.remove(this.circuito.grupo);
+      this.circuito.dispose();
+      this.circuito = null;
+    }
+    this.tramoDelCircuito = null;
+    if (!this.tier.circuito) return;
+    this.circuito = crearCircuito(
+      this.scenario.runway,
+      this.terrain.runwayElevation,
+      (x, z) => this.terrain.sampleHeight(x, z),
+    );
+    this.circuito.grupo.visible = false;
+    this.scene.add(this.circuito.grupo);
+  }
+
+  /**
+   * El circuito, mientras se vuela: se ve cuando sirve y dice en qué tramo vas.
+   *
+   * **Se ve desde que estás alineado**, y no desde que despegás: la gracia de
+   * un circuito es verlo entero **antes** de meterse en él, igual que el coche
+   * del sígame está delante antes de arrancar. Y se apaga en cuanto se toma
+   * tierra, porque en el suelo manda la raya verde.
+   *
+   * Los tramos se cantan al entrar en cada uno, con su dibujo y su nombre de
+   * verdad. Solo hacia delante y solo una vez cada uno: quien se sale y vuelve
+   * a entrar en el mismo tramo no necesita que se lo repitan.
+   */
+  private seguirElCircuito(): void {
+    const c = this.circuito;
+    if (!c) return;
+    const s = this.flight.state;
+    const fase = this.faseAnunciada;
+    const enElAire = !s.onGround;
+    const preparando =
+      s.onGround && (fase === "alineando" || fase === "despegando");
+    c.grupo.visible = enElAire || preparando;
+    if (!enElAire) {
+      // En tierra se olvida lo dicho, que la vuelta siguiente empieza de cero.
+      if (fase !== "despegando") this.tramoDelCircuito = null;
+      return;
+    }
+    /*
+     * **Y no se canta ningún tramo pegado al suelo.**
+     *
+     * El circuito pasa por encima de la pista —su primer tramo **es** la
+     * subida por el eje—, así que cruzando el umbral a diez metros para
+     * aterrizar, la máquina veía «estás en la subida» y sacaba su tarjeta
+     * encima de la que de verdad tocaba: «ya podés tocar». Lo cazó el banco a
+     * la primera. Por debajo de sesenta metros sobre la pista no hay circuito
+     * que valga: o estás despegando o estás aterrizando, y las dos cosas
+     * tienen su propia lección.
+     */
+    if (s.position.y - this.terrain.runwayElevation < ALTO_PARA_EL_CIRCUITO)
+      return;
+    const tramo = c.tramoEn(s.position.x, s.position.z);
+    if (!tramo || tramo === this.tramoDelCircuito) return;
+    /*
+     * **Y no se canta el tramo si ya estás en final.** La lección de ahí en
+     * adelante son los aros y el hilo de la senda, y una tarjeta diciendo
+     * «girá a la izquierda» encima de eso sería mandar dos cosas a la vez.
+     */
+    if (fase === "final" || fase === "aterrizado") return;
+    this.tramoDelCircuito = tramo;
+    this.hud.senal.mostrar(
+      `circuito-${tramo}`,
+      this.tier.instruments === "none" ? "" : t(`circuito.${tramo}` as never),
+      null,
+      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+    );
   }
 
   /**
@@ -3415,6 +3529,7 @@ export class Game {
       }
     }
     this.explicarElPapi(acercandose);
+    this.seguirElCircuito();
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);

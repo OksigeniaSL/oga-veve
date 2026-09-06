@@ -1795,6 +1795,7 @@ const umbral = await page.evaluate(async () => {
     await new Promise((r) => setTimeout(r, 100));
   }
 
+  const faseArriba = `${o.fase()}/${o.estado().onGround ? "suelo" : "aire"}/${o.estado().airspeed.toFixed(0)}`;
   const p = o.puntoDeFinal(80);
   o.colocar(p.x, globalThis.__umbral.y + 10, p.z, 30, p.h);
   await new Promise((r) => setTimeout(r, 400));
@@ -1822,7 +1823,7 @@ const umbral = await page.evaluate(async () => {
     terreno,
     ultima: o.tarjeta().dibujo,
     // Para saber por qué, si no sale: altura sobre la pista, caída y suelo.
-    como: `${puesto} · alto ${(s.position.y - globalThis.__umbral.y).toFixed(0)} m · vs ${s.verticalSpeed.toFixed(1)} · ${s.onGround ? "posado" : "volando"} · fase ${o.fase()}`,
+    como: `${puesto} · arriba ${faseArriba} · alto ${(s.position.y - globalThis.__umbral.y).toFixed(0)} m · vs ${s.verticalSpeed.toFixed(1)} · ${s.onGround ? "posado" : "volando"} · fase ${o.fase()} · v ${s.airspeed.toFixed(0)}`,
   };
 });
 comprobar(

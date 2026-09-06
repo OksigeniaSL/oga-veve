@@ -395,6 +395,42 @@ const papi = (blancas: number): string => {
   return icono(`${luces}${gesto}`);
 };
 
+/**
+ * El circuito de tráfico: la misma figura siempre, con un tramo encendido.
+ *
+ * Son cuatro dibujos y en realidad son uno: la vuelta entera dibujada floja
+ * —la pista en medio y el rectángulo alrededor— y encima, en grueso y con su
+ * punta de flecha, **el tramo que tocás ahora**. Así el que juega no aprende
+ * cuatro señales sueltas: aprende una figura, y ve dónde está dentro de ella.
+ *
+ * Y la vuelta va por la izquierda, como en el mundo entero: mirando el dibujo
+ * de frente, se sube por el eje, se gira al lado de la mano izquierda y se
+ * baja por fuera. Ver `world/circuito.ts`.
+ */
+const TRAZO: Record<string, string> = {
+  subida: "M15.5 18 V4",
+  cruzado: "M15.5 4 H7.5",
+  encola: "M7.5 4 V20",
+  base: "M7.5 20 H15.5",
+};
+
+const PUNTA: Record<string, string> = {
+  subida: "M15.5 2.2 L13.4 5.2 H17.6 Z",
+  cruzado: "M5.5 4 L8.5 1.9 V6.1 Z",
+  encola: "M7.5 21.8 L5.4 18.8 H9.6 Z",
+  base: "M17.6 20 L14.6 17.9 V22.1 Z",
+};
+
+const circuito = (tramo: string): string =>
+  icono(`
+  <path d="M15.5 19 V4 H7.5 V20 H15.5" fill="none" stroke="currentColor"
+        stroke-width="1.3" stroke-linejoin="round" opacity="0.3" />
+  <rect x="14.4" y="7" width="2.2" height="11" rx="1.1" opacity="0.5" />
+  <path d="${TRAZO[tramo]}" fill="none" stroke="currentColor" stroke-width="2.4"
+        stroke-linecap="round" />
+  <path d="${PUNTA[tramo]}" />
+`);
+
 const DIBUJOS: Record<string, string> = {
   llave: LLAVE,
   helice: HELICE,
@@ -414,6 +450,10 @@ const DIBUJOS: Record<string, string> = {
   frustrada: FRUSTRADA,
   edificio: EDIFICIO,
   fuera: FUERA_DE_PISTA,
+  "circuito-subida": circuito("subida"),
+  "circuito-cruzado": circuito("cruzado"),
+  "circuito-encola": circuito("encola"),
+  "circuito-base": circuito("base"),
   papi0: papi(0),
   papi1: papi(1),
   papi2: papi(2),
