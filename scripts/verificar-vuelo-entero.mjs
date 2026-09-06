@@ -224,7 +224,7 @@ const vuelo = await page.evaluate(async () => {
     }
     if (i % 20 === 0) {
       linea.push(
-        `${t.toFixed(0)}s ${fase} ${s.airspeed.toFixed(0)}/${(o.rodaje() || 0).toFixed(0)}m/s gas ${c.throttle.toFixed(1)} fr ${c.brakes.toFixed(0)} ${alto(s).toFixed(0)}m ${tarjeta.dibujo || "—"}`,
+        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${tarjeta.dibujo || "—"}`,
       );
     }
 
@@ -265,40 +265,71 @@ const vuelo = await page.evaluate(async () => {
       }
     } else if (etapa === "subir") {
       /*
-       * Se sube en el eje hasta la altura de circuito y se va a buscar el
-       * punto de entrada en final, cuatro kilómetros por delante del umbral.
+       * Se sube a la altura de circuito y se va a buscar la entrada en final.
        * El avión da la vuelta él solo por el camino: es lo que hace cualquiera
        * que despega y vuelve a entrar.
+       *
+       * **Y el cambio a final se decide en coordenadas de pista, no por
+       * cercanía a un punto.** Apuntando a un punto y esperando a estar a
+       * seiscientos metros de él, el avión se quedaba **orbitándolo**: a
+       * treinta y seis metros por segundo y con el giro acotado, un punto se
+       * puede rodear eternamente sin llegar nunca. Doce minutos de vuelo así,
+       * subiendo, y las cinco comprobaciones de después culpando al juego.
        */
-      c.throttle = 0.9;
-      c.elevator = Math.max(-0.4, Math.min(0.5, (CRUCERO - alto(s)) * 0.01));
-      const p = o.puntoDeFinal(2500);
+      const r = o.pista();
+      const hp = (r.heading * Math.PI) / 180;
+      const fx = Math.sin(hp);
+      const fz = -Math.cos(hp);
+      const along = (s.position.x - r.x) * fx + (s.position.z - r.z) * fz;
+      const alUmbral = -r.length / 2 - along;
+      // Y el gas se afloja al llegar arriba: con el motor a tope este modelo
+      // sube aunque la palanca diga que no.
+      c.throttle = alto(s) > CRUCERO ? 0.6 : 0.9;
+      c.elevator = Math.max(-0.5, Math.min(0.5, (CRUCERO - alto(s)) * 0.02));
+      const p = o.puntoDeFinal(3000);
       c.aileron = p ? alPunto(s, p.x, p.z) : 0;
-      if (p && Math.hypot(p.x - s.position.x, p.z - s.position.z) < 600) {
-        etapa = "final";
-      }
+      if (alUmbral > 800 && alUmbral < 4000) etapa = "final";
     } else if (etapa === "final") {
       /*
-       * En final: se apunta al umbral y se baja por la senda de tres grados.
-       * La altura que toca sale de la distancia, que es la definición de una
-       * senda de planeo.
+       * **En final se vuela con coordenadas de pista, no con distancias.**
+       *
+       * La primera versión apuntaba al umbral y sacaba la altura de la
+       * distancia a él. Y una distancia no tiene signo: en cuanto se cruza la
+       * cabecera vuelve a crecer, así que la senda subía y el avión se quedaba
+       * **volando a un metro del asfalto para siempre** —treinta metros por
+       * segundo, gas a fondo, once minutos— sin tocar tierra. Y como el rumbo
+       * de respaldo solo mantiene el rumbo y no el eje, volaba paralelo a la
+       * pista y por fuera, así que ni siquiera contaba como estar en ella.
+       *
+       * Con las coordenadas de la pista —cuánto llevas recorrido a lo largo y
+       * cuánto te has ido de lado— las dos cosas salen solas: la altura es lo
+       * que queda hasta el umbral, y el punto al que apuntar está en el eje,
+       * trescientos metros por delante.
        */
-      const p = o.puntoDeFinal(0);
-      const d = p ? Math.hypot(p.x - s.position.x, p.z - s.position.z) : 0;
-      const objetivo = Math.max(0, d * SENDA);
+      const r = o.pista();
+      const hp = (r.heading * Math.PI) / 180;
+      const fx = Math.sin(hp);
+      const fz = -Math.cos(hp);
+      const dx = s.position.x - r.x;
+      const dz = s.position.z - r.z;
+      const along = dx * fx + dz * fz;
+      // El umbral por el que se entra está a media pista por detrás del centro.
+      const alUmbral = -r.length / 2 - along;
+      const objetivo = Math.max(0, alUmbral * SENDA);
       c.elevator = Math.max(-0.5, Math.min(0.4, (objetivo - alto(s)) * 0.02));
-      /*
-       * La velocidad se sostiene a mano, que es lo que hace quien vuela: el
-       * gas no significa lo mismo en los dos modelos —en el de Guyrami **es**
-       * la velocidad y en el de coeficientes es empuje—, así que se persigue
-       * la velocidad y no un número de gas.
-       */
+      // Sobre la pista se corta el gas: eso es aterrizar. Y antes, la
+      // velocidad de aproximación a mano, que el gas no significa lo mismo en
+      // los dos modelos de vuelo.
+      const quiere = alUmbral < 60 ? 24 : 30;
       c.throttle =
-        s.airspeed < 30
+        s.airspeed < quiere
           ? Math.min(1, c.throttle + 0.05)
           : Math.max(0, c.throttle - 0.05);
-      const mira = o.puntoDeFinal(Math.max(-400, d - 600));
-      c.aileron = mira ? alPunto(s, mira.x, mira.z) : alRumbo(s, rumboPista);
+      // Y el eje, apuntando a un punto trescientos metros por delante de donde
+      // se está: eso corrige el desvío en vez de solo mantener el rumbo.
+      const tx = r.x + fx * (along + 300);
+      const tz = r.z + fz * (along + 300);
+      c.aileron = alPunto(s, tx, tz);
       if (s.onGround && s.onRunway) {
         toco = t;
         etapa = "frenar";
@@ -344,7 +375,7 @@ const vuelo = await page.evaluate(async () => {
     segundos: i * PASO,
     fases: [...fases].join(" "),
     // El principio y el final: los dos sitios donde se atasca un vuelo.
-    linea: [...linea.slice(0, 25), "…", ...linea.slice(-20)],
+    linea: [...linea.slice(0, 12), "…", ...linea.slice(60, 95)],
     mudoMaximo: +mudoMaximo.toFixed(1),
     mudoDonde,
     vueltaMetros: Math.round(vueltaMetros),
