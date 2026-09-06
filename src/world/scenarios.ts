@@ -551,21 +551,50 @@ export const YVYTU_RAPE: Scenario = {
   // más de lo que hace falta para un circuito de tráfico.
   size: 12000,
   segments: 384,
-  // El campo paraguayo: lomas de nada. Lo más alto de la zona no llega a los
-  // doscientos metros y el aeródromo está a ciento treinta y ocho.
-  reliefHeight: 190,
+  /*
+   * **Y aquí el relieve ya no se inventa: se mide.**
+   *
+   * Este campo está en un sitio de verdad —San José Obrero, cerca de
+   * Capiibary, en el departamento de San Pedro— y desde que se supo el punto
+   * exacto, el terreno sale de Copernicus como el de Asunción y el de
+   * Tenerife: `data/terrain/yvytu-rape.bin`. Las lomas que se ven volando son
+   * las que hay.
+   *
+   * La semilla y los tres números de aquí abajo se quedan porque el escenario
+   * los pide, pero **no los usa nadie** mientras haya relieve medido: ver
+   * `buildHeightfield`. Sirven de red por si el fichero no llega, y por eso
+   * el techo es ahora el de verdad —cuatrocientos veinte, que es lo más alto
+   * del anillo— y no los ciento noventa de cuando el terreno se inventaba: si
+   * un día falta el fichero, lo generado tiene que parecerse a lo que
+   * sustituye, con su agua a cien metros y sus árboles a media ladera.
+   */
+  reliefHeight: 420,
   reliefScale: 4.4,
   ridgeMix: 0.1,
-  // Un arroyo, no un río: por aquí el agua va estrecha y con árboles al lado.
-  waterLevel: 62,
+  /*
+   * El agua, muy abajo y solo en el anillo lejano.
+   *
+   * Medido: en los doce kilómetros de alrededor del campo, lo más bajo está a
+   * ciento ochenta y cuatro metros, y en los setenta y dos del horizonte, a
+   * ochenta y siete. Así que a cien metros no hay una gota de agua donde se
+   * vuela y sí una línea de río lejísimos, que es exactamente lo que hay:
+   * el Jejuí queda a más de veinte kilómetros.
+   */
+  waterLevel: 100,
   riverWidth: 260,
+  /*
+   * Y las bandas de color, repartidas sobre lo que mide el terreno de verdad:
+   * de ciento ochenta y cuatro a trescientos sesenta y siete metros cerca, y
+   * hasta cuatrocientos veintinueve en el anillo. El aeródromo, a doscientos
+   * sesenta y ocho, cae justo en el verde de en medio.
+   */
   bands: [
-    { from: -20, colour: 0x3f6b45 },
-    { from: 70, colour: 0x58864d },
-    { from: 105, colour: 0x749c56 },
-    { from: 140, colour: 0x94ab62 },
-    { from: 175, colour: 0xb7a97a },
-    { from: 205, colour: 0xa89688 },
+    { from: 80, colour: 0x3f6b45 },
+    { from: 190, colour: 0x58864d },
+    { from: 240, colour: 0x749c56 },
+    { from: 290, colour: 0x94ab62 },
+    { from: 340, colour: 0xb7a97a },
+    { from: 390, colour: 0xa89688 },
   ],
   water: 0x3e7f9c,
   fill: 0x4d6b45,
@@ -573,8 +602,20 @@ export const YVYTU_RAPE: Scenario = {
   fog: { colour: 0xd2e0ea, density: 0.00005 },
   sun: { azimuth: 130, elevation: 46 },
   runway: pistaDe(YVYTU as unknown as Aerodrome),
-  // Paraguay: declinación oeste de unos trece grados. Con el umbral 09
-  // apuntando a 77° verdaderos, el designador sale redondo.
+  /*
+   * Paraguay: declinación oeste de unos trece grados. Con el umbral 15
+   * apuntando a 140° verdaderos, el designador sale redondo: 140 + 13 = 153,
+   * y una pista se llama por las dos primeras cifras de su rumbo magnético.
+   *
+   * El rumbo no se eligió: **lo eligió el terreno**. Con el relieve medido
+   * puesto, se barrió el campo de alrededor buscando novecientos metros llanos
+   * con las dos aproximaciones limpias —que es exactamente lo que hace quien
+   * decide dónde poner una pista— y el mejor trozo salió un kilómetro al este
+   * del casco de la granja, apuntando al sureste. En el sitio anterior había
+   * diecisiete metros de desnivel a lo largo de la pista y una loma que
+   * obligaba a levantar los aros veintisiete metros sobre la senda; aquí, doce
+   * y dos.
+   */
   magneticVariation: 13,
   aerodrome: YVYTU as unknown as Aerodrome,
 };

@@ -1,0 +1,13 @@
+{
+  "id": "yvytu-rape-lejos",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "origen": {
+    "lat": -24.830009,
+    "lon": -56.147041
+  },
+  "tamanoM": 72000,
+  "resolucion": 385,
+  "minM": 87,
+  "maxM": 429
+}

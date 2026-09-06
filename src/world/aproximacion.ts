@@ -31,14 +31,29 @@ import {
   Matrix4,
   MeshBasicMaterial,
   SphereGeometry,
-} from 'three';
-import type { Pista, Punto, Umbral } from './aerodrome';
+} from "three";
+import type { Pista, Punto, Umbral } from "./aerodrome";
 
 /** Un umbral del que sí sabemos dónde está. */
 type Situado = Umbral & { readonly xy: Punto };
 
 /** Los cuatro ángulos del PAPI, en grados, del más cerca de la pista al más lejos. */
 const ANGULOS = [2.5, 2.8333, 3.1667, 3.5];
+
+/**
+ * Cuántas de las cuatro luces se ven blancas desde un ángulo dado, de 0 a 4.
+ *
+ * Es **la lectura del PAPI**, y la usan dos: las luces del mundo, para
+ * pintarse, y la pantalla, para explicarlas. Tiene que salir de un solo sitio
+ * o acabarían diciendo cosas distintas del mismo avión.
+ *
+ * Cuatro blancas es venir alto; cuatro rojas, bajo; dos y dos, en la senda. La
+ * unidad más cercana a la pista es la del ángulo más pequeño, así que las
+ * blancas se cuentan desde ella hacia fuera.
+ */
+export function blancasDePapi(grados: number): number {
+  return ANGULOS.filter((a) => grados >= a).length;
+}
 
 /** Blanco de luz y rojo de luz. Ni uno ni otro son el blanco y el rojo del HUD. */
 const BLANCO = 0xfff4e2;
@@ -101,7 +116,7 @@ export function crearAproximacion(
   const ancho = pista.widthM ?? 45;
   const cotaUmbral = altura(entrada.xy);
   const grupo = new Group();
-  grupo.name = 'aproximacion';
+  grupo.name = "aproximacion";
 
   /*
    * Las luces van al nivel del umbral, no al del suelo que tengan debajo.
@@ -117,7 +132,11 @@ export function crearAproximacion(
     puntos.push([x, Math.max(cotaUmbral, suelo) + 0.6, -y]);
   };
 
-  for (let d = PASO_APROXIMACION; d <= LARGO_APROXIMACION; d += PASO_APROXIMACION) {
+  for (
+    let d = PASO_APROXIMACION;
+    d <= LARGO_APROXIMACION;
+    d += PASO_APROXIMACION
+  ) {
     // Hacia fuera del umbral: al contrario del eje, que apunta pista adentro.
     const cx = entrada.xy[0] - ux * d;
     const cy = entrada.xy[1] - uy * d;
@@ -138,7 +157,7 @@ export function crearAproximacion(
     new MeshBasicMaterial({ color: BLANCO }),
     puntos.length,
   );
-  fila.name = 'luces-aproximacion';
+  fila.name = "luces-aproximacion";
   puntos.forEach((p, k) => {
     m.makeTranslation(p[0], p[1], p[2]);
     fila.setMatrixAt(k, m);
@@ -149,8 +168,12 @@ export function crearAproximacion(
    * El PAPI, a trescientos metros pista adentro y al costado izquierdo visto
    * desde la aproximación, que es donde va.
    */
-  const papi = new InstancedMesh(new SphereGeometry(1.1, 8, 6), new MeshBasicMaterial(), 4);
-  papi.name = 'papi';
+  const papi = new InstancedMesh(
+    new SphereGeometry(1.1, 8, 6),
+    new MeshBasicMaterial(),
+    4,
+  );
+  papi.name = "papi";
   const luces: { x: number; y: number; z: number }[] = [];
   for (let k = 0; k < 4; k++) {
     const d = 300;
@@ -175,7 +198,8 @@ export function crearAproximacion(
        * Pegado a la luz no hay ángulo que valga —la cuenta se dispara— así que
        * de cerca se dejan como se quedaron. A un kilómetro y medio ya se ve.
        */
-      const angulo = suelo < 50 ? ANGULOS[k]! : (Math.atan2(y - l.y, suelo) * 180) / Math.PI;
+      const angulo =
+        suelo < 50 ? ANGULOS[k]! : (Math.atan2(y - l.y, suelo) * 180) / Math.PI;
       papi.setColorAt(k, tono.setHex(angulo >= ANGULOS[k]! ? BLANCO : ROJO));
     }
     if (papi.instanceColor) papi.instanceColor.needsUpdate = true;

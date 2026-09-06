@@ -361,6 +361,40 @@ const SENALERO_DESPACIO = senalero(brazos(4.2, 14.6, 19.8, 14.6));
 /** Frenos puestos: el aspa, pero abajo. Ya está, llegaste. */
 const SENALERO_FRENOS = senalero(brazos(16.4, 15.4, 7.6, 15.4));
 
+/**
+ * El PAPI, dibujado: cuatro luces y qué hacer con ellas.
+ *
+ * Es el instrumento más bonito que tiene la aviación y hasta hoy estaba en el
+ * mundo sin que nadie lo explicara: cuatro bolitas al lado de la pista que
+ * cambiaban de color y nadie decía por qué. La tarjeta lo dice como se dice a
+ * un piloto: **enseñando las luces que estás viendo** y una flecha con lo que
+ * hay que hacer.
+ *
+ * Las blancas van llenas y las rojas oscuras con su filo, así que la tarjeta
+ * se lee igual sin distinguir el rojo del verde — que es medio hombre de cada
+ * doce. En el mundo las luces son rojas y blancas de verdad, como manda; aquí
+ * lo que hay que entender es **cuántas de cada** y hacia dónde.
+ */
+const papi = (blancas: number): string => {
+  const luces = [0, 1, 2, 3]
+    .map(
+      (i) =>
+        `<circle cx="${3.4 + i * 5.7}" cy="7.5" r="2.5"${
+          i < 4 - blancas ? ' class="senal__roja"' : ""
+        } />`,
+    )
+    .join("");
+  // La flecha dice qué hacer: subir si sobran rojas, bajar si sobran blancas.
+  // Con dos y dos no hay nada que hacer, y entonces lo que sale es el visto.
+  const gesto =
+    blancas >= 3
+      ? '<path d="M12 22 L7 15 h3.4 v-2.4 h3.2 V15 H17 Z" />'
+      : blancas <= 1
+        ? '<path d="M12 12.4 L17 19.4 h-3.4 v2.4 h-3.2 v-2.4 H7 Z" />'
+        : '<path d="M6.2 17.2 l1.9-1.9 2.5 2.5 5.3-5.3 1.9 1.9-7.2 7.2 Z" />';
+  return icono(`${luces}${gesto}`);
+};
+
 const DIBUJOS: Record<string, string> = {
   llave: LLAVE,
   helice: HELICE,
@@ -380,6 +414,11 @@ const DIBUJOS: Record<string, string> = {
   frustrada: FRUSTRADA,
   edificio: EDIFICIO,
   fuera: FUERA_DE_PISTA,
+  papi0: papi(0),
+  papi1: papi(1),
+  papi2: papi(2),
+  papi3: papi(3),
+  papi4: papi(4),
   "aro-alto": ARO_ALTO,
   "aro-bajo": ARO_BAJO,
   "senalero-adelante": SENALERO_ADELANTE,

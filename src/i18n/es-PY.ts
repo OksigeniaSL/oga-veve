@@ -147,6 +147,9 @@ export const ES_PY = {
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   "vuelo.aroAlto": "Pasaste por encima del aro. Bajá un poco",
   "vuelo.aroBajo": "Pasaste por debajo del aro. Subí un poco",
+  "vuelo.papiAlto": "Luces blancas: vas alto, bajá",
+  "vuelo.papiBajo": "Luces rojas: vas bajo, subí",
+  "vuelo.papiBien": "Dos rojas y dos blancas: vas bien",
   "vuelo.bulto": "Por ahí no se pasa: hay un edificio",
   // El final del vuelo. Ninguno es un reproche: ver flight/reconocimiento.ts.
   "fin.llegaste": "¡Llegaste! Ya estás en casa",
