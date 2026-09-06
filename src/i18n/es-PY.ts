@@ -60,6 +60,7 @@ export const ES_PY = {
 
   "scenario.valle.name": "Valle de la Cordillera",
   "scenario.pettirossi.name": "Silvio Pettirossi",
+  "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
   "scenario.chaco.name": "Llanura del Chaco",
   "scenario.tenerife.name": "Tenerife Norte",
 

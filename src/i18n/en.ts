@@ -65,6 +65,7 @@ export const EN: Dictionary = {
 
   "scenario.valle.name": "Cordillera Valley",
   "scenario.pettirossi.name": "Silvio Pettirossi",
+  "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
   "scenario.chaco.name": "Chaco Plain",
   "scenario.tenerife.name": "Tenerife North",
 

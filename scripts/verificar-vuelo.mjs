@@ -749,8 +749,16 @@ const enPista = await page.evaluate(() => {
   );
   return {
     fase: `${o.fase()} av=${globalThis.__av ?? 0}`,
-    delante: enAsfalto.filter((p) => (p.along - yo.along) * Math.sign(1) > 0)
-      .length,
+    delante: enAsfalto.filter((p) => p.along - yo.along > 0).length,
+    /*
+     * **Dónde nace la raya**, que es lo que se ve o no se ve al levantar la
+     * vista. Se miraba cuántos puntos quedaban por delante y eso mide el
+     * tamaño del aeropuerto: en un campo de novecientos metros la salida está
+     * a cincuenta y la ruta se va del asfalto en dos puntos. Lo que hacía daño
+     * era que **el primer punto** estuviera doscientos ochenta y seis metros
+     * detrás, o sea fuera de la pantalla.
+     */
+    naceDetras: ruta.length ? yo.along - ruta[0].along : 0,
     // Los últimos puntos son el giro a la calle de salida: ahí hay que
     // cruzar el borde, para eso es una salida. Lo que no puede es cruzarlo
     // antes, que es lo que hacía la diagonal.
@@ -777,10 +785,27 @@ const enPista = await page.evaluate(() => {
     })(),
   };
 });
+/*
+ * **Y lo que se comprueba es que no nazca por detrás.**
+ *
+ * Se pedían más de tres puntos de ruta sobre la pista por delante, y eso mide
+ * el tamaño del aeropuerto más que otra cosa: en Yvytu Rape la salida está a
+ * cincuenta metros de donde se para el avión, así que la ruta se va del
+ * asfalto en dos puntos y la comprobación salía roja teniendo razón el juego.
+ * Lo que de verdad hacía daño era lo otro: que la raya arrancara doscientos
+ * ochenta y seis metros **detrás**, o sea fuera de la pantalla.
+ */
 comprobar(
-  "la ruta de vuelta tiene pista por delante",
-  enPista.delante > 3,
-  `${enPista.delante} puntos por delante`,
+  "la ruta de vuelta no nace por detrás del avión",
+  /*
+   * Ciento cincuenta metros. No es cero a propósito: la ruta se traza cuando
+   * la fase cambia a «abandonando» y el avión sigue corriendo mientras tanto,
+   * así que a treinta metros por segundo unos segundos de cola son normales y
+   * no se ven —quedan debajo del avión—. Lo que se vigila es lo otro: los
+   * doscientos ochenta y seis metros que dejaban la raya fuera de la pantalla.
+   */
+  enPista.naceDetras < 150,
+  `nace ${enPista.naceDetras.toFixed(0)} m ${enPista.naceDetras < 0 ? "por delante" : "por detrás"}, y hay ${enPista.delante} puntos de pista por delante`,
   "la ruta nacía 286 m por detrás del avión y se iba por la calle paralela",
 );
 comprobar(

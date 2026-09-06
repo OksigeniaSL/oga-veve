@@ -171,6 +171,7 @@ export const GUG: Dictionary = {
   "scenario.valle.name": "Cordillera Valle",
   "scenario.chaco.name": "Chaco Ñu",
   "scenario.pettirossi.name": "Silvio Pettirossi",
+  "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
   "scenario.tenerife.name": "Tenerife Norte",
 
   // ── Ayuda ──────────────────────────────────────────────────────────────
