@@ -144,7 +144,7 @@ const SALTO_A_LA_ESPERA = 40;
 /**
  * Lo menos que se rueda de un puesto a la pista, m.
  *
- * Ochenta. Lo que esto descarta son los pares degenerados: un puesto y un
+ * Sesenta. Lo que esto descarta son los pares degenerados: un puesto y un
  * punto de espera que caen sobre el mismo nudo del grafo dan una «ruta» de dos
  * puntos y cero metros, que es la mejor de todas y va por encima de la hierba.
  *
@@ -156,7 +156,7 @@ const SALTO_A_LA_ESPERA = 40;
  * aeródromo entero y arrancaba el avión ya autorizado en la pista. De que la
  * ruta sea un camino y no un salto se encarga el número de puntos.
  */
-const LO_MINIMO_QUE_SE_RUEDA = 80;
+const LO_MINIMO_QUE_SE_RUEDA = 60;
 
 /**
  * Dónde se da por hecho que el avión ha dejado de correr al aterrizar, m.

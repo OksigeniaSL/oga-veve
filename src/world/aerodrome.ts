@@ -26,6 +26,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   Color,
+  BoxGeometry,
   CylinderGeometry,
   InstancedMesh,
   Matrix4,
@@ -1449,6 +1450,61 @@ function mangas(
  * verdad. Calcularlos del rumbo daría 01 donde pone 02: el número de una
  * pista es su rumbo magnético, y el geométrico no lo es.
  */
+/**
+ * Las balizas de una pista de hierba: dos filas de tablillas blancas.
+ *
+ * Es lo que hay en un campo de verdad, y hace el mismo trabajo que la pintura
+ * —decir dónde está la pista y hasta dónde llega— con la ventaja de que se ve
+ * desde el aire con el sol de frente, que es cuando la pintura desaparece.
+ */
+function balizas(pista: Pista, altura: (p: Punto) => number): Group {
+  const grupo = new Group();
+  grupo.name = "marcas";
+  const umbrales = Object.entries(pista.thresholds)
+    .map((e) => e[1])
+    .filter((u): u is Umbral => !!u?.xy);
+  if (umbrales.length < 2) return grupo;
+  const [a, b] = umbrales as [Umbral, Umbral];
+  const ancho = pista.widthM ?? 18;
+  const largo = Math.hypot(b.xy![0] - a.xy![0], b.xy![1] - a.xy![1]);
+  const ux = (b.xy![0] - a.xy![0]) / largo;
+  const uy = (b.xy![1] - a.xy![1]) / largo;
+
+  /** Cada cuánto va una baliza, m. */
+  const PASO = 50;
+  /**
+   * Y lo que mide cada una: ochenta centímetros de ancho por uno de alto.
+   *
+   * Más grande que la tablilla de verdad, como todo lo que este juego tiene
+   * que verse desde el aire: a media tablilla real no se distingue nada a
+   * doscientos metros, y lo que se busca es que la pista se lea **como una
+   * hilera de puntos blancos** desde la aproximación.
+   */
+  const cuantas = Math.max(2, Math.round(largo / PASO));
+  const total = (cuantas + 1) * 2;
+  const malla = new InstancedMesh(
+    new BoxGeometry(0.8, 1, 0.8),
+    new MeshLambertMaterial({ color: PINTURA }),
+    total,
+  );
+  malla.name = "balizas";
+  const m = new Matrix4();
+  let k = 0;
+  for (let i = 0; i <= cuantas; i++) {
+    const d = (i / cuantas) * largo;
+    for (const lado of [-1, 1]) {
+      const x = a.xy![0] + ux * d - uy * lado * (ancho / 2 + 1.5);
+      const y = a.xy![1] + uy * d + ux * lado * (ancho / 2 + 1.5);
+      m.makeTranslation(x, altura([x, y]) + 0.5, -y);
+      malla.setMatrixAt(k++, m);
+    }
+  }
+  malla.count = k;
+  malla.instanceMatrix.needsUpdate = true;
+  grupo.add(malla);
+  return grupo;
+}
+
 function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   const grupo = new Group();
   grupo.name = "marcas";
@@ -1459,6 +1515,16 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   if (umbrales.length < 2) return grupo;
 
   const ancho = pista.widthM ?? 45;
+  /*
+   * **Una pista de hierba no lleva pintura.**
+   *
+   * No se puede pintar el césped: lo que llevan esos campos son **balizas
+   * blancas** a los lados —conos, tablillas o medios bidones— cada cincuenta
+   * metros, y con eso se ve dónde empieza, dónde acaba y por dónde va. Se vio
+   * en cuanto existió el primer campo de hierba: «esas líneas de pintura de la
+   * pista, ¿están bien?» No lo estaban.
+   */
+  if (pista.surface === "grass") return balizas(pista, altura);
   const [[nombreA, a], [nombreB, b]] = umbrales as [
     [string, Umbral],
     [string, Umbral],
