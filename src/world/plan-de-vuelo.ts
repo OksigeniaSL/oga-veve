@@ -144,12 +144,19 @@ const SALTO_A_LA_ESPERA = 40;
 /**
  * Lo menos que se rueda de un puesto a la pista, m.
  *
- * Doscientos. Por debajo de eso el par elegido no es un rodaje: es un puesto
- * pegado a la entrada, y además suele ser señal de que el camino se está
- * trazando por encima de la hierba. Y hay una razón de juego: **rodar es la
- * lección**, y una lección de veinte segundos no se aprende.
+ * Ochenta. Lo que esto descarta son los pares degenerados: un puesto y un
+ * punto de espera que caen sobre el mismo nudo del grafo dan una «ruta» de dos
+ * puntos y cero metros, que es la mejor de todas y va por encima de la hierba.
+ *
+ * **Estaba en doscientos y era demasiado**, con un argumento que sonaba bien
+ * —«rodar es la lección, y una lección de veinte segundos no se aprende»— y
+ * que en un aeródromo de verdad para avionetas es falso: en Yvytu Rape el
+ * puesto está a ciento cincuenta metros del punto de espera porque **así son
+ * esos campos**, y con el listón en doscientos el juego descartaba el
+ * aeródromo entero y arrancaba el avión ya autorizado en la pista. De que la
+ * ruta sea un camino y no un salto se encarga el número de puntos.
  */
-const LO_MINIMO_QUE_SE_RUEDA = 200;
+const LO_MINIMO_QUE_SE_RUEDA = 80;
 
 /**
  * Dónde se da por hecho que el avión ha dejado de correr al aterrizar, m.
@@ -159,6 +166,9 @@ const LO_MINIMO_QUE_SE_RUEDA = 200;
  * se mide **cuánto se rueda hasta casa** al elegir el puesto.
  */
 const TRAS_TOMAR_TIERRA = 1000;
+
+/** Metros que tiene que quedar por delante para poder tomar una salida. */
+const HUECO_PARA_GIRAR = 25;
 
 /**
  * Lo más que se rueda para ir a despegar, m.
@@ -723,7 +733,17 @@ export class PlanDeVuelo {
   /** La cabecera por la que se despega, en coordenadas de fichero. */
   private cabeceraDeSalida(): Punto {
     const [fx, fz] = delante(this.pista.heading);
-    return [this.pista.x - fx * 1600, -(this.pista.z - fz * 1600)];
+    /*
+     * **Media pista, no mil seiscientos metros.**
+     *
+     * Estaba escrito a mano, y mil seiscientos es media pista de Tenerife
+     * Norte: en un aeródromo de novecientos metros esa «cabecera» cae a
+     * kilómetro y pico por delante del umbral, en mitad del campo. Todo lo que
+     * se decide contra ella —qué punto de espera es el de la cabecera, qué
+     * puesto queda cerca— se decidía entonces mirando a un sitio que no existe.
+     */
+    const media = this.pista.length / 2;
+    return [this.pista.x - fx * media, -(this.pista.z - fz * media)];
   }
 
   /**
@@ -1573,7 +1593,17 @@ export class PlanDeVuelo {
       );
       if (!tieneCalle) continue;
       const adelante = along - aqui.along;
-      if (adelante < 60) continue;
+      /*
+       * **Y por delante de verdad, con sitio para girar.**
+       *
+       * Eran sesenta metros, que es lo que ocupa la boca de una salida en un
+       * aeropuerto grande. En un campo de novecientos metros con una sola
+       * salida, eso la descartaba justo cuando el avión estaba parado a
+       * cincuenta metros de ella, y entonces la ruta a casa se trazaba desde
+       * donde fuera: naciendo por detrás del avión, o sea fuera de la pantalla.
+       * Veinticinco metros son de sobra para girar a paso de rodaje.
+       */
+      if (adelante < HUECO_PARA_GIRAR) continue;
       /*
        * **Y no la primera: la que deja el camino más corto a casa.**
        *

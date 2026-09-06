@@ -12,11 +12,12 @@
  * juego tiene un aspecto propio y no cuesta nada al mes.
  */
 
-import type { Aerodrome } from './aerodrome';
-import SGAS from '../../data/aerodromes/sgas.aero.json';
-import GCXO from '../../data/aerodromes/gcxo.aero.json';
-import type { Ciudad } from './ciudad';
-import { deFrente, type Meteo } from './meteo';
+import type { Aerodrome } from "./aerodrome";
+import SGAS from "../../data/aerodromes/sgas.aero.json";
+import GCXO from "../../data/aerodromes/gcxo.aero.json";
+import YVYTU from "../../data/aerodromes/yvytu.aero.json";
+import type { Ciudad } from "./ciudad";
+import { deFrente, type Meteo } from "./meteo";
 
 export interface TerrainBand {
   /** Altitud a la que empieza la banda, en metros. */
@@ -50,7 +51,7 @@ export interface Scenario {
    * Llanura del Chaco son sitios paraguayos de nombre pero no son ningún
    * aeropuerto de verdad, y mezclarlos con Silvio Pettirossi diría que existen.
    */
-  pais: 'py' | 'es' | 'inventado';
+  pais: "py" | "es" | "inventado";
   /** Semilla del generador. Cambiarla cambia el relieve por completo. */
   seed: number;
   /** Lado del terreno, en metros. */
@@ -79,7 +80,13 @@ export interface Scenario {
    * Pista: centro en coordenadas de mundo, rumbo **verdadero** en grados, y
    * longitud y anchura en metros.
    */
-  runway: { x: number; z: number; heading: number; length: number; width: number };
+  runway: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+    width: number;
+  };
   /**
    * Declinación magnética del escenario: grados que hay que **sumar al rumbo
    * verdadero para obtener el magnético**.
@@ -150,9 +157,9 @@ export interface Scenario {
  * la pista es larga y está a la vista.
  */
 export const VALLE_CORDILLERA: Scenario = {
-  id: 'valle-cordillera',
-  nameKey: 'scenario.valle.name',
-  pais: 'inventado',
+  id: "valle-cordillera",
+  nameKey: "scenario.valle.name",
+  pais: "inventado",
   seed: 19540514,
   size: 14000,
   segments: 384,
@@ -194,9 +201,9 @@ export const VALLE_CORDILLERA: Scenario = {
  * aterrizajes y para el primer vuelo de alguien que no ha volado nunca.
  */
 export const CHACO: Scenario = {
-  id: 'chaco',
-  nameKey: 'scenario.chaco.name',
-  pais: 'inventado',
+  id: "chaco",
+  nameKey: "scenario.chaco.name",
+  pais: "inventado",
   seed: 18701201,
   size: 16000,
   segments: 320,
@@ -219,7 +226,6 @@ export const CHACO: Scenario = {
   runway: { x: 300, z: -200, heading: 30, length: 1400, width: 34 },
   magneticVariation: 13,
 };
-
 
 /**
  * Silvio Pettirossi — el primero de verdad.
@@ -274,15 +280,20 @@ export function conViento(esc: Scenario, meteo: Meteo): Scenario {
       mejor = nombre;
     }
   }
-  return { ...esc, runway: pistaDe(aero as unknown as Aerodrome, mejor), meteo };
+  return {
+    ...esc,
+    runway: pistaDe(aero as unknown as Aerodrome, mejor),
+    meteo,
+  };
 }
 
-function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario['runway'] {
+function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario["runway"] {
   const pista = aero.runways[0]!;
   const umbrales = Object.entries(pista.thresholds).filter(
     (e): e is [string, NonNullable<(typeof e)[1]>] => e[1]?.xy != null,
   );
-  if (umbrales.length < 2) throw new Error(`${aero.id}: la pista no tiene dos umbrales situados`);
+  if (umbrales.length < 2)
+    throw new Error(`${aero.id}: la pista no tiene dos umbrales situados`);
 
   /*
    * **Por qué cabecera se opera.**
@@ -328,16 +339,19 @@ function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario['runway'] {
      * eso se encarga el designador.
      */
     heading:
-      ((Math.atan2(mundoB[0] - mundoA[0], -(mundoB[1] - mundoA[1])) * 180) / Math.PI + 360) % 360,
+      ((Math.atan2(mundoB[0] - mundoA[0], -(mundoB[1] - mundoA[1])) * 180) /
+        Math.PI +
+        360) %
+      360,
     length: Math.round(Math.hypot(bx - ax, bz - az)),
     width: pista.widthM ?? 45,
   };
 }
 
 export const PETTIROSSI: Scenario = {
-  id: 'pettirossi',
-  nameKey: 'scenario.pettirossi.name',
-  pais: 'py',
+  id: "pettirossi",
+  nameKey: "scenario.pettirossi.name",
+  pais: "py",
   seed: 19161017,
   /*
    * **Veintidós kilómetros, y son por el río.**
@@ -432,9 +446,9 @@ export const PETTIROSSI: Scenario = {
  * se elige midiendo, con `scripts/buscar-semilla.mjs`.
  */
 export const TENERIFE_NORTE: Scenario = {
-  id: 'tenerife-norte',
-  nameKey: 'scenario.tenerife.name',
-  pais: 'es',
+  id: "tenerife-norte",
+  nameKey: "scenario.tenerife.name",
+  pais: "es",
   // Elegida midiendo con `scripts/buscar-semilla.mjs`, que puntúa dos cosas:
   // que el terreno de alrededor esté a la cota del aeropuerto y que **no haya
   // un muro en la prolongación del eje de pista**. La primera versión tenía
@@ -491,7 +505,7 @@ export const TENERIFE_NORTE: Scenario = {
   fog: { colour: 0xdae4e8, density: 0.000018 },
   sun: { azimuth: 108, elevation: 44 },
   // Se opera por la 30, que es la preferente de verdad.
-  runway: pistaDe(GCXO as unknown as Aerodrome, '30'),
+  runway: pistaDe(GCXO as unknown as Aerodrome, "30"),
   /**
    * Nueve grados, y no es la declinación geomagnética de Canarias —que anda
    * por los cinco al oeste—. Es la que hace que **el número pintado y la
@@ -506,9 +520,69 @@ export const TENERIFE_NORTE: Scenario = {
   aerodrome: GCXO as unknown as Aerodrome,
 };
 
+/**
+ * Yvytu Rape — el aeródromo de Granja Óga, y el primero hecho a medida.
+ *
+ * «No es lo mismo un aeródromo para avionetas que un aeropuerto internacional
+ * y, francamente, estar rodando y rodando aburre, especialmente con una
+ * avioneta que en la pista parece un juguete.» Exacto, y no se arregla con
+ * ajustes: en Tenerife Norte la plataforma está a dos kilómetros de la
+ * cabecera y una de las dos patas del rodaje es larga por geometría. Aquí no:
+ * el puesto está a ciento cincuenta metros del punto de espera, así que se
+ * arranca, se rueda medio minuto y se vuela.
+ *
+ * **Y es inventado a propósito.** No sale de OpenStreetMap —no hay geometría
+ * de terceros en su fichero— sino dibujado a mano para que quepa exactamente
+ * lo que hace falta: novecientos metros de hierba, una calle, tres puestos, un
+ * hangar, la casa de la granja y la manga. Un campo así existe a cientos por
+ * todo Paraguay, y es donde de verdad aprende a volar quien aprende.
+ *
+ * La pista es de hierba, que es la otra mitad de la sensación: la hierba se ve
+ * pasar por debajo —tiene textura, y el asfalto de una pista de tres
+ * kilómetros no— y sus bordes están a nueve metros del eje en vez de a
+ * veintidós. Correr a cien por hora se nota cuando hay algo cerca que pasa.
+ */
+export const YVYTU_RAPE: Scenario = {
+  id: "yvytu-rape",
+  nameKey: "scenario.yvytu.name",
+  pais: "py",
+  seed: 20260906,
+  // Doce kilómetros: lo que se ve desde mil pies sobre el campo, y bastante
+  // más de lo que hace falta para un circuito de tráfico.
+  size: 12000,
+  segments: 384,
+  // El campo paraguayo: lomas de nada. Lo más alto de la zona no llega a los
+  // doscientos metros y el aeródromo está a ciento treinta y ocho.
+  reliefHeight: 190,
+  reliefScale: 4.4,
+  ridgeMix: 0.1,
+  // Un arroyo, no un río: por aquí el agua va estrecha y con árboles al lado.
+  waterLevel: 62,
+  riverWidth: 260,
+  bands: [
+    { from: -20, colour: 0x3f6b45 },
+    { from: 70, colour: 0x58864d },
+    { from: 105, colour: 0x749c56 },
+    { from: 140, colour: 0x94ab62 },
+    { from: 175, colour: 0xb7a97a },
+    { from: 205, colour: 0xa89688 },
+  ],
+  water: 0x3e7f9c,
+  fill: 0x4d6b45,
+  sky: { horizon: 0xe6edf2, zenith: 0x4d92d4 },
+  fog: { colour: 0xd2e0ea, density: 0.00005 },
+  sun: { azimuth: 130, elevation: 46 },
+  runway: pistaDe(YVYTU as unknown as Aerodrome),
+  // Paraguay: declinación oeste de unos trece grados. Con el umbral 09
+  // apuntando a 77° verdaderos, el designador sale redondo.
+  magneticVariation: 13,
+  aerodrome: YVYTU as unknown as Aerodrome,
+};
+
 export const SCENARIOS: readonly Scenario[] = [
   VALLE_CORDILLERA,
   CHACO,
+  YVYTU_RAPE,
   PETTIROSSI,
   TENERIFE_NORTE,
 ];

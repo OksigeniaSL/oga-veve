@@ -475,7 +475,17 @@ const despegue = await page.evaluate(async () => {
     // Ya en el eje: se acabó el rodaje. (Sin mirar la velocidad: entrando a
     // trece metros por segundo, el listón de doce no se cruzaba nunca y el
     // banco se pasaba cuarenta segundos dando vueltas por la pista.)
-    if (s.onRunway && o.fase() === "alineando" && i > 12) break;
+    /*
+     * **Y «en el eje» quiere decir alineado, no «encima del asfalto».**
+     *
+     * Esto rompía a los doce fotogramas de estar sobre la pista, mirase donde
+     * mirase el morro. En Tenerife colaba porque se entra por una calle casi
+     * paralela; en un campo de novecientos metros con la calle entrando de
+     * costado, el banco daba gas con el avión **ciento siete grados torcido**
+     * —medido—, o sea cruzando la pista, y desde ahí no hay despegue posible:
+     * se sale por el otro lado en dos segundos.
+     */
+    if (s.onRunway && Math.abs(alRumbo(s, rumboPista)) < 0.25 && i > 8) break;
   }
   // La carrera va por donde va la pista. Ver arriba.
   const rumboDeLaCarrera = rumboPista;
@@ -486,9 +496,23 @@ const despegue = await page.evaluate(async () => {
   // Desde dónde se empieza la carrera y hasta dónde se llega: si no despega,
   // esto dice si el problema es el empuje o el sitio.
   const ini = o.estado();
+  const eIni = (() => {
+    let e = rumboDeLaCarrera - ini.heading;
+    while (e > Math.PI) e -= 2 * Math.PI;
+    while (e < -Math.PI) e += 2 * Math.PI;
+    return (e * 180) / Math.PI;
+  })();
   const partida = {
     pista: ini.onRunway,
     fase: o.fase(),
+    // Con qué morro y a qué distancia del eje se empieza la carrera: si el
+    // avión entra torcido, lo que se mide después no es el empuje.
+    torcido: eIni.toFixed(0),
+    delEje: (
+      (ini.position.x - pista.x) * Math.cos(rumboDeLaCarrera) +
+      (ini.position.z - pista.z) * Math.sin(rumboDeLaCarrera)
+    ).toFixed(0),
+    v: ini.airspeed.toFixed(1),
     // Cuánta pista queda por delante donde empieza la carrera: si el avión se
     // sale por el final, el problema es dónde le han hecho entrar.
     queda: (
@@ -499,6 +523,8 @@ const despegue = await page.evaluate(async () => {
   };
   let alto = 0;
   let punta = 0;
+  let desvio = 0;
+  let enPistaPasos = 0;
   const inicio = o.estado().position.clone
     ? { x: o.estado().position.x, z: o.estado().position.z }
     : null;
@@ -548,6 +574,19 @@ const despegue = await page.evaluate(async () => {
     }
     alto = Math.max(alto, s.heightAboveGround);
     punta = Math.max(punta, s.airspeed);
+    // Y lo que se separa del eje, que en una pista de hierba de dieciocho
+    // metros es la diferencia entre despegar y correr por el campo.
+    {
+      const dx = s.position.x - pista.x;
+      const dz = s.position.z - pista.z;
+      desvio = Math.max(
+        desvio,
+        Math.abs(
+          dx * Math.cos(rumboDeLaCarrera) + dz * Math.sin(rumboDeLaCarrera),
+        ),
+      );
+      if (s.onRunway) enPistaPasos += 1;
+    }
     if (!s.onGround && s.heightAboveGround > 15) {
       enElAire = { v: s.airspeed, usado };
       break;
@@ -567,6 +606,8 @@ const despegue = await page.evaluate(async () => {
     partida,
     alto,
     punta,
+    desvio: +desvio.toFixed(0),
+    enPistaPasos,
     usado,
   };
 });
@@ -576,7 +617,7 @@ comprobar(
   despegue.enElAire !== null,
   despegue.enElAire
     ? `a ${despegue.enElAire.v.toFixed(1)} m/s tras ${despegue.enElAire.usado.toFixed(0)} m`
-    : `no llegó a despegar: empezó ${despegue.partida.pista ? "en pista" : "fuera de pista"} en fase «${despegue.partida.fase}» con ${despegue.partida.queda} m por delante, subió ${despegue.alto.toFixed(0)} m en ${despegue.usado.toFixed(0)} m, punta ${despegue.punta.toFixed(1)} m/s, acabó ${despegue.acabo}`,
+    : `no llegó a despegar: empezó ${despegue.partida.pista ? "en pista" : "fuera de pista"} en fase «${despegue.partida.fase}» con ${despegue.partida.queda} m por delante, ${despegue.partida.torcido}° torcido, ${despegue.partida.delEje} m del eje, a ${despegue.partida.v} m/s, subió ${despegue.alto.toFixed(0)} m en ${despegue.usado.toFixed(0)} m, punta ${despegue.punta.toFixed(1)} m/s, ${despegue.desvio} m de desvío máximo, ${despegue.enPistaPasos} fotogramas en pista, acabó ${despegue.acabo}`,
   "con el empuje mal el avión tardaba veinticinco segundos en rotar",
 );
 if (despegue.enElAire) {
