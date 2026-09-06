@@ -1229,6 +1229,15 @@ export class Game {
       },
       ruta: () => this.plan?.rutaVisible() ?? [],
       pista: () => this.scenario.runway,
+      /**
+       * A qué velocidad pide el juego que se ruede **aquí**, m/s.
+       *
+       * La calcula el plan por el radio de cada curva y la usa el tope de
+       * rodaje. El banco la necesita para rodar como se debe: su piloto
+       * sostenía nueve metros por segundo escritos a mano, así que subir la
+       * velocidad de crucero del plan no cambiaba nada de lo que medía.
+       */
+      rodaje: () => this.vistaActual?.velocidadSugerida ?? 0,
     };
   }
 
@@ -3285,9 +3294,20 @@ export class Game {
      * puede— y acelerar, no.
      */
     if (enLaCarrera) {
+      /*
+       * **Y el suelo del trinquete es la velocidad de rodaje entera**, la
+       * misma que se puede llevar por una calle, holgura incluida.
+       *
+       * Estaba en los nueve pelados y el coche del sígame va a once: el avión
+       * frenaba solo hasta nueve, no había forma de volver a subir, y el coche
+       * se iba. «El avión frena sin que el usuario pueda acelerar y el coche
+       * casi que se escapa.» El trinquete es para no *añadir* velocidad de
+       * aterrizaje, no para dejarte por debajo de lo que rueda cualquiera.
+       */
+      const rodaje = topeDeRodaje({ velocidad: s.airspeed, rodaje: RODAJE });
       this.techoDeLaCarrera = Math.min(
         this.techoDeLaCarrera,
-        Math.max(RODAJE, s.airspeed),
+        Math.max(rodaje.velocidad, s.airspeed),
       );
     } else {
       this.techoDeLaCarrera = Infinity;

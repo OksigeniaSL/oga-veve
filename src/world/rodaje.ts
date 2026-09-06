@@ -84,6 +84,15 @@ export interface Grafo {
  */
 const PENALIZACION_PISTA = 6;
 
+/**
+ * Cuánto se perdona más allá del borde de la pista al coser una calle, m.
+ *
+ * Cinco. Las puntas de calle de OpenStreetMap no caen exactamente en el borde:
+ * unas se quedan un poco cortas y otras se pasan. Más margen que este ya
+ * empezaría a coser calles que pasan **al lado** de la pista sin tocarla.
+ */
+const MARGEN_DE_PISTA = 5;
+
 const clave = (p: Punto): string =>
   `${Math.round(p[0] / REJILLA)},${Math.round(p[1] / REJILLA)}`;
 
@@ -137,6 +146,62 @@ export function construirGrafo(aero: Aerodrome): Grafo {
         pista: true,
       })),
   ];
+
+  /*
+   * ── Coser las calles a la pista ──────────────────────────────────────────
+   *
+   * **Una calle que muere en el borde de la pista está conectada a la pista.**
+   *
+   * El nodado de abajo suelda puntas a doce metros, que es lo que mide una
+   * soldadura entre dos calles. Pero una pista tiene cuarenta y cinco metros de
+   * ancho, así que una calle de rodaje que llega hasta su borde se queda a
+   * veintitrés del eje: para el grafo, a un mundo de distancia. Resultado: el
+   * aeropuerto tenía la pista por un lado y las calles por otro, sin más
+   * uniones que las de las dos cabeceras.
+   *
+   * De ahí salían dos cosas que se vieron jugando. Una, que no había ninguna
+   * salida por intersección: para entrar en pista había que ir a la cabecera,
+   * dos kilómetros y cuatro minutos de rodaje. Y otra, que al aterrizar la
+   * ruta a casa saltaba en línea recta desde la pista hasta la calle más
+   * cercana, por encima de la hierba — «salgo por E4 atravesando los
+   * jardines».
+   *
+   * Así que la punta se **alarga hasta el eje** y ahí se suelda. El trozo que
+   * se añade es medio ancho de pista de asfalto de verdad: es exactamente por
+   * donde se entra y por donde se sale.
+   */
+  const pistas = aero.runways.filter((p) => p.centerline.length > 1);
+  for (const calle of crudas) {
+    if (calle.pista) continue;
+    for (const extremo of [0, calle.path.length - 1]) {
+      const p = calle.path[extremo]!;
+      let mejor: { d: number; q: Punto } | null = null;
+      for (const pista of pistas) {
+        const media = (pista.widthM ?? 45) / 2;
+        for (let i = 0; i < pista.centerline.length - 1; i++) {
+          const a = pista.centerline[i]!;
+          const b = pista.centerline[i + 1]!;
+          const dx = b[0] - a[0];
+          const dy = b[1] - a[1];
+          const l2 = dx * dx + dy * dy;
+          if (l2 < 1) continue;
+          const t = Math.max(
+            0,
+            Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
+          );
+          const q: Punto = [a[0] + dx * t, a[1] + dy * t];
+          const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+          // Ni pegada ya —eso lo resuelve el nodado— ni en el campo: solo las
+          // que mueren dentro del asfalto de la pista o justo en su borde.
+          if (d > media + MARGEN_DE_PISTA) continue;
+          if (!mejor || d < mejor.d) mejor = { d, q };
+        }
+      }
+      if (!mejor || mejor.d < 0.5) continue;
+      if (extremo === 0) calle.path.unshift(mejor.q);
+      else calle.path.push(mejor.q);
+    }
+  }
 
   // ── Nodado: meter cada punta ajena en el costado sobre el que cae ────────
   //

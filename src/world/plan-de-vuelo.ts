@@ -28,7 +28,13 @@ import {
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Aerodrome, Punto } from "./aerodrome";
 import { aLaPolilinea } from "./aerodrome";
-import { construirGrafo, rodajeEntre, type Grafo, type Ruta } from "./rodaje";
+import {
+  construirGrafo,
+  rodajeEntre,
+  type Grafo,
+  type Ruta,
+  type Tramo,
+} from "./rodaje";
 import { delante, enEjesDePista, puntoDePista } from "./rumbo";
 import {
   GUION,
@@ -87,7 +93,7 @@ const AMBAR: readonly [number, number, number] = [0.91, 0.694, 0.23];
 const ROJO: readonly [number, number, number] = [0.79, 0.29, 0.24];
 
 /**
- * Velocidad de rodaje cómoda en recta, m/s. Unos cuarenta por hora.
+ * Velocidad de rodaje cómoda en recta, m/s. Unos cuarenta y siete por hora.
  *
  * Un avión rueda en recta hasta a treinta nudos —cincuenta y cinco por hora—,
  * así que cuarenta es realista y no es un atajo. Con treinta, los dos
@@ -98,8 +104,52 @@ const ROJO: readonly [number, number, number] = [0.79, 0.29, 0.24];
  * La otra mitad del problema no se arregla con velocidad sino con viento: la
  * cabecera en uso la elige el viento, y en Silvio Pettirossi la contraria está
  * al lado de la plataforma. Eso está apuntado aparte.
+ *
+ * **Y trece, no once**, después de cronometrarlo entero: «voy a una velocidad
+ * absurdamente lenta, es aburrido pasarse cuatro minutos en una pista, eso un
+ * niño no lo aguanta». Trece son cuarenta y siete por hora, todavía por debajo
+ * de los treinta nudos a los que rueda un avión de verdad en recta, y es
+ * también la velocidad del coche que te lleva: seguirle es ir bien.
  */
-const CRUCERO = 11;
+export const CRUCERO = 13;
+
+/**
+ * Pista que tiene que quedar por delante para salir por una intersección, m.
+ *
+ * Mil doscientos. La Óga 172 despega en cuatrocientos cincuenta medidos en el
+ * banco, así que esto es casi el triple: sitio para el despegue, para un
+ * despegue mal hecho y para arrepentirse a mitad. Un piloto de verdad hace
+ * esta misma cuenta antes de aceptar una salida por intersección.
+ */
+const PISTA_QUE_HACE_FALTA = 1200;
+
+/**
+ * Cuánto hay que apartarse del borde de la pista para esperar, m.
+ *
+ * Cuarenta: el punto de espera de un aeródromo pequeño está entre treinta y
+ * cinco y cincuenta metros del eje, y lo que importa aquí es que el avión
+ * quepa entero fuera con sitio de sobra para que la torre lo vea parado.
+ */
+const FUERA_DE_LA_PISTA = 40;
+
+/**
+ * Lo lejos que puede quedar un punto de espera publicado del asfalto que
+ * conocemos, m.
+ *
+ * Cuarenta: el ancho de la boca de una calle donde se une a la pista. Más que
+ * eso ya no es «nos falta el dibujo del trocito», es campo.
+ */
+const SALTO_A_LA_ESPERA = 40;
+
+/**
+ * Lo menos que se rueda de un puesto a la pista, m.
+ *
+ * Doscientos. Por debajo de eso el par elegido no es un rodaje: es un puesto
+ * pegado a la entrada, y además suele ser señal de que el camino se está
+ * trazando por encima de la hierba. Y hay una razón de juego: **rodar es la
+ * lección**, y una lección de veinte segundos no se aprende.
+ */
+const LO_MINIMO_QUE_SE_RUEDA = 200;
 
 /** Deceleración cómoda, m/s². Con esto se calcula dónde hay que ir aflojando. */
 const FRENADA = 0.9;
@@ -124,11 +174,18 @@ const RADIO_CURVA = 18;
  * velocidad salía del ángulo de cada vértice, y eso significaba que redondear
  * un codo —repartir el mismo giro entre veinte puntos— lo convertía en recta a
  * ojos del cálculo. El radio no se deja engañar.
+ *
+ * **Estaba en 1,2 y era una cifra de coche de línea.** El propio modelo de
+ * vuelo tolera seis metros por segundo al cuadrado rodando —ver
+ * `DE_LADO_RODANDO`—, así que el plan pedía ir cinco veces más despacio de lo
+ * que el avión aguanta, y cada codo de la ruta se tomaba a paso de peatón. Con
+ * 2,5 una curva de dieciocho metros se toma a siete y medio y una de cuarenta,
+ * a la velocidad de crucero, que es como se rueda de verdad.
  */
-const LATERAL = 1.2;
+const LATERAL = 2.5;
 
 /** Lo más despacio que se pide rodar. Por debajo, una curva parece una parada. */
-const MINIMO_EN_CURVA = 4.5;
+const MINIMO_EN_CURVA = 6;
 
 /**
  * Lo más largo que se deja un tramo de la raya, m.
@@ -367,6 +424,11 @@ export class PlanDeVuelo {
    * puesto nuevo y el avión aparecía en el viejo — dentro del Boeing.
    */
   private puestoElegido: Punto | null = null;
+  /** El par puesto + espera con el que menos se rueda. Ver `parDeSalida`. */
+  private par:
+    | { puesto: { ref: string | null; xy: Punto }; espera: Punto }
+    | null
+    | undefined;
 
   /** Dónde empieza el vuelo: el puesto de estacionamiento, si lo hay. */
   arranque(): readonly [number, number] | null {
@@ -442,7 +504,6 @@ export class PlanDeVuelo {
     // Sigue siendo el mismo siempre, que es lo que importa: quien juega se
     // aprende su sitio, y un aeropuerto que te cambia el puesto cada partida
     // no se aprende nunca.
-    const cabecera = this.cabeceraDeSalida();
     const cerca = (p: Punto): number => {
       let d = Infinity;
       for (const e of this.aero.buildings ?? []) {
@@ -493,11 +554,75 @@ export class PlanDeVuelo {
     const porLejania = [...puestos].sort((a, b) => cerca(b.xy) - cerca(a.xy));
     const cuantos = Math.max(1, Math.ceil(porLejania.length / 3));
     const donde = porLejania.slice(0, cuantos);
-    return [...donde].sort(
-      (a, b) =>
-        Math.hypot(a.xy[0] - cabecera[0], a.xy[1] - cabecera[1]) -
-        Math.hypot(b.xy[0] - cabecera[0], b.xy[1] - cabecera[1]),
-    )[0]!;
+    /*
+     * **Y de ese grupo, el que menos rodaje tiene por delante — rodando.**
+     *
+     * Se cogía el más cercano a la cabecera en línea recta, y eso no es lo
+     * mismo: en Tenerife Norte el puesto que gana está a la vista de la
+     * cabecera y hay que dar la vuelta al aeropuerto para llegar, dos
+     * kilómetros y tres minutos. Lo que decide es lo que se rueda, y el juego
+     * ya sabe calcularlo. Ver `parDeSalida`.
+     */
+    return this.parDeSalida()?.puesto ?? donde[0]!;
+  }
+
+  /** Los puestos de los que puede salir una avioneta, sin ordenar. */
+  private puestosCandidatos(): { ref: string | null; xy: Punto }[] {
+    const puestos = this.aero.parkingPositions;
+    if (!puestos?.length) return [];
+    const cerca = (p: Punto): number => {
+      let d = Infinity;
+      for (const e of this.aero.buildings ?? []) {
+        for (const q of e.polygon)
+          d = Math.min(d, Math.hypot(q[0] - p[0], q[1] - p[1]));
+      }
+      return d;
+    };
+    const porLejania = [...puestos].sort((a, b) => cerca(b.xy) - cerca(a.xy));
+    return porLejania.slice(0, Math.max(1, Math.ceil(porLejania.length / 3)));
+  }
+
+  /**
+   * El par puesto + punto de espera con el que menos se rueda.
+   *
+   * **Se eligen juntos, y por metros rodados.** Por separado no sale: el
+   * puesto más cercano a la cabecera puede estar al otro lado de un aeropuerto
+   * sin conexión directa, y la intersección que se ve al lado del puesto puede
+   * pedir un rodeo. Los dos se probaban por línea recta y los dos acertaban
+   * por separado y fallaban juntos: 244 segundos de rodaje en Tenerife Norte,
+   * «cuatro minutos en una pista, eso un niño no lo aguanta».
+   *
+   * Se calcula una vez y se guarda: son unas decenas de búsquedas de camino en
+   * un grafo de unos cientos de nudos, y el sitio del que se sale **tiene que
+   * ser el mismo siempre** — quien juega se aprende su puesto.
+   */
+  private parDeSalida(): {
+    puesto: { ref: string | null; xy: Punto };
+    espera: Punto;
+  } | null {
+    if (this.par !== undefined) return this.par;
+    this.par = null;
+    const esperas = this.esperasPosibles();
+    let corto = Infinity;
+    for (const puesto of this.puestosCandidatos()) {
+      for (const espera of esperas) {
+        const ruta = rodajeEntre(this.grafo, puesto.xy, espera);
+        /*
+         * **Y tiene que ser un camino, no un salto.**
+         *
+         * El buscador engancha cada punta al nudo más cercano y une el resto
+         * en línea recta, así que un puesto y un punto de espera que caigan
+         * cerca del mismo nudo dan una «ruta» de dos puntos y cero metros: la
+         * mejor de todas, y por el campo. Sin esto, el optimizador la elegía.
+         */
+        if (!ruta || ruta.puntos.length < 5) continue;
+        if (ruta.largo < LO_MINIMO_QUE_SE_RUEDA || ruta.largo >= corto)
+          continue;
+        corto = ruta.largo;
+        this.par = { puesto, espera };
+      }
+    }
+    return this.par;
   }
 
   /** La cabecera por la que se despega, en coordenadas de fichero. */
@@ -514,14 +639,180 @@ export class PlanDeVuelo {
    * entera en sentido contrario, que es de las cosas que más asustan a una
    * torre.
    */
-  private esperaDeSalida(): Punto | null {
-    if (!this.aero.holdingPositions.length) return null;
+  /**
+   * Metros de pista que quedan por delante desde un punto de espera.
+   *
+   * Se proyecta el punto sobre el eje y se mide hasta el final. Es la cuenta
+   * que hace cualquier piloto antes de aceptar una salida por intersección.
+   */
+  private pistaQueQueda(p: Punto): number {
+    const [fx, fz] = delante(this.pista.heading);
+    // El eje, en las coordenadas del plan, donde la y es la z cambiada de signo.
+    const ux = fx;
+    const uy = -fz;
+    const media = this.pista.length / 2;
+    const fin: Punto = [
+      this.pista.x + fx * media,
+      -(this.pista.z + fz * media),
+    ];
+    return (fin[0] - p[0]) * ux + (fin[1] - p[1]) * uy;
+  }
+
+  /**
+   * De qué punto de espera se sale.
+   *
+   * **Del más cercano al puesto, no del de la cabecera**, mientras quede pista
+   * de sobra por delante. Eso tiene nombre en aviación —salida por
+   * intersección— y es lo que hace todos los días una avioneta que aparca a
+   * mitad de campo: no se recorre el aeropuerto entero para usar los tres
+   * kilómetros de pista cuando con doscientos cincuenta metros vuela.
+   *
+   * Es la mitad del problema del rodaje eterno: «es aburrido pasarse cuatro
+   * minutos en una pista, eso un niño no lo aguanta, se aburre». La otra mitad
+   * era la velocidad, y está arriba, en `CRUCERO`. Medido en Tenerife Norte:
+   * 244 segundos del puesto a la cabecera, 74 hasta la intersección.
+   *
+   * Si no hay ninguna intersección utilizable —una pista corta, un aeródromo
+   * con una sola entrada— se vuelve a lo de siempre: el punto de espera
+   * publicado más cercano a la cabecera, que ahí sí hace falta la pista
+   * entera.
+   */
+  /**
+   * Todos los sitios donde se puede esperar para entrar en pista: las
+   * intersecciones con pista de sobra por delante y el punto de espera
+   * publicado de la cabecera, que es el que siempre vale.
+   */
+  private esperasPosibles(): Punto[] {
     const cabecera = this.cabeceraDeSalida();
-    return [...this.aero.holdingPositions].sort(
+    const publicada = [...this.aero.holdingPositions].sort(
       (a, b) =>
         Math.hypot(a.xy[0] - cabecera[0], a.xy[1] - cabecera[1]) -
         Math.hypot(b.xy[0] - cabecera[0], b.xy[1] - cabecera[1]),
-    )[0]!.xy;
+    )[0]?.xy;
+    const sitios = this.esperasPorInterseccion();
+    /*
+     * **Y los puntos de espera publicados que estén al alcance de una calle.**
+     *
+     * OpenStreetMap los trae, y son los buenos: es donde se espera de verdad.
+     * Lo que a veces no trae es el trocito de calle que va de la calle
+     * paralela hasta ellos, y sin ese trozo el buscador llega hasta donde
+     * puede y salta en línea recta. Un salto corto se puede permitir —ahí hay
+     * asfalto de verdad, aunque en nuestros datos no esté dibujado—; uno largo
+     * es cruzar el campo, y eso ya se vio: «salgo por E4 atravesando los
+     * jardines».
+     */
+    for (const e of this.aero.holdingPositions) {
+      if (this.alGrafo(e.xy) <= SALTO_A_LA_ESPERA) sitios.push(e.xy);
+    }
+    if (publicada) sitios.push(publicada);
+    return sitios;
+  }
+
+  /** Lo lejos que queda un punto del asfalto que el juego conoce, m. */
+  private alGrafo(p: Punto): number {
+    let mejor = Infinity;
+    for (const t of this.grafo.tramos) {
+      for (let i = 0; i < t.puntos.length - 1; i++) {
+        const a = t.puntos[i]!;
+        const b = t.puntos[i + 1]!;
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const l2 = dx * dx + dy * dy;
+        if (l2 < 1) continue;
+        const u = Math.max(
+          0,
+          Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
+        );
+        mejor = Math.min(
+          mejor,
+          Math.hypot(p[0] - (a[0] + dx * u), p[1] - (a[1] + dy * u)),
+        );
+      }
+    }
+    return mejor;
+  }
+
+  private esperaDeSalida(): Punto | null {
+    const puesto = this.puestoElegido;
+    // Sin puesto a mano manda el par calculado; con uno —el mejor estaba
+    // ocupado y el juego eligió otro— se vuelve a mirar desde ahí.
+    if (!puesto) return this.parDeSalida()?.espera ?? null;
+    let mejor: Punto | null = null;
+    let corto = Infinity;
+    for (const espera of this.esperasPosibles()) {
+      const ruta = rodajeEntre(this.grafo, puesto, espera);
+      if (!ruta || ruta.largo >= corto) continue;
+      corto = ruta.largo;
+      mejor = espera;
+    }
+    return mejor;
+  }
+
+  /**
+   * Todos los sitios donde se puede esperar para entrar por una intersección
+   * con pista de sobra por delante. Quien llama elige por distancia rodada.
+   *
+   * **No se usan los puntos de espera publicados**, y costó una tarde
+   * entenderlo: OpenStreetMap los trae sueltos, a treinta metros de la calle
+   * más cercana, y el buscador de rutas solo sabe enganchar en los **nudos**
+   * del grafo —los cruces—, así que el camino hasta ellos se trazaba en línea
+   * recta por encima de la hierba. Cuatro puntos de la ruta a treinta y cuatro
+   * metros del asfalto, medidos.
+   *
+   * Lo que sí es asfalto seguro es el grafo. Así que la intersección se busca
+   * donde el juego ya sabe buscar salidas de pista —un nudo sobre el eje con
+   * una calle colgando— y desde ahí se retrocede por esa calle hasta quedar
+   * fuera de la pista. El sitio de esperar sale de la geometría del aeropuerto,
+   * no de que alguien haya dibujado un nodo.
+   */
+  private esperasPorInterseccion(): Punto[] {
+    const sitios: Punto[] = [];
+    this.grafo.nudos.forEach((nudo, i) => {
+      const { across } = enEjesDePista(
+        nudo[0],
+        -nudo[1],
+        this.pista.x,
+        this.pista.z,
+        this.pista.heading,
+      );
+      // Sobre el asfalto de la pista, no «cerca»: ver `primeraSalida`.
+      if (Math.abs(across) > this.pista.width / 2) return;
+      const calles = (this.grafo.desde[i] ?? [])
+        .map((t) => this.grafo.tramos[t]!)
+        .filter((t) => !t.pista);
+      if (!calles.length) return;
+      if (this.pistaQueQueda(nudo) < PISTA_QUE_HACE_FALTA) return;
+      const punto = this.atrasPorLaCalle(calles[0]!, nudo);
+      if (punto) sitios.push(punto);
+    });
+    return sitios;
+  }
+
+  /**
+   * Retrocede por una calle desde su encuentro con la pista hasta quedar bien
+   * fuera de ella. Es donde se pinta la doble raya y donde se espera el verde.
+   */
+  private atrasPorLaCalle(tramo: Tramo, nudo: Punto): Punto | null {
+    const puntos = tramo.puntos;
+    const desdeElFinal =
+      Math.hypot(puntos[0]![0] - nudo[0], puntos[0]![1] - nudo[1]) >
+      Math.hypot(
+        puntos[puntos.length - 1]![0] - nudo[0],
+        puntos[puntos.length - 1]![1] - nudo[1],
+      );
+    const orden = desdeElFinal ? [...puntos].reverse() : [...puntos];
+    for (const p of orden) {
+      const { across } = enEjesDePista(
+        p[0],
+        -p[1],
+        this.pista.x,
+        this.pista.z,
+        this.pista.heading,
+      );
+      if (Math.abs(across) >= this.pista.width / 2 + FUERA_DE_LA_PISTA)
+        return p;
+    }
+    return null;
   }
 
   /** Empieza un vuelo. Devuelve `false` si este aeródromo no da para rodar. */
