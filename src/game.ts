@@ -1658,6 +1658,8 @@ export class Game {
       mandarFrustrar: (como: "auto" | "siempre" | "nunca" = "siempre") => {
         this.ordenes = como;
       },
+      /** El percance que ha parado el vuelo, si lo hay. Congela el avión. */
+      percance: () => this.percance,
       /** Si ahora mismo hay orden de irse al aire. */
       ordenDeFrustrar: () => this.mandanFrustrar,
       /**
