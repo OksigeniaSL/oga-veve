@@ -64,6 +64,26 @@ export interface Tier {
    * cuatro. Ver `world/circuito.ts`.
    */
   circuito: boolean;
+  /**
+   * En qué idioma —y con qué voz— se avisa de las cosas del vuelo.
+   *
+   * `AGENTS.md` promete que los avisos crecen con el peldaño y hasta hoy no lo
+   * hacía ninguno: **una niña de cuatro años oía «terrain, pull up» y «one
+   * hundred… fifty… thirty»**, que son llamadas de radioaltímetro de un avión
+   * de línea, en un idioma que no habla. Eso choca de frente con la regla de
+   * que lo que se aprenda aquí no haya que desaprenderlo.
+   *
+   * - `propia`: lo dice el instructor, en castellano paraguayo y en una
+   *   palabra —«¡Subí!», «Más despacio», «Cincuenta»—. Es la voz que sustituye
+   *   al texto en el peldaño que no lee.
+   * - `cabina`: los cantos de verdad, en inglés aeronáutico, que es donde ya
+   *   sirven — a los diez años, un canto de cabina es algo que se reconocerá
+   *   toda la vida.
+   *
+   * **Y en los dos casos el aviso se ve**: la tarjeta con su dibujo y el tono
+   * salen igual. La voz es el tercer canal, nunca el único. Ver `Game.cantar`.
+   */
+  avisos: "propia" | "cabina";
 }
 
 export const GUYRAMI: Tier = {
@@ -94,6 +114,7 @@ export const GUYRAMI: Tier = {
   units: "metric",
   sigueme: true,
   circuito: true,
+  avisos: "propia",
 };
 
 export const TUKA: Tier = {
@@ -115,6 +136,7 @@ export const TUKA: Tier = {
   // es la red, no el camino.
   sigueme: true,
   circuito: true,
+  avisos: "propia",
 };
 
 export const TAGUATO: Tier = {
@@ -143,6 +165,7 @@ export const TAGUATO: Tier = {
   // hay plano que aprender.
   sigueme: false,
   circuito: false,
+  avisos: "cabina",
 };
 
 export const TAGUATO_RUVICHA: Tier = {
@@ -155,6 +178,7 @@ export const TAGUATO_RUVICHA: Tier = {
   units: "aeronautical",
   sigueme: false,
   circuito: false,
+  avisos: "cabina",
 };
 
 export const TIERS: readonly Tier[] = [GUYRAMI, TUKA, TAGUATO, TAGUATO_RUVICHA];

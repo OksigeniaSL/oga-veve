@@ -162,6 +162,8 @@ export const EN: Dictionary = {
   "vuelo.enPuesto": "You made it. Shut the engine down",
   "vuelo.apagado": "Flight complete!",
   "vuelo.fuera": "Back to the green line",
+  "vuelo.roto": "We have a problem",
+  "vuelo.rapido": "Too fast",
   "vuelo.despacio": "Slow down",
   "vuelo.alto": "Stop here",
   "vuelo.teLoPasaste": "You went past. Brake and come back",

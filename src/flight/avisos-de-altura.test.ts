@@ -8,7 +8,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { AvisosDeAltura } from "./avisos-de-altura";
+import {
+  AvisosDeAltura,
+  ESCALONES,
+  ESCALONES_EN_PIES,
+} from "./avisos-de-altura";
 
 /** Baja de una altura a otra de metro en metro y anota lo que se canta. */
 const bajarDe = (a: AvisosDeAltura, desde: number, hasta: number): string[] => {
@@ -69,5 +73,24 @@ describe("los avisos de altura", () => {
     bajarDe(a, 120, 0);
     a.paso(0.5, false);
     expect(bajarDe(a, 120, 0).length).toBe(6);
+  });
+
+  /*
+   * **El número que se canta es el que marca el instrumento.** En los tres
+   * peldaños métricos, metros; en el que vuela en pies, pies — y ahí «fifty»
+   * vuelve a querer decir lo que quiere decir en cualquier avión del mundo.
+   */
+  it("en pies, «fifty» son quince metros y no cincuenta", () => {
+    const a = new AvisosDeAltura(ESCALONES_EN_PIES);
+    a.paso(200, true);
+    // A cincuenta metros todavía no ha dicho «fifty»: está a 164 pies.
+    expect(bajarDe(a, 200, 50)).not.toContain("fifty");
+    expect(bajarDe(a, 50, 14)).toContain("fifty");
+  });
+
+  it("cada escalón sabe decirse también en casa", () => {
+    for (const e of [...ESCALONES, ...ESCALONES_EN_PIES]) {
+      expect(e.encasa.length).toBeGreaterThan(2);
+    }
   });
 });

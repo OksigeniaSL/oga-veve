@@ -32,16 +32,36 @@
  * aceleración **es** la lección — no es una lista de números, es un ritmo que
  * dice «ya, ya, ya».
  */
-export const ESCALONES: readonly {
-  readonly metros: number;
-  readonly dice: string;
-}[] = [
-  { metros: 100, dice: "one hundred" },
-  { metros: 50, dice: "fifty" },
-  { metros: 30, dice: "thirty" },
-  { metros: 20, dice: "twenty" },
-  { metros: 10, dice: "ten" },
-  { metros: 5, dice: "five" },
+export const ESCALONES: readonly Escalon[] = [
+  { metros: 100, dice: "one hundred", encasa: "cien" },
+  { metros: 50, dice: "fifty", encasa: "cincuenta" },
+  { metros: 30, dice: "thirty", encasa: "treinta" },
+  { metros: 20, dice: "twenty", encasa: "veinte" },
+  { metros: 10, dice: "ten", encasa: "diez" },
+  { metros: 5, dice: "five", encasa: "cinco" },
+];
+
+/**
+ * Y los mismos, en pies, para el peldaño que vuela en pies.
+ *
+ * Porque la regla de arriba tiene una segunda mitad: el número que se canta
+ * **es el que marca el instrumento**. En los tres peldaños métricos eso son
+ * metros; en Taguato Ruvicha, que lleva la cabina en unidades aeronáuticas,
+ * son pies — y ahí «fifty» vuelve a querer decir lo que quiere decir en
+ * cualquier avión del mundo: cincuenta pies, quince metros.
+ *
+ * Son los escalones de verdad de un radioaltímetro, y por eso no son los
+ * mismos números: cien pies son treinta metros, así que la cuenta empieza
+ * mucho más abajo y se aprieta mucho más deprisa.
+ */
+export const ESCALONES_EN_PIES: readonly Escalon[] = [
+  { metros: 152, dice: "five hundred", encasa: "quinientos" },
+  { metros: 30.5, dice: "one hundred", encasa: "cien" },
+  { metros: 15.2, dice: "fifty", encasa: "cincuenta" },
+  { metros: 12.2, dice: "forty", encasa: "cuarenta" },
+  { metros: 9.1, dice: "thirty", encasa: "treinta" },
+  { metros: 6.1, dice: "twenty", encasa: "veinte" },
+  { metros: 3, dice: "ten", encasa: "diez" },
 ];
 
 /**
@@ -52,10 +72,15 @@ export const ESCALONES: readonly {
  */
 const REARME = 8;
 
-export interface Aviso {
+export interface Escalon {
   readonly metros: number;
+  /** Lo que dice una cabina de verdad. */
   readonly dice: string;
+  /** Y la misma cifra en casa, para el peldaño que todavía no habla inglés. */
+  readonly encasa: string;
 }
+
+export type Aviso = Escalon;
 
 /**
  * La cuenta atrás de la toma.
@@ -66,6 +91,18 @@ export interface Aviso {
 export class AvisosDeAltura {
   /** Escalones ya dados, hasta que se suba lo bastante para rearmarlos. */
   private dados = new Set<number>();
+
+  /**
+   * Los escalones de hoy: los métricos o los de pies.
+   *
+   * Los elige el juego según las unidades del peldaño, porque el número que se
+   * canta tiene que ser el que marca el instrumento. Ver `ESCALONES_EN_PIES`.
+   */
+  private readonly escalones: readonly Escalon[];
+
+  constructor(escalones: readonly Escalon[] = ESCALONES) {
+    this.escalones = escalones;
+  }
 
   /**
    * Un fotograma.
@@ -81,7 +118,7 @@ export class AvisosDeAltura {
     }
 
     // Rearme: lo que ha quedado bien por encima vuelve a estar disponible.
-    for (const e of ESCALONES) {
+    for (const e of this.escalones) {
       if (this.dados.has(e.metros) && sobreElSuelo > e.metros + REARME) {
         this.dados.delete(e.metros);
       }
@@ -91,10 +128,10 @@ export class AvisosDeAltura {
     // da uno solo por fotograma —caer diez metros de golpe no puede soltar
     // cuatro palabras a la vez— y se dan por dados los de debajo, que ya no
     // toca cantarlos.
-    for (const e of ESCALONES) {
+    for (const e of this.escalones) {
       if (this.dados.has(e.metros) || sobreElSuelo > e.metros) continue;
       this.dados.add(e.metros);
-      return { metros: e.metros, dice: e.dice };
+      return e;
     }
     return null;
   }

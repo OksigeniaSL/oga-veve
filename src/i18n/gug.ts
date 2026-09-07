@@ -58,6 +58,8 @@ export const GUG: Dictionary = {
   "vuelo.enPuesto": "Reguahẽma. Embogue motor",
   "vuelo.apagado": "¡Opáma ne veve!",
   "vuelo.fuera": "Eho jey raya hovýpe",
+  "vuelo.roto": "Oso. Ñañepyrũ jey",
+  "vuelo.rapido": "Reho pya'e eterei",
   "vuelo.despacio": "Mbeguekatu",
   "vuelo.alto": "Epyta ko’ápe",
   "vuelo.teLoPasaste": "Rehasapa. Ejoko ha eju jey",
