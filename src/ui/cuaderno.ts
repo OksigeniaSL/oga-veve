@@ -40,25 +40,22 @@ function horasDe(segundos: number): string {
   const m = Math.floor(segundos / 60);
   return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
 }
+import { Encierro } from "./panel";
 
 export class CuadernoScreen {
   private readonly root: HTMLElement;
-  private previo: HTMLElement | null = null;
+  /** Foco atrapado y Escape que cierra desde donde sea. Ver `ui/panel.ts`. */
+  private readonly encierro: Encierro;
   private cuaderno: Cuaderno;
 
   constructor(root: HTMLElement, cuaderno: Cuaderno) {
     this.root = root;
     this.cuaderno = cuaderno;
+    this.encierro = new Encierro(root, () => this.hide());
     this.pintar();
     root.addEventListener("click", (e) => {
       if (e.target === root) this.hide();
       if ((e.target as HTMLElement)?.dataset?.cerrar !== undefined) this.hide();
-    });
-    root.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        this.hide();
-      }
     });
   }
 
@@ -124,15 +121,13 @@ export class CuadernoScreen {
   }
 
   show(): void {
-    this.previo = document.activeElement as HTMLElement | null;
     this.pintar();
     this.root.hidden = false;
-    this.root.querySelector("button")?.focus();
+    this.encierro.abrir();
   }
 
   hide(): void {
     this.root.hidden = true;
-    this.previo?.focus?.();
-    this.previo = null;
+    this.encierro.soltar();
   }
 }

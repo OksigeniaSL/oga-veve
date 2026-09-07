@@ -7,11 +7,17 @@
  */
 
 import { t } from "../i18n";
+import { Encierro } from "./panel";
 
 export class CreditsScreen {
   private readonly root: HTMLElement;
-  /** Dónde estaba el foco antes de abrir, para devolverlo al cerrar. */
-  private previousFocus: HTMLElement | null = null;
+  /**
+   * El encierro: el foco no se sale y Escape cierra desde donde sea.
+   *
+   * Lleva también lo de devolver el foco a donde estaba. Ver `ui/panel.ts`,
+   * que existe porque esto estaba escrito tres veces y mal las tres.
+   */
+  private readonly encierro: Encierro;
 
   constructor(root: HTMLElement, flightModelName: string) {
     this.root = root;
@@ -39,20 +45,15 @@ export class CreditsScreen {
         <button class="creditos__cerrar" type="button">${t("credits.close")}</button>
       </div>
     `;
+    this.encierro = new Encierro(root, () => this.hide());
     root.querySelector("button")?.addEventListener("click", () => this.hide());
     root.addEventListener("click", (event) => {
       if (event.target === root) this.hide();
     });
 
-    // Escape cierra. El diálogo se declaraba modal y no se podía salir con
-    // teclado, que es exactamente lo que exige el criterio 2.1.2 de WCAG:
-    // si se puede entrar con el teclado, se tiene que poder salir.
-    root.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        this.hide();
-      }
-    });
+    // Escape y el tabulador los lleva el encierro, y los lleva en `window`:
+    // colgados de esta caja solo funcionaban mientras el foco siguiera dentro,
+    // que era justo lo que fallaba. Criterios 2.1.2 y 2.4.3.
   }
 
   get visible(): boolean {
@@ -70,15 +71,12 @@ export class CreditsScreen {
    * enterarse de que había algo abierto.
    */
   show(): void {
-    this.previousFocus = document.activeElement as HTMLElement | null;
     this.root.hidden = false;
-    this.root.querySelector<HTMLElement>("button")?.focus();
+    this.encierro.abrir();
   }
 
   hide(): void {
     this.root.hidden = true;
-    // Y devuelve el foco a donde estaba: criterio 2.4.3.
-    this.previousFocus?.focus();
-    this.previousFocus = null;
+    this.encierro.soltar();
   }
 }

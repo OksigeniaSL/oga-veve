@@ -535,7 +535,8 @@ body {
 
 .cuaderno__glosa {
   font-size: 13px;
-  color: rgba(228, 226, 218, 0.72);
+  /* Al 72 % eran 4,36:1, a catorce centésimas de AA. Al 85 %, 5,37. */
+  color: rgba(228, 226, 218, 0.85);
 }
 
 .cuaderno__falta {
@@ -1348,7 +1349,13 @@ body {
   padding: 10px 20px;
   border-radius: 12px;
   border: none;
-  background: var(--terracota);
+  /*
+   * Barro cálido y no la terracota de marca: blanco sobre terracota se queda
+   * en **4,36:1** —a catorce centésimas de AA, que es fallar igual— y sobre
+   * este llega a 5,46. El color de marca sigue en todo lo que no lleva letra
+   * pequeña encima.
+   */
+  background: var(--barro-calido);
   color: #fff;
   font: inherit;
   font-size: 15px;
@@ -1981,7 +1988,12 @@ body {
 
 .tecla__letra {
   font-size: 12px;
-  opacity: 0.4;
+  /*
+   * Al 40 % se quedaba en **2,8:1** sobre la tecla, y la letra es lo que dice
+   * qué hay que pulsar. Al 75 % son 5,9:1 y sigue leyéndose como lo que es:
+   * el rótulo de la tecla, no el dibujo. Medido con `verificar-acceso.mjs`.
+   */
+  opacity: 0.75;
 }
 
 /*
@@ -2013,9 +2025,11 @@ body {
   position: absolute;
   top: 2px;
   left: 4px;
-  font-size: 9px;
+  /* Nueve píxeles al 60 % sobre el ocre eran 1,35:1: no se leía, se
+     adivinaba. Once y al 85 % son 5,5:1. */
+  font-size: 11px;
   color: #1a1206;
-  opacity: 0.6;
+  opacity: 0.85;
 }
 
 .tecla--activa .cap__helice ellipse {
