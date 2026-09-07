@@ -141,6 +141,8 @@ export interface FdmOptions {
   assist?: number | AssistLayers;
 }
 
+import { ROZAMIENTO, type Superficie } from "../world/superficie";
+
 export class CoefficientFlightModel implements FlightModel {
   readonly implementationName = "FDM Óga Veve (coeficientes)";
 
@@ -220,6 +222,13 @@ export class CoefficientFlightModel implements FlightModel {
   /** Cambia las ayudas capa a capa. Es lo que hacen los tramos. */
   setAssists(layers: AssistLayers): void {
     this.layers = layers;
+  }
+
+  /** De qué está hecho el suelo de debajo. Ver `ponerSuperficie` en el modelo. */
+  private superficie: Superficie = "asfalto";
+
+  ponerSuperficie(superficie: Superficie): void {
+    this.superficie = superficie;
   }
 
   setOnRunway(enPista: boolean): void {
@@ -664,7 +673,13 @@ export class CoefficientFlightModel implements FlightModel {
      * Cero coma veintiocho son unos tres metros por segundo al cuadrado y
      * ciento ochenta de parada: lo de verdad, y lo que las cuentas ya suponían.
      */
-    const rolling = 0.02 + 0.28 * controls.brakes;
+    /*
+     * **Y el suelo tiene tipo.** Dos centésimas sobre asfalto, cinco sobre
+     * hierba segada, nueve sobre campo: son los coeficientes de rodadura de
+     * verdad, y de ellos sale que una pista de hierba pida más carrera de
+     * despegue que una de asfalto. Ver `world/superficie.ts`.
+     */
+    const rolling = ROZAMIENTO[this.superficie] + 0.28 * controls.brakes;
     const longitudinal = s.velocity.dot(this.forward);
     s.velocity.addScaledVector(
       this.forward,

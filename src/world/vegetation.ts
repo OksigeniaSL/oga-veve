@@ -604,7 +604,7 @@ const MARGEN_RODADURA = 30;
 /** Margen libre alrededor de una plataforma, m. */
 const MARGEN_PLATAFORMA = 15;
 
-class Pavimento {
+export class Pavimento {
   private readonly mapa: Uint8Array;
 
   constructor(
@@ -667,7 +667,14 @@ class Pavimento {
  * marcar solo su contorno y quedaban árboles **dentro** de la plataforma,
  * rodeados de asfalto, que es todavía más raro que tenerlos fuera.
  */
-function mapaDePavimento(aero: Aerodrome): Pavimento | null {
+/**
+ * Y se exporta porque lo pregunta alguien más: **de qué está hecho el suelo**.
+ *
+ * Este mapa es la parte cara de esa pregunta —se pinta una vez y se consulta
+ * miles— y ya estaba aquí, así que el módulo de superficies lo pide prestado
+ * en vez de construir otro igual. Ver `world/superficie.ts`.
+ */
+export function mapaDePavimento(aero: Aerodrome): Pavimento | null {
   let minX = Infinity;
   let maxX = -Infinity;
   let minZ = Infinity;

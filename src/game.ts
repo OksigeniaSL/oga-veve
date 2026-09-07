@@ -228,6 +228,8 @@ import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
+import { superficieEn, TRAQUETEO, type Superficie } from "./world/superficie";
+import { mapaDePavimento, type Pavimento } from "./world/vegetation";
 import {
   AvisosDeAltura,
   ESCALONES,
@@ -716,6 +718,16 @@ export class Game {
    * `flight/bitacora.ts`.
    */
   private traza: Paso[] = [];
+  /** De qué está hecho el suelo de debajo. Ver `world/superficie.ts`. */
+  private superficie: Superficie = "asfalto";
+  /**
+   * El mapa de calles y plataformas, para saber si debajo hay pavimento.
+   *
+   * Se pinta una vez y se consulta en cada fotograma, así que se guarda: es la
+   * parte cara de la pregunta. El mismo que usa la vegetación para no plantar
+   * árboles en el asfalto.
+   */
+  private readonly pavimento: Pavimento | null;
   /** Lo que se lleva sin catar la traza, s. */
   private sinCatar = 0;
   /** Cuánto ha durado este vuelo, s. Cuenta desde que se arrancó. */
@@ -802,6 +814,9 @@ export class Game {
   constructor(options: GameOptions) {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
+    this.pavimento = this.scenario.aerodrome
+      ? mapaDePavimento(this.scenario.aerodrome)
+      : null;
     /*
      * Los escalones que canta el radioaltímetro **son los que marca el
      * instrumento**: metros donde la cabina va en metros, pies donde va en
@@ -3326,6 +3341,19 @@ export class Game {
       return;
     }
 
+    /*
+     * **De qué está hecho el suelo de debajo**, que el modelo de vuelo no
+     * sabe de aeródromos. Va antes de pilotar porque lo usa el paso de este
+     * fotograma. Ver `world/superficie.ts`.
+     */
+    this.superficie = superficieEn(
+      this.scenario,
+      this.pavimento,
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+    );
+    this.flight.ponerSuperficie(this.superficie);
+
     this.input.update(dt);
     // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
     // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
@@ -3796,6 +3824,7 @@ export class Game {
       this.flight.state,
       this.input.controls,
       this.aircraft.aero.alphaStall * 0.85,
+      TRAQUETEO[this.superficie],
     );
     // El mapa, si está abierto. Solo mueve la flecha: el mundo ya está pintado.
     /*
@@ -4993,7 +5022,9 @@ export class Game {
     // Tres senos que no comparten periodo: se lee como suelo irregular y no
     // como una oscilación. Y un cuarto término lento hace los baches.
     const bump = Math.pow(Math.max(0, Math.sin(t * 5.3)), 8);
-    const amount = SHAKE_AMPLITUDE * this.shake;
+    // Y multiplicado por lo que traquetea el suelo de debajo: rodar por un
+    // campo tiene que **notarse** antes de que nadie lo explique.
+    const amount = SHAKE_AMPLITUDE * this.shake * TRAQUETEO[this.superficie];
     this.desiredCamera.y +=
       amount * (Math.sin(t * 41) * 0.5 + Math.sin(t * 17.3) * 0.3 + bump * 1.4);
     this.desiredCamera.x += amount * Math.sin(t * 23.7) * 0.35;

@@ -165,6 +165,8 @@ export interface ArcadeOptions {
   ground: GroundSampler;
 }
 
+import { ROZAMIENTO, type Superficie } from "../world/superficie";
+
 export class ArcadeFlightModel implements FlightModel {
   readonly implementationName = "Modelo sencillo Óga Veve";
   readonly state: FlightState;
@@ -248,6 +250,21 @@ export class ArcadeFlightModel implements FlightModel {
    * así el avión **se sostiene** en vez de frenar solo hasta su techo.
    */
   /** Dos tercios del crucero, que es donde este modelo se planta. */
+  /** De qué está hecho el suelo de debajo. Ver `ponerSuperficie` en el modelo. */
+  private superficie: Superficie = "asfalto";
+
+  /**
+   * **Y aquí el suelo se nota en lo que cuesta.**
+   *
+   * Este modelo no tiene fuerzas: el gas *es* la velocidad. Así que rodar por
+   * hierba no puede frenar con un coeficiente, pero sí puede costar más de lo
+   * que cuesta sobre asfalto — acelerar más despacio y perder un poco de punta,
+   * que es lo que se nota al despegar de un campo blando.
+   */
+  ponerSuperficie(superficie: Superficie): void {
+    this.superficie = superficie;
+  }
+
   velocidadMaxima(): number {
     return this.aircraft.cruiseSpeed * CRUISE_FRACTION;
   }
@@ -352,8 +369,32 @@ export class ArcadeFlightModel implements FlightModel {
     // subir y la resistencia frena en cuanto se suelta.
     const frenando = target < this.speed;
     const base = this.state.onGround && frenando ? 0.55 : 0.18;
-    const rate = this.state.onGround ? base * (1 + controls.brakes * 5) : 0.18;
-    this.speed += (target - this.speed) * Math.min(1, step * rate);
+    /*
+     * **Y sobre hierba se acelera peor y se frena solo.**
+     *
+     * El coeficiente de rodadura de la superficie —dos centésimas en asfalto,
+     * cinco en hierba, nueve en campo— aquí no puede entrar como fuerza,
+     * porque este modelo no tiene fuerzas. Entra como lo que se nota: cuesta
+     * más llegar a la velocidad pedida, y al soltar el gas el avión se para
+     * antes. Una pista de hierba pide más carrera, que es lo que pasa de
+     * verdad y por lo que un piloto mira de qué es la pista antes de ir.
+     */
+    const cuesta = ROZAMIENTO[this.superficie] / ROZAMIENTO.asfalto;
+    /*
+     * Sobre asfalto esto vale uno y no cambia nada, que es como tiene que ser:
+     * toda la calibración de este modelo se hizo sobre asfalto. Sobre hierba
+     * el mismo gas da un siete por ciento menos de punta y se acelera peor.
+     *
+     * **Y los dos números juntos dan lo que dice el manual**: una pista de
+     * hierba seca y corta pide entre un quince y un treinta por ciento más de
+     * carrera de despegue que una de asfalto. Medido en Yvytu Rape con el
+     * banco de despegue, que es de donde salen los exponentes.
+     */
+    const blando = this.state.onGround ? 1 - (cuesta - 1) * 0.05 : 1;
+    const suelo = this.state.onGround && !frenando ? 1 / cuesta ** 0.2 : 1;
+    const rate =
+      (this.state.onGround ? base * (1 + controls.brakes * 5) : 0.18) * suelo;
+    this.speed += (target * blando - this.speed) * Math.min(1, step * rate);
     // Rozamiento estático. Un decaimiento exponencial se acerca a cero para
     // siempre y nunca llega, y lo que se ve en pantalla es un avión que
     // repta eternamente después de frenar. Un avión parado está parado.
