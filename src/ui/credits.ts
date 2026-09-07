@@ -6,7 +6,7 @@
  * el juego, no solo en un fichero del repositorio. Ver LICENSE-CONTENIDO.md.
  */
 
-import { t } from '../i18n';
+import { t } from "../i18n";
 
 export class CreditsScreen {
   private readonly root: HTMLElement;
@@ -17,32 +17,38 @@ export class CreditsScreen {
     this.root = root;
     root.innerHTML = `
       <div class="creditos__panel" role="dialog" aria-modal="true">
-        <h2>${t('credits.title')}</h2>
-        <p><strong>Óga Veve</strong> — ${t('app.tagline')}</p>
-        <p>${t('credits.madeBy')}</p>
-        <p class="creditos__destacado">${t('credits.educational')}</p>
-        <p>${t('credits.terrain')}</p>
-        <p>${t('credits.engine', { model: flightModelName })}</p>
-        <p>${t('credits.licence')}</p>
+        <h2>${t("credits.title")}</h2>
+        <p><strong>Óga Veve</strong> — ${t("app.tagline")}</p>
+        <p>${t("credits.madeBy")}</p>
+        <p class="creditos__destacado">${t("credits.educational")}</p>
+        <p>${t("credits.terrain")}</p>
+        <!--
+          Y la del IGN, que es igual de obligatoria: los escenarios españoles
+          vuelan sobre el MDT05 del PNOA-LiDAR y su licencia pide atribución.
+          Ver scripts/ign-a-relieve.mjs y CREDITOS.md.
+        -->
+        <p>${t("credits.terrainEs")}</p>
+        <p>${t("credits.engine", { model: flightModelName })}</p>
+        <p>${t("credits.licence")}</p>
         <!--
           La dedicatoria va la última y separada, porque no es un crédito de
           procedencia: es la única línea de esta pantalla que no está aquí
           por obligación legal.
         -->
-        <p class="creditos__dedicatoria">${t('credits.dedication')}</p>
-        <button class="creditos__cerrar" type="button">${t('credits.close')}</button>
+        <p class="creditos__dedicatoria">${t("credits.dedication")}</p>
+        <button class="creditos__cerrar" type="button">${t("credits.close")}</button>
       </div>
     `;
-    root.querySelector('button')?.addEventListener('click', () => this.hide());
-    root.addEventListener('click', (event) => {
+    root.querySelector("button")?.addEventListener("click", () => this.hide());
+    root.addEventListener("click", (event) => {
       if (event.target === root) this.hide();
     });
 
     // Escape cierra. El diálogo se declaraba modal y no se podía salir con
     // teclado, que es exactamente lo que exige el criterio 2.1.2 de WCAG:
     // si se puede entrar con el teclado, se tiene que poder salir.
-    root.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
+    root.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
         event.stopPropagation();
         this.hide();
       }
@@ -66,7 +72,7 @@ export class CreditsScreen {
   show(): void {
     this.previousFocus = document.activeElement as HTMLElement | null;
     this.root.hidden = false;
-    this.root.querySelector<HTMLElement>('button')?.focus();
+    this.root.querySelector<HTMLElement>("button")?.focus();
   }
 
   hide(): void {

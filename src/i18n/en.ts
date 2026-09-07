@@ -119,6 +119,8 @@ export const EN: Dictionary = {
     "Free forever for Paraguayan education: schools, teachers, pupils and families. No paperwork, no payment.",
   "credits.terrain":
     "Relief from Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
+  "credits.terrainEs":
+    "Relief in Spain from PNOA-LiDAR MDT05 © Instituto Geográfico Nacional de España, CC BY 4.0.",
   "credits.engine": "Flight model: {model}",
   "credits.licence":
     "Code free under Apache-2.0. Content and brands, © Oksigenia SL.",
@@ -141,8 +143,9 @@ export const EN: Dictionary = {
   "vuelo.final": "Come down gently",
   "vuelo.terrenoBajo": "You are very low",
   "vuelo.terrenoSube": "Pull up!",
-  "vuelo.mandanFrustrar": "Runway occupied: go around",
+  "vuelo.mandanFrustrar": "Runway occupied: go around and rejoin the circuit",
   "percance.ocupada": "The runway was occupied and you were told to go around",
+  "vuelo.puedeVolver": "Cleared to try again",
   "vuelo.frustrada": "Well done! You went around. Try again",
   "vuelo.aroAlto": "You went over the ring. Come down a little",
   "vuelo.aroBajo": "You went under the ring. Climb a little",

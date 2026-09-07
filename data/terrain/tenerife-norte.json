@@ -1,13 +1,13 @@
 {
   "id": "tenerife-norte",
-  "fuente": "Copernicus DEM GLO-30",
-  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "fuente": "PNOA-LiDAR MDT05 (IGN)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0",
   "origen": {
     "lat": 28.482752,
     "lon": -16.341707
   },
   "tamanoM": 18000,
   "resolucion": 417,
-  "minM": -2,
-  "maxM": 1671
+  "minM": 0,
+  "maxM": 1666
 }
