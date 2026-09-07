@@ -16,7 +16,8 @@
     "test": "vitest run",
     "terreno": "node scripts/hgt-a-heightmap.mjs",
     "vuelo": "node scripts/verificar-despegue.mjs tenerife-norte guyrami && node scripts/verificar-despegue.mjs pettirossi guyrami && node scripts/verificar-vuelo.mjs tenerife-norte guyrami && node scripts/verificar-vuelo.mjs pettirossi taguato && node scripts/verificar-despegue.mjs yvytu-rape guyrami && node scripts/verificar-vuelo.mjs yvytu-rape guyrami",
-    "vuelo-entero": "node scripts/verificar-vuelo-entero.mjs"
+    "vuelo-entero": "node scripts/verificar-vuelo-entero.mjs",
+    "rendimiento": "node scripts/verificar-rendimiento.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",
