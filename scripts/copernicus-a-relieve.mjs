@@ -173,6 +173,9 @@ async function leerTesela(url, cab, ct, ft) {
  * catorce kilómetros toca dos o tres de las dieciséis que tiene el grado, y
  * bajarlas todas serían cuarenta megas para usar cinco.
  */
+/** El grado que no existe: océano, cota cero. Ver `Grado.abrir`. */
+const MAR = { cota: async () => 0 };
+
 class Grado {
   constructor(url, cab) {
     this.url = url;
@@ -187,8 +190,24 @@ class Grado {
   static async abrir(lat, lon) {
     const nombre = nombreDeTesela(lat, lon);
     const url = `${BASE}/${nombre}/${nombre}.tif`;
-    const cab = leerCabecera(await trozo(url, 0, 65535));
-    return new Grado(url, cab);
+    try {
+      const cab = leerCabecera(await trozo(url, 0, 65535));
+      return new Grado(url, cab);
+    } catch (e) {
+      /*
+       * **Un grado que no existe es mar abierto.**
+       *
+       * Copernicus solo publica las teselas que tienen tierra: pedir la de un
+       * cuadrado de océano devuelve 404. Y eso no es un error, es la
+       * respuesta: ahí no hay nada que medir, hay Atlántico. El anillo lejano
+       * de una isla necesita cuatro grados y tres de ellos suelen ser agua, así
+       * que sin esto ningún escenario isleño puede tener horizonte — La Palma
+       * se cayó justo aquí.
+       */
+      if (!String(e.message).includes("404")) throw e;
+      console.log("mar");
+      return MAR;
+    }
   }
 
   /** La cota en un punto, con interpolación bilineal. */

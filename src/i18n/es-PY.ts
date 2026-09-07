@@ -63,6 +63,8 @@ export const ES_PY = {
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
   "scenario.chaco.name": "Llanura del Chaco",
   "scenario.tenerife.name": "Tenerife Norte",
+  "scenario.laPalma.name": "La Palma",
+  "scenario.cuatroVientos.name": "Cuatro Vientos",
 
   "tutor.throttle": "Dale motor",
   "tutor.speed": "Esperá a que corra",

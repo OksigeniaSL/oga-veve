@@ -16,6 +16,8 @@ import type { Aerodrome } from "./aerodrome";
 import SGAS from "../../data/aerodromes/sgas.aero.json";
 import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
+import GCLA from "../../data/aerodromes/gcla.aero.json";
+import LECU from "../../data/aerodromes/lecu.aero.json";
 import type { Ciudad } from "./ciudad";
 import { deFrente, type Meteo } from "./meteo";
 
@@ -620,12 +622,138 @@ export const YVYTU_RAPE: Scenario = {
   aerodrome: YVYTU as unknown as Aerodrome,
 };
 
+/**
+ * La Palma — la pista entre el mar y la pared.
+ *
+ * Es el segundo escenario canario y está aquí por lo que enseña, no por
+ * completar la lista: **una pista de dos kilómetros en una repisa entre el
+ * Atlántico y una montaña de dos mil metros**, con el mar por un lado y la
+ * caldera por el otro a ocho kilómetros. Volando ahí se entiende de una vez
+ * por qué existen la senda de planeo, la altura mínima y el circuito, que es
+ * de lo que va este juego.
+ *
+ * El relieve es medido, como el de Tenerife y el de la granja: la pared de
+ * enfrente es la que hay.
+ */
+export const LA_PALMA: Scenario = {
+  id: "la-palma",
+  nameKey: "scenario.laPalma.name",
+  pais: "es",
+  seed: 19710101,
+  // Dieciséis kilómetros: los que hacen falta para que entre la cumbre, que
+  // es lo que hay que ver desde el aire para entender dónde estás.
+  size: 16000,
+  segments: 400,
+  /*
+   * Los tres de abajo son la red por si falta el fichero de relieve. La isla
+   * de verdad sube de cero a dos mil cuatrocientos en quince kilómetros, y eso
+   * no lo imita un ruido; lo que se busca aquí es que, sin datos, salga algo
+   * con la forma correcta —aristas, no lomas— y no una llanura.
+   */
+  reliefHeight: 2000,
+  reliefScale: 3.2,
+  ridgeMix: 0.6,
+  // El Atlántico está a cero, y con relieve medido eso es un dato y no una
+  // perilla. Y no hay ríos: hay barrancos, que son otra cosa.
+  waterLevel: 2,
+  riverWidth: 0,
+  /*
+   * Las bandas, repartidas sobre lo que mide la isla alrededor del aeropuerto:
+   * la costa de lava oscura, el pinar canario de media ladera —que es lo que
+   * de verdad viste esa montaña— y la roca desnuda de la cumbre.
+   */
+  bands: [
+    { from: -50, colour: 0x5f5b4e },
+    { from: 150, colour: 0x6f7a52 },
+    { from: 500, colour: 0x44643f },
+    { from: 1000, colour: 0x556b42 },
+    { from: 1500, colour: 0x6f6152 },
+    { from: 1950, colour: 0x9a8d7e },
+  ],
+  water: 0x3f6a80,
+  fill: 0x53614a,
+  sky: { horizon: 0xdfe7ea, zenith: 0x4a86c8 },
+  // El mismo aire atlántico que en Tenerife: bruma poca, y la cumbre se ve.
+  fog: { colour: 0xdae4e8, density: 0.000018 },
+  sun: { azimuth: 112, elevation: 46 },
+  runway: pistaDe(GCLA as unknown as Aerodrome, "18"),
+  /*
+   * Un grado, y aquí sí es la declinación de verdad: el asfalto corre a 179°
+   * verdaderos y la cabecera pone 18. En Canarias la declinación anda por los
+   * cinco al oeste, pero lo que manda para el número pintado es lo que diga
+   * el fichero del aeródromo, que sale de OpenStreetMap.
+   */
+  magneticVariation: 1,
+  aerodrome: GCLA as unknown as Aerodrome,
+};
+
+/**
+ * Madrid–Cuatro Vientos, que es el aeródromo de las avionetas.
+ *
+ * Y no Barajas, a propósito. Barajas es el aeropuerto de Madrid y en este
+ * juego sería un decorado enorme por el que rodar veinte minutos; **Cuatro
+ * Vientos es donde se aprende a volar en Madrid** desde 1911 —es el más
+ * antiguo de España en servicio— y es donde estaría de verdad una Óga 172 un
+ * sábado por la mañana. Pista de kilómetro y medio, mucha escuela, y la
+ * meseta alrededor.
+ *
+ * La meseta importa: setecientos metros de altitud es aire menos denso, más
+ * carrera de despegue y más velocidad real para la misma indicada. Es el
+ * primer escenario del juego que enseña eso sin decir nada.
+ */
+export const CUATRO_VIENTOS: Scenario = {
+  id: "cuatro-vientos",
+  nameKey: "scenario.cuatroVientos.name",
+  pais: "es",
+  seed: 19110415,
+  size: 14000,
+  segments: 384,
+  // La red por si falta el relieve medido: la meseta con sus cerros, que
+  // alrededor de Madrid suben poco y despacio.
+  reliefHeight: 900,
+  reliefScale: 4.6,
+  ridgeMix: 0.15,
+  // Aquí no hay mar. El agua se queda muy por debajo de todo para que no
+  // aparezca un lago donde hay campo de Castilla.
+  waterLevel: 400,
+  riverWidth: 0,
+  /*
+   * Y los colores de la meseta en septiembre: rastrojo, encinar y tierra. Las
+   * bandas se reparten sobre lo que mide el terreno medido alrededor del
+   * aeródromo, que va de unos seiscientos a novecientos metros.
+   */
+  bands: [
+    { from: 500, colour: 0x8a8a5c },
+    { from: 620, colour: 0x94925f },
+    { from: 700, colour: 0x7d8a55 },
+    { from: 780, colour: 0x8f8f60 },
+    { from: 860, colour: 0xa39670 },
+    { from: 950, colour: 0xa89681 },
+  ],
+  water: 0x4d7d95,
+  fill: 0x6f7350,
+  sky: { horizon: 0xe8ecec, zenith: 0x4d8ecb },
+  // El aire seco de la meseta: se ve lejos, y en verano tiembla de calor.
+  fog: { colour: 0xdfe3dc, density: 0.00003 },
+  sun: { azimuth: 122, elevation: 52 },
+  runway: pistaDe(LECU as unknown as Aerodrome, "27"),
+  /*
+   * Un grado. El asfalto corre a 274° verdaderos y la cabecera pone 27, así
+   * que el número pintado y la brújula dicen lo mismo, que es la lección
+   * regalada de este juego.
+   */
+  magneticVariation: 1,
+  aerodrome: LECU as unknown as Aerodrome,
+};
+
 export const SCENARIOS: readonly Scenario[] = [
   VALLE_CORDILLERA,
   CHACO,
   YVYTU_RAPE,
   PETTIROSSI,
   TENERIFE_NORTE,
+  LA_PALMA,
+  CUATRO_VIENTOS,
 ];
 
 export function scenarioById(id: string): Scenario {

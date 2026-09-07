@@ -202,6 +202,8 @@ export const GUG: Dictionary = {
   "scenario.pettirossi.name": "Silvio Pettirossi",
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
   "scenario.tenerife.name": "Tenerife Norte",
+  "scenario.laPalma.name": "La Palma",
+  "scenario.cuatroVientos.name": "Cuatro Vientos",
 
   // ── Ayuda ──────────────────────────────────────────────────────────────
   "help.start": "Emombarete motor opa peve ha emopu’ã mbeguemi oñani vove",
