@@ -43,6 +43,11 @@ import {
 } from "./world/aproximacion";
 import {
   crearCircuito,
+  // El circuito muere donde empieza la senda: mil ochocientos metros del
+  // umbral. No es el mismo número que el `ENTRADA_EN_FINAL` de la senda —que
+  // son tres mil seiscientos, donde el juego da la aproximación por empezada—,
+  // así que va con su nombre para que no se confundan.
+  ENTRADA_EN_FINAL as ENTRADA_DEL_CIRCUITO,
   type Circuito,
   type TramoDeCircuito,
 } from "./world/circuito";
@@ -2545,7 +2550,7 @@ export class Game {
    * verdad. Solo hacia delante y solo una vez cada uno: quien se sale y vuelve
    * a entrar en el mismo tramo no necesita que se lo repitan.
    */
-  private seguirElCircuito(): void {
+  private seguirElCircuito(acercandose: boolean): void {
     const c = this.circuito;
     if (!c) return;
     const s = this.flight.state;
@@ -2553,7 +2558,35 @@ export class Game {
     const enElAire = !s.onGround;
     const preparando =
       s.onGround && (fase === "alineando" || fase === "despegando");
-    c.grupo.visible = enElAire || preparando;
+    const alto = s.position.y - this.terrain.runwayElevation;
+    /*
+     * **Y en final el circuito no se dibuja.**
+     *
+     * «No entiendo esa ruta de puntitos amarillos fuera de la línea de
+     * aterrizaje, como si me invitara a dar un rodeo.» Y era exactamente eso:
+     * en la aproximación se veían **dos caminos a la vez** —los aros y el hilo
+     * de la senda diciendo «recto a la pista», y el circuito diciendo «por
+     * aquí se da la vuelta»—, y dos caminos son ninguno.
+     *
+     * El circuito lleva a final y ahí se acaba su trabajo. Se dibuja cuando es
+     * lo que hay que seguir: alineado en la pista para verlo entero antes de
+     * meterse en él, y volando por encima de la altura a la que ya no se está
+     * ni despegando ni aterrizando.
+     */
+    /*
+     * **Y «estar en final» no es solo la fase.** A dos kilómetros del umbral,
+     * bajando y alineado, la máquina de fases todavía dice «en vuelo» y quien
+     * juega ya está aterrizando: tiene los aros delante y el hilo de la senda
+     * puesto. Así que lo que apaga el circuito es lo que de verdad describe
+     * ese momento — venir acercándose al umbral y estar ya dentro de donde
+     * empieza la senda—, y no una etiqueta.
+     */
+    const enLlegada =
+      fase === "final" ||
+      fase === "aterrizado" ||
+      (acercandose && this.distanceToRunway() < ENTRADA_DEL_CIRCUITO + 400);
+    c.grupo.visible =
+      preparando || (enElAire && alto >= ALTO_PARA_EL_CIRCUITO && !enLlegada);
     if (!enElAire) {
       // En tierra se olvida lo dicho, que la vuelta siguiente empieza de cero.
       if (fase !== "despegando") this.tramoDelCircuito = null;
@@ -2570,8 +2603,7 @@ export class Game {
      * que valga: o estás despegando o estás aterrizando, y las dos cosas
      * tienen su propia lección.
      */
-    if (s.position.y - this.terrain.runwayElevation < ALTO_PARA_EL_CIRCUITO)
-      return;
+    if (alto < ALTO_PARA_EL_CIRCUITO) return;
     const tramo = c.tramoEn(s.position.x, s.position.z);
     if (!tramo || tramo === this.tramoDelCircuito) return;
     /*
@@ -3672,7 +3704,7 @@ export class Game {
       }
     }
     this.explicarElPapi(acercandose);
-    this.seguirElCircuito();
+    this.seguirElCircuito(acercandose);
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
