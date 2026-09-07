@@ -395,13 +395,23 @@ async function construir(icao, pistas, aeropuertos) {
       .map((n) => centro(n))
       .filter(Boolean)
       .map(([la, lo]) => proj(la, lo)),
-    // OJO: en OSM `aeroway=navigationaid` son ayudas VISUALES —PAPI, VASI—,
-    // no radioayudas. Las radioayudas van con `airmark=beacon`, que es otra
-    // consulta. Lo dimos por hecho al revés durante un tiempo.
+    /*
+     * OJO: en OSM `aeroway=navigationaid` son ayudas VISUALES —PAPI, VASI—,
+     * no radioayudas. Las radioayudas van con `airmark=beacon`, que es otra
+     * consulta. Lo dimos por hecho al revés durante un tiempo.
+     *
+     * **Y lo que vale es el valor de la etiqueta, no el nodo.** Un
+     * `navigationaid=papi` dice dónde están de verdad las cuatro luces —de qué
+     * costado y a cuántos metros del umbral—, que es justo lo que hasta ahora
+     * se calculaba a ojo. Sin valor, un nodo no dice qué es: en Tenerife Norte
+     * los veinticinco que hay están todos sin etiquetar y son una barra
+     * cruzada de luces de aproximación, no un PAPI. Colocar un PAPI ahí sería
+     * enseñar una senda de planeo inventada, así que sin valor no se toca.
+     */
     visualAids: de("navigationaid")
-      .map((n) => centro(n))
-      .filter(Boolean)
-      .map(([la, lo]) => proj(la, lo)),
+      .map((n) => ({ tipo: n.tags?.navigationaid ?? null, punto: centro(n) }))
+      .filter((a) => a.punto)
+      .map(({ tipo, punto }) => ({ tipo, xy: proj(punto[0], punto[1]) })),
   };
 
   // Si OSM no trae ninguno, se deducen. Va aquí y no arriba porque hacen falta
@@ -519,7 +529,23 @@ function conservarManual(nuevo, viejo) {
   if (viejo === null || typeof viejo !== "object") return nuevo;
   if (viejo.manual === true) return viejo;
   if (Array.isArray(viejo) && Array.isArray(nuevo)) {
-    return nuevo.map((n, i) => conservarManual(n, viejo[i] ?? null));
+    const fusionado = nuevo.map((n, i) => conservarManual(n, viejo[i] ?? null));
+    /*
+     * Y lo puesto a mano que OSM no trae **se queda**, aunque la lista nueva
+     * venga más corta o vacía.
+     *
+     * Sin esto la promesa de arriba solo valía cuando OSM traía al menos
+     * tantos objetos como había: los cuatro puestos de estacionamiento de
+     * Cuatro Vientos —que OpenStreetMap no mapea, y sin los cuales no hay de
+     * dónde salir ni a dónde volver— desaparecieron en la primera extracción
+     * que se hizo después de ponerlos.
+     */
+    for (const v of viejo) {
+      if (v !== null && typeof v === "object" && v.manual === true) {
+        if (!fusionado.includes(v)) fusionado.push(v);
+      }
+    }
+    return fusionado;
   }
   if (Array.isArray(nuevo) || typeof nuevo !== "object" || nuevo === null)
     return nuevo;
@@ -548,10 +574,24 @@ for (const icao of icaos) {
   const previo = existsSync(destino)
     ? JSON.parse(await readFile(destino, "utf8"))
     : null;
-  await writeFile(
-    destino,
-    JSON.stringify(conservarManual(ficha, previo), null, 2) + "\n",
-  );
+  const salida = conservarManual(ficha, previo);
+  /*
+   * Y la nota escrita a mano se queda.
+   *
+   * `source.note` lleva la atribución obligatoria, pero en algunos ficheros
+   * lleva detrás la explicación de lo que se retocó y por qué —los cuatro
+   * puestos de Cuatro Vientos, por ejemplo—. Eso no es un campo con `manual`
+   * que se pueda salvar por la vía de arriba: es texto, y se perdía entero.
+   */
+  const notaVieja = previo?.source?.note;
+  if (
+    typeof notaVieja === "string" &&
+    notaVieja.startsWith(salida.source.note) &&
+    notaVieja.length > salida.source.note.length
+  ) {
+    salida.source.note = notaVieja;
+  }
+  await writeFile(destino, JSON.stringify(salida, null, 2) + "\n");
   const r = ficha.runways[0];
   process.stdout.write(
     `  ${ficha.name}\n` +

@@ -66,6 +66,136 @@ const PASO_APROXIMACION = 30;
 /** A qué distancia va la barra cruzada. */
 const BARRA = 300;
 
+/**
+ * Y las medidas del PAPI cuando hay que calcularlo, sacadas de las de verdad.
+ *
+ * En La Palma, que es el único de los nuestros que trae las dieciséis luces
+ * etiquetadas en OpenStreetMap, están a 297 m del umbral 18 y a 284 del 36, y
+ * los cuatro focos caen a 37, 46, 55 y 63 m del eje sobre una pista de 45 de
+ * ancha. O sea: unos quince metros por fuera del borde y nueve entre foco y
+ * foco. Es lo que se calcula aquí cuando el fichero no dice dónde están.
+ */
+const PAPI_ADENTRO = 300;
+const PAPI_DEL_BORDE = 15;
+const PAPI_SEPARACION = 9;
+
+/** Una ayuda visual del fichero del aeródromo. */
+export interface AyudaVisual {
+  readonly tipo: string | null;
+  readonly xy: Punto;
+}
+
+/** Dónde acaban las cuatro luces, y si eso se midió o se dedujo. */
+export interface SitioDelPapi {
+  /** Las cuatro, de la más cercana al eje a la más lejana. */
+  readonly luces: readonly Punto[];
+  readonly origen: "osm" | "calculado";
+}
+
+/**
+ * Dónde va el PAPI de este umbral: donde OpenStreetMap dice, o donde toca.
+ *
+ * ## Por qué esto no se puede adivinar
+ *
+ * El PAPI no está siempre a la misma distancia ni siempre al mismo lado.
+ * Cuatro Vientos lo tiene a **162 m** del umbral 27, no a trescientos; La
+ * Palma lo tiene a los dos costados. Cuando el dato existe, ponerlo donde está
+ * de verdad no es un detalle de decoración: es que la senda que enseña sea la
+ * senda de esa pista.
+ *
+ * ## Y por qué se mira el valor de la etiqueta y no el nodo
+ *
+ * Tenerife Norte trae veinticinco nodos `aeroway=navigationaid` **sin valor**,
+ * alineados en una barra de cuarenta metros a 225 del umbral 30: son luces de
+ * aproximación, no un PAPI. Tomarlos por PAPI pondría cuatro focos donde no
+ * hay ninguno y le enseñaría a un chico una senda de planeo inventada. Sin
+ * `tipo`, no se toca.
+ *
+ * Tres casos, y los tres salen del mismo sitio:
+ *
+ * - **Cuatro o más nodos de un costado**: son las luces, una por una.
+ * - **Uno o dos**: el nodo dice el costado y la distancia, que es lo que no se
+ *   podía saber; la separación entre focos se completa con la de siempre.
+ * - **Ninguno**: se calcula, como hasta hoy.
+ */
+export function sitiarPapi(
+  entrada: Punto,
+  eje: readonly [number, number],
+  ancho: number,
+  largo: number,
+  ayudas: readonly AyudaVisual[] = [],
+): SitioDelPapi {
+  const [ux, uy] = eje;
+  // A la izquierda vista desde la aproximación, que es donde va un PAPI solo.
+  const izquierda: Punto = [-uy, ux];
+
+  const calculada = (adentro: number, sitio: number, signo: number): Punto[] =>
+    Array.from({ length: 4 }, (_, k) => {
+      const lado = signo * (sitio + k * PAPI_SEPARACION);
+      return [
+        entrada[0] + ux * adentro + izquierda[0] * lado,
+        entrada[1] + uy * adentro + izquierda[1] * lado,
+      ] as Punto;
+    });
+
+  const porDefecto: SitioDelPapi = {
+    luces: calculada(PAPI_ADENTRO, ancho / 2 + PAPI_DEL_BORDE, 1),
+    origen: "calculado",
+  };
+
+  /*
+   * Solo la mitad de la pista que toca. Sin este tope, el PAPI del umbral
+   * contrario —que está a mil novecientos metros y mirando al revés— entra en
+   * la cuenta y el aeródromo se llena de luces que no van a ninguna parte.
+   */
+  const hastaDonde = Math.min(900, largo / 2);
+  const cerca = ayudas
+    .filter((a) => a.tipo === "papi")
+    .map((a) => {
+      const px = a.xy[0] - entrada[0];
+      const py = a.xy[1] - entrada[1];
+      return {
+        xy: a.xy,
+        adentro: px * ux + py * uy,
+        lado: px * izquierda[0] + py * izquierda[1],
+      };
+    })
+    .filter(
+      (a) =>
+        a.adentro > 30 &&
+        a.adentro < hastaDonde &&
+        Math.abs(a.lado) > ancho / 2 &&
+        Math.abs(a.lado) < 200,
+    );
+  if (!cerca.length) return porDefecto;
+
+  // Si están a los dos costados —La Palma— manda el izquierdo, que es el que
+  // se mira desde la aproximación y el que sigue teniendo cualquier pista con
+  // uno solo.
+  const izq = cerca.filter((a) => a.lado > 0);
+  const der = cerca.filter((a) => a.lado < 0);
+  const grupo = izq.length >= der.length ? izq : der;
+  const signo = grupo === izq ? 1 : -1;
+  grupo.sort((a, b) => Math.abs(a.lado) - Math.abs(b.lado));
+
+  if (grupo.length >= 4) {
+    return { luces: grupo.slice(0, 4).map((a) => a.xy), origen: "osm" };
+  }
+
+  /*
+   * Con uno o dos nodos no hay cuatro luces que copiar, pero sí está lo que
+   * no se podía calcular: **de qué costado y a cuántos metros**. El resto se
+   * completa con la separación de siempre, y el nodo se toma por la luz de
+   * dentro, que es equivocarse hacia fuera y no hacia la pista.
+   */
+  const adentro =
+    grupo.reduce((suma, a) => suma + a.adentro, 0) / grupo.length;
+  return {
+    luces: calculada(adentro, Math.abs(grupo[0]!.lado), signo),
+    origen: "osm",
+  };
+}
+
 export interface Aproximacion {
   readonly grupo: Group;
   /**
@@ -91,6 +221,7 @@ export function crearAproximacion(
   pista: Pista,
   cabecera: string | null,
   altura: (p: Punto) => number,
+  ayudas: readonly AyudaVisual[] = [],
 ): Aproximacion | null {
   const conNombre = Object.entries(pista.thresholds).filter(
     (e): e is [string, Situado] => e[1] !== null && e[1].xy !== null,
@@ -174,19 +305,25 @@ export function crearAproximacion(
     4,
   );
   papi.name = "papi";
+  /*
+   * Las cuatro, en el orden que importa: la más cerca del eje es la del ángulo
+   * más bajo. Así, en la senda, las dos de dentro salen blancas y las dos de
+   * fuera rojas.
+   */
+  const sitio = sitiarPapi(
+    entrada.xy,
+    [ux, uy],
+    ancho,
+    Math.hypot(salida.xy[0] - entrada.xy[0], salida.xy[1] - entrada.xy[1]),
+    ayudas,
+  );
   const luces: { x: number; y: number; z: number }[] = [];
-  for (let k = 0; k < 4; k++) {
-    const d = 300;
-    // La más cerca de la pista es la de ángulo más bajo. Así, en la senda, las
-    // dos de dentro salen blancas y las dos de fuera rojas.
-    const lado = ancho / 2 + 12 + k * 8;
-    const cx = entrada.xy[0] + ux * d - uy * lado;
-    const cy = entrada.xy[1] + uy * d + ux * lado;
+  sitio.luces.forEach(([cx, cy], k) => {
     const y = Math.max(cotaUmbral, altura([cx, cy])) + 1;
     luces.push({ x: cx, y, z: -cy });
     m.makeTranslation(cx, y, -cy);
     papi.setMatrixAt(k, m);
-  }
+  });
   grupo.add(papi);
 
   const tono = new Color();

@@ -2751,6 +2751,9 @@ export class Game {
       pista,
       cabeceraEnUso(this.scenario),
       (p) => this.terrain.sampleHeight(p[0], -p[1]),
+      // Y si el fichero trae las luces mapeadas, el PAPI va donde está de
+      // verdad y no donde lo pondríamos nosotros. Ver `sitiarPapi`.
+      this.scenario.aerodrome?.visualAids ?? [],
     );
     if (this.aproximacion) this.scene.add(this.aproximacion.grupo);
     /*
