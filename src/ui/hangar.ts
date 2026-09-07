@@ -217,8 +217,32 @@ export function caja(escenario: Scenario): Caja {
  * grande que la del valle porque lo es**: 3,4 km de pista contra 1,1. Cuatro
  * iconos iguales no dirían eso; cuatro planos a escala sí, y sin una palabra.
  */
-function plano(escenario: Scenario, escala: number): string {
-  const { cx, cy, lado } = caja(escenario);
+/**
+ * El plano de un aeródromo, en SVG y en coordenadas de su fichero.
+ *
+ * Se exporta porque lo usan dos: las fichas del hangar —para elegir dónde
+ * volar— y la pantalla de fin de vuelo, que dibuja encima **la traza de lo que
+ * acabás de hacer**. Es el mismo dibujo y tiene que serlo: quien reconoce el
+ * plano en el hangar reconoce su vuelo al acabarlo.
+ *
+ * `traza`, si viene, son puntos en coordenadas del fichero (x al este, y al
+ * norte) y se dibuja como una polilínea encima de todo.
+ */
+export function plano(
+  escenario: Scenario,
+  escala: number,
+  traza?: readonly (readonly [number, number])[],
+): string {
+  const encaje = caja(escenario);
+  /*
+   * **Y si hay traza, la ventana la tiene que contener.**
+   *
+   * El encuadre sale del aeródromo, que es lo que se dibuja en el hangar. Un
+   * vuelo se va mucho más lejos —un circuito son cinco kilómetros y una vuelta
+   * al pueblo, veinte—, así que sin esto la raya se saldría por el borde y lo
+   * que se vería sería un trozo de vuelo, que es peor que no verlo.
+   */
+  const { cx, cy, lado } = traza?.length ? conLaTraza(encaje, traza) : encaje;
   // **Con suelo de escala.** Todas comparten escala para que se vea de un
   // vistazo cuál es la pista larga, pero sin suelo el valle salía como un
   // palito perdido en medio de la ficha. Con el suelo al 55 % la diferencia se
@@ -272,6 +296,7 @@ function plano(escenario: Scenario, escala: number): string {
            aria-hidden="true">
         <line class="plano__pista" x1="${a[0]}" y1="${-a[1]}" x2="${b[0]}" y2="${-b[1]}" />
         ${umbrales(a, b, width * 2.6)}
+        ${dibujarTraza(traza)}
       </svg>`;
   }
 
@@ -308,7 +333,44 @@ function plano(escenario: Scenario, escala: number): string {
     <svg class="ficha__plano" viewBox="${vb}" preserveAspectRatio="xMidYMid meet"
          aria-hidden="true">
       ${plataformas}${rodaduras}${pistas}
+      ${dibujarTraza(traza)}
     </svg>`;
+}
+
+/** Agranda el encuadre hasta que quepan el aeródromo y la traza. */
+function conLaTraza(
+  encaje: Caja,
+  traza: readonly (readonly [number, number])[],
+): Caja {
+  let minX = encaje.cx - encaje.lado / 2;
+  let maxX = encaje.cx + encaje.lado / 2;
+  let minY = encaje.cy - encaje.lado / 2;
+  let maxY = encaje.cy + encaje.lado / 2;
+  for (const [x, y] of traza) {
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
+  return {
+    cx: (minX + maxX) / 2,
+    cy: (minY + maxY) / 2,
+    lado: Math.max(maxX - minX, maxY - minY),
+  };
+}
+
+/**
+ * La traza del vuelo, encima del plano.
+ *
+ * Va la última porque va encima de todo: es lo que se mira. Y lleva su propio
+ * largo escrito —`pathLength`— para que la animación que la dibuja no dependa
+ * de cuántos metros se volaran: un circuito de cinco kilómetros y una vuelta a
+ * la manzana tienen que tardar lo mismo en pintarse.
+ */
+function dibujarTraza(traza?: readonly (readonly [number, number])[]): string {
+  if (!traza || traza.length < 2) return "";
+  const puntos = traza.map(([x, y]) => `${x},${-y}`).join(" ");
+  return `<polyline class="plano__traza" pathLength="100" points="${puntos}" />`;
 }
 
 /** El designador pintado en la cabecera, si el aeródromo lo trae. */
