@@ -197,6 +197,13 @@ const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
 import { Hud } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { Medidor } from "./ui/rendimiento";
+import {
+  CAMERA_MODES,
+  construirCamaras,
+  type CameraMode,
+  type CameraRig,
+  type Contexto,
+} from "./cameras";
 import { nombreDeTecla } from "./flight/keymap";
 import { elegirInstructor, type Instructor } from "./audio/instructor";
 import type { ControlInputs } from "./flight/model";
@@ -247,33 +254,6 @@ import { callar, decir, permitirVoz } from "./audio/voz";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 
-/**
- * Vistas disponibles, en el orden en que rota la tecla C.
- *
- * `pajaro` es la cabina **sin avión**: la cámara va donde los ojos del piloto
- * y la aeronave no se dibuja, así que lo único que hay delante es el mundo.
- * «En algunos juegos recuerdo que había una opción para ocultar la aeronave,
- * era como si tú fueras el pájaro.»
- *
- * Va la última del ciclo a propósito. Es la vista más bonita y la que menos
- * enseña —sin panel, sin morro, sin nada que diga cómo va el avión—, así que
- * se llega a ella después de las que sí enseñan.
- *
- * `wing` mira desde el ala derecha e `izquierda` desde la otra, y las dos
- * están porque se pidieron: desde el costado se ve **a la vez** el avión y
- * hacia dónde va, que es justo lo que la cámara de detrás no deja ver. La
- * izquierda es además el lado desde el que se mira en un avión de verdad —el
- * comandante se sienta a la izquierda—, y es la que enseña la pista en el
- * circuito, que se vuela con las vueltas a la izquierda.
- */
-const CAMERA_MODES = [
-  "chase",
-  "cockpit",
-  "wing",
-  "izquierda",
-  "pajaro",
-] as const;
-
 /** Dónde se guarda la vista elegida. */
 const ALMACEN_VISTA = "oga-veve:vista";
 
@@ -323,31 +303,6 @@ const CORRIENDO = new Set(["despegando", "comprometido", "aterrizado"]);
  * Un número que uno de los dos modelos no puede sostener no es una velocidad
  * de entrada: es una postura que se deshace sola. Ver `velocidadDeEntradaEnFinal`.
  */
-type CameraMode = (typeof CAMERA_MODES)[number];
-
-/** Campo de visión en reposo y cuánto se abre a velocidad máxima, en grados. */
-const BASE_FOV = 62;
-/** Y el de la cabina, que es más cerrado. Ver `updateFieldOfView`. */
-const FOV_DE_CABINA = 50;
-const FOV_STRETCH = 9;
-/**
- * Velocidad, en m/s, a la que el campo de visión llega a su tope.
- *
- * Baja a propósito. Con la referencia en setenta, a velocidad de rotación
- * —treinta— solo se había abierto el cuarenta por ciento, así que toda la
- * carrera por pista transcurría con el ángulo casi quieto y no se apreciaba
- * acelerar. Lo que tiene que leerse es el **cambio**, y el cambio importa
- * justo donde se acelera de verdad, no en crucero.
- */
-const FOV_REFERENCE = 44;
-/** Amplitud del traqueteo de pista, en metros. */
-const SHAKE_AMPLITUDE = 0.42;
-/** Velocidad, en m/s, a la que el traqueteo llega a su máximo. */
-const SHAKE_REFERENCE = 30;
-/** Cuánto retrocede la cámara por cada m/s² de aceleración. */
-const ACCELERATION_LAG = 0.9;
-/** Segundos que tarda el traqueteo en apagarse al despegar. */
-const SHAKE_FADE = 0.2;
 
 /**
  * Segundos que se espera antes de reiniciar solo tras romper el avión.
@@ -853,12 +808,28 @@ export class Game {
   private wasOnGround = true;
   private wasStalled = false;
   private wasCrashed = false;
-  /** Cuánto traqueteo hay ahora mismo, de 0 a 1. Se apaga solo al despegar. */
-  private shake = 0;
-  private shakeClock = 0;
-  /** Aceleración longitudinal filtrada, para el retroceso de cámara. */
-  private surge = 0;
-  private lastAirspeed = 0;
+  /**
+   * Las cinco vistas, cada una con su estado.
+   *
+   * Se construyen todas al empezar y no una por pulsación: el traqueteo y el
+   * filtro de aceleración son historia acumulada, y rehacerlos haría que
+   * cambiar de vista sacudiera la cámara. Ver `src/cameras/`.
+   */
+  private readonly camaras = construirCamaras();
+  /**
+   * Lo que las cámaras necesitan saber del juego **sin conocer el juego**.
+   *
+   * Es un objeto y no cinco argumentos, y se reutiliza en vez de fabricarse
+   * cada fotograma: son sesenta objetos por segundo que no hace falta crear
+   * ni recoger. Se rellena justo antes de mover la cámara.
+   */
+  private readonly contextoDeCamara = {
+    aircraft: { wingSpan: 0, chord: 0 },
+    ojo: null as Contexto["ojo"],
+    suelo: (x: number, z: number): number => this.terrain.sampleSurface(x, z),
+    movimientoReducido: false,
+    traqueteo: 1,
+  };
   private readonly blobShadow: Mesh;
   /** Respeta la preferencia del sistema de reducir movimiento. */
   private readonly reducedMotion =
@@ -867,10 +838,6 @@ export class Game {
   /** Segundos que lleva el avión roto. Ver `frame`. */
   private crashedFor = 0;
 
-  // Vectores de trabajo, reutilizados en el bucle.
-  private readonly desiredCamera = new Vector3();
-  private readonly lookTarget = new Vector3();
-  private readonly offset = new Vector3();
 
   constructor(options: GameOptions) {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
@@ -5221,188 +5188,48 @@ export class Game {
     (this.blobShadow.material as MeshBasicMaterial).opacity = fade * fade * 0.5;
   }
 
+  /**
+   * Mover la cámara, que ya no es cosa de aquí.
+   *
+   * Lo único que queda en el juego es **elegir la vista y darle lo que
+   * necesita**: dónde está el suelo, qué mide el avión, dónde tiene los ojos
+   * el piloto y cómo traquetea lo que hay debajo de las ruedas. El resto
+   * —suavizado, retroceso por aceleración, traqueteo, mirar lejos— vive en
+   * `src/cameras/`, una vista por fichero.
+   */
   private updateCamera(dt: number): void {
     const state = this.flight.state;
-
-    // Aceleración longitudinal, filtrada. Sin filtrar salta con cada subpaso
-    // del modelo y la cámara temblaría.
-    const rawSurge = dt > 0 ? (state.airspeed - this.lastAirspeed) / dt : 0;
-    this.lastAirspeed = state.airspeed;
-    this.surge += (Math.min(rawSurge, 6) - this.surge) * Math.min(1, dt * 4);
+    const rig: CameraRig = this.camaras[this.cameraMode];
 
     // El avión, escondido solo en la vista de pájaro. Va aquí y no al cambiar
     // de vista para que valga también cuando el modelo se carga o se cambia.
-    this.aircraftMesh.group.visible = this.cameraMode !== "pajaro";
+    this.aircraftMesh.group.visible = rig.muestraElAvion;
 
-    if (this.cameraMode === "cockpit" || this.cameraMode === "pajaro") {
-      // Desde dentro no hay suavizado: la cámara es la cabeza del piloto y
-      // va rígidamente unida al avión.
-      //
-      // Y si la aeronave es un modelo de verdad, el sitio lo dice él: sus
-      // asientos. La fórmula sobre la cuerda del ala es para las cajas, donde
-      // no hay cabina y da igual dónde te pongas.
-      const ojo = this.aircraftMesh.ojo;
-      if (ojo) this.offset.set(ojo.x, ojo.y, ojo.z);
-      else
-        this.offset.set(
-          0,
-          this.aircraft.chord * 0.55,
-          -this.aircraft.chord * 0.4,
-        );
-      this.offset.applyQuaternion(state.orientation);
-      this.camera.position.copy(state.position).add(this.offset);
-      this.camera.quaternion.copy(state.orientation);
-      return;
-    }
+    const ctx = this.contextoDeCamara;
+    ctx.aircraft.wingSpan = this.aircraft.wingSpan;
+    ctx.aircraft.chord = this.aircraft.chord;
+    ctx.ojo = this.aircraftMesh.ojo ?? null;
+    ctx.movimientoReducido = this.reducedMotion;
+    ctx.traqueteo = TRAQUETEO[this.superficie];
 
-    if (this.cameraMode === "wing" || this.cameraMode === "izquierda") {
-      // El mismo sitio a un lado y al otro: lo único que cambia es de qué
-      // costado se mira.
-      this.offset.set(
-        this.aircraft.wingSpan * 0.9 * (this.cameraMode === "wing" ? 1 : -1),
-        this.aircraft.chord * 1.4,
-        this.aircraft.wingSpan * 0.5,
-      );
-    } else {
-      // Más alta y algo más atrás que en la primera versión: estaba a la
-      // altura del avión y el fuselaje tapaba justo el centro de la pantalla,
-      // que es donde uno quiere mirar para saber adónde va.
-      this.offset.set(
-        0,
-        this.aircraft.wingSpan * 0.6,
-        this.aircraft.wingSpan * 1.6,
-      );
-    }
-    // Retroceso por aceleración: la cámara se queda un poco atrás cuando el
-    // avión empuja y vuelve a su sitio al estabilizarse. Es el mismo truco
-    // que usa cualquier juego de coches y es lo que hace que se *sienta* la
-    // aceleración en vez de solo verla en el marcador.
-    this.offset.z += ACCELERATION_LAG * Math.max(0, this.surge);
-    this.offset.applyQuaternion(state.orientation);
-    this.desiredCamera.copy(state.position).add(this.offset);
-    this.applyGroundShake(state, dt);
-
-    // Nunca por debajo del terreno: en un vuelo rasante la cámara de
-    // persecución se metería dentro de la loma de atrás.
-    const floor =
-      this.terrain.sampleSurface(this.desiredCamera.x, this.desiredCamera.z) +
-      3;
-    if (this.desiredCamera.y < floor) this.desiredCamera.y = floor;
-
-    // Suavizado exponencial independiente de la tasa de fotogramas: sin el
-    // `1 - exp`, la cámara iría distinta a 30 y a 120 fps.
-    const smoothing = 1 - Math.exp(-dt * 7);
-    this.camera.position.lerp(this.desiredCamera, smoothing);
-
-    /*
-     * **Y la cámara de detrás mira lejos, no al avión.**
-     *
-     * Miraba a donde el avión estaría un tercio de segundo después —diez
-     * metros—, o sea prácticamente al avión, y eso lo dejaba clavado en el
-     * centro de la pantalla **encima justo de la pista**: en corta final, un
-     * fuselaje a dieciséis metros tapa exactamente los quince píxeles que mide
-     * una pista de hierba de dieciocho metros de ancha a medio kilómetro. «No
-     * se ve dónde tengo que tomar tierra», y no se veía porque lo tapaba la
-     * propia avioneta.
-     *
-     * Mirando lejos, la línea de visión se levanta y el avión baja al tercio
-     * de abajo del cuadro: sigue viéndose entero —hace falta para saber cómo
-     * va— y por encima de él aparece hacia dónde va, que es lo que hay que
-     * mirar para aterrizar. Es lo que hace la cámara de cualquier juego de
-     * conducción, y por lo mismo.
-     *
-     * La distancia crece con la velocidad porque la cabeza mira más lejos
-     * cuanto más deprisa se va, y tiene suelo para que rodando por la
-     * plataforma —donde lo que importa está a veinte metros— la cámara no se
-     * vaya al horizonte.
-     */
-    const MIRA_LEJOS = 2.4;
-    const MIRA_LO_MINIMO = 32;
-    const lejos = Math.max(MIRA_LO_MINIMO, state.airspeed * MIRA_LEJOS);
-    if (this.cameraMode === "chase" && state.velocity.lengthSq() > 1) {
-      this.lookTarget
-        .copy(state.velocity)
-        .normalize()
-        .multiplyScalar(lejos)
-        .add(state.position);
-    } else {
-      this.lookTarget
-        .copy(state.position)
-        .addScaledVector(state.velocity, 0.35);
-    }
-    this.camera.lookAt(this.lookTarget);
-    this.updateFieldOfView(state, dt);
+    rig.update(this.camera, state, dt, ctx);
+    this.ajustarElAngulo(rig.fovDeseado(state, ctx), dt);
   }
 
   /**
-   * Traqueteo de la carrera por pista, y su corte al despegar.
+   * El ángulo de visión, acercándose al que pide la vista.
    *
-   * La velocidad no se ve: se deduce de lo que pasa cerca y de lo que sacude.
-   * Con el avión rodando, la cámara vibra con una amplitud proporcional a la
-   * velocidad en el suelo, con baches sueltos encima para que sea traqueteo y
-   * no un zumbido.
-   *
-   * Y lo que de verdad vende el despegue es lo contrario: **el corte**. En
-   * cuanto las ruedas dejan el suelo la vibración se apaga en dos décimas, y
-   * ese silencio repentino es el momento. No hace falta adornarlo más.
+   * El suavizado está aquí y no en cada vista a propósito: es el mismo para
+   * todas, y sobre todo es lo que hace que **cambiar de vista no dé un tirón**
+   * cuando la nueva pide un ángulo distinto —de los sesenta y dos de fuera a
+   * los cincuenta de la cabina—. Si cada vista pusiera el suyo de golpe, ese
+   * salto sería lo primero que se vería al pulsar la tecla.
    */
-  private applyGroundShake(state: FlightState, dt: number): void {
-    if (this.reducedMotion) return;
-
-    // Sube con el cuadrado de la velocidad hasta la de rotación: así el
-    // traqueteo crece de verdad durante toda la carrera en vez de saturarse a
-    // media pista, que era lo que hacía que después de arrancar pareciera que
-    // ya no se aceleraba más.
-    const roll = Math.min(1, state.airspeed / SHAKE_REFERENCE);
-    const target = state.onGround ? roll * roll : 0;
-    // Sube deprisa y se apaga en SHAKE_FADE segundos.
-    const rate = target > this.shake ? dt * 6 : dt / SHAKE_FADE;
-    this.shake += Math.max(-rate, Math.min(rate, target - this.shake));
-    if (this.shake < 0.002) return;
-
-    this.shakeClock += dt;
-    const t = this.shakeClock;
-    // Tres senos que no comparten periodo: se lee como suelo irregular y no
-    // como una oscilación. Y un cuarto término lento hace los baches.
-    const bump = Math.pow(Math.max(0, Math.sin(t * 5.3)), 8);
-    // Y multiplicado por lo que traquetea el suelo de debajo: rodar por un
-    // campo tiene que **notarse** antes de que nadie lo explique.
-    const amount = SHAKE_AMPLITUDE * this.shake * TRAQUETEO[this.superficie];
-    this.desiredCamera.y +=
-      amount * (Math.sin(t * 41) * 0.5 + Math.sin(t * 17.3) * 0.3 + bump * 1.4);
-    this.desiredCamera.x += amount * Math.sin(t * 23.7) * 0.35;
-  }
-
-  /**
-   * Campo de visión atado a la velocidad.
-   *
-   * Abrir el ángulo estira la periferia y da sensación de ir más rápido, que
-   * es el truco más barato que existe. No pasa de setenta y un grados: más
-   * distorsiona y marea. En vista de cabina no se toca, y con movimiento
-   * reducido se queda fijo.
-   */
-  private updateFieldOfView(state: FlightState, dt: number): void {
-    /*
-     * **Y desde dentro el ángulo se cierra.**
-     *
-     * Sesenta y dos grados en una pantalla son los que hacen falta volando por
-     * fuera, y dentro de la cabina meten en el cuadro el techo, los montantes
-     * y los dos respaldos: el mundo se ve por una rendija rodeada de avión.
-     * Cincuenta —un objetivo un poco más largo— dejan el parabrisas ocupando
-     * lo que ocupa cuando uno va sentado ahí de verdad.
-     */
-    const wanted =
-      this.cameraMode === "cockpit"
-        ? FOV_DE_CABINA
-        : this.reducedMotion
-          ? BASE_FOV
-          : BASE_FOV +
-            FOV_STRETCH * Math.min(1, state.airspeed / FOV_REFERENCE);
-
-    const smoothing = 1 - Math.exp(-dt * 2.5);
-    const next = this.camera.fov + (wanted - this.camera.fov) * smoothing;
-    if (Math.abs(next - this.camera.fov) < 0.01) return;
-    this.camera.fov = next;
+  private ajustarElAngulo(quiere: number, dt: number): void {
+    const suavizado = 1 - Math.exp(-dt * 2.5);
+    const siguiente = this.camera.fov + (quiere - this.camera.fov) * suavizado;
+    if (Math.abs(siguiente - this.camera.fov) < 0.01) return;
+    this.camera.fov = siguiente;
     this.camera.updateProjectionMatrix();
   }
 
