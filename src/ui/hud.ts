@@ -608,6 +608,13 @@ export class Hud {
       <div class="v1" data-hud="v1" aria-hidden="true">V1</div>
       <div class="fin" data-hud="fin" hidden>
         <div class="fin__panel">
+          <!--
+            La traza del vuelo sobre el plano del aeródromo, que se dibuja
+            sola en poco más de un segundo. Es lo primero que se mira porque
+            es lo único de esta pantalla que cuenta **este** vuelo y no otro:
+            a los cuatro años eso se reconoce como «lo que acabo de hacer».
+          -->
+          <div class="fin__plano" data-hud="fin-plano" hidden></div>
           <div class="fin__manga" data-hud="fin-manga"></div>
           <p class="fin__frase" data-hud="fin-frase"></p>
           <!--
@@ -615,6 +622,7 @@ export class Hud {
             que salir de aquí». La flecha que vuelve a empezar se entiende sin
             leer; el texto solo aparece donde ya se lee.
           -->
+          <div class="fin__botones">
           <button type="button" class="fin__otra" data-hud="fin-otra">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 5 a7 7 0 1 0 6.6 4.7" fill="none" stroke="currentColor"
@@ -623,6 +631,22 @@ export class Hud {
             </svg>
             <span data-hud="fin-otra-texto"></span>
           </button>
+          <!--
+            Y la puerta de al lado: volver al hangar a elegir otra cosa.
+            Pequeña y al lado de la grande, porque lo que uno quiere hacer
+            justo ahí es volver a volar; pero si lo que quiere es cambiar de
+            sitio, hasta hoy había que recargar la página.
+          -->
+          <button type="button" class="fin__hangar" data-hud="fin-hangar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 12 L12 5 L21 12 v8 H3 Z" fill="none"
+                    stroke="currentColor" stroke-width="2.2"
+                    stroke-linejoin="round" />
+              <path d="M9 20 v-5 h6 v5" fill="none" stroke="currentColor"
+                    stroke-width="2.2" stroke-linejoin="round" />
+            </svg>
+          </button>
+          </div>
         </div>
       </div>
     `;
@@ -727,6 +751,15 @@ export class Hud {
       e.stopPropagation();
       this.cerrarFinDeVuelo();
       this.otroVuelo?.();
+    });
+    /*
+     * Y al hangar. Se hace recargando sin `?escenario=`, que es exactamente lo
+     * que hace que el hangar salga: la dirección manda sobre lo guardado, y
+     * sin ella el juego pregunta dónde, cómo y qué. Ver `main.ts`.
+     */
+    pick(this.root, "fin-hangar").addEventListener("click", (e) => {
+      e.stopPropagation();
+      location.href = location.pathname;
     });
 
     this.badge.textContent = this.badgeText;
@@ -1168,8 +1201,13 @@ export class Hud {
    * La manga va grande —es lo único que hay que mirar— y la frase solo aparece
    * en los peldaños que leen: en Guyrami las barras **son** el mensaje.
    */
-  mostrarFinDeVuelo(lista: readonly Galon[], frase: string): void {
+  mostrarFinDeVuelo(
+    lista: readonly Galon[],
+    frase: string,
+    planoConTraza = "",
+  ): void {
     if (!this.fin) return;
+    this.ponerPlano(planoConTraza);
     const final = reconocer(lista);
     const manga = pick(this.root, "fin-manga");
     manga.hidden = !final.manga;
@@ -1207,6 +1245,9 @@ export class Hud {
    */
   mostrarAscenso(barras: number, nombre: string): void {
     if (!this.fin) return;
+    // El ascenso se enseña solo: es el único momento del juego que pasa una
+    // vez, y la traza del vuelo que lo ganó no le añade nada.
+    this.ponerPlano("");
     const manga = pick(this.root, "fin-manga");
     manga.hidden = false;
     manga.innerHTML = `
@@ -1242,6 +1283,9 @@ export class Hud {
    */
   mostrarPercance(dibujo: string, frase: string): void {
     if (!this.fin) return;
+    // Un percance no enseña la traza: lo que hay que mirar es el dibujo de lo
+    // que pasó, y una raya al lado solo repartiría la atención.
+    this.ponerPlano("");
     const manga = pick(this.root, "fin-manga");
     manga.hidden = false;
     manga.innerHTML = dibujo;
@@ -1253,6 +1297,18 @@ export class Hud {
     pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
     this.fin.hidden = false;
     this.root.classList.add("hud--fin");
+  }
+
+  /**
+   * Pone —o quita— el plano con la traza en la pantalla de fin de vuelo.
+   *
+   * El SVG lo trae hecho quien lo llama: aquí no se sabe de aeródromos. Ver
+   * `plano()` en `ui/hangar.ts`.
+   */
+  private ponerPlano(svg: string): void {
+    const hueco = pick(this.root, "fin-plano");
+    hueco.innerHTML = svg;
+    hueco.hidden = !svg;
   }
 
   /**

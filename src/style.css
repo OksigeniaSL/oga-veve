@@ -604,6 +604,88 @@ body {
   text-align: center;
 }
 
+/*
+ * El plano con la traza del vuelo.
+ *
+ * Ocupa el sitio de arriba de la caja porque es lo que se mira primero: es lo
+ * único de esta pantalla que cuenta **este** vuelo. Fondo propio y un poco más
+ * oscuro, como un plano de verdad sobre la mesa.
+ */
+.fin__plano {
+  width: min(320px, 70vw);
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(10, 16, 13, 0.28);
+}
+
+.fin__plano[hidden] {
+  display: none;
+}
+
+.fin__plano svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/*
+ * Y la raya del vuelo, que se dibuja sola.
+ *
+ * Poco más de un segundo, y con `pathLength` a cien para que tarde lo mismo un
+ * circuito de cinco kilómetros que una vuelta a la manzana: lo que se cuenta
+ * es el recorrido, no los metros.
+ */
+.plano__traza {
+  fill: none;
+  stroke: var(--ocre);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: traza-se-dibuja 1.3s ease-out forwards;
+}
+
+@keyframes traza-se-dibuja {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Con movimiento reducido la raya sale entera y ya está. */
+@media (prefers-reduced-motion: reduce) {
+  .plano__traza {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Los dos botones del final: volver a volar, y volver al hangar. */
+.fin__botones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fin__hangar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--linea-fuerte);
+  background: transparent;
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.fin__hangar svg {
+  width: 26px;
+  height: 26px;
+}
+
 .fin__manga svg {
   display: block;
   /* Cuatro veces la del HUD: aquí la manga no acompaña, es lo que se mira. */

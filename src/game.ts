@@ -226,6 +226,8 @@ import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
+import { apuntarVuelo, type Paso } from "./flight/bitacora";
+import { plano } from "./ui/hangar";
 import {
   AvisosDeAltura,
   ESCALONES,
@@ -359,6 +361,16 @@ const VUELVE_SOLO = 8;
 
 /** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
 const CADA_CUANTO_SE_APUNTA = 30;
+
+/**
+ * Cada cuántos segundos se cata por dónde va el avión, para la traza.
+ *
+ * Dos. Un vuelo de diez minutos son trescientas catas, que la bitácora
+ * adelgaza a ciento veinte al guardarlas: más resolución de la que se ve en
+ * una raya sobre un plano de doce kilómetros, y suficiente para que una curva
+ * de circuito siga pareciendo una curva. Ver `flight/bitacora.ts`.
+ */
+const CADA_CUANTO_SE_CATA = 2;
 
 export interface GameOptions {
   canvas: HTMLCanvasElement;
@@ -696,6 +708,18 @@ export class Game {
   private gradoAlEmpezar: Grado = grado(leerCuaderno());
   /** Segundos volando desde el último apunte, para no escribir cada fotograma. */
   private sinApuntar = 0;
+  /**
+   * Por dónde ha ido este vuelo, en coordenadas del fichero del aeródromo.
+   *
+   * Se cata cada pocos segundos y se guarda con el vuelo: a los cuatro años
+   * «lo que acabo de hacer» no es una lista de números, es un dibujo. Ver
+   * `flight/bitacora.ts`.
+   */
+  private traza: Paso[] = [];
+  /** Lo que se lleva sin catar la traza, s. */
+  private sinCatar = 0;
+  /** Cuánto ha durado este vuelo, s. Cuenta desde que se arrancó. */
+  private duracion = 0;
   /**
    * La última lectura del PAPI que se enseñó, o `null` si todavía ninguna.
    *
@@ -1566,6 +1590,10 @@ export class Game {
           // Del fichero al mundo: la Y del norte es la Z negativa.
           puntos: e.polygon.map(([x, y]) => [x, -y] as [number, number]),
         })),
+      /** Termina el vuelo ahora mismo, para poder mirar su pantalla. */
+      acabar: () => this.terminarElVuelo(),
+      /** Y la traza de por dónde ha ido, en coordenadas del fichero. */
+      traza: () => this.traza,
       /** Los cinco vértices del circuito de tráfico, si lo hay. */
       circuito: () => this.circuito?.vertices ?? null,
       /** A qué caída se tocó, m/s. Para el banco y para las sondas. */
@@ -2022,6 +2050,22 @@ export class Game {
     if (this.vueloTerminado) return;
     this.vueloTerminado = true;
     this.apuntar({ completos: this.cuaderno.completos + 1 });
+    /*
+     * **Y el vuelo entero a la bitácora**, con su traza.
+     *
+     * El cuaderno guarda los totales —horas, despegues, aterrizajes— y un
+     * total no es un recuerdo: dice que hubo veinte aterrizajes y no dice cuál
+     * fue el tuyo. Esto es la línea de este vuelo. Ver `flight/bitacora.ts`.
+     */
+    apuntarVuelo({
+      fecha: new Date().toISOString(),
+      escenario: this.scenario.id,
+      leccion: this.leccion.id,
+      tramo: this.tier.id,
+      segundos: Math.round(this.duracion),
+      galones: this.galones.lista,
+      traza: this.traza,
+    });
     window.setTimeout(() => {
       if (!this.vueloTerminado) return;
       /*
@@ -2052,6 +2096,8 @@ export class Game {
         this.tier.instruments === "none"
           ? ""
           : t(`fin.${final.nivel}` as never),
+        // Y el plano con la raya de por dónde se fue. Ver `bitacora.ts`.
+        plano(this.scenario, this.scenario.size, this.traza),
       );
       this.audio.cue("achieved");
     }, TARDA_EL_FINAL * 1000);
@@ -2295,6 +2341,10 @@ export class Game {
 
   resetFlight(): void {
     this.percance = null;
+    // Otro vuelo, otra traza: la raya del anterior ya está guardada.
+    this.traza = [];
+    this.sinCatar = 0;
+    this.duracion = 0;
     this.hud.cerrarFinDeVuelo();
     this.dichoDeLaToma = false;
     this.avisadoDeLaPasada = false;
@@ -3249,6 +3299,22 @@ export class Game {
         this.apuntar({ segundos: this.cuaderno.segundos + this.sinApuntar });
         this.sinApuntar = 0;
       }
+    }
+
+    /*
+     * **Y por dónde se va pasando**, que es lo que después se dibuja.
+     *
+     * Se cata cada pocos segundos, en el suelo y en el aire: la vuelta del
+     * puesto a la pista es parte del vuelo y en el plano se reconoce igual que
+     * el circuito. En coordenadas del fichero —la Y del norte es la Z negativa
+     * del mundo—, que es el sistema en el que ya está dibujado el plano.
+     */
+    this.duracion += dt;
+    this.sinCatar += dt;
+    if (this.sinCatar >= CADA_CUANTO_SE_CATA) {
+      this.sinCatar = 0;
+      const p = this.flight.state.position;
+      this.traza.push([Math.round(p.x), Math.round(-p.z)]);
     }
 
     if (this.percance) {
