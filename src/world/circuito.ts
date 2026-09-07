@@ -99,7 +99,7 @@ const RECTO_TRAS_LA_PISTA = 1200;
  * senda, y eso no es casualidad: **el circuito tiene que morir donde empieza
  * lo que ya estaba dibujado**, o serían dos caminos distintos para lo mismo.
  */
-const ENTRADA_EN_FINAL = 1800;
+export const ENTRADA_EN_FINAL = 1800;
 
 /** La senda de planeo, en radianes. La misma que la de los aros. */
 const SENDA = (3 * Math.PI) / 180;
