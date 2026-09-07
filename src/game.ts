@@ -1660,6 +1660,19 @@ export class Game {
       },
       /** Si ahora mismo hay orden de irse al aire. */
       ordenDeFrustrar: () => this.mandanFrustrar,
+      /**
+       * Lo que cuesta el cuadro que se acaba de dibujar.
+       *
+       * Llamadas de dibujo y triángulos, que es lo que dice **por dónde** se va
+       * el tiempo: los fotogramas solos dicen que va lento, y estos dos dicen
+       * si es por dibujar demasiadas cosas o cosas demasiado gordas. Los usa
+       * el banco de rendimiento. Ver `scripts/verificar-rendimiento.mjs`.
+       */
+      coste: () => ({
+        llamadas: this.renderer.info.render.calls,
+        triangulos: this.renderer.info.render.triangles,
+        arboles: this.vegetacion?.children.length ?? 0,
+      }),
       /** Termina el vuelo ahora mismo, para poder mirar su pantalla. */
       acabar: () => this.terminarElVuelo(),
       /** Y la traza de por dónde ha ido, en coordenadas del fichero. */
