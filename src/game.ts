@@ -1416,6 +1416,19 @@ export class Game {
        * El tronco de la cámara y **cuántos bits tiene el búfer de
        * profundidad**, que es de donde sale que la pintura se vea o no.
        */
+      /**
+       * Dónde está el ojo ahora mismo, y con qué ángulo.
+       *
+       * Lo pide el banco de accesibilidad: comprobar que con movimiento
+       * reducido la cámara **no se balancea** es mirar su altura fotograma a
+       * fotograma, y desde fuera no hay otra forma de verla.
+       */
+      ojoDeCamara: () => ({
+        x: this.camera.position.x,
+        y: this.camera.position.y,
+        z: this.camera.position.z,
+        fov: this.camera.fov,
+      }),
       camara: () => {
         const gl = this.renderer.getContext();
         return {
