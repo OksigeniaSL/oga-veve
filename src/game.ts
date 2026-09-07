@@ -209,6 +209,7 @@ import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
 import { Sigueme } from "./world/sigueme";
+import { Vaca } from "./world/vaca";
 import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
@@ -466,6 +467,23 @@ const ALTURA_DE_TOMA = 18;
  * cosas tienen su propia lección en la pantalla. Ver `seguirElCircuito`.
  */
 const ALTO_PARA_EL_CIRCUITO = 60;
+
+/**
+ * Entre qué alturas sobre la pista te pueden mandar al aire, m.
+ *
+ * De sesenta a ciento sesenta. Más arriba no hay aproximación que
+ * interrumpir; más abajo ya no es una decisión, es un susto — y en un avión
+ * de verdad tampoco se manda frustrar a quince metros salvo que se venga algo
+ * encima. Ver `mirarSiMandanFrustrar`.
+ */
+const ALTO_MINIMO_PARA_MANDAR = 60;
+const ALTO_MAXIMO_PARA_MANDAR = 160;
+
+/** Y a cuánto del umbral, como mucho, m. Más lejos no es final todavía. */
+const MANDAN_DESDE = 3000;
+
+/** Cada cuántas aproximaciones se manda, de media. */
+const UNA_DE_CADA = 0.25;
 
 const ANTES_DEL_UMBRAL = 300;
 
@@ -771,6 +789,28 @@ export class Game {
    */
   private readonly sigueme: Sigueme;
   /**
+   * La vaca que se cruza en la pista, en los campos de hierba.
+   *
+   * Es la razón número uno por la que se frustra una aproximación en un
+   * aeródromo pequeño, y aquí es además la vecina: «las vacas van a pastar
+   * pasto aceitoso». Ver `world/vaca.ts`.
+   */
+  private readonly vaca = new Vaca();
+  /**
+   * Cómo se sortean las órdenes de irse al aire.
+   *
+   * `auto` es lo que se juega: una de cada cuatro aproximaciones. Las otras
+   * dos son para el banco de pruebas, que hace decenas de aproximaciones
+   * seguidas y necesita decidir él cuándo pasa — un sorteo suelto en mitad de
+   * una comprobación de otra cosa la rompe, y lo hizo. Ver `mandarFrustrar`
+   * en la ventana de pruebas.
+   */
+  private ordenes: "auto" | "siempre" | "nunca" = "auto";
+  /** Si la torre —o la vaca— ha mandado irse al aire y todavía manda. */
+  private mandanFrustrar = false;
+  /** Y si ya lo mandaron en este vuelo, que se manda una vez. */
+  private yaLoMandaron = false;
+  /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
    * Solo existe cuando el escenario tiene un aeródromo de verdad con puestos de
@@ -898,6 +938,7 @@ export class Game {
        */
       this.scene.add(this.senalero.grupo);
       this.scene.add(this.sigueme.grupo);
+      this.scene.add(this.vaca.grupo);
     }
 
     this.sky = createSky(this.scenario);
@@ -1610,6 +1651,15 @@ export class Game {
           // Del fichero al mundo: la Y del norte es la Z negativa.
           puntos: e.polygon.map(([x, y]) => [x, -y] as [number, number]),
         })),
+      /**
+       * Cómo se sortean las órdenes de irse al aire: `siempre`, `nunca` o
+       * `auto`. Para el banco. Ver `ordenes`.
+       */
+      mandarFrustrar: (como: "auto" | "siempre" | "nunca" = "siempre") => {
+        this.ordenes = como;
+      },
+      /** Si ahora mismo hay orden de irse al aire. */
+      ordenDeFrustrar: () => this.mandanFrustrar,
       /** Termina el vuelo ahora mismo, para poder mirar su pantalla. */
       acabar: () => this.terminarElVuelo(),
       /** Y la traza de por dónde ha ido, en coordenadas del fichero. */
@@ -1761,7 +1811,17 @@ export class Game {
      * lo que hace que el peor final posible no se distinga de un aterrizaje
      * bueno. Ver `flight/percance.ts`.
      */
-    if (veredicto === "fuera") this.sufrirPercance("fuera");
+    /*
+     * **Y aterrizar cuando te habían dicho que no.**
+     *
+     * Es el otro lado de la frustrada: la maniobra que salva existe porque a
+     * veces no se puede aterrizar, y quien se empeña se lleva por delante lo
+     * que hubiera en la pista — que en un campo de hierba tiene cuatro patas.
+     * No es un castigo por fallar una maniobra: es lo que pasa por seguir
+     * bajando después de la orden. Ver `mirarSiMandanFrustrar`.
+     */
+    if (this.mandanFrustrar) this.sufrirPercance("ocupada");
+    else if (veredicto === "fuera") this.sufrirPercance("fuera");
     /*
      * Y llegar dando un golpe, aunque sea sobre el asfalto.
      *
@@ -1808,6 +1868,92 @@ export class Game {
       return;
     }
     if (encasa) this.instructor.decir(encasa);
+  }
+
+  /**
+   * Que te manden irse al aire, y por qué.
+   *
+   * **La frustrada es la regla número uno de este proyecto y hasta hoy solo la
+   * hacía quien quería.** Se detectaba, se celebraba y valía un galón, pero
+   * nadie te la pedía nunca — y en la vida real la mitad de las frustradas no
+   * se deciden, se obedecen: la pista está ocupada, la torre te manda al aire,
+   * y se pregunta después.
+   *
+   * ## Y se ve por qué
+   *
+   * En un campo de hierba, **se cruza una vaca**. Es la razón número uno por
+   * la que se frustra en un aeródromo pequeño de verdad, y aquí además es la
+   * vecina. Se ve, se entiende sin una palabra y da risa, que es exactamente
+   * el registro que hace falta a los cuatro años.
+   *
+   * En un aeropuerto con torre no hay vaca: hay una lámpara roja y una orden,
+   * porque eso es lo que hay allí — otro avión que no ha salido todavía, y vos
+   * no lo ves. Obedecer sin ver el motivo también es de verdad.
+   *
+   * ## Una vez por vuelo, y con sitio para hacerla
+   *
+   * Entre los sesenta y los ciento sesenta metros sobre la pista: más arriba
+   * no hay aproximación que interrumpir y más abajo ya no es una decisión, es
+   * un susto. Y una sola vez, porque lo que enseña es la maniobra, no la
+   * sorpresa repetida.
+   */
+  private mirarSiMandanFrustrar(acercandose: boolean): void {
+    // Puesta la orden, la levanta irse al aire, que se ve en
+    // `celebrarLaFrustrada`; aquí solo hay que no volver a mandarla.
+    if (this.mandanFrustrar) return;
+    if (this.yaLoMandaron || this.vueloTerminado || !acercandose) return;
+    const s = this.flight.state;
+    if (s.onGround) return;
+    const alto = s.position.y - this.terrain.runwayElevation;
+    if (alto < ALTO_MINIMO_PARA_MANDAR || alto > ALTO_MAXIMO_PARA_MANDAR)
+      return;
+    if (this.distanceToRunway() > MANDAN_DESDE) return;
+    /*
+     * **Una de cada cuatro**, y sorteada con el propio vuelo.
+     *
+     * Ni siempre —una aproximación que siempre acaba en frustrada deja de ser
+     * una aproximación— ni tan raro que no llegue a pasar en una tarde. El
+     * sorteo usa los segundos volados, así que dos vuelos seguidos no salen
+     * igual y el banco de pruebas puede forzarlo cuando lo necesita.
+     */
+    if (this.ordenes === "nunca") return;
+    if (this.ordenes === "auto" && Math.random() > UNA_DE_CADA) return;
+    // Forzada, se gasta: el banco pide una y quiere una, no todas.
+    if (this.ordenes === "siempre") this.ordenes = "auto";
+    this.yaLoMandaron = true;
+    this.mandanFrustrar = true;
+
+    /*
+     * Y el motivo, donde lo hay: la vaca se planta en la zona de toma, que es
+     * justo donde ibas a poner las ruedas.
+     */
+    if (this.scenario.aerodrome?.privado) {
+      const [x, z] = this.enLaPista(this.scenario.runway.length / 2 - 150);
+      this.vaca.poner(
+        x,
+        this.terrain.sampleHeight(x, z),
+        z,
+        (this.scenario.runway.heading * Math.PI) / 180,
+      );
+    } else {
+      this.hud.setLuzDeTorre("roja");
+    }
+
+    this.hud.senal.mostrar(
+      "frustrada",
+      this.tier.instruments === "none" ? "" : t("vuelo.mandanFrustrar"),
+      null,
+      { segundos: SE_QUEDA_LA_FRUSTRADA, prioridad: URGENTE },
+    );
+    this.audio.cue("peligro");
+    this.cantar("go around, runway occupied", t("vuelo.mandanFrustrar"));
+  }
+
+  /** Se acabó la orden: la vaca se va y la lámpara se apaga. */
+  private levantarLaOrden(): void {
+    this.mandanFrustrar = false;
+    this.vaca.quitar();
+    this.hud.setLuzDeTorre(null);
   }
 
   /**
@@ -2361,6 +2507,9 @@ export class Game {
 
   resetFlight(): void {
     this.percance = null;
+    this.mandanFrustrar = false;
+    this.yaLoMandaron = false;
+    this.vaca.quitar();
     // Otro vuelo, otra traza: la raya del anterior ya está guardada.
     this.traza = [];
     this.sinCatar = 0;
@@ -3589,7 +3738,12 @@ export class Game {
      * alguien lo ha resuelto. Ver `flight/frustrada.ts`.
      */
     const renuncio = this.frustrada.paso(cerca);
-    if (renuncio) this.celebrarLaFrustrada();
+    if (renuncio) {
+      // Y si te lo habían mandado, la orden se levanta: la pista vuelve a ser
+      // tuya y la vaca se va, que para eso se hace la pasada.
+      if (this.mandanFrustrar) this.levantarLaOrden();
+      this.celebrarLaFrustrada();
+    }
     if (terreno && terreno !== this.terrenoDicho) {
       this.terrenoDicho = terreno;
       this.hud.senal.mostrar(
@@ -3704,6 +3858,7 @@ export class Game {
       }
     }
     this.explicarElPapi(acercandose);
+    this.mirarSiMandanFrustrar(acercandose);
     this.seguirElCircuito(acercandose);
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
