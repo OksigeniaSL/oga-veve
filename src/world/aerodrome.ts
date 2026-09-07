@@ -128,6 +128,22 @@ export interface Aerodrome {
     readonly ref: string | null;
     readonly xy: Punto;
   }[];
+  /**
+   * Las ayudas **visuales** de OpenStreetMap: PAPI, VASI, luces de aproximación.
+   *
+   * `tipo` es el valor de `aeroway=navigationaid`, y es lo único que las hace
+   * servibles: un nodo sin valor no dice qué es. Medido en los cuatro
+   * aeródromos que volamos: La Palma trae dieciséis y los dieciséis dicen
+   * `papi`; Cuatro Vientos trae uno; Tenerife Norte trae veinticinco **sin
+   * valor ninguno** —y no son PAPI, son una barra cruzada de luces de
+   * aproximación—; Asunción no trae ninguno.
+   *
+   * Por eso el `tipo` no se adivina. Ver `world/aproximacion.ts`.
+   */
+  readonly visualAids?: readonly {
+    readonly tipo: string | null;
+    readonly xy: Punto;
+  }[];
 }
 
 /** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */
