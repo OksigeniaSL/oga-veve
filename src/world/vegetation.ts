@@ -67,7 +67,7 @@ const MAX_TREES = 7000;
 /** Pendiente por encima de la cual no agarra nada. */
 const MAX_SLOPE = 0.42;
 
-interface Species {
+export interface Species {
   name: string;
   trunk: {
     colour: number;
@@ -119,7 +119,106 @@ const KARANDAY: Species = {
   scale: [0.85, 1.25],
 };
 
-const SPECIES = [LAPACHO, SAMUU, KARANDAY];
+/*
+ * ── Y lo que crece al otro lado del mar ──────────────────────────────────
+ *
+ * Un lapacho en el monteverde canario es exactamente igual de falso que una
+ * casa de Asunción en Tenerife, y se ve desde el aire igual de bien. Desde
+ * que hay escenarios en dos continentes, la lista de especies no puede ser
+ * una: **cada sitio tiene la suya**, y en Canarias además cambia con la
+ * altura de una manera que se reconoce volando.
+ */
+
+/**
+ * Pino canario: alto, recto y de copa estrecha.
+ *
+ * Es el árbol de la isla y el que hace el paisaje entre los ochocientos y los
+ * dos mil metros. Rebrota después de un incendio, que es la razón de que
+ * siga habiendo pinar; aquí lo que importa es su silueta, que no se parece a
+ * ningún árbol paraguayo: tronco largo y desnudo y una copa estrecha arriba.
+ */
+const PINO_CANARIO: Species = {
+  name: "pino-canario",
+  trunk: { colour: 0x7a5f47, height: 13, radiusTop: 0.4, radiusBottom: 0.95 },
+  crown: { colour: 0x37624a, radius: 3.4, height: 1.35, detail: 0, lift: 11 },
+  weight: 0.5,
+  // De media ladera para arriba, que es donde está el pinar de verdad.
+  bandFrom: 0.28,
+  bandTo: 0.95,
+  scale: [0.85, 1.5],
+};
+
+/**
+ * Laurisilva: la copa redonda y apretada del monteverde.
+ *
+ * El bosque de niebla del norte de Tenerife —donde está el aeropuerto—, entre
+ * los quinientos y los mil doscientos metros. Va oscuro y muy junto: lo que
+ * se ve desde el aire es una manta, no árboles sueltos.
+ */
+const LAURISILVA: Species = {
+  name: "laurisilva",
+  trunk: { colour: 0x5c4a3c, height: 4.5, radiusTop: 0.5, radiusBottom: 0.8 },
+  crown: { colour: 0x2f5a3c, radius: 5.2, height: 0.95, detail: 0, lift: 4.2 },
+  weight: 0.42,
+  bandFrom: 0,
+  bandTo: 0.5,
+  scale: [0.8, 1.4],
+};
+
+/**
+ * Palmera canaria: baja, gorda y con la copa abierta.
+ *
+ * Vive abajo, cerca de la costa y de los pueblos, y es lo que le pone a un
+ * barranco canario su forma. Comparte silueta con el karanday paraguayo —las
+ * dos son palmeras— y a propósito: lo que cambia es dónde crece y de qué
+ * color va.
+ */
+const PALMERA_CANARIA: Species = {
+  name: "palmera-canaria",
+  trunk: { colour: 0x8a7454, height: 9, radiusTop: 0.75, radiusBottom: 0.95 },
+  crown: { colour: 0x6f9153, radius: 4.6, height: 0.5, detail: 0, lift: 8.4 },
+  weight: 0.2,
+  bandFrom: 0,
+  bandTo: 0.22,
+  scale: [0.85, 1.2],
+};
+
+/**
+ * Quebracho: el árbol del Chaco, y el que le da nombre a media región.
+ *
+ * Bajo, retorcido y durísimo —«quiebra-hachas»—, con la copa abierta y poca
+ * hoja. En el Chaco no hay monte cerrado: hay árboles sueltos sobre pasto, y
+ * eso es lo que tiene que verse desde el aire.
+ */
+const QUEBRACHO: Species = {
+  name: "quebracho",
+  trunk: { colour: 0x6f5a41, height: 5, radiusTop: 0.55, radiusBottom: 1.1 },
+  crown: { colour: 0x6b7f45, radius: 4.8, height: 0.6, detail: 0, lift: 4.6 },
+  weight: 0.55,
+  bandFrom: 0,
+  bandTo: 0.8,
+  scale: [0.75, 1.3],
+};
+
+/** Lo que crece en cada sitio. Ver el bloque de arriba. */
+const FLORA: Record<string, readonly Species[]> = {
+  "tenerife-norte": [LAURISILVA, PINO_CANARIO, PALMERA_CANARIA],
+  chaco: [QUEBRACHO, KARANDAY],
+};
+
+/**
+ * Y lo que crece donde no se ha dicho otra cosa: el este de Paraguay.
+ *
+ * Es la flora de Asunción, del Valle y de la granja, que son tres de los cinco
+ * escenarios. Un escenario nuevo sin flora escrita sale con esta, que es una
+ * respuesta razonable mientras nadie diga la suya.
+ */
+const FLORA_POR_DEFECTO: readonly Species[] = [LAPACHO, SAMUU, KARANDAY];
+
+/** Qué especies crecen en este escenario. */
+export function floraDe(escenario: { id: string }): readonly Species[] {
+  return FLORA[escenario.id] ?? FLORA_POR_DEFECTO;
+}
 
 /** Proporción de lapachos en flor. Es un acento, no una alfombra. */
 const FLOWERING = 0.16;
@@ -194,6 +293,8 @@ export function createVegetation(
    * monte, arriba el pelado, y en medio lo que haya.
    */
   const franja = franjaDeCotas(scenario);
+  // Y lo que crece aquí, que no es lo mismo en Asunción que en Tenerife.
+  const flora = floraDe(scenario);
 
   const random = mulberry32(scenario.seed ^ 0x7ee5);
   const clumps = new ValueNoise2D(scenario.seed ^ 0xb05c);
@@ -202,9 +303,7 @@ export function createVegetation(
 
   // Un sorteo, un reparto: se recorren candidatos y cada uno acaba en su
   // especie o en la basura. Así el coste no depende del número de especies.
-  const placements = new Map<string, Matrix4[]>(
-    SPECIES.map((s) => [s.name, []]),
-  );
+  const placements = new Map<string, Matrix4[]>(flora.map((s) => [s.name, []]));
   const flowering: Matrix4[] = [];
   let placed = 0;
 
@@ -270,7 +369,7 @@ export function createVegetation(
     if (random() > Math.pow(density, 4) * 5.5) continue;
 
     const band = clamp01((height - franja.desde) / franja.cuanto);
-    const species = pickSpecies(band, random());
+    const species = pickSpecies(flora, band, random());
     if (!species) continue;
 
     const size =
@@ -285,7 +384,7 @@ export function createVegetation(
     if (++placed >= MAX_TREES) break;
   }
 
-  for (const species of SPECIES) {
+  for (const species of flora) {
     const matrices = placements.get(species.name)!;
     if (matrices.length)
       group.add(buildSpecies(species, matrices, species.crown.colour));
@@ -319,8 +418,12 @@ function franjaDeCotas(scenario: Scenario): { desde: number; cuanto: number } {
 }
 
 /** Elige especie según la franja de altitud, con un sorteo ponderado. */
-function pickSpecies(band: number, roll: number): Species | null {
-  const eligible = SPECIES.filter(
+function pickSpecies(
+  especies: readonly Species[],
+  band: number,
+  roll: number,
+): Species | null {
+  const eligible = especies.filter(
     (s) => band >= s.bandFrom && band <= s.bandTo,
   );
   if (!eligible.length) return null;
