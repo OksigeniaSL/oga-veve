@@ -74,6 +74,16 @@ const comprobar = (nombre, ok, detalle, porque) =>
 
 const vuelo = await page.evaluate(async () => {
   const o = globalThis.__oga;
+  /*
+   * **Sin órdenes de irse al aire.**
+   *
+   * Una de cada cuatro aproximaciones trae orden de frustrar, y el piloto de
+   * este banco no sabe obedecerla: bajaba igual, se llevaba el percance de
+   * pista ocupada y el vuelo se quedaba congelado a los novecientos segundos.
+   * Quien comprueba esa orden es el banco de vuelo, que sí sabe. Aquí lo que
+   * se mide es que un vuelo entero se pueda completar.
+   */
+  o.mandarFrustrar("nunca");
   // La raíz de la escena, para poder mirar el coche del sígame.
   let raiz = o.aeronave().grupo;
   while (raiz.parent) raiz = raiz.parent;
@@ -95,6 +105,15 @@ const vuelo = await page.evaluate(async () => {
   /** Y para ir a un punto. */
   const alPunto = (s, x, z) =>
     alRumbo(s, Math.atan2(x - s.position.x, -(z - s.position.z)));
+
+  /** Cuánto se está del eje de la pista, en metros. Para la traza. */
+  const desvio = (s) => {
+    const r = o.pista();
+    const hp = (r.heading * Math.PI) / 180;
+    return (
+      (s.position.x - r.x) * Math.cos(hp) + (s.position.z - r.z) * Math.sin(hp)
+    );
+  };
 
   /**
    * Seguir la raya: se mira un punto de la ruta quince metros por delante y se
@@ -224,7 +243,7 @@ const vuelo = await page.evaluate(async () => {
     }
     if (i % 20 === 0) {
       linea.push(
-        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${tarjeta.dibujo || "—"}`,
+        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m ${tarjeta.dibujo || "—"}`,
       );
     }
 
@@ -288,6 +307,14 @@ const vuelo = await page.evaluate(async () => {
       c.elevator = Math.max(-0.5, Math.min(0.5, (CRUCERO - alto(s)) * 0.02));
       const p = o.puntoDeFinal(3000);
       c.aileron = p ? alPunto(s, p.x, p.z) : 0;
+      /*
+       * **Y aquí hubo un intento de exigir estar en el eje antes de bajar**,
+       * que es lo que hace un piloto de verdad. Se quitó porque empeoraba:
+       * sin una captura de eje como tal —volar a un punto de intercepción y
+       * después mantener rumbo— el piloto se quedaba dando vueltas sin llegar
+       * nunca a cumplir la condición, y en Taguato ni siquiera entraba en
+       * final. Queda anotado en #147 con lo medido.
+       */
       if (alUmbral > 800 && alUmbral < 4000) etapa = "final";
     } else if (etapa === "final") {
       /*
@@ -325,8 +352,19 @@ const vuelo = await page.evaluate(async () => {
         s.airspeed < quiere
           ? Math.min(1, c.throttle + 0.05)
           : Math.max(0, c.throttle - 0.05);
-      // Y el eje, apuntando a un punto trescientos metros por delante de donde
-      // se está: eso corrige el desvío en vez de solo mantener el rumbo.
+      /*
+       * Y el eje, apuntando a un punto trescientos metros por delante de donde
+       * se está: eso corrige el desvío en vez de solo mantener el rumbo.
+       *
+       * **Y aquí se probó a afinarlo y salió peor.** Se intentó mirar más
+       * corto según se acerca el umbral, añadir un término con el desvío
+       * medido en anchos de pista y meter timón, buscando que el piloto
+       * pudiera posarse en los dieciocho metros de Yvytu Rape. Resultado: en
+       * Tenerife Norte, donde antes hacía el vuelo entero, pasó de diez
+       * comprobaciones a seis. Lo medido y lo aprendido están en #147; el
+       * piloto se queda como estaba hasta que haya una captura de eje de
+       * verdad.
+       */
       const tx = r.x + fx * (along + 300);
       const tz = r.z + fz * (along + 300);
       c.aileron = alPunto(s, tx, tz);
