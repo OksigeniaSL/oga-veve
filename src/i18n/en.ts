@@ -68,6 +68,8 @@ export const EN: Dictionary = {
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
   "scenario.chaco.name": "Chaco Plain",
   "scenario.tenerife.name": "Tenerife North",
+  "scenario.laPalma.name": "La Palma",
+  "scenario.cuatroVientos.name": "Cuatro Vientos",
 
   "tutor.throttle": "Add power",
   "tutor.speed": "Let her run",

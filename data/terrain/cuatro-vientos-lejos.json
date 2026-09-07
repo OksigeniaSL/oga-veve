@@ -1,0 +1,13 @@
+{
+  "id": "cuatro-vientos-lejos",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "origen": {
+    "lat": 40.370701,
+    "lon": -3.78514
+  },
+  "tamanoM": 84000,
+  "resolucion": 385,
+  "minM": 438,
+  "maxM": 1917
+}

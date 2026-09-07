@@ -1,0 +1,13 @@
+{
+  "id": "la-palma",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "origen": {
+    "lat": 28.626499,
+    "lon": -17.7556
+  },
+  "tamanoM": 16000,
+  "resolucion": 401,
+  "minM": -2,
+  "maxM": 1986
+}
