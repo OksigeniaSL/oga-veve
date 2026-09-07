@@ -144,6 +144,8 @@ export const ES_PY = {
   "vuelo.terrenoBajo": "Vas muy bajo",
   "vuelo.terrenoSube": "¡Subí!",
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
+  "vuelo.mandanFrustrar": "¡Pista ocupada! Andate al aire",
+  "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   "vuelo.aroAlto": "Pasaste por encima del aro. Bajá un poco",
   "vuelo.aroBajo": "Pasaste por debajo del aro. Subí un poco",

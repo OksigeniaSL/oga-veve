@@ -48,7 +48,19 @@ export type Percance =
    * la pista puede tener a alguien aterrizando encima. Es justo para lo que
    * existen el punto de espera, la doble raya y la lámpara de la torre.
    */
-  | "sinpermiso";
+  | "sinpermiso"
+  /**
+   * Aterrizar en una pista ocupada, después de que te dijeran que no.
+   *
+   * Es el otro lado de la frustrada: la maniobra que salva existe porque a
+   * veces **no se puede aterrizar**, y quien se empeña se lleva por delante lo
+   * que hubiera en la pista. En un campo de hierba eso tiene cuatro patas y
+   * está pastando; en un aeropuerto es otro avión que no ha salido todavía.
+   *
+   * No es un castigo por fallar la maniobra: es la consecuencia de haber
+   * seguido bajando cuando ya te habían dicho que te fueras al aire.
+   */
+  | "ocupada";
 
 /**
  * A qué velocidad un contacto deja de ser un roce y pasa a ser un percance,

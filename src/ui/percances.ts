@@ -127,6 +127,28 @@ const SIN_PERMISO = lienzo(`
   <circle class="percance__hueco" cx="55" cy="33" r="3.4" />
 `);
 
+/**
+ * La pista ocupada: la vaca, y la avioneta que no debió bajar.
+ *
+ * La vaca de frente y de cajas, como en el mundo —lo que hay que reconocer es
+ * que hay un bicho ahí—, plantada sobre la raya de la pista, y el avión encima
+ * con su nubecilla. Es el dibujo más fácil de leer de los siete: a los cuatro
+ * años, una vaca en la pista se entiende sin una palabra y da risa, que es
+ * exactamente lo que se pidió.
+ */
+const OCUPADA = lienzo(`
+  <path d="M6 52 h52" stroke="currentColor" stroke-width="3.4"
+        stroke-linecap="round" fill="none" />
+  <rect x="18" y="34" width="24" height="13" rx="3" />
+  <rect x="12" y="36" width="8" height="8" rx="2.5" />
+  <rect class="percance__hueco" x="14" y="38" width="1.8" height="1.8" rx="0.9" />
+  <rect x="21" y="46" width="3.4" height="6" rx="1.4" />
+  <rect x="35" y="46" width="3.4" height="6" rx="1.4" />
+  <rect class="percance__hueco" x="27" y="36" width="6" height="5" rx="2" />
+  <g transform="translate(24 -6) scale(0.55)">${AVIONETA}</g>
+  ${HUMO}
+`);
+
 const DIBUJOS: Record<Percance, string> = {
   coche: COCHE,
   edificio: EDIFICIO,
@@ -134,6 +156,7 @@ const DIBUJOS: Record<Percance, string> = {
   golpe: GOLPE,
   pasada: PASADA,
   sinpermiso: SIN_PERMISO,
+  ocupada: OCUPADA,
 };
 
 export const dibujoDePercance = (p: Percance): string => DIBUJOS[p];

@@ -139,6 +139,8 @@ export const EN: Dictionary = {
   "vuelo.final": "Come down gently",
   "vuelo.terrenoBajo": "You are very low",
   "vuelo.terrenoSube": "Pull up!",
+  "vuelo.mandanFrustrar": "Runway occupied: go around",
+  "percance.ocupada": "The runway was occupied and you were told to go around",
   "vuelo.frustrada": "Well done! You went around. Try again",
   "vuelo.aroAlto": "You went over the ring. Come down a little",
   "vuelo.aroBajo": "You went under the ring. Climb a little",

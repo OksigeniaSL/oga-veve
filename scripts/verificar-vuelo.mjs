@@ -168,6 +168,16 @@ await page.evaluate(() => {
   globalThis.__raiz = raiz;
 });
 
+/*
+ * **Y sin órdenes de frustrar por sorteo.**
+ *
+ * Una de cada cuatro aproximaciones trae orden de irse al aire, y este guion
+ * hace decenas seguidas: un sorteo suelto en mitad de otra comprobación la
+ * rompe. Se apaga aquí y se enciende en su propia sección, que es donde toca
+ * mirarlo.
+ */
+await page.evaluate(() => globalThis.__oga.mandarFrustrar("nunca"));
+
 const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
@@ -2116,6 +2126,71 @@ if (volado?.corta) {
     "se medía la distancia al centro de la pista en valor absoluto, y corto salía «pasada»",
   );
 }
+
+// ── Que te manden irse al aire ────────────────────────────────────────────
+
+/*
+ * **La frustrada es la regla número uno de este proyecto, y hasta hoy solo la
+ * hacía quien quería.** En la vida real la mitad no se deciden: se obedecen —
+ * la pista está ocupada, la torre te manda al aire, y se pregunta después. En
+ * un campo de hierba lo que se cruza tiene cuatro patas.
+ *
+ * Lo que se comprueba es la cadena entera: que la orden llegue en final, que
+ * se vea el motivo donde lo hay, y que **bajar igualmente tenga
+ * consecuencia**, que es lo que hace que una orden sea una orden.
+ */
+const orden = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  o.reiniciar();
+  await new Promise((r) => setTimeout(r, 600));
+  o.mandarFrustrar("siempre");
+  const c = o.controles();
+  c.throttle = 0.25;
+  c.elevator = 0;
+  // En final, a la altura a la que se manda: noventa metros sobre la pista.
+  const p = o.puntoDeFinal(1000);
+  o.colocar(p.x, globalThis.__umbral.y + 90, p.z, 30, p.h);
+  let mandaron = false;
+  let dibujo = "";
+  for (let i = 0; i < 40 && !mandaron; i++) {
+    c.elevator = -0.05;
+    await new Promise((r) => setTimeout(r, 100));
+    mandaron = o.ordenDeFrustrar();
+    if (mandaron) dibujo = o.tarjeta().dibujo;
+  }
+  // Y bajar igualmente: se sigue hasta tocar, con gas de aproximación.
+  let percance = false;
+  if (mandaron) {
+    c.throttle = 0.12;
+    for (let i = 0; i < 300 && !percance; i++) {
+      c.elevator = -0.5;
+      await new Promise((r) => setTimeout(r, 100));
+      percance = o.finDeVuelo();
+    }
+  }
+  const vaca = (() => {
+    let raiz = globalThis.__oga.aeronave().grupo;
+    while (raiz.parent) raiz = raiz.parent;
+    return raiz.getObjectByName("vaca")?.visible ?? false;
+  })();
+  return { mandaron, dibujo, percance, vaca, fase: o.fase() };
+});
+comprobar(
+  "en final te pueden mandar irse al aire",
+  orden.mandaron && orden.dibujo === "frustrada",
+  orden.mandaron
+    ? `salió la orden con la tarjeta «${orden.dibujo}»`
+    : `nadie mandó nada (fase «${orden.fase}»)`,
+  "la frustrada estaba, pero solo la hacía quien quería: nadie la pedía nunca",
+);
+comprobar(
+  "y bajar igualmente termina el intento",
+  orden.percance,
+  orden.percance
+    ? "sale la pantalla del percance"
+    : `se aterrizó sin consecuencia (fase «${orden.fase}»)`,
+  "una orden que se puede ignorar sin consecuencia no es una orden",
+);
 
 // ── El informe ────────────────────────────────────────────────────────────
 
