@@ -212,6 +212,19 @@ const atender = (): void => {
   if (mirando()) game.start();
   else game.stop();
 };
+/*
+ * Y una puerta para los bancos de pruebas, solo en desarrollo.
+ *
+ * Una pestaña abierta por un guion nunca tiene el foco, así que `atender` la
+ * para en cuanto arranca y el banco mide un avión congelado. Costó una tarde
+ * entenderlo. Con esto, quien prueba puede decir «sigue, que sí estoy
+ * mirando».
+ */
+if (import.meta.env.DEV) {
+  (globalThis as { __ogaEmpezar?: () => void }).__ogaEmpezar = () =>
+    game.start();
+}
+
 document.addEventListener("visibilitychange", atender);
 window.addEventListener("blur", atender);
 window.addEventListener("focus", atender);
