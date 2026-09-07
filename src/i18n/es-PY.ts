@@ -117,6 +117,8 @@ export const ES_PY = {
   // exacta, y por eso no se traduce la parte legal.
   "credits.terrain":
     "Relieve a partir de Copernicus DEM GLO-30. © DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
+  "credits.terrainEs":
+    "Relieve de España a partir del MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0.",
   "credits.engine": "Modelo de vuelo: {model}",
   "credits.licence":
     "Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.",
@@ -146,8 +148,9 @@ export const ES_PY = {
   "vuelo.terrenoBajo": "Vas muy bajo",
   "vuelo.terrenoSube": "¡Subí!",
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
-  "vuelo.mandanFrustrar": "¡Pista ocupada! Andate al aire",
+  "vuelo.mandanFrustrar": "¡Pista ocupada! Subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
+  "vuelo.puedeVolver": "La torre te deja volver a intentarlo",
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   "vuelo.aroAlto": "Pasaste por encima del aro. Bajá un poco",
   "vuelo.aroBajo": "Pasaste por debajo del aro. Subí un poco",

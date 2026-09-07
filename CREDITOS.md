@@ -40,10 +40,11 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 
 | Fuente | Uso | Licencia |
 |---|---|---|
-| [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve real de Silvio Pettirossi y Tenerife Norte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
+| [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
 | [OpenStreetMap](https://www.openstreetmap.org) | Pistas, calles de rodaje, plataformas y estacionamientos | **ODbL** |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data) | Coordenadas, pistas y elevación de aeropuertos | **Unlicense** (dominio público) |
 | [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España | Ortofoto de Tenerife Norte, sobre el relieve | **CC BY 4.0** · scne.es |
+| [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España | Relieve de Tenerife Norte, La Palma y Cuatro Vientos | **CC BY 4.0** |
 | [Sentinel-2 cloudless](https://s2maps.eu) — EOX IT Services, sobre datos Copernicus/ESA | Ortofoto de Silvio Pettirossi, sobre el relieve | **CC BY 4.0** · EOX y contribuidores |
 
 La ortofoto del PNOA entró el día que las teselas fotorrealistas de Google

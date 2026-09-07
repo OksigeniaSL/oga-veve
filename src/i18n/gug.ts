@@ -60,6 +60,7 @@ export const GUG: Dictionary = {
   "vuelo.fuera": "Eho jey raya hovýpe",
   "vuelo.roto": "Oso. Ñañepyrũ jey",
   "vuelo.rapido": "Reho pya'e eterei",
+  "vuelo.puedeVolver": "Torre he'i ikatuha reñeha'ã jey",
   "vuelo.despacio": "Mbeguekatu",
   "vuelo.alto": "Epyta ko’ápe",
   "vuelo.teLoPasaste": "Rehasapa. Ejoko ha eju jey",
@@ -82,7 +83,7 @@ export const GUG: Dictionary = {
   "cuaderno.aerodromos": "aeródromo",
   "cuaderno.falta": "{grado} peve oĩ gueteri:",
   "cuaderno.completo": "Opaite oĩma. Eveve katu",
-  "vuelo.mandanFrustrar": "¡Pista ojeporúma! Ejupi jey",
+  "vuelo.mandanFrustrar": "¡Pista ojeporúma! Ejupi ha eju jey circuito rupi",
   "percance.ocupada": "Pista ojeporu ha oje'e ndéve ani reguejy",
   "vuelo.sinPermiso": "Reike tesape hovy'ỹre. Ambuévape eha'arõ",
 
@@ -255,6 +256,8 @@ export const GUG: Dictionary = {
   // atribución obligatoria es dejar de cumplirla.
   "credits.terrain":
     "Yvy Copernicus DEM GLO-30 guive. © DLR e.V. 2010-2014 ha © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
+  "credits.terrainEs":
+    "Relieve España-pegua MDT05 PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0.",
   "credits.engine": "Veve modelo: {model}",
   "credits.licence":
     "Código sãso Apache-2.0 guýpe. Mba'ekuaa ha marca, © Oksigenia SL.",
