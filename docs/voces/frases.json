@@ -1,0 +1,668 @@
+[
+  {
+    "id": "vuelo.estacionado",
+    "idioma": "es-PY",
+    "texto": "Arrancá el motor",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.arrancando",
+    "idioma": "es-PY",
+    "texto": "Soltá el freno y andá despacito",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.rodando",
+    "idioma": "es-PY",
+    "texto": "Seguí la raya verde",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.esperando",
+    "idioma": "es-PY",
+    "texto": "Pará del todo y esperá la luz",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.autorizado",
+    "idioma": "es-PY",
+    "texto": "¡Luz verde! Entrá a la pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.alineando",
+    "idioma": "es-PY",
+    "texto": "Ponete derechito en el eje",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.comprometido",
+    "idioma": "es-PY",
+    "texto": "¡Ya no se puede frenar, volá!",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.despegando",
+    "idioma": "es-PY",
+    "texto": "Motor a fondo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.enVuelo",
+    "idioma": "es-PY",
+    "texto": "Andá a dar una vuelta",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.enVueloAterrizando",
+    "idioma": "es-PY",
+    "texto": "Andá a la pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.final",
+    "idioma": "es-PY",
+    "texto": "Bajá suavecito",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.terrenoBajo",
+    "idioma": "es-PY",
+    "texto": "Vas muy bajo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.terrenoSube",
+    "idioma": "es-PY",
+    "texto": "¡Subí!",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.mandanFrustrar",
+    "idioma": "es-PY",
+    "texto": "¡Pista ocupada! Subí y volvé por el circuito",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.puedeVolver",
+    "idioma": "es-PY",
+    "texto": "La torre te deja volver a intentarlo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.frustrada",
+    "idioma": "es-PY",
+    "texto": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.aroAlto",
+    "idioma": "es-PY",
+    "texto": "Pasaste por encima del aro. Bajá un poco",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.aroBajo",
+    "idioma": "es-PY",
+    "texto": "Pasaste por debajo del aro. Subí un poco",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.papiAlto",
+    "idioma": "es-PY",
+    "texto": "Luces blancas: vas alto, bajá",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.papiBajo",
+    "idioma": "es-PY",
+    "texto": "Luces rojas: vas bajo, subí",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.papiBien",
+    "idioma": "es-PY",
+    "texto": "Dos rojas y dos blancas: vas bien",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.bulto",
+    "idioma": "es-PY",
+    "texto": "Por ahí no se pasa: hay un edificio",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.aterrizado",
+    "idioma": "es-PY",
+    "texto": "Frená",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.abandonando",
+    "idioma": "es-PY",
+    "texto": "Salí de la pista, que viene otro",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.pistaLibre",
+    "idioma": "es-PY",
+    "texto": "¡Pista libre! Bien hecho",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.aPlataforma",
+    "idioma": "es-PY",
+    "texto": "Volvé a tu lugar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.enPuesto",
+    "idioma": "es-PY",
+    "texto": "Llegaste. Apagá el motor",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.apagado",
+    "idioma": "es-PY",
+    "texto": "¡Vuelo terminado!",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.fuera",
+    "idioma": "es-PY",
+    "texto": "Volvé a la raya verde",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.roto",
+    "idioma": "es-PY",
+    "texto": "Se rompió. Volvemos a empezar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.rapido",
+    "idioma": "es-PY",
+    "texto": "Vas muy rápido",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.despacio",
+    "idioma": "es-PY",
+    "texto": "Más despacio",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.alto",
+    "idioma": "es-PY",
+    "texto": "Pará acá",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.teLoPasaste",
+    "idioma": "es-PY",
+    "texto": "Te pasaste. Frená y volvé",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.yaPodesTocar",
+    "idioma": "es-PY",
+    "texto": "Ya podés tocar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.sinPermiso",
+    "idioma": "es-PY",
+    "texto": "Entraste sin la luz verde. La próxima, esperala",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "circuito.subida",
+    "idioma": "es-PY",
+    "texto": "Subí derecho por el eje",
+    "para": "los cuatro tramos del circuito de tráfico"
+  },
+  {
+    "id": "circuito.cruzado",
+    "idioma": "es-PY",
+    "texto": "Girá a la izquierda",
+    "para": "los cuatro tramos del circuito de tráfico"
+  },
+  {
+    "id": "circuito.encola",
+    "idioma": "es-PY",
+    "texto": "Volá al lado de la pista",
+    "para": "los cuatro tramos del circuito de tráfico"
+  },
+  {
+    "id": "circuito.base",
+    "idioma": "es-PY",
+    "texto": "Girá y empezá a bajar",
+    "para": "los cuatro tramos del circuito de tráfico"
+  },
+  {
+    "id": "percance.ocupada",
+    "idioma": "es-PY",
+    "texto": "La pista estaba ocupada y te dijeron que no bajaras",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "percance.coche",
+    "idioma": "es-PY",
+    "texto": "Le pasaste por encima al coche",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "percance.edificio",
+    "idioma": "es-PY",
+    "texto": "Chocaste con un edificio",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "percance.fuera",
+    "idioma": "es-PY",
+    "texto": "Tocaste tierra fuera de la pista",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "percance.golpe",
+    "idioma": "es-PY",
+    "texto": "Llegaste dando un golpe",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "percance.pasada",
+    "idioma": "es-PY",
+    "texto": "Te pasaste del final de la pista",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "percance.sinpermiso",
+    "idioma": "es-PY",
+    "texto": "Entraste en la pista sin la luz verde",
+    "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "fin.llegaste",
+    "idioma": "es-PY",
+    "texto": "¡Llegaste! Ya estás en casa",
+    "para": "el reconocimiento al terminar"
+  },
+  {
+    "id": "fin.bien",
+    "idioma": "es-PY",
+    "texto": "¡Buen vuelo!",
+    "para": "el reconocimiento al terminar"
+  },
+  {
+    "id": "fin.muyBien",
+    "idioma": "es-PY",
+    "texto": "¡Gran vuelo!",
+    "para": "el reconocimiento al terminar"
+  },
+  {
+    "id": "fin.otra",
+    "idioma": "es-PY",
+    "texto": "Otro vuelo",
+    "para": "el reconocimiento al terminar"
+  },
+  {
+    "id": "fin.redondo",
+    "idioma": "es-PY",
+    "texto": "¡Vuelo redondo! No se puede hacer mejor",
+    "para": "el reconocimiento al terminar"
+  },
+  {
+    "id": "grado.aprendiz",
+    "idioma": "es-PY",
+    "texto": "Aprendiz",
+    "para": "los cuatro grados del cuaderno"
+  },
+  {
+    "id": "grado.piloto",
+    "idioma": "es-PY",
+    "texto": "Piloto",
+    "para": "los cuatro grados del cuaderno"
+  },
+  {
+    "id": "grado.comandante",
+    "idioma": "es-PY",
+    "texto": "Comandante",
+    "para": "los cuatro grados del cuaderno"
+  },
+  {
+    "id": "grado.instructora",
+    "idioma": "es-PY",
+    "texto": "Instructora",
+    "para": "los cuatro grados del cuaderno"
+  },
+  {
+    "id": "galon.manga",
+    "idioma": "es-PY",
+    "texto": "Los galones de este vuelo",
+    "para": "los galones que se ganan en el vuelo"
+  },
+  {
+    "id": "galon.aproximacion",
+    "idioma": "es-PY",
+    "texto": "Galón de la aproximación",
+    "para": "los galones que se ganan en el vuelo"
+  },
+  {
+    "id": "galon.toma",
+    "idioma": "es-PY",
+    "texto": "Galón del aterrizaje",
+    "para": "los galones que se ganan en el vuelo"
+  },
+  {
+    "id": "galon.aros",
+    "idioma": "es-PY",
+    "texto": "Galón de los aros",
+    "para": "los galones que se ganan en el vuelo"
+  },
+  {
+    "id": "galon.velocidad",
+    "idioma": "es-PY",
+    "texto": "Galón de la velocidad",
+    "para": "los galones que se ganan en el vuelo"
+  },
+  {
+    "id": "galon.rodaje",
+    "idioma": "es-PY",
+    "texto": "Galón del rodaje",
+    "para": "los galones que se ganan en el vuelo"
+  },
+  {
+    "id": "galon.frustrada",
+    "idioma": "es-PY",
+    "texto": "Galón de la frustrada",
+    "para": "los galones que se ganan en el vuelo"
+  },
+  {
+    "id": "tutor.throttle",
+    "idioma": "es-PY",
+    "texto": "Dale motor",
+    "para": "los consejos del tutor de los primeros minutos"
+  },
+  {
+    "id": "tutor.speed",
+    "idioma": "es-PY",
+    "texto": "Esperá a que corra",
+    "para": "los consejos del tutor de los primeros minutos"
+  },
+  {
+    "id": "tutor.pull",
+    "idioma": "es-PY",
+    "texto": "Tirá para arriba",
+    "para": "los consejos del tutor de los primeros minutos"
+  },
+  {
+    "id": "tutor.flying",
+    "idioma": "es-PY",
+    "texto": "¡Estás volando!",
+    "para": "los consejos del tutor de los primeros minutos"
+  },
+  {
+    "id": "tutor.frenar",
+    "idioma": "es-PY",
+    "texto": "Frená",
+    "para": "los consejos del tutor de los primeros minutos"
+  },
+  {
+    "id": "tutor.salir",
+    "idioma": "es-PY",
+    "texto": "Seguí la raya y salí de la pista",
+    "para": "los consejos del tutor de los primeros minutos"
+  },
+  {
+    "id": "tutor.slow",
+    "idioma": "es-PY",
+    "texto": "Bajá el motor",
+    "para": "los consejos del tutor de los primeros minutos"
+  },
+  {
+    "id": "mission.rio.name",
+    "idioma": "es-PY",
+    "texto": "Ver el río",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.rioabajo.name",
+    "idioma": "es-PY",
+    "texto": "Seguir el río",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.mar.name",
+    "idioma": "es-PY",
+    "texto": "Salir al mar",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.anaga.name",
+    "idioma": "es-PY",
+    "texto": "A Anaga",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.cumbre.name",
+    "idioma": "es-PY",
+    "texto": "A la cumbre",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.lomas.name",
+    "idioma": "es-PY",
+    "texto": "A las lomas",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.first.name",
+    "idioma": "es-PY",
+    "texto": "Tu primer vuelo",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.valley.name",
+    "idioma": "es-PY",
+    "texto": "La vuelta al valle",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.transfer.name",
+    "idioma": "es-PY",
+    "texto": "El traslado",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.started",
+    "idioma": "es-PY",
+    "texto": "{name}",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.step",
+    "idioma": "es-PY",
+    "texto": "¡Bien! Seguí",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.done",
+    "idioma": "es-PY",
+    "texto": "¡Misión cumplida!",
+    "para": "las misiones"
+  },
+  {
+    "id": "mission.none",
+    "idioma": "es-PY",
+    "texto": "Vuelo libre",
+    "para": "las misiones"
+  },
+  {
+    "id": "torre.verde",
+    "idioma": "es-PY",
+    "texto": "Podés entrar",
+    "para": "la lámpara de la torre, dicha"
+  },
+  {
+    "id": "torre.roja",
+    "idioma": "es-PY",
+    "texto": "Esperá acá",
+    "para": "la lámpara de la torre, dicha"
+  },
+  {
+    "id": "cabina.v1",
+    "idioma": "en",
+    "texto": "V1",
+    "para": "el punto de no retorno del despegue"
+  },
+  {
+    "id": "cabina.vr",
+    "idioma": "en",
+    "texto": "Vr",
+    "para": "la velocidad de rotación: tirar"
+  },
+  {
+    "id": "cabina.terrainPullUp",
+    "idioma": "en",
+    "texto": "terrain, pull up",
+    "para": "aviso de terreno, el más urgente"
+  },
+  {
+    "id": "cabina.tooLow",
+    "idioma": "en",
+    "texto": "too low",
+    "para": "vas bajo sobre el terreno"
+  },
+  {
+    "id": "cabina.tooFast",
+    "idioma": "en",
+    "texto": "too fast",
+    "para": "veredicto de toma rápida"
+  },
+  {
+    "id": "cabina.offTheRunway",
+    "idioma": "en",
+    "texto": "off the runway",
+    "para": "tomaste fuera de la pista"
+  },
+  {
+    "id": "cabina.airspeed",
+    "idioma": "en",
+    "texto": "airspeed",
+    "para": "vas rápido en el aire"
+  },
+  {
+    "id": "cabina.slowDown",
+    "idioma": "en",
+    "texto": "slow down",
+    "para": "vas rápido en el suelo"
+  },
+  {
+    "id": "cabina.tooHighComeDown",
+    "idioma": "en",
+    "texto": "too high, come down",
+    "para": "te pasaste el aro por arriba"
+  },
+  {
+    "id": "cabina.tooLowClimb",
+    "idioma": "en",
+    "texto": "too low, climb",
+    "para": "te pasaste el aro por abajo"
+  },
+  {
+    "id": "cabina.obstacleAhead",
+    "idioma": "en",
+    "texto": "obstacle ahead",
+    "para": "hay un edificio delante"
+  },
+  {
+    "id": "cabina.goAround",
+    "idioma": "en",
+    "texto": "going around. good decision",
+    "para": "te fuiste al aire: bien hecho"
+  },
+  {
+    "id": "cabina.weHaveAProblem",
+    "idioma": "en",
+    "texto": "we have a problem",
+    "para": "se rompió el avión"
+  },
+  {
+    "id": "cabina.fiveHundred",
+    "idioma": "en",
+    "texto": "five hundred",
+    "para": "altura de la toma, en pies"
+  },
+  {
+    "id": "cabina.oneHundred",
+    "idioma": "en",
+    "texto": "one hundred",
+    "para": "altura de la toma"
+  },
+  {
+    "id": "cabina.fifty",
+    "idioma": "en",
+    "texto": "fifty",
+    "para": "altura de la toma"
+  },
+  {
+    "id": "cabina.forty",
+    "idioma": "en",
+    "texto": "forty",
+    "para": "altura de la toma, en pies"
+  },
+  {
+    "id": "cabina.thirty",
+    "idioma": "en",
+    "texto": "thirty",
+    "para": "altura de la toma"
+  },
+  {
+    "id": "cabina.twenty",
+    "idioma": "en",
+    "texto": "twenty",
+    "para": "altura de la toma"
+  },
+  {
+    "id": "cabina.ten",
+    "idioma": "en",
+    "texto": "ten",
+    "para": "altura de la toma"
+  },
+  {
+    "id": "cabina.five",
+    "idioma": "en",
+    "texto": "five",
+    "para": "altura de la toma, en metros"
+  },
+  {
+    "id": "torre.clearedTakeoff",
+    "idioma": "en",
+    "texto": "cleared for take-off",
+    "para": "luz verde para despegar"
+  },
+  {
+    "id": "torre.clearedLand",
+    "idioma": "en",
+    "texto": "cleared to land",
+    "para": "podés volver a intentarlo"
+  },
+  {
+    "id": "torre.goAround",
+    "idioma": "en",
+    "texto": "go around, runway occupied",
+    "para": "la pista está ocupada"
+  },
+  {
+    "id": "torre.holdShort",
+    "idioma": "en",
+    "texto": "hold short of the runway",
+    "para": "pará en la doble raya"
+  },
+  {
+    "id": "torre.lineUpWait",
+    "idioma": "en",
+    "texto": "line up and wait",
+    "para": "entrá y esperá en el eje"
+  }
+]
