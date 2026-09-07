@@ -1269,6 +1269,24 @@ export class Game {
     this.resetFlight();
     this.abrirVentanaDePruebas();
     this.hud.flash(`${t("help.start")} · ${t("help.assist")}`, 8);
+
+    /*
+     * **Y si no hay voz, se dice.**
+     *
+     * El instructor es la voz que sustituye al texto en el peldaño que no lee,
+     * y habla con lo que traiga el sistema. En Linux, y en cualquier navegador
+     * sin voces instaladas, `speechSynthesis` devuelve una lista vacía y el
+     * instructor se queda **mudo en silencio**: el juego no dice nada y nadie
+     * sabe por qué. Se vio jugando: «yo no estoy escuchando voces por ningún
+     * lado, ni robóticas ni nada».
+     *
+     * Así que se avisa una vez, y solo cuando de verdad no hay ninguna. El día
+     * que las frases estén grabadas esto sobra, porque ya no dependerá del
+     * sistema. Ver `docs/voces/`.
+     */
+    if (!this.instructor.disponible) {
+      window.setTimeout(() => this.hud.flash(t("hud.sinVoz"), 8), 4000);
+    }
   }
 
   /**
