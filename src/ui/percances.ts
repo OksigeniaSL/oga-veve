@@ -149,7 +149,28 @@ const OCUPADA = lienzo(`
   ${HUMO}
 `);
 
-const DIBUJOS: Record<Percance, string> = {
+/**
+ * Y la misma pista ocupada, pero por otro avión.
+ *
+ * Porque el motivo no es el mismo en todas partes y el dibujo no puede
+ * mentir: en un campo de hierba lo que se cruza tiene cuatro patas, y en un
+ * aeropuerto con torre es **otro avión que no ha salido todavía** — que es lo
+ * que te dicen por radio y lo que no ves. Enseñar una vaca en la pista de
+ * Tenerife sería contar otra historia.
+ */
+const OCUPADA_AVION = lienzo(`
+  <path d="M6 52 h52" stroke="currentColor" stroke-width="3.4"
+        stroke-linecap="round" fill="none" />
+  <g transform="translate(6 20) scale(0.62)">${AVIONETA}</g>
+  <g transform="translate(26 -8) scale(0.5)">${AVIONETA}</g>
+  ${HUMO}
+`);
+
+/*
+ * La tabla lleva además alguna **variante**: un mismo percance con dos
+ * motivos posibles, y el dibujo dice cuál. Ver `dibujoDePercance`.
+ */
+const DIBUJOS: Record<string, string> = {
   coche: COCHE,
   edificio: EDIFICIO,
   fuera: FUERA,
@@ -157,6 +178,15 @@ const DIBUJOS: Record<Percance, string> = {
   pasada: PASADA,
   sinpermiso: SIN_PERMISO,
   ocupada: OCUPADA,
+  "ocupada-avion": OCUPADA_AVION,
 };
 
-export const dibujoDePercance = (p: Percance): string => DIBUJOS[p];
+/**
+ * El dibujo de un percance.
+ *
+ * `variante` sirve para lo que tiene más de un motivo posible: la pista
+ * ocupada la ocupa una vaca en un campo de hierba y otro avión en un
+ * aeropuerto, y el dibujo tiene que decir cuál de las dos.
+ */
+export const dibujoDePercance = (p: Percance, variante = ""): string =>
+  DIBUJOS[`${p}${variante}`] ?? DIBUJOS[p]!;

@@ -43,11 +43,6 @@ import {
 } from "./world/aproximacion";
 import {
   crearCircuito,
-  // El circuito muere donde empieza la senda: mil ochocientos metros del
-  // umbral. No es el mismo número que el `ENTRADA_EN_FINAL` de la senda —que
-  // son tres mil seiscientos, donde el juego da la aproximación por empezada—,
-  // así que va con su nombre para que no se confundan.
-  ENTRADA_EN_FINAL as ENTRADA_DEL_CIRCUITO,
   type Circuito,
   type TramoDeCircuito,
 } from "./world/circuito";
@@ -485,6 +480,16 @@ const MANDAN_DESDE = 3000;
 /** Cada cuántas aproximaciones se manda, de media. */
 const UNA_DE_CADA = 0.25;
 
+/**
+ * Cuánto hay que subir desde donde te lo mandaron para que cuente, m.
+ *
+ * Sesenta. Es lo que se sube en una frustrada de verdad antes de nada:
+ * potencia, morro arriba y ganar altura. Menos sería un bache; más, un
+ * circuito entero, y la orden tiene que levantarse cuando se ha obedecido, no
+ * cuando se ha terminado la vuelta.
+ */
+const SUBIR_PARA_IRSE = 60;
+
 const ANTES_DEL_UMBRAL = 300;
 
 /**
@@ -810,6 +815,8 @@ export class Game {
   private mandanFrustrar = false;
   /** Y si ya lo mandaron en este vuelo, que se manda una vez. */
   private yaLoMandaron = false;
+  /** A qué altura sobre la pista se dio la orden. Ver `levantarLaOrden`. */
+  private altoAlMandar = 0;
   /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
@@ -1913,9 +1920,29 @@ export class Game {
    * sorpresa repetida.
    */
   private mirarSiMandanFrustrar(acercandose: boolean): void {
-    // Puesta la orden, la levanta irse al aire, que se ve en
-    // `celebrarLaFrustrada`; aquí solo hay que no volver a mandarla.
-    if (this.mandanFrustrar) return;
+    /*
+     * **Puesta la orden, lo primero es saber cuándo se levanta.**
+     *
+     * Estaba atada a que el detector de frustradas cantara la maniobra, y ese
+     * detector es exigente a propósito —hace falta venir bajando y luego subir
+     * cuarenta metros—: quien se apartaba sin cumplir sus condiciones se
+     * quedaba con la orden puesta en la pantalla para siempre. «Voy a meterme
+     * en Anaga y todavía eso ahí diciendo que frustre el aterrizaje.»
+     *
+     * Ahora se levanta con lo que cualquiera reconoce como haberse ido: haber
+     * subido de verdad desde donde te lo dijeron, o estar alejándote del
+     * umbral. Y **se dice que se ha levantado**, que era la otra mitad de la
+     * queja: «¿cómo sé que la torre ya me deja volver a intentarlo?».
+     */
+    if (this.mandanFrustrar) {
+      const s = this.flight.state;
+      if (s.onGround) return;
+      const alto = s.position.y - this.terrain.runwayElevation;
+      const subio = alto > this.altoAlMandar + SUBIR_PARA_IRSE;
+      const alejandose = !acercandose && this.distanceToRunway() > MANDAN_DESDE;
+      if (subio || alejandose) this.levantarLaOrden();
+      return;
+    }
     if (this.yaLoMandaron || this.vueloTerminado || !acercandose) return;
     const s = this.flight.state;
     if (s.onGround) return;
@@ -1937,6 +1964,7 @@ export class Game {
     if (this.ordenes === "siempre") this.ordenes = "auto";
     this.yaLoMandaron = true;
     this.mandanFrustrar = true;
+    this.altoAlMandar = alto;
 
     /*
      * Y el motivo, donde lo hay: la vaca se planta en la zona de toma, que es
@@ -1954,21 +1982,51 @@ export class Game {
       this.hud.setLuzDeTorre("roja");
     }
 
+    /*
+     * **Y la orden se queda puesta hasta que se resuelva.**
+     *
+     * Duraba lo que dura un aviso —unos segundos— y se iba sola, así que quien
+     * estaba mirando la pista se la perdía y llegaba abajo sin saber que le
+     * habían dicho que no: «me sale esto al aterrizar», con la pantalla del
+     * percance de sorpresa. Una orden no es un aviso de paso: es de la familia
+     * de «pará en la doble raya» y «frená», que se quedan hasta que alguien
+     * hace algo. Se va al irse al aire, o con el percance si se baja igual.
+     */
     this.hud.senal.mostrar(
       "frustrada",
       this.tier.instruments === "none" ? "" : t("vuelo.mandanFrustrar"),
       null,
-      { segundos: SE_QUEDA_LA_FRUSTRADA, prioridad: URGENTE },
+      { segundos: Infinity, prioridad: URGENTE },
     );
     this.audio.cue("peligro");
     this.cantar("go around, runway occupied", t("vuelo.mandanFrustrar"));
   }
 
-  /** Se acabó la orden: la vaca se va y la lámpara se apaga. */
+  /**
+   * Se acabó la orden: la vaca se va, la torre da verde y se dice.
+   *
+   * **Y se dice**, que es lo que faltaba. Sin esto, quien obedecía se quedaba
+   * dando vueltas sin saber si podía volver: «¿cómo sé que la torre ya me deja
+   * volver a intentar la aproximación?». La luz verde es la misma que da paso
+   * para despegar, y quiere decir lo mismo: adelante.
+   */
   private levantarLaOrden(): void {
     this.mandanFrustrar = false;
     this.vaca.quitar();
-    this.hud.setLuzDeTorre(null);
+    this.hud.setLuzDeTorre("verde");
+    this.hud.senal.mostrar(
+      "verde",
+      this.tier.instruments === "none" ? "" : t("vuelo.puedeVolver"),
+      null,
+      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+    );
+    this.audio.cue("success");
+    this.cantar("cleared to land", t("vuelo.puedeVolver"));
+    // Y la lámpara se apaga sola en cuanto pase el aviso: en el aire no hay
+    // lámpara que mirar, y dejarla encendida diría algo que ya no es verdad.
+    window.setTimeout(() => {
+      if (!this.mandanFrustrar) this.hud.setLuzDeTorre(null);
+    }, SE_QUEDA_EL_ARO * 1000);
   }
 
   /**
@@ -2201,7 +2259,14 @@ export class Game {
     window.setTimeout(() => {
       if (this.percance !== tipo) return;
       this.hud.mostrarPercance(
-        dibujoDePercance(tipo),
+        dibujoDePercance(
+          tipo,
+          // La pista la ocupa una vaca donde hay vacas, y otro avión donde hay
+          // torre: el dibujo tiene que contar lo que pasó de verdad.
+          tipo === "ocupada" && !this.scenario.aerodrome?.privado
+            ? "-avion"
+            : "",
+        ),
         // Sin palabras donde todavía no se lee: el dibujo es el mensaje.
         this.tier.instruments === "none" ? "" : t(`percance.${tipo}` as never),
       );
@@ -2745,10 +2810,33 @@ export class Game {
      * ese momento — venir acercándose al umbral y estar ya dentro de donde
      * empieza la senda—, y no una etiqueta.
      */
+    /*
+     * **Y el corredor entero, no los últimos dos kilómetros.**
+     *
+     * Se apagaba dentro de los dos mil doscientos metros del umbral, y la
+     * senda empieza a los tres mil seiscientos: entre esos dos números quedaba
+     * un trecho con los aros delante **y** el circuito dibujado al costado.
+     * «Aterrizar en La Palma también tiene la guía de puntitos para dar el
+     * rodeo, pero estoy en modo aterrizaje.» Es la misma queja de Yvytu Rape y
+     * la misma causa: dos caminos a la vez.
+     *
+     * Así que el circuito se calla en cuanto se está dentro de donde manda la
+     * senda. Lo que se pierde es la ayuda del último tramo de la base; lo que
+     * se gana es que nunca haya dos caminos.
+     */
+    /*
+     * **Y con orden de irse al aire, el circuito se enciende.**
+     *
+     * «Me aparto, pero ¿a dónde voy en una frustrada? ¿Qué hago?» A eso
+     * contesta el circuito, que es exactamente el camino de vuelta: se sube,
+     * se gira a la izquierda y se vuelve por donde se vino. Sin él, la orden
+     * es una flecha que aparece y nada más.
+     */
     const enLlegada =
-      fase === "final" ||
-      fase === "aterrizado" ||
-      (acercandose && this.distanceToRunway() < ENTRADA_DEL_CIRCUITO + 400);
+      !this.mandanFrustrar &&
+      (fase === "final" ||
+        fase === "aterrizado" ||
+        (acercandose && this.distanceToRunway() < ENTRADA_EN_FINAL));
     c.grupo.visible =
       preparando || (enElAire && alto >= ALTO_PARA_EL_CIRCUITO && !enLlegada);
     if (!enElAire) {
