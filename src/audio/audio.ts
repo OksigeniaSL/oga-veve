@@ -54,6 +54,13 @@ export type Cue =
   | "success"
   | "achieved"
   | "error"
+  /**
+   * **Atención**: esto no salió bien, o hay algo que hacer ahora.
+   *
+   * El veredicto de una toma rápida, la orden de frenar. Informa, no manda:
+   * lo que manda es `peligro`, y son cosas distintas. Llegó a significar seis
+   * cosas a la vez y de ahí salieron `peligro`, `perdida` y `mision`.
+   */
   | "attention"
   | "touchdown"
   /**
@@ -73,7 +80,36 @@ export type Cue =
    * misma pareja de notas del bueno, en orden inverso, que es lo que hace que
    * se reconozcan como las dos caras de la misma cosa.
    */
-  | "aroFallado";
+  | "aroFallado"
+  /**
+   * **Peligro**: terreno, un edificio delante, entrar en pista sin permiso.
+   *
+   * Iba con `attention`, y `attention` significaba a la vez pérdida, misión
+   * empezada, vas bajo sobre el terreno, frená y te has colado en la pista.
+   * Siete motivos para dieciocho eventos: para quien depende del sonido como
+   * segundo canal, que la alarma de pérdida suene igual que «has empezado una
+   * misión» no es una imprecisión, es dejarle sin el canal.
+   *
+   * Tres notas rápidas y bajando, repetidas. Es el único motivo del juego que
+   * interrumpe: los demás informan, este manda.
+   */
+  | "peligro"
+  /**
+   * **Pérdida**: el ala ha dejado de volar.
+   *
+   * Un avión de verdad lleva para esto una bocina o una chicharra, no una
+   * melodía: un tono fijo que no se parece a nada más de la cabina y que no
+   * hay que interpretar. Aquí es lo mismo — dos notas iguales, secas y
+   * repetidas—, y por eso no comparte motivo con ningún otro aviso.
+   */
+  | "perdida"
+  /**
+   * **Empieza una misión.** No es un aviso: es que arranca algo.
+   *
+   * Sonaba con el mismo motivo que la alarma de pérdida. Sube, porque lo que
+   * viene después es volar.
+   */
+  | "mision";
 
 export interface AudioLevel {
   id: "normal" | "bajo" | "mudo";
@@ -358,6 +394,12 @@ export class Audio {
        */
       aro: [659.25, 880, 1174.66],
       aroFallado: [440, 349.23],
+      // Bajando y deprisa, dos veces: es el único que interrumpe.
+      peligro: [880, 698.46, 587.33, 880, 698.46, 587.33],
+      // La chicharra: el mismo tono, seco, tres veces.
+      perdida: [622.25, 622.25, 622.25],
+      // Y el arranque de algo, subiendo con calma.
+      mision: [523.25, 659.25, 880],
     };
 
     const notes = patterns[kind];
@@ -369,7 +411,12 @@ export class Audio {
           ? 0.07
           : kind === "aroFallado"
             ? 0.16
-            : 0.14;
+            : // El peligro y la pérdida van más rápidos que nada: lo que
+              // distingue una alarma de un aviso es el ritmo, antes que la
+              // altura de las notas.
+              kind === "peligro" || kind === "perdida"
+              ? 0.09
+              : 0.14;
     notes.forEach((frequency, index) => {
       this.pluck(
         frequency,
@@ -380,7 +427,9 @@ export class Audio {
             ? 0.18
             : kind === "aroFallado"
               ? 0.3
-              : 0.35,
+              : kind === "peligro" || kind === "perdida"
+                ? 0.16
+                : 0.35,
       );
     });
   }

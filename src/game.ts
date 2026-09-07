@@ -226,7 +226,11 @@ import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
 import { Audio } from "./audio/audio";
-import { AvisosDeAltura } from "./flight/avisos-de-altura";
+import {
+  AvisosDeAltura,
+  ESCALONES,
+  ESCALONES_EN_PIES,
+} from "./flight/avisos-de-altura";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
   bandaDeRodaje,
@@ -637,7 +641,7 @@ export class Game {
    * Vive en el juego y no en el HUD porque no es un adorno de pantalla: es lo
    * que enseña el ritmo de la recogida, y se dice **y** se dibuja.
    */
-  private readonly avisosDeAltura = new AvisosDeAltura();
+  private readonly avisosDeAltura: AvisosDeAltura;
   /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
   private fueraDeBanda = 0;
   /** Qué se dijo la última vez, para no repetirlo mientras siga igual. */
@@ -774,6 +778,14 @@ export class Game {
   constructor(options: GameOptions) {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
+    /*
+     * Los escalones que canta el radioaltímetro **son los que marca el
+     * instrumento**: metros donde la cabina va en metros, pies donde va en
+     * pies. Ver `ESCALONES_EN_PIES`.
+     */
+    this.avisosDeAltura = new AvisosDeAltura(
+      this.tier.units === "aeronautical" ? ESCALONES_EN_PIES : ESCALONES,
+    );
     this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? OGA_172;
@@ -1601,7 +1613,7 @@ export class Game {
     this.missions.start(mision);
     this.hud.setMissionProgress(this.missions.progress);
     this.hud.flash(t("mission.started", { name: t(mision.nameKey) }), 4);
-    this.audio.cue("attention");
+    this.audio.cue("mision");
     this.updateMissionMarker();
   }
 
@@ -1666,7 +1678,10 @@ export class Game {
       this.audio.cue("success");
     } else {
       this.audio.cue("attention");
-      decir(veredicto === "rapido" ? "too fast" : "off the runway");
+      this.cantar(
+        veredicto === "rapido" ? "too fast" : "off the runway",
+        t(veredicto === "rapido" ? "hud.landedFast" : "hud.landedOffRunway"),
+      );
       /*
        * **Y con dibujo**, que es lo que faltaba.
        *
@@ -1720,6 +1735,31 @@ export class Game {
       this.apuntarElSitio();
     }
     return veredicto;
+  }
+
+  /**
+   * Un aviso de vuelo, dicho como toca en este peldaño.
+   *
+   * **Los avisos crecen con el peldaño**, y hasta hoy no lo hacía ninguno: una
+   * niña de cuatro años oía «terrain, pull up» y «one hundred… fifty» en
+   * inglés aeronáutico, que son cantos de radioaltímetro de un avión de línea.
+   * Lo que se aprende aquí no puede haber que desaprenderlo, y para eso lo
+   * primero es entenderlo.
+   *
+   * - En Guyrami y Tukã habla el instructor, en casa y en una palabra.
+   * - De Taguato en adelante, el canto de cabina en inglés, que es donde ya
+   *   sirve: a los diez años eso es algo que se reconocerá toda la vida.
+   *
+   * **La voz es siempre el tercer canal**: el dibujo y el tono salen igual, y
+   * quien juega en silencio no se pierde nada. Por eso esto solo elige quién
+   * habla, y nunca decide si hay aviso.
+   */
+  private cantar(ingles: string, encasa?: string): void {
+    if (this.tier.avisos === "cabina") {
+      decir(ingles);
+      return;
+    }
+    if (encasa) this.instructor.decir(encasa);
   }
 
   /**
@@ -1948,7 +1988,7 @@ export class Game {
     this.input.controls.brakes = 1;
     this.input.releaseAll();
     this.audio.cue("error");
-    decir("we have a problem");
+    this.cantar("we have a problem", t("vuelo.roto"));
     window.setTimeout(() => {
       if (this.percance !== tipo) return;
       this.hud.mostrarPercance(
@@ -2049,8 +2089,8 @@ export class Game {
       null,
       { segundos: SE_QUEDA_EL_BULTO, prioridad: URGENTE },
     );
-    this.audio.cue("attention");
-    decir("obstacle ahead");
+    this.audio.cue("peligro");
+    this.cantar("obstacle ahead", t("vuelo.bulto"));
   }
 
   /**
@@ -2076,7 +2116,7 @@ export class Game {
     this.apuntar({ frustradas: this.cuaderno.frustradas + 1 });
     // En inglés aeronáutico, como el resto de la voz de cabina: «going around»
     // es lo que se dice por radio, y lo demás es del instructor.
-    decir("going around. good decision");
+    this.cantar("going around. good decision", t("vuelo.frustrada"));
   }
 
   /**
@@ -3263,7 +3303,7 @@ export class Game {
       !this.flight.state.onGround,
     );
     if (aviso) {
-      decir(aviso.dice);
+      this.cantar(aviso.dice, aviso.encasa);
       this.hud.flash(`${aviso.metros}`, 1.6);
     }
 
@@ -3305,7 +3345,10 @@ export class Game {
          * «airspeed» es lo que dice una cabina de verdad — dice las dos cosas
          * a la vez, «mira la velocidad»; cuál de las dos ya lo dice el color.
          */
-        decir(this.flight.state.onGround ? "slow down" : "airspeed");
+        this.cantar(
+          this.flight.state.onGround ? "slow down" : "airspeed",
+          t(this.flight.state.onGround ? "vuelo.despacio" : "vuelo.rapido"),
+        );
       }
     } else {
       this.fueraDeBanda = 0;
@@ -3435,7 +3478,10 @@ export class Game {
       );
       this.audio.cue(terreno === "sube" ? "error" : "attention");
       // En inglés aeronáutico, como el resto de la voz de cabina.
-      decir(terreno === "sube" ? "terrain, pull up" : "too low");
+      this.cantar(
+        terreno === "sube" ? "terrain, pull up" : "too low",
+        t(terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo"),
+      );
     } else if (!terreno) {
       this.terrenoDicho = null;
     }
@@ -3525,7 +3571,10 @@ export class Game {
           null,
           { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
         );
-        decir(donde === "alto" ? "too high, come down" : "too low, climb");
+        this.cantar(
+          donde === "alto" ? "too high, come down" : "too low, climb",
+          t(donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo"),
+        );
       }
     }
     this.explicarElPapi(acercandose);
@@ -5038,7 +5087,7 @@ export class Game {
     if (!state.onGround && this.wasOnGround && !state.crashed) {
       this.audio.cue("achieved");
     }
-    if (state.stalled && !this.wasStalled) this.audio.cue("attention");
+    if (state.stalled && !this.wasStalled) this.audio.cue("perdida");
     if (state.crashed && !this.wasCrashed) this.audio.cue("error");
 
     this.wasOnGround = state.onGround;
@@ -5069,7 +5118,7 @@ export class Game {
       this.missions.start(mission);
       this.hud.setMissionProgress(this.missions.progress);
       this.hud.flash(t("mission.started", { name: t(mission.nameKey) }), 4);
-      this.audio.cue("attention");
+      this.audio.cue("mision");
     }
     this.updateMissionMarker();
   }
