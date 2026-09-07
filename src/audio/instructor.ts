@@ -68,6 +68,79 @@ const IDIOMAS: Record<string, string | null> = {
   gug: null,
 };
 
+/**
+ * Qué acento se prefiere para cada idioma, del mejor al peor.
+ *
+ * No es un capricho: el juego es paraguayo, y una voz de España diciéndole
+ * «seguí la raya verde» a un chico de Asunción suena a documental. Cuando el
+ * sistema tiene varias castellanas, la americana va primero —«es-419» es el
+ * código del castellano de América y es lo que publica espeak— y la de España
+ * queda de última red de seguridad.
+ */
+const ACENTOS: Record<string, string[]> = {
+  'es-PY': ['es-py', 'es-419', 'es-ar', 'es-uy', 'es-bo', 'es-mx', 'es-us', 'es'],
+  en: ['en-us', 'en-gb', 'en'],
+};
+
+/**
+ * La mejor voz de las que haya, o ninguna.
+ *
+ * Está aparte de la clase, y sin tocar `speechSynthesis`, porque **es la
+ * única parte de esto que se puede comprobar**: lo demás es el navegador.
+ *
+ * ## Por qué no vale con coger la primera que case
+ *
+ * Firefox en Linux publica **trece mil trescientas voces**: espeak-ng
+ * multiplica cada idioma por cada variante —«Spanish (Spain)+Nguyen»,
+ * «Spanish (Latin America)+Robosoft2»— y las sirve en un orden cualquiera.
+ * Coger la primera castellana es coger una al azar, y las variantes suenan
+ * bastante peor que la voz base, que es la que está afinada. Chrome tiene el
+ * problema contrario —diecinueve voces y ninguna local— y ahí lo que importa
+ * es el acento.
+ *
+ * Así que se puntúa: primero el acento, y a igualdad de acento, la voz base
+ * antes que una variante y la que el sistema marque por defecto antes que el
+ * resto.
+ */
+export function elegirVoz(
+  voces: readonly SpeechSynthesisVoice[],
+  locale: string,
+): SpeechSynthesisVoice | null {
+  const quiero = IDIOMAS[locale];
+  if (!quiero) return null;
+  const orden = ACENTOS[locale] ?? [locale.toLowerCase(), quiero];
+
+  let mejor: SpeechSynthesisVoice | null = null;
+  let mejorNota = 0;
+  for (const voz of voces) {
+    // Hay sistemas que devuelven «es_ES» en vez de «es-ES».
+    const lang = voz.lang.toLowerCase().replace(/_/g, '-');
+    let nota = 0;
+    for (let i = 0; i < orden.length; i++) {
+      const quiza = orden[i]!;
+      if (lang === quiza || lang.startsWith(`${quiza}-`)) {
+        // Diez por escalón de acento: siempre pesa más que lo de abajo, y así
+        // una voz base de España nunca le gana el puesto a una americana.
+        nota = (orden.length - i) * 10;
+        break;
+      }
+    }
+    // Y si el idioma vale pero el acento no estaba en la lista, entra igual:
+    // una voz rara del idioma correcto es infinitamente mejor que el silencio.
+    if (nota === 0 && !lang.startsWith(quiero)) continue;
+    if (nota === 0) nota = 1;
+
+    if (!voz.name.includes('+')) nota += 5;
+    if (voz.default) nota += 2;
+
+    if (nota > mejorNota) {
+      mejorNota = nota;
+      mejor = voz;
+    }
+  }
+  return mejor;
+}
+
 export class VozDelNavegador implements Instructor {
   private voz: SpeechSynthesisVoice | null = null;
   private ultima = '';
@@ -83,18 +156,7 @@ export class VozDelNavegador implements Instructor {
   }
 
   private buscarVoz(): void {
-    const quiero = IDIOMAS[getLocale()];
-    if (!quiero) {
-      this.voz = null;
-      return;
-    }
-    const voces = speechSynthesis.getVoices();
-    // La del país primero —es-PY, es-AR, es-MX— y si no, cualquier castellana.
-    this.voz =
-      voces.find((v) => v.lang.toLowerCase().startsWith(getLocale().toLowerCase())) ??
-      voces.find((v) => v.lang.toLowerCase().startsWith(`${quiero}-`)) ??
-      voces.find((v) => v.lang.toLowerCase().startsWith(quiero)) ??
-      null;
+    this.voz = elegirVoz(speechSynthesis.getVoices(), getLocale());
   }
 
   get disponible(): boolean {
