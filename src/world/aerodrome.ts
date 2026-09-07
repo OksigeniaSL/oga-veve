@@ -90,7 +90,18 @@ export interface Aerodrome {
     readonly widthM: number | null;
     readonly path: readonly Punto[];
   }[];
-  readonly aprons: readonly { readonly polygon: readonly Punto[] }[];
+  readonly aprons: readonly {
+    readonly polygon: readonly Punto[];
+    /**
+     * De qué está hecha, si el fichero lo dice.
+     *
+     * OpenStreetMap muchas veces no lo dice —las plataformas de Tenerife y
+     * Asunción vienen sin ello— y entonces manda la pista: un campo cuya pista
+     * es de hierba tiene la plataforma de hierba, y uno con pista de asfalto la
+     * tiene de hormigón. Ver `world/superficie.ts`.
+     */
+    readonly surface?: string | null;
+  }[];
   readonly buildings: readonly {
     readonly heightM: number | null;
     readonly polygon: readonly Punto[];

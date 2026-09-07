@@ -260,6 +260,14 @@ export class Audio {
     state: FlightState,
     controls: ControlInputs,
     stallWarnAt = 0.24,
+    /**
+     * Y por dónde se está rodando, que hasta hoy la rodadura no lo sabía.
+     *
+     * Sonaba igual rodar por el asfalto de una pista que por un campo. Es la
+     * mitad sonora de lo mismo que ya cambió en la física: el suelo tiene
+     * tipo. Ver `world/superficie.ts`.
+     */
+    traqueteo = 1,
   ): void {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running") return;
@@ -361,7 +369,13 @@ export class Audio {
 
     // ── Rodadura ────────────────────────────────────────────────────────
     const rolling = state.onGround ? Math.min(1, state.airspeed / 32) : 0;
-    this.rollGain?.gain.setTargetAtTime(rolling * rolling * 0.2, now, 0.08);
+    // Más fuerte cuanto más blando el suelo: un campo suena a campo. Con tope,
+    // que un ruido de rodadura por encima del motor deja de ser rodadura.
+    this.rollGain?.gain.setTargetAtTime(
+      Math.min(0.34, rolling * rolling * 0.2 * traqueteo),
+      now,
+      0.08,
+    );
   }
 
   /**

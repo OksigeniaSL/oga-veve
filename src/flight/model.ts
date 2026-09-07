@@ -133,6 +133,8 @@ export type GroundSampler = (x: number, z: number) => number;
  * `position/*`, `velocities/*` y `attitude/*`. El resto del juego no
  * necesitaría ni un cambio.
  */
+import type { Superficie } from "../world/superficie";
+
 export interface FlightModel {
   readonly state: Readonly<FlightState>;
   /**
@@ -228,4 +230,14 @@ export interface FlightModel {
    * cuánto aguanta el tren con las ayudas de este peldaño puestas.
    */
   limiteDeCaida(): number;
+
+  /**
+   * De qué está hecho el suelo que hay debajo ahora mismo.
+   *
+   * Lo dice el juego en cada fotograma, porque el que sabe de aeródromos es
+   * él. El modelo solo lo usa para lo que le toca: **rodar por hierba cuesta
+   * más que rodar por asfalto**, y por eso una pista de hierba pide más
+   * carrera de despegue. Ver `world/superficie.ts`.
+   */
+  ponerSuperficie(superficie: Superficie): void;
 }
