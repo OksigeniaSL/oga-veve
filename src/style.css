@@ -259,6 +259,8 @@ body {
   align-self: center;
   display: grid;
   gap: 10px;
+  /* Y se aparta con suavidad cuando se abre el mapa. Ver `.hud--con-mapa`. */
+  transition: transform 160ms ease;
 }
 
 .hud__derecha {
@@ -3339,9 +3341,6 @@ body {
   pointer-events: auto;
 }
 
-.hud__izquierda {
-  transition: transform 160ms ease;
-}
 
 .mapa__lienzos {
   position: relative;
@@ -3798,4 +3797,39 @@ body {
   width: 24px;
   height: 24px;
   fill: none;
+}
+
+/*
+ * El cartel de rendimiento, que se enciende con F2.
+ *
+ * Se llama `rendimiento` y no `medidor` porque **`medidor` ya es la clase de
+ * los instrumentos del HUD** desde el primer día. Ver `style.test.ts`.
+ *
+ * Monoespaciado y con las cifras de ancho fijo: un número que baila de sitio
+ * cada medio segundo no se puede leer de reojo mientras se vuela, que es
+ * exactamente cuando hace falta leerlo.
+ *
+ * Abajo a la izquierda, que es la única esquina libre: arriba están los
+ * botones del HUD, a la derecha el motor y el freno, y abajo en el centro el
+ * teclado dibujado. Y sin capturar el ratón, que es una herramienta y no un
+ * mando.
+ */
+.rendimiento {
+  /* Fija, y colgada del cuerpo: el HUD se rehace entero al cambiar de idioma. */
+  position: fixed;
+  bottom: 8px;
+  left: 8px;
+  z-index: 40;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgb(12 14 18 / 78%);
+  color: #d7e2ea;
+  font: 12px/1.5 ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.rendimiento__linea--caro {
+  color: #ff8b74;
 }

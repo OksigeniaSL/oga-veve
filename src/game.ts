@@ -196,6 +196,7 @@ import { mundoElegido } from "./ui/mundo";
 const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
 import { Hud } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
+import { Medidor } from "./ui/rendimiento";
 import { nombreDeTecla } from "./flight/keymap";
 import { elegirInstructor, type Instructor } from "./audio/instructor";
 import type { ControlInputs } from "./flight/model";
@@ -694,6 +695,14 @@ export class Game {
   /** La misión elegida en el hangar, hasta que arranca. Ver `start`. */
   private misionInicial: Mission | null;
   private readonly hud: Hud;
+  /**
+   * El medidor de fotogramas, apagado y esperando a F2.
+   *
+   * No es de desarrollo: va también en lo publicado, porque el aparato que
+   * hay que medir es la tableta del aula y no esta máquina. Apagado no
+   * formatea nada. Ver `ui/rendimiento.ts` y #33.
+   */
+  private readonly medidor: Medidor;
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
   private keyScreen: KeyScreen | null = null;
@@ -1127,6 +1136,7 @@ export class Game {
     this.flight = this.buildFlightModel(this.tier);
 
     this.hud = new Hud(options.hudRoot);
+    this.medidor = new Medidor(document.body, this.renderer);
     this.hud.setInstruments(this.tier.instruments);
     this.hud.setUnits(this.tier.units);
     this.hud.setMagneticVariation(this.scenario.magneticVariation);
@@ -1765,6 +1775,7 @@ export class Game {
     this.stop();
     window.removeEventListener("resize", this.onResize);
     this.input.dispose();
+    this.medidor.dispose();
     this.terrain.dispose();
     this.renderer.dispose();
   }
@@ -3523,6 +3534,10 @@ export class Game {
   // ── Bucle ─────────────────────────────────────────────────────────────
 
   private frame = (): void => {
+    // El reloj del medidor, antes que nada: lo que mide es el tiempo de
+    // pared entre fotogramas, que es lo único que se corresponde con lo que
+    // se ve. Apagado, esto son dos restas. Ver `ui/rendimiento.ts`.
+    this.medidor.empezarCuadro(performance.now());
     /*
      * **El tope está en un segundo**, y cada vez que se ha subido ha sido por
      * el mismo motivo: por debajo de él, un aparato lento no pierde
@@ -3642,7 +3657,8 @@ export class Game {
       this.updateCamera(dt);
       updateSky(this.sky, this.camera.position);
       this.hud.senal.update(dt);
-      this.renderer.render(this.scene, this.camera);
+      this.pintar();
+      this.medidor.update(dt);
       return;
     }
 
@@ -4205,8 +4221,24 @@ export class Game {
     this.contarGalones(dt, banda, aro, toma, renuncio);
     this.hud.senal.update(dt);
 
-    this.renderer.render(this.scene, this.camera);
+    this.pintar();
+    this.medidor.update(dt);
   };
+
+  /**
+   * Pintar, cronometrado.
+   *
+   * `render` **encola** el trabajo para la tarjeta y vuelve, así que este
+   * número no es lo que cuesta dibujar: es lo que cuesta preparar el dibujo
+   * —recorrer la escena, ordenar, mandar—. Lo que la tarjeta tarde de verdad
+   * aparece en el hueco entre fotogramas, que es el otro número del cartel.
+   * Los dos juntos sí dicen dónde se está yendo el tiempo.
+   */
+  private pintar(): void {
+    const t0 = performance.now();
+    this.renderer.render(this.scene, this.camera);
+    this.medidor.apuntarPintado(performance.now() - t0);
+  }
 
   /**
    * Dónde se planta el señalero, y mirando a dónde.
