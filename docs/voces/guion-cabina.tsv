@@ -1,0 +1,21 @@
+001	cabina.v1	V1
+002	cabina.vr	Vr
+003	cabina.terrainPullUp	terrain, pull up
+004	cabina.tooLow	too low
+005	cabina.tooFast	too fast
+006	cabina.offTheRunway	off the runway
+007	cabina.airspeed	airspeed
+008	cabina.slowDown	slow down
+009	cabina.tooHighComeDown	too high, come down
+010	cabina.tooLowClimb	too low, climb
+011	cabina.obstacleAhead	obstacle ahead
+012	cabina.goAround	going around. good decision
+013	cabina.weHaveAProblem	we have a problem
+014	cabina.fiveHundred	five hundred
+015	cabina.oneHundred	one hundred
+016	cabina.fifty	fifty
+017	cabina.forty	forty
+018	cabina.thirty	thirty
+019	cabina.twenty	twenty
+020	cabina.ten	ten
+021	cabina.five	five

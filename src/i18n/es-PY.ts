@@ -15,6 +15,8 @@ export const ES_PY = {
   "hud.throttleDown": "Menos motor",
   "hud.throttleUp": "Más motor",
   "hud.sinFoto": "Hoy no hay fotos del mundo. Volás el mundo dibujado.",
+  "hud.sinVoz":
+    "Este navegador no tiene voces instaladas: el instructor no puede hablar.",
   "hud.throttle": "Motor",
   "hud.vspeed": "Subida",
   "hud.stall": "¡Pérdida! Bajá el morro",

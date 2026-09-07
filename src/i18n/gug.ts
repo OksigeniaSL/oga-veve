@@ -139,6 +139,7 @@ export const GUG: Dictionary = {
   // Los rótulos cortos (IAS, ALT, HDG…) no están aquí a propósito: no se
   // traducen. Esto son las glosas de debajo, que sí explican.
   "hud.speed": "Pya’ekue",
+  "hud.sinVoz": "Ko navegador ndoguerekói ñe'ẽ: instructor ndaikatúi oñe'ẽ.",
   "hud.altitude": "Yvate",
   "hud.heading": "Tape",
   "hud.throttle": "Motor",

@@ -40,15 +40,15 @@ const SALIDA = process.argv[2] ?? "docs/voces";
  * mientras se vuela**, que es lo que alguien de cuatro años no puede leer.
  */
 const HABLADOS = [
-  ["vuelo", "lo que toca hacer ahora, en vuelo y en tierra"],
-  ["circuito", "los cuatro tramos del circuito de tráfico"],
-  ["percance", "lo que salió mal, en la pantalla de fin"],
-  ["fin", "el reconocimiento al terminar"],
-  ["grado", "los cuatro grados del cuaderno"],
-  ["galon", "los galones que se ganan en el vuelo"],
-  ["tutor", "los consejos del tutor de los primeros minutos"],
-  ["mission", "las misiones"],
-  ["torre", "la lámpara de la torre, dicha"],
+  ["vuelo", "instructor", "lo que toca hacer ahora, en vuelo y en tierra"],
+  ["circuito", "instructor", "los cuatro tramos del circuito de tráfico"],
+  ["percance", "instructor", "lo que salió mal, en la pantalla de fin"],
+  ["fin", "instructor", "el reconocimiento al terminar"],
+  ["grado", "instructor", "los cuatro grados del cuaderno"],
+  ["galon", "instructor", "los galones que se ganan en el vuelo"],
+  ["tutor", "instructor", "los consejos de los primeros minutos"],
+  ["mission", "instructor", "las misiones"],
+  ["torre", "torre", "la lámpara de la torre, dicha en casa"],
 ];
 
 /**
@@ -110,6 +110,39 @@ const TORRE = [
   ["torre.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
 ];
 
+/**
+ * Y otro avión en la radio, que es el que hace que un aeropuerto suene a
+ * aeropuerto.
+ *
+ * Todavía no hay tráfico —eso es #118— pero estas cinco frases valen desde el
+ * día uno para que la radio no esté muerta mientras se rueda: se oye a alguien
+ * más ahí fuera, y eso ya cuenta que uno no está solo en el mundo. Van con
+ * matrícula paraguaya de verdad, ZP, y con la fraseología de siempre.
+ */
+const OTRO_AVION = [
+  [
+    "otro.rodando",
+    "Zulu Papa Alfa Bravo Charlie, rodando a la cabecera",
+    "otro avión rodando",
+  ],
+  [
+    "otro.enCola",
+    "Zulu Papa Alfa Bravo Charlie, viento en cola para la uno cinco",
+    "otro avión en el circuito",
+  ],
+  [
+    "otro.final",
+    "Zulu Papa Alfa Bravo Charlie, en final",
+    "otro avión llegando",
+  ],
+  [
+    "otro.pistaLibre",
+    "Zulu Papa Alfa Bravo Charlie, pista libre",
+    "otro avión que ya salió",
+  ],
+  ["otro.buenosDias", "Buenos días, Óga uno siete dos", "el saludo de siempre"],
+];
+
 const claves = (ruta) => {
   const s = readFileSync(ruta, "utf8");
   const salida = new Map();
@@ -125,39 +158,66 @@ mkdirSync(SALIDA, { recursive: true });
 
 const filas = [];
 let total = 0;
-for (const [grupo, para] of HABLADOS) {
+for (const [grupo, voz, para] of HABLADOS) {
   for (const [k, v] of es) {
     if (k.split(".")[0] !== grupo) continue;
-    filas.push({ id: k, idioma: "es-PY", texto: v, para });
+    filas.push({ id: k, voz, idioma: "es-PY", texto: v, para });
     total += v.length;
   }
 }
-for (const [id, texto, para] of [...CABINA, ...TORRE]) {
-  filas.push({ id, idioma: "en", texto, para });
+for (const [id, texto, para] of CABINA) {
+  filas.push({ id, voz: "cabina", idioma: "en", texto, para });
+  total += texto.length;
+}
+for (const [id, texto, para] of TORRE) {
+  filas.push({ id, voz: "torre", idioma: "en", texto, para });
+  total += texto.length;
+}
+for (const [id, texto, para] of OTRO_AVION) {
+  filas.push({ id, voz: "otro", idioma: "es-PY", texto, para });
   total += texto.length;
 }
 
 const tsv = [
-  ["fichero", "idioma", "texto", "dónde suena"].join("\t"),
+  ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>
-    [`${f.idioma}/${f.id}.ogg`, f.idioma, f.texto, f.para].join("\t"),
+    [f.voz, `${f.voz}/${f.id}.ogg`, f.idioma, f.texto, f.para].join("\t"),
   ),
 ].join("\n");
 writeFileSync(`${SALIDA}/frases.tsv`, tsv + "\n");
+
+/*
+ * Y un fichero por voz con **solo el texto**, una frase por línea y en el
+ * orden de la tabla: es lo que se pega de una vez en el estudio, y lo que
+ * vuelve son los audios en ese mismo orden.
+ */
+for (const voz of new Set(filas.map((f) => f.voz))) {
+  const suyas = filas.filter((f) => f.voz === voz);
+  writeFileSync(
+    `${SALIDA}/guion-${voz}.txt`,
+    suyas.map((f) => f.texto).join("\n") + "\n",
+  );
+  writeFileSync(
+    `${SALIDA}/guion-${voz}.tsv`,
+    suyas
+      .map((f, i) => `${String(i + 1).padStart(3, "0")}\t${f.id}\t${f.texto}`)
+      .join("\n") + "\n",
+  );
+}
 
 // Y el mismo contenido como JSON, que es lo que leerá el juego para saber qué
 // fichero suena con cada clave.
 writeFileSync(`${SALIDA}/frases.json`, JSON.stringify(filas, null, 2) + "\n");
 
 console.log(`\n  ${filas.length} frases · ${total} caracteres en total\n`);
-const porIdioma = new Map();
+const porVoz = new Map();
 for (const f of filas) {
-  const [n, c] = porIdioma.get(f.idioma) ?? [0, 0];
-  porIdioma.set(f.idioma, [n + 1, c + f.texto.length]);
+  const [n, c] = porVoz.get(f.voz) ?? [0, 0];
+  porVoz.set(f.voz, [n + 1, c + f.texto.length]);
 }
-for (const [idioma, [n, c]] of porIdioma) {
+for (const [voz, [n, c]] of porVoz) {
   console.log(
-    `  ${idioma.padEnd(6)} ${String(n).padStart(4)} frases · ${c} caracteres`,
+    `  ${voz.padEnd(11)} ${String(n).padStart(4)} frases · ${String(c).padStart(5)} caracteres`,
   );
 }
 console.log(

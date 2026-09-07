@@ -1,112 +1,117 @@
-fichero	idioma	texto	dónde suena
-es-PY/vuelo.estacionado.ogg	es-PY	Arrancá el motor	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.arrancando.ogg	es-PY	Soltá el freno y andá despacito	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.rodando.ogg	es-PY	Seguí la raya verde	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.esperando.ogg	es-PY	Pará del todo y esperá la luz	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.autorizado.ogg	es-PY	¡Luz verde! Entrá a la pista	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.alineando.ogg	es-PY	Ponete derechito en el eje	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.comprometido.ogg	es-PY	¡Ya no se puede frenar, volá!	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.despegando.ogg	es-PY	Motor a fondo	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.enVuelo.ogg	es-PY	Andá a dar una vuelta	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.enVueloAterrizando.ogg	es-PY	Andá a la pista	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.terrenoSube.ogg	es-PY	¡Subí!	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.mandanFrustrar.ogg	es-PY	¡Pista ocupada! Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.frustrada.ogg	es-PY	¡Bien hecho! Te fuiste al aire. Probá de nuevo	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.aroAlto.ogg	es-PY	Pasaste por encima del aro. Bajá un poco	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.aroBajo.ogg	es-PY	Pasaste por debajo del aro. Subí un poco	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.papiAlto.ogg	es-PY	Luces blancas: vas alto, bajá	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.papiBajo.ogg	es-PY	Luces rojas: vas bajo, subí	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.papiBien.ogg	es-PY	Dos rojas y dos blancas: vas bien	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.bulto.ogg	es-PY	Por ahí no se pasa: hay un edificio	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.aterrizado.ogg	es-PY	Frená	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.abandonando.ogg	es-PY	Salí de la pista, que viene otro	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.pistaLibre.ogg	es-PY	¡Pista libre! Bien hecho	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.aPlataforma.ogg	es-PY	Volvé a tu lugar	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.enPuesto.ogg	es-PY	Llegaste. Apagá el motor	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.apagado.ogg	es-PY	¡Vuelo terminado!	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.fuera.ogg	es-PY	Volvé a la raya verde	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.roto.ogg	es-PY	Se rompió. Volvemos a empezar	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.rapido.ogg	es-PY	Vas muy rápido	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.despacio.ogg	es-PY	Más despacio	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.alto.ogg	es-PY	Pará acá	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.teLoPasaste.ogg	es-PY	Te pasaste. Frená y volvé	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.yaPodesTocar.ogg	es-PY	Ya podés tocar	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/vuelo.sinPermiso.ogg	es-PY	Entraste sin la luz verde. La próxima, esperala	lo que toca hacer ahora, en vuelo y en tierra
-es-PY/circuito.subida.ogg	es-PY	Subí derecho por el eje	los cuatro tramos del circuito de tráfico
-es-PY/circuito.cruzado.ogg	es-PY	Girá a la izquierda	los cuatro tramos del circuito de tráfico
-es-PY/circuito.encola.ogg	es-PY	Volá al lado de la pista	los cuatro tramos del circuito de tráfico
-es-PY/circuito.base.ogg	es-PY	Girá y empezá a bajar	los cuatro tramos del circuito de tráfico
-es-PY/percance.ocupada.ogg	es-PY	La pista estaba ocupada y te dijeron que no bajaras	lo que salió mal, en la pantalla de fin
-es-PY/percance.coche.ogg	es-PY	Le pasaste por encima al coche	lo que salió mal, en la pantalla de fin
-es-PY/percance.edificio.ogg	es-PY	Chocaste con un edificio	lo que salió mal, en la pantalla de fin
-es-PY/percance.fuera.ogg	es-PY	Tocaste tierra fuera de la pista	lo que salió mal, en la pantalla de fin
-es-PY/percance.golpe.ogg	es-PY	Llegaste dando un golpe	lo que salió mal, en la pantalla de fin
-es-PY/percance.pasada.ogg	es-PY	Te pasaste del final de la pista	lo que salió mal, en la pantalla de fin
-es-PY/percance.sinpermiso.ogg	es-PY	Entraste en la pista sin la luz verde	lo que salió mal, en la pantalla de fin
-es-PY/fin.llegaste.ogg	es-PY	¡Llegaste! Ya estás en casa	el reconocimiento al terminar
-es-PY/fin.bien.ogg	es-PY	¡Buen vuelo!	el reconocimiento al terminar
-es-PY/fin.muyBien.ogg	es-PY	¡Gran vuelo!	el reconocimiento al terminar
-es-PY/fin.otra.ogg	es-PY	Otro vuelo	el reconocimiento al terminar
-es-PY/fin.redondo.ogg	es-PY	¡Vuelo redondo! No se puede hacer mejor	el reconocimiento al terminar
-es-PY/grado.aprendiz.ogg	es-PY	Aprendiz	los cuatro grados del cuaderno
-es-PY/grado.piloto.ogg	es-PY	Piloto	los cuatro grados del cuaderno
-es-PY/grado.comandante.ogg	es-PY	Comandante	los cuatro grados del cuaderno
-es-PY/grado.instructora.ogg	es-PY	Instructora	los cuatro grados del cuaderno
-es-PY/galon.manga.ogg	es-PY	Los galones de este vuelo	los galones que se ganan en el vuelo
-es-PY/galon.aproximacion.ogg	es-PY	Galón de la aproximación	los galones que se ganan en el vuelo
-es-PY/galon.toma.ogg	es-PY	Galón del aterrizaje	los galones que se ganan en el vuelo
-es-PY/galon.aros.ogg	es-PY	Galón de los aros	los galones que se ganan en el vuelo
-es-PY/galon.velocidad.ogg	es-PY	Galón de la velocidad	los galones que se ganan en el vuelo
-es-PY/galon.rodaje.ogg	es-PY	Galón del rodaje	los galones que se ganan en el vuelo
-es-PY/galon.frustrada.ogg	es-PY	Galón de la frustrada	los galones que se ganan en el vuelo
-es-PY/tutor.throttle.ogg	es-PY	Dale motor	los consejos del tutor de los primeros minutos
-es-PY/tutor.speed.ogg	es-PY	Esperá a que corra	los consejos del tutor de los primeros minutos
-es-PY/tutor.pull.ogg	es-PY	Tirá para arriba	los consejos del tutor de los primeros minutos
-es-PY/tutor.flying.ogg	es-PY	¡Estás volando!	los consejos del tutor de los primeros minutos
-es-PY/tutor.frenar.ogg	es-PY	Frená	los consejos del tutor de los primeros minutos
-es-PY/tutor.salir.ogg	es-PY	Seguí la raya y salí de la pista	los consejos del tutor de los primeros minutos
-es-PY/tutor.slow.ogg	es-PY	Bajá el motor	los consejos del tutor de los primeros minutos
-es-PY/mission.rio.name.ogg	es-PY	Ver el río	las misiones
-es-PY/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
-es-PY/mission.mar.name.ogg	es-PY	Salir al mar	las misiones
-es-PY/mission.anaga.name.ogg	es-PY	A Anaga	las misiones
-es-PY/mission.cumbre.name.ogg	es-PY	A la cumbre	las misiones
-es-PY/mission.lomas.name.ogg	es-PY	A las lomas	las misiones
-es-PY/mission.first.name.ogg	es-PY	Tu primer vuelo	las misiones
-es-PY/mission.valley.name.ogg	es-PY	La vuelta al valle	las misiones
-es-PY/mission.transfer.name.ogg	es-PY	El traslado	las misiones
-es-PY/mission.started.ogg	es-PY	{name}	las misiones
-es-PY/mission.step.ogg	es-PY	¡Bien! Seguí	las misiones
-es-PY/mission.done.ogg	es-PY	¡Misión cumplida!	las misiones
-es-PY/mission.none.ogg	es-PY	Vuelo libre	las misiones
-es-PY/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha
-es-PY/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha
-en/cabina.v1.ogg	en	V1	el punto de no retorno del despegue
-en/cabina.vr.ogg	en	Vr	la velocidad de rotación: tirar
-en/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
-en/cabina.tooLow.ogg	en	too low	vas bajo sobre el terreno
-en/cabina.tooFast.ogg	en	too fast	veredicto de toma rápida
-en/cabina.offTheRunway.ogg	en	off the runway	tomaste fuera de la pista
-en/cabina.airspeed.ogg	en	airspeed	vas rápido en el aire
-en/cabina.slowDown.ogg	en	slow down	vas rápido en el suelo
-en/cabina.tooHighComeDown.ogg	en	too high, come down	te pasaste el aro por arriba
-en/cabina.tooLowClimb.ogg	en	too low, climb	te pasaste el aro por abajo
-en/cabina.obstacleAhead.ogg	en	obstacle ahead	hay un edificio delante
-en/cabina.goAround.ogg	en	going around. good decision	te fuiste al aire: bien hecho
-en/cabina.weHaveAProblem.ogg	en	we have a problem	se rompió el avión
-en/cabina.fiveHundred.ogg	en	five hundred	altura de la toma, en pies
-en/cabina.oneHundred.ogg	en	one hundred	altura de la toma
-en/cabina.fifty.ogg	en	fifty	altura de la toma
-en/cabina.forty.ogg	en	forty	altura de la toma, en pies
-en/cabina.thirty.ogg	en	thirty	altura de la toma
-en/cabina.twenty.ogg	en	twenty	altura de la toma
-en/cabina.ten.ogg	en	ten	altura de la toma
-en/cabina.five.ogg	en	five	altura de la toma, en metros
-en/torre.clearedTakeoff.ogg	en	cleared for take-off	luz verde para despegar
-en/torre.clearedLand.ogg	en	cleared to land	podés volver a intentarlo
-en/torre.goAround.ogg	en	go around, runway occupied	la pista está ocupada
-en/torre.holdShort.ogg	en	hold short of the runway	pará en la doble raya
-en/torre.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
+voz	fichero	idioma	texto	dónde suena
+instructor	instructor/vuelo.estacionado.ogg	es-PY	Arrancá el motor	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.arrancando.ogg	es-PY	Soltá el freno y andá despacito	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.rodando.ogg	es-PY	Seguí la raya verde	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.esperando.ogg	es-PY	Pará del todo y esperá la luz	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.autorizado.ogg	es-PY	¡Luz verde! Entrá a la pista	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.alineando.ogg	es-PY	Ponete derechito en el eje	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.comprometido.ogg	es-PY	¡Ya no se puede frenar, volá!	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.despegando.ogg	es-PY	Motor a fondo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.enVuelo.ogg	es-PY	Andá a dar una vuelta	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.enVueloAterrizando.ogg	es-PY	Andá a la pista	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.terrenoSube.ogg	es-PY	¡Subí!	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	¡Pista ocupada! Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.frustrada.ogg	es-PY	¡Bien hecho! Te fuiste al aire. Probá de nuevo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aroAlto.ogg	es-PY	Pasaste por encima del aro. Bajá un poco	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aroBajo.ogg	es-PY	Pasaste por debajo del aro. Subí un poco	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.papiAlto.ogg	es-PY	Luces blancas: vas alto, bajá	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.papiBajo.ogg	es-PY	Luces rojas: vas bajo, subí	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.papiBien.ogg	es-PY	Dos rojas y dos blancas: vas bien	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.bulto.ogg	es-PY	Por ahí no se pasa: hay un edificio	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aterrizado.ogg	es-PY	Frená	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.abandonando.ogg	es-PY	Salí de la pista, que viene otro	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.pistaLibre.ogg	es-PY	¡Pista libre! Bien hecho	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aPlataforma.ogg	es-PY	Volvé a tu lugar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.enPuesto.ogg	es-PY	Llegaste. Apagá el motor	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.apagado.ogg	es-PY	¡Vuelo terminado!	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.fuera.ogg	es-PY	Volvé a la raya verde	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.roto.ogg	es-PY	Se rompió. Volvemos a empezar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.rapido.ogg	es-PY	Vas muy rápido	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.despacio.ogg	es-PY	Más despacio	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.alto.ogg	es-PY	Pará acá	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.teLoPasaste.ogg	es-PY	Te pasaste. Frená y volvé	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.yaPodesTocar.ogg	es-PY	Ya podés tocar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.sinPermiso.ogg	es-PY	Entraste sin la luz verde. La próxima, esperala	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/circuito.subida.ogg	es-PY	Subí derecho por el eje	los cuatro tramos del circuito de tráfico
+instructor	instructor/circuito.cruzado.ogg	es-PY	Girá a la izquierda	los cuatro tramos del circuito de tráfico
+instructor	instructor/circuito.encola.ogg	es-PY	Volá al lado de la pista	los cuatro tramos del circuito de tráfico
+instructor	instructor/circuito.base.ogg	es-PY	Girá y empezá a bajar	los cuatro tramos del circuito de tráfico
+instructor	instructor/percance.ocupada.ogg	es-PY	La pista estaba ocupada y te dijeron que no bajaras	lo que salió mal, en la pantalla de fin
+instructor	instructor/percance.coche.ogg	es-PY	Le pasaste por encima al coche	lo que salió mal, en la pantalla de fin
+instructor	instructor/percance.edificio.ogg	es-PY	Chocaste con un edificio	lo que salió mal, en la pantalla de fin
+instructor	instructor/percance.fuera.ogg	es-PY	Tocaste tierra fuera de la pista	lo que salió mal, en la pantalla de fin
+instructor	instructor/percance.golpe.ogg	es-PY	Llegaste dando un golpe	lo que salió mal, en la pantalla de fin
+instructor	instructor/percance.pasada.ogg	es-PY	Te pasaste del final de la pista	lo que salió mal, en la pantalla de fin
+instructor	instructor/percance.sinpermiso.ogg	es-PY	Entraste en la pista sin la luz verde	lo que salió mal, en la pantalla de fin
+instructor	instructor/fin.llegaste.ogg	es-PY	¡Llegaste! Ya estás en casa	el reconocimiento al terminar
+instructor	instructor/fin.bien.ogg	es-PY	¡Buen vuelo!	el reconocimiento al terminar
+instructor	instructor/fin.muyBien.ogg	es-PY	¡Gran vuelo!	el reconocimiento al terminar
+instructor	instructor/fin.otra.ogg	es-PY	Otro vuelo	el reconocimiento al terminar
+instructor	instructor/fin.redondo.ogg	es-PY	¡Vuelo redondo! No se puede hacer mejor	el reconocimiento al terminar
+instructor	instructor/grado.aprendiz.ogg	es-PY	Aprendiz	los cuatro grados del cuaderno
+instructor	instructor/grado.piloto.ogg	es-PY	Piloto	los cuatro grados del cuaderno
+instructor	instructor/grado.comandante.ogg	es-PY	Comandante	los cuatro grados del cuaderno
+instructor	instructor/grado.instructora.ogg	es-PY	Instructora	los cuatro grados del cuaderno
+instructor	instructor/galon.manga.ogg	es-PY	Los galones de este vuelo	los galones que se ganan en el vuelo
+instructor	instructor/galon.aproximacion.ogg	es-PY	Galón de la aproximación	los galones que se ganan en el vuelo
+instructor	instructor/galon.toma.ogg	es-PY	Galón del aterrizaje	los galones que se ganan en el vuelo
+instructor	instructor/galon.aros.ogg	es-PY	Galón de los aros	los galones que se ganan en el vuelo
+instructor	instructor/galon.velocidad.ogg	es-PY	Galón de la velocidad	los galones que se ganan en el vuelo
+instructor	instructor/galon.rodaje.ogg	es-PY	Galón del rodaje	los galones que se ganan en el vuelo
+instructor	instructor/galon.frustrada.ogg	es-PY	Galón de la frustrada	los galones que se ganan en el vuelo
+instructor	instructor/tutor.throttle.ogg	es-PY	Dale motor	los consejos de los primeros minutos
+instructor	instructor/tutor.speed.ogg	es-PY	Esperá a que corra	los consejos de los primeros minutos
+instructor	instructor/tutor.pull.ogg	es-PY	Tirá para arriba	los consejos de los primeros minutos
+instructor	instructor/tutor.flying.ogg	es-PY	¡Estás volando!	los consejos de los primeros minutos
+instructor	instructor/tutor.frenar.ogg	es-PY	Frená	los consejos de los primeros minutos
+instructor	instructor/tutor.salir.ogg	es-PY	Seguí la raya y salí de la pista	los consejos de los primeros minutos
+instructor	instructor/tutor.slow.ogg	es-PY	Bajá el motor	los consejos de los primeros minutos
+instructor	instructor/mission.rio.name.ogg	es-PY	Ver el río	las misiones
+instructor	instructor/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
+instructor	instructor/mission.mar.name.ogg	es-PY	Salir al mar	las misiones
+instructor	instructor/mission.anaga.name.ogg	es-PY	A Anaga	las misiones
+instructor	instructor/mission.cumbre.name.ogg	es-PY	A la cumbre	las misiones
+instructor	instructor/mission.lomas.name.ogg	es-PY	A las lomas	las misiones
+instructor	instructor/mission.first.name.ogg	es-PY	Tu primer vuelo	las misiones
+instructor	instructor/mission.valley.name.ogg	es-PY	La vuelta al valle	las misiones
+instructor	instructor/mission.transfer.name.ogg	es-PY	El traslado	las misiones
+instructor	instructor/mission.started.ogg	es-PY	{name}	las misiones
+instructor	instructor/mission.step.ogg	es-PY	¡Bien! Seguí	las misiones
+instructor	instructor/mission.done.ogg	es-PY	¡Misión cumplida!	las misiones
+instructor	instructor/mission.none.ogg	es-PY	Vuelo libre	las misiones
+torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa
+torre	torre/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha en casa
+cabina	cabina/cabina.v1.ogg	en	V1	el punto de no retorno del despegue
+cabina	cabina/cabina.vr.ogg	en	Vr	la velocidad de rotación: tirar
+cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
+cabina	cabina/cabina.tooLow.ogg	en	too low	vas bajo sobre el terreno
+cabina	cabina/cabina.tooFast.ogg	en	too fast	veredicto de toma rápida
+cabina	cabina/cabina.offTheRunway.ogg	en	off the runway	tomaste fuera de la pista
+cabina	cabina/cabina.airspeed.ogg	en	airspeed	vas rápido en el aire
+cabina	cabina/cabina.slowDown.ogg	en	slow down	vas rápido en el suelo
+cabina	cabina/cabina.tooHighComeDown.ogg	en	too high, come down	te pasaste el aro por arriba
+cabina	cabina/cabina.tooLowClimb.ogg	en	too low, climb	te pasaste el aro por abajo
+cabina	cabina/cabina.obstacleAhead.ogg	en	obstacle ahead	hay un edificio delante
+cabina	cabina/cabina.goAround.ogg	en	going around. good decision	te fuiste al aire: bien hecho
+cabina	cabina/cabina.weHaveAProblem.ogg	en	we have a problem	se rompió el avión
+cabina	cabina/cabina.fiveHundred.ogg	en	five hundred	altura de la toma, en pies
+cabina	cabina/cabina.oneHundred.ogg	en	one hundred	altura de la toma
+cabina	cabina/cabina.fifty.ogg	en	fifty	altura de la toma
+cabina	cabina/cabina.forty.ogg	en	forty	altura de la toma, en pies
+cabina	cabina/cabina.thirty.ogg	en	thirty	altura de la toma
+cabina	cabina/cabina.twenty.ogg	en	twenty	altura de la toma
+cabina	cabina/cabina.ten.ogg	en	ten	altura de la toma
+cabina	cabina/cabina.five.ogg	en	five	altura de la toma, en metros
+torre	torre/torre.clearedTakeoff.ogg	en	cleared for take-off	luz verde para despegar
+torre	torre/torre.clearedLand.ogg	en	cleared to land	podés volver a intentarlo
+torre	torre/torre.goAround.ogg	en	go around, runway occupied	la pista está ocupada
+torre	torre/torre.holdShort.ogg	en	hold short of the runway	pará en la doble raya
+torre	torre/torre.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
+otro	otro/otro.rodando.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, rodando a la cabecera	otro avión rodando
+otro	otro/otro.enCola.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, viento en cola para la uno cinco	otro avión en el circuito
+otro	otro/otro.final.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, en final	otro avión llegando
+otro	otro/otro.pistaLibre.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, pista libre	otro avión que ya salió
+otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, Óga uno siete dos	el saludo de siempre

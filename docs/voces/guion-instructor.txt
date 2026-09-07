@@ -1,0 +1,83 @@
+Arrancá el motor
+Soltá el freno y andá despacito
+Seguí la raya verde
+Pará del todo y esperá la luz
+¡Luz verde! Entrá a la pista
+Ponete derechito en el eje
+¡Ya no se puede frenar, volá!
+Motor a fondo
+Andá a dar una vuelta
+Andá a la pista
+Bajá suavecito
+Vas muy bajo
+¡Subí!
+¡Pista ocupada! Subí y volvé por el circuito
+La torre te deja volver a intentarlo
+¡Bien hecho! Te fuiste al aire. Probá de nuevo
+Pasaste por encima del aro. Bajá un poco
+Pasaste por debajo del aro. Subí un poco
+Luces blancas: vas alto, bajá
+Luces rojas: vas bajo, subí
+Dos rojas y dos blancas: vas bien
+Por ahí no se pasa: hay un edificio
+Frená
+Salí de la pista, que viene otro
+¡Pista libre! Bien hecho
+Volvé a tu lugar
+Llegaste. Apagá el motor
+¡Vuelo terminado!
+Volvé a la raya verde
+Se rompió. Volvemos a empezar
+Vas muy rápido
+Más despacio
+Pará acá
+Te pasaste. Frená y volvé
+Ya podés tocar
+Entraste sin la luz verde. La próxima, esperala
+Subí derecho por el eje
+Girá a la izquierda
+Volá al lado de la pista
+Girá y empezá a bajar
+La pista estaba ocupada y te dijeron que no bajaras
+Le pasaste por encima al coche
+Chocaste con un edificio
+Tocaste tierra fuera de la pista
+Llegaste dando un golpe
+Te pasaste del final de la pista
+Entraste en la pista sin la luz verde
+¡Llegaste! Ya estás en casa
+¡Buen vuelo!
+¡Gran vuelo!
+Otro vuelo
+¡Vuelo redondo! No se puede hacer mejor
+Aprendiz
+Piloto
+Comandante
+Instructora
+Los galones de este vuelo
+Galón de la aproximación
+Galón del aterrizaje
+Galón de los aros
+Galón de la velocidad
+Galón del rodaje
+Galón de la frustrada
+Dale motor
+Esperá a que corra
+Tirá para arriba
+¡Estás volando!
+Frená
+Seguí la raya y salí de la pista
+Bajá el motor
+Ver el río
+Seguir el río
+Salir al mar
+A Anaga
+A la cumbre
+A las lomas
+Tu primer vuelo
+La vuelta al valle
+El traslado
+{name}
+¡Bien! Seguí
+¡Misión cumplida!
+Vuelo libre
