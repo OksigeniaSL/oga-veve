@@ -25,6 +25,14 @@
 import type { ControlInputs, FlightState } from "../flight/model";
 import type { AircraftSound } from "../flight/aircraft";
 import { leerTexto, ponerTexto } from "../datos/guardado";
+import {
+  Agachado,
+  BUSES,
+  TARDA_EN_BAJAR,
+  TARDA_EN_SUBIR,
+  nivelesAhora,
+  type Bus,
+} from "./mezcla";
 
 /**
  * Régimen de ralentí y máximo, en revoluciones por minuto.
@@ -154,6 +162,16 @@ function persistLevel(index: number): void {
 export class Audio {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
+  /**
+   * Los seis buses de mezcla, entre las fuentes y el maestro.
+   *
+   * Antes las veinte fuentes iban todas al maestro con su ganancia a mano, y
+   * la única defensa era el compresor del final — que no distingue lo que hay
+   * que entender de lo que hay que sentir. Ver `audio/mezcla.ts`.
+   */
+  private buses: Record<Bus, GainNode> | null = null;
+  /** Cuánta gente está hablando ahora mismo. Manda el ducking. */
+  private readonly hablando = new Agachado();
   /**
    * Volumen en tres pasos, no un deslizador.
    *
@@ -432,6 +450,19 @@ export class Audio {
               kind === "peligro" || kind === "perdida"
               ? 0.09
               : 0.14;
+    /*
+     * **Los que avisan van por el bus de avisos, y los demás por el de
+     * interfaz.**
+     *
+     * No es una etiqueta: el bus de avisos manda agacharse a todo lo demás y
+     * suena por encima. Un «lo conseguiste» no tiene que taparle el motor a
+     * nadie; una alarma de pérdida sí, y por eso están separados.
+     */
+    const suBus: Bus =
+      kind === "peligro" || kind === "perdida" || kind === "attention"
+        ? "avisos"
+        : "interfaz";
+    if (suBus === "avisos") this.agacharUnRato(notes.length * 0.2);
     notes.forEach((frequency, index) => {
       this.pluck(
         frequency,
@@ -445,6 +476,7 @@ export class Audio {
               : kind === "peligro" || kind === "perdida"
                 ? 0.16
                 : 0.35,
+        suBus,
       );
     });
   }
@@ -465,7 +497,33 @@ export class Audio {
     this.levelIndex = restoreLevel();
     this.applyMasterGain();
     this.master.connect(compressor);
-    compressor.connect(ctx.destination);
+    /*
+     * **Y un limitador detrás del compresor, que no son lo mismo.**
+     *
+     * El compresor de arriba pega la mezcla —sube lo bajo y baja lo alto, con
+     * calma—. El limitador es la red: relación veinte a uno, ataque de tres
+     * milisegundos y umbral en menos tres, para que un pico no llegue nunca
+     * al altavoz de una tablet, que es donde recortar suena a rotura.
+     */
+    const limitador = ctx.createDynamicsCompressor();
+    limitador.threshold.value = -3;
+    limitador.ratio.value = 20;
+    limitador.knee.value = 0;
+    limitador.attack.value = 0.003;
+    limitador.release.value = 0.1;
+    compressor.connect(limitador);
+    limitador.connect(ctx.destination);
+
+    // Los seis buses, cada uno a su nivel. Ver `audio/mezcla.ts`.
+    const niveles = nivelesAhora(false);
+    this.buses = Object.fromEntries(
+      BUSES.map((nombre) => {
+        const bus = ctx.createGain();
+        bus.gain.value = niveles[nombre];
+        bus.connect(this.master!);
+        return [nombre, bus];
+      }),
+    ) as Record<Bus, GainNode>;
 
     const noise = this.noiseBuffer();
 
@@ -475,7 +533,7 @@ export class Audio {
     this.engineFilter.Q.value = 1.1;
     this.engineGain = ctx.createGain();
     this.engineGain.gain.value = 0;
-    this.engineFilter.connect(this.engineGain).connect(this.master);
+    this.engineFilter.connect(this.engineGain).connect(this.bus('motor'));
 
     // Resonancia en la banda en la que el oído sitúa un motor. Sin ella, en
     // un altavoz pequeño el motor se oye como un soplido sin carácter.
@@ -510,12 +568,12 @@ export class Audio {
     this.loopNoise(noise)
       .connect(this.propFilter)
       .connect(this.propGain)
-      .connect(this.master);
+      .connect(this.bus("motor"));
 
     // ── Viento: cuerpo grave y silbido agudo ────────────────────────────
     this.windGain = ctx.createGain();
     this.windGain.gain.value = 0;
-    this.windGain.connect(this.master);
+    this.windGain.connect(this.bus("ambiente"));
 
     this.windBody = ctx.createBiquadFilter();
     this.windBody.type = "bandpass";
@@ -549,7 +607,7 @@ export class Audio {
     this.hornGain.gain.value = 0;
     const hornShape = ctx.createGain();
     hornShape.gain.value = 0;
-    horn.connect(hornShape).connect(this.hornGain).connect(this.master);
+    horn.connect(hornShape).connect(this.hornGain).connect(this.bus("avisos"));
     horn.start();
 
     // El pulso: una lengüeta real no da un tono limpio, tiembla.
@@ -570,7 +628,7 @@ export class Audio {
     this.loopNoise(noise)
       .connect(rollFilter)
       .connect(this.rollGain)
-      .connect(this.master);
+      .connect(this.bus("ambiente"));
   }
 
   /** Dos segundos de ruido blanco generados en memoria. Cero bytes de red. */
@@ -592,7 +650,12 @@ export class Audio {
   }
 
   /** Una nota corta con caída exponencial, que es lo que hace una cuerda. */
-  private pluck(frequency: number, at: number, duration: number): void {
+  private pluck(
+    frequency: number,
+    at: number,
+    duration: number,
+    bus: Bus = "interfaz",
+  ): void {
     const ctx = this.context!;
     const oscillator = ctx.createOscillator();
     oscillator.type = "triangle";
@@ -603,9 +666,78 @@ export class Audio {
     gain.gain.linearRampToValueAtTime(0.22, at + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
 
-    oscillator.connect(gain).connect(this.master!);
+    oscillator.connect(gain).connect(this.bus(bus));
     oscillator.start(at);
     oscillator.stop(at + duration + 0.05);
+  }
+
+  /**
+   * El bus donde enchufar una fuente.
+   *
+   * Antes de que existiera el grafo devuelve el maestro, que es lo que había:
+   * si algo suena antes de construir la mezcla, mejor que suene mal que que
+   * no suene.
+   */
+  private bus(cual: Bus): AudioNode {
+    return this.buses?.[cual] ?? this.master!;
+  }
+
+  /**
+   * Alguien empieza a hablar: todo lo demás se agacha.
+   *
+   * Lo llaman las dos voces del juego —el instructor y el otro avión— desde
+   * `audio/voz.ts`, y los avisos desde aquí mismo. **La voz del navegador no
+   * pasa por Web Audio**, así que el ducking no lo puede disparar el sonido:
+   * lo dispara el evento. El día que existan las grabaciones entrarán por el
+   * bus de voz y esto seguirá valiendo igual.
+   */
+  empiezaLaVoz(): void {
+    if (this.hablando.entra()) this.ponerNiveles();
+  }
+
+  /** Y se calla: la mezcla se levanta cuando se calla el último. */
+  acabaLaVoz(): void {
+    if (this.hablando.sale()) this.ponerNiveles();
+  }
+
+  /** Todos callados de golpe. Al reiniciar el vuelo o al poner en mudo. */
+  callarLasVoces(): void {
+    if (this.hablando.vaciar()) this.ponerNiveles();
+  }
+
+  /**
+   * Se agacha por un rato y se levanta solo.
+   *
+   * Es para los avisos, que sí pasan por Web Audio pero no tienen un evento
+   * de «he terminado»: se sabe cuánto duran porque los toca el propio juego.
+   */
+  private agacharUnRato(segundos: number): void {
+    this.empiezaLaVoz();
+    window.setTimeout(() => this.acabaLaVoz(), segundos * 1000);
+  }
+
+  /**
+   * Pone cada bus donde le toca ahora mismo.
+   *
+   * Bajar deprisa y subir despacio: cincuenta milisegundos es lo que tarda en
+   * no oírse el escalón, y cuatro décimas lo que tarda en no oírse la vuelta.
+   * Al revés se nota, y lo que se nota distrae.
+   */
+  private ponerNiveles(): void {
+    if (!this.buses || !this.context) return;
+    const agachado = this.hablando.activo;
+    const niveles = nivelesAhora(agachado);
+    const ahora = this.context.currentTime;
+    // `setTargetAtTime` va a un tercio de la constante por cada tramo, así
+    // que la constante es el tiempo pedido entre tres.
+    const constante = (agachado ? TARDA_EN_BAJAR : TARDA_EN_SUBIR) / 3;
+    for (const nombre of BUSES) {
+      this.buses[nombre].gain.setTargetAtTime(
+        niveles[nombre],
+        ahora,
+        constante,
+      );
+    }
   }
 
   private applyMasterGain(): void {

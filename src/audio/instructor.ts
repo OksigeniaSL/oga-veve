@@ -41,7 +41,7 @@
  */
 
 import { getLocale } from '../i18n';
-import { vozPermitida } from './voz';
+import { seguirLaVoz, vozPermitida } from './voz';
 
 export interface Instructor {
   /** Dice algo. `texto` ya viene traducido y listo para leer. */
@@ -247,6 +247,9 @@ export class VozDelNavegador implements Instructor {
     // sigue hablando de la calle de rodaje con el avión ya en el aire.
     speechSynthesis.cancel();
     const frase = new SpeechSynthesisUtterance(texto);
+    // Y la mezcla se entera: mientras habla, todo lo demás se agacha diez
+    // decibelios. Ver `audio/mezcla.ts`.
+    seguirLaVoz(frase);
     frase.voice = this.voz;
     frase.lang = this.voz.lang;
     frase.rate = this.timbre.rate;
