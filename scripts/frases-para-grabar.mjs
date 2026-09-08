@@ -60,8 +60,16 @@ const HABLADOS = [
  * del juego que suena a avión.
  */
 const CABINA = [
-  ["cabina.v1", "V1", "el punto de no retorno del despegue"],
-  ["cabina.vr", "Vr", "la velocidad de rotación: tirar"],
+  ["cabina.v1", "V one", "el punto de no retorno del despegue"],
+  /*
+   * «Rotate», y no «Vr».
+   *
+   * Es lo que se canta de verdad en una cabina: V1 se dice porque es un
+   * número y una decisión, y la siguiente no se dice como número sino como
+   * orden, porque es una acción — «rotate» es literalmente «levantá el
+   * morro». Decir «Vr» en voz alta no lo dice nadie.
+   */
+  ["cabina.vr", "rotate", "la velocidad de rotación: tirar"],
   [
     "cabina.terrainPullUp",
     "terrain, pull up",

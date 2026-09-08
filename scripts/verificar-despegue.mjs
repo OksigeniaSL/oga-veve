@@ -597,6 +597,13 @@ const despegue = await page.evaluate(async () => {
   let desvio = 0;
   let enPistaPasos = 0;
   let destelloV1 = 0;
+  /*
+   * Y los dos momentos por separado: qué decía el destello y si salió la
+   * flecha de tirar. V1 es una decisión y Vr es una acción, y hasta que no se
+   * distinguieron los dos salían igual: un destello mudo. Ver #105.
+   */
+  const dichos = [];
+  let flechaDeTirar = false;
   const inicio = o.estado().position.clone
     ? { x: o.estado().position.x, z: o.estado().position.z }
     : null;
@@ -651,6 +658,12 @@ const despegue = await page.evaluate(async () => {
       const el = document.querySelector('[data-hud="v1"]');
       const op = el ? Number(getComputedStyle(el).opacity) : 0;
       if (op > destelloV1) destelloV1 = op;
+      const texto = el?.textContent?.trim() ?? "";
+      if (op > 0.05 && texto && !dichos.includes(texto)) dichos.push(texto);
+      const dibujo =
+        document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
+      // La flecha de tirar tiene una marca propia en su trazo.
+      if (dibujo.includes("18.5 8.4")) flechaDeTirar = true;
     }
     // Y lo que se separa del eje, que en una pista de hierba de dieciocho
     // metros es la diferencia entre despegar y correr por el campo.
@@ -687,6 +700,8 @@ const despegue = await page.evaluate(async () => {
     desvio: +desvio.toFixed(0),
     enPistaPasos,
     destelloV1: +destelloV1.toFixed(2),
+    dichos,
+    flechaDeTirar,
     usado,
   };
 });
@@ -722,6 +737,27 @@ if (despegue.enElAire) {
       ? `destelló hasta ${despegue.destelloV1}`
       : "no se vio nada",
     "V1 solo se contaba quitando el botón del freno, que se entiende después",
+  );
+  /*
+   * **Y Vr detrás, que es otra cosa.**
+   *
+   * V1 es el último instante en que se puede parar —una decisión que ya está
+   * tomada— y Vr es tirar para levantar el morro —una acción que toca hacer
+   * ahora—. Entre las dos pasan unos segundos, y esos segundos son la
+   * lección: ya no puedo parar y todavía no vuelo. Salían las dos igual: un
+   * destello mudo y nada más.
+   */
+  comprobar(
+    "y detrás de V1 sale Vr, que es la que se usa de verdad",
+    despegue.dichos.includes("V1") && despegue.dichos.includes("Vr"),
+    `destellos: ${despegue.dichos.join(" → ") || "ninguno"}`,
+    "los dos momentos del despegue salían igual y no se distinguían",
+  );
+  comprobar(
+    "y en Vr aparece la flecha de tirar, que se entiende sin leer",
+    despegue.flechaDeTirar,
+    despegue.flechaDeTirar ? "salió" : "no salió",
+    "el peldaño que no lee se quedaba sin saber qué hacer en ese segundo",
   );
   comprobar(
     "el freno se despide al pasar el punto de no retorno",

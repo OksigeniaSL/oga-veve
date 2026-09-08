@@ -431,6 +431,22 @@ const circuito = (tramo: string): string =>
   <path d="${PUNTA[tramo]}" />
 `);
 
+/**
+ * Tirar: levantá el morro.
+ *
+ * Es la señal de Vr, y por eso es una acción y no un estado: la avioneta de
+ * perfil con el morro ya arriba y una flecha que sube pegada a él. A los
+ * cuatro años eso es «para arriba», que es exactamente lo que hay que hacer
+ * en ese segundo — y es la única señal del despegue que pide mover algo.
+ */
+const TIRAR = `
+  <path d="M4.5 17.5 L13.5 13.2 L16.8 10.2 a1.6 1.6 0 0 1 2.4 2.1
+           L16.4 15.6 L12.6 20.5 H10.4 L11.2 16.4 L6.6 18.6 Z" />
+  <path d="M18.5 8.4 V2.6 M16 5 L18.5 2.2 L21 5" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round" />
+`;
+
 const DIBUJOS: Record<string, string> = {
   llave: LLAVE,
   helice: HELICE,
@@ -454,6 +470,7 @@ const DIBUJOS: Record<string, string> = {
   "circuito-cruzado": circuito("cruzado"),
   "circuito-encola": circuito("encola"),
   "circuito-base": circuito("base"),
+  tirar: TIRAR,
   papi0: papi(0),
   papi1: papi(1),
   papi2: papi(2),

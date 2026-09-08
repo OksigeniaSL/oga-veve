@@ -5,6 +5,7 @@ instructor	instructor/vuelo.rodando.ogg	es-PY	Seguí la raya verde	lo que toca h
 instructor	instructor/vuelo.esperando.ogg	es-PY	Pará del todo y esperá la luz	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.autorizado.ogg	es-PY	¡Luz verde! Entrá a la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alineando.ogg	es-PY	Ponete derechito en el eje	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.rotar.ogg	es-PY	Tirá para arriba	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.comprometido.ogg	es-PY	¡Ya no se puede frenar, volá!	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despegando.ogg	es-PY	Motor a fondo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enVuelo.ogg	es-PY	Andá a dar una vuelta	lo que toca hacer ahora, en vuelo y en tierra
@@ -46,6 +47,7 @@ instructor	instructor/percance.fuera.ogg	es-PY	Tocaste tierra fuera de la pista	
 instructor	instructor/percance.golpe.ogg	es-PY	Llegaste dando un golpe	lo que salió mal, en la pantalla de fin
 instructor	instructor/percance.pasada.ogg	es-PY	Te pasaste del final de la pista	lo que salió mal, en la pantalla de fin
 instructor	instructor/percance.sinpermiso.ogg	es-PY	Entraste en la pista sin la luz verde	lo que salió mal, en la pantalla de fin
+instructor	instructor/fin.horas.ogg	es-PY	Lo que llevás volado	el reconocimiento al terminar
 instructor	instructor/fin.llegaste.ogg	es-PY	¡Llegaste! Ya estás en casa	el reconocimiento al terminar
 instructor	instructor/fin.bien.ogg	es-PY	¡Buen vuelo!	el reconocimiento al terminar
 instructor	instructor/fin.muyBien.ogg	es-PY	¡Gran vuelo!	el reconocimiento al terminar
@@ -89,8 +91,8 @@ otro	otro/otro.rodando.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, rodando a la cabe
 otro	otro/otro.enCola.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, viento en cola	el otro avión de la frecuencia
 otro	otro/otro.final.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, en final	el otro avión de la frecuencia
 otro	otro/otro.pistaLibre.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, pista libre	el otro avión de la frecuencia
-cabina	cabina/cabina.v1.ogg	en	V1	el punto de no retorno del despegue
-cabina	cabina/cabina.vr.ogg	en	Vr	la velocidad de rotación: tirar
+cabina	cabina/cabina.v1.ogg	en	V one	el punto de no retorno del despegue
+cabina	cabina/cabina.vr.ogg	en	rotate	la velocidad de rotación: tirar
 cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
 cabina	cabina/cabina.tooLow.ogg	en	too low	vas bajo sobre el terreno
 cabina	cabina/cabina.tooFast.ogg	en	too fast	veredicto de toma rápida

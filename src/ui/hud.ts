@@ -173,6 +173,8 @@ export class Hud {
   /** Lo que le queda al destello de pantalla, s. Ver `destellar`. */
   private destelloRestante = 0;
   private cuadernoHandler: (() => void) | null = null;
+  /** Quién se entera de que se ha pasado V1 o Vr. Ver `onVelocidades`. */
+  private velocidadesHandler: ((cual: "V1" | "Vr") => void) | null = null;
   /**
    * Cuántos instrumentos enseña el HUD.
    *
@@ -1090,6 +1092,7 @@ export class Hud {
     if (despegando && !this.dijoV1) {
       this.dijoV1 = true;
       this.destellar("V1");
+      this.velocidadesHandler?.("V1");
     } else if (
       /*
        * **Y detrás de V1 viene Vr, que es la que se usa de verdad.**
@@ -1109,6 +1112,7 @@ export class Hud {
     ) {
       this.dijoVr = true;
       this.destellar("Vr");
+      this.velocidadesHandler?.("Vr");
     } else if (
       /*
        * Y se rearma cuando de verdad se ha dejado de despegar: bien arriba, o
@@ -1471,6 +1475,17 @@ export class Hud {
   }
 
   /** Quién abre la pantalla de mandos. */
+  /**
+   * Los dos momentos del despegue, para quien quiera sonarlos o decirlos.
+   *
+   * El destello lo pone el HUD porque es pintura; **el sonido y la voz no son
+   * suyos**, y hasta hoy no salían de ningún sitio: V1 se marcaba solo
+   * quitando el botón del freno y con un destello mudo. Ver #105.
+   */
+  onVelocidades(handler: (cual: "V1" | "Vr") => void): void {
+    this.velocidadesHandler = handler;
+  }
+
   onKeys(handler: () => void): void {
     this.keysHandler = handler;
   }

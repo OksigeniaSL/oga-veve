@@ -141,6 +141,7 @@ export const EN: Dictionary = {
   "vuelo.esperando": "Stop completely and wait for the light",
   "vuelo.autorizado": "Green light! Enter the runway",
   "vuelo.alineando": "Line up on the centreline",
+  "vuelo.rotar": "Pull up and fly",
   "vuelo.comprometido": "Too late to stop — fly!",
   "vuelo.despegando": "Full power",
   "vuelo.enVuelo": "Go for a fly",
