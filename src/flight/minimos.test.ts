@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   ALTURA_DE_DECISION,
+  seVeLaPista,
   MARGENES,
   Minimos,
   VENTANA,
@@ -61,6 +62,33 @@ describe("si se puede seguir bajando", () => {
         delEje: MARGENES.delEje - 10,
       }),
     ).toBeNull();
+  });
+});
+
+describe("si se ve la pista desde mínimos", () => {
+  it("con el cielo despejado, siempre", () => {
+    expect(seVeLaPista(null)).toBe(true);
+  });
+
+  it("con la base de las nubes por encima, también", () => {
+    expect(seVeLaPista(ALTURA_DE_DECISION + 1)).toBe(true);
+    expect(seVeLaPista(300)).toBe(true);
+  });
+
+  it("pero dentro de la nube no hay pista que ver", () => {
+    // Es literalmente para lo que existe una altura de decisión, y la razón
+    // de que un aeropuerto esté cerrado con el cielo azul mil metros arriba.
+    expect(seVeLaPista(ALTURA_DE_DECISION - 1)).toBe(false);
+    expect(seVeLaPista(20)).toBe(false);
+  });
+
+  it("y eso manda sobre todo lo demás", () => {
+    // Se puede llegar perfectamente estabilizado a una nube, y sigue sin
+    // haber pista.
+    expect(porQueNoSeSigue(BIEN, 30)).toBe("sinPista");
+    // Y con techo alto, la aproximación se juzga como siempre.
+    expect(porQueNoSeSigue(BIEN, 300)).toBeNull();
+    expect(porQueNoSeSigue({ ...BIEN, velocidad: 20 }, 300)).toBe("lento");
   });
 });
 

@@ -264,10 +264,32 @@ export class PanelDelTiempo {
    * atraviesa despegando, y ese es el momento por el que existe todo esto.
    * Setecientos metros son mil quinientos pies, que es un día tapado de verdad.
    */
-  private static readonly CIELOS: readonly { alturaM: number | null; tapadura: number }[] = [
-    { alturaM: null, tapadura: 0 },
-    { alturaM: 1500, tapadura: 0.35 },
-    { alturaM: 700, tapadura: 0.9 },
+  /**
+   * Los tres cielos, y **la altura es sobre el aeródromo**, no sobre el mar.
+   *
+   * Era absoluta —mil quinientos metros, setecientos— y eso decía cosas
+   * distintas en cada sitio: setecientos metros de nubes sobre Silvio
+   * Pettirossi, que está a ochenta y nueve, son seiscientos de techo y un día
+   * precioso; sobre Tenerife Norte, que está a seiscientos treinta y dos, son
+   * sesenta y ocho, o sea el aeropuerto metido en la nube. La misma nube y
+   * dos días completamente distintos.
+   *
+   * Un parte meteorológico de verdad mide la base **sobre el aeropuerto**, y
+   * así es como ya venía del METAR (`Meteo.techoM`). Ahora los botones hablan
+   * el mismo idioma que el parte.
+   *
+   * Y el tercero, el cubierto de verdad, está **por debajo de la altura de
+   * decisión** a propósito: con ese cielo se baja, no se ve la pista y se sube
+   * — que es exactamente lo que pasa en un aeropuerto por debajo de mínimos, y
+   * la lección que este juego quiere dar. Ver `flight/minimos.ts` y #86.
+   */
+  private static readonly CIELOS: readonly {
+    techoM: number | null;
+    tapadura: number;
+  }[] = [
+    { techoM: null, tapadura: 0 },
+    { techoM: 1200, tapadura: 0.35 },
+    { techoM: 45, tapadura: 0.9 },
   ];
   private cieloActual = 0;
   private alCambiarNubes: ((alturaM: number | null, tapadura: number) => void) | null = null;
@@ -288,7 +310,7 @@ export class PanelDelTiempo {
     this.cieloActual = indice;
     this.pintarCielos();
     const c = PanelDelTiempo.CIELOS[indice]!;
-    this.alCambiarNubes?.(c.alturaM, c.tapadura);
+    this.alCambiarNubes?.(c.techoM, c.tapadura);
   }
 
   private pintarCielos(): void {

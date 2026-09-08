@@ -2276,6 +2276,59 @@ comprobar(
   "la regla de la aproximación estabilizada no existía: se podía llegar al suelo de cualquier manera",
 );
 
+/*
+ * **Y el motivo de verdad: llegar a mínimos y no ver la pista.**
+ *
+ * Es el caso que le da nombre a la altura de decisión, y el que hace de
+ * Tenerife Norte un escenario didáctico de primera: el aeropuerto está a 632
+ * metros, que es justo donde se asienta el mar de nubes del alisio, así que
+ * **está a la altura de las nubes y no debajo**. Se ve la isla desde arriba,
+ * perfectamente despejada, se baja hacia una manta blanca y de dentro se sale
+ * con la pista delante… o sin ella.
+ *
+ * Aquí se pone el techo por debajo de la altura de decisión y se baja bien:
+ * estabilizado, en el eje y a la velocidad. Y aun así hay que irse, que es
+ * justo la lección — no es que lo hayas hecho mal, es que no hay pista que
+ * ver.
+ */
+await page.evaluate(() => {
+  globalThis.__oga.reiniciar();
+  globalThis.__oga.ponerNubes(40, 0.9);
+});
+await page.waitForTimeout(600);
+await poner(700, 85);
+const enLaNube = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const c = o.controles();
+  o.mandarFrustrar?.("nunca");
+  const u = globalThis.__umbral;
+  let mandaron = false;
+  c.throttle = 0.3;
+  for (let i = 0; i < 400; i++) {
+    c.elevator = -0.28;
+    await new Promise((r) => setTimeout(r, 50));
+    const s = o.estado();
+    if ((o.tarjeta()?.dibujo ?? "") === "frustrada") {
+      mandaron = true;
+      break;
+    }
+    if (s.onGround || s.position.y - u.y < 25) break;
+  }
+  const nube = o.nubes();
+  o.mandarFrustrar?.("auto");
+  o.ponerNubes(null, 0);
+  return { mandaron, nube, alto: Math.round(o.estado().position.y - u.y) };
+});
+comprobar(
+  "y con el techo por debajo de mínimos, no hay pista que ver: se sube",
+  enLaNube.mandaron,
+  enLaNube.mandaron
+    ? `mandó frustrar con la nube a ${enLaNube.nube?.altura} m`
+    : `bajó hasta ${enLaNube.alto} m sobre el umbral dentro de la nube sin que nadie dijera nada`,
+  "se podía bajar dentro de una nube hasta el suelo y nadie decía nada",
+);
+
+
 comprobar(
   "y bajar igualmente termina el intento",
   orden.percance,
