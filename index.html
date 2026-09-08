@@ -13,6 +13,16 @@
     <meta name="description" content="Óga Veve — simulador de vuelo para navegador. Volá sobre Paraguay. Un producto de Oksigenia SL bajo la marca Granja Óga." />
     <title>Óga Veve — Volá sobre Paraguay</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <!--
+      Y el manifiesto, que es lo que convierte esto en algo instalable.
+
+      `display: standalone` y `orientation: landscape` no son adornos: en la
+      tablet de un aula, el juego abierto desde el escritorio y sin barra de
+      navegador es lo que hace que no se toque nada por error, y volar en
+      vertical no tiene sentido con la pantalla partida en tres columnas.
+    -->
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icono-192.png" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>

@@ -46,22 +46,49 @@ genera por código, sin descargar datos.
 | `npm run typecheck` | Comprueba tipos sin compilar |
 | `npm test` | Tests del modelo de vuelo |
 | `npm run terreno` | Convierte teselas NASADEM a mapas de altura |
+| `npm run acceso` | Mide WCAG 2.2 AA: contraste, foco, teclado y movimiento |
+| `npm run sin-red` | Compila, corta la conexión y comprueba que se vuela igual |
+| `npm run rendimiento` | Mide el coste por fotograma con la CPU estrangulada |
+
+## Sin conexión
+
+A partir de la segunda visita, el juego funciona **sin internet**: un service
+worker guarda el armazón —HTML, código y estilos, 1,1 MB— y, según se usan,
+los mundos que se visitan. El escenario en el que se voló ayer está disponible
+hoy aunque no haya red, que es la diferencia entre una promesa educativa y un
+folleto. Se puede instalar en el escritorio de una tablet como una aplicación
+más.
+
+Lo que no se guarda es lo de fuera de casa: las teselas de Google y el METAR
+en directo. Sin ellas el juego cae al mundo dibujado y al tiempo de casa, que
+es exactamente para lo que están esos dos caminos.
+
+Comprobado con `npm run sin-red`, que apaga el servidor de verdad y vuelve a
+entrar.
 
 ## Controles
+
+Todas las teclas se pueden cambiar desde la pantalla de mandos, y esa pantalla
+dice la verdad sobre lo que hace cada una. Esta tabla, hasta hace poco, no:
+prometía botones táctiles de cámara y de reinicio que no existían y una
+pantalla de ajustes que sigue sin existir (#149).
 
 | Acción | Teclado | Táctil |
 |---|---|---|
 | Cabeceo / alabeo | Flechas o `W A S D` | Palanca izquierda |
-| Timón | `Q` / `E` | Deslizar en la barra inferior |
-| Motor | `+` / `−` (o `Shift` / `Ctrl`) | Palanca derecha |
-| Frenos | `B` | Botón |
-| Cámara | `C` | Botón |
-| Reiniciar vuelo | `R` | Botón |
-| Nivel de dificultad | `M` | Ajustes |
-| Idioma | `L` | Ajustes |
-| Sonido | `V` | **Botón en pantalla** |
-| Cambiar de avión | `P` | Ajustes |
-| Misión | `N` | Ajustes |
+| Timón | `Q` / `E` | Los dos pedales |
+| Motor | `+` / `−` o `X` / `Z` | Palanca derecha |
+| Frenos | `B` o `Espacio` | La mano roja del HUD |
+| Cámara | `C` | Botón, arriba a la izquierda |
+| **Pausa** | `Esc` | Botón, arriba a la izquierda |
+| Reiniciar vuelo | `R` | Desde el menú de pausa |
+| Volver al hangar | — | Botón, y desde el menú de pausa |
+| Nivel de dificultad | `M` | — |
+| Idioma | `L` | — |
+| Sonido | `V` | Botón en pantalla |
+| Cambiar de avión | `P` | — |
+| Misión | `N` | — |
+| Mandos, mapa, tiempo, créditos, cuaderno | `K`, `F1` | Botones de la barra |
 
 También funciona con mando (Xbox / PlayStation) por la Gamepad API.
 

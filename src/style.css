@@ -275,10 +275,38 @@ body {
 .hud__arriba {
   grid-column: 2;
   grid-row: 1;
+  /*
+   * Estirada y con el contenido centrado, en vez de centrada ella.
+   *
+   * Es lo que permite reservarle sitio a los dos mandos de la esquina —cámara
+   * y pausa— **a los dos lados**: así la barra sigue viéndose centrada y no
+   * puede meterse debajo de ellos. Centrada ella y sin reserva, en 900 px la
+   * insignia empezaba en x=60 y se leía «📷 ⏸ 2 · Tenerife North», con el
+   * principio del texto tapado.
+   */
   justify-self: center;
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+/*
+ * Y el sitio reservado a los dos mandos de la esquina **solo donde hace
+ * falta**, que es donde la barra es lo bastante ancha para llegar hasta
+ * ellos.
+ *
+ * Medido: por debajo de 850 px la barra empieza en x=202 y no los roza; a
+ * partir de ahí empezaba en x=60 y la insignia se leía «📷 ⏸ 2 · Tenerife
+ * North», con el principio tapado. Reservar siempre habría encogido los
+ * botones de la barra de 34 a 27 px justo en la tablet, que es el aparato
+ * donde menos se puede permitir (#150).
+ */
+@media (min-width: 850px) {
+  .hud__arriba {
+    justify-self: stretch;
+    justify-content: center;
+    padding-inline: 58px;
+  }
 }
 
 
@@ -315,6 +343,15 @@ body {
   top: max(16px, env(safe-area-inset-top));
   left: max(16px, env(safe-area-inset-left));
   display: flex;
+  /*
+   * En columna, y no en fila.
+   *
+   * En fila ocupan 106 px de ancho y la insignia —que va centrada en la
+   * columna del medio— le pasaba por debajo en cuanto la pantalla bajaba de
+   * unos 950 px: se leía «📷 ⏸ 2 · Tenerife North» con el principio del texto
+   * tapado. En columna ocupan 48 y no le quitan sitio a nada.
+   */
+  flex-direction: column;
   gap: 10px;
 }
 

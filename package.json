@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/hacer-sw.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -18,7 +18,8 @@
     "vuelo": "node scripts/verificar-despegue.mjs tenerife-norte guyrami && node scripts/verificar-despegue.mjs pettirossi guyrami && node scripts/verificar-vuelo.mjs tenerife-norte guyrami && node scripts/verificar-vuelo.mjs pettirossi taguato && node scripts/verificar-despegue.mjs yvytu-rape guyrami && node scripts/verificar-vuelo.mjs yvytu-rape guyrami",
     "vuelo-entero": "node scripts/verificar-vuelo-entero.mjs",
     "rendimiento": "node scripts/verificar-rendimiento.mjs",
-    "acceso": "node scripts/verificar-acceso.mjs"
+    "acceso": "node scripts/verificar-acceso.mjs",
+    "sin-red": "node scripts/verificar-sin-red.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",
