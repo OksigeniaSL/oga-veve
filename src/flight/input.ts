@@ -54,6 +54,7 @@ export interface InputActions {
   toggleAssist: () => void;
   resetFlight: () => void;
   toggleKeys: () => void;
+  togglePausa: () => void;
   toggleEngine: () => void;
   toggleCredits: () => void;
   cycleAircraft: () => void;
@@ -259,6 +260,12 @@ export class InputManager {
         break;
       case 'keys':
         this.actions.toggleKeys();
+        break;
+      case 'pausa':
+        // Sin `preventDefault`: Escape no hace nada raro en un navegador, y
+        // los paneles que se abren encima ya se lo quedan antes de llegar
+        // aquí mientras están abiertos. Ver `ui/panel.ts`.
+        this.actions.togglePausa();
         break;
       case 'flaps':
         this.controls.flaps = this.controls.flaps > 0.5 ? 0 : 1;

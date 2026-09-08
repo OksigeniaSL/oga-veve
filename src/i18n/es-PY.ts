@@ -107,6 +107,7 @@ export const ES_PY = {
   "tecla.language": "Idioma",
   "tecla.credits": "Créditos",
   "tecla.keys": "Ver y cambiar las teclas",
+  "tecla.pausa": "Parar el juego",
   "tecla.engine": "Arrancar o apagar el motor",
   "hud.engineOff": "Motor apagado",
   "hud.engineBusy": "Parate del todo y bajá el motor primero",
@@ -189,6 +190,18 @@ export const ES_PY = {
   "vuelo.bulto": "Por ahí no se pasa: hay un edificio",
   // El final del vuelo. Ninguno es un reproche: ver flight/reconocimiento.ts.
   // La fila de avioncitos de la pantalla de fin: media hora cada uno.
+  /*
+   * ── El menú de pausa ────────────────────────────────────────────────────
+   *
+   * Tres puertas y ninguna palabra obligatoria: los dibujos ya las cuentan.
+   * El texto aparece solo en los peldaños que leen, como en todas partes.
+   */
+  "pausa.titulo": "El vuelo está parado",
+  "pausa.seguir": "Seguir volando",
+  "pausa.reiniciar": "Empezar de nuevo",
+  "pausa.hangar": "Volver al hangar",
+  "hud.pausa": "Parar el juego",
+  "hud.camara": "Cambiar de vista",
   "fin.horas": "Lo que llevás volado",
   "fin.llegaste": "¡Llegaste! Ya estás en casa",
   "fin.bien": "¡Buen vuelo!",

@@ -281,6 +281,43 @@ body {
   align-items: center;
 }
 
+
+
+
+
+/*
+ * La esquina de arriba a la izquierda: cambiar de vista y parar.
+ *
+ * Estaba vacía, y es el único hueco de la pantalla que no le quita sitio a
+ * nada.
+ *
+ * No es una preferencia: la barra de arriba iba justa con siete botones y una
+ * insignia, y **medido en una tablet de 720 px, dos botones más echaban el
+ * cuaderno y el hangar fuera de la pantalla** — que son, entre otras cosas,
+ * los que llevan la atribución obligatoria de las licencias. Se probó partir
+ * la fila en dos pisos y salió peor: se metía encima de las tarjetas del
+ * vuelo.
+ *
+ * Y hay una segunda razón, que es la buena: **no son de la misma familia**.
+ * Los de la barra abren cosas —el mapa, el cuaderno, los créditos— y estos
+ * dos actúan sobre el vuelo. Estar aparte también dice eso.
+ */
+.hud__vistas {
+  /*
+   * Colocada encima y no dentro de la rejilla, y esto costó una medida.
+   *
+   * Puesta en la columna 1 del HUD, ensanchaba esa columna —que es `auto`— y
+   * le robaba el sitio a la del medio, que es `1fr`: la barra de arriba se
+   * quedaba corta y en 720 px el cuaderno y el hangar se salían de la
+   * pantalla. Flotando por encima no le quita ancho a nadie.
+   */
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  display: flex;
+  gap: 10px;
+}
+
 .hud__abajo {
   grid-column: 1 / -1;
   grid-row: 3;
@@ -3940,4 +3977,78 @@ body {
   .reloj__avion--nuevo {
     animation: none;
   }
+}
+
+/*
+ * El menú de pausa.
+ *
+ * El mundo se queda pintado detrás —parar no es perder el vuelo— y encima va
+ * un velo lo bastante oscuro para que las tres puertas manden y lo bastante
+ * claro para seguir viendo dónde quedó el avión.
+ */
+.pausa {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgb(8 12 10 / 62%);
+  backdrop-filter: blur(2px);
+}
+
+.pausa__panel {
+  padding: 22px;
+}
+
+.pausa__puertas {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/*
+ * Puertas grandes: ciento veinte píxeles de lado.
+ *
+ * El mínimo táctil de la casa son cuarenta y ocho, y eso vale para un botón
+ * de la barra. Esto lo pulsa un chico de cuatro años con la tablet en las
+ * rodillas y con prisa por volver, así que va al doble largo.
+ */
+.pausa__puerta {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  width: 120px;
+  min-height: 120px;
+  padding: 14px 10px;
+  border-radius: var(--r-l);
+  border: 1px solid var(--linea);
+  background: var(--barniz), var(--barro);
+  box-shadow: var(--filo), var(--poso);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pausa__puerta svg {
+  width: 44px;
+  height: 44px;
+  fill: currentColor;
+}
+
+/* La de seguir es la que uno quiere, así que es la que se ve primero. */
+.pausa__puerta--seguir {
+  background: var(--barniz), var(--barro-calido);
+  border-color: transparent;
+}
+
+.pausa__puerta:hover {
+  border-color: var(--ocre);
+}
+
+.pausa__puerta:active {
+  transform: scale(0.97);
 }
