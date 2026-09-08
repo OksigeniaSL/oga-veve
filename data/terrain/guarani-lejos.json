@@ -1,0 +1,13 @@
+{
+  "id": "guarani-lejos",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "origen": {
+    "lat": -25.457186,
+    "lon": -54.839544
+  },
+  "tamanoM": 120000,
+  "resolucion": 385,
+  "minM": 97,
+  "maxM": 406
+}
