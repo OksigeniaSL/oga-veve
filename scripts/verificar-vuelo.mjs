@@ -645,12 +645,28 @@ const frustrada = await page.evaluate(async () => {
   c.throttle = 0.2;
   let enFinal = false;
   let masBajo = Infinity;
+  /*
+   * Y por el camino se cruza la altura de decisión, que son sesenta metros
+   * sobre la pista: doscientos pies, el número de todas las cartas. Ahí el
+   * juego tiene que decir algo —«mirá la pista» si la aproximación va bien, o
+   * «andate» si no—, porque lo que enseña la frustrada no es la maniobra: es
+   * que **hay un momento en que se decide**. Ver `flight/minimos.ts`.
+   */
+  let cantoMinimos = false;
+  const tarjetasVistas = [];
   for (let i = 0; i < 400; i++) {
     c.elevator = -0.35;
     await new Promise((r) => setTimeout(r, 50));
     const s = o.estado();
     enFinal ||= o.fase() === "final";
     masBajo = Math.min(masBajo, s.heightAboveGround);
+    // Se mira **la tarjeta y no el dibujo**: el dibujo de la senda se usa
+    // también para guiar la aproximación, así que sniffar el trazo daría por
+    // bueno cualquier momento del final. El identificador solo lo pone quien
+    // lo puso.
+    const cual = o.tarjeta()?.dibujo ?? "";
+    if (cual && !tarjetasVistas.includes(cual)) tarjetasVistas.push(cual);
+    if (cual === "senda" || cual === "frustrada") cantoMinimos = true;
     if (s.onGround || s.heightAboveGround < 40) break;
   }
   const toco = o.estado().onGround;
@@ -693,6 +709,8 @@ const frustrada = await page.evaluate(async () => {
     subido,
     cuando,
     alSubir,
+    cantoMinimos,
+    tarjetasVistas,
     galones: o.galones(),
   };
 });
@@ -712,6 +730,21 @@ comprobar(
     ? `nada tras subir ${frustrada.subido.toFixed(0)} m`
     : `a los ${frustrada.alSubir.toFixed(0)} m de subida, ${frustrada.cuando.toFixed(1)} s`,
   "el juego no detectaba la frustrada en absoluto, siendo su regla número uno",
+);
+/*
+ * **Y antes de todo eso, el momento de decidir.**
+ *
+ * «Lo importante es la decisión, no la maniobra: hay un punto en el que hay
+ * que decidir, y pasado ese punto ya no se decide.» Sesenta metros sobre la
+ * pista son doscientos pies. Sin ese momento, una frustrada es una ocurrencia.
+ */
+comprobar(
+  "y por el camino se cruza la altura de decisión y el juego lo dice",
+  frustrada.cantoMinimos,
+  frustrada.cantoMinimos
+    ? "cantó mínimos"
+    : `bajó sin decir nada · tarjetas vistas: ${frustrada.tarjetasVistas.join(", ") || "ninguna"}`,
+  "se podía llegar al suelo sin que nadie marcara el momento de decidir",
 );
 comprobar(
   "y vale un galón, como un aterrizaje",
@@ -2183,6 +2216,66 @@ comprobar(
     : `nadie mandó nada (fase «${orden.fase}»)`,
   "la frustrada estaba, pero solo la hacía quien quería: nadie la pedía nunca",
 );
+
+/*
+ * **Y la otra mitad de la regla: si a esa altura no estás como debes, no
+ * sigas.**
+ *
+ * No se corrige, se va uno y se vuelve a empezar. Eso es lo que la hace una
+ * regla y no un consejo, y es la más repetida de las que llevan a un
+ * accidente cuando no se cumple: la aproximación no estabilizada. Aquí se
+ * llega a mínimos descolocado del eje a propósito, y el juego tiene que
+ * mandar irse al aire — la misma señal que cuando lo manda la torre, porque
+ * para quien juega es lo mismo.
+ */
+/*
+ * Vuelo limpio antes de medir: la sección anterior deja una orden de la torre
+ * puesta, y una orden puesta desactiva la de los mínimos —que es lo correcto:
+ * ya te habían mandado irte—. Sin reiniciar, esto medía el estado del test de
+ * al lado.
+ */
+await page.evaluate(() => globalThis.__oga.reiniciar());
+await page.waitForTimeout(600);
+await poner(700, 85, 130);
+const noEstabilizada = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const c = o.controles();
+  o.mandarFrustrar?.("nunca");
+  c.throttle = 0.2;
+  let mandaron = false;
+  let dibujo = "";
+  /*
+   * Se mide la altura **sobre la pista** y no sobre el suelo, que aquí no es
+   * lo mismo: en Tenerife Norte el terreno se cae por delante del umbral, así
+   * que a sesenta metros de la pista el radioaltímetro marca ciento treinta.
+   * La altura de decisión es sobre la pista, siempre.
+   */
+  const u = globalThis.__umbral;
+  for (let i = 0; i < 400; i++) {
+    c.elevator = -0.3;
+    await new Promise((r) => setTimeout(r, 50));
+    const s = o.estado();
+    const t = o.tarjeta()?.dibujo ?? "";
+    if (t === "frustrada") {
+      mandaron = true;
+      dibujo = t;
+      break;
+    }
+    if (s.onGround || s.position.y - u.y < 25) break;
+  }
+  const alto = o.estado().position.y - u.y;
+  o.mandarFrustrar?.("auto");
+  return { mandaron, dibujo, alto: Math.round(alto) };
+});
+comprobar(
+  "llegando a mínimos descolocado, el juego manda irse al aire",
+  noEstabilizada.mandaron,
+  noEstabilizada.mandaron
+    ? `mandó frustrar, a ${noEstabilizada.alto} m sobre el umbral`
+    : `bajó hasta ${noEstabilizada.alto} m sobre el umbral sin que nadie dijera nada`,
+  "la regla de la aproximación estabilizada no existía: se podía llegar al suelo de cualquier manera",
+);
+
 comprobar(
   "y bajar igualmente termina el intento",
   orden.percance,

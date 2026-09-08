@@ -216,6 +216,7 @@ import {
   type Instructor,
 } from "./audio/instructor";
 import { Radio } from "./flight/radio";
+import { Minimos, porQueNoSeSigue } from "./flight/minimos";
 import type { ControlInputs } from "./flight/model";
 import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
@@ -327,6 +328,14 @@ const VUELVE_SOLO = 8;
  * consulta. Si sigue ahí cuando el avión ya vuela, deja de significar nada.
  */
 const DURA_LA_FLECHA_DE_TIRAR = 2.2;
+
+/**
+ * Lo que se queda la tarjeta de mínimos, en segundos.
+ *
+ * Lo justo para mirar y decidir. Más rato y deja de ser un momento; menos y
+ * no da tiempo a levantar la vista de la pista.
+ */
+const SE_QUEDAN_LOS_MINIMOS = 4;
 
 /** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
 const CADA_CUANTO_SE_APUNTA = 30;
@@ -698,6 +707,12 @@ export class Game {
   private readonly galones = new Galones();
   /** Reconoce cuándo se renuncia a una aproximación. Ver `flight/frustrada.ts`. */
   private readonly frustrada = new Frustrada();
+  /**
+   * La altura de decisión: el momento en que hay que mirar y decidir.
+   *
+   * «Lo importante es la decisión, no la maniobra.» Ver `flight/minimos.ts`.
+   */
+  private readonly minimos = new Minimos();
   /** Contra qué se choca además del suelo. Ver `world/obstaculos.ts`. */
   private readonly bultos = new Obstaculos();
   /** Dónde estaba el avión antes de este paso, para mirar el camino entero. */
@@ -2178,6 +2193,88 @@ export class Game {
    * Solo donde hay PAPI de verdad. Un campo de hierba no tiene, y ponerle uno
    * en la pantalla sería enseñar un instrumento que no está.
    */
+  /**
+   * Los mínimos: se baja hasta una altura, se mira, y se decide una vez.
+   *
+   * Es la mitad de la lección de la frustrada que faltaba. La otra —saber
+   * irse al aire— ya se reconocía y se premiaba con su galón; lo que no
+   * existía era **el momento de decidir**, y sin él una frustrada es una
+   * ocurrencia y no una maniobra.
+   *
+   * Sesenta metros sobre la pista son doscientos pies, que es la altura de
+   * decisión de una aproximación de precisión de verdad y el número que
+   * aparece en todas las cartas.
+   *
+   * Y ahí pasa una de dos, que es exactamente lo que enseña:
+   *
+   * - **La aproximación está estabilizada**: se canta «minimums», se mira la
+   *   pista y se sigue. La palabra marca el momento y ya está.
+   * - **No lo está**: entonces no se corrige, **se va uno**. La regla de
+   *   verdad es del tipo «si a esta altura no estás como debes, no sigas», y
+   *   eso es lo que la hace una regla y no un consejo. Se usa la misma señal
+   *   y la misma orden que cuando lo manda la torre, porque para quien juega
+   *   es lo mismo: hay que irse.
+   */
+  private mirarLosMinimos(acercandose: boolean): void {
+    if (this.mandanFrustrar || this.vueloTerminado) return;
+    const s = this.flight.state;
+    if (s.onGround) return;
+    const alto = s.position.y - this.terrain.runwayElevation;
+    if (!this.minimos.paso(alto, acercandose)) return;
+
+    const { across, along } = enEjesDePista(
+      s.position.x,
+      s.position.z,
+      this.scenario.runway.x,
+      this.scenario.runway.z,
+      this.scenario.runway.heading,
+    );
+    void along;
+    let torcido =
+      ((s.heading * 180) / Math.PI - this.scenario.runway.heading + 540) % 360;
+    torcido -= 180;
+    const motivo = porQueNoSeSigue({
+      velocidad: s.airspeed,
+      referencia: this.aircraft.approachSpeed,
+      vertical: s.verticalSpeed,
+      delEje: across,
+      torcido,
+    });
+
+    if (!motivo) {
+      this.hud.senal.mostrar(
+        "senda",
+        this.tier.instruments === "none" ? "" : t("vuelo.minimos"),
+        null,
+        { segundos: SE_QUEDAN_LOS_MINIMOS, prioridad: IMPORTANTE },
+      );
+      this.audio.cue("attention");
+      this.cantar("minimums", t("vuelo.minimos"));
+      return;
+    }
+
+    /*
+     * No estabilizada: la misma orden de irse al aire que da la torre.
+     *
+     * Se reutiliza entera —la señal que se queda puesta, el circuito
+     * dibujado, la luz verde al levantarla— porque para quien juega es lo
+     * mismo: hay que irse. Lo que cambia es el porqué, y el porqué se dice.
+     */
+    this.yaLoMandaron = true;
+    this.mandanFrustrar = true;
+    this.altoAlMandar = alto;
+    this.hud.senal.mostrar(
+      "frustrada",
+      this.tier.instruments === "none"
+        ? ""
+        : `${t(`motivo.${motivo}` as never)}. ${t("vuelo.noEstabilizada")}`,
+      null,
+      { segundos: Infinity, prioridad: URGENTE },
+    );
+    this.audio.cue("peligro");
+    this.cantar("go around", t("vuelo.noEstabilizada"));
+  }
+
   private explicarElPapi(acercandose: boolean): void {
     if (!this.hayPapi || !acercandose) return;
     const s = this.flight.state;
@@ -2776,6 +2873,7 @@ export class Game {
     this.runwayGuide.reset();
     this.landing.reset();
     this.frustrada.reiniciar();
+    this.minimos.reiniciar();
     this.reiniciarGalones();
     this.crashedFor = 0;
     this.wasOnGround = true;
@@ -3679,6 +3777,7 @@ export class Game {
     this.runwayGuide.reset(this.flight.state.position);
     this.landing.reset();
     this.frustrada.reiniciar();
+    this.minimos.reiniciar();
     this.reiniciarGalones();
     this.crashedFor = 0;
     this.wasOnGround = false;
@@ -4169,6 +4268,7 @@ export class Game {
       }
     }
     this.explicarElPapi(acercandose);
+    this.mirarLosMinimos(acercandose);
     this.mirarSiMandanFrustrar(acercandose);
     this.seguirElCircuito(acercandose);
     this.oirLaRadio(dt);
