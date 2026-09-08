@@ -13,13 +13,12 @@
  * fotograma sigue pintado detrás del menú, así que quien vuelva ve el avión
  * donde lo dejó. Un fundido a negro haría creer que se perdió el vuelo.
  *
- * ## Tres puertas, no cuatro
+ * ## Cuatro puertas
  *
- * Seguir, empezar de nuevo y volver al hangar. La pantalla de ajustes que
- * pedía el issue se quedó fuera a propósito: de los siete ajustes que
- * enumeraba, cuatro no existen todavía como funcionalidad —alto contraste,
- * unidades, invertir cabeceo, tamaño del HUD— y la pantalla en sí es #70.
- * Cuatro botones de los que uno no hiciera nada sería peor que tres.
+ * Seguir, empezar de nuevo, ajustes y volver al hangar. Los ajustes entraron
+ * los últimos y solo cuando tuvieron algo que ajustar: durante un tiempo esta
+ * pantalla tuvo tres puertas a propósito, porque cuatro botones de los que uno
+ * no hiciera nada habrían sido peores que tres. Ver `ui/ajustes.ts` y #149.
  *
  * Cada puerta es un dibujo antes que una palabra, porque el peldaño que
  * empieza a los cuatro años no lee: la flecha que sigue, la vuelta que
@@ -32,6 +31,7 @@ import { Encierro } from "./panel";
 export interface AccionesDePausa {
   seguir: () => void;
   reiniciar: () => void;
+  ajustes: () => void;
   hangar: () => void;
 }
 
@@ -65,6 +65,19 @@ export class PantallaDePausa {
             </svg>
             <span>${conLetras ? t("pausa.reiniciar") : ""}</span>
           </button>
+          <button type="button" class="pausa__puerta" data-pausa="ajustes"
+                  aria-label="${t("ajustes.titulo")}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor"
+                      stroke-width="2.2" />
+              <path d="M12 2.6v3.1M12 18.3v3.1M2.6 12h3.1M18.3 12h3.1
+                       M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2
+                       M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2"
+                    stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" fill="none" />
+            </svg>
+            <span>${conLetras ? t("ajustes.titulo") : ""}</span>
+          </button>
           <button type="button" class="pausa__puerta" data-pausa="hangar"
                   aria-label="${t("pausa.hangar")}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -84,6 +97,7 @@ export class PantallaDePausa {
       const cual = boton?.getAttribute("data-pausa");
       if (cual === "seguir") this.acciones.seguir();
       else if (cual === "reiniciar") this.acciones.reiniciar();
+      else if (cual === "ajustes") this.acciones.ajustes();
       else if (cual === "hangar") this.acciones.hangar();
       // Y tocar fuera del panel también sigue: es lo que espera cualquiera
       // que abrió esto sin querer, y el dedo de un chico se va donde se va.

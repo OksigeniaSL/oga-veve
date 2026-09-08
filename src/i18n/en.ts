@@ -14,6 +14,23 @@
 import type { Dictionary } from "./index";
 
 export const EN: Dictionary = {
+  "ajustes.titulo": "Settings",
+  "ajustes.listo": "Done",
+  "ajustes.movimiento": "Motion",
+  "ajustes.movimiento.sistema": "Follow the device",
+  "ajustes.movimiento.normal": "Normal",
+  "ajustes.movimiento.reducido": "Reduced",
+  "ajustes.cabeceo": "Pitch control",
+  "ajustes.cabeceo.normal": "Normal",
+  "ajustes.cabeceo.invertido": "Inverted",
+  "ajustes.unidades": "Units",
+  "ajustes.unidades.peldano": "The step's own",
+  "ajustes.unidades.metrico": "km/h and metres",
+  "ajustes.unidades.aeronautico": "Knots and feet",
+  "ajustes.tamano": "Control size",
+  "ajustes.tamano.pequeno": "Small",
+  "ajustes.tamano.normal": "Normal",
+  "ajustes.tamano.grande": "Large",
   "app.tagline": "Fly over Paraguay",
 
   "hud.speed": "Airspeed",

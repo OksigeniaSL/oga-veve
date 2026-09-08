@@ -42,4 +42,10 @@ describe("a quién le toca el foco", () => {
   it("y un panel sin nada que enfocar no atrapa a nadie", () => {
     expect(aQuienLeToca([], null, false)).toBeNull();
   });
+
+  /*
+   * Lo de la pila —que con dos paneles abiertos mande el de arriba— no se
+   * puede comprobar aquí: son oyentes de `window` y foco de verdad. Lo mide
+   * el banco de acceso, que abre los ajustes sobre la pausa y pulsa Escape.
+   */
 });

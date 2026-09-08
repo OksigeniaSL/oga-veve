@@ -7,6 +7,23 @@
  */
 
 export const ES_PY = {
+  "ajustes.titulo": "Ajustes",
+  "ajustes.listo": "Listo",
+  "ajustes.movimiento": "Movimiento",
+  "ajustes.movimiento.sistema": "Como el aparato",
+  "ajustes.movimiento.normal": "Normal",
+  "ajustes.movimiento.reducido": "Reducido",
+  "ajustes.cabeceo": "Subir y bajar el morro",
+  "ajustes.cabeceo.normal": "Normal",
+  "ajustes.cabeceo.invertido": "Al revés",
+  "ajustes.unidades": "Unidades",
+  "ajustes.unidades.peldano": "Las del peldaño",
+  "ajustes.unidades.metrico": "km/h y metros",
+  "ajustes.unidades.aeronautico": "Nudos y pies",
+  "ajustes.tamano": "Tamaño de los mandos",
+  "ajustes.tamano.pequeno": "Pequeño",
+  "ajustes.tamano.normal": "Normal",
+  "ajustes.tamano.grande": "Grande",
   "app.tagline": "Volá sobre Paraguay",
 
   "hud.speed": "Velocidad",

@@ -244,9 +244,18 @@ async function auditar(page, donde, encierra = null) {
     const parada = await page.evaluate(() => {
       const a = document.activeElement;
       if (!a || a === document.body) return null;
+      /*
+       * El nombre tiene que ser **único por mando**, no por clase: en la
+       * pantalla de ajustes hay once botones con la misma clase, y con el
+       * nombre por clase el recorrido se daba por terminado en el segundo.
+       */
       const nombre =
         a.getAttribute("data-hud") ??
         a.getAttribute("data-touch") ??
+        (a.getAttribute("data-ajuste")
+          ? `${a.getAttribute("data-ajuste")}:${a.getAttribute("data-valor")}`
+          : null) ??
+        a.getAttribute("data-pausa") ??
         (a.className || a.tagName).toString().split(" ")[0];
       const retrato = (e) =>
         `${e.outlineWidth}|${e.outlineStyle}|${e.outlineColor}|${e.boxShadow}|${e.backgroundColor}|${e.borderColor}`;
@@ -259,7 +268,9 @@ async function auditar(page, donde, encierra = null) {
         marca: enfocado !== suelto,
         // Y de qué panel es. Un diálogo modal no puede dejar que el
         // tabulador se vaya por detrás, a lo que está tapado.
-        dentroDe: a.closest("#creditos, #teclas, #cuaderno, #hangar")?.id ?? null,
+        dentroDe:
+          a.closest("#creditos, #teclas, #cuaderno, #hangar, #pausa, #ajustes")
+            ?.id ?? null,
       };
     });
     if (parada === null) continue;
@@ -285,6 +296,10 @@ async function auditar(page, donde, encierra = null) {
         nombre:
           e.getAttribute("data-hud") ??
           e.getAttribute("data-touch") ??
+          (e.getAttribute("data-ajuste")
+            ? `${e.getAttribute("data-ajuste")}:${e.getAttribute("data-valor")}`
+            : null) ??
+          e.getAttribute("data-pausa") ??
           (e.className || e.tagName).toString().split(" ")[0],
         equivale: e.getAttribute("data-equivale-a"),
       })),
@@ -320,6 +335,49 @@ async function auditar(page, donde, encierra = null) {
         (declarados.length
           ? ` · con teclas equivalentes: ${declarados.join(", ")}`
           : `: ${recorrido.slice(0, 6).join(" → ")}`),
+  );
+  /*
+   * **Y que lo que se toca se pueda tocar.**
+   *
+   * La hoja declara `--tacto: 48px` como mínimo de la casa, pero declararlo
+   * no es cumplirlo: en una tablet de 720 px los siete botones de la barra se
+   * dibujaban a **34**, porque flexbox reparte el sitio que falta quitándoselo
+   * a los elementos. El mínimo duro de WCAG 2.5.8 son 24, así que aquello no
+   * era un incumplimiento — era el aparato del aula haciendo el objetivo más
+   * pequeño justo donde más grande tendría que ser. Ver #150.
+   */
+  const chicos = await page.evaluate(() =>
+    [...document.querySelectorAll("button, [role='radio'], [data-touch]")]
+      .filter((e) => {
+        const c = e.getBoundingClientRect();
+        if (!c.width || e.closest("[hidden]")) return false;
+        /*
+         * Y lo que declara que su objetivo es más grande de lo que se ve, no
+         * cuenta. Se declara en el marcado —`data-objetivo="extendido"`— y no
+         * se adivina: un pseudoelemento que agranda el área no sale en
+         * `getBoundingClientRect`, así que o se dice o no se puede medir.
+         * Es el mismo trato que `data-equivale-a` en los mandos táctiles.
+         */
+        return e.getAttribute("data-objetivo") !== "extendido";
+      })
+      .map((e) => {
+        const c = e.getBoundingClientRect();
+        return {
+          nombre:
+            e.getAttribute("data-hud") ??
+            e.getAttribute("data-valor") ??
+            (e.className || e.tagName).toString().split(" ")[0],
+          lado: Math.round(Math.min(c.width, c.height)),
+        };
+      })
+      .filter((x) => x.lado < 44),
+  );
+  comprobar(
+    `${donde}: lo que se toca mide lo que tiene que medir`,
+    chicos.length === 0,
+    chicos.length
+      ? `por debajo de 44 px: ${chicos.map((c) => `${c.nombre} (${c.lado})`).join(", ")}`
+      : "todos por encima del mínimo táctil",
   );
   comprobar(
     `${donde}: y al llegar el foco se ve dónde está`,
@@ -420,6 +478,42 @@ for (const [donde, boton, caja] of [
     const c = document.querySelector(s);
     if (c && !c.hidden) c.hidden = true;
   }, caja);
+}
+
+/*
+ * Y los ajustes, que se abren **sobre** el menú de pausa.
+ *
+ * Es el único panel del juego que se abre encima de otro, así que es el único
+ * donde se puede comprobar que Escape cierra **lo que estás mirando** y no lo
+ * de debajo. Sin pila de paneles ganaba el que se hubiera registrado antes:
+ * Escape cerraba la pausa y dejaba los ajustes flotando sobre el vuelo.
+ */
+await page.click('[data-hud="pausa"]');
+await page.waitForTimeout(500);
+await page.click('[data-pausa="ajustes"]');
+await page.waitForTimeout(500);
+const ajustesAbiertos = await page.evaluate(
+  () => document.querySelector("#ajustes")?.hidden === false,
+);
+if (ajustesAbiertos) {
+  peores = peores.concat(await auditar(page, "ajustes", "ajustes"));
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  const donde = await page.evaluate(() => ({
+    ajustes: document.querySelector("#ajustes")?.hidden === true,
+    pausa: document.querySelector("#pausa")?.hidden === false,
+  }));
+  comprobar(
+    "ajustes: Escape cierra lo de arriba y deja lo de abajo",
+    donde.ajustes && donde.pausa,
+    `ajustes ${donde.ajustes ? "cerrados" : "abiertos"} · pausa ${donde.pausa ? "sigue" : "se fue"}`,
+  );
+  await page.evaluate(() => {
+    const p = document.querySelector("#pausa");
+    if (p) p.hidden = true;
+  });
+} else {
+  comprobar("ajustes: se abren desde la pausa", false, "no se abrieron");
 }
 
 // ── El aparato táctil, que es el del aula ────────────────────────────────
