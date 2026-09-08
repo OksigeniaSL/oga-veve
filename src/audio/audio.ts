@@ -72,6 +72,9 @@ export type Cue =
    */
   | "attention"
   | "touchdown"
+  /** Los dos momentos del despegue: la decisión y la acción. Ver `cue`. */
+  | "v1"
+  | "rotar"
   /**
    * Un aro de la senda, cruzado por dentro. Dos notas que suben.
    *
@@ -433,6 +436,19 @@ export class Audio {
       perdida: [622.25, 622.25, 622.25],
       // Y el arranque de algo, subiendo con calma.
       mision: [523.25, 659.25, 880],
+      /*
+       * **V1 es una nota sola y grave, y Vr son dos que suben.**
+       *
+       * No es adorno: son los dos momentos del despegue y son de naturaleza
+       * distinta. V1 es una **decisión** que ya está tomada —a partir de ahí
+       * se vuela pase lo que pase—, así que suena una vez, abajo, y se acabó.
+       * Vr es una **acción** que toca hacer ahora, así que sube, que en la
+       * gramática de este juego es «hacé algo». Entre las dos pasan unos
+       * segundos, y esos segundos son la lección: ya no puedo parar y todavía
+       * no vuelo.
+       */
+      v1: [392],
+      rotar: [587.33, 880],
     };
 
     const notes = patterns[kind];

@@ -4,6 +4,7 @@ Seguí la raya verde
 Pará del todo y esperá la luz
 ¡Luz verde! Entrá a la pista
 Ponete derechito en el eje
+Tirá para arriba
 ¡Ya no se puede frenar, volá!
 Motor a fondo
 Andá a dar una vuelta
@@ -45,6 +46,7 @@ Tocaste tierra fuera de la pista
 Llegaste dando un golpe
 Te pasaste del final de la pista
 Entraste en la pista sin la luz verde
+Lo que llevás volado
 ¡Llegaste! Ya estás en casa
 ¡Buen vuelo!
 ¡Gran vuelo!

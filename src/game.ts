@@ -320,6 +320,14 @@ const CORRIENDO = new Set(["despegando", "comprometido", "aterrizado"]);
  */
 const VUELVE_SOLO = 8;
 
+/**
+ * Lo que se queda la flecha de tirar, en segundos.
+ *
+ * Corta a propósito: es una acción de ahora mismo, no un aviso que se
+ * consulta. Si sigue ahí cuando el avión ya vuela, deja de significar nada.
+ */
+const DURA_LA_FLECHA_DE_TIRAR = 2.2;
+
 /** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
 const CADA_CUANTO_SE_APUNTA = 30;
 
@@ -1225,6 +1233,34 @@ export class Game {
     }
     this.hud.onPausa(() => this.alternarPausa());
     this.hud.onCamara(() => this.cycleCamera());
+    /*
+     * **Los dos momentos del despegue, cada uno con lo suyo.**
+     *
+     * V1 es una decisión que ya está tomada —a partir de ahí se vuela pase lo
+     * que pase— y Vr es una acción que toca hacer ahora. Entre las dos pasan
+     * unos segundos, y esos segundos son la lección: ya no puedo parar y
+     * todavía no vuelo. Hasta hoy los dos salían igual: un destello mudo.
+     *
+     * Así que suenan distinto —una nota grave y sola para la decisión, dos que
+     * suben para la acción—, se dicen distinto, y **en Vr aparece la flecha de
+     * tirar**, que es la única de las dos que pide mover algo y la única que
+     * se entiende sin leer. Ver #105.
+     */
+    this.hud.onVelocidades((cual) => {
+      if (cual === "V1") {
+        this.audio.cue("v1");
+        this.cantar("V one", t("vuelo.comprometido"));
+        return;
+      }
+      this.audio.cue("rotar");
+      this.cantar("rotate", t("vuelo.rotar"));
+      this.hud.senal.mostrar(
+        "tirar",
+        this.tier.instruments !== "none" ? t("vuelo.rotar") : "",
+        null,
+        { segundos: DURA_LA_FLECHA_DE_TIRAR, prioridad: IMPORTANTE },
+      );
+    });
     this.hud.onKeys(() => this.keyScreen?.toggle());
     this.hud.onCredits(() => this.credits.toggle());
     // Volver al hangar es recargar. Suena brusco y es lo correcto: la elección

@@ -42,6 +42,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.rotar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Tirá para arriba",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.comprometido",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -327,6 +334,13 @@
     "idioma": "es-PY",
     "texto": "Entraste en la pista sin la luz verde",
     "para": "lo que salió mal, en la pantalla de fin"
+  },
+  {
+    "id": "fin.horas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Lo que llevás volado",
+    "para": "el reconocimiento al terminar"
   },
   {
     "id": "fin.llegaste",
@@ -633,14 +647,14 @@
     "id": "cabina.v1",
     "voz": "cabina",
     "idioma": "en",
-    "texto": "V1",
+    "texto": "V one",
     "para": "el punto de no retorno del despegue"
   },
   {
     "id": "cabina.vr",
     "voz": "cabina",
     "idioma": "en",
-    "texto": "Vr",
+    "texto": "rotate",
     "para": "la velocidad de rotación: tirar"
   },
   {
