@@ -170,6 +170,7 @@ export const ES_PY = {
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
   "vuelo.noEstabilizada": "Así no: andate y volvé a intentarlo",
+  "motivo.sinPista": "No se ve la pista",
   "motivo.lento": "Vas muy despacio",
   "motivo.cayendo": "Estás cayendo muy rápido",
   "motivo.rapido": "Vas muy rápido",

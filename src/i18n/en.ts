@@ -143,6 +143,7 @@ export const EN: Dictionary = {
   "vuelo.alineando": "Line up on the centreline",
   "vuelo.minimos": "Look at the runway: can you see it?",
   "vuelo.noEstabilizada": "Not like this: go around and try again",
+  "motivo.sinPista": "The runway is not in sight",
   "motivo.lento": "Too slow",
   "motivo.cayendo": "Coming down too fast",
   "motivo.rapido": "Too fast",

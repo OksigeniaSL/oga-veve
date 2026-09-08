@@ -713,6 +713,15 @@ export class Game {
    * «Lo importante es la decisión, no la maniobra.» Ver `flight/minimos.ts`.
    */
   private readonly minimos = new Minimos();
+  /**
+   * La base de las nubes sobre el aeródromo, en metros. `null` si despejado.
+   *
+   * Sale de dos sitios que hasta hoy no se hablaban: los tres botones del
+   * panel del tiempo y **el parte de verdad**, que traía `techoM` desde el
+   * METAR y no lo usaba nadie. Ahora los dos ponen la misma nube y los dos
+   * cuentan para los mínimos. Ver `flight/minimos.ts`.
+   */
+  private techoDeNubes: number | null = null;
   /** Contra qué se choca además del suelo. Ver `world/obstaculos.ts`. */
   private readonly bultos = new Obstaculos();
   /** Dónde estaba el avión antes de este paso, para mirar el camino entero. */
@@ -1300,8 +1309,8 @@ export class Game {
      * de lo que va esto; las nubes se eligen cuando se quieren, y entonces se
      * atraviesan despegando, que es el momento por el que están.
      */
-    this.hud.ponerCielo(0, (alturaM, tapadura) => {
-      if (this.sky) ponerNubes(this.sky, alturaM, tapadura);
+    this.hud.ponerCielo(0, (techoM, tapadura) => {
+      this.ponerTecho(techoM, tapadura);
     });
     this.hud.ponerTiempo(
       this.scenario.meteo ?? TIEMPO_DE_CASA,
@@ -1671,6 +1680,14 @@ export class Game {
       /** Cuánto se subió el aeródromo sobre el datum para librar la foto. */
       alzado: () => this.alzadoDelAerodromo,
       /** Cómo está el banco de nubes: si se ve, a qué altura y cuánto tapa. */
+      /**
+       * Y ponerlas, que es lo que hace falta para probar los mínimos.
+       *
+       * El techo va **sobre el aeródromo**, como en un parte de verdad: es la
+       * misma llamada que hacen los tres botones del panel del tiempo.
+       */
+      ponerNubes: (techoM: number | null, tapadura = 0.9) =>
+        this.ponerTecho(techoM, tapadura),
       nubes: () => {
         const banco = this.sky?.group.getObjectByName("nubes");
         if (!banco) return null;
@@ -2233,13 +2250,16 @@ export class Game {
     let torcido =
       ((s.heading * 180) / Math.PI - this.scenario.runway.heading + 540) % 360;
     torcido -= 180;
-    const motivo = porQueNoSeSigue({
-      velocidad: s.airspeed,
-      referencia: this.aircraft.approachSpeed,
-      vertical: s.verticalSpeed,
-      delEje: across,
-      torcido,
-    });
+    const motivo = porQueNoSeSigue(
+      {
+        velocidad: s.airspeed,
+        referencia: this.aircraft.approachSpeed,
+        vertical: s.verticalSpeed,
+        delEje: across,
+        torcido,
+      },
+      this.techoDeNubes,
+    );
 
     if (!motivo) {
       this.hud.senal.mostrar(
@@ -3697,6 +3717,19 @@ export class Game {
    */
   ponerTiempo(meteo: Meteo): void {
     this.scenario = conViento(this.scenario, meteo);
+    /*
+     * **Y las nubes del parte, que estaban ahí sin usar.**
+     *
+     * `Meteo.techoM` se leía del METAR desde el primer día —la base de las
+     * nubes sobre el aeropuerto— y no la miraba nadie: el cielo lo ponían solo
+     * los tres botones. Así que se podía pedir el tiempo de verdad de un día
+     * cerrado en Tenerife y volar con el cielo azul. Ahora el parte pone su
+     * nube, y con ella su altura de decisión.
+     */
+    this.ponerTecho(
+      meteo.techoM,
+      meteo.techoM === null ? 0 : meteo.techoM < 300 ? 0.9 : 0.45,
+    );
     this.terrain.rehacerAerodromo(this.scenario);
     // Y las luces de aproximación, que van en la cabecera por la que se entra:
     // si el viento gira, se mudan al otro extremo con todo lo demás.
@@ -3718,6 +3751,25 @@ export class Game {
      * nuevo y no te toca nada más.
      */
     this.recolocarTrasElMoldeado();
+  }
+
+  /**
+   * Pone la nube a una altura **sobre el aeródromo**.
+   *
+   * El banco de nubes vive en coordenadas del mundo, así que aquí se suma la
+   * cota de la pista: un techo de cuarenta y cinco metros son cuarenta y cinco
+   * sobre el asfalto tanto en Asunción, que está a ochenta y nueve, como en
+   * Tenerife Norte, que está a seiscientos treinta y dos. Es como se mide un
+   * techo de verdad y como venía del METAR.
+   */
+  private ponerTecho(techoM: number | null, tapadura: number): void {
+    this.techoDeNubes = techoM;
+    if (!this.sky) return;
+    ponerNubes(
+      this.sky,
+      techoM === null ? null : this.terrain.runwayElevation + techoM,
+      tapadura,
+    );
   }
 
   /** Vuelve a pedir el parte de verdad y lo pone. */

@@ -60,7 +60,33 @@ export interface Aproximacion {
 }
 
 /** Por qué no se puede seguir, o `null` si se puede. */
-export type Motivo = "rapido" | "lento" | "cayendo" | "torcido" | "descolocado";
+export type Motivo =
+  /** Ni siquiera se ve la pista: se llegó a mínimos dentro de la nube. */
+  | "sinPista"
+  | "rapido"
+  | "lento"
+  | "cayendo"
+  | "torcido"
+  | "descolocado";
+
+/**
+ * ¿Se ve la pista desde la altura de decisión?
+ *
+ * `techoM` es la base de las nubes **sobre el aeródromo**, que es como se mide
+ * en un parte meteorológico de verdad y como ya venía del METAR. Si esa base
+ * está por debajo de la altura de decisión, al llegar ahí todavía se está
+ * dentro de la nube: no hay pista que ver, y entonces no hay nada que decidir
+ * — se sube y se acabó. Eso es literalmente para lo que existe una altura de
+ * decisión, y es la razón de que un aeropuerto pueda estar «por debajo de
+ * mínimos» y cerrado con el cielo perfectamente azul mil metros más arriba.
+ *
+ * Tenerife Norte es el ejemplo de manual: está a 632 metros, que es justo
+ * donde se asienta el mar de nubes del alisio. El aeropuerto **está a la
+ * altura de las nubes**, no debajo.
+ */
+export function seVeLaPista(techoM: number | null): boolean {
+  return techoM === null || techoM > ALTURA_DE_DECISION;
+}
 
 /**
  * Los márgenes, y de dónde salen.
@@ -92,7 +118,13 @@ export const MARGENES = {
  * mata a lo que menos. Ir lento en aproximación es lo que pone un avión en
  * pérdida a cien metros del suelo, y por eso va antes que ir rápido.
  */
-export function porQueNoSeSigue(a: Aproximacion): Motivo | null {
+export function porQueNoSeSigue(
+  a: Aproximacion,
+  techoM: number | null = null,
+): Motivo | null {
+  // Lo primero de todo: si no se ve la pista, lo demás da igual. Se puede
+  // llegar perfectamente estabilizado a una nube, y sigue sin haber pista.
+  if (!seVeLaPista(techoM)) return "sinPista";
   if (a.velocidad < a.referencia * MARGENES.lento) return "lento";
   if (a.vertical < MARGENES.cayendo) return "cayendo";
   if (a.velocidad > a.referencia * MARGENES.rapido) return "rapido";
