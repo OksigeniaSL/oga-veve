@@ -18,6 +18,8 @@ import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
 import GCLA from "../../data/aerodromes/gcla.aero.json";
 import LECU from "../../data/aerodromes/lecu.aero.json";
+import SGES from "../../data/aerodromes/sges.aero.json";
+import SGME from "../../data/aerodromes/sgme.aero.json";
 import type { Ciudad } from "./ciudad";
 import { deFrente, type Meteo } from "./meteo";
 
@@ -103,6 +105,21 @@ export interface Scenario {
    * verdad y viene en el propio fichero.
    */
   magneticVariation: number;
+  /**
+   * Si en este aeródromo solo se puede operar por una cabecera.
+   *
+   * Normalmente la elige el viento, que es lo correcto y es media lección.
+   * Pero hay sitios donde la otra **no se puede usar**: en Mariscal
+   * Estigarribia la plataforma y la única calle de rodaje están en el extremo
+   * norte, y llegar al umbral 01 significa rodar tres kilómetros y medio
+   * pista abajo. Eso es una maniobra real —el «back-taxi»— y aquí no existe
+   * todavía, así que con viento del norte el juego colocaba el avión ya
+   * autorizado y con el motor en marcha, sin rodaje ninguno.
+   *
+   * Mientras no exista el back-taxi, esto dice la verdad de ese aeródromo:
+   * se opera por una y punto. Ver #39.
+   */
+  cabeceraFija?: boolean;
   /**
    * El relieve medido, si lo hay.
    *
@@ -264,6 +281,9 @@ export const CHACO: Scenario = {
 export function conViento(esc: Scenario, meteo: Meteo): Scenario {
   const aero = esc.aerodrome;
   if (!aero || meteo.vientoDe === null) return { ...esc, meteo };
+  // Y donde solo se puede operar por una cabecera, el viento no la cambia.
+  // Ver `cabeceraFija`.
+  if (esc.cabeceraFija) return { ...esc, meteo };
   const pista = aero.runways[0];
   const nombres = pista
     ? Object.entries(pista.thresholds)
@@ -746,11 +766,189 @@ export const CUATRO_VIENTOS: Scenario = {
   aerodrome: LECU as unknown as Aerodrome,
 };
 
+/**
+ * Guaraní — el segundo aeropuerto internacional del país, y el que cae.
+ *
+ * Silvio Pettirossi está en el llano y su pista baja trece metros. Aquí la
+ * 05/23 mide tres kilómetros y medio y **cae veintidós de una cabecera a la
+ * otra**: la 05 arranca a 258 m y el umbral 23 está a 236. Es la pista más
+ * inclinada del juego con diferencia, y eso se nota en las dos direcciones —
+ * despegar por la 05 es cuesta abajo y aterrizar por ella es contra la
+ * cuesta—. No hay que explicarlo: se siente en el gas.
+ *
+ * Está en Minga Guazú, entre Ciudad del Este y Hernandarias, o sea en la
+ * esquina del país donde el Paraná hace de frontera con Brasil y donde está
+ * Itaipú. Lo que trajo el extractor sin tocar nada: cuarenta calles de rodaje
+ * y cuarenta edificios, que es un aeropuerto de verdad; ni una manga ni un
+ * punto de espera mapeados, que es lo que pasa fuera de Europa.
+ *
+ * Los cuatro puestos de estacionamiento están puestos a mano sobre la
+ * plataforma, como en Cuatro Vientos: OpenStreetMap no trae ninguno y sin
+ * puestos no hay de dónde salir ni a dónde volver.
+ */
+export const GUARANI: Scenario = {
+  id: "guarani",
+  nameKey: "scenario.guarani.name",
+  pais: "py",
+  seed: 19540101,
+  size: 20000,
+  segments: 384,
+  // La red por si falta el relieve medido. El oriente paraguayo es una meseta
+  // ondulada, no una llanura: sube y baja despacio entre 200 y 300 metros.
+  reliefHeight: 320,
+  reliefScale: 4.4,
+  ridgeMix: 0.14,
+  /*
+   * **Ciento cinco metros: el Paraná, y solo el Paraná.**
+   *
+   * No es una perilla: es una cota medida. Alrededor del aeropuerto el
+   * terreno de Copernicus va de 184 a 286 metros, así que ahí no puede
+   * aparecer agua por mucho que se baje el número. En el anillo lejano, en
+   * cambio, baja hasta 97: eso es la garganta del Paraná aguas abajo de
+   * Itaipú, donde el río hace de frontera con Brasil.
+   *
+   * Con la lámina en ciento cinco, el río sale **donde está de verdad** y con
+   * sus meandros, y el embalse de Itaipú —que está a más de doscientos— sigue
+   * siendo tierra, que es lo que le toca a esta altura de lámina. Un río
+   * dibujado a mano en esta esquina del país habría salido recto y en el
+   * sitio equivocado.
+   */
+  waterLevel: 105,
+  riverWidth: 0,
+  /*
+   * Y los colores repartidos sobre lo que **mide** el terreno alrededor del
+   * aeródromo: de 184 a 286 metros. Tierra colorada y bosque atlántico, que es
+   * lo que hay entre Minga Guazú y el río.
+   */
+  bands: [
+    { from: 175, colour: 0x4f7a45 },
+    { from: 205, colour: 0x5c8a4a },
+    { from: 228, colour: 0x6f9a52 },
+    { from: 250, colour: 0x8a9a5a },
+    { from: 270, colour: 0xa4835c },
+    { from: 292, colour: 0xa8785f },
+  ],
+  water: 0x5b7f6a,
+  fill: 0x557d47,
+  sky: { horizon: 0xe7edf0, zenith: 0x4f95d6 },
+  // Aire húmedo del oriente: se ve menos lejos que en el Chaco.
+  fog: { colour: 0xd9e4ea, density: 0.00005 },
+  sun: { azimuth: 140, elevation: 54 },
+  runway: pistaDe(SGES as unknown as Aerodrome, "05"),
+  /*
+   * Nueve grados. El asfalto de la 05 corre a 40,8° verdaderos y la cabecera
+   * pone 05, o sea 050 magnéticos: la diferencia es la declinación del
+   * oriente paraguayo, y es lo que hace que el HDG del HUD marque cincuenta
+   * cuando estás alineado.
+   */
+  magneticVariation: 9,
+  aerodrome: SGES as unknown as Aerodrome,
+};
+
+/**
+ * Mariscal Estigarribia — tres kilómetros y medio de hormigón en medio del
+ * Chaco, y nada más.
+ *
+ * Es el escenario que enseña por lo que **no** tiene. Dos calles de rodaje,
+ * dos plataformas, ocho edificios: al lado de las cuarenta rodaduras de
+ * Guaraní o las treinta y cinco de Tenerife, esto es una pista y un camino
+ * para llegar a ella. Y sin embargo la pista es la más larga de las tres.
+ *
+ * El Chaco es la llanura de verdad: el terreno medido en veinte kilómetros
+ * alrededor apenas se mueve, así que aquí no hay lomas que ayuden a
+ * orientarse ni río que reconocer. Lo único que hay para volver es la pista,
+ * y por eso este es el sitio donde el circuito de tráfico deja de ser un
+ * adorno — sin él, uno se pierde de verdad.
+ *
+ * Hormigón y no asfalto, que se nota en el color y en el traqueteo.
+ */
+export const ESTIGARRIBIA: Scenario = {
+  id: "estigarribia",
+  nameKey: "scenario.estigarribia.name",
+  pais: "py",
+  seed: 19351201,
+  size: 20000,
+  segments: 320,
+  /*
+   * **Ciento noventa, y no sesenta.**
+   *
+   * `reliefHeight` es la cota máxima del mundo de repuesto, el que se dibuja
+   * si falta el relieve medido, y no la amplitud de lo que hay aquí. Con
+   * sesenta —que es lo que de verdad se mueve el Chaco— el mundo de repuesto
+   * iba de cero a sesenta metros y **quedaba entero por debajo de la lámina
+   * de agua**: un océano donde hay espinal, y ni un árbol plantado, porque
+   * nada crece bajo el mar. Lo cazó la prueba de vegetación.
+   *
+   * Lo llano de verdad lo dicen `ridgeMix` y el relieve medido, que va de 158
+   * a 176 metros en veinte kilómetros.
+   */
+  reliefHeight: 190,
+  reliefScale: 5.5,
+  ridgeMix: 0.05,
+  // Y el agua, muy por debajo de todo: en el Chaco central no hay ni río ni
+  // laguna que dibujar, y el terreno medido no baja de 132 en ningún sitio.
+  waterLevel: 20,
+  riverWidth: 0,
+  /*
+   * Los colores del Chaco en seco: espinal gris verdoso, palo santo y polvo.
+   *
+   * Las bandas se reparten en **dieciocho metros**, que es lo que mide de
+   * verdad el terreno en los veinte kilómetros de alrededor: de 158 a 176.
+   * Repartirlas como en un escenario de montaña dejaría los veinte kilómetros
+   * enteros del mismo tono, y entonces el Chaco no se vería llano: se vería
+   * vacío, que no es lo mismo.
+   */
+  bands: [
+    { from: 152, colour: 0x7d8452 },
+    { from: 158, colour: 0x8a8a56 },
+    { from: 163, colour: 0x93875a },
+    { from: 168, colour: 0x9e8b5f },
+    { from: 173, colour: 0xa89268 },
+    { from: 179, colour: 0xb09a74 },
+  ],
+  water: 0x6a7f66,
+  fill: 0x8a8a56,
+  sky: { horizon: 0xeae7dc, zenith: 0x5b9ad4 },
+  // El aire seco del Chaco: se ve lejísimos, y al mediodía tiembla.
+  fog: { colour: 0xe4dfd0, density: 0.000025 },
+  sun: { azimuth: 150, elevation: 62 },
+  /*
+   * **La 19, y no la 01.**
+   *
+   * La plataforma y la única calle de rodaje están en el extremo norte, a
+   * quinientos sesenta metros del umbral 19 y a más de tres kilómetros del
+   * 01. Con la 01 puesta, el juego arrancaba el vuelo ya autorizado y sin
+   * rodaje ninguno: no hay forma de llegar a esa cabecera que no sea rodar
+   * tres kilómetros pista abajo, que es una maniobra real —el «back-taxi»—
+   * pero que aquí no existe todavía. Lo cazó el banco de despegue: cero
+   * segundos de rodaje y ningún coche del sígame.
+   */
+  runway: pistaDe(SGME as unknown as Aerodrome, "19"),
+  cabeceraFija: true,
+  // Doce grados: la 19 corre a 177,8° verdaderos y la cabecera pone 19.
+  magneticVariation: 12,
+  aerodrome: SGME as unknown as Aerodrome,
+};
+
 export const SCENARIOS: readonly Scenario[] = [
   VALLE_CORDILLERA,
   CHACO,
   YVYTU_RAPE,
   PETTIROSSI,
+  GUARANI,
+  /*
+   * **Mariscal Estigarribia todavía no entra en la lista, y por una razón.**
+   *
+   * El escenario está hecho y el relieve medido, pero el vuelo no se puede
+   * terminar: el aeródromo tiene **una sola calle de rodaje**, y con ella el
+   * juego llega a la doble raya y se queda ahí —la fase no pasa a «esperando»
+   * y la torre no autoriza nunca—. Enseñarlo así sería ofrecer un aeropuerto
+   * del que no se puede despegar.
+   *
+   * Se queda escrito y con sus datos porque falta poco: cuando el rodaje de
+   * un aeródromo de una sola calle funcione, esto es una línea. Ver el issue
+   * del Chaco.
+   */
   TENERIFE_NORTE,
   LA_PALMA,
   CUATRO_VIENTOS,

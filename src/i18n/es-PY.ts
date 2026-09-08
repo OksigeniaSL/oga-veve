@@ -60,6 +60,8 @@ export const ES_PY = {
   "mission.done": "¡Misión cumplida!",
   "mission.none": "Vuelo libre",
 
+  "scenario.guarani.name": "Guaraní · Ciudad del Este",
+  "scenario.estigarribia.name": "Mariscal Estigarribia · el Chaco",
   "scenario.valle.name": "Valle de la Cordillera",
   "scenario.pettirossi.name": "Silvio Pettirossi",
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",

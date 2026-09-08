@@ -65,6 +65,8 @@ export const EN: Dictionary = {
   "mission.done": "Mission complete!",
   "mission.none": "Free flight",
 
+  "scenario.guarani.name": "Guaraní · Ciudad del Este",
+  "scenario.estigarribia.name": "Mariscal Estigarribia · the Chaco",
   "scenario.valle.name": "Cordillera Valley",
   "scenario.pettirossi.name": "Silvio Pettirossi",
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",

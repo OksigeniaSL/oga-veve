@@ -1,0 +1,460 @@
+{
+  "id": "SGME",
+  "name": "Dr. Luis María Argaña International Airport",
+  "source": {
+    "osm": "overpass",
+    "extracted": "2026-09-08",
+    "ourairports": "6093",
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los tres puestos de estacionamiento están puestos a mano sobre la plataforma del sur, que es la que toca la calle de rodaje: OpenStreetMap no trae ninguno. Van marcados «manual» para que la próxima extracción no se los lleve por delante."
+  },
+  "origin": {
+    "lat": -22.046499,
+    "lon": -60.6217
+  },
+  "elevationM": 168.6,
+  "runways": [
+    {
+      "ref": "01/19",
+      "widthM": 39.9,
+      "surface": "CON",
+      "lit": true,
+      "centerline": [
+        [
+          -66.7,
+          1914.4
+        ],
+        [
+          68.2,
+          -1574.3
+        ]
+      ],
+      "thresholds": {
+        "19": {
+          "xy": [
+            -61.8,
+            1923.6
+          ],
+          "elevM": 168.2,
+          "headingTrue": 177.8,
+          "displacedM": 0,
+          "papi": null,
+          "approachLights": null
+        },
+        "01": {
+          "xy": [
+            72.3,
+            -1590.3
+          ],
+          "elevM": 167.3,
+          "headingTrue": 357.8,
+          "displacedM": 0,
+          "papi": null,
+          "approachLights": null
+        }
+      },
+      "markings": null,
+      "magneticVariation": 12.2
+    },
+    {
+      "ref": "",
+      "widthM": 39.9,
+      "surface": "CON",
+      "lit": true,
+      "centerline": [
+        [
+          -95,
+          1920.6
+        ],
+        [
+          -66.1,
+          1920.8
+        ],
+        [
+          -35.9,
+          1923.9
+        ],
+        [
+          92.4,
+          -1487.7
+        ],
+        [
+          120,
+          -1512
+        ],
+        [
+          120.6,
+          -1585
+        ],
+        [
+          69.1,
+          -1587.6
+        ],
+        [
+          37.1,
+          -1590.4
+        ],
+        [
+          -95,
+          1920.6
+        ]
+      ],
+      "thresholds": {},
+      "markings": null,
+      "magneticVariation": null
+    }
+  ],
+  "taxiways": [
+    {
+      "ref": null,
+      "kind": "taxiway",
+      "widthM": null,
+      "path": [
+        [
+          247.4,
+          1381.7
+        ],
+        [
+          -27.7,
+          1370.9
+        ],
+        [
+          -33.6,
+          1369.4
+        ],
+        [
+          -38.9,
+          1366.2
+        ],
+        [
+          -45.1,
+          1355.6
+        ]
+      ]
+    },
+    {
+      "ref": null,
+      "kind": "taxiway",
+      "widthM": null,
+      "path": [
+        [
+          -27.7,
+          1370.9
+        ],
+        [
+          -35.3,
+          1373.1
+        ],
+        [
+          -46.1,
+          1382.6
+        ]
+      ]
+    }
+  ],
+  "aprons": [
+    {
+      "surface": null,
+      "polygon": [
+        [
+          259.2,
+          1439.4
+        ],
+        [
+          262.6,
+          1330.8
+        ],
+        [
+          204.6,
+          1329
+        ],
+        [
+          201.2,
+          1437.6
+        ],
+        [
+          215.1,
+          1438.8
+        ],
+        [
+          259.2,
+          1439.4
+        ]
+      ]
+    },
+    {
+      "surface": null,
+      "polygon": [
+        [
+          182.1,
+          1908.5
+        ],
+        [
+          241.3,
+          1912.8
+        ],
+        [
+          247.7,
+          1846
+        ],
+        [
+          187.4,
+          1841.8
+        ],
+        [
+          182.1,
+          1908.5
+        ]
+      ]
+    }
+  ],
+  "buildings": [
+    {
+      "kind": "terminal",
+      "heightM": null,
+      "polygon": [
+        [
+          108.6,
+          1779.7
+        ],
+        [
+          134.2,
+          1781.5
+        ],
+        [
+          137.8,
+          1730.4
+        ],
+        [
+          112.2,
+          1728.5
+        ],
+        [
+          108.6,
+          1779.7
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": null,
+      "polygon": [
+        [
+          -596.1,
+          153.1
+        ],
+        [
+          -595.5,
+          138.3
+        ],
+        [
+          -602.1,
+          137.9
+        ],
+        [
+          -602.8,
+          152.9
+        ],
+        [
+          -596.1,
+          153.1
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": null,
+      "polygon": [
+        [
+          267.8,
+          1919
+        ],
+        [
+          279.6,
+          1921
+        ],
+        [
+          283.6,
+          1896
+        ],
+        [
+          271.9,
+          1894.1
+        ],
+        [
+          267.8,
+          1919
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": null,
+      "polygon": [
+        [
+          431.7,
+          449.9
+        ],
+        [
+          431.3,
+          452.7
+        ],
+        [
+          436.3,
+          453.6
+        ],
+        [
+          436.8,
+          450.8
+        ],
+        [
+          431.7,
+          449.9
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": null,
+      "polygon": [
+        [
+          269.5,
+          1426.2
+        ],
+        [
+          269.1,
+          1447.7
+        ],
+        [
+          278.4,
+          1447.8
+        ],
+        [
+          278.9,
+          1426.4
+        ],
+        [
+          269.5,
+          1426.2
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": null,
+      "polygon": [
+        [
+          283.5,
+          1803.1
+        ],
+        [
+          283.2,
+          1815.9
+        ],
+        [
+          293.1,
+          1816.2
+        ],
+        [
+          293.4,
+          1803.4
+        ],
+        [
+          283.5,
+          1803.1
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": null,
+      "polygon": [
+        [
+          283.2,
+          1821.7
+        ],
+        [
+          282.2,
+          1835.3
+        ],
+        [
+          291.3,
+          1836
+        ],
+        [
+          292.3,
+          1822.3
+        ],
+        [
+          283.2,
+          1821.7
+        ]
+      ]
+    },
+    {
+      "kind": "yes",
+      "heightM": null,
+      "polygon": [
+        [
+          -596.1,
+          153.1
+        ],
+        [
+          -584,
+          153.9
+        ],
+        [
+          -583.4,
+          145.1
+        ],
+        [
+          -595.6,
+          144.3
+        ],
+        [
+          -596.1,
+          153.1
+        ]
+      ]
+    }
+  ],
+  "helipads": [],
+  "parkingPositions": [
+    {
+      "ref": "1",
+      "xy": [
+        215.0,
+        1420.0
+      ],
+      "manual": true
+    },
+    {
+      "ref": "2",
+      "xy": [
+        215.0,
+        1390.0
+      ],
+      "manual": true
+    },
+    {
+      "ref": "3",
+      "xy": [
+        215.0,
+        1360.0
+      ],
+      "manual": true
+    }
+  ],
+  "holdingPositions": [
+    {
+      "xy": [
+        44.3,
+        1373.7
+      ],
+      "ref": null,
+      "runway": "01/19",
+      "source": "derivado"
+    }
+  ],
+  "windsocks": [],
+  "visualAids": []
+}

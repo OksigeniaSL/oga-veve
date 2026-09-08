@@ -160,6 +160,40 @@ const SALTO_A_LA_ESPERA = 40;
 const LO_MINIMO_QUE_SE_RUEDA = 60;
 
 /**
+ * Lo más que puede haber entre una punta de la ruta y el asfalto, m.
+ *
+ * **Ciento diez, y el número lo puso Yvytu Rape.** Con ochenta —que parecía
+ * de sobra mirando los aeropuertos grandes, donde el puesto está a uno o dos
+ * metros de su calle— el campo de la granja se quedaba fuera por tres metros:
+ * su enganche mide 83, porque en un campo de hierba el puesto está donde cabe
+ * y la calle donde se pueda. El juego volvía a arrancar el vuelo ya
+ * autorizado y con el motor en marcha, que es exactamente el fallo que este
+ * filtro venía a arreglar en otro sitio.
+ *
+ * Ciento diez deja pasar los enganches de verdad —1 m en Guaraní, 39 en el
+ * Chaco, 83 en la granja— y sigue descartando el atajo por el campo, que
+ * cuando aparece son cientos de metros en línea recta.
+ */
+const MAXIMO_ENGANCHE = 110;
+
+/**
+ * Lo que la ruta se aparta del asfalto por sus dos puntas.
+ *
+ * Los tramos de en medio son aristas del grafo, o sea calles de rodaje. Los
+ * dos de las puntas los inventa el buscador para enganchar el principio y el
+ * final, y son los únicos que pueden ir por la hierba.
+ */
+function engancheDe(puntos: readonly Punto[]): number {
+  if (puntos.length < 2) return Infinity;
+  const largo = (a: Punto, b: Punto): number =>
+    Math.hypot(a[0] - b[0], a[1] - b[1]);
+  return Math.max(
+    largo(puntos[0]!, puntos[1]!),
+    largo(puntos[puntos.length - 1]!, puntos[puntos.length - 2]!),
+  );
+}
+
+/**
  * Dónde se da por hecho que el avión ha dejado de correr al aterrizar, m.
  *
  * Mil metros pasado el umbral. La Óga 172 para en bastante menos, pero lo que
@@ -721,10 +755,24 @@ export class PlanDeVuelo {
          *
          * El buscador engancha cada punta al nudo más cercano y une el resto
          * en línea recta, así que un puesto y un punto de espera que caigan
-         * cerca del mismo nudo dan una «ruta» de dos puntos y cero metros: la
-         * mejor de todas, y por el campo. Sin esto, el optimizador la elegía.
+         * cerca del mismo nudo dan una «ruta» de dos puntos que cruza el campo
+         * en diagonal: la más corta de todas, y por la hierba. Sin esto, el
+         * optimizador la elegía.
+         *
+         * Lo que se mira es **el enganche**: lo que va del puesto a su nudo y
+         * del nudo al punto de espera, que son los dos únicos tramos de la
+         * ruta que no van por asfalto. Todo lo de en medio es el grafo, y el
+         * grafo es asfalto por construcción.
+         *
+         * Antes esto se medía contando puntos —menos de cinco, fuera—, y era
+         * un apaño que valía mientras todos los aeródromos tuvieran calles de
+         * rodaje enredadas. En Mariscal Estigarribia hay **una sola calle**:
+         * la ruta del puesto a la doble raya son 361 metros de asfalto en
+         * cuatro puntos, y el filtro la tiraba. El juego arrancaba el vuelo ya
+         * autorizado, con el motor en marcha y sin rodaje ninguno.
          */
-        if (!ruta || ruta.puntos.length < 5) continue;
+        if (!ruta) continue;
+        if (engancheDe(ruta.puntos) > MAXIMO_ENGANCHE) continue;
         if (ruta.largo < LO_MINIMO_QUE_SE_RUEDA) continue;
         pares.push({
           puesto,
