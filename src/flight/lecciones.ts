@@ -25,6 +25,8 @@
  * aeropuerto.
  */
 
+import { leerTexto, ponerTexto } from '../datos/guardado';
+
 export type LeccionId = 'vuelta' | 'rodaje' | 'despegue' | 'aterrizaje';
 
 export interface Leccion {
@@ -100,7 +102,7 @@ export function leccionPorId(id: string | null): Leccion {
   return LECCIONES.find((l) => l.id === id) ?? LECCION_POR_DEFECTO;
 }
 
-const LLAVE = 'oga-veve:leccion';
+const LLAVE = 'leccion';
 
 /**
  * Qué lección se eligió la última vez.
@@ -110,7 +112,7 @@ const LLAVE = 'oga-veve:leccion';
  */
 export function leccionRecordada(): Leccion {
   try {
-    return leccionPorId(localStorage.getItem(LLAVE));
+    return leccionPorId(leerTexto(LLAVE));
   } catch {
     return LECCION_POR_DEFECTO;
   }
@@ -118,7 +120,7 @@ export function leccionRecordada(): Leccion {
 
 export function recordarLeccion(leccion: Leccion): void {
   try {
-    localStorage.setItem(LLAVE, leccion.id);
+    ponerTexto(LLAVE, leccion.id);
   } catch {
     // No poder recordarlo no puede romper nada.
   }

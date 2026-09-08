@@ -262,9 +262,11 @@ import {
 import { callar, decir, permitirVoz } from "./audio/voz";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
+import { leerTexto, ponerTexto } from "./datos/guardado";
+import { dibujarReloj, relojDe } from "./ui/reloj";
 
 /** Dónde se guarda la vista elegida. */
-const ALMACEN_VISTA = "oga-veve:vista";
+const ALMACEN_VISTA = "vista";
 
 /**
  * La vista con la que se abrió la última vez.
@@ -275,22 +277,12 @@ const ALMACEN_VISTA = "oga-veve:vista";
  * clic para siempre.
  */
 function vistaRecordada(): CameraMode {
-  try {
-    const guardada = localStorage.getItem(ALMACEN_VISTA);
-    const vale = CAMERA_MODES.find((v) => v === guardada);
-    if (vale) return vale;
-  } catch {
-    // Navegación privada o almacenamiento bloqueado: se vuela igual.
-  }
-  return "chase";
+  const guardada = leerTexto(ALMACEN_VISTA);
+  return CAMERA_MODES.find((v) => v === guardada) ?? "chase";
 }
 
 function recordarVista(vista: CameraMode): void {
-  try {
-    localStorage.setItem(ALMACEN_VISTA, vista);
-  } catch {
-    // Igual que arriba: no poder recordarlo no puede romper nada.
-  }
+  ponerTexto(ALMACEN_VISTA, vista);
 }
 
 /**
@@ -1243,17 +1235,9 @@ export class Game {
      * dentro. Ver `index.html`.
      */
     const conTeclado = matchMedia("(pointer: fine)").matches;
-    if (
-      conTeclado &&
-      this.keyScreen &&
-      !localStorage.getItem("oga-veve:teclas-vistas")
-    ) {
-      try {
-        localStorage.setItem("oga-veve:teclas-vistas", "1");
-        this.keyScreen.show();
-      } catch {
-        // Sin almacenamiento se abrirá cada vez, que tampoco es un drama.
-      }
+    if (conTeclado && this.keyScreen && !leerTexto("teclas-vistas")) {
+      ponerTexto("teclas-vistas", "1");
+      this.keyScreen.show();
     }
 
     this.hud.onSoundClick(() => this.toggleSound());
@@ -2364,6 +2348,7 @@ export class Game {
           // El nombre del grado se lee o no se lee, pero las barras son el
           // mensaje: en Guyrami se enseñan igual y sin una palabra.
           this.tier.instruments === "none" ? "" : t(`grado.${ahora}` as never),
+          this.relojDeHoras(),
         );
         this.audio.cue("achieved");
         return;
@@ -2377,9 +2362,25 @@ export class Game {
           : t(`fin.${final.nivel}` as never),
         // Y el plano con la raya de por dónde se fue. Ver `bitacora.ts`.
         plano(this.scenario, this.scenario.size, this.traza),
+        // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
+        this.relojDeHoras(),
       );
       this.audio.cue("achieved");
     }, TARDA_EL_FINAL * 1000);
+  }
+
+  /**
+   * Las horas voladas, dibujadas, con lo de este vuelo marcado aparte.
+   *
+   * El cuaderno ya lleva los segundos de este vuelo sumados cuando llega
+   * aquí, así que se le pasa la duración para saber **cuáles de los
+   * avioncitos son nuevos**: un premio que no se ve llegar no es un premio.
+   */
+  private relojDeHoras(): string {
+    return dibujarReloj(
+      relojDe(this.cuaderno.segundos, this.duracion),
+      t("fin.horas"),
+    );
   }
 
   /**

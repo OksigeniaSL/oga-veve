@@ -188,6 +188,8 @@ export const ES_PY = {
   "vuelo.papiBien": "Dos rojas y dos blancas: vas bien",
   "vuelo.bulto": "Por ahí no se pasa: hay un edificio",
   // El final del vuelo. Ninguno es un reproche: ver flight/reconocimiento.ts.
+  // La fila de avioncitos de la pantalla de fin: media hora cada uno.
+  "fin.horas": "Lo que llevás volado",
   "fin.llegaste": "¡Llegaste! Ya estás en casa",
   "fin.bien": "¡Buen vuelo!",
   "fin.muyBien": "¡Gran vuelo!",

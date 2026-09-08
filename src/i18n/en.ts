@@ -159,6 +159,7 @@ export const EN: Dictionary = {
   "vuelo.papiBajo": "Reds: you are low, climb",
   "vuelo.papiBien": "Two red, two white: on the glide path",
   "vuelo.bulto": "No way through: there is a building",
+  "fin.horas": "Your flying time",
   "fin.llegaste": "You made it! You are home",
   "fin.bien": "Good flight!",
   "fin.muyBien": "Great flight!",

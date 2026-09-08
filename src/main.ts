@@ -76,6 +76,7 @@ import { detectLocale, setLocale } from "./i18n";
 import { abrirHangar } from "./ui/hangar";
 import type { Mission } from "./missions/types";
 import { rememberTier, rememberedTier } from "./flight/tiers";
+import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 
 setLocale(detectLocale());
 
@@ -102,7 +103,7 @@ const directo = pedido ? SCENARIOS.find((s) => s.id === pedido) : undefined;
 const recordado =
   SCENARIOS.find((s) => {
     try {
-      return s.id === localStorage.getItem("oga-veve:escenario");
+      return s.id === leerTexto("escenario");
     } catch {
       return false;
     }
@@ -174,7 +175,7 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina] = await Promise.all([
 escenario = conViento(ciudad ? { ...conMapa, ciudad } : conMapa, meteo);
 
 try {
-  localStorage.setItem("oga-veve:escenario", escenario.id);
+  ponerTexto("escenario", escenario.id);
 } catch {
   // Sin almacenamiento se juega igual, solo que no se recuerda.
 }
@@ -228,3 +229,14 @@ if (import.meta.env.DEV) {
 document.addEventListener("visibilitychange", atender);
 window.addEventListener("blur", atender);
 window.addEventListener("focus", atender);
+
+/*
+ * Y lo pendiente de guardar se escribe antes de que la pestaña se vaya.
+ *
+ * El guardado tiene un freno de un cuarto de segundo para no escribir sesenta
+ * veces por segundo en el hilo que dibuja, y ese freno tiene un precio: un
+ * cambio hecho en el último instante se perdería. En una tablet de aula el
+ * último instante es lo normal —se cambia de aplicación y ya está—, y lo que
+ * se pierde es justo el vuelo que se acaba de terminar. Ver `datos/guardado.ts`.
+ */
+guardarAlSalir();

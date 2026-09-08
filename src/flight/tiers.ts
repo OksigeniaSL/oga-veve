@@ -24,6 +24,7 @@
  */
 
 import { type AssistLayers, FULL_ASSISTS, NO_ASSISTS } from "./assists";
+import { leerTexto, ponerTexto } from "../datos/guardado";
 
 export type TierId = "guyrami" | "tuka" | "taguato" | "taguato-ruvicha";
 
@@ -206,7 +207,7 @@ export const TIERS: readonly Tier[] = [GUYRAMI, TUKA, TAGUATO, TAGUATO_RUVICHA];
  */
 export const DEFAULT_TIER = GUYRAMI;
 
-const STORAGE_KEY = "oga-veve:tramo";
+const STORAGE_KEY = "tramo";
 
 /**
  * Último tramo elegido, o el de por defecto si no hay ninguno guardado.
@@ -225,7 +226,7 @@ export function rememberedTier(): Tier {
     // Sin `location` —una prueba, por ejemplo— manda lo guardado.
   }
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = leerTexto(STORAGE_KEY);
     const found = TIERS.find((tier) => tier.id === saved);
     if (found) return found;
   } catch {
@@ -236,7 +237,7 @@ export function rememberedTier(): Tier {
 
 export function rememberTier(tier: Tier): void {
   try {
-    localStorage.setItem(STORAGE_KEY, tier.id);
+    ponerTexto(STORAGE_KEY, tier.id);
   } catch {
     // Igual que arriba: no poder recordarlo no puede romper nada.
   }

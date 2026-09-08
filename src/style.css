@@ -3869,3 +3869,75 @@ body {
   line-height: 1.35;
   font-style: italic;
 }
+
+/*
+ * El reloj de horas de la pantalla de fin: un arco y una fila de avioncitos.
+ *
+ * Va debajo de la manga y en pequeño, y ese orden es el mensaje: primero qué
+ * tal salió **este** vuelo, y después cuánto llevas. Al revés, lo de hoy
+ * quedaría por detrás de una estadística.
+ */
+.fin__reloj {
+  display: grid;
+  place-items: center;
+  margin-top: 2px;
+}
+
+.reloj {
+  /* Veintiocho y no veintidós: a veintidós los avioncitos se leían como
+     asteriscos, que es justo lo que no son. */
+  height: 28px;
+  width: auto;
+  max-width: 100%;
+}
+
+.reloj__pista {
+  fill: none;
+  stroke: var(--linea-fuerte);
+  stroke-width: 2.5;
+}
+
+/* El arco de la media hora en curso: lo de ahora también cuenta. */
+.reloj__arco {
+  fill: none;
+  stroke: var(--ocre-tinta);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.reloj__avion {
+  fill: var(--tinta-suave);
+}
+
+/*
+ * Y el que se acaba de ganar entra encendido y con su retraso, uno detrás de
+ * otro. Es el único sitio de esta fila donde pasa algo, y por eso se ve.
+ */
+.reloj__avion--nuevo {
+  fill: var(--ocre-tinta);
+  /* Sobre su propio centro: el grupo de fuera ya lo puso en su hueco. */
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: reloj-llega 420ms cubic-bezier(0.2, 1.4, 0.4, 1) backwards;
+  animation-delay: calc(var(--turno) * 90ms + 320ms);
+}
+
+@keyframes reloj-llega {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.4);
+  }
+}
+
+.reloj__demas {
+  fill: var(--tinta-suave);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Con movimiento reducido, aparecen y ya está. */
+@media (prefers-reduced-motion: reduce) {
+  .reloj__avion--nuevo {
+    animation: none;
+  }
+}
