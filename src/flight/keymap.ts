@@ -40,7 +40,8 @@ export type Accion =
   | 'language'
   | 'credits'
   | 'keys'
-  | 'engine';
+  | 'engine'
+  | 'pausa';
 
 interface Definicion {
   /** Clave de traducción del nombre de la acción. */
@@ -105,6 +106,15 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
   credits: { label: 'tecla.credits', defecto: ['F1'], held: false },
   keys: { label: 'tecla.keys', defecto: ['KeyK'], held: false },
   engine: { label: 'tecla.engine', defecto: ['KeyI'], held: false },
+  /*
+   * Escape para y suelta.
+   *
+   * Es la tecla que todo el mundo prueba primero, y aquí no choca con nada:
+   * los paneles que se abren encima —créditos, teclas, cuaderno— atrapan su
+   * propio Escape mientras están abiertos y no lo dejan pasar. Ver
+   * `ui/panel.ts`.
+   */
+  pausa: { label: 'tecla.pausa', defecto: ['Escape'], held: false },
 };
 
 export const ORDEN: readonly Accion[] = Object.keys(ACCIONES) as Accion[];

@@ -270,6 +270,8 @@ export class Hud {
   private soundState = { glyph: "🔊", label: "" };
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
+  private camaraHandler: (() => void) | null = null;
+  private pausaHandler: (() => void) | null = null;
   private creditsHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
   private horaAtada: { hora: number; cambio: (h: number) => void } | null =
@@ -320,6 +322,51 @@ export class Hud {
     const numbers = this.instruments === "numeric";
 
     this.root.innerHTML = `
+      <!--
+        La esquina de arriba a la izquierda, que estaba vacía.
+
+        Aquí van los dos mandos que faltaban —cambiar de vista y parar—, y van
+        aquí y no en la barra de arriba por una razón medida: la barra ya tenía
+        siete botones y una insignia, y con dos más se partía en dos pisos y se
+        metía encima de las tarjetas del vuelo en una tablet de 720 px.
+
+        Y no son mandos de la misma familia que los otros: los de la barra
+        abren cosas —el mapa, el cuaderno, los créditos— y estos dos actúan
+        sobre el vuelo. Estar aparte también dice eso.
+      -->
+      <div class="hud__vistas">
+        <!--
+          La cámara, que hasta hoy solo se cambiaba con la tecla C.
+
+          En el aparato del aula no hay teclado, así que **la mitad de las
+          vistas del juego eran inalcanzables con el dedo**: la de cabina, las
+          dos de ala y la de pájaro. Un botón redondo aquí arriba, fuera de la
+          franja de los pulgares, y ya se recorren igual que con la tecla.
+        -->
+        <button class="sonido" type="button" data-hud="camara"
+                aria-label="${t("hud.camara")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 8h3.2l1.4-2h6.8l1.4 2H20a1.6 1.6 0 0 1 1.6 1.6v7.8
+                     A1.6 1.6 0 0 1 20 19H4a1.6 1.6 0 0 1-1.6-1.6V9.6
+                     A1.6 1.6 0 0 1 4 8Z" fill="none" stroke="currentColor"
+                  stroke-width="1.8" stroke-linejoin="round" />
+            <circle cx="12" cy="13.4" r="3.4" fill="none"
+                    stroke="currentColor" stroke-width="1.8" />
+          </svg>
+        </button>
+        <!--
+          Y la pausa, que no existía en ninguna plataforma. Es lo primero que
+          se busca cuando llaman a la puerta, y es el criterio 2.2.2 de WCAG:
+          si algo se mueve, tiene que poder pararse.
+        -->
+        <button class="sonido" type="button" data-hud="pausa"
+                aria-label="${t("hud.pausa")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="6.5" y="5" width="4" height="14" rx="1.4" />
+            <rect x="13.5" y="5" width="4" height="14" rx="1.4" />
+          </svg>
+        </button>
+      </div>
       <div class="hud__arriba">
         <div class="tarjeta insignia" data-hud="badge"></div>
         <!--
@@ -721,6 +768,12 @@ export class Hud {
     this.progress = pick(this.root, "progress");
     this.sound = pick(this.root, "sound");
     this.sound.addEventListener("click", () => this.soundHandler?.());
+    pick(this.root, "camara").addEventListener("click", () =>
+      this.camaraHandler?.(),
+    );
+    pick(this.root, "pausa").addEventListener("click", () =>
+      this.pausaHandler?.(),
+    );
     pick(this.root, "keys").addEventListener("click", () =>
       this.keysHandler?.(),
     );
@@ -1420,6 +1473,16 @@ export class Hud {
   /** Quién abre la pantalla de mandos. */
   onKeys(handler: () => void): void {
     this.keysHandler = handler;
+  }
+
+  /** El botón de cámara: lo mismo que la tecla C, pero con el dedo. */
+  onCamara(handler: () => void): void {
+    this.camaraHandler = handler;
+  }
+
+  /** Y el de pausa, que no tenía tecla ni botón. */
+  onPausa(handler: () => void): void {
+    this.pausaHandler = handler;
   }
 
   /**

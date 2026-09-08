@@ -196,6 +196,7 @@ import { mundoElegido } from "./ui/mundo";
 const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
 import { Hud } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
+import { PantallaDePausa } from "./ui/pausa";
 import { Medidor } from "./ui/rendimiento";
 import {
   crearLucesDeRodadura,
@@ -659,6 +660,21 @@ export class Game {
    * formatea nada. Ver `ui/rendimiento.ts` y #33.
    */
   private readonly medidor: Medidor;
+  /**
+   * El menú de pausa, si el HTML trae su hueco.
+   *
+   * Opcional como los demás paneles: el juego tiene que arrancar aunque falte.
+   */
+  private pausa: PantallaDePausa | null = null;
+  /**
+   * Si lo paró quien juega, y no el navegador.
+   *
+   * Son dos cosas distintas y hasta hoy solo existía la segunda: el juego se
+   * detiene solo al perder el foco —eso es «nadie mira»— y volver a mirar lo
+   * arranca otra vez. Una pausa pedida **no la levanta volver a la pestaña**,
+   * solo levantarla. Ver `main.ts`.
+   */
+  private pausadoAdrede = false;
   /**
    * Las luces azules de las calles de rodaje, que se encienden con el sol
    * bajo. Se montan con las de aproximación, después de moldear el terreno.
@@ -1147,6 +1163,7 @@ export class Game {
       toggleAssist: () => this.cycleTier(),
       resetFlight: () => this.resetFlight(),
       toggleKeys: () => this.keyScreen?.toggle(),
+      togglePausa: () => this.alternarPausa(),
       toggleEngine: () => this.toggleEngine(),
       toggleCredits: () => this.credits.toggle(),
       cycleAircraft: () => this.cycleAircraft(),
@@ -1184,6 +1201,24 @@ export class Game {
     this.keyScreen?.setSimple(
       this.tier.instruments === "none" || this.tier.instruments === "pictorial",
     );
+    const pausaRoot = document.getElementById("pausa");
+    if (pausaRoot) {
+      this.pausa = new PantallaDePausa(
+        pausaRoot,
+        {
+          seguir: () => this.reanudar(),
+          reiniciar: () => {
+            this.reanudar();
+            this.resetFlight();
+          },
+          // Igual que el botón del hangar: recargar. Ver `onHangar`.
+          hangar: () => location.reload(),
+        },
+        this.tier.instruments !== "none",
+      );
+    }
+    this.hud.onPausa(() => this.alternarPausa());
+    this.hud.onCamara(() => this.cycleCamera());
     this.hud.onKeys(() => this.keyScreen?.toggle());
     this.hud.onCredits(() => this.credits.toggle());
     // Volver al hangar es recargar. Suena brusco y es lo correcto: la elección
@@ -1756,6 +1791,44 @@ export class Game {
     this.running = false;
     this.renderer.setAnimationLoop(null);
     this.audio.setActive(false);
+  }
+
+  /** Si el vuelo está parado porque alguien lo paró. Lo mira `main.ts`. */
+  get pausado(): boolean {
+    return this.pausadoAdrede;
+  }
+
+  alternarPausa(): void {
+    if (this.pausadoAdrede) this.reanudar();
+    else this.pausar();
+  }
+
+  /**
+   * Para el vuelo de verdad, y deja el mundo donde estaba.
+   *
+   * El reloj se detiene entero, así que el avión no se mueve ni un metro
+   * mientras el menú está abierto. Y el último fotograma **sigue pintado
+   * detrás**: quien vuelva ve el avión donde lo dejó, que es lo que hace que
+   * parar no dé miedo. Un fundido a negro haría creer que se perdió el vuelo.
+   *
+   * También se calla todo. Un instructor que sigue explicando la aproximación
+   * con el juego parado es lo contrario de una pausa.
+   */
+  pausar(): void {
+    if (this.pausadoAdrede) return;
+    this.pausadoAdrede = true;
+    this.stop();
+    this.instructor.callar();
+    this.otroAvion.callar();
+    callar();
+    this.pausa?.abrir();
+  }
+
+  reanudar(): void {
+    if (!this.pausadoAdrede) return;
+    this.pausadoAdrede = false;
+    this.pausa?.cerrar();
+    this.start();
   }
 
   dispose(): void {

@@ -210,7 +210,15 @@ game.start();
  */
 const mirando = (): boolean => !document.hidden && document.hasFocus();
 const atender = (): void => {
-  if (mirando()) game.start();
+  /*
+   * **Y una pausa pedida no la levanta volver a la pestaña.**
+   *
+   * Son dos cosas distintas que hasta hoy se confundían: el juego se para
+   * solo cuando nadie mira, y arranca solo al volver a mirar. Pero si alguien
+   * le dio a la pausa, volver a la ventana no puede devolverle un avión en
+   * movimiento: lo paró él y lo levanta él.
+   */
+  if (mirando() && !game.pausado) game.start();
   else game.stop();
 };
 /*
