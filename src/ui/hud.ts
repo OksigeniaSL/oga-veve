@@ -288,6 +288,9 @@ export class Hud {
     cota: (x: number, z: number) => number;
   } | null = null;
   private torre: HTMLElement | null = null;
+  /** La tira de la radio, y el reloj que la esconde. */
+  private radioCaja: HTMLElement | null = null;
+  private radioReloj = 0;
   private hintTimer = 0;
 
   constructor(root: HTMLElement) {
@@ -363,6 +366,16 @@ export class Hud {
           <span class="torre__luz" data-hud="torre-luz"></span>
           <span class="torre__texto" data-hud="torre-texto"></span>
         </div>
+        <!--
+          La radio: lo que se acaba de oír decir a otro avión.
+
+          Va aparte de todo lo demás y en pequeño **porque no es una
+          instrucción**: nadie tiene que hacer nada con esto. Es el gemelo en
+          pantalla de una voz —cada aviso hablado tiene el suyo, ver
+          audio/voz.ts— y está por quien no oye o juega en silencio, que si no
+          se perdería entero que hay alguien más ahí fuera.
+        -->
+        <div class="radio" data-hud="radio" hidden role="status"></div>
         <!--
           Botón de sonido. Es un botón de verdad y no un adorno: se pulsa con
           el dedo, se enfoca con el tabulador y dice su estado. Existe porque
@@ -660,6 +673,7 @@ export class Hud {
     this.altitude = optional(this.root, "altitude");
     this.heading = optional(this.root, "heading");
     this.torre = optional(this.root, "torre");
+    this.radioCaja = optional(this.root, "radio");
     this.vspeed = optional(this.root, "vspeed");
     this.throttleFill = pick(this.root, "throttle");
     this.brakes = pick(this.root, "brakes");
@@ -1554,6 +1568,25 @@ export class Hud {
   }
 
   /** Mensaje efímero: cambio de modo, de cámara, de idioma. */
+  /**
+   * Enseña lo que se acaba de oír por la radio, y lo quita solo.
+   *
+   * No usa `flash` a propósito: el destello es para avisos —cosas que hay que
+   * atender ya— y esto es lo contrario, alguien hablando de lo suyo. Ponerlo
+   * en el mismo sitio y con la misma pinta enseñaría a un chico que la radio
+   * de otro avión le manda algo.
+   */
+  radio(texto: string, segundos = 6): void {
+    const caja = this.radioCaja;
+    if (!caja) return;
+    caja.textContent = texto;
+    caja.hidden = false;
+    window.clearTimeout(this.radioReloj);
+    this.radioReloj = window.setTimeout(() => {
+      caja.hidden = true;
+    }, segundos * 1000);
+  }
+
   flash(text: string, seconds = 2.4): void {
     this.hint.textContent = text;
     this.hintTimer = seconds;

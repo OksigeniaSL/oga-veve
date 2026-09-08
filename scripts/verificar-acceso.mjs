@@ -378,6 +378,21 @@ async function comprobarEscape(page, donde, selector) {
   comprobar(`${donde}: se sale con Escape (2.1.2)`, cerrado, cerrado ? "sí" : "sigue abierto");
 }
 
+/*
+ * La tira de la radio se saca a propósito antes de medir.
+ *
+ * Solo aparece unos segundos cuando el otro avión dice algo, así que una
+ * auditoría que pase por delante no la ve nunca — y fue justo la primera que
+ * se coló por debajo de AA. Lo que no se enseña no se mide.
+ */
+await page.evaluate(() => {
+  const r = document.querySelector('[data-hud="radio"]');
+  if (r) {
+    r.hidden = false;
+    r.textContent = "Zulu Papa Alfa Bravo Charlie, viento en cola";
+  }
+});
+
 let peores = await auditar(page, "vuelo");
 
 // Y las cuatro pantallas que se abren encima, que son lo que de verdad tiene

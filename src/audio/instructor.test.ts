@@ -90,6 +90,22 @@ describe('elegirVoz', () => {
     expect(elegirVoz(FIREFOX, 'gug')).toBeNull();
   });
 
+  it('el otro avión de la radio no coge la voz del instructor', () => {
+    // Una radio en la que contesta tu propio instructor no es una radio, es
+    // un eco. Ver `elegirOtroAvion`.
+    const suya = elegirVoz(CHROME, 'es-PY')!;
+    const otra = elegirVoz(CHROME, 'es-PY', suya.name);
+    expect(otra).not.toBeNull();
+    expect(otra!.name).not.toBe(suya.name);
+  });
+
+  it('pero si solo hay una, prefiere repetirla a callarse', () => {
+    const unica = [voz('es-ES', 'Google español')];
+    expect(elegirVoz(unica, 'es-PY', 'Google español')?.name).toBe(
+      'Google español',
+    );
+  });
+
   it('sin voces del idioma, ninguna', () => {
     expect(elegirVoz([voz('de-DE', 'Deutsch')], 'es-PY')).toBeNull();
     expect(elegirVoz([], 'es-PY')).toBeNull();

@@ -1,7 +1,8 @@
 # Las voces del juego
 
-Cuatro voces, ciento dieciséis frases y dos mil doscientos caracteres. Esto
-dice **qué se graba, con qué voz, cómo vuelve y qué se le hace después**.
+Cuatro voces, ciento dieciséis frases y dos mil doscientos setenta y un
+caracteres. Esto dice **qué se graba, con qué voz, cómo vuelve y qué se le
+hace después**.
 
 La lista la genera el propio juego, así que nunca se queda vieja:
 
@@ -25,7 +26,7 @@ Escribe en esta carpeta:
 | **instructor** | castellano paraguayo | 83 | cercana, tranquila, **hablándole a un chico** | Es la voz que sustituye al texto en el peldaño que empieza a los cuatro años y no lee. Es la que más se oye y la que más importa. |
 | **cabina** | inglés aeronáutico | 21 | seca, plana, **sin emoción** | Son los cantos del avión: *terrain, pull up*, *one hundred*, *V1*. En un avión de verdad los dice una máquina, y por eso una voz con intención suena mal aquí. |
 | **torre** | inglés aeronáutico y castellano | 7 | neutra, profesional, con prisa | Va con efecto de radio, y por eso se graba **limpia**: el filtro se pone después. |
-| **otro** | castellano paraguayo | 5 | otra persona, otro timbre | Otro avión en la frecuencia. No hay tráfico todavía (#118), pero con esto la radio deja de estar muerta. |
+| **otro** | castellano paraguayo | 5 | otra persona, otro timbre | Otro avión en la frecuencia. **Ya suenan en el juego** con la voz del sistema: ver `src/flight/radio.ts`, que las dice en orden —saluda, rueda, viento en cola, final, pista libre— y se calla en cuanto habla el instructor. No hay tráfico dibujado todavía (#118), pero la radio ya no está muerta. |
 
 Tres cosas que no cambian:
 

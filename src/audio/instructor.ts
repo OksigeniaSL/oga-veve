@@ -50,6 +50,13 @@ export interface Instructor {
   callar(): void;
   /** ¿Hay alguien que pueda hablar en el idioma de ahora? */
   readonly disponible: boolean;
+  /**
+   * ¿Está diciendo algo en este instante?
+   *
+   * Lo pregunta la radio del otro avión antes de abrir la boca: si hablan a
+   * la vez, la voz que se pierde es la que enseñaba. Ver `flight/radio.ts`.
+   */
+  readonly hablando: boolean;
 }
 
 /** Un instructor mudo. Es lo que hay en guaraní, y no pasa nada. */
@@ -57,6 +64,7 @@ export const MUDO: Instructor = {
   decir: () => {},
   callar: () => {},
   disponible: false,
+  hablando: false,
 };
 
 /** El idioma que le pedimos al navegador. */
@@ -105,6 +113,15 @@ const ACENTOS: Record<string, string[]> = {
 export function elegirVoz(
   voces: readonly SpeechSynthesisVoice[],
   locale: string,
+  /**
+   * Una voz que ya está cogida, si la hay.
+   *
+   * La usa el otro avión de la frecuencia: **tiene que sonar a otra persona**,
+   * o la radio es el instructor hablando solo. Se penaliza en vez de
+   * descartarse porque en un sistema con una única voz castellana es mejor
+   * repetirla que callarse.
+   */
+  cogida: string | null = null,
 ): SpeechSynthesisVoice | null {
   const quiero = IDIOMAS[locale];
   if (!quiero) return null;
@@ -132,6 +149,16 @@ export function elegirVoz(
 
     if (!voz.name.includes('+')) nota += 5;
     if (voz.default) nota += 2;
+    /*
+     * Y la que ya está cogida baja **un escalón entero de acento y algo más**,
+     * que es lo justo para que gane cualquier otra del idioma. Menos que eso
+     * no cambiaba nada: el escalón vale diez, así que una penalización de
+     * cuatro dejaba ganando a la misma voz otra vez.
+     *
+     * Y no se descarta del todo a propósito: en un sistema con una sola voz
+     * castellana es mejor repetirla que dejar mudo al otro avión.
+     */
+    if (cogida && voz.name === cogida) nota -= 12;
 
     if (nota > mejorNota) {
       mejorNota = nota;
@@ -141,12 +168,28 @@ export function elegirVoz(
   return mejor;
 }
 
+/** Cómo suena una voz, y de cuál se tiene que diferenciar. */
+export interface Timbre {
+  readonly rate: number;
+  readonly pitch: number;
+  /** El nombre de la voz que ya está cogida por otro. Ver `elegirVoz`. */
+  readonly cogida?: () => string | null;
+}
+
+/**
+ * El instructor: un poco más despacio y un poco más agudo que por defecto. Se
+ * entiende mejor y suena menos a contestador.
+ */
+export const TIMBRE_INSTRUCTOR: Timbre = { rate: 0.95, pitch: 1.05 };
+
 export class VozDelNavegador implements Instructor {
   private voz: SpeechSynthesisVoice | null = null;
   private ultima = '';
   private desdeUltima = 0;
+  private readonly timbre: Timbre;
 
-  constructor() {
+  constructor(timbre: Timbre = TIMBRE_INSTRUCTOR) {
+    this.timbre = timbre;
     if (typeof speechSynthesis === 'undefined') return;
     this.buscarVoz();
     // Las voces llegan tarde: en Chrome la primera llamada devuelve una lista
@@ -156,7 +199,25 @@ export class VozDelNavegador implements Instructor {
   }
 
   private buscarVoz(): void {
-    this.voz = elegirVoz(speechSynthesis.getVoices(), getLocale());
+    this.voz = elegirVoz(
+      speechSynthesis.getVoices(),
+      getLocale(),
+      this.timbre.cogida?.() ?? null,
+    );
+  }
+
+  /** Con qué voz habla ahora mismo, si con alguna. */
+  get nombreDeVoz(): string | null {
+    return this.voz?.name ?? null;
+  }
+
+  /** Si está diciendo algo en este instante. Lo mira la radio para callarse. */
+  get hablando(): boolean {
+    try {
+      return globalThis.speechSynthesis?.speaking ?? false;
+    } catch {
+      return false;
+    }
   }
 
   get disponible(): boolean {
@@ -188,10 +249,8 @@ export class VozDelNavegador implements Instructor {
     const frase = new SpeechSynthesisUtterance(texto);
     frase.voice = this.voz;
     frase.lang = this.voz.lang;
-    // Un poco más despacio y un poco más agudo que por defecto: se entiende
-    // mejor y suena menos a contestador.
-    frase.rate = 0.95;
-    frase.pitch = 1.05;
+    frase.rate = this.timbre.rate;
+    frase.pitch = this.timbre.pitch;
     speechSynthesis.speak(frase);
   }
 
@@ -211,4 +270,22 @@ export class VozDelNavegador implements Instructor {
 export function elegirInstructor(): Instructor {
   if (typeof speechSynthesis === 'undefined') return MUDO;
   return new VozDelNavegador();
+}
+
+/**
+ * La voz del otro avión de la frecuencia.
+ *
+ * Más rápida y más grave que la del instructor, y **de otra persona si el
+ * sistema tiene con qué**: una radio en la que contesta tu propio instructor
+ * no es una radio, es un eco. Con las grabaciones esto será la voz «otro» de
+ * `docs/voces/`; hasta entonces, la del sistema que menos se le parezca.
+ */
+export function elegirOtroAvion(instructor: Instructor): Instructor {
+  if (typeof speechSynthesis === 'undefined') return MUDO;
+  return new VozDelNavegador({
+    rate: 1.08,
+    pitch: 0.88,
+    cogida: () =>
+      instructor instanceof VozDelNavegador ? instructor.nombreDeVoz : null,
+  });
 }

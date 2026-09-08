@@ -595,6 +595,41 @@
     "para": "la lámpara de la torre, dicha en casa"
   },
   {
+    "id": "otro.buenosDias",
+    "voz": "otro",
+    "idioma": "es-PY",
+    "texto": "Buenos días, Óga uno siete dos",
+    "para": "el otro avión de la frecuencia"
+  },
+  {
+    "id": "otro.rodando",
+    "voz": "otro",
+    "idioma": "es-PY",
+    "texto": "Zulu Papa Alfa Bravo Charlie, rodando a la cabecera",
+    "para": "el otro avión de la frecuencia"
+  },
+  {
+    "id": "otro.enCola",
+    "voz": "otro",
+    "idioma": "es-PY",
+    "texto": "Zulu Papa Alfa Bravo Charlie, viento en cola",
+    "para": "el otro avión de la frecuencia"
+  },
+  {
+    "id": "otro.final",
+    "voz": "otro",
+    "idioma": "es-PY",
+    "texto": "Zulu Papa Alfa Bravo Charlie, en final",
+    "para": "el otro avión de la frecuencia"
+  },
+  {
+    "id": "otro.pistaLibre",
+    "voz": "otro",
+    "idioma": "es-PY",
+    "texto": "Zulu Papa Alfa Bravo Charlie, pista libre",
+    "para": "el otro avión de la frecuencia"
+  },
+  {
     "id": "cabina.v1",
     "voz": "cabina",
     "idioma": "en",
@@ -775,40 +810,5 @@
     "idioma": "en",
     "texto": "line up and wait",
     "para": "entrá y esperá en el eje"
-  },
-  {
-    "id": "otro.rodando",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "Zulu Papa Alfa Bravo Charlie, rodando a la cabecera",
-    "para": "otro avión rodando"
-  },
-  {
-    "id": "otro.enCola",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "Zulu Papa Alfa Bravo Charlie, viento en cola para la uno cinco",
-    "para": "otro avión en el circuito"
-  },
-  {
-    "id": "otro.final",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "Zulu Papa Alfa Bravo Charlie, en final",
-    "para": "otro avión llegando"
-  },
-  {
-    "id": "otro.pistaLibre",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "Zulu Papa Alfa Bravo Charlie, pista libre",
-    "para": "otro avión que ya salió"
-  },
-  {
-    "id": "otro.buenosDias",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "Buenos días, Óga uno siete dos",
-    "para": "el saludo de siempre"
   }
 ]
