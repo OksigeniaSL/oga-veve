@@ -260,7 +260,7 @@ import {
   bandaDeVelocidad,
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
-import { callar, decir, permitirVoz } from "./audio/voz";
+import { callar, conectarLaMezcla, decir, permitirVoz } from "./audio/voz";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 import { leerTexto, ponerTexto } from "./datos/guardado";
@@ -1186,6 +1186,12 @@ export class Game {
       this.hud.onCuaderno(() => this.cuadernoUI?.toggle());
     }
 
+    /*
+     * Y la mezcla se entera de cuándo habla alguien, para agachar lo demás.
+     * La voz del navegador no pasa por Web Audio, así que hay que avisarla.
+     * Ver `audio/mezcla.ts`.
+     */
+    conectarLaMezcla(this.audio);
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
     this.hud.setSoundLevel(
@@ -5587,6 +5593,9 @@ export class Game {
     // juego en mudo lo pone en mudo entero, y una voz que sigue hablando con
     // el altavoz tachado es exactamente lo que nadie espera.
     permitirVoz(level.id !== "mudo");
+    // En mudo no queda nadie hablando, así que la mezcla se levanta: si no,
+    // se quedaba agachada con la última voz cortada a medias.
+    if (level.id === "mudo") this.audio.callarLasVoces();
     // Y al instructor se le calla ahora mismo, no en la frase siguiente.
     if (level.id === "mudo") this.instructor.callar();
     this.hud.setSoundLevel(level.glyph, t(`sound.${level.id}` as never));

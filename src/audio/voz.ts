@@ -25,6 +25,49 @@ const IDIOMA = "en-US";
 let permitido = true;
 
 /**
+ * Quién se entera de que hay alguien hablando.
+ *
+ * **La voz del navegador no pasa por Web Audio**, así que la mezcla no puede
+ * oírla para agacharse: hay que avisarla. Se conecta desde el juego, y si no
+ * hay nadie conectado —una prueba, un guion— esto no hace nada y se habla
+ * igual. Ver `audio/mezcla.ts`.
+ */
+let mezcla: { empiezaLaVoz(): void; acabaLaVoz(): void } | null = null;
+
+export function conectarLaMezcla(
+  quien: { empiezaLaVoz(): void; acabaLaVoz(): void } | null,
+): void {
+  mezcla = quien;
+}
+
+/**
+ * Le cuenta a la mezcla cuándo empieza y cuándo acaba esta frase.
+ *
+ * Se engancha al `start` y no a la llamada porque lo que tiene que agachar el
+ * motor es **que se oiga una voz**, no que se haya pedido una: entre pedirla y
+ * oírla pasa un rato, y en sistemas sin voces no llega a oírse nunca.
+ *
+ * Y con seguro contra el doble aviso: el navegador dispara `end` y `error`
+ * sobre la misma frase cuando se cancela, y dos avisos de final por un solo
+ * comienzo dejarían la mezcla agachada para siempre.
+ */
+export function seguirLaVoz(frase: SpeechSynthesisUtterance): void {
+  let contada = false;
+  frase.addEventListener("start", () => {
+    if (contada) return;
+    contada = true;
+    mezcla?.empiezaLaVoz();
+  });
+  const acabo = (): void => {
+    if (!contada) return;
+    contada = false;
+    mezcla?.acabaLaVoz();
+  };
+  frase.addEventListener("end", acabo);
+  frase.addEventListener("error", acabo);
+}
+
+/**
  * ¿Se puede hablar ahora mismo?
  *
  * Lo pregunta el instructor, que tiene su propia voz y su propio ritmo pero
@@ -55,6 +98,7 @@ export function decir(frase: string): void {
     if (!sintesis) return;
     sintesis.cancel();
     const dicho = new SpeechSynthesisUtterance(frase);
+    seguirLaVoz(dicho);
     dicho.lang = IDIOMA;
     // Un punto por encima de lo normal: los avisos de cabina son secos y
     // rápidos, y a los cuatro años una voz lenta se pierde antes de acabar.
