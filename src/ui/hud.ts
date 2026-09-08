@@ -631,6 +631,12 @@ export class Hud {
           <div class="fin__manga" data-hud="fin-manga"></div>
           <p class="fin__frase" data-hud="fin-frase"></p>
           <!--
+            Y las horas voladas, en avioncitos. Los galones dicen qué tal salió
+            este vuelo y se olvidan al siguiente; esto dice cuánto llevas, que
+            es lo que hace volver mañana. Ver ui/reloj.ts.
+          -->
+          <div class="fin__reloj" data-hud="fin-reloj"></div>
+          <!--
             Y la salida, que la primera versión no tenía: «vale, pero habrá
             que salir de aquí». La flecha que vuelve a empezar se entiende sin
             leer; el texto solo aparece donde ya se lee.
@@ -1219,9 +1225,11 @@ export class Hud {
     lista: readonly Galon[],
     frase: string,
     planoConTraza = "",
+    reloj = "",
   ): void {
     if (!this.fin) return;
     this.ponerPlano(planoConTraza);
+    this.ponerReloj(reloj);
     const final = reconocer(lista);
     const manga = pick(this.root, "fin-manga");
     manga.hidden = !final.manga;
@@ -1257,8 +1265,9 @@ export class Hud {
    * Va con la manga grande y sin cifras, como todo lo demás de esta pantalla:
    * la barra nueva **es** el mensaje.
    */
-  mostrarAscenso(barras: number, nombre: string): void {
+  mostrarAscenso(barras: number, nombre: string, reloj = ""): void {
     if (!this.fin) return;
+    this.ponerReloj(reloj);
     // El ascenso se enseña solo: es el único momento del juego que pasa una
     // vez, y la traza del vuelo que lo ganó no le añade nada.
     this.ponerPlano("");
@@ -1297,6 +1306,7 @@ export class Hud {
    */
   mostrarPercance(dibujo: string, frase: string): void {
     if (!this.fin) return;
+    this.ponerReloj("");
     // Un percance no enseña la traza: lo que hay que mirar es el dibujo de lo
     // que pasó, y una raya al lado solo repartiría la atención.
     this.ponerPlano("");
@@ -1311,6 +1321,19 @@ export class Hud {
     pick(this.root, "fin-otra-texto").textContent = frase ? t("fin.otra") : "";
     this.fin.hidden = false;
     this.root.classList.add("hud--fin");
+  }
+
+  /**
+   * Pone —o quita— la fila de avioncitos de las horas voladas.
+   *
+   * Vacía en el percance: ahí lo que hay que mirar es lo que pasó, y una fila
+   * de premios al lado del avión roto es exactamente el mensaje contrario.
+   */
+  private ponerReloj(svg: string): void {
+    const caja = optional(this.root, "fin-reloj");
+    if (!caja) return;
+    caja.innerHTML = svg;
+    caja.hidden = !svg;
   }
 
   /**

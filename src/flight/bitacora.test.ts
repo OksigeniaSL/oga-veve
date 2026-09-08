@@ -9,6 +9,8 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
+
+import { olvidar } from "../datos/guardado";
 import {
   adelgazar,
   apuntarVuelo,
@@ -53,7 +55,18 @@ const vuelo = (n: number, puntos = 3): Vuelo => ({
 });
 
 describe("la bitácora", () => {
-  beforeEach(() => localStorage.clear());
+  /*
+   * Y se olvida lo leído, no solo lo guardado.
+   *
+   * Desde que la bitácora vive dentro del guardado con versión, hay una copia
+   * en memoria que se lee una vez por sesión —para no volver a parsear en cada
+   * consulta—, así que vaciar el almacenamiento sin más dejaba la prueba
+   * mirando la sesión anterior. Ver `datos/guardado.ts`.
+   */
+  beforeEach(() => {
+    localStorage.clear();
+    olvidar();
+  });
 
   it("empieza vacía y no se queja", () => {
     expect(leerBitacora()).toEqual([]);

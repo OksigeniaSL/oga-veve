@@ -18,6 +18,7 @@
  */
 
 import type { TranslationKey } from '../i18n';
+import { leerAjuste, leerTexto, ponerAjuste, ponerTexto } from '../datos/guardado';
 
 export type Accion =
   | 'pitchUp'
@@ -132,8 +133,8 @@ export function parejaDe(accion: Accion): readonly Accion[] {
   return PAREJAS.find((p) => p.includes(accion)) ?? [accion];
 }
 
-const ALMACEN = 'oga-veve:teclas';
-const ALMACEN_MANO = 'oga-veve:mano';
+const ALMACEN = 'teclas';
+const ALMACEN_MANO = 'mano';
 
 /**
  * Con qué mano se lleva el motor.
@@ -168,11 +169,7 @@ export class Keymap {
 
   setMano(mano: Mano): void {
     this.manoActual = mano;
-    try {
-      localStorage.setItem(ALMACEN_MANO, mano);
-    } catch {
-      // Vale para esta partida.
-    }
+    ponerTexto(ALMACEN_MANO, mano);
   }
 
   /**
@@ -262,16 +259,11 @@ export class Keymap {
   }
 
   private load(): void {
+    const mano = leerTexto(ALMACEN_MANO);
+    if (mano === 'izquierda' || mano === 'derecha') this.manoActual = mano;
     try {
-      const mano = localStorage.getItem(ALMACEN_MANO);
-      if (mano === 'izquierda' || mano === 'derecha') this.manoActual = mano;
-    } catch {
-      // Sin almacenamiento, mano derecha.
-    }
-    try {
-      const crudo = localStorage.getItem(ALMACEN);
-      if (!crudo) return;
-      const datos = JSON.parse(crudo) as Record<string, string[]>;
+      const datos = leerAjuste(ALMACEN) as Record<string, string[]> | undefined;
+      if (!datos) return;
       for (const accion of ORDEN) {
         const teclas = datos[accion];
         // Se comprueba la forma antes de creérsela: esto sale de un sitio
@@ -288,11 +280,7 @@ export class Keymap {
   }
 
   private save(): void {
-    try {
-      localStorage.setItem(ALMACEN, JSON.stringify(Object.fromEntries(this.cambios)));
-    } catch {
-      // Igual: si no se puede guardar, los cambios valen para esta partida.
-    }
+    ponerAjuste(ALMACEN, Object.fromEntries(this.cambios));
   }
 }
 

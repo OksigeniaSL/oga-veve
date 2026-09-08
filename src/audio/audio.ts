@@ -24,6 +24,7 @@
 
 import type { ControlInputs, FlightState } from "../flight/model";
 import type { AircraftSound } from "../flight/aircraft";
+import { leerTexto, ponerTexto } from "../datos/guardado";
 
 /**
  * Régimen de ralentí y máximo, en revoluciones por minuto.
@@ -124,7 +125,7 @@ const LEVELS: readonly AudioLevel[] = [
   { id: "mudo", gain: 0, glyph: "🔇" },
 ];
 
-const STORAGE_KEY = "oga-veve:volumen";
+const STORAGE_KEY = "volumen";
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
@@ -133,7 +134,7 @@ function clamp(value: number, min: number, max: number): number {
 function restoreLevel(): number {
   try {
     const saved = LEVELS.findIndex(
-      (level) => level.id === localStorage.getItem(STORAGE_KEY),
+      (level) => level.id === leerTexto(STORAGE_KEY),
     );
     if (saved >= 0) return saved;
   } catch {
@@ -144,7 +145,7 @@ function restoreLevel(): number {
 
 function persistLevel(index: number): void {
   try {
-    localStorage.setItem(STORAGE_KEY, LEVELS[index]!.id);
+    ponerTexto(STORAGE_KEY, LEVELS[index]!.id);
   } catch {
     // No poder recordarlo no puede romper nada.
   }

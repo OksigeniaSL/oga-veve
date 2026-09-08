@@ -25,12 +25,18 @@
  * que ya está dibujado el plano del hangar. Así el dibujo es el de siempre con
  * una polilínea encima, y no hay que convertir nada al pintarlo.
  *
- * Y con tope: ciento veinte puntos por vuelo y sesenta vuelos guardados. Un
- * vuelo de diez minutos son cinco segundos por punto, que para una raya sobre
- * un plano de doce kilómetros es más resolución de la que se ve. Sesenta
- * vuelos con eso ocupan menos de cien kilobytes, y `localStorage` tiene cinco
- * megas.
+ * Y con tope: **noventa puntos por vuelo y sesenta vuelos guardados**. Un
+ * vuelo de diez minutos son casi siete segundos por punto, que para una raya
+ * sobre un plano de doce kilómetros es más resolución de la que se ve.
+ *
+ * Eran ciento veinte, con la nota «sesenta vuelos con eso ocupan menos de cien
+ * kilobytes» escrita aquí mismo **sin haberlo medido nunca**. Medido: son
+ * **108,6 KB**, o sea por encima del presupuesto del guardado. Con noventa
+ * salen 82,2 y sobra sitio para todo lo demás. Lo bajó una prueba, no un ojo.
+ * Ver `datos/guardado.ts`.
  */
+
+import { leerProgreso, ponerProgreso } from "../datos/guardado";
 
 /** Un punto de la traza, en coordenadas del fichero del aeródromo. */
 export type Paso = readonly [number, number];
@@ -53,13 +59,13 @@ export interface Vuelo {
 }
 
 /** Dónde vive. */
-const LLAVE = "oga-veve:bitacora";
+const LLAVE = "bitacora";
 
 /** Cuántos vuelos se guardan. Ver la cabecera. */
 export const CUANTOS_VUELOS = 60;
 
-/** Y cuántos puntos tiene una traza como mucho. */
-export const PUNTOS_DE_TRAZA = 120;
+/** Y cuántos puntos tiene una traza como mucho. Ver la cabecera: son 82,2 KB. */
+export const PUNTOS_DE_TRAZA = 90;
 
 /**
  * Los vuelos guardados, del más reciente al más antiguo.
@@ -70,15 +76,9 @@ export const PUNTOS_DE_TRAZA = 120;
  * porque el historial está roto sería otra cosa.
  */
 export function leerBitacora(): Vuelo[] {
-  try {
-    const crudo = localStorage.getItem(LLAVE);
-    if (!crudo) return [];
-    const leido: unknown = JSON.parse(crudo);
-    if (!Array.isArray(leido)) return [];
-    return leido.filter(esVuelo).slice(0, CUANTOS_VUELOS);
-  } catch {
-    return [];
-  }
+  const leido = leerProgreso(LLAVE);
+  if (!Array.isArray(leido)) return [];
+  return leido.filter(esVuelo).slice(0, CUANTOS_VUELOS);
 }
 
 /**
@@ -93,11 +93,7 @@ export function apuntarVuelo(vuelo: Vuelo): Vuelo[] {
     { ...vuelo, traza: adelgazar(vuelo.traza, PUNTOS_DE_TRAZA) },
     ...leerBitacora(),
   ].slice(0, CUANTOS_VUELOS);
-  try {
-    localStorage.setItem(LLAVE, JSON.stringify(bitacora));
-  } catch {
-    // Navegación privada o almacenamiento lleno: se ha volado igual.
-  }
+  ponerProgreso(LLAVE, bitacora);
   return bitacora;
 }
 

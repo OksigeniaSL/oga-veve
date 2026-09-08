@@ -36,6 +36,7 @@ import { SCENARIOS, type Scenario } from "../world/scenarios";
 import { PROXIMAMENTE } from "../world/proximamente";
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
 import { elegirMundo, mundoElegido } from "./mundo";
+import { leerProgreso, ponerProgreso } from "../datos/guardado";
 
 /** Lo que el hangar devuelve cuando alguien le da al botón de despegar. */
 export interface Eleccion {
@@ -846,17 +847,13 @@ const MARCA_MISIONES = trazo(
  * llanura inventados son sitios para practicar; un aeropuerto con su
  * designador, su cota y su nombre es un sitio al que se va.
  */
-const ALMACEN_RECIENTES = "oga-veve:recientes";
+const ALMACEN_RECIENTES = "recientes";
 
 export function recientes(elegido: Scenario): Scenario[] {
-  let ids: string[] = [];
-  try {
-    ids = JSON.parse(
-      localStorage.getItem(ALMACEN_RECIENTES) ?? "[]",
-    ) as string[];
-  } catch {
-    ids = [];
-  }
+  const guardado = leerProgreso(ALMACEN_RECIENTES);
+  const ids: string[] = Array.isArray(guardado)
+    ? guardado.filter((x): x is string => typeof x === "string")
+    : [];
   const vistos = [elegido];
   const anadir = (e: Scenario | undefined): void => {
     if (e && vistos.length < 3 && !vistos.some((v) => v.id === e.id))
@@ -869,15 +866,11 @@ export function recientes(elegido: Scenario): Scenario[] {
 }
 
 function apuntarReciente(id: string): void {
-  try {
-    const ids = JSON.parse(
-      localStorage.getItem(ALMACEN_RECIENTES) ?? "[]",
-    ) as string[];
-    const nuevos = [id, ...ids.filter((x) => x !== id)].slice(0, 6);
-    localStorage.setItem(ALMACEN_RECIENTES, JSON.stringify(nuevos));
-  } catch {
-    // Vale para esta partida.
-  }
+  const guardado = leerProgreso(ALMACEN_RECIENTES);
+  const ids: string[] = Array.isArray(guardado)
+    ? guardado.filter((x): x is string => typeof x === "string")
+    : [];
+  ponerProgreso(ALMACEN_RECIENTES, [id, ...ids.filter((x) => x !== id)].slice(0, 6));
 }
 
 /**

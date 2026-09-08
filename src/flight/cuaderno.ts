@@ -29,6 +29,8 @@
  * que cuenta los galones de un vuelo.
  */
 
+import { leerProgreso, ponerProgreso } from "../datos/guardado";
+
 /** Lo que el cuaderno guarda. Todo son cuentas, y todas suben. */
 export interface Cuaderno {
   /** Segundos volados, con las ruedas en el aire. */
@@ -132,7 +134,7 @@ export function loQueFalta(
   };
 }
 
-const LLAVE = "oga-veve:cuaderno";
+const LLAVE = "cuaderno";
 
 /**
  * Lee el cuaderno del aparato.
@@ -144,9 +146,8 @@ const LLAVE = "oga-veve:cuaderno";
  */
 export function leerCuaderno(): Cuaderno {
   try {
-    const crudo = localStorage.getItem(LLAVE);
-    if (!crudo) return CUADERNO_VACIO;
-    const d = JSON.parse(crudo) as Partial<Cuaderno>;
+    const d = (leerProgreso(LLAVE) ?? null) as Partial<Cuaderno> | null;
+    if (!d) return CUADERNO_VACIO;
     const n = (v: unknown): number =>
       typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : 0;
     return {
@@ -167,10 +168,7 @@ export function leerCuaderno(): Cuaderno {
 
 /** Y lo guarda. Si no se puede, se vuela igual. */
 export function guardarCuaderno(c: Cuaderno): void {
-  try {
-    localStorage.setItem(LLAVE, JSON.stringify(c));
-  } catch {
-    // Navegación privada o almacenamiento lleno: la partida no se rompe por
-    // no poder apuntar, igual que no se rompe por no recordar el peldaño.
-  }
+  // Sin `try`: guardar ya no puede fallar aquí. Quien se come el fallo del
+  // almacenamiento lleno o bloqueado es `datos/guardado.ts`, en un solo sitio.
+  ponerProgreso(LLAVE, c);
 }

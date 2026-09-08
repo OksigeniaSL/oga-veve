@@ -14,6 +14,7 @@
 import { EN } from './en';
 import { ES_PY } from './es-PY';
 import { GUG } from './gug';
+import { leerTexto, ponerTexto } from '../datos/guardado';
 
 export type TranslationKey = keyof typeof ES_PY;
 export type Dictionary = Partial<Record<TranslationKey, string>>;
@@ -50,7 +51,7 @@ const HTML_LANG: Record<Locale, string> = {
   en: 'en',
 };
 
-const STORAGE_KEY = 'oga-veve:idioma';
+const STORAGE_KEY = 'idioma';
 
 let current: Locale = 'es-PY';
 
@@ -60,7 +61,7 @@ export function setLocale(locale: Locale): void {
   // Una preferencia de idioma no es un dato personal y no sale del
   // navegador. Es la única cosa que este juego recuerda de quien juega.
   try {
-    localStorage.setItem(STORAGE_KEY, locale);
+    ponerTexto(STORAGE_KEY, locale);
   } catch {
     // Navegación privada o almacenamiento bloqueado: se juega igual.
   }
@@ -94,7 +95,7 @@ export function t(key: TranslationKey, values?: Record<string, string | number>)
  */
 export function detectLocale(): Locale {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = leerTexto(STORAGE_KEY);
     if (saved && (LOCALES as readonly string[]).includes(saved)) return saved as Locale;
   } catch {
     // Sin almacenamiento se sigue adelante con la detección normal.

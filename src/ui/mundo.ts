@@ -16,14 +16,16 @@
  * juego no se queda sin mundo: se queda con el otro.
  */
 
-const ALMACEN = 'oga-veve:mundo';
+import { leerTexto, ponerTexto } from '../datos/guardado';
+
+const ALMACEN = 'mundo';
 
 export type Mundo = 'foto' | 'dibujado';
 
 /** El mundo elegido, o la fotografía si nadie ha elegido todavía. */
 export function mundoElegido(): Mundo {
   try {
-    return localStorage.getItem(ALMACEN) === 'dibujado' ? 'dibujado' : 'foto';
+    return leerTexto(ALMACEN) === 'dibujado' ? 'dibujado' : 'foto';
   } catch {
     // Sin almacén —ventana privada, permisos— se vuela la foto, que es el
     // que enseña el planeta. Perder la preferencia no puede impedir jugar.
@@ -34,7 +36,7 @@ export function mundoElegido(): Mundo {
 /** Guarda la elección. Se aplica al empezar la siguiente partida. */
 export function elegirMundo(mundo: Mundo): void {
   try {
-    localStorage.setItem(ALMACEN, mundo);
+    ponerTexto(ALMACEN, mundo);
   } catch {
     // Vale para esta partida.
   }
