@@ -175,6 +175,8 @@ export class Hud {
   private cuadernoHandler: (() => void) | null = null;
   /** Quién se entera de que se ha pasado V1 o Vr. Ver `onVelocidades`. */
   private velocidadesHandler: ((cual: "V1" | "Vr") => void) | null = null;
+  /** Quién vigila el alto de la barra. Ver `medirLaBarra`. */
+  private barraObservada: ResizeObserver | null = null;
   /**
    * Cuántos instrumentos enseña el HUD.
    *
@@ -549,9 +551,10 @@ export class Hud {
           -->
           <div class="motor__fila">
             <button class="motor__tecla" type="button" data-hud="throttle-down"
+                    data-objetivo="extendido"
                     aria-label="${t("hud.throttleDown")}">${pictos ? helice(7) : "−"}</button>
             <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
-            <button class="motor__tecla" type="button" data-hud="throttle-up"
+            <button class="motor__tecla" type="button" data-hud="throttle-up" data-objetivo="extendido"
                     aria-label="${t("hud.throttleUp")}">${pictos ? helice(11) : "+"}</button>
           </div>
           ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
@@ -840,6 +843,7 @@ export class Hud {
     this.badge.textContent = this.badgeText;
     this.sixPack.bind(this.root);
     this.pictos.bind(this.root);
+    this.medirLaBarra();
     this.senal.bind(this.root);
     this.tutor.bind(this.root);
     this.reserveForPanel();
@@ -1475,6 +1479,34 @@ export class Hud {
   }
 
   /** Quién abre la pantalla de mandos. */
+  /**
+   * Mide la barra de arriba y lo escribe donde la hoja lo pueda leer.
+   *
+   * Las tarjetas de dibujos flotan debajo de la barra, y la barra cambia de
+   * alto: se parte en dos filas en cuanto los botones no caben, que en una
+   * tablet de 720 px es siempre. Con la altura clavada a mano, ese día las
+   * tarjetas se quedaban encima de los botones.
+   *
+   * Se vuelve a medir cuando cambia de tamaño —girar la tablet, abrir el
+   * teclado del sistema— porque el número no es una constante: es una
+   * consecuencia.
+   */
+  private medirLaBarra(): void {
+    const barra = this.root.querySelector<HTMLElement>(".hud__arriba");
+    if (!barra) return;
+    const escribir = (): void => {
+      const alto = Math.round(barra.getBoundingClientRect().height);
+      if (alto > 0) {
+        this.root.style.setProperty("--alto-de-la-barra", `${alto}px`);
+      }
+    };
+    escribir();
+    this.barraObservada?.disconnect();
+    if (typeof ResizeObserver === "undefined") return;
+    this.barraObservada = new ResizeObserver(escribir);
+    this.barraObservada.observe(barra);
+  }
+
   /**
    * Los dos momentos del despegue, para quien quiera sonarlos o decirlos.
    *

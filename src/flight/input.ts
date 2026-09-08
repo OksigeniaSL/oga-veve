@@ -75,6 +75,9 @@ export class InputManager {
   private touchRoll = 0;
   private touchRudder = 0;
   private touchThrottle: number | null = null;
+  /** −1 si el cabeceo va invertido. Lo pone el juego desde los ajustes. */
+  private signoDeCabeceo = 1;
+
   /** Qué carácter dio cada tecla física al pulsarla. Ver `onKeyUp`. */
   private readonly chars = new Map<string, string>();
 
@@ -170,8 +173,16 @@ export class InputManager {
   update(dt: number): void {
     const gamepad = this.readGamepad();
 
+    /*
+     * Y el cabeceo, con su signo.
+     *
+     * Quien ha volado con un mando o con otro simulador lo tiene al revés en
+     * la cabeza, y eso no se aprende: se tiene. Media hora de frustración
+     * contra una casilla. Ver `ui/ajustes.ts`.
+     */
     const pitchTarget =
-      gamepad?.pitch ?? this.touchPitch + this.axis('pitchUp', 'pitchDown');
+      this.signoDeCabeceo *
+      (gamepad?.pitch ?? this.touchPitch + this.axis('pitchUp', 'pitchDown'));
     const rollTarget =
       gamepad?.roll ?? this.touchRoll + this.axis('rollRight', 'rollLeft');
     const rudderTarget =
@@ -204,6 +215,11 @@ export class InputManager {
     this.controls.brakes = approach(this.controls.brakes, braking ? 1 : 0, dt * 2);
     // Los flaps no se leen aquí: son un conmutador, y lo lleva `onKeyDown`.
     // Forzarlos también desde el bucle impedía apagarlos sin soltar la tecla.
+  }
+
+  /** Invertir o no el cabeceo. Ver `ui/ajustes.ts`. */
+  ponerSignoDeCabeceo(signo: number): void {
+    this.signoDeCabeceo = signo < 0 ? -1 : 1;
   }
 
   // ── Teclado ───────────────────────────────────────────────────────────

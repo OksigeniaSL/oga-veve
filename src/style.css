@@ -76,14 +76,24 @@
      Por debajo de 16px no hay nada que un prelector pueda usar: no lee
      letra a letra, reconoce la silueta de la palabra entera, y a 11px esa
      silueta no se resuelve. */
-  --voz-glosa: 16px;
-  --voz-rotulo: 15px;
-  --voz-cifra: 32px;
+  --voz-glosa: calc(16px * var(--escala-hud));
+  --voz-rotulo: calc(15px * var(--escala-hud));
+  --voz-cifra: calc(32px * var(--escala-hud));
+
+  /*
+   * La escala del HUD, que la pone la pantalla de ajustes.
+   *
+   * Multiplica el tacto y las tres voces tipográficas, que es todo lo que
+   * hace grande o pequeña una interfaz: los botones que se pulsan y las
+   * letras que se leen. Lo demás —los radios, las separaciones— se queda,
+   * porque escalarlo todo no agranda nada, solo aleja.
+   */
+  --escala-hud: 1;
 
   --r-s: 10px;
   --r-m: 16px;
   --r-l: 22px;
-  --tacto: 48px;
+  --tacto: calc(48px * var(--escala-hud));
 
   /* Compatibilidad: quedaba código apuntando al nombre viejo. */
   --sombra: var(--barro);
@@ -288,6 +298,21 @@ body {
   display: flex;
   gap: 10px;
   align-items: center;
+  /*
+   * **Se parte antes que encoger.**
+   *
+   * Medido en una tablet de 720 px: los siete botones se dibujaban a **34
+   * píxeles**, por debajo de los 48 que la propia hoja declara como mínimo
+   * táctil. Los encogía flexbox, que reparte el sitio que falta quitándoselo
+   * a los elementos. Un botón de 34 px es el aparato del aula haciendo el
+   * objetivo más pequeño justo donde más grande tendría que ser.
+   *
+   * Con `flex-shrink: 0` en los botones y `wrap` aquí, lo que no cabe baja a
+   * una segunda fila y todos conservan su tamaño. Y las tarjetas de dibujos,
+   * que van flotando debajo, bajan con ella. Ver `--alto-de-la-barra`.
+   */
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /*
@@ -372,6 +397,8 @@ body {
   pointer-events: auto;
   width: var(--tacto);
   height: var(--tacto);
+  /* Nunca por debajo del mínimo táctil: antes se parte la fila. Ver #150. */
+  flex: 0 0 auto;
   border-radius: 50%;
   border: 1px solid var(--linea);
   background: var(--barniz), var(--barro);
@@ -912,6 +939,29 @@ body {
   pointer-events: auto;
   cursor: pointer;
   user-select: none;
+  position: relative;
+}
+
+/*
+ * **El dibujo mide veintiséis píxeles y el botón mide cuarenta y ocho.**
+ *
+ * Estas dos teclas son el mando de motor con el dedo, y a veintiséis píxeles
+ * son el objetivo más pequeño de todo el juego justo en el aparato donde más
+ * grande tendría que ser. Agrandar el dibujo no vale: la tarjeta del motor es
+ * pequeña a propósito y una tecla de cuarenta y ocho la reventaría.
+ *
+ * Así que crece **el objetivo y no el dibujo**: un cuadrado invisible del
+ * tamaño del tacto, centrado sobre la tecla. Es lo que mide WCAG 2.5.8 —el
+ * área que responde al dedo— y no lo que se ve.
+ */
+button.motor__tecla::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--tacto);
+  height: var(--tacto);
+  transform: translate(-50%, -50%);
 }
 
 .motor__fila .motor__pista {
@@ -1420,6 +1470,8 @@ body {
 
 .creditos__cerrar {
   margin-top: 8px;
+  /* Cuarenta y ocho de alto, como todo lo que se toca: medía treinta y ocho. */
+  min-height: var(--tacto);
   padding: 10px 20px;
   border-radius: 12px;
   border: none;
@@ -1687,7 +1739,13 @@ body {
  */
 .pictos {
   position: absolute;
-  top: 74px;
+  /*
+   * Debajo de la barra, **la mida lo que mida**. Estaba clavado en 74 px, que
+   * es lo que mide la barra de una sola fila; el día que se partió en dos, las
+   * tarjetas se quedaron encima de los botones. Lo mide el HUD y lo escribe
+   * aquí. Ver `Hud.medirLaBarra`.
+   */
+  top: calc(var(--alto-de-la-barra, 58px) + 16px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -4088,4 +4146,82 @@ body {
 
 .pausa__puerta:active {
   transform: scale(0.97);
+}
+
+/*
+ * La pantalla de ajustes, que se abre sobre el menú de pausa.
+ *
+ * Cuatro filas y ninguna más. Cada una es un grupo de opciones excluyentes, y
+ * se ve que lo es: la puesta va en barro cálido y las otras en barro oscuro,
+ * que es la misma pareja que usa el resto del juego para «esto es lo elegido».
+ */
+.ajustes {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow: auto;
+  background: rgb(8 12 10 / 74%);
+}
+
+.ajustes__panel {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  border-radius: var(--r-l);
+  background: var(--panel-verde);
+  border: 1px solid var(--linea);
+  box-shadow: var(--poso);
+  color: var(--tinta);
+}
+
+.ajustes__titulo {
+  margin: 0;
+  font-size: 22px;
+}
+
+.ajustes__fila {
+  display: grid;
+  gap: 6px;
+}
+
+.ajustes__que {
+  font-size: var(--voz-glosa);
+  color: var(--tinta-suave);
+}
+
+.ajustes__opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/*
+ * Cuarenta y ocho de alto, como todo lo que se toca. Un ajuste que hay que
+ * acertar con la yema no es un ajuste accesible, y esta pantalla existe
+ * precisamente para quien lo tiene difícil.
+ */
+.ajustes__opcion {
+  min-height: var(--tacto);
+  padding: 10px 16px;
+  border-radius: var(--r-m);
+  border: 1px solid var(--linea);
+  background: var(--barniz), var(--barro);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--voz-rotulo);
+  cursor: pointer;
+}
+
+.ajustes__opcion:hover {
+  border-color: var(--ocre);
+}
+
+.ajustes__opcion--puesta {
+  background: var(--barniz), var(--barro-calido);
+  border-color: transparent;
+  font-weight: 700;
 }

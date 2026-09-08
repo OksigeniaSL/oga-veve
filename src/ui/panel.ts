@@ -60,6 +60,20 @@ export function aQuienLeToca<T>(
  * un fallo nuestro no puede dejar a nadie encerrado— Escape tiene que seguir
  * funcionando.
  */
+/**
+ * La pila de paneles abiertos, y por qué hace falta.
+ *
+ * Los ajustes se abren **encima** del menú de pausa, así que hay dos paneles
+ * abiertos a la vez y los dos escuchan el teclado en `window`. Sin pila
+ * ganaba el que se hubiera registrado antes: Escape cerraba el menú de pausa
+ * de debajo y dejaba los ajustes flotando sobre el vuelo. Medido con el
+ * banco.
+ *
+ * Con pila, solo manda el de arriba —el último que se abrió—, que es lo que
+ * espera cualquiera: Escape cierra lo que estás mirando.
+ */
+const pila: Encierro[] = [];
+
 export class Encierro {
   private readonly root: HTMLElement;
   private readonly cerrar: () => void;
@@ -87,11 +101,17 @@ export class Encierro {
       window.addEventListener("keydown", this.alPulsar, true);
       this.puesto = true;
     }
+    // El último que se abre es el que manda. Ver `pila`.
+    const donde = pila.indexOf(this);
+    if (donde >= 0) pila.splice(donde, 1);
+    pila.push(this);
     this.enfocarElPrimero();
   }
 
   /** Desmonta la vigilancia y devuelve el foco a donde estaba: criterio 2.4.3. */
   soltar(): void {
+    const donde = pila.indexOf(this);
+    if (donde >= 0) pila.splice(donde, 1);
     if (this.puesto) {
       window.removeEventListener("keydown", this.alPulsar, true);
       this.puesto = false;
@@ -113,6 +133,8 @@ export class Encierro {
 
   private alPulsar = (e: KeyboardEvent): void => {
     if (this.root.hidden) return;
+    // Y si hay otro panel encima, manda él. Ver `pila`.
+    if (pila[pila.length - 1] !== this) return;
     /*
      * Si el panel ya se ha ocupado de esta tecla, aquí no se toca.
      *

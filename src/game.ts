@@ -197,6 +197,15 @@ const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
 import { Hud } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { PantallaDePausa } from "./ui/pausa";
+import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
+import {
+  ESCALA,
+  conMovimientoReducido,
+  leerAjustes,
+  signoDeCabeceo,
+  unidadesElegidas,
+  type Ajustes,
+} from "./ui/ajustes";
 import { Medidor } from "./ui/rendimiento";
 import {
   crearLucesDeRodadura,
@@ -683,6 +692,8 @@ export class Game {
    * Opcional como los demás paneles: el juego tiene que arrancar aunque falte.
    */
   private pausa: PantallaDePausa | null = null;
+  /** La pantalla de ajustes, que se abre desde la pausa. */
+  private ajustesUI: PantallaDeAjustes | null = null;
   /**
    * Si lo paró quien juega, y no el navegador.
    *
@@ -894,9 +905,17 @@ export class Game {
     traqueteo: 1,
   };
   private readonly blobShadow: Mesh;
-  /** Respeta la preferencia del sistema de reducir movimiento. */
-  private readonly reducedMotion =
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  /**
+   * Si hay que reducir el movimiento.
+   *
+   * Sale de los ajustes, que de fábrica dicen «lo que pida el sistema» pero
+   * se pueden cambiar: en un aula la tablet es de todos y su preferencia
+   * también, y quien se marea no puede tocar el ajuste del aparato de los
+   * demás. Ver `ui/ajustes.ts`.
+   */
+  private reducedMotion = false;
+  /** Lo elegido en la pantalla de ajustes. */
+  private ajustes: Ajustes = leerAjustes();
   private running = false;
   /** Segundos que lleva el avión roto. Ver `frame`. */
   private crashedFor = 0;
@@ -1168,7 +1187,6 @@ export class Game {
     this.hud = new Hud(options.hudRoot);
     this.medidor = new Medidor(document.body, this.renderer);
     this.hud.setInstruments(this.tier.instruments);
-    this.hud.setUnits(this.tier.units);
     this.hud.setMagneticVariation(this.scenario.magneticVariation);
     this.creditsRoot = options.creditsRoot;
     this.credits = new CreditsScreen(
@@ -1239,6 +1257,12 @@ export class Game {
     this.keyScreen?.setSimple(
       this.tier.instruments === "none" || this.tier.instruments === "pictorial",
     );
+    const ajustesRoot = document.getElementById("ajustes");
+    if (ajustesRoot) {
+      this.ajustesUI = new PantallaDeAjustes(ajustesRoot, (a) =>
+        this.aplicarAjustes(a),
+      );
+    }
     const pausaRoot = document.getElementById("pausa");
     if (pausaRoot) {
       this.pausa = new PantallaDePausa(
@@ -1249,12 +1273,29 @@ export class Game {
             this.reanudar();
             this.resetFlight();
           },
+          /*
+           * Los ajustes se abren **sobre la pausa**, no en su lugar: al
+           * cerrarlos se vuelve al menú, que es donde se estaba. Cerrarlos
+           * devolviendo al vuelo sería sacar a alguien de la partida por
+           * haber mirado el tamaño de los botones.
+           */
+          ajustes: () => this.ajustesUI?.abrir(),
           // Igual que el botón del hangar: recargar. Ver `onHangar`.
           hangar: () => location.reload(),
         },
         this.tier.instruments !== "none",
       );
     }
+    /*
+     * Y los ajustes puestos, **después de que exista el teclado**.
+     *
+     * Uno de los cuatro invierte el cabeceo, y eso se le dice al gestor de
+     * entrada. Llamando a esto antes de construirlo, la excepción se comía el
+     * resto del constructor en silencio y el juego arrancaba **sin menú de
+     * pausa y sin ajustes**: los dos se montan unas líneas más abajo. Costó
+     * una tarde y lo cazó un `pageerror` del banco.
+     */
+    this.aplicarAjustes();
     this.hud.onPausa(() => this.alternarPausa());
     this.hud.onCamara(() => this.cycleCamera());
     /*
@@ -3689,6 +3730,29 @@ export class Game {
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
     this.scene.add(this.plan.grupo);
     this.colocarSenalero();
+  }
+
+  /**
+   * Pone los cuatro ajustes donde tienen efecto.
+   *
+   * Se llama al arrancar y cada vez que se cambia uno. Todos son de aplicar
+   * ahora mismo: nada de aquí pide reiniciar el vuelo, que es de las cosas
+   * que más molestan cuando llevas media hora volando.
+   */
+  aplicarAjustes(ajustes: Ajustes = this.ajustes): void {
+    this.ajustes = ajustes;
+    this.reducedMotion = conMovimientoReducido(
+      ajustes,
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+    );
+    this.input.ponerSignoDeCabeceo(signoDeCabeceo(ajustes));
+    // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
+    this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
+    // Y el tamaño, que es una escala sobre el tacto y la letra del HUD.
+    document.documentElement.style.setProperty(
+      "--escala-hud",
+      String(ESCALA[ajustes.tamano]),
+    );
   }
 
   /** Pone una hora del día. Lo llama el panel del tiempo. */
