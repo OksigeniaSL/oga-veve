@@ -248,3 +248,33 @@ window.addEventListener("focus", atender);
  * se pierde es justo el vuelo que se acaba de terminar. Ver `datos/guardado.ts`.
  */
 guardarAlSalir();
+
+/*
+ * Y el service worker, que es lo que hace que esto funcione sin conexión.
+ *
+ * Solo en lo publicado: en desarrollo estorbaría —serviría ficheros viejos
+ * mientras se edita— y los bancos de pruebas corren contra el servidor de
+ * desarrollo, así que ahí ni existe.
+ *
+ * Falla en silencio a propósito. Un navegador sin service workers, una
+ * ventana privada o un servidor sin HTTPS son razones para no tener el juego
+ * sin conexión, no para no tener juego. Ver `scripts/hacer-sw.mjs`.
+ */
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  const registrar = (): void => {
+    void navigator.serviceWorker.register("./sw.js").catch(() => {});
+  };
+  /*
+   * **Y se mira si la página ya cargó, en vez de esperar a que cargue.**
+   *
+   * Esto colgaba de `window.addEventListener("load", …)` y no se registraba
+   * nunca. El motivo: este fichero es un módulo con `await` de primer nivel
+   * —espera al relieve, a la ciudad, al tiempo y a las dos ortofotos— así que
+   * para cuando llega aquí, el evento `load` **ya pasó hace rato** y el oyente
+   * se queda esperando algo que no va a volver a ocurrir.
+   *
+   * Lo cazó el banco: cero cachés, cero piezas, el juego sin red en blanco.
+   */
+  if (document.readyState === "complete") registrar();
+  else window.addEventListener("load", registrar);
+}
