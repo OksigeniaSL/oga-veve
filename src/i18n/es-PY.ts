@@ -136,6 +136,29 @@ export const ES_PY = {
   // información**: quien no distinga el rojo del verde tiene que poder saberlo.
   "torre.verde": "Podés entrar",
   "torre.roja": "Esperá acá",
+
+  /*
+   * ── El otro avión de la frecuencia ──────────────────────────────────────
+   *
+   * Cinco frases que no le dicen nada a quien juega y lo cambian todo: **se
+   * oye a alguien más ahí fuera**. Un aeropuerto donde la radio está muerta
+   * es un decorado; con esto, uno no está solo en el mundo. Todavía no hay
+   * tráfico dibujado —eso es #118—, pero la radio ya no calla.
+   *
+   * Van con matrícula paraguaya de verdad, ZP, y con la fraseología de
+   * siempre. Y **no las traduce nadie**: en Silvio Pettirossi la radio se
+   * habla en castellano, y oírla en castellano mientras tu instructor te
+   * habla en inglés es exactamente lo que suena en un aeropuerto de verdad.
+   *
+   * Sin número de pista a propósito: es una frase grabada, y decir «para la
+   * uno cinco» en Tenerife Norte —que es la 12/30— sería enseñar algo falso
+   * por un adorno.
+   */
+  "otro.buenosDias": "Buenos días, Óga uno siete dos",
+  "otro.rodando": "Zulu Papa Alfa Bravo Charlie, rodando a la cabecera",
+  "otro.enCola": "Zulu Papa Alfa Bravo Charlie, viento en cola",
+  "otro.final": "Zulu Papa Alfa Bravo Charlie, en final",
+  "otro.pistaLibre": "Zulu Papa Alfa Bravo Charlie, pista libre",
   "vuelo.estacionado": "Arrancá el motor",
   "vuelo.arrancando": "Soltá el freno y andá despacito",
   "vuelo.rodando": "Seguí la raya verde",

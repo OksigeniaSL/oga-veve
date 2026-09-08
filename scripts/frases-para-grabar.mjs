@@ -49,6 +49,7 @@ const HABLADOS = [
   ["tutor", "instructor", "los consejos de los primeros minutos"],
   ["mission", "instructor", "las misiones"],
   ["torre", "torre", "la lámpara de la torre, dicha en casa"],
+  ["otro", "otro", "el otro avión de la frecuencia"],
 ];
 
 /**
@@ -110,38 +111,17 @@ const TORRE = [
   ["torre.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
 ];
 
-/**
- * Y otro avión en la radio, que es el que hace que un aeropuerto suene a
- * aeropuerto.
+/*
+ * **El otro avión ya no vive aquí.**
  *
- * Todavía no hay tráfico —eso es #118— pero estas cinco frases valen desde el
- * día uno para que la radio no esté muerta mientras se rueda: se oye a alguien
- * más ahí fuera, y eso ya cuenta que uno no está solo en el mundo. Van con
- * matrícula paraguaya de verdad, ZP, y con la fraseología de siempre.
+ * Sus cinco frases estaban escritas en este guion, y eso duró hasta que el
+ * juego empezó a decirlas de verdad: entonces había dos copias del mismo
+ * texto y una de ellas —la de aquí— seguía diciendo «viento en cola para la
+ * uno cinco» cuando la del juego ya no nombraba ninguna pista. Ahora salen
+ * del diccionario, como las del instructor, y no hay dos.
+ *
+ * Ver `otro.*` en `src/i18n/es-PY.ts` y `src/flight/radio.ts`.
  */
-const OTRO_AVION = [
-  [
-    "otro.rodando",
-    "Zulu Papa Alfa Bravo Charlie, rodando a la cabecera",
-    "otro avión rodando",
-  ],
-  [
-    "otro.enCola",
-    "Zulu Papa Alfa Bravo Charlie, viento en cola para la uno cinco",
-    "otro avión en el circuito",
-  ],
-  [
-    "otro.final",
-    "Zulu Papa Alfa Bravo Charlie, en final",
-    "otro avión llegando",
-  ],
-  [
-    "otro.pistaLibre",
-    "Zulu Papa Alfa Bravo Charlie, pista libre",
-    "otro avión que ya salió",
-  ],
-  ["otro.buenosDias", "Buenos días, Óga uno siete dos", "el saludo de siempre"],
-];
 
 const claves = (ruta) => {
   const s = readFileSync(ruta, "utf8");
@@ -171,10 +151,6 @@ for (const [id, texto, para] of CABINA) {
 }
 for (const [id, texto, para] of TORRE) {
   filas.push({ id, voz: "torre", idioma: "en", texto, para });
-  total += texto.length;
-}
-for (const [id, texto, para] of OTRO_AVION) {
-  filas.push({ id, voz: "otro", idioma: "es-PY", texto, para });
   total += texto.length;
 }
 

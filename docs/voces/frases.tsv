@@ -84,6 +84,11 @@ instructor	instructor/mission.done.ogg	es-PY	¡Misión cumplida!	las misiones
 instructor	instructor/mission.none.ogg	es-PY	Vuelo libre	las misiones
 torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa
 torre	torre/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha en casa
+otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, Óga uno siete dos	el otro avión de la frecuencia
+otro	otro/otro.rodando.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, rodando a la cabecera	el otro avión de la frecuencia
+otro	otro/otro.enCola.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, viento en cola	el otro avión de la frecuencia
+otro	otro/otro.final.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, en final	el otro avión de la frecuencia
+otro	otro/otro.pistaLibre.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, pista libre	el otro avión de la frecuencia
 cabina	cabina/cabina.v1.ogg	en	V1	el punto de no retorno del despegue
 cabina	cabina/cabina.vr.ogg	en	Vr	la velocidad de rotación: tirar
 cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
@@ -110,8 +115,3 @@ torre	torre/torre.clearedLand.ogg	en	cleared to land	podés volver a intentarlo
 torre	torre/torre.goAround.ogg	en	go around, runway occupied	la pista está ocupada
 torre	torre/torre.holdShort.ogg	en	hold short of the runway	pará en la doble raya
 torre	torre/torre.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
-otro	otro/otro.rodando.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, rodando a la cabecera	otro avión rodando
-otro	otro/otro.enCola.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, viento en cola para la uno cinco	otro avión en el circuito
-otro	otro/otro.final.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, en final	otro avión llegando
-otro	otro/otro.pistaLibre.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, pista libre	otro avión que ya salió
-otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, Óga uno siete dos	el saludo de siempre

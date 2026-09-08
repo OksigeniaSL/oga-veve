@@ -3847,3 +3847,25 @@ body {
 .rendimiento__linea--caro {
   color: #ff8b74;
 }
+
+/*
+ * La radio: lo que dice otro avión en la frecuencia.
+ *
+ * Pequeña, apagada y sin recuadro fuerte, y ese es el diseño entero: **no es
+ * una instrucción**. Las tarjetas del vuelo dicen qué hacer; esto solo cuenta
+ * que hay alguien más ahí fuera. Si tuviera la misma pinta que un aviso,
+ * enseñaría a un chico que la radio de otro avión le manda algo.
+ */
+.radio {
+  max-width: 320px;
+  padding: 5px 10px;
+  border-radius: var(--r-s);
+  /* Al 62 % se quedaba en 4,27:1 sobre un cielo claro. Al 75 %, en 6,52.
+     Medido con `npm run acceso`, que ahora la saca a propósito para verla. */
+  background: rgb(12 18 15 / 75%);
+  border: 1px solid var(--linea);
+  color: var(--tinta-suave);
+  font-size: 13px;
+  line-height: 1.35;
+  font-style: italic;
+}

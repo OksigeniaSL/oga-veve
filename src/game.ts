@@ -209,7 +209,12 @@ import {
   type Contexto,
 } from "./cameras";
 import { nombreDeTecla } from "./flight/keymap";
-import { elegirInstructor, type Instructor } from "./audio/instructor";
+import {
+  elegirInstructor,
+  elegirOtroAvion,
+  type Instructor,
+} from "./audio/instructor";
+import { Radio } from "./flight/radio";
 import type { ControlInputs } from "./flight/model";
 import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
@@ -808,6 +813,15 @@ export class Game {
    * que permitirá cambiarla sin tocar nada de aquí.
    */
   private readonly instructor: Instructor = elegirInstructor();
+  /**
+   * El otro avión de la frecuencia, con su propia voz.
+   *
+   * Un aeropuerto donde la radio está muerta es un decorado. Ver
+   * `flight/radio.ts`, que decide **cuándo** habla, y `audio/instructor.ts`,
+   * que le busca una voz que no sea la del instructor.
+   */
+  private readonly otroAvion: Instructor = elegirOtroAvion(this.instructor);
+  private readonly radio = new Radio();
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   private faseAnunciada = "";
 
@@ -2618,6 +2632,8 @@ export class Game {
     this.avisadoDeLaPasada = false;
     // Una cuenta atrás a medias de un vuelo que ya no existe.
     this.avisosDeAltura.reiniciar();
+    // Y el otro avión vuelve a empezar su vuelo con nosotros.
+    this.radio.reiniciar();
     callar();
     const { runway } = this.scenario;
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
@@ -2783,6 +2799,32 @@ export class Game {
      */
     this.hayPapi = !!this.aproximacion?.grupo.getObjectByName("papi");
     this.papiEnPantalla = null;
+  }
+
+  /**
+   * La radio: si el otro avión tiene algo que decir, se oye y se lee.
+   *
+   * Todo lo que decide está en `flight/radio.ts`. Aquí solo se le pasa el
+   * momento —qué fase, si hay luz y si el instructor está hablando— y se
+   * reparte lo que conteste entre la voz y la pantalla, que es la regla de
+   * siempre: **cada aviso hablado tiene su gemelo escrito**.
+   *
+   * **La voz suena en todos los peldaños; la tira escrita, no.** En Guyrami
+   * no hay texto en pantalla porque a los cuatro años no se lee, y una tira
+   * de letras ahí no la ve nadie. Pero oír que hay otro avión sí se entiende
+   * a los cuatro, y es justo la edad a la que más dice: no estás solo en el
+   * mundo, y la pista es de todos.
+   */
+  private oirLaRadio(dt: number): void {
+    const dice = this.radio.update(dt, {
+      fase: this.faseAnunciada,
+      deDia: this.sky.sunDirection.y > 0,
+      instructorHablando: this.instructor.hablando,
+    });
+    if (!dice) return;
+    const texto = t(dice);
+    this.otroAvion.decir(texto);
+    if (this.tier.instruments !== "none") this.hud.radio(texto);
   }
 
   /**
@@ -4013,6 +4055,7 @@ export class Game {
     this.explicarElPapi(acercandose);
     this.mirarSiMandanFrustrar(acercandose);
     this.seguirElCircuito(acercandose);
+    this.oirLaRadio(dt);
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
