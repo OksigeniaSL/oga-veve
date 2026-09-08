@@ -198,6 +198,10 @@ import { Hud } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { Medidor } from "./ui/rendimiento";
 import {
+  crearLucesDeRodadura,
+  type LucesDeRodadura,
+} from "./world/luces-de-rodadura";
+import {
   CAMERA_MODES,
   construirCamaras,
   type CameraMode,
@@ -658,6 +662,11 @@ export class Game {
    * formatea nada. Ver `ui/rendimiento.ts` y #33.
    */
   private readonly medidor: Medidor;
+  /**
+   * Las luces azules de las calles de rodaje, que se encienden con el sol
+   * bajo. Se montan con las de aproximación, después de moldear el terreno.
+   */
+  private rodadura: LucesDeRodadura | null = null;
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
   private keyScreen: KeyScreen | null = null;
@@ -1756,6 +1765,7 @@ export class Game {
     window.removeEventListener("resize", this.onResize);
     this.input.dispose();
     this.medidor.dispose();
+    this.rodadura?.dispose();
     this.terrain.dispose();
     this.renderer.dispose();
   }
@@ -2747,6 +2757,26 @@ export class Game {
       this.scenario.aerodrome?.visualAids ?? [],
     );
     if (this.aproximacion) this.scene.add(this.aproximacion.grupo);
+
+    /*
+     * Y las azules de las calles de rodaje, que son las que dibujan el
+     * aeropuerto de noche. Van aquí porque necesitan el mismo suelo que las
+     * de aproximación: montadas antes de moldear el terreno acaban enterradas.
+     */
+    if (this.rodadura) {
+      this.scene.remove(this.rodadura.grupo);
+      this.rodadura.dispose();
+      this.rodadura = null;
+    }
+    if (this.scenario.aerodrome) {
+      this.rodadura = crearLucesDeRodadura(this.scenario.aerodrome, (p) =>
+        this.terrain.sampleHeight(p[0], -p[1]),
+      );
+      if (this.rodadura) {
+        this.scene.add(this.rodadura.grupo);
+        this.rodadura.ponerSol(this.sky.sunDirection.y);
+      }
+    }
     /*
      * Y si esta pista tiene PAPI, la pantalla puede explicarlo. Se pregunta
      * aquí y no cada fotograma porque la respuesta no cambia en todo el vuelo.
@@ -3388,6 +3418,9 @@ export class Game {
   /** Pone una hora del día. Lo llama el panel del tiempo. */
   ponerHora(hora: number): void {
     this.sky.ponerHora(hora);
+    // Y con ella se enciende o se apaga el balizamiento. `sunDirection.y` es
+    // el seno de la altura del sol, que el cielo acaba de recalcular.
+    this.rodadura?.ponerSol(this.sky.sunDirection.y);
   }
 
   /**
