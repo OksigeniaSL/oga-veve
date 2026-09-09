@@ -249,6 +249,52 @@ async function construir(icao, pistas, aeropuertos) {
     const [a, b] = ref.split("/");
     const eje = camino(w, proj);
     const suyas = pistas.filter((p) => p.airport_ident === icao);
+    const suya =
+      suyas.find((r) => `${r.le_ident}/${r.he_ident}` === ref) ?? suyas[0];
+    const anchoPies = suya ? num(suya.width_ft) : null;
+
+    /*
+     * **Y si OurAirports no sabe dónde están los umbrales, lo dice el eje.**
+     *
+     * Sus columnas `le_latitude_deg` y `he_latitude_deg` están vacías en la
+     * mayoría de los campos de fuera de Europa y Estados Unidos: Encarnación,
+     * por ejemplo, tiene la pista con su longitud, su anchura, su superficie y
+     * sus dos elevaciones, y ni una coordenada. Sin ellas el aeródromo salía
+     * con los dos umbrales en `null`, o sea inservible — y este extractor está
+     * escrito precisamente para aeródromos paraguayos.
+     *
+     * Esto no inventa nada: el eje de la pista es geometría de
+     * OpenStreetMap, y los umbrales son sus dos extremos. Lo único que hay que
+     * decidir es **cuál es cuál**, y lo dice el propio designador: la 02
+     * apunta al nordeste, así que está en el extremo sur. Se compara el rumbo
+     * del eje con el número pintado y se reparte.
+     */
+    const puntas = (() => {
+      if (!a || !b || eje.length < 2) return {};
+      const uno = eje[0];
+      const otro = eje[eje.length - 1];
+      // Rumbo de ir del primer punto al último, en grados desde el norte. En
+      // este sistema `x` va al este y `y` al norte, como en el proyector.
+      const rumbo =
+        (Math.atan2(otro[0] - uno[0], otro[1] - uno[1]) * 180) / Math.PI;
+      const separa = (grados, otros) => {
+        const d = Math.abs(grados - otros) % 360;
+        return d > 180 ? 360 - d : d;
+      };
+      // Si el eje va en el sentido que dice `a`, el umbral `a` está al
+      // principio; si va al revés, al final.
+      const alDerecho = separa(rumbo, Number(a) * 10) < 90;
+      return alDerecho ? { [a]: uno, [b]: otro } : { [a]: otro, [b]: uno };
+    })();
+    const rumboDelEje = (designador) => {
+      const suyo = puntas[designador];
+      const opuesto = Object.entries(puntas).find(([k]) => k !== designador);
+      if (!suyo || !opuesto) return null;
+      const [, hacia] = opuesto;
+      const r =
+        (Math.atan2(hacia[0] - suyo[0], hacia[1] - suyo[1]) * 180) / Math.PI;
+      return Math.round(((r % 360) + 360) % 360);
+    };
     const umbral = (designador) => {
       const p = suyas.find(
         (r) => r.le_ident === designador || r.he_ident === designador,
@@ -259,9 +305,12 @@ async function construir(icao, pistas, aeropuertos) {
       const lon = num(p[`${lado}_longitude_deg`]);
       const pies = num(p[`${lado}_elevation_ft`]);
       return {
-        xy: lat !== null && lon !== null ? proj(lat, lon) : null,
+        xy:
+          lat !== null && lon !== null
+            ? proj(lat, lon)
+            : (puntas[designador] ?? null),
         elevM: pies === null ? null : redondear(pies * 0.3048),
-        headingTrue: num(p[`${lado}_heading_degT`]),
+        headingTrue: num(p[`${lado}_heading_degT`]) ?? rumboDelEje(designador),
         displacedM: (() => {
           const d = num(p[`${lado}_displaced_threshold_ft`]);
           return d === null ? 0 : redondear(d * 0.3048);
@@ -272,9 +321,6 @@ async function construir(icao, pistas, aeropuertos) {
         approachLights: null,
       };
     };
-    const suya =
-      suyas.find((r) => `${r.le_ident}/${r.he_ident}` === ref) ?? suyas[0];
-    const anchoPies = suya ? num(suya.width_ft) : null;
     return {
       ref,
       // OSM casi nunca trae la anchura; OurAirports sí.
@@ -303,9 +349,18 @@ async function construir(icao, pistas, aeropuertos) {
        */
       magneticVariation: (() => {
         if (!a || !eje.length) return null;
-        const t = num(
-          suya?.[suya?.le_ident === a ? "le_heading_degT" : "he_heading_degT"],
-        );
+        /*
+         * Y donde OurAirports tampoco trae el rumbo —que es donde tampoco
+         * traía las coordenadas— la cuenta sale igual con el rumbo del eje de
+         * OpenStreetMap: el designador es magnético, el eje es verdadero, y la
+         * diferencia es la declinación.
+         */
+        const t =
+          num(
+            suya?.[
+              suya?.le_ident === a ? "le_heading_degT" : "he_heading_degT"
+            ],
+          ) ?? rumboDelEje(a);
         if (t === null) return null;
         let d = Number(a) * 10 - t;
         while (d > 180) d -= 360;
@@ -315,7 +370,49 @@ async function construir(icao, pistas, aeropuertos) {
     };
   });
 
-  const elev = num(ficha.elevation_ft);
+  /*
+   * **La cota del campo, y qué hacer cuando OurAirports se contradice.**
+   *
+   * La ficha del aeropuerto trae una elevación y las filas de pista traen las
+   * de cada umbral, y son la misma fuente: normalmente coinciden dentro de
+   * unos metros —Asunción, trece; Ciudad del Este, veintidós— porque la ficha
+   * mide en el punto de referencia y los umbrales en los extremos.
+   *
+   * Pero en Encarnación la ficha dice seiscientos cincuenta y nueve pies y los
+   * dos umbrales dicen doscientos setenta y nueve: ciento dieciséis metros de
+   * diferencia. Uno de los dos está mal, y se puede saber cuál sin salir de
+   * aquí — Encarnación está a orillas del Paraná, y el relieve medido de
+   * Copernicus en veinte kilómetros a la redonda va de ochenta a doscientos
+   * ochenta y ocho metros. Doscientos uno pondría el aeropuerto casi en lo más
+   * alto de su propia comarca; ochenta y cinco lo pone junto al río, que es
+   * donde está.
+   *
+   * Así que cuando las dos cifras se separan de verdad **manda el umbral**,
+   * que es lo que toca el avión, y se dice en voz alta. Un aeródromo colocado
+   * ciento dieciséis metros por encima de su terreno no se estrella: flota, y
+   * eso se ve al primer vuelo.
+   */
+  const CUANTO_SE_PERDONA = 60;
+  const umbrales = pistas
+    .filter((p) => p.airport_ident === icao)
+    .flatMap((p) => [num(p.le_elevation_ft), num(p.he_elevation_ft)])
+    .filter((v) => v !== null);
+  const deLaFicha = num(ficha.elevation_ft);
+  const deLosUmbrales = umbrales.length
+    ? umbrales.reduce((a, b) => a + b, 0) / umbrales.length
+    : null;
+  let elev = deLaFicha;
+  if (
+    deLaFicha !== null &&
+    deLosUmbrales !== null &&
+    Math.abs(deLaFicha - deLosUmbrales) * 0.3048 > CUANTO_SE_PERDONA
+  ) {
+    process.stdout.write(
+      `  ⚠ OurAirports se contradice: la ficha dice ${Math.round(deLaFicha * 0.3048)} m ` +
+        `y los umbrales ${Math.round(deLosUmbrales * 0.3048)} m. Manda el umbral.\n`,
+    );
+    elev = deLosUmbrales;
+  }
   const salida = {
     id: icao,
     name: ficha.name,
@@ -478,6 +575,46 @@ function esperaDeducida(taxiways, runways) {
       // que cruza los noventa metros. Desde los dos, porque una calle puede
       // tocar la pista por cualquiera de sus dos puntas —o por las dos, si la
       // atraviesa—.
+      /*
+       * **Y si la calle no llega tan lejos, la espera va donde acaba.**
+       *
+       * Noventa metros es la distancia de una pista grande con aproximación de
+       * precisión, y en un campo pequeño simplemente no existe: las dos
+       * salidas de Encarnación miden treinta y ocho metros de punta a punta, o
+       * sea que **ninguna cruza los noventa** y de ahí no salía ni un punto de
+       * espera. Sin punto de espera no hay ruta de rodaje, y sin ruta el juego
+       * arranca el vuelo con el avión ya alineado en la pista: un aeropuerto
+       * de verdad convertido en un despegue de arcade.
+       *
+       * Así que cuando la calle se queda corta, la espera se pone en su punto
+       * más lejano del eje, siempre que esté fuera de la franja de pista. Es
+       * lo mismo que se hace en un campo pequeño de verdad: la doble raya está
+       * donde acaba la calle, no a una distancia de manual.
+       */
+      const DEL_ASFALTO = 12;
+      const masLejos = camino.reduce((a, b) =>
+        aLaLinea(b, eje) > aLaLinea(a, eje) ? b : a,
+      );
+      const alcance = aLaLinea(masLejos, eje);
+      if (alcance < DEL_EJE) {
+        // No hay cruce que interpolar: el punto más lejano **es** el final de
+        // la calle, y ahí va la doble raya. Si ni siquiera eso sale de la
+        // franja de pista, esta calle no sirve de espera.
+        if (alcance < media + DEL_ASFALTO) continue;
+        const xy = [redondear(masLejos[0]), redondear(masLejos[1])];
+        if (
+          !salida.some((p) => Math.hypot(p.xy[0] - xy[0], p.xy[1] - xy[1]) < 40)
+        ) {
+          salida.push({
+            xy,
+            ref: calle.ref ?? null,
+            runway: pista.ref || null,
+            source: "derivado",
+          });
+        }
+        continue;
+      }
+
       for (const orden of [camino, [...camino].reverse()]) {
         for (let i = 0; i < orden.length - 1; i++) {
           const d1 = aLaLinea(orden[i], eje);

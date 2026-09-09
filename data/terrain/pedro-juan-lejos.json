@@ -1,0 +1,13 @@
+{
+  "id": "pedro-juan-lejos",
+  "fuente": "Copernicus DEM GLO-30",
+  "atribucion": "© DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved",
+  "origen": {
+    "lat": -22.641427,
+    "lon": -55.829993
+  },
+  "tamanoM": 108000,
+  "resolucion": 353,
+  "minM": 174,
+  "maxM": 759
+}
