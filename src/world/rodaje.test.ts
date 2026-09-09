@@ -12,6 +12,7 @@
 import { describe, expect, it } from "vitest";
 import sgas from "../../data/aerodromes/sgas.aero.json";
 import gcxo from "../../data/aerodromes/gcxo.aero.json";
+import sgme from "../../data/aerodromes/sgme.aero.json";
 import { construirGrafo, nudoCercano, rodajeEntre, rutaEntre } from "./rodaje";
 import type { Aerodrome, Punto } from "./aerodrome";
 
@@ -93,7 +94,13 @@ describe("la ruta", () => {
 
   it("de un sitio a sí mismo no va a ninguna parte", () => {
     const r = rutaEntre(grafo, 3, 3);
-    expect(r).toEqual({ tramos: [], puntos: [], largo: 0, letras: [] });
+    expect(r).toEqual({
+      tramos: [],
+      puntos: [],
+      largo: 0,
+      letras: [],
+      enganche: 0,
+    });
   });
 
   it("no inventa camino desde un punto que está lejos de todo", () => {
@@ -250,4 +257,96 @@ describe("desde cualquier punto de la pista se sale por asfalto", () => {
         expect(alCamino(p)).toBeLessThan(30);
     },
   );
+});
+
+/**
+ * Y el campo de una sola calle, que es el que rompía todo esto.
+ *
+ * Mariscal Estigarribia tiene una calle de rodaje y nada más: se va y se vuelve
+ * por ella. Su punto de espera está **a mitad de calle**, y el buscador de
+ * rutas solo sabe enganchar en los nudos —los extremos—, así que la ruta se
+ * iba hasta el final de la calle y volvía por el mismo sitio noventa metros
+ * para llegar a un punto que ya se había pisado.
+ *
+ * Medido con el banco de despegue antes del recorte: ruta de 319 m para un
+ * rodaje de 228, el avión parado a un metro del último punto y el plan
+ * diciendo, con razón, que quedaban 92. Ver #151.
+ */
+describe("el rodaje de Mariscal Estigarribia, que tiene una sola calle", () => {
+  const aero = sgme as unknown as Aerodrome;
+  const grafo = construirGrafo(aero);
+  const puesto = aero.parkingPositions![0]!.xy;
+  const espera = aero.holdingPositions[0]!.xy;
+
+  it("la ruta acaba en la doble raya", () => {
+    const ruta = rodajeEntre(grafo, puesto, espera)!;
+    expect(ruta).not.toBeNull();
+    const fin = ruta.puntos[ruta.puntos.length - 1]!;
+    expect(Math.hypot(fin[0] - espera[0], fin[1] - espera[1])).toBeLessThan(1);
+  });
+
+  it("y no pasa dos veces por ella", () => {
+    // Lo que delata el ida y vuelta: la doble raya aparece a mitad de la ruta
+    // **y** al final. Contando cuántos puntos de la ruta le quedan cerca se ve
+    // enseguida, porque entre los dos pases hay noventa metros de calle.
+    const ruta = rodajeEntre(grafo, puesto, espera)!;
+    const cerca = ruta.puntos.filter(
+      (p) => Math.hypot(p[0] - espera[0], p[1] - espera[1]) < 5,
+    );
+    expect(cerca.length).toBeLessThanOrEqual(2);
+  });
+
+  it("y mide lo que mide llegar, no lo de ir y volver", () => {
+    // Del puesto 1 a la doble raya hay 253 m. Aquí lo que se mira es que no
+    // haya noventa y uno de calle contados dos veces: en el juego, que sale
+    // del puesto 3, eran 319 m de ruta para 228 de rodaje.
+    const ruta = rodajeEntre(grafo, puesto, espera)!;
+    let largo = 0;
+    for (let i = 0; i < ruta.puntos.length - 1; i++) {
+      largo += Math.hypot(
+        ruta.puntos[i + 1]![0] - ruta.puntos[i]![0],
+        ruta.puntos[i + 1]![1] - ruta.puntos[i]![1],
+      );
+    }
+    expect(largo).toBeGreaterThan(200);
+    expect(largo).toBeLessThan(270);
+  });
+});
+
+/**
+ * Y el otro lado del recorte, que costó un banco entero.
+ *
+ * En Tenerife Norte el buscador acaba a quince metros del punto de espera, y
+ * esos quince metros son **el bulbo de giro** por el que se entra. Cortarlos
+ * porque la ruta pasa cerca del punto antes de darlos deja al avión sin la
+ * maniobra: medido con el banco de despegue, trescientos cincuenta segundos
+ * dando vueltas a veintidós metros de la doble raya. Ver #151.
+ */
+describe("el recorte no se lleva la curva de entrada", () => {
+  const aero = gcxo as unknown as Aerodrome;
+  const grafo = construirGrafo(aero);
+
+  it("en Tenerife Norte la ruta al punto de espera llega entera", () => {
+    const puesto = aero.parkingPositions![0]!.xy;
+    const espera = aero.holdingPositions[0]!.xy;
+    const ruta = rodajeEntre(grafo, puesto, espera)!;
+    expect(ruta).not.toBeNull();
+    // Lo que se comprueba es que no falte nada: el último punto de calle del
+    // buscador —el que el recorte se llevaba— sigue estando en la ruta.
+    const a = nudoCercano(grafo, puesto);
+    const b = nudoCercano(grafo, espera);
+    const entera = rutaEntre(grafo, a.nudo, b.nudo)!;
+    const finDeCalle = entera.puntos[entera.puntos.length - 1]!;
+    const sigue = ruta.puntos.some(
+      (p) => Math.hypot(p[0] - finDeCalle[0], p[1] - finDeCalle[1]) < 0.5,
+    );
+    expect(sigue).toBe(true);
+    let largo = 0;
+    for (let i = 0; i < ruta.puntos.length - 1; i++)
+      largo += Math.hypot(
+        ruta.puntos[i + 1]![0] - ruta.puntos[i]![0],
+        ruta.puntos[i + 1]![1] - ruta.puntos[i]![1],
+      );
+    expect(largo).toBeGreaterThan(150);
+  });
 });

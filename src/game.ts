@@ -1959,6 +1959,7 @@ export class Game {
         fase: this.vistaActual?.fase ?? "",
         puntos: this.plan?.rutaVisible().length ?? 0,
         vecesQueSePuso: this.plan?.vecesQueSePusoLaRuta ?? 0,
+        ...(this.plan?.comoVaLaRuta ?? {}),
       }),
     };
   }
