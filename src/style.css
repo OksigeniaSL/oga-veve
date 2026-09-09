@@ -334,10 +334,6 @@ body {
   }
 }
 
-
-
-
-
 /*
  * La esquina de arriba a la izquierda: cambiar de vista y parar.
  *
@@ -3487,7 +3483,6 @@ button.motor__tecla::after {
   pointer-events: auto;
 }
 
-
 .mapa__lienzos {
   position: relative;
   width: min(78vmin, 460px);
@@ -3970,7 +3965,11 @@ button.motor__tecla::after {
   border-radius: 8px;
   background: rgb(12 14 18 / 78%);
   color: #d7e2ea;
-  font: 12px/1.5 ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  font:
+    12px/1.5 ui-monospace,
+    "SFMono-Regular",
+    "Menlo",
+    monospace;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   white-space: nowrap;
@@ -4405,4 +4404,267 @@ button.motor__tecla::after {
 
 .pilotos__color--puesto {
   border-color: var(--tinta);
+}
+
+/* ── Cómo vuela un ala ─────────────────────────────────────────────────────
+ *
+ * El esquema con el tirador del ángulo de ataque. Los colores no son de
+ * adorno: **azul es que chupa y rojo es que empuja**, y eso hay que poder
+ * decirlo sin ver los colores, así que el azul sale arriba y el rojo abajo y
+ * el rótulo lo dice con palabras. Ver `ui/pantalla-ala.ts`.
+ */
+
+.ala {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 16, 13, 0.86);
+  z-index: 10;
+  padding: 20px;
+}
+
+.ala[hidden] {
+  display: none;
+}
+
+.ala__panel {
+  width: min(680px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--verde-bosque);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 18px;
+  padding: 22px;
+}
+
+.ala__panel h2 {
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+
+.ala__esquema {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--barro);
+  border-radius: var(--r-m);
+}
+
+/* El cielo por el que pasa el aire: rayas finas, casi transparentes, para que
+   lo que se mire sea el ala y no ellas. */
+.ala__corriente path {
+  fill: none;
+  stroke: rgba(228, 226, 218, 0.5);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-dasharray: 13 9;
+  animation: ala-corre 1.1s linear infinite;
+}
+
+@keyframes ala-corre {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+
+/* Y quieta cuando se ha pedido movimiento reducido: el mismo dibujo, sin que
+   nada se mueva. Criterio 2.3.3. */
+.ala__corriente--quieta path {
+  animation: none;
+  stroke-dasharray: none;
+  stroke: rgba(228, 226, 218, 0.34);
+}
+
+.ala__perfil {
+  fill: var(--beige);
+  stroke: rgba(26, 36, 32, 0.7);
+  stroke-width: 1;
+}
+
+.ala__presion {
+  stroke-width: 0.9;
+}
+
+/* Azul: acá el aire chupa hacia arriba, y de acá sale la mayor parte de la
+   fuerza. Es la sorpresa del esquema entero. */
+.ala__presion--chupa {
+  fill: rgba(86, 156, 214, 0.5);
+  stroke: #7cc1f0;
+}
+
+/* Y rojo: acá empuja. Menos de lo que todo el mundo supone. */
+.ala__presion--empuja {
+  fill: rgba(190, 93, 56, 0.5);
+  stroke: var(--terracota-tinta);
+}
+
+.ala__remolinos path {
+  fill: none;
+  stroke: #e8b13a;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.ala__flecha {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ala__flecha--sustenta {
+  stroke: var(--ok);
+}
+
+.ala__flecha--arrastra {
+  stroke: var(--terracota-tinta);
+}
+
+.ala__rotulo {
+  fill: var(--tinta-suave);
+  font-size: 9px;
+}
+
+/* Los dos rótulos del cuadro llevan el color de su curva: es lo que hace de
+   leyenda sin gastar una línea en una leyenda. */
+.ala__rotulo--sustenta {
+  fill: var(--ok);
+}
+
+.ala__rotulo--arrastra {
+  fill: var(--terracota-tinta);
+}
+
+/* El cuadro de las dos curvas va **opaco**: la corriente le pasa por detrás y
+   con fondo translúcido las rayas se colaban entre las curvas y se leía como
+   ruido en vez de como un cuadro aparte. */
+.ala__cuadro {
+  fill: var(--barro);
+  stroke: var(--linea);
+}
+
+.ala__curva {
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.ala__curva--sustenta,
+.ala__aqui--sustenta {
+  stroke: var(--ok);
+  fill: none;
+}
+
+.ala__curva--arrastra,
+.ala__aqui--arrastra {
+  stroke: var(--terracota-tinta);
+  fill: none;
+}
+
+.ala__aqui {
+  stroke-width: 2.2;
+  fill: var(--barro);
+}
+
+.ala__dice {
+  margin: 12px 0;
+  min-height: 3em;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.ala__mandos {
+  display: grid;
+  gap: 6px;
+}
+
+.ala__mando {
+  display: grid;
+  grid-template-columns: minmax(7em, auto) 1fr minmax(4.5em, auto);
+  align-items: center;
+  gap: 12px;
+  /* El sitio del puño, que sobresale de la barra por arriba y por abajo. Sin
+     esto los dos tiradores se rozaban y parecían dos bolas sueltas. */
+  min-height: var(--tacto);
+  font-size: var(--voz-rotulo);
+}
+
+/* El tirador. Grande de verdad: es el único mando de esta pantalla y se usa
+   con el dedo, así que la barra y el puño miden lo que mide un botón. */
+/* El tirador mide lo que mide un botón **de alto**, aunque la barra pintada
+   sea fina: lo que se toca con el dedo y lo que mide `verificar-acceso` es la
+   caja del control, no la raya que se ve. La raya la pintan los dos
+   seudoelementos de abajo. */
+.ala__mando input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: var(--tacto);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ala__mando input[type="range"]::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--barro);
+  border: 1px solid var(--linea);
+}
+
+.ala__mando input[type="range"]::-moz-range-track {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--barro);
+  border: 1px solid var(--linea);
+}
+
+.ala__mando input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: calc(30px * var(--escala-hud));
+  height: calc(30px * var(--escala-hud));
+  border-radius: 50%;
+  background: var(--ocre);
+  border: 2px solid var(--barro);
+  /* Webkit no centra el puño sobre la pista: hay que subirlo la mitad de lo
+     que mide, menos la mitad de la pista. */
+  margin-top: calc(7px - 15px * var(--escala-hud));
+}
+
+.ala__mando input[type="range"]::-moz-range-thumb {
+  width: calc(30px * var(--escala-hud));
+  height: calc(30px * var(--escala-hud));
+  border-radius: 50%;
+  background: var(--ocre);
+  border: 2px solid var(--barro);
+}
+
+.ala__mando output {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ala__cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9em, 1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.ala__cifra {
+  background: var(--barro);
+  border: 1px solid var(--linea);
+  border-radius: var(--r-s);
+  padding: 8px 10px;
+}
+
+.ala__cifra dt {
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+.ala__cifra dd {
+  margin: 2px 0 0;
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
 }

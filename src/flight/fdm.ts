@@ -944,8 +944,15 @@ export function liftCoefficient(
   return clAtStall * (1 - blend) + clFlatPlate * blend;
 }
 
-/** Resistencia adicional al desprenderse el flujo. */
-function postStallDrag(alpha: number, stallAngle: number): number {
+/**
+ * Resistencia adicional al desprenderse el flujo.
+ *
+ * Se exporta porque el esquema de «cómo vuela un ala» tiene que dibujar **la
+ * curva de este avión**, no la de un ala de libro: un esquema que enseñe una
+ * pérdida distinta de la que se acaba de sentir a los mandos enseña dos cosas
+ * a la vez. Ver `flight/ala.ts`.
+ */
+export function postStallDrag(alpha: number, stallAngle: number): number {
   const excess = Math.abs(alpha) - stallAngle;
   if (excess <= 0) return 0;
   const s = Math.sin(excess);

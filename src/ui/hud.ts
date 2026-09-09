@@ -287,6 +287,7 @@ export class Hud {
   private camaraHandler: (() => void) | null = null;
   private pausaHandler: (() => void) | null = null;
   private creditsHandler: (() => void) | null = null;
+  private alaHandler: (() => void) | null = null;
   private hangarHandler: (() => void) | null = null;
   private horaAtada: { hora: number; cambio: (h: number) => void } | null =
     null;
@@ -461,6 +462,25 @@ export class Hud {
         </button>
         ${Mapa.boton(t("mapa.title"))}
         ${PanelDelTiempo.boton(t("tiempo.title"))}
+        <!--
+          Y el esquema de cómo vuela un ala.
+
+          Tiene botón propio y no vive escondido en un menú porque es la única
+          explicación del juego que no se puede dar hablando, y porque la
+          pregunta —«¿y por qué se cae si tiro mucho?»— llega justo después de
+          una pérdida, o sea volando y no en el hangar. El icono es el perfil
+          en corte con la corriente pasándole por encima, que es literalmente
+          lo que hay dentro.
+        -->
+        <button class="sonido" type="button" data-hud="ala"
+                aria-label="${t("ala.titulo")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 15 C8 15 13 13.4 21 9 C15 15.6 9 18 3 18 Z" />
+            <path d="M2.4 6.6 C7 6.6 12 5.4 20 2.6 M2.4 10.2 C6 10.2 9.4 9.6 13 8.4"
+                  fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" />
+          </svg>
+        </button>
         <!--
           Los créditos, y **esto no es cortesía: es una obligación**. El
           relieve es de Copernicus y las ortofotos son CC BY del PNOA y de
@@ -792,6 +812,7 @@ export class Hud {
     pick(this.root, "keys").addEventListener("click", () =>
       this.keysHandler?.(),
     );
+    pick(this.root, "ala").addEventListener("click", () => this.alaHandler?.());
     pick(this.root, "credits").addEventListener("click", () =>
       this.creditsHandler?.(),
     );
@@ -1676,6 +1697,11 @@ export class Hud {
   /** Quién abre los créditos. Ver el botón en el marcado. */
   onCredits(handler: () => void): void {
     this.creditsHandler = handler;
+  }
+
+  /** Quién abre el esquema de cómo vuela un ala. */
+  onAla(handler: () => void): void {
+    this.alaHandler = handler;
   }
 
   /** Y quién abre el cuaderno de vuelo. */

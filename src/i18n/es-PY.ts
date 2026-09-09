@@ -206,6 +206,29 @@ export const ES_PY = {
    * mismo viniendo alto por la senda que pasando por encima de un aro, y esa
    * es justamente la idea. Ver `flight/escalera.ts`.
    */
+  /*
+   * **Cómo vuela un ala.** El esquema con el tirador del ángulo de ataque.
+   *
+   * Es lo único de este juego que no se entiende oyéndolo, así que estas
+   * frases no explican el ala: acompañan al dibujo y dicen qué está pasando
+   * ahora mismo. Quien navega con lector de pantalla las oye al mover el
+   * tirador, que es lo más cerca del dibujo que se puede poner. Ver
+   * `ui/pantalla-ala.ts`.
+   */
+  "ala.titulo": "Cómo vuela un ala",
+  "ala.angulo": "Ángulo del ala",
+  "ala.velocidad": "Velocidad",
+  "ala.sustentacion": "Lo que sube",
+  "ala.resistencia": "Lo que frena",
+  "ala.finura": "Sube por frena",
+  "ala.peso": "Veces el peso del avión",
+  "ala.dice.arriba":
+    "Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.",
+  "ala.dice.arrastra":
+    "Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.",
+  "ala.dice.cerca": "Cuidado: un poco más de ángulo y el aire se suelta.",
+  "ala.dice.perdida":
+    "El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.",
   "palabra.bien": "¡Bien!",
   "palabra.tira": "¡Tirá!",
   "palabra.subi": "¡Subí!",

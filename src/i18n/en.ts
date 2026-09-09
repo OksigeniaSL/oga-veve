@@ -170,6 +170,21 @@ export const EN: Dictionary = {
   "torre.verde": "Cleared to enter",
   "torre.roja": "Hold here",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
+  // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
+  "ala.titulo": "How a wing flies",
+  "ala.angulo": "Wing angle",
+  "ala.velocidad": "Speed",
+  "ala.sustentacion": "What lifts",
+  "ala.resistencia": "What slows",
+  "ala.finura": "Lift over drag",
+  "ala.peso": "Times the aeroplane's weight",
+  "ala.dice.arriba":
+    "Look at the blue: most of the force comes from the air on top, pulling up. And look at the air going down behind the wing.",
+  "ala.dice.arrastra":
+    "More angle lifts more… but it slows you down much more. That is why you do not fly nose-high.",
+  "ala.dice.cerca": "Careful: a bit more angle and the air lets go.",
+  "ala.dice.perdida":
+    "The air came off the wing: look at the swirls, and how the blue is left only at the very front. That is the stall: lower the nose and it comes back.",
   "palabra.bien": "Good!",
   "palabra.tira": "Pull!",
   "palabra.subi": "Up!",

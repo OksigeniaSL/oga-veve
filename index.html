@@ -8,9 +8,15 @@
       none` sobre los mandos, que ya evita el zoom accidental al pilotar sin
       quitárselo a quien lo necesita.
     -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#2F5243" />
-    <meta name="description" content="Óga Veve — simulador de vuelo para navegador. Volá sobre Paraguay. Un producto de Oksigenia SL bajo la marca Granja Óga." />
+    <meta
+      name="description"
+      content="Óga Veve — simulador de vuelo para navegador. Volá sobre Paraguay. Un producto de Oksigenia SL bajo la marca Granja Óga."
+    />
     <title>Óga Veve — Volá sobre Paraguay</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <!--
@@ -139,24 +145,56 @@
       equivalente, y lo comprueba contra el mapa de teclas de verdad.
     -->
     <div id="tactil" class="tactil">
-      <div class="pad pad--stick" data-touch="stick" role="group" data-equivale-a="pitchUp pitchDown rollLeft rollRight" data-i18n-label="tactil.palanca">
+      <div
+        class="pad pad--stick"
+        data-touch="stick"
+        role="group"
+        data-equivale-a="pitchUp pitchDown rollLeft rollRight"
+        data-i18n-label="tactil.palanca"
+      >
         <svg class="pad__dibujo" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 2.6 L13.4 9.4 L22 12.6 v1.8 l-8.6-1.6 v4.4 l2.6 2 v1.4
-                   L12 19.6 L7.9 20.6 v-1.4 l2.6-2 v-4.4 L2 14.4 v-1.8 l8.6-3.2 Z" />
+          <path
+            d="M12 2.6 L13.4 9.4 L22 12.6 v1.8 l-8.6-1.6 v4.4 l2.6 2 v1.4
+                   L12 19.6 L7.9 20.6 v-1.4 l2.6-2 v-4.4 L2 14.4 v-1.8 l8.6-3.2 Z"
+          />
         </svg>
         <span class="pad__punto"></span>
       </div>
-      <div class="pad pad--rudder" data-touch="rudder" role="group" data-equivale-a="yawLeft yawRight" data-i18n-label="tactil.timon">
-        <svg class="pad__dibujo pad__dibujo--ancho" viewBox="0 0 48 24" aria-hidden="true">
+      <div
+        class="pad pad--rudder"
+        data-touch="rudder"
+        role="group"
+        data-equivale-a="yawLeft yawRight"
+        data-i18n-label="tactil.timon"
+      >
+        <svg
+          class="pad__dibujo pad__dibujo--ancho"
+          viewBox="0 0 48 24"
+          aria-hidden="true"
+        >
           <rect x="6" y="4" width="13" height="16" rx="3" />
           <rect x="29" y="4" width="13" height="16" rx="3" />
-          <path d="M6 12 h13 M29 12 h13" stroke="rgba(18,26,22,0.55)"
-                stroke-width="2" fill="none" />
+          <path
+            d="M6 12 h13 M29 12 h13"
+            stroke="rgba(18,26,22,0.55)"
+            stroke-width="2"
+            fill="none"
+          />
         </svg>
         <span class="pad__punto"></span>
       </div>
-      <div class="pad pad--throttle" data-touch="throttle" role="group" data-equivale-a="throttleUp throttleDown" data-i18n-label="tactil.motor">
-        <svg class="pad__dibujo pad__dibujo--alto" viewBox="0 0 24 60" aria-hidden="true">
+      <div
+        class="pad pad--throttle"
+        data-touch="throttle"
+        role="group"
+        data-equivale-a="throttleUp throttleDown"
+        data-i18n-label="tactil.motor"
+      >
+        <svg
+          class="pad__dibujo pad__dibujo--alto"
+          viewBox="0 0 24 60"
+          aria-hidden="true"
+        >
           <ellipse cx="12" cy="6.5" rx="2.4" ry="6" />
           <ellipse cx="12" cy="19.5" rx="2.4" ry="6" />
           <ellipse cx="5.2" cy="13" rx="6" ry="2.4" />
@@ -191,6 +229,11 @@
     <!-- Y los ajustes, que se abren desde la pausa. -->
     <div id="ajustes" class="ajustes" hidden></div>
 
+    <!--
+      El esquema de cómo vuela un ala. Va aparte de los créditos porque no es
+      un panel de leer: tiene un tirador y un dibujo que responde.
+    -->
+    <div id="ala" class="ala" hidden></div>
     <div id="creditos" class="creditos" hidden></div>
     <div id="teclas" class="creditos teclas" hidden></div>
     <!--

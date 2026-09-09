@@ -196,6 +196,7 @@ import { mundoElegido } from "./ui/mundo";
 const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
 import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
+import { PantallaDelAla } from "./ui/pantalla-ala";
 import { PantallaDePausa } from "./ui/pausa";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
 import {
@@ -718,6 +719,13 @@ export class Game {
   private rodadura: LucesDeRodadura | null = null;
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
+  /**
+   * El esquema de cómo vuela un ala, si su hueco existe en la página.
+   *
+   * Opcional a propósito, como la pantalla de teclas: el juego tiene que
+   * arrancar aunque falte un `div`. Ver `ui/pantalla-ala.ts`.
+   */
+  private ala: PantallaDelAla | null = null;
   private keyScreen: KeyScreen | null = null;
 
   /** Reconoce el aterrizaje y su calidad. Ver `flight/aterrizaje.ts`. */
@@ -1211,6 +1219,7 @@ export class Game {
       this.creditsRoot,
       this.flight.implementationName,
     );
+    this.montarElAla();
 
     /*
      * Las etiquetas de los mandos táctiles, traducidas.
@@ -1346,6 +1355,7 @@ export class Game {
     });
     this.hud.onKeys(() => this.keyScreen?.toggle());
     this.hud.onCredits(() => this.credits.toggle());
+    this.hud.onAla(() => this.ala?.alternar());
     // Volver al hangar es recargar. Suena brusco y es lo correcto: la elección
     // ya está guardada, cambiar de aeropuerto es empezar otro vuelo, y así no
     // hay que inventar el desmontaje en caliente de un escenario entero —que
@@ -5933,6 +5943,23 @@ export class Game {
     this.hud.flash(t(`sound.${level.id}` as never));
   }
 
+  /**
+   * Monta —o vuelve a montar— el esquema del ala.
+   *
+   * Se le pasa el avión que se está volando y no un ala de ejemplo: las cifras
+   * de al lado del dibujo son las suyas, y la pérdida que enseña es la que se
+   * acaba de sentir a los mandos. Ver `flight/ala.ts`.
+   */
+  private montarElAla(): void {
+    const donde = document.getElementById("ala");
+    if (!donde) return;
+    this.ala = new PantallaDelAla(
+      donde,
+      this.aircraft,
+      () => this.reducedMotion,
+    );
+  }
+
   /** Pasa al siguiente idioma y repinta todo lo que lleva texto. */
   private changeLanguage(): void {
     const locale = cycleLocale();
@@ -5941,6 +5968,9 @@ export class Game {
       this.creditsRoot,
       this.flight.implementationName,
     );
+    // El esquema del ala lleva sus rótulos cocidos en el marcado, igual que
+    // los créditos: al cambiar de idioma se rehace, no se traduce a medias.
+    this.montarElAla();
 
     this.updateBadge();
     this.hud.flash(t("language.changed", { name: LOCALE_NAMES[locale] }));
