@@ -2328,7 +2328,6 @@ comprobar(
   "se podía bajar dentro de una nube hasta el suelo y nadie decía nada",
 );
 
-
 comprobar(
   "y bajar igualmente termina el intento",
   orden.percance,
@@ -2336,6 +2335,131 @@ comprobar(
     ? "sale la pantalla del percance"
     : `se aterrizó sin consecuencia (fase «${orden.fase}»)`,
   "una orden que se puede ignorar sin consecuencia no es una orden",
+);
+
+// ── La escalera de comunicación ───────────────────────────────────────────
+
+/*
+ * **Del aro que brilla a la voz de cabina.** Ver `src/flight/escalera.ts`.
+ *
+ * Lo que se mide aquí es el aviso de peligro del HUD, que es el único que sale
+ * siempre y en cualquier escenario: se pone el avión bajo y cayendo, y se mira
+ * qué canales se encienden.
+ *
+ * La comprobación tiene dos mitades y las dos importan:
+ *
+ * - **El dibujo sale en los cuatro peldaños.** La viñeta roja y la flecha no
+ *   dependen de saber leer y por eso no se retiran nunca. Esta mitad es la que
+ *   se rompió una vez: el texto y el aviso iban por la misma variable, así que
+ *   quitarle las palabras a Guyrami le apagaba también el borde rojo.
+ * - **El texto sube de peldaño**: ninguno en Guyrami, una sola palabra en
+ *   Tukã, la frase entera de Taguato en adelante.
+ */
+const escalera = await page.evaluate(async () => {
+  const o = globalThis.__oga;
+  const c = o.controles();
+  const u = globalThis.__umbral;
+  /*
+   * Lo primero, salir del percance que dejó la sección anterior: con la
+   * pantalla del final puesta el avión está congelado y no hay aviso que
+   * mirar. Se sale por donde se sale de verdad, tocando el botón.
+   */
+  document.querySelector('[data-hud="fin-otra"]')?.click();
+  for (let i = 0; i < 40 && o.finDeVuelo(); i++) {
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  /*
+   * **Y el aviso que se provoca es el de quedarse sin pista**, no el de
+   * proximidad del suelo.
+   *
+   * Se intentó con el suelo y no sale en Guyrami: en ese peldaño el avión no
+   * se rompe, así que su modelo deja el tiempo hasta el impacto en infinito a
+   * propósito y no hay nada que avisar. El de la pista sí sale en los cuatro,
+   * porque quedarse sin pista le pasa a cualquiera — y es justamente el aviso
+   * que pedía #43. Se pone el avión rodando deprisa cerca del final.
+   */
+  const pista = o.pista();
+  const largo = pista?.length ?? pista?.largo ?? 1400;
+  const s = o.estado();
+  const ux = Math.sin(s.heading);
+  const uz = -Math.cos(s.heading);
+  const d = -(largo - 90);
+  const x = u.x - ux * d;
+  const z = u.z - uz * d;
+  o.colocar(x, o.suelo(x, z) + 1, z, 34);
+  let visto = null;
+  for (let i = 0; i < 60; i++) {
+    c.throttle = 0.5;
+    c.brakes = 0;
+    await new Promise((r) => setTimeout(r, 50));
+    const caja = document.querySelector('[data-hud="warning"]');
+    if (caja?.classList.contains("aviso-hud--visible")) {
+      visto = {
+        texto: (
+          document.querySelector('[data-hud="warning-text"]')?.textContent ?? ""
+        ).trim(),
+        vineta: !!document
+          .querySelector('[data-hud="vignette"]')
+          ?.classList.contains("vineta--activa"),
+        flecha: (
+          document.querySelector('[data-hud="warning-arrow"]')?.textContent ??
+          ""
+        ).trim(),
+        // Lo que el HUD declara que le llegó del tramo. Ver `setWarning`.
+        peldano: caja.dataset.escalera ?? "",
+      };
+      break;
+    }
+  }
+  c.throttle = 0;
+  c.brakes = 1;
+  return visto;
+});
+
+comprobar(
+  "el aviso de peligro se ve sin saber leer: viñeta y flecha",
+  !!escalera && escalera.vineta && escalera.flecha !== "",
+  escalera
+    ? `viñeta ${escalera.vineta ? "encendida" : "apagada"}, flecha «${escalera.flecha}»`
+    : "no llegó a salir el aviso de que se acaba la pista",
+  "el texto y el aviso iban por la misma variable: quitarle las palabras al peldaño de los pequeños le apagaba el borde rojo",
+);
+
+const palabras = escalera ? escalera.texto.split(/\s+/).filter(Boolean) : [];
+/*
+ * Qué tiene que declarar el HUD en cada tramo, y qué se ve entonces.
+ *
+ * No se cuentan palabras para la frase entera: «Runway ending» son dos y «¡Se
+ * acaba la pista!» son cuatro, y las dos son la frase entera. Lo que se
+ * comprueba es que el peldaño del tramo llegue hasta el HUD —eso es lo que las
+ * pruebas de `escalera.test.ts` no pueden ver— y que lo que se lee encaje: sin
+ * una palabra abajo, una sola arriba de ella, y algo escrito en los dos de
+ * arriba.
+ */
+const ESPERADO = {
+  guyrami: { peldano: "sin-texto", dice: "ni una palabra" },
+  tuka: { peldano: "corto", dice: "una sola palabra corta" },
+  taguato: { peldano: "largo", dice: "la frase entera" },
+  "taguato-ruvicha": { peldano: "largo", dice: "la frase entera" },
+}[TRAMO];
+
+const bienEscrito =
+  !!escalera &&
+  escalera.peldano === ESPERADO.peldano &&
+  (ESPERADO.peldano === "sin-texto"
+    ? palabras.length === 0
+    : ESPERADO.peldano === "corto"
+      ? palabras.length === 1
+      : palabras.length >= 1);
+
+comprobar(
+  `y el texto es el de este peldaño: ${ESPERADO.dice}`,
+  bienEscrito,
+  escalera
+    ? `declara «${escalera.peldano}» y pone «${escalera.texto}» — ${palabras.length} palabra(s)`
+    : "no llegó a salir el aviso de que se acaba la pista",
+  "una niña de cuatro años leía «¡Pérdida! Bajá el morro» y una de siete no llega a leer una frase mientras vuela",
 );
 
 // ── El informe ────────────────────────────────────────────────────────────

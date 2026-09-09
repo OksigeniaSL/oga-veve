@@ -295,6 +295,17 @@ export class RunwayGuide {
    */
   porDonde: "alto" | "bajo" | "ancho" | null = null;
 
+  /**
+   * Y **por cuánto**, en metros: cuánto le faltó o le sobró de altura.
+   *
+   * Es el mismo dato que `porDonde` con una cifra en vez de una palabra, y
+   * existe para el peldaño en el que entran los números: «pasaste el aro» es
+   * el dibujo, «treinta y ocho metros por encima» es la lección siguiente.
+   * Ver `flight/escalera.ts`. Positivo es alto, negativo es bajo, y con el aro
+   * cruzado se queda a cero.
+   */
+  porCuanto = 0;
+
   check(position: Vector3): PasoDeAro {
     const aro = this.rings[this.next];
     if (!aro) return null;
@@ -366,6 +377,7 @@ export class RunwayGuide {
      * de altura no explica el fallo, es que se pasó ancho: se fue por un lado.
      */
     const desnivel = cruce.y - aro.position.y;
+    this.porCuanto = cruzado ? 0 : desnivel;
     this.porDonde = cruzado
       ? null
       : Math.abs(desnivel) > radio
