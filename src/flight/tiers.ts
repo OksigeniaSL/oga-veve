@@ -24,6 +24,7 @@
  */
 
 import { type AssistLayers, FULL_ASSISTS, NO_ASSISTS } from "./assists";
+import type { Peldano } from "./escalera";
 import { leerTexto, ponerTexto } from "../datos/guardado";
 
 export type TierId = "guyrami" | "tuka" | "taguato" | "taguato-ruvicha";
@@ -66,7 +67,7 @@ export interface Tier {
    */
   circuito: boolean;
   /**
-   * En qué idioma —y con qué voz— se avisa de las cosas del vuelo.
+   * En qué peldaño de la escalera de comunicación está este tramo.
    *
    * `AGENTS.md` promete que los avisos crecen con el peldaño y hasta hoy no lo
    * hacía ninguno: **una niña de cuatro años oía «terrain, pull up» y «one
@@ -74,17 +75,23 @@ export interface Tier {
    * de línea, en un idioma que no habla. Eso choca de frente con la regla de
    * que lo que se aprenda aquí no haya que desaprenderlo.
    *
-   * - `propia`: lo dice el instructor, en castellano paraguayo y en una
-   *   palabra —«¡Subí!», «Más despacio», «Cincuenta»—. Es la voz que sustituye
-   *   al texto en el peldaño que no lee.
+   * - `dibujo`: el pictograma, el color y el tono, y ni una palabra escrita.
+   * - `palabra`: lo mismo, más **una sola palabra corta** en la tarjeta.
+   * - `cifra`: la frase entera y los números —la altura en grande, la
+   *   desviación de la senda—, que es donde se empieza a leer un instrumento.
    * - `cabina`: los cantos de verdad, en inglés aeronáutico, que es donde ya
-   *   sirven — a los diez años, un canto de cabina es algo que se reconocerá
-   *   toda la vida.
+   *   sirven — a los catorce años, un canto de cabina es algo que se
+   *   reconocerá toda la vida.
    *
-   * **Y en los dos casos el aviso se ve**: la tarjeta con su dibujo y el tono
-   * salen igual. La voz es el tercer canal, nunca el único. Ver `Game.cantar`.
+   * **Y en los cuatro el aviso se ve**: la tarjeta con su dibujo y el tono
+   * salen igual. Lo que reparte esta escalera es el texto y el idioma del
+   * canto, nunca si hay aviso. Ver `flight/escalera.ts` y `Game.cantar`.
+   *
+   * La voz del instructor no va en esta escalera y no se retira nunca: quien
+   * no lee necesita que alguien le diga las cosas, y por eso Guyrami habla
+   * aunque no escriba.
    */
-  avisos: "propia" | "cabina";
+  avisos: Peldano;
 }
 
 export const GUYRAMI: Tier = {
@@ -115,7 +122,7 @@ export const GUYRAMI: Tier = {
   units: "metric",
   sigueme: true,
   circuito: true,
-  avisos: "propia",
+  avisos: "dibujo",
 };
 
 export const TUKA: Tier = {
@@ -137,7 +144,7 @@ export const TUKA: Tier = {
   // es la red, no el camino.
   sigueme: true,
   circuito: true,
-  avisos: "propia",
+  avisos: "palabra",
 };
 
 export const TAGUATO: Tier = {
@@ -166,7 +173,7 @@ export const TAGUATO: Tier = {
   // hay plano que aprender.
   sigueme: false,
   circuito: false,
-  avisos: "cabina",
+  avisos: "cifra",
 };
 
 export const TAGUATO_RUVICHA: Tier = {

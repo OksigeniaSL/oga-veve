@@ -194,7 +194,7 @@ import { mundoElegido } from "./ui/mundo";
  * el que se construye todo lo demás.
  */
 const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
-import { Hud } from "./ui/hud";
+import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { PantallaDePausa } from "./ui/pausa";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
@@ -253,7 +253,7 @@ import type { Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
-import { LOCALE_NAMES, cycleLocale, t } from "./i18n";
+import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { Audio } from "./audio/audio";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
@@ -264,6 +264,12 @@ import {
   ESCALONES,
   ESCALONES_EN_PIES,
 } from "./flight/avisos-de-altura";
+import {
+  canalesDe,
+  claveDelAviso,
+  EN_GRANDE,
+  EN_GRANDE_EN_PIES,
+} from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
   bandaDeRodaje,
@@ -668,6 +674,8 @@ export class Game {
    * que enseña el ritmo de la recogida, y se dice **y** se dibuja.
    */
   private readonly avisosDeAltura: AvisosDeAltura;
+  /** La altura sobre la pista en grande: 150, 100 y 50. Ver `escalera.ts`. */
+  private readonly alturaEnGrande: AvisosDeAltura;
   /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
   private fueraDeBanda = 0;
   /** Qué se dijo la última vez, para no repetirlo mientras siga igual. */
@@ -920,7 +928,6 @@ export class Game {
   /** Segundos que lleva el avión roto. Ver `frame`. */
   private crashedFor = 0;
 
-
   constructor(options: GameOptions) {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
@@ -934,6 +941,16 @@ export class Game {
      */
     this.avisosDeAltura = new AvisosDeAltura(
       this.tier.units === "aeronautical" ? ESCALONES_EN_PIES : ESCALONES,
+    );
+    /*
+     * Y el segundo contador: el de la altura **en grande**, que es otro canal
+     * y por eso es otro contador. La cuenta atrás de arriba es la voz —cien,
+     * cincuenta, treinta, veinte, diez— y tiene el ritmo apretado que enseña
+     * a recoger; esta son tres números sueltos y grandes para empezar a leer
+     * una altura. Solo sale de Taguato en adelante. Ver `flight/escalera.ts`.
+     */
+    this.alturaEnGrande = new AvisosDeAltura(
+      this.tier.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
     );
     this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
     this.misionInicial = options.mision ?? null;
@@ -1186,6 +1203,7 @@ export class Game {
 
     this.hud = new Hud(options.hudRoot);
     this.medidor = new Medidor(document.body, this.renderer);
+    this.hud.setEscalera(this.tier.avisos);
     this.hud.setInstruments(this.tier.instruments);
     this.hud.setMagneticVariation(this.scenario.magneticVariation);
     this.creditsRoot = options.creditsRoot;
@@ -1321,7 +1339,7 @@ export class Game {
       this.cantar("rotate", t("vuelo.rotar"));
       this.hud.senal.mostrar(
         "tirar",
-        this.tier.instruments !== "none" ? t("vuelo.rotar") : "",
+        this.rotulo("vuelo.rotar", "palabra.tira"),
         null,
         { segundos: DURA_LA_FLECHA_DE_TIRAR, prioridad: IMPORTANTE },
       );
@@ -2022,9 +2040,9 @@ export class Game {
        */
       this.hud.senal.mostrar(
         veredicto === "rapido" ? "freno" : "fuera",
-        this.tier.instruments !== "none"
-          ? t(veredicto === "rapido" ? "hud.landedFast" : "hud.landedOffRunway")
-          : "",
+        veredicto === "rapido"
+          ? this.rotulo("hud.landedFast", "palabra.rapido")
+          : this.rotulo("hud.landedOffRunway", "palabra.fuera"),
         null,
         { segundos: SE_QUEDA_EL_VEREDICTO, prioridad: URGENTE },
       );
@@ -2090,11 +2108,57 @@ export class Game {
    * habla, y nunca decide si hay aviso.
    */
   private cantar(ingles: string, encasa?: string): void {
-    if (this.tier.avisos === "cabina") {
+    if (canalesDe(this.tier.avisos).cabina) {
       decir(ingles);
       return;
     }
     if (encasa) this.instructor.decir(encasa);
+  }
+
+  /**
+   * El texto de una tarjeta de aviso, en el peldaño de hoy.
+   *
+   * Las dos formas se escriben aquí mismo, en el sitio donde se da el aviso:
+   * la frase entera y **la palabra corta**. Cuál sale la decide la escalera de
+   * comunicación —ninguna en Guyrami, la corta en Tukã, la larga de Taguato en
+   * adelante—, y nunca decide si hay aviso: el dibujo y el tono salen igual.
+   *
+   * Estaban las dos docenas de sitios escribiendo `instruments !== "none"`
+   * a mano, que además era la pregunta equivocada: los instrumentos son lo que
+   * marca la cabina, no cómo se avisa. Ver `flight/escalera.ts`.
+   */
+  private rotulo(larga: TranslationKey, corta: TranslationKey): string {
+    const clave = claveDelAviso(this.tier.avisos, larga, corta);
+    return clave ? t(clave as TranslationKey) : "";
+  }
+
+  /** Lo mismo, cuando la frase larga se compone de varias claves. */
+  private rotuloCompuesto(larga: string, corta: TranslationKey): string {
+    const canales = canalesDe(this.tier.avisos);
+    if (!canales.texto) return "";
+    return canales.corto ? t(corta) : larga;
+  }
+
+  /**
+   * El rótulo del aro perdido, **con la cifra cuando toca**.
+   *
+   * «Pasaste por encima del aro» es la frase; «por encima del aro, 38 m» es la
+   * misma frase con el número que la hace medible, y ese número es justo el
+   * peldaño en el que se empieza a leer un instrumento en vez de un dibujo.
+   * En pies donde la cabina va en pies, como todo lo demás.
+   */
+  private rotuloDelAro(donde: "alto" | "bajo"): string {
+    const clave = donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo";
+    const corta = donde === "alto" ? "palabra.baja" : "palabra.subi";
+    if (!canalesDe(this.tier.avisos).cifra) return this.rotulo(clave, corta);
+    const unidades = UNIT_SYSTEMS[this.tier.units];
+    const cuanto = Math.round(
+      Math.abs(unidades.altitude(this.runwayGuide.porCuanto)),
+    );
+    return this.rotuloCompuesto(
+      `${t(clave)} (${cuanto} ${unidades.altitudeLabel()})`,
+      corta,
+    );
   }
 
   /**
@@ -2199,7 +2263,7 @@ export class Game {
      */
     this.hud.senal.mostrar(
       "frustrada",
-      this.tier.instruments === "none" ? "" : t("vuelo.mandanFrustrar"),
+      this.rotulo("vuelo.mandanFrustrar", "palabra.alAire"),
       null,
       { segundos: Infinity, prioridad: URGENTE },
     );
@@ -2221,7 +2285,7 @@ export class Game {
     this.hud.setLuzDeTorre("verde");
     this.hud.senal.mostrar(
       "verde",
-      this.tier.instruments === "none" ? "" : t("vuelo.puedeVolver"),
+      this.rotulo("vuelo.puedeVolver", "palabra.volve"),
       null,
       { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
     );
@@ -2305,7 +2369,7 @@ export class Game {
     if (!motivo) {
       this.hud.senal.mostrar(
         "senda",
-        this.tier.instruments === "none" ? "" : t("vuelo.minimos"),
+        this.rotulo("vuelo.minimos", "palabra.laPista"),
         null,
         { segundos: SE_QUEDAN_LOS_MINIMOS, prioridad: IMPORTANTE },
       );
@@ -2326,9 +2390,10 @@ export class Game {
     this.altoAlMandar = alto;
     this.hud.senal.mostrar(
       "frustrada",
-      this.tier.instruments === "none"
-        ? ""
-        : `${t(`motivo.${motivo}` as never)}. ${t("vuelo.noEstabilizada")}`,
+      this.rotuloCompuesto(
+        `${t(`motivo.${motivo}` as never)}. ${t("vuelo.noEstabilizada")}`,
+        "palabra.alAire",
+      ),
       null,
       { segundos: Infinity, prioridad: URGENTE },
     );
@@ -2358,15 +2423,11 @@ export class Game {
     if (primera && blancas === 2) return;
     this.hud.senal.mostrar(
       `papi${blancas}`,
-      this.tier.instruments === "none"
-        ? ""
-        : t(
-            blancas >= 3
-              ? "vuelo.papiAlto"
-              : blancas <= 1
-                ? "vuelo.papiBajo"
-                : "vuelo.papiBien",
-          ),
+      blancas >= 3
+        ? this.rotulo("vuelo.papiAlto", "palabra.baja")
+        : blancas <= 1
+          ? this.rotulo("vuelo.papiBajo", "palabra.subi")
+          : this.rotulo("vuelo.papiBien", "palabra.bien"),
       null,
       { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
     );
@@ -2684,7 +2745,7 @@ export class Game {
     this.avisandoDelBulto = SE_QUEDA_EL_BULTO;
     this.hud.senal.mostrar(
       dibujo,
-      this.tier.instruments !== "none" ? t("vuelo.bulto") : "",
+      this.rotulo("vuelo.bulto", "palabra.cuidado"),
       null,
       { segundos: SE_QUEDA_EL_BULTO, prioridad: URGENTE },
     );
@@ -2706,7 +2767,7 @@ export class Game {
   private celebrarLaFrustrada(): void {
     this.hud.senal.mostrar(
       "frustrada",
-      this.tier.instruments !== "none" ? t("vuelo.frustrada") : "",
+      this.rotulo("vuelo.frustrada", "palabra.bien"),
       null,
       { segundos: SE_QUEDA_LA_FRUSTRADA, prioridad: URGENTE },
     );
@@ -2906,6 +2967,7 @@ export class Game {
     this.avisadoDeLaPasada = false;
     // Una cuenta atrás a medias de un vuelo que ya no existe.
     this.avisosDeAltura.reiniciar();
+    this.alturaEnGrande.reiniciar();
     // Y el otro avión vuelve a empezar su vuelo con nosotros.
     this.radio.reiniciar();
     callar();
@@ -4103,9 +4165,27 @@ export class Game {
       this.flight.state.heightAboveGround,
       !this.flight.state.onGround,
     );
-    if (aviso) {
-      this.cantar(aviso.dice, aviso.encasa);
-      this.hud.flash(`${aviso.metros}`, 1.6);
+    if (aviso) this.cantar(aviso.dice, aviso.encasa);
+
+    /*
+     * **Y el número en grande, que es otro peldaño.**
+     *
+     * Salía siempre, en los cuatro tramos y en los seis escalones de la cuenta
+     * atrás: a los cuatro años, un «30» apareciendo en el centro de la pantalla
+     * mientras se recoge no es información, es una cosa que parpadea. Los
+     * números son el peldaño de Taguato —150, 100 y 50 sobre la pista, tres
+     * veces y grandes— y ahí sí enseñan a leer una altura. Ver
+     * `flight/escalera.ts`.
+     */
+    const grande = this.alturaEnGrande.paso(
+      this.flight.state.heightAboveGround,
+      !this.flight.state.onGround,
+    );
+    if (grande && canalesDe(this.tier.avisos).cifra) {
+      this.hud.flash(
+        `${grande.dice} ${UNIT_SYSTEMS[this.tier.units].altitudeLabel()}`,
+        1.6,
+      );
     }
 
     /*
@@ -4225,7 +4305,7 @@ export class Game {
       this.dichoDeLaToma = true;
       this.hud.senal.mostrar(
         "toma",
-        this.tier.instruments !== "none" ? t("vuelo.yaPodesTocar") : "",
+        this.rotulo("vuelo.yaPodesTocar", "palabra.toca"),
         null,
         /*
          * **Con prioridad de aviso, y caducando al tocar.**
@@ -4274,9 +4354,9 @@ export class Game {
       this.terrenoDicho = terreno;
       this.hud.senal.mostrar(
         "terreno",
-        this.tier.instruments !== "none"
-          ? t(terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo")
-          : "",
+        terreno === "sube"
+          ? this.rotulo("vuelo.terrenoSube", "palabra.subi")
+          : this.rotulo("vuelo.terrenoBajo", "palabra.subi"),
         null,
         // Por debajo del aviso de bulto: los dos saltan a la vez volando bajo
         // sobre la ciudad, y el que dice qué hacer es el que nombra el bulto.
@@ -4371,9 +4451,7 @@ export class Game {
       if (donde === "alto" || donde === "bajo") {
         this.hud.senal.mostrar(
           donde === "alto" ? "aro-alto" : "aro-bajo",
-          this.tier.instruments !== "none"
-            ? t(donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo")
-            : "",
+          this.rotuloDelAro(donde),
           null,
           { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
         );
@@ -4703,7 +4781,7 @@ export class Game {
         this.avisadoDeLaPasada = true;
         this.hud.senal.mostrar(
           "senalero-alto",
-          this.tier.instruments !== "none" ? t("vuelo.teLoPasaste") : "",
+          this.rotulo("vuelo.teLoPasaste", "palabra.frena"),
           null,
           {
             segundos: SE_QUEDA_EL_BULTO,
@@ -5741,6 +5819,7 @@ export class Game {
     this.flight.reset(carried);
 
     this.hud.setUnits(next.units);
+    this.hud.setEscalera(next.avisos);
     this.hud.setInstruments(next.instruments);
     this.keyScreen?.setSimple(
       next.instruments === "none" || next.instruments === "pictorial",

@@ -13,6 +13,7 @@ import { CoefficientFlightModel } from "./fdm";
 import { OGA_172 } from "./aircraft";
 import { neutralControls, type ControlInputs, type FlightModel } from "./model";
 import { GUYRAMI, TAGUATO, TAGUATO_RUVICHA, TIERS, TUKA } from "./tiers";
+import { PELDANOS } from "./escalera";
 
 function build(tier: (typeof TIERS)[number]): FlightModel {
   const ground = () => 0;
@@ -170,11 +171,16 @@ describe("los peldaños intermedios se distinguen", () => {
    * **Los avisos crecen con el peldaño**, que es lo que promete AGENTS.md y lo
    * que no hacía ninguno: en Guyrami se oía «terrain, pull up» en inglés
    * aeronáutico a los cuatro años.
+   *
+   * Y los cuatro peldaños son los cuatro de la escalera, en orden y sin
+   * repetir: el dibujo solo, la palabra, la cifra y la voz de cabina. Ver
+   * `flight/escalera.ts`.
    */
-  it("los avisos se dicen en casa abajo y en cabina arriba", () => {
-    expect(GUYRAMI.avisos).toBe("propia");
-    expect(TUKA.avisos).toBe("propia");
-    expect(TAGUATO.avisos).toBe("cabina");
+  it("cada peldaño sube un escalón de la escalera de comunicación", () => {
+    expect(GUYRAMI.avisos).toBe("dibujo");
+    expect(TUKA.avisos).toBe("palabra");
+    expect(TAGUATO.avisos).toBe("cifra");
     expect(TAGUATO_RUVICHA.avisos).toBe("cabina");
+    expect(TIERS.map((tier) => tier.avisos)).toEqual(PELDANOS);
   });
 });

@@ -26,7 +26,7 @@
 
 import type { FlightState } from "../flight/model";
 import { indicatedAirspeed } from "../flight/atmosphere";
-import { t } from "../i18n";
+import { t, type TranslationKey } from "../i18n";
 import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
@@ -36,6 +36,7 @@ import { Senal } from "./senal";
 import { Mapa } from "./mapa";
 import { PanelDelTiempo } from "./tiempo";
 import type { Tier } from "../flight/tiers";
+import { canalesDe, type Peldano } from "../flight/escalera";
 import type { Galon } from "../flight/galones";
 import { reconocer } from "../flight/reconocimiento";
 
@@ -185,6 +186,15 @@ export class Hud {
    * quita paisaje.
    */
   private instruments: Tier["instruments"] = "numeric";
+
+  /**
+   * En qué peldaño de la escalera de comunicación se está avisando.
+   *
+   * Va aparte de `instruments` porque son dos preguntas distintas —cuántos
+   * instrumentos marca la cabina, y cómo se cuenta lo que pasa— y el aviso de
+   * peligro se estaba escribiendo con la primera. Ver `flight/escalera.ts`.
+   */
+  private escalera: Peldano = "cifra";
 
   /**
    * El cuadro de mandos clásico. Solo existe en el peldaño más alto: seis
@@ -909,6 +919,11 @@ export class Hud {
   setUnits(name: UnitSystemName): void {
     this.units = UNIT_SYSTEMS[name];
     this.render();
+  }
+
+  /** En qué peldaño de la escalera de comunicación avisa este tramo. */
+  setEscalera(peldano: Peldano): void {
+    this.escalera = peldano;
   }
 
   /** Cuántos instrumentos enseña este peldaño de la escalera. */
@@ -1735,16 +1750,30 @@ export class Hud {
     let text = "";
     let arrow = "";
     let blink = false;
+    /*
+     * **El aviso y su texto son dos cosas.**
+     *
+     * `hay` dice si hay peligro y manda sobre el color, la flecha y el
+     * parpadeo, que funcionan sin saber leer. El texto es el tercer canal y
+     * sube con la escalera: ninguno en Guyrami, una palabra en Tukã, la frase
+     * de Taguato en adelante. Antes iba todo junto, así que a los cuatro años
+     * se leía «¡Pérdida! Bajá el morro» — o, peor, se dejaba de leer y con él
+     * se apagaba el borde rojo. Ver `flight/escalera.ts`.
+     */
+    let corta: TranslationKey | null = null;
 
     if (state.crashed) {
       text = t("hud.crashed");
+      corta = "palabra.roto";
       arrow = "↺";
     } else if (state.stalled) {
       text = t("hud.stall");
+      corta = "palabra.baja";
       arrow = "↓";
       blink = true;
     } else if (closingWithGround(state)) {
       text = t("hud.pullUp");
+      corta = "palabra.subi";
       arrow = "↑";
       blink = true;
     } else if (runningOutOfRunway(state, runwayLeft)) {
@@ -1753,22 +1782,39 @@ export class Hud {
       // otra cosa: en un avión de verdad, quedarse sin pista es **la**
       // decisión, y aquí no se anunciaba de ninguna manera.
       text = t("hud.runwayEnd");
+      corta = "palabra.frena";
       arrow = "↤";
       blink = true;
     }
+    const hay = text !== "";
+    const canales = canalesDe(this.escalera);
+    if (!canales.texto) text = "";
+    else if (canales.corto && corta) text = t(corta);
+    /*
+     * Y **declarado en el marcado**, que es cómo se comprueba desde fuera sin
+     * saber en qué idioma está el juego: contar palabras no vale —«Runway
+     * ending» son dos y «¡Se acaba la pista!» son cuatro, y las dos son la
+     * frase entera—. El banco lee esto y comprueba que el peldaño que llega
+     * del tramo es el que acaba mandando aquí.
+     */
+    this.warning.dataset.escalera = !canales.texto
+      ? "sin-texto"
+      : canales.corto
+        ? "corto"
+        : "largo";
 
     // **Cuando hay un aviso, el tutor se calla.** El cartel del tutor va fijo
     // sobre el fondo de la pantalla y tapaba el aviso de que se acaba la
     // pista, que es justo el momento en que hay que mirarlo. Y no se arregla
     // subiendo capas: dos carteles a la vez son ruido, y de los dos manda el
     // aviso. La lección puede esperar diez segundos; la pista, no.
-    this.root.classList.toggle("hud--avisando", text !== "");
+    this.root.classList.toggle("hud--avisando", hay);
 
     this.warningText.textContent = text;
     this.warningArrow.textContent = arrow;
-    this.warning.classList.toggle("aviso-hud--visible", text !== "");
+    this.warning.classList.toggle("aviso-hud--visible", hay);
     this.warning.classList.toggle("aviso-hud--parpadeo", blink);
-    this.vignette.classList.toggle("vineta--activa", text !== "");
+    this.vignette.classList.toggle("vineta--activa", hay);
   }
 }
 

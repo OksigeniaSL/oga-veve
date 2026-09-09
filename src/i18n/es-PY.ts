@@ -196,6 +196,29 @@ export const ES_PY = {
   "otro.enCola": "Zulu Papa Alfa Bravo Charlie, viento en cola",
   "otro.final": "Zulu Papa Alfa Bravo Charlie, en final",
   "otro.pistaLibre": "Zulu Papa Alfa Bravo Charlie, pista libre",
+  /*
+   * **Las palabras del segundo peldaño.** Una sola palabra, corta, y siempre
+   * la misma para la misma cosa.
+   *
+   * A los siete años se lee una palabra de un vistazo y una frase no se lee en
+   * absoluto mientras se vuela: mirar el cartel es dejar de mirar la pista. Y
+   * un vocabulario corto y repetido se aprende solo — «Bajá» quiere decir lo
+   * mismo viniendo alto por la senda que pasando por encima de un aro, y esa
+   * es justamente la idea. Ver `flight/escalera.ts`.
+   */
+  "palabra.bien": "¡Bien!",
+  "palabra.tira": "¡Tirá!",
+  "palabra.subi": "¡Subí!",
+  "palabra.baja": "¡Bajá!",
+  "palabra.frena": "¡Frená!",
+  "palabra.toca": "¡Tocá!",
+  "palabra.volve": "¡Volvé!",
+  "palabra.alAire": "¡Al aire!",
+  "palabra.laPista": "¿La pista?",
+  "palabra.cuidado": "¡Cuidado!",
+  "palabra.rapido": "Muy rápido",
+  "palabra.fuera": "Fuera",
+  "palabra.roto": "Se rompió",
   "vuelo.estacionado": "Arrancá el motor",
   "vuelo.arrancando": "Soltá el freno y andá despacito",
   "vuelo.rodando": "Seguí la raya verde",
