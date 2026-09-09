@@ -40,12 +40,23 @@
  *   es peor que callarse.
  */
 
-import { getLocale } from '../i18n';
-import { seguirLaVoz, vozPermitida } from './voz';
+import { getLocale } from "../i18n";
+import { seguirLaVoz, vozPermitida } from "./voz";
 
 export interface Instructor {
-  /** Dice algo. `texto` ya viene traducido y listo para leer. */
-  decir(texto: string): void;
+  /**
+   * Dice algo. `texto` ya viene traducido y listo para leer.
+   *
+   * Y `clave`, cuando se sabe, es la del diccionario: `vuelo.rodando`. La voz
+   * del navegador no la necesita —lee el texto— pero **la voz grabada busca
+   * por clave**, porque los ficheros se llaman por clave y no por texto. Ver
+   * `banco-de-voz.ts`.
+   *
+   * Va opcional a propósito: hay media docena de frases que se componen en
+   * caliente y no tienen una clave sola. Esas las dice el navegador, como
+   * hasta ahora, en vez de obligar a inventarles un nombre.
+   */
+  decir(texto: string, clave?: string): void;
   /** Se calla ahora mismo. */
   callar(): void;
   /** ¿Hay alguien que pueda hablar en el idioma de ahora? */
@@ -61,7 +72,7 @@ export interface Instructor {
 
 /** Un instructor mudo. Es lo que hay en guaraní, y no pasa nada. */
 export const MUDO: Instructor = {
-  decir: () => {},
+  decir: (_texto?: string, _clave?: string) => {},
   callar: () => {},
   disponible: false,
   hablando: false,
@@ -69,8 +80,8 @@ export const MUDO: Instructor = {
 
 /** El idioma que le pedimos al navegador. */
 const IDIOMAS: Record<string, string | null> = {
-  'es-PY': 'es',
-  en: 'en',
+  "es-PY": "es",
+  en: "en",
   // No existe voz de guaraní en ningún sistema, y una voz castellana leyendo
   // guaraní escrito sonaría a burla. Aquí manda el pictograma.
   gug: null,
@@ -86,8 +97,17 @@ const IDIOMAS: Record<string, string | null> = {
  * queda de última red de seguridad.
  */
 const ACENTOS: Record<string, string[]> = {
-  'es-PY': ['es-py', 'es-419', 'es-ar', 'es-uy', 'es-bo', 'es-mx', 'es-us', 'es'],
-  en: ['en-us', 'en-gb', 'en'],
+  "es-PY": [
+    "es-py",
+    "es-419",
+    "es-ar",
+    "es-uy",
+    "es-bo",
+    "es-mx",
+    "es-us",
+    "es",
+  ],
+  en: ["en-us", "en-gb", "en"],
 };
 
 /**
@@ -131,7 +151,7 @@ export function elegirVoz(
   let mejorNota = 0;
   for (const voz of voces) {
     // Hay sistemas que devuelven «es_ES» en vez de «es-ES».
-    const lang = voz.lang.toLowerCase().replace(/_/g, '-');
+    const lang = voz.lang.toLowerCase().replace(/_/g, "-");
     let nota = 0;
     for (let i = 0; i < orden.length; i++) {
       const quiza = orden[i]!;
@@ -147,7 +167,7 @@ export function elegirVoz(
     if (nota === 0 && !lang.startsWith(quiero)) continue;
     if (nota === 0) nota = 1;
 
-    if (!voz.name.includes('+')) nota += 5;
+    if (!voz.name.includes("+")) nota += 5;
     if (voz.default) nota += 2;
     /*
      * Y la que ya está cogida baja **un escalón entero de acento y algo más**,
@@ -184,18 +204,18 @@ export const TIMBRE_INSTRUCTOR: Timbre = { rate: 0.95, pitch: 1.05 };
 
 export class VozDelNavegador implements Instructor {
   private voz: SpeechSynthesisVoice | null = null;
-  private ultima = '';
+  private ultima = "";
   private desdeUltima = 0;
   private readonly timbre: Timbre;
 
   constructor(timbre: Timbre = TIMBRE_INSTRUCTOR) {
     this.timbre = timbre;
-    if (typeof speechSynthesis === 'undefined') return;
+    if (typeof speechSynthesis === "undefined") return;
     this.buscarVoz();
     // Las voces llegan tarde: en Chrome la primera llamada devuelve una lista
     // vacía y se llena luego. Preguntar una sola vez al arrancar es el error
     // clásico de esta API.
-    speechSynthesis.addEventListener('voiceschanged', () => this.buscarVoz());
+    speechSynthesis.addEventListener("voiceschanged", () => this.buscarVoz());
   }
 
   private buscarVoz(): void {
@@ -258,8 +278,8 @@ export class VozDelNavegador implements Instructor {
   }
 
   callar(): void {
-    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
-    this.ultima = '';
+    if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
+    this.ultima = "";
   }
 }
 
@@ -271,7 +291,7 @@ export class VozDelNavegador implements Instructor {
  * la red de seguridad para los idiomas o las frases que falten por grabar—.
  */
 export function elegirInstructor(): Instructor {
-  if (typeof speechSynthesis === 'undefined') return MUDO;
+  if (typeof speechSynthesis === "undefined") return MUDO;
   return new VozDelNavegador();
 }
 
@@ -284,7 +304,7 @@ export function elegirInstructor(): Instructor {
  * `docs/voces/`; hasta entonces, la del sistema que menos se le parezca.
  */
 export function elegirOtroAvion(instructor: Instructor): Instructor {
-  if (typeof speechSynthesis === 'undefined') return MUDO;
+  if (typeof speechSynthesis === "undefined") return MUDO;
   return new VozDelNavegador({
     rate: 1.08,
     pitch: 0.88,

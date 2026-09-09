@@ -36,7 +36,9 @@ self.addEventListener("activate", (evento) => {
       const nombres = await caches.keys();
       await Promise.all(
         nombres
-          .filter((n) => n.startsWith("oga-veve-armazon-") && n !== CACHE_ARMAZON)
+          .filter(
+            (n) => n.startsWith("oga-veve-armazon-") && n !== CACHE_ARMAZON,
+          )
           .map((n) => caches.delete(n)),
       );
       await self.clients.claim();
@@ -116,6 +118,26 @@ self.addEventListener("fetch", (evento) => {
     );
     return;
   }
+
+  /*
+   * **El pack de voz se deja pasar: tiene dueño y no es este.**
+   *
+   * Lo guarda el propio instructor en su caché —`oga-veve-voz-v1`— después
+   * del primer gesto, y lo hace así para que funcione **también sin service
+   * worker**: la primera visita de una tablet todavía no tiene uno activo, y
+   * ahí el pack tiene que guardarse igual o el aula lo baja veinte veces.
+   *
+   * Si además lo guardara este, habría dos copias de los mismos seiscientos
+   * kilobytes en el mismo aparato: la del instructor y la del uso. Y no se
+   * arregla solo — `caches.match` mira en todas las cachés, así que a partir
+   * de la segunda sesión ya encontraría la del instructor y no volvería a
+   * escribir, pero la copia de la primera vez se queda ahí para siempre.
+   *
+   * Así que aquí no se toca. Lo que sí sigue valiendo es que la caché del
+   * instructor sobrevive a las actualizaciones: arriba solo se borran las que
+   * empiezan por `oga-veve-armazon-`. Ver #65 y `audio/banco-de-voz.ts`.
+   */
+  if (new URL(peticion.url).pathname.includes("/data/voces/")) return;
 
   /*
    * Y todo lo demás de casa, primero de la caché.
