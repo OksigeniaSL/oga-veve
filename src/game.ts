@@ -256,6 +256,7 @@ import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { Audio } from "./audio/audio";
+import { InstructorGrabado } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
 import { superficieEn, TRAQUETEO, type Superficie } from "./world/superficie";
@@ -879,7 +880,20 @@ export class Game {
    * una persona. El juego pide «di esto» y no sabe quién contesta, que es lo
    * que permitirá cambiarla sin tocar nada de aquí.
    */
-  private readonly instructor: Instructor = elegirInstructor();
+  /**
+   * La voz del sistema, que es la suplente y la que oye el otro avión.
+   *
+   * Va en su propio campo y no dentro del instructor porque hacen falta las
+   * dos cosas: el instructor grabado la usa para lo que todavía no está
+   * grabado, y `elegirOtroAvion` necesita saber **qué voz del sistema cogió el
+   * instructor** para no coger la misma — una radio en la que contesta tu
+   * propio instructor no es una radio, es un eco.
+   */
+  private readonly vozDelSistema: Instructor = elegirInstructor();
+  private readonly instructor: InstructorGrabado = new InstructorGrabado(
+    this.audio,
+    this.vozDelSistema,
+  );
   /**
    * El otro avión de la frecuencia, con su propia voz.
    *
@@ -887,7 +901,7 @@ export class Game {
    * `flight/radio.ts`, que decide **cuándo** habla, y `audio/instructor.ts`,
    * que le busca una voz que no sea la del instructor.
    */
-  private readonly otroAvion: Instructor = elegirOtroAvion(this.instructor);
+  private readonly otroAvion: Instructor = elegirOtroAvion(this.vozDelSistema);
   private readonly radio = new Radio();
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   private faseAnunciada = "";
@@ -1247,7 +1261,20 @@ export class Game {
       cycleMission: () => this.cycleMission(),
       cycleLanguage: () => this.changeLanguage(),
       toggleSound: () => this.toggleSound(),
-      firstGesture: () => this.audio.unlock(),
+      firstGesture: () => {
+        this.audio.unlock();
+        /*
+         * **Y aquí se baja el pack de voz, no antes.**
+         *
+         * Después del primer gesto y no en el paquete del juego: es cuando el
+         * navegador deja sonar algo, así que es cuando sirve de algo tenerlo.
+         * Se guarda en la Cache API, o sea que las veinte tablets de un aula
+         * lo bajan una vez y todas las sesiones siguientes van sin red. Y
+         * mientras no exista, no pasa nada: habla la voz del navegador, que es
+         * lo que hay desde el primer día. Ver `audio/instructor-grabado.ts`.
+         */
+        void this.instructor.cargar();
+      },
     });
 
     /*
@@ -1341,11 +1368,11 @@ export class Game {
     this.hud.onVelocidades((cual) => {
       if (cual === "V1") {
         this.audio.cue("v1");
-        this.cantar("V one", t("vuelo.comprometido"));
+        this.cantar("V one", t("vuelo.comprometido"), "vuelo.comprometido");
         return;
       }
       this.audio.cue("rotar");
-      this.cantar("rotate", t("vuelo.rotar"));
+      this.cantar("rotate", t("vuelo.rotar"), "vuelo.rotar");
       this.hud.senal.mostrar(
         "tirar",
         this.rotulo("vuelo.rotar", "palabra.tira"),
@@ -1569,6 +1596,30 @@ export class Game {
       avisoDeBulto: () => this.avisandoDelBulto,
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
+      /*
+       * Cómo anda la voz del instructor: cuántas piezas grabadas tiene
+       * cargadas y qué fue lo último que se le pidió decir.
+       *
+       * Existe porque el pack de voz es una tubería entera —bajarlo,
+       * descodificarlo, montarlo y tocarlo— cuyo contenido todavía no existe,
+       * y una tubería que no se puede mirar desde fuera es una tubería que no
+       * se ha probado. Ver `audio/instructor-grabado.ts`.
+       */
+      voz: () => ({
+        piezas: this.instructor.cuantasPiezas,
+        ultima: this.instructor.loUltimo,
+        hablando: this.instructor.hablando,
+      }),
+      /**
+       * Y pedirle que diga una frase, para poder oírla sin volar hasta ella.
+       *
+       * Media docena de las frases grabadas solo salen en un momento concreto
+       * del vuelo —«pará en la doble raya», «salí de la pista»—, y probar el
+       * pack esperando a que llegue ese momento es probarlo una vez cada tres
+       * minutos. Ver `verificar-voz.mjs`.
+       */
+      decirlo: (clave: string) =>
+        this.instructor.decir(t(clave as TranslationKey), clave),
       /** Si está puesta la pantalla de fin de vuelo. Para el banco. */
       finDeVuelo: () => this.hud.finPuesto,
       /**
@@ -2031,9 +2082,12 @@ export class Game {
       this.audio.cue("success");
     } else {
       this.audio.cue("attention");
+      const dicho =
+        veredicto === "rapido" ? "hud.landedFast" : "hud.landedOffRunway";
       this.cantar(
         veredicto === "rapido" ? "too fast" : "off the runway",
-        t(veredicto === "rapido" ? "hud.landedFast" : "hud.landedOffRunway"),
+        t(dicho),
+        dicho,
       );
       /*
        * **Y con dibujo**, que es lo que faltaba.
@@ -2117,12 +2171,15 @@ export class Game {
    * quien juega en silencio no se pierde nada. Por eso esto solo elige quién
    * habla, y nunca decide si hay aviso.
    */
-  private cantar(ingles: string, encasa?: string): void {
+  private cantar(ingles: string, encasa?: string, clave?: string): void {
     if (canalesDe(this.tier.avisos).cabina) {
       decir(ingles);
       return;
     }
-    if (encasa) this.instructor.decir(encasa);
+    // Y con la clave cuando la hay: el instructor grabado busca por clave.
+    // Las frases que se componen en caliente no la tienen y las dice la voz
+    // del navegador, que es lo que hay hasta que existan las grabaciones.
+    if (encasa) this.instructor.decir(encasa, clave);
   }
 
   /**
@@ -2278,7 +2335,11 @@ export class Game {
       { segundos: Infinity, prioridad: URGENTE },
     );
     this.audio.cue("peligro");
-    this.cantar("go around, runway occupied", t("vuelo.mandanFrustrar"));
+    this.cantar(
+      "go around, runway occupied",
+      t("vuelo.mandanFrustrar"),
+      "vuelo.mandanFrustrar",
+    );
   }
 
   /**
@@ -2300,7 +2361,7 @@ export class Game {
       { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
     );
     this.audio.cue("success");
-    this.cantar("cleared to land", t("vuelo.puedeVolver"));
+    this.cantar("cleared to land", t("vuelo.puedeVolver"), "vuelo.puedeVolver");
     // Y la lámpara se apaga sola en cuanto pase el aviso: en el aire no hay
     // lámpara que mirar, y dejarla encendida diría algo que ya no es verdad.
     window.setTimeout(() => {
@@ -2384,7 +2445,7 @@ export class Game {
         { segundos: SE_QUEDAN_LOS_MINIMOS, prioridad: IMPORTANTE },
       );
       this.audio.cue("attention");
-      this.cantar("minimums", t("vuelo.minimos"));
+      this.cantar("minimums", t("vuelo.minimos"), "vuelo.minimos");
       return;
     }
 
@@ -2408,7 +2469,7 @@ export class Game {
       { segundos: Infinity, prioridad: URGENTE },
     );
     this.audio.cue("peligro");
-    this.cantar("go around", t("vuelo.noEstabilizada"));
+    this.cantar("go around", t("vuelo.noEstabilizada"), "vuelo.noEstabilizada");
   }
 
   private explicarElPapi(acercandose: boolean): void {
@@ -2616,7 +2677,7 @@ export class Game {
     this.input.controls.brakes = 1;
     this.input.releaseAll();
     this.audio.cue("error");
-    this.cantar("we have a problem", t("vuelo.roto"));
+    this.cantar("we have a problem", t("vuelo.roto"), "vuelo.roto");
     window.setTimeout(() => {
       if (this.percance !== tipo) return;
       this.hud.mostrarPercance(
@@ -2760,7 +2821,7 @@ export class Game {
       { segundos: SE_QUEDA_EL_BULTO, prioridad: URGENTE },
     );
     this.audio.cue("peligro");
-    this.cantar("obstacle ahead", t("vuelo.bulto"));
+    this.cantar("obstacle ahead", t("vuelo.bulto"), "vuelo.bulto");
   }
 
   /**
@@ -2786,7 +2847,11 @@ export class Game {
     this.apuntar({ frustradas: this.cuaderno.frustradas + 1 });
     // En inglés aeronáutico, como el resto de la voz de cabina: «going around»
     // es lo que se dice por radio, y lo demás es del instructor.
-    this.cantar("going around. good decision", t("vuelo.frustrada"));
+    this.cantar(
+      "going around. good decision",
+      t("vuelo.frustrada"),
+      "vuelo.frustrada",
+    );
   }
 
   /**
@@ -3170,7 +3235,7 @@ export class Game {
     });
     if (!dice) return;
     const texto = t(dice);
-    this.otroAvion.decir(texto);
+    this.otroAvion.decir(texto, dice);
     if (this.tier.instruments !== "none") this.hud.radio(texto);
   }
 
@@ -4236,9 +4301,13 @@ export class Game {
          * «airspeed» es lo que dice una cabina de verdad — dice las dos cosas
          * a la vez, «mira la velocidad»; cuál de las dos ya lo dice el color.
          */
+        const suave = this.flight.state.onGround
+          ? "vuelo.despacio"
+          : "vuelo.rapido";
         this.cantar(
           this.flight.state.onGround ? "slow down" : "airspeed",
-          t(this.flight.state.onGround ? "vuelo.despacio" : "vuelo.rapido"),
+          t(suave),
+          suave,
         );
       }
     } else {
@@ -4329,7 +4398,7 @@ export class Game {
          */
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
       );
-      this.instructor.decir(t("vuelo.yaPodesTocar"));
+      this.instructor.decir(t("vuelo.yaPodesTocar"), "vuelo.yaPodesTocar");
     } else if (
       this.dichoDeLaToma &&
       /*
@@ -4374,9 +4443,12 @@ export class Game {
       );
       this.audio.cue(terreno === "sube" ? "error" : "attention");
       // En inglés aeronáutico, como el resto de la voz de cabina.
+      const cual =
+        terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo";
       this.cantar(
         terreno === "sube" ? "terrain, pull up" : "too low",
-        t(terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo"),
+        t(cual),
+        cual,
       );
     } else if (!terreno) {
       this.terrenoDicho = null;
@@ -4465,9 +4537,11 @@ export class Game {
           null,
           { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
         );
+        const cual = donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo";
         this.cantar(
           donde === "alto" ? "too high, come down" : "too low, climb",
-          t(donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo"),
+          t(cual),
+          cual,
         );
       }
     }
@@ -4800,7 +4874,7 @@ export class Game {
           },
         );
         this.audio.cue("error");
-        this.instructor.decir(t("vuelo.teLoPasaste"));
+        this.instructor.decir(t("vuelo.teLoPasaste"), "vuelo.teLoPasaste");
       }
     } else if (pasado < SE_PASO_DEL_PUESTO / 2) {
       this.avisadoDeLaPasada = false;
@@ -4859,9 +4933,8 @@ export class Game {
             : null,
         });
         if (parando) {
-          this.instructor.decir(
-            t(enPantalla === "alto" ? "vuelo.alto" : "vuelo.despacio"),
-          );
+          const cual = enPantalla === "alto" ? "vuelo.alto" : "vuelo.despacio";
+          this.instructor.decir(t(cual), cual);
         }
       } else {
         this.faseAnunciada = "";
@@ -5526,7 +5599,9 @@ export class Game {
         // timón, gas y freno, y el contacto no estaba por ningún lado.
         accion: pendiente ? () => this.toggleEngine() : null,
       });
-      this.instructor.decir(frase);
+      // Y con su clave: los ficheros de voz se llaman por clave, no por
+      // texto. Ver `audio/banco-de-voz.ts`.
+      this.instructor.decir(frase, clave);
       if (conLetras) {
         this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
       }
@@ -5549,7 +5624,7 @@ export class Game {
           segundos: 3.5,
         },
       );
-      this.instructor.decir(t("vuelo.despacio"));
+      this.instructor.decir(t("vuelo.despacio"), "vuelo.despacio");
     } else if (vista.fuera && this.plan.avisarDeSalida(dt)) {
       this.hud.senal.mostrar(
         "amarillo",
@@ -5559,7 +5634,7 @@ export class Game {
           segundos: 4,
         },
       );
-      this.instructor.decir(t("vuelo.fuera"));
+      this.instructor.decir(t("vuelo.fuera"), "vuelo.fuera");
       if (conLetras) this.hud.flash(t("vuelo.fuera"), 3);
     }
 
@@ -5607,7 +5682,7 @@ export class Game {
           },
         );
         this.audio.cue("attention");
-        this.instructor.decir(t("vuelo.aterrizado"));
+        this.instructor.decir(t("vuelo.aterrizado"), "vuelo.aterrizado");
       } else {
         // Que la fase vuelva a anunciarse sola en el próximo fotograma.
         this.faseAnunciada = "";

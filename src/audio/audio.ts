@@ -549,7 +549,7 @@ export class Audio {
     this.engineFilter.Q.value = 1.1;
     this.engineGain = ctx.createGain();
     this.engineGain.gain.value = 0;
-    this.engineFilter.connect(this.engineGain).connect(this.bus('motor'));
+    this.engineFilter.connect(this.engineGain).connect(this.bus("motor"));
 
     // Resonancia en la banda en la que el oído sitúa un motor. Sin ella, en
     // un altavoz pequeño el motor se oye como un soplido sin carácter.
@@ -699,13 +699,86 @@ export class Audio {
   }
 
   /**
+   * Descodifica un trozo de voz grabada, o `null` si no se puede.
+   *
+   * Falla en silencio a propósito, y de las dos maneras que falla esto: sin
+   * contexto de audio —el navegador no trae Web Audio, o nadie ha tocado la
+   * pantalla todavía— y con un fichero que no se puede leer. Ninguna de las
+   * dos puede romper un vuelo; lo que pasa es que habla el navegador.
+   */
+  async decodificar(bytes: ArrayBuffer): Promise<AudioBuffer | null> {
+    if (!this.context) return null;
+    try {
+      return await this.context.decodeAudioData(bytes);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Toca una cadena de piezas de voz, una detrás de otra, por el bus de voz.
+   *
+   * **Se programan todas de una vez y en el reloj del audio**, no una detrás
+   * de otra con temporizadores: entre una pieza y la siguiente no puede haber
+   * ni un hueco ni un solape, y un `setTimeout` de un navegador ocupado llega
+   * tarde con toda tranquilidad. Es exactamente lo que hace un GPS, y es lo
+   * que hace que ocho trozos suenen como una frase y no como ocho trozos.
+   *
+   * Devuelve con qué cortarla —el instructor lo llama al callar— o `null` si
+   * no hay dónde tocar.
+   */
+  encadenarVoz(
+    piezas: readonly AudioBuffer[],
+    alAcabar: () => void,
+  ): (() => void) | null {
+    const ctx = this.context;
+    if (!ctx || ctx.state !== "running" || piezas.length === 0) return null;
+    const fuentes: AudioBufferSourceNode[] = [];
+    let cuando = ctx.currentTime + 0.02;
+    for (const pieza of piezas) {
+      const fuente = ctx.createBufferSource();
+      fuente.buffer = pieza;
+      fuente.connect(this.bus("voz"));
+      fuente.start(cuando);
+      cuando += pieza.duration;
+      fuentes.push(fuente);
+    }
+    /*
+     * Y **el aviso de que ha terminado lo da la última pieza**, no un reloj de
+     * fuera. La mezcla se agacha mientras habla el instructor y se levanta
+     * cuando calla; si el aviso llegara por temporizador, un fotograma largo
+     * dejaría el motor agachado de más, o peor, para siempre.
+     */
+    const ultima = fuentes[fuentes.length - 1]!;
+    let avisado = false;
+    const acabo = (): void => {
+      if (avisado) return;
+      avisado = true;
+      this.acabaLaVoz();
+      alAcabar();
+    };
+    ultima.addEventListener("ended", acabo);
+    this.empiezaLaVoz();
+    return () => {
+      for (const f of fuentes) {
+        try {
+          f.stop();
+        } catch {
+          // Ya había acabado. Cortar lo que no suena no es un fallo.
+        }
+      }
+      acabo();
+    };
+  }
+
+  /**
    * Alguien empieza a hablar: todo lo demás se agacha.
    *
    * Lo llaman las dos voces del juego —el instructor y el otro avión— desde
    * `audio/voz.ts`, y los avisos desde aquí mismo. **La voz del navegador no
    * pasa por Web Audio**, así que el ducking no lo puede disparar el sonido:
-   * lo dispara el evento. El día que existan las grabaciones entrarán por el
-   * bus de voz y esto seguirá valiendo igual.
+   * lo dispara el evento. Las grabaciones sí pasan por el bus de voz, y esas
+   * lo disparan con el sonido. Ver `encadenarVoz`.
    */
   empiezaLaVoz(): void {
     if (this.hablando.entra()) this.ponerNiveles();

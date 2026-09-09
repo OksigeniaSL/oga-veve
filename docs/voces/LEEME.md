@@ -12,21 +12,21 @@ node scripts/frases-para-grabar.mjs
 
 Escribe en esta carpeta:
 
-| fichero | para qué |
-|---|---|
-| `frases.tsv` | la tabla entera: voz, fichero, idioma, texto y dónde suena |
-| `frases.json` | lo mismo, para que lo lea el juego |
+| fichero           | para qué                                                                |
+| ----------------- | ----------------------------------------------------------------------- |
+| `frases.tsv`      | la tabla entera: voz, fichero, idioma, texto y dónde suena              |
+| `frases.json`     | lo mismo, para que lo lea el juego                                      |
 | `guion-<voz>.txt` | **solo el texto**, una frase por línea: es lo que se pega en el estudio |
-| `guion-<voz>.tsv` | el mismo guion numerado, para casar los audios que vuelven |
+| `guion-<voz>.tsv` | el mismo guion numerado, para casar los audios que vuelven              |
 
 ## Las cuatro voces
 
-| voz | idioma | frases | cómo suena | por qué |
-|---|---|---|---|---|
-| **instructor** | castellano paraguayo | 83 | cercana, tranquila, **hablándole a un chico** | Es la voz que sustituye al texto en el peldaño que empieza a los cuatro años y no lee. Es la que más se oye y la que más importa. |
-| **cabina** | inglés aeronáutico | 21 | seca, plana, **sin emoción** | Son los cantos del avión: *terrain, pull up*, *one hundred*, *V1*. En un avión de verdad los dice una máquina, y por eso una voz con intención suena mal aquí. |
-| **torre** | inglés aeronáutico y castellano | 7 | neutra, profesional, con prisa | Va con efecto de radio, y por eso se graba **limpia**: el filtro se pone después. |
-| **otro** | castellano paraguayo | 5 | otra persona, otro timbre | Otro avión en la frecuencia. **Ya suenan en el juego** con la voz del sistema: ver `src/flight/radio.ts`, que las dice en orden —saluda, rueda, viento en cola, final, pista libre— y se calla en cuanto habla el instructor. No hay tráfico dibujado todavía (#118), pero la radio ya no está muerta. |
+| voz            | idioma                          | frases | cómo suena                                    | por qué                                                                                                                                                                                                                                                                                                |
+| -------------- | ------------------------------- | ------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **instructor** | castellano paraguayo            | 83     | cercana, tranquila, **hablándole a un chico** | Es la voz que sustituye al texto en el peldaño que empieza a los cuatro años y no lee. Es la que más se oye y la que más importa.                                                                                                                                                                      |
+| **cabina**     | inglés aeronáutico              | 21     | seca, plana, **sin emoción**                  | Son los cantos del avión: _terrain, pull up_, _one hundred_, _V1_. En un avión de verdad los dice una máquina, y por eso una voz con intención suena mal aquí.                                                                                                                                         |
+| **torre**      | inglés aeronáutico y castellano | 7      | neutra, profesional, con prisa                | Va con efecto de radio, y por eso se graba **limpia**: el filtro se pone después.                                                                                                                                                                                                                      |
+| **otro**       | castellano paraguayo            | 5      | otra persona, otro timbre                     | Otro avión en la frecuencia. **Ya suenan en el juego** con la voz del sistema: ver `src/flight/radio.ts`, que las dice en orden —saluda, rueda, viento en cola, final, pista libre— y se calla en cuanto habla el instructor. No hay tráfico dibujado todavía (#118), pero la radio ya no está muerta. |
 
 Tres cosas que no cambian:
 
@@ -60,7 +60,66 @@ es una línea de shell.
 Formato de entrega: lo que salga del estudio, en la calidad más alta que dé.
 La conversión a lo que usa el juego se hace aquí.
 
+## El horneado: un comando, y ya
+
+```bash
+node scripts/hacer-pack-de-voz.mjs crudo/instructor instructor
+```
+
+Coge las tomas, aplica la cadena de abajo, escribe los **dos** formatos y el
+manifiesto en `data/voces/instructor/`. Y va aquí y no en el estudio por una
+razón concreta: para que **la frase veintisiete suene igual dentro de un año**.
+Si el tratamiento vive en la cabeza de quien mezcló la primera tanda, la segunda
+no pega con la primera y se nota en cuanto suenan seguidas — es el fallo clásico
+de los packs de voz.
+
+### Las recetas: montar como los GPS
+
+Un GPS no graba «gire a la derecha en doscientos metros hacia la calle Mayor».
+Graba **piezas** y las monta. Aquí igual, y por eso al lado de las tomas puede
+ir un `recetas.json` que diga qué piezas monta cada frase del diccionario:
+
+```json
+{
+  "vuelo.rodando": ["segui", "la-raya-verde"],
+  "vuelo.calle": ["segui", "la-calle", "{letra}"]
+}
+```
+
+`{letra}` es un hueco: lo rellena el juego con la pieza de la calle que toque.
+Veintiséis piezas de una sílaba cubren así todas las calles de rodaje de todos
+los aeropuertos del juego. Ver #126 y `src/audio/banco-de-voz.ts`.
+
+Sin `recetas.json`, cada fichero es su propia frase de una pieza. Es lo que vale
+para la cabina y la torre: `cabina.oneHundred` es un canto entero y no se monta
+con nada.
+
+Y una regla que el guion comprueba y no perdona: **una receta no puede nombrar
+una pieza que no se grabó**. Media frase es peor que ninguna, así que el juego
+descarta la receta entera y la dice con la voz del navegador — mejor enterarse
+al hornear que al volar.
+
+### Dos formatos, y no es por gusto
+
+Opus a 24 kbps y **gemelo en AAC**, porque Safari no decodifica Opus de forma
+fiable. Los dos se hornean desde la misma toma y con el mismo filtro, nunca uno
+desde el otro: encadenar dos códecs con pérdida sobre una voz suena a teléfono
+roto, y el gemelo existe justo para que a quien le toque Safari no le toque una
+versión peor. El juego elige según lo que diga `canPlayType`.
+
+### Y no entra en la precarga
+
+El pack se baja **después del primer gesto** —que es cuando el navegador deja
+sonar algo— y se guarda en su propia caché, `oga-veve-voz-v1`. Así las veinte
+tablets de un aula lo bajan una vez y todas las sesiones siguientes van sin red,
+y la primera carga del juego sigue pesando lo que pesaba. El service worker lo
+deja pasar a propósito para no guardar una segunda copia de lo mismo: ver
+`scripts/plantilla-sw.js`.
+
 ## El tratamiento, con ffmpeg
+
+Esto es lo que hace el guion de arriba. Está escrito aquí para poder repetirlo a
+mano, no para tener que hacerlo.
 
 ### 1. Todas las voces: limpiar, igualar y comprimir
 
@@ -118,11 +177,18 @@ No hace falta que sea perfecto: a los cuatro años, ese clic es lo que dice
 
 ## Qué falta en el juego, y qué no
 
-Nada del motor: `Instructor` es una interfaz desde el primer día precisamente
-para esto —el resto del juego pide «decí esto» sin saber quién contesta—, así
-que cuando existan los ficheros se escribe una implementación que los
-reproduce y se cambia una línea. Lo que hay hoy es la voz del navegador, que
-suena a robot y que **en muchos sistemas no existe**: en Linux, sin
-`speech-dispatcher` instalado, `speechSynthesis.getVoices()` devuelve una lista
-vacía y el instructor se queda mudo sin decir por qué. El juego ya avisa de eso
-una vez al arrancar; con las frases grabadas, deja de depender del sistema.
+**Nada del motor: ya está puesto.** `Instructor` era una interfaz desde el
+primer día precisamente para esto, y la implementación que toca ficheros existe
+—`src/audio/instructor-grabado.ts`—, está enganchada y baja el pack tras el
+primer gesto. Lo que falta son las grabaciones.
+
+Y no hace falta tenerlas todas para empezar a oírlas: **el pack se puede subir
+por partes**. Una frase sin receta no calla el juego, la dice la voz del
+navegador como hasta ahora. Así se puede grabar de diez en diez y oír el
+resultado el mismo día, en vez de esperar a las ciento dieciséis.
+
+Lo que hay mientras tanto es la voz del navegador, que suena a robot y que **en
+muchos sistemas no existe**: en Linux, sin `speech-dispatcher` instalado,
+`speechSynthesis.getVoices()` devuelve una lista vacía y el instructor se queda
+mudo sin decir por qué. El juego ya avisa de eso una vez al arrancar; con las
+frases grabadas, deja de depender del sistema.
