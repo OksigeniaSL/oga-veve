@@ -5,9 +5,15 @@ real, el paisaje lo pintamos nosotros— y se aterriza donde se pueda.
 
 ### ▶ [Jugar ahora](https://oksigeniasl.github.io/oga-veve/)
 
-> **Estado**: esqueleto funcional. Modelo de vuelo, terreno procedural, HUD y
-> controles operativos. Sin arte final, sin audio, sin multijugador. Lo que
-> falta está en los [issues](https://github.com/OksigeniaSL/oga-veve/issues).
+> **Estado**: se puede volar de principio a fin. Del puesto de
+> estacionamiento a la pista siguiendo la raya verde, despegue con V1 y Vr,
+> circuito de tráfico, aproximación con PAPI y altura de decisión, aterrizaje
+> o frustrada — y la frustrada puntúa igual que la toma, que es la lección.
+> Seis aeródromos reales, relieve medido, sonido sintetizado y cuatro
+> peldaños de edad. Funciona **sin conexión** a partir de la segunda visita.
+>
+> Falta el arte final, las voces grabadas y el multijugador. Lo que falta está
+> en los [issues](https://github.com/OksigeniaSL/oga-veve/issues).
 
 Producto de **[Oksigenia SL](https://oksigenia.com)**, publicado bajo la
 marca **Granja Óga**. **Gratis para siempre para la educación paraguaya** —

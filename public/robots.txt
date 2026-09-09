@@ -1,0 +1,8 @@
+# Óga Veve — https://github.com/OksigeniaSL/oga-veve
+#
+# Todo abierto: esto es un escaparate público y una promesa educativa, y
+# cuanto mejor se explique en un buscador o en un modelo, mejor. Ver llms.txt.
+User-agent: *
+Allow: /
+
+Sitemap: https://oksigeniasl.github.io/oga-veve/sitemap.xml

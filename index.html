@@ -23,6 +23,75 @@
     -->
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icono-192.png" />
+
+    <!--
+      **Cómo se ve este enlace cuando alguien lo comparte.**
+
+      En Paraguay esto se va a compartir por WhatsApp, y un enlace sin tarjeta
+      es un enlace que nadie abre. Las direcciones van absolutas a propósito:
+      quien lee estas etiquetas es un servidor ajeno, no un navegador, y una
+      ruta relativa no le sirve de nada.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Óga Veve" />
+    <meta property="og:locale" content="es_PY" />
+    <meta property="og:title" content="Óga Veve — Volá sobre Paraguay" />
+    <meta
+      property="og:description"
+      content="Simulador de vuelo gratis, en el navegador y sin instalar. Se vuela sobre aeródromos reales del Paraguay, con relieve medido. Gratis para siempre para la educación paraguaya."
+    />
+    <meta property="og:url" content="https://oksigeniasl.github.io/oga-veve/" />
+    <meta
+      property="og:image"
+      content="https://oksigeniasl.github.io/oga-veve/og.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Una avioneta sobre lomas verdes, con el nombre Óga Veve"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!--
+      Y lo mismo para quien no es una persona: `llms.txt` cuenta qué es esto y
+      para quién, y este JSON-LD lo dice en el vocabulario que entienden los
+      buscadores. `isAccessibleForFree` no es una etiqueta de marketing: es la
+      promesa del proyecto, escrita donde una máquina la puede leer.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Óga Veve",
+        "alternateName": "Oga Veve",
+        "url": "https://oksigeniasl.github.io/oga-veve/",
+        "image": "https://oksigeniasl.github.io/oga-veve/og.png",
+        "description": "Simulador de vuelo para navegador sobre aeródromos reales del Paraguay, con relieve medido. Cuatro peldaños, del que no sabe leer al que lee instrumentos.",
+        "inLanguage": ["es-PY", "en", "gn"],
+        "isAccessibleForFree": true,
+        "isFamilyFriendly": true,
+        "typicalAgeRange": "4-",
+        "genre": ["Simulation", "Educational"],
+        "gamePlatform": "Web browser",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any",
+        "author": {
+          "@type": "Organization",
+          "name": "Oksigenia SL",
+          "url": "https://oksigenia.com"
+        },
+        "publisher": { "@type": "Brand", "name": "Granja Óga" },
+        "license": "https://www.apache.org/licenses/LICENSE-2.0",
+        "codeRepository": "https://github.com/OksigeniaSL/oga-veve",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "PYG",
+          "availability": "https://schema.org/InStock"
+        }
+      }
+    </script>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>

@@ -1,0 +1,65 @@
+# Óga Veve
+
+> Simulador de vuelo para navegador, gratis y sin instalar, hecho para que
+> chicos y chicas del Paraguay aprendan a volar reconociendo su propio país
+> desde el aire. Empieza a los cuatro años, antes de saber leer.
+
+Producto de Oksigenia SL, publicado bajo la marca Granja Óga.
+Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.
+
+## Qué es
+
+Un simulador de vuelo que funciona en el navegador, sin instalar y **sin
+conexión a partir de la segunda visita**. Se vuela sobre aeródromos reales
+—Silvio Pettirossi en Asunción, Guaraní en Ciudad del Este, un campo de
+estancia, y tres españoles— con el relieve medido de Copernicus y ortofotos
+públicas, no con un mapa inventado.
+
+No es un juego de aviones: es un simulador que enseña. La regla que lo
+gobierna es «seguridad, seguridad, seguridad — a partir de ahí, todo lo demás
+es aprendizaje», y de ahí salen las decisiones que lo hacen distinto:
+renunciar a un aterrizaje y volver a intentarlo **puntúa igual que aterrizar**,
+porque en la aviación de verdad esa es la maniobra que salva.
+
+## Para quién
+
+Cuatro peldaños, del que no sabe leer al que lee instrumentos:
+
+- **Guyrami (4-6)**: ni una palabra escrita. Dibujos, colores, una raya verde
+  en el suelo que seguir y una voz que dice qué toca.
+- **Tukã (7-9)**: aparecen las primeras palabras.
+- **Taguato (10-13)**: entran los números y los instrumentos.
+- **Taguato Ruvicha (14+)**: la cabina completa, con los cantos de altura y
+  la fraseología aeronáutica de verdad.
+
+## El compromiso
+
+**Gratis para siempre para toda la educación paraguaya**: colegios, docentes,
+alumnos y familias. Sin trámites y sin pagar nada. Está escrito en
+LICENSE-CONTENIDO.md y en la pantalla de créditos del propio juego, que es
+donde lo puede leer cualquiera.
+
+Y sin datos personales: no hay cuentas, ni correo, ni nombres. Un perfil es un
+bicho y un color —*Tero Rojo*, *Jaguareté Azul*—, y todo lo que se guarda vive
+en el navegador de quien juega. Lo que no se recoge no se puede perder.
+
+## Idiomas
+
+Castellano paraguayo, inglés y guaraní. El inglés aeronáutico de cabina no se
+traduce nunca: reconocerlo es parte de lo que se aprende.
+
+## Enlaces
+
+- Jugar: https://oksigeniasl.github.io/oga-veve/
+- Código y backlog: https://github.com/OksigeniaSL/oga-veve
+- Oksigenia SL: https://oksigenia.com
+
+## Datos y licencias de origen
+
+- Relieve global: Copernicus DEM GLO-30. © DLR e.V. 2010-2014 y © Airbus
+  Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European
+  Union and ESA; all rights reserved.
+- Relieve de España: MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de
+  España, CC BY 4.0.
+- Geometría de aeródromos: OpenStreetMap, ODbL 1.0.
+- Elevaciones y datos de pista: OurAirports, dominio público.
