@@ -14,6 +14,23 @@
 import type { Dictionary } from "./index";
 
 export const EN: Dictionary = {
+  "pilotos.titulo": "Which one is your plane?",
+  "pilotos.nuevo": "A new one",
+  "pilotos.quitar": "Remove this plane",
+  "pilotos.tuyo": "This is your plane",
+  "pilotos.bicho": "The animal",
+  "pilotos.color": "The colour",
+  "pilotos.listo": "Let's fly",
+  "bicho.tero": "Tero",
+  "bicho.jaguarete": "Jaguareté",
+  "bicho.karumbe": "Karumbé",
+  "bicho.mburucuya": "Mburucuyá",
+  "color.rojo": "Red",
+  "color.azul": "Blue",
+  "color.verde": "Green",
+  "color.amarillo": "Yellow",
+  "color.violeta": "Purple",
+  "color.naranja": "Orange",
   "ajustes.titulo": "Settings",
   "ajustes.listo": "Done",
   "ajustes.movimiento": "Motion",

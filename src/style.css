@@ -4225,3 +4225,184 @@ button.motor__tecla::after {
   border-color: transparent;
   font-weight: 700;
 }
+
+/*
+ * El hangar de pilotos: doce huecos y un avión en cada uno.
+ *
+ * Es lo primero que se ve, y es una rejilla de aviones y no una lista de
+ * nombres a propósito: quien tiene cuatro años no lee «Tero Rojo», reconoce
+ * su avión. Ver `ui/pilotos.ts`.
+ */
+.pilotos {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow: auto;
+  background: var(--barro);
+  background-image: var(--barniz);
+}
+
+.pilotos__panel {
+  width: min(760px, 100%);
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  color: var(--tinta);
+}
+
+.pilotos__titulo {
+  margin: 0;
+  font-size: 26px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.pilotos__rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.piloto {
+  position: relative;
+}
+
+/*
+ * El hueco de aparcamiento. El avión ocupa casi todo y el nombre va debajo en
+ * pequeño: quien lee lo confirma, quien no lee ya lo sabía por el dibujo.
+ */
+.piloto__boton {
+  width: 100%;
+  min-height: 124px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: var(--r-l);
+  border: 1px solid var(--linea);
+  background: rgb(255 255 255 / 4%);
+  color: var(--tinta);
+  font: inherit;
+  cursor: pointer;
+}
+
+.piloto__boton:hover {
+  border-color: var(--ocre);
+}
+
+/* El tuyo, el que estabas usando: marcado sin palabras. */
+.piloto__boton--tuyo {
+  border-color: var(--ocre);
+  background: rgb(221 146 63 / 14%);
+}
+
+.piloto__avion {
+  width: 64px;
+  height: 64px;
+}
+
+.piloto__escarapela {
+  fill: var(--beige);
+}
+
+.piloto__bicho {
+  color: #1a2420;
+}
+
+.piloto__nombre {
+  font-size: var(--voz-glosa);
+  color: var(--tinta-suave);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.piloto__boton--hueco {
+  border-style: dashed;
+  color: var(--tinta-suave);
+}
+
+.piloto__mas {
+  font-size: 48px;
+  line-height: 64px;
+}
+
+/*
+ * Y quitar un avión, que va pequeño y en una esquina: es lo único de esta
+ * pantalla que borra algo, y no puede estar al lado de lo que se pulsa para
+ * jugar.
+ */
+.piloto__quitar {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--linea);
+  background: var(--barro);
+  color: var(--tinta-suave);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.piloto__quitar:hover {
+  border-color: var(--peligro);
+  color: var(--tinta);
+}
+
+.pilotos__muestra .piloto__avion {
+  width: 128px;
+  height: 128px;
+}
+
+.pilotos__nombre {
+  margin: 0;
+  font-size: 20px;
+}
+
+.pilotos__opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.pilotos__opcion {
+  width: var(--tacto);
+  height: var(--tacto);
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border-radius: var(--r-m);
+  border: 1px solid var(--linea);
+  background: var(--barro-claro);
+  color: var(--tinta);
+  cursor: pointer;
+}
+
+.pilotos__opcion svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pilotos__opcion--puesta {
+  border-color: var(--ocre);
+  background: var(--barro-calido);
+}
+
+.pilotos__color {
+  width: var(--tacto);
+  height: var(--tacto);
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+}
+
+.pilotos__color--puesto {
+  border-color: var(--tinta);
+}

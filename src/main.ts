@@ -77,6 +77,7 @@ import { abrirHangar } from "./ui/hangar";
 import type { Mission } from "./missions/types";
 import { rememberTier, rememberedTier } from "./flight/tiers";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
+import { elegirPiloto } from "./ui/pantalla-pilotos";
 
 setLocale(detectLocale());
 
@@ -100,15 +101,6 @@ const params = new URLSearchParams(location.search);
 const pedido = params.get("escenario");
 const directo = pedido ? SCENARIOS.find((s) => s.id === pedido) : undefined;
 
-const recordado =
-  SCENARIOS.find((s) => {
-    try {
-      return s.id === leerTexto("escenario");
-    } catch {
-      return false;
-    }
-  }) ?? SCENARIOS[0]!;
-
 let escenario = directo;
 // `?tramo=guyrami` entra directo en ese peldaño; lo resuelve `rememberedTier`,
 // que es a quien pregunta también el juego.
@@ -124,6 +116,40 @@ let leccion: Leccion = params.get("leccion")
  * puesta otra vez sería empezar por donde ya estuviste.
  */
 let mision: Mission | null = null;
+
+/*
+ * **Primero quién vuela, y después dónde.**
+ *
+ * En una tablet de aula lo primero no es el aeropuerto: es reconocer tu avión
+ * entre los doce aparcados. Y va antes que el hangar porque todo lo que se
+ * elige ahí —el escenario, el peldaño, la lección— **se guarda por perfil**:
+ * elegirlo después sería guardárselo al piloto equivocado.
+ *
+ * Con la dirección puesta —`?escenario=`— no se pregunta: eso es un banco de
+ * pruebas o un enlace directo, y ahí interrumpir sería estorbar.
+ */
+if (!escenario) {
+  const pilotosRoot = document.querySelector<HTMLElement>("#pilotos");
+  if (pilotosRoot) await elegirPiloto(pilotosRoot);
+  /*
+   * Y lo recordado se lee **después** de saber quién vuela.
+   *
+   * El escenario, el peldaño y la lección se guardan por perfil, así que
+   * leerlos antes es leer los del piloto anterior: el segundo niño del aula
+   * entraba en el aeropuerto y el peldaño del primero.
+   */
+  tramo = rememberedTier();
+  if (!params.get("leccion")) leccion = leccionRecordada();
+}
+
+const recordado =
+  SCENARIOS.find((s) => {
+    try {
+      return s.id === leerTexto("escenario");
+    } catch {
+      return false;
+    }
+  }) ?? SCENARIOS[0]!;
 
 if (!escenario) {
   const hangarRoot = document.querySelector<HTMLElement>("#hangar");
