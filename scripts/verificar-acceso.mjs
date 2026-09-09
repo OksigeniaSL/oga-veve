@@ -76,7 +76,9 @@ const comprobar = (nombre, ok, detalle) =>
 
 // ── El navegador de siempre ──────────────────────────────────────────────
 
-const page = await navegador.newPage({ viewport: { width: 1100, height: 700 } });
+const page = await navegador.newPage({
+  viewport: { width: 1100, height: 700 },
+});
 await page.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
@@ -256,6 +258,7 @@ async function auditar(page, donde, encierra = null) {
           ? `${a.getAttribute("data-ajuste")}:${a.getAttribute("data-valor")}`
           : null) ??
         a.getAttribute("data-pausa") ??
+        a.getAttribute("data-ala") ??
         (a.className || a.tagName).toString().split(" ")[0];
       const retrato = (e) =>
         `${e.outlineWidth}|${e.outlineStyle}|${e.outlineColor}|${e.boxShadow}|${e.backgroundColor}|${e.borderColor}`;
@@ -269,8 +272,9 @@ async function auditar(page, donde, encierra = null) {
         // Y de qué panel es. Un diálogo modal no puede dejar que el
         // tabulador se vaya por detrás, a lo que está tapado.
         dentroDe:
-          a.closest("#creditos, #teclas, #cuaderno, #hangar, #pausa, #ajustes")
-            ?.id ?? null,
+          a.closest(
+            "#creditos, #teclas, #cuaderno, #hangar, #pausa, #ajustes, #ala",
+          )?.id ?? null,
       };
     });
     if (parada === null) continue;
@@ -280,35 +284,48 @@ async function auditar(page, donde, encierra = null) {
     if (encierra && parada.dentroDe !== encierra) escapados.push(parada.nombre);
   }
 
-  const visibles = await page.evaluate((encierra) =>
-    [
-      ...(encierra ? document.getElementById(encierra) : document).querySelectorAll(
-        "button, summary, [data-touch]",
-      ),
-    ]
-      .filter(
-        (e) =>
-          e.getBoundingClientRect().width > 4 &&
-          !e.closest("[hidden]") &&
-          getComputedStyle(e).display !== "none",
-      )
-      .map((e) => ({
-        nombre:
-          e.getAttribute("data-hud") ??
-          e.getAttribute("data-touch") ??
-          (e.getAttribute("data-ajuste")
-            ? `${e.getAttribute("data-ajuste")}:${e.getAttribute("data-valor")}`
-            : null) ??
-          e.getAttribute("data-pausa") ??
-          (e.className || e.tagName).toString().split(" ")[0],
-        equivale: e.getAttribute("data-equivale-a"),
-      })),
   /*
-   * Con un panel modal abierto solo cuentan sus mandos. Los del vuelo siguen
-   * en pantalla, detrás del velo, y **no alcanzarlos es justo lo que tiene que
-   * pasar**: para eso está el encierro.
+   * **Un mando no es siempre un botón.**
+   *
+   * Esta lista decía `button, summary, [data-touch]`, y con eso el esquema del
+   * ala pasaba las cinco comprobaciones sin que nadie mirara sus dos
+   * tiradores: no eran botones, así que no estaban en la lista, así que no
+   * había nada que alcanzar ni nada que medir. Una comprobación que no puede
+   * fallar es peor que no tenerla.
    */
-  encierra);
+  const visibles = await page.evaluate(
+    (encierra) =>
+      [
+        ...(encierra
+          ? document.getElementById(encierra)
+          : document
+        ).querySelectorAll("button, summary, input, [data-touch]"),
+      ]
+        .filter(
+          (e) =>
+            e.getBoundingClientRect().width > 4 &&
+            !e.closest("[hidden]") &&
+            getComputedStyle(e).display !== "none",
+        )
+        .map((e) => ({
+          nombre:
+            e.getAttribute("data-hud") ??
+            e.getAttribute("data-touch") ??
+            (e.getAttribute("data-ajuste")
+              ? `${e.getAttribute("data-ajuste")}:${e.getAttribute("data-valor")}`
+              : null) ??
+            e.getAttribute("data-pausa") ??
+            e.getAttribute("data-ala") ??
+            (e.className || e.tagName).toString().split(" ")[0],
+          equivale: e.getAttribute("data-equivale-a"),
+        })),
+    /*
+     * Con un panel modal abierto solo cuentan sus mandos. Los del vuelo siguen
+     * en pantalla, detrás del velo, y **no alcanzarlos es justo lo que tiene que
+     * pasar**: para eso está el encierro.
+     */
+    encierra,
+  );
   const fuera = [];
   const declarados = [];
   for (const v of visibles) {
@@ -332,9 +349,9 @@ async function auditar(page, donde, encierra = null) {
     fuera.length
       ? `sin alcanzar: ${fuera.join(", ")}`
       : `${recorrido.length} paradas` +
-        (declarados.length
-          ? ` · con teclas equivalentes: ${declarados.join(", ")}`
-          : `: ${recorrido.slice(0, 6).join(" → ")}`),
+          (declarados.length
+            ? ` · con teclas equivalentes: ${declarados.join(", ")}`
+            : `: ${recorrido.slice(0, 6).join(" → ")}`),
   );
   /*
    * **Y que lo que se toca se pueda tocar.**
@@ -347,7 +364,11 @@ async function auditar(page, donde, encierra = null) {
    * pequeño justo donde más grande tendría que ser. Ver #150.
    */
   const chicos = await page.evaluate(() =>
-    [...document.querySelectorAll("button, [role='radio'], [data-touch]")]
+    [
+      ...document.querySelectorAll(
+        "button, input, [role='radio'], [data-touch]",
+      ),
+    ]
       .filter((e) => {
         const c = e.getBoundingClientRect();
         if (!c.width || e.closest("[hidden]")) return false;
@@ -433,7 +454,11 @@ async function comprobarEscape(page, donde, selector) {
     (s) => document.querySelector(s)?.hidden === true,
     selector,
   );
-  comprobar(`${donde}: se sale con Escape (2.1.2)`, cerrado, cerrado ? "sí" : "sigue abierto");
+  comprobar(
+    `${donde}: se sale con Escape (2.1.2)`,
+    cerrado,
+    cerrado ? "sí" : "sigue abierto",
+  );
 }
 
 /*
@@ -459,6 +484,14 @@ for (const [donde, boton, caja] of [
   ["créditos", "credits", "#creditos"],
   ["teclas", "keys", "#teclas"],
   ["cuaderno", "cuaderno", "#cuaderno"],
+  /*
+   * Y el esquema del ala, que es el único panel del juego **con un mando que
+   * no es un botón**: dos tiradores. Ahí lo que se mide de verdad es el
+   * objetivo táctil, porque la barra pintada mide doce píxeles y lo que se
+   * toca tiene que medir cuarenta y cuatro — son dos cosas distintas y es
+   * fácil confundirlas al escribir el CSS. Ver `ui/pantalla-ala.ts`.
+   */
+  ["ala", "ala", "#ala"],
 ]) {
   await page.click(`[data-hud="${boton}"]`);
   await page.waitForTimeout(600);
@@ -532,7 +565,6 @@ await tableta.goto(
 await tableta.waitForTimeout(12000);
 peores = peores.concat(await auditar(tableta, "tableta"));
 
-
 // ── Los pilotos, que es lo primero que se ve ─────────────────────────────
 
 /*
@@ -561,7 +593,9 @@ const quieta = await navegador.newPage({
 await quieta.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
-await quieta.goto(`http://localhost:${PUERTO}/?escenario=${ESCENARIO}&teselas=0`);
+await quieta.goto(
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&teselas=0`,
+);
 await quieta.waitForTimeout(12000);
 // A todo gas por la pista, que es donde traquetea de verdad.
 const balanceo = await quieta.evaluate(async () => {
