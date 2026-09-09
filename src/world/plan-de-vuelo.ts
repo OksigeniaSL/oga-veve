@@ -404,6 +404,128 @@ export interface Vista {
 const FUERA_DE_RUTA = 30;
 
 /**
+ * Cuánto se le perdona retroceder, además de lo que el avión se ha movido.
+ *
+ * Dos metros: lo que puede bailar la proyección entre fotogramas por las
+ * curvas redondeadas de la ruta y por el propio muestreo. No es una tolerancia
+ * a equivocarse, es el ruido de la cuenta.
+ */
+const HOLGURA_DEL_AVANCE = 2;
+
+/** Por dónde va el avión en su ruta. */
+export interface EnLaRuta {
+  /** Metros de ruta recorridos hasta el punto más cercano. */
+  readonly recorrido: number;
+  /** Y los que quedan. */
+  readonly restante: number;
+  /** A qué distancia queda la raya, en perpendicular. */
+  readonly aLaRaya: number;
+}
+
+/**
+ * Por dónde va el avión en la ruta, sin poder saltar a otro trozo del camino.
+ *
+ * ## El fallo que arregla
+ *
+ * Buscar el tramo **más cercano en perpendicular** parece la respuesta obvia y
+ * es correcta solo mientras la ruta no se pise a sí misma. En cuanto se dobla
+ * —y se dobla siempre que un aeródromo tiene una sola calle de rodaje, porque
+ * se va y se vuelve por ella— hay dos tramos igual de cerca del avión, y uno
+ * de los dos dice que quedan trescientos metros cuando quedan cinco.
+ *
+ * Se midió en Mariscal Estigarribia, que tiene exactamente esa forma: el avión
+ * rodando hacia la doble raya a 6,7 m/s y la cuenta de lo que faltaba
+ * **subiendo** —281 metros, 300, 307, 315—. La fase no llegaba nunca a
+ * «esperando», la torre no autorizaba nunca, y el aeródromo entero se quedó
+ * fuera de la lista de escenarios por esto. Ver #151.
+ *
+ * ## Y por qué la tolerancia es lo que se ha movido y no un número
+ *
+ * El primer arreglo permitía retroceder hasta veinticinco metros —«rodando se
+ * puede retroceder un poco»— y **no arregló nada**: medido, el resbalón era de
+ * veinte metros y pasaba por debajo del umbral, y luego otros veinte, y otros.
+ * Una tolerancia fija se la come cualquier deslizamiento gradual.
+ *
+ * Lo que no admite discusión es la física: entre dos fotogramas, el avance por
+ * la ruta no puede cambiar más de lo que el avión se ha movido. Con eso,
+ * parado no se mueve nada —que es justo el caso de la doble raya— y rodando a
+ * siete metros por segundo se mueve un palmo por fotograma. Y un avión
+ * teletransportado —un banco que lo coloca, un reinicio en el aire— trae un
+ * `movido` enorme, así que la ventana se abre sola y vuelve a engancharse
+ * donde toca sin ningún caso especial.
+ */
+export function avanzarEnRuta(
+  ruta: readonly Punto[],
+  p: Punto,
+  avanceAnterior = 0,
+  movido = Infinity,
+): EnLaRuta {
+  if (ruta.length < 2) return { recorrido: 0, restante: 0, aLaRaya: 0 };
+
+  let total = 0;
+  const largos: number[] = [];
+  for (let i = 0; i < ruta.length - 1; i++) {
+    const largo = Math.hypot(
+      ruta[i + 1]![0] - ruta[i]![0],
+      ruta[i + 1]![1] - ruta[i]![1],
+    );
+    largos.push(largo);
+    total += largo;
+  }
+
+  /*
+   * Se miran todos los tramos y se apuntan dos candidatos: el más cercano de
+   * todos, y el más cercano **de los que no van hacia atrás**.
+   *
+   * Hacia adelante no se restringe nada, y eso costó una regresión: la primera
+   * versión puso una ventana simétrica —no más de lo que el avión se ha
+   * movido, ni adelante ni atrás— y frenó también el avance legítimo. En una
+   * curva redondeada la ruta es más larga que la cuerda, así que el avance por
+   * la polilínea corre más que el avión y la ventana lo dejaba atrás. Medido
+   * en Tenerife Norte: el avión a dos metros del final y el plan creyendo que
+   * quedaban cuarenta y seis, justo un metro por encima del umbral que cambia
+   * la fase. Un aeródromo que funcionaba, roto por el arreglo de otro.
+   *
+   * Y no hace falta: **el fallo es un salto hacia atrás**. En un empate gana
+   * el primero que se encuentra, que es el tramo de ida —el de menos recorrido—
+   * y por eso la cuenta se iba hacia atrás y nunca hacia adelante.
+   */
+  const noAntesDe = avanceAnterior - movido - HOLGURA_DEL_AVANCE;
+  let deTodos = { d: Infinity, recorrido: 0 };
+  let sinRetroceder = { d: Infinity, recorrido: 0 };
+  let acumulado = 0;
+  for (let i = 0; i < ruta.length - 1; i++) {
+    const a = ruta[i]!;
+    const b = ruta[i + 1]!;
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const l2 = dx * dx + dy * dy || 1;
+    const t = Math.max(
+      0,
+      Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
+    );
+    const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
+    const recorrido = acumulado + t * largos[i]!;
+    if (d < deTodos.d) deTodos = { d, recorrido };
+    if (d < sinRetroceder.d && recorrido >= noAntesDe) {
+      sinRetroceder = { d, recorrido };
+    }
+    acumulado += largos[i]!;
+  }
+
+  // Y si no queda ninguno, es que el avión no está donde creíamos: se vuelve a
+  // empezar por el más cercano en vez de defender una cuenta que ya no
+  // describe nada. Pasa siempre en una ruta de un solo tramo, donde tampoco
+  // hay ambigüedad de la que protegerse.
+  const elegido = sinRetroceder.d < Infinity ? sinRetroceder : deTodos;
+  return {
+    recorrido: elegido.recorrido,
+    restante: Math.max(0, total - elegido.recorrido),
+    aLaRaya: elegido.d,
+  };
+}
+
+/**
  * Redondea los codos de una polilínea y dice el radio de cada punto.
  *
  * Cada esquina interior se sustituye por un filete: se retrocede un poco por
@@ -505,6 +627,15 @@ export class PlanDeVuelo {
   private ruta: Ruta | null = null;
   /** La ruta en coordenadas de mundo, que es donde vive el avión. */
   private rutaMundo: Punto[] = [];
+  /**
+   * Cuánta ruta se lleva recorrida, en metros. Se acuerda entre fotogramas.
+   *
+   * Es lo que impide que la proyección salte a un tramo anterior cuando la
+   * ruta se dobla sobre sí misma. Ver `avanzarEnRuta`.
+   */
+  private avance = 0;
+  /** Y dónde estaba el fotograma anterior, para saber cuánto se ha movido. */
+  private dondeEstaba: Punto | null = null;
   /** El radio de giro en cada punto de la ruta. `Infinity` donde va recta. */
   private radios: number[] = [];
 
@@ -1993,41 +2124,22 @@ export class PlanDeVuelo {
     return this.velocidades[cual] ?? CRUCERO;
   }
 
-  /** Metros de ruta que quedan desde el punto más cercano al avión. */
+  /**
+   * Metros de ruta que quedan, contando desde donde va el avión.
+   *
+   * Delega en `avanzarEnRuta`, que es la parte que se puede comprobar sin
+   * navegador, y **guarda el avance de un fotograma para el siguiente**: sin
+   * esa memoria no hay forma de saber por cuál de dos tramos que se pisan va
+   * el avión. Ver el porqué en `avanzarEnRuta`.
+   */
   private restanteHasta(p: Punto): number {
-    // Primero el total, y luego cuánto se lleva recorrido hasta el punto de la
-    // ruta más cercano al avión. Restar. El primer intento hizo las dos cosas
-    // en la misma pasada y salió una expresión que se cancelaba sola.
-    let total = 0;
-    for (let i = 0; i < this.rutaMundo.length - 1; i++) {
-      total += Math.hypot(
-        this.rutaMundo[i + 1]![0] - this.rutaMundo[i]![0],
-        this.rutaMundo[i + 1]![1] - this.rutaMundo[i]![1],
-      );
-    }
-
-    let mejor = Infinity;
-    let recorrido = 0;
-    let acumulado = 0;
-    for (let i = 0; i < this.rutaMundo.length - 1; i++) {
-      const a = this.rutaMundo[i]!;
-      const b = this.rutaMundo[i + 1]!;
-      const dx = b[0] - a[0];
-      const dy = b[1] - a[1];
-      const l2 = dx * dx + dy * dy || 1;
-      const largo = Math.sqrt(l2);
-      const t = Math.max(
-        0,
-        Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
-      );
-      const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
-      if (d < mejor) {
-        mejor = d;
-        recorrido = acumulado + t * largo;
-      }
-      acumulado += largo;
-    }
-    return Math.max(0, total - recorrido);
+    const movido = this.dondeEstaba
+      ? Math.hypot(p[0] - this.dondeEstaba[0], p[1] - this.dondeEstaba[1])
+      : Infinity;
+    const donde = avanzarEnRuta(this.rutaMundo, p, this.avance, movido);
+    this.avance = donde.recorrido;
+    this.dondeEstaba = p;
+    return donde.restante;
   }
 
   /** La letra de la calle por la que toca ir ahora mismo. */
@@ -2047,8 +2159,15 @@ export class PlanDeVuelo {
     return letra;
   }
 
+  /** Cuántas veces se ha puesto una ruta. Lo mira el banco. Ver #151. */
+  vecesQueSePusoLaRuta = 0;
+
   private ponerRuta(ruta: Ruta | null): void {
+    this.vecesQueSePusoLaRuta++;
     this.ruta = ruta;
+    // Ruta nueva, cuenta nueva: el avance que se llevaba era de otro camino.
+    this.avance = 0;
+    this.dondeEstaba = null;
     const crudos = ruta ? ruta.puntos.map((p) => [p[0], -p[1]] as Punto) : [];
     const { puntos, radios } = redondear(crudos, RADIO_CURVA);
     this.rutaMundo = puntos;

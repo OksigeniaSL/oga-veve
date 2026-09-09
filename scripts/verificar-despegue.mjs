@@ -381,6 +381,17 @@ const rodando = await page.evaluate(async () => {
     alFinal: fin
       ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z)
       : -1,
+    /*
+     * Y **lo que el juego cree que queda**, que no es lo mismo.
+     *
+     * Lo de arriba es la distancia en línea recta al último punto de la ruta,
+     * medida por este banco; esto es la cuenta con la que el juego decide
+     * cambiar de fase. Cuando las dos se separan, el fallo está en la cuenta y
+     * no en el piloto — y así es como se encontró el de Estigarribia, donde el
+     * avión estaba a un metro de la raya y el juego creía que quedaban
+     * trescientos. Ver #151.
+     */
+    creeQueQuedan: o.rodajeAsi?.().restante ?? -1,
     puntos: ruta.length,
     fases: [...new Set(fases)].join(" "),
   };
@@ -388,7 +399,7 @@ const rodando = await page.evaluate(async () => {
 comprobar(
   "rodando se llega al punto de espera y el juego lo sabe",
   rodando.fase === "esperando" || rodando.fase === "autorizado",
-  `fase «${rodando.fase}» a ${rodando.v.toFixed(1)} m/s en ${rodando.segundos.toFixed(0)} s, quedan ${rodando.alFinal.toFixed(0)} m · vistas: ${rodando.fases}`,
+  `fase «${rodando.fase}» a ${rodando.v.toFixed(1)} m/s en ${rodando.segundos.toFixed(0)} s, quedan ${rodando.alFinal.toFixed(0)} m y el juego cree que ${rodando.creeQueQuedan} · vistas: ${rodando.fases}`,
   "la máquina de fases se quedaba pegada y la lección no avanzaba",
 );
 /*

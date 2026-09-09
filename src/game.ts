@@ -1945,6 +1945,21 @@ export class Game {
        * velocidad de crucero del plan no cambiaba nada de lo que medía.
        */
       rodaje: () => this.vistaActual?.velocidadSugerida ?? 0,
+      /**
+       * Cómo va el rodaje por dentro: cuánta ruta queda y cuánto se va de ella.
+       *
+       * `restante` es lo que decide que la fase pase a «esperando» al llegar
+       * a la doble raya, y no había forma de mirarlo desde fuera: el banco veía
+       * el síntoma —una fase que no cambia— y no el número que lo causa. Ver
+       * #151.
+       */
+      rodajeAsi: () => ({
+        restante: Math.round(this.vistaActual?.restante ?? -1),
+        fuera: this.vistaActual?.fuera ?? false,
+        fase: this.vistaActual?.fase ?? "",
+        puntos: this.plan?.rutaVisible().length ?? 0,
+        vecesQueSePuso: this.plan?.vecesQueSePusoLaRuta ?? 0,
+      }),
     };
   }
 
