@@ -20,6 +20,8 @@ import GCLA from "../../data/aerodromes/gcla.aero.json";
 import LECU from "../../data/aerodromes/lecu.aero.json";
 import SGES from "../../data/aerodromes/sges.aero.json";
 import SGME from "../../data/aerodromes/sgme.aero.json";
+import SGPJ from "../../data/aerodromes/sgpj.aero.json";
+import SGEN from "../../data/aerodromes/sgen.aero.json";
 import type { Ciudad } from "./ciudad";
 import { deFrente, type Meteo } from "./meteo";
 
@@ -70,6 +72,22 @@ export interface Scenario {
   ridgeMix: number;
   /** Cota del agua. El relieve por debajo queda sumergido. */
   waterLevel: number;
+  /**
+   * Cuántos metros se espera que la pista quede por encima del agua.
+   *
+   * Veinte por defecto, y no es una manía: la primera pista del Valle de la
+   * Cordillera cayó **dentro del cauce del río** y no se descubrió hasta
+   * arrancar el juego. Desde entonces hay una prueba que lo comprueba en todos
+   * los escenarios.
+   *
+   * Se declara aquí, y solo aquí, cuando un campo de verdad está a la orilla:
+   * Encarnación tiene la pista a ochenta y cinco metros y el Paraná embalsado
+   * a ochenta y tres, y eso son dos metros y medio. Bajar la lámina para que
+   * pasara la prueba sería quitarle el río al único escenario que lo tiene
+   * delante; aflojar la prueba para todos sería perder el guardarraíl. Se
+   * declara la excepción, con su motivo, y el guardarraíl sigue en pie.
+   */
+  orilla?: number;
   /** Ancho del cauce principal, en metros. 0 para no excavar río. */
   riverWidth: number;
   bands: readonly TerrainBand[];
@@ -930,12 +948,166 @@ export const ESTIGARRIBIA: Scenario = {
   aerodrome: SGME as unknown as Aerodrome,
 };
 
+/**
+ * **Pedro Juan Caballero: el aeródromo alto, y la frontera pegada.**
+ *
+ * Quinientos setenta y un metros, la cota más alta de todos los campos de este
+ * juego y trescientos por encima de Asunción. Eso no es un dato de ficha: es
+ * la mitad de una lección que hasta ahora no se podía dar. **El altímetro
+ * marca quinientos setenta con el avión parado en el suelo**, y ahí se
+ * entiende de una vez que un altímetro no mide lo alto que vas: mide sobre el
+ * mar, y el suelo también está sobre el mar. Ver #39.
+ *
+ * Y el aire es más fino: a esa cota el avión corre más metros antes de
+ * despegar y baja con menos ganas de frenar. No hay que explicarlo, se nota.
+ *
+ * La ciudad está partida por la frontera —Pedro Juan Caballero de este lado,
+ * Ponta Porã del otro, y en medio una avenida— y el aeródromo queda al norte,
+ * en la sierra de Amambay. Pista sin luces, así que aquí no se vuela de noche.
+ */
+export const PEDRO_JUAN: Scenario = {
+  id: "pedro-juan",
+  nameKey: "scenario.pedroJuan.name",
+  pais: "py",
+  seed: 19450501,
+  size: 18000,
+  segments: 352,
+  // La red de repuesto, por si falta el relieve medido.
+  reliefHeight: 700,
+  reliefScale: 4.8,
+  ridgeMix: 0.28,
+  /*
+   * **Sin agua, y eso es una medida, no una suposición.**
+   *
+   * El relieve medido en los dieciocho kilómetros de alrededor va de 302 a 638
+   * metros, y el anillo lejano no baja de 174. Aquí arriba no hay río ni
+   * laguna que dibujar en cien kilómetros a la redonda.
+   */
+  waterLevel: 30,
+  riverWidth: 0,
+  /*
+   * Y los colores repartidos sobre lo que **mide** el terreno: de 302 a 638.
+   *
+   * Trescientos treinta y seis metros de desnivel, que es lo más movido de
+   * los cuatro escenarios paraguayos: la sierra de Amambay se levanta como un
+   * escalón y el aeródromo está arriba, a 571. La primera versión de estas
+   * bandas iba de 500 a 625 porque di por hecho que un campo alto está en una
+   * comarca alta, y no: la mitad del mapa se habría pintado del mismo tono más
+   * bajo. Lo dijo la descarga, no yo.
+   */
+  bands: [
+    { from: 295, colour: 0x4a6f3f },
+    { from: 360, colour: 0x587c45 },
+    { from: 425, colour: 0x688a4b },
+    { from: 490, colour: 0x7d9453 },
+    { from: 555, colour: 0x97925c },
+    { from: 615, colour: 0xa98a66 },
+  ],
+  water: 0x5b7f6a,
+  fill: 0x688a4b,
+  sky: { horizon: 0xe9eef1, zenith: 0x4b93d8 },
+  fog: { colour: 0xdde7ec, density: 0.000042 },
+  sun: { azimuth: 145, elevation: 58 },
+  runway: pistaDe(SGPJ as unknown as Aerodrome, "03"),
+  // Dieciséis grados, deducidos de los propios datos: la 03 corre a 14°
+  // verdaderos y la cabecera pone 03.
+  magneticVariation: 16,
+  aerodrome: SGPJ as unknown as Aerodrome,
+};
+
+/**
+ * **Encarnación: el río que es frontera, y una pista con dos países a la vista.**
+ *
+ * El Paraná aquí mide más de un kilómetro de ancho y del otro lado está
+ * Posadas, en Argentina. Es el único escenario del juego donde el agua no es
+ * un adorno del horizonte: es lo primero que se ve al levantar el morro, y en
+ * final a la 20 se viene por encima de ella.
+ *
+ * Y ochenta y cinco metros de cota, que al lado de Pedro Juan Caballero es la
+ * otra mitad de la lección del altímetro: el mismo avión, el mismo
+ * instrumento, y quinientos metros de diferencia con el avión parado.
+ */
+export const ENCARNACION: Scenario = {
+  id: "encarnacion",
+  nameKey: "scenario.encarnacion.name",
+  pais: "py",
+  seed: 19900101,
+  size: 20000,
+  segments: 384,
+  reliefHeight: 320,
+  reliefScale: 5.2,
+  ridgeMix: 0.1,
+  /*
+   * **Ochenta y dos metros: el Paraná embalsado, y una cota medida.**
+   *
+   * El relieve de los veinte kilómetros de alrededor baja hasta ochenta
+   * justos, y ese ochenta es el río: Yacyretá mantiene el embalse a
+   * ochenta y tres metros y el aeropuerto está a ochenta y cinco. Es la lámina
+   * más pegada al campo de todo el juego —dos metros— y por eso aquí el agua
+   * no es un adorno del horizonte: se ve desde la pista.
+   *
+   * Y por eso también la cota del aeródromo importó tanto. OurAirports da dos
+   * cifras que no pueden ser las dos: doscientos uno en la ficha del
+   * aeropuerto y ochenta y cinco en los dos umbrales. Con doscientos uno el
+   * aeropuerto quedaba casi en lo más alto de su propia comarca —el máximo
+   * medido son 288— y flotando sobre su terreno. Manda el umbral; ver el aviso
+   * que lo dice en `scripts/osm-a-aerodromo.mjs`.
+   */
+  waterLevel: 82,
+  // Dos metros y medio de orilla, que es lo que hay. Ver `orilla`.
+  orilla: 2,
+  riverWidth: 0,
+  /*
+   * Los colores sobre lo medido: de 80 a 288 metros. Del agua a la loma de
+   * tierra colorada, que es lo que hay entre Encarnación y Cambyretá.
+   */
+  bands: [
+    { from: 84, colour: 0x5c7f52 },
+    { from: 110, colour: 0x678c4f },
+    { from: 145, colour: 0x789751 },
+    { from: 185, colour: 0x8f9857 },
+    { from: 225, colour: 0xa08a5c },
+    { from: 265, colour: 0xa8815f },
+  ],
+  water: 0x55738a,
+  fill: 0x678c4f,
+  sky: { horizon: 0xe6ecf2, zenith: 0x4d92d6 },
+  // Aire húmedo del sur, con el río al lado.
+  fog: { colour: 0xd8e3ec, density: 0.000055 },
+  sun: { azimuth: 135, elevation: 50 },
+  runway: pistaDe(SGEN as unknown as Aerodrome, "02"),
+  // Ocho grados, deducidos del eje de OpenStreetMap: la 02 corre a 12°
+  // verdaderos y la cabecera pone 02.
+  magneticVariation: 8,
+  aerodrome: SGEN as unknown as Aerodrome,
+};
+
 export const SCENARIOS: readonly Scenario[] = [
   VALLE_CORDILLERA,
   CHACO,
   YVYTU_RAPE,
   PETTIROSSI,
   GUARANI,
+  ENCARNACION,
+  /*
+   * **Y Pedro Juan Caballero tampoco entra todavía, por lo mismo.**
+   *
+   * El escenario está hecho, el relieve medido y el aeródromo extraído; lo que
+   * no funciona es el rodaje. La única calle que va de la plataforma a la
+   * pista **cruza la pista** —así está en OpenStreetMap y así es sobre el
+   * terreno—, y el encaminador se pierde ahí: medido con el banco de
+   * despegue, trescientos cincuenta segundos rodando para acabar cincuenta y
+   * tres metros fuera del eje y sin llegar nunca a la doble raya.
+   *
+   * Se queda escrito y con sus datos porque el arreglo no está aquí: está en
+   * el encaminamiento de rodaje, que es el mismo fallo que tiene Estigarribia
+   * abajo. El día que un aeródromo de una sola calle funcione, esto es una
+   * línea. Ver #151.
+   *
+   * Y merece la pena esperarlo: quinientos setenta y un metros de cota, la más
+   * alta de todos los campos del juego, que es media lección de altimetría
+   * regalada.
+   */
   /*
    * **Mariscal Estigarribia todavía no entra en la lista, y por una razón.**
    *

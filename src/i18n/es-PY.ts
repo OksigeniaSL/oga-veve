@@ -96,6 +96,8 @@ export const ES_PY = {
 
   "scenario.guarani.name": "Guaraní · Ciudad del Este",
   "scenario.estigarribia.name": "Mariscal Estigarribia · el Chaco",
+  "scenario.pedroJuan.name": "Pedro Juan Caballero · Amambay",
+  "scenario.encarnacion.name": "Encarnación · el Paraná",
   "scenario.valle.name": "Valle de la Cordillera",
   "scenario.pettirossi.name": "Silvio Pettirossi",
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
