@@ -48,7 +48,7 @@ export const LLAVE_COPIA = "oga-veve:guardado.bak";
 export const LLAVE_ROTA = "oga-veve:guardado.roto";
 
 /** La versión del formato de hoy. */
-export const VERSION = 1;
+export const VERSION = 2;
 
 /**
  * El presupuesto, en kilobytes.
@@ -68,8 +68,15 @@ export type Progreso = Record<string, unknown>;
 export interface Perfil {
   /** Un identificador que no sale de este navegador. */
   readonly id: string;
-  /** El icono, que es cómo se reconoce un perfil sin saber leer. */
+  /**
+   * El bicho, que es cómo se reconoce un perfil sin saber leer.
+   *
+   * Un tero, un jaguareté, un karumbé. Ver `ui/pilotos.ts`, que es quien sabe
+   * cuáles hay y cómo se dibujan; aquí solo se guarda cuál.
+   */
   readonly avatar: string;
+  /** Y el color de su avión, que es la otra mitad de reconocerlo. */
+  readonly color?: string;
   readonly ajustes: Ajustes;
   readonly progreso: Progreso;
 }
@@ -123,7 +130,9 @@ export function guardadoNuevo(): Guardado {
   return {
     version: VERSION,
     activo: id,
-    perfiles: [{ id, avatar: "🐦", ajustes: {}, progreso: {} }],
+    perfiles: [
+      { id, avatar: "tero", color: "rojo", ajustes: {}, progreso: {} },
+    ],
   };
 }
 
@@ -170,7 +179,65 @@ export function migrarDeClavesSueltas(
  * escriba será, casi seguro, la que convierta el perfil único en una lista
  * elegible cuando llegue #26.
  */
-export const MIGRACIONES: readonly ((d: Guardado) => Guardado)[] = [];
+export const MIGRACIONES: readonly ((d: Guardado) => Guardado)[] = [
+  /*
+   * El hueco de la 0 a la 1, que no se usa nunca.
+   *
+   * La versión 0 no era un formato: eran trece claves sueltas, y de ahí se
+   * sale por otro camino —`migrarDeClavesSueltas`, que además necesita leer
+   * el almacenamiento entero y no un documento—. Está aquí porque el índice
+   * **es** la versión de origen, y saltárselo desplazaría todas las demás:
+   * la primera migración de verdad se escribió sin este hueco y no llegó a
+   * ejecutarse nunca. Lo cazó su propia prueba.
+   */
+  (d) => d,
+  /*
+   * **1 → 2: el perfil deja de ser un emoji y pasa a ser un avión.**
+   *
+   * En la versión 1 un perfil tenía `avatar: "🐦"` y nada más, porque nadie lo
+   * elegía ni lo veía. Con la pantalla de pilotos (#26) un perfil es un bicho
+   * y un color —lo que se reconoce entre doce aviones aparcados sin saber
+   * leer— y aquel pájaro no es ninguno de los cuatro.
+   *
+   * A quien ya tenía horas voladas no se le puede pedir que vuelva a elegir:
+   * se le asigna el primer avión libre y se le deja en paz. Las horas, la
+   * bitácora y los ajustes no se tocan.
+   *
+   * **Y las listas van escritas aquí a mano, no importadas de `ui/pilotos.ts`.**
+   * Una migración es una foto de un momento: el día que se añada un quinto
+   * bicho, esta tiene que seguir haciendo lo que hacía en su día, o dejará de
+   * ser reproducible. Es la regla de siempre con las migraciones y aquí se
+   * nota enseguida porque el fixture de la prueba está congelado.
+   */
+  (d) => {
+    const BICHOS = ["tero", "jaguarete", "karumbe", "mburucuya"];
+    const COLORES = ["rojo", "azul", "verde", "amarillo", "violeta", "naranja"];
+    const cogidos = new Set(
+      d.perfiles
+        .filter((p) => BICHOS.includes(p.avatar))
+        .map((p) => `${p.avatar}|${p.color ?? ""}`),
+    );
+    const libre = (): { avatar: string; color: string } => {
+      for (const color of COLORES) {
+        for (const avatar of BICHOS) {
+          if (!cogidos.has(`${avatar}|${color}`)) {
+            cogidos.add(`${avatar}|${color}`);
+            return { avatar, color };
+          }
+        }
+      }
+      return { avatar: BICHOS[0]!, color: COLORES[0]! };
+    };
+    return {
+      ...d,
+      perfiles: d.perfiles.map((p) =>
+        BICHOS.includes(p.avatar) && COLORES.includes(p.color ?? "")
+          ? p
+          : { ...p, ...libre() },
+      ),
+    };
+  },
+];
 
 /** ¿Esto tiene pinta de ser un guardado nuestro? */
 function esGuardado(d: unknown): d is Guardado {
@@ -290,6 +357,71 @@ function limpiarClavesViejas(s: Storage): void {
 /** El perfil que está jugando ahora. */
 function perfilActivo(g: Guardado): Perfil {
   return g.perfiles.find((p) => p.id === g.activo) ?? g.perfiles[0]!;
+}
+
+/**
+ * Los perfiles que hay, y cuál está jugando.
+ *
+ * Devuelve copias de lo que hay: quien los pinta no tiene por qué poder
+ * cambiarlos por su cuenta.
+ */
+export function perfiles(): {
+  readonly lista: readonly Perfil[];
+  readonly activo: string;
+} {
+  const g = leerGuardado();
+  return { lista: g.perfiles, activo: perfilActivo(g).id };
+}
+
+/**
+ * Crea uno y lo deja jugando.
+ *
+ * Con tope: doce, que son los huecos del hangar. Trece perfiles en una tablet
+ * de aula no es un aula, es un cajón desastre — y quien llega el decimotercero
+ * lo que quiere es un hueco libre, no otro más.
+ */
+export const CUANTOS_PERFILES = 12;
+
+export function crearPerfil(avatar: string, color: string): string | null {
+  const g = leerGuardado();
+  if (g.perfiles.length >= CUANTOS_PERFILES) return null;
+  const id = nuevoId();
+  memoria = {
+    ...g,
+    activo: id,
+    perfiles: [...g.perfiles, { id, avatar, color, ajustes: {}, progreso: {} }],
+  };
+  escribirYa();
+  return id;
+}
+
+/** Pone a jugar a otro. Si no existe, no pasa nada. */
+export function elegirPerfil(id: string): void {
+  const g = leerGuardado();
+  if (!g.perfiles.some((p) => p.id === id)) return;
+  memoria = { ...g, activo: id };
+  escribirYa();
+}
+
+/**
+ * Y borra uno, con lo que llevara dentro.
+ *
+ * **El último no se borra.** Un hangar sin ningún avión no es un estado del
+ * juego: es una pantalla en la que no se puede hacer nada, y de la que habría
+ * que salir creando uno. Si queda uno solo, se queda.
+ */
+export function borrarPerfil(id: string): boolean {
+  const g = leerGuardado();
+  if (g.perfiles.length <= 1) return false;
+  const quedan = g.perfiles.filter((p) => p.id !== id);
+  if (quedan.length === g.perfiles.length) return false;
+  memoria = {
+    ...g,
+    perfiles: quedan,
+    activo: g.activo === id ? quedan[0]!.id : g.activo,
+  };
+  escribirYa();
+  return true;
 }
 
 /** Un ajuste guardado, o `undefined` si no lo hay. */

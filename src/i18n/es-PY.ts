@@ -7,6 +7,23 @@
  */
 
 export const ES_PY = {
+  "pilotos.titulo": "¿Cuál es tu avión?",
+  "pilotos.nuevo": "Uno nuevo",
+  "pilotos.quitar": "Quitar este avión",
+  "pilotos.tuyo": "Este es tu avión",
+  "pilotos.bicho": "El bicho",
+  "pilotos.color": "El color",
+  "pilotos.listo": "A volar",
+  "bicho.tero": "Tero",
+  "bicho.jaguarete": "Jaguareté",
+  "bicho.karumbe": "Karumbé",
+  "bicho.mburucuya": "Mburucuyá",
+  "color.rojo": "Rojo",
+  "color.azul": "Azul",
+  "color.verde": "Verde",
+  "color.amarillo": "Amarillo",
+  "color.violeta": "Violeta",
+  "color.naranja": "Naranja",
   "ajustes.titulo": "Ajustes",
   "ajustes.listo": "Listo",
   "ajustes.movimiento": "Movimiento",

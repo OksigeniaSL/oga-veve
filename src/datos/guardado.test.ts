@@ -169,6 +169,76 @@ describe("al abrir el juego", () => {
   });
 });
 
+/**
+ * La primera migración de verdad, con un guardado de la versión 1 congelado.
+ *
+ * Y congelado quiere decir eso: este objeto es una foto de lo que escribía el
+ * juego el día que la versión 1 era la de hoy. No se actualiza cuando cambie
+ * el formato — si se actualizara, dejaría de probar la migración y pasaría a
+ * probar el presente contra sí mismo.
+ */
+const VERSION_1 = {
+  version: 1,
+  activo: "p-viejo",
+  perfiles: [
+    {
+      id: "p-viejo",
+      avatar: "🐦",
+      ajustes: { vista: "cockpit", tramo: "taguato" },
+      progreso: {
+        cuaderno: { segundos: 7200, despegues: 14, aterrizajes: 11 },
+        bitacora: [{ fecha: "2026-09-01T10:00:00.000Z", segundos: 400 }],
+      },
+    },
+  ],
+};
+
+describe("del formato 1 al 2: el emoji pasa a ser un avión", () => {
+  it("sube de versión sin tocar lo que había dentro", () => {
+    memoria.set(LLAVE, JSON.stringify(VERSION_1));
+    const g = leerGuardado();
+    expect(g.version).toBe(VERSION);
+    const p = g.perfiles[0]!;
+    // Lo que importa: las horas siguen ahí.
+    expect((p.progreso["cuaderno"] as { segundos: number }).segundos).toBe(7200);
+    expect(p.ajustes["vista"]).toBe("cockpit");
+    expect(p.id).toBe("p-viejo");
+    expect(g.activo).toBe("p-viejo");
+  });
+
+  it("y el pájaro se convierte en un bicho de verdad, con su color", () => {
+    memoria.set(LLAVE, JSON.stringify(VERSION_1));
+    const p = leerGuardado().perfiles[0]!;
+    expect(p.avatar).not.toBe("🐦");
+    expect(["tero", "jaguarete", "karumbe", "mburucuya"]).toContain(p.avatar);
+    expect(p.color).toBeTruthy();
+  });
+
+  it("y deja copia antes de tocar nada", () => {
+    memoria.set(LLAVE, JSON.stringify(VERSION_1));
+    leerGuardado();
+    escribirYa();
+    // Si la migración estuviera mal, el original sigue ahí.
+    expect(JSON.parse(memoria.get(LLAVE_COPIA)!).version).toBe(1);
+  });
+
+  it("dos perfiles viejos no acaban con el mismo avión", () => {
+    memoria.set(
+      LLAVE,
+      JSON.stringify({
+        ...VERSION_1,
+        perfiles: [
+          { ...VERSION_1.perfiles[0], id: "a" },
+          { ...VERSION_1.perfiles[0], id: "b" },
+          { ...VERSION_1.perfiles[0], id: "c" },
+        ],
+      }),
+    );
+    const suyos = leerGuardado().perfiles.map((p) => `${p.avatar}|${p.color}`);
+    expect(new Set(suyos).size).toBe(3);
+  });
+});
+
 describe("leer y escribir", () => {
   it("lo que se pone se lee", () => {
     ponerAjuste("vista", "pajaro");

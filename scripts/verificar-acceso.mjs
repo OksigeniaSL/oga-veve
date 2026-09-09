@@ -533,6 +533,25 @@ await tableta.waitForTimeout(12000);
 peores = peores.concat(await auditar(tableta, "tableta"));
 
 
+// ── Los pilotos, que es lo primero que se ve ─────────────────────────────
+
+/*
+ * Se abre **sin `?escenario=`**, que es como entra quien juega: con la
+ * dirección puesta el juego va directo al vuelo y esta pantalla no aparece.
+ * Y es la primera de todas, así que si algo aquí no se alcanza con el
+ * teclado, no se llega ni a elegir avión.
+ */
+const pilotos = await navegador.newPage({
+  viewport: { width: 1000, height: 620 },
+});
+await pilotos.addInitScript(() => {
+  localStorage.setItem("oga-veve:teclas-vistas", "1");
+});
+await pilotos.goto(`http://localhost:${PUERTO}/`);
+await pilotos.waitForTimeout(3000);
+peores = peores.concat(await auditar(pilotos, "pilotos"));
+await pilotos.close();
+
 // ── Movimiento reducido ─────────────────────────────────────────────────
 
 const quieta = await navegador.newPage({
