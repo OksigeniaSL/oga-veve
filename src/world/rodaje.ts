@@ -388,6 +388,22 @@ export interface Ruta {
   readonly puntos: readonly Punto[];
   /** Metros de rodaje. */
   readonly largo: number;
+  /**
+   * Lo que la ruta se aparta del asfalto por sus dos puntas, m.
+   *
+   * Los tramos de en medio son aristas del grafo, o sea calles de rodaje; los
+   * dos de las puntas los inventa el buscador para enganchar el principio y el
+   * final, y son los únicos que pueden ir por la hierba. Quien llama lo usa
+   * para descartar el atajo en diagonal por el campo.
+   *
+   * Lo dice el buscador y no se deduce mirando la polilínea, que era como se
+   * hacía antes: desde que la ruta puede acabar **a mitad de arista** —ver
+   * `recortada`—, su última pata puede ser calle de rodaje de verdad. En
+   * Mariscal Estigarribia la calle entera es una sola arista de 262 m entre
+   * dos nudos, y medir la polilínea daba un enganche de 203 m de asfalto: el
+   * aeródromo se descartaba y el juego arrancaba ya autorizado.
+   */
+  readonly enganche: number;
   /** Las letras por las que se pasa, sin repetir seguidas. Es la instrucción. */
   readonly letras: readonly string[];
 }
@@ -404,7 +420,7 @@ export function rutaEntre(
   hastaNudo: number,
 ): Ruta | null {
   if (desdeNudo === hastaNudo)
-    return { tramos: [], puntos: [], largo: 0, letras: [] };
+    return { tramos: [], puntos: [], largo: 0, letras: [], enganche: 0 };
 
   const coste = new Array<number>(grafo.nudos.length).fill(Infinity);
   const porTramo = new Array<number>(grafo.nudos.length).fill(-1);
@@ -469,7 +485,169 @@ export function rutaEntre(
       letras.push(paso.ref);
   }
 
-  return { tramos: pasos, puntos, largo: coste[hastaNudo]!, letras };
+  return {
+    tramos: pasos,
+    puntos,
+    largo: coste[hastaNudo]!,
+    letras,
+    enganche: 0,
+  };
+}
+
+/**
+ * La ruta se corta donde más se acerca al destino, no donde acaba la calle.
+ *
+ * El buscador de arriba solo sabe enganchar en los **nudos** del grafo, y un
+ * punto de espera no tiene por qué caer en un nudo: el de Mariscal
+ * Estigarribia está a mitad de la única calle del campo. Sin este recorte la
+ * ruta se iba hasta el final de la calle y **volvía por el mismo sitio** para
+ * llegar al punto de espera, que ya se había pisado noventa metros antes.
+ *
+ * Medido con el banco de despegue: ruta de 319 m para un rodaje de 228, el
+ * avión parado a un metro del último punto y el juego diciendo, con razón, que
+ * quedaban 92. La cuenta del plan no estaba mal; lo que estaba mal era la
+ * ruta. Ver #151.
+ *
+ * El recorte nunca empeora el remate en línea recta que hace quien llama: el
+ * punto por el que se corta es, por construcción, el más cercano al destino de
+ * toda la polilínea. Pero sí puede quitar maniobra, así que solo se aplica
+ * cuando el remate que había era largo de verdad. Ver `EL_TROCITO_QUE_FALTA`.
+ */
+function recortarAlDestino(
+  pasos: { ref: string | null; puntos: Punto[] }[],
+  destino: Punto,
+): {
+  pasos: { ref: string | null; puntos: Punto[] }[];
+  quitado: number;
+  cerca: number;
+} {
+  let mejor = { d: Infinity, paso: 0, i: 0, punto: destino, hasta: 0 };
+  let acumulado = 0;
+  for (let iPaso = 0; iPaso < pasos.length; iPaso++) {
+    const puntos = pasos[iPaso]!.puntos;
+    for (let i = 0; i < puntos.length - 1; i++) {
+      const a = puntos[i]!;
+      const b = puntos[i + 1]!;
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const l2 = dx * dx + dy * dy;
+      const largo = Math.sqrt(l2);
+      const t =
+        l2 < 1e-9
+          ? 0
+          : Math.max(
+              0,
+              Math.min(
+                1,
+                ((destino[0] - a[0]) * dx + (destino[1] - a[1]) * dy) / l2,
+              ),
+            );
+      const sobre: Punto = [a[0] + t * dx, a[1] + t * dy];
+      const d = Math.hypot(destino[0] - sobre[0], destino[1] - sobre[1]);
+      if (d < mejor.d) {
+        mejor = {
+          d,
+          paso: iPaso,
+          i,
+          punto: sobre,
+          hasta: acumulado + t * largo,
+        };
+      }
+      acumulado += largo;
+    }
+  }
+  // Sin tramos no hay nada que recortar, y con el punto más cercano al final
+  // tampoco: el recorte se queda en un no-op y la ruta sale entera.
+  if (mejor.d === Infinity) return { pasos, quitado: 0, cerca: Infinity };
+
+  const cortados = pasos.slice(0, mejor.paso + 1).map((paso, iPaso) => {
+    if (iPaso < mejor.paso) return paso;
+    const puntos = paso.puntos.slice(0, mejor.i + 1);
+    const ultimo = puntos[puntos.length - 1]!;
+    if (
+      Math.hypot(ultimo[0] - mejor.punto[0], ultimo[1] - mejor.punto[1]) > 0.5
+    )
+      puntos.push(mejor.punto);
+    return { ref: paso.ref, puntos };
+  });
+  // Y un paso que se queda en un solo punto no es un tramo por el que se pase:
+  // es el final de la ruta, y su letra no se canta.
+  const limpios = cortados.filter(
+    (paso, i) => paso.puntos.length > 1 || i < cortados.length - 1,
+  );
+  return { pasos: limpios, quitado: acumulado - mejor.hasta, cerca: mejor.d };
+}
+
+/**
+ * Cuánto puede quedar el destino del final de la ruta sin que eso sea un
+ * rodeo, m.
+ *
+ * Cuarenta es el mismo número que `SALTO_A_LA_ESPERA` en el plan de vuelo, y
+ * por el mismo motivo: es el ancho de la boca de una calle donde se une a la
+ * pista. Un punto de espera que queda a menos de eso del final de la ruta está
+ * **en esa boca**, y el trozo de calle que lleva hasta él es la curva de
+ * entrada; recortarla sería quitarle al avión la maniobra.
+ *
+ * Los dos casos, medidos: en Tenerife Norte el buscador acaba a 15,2 m del
+ * punto de espera y los quince metros que sobran son el bulbo de giro —cortar
+ * ahí dejó al avión dando vueltas trescientos cincuenta segundos a veintidós
+ * metros de la doble raya—. En Mariscal Estigarribia acaba a 59,5 m, y esos
+ * cincuenta y nueve son calle recorrida en el sentido contrario.
+ */
+const EL_TROCITO_QUE_FALTA = 40;
+
+/** La misma ruta, cortada en su punto más cercano al destino. */
+function recortada(ruta: Ruta, destino: Punto): Ruta {
+  const fin = ruta.puntos[ruta.puntos.length - 1];
+  if (
+    !fin ||
+    Math.hypot(fin[0] - destino[0], fin[1] - destino[1]) <= EL_TROCITO_QUE_FALTA
+  )
+    return ruta;
+
+  const pasos = ruta.tramos.map((t) => ({
+    ref: t.ref,
+    puntos: [...t.puntos] as Punto[],
+  }));
+  const { pasos: cortados, quitado, cerca } = recortarAlDestino(pasos, destino);
+  /*
+   * **Y solo si la ruta llega de verdad hasta el destino.**
+   *
+   * Costó otra medida. Si el punto más cercano de toda la polilínea sigue
+   * quedando lejos, el destino no está sobre esta ruta: está a campo través, y
+   * cortar por ahí abarata un camino que no existe. En Mariscal Estigarribia
+   * eso puso el juego en «autorizado» nada más cargar, con el motor en marcha
+   * y sin haber rodado un metro: un punto de espera cualquiera salía a
+   * doscientos metros de hierba y ganaba a la doble raya de verdad.
+   */
+  if (quitado < 0.5 || cerca > EL_TROCITO_QUE_FALTA) return ruta;
+
+  const puntos: Punto[] = [];
+  for (const paso of cortados) {
+    for (const p of paso.puntos) {
+      const ultimo = puntos[puntos.length - 1];
+      if (ultimo && Math.hypot(ultimo[0] - p[0], ultimo[1] - p[1]) < 0.5)
+        continue;
+      puntos.push(p);
+    }
+  }
+  const letras: string[] = [];
+  for (const paso of cortados) {
+    if (paso.ref && paso.ref !== letras[letras.length - 1])
+      letras.push(paso.ref);
+  }
+  // El largo es un **coste**, no una longitud: cruzar una pista se paga caro
+  // para que el buscador no lo elija por gusto. Restarle lo que se ha quitado
+  // lo deja algo por encima de lo que cuesta de verdad cuando el trozo que se
+  // va cruzaba pista, y eso es lo prudente: nunca hace parecer un camino más
+  // barato de lo que es.
+  return {
+    tramos: cortados,
+    puntos,
+    largo: Math.max(0, ruta.largo - quitado),
+    letras,
+    enganche: ruta.enganche,
+  };
 }
 
 /**
@@ -490,8 +668,9 @@ export function rodajeEntre(
   const b = nudoCercano(grafo, destino);
   if (a.nudo < 0 || b.nudo < 0) return null;
   if (a.distancia > maxSalto || b.distancia > maxSalto) return null;
-  const ruta = rutaEntre(grafo, a.nudo, b.nudo);
-  if (!ruta) return null;
+  const entera = rutaEntre(grafo, a.nudo, b.nudo);
+  if (!entera) return null;
+  const ruta = recortada(entera, destino);
 
   // **La ruta empieza en las ruedas y acaba en el destino**, no en el nudo más
   // cercano a cada uno. Un puesto de estacionamiento puede estar a cien metros
@@ -504,5 +683,17 @@ export function rodajeEntre(
       !anterior || Math.hypot(anterior[0] - p[0], anterior[1] - p[1]) > 0.5
     );
   });
-  return { ...ruta, puntos, largo: ruta.largo + a.distancia + b.distancia };
+  // Y el remate se mide desde donde acaba la ruta de verdad, que con el
+  // recorte ya no es el nudo del final: cobrarle al camino los noventa metros
+  // que se le acaban de quitar lo haría perder contra uno peor.
+  const fin = ruta.puntos[ruta.puntos.length - 1];
+  const remate = fin
+    ? Math.hypot(fin[0] - destino[0], fin[1] - destino[1])
+    : b.distancia;
+  return {
+    ...ruta,
+    puntos,
+    largo: ruta.largo + a.distancia + remate,
+    enganche: Math.max(a.distancia, remate),
+  };
 }

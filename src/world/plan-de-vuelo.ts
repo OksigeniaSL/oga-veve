@@ -177,23 +177,6 @@ const LO_MINIMO_QUE_SE_RUEDA = 60;
 const MAXIMO_ENGANCHE = 110;
 
 /**
- * Lo que la ruta se aparta del asfalto por sus dos puntas.
- *
- * Los tramos de en medio son aristas del grafo, o sea calles de rodaje. Los
- * dos de las puntas los inventa el buscador para enganchar el principio y el
- * final, y son los únicos que pueden ir por la hierba.
- */
-function engancheDe(puntos: readonly Punto[]): number {
-  if (puntos.length < 2) return Infinity;
-  const largo = (a: Punto, b: Punto): number =>
-    Math.hypot(a[0] - b[0], a[1] - b[1]);
-  return Math.max(
-    largo(puntos[0]!, puntos[1]!),
-    largo(puntos[puntos.length - 1]!, puntos[puntos.length - 2]!),
-  );
-}
-
-/**
  * Dónde se da por hecho que el avión ha dejado de correr al aterrizar, m.
  *
  * Mil metros pasado el umbral. La Óga 172 para en bastante menos, pero lo que
@@ -891,9 +874,10 @@ export class PlanDeVuelo {
          * optimizador la elegía.
          *
          * Lo que se mira es **el enganche**: lo que va del puesto a su nudo y
-         * del nudo al punto de espera, que son los dos únicos tramos de la
-         * ruta que no van por asfalto. Todo lo de en medio es el grafo, y el
-         * grafo es asfalto por construcción.
+         * de donde acaba la ruta al punto de espera, que son los dos únicos
+         * tramos que no van por asfalto. Todo lo de en medio es el grafo, y el
+         * grafo es asfalto por construcción. Lo dice el buscador, que es quien
+         * sabe cuáles son esas dos patas; ver `Ruta.enganche`.
          *
          * Antes esto se medía contando puntos —menos de cinco, fuera—, y era
          * un apaño que valía mientras todos los aeródromos tuvieran calles de
@@ -903,7 +887,7 @@ export class PlanDeVuelo {
          * autorizado, con el motor en marcha y sin rodaje ninguno.
          */
         if (!ruta) continue;
-        if (engancheDe(ruta.puntos) > MAXIMO_ENGANCHE) continue;
+        if (ruta.enganche > MAXIMO_ENGANCHE) continue;
         if (ruta.largo < LO_MINIMO_QUE_SE_RUEDA) continue;
         pares.push({
           puesto,
@@ -1793,7 +1777,14 @@ export class PlanDeVuelo {
     }
     // Sin letras: en la pista no se anuncia una calle, se anuncia la pista, y
     // de eso ya se encarga el designador pintado en la cabecera.
-    return { tramos: [{ ref: null, puntos }], puntos, largo, letras: [] };
+    return {
+      tramos: [{ ref: null, puntos }],
+      puntos,
+      largo,
+      letras: [],
+      // Trazada a mano sobre la pista: no hay puntas que enganchar al grafo.
+      enganche: 0,
+    };
   }
 
   /**
@@ -1958,7 +1949,14 @@ export class PlanDeVuelo {
         puntos[i]![1] - puntos[i - 1]![1],
       );
     }
-    return { tramos: [{ ref: null, puntos }], puntos, largo, letras: [] };
+    return {
+      tramos: [{ ref: null, puntos }],
+      puntos,
+      largo,
+      letras: [],
+      // Trazada a mano sobre la pista: no hay puntas que enganchar al grafo.
+      enganche: 0,
+    };
   }
 
   /** El largo de la pista, medido entre umbrales. */
@@ -2122,6 +2120,22 @@ export class PlanDeVuelo {
       }
     }
     return this.velocidades[cual] ?? CRUCERO;
+  }
+
+  /** El largo total de la ruta de hoy y lo recorrido. Lo mira el banco. #151. */
+  get comoVaLaRuta(): { total: number; recorrido: number; puntos: number } {
+    let total = 0;
+    for (let i = 0; i < this.rutaMundo.length - 1; i++) {
+      total += Math.hypot(
+        this.rutaMundo[i + 1]![0] - this.rutaMundo[i]![0],
+        this.rutaMundo[i + 1]![1] - this.rutaMundo[i]![1],
+      );
+    }
+    return {
+      total: Math.round(total),
+      recorrido: Math.round(this.avance),
+      puntos: this.rutaMundo.length,
+    };
   }
 
   /**

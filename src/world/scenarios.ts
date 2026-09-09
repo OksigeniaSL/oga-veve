@@ -1090,37 +1090,25 @@ export const SCENARIOS: readonly Scenario[] = [
   GUARANI,
   ENCARNACION,
   /*
-   * **Y Pedro Juan Caballero tampoco entra todavía, por lo mismo.**
+   * **Los dos que faltaban entraron el día que el rodaje supo parar a mitad de
+   * calle.**
    *
-   * El escenario está hecho, el relieve medido y el aeródromo extraído; lo que
-   * no funciona es el rodaje. La única calle que va de la plataforma a la
-   * pista **cruza la pista** —así está en OpenStreetMap y así es sobre el
-   * terreno—, y el encaminador se pierde ahí: medido con el banco de
-   * despegue, trescientos cincuenta segundos rodando para acabar cincuenta y
-   * tres metros fuera del eje y sin llegar nunca a la doble raya.
+   * Mariscal Estigarribia tiene una sola calle de rodaje y Pedro Juan
+   * Caballero tiene una que **cruza la pista**. Los dos se quedaron fuera
+   * meses por lo mismo: el buscador de rutas solo sabía terminar en un nudo
+   * del grafo, y en un campo así el punto de espera cae a mitad de arista, con
+   * lo que la ruta se pasaba de largo y volvía. Trescientos cincuenta segundos
+   * de rodaje para no llegar nunca a la doble raya, medidos en los dos.
    *
-   * Se queda escrito y con sus datos porque el arreglo no está aquí: está en
-   * el encaminamiento de rodaje, que es el mismo fallo que tiene Estigarribia
-   * abajo. El día que un aeródromo de una sola calle funcione, esto es una
-   * línea. Ver #151.
-   *
-   * Y merece la pena esperarlo: quinientos setenta y un metros de cota, la más
-   * alta de todos los campos del juego, que es media lección de altimetría
-   * regalada.
+   * Con el recorte —ver `recortada` en `rodaje.ts`— los dos pasan el banco de
+   * despegue entero. Y traen lo suyo: el Chaco central se mueve dieciocho
+   * metros en veinte kilómetros, así que en Estigarribia no hay lomas ni río
+   * para volver y el circuito de tráfico deja de ser un adorno; Pedro Juan
+   * pone quinientos setenta y un metros de cota, la más alta del juego, que es
+   * media lección de altimetría regalada. Ver #151.
    */
-  /*
-   * **Mariscal Estigarribia todavía no entra en la lista, y por una razón.**
-   *
-   * El escenario está hecho y el relieve medido, pero el vuelo no se puede
-   * terminar: el aeródromo tiene **una sola calle de rodaje**, y con ella el
-   * juego llega a la doble raya y se queda ahí —la fase no pasa a «esperando»
-   * y la torre no autoriza nunca—. Enseñarlo así sería ofrecer un aeropuerto
-   * del que no se puede despegar.
-   *
-   * Se queda escrito y con sus datos porque falta poco: cuando el rodaje de
-   * un aeródromo de una sola calle funcione, esto es una línea. Ver el issue
-   * del Chaco.
-   */
+  ESTIGARRIBIA,
+  PEDRO_JUAN,
   TENERIFE_NORTE,
   LA_PALMA,
   CUATRO_VIENTOS,
