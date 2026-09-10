@@ -1909,3 +1909,74 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
 
   return grupo;
 }
+
+/**
+ * Pista que tiene que quedar por delante para entrar y despegar sin más, m.
+ *
+ * Seiscientos: la carrera de despegue de la Óga 172 con la mitad de propina.
+ * Por debajo de esto, entrar donde muere la calle de rodaje **no es una
+ * opción**, y para llegar a la cabecera hay que rodar por la propia pista y
+ * dar la vuelta al final. Eso es el back-taxi, y así se pide por radio.
+ *
+ * Es deliberadamente más bajo que `PISTA_QUE_HACE_FALTA`, que responde a otra
+ * pregunta: aquélla dice cuánta pista se quiere para **elegir** una salida por
+ * intersección habiendo alternativa; ésta dice cuándo ya no hay alternativa.
+ *
+ * Medido en los aeródromos del juego, entrando por donde hay calle: Silvio
+ * Pettirossi, Tenerife Norte, Guaraní, La Palma y Cuatro Vientos dejan más de
+ * mil quinientos metros y no se enteran de esto; Pedro Juan Caballero deja
+ * novecientos treinta y tampoco. Se quedan cortos la 01 de Mariscal
+ * Estigarribia —quinientos cincuenta y nueve—, la 02 de Encarnación
+ * —trescientos ochenta y nueve, menos de lo que corre el avión— y las dos
+ * cabeceras de Yvytu Rape, que es un campo de novecientos metros con la calle
+ * en el medio. Los dos primeros hacen el back-taxi; Yvytu no, porque su pista
+ * de hierba es demasiado estrecha para dibujarlo. Ver `ANCHO_PARA_LA_VUELTA`.
+ */
+export const PARA_ENTRAR_Y_DESPEGAR = 600;
+
+/**
+ * Metros de pista que quedan por delante si se entra por donde hay calle de
+ * rodaje, despegando por la cabecera que se pide.
+ *
+ * Devuelve `Infinity` cuando no hay calles dibujadas: sin datos no se puede
+ * decir que falte sitio, y quedarse sin respuesta es peor que no preguntar.
+ *
+ * Se mira la entrada **más cercana a la cabecera**, que es la que más pista
+ * deja: si hay varias, el avión usará la que le convenga.
+ */
+export function pistaTrasLaCalle(aero: Aerodrome, cabecera: string): number {
+  const pista = aero.runways[0];
+  const umbral = pista?.thresholds?.[cabecera]?.xy;
+  if (!pista || !umbral) return Infinity;
+  const c = pista.centerline;
+  const a = c[0];
+  const b = c[c.length - 1];
+  if (!a || !b) return Infinity;
+  const largo = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (largo < 1) return Infinity;
+  const ux = (b[0] - a[0]) / largo;
+  const uy = (b[1] - a[1]) / largo;
+  /** Dónde cae un punto a lo largo del eje, medido desde el extremo `a`. */
+  const alEje = (p: Punto): number => (p[0] - a[0]) * ux + (p[1] - a[1]) * uy;
+  const alLado = (p: Punto): number =>
+    Math.abs(-(p[0] - a[0]) * uy + (p[1] - a[1]) * ux);
+
+  const desdeElUmbral = alEje(umbral);
+  // Hacia dónde se despega: al extremo contrario al de la cabecera.
+  const fin = desdeElUmbral < largo / 2 ? largo : 0;
+
+  let entrada = Infinity;
+  for (const calle of aero.taxiways ?? []) {
+    for (const p of calle.path) {
+      // Medio ancho de pista de sobra: lo que se busca es el punto donde la
+      // calle toca el asfalto, no la calle entera.
+      if (alLado(p) > (pista.widthM ?? 45) / 2 + 40) continue;
+      const s = alEje(p);
+      if (s < -50 || s > largo + 50) continue;
+      if (Math.abs(s - desdeElUmbral) < Math.abs(entrada - desdeElUmbral))
+        entrada = s;
+    }
+  }
+  if (!Number.isFinite(entrada)) return Infinity;
+  return Math.abs(fin - entrada);
+}

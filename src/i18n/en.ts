@@ -205,6 +205,7 @@ export const EN: Dictionary = {
   "vuelo.rodando": "Follow the green line",
   "vuelo.esperando": "Stop completely and wait for the light",
   "vuelo.autorizado": "Green light! Enter the runway",
+  "vuelo.backTaxi": "Backtrack to the far end, then turn around",
   "vuelo.alineando": "Line up on the centreline",
   "vuelo.minimos": "Look at the runway: can you see it?",
   "vuelo.noEstabilizada": "Not like this: go around and try again",

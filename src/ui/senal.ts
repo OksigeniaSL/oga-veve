@@ -447,6 +447,21 @@ const TIRAR = `
         stroke-linejoin="round" />
 `;
 
+/**
+ * El back-taxi: **la pista, y la flecha que baja, da la vuelta y sube**.
+ *
+ * Es el dibujo entero de la maniobra, que es lo que hace falta a los cuatro
+ * años: no dice «girá» ni «seguí», dice a dónde vas y por dónde volvés. La
+ * punta apunta hacia arriba porque el despegue es hacia allá; lo de bajar es
+ * el trámite.
+ */
+const MEDIA_VUELTA = icono(`
+  <path d="M4.6 2 h14.8 v20 H4.6 Z" opacity="0.26" />
+  <path d="M9 4 v11 q0 4 3 4 q3 0 3-4 V9.6" fill="none" stroke="currentColor"
+        stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M15 3.6 L18.4 9.2 L11.6 9.2 Z" />
+`);
+
 const DIBUJOS: Record<string, string> = {
   llave: LLAVE,
   helice: HELICE,
@@ -454,6 +469,7 @@ const DIBUJOS: Record<string, string> = {
   mano: MANO,
   nopara: NO_PARAR,
   verde: VERDE,
+  "media-vuelta": MEDIA_VUELTA,
   eje: EJE,
   motor: MOTOR,
   ala: ALA,

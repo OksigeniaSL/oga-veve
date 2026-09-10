@@ -27,7 +27,7 @@ import {
 } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Aerodrome, Punto } from "./aerodrome";
-import { aLaPolilinea } from "./aerodrome";
+import { aLaPolilinea, PARA_ENTRAR_Y_DESPEGAR } from "./aerodrome";
 import {
   construirGrafo,
   nudoCercano,
@@ -36,7 +36,7 @@ import {
   type Ruta,
   type Tramo,
 } from "./rodaje";
-import { delante, enEjesDePista, puntoDePista } from "./rumbo";
+import { delante, enEjesDePista, puntoDePista, traves } from "./rumbo";
 import {
   GUION,
   Vuelo,
@@ -187,6 +187,24 @@ const TRAS_TOMAR_TIERRA = 1000;
 
 /** Metros que tiene que quedar por delante para poder tomar una salida. */
 const HUECO_PARA_GIRAR = 25;
+
+/**
+ * Lo estrecha que puede ser una pista y aun así admitir un back-taxi, m.
+ *
+ * Treinta y seis. La maniobra se rueda por una raya apartada del eje y se
+ * vuelve **por el eje**, así que lo que separa la ida de la vuelta es esa
+ * apartada: medio ancho menos cuatro metros de borde. Con treinta y seis
+ * salen catorce, más que la envergadura de la Óga 172, y por debajo de eso
+ * las dos rayas dejan de ser dos.
+ *
+ * Lo puso Yvytu Rape, que son dieciocho metros de hierba: ahí quedaban a
+ * cinco, y medido con el banco el avión entraba, se enganchaba a la raya de
+ * vuelta antes de haberse ido, daba media vuelta sobre sí mismo y se
+ * plantaba. En campos así se hace lo de siempre —se entra donde muere la
+ * calle y se despega con lo que queda—, que es menos elegante y es lo que se
+ * puede enseñar sin mentir. Ver #151.
+ */
+export const ANCHO_PARA_LA_VUELTA = 36;
 
 /**
  * Pista que se procura dejar por delante al entrar, m.
@@ -1432,7 +1450,7 @@ export class PlanDeVuelo {
   ): Vista {
     const s = this.situacion(estado, sobreElSuelo, motor);
     const p: Paso = this.vuelo.paso(s, dt);
-    const sugerida = this.velocidadAqui([estado.position.x, estado.position.z]);
+    const sugerida = this.velocidadAqui();
 
     if (p.cambio) this.alCambiarDeFase(p.fase);
     else this.rehacerSiHaceFalta(p.fase, dt);
@@ -1517,7 +1535,7 @@ export class PlanDeVuelo {
      * pases. Lo encontró el banco de pruebas: con el verde dado, el avión se
      * quedaba en el punto de espera sin ruta a la que agarrarse.
      */
-    if (fase === "alineando" || fase === "autorizado") {
+    if (fase === "alineando" || fase === "autorizado" || fase === "back-taxi") {
       if (this.destino === "pista") return;
       this.destino = "pista";
       this.ponerRuta(this.entradaEnPista());
@@ -1533,6 +1551,7 @@ export class PlanDeVuelo {
     ) {
       this.ponerRuta(null);
       this.destino = null;
+      this.giroDelBackTaxi = null;
       return;
     }
 
@@ -1636,7 +1655,8 @@ export class PlanDeVuelo {
     if (this.destino === null) return;
     // En el aire no hay nada que rodar, y entrando en pista la raya es
     // geometría de la pista y no del grafo: ahí no se recalcula.
-    if (fase === "alineando" || fase === "autorizado") return;
+    if (fase === "alineando" || fase === "autorizado" || fase === "back-taxi")
+      return;
     this.desdeElUltimoTrazado += dt;
     if (this.desdeElUltimoTrazado < CADA_CUANTO_SE_REHACE) return;
     this.desdeElUltimoTrazado = 0;
@@ -1659,6 +1679,106 @@ export class PlanDeVuelo {
     // Y si no sale, **se deja la que había**: una raya vieja guía peor que una
     // nueva, pero infinitamente mejor que ninguna.
     if (ruta) this.ponerRuta(ruta);
+  }
+
+  /**
+   * El back-taxi: rodar por la propia pista hasta la cabecera y dar la vuelta.
+   *
+   * Hay aeródromos donde la plataforma está en un extremo y la única calle de
+   * rodaje muere ahí. Con el viento en contra de esa cabecera hay que despegar
+   * por la otra, y a la otra **no se llega rodando por calles**: se llega
+   * entrando en la pista y recorriéndola en sentido contrario. Es una maniobra
+   * de verdad, se pide por radio con esas palabras —«back-track runway 01»— y
+   * es la única forma de operar la mitad de los campos pequeños del mundo.
+   *
+   * Devuelve `null` cuando no hace falta, que es lo normal: si desde donde se
+   * entra ya queda pista de sobra por delante, se entra y se despega.
+   *
+   * **Hasta dónde se vuelve.** Hasta el primer sitio desde el que ya se puede
+   * despegar con la pista de una salida por intersección delante
+   * —`PISTA_QUE_HACE_FALTA`, casi el triple de lo que corre la Óga 172—, y si
+   * el campo es más corto que eso, hasta el umbral. Ni un metro más: volver
+   * hasta la cabecera por costumbre es rodar de balde, y aquí lo que sobra de
+   * rodaje se paga en niños aburridos.
+   *
+   * Medido: en Mariscal Estigarribia se entra en el metro 1208 del eje, se
+   * vuelven 650 —por debajo de `LO_MAXIMO_DE_IDA`, que es lo que aguanta la
+   * paciencia de quien tiene cuatro años— y quedan 1200 por delante, cuando el
+   * avión necesita 450.
+   *
+   * **Y la media vuelta se dibuja, no se pide.** Un vértice de ciento ochenta
+   * grados no lo redondea nadie —`redondear` se queda con radio cero y la
+   * ayuda de rodaje se planta, que para eso está `VUELTA_EN_U`—, así que la
+   * vuelta va como lo que es: media circunferencia de puntos, con el avión
+   * rodando por un lado del eje a la ida y por el otro a la vuelta, que es
+   * exactamente como se hace.
+   */
+  private backTaxiDesde(along: number): Punto[] | null {
+    this.giroDelBackTaxi = null;
+    const mitad = this.largoDePista / 2;
+    // Si desde aquí ya queda pista de sobra, esto no es un back-taxi: es
+    // entrar y despegar, que es lo que pasa en casi todos los aeródromos.
+    if (mitad - along >= PARA_ENTRAR_Y_DESPEGAR) return null;
+    // Y en una pista estrecha tampoco, porque las dos rayas se confunden.
+    // Ver `ANCHO_PARA_LA_VUELTA`.
+    if (this.pista.width < ANCHO_PARA_LA_VUELTA) return null;
+
+    const [fx, fz] = delante(this.pista.heading);
+    const [tx, tz] = traves(this.pista.heading);
+    /** Un punto del asfalto, en coordenadas de fichero. */
+    const enLaPista = (a: number, lado: number): Punto => [
+      this.pista.x + fx * a + tx * lado,
+      -(this.pista.z + fz * a + tz * lado),
+    ];
+
+    /*
+     * **La media vuelta acaba en el eje, no al lado.**
+     *
+     * Una circunferencia de 180 grados te deja a dos radios de donde
+     * entraste, así que si se rueda por una raya a `L` del eje y se gira con
+     * radio `L/2`, se sale **exactamente sobre el eje** y mirando a donde se
+     * despega. Ni una recta más: el avión termina la maniobra alineado y ya
+     * puede dar gas.
+     *
+     * La primera versión giraba con el centro en el eje y terminaba a
+     * dieciséis metros de él, con un tramo de ciento veinte metros para ir
+     * acercándose. Y ese tramo se hacía **acelerando**: el avión cruzaba el
+     * listón de los doce metros ya lanzado, la fase saltaba de «despegando» a
+     * «alineando» a media carrera y el destello de Vr se perdía por el camino.
+     * Medido en el banco tres veces, con tres resultados distintos, que es lo
+     * que pasa cuando algo depende de por dónde te pille una convergencia.
+     *
+     * `L` es también lo que separa la raya de ida de la de vuelta, y por eso
+     * se le deja cuatro metros de borde: en una pista de cuarenta metros son
+     * dieciséis, más que la envergadura de la Óga 172.
+     */
+    const lado = Math.max(
+      6,
+      Math.min(2 * RADIO_CURVA, this.pista.width / 2 - 4),
+    );
+    const radio = lado / 2;
+    const umbral = -mitad + HUECO_PARA_GIRAR + radio;
+    const giro = Math.max(umbral, mitad - PISTA_QUE_HACE_FALTA);
+    this.giroDelBackTaxi = giro;
+
+    const puntos: Punto[] = [
+      // Del eje al lado por el que se va: entrar y apartarse, sin cruzarse.
+      enLaPista(Math.min(along, mitad - 40) - 60, lado),
+      enLaPista(giro + radio, lado),
+    ];
+    /*
+     * Media circunferencia con el centro a medio camino del eje, un punto cada
+     * treinta grados: se entra por la raya de ida y se sale sobre el eje.
+     */
+    for (let g = 90; g <= 270; g += 30) {
+      const rad = (g * Math.PI) / 180;
+      puntos.push(
+        enLaPista(giro + radio * Math.cos(rad), radio + radio * Math.sin(rad)),
+      );
+    }
+    // Y eje abajo, que es lo que dice hacia dónde se despega.
+    puntos.push(enLaPista(Math.min(mitad - 60, giro + 620), 0));
+    return puntos;
   }
 
   /**
@@ -1728,6 +1848,9 @@ export class PlanDeVuelo {
     const enElEje: Punto = [entrada[0], -entrada[1]];
     const ejeAbajo: Punto = [rodada[0], -rodada[1]];
 
+    // Y la vuelta entera, si desde aquí no hay pista para despegar.
+    const vuelta = this.backTaxiDesde(along);
+
     /*
      * **Y hasta el eje se va por la calle, si hay calle.**
      *
@@ -1764,10 +1887,13 @@ export class PlanDeVuelo {
       desdeElAvion.distancia <= LEJOS_DE_LA_CALLE
         ? rodajeEntre(this.grafo, this.ultimaPos, enElEje, HASTA_EL_EJE)
         : null;
-    const puntos: Punto[] =
+    const hastaElEje: Punto[] =
       porLaCalle && porLaCalle.puntos.length > 2
-        ? [...porLaCalle.puntos, ejeAbajo]
-        : [this.ultimaPos, enElEje, ejeAbajo];
+        ? [...porLaCalle.puntos]
+        : [this.ultimaPos, enElEje];
+    const puntos: Punto[] = vuelta
+      ? [...hastaElEje, ...vuelta]
+      : [...hastaElEje, ejeAbajo];
     let largo = 0;
     for (let i = 1; i < puntos.length; i++) {
       largo += Math.hypot(
@@ -1972,6 +2098,16 @@ export class PlanDeVuelo {
     return Math.hypot(a[0] - b[0], a[1] - b[1]);
   }
 
+  /**
+   * En qué metro de la pista toca dar la media vuelta, o `null` si no hay
+   * back-taxi. Se mide a lo largo del eje desde el centro, como `alLargoDePista`.
+   *
+   * Lo pone `entradaEnPista` al trazar la ruta y lo lee `situacion` para
+   * decirle a la máquina de fases que lo que está haciendo el avión no es
+   * alinearse. Ver `Situacion.backTaxi`.
+   */
+  private giroDelBackTaxi: number | null = null;
+
   /** A dónde va ahora mismo. Sirve para no recalcular la misma ruta cada fase. */
   private destino: "espera" | "puesto" | "pista" | null = null;
   /** Segundos desde el último trazado. Ver `rehacerSiHaceFalta`. */
@@ -2004,6 +2140,25 @@ export class PlanDeVuelo {
       restante = this.restanteHasta([x, z]);
     }
 
+    /*
+     * **Y el back-taxi se acaba al llegar al sitio de girar, y no vuelve.**
+     *
+     * Esto se preguntaba cada fotograma —«¿queda pista por detrás?»— y la
+     * respuesta volvía a ser que sí en cuanto el avión daba la vuelta y
+     * empezaba a correr, porque desde ahí la cuenta a lo largo del eje sube
+     * otra vez. O sea que la carrera de despegue entera se hacía en fase de
+     * back-taxi: sin V1, sin Vr y sin la flecha de tirar, que son las tres
+     * cosas que marcan ese medio minuto. Se ve en el banco tal cual.
+     *
+     * Así que la bandera es de ida y no de vuelta: se levanta al trazar la
+     * ruta y se baja al llegar al giro. Ver `backTaxiDesde`.
+     */
+    if (
+      this.giroDelBackTaxi !== null &&
+      along <= this.giroDelBackTaxi + HUECO_PARA_GIRAR
+    )
+      this.giroDelBackTaxi = null;
+
     const rumbo = ((estado.heading * 180) / Math.PI + 360) % 360;
     let desalineado = rumbo - this.pista.heading;
     while (desalineado > 180) desalineado -= 360;
@@ -2016,6 +2171,7 @@ export class PlanDeVuelo {
       alEjeDePista,
       alLargoDePista: along,
       enPista: alEjeDePista < this.pista.width / 2 + 3,
+      backTaxi: this.giroDelBackTaxi !== null,
       pistaRestante: Math.max(0, this.pista.length / 2 - along),
       sobreElSuelo,
       motor,
@@ -2042,6 +2198,15 @@ export class PlanDeVuelo {
   private calcularVelocidades(): void {
     const n = this.rutaMundo.length;
     this.velocidades = new Array<number>(n).fill(CRUCERO);
+    this.recorridos = new Array<number>(n).fill(0);
+    for (let i = 1; i < n; i++) {
+      this.recorridos[i] =
+        this.recorridos[i - 1]! +
+        Math.hypot(
+          this.rutaMundo[i]![0] - this.rutaMundo[i - 1]![0],
+          this.rutaMundo[i]![1] - this.rutaMundo[i - 1]![1],
+        );
+    }
     if (n < 2) return;
 
     // **Por el radio de la curva, no por el ángulo del vértice.**
@@ -2104,22 +2269,46 @@ export class PlanDeVuelo {
     }
   }
 
-  /** La velocidad que toca donde está el avión ahora. */
-  private velocidadAqui(p: Punto): number {
-    if (this.velocidades.length < 2) return CRUCERO;
-    let mejor = Infinity;
-    let cual = 0;
-    for (let i = 0; i < this.rutaMundo.length; i++) {
-      const d = Math.hypot(
-        this.rutaMundo[i]![0] - p[0],
-        this.rutaMundo[i]![1] - p[1],
-      );
-      if (d < mejor) {
-        mejor = d;
-        cual = i;
-      }
-    }
-    return this.velocidades[cual] ?? CRUCERO;
+  /** Los metros de ruta recorridos hasta cada punto. Ver `velocidadAqui`. */
+  private recorridos: number[] = [];
+
+  /**
+   * La velocidad que toca donde va el avión ahora, m/s.
+   *
+   * **Por lo recorrido y no por lo cercano.** Esto buscaba el punto de la ruta
+   * más próximo al avión, y eso solo vale mientras la ruta no se pise a sí
+   * misma. El back-taxi la pisa por definición —se va y se vuelve por la misma
+   * pista, con diez metros entre la ida y la vuelta—, así que a veinte metros
+   * de entrar el punto más cercano era ya **el último de la ruta**, que va a
+   * cero porque ahí se para. El avión frenaba en seco y se quedaba clavado
+   * seiscientos metros antes de la cabecera: medido, parado a los cincuenta
+   * segundos y sin moverse en los ciento cincuenta siguientes.
+   *
+   * El avance por la ruta ya lo lleva `avanzarEnRuta`, con su memoria de un
+   * fotograma para el siguiente, que es justo lo que distingue la ida de la
+   * vuelta. Ver #151.
+   */
+  private velocidadAqui(): number {
+    const n = this.velocidades.length;
+    if (n < 2 || this.recorridos.length !== n) return CRUCERO;
+    const donde = this.avance;
+    let i = 1;
+    while (i < n - 1 && this.recorridos[i]! < donde) i++;
+    const antes = this.recorridos[i - 1]!;
+    const largo = this.recorridos[i]! - antes;
+    const t = largo > 0 ? Math.max(0, Math.min(1, (donde - antes) / largo)) : 0;
+    return (
+      this.velocidades[i - 1]! +
+      (this.velocidades[i]! - this.velocidades[i - 1]!) * t
+    );
+  }
+
+  /**
+   * Metros de ruta recorridos, con la memoria de un fotograma para el
+   * siguiente. Lo mira el coche del sígame. Ver `avanzarEnRuta`.
+   */
+  get avanceEnLaRuta(): number {
+    return this.avance;
   }
 
   /** El largo total de la ruta de hoy y lo recorrido. Lo mira el banco. #151. */

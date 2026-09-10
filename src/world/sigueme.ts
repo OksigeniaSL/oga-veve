@@ -356,6 +356,17 @@ export class Sigueme {
     cediendo: boolean,
     cota: (x: number, z: number) => number,
     esperaEn?: { x: number; z: number } | null,
+    /**
+     * En qué metro de la ruta va el avión, si el plan ya lo sabe.
+     *
+     * Lo sabe mejor que nadie: lleva la cuenta de un fotograma para el
+     * siguiente, y eso es lo único que distingue la ida de la vuelta en una
+     * ruta que se pisa a sí misma. Sin esto, en el back-taxi de Mariscal
+     * Estigarribia —seiscientos metros de pista a la ida y otros tantos a la
+     * vuelta, con veinte metros entre las dos— el coche se pasaba a la raya de
+     * vuelta en cuanto entraba en la pista y se ponía a guiar al revés.
+     */
+    avanceDelAvion?: number,
   ): void {
     if (!activo || this.ruta.length < 2 || this.largo < ADELANTO) {
       this.grupo.visible = false;
@@ -364,7 +375,7 @@ export class Sigueme {
     this.grupo.visible = true;
     this.t += dt;
 
-    const alLlegar = this.enLaRuta(avion);
+    const alLlegar = avanceDelAvion ?? this.enLaRuta(avion);
     /*
      * **El tope, cuando lo hay: la boca de la calle de salida.**
      *
@@ -418,7 +429,13 @@ export class Sigueme {
     this.grupo.visible = false;
   }
 
-  /** En qué metro de la ruta está el avión. Por el punto más cercano. */
+  /**
+   * En qué metro de la ruta está el avión.
+   *
+   * Por el punto más cercano, que vale mientras la ruta no se pise a sí misma.
+   * Cuando el plan de vuelo trae su propia cuenta —que sí lo distingue—, manda
+   * la suya. Ver `paso`.
+   */
   private enLaRuta(avion: { x: number; z: number }): number {
     let mejor = 0;
     let menor = Infinity;

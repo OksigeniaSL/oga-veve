@@ -13,6 +13,7 @@
  */
 
 import type { Aerodrome } from "./aerodrome";
+import { PARA_ENTRAR_Y_DESPEGAR, pistaTrasLaCalle } from "./aerodrome";
 import SGAS from "../../data/aerodromes/sgas.aero.json";
 import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
@@ -123,21 +124,6 @@ export interface Scenario {
    * verdad y viene en el propio fichero.
    */
   magneticVariation: number;
-  /**
-   * Si en este aeródromo solo se puede operar por una cabecera.
-   *
-   * Normalmente la elige el viento, que es lo correcto y es media lección.
-   * Pero hay sitios donde la otra **no se puede usar**: en Mariscal
-   * Estigarribia la plataforma y la única calle de rodaje están en el extremo
-   * norte, y llegar al umbral 01 significa rodar tres kilómetros y medio
-   * pista abajo. Eso es una maniobra real —el «back-taxi»— y aquí no existe
-   * todavía, así que con viento del norte el juego colocaba el avión ya
-   * autorizado y con el motor en marcha, sin rodaje ninguno.
-   *
-   * Mientras no exista el back-taxi, esto dice la verdad de ese aeródromo:
-   * se opera por una y punto. Ver #39.
-   */
-  cabeceraFija?: boolean;
   /**
    * El relieve medido, si lo hay.
    *
@@ -288,6 +274,16 @@ export const CHACO: Scenario = {
  * verdad y la guía de pista apunta a donde tiene que apuntar.
  */
 /**
+ * Viento de cola que se acepta con tal de no hacer el back-taxi, en nudos.
+ *
+ * Cinco. Es el número de siempre para un ligero: por debajo no cambia nada que
+ * se note en la carrera de despegue, y por encima sí. Aquí decide algo más
+ * que la carrera —decide si el vuelo empieza con un minuto largo de rodaje por
+ * la pista— y por eso está escrito y no supuesto.
+ */
+const COLA_QUE_SE_AGUANTA = 5;
+
+/**
  * La cabecera que toca con este viento.
  *
  * Se opera por la que da más viento de frente, que es la regla de verdad y la
@@ -299,9 +295,6 @@ export const CHACO: Scenario = {
 export function conViento(esc: Scenario, meteo: Meteo): Scenario {
   const aero = esc.aerodrome;
   if (!aero || meteo.vientoDe === null) return { ...esc, meteo };
-  // Y donde solo se puede operar por una cabecera, el viento no la cambia.
-  // Ver `cabeceraFija`.
-  if (esc.cabeceraFija) return { ...esc, meteo };
   const pista = aero.runways[0];
   const nombres = pista
     ? Object.entries(pista.thresholds)
@@ -320,6 +313,51 @@ export function conViento(esc: Scenario, meteo: Meteo): Scenario {
       mejor = nombre;
     }
   }
+
+  /*
+   * **Y tres nudos no valen un back-taxi.**
+   *
+   * Hay cabeceras a las que no se llega rodando por calles: la calle muere en
+   * el otro extremo y para ponerse ahí hay que entrar en la pista, recorrerla
+   * al revés y dar la vuelta. Es una maniobra de verdad y el juego la sabe
+   * hacer —ver `backTaxiDesde`—, pero cuesta un minuto largo de rodaje, y eso
+   * solo se paga cuando el viento lo vale.
+   *
+   * La regla es la que usa cualquiera con una avioneta en un campo sin torre:
+   * **se despega con viento de cola mientras sea poco**. Cinco nudos es lo que
+   * se acepta sin pensarlo; por encima, se va uno a la otra cabecera aunque
+   * haya que rodar.
+   *
+   * Sin esto, Mariscal Estigarribia hacía el back-taxi en todos los vuelos:
+   * el tiempo de por defecto son tres nudos del norte, la 01 gana por seis y
+   * la 19 —que tiene la plataforma al lado— se quedaba sin usar nunca.
+   *
+   * Solo protege a la cabecera **escrita**, y a propósito: si la del escenario
+   * ya es de las que piden back-taxi —la 02 de Encarnación—, esto no la mueve.
+   * Ahí el back-taxi es la operación normal del campo, no un capricho del
+   * viento.
+   */
+  const escrita = nombres.find(
+    (n) =>
+      Math.abs(
+        pistaDe(aero as unknown as Aerodrome, n).heading - esc.runway.heading,
+      ) < 1,
+  );
+  if (escrita && escrita !== mejor) {
+    const cuestaVolver =
+      pistaTrasLaCalle(aero as unknown as Aerodrome, mejor) <
+      PARA_ENTRAR_Y_DESPEGAR;
+    const seLlegaRodando =
+      pistaTrasLaCalle(aero as unknown as Aerodrome, escrita) >=
+      PARA_ENTRAR_Y_DESPEGAR;
+    const cola = -deFrente(
+      pistaDe(aero as unknown as Aerodrome, escrita).heading,
+      meteo,
+    );
+    if (cuestaVolver && seLlegaRodando && cola <= COLA_QUE_SE_AGUANTA)
+      mejor = escrita;
+  }
+
   return {
     ...esc,
     runway: pistaDe(aero as unknown as Aerodrome, mejor),
@@ -931,18 +969,20 @@ export const ESTIGARRIBIA: Scenario = {
   fog: { colour: 0xe4dfd0, density: 0.000025 },
   sun: { azimuth: 150, elevation: 62 },
   /*
-   * **La 19, y no la 01.**
+   * **La 19 de casa, y la 01 cuando el viento la pida.**
    *
    * La plataforma y la única calle de rodaje están en el extremo norte, a
-   * quinientos sesenta metros del umbral 19 y a más de tres kilómetros del
-   * 01. Con la 01 puesta, el juego arrancaba el vuelo ya autorizado y sin
-   * rodaje ninguno: no hay forma de llegar a esa cabecera que no sea rodar
-   * tres kilómetros pista abajo, que es una maniobra real —el «back-taxi»—
-   * pero que aquí no existe todavía. Lo cazó el banco de despegue: cero
-   * segundos de rodaje y ningún coche del sígame.
+   * quinientos sesenta metros del umbral 19 y a más de tres kilómetros del 01.
+   * Para despegar por la 01 hay que entrar en la pista y recorrerla al revés
+   * —el back-taxi—, que es exactamente como se opera este campo de verdad.
+   *
+   * Durante meses esto llevó `cabeceraFija: true` porque la maniobra no
+   * existía y el juego, con la 01 puesta, arrancaba el vuelo ya autorizado y
+   * sin rodaje ninguno. Ahora existe, así que manda el viento como en todas
+   * partes — con la salvedad de que tres nudos de cola no valen un back-taxi.
+   * Ver `COLA_QUE_SE_AGUANTA`.
    */
   runway: pistaDe(SGME as unknown as Aerodrome, "19"),
-  cabeceraFija: true,
   // Doce grados: la 19 corre a 177,8° verdaderos y la cabecera pone 19.
   magneticVariation: 12,
   aerodrome: SGME as unknown as Aerodrome,

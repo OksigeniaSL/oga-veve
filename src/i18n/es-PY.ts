@@ -249,6 +249,7 @@ export const ES_PY = {
   "vuelo.rodando": "Seguí la raya verde",
   "vuelo.esperando": "Pará del todo y esperá la luz",
   "vuelo.autorizado": "¡Luz verde! Entrá a la pista",
+  "vuelo.backTaxi": "Andá hasta el fondo y dá la vuelta",
   "vuelo.alineando": "Ponete derechito en el eje",
   "vuelo.minimos": "Mirá la pista: ¿la ves?",
   "vuelo.noEstabilizada": "Así no: andate y volvé a intentarlo",

@@ -16,6 +16,7 @@ const EN_TIERRA: Situacion = {
   alaRuta: 0,
   restante: 500,
   alEjeDePista: 500,
+  backTaxi: false,
   alLargoDePista: -900,
   pistaRestante: 2400,
   enPista: false,
@@ -710,5 +711,62 @@ describe("la carrera de aterrizaje", () => {
     expect(durante(v, enLaCarrera(13), 2)).toBe("abandonando");
     // Y ya no vuelve atrás por un rebote de un metro por segundo.
     expect(durante(v, enLaCarrera(17), 2)).toBe("abandonando");
+  });
+});
+
+/**
+ * El back-taxi: en la pista, al revés, y eso no es alinearse.
+ *
+ * Donde la plataforma está en un extremo y hay que despegar por el otro, la
+ * única forma de llegar a la cabecera es entrar en la pista y recorrerla en
+ * sentido contrario. Todo ese rato el avión cumple las dos condiciones que
+ * esta máquina usaba para decir «ponete derechito en el eje» —está sobre el
+ * asfalto y está torcido— y ponerse derechito ahí es justo lo que no hay que
+ * hacer. Ver #151.
+ */
+describe("rodando por la pista para ir a la cabecera", () => {
+  const enLaPista = (mas: Partial<Situacion>): Situacion =>
+    con({
+      motor: true,
+      enPista: true,
+      alEjeDePista: 4,
+      estado: { airspeed: 8 } as never,
+      ...mas,
+    });
+
+  it("con la bandera puesta, la fase es el back-taxi y no alinearse", () => {
+    const v = new Vuelo();
+    expect(durante(v, enLaPista({ backTaxi: true, desalineado: 178 }), 2)).toBe(
+      "back-taxi",
+    );
+  });
+
+  it("y en cuanto se llega al sitio de girar, vuelve a ser alinearse", () => {
+    const v = new Vuelo();
+    durante(v, enLaPista({ backTaxi: true, desalineado: 178 }), 2);
+    expect(
+      durante(v, enLaPista({ backTaxi: false, desalineado: 178 }), 2),
+    ).toBe("alineando");
+  });
+
+  it("dada la vuelta y en el eje, se despega", () => {
+    const v = new Vuelo();
+    durante(v, enLaPista({ backTaxi: true, desalineado: 178 }), 2);
+    durante(v, enLaPista({ backTaxi: false, desalineado: 90 }), 2);
+    expect(
+      durante(
+        v,
+        enLaPista({ backTaxi: false, desalineado: 1, alEjeDePista: 2 }),
+        2,
+      ),
+    ).toBe("despegando");
+  });
+
+  it("torcido en la pista sin bandera sigue siendo alinearse", () => {
+    // La bandera la pone el plan de vuelo, que es quien ha trazado la ruta.
+    // Sin ella, un avión torcido en la pista es alguien que se ha metido
+    // torcido, y a ése hay que decirle que se enderece.
+    const v = new Vuelo();
+    expect(durante(v, enLaPista({ desalineado: 178 }), 2)).toBe("alineando");
   });
 });
