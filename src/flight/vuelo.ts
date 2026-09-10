@@ -57,6 +57,7 @@ export type Fase =
   | "rodando"
   | "esperando"
   | "autorizado"
+  | "back-taxi"
   | "alineando"
   | "despegando"
   | "comprometido"
@@ -90,6 +91,16 @@ export interface Situacion {
   readonly alLargoDePista: number;
   /** ¿Está el avión sobre el asfalto de la pista? */
   readonly enPista: boolean;
+  /**
+   * ¿Está haciendo el back-taxi, o sea rodando por la pista hacia la cabecera?
+   *
+   * Lo dice el plan de vuelo, que es quien ha trazado la ruta y sabe si esta
+   * entrada en pista es «cruzo el borde y ya estoy» o «tengo que irme al fondo
+   * y dar la vuelta». Desde aquí no se puede deducir: un avión en el eje
+   * apuntando al revés puede estar haciendo el back-taxi o puede haberse
+   * metido al revés, y lo que hay que decirle es distinto.
+   */
+  readonly backTaxi: boolean;
   /**
    * Metros de pista que quedan por delante. Cero pasado el final.
    *
@@ -461,6 +472,21 @@ export class Vuelo {
 
     // ── En el suelo, yendo hacia la pista ────────────────────────────────
     if (s.enPista) {
+      /*
+       * **Ir hasta el fondo por la propia pista no es alinearse.**
+       *
+       * Cuando la plataforma está en un extremo y hay que despegar por el
+       * otro, la única forma de llegar a la cabecera es rodar por la pista y
+       * dar la vuelta al final: el back-taxi. Durante todo ese trecho el avión
+       * está sobre el asfalto y con el morro apuntando justo al revés que la
+       * pista, que es exactamente la señal que esta función usaba para decir
+       * «ponete derechito en el eje». Y ponerse derechito ahí es lo que **no**
+       * hay que hacer: lo que hay que hacer es seguir hasta el fondo.
+       *
+       * En cuanto se pasa el punto donde toca girar, el plan baja la bandera y
+       * esto vuelve a ser lo de siempre: alinearse y despegar.
+       */
+      if (s.backTaxi) return "back-taxi";
       const alineado = Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12;
       if (!alineado) return "alineando";
       return yaNoSePuedeParar(s) ? "comprometido" : "despegando";
@@ -535,6 +561,7 @@ export const GUION: Record<
   rodando: { clave: "vuelo.rodando", icono: "amarillo" },
   esperando: { clave: "vuelo.esperando", icono: "mano" },
   autorizado: { clave: "vuelo.autorizado", icono: "verde" },
+  "back-taxi": { clave: "vuelo.backTaxi", icono: "media-vuelta" },
   alineando: { clave: "vuelo.alineando", icono: "eje" },
   despegando: { clave: "vuelo.despegando", icono: "motor" },
   comprometido: { clave: "vuelo.comprometido", icono: "nopara" },

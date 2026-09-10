@@ -24,13 +24,20 @@
  * exactamente lo que **no** promete Taguató, donde la curva es tuya. Correrlo
  * ahí saldría en rojo por la razón contraria a un fallo.
  *
- * Uso: `node scripts/verificar-despegue.mjs [escenario] [tramo]`
+ * Uso: `node scripts/verificar-despegue.mjs [escenario] [tramo] [viento]`
+ *
+ * El viento va como en el juego —`000/14`, del norte a catorce nudos— y sirve
+ * para pedir una cabecera concreta. Sin él manda el tiempo de casa, que es lo
+ * que ve quien abre el juego. Hace falta para el **back-taxi**: en Mariscal
+ * Estigarribia la maniobra solo aparece con el viento del norte apretando, que
+ * es justo cuando merece la pena rodar por la pista. Ver #151.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
+const VIENTO = process.argv[4] ?? "";
 const PUERTO = 5281;
 
 const server = await createServer({
@@ -54,7 +61,8 @@ await page.addInitScript(() => {
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue&tramo=${TRAMO}`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue&tramo=${TRAMO}` +
+    (VIENTO ? `&viento=${VIENTO}` : ""),
 );
 await page.waitForTimeout(16000);
 
@@ -302,11 +310,28 @@ const rodando = await page.evaluate(async () => {
    * banco midiendo lo que tiene que medir — si la raya se puede seguir.
    */
   const MIRA = 15;
+  /*
+   * **Y no se busca el punto más cercano de toda la ruta: solo hacia delante.**
+   *
+   * Vale mientras la ruta no se pise a sí misma. El back-taxi la pisa por
+   * definición —se va y se vuelve por la misma pista— y ahí el punto más
+   * cercano salta de una raya a la otra cada pocos segundos: medido en
+   * Mariscal Estigarribia, el avión daba bandazos de ciento ochenta grados
+   * cada diez segundos sin avanzar un metro. Se recuerda por dónde iba, que
+   * es lo que hace cualquiera que sigue una raya. Ver #151.
+   */
+  let ibaPor = 0;
+  let cuantosEran = 0;
   const timon = (s, ruta) => {
     if (!ruta.length) return 0;
-    let cerca = 0;
+    // Ruta nueva, numeración nueva: la memoria de la anterior no vale.
+    if (ruta.length !== cuantosEran) {
+      cuantosEran = ruta.length;
+      ibaPor = 0;
+    }
+    let cerca = ibaPor;
     let mejor = Infinity;
-    for (let i = 0; i < ruta.length; i++) {
+    for (let i = Math.max(0, ibaPor - 2); i < ruta.length; i++) {
       const d = Math.hypot(
         ruta[i][0] - s.position.x,
         ruta[i][1] - s.position.z,
@@ -316,6 +341,7 @@ const rodando = await page.evaluate(async () => {
         cerca = i;
       }
     }
+    ibaPor = cerca;
     let mira = ruta[ruta.length - 1];
     for (let i = cerca; i < ruta.length; i++) {
       const d = Math.hypot(
@@ -516,7 +542,12 @@ const despegue = await page.evaluate(async () => {
     while (e < -Math.PI) e += 2 * Math.PI;
     return Math.max(-1, Math.min(1, e * 2));
   };
-  for (let i = 0; i < 200; i++) {
+  /*
+   * Seiscientas vueltas y no doscientas: dos minutos. Lo pide el **back-taxi**,
+   * que son seiscientos y pico metros de pista a ocho metros por segundo antes
+   * de poder pensar en despegar. Ver #151.
+   */
+  for (let i = 0; i < 600; i++) {
     await new Promise((r) => setTimeout(r, 200));
     const s = o.estado();
     c.throttle = s.airspeed < 8 ? 0.5 : 0;
@@ -531,7 +562,19 @@ const despegue = await page.evaluate(async () => {
     const alFin = fin
       ? Math.hypot(fin[0] - s.position.x, fin[1] - s.position.z)
       : 0;
-    if (s.onRunway) {
+    if (o.fase() === "back-taxi" && ruta.length > 1) {
+      /*
+       * **Salvo en el back-taxi, donde ir por la pista es el plan.**
+       *
+       * Aquí el avión está sobre el asfalto y apuntando justo al revés que la
+       * pista **a propósito**: va a buscar la cabecera al otro extremo. Poner
+       * el morro en el rumbo de despegue en ese momento es abortar la
+       * maniobra, y eso es lo que hacía este banco: daba media vuelta y
+       * despegaba desde donde estuviera. Mientras el juego diga que esto es un
+       * back-taxi, se sigue la raya como en cualquier otro rodaje.
+       */
+      c.aileron = globalThis.__timon(s, ruta);
+    } else if (s.onRunway) {
       /*
        * **Y siempre en el rumbo de la pista, no en el que se parezca al
        * morro.**
@@ -567,7 +610,23 @@ const despegue = await page.evaluate(async () => {
      * —medido—, o sea cruzando la pista, y desde ahí no hay despegue posible:
      * se sale por el otro lado en dos segundos.
      */
-    if (s.onRunway && Math.abs(alRumbo(s, rumboPista)) < 0.25 && i > 8) break;
+    /*
+     * **Y en el back-taxi no se rompe por mucho que el morro apunte bien.**
+     *
+     * Yendo hacia la cabecera por la pista, el avión cruza el rumbo de
+     * despegue cada vez que corrige, y con eso bastaba para dar el rodaje por
+     * terminado: el piloto de la carrera tomaba el mando a mitad del
+     * back-taxi, daba media vuelta donde estuviera y despegaba desde ahí. Dos
+     * de cada tres veces salía bien y a la tercera no, que es la peor clase de
+     * banco. Ver #151.
+     */
+    if (
+      s.onRunway &&
+      o.fase() !== "back-taxi" &&
+      Math.abs(alRumbo(s, rumboPista)) < 0.25 &&
+      i > 8
+    )
+      break;
   }
   // La carrera va por donde va la pista. Ver arriba.
   const rumboDeLaCarrera = rumboPista;

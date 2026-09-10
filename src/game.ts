@@ -563,6 +563,16 @@ const CONDUCE_EL_JUEGO = 0.5;
  * después de tomar tierra no hay nada que abortar — hay una pista que se
  * acaba, que es otra cosa y necesita el freno puesto.
  */
+/**
+ * Lo más deprisa que se puede ir y seguir *alineándose*, m/s.
+ *
+ * Doce es velocidad de rodaje: por debajo, uno se está poniendo en el eje para
+ * despegar; por encima ya está despegando y lo que hace es corregir. Sirve
+ * para que el número de la pista salga una vez, al ponerse, y no otra vez a
+ * media carrera. Ver donde se usa.
+ */
+const ALINEANDO_DE_VERDAD = 12;
+
 const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
   "alineando",
   "despegando",
@@ -5043,6 +5053,7 @@ export class Game {
         cede,
         (x, z) => this.terrain.sampleHeight(x, z),
         espera,
+        this.plan?.avanceEnLaRuta,
       );
 
       /*
@@ -5492,7 +5503,23 @@ export class Game {
        * hacia donde vas a despegar. A los cuatro años eso son dos cifras que
        * aparecen siempre en el mismo sitio; a los diez, un rumbo.
        */
-      if (vista.fase === "alineando") {
+      /*
+       * **Y solo alineándose, no corriendo.**
+       *
+       * «Alineando» describe dos cosas que se parecen poco: ponerse en el eje
+       * antes de dar gas, y corregir un desvío **en plena carrera**, que es
+       * la misma fase porque la máquina mira lo mismo —en pista y torcido—.
+       * Con el número saliendo en las dos, un bandazo a media carrera lo
+       * volvía a sacar y de paso se comía el destello de Vr, que iba detrás.
+       *
+       * Salió con el back-taxi, donde el avión termina la media vuelta a
+       * dieciséis metros del eje y se va acercando mientras acelera: cruzaba
+       * el listón de los doce metros ya lanzado. Ver #151.
+       */
+      if (
+        vista.fase === "alineando" &&
+        this.flight.state.airspeed < ALINEANDO_DE_VERDAD
+      ) {
         const cabecera = cabeceraEnUso(this.scenario);
         if (cabecera) this.hud.destellar(cabecera);
       }
