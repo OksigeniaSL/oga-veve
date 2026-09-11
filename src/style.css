@@ -457,6 +457,14 @@ body {
   fill: #2c3a55;
 }
 
+/* Y las que ya estaban puestas no vuelven a entrar: la manga se repinta
+   entera cuando llega un galón nuevo —la separación depende de cuántos hay,
+   ver `repartoDeBarras`—, y sin esto saltarían todos a la vez, que es lo
+   contrario de «aparecen de uno en uno». */
+.manga__barra--ya {
+  animation: none;
+}
+
 .manga__barra {
   fill: #f2b05c;
   /* Entra creciendo desde el puño. Es lo único que anuncia que acabás de

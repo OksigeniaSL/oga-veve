@@ -20,27 +20,21 @@ import {
   type Grado,
 } from "../flight/cuaderno";
 
-/** Alto de la manga, en unidades de su dibujo. Igual que en el HUD. */
-const MANGA_ALTO = 34;
-
-/** Una barra de galón, la misma que cuenta los galones de un vuelo. */
-const barra = (n: number): string =>
-  `<rect class="manga__barra" x="9" y="${21 - n * 5.5}" width="30" height="3.6" rx="1.8" />`;
-
-const manga = (barras: number): string => `
-  <svg viewBox="0 0 48 ${MANGA_ALTO}" role="img" aria-label="${t("galon.manga")}">
-    <rect class="manga__tela" x="4" y="2" width="40" height="28" rx="6" />
-    <rect class="manga__puno" x="4" y="24" width="40" height="6" rx="3" />
-    ${Array.from({ length: barras }, (_, i) => barra(i)).join("")}
-  </svg>
-`;
-
 /** Las horas, como se dicen en un cuaderno de vuelo: horas y minutos. */
 function horasDe(segundos: number): string {
   const m = Math.floor(segundos / 60);
   return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
 }
 import { Encierro } from "./panel";
+import { manga as dibujarManga } from "./manga";
+
+/**
+ * Alto del lienzo de la manga en el cuaderno.
+ *
+ * Dos más que en el HUD, que es aire por debajo del puño: aquí la manga se
+ * mira de cerca y pegada al borde queda apretada.
+ */
+const CUADERNO_ALTO = 34;
 
 export class CuadernoScreen {
   private readonly root: HTMLElement;
@@ -76,7 +70,7 @@ export class CuadernoScreen {
       </div>`;
     this.root.innerHTML = `
       <div class="cuaderno__panel" role="dialog" aria-modal="true">
-        <div class="cuaderno__manga">${manga(barrasDe(g))}</div>
+        <div class="cuaderno__manga">${dibujarManga(barrasDe(g), CUADERNO_ALTO, t("galon.manga"))}</div>
         <h2 class="cuaderno__grado">${t(`grado.${g}` as never)}</h2>
         <div class="cuaderno__datos">
           ${cuenta("cuaderno.horas", horasDe(c.segundos))}

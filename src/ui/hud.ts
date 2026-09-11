@@ -38,6 +38,7 @@ import { PanelDelTiempo } from "./tiempo";
 import type { Tier } from "../flight/tiers";
 import { canalesDe, type Peldano } from "../flight/escalera";
 import type { Galon } from "../flight/galones";
+import { manga as dibujarManga, MANGA_ALTO } from "./manga";
 import { reconocer } from "../flight/reconocimiento";
 
 /**
@@ -144,11 +145,6 @@ const FLECHA_SEGUIR = `
  * apareciendo de abajo arriba. Una manga vacía no se enseña: hasta que no hay
  * un galón, no hay manga.
  */
-const MANGA_ALTO = 32;
-
-/** Dónde cae la barra número `n`, de abajo arriba, en el lienzo de la manga. */
-const barraDeGalon = (n: number): string =>
-  `<rect class="manga__barra" x="9" y="${21 - n * 5.5}" width="30" height="3.6" rx="1.8" />`;
 
 /**
  * ¿Se juega con el dedo?
@@ -1294,21 +1290,20 @@ export class Hud {
      * una». Al rehacer el HUD —cambio de idioma o de peldaño— sí se repinta
      * todo, y ahí no hay animación que perder.
      */
-    if (!svg || puestas > lista.length) {
-      this.galones.innerHTML = `
-        <svg viewBox="0 0 48 ${MANGA_ALTO}" role="img" aria-label="${t(
-          "galon.manga",
-        )}">
-          <rect class="manga__tela" x="4" y="2" width="40" height="28" rx="6" />
-          <rect class="manga__puno" x="4" y="24" width="40" height="6" rx="3" />
-          ${lista.map((_, i) => barraDeGalon(i)).join("")}
-        </svg>
-      `;
-      return;
-    }
-    for (let i = puestas; i < lista.length; i++) {
-      svg.insertAdjacentHTML("beforeend", barraDeGalon(i));
-    }
+    /*
+     * **Y se repinta entera, marcando cuáles ya estaban.**
+     *
+     * Antes se le pegaba la barra nueva al final y las demás se quedaban
+     * donde estaban. Eso solo vale mientras la separación no dependa de
+     * cuántas hay, y depende: de la quinta en adelante se juntan para caber.
+     * Ver `repartoDeBarras`.
+     */
+    this.galones.innerHTML = dibujarManga(
+      lista.length,
+      MANGA_ALTO,
+      t("galon.manga"),
+      svg ? Math.min(puestas, lista.length) : 0,
+    );
   }
 
   /**
@@ -1331,15 +1326,7 @@ export class Hud {
     const manga = pick(this.root, "fin-manga");
     manga.hidden = !final.manga;
     manga.innerHTML = final.manga
-      ? `
-        <svg viewBox="0 0 48 ${MANGA_ALTO}" role="img" aria-label="${t(
-          "galon.manga",
-        )}">
-          <rect class="manga__tela" x="4" y="2" width="40" height="28" rx="6" />
-          <rect class="manga__puno" x="4" y="24" width="40" height="6" rx="3" />
-          ${lista.map((_, i) => barraDeGalon(i)).join("")}
-        </svg>
-      `
+      ? dibujarManga(lista.length, MANGA_ALTO, t("galon.manga"))
       : "";
     const texto = pick(this.root, "fin-frase");
     texto.textContent = frase;
@@ -1370,15 +1357,7 @@ export class Hud {
     this.ponerPlano("");
     const manga = pick(this.root, "fin-manga");
     manga.hidden = false;
-    manga.innerHTML = `
-      <svg viewBox="0 0 48 ${MANGA_ALTO}" role="img" aria-label="${t(
-        "galon.manga",
-      )}">
-        <rect class="manga__tela" x="4" y="2" width="40" height="28" rx="6" />
-        <rect class="manga__puno" x="4" y="24" width="40" height="6" rx="3" />
-        ${Array.from({ length: barras }, (_, i) => barraDeGalon(i)).join("")}
-      </svg>
-    `;
+    manga.innerHTML = dibujarManga(barras, MANGA_ALTO, t("galon.manga"));
     const texto = pick(this.root, "fin-frase");
     texto.textContent = nombre;
     texto.hidden = !nombre;
