@@ -4449,6 +4449,16 @@ export class Game {
      */
     const puedeTocar =
       !this.flight.state.onGround &&
+      /*
+       * **Y no despegando, que es la tarjeta contraria.**
+       *
+       * Las condiciones de «ya podés tocar» —en el aire, sobre la pista, bajo
+       * y sin subir— las cumple también el instante en que las ruedas se
+       * despegan del asfalto: medido en el banco, sale a 28 m/s y un metro de
+       * altura, entre el motor y la flecha de tirar. Ahí lo que hay que hacer
+       * es justo lo contrario de tocar.
+       */
+      !EN_DESPEGUE.has(this.faseAnunciada as Fase) &&
       cerca.sobreLaPista &&
       /*
        * **La altura sobre la pista, no sobre el terreno.** Antes del umbral el
