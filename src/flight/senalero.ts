@@ -30,13 +30,7 @@
  * los gestos son adorno.
  */
 export type Gesto =
-  | "adelante"
-  | "izquierda"
-  | "derecha"
-  | "despacio"
-  | "alto"
-  | "frenos"
-  | null;
+  "adelante" | "izquierda" | "derecha" | "despacio" | "alto" | "frenos" | null;
 
 /** Lo que hace falta saber para elegir el gesto. */
 export interface Llegada {
@@ -81,6 +75,22 @@ const DEPRISA = 3.5;
 const QUIETO = 0.4;
 
 /**
+ * Y a partir de qué velocidad se da por hecho que se ha vuelto a mover, m/s.
+ *
+ * **Uno y medio, y no los mismos cuatro décimos.** Con un solo listón, un avión
+ * parado en el puesto con el motor en marcha cruza la raya en los dos sentidos
+ * cada pocos fotogramas —el ralentí lo empuja, el freno lo retiene— y el gesto
+ * salta entre «frenos puestos» y «alto» sin parar. En pantalla eso es la
+ * tarjeta de apagar el motor y la del señalero turnándose, medido en vídeo
+ * durante los quince segundos que el avión llevaba ya aparcado.
+ *
+ * Es la misma histéresis que usa la máquina de fases para entrar y salir de
+ * «aterrizado»: para **llegar** hace falta estar parado de verdad; para dejar
+ * de haber llegado, moverse de verdad.
+ */
+const SE_MUEVE_OTRA_VEZ = 1.5;
+
+/**
  * Qué gesto toca, o `null` si no toca ninguno.
  *
  * El orden importa y es el de un señalero de verdad: **primero parar**, que es
@@ -88,7 +98,7 @@ const QUIETO = 0.4;
  * resto; luego la dirección; y adelante es lo que se dice cuando no hay nada
  * que corregir.
  */
-export function gestoDeSenalero(s: Llegada): Gesto {
+export function gestoDeSenalero(s: Llegada, antes: Gesto = null): Gesto {
   if (!s.volviendo || !s.enElSuelo) return null;
   // Todavía viene de lejos: el señalero espera con los bastones abajo.
   if (s.restante > ALCANCE) return null;
@@ -101,7 +111,8 @@ export function gestoDeSenalero(s: Llegada): Gesto {
    * termina sin decir que ha terminado deja a quien juega mirando la pantalla
    * a ver si falta algo.
    */
-  if (s.velocidad < QUIETO && Math.abs(s.restante) < PARADA * 2) {
+  const liston = antes === "frenos" ? SE_MUEVE_OTRA_VEZ : QUIETO;
+  if (s.velocidad < liston && Math.abs(s.restante) < PARADA * 2) {
     return "frenos";
   }
 
