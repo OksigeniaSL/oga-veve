@@ -730,10 +730,23 @@ const despegue = await page.evaluate(async () => {
       if (op > destelloV1) destelloV1 = op;
       const texto = el?.textContent?.trim() ?? "";
       if (op > 0.05 && texto && !dichos.includes(texto)) dichos.push(texto);
-      const dibujo =
-        document.querySelector('[data-hud="senal-dibujo"]')?.innerHTML ?? "";
-      // La flecha de tirar tiene una marca propia en su trazo.
-      if (dibujo.includes("18.5 8.4")) flechaDeTirar = true;
+      /*
+       * **Y se mira lo que se ve, no lo que pone en el HTML.**
+       *
+       * Esto buscaba el trazo de la flecha dentro de `innerHTML` y con eso se
+       * daba por contento. El trazo estaba y no se veía nada: el dibujo se
+       * escribía sin `<svg>` alrededor y un navegador no pinta un `<path>`
+       * suelto, así que en el segundo de tirar del morro salía un recuadro
+       * naranja vacío. Meses. Ahora se le pide al navegador que mida el
+       * `<svg>`: si no hay svg no hay caja, y si no hay caja no se vio.
+       */
+      const caja = document.querySelector('[data-hud="senal-dibujo"] svg');
+      const dibujo = caja?.innerHTML ?? "";
+      if (
+        dibujo.includes("18.5 8.4") &&
+        caja.getBoundingClientRect().height > 4
+      )
+        flechaDeTirar = true;
     }
     // Y lo que se separa del eje, que en una pista de hierba de dieciocho
     // metros es la diferencia entre despegar y correr por el campo.

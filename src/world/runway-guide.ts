@@ -35,7 +35,7 @@ import {
   PointsMaterial,
   TorusGeometry,
 } from "three";
-import { delante } from "./rumbo";
+import { delante, enEjesDePista } from "./rumbo";
 import type { Scenario } from "./scenarios";
 
 /** Cota del terreno en unas coordenadas de mundo. */
@@ -168,6 +168,66 @@ const LAST_RING_DISTANCE = 500;
  * misma pantalla es enseñar que una de las dos miente.
  */
 export const GLIDE_SLOPE = (3 * Math.PI) / 180;
+
+/**
+ * El embudo de la aproximación: **cuándo se está de verdad en final**.
+ *
+ * Hasta hoy esto se preguntaba con una distancia al umbral y poco más, y una
+ * distancia no distingue entre venir por el eje y pasar al lado. En el viento
+ * en cola de un circuito se vuela **hacia** el umbral con la pista a mil
+ * metros por el costado: la distancia baja, se cumple «acercándose», y todo lo
+ * que dependa de eso cree que estás aterrizando cuando te quedan dos giros.
+ *
+ * Medido en Mariscal Estigarribia, cuyo circuito son 6516 metros de viento en
+ * cola: la cuenta de la distancia daba «en final» durante **3458 de esos
+ * metros**, o sea más de la mitad del tramo largo, y ahí se apagaba el
+ * circuito dibujado — justo el tramo que existe para darte tiempo a pensar.
+ * «La línea de puntos desaparece cuando ya voy paralelo a la pista.»
+ *
+ * El embudo son dos condiciones que sí lo distinguen:
+ *
+ * - estar **del lado por el que se entra**, o sea pasado el umbral de salida;
+ * - y estar dentro de un cono de ocho grados a cada lado del eje prolongado,
+ *   que se abre desde los sesenta metros del umbral —el mismo margen con el
+ *   que se juzga una aproximación estabilizada— hasta unos quinientos a tres
+ *   kilómetros y medio.
+ *
+ * Ocho grados no es una cifra de adorno: un localizador de ILS tiene una
+ * anchura de curso de ese orden, y por fuera de eso ningún piloto diría que
+ * está establecido en final.
+ */
+export const EMBUDO_DE_FINAL = (8 * Math.PI) / 180;
+
+/** Y lo ancho que es el embudo pegado al umbral, m. Ver `EMBUDO_DE_FINAL`. */
+export const ANCHO_EN_EL_UMBRAL = 60;
+
+/**
+ * ¿Viene el avión por el embudo de final, y a cuánto del umbral?
+ *
+ * Devuelve `null` cuando no está en final —porque va por detrás del umbral de
+ * salida, porque está fuera del cono o porque todavía no ha entrado en la
+ * lección de aterrizar—, y los metros que le quedan al umbral cuando sí.
+ */
+export function enElEmbudoDeFinal(
+  runway: { x: number; z: number; heading: number; length: number },
+  x: number,
+  z: number,
+): number | null {
+  const { along, across } = enEjesDePista(
+    x,
+    z,
+    runway.x,
+    runway.z,
+    runway.heading,
+  );
+  // Metros hasta el umbral de salida, positivos por el lado por el que se
+  // entra. Negativos quiere decir que el avión ya está sobre la pista o más
+  // allá, y eso no es venir en final.
+  const alUmbral = -along - runway.length / 2;
+  if (alUmbral < 0 || alUmbral > ENTRADA_EN_FINAL) return null;
+  const ancho = ANCHO_EN_EL_UMBRAL + alUmbral * Math.tan(EMBUDO_DE_FINAL);
+  return Math.abs(across) <= ancho ? alUmbral : null;
+}
 
 /**
  * Guía de aterrizaje viva.

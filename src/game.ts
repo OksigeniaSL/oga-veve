@@ -50,6 +50,7 @@ import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
+  enElEmbudoDeFinal,
   ENTRADA_EN_FINAL,
   GLIDE_SLOPE,
   RunwayGuide,
@@ -2298,7 +2299,22 @@ export class Game {
      */
     if (this.mandanFrustrar) {
       const s = this.flight.state;
-      if (s.onGround) return;
+      /*
+       * **Y tocar tierra también la levanta.**
+       *
+       * Esto salía de aquí en cuanto el avión estaba en el suelo, así que
+       * quien no obedecía y aterrizaba se quedaba con la orden puesta: la
+       * tarjeta no caduca —es una orden, espera respuesta— y seguía en
+       * pantalla durante la toma, la carrera y el rodaje. Un minuto entero de
+       * «irse al aire» con el avión ya parado en la pista, medido en vídeo.
+       *
+       * No se discute si estuvo bien o mal: se aterrizó, la orden ya no
+       * describe nada y se retira.
+       */
+      if (s.onGround) {
+        this.levantarLaOrden();
+        return;
+      }
       const alto = s.position.y - this.terrain.runwayElevation;
       const subio = alto > this.altoAlMandar + SUBIR_PARA_IRSE;
       const alejandose = !acercandose && this.distanceToRunway() > MANDAN_DESDE;
@@ -2438,6 +2454,25 @@ export class Game {
     if (this.mandanFrustrar || this.vueloTerminado) return;
     const s = this.flight.state;
     if (s.onGround) return;
+    /*
+     * **Y solo viniendo por el embudo de final.**
+     *
+     * La altura de decisión es un punto de la aproximación, no una altura
+     * cualquiera: cruzar los sesenta metros dando el giro a la base, con la
+     * pista a un kilómetro por el costado, no es llegar a mínimos. Y ahí el
+     * avión está **por definición** torcido respecto a la pista, así que la
+     * regla saltaba con «no estás alineado» y mandaba frustrar. En todos los
+     * vuelos: «me sale el mensaje de frustrada en todos los intentos de
+     * aterrizaje». Medido en el vídeo de un circuito en Mariscal Estigarribia:
+     * la orden salía en el segundo 393, con el avión en pleno viraje.
+     *
+     * Ver `enElEmbudoDeFinal`.
+     */
+    if (
+      enElEmbudoDeFinal(this.scenario.runway, s.position.x, s.position.z) ===
+      null
+    )
+      return;
     const alto = s.position.y - this.terrain.runwayElevation;
     if (!this.minimos.paso(alto, acercandose)) return;
 
@@ -3354,11 +3389,29 @@ export class Game {
      * se gira a la izquierda y se vuelve por donde se vino. Sin él, la orden
      * es una flecha que aparece y nada más.
      */
+    /*
+     * **Y «venir a aterrizar» es venir por el embudo, no estar cerca.**
+     *
+     * Esto miraba la distancia al umbral y si bajaba. En el viento en cola se
+     * vuela hacia el umbral con la pista a mil metros por el costado, así que
+     * las dos cosas se cumplen **con dos giros por delante**: medido en
+     * Mariscal Estigarribia, el circuito se apagaba durante 3458 de los 6516
+     * metros del tramo y volvía a aparecer al pasar por el través. «La línea
+     * de puntos desaparece cuando ya voy paralelo a la pista en busca del
+     * giro, reaparece cuando estoy en el penúltimo giro.» Exacto, y por esto.
+     *
+     * Ver `enElEmbudoDeFinal`.
+     */
     const enLlegada =
       !this.mandanFrustrar &&
       (fase === "final" ||
         fase === "aterrizado" ||
-        (acercandose && this.distanceToRunway() < ENTRADA_EN_FINAL));
+        (acercandose &&
+          enElEmbudoDeFinal(
+            this.scenario.runway,
+            s.position.x,
+            s.position.z,
+          ) !== null));
     c.grupo.visible =
       preparando || (enElAire && alto >= ALTO_PARA_EL_CIRCUITO && !enLlegada);
     if (!enElAire) {
