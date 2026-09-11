@@ -3439,6 +3439,19 @@ export class Game {
      * «girá a la izquierda» encima de eso sería mandar dos cosas a la vez.
      */
     if (fase === "final" || fase === "aterrizado") return;
+    /*
+     * **Ni con el aviso de terreno puesto.**
+     *
+     * Los dos salen con la misma prioridad, así que se turnaban: «terrain,
+     * pull up» y, un segundo después, «vas por el tramo de subida» — dos
+     * cosas contrarias en el mismo sitio de la pantalla. Medido en vídeo, en
+     * una aproximación baja, alternando durante ocho segundos.
+     *
+     * El aviso de terreno manda sobre todo lo demás mientras dura, que es
+     * exactamente lo que dice su propio comentario. Un tramo de circuito
+     * espera; es una indicación, no una alarma.
+     */
+    if (this.terrenoDicho) return;
     this.tramoDelCircuito = tramo;
     this.hud.senal.mostrar(
       `circuito-${tramo}`,

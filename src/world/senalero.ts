@@ -355,13 +355,17 @@ export class Senalero {
     const lateral = vx * this.hacia.z - vz * this.hacia.x;
     this.restante = restante;
 
-    this.gesto = gestoDeSenalero({
-      restante,
-      lateral,
-      velocidad: avion.velocidad,
-      enElSuelo: avion.enElSuelo,
-      volviendo,
-    });
+    this.gesto = gestoDeSenalero(
+      {
+        restante,
+        lateral,
+        velocidad: avion.velocidad,
+        enElSuelo: avion.enElSuelo,
+        volviendo,
+      },
+      // El de antes, que es lo que distingue «llegó» de «se está moviendo».
+      this.gesto,
+    );
 
     /*
      * **Está o no está, y no aparece de golpe delante del morro.**
