@@ -438,14 +438,21 @@ const circuito = (tramo: string): string =>
  * perfil con el morro ya arriba y una flecha que sube pegada a él. A los
  * cuatro años eso es «para arriba», que es exactamente lo que hay que hacer
  * en ese segundo — y es la única señal del despegue que pide mover algo.
+ *
+ * **Y va envuelta en `icono`, como todas.** Era la única que no lo estaba:
+ * los dos trazos se metían en la tarjeta sin `<svg>` alrededor, y un navegador
+ * no dibuja un `<path>` suelto. O sea que en el segundo en que hay que tirar
+ * del morro salía **un recuadro naranja vacío**, medido en vídeo durante los
+ * dos segundos largos que dura. El banco decía que sí salía porque buscaba el
+ * trazo en el HTML y el trazo estaba: ver `verificar-despegue`.
  */
-const TIRAR = `
+const TIRAR = icono(`
   <path d="M4.5 17.5 L13.5 13.2 L16.8 10.2 a1.6 1.6 0 0 1 2.4 2.1
            L16.4 15.6 L12.6 20.5 H10.4 L11.2 16.4 L6.6 18.6 Z" />
   <path d="M18.5 8.4 V2.6 M16 5 L18.5 2.2 L21 5" fill="none"
         stroke="currentColor" stroke-width="2" stroke-linecap="round"
         stroke-linejoin="round" />
-`;
+`);
 
 /**
  * El back-taxi: **la pista, y la flecha que baja, da la vuelta y sube**.
@@ -462,7 +469,15 @@ const MEDIA_VUELTA = icono(`
   <path d="M15 3.6 L18.4 9.2 L11.6 9.2 Z" />
 `);
 
-const DIBUJOS: Record<string, string> = {
+/**
+ * Todos los dibujos, por su nombre.
+ *
+ * Se exporta para poder comprobar la única regla que tienen en común: **cada
+ * uno es un `<svg>` entero**. Suena a perogrullada y no lo es — `TIRAR` se
+ * escribió sin envolver y durante meses la señal de levantar el morro fue un
+ * recuadro naranja vacío.
+ */
+export const DIBUJOS: Record<string, string> = {
   llave: LLAVE,
   helice: HELICE,
   amarillo: RAYA,
