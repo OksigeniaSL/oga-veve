@@ -166,6 +166,29 @@ const vuelo = await page.evaluate(async () => {
   const CRUCERO = 200;
   const SENDA = Math.tan((3 * Math.PI) / 180);
 
+  /*
+   * **Las fases en las que el juego promete una raya que seguir.**
+   *
+   * Esto era «todas menos aterrizado», y contaba como fallo dos huecos que son
+   * a propósito: la carrera de despegue —donde la raya se borra porque lo que
+   * se sigue es la pista, y hay una comprobación aparte que exige justo eso— y
+   * el final del vuelo en el puesto, donde ya no queda sitio a donde ir.
+   *
+   * Medido en Yvytu Rape: 9,4 s de «raya que falta», el primero a los 40 s en
+   * «despegando» a 9 m/s y el último a los 238 en «apagado» con el avión
+   * parado. Ni uno solo de esos segundos era rodando.
+   */
+  const CON_RAYA = new Set([
+    "estacionado",
+    "arrancando",
+    "rodando",
+    "esperando",
+    "autorizado",
+    "alineando",
+    "abandonando",
+    "a-plataforma",
+  ]);
+
   const linea = [];
   let etapa = "arrancar";
   let mudo = 0;
@@ -174,6 +197,8 @@ const vuelo = await page.evaluate(async () => {
   let vueltaMetros = 0;
   let antes = null;
   let sinRaya = 0;
+  let sinRayaDonde = "";
+  let sinRayaPrimero = "";
   let lejosDelCoche = 0;
   let terrenoEnPista = 0;
   let dijoToca = false;
@@ -213,7 +238,14 @@ const vuelo = await page.evaluate(async () => {
         // Y **dónde**: un número sin sitio no se puede arreglar.
         mudoDonde = `a los ${t.toFixed(0)} s, en «${fase}» a ${s.airspeed.toFixed(0)} m/s`;
       }
-      if (fase !== "aterrizado" && ruta.length < 2) sinRaya += PASO;
+      if (CON_RAYA.has(fase) && ruta.length < 2) {
+        sinRaya += PASO;
+        // Y **dónde**: el primero y el último, que es lo que distingue un
+        // hueco en mitad del rodaje de la cola natural del final del vuelo.
+        const donde = `${t.toFixed(0)} s en «${fase}» a ${s.airspeed.toFixed(0)} m/s`;
+        if (!sinRayaPrimero) sinRayaPrimero = donde;
+        sinRayaDonde = donde;
+      }
     } else {
       mudo = 0;
     }
@@ -418,6 +450,8 @@ const vuelo = await page.evaluate(async () => {
     mudoDonde,
     vueltaMetros: Math.round(vueltaMetros),
     sinRaya: +sinRaya.toFixed(1),
+    sinRayaDonde,
+    sinRayaPrimero,
     lejosDelCoche: Math.round(lejosDelCoche),
     terrenoEnPista: +terrenoEnPista.toFixed(1),
     dijoToca,
@@ -481,7 +515,9 @@ comprobar(
 comprobar(
   "la raya verde no falta mientras se rueda",
   vuelo.sinRaya < 1,
-  vuelo.sinRaya ? `${vuelo.sinRaya} s sin raya` : "puesta todo el rato",
+  vuelo.sinRaya
+    ? `${vuelo.sinRaya} s sin raya · del ${vuelo.sinRayaPrimero} al ${vuelo.sinRayaDonde}`
+    : "puesta todo el rato",
   "«cuando doy el giro dejo de ver la línea verde… había desaparecido hasta A3»",
 );
 
