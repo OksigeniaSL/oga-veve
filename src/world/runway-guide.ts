@@ -489,20 +489,45 @@ export class RunwayGuide {
    * Existe porque «los aros no hacen nada» se había mirado tres veces a ojo y
    * dos de ellas mal. Un número no se discute.
    */
+  /**
+   * Dónde empieza la senda, en el mundo.
+   *
+   * Aparte de `sonda` porque `sonda` devuelve `null` cuando ya no quedan aros
+   * por cruzar, y lo que hace falta para comprobar que la senda **se ha mudado
+   * de cabecera** es dónde está, se haya cruzado o no. Ver `verificar-viento`.
+   */
+  get dondeEmpieza(): [number, number] | null {
+    const a = this.rings[0];
+    return a ? [Math.round(a.position.x), Math.round(a.position.z)] : null;
+  }
+
   sonda(): {
     i: number;
     opacidad: number;
     verde: number;
     escala: number;
+    /**
+     * Dónde está el aro más lejano, en el mundo.
+     *
+     * Es lo que hace falta para poder comprobar desde fuera que la senda
+     * **se ha mudado de cabecera** cuando el viento gira: sus cotas y su eje
+     * van horneados en la geometría, así que una senda que no se rehace mide
+     * aros del extremo contrario sin decir nada.
+     */
+    donde: [number, number] | null;
   } | null {
     const r = this.rings[this.next];
     if (!r) return null;
     const m = r.material as MeshBasicMaterial;
+    const lejano = this.rings[0];
     return {
       i: this.next,
       opacidad: +m.opacity.toFixed(2),
       verde: +m.color.g.toFixed(2),
       escala: +r.scale.x.toFixed(2),
+      donde: lejano
+        ? [Math.round(lejano.position.x), Math.round(lejano.position.z)]
+        : null,
     };
   }
 

@@ -692,7 +692,14 @@ export class Game {
   private readonly missions = new MissionRunner();
   private vegetacion: Group | null = null;
   private readonly missionMarker = new MissionMarker();
-  private readonly runwayGuide: RunwayGuide;
+  /**
+   * La senda de aros, que **se rehace si el viento cambia la cabecera**.
+   *
+   * No es `readonly` por eso: hornea la pista en su geometría al construirse,
+   * así que cambiar de cabecera y no rehacerla deja los aros en el extremo
+   * contrario. Ver `ponerTiempo` y `rehacerLaSenda`.
+   */
+  private runwayGuide: RunwayGuide;
   /** Índice de la misión de la lista del escenario, o -1 en vuelo libre. */
   private missionIndex = -1;
   /**
@@ -1915,6 +1922,27 @@ export class Game {
       },
       /** Cómo va el aro que toca de la senda: para poder medir si se enciende. */
       aros: () => this.runwayGuide.sonda(),
+      /** Dónde empieza la senda. Para ver que se muda con el viento. */
+      dondeEmpiezaLaSenda: () => this.runwayGuide.dondeEmpieza,
+      /**
+       * Poner un viento y ver qué se mueve con él.
+       *
+       * Cambiar de viento cambia **la cabecera en uso**, y con ella todo lo
+       * que depende de por dónde se entra: el aeródromo, las luces de
+       * aproximación, el plan de rodaje, el plano y la senda de aros. Esa
+       * última se quedaba en el extremo contrario y no había forma de verlo
+       * desde fuera. Para el banco.
+       */
+      ponerViento: (grados: number, nudos: number) =>
+        this.ponerTiempo({
+          vientoDe: grados,
+          vientoKt: nudos,
+          qnh: 1013,
+          temp: 24,
+          techoM: this.techoDeNubes,
+          visibilidadM: 10000,
+          fuente: "mano",
+        }),
       /**
        * Vuelve a armar la senda desde donde está el avión.
        *
@@ -4196,6 +4224,25 @@ export class Game {
    * regla que con las teselas, que **faltar un recurso externo no puede dejar a
    * nadie sin volar**.
    */
+  /**
+   * Vuelve a montar la senda de aros con la cabecera que haya ahora.
+   *
+   * Se tira la anterior y se construye otra porque sus cotas y su eje van
+   * horneados en la geometría; es lo mismo que ya se hace con la cinta de guía
+   * del rodaje, y por el mismo motivo.
+   */
+  private rehacerLaSenda(): void {
+    const estaba = this.runwayGuide.group.parent !== null;
+    this.scene.remove(this.runwayGuide.group);
+    this.runwayGuide = new RunwayGuide(
+      this.scenario,
+      this.terrain.runwayElevation,
+      (x: number, z: number) => this.terrain.sampleSurface(x, z),
+    );
+    if (estaba) this.scene.add(this.runwayGuide.group);
+    this.runwayGuide.reset(this.flight.state.position);
+  }
+
   private async ponerModeloSiLoHay(): Promise<void> {
     const idAlPedir = this.aircraft.id;
     const modelo = await cargarModelo(this.aircraft);
@@ -4311,6 +4358,16 @@ export class Game {
     this.ponerAproximacion();
     this.rehacerPlanDeVuelo();
     this.hud.mapa.rehacer(this.scenario);
+    /*
+     * **Y la senda de aros, que se quedaba en la cabecera vieja.**
+     *
+     * `RunwayGuide` hornea la pista en su geometría al construirse, y aquí se
+     * rehacían el aeródromo, las luces de aproximación, el plan y el plano
+     * —todo lo que depende de por dónde se entra— menos ella. Con el viento
+     * girado, los aros quedaban a nueve kilómetros y medio de donde tocaba y
+     * el juego seguía midiendo contra ellos. Medido con `npm run viento`.
+     */
+    this.rehacerLaSenda();
     /*
      * **Y sin tirar el vuelo.** Aquí había un `resetFlight` y era el mismo
      * error que ya se había arreglado una vez para el moldeado del terreno:
