@@ -104,19 +104,6 @@ export class Mapa {
     `;
   }
 
-  /** El botón que lo abre, para la barra de arriba. */
-  static boton(etiqueta: string): string {
-    return `
-      <button class="sonido teclas-boton" type="button" data-hud="mapa-boton" aria-label="${etiqueta}">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M2.6 6.2 L9 3.6 v14.2 l-6.4 2.6 Z" />
-          <path d="M9 3.6 L15 6.2 v14.2 L9 17.8 Z" />
-          <path d="M15 6.2 L21.4 3.6 v14.2 L15 20.4 Z" />
-        </svg>
-      </button>
-    `;
-  }
-
   bind(
     raiz: HTMLElement,
     escenario: Scenario,

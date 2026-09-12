@@ -504,34 +504,42 @@ await page.evaluate(() => {
 let peores = await auditar(page, "vuelo");
 
 /*
- * **Todas las pantallas que se abren encima, no las que se acordó alguien.**
+ * **Todas las pantallas que se abren encima, y no las que se acordó alguien.**
  *
- * Esta lista tenía cuatro y el juego tiene seis. Las dos que faltaban —el
- * plano y el tiempo— eran justo las dos que **no** eran paneles: sin
- * `role="dialog"`, sin encierro del foco y sin Escape. O sea que el banco no
- * fallaba porque no las abría, que es la peor forma de pasar. Ver #70.
+ * Esta lista estaba escrita a mano aquí, tenía cuatro y el juego tiene seis.
+ * Las dos que faltaban —el plano y el tiempo— eran justo las dos que **no**
+ * eran paneles: sin `role="dialog"`, sin encierro del foco y sin Escape. O sea
+ * que el banco no fallaba porque no las abría, que es la peor forma de pasar.
+ *
+ * Así que ya no está escrita aquí: sale de `ui/paneles.ts`, que es la misma
+ * tabla de la que el HUD dibuja los botones. Quien añada un panel lo mete en
+ * el banco sin enterarse, que es lo que pedía #70.
  *
  * (El hangar y los pilotos son pantallas de entrada, no paneles encima del
  * vuelo: se auditan aparte, y sin Escape ni encierro, porque ahí no procede.)
  *
- * Una pantalla que se abre encima del vuelo y no está aquí es una pantalla sin
- * vigilar: al añadir la siguiente, se añade aquí.
+ * Lo que sí queda escrito aquí es el mínimo: si la tabla llegara vacía —el
+ * gancho renombrado, el módulo sin cargar— el bucle no daría ni una vuelta y
+ * el banco pasaría sin mirar nada. Un banco que no puede fallar no es un
+ * banco.
  */
-for (const [donde, boton, caja] of [
-  ["créditos", "credits", "#creditos"],
-  ["teclas", "keys", "#teclas"],
-  ["cuaderno", "cuaderno", "#cuaderno"],
-  ["plano", "mapa-boton", '[data-hud="mapa"]'],
-  ["tiempo", "tiempo-boton", '[data-hud="tiempo"]'],
+const paneles = await page.evaluate(() => globalThis.__oga?.paneles?.() ?? []);
+comprobar(
+  "el banco recorre todos los paneles de la tabla",
+  paneles.length >= 6,
+  `la tabla trajo ${paneles.length}`,
+);
+for (const { id: boton, caja } of paneles) {
+  // El identificador de la tabla es el `data-hud` del botón, y dos lo llevan
+  // en el nombre. Para el informe sobra.
+  const donde = boton.replace(/-boton$/, "");
   /*
-   * Y el esquema del ala, que es el único panel del juego **con un mando que
-   * no es un botón**: dos tiradores. Ahí lo que se mide de verdad es el
-   * objetivo táctil, porque la barra pintada mide doce píxeles y lo que se
-   * toca tiene que medir cuarenta y cuatro — son dos cosas distintas y es
-   * fácil confundirlas al escribir el CSS. Ver `ui/pantalla-ala.ts`.
+   * De los seis, el esquema del ala es el único **con un mando que no es un
+   * botón**: dos tiradores. Ahí lo que se mide de verdad es el objetivo
+   * táctil, porque la barra pintada mide doce píxeles y lo que se toca tiene
+   * que medir cuarenta y cuatro — son dos cosas distintas y es fácil
+   * confundirlas al escribir el CSS. Ver `ui/pantalla-ala.ts`.
    */
-  ["ala", "ala", "#ala"],
-]) {
   await page.click(`[data-hud="${boton}"]`);
   await page.waitForTimeout(600);
   const abierta = await page.evaluate(

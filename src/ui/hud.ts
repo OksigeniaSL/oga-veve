@@ -34,6 +34,7 @@ import { SixPack } from "./six-pack";
 import { Pictogramas, helice } from "./pictogramas";
 import { Senal } from "./senal";
 import { Mapa } from "./mapa";
+import { botonesDeLosPaneles } from "./paneles";
 import { PanelDelTiempo } from "./tiempo";
 import type { Tier } from "../flight/tiers";
 import { canalesDe, type Peldano } from "../flight/escalera";
@@ -442,93 +443,13 @@ export class Hud {
         -->
         <button class="sonido" type="button" data-hud="sound" aria-pressed="false"></button>
         <!--
-          Y el botón que anuncia la pantalla de mandos. Existe porque esa
-          pantalla se abría solo con una tecla, y una pantalla que explica
-          los mandos no puede esconderse detrás de un mando. Menos todavía
-          para quien no lee.
+          Y la fila de paneles: mandos, plano, tiempo, ala, créditos y
+          cuaderno. No están escritos aquí uno a uno a propósito — salen de
+          «paneles.ts», que es la única lista. Antes eran seis sitios, y dos
+          de ellos se quedaron sin banco de accesibilidad porque el banco
+          tenía su propia copia de la lista. Ver #70.
         -->
-        <button class="sonido teclas-boton" type="button" data-hud="keys"
-                aria-label="${t("teclas.title")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="2" y="6" width="20" height="13" rx="2.4" />
-            <path d="M6 10h1.6M10.2 10h1.6M14.4 10h1.6M18.6 10h.8
-                     M6 13.4h1.6M10.2 13.4h1.6M14.4 13.4h1.6M18.6 13.4h.8
-                     M7.6 16.6h8.8" />
-          </svg>
-        </button>
-        ${Mapa.boton(t("mapa.title"))}
-        ${PanelDelTiempo.boton(t("tiempo.title"))}
-        <!--
-          Y el esquema de cómo vuela un ala.
-
-          Tiene botón propio y no vive escondido en un menú porque es la única
-          explicación del juego que no se puede dar hablando, y porque la
-          pregunta —«¿y por qué se cae si tiro mucho?»— llega justo después de
-          una pérdida, o sea volando y no en el hangar. El icono es el perfil
-          en corte con la corriente pasándole por encima, que es literalmente
-          lo que hay dentro.
-        -->
-        <button class="sonido" type="button" data-hud="ala"
-                aria-label="${t("ala.titulo")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 15 C8 15 13 13.4 21 9 C15 15.6 9 18 3 18 Z" />
-            <path d="M2.4 6.6 C7 6.6 12 5.4 20 2.6 M2.4 10.2 C6 10.2 9.4 9.6 13 8.4"
-                  fill="none" stroke="currentColor" stroke-width="1.5"
-                  stroke-linecap="round" />
-          </svg>
-        </button>
-        <!--
-          Los créditos, y **esto no es cortesía: es una obligación**. El
-          relieve es de Copernicus y las ortofotos son CC BY del PNOA y de
-          Sentinel-2; las tres licencias exigen atribución visible. Estaban
-          solo detrás de F1, o sea inalcanzables en una tablet, que es el
-          aparato del aula. Y ahí dentro va también la promesa que da sentido
-          al proyecto: gratis para siempre para la educación paraguaya.
-        -->
-        <button class="sonido" type="button" data-hud="credits"
-                aria-label="${t("credits.title")}">
-          <!--
-            **Y cabe dentro del botón, con aire alrededor.**
-
-            El círculo medía 9,4 de radio en un lienzo de 24, o sea que tocaba
-            el borde: al lado de los demás iconos —que son formas pequeñas con
-            margen— no se leía como un icono sino como un **aro alrededor del
-            botón**, más gordo y más brillante que todo lo que tenía al lado.
-            «Este icono habría que mejorarlo, no encaja con el resto.»
-
-            Y el motivo, mirando la fila entera: **el icono repetía el botón**.
-            Todos los botones de la barra son un círculo oscuro con un dibujo
-            abierto dentro —un teclado, un mapa plegado, una nube, un hangar—;
-            este metía otro círculo dentro del círculo, y lo que se veía era
-            una diana, más gorda y más brillante que sus vecinos. Se probó
-            encogerlo y afinarle el trazo y seguía siendo una diana.
-
-            Sin el aro es la «i» y nada más, que es lo que son los demás: un
-            dibujo dentro de un botón redondo.
-          -->
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="5.4" r="1.35" />
-            <path d="M12 9.4 v9" stroke="currentColor" stroke-width="2.2"
-                  stroke-linecap="round" fill="none" />
-          </svg>
-        </button>
-        <!--
-          El cuaderno de vuelo: las horas, lo hecho y el grado.
-
-          La hombrera con sus galones es el icono, y no hace falta más: es lo
-          que hay dentro, y quien ha visto una vez sus galones al terminar un
-          vuelo sabe qué es esto sin que nadie se lo diga.
-        -->
-        <button class="sonido" type="button" data-hud="cuaderno"
-                aria-label="${t("cuaderno.title")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="4" y="4" width="16" height="13" rx="3" fill="none"
-                  stroke="currentColor" stroke-width="1.8" />
-            <rect x="4" y="15.5" width="16" height="3.5" rx="1.75" />
-            <path d="M7.5 8.4 h9 M7.5 11.6 h9" stroke="currentColor"
-                  stroke-width="1.8" stroke-linecap="round" fill="none" />
-          </svg>
-        </button>
+        ${botonesDeLosPaneles()}
         <!--
           Y la puerta de vuelta al hangar. Un hangar al que solo se entra al
           arrancar es un hangar con la puerta tapiada: quien quiera cambiar de

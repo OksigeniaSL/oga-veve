@@ -195,6 +195,7 @@ import { mundoElegido } from "./ui/mundo";
  * el que se construye todo lo demás.
  */
 const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
+import { PANELES_DEL_VUELO } from "./ui/paneles";
 import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
 import { PantallaDelAla } from "./ui/pantalla-ala";
@@ -1613,6 +1614,16 @@ export class Game {
        * también: si no, mide un coche aparcado al lado del puesto.
        */
       cocheApartado: () => this.sigueme.yaSeAparto,
+      /*
+       * La lista de paneles que se abren encima del vuelo.
+       *
+       * La lee `verificar-acceso`, y ese es todo el motivo de que exista: el
+       * banco tenía su propia copia escrita a mano, con cuatro de los seis, y
+       * los dos que faltaban llevaban meses sin encierro del foco y sin
+       * Escape sin que nadie lo midiera. Ahora quien añada un panel a la
+       * tabla lo mete en el banco sin enterarse. Ver `ui/paneles.ts` y #70.
+       */
+      paneles: () => PANELES_DEL_VUELO.map((p) => ({ id: p.id, caja: p.caja })),
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
       /*
