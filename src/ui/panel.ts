@@ -19,7 +19,27 @@
  * tres veces.
  */
 
+import { elDeAlLado, VigilanteDelMando } from "./mando";
+
 /** Lo que se puede enfocar dentro de un panel, en el orden en que se tabula. */
+/** Qué flecha va hacia atrás en la lista y cuál hacia delante. */
+const FLECHAS: Record<string, boolean> = {
+  ArrowUp: true,
+  ArrowLeft: true,
+  ArrowDown: false,
+  ArrowRight: false,
+};
+
+/**
+ * Los mandos que usan las flechas para lo suyo y no las sueltan.
+ *
+ * Un deslizador, una lista desplegable o una caja de texto: dentro de ellos
+ * una flecha mueve el valor o el cursor, y eso manda sobre recorrer el panel.
+ */
+function seQuedaConLasFlechas(quien: Element | null): boolean {
+  return !!quien?.matches?.("input, select, textarea, [role='slider']");
+}
+
 const ENFOCABLES =
   // `summary` va en la lista y no es un detalle: es el que abre «cambiar las
   // teclas», y sin él el encierro saltaba por encima y esa pantalla no se
@@ -125,7 +145,8 @@ export class Encierro {
     (dentro[0] ?? this.root).focus?.();
   }
 
-  private dentro(): HTMLElement[] {
+  /** Lo enfocable de dentro, en orden. Lo mira también el mando. */
+  dentro(): HTMLElement[] {
     return [...this.root.querySelectorAll<HTMLElement>(ENFOCABLES)].filter(
       (e) => !e.hasAttribute("disabled") && e.offsetParent !== null,
     );
@@ -147,6 +168,32 @@ export class Encierro {
       e.stopPropagation();
       e.preventDefault();
       this.cerrar();
+      return;
+    }
+    /*
+     * **Y las flechas recorren el panel, como el tabulador.**
+     *
+     * Lo pide #70 —«se navega igual con el dedo, con el ratón, con las
+     * flechas del teclado y con el mando»— y no es capricho: el tabulador es
+     * una tecla que hay que saber que existe, y quien tiene cuatro años y una
+     * pantalla delante prueba las flechas. Y quien llega desde el mando
+     * espera lo mismo, porque es lo mismo.
+     *
+     * Menos dentro de un mando que ya las usa. Los dos tiradores del esquema
+     * del ala son deslizadores de verdad, y ahí una flecha mueve el valor:
+     * robársela para mover el foco sería quitar el único modo de usarlos sin
+     * ratón.
+     */
+    const flecha = FLECHAS[e.key];
+    if (flecha !== undefined && !seQuedaConLasFlechas(document.activeElement)) {
+      const alLado = elDeAlLado(
+        this.dentro(),
+        document.activeElement as HTMLElement | null,
+        flecha,
+      );
+      if (!alLado) return;
+      e.preventDefault();
+      alLado.focus();
       return;
     }
     if (e.key !== "Tab") return;
@@ -201,6 +248,15 @@ export class Encierro {
  */
 const todos = new Set<Panel>();
 let habia = false;
+/**
+ * Los abiertos, en el orden en que se abrieron: el último es el de arriba.
+ *
+ * Es el que atiende el mando. Con los ajustes abiertos **sobre** el menú de
+ * pausa hay dos a la vez, y la cruceta tiene que recorrer el de encima, que
+ * es el que se está mirando — la misma regla que ya sigue Escape.
+ */
+const pilaDePaneles: Panel[] = [];
+const vigilante = new VigilanteDelMando();
 
 /**
  * Lo que la concha necesita del juego, y es lo único que necesita.
@@ -237,6 +293,7 @@ export function laConchaLaLleva(quien: LaConcha): void {
 }
 
 function recontar(): void {
+  vigilante.atiendeA(pilaDePaneles[pilaDePaneles.length - 1] ?? null);
   const hay = [...todos].some((p) => p.abierto);
   if (hay === habia) return;
   habia = hay;
@@ -309,11 +366,19 @@ export class Panel {
     return !this.caja.hidden;
   }
 
+  /** Lo que se puede enfocar dentro. Lo usa el mando. */
+  mandos(): HTMLElement[] {
+    return this.encierro.dentro();
+  }
+
   abrir(): void {
     if (this.abierto) return;
     this.recienAbierto = true;
     this.caja.hidden = false;
     this.encierro.abrir();
+    const donde = pilaDePaneles.indexOf(this);
+    if (donde >= 0) pilaDePaneles.splice(donde, 1);
+    pilaDePaneles.push(this);
     concha?.suena("abrir");
     recontar();
   }
@@ -322,6 +387,8 @@ export class Panel {
     if (!this.abierto) return;
     this.caja.hidden = true;
     this.encierro.soltar();
+    const donde = pilaDePaneles.indexOf(this);
+    if (donde >= 0) pilaDePaneles.splice(donde, 1);
     concha?.suena("cerrar");
     recontar();
   }
