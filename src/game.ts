@@ -290,6 +290,7 @@ import { Agenda } from "./flight/agenda";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
+import { Reparto } from "./hechos";
 import { asentarAerodromoSobreLaFoto } from "./world/asentar-aerodromo";
 import { limitarElRodaje } from "./flight/tope-de-rodaje";
 import { leerTexto, ponerTexto } from "./datos/guardado";
@@ -843,6 +844,15 @@ export class Game {
    * pasa con el juego parado, y va más deprisa cuando el reloj va más deprisa.
    */
   private readonly agenda = new Agenda();
+
+  /**
+   * Lo que ha pasado, contado una vez y oído por quien le importe.
+   *
+   * Ver `src/hechos.ts`. Hoy lleva un solo hecho —la frustrada— a propósito:
+   * es el mecanismo de #30 estrenándose con algo que ya tocaba cuatro sitios,
+   * para saber si aguanta antes de mudarle el resto.
+   */
+  readonly hechos = new Reparto();
   /**
    * El reloj del juego desde que arrancó la partida, s.
    *
@@ -1545,6 +1555,8 @@ export class Game {
     this.hud.onOtroVuelo(() => this.resetFlight());
     this.hud.onBrake((pressed) => this.input.setTouchBrakes(pressed));
     this.hud.onThrottle((direction) => this.input.setButtonThrottle(direction));
+
+    this.escucharLosHechos();
 
     window.addEventListener("resize", this.onResize);
     this.onResize();
@@ -2708,22 +2720,35 @@ export class Game {
    * a secas: el mismo que suena al ganar un galón, porque justo eso es lo que
    * acaba de pasar. Ver `flight/frustrada.ts` para el porqué de todo esto.
    */
-  private celebrarLaFrustrada(): void {
-    this.hud.senal.mostrar(
-      "frustrada",
-      this.rotulo("vuelo.frustrada", "palabra.bien"),
-      null,
-      { segundos: SE_QUEDA_LA_FRUSTRADA, prioridad: URGENTE },
+  private escucharLosHechos(): void {
+    /*
+     * Cuatro oyentes para un hecho, que es exactamente el reparto que había
+     * escrito a mano dentro de quien lo detecta. Lo que cambia es que ahora
+     * cada uno está donde se entiende —esto es pantalla, esto es sonido, esto
+     * es cuaderno, esto es voz— y que añadir un quinto (una misión, un logro)
+     * no obliga a tocar el trozo que se da cuenta.
+     */
+    this.hechos.on("frustrada", () => {
+      this.hud.senal.mostrar(
+        "frustrada",
+        this.rotulo("vuelo.frustrada", "palabra.bien"),
+        null,
+        { segundos: SE_QUEDA_LA_FRUSTRADA, prioridad: URGENTE },
+      );
+    });
+    this.hechos.on("frustrada", () => this.audio.cue("achieved"));
+    // Al cuaderno: renunciar es ganar, y el grado más alto lo pide.
+    this.hechos.on("frustrada", () =>
+      this.apuntar({ frustradas: this.cuaderno.frustradas + 1 }),
     );
-    this.audio.cue("achieved");
-    // Y va al cuaderno: renunciar es ganar, y el grado más alto lo pide.
-    this.apuntar({ frustradas: this.cuaderno.frustradas + 1 });
     // En inglés aeronáutico, como el resto de la voz de cabina: «going around»
     // es lo que se dice por radio, y lo demás es del instructor.
-    this.cantar(
-      "going around. good decision",
-      t("vuelo.frustrada"),
-      "vuelo.frustrada",
+    this.hechos.on("frustrada", () =>
+      this.cantar(
+        "going around. good decision",
+        t("vuelo.frustrada"),
+        "vuelo.frustrada",
+      ),
     );
   }
 
@@ -4162,8 +4187,17 @@ export class Game {
     if (renuncio) {
       // Y si te lo habían mandado, la orden se levanta: la pista vuelve a ser
       // tuya y la vaca se va, que para eso se hace la pasada.
-      if (this.mandanFrustrar) this.levantarLaOrden();
-      this.celebrarLaFrustrada();
+      const mandada = this.mandanFrustrar;
+      if (mandada) this.levantarLaOrden();
+      /*
+       * **Y aquí se acaba el trabajo de este trozo: contarlo.**
+       *
+       * Antes seguían cuatro llamadas a mano —la tarjeta, el sonido, el
+       * cuaderno y la voz— dentro del método que se da cuenta de que ha habido
+       * frustrada. O sea que para darse cuenta de algo había que saber de
+       * pantalla, de audio, de cuaderno y de instructor. Ver `src/hechos.ts`.
+       */
+      this.hechos.emit("frustrada", { mandada });
     }
     if (terreno && terreno !== this.terrenoDicho) {
       this.terrenoDicho = terreno;

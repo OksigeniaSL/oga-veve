@@ -588,6 +588,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     },
     /** El percance que ha parado el vuelo, si lo hay. Congela el avión. */
     percance: () => juego.percance,
+    /**
+     * Cuántos escuchan cada hecho del vuelo. Ver `src/hechos.ts`.
+     *
+     * Sirve para distinguir dos averías que desde fuera se parecen: que el
+     * juego no se dé cuenta de algo, y que se dé cuenta y no lo cuente nadie.
+     * La primera es un fallo de la regla; la segunda, de cableado.
+     */
+    hechos: () => ({ frustrada: juego.hechos.cuantosEscuchan("frustrada") }),
     /** Si ahora mismo hay orden de irse al aire. */
     ordenDeFrustrar: () => juego.mandanFrustrar,
     porQueSeMando: () => juego.porQueSeMando,

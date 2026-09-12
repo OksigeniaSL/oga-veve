@@ -712,6 +712,9 @@ const frustrada = await page.evaluate(async () => {
     cantoMinimos,
     tarjetasVistas,
     galones: o.galones(),
+    // Cuántos escuchan el hecho, que es lo que distingue «el juego no se
+    // entera» de «se entera y no se lo cuenta a nadie». Ver `src/hechos.ts`.
+    escuchan: o.hechos?.().frustrada ?? null,
   };
 });
 
@@ -728,7 +731,7 @@ comprobar(
   frustrada.alSubir < 80,
   frustrada.cuando === Infinity
     ? `nada tras subir ${frustrada.subido.toFixed(0)} m`
-    : `a los ${frustrada.alSubir.toFixed(0)} m de subida, ${frustrada.cuando.toFixed(1)} s`,
+    : `a los ${frustrada.alSubir.toFixed(0)} m de subida, ${frustrada.cuando.toFixed(1)} s · ${frustrada.escuchan ?? "?"} la escuchan`,
   "el juego no detectaba la frustrada en absoluto, siendo su regla número uno",
 );
 /*
