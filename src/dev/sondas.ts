@@ -599,6 +599,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       frustrada: juego.hechos.cuantosEscuchan("frustrada"),
       minimos: juego.hechos.cuantosEscuchan("minimos"),
       papi: juego.hechos.cuantosEscuchan("papi"),
+      mandaronIrseAlAire: juego.hechos.cuantosEscuchan("mandaronIrseAlAire"),
       pistaLibreOtraVez: juego.hechos.cuantosEscuchan("pistaLibreOtraVez"),
     }),
     /** Si ahora mismo hay orden de irse al aire. */
