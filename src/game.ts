@@ -43,6 +43,7 @@ import {
 } from "./world/aproximacion";
 import {
   crearCircuito,
+  verticesDelCircuito,
   type Circuito,
   type TramoDeCircuito,
 } from "./world/circuito";
@@ -2140,7 +2141,20 @@ export class Game {
       /** Y la traza de por dónde ha ido, en coordenadas del fichero. */
       traza: () => this.traza,
       /** Los cinco vértices del circuito de tráfico, si lo hay. */
-      circuito: () => this.circuito?.vertices ?? null,
+      /**
+       * Los vértices del circuito de tráfico de la cabecera en uso.
+       *
+       * **Aunque no esté dibujado.** El circuito se dibuja solo en los
+       * peldaños que lo enseñan, pero su geometría existe siempre —depende de
+       * la pista y de por dónde se entra, no de a quién se le enseña— y el
+       * piloto del banco la necesita para volar la vuelta como se vuela. Sin
+       * esto tendría que calcularla por su cuenta, o sea una segunda fuente de
+       * verdad para la misma figura, que es como se acaba midiendo un circuito
+       * que no es el que el juego dibuja.
+       */
+      circuito: () =>
+        this.circuito?.vertices ??
+        verticesDelCircuito(this.scenario.runway, this.terrain.runwayElevation),
       /** A qué caída se tocó, m/s. Para el banco y para las sondas. */
       caida: () => this.landing.caidaAlTocar,
       /** Los pares puesto + espera que se consideraron, con sus metros. */

@@ -147,6 +147,29 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   const SEGURO_PARA_GIRAR = 150;
 
   /**
+   * Cuánto antes de un vértice se da el tramo por terminado, m.
+   *
+   * Trescientos. Un avión no gira en una esquina: gira en un arco, y a treinta
+   * y cinco metros por segundo con veinticinco grados de inclinación ese arco
+   * mide unos trescientos metros de radio. Anticipar el viraje es lo que hace
+   * que el circuito salga rectangular y no en forma de estrella.
+   */
+  const MARGEN_DE_VIRAJE = 300;
+
+  /**
+   * Los vértices del circuito que dibuja el juego, en coordenadas de mundo.
+   *
+   * Se piden una vez y se guardan: son los mismos todo el vuelo mientras no
+   * cambie el viento, y pedirlos por fotograma es cruzar la frontera con el
+   * juego cientos de veces para nada.
+   */
+  let vertices;
+  const circuito = () => {
+    if (vertices === undefined) vertices = o.circuito?.() ?? null;
+    return vertices;
+  };
+
+  /**
    * A qué velocidad se sube y a cuál se navega, m/s.
    *
    * Treinta y cuatro y cincuenta. La primera está bastante por encima de la de
@@ -426,6 +449,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   const vistas = new Set();
   /** Cuándo se rompió, si se rompió. */
   let seRompio = 0;
+  /** A qué vértice del circuito se va ahora. Ver la etapa «subir». */
+  let aDonde = 1;
   let tocaDichas = 0;
   const cuandoDijoToca = [];
   let queLaTapo = "";
@@ -706,118 +731,104 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       }
     } else if (etapa === "subir") {
       /*
-       * Se sube a la altura de circuito y se va a buscar la entrada en final.
-       * El avión da la vuelta él solo por el camino: es lo que hace cualquiera
-       * que despega y vuelve a entrar.
+       * **El circuito, tramo a tramo, que es como se vuela una vuelta.**
        *
-       * **Y el cambio a final se decide en coordenadas de pista, no por
-       * cercanía a un punto.** Apuntando a un punto y esperando a estar a
-       * seiscientos metros de él, el avión se quedaba **orbitándolo**: a
-       * treinta y seis metros por segundo y con el giro acotado, un punto se
-       * puede rodear eternamente sin llegar nunca. Doce minutos de vuelo así,
-       * subiendo, y las cinco comprobaciones de después culpando al juego.
+       * Esto subía y se iba derecho a buscar la entrada en final desde donde
+       * estuviera, y funcionaba en el sentido de que llegaba. Lo que no hacía
+       * era **llegar alineado**: medido en los nueve aeropuertos, el avión se
+       * plantaba en la altura de decisión entre 63 y 95 metros fuera del eje y
+       * hasta 25 grados torcido, y el juego le mandaba irse al aire con toda
+       * la razón — eso es una aproximación no estabilizada de manual, y
+       * mandar al aire es lo que hace un instructor. Consecuencia: la tarjeta
+       * de «ya podés tocar» no salía **nunca**, en ninguno de los nueve.
+       *
+       * Se intentó dos veces arreglarlo afinando la captura del eje y las dos
+       * salió peor. El problema no era la ganancia: era que no había circuito.
+       * Un piloto no va derecho al umbral desde donde esté — sube por el eje,
+       * gira a la izquierda, vuela paralelo a la pista al revés y gira otra
+       * vez ya bajando. Cuando llega a final **ya viene alineado**, y por eso
+       * la aproximación está estabilizada antes de empezar a bajar.
+       *
+       * Y el circuito no se calcula aquí: se lee del juego, que es quien lo
+       * dibuja. Volarlo por una geometría propia sería medir un circuito que
+       * no es el que se enseña. Ver `world/circuito.ts` y `__oga.circuito`.
        */
-      const r = o.pista();
-      const hp = (r.heading * Math.PI) / 180;
-      const fx = Math.sin(hp);
-      const fz = -Math.cos(hp);
-      const along = (s.position.x - r.x) * fx + (s.position.z - r.z) * fz;
-      const alUmbral = -r.length / 2 - along;
-      // Y el gas se afloja al llegar arriba: con el motor a tope este modelo
-      // sube aunque la palanca diga que no.
+      const v = circuito();
+      // El vértice al que se va ahora. 1 es el final de la subida, 2 la
+      // esquina de allá, 3 la esquina de acá y 4 la entrada en final.
+      const meta = v?.[aDonde] ?? null;
+
       /*
-       * **Se sube con la velocidad, no con la altura.**
-       *
-       * Esto pedía palanca en proporción a lo que faltaba para la altura de
-       * crucero, o sea media palanca sostenida durante toda la subida. Con el
-       * mando llegando entero al avión —que es lo que cambió al pasar por
-       * `pilotar`— media palanca sostenida en el modelo de coeficientes
-       * equilibra en un ángulo de ataque que es justo el de la pérdida, y
-       * Taguato no lleva protección: el avión entraba en pérdida subiendo.
-       * Antes no pasaba porque el teclado le borraba el mando, o sea que la
-       * subida funcionaba **por estar rota**.
-       *
-       * Un piloto sube apuntando a una velocidad: si el avión va deprisa se
-       * tira un poco más, y si va despacio se suelta. Así no hay forma de
-       * entrar en pérdida por insistir.
+       * El gas y la palanca: subiendo se manda la velocidad con la palanca y
+       * el gas va a tope; a la altura del circuito se cambia el reparto —el
+       * gas lleva la velocidad y la palanca la altura, amortiguada—. Seguir
+       * con el primero arriba daba un fugoide que crecía hasta el suelo:
+       * medido en Guaraní, 185 → 219 → 147 → 236 → 99 → 34 metros.
        */
+      const altoQueToca = meta ? meta.y - cotaDePista : CRUCERO;
+      const subiendo = alto(s) < altoQueToca - 15;
+      c.throttle = subiendo
+        ? 1
+        : Math.max(
+            0.3,
+            Math.min(1, 0.55 + (VELOCIDAD_DE_CRUCERO - s.airspeed) * 0.04),
+          );
+      c.elevator = subiendo
+        ? palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA)
+        : aLaAltura(s, altoQueToca);
+
       /*
-       * **Arriba se cambia de reparto: el gas lleva la velocidad y la palanca
-       * la altura.**
-       *
-       * Subiendo se hace al revés —gas a tope y la palanca sostiene la
-       * velocidad— y funciona. Pero al llegar a crucero, seguir con ese
-       * reparto y un gas de dos posiciones da un fugoide que crece: medido en
-       * Guaraní, 185 → 219 → 147 → 236 → 99 → 34 metros, cada vaivén más
-       * grande que el anterior, hasta el suelo. El gas a saltos es la mitad
-       * del problema y la otra mitad es que nada amortiguaba.
-       *
-       * Arriba: gas proporcional a lo que falta de velocidad, y palanca por
-       * altura **con un término de velocidad vertical**, que es el freno del
-       * vaivén. Y con tope por abajo cuando el avión va lento, que es la única
-       * regla que no se puede saltar: nunca tirar por debajo de la velocidad
-       * de subida.
+       * **Y no se gira hasta estar alto.** El primer tramo es recto por el eje
+       * de la pista, y eso no es una preferencia: girar a sesenta metros con
+       * el alerón a fondo es lo que estrelló a este piloto en La Palma, donde
+       * el suelo al oeste está a la cota de la pista. Se baja de 62 a 14
+       * metros en cuatro segundos.
        */
-      c.throttle =
-        alto(s) > CRUCERO
-          ? Math.max(
-              0.3,
-              Math.min(1, 0.55 + (VELOCIDAD_DE_CRUCERO - s.airspeed) * 0.04),
-            )
-          : 1;
-      c.elevator =
-        alto(s) > CRUCERO
-          ? aLaAltura(s, CRUCERO)
-          : palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA);
+      if (!meta || alto(s) < SEGURO_PARA_GIRAR) {
+        c.aileron = alRumbo(s, rumboDeSalida);
+      } else {
+        c.aileron = alPunto(s, meta.x, meta.z);
+      }
+
       /*
-       * **Y no se gira hasta estar alto.**
+       * Se pasa al vértice siguiente al **rebasarlo**, no al acercarse.
        *
-       * Esto apuntaba a un punto a tres kilómetros **detrás** del umbral de
-       * salida, o sea media vuelta, y la pedía a sesenta metros de altura con
-       * el alerón a fondo. En Tenerife se aguanta porque la pista está en un
-       * lomo; en La Palma el suelo al oeste está a la cota de la pista, y el
-       * avión bajaba de 62 a 14 m en cuatro segundos y se estrellaba. El
-       * percance «golpe» del barrido era eso.
-       *
-       * Nadie despega y da media vuelta a sesenta metros. Se mantiene el
-       * rumbo de pista hasta la altura de circuito y **luego** se gira, que es
-       * además lo que el juego enseña.
+       * Esperar a estar a tantos metros de un punto deja al avión
+       * orbitándolo: con el giro acotado a veinticinco grados, un punto se
+       * puede rodear eternamente sin llegar nunca. Lo que dice que un tramo se
+       * ha terminado es haber pasado de largo, y eso se mide proyectando sobre
+       * la dirección del tramo.
        */
+      if (meta && v) {
+        const desde = v[aDonde - 1] ?? v[0];
+        const dx = meta.x - desde.x;
+        const dz = meta.z - desde.z;
+        const largo = Math.hypot(dx, dz) || 1;
+        const cuanto =
+          ((s.position.x - desde.x) * dx + (s.position.z - desde.z) * dz) /
+          largo;
+        if (cuanto > largo - MARGEN_DE_VIRAJE) {
+          if (aDonde >= 4) etapa = "final";
+          else aDonde++;
+        }
+      }
+
       /*
-       * Por debajo de la altura de giro se sigue el eje **hacia delante**, y
-       * eso se dice apuntando a un punto del propio eje por delante del avión.
-       * Se probó con `alRumbo(rumboPista)` y sale mal de la peor manera: el
-       * rumbo nominal de la pista es el de una de sus dos cabeceras, y cuando
-       * el viento manda salir por la otra, eso es media vuelta pedida a
-       * treinta metros de altura. Un punto por delante no tiene ese problema:
-       * por delante solo hay un sitio.
+       * Y una salida de socorro: si el circuito no se puede leer —un escenario
+       * sin aeródromo, un peldaño sin circuito— se hace lo de antes, que es ir
+       * a la entrada en final por coordenadas de pista. Peor, pero llega.
        */
-      const p = alto(s) > SEGURO_PARA_GIRAR ? o.puntoDeFinal(3000) : null;
-      c.aileron = p ? alPunto(s, p.x, p.z) : alRumbo(s, rumboDeSalida);
-      /*
-       * **Y aquí hubo un intento de exigir estar en el eje antes de bajar**,
-       * que es lo que hace un piloto de verdad. Se quitó porque empeoraba:
-       * sin una captura de eje como tal —volar a un punto de intercepción y
-       * después mantener rumbo— el piloto se quedaba dando vueltas sin llegar
-       * nunca a cumplir la condición, y en Taguato ni siquiera entraba en
-       * final. Queda anotado en #147 con lo medido.
-       */
-      /*
-       * **Y aquí se probó dos veces a exigir el eje antes de bajar**, que es
-       * lo que hace un piloto de verdad y lo que el propio juego pide: a la
-       * altura de decisión mide si la aproximación está estabilizada y manda
-       * irse al aire si no. Medido, el piloto llega ahí 83 metros fuera del
-       * eje y 24 grados torcido, así que se lleva la orden en los nueve
-       * aeropuertos y nunca ve la tarjeta de «ya podés tocar».
-       *
-       * Las dos veces salió peor: esperando a estar en el eje, el avión llega
-       * encima del umbral todavía alto y se tira; capturando con un rumbo de
-       * interceptación calculado, se pasa al otro lado. Lo que hace falta no
-       * es afinar esto, es un tramo de base y una captura de eje de verdad —o
-       * sea, volar el circuito en vez de ir derecho al umbral—. Queda anotado
-       * en #147 con los números.
-       */
-      if (alUmbral > 800 && alUmbral < 4000) etapa = "final";
+      if (!v) {
+        const r = o.pista();
+        const hp = (r.heading * Math.PI) / 180;
+        const along =
+          (s.position.x - r.x) * Math.sin(hp) +
+          (s.position.z - r.z) * -Math.cos(hp);
+        const alUmbral = -r.length / 2 - along;
+        const p = alto(s) > SEGURO_PARA_GIRAR ? o.puntoDeFinal(3000) : null;
+        if (p) c.aileron = alPunto(s, p.x, p.z);
+        if (alUmbral > 800 && alUmbral < 4000) etapa = "final";
+      }
     } else if (etapa === "final") {
       /*
        * **En final se vuela con coordenadas de pista, no con distancias.**
