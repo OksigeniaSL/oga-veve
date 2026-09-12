@@ -19,13 +19,21 @@ export interface Proximamente {
   /** El nombre de la ciudad, que es lo que se reconoce en un mapa. */
   readonly ciudad: string;
   /** De qué país, para que salga en su grupo del hangar. */
-  readonly pais: 'py' | 'es' | 'inventado';
+  readonly pais: "py" | "es" | "inventado";
 }
 
+/**
+ * Y **lo que se construye sale de aquí**, que no es obvio y ya falló.
+ *
+ * El hangar pinta esta lista detrás de los escenarios de verdad, sin cruzarlas:
+ * Encarnación, Ciudad del Este y Mariscal Estigarribia se construyeron y aquí
+ * se quedaron, así que los tres salían **dos veces** en el hangar —una para
+ * volar y otra apagada, prometiendo lo que ya estaba—. Lo vigila
+ * `proximamente.test.ts`, comparando por nombre de ciudad y no por
+ * identificador, porque eran distintos: aquí ponía `mariscal-estigarribia` y
+ * el escenario se llama `estigarribia`.
+ */
 export const PROXIMAMENTE: readonly Proximamente[] = [
-  { id: 'encarnacion', ciudad: 'Encarnación', pais: 'py' },
-  { id: 'ciudad-del-este', ciudad: 'Ciudad del Este', pais: 'py' },
-  { id: 'concepcion', ciudad: 'Concepción', pais: 'py' },
-  { id: 'pilar', ciudad: 'Pilar', pais: 'py' },
-  { id: 'mariscal-estigarribia', ciudad: 'Mariscal Estigarribia', pais: 'py' },
+  { id: "concepcion", ciudad: "Concepción", pais: "py" },
+  { id: "pilar", ciudad: "Pilar", pais: "py" },
 ];
