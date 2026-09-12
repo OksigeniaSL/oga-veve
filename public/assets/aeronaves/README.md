@@ -1,7 +1,7 @@
 # Modelos de aeronave
 
 Un fichero glTF binario por aeronave, con **el identificador exacto** de la
-aeronave: `oga-172.glb`, `mainumby.glb`. Con guion, tal y como está escrito en
+aeronave: `jaz-20.glb`, `jaz-25.glb`. Con guion, tal y como está escrito en
 `src/flight/aircraft.ts` — al enchufar el primero se llamó `oga172.glb` y el
 juego siguió volando en cajas sin decir nada, que es justo lo que hace cuando
 no encuentra el fichero.
