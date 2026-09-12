@@ -310,6 +310,30 @@ const TOMA = icono(`
         stroke-linecap="round" fill="none" />
 `);
 
+/**
+ * El instructor, callado: una boca con una raya encima.
+ *
+ * Es el dibujo de «hoy no se me oye». Existe porque el aviso de que la voz no
+ * funciona iba **escrito**, y eso es incumplir la regla de oro justo donde más
+ * duele: el canal que se ha caído es el hablado y el aviso de que se ha caído
+ * iba por el escrito. Quien no lee se quedaba sin las dos cosas.
+ *
+ * No sustituye a la voz —cuando el pack grabado esté, el instructor hablará y
+ * esto no saldrá— sino que dice que hoy no la hay. Medido en un Chrome 139 de
+ * Linux con speech-dispatcher activo y cientos de voces instaladas:
+ * `speechSynthesis.getVoices()` devuelve cero. No es raro y no es nuestro.
+ */
+const SIN_VOZ = icono(`
+  <path d="M12 3.2 a3.1 3.1 0 0 1 3.1 3.1 v5.2 a3.1 3.1 0 0 1-6.2 0 V6.3
+           A3.1 3.1 0 0 1 12 3.2 Z" opacity="0.5" />
+  <path d="M6.6 11 a5.4 5.4 0 0 0 10.8 0" stroke="currentColor"
+        stroke-width="2" fill="none" stroke-linecap="round" />
+  <path d="M12 16.4 V20 M9 20 h6" stroke="currentColor" stroke-width="2"
+        fill="none" stroke-linecap="round" />
+  <path d="M3.4 3.4 L20.6 20.6" stroke="currentColor" stroke-width="2.6"
+        fill="none" stroke-linecap="round" />
+`);
+
 const SALIDA = icono(`
   <path d="M2 6 h20 v3.2 H2 Z" opacity="0.45" />
   <path d="M6 9.2 q0 6 5 8" stroke="currentColor" stroke-width="3" fill="none"
@@ -491,6 +515,7 @@ export const DIBUJOS: Record<string, string> = {
   senda: SENDA,
   freno: FRENO,
   salida: SALIDA,
+  sinVoz: SIN_VOZ,
   toma: TOMA,
   acasa: A_CASA,
   terreno: TERRENO,
