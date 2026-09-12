@@ -28,8 +28,11 @@
  *    `aircraft.wingSpan`, no lo que trajera el fichero — que puede venir en
  *    metros, en centímetros o en pulgadas, y no hay forma de saberlo.
  * 2. **El morro mira a la Z negativa**, que es adelante en este mundo.
- * 3. **Las ruedas quedan en el origen**, porque el juego coloca la aeronave por
- *    su tren de aterrizaje y no por su centro.
+ * 3. **Las ruedas quedan en el suelo.** El juego coloca la aeronave a la cota
+ *    del terreno **más la altura de su tren**, así que el modelo hay que
+ *    bajarlo lo que mide él y además lo que el juego lo ha subido. Faltaba lo
+ *    segundo y el avión flotaba exactamente la altura de su tren: 1,40 m el
+ *    Pykasu y 1,80 el Mainumby, medidos con el avión parado en la pista.
  */
 
 import { Box3, Group, Vector3, type Object3D } from "three";
@@ -286,12 +289,24 @@ export async function cargarModelo(
   }
 
   /*
-   * Y las ruedas al origen. El juego coloca la aeronave por su tren —
-   * `sampleHeight` más `gearHeight`— y un modelo cualquiera viene centrado en
-   * su propio centro, así que se baja hasta que su punto más bajo sea el cero.
+   * **Y las ruedas al suelo, no al origen.**
+   *
+   * El juego coloca la aeronave a `sampleHeight` **más `gearHeight`**: su
+   * origen no está en las ruedas, está a la altura del tren por encima de
+   * ellas. Un modelo cualquiera viene centrado en su propio centro, así que
+   * hay que bajarlo hasta que su punto más bajo caiga en el suelo — o sea, lo
+   * que mide el modelo **más** lo que el juego lo ha subido.
+   *
+   * Faltaba el segundo término y el avión flotaba exactamente la altura de su
+   * tren: medido con el avión parado en la pista, el Pykasu a 1,40 m del
+   * asfalto y el Mainumby a 1,80. Llevaba así desde que existe el cargador de
+   * glTF, y no se veía porque la sombra se dibuja aparte, contra el suelo, y
+   * tapaba el hueco desde la cámara de persecución. El respaldo de cajas sí lo
+   * hacía bien —`aircraft-mesh.ts` resta `gearHeight`—, que es lo que hacía
+   * que el avión de la fábrica se posara y el de verdad no.
    */
   const yaEscalada = new Box3().setFromObject(raiz);
-  raiz.position.y -= yaEscalada.min.y;
+  raiz.position.y -= yaEscalada.min.y + aircraft.gearHeight;
   raiz.position.x -= (yaEscalada.min.x + yaEscalada.max.x) / 2;
   raiz.position.z -= (yaEscalada.min.z + yaEscalada.max.z) / 2;
 
