@@ -1969,24 +1969,55 @@ const percance = !CON_TOPE
       // Doscientos metros al costado de la pista: el descampado de al lado.
       const x = p.x + Math.cos(p.h) * 220;
       const z = p.z + Math.sin(p.h) * 220;
-      const c = o.controles();
-      c.throttle = 0;
-      // Morro abajo: a velocidad de aproximación el modelo de coeficientes vuela,
-      // así que soltado a tres metros no toca tierra — se va planeando y lo que se
-      // mediría es otra cosa. Se le pone donde toca y se le empuja al suelo.
-      c.elevator = -0.25;
-      c.brakes = 0;
-      o.colocar(x, o.suelo(x, z) + 1.5, z, 26, p.h);
-      for (let i = 0; i < 150 && !o.finDeVuelo(); i++) {
+      /*
+       * **Y se aterriza de verdad, bajando, no apareciendo ya posado.**
+       *
+       * Esto dejaba el avión a metro y medio del suelo —o sea, con las ruedas
+       * ya casi puestas— y esperaba el percance. Nunca llegaba, y con razón:
+       * no hay toma que detectar si no hay paso del aire al suelo. El avión
+       * aparecía rodando por la hierba, frenaba solo y el banco decía que el
+       * juego no se enteraba de nada. El juego sí se entera — medido: bajando
+       * desde cuarenta y cinco metros, el percance «fuera» salta en cuanto las
+       * ruedas tocan el campo.
+       *
+       * Y con `pilotar`, no escribiendo en `controles()`: lo que se escribe
+       * ahí lo borra el teclado en el fotograma siguiente. En la traza se veía
+       * — se pedía morro abajo y el elevador valía cero paso tras paso.
+       *
+       * **Y con el motor en marcha.** Tras `reiniciar()` está apagado, y un
+       * avión apagado planeando no acaba en toma: acaba en otra cosa, y lo que
+       * se mediría sería esa otra cosa.
+       */
+      o.pilotar((mandos) => {
+        const s = o.estado();
+        mandos.engineOn = true;
+        mandos.throttle = 0.15;
+        // Senda de bajada suave: se sostiene poco más de dos metros por
+        // segundo de caída, que es una aproximación y no un picado.
+        mandos.elevator = s.vertical > -2.2 ? -0.2 : 0.1;
+        mandos.aileron = 0;
+        mandos.rudder = 0;
+        mandos.brakes = 0;
+      });
+      o.colocar(x, o.suelo(x, z) + 45, z, 30, p.h);
+      let tocoFuera = false;
+      for (let i = 0; i < 260 && !o.finDeVuelo(); i++) {
         await new Promise((r) => setTimeout(r, 100));
+        const v = o.estado();
+        if (v.onGround && i > 5) tocoFuera = !v.onRunway;
       }
       const antes = { ...o.estado().position };
       // Y con el gas a fondo: el avión no puede seguir.
-      c.throttle = 1;
+      o.pilotar((mandos) => {
+        mandos.throttle = 1;
+        mandos.engineOn = true;
+      });
       for (let i = 0; i < 20; i++) await new Promise((r) => setTimeout(r, 100));
       const s = o.estado();
       const parado = {
         pantalla: o.finDeVuelo(),
+        tocoFuera,
+        percance: o.percance(),
         corrio: Math.hypot(s.position.x - antes.x, s.position.z - antes.z),
         v: s.airspeed,
       };
@@ -1998,6 +2029,17 @@ const percance = !CON_TOPE
        * maniobra»— y que las pruebas de más abajo encuentren un avión que vuela y
        * no uno congelado.
        */
+      /*
+       * **Y se suelta el mando antes de irse.**
+       *
+       * El piloto de pruebas se queda puesto hasta que alguien lo quita, y lo
+       * que viene después de esta sección es otra que necesita volar el avión
+       * a su manera. Dejarlo puesto le pisaba los mandos fotograma a
+       * fotograma: tres comprobaciones dejaron de correr y una cuarta falló
+       * diciendo que el juego no reaccionaba, cuando lo que pasaba es que este
+       * banco no le soltaba la palanca.
+       */
+      o.pilotar(null);
       document.querySelector('[data-hud="fin-otra"]')?.click();
       for (let i = 0; i < 40 && o.finDeVuelo(); i++) {
         await new Promise((r) => setTimeout(r, 100));
@@ -2012,9 +2054,9 @@ const percance = !CON_TOPE
 if (percance) {
   comprobar(
     "aterrizar fuera de la pista termina el intento",
-    percance.pantalla,
+    percance.pantalla && percance.tocoFuera,
     percance.pantalla
-      ? "sale la pantalla del percance"
+      ? `${percance.tocoFuera ? "tocó fuera de la pista y sale la pantalla" : "salió la pantalla, pero sin tocar fuera"} · percance «${percance.percance ?? "ninguno"}»`
       : `no salió nada · ${percance.como}`,
     "se tocaba tierra en un descampado y el vuelo seguía como si nada",
   );
