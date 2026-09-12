@@ -229,6 +229,130 @@ comprobar(
 await page.keyboard.press("Escape");
 await page.waitForTimeout(300);
 
+/*
+ * ── Y se recorre igual con todo ──────────────────────────────────────────
+ *
+ * #70: «se navega igual con el dedo, con el ratón, con las flechas del
+ * teclado y con el mando». El dedo y el ratón ya los mide `verificar-acceso`
+ * con el tabulador; aquí van los otros dos.
+ */
+/*
+ * En qué parada del panel está el foco. **El número y no el nombre**: dos
+ * botones seguidos de la misma lista tienen la misma clase, así que comparar
+ * nombres decía «no se movió» cada vez que se movía a su vecino.
+ */
+const enFoco = (sel) =>
+  page.evaluate((s) => {
+    const caja = document.querySelector(s);
+    const a = document.activeElement;
+    if (!caja || !a) return "nada";
+    const lista = [
+      ...caja.querySelectorAll(
+        'button, summary, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
+    ].filter((e) => !e.hasAttribute("disabled") && e.offsetParent !== null);
+    const donde = lista.indexOf(a);
+    return donde < 0 ? "fuera" : `${donde + 1} de ${lista.length}`;
+  }, sel);
+
+await page.click('[data-hud="keys"]');
+await page.waitForTimeout(600);
+const primero = await enFoco("#teclas");
+await page.keyboard.press("ArrowDown");
+await page.waitForTimeout(150);
+const bajando = await enFoco("#teclas");
+comprobar(
+  "la flecha de abajo recorre el panel",
+  bajando !== primero && bajando !== "nada",
+  `${primero} → ${bajando}`,
+);
+await page.keyboard.press("ArrowUp");
+await page.waitForTimeout(150);
+const volviendo = await enFoco("#teclas");
+comprobar(
+  "y la de arriba vuelve",
+  volviendo === primero,
+  `${bajando} → ${volviendo}`,
+);
+await page.keyboard.press("Escape");
+await page.waitForTimeout(400);
+
+/*
+ * Y **dentro de un deslizador manda el deslizador**. Los dos tiradores del
+ * esquema del ala son `input[type=range]`: robarles la flecha para mover el
+ * foco sería quitarles el único modo de usarlos sin ratón.
+ */
+await page.click('[data-hud="ala"]');
+await page.waitForTimeout(600);
+const antesDelTirador = await page.evaluate(() => {
+  const t = document.querySelector('#ala input[type="range"]');
+  t?.focus();
+  return t?.value ?? null;
+});
+await page.keyboard.press("ArrowRight");
+await page.waitForTimeout(200);
+const trasElTirador = await page.evaluate(() => {
+  const t = document.querySelector('#ala input[type="range"]');
+  return {
+    valor: t?.value ?? null,
+    sigueEnFoco: document.activeElement === t,
+  };
+});
+comprobar(
+  "dentro de un tirador, la flecha mueve el tirador y no el foco",
+  trasElTirador.valor !== antesDelTirador && trasElTirador.sigueEnFoco,
+  `${antesDelTirador} → ${trasElTirador.valor} · ${trasElTirador.sigueEnFoco ? "sigue en foco" : "perdió el foco"}`,
+);
+await page.keyboard.press("Escape");
+await page.waitForTimeout(400);
+
+/*
+ * ── El mando ─────────────────────────────────────────────────────────────
+ *
+ * No hay mando enchufado en un banco, así que se le pone uno de mentira: lo
+ * que se mide es que el vigilante lo lee, mueve el foco y atiende al botón de
+ * volver. La alternativa era no medirlo, y entonces «se navega con el mando»
+ * sería una frase del issue y nada más.
+ */
+await page.evaluate(() => {
+  globalThis.__mando = { botones: new Set(), eje: 0 };
+  navigator.getGamepads = () => [
+    {
+      connected: true,
+      axes: [0, globalThis.__mando.eje, 0, 0],
+      buttons: Array.from({ length: 16 }, (_, i) => ({
+        pressed: globalThis.__mando.botones.has(i),
+        value: globalThis.__mando.botones.has(i) ? 1 : 0,
+      })),
+    },
+  ];
+});
+await page.click('[data-hud="tiempo"] , [data-hud="tiempo-boton"]');
+await page.waitForTimeout(600);
+const antesDelMando = await enFoco('[data-hud="tiempo"]');
+await page.evaluate(() => globalThis.__mando.botones.add(13));
+await page.waitForTimeout(250);
+await page.evaluate(() => globalThis.__mando.botones.delete(13));
+await page.waitForTimeout(150);
+const conLaCruceta = await enFoco('[data-hud="tiempo"]');
+comprobar(
+  "la cruceta del mando recorre el panel",
+  conLaCruceta !== antesDelMando && conLaCruceta !== "nada",
+  `${antesDelMando} → ${conLaCruceta}`,
+);
+await page.evaluate(() => globalThis.__mando.botones.add(1));
+await page.waitForTimeout(300);
+await page.evaluate(() => globalThis.__mando.botones.delete(1));
+const cerrado = await page.evaluate(
+  () => document.querySelector('[data-hud="tiempo"]')?.hidden === true,
+);
+comprobar(
+  "y el botón de volver lo cierra",
+  cerrado,
+  cerrado ? "cerrado" : "sigue abierto",
+);
+await page.waitForTimeout(300);
+
 console.log(`\n  paneles · ${ESCENARIO}\n`);
 for (const r of resultados) {
   console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);

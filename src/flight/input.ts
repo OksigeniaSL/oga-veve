@@ -226,6 +226,22 @@ export class InputManager {
 
   private onKeyDown = (event: KeyboardEvent): void => {
     this.noteGesture();
+    /*
+     * **Y si la tecla es para un mando de la pantalla, el avión no la toca.**
+     *
+     * Esto escucha en `window`, así que hasta hoy se quedaba con **todas** las
+     * teclas, estuviera el foco donde estuviera. Con los dos tiradores del
+     * esquema del ala abiertos, una flecha no movía el tirador: la paraba el
+     * `preventDefault` de aquí abajo —puesto para que las flechas no hagan
+     * scroll de la página— y el deslizador se quedaba clavado. Es decir, el
+     * único modo de usarlo sin ratón.
+     *
+     * La regla es la de siempre en cualquier aplicación: quien tiene el foco
+     * manda. Un deslizador, una lista o una caja de texto usan las flechas
+     * para lo suyo; el avión, para volar, y volando no hay nada de eso
+     * enfocado.
+     */
+    if (leTocaAlDeLaPantalla(event.target)) return;
     // Las flechas hacen scroll de la página si no se les para los pies.
     if (event.code.startsWith('Arrow') || event.code === 'Space') event.preventDefault();
     if (event.repeat) return;
@@ -380,6 +396,18 @@ export class InputManager {
       );
     }
   }
+}
+
+/**
+ * Si la tecla es de un mando de la pantalla y no del avión.
+ *
+ * Ver la nota de `onKeyDown`. Aparte y exportada porque es una regla, no un
+ * detalle: **quien tiene el foco manda**.
+ */
+export function leTocaAlDeLaPantalla(quien: EventTarget | null): boolean {
+  return !!(quien as Element | null)?.closest?.(
+    "input, select, textarea, [contenteditable='true']",
+  );
 }
 
 /**
