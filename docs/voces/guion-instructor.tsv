@@ -3,83 +3,86 @@
 003	vuelo.rodando	Seguí la raya verde
 004	vuelo.esperando	Pará del todo y esperá la luz
 005	vuelo.autorizado	¡Luz verde! Entrá a la pista
-006	vuelo.alineando	Ponete derechito en el eje
-007	vuelo.rotar	Tirá para arriba
-008	vuelo.comprometido	¡Ya no se puede frenar, volá!
-009	vuelo.despegando	Motor a fondo
-010	vuelo.enVuelo	Andá a dar una vuelta
-011	vuelo.enVueloAterrizando	Andá a la pista
-012	vuelo.final	Bajá suavecito
-013	vuelo.terrenoBajo	Vas muy bajo
-014	vuelo.terrenoSube	¡Subí!
-015	vuelo.mandanFrustrar	¡Pista ocupada! Subí y volvé por el circuito
-016	vuelo.puedeVolver	La torre te deja volver a intentarlo
-017	vuelo.frustrada	¡Bien hecho! Te fuiste al aire. Probá de nuevo
-018	vuelo.aroAlto	Pasaste por encima del aro. Bajá un poco
-019	vuelo.aroBajo	Pasaste por debajo del aro. Subí un poco
-020	vuelo.papiAlto	Luces blancas: vas alto, bajá
-021	vuelo.papiBajo	Luces rojas: vas bajo, subí
-022	vuelo.papiBien	Dos rojas y dos blancas: vas bien
-023	vuelo.bulto	Por ahí no se pasa: hay un edificio
-024	vuelo.aterrizado	Frená
-025	vuelo.abandonando	Salí de la pista, que viene otro
-026	vuelo.pistaLibre	¡Pista libre! Bien hecho
-027	vuelo.aPlataforma	Volvé a tu lugar
-028	vuelo.enPuesto	Llegaste. Apagá el motor
-029	vuelo.apagado	¡Vuelo terminado!
-030	vuelo.fuera	Volvé a la raya verde
-031	vuelo.roto	Se rompió. Volvemos a empezar
-032	vuelo.rapido	Vas muy rápido
-033	vuelo.despacio	Más despacio
-034	vuelo.alto	Pará acá
-035	vuelo.teLoPasaste	Te pasaste. Frená y volvé
-036	vuelo.yaPodesTocar	Ya podés tocar
-037	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
-038	circuito.subida	Subí derecho por el eje
-039	circuito.cruzado	Girá a la izquierda
-040	circuito.encola	Volá al lado de la pista
-041	circuito.base	Girá y empezá a bajar
-042	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
-043	percance.coche	Le pasaste por encima al coche
-044	percance.edificio	Chocaste con un edificio
-045	percance.fuera	Tocaste tierra fuera de la pista
-046	percance.golpe	Llegaste dando un golpe
-047	percance.pasada	Te pasaste del final de la pista
-048	percance.sinpermiso	Entraste en la pista sin la luz verde
-049	fin.horas	Lo que llevás volado
-050	fin.llegaste	¡Llegaste! Ya estás en casa
-051	fin.bien	¡Buen vuelo!
-052	fin.muyBien	¡Gran vuelo!
-053	fin.otra	Otro vuelo
-054	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
-055	grado.aprendiz	Aprendiz
-056	grado.piloto	Piloto
-057	grado.comandante	Comandante
-058	grado.instructora	Instructora
-059	galon.manga	Los galones de este vuelo
-060	galon.aproximacion	Galón de la aproximación
-061	galon.toma	Galón del aterrizaje
-062	galon.aros	Galón de los aros
-063	galon.velocidad	Galón de la velocidad
-064	galon.rodaje	Galón del rodaje
-065	galon.frustrada	Galón de la frustrada
-066	tutor.throttle	Dale motor
-067	tutor.speed	Esperá a que corra
-068	tutor.pull	Tirá para arriba
-069	tutor.flying	¡Estás volando!
-070	tutor.frenar	Frená
-071	tutor.salir	Seguí la raya y salí de la pista
-072	tutor.slow	Bajá el motor
-073	mission.rio.name	Ver el río
-074	mission.rioabajo.name	Seguir el río
-075	mission.mar.name	Salir al mar
-076	mission.anaga.name	A Anaga
-077	mission.cumbre.name	A la cumbre
-078	mission.lomas.name	A las lomas
-079	mission.first.name	Tu primer vuelo
-080	mission.valley.name	La vuelta al valle
-081	mission.transfer.name	El traslado
-082	mission.started	{name}
-083	mission.step	¡Bien! Seguí
-084	mission.done	¡Misión cumplida!
-085	mission.none	Vuelo libre
+006	vuelo.backTaxi	Andá hasta el fondo y dá la vuelta
+007	vuelo.alineando	Ponete derechito en el eje
+008	vuelo.minimos	Mirá la pista: ¿la ves?
+009	vuelo.noEstabilizada	Así no: andate y volvé a intentarlo
+010	vuelo.rotar	Tirá para arriba
+011	vuelo.comprometido	¡Ya no se puede frenar, volá!
+012	vuelo.despegando	Motor a fondo
+013	vuelo.enVuelo	Andá a dar una vuelta
+014	vuelo.enVueloAterrizando	Andá a la pista
+015	vuelo.final	Bajá suavecito
+016	vuelo.terrenoBajo	Vas muy bajo
+017	vuelo.terrenoSube	¡Subí!
+018	vuelo.mandanFrustrar	¡Pista ocupada! Subí y volvé por el circuito
+019	vuelo.puedeVolver	La torre te deja volver a intentarlo
+020	vuelo.frustrada	¡Bien hecho! Te fuiste al aire. Probá de nuevo
+021	vuelo.aroAlto	Pasaste por encima del aro. Bajá un poco
+022	vuelo.aroBajo	Pasaste por debajo del aro. Subí un poco
+023	vuelo.papiAlto	Luces blancas: vas alto, bajá
+024	vuelo.papiBajo	Luces rojas: vas bajo, subí
+025	vuelo.papiBien	Dos rojas y dos blancas: vas bien
+026	vuelo.bulto	Por ahí no se pasa: hay un edificio
+027	vuelo.aterrizado	Frená
+028	vuelo.abandonando	Salí de la pista, que viene otro
+029	vuelo.pistaLibre	¡Pista libre! Bien hecho
+030	vuelo.aPlataforma	Volvé a tu lugar
+031	vuelo.enPuesto	Llegaste. Apagá el motor
+032	vuelo.apagado	¡Vuelo terminado!
+033	vuelo.fuera	Volvé a la raya verde
+034	vuelo.roto	Se rompió. Volvemos a empezar
+035	vuelo.rapido	Vas muy rápido
+036	vuelo.despacio	Más despacio
+037	vuelo.alto	Pará acá
+038	vuelo.teLoPasaste	Te pasaste. Frená y volvé
+039	vuelo.yaPodesTocar	Ya podés tocar
+040	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
+041	circuito.subida	Subí derecho por el eje
+042	circuito.cruzado	Girá a la izquierda
+043	circuito.encola	Volá al lado de la pista
+044	circuito.base	Girá y empezá a bajar
+045	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
+046	percance.coche	Le pasaste por encima al coche
+047	percance.edificio	Chocaste con un edificio
+048	percance.fuera	Tocaste tierra fuera de la pista
+049	percance.golpe	Llegaste dando un golpe
+050	percance.pasada	Te pasaste del final de la pista
+051	percance.sinpermiso	Entraste en la pista sin la luz verde
+052	fin.horas	Lo que llevás volado
+053	fin.llegaste	¡Llegaste! Ya estás en casa
+054	fin.bien	¡Buen vuelo!
+055	fin.muyBien	¡Gran vuelo!
+056	fin.otra	Otro vuelo
+057	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
+058	grado.aprendiz	Aprendiz
+059	grado.piloto	Piloto
+060	grado.comandante	Comandante
+061	grado.instructora	Instructora
+062	galon.manga	Los galones de este vuelo
+063	galon.aproximacion	Galón de la aproximación
+064	galon.toma	Galón del aterrizaje
+065	galon.aros	Galón de los aros
+066	galon.velocidad	Galón de la velocidad
+067	galon.rodaje	Galón del rodaje
+068	galon.frustrada	Galón de la frustrada
+069	tutor.throttle	Dale motor
+070	tutor.speed	Esperá a que corra
+071	tutor.pull	Tirá para arriba
+072	tutor.flying	¡Estás volando!
+073	tutor.frenar	Frená
+074	tutor.salir	Seguí la raya y salí de la pista
+075	tutor.slow	Bajá el motor
+076	mission.rio.name	Ver el río
+077	mission.rioabajo.name	Seguir el río
+078	mission.mar.name	Salir al mar
+079	mission.anaga.name	A Anaga
+080	mission.cumbre.name	A la cumbre
+081	mission.lomas.name	A las lomas
+082	mission.first.name	Tu primer vuelo
+083	mission.valley.name	La vuelta al valle
+084	mission.transfer.name	El traslado
+085	mission.started	{name}
+086	mission.step	¡Bien! Seguí
+087	mission.done	¡Misión cumplida!
+088	mission.none	Vuelo libre

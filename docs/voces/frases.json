@@ -35,10 +35,31 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.backTaxi",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Andá hasta el fondo y dá la vuelta",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.alineando",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Ponete derechito en el eje",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.minimos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá la pista: ¿la ves?",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.noEstabilizada",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Así no: andate y volvé a intentarlo",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {

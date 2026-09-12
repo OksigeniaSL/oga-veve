@@ -97,6 +97,18 @@ export interface Manifiesto {
 /** Dónde vive el pack, y en qué caché se guarda una vez bajado. */
 export const BASE = "data/voces";
 export const CACHE = "oga-veve-voz-v1";
+/**
+ * Y dónde se guarda el respaldo del manifiesto, que va aparte.
+ *
+ * El manifiesto se pide **siempre** de la red: es lo único que puede decir que
+ * hay una tanda de grabaciones nueva, y los ficheros del pack no llevan huella
+ * en el nombre, así que sin eso una segunda tanda no se vería jamás.
+ *
+ * Pero sin red el juego tiene que seguir hablando, y para eso hace falta una
+ * copia. Va en otra caché para que no se confundan las dos cosas: de `CACHE`
+ * se sirve, de ésta solo se rescata. Ver `traer`.
+ */
+export const RESPALDO = "oga-veve-voz-respaldo";
 
 /** El fichero de una pieza, con el formato de este navegador. */
 export function ficheroDe(
