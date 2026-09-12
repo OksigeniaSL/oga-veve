@@ -61,6 +61,13 @@ export interface Hechos {
    */
   minimos: Record<string, never>;
   /**
+   * Se ha entrado en un tramo nuevo del circuito de tráfico.
+   *
+   * Subida, cruzado, en cola o base. Es una indicación y no una alarma, y eso
+   * importa: el aviso de terreno manda sobre ella mientras dura.
+   */
+  tramoDeCircuito: { readonly tramo: string };
+  /**
    * El PAPI ha cambiado de lectura: `blancas` luces de cuatro.
    *
    * Tres o cuatro es venir alto, una o ninguna es venir bajo, dos es la senda.

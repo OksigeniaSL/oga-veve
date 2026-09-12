@@ -2701,6 +2701,19 @@ export class Game {
     });
 
     /*
+     * **Un tramo nuevo del circuito.** Sin palabra en el peldaño que no lee:
+     * ahí el dibujo es el mensaje entero.
+     */
+    this.hechos.on("tramoDeCircuito", ({ tramo }) => {
+      this.hud.senal.mostrar(
+        `circuito-${tramo}`,
+        this.tier.instruments === "none" ? "" : t(`circuito.${tramo}` as never),
+        null,
+        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+      );
+    });
+
+    /*
      * **Te mandan al aire.**
      *
      * La tarjeta **se queda puesta hasta que se resuelva**. Duraba lo que dura
@@ -3367,12 +3380,7 @@ export class Game {
      */
     if (this.terrenoDicho) return;
     this.tramoDelCircuito = tramo;
-    this.hud.senal.mostrar(
-      `circuito-${tramo}`,
-      this.tier.instruments === "none" ? "" : t(`circuito.${tramo}` as never),
-      null,
-      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
-    );
+    this.hechos.emit("tramoDeCircuito", { tramo });
   }
 
   /**
