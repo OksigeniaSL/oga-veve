@@ -268,6 +268,16 @@ export function triangulos(g: BufferGeometry): number {
   return (idx ? idx.count : g.getAttribute("position").count) / 3;
 }
 
+/**
+ * El radio de la hélice, como fracción de la envergadura.
+ *
+ * Una novena parte del ala a cada lado. Vive aquí y no donde se dibuja la
+ * hélice porque la fábrica lo necesita para **colocar las góndolas**: si la
+ * hélice no cabe entre la góndola y el suelo, el avión ara el campo. Un solo
+ * número para las dos cosas.
+ */
+export const RADIO_DE_HELICE = 0.11;
+
 /** Los colores de un avión: casco, capó y detalles. */
 export interface Paleta {
   readonly body: number;
@@ -340,6 +350,19 @@ function gondola(largo: number, radio: number): Anillo[] {
 }
 
 /** Una pata del tren con su rueda, en cajas: a veinte metros no se distingue. */
+/**
+ * Una pata del tren con su rueda.
+ *
+ * **Y la rueda mide como una rueda.** Salía del grosor de la pierna —dos
+ * veces y media un palo de doce centímetros— así que era un taco de treinta
+ * centímetros al final de un poste: «eso de atrás a lo mejor es un arado, te
+ * vendieron un arado por un avión». Una rueda de avioneta mide cerca de medio
+ * metro y se ve, que es justo lo que hace que un avión parado parezca un
+ * avión y no una mesa.
+ *
+ * Se mide contra la altura del tren, que es lo que la relaciona con el avión:
+ * una rueda es aproximadamente la mitad de lo que el tren levanta.
+ */
 function pata(
   x: number,
   z: number,
@@ -347,24 +370,37 @@ function pata(
   grosor: number,
   color: number,
 ): BufferGeometry[] {
+  const radio = alto * 0.26;
+  // La pierna llega hasta el eje de la rueda y no hasta el suelo.
+  const largoPierna = Math.max(0.01, alto - radio);
   const pierna = tubo(
     [
-      { z: -grosor / 2, ancho: grosor, alto, y: -alto / 2 },
-      { z: grosor / 2, ancho: grosor, alto, y: -alto / 2 },
+      {
+        z: -grosor * 0.8,
+        ancho: grosor * 1.6,
+        alto: largoPierna,
+        y: -largoPierna / 2,
+      },
+      {
+        z: grosor * 0.8,
+        ancho: grosor * 1.6,
+        alto: largoPierna,
+        y: -largoPierna / 2,
+      },
     ],
     color,
   );
   pierna.translate(x, 0, z);
   const rueda = tubo(
     [
-      { z: -grosor * 0.6, ancho: grosor * 2.6, alto: grosor * 2.6 },
-      { z: grosor * 0.6, ancho: grosor * 2.6, alto: grosor * 2.6 },
+      { z: -grosor * 0.75, ancho: radio * 2, alto: radio * 2 },
+      { z: grosor * 0.75, ancho: radio * 2, alto: radio * 2 },
     ],
     0x23231f,
   );
   // La rueda gira sobre el eje de las alas, así que su tubo va tumbado.
   rueda.rotateY(Math.PI / 2);
-  rueda.translate(x, -alto + grosor * 1.3, z);
+  rueda.translate(x, -alto + radio, z);
   return [pierna, rueda];
 }
 
@@ -445,7 +481,20 @@ export function fabricarAeronave(
   piezas.push(cabina);
 
   // ── El ala, que es lo que decide la silueta ──────────────────────────
-  const alaY = alaArriba ? altoCuerpo * 0.48 : -altoCuerpo * 0.42;
+  /*
+   * **Y en el biplano la de arriba va arriba del todo.**
+   *
+   * Estaba en la posición de ala baja, y la segunda unos centímetros por
+   * debajo: dos losas casi a la misma altura, que de cerca no se leen como un
+   * biplano sino como un ala gorda partida. Lo que hace biplano a un biplano
+   * es **el hueco**, y el hueco tiene que medir algo — aquí, más de medio
+   * fuselaje.
+   */
+  const alaY = biplano
+    ? altoCuerpo * 0.62
+    : alaArriba
+      ? altoCuerpo * 0.48
+      : -altoCuerpo * 0.42;
   /*
    * Y en el biplano el ala de arriba va **adelantada** respecto a la de abajo.
    * Se llama decalaje y lo llevan casi todos los biplanos de verdad, pero aquí
@@ -482,23 +531,30 @@ export function fabricarAeronave(
           cuerdaPunta: c * 0.68,
           largo: b * 0.43,
           espesor: c * 0.11,
-          en: [0, -altoCuerpo * 0.44, alaZ + c * 0.95],
+          en: [0, -altoCuerpo * 0.45, alaZ + c * 0.95],
         },
         paleta.body,
       ),
     );
     for (const lado of [-1, 1]) {
       for (const dz of [-c * 0.3, c * 0.3]) {
+        /*
+         * Y los montantes miden **el hueco entero**, de un ala a la otra. Antes
+         * medían una cuerda de alto fijo, que con las dos alas juntas sobraba
+         * y con el hueco de verdad se queda corto: un biplano con montantes
+         * que no llegan es un biplano roto.
+         */
+        const hueco = alaY + altoCuerpo * 0.45;
         const montante = tubo(
           [
-            { z: -c * 0.05, ancho: c * 0.07, alto: c * 0.95, y: c * 0.03 },
-            { z: c * 0.05, ancho: c * 0.07, alto: c * 0.95, y: c * 0.03 },
+            { z: -c * 0.05, ancho: c * 0.07, alto: hueco, y: hueco / 2 },
+            { z: c * 0.05, ancho: c * 0.07, alto: hueco, y: hueco / 2 },
           ],
           paleta.trim,
         );
         montante.translate(
           lado * b * 0.3,
-          -altoCuerpo * 0.44,
+          -altoCuerpo * 0.45,
           alaZ + dz + c * 0.48,
         );
         piezas.push(montante);
@@ -518,7 +574,18 @@ export function fabricarAeronave(
        * **colgada por debajo y por delante**. Es una diferencia de medio metro
        * y es la que separa las dos siluetas de un vistazo.
        */
-      const y = reactor ? alaY - c * 0.62 : alaY + c * 0.16;
+      /*
+       * **Y la hélice tiene que caber debajo.**
+       *
+       * En el ala baja, una góndola puesta a la altura del ala deja el disco
+       * de la hélice por debajo del suelo: el radio es la novena parte del
+       * ala y el tren no da para tanto. Un bimotor de verdad lo resuelve con
+       * tren más alto o con las góndolas por encima del ala; aquí se sube la
+       * góndola lo justo para que la punta de la pala pase con un palmo.
+       */
+      const sitio = reactor ? alaY - c * 0.62 : alaY + c * 0.16;
+      const cabe = -tren + b * RADIO_DE_HELICE + 0.2;
+      const y = reactor ? sitio : Math.max(sitio, cabe);
       const z = reactor ? alaZ - c * 1.5 : alaZ - c * 0.75;
       g.translate(lado * x, y, z);
       piezas.push(g);
@@ -610,7 +677,16 @@ export function fabricarAeronave(
         [0, largo * 0.4],
       ];
   for (const [x, z] of patas) {
-    piezas.push(...pata(x, z, tren * 0.82, grosor, paleta.trim));
+    /*
+     * **El tren mide lo que dice la ficha, no el ochenta y dos por ciento.**
+     *
+     * Estaba al 0,82 y eso son dos fuentes de verdad para la misma cosa: el
+     * juego coloca la aeronave por `gearHeight` —las ruedas en el suelo— y la
+     * geometría se hundía un 18 % de esa altura. Con las ruedas tocando, el
+     * eje del fuselaje quedaba más bajo de lo que el juego cree, y **la hélice
+     * acababa bajo tierra**: «eso se usa para plantar chía y soja».
+     */
+    piezas.push(...pata(x, z, tren, grosor, paleta.trim));
   }
 
   const geometria = mergeGeometries(piezas, false)!;
@@ -620,12 +696,41 @@ export function fabricarAeronave(
    * posarlo en el suelo—, así que la panza baja hasta que lo más bajo sea el
    * cero. Es la misma convención que se le impone a un glTF de fuera.
    */
-  const caja = geometria.boundingBox!;
-  geometria.translate(0, -caja.min.y, 0);
+  /*
+   * **Y el número se copia antes de trasladar.**
+   *
+   * `boundingBox` no es una foto: `translate` la actualiza en el sitio, así
+   * que quedarse con la referencia y leer `min.y` después de mover la
+   * geometría da **cero**, siempre. Las dos cosas que se corrigen con ese
+   * número —dónde va la hélice y dónde va el ojo— se quedaban en el eje del
+   * fuselaje, y el juego las bajaba después otra vez por la altura del tren:
+   * la hélice acababa bajo tierra. «Eso se usa para plantar chía y soja.»
+   */
+  const panza = geometria.boundingBox!.min.y;
+  geometria.translate(0, -panza, 0);
 
   return {
     geometria,
-    helices: helices.map((h) => new Vector3(h.x, h.y - caja.min.y, h.z)),
-    ojo: new Vector3(0, altoCuerpo * 0.45 - caja.min.y, -largo * 0.16),
+    helices: helices.map((h) => new Vector3(h.x, h.y - panza, h.z)),
+    /*
+     * **Dónde se pone la cámara de cabina, que aquí no es una cabina.**
+     *
+     * La vista de cabina del juego se pone donde los ojos del piloto **y deja
+     * el avión dibujado**, porque en un modelo de verdad hay cabina: se ve el
+     * panel, el marco del parabrisas y el morro. Un avión de esta fábrica no
+     * tiene cabina — el cristal va pintado sobre un casco macizo—, así que
+     * poner el ojo dentro es poner la cámara dentro de una caja cerrada.
+     *
+     * Se probó tres veces y las tres se vio lo mismo con otro color: a la
+     * altura del fuselaje, el fuselaje; un poco más arriba, el capó, que en un
+     * radial de fumigador es más ancho que el propio avión; y por encima de
+     * todo, el ala de arriba del biplano.
+     *
+     * Así que va **justo delante del morro**, en el eje. Desde ahí se ve lo
+     * que hay que ver y el avión queda detrás, que es lo único que no puede
+     * estorbar. El día que un modelo traiga cabina de verdad, manda él: el
+     * cargador de glTF devuelve su propio ojo y éste no se usa.
+     */
+    ojo: new Vector3(0, altoCuerpo * 0.2 - panza, -largo * 0.6),
   };
 }

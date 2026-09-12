@@ -169,6 +169,36 @@ describe("las cinco siluetas", () => {
   });
 });
 
+/**
+ * **Dónde queda el suelo.**
+ *
+ * El juego coloca la aeronave por `gearHeight`: las ruedas tocando y el origen
+ * del avión en el suelo. Si la geometría no baja exactamente eso, las dos
+ * cosas discrepan y lo que pasa no es sutil — con el tren al 82 % de lo que
+ * decía la ficha, la hélice acababa **bajo tierra**: «eso se usa para plantar
+ * chía y soja».
+ */
+describe("el tren y el suelo", () => {
+  it("la hélice del morro va en el eje del fuselaje", () => {
+    // Las de morro —ala alta y biplano— van donde va el motor, que es el eje.
+    // Las de ala no: ésas van donde va el ala, y solo se les pide que quepan.
+    for (const s of ["ala-alta", "biplano"] as const) {
+      const { helices } = fabricarAeronave(s, MEDIDAS, PALETA);
+      expect(helices[0]!.y, s).toBeCloseTo(MEDIDAS.tren, 1);
+    }
+  });
+
+  it("y ninguna hélice queda bajo tierra al posarlo", () => {
+    for (const m of FLOTA) {
+      const { helices } = fabricarAeronave(m.silueta, MEDIDAS, PALETA);
+      for (const h of helices) {
+        // En coordenadas de la aeronave el suelo está en `-tren`.
+        expect(h.y - MEDIDAS.tren, m.nombre).toBeGreaterThan(-0.05);
+      }
+    }
+  });
+});
+
 describe("las hélices", () => {
   it("el ala alta y el biplano llevan una, delante del morro", () => {
     for (const s of ["ala-alta", "biplano"] as const) {

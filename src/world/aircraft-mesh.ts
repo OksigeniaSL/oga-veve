@@ -27,11 +27,11 @@ import {
   Group,
   Mesh,
   MeshLambertMaterial,
-  type Object3D,
+  Object3D,
 } from "three";
 import type { AircraftConfig } from "../flight/aircraft";
 import { modeloPorId } from "../flight/flota";
-import { fabricarAeronave } from "./fabrica-de-aeronaves";
+import { fabricarAeronave, RADIO_DE_HELICE } from "./fabrica-de-aeronaves";
 
 export interface AircraftMesh {
   group: Group;
@@ -119,28 +119,39 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
   for (const donde of hecho.helices) {
     const helice = new Group();
     helice.position.set(donde.x, donde.y - aircraft.gearHeight, donde.z);
+    /*
+     * **La hélice, con el tamaño de una hélice.**
+     *
+     * Medía por la cuerda del ala y las palas eran cajas **centradas en el
+     * buje**, así que salían al otro lado: tres palas de dos metros y medio
+     * cruzándose en una estrella por delante del capó. De cerca no parecía una
+     * hélice, parecía un avión roto.
+     *
+     * Una hélice mide por la envergadura, que es lo que la relaciona con el
+     * avión: alrededor de un noveno del ala a cada lado. Y cada pala sale
+     * **del buje hacia fuera**, no lo atraviesa.
+     */
+    const radio = aircraft.wingSpan * RADIO_DE_HELICE;
     const buje = new Mesh(
-      new CylinderGeometry(
-        aircraft.chord * 0.1,
-        aircraft.chord * 0.1,
-        aircraft.chord * 0.12,
-        8,
-      ),
+      new CylinderGeometry(radio * 0.14, radio * 0.1, radio * 0.5, 10),
       new MeshLambertMaterial({ color: look.accent }),
     );
-    buje.rotation.x = Math.PI / 2;
+    // El cono, apuntando adelante: es lo que hace que se lea como morro y no
+    // como un disco pegado.
+    buje.rotation.x = -Math.PI / 2;
+    buje.position.z = -radio * 0.2;
     helice.add(buje);
     for (let i = 0; i < look.blades; i++) {
       const pala = new Mesh(
-        new BoxGeometry(
-          aircraft.chord * 1.5,
-          aircraft.chord * 0.11,
-          aircraft.chord * 0.05,
-        ),
+        new BoxGeometry(radio, radio * 0.16, radio * 0.05),
         new MeshLambertMaterial({ color: look.trim }),
       );
-      pala.rotation.z = (i * Math.PI) / look.blades;
-      helice.add(pala);
+      // Del buje hacia fuera, y repartidas por toda la vuelta.
+      pala.position.x = radio * 0.55;
+      const brazo = new Object3D();
+      brazo.rotation.z = (i * 2 * Math.PI) / look.blades;
+      brazo.add(pala);
+      helice.add(brazo);
     }
     group.add(helice);
     helices.push(helice);
@@ -151,6 +162,11 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
     // `propeller` es la primera, para que lo que ya existía siga funcionando.
     propeller: helices[0] ?? new Group(),
     helices,
+    /*
+     * Y dónde se sienta el piloto, que aquí no hay cabina modelada —el cristal
+     * va pintado— pero sí un sitio del que se ve lo que se tiene que ver:
+     * encima del fuselaje y delante del ala. Ver `fabricarAeronave`.
+     */
     ojo: {
       x: hecho.ojo.x,
       y: hecho.ojo.y - aircraft.gearHeight,
