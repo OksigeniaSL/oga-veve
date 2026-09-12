@@ -298,6 +298,7 @@ export const EN: Dictionary = {
   "hangar.tramos": "Learning to fly",
   "hangar.misiones": "Going somewhere",
   "hangar.donde": "Where are we flying?",
+  "hangar.conque": "What are you flying?",
   "hangar.como": "Which pilot are you?",
   "hangar.despegar": "Take off!",
   "hangar.volver": "Pick another place",

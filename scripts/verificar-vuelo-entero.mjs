@@ -1040,7 +1040,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
  * notó. Ahora lo nota este.
  */
 comprobar(
-  "se vuela el modelo de la aeronave y no las cajas de respaldo",
+  "se vuela el modelo de la aeronave y no el respaldo",
   vuelo.avion?.dibujo === "modelo",
   vuelo.avion
     ? `${vuelo.avion.nombre} · ${vuelo.avion.dibujo}`

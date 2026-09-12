@@ -76,6 +76,7 @@ import { detectLocale, setLocale } from "./i18n";
 import { abrirHangar } from "./ui/hangar";
 import type { Mission } from "./missions/types";
 import { rememberTier, rememberedTier } from "./flight/tiers";
+import { AIRCRAFT, type AircraftConfig } from "./flight/aircraft";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 
@@ -116,6 +117,14 @@ let leccion: Leccion = params.get("leccion")
  * puesta otra vez sería empezar por donde ya estuviste.
  */
 let mision: Mission | null = null;
+/**
+ * Con qué avión se vuela, y se recuerda entre partidas.
+ *
+ * Como el peldaño y la lección: quien eligió el biplano ayer no quiere volver
+ * a buscarlo hoy. Y con respaldo, porque lo guardado puede ser de una versión
+ * en la que ese avión se llamaba de otra forma — pasó al renombrar la flota.
+ */
+let avion: AircraftConfig = AIRCRAFT[0]!;
 
 /*
  * **Primero quién vuela, y después dónde.**
@@ -140,6 +149,14 @@ if (!escenario) {
    */
   tramo = rememberedTier();
   if (!params.get("leccion")) leccion = leccionRecordada();
+  /*
+   * Y el avión, por el mismo motivo que el peldaño: se guarda por perfil, así
+   * que leerlo antes de saber quién vuela es darle al segundo niño del aula el
+   * avión del primero. Con respaldo, porque lo guardado puede ser de una
+   * versión en la que ese avión se llamaba de otra forma — pasó al renombrar
+   * la flota.
+   */
+  avion = AIRCRAFT.find((a) => a.id === leerTexto("aeronave")) ?? AIRCRAFT[0]!;
 }
 
 const recordado =
@@ -158,12 +175,15 @@ if (!escenario) {
     scenario: recordado,
     tier: tramo,
     leccion,
+    aircraft: avion,
   });
   escenario = elegido.scenario;
   tramo = elegido.tier;
   leccion = elegido.leccion;
   mision = elegido.mision;
+  avion = elegido.aircraft;
   rememberTier(tramo);
+  ponerTexto("aeronave", avion.id);
   recordarLeccion(leccion);
 }
 
@@ -215,6 +235,7 @@ const game = new Game({
   scenario: escenario,
   leccion,
   mision,
+  aircraft: avion,
   ortofoto,
   ortofotoFina,
 });

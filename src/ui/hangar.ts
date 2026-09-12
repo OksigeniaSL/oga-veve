@@ -29,6 +29,9 @@
  */
 
 import { TIERS, type Tier } from "../flight/tiers";
+import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
+import { FABRICANTE, modeloPorId } from "../flight/flota";
+import { retratosDeLaFlota } from "./siluetas";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
 import { missionsFor } from "../content/missions";
 import { objectiveTarget, type Mission } from "../missions/types";
@@ -43,6 +46,8 @@ export interface Eleccion {
   readonly scenario: Scenario;
   readonly tier: Tier;
   readonly leccion: Leccion;
+  /** Con qué avión se vuela. Ver `flight/flota.ts`. */
+  readonly aircraft: AircraftConfig;
   /**
    * La misión elegida, si se eligió una.
    *
@@ -475,6 +480,37 @@ function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
 const galones = (n: number): string =>
   `<span class="ficha__galones" aria-hidden="true">${"<i></i>".repeat(n)}</span>`;
 
+/**
+ * La ficha de una aeronave: su retrato y su nombre entero.
+ *
+ * El retrato sale de la misma fábrica que la vuela —ver `ui/siluetas.ts`—
+ * porque un dibujo aparte y una geometría generada empiezan iguales y acaban
+ * distintas, y entonces el hangar promete un avión que luego no es.
+ *
+ * Y el nombre va entero, «JAZ 20 Pykasu», aunque en pantalla se recuerde el
+ * pájaro: la estructura de fabricante y modelo es en sí misma algo que se
+ * aprende, y el hangar es donde se lee. Ver `flight/flota.ts` y #69.
+ */
+function fichaDeAvion(
+  avion: AircraftConfig,
+  retrato: string | undefined,
+  elegido: boolean,
+): string {
+  const modelo = modeloPorId(avion.id);
+  return `
+    <button class="ficha ficha--avion" type="button" role="radio"
+            aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
+            data-avion="${avion.id}">
+      <span class="ficha__lienzo ficha__lienzo--avion">${
+        retrato ? `<img class="ficha__retrato" src="${retrato}" alt="" />` : ""
+      }</span>
+      <span class="ficha__pie">
+        <span class="ficha__dato">${FABRICANTE} ${modelo?.numero ?? ""}</span>
+        <span class="ficha__nombre">${modelo?.nombre ?? avion.name}</span>
+      </span>
+    </button>`;
+}
+
 function fichaDeTramo(tier: Tier, indice: number, elegido: boolean): string {
   return `
     <button class="ficha ficha--tramo" type="button" role="radio"
@@ -810,6 +846,15 @@ const PASO_QUE = trazo(
 const PASO_QUIEN = trazo(
   '<circle cx="12" cy="8.4" r="3.6" /><path d="M4.8 20c.7-3.7 3.6-5.6 7.2-5.6s6.5 1.9 7.2 5.6" />',
 );
+/*
+ * Con qué se vuela: un avión visto de frente, que es como se distingue uno de
+ * otro de un vistazo —un ala arriba, dos alas, dos motores—. Las demás marcas
+ * de la barra son un sitio, una maniobra y una persona; ésta tenía que ser la
+ * cosa, no otra persona.
+ */
+const PASO_CONQUE = trazo(
+  '<path d="M12 3.4v14.8" /><path d="M2.6 12.4h18.8" /><path d="M7.6 20.6h8.8" /><path d="M9.4 17h5.2" />',
+);
 const PASO_AJUSTES = trazo(
   '<circle cx="12" cy="12" r="3.1" /><path d="M12 2.6v3M12 18.4v3M21.4 12h-3M5.6 12h-3M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1M18.6 18.6l-2.1-2.1M7.5 7.5 5.4 5.4" />',
 );
@@ -870,7 +915,10 @@ function apuntarReciente(id: string): void {
   const ids: string[] = Array.isArray(guardado)
     ? guardado.filter((x): x is string => typeof x === "string")
     : [];
-  ponerProgreso(ALMACEN_RECIENTES, [id, ...ids.filter((x) => x !== id)].slice(0, 6));
+  ponerProgreso(
+    ALMACEN_RECIENTES,
+    [id, ...ids.filter((x) => x !== id)].slice(0, 6),
+  );
 }
 
 /**
@@ -884,14 +932,20 @@ function apuntarReciente(id: string): void {
 const REPOSO_MS = 120000;
 
 /** Las pantallas del hangar. Una cada vez, y la de inicio no crece nunca. */
-type Pantalla = "inicio" | "donde" | "que" | "quien" | "ajustes";
+type Pantalla = "inicio" | "donde" | "que" | "quien" | "conque" | "ajustes";
 
 export function abrirHangar(
   root: HTMLElement,
-  inicial: { scenario: Scenario; tier: Tier; leccion: Leccion },
+  inicial: {
+    scenario: Scenario;
+    tier: Tier;
+    leccion: Leccion;
+    aircraft?: AircraftConfig;
+  },
 ): Promise<Eleccion> {
   let sitio = inicial.scenario;
   let tramo = inicial.tier;
+  let avion = inicial.aircraft ?? AIRCRAFT[0]!;
   let leccion = inicial.leccion;
   let mision: Mission | null = null;
   let pantalla: Pantalla = "inicio";
@@ -1024,6 +1078,29 @@ export function abrirHangar(
         }
 
         ${
+          pantalla === "conque"
+            ? `
+        <!--
+          **Y con qué se vuela.**
+          Faltaba, y se notó en cuanto la flota tuvo nombres: «¿cómo cambio de
+          avión?». Se cambiaba con una tecla, que es un mando escondido detrás
+          de otro mando — lo mismo que ya se arregló con la pantalla de teclas
+          y con el hangar. Aquí se ve el avión antes de elegirlo, que es lo
+          único que sirve a quien no lee: lo que distingue un Pykasu de un
+          Mainumby es que uno tiene un ala y el otro dos.
+        -->
+        <section class="hangar__bloque" aria-labelledby="hangar-avion">
+          <h2 class="hangar__pregunta" id="hangar-avion">${t("hangar.conque")}</h2>
+          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-avion">
+            ${AIRCRAFT.map((a) =>
+              fichaDeAvion(a, retratosDeLaFlota().get(a.id), a.id === avion.id),
+            ).join("")}
+          </div>
+        </section>`
+            : ""
+        }
+
+        ${
           pantalla === "ajustes"
             ? `
         <!--
@@ -1095,6 +1172,12 @@ export function abrirHangar(
               PASO_QUE,
             ],
             ["quien", t("hangar.como"), tramo.name, PASO_QUIEN],
+            [
+              "conque",
+              t("hangar.conque"),
+              modeloPorId(avion.id)?.nombre ?? avion.name,
+              PASO_CONQUE,
+            ],
             [
               "ajustes",
               t("hangar.ajustes"),
@@ -1213,6 +1296,14 @@ export function abrirHangar(
         return;
       }
 
+      const idAvion = boton.getAttribute("data-avion");
+      if (idAvion) {
+        avion = AIRCRAFT.find((a) => a.id === idAvion) ?? avion;
+        pantalla = "inicio";
+        pintar();
+        return;
+      }
+
       const idTramo = boton.getAttribute("data-tramo");
       if (idTramo) {
         elegir("data-tramo", idTramo);
@@ -1250,7 +1341,13 @@ export function abrirHangar(
         apuntarReciente(sitio.id);
         root.hidden = true;
         root.innerHTML = "";
-        resolve({ scenario: sitio, tier: tramo, leccion, mision });
+        resolve({
+          scenario: sitio,
+          tier: tramo,
+          leccion,
+          mision,
+          aircraft: avion,
+        });
       }
     });
 

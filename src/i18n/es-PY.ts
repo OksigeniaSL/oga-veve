@@ -369,6 +369,7 @@ export const ES_PY = {
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro
   // modelos de avión, que es exactamente la confusión de la que avisa
   // `tiers.ts`. Un tramo no es una aeronave, son tus galones.
+  "hangar.conque": "¿Con qué volás?",
   "hangar.como": "¿Qué piloto sos?",
   "hangar.despegar": "¡Despegar!",
   "hangar.volver": "Elegir otro sitio",
