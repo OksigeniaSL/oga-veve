@@ -2661,6 +2661,33 @@ button.motor__tecla::after {
   text-align: left;
 }
 
+/*
+ * El lienzo de la ficha de avión: el retrato ocupa todo el hueco.
+ *
+ * Es una imagen y no un dibujo en línea porque sale de la misma geometría que
+ * vuela —ver `ui/siluetas.ts`—, y ese es el punto: un retrato dibujado aparte
+ * y un avión generado empiezan iguales y acaban distintos.
+ */
+/*
+ * El lienzo de la ficha de avión.
+ *
+ * **Se queda con la caja de las demás fichas** —el 5/3 apaisado de arriba— y
+ * el retrato se mete dentro, no al revés. Puesto como bloque con la imagen al
+ * cien por cien de ancho, la imagen imponía su altura y el nombre del modelo
+ * quedaba cortado por el borde de la tarjeta.
+ */
+.ficha__lienzo--avion {
+  background: #1d2721;
+  overflow: hidden;
+}
+
+.ficha__retrato {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .ficha__dato {
   font-size: 13px;
   color: var(--tinta-suave);

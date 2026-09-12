@@ -1800,7 +1800,9 @@ export class Game {
       avion: () => ({
         id: this.aircraft.id,
         nombre: this.aircraft.name,
-        dibujo: this.aircraftMesh.deVerdad ? "modelo" : "cajas",
+        // «fábrica» y no «cajas»: el respaldo dejó de ser media docena de
+        // cajas el día que hubo fábrica paramétrica. Ver #68.
+        dibujo: this.aircraftMesh.deVerdad ? "modelo" : "fábrica",
       }),
       /**
        * Cómo está puesto el avión: alabeo y cabeceo, en radianes.
