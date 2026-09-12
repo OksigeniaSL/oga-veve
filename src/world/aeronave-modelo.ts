@@ -35,7 +35,7 @@
  *    Pykasu y 1,80 el Mainumby, medidos con el avión parado en la pista.
  */
 
-import { Box3, Group, Vector3, type Object3D } from "three";
+import { Box3, Group, Vector3, type Color, type Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { AircraftConfig } from "../flight/aircraft";
 import type { AircraftMesh } from "./aircraft-mesh";
@@ -108,6 +108,68 @@ function ejeDeHelice(raiz: Object3D): Object3D {
   // colgarlas del eje no las mueve ni un milímetro.
   for (const p of piezas) eje.attach(p);
   return eje;
+}
+
+/**
+ * Los nombres de material que este proyecto le pone a los modelos que hace.
+ *
+ * Un modelo nuestro sale de `modelos/<id>.py` con un material por pieza y con
+ * estos nombres, y el juego lo repinta con los colores de la flota. Un modelo
+ * traído de fuera trae los suyos —el Pykasu tiene treinta, de `fuselarge` a
+ * `ruder_petal`— y no coincide ninguno, así que se queda con su librea tal
+ * como vino. Que es lo que se quiere: al de fuera no se le toca.
+ */
+const RANURAS = {
+  casco: "body",
+  capo: "accent",
+  detalle: "trim",
+} as const;
+
+/**
+ * El cristal y la goma, que son iguales en todos los aviones.
+ *
+ * No están en la paleta de la flota porque no distinguen a un avión de otro:
+ * las ruedas son negras en los cinco y el parabrisas es oscuro en los cinco.
+ * Poner dos colores más en cada ficha sería repetir cinco veces el mismo par.
+ */
+const CRISTAL = 0x1b262d;
+const GOMA = 0x16161a;
+
+/**
+ * Repinta el modelo con los colores de su ficha.
+ *
+ * **Por qué se repinta y no se exporta pintado.** El color de cada avión ya
+ * vive en `aircraft.ts` y de ahí lo sacan las cajas del respaldo, los retratos
+ * del hangar y la ficha de «¿Con qué volás?». Si además lo trajera el `.glb`
+ * habría dos verdades, y la primera vez que alguien cambiara una tendríamos un
+ * Mainumby crema en el hangar y beige en la pista.
+ *
+ * **Y hacía falta.** El Mainumby salía gris. Los colores del guion de Blender
+ * estaban escritos como sRGB —`(0.72, 0.28, 0.16)` para el terracota del
+ * capó— y un glTF los guarda en **lineal**, así que al pintarlos el navegador
+ * los subía otra vez: el terracota llegaba a la pista como `#DD906F`, un
+ * salmón; el verde oscuro de los detalles como `#7C8179`, gris; y la goma
+ * negra de las ruedas como `#555550`. Lo oscuro es lo que más se levanta al
+ * confundir los dos espacios, y por eso lo que se veía era un avión
+ * descolorido. Se arregló también en el guion —ver `srgb()` en
+ * `modelos/jaz-25-mainumby.py`—, pero quien manda aquí es la ficha.
+ */
+function pintarDeLaFlota(raiz: Object3D, aircraft: AircraftConfig): void {
+  raiz.traverse((o) => {
+    const mallas = o as { material?: unknown };
+    const materiales = Array.isArray(mallas.material)
+      ? mallas.material
+      : mallas.material
+        ? [mallas.material]
+        : [];
+    for (const m of materiales as { name?: string; color?: Color }[]) {
+      if (!m.color) continue;
+      const ranura = RANURAS[m.name as keyof typeof RANURAS];
+      if (ranura) m.color.setHex(aircraft.appearance[ranura]);
+      else if (m.name === "cristal") m.color.setHex(CRISTAL);
+      else if (m.name === "goma") m.color.setHex(GOMA);
+    }
+  });
 }
 
 /**
@@ -305,6 +367,8 @@ export async function cargarModelo(
    * hacía bien —`aircraft-mesh.ts` resta `gearHeight`—, que es lo que hacía
    * que el avión de la fábrica se posara y el de verdad no.
    */
+  pintarDeLaFlota(raiz, aircraft);
+
   const yaEscalada = new Box3().setFromObject(raiz);
   raiz.position.y -= yaEscalada.min.y + aircraft.gearHeight;
   raiz.position.x -= (yaEscalada.min.x + yaEscalada.max.x) / 2;
