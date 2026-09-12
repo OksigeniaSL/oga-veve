@@ -1714,6 +1714,21 @@ export class Game {
        * lo que quedó puesto, que puede no ser lo pedido — ver `acelerar`.
        */
       acelerar: (veces: number) => this.acelerar(veces),
+      /**
+       * Qué aeronave se está volando y **con qué se está dibujando**.
+       *
+       * Lo segundo es lo que hacía falta: el modelo de verdad se carga si está
+       * y, si no, el juego sigue con las cajas sin decir nada. Es la regla de
+       * la casa —que falte un recurso externo no puede dejar a nadie sin
+       * volar— y su reverso es que nadie se entera de que se apagó. Pasó: la
+       * aeronave cambió de identificador, el fichero se quedó con el nombre
+       * viejo, y el salto visual más grande del juego se fue en silencio.
+       */
+      avion: () => ({
+        id: this.aircraft.id,
+        nombre: this.aircraft.name,
+        dibujo: this.aircraftMesh.deVerdad ? "modelo" : "cajas",
+      }),
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
       /*
