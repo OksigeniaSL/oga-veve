@@ -53,6 +53,24 @@ export interface Hechos {
    * pueden querer distinguirlas, y el dato ya está ahí cuando ocurre.
    */
   frustrada: { readonly mandada: boolean };
+  /**
+   * Se ha cruzado la altura de decisión con la pista a la vista.
+   *
+   * Doscientos pies. Es el momento en el que se decide, y pasado ese momento
+   * ya no se decide: por eso se cuenta, aunque no haya nada que corregir.
+   */
+  minimos: Record<string, never>;
+  /**
+   * El PAPI ha cambiado de lectura: `blancas` luces de cuatro.
+   *
+   * Tres o cuatro es venir alto, una o ninguna es venir bajo, dos es la senda.
+   */
+  papi: { readonly blancas: number };
+  /**
+   * La torre ha levantado la orden de irse al aire: la pista vuelve a ser
+   * tuya.
+   */
+  pistaLibreOtraVez: Record<string, never>;
 }
 
 /** Quien escucha un hecho. No devuelve nada: enterarse no contesta. */

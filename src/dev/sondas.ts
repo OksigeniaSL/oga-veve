@@ -595,7 +595,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * juego no se dé cuenta de algo, y que se dé cuenta y no lo cuente nadie.
      * La primera es un fallo de la regla; la segunda, de cableado.
      */
-    hechos: () => ({ frustrada: juego.hechos.cuantosEscuchan("frustrada") }),
+    hechos: () => ({
+      frustrada: juego.hechos.cuantosEscuchan("frustrada"),
+      minimos: juego.hechos.cuantosEscuchan("minimos"),
+      papi: juego.hechos.cuantosEscuchan("papi"),
+      pistaLibreOtraVez: juego.hechos.cuantosEscuchan("pistaLibreOtraVez"),
+    }),
     /** Si ahora mismo hay orden de irse al aire. */
     ordenDeFrustrar: () => juego.mandanFrustrar,
     porQueSeMando: () => juego.porQueSeMando,
