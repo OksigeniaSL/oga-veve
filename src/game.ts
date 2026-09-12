@@ -1803,6 +1803,18 @@ export class Game {
         // «fábrica» y no «cajas»: el respaldo dejó de ser media docena de
         // cajas el día que hubo fábrica paramétrica. Ver #68.
         dibujo: this.aircraftMesh.deVerdad ? "modelo" : "fábrica",
+        /*
+         * Y los colores de su ficha, que es quien manda sobre el modelo.
+         *
+         * Un `.glb` trae sus propios materiales, así que el cargador lo
+         * repinta con esto al abrirlo. `verificar-librea` compara lo uno con
+         * lo otro sobre el material que se va a pintar de verdad.
+         */
+        librea: {
+          casco: this.aircraft.appearance.body,
+          capo: this.aircraft.appearance.accent,
+          detalle: this.aircraft.appearance.trim,
+        },
       }),
       /**
        * Cómo está puesto el avión: alabeo y cabeceo, en radianes.
@@ -1867,6 +1879,7 @@ export class Game {
         grupo: this.aircraftMesh.group,
         helice: this.aircraftMesh.propeller.name || "(sin nombre)",
         ojo: this.aircraftMesh.ojo ?? null,
+        deVerdad: !!this.aircraftMesh.deVerdad,
       }),
       /**
        * El tronco de la cámara y **cuántos bits tiene el búfer de

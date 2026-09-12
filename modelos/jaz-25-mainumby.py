@@ -57,13 +57,34 @@ SALIDA = os.path.join(
 # Uno por material y **color por vértice no**: un glTF con materiales separados
 # se lee mejor en el juego, que ya sabe tratarlos, y permite que el cristal sea
 # cristal.
+#
+# **Y quien manda no es esta tabla.** El color de cada avión vive en
+# `src/flight/aircraft.ts` y el juego repinta el modelo al cargarlo —ver
+# `pintarDeLaFlota` en `src/world/aeronave-modelo.ts`—, porque si el color
+# viniera también en el `.glb` habría dos verdades. Esto es para que el fichero
+# se vea bien en un visor cualquiera y para poder mirarlo en Blender.
+#
+# Van escritos como se escriben los colores, en sRGB, y se convierten a lineal
+# antes de dárselos a Blender. El primer intento los metía tal cual y el avión
+# salía descolorido: el terracota del capó llegaba al juego como un salmón y el
+# verde oscuro de los detalles, como un gris. Lo oscuro es lo que más se
+# levanta al confundir los dos espacios.
 COLORES = {
-    "casco": (0.88, 0.86, 0.80, 1.0),
-    "capo": (0.72, 0.28, 0.16, 1.0),
-    "detalle": (0.20, 0.22, 0.19, 1.0),
-    "cristal": (0.10, 0.14, 0.17, 1.0),
-    "goma": (0.09, 0.09, 0.08, 1.0),
+    "casco": (0.89, 0.89, 0.85, 1.0),
+    "capo": (0.75, 0.36, 0.22, 1.0),
+    "detalle": (0.18, 0.32, 0.26, 1.0),
+    "cristal": (0.11, 0.15, 0.18, 1.0),
+    "goma": (0.09, 0.09, 0.10, 1.0),
 }
+
+
+def srgb(color):
+    """De sRGB a lineal, que es como Blender guarda un color de material."""
+    def canal(c):
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+    r, g, b, a = color
+    return (canal(r), canal(g), canal(b), a)
 
 
 def limpiar():
@@ -76,7 +97,7 @@ def material(nombre):
     m = bpy.data.materials.new(nombre)
     m.use_nodes = True
     bsdf = m.node_tree.nodes["Principled BSDF"]
-    bsdf.inputs["Base Color"].default_value = COLORES[nombre]
+    bsdf.inputs["Base Color"].default_value = srgb(COLORES[nombre])
     bsdf.inputs["Roughness"].default_value = 0.55
     bsdf.inputs["Metallic"].default_value = 0.0
     return m

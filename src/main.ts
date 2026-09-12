@@ -123,8 +123,13 @@ let mision: Mission | null = null;
  * Como el peldaño y la lección: quien eligió el biplano ayer no quiere volver
  * a buscarlo hoy. Y con respaldo, porque lo guardado puede ser de una versión
  * en la que ese avión se llamaba de otra forma — pasó al renombrar la flota.
+ *
+ * `?avion=jaz-25` lo fija desde la dirección, igual que `?escenario=` fija el
+ * aeródromo. Hace falta para mirar un avión concreto sin dar cuatro clics —y
+ * los bancos no pueden dar clics en el hangar cuando entran directos.
  */
-let avion: AircraftConfig = AIRCRAFT[0]!;
+let avion: AircraftConfig =
+  AIRCRAFT.find((a) => a.id === params.get("avion")) ?? AIRCRAFT[0]!;
 
 /*
  * **Primero quién vuela, y después dónde.**
