@@ -22,7 +22,13 @@ export class CreditsScreen {
   constructor(root: HTMLElement, flightModelName: string) {
     this.root = root;
     root.innerHTML = `
-      <div class="creditos__panel" role="dialog" aria-modal="true">
+      <!--
+        **Y con nombre.** Un diálogo sin nombre deja al lector de pantalla
+        diciendo «diálogo» y nada más, o sea abriendo algo que no se sabe qué
+        es. Lo cazó verificar-acceso el día que aprendió a mirarlo.
+      -->
+      <div class="creditos__panel" role="dialog" aria-modal="true"
+           aria-label="${t("credits.title")}">
         <h2>${t("credits.title")}</h2>
         <p><strong>Óga Veve</strong> — ${t("app.tagline")}</p>
         <p>${t("credits.madeBy")}</p>
