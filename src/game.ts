@@ -2127,48 +2127,7 @@ export class Game {
     this.mandanFrustrar = true;
     this.altoAlMandar = alto;
 
-    /*
-     * Y el motivo, donde lo hay: la vaca se planta en la zona de toma, que es
-     * justo donde ibas a poner las ruedas.
-     */
-    if (this.scenario.aerodrome?.privado) {
-      const [x, z] = this.enLaPista(this.scenario.runway.length / 2 - 150);
-      this.vaca.poner(
-        x,
-        this.terrain.sampleHeight(x, z),
-        z,
-        (this.scenario.runway.heading * Math.PI) / 180,
-      );
-    } else {
-      // Roja, pero la del aire: «¡al aire!», no «esperá acá». Ver
-      // `Hud.setLuzDeTorre`.
-      this.hud.setLuzDeTorre("roja", "alAire");
-    }
-    // Y a partir de aquí la luz la lleva la torre. Ver `laTorreMandaEnLaLuz`.
-    this.laTorreMandaEnLaLuz = true;
-
-    /*
-     * **Y la orden se queda puesta hasta que se resuelva.**
-     *
-     * Duraba lo que dura un aviso —unos segundos— y se iba sola, así que quien
-     * estaba mirando la pista se la perdía y llegaba abajo sin saber que le
-     * habían dicho que no: «me sale esto al aterrizar», con la pantalla del
-     * percance de sorpresa. Una orden no es un aviso de paso: es de la familia
-     * de «pará en la doble raya» y «frená», que se quedan hasta que alguien
-     * hace algo. Se va al irse al aire, o con el percance si se baja igual.
-     */
-    this.hud.senal.mostrar(
-      "frustrada",
-      this.rotulo("vuelo.mandanFrustrar", "palabra.alAire"),
-      null,
-      { segundos: Infinity, prioridad: URGENTE },
-    );
-    this.audio.cue("peligro");
-    this.cantar(
-      "go around, runway occupied",
-      t("vuelo.mandanFrustrar"),
-      "vuelo.mandanFrustrar",
-    );
+    this.hechos.emit("mandaronIrseAlAire", { porque: "pistaOcupada" });
   }
 
   /**
@@ -2303,17 +2262,10 @@ export class Game {
       torcido: +torcido.toFixed(1),
       alto: Math.round(alto),
     };
-    this.hud.senal.mostrar(
-      "frustrada",
-      this.rotuloCompuesto(
-        `${t(`motivo.${motivo}` as never)}. ${t("vuelo.noEstabilizada")}`,
-        "palabra.alAire",
-      ),
-      null,
-      { segundos: Infinity, prioridad: URGENTE },
-    );
-    this.audio.cue("peligro");
-    this.cantar("go around", t("vuelo.noEstabilizada"), "vuelo.noEstabilizada");
+    this.hechos.emit("mandaronIrseAlAire", {
+      porque: "noEstabilizada",
+      motivo,
+    });
   }
 
   private explicarElPapi(acercandose: boolean): void {
@@ -2746,6 +2698,65 @@ export class Game {
         null,
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
       );
+    });
+
+    /*
+     * **Te mandan al aire.**
+     *
+     * La tarjeta **se queda puesta hasta que se resuelva**. Duraba lo que dura
+     * un aviso —unos segundos— y se iba sola, así que quien estaba mirando la
+     * pista se la perdía y llegaba abajo sin saber que le habían dicho que no:
+     * «me sale esto al aterrizar», con la pantalla del percance de sorpresa.
+     * Una orden no es un aviso de paso: es de la familia de «pará en la doble
+     * raya» y «frená», que se quedan hasta que alguien hace algo.
+     *
+     * Y el porqué cambia lo que se ve, porque no lo dice el mismo: la torre
+     * enciende su lámpara —o planta una vaca en la zona de toma, que es lo que
+     * tiene un campo privado en vez de torre—, y la aproximación no
+     * estabilizada no enciende nada, solo dice cuál de los cinco motivos es.
+     */
+    this.hechos.on("mandaronIrseAlAire", ({ porque, motivo }) => {
+      if (porque === "pistaOcupada") {
+        if (this.scenario.aerodrome?.privado) {
+          const [x, z] = this.enLaPista(this.scenario.runway.length / 2 - 150);
+          this.vaca.poner(
+            x,
+            this.terrain.sampleHeight(x, z),
+            z,
+            (this.scenario.runway.heading * Math.PI) / 180,
+          );
+        } else {
+          // Roja, pero la del aire: «¡al aire!», no «esperá acá». Ver
+          // `Hud.setLuzDeTorre`.
+          this.hud.setLuzDeTorre("roja", "alAire");
+        }
+        // Y a partir de aquí la luz la lleva la torre.
+        this.laTorreMandaEnLaLuz = true;
+      }
+      this.hud.senal.mostrar(
+        "frustrada",
+        porque === "pistaOcupada"
+          ? this.rotulo("vuelo.mandanFrustrar", "palabra.alAire")
+          : this.rotuloCompuesto(
+              `${t(`motivo.${motivo}` as never)}. ${t("vuelo.noEstabilizada")}`,
+              "palabra.alAire",
+            ),
+        null,
+        { segundos: Infinity, prioridad: URGENTE },
+      );
+      this.audio.cue("peligro");
+      if (porque === "pistaOcupada")
+        this.cantar(
+          "go around, runway occupied",
+          t("vuelo.mandanFrustrar"),
+          "vuelo.mandanFrustrar",
+        );
+      else
+        this.cantar(
+          "go around",
+          t("vuelo.noEstabilizada"),
+          "vuelo.noEstabilizada",
+        );
     });
 
     /*

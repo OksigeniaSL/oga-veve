@@ -67,6 +67,24 @@ export interface Hechos {
    */
   papi: { readonly blancas: number };
   /**
+   * Te han mandado irte al aire, y por qué.
+   *
+   * Las dos razones llegan aquí porque para quien vuela son la misma cosa
+   * —hay que irse— y lo que cambia es el porqué. Estaban escritas en dos
+   * sitios distintos con su propia tarjeta, su propio sonido y su propia voz,
+   * y nada que las relacionara: una misión que quisiera contar cuántas veces
+   * te mandan al aire tenía que saber de las dos.
+   *
+   * - `pistaOcupada`: la torre. Hay algo abajo, y en un campo privado ese
+   *   algo es una vaca en la zona de toma.
+   * - `noEstabilizada`: no la torre, la aproximación. `motivo` dice cuál de
+   *   los cinco.
+   */
+  mandaronIrseAlAire: {
+    readonly porque: "pistaOcupada" | "noEstabilizada";
+    readonly motivo?: string;
+  };
+  /**
    * La torre ha levantado la orden de irse al aire: la pista vuelve a ser
    * tuya.
    */
