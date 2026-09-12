@@ -306,6 +306,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       z: juego.camera.position.z,
       fov: juego.camera.fov,
     }),
+    /**
+     * Las pantallas del salpicadero: dónde cayó cada una y qué pinta.
+     *
+     * `null` si este avión no tiene cabina de verdad. Ver `verificar-cabina`.
+     */
+    pantallas: () => juego.aircraftMesh.pantallas?.orden ?? null,
+    /** Con qué vista se está mirando: `chase`, `cockpit`, `wing`… */
+    vista: () => juego.cameraMode,
     camara: () => {
       const gl = juego.renderer.getContext();
       return {

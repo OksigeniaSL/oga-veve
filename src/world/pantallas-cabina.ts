@@ -30,9 +30,11 @@
  */
 
 import {
+  Box3,
   CanvasTexture,
   LinearFilter,
   MeshBasicMaterial,
+  Vector3,
   type Mesh,
 } from "three";
 
@@ -147,6 +149,18 @@ function estirarUV(malla: Mesh): void {
 }
 
 export interface Pantallas {
+  /**
+   * Dónde quedó cada pantalla en el avión y qué le tocó pintar.
+   *
+   * Para poder comprobarlo desde fuera: la izquierda del piloto lleva el
+   * horizonte y la derecha la rosa de rumbos, como un G1000 de verdad, y eso
+   * no lo ve ninguna prueba unitaria — hay que preguntárselo al avión ya
+   * cargado. Ver `verificar-cabina`.
+   */
+  readonly orden: readonly {
+    readonly uuid: string;
+    readonly dibujo: string;
+  }[];
   /** Repinta las dos, si toca. Se llama cada fotograma. */
   actualizar(datos: DatosDeCabina, dt: number): void;
   dispose(): void;
@@ -162,6 +176,19 @@ export interface Pantallas {
  */
 export function encenderPantallas(
   raiz: import("three").Object3D,
+  /**
+   * El grupo de la aeronave, que es **el único sitio donde izquierda es
+   * izquierda**.
+   *
+   * El cargador puede darle media vuelta al modelo para poner el morro donde
+   * toca —lo hace con el que viene de fuera— y esa media vuelta vive en el
+   * nodo de dentro. Así que medir «a qué lado cae esta pantalla» dentro del
+   * modelo da la respuesta cambiada justo en los modelos a los que se dio la
+   * vuelta, y lo que salía era el horizonte a la derecha en un avión y a la
+   * izquierda en el otro. Desde el grupo, la +X es la derecha del piloto en
+   * los dos.
+   */
+  grupo: import("three").Object3D = raiz,
 ): Pantallas | null {
   const mallas: Mesh[] = [];
   raiz.traverse((o) => {
@@ -172,14 +199,31 @@ export function encenderPantallas(
   });
   if (!mallas.length) return null;
 
-  // La de la izquierda del piloto es la del horizonte, como en el de verdad.
-  // Se ordenan por su X en el avión, que es lo que distingue una de otra.
+  /*
+   * La de la izquierda del piloto es la del horizonte, como en el de verdad.
+   * Se ordenan por su X **en el avión**, que es lo que distingue una de otra.
+   *
+   * Y se mide **la caja de la malla ya colocada**, que es lo único que vale
+   * para los dos modelos. Esto miraba el centro de la esfera de la geometría,
+   * y eso solo funciona si cada pantalla lleva su sitio metido en los
+   * vértices: es como viene el modelo traído de fuera y no como sale de
+   * Blender, donde las dos pantallas son la misma geometría movida por el
+   * nodo. Con las dos centradas en cero el orden salía el que fuera, y en el
+   * Mainumby quedaba el horizonte a la derecha, al revés que en un G1000.
+   *
+   * Mirar solo la posición del nodo tampoco vale, y se comprobó: entonces el
+   * que se descoloca es el de fuera, que tiene los dos nodos en el mismo
+   * sitio. La caja ya colocada recoge las dos cosas. Y se mide **desde el
+   * grupo**, no desde el modelo, por lo que dice `grupo` ahí arriba.
+   */
   raiz.updateWorldMatrix(true, true);
-  mallas.sort((a, b) => {
-    const ax = a.geometry.boundingSphere?.center.x ?? a.position.x;
-    const bx = b.geometry.boundingSphere?.center.x ?? b.position.x;
-    return ax - bx;
-  });
+  const enElAvion = new Map<Mesh, number>();
+  const centro = new Vector3();
+  for (const m of mallas) {
+    new Box3().setFromObject(m).getCenter(centro);
+    enElAvion.set(m, grupo.worldToLocal(centro.clone()).x);
+  }
+  mallas.sort((a, b) => (enElAvion.get(a) ?? 0) - (enElAvion.get(b) ?? 0));
 
   const pantallas: Pantalla[] = [];
   mallas.forEach((malla, i) => {
@@ -194,6 +238,22 @@ export function encenderPantallas(
 
   let desde = 0;
   return {
+    /*
+     * Dónde quedó cada pantalla y qué le tocó pintar.
+     *
+     * Está aquí para que se pueda comprobar desde fuera, porque el orden es
+     * lo que se rompió: la izquierda del piloto tiene que llevar el horizonte
+     * y la derecha la rosa de rumbos, como un G1000 de verdad, y eso no se ve
+     * en ninguna prueba unitaria — hay que preguntárselo al avión cargado.
+     */
+    orden: mallas.map((m, i) => ({
+      // El identificador de la malla, no su sitio: quien comprueba esto desde
+      // fuera tiene que poder **medir él** a qué lado cayó. Devolver aquí la
+      // X sería contarle lo mismo que ya se usó para ordenar, y entonces la
+      // comprobación sale bien aunque el orden esté al revés.
+      uuid: m.uuid,
+      dibujo: i % 2 === 0 ? "horizonte" : "rumbo",
+    })),
     actualizar(datos, dt) {
       desde += dt;
       if (desde < 1 / POR_SEGUNDO) return;

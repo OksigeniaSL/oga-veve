@@ -381,7 +381,7 @@ export async function cargarModelo(
     propeller: ejeDeHelice(raiz),
     ojo: ojoDePiloto(raiz, group),
     // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
-    pantallas: encenderPantallas(raiz),
+    pantallas: encenderPantallas(raiz, group),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
   };
