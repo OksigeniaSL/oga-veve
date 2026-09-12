@@ -971,6 +971,8 @@ export class Game {
   private propellerAngle = 0;
   /** Estado del avión en el fotograma anterior, para detectar los cambios. */
   private wasOnGround = true;
+  /** Si ya se despegó en este vuelo. Ver `announce`. */
+  private yaDespego = false;
   private wasStalled = false;
   private wasCrashed = false;
   /**
@@ -1009,7 +1011,6 @@ export class Game {
   private ajustes: Ajustes = leerAjustes();
   private running = false;
   /** Segundos que lleva el avión roto. Ver `frame`. */
-  private crashedFor = 0;
 
   constructor(options: GameOptions) {
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
@@ -2962,6 +2963,24 @@ export class Game {
         this.tier.instruments === "none" ? "" : t(`percance.${tipo}` as never),
       );
     });
+    /*
+     * **Y la red: si nadie toca el botón, el juego vuelve solo.**
+     *
+     * Esto existía y **no pasaba nunca**. El contador vivía en el bucle, unas
+     * líneas después de la salida temprana que hace el propio percance: subía
+     * una vez, en el fotograma del golpe, y a partir de ahí el bucle ya no
+     * llegaba. O sea que la pantalla del percance se quedaba puesta **para
+     * siempre**, que es justo lo que el comentario de `VUELVE_SOLO` dice que
+     * no puede pasar: a los cuatro años, una pantalla que no se va nunca es
+     * una pantalla rota.
+     *
+     * Va en la agenda porque esta cuenta atrás es del juego y no del
+     * navegador: con el menú de pausa abierto no tiene que correr, y con el
+     * reloj acelerado de los bancos tiene que correr igual de acelerada.
+     */
+    this.agenda.luego(TARDA_EL_FINAL + VUELVE_SOLO, () => {
+      if (this.percance === tipo) this.resetFlight();
+    });
   }
 
   /**
@@ -3345,8 +3364,8 @@ export class Game {
     this.frustrada.reiniciar();
     this.minimos.reiniciar();
     this.reiniciarGalones();
-    this.crashedFor = 0;
     this.wasOnGround = true;
+    this.yaDespego = false;
     this.wasStalled = false;
     this.wasCrashed = false;
     this.input.releaseAll();
@@ -4185,6 +4204,23 @@ export class Game {
       ajustes,
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
     );
+    /*
+     * **Y se lo decimos a la hoja de estilos, que es donde está casi todo el
+     * movimiento.**
+     *
+     * Esto se quedaba en una variable de TypeScript que solo mira la cámara.
+     * La hoja tiene diez `@media (prefers-reduced-motion: reduce)` —el latido
+     * de los pictogramas, el rebote de la lupa del plano, el desplazamiento
+     * del HUD— y todas miran el ajuste **del sistema**, no el del juego. O
+     * sea que la fila «Movimiento: reducido» de los ajustes, que existe
+     * precisamente para quien no puede o no sabe tocar el ajuste del sistema,
+     * no apagaba ni una animación. Con la marca en la raíz, el CSS puede
+     * atender a las dos.
+     */
+    document.documentElement.classList.toggle(
+      "sin-movimiento",
+      this.reducedMotion,
+    );
     this.input.ponerSignoDeCabeceo(signoDeCabeceo(ajustes));
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
@@ -4335,7 +4371,6 @@ export class Game {
     this.frustrada.reiniciar();
     this.minimos.reiniciar();
     this.reiniciarGalones();
-    this.crashedFor = 0;
     this.wasOnGround = false;
     this.wasStalled = false;
     this.wasCrashed = false;
@@ -4520,8 +4555,22 @@ export class Game {
       this.updateCamera(dt);
       updateSky(this.sky, this.camera.position);
       this.hud.senal.update(dt);
-      this.pintar();
-      this.medidor.update(dt);
+      /*
+       * **Y el motor se calla.**
+       *
+       * La mezcla sigue al avión una vez por paso, unas líneas más abajo, y
+       * desde aquí no se llega nunca. Así que un percance dejaba el motor
+       * rugiendo al gas que tuviera en el último fotograma **para siempre**,
+       * detrás de la pantalla del golpe. `sufrirPercance` pone el gas a cero
+       * pero nadie volvía a leerlo.
+       */
+      this.audio.update(this.flight.state, this.input.controls);
+      /*
+       * Y aquí **no se pinta**: lo hace el fotograma, una sola vez. Pintar
+       * también aquí era pintar dos veces por cuadro —y con el reloj a
+       * dieciséis, diecisiete veces—, con el medidor de rendimiento contando
+       * todas como si fueran fotogramas.
+       */
       return;
     }
 
@@ -4561,9 +4610,7 @@ export class Game {
        * ocho segundos, el juego reinicia solo. A los cuatro años, una pantalla
        * que no se va nunca es una pantalla rota.
        */
-      this.crashedFor += dt;
       this.sufrirPercance("golpe");
-      if (this.crashedFor > VUELVE_SOLO) this.resetFlight();
     } else {
       this.antesDelPaso.copy(this.flight.state.position);
       this.flight.step(dt, this.input.controls);
@@ -4791,7 +4838,18 @@ export class Game {
         // sobre la ciudad, y el que dice qué hacer es el que nombra el bulto.
         { segundos: 3, prioridad: IMPORTANTE },
       );
-      this.audio.cue(terreno === "sube" ? "error" : "attention");
+      /*
+       * **Y «subí» suena a peligro, no a error.**
+       *
+       * Sonaba con el motivo de `error`, que es el de «se rompió el avión» y
+       * el de una toma dura. Este es el aviso más urgente que da el juego —el
+       * suelo viene— y es el único que tiene que **interrumpir**, no informar.
+       * La propia ficha de `peligro` lo dice con esas palabras: «terreno, un
+       * edificio delante». Se contaba una cosa en la documentación y sonaba
+       * otra, y para quien depende del sonido como segundo canal eso es un
+       * canal menos.
+       */
+      this.audio.cue(terreno === "sube" ? "peligro" : "attention");
       // En inglés aeronáutico, como el resto de la voz de cabina.
       const cual =
         terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo";
@@ -6319,7 +6377,21 @@ export class Game {
       // que enseña a aterrizar sin necesidad de puntuación ninguna.
       this.audio.cue(state.touchdownSinkRate > 2.5 ? "error" : "touchdown");
     }
-    if (!state.onGround && this.wasOnGround && !state.crashed) {
+    /*
+     * **Y el logro de despegar suena una vez por vuelo, no en cada bote.**
+     *
+     * Esto miraba solo que las ruedas se despegaran del suelo, y en una toma
+     * con rebote se despegan tres o cuatro veces: sonaba «lo conseguiste»
+     * alternando con el golpe de la toma dura, felicitando por rebotar. El
+     * logro es **despegar**, y despegar pasa una vez.
+     */
+    if (
+      !state.onGround &&
+      this.wasOnGround &&
+      !state.crashed &&
+      !this.yaDespego
+    ) {
+      this.yaDespego = true;
       this.audio.cue("achieved");
     }
     if (state.stalled && !this.wasStalled) this.audio.cue("perdida");

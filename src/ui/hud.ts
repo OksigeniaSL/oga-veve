@@ -1683,8 +1683,17 @@ export class Hud {
   radio(texto: string, segundos = 6): void {
     const caja = this.radioCaja;
     if (!caja) return;
-    caja.textContent = texto;
+    /*
+     * **Primero se enseña y después se escribe.**
+     *
+     * Es `role="status"`, o sea una región viva: lo que anuncia un lector de
+     * pantalla es el **cambio** de contenido. Escribiendo con la caja todavía
+     * escondida, el cambio ocurre sobre algo que no está en el árbol visible y
+     * no se anuncia nunca; quitar el `hidden` después no vuelve a contarlo.
+     * Quien depende del lector se perdía entera la radio.
+     */
     caja.hidden = false;
+    caja.textContent = texto;
     window.clearTimeout(this.radioReloj);
     this.radioReloj = window.setTimeout(() => {
       caja.hidden = true;
@@ -1766,8 +1775,22 @@ export class Hud {
     // aviso. La lección puede esperar diez segundos; la pista, no.
     this.root.classList.toggle("hud--avisando", hay);
 
-    this.warningText.textContent = text;
-    this.warningArrow.textContent = arrow;
+    /*
+     * **Solo se escribe cuando cambia.**
+     *
+     * Esto corre una vez por fotograma y reasignaba el texto siempre, aunque
+     * fuera el mismo. El elemento es `role="alert"` con `aria-live="assertive"`
+     * —el papel que dice «interrumpí lo que estés leyendo y decí esto»— así
+     * que eran **sesenta interrupciones por segundo** a quien usa lector de
+     * pantalla mientras hubiera un aviso puesto. Un aviso que no calla no
+     * avisa: impide oír.
+     */
+    if (this.warningText.textContent !== text) {
+      this.warningText.textContent = text;
+    }
+    if (this.warningArrow.textContent !== arrow) {
+      this.warningArrow.textContent = arrow;
+    }
     this.warning.classList.toggle("aviso-hud--visible", hay);
     this.warning.classList.toggle("aviso-hud--parpadeo", blink);
     this.vignette.classList.toggle("vineta--activa", hay);

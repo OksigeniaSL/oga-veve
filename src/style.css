@@ -484,10 +484,29 @@ body {
   }
 }
 
+/*
+ * ── Movimiento reducido, por partida doble ───────────────────────────────
+ *
+ * Cada regla de este archivo que apaga una animación aparece **dos veces**:
+ * bajo `@media (prefers-reduced-motion: reduce)`, que es el ajuste del
+ * sistema operativo, y bajo `.sin-movimiento`, que es la fila «Movimiento» de
+ * los ajustes del juego. No se puede meter una clase dentro de una consulta de
+ * medios, así que se escriben las dos.
+ *
+ * Hacía falta porque durante meses solo existía la primera: el ajuste del
+ * juego se quedaba en una variable que solo miraba la cámara, y **no apagaba
+ * ni una animación de la hoja**. Esa fila existe precisamente para quien no
+ * puede o no sabe tocar el ajuste del sistema —un aula con veinte tablets
+ * prestadas—, así que era la mitad que más falta hacía. Ver
+ * `Game.aplicarAjustes`.
+ */
 @media (prefers-reduced-motion: reduce) {
   .manga__barra {
     animation: none;
   }
+}
+.sin-movimiento .manga__barra {
+  animation: none;
 }
 
 /* ── El final del vuelo ───────────────────────────────────────────────────
@@ -569,16 +588,19 @@ body {
   .v1--suena {
     animation: v1-quieto 1.4s ease-out 1;
   }
+}
+.sin-movimiento .v1--suena {
+  animation: v1-quieto 1.4s ease-out 1;
+}
 
-  @keyframes v1-quieto {
-    0%,
-    100% {
-      opacity: 0;
-    }
-    20%,
-    70% {
-      opacity: 0.22;
-    }
+@keyframes v1-quieto {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  20%,
+  70% {
+    opacity: 0.22;
   }
 }
 
@@ -768,6 +790,10 @@ body {
     stroke-dashoffset: 0;
   }
 }
+.sin-movimiento .plano__traza {
+  animation: none;
+  stroke-dashoffset: 0;
+}
 
 /* Los dos botones del final: volver a volar, y volver al hangar. */
 .fin__botones {
@@ -866,6 +892,9 @@ body {
   .fin {
     animation: none;
   }
+}
+.sin-movimiento .fin {
+  animation: none;
 }
 
 /* Progreso de misión: una fila de puntos. Los hechos, en ocre lleno; los
@@ -1466,10 +1495,22 @@ button.motor__tecla::after {
 }
 
 /* Foco visible en todo lo que se puede enfocar: criterio 2.4.7. */
+/*
+ * El aro del foco. **Sin `border-radius`**, y no es un detalle de gusto.
+ *
+ * Esta regla se aplica a todo lo enfocable del juego, así que su radio de 6 px
+ * pisaba el de cualquier cosa redonda declarada antes —los botones del HUD
+ * tienen el 50 %—: **al enfocarlos con el tabulador se volvían cuadrados**. Un
+ * botón que cambia de forma al llegarle el foco no dice «estoy enfocado», dice
+ * «pasó algo raro», y para quien navega con teclado o con mando es lo único
+ * que ve.
+ *
+ * El `outline` ya sigue la forma del elemento por sí solo; no hacía falta
+ * decirle ninguna.
+ */
 :focus-visible {
   outline: 3px solid var(--ocre);
   outline-offset: 2px;
-  border-radius: 6px;
 }
 
 .creditos__cerrar {
@@ -1512,6 +1553,15 @@ button.motor__tecla::after {
   .motor__relleno {
     transition: none;
   }
+}
+.sin-movimiento .aviso-hud--parpadeo,
+.sin-movimiento .vineta--activa,
+.sin-movimiento .tutor__glifo,
+.sin-movimiento .tutor__tecla {
+  animation: none;
+}
+.sin-movimiento .motor__relleno {
+  transition: none;
 }
 
 /*
@@ -1936,6 +1986,10 @@ button.motor__tecla::after {
     animation: none;
     opacity: 0;
   }
+}
+.sin-movimiento .freno--se-va {
+  animation: none;
+  opacity: 0;
 }
 
 /*
@@ -3136,6 +3190,18 @@ button.motor__tecla::after {
     transform: none;
   }
 }
+.sin-movimiento .ficha,
+.sin-movimiento .hangar__despegar {
+  transition: none;
+}
+
+.sin-movimiento .ficha:hover {
+  transform: none;
+}
+
+.sin-movimiento .hangar__despegar:hover {
+  transform: none;
+}
 
 /*
  * ══ LA LÁMPARA DE LA TORRE ══════════════════════════════════════════════
@@ -3261,6 +3327,9 @@ button.motor__tecla::after {
     animation: none;
   }
 }
+.sin-movimiento .torre--verde .torre__luz {
+  animation: none;
+}
 
 /*
  * ══ LA SEÑAL DEL VUELO ══════════════════════════════════════════════════
@@ -3350,6 +3419,9 @@ button.motor__tecla::after {
   .senal--pulsable {
     animation: none;
   }
+}
+.sin-movimiento .senal--pulsable {
+  animation: none;
 }
 
 /*
@@ -4097,6 +4169,9 @@ button.motor__tecla::after {
   .reloj__avion--nuevo {
     animation: none;
   }
+}
+.sin-movimiento .reloj__avion--nuevo {
+  animation: none;
 }
 
 /*

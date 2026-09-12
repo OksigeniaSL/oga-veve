@@ -74,7 +74,14 @@ export class Mapa {
 
   static markup(): string {
     return `
-      <div class="mapa" data-hud="mapa" hidden>
+      <!--
+        **Y con nombre.** «Panel» le pone role de diálogo y aria-modal —la
+        promesa de que lo de detrás no existe— y un diálogo sin nombre es un
+        lector de pantalla diciendo «diálogo» y nada más. El del tiempo sí lo
+        tenía; este se quedó sin él el día que dejó de ser una caja suelta y
+        pasó a ser un panel.
+      -->
+      <div class="mapa" data-hud="mapa" hidden aria-label="${t("mapa.title")}">
         <div class="mapa__lienzos">
           <canvas class="mapa__fondo" data-hud="mapa-fondo" width="${LADO}" height="${LADO}"></canvas>
           <canvas class="mapa__encima" data-hud="mapa-encima" width="${LADO}" height="${LADO}"></canvas>

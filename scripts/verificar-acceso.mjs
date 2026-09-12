@@ -550,6 +550,32 @@ for (const { id: boton, caja } of paneles) {
     comprobar(`${donde}: se abre`, false, "no se abrió al pulsar su botón");
     continue;
   }
+  /*
+   * **Y el diálogo tiene nombre.**
+   *
+   * `Panel` declara `role="dialog"` y `aria-modal`, que es la promesa de que
+   * lo de detrás no existe. Un diálogo sin nombre deja al lector de pantalla
+   * diciendo «diálogo» y nada más, o sea abriendo algo que no se sabe qué es.
+   * El plano llevaba así desde el día que dejó de ser una caja suelta y pasó a
+   * ser un panel, y nadie lo vio: este banco buscaba lo contrario —nombres en
+   * elementos sin papel— y no que a un papel le faltara el nombre.
+   */
+  const nombre = await page.evaluate((sel) => {
+    const c = document.querySelector(sel);
+    const dialogo = c?.matches('[role="dialog"]')
+      ? c
+      : (c?.querySelector('[role="dialog"]') ?? null);
+    if (!dialogo) return null;
+    const porEtiqueta = dialogo.getAttribute("aria-label");
+    const porOtro = dialogo.getAttribute("aria-labelledby");
+    const apuntado = porOtro ? document.getElementById(porOtro) : null;
+    return (porEtiqueta || apuntado?.textContent || "").trim();
+  }, caja);
+  comprobar(
+    `${donde}: el diálogo dice cómo se llama (4.1.2)`,
+    !!nombre,
+    nombre ? `«${nombre}»` : "sin nombre",
+  );
   peores = peores.concat(await auditar(page, donde, caja));
   await comprobarEscape(page, donde, caja);
   /*
