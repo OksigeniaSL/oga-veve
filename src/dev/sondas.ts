@@ -584,7 +584,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `auto`. Para el banco. Ver `ordenes`.
      */
     mandarFrustrar: (como: "auto" | "siempre" | "nunca" = "siempre") => {
-      juego.ordenes = como;
+      juego.laAproximacion.ordenes = como;
     },
     /** El percance que ha parado el vuelo, si lo hay. Congela el avión. */
     percance: () => juego.percance,
@@ -604,8 +604,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       pistaLibreOtraVez: juego.hechos.cuantosEscuchan("pistaLibreOtraVez"),
     }),
     /** Si ahora mismo hay orden de irse al aire. */
-    ordenDeFrustrar: () => juego.mandanFrustrar,
-    porQueSeMando: () => juego.porQueSeMando,
+    ordenDeFrustrar: () => juego.laAproximacion.mandanFrustrar,
+    porQueSeMando: () => juego.laAproximacion.porQueSeMando,
     /**
      * Lo que cuesta el cuadro que se acaba de dibujar.
      *

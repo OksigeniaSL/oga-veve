@@ -36,16 +36,8 @@ import { AIRCRAFT, PYKASU, type AircraftConfig } from "./flight/aircraft";
 import { InputManager } from "./flight/input";
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraEnUso } from "./world/terrain";
-import {
-  blancasDePapi,
-  crearAproximacion,
-  type Aproximacion,
-} from "./world/aproximacion";
-import {
-  crearCircuito,
-  type Circuito,
-  type TramoDeCircuito,
-} from "./world/circuito";
+import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
+import { crearCircuito, type Circuito } from "./world/circuito";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
@@ -228,7 +220,6 @@ import {
   type Instructor,
 } from "./audio/instructor";
 import { Radio } from "./flight/radio";
-import { Minimos, porQueNoSeSigue } from "./flight/minimos";
 import type { ControlInputs } from "./flight/model";
 import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
@@ -291,6 +282,7 @@ import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
 import { Reparto } from "./hechos";
+import { LaAproximacion } from "./flight/la-aproximacion";
 import { asentarAerodromoSobreLaFoto } from "./world/asentar-aerodromo";
 import { limitarElRodaje } from "./flight/tope-de-rodaje";
 import { leerTexto, ponerTexto } from "./datos/guardado";
@@ -474,41 +466,6 @@ const FINAL_DE_PISTA = 40;
  */
 const ALTURA_DE_TOMA = 18;
 
-/**
- * Por debajo de qué altura sobre la pista el circuito se calla, m.
- *
- * Sesenta: por debajo de eso se está despegando o aterrizando, y las dos
- * cosas tienen su propia lección en la pantalla. Ver `seguirElCircuito`.
- */
-const ALTO_PARA_EL_CIRCUITO = 60;
-
-/**
- * Entre qué alturas sobre la pista te pueden mandar al aire, m.
- *
- * De sesenta a ciento sesenta. Más arriba no hay aproximación que
- * interrumpir; más abajo ya no es una decisión, es un susto — y en un avión
- * de verdad tampoco se manda frustrar a quince metros salvo que se venga algo
- * encima. Ver `mirarSiMandanFrustrar`.
- */
-const ALTO_MINIMO_PARA_MANDAR = 60;
-const ALTO_MAXIMO_PARA_MANDAR = 160;
-
-/** Y a cuánto del umbral, como mucho, m. Más lejos no es final todavía. */
-const MANDAN_DESDE = 3000;
-
-/** Cada cuántas aproximaciones se manda, de media. */
-const UNA_DE_CADA = 0.25;
-
-/**
- * Cuánto hay que subir desde donde te lo mandaron para que cuente, m.
- *
- * Sesenta. Es lo que se sube en una frustrada de verdad antes de nada:
- * potencia, morro arriba y ganar altura. Menos sería un bache; más, un
- * circuito entero, y la orden tiene que levantarse cuando se ha obedecido, no
- * cuando se ha terminado la vuelta.
- */
-const SUBIR_PARA_IRSE = 60;
-
 const ANTES_DEL_UMBRAL = 300;
 
 /**
@@ -648,8 +605,6 @@ export class Game {
    * `world/circuito.ts`.
    */
   circuito: Circuito | null = null;
-  /** En qué tramo del circuito se dijo por última vez que estaba. */
-  private tramoDelCircuito: TramoDeCircuito | null = null;
   /**
    * Segundos desde la última vez que se preguntó por los edificios de la foto.
    *
@@ -767,12 +722,6 @@ export class Game {
   /** Reconoce cuándo se renuncia a una aproximación. Ver `flight/frustrada.ts`. */
   private readonly frustrada = new Frustrada();
   /**
-   * La altura de decisión: el momento en que hay que mirar y decidir.
-   *
-   * «Lo importante es la decisión, no la maniobra.» Ver `flight/minimos.ts`.
-   */
-  private readonly minimos = new Minimos();
-  /**
    * La base de las nubes sobre el aeródromo, en metros. `null` si despejado.
    *
    * Sale de dos sitios que hasta hoy no se hablaban: los tres botones del
@@ -853,6 +802,16 @@ export class Game {
    * para saber si aguanta antes de mudarle el resto.
    */
   readonly hechos = new Reparto();
+
+  /**
+   * Todo lo que se decide viniendo a aterrizar. Ver `flight/la-aproximacion.ts`.
+   *
+   * Se construye en el constructor, cuando ya existen el terreno y el
+   * escenario, y se le da un paso por fotograma. Su estado —si te han mandado
+   * al aire, qué dice el PAPI, por qué tramo del circuito vas— se lee desde
+   * aquí y **solo se escribe ahí dentro**.
+   */
+  laAproximacion!: LaAproximacion;
   /**
    * El reloj del juego desde que arrancó la partida, s.
    *
@@ -872,16 +831,6 @@ export class Game {
    * cuántos segundos de vuelo caben en un segundo de pared.
    */
   private aceleracion = 1;
-  /**
-   * La última lectura del PAPI que se enseñó, o `null` si todavía ninguna.
-   *
-   * Se guarda para no repetir la tarjeta sesenta veces por segundo: el PAPI
-   * habla cuando **cambia** lo que dice, que es exactamente cuando hay algo
-   * nuevo que hacer. Ver `explicarElPapi`.
-   */
-  private papiEnPantalla: number | null = null;
-  /** Si la pista de hoy tiene PAPI. Un campo de hierba no tiene. */
-  private hayPapi = false;
   /** Lo que se distaba del umbral el fotograma anterior. Ver los aros. */
   private antesAlUmbral = Infinity;
   /** Lo último que dijo el plan de vuelo, para quien lo necesite después. */
@@ -923,18 +872,6 @@ export class Game {
    */
   private readonly vaca = new Vaca();
   /**
-   * Cómo se sortean las órdenes de irse al aire.
-   *
-   * `auto` es lo que se juega: una de cada cuatro aproximaciones. Las otras
-   * dos son para el banco de pruebas, que hace decenas de aproximaciones
-   * seguidas y necesita decidir él cuándo pasa — un sorteo suelto en mitad de
-   * una comprobación de otra cosa la rompe, y lo hizo. Ver `mandarFrustrar`
-   * en la ventana de pruebas.
-   */
-  ordenes: "auto" | "siempre" | "nunca" = "auto";
-  /** Si la torre —o la vaca— ha mandado irse al aire y todavía manda. */
-  mandanFrustrar = false;
-  /**
    * Si la lámpara de la torre la está llevando la torre y no el plan.
    *
    * Son dos dueños para una luz: el plan la enciende en el punto de espera, y
@@ -944,12 +881,6 @@ export class Game {
    * las dos luces existían y no se veían nunca.
    */
   private laTorreMandaEnLaLuz = false;
-  /** Y si ya lo mandaron en este vuelo, que se manda una vez. */
-  private yaLoMandaron = false;
-  /** A qué altura sobre la pista se dio la orden. Ver `levantarLaOrden`. */
-  private altoAlMandar = 0;
-  /** El último motivo por el que se mandó frustrar, con sus números. */
-  porQueSeMando: Record<string, unknown> | null = null;
   /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
@@ -1101,6 +1032,26 @@ export class Game {
 
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
+
+    /*
+     * **La aproximación, con lo que no cambia en todo el vuelo.**
+     *
+     * Va aquí, justo detrás del terreno, porque necesita el terreno y el
+     * escenario ya montados —son lo que mira para decidir— y porque el montaje
+     * de los aros y el PAPI, que viene después en este mismo constructor, ya
+     * le escribe encima. Lo que cambia —dónde está el avión, en qué fase va,
+     * si hay aviso de terreno— se le da en cada paso. Ver
+     * `flight/la-aproximacion.ts`.
+     */
+    this.laAproximacion = new LaAproximacion({
+      aircraft: this.aircraft,
+      scenario: this.scenario,
+      terrain: this.terrain,
+      hechos: this.hechos,
+      vaca: this.vaca,
+      enLaPista: (metros) => this.enLaPista(metros),
+      distanceToRunway: () => this.distanceToRunway(),
+    });
 
     /*
      * El plan de vuelo, si este aeródromo da para uno **y la lección lo pide**.
@@ -1921,7 +1872,7 @@ export class Game {
      * No es un castigo por fallar una maniobra: es lo que pasa por seguir
      * bajando después de la orden. Ver `mirarSiMandanFrustrar`.
      */
-    if (this.mandanFrustrar) this.sufrirPercance("ocupada");
+    if (this.laAproximacion.mandanFrustrar) this.sufrirPercance("ocupada");
     else if (veredicto === "fuera") this.sufrirPercance("fuera");
     /*
      * Y llegar dando un golpe, aunque sea sobre el asfalto.
@@ -2018,277 +1969,6 @@ export class Game {
       `${t(clave)} (${cuanto} ${unidades.altitudeLabel()})`,
       corta,
     );
-  }
-
-  /**
-   * Que te manden irse al aire, y por qué.
-   *
-   * **La frustrada es la regla número uno de este proyecto y hasta hoy solo la
-   * hacía quien quería.** Se detectaba, se celebraba y valía un galón, pero
-   * nadie te la pedía nunca — y en la vida real la mitad de las frustradas no
-   * se deciden, se obedecen: la pista está ocupada, la torre te manda al aire,
-   * y se pregunta después.
-   *
-   * ## Y se ve por qué
-   *
-   * En un campo de hierba, **se cruza una vaca**. Es la razón número uno por
-   * la que se frustra en un aeródromo pequeño de verdad, y aquí además es la
-   * vecina. Se ve, se entiende sin una palabra y da risa, que es exactamente
-   * el registro que hace falta a los cuatro años.
-   *
-   * En un aeropuerto con torre no hay vaca: hay una lámpara roja y una orden,
-   * porque eso es lo que hay allí — otro avión que no ha salido todavía, y vos
-   * no lo ves. Obedecer sin ver el motivo también es de verdad.
-   *
-   * ## Una vez por vuelo, y con sitio para hacerla
-   *
-   * Entre los sesenta y los ciento sesenta metros sobre la pista: más arriba
-   * no hay aproximación que interrumpir y más abajo ya no es una decisión, es
-   * un susto. Y una sola vez, porque lo que enseña es la maniobra, no la
-   * sorpresa repetida.
-   */
-  private mirarSiMandanFrustrar(acercandose: boolean): void {
-    /*
-     * **Puesta la orden, lo primero es saber cuándo se levanta.**
-     *
-     * Estaba atada a que el detector de frustradas cantara la maniobra, y ese
-     * detector es exigente a propósito —hace falta venir bajando y luego subir
-     * cuarenta metros—: quien se apartaba sin cumplir sus condiciones se
-     * quedaba con la orden puesta en la pantalla para siempre. «Voy a meterme
-     * en Anaga y todavía eso ahí diciendo que frustre el aterrizaje.»
-     *
-     * Ahora se levanta con lo que cualquiera reconoce como haberse ido: haber
-     * subido de verdad desde donde te lo dijeron, o estar alejándote del
-     * umbral. Y **se dice que se ha levantado**, que era la otra mitad de la
-     * queja: «¿cómo sé que la torre ya me deja volver a intentarlo?».
-     */
-    if (this.mandanFrustrar) {
-      const s = this.flight.state;
-      /*
-       * **Y tocar tierra también la levanta.**
-       *
-       * Esto salía de aquí en cuanto el avión estaba en el suelo, así que
-       * quien no obedecía y aterrizaba se quedaba con la orden puesta: la
-       * tarjeta no caduca —es una orden, espera respuesta— y seguía en
-       * pantalla durante la toma, la carrera y el rodaje. Un minuto entero de
-       * «irse al aire» con el avión ya parado en la pista, medido en vídeo.
-       *
-       * No se discute si estuvo bien o mal: se aterrizó, la orden ya no
-       * describe nada y se retira.
-       */
-      if (s.onGround) {
-        this.levantarLaOrden();
-        return;
-      }
-      const alto = s.position.y - this.terrain.runwayElevation;
-      const subio = alto > this.altoAlMandar + SUBIR_PARA_IRSE;
-      const alejandose = !acercandose && this.distanceToRunway() > MANDAN_DESDE;
-      if (subio || alejandose) this.levantarLaOrden();
-      return;
-    }
-    if (this.yaLoMandaron || this.vueloTerminado || !acercandose) return;
-    const s = this.flight.state;
-    if (s.onGround) return;
-    const alto = s.position.y - this.terrain.runwayElevation;
-    if (alto < ALTO_MINIMO_PARA_MANDAR || alto > ALTO_MAXIMO_PARA_MANDAR)
-      return;
-    if (this.distanceToRunway() > MANDAN_DESDE) return;
-    /*
-     * **Y viniendo de verdad en final, no solo cerca.**
-     *
-     * Esto pedía «acercándose al umbral, entre sesenta y ciento sesenta metros
-     * y a menos de tres kilómetros», y eso lo cumple cualquiera que dé una
-     * vuelta por el valle: se pasa cerca de la pista sin la menor intención de
-     * aterrizar y la torre te manda al aire con la pista fuera de la pantalla.
-     * «¿Qué carajo si no hay ni campo a la vista?»
-     *
-     * El embudo ya existía y ya lo usaban los mínimos, por esta misma razón
-     * escrita en `mirarLosMinimos`: «cerca del umbral y acercándose» no
-     * distingue una aproximación de un tramo del circuito. Faltaba aquí.
-     */
-    if (
-      enElEmbudoDeFinal(this.scenario.runway, s.position.x, s.position.z) ===
-      null
-    )
-      return;
-    /*
-     * **Una de cada cuatro**, y sorteada con el propio vuelo.
-     *
-     * Ni siempre —una aproximación que siempre acaba en frustrada deja de ser
-     * una aproximación— ni tan raro que no llegue a pasar en una tarde. El
-     * sorteo usa los segundos volados, así que dos vuelos seguidos no salen
-     * igual y el banco de pruebas puede forzarlo cuando lo necesita.
-     */
-    if (this.ordenes === "nunca") return;
-    if (this.ordenes === "auto" && Math.random() > UNA_DE_CADA) return;
-    // Forzada, se gasta: el banco pide una y quiere una, no todas.
-    if (this.ordenes === "siempre") this.ordenes = "auto";
-    this.yaLoMandaron = true;
-    this.mandanFrustrar = true;
-    this.altoAlMandar = alto;
-
-    this.hechos.emit("mandaronIrseAlAire", { porque: "pistaOcupada" });
-  }
-
-  /**
-   * Se acabó la orden: la vaca se va, la torre da verde y se dice.
-   *
-   * **Y se dice**, que es lo que faltaba. Sin esto, quien obedecía se quedaba
-   * dando vueltas sin saber si podía volver: «¿cómo sé que la torre ya me deja
-   * volver a intentar la aproximación?». La luz verde es la misma que da paso
-   * para despegar, y quiere decir lo mismo: adelante.
-   */
-  private levantarLaOrden(): void {
-    this.mandanFrustrar = false;
-    this.vaca.quitar();
-    this.hechos.emit("pistaLibreOtraVez", {});
-  }
-
-  /**
-   * El PAPI, explicado mientras se usa.
-   *
-   * En el mundo lleva desde el principio: cuatro luces al costado del umbral
-   * que se ven blancas si venís alto y rojas si venís bajo. Es el instrumento
-   * más bonito que tiene la aviación —no hay número, no hay texto, no hay que
-   * saber nada— y estaba ahí **sin que nadie dijera qué era**: cuatro bolitas
-   * que cambiaban de color.
-   *
-   * Ahora, en final, la pantalla enseña las luces que estás viendo y una
-   * flecha con lo que hay que hacer. Y habla cuando cambia lo que dicen, que
-   * es cuando hay algo nuevo que hacer; con dos y dos sale una vez, con su
-   * visto, porque acertar también se cuenta.
-   *
-   * Solo donde hay PAPI de verdad. Un campo de hierba no tiene, y ponerle uno
-   * en la pantalla sería enseñar un instrumento que no está.
-   */
-  /**
-   * Los mínimos: se baja hasta una altura, se mira, y se decide una vez.
-   *
-   * Es la mitad de la lección de la frustrada que faltaba. La otra —saber
-   * irse al aire— ya se reconocía y se premiaba con su galón; lo que no
-   * existía era **el momento de decidir**, y sin él una frustrada es una
-   * ocurrencia y no una maniobra.
-   *
-   * Sesenta metros sobre la pista son doscientos pies, que es la altura de
-   * decisión de una aproximación de precisión de verdad y el número que
-   * aparece en todas las cartas.
-   *
-   * Y ahí pasa una de dos, que es exactamente lo que enseña:
-   *
-   * - **La aproximación está estabilizada**: se canta «minimums», se mira la
-   *   pista y se sigue. La palabra marca el momento y ya está.
-   * - **No lo está**: entonces no se corrige, **se va uno**. La regla de
-   *   verdad es del tipo «si a esta altura no estás como debes, no sigas», y
-   *   eso es lo que la hace una regla y no un consejo. Se usa la misma señal
-   *   y la misma orden que cuando lo manda la torre, porque para quien juega
-   *   es lo mismo: hay que irse.
-   */
-  private mirarLosMinimos(acercandose: boolean): void {
-    if (this.mandanFrustrar || this.vueloTerminado) return;
-    const s = this.flight.state;
-    if (s.onGround) return;
-    /*
-     * **Y solo viniendo por el embudo de final.**
-     *
-     * La altura de decisión es un punto de la aproximación, no una altura
-     * cualquiera: cruzar los sesenta metros dando el giro a la base, con la
-     * pista a un kilómetro por el costado, no es llegar a mínimos. Y ahí el
-     * avión está **por definición** torcido respecto a la pista, así que la
-     * regla saltaba con «no estás alineado» y mandaba frustrar. En todos los
-     * vuelos: «me sale el mensaje de frustrada en todos los intentos de
-     * aterrizaje». Medido en el vídeo de un circuito en Mariscal Estigarribia:
-     * la orden salía en el segundo 393, con el avión en pleno viraje.
-     *
-     * Ver `enElEmbudoDeFinal`.
-     */
-    if (
-      enElEmbudoDeFinal(this.scenario.runway, s.position.x, s.position.z) ===
-      null
-    )
-      return;
-    const alto = s.position.y - this.terrain.runwayElevation;
-    if (!this.minimos.paso(alto, acercandose)) return;
-
-    const { across, along } = enEjesDePista(
-      s.position.x,
-      s.position.z,
-      this.scenario.runway.x,
-      this.scenario.runway.z,
-      this.scenario.runway.heading,
-    );
-    void along;
-    let torcido =
-      ((s.heading * 180) / Math.PI - this.scenario.runway.heading + 540) % 360;
-    torcido -= 180;
-    const motivo = porQueNoSeSigue(
-      {
-        velocidad: s.airspeed,
-        referencia: this.aircraft.approachSpeed,
-        vertical: s.verticalSpeed,
-        delEje: across,
-        torcido,
-      },
-      this.techoDeNubes,
-    );
-
-    if (!motivo) {
-      this.hechos.emit("minimos", {});
-      return;
-    }
-
-    /*
-     * No estabilizada: la misma orden de irse al aire que da la torre.
-     *
-     * Se reutiliza entera —la señal que se queda puesta, el circuito
-     * dibujado, la luz verde al levantarla— porque para quien juega es lo
-     * mismo: hay que irse. Lo que cambia es el porqué, y el porqué se dice.
-     */
-    this.yaLoMandaron = true;
-    this.mandanFrustrar = true;
-    this.altoAlMandar = alto;
-    /*
-     * Y **por qué**, con sus números. Para el banco.
-     *
-     * «Sale la frustrada en todas las aproximaciones» no se arregla sin saber
-     * cuál de los cinco motivos salta, y el motivo solo vivía dentro del texto
-     * de la tarjeta. Medirlo desde fuera era leer una frase traducida.
-     */
-    this.porQueSeMando = {
-      motivo,
-      velocidad: +s.airspeed.toFixed(1),
-      referencia: this.aircraft.approachSpeed,
-      vertical: +s.verticalSpeed.toFixed(1),
-      delEje: +across.toFixed(1),
-      torcido: +torcido.toFixed(1),
-      alto: Math.round(alto),
-    };
-    this.hechos.emit("mandaronIrseAlAire", {
-      porque: "noEstabilizada",
-      motivo,
-    });
-  }
-
-  private explicarElPapi(acercandose: boolean): void {
-    if (!this.hayPapi || !acercandose) return;
-    const s = this.flight.state;
-    if (s.onGround) return;
-    const alto = s.position.y - this.terrain.runwayElevation;
-    // De quince metros para abajo ya no se corrige nada: se toca. Y por encima
-    // de trescientos todavía no se está en final, se está llegando.
-    if (alto < 15 || alto > 300) return;
-    const [ux, uz] = this.enLaPista(this.scenario.runway.length * 0.5);
-    const suelo = Math.hypot(s.position.x - ux, s.position.z - uz);
-    // Muy cerca del umbral el ángulo se dispara y el PAPI de verdad tampoco
-    // sirve: se mira hasta la valla y a partir de ahí se mira la pista.
-    if (suelo < 150 || suelo > 6000) return;
-    const blancas = blancasDePapi((Math.atan2(alto, suelo) * 180) / Math.PI);
-    if (blancas === this.papiEnPantalla) return;
-    // La primera lectura no se anuncia si ya venís bien: la tarjeta es para
-    // enseñar a corregir, no para felicitar a quien todavía no ha hecho nada.
-    const primera = this.papiEnPantalla === null;
-    this.papiEnPantalla = blancas;
-    if (primera && blancas === 2) return;
-    this.hechos.emit("papi", { blancas });
   }
 
   /**
@@ -2793,7 +2473,7 @@ export class Game {
         "vuelo.puedeVolver",
       );
       this.agenda.luego(SE_QUEDA_EL_ARO, () => {
-        if (this.mandanFrustrar) return;
+        if (this.laAproximacion.mandanFrustrar) return;
         this.hud.setLuzDeTorre(null);
         this.laTorreMandaEnLaLuz = false;
       });
@@ -2976,8 +2656,9 @@ export class Game {
 
   resetFlight(): void {
     this.percance = null;
-    this.mandanFrustrar = false;
-    this.yaLoMandaron = false;
+    // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
+    // tenerlo junto: antes eran cinco líneas repartidas por este método.
+    this.laAproximacion.reiniciar();
     this.laTorreMandaEnLaLuz = false;
     this.vaca.quitar();
     // Otro vuelo, otra traza: la raya del anterior ya está guardada.
@@ -3018,11 +2699,9 @@ export class Game {
     }
     this.vistaActual = null;
     this.pidiendoFreno = false;
-    this.papiEnPantalla = null;
     this.antesAlUmbral = Infinity;
     this.gestoEnPantalla = null;
     this.techoDeLaCarrera = Infinity;
-    this.tramoDelCircuito = null;
     this.fueraDeBanda = 0;
     this.dichoDeBanda = null;
     this.terrenoDicho = null;
@@ -3059,7 +2738,6 @@ export class Game {
     this.runwayGuide.reset();
     this.landing.reset();
     this.frustrada.reiniciar();
-    this.minimos.reiniciar();
     this.reiniciarGalones();
     this.wasOnGround = true;
     this.yaDespego = false;
@@ -3197,8 +2875,9 @@ export class Game {
      * Y si esta pista tiene PAPI, la pantalla puede explicarlo. Se pregunta
      * aquí y no cada fotograma porque la respuesta no cambia en todo el vuelo.
      */
-    this.hayPapi = !!this.aproximacion?.grupo.getObjectByName("papi");
-    this.papiEnPantalla = null;
+    this.laAproximacion.hayPapi =
+      !!this.aproximacion?.grupo.getObjectByName("papi");
+    this.laAproximacion.papiEnPantalla = null;
   }
 
   /**
@@ -3240,7 +2919,7 @@ export class Game {
       this.circuito.dispose();
       this.circuito = null;
     }
-    this.tramoDelCircuito = null;
+    this.laAproximacion.tramoDelCircuito = null;
     if (!this.tier.circuito) return;
     this.circuito = crearCircuito(
       this.scenario.runway,
@@ -3249,138 +2928,6 @@ export class Game {
     );
     this.circuito.grupo.visible = false;
     this.scene.add(this.circuito.grupo);
-  }
-
-  /**
-   * El circuito, mientras se vuela: se ve cuando sirve y dice en qué tramo vas.
-   *
-   * **Se ve desde que estás alineado**, y no desde que despegás: la gracia de
-   * un circuito es verlo entero **antes** de meterse en él, igual que el coche
-   * del sígame está delante antes de arrancar. Y se apaga en cuanto se toma
-   * tierra, porque en el suelo manda la raya verde.
-   *
-   * Los tramos se cantan al entrar en cada uno, con su dibujo y su nombre de
-   * verdad. Solo hacia delante y solo una vez cada uno: quien se sale y vuelve
-   * a entrar en el mismo tramo no necesita que se lo repitan.
-   */
-  private seguirElCircuito(acercandose: boolean): void {
-    const c = this.circuito;
-    if (!c) return;
-    const s = this.flight.state;
-    const fase = this.faseDeAhora;
-    const enElAire = !s.onGround;
-    const preparando =
-      s.onGround && (fase === "alineando" || fase === "despegando");
-    const alto = s.position.y - this.terrain.runwayElevation;
-    /*
-     * **Y en final el circuito no se dibuja.**
-     *
-     * «No entiendo esa ruta de puntitos amarillos fuera de la línea de
-     * aterrizaje, como si me invitara a dar un rodeo.» Y era exactamente eso:
-     * en la aproximación se veían **dos caminos a la vez** —los aros y el hilo
-     * de la senda diciendo «recto a la pista», y el circuito diciendo «por
-     * aquí se da la vuelta»—, y dos caminos son ninguno.
-     *
-     * El circuito lleva a final y ahí se acaba su trabajo. Se dibuja cuando es
-     * lo que hay que seguir: alineado en la pista para verlo entero antes de
-     * meterse en él, y volando por encima de la altura a la que ya no se está
-     * ni despegando ni aterrizando.
-     */
-    /*
-     * **Y «estar en final» no es solo la fase.** A dos kilómetros del umbral,
-     * bajando y alineado, la máquina de fases todavía dice «en vuelo» y quien
-     * juega ya está aterrizando: tiene los aros delante y el hilo de la senda
-     * puesto. Así que lo que apaga el circuito es lo que de verdad describe
-     * ese momento — venir acercándose al umbral y estar ya dentro de donde
-     * empieza la senda—, y no una etiqueta.
-     */
-    /*
-     * **Y el corredor entero, no los últimos dos kilómetros.**
-     *
-     * Se apagaba dentro de los dos mil doscientos metros del umbral, y la
-     * senda empieza a los tres mil seiscientos: entre esos dos números quedaba
-     * un trecho con los aros delante **y** el circuito dibujado al costado.
-     * «Aterrizar en La Palma también tiene la guía de puntitos para dar el
-     * rodeo, pero estoy en modo aterrizaje.» Es la misma queja de Yvytu Rape y
-     * la misma causa: dos caminos a la vez.
-     *
-     * Así que el circuito se calla en cuanto se está dentro de donde manda la
-     * senda. Lo que se pierde es la ayuda del último tramo de la base; lo que
-     * se gana es que nunca haya dos caminos.
-     */
-    /*
-     * **Y con orden de irse al aire, el circuito se enciende.**
-     *
-     * «Me aparto, pero ¿a dónde voy en una frustrada? ¿Qué hago?» A eso
-     * contesta el circuito, que es exactamente el camino de vuelta: se sube,
-     * se gira a la izquierda y se vuelve por donde se vino. Sin él, la orden
-     * es una flecha que aparece y nada más.
-     */
-    /*
-     * **Y «venir a aterrizar» es venir por el embudo, no estar cerca.**
-     *
-     * Esto miraba la distancia al umbral y si bajaba. En el viento en cola se
-     * vuela hacia el umbral con la pista a mil metros por el costado, así que
-     * las dos cosas se cumplen **con dos giros por delante**: medido en
-     * Mariscal Estigarribia, el circuito se apagaba durante 3458 de los 6516
-     * metros del tramo y volvía a aparecer al pasar por el través. «La línea
-     * de puntos desaparece cuando ya voy paralelo a la pista en busca del
-     * giro, reaparece cuando estoy en el penúltimo giro.» Exacto, y por esto.
-     *
-     * Ver `enElEmbudoDeFinal`.
-     */
-    const enLlegada =
-      !this.mandanFrustrar &&
-      (fase === "final" ||
-        fase === "aterrizado" ||
-        (acercandose &&
-          enElEmbudoDeFinal(
-            this.scenario.runway,
-            s.position.x,
-            s.position.z,
-          ) !== null));
-    c.grupo.visible =
-      preparando || (enElAire && alto >= ALTO_PARA_EL_CIRCUITO && !enLlegada);
-    if (!enElAire) {
-      // En tierra se olvida lo dicho, que la vuelta siguiente empieza de cero.
-      if (fase !== "despegando") this.tramoDelCircuito = null;
-      return;
-    }
-    /*
-     * **Y no se canta ningún tramo pegado al suelo.**
-     *
-     * El circuito pasa por encima de la pista —su primer tramo **es** la
-     * subida por el eje—, así que cruzando el umbral a diez metros para
-     * aterrizar, la máquina veía «estás en la subida» y sacaba su tarjeta
-     * encima de la que de verdad tocaba: «ya podés tocar». Lo cazó el banco a
-     * la primera. Por debajo de sesenta metros sobre la pista no hay circuito
-     * que valga: o estás despegando o estás aterrizando, y las dos cosas
-     * tienen su propia lección.
-     */
-    if (alto < ALTO_PARA_EL_CIRCUITO) return;
-    const tramo = c.tramoEn(s.position.x, s.position.z);
-    if (!tramo || tramo === this.tramoDelCircuito) return;
-    /*
-     * **Y no se canta el tramo si ya estás en final.** La lección de ahí en
-     * adelante son los aros y el hilo de la senda, y una tarjeta diciendo
-     * «girá a la izquierda» encima de eso sería mandar dos cosas a la vez.
-     */
-    if (fase === "final" || fase === "aterrizado") return;
-    /*
-     * **Ni con el aviso de terreno puesto.**
-     *
-     * Los dos salen con la misma prioridad, así que se turnaban: «terrain,
-     * pull up» y, un segundo después, «vas por el tramo de subida» — dos
-     * cosas contrarias en el mismo sitio de la pantalla. Medido en vídeo, en
-     * una aproximación baja, alternando durante ocho segundos.
-     *
-     * El aviso de terreno manda sobre todo lo demás mientras dura, que es
-     * exactamente lo que dice su propio comentario. Un tramo de circuito
-     * espera; es una indicación, no una alarma.
-     */
-    if (this.terrenoDicho) return;
-    this.tramoDelCircuito = tramo;
-    this.hechos.emit("tramoDeCircuito", { tramo });
   }
 
   /**
@@ -3772,7 +3319,7 @@ export class Game {
     this.runwayGuide.reset(this.flight.state.position);
     this.landing.reset();
     this.frustrada.reiniciar();
-    this.minimos.reiniciar();
+    this.laAproximacion.reiniciar();
     this.reiniciarGalones();
     this.wasOnGround = false;
     this.wasStalled = false;
@@ -4230,8 +3777,8 @@ export class Game {
     if (renuncio) {
       // Y si te lo habían mandado, la orden se levanta: la pista vuelve a ser
       // tuya y la vaca se va, que para eso se hace la pasada.
-      const mandada = this.mandanFrustrar;
-      if (mandada) this.levantarLaOrden();
+      const mandada = this.laAproximacion.mandanFrustrar;
+      if (mandada) this.laAproximacion.levantarLaOrden();
       /*
        * **Y aquí se acaba el trabajo de este trozo: contarlo.**
        *
@@ -4369,10 +3916,15 @@ export class Game {
         );
       }
     }
-    this.explicarElPapi(acercandose);
-    this.mirarLosMinimos(acercandose);
-    this.mirarSiMandanFrustrar(acercandose);
-    this.seguirElCircuito(acercandose);
+    this.laAproximacion.paso({
+      estado: this.flight.state,
+      acercandose,
+      circuito: this.circuito,
+      faseDeAhora: this.faseDeAhora,
+      techoDeNubes: this.techoDeNubes,
+      terrenoDicho: this.terrenoDicho,
+      vueloTerminado: this.vueloTerminado,
+    });
     this.oirLaRadio(dt);
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
