@@ -1576,7 +1576,31 @@ export class Game {
      * sistema. Ver `docs/voces/`.
      */
     if (!this.instructor.disponible) {
-      window.setTimeout(() => this.hud.flash(t("hud.sinVoz"), 8), 4000);
+      /*
+       * **Y se dice con un dibujo, no solo con una frase.**
+       *
+       * Iba únicamente escrito, y eso es incumplir la regla de oro justo donde
+       * más duele: el canal que se ha caído es el hablado, y el aviso de que
+       * se ha caído iba por el escrito. Quien no lee se quedaba sin las dos
+       * cosas y sin saber por qué el juego no le habla.
+       *
+       * La frase se queda para quien sí lee, que ahí dice **qué** pasa y no
+       * solo que pasa algo. Cuando el pack grabado esté, esto no saldrá:
+       * el instructor hablará aunque el navegador no tenga ni una voz.
+       */
+      this.agenda.luego(4, () => {
+        this.hud.senal.mostrar(
+          "sinVoz",
+          this.rotulo("hud.sinVoz", "palabra.mudo"),
+          null,
+          {
+            segundos: 8,
+            prioridad: IMPORTANTE,
+          },
+        );
+        if (this.tier.instruments !== "none")
+          this.hud.flash(t("hud.sinVoz"), 8);
+      });
     }
   }
 

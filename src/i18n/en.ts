@@ -195,6 +195,7 @@ export const EN: Dictionary = {
   "ala.dice.cerca": "Careful: a bit more angle and the air lets go.",
   "ala.dice.perdida":
     "The air came off the wing: look at the swirls, and how the blue is left only at the very front. That is the stall: lower the nose and it comes back.",
+  "palabra.mudo": "No voice",
   "palabra.bien": "Good!",
   "palabra.tira": "Pull!",
   "palabra.subi": "Up!",

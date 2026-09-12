@@ -251,6 +251,7 @@ export const ES_PY = {
   "ala.dice.cerca": "Cuidado: un poco más de ángulo y el aire se suelta.",
   "ala.dice.perdida":
     "El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.",
+  "palabra.mudo": "Sin voz",
   "palabra.bien": "¡Bien!",
   "palabra.tira": "¡Tirá!",
   "palabra.subi": "¡Subí!",
