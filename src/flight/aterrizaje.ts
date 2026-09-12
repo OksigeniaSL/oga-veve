@@ -54,6 +54,24 @@ const DEMASIADO_RAPIDO = 1.25;
  */
 const CASI_A_TOPE = 0.93;
 
+/**
+ * Cuánto hay que llevar en el aire para que el contacto siguiente sea un
+ * aterrizaje, s.
+ *
+ * Tres segundos. **Un bote no es un vuelo**, y hasta hoy lo era: bastaba un
+ * fotograma con las ruedas despegadas para armar el detector, así que rodar
+ * por una plataforma con un badén a trece metros por segundo daba un salto
+ * corto y, al volver a tocar, «aterrizaste fuera de la pista» — con su
+ * percance, su pantalla y el vuelo terminado. Pasó en Guaraní, rodando de
+ * vuelta al puesto, con el vuelo ya hecho y el aterrizaje ya celebrado.
+ *
+ * Tres segundos separa las dos cosas sin discusión: una aproximación pasa
+ * minutos en el aire y un badén, décimas. Y de paso arregla el otro lado de lo
+ * mismo — un rebote en la toma tampoco vuelve a armar el detector, así que ya
+ * no puede haber dos veredictos para un solo aterrizaje.
+ */
+const ALGO_MAS_QUE_UN_BOTE = 3;
+
 export class LandingWatcher {
   private volando = false;
   private pendiente = false;
@@ -61,6 +79,8 @@ export class LandingWatcher {
   private descenso = 0;
   /** Segundos desde que las ruedas tocaron. */
   private desdeQueToco = 0;
+  /** Segundos que se lleva en el aire. Ver `ALGO_MAS_QUE_UN_BOTE`. */
+  private enElAire = 0;
   /** A qué velocidad se tocó. Al frenar ya no se sabría. */
   private velocidadAlTocar = 0;
 
@@ -94,9 +114,11 @@ export class LandingWatcher {
     vmax = Infinity,
   ): Aterrizaje {
     if (!onGround) {
-      this.volando = true;
+      this.enElAire += dt;
+      if (this.enElAire >= ALGO_MAS_QUE_UN_BOTE) this.volando = true;
       return null;
     }
+    this.enElAire = 0;
 
     if (this.volando) {
       // Acaba de tocar: se guarda cómo, porque al frenar ya no se sabrá.
@@ -145,5 +167,6 @@ export class LandingWatcher {
     this.volando = false;
     this.pendiente = false;
     this.desdeQueToco = 0;
+    this.enElAire = 0;
   }
 }
