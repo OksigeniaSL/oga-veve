@@ -168,6 +168,23 @@ G1000 dibujado en la textura, que es obra del autor bajo su misma licencia.
 Se descargó la versión **GLB con texturas de 1K**, que son dos megas y medio.
 La de 4K pesa más y no se distingue en una tablet.
 
+### Y la que se hace en casa
+
+El **JAZ 25 *Mainumby*** no viene de ningún sitio: se modela aquí, con Blender,
+desde `modelos/jaz-25-mainumby.py`. El guion es el modelo — se ejecuta con
+`blender --background --python modelos/jaz-25-mainumby.py` y escribe
+`public/assets/aeronaves/jaz-25.glb`—, así que no hay un `.blend` binario que
+nadie pueda leer ni un fichero que dependa de acordarse de cómo se hizo.
+
+No lleva texturas, como el resto del juego: un material por pieza y el color se
+lo pone la ficha del avión al cargarlo, no el fichero. Ver
+`pintarDeLaFlota` en `src/world/aeronave-modelo.ts`.
+
+Es obra de Oksigenia SL y va bajo la licencia del proyecto, Apache-2.0. Los
+únicos nombres que no son libres dentro del guion son dos, y son del juego:
+`asiento`, del que sale el sitio de los ojos, y `g1000_display`, que es el
+material con el que el juego encuentra las pantallas del panel.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:

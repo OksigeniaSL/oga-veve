@@ -45,6 +45,20 @@ ALTO_FUSELAJE = 1.30
 ANCHO_FUSELAJE = 1.15
 # El hueco entre alas de un biplano: lo que lo hace biplano.
 HUECO = 1.55
+# Dónde va cada plano, medido desde el eje del fuselaje.
+#
+# **El ala de arriba tiene que pasar por encima de la cabina**, y no pasaba: la
+# dejaba a 0,96 y el techo del cristal llega a 1,03, así que el plano cruzaba
+# por dentro de la carlinga. Desde el asiento eso es todo lo que se veía —un
+# techo oscuro a ocho centímetros de la cabeza y ni rastro del mundo—, que es
+# la mitad de «JAZ 25 no tiene panel de mandos»: no es solo que faltara el
+# panel, es que tampoco había por dónde mirar.
+#
+# A 1,25 el intradós queda a 1,17, un palmo largo por encima del cristal y
+# treinta centímetros por encima de los ojos: se ve el suelo por debajo del
+# plano, que es como se vuela un fumigador de verdad.
+ALA_ALTA = 1.25
+ALA_BAJA = -HUECO * 0.38
 TREN = 1.05
 
 SALIDA = os.path.join(
@@ -75,6 +89,14 @@ COLORES = {
     "detalle": (0.18, 0.32, 0.26, 1.0),
     "cristal": (0.11, 0.15, 0.18, 1.0),
     "goma": (0.09, 0.09, 0.10, 1.0),
+    # Los de dentro. El salpicadero es gris oscuro mate y la tapicería un
+    # cuero gastado: los dos tienen que quedarse **por debajo** del mundo que
+    # se ve por el parabrisas, que es lo que se está mirando.
+    "tablero": (0.13, 0.14, 0.15, 1.0),
+    "tapiceria": (0.29, 0.23, 0.17, 1.0),
+    # Y las dos pantallas del panel. El nombre no es libre: `pantallas-cabina.ts`
+    # busca exactamente `g1000_display` para encenderlas.
+    "g1000_display": (0.02, 0.03, 0.04, 1.0),
 }
 
 
@@ -100,6 +122,16 @@ def material(nombre):
     bsdf.inputs["Base Color"].default_value = srgb(COLORES[nombre])
     bsdf.inputs["Roughness"].default_value = 0.55
     bsdf.inputs["Metallic"].default_value = 0.0
+    # **Y con la cara de atrás quitada**, que es lo que hace que se pueda ir
+    # dentro del avión.
+    #
+    # Blender exporta un material a glTF como `doubleSided` mientras no se le
+    # diga lo contrario, y un avión entero a doble cara **no tiene dentro**:
+    # desde el asiento se veía la carlinga y el fuselaje por su cara interior,
+    # una mancha oscura tapando el mundo entero. Con la cara de atrás quitada,
+    # el casco y el cristal desaparecen desde dentro y queda lo que tiene que
+    # quedar: el panel, la silla y el mundo por el parabrisas.
+    m.use_backface_culling = True
     return m
 
 
@@ -122,8 +154,17 @@ def suavizar(obj, subdividir=1, biselar=0.012, angulo=40):
         s.render_levels = subdividir
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.shade_smooth()
-    obj.data.use_auto_smooth = True
-    obj.data.auto_smooth_angle = math.radians(angulo)
+    # El sombreado por ángulo cambió de sitio en Blender 4.1: `use_auto_smooth`
+    # desapareció de la malla y pasó a ser un modificador que pone un operador.
+    # Se hacen las dos cosas porque este guion tiene que seguir corriendo con
+    # la 4.0 que había instalada y con la 4.5 que trajo el MCP.
+    if hasattr(obj.data, "use_auto_smooth"):
+        obj.data.use_auto_smooth = True
+        obj.data.auto_smooth_angle = math.radians(angulo)
+    else:
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.ops.object.shade_smooth_by_angle(angle=math.radians(angulo))
     return obj
 
 
@@ -205,6 +246,61 @@ def ala(nombre, media_envergadura, cuerda_raiz, cuerda_punta, espesor,
     return pintar(obj, material_)
 
 
+def caja(nombre, x0, x1, y0, y1, z0, z1, material_="tablero"):
+    """Una caja recta, que es lo que es un salpicadero."""
+    bpy.ops.mesh.primitive_cube_add(size=1)
+    o = bpy.context.object
+    o.name = nombre
+    o.scale = ((x1 - x0), (y1 - y0), (z1 - z0))
+    o.location = ((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2)
+    bpy.ops.object.transform_apply(location=True, scale=True)
+    return pintar(o, material_)
+
+
+def cuadro(nombre, ancho, alto, en, material_):
+    """
+    Un rectángulo plano mirando al piloto, **con coordenadas de textura**.
+
+    Las pantallas del panel se pintan desde el juego sobre un lienzo, y eso
+    necesita UV: sin ellas `estirarUV` se va de vacío y la pantalla se queda
+    sin nada que enseñar. Un `bmesh` no las trae puestas, así que se ponen a
+    mano — las cuatro esquinas del cuadrado, que es lo que hay.
+    """
+    malla = bpy.data.meshes.new(nombre)
+    bm = bmesh.new()
+    a, b = ancho / 2, alto / 2
+    vs = [
+        bm.verts.new((-a, -b, 0.0)),
+        bm.verts.new((a, -b, 0.0)),
+        bm.verts.new((a, b, 0.0)),
+        bm.verts.new((-a, b, 0.0)),
+    ]
+    cara = bm.faces.new(vs)
+    capa = bm.loops.layers.uv.new("UVMap")
+    # **Y puestas como las quiere el juego**, que no es como uno las pondría.
+    #
+    # `pantallas-cabina.ts` pinta el lienzo en espejo y además da la vuelta a
+    # las dos coordenadas al cargarlo, porque la pantalla del modelo traído de
+    # fuera se ve **por su cara de atrás** y eso mete un espejo por sí solo.
+    # Esta se ve de frente, así que hay que darle esa vuelta aquí: con las UV
+    # «derechas» la pantalla salía girada media vuelta —el suelo arriba, el
+    # cielo abajo y los rótulos del revés—, que es justo lo que se ve cuando
+    # una imagen se voltea en los dos ejes.
+    #
+    # Medido, no razonado: se pintaron las dos pantallas con lo mismo y con el
+    # espejo puesto en una sí y en la otra no, que es lo que enseña de una vez
+    # cuál de las cuatro combinaciones es la buena.
+    for bucle, uv in zip(cara.loops, [(0, 1), (1, 1), (1, 0), (0, 0)]):
+        bucle[capa].uv = uv
+    bm.normal_update()
+    bm.to_mesh(malla)
+    bm.free()
+    obj = bpy.data.objects.new(nombre, malla)
+    bpy.context.collection.objects.link(obj)
+    obj.location = Vector(en)
+    return pintar(obj, material_)
+
+
 def montante(x, z, y0, y1, grosor=0.045):
     """Un montante entre alas. Redondo, que es lo que es."""
     bpy.ops.mesh.primitive_cylinder_add(
@@ -214,6 +310,91 @@ def montante(x, z, y0, y1, grosor=0.045):
     o = bpy.context.object
     o.rotation_euler = (0, 0, 0)
     return pintar(o, "detalle")
+
+
+def asiento_de_una_pieza():
+    """El cojín y el respaldo, unidos. Ver `cabina_interior`."""
+    cojin = caja("asiento", -0.24, 0.24, 0.34, 0.42, -0.90, -0.50, "tapiceria")
+    respaldo = caja("respaldo", -0.24, 0.24, 0.42, 0.88, -0.55, -0.45, "tapiceria")
+    bpy.ops.object.select_all(action="DESELECT")
+    cojin.select_set(True)
+    respaldo.select_set(True)
+    bpy.context.view_layer.objects.active = cojin
+    bpy.ops.object.join()
+    cojin.name = "asiento"
+    return cojin
+
+
+def cabina_interior():
+    """
+    Lo que se ve desde el asiento: suelo, panel, visera, pantallas y silla.
+
+    **Hacía falta porque el avión no tenía dentro.** El modelo era una carcasa
+    cerrada con cristal ahumado, y desde la vista de cabina se veía el capó y
+    el mundo y nada más: «JAZ 25 no tiene panel de mandos». Un avión sin panel
+    por dentro no es una cabina, es una burbuja.
+
+    Nada de esto se ve desde fuera —el cristal es oscuro— así que va contado en
+    caras: son siete piezas rectas, sin subdividir, y el avión entero sigue por
+    debajo de lo que costaba antes el modelo traído de fuera.
+
+    Dos nombres no son libres:
+
+    - **`asiento`**, porque de ahí sale el sitio de los ojos. `ojoDePiloto` lo
+      busca por nombre y pone la cabeza en el borde de arriba del respaldo.
+    - **`g1000_display`**, el material de las dos pantallas, que es lo que
+      busca `pantallas-cabina.ts` para encenderlas.
+    """
+    piezas = []
+
+    # El suelo, que si no se ve el interior del fuselaje por debajo de la silla.
+    piezas.append(caja("suelo-cabina", -0.36, 0.36, 0.32, 0.34, -1.70, -0.10))
+
+    # ── El panel ──────────────────────────────────────────────────────────
+    #
+    # **A setenta centímetros de los ojos, no a cuarenta.** El primer intento
+    # lo puso a cuarenta y cinco y desde el asiento no se veía: el plano
+    # cercano de la cámara está a sesenta centímetros, así que el panel entero
+    # quedaba **por delante** de él y se recortaba. Se veía el mundo, el capó y
+    # ni rastro de la cabina — igual que cuando no había panel. En un avión de
+    # verdad el panel cae a unos setenta y cinco centímetros de la cara, que
+    # es más o menos el brazo estirado.
+    #
+    # Vertical y mirando al piloto, con la visera por encima: esa visera es lo
+    # que en un avión de verdad hace que las pantallas se lean con sol, y aquí
+    # además es lo que separa el panel del parabrisas.
+    piezas.append(caja("panel", -0.38, 0.38, 0.40, 0.80, -1.60, -1.48))
+    piezas.append(caja("visera", -0.40, 0.40, 0.80, 0.84, -1.66, -1.40))
+
+    # Las dos pantallas, pegadas a la cara de atrás del panel. Separadas, que
+    # es como está un G1000: horizonte a la izquierda, rumbos a la derecha.
+    for lado in (-1, 1):
+        piezas.append(
+            cuadro(
+                "pantalla-izquierda" if lado < 0 else "pantalla-derecha",
+                0.28, 0.20, (lado * 0.155, 0.62, -1.475), "g1000_display",
+            )
+        )
+
+    # ── La silla ──────────────────────────────────────────────────────────
+    #
+    # Una sola: un fumigador lleva al piloto y nada más.
+    #
+    # **Y en una sola pieza**, que no es un capricho. `ojoDePiloto` busca el
+    # asiento **más adelantado** y pone los ojos en el borde de arriba de su
+    # caja. Con el cojín y el respaldo como dos objetos, el más adelantado era
+    # el cojín y los ojos quedaban a su altura: el piloto sentado en el suelo,
+    # con el panel por encima de la cabeza. Unidos, el borde de arriba de la
+    # caja es el del respaldo, que es donde va la cabeza de quien va sentado.
+    piezas.append(asiento_de_una_pieza())
+
+    # La palanca. No se toca, pero un avión sin palanca no es un avión.
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=8, radius=0.026, depth=0.32, location=(0, 0.54, -1.16)
+    )
+    piezas.append(pintar(bpy.context.object, "tablero"))
+
+    return piezas
 
 
 def construir():
@@ -259,11 +440,13 @@ def construir():
     ], "cristal")
     piezas.append(suavizar(cabina, subdividir=2, biselar=0))
 
+    piezas += cabina_interior()
+
     # ── Las dos alas ──────────────────────────────────────────────────────
     arriba = ala("ala-alta", ENVERGADURA / 2, CUERDA, CUERDA * 0.86, CUERDA * 0.13,
-                 en=(0, HUECO * 0.62, -LARGO * 0.13), diedro=math.radians(1.5))
+                 en=(0, ALA_ALTA, -LARGO * 0.13), diedro=math.radians(1.5))
     abajo = ala("ala-baja", ENVERGADURA * 0.46, CUERDA * 0.94, CUERDA * 0.80,
-                CUERDA * 0.12, en=(0, -HUECO * 0.38, -LARGO * 0.02),
+                CUERDA * 0.12, en=(0, ALA_BAJA, -LARGO * 0.02),
                 diedro=math.radians(2.5))
     piezas += [suavizar(arriba, subdividir=1), suavizar(abajo, subdividir=1)]
 
@@ -272,7 +455,17 @@ def construir():
         for dz in (-CUERDA * 0.30, CUERDA * 0.28):
             piezas.append(
                 montante(lado * ENVERGADURA * 0.30, -LARGO * 0.07 + dz,
-                         -HUECO * 0.38, HUECO * 0.62)
+                         ALA_BAJA, ALA_ALTA)
+            )
+
+    # Y las cabañas, del fuselaje al ala de arriba. Con el plano subido por
+    # encima de la carlinga hay medio metro de aire entre los dos, y sin nada
+    # que lo cruce el ala parece puesta ahí con alfileres.
+    for lado in (-1, 1):
+        for dz in (-CUERDA * 0.34, CUERDA * 0.20):
+            piezas.append(
+                montante(lado * 0.34, -LARGO * 0.13 + dz,
+                         ALTO_FUSELAJE * 0.50, ALA_ALTA, grosor=0.035)
             )
 
     # ── Cola ──────────────────────────────────────────────────────────────

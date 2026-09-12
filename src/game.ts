@@ -1000,7 +1000,7 @@ export class Game {
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   faseAnunciada = "";
 
-  private cameraMode: CameraMode = vistaRecordada();
+  cameraMode: CameraMode = vistaRecordada();
   private propellerAngle = 0;
   /** Estado del avión en el fotograma anterior, para detectar los cambios. */
   private wasOnGround = true;
