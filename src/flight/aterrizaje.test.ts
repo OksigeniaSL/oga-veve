@@ -15,7 +15,17 @@ function volarYAterrizar(
   const veredictos = [];
   const paso = 0.5;
   veredictos.push(w.update(true, 0, 0, false, true, VREF, paso)); // parado al principio
-  for (let i = 0; i < 5; i++)
+  /*
+   * **Y se vuela un rato de verdad antes de tocar.**
+   *
+   * Eran cinco pasos, o sea dos segundos y medio en el aire, y eso dejó de
+   * contar como un vuelo el día que un bote dejó de contar como uno: rodando
+   * por una plataforma, un badén daba un salto corto y al volver a tocar salía
+   * «aterrizaste fuera de la pista», con percance y vuelo terminado. Ver
+   * `ALGO_MAS_QUE_UN_BOTE`. Dos segundos y medio no es una aproximación por
+   * ningún lado, así que aquí se vuela veinte.
+   */
+  for (let i = 0; i < 40; i++)
     veredictos.push(w.update(false, VREF, 0, false, false, VREF, paso));
   // El contacto.
   veredictos.push(w.update(true, alTocar, sink, crashed, enPista, VREF, paso));
@@ -51,7 +61,10 @@ describe("el aterrizaje se reconoce y se dice", () => {
 
   it("se dice una sola vez, no una por fotograma", () => {
     const w = new LandingWatcher();
-    w.update(false, 50, 0, false, false, VREF, 0.2);
+    // Un rato en el aire de verdad: un bote no arma el detector. Ver
+    // `ALGO_MAS_QUE_UN_BOTE`.
+    for (let i = 0; i < 30; i++)
+      w.update(false, 50, 0, false, false, VREF, 0.2);
     w.update(true, 40, 0.5, false, true, VREF, 0.2);
     const dichos = [];
     for (let i = 0; i < 30; i++) {
@@ -108,7 +121,9 @@ describe("el listón de la toma rápida es alcanzable", () => {
   const conTope = (alTocar: number) => {
     const w = new LandingWatcher();
     const paso = 0.5;
-    w.update(false, VREF, 0, false, false, VREF, paso, VMAX_ARCADE);
+    // Volando un rato antes, que es lo que arma el detector.
+    for (let i = 0; i < 10; i++)
+      w.update(false, VREF, 0, false, false, VREF, paso, VMAX_ARCADE);
     w.update(true, alTocar, 0.4, false, true, VREF, paso, VMAX_ARCADE);
     const dichos = [];
     for (let i = 0; i < 6; i++) {
@@ -124,5 +139,56 @@ describe("el listón de la toma rápida es alcanzable", () => {
 
   it("y a velocidad de aproximación sigue siendo una toma buena", () => {
     expect(conTope(VREF)).toEqual(["suave"]);
+  });
+});
+
+/**
+ * Un bote no es un vuelo.
+ *
+ * El detector se armaba con **un solo fotograma** con las ruedas despegadas,
+ * así que rodar por una plataforma con un badén daba un salto corto y, al
+ * volver a tocar, veredicto de aterrizaje. Y fuera de la pista, porque una
+ * plataforma no es pista: percance, pantalla y vuelo terminado, con el vuelo
+ * ya hecho y el aterrizaje ya celebrado. Medido en Guaraní, rodando de vuelta
+ * al puesto a trece metros por segundo.
+ */
+describe("un bote no es un vuelo", () => {
+  /** Un paso del detector, con los valores de rodar por una plataforma. */
+  const rodando = (w: LandingWatcher, enElSuelo: boolean) =>
+    w.update(enElSuelo, 13, 0.2, false, false, 28, 0.1, 37);
+
+  it("un salto de medio segundo rodando no da veredicto", () => {
+    const w = new LandingWatcher();
+    for (let i = 0; i < 20; i++) rodando(w, true);
+    // Medio segundo en el aire: el badén.
+    for (let i = 0; i < 5; i++) rodando(w, false);
+    let veredicto = null;
+    for (let i = 0; i < 60; i++) veredicto = veredicto ?? rodando(w, true);
+    expect(veredicto).toBeNull();
+  });
+
+  it("pero volar de verdad y posarse fuera sí lo da", () => {
+    const w = new LandingWatcher();
+    for (let i = 0; i < 20; i++) rodando(w, true);
+    // Cinco segundos en el aire: eso ya es volar.
+    for (let i = 0; i < 50; i++) rodando(w, false);
+    let veredicto = null;
+    for (let i = 0; i < 60; i++) veredicto = veredicto ?? rodando(w, true);
+    expect(veredicto).toBe("fuera");
+  });
+
+  it("y un rebote en la toma no da dos veredictos", () => {
+    const w = new LandingWatcher();
+    const enPista = (s: boolean) =>
+      w.update(s, 28, 1.0, false, true, 28, 0.1, 37);
+    for (let i = 0; i < 50; i++) enPista(false);
+    // Toca, rebota medio segundo y vuelve a tocar.
+    let primero = null;
+    for (let i = 0; i < 30; i++) primero = primero ?? enPista(true);
+    expect(primero).not.toBeNull();
+    for (let i = 0; i < 5; i++) enPista(false);
+    let segundo = null;
+    for (let i = 0; i < 60; i++) segundo = segundo ?? enPista(true);
+    expect(segundo).toBeNull();
   });
 });
