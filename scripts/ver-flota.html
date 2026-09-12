@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>La flota</title>
+<style>
+  body { margin: 0; background: #eceae2; font: 13px system-ui, sans-serif; }
+  .fila { display: flex; align-items: center; }
+  .nombre { width: 150px; padding-left: 14px; color: #26302a; }
+  .nombre b { display: block; font-size: 15px; }
+  canvas { display: block; }
+</style>
+<div id="todo"></div>
+<script type="module">
+  import { AmbientLight, DirectionalLight, PerspectiveCamera, Scene, WebGLRenderer } from "three";
+  import { FLOTA } from "/src/flight/flota.ts";
+  import { fabricarAeronave } from "/src/world/fabrica-de-aeronaves.ts";
+  import { Mesh, MeshLambertMaterial } from "three";
+
+  const MEDIDAS = { envergadura: 11, cuerda: 1.5, tren: 0.9 };
+  const PALETA = { body: 0xe7e3d8, accent: 0xc4522f, trim: 0x3a4038 };
+  // De perfil, de planta y de tres cuartos: un avión no se reconoce desde un
+  // solo sitio. La cola en T se ve de perfil; la flecha del ala, desde arriba.
+  const VISTAS = [
+    { d: [14, 0.6, 0], nombre: "perfil" },
+    { d: [0, 15, 0.001], nombre: "planta" },
+    { d: [9, 6, 10], nombre: "tres cuartos" },
+  ];
+
+  const todo = document.getElementById("todo");
+  for (const m of FLOTA) {
+    const fila = document.createElement("div");
+    fila.className = "fila";
+    const rotulo = document.createElement("div");
+    rotulo.className = "nombre";
+    rotulo.innerHTML = `<b>JAZ ${m.numero} ${m.nombre}</b>${m.silueta}`;
+    fila.appendChild(rotulo);
+    for (const vista of VISTAS) {
+      const escena = new Scene();
+      escena.add(new AmbientLight(0xffffff, 0.72));
+      const sol = new DirectionalLight(0xffffff, 0.9);
+      sol.position.set(4, 9, 6);
+      escena.add(sol);
+      const { geometria } = fabricarAeronave(m.silueta, MEDIDAS, PALETA);
+      geometria.center();
+      escena.add(new Mesh(geometria, new MeshLambertMaterial({ vertexColors: true })));
+      const camara = new PerspectiveCamera(34, 330 / 150, 0.1, 200);
+      camara.position.set(...vista.d);
+      camara.lookAt(0, 0, 0);
+      const pintor = new WebGLRenderer({ antialias: true });
+      pintor.setSize(330, 150);
+      pintor.setClearColor(0xeceae2);
+      pintor.render(escena, camara);
+      fila.appendChild(pintor.domElement);
+    }
+    todo.appendChild(fila);
+  }
+  globalThis.__listo = true;
+</script>
