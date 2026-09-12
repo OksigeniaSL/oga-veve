@@ -281,7 +281,13 @@ import {
   bandaDeVelocidad,
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
-import { callar, conectarLaMezcla, decir, permitirVoz } from "./audio/voz";
+import {
+  callar,
+  conectarLaMezcla,
+  decir,
+  permitirVoz,
+  ponerVolumenDeVoz,
+} from "./audio/voz";
 import { Agenda } from "./flight/agenda";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
@@ -1355,6 +1361,14 @@ export class Game {
       this.audio.level.glyph,
       t(`sound.${this.audio.level.id}` as never),
     );
+    /*
+     * Y el volumen que quedó guardado también manda sobre la voz, **desde el
+     * arranque**: se guarda entre partidas, así que quien dejó el juego en
+     * «bajo» lo encuentra en «bajo» — y hasta hoy se lo encontraba con el
+     * instructor a tope hasta que tocara el botón. Ver `ponerVolumenDeVoz`.
+     */
+    permitirVoz(this.audio.level.id !== "mudo");
+    ponerVolumenDeVoz(this.audio.level.gain);
     // La pantalla de teclas se monta si existe su hueco. Es opcional a
     // propósito: el juego tiene que arrancar aunque falte.
     const teclasRoot = document.getElementById("teclas");
@@ -6455,6 +6469,13 @@ export class Game {
     // juego en mudo lo pone en mudo entero, y una voz que sigue hablando con
     // el altavoz tachado es exactamente lo que nadie espera.
     permitirVoz(level.id !== "mudo");
+    /*
+     * Y **el peldaño «bajo» también baja la voz**. La voz del navegador no
+     * pasa por la mezcla, así que el volumen maestro no la alcanza: hasta hoy
+     * el botón solo la callaba del todo o la dejaba a tope. Veinte tablets en
+     * un aula a medio volumen con el instructor gritando en las veinte.
+     */
+    ponerVolumenDeVoz(level.gain);
     // En mudo no queda nadie hablando, así que la mezcla se levanta: si no,
     // se quedaba agachada con la última voz cortada a medias.
     if (level.id === "mudo") this.audio.callarLasVoces();

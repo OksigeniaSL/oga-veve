@@ -25,6 +25,27 @@ const IDIOMA = "en-US";
 let permitido = true;
 
 /**
+ * Lo alto que habla la voz del navegador, de 0 a 1.
+ *
+ * **La voz no pasa por Web Audio**, así que el volumen maestro del juego no la
+ * toca: el botón del altavoz la callaba en mudo y la dejaba **igual de alta en
+ * «bajo»**. En un aula con veinte tablets a medio volumen, el instructor
+ * seguía a tope en las veinte, que es justo el aparato y el sitio para los que
+ * ese peldaño existe.
+ *
+ * Un punto por debajo de lo normal, como estaba: los avisos de cabina son
+ * secos y a los cuatro años una voz baja se pierde.
+ */
+let volumen = 0.9;
+
+/** Lo pone el botón del altavoz, con la ganancia del peldaño que toque. */
+export function ponerVolumenDeVoz(deLaMezcla: number): void {
+  // La ganancia normal de la mezcla es 0,85; se traduce a la escala de la voz
+  // para que «normal» siga sonando como sonaba.
+  volumen = Math.max(0, Math.min(1, (deLaMezcla / 0.85) * 0.9));
+}
+
+/**
  * Quién se entera de que hay alguien hablando.
  *
  * **La voz del navegador no pasa por Web Audio**, así que la mezcla no puede
@@ -103,7 +124,7 @@ export function decir(frase: string): void {
     // Un punto por encima de lo normal: los avisos de cabina son secos y
     // rápidos, y a los cuatro años una voz lenta se pierde antes de acabar.
     dicho.rate = 1.15;
-    dicho.volume = 0.9;
+    dicho.volume = volumen;
     sintesis.speak(dicho);
   } catch {
     // Sin voz se juega igual. Ver la cabecera de este fichero.

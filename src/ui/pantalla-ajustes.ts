@@ -47,6 +47,22 @@ export class PantallaDeAjustes {
         const valor = boton.getAttribute("data-valor") ?? "";
         guardarAjuste(cual, valor as never);
         this.pintar();
+        /*
+         * **Y el foco vuelve al botón que se acaba de pulsar.**
+         *
+         * `pintar` rehace el HTML entero del panel, así que el elemento que
+         * tenía el foco deja de existir y el navegador lo devuelve al `body`:
+         * fuera del panel. Con el teclado eso es tener que tabular otra vez
+         * desde el principio por cada ajuste que se cambia, y **con el mando
+         * es peor**, porque el cursor desaparece de la pantalla y no hay nada
+         * que diga dónde estaba. Un panel que se recorre sin leer no puede
+         * perder el sitio al elegir.
+         */
+        this.root
+          .querySelector<HTMLElement>(
+            `[data-ajuste="${cual}"][data-valor="${valor}"]`,
+          )
+          ?.focus();
         this.alCambiar(leerAjustes());
         return;
       }

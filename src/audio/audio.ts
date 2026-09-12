@@ -492,11 +492,7 @@ export class Audio {
     // El gas cerrado tapa el motor: respuesta inmediata al oído aunque las
     // vueltas todavía estén bajando.
     this.engineFilter?.frequency.setTargetAtTime(900 + gas * 3200, now, 0.06);
-    this.engineGain?.gain.setTargetAtTime(
-      (controls.engineOn ? 0.1 : 0) + gas * 0.14,
-      now,
-      0.1,
-    );
+
     // La resonancia sube con las vueltas. Es lo que de verdad se oye cambiar
     // en un altavoz pequeño: el fundamental está por debajo de lo que
     // reproduce, así que si el timbre no se mueve, el motor suena plano por
@@ -511,10 +507,26 @@ export class Audio {
     // Esfuerzo: el motor canta distinto trepando que en descenso, aunque el
     // gas no se toque. Es carga aerodinámica, y se oye.
     const load = clamp(state.verticalSpeed / 6, -1, 1);
+    /*
+     * **Una sola escritura, y con la constante rápida.**
+     *
+     * Esto se programaba **dos veces por fotograma**: una arriba con el gas
+     * solo y constante de una décima —«respuesta inmediata al oído aunque las
+     * vueltas todavía estén bajando»— y otra aquí con el esfuerzo añadido y
+     * constante de segundo y medio. La segunda anulaba a la primera, así que
+     * la respuesta inmediata era código muerto y el gas tardaba segundo y
+     * medio en oírse: cerrar gases en corta final no sonaba a cerrar gases.
+     *
+     * Un nodo de ganancia tiene un valor y una constante, así que se escribe
+     * una vez con el objetivo entero. Y la constante es la rápida: los
+     * términos de esfuerzo —régimen de ascenso y carga en viraje— se mueven
+     * despacio por sí solos, así que no pierden nada, y el gas gana lo que
+     * llevaba perdido.
+     */
     this.engineGain?.gain.setTargetAtTime(
       (controls.engineOn ? 0.1 : 0) + gas * 0.14 + load * 0.03 + carga * 0.02,
       now,
-      1.4,
+      0.1,
     );
     this.propGain?.gain.setTargetAtTime(
       (controls.engineOn ? 0.03 : 0) + gas * 0.075,
