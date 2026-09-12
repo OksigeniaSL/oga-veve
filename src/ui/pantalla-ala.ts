@@ -33,7 +33,7 @@
  */
 
 import { t } from "../i18n";
-import { Encierro } from "./panel";
+import { Panel } from "./panel";
 import {
   ALFA_MAXIMA,
   ALFA_MINIMA,
@@ -68,7 +68,7 @@ const CURVAS = { x: 214, y: 12, ancho: 92, alto: 58 };
 
 export class PantallaDelAla {
   private readonly root: HTMLElement;
-  private readonly encierro: Encierro;
+  private readonly panel: Panel;
   private readonly avion: AircraftConfig;
   /**
    * Si hay que dibujar la corriente quieta.
@@ -90,7 +90,7 @@ export class PantallaDelAla {
     this.root = root;
     this.avion = avion;
     this.reducido = reducido;
-    this.encierro = new Encierro(root, () => this.cerrar());
+    this.panel = new Panel(root, () => this.cerrar());
     root.innerHTML = this.armazon();
     root
       .querySelector('[data-ala="cerrar"]')
@@ -116,14 +116,12 @@ export class PantallaDelAla {
   }
 
   abrir(): void {
-    this.root.hidden = false;
-    this.encierro.abrir();
+    this.panel.abrir();
     this.pintar();
   }
 
   cerrar(): void {
-    this.root.hidden = true;
-    this.encierro.soltar();
+    this.panel.cerrar();
   }
 
   alternar(): void {

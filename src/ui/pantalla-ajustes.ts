@@ -12,7 +12,7 @@
  */
 
 import { t } from "../i18n";
-import { Encierro } from "./panel";
+import { Panel } from "./panel";
 import {
   CABECEOS,
   MOVIMIENTOS,
@@ -33,13 +33,13 @@ const FILAS = [
 
 export class PantallaDeAjustes {
   private readonly root: HTMLElement;
-  private readonly encierro: Encierro;
+  private readonly panel: Panel;
   private readonly alCambiar: (a: Ajustes) => void;
 
   constructor(root: HTMLElement, alCambiar: (a: Ajustes) => void) {
     this.root = root;
     this.alCambiar = alCambiar;
-    this.encierro = new Encierro(root, () => this.cerrar());
+    this.panel = new Panel(root, () => this.cerrar());
     root.addEventListener("click", (e) => {
       const boton = (e.target as HTMLElement)?.closest?.("[data-ajuste]");
       if (boton) {
@@ -65,13 +65,11 @@ export class PantallaDeAjustes {
 
   abrir(): void {
     this.pintar();
-    this.root.hidden = false;
-    this.encierro.abrir();
+    this.panel.abrir();
   }
 
   cerrar(): void {
-    this.root.hidden = true;
-    this.encierro.soltar();
+    this.panel.cerrar();
   }
 
   private pintar(): void {
