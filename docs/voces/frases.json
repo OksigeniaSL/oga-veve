@@ -616,6 +616,34 @@
     "para": "las misiones"
   },
   {
+    "id": "ala.dice.arriba",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.",
+    "para": "lo que explica el esquema del ala"
+  },
+  {
+    "id": "ala.dice.arrastra",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.",
+    "para": "lo que explica el esquema del ala"
+  },
+  {
+    "id": "ala.dice.cerca",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cuidado: un poco más de ángulo y el aire se suelta.",
+    "para": "lo que explica el esquema del ala"
+  },
+  {
+    "id": "ala.dice.perdida",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.",
+    "para": "lo que explica el esquema del ala"
+  },
+  {
     "id": "torre.verde",
     "voz": "torre",
     "idioma": "es-PY",

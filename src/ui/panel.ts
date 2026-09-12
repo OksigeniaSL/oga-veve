@@ -247,7 +247,7 @@ export class Encierro {
  * está abierto no se puede descuadrar.
  */
 const todos = new Set<Panel>();
-let habia = false;
+let habia = { congela: false, alguno: false };
 /**
  * Los abiertos, en el orden en que se abrieron: el último es el de arriba.
  *
@@ -267,8 +267,19 @@ const vigilante = new VigilanteDelMando();
  * montar media concha.
  */
 export interface LaConcha {
-  /** Hay algún panel abierto, o ya no hay ninguno. */
-  alAbrirseOCerrarse(hayAlguno: boolean): void;
+  /**
+   * Qué hay abierto encima del vuelo, y de qué clase.
+   *
+   * Dos cosas y no una, porque no todos los paneles piden lo mismo: una
+   * pantalla que se lee congela el vuelo y un instrumento que se consulta
+   * volando solo pide que el avión no se caiga. Ver `PanelDelVuelo.congela`.
+   */
+  alAbrirseOCerrarse(que: {
+    /** Hay alguno que congela: el mundo se para. */
+    congela: boolean;
+    /** Hay alguno abierto, congele o no: el vuelo se mantiene recto. */
+    alguno: boolean;
+  }): void;
   /** Acusa recibo de lo que acaba de hacer quien está delante. */
   suena(que: SonidoDeConcha): void;
 }
@@ -288,24 +299,42 @@ let concha: LaConcha | null = null;
 /** Quién lleva la concha. Lo monta `Game`. */
 export function laConchaLaLleva(quien: LaConcha): void {
   concha = quien;
-  habia = false;
+  habia = { congela: false, alguno: false };
   recontar();
 }
 
 function recontar(): void {
   vigilante.atiendeA(pilaDePaneles[pilaDePaneles.length - 1] ?? null);
-  const hay = [...todos].some((p) => p.abierto);
-  if (hay === habia) return;
-  habia = hay;
-  concha?.alAbrirseOCerrarse(hay);
+  const abiertos = [...todos].filter((p) => p.abierto);
+  const ahora = {
+    congela: abiertos.some((p) => p.congela),
+    alguno: abiertos.length > 0,
+  };
+  if (ahora.congela === habia.congela && ahora.alguno === habia.alguno) return;
+  habia = ahora;
+  concha?.alAbrirseOCerrarse(ahora);
 }
 
 export class Panel {
   private readonly caja: HTMLElement;
   private readonly encierro: Encierro;
 
-  constructor(caja: HTMLElement, cerrar: () => void, conEscape = true) {
+  /**
+   * Si abrirlo congela el vuelo, o solo lo deja recto.
+   *
+   * Lo dice la tabla de paneles, que es donde se decide de qué clase es cada
+   * uno. Ver `PanelDelVuelo.congela`.
+   */
+  readonly congela: boolean;
+
+  constructor(
+    caja: HTMLElement,
+    cerrar: () => void,
+    conEscape = true,
+    congela = true,
+  ) {
     this.caja = caja;
+    this.congela = congela;
     /*
      * La promesa que hace el encierro —«lo de detrás no existe»— se declara
      * junto a él, o el lector de pantalla dice una cosa y el teclado hace

@@ -37,6 +37,24 @@ export interface PanelDelVuelo {
    * el icono a trazo de 1,6 en vez de a relleno.
    */
   readonly trazo?: boolean;
+  /**
+   * Si abrirlo **congela el vuelo** o solo lo deja recto.
+   *
+   * #70 lo pide con las dos opciones: «un panel abierto pausa el vuelo o lo
+   * deja en vuelo recto; nunca se cae el avión mientras alguien está eligiendo
+   * gorra». La diferencia no es de gusto, es de qué clase de cosa es cada uno:
+   *
+   * - Los **instrumentos** —el plano y el tiempo— se consultan **volando**. Un
+   *   plano existe para ver por dónde vas, y con el avión parado no vas a
+   *   ninguna parte: la marca de tu posición se queda quieta y el instrumento
+   *   deja de decir lo único que tiene que decir. Esos dejan el vuelo recto.
+   * - Las **pantallas** —los mandos, el cuaderno, el ala, los créditos— se
+   *   leen. Ahí el vuelo estorba, y congelarlo es lo correcto.
+   *
+   * Se eligió congelar los seis y se vio jugando: «no entiendo por qué cuando
+   * se abre el mapa se para el avión».
+   */
+  readonly congela?: boolean;
   /** El dibujo, en el lienzo de 24 de siempre. */
   readonly icono: string;
 }
@@ -61,6 +79,8 @@ export const PANELES_DEL_VUELO: readonly PanelDelVuelo[] = [
   {
     /* El plano del campo, doblado en tres como el de papel. */
     id: "mapa-boton",
+    // Un instrumento: se mira volando. Ver `congela`.
+    congela: false,
     caja: '[data-hud="mapa"]',
     titulo: "mapa.title",
     trazo: true,
@@ -72,6 +92,8 @@ export const PANELES_DEL_VUELO: readonly PanelDelVuelo[] = [
   {
     /* El tiempo: la nube y el viento por debajo, que es lo que cambia un vuelo. */
     id: "tiempo-boton",
+    // Un instrumento: se mira volando. Ver `congela`.
+    congela: false,
     caja: '[data-hud="tiempo"]',
     titulo: "tiempo.title",
     trazo: true,

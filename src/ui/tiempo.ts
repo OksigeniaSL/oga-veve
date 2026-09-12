@@ -195,7 +195,14 @@ export class PanelDelTiempo {
   bind(raiz: HTMLElement): void {
     this.raiz = raiz;
     this.caja = raiz.querySelector('[data-hud="tiempo"]');
-    if (this.caja) this.panel = new Panel(this.caja, () => this.cerrar());
+    if (this.caja)
+      this.panel = new Panel(
+        this.caja,
+        () => this.cerrar(),
+        true,
+        // Instrumento, como el plano: se consulta volando. Ver `congela`.
+        false,
+      );
     this.rosa = raiz.querySelector('[data-hud="tiempo-rosa"]');
     raiz
       .querySelector('[data-hud="tiempo-boton"]')
