@@ -2099,6 +2099,24 @@ export class Game {
       return;
     if (this.distanceToRunway() > MANDAN_DESDE) return;
     /*
+     * **Y viniendo de verdad en final, no solo cerca.**
+     *
+     * Esto pedía «acercándose al umbral, entre sesenta y ciento sesenta metros
+     * y a menos de tres kilómetros», y eso lo cumple cualquiera que dé una
+     * vuelta por el valle: se pasa cerca de la pista sin la menor intención de
+     * aterrizar y la torre te manda al aire con la pista fuera de la pantalla.
+     * «¿Qué carajo si no hay ni campo a la vista?»
+     *
+     * El embudo ya existía y ya lo usaban los mínimos, por esta misma razón
+     * escrita en `mirarLosMinimos`: «cerca del umbral y acercándose» no
+     * distingue una aproximación de un tramo del circuito. Faltaba aquí.
+     */
+    if (
+      enElEmbudoDeFinal(this.scenario.runway, s.position.x, s.position.z) ===
+      null
+    )
+      return;
+    /*
      * **Una de cada cuatro**, y sorteada con el propio vuelo.
      *
      * Ni siempre —una aproximación que siempre acaba en frustrada deja de ser
@@ -2127,7 +2145,9 @@ export class Game {
         (this.scenario.runway.heading * Math.PI) / 180,
       );
     } else {
-      this.hud.setLuzDeTorre("roja");
+      // Roja, pero la del aire: «¡al aire!», no «esperá acá». Ver
+      // `Hud.setLuzDeTorre`.
+      this.hud.setLuzDeTorre("roja", "alAire");
     }
     // Y a partir de aquí la luz la lleva la torre. Ver `laTorreMandaEnLaLuz`.
     this.laTorreMandaEnLaLuz = true;
@@ -4831,7 +4851,17 @@ export class Game {
       this.flight.state,
       this.input.controls.throttle,
       dt,
-      this.distanceToRunway(),
+      /*
+       * Y si viene **de verdad** en final, que es el mismo embudo que usan los
+       * mínimos y la orden de irse al aire. Antes se le pasaba la distancia
+       * cruda a la cabecera, y con eso el consejo de aflojar el motor salía
+       * dando una vuelta por el valle, a veinte metros de una ladera.
+       */
+      enElEmbudoDeFinal(
+        this.scenario.runway,
+        this.flight.state.position.x,
+        this.flight.state.position.z,
+      ) !== null,
       /*
        * Y si hay raya verde a la que seguir. El último consejo del tutor es
        * «seguí la raya y salí de la pista», y en una pista en medio del campo

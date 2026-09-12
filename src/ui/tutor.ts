@@ -51,10 +51,31 @@ type Step =
   | "salir"
   | "done";
 
-/** Distancia a la cabecera desde la que se avisa de bajar el motor, en metros. */
-const APPROACH_DISTANCE = 2400;
 /** Por encima de este gas no se puede bajar para aterrizar. */
 const APPROACH_THROTTLE = 0.45;
+
+/**
+ * Y por debajo de esta altura sobre el terreno no se pide aflojar, m.
+ *
+ * **Aflojar el motor pegado al suelo es estrellarse.** El consejo miraba solo
+ * la distancia al umbral, así que volando bajo por el valle —a veinte metros
+ * de una ladera que sube— el cartel pedía quitar gas sin parar, y obedecerlo
+ * era tocar la loma: «me pide insistentemente que baje el motor, pero si lo
+ * bajo, caigo y me la pego contra el suelo». Y a la vez el aviso de terreno
+ * pedía subir: dos carteles del mismo juego diciendo lo contrario.
+ *
+ * Sesenta metros es la misma altura desde la que empieza a contar el circuito
+ * y desde la que se puede mandar al aire: por debajo de eso ya no se está
+ * decidiendo nada, se está volando rasante.
+ */
+const ALTO_PARA_AFLOJAR = 60;
+
+/**
+ * Y con cuánto gas se entiende que lo que hay no es una carrera de frenada.
+ *
+ * Nadie frena con medio motor puesto. Ver `pasoQueToca`.
+ */
+const GAS_DE_DESPEGUE = 0.5;
 
 /**
  * Por debajo de esta velocidad se ha acabado la carrera de aterrizaje, m/s.
@@ -216,7 +237,7 @@ export class Tutor {
     this.hasFlown = false;
   }
 
-  /** @param distanceToRunway metros hasta la cabecera de pista */
+  /** @param enFinal si el avión viene en final de verdad. Ver `Mirada`. */
   /**
    * Callar mientras manda otro.
    *
@@ -238,7 +259,7 @@ export class Tutor {
     state: FlightState,
     throttle: number,
     dt: number,
-    distanceToRunway: number,
+    enFinal: boolean,
     /**
      * Si hay una raya verde pintada en el suelo a la que seguir.
      *
@@ -261,7 +282,7 @@ export class Tutor {
       return;
     }
 
-    this.step = this.nextStep(state, throttle, dt, distanceToRunway, hayRaya);
+    this.step = this.nextStep(state, throttle, dt, enFinal, hayRaya);
 
     if (this.step === "done" || state.crashed) {
       this.root.hidden = true;
@@ -302,7 +323,7 @@ export class Tutor {
     state: FlightState,
     throttle: number,
     dt: number,
-    distanceToRunway: number,
+    enFinal: boolean,
     hayRaya: boolean,
   ): Step {
     const salida = pasoQueToca(
@@ -311,7 +332,7 @@ export class Tutor {
         celebrando: this.celebrating,
         haVolado: this.hasFlown,
       },
-      { state, throttle, dt, distanceToRunway, hayRaya },
+      { state, throttle, dt, hayRaya, enFinal },
     );
     this.celebrating = salida.celebrando;
     this.hasFlown = salida.haVolado;
@@ -364,9 +385,18 @@ export interface Mirada {
   readonly state: FlightState;
   readonly throttle: number;
   readonly dt: number;
-  readonly distanceToRunway: number;
   /** Si hay raya verde a la que seguir. Ver `Tutor.update`. */
   readonly hayRaya: boolean;
+  /**
+   * Si el avión viene **de verdad** en final: dentro del embudo de la pista.
+   *
+   * «Cerca del umbral y acercándose» no lo distingue, y por eso está aquí lo
+   * mismo que ya usaban los mínimos y la orden de irse al aire: en el viento
+   * en cola de un circuito se vuela hacia el umbral con la pista a mil metros
+   * por el costado, y dando una vuelta por el valle se pasa cerca sin tener
+   * ninguna intención de aterrizar. Ver `enElEmbudoDeFinal`.
+   */
+  readonly enFinal: boolean;
 }
 
 /**
@@ -382,7 +412,7 @@ export function pasoQueToca(
   antes: Memoria,
   mirada: Mirada,
 ): { paso: Step; celebrando: number; haVolado: boolean } {
-  const { state, throttle, dt, distanceToRunway, hayRaya } = mirada;
+  const { state, throttle, dt, hayRaya, enFinal } = mirada;
   let { celebrando, haVolado } = antes;
 
   if (antes.paso === "flying") {
@@ -391,6 +421,20 @@ export function pasoQueToca(
   }
 
   if (state.onGround) {
+    /*
+     * **Con el motor puesto, en el suelo, lo que hay es un despegue.**
+     *
+     * Volar y volver a despegar es lo normal en este juego: se aterriza, se
+     * frena, y se vuelve a salir sin pasar por el hangar. Pero «ya ha volado»
+     * se quedaba puesto para siempre, así que la segunda carrera de despegue
+     * entraba por la rama del aterrizaje y el cartel pedía **frenar** con la
+     * pista entera por delante: «¿por qué me pide que frene?».
+     *
+     * No hace falta preguntarle a nadie qué quiere hacer: nadie frena con
+     * medio motor puesto. Con el gas arriba y las ruedas en el suelo, esto
+     * empieza otra vez por el principio.
+     */
+    if (haVolado && throttle >= GAS_DE_DESPEGUE) haVolado = false;
     if (haVolado) {
       // La carrera de aterrizaje: frenar hasta rodaje, y luego salir.
       if (state.airspeed > RODAJE)
@@ -429,8 +473,18 @@ export function pasoQueToca(
     return { paso: "flying", celebrando, haVolado };
   }
 
-  // En el aire y de vuelta hacia la pista.
-  if (distanceToRunway < APPROACH_DISTANCE && throttle > APPROACH_THROTTLE)
+  /*
+   * En el aire y **de verdad** viniendo a aterrizar: dentro del embudo de
+   * final y con altura de sobra sobre lo que haya debajo. Las dos condiciones
+   * son de la misma queja: el consejo miraba solo la distancia al umbral, así
+   * que salía dando una vuelta por el valle y pedía quitar gas a veinte metros
+   * de una ladera.
+   */
+  if (
+    enFinal &&
+    throttle > APPROACH_THROTTLE &&
+    state.heightAboveGround > ALTO_PARA_AFLOJAR
+  )
     return { paso: "slow", celebrando, haVolado };
   return { paso: "done", celebrando, haVolado };
 }
