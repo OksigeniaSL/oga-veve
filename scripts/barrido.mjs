@@ -47,6 +47,25 @@ const cuenta = (salida) => {
   return m ? { bien: +m[1], total: +m[2] } : null;
 };
 
+/**
+ * Cuánto del vuelo se pasa rodando.
+ *
+ * Es el número que el barrido está aquí para enseñar, y no cabía en ningún
+ * banco suelto: cada uno mira su aeropuerto y dice si el rodaje «no se
+ * dispara», pero lo que se ve al ponerlos en fila es otra cosa —que en los
+ * campos grandes el rodaje **es** el vuelo—. Medido en Pettirossi: 75 s de
+ * ida, 276 de vuelta y 500 de vuelo entero. Siete de cada diez minutos
+ * rodando, para alguien que tiene cuatro años y quiere volar.
+ */
+const rodando = (salida) => {
+  const ida = /(\d+) s del puesto al punto de espera/.exec(salida);
+  const vuelta = /(\d+) s y (\d+) m de la pista al puesto/.exec(salida);
+  const total = /acabó en «[^»]+» a los (\d+) s/.exec(salida);
+  if (!ida || !vuelta || !total) return null;
+  const suma = +ida[1] + +vuelta[1];
+  return { ida: +ida[1], vuelta: +vuelta[1], total: +total[1], suma };
+};
+
 /** Y la línea del final del vuelo, que es lo que dice dónde se quedó. */
 const comoAcabo = (salida) => {
   const m = /acabó en «([^»]+)» a los (\d+) s([^\n]*)/.exec(salida);
@@ -74,7 +93,15 @@ for (const [escenario, tramo] of LISTA) {
   });
   const minutos = (Date.now() - empezo) / 60000;
   const c = cuenta(salida);
-  partes.push({ escenario, tramo, c, minutos, fin: comoAcabo(salida), salida });
+  partes.push({
+    escenario,
+    tramo,
+    c,
+    minutos,
+    fin: comoAcabo(salida),
+    rodaje: rodando(salida),
+    salida,
+  });
   console.log(
     c
       ? `${c.bien} de ${c.total} · ${minutos.toFixed(1)} min`
@@ -99,6 +126,22 @@ for (const p of partes) {
  * un problema y no dice cuál, y entonces hay que volver a correr el banco a
  * mano para verlo: o sea, el barrido no ha ahorrado nada.
  */
+console.log("\n  y cuánto de cada vuelo se pasa rodando:\n");
+for (const p of partes) {
+  const r = p.rodaje;
+  if (!r) {
+    console.log(`  · ${p.escenario.padEnd(ancho)}  no llegó a terminar`);
+    continue;
+  }
+  const parte = Math.round((100 * r.suma) / Math.max(1, r.total));
+  console.log(
+    `  · ${p.escenario.padEnd(ancho)}  ida ${String(r.ida).padStart(3)} s` +
+      ` · vuelta ${String(r.vuelta).padStart(3)} s` +
+      ` · vuelo ${String(r.total).padStart(3)} s` +
+      `  →  ${String(parte).padStart(3)} % rodando`,
+  );
+}
+
 const malos = partes.filter((p) => !p.c || p.c.bien !== p.c.total);
 for (const p of malos) {
   console.log(`\n  ── ${p.escenario} ──`);
