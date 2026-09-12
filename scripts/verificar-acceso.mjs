@@ -655,12 +655,39 @@ await quieta.goto(
   `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&teselas=0`,
 );
 await quieta.waitForTimeout(12000);
-// A todo gas por la pista, que es donde traquetea de verdad.
+/*
+ * Rodando con el motor a tope, que es cuando la cámara se mueve: el tope de
+ * rodaje del juego lo deja en unos cinco metros por segundo, y aun así el
+ * paso del tren por el asfalto es lo que hace el balanceo que aquí se mide.
+ *
+ * Se probó a colocarlo en la pista para medir la carrera de despegue y sale
+ * peor: `colocar` no cambia la fase, así que el tope de rodaje deja el gas a
+ * cero y el avión se queda quieto — que es exactamente el fallo que esta
+ * comprobación acaba de dejar de tener.
+ */
 const balanceo = await quieta.evaluate(async () => {
   const o = globalThis.__oga;
-  o.pilotar?.({ empuje: 1 });
+  /*
+   * **Y esto llevaba meses sin mover el avión.**
+   *
+   * `pilotar` recibe **una función** que el juego llama en cada fotograma con
+   * los mandos —ver `game.ts`— y aquí se le pasaba un objeto, `{empuje: 1}`,
+   * con un nombre de mando que además no existe. El juego intentaba llamarlo,
+   * reventaba con un `TypeError` sesenta veces por segundo —este banco no
+   * escucha `pageerror`, así que en silencio— y el avión no se movía ni un
+   * metro. Lo que se medía era una cámara quieta, o sea que la comprobación
+   * de movimiento reducido pasaba **por no haber movimiento que reducir**.
+   */
+  o.pilotar?.((c) => {
+    c.engineOn = true;
+    c.throttle = 1;
+    c.brakes = 0;
+  });
+  const antes = o.estado().position.clone?.() ?? { ...o.estado().position };
   await new Promise((r) => setTimeout(r, 6000));
   if (!o.ojoDeCamara) return null;
+  const ahora = o.estado().position;
+  const rodado = Math.hypot(ahora.x - antes.x, ahora.z - antes.z);
   const alturas = [];
   for (let i = 0; i < 90; i++) {
     alturas.push(o.ojoDeCamara().y);
@@ -678,8 +705,22 @@ const balanceo = await quieta.evaluate(async () => {
       Math.abs(alturas[i] - (alturas[i - 2] + alturas[i - 1]) / 2),
     );
   }
-  return { peor };
+  return { peor, rodado };
 });
+/*
+ * **Primero, que el avión se haya movido.**
+ *
+ * Una cámara quieta no se balancea, así que sin esto la comprobación de abajo
+ * pasa siempre y con más motivo cuanto más roto esté el juego. Es lo que
+ * pasaba: el mando iba mal escrito, el avión no rodaba y el banco daba verde.
+ */
+comprobar(
+  "y el avión rueda de verdad mientras se mide",
+  balanceo !== null && balanceo.rodado > 30,
+  balanceo === null
+    ? "no se pudo mirar"
+    : `${balanceo.rodado.toFixed(0)} m en seis segundos`,
+);
 comprobar(
   "con movimiento reducido la cámara no se balancea (2.3.3)",
   balanceo !== null && balanceo.peor < 0.05,

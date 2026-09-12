@@ -1729,6 +1729,22 @@ export class Game {
         nombre: this.aircraft.name,
         dibujo: this.aircraftMesh.deVerdad ? "modelo" : "cajas",
       }),
+      /**
+       * Cómo está puesto el avión: alabeo y cabeceo, en radianes.
+       *
+       * El estado de vuelo lleva la orientación como cuaternión, que es lo
+       * correcto por dentro y lo inservible desde fuera. Y hace falta: un
+       * piloto automático que manda alerón **sin mirar cuánto está inclinado**
+       * no vira, entra en espiral — el alerón manda velocidad de alabeo, no
+       * inclinación, así que sostenerlo es seguir girando sobre el eje hasta
+       * quedarse boca abajo. Le pasó al piloto del banco en Guaraní: viraba
+       * para volver, la inclinación crecía sola y bajaba de 168 a 39 metros
+       * con la palanca pidiendo subir.
+       */
+      actitud: () => ({
+        alabeo: bankAngleOf(this.flight.state.orientation),
+        cabeceo: pitchAngleOf(this.flight.state.orientation),
+      }),
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
       /*
