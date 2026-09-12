@@ -40,6 +40,14 @@ import { createServer } from "vite";
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
 const PUERTO = 5289;
+/*
+ * Cuántas veces más deprisa va el reloj del juego. Ver `Game.acelerar`.
+ *
+ * Con uno se vuela en tiempo real, que es lo que hacía este banco y lo que
+ * lo dejaba en ocho minutos por escenario. El juego tiene su tope y dice lo
+ * que pudo poner.
+ */
+const VECES = Number(process.argv[4] ?? 12);
 
 const server = await createServer({
   root: process.cwd(),
@@ -72,7 +80,7 @@ const comprobar = (nombre, ok, detalle, porque) =>
 
 // ── El vuelo ──────────────────────────────────────────────────────────────
 
-const vuelo = await page.evaluate(async () => {
+const vuelo = await page.evaluate(async (vecesPedidas) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -213,19 +221,52 @@ const vuelo = await page.evaluate(async () => {
   let toco = 0;
   const fases = new Set();
 
+  /** Cada cuánto mira el piloto lo que pasa, en segundos **de juego**. */
   const PASO = 0.1;
-  // Quince minutos de reloj. Un vuelo entero son unos ocho; el resto es
-  // margen para que, cuando algo falle, se vea **dónde** se quedó parado.
-  const TOPE = 9000;
+  /*
+   * **Y el reloj del juego va más deprisa que el de la pared.**
+   *
+   * Un vuelo entero son unos ocho minutos de reloj, y esto se corre por siete
+   * escenarios: casi dos horas por barrido, que es tanto como no tenerlo —«no
+   * puede ser que yo tenga que estar media hora entre prueba, grabación,
+   * comprobar que el fallo todavía está»—. Acelerado, el mismo vuelo cabe en
+   * un minuto largo.
+   *
+   * El juego dice lo que pudo poner, que puede no ser lo pedido: hay tope, y
+   * por buenos motivos. Ver `Game.acelerar`.
+   */
+  const veces = o.acelerar?.(vecesPedidas) ?? 1;
+  /*
+   * Quince minutos **de vuelo**. Un vuelo entero son unos ocho; el resto es
+   * margen para que, cuando algo falle, se vea **dónde** se quedó parado.
+   */
+  const TOPE = 900;
+  /*
+   * Y el tiempo se lee del juego, no se cuenta por vueltas.
+   *
+   * Antes era `i * PASO`: «cien milisegundos por vuelta, luego esto son doce
+   * segundos». Es mentira en cuanto la máquina va cargada —seis pestañas de
+   * Chrome, que es como se pasa un barrido entero— y con el reloj acelerado
+   * lo es del todo. Todo lo que este banco mide son **duraciones** —cuánto se
+   * rueda, cuánto tiempo estuvo muda la pantalla, cuánto sin raya—, así que
+   * medirlas con un reloj que miente es no medirlas.
+   */
+  const empezo = o.reloj();
+  let leidoAntes = empezo;
+  let t = 0;
   let i = 0;
-  for (; i < TOPE; i++) {
-    await new Promise((r) => setTimeout(r, PASO * 1000));
+  for (; t < TOPE; i++) {
+    await new Promise((r) => setTimeout(r, (PASO / veces) * 1000));
+    const ahora = o.reloj();
+    /** Lo que ha pasado de verdad desde la muestra anterior. */
+    const paso = ahora - leidoAntes;
+    leidoAntes = ahora;
+    t = ahora - empezo;
     const s = o.estado();
     const fase = o.fase();
     const ruta = o.ruta();
     const tarjeta = o.tarjeta();
     fases.add(fase);
-    const t = i * PASO;
 
     // ── Lo que se mide, pase lo que pase ─────────────────────────────────
     if (s.onGround) {
@@ -236,14 +277,14 @@ const vuelo = await page.evaluate(async () => {
        * Es literalmente lo que pasó: «la llave salió, se apagó a los seis
        * segundos, y ya no había forma de enterarse de qué hacía falta».
        */
-      mudo = tarjeta.dibujo ? 0 : mudo + PASO;
+      mudo = tarjeta.dibujo ? 0 : mudo + paso;
       if (mudo > mudoMaximo) {
         mudoMaximo = mudo;
         // Y **dónde**: un número sin sitio no se puede arreglar.
         mudoDonde = `a los ${t.toFixed(0)} s, en «${fase}» a ${s.airspeed.toFixed(0)} m/s`;
       }
       if (CON_RAYA.has(fase) && ruta.length < 2) {
-        sinRaya += PASO;
+        sinRaya += paso;
         // Y **dónde**: el primero y el último, que es lo que distingue un
         // hueco en mitad del rodaje de la cola natural del final del vuelo.
         const donde = `${t.toFixed(0)} s en «${fase}» a ${s.airspeed.toFixed(0)} m/s`;
@@ -253,7 +294,7 @@ const vuelo = await page.evaluate(async () => {
     } else {
       mudo = 0;
     }
-    if (o.avisoDeTerreno() && s.onRunway) terrenoEnPista += PASO;
+    if (o.avisoDeTerreno() && s.onRunway) terrenoEnPista += paso;
     if (tarjeta.dibujo === "toma") dijoToca = true;
     if (tarjeta.dibujo === "freno" && toco) pidioFreno = true;
 
@@ -334,7 +375,7 @@ const vuelo = await page.evaluate(async () => {
       c.brakes = 0;
       if (fase === "rodando" || fase === "arrancando") etapa = "rodar";
     } else if (etapa === "rodar") {
-      tiempoDeRodajeIda += PASO;
+      tiempoDeRodajeIda += paso;
       // La velocidad la pide el juego, y al final de la ruta pide cero: el
       // avión se para solo encima de la raya. Ver `calcularVelocidades`.
       const quiere = o.rodaje() ?? 9;
@@ -460,7 +501,7 @@ const vuelo = await page.evaluate(async () => {
       c.aileron = alRumbo(s, rumboPista);
       if (s.airspeed < 8) etapa = "volver";
     } else if (etapa === "volver") {
-      tiempoDeRodajeVuelta += PASO;
+      tiempoDeRodajeVuelta += paso;
       if (antes) {
         vueltaMetros += Math.hypot(
           s.position.x - antes.x,
@@ -500,7 +541,9 @@ const vuelo = await page.evaluate(async () => {
      * frenos puestos durante once minutos. Ver `sufrirPercance`.
      */
     percance: o.percance?.() ?? null,
-    segundos: i * PASO,
+    segundos: +t.toFixed(1),
+    veces,
+    vueltas: i,
     fases: [...fases].join(" "),
     // El principio y el final: los dos sitios donde se atasca un vuelo.
     linea: [...linea.slice(0, 4), "…", ...linea.slice(88, 150)],
@@ -525,7 +568,7 @@ const vuelo = await page.evaluate(async () => {
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
   };
-});
+}, VECES);
 
 // ── Lo que se comprueba ───────────────────────────────────────────────────
 
@@ -643,7 +686,10 @@ comprobar(
 
 // ── El informe ────────────────────────────────────────────────────────────
 
-console.log(`\n  vuelo entero · ${ESCENARIO} · ${TRAMO}\n`);
+console.log(
+  `\n  vuelo entero · ${ESCENARIO} · ${TRAMO} · reloj ×${vuelo.veces}` +
+    ` · ${vuelo.vueltas} muestras en ${vuelo.segundos.toFixed(0)} s de vuelo\n`,
+);
 let fallos = 0;
 for (const r of resultados) {
   if (!r.ok) fallos++;

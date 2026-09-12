@@ -282,10 +282,26 @@ import {
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
 import { callar, conectarLaMezcla, decir, permitirVoz } from "./audio/voz";
+import { Agenda } from "./flight/agenda";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 import { leerTexto, ponerTexto } from "./datos/guardado";
 import { dibujarReloj, relojDe } from "./ui/reloj";
+
+/** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
+const TOPE_DE_ACELERACION = 16;
+/**
+ * Lo más que puede valer un fotograma, en segundos de vuelo.
+ *
+ * El tope de arriba cuenta pasos y este cuenta **tiempo**, y hace falta porque
+ * lo primero depende de la máquina y lo segundo no. Quien mira el vuelo desde
+ * fuera —el banco, o quien juega— solo puede leer el estado una vez por
+ * fotograma: si un fotograma vale medio segundo de vuelo, el piloto del banco
+ * corrige el rumbo cada medio segundo y ya no está volando como se vuela.
+ * Medido: a veinticuatro pasos el rodaje de vuelta salía un catorce por ciento
+ * más largo que en tiempo real, que es el banco midiéndose a sí mismo.
+ */
+const LO_QUE_VALE_UN_CUADRO = 0.3;
 
 /** Dónde se guarda la vista elegida. */
 const ALMACEN_VISTA = "vista";
@@ -825,6 +841,32 @@ export class Game {
   private sinCatar = 0;
   /** Cuánto ha durado este vuelo, s. Cuenta desde que se arrancó. */
   private duracion = 0;
+  /**
+   * Lo que hay apuntado para dentro de un rato. Ver `flight/agenda.ts`.
+   *
+   * Con el reloj del juego y no con el del navegador: lo que se apunta aquí no
+   * pasa con el juego parado, y va más deprisa cuando el reloj va más deprisa.
+   */
+  private readonly agenda = new Agenda();
+  /**
+   * El reloj del juego desde que arrancó la partida, s.
+   *
+   * No es `duracion`, que se pone a cero en cada vuelo: este no se reinicia
+   * nunca. Lo miran los bancos para medir en segundos **de juego** en vez de
+   * en segundos de pared, que es la única forma de que lo que midan siga
+   * significando lo mismo con el reloj acelerado. Ver `acelerar`.
+   */
+  private relojDelJuego = 0;
+  /**
+   * Cuántas veces más deprisa va el reloj del juego. Solo en desarrollo.
+   *
+   * Un vuelo entero son unos ocho minutos de reloj, y el banco que lo vuela
+   * entero mide siete escenarios: casi dos horas por barrido, que es tanto
+   * como no tenerlo. La física ya va a pasos pequeños por dentro —ver
+   * `fdm.step`—, así que multiplicar el paso no la cambia: lo que cambia es
+   * cuántos segundos de vuelo caben en un segundo de pared.
+   */
+  private aceleracion = 1;
   /**
    * La última lectura del PAPI que se enseñó, o `null` si todavía ninguna.
    *
@@ -1654,6 +1696,24 @@ export class Game {
         ...this.audio.comoVa(),
         concha: this.loQueSonoLaConcha.splice(0),
       }),
+      /**
+       * El reloj del juego, en segundos, desde que arrancó la partida.
+       *
+       * Los bancos median el tiempo contando sus propias vueltas: «cien
+       * milisegundos por vuelta, luego esto son doce segundos». Es mentira en
+       * cuanto la máquina va cargada —seis pestañas de Chrome a la vez, que es
+       * como se pasa un barrido entero— y es mentira del todo con el reloj
+       * acelerado. Aquí está el número de verdad.
+       */
+      reloj: () => this.relojDelJuego,
+      /**
+       * Pone el reloj del juego a ir más deprisa.
+       *
+       * Para los bancos, y con un motivo muy concreto: el vuelo entero son
+       * ocho minutos de reloj por escenario y son siete escenarios. Devuelve
+       * lo que quedó puesto, que puede no ser lo pedido — ver `acelerar`.
+       */
+      acelerar: (veces: number) => this.acelerar(veces),
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
       /*
@@ -2061,6 +2121,32 @@ export class Game {
     this.running = false;
     this.renderer.setAnimationLoop(null);
     this.audio.setActive(false);
+  }
+
+  /**
+   * Pone el reloj del juego a ir más deprisa, **solo en desarrollo**.
+   *
+   * No hay truco: el mundo da **varios pasos por fotograma** en vez de uno, y
+   * se pinta una sola vez. Cada paso es exactamente el de siempre, así que el
+   * juego toma las mismas decisiones a los mismos intervalos y lo que cuenta
+   * el tiempo lo cuenta igual: las tarjetas, la agenda, la duración del vuelo.
+   * Lo único que se salta es pintar. Ver `frame`, que cuenta por qué no vale
+   * con alargar el paso.
+   *
+   * **Con tope.** Cada paso de más es trabajo de más en el mismo fotograma, y
+   * pasado cierto punto el fotograma tarda tanto que la ganancia se para sola:
+   * el mundo va más deprisa por paso y más despacio por segundo de pared. El
+   * tope está donde deja de compensar en la máquina más lenta con la que se
+   * mide, y no más arriba, porque un banco que tarda menos midiendo otra cosa
+   * no ha ahorrado nada.
+   *
+   * Devuelve lo que quedó puesto, que es lo que el banco tiene que creerse
+   * para sus cuentas, y no lo que pidió.
+   */
+  acelerar(veces: number): number {
+    if (!import.meta.env.DEV) return 1;
+    this.aceleracion = Math.max(1, Math.min(TOPE_DE_ACELERACION, veces));
+    return this.aceleracion;
   }
 
   /**
@@ -2497,9 +2583,9 @@ export class Game {
     this.cantar("cleared to land", t("vuelo.puedeVolver"), "vuelo.puedeVolver");
     // Y la lámpara se apaga sola en cuanto pase el aviso: en el aire no hay
     // lámpara que mirar, y dejarla encendida diría algo que ya no es verdad.
-    window.setTimeout(() => {
+    this.agenda.luego(SE_QUEDA_EL_ARO, () => {
       if (!this.mandanFrustrar) this.hud.setLuzDeTorre(null);
-    }, SE_QUEDA_EL_ARO * 1000);
+    });
   }
 
   /**
@@ -2830,7 +2916,7 @@ export class Game {
     this.input.releaseAll();
     this.audio.cue("error");
     this.cantar("we have a problem", t("vuelo.roto"), "vuelo.roto");
-    window.setTimeout(() => {
+    this.agenda.luego(TARDA_EL_FINAL, () => {
       if (this.percance !== tipo) return;
       this.hud.mostrarPercance(
         dibujoDePercance(
@@ -2844,7 +2930,7 @@ export class Game {
         // Sin palabras donde todavía no se lee: el dibujo es el mensaje.
         this.tier.instruments === "none" ? "" : t(`percance.${tipo}` as never),
       );
-    }, TARDA_EL_FINAL * 1000);
+    });
   }
 
   /**
@@ -2886,7 +2972,7 @@ export class Game {
       galones: this.galones.lista,
       traza: this.traza,
     });
-    window.setTimeout(() => {
+    this.agenda.luego(TARDA_EL_FINAL, () => {
       if (!this.vueloTerminado) return;
       /*
        * **Y si en este vuelo se ha subido de grado, eso es lo que se enseña.**
@@ -2923,7 +3009,7 @@ export class Game {
         this.relojDeHoras(),
       );
       this.audio.cue("achieved");
-    }, TARDA_EL_FINAL * 1000);
+    });
   }
 
   /**
@@ -3189,6 +3275,9 @@ export class Game {
     this.traza = [];
     this.sinCatar = 0;
     this.duracion = 0;
+    // Lo que quedaba apuntado era del vuelo anterior: una pantalla de percance
+    // de una partida que ya no existe, saliendo encima de la que empieza.
+    this.agenda.vaciar();
     this.hud.cerrarFinDeVuelo();
     this.dichoDeLaToma = false;
     this.avisadoDeLaPasada = false;
@@ -4239,11 +4328,46 @@ export class Game {
 
   // ── Bucle ─────────────────────────────────────────────────────────────
 
+  /**
+   * Un fotograma: **uno o varios pasos del mundo, y un solo dibujo**.
+   *
+   * Acelerar el reloj es repetir el paso, no alargarlo, y la diferencia no es
+   * de estilo. Alargándolo se probó primero, que es lo obvio: se multiplica el
+   * `dt` y listo. La física aguanta —`fdm.step` parte cualquier paso en trozos
+   * pequeños por dentro—, pero **lo que decide el juego no se parte**: mirar
+   * el terreno, cambiar de fase, corregir el rumbo, atender al sígame. Eso
+   * pasa una vez por fotograma, así que con el reloj a ocho el juego tomaba
+   * ocho veces menos decisiones por segundo de vuelo. Medido: el mismo vuelo
+   * que se completaba entero se salía de la pista y acababa en percance —7 de
+   * 11 comprobaciones en vez de 10—. No estaba midiendo el mismo juego.
+   *
+   * Repitiendo el paso, cada paso es el de siempre y el mundo toma las mismas
+   * decisiones a los mismos intervalos. Lo único que se salta es **pintar**,
+   * que es lo caro —en los bancos, con la tarjeta gráfica emulada por
+   * software, es casi todo el tiempo— y lo único que a un banco no le importa.
+   */
   private frame = (): void => {
     // El reloj del medidor, antes que nada: lo que mide es el tiempo de
     // pared entre fotogramas, que es lo único que se corresponde con lo que
     // se ve. Apagado, esto son dos restas. Ver `ui/rendimiento.ts`.
     this.medidor.empezarCuadro(performance.now());
+    const real = Math.min(this.clock.getDelta(), MAX_PASO);
+    /*
+     * Y los pasos se recortan si el fotograma ya es largo de por sí. En una
+     * máquina lenta —o con la tarjeta emulada por software, que es como corren
+     * los bancos— ocho pasos de un fotograma de cuarenta milisegundos son un
+     * tercio de segundo de vuelo entre una lectura y la siguiente. Ver
+     * `LO_QUE_VALE_UN_CUADRO`.
+     */
+    const caben = Math.max(1, Math.floor(LO_QUE_VALE_UN_CUADRO / real));
+    for (let i = 0; i < Math.min(this.aceleracion, caben); i++)
+      this.unPaso(real);
+    this.pintar();
+    this.medidor.update(real);
+  };
+
+  /** Un paso del mundo. Lo de siempre, sin pintar. Ver `frame`. */
+  private unPaso = (dt: number): void => {
     /*
      * **El tope está en un segundo**, y cada vez que se ha subido ha sido por
      * el mismo motivo: por debajo de él, un aparato lento no pierde
@@ -4269,7 +4393,9 @@ export class Game {
      * dos, tenían que valer lo mismo, y subir este solo no arreglaba nada
      * porque el modelo de vuelo recortaba otra vez por su cuenta.
      */
-    const dt = Math.min(this.clock.getDelta(), MAX_PASO);
+    this.relojDelJuego += dt;
+    // Lo apuntado para dentro de un rato, con este reloj y no con el de pared.
+    this.agenda.paso(dt);
 
     /*
      * Si las ruedas están sobre la pista, y no en la plataforma ni en la
@@ -4963,9 +5089,6 @@ export class Game {
     this.atenderAlSenalero(dt);
     this.contarGalones(dt, banda, aro, toma, renuncio);
     this.hud.senal.update(dt);
-
-    this.pintar();
-    this.medidor.update(dt);
   };
 
   /**
