@@ -18,6 +18,7 @@
 import { ACCIONES, ORDEN, nombreDeTecla, type Accion, type Keymap } from '../flight/keymap';
 import { t } from '../i18n';
 import { Panel } from './panel';
+import { HELICE_MAS, HELICE_MENOS } from './pictogramas';
 
 /*
  * Los dibujos de las teclas. En SVG y no emoji: un emoji se ve distinto en
@@ -32,21 +33,12 @@ const FLECHA_ABA = flecha('M12 21 L4 11 H9 V4 H15 V11 H20 Z');
 const FLECHA_IZQ = flecha('M3 12 L13 4 V9 H21 V15 H13 V20 Z');
 const FLECHA_DER = flecha('M21 12 L11 20 V15 H3 V9 H11 V4 Z');
 
-/** Hélice con una flecha: más motor y menos motor. */
-const helice = (chevron: string): string => `
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <g class="cap__helice">
-      <ellipse cx="12" cy="5.5" rx="1.9" ry="5.5" />
-      <ellipse cx="12" cy="18.5" rx="1.9" ry="5.5" />
-      <ellipse cx="5.5" cy="12" rx="5.5" ry="1.9" />
-      <ellipse cx="18.5" cy="12" rx="5.5" ry="1.9" />
-    </g>
-    <path class="cap__chevron" d="${chevron}" />
-  </svg>
-`;
-
-const HELICE_MAS = helice('M17 8 L20.5 4.5 L24 8');
-const HELICE_MENOS = helice('M17 4.5 L20.5 8 L24 4.5');
+/*
+ * La hélice con su flecha vive en `pictogramas.ts`, que es de donde la sacan
+ * también los botones del motor del HUD. Estaban dibujadas dos veces y solo
+ * una de las dos llevaba flecha: la del HUD eran dos hélices del mismo dibujo
+ * en dos tamaños, y no se distinguían.
+ */
 
 /** La mano de parar, la misma que el botón de freno. */
 const MANO = `

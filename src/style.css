@@ -953,6 +953,13 @@ body {
   fill: currentcolor;
 }
 
+/* La flecha del botón del motor: trazo, no relleno, y con su propio hueco
+   alrededor para que se despegue de las palas. Es lo único que distingue el
+   botón de subir del de bajar — las dos hélices son el mismo dibujo. */
+.motor__tecla .cap__flecha {
+  fill: currentcolor;
+}
+
 .motor__tecla {
   display: inline-grid;
   place-items: center;
@@ -2226,12 +2233,8 @@ button.motor__tecla::after {
   fill: #1a1206;
 }
 
-.tecla--activa .cap__chevron {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.tecla--activa .cap__flecha {
+  fill: #fff;
 }
 
 /* Pulsada de verdad: se hunde y se pone terracota. Ese es todo el tutorial —
