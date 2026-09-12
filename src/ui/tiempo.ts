@@ -57,18 +57,6 @@ export class PanelDelTiempo {
   private alCambiar: ((m: Meteo) => void) | null = null;
   private pidiendoDeVerdad: (() => void) | null = null;
 
-  static boton(etiqueta: string): string {
-    return `
-      <button class="sonido teclas-boton" type="button" data-hud="tiempo-boton" aria-label="${etiqueta}">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6.4 17.4 a4.4 4.4 0 0 1 0.5-8.8 a5.8 5.8 0 0 1 11.1 1.5
-                   a3.7 3.7 0 0 1-0.6 7.3 Z" />
-          <path d="M4 21.2 h6.4 M13 21.2 h7" />
-        </svg>
-      </button>
-    `;
-  }
-
   static markup(): string {
     return `
       <div class="tiempo" data-hud="tiempo" hidden role="group"
