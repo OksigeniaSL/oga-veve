@@ -200,12 +200,38 @@ export class Encierro {
  * está abierto no se puede descuadrar.
  */
 const todos = new Set<Panel>();
-let avisar: ((hayAlguno: boolean) => void) | null = null;
 let habia = false;
 
-/** Quién quiere enterarse de que hay —o ya no hay— algún panel abierto. */
-export function alCambiarLosPaneles(quien: (hayAlguno: boolean) => void): void {
-  avisar = quien;
+/**
+ * Lo que la concha necesita del juego, y es lo único que necesita.
+ *
+ * Son dos cosas y las dos son suyas: enterarse de que hay algo abierto —para
+ * congelar el vuelo— y poder sonar. Van juntas en una interfaz en vez de en
+ * dos funciones sueltas porque las cumple el mismo —`Game`— y así no se puede
+ * montar media concha.
+ */
+export interface LaConcha {
+  /** Hay algún panel abierto, o ya no hay ninguno. */
+  alAbrirseOCerrarse(hayAlguno: boolean): void;
+  /** Acusa recibo de lo que acaba de hacer quien está delante. */
+  suena(que: SonidoDeConcha): void;
+}
+
+/**
+ * Lo que suena la concha, y por qué son cuatro y no uno.
+ *
+ * #70 los pide por su nombre —«sonido al abrir, al moverse por las opciones y
+ * al confirmar»— y son lo que separa un menú de consola de un formulario. Para
+ * quien no lee son más que un adorno: con el dedo o con el tabulador, el
+ * sonido es la única confirmación de que el aparato se ha enterado.
+ */
+export type SonidoDeConcha = "abrir" | "cerrar" | "mover" | "elegir";
+
+let concha: LaConcha | null = null;
+
+/** Quién lleva la concha. Lo monta `Game`. */
+export function laConchaLaLleva(quien: LaConcha): void {
+  concha = quien;
   habia = false;
   recontar();
 }
@@ -214,7 +240,7 @@ function recontar(): void {
   const hay = [...todos].some((p) => p.abierto);
   if (hay === habia) return;
   habia = hay;
-  avisar?.(hay);
+  concha?.alAbrirseOCerrarse(hay);
 }
 
 export class Panel {
@@ -239,7 +265,45 @@ export class Panel {
     }
     this.encierro = new Encierro(caja, cerrar, conEscape);
     todos.add(this);
+    /*
+     * **Y suena al recorrerlo y al elegir.**
+     *
+     * Se escucha aquí, en la caja, y no panel por panel: son ocho paneles con
+     * sus botones, sus tiradores y sus casillas, y ponerle el sonido a cada
+     * uno son ocho sitios que mantener y el noveno que se olvida. `focusin` y
+     * `click` suben desde cualquier cosa de dentro, así que un panel nuevo
+     * suena sin escribir una línea.
+     *
+     * `focusin` y no `focus` porque `focus` no burbujea: colgado de la caja no
+     * llegaría nunca.
+     */
+    caja.addEventListener("focusin", () => {
+      // Menos el primero, que es el que coloca el foco al abrir: ya sonó
+      // `abrir`, y dos motivos pegados suenan a error.
+      if (this.recienAbierto) {
+        this.recienAbierto = false;
+        return;
+      }
+      concha?.suena("mover");
+    });
+    caja.addEventListener("click", (e) => {
+      const que = (e.target as HTMLElement | null)?.closest?.(
+        "button, summary, input, select",
+      );
+      if (!que) return;
+      /*
+       * Y si lo que se pulsó cerraba el panel, lo que suena es el cierre y no
+       * la elección: son el mismo gesto contado dos veces. Se mira **después**
+       * de que el clic haya hecho lo suyo, que es la única forma de saberlo.
+       */
+      setTimeout(() => {
+        if (this.abierto) concha?.suena("elegir");
+      }, 0);
+    });
   }
+
+  /** Si el foco todavía no se ha movido desde que se abrió. */
+  private recienAbierto = false;
 
   get abierto(): boolean {
     return !this.caja.hidden;
@@ -247,8 +311,10 @@ export class Panel {
 
   abrir(): void {
     if (this.abierto) return;
+    this.recienAbierto = true;
     this.caja.hidden = false;
     this.encierro.abrir();
+    concha?.suena("abrir");
     recontar();
   }
 
@@ -256,6 +322,7 @@ export class Panel {
     if (!this.abierto) return;
     this.caja.hidden = true;
     this.encierro.soltar();
+    concha?.suena("cerrar");
     recontar();
   }
 

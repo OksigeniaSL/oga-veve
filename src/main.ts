@@ -244,8 +244,14 @@ const atender = (): void => {
    * le dio a la pausa, volver a la ventana no puede devolverle un avión en
    * movimiento: lo paró él y lo levanta él.
    */
-  if (mirando() && !game.pausado) game.start();
-  else game.stop();
+  if (!mirando()) return game.stop();
+  if (!game.pausado) return game.start();
+  /*
+   * Y si está quieto porque hay algo abierto encima, el bucle sigue parado
+   * pero el sonido despierta: quien vuelve a la ventana con un panel abierto
+   * está eligiendo algo. Ver `Game.quedarQuieto`.
+   */
+  game.despertarElSonido();
 };
 /*
  * Y una puerta para los bancos de pruebas, solo en desarrollo.

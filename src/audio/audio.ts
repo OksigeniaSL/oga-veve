@@ -121,7 +121,156 @@ export type Cue =
    * Sonaba con el mismo motivo que la alarma de pérdida. Sube, porque lo que
    * viene después es volar.
    */
-  | "mision";
+  | "mision"
+  /*
+   * ## Y los cuatro de la concha, que son de otra naturaleza
+   *
+   * Los doce de arriba cuentan algo que pasó en el vuelo. Estos cuatro no
+   * cuentan nada: **acusan recibo**. Suenan porque alguien tocó, y lo único
+   * que dicen es «te he oído». Por eso son más cortos, más agudos y pegan
+   * menos de la mitad que los demás: si un menú suena tan fuerte como una
+   * alarma de pérdida, el idioma sonoro del juego deja de tener graves.
+   *
+   * Es lo que pide #70 —«sonido al abrir, al moverse por las opciones y al
+   * confirmar»— y lo que le da a esto aire de consola y no de formulario.
+   */
+  /** Se abre un panel: dos notas subiendo, deprisa. */
+  | "abrir"
+  /** Y se cierra: las mismas dos al revés. El gesto de vuelta. */
+  | "cerrar"
+  /**
+   * El foco pasa de un mando al siguiente.
+   *
+   * Una sola nota, la más corta y la más floja de todas. Suena una vez por
+   * cada tecla que se pulsa recorriendo un panel, así que cualquier cosa con
+   * cuerpo se volvería un martilleo.
+   */
+  | "mover"
+  /** Se elige algo. Sube, que en este juego es «hecho». */
+  | "elegir";
+
+/**
+ * Un motivo: qué notas, a qué ritmo y con cuánto cuerpo.
+ *
+ * Estaba repartido entre una tabla de notas y **dos ternarios anidados** —uno
+ * para el paso y otro para la duración— con las excepciones escritas por
+ * nombre. Añadir un motivo eran tres sitios y era fácil dejarse el tercero;
+ * añadir los cuatro de la concha habría dejado ternarios de ocho ramas.
+ * Ahora cada motivo es una fila.
+ */
+export interface Motivo {
+  /** Las notas, en hercios y en orden. */
+  readonly notas: readonly number[];
+  /** Cuánto se tarda de una nota a la siguiente, en segundos. */
+  readonly paso: number;
+  /** Cuánto dura cada nota. */
+  readonly dura: number;
+  /** Cuánto pega, de 0 a 1. Por omisión, `FUERZA`. */
+  readonly fuerza?: number;
+  /** Si manda agacharse a todo lo demás. Solo las alarmas y los avisos. */
+  readonly manda?: boolean;
+}
+
+/** Los dos buses que suenan solos, sin que nadie toque nada. */
+const EL_MUNDO: readonly Bus[] = ["motor", "ambiente"];
+
+/** Lo que pega una nota si nadie dice otra cosa. */
+export const FUERZA = 0.22;
+/**
+ * Y lo que pega la concha, que es menos de la mitad.
+ *
+ * Un menú que suena tan fuerte como una alarma de pérdida no es sonido de
+ * consola: es ruido. Acusar recibo se hace por debajo de lo que se cuenta.
+ */
+export const FUERZA_DE_CONCHA = 0.1;
+
+/**
+ * Los motivos, uno por fila.
+ *
+ * Notas de una pentatónica, no pitidos: la gramática es **subir es bien,
+ * bajar es corregir**, y con eso un niño distingue acierto de error sin que
+ * nadie se lo enseñe. Cuando haya arpa paraguaya grabada, estos motivos se
+ * sustituyen por las mismas frases tocadas de verdad.
+ */
+export const MOTIVOS: Record<Cue, Motivo> = {
+  success: { notas: [523.25, 783.99], paso: 0.14, dura: 0.35 },
+  achieved: {
+    notas: [523.25, 659.25, 783.99, 1046.5],
+    paso: 0.11,
+    dura: 0.35,
+  },
+  error: { notas: [440, 349.23], paso: 0.14, dura: 0.35 },
+  attention: { notas: [659.25, 659.25], paso: 0.14, dura: 0.35, manda: true },
+  touchdown: { notas: [130.81], paso: 0.14, dura: 0.5 },
+  /*
+   * **V1 es una nota sola y grave, y Vr son dos que suben.**
+   *
+   * No es adorno: son los dos momentos del despegue y son de naturaleza
+   * distinta. V1 es una **decisión** que ya está tomada —a partir de ahí se
+   * vuela pase lo que pase—, así que suena una vez, abajo, y se acabó. Vr es
+   * una **acción** que toca hacer ahora, así que sube, que en la gramática de
+   * este juego es «hacé algo». Entre las dos pasan unos segundos, y esos
+   * segundos son la lección: ya no puedo parar y todavía no vuelo.
+   */
+  v1: { notas: [392], paso: 0.14, dura: 0.35 },
+  rotar: { notas: [587.33, 880], paso: 0.14, dura: 0.35 },
+  /*
+   * **Y los dos aros no se distinguen solo por el orden.**
+   *
+   * Eran las mismas dos notas al derecho y al revés, 0,25 s en total, con el
+   * motor debajo: separar el contorno de dos notas tan cortas exige atención
+   * dirigida, y quien juega está mirando la pista. Ahora son dos gestos
+   * distintos: el bueno sube en tres saltos y el perdido son dos notas más
+   * graves, más largas y hacia abajo. Sigue sin ser un castigo —el timbre de
+   * `error` no se toca— pero ya no hay que adivinarlo. Y van más rápidos que
+   * los demás: suenan al vuelo y no pueden entretenerse.
+   */
+  aro: { notas: [659.25, 880, 1174.66], paso: 0.07, dura: 0.18 },
+  aroFallado: { notas: [440, 349.23], paso: 0.16, dura: 0.3 },
+  /*
+   * El peligro y la pérdida van más rápidos que nada: lo que distingue una
+   * alarma de un aviso es el ritmo, antes que la altura de las notas.
+   */
+  peligro: {
+    notas: [880, 698.46, 587.33, 880, 698.46, 587.33],
+    paso: 0.09,
+    dura: 0.16,
+    manda: true,
+  },
+  perdida: {
+    notas: [622.25, 622.25, 622.25],
+    paso: 0.09,
+    dura: 0.16,
+    manda: true,
+  },
+  mision: { notas: [523.25, 659.25, 880], paso: 0.14, dura: 0.35 },
+
+  // ── La concha ────────────────────────────────────────────────────────
+  abrir: {
+    notas: [659.25, 987.77],
+    paso: 0.05,
+    dura: 0.18,
+    fuerza: FUERZA_DE_CONCHA,
+  },
+  cerrar: {
+    notas: [987.77, 659.25],
+    paso: 0.05,
+    dura: 0.14,
+    fuerza: FUERZA_DE_CONCHA,
+  },
+  mover: {
+    notas: [1318.51],
+    paso: 0.05,
+    dura: 0.05,
+    fuerza: FUERZA_DE_CONCHA * 0.7,
+  },
+  elegir: {
+    notas: [880, 1318.51],
+    paso: 0.045,
+    dura: 0.16,
+    fuerza: FUERZA_DE_CONCHA,
+  },
+};
 
 export interface AudioLevel {
   id: "normal" | "bajo" | "mudo";
@@ -175,6 +324,16 @@ export class Audio {
   private buses: Record<Bus, GainNode> | null = null;
   /** Cuánta gente está hablando ahora mismo. Manda el ducking. */
   private readonly hablando = new Agachado();
+  /**
+   * Si el mundo está callado porque hay algo abierto encima del vuelo.
+   *
+   * No es lo mismo que suspender el contexto, que es lo que se hace cuando
+   * nadie mira la pestaña. Con un panel abierto el vuelo está congelado —ver
+   * `Game.quedarQuieto`— y el motor no puede seguir rugiendo, pero **la concha
+   * sí tiene que sonar**: es justo entonces cuando alguien está recorriendo
+   * opciones. Callar el contexto entero dejaba el menú mudo.
+   */
+  private mundoCallado = false;
   /**
    * Volumen en tres pasos, no un deslizador.
    *
@@ -401,71 +560,25 @@ export class Audio {
   }
 
   /**
-   * Motivos cortos del idioma sonoro.
+   * Cómo anda el sonido por dentro. Para los bancos.
    *
-   * Notas de una pentatónica, no pitidos: la gramática es **subir es bien,
-   * bajar es corregir**, y con eso un niño distingue acierto de error sin que
-   * nadie se lo enseñe. Cuando haya arpa paraguaya grabada, estos motivos se
-   * sustituyen por las mismas frases tocadas de verdad.
+   * Lo que hay que poder mirar desde fuera es que el contexto sigue **vivo**
+   * con un panel abierto: si se suspendiera, `cue` no tocaría nada y la concha
+   * sería muda sin que ningún banco se enterara, porque no hay nada que mirar
+   * en la pantalla. Ver `callarElMundo`.
    */
+  comoVa(): { contexto: string; mundoCallado: boolean } {
+    return {
+      contexto: this.context?.state ?? "sin contexto",
+      mundoCallado: this.mundoCallado,
+    };
+  }
+
+  /** Toca uno de los motivos del idioma sonoro. Están en `MOTIVOS`. */
   cue(kind: Cue): void {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running" || !this.master) return;
-
-    const patterns: Record<Cue, number[]> = {
-      success: [523.25, 783.99],
-      achieved: [523.25, 659.25, 783.99, 1046.5],
-      error: [440, 349.23],
-      attention: [659.25, 659.25],
-      touchdown: [130.81],
-      /*
-       * **Y los dos aros no se distinguen solo por el orden.**
-       *
-       * Eran las mismas dos notas al derecho y al revés, 0,25 s en total, con
-       * el motor debajo: separar el contorno de dos notas tan cortas exige
-       * atención dirigida, y quien juega está mirando la pista. Ahora son dos
-       * gestos distintos: el bueno sube en tres saltos y el perdido son dos
-       * notas más graves, más largas y hacia abajo. Sigue sin ser un castigo
-       * —el timbre de `error` no se toca— pero ya no hay que adivinarlo.
-       */
-      aro: [659.25, 880, 1174.66],
-      aroFallado: [440, 349.23],
-      // Bajando y deprisa, dos veces: es el único que interrumpe.
-      peligro: [880, 698.46, 587.33, 880, 698.46, 587.33],
-      // La chicharra: el mismo tono, seco, tres veces.
-      perdida: [622.25, 622.25, 622.25],
-      // Y el arranque de algo, subiendo con calma.
-      mision: [523.25, 659.25, 880],
-      /*
-       * **V1 es una nota sola y grave, y Vr son dos que suben.**
-       *
-       * No es adorno: son los dos momentos del despegue y son de naturaleza
-       * distinta. V1 es una **decisión** que ya está tomada —a partir de ahí
-       * se vuela pase lo que pase—, así que suena una vez, abajo, y se acabó.
-       * Vr es una **acción** que toca hacer ahora, así que sube, que en la
-       * gramática de este juego es «hacé algo». Entre las dos pasan unos
-       * segundos, y esos segundos son la lección: ya no puedo parar y todavía
-       * no vuelo.
-       */
-      v1: [392],
-      rotar: [587.33, 880],
-    };
-
-    const notes = patterns[kind];
-    // Los aros van más rápidos: suenan al vuelo y no pueden entretenerse.
-    const step =
-      kind === "achieved"
-        ? 0.11
-        : kind === "aro"
-          ? 0.07
-          : kind === "aroFallado"
-            ? 0.16
-            : // El peligro y la pérdida van más rápidos que nada: lo que
-              // distingue una alarma de un aviso es el ritmo, antes que la
-              // altura de las notas.
-              kind === "peligro" || kind === "perdida"
-              ? 0.09
-              : 0.14;
+    const m = MOTIVOS[kind];
     /*
      * **Los que avisan van por el bus de avisos, y los demás por el de
      * interfaz.**
@@ -474,25 +587,15 @@ export class Audio {
      * suena por encima. Un «lo conseguiste» no tiene que taparle el motor a
      * nadie; una alarma de pérdida sí, y por eso están separados.
      */
-    const suBus: Bus =
-      kind === "peligro" || kind === "perdida" || kind === "attention"
-        ? "avisos"
-        : "interfaz";
-    if (suBus === "avisos") this.agacharUnRato(notes.length * 0.2);
-    notes.forEach((frequency, index) => {
+    const suBus: Bus = m.manda ? "avisos" : "interfaz";
+    if (m.manda) this.agacharUnRato(m.notas.length * 0.2);
+    m.notas.forEach((frecuencia, i) => {
       this.pluck(
-        frequency,
-        ctx.currentTime + index * step,
-        kind === "touchdown"
-          ? 0.5
-          : kind === "aro"
-            ? 0.18
-            : kind === "aroFallado"
-              ? 0.3
-              : kind === "peligro" || kind === "perdida"
-                ? 0.16
-                : 0.35,
+        frecuencia,
+        ctx.currentTime + i * m.paso,
+        m.dura,
         suBus,
+        m.fuerza ?? FUERZA,
       );
     });
   }
@@ -671,6 +774,7 @@ export class Audio {
     at: number,
     duration: number,
     bus: Bus = "interfaz",
+    fuerza = FUERZA,
   ): void {
     const ctx = this.context!;
     const oscillator = ctx.createOscillator();
@@ -679,7 +783,7 @@ export class Audio {
 
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, at);
-    gain.gain.linearRampToValueAtTime(0.22, at + 0.012);
+    gain.gain.linearRampToValueAtTime(fuerza, at + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
 
     oscillator.connect(gain).connect(this.bus(bus));
@@ -789,6 +893,20 @@ export class Audio {
     if (this.hablando.sale()) this.ponerNiveles();
   }
 
+  /**
+   * Calla el mundo —el motor y el ambiente— y deja viva la concha.
+   *
+   * Lo pide el vuelo congelado: ver `mundoCallado`. Los dos buses que se
+   * callan son los dos que suenan **solos**, sin que nadie toque nada; los
+   * demás solo suenan cuando pasa algo, y con el vuelo parado no pasa nada
+   * salvo lo que hace quien está delante.
+   */
+  callarElMundo(callado: boolean): void {
+    if (this.mundoCallado === callado) return;
+    this.mundoCallado = callado;
+    this.ponerNiveles();
+  }
+
   /** Todos callados de golpe. Al reiniciar el vuelo o al poner en mudo. */
   callarLasVoces(): void {
     if (this.hablando.vaciar()) this.ponerNiveles();
@@ -821,8 +939,11 @@ export class Audio {
     // que la constante es el tiempo pedido entre tres.
     const constante = (agachado ? TARDA_EN_BAJAR : TARDA_EN_SUBIR) / 3;
     for (const nombre of BUSES) {
+      // Y el mundo callado manda sobre el nivel que le tocaría. Ver
+      // `callarElMundo`.
+      const callado = this.mundoCallado && EL_MUNDO.includes(nombre);
       this.buses[nombre].gain.setTargetAtTime(
-        niveles[nombre],
+        callado ? 0 : niveles[nombre],
         ahora,
         constante,
       );
