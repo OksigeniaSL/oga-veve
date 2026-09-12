@@ -749,8 +749,16 @@ export class Game {
   private pausadoAdrede = false;
   /** Lo que ha ido sonando la concha, solo en desarrollo. Para el banco. */
   private readonly loQueSonoLaConcha: string[] = [];
-  /** Si hay algún panel abierto encima del vuelo. Lo dice `ui/panel.ts`. */
+  /** Si hay alguno de los que congelan el vuelo. Lo dice `ui/panel.ts`. */
   private hayPanelAbierto = false;
+  /**
+   * Si hay un **instrumento** abierto: el plano o el tiempo.
+   *
+   * Esos no congelan el vuelo —se consultan volando, y con el avión parado un
+   * plano deja de decir por dónde vas— pero sí piden que el avión no se caiga
+   * mientras se miran. Ver `mantenerElVueloRecto` y `PanelDelVuelo.congela`.
+   */
+  private hayInstrumentoAbierto = false;
   /** Si el mundo está parado ahora mismo, por lo que sea. Ver `quedarQuieto`. */
   private quieto = false;
   /**
@@ -1451,8 +1459,9 @@ export class Game {
      * abierto. Ver `quedarQuieto` y #70.
      */
     laConchaLaLleva({
-      alAbrirseOCerrarse: (hayAlguno) => {
-        this.hayPanelAbierto = hayAlguno;
+      alAbrirseOCerrarse: (que) => {
+        this.hayPanelAbierto = que.congela;
+        this.hayInstrumentoAbierto = que.alguno && !que.congela;
         this.quedarQuieto();
       },
       suena: (que) => {
@@ -1745,7 +1754,12 @@ export class Game {
        * Escape sin que nadie lo midiera. Ahora quien añada un panel a la
        * tabla lo mete en el banco sin enterarse. Ver `ui/paneles.ts` y #70.
        */
-      paneles: () => PANELES_DEL_VUELO.map((p) => ({ id: p.id, caja: p.caja })),
+      paneles: () =>
+        PANELES_DEL_VUELO.map((p) => ({
+          id: p.id,
+          caja: p.caja,
+          congela: p.congela ?? true,
+        })),
       /**
        * Cómo anda el sonido, y qué ha sonado la concha desde la última vez
        * que se preguntó. Se vacía al leerlo, que es lo que hace fácil medir
@@ -2355,6 +2369,39 @@ export class Game {
    */
   private get faseDeAhora(): string {
     return this.vistaActual?.fase ?? this.faseAnunciada;
+  }
+
+  /**
+   * Mantiene el avión derecho mientras se mira un instrumento.
+   *
+   * #70 da dos salidas —«un panel abierto pausa el vuelo **o lo deja en vuelo
+   * recto**»— y no son intercambiables: una pantalla que se lee pide lo
+   * primero y un instrumento que se consulta volando pide lo segundo. El plano
+   * existe para ver por dónde vas, y con el avión congelado la marca de tu
+   * posición se queda quieta: el instrumento deja de decir lo único que tiene
+   * que decir. Se congelaban los seis y se vio jugando —«no entiendo por qué
+   * cuando se abre el mapa se para el avión»—.
+   *
+   * Lo que hace es lo que haría un piloto que suelta los mandos un momento:
+   * alas al horizonte y sin subir ni bajar. **No es un piloto automático** y no
+   * mantiene rumbo ni navega; solo impide que el avión se caiga mientras no se
+   * le mira, que es lo que el issue promete con esas palabras.
+   *
+   * Va sobre los mandos y no sobre el estado —nada de mover el avión a mano—
+   * porque es lo que hace el resto del juego: quien pilota escribe mandos.
+   */
+  private mantenerElVueloRecto(): void {
+    const s = this.flight.state;
+    if (s.onGround) return;
+    const c = this.input.controls;
+    const tope = (v: number, t: number) => Math.max(-t, Math.min(t, v));
+    // Alas al horizonte: se manda **inclinación**, no velocidad de alabeo, o
+    // el avión seguiría girando sobre su eje. Es la misma lección que el
+    // piloto del banco aprendió cayendo en espiral.
+    c.aileron = tope(-bankAngleOf(s.orientation) * 1.6, 0.35);
+    // Y sin subir ni bajar, amortiguado con la velocidad vertical.
+    c.elevator = tope(-s.verticalSpeed * 0.08, 0.3);
+    c.rudder = 0;
   }
 
   private quedarQuieto(): void {
@@ -4824,6 +4871,9 @@ export class Game {
       this.sufrirPercance("golpe");
     } else {
       this.antesDelPaso.copy(this.flight.state.position);
+      // Con un instrumento abierto —el plano, el tiempo— el avión se
+      // mantiene solo. Ver `mantenerElVueloRecto`.
+      if (this.hayInstrumentoAbierto) this.mantenerElVueloRecto();
       this.flight.step(dt, this.input.controls);
       this.mirarSiChocaConAlgo();
     }

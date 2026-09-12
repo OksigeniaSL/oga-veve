@@ -87,6 +87,10 @@ instructor	instructor/mission.started.ogg	es-PY	{name}	las misiones
 instructor	instructor/mission.step.ogg	es-PY	¡Bien! Seguí	las misiones
 instructor	instructor/mission.done.ogg	es-PY	¡Misión cumplida!	las misiones
 instructor	instructor/mission.none.ogg	es-PY	Vuelo libre	las misiones
+instructor	instructor/ala.dice.arriba.ogg	es-PY	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.	lo que explica el esquema del ala
+instructor	instructor/ala.dice.arrastra.ogg	es-PY	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.	lo que explica el esquema del ala
+instructor	instructor/ala.dice.cerca.ogg	es-PY	Cuidado: un poco más de ángulo y el aire se suelta.	lo que explica el esquema del ala
+instructor	instructor/ala.dice.perdida.ogg	es-PY	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.	lo que explica el esquema del ala
 torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa
 torre	torre/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha en casa
 otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, Óga uno siete dos	el otro avión de la frecuencia

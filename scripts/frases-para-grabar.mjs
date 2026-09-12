@@ -48,6 +48,18 @@ const HABLADOS = [
   ["galon", "instructor", "los galones que se ganan en el vuelo"],
   ["tutor", "instructor", "los consejos de los primeros minutos"],
   ["mission", "instructor", "las misiones"],
+  /*
+   * **Y lo que explican los paneles.**
+   *
+   * Estaban fuera con el argumento de que «se leen, no se oyen», y vale para
+   * los créditos y los rótulos del hangar — pero no para el esquema del ala,
+   * que es una explicación y **la explicación es el panel**. Quien tiene
+   * cuatro años abre esa pantalla, ve el aire azul chupando por arriba y no
+   * puede leer por qué. Cuatro frases de las que cambian según dónde esté el
+   * tirador, que es justo lo que un instructor diría mirando por encima del
+   * hombro.
+   */
+  ["ala.dice", "instructor", "lo que explica el esquema del ala"],
   ["torre", "torre", "la lámpara de la torre, dicha en casa"],
   ["otro", "otro", "el otro avión de la frecuencia"],
 ];
@@ -148,7 +160,14 @@ const filas = [];
 let total = 0;
 for (const [grupo, voz, para] of HABLADOS) {
   for (const [k, v] of es) {
-    if (k.split(".")[0] !== grupo) continue;
+    /*
+     * El grupo se compara por **el principio de la clave**, no solo por el
+     * primer trozo. `vuelo` coge todo `vuelo.*` como siempre, y `ala.dice`
+     * coge las cuatro explicaciones del esquema del ala sin arrastrar sus
+     * rótulos —«Ángulo del ala», «Velocidad»—, que son etiquetas de mando y
+     * no algo que nadie diga en voz alta.
+     */
+    if (k !== grupo && !k.startsWith(`${grupo}.`)) continue;
     filas.push({ id: k, voz, idioma: "es-PY", texto: v, para });
     total += v.length;
   }

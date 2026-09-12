@@ -120,7 +120,20 @@ export class Mapa {
     this.cota = cota;
     this.raiz = raiz;
     this.caja = raiz.querySelector('[data-hud="mapa"]');
-    if (this.caja) this.panel = new Panel(this.caja, () => this.cerrar());
+    if (this.caja)
+      this.panel = new Panel(
+        this.caja,
+        () => this.cerrar(),
+        true,
+        /*
+         * **Y no congela el vuelo.** El plano existe para ver por dónde vas, y
+         * con el avión parado no vas a ninguna parte: la marca de tu posición
+         * se queda quieta y el instrumento deja de decir lo único que tiene
+         * que decir. El vuelo se mantiene recto mientras está abierto. Ver
+         * `PanelDelVuelo.congela`.
+         */
+        false,
+      );
     this.fondo = raiz.querySelector('[data-hud="mapa-fondo"]');
     this.encima = raiz.querySelector('[data-hud="mapa-encima"]');
     raiz

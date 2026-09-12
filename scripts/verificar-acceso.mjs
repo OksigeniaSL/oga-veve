@@ -330,7 +330,18 @@ async function auditar(page, donde, encierra = null) {
           (e) =>
             e.getBoundingClientRect().width > 4 &&
             !e.closest("[hidden]") &&
-            getComputedStyle(e).display !== "none",
+            getComputedStyle(e).display !== "none" &&
+            /*
+             * **Y lo deshabilitado no cuenta.**
+             *
+             * Un botón `disabled` no es alcanzable con el tabulador, y eso no
+             * es un fallo: es lo que significa deshabilitado. La tarjeta de
+             * aviso del juego es un botón siempre —a veces pide que la pulses,
+             * a veces solo informa— y en el segundo caso nace deshabilitada.
+             * Sin esto, cualquier aviso en pantalla durante la medición se
+             * contaba como «mando visible que no se alcanza».
+             */
+            !e.hasAttribute("disabled"),
         )
         .map((e) => ({
           nombre:

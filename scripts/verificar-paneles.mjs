@@ -107,16 +107,47 @@ comprobar(
   `la tabla trajo ${paneles.length}`,
 );
 
-for (const { id, caja } of paneles) {
+for (const { id, caja, congela = true } of paneles) {
   const donde_ = id.replace(/-boton$/, "");
   await page.click(`[data-hud="${id}"]`);
   await page.waitForTimeout(500);
+  /*
+   * **Y aquí hay dos preguntas, no una.**
+   *
+   * #70 da dos salidas —«un panel abierto pausa el vuelo **o lo deja en vuelo
+   * recto**»— y cada panel toma la suya según lo que sea. Una pantalla que se
+   * lee congela: el avión no se mueve ni un metro. Un instrumento que se
+   * consulta volando —el plano, el tiempo— **sigue volando**, porque un plano
+   * con el avión parado deja de decir por dónde vas; lo que se le exige a ése
+   * es que no se caiga.
+   */
+  const antesDeMirar = await donde();
   const quieto = await rato(2000);
-  comprobar(
-    `${donde_}: abierto, el avión no se mueve`,
-    quieto <= LO_QUE_SE_PERDONA,
-    `${quieto.toFixed(1)} m en dos segundos`,
-  );
+  const despuesDeMirar = await donde();
+  if (congela) {
+    comprobar(
+      `${donde_}: abierto, el avión no se mueve`,
+      quieto <= LO_QUE_SE_PERDONA,
+      `${quieto.toFixed(1)} m en dos segundos`,
+    );
+  } else {
+    comprobar(
+      `${donde_}: es un instrumento, así que el avión sigue volando`,
+      quieto > 20,
+      `${quieto.toFixed(1)} m en dos segundos`,
+    );
+    /*
+     * Y recto: lo que promete el issue es que **no se caiga**. Dos metros de
+     * altura en dos segundos es un metro por segundo, que para un avión que
+     * viene de donde venga es «se mantiene».
+     */
+    const subeObaja = Math.abs(despuesDeMirar[1] - antesDeMirar[1]);
+    comprobar(
+      `${donde_}: y se mantiene, ni sube ni se cae`,
+      subeObaja < 8,
+      `${subeObaja.toFixed(1)} m de altura en dos segundos`,
+    );
+  }
   /*
    * Y **sin sacar el menú de pausa**, que es la diferencia entre parar y
    * echar a alguien de la partida. Quien abre el plano quiere mirar el plano,
@@ -147,9 +178,15 @@ for (const { id, caja } of paneles) {
     alAbrir.concha.includes("abrir"),
     alAbrir.concha.join(" · ") || "no sonó nada",
   );
+  /*
+   * Y el motor se calla **si el vuelo se ha parado**. Con un instrumento
+   * abierto el avión sigue volando, así que el motor sigue rugiendo, que es lo
+   * correcto: lo que hay que comprobar en los dos casos es que el contexto de
+   * audio siga vivo, porque es lo que deja sonar la concha.
+   */
   comprobar(
-    `${donde_}: y el sonido sigue vivo con el vuelo parado`,
-    alAbrir.contexto === "running" && alAbrir.mundoCallado,
+    `${donde_}: y el sonido sigue vivo`,
+    alAbrir.contexto === "running" && alAbrir.mundoCallado === congela,
     `contexto ${alAbrir.contexto} · mundo ${alAbrir.mundoCallado ? "callado" : "sonando"}`,
   );
   /*
@@ -204,7 +241,7 @@ for (const { id, caja } of paneles) {
   );
   const otraVez = await rato(1500);
   comprobar(
-    `${donde_}: al cerrarlo el avión vuelve a volar`,
+    `${donde_}: al cerrarlo el avión vuela`,
     otraVez > 15,
     `${otraVez.toFixed(1)} m en segundo y medio`,
   );
