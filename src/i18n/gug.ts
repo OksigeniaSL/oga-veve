@@ -259,6 +259,22 @@ export const GUG: Dictionary = {
     "Yvy Copernicus DEM GLO-30 guive. © DLR e.V. 2010-2014 ha © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
   "credits.terrainEs":
     "Relieve España-pegua MDT05 PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0.",
+  /*
+   * Estas cuatro van en castellano y no en guaraní, y es a propósito: son
+   * texto legal literal —dos de ellas son la cadena exacta que pide su
+   * licencia— y una traducción a medias de una atribución no es una
+   * atribución. El guaraní del proyecto está al diez por ciento y esto no es
+   * lo que hay que traducir primero. Ver `credits.terrain`, que tampoco se
+   * traduce.
+   */
+  "credits.osm":
+    "Aeródromos, calles de rodaje, plataformas y ciudades a partir de datos de © colaboradores de OpenStreetMap, bajo licencia ODbL.",
+  "credits.ortoEs":
+    "Ortofoto de España: PNOA © Instituto Geográfico Nacional de España, CC BY 4.0 · scne.es.",
+  "credits.ortoPy":
+    "Ortofoto de Paraguay: EOxCloudless (cloudless.eox.at) de EOX IT Services GmbH — contiene datos Copernicus Sentinel modificados, 2020.",
+  "credits.modelo":
+    "Modelo de la avioneta: «Cessna 172Kr (with cockpit) (ver III)» de TonyWony, bajo Creative Commons Attribution 4.0.",
   "credits.engine": "Veve modelo: {model}",
   "credits.licence":
     "Código sãso Apache-2.0 guýpe. Mba'ekuaa ha marca, © Oksigenia SL.",

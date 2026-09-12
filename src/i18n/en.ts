@@ -162,6 +162,14 @@ export const EN: Dictionary = {
     "Relief from Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
   "credits.terrainEs":
     "Relief in Spain from PNOA-LiDAR MDT05 © Instituto Geográfico Nacional de España, CC BY 4.0.",
+  "credits.osm":
+    "Aerodromes, taxiways, aprons and towns from data © OpenStreetMap contributors, under the ODbL licence.",
+  "credits.ortoEs":
+    "Aerial imagery of Spain: PNOA © Instituto Geográfico Nacional de España, CC BY 4.0 · scne.es.",
+  "credits.ortoPy":
+    "Aerial imagery of Paraguay: EOxCloudless (cloudless.eox.at) by EOX IT Services GmbH — contains modified Copernicus Sentinel data, 2020.",
+  "credits.modelo":
+    "Aeroplane model: \u00abCessna 172Kr (with cockpit) (ver III)\u00bb by TonyWony, under Creative Commons Attribution 4.0.",
   "credits.engine": "Flight model: {model}",
   "credits.licence":
     "Code free under Apache-2.0. Content and brands, © Oksigenia SL.",

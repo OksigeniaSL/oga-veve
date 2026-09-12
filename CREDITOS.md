@@ -14,8 +14,14 @@ Si no se puede anotar la licencia, el asset no entra.
 | Teselas 3D fotorrealistas | Google Maps Platform | De pago por uso, atribución obligatoria |
 
 La atribución de Google **no es opcional y cambia con cada tesela**: la recoge
-el propio renderizador y se pinta siempre en pantalla. Es la condición de uso, y
-además es justo — esa ciudad la fotografió otro.
+el propio renderizador y se pinta en la franja de abajo del HUD mientras se ven
+teselas. Es la condición de uso, y además es justo — esa ciudad la fotografió
+otro.
+
+Esto llevaba meses escrito aquí en presente y **no era verdad**: nadie llamaba a
+`getAttributions` y no se pintaba nada. Lo peor de ese error no es el fallo, es
+que estaba documentado como hecho, que es la forma más segura de que nadie lo
+revise. Ahora lo hace `Teselas.atribucion` y lo pinta `Hud.setAtribucion`.
 
 ## Dedicatoria
 
@@ -40,12 +46,37 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 
 | Fuente | Uso | Licencia |
 |---|---|---|
-| [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
-| [OpenStreetMap](https://www.openstreetmap.org) | Pistas, calles de rodaje, plataformas y estacionamientos | **ODbL** |
+| [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Guaraní, Encarnación, Mariscal Estigarribia, Pedro Juan Caballero, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
+| [OpenStreetMap](https://www.openstreetmap.org) | Pistas, calles de rodaje, plataformas, estacionamientos, edificios, viario y agua de las ciudades | **ODbL** |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data) | Coordenadas, pistas y elevación de aeropuertos | **Unlicense** (dominio público) |
 | [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España | Ortofoto de Tenerife Norte, sobre el relieve | **CC BY 4.0** · scne.es |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España | Relieve de Tenerife Norte, La Palma y Cuatro Vientos | **CC BY 4.0** |
-| [Sentinel-2 cloudless](https://s2maps.eu) — EOX IT Services, sobre datos Copernicus/ESA | Ortofoto de Silvio Pettirossi, sobre el relieve | **CC BY 4.0** · EOX y contribuidores |
+| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA | Ortofoto de Silvio Pettirossi, sobre el relieve | **Sin resolver.** Ver abajo |
+
+### Sentinel-2 cloudless: la licencia declarada no es la que dice EOX
+
+**Esto está sin resolver y bloquea la publicación de Silvio Pettirossi con su
+ortofoto.** Aquí se declaraba CC BY 4.0, y lo mismo en
+`data/ortho/pettirossi-lejos.json`. La documentación de licencia de EOX
+—`cloudless.eox.at/documentation/license`, consultada el 12 de septiembre de
+2026— dice otra cosa: **Creative Commons Attribution-NonCommercial-ShareAlike
+4.0** para uso no comercial, y para uso comercial la «EOX Commercial
+Attribution-RestrictedUse 1.2 License», que además **exige un acuerdo explícito
+con EOX IT Services GmbH**.
+
+Y este proyecto declara uso comercial unas líneas más abajo, y con razón: el
+juego es un gancho de la Granja Óga, y eso cuenta por mucho que se regale.
+
+La capa que se usa es `s2cloudless-2020_3857`. Hay tres salidas y son de
+Oksigenia, no de un refactor:
+
+1. Escribir a EOX y pedir la licencia comercial.
+2. Cambiar a un mosaico cuyo año sí esté bajo CC BY 4.0, si se confirma cuál.
+3. Quitar la ortofoto de Pettirossi y volar sobre el relieve dibujado, que es
+   lo que hace todo lo demás.
+
+Mientras tanto la atribución que EOX pide sí se muestra en pantalla, que es lo
+único que se podía arreglar tecleando.
 
 La ortofoto del PNOA entró el día que las teselas fotorrealistas de Google
 dejaron de servirse — «no disponibles para tu cuenta y tu región»— y el juego
@@ -88,13 +119,12 @@ Copernicus se descarga sin registro y su única condición es una línea de text
 de `.hgt`**, que son cuarenta líneas: el formato es Int16 crudo en big-endian.
 El resto del pipeline no cambia.
 
-No usamos imaginería satelital de ningún proveedor: el terreno se pinta con
-shaders propios. Es más bonito para lo que queremos y no genera ni coste
-recurrente ni dependencia de licencia.
-
-No usamos imaginería satelital de ningún proveedor: el terreno se pinta con
-shaders propios. Es más bonito para lo que queremos y no genera ni coste
-recurrente ni dependencia de licencia.
+Esto decía, dos veces seguidas, que «no usamos imaginería satelital de ningún
+proveedor: el terreno se pinta con shaders propios». Era verdad cuando se
+escribió y hoy es falso dos veces: el juego carga ortofoto del PNOA en los
+escenarios españoles y de EOX sobre datos Sentinel en Silvio Pettirossi, y las
+dos están en la tabla de arriba. Un fichero de licencias que afirma lo
+contrario de lo que hace el código es peor que no tenerlo.
 
 ## Software de terceros
 

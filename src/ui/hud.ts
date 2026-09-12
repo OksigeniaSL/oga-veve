@@ -302,6 +302,9 @@ export class Hud {
     cota: (x: number, z: number) => number;
   } | null = null;
   private torre: HTMLElement | null = null;
+  /** La firma de quien hizo la fotografía que se está viendo. */
+  private atribucionCaja: HTMLElement | null = null;
+  private atribucionPuesta = "";
   /** La tira de la radio, y el reloj que la esconde. */
   private radioCaja: HTMLElement | null = null;
   private radioReloj = 0;
@@ -585,6 +588,17 @@ export class Hud {
       ${Tutor.markup()}
       <div class="hud__abajo">
         <!--
+          **La firma de la fotografía, y no es un adorno.**
+          La atribución de las teselas fotorrealistas es la condición de uso y
+          **cambia con cada tesela**: quien fotografió esa ciudad tiene derecho
+          a que se diga mientras se está viendo, no en un fichero del
+          repositorio. CREDITOS.md llevaba meses afirmando que esto «se pinta
+          siempre en pantalla» y no lo pintaba nadie. Va abajo del todo, en
+          pequeño y sin papel de lector de pantalla, porque no es una
+          instrucción para quien juega: es una obligación nuestra.
+        -->
+        <div class="atribucion" data-hud="atribucion" hidden></div>
+        <!--
           Aquí sí: el aviso es assertive porque interrumpe (pérdida, suelo)
           y el mensaje efímero es polite porque puede esperar. Son las dos
           únicas cosas del HUD que un lector de pantalla debe leer.
@@ -678,6 +692,7 @@ export class Hud {
     this.altitude = optional(this.root, "altitude");
     this.heading = optional(this.root, "heading");
     this.torre = optional(this.root, "torre");
+    this.atribucionCaja = optional(this.root, "atribucion");
     this.radioCaja = optional(this.root, "radio");
     this.vspeed = optional(this.root, "vspeed");
     this.throttleFill = pick(this.root, "throttle");
@@ -1650,6 +1665,21 @@ export class Hud {
    * en el mismo sitio y con la misma pinta enseñaría a un chico que la radio
    * de otro avión le manda algo.
    */
+  /**
+   * Pone la firma de la fotografía, o la quita si no hay ninguna.
+   *
+   * Se llama por fotograma y compara antes de escribir: la atribución cambia
+   * al moverse —cada tesela trae la suya— pero cambia despacio, y reescribir
+   * el DOM sesenta veces por segundo para poner lo mismo no lo hace nadie.
+   */
+  setAtribucion(texto: string): void {
+    const caja = this.atribucionCaja;
+    if (!caja || texto === this.atribucionPuesta) return;
+    this.atribucionPuesta = texto;
+    caja.textContent = texto;
+    caja.hidden = texto === "";
+  }
+
   radio(texto: string, segundos = 6): void {
     const caja = this.radioCaja;
     if (!caja) return;

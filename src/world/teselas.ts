@@ -133,6 +133,19 @@ export interface Teselas {
   /** Cuántas teselas se ven ahora mismo. Para las comprobaciones. */
   readonly visibles: number;
   /**
+   * A quién hay que acreditar por lo que se está viendo ahora mismo.
+   *
+   * **No es opcional y cambia con cada tesela**: es la condición de uso de la
+   * fotografía, y además es justo, porque esa ciudad la fotografió otro. El
+   * cargador la recoge tesela a tesela y aquí solo se pasa adelante.
+   *
+   * CREDITOS.md llevaba meses diciendo que esto «se pinta siempre en
+   * pantalla». No se pintaba: nadie llamaba a `getAttributions`. Es el mismo
+   * error que las otras cuatro fuentes —anotado y no enseñado—, y aquí era
+   * peor, porque lo que estaba escrito era que sí.
+   */
+  readonly atribucion: string;
+  /**
    * La altura del mundo fotografiado en un punto, o `null` si no llega el rayo.
    *
    * Sirve para preguntarle a la foto qué hay en un sitio. Es caro —un rayo
@@ -480,6 +493,13 @@ export function crearTeselas(
     grupo,
     get asentado() {
       return asentado;
+    },
+    get atribucion() {
+      const quienes: { value?: string }[] = [];
+      teselas.getAttributions(quienes as never);
+      const lista = quienes.map((a) => a.value).filter((v): v is string => !!v);
+      // Sin repetir: la misma casa firma muchas teselas a la vez.
+      return [...new Set(lista)].join(" · ");
     },
     get desfase() {
       return desfase;

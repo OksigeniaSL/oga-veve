@@ -51,7 +51,7 @@ genera por código, sin descargar datos.
 | `npm run build` | Compila a `dist/` (estático, se sirve con nginx) |
 | `npm run typecheck` | Comprueba tipos sin compilar |
 | `npm test` | Tests del modelo de vuelo |
-| `npm run terreno` | Convierte teselas NASADEM a mapas de altura |
+| `npm run terreno` | Convierte teselas NASADEM a mapas de altura (**sin uso**: hoy el relieve sale de `copernicus-a-relieve.mjs`) |
 | `npm run acceso` | Mide WCAG 2.2 AA: contraste, foco, teclado y movimiento |
 | `npm run sin-red` | Compila, corta la conexión y comprueba que se vuela igual |
 | `npm run rendimiento` | Mide el coste por fotograma con la CPU estrangulada |
@@ -112,7 +112,7 @@ También funciona con mando (Xbox / PlayStation) por la Gamepad API.
 │   ├── ui/             HUD, menús, créditos
 │   ├── i18n/           es-PY y guaraní (gug)
 │   └── game.ts         Bucle de juego y ensamblaje
-├── scripts/            Pipeline de terreno (NASADEM → mapa de altura)
+├── scripts/            Pipelines de datos y bancos de pruebas
 ├── docs/adr/           Decisiones de arquitectura y su porqué
 └── public/assets/      Assets estáticos
 ```
@@ -155,13 +155,22 @@ nos hicieron no usarlo de entrada— está en
 
 ## Terreno
 
-El relieve sale de **NASADEM** (NASA, dominio público, ~30 m de resolución).
-`scripts/hgt-a-heightmap.mjs` convierte las teselas `.hgt` a mapas de altura
-PNG de 16 bits que el juego carga como escenario.
+El relieve sale de **Copernicus DEM GLO-30** (ESA/Airbus/DLR, gratuito y con
+atribución literal obligatoria) en los quince escenarios paraguayos y de los
+anillos de horizonte, y del **MDT05 del PNOA-LiDAR** del IGN (CC BY 4.0) en los
+tres españoles. `scripts/copernicus-a-relieve.mjs` e `ign-a-relieve.mjs` los
+convierten a los `.bin` de `data/terrain/`, cada uno con su ficha de
+procedencia al lado.
 
-El color **no** sale de imaginería satelital: se pinta por altitud, pendiente
-y bioma con shaders propios. Sale más bonito, no cuesta nada al mes y no nos
-ata a ningún proveedor.
+Hubo un pipeline de NASADEM —`scripts/hgt-a-heightmap.mjs`, teselas `.hgt` a
+PNG de 16 bits— y esta sección lo siguió describiendo mucho después de que
+dejara de usarse. No carga ningún escenario: `world/relieve.ts` lee `.bin`.
+
+El color sí sale de imaginería en tres escenarios —la ortofoto del PNOA en
+Tenerife Norte y la de EOX en Silvio Pettirossi—; en el resto se pinta por
+altitud, pendiente y bioma con shaders propios, que sale más bonito y no ata a
+ningún proveedor. Las procedencias y sus licencias, en
+[`CREDITOS.md`](CREDITOS.md).
 
 ## Idiomas e instrumentos
 
