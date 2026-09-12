@@ -429,6 +429,16 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   let sinRayaDonde = "";
   let sinRayaPrimero = "";
   let lejosDelCoche = 0;
+  /*
+   * **Y dónde pasó**, que sin eso el fallo no se puede perseguir.
+   *
+   * Esto decía «lo más lejos que llegó a estar: 722 m» y ahí se acababa el
+   * parte. Con doce de cada catorce carreras dando 36 m clavados y dos dando
+   * setecientos y pico, lo único que hace falta saber es en qué fase y en qué
+   * segundo se dispara — y eso no había forma de sacarlo sin volver a correr
+   * el banco con una sonda a mano.
+   */
+  let lejosDondeCoche = "";
   let cercaDelCoche = Infinity;
   let cercaCuando = "";
   let alCocheAhora = -1;
@@ -629,7 +639,10 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         coche.position.x - s.position.x,
         coche.position.z - s.position.z,
       );
-      lejosDelCoche = Math.max(lejosDelCoche, alCoche);
+      if (alCoche > lejosDelCoche) {
+        lejosDelCoche = alCoche;
+        lejosDondeCoche = `en «${fase}» a los ${Math.round(t)} s, a ${Math.round(s.airspeed)} m/s`;
+      }
       /*
        * **Y lo cerca que se le llega a poner**, que es la otra mitad.
        *
@@ -1026,6 +1039,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     sinRayaDonde,
     sinRayaPrimero,
     lejosDelCoche: Math.round(lejosDelCoche),
+    lejosDondeCoche,
     cercaDelCoche: Number.isFinite(cercaDelCoche)
       ? Math.round(cercaDelCoche)
       : -1,
@@ -1148,7 +1162,7 @@ if (TRAMO === "guyrami" || TRAMO === "tuka") {
   comprobar(
     "al coche del sígame se le puede seguir",
     vuelo.lejosDelCoche < 150,
-    `lo más lejos que llegó a estar: ${vuelo.lejosDelCoche} m`,
+    `lo más lejos que llegó a estar: ${vuelo.lejosDelCoche} m${vuelo.lejosDondeCoche ? ` · ${vuelo.lejosDondeCoche}` : ""}`,
     "«el avión frena sin que el usuario pueda acelerar y el coche casi que se escapa»",
   );
 }
