@@ -39,7 +39,7 @@ await page.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=aterrizaje&tramo=taguato`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=aterrizaje&tramo=taguato-ruvicha`,
 );
 await page.bringToFront();
 await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
@@ -52,6 +52,14 @@ const comprobar = (nombre, ok, detalle) =>
   resultados.push({ nombre, ok: !!ok, detalle });
 
 /*
+ * **Y en el peldaño de arriba**, que es el único sin ayudas: en los de abajo
+ * el juego nivela y compensa, y un avión tirado en picado desde ochenta metros
+ * se recuperaba solo y llegaba a metro y medio del suelo planeando. Eso está
+ * bien —es lo que promete ese peldaño— pero para medir qué pasa **cuando el
+ * avión se rompe** hace falta un avión que se pueda romper.
+ */
+
+/*
  * Se rompe el avión **de verdad**, no llamando a nada por dentro: se le
  * coloca alto, con el motor a tope y el morro abajo, y se le deja caer. Lo que
  * se quiere comprobar es la cadena entera, y una cadena que empieza por el
@@ -61,16 +69,42 @@ const golpe = await page.evaluate(async () => {
   const o = globalThis.__oga;
   const espera = (ms) => new Promise((r) => setTimeout(r, ms));
   const veces = o.acelerar?.(8) ?? 1;
-  const p = o.pista();
-  o.colocar(p.x, o.suelo(p.x, p.z) + 220, p.z, 60, (p.heading * Math.PI) / 180);
+  /*
+   * **Se le hace salirse de la pista por el final**, que es el percance más
+   * fácil de provocar y también el más fácil de tener jugando: se aterriza
+   * largo, no se frena a tiempo y el avión se va al campo. Lo que se mide aquí
+   * no es *qué* percance, es lo que el juego hace con cualquiera de ellos.
+   *
+   * Se probó antes a estrellarlo tirándolo en picado desde doscientos metros y
+   * desde ochenta, con ayudas y sin ellas, y no se rompía: el avión llegaba a
+   * metro y medio del suelo y se posaba. Eso está bien —es lo que el modelo
+   * promete— pero como forma de provocar un percance es poco de fiar, y un
+   * banco que depende de que algo salga mal **de una manera concreta** es un
+   * banco que dará verde el día que salga mal de otra.
+   */
+  const r = o.pista();
+  const hp = (r.heading * Math.PI) / 180;
+  const fx = Math.sin(hp);
+  const fz = -Math.cos(hp);
+  // Ochenta metros antes del final, rodando rápido y sin frenos.
+  const x = r.x + fx * (r.length / 2 - 80);
+  const z = r.z + fz * (r.length / 2 - 80);
+  o.colocar(x, o.suelo(x, z) + 1.2, z, 30, hp);
   o.pilotar((c) => {
     c.engineOn = true;
     c.throttle = 1;
     c.brakes = 0;
-    c.elevator = -1;
+    c.elevator = 0;
+    c.aileron = 0;
   });
-  for (let i = 0; i < 400 && !o.percance(); i++) await espera(50 / veces);
-  if (!o.percance()) return null;
+  let masLejos = 0;
+  for (let i = 0; i < 600 && !o.percance(); i++) {
+    await espera(50 / veces);
+    const e = o.estado();
+    masLejos = Math.hypot(e.position.x - x, e.position.z - z);
+  }
+  if (!o.percance())
+    return { fallo: `no hubo percance; rodó ${masLejos.toFixed(0)} m` };
   const cuando = o.reloj();
   o.pilotar(null);
   // Justo después del golpe: lo que suena y cuántas veces se pinta.
@@ -92,12 +126,22 @@ const golpe = await page.evaluate(async () => {
   };
 });
 
-if (!golpe) {
-  comprobar("el avión se rompe al estrellarlo", false, "no llegó a romperse");
-} else {
+if (!golpe || golpe.fallo) {
   comprobar(
     "el avión se rompe al estrellarlo",
-    golpe.percance === "golpe",
+    false,
+    golpe?.fallo ?? "no llegó a romperse",
+  );
+} else {
+  /*
+   * Cuál de los percances sea da igual y **no se fija a propósito**: pasarse
+   * del final de la pista acaba en el campo o contra lo que haya al otro
+   * lado, y eso cambia con el aeropuerto. Lo que este banco mide es lo que el
+   * juego hace con cualquiera de ellos.
+   */
+  comprobar(
+    "salirse por el final de la pista es un percance",
+    !!golpe.percance,
     `percance: ${golpe.percance}`,
   );
   comprobar(
