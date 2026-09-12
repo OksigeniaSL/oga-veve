@@ -884,6 +884,15 @@ export class Game {
   private avisadoDeLaPasada = false;
   /** Si ya se dijo en esta aproximación que se puede tocar. */
   private dichoDeLaToma = false;
+  /**
+   * Cuántas veces el juego ha decidido decir «ya podés tocar».
+   *
+   * No es lo mismo que haberlo enseñado, y esa diferencia es justo lo que hubo
+   * que medir: el banco veía que la tarjeta no salía nunca en ninguno de los
+   * nueve aeropuertos, y con eso solo no se sabe si el juego no lo decide o lo
+   * decide y algo se lo tapa. Para el banco.
+   */
+  private vecesQueDijoToca = 0;
   /** El gesto del señalero que se está enseñando en la tarjeta, si hay uno. */
   private gestoEnPantalla: Gesto = null;
   /** El señor de los bastones, esperando en el puesto. Ver `world/senalero.ts`. */
@@ -921,6 +930,8 @@ export class Game {
   private yaLoMandaron = false;
   /** A qué altura sobre la pista se dio la orden. Ver `levantarLaOrden`. */
   private altoAlMandar = 0;
+  /** El último motivo por el que se mandó frustrar, con sus números. */
+  private porQueSeMando: Record<string, unknown> | null = null;
   /**
    * El vuelo completo: de dónde se sale, por dónde se rueda y qué toca ahora.
    *
@@ -1751,6 +1762,8 @@ export class Game {
         alabeo: bankAngleOf(this.flight.state.orientation),
         cabeceo: pitchAngleOf(this.flight.state.orientation),
       }),
+      /** Cuántas veces el juego ha decidido decir «ya podés tocar». */
+      vecesQueDijoToca: () => this.vecesQueDijoToca,
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
       /*
@@ -2070,6 +2083,7 @@ export class Game {
       percance: () => this.percance,
       /** Si ahora mismo hay orden de irse al aire. */
       ordenDeFrustrar: () => this.mandanFrustrar,
+      porQueSeMando: () => this.porQueSeMando,
       /**
        * Lo que cuesta el cuadro que se acaba de dibujar.
        *
@@ -2734,6 +2748,22 @@ export class Game {
     this.yaLoMandaron = true;
     this.mandanFrustrar = true;
     this.altoAlMandar = alto;
+    /*
+     * Y **por qué**, con sus números. Para el banco.
+     *
+     * «Sale la frustrada en todas las aproximaciones» no se arregla sin saber
+     * cuál de los cinco motivos salta, y el motivo solo vivía dentro del texto
+     * de la tarjeta. Medirlo desde fuera era leer una frase traducida.
+     */
+    this.porQueSeMando = {
+      motivo,
+      velocidad: +s.airspeed.toFixed(1),
+      referencia: this.aircraft.approachSpeed,
+      vertical: +s.verticalSpeed.toFixed(1),
+      delEje: +across.toFixed(1),
+      torcido: +torcido.toFixed(1),
+      alto: Math.round(alto),
+    };
     this.hud.senal.mostrar(
       "frustrada",
       this.rotuloCompuesto(
@@ -4784,6 +4814,7 @@ export class Game {
       this.flight.state.verticalSpeed < 1;
     if (puedeTocar && !this.dichoDeLaToma) {
       this.dichoDeLaToma = true;
+      this.vecesQueDijoToca++;
       this.hud.senal.mostrar(
         "toma",
         this.rotulo("vuelo.yaPodesTocar", "palabra.toca"),

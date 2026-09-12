@@ -232,6 +232,15 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   const rumboDeSalida = porDelante()?.h ?? rumboPista;
 
+  /**
+   * Lo más que se apunta contra el eje al capturarlo, en radianes.
+   *
+   * Veinte grados. El juego manda irse al aire por encima de veinte de
+   * desalineación —ver `MARGENES.torcido`—, así que capturar con más de eso es
+   * capturar de una forma que el propio juego llama mal hecha.
+   */
+  const ANGULO_DE_CAPTURA = (20 * Math.PI) / 180;
+
   /** Diferencia de rumbo, de −π a π. */
   const error = (a, b) => {
     let e = a - b;
@@ -417,6 +426,13 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   const vistas = new Set();
   /** Cuándo se rompió, si se rompió. */
   let seRompio = 0;
+  let tocaDichas = 0;
+  const cuandoDijoToca = [];
+  let queLaTapo = "";
+  /** Lo más bajo que se llegó a estar sobre la pista, volando, y con qué. */
+  let mejorAltura = Infinity;
+  let mejorVertical = 0;
+  let mejorFase = "";
 
   /** Cada cuánto mira el piloto lo que pasa, en segundos **de juego**. */
   const PASO = 0.1;
@@ -508,6 +524,47 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     }
     if (o.avisoDeTerreno() && s.onRunway) terrenoEnPista += paso;
     if (tarjeta.dibujo) vistas.add(tarjeta.dibujo);
+    // Y **cuándo** lo decidió, que es lo que separa «se lo tapan» de «lo
+    // decide en el despegue y no se rearma».
+    if (queLaTapo === "pendiente") queLaTapo = tarjeta.dibujo || "nada";
+    const dichas = o.vecesQueDijoToca?.() ?? 0;
+    if (dichas > tocaDichas) {
+      tocaDichas = dichas;
+      cuandoDijoToca.push(
+        `${t.toFixed(0)}s/${fase}/${alto(s).toFixed(0)}m, y en pantalla «${tarjeta.dibujo || "—"}»`,
+      );
+      // Y lo que hay en pantalla justo después, que es quien se la come.
+      queLaTapo = "pendiente";
+    }
+    /*
+     * **Las condiciones de «ya podés tocar», medidas una a una.**
+     *
+     * El banco decía «no lo dijo» y ahí se acababa, que sirve para saber que
+     * algo falla y no para saber qué. Son cuatro —en el aire, sobre la pista,
+     * por debajo de dieciocho metros **sobre la cota de la pista** y sin
+     * subir— y para arreglarlo solo hace falta saber cuál no se cumple nunca.
+     */
+    if (!s.onGround) {
+      const r = o.pista();
+      const hp = (r.heading * Math.PI) / 180;
+      const dx = s.position.x - r.x;
+      const dz = s.position.z - r.z;
+      const aLoLargo = dx * Math.sin(hp) + dz * -Math.cos(hp);
+      const deLado = dx * Math.cos(hp) + dz * Math.sin(hp);
+      const encima =
+        Math.abs(deLado) < r.width / 2 + 40 &&
+        Math.abs(aLoLargo) < r.length / 2 + 300;
+      if (encima) {
+        // `alto` ya es la altura sobre la cota del umbral, que es contra la
+        // que mide el juego. Ver `ALTURA_DE_TOMA`.
+        const sobre = alto(s);
+        if (sobre < mejorAltura) {
+          mejorAltura = sobre;
+          mejorVertical = s.verticalSpeed;
+          mejorFase = fase;
+        }
+      }
+    }
     if (tarjeta.dibujo === "toma") dijoToca = true;
     if (tarjeta.dibujo === "freno" && toco) pidioFreno = true;
 
@@ -745,6 +802,21 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * nunca a cumplir la condición, y en Taguato ni siquiera entraba en
        * final. Queda anotado en #147 con lo medido.
        */
+      /*
+       * **Y aquí se probó dos veces a exigir el eje antes de bajar**, que es
+       * lo que hace un piloto de verdad y lo que el propio juego pide: a la
+       * altura de decisión mide si la aproximación está estabilizada y manda
+       * irse al aire si no. Medido, el piloto llega ahí 83 metros fuera del
+       * eje y 24 grados torcido, así que se lleva la orden en los nueve
+       * aeropuertos y nunca ve la tarjeta de «ya podés tocar».
+       *
+       * Las dos veces salió peor: esperando a estar en el eje, el avión llega
+       * encima del umbral todavía alto y se tira; capturando con un rumbo de
+       * interceptación calculado, se pasa al otro lado. Lo que hace falta no
+       * es afinar esto, es un tramo de base y una captura de eje de verdad —o
+       * sea, volar el circuito en vez de ir derecho al umbral—. Queda anotado
+       * en #147 con los números.
+       */
       if (alUmbral > 800 && alUmbral < 4000) etapa = "final";
     } else if (etapa === "final") {
       /*
@@ -796,6 +868,39 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * comprobaciones a seis. Lo medido y lo aprendido están en #147; el
        * piloto se queda como estaba hasta que haya una captura de eje de
        * verdad.
+       */
+      /*
+       * **El eje se captura con rumbo, no persiguiendo un punto.**
+       *
+       * Esto apuntaba a un punto del eje trescientos metros por delante, y eso
+       * es una persecución: el avión va siempre detrás del error en vez de
+       * anticiparlo. Medido en Tenerife Norte, con el mando llegando entero al
+       * avión: a la altura de decisión —cincuenta y tres metros— el piloto
+       * llegaba **83 metros fuera del eje y 24 grados torcido**, y el juego le
+       * mandaba al aire con toda la razón. Después se enderezaba y tocaba a
+       * 0,7 m del eje, o sea que el avión podía: lo que llegaba tarde era la
+       * corrección.
+       *
+       * Un piloto de verdad captura un eje apuntando **un ángulo** contra él y
+       * lo va soltando según se acerca: es lo que hace cualquiera aparcando en
+       * línea. El ángulo se limita a treinta grados, que es lo que cabe dentro
+       * del margen de «torcido» del juego, que son veinte.
+       */
+      /*
+       * **Y se mira más cerca cuanto más fuera se está.**
+       *
+       * Perseguir un punto del eje trescientos metros por delante converge,
+       * pero tarde: medido en Tenerife Norte, a la altura de decisión el
+       * piloto llegaba **83 metros fuera del eje y 24 grados torcido** y el
+       * juego le mandaba al aire con toda la razón. Después se enderezaba y
+       * tocaba a 0,7 m del eje, o sea que el avión podía; lo que llegaba tarde
+       * era la corrección.
+       *
+       * Mirar más cerca es apuntar más contra el eje, que es lo que hace
+       * cualquiera aparcando en línea: ángulo grande al principio y se va
+       * soltando al llegar. Se probó también a mandar un rumbo de
+       * interceptación calculado y salió peor —el avión se iba del otro lado—,
+       * así que se queda lo que ya funcionaba, con la mirada variable.
        */
       const tx = r.x + fx * (along + 300);
       const tz = r.z + fz * (along + 300);
@@ -866,6 +971,13 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     vueltas: i,
     fases: [...fases].join(" "),
     tarjetas: [...vistas].join(" "),
+    vecesQueDijoToca: o.vecesQueDijoToca?.() ?? null,
+    porQueSeMando: o.porQueSeMando?.() ?? null,
+    cuandoDijoToca: cuandoDijoToca.join(" · "),
+    queLaTapo,
+    masBajoSobreLaPista:
+      mejorAltura === Infinity ? null : +mejorAltura.toFixed(1),
+    alEstarAbajo: { vertical: +mejorVertical.toFixed(1), fase: mejorFase },
     // El principio y el final: los dos sitios donde se atasca un vuelo.
     /*
      * El principio y **el final**, que es donde se atasca un vuelo.
@@ -1021,7 +1133,7 @@ comprobar(
   vuelo.dijoToca,
   vuelo.dijoToca
     ? "salió su dibujo"
-    : `no lo dijo · se vieron: ${vuelo.tarjetas}`,
+    : `no salió · el juego lo decidió ${vuelo.vecesQueDijoToca} veces (${vuelo.cuandoDijoToca}; lo siguiente en pantalla: «${vuelo.queLaTapo}», mandada por ${JSON.stringify(vuelo.porQueSeMando)}) · lo más bajo sobre la pista, volando: ${vuelo.masBajoSobreLaPista} m, a ${vuelo.alEstarAbajo.vertical} m/s, en «${vuelo.alEstarAbajo.fase}»`,
   "«no me indica lo contrario, que ya debo tomar tierra»",
 );
 
