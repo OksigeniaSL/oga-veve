@@ -57,7 +57,7 @@ export interface Llegada {
  * exactamente lo que hay que dibujar: **estar ahí quieto también es una
  * señal**, dice «este es tu sitio».
  */
-const ALCANCE = 90;
+export const ALCANCE = 90;
 
 /** A partir de aquí ya se está parando: el gesto es de parar, m. */
 const PARADA = 2.5;
