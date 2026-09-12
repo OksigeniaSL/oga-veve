@@ -54,6 +54,23 @@ export interface Hechos {
    */
   frustrada: { readonly mandada: boolean };
   /**
+   * Te has pasado del puesto de estacionamiento.
+   *
+   * No se castiga —aquí no se castiga nada— pero suena, sale con prioridad de
+   * urgencia y lo dice la voz. Una sola vez por pasada: se rearma al volver a
+   * acercarse.
+   */
+  teLoPasaste: Record<string, never>;
+  /**
+   * El señalero ha cambiado de gesto: `gesto` es el que hace ahora.
+   *
+   * Al señalero de verdad no se le ve bien desde la cabina, así que su gesto
+   * se repite en la tarjeta. Y cuando lo que pide es parar —«alto» o
+   * «despacio»— la tarjeta lleva además **la tecla del freno**, porque el
+   * señalero dice qué hay que hacer y no cómo.
+   */
+  gestoDelSenalero: { readonly gesto: string };
+  /**
    * Se ha cruzado la altura de decisión con la pista a la vista.
    *
    * Doscientos pies. Es el momento en el que se decide, y pasado ese momento

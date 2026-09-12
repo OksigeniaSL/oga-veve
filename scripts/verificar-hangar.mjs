@@ -12,7 +12,7 @@ import { createServer } from "vite";
 const D = process.argv[2] ?? "/tmp";
 const server = await createServer({
   root: process.cwd(),
-  server: { port: 5199 },
+  server: { port: 5199, hmr: false },
 });
 await server.listen();
 const b = await chromium.launch({ executablePath: "/usr/bin/google-chrome" });

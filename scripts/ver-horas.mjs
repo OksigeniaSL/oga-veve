@@ -2,7 +2,7 @@
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5233 } });
+const server = await createServer({ root: process.cwd(), server: { port: 5233, hmr: false } });
 await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 for (const hora of (process.argv[3] ?? '6,7,12,16,19,23').split(',').map(Number)) {

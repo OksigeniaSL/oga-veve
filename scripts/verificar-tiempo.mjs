@@ -9,7 +9,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5229 } });
+const server = await createServer({ root: process.cwd(), server: { port: 5229, hmr: false } });
 await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage({ viewport: { width: 1280, height: 800 }, locale: 'es-PY' });

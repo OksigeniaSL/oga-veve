@@ -28,7 +28,7 @@ import { createServer } from 'vite';
 /** Caída por metro, en metros, que ya despega al avión rodando. */
 const CAIDA_QUE_DESPEGA = 0.12;
 
-const server = await createServer({ root: process.cwd(), server: { port: 5278 } });
+const server = await createServer({ root: process.cwd(), server: { port: 5278, hmr: false } });
 await server.listen();
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',

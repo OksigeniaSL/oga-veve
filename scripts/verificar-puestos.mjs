@@ -23,7 +23,7 @@ import { createServer } from 'vite';
 /** Cuánto tiene que moverse en horizontal para llamarlo un salto, en metros. */
 const SALTO = 5;
 
-const server = await createServer({ root: process.cwd(), server: { port: 5272 } });
+const server = await createServer({ root: process.cwd(), server: { port: 5272, hmr: false } });
 await server.listen();
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',

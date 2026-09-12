@@ -2,7 +2,7 @@
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5243 } });
+const server = await createServer({ root: process.cwd(), server: { port: 5243, hmr: false } });
 await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 for (const tramo of ['guyrami', 'taguato']) {
