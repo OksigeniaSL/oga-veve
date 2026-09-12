@@ -442,10 +442,19 @@ const vuelo = await page.evaluate(async () => {
 
   return {
     etapa,
+    /*
+     * **Y si el vuelo se paró por un percance, cuál.**
+     *
+     * Sin esto, un percance y un atasco se cuentan igual —«acabó en volver a
+     * los 900 s»— y son cosas muy distintas: en el percance el juego hizo lo
+     * que tenía que hacer y el banco se quedó dando gas a un avión con los
+     * frenos puestos durante once minutos. Ver `sufrirPercance`.
+     */
+    percance: o.percance?.() ?? null,
     segundos: i * PASO,
     fases: [...fases].join(" "),
     // El principio y el final: los dos sitios donde se atasca un vuelo.
-    linea: [...linea.slice(0, 12), "…", ...linea.slice(60, 95)],
+    linea: [...linea.slice(0, 4), "…", ...linea.slice(88, 150)],
     mudoMaximo: +mudoMaximo.toFixed(1),
     mudoDonde,
     vueltaMetros: Math.round(vueltaMetros),
@@ -470,7 +479,9 @@ const vuelo = await page.evaluate(async () => {
 comprobar(
   "un vuelo entero se puede completar sin ayuda de nadie",
   vuelo.etapa === "apagar",
-  `acabó en «${vuelo.etapa}» a los ${vuelo.segundos.toFixed(0)} s · fases: ${vuelo.fases}`,
+  `acabó en «${vuelo.etapa}» a los ${vuelo.segundos.toFixed(0)} s${
+    vuelo.percance ? ` · percance: ${vuelo.percance}` : ""
+  } · fases: ${vuelo.fases}`,
   "el banco medía trozos sueltos y nunca había volado un vuelo de principio a fin",
 );
 

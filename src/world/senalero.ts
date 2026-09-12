@@ -32,7 +32,7 @@ import {
   MeshLambertMaterial,
   SphereGeometry,
 } from "three";
-import { gestoDeSenalero, type Gesto } from "../flight/senalero";
+import { ALCANCE, gestoDeSenalero, type Gesto } from "../flight/senalero";
 
 /** El naranja de los bastones. El mismo de los conos y los chalecos. */
 const BASTON = 0xff7a1a;
@@ -240,9 +240,32 @@ export class Senalero {
    */
   private restante = Infinity;
 
-  /** Metros que se ha pasado del puesto, o cero si todavía no ha llegado. */
+  /**
+   * Si el avión llegó a ponerse a su alcance en esta vuelta.
+   *
+   * Hace falta para poder decir que **se ha pasado**, que es una cosa que solo
+   * le puede ocurrir a quien venía. Ver `pasado`.
+   */
+  private llegoAsuAlcance = false;
+
+  /**
+   * Metros que se ha pasado del puesto, o cero si todavía no ha llegado.
+   *
+   * **Y cero también si nunca estuvo cerca**, que es el arreglo. `restante` se
+   * mide a lo largo de la raya de entrada al puesto y es negativo por detrás,
+   * así que un avión que acaba de aterrizar en el otro extremo del campo está,
+   * por la cuenta, tres kilómetros «pasado». En Mariscal Estigarribia eso
+   * sacaba el aviso de «te lo pasaste» **en el primer fotograma después de
+   * tocar tierra**, con el avión rodando por la pista a nueve metros por
+   * segundo y el puesto a tres kilómetros por delante. Medido en el banco del
+   * vuelo entero.
+   *
+   * Pasarse de un sitio exige haber estado en él: el aviso se arma cuando el
+   * avión entra en el alcance del señalero, que es donde el señalero existe.
+   */
   get pasado(): number {
-    return Number.isFinite(this.restante) ? Math.max(0, -this.restante) : 0;
+    if (!this.llegoAsuAlcance || !Number.isFinite(this.restante)) return 0;
+    return Math.max(0, -this.restante);
   }
   /** Los ángulos de ahora, que persiguen a los de la postura que toca. */
   private angulos = {
@@ -354,6 +377,7 @@ export class Senalero {
      */
     const lateral = vx * this.hacia.z - vz * this.hacia.x;
     this.restante = restante;
+    if (volviendo && restante < ALCANCE) this.llegoAsuAlcance = true;
 
     this.gesto = gestoDeSenalero(
       {
@@ -483,6 +507,8 @@ export class Senalero {
   reiniciar(): void {
     this.gesto = null;
     this.t = 0;
+    this.restante = Infinity;
+    this.llegoAsuAlcance = false;
     this.grupo.visible = false;
     // Y de vuelta a su sitio: el susto no se hereda del vuelo anterior.
     this.apartado = 0;
