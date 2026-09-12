@@ -28,8 +28,9 @@
  * hay forma de contarla con letras.
  */
 
-import { t } from '../i18n';
-import type { Meteo } from '../world/meteo';
+import { t } from "../i18n";
+import type { Meteo } from "../world/meteo";
+import { Panel } from "./panel";
 
 /** Lo más fuerte que se puede pedir, en nudos. Treinta ya es incómodo. */
 const MAXIMO_KT = 30;
@@ -39,7 +40,19 @@ export class PanelDelTiempo {
   private raiz: HTMLElement | null = null;
   private caja: HTMLElement | null = null;
   private rosa: SVGSVGElement | null = null;
-  private abierto = false;
+  /** Si está abierto. Lo dice el panel, que es quien enseña y esconde. */
+  private get abierto(): boolean {
+    return this.panel?.abierto ?? false;
+  }
+
+  /**
+   * El panel, que es lo que le da el encierro del foco y Escape.
+   *
+   * Sin él, con el tiempo abierto el tabulador se iba a los mandos del vuelo
+   * que hay detrás del velo y Escape no cerraba nada — se lo comía el juego y
+   * sacaba el menú de pausa encima. Medido con `verificar-acceso`. Ver #70.
+   */
+  private panel: Panel | null = null;
   private meteo: Meteo | null = null;
   private alCambiar: ((m: Meteo) => void) | null = null;
   private pidiendoDeVerdad: (() => void) | null = null;
@@ -59,7 +72,7 @@ export class PanelDelTiempo {
   static markup(): string {
     return `
       <div class="tiempo" data-hud="tiempo" hidden role="group"
-           aria-label="${t('tiempo.title')}">
+           aria-label="${t("tiempo.title")}">
         <div class="tiempo__caja">
         <!--
           **Cada mando dice qué es, y lo dice con un dibujo.**
@@ -76,7 +89,7 @@ export class PanelDelTiempo {
             </svg>
           </span>
         <svg class="tiempo__rosa" data-hud="tiempo-rosa" viewBox="-110 -110 220 220"
-             role="application" aria-label="${t('tiempo.viento')}">
+             role="application" aria-label="${t("tiempo.viento")}">
           <circle class="rosa__fondo" cx="0" cy="0" r="${RADIO}" />
           <circle class="rosa__anillo" cx="0" cy="0" r="${RADIO * 0.55}" />
           <!--
@@ -112,7 +125,7 @@ export class PanelDelTiempo {
           años porque es literalmente lo que ve todos los días — un reloj, no.
         -->
         <svg class="tiempo__sol" data-hud="tiempo-sol" viewBox="-110 -110 220 220"
-             role="application" aria-label="${t('tiempo.hora')}">
+             role="application" aria-label="${t("tiempo.hora")}">
           <path class="sol__noche" d="M-92 0 A92 92 0 0 0 92 0 Z" />
           <circle class="sol__orbita" cx="0" cy="0" r="92" />
           <path class="sol__horizonte" d="M-104 0 H104" />
@@ -138,9 +151,9 @@ export class PanelDelTiempo {
             sol con nubes, y tapado. Y el dibujo es el propio cielo, no un
             símbolo de nada — se elige mirando cuál se parece al día que quieres.
           -->
-          <div class="tiempo__cielos" role="group" aria-label="${t('tiempo.nubes')}">
+          <div class="tiempo__cielos" role="group" aria-label="${t("tiempo.nubes")}">
             <button class="tiempo__cielo" type="button" data-hud="tiempo-nubes" data-nubes="0"
-                    aria-label="${t('tiempo.despejado')}" aria-pressed="false">
+                    aria-label="${t("tiempo.despejado")}" aria-pressed="false">
               <svg viewBox="0 0 32 24" aria-hidden="true">
                 <circle cx="16" cy="12" r="5.4" fill="currentColor" />
                 <path d="M16 1.4 v3.2 M16 19.4 v3.2 M5.4 12 h3.2 M23.4 12 h3.2
@@ -150,7 +163,7 @@ export class PanelDelTiempo {
               </svg>
             </button>
             <button class="tiempo__cielo" type="button" data-hud="tiempo-nubes" data-nubes="1"
-                    aria-label="${t('tiempo.algunas')}" aria-pressed="false">
+                    aria-label="${t("tiempo.algunas")}" aria-pressed="false">
               <svg viewBox="0 0 32 24" aria-hidden="true">
                 <circle cx="11" cy="9" r="4.4" fill="currentColor" />
                 <path d="M11 1.6 v2.6 M3.2 9 h2.6 M5.6 3.6 l1.9 1.9 M16.4 3.6 l-1.9 1.9"
@@ -160,7 +173,7 @@ export class PanelDelTiempo {
               </svg>
             </button>
             <button class="tiempo__cielo" type="button" data-hud="tiempo-nubes" data-nubes="2"
-                    aria-label="${t('tiempo.cubierto')}" aria-pressed="false">
+                    aria-label="${t("tiempo.cubierto")}" aria-pressed="false">
               <svg viewBox="0 0 32 24" aria-hidden="true">
                 <path d="M8 12h13a3.1 3.1 0 0 0 .3-6.2A4.4 4.4 0 0 0 13 4.8 2.9 2.9 0 0 0 8 12Z"
                       fill="currentColor" opacity="0.55" />
@@ -172,14 +185,14 @@ export class PanelDelTiempo {
         </div>
         <div class="tiempo__botones">
           <button class="tiempo__boton" type="button" data-hud="tiempo-calma"
-                  aria-label="${t('tiempo.calma')}">
+                  aria-label="${t("tiempo.calma")}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3 9.5 h13 a3 3 0 1 0-3-3" />
               <path d="M3 14.5 h15 a3.2 3.2 0 1 1-3.2 3.2" />
             </svg>
           </button>
           <button class="tiempo__boton" type="button" data-hud="tiempo-real"
-                  aria-label="${t('tiempo.real')}">
+                  aria-label="${t("tiempo.real")}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M20.4 12a8.4 8.4 0 1 1-2.9-6.3" />
               <path d="M20.8 3.6 v5.2 h-5.2" />
@@ -194,18 +207,21 @@ export class PanelDelTiempo {
   bind(raiz: HTMLElement): void {
     this.raiz = raiz;
     this.caja = raiz.querySelector('[data-hud="tiempo"]');
+    if (this.caja) this.panel = new Panel(this.caja, () => this.cerrar());
     this.rosa = raiz.querySelector('[data-hud="tiempo-rosa"]');
-    raiz.querySelector('[data-hud="tiempo-boton"]')?.addEventListener('click', () => this.alternar());
+    raiz
+      .querySelector('[data-hud="tiempo-boton"]')
+      ?.addEventListener("click", () => this.alternar());
     // Tocando el fondo se cierra, igual que el mapa.
-    this.caja?.addEventListener('pointerdown', (e) => {
+    this.caja?.addEventListener("pointerdown", (e) => {
       if (e.target === this.caja) this.cerrar();
     });
     raiz
       .querySelector('[data-hud="tiempo-calma"]')
-      ?.addEventListener('click', () => this.aplicar(null, 0));
+      ?.addEventListener("click", () => this.aplicar(null, 0));
     raiz
       .querySelector('[data-hud="tiempo-real"]')
-      ?.addEventListener('click', () => this.pidiendoDeVerdad?.());
+      ?.addEventListener("click", () => this.pidiendoDeVerdad?.());
 
     // Arrastrar en cualquier parte de la rosa, no solo en el tirador: un dedo
     // de cuatro años no acierta un círculo de trece píxeles.
@@ -221,11 +237,11 @@ export class PanelDelTiempo {
       const kt = Math.min(MAXIMO_KT, Math.round((largo / RADIO) * MAXIMO_KT));
       this.aplicar(Math.round(de), Math.max(1, kt));
     };
-    this.rosa?.addEventListener('pointerdown', (e) => {
+    this.rosa?.addEventListener("pointerdown", (e) => {
       (e.target as Element).setPointerCapture?.(e.pointerId);
       mover(e);
     });
-    this.rosa?.addEventListener('pointermove', (e) => {
+    this.rosa?.addEventListener("pointermove", (e) => {
       if (e.buttons) mover(e);
     });
 
@@ -240,17 +256,21 @@ export class PanelDelTiempo {
       const angulo = (Math.atan2(x, -y) * 180) / Math.PI;
       this.ponerHora(((angulo / 360) * 24 + 12 + 24) % 24);
     };
-    arco?.addEventListener('pointerdown', (e) => {
+    arco?.addEventListener("pointerdown", (e) => {
       (e.target as Element).setPointerCapture?.(e.pointerId);
       moverSol(e);
     });
-    arco?.addEventListener('pointermove', (e) => {
+    arco?.addEventListener("pointermove", (e) => {
       if (e.buttons) moverSol(e);
     });
 
-    this.raiz?.querySelectorAll<HTMLButtonElement>('[data-hud="tiempo-nubes"]').forEach((b) => {
-      b.addEventListener('click', () => this.ponerCielo(Number(b.dataset.nubes ?? 0)));
-    });
+    this.raiz
+      ?.querySelectorAll<HTMLButtonElement>('[data-hud="tiempo-nubes"]')
+      .forEach((b) => {
+        b.addEventListener("click", () =>
+          this.ponerCielo(Number(b.dataset.nubes ?? 0)),
+        );
+      });
     this.pintarCielos();
   }
 
@@ -292,7 +312,8 @@ export class PanelDelTiempo {
     { techoM: 45, tapadura: 0.9 },
   ];
   private cieloActual = 0;
-  private alCambiarNubes: ((alturaM: number | null, tapadura: number) => void) | null = null;
+  private alCambiarNubes:
+    ((alturaM: number | null, tapadura: number) => void) | null = null;
 
   /** Quién se entera de que han cambiado las nubes. */
   onNubes(handler: (alturaM: number | null, tapadura: number) => void): void {
@@ -301,7 +322,10 @@ export class PanelDelTiempo {
 
   /** Pone el cielo sin avisar: es pintar, no cambiar. */
   ponerCieloSinAvisar(indice: number): void {
-    this.cieloActual = Math.max(0, Math.min(PanelDelTiempo.CIELOS.length - 1, indice));
+    this.cieloActual = Math.max(
+      0,
+      Math.min(PanelDelTiempo.CIELOS.length - 1, indice),
+    );
     this.pintarCielos();
   }
 
@@ -314,11 +338,13 @@ export class PanelDelTiempo {
   }
 
   private pintarCielos(): void {
-    const botones = this.raiz?.querySelectorAll<HTMLButtonElement>('[data-hud="tiempo-nubes"]');
+    const botones = this.raiz?.querySelectorAll<HTMLButtonElement>(
+      '[data-hud="tiempo-nubes"]',
+    );
     botones?.forEach((b) => {
       const suyo = Number(b.dataset.nubes ?? 0) === this.cieloActual;
-      b.setAttribute('aria-pressed', String(suyo));
-      b.classList.toggle('tiempo__cielo--puesto', suyo);
+      b.setAttribute("aria-pressed", String(suyo));
+      b.classList.toggle("tiempo__cielo--puesto", suyo);
     });
   }
 
@@ -341,13 +367,18 @@ export class PanelDelTiempo {
   }
 
   private pintarSol(): void {
-    const astro = this.raiz?.querySelector<SVGGElement>('[data-hud="tiempo-astro"]');
+    const astro = this.raiz?.querySelector<SVGGElement>(
+      '[data-hud="tiempo-astro"]',
+    );
     if (!astro) return;
-    astro.setAttribute('transform', `rotate(${((this.horaActual - 12) / 24) * 360})`);
+    astro.setAttribute(
+      "transform",
+      `rotate(${((this.horaActual - 12) / 24) * 360})`,
+    );
     // De noche el sol se apaga y queda la luna, que es el mismo disco más
     // pequeño y frío. Una luna aparte serían dos cosas que mantener sincronizadas.
     const deNoche = this.horaActual < 6 || this.horaActual > 18;
-    astro.classList.toggle('sol--luna', deNoche);
+    astro.classList.toggle("sol--luna", deNoche);
   }
 
   /** Quién se entera de que ha cambiado el tiempo. */
@@ -374,16 +405,13 @@ export class PanelDelTiempo {
   }
 
   cerrar(): void {
-    if (!this.caja || !this.abierto) return;
-    this.abierto = false;
-    this.caja.hidden = true;
+    this.panel?.cerrar();
   }
 
   alternar(): void {
-    if (!this.caja) return;
-    this.abierto = !this.abierto;
-    this.caja.hidden = !this.abierto;
-    if (this.abierto) this.alAbrir?.();
+    if (!this.panel) return;
+    this.panel.alternar();
+    if (this.panel.abierto) this.alAbrir?.();
   }
 
   get visible(): boolean {
@@ -397,25 +425,32 @@ export class PanelDelTiempo {
   private aplicar(de: number | null, kt: number): void {
     if (!this.meteo) return;
     if (this.meteo.vientoDe === de && this.meteo.vientoKt === kt) return;
-    this.meteo = { ...this.meteo, vientoDe: de, vientoKt: kt, fuente: 'mano' };
+    this.meteo = { ...this.meteo, vientoDe: de, vientoKt: kt, fuente: "mano" };
     this.pintar();
     this.alCambiar?.(this.meteo);
   }
 
   private pintar(): void {
-    const flecha = this.raiz?.querySelector<SVGGElement>('[data-hud="tiempo-flecha"]');
+    const flecha = this.raiz?.querySelector<SVGGElement>(
+      '[data-hud="tiempo-flecha"]',
+    );
     if (!flecha || !this.meteo) return;
     const { vientoDe, vientoKt } = this.meteo;
     if (vientoDe === null || vientoKt === 0) {
-      flecha.style.opacity = '0';
+      flecha.style.opacity = "0";
       return;
     }
-    flecha.style.opacity = '1';
+    flecha.style.opacity = "1";
     // La caña se estira con la fuerza: la flecha larga es viento fuerte, y eso
     // se entiende sin que nadie lo explique.
-    const largo = 26 + (Math.min(MAXIMO_KT, vientoKt) / MAXIMO_KT) * (RADIO - 26);
-    flecha.setAttribute('transform', `rotate(${vientoDe})`);
-    flecha.querySelector('.rosa__caña')?.setAttribute('d', `M0 0 V-${largo.toFixed(1)}`);
-    flecha.querySelector('.rosa__tirador')?.setAttribute('cy', `-${largo.toFixed(1)}`);
+    const largo =
+      26 + (Math.min(MAXIMO_KT, vientoKt) / MAXIMO_KT) * (RADIO - 26);
+    flecha.setAttribute("transform", `rotate(${vientoDe})`);
+    flecha
+      .querySelector(".rosa__caña")
+      ?.setAttribute("d", `M0 0 V-${largo.toFixed(1)}`);
+    flecha
+      .querySelector(".rosa__tirador")
+      ?.setAttribute("cy", `-${largo.toFixed(1)}`);
   }
 }

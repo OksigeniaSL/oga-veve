@@ -212,6 +212,15 @@ const MEDIR_CONTRASTE = (EXTREMOS) => {
  * usable sin ver. Se abren como los abre cualquiera —pulsando su botón— y se
  * miden igual.
  */
+/*
+ * **Y el panel se nombra con un selector, no con un `id`.**
+ *
+ * Iba por `getElementById`, y eso deja fuera a los paneles que no tienen uno:
+ * el plano y el tiempo se buscan por `data-hud`, porque los construye su
+ * propio módulo dentro del HUD en vez de venir de `index.html`. Un banco que
+ * solo sabe mirar a los que tienen `id` es un banco que no mira a los que
+ * hacen falta. Ver #70.
+ */
 async function auditar(page, donde, encierra = null) {
   const escapados = [];
   const contrastes = await page.evaluate(MEDIR_CONTRASTE, EXTREMOS);
@@ -233,6 +242,22 @@ async function auditar(page, donde, encierra = null) {
 
   const recorrido = [];
   const sinFoco = [];
+  /*
+   * **El recorrido se acaba al repetir el mismo mando, no el mismo nombre.**
+   *
+   * Iba por nombre, y el nombre sale de `data-hud` o de la clase, así que
+   * tres botones que comparten uno —las tres nubes del tiempo— cortaban la
+   * vuelta en el segundo: los dos mandos que iban detrás, «calma» y «tiempo
+   * de verdad», quedaban **sin visitar y sin nadie que lo dijera**. Ya había
+   * pasado con los once botones de ajustes y se tapó dándoles un nombre
+   * compuesto; eso es una lista que hay que ir alargando con cada pantalla.
+   *
+   * Comparar el elemento es exacto y no hace falta nombrar nada: se marcan en
+   * la propia página, que es donde viven. Ver #70.
+   */
+  await page.evaluate(() => {
+    globalThis.__vistos = new WeakSet();
+  });
   for (let i = 0; i < 40; i++) {
     await page.keyboard.press("Tab");
     /*
@@ -243,7 +268,7 @@ async function auditar(page, donde, encierra = null) {
      * Enfocar desde el guion no lo enciende, y la primera versión de esto
      * acusó de no marcar el foco a un botón que sí lo marca.
      */
-    const parada = await page.evaluate(() => {
+    const parada = await page.evaluate((encierra) => {
       const a = document.activeElement;
       if (!a || a === document.body) return null;
       /*
@@ -266,20 +291,20 @@ async function auditar(page, donde, encierra = null) {
       a.blur();
       const suelto = retrato(getComputedStyle(a));
       a.focus();
+      const repetido = globalThis.__vistos.has(a);
+      globalThis.__vistos.add(a);
       return {
+        repetido,
         nombre,
         marca: enfocado !== suelto,
         // Y de qué panel es. Un diálogo modal no puede dejar que el
         // tabulador se vaya por detrás, a lo que está tapado.
-        dentroDe:
-          a.closest(
-            "#creditos, #teclas, #cuaderno, #hangar, #pausa, #ajustes, #ala",
-          )?.id ?? null,
+        dentroDe: encierra && a.closest(encierra) ? encierra : null,
       };
-    });
+    }, encierra);
     if (parada === null) continue;
-    if (recorrido.includes(parada.nombre)) break;
-    recorrido.push(parada.nombre);
+    if (parada.repetido) break;
+    if (!recorrido.includes(parada.nombre)) recorrido.push(parada.nombre);
     if (!parada.marca) sinFoco.push(parada.nombre);
     if (encierra && parada.dentroDe !== encierra) escapados.push(parada.nombre);
   }
@@ -297,7 +322,7 @@ async function auditar(page, donde, encierra = null) {
     (encierra) =>
       [
         ...(encierra
-          ? document.getElementById(encierra)
+          ? (document.querySelector(encierra) ?? document)
           : document
         ).querySelectorAll("button, summary, input, [data-touch]"),
       ]
@@ -478,12 +503,26 @@ await page.evaluate(() => {
 
 let peores = await auditar(page, "vuelo");
 
-// Y las cuatro pantallas que se abren encima, que son lo que de verdad tiene
-// que ser usable sin ver.
+/*
+ * **Todas las pantallas que se abren encima, no las que se acordó alguien.**
+ *
+ * Esta lista tenía cuatro y el juego tiene seis. Las dos que faltaban —el
+ * plano y el tiempo— eran justo las dos que **no** eran paneles: sin
+ * `role="dialog"`, sin encierro del foco y sin Escape. O sea que el banco no
+ * fallaba porque no las abría, que es la peor forma de pasar. Ver #70.
+ *
+ * (El hangar y los pilotos son pantallas de entrada, no paneles encima del
+ * vuelo: se auditan aparte, y sin Escape ni encierro, porque ahí no procede.)
+ *
+ * Una pantalla que se abre encima del vuelo y no está aquí es una pantalla sin
+ * vigilar: al añadir la siguiente, se añade aquí.
+ */
 for (const [donde, boton, caja] of [
   ["créditos", "credits", "#creditos"],
   ["teclas", "keys", "#teclas"],
   ["cuaderno", "cuaderno", "#cuaderno"],
+  ["plano", "mapa-boton", '[data-hud="mapa"]'],
+  ["tiempo", "tiempo-boton", '[data-hud="tiempo"]'],
   /*
    * Y el esquema del ala, que es el único panel del juego **con un mando que
    * no es un botón**: dos tiradores. Ahí lo que se mide de verdad es el
@@ -503,14 +542,25 @@ for (const [donde, boton, caja] of [
     comprobar(`${donde}: se abre`, false, "no se abrió al pulsar su botón");
     continue;
   }
-  peores = peores.concat(await auditar(page, donde, caja.slice(1)));
+  peores = peores.concat(await auditar(page, donde, caja));
   await comprobarEscape(page, donde, caja);
-  // Y si Escape no lo cerró, se cierra a mano: lo que se mide es el panel
-  // siguiente, y no se puede medir con este encima.
+  /*
+   * Y si Escape no lo cerró, se cierra a mano: lo que se mide es el panel
+   * siguiente, y no se puede medir con este encima.
+   *
+   * **Y el menú de pausa también.** Un panel que no atiende Escape deja que la
+   * tecla llegue al juego, y en el juego Escape es la pausa: el panel sigue
+   * abierto **y** encima sale el menú, que tapa la pantalla entera y bloquea
+   * el botón del panel siguiente. Así se cayó este banco la primera vez que
+   * miró el plano. Ver #70.
+   */
   await page.evaluate((s) => {
-    const c = document.querySelector(s);
-    if (c && !c.hidden) c.hidden = true;
+    for (const sel of [s, "#pausa", "#ajustes"]) {
+      const c = document.querySelector(sel);
+      if (c && !c.hidden) c.hidden = true;
+    }
   }, caja);
+  await page.waitForTimeout(150);
 }
 
 /*
@@ -529,7 +579,7 @@ const ajustesAbiertos = await page.evaluate(
   () => document.querySelector("#ajustes")?.hidden === false,
 );
 if (ajustesAbiertos) {
-  peores = peores.concat(await auditar(page, "ajustes", "ajustes"));
+  peores = peores.concat(await auditar(page, "ajustes", "#ajustes"));
   await page.keyboard.press("Escape");
   await page.waitForTimeout(400);
   const donde = await page.evaluate(() => ({

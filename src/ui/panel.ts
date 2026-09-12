@@ -158,3 +158,67 @@ export class Encierro {
     toca.focus();
   };
 }
+
+/**
+ * Un panel que se abre encima del vuelo.
+ *
+ * El encierro de arriba resuelve el foco y Escape, pero hay que acordarse de
+ * montarlo — y **dos no se acordaron**: el plano y el tiempo se abrían y se
+ * cerraban a mano, sin `role="dialog"`, sin atrapar el tabulador y sin
+ * Escape. No es una teoría: es lo que midió `verificar-acceso` el día que se
+ * le enseñaron, porque antes ni siquiera los abría — que es la peor forma de
+ * pasar.
+ *
+ * El hangar y la pantalla de pilotos no entran aquí y no es un olvido: son
+ * pantallas **de entrada**, no paneles encima del vuelo. Ahí Escape no tiene a
+ * dónde volver y `dialog` diría algo que no es.
+ *
+ * Lo que se medía en el plano, abierto:
+ *
+ * - el tabulador se iba **detrás del velo** a los mandos del vuelo: al gas, al
+ *   hangar, a los créditos;
+ * - y Escape no lo cerraba. Peor: la tecla llegaba al juego, que la usa para
+ *   la pausa, así que salía el menú de pausa **encima** del plano abierto.
+ *
+ * Así que la caja y el encierro van juntos. Abrir es enseñar y encerrar;
+ * cerrar es esconder y soltar. Quien quiera un panel nuevo hereda las dos
+ * cosas sin tener que acordarse de ninguna. Ver #70.
+ */
+export class Panel {
+  private readonly caja: HTMLElement;
+  private readonly encierro: Encierro;
+
+  constructor(caja: HTMLElement, cerrar: () => void, conEscape = true) {
+    this.caja = caja;
+    /*
+     * Se declara aquí y no en la plantilla de cada panel a propósito: es la
+     * promesa que hace el encierro —«lo de detrás no existe»— y las dos tienen
+     * que ir siempre juntas, o el lector de pantalla dice una cosa y el
+     * teclado hace otra.
+     */
+    caja.setAttribute("role", "dialog");
+    caja.setAttribute("aria-modal", "true");
+    this.encierro = new Encierro(caja, cerrar, conEscape);
+  }
+
+  get abierto(): boolean {
+    return !this.caja.hidden;
+  }
+
+  abrir(): void {
+    if (this.abierto) return;
+    this.caja.hidden = false;
+    this.encierro.abrir();
+  }
+
+  cerrar(): void {
+    if (!this.abierto) return;
+    this.caja.hidden = true;
+    this.encierro.soltar();
+  }
+
+  alternar(): void {
+    if (this.abierto) this.cerrar();
+    else this.abrir();
+  }
+}
