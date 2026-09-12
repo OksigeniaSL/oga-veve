@@ -17,7 +17,7 @@
 
 import { ACCIONES, ORDEN, nombreDeTecla, type Accion, type Keymap } from '../flight/keymap';
 import { t } from '../i18n';
-import { Encierro } from './panel';
+import { Panel } from './panel';
 
 /*
  * Los dibujos de las teclas. En SVG y no emoji: un emoji se ve distinto en
@@ -147,7 +147,7 @@ export class KeyScreen {
    * Sin Escape: aquí Escape cancela la captura de una tecla antes que cerrar,
    * y esa decisión es de esta pantalla. Ver `ui/panel.ts`.
    */
-  private readonly encierro: Encierro;
+  private readonly panel: Panel;
 
   /** Qué acción está esperando una tecla nueva, si alguna. */
   private capturando: Accion | null = null;
@@ -155,7 +155,7 @@ export class KeyScreen {
   constructor(root: HTMLElement, keymap: Keymap) {
     this.root = root;
     this.keymap = keymap;
-    this.encierro = new Encierro(root, () => this.hide(), false);
+    this.panel = new Panel(root, () => this.hide(), false);
     this.root.hidden = true;
 
     this.root.addEventListener('click', (event) => {
@@ -246,15 +246,16 @@ export class KeyScreen {
   }
 
   show(): void {
-    this.root.hidden = false;
+    // Se pinta **antes** de enseñarlo: el encierro lleva el foco al primer
+    // mando de dentro, y si todavía no hay nada dentro no hay a dónde
+    // llevarlo.
     this.render();
-    this.encierro.abrir();
+    this.panel.abrir();
   }
 
   hide(): void {
     this.capturando = null;
-    this.root.hidden = true;
-    this.encierro.soltar();
+    this.panel.cerrar();
   }
 
   private capture(accion: Accion): void {

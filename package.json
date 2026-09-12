@@ -19,6 +19,7 @@
     "vuelo-entero": "node scripts/verificar-vuelo-entero.mjs",
     "rendimiento": "node scripts/verificar-rendimiento.mjs",
     "acceso": "node scripts/verificar-acceso.mjs",
+    "paneles": "node scripts/verificar-paneles.mjs",
     "sin-red": "node scripts/verificar-sin-red.mjs",
     "voz": "node scripts/verificar-voz.mjs"
   },

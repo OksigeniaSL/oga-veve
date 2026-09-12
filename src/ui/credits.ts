@@ -7,7 +7,7 @@
  */
 
 import { t } from "../i18n";
-import { Encierro } from "./panel";
+import { Panel } from "./panel";
 
 export class CreditsScreen {
   private readonly root: HTMLElement;
@@ -17,7 +17,7 @@ export class CreditsScreen {
    * Lleva también lo de devolver el foco a donde estaba. Ver `ui/panel.ts`,
    * que existe porque esto estaba escrito tres veces y mal las tres.
    */
-  private readonly encierro: Encierro;
+  private readonly panel: Panel;
 
   constructor(root: HTMLElement, flightModelName: string) {
     this.root = root;
@@ -45,7 +45,7 @@ export class CreditsScreen {
         <button class="creditos__cerrar" type="button">${t("credits.close")}</button>
       </div>
     `;
-    this.encierro = new Encierro(root, () => this.hide());
+    this.panel = new Panel(root, () => this.hide());
     root.querySelector("button")?.addEventListener("click", () => this.hide());
     root.addEventListener("click", (event) => {
       if (event.target === root) this.hide();
@@ -71,12 +71,10 @@ export class CreditsScreen {
    * enterarse de que había algo abierto.
    */
   show(): void {
-    this.root.hidden = false;
-    this.encierro.abrir();
+    this.panel.abrir();
   }
 
   hide(): void {
-    this.root.hidden = true;
-    this.encierro.soltar();
+    this.panel.cerrar();
   }
 }

@@ -184,6 +184,39 @@ export class Encierro {
  * cerrar es esconder y soltar. Quien quiera un panel nuevo hereda las dos
  * cosas sin tener que acordarse de ninguna. Ver #70.
  */
+/**
+ * Todos los paneles que existen, y a quién avisar cuando alguno se abre.
+ *
+ * Es lo que hace cumplible la tercera exigencia de #70: «un panel abierto
+ * pausa el vuelo o lo deja en vuelo recto; nunca se cae el avión mientras
+ * alguien está eligiendo gorra». Eso no se puede resolver panel a panel —son
+ * ocho sitios y el octavo se olvida—, así que lo resuelve la clase: quien abre
+ * cualquier panel congela el vuelo sin saber que lo hace.
+ *
+ * Se **recuenta** en vez de llevar un contador que sube y baja. Un contador
+ * se descuadra en cuanto alguien esconde una caja por su cuenta —el banco de
+ * accesibilidad lo hace, para poder medir el panel siguiente— y un contador
+ * descuadrado deja el vuelo congelado para siempre. Recontar mirando quién
+ * está abierto no se puede descuadrar.
+ */
+const todos = new Set<Panel>();
+let avisar: ((hayAlguno: boolean) => void) | null = null;
+let habia = false;
+
+/** Quién quiere enterarse de que hay —o ya no hay— algún panel abierto. */
+export function alCambiarLosPaneles(quien: (hayAlguno: boolean) => void): void {
+  avisar = quien;
+  habia = false;
+  recontar();
+}
+
+function recontar(): void {
+  const hay = [...todos].some((p) => p.abierto);
+  if (hay === habia) return;
+  habia = hay;
+  avisar?.(hay);
+}
+
 export class Panel {
   private readonly caja: HTMLElement;
   private readonly encierro: Encierro;
@@ -191,14 +224,21 @@ export class Panel {
   constructor(caja: HTMLElement, cerrar: () => void, conEscape = true) {
     this.caja = caja;
     /*
-     * Se declara aquí y no en la plantilla de cada panel a propósito: es la
-     * promesa que hace el encierro —«lo de detrás no existe»— y las dos tienen
-     * que ir siempre juntas, o el lector de pantalla dice una cosa y el
-     * teclado hace otra.
+     * La promesa que hace el encierro —«lo de detrás no existe»— se declara
+     * junto a él, o el lector de pantalla dice una cosa y el teclado hace
+     * otra.
+     *
+     * Salvo que el panel ya la traiga puesta más adentro, que es lo normal:
+     * casi todos son un velo a pantalla completa con la caja de verdad
+     * dentro, y el diálogo es la caja, no el velo. Poner otro fuera anidaría
+     * dos diálogos, que es decir dos veces lo mismo y peor.
      */
-    caja.setAttribute("role", "dialog");
-    caja.setAttribute("aria-modal", "true");
+    if (!caja.querySelector('[role="dialog"]')) {
+      caja.setAttribute("role", "dialog");
+      caja.setAttribute("aria-modal", "true");
+    }
     this.encierro = new Encierro(caja, cerrar, conEscape);
+    todos.add(this);
   }
 
   get abierto(): boolean {
@@ -209,12 +249,14 @@ export class Panel {
     if (this.abierto) return;
     this.caja.hidden = false;
     this.encierro.abrir();
+    recontar();
   }
 
   cerrar(): void {
     if (!this.abierto) return;
     this.caja.hidden = true;
     this.encierro.soltar();
+    recontar();
   }
 
   alternar(): void {

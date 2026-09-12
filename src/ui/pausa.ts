@@ -26,7 +26,7 @@
  */
 
 import { t } from "../i18n";
-import { Encierro } from "./panel";
+import { Panel } from "./panel";
 
 export interface AccionesDePausa {
   seguir: () => void;
@@ -37,13 +37,17 @@ export interface AccionesDePausa {
 
 export class PantallaDePausa {
   private readonly root: HTMLElement;
-  private readonly encierro: Encierro;
+  private readonly panel: Panel;
   private readonly acciones: AccionesDePausa;
 
-  constructor(root: HTMLElement, acciones: AccionesDePausa, conLetras: boolean) {
+  constructor(
+    root: HTMLElement,
+    acciones: AccionesDePausa,
+    conLetras: boolean,
+  ) {
     this.root = root;
     this.acciones = acciones;
-    this.encierro = new Encierro(root, () => this.acciones.seguir());
+    this.panel = new Panel(root, () => this.acciones.seguir());
     root.innerHTML = `
       <div class="pausa__panel" role="dialog" aria-modal="true"
            aria-label="${t("pausa.titulo")}">
@@ -110,12 +114,10 @@ export class PantallaDePausa {
   }
 
   abrir(): void {
-    this.root.hidden = false;
-    this.encierro.abrir();
+    this.panel.abrir();
   }
 
   cerrar(): void {
-    this.root.hidden = true;
-    this.encierro.soltar();
+    this.panel.cerrar();
   }
 }

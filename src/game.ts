@@ -195,6 +195,7 @@ import { mundoElegido } from "./ui/mundo";
  * el que se construye todo lo demás.
  */
 const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
+import { alCambiarLosPaneles } from "./ui/panel";
 import { PANELES_DEL_VUELO } from "./ui/paneles";
 import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
@@ -725,6 +726,10 @@ export class Game {
    * solo levantarla. Ver `main.ts`.
    */
   private pausadoAdrede = false;
+  /** Si hay algún panel abierto encima del vuelo. Lo dice `ui/panel.ts`. */
+  private hayPanelAbierto = false;
+  /** Si el mundo está parado ahora mismo, por lo que sea. Ver `quedarQuieto`. */
+  private quieto = false;
   /**
    * Las luces azules de las calles de rodaje, que se encienden con el sol
    * bajo. Se montan con las de aproximación, después de moldear el terreno.
@@ -1362,6 +1367,14 @@ export class Game {
      * una tarde y lo cazó un `pageerror` del banco.
      */
     this.aplicarAjustes();
+    /*
+     * Y con los paneles ya montados, el vuelo se entera de cuándo hay alguno
+     * abierto. Ver `quedarQuieto` y #70.
+     */
+    alCambiarLosPaneles((hayAlguno) => {
+      this.hayPanelAbierto = hayAlguno;
+      this.quedarQuieto();
+    });
     this.hud.onPausa(() => this.alternarPausa());
     this.hud.onCamara(() => this.cycleCamera());
     /*
@@ -2033,9 +2046,9 @@ export class Game {
     this.audio.setActive(false);
   }
 
-  /** Si el vuelo está parado porque alguien lo paró. Lo mira `main.ts`. */
+  /** Si el vuelo está parado, lo haya parado quien lo haya parado. */
   get pausado(): boolean {
-    return this.pausadoAdrede;
+    return this.quieto;
   }
 
   alternarPausa(): void {
@@ -2043,32 +2056,50 @@ export class Game {
     else this.pausar();
   }
 
-  /**
-   * Para el vuelo de verdad, y deja el mundo donde estaba.
-   *
-   * El reloj se detiene entero, así que el avión no se mueve ni un metro
-   * mientras el menú está abierto. Y el último fotograma **sigue pintado
-   * detrás**: quien vuelva ve el avión donde lo dejó, que es lo que hace que
-   * parar no dé miedo. Un fundido a negro haría creer que se perdió el vuelo.
-   *
-   * También se calla todo. Un instructor que sigue explicando la aproximación
-   * con el juego parado es lo contrario de una pausa.
-   */
   pausar(): void {
     if (this.pausadoAdrede) return;
     this.pausadoAdrede = true;
-    this.stop();
-    this.instructor.callar();
-    this.otroAvion.callar();
-    callar();
     this.pausa?.abrir();
+    this.quedarQuieto();
   }
 
   reanudar(): void {
     if (!this.pausadoAdrede) return;
     this.pausadoAdrede = false;
     this.pausa?.cerrar();
-    this.start();
+    this.quedarQuieto();
+  }
+
+  /**
+   * Deja el mundo donde estaba, o lo suelta otra vez.
+   *
+   * El reloj se detiene entero, así que el avión no se mueve ni un metro
+   * mientras hay algo abierto encima. Y el último fotograma **sigue pintado
+   * detrás**: quien vuelva ve el avión donde lo dejó, que es lo que hace que
+   * parar no dé miedo. Un fundido a negro haría creer que se perdió el vuelo.
+   *
+   * También se calla todo. Un instructor que sigue explicando la aproximación
+   * con el juego parado es lo contrario de una pausa.
+   *
+   * Lo piden **dos** cosas y por eso está aquí y no dentro de `pausar`: el
+   * menú de pausa, que es lo de siempre, y cualquier panel que se abra encima
+   * del vuelo, que es lo que exige #70 —«nunca se cae el avión mientras
+   * alguien está eligiendo gorra»—. Hasta ahora abrir el plano en vuelo
+   * dejaba el avión volando solo detrás del velo, y volver era volver a un
+   * avión que ya no estaba donde se dejó.
+   */
+  private quedarQuieto(): void {
+    const debe = this.pausadoAdrede || this.hayPanelAbierto;
+    if (debe === this.quieto) return;
+    this.quieto = debe;
+    if (!debe) {
+      this.start();
+      return;
+    }
+    this.stop();
+    this.instructor.callar();
+    this.otroAvion.callar();
+    callar();
   }
 
   dispose(): void {
