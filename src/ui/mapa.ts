@@ -27,6 +27,7 @@
 import { t } from "../i18n";
 import type { Scenario } from "../world/scenarios";
 import { puntoDePista } from "../world/rumbo";
+import { Panel } from "./panel";
 
 /** Lado del lienzo, en píxeles. */
 const LADO = 460;
@@ -53,7 +54,18 @@ export class Mapa {
   private caja: HTMLElement | null = null;
   private fondo: HTMLCanvasElement | null = null;
   private encima: HTMLCanvasElement | null = null;
-  private abierto = false;
+  /** Si está abierto. Lo dice el panel, que es quien enseña y esconde. */
+  private get abierto(): boolean {
+    return this.panel?.abierto ?? false;
+  }
+
+  /**
+   * El panel, que es lo que le da el encierro del foco y Escape.
+   *
+   * Se monta al enganchar la caja porque antes no hay caja que encerrar. Ver
+   * `Panel`, y #70 para lo que faltaba aquí.
+   */
+  private panel: Panel | null = null;
   private pintado = false;
   /** Qué alcance está puesto, como índice de `ALCANCES`. */
   private alcance = 0;
@@ -114,6 +126,7 @@ export class Mapa {
     this.cota = cota;
     this.raiz = raiz;
     this.caja = raiz.querySelector('[data-hud="mapa"]');
+    if (this.caja) this.panel = new Panel(this.caja, () => this.cerrar());
     this.fondo = raiz.querySelector('[data-hud="mapa-fondo"]');
     this.encima = raiz.querySelector('[data-hud="mapa-encima"]');
     raiz
@@ -195,19 +208,18 @@ export class Mapa {
   }
 
   cerrar(): void {
-    if (!this.caja || !this.abierto) return;
-    this.abierto = false;
-    this.caja.hidden = true;
+    if (!this.panel?.abierto) return;
+    this.panel.cerrar();
     this.avisarAlHud();
   }
 
   alternar(): void {
-    if (!this.caja) return;
-    this.abierto = !this.abierto;
-    this.caja.hidden = !this.abierto;
+    if (!this.panel) return;
+    this.panel.alternar();
     this.avisarAlHud();
-    if (this.abierto) this.alAbrir?.();
-    if (this.abierto && !this.pintado) {
+    if (!this.panel.abierto) return;
+    this.alAbrir?.();
+    if (!this.pintado) {
       this.pintarFondo();
       this.pintado = true;
     }
