@@ -489,6 +489,26 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * rueda, cuánto tiempo estuvo muda la pantalla, cuánto sin raya—, así que
    * medirlas con un reloj que miente es no medirlas.
    */
+  /** Cuánto flotaba el avión sobre el suelo antes de moverse, m. */
+  const alPrincipioFlotaba = (() => {
+    const g = o.aeronave?.().grupo;
+    if (!g) return null;
+    g.updateWorldMatrix(true, true);
+    let bajo = Infinity;
+    g.traverse((n) => {
+      const pos = n.geometry?.attributes?.position;
+      if (!pos) return;
+      for (let i = 0; i < pos.count; i++) {
+        const v = n.localToWorld(
+          new n.position.constructor(pos.getX(i), pos.getY(i), pos.getZ(i)),
+        );
+        if (v.y < bajo) bajo = v.y;
+      }
+    });
+    const p = o.estado().position;
+    return bajo === Infinity ? null : +(bajo - o.suelo(p.x, p.z)).toFixed(2);
+  })();
+
   const empezo = o.reloj();
   let leidoAntes = empezo;
   let t = 0;
@@ -1023,6 +1043,17 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
     avion: o.avion?.() ?? null,
+    /*
+     * **Y a qué altura del suelo se queda el avión parado.**
+     *
+     * Se mide al principio, con el avión en su puesto y quieto: el punto más
+     * bajo del modelo tiene que estar en el asfalto. Flotaba exactamente la
+     * altura de su tren —1,40 m el Pykasu, 1,80 el Mainumby— porque el
+     * cargador bajaba el modelo lo que mide él y no lo que el juego lo había
+     * subido. No se veía porque la sombra se dibuja aparte, contra el suelo, y
+     * tapaba el hueco desde la cámara de persecución.
+     */
+    flota: alPrincipioFlotaba,
   };
 }, VECES);
 
@@ -1046,6 +1077,15 @@ comprobar(
     ? `${vuelo.avion.nombre} · ${vuelo.avion.dibujo}`
     : "no se pudo mirar",
   "el modelo se apaga en silencio si el fichero no está donde se le espera",
+);
+
+comprobar(
+  "el avión parado tiene las ruedas en el suelo",
+  vuelo.flota !== null && Math.abs(vuelo.flota) < 0.25,
+  vuelo.flota === null
+    ? "no se pudo medir"
+    : `${vuelo.flota > 0 ? "flota" : "hundido"} ${Math.abs(vuelo.flota).toFixed(2)} m`,
+  "el modelo se bajaba lo que mide él y no lo que el juego lo había subido",
 );
 
 comprobar(
