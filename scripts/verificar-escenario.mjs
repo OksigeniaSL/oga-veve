@@ -17,7 +17,7 @@ import { writeFileSync } from 'node:fs';
 const id = process.argv[2] ?? 'tenerife-norte';
 const salida = process.argv[3] ?? `/tmp/escenario-${id}.png`;
 
-const server = await createServer({ root: process.cwd(), server: { port: 5197 } });
+const server = await createServer({ root: process.cwd(), server: { port: 5197, hmr: false } });
 await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage();

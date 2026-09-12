@@ -23,7 +23,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { writeFileSync } from 'node:fs';
 
-const server = await createServer({ root: process.cwd(), server: { port: 5191 } });
+const server = await createServer({ root: process.cwd(), server: { port: 5191, hmr: false } });
 await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage();

@@ -2381,6 +2381,54 @@ export class Game {
     });
 
     /*
+     * **Te has pasado del puesto.** Con el freno dibujado, que es lo que hay
+     * que hacer, y con la voz: quien no lee necesita las dos cosas.
+     */
+    this.hechos.on("teLoPasaste", () => {
+      this.hud.senal.mostrar(
+        "senalero-alto",
+        this.rotulo("vuelo.teLoPasaste", "palabra.frena"),
+        null,
+        {
+          segundos: SE_QUEDA_EL_BULTO,
+          prioridad: URGENTE,
+          tecla: nombreDeTecla(this.input.preferredKey("brakes")),
+        },
+      );
+      this.audio.cue("error");
+      this.instructor.decir(t("vuelo.teLoPasaste"), "vuelo.teLoPasaste");
+    });
+
+    /*
+     * **El gesto del señalero, repetido en la tarjeta.**
+     *
+     * Y el «alto» lleva el freno dibujado, que es lo que hay que hacer.
+     * «Aparte del señor, algo debe decirme que pare. Si durante todo el rato
+     * del aterrizaje el juego está moviendo y controlando la velocidad de la
+     * aeronave, ahora el niño cree que se va a parar sola.» El señalero dice
+     * **qué** —no te muevas más— y hasta ahí llegaba la pantalla; lo que
+     * faltaba era el **cómo**, que es la misma tecla del freno que ya sale en
+     * el punto de espera y al tomar tierra.
+     *
+     * Es la tercera vez que aparece la misma pareja —dibujo que se entiende
+     * sin leer, tecla dibujada al lado— y a propósito: quien la vio en la
+     * doble raya la reconoce aquí.
+     */
+    this.hechos.on("gestoDelSenalero", ({ gesto }) => {
+      const parando = gesto === "alto" || gesto === "despacio";
+      this.hud.senal.mostrar(`senalero-${gesto}`, "", null, {
+        segundos: Infinity,
+        tecla: parando
+          ? nombreDeTecla(this.input.preferredKey("brakes"))
+          : null,
+      });
+      if (parando) {
+        const cual = gesto === "alto" ? "vuelo.alto" : "vuelo.despacio";
+        this.instructor.decir(t(cual), cual);
+      }
+    });
+
+    /*
      * **Un tramo nuevo del circuito.** Sin palabra en el peldaño que no lee:
      * ahí el dibujo es el mensaje entero.
      */
@@ -4258,18 +4306,7 @@ export class Game {
     if (volviendo && pasado > SE_PASO_DEL_PUESTO && s.airspeed > 2) {
       if (!this.avisadoDeLaPasada) {
         this.avisadoDeLaPasada = true;
-        this.hud.senal.mostrar(
-          "senalero-alto",
-          this.rotulo("vuelo.teLoPasaste", "palabra.frena"),
-          null,
-          {
-            segundos: SE_QUEDA_EL_BULTO,
-            prioridad: URGENTE,
-            tecla: nombreDeTecla(this.input.preferredKey("brakes")),
-          },
-        );
-        this.audio.cue("error");
-        this.instructor.decir(t("vuelo.teLoPasaste"), "vuelo.teLoPasaste");
+        this.hechos.emit("teLoPasaste", {});
       }
     } else if (pasado < SE_PASO_DEL_PUESTO / 2) {
       this.avisadoDeLaPasada = false;
@@ -4320,17 +4357,7 @@ export class Game {
          * entiende sin leer, tecla dibujada al lado— y a propósito: quien la
          * vio en la doble raya la reconoce aquí.
          */
-        const parando = enPantalla === "alto" || enPantalla === "despacio";
-        this.hud.senal.mostrar(`senalero-${enPantalla}`, "", null, {
-          segundos: Infinity,
-          tecla: parando
-            ? nombreDeTecla(this.input.preferredKey("brakes"))
-            : null,
-        });
-        if (parando) {
-          const cual = enPantalla === "alto" ? "vuelo.alto" : "vuelo.despacio";
-          this.instructor.decir(t(cual), cual);
-        }
+        this.hechos.emit("gestoDelSenalero", { gesto: enPantalla });
       } else {
         this.faseAnunciada = "";
       }

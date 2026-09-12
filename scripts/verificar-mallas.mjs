@@ -16,7 +16,7 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
-const server = await createServer({ root: process.cwd(), server: { port: 5286 } });
+const server = await createServer({ root: process.cwd(), server: { port: 5286, hmr: false } });
 await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'] });

@@ -600,6 +600,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       minimos: juego.hechos.cuantosEscuchan("minimos"),
       papi: juego.hechos.cuantosEscuchan("papi"),
       tramoDeCircuito: juego.hechos.cuantosEscuchan("tramoDeCircuito"),
+      teLoPasaste: juego.hechos.cuantosEscuchan("teLoPasaste"),
+      gestoDelSenalero: juego.hechos.cuantosEscuchan("gestoDelSenalero"),
       mandaronIrseAlAire: juego.hechos.cuantosEscuchan("mandaronIrseAlAire"),
       pistaLibreOtraVez: juego.hechos.cuantosEscuchan("pistaLibreOtraVez"),
     }),

@@ -29,7 +29,7 @@ const LO_QUE_SE_PERDONA = 0.5;
 
 const server = await createServer({
   root: process.cwd(),
-  server: { port: PUERTO },
+  server: { port: PUERTO, hmr: false },
 });
 await server.listen();
 

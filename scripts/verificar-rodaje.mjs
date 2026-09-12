@@ -25,7 +25,7 @@ import { createServer } from "vite";
 
 const server = await createServer({
   root: process.cwd(),
-  server: { port: 5279 },
+  server: { port: 5279, hmr: false },
 });
 await server.listen();
 /*
