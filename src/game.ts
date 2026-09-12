@@ -241,7 +241,7 @@ import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
-import { topeDeRodaje } from "./flight/gobernador";
+import { CONDUCE_EL_JUEGO, topeDeRodaje } from "./flight/gobernador";
 import { ROCE, type Percance } from "./flight/percance";
 import {
   barrasDe,
@@ -551,15 +551,6 @@ const RODAJE = 9;
  * y a la derecha y no estorba a quien todavía viene por la pista.
  */
 const BIEN_FUERA_DE_LA_PISTA = 40;
-
-/**
- * A partir de cuánta ayuda de rodaje se considera que el juego conduce.
- *
- * Medio. Por debajo —Taguató y Taguató Ruvicha— la ayuda solo evita que te
- * salgas, y ahí la velocidad es cosa tuya. Sale de la misma escalera de
- * `tiers.ts` para no añadir otro mando que se pueda desafinar por su cuenta.
- */
-const CONDUCE_EL_JUEGO = 0.5;
 
 /**
  * Las fases en las que se rueda, que son en las que hay tope de velocidad.

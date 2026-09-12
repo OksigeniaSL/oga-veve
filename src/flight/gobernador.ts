@@ -45,6 +45,23 @@
  * el plan de vuelo. No es un número nuevo: es **el** número, y por eso se
  * recibe de fuera en vez de escribirlo otra vez aquí.
  */
+/**
+ * A partir de cuánta ayuda de rodaje se considera que el juego conduce.
+ *
+ * Tres décimas. Por debajo —Taguató y Taguató Ruvicha— la ayuda solo evita que
+ * te salgas, y ahí la velocidad es cosa tuya. Sale de la misma escalera de
+ * `tiers.ts` para no añadir otro mando que se pueda desafinar por su cuenta.
+ *
+ * **Estaba en medio, y medio dejaba fuera a Tukã**, que tiene 0,35. O sea que
+ * el segundo peldaño no llevaba tope de velocidad en tierra mientras tres
+ * sitios daban por hecho que sí: el comentario de `limitarElRodaje` («Guyrami
+ * y Tukã llevan tope»), la prosa de esta misma constante —que nombra a
+ * Taguató y Taguató Ruvicha como los de abajo, no a Tukã— y el banco de vuelo,
+ * que comprueba el tope en los dos. Nadie lo vio porque **Tukã no se ejecuta
+ * en ningún banco con veredicto**. Lo vigila ahora `tiers.test.ts`.
+ */
+export const CONDUCE_EL_JUEGO = 0.3;
+
 export interface Rodaje {
   /** Velocidad actual, m/s. */
   readonly velocidad: number;
