@@ -96,9 +96,141 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   let raiz = o.aeronave().grupo;
   while (raiz.parent) raiz = raiz.parent;
   globalThis.__raiz = raiz;
-  const c = o.controles();
+  /*
+   * **Los mandos se ponen por `pilotar`, no escribiendo en `controles()`.**
+   *
+   * Esto es lo que llevaba meses midiendo un piloto que no pilotaba. El
+   * objeto de `controles()` es el del teclado, y el teclado lo **reescribe
+   * entero cada fotograma**: `Input.update` devuelve alerón y palanca al
+   * centro a 3,4 por segundo, así que un alerón de 0,5 escrito desde fuera se
+   * queda en nada en siete centésimas de vuelo. En las trazas se ve tal cual —
+   * tras escribir 0,5, tres de cada cuatro muestras leen 0,0.
+   *
+   * El juego tiene el gancho exactamente para esto y corre **después** del
+   * teclado. Es la misma lección que ya se aprendió en el banco de rodaje —
+   * «el guion le ponía timón al avión y el teclado se lo quitaba al
+   * instante»— y que aquí se había vuelto a colar.
+   *
+   * Y no era solo que el piloto fuera flojo: **su autoridad dependía del
+   * reloj**. Escribiendo una vez por vuelta del bucle, a tiempo real el mando
+   * vivía un tercio del tiempo y a reloj acelerado un octavo. Un banco cuyo
+   * piloto pilota distinto según lo deprisa que vaya la máquina no mide el
+   * juego, se mide a sí mismo.
+   */
+  const c = {
+    throttle: 0,
+    brakes: 1,
+    aileron: 0,
+    elevator: 0,
+    rudder: 0,
+    flaps: 0,
+    engineOn: false,
+  };
+  o.pilotar((mandos) => Object.assign(mandos, c));
   const pista = o.pista();
   const rumboPista = (pista.heading * Math.PI) / 180;
+
+  /**
+   * A qué altura se puede empezar a girar, m.
+   *
+   * Ciento cincuenta. Por debajo se mantiene el rumbo de salida: girar bajo es
+   * lo que estrelló este banco en La Palma —de 62 a 14 metros en cuatro
+   * segundos— y es además lo que ningún piloto hace.
+   *
+   * **Y tiene que estar por debajo de la altura de crucero**, que son
+   * doscientos. Se puso primero en doscientos cincuenta, la del circuito de
+   * tráfico, y entonces el permiso para girar no llegaba nunca: el avión
+   * nivelaba a doscientos, salía recto hasta quedarse sin escenario y el banco
+   * se lo apuntaba como «pasada». Un umbral por encima de donde el avión se
+   * queda es un umbral que no existe.
+   */
+  const SEGURO_PARA_GIRAR = 150;
+
+  /**
+   * A qué velocidad se sube y a cuál se navega, m/s.
+   *
+   * Treinta y cuatro y cincuenta. La primera está bastante por encima de la de
+   * rotación —veintiocho— y bastante por debajo de donde este avión deja de
+   * subir; la segunda es el crucero de la ficha. Lo que importa de las dos no
+   * es el número exacto: es que el piloto **apunte a una velocidad** y no
+   * sostenga media palanca, que es como se entra en pérdida subiendo.
+   */
+  const VELOCIDAD_DE_SUBIDA = 34;
+  const VELOCIDAD_DE_CRUCERO = 50;
+
+  /**
+   * Palanca para mantener una velocidad, con un empujón opcional de altura.
+   *
+   * Si el avión va más deprisa de lo que toca, se tira y sube; si va más
+   * despacio, se suelta y acelera. Es como se vuela de verdad y, sobre todo,
+   * es lo único que **no puede entrar en pérdida por insistir**: cuanto más
+   * cerca de la pérdida está, menos palanca pide.
+   */
+  const palancaPorVelocidad = (s, objetivo, extra = 0) =>
+    Math.max(-0.35, Math.min(0.35, (s.airspeed - objetivo) * 0.05 + extra));
+
+  /**
+   * Palanca para quedarse a una altura, amortiguada.
+   *
+   * El término de velocidad vertical es lo que impide el vaivén: sin él, el
+   * avión llega a la altura pedida con toda la subida encima, se pasa, corrige
+   * y se pasa más. Con él llega y se queda.
+   *
+   * Y por debajo de la velocidad de subida no se tira, pase lo que pase. Es la
+   * única regla del piloto que no admite excepción: una altura que falta se
+   * recupera, una pérdida en viraje no.
+   */
+  const aLaAltura = (s, objetivo) => {
+    /*
+     * Se manda **velocidad vertical**, no palanca, y se limita.
+     *
+     * Es el paso que faltaba. Mandando palanca en proporción a la altura que
+     * falta, un objetivo cien metros más bajo pide media palanca de morro
+     * abajo, y eso no es descender: es tirarse. Medido en final, entrando a
+     * 176 m con la senda en 40: de 176 a 64 metros en dos segundos y de 53 a
+     * 68 m/s. Pidiendo cinco metros por segundo de bajada, el mismo error se
+     * recorre en veinte segundos y el avión llega volando.
+     */
+    const quiere = Math.max(-5, Math.min(4, (objetivo - alto(s)) * 0.1));
+    const mando = Math.max(
+      -0.3,
+      Math.min(0.3, (quiere - s.verticalSpeed) * 0.08),
+    );
+    return s.airspeed < VELOCIDAD_DE_SUBIDA ? Math.min(0, mando) : mando;
+  };
+
+  /**
+   * Un punto del eje de pista **siempre por delante**, saliendo.
+   *
+   * `puntoDeFinal(d)` mide desde la cabecera en uso hacia atrás, o sea hacia
+   * el final; con `d` negativo se va hacia delante por la pista. Pidiendo dos
+   * kilómetros más allá de la cabecera contraria, el punto queda por delante
+   * de cualquier avión que esté saliendo, entre en pista por donde entre.
+   *
+   * Esto se escribió primero como `puntoDeFinal(-2000)`, un punto fijo, y en
+   * Guaraní se entra en pista a 1.522 m de la cabecera: el punto caía a 478 m
+   * por delante, el avión lo rebasaba todavía rodando a 39 m/s y el piloto
+   * daba media vuelta con alerón a fondo — contra la fila de hangares. Y se
+   * escribió después como «mantener el rumbo de pista», que es peor: el rumbo
+   * nominal es el de **una** de las dos cabeceras, y saliendo por la otra eso
+   * es media vuelta pedida a treinta metros de altura.
+   */
+  const porDelante = () => o.puntoDeFinal(-(pista.length + 2000));
+
+  /**
+   * El rumbo con el que se sale, que **no es el rumbo nominal de la pista**.
+   *
+   * Una pista tiene dos cabeceras y su `heading` es el de una de ellas; por
+   * cuál se sale lo decide el viento. `puntoDeFinal` ya sabe cuál está en uso
+   * y devuelve, con el punto, el rumbo que va de esa cabecera a la contraria:
+   * o sea, el de salida. Se pregunta una vez, en el suelo, y ya no cambia.
+   *
+   * Se probó a sostener el eje volando **a un punto** en vez de a un rumbo y
+   * no vale: cualquier punto fijo se acaba rebasando, y en cuanto se rebasa el
+   * piloto pide media vuelta. Medido: el avión salía derecho noventa segundos
+   * y a los 3.600 m se tiraba de lado hasta el suelo.
+   */
+  const rumboDeSalida = porDelante()?.h ?? rumboPista;
 
   /** Diferencia de rumbo, de −π a π. */
   const error = (a, b) => {
@@ -107,9 +239,53 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     while (e < -Math.PI) e += 2 * Math.PI;
     return e;
   };
-  /** Mando de alerón para ir a un rumbo. */
-  const alRumbo = (s, rumbo) =>
-    Math.max(-1, Math.min(1, error(rumbo, s.heading) * 2));
+  /**
+   * Mando de alerón para ir a un rumbo.
+   *
+   * **En el aire se limita a un tercio**, y no es un ajuste fino: con el mando
+   * llegando entero al avión, media vuelta con alerón a fondo a ciento
+   * cincuenta metros de altura es un viraje de cuchillo, y un viraje de
+   * cuchillo pierde altura mucho más deprisa de lo que el motor la recupera.
+   * Medido en Guaraní: de 154 a 41 metros en cinco segundos, con la velocidad
+   * subiendo de 40 a 60 m/s. El avión no se rompía virando, se rompía cayendo
+   * mientras viraba.
+   *
+   * En tierra no se limita: allí el alerón es la rueda de morro y lo que hace
+   * falta es dirección, no inclinación.
+   */
+  const TOPE_DE_ALERON_EN_VUELO = 0.35;
+  /**
+   * Y cuánto se puede inclinar: veinticinco grados.
+   *
+   * Es lo que llamaría viraje normal cualquier manual, y aquí además es la
+   * diferencia entre virar y caer. **El alerón manda velocidad de alabeo, no
+   * inclinación**: sostenerlo es seguir girando sobre el eje, así que un
+   * piloto que empuja el alerón «hasta estar en rumbo» acaba boca abajo y en
+   * espiral, tirando de la palanca mientras baja. Le pasó a este: de 168 a 39
+   * metros en cinco segundos con la palanca pidiendo subir.
+   *
+   * Con esto, el alerón lo decide la inclinación que falta y no el rumbo que
+   * falta, que son dos cosas distintas y solo la primera se puede sostener.
+   */
+  const TOPE_DE_INCLINACION = (25 * Math.PI) / 180;
+  const alRumbo = (s, rumbo) => {
+    const e = error(rumbo, s.heading);
+    /*
+     * En tierra el alerón es la rueda de morro. Con ganancia 2 y el mando
+     * entero, la corrección se pasa y la siguiente se pasa al otro lado: el
+     * avión se iba del asfalto rodando. Con 1,2 llega y se queda.
+     */
+    if (s.onGround) return Math.max(-1, Math.min(1, e * 1.2));
+    const quiere = Math.max(
+      -TOPE_DE_INCLINACION,
+      Math.min(TOPE_DE_INCLINACION, e * 1.5),
+    );
+    const alabeo = o.actitud?.().alabeo ?? 0;
+    return Math.max(
+      -TOPE_DE_ALERON_EN_VUELO,
+      Math.min(TOPE_DE_ALERON_EN_VUELO, (quiere - alabeo) * 1.6),
+    );
+  };
   /** Y para ir a un punto. */
   const alPunto = (s, x, z) =>
     alRumbo(s, Math.atan2(x - s.position.x, -(z - s.position.z)));
@@ -127,7 +303,20 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * Seguir la raya: se mira un punto de la ruta quince metros por delante y se
    * gira hacia él. Es lo que hace quien sigue una raya pintada en el suelo.
    */
-  const MIRA = 15;
+  /**
+   * Cuánto se mira por delante al seguir la raya, m.
+   *
+   * **Según lo que se corra**, no quince metros fijos. Quince es lo que mira
+   * quien va al paso; a doce metros por segundo eso es medio segundo de
+   * anticipación, y con el mando llegando entero al avión —que es lo que
+   * cambió al pasar por `pilotar`— el piloto zigzagueaba y se salía del
+   * asfalto en el rodaje de vuelta. Antes no se notaba porque el teclado le
+   * borraba el mando: iba mal dirigido pero flojo.
+   *
+   * Mirar más lejos cuanto más deprisa se va es lo que hace cualquiera
+   * conduciendo, y es lo que convierte un zigzag en una curva.
+   */
+  const miraDe = (s) => Math.max(12, s.airspeed * 1.6);
   const timon = (s, ruta) => {
     if (ruta.length < 2) return 0;
     let cerca = 0;
@@ -148,7 +337,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         ruta[i][0] - s.position.x,
         ruta[i][1] - s.position.z,
       );
-      if (d > MIRA) {
+      if (d > miraDe(s)) {
         mira = ruta[i];
         break;
       }
@@ -219,7 +408,15 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   let tiempoDeRodajeVuelta = 0;
   let despego = 0;
   let toco = 0;
+  /** Dónde y cómo se tocó: del eje, pasado el umbral y a qué velocidad. */
+  let tocoDesviado = 0;
+  let tocoPasadoElUmbral = 0;
+  let tocoA = 0;
   const fases = new Set();
+  /** Todas las tarjetas que llegaron a verse. Para saber qué faltó. */
+  const vistas = new Set();
+  /** Cuándo se rompió, si se rompió. */
+  let seRompio = 0;
 
   /** Cada cuánto mira el piloto lo que pasa, en segundos **de juego**. */
   const PASO = 0.1;
@@ -269,6 +466,21 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     fases.add(fase);
 
     // ── Lo que se mide, pase lo que pase ─────────────────────────────────
+    /*
+     * **Y con un percance se deja de medir.**
+     *
+     * Un percance congela el avión en tierra y quita la tarjeta, que es lo que
+     * tiene que pasar. Pero el contador de «pantalla muda en tierra» seguía
+     * sumando hasta el tope del bucle: en La Palma daba **816 segundos sin
+     * tarjeta**, que no es un fallo del juego sino el banco midiendo los trece
+     * minutos que tardó en rendirse. Lo que hay que contar de un percance es
+     * que pasó, no lo que dura la pantalla.
+     */
+    if (o.percance?.()) {
+      if (!seRompio) seRompio = t;
+      if (t - seRompio > 3) break;
+      continue;
+    }
     if (s.onGround) {
       /*
        * **La pantalla muda en tierra.** En el suelo el juego siempre tiene
@@ -295,6 +507,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       mudo = 0;
     }
     if (o.avisoDeTerreno() && s.onRunway) terrenoEnPista += paso;
+    if (tarjeta.dibujo) vistas.add(tarjeta.dibujo);
     if (tarjeta.dibujo === "toma") dijoToca = true;
     if (tarjeta.dibujo === "freno" && toco) pidioFreno = true;
 
@@ -396,11 +609,41 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       }
     } else if (etapa === "despegar") {
       c.throttle = 1;
-      // En el eje: se apunta a un punto de la pista muy por delante.
-      const p = o.puntoDeFinal(-2000);
+      /*
+       * **En el eje, apuntando por delante del avión y no del umbral.**
+       *
+       * Esto apuntaba a un punto fijo a dos mil metros del umbral, y en un
+       * aeropuerto donde se entra por una intersección eso puede quedar
+       * **detrás**: en Guaraní se entra a 1.522 m del umbral, así que el punto
+       * caía a 478 m por delante, el avión lo rebasaba todavía en el suelo a
+       * 39 m/s, y el piloto daba media vuelta con alerón a fondo — hacia la
+       * fila de hangares. El percance «edificio» que salía en el barrido era
+       * eso, y el juego hacía bien en darlo.
+       *
+       * Apuntar mil metros por delante de donde está el avión no puede quedar
+       * detrás de él nunca.
+       */
+      const p = porDelante();
       c.aileron = p ? alPunto(s, p.x, p.z) : alRumbo(s, rumboPista);
-      if (s.airspeed > 27) c.elevator = 0.5;
-      if (!s.onGround && alto(s) > 60) {
+      /*
+       * **Se tira para rotar, y en cuanto se vuela se suelta.**
+       *
+       * Aquí se sostenía media palanca desde los 27 m/s **y también en el
+       * aire**, hasta pasar los sesenta metros. Con el mando llegando entero
+       * al avión eso es volar medio minuto al borde de la pérdida: en la traza
+       * de Guaraní se veía subir a 24 m, caer a 22, subir a 47, caer a 50, con
+       * la velocidad bajando de 30 a 22 m/s — un delfín. Y en cuanto la etapa
+       * siguiente pedía algo más, se caía.
+       *
+       * Rotar es un tirón; volar es mantener una velocidad. Son dos cosas
+       * distintas y ahora se hacen distinto.
+       */
+      c.elevator = s.onGround
+        ? s.airspeed > 27
+          ? 0.5
+          : 0
+        : palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA);
+      if (!s.onGround && alto(s) > 30) {
         despego = t;
         etapa = "subir";
       }
@@ -425,10 +668,75 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       const alUmbral = -r.length / 2 - along;
       // Y el gas se afloja al llegar arriba: con el motor a tope este modelo
       // sube aunque la palanca diga que no.
-      c.throttle = alto(s) > CRUCERO ? 0.6 : 0.9;
-      c.elevator = Math.max(-0.5, Math.min(0.5, (CRUCERO - alto(s)) * 0.02));
-      const p = o.puntoDeFinal(3000);
-      c.aileron = p ? alPunto(s, p.x, p.z) : 0;
+      /*
+       * **Se sube con la velocidad, no con la altura.**
+       *
+       * Esto pedía palanca en proporción a lo que faltaba para la altura de
+       * crucero, o sea media palanca sostenida durante toda la subida. Con el
+       * mando llegando entero al avión —que es lo que cambió al pasar por
+       * `pilotar`— media palanca sostenida en el modelo de coeficientes
+       * equilibra en un ángulo de ataque que es justo el de la pérdida, y
+       * Taguato no lleva protección: el avión entraba en pérdida subiendo.
+       * Antes no pasaba porque el teclado le borraba el mando, o sea que la
+       * subida funcionaba **por estar rota**.
+       *
+       * Un piloto sube apuntando a una velocidad: si el avión va deprisa se
+       * tira un poco más, y si va despacio se suelta. Así no hay forma de
+       * entrar en pérdida por insistir.
+       */
+      /*
+       * **Arriba se cambia de reparto: el gas lleva la velocidad y la palanca
+       * la altura.**
+       *
+       * Subiendo se hace al revés —gas a tope y la palanca sostiene la
+       * velocidad— y funciona. Pero al llegar a crucero, seguir con ese
+       * reparto y un gas de dos posiciones da un fugoide que crece: medido en
+       * Guaraní, 185 → 219 → 147 → 236 → 99 → 34 metros, cada vaivén más
+       * grande que el anterior, hasta el suelo. El gas a saltos es la mitad
+       * del problema y la otra mitad es que nada amortiguaba.
+       *
+       * Arriba: gas proporcional a lo que falta de velocidad, y palanca por
+       * altura **con un término de velocidad vertical**, que es el freno del
+       * vaivén. Y con tope por abajo cuando el avión va lento, que es la única
+       * regla que no se puede saltar: nunca tirar por debajo de la velocidad
+       * de subida.
+       */
+      c.throttle =
+        alto(s) > CRUCERO
+          ? Math.max(
+              0.3,
+              Math.min(1, 0.55 + (VELOCIDAD_DE_CRUCERO - s.airspeed) * 0.04),
+            )
+          : 1;
+      c.elevator =
+        alto(s) > CRUCERO
+          ? aLaAltura(s, CRUCERO)
+          : palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA);
+      /*
+       * **Y no se gira hasta estar alto.**
+       *
+       * Esto apuntaba a un punto a tres kilómetros **detrás** del umbral de
+       * salida, o sea media vuelta, y la pedía a sesenta metros de altura con
+       * el alerón a fondo. En Tenerife se aguanta porque la pista está en un
+       * lomo; en La Palma el suelo al oeste está a la cota de la pista, y el
+       * avión bajaba de 62 a 14 m en cuatro segundos y se estrellaba. El
+       * percance «golpe» del barrido era eso.
+       *
+       * Nadie despega y da media vuelta a sesenta metros. Se mantiene el
+       * rumbo de pista hasta la altura de circuito y **luego** se gira, que es
+       * además lo que el juego enseña.
+       */
+      /*
+       * Por debajo de la altura de giro se sigue el eje **hacia delante**, y
+       * eso se dice apuntando a un punto del propio eje por delante del avión.
+       * Se probó con `alRumbo(rumboPista)` y sale mal de la peor manera: el
+       * rumbo nominal de la pista es el de una de sus dos cabeceras, y cuando
+       * el viento manda salir por la otra, eso es media vuelta pedida a
+       * treinta metros de altura. Un punto por delante no tiene ese problema:
+       * por delante solo hay un sitio.
+       */
+      const p = alto(s) > SEGURO_PARA_GIRAR ? o.puntoDeFinal(3000) : null;
+      c.aileron = p ? alPunto(s, p.x, p.z) : alRumbo(s, rumboDeSalida);
       /*
        * **Y aquí hubo un intento de exigir estar en el eje antes de bajar**,
        * que es lo que hace un piloto de verdad. Se quitó porque empeoraba:
@@ -465,7 +773,9 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       // El umbral por el que se entra está a media pista por detrás del centro.
       const alUmbral = -r.length / 2 - along;
       const objetivo = Math.max(0, alUmbral * SENDA);
-      c.elevator = Math.max(-0.5, Math.min(0.4, (objetivo - alto(s)) * 0.02));
+      // Con la misma ley de altura que arriba: bajada limitada y amortiguada.
+      // Ver `aLaAltura`, que cuenta el porqué con lo medido.
+      c.elevator = aLaAltura(s, objetivo);
       // Sobre la pista se corta el gas: eso es aterrizar. Y antes, la
       // velocidad de aproximación a mano, que el gas no significa lo mismo en
       // los dos modelos de vuelo.
@@ -492,6 +802,16 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       c.aileron = alPunto(s, tx, tz);
       if (s.onGround && s.onRunway) {
         toco = t;
+        /*
+         * **Dónde se tocó.** Es el número que da nombre a #147 y el banco no
+         * lo decía: en una pista de dieciocho metros de ancho, «aterrizó» sin
+         * decir a cuántos metros del eje no significa nada. Se apunta también
+         * cuánta pista se dejó atrás, que es lo que separa posarse en el
+         * umbral de posarse a mitad de pista.
+         */
+        tocoDesviado = desvio(s);
+        tocoPasadoElUmbral = alUmbral < 0 ? -alUmbral : 0;
+        tocoA = s.airspeed;
         etapa = "frenar";
       }
     } else if (etapa === "frenar") {
@@ -545,8 +865,17 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     veces,
     vueltas: i,
     fases: [...fases].join(" "),
+    tarjetas: [...vistas].join(" "),
     // El principio y el final: los dos sitios donde se atasca un vuelo.
-    linea: [...linea.slice(0, 4), "…", ...linea.slice(88, 150)],
+    /*
+     * El principio y **el final**, que es donde se atasca un vuelo.
+     *
+     * Era una ventana fija en mitad de la traza —de la muestra 88 a la 150—,
+     * y eso valía cuando lo que fallaba era el rodaje de salida. Desde que el
+     * bucle se corta al romperse, lo que hay que ver es lo de justo antes del
+     * percance, y una ventana fija cae en cualquier otro sitio.
+     */
+    linea: [...linea.slice(0, 4), "…", ...linea.slice(-45)],
     mudoMaximo: +mudoMaximo.toFixed(1),
     mudoDonde,
     vueltaMetros: Math.round(vueltaMetros),
@@ -565,6 +894,9 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     vuelta: +tiempoDeRodajeVuelta.toFixed(0),
     despego: +despego.toFixed(0),
     toco: +toco.toFixed(0),
+    tocoDesviado: +tocoDesviado.toFixed(1),
+    tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
+    tocoA: +tocoA.toFixed(0),
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
     avion: o.avion?.() ?? null,
@@ -687,8 +1019,24 @@ comprobar(
 comprobar(
   "antes de tocar, el juego dice que ya se puede tocar",
   vuelo.dijoToca,
-  vuelo.dijoToca ? "salió su dibujo" : "no lo dijo",
+  vuelo.dijoToca
+    ? "salió su dibujo"
+    : `no lo dijo · se vieron: ${vuelo.tarjetas}`,
   "«no me indica lo contrario, que ya debo tomar tierra»",
+);
+
+/*
+ * **Y dónde se tocó.** Nueve metros del eje es lo que caben en media pista de
+ * Yvytu Rape, que mide dieciocho de ancho: es el listón que hace falta para
+ * poder decir que este piloto sabe posarse ahí. Ver #147.
+ */
+comprobar(
+  "se toca cerca del eje y dentro de la pista",
+  vuelo.toco > 0 && Math.abs(vuelo.tocoDesviado) < 9,
+  vuelo.toco
+    ? `a ${Math.abs(vuelo.tocoDesviado).toFixed(1)} m del eje, ${vuelo.tocoPasadoElUmbral} m pasado el umbral, a ${vuelo.tocoA} m/s`
+    : "no llegó a tocar",
+  "en una pista de dieciocho metros, «aterrizó» sin decir a cuánto del eje no significa nada",
 );
 
 comprobar(
