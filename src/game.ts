@@ -4898,6 +4898,11 @@ export class Game {
     if (this.teselas) {
       this.teselas.update(this.camera, this.renderer, dt);
       /*
+       * Y la firma de quien fotografió lo que se está viendo, que cambia con
+       * cada tesela y es la condición de uso. Ver `Teselas.atribucion`.
+       */
+      this.hud.setAtribucion(this.teselas.atribucion);
+      /*
        * Y el parche de suelo lejano sigue al avión. Solo hace falta cuando ya
        * se ha salido del escenario o anda cerca del borde: dentro manda el mapa
        * de alturas, que es exacto y no cuesta rayos.

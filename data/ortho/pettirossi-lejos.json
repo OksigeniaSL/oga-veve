@@ -2,7 +2,7 @@
   "id": "pettirossi",
   "encuadre": "lejos",
   "fuente": "Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA",
-  "licencia": "CC BY 4.0 · EOX & contribuidores, datos Copernicus Sentinel",
+  "licencia": "SIN RESOLVER — EOX declara CC BY-NC-SA 4.0 para uso no comercial y licencia comercial con acuerdo explícito. Ver CREDITOS.md",
   "servicio": "https://tiles.maps.eox.at/wmts",
   "capa": "s2cloudless-2020_3857",
   "esquina": {

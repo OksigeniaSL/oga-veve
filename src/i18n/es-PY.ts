@@ -160,6 +160,26 @@ export const ES_PY = {
     "Relieve a partir de Copernicus DEM GLO-30. © DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA; all rights reserved.",
   "credits.terrainEs":
     "Relieve de España a partir del MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0.",
+  /*
+   * **Y las cuatro que faltaban, que llevaban meses solo en CREDITOS.md.**
+   *
+   * Un fichero del repositorio no es «atribución visible»: quien juega no lo
+   * abre nunca. Las cuatro fuentes de abajo se cargan en el juego de verdad y
+   * las cuatro licencias piden que se diga **a quien lo usa**. Que estuvieran
+   * anotadas y no enseñadas es el error más fácil de cometer aquí, porque por
+   * dentro parece hecho.
+   */
+  // ODbL: pide avisar a quien usa los datos, no solo guardarlo escrito.
+  "credits.osm":
+    "Aeródromos, calles de rodaje, plataformas y ciudades a partir de datos de © colaboradores de OpenStreetMap, bajo licencia ODbL.",
+  "credits.ortoEs":
+    "Ortofoto de España: PNOA © Instituto Geográfico Nacional de España, CC BY 4.0 · scne.es.",
+  // La cadena que pide EOX, literal. Ver CREDITOS.md.
+  "credits.ortoPy":
+    "Ortofoto de Paraguay: EOxCloudless (cloudless.eox.at) de EOX IT Services GmbH — contiene datos Copernicus Sentinel modificados, 2020.",
+  // La que pide el autor del modelo, literal.
+  "credits.modelo":
+    "Modelo de la avioneta: «Cessna 172Kr (with cockpit) (ver III)» de TonyWony, bajo Creative Commons Attribution 4.0.",
   "credits.engine": "Modelo de vuelo: {model}",
   "credits.licence":
     "Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.",

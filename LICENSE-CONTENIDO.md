@@ -70,7 +70,8 @@ contacta con Oksigenia SL. El código, insistimos, es libre para todos.
 | Qué | Licencia | ¿Puedo usarlo en un producto comercial? |
 |---|---|---|
 | Motor, FDM, herramientas (`src/`, `scripts/`) | Apache-2.0 | Sí, sin pedir permiso |
-| Datos de elevación derivados de NASADEM | Dominio público (NASA) | Sí |
+| Relieve derivado de Copernicus DEM GLO-30 | Gratuito, comercial permitido, **atribución literal obligatoria** | Sí, con la atribución |
+| Relieve derivado del PNOA-LiDAR MDT05 (IGN) | CC BY 4.0 | Sí, con atribución |
 | Arte, audio, escenarios, personajes | Propietario | No, salvo acuerdo |
 | Marcas Oksigenia / Granja Óga | Propietario | No |
 | Todo lo anterior, en un colegio paraguayo | Gratis, para siempre | Sí, adelante |

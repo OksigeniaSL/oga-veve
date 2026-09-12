@@ -3995,6 +3995,24 @@ button.motor__tecla::after {
  * que hay alguien más ahí fuera. Si tuviera la misma pinta que un aviso,
  * enseñaría a un chico que la radio de otro avión le manda algo.
  */
+/*
+ * La firma de la fotografía. En pequeño y abajo del todo: es una obligación
+ * nuestra, no una instrucción para quien juega. Pero legible — una atribución
+ * que no se puede leer no es una atribución, así que va sobre su propio fondo
+ * y no flotando sobre el cielo.
+ */
+.atribucion {
+  align-self: flex-start;
+  max-width: 62ch;
+  margin-bottom: 4px;
+  padding: 3px 8px;
+  border-radius: var(--r-s);
+  background: rgb(12 18 15 / 75%);
+  color: var(--tinta-suave);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
 .radio {
   max-width: 320px;
   padding: 5px 10px;

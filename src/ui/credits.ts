@@ -34,6 +34,20 @@ export class CreditsScreen {
           Ver scripts/ign-a-relieve.mjs y CREDITOS.md.
         -->
         <p>${t("credits.terrainEs")}</p>
+        <!--
+          **Y las cuatro que faltaban.** OpenStreetMap, la ortofoto del PNOA,
+          la de EOX sobre datos Sentinel y el modelo de la avioneta se cargan
+          en el juego de verdad, y las cuatro licencias piden atribución **a
+          quien lo usa**. Estaban anotadas en CREDITOS.md y en ningún sitio
+          más, que es el error más fácil de cometer aquí porque por dentro
+          parece hecho: un fichero del repositorio no lo abre nadie que juegue.
+          La ODbL lo dice con esas palabras —hay que avisar al usuario—, y las
+          dos ortofotos y el modelo piden una cadena literal.
+        -->
+        <p>${t("credits.osm")}</p>
+        <p>${t("credits.ortoEs")}</p>
+        <p>${t("credits.ortoPy")}</p>
+        <p>${t("credits.modelo")}</p>
         <p>${t("credits.engine", { model: flightModelName })}</p>
         <p>${t("credits.licence")}</p>
         <!--
