@@ -42,6 +42,18 @@ export interface AircraftMesh {
    */
   /** Las pantallas de la cabina, si el modelo las trae. */
   pantallas?: import("./pantallas-cabina").Pantallas | null;
+  /**
+   * Si esto es el modelo de verdad y no las cajas de respaldo.
+   *
+   * Existe para poder **mirarlo desde fuera**, y hace falta porque el respaldo
+   * es silencioso a propósito: si el glTF no está o está roto, el juego sigue
+   * volando con cajas y no dice nada. Es la regla de la casa —que falte un
+   * recurso externo no puede dejar a nadie sin volar— y tiene su reverso:
+   * **nadie se entera de que se apagó**. Pasó el día que la aeronave cambió de
+   * identificador y el fichero se quedó con el nombre viejo; el modelo se fue
+   * y no lo notó ningún banco. Ver `flota.ts` y `__oga.avion`.
+   */
+  deVerdad?: boolean;
   ojo?: { x: number; y: number; z: number };
 }
 

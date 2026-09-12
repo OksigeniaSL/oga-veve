@@ -567,10 +567,31 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     toco: +toco.toFixed(0),
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
+    avion: o.avion?.() ?? null,
   };
 }, VECES);
 
 // ── Lo que se comprueba ───────────────────────────────────────────────────
+
+/*
+ * **Y se vuela el avión de verdad, no las cajas.**
+ *
+ * El modelo en glTF se carga si está y, si no, el juego sigue con la media
+ * docena de cajas de respaldo sin decir nada. Eso está bien —que falte un
+ * recurso externo no puede dejar a nadie sin volar— y tiene un reverso que
+ * ya costó caro: **nadie se entera de que se apagó**. Pasó el día que la
+ * aeronave cambió de identificador y el fichero se quedó con el nombre viejo;
+ * el salto visual más grande del juego se fue en silencio y ningún banco lo
+ * notó. Ahora lo nota este.
+ */
+comprobar(
+  "se vuela el modelo de la aeronave y no las cajas de respaldo",
+  vuelo.avion?.dibujo === "modelo",
+  vuelo.avion
+    ? `${vuelo.avion.nombre} · ${vuelo.avion.dibujo}`
+    : "no se pudo mirar",
+  "el modelo se apaga en silencio si el fichero no está donde se le espera",
+);
 
 comprobar(
   "un vuelo entero se puede completar sin ayuda de nadie",

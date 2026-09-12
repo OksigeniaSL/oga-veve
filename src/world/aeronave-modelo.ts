@@ -303,5 +303,7 @@ export async function cargarModelo(
     ojo: ojoDePiloto(raiz, group),
     // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
     pantallas: encenderPantallas(raiz),
+    // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
+    deVerdad: true,
   };
 }
