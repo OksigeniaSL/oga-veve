@@ -239,6 +239,21 @@ export class Tutor {
     throttle: number,
     dt: number,
     distanceToRunway: number,
+    /**
+     * Si hay una raya verde pintada en el suelo a la que seguir.
+     *
+     * Hace falta porque el último consejo del tutor es «seguí la raya y salí
+     * de la pista», y eso **no siempre se puede hacer**: los escenarios
+     * inventados —el Valle de la Cordillera, el Chaco— son una pista en medio
+     * del campo, sin calles de rodaje, sin plataforma y sin puesto. Ahí no hay
+     * raya ni hay salida, y el cartel pedía las dos cosas: «¿qué raya? ¿y por
+     * dónde salgo de esta pista si no hay nada fuera de pista?».
+     *
+     * También vale para el momento justo después de tocar en un aeropuerto de
+     * verdad, antes de que el plan haya trazado la vuelta: mejor callado un
+     * segundo que señalando algo que todavía no está.
+     */
+    hayRaya = true,
   ): void {
     if (!this.root) return;
     if (this.callado) {
@@ -246,7 +261,7 @@ export class Tutor {
       return;
     }
 
-    this.step = this.nextStep(state, throttle, dt, distanceToRunway);
+    this.step = this.nextStep(state, throttle, dt, distanceToRunway, hayRaya);
 
     if (this.step === "done" || state.crashed) {
       this.root.hidden = true;
@@ -288,39 +303,19 @@ export class Tutor {
     throttle: number,
     dt: number,
     distanceToRunway: number,
+    hayRaya: boolean,
   ): Step {
-    if (this.step === "flying") {
-      this.celebrating -= dt;
-      return this.celebrating > 0 ? "flying" : "done";
-    }
-
-    if (state.onGround) {
-      if (this.hasFlown) {
-        // La carrera de aterrizaje: frenar hasta rodaje, y luego salir.
-        if (state.airspeed > RODAJE) return "frenar";
-        // Ya despacio, lo que falta es dejar la pista libre. Fuera de ella el
-        // tutor calla: la raya verde sigue guiando y no hace falta un cartel.
-        return state.onRunway ? "salir" : "done";
-      }
-      // El orden importa: con velocidad de rotación alcanzada, lo que toca es
-      // tirar aunque no se haya llegado al gas máximo. Al revés, el cartel
-      // seguía pidiendo motor a ciento treinta por hora, con el avión ya
-      // listo para volar, y contradecía a la pista que se veía por delante.
-      if (state.airspeed >= ROTATION_SPEED) return "pull";
-      if (throttle < 0.85) return "throttle";
-      return "speed";
-    }
-
-    if (!this.hasFlown) {
-      this.hasFlown = true;
-      this.celebrating = 2.6;
-      return "flying";
-    }
-
-    // En el aire y de vuelta hacia la pista.
-    if (distanceToRunway < APPROACH_DISTANCE && throttle > APPROACH_THROTTLE)
-      return "slow";
-    return "done";
+    const salida = pasoQueToca(
+      {
+        paso: this.step,
+        celebrando: this.celebrating,
+        haVolado: this.hasFlown,
+      },
+      { state, throttle, dt, distanceToRunway, hayRaya },
+    );
+    this.celebrating = salida.celebrando;
+    this.hasFlown = salida.haVolado;
+    return salida.paso;
   }
 }
 
@@ -353,4 +348,89 @@ function renderCue(
  */
 function isTouch(): boolean {
   return window.matchMedia?.("(pointer: coarse)").matches ?? false;
+}
+
+/** Lo que el tutor recuerda de un paso al siguiente. */
+export interface Memoria {
+  readonly paso: Step;
+  /** Cuánto le queda de celebrar el primer despegue, s. */
+  readonly celebrando: number;
+  /** Si ya se ha volado en este vuelo. */
+  readonly haVolado: boolean;
+}
+
+/** Lo que el tutor mira del mundo para decidir. */
+export interface Mirada {
+  readonly state: FlightState;
+  readonly throttle: number;
+  readonly dt: number;
+  readonly distanceToRunway: number;
+  /** Si hay raya verde a la que seguir. Ver `Tutor.update`. */
+  readonly hayRaya: boolean;
+}
+
+/**
+ * Qué consejo toca ahora.
+ *
+ * **Aparte de la clase y sin tocar el DOM**, que es la regla de la casa para
+ * las máquinas de estados pequeñas: el orden no es un guion cerrado, se deduce
+ * del estado, y eso se comprueba con pruebas y no volando a mano veinte veces.
+ * Lo que la clase hace con el resultado —dibujar una tecla, una barra o
+ * esconderse— es otra cosa.
+ */
+export function pasoQueToca(
+  antes: Memoria,
+  mirada: Mirada,
+): { paso: Step; celebrando: number; haVolado: boolean } {
+  const { state, throttle, dt, distanceToRunway, hayRaya } = mirada;
+  let { celebrando, haVolado } = antes;
+
+  if (antes.paso === "flying") {
+    celebrando -= dt;
+    return { paso: celebrando > 0 ? "flying" : "done", celebrando, haVolado };
+  }
+
+  if (state.onGround) {
+    if (haVolado) {
+      // La carrera de aterrizaje: frenar hasta rodaje, y luego salir.
+      if (state.airspeed > RODAJE)
+        return { paso: "frenar", celebrando, haVolado };
+      /*
+       * Ya despacio, lo que falta es dejar la pista libre. Fuera de ella el
+       * tutor calla: la raya verde sigue guiando y no hace falta un cartel.
+       *
+       * **Y si no hay raya, tampoco hay nada que decir.** En los escenarios
+       * inventados —una pista en medio del campo, sin calles de rodaje, sin
+       * plataforma y sin puesto— el vuelo se acaba parado en la pista, y pedir
+       * que se salga de ella es pedir lo imposible: «¿qué raya? ¿y por dónde
+       * salgo de esta pista si no hay nada fuera de pista?».
+       */
+      return {
+        paso: state.onRunway && hayRaya ? "salir" : "done",
+        celebrando,
+        haVolado,
+      };
+    }
+    /*
+     * El orden importa: con velocidad de rotación alcanzada, lo que toca es
+     * tirar aunque no se haya llegado al gas máximo. Al revés, el cartel
+     * seguía pidiendo motor a ciento treinta por hora, con el avión ya listo
+     * para volar, y contradecía a la pista que se veía por delante.
+     */
+    if (state.airspeed >= ROTATION_SPEED)
+      return { paso: "pull", celebrando, haVolado };
+    if (throttle < 0.85) return { paso: "throttle", celebrando, haVolado };
+    return { paso: "speed", celebrando, haVolado };
+  }
+
+  if (!haVolado) {
+    haVolado = true;
+    celebrando = 2.6;
+    return { paso: "flying", celebrando, haVolado };
+  }
+
+  // En el aire y de vuelta hacia la pista.
+  if (distanceToRunway < APPROACH_DISTANCE && throttle > APPROACH_THROTTLE)
+    return { paso: "slow", celebrando, haVolado };
+  return { paso: "done", celebrando, haVolado };
 }

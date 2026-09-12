@@ -5442,6 +5442,13 @@ export class Game {
       this.input.controls.throttle,
       dt,
       this.distanceToRunway(),
+      /*
+       * Y si hay raya verde a la que seguir. El último consejo del tutor es
+       * «seguí la raya y salí de la pista», y en una pista en medio del campo
+       * —los escenarios inventados, sin calles ni plataforma— no hay ni raya
+       * ni salida. Ver `Tutor.update`.
+       */
+      (this.plan?.rutaVisible().length ?? 0) > 1,
     );
     this.avanzarPlan(dt);
     this.atenderAlSenalero(dt);
