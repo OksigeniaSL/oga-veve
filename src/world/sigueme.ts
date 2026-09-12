@@ -296,6 +296,21 @@ export class Sigueme {
   private s = 0;
   /** Cuánto lleva apartado, de 0 a 1. */
   private aparte = 0;
+
+  /**
+   * Si ya se ha echado a un lado del todo.
+   *
+   * **Y entonces deja de ser un atropello.** Es la misma regla que ya vale
+   * para la bici, escrita para el coche: lo que enseña el percance es «no se
+   * adelanta a quien te está guiando», y un coche que ha parado en la boca de
+   * tu puesto y se ha apartado once metros ya no te está guiando — está
+   * aparcado al lado. Medido en Pedro Juan Caballero: coche apartado sus once
+   * metros, avión a ocho de él recortando la curva de entrada al puesto, y el
+   * vuelo terminado en percance. En todos los vuelos.
+   */
+  get yaSeAparto(): boolean {
+    return this.aparte > 0.9;
+  }
   private t = 0;
 
   /** Si quien sale a buscarte va en bici. Ver `construirBici`. */
@@ -331,7 +346,20 @@ export class Sigueme {
     // vuelta —que empieza donde tocaste tierra— aparecía trescientos metros a
     // la espalda y ya no lo alcanzabas nunca.
     this.s = -1;
-    this.aparte = 0;
+    /*
+     * **Y lo que no se olvida es haberse apartado.**
+     *
+     * Esto ponía `aparte` a cero con cada ruta nueva, y el plan es un GPS:
+     * recalcula en cuanto el avión se separa de la raya, que es justo lo que
+     * pasa al meterse en el puesto. El coche, ya echado a un lado, **volvía al
+     * medio de la raya** delante del morro. Medido en Mariscal Estigarribia:
+     * segundo 230, coche a seis metros de la raya y a treinta y dos del avión;
+     * segundo 232, de vuelta a dos metros de la raya y a dieciocho; segundo
+     * 234, atropellado. En todos los vuelos. Ver #154.
+     *
+     * Apartarse es un sitio del mundo, no un tramo de la ruta: una raya nueva
+     * no devuelve un coche al medio de la calle.
+     */
   }
 
   private get largo(): number {

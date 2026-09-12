@@ -1605,6 +1605,14 @@ export class Game {
       bultos: () => this.bultos,
       /** Segundos que le quedan al aviso de bulto. Para el banco. */
       avisoDeBulto: () => this.avisandoDelBulto,
+      /**
+       * Si el coche del sígame ya se ha echado a un lado. Para el banco.
+       *
+       * Apartado deja de ser un atropello —ver `yaSeAparto`—, así que la
+       * comprobación de «no se le atropella» tiene que dejar de mirarlo
+       * también: si no, mide un coche aparcado al lado del puesto.
+       */
+      cocheApartado: () => this.sigueme.yaSeAparto,
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
       /*
@@ -5144,7 +5152,16 @@ export class Game {
        * Ocho metros: la envergadura de la Óga 172 son once, así que esto es
        * tocarlo con el tren, no pasarle cerca.
        */
-      const coche = enBici ? null : this.sigueme.donde;
+      /*
+       * **Y a un coche ya apartado no se le atropella.**
+       *
+       * Es la misma regla de la bici de arriba, y por el mismo motivo: lo que
+       * enseña esto es que no se adelanta a quien te guía. El coche que ha
+       * llegado a la boca de tu puesto, ha parado y se ha echado once metros
+       * a un lado ya no te guía — está aparcado. Ver `yaSeAparto`.
+       */
+      const coche =
+        enBici || this.sigueme.yaSeAparto ? null : this.sigueme.donde;
       if (coche && s.onGround && s.airspeed > ROCE) {
         const d = Math.hypot(coche.x - s.position.x, coche.z - s.position.z);
         if (d < ATROPELLO) this.sufrirPercance("coche");

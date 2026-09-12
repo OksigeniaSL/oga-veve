@@ -200,6 +200,10 @@ const vuelo = await page.evaluate(async () => {
   let sinRayaDonde = "";
   let sinRayaPrimero = "";
   let lejosDelCoche = 0;
+  let cercaDelCoche = Infinity;
+  let cercaCuando = "";
+  let alCocheAhora = -1;
+  let ladoDelCoche = -1;
   let terrenoEnPista = 0;
   let dijoToca = false;
   let pidioFreno = false;
@@ -265,17 +269,62 @@ const vuelo = await page.evaluate(async () => {
       s.airspeed < 16 &&
       fase !== "aterrizado"
     ) {
-      lejosDelCoche = Math.max(
-        lejosDelCoche,
-        Math.hypot(
-          coche.position.x - s.position.x,
-          coche.position.z - s.position.z,
-        ),
+      const alCoche = Math.hypot(
+        coche.position.x - s.position.x,
+        coche.position.z - s.position.z,
       );
+      lejosDelCoche = Math.max(lejosDelCoche, alCoche);
+      /*
+       * **Y lo cerca que se le llega a poner**, que es la otra mitad.
+       *
+       * Se medía solo lo lejos —«se le puede seguir»— y faltaba lo contrario:
+       * que no se le lleve por delante. Atropellarlo es un percance, o sea el
+       * final del vuelo, y en Mariscal Estigarribia y Pedro Juan Caballero
+       * pasa **en todos**. Ver #154.
+       */
+      alCocheAhora = alCoche;
+      // Y apartado ya no cuenta: ahí es un coche aparcado al lado del puesto,
+      // no alguien a quien se adelanta. Ver `yaSeAparto`.
+      const guiando = !o.cocheApartado?.();
+      /*
+       * Y a qué lado de la raya se ha puesto el coche, que es lo que dice si
+       * se está apartando o no. Ver `A_UN_LADO` en `world/sigueme.ts`.
+       */
+      if (ruta.length > 1) {
+        let mejor = Infinity;
+        for (let k = 1; k < ruta.length; k++) {
+          const a = ruta[k - 1];
+          const b = ruta[k];
+          const dx = b[0] - a[0];
+          const dz = b[1] - a[1];
+          const l2 = dx * dx + dz * dz || 1;
+          const u = Math.max(
+            0,
+            Math.min(
+              1,
+              ((coche.position.x - a[0]) * dx +
+                (coche.position.z - a[1]) * dz) /
+                l2,
+            ),
+          );
+          mejor = Math.min(
+            mejor,
+            Math.hypot(
+              coche.position.x - (a[0] + dx * u),
+              coche.position.z - (a[1] + dz * u),
+            ),
+          );
+        }
+        ladoDelCoche = mejor;
+      }
+      if (guiando && alCoche < cercaDelCoche) {
+        cercaDelCoche = alCoche;
+        cercaCuando = `a los ${t.toFixed(0)} s, en «${fase}» a ${s.airspeed.toFixed(0)} m/s`;
+      }
     }
     if (i % 20 === 0) {
       linea.push(
-        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m ${tarjeta.dibujo || "—"}`,
+        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m coche ${alCocheAhora < 0 ? "—" : `${alCocheAhora.toFixed(0)}/${ladoDelCoche.toFixed(0)}`} ${tarjeta.dibujo || "—"}`,
       );
     }
 
@@ -462,6 +511,10 @@ const vuelo = await page.evaluate(async () => {
     sinRayaDonde,
     sinRayaPrimero,
     lejosDelCoche: Math.round(lejosDelCoche),
+    cercaDelCoche: Number.isFinite(cercaDelCoche)
+      ? Math.round(cercaDelCoche)
+      : -1,
+    cercaCuando,
     terrenoEnPista: +terrenoEnPista.toFixed(1),
     dijoToca,
     pidioFreno,
@@ -540,6 +593,23 @@ if (TRAMO === "guyrami" || TRAMO === "tuka") {
     "«el avión frena sin que el usuario pueda acelerar y el coche casi que se escapa»",
   );
 }
+
+/*
+ * **Y no se le atropella.**
+ *
+ * Es lo contrario de la comprobación de arriba y hace falta igual: llevárselo
+ * por delante es un percance, o sea el final del vuelo en el sitio donde el
+ * juego debería estar diciendo «llegaste a casa». Ocho metros es lo que el
+ * propio juego considera atropello — el tren de la Óga 172, no pasarle cerca.
+ */
+comprobar(
+  "y no se le atropella",
+  vuelo.cercaDelCoche < 0 || vuelo.cercaDelCoche > 8,
+  vuelo.cercaDelCoche < 0
+    ? "no llegó a salir"
+    : `lo más cerca que llegó a estar: ${vuelo.cercaDelCoche} m · ${vuelo.cercaCuando}`,
+  "«con el avión puedo adelantar al coche, le paso por encima»",
+);
 
 comprobar(
   "sobre la pista no salta el aviso de terreno",
