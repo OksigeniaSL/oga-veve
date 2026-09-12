@@ -2175,6 +2175,16 @@ export class Game {
 
   start(): void {
     if (this.running) return;
+    /*
+     * **Y no se arranca con algo abierto encima.**
+     *
+     * El vuelo se congela cuando hay un panel abierto o el menú de pausa
+     * puesto, y `start` no lo miraba: la puerta de desarrollo `__ogaEmpezar`
+     * —que existe porque una pestaña abierta por un guion nunca tiene el foco—
+     * soltaba el avión con el plano abierto delante. Quien decide que se puede
+     * volver a volar es `quedarQuieto`, y sólo él.
+     */
+    if (this.quieto) return;
     this.running = true;
     this.clock.start();
     this.audio.setActive(true);
@@ -2292,6 +2302,23 @@ export class Game {
    * dejaba el avión volando solo detrás del velo, y volver era volver a un
    * avión que ya no estaba donde se dejó.
    */
+  /**
+   * En qué fase está el vuelo **ahora**.
+   *
+   * No es lo mismo que `faseAnunciada`, que es *lo último que se dijo*: hay
+   * tres sitios que la vacían para que una tarjeta vuelva a salir, y durante
+   * esos fotogramas vale cadena vacía. Cinco cosas la leían como si fuera la
+   * fase actual —la radio, el circuito, la banda de velocidad, el aviso de
+   * terreno en final y el «ya podés tocar»— y en esos fotogramas veían una
+   * fase que no existe.
+   *
+   * La de ahora la tiene el plan. Cuando no hay plan —los escenarios sin
+   * aeródromo— no hay fase, y entonces lo último dicho es lo mejor que hay.
+   */
+  private get faseDeAhora(): string {
+    return this.vistaActual?.fase ?? this.faseAnunciada;
+  }
+
   private quedarQuieto(): void {
     const debe = this.pausadoAdrede || this.hayPanelAbierto;
     if (debe === this.quieto) return;
@@ -3416,6 +3443,44 @@ export class Game {
     // Y el otro avión vuelve a empezar su vuelo con nosotros.
     this.radio.reiniciar();
     callar();
+    /*
+     * **Y todo lo que el paso siguiente va a leer.**
+     *
+     * Esto reiniciaba lo que se ve —la traza, las tarjetas, los avisos— y se
+     * dejaba una docena de variables que el primer fotograma del vuelo nuevo
+     * lee antes de que nadie las escriba: la vista del plan y la petición de
+     * freno del vuelo anterior, la última lectura del PAPI —así que la primera
+     * del vuelo nuevo no contaba como primera—, la distancia al umbral, el
+     * gesto del señalero, el tope de la carrera y los contadores de avisos.
+     * Ninguna rompe nada de golpe, y esa es justo la clase de resto que hace
+     * que el segundo vuelo no se parezca al primero.
+     *
+     * Y los segundos sin apuntar se vuelcan en vez de tirarse: son tiempo
+     * volado de verdad, y tirarlos era regalarle hasta medio minuto al
+     * cuaderno en cada reinicio.
+     */
+    if (this.sinApuntar > 0) {
+      this.apuntar({ segundos: this.cuaderno.segundos + this.sinApuntar });
+      this.sinApuntar = 0;
+    }
+    this.vistaActual = null;
+    this.pidiendoFreno = false;
+    this.papiEnPantalla = null;
+    this.antesAlUmbral = Infinity;
+    this.gestoEnPantalla = null;
+    this.techoDeLaCarrera = Infinity;
+    this.tramoDelCircuito = null;
+    this.fueraDeBanda = 0;
+    this.dichoDeBanda = null;
+    this.terrenoDicho = null;
+    this.avisandoDelBulto = 0;
+    /*
+     * Y lo de arriba va **antes** de la bifurcación, que es la otra mitad del
+     * mismo problema: hay dos caminos de reinicio —éste y `reiniciarEnFinal`,
+     * para las lecciones que empiezan en el aire— y lo que se reinicia en cada
+     * uno se fue copiando a mano hasta divergir. Todo lo que sea «estado de
+     * este vuelo» tiene que quedar limpio por los dos.
+     */
     const { runway } = this.scenario;
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
@@ -3599,7 +3664,7 @@ export class Game {
    */
   private oirLaRadio(dt: number): void {
     const dice = this.radio.update(dt, {
-      fase: this.faseAnunciada,
+      fase: this.faseDeAhora,
       deDia: this.sky.sunDirection.y > 0,
       instructorHablando: this.instructor.hablando,
     });
@@ -3649,7 +3714,7 @@ export class Game {
     const c = this.circuito;
     if (!c) return;
     const s = this.flight.state;
-    const fase = this.faseAnunciada;
+    const fase = this.faseDeAhora;
     const enElAire = !s.onGround;
     const preparando =
       s.onGround && (fase === "alineando" || fase === "despegando");
@@ -4770,7 +4835,7 @@ export class Game {
         this.flight.state.airspeed,
         this.flight.state.onGround,
         // Correr es despegar o aterrizar. Lo demás, en el suelo, es rodar.
-        CORRIENDO.has(this.faseAnunciada),
+        CORRIENDO.has(this.faseDeAhora),
       ) ??
       bandaDeVelocidad(
         {
@@ -4836,7 +4901,7 @@ export class Game {
        * final a propósito. Ver `fueraDeLaSenda`.
        */
       enFinal:
-        this.faseAnunciada === "final" &&
+        this.faseDeAhora === "final" &&
         !fueraDeLaSenda(
           this.distanceToRunway(),
           this.flight.state.position.y - this.terrain.runwayElevation,
@@ -4874,7 +4939,7 @@ export class Game {
        * altura, entre el motor y la flecha de tirar. Ahí lo que hay que hacer
        * es justo lo contrario de tocar.
        */
-      !EN_DESPEGUE.has(this.faseAnunciada as Fase) &&
+      !EN_DESPEGUE.has(this.faseDeAhora as Fase) &&
       cerca.sobreLaPista &&
       /*
        * **La altura sobre la pista, no sobre el terreno.** Antes del umbral el

@@ -316,10 +316,6 @@ export class Panel {
      * dentro, y el diálogo es la caja, no el velo. Poner otro fuera anidaría
      * dos diálogos, que es decir dos veces lo mismo y peor.
      */
-    if (!caja.querySelector('[role="dialog"]')) {
-      caja.setAttribute("role", "dialog");
-      caja.setAttribute("aria-modal", "true");
-    }
     this.encierro = new Encierro(caja, cerrar, conEscape);
     todos.add(this);
     /*
@@ -362,6 +358,25 @@ export class Panel {
   /** Si el foco todavía no se ha movido desde que se abrió. */
   private recienAbierto = false;
 
+  /**
+   * Declara el papel de diálogo, **al abrir y no al construir**.
+   *
+   * Se hacía en el constructor y allí no se puede saber: hay paneles que
+   * pintan su contenido más tarde —la pantalla de mandos lo pinta al abrirse,
+   * porque depende de las teclas que haya asignadas— así que al construirse
+   * están vacíos, no se les ve el diálogo de dentro, y se les ponía **otro por
+   * fuera**. Dos diálogos anidados, y el de fuera sin nombre: un lector de
+   * pantalla decía «diálogo» y no decía cuál. Es justo lo que esta clase dice
+   * que evita.
+   *
+   * Al abrir, el contenido ya está, así que la pregunta tiene respuesta.
+   */
+  private ponerElPapel(): void {
+    if (this.caja.querySelector('[role="dialog"]')) return;
+    this.caja.setAttribute("role", "dialog");
+    this.caja.setAttribute("aria-modal", "true");
+  }
+
   get abierto(): boolean {
     return !this.caja.hidden;
   }
@@ -373,6 +388,7 @@ export class Panel {
 
   abrir(): void {
     if (this.abierto) return;
+    this.ponerElPapel();
     this.recienAbierto = true;
     this.caja.hidden = false;
     this.encierro.abrir();

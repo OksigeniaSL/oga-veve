@@ -69,7 +69,9 @@ export class CuadernoScreen {
         <span class="cuaderno__glosa">${t(clave as never)}</span>
       </div>`;
     this.root.innerHTML = `
-      <div class="cuaderno__panel" role="dialog" aria-modal="true">
+      <!-- Con nombre: ver la nota de credits.ts. -->
+      <div class="cuaderno__panel" role="dialog" aria-modal="true"
+           aria-label="${t("cuaderno.title")}">
         <div class="cuaderno__manga">${dibujarManga(barrasDe(g), CUADERNO_ALTO, t("galon.manga"))}</div>
         <h2 class="cuaderno__grado">${t(`grado.${g}` as never)}</h2>
         <div class="cuaderno__datos">
