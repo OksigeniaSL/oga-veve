@@ -336,7 +336,8 @@ export class Hud {
     // justo el hábito que este peldaño existe para quitar.
     const numbers = this.instruments === "numeric";
 
-    this.root.innerHTML = `
+    this.root.innerHTML =
+      `
       <!--
         La esquina de arriba a la izquierda, que estaba vacía.
 
@@ -494,7 +495,8 @@ export class Hud {
 
             Llevaron la misma hélice en dos tamaños, y no valía: una hélice de
             cuatro palas de frente es una cruz, y en pantalla los dos botones
-            se leían como dos `+`. «Quiere que suba, pero no me deja meter gas
+            se leían como dos ` +
+      `. «Quiere que suba, pero no me deja meter gas
             ¿cómo subo?» — estaba apretando el de bajar.
 
             Llevaron un día la tortuga y el pájaro, y fue un error de bulto:
@@ -1494,7 +1496,19 @@ export class Hud {
    * Apagada quiere decir que ahora mismo la torre no tiene nada que decirte,
    * que es lo normal durante casi todo el vuelo.
    */
-  setLuzDeTorre(luz: "verde" | "roja" | null): void {
+  setLuzDeTorre(
+    luz: "verde" | "roja" | null,
+    /**
+     * Qué dice la luz roja cuando no es la del punto de espera.
+     *
+     * La roja nació en tierra, mirándola desde el punto de espera, y por eso
+     * dice «esperá acá». La orden de irse al aire la enciende **en el aire**,
+     * y ahí «esperá acá» no quiere decir nada: se leía volando sobre unos
+     * cerros, con la pista fuera de la pantalla. En el aire no se espera: se
+     * sube y se vuelve a probar.
+     */
+    rojaDice: "esperar" | "alAire" = "esperar",
+  ): void {
     const caja = this.torre;
     if (!caja) return;
     caja.hidden = luz === null;
@@ -1503,7 +1517,11 @@ export class Hud {
     const texto = caja.querySelector('[data-hud="torre-texto"]');
     if (texto)
       texto.textContent =
-        luz === "verde" ? t("torre.verde") : luz ? t("torre.roja") : "";
+        luz === "verde"
+          ? t("torre.verde")
+          : luz
+            ? t(rojaDice === "alAire" ? "palabra.alAire" : "torre.roja")
+            : "";
     // **Y una forma dentro de la luz**, no solo un color: la mano abierta de
     // parar o la flecha de seguir. Quien no distinga el rojo del verde —que es
     // uno de cada doce niños— tiene que enterarse igual, y quien no lea
@@ -1511,7 +1529,15 @@ export class Hud {
     const bombilla = caja.querySelector('[data-hud="torre-luz"]');
     if (bombilla)
       bombilla.innerHTML =
-        luz === "verde" ? FLECHA_SEGUIR : luz ? MANO_PARAR : "";
+        luz === "verde"
+          ? FLECHA_SEGUIR
+          : luz
+            ? // Y el dibujo va con las palabras: la mano de parar para el punto
+              // de espera, la flecha de subir para la orden de irse al aire.
+              rojaDice === "alAire"
+              ? FLECHA_SEGUIR
+              : MANO_PARAR
+            : "";
   }
 
   /** De dónde saca el mapa el mundo que pinta. */

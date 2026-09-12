@@ -13,22 +13,27 @@ import { pasoQueToca } from "./tutor";
 
 /** Un avión en el suelo, con lo poco que mira el tutor. */
 const enElSuelo = (airspeed: number, onRunway = true) =>
-  ({ onGround: true, onRunway, airspeed }) as FlightState;
+  ({ onGround: true, onRunway, airspeed, heightAboveGround: 0 }) as FlightState;
 
-const enElAire = (airspeed: number) =>
-  ({ onGround: false, onRunway: false, airspeed }) as FlightState;
+const enElAire = (airspeed: number, heightAboveGround = 300) =>
+  ({
+    onGround: false,
+    onRunway: false,
+    airspeed,
+    heightAboveGround,
+  }) as FlightState;
 
 const recienAterrizado = {
   paso: "frenar" as const,
   celebrando: 0,
   haVolado: true,
 };
-const mirada = (state: FlightState, hayRaya: boolean) => ({
+const mirada = (state: FlightState, hayRaya: boolean, enFinal = false) => ({
   state,
   throttle: 0,
   dt: 0.1,
-  distanceToRunway: 4000,
   hayRaya,
+  enFinal,
 });
 
 describe("después de aterrizar", () => {
@@ -82,6 +87,68 @@ describe("antes de volar, la raya no cambia nada", () => {
       throttle: 0.5,
     });
     expect(r.paso).toBe("pull");
+  });
+});
+
+describe("volver a despegar después de aterrizar", () => {
+  /*
+   * En este juego se aterriza y se vuelve a salir sin pasar por el hangar, y
+   * «ya ha volado» se quedaba puesto: la segunda carrera de despegue entraba
+   * por la rama del aterrizaje y el cartel pedía frenar con la pista entera
+   * por delante. «¿Por qué me pide que frene?»
+   */
+  it("con el motor puesto pide motor, no frenar", () => {
+    const r = pasoQueToca(recienAterrizado, {
+      ...mirada(enElSuelo(20), true),
+      throttle: 0.7,
+    });
+    expect(r.paso).not.toBe("frenar");
+    expect(r.haVolado).toBe(false);
+  });
+
+  it("pero corriendo sin motor sigue pidiendo frenar", () => {
+    const r = pasoQueToca(recienAterrizado, {
+      ...mirada(enElSuelo(20), true),
+      throttle: 0.1,
+    });
+    expect(r.paso).toBe("frenar");
+  });
+});
+
+describe("aflojar el motor solo viniendo a aterrizar", () => {
+  const enElAireYaVolado = {
+    paso: "done" as const,
+    celebrando: 0,
+    haVolado: true,
+  };
+
+  it("en final y con altura, pide bajar el motor", () => {
+    const r = pasoQueToca(enElAireYaVolado, {
+      ...mirada(enElAire(40, 200), true, true),
+      throttle: 0.9,
+    });
+    expect(r.paso).toBe("slow");
+  });
+
+  /*
+   * «Me pide insistentemente que baje el motor, pero si lo bajo, caigo y me la
+   * pego contra el suelo.» Volando bajo por el valle el consejo salía igual,
+   * porque solo miraba la distancia al umbral.
+   */
+  it("pero no pegado al suelo, que obedecer eso es estrellarse", () => {
+    const r = pasoQueToca(enElAireYaVolado, {
+      ...mirada(enElAire(40, 20), true, true),
+      throttle: 0.9,
+    });
+    expect(r.paso).toBe("done");
+  });
+
+  it("ni pasando cerca sin venir en final", () => {
+    const r = pasoQueToca(enElAireYaVolado, {
+      ...mirada(enElAire(40, 200), true, false),
+      throttle: 0.9,
+    });
+    expect(r.paso).toBe("done");
   });
 });
 
