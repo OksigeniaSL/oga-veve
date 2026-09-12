@@ -2185,11 +2185,26 @@ const orden = await page.evaluate(async () => {
   o.colocar(p.x, globalThis.__umbral.y + 90, p.z, 30, p.h);
   let mandaron = false;
   let dibujo = "";
+  let lampara = "no se miró";
   for (let i = 0; i < 40 && !mandaron; i++) {
     c.elevator = -0.05;
     await new Promise((r) => setTimeout(r, 100));
     mandaron = o.ordenDeFrustrar();
-    if (mandaron) dibujo = o.tarjeta().dibujo;
+    if (mandaron) {
+      dibujo = o.tarjeta().dibujo;
+      /*
+       * **Y la lámpara de la torre, que hay que verla.**
+       *
+       * La orden la enciende en rojo y al levantarla la pone en verde, y las
+       * dos cosas pasan en el aire. El plan de vuelo escribe la misma lámpara
+       * unas líneas después, en el mismo paso, y la apagaba siempre que la
+       * fase no fuera una de las tres de esperar en tierra — o sea, siempre
+       * que la orden estaba puesta. Las dos luces existían, se encendían, y no
+       * llegaban nunca a la pantalla.
+       */
+      const luz = document.querySelector('[data-hud="torre"]');
+      lampara = luz && !luz.hidden ? luz.className : "apagada";
+    }
   }
   // Y bajar igualmente: se sigue hasta tocar, con gas de aproximación.
   let percance = false;
@@ -2206,8 +2221,15 @@ const orden = await page.evaluate(async () => {
     while (raiz.parent) raiz = raiz.parent;
     return raiz.getObjectByName("vaca")?.visible ?? false;
   })();
-  return { mandaron, dibujo, percance, vaca, fase: o.fase() };
+  return { mandaron, dibujo, lampara, percance, vaca, fase: o.fase() };
 });
+comprobar(
+  "y la lámpara de la torre se pone roja, y se ve",
+  orden.lampara.includes("roja"),
+  `lámpara: ${orden.lampara}`,
+  "las dos luces de la torre se encendían y el plan de vuelo las apagaba en el mismo paso",
+);
+
 comprobar(
   "en final te pueden mandar irse al aire",
   orden.mandaron && orden.dibujo === "frustrada",

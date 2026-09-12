@@ -933,6 +933,16 @@ export class Game {
   private ordenes: "auto" | "siempre" | "nunca" = "auto";
   /** Si la torre —o la vaca— ha mandado irse al aire y todavía manda. */
   private mandanFrustrar = false;
+  /**
+   * Si la lámpara de la torre la está llevando la torre y no el plan.
+   *
+   * Son dos dueños para una luz: el plan la enciende en el punto de espera, y
+   * la orden de irse al aire la enciende en el aire. El plan corre después en
+   * el mismo paso, así que apagaba lo que la torre acababa de encender —y como
+   * en el aire nunca es «esperando», la apagaba siempre—. El resultado es que
+   * las dos luces existían y no se veían nunca.
+   */
+  private laTorreMandaEnLaLuz = false;
   /** Y si ya lo mandaron en este vuelo, que se manda una vez. */
   private yaLoMandaron = false;
   /** A qué altura sobre la pista se dio la orden. Ver `levantarLaOrden`. */
@@ -2615,6 +2625,8 @@ export class Game {
     } else {
       this.hud.setLuzDeTorre("roja");
     }
+    // Y a partir de aquí la luz la lleva la torre. Ver `laTorreMandaEnLaLuz`.
+    this.laTorreMandaEnLaLuz = true;
 
     /*
      * **Y la orden se queda puesta hasta que se resuelva.**
@@ -2651,6 +2663,7 @@ export class Game {
   private levantarLaOrden(): void {
     this.mandanFrustrar = false;
     this.vaca.quitar();
+    this.laTorreMandaEnLaLuz = true;
     this.hud.setLuzDeTorre("verde");
     this.hud.senal.mostrar(
       "verde",
@@ -2663,7 +2676,9 @@ export class Game {
     // Y la lámpara se apaga sola en cuanto pase el aviso: en el aire no hay
     // lámpara que mirar, y dejarla encendida diría algo que ya no es verdad.
     this.agenda.luego(SE_QUEDA_EL_ARO, () => {
-      if (!this.mandanFrustrar) this.hud.setLuzDeTorre(null);
+      if (this.mandanFrustrar) return;
+      this.hud.setLuzDeTorre(null);
+      this.laTorreMandaEnLaLuz = false;
     });
   }
 
@@ -3383,6 +3398,7 @@ export class Game {
     this.percance = null;
     this.mandanFrustrar = false;
     this.yaLoMandaron = false;
+    this.laTorreMandaEnLaLuz = false;
     this.vaca.quitar();
     // Otro vuelo, otra traza: la raya del anterior ya está guardada.
     this.traza = [];
@@ -5942,15 +5958,27 @@ export class Game {
       (vista.fase === "esperando" ||
         vista.fase === "autorizado" ||
         vista.fase === "alineando");
-    this.hud.setLuzDeTorre(
-      !enTierraEsperando
-        ? null
-        : vista.fase === "esperando"
-          ? "roja"
-          : vista.luzVerde
-            ? "verde"
-            : null,
-    );
+    /*
+     * **Y no se toca mientras la lleve la torre.**
+     *
+     * La orden de irse al aire enciende la lámpara en rojo y la pone en verde
+     * al levantarla, y eso pasa **en el aire**. Esto corre después, en el
+     * mismo paso, y la apagaba siempre que la fase no fuera una de las tres de
+     * esperar en tierra: o sea, siempre que la orden estaba puesta. Las dos
+     * luces de la torre existían, se encendían, y **no llegaban nunca a la
+     * pantalla**. Ver `laTorreMandaEnLaLuz`.
+     */
+    if (!this.laTorreMandaEnLaLuz) {
+      this.hud.setLuzDeTorre(
+        !enTierraEsperando
+          ? null
+          : vista.fase === "esperando"
+            ? "roja"
+            : vista.luzVerde
+              ? "verde"
+              : null,
+      );
+    }
 
     // Mientras manda el plan, el tutor calla. Vuelve al alinearse, que es
     // cuando toca despegar y el tutor sí sabe de eso.
