@@ -24,7 +24,11 @@
     "percance": "node scripts/verificar-percance.mjs",
     "viento": "node scripts/verificar-viento.mjs",
     "sin-red": "node scripts/verificar-sin-red.mjs",
-    "voz": "node scripts/verificar-voz.mjs"
+    "voz": "node scripts/verificar-voz.mjs",
+    "frenos": "node scripts/verificar-frenos.mjs",
+    "pictos": "node scripts/verificar-pictos.mjs",
+    "librea": "node scripts/verificar-librea.mjs",
+    "cabina": "node scripts/verificar-cabina.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",
