@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { ArcadeFlightModel } from "./arcade";
 import { CoefficientFlightModel } from "./fdm";
-import { OGA_172 } from "./aircraft";
+import { PYKASU } from "./aircraft";
 import { neutralControls, type ControlInputs, type FlightModel } from "./model";
 import { GUYRAMI, TAGUATO, TAGUATO_RUVICHA, TIERS, TUKA } from "./tiers";
 import { PELDANOS } from "./escalera";
@@ -18,9 +18,9 @@ import { PELDANOS } from "./escalera";
 function build(tier: (typeof TIERS)[number]): FlightModel {
   const ground = () => 0;
   return tier.model === "simple"
-    ? new ArcadeFlightModel({ aircraft: OGA_172, ground })
+    ? new ArcadeFlightModel({ aircraft: PYKASU, ground })
     : new CoefficientFlightModel({
-        aircraft: OGA_172,
+        aircraft: PYKASU,
         ground,
         assist: tier.assists,
       });
@@ -71,7 +71,7 @@ describe("el primer peldaño usa otro modelo", () => {
   it("en Mainumby hay que coger velocidad para despegar", () => {
     const model = build(GUYRAMI);
     model.reset({
-      position: new Vector3(0, OGA_172.gearHeight, 0),
+      position: new Vector3(0, PYKASU.gearHeight, 0),
       heading: 0,
       airspeed: 0,
     });
@@ -88,7 +88,7 @@ describe("el primer peldaño usa otro modelo", () => {
   it("no despega desde la plataforma, por mucha velocidad que coja", () => {
     const model = build(GUYRAMI);
     model.reset({
-      position: new Vector3(0, OGA_172.gearHeight, 0),
+      position: new Vector3(0, PYKASU.gearHeight, 0),
       heading: 0,
       airspeed: 0,
     });

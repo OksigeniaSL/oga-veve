@@ -11,19 +11,19 @@
  * inventada, que sería peor que no traducir. Ver `gug.ts`.
  */
 
-import { EN } from './en';
-import { ES_PY } from './es-PY';
-import { GUG } from './gug';
-import { leerTexto, ponerTexto } from '../datos/guardado';
+import { EN } from "./en";
+import { ES_PY } from "./es-PY";
+import { GUG } from "./gug";
+import { leerTexto, ponerTexto } from "../datos/guardado";
 
 export type TranslationKey = keyof typeof ES_PY;
 export type Dictionary = Partial<Record<TranslationKey, string>>;
 
-export const LOCALES = ['es-PY', 'gug', 'en'] as const;
+export const LOCALES = ["es-PY", "gug", "en"] as const;
 export type Locale = (typeof LOCALES)[number];
 
 const DICTIONARIES: Record<Locale, Dictionary> = {
-  'es-PY': ES_PY,
+  "es-PY": ES_PY,
   gug: GUG,
   en: EN,
 };
@@ -37,23 +37,23 @@ const DICTIONARIES: Record<Locale, Dictionary> = {
  * con los ojos. Dentro del juego, el registro sigue siendo el paraguayo.
  */
 export const LOCALE_NAMES: Record<Locale, string> = {
-  'es-PY': 'Español',
+  "es-PY": "Español",
   // El nombre del guaraní en guaraní, por el mismo criterio que hace que ahí
   // ponga «English» y no «Inglés».
   gug: "Avañe'ẽ",
-  en: 'English',
+  en: "English",
 };
 
 /** Etiqueta `lang` del documento, para lectores de pantalla y tipografía. */
 const HTML_LANG: Record<Locale, string> = {
-  'es-PY': 'es-PY',
-  gug: 'gn',
-  en: 'en',
+  "es-PY": "es-PY",
+  gug: "gn",
+  en: "en",
 };
 
-const STORAGE_KEY = 'idioma';
+const STORAGE_KEY = "idioma";
 
-let current: Locale = 'es-PY';
+let current: Locale = "es-PY";
 
 export function setLocale(locale: Locale): void {
   current = locale;
@@ -69,7 +69,8 @@ export function setLocale(locale: Locale): void {
 
 /** Pasa al siguiente idioma y devuelve el que ha quedado activo. */
 export function cycleLocale(): Locale {
-  const next = LOCALES[(LOCALES.indexOf(current) + 1) % LOCALES.length] ?? 'es-PY';
+  const next =
+    LOCALES[(LOCALES.indexOf(current) + 1) % LOCALES.length] ?? "es-PY";
   setLocale(next);
   return next;
 }
@@ -83,10 +84,15 @@ export function getLocale(): Locale {
  * falta también ahí devuelve la clave: en desarrollo eso canta a la primera
  * y no deja pasar un texto olvidado.
  */
-export function t(key: TranslationKey, values?: Record<string, string | number>): string {
+export function t(
+  key: TranslationKey,
+  values?: Record<string, string | number>,
+): string {
   const raw = DICTIONARIES[current][key] ?? ES_PY[key] ?? key;
   if (!values) return raw;
-  return raw.replace(/\{(\w+)\}/g, (match, name: string) => String(values[name] ?? match));
+  return raw.replace(/\{(\w+)\}/g, (match, name: string) =>
+    String(values[name] ?? match),
+  );
 }
 
 /**
@@ -96,7 +102,8 @@ export function t(key: TranslationKey, values?: Record<string, string | number>)
 export function detectLocale(): Locale {
   try {
     const saved = leerTexto(STORAGE_KEY);
-    if (saved && (LOCALES as readonly string[]).includes(saved)) return saved as Locale;
+    if (saved && (LOCALES as readonly string[]).includes(saved))
+      return saved as Locale;
   } catch {
     // Sin almacenamiento se sigue adelante con la detección normal.
   }
@@ -104,9 +111,9 @@ export function detectLocale(): Locale {
   const preferred = navigator.languages ?? [navigator.language];
   for (const tag of preferred) {
     const lower = tag.toLowerCase();
-    if (lower.startsWith('gn') || lower.startsWith('gug')) return 'gug';
-    if (lower.startsWith('en')) return 'en';
-    if (lower.startsWith('es')) return 'es-PY';
+    if (lower.startsWith("gn") || lower.startsWith("gug")) return "gug";
+    if (lower.startsWith("en")) return "en";
+    if (lower.startsWith("es")) return "es-PY";
   }
-  return 'es-PY';
+  return "es-PY";
 }

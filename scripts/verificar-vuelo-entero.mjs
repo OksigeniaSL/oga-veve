@@ -643,7 +643,7 @@ if (TRAMO === "guyrami" || TRAMO === "tuka") {
  * Es lo contrario de la comprobación de arriba y hace falta igual: llevárselo
  * por delante es un percance, o sea el final del vuelo en el sitio donde el
  * juego debería estar diciendo «llegaste a casa». Ocho metros es lo que el
- * propio juego considera atropello — el tren de la Óga 172, no pasarle cerca.
+ * propio juego considera atropello — el tren de el Pykasu, no pasarle cerca.
  */
 comprobar(
   "y no se le atropella",

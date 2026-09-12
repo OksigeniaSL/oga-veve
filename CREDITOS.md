@@ -127,8 +127,12 @@ Commercial use is allowed.» Eso último importa aquí más de lo que parece,
 porque el juego es también un gancho de la Granja Óga, y eso cuenta como uso
 comercial por mucho que se regale.
 
-Se usa **la forma, no el nombre**. La avioneta del juego se llama Óga 172; ver
-el apartado de marcas registradas más abajo. En el modelo hay además un panel
+Se usa **la forma, no el nombre**. La avioneta del juego se llama **JAZ 20
+*Pykasu***: JAZ es el fabricante ficticio del mundo del juego y *Pykasu* es la
+paloma en guaraní. Se llamó «Óga 172» hasta que se vio lo que eso decía —ciento
+setenta y dos, delante de un ala alta de cuatro plazas, cita a una avioneta que
+existe—; ver `src/flight/flota.ts`, #69 y el apartado de marcas registradas más
+abajo. En el modelo hay además un panel
 G1000 dibujado en la textura, que es obra del autor bajo su misma licencia.
 
 Se descargó la versión **GLB con texturas de 1K**, que son dos megas y medio.

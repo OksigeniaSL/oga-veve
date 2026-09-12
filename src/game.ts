@@ -32,7 +32,7 @@ import {
   rememberedTier,
   type Tier,
 } from "./flight/tiers";
-import { AIRCRAFT, OGA_172, type AircraftConfig } from "./flight/aircraft";
+import { AIRCRAFT, PYKASU, type AircraftConfig } from "./flight/aircraft";
 import { InputManager } from "./flight/input";
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraEnUso } from "./world/terrain";
@@ -442,7 +442,7 @@ const SE_PASO_DEL_PUESTO = 10;
 /**
  * A qué distancia del coche del sígame se considera que se le ha atropellado.
  *
- * Ocho metros de centro a centro. La Óga 172 tiene once de envergadura y el
+ * Ocho metros de centro a centro. El Pykasu tiene once de envergadura y el
  * coche mide cuatro de largo, así que esto es tocarlo con el tren y no pasarle
  * cerca — que rodando en una plataforma es lo normal.
  */
@@ -1037,7 +1037,7 @@ export class Game {
     );
     this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
     this.misionInicial = options.mision ?? null;
-    this.aircraft = options.aircraft ?? OGA_172;
+    this.aircraft = options.aircraft ?? PYKASU;
 
     this.renderer = new WebGLRenderer({
       canvas: options.canvas,
@@ -5355,7 +5355,7 @@ export class Game {
        * único que se mueve por la plataforma además del avión, y atropellarlo
        * termina el intento con su dibujo.
        *
-       * Ocho metros: la envergadura de la Óga 172 son once, así que esto es
+       * Ocho metros: la envergadura de el Pykasu son once, así que esto es
        * tocarlo con el tren, no pasarle cerca.
        */
       /*
@@ -6199,7 +6199,7 @@ export class Game {
   private cycleAircraft(): void {
     const next =
       AIRCRAFT[(AIRCRAFT.indexOf(this.aircraft) + 1) % AIRCRAFT.length] ??
-      OGA_172;
+      PYKASU;
     const { position, heading, airspeed } = this.flight.state;
     const carried = { position: position.clone(), heading, airspeed };
 

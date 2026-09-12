@@ -75,7 +75,7 @@ export const ES_PY = {
   "units.feet": "ft",
   "units.fpm": "ft/min",
 
-  "aircraft.oga172.description":
+  "aircraft.pykasu.description":
     "Avioneta de escuela. Tranquila y perdonadora.",
   "aircraft.mainumby.description":
     "Biplano fumigador. Ágil y con mucha fuerza.",

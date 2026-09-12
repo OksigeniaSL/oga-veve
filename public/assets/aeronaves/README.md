@@ -34,7 +34,7 @@ No sirve GPL mientras el juego sea Apache-2.0.
 Y una advertencia que **no es de licencia sino de marca**: «Cessna», «Piper» y
 compañía son marcas registradas. La geometría de un modelo puede ser libre y
 el nombre no serlo. Se usa la forma; el nombre y la librea, no. Por eso la
-avioneta de este juego se llama Óga 172. Ver el apartado de marcas registradas
+avioneta de este juego se llama JAZ 20 *Pykasu*. Ver el apartado de marcas registradas
 en `CREDITOS.md`.
 
 ## Tamaño

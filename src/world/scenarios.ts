@@ -769,7 +769,7 @@ export const LA_PALMA: Scenario = {
  * Y no Barajas, a propósito. Barajas es el aeropuerto de Madrid y en este
  * juego sería un decorado enorme por el que rodar veinte minutos; **Cuatro
  * Vientos es donde se aprende a volar en Madrid** desde 1911 —es el más
- * antiguo de España en servicio— y es donde estaría de verdad una Óga 172 un
+ * antiguo de España en servicio— y es donde estaría de verdad un Pykasu un
  * sábado por la mañana. Pista de kilómetro y medio, mucha escuela, y la
  * meseta alrededor.
  *

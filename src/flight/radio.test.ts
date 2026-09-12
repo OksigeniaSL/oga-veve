@@ -115,6 +115,8 @@ describe("el otro avión", () => {
     const corta = new Radio(() => 0);
     const larga = new Radio(() => 1);
     const t = ESPERA_PRIMERA + 40;
-    expect(escuchar(corta, t).length).toBeGreaterThan(escuchar(larga, t).length);
+    expect(escuchar(corta, t).length).toBeGreaterThan(
+      escuchar(larga, t).length,
+    );
   });
 });

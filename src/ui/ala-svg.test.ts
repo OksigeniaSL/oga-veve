@@ -22,9 +22,9 @@ import {
   trazo,
 } from "./ala-svg";
 import { mirarElAla, presiones } from "../flight/ala";
-import { OGA_172 } from "../flight/aircraft";
+import { PYKASU } from "../flight/aircraft";
 
-const PERDIDA = (OGA_172.aero.alphaStall * 180) / Math.PI;
+const PERDIDA = (PYKASU.aero.alphaStall * 180) / Math.PI;
 
 /** Saca los pares `x y` de una `d` de SVG. */
 const puntosDe = (d: string): { x: number; y: number }[] =>
@@ -80,7 +80,7 @@ describe("el perfil", () => {
 });
 
 describe("las líneas de corriente", () => {
-  const alaEn = (g: number) => mirarElAla(OGA_172, g, 40);
+  const alaEn = (g: number) => mirarElAla(PYKASU, g, 40);
 
   /*
    * Entran casi rectas: casi, y no del todo, porque **el aire se entera de que
@@ -149,7 +149,7 @@ describe("las líneas de corriente", () => {
 
 describe("la envolvente de presiones", () => {
   it("sale hacia afuera por los dos lados", () => {
-    const p = presiones(OGA_172, 8);
+    const p = presiones(PYKASU, 8);
     const arriba = puntosDe(envolvente(p.arriba, 0, true));
     const abajo = puntosDe(envolvente(p.abajo, 0, false));
     // Con el ala sin girar, arriba de la pantalla es menos `y`.
@@ -160,7 +160,7 @@ describe("la envolvente de presiones", () => {
   });
 
   it("y la de arriba es mucho más gorda que la de abajo", () => {
-    const p = presiones(OGA_172, 8);
+    const p = presiones(PYKASU, 8);
     const grosor = (d: string, encima: boolean) => {
       const q = puntosDe(d);
       return encima

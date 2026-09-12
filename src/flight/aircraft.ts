@@ -1,3 +1,5 @@
+import { FLOTA, nombreEntero } from "./flota";
+
 /**
  * Fichas técnicas de las aeronaves.
  *
@@ -204,16 +206,22 @@ export interface AircraftConfig {
 }
 
 /**
- * Óga 172 — avioneta de escuela, ala alta, cuatro plazas.
+ * JAZ 20 *Pykasu* — avioneta de escuela, ala alta, cuatro plazas.
  *
  * Es la aeronave de partida: estable, indulgente, entra en pérdida avisando.
  * Los números están en el orden de magnitud de una avioneta ligera real:
  * pérdida sobre 25 m/s (~49 kt) y crucero sobre 60 m/s (~117 kt).
+ *
+ * **Se llamaba «Óga 172»**, y eso era un problema, no un detalle: ciento
+ * setenta y dos es el número de una avioneta de escuela que existe, y puesto
+ * delante de un ala alta de cuatro plazas **cita** a una — exactamente la
+ * asociación que este proyecto había decidido evitar, escrita en la ficha.
+ * *Pykasu* es la paloma. Ver `flota.ts` y #69.
  */
-export const OGA_172: AircraftConfig = {
-  id: "oga-172",
-  name: "Óga 172",
-  descriptionKey: "aircraft.oga172.description",
+export const PYKASU: AircraftConfig = {
+  id: "jaz-20",
+  name: nombreEntero(FLOTA[0]!),
+  descriptionKey: "aircraft.pykasu.description",
   mass: 1100,
   wingArea: 16.2,
   wingSpan: 11.0,
@@ -290,8 +298,8 @@ export const OGA_172: AircraftConfig = {
  * Óga, y dos personajes con el mismo nombre se confunden en vídeo.
  */
 export const MAINUMBY: AircraftConfig = {
-  id: "mainumby",
-  name: "Mainumby",
+  id: "jaz-25",
+  name: nombreEntero(FLOTA[1]!),
   descriptionKey: "aircraft.mainumby.description",
   mass: 1500,
   wingArea: 24.0,
@@ -346,7 +354,7 @@ export const MAINUMBY: AircraftConfig = {
   },
 };
 
-export const AIRCRAFT: readonly AircraftConfig[] = [OGA_172, MAINUMBY];
+export const AIRCRAFT: readonly AircraftConfig[] = [PYKASU, MAINUMBY];
 
 export function aircraftById(id: string): AircraftConfig {
   const found = AIRCRAFT.find((a) => a.id === id);

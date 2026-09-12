@@ -11,32 +11,41 @@
  * miran lo que pasa en el aire.
  */
 
-import { describe, expect, it } from 'vitest';
-import { Vector3 } from 'three';
-import { ArcadeFlightModel } from './arcade';
-import { CoefficientFlightModel } from './fdm';
-import { OGA_172 } from './aircraft';
-import { neutralControls, type FlightModel } from './model';
-import { TIERS } from './tiers';
+import { describe, expect, it } from "vitest";
+import { Vector3 } from "three";
+import { ArcadeFlightModel } from "./arcade";
+import { CoefficientFlightModel } from "./fdm";
+import { PYKASU } from "./aircraft";
+import { neutralControls, type FlightModel } from "./model";
+import { TIERS } from "./tiers";
 
 function enPista(tier: (typeof TIERS)[number]): FlightModel {
   const ground = () => 0;
   const model =
-    tier.model === 'simple'
-      ? new ArcadeFlightModel({ aircraft: OGA_172, ground })
-      : new CoefficientFlightModel({ aircraft: OGA_172, ground, assist: tier.assists });
+    tier.model === "simple"
+      ? new ArcadeFlightModel({ aircraft: PYKASU, ground })
+      : new CoefficientFlightModel({
+          aircraft: PYKASU,
+          ground,
+          assist: tier.assists,
+        });
   // Recién tomado: en el suelo y rodando deprisa.
   model.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 30 });
   return model;
 }
 
-function rodar(model: FlightModel, seconds: number, brakes: number, throttle = 0): void {
+function rodar(
+  model: FlightModel,
+  seconds: number,
+  brakes: number,
+  throttle = 0,
+): void {
   const input = { ...neutralControls(), throttle, brakes };
   const dt = 1 / 120;
   for (let i = 0; i < Math.round(seconds * 120); i++) model.step(dt, input);
 }
 
-describe('los frenos', () => {
+describe("los frenos", () => {
   for (const tier of TIERS) {
     it(`paran el avión en ${tier.name}`, () => {
       const model = enPista(tier);
@@ -77,8 +86,8 @@ describe('los frenos', () => {
   }
 });
 
-describe('con el motor a cero', () => {
-  it('el avión no se pasea solo por la pista', () => {
+describe("con el motor a cero", () => {
+  it("el avión no se pasea solo por la pista", () => {
     // Sin frenar siquiera: gas a cero es gas a cero. El modelo sencillo
     // tenía un suelo de velocidad pensado para el vuelo y lo aplicaba
     // también rodando, así que el avión se iba caminando él solo.
@@ -88,7 +97,7 @@ describe('con el motor a cero', () => {
   });
 });
 
-describe('rodar por la pista', () => {
+describe("rodar por la pista", () => {
   for (const tier of TIERS) {
     it(`en ${tier.name} el avión gira parado o rodando despacio`, () => {
       const model = enPista(tier);
@@ -112,8 +121,8 @@ describe('rodar por la pista', () => {
   }
 });
 
-describe('quitar gas', () => {
-  it('el avión pierde velocidad pronto, no diez segundos después', () => {
+describe("quitar gas", () => {
+  it("el avión pierde velocidad pronto, no diez segundos después", () => {
     const model = enPista(TIERS[0]!);
     model.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 0 });
     rodar(model, 25, 0, 1);
@@ -126,7 +135,7 @@ describe('quitar gas', () => {
   });
 });
 
-describe('la alarma de pérdida', () => {
+describe("la alarma de pérdida", () => {
   /**
    * Reportado volando: la alarma cantaba «¡pérdida!» en cuanto se levantaba
    * un poco el morro, y también subiendo justo después de despegar. Se
@@ -135,7 +144,7 @@ describe('la alarma de pérdida', () => {
    */
   function volar(elevator: number, seconds: number, throttle = 1) {
     const model = new CoefficientFlightModel({
-      aircraft: OGA_172,
+      aircraft: PYKASU,
       ground: () => 0,
       assist: TIERS[2]!.assists,
     });
@@ -151,7 +160,7 @@ describe('la alarma de pérdida', () => {
     return { avisos, model };
   }
 
-  it('no salta en un ascenso normal', () => {
+  it("no salta en un ascenso normal", () => {
     // Motor de ascenso y un tirón moderado, que es lo que hace cualquiera
     // después de despegar. Tirar a fondo veinte segundos seguidos sí acaba en
     // pérdida, y debe: eso no es un ascenso, es forzar el ala.
@@ -159,7 +168,7 @@ describe('la alarma de pérdida', () => {
     expect(avisos).toBe(0);
   });
 
-  it('sí salta si de verdad se tira a tope, y una sola vez', () => {
+  it("sí salta si de verdad se tira a tope, y una sola vez", () => {
     const { avisos, model } = volar(1, 20, 0.2);
     expect(model.state.stalled || avisos > 0).toBe(true);
     // Una entrada, no un parpadeo: antes daba decenas.
