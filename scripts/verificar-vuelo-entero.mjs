@@ -741,6 +741,30 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       const p = porDelante();
       c.aileron = p ? alPunto(s, p.x, p.z) : alRumbo(s, rumboPista);
       /*
+       * **Y el timón, que es lo único que dirige a partir de los veintiocho.**
+       *
+       * La rueda de morro va con el mando de alabeo y **se apaga con la
+       * carrerilla**: entera hasta ocho metros por segundo y sin autoridad
+       * ninguna a los veintiocho. A partir de ahí lo que dirige es el timón, y
+       * este piloto no lo tocaba nunca — ni rodando ni despegando.
+       *
+       * En Guyrami no se notaba porque la asistencia de rodaje empuja hacia la
+       * raya y tapaba el agujero. En Tukã esa asistencia es un tercio, así que
+       * el avión entraba en pista descolocado del eje, aceleraba, y a partir
+       * de los veintiocho ya no había nada que lo enderezara.
+       *
+       * Dos términos, que es como se lleva un avión por el eje: adónde apunta
+       * el morro y a qué lado del eje se está. El segundo es pequeño a
+       * propósito —dos centésimas por metro— porque corregir el desvío con
+       * prisa es hacer eses.
+       */
+      c.rudder = s.onGround
+        ? Math.max(
+            -1,
+            Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
+          )
+        : 0;
+      /*
        * **Se tira para rotar, y en cuanto se vuela se suelta.**
        *
        * Aquí se sostenía media palanca desde los 27 m/s **y también en el
