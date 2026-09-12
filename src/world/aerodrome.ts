@@ -1913,7 +1913,7 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
 /**
  * Pista que tiene que quedar por delante para entrar y despegar sin más, m.
  *
- * Seiscientos: la carrera de despegue de la Óga 172 con la mitad de propina.
+ * Seiscientos: la carrera de despegue de el Pykasu con la mitad de propina.
  * Por debajo de esto, entrar donde muere la calle de rodaje **no es una
  * opción**, y para llegar a la cabecera hay que rodar por la propia pista y
  * dar la vuelta al final. Eso es el back-taxi, y así se pide por radio.

@@ -184,7 +184,7 @@ export const GUG: Dictionary = {
   "units.fpm": "ft/min",
 
   // ── Aeronaves ──────────────────────────────────────────────────────────
-  "aircraft.oga172.description":
+  "aircraft.pykasu.description":
     "Avión mbo'ehao peguarã. Py’aguapy ha ipochy’ỹva.",
   "aircraft.mainumby.description": "Biplano ñemitỹrã. Ipya’e ha imbarete.",
 

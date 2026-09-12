@@ -26,7 +26,9 @@ describe("el grado", () => {
   it("sube con lo que se ha hecho", () => {
     expect(grado(con({ aterrizajes: 3, aerodromos: ["gcxo"] }))).toBe("piloto");
     expect(
-      grado(con({ aterrizajes: 10, aerodromos: ["gcxo", "sgas"], frustradas: 1 })),
+      grado(
+        con({ aterrizajes: 10, aerodromos: ["gcxo", "sgas"], frustradas: 1 }),
+      ),
     ).toBe("comandante");
   });
 
@@ -45,14 +47,18 @@ describe("el grado", () => {
   it("no baja por estrellarse", () => {
     // «¿Se quitan galones en la vida real?» No. Se sube por horas y por
     // pruebas superadas; cuando algo sale mal, lo que hay es repetir.
-    const bueno = con({ aterrizajes: 12, aerodromos: ["a", "b"], frustradas: 1 });
+    const bueno = con({
+      aterrizajes: 12,
+      aerodromos: ["a", "b"],
+      frustradas: 1,
+    });
     expect(grado({ ...bueno, percances: 30 })).toBe(grado(bueno));
   });
 
   it("y volar en el mismo sitio cien veces no cuenta como dos aeródromos", () => {
-    expect(grado(con({ aterrizajes: 40, aerodromos: ["gcxo"], frustradas: 9 }))).toBe(
-      "piloto",
-    );
+    expect(
+      grado(con({ aterrizajes: 40, aerodromos: ["gcxo"], frustradas: 9 })),
+    ).toBe("piloto");
   });
 });
 

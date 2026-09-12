@@ -12,18 +12,18 @@
 
 import { describe, expect, it } from "vitest";
 import { ArcadeFlightModel } from "./arcade";
-import { OGA_172 } from "./aircraft";
+import { PYKASU } from "./aircraft";
 import { neutralControls } from "./model";
 import { Vector3 } from "three";
 
 /** Vuela unos segundos con un gas dado y devuelve cuánto ha subido o bajado. */
 function volandoCon(throttle: number, segundos = 6): number {
   // Suelo plano y bien abajo: aquí se mira el aire, no el aterrizaje.
-  const m = new ArcadeFlightModel({ aircraft: OGA_172, ground: () => 0 });
+  const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
   m.reset({
     position: new Vector3(0, 600, 0),
     heading: 0,
-    airspeed: OGA_172.approachSpeed,
+    airspeed: PYKASU.approachSpeed,
   });
   const y0 = m.state.position.y;
   const mandos = { ...neutralControls(), engineOn: true, throttle };
@@ -52,11 +52,11 @@ describe("el motor y la altura", () => {
 describe("después de tomar tierra", () => {
   /** Vuela, toca con motor puesto y sigue con el gas donde estaba. */
   function tocarConMotor(): { toco: boolean; volvioAVolar: boolean } {
-    const m = new ArcadeFlightModel({ aircraft: OGA_172, ground: () => 0 });
+    const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
     m.reset({
       position: new Vector3(0, 40, 0),
       heading: 0,
-      airspeed: OGA_172.cruiseSpeed * 0.62,
+      airspeed: PYKASU.cruiseSpeed * 0.62,
     });
     m.setOnRunway(true);
     // A todo gas y bajando: la toma que se hace sin saber que hay que frenar.

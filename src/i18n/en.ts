@@ -82,7 +82,7 @@ export const EN: Dictionary = {
   "units.feet": "ft",
   "units.fpm": "ft/min",
 
-  "aircraft.oga172.description": "Trainer. Steady and forgiving.",
+  "aircraft.pykasu.description": "Trainer. Steady and forgiving.",
   "aircraft.mainumby.description": "Crop duster biplane. Nimble and strong.",
 
   "mission.rio.name": "See the river",

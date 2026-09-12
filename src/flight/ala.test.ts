@@ -19,11 +19,11 @@ import {
   PARTE_DE_ARRIBA,
   presiones,
 } from "./ala";
-import { OGA_172 } from "./aircraft";
+import { PYKASU } from "./aircraft";
 import { liftCoefficient } from "./fdm";
 
-const PERDIDA = (OGA_172.aero.alphaStall * 180) / Math.PI;
-const ala = (grados: number, v = 40) => mirarElAla(OGA_172, grados, v);
+const PERDIDA = (PYKASU.aero.alphaStall * 180) / Math.PI;
+const ala = (grados: number, v = 40) => mirarElAla(PYKASU, grados, v);
 
 describe("cómo vuela un ala", () => {
   it("el tirador cubre de antes de nivelado a bien pasada la pérdida", () => {
@@ -38,8 +38,8 @@ describe("cómo vuela un ala", () => {
     for (let g = ALFA_MINIMA; g < PERDIDA; g += 1) {
       const suya = liftCoefficient(
         (g * Math.PI) / 180,
-        OGA_172.aero,
-        OGA_172.aero.alphaStall,
+        PYKASU.aero,
+        PYKASU.aero.alphaStall,
       );
       expect(ala(g).cl).toBeCloseTo(suya, 9);
     }
@@ -49,8 +49,8 @@ describe("cómo vuela un ala", () => {
     const g = PERDIDA + 7;
     const suya = liftCoefficient(
       (g * Math.PI) / 180,
-      OGA_172.aero,
-      OGA_172.aero.alphaStall,
+      PYKASU.aero,
+      PYKASU.aero.alphaStall,
     );
     expect(ala(g).cl).toBeLessThan(suya);
     // Y sobre todo: por debajo de lo que daba a un ángulo cómodo, que es lo
@@ -90,24 +90,24 @@ describe("cómo vuela un ala", () => {
    */
   describe("y en un punto se despega", () => {
     it("por debajo de la pérdida no hay nada desprendido", () => {
-      expect(cuantoDesprendido(PERDIDA - 1, OGA_172.aero.alphaStall)).toBe(0);
-      expect(dondeSeDespega(PERDIDA - 1, OGA_172.aero.alphaStall)).toBe(1);
+      expect(cuantoDesprendido(PERDIDA - 1, PYKASU.aero.alphaStall)).toBe(0);
+      expect(dondeSeDespega(PERDIDA - 1, PYKASU.aero.alphaStall)).toBe(1);
     });
 
     it("y por encima se desprende más cuanto más se insiste", () => {
-      const poco = cuantoDesprendido(PERDIDA + 2, OGA_172.aero.alphaStall);
-      const mucho = cuantoDesprendido(PERDIDA + 7, OGA_172.aero.alphaStall);
+      const poco = cuantoDesprendido(PERDIDA + 2, PYKASU.aero.alphaStall);
+      const mucho = cuantoDesprendido(PERDIDA + 7, PYKASU.aero.alphaStall);
       expect(poco).toBeGreaterThan(0);
       expect(mucho).toBeGreaterThan(poco);
       expect(mucho).toBeLessThanOrEqual(1);
     });
 
     it("el punto de despegue se corre hacia el borde de ataque", () => {
-      expect(dondeSeDespega(PERDIDA + 2, OGA_172.aero.alphaStall)).toBeLessThan(
+      expect(dondeSeDespega(PERDIDA + 2, PYKASU.aero.alphaStall)).toBeLessThan(
         1,
       );
-      expect(dondeSeDespega(PERDIDA + 8, OGA_172.aero.alphaStall)).toBeLessThan(
-        dondeSeDespega(PERDIDA + 2, OGA_172.aero.alphaStall),
+      expect(dondeSeDespega(PERDIDA + 8, PYKASU.aero.alphaStall)).toBeLessThan(
+        dondeSeDespega(PERDIDA + 2, PYKASU.aero.alphaStall),
       );
     });
 
@@ -123,20 +123,20 @@ describe("cómo vuela un ala", () => {
    */
   describe("el mapa de presiones", () => {
     it("chupa arriba y empuja abajo", () => {
-      const p = presiones(OGA_172, 6);
+      const p = presiones(PYKASU, 6);
       expect(p.arriba).toHaveLength(CUANTAS_PRESIONES);
       for (const e of p.arriba) expect(e.cp).toBeLessThan(0);
       for (const e of p.abajo) expect(e.cp).toBeGreaterThan(0);
     });
 
     it("y la mayor parte la hace la succión de arriba", () => {
-      const l = loQueLevantan(presiones(OGA_172, 6));
+      const l = loQueLevantan(presiones(PYKASU, 6));
       expect(l.arriba).toBeGreaterThan(l.abajo);
       expect(l.arriba / l.total).toBeGreaterThan(0.6);
     });
 
     it("la succión vive en el primer trozo de cuerda, no repartida", () => {
-      const { arriba } = presiones(OGA_172, 6);
+      const { arriba } = presiones(PYKASU, 6);
       const delante = arriba.filter((e) => e.x < 0.25);
       const detras = arriba.filter((e) => e.x >= 0.25);
       const media = (l: typeof arriba) =>
@@ -145,8 +145,8 @@ describe("cómo vuela un ala", () => {
     });
 
     it("crece con el ángulo mientras el flujo va pegado", () => {
-      const poco = loQueLevantan(presiones(OGA_172, 2)).total;
-      const mucho = loQueLevantan(presiones(OGA_172, 10)).total;
+      const poco = loQueLevantan(presiones(PYKASU, 2)).total;
+      const mucho = loQueLevantan(presiones(PYKASU, 10)).total;
       expect(mucho).toBeGreaterThan(poco);
     });
 
@@ -156,9 +156,9 @@ describe("cómo vuela un ala", () => {
      * succión, y por eso el dibujo y la curva se caen a la vez.
      */
     it("y se cae al desprenderse, sin que nadie lo apague", () => {
-      const pegado = loQueLevantan(presiones(OGA_172, PERDIDA)).total;
-      const poco = loQueLevantan(presiones(OGA_172, PERDIDA + 7)).total;
-      const del_todo = loQueLevantan(presiones(OGA_172, PERDIDA + 9)).total;
+      const pegado = loQueLevantan(presiones(PYKASU, PERDIDA)).total;
+      const poco = loQueLevantan(presiones(PYKASU, PERDIDA + 7)).total;
+      const del_todo = loQueLevantan(presiones(PYKASU, PERDIDA + 9)).total;
       // El campo hace cumbre justo en la pérdida y a partir de ahí baja.
       expect(poco).toBeLessThan(pegado * 0.7);
       expect(del_todo).toBeLessThan(pegado * 0.5);
@@ -177,7 +177,7 @@ describe("cómo vuela un ala", () => {
       let mayor = -Infinity;
       let donde = 0;
       for (let g = 0; g <= PERDIDA + 12; g += 0.5) {
-        const v = loQueLevantan(presiones(OGA_172, g)).total;
+        const v = loQueLevantan(presiones(PYKASU, g)).total;
         if (v > mayor) {
           mayor = v;
           donde = g;
@@ -187,8 +187,8 @@ describe("cómo vuela un ala", () => {
     });
 
     it("detrás del despegue no queda succión, solo la estela", () => {
-      const { arriba } = presiones(OGA_172, PERDIDA + 7);
-      const corte = dondeSeDespega(PERDIDA + 7, OGA_172.aero.alphaStall);
+      const { arriba } = presiones(PYKASU, PERDIDA + 7);
+      const corte = dondeSeDespega(PERDIDA + 7, PYKASU.aero.alphaStall);
       for (const e of arriba) {
         if (e.x > corte) expect(Math.abs(e.cp)).toBeLessThan(0.2);
       }
@@ -218,7 +218,7 @@ describe("cómo vuela un ala", () => {
 
     it("y el reparto entre arriba y abajo no depende de la velocidad", () => {
       expect(PARTE_DE_ARRIBA).toBeGreaterThan(0.5);
-      const a = loQueLevantan(presiones(OGA_172, 6));
+      const a = loQueLevantan(presiones(PYKASU, 6));
       expect(a.arriba / a.total).toBeCloseTo(PARTE_DE_ARRIBA, 1);
     });
   });

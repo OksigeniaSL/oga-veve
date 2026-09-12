@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LandingWatcher } from "./aterrizaje";
 
 /** Un vuelo completo: rodar, volar, tocar y frenar. */
-/** La velocidad de aproximación de las pruebas. La del Óga 172. */
+/** La velocidad de aproximación de las pruebas. La del Pykasu. */
 const VREF = 33;
 
 function volarYAterrizar(
@@ -26,7 +26,9 @@ function volarYAterrizar(
    * toma. Aquí se rueda medio segundo por paso, así que sale al quinto.
    */
   for (let i = 0; i < 6; i++)
-    veredictos.push(w.update(true, 40 - i * 4, 0, crashed, enPista, VREF, paso));
+    veredictos.push(
+      w.update(true, 40 - i * 4, 0, crashed, enPista, VREF, paso),
+    );
   return veredictos.filter(Boolean);
 }
 

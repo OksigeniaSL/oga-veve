@@ -270,7 +270,7 @@ export class Hud {
    *
    * **Y hace falta, porque una escala que promete una velocidad imposible
    * miente.** El pájaro estaba a vez y seis décimas de la de aproximación —52,8
-   * en el Óga 172— y el modelo sencillo no pasa de 37,2: a tope de gas la
+   * en el Pykasu— y el modelo sencillo no pasa de 37,2: a tope de gas la
    * marca se quedaba en el 41 % del recorrido y ahí se quedaba para siempre.
    * «A toda velocidad la señal entre la tortuga y el ave están a mitad», y era
    * literal: el ave estaba pintada en un sitio al que no se llega.

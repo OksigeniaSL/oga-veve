@@ -18,7 +18,7 @@
 
 import { describe, expect, it } from "vitest";
 import { ArcadeFlightModel } from "./arcade";
-import { OGA_172 } from "./aircraft";
+import { PYKASU } from "./aircraft";
 import { neutralControls } from "./model";
 import { Vector3 } from "three";
 
@@ -27,7 +27,7 @@ import { Vector3 } from "three";
  * de la curva que sale, en metros.
  */
 function curvaRodando(velocidad: number): { radio: number; v: number } {
-  const m = new ArcadeFlightModel({ aircraft: OGA_172, ground: () => 0 });
+  const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
   m.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: velocidad });
   const mandos = {
     ...neutralControls(),
@@ -122,7 +122,7 @@ describe("girar rodando", () => {
  */
 describe("el gas de rodar", () => {
   it("sostiene la velocidad que se le pide", () => {
-    const m = new ArcadeFlightModel({ aircraft: OGA_172, ground: () => 0 });
+    const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
     m.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 0 });
     const mandos = {
       ...neutralControls(),
@@ -135,7 +135,7 @@ describe("el gas de rodar", () => {
 
   it("y no es cero para una velocidad de rodaje", () => {
     // El fallo, en una línea: preguntar por rodar con la cuenta de volar.
-    const m = new ArcadeFlightModel({ aircraft: OGA_172, ground: () => 0 });
+    const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
     expect(m.gasPara(9)).toBe(0);
     expect(m.gasParaRodar(9)).toBeGreaterThan(0.1);
   });

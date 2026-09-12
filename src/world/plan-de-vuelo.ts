@@ -117,7 +117,7 @@ export const CRUCERO = 13;
 /**
  * Pista que tiene que quedar por delante para salir por una intersección, m.
  *
- * Mil doscientos. La Óga 172 despega en cuatrocientos cincuenta medidos en el
+ * Mil doscientos. El Pykasu despega en cuatrocientos cincuenta medidos en el
  * banco, así que esto es casi el triple: sitio para el despegue, para un
  * despegue mal hecho y para arrepentirse a mitad. Un piloto de verdad hace
  * esta misma cuenta antes de aceptar una salida por intersección.
@@ -179,7 +179,7 @@ const MAXIMO_ENGANCHE = 110;
 /**
  * Dónde se da por hecho que el avión ha dejado de correr al aterrizar, m.
  *
- * Mil metros pasado el umbral. La Óga 172 para en bastante menos, pero lo que
+ * Mil metros pasado el umbral. El Pykasu para en bastante menos, pero lo que
  * se busca con este número no es una toma concreta: es el sitio desde el que
  * se mide **cuánto se rueda hasta casa** al elegir el puesto.
  */
@@ -194,7 +194,7 @@ const HUECO_PARA_GIRAR = 25;
  * Treinta y seis. La maniobra se rueda por una raya apartada del eje y se
  * vuelve **por el eje**, así que lo que separa la ida de la vuelta es esa
  * apartada: medio ancho menos cuatro metros de borde. Con treinta y seis
- * salen catorce, más que la envergadura de la Óga 172, y por debajo de eso
+ * salen catorce, más que la envergadura de el Pykasu, y por debajo de eso
  * las dos rayas dejan de ser dos.
  *
  * Lo puso Yvytu Rape, que son dieciocho metros de hierba: ahí quedaban a
@@ -209,7 +209,7 @@ export const ANCHO_PARA_LA_VUELTA = 36;
 /**
  * Pista que se procura dejar por delante al entrar, m.
  *
- * Cuatrocientos: la Óga 172 despega en doscientos sesenta medidos en el banco,
+ * Cuatrocientos: el Pykasu despega en doscientos sesenta medidos en el banco,
  * así que esto es esa carrera con la mitad de propina. En una pista corta se
  * usa el cuarenta por ciento de lo que haya, que es lo que se puede prometer
  * sin empujar la entrada fuera del asfalto.
@@ -1696,7 +1696,7 @@ export class PlanDeVuelo {
    *
    * **Hasta dónde se vuelve.** Hasta el primer sitio desde el que ya se puede
    * despegar con la pista de una salida por intersección delante
-   * —`PISTA_QUE_HACE_FALTA`, casi el triple de lo que corre la Óga 172—, y si
+   * —`PISTA_QUE_HACE_FALTA`, casi el triple de lo que corre el Pykasu—, y si
    * el campo es más corto que eso, hasta el umbral. Ni un metro más: volver
    * hasta la cabecera por costumbre es rodar de balde, y aquí lo que sobra de
    * rodaje se paga en niños aburridos.
@@ -1750,7 +1750,7 @@ export class PlanDeVuelo {
      *
      * `L` es también lo que separa la raya de ida de la de vuelta, y por eso
      * se le deja cuatro metros de borde: en una pista de cuarenta metros son
-     * dieciséis, más que la envergadura de la Óga 172.
+     * dieciséis, más que la envergadura de el Pykasu.
      */
     const lado = Math.max(
       6,
@@ -1829,7 +1829,7 @@ export class PlanDeVuelo {
      * que la mitad: el tope empujaba el punto de entrada **doscientos cincuenta
      * metros por detrás del avión**, así que la raya de entrada salía hacia
      * atrás y cruzaba el campo en diagonal. «Sigue marcándome fuera de la
-     * pista por el césped.» La Óga 172 despega en doscientos sesenta metros
+     * pista por el césped.» El Pykasu despega en doscientos sesenta metros
      * medidos, así que lo que hay que dejar es eso con margen — y en una pista
      * corta, lo que se pueda sin salirse de ella.
      */
