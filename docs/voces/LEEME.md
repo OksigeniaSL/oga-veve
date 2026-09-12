@@ -60,6 +60,39 @@ es una línea de shell.
 Formato de entrega: lo que salga del estudio, en la calidad más alta que dé.
 La conversión a lo que usa el juego se hace aquí.
 
+## Las tomas, con ElevenLabs
+
+Ciento veintiuna frases y dos mil cuatrocientos caracteres pegados a mano en
+una web es la clase de trabajo que se hace una vez y se hace mal la segunda.
+Hay un guion:
+
+```bash
+export ELEVENLABS_API_KEY=...          # del entorno, nunca de un fichero
+node scripts/voces-elevenlabs.mjs --voces    # lista las de la cuenta
+node scripts/voces-elevenlabs.mjs --cuanto   # qué se va a gastar, sin gastarlo
+node scripts/voces-elevenlabs.mjs instructor # y a grabar
+```
+
+Escribe un fichero por frase en `crudo/<voz>/`, con el nombre que dice la
+tabla, y **salta lo que ya está**: una tanda que se corta —la red, un límite de
+la cuenta, un Ctrl-C— se reanuda sin pagar dos veces lo mismo.
+
+Antes hace falta decir qué voz de la cuenta hace de cuál, en
+`docs/voces/voces.json`. Es configuración, no un secreto: un identificador de
+voz no abre nada.
+
+```json
+{ "instructor": "…", "cabina": "…", "torre": "…", "otro": "…" }
+```
+
+**La clave sale del entorno y no se escribe en ningún sitio.** Sin `VITE_`
+delante: cualquier variable con ese prefijo la mete Vite dentro del paquete que
+se publica, o sea dentro del navegador de quien juegue.
+
+Y una nota sobre el modelo: `eleven_multilingual_v2` es el que aguanta el
+voseo —«arrancá», «seguí», «andá»—, que es la mitad de lo que hace que el
+instructor suene de Paraguay y no de un doblaje.
+
 ## El horneado: un comando, y ya
 
 ```bash

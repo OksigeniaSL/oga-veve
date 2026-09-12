@@ -131,14 +131,33 @@ try {
   const guardado = await page.evaluate(async () => {
     const nombres = await caches.keys();
     const voz = await caches.open("oga-veve-voz-v1");
-    return { nombres, cuantas: (await voz.keys()).length };
+    const rutas = (await voz.keys()).map((p) => new URL(p.url).pathname);
+    return { nombres, rutas };
   });
+  /*
+   * **Las piezas se guardan; el manifiesto, no.** Y la diferencia es la que
+   * separa un pack que se puede rehornear de uno que no: los ficheros del pack
+   * no llevan huella en el nombre, así que una segunda tanda de grabaciones se
+   * guarda con los mismos nombres que la primera. Con el manifiesto cacheado,
+   * el juego seguiría viendo el de la primera y **no se enteraría nunca** de
+   * que hay versión nueva. Pidiéndolo siempre se descubre el cambio; si no hay
+   * red, se cae a lo guardado. Ver `traer`.
+   */
+  const conManifiesto = guardado.rutas.some((r) =>
+    r.endsWith("manifiesto.json"),
+  );
   comprobar(
     "y queda guardado en su propia caché, no en la del juego",
-    guardado.cuantas === PIEZAS.length + 1 &&
-      guardado.nombres.includes("oga-veve-voz-v1"),
-    `${guardado.cuantas} entradas en ${guardado.nombres.join(", ") || "ninguna"}`,
+    guardado.rutas.length > 0 && guardado.nombres.includes("oga-veve-voz-v1"),
+    `${guardado.rutas.length} entradas en ${guardado.nombres.join(", ") || "ninguna"}`,
     "las veinte tablets de un aula tienen que bajarlo una vez, no una por sesión",
+  );
+  comprobar(
+    "y el manifiesto no se guarda, que es como se ve una tanda nueva",
+    !conManifiesto,
+    conManifiesto
+      ? "está guardado: una segunda tanda de grabaciones no se vería nunca"
+      : "solo las piezas",
   );
 
   /*
@@ -223,13 +242,27 @@ try {
     `${segunda.piezas} de ${PIEZAS.length} piezas`,
     "de nada sirve guardarlo si a la vuelta no está",
   );
+  /*
+   * Y no vuelve a pedir **las piezas**, que es donde está el peso: son ciento
+   * veintiuna frases en dos formatos. El manifiesto sí se vuelve a pedir, a
+   * propósito y siempre: son unos cientos de bytes y es lo único que puede
+   * decir que hay grabaciones nuevas. Ver la nota de arriba.
+   */
+  const dePiezas = pedidas.filter((r) => !r.endsWith("manifiesto.json"));
   comprobar(
-    "y no vuelve a pedirlo por la red",
-    pedidas.length === 0,
-    pedidas.length === 0
-      ? "ni una petición"
-      : `${pedidas.length} peticiones, la primera ${pedidas[0]}`,
+    "y no vuelve a pedir las piezas por la red",
+    dePiezas.length === 0,
+    dePiezas.length === 0
+      ? `ni una pieza · ${pedidas.length} petición del manifiesto`
+      : `${dePiezas.length} piezas, la primera ${dePiezas[0]}`,
     "un aula de veinte tablets bajaría el pack veinte veces al día",
+  );
+  comprobar(
+    "y sí vuelve a pedir el manifiesto, que es como se entera de una tanda nueva",
+    pedidas.some((r) => r.endsWith("manifiesto.json")),
+    pedidas.some((r) => r.endsWith("manifiesto.json"))
+      ? "lo pidió"
+      : "no lo pidió: una segunda tanda de grabaciones no se vería nunca",
   );
 
   comprobar(

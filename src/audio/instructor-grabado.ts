@@ -29,6 +29,7 @@ import type { Instructor } from "./instructor";
 import {
   BASE,
   CACHE,
+  RESPALDO,
   elegirFormato,
   ficheroDe,
   leerManifiesto,
@@ -51,7 +52,16 @@ export class InstructorGrabado implements Instructor {
   private readonly altavoz: Altavoz;
   /** A quién se le pasa lo que todavía no está grabado. */
   private readonly suplente: Instructor;
-  private manifiesto: Manifiesto | null = null;
+  /**
+   * Un manifiesto por voz, en el orden en que se buscan.
+   *
+   * Era uno solo, el del instructor, y eso dejaba fuera los cantos de cabina,
+   * la torre y el otro avión: treinta y tres de las ciento veintiuna frases
+   * que hay que grabar. Se buscan en orden y manda el primero que tenga
+   * receta para la clave, que es lo mismo que decir «cada frase la dice quien
+   * le toca», porque ninguna clave está en dos packs.
+   */
+  private readonly manifiestos: Manifiesto[] = [];
   private readonly piezas = new Map<string, AudioBuffer>();
   private cortar: (() => void) | null = null;
   private sonando = false;
@@ -77,9 +87,26 @@ export class InstructorGrabado implements Instructor {
     return this.piezas.size;
   }
 
+  /**
+   * Quién tiene grabada esta frase, si la tiene alguien.
+   *
+   * Devuelve las piezas ya con la voz delante, que es como están guardadas.
+   */
+  private quienLaDice(
+    clave: string | null,
+  ): { voz: string; piezas: readonly string[] } | null {
+    for (const m of this.manifiestos) {
+      const suena = queSuena(m, clave, true);
+      if (suena.como === "grabado") {
+        return { voz: m.voz, piezas: suena.piezas };
+      }
+    }
+    return null;
+  }
+
   decir(texto: string, clave?: string): void {
-    const suena = queSuena(this.manifiesto, clave ?? null, true);
-    if (suena.como !== "grabado") {
+    const suena = this.quienLaDice(clave ?? null);
+    if (!suena) {
       // Que hable el navegador, y que se calle lo grabado: dos voces a la vez
       // son ruido, y de las dos manda la que se acaba de pedir.
       this.callarLoGrabado();
@@ -88,7 +115,7 @@ export class InstructorGrabado implements Instructor {
     }
     const cadena: AudioBuffer[] = [];
     for (const pieza of suena.piezas) {
-      const buffer = this.piezas.get(pieza);
+      const buffer = this.piezas.get(`${suena.voz}/${pieza}`);
       // Una pieza que el manifiesto promete y no está cargada deja la frase
       // coja. Media frase es peor que ninguna: la dice el navegador entera.
       if (!buffer) {
@@ -140,29 +167,46 @@ export class InstructorGrabado implements Instructor {
    * el primer día, y el vuelo tiene que seguir igual.
    */
   async cargar(
-    voz = "instructor",
+    /**
+     * Qué voces se bajan. **Las cuatro**, y no solo el instructor.
+     *
+     * Se bajaba una y el juego tiene cuatro encargos distintos —ver
+     * `docs/voces/LEEME.md`—: el instructor que habla al chico, los cantos de
+     * cabina en inglés aeronáutico, la torre y el otro avión de la radio. De
+     * las ciento veintiuna frases que hay que grabar, **treinta y tres no eran
+     * del instructor**, así que se habrían grabado, horneado y publicado para
+     * no sonar nunca. Un pack que se baja a medias no avisa: cada frase que
+     * falta cae al navegador una por una y parece que el sistema va lento.
+     */
+    voces: readonly string[] = ["instructor", "cabina", "torre", "otro"],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,
   ): Promise<number> {
     const formato = elegirFormato(puede);
     if (!formato) return 0;
-    try {
-      const crudo = await traer(`${base}/${voz}/manifiesto.json`);
-      if (!crudo) return 0;
-      const manifiesto = leerManifiesto(
-        JSON.parse(new TextDecoder().decode(crudo)),
-      );
-      if (!manifiesto) return 0;
-      await this.cargarPiezas(manifiesto, formato, base);
-      // El manifiesto se pone **al final**, cuando ya hay piezas: puesto antes,
-      // las primeras frases del vuelo se resolverían como «grabado» con el
-      // pack a medio bajar y se caerían una a una al suplente. Funciona igual,
-      // pero el instructor cambiaría de voz a mitad del rodaje.
-      this.manifiesto = manifiesto;
-      return this.piezas.size;
-    } catch {
-      return 0;
+    for (const voz of voces) {
+      try {
+        // El manifiesto siempre de la red. Ver `traer`.
+        const crudo = await traer(`${base}/${voz}/manifiesto.json`, false);
+        if (!crudo) continue;
+        const manifiesto = leerManifiesto(
+          JSON.parse(new TextDecoder().decode(crudo)),
+        );
+        if (!manifiesto) continue;
+        await this.cargarPiezas(manifiesto, formato, base);
+        /*
+         * El manifiesto se apunta **al final**, cuando ya hay piezas: puesto
+         * antes, las primeras frases del vuelo se resolverían como «grabado»
+         * con el pack a medio bajar y se caerían una a una al suplente.
+         * Funciona igual, pero el instructor cambiaría de voz a mitad del
+         * rodaje.
+         */
+        this.manifiestos.push(manifiesto);
+      } catch {
+        // Una voz que no está no puede llevarse por delante a las otras tres.
+      }
     }
+    return this.piezas.size;
   }
 
   private async cargarPiezas(
@@ -178,7 +222,10 @@ export class InstructorGrabado implements Instructor {
         );
         if (!bytes) return;
         const buffer = await this.altavoz.decodificar(bytes);
-        if (buffer) this.piezas.set(pieza, buffer);
+        // Con la voz delante: cuatro packs distintos pueden traer una pieza
+        // que se llame igual —«uno», «pista»— y la de la torre no es la del
+        // instructor.
+        if (buffer) this.piezas.set(`${manifiesto.voz}/${pieza}`, buffer);
       }),
     );
   }
@@ -202,16 +249,51 @@ function miraSiPuede(mime: string): string {
  * juego a propósito — el pack no entra en la precarga del service worker, que
  * es lo que hace que la primera carga del juego siga siendo pequeña.
  */
-async function traer(ruta: string): Promise<ArrayBuffer | null> {
+async function traer(
+  ruta: string,
+  /**
+   * Si se puede servir de la caché.
+   *
+   * El **manifiesto no**, y es la diferencia entre un pack que se puede
+   * rehornear y uno que no. Los ficheros del pack no llevan huella en el
+   * nombre, así que una segunda tanda de grabaciones se guarda con los mismos
+   * nombres que la primera: con el manifiesto cacheado, el juego seguiría
+   * viendo el de la primera y no se enteraría de que hay versión nueva
+   * **nunca**. Pidiéndolo siempre de la red se descubre el cambio; si no hay
+   * red, se cae a lo guardado, que es mejor que quedarse mudo.
+   */
+  deLaCache = true,
+): Promise<ArrayBuffer | null> {
   try {
     const almacen = await globalThis.caches?.open(CACHE);
-    const guardado = await almacen?.match(ruta);
+    const guardado = deLaCache ? await almacen?.match(ruta) : undefined;
     if (guardado) return await guardado.arrayBuffer();
-    const respuesta = await fetch(ruta);
-    if (!respuesta.ok) return null;
-    // Se guarda un clon y se devuelve el original: un `Response` se lee una
-    // sola vez, y guardar el que ya se leyó guarda un cuerpo vacío.
-    await almacen?.put(ruta, respuesta.clone());
+    const respuesta = await fetch(ruta).catch(() => null);
+    if (!respuesta?.ok) {
+      // Sin red: lo guardado, si hay algo. Ver `deLaCache`.
+      const respaldo = deLaCache
+        ? null
+        : await globalThis.caches?.open(RESPALDO);
+      const viejo = await respaldo?.match(ruta);
+      return viejo ? await viejo.arrayBuffer() : null;
+    }
+    /*
+     * Se guarda un clon y se devuelve el original: un `Response` se lee una
+     * sola vez, y guardar el que ya se leyó guarda un cuerpo vacío.
+     *
+     * **Y lo que no se sirve de la caché tampoco se guarda en ella.** Guardar
+     * el manifiesto lo dejaría ahí para la próxima —no para servirlo, porque
+     * se pide siempre, pero sí para el respaldo sin red—; el problema es que
+     * entonces `deLaCache = false` no significaría nada en el siguiente
+     * arranque, porque el respaldo se lee antes que la red cuando la red
+     * falla. Se guarda aparte, con otra clave, para no confundir las dos
+     * cosas. Ver `RESPALDO`.
+     */
+    if (deLaCache) await almacen?.put(ruta, respuesta.clone());
+    else {
+      const respaldo = await globalThis.caches?.open(RESPALDO);
+      await respaldo?.put(ruta, respuesta.clone());
+    }
     return await respuesta.arrayBuffer();
   } catch {
     return null;

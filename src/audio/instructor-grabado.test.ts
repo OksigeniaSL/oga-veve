@@ -92,7 +92,7 @@ async function conPack(): Promise<{
     }
     return new Response(new ArrayBuffer(64));
   }) as typeof fetch;
-  await instructor.cargar("instructor", "data/voces", () => "probably");
+  await instructor.cargar(["instructor"], "data/voces", () => "probably");
   globalThis.fetch = antes;
   return { instructor, altavoz, suplente };
 }
@@ -200,7 +200,7 @@ describe("el instructor grabado", () => {
     it("un navegador que no puede con ningún formato no baja nada", async () => {
       const altavoz = new Grabadora();
       const i = new InstructorGrabado(altavoz, new Suplente());
-      expect(await i.cargar("instructor", "data/voces", () => "")).toBe(0);
+      expect(await i.cargar(["instructor"], "data/voces", () => "")).toBe(0);
     });
 
     /*
@@ -214,7 +214,7 @@ describe("el instructor grabado", () => {
       ) as typeof fetch;
       const i = new InstructorGrabado(new Grabadora(), new Suplente());
       await expect(
-        i.cargar("instructor", "data/voces", () => "probably"),
+        i.cargar(["instructor"], "data/voces", () => "probably"),
       ).resolves.toBe(0);
       globalThis.fetch = antes;
     });
@@ -226,7 +226,7 @@ describe("el instructor grabado", () => {
       ) as typeof fetch;
       const i = new InstructorGrabado(new Grabadora(), new Suplente());
       await expect(
-        i.cargar("instructor", "data/voces", () => "probably"),
+        i.cargar(["instructor"], "data/voces", () => "probably"),
       ).resolves.toBe(0);
       globalThis.fetch = antes;
     });
@@ -247,13 +247,111 @@ describe("el instructor grabado", () => {
       const altavoz = new Grabadora();
       const suplente = new Suplente();
       const i = new InstructorGrabado(altavoz, suplente);
-      expect(await i.cargar("instructor", "data/voces", () => "probably")).toBe(
-        0,
-      );
+      expect(
+        await i.cargar(["instructor"], "data/voces", () => "probably"),
+      ).toBe(0);
       i.decir("Seguí la raya verde", "vuelo.rodando");
       expect(altavoz.tocadas).toHaveLength(0);
       expect(suplente.dichas).toEqual(["Seguí la raya verde"]);
       globalThis.fetch = antes;
     });
+  });
+});
+
+/**
+ * Las cuatro voces, no solo el instructor.
+ *
+ * Se bajaba una, y el juego tiene cuatro encargos: el instructor que le habla
+ * al chico, los cantos de cabina en inglés aeronáutico, la torre y el otro
+ * avión de la radio. De las ciento veintiuna frases que hay que grabar,
+ * **treinta y tres no son del instructor**: se habrían grabado, horneado y
+ * publicado para no sonar nunca. Y no avisa — cada frase que falta cae al
+ * navegador una por una, así que parece que el sistema va lento.
+ */
+describe("las cuatro voces", () => {
+  const packDe = (voz: string, clave: string, pieza: string) => ({
+    version: 1,
+    voz,
+    idioma: "es-PY",
+    piezas: { [pieza]: { ms: 600 } },
+    recetas: { [clave]: [pieza] },
+  });
+
+  /** Sirve los manifiestos que se le digan y nada más. */
+  const conRed = async (
+    voces: readonly string[],
+    packs: Record<string, unknown>,
+  ) => {
+    const instructor = new InstructorGrabado(new Grabadora(), new Suplente());
+    const pedidas: string[] = [];
+    const antes = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (ruta: unknown) => {
+      const nombre = String(ruta);
+      pedidas.push(nombre);
+      const voz = nombre.split("/").at(-2) ?? "";
+      if (nombre.endsWith("manifiesto.json")) {
+        return packs[voz]
+          ? new Response(JSON.stringify(packs[voz]))
+          : new Response("", { status: 404 });
+      }
+      return new Response(new ArrayBuffer(64));
+    }) as typeof fetch;
+    const cuantas = await instructor.cargar(
+      voces,
+      "data/voces",
+      () => "probably",
+    );
+    globalThis.fetch = antes;
+    return { cuantas, pedidas };
+  };
+
+  it("se cargan todas, y cada frase la dice quien le toca", async () => {
+    const { cuantas, pedidas } = await conRed(["instructor", "cabina"], {
+      instructor: packDe("instructor", "vuelo.rodando", "raya"),
+      cabina: packDe("cabina", "cabina.oneHundred", "cien"),
+    });
+    expect(cuantas).toBe(2);
+    expect(pedidas.some((r) => r.includes("cabina/manifiesto.json"))).toBe(
+      true,
+    );
+  });
+
+  /*
+   * Y **por omisión se bajan las cuatro**. Es lo que de verdad se rompió
+   * —nadie llamaba a `cargar` con una lista— así que si mañana alguien vuelve
+   * a poner una sola voz por defecto, esto lo dice.
+   */
+  it("por omisión se piden las cuatro", async () => {
+    const instructor = new InstructorGrabado(new Grabadora(), new Suplente());
+    const pedidas: string[] = [];
+    const antes = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (ruta: unknown) => {
+      pedidas.push(String(ruta));
+      return new Response("", { status: 404 });
+    }) as typeof fetch;
+    await instructor.cargar(undefined, "data/voces", () => "probably");
+    globalThis.fetch = antes;
+    const voces = pedidas.map((r) => r.split("/").at(-2));
+    expect(voces).toEqual(["instructor", "cabina", "torre", "otro"]);
+  });
+
+  it("y una voz que no está no se lleva por delante a las demás", async () => {
+    const { cuantas } = await conRed(["torre", "instructor", "otro"], {
+      instructor: packDe("instructor", "vuelo.rodando", "raya"),
+    });
+    expect(cuantas).toBe(1);
+  });
+
+  /*
+   * Y las piezas llevan la voz delante, que es lo que impide que la pieza
+   * «uno» de la torre y la del instructor se pisen. Cuatro packs distintos
+   * pueden traer piezas con el mismo nombre y no son la misma.
+   */
+  it("dos voces con una pieza del mismo nombre no se pisan", async () => {
+    const { cuantas } = await conRed(["instructor", "torre"], {
+      instructor: packDe("instructor", "vuelo.uno", "uno"),
+      torre: packDe("torre", "torre.uno", "uno"),
+    });
+    expect(cuantas).toBe(2);
   });
 });
