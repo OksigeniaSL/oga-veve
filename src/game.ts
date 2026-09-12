@@ -195,7 +195,7 @@ import { mundoElegido } from "./ui/mundo";
  * el que se construye todo lo demás.
  */
 const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
-import { alCambiarLosPaneles } from "./ui/panel";
+import { laConchaLaLleva } from "./ui/panel";
 import { PANELES_DEL_VUELO } from "./ui/paneles";
 import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
@@ -726,6 +726,8 @@ export class Game {
    * solo levantarla. Ver `main.ts`.
    */
   private pausadoAdrede = false;
+  /** Lo que ha ido sonando la concha, solo en desarrollo. Para el banco. */
+  private readonly loQueSonoLaConcha: string[] = [];
   /** Si hay algún panel abierto encima del vuelo. Lo dice `ui/panel.ts`. */
   private hayPanelAbierto = false;
   /** Si el mundo está parado ahora mismo, por lo que sea. Ver `quedarQuieto`. */
@@ -1371,9 +1373,15 @@ export class Game {
      * Y con los paneles ya montados, el vuelo se entera de cuándo hay alguno
      * abierto. Ver `quedarQuieto` y #70.
      */
-    alCambiarLosPaneles((hayAlguno) => {
-      this.hayPanelAbierto = hayAlguno;
-      this.quedarQuieto();
+    laConchaLaLleva({
+      alAbrirseOCerrarse: (hayAlguno) => {
+        this.hayPanelAbierto = hayAlguno;
+        this.quedarQuieto();
+      },
+      suena: (que) => {
+        if (import.meta.env.DEV) this.loQueSonoLaConcha.push(que);
+        this.audio.cue(que);
+      },
     });
     this.hud.onPausa(() => this.alternarPausa());
     this.hud.onCamara(() => this.cycleCamera());
@@ -1637,6 +1645,15 @@ export class Game {
        * tabla lo mete en el banco sin enterarse. Ver `ui/paneles.ts` y #70.
        */
       paneles: () => PANELES_DEL_VUELO.map((p) => ({ id: p.id, caja: p.caja })),
+      /**
+       * Cómo anda el sonido, y qué ha sonado la concha desde la última vez
+       * que se preguntó. Se vacía al leerlo, que es lo que hace fácil medir
+       * «lo que sonó al pulsar esto» y no «lo que ha sonado en todo el rato».
+       */
+      sonido: () => ({
+        ...this.audio.comoVa(),
+        concha: this.loQueSonoLaConcha.splice(0),
+      }),
       /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
       tarjeta: () => this.hud.senal.puesto,
       /*
@@ -2046,6 +2063,18 @@ export class Game {
     this.audio.setActive(false);
   }
 
+  /**
+   * Despierta el sonido sin soltar el vuelo.
+   *
+   * Lo llama `main.ts` al volver a la ventana. Si lo que tiene parado el vuelo
+   * es un panel abierto, arrancar el bucle sería devolver un avión en
+   * movimiento a quien está eligiendo algo; pero dejar el sonido suspendido
+   * sería devolverle un menú mudo, y un menú mudo no dice si se ha enterado.
+   */
+  despertarElSonido(): void {
+    this.audio.setActive(true);
+  }
+
   /** Si el vuelo está parado, lo haya parado quien lo haya parado. */
   get pausado(): boolean {
     return this.quieto;
@@ -2093,10 +2122,22 @@ export class Game {
     if (debe === this.quieto) return;
     this.quieto = debe;
     if (!debe) {
+      this.audio.callarElMundo(false);
       this.start();
       return;
     }
-    this.stop();
+    this.running = false;
+    this.renderer.setAnimationLoop(null);
+    /*
+     * Y se calla **el mundo**, no el sonido entero.
+     *
+     * Suspender el contexto —que es lo que hace `stop`, y está bien cuando
+     * nadie mira la pestaña— dejaría la concha muda, y es justo entonces
+     * cuando alguien está recorriendo opciones con el dedo o con el tabulador
+     * y necesita oír que el aparato se ha enterado. El motor y el ambiente sí
+     * se callan: son los dos que suenan solos. Ver `Audio.callarElMundo`.
+     */
+    this.audio.callarElMundo(true);
     this.instructor.callar();
     this.otroAvion.callar();
     callar();

@@ -68,6 +68,8 @@ const donde = () =>
     const p = globalThis.__oga.estado().position;
     return [p.x, p.y, p.z];
   });
+/** Lo que ha sonado la concha desde la última vez que se preguntó. */
+const sonido = () => page.evaluate(() => globalThis.__oga.sonido());
 const separacion = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const rato = async (ms) => {
   const antes = await donde();
@@ -105,7 +107,7 @@ comprobar(
   `la tabla trajo ${paneles.length}`,
 );
 
-for (const { id } of paneles) {
+for (const { id, caja } of paneles) {
   const donde_ = id.replace(/-boton$/, "");
   await page.click(`[data-hud="${id}"]`);
   await page.waitForTimeout(500);
@@ -128,16 +130,78 @@ for (const { id } of paneles) {
     pausaFuera,
     pausaFuera ? "no sale" : "salió",
   );
+
+  /*
+   * **Y suena, con el vuelo congelado.**
+   *
+   * Es la parte que no se ve en pantalla y por eso hay que medirla aquí: el
+   * vuelo se congela con un panel abierto, y la forma fácil de congelarlo
+   * —suspender el contexto de audio, que es lo que se hace cuando nadie mira
+   * la pestaña— deja la concha muda justo cuando alguien está recorriendo
+   * opciones. No hay nada en la pantalla que lo delate. Ver
+   * `Audio.callarElMundo` y #70.
+   */
+  const alAbrir = await sonido();
+  comprobar(
+    `${donde_}: al abrirlo suena`,
+    alAbrir.concha.includes("abrir"),
+    alAbrir.concha.join(" · ") || "no sonó nada",
+  );
+  comprobar(
+    `${donde_}: y el sonido sigue vivo con el vuelo parado`,
+    alAbrir.contexto === "running" && alAbrir.mundoCallado,
+    `contexto ${alAbrir.contexto} · mundo ${alAbrir.mundoCallado ? "callado" : "sonando"}`,
+  );
+  /*
+   * Y al pasar de un mando al siguiente. **Si hay un siguiente**: los
+   * créditos y el cuaderno tienen un solo botón, así que el tabulador se
+   * queda donde está y lo correcto ahí es que no suene nada. Un acuse de
+   * recibo de un movimiento que no ocurrió es peor que el silencio.
+   */
+  const mandos = await page.evaluate(
+    (sel) =>
+      [
+        ...(document
+          .querySelector(sel)
+          ?.querySelectorAll(
+            'button, summary, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          ) ?? []),
+      ].filter((e) => !e.hasAttribute("disabled") && e.offsetParent !== null)
+        .length,
+    caja,
+  );
+  await page.keyboard.press("Tab");
+  await page.waitForTimeout(200);
+  const alMoverse = await sonido();
+  comprobar(
+    mandos > 1
+      ? `${donde_}: y al pasar de un mando al siguiente`
+      : `${donde_}: con un solo mando, el tabulador no suena`,
+    mandos > 1
+      ? alMoverse.concha.includes("mover")
+      : !alMoverse.concha.includes("mover"),
+    `${mandos} mando${mandos === 1 ? "" : "s"} · ${alMoverse.concha.join(" · ") || "no sonó nada"}`,
+  );
   await page.keyboard.press("Escape");
   await page.waitForTimeout(600);
+  // Y si Escape no lo cerró, se cierra a mano: lo que se mide es el panel
+  // siguiente. **La caja, no el botón** — para dos de ellos el `data-hud` de
+  // la tabla es el del botón, y esconder el botón deja el panel fuera de
+  // alcance para siempre.
   await page.evaluate((s) => {
     for (const sel of [s, "#pausa"]) {
       const c = document.querySelector(sel);
       if (c && !c.hidden) c.hidden = true;
     }
-  }, `[data-hud="${id}"]`);
+  }, caja);
   await page.waitForTimeout(400);
   // Y al cerrarlo vuelve a volar: una pausa de la que no se sale es un cuelgue.
+  const alCerrar = await sonido();
+  comprobar(
+    `${donde_}: y al cerrarlo suena la vuelta`,
+    alCerrar.concha.includes("cerrar"),
+    alCerrar.concha.join(" · ") || "no sonó nada",
+  );
   const otraVez = await rato(1500);
   comprobar(
     `${donde_}: al cerrarlo el avión vuelve a volar`,
@@ -145,6 +209,25 @@ for (const { id } of paneles) {
     `${otraVez.toFixed(1)} m en segundo y medio`,
   );
 }
+
+/*
+ * Y el cuarto sonido, el de elegir, que hace falta un mando que **no** cierre
+ * el panel para poder oírlo. El de calma del tiempo sirve: cambia el viento y
+ * deja el panel abierto.
+ */
+await page.click('[data-hud="tiempo-boton"]');
+await page.waitForTimeout(500);
+await sonido();
+await page.click('[data-hud="tiempo-calma"]');
+await page.waitForTimeout(300);
+const alElegir = await sonido();
+comprobar(
+  "elegir algo dentro de un panel suena, y no suena a cierre",
+  alElegir.concha.includes("elegir") && !alElegir.concha.includes("cerrar"),
+  alElegir.concha.join(" · ") || "no sonó nada",
+);
+await page.keyboard.press("Escape");
+await page.waitForTimeout(300);
 
 console.log(`\n  paneles · ${ESCENARIO}\n`);
 for (const r of resultados) {
