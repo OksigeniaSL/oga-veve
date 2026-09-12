@@ -2182,23 +2182,7 @@ export class Game {
   private levantarLaOrden(): void {
     this.mandanFrustrar = false;
     this.vaca.quitar();
-    this.laTorreMandaEnLaLuz = true;
-    this.hud.setLuzDeTorre("verde");
-    this.hud.senal.mostrar(
-      "verde",
-      this.rotulo("vuelo.puedeVolver", "palabra.volve"),
-      null,
-      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
-    );
-    this.audio.cue("success");
-    this.cantar("cleared to land", t("vuelo.puedeVolver"), "vuelo.puedeVolver");
-    // Y la lámpara se apaga sola en cuanto pase el aviso: en el aire no hay
-    // lámpara que mirar, y dejarla encendida diría algo que ya no es verdad.
-    this.agenda.luego(SE_QUEDA_EL_ARO, () => {
-      if (this.mandanFrustrar) return;
-      this.hud.setLuzDeTorre(null);
-      this.laTorreMandaEnLaLuz = false;
-    });
+    this.hechos.emit("pistaLibreOtraVez", {});
   }
 
   /**
@@ -2289,14 +2273,7 @@ export class Game {
     );
 
     if (!motivo) {
-      this.hud.senal.mostrar(
-        "senda",
-        this.rotulo("vuelo.minimos", "palabra.laPista"),
-        null,
-        { segundos: SE_QUEDAN_LOS_MINIMOS, prioridad: IMPORTANTE },
-      );
-      this.audio.cue("attention");
-      this.cantar("minimums", t("vuelo.minimos"), "vuelo.minimos");
+      this.hechos.emit("minimos", {});
       return;
     }
 
@@ -2359,16 +2336,7 @@ export class Game {
     const primera = this.papiEnPantalla === null;
     this.papiEnPantalla = blancas;
     if (primera && blancas === 2) return;
-    this.hud.senal.mostrar(
-      `papi${blancas}`,
-      blancas >= 3
-        ? this.rotulo("vuelo.papiAlto", "palabra.baja")
-        : blancas <= 1
-          ? this.rotulo("vuelo.papiBajo", "palabra.subi")
-          : this.rotulo("vuelo.papiBien", "palabra.bien"),
-      null,
-      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
-    );
+    this.hechos.emit("papi", { blancas });
   }
 
   /**
@@ -2750,6 +2718,62 @@ export class Game {
         "vuelo.frustrada",
       ),
     );
+
+    /*
+     * **Los mínimos.** Se dice aunque no haya nada que corregir: lo que enseña
+     * no es la maniobra, es que hay un momento en el que se decide.
+     */
+    this.hechos.on("minimos", () => {
+      this.hud.senal.mostrar(
+        "senda",
+        this.rotulo("vuelo.minimos", "palabra.laPista"),
+        null,
+        { segundos: SE_QUEDAN_LOS_MINIMOS, prioridad: IMPORTANTE },
+      );
+      this.audio.cue("attention");
+      this.cantar("minimums", t("vuelo.minimos"), "vuelo.minimos");
+    });
+
+    /** El PAPI: alto, bajo o en la senda, con su dibujo. */
+    this.hechos.on("papi", ({ blancas }) => {
+      this.hud.senal.mostrar(
+        `papi${blancas}`,
+        blancas >= 3
+          ? this.rotulo("vuelo.papiAlto", "palabra.baja")
+          : blancas <= 1
+            ? this.rotulo("vuelo.papiBajo", "palabra.subi")
+            : this.rotulo("vuelo.papiBien", "palabra.bien"),
+        null,
+        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+      );
+    });
+
+    /*
+     * **La pista vuelve a ser tuya.** La lámpara se enciende en verde y se
+     * apaga sola en cuanto pasa el aviso: en el aire no hay lámpara que mirar,
+     * y dejarla encendida diría algo que ya no es verdad.
+     */
+    this.hechos.on("pistaLibreOtraVez", () => {
+      this.laTorreMandaEnLaLuz = true;
+      this.hud.setLuzDeTorre("verde");
+      this.hud.senal.mostrar(
+        "verde",
+        this.rotulo("vuelo.puedeVolver", "palabra.volve"),
+        null,
+        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+      );
+      this.audio.cue("success");
+      this.cantar(
+        "cleared to land",
+        t("vuelo.puedeVolver"),
+        "vuelo.puedeVolver",
+      );
+      this.agenda.luego(SE_QUEDA_EL_ARO, () => {
+        if (this.mandanFrustrar) return;
+        this.hud.setLuzDeTorre(null);
+        this.laTorreMandaEnLaLuz = false;
+      });
+    });
   }
 
   /**
