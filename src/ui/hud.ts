@@ -31,7 +31,7 @@ import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
 import { SixPack } from "./six-pack";
-import { Pictogramas, helice } from "./pictogramas";
+import { Pictogramas, HELICE_MAS, HELICE_MENOS } from "./pictogramas";
 import { Senal } from "./senal";
 import { Mapa } from "./mapa";
 import { botonesDeLosPaneles } from "./paneles";
@@ -489,8 +489,13 @@ export class Hud {
             Sirven igual con el dedo en una tablet.
           -->
           <!--
-            En los peldaños con dibujos, los botones llevan **la hélice**:
-            pequeña para menos motor, grande para más.
+            En los peldaños con dibujos, los botones llevan **la hélice con
+            su flecha**: arriba para más motor, abajo para menos.
+
+            Llevaron la misma hélice en dos tamaños, y no valía: una hélice de
+            cuatro palas de frente es una cruz, y en pantalla los dos botones
+            se leían como dos `+`. «Quiere que suba, pero no me deja meter gas
+            ¿cómo subo?» — estaba apretando el de bajar.
 
             Llevaron un día la tortuga y el pájaro, y fue un error de bulto:
             esos dos son los extremos del velocímetro, no del gas. En pantalla
@@ -502,10 +507,10 @@ export class Hud {
           <div class="motor__fila">
             <button class="motor__tecla" type="button" data-hud="throttle-down"
                     data-objetivo="extendido"
-                    aria-label="${t("hud.throttleDown")}">${pictos ? helice(7) : "−"}</button>
+                    aria-label="${t("hud.throttleDown")}">${pictos ? HELICE_MENOS : "−"}</button>
             <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
             <button class="motor__tecla" type="button" data-hud="throttle-up" data-objetivo="extendido"
-                    aria-label="${t("hud.throttleUp")}">${pictos ? helice(11) : "+"}</button>
+                    aria-label="${t("hud.throttleUp")}">${pictos ? HELICE_MAS : "+"}</button>
           </div>
           ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
         </div>

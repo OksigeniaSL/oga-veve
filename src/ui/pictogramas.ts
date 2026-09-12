@@ -23,7 +23,7 @@
  */
 
 /**
- * La hélice del gas, en dos tamaños.
+ * La hélice del gas, con su flecha: más motor y menos motor.
  *
  * **El gas no es la velocidad**, y confundirlos fue un error de bulto: los
  * botones del motor llevaron un día la tortuga y el pájaro, que son los
@@ -34,17 +34,34 @@
  * tope y el velocímetro está por debajo de la mitad.»
  *
  * El motor tiene su propio dibujo en este juego desde el principio: la hélice.
- * Así que menos motor es una hélice pequeña y más motor una hélice grande, y
- * ya no hay dos escalas que se puedan contradecir.
+ *
+ * **Y lo que las distingue es la flecha, no el tamaño.** Los dos botones del
+ * motor llevaban la misma hélice en dos tamaños —una de radio 7 y otra de 11—
+ * y en pantalla las dos se leen como un `+`: una hélice de cuatro palas vista
+ * de frente **es** una cruz. La diferencia de tamaño la termina de comer el
+ * botón, que las escala a lo mismo. Quien jugaba no sabía cuál daba gas:
+ * «quiere que suba, pero no me deja meter gas ¿cómo subo?» — apretando el de
+ * bajar, que parecía el de subir.
+ *
+ * La flecha ya existía, en las teclas dibujadas del panel de mandos, y era el
+ * único sitio donde el motor se entendía. Ahora es la misma pareja en los dos
+ * sitios: un dibujo, un significado.
  */
-export const helice = (r: number): string =>
+const conFlecha = (flecha: string): string =>
   `<svg viewBox="0 0 24 24" aria-hidden="true">
-     <ellipse cx="12" cy="${12 - r * 0.55}" rx="${r * 0.19}" ry="${r * 0.55}" />
-     <ellipse cx="12" cy="${12 + r * 0.55}" rx="${r * 0.19}" ry="${r * 0.55}" />
-     <ellipse cx="${12 - r * 0.55}" cy="12" rx="${r * 0.55}" ry="${r * 0.19}" />
-     <ellipse cx="${12 + r * 0.55}" cy="12" rx="${r * 0.55}" ry="${r * 0.19}" />
-     <circle cx="12" cy="12" r="${r * 0.22}" />
+     <g class="cap__helice">
+       <ellipse cx="9" cy="5" rx="1.7" ry="5" />
+       <ellipse cx="9" cy="19" rx="1.7" ry="5" />
+       <ellipse cx="4" cy="12" rx="5" ry="1.7" />
+       <ellipse cx="14" cy="12" rx="5" ry="1.7" />
+     </g>
+     <path class="cap__flecha" d="${flecha}" />
    </svg>`;
+
+/** Más motor: la hélice con la flecha hacia arriba. */
+export const HELICE_MAS = conFlecha("M20 1.5 L24 10 H16 Z");
+/** Menos motor: la misma hélice con la flecha hacia abajo. */
+export const HELICE_MENOS = conFlecha("M20 22.5 L16 14 H24 Z");
 
 /** Silueta de tortuga: caparazón, cabeza y patas. Despacio. */
 const TORTUGA = `
