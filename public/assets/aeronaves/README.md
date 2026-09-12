@@ -41,3 +41,27 @@ en `CREDITOS.md`.
 
 Esto tiene que abrir en una tablet. Un modelo de veinte mil triángulos está
 bien; sus texturas de 4K, no — hay que bajarlas a 1K antes de meterlas.
+
+## Los que se modelan aquí
+
+`jaz-25.glb` no viene de ningún sitio: sale de `modelos/jaz-25-mainumby.py`,
+que es un guion de Blender. Se rehace con
+
+```bash
+blender --background --python modelos/jaz-25-mainumby.py
+```
+
+y escribe directamente donde el juego lo busca. Va por script y no a mano por
+el mismo motivo por el que el pack de voz se hornea con un comando: **para que
+el segundo avión pegue con el primero**. Si el tratamiento vive en la cabeza de
+quien modeló el primero, el segundo no pega y se nota en cuanto vuelan juntos.
+
+Dos cosas que el guion comprueba y no perdona, porque las dos se han colado ya:
+
+- **Que el avión mida de ancho su envergadura.** Aquí se modela con la Y hacia
+  arriba —la convención de glTF y la del juego— y Blender usa la Z; sin girar
+  la escena antes de exportar, las dos conversiones se suman y el avión sale de
+  pie: 5,74 de ancho, 9,49 de alto y 12,50 de largo.
+- **Que nada herede la transformación de su padre dos veces.** Colgar las palas
+  del buje sin la inversa del padre las mandaba a cuatro metros y medio de
+  altura.
