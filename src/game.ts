@@ -6091,7 +6091,12 @@ export class Game {
     // La hélice gira con el motor. No se intenta reproducir las rpm reales:
     // se busca que se vea girar y que el ritmo suba al acelerar.
     this.propellerAngle += dt * (6 + this.input.controls.throttle * 96);
-    this.aircraftMesh.propeller.rotation.z = this.propellerAngle;
+    // Todas las que haya, cada una sobre su eje. Ver `AircraftMesh.helices`.
+    for (const h of this.aircraftMesh.helices ?? [
+      this.aircraftMesh.propeller,
+    ]) {
+      h.rotation.z = this.propellerAngle;
+    }
 
     this.updateBlobShadow(state);
   }

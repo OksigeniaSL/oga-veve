@@ -84,8 +84,12 @@ export interface AeroCoefficients {
  * paleta.
  */
 export interface AircraftAppearance {
-  /** Disposición del ala. Es lo que distingue una silueta de otra. */
-  layout: "high-wing" | "biplane";
+  /*
+   * **La silueta no está aquí**, y no es un olvido: la dice la tabla de la
+   * flota, `flota.ts`, junto al número y al pájaro. Estaba en los dos sitios y
+   * eran dos listas que podían discrepar — un avión que en su ficha era ala
+   * alta y en la flota bimotor. Una silueta, un sitio.
+   */
   /** Colores del fuselaje, del capó y de los detalles. */
   body: number;
   accent: number;
@@ -251,7 +255,6 @@ export const PYKASU: AircraftConfig = {
   flapsLift: 0.55,
   flapsDrag: 0.06,
   appearance: {
-    layout: "high-wing",
     body: 0xe4e2da,
     accent: 0xbe5d38,
     trim: 0x2f5243,
@@ -317,7 +320,6 @@ export const MAINUMBY: AircraftConfig = {
   flapsDrag: 0.05,
   appearance: {
     // Biplano de trabajo: dos alas, ocre y verde, hélice de tres palas.
-    layout: "biplane",
     body: 0xdd923f,
     accent: 0x2f5243,
     trim: 0x8a5a34,
