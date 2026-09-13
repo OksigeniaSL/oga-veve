@@ -36,7 +36,7 @@ const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
 /** Los que tienen modelo de verdad hecho aquí, con las ranuras de la casa. */
-const NUESTROS = ["jaz-25"];
+const NUESTROS = ["jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
 /** Y uno traído de fuera, que no se toca. */
 const DE_FUERA = "jaz-20";
 

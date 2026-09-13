@@ -1328,7 +1328,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
  * Lo que sí se sigue cazando es lo que costó caro: un avión que **tiene**
  * fichero y no lo carga.
  */
-const CON_MODELO = new Set(["jaz-20", "jaz-25"]);
+const CON_MODELO = new Set(["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"]);
 if (CON_MODELO.has(AVION)) {
   comprobar(
     "se vuela el modelo de la aeronave y no el respaldo",

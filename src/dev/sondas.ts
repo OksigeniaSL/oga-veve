@@ -237,6 +237,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       aproximacion: juego.aircraft.approachSpeed,
       crucero: juego.aircraft.cruiseSpeed,
       /*
+       * Y su envergadura, que es con lo que se escala el modelo y por tanto lo
+       * único con lo que se puede comprobar que **entró derecho**. Ver
+       * `verificar-cabina`.
+       */
+      envergadura: juego.aircraft.wingSpan,
+      /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
        *
        * Un `.glb` trae sus propios materiales, así que el cargador lo
@@ -326,6 +332,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     aeronave: () => ({
       grupo: juego.aircraftMesh.group,
       helice: juego.aircraftMesh.propeller.name || "(sin nombre)",
+      /*
+       * Y los ejes de todas, que en un bimotor son dos y cada uno tiene que
+       * estar **sobre su motor**. Con un eje único para las dos hélices, éste
+       * cae en el centro del avión y las pone a orbitar el morro. Lo mide
+       * `verificar-cabina.mjs`. Ver `ejesDeHelice`.
+       */
+      helices: juego.aircraftMesh.helices ?? [juego.aircraftMesh.propeller],
       ojo: juego.aircraftMesh.ojo ?? null,
       deVerdad: !!juego.aircraftMesh.deVerdad,
     }),

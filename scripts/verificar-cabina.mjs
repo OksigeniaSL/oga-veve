@@ -41,7 +41,14 @@ const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
 /** Los que tienen cabina de verdad: modelo glTF con panel dentro. */
-for (const id of ["jaz-20", "jaz-25"]) {
+for (const id of [
+  "jaz-20",
+  "jaz-25",
+  "jaz-40",
+  "jaz-60",
+  "jaz-90",
+  "jaz-120",
+]) {
   const page = await navegador.newPage({
     viewport: { width: 900, height: 600 },
   });
@@ -150,12 +157,95 @@ for (const id of ["jaz-20", "jaz-25"]) {
       // Y a qué lado del avión cayó, medido aquí y no preguntado al juego.
       donde[n.uuid] = +c.x.toFixed(3);
     });
+    /*
+     * Y dónde gira cada hélice.
+     *
+     * Se mide el eje de giro y se busca **la pieza de hélice más cercana**. Es
+     * la pregunta que importa: un eje puesto donde no hay hélice no la hace
+     * girar, la hace orbitar. Con un eje único para las dos de un bimotor,
+     * cae en el eje del fuselaje, que está a dos metros y medio de las dos.
+     */
+    const bujes = [];
+    g.traverse((n) => {
+      if (!n.geometry) return;
+      if (!/prop|helice|hélice|spinner|blade/i.test(n.name)) return;
+      const pos = n.geometry.attributes.position;
+      let sx = 0,
+        sy = 0,
+        sz = 0;
+      for (let i = 0; i < pos.count; i++) {
+        const v = new n.position.constructor(
+          pos.getX(i),
+          pos.getY(i),
+          pos.getZ(i),
+        );
+        n.localToWorld(v);
+        const l = g.worldToLocal(v);
+        sx += l.x;
+        sy += l.y;
+        sz += l.z;
+      }
+      bujes.push({ x: sx / pos.count, y: sy / pos.count, z: sz / pos.count });
+    });
+    const ejes = o.aeronave().helices.map((h) => {
+      const v = h.getWorldPosition(new h.position.constructor());
+      const l = g.worldToLocal(v);
+      const cerca = bujes.length
+        ? Math.min(
+            ...bujes.map((b) => Math.hypot(b.x - l.x, b.y - l.y, b.z - l.z)),
+          )
+        : null;
+      return {
+        x: +l.x.toFixed(2),
+        cerca: cerca === null ? null : +cerca.toFixed(2),
+      };
+    });
+
+    /*
+     * Y lo que mide el avión ya puesto en el mundo, en los ejes del avión.
+     *
+     * Lo ancho tiene que ser su envergadura y lo largo su fuselaje. El
+     * cargador lo decidía adivinando —«la dimensión mayor es el ala»—, y eso
+     * es verdad en una avioneta y mentira en cuanto el avión es de línea.
+     */
+    const medidas = (() => {
+      let minX = Infinity,
+        maxX = -Infinity,
+        minZ = Infinity,
+        maxZ = -Infinity;
+      g.traverse((n) => {
+        if (!n.geometry) return;
+        const pos = n.geometry.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const v = new n.position.constructor(
+            pos.getX(i),
+            pos.getY(i),
+            pos.getZ(i),
+          );
+          n.localToWorld(v);
+          const l = g.worldToLocal(v);
+          minX = Math.min(minX, l.x);
+          maxX = Math.max(maxX, l.x);
+          minZ = Math.min(minZ, l.z);
+          maxZ = Math.max(maxZ, l.z);
+        }
+      });
+      return {
+        ancho: +(maxX - minX).toFixed(2),
+        largo: +(maxZ - minZ).toFixed(2),
+      };
+    })();
+
     return {
       ojo,
       delante,
       asiento,
       lejos,
       donde,
+      ejes,
+      medidas,
+      envergadura: o.avion().envergadura,
+      hayHelices: bujes.length > 0,
       near: o.camara().near,
       pantallas: o.pantallas(),
     };
@@ -229,6 +319,46 @@ for (const id of ["jaz-20", "jaz-25"]) {
     conSitio.map((p) => `${p.x} ${p.dibujo}`).join(" · ") || "sin pantallas",
     "el orden salía del centro de la geometría, que en un modelo hecho aquí es cero en las dos",
   );
+
+  /*
+   * **Que el avión haya entrado derecho y del tamaño que dice su ficha.**
+   *
+   * El cargador escala el modelo por su lado mayor y lo gira si le parece que
+   * está cruzado, y las dos cosas son adivinanzas que acertaban porque los dos
+   * primeros aviones eran avionetas —más anchas que largas—. El JAZ 90 mide
+   * veintiséis de ala y treinta y uno y medio de largo: con la regla vieja
+   * habría entrado cruzado en la calle de rodaje y escalado por el fuselaje.
+   *
+   * Aquí no se adivina: lo ancho tiene que ser la envergadura de su ficha, que
+   * es la que usa el modelo de vuelo para calcular la sustentación. Si el
+   * dibujo y la física no miden lo mismo, el avión parece de otro tamaño del
+   * que vuela.
+   */
+  comprobar(
+    etiqueta("mide de ancho la envergadura de su ficha"),
+    Math.abs(visto.medidas.ancho - visto.envergadura) < 0.4,
+    `ancho ${visto.medidas.ancho} · largo ${visto.medidas.largo} · ficha ${visto.envergadura} m`,
+    "el cargador lo giraba y lo escalaba por su lado mayor, y en un avión de línea el lado mayor es el fuselaje",
+  );
+
+  /*
+   * Y cada hélice sobre su motor.
+   *
+   * El cargador juntaba todas las piezas de hélice del avión en un eje y lo
+   * ponía en el centro de todas. En un monomotor eso es el buje; en el
+   * bimotor es el eje del fuselaje, donde no hay ninguna hélice, y las dos se
+   * ponen a dar vueltas alrededor del morro. Diez centímetros de holgura: una
+   * hélice grande tiene el buje donde tiene el eje, y no más lejos.
+   */
+  if (visto.hayHelices) {
+    comprobar(
+      etiqueta("cada hélice gira sobre su motor"),
+      visto.ejes.length > 0 &&
+        visto.ejes.every((e) => e.cerca !== null && e.cerca < 0.1),
+      visto.ejes.map((e) => `x ${e.x} · buje a ${e.cerca} m`).join(" · "),
+      "un eje puesto donde no hay hélice no la gira, la pone a orbitar",
+    );
+  }
 
   comprobar(
     etiqueta("sin errores"),
