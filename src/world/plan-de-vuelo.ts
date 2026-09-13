@@ -365,6 +365,16 @@ const SIN_AYUDA_FUERA = 60;
 const TOPE_DE_AYUDA = 0.7;
 
 /**
+ * Cuánto acercamiento a la raya cuenta el amortiguador, como mucho, m/s.
+ *
+ * Dos. No es un ajuste fino: es lo que separa amortiguar de estrellarse. Cerca
+ * de una plataforma la ruta hace codos cerrados, el error de rumbo contra el
+ * tramo más próximo es enorme, y sin tope el término se dispara y manda girar
+ * al lado que no. Ver `asistencia`.
+ */
+const TOPE_DE_ACERCAMIENTO = 2;
+
+/**
  * A partir de qué error de rumbo la ayuda deja de ayudar, en radianes.
  *
  * Setenta grados. Por debajo es una curva de calle de rodaje —cerrada, pero
@@ -1396,7 +1406,40 @@ export class PlanDeVuelo {
      * nada, porque ahí no hay deriva que corregir — hay un avión rodando.
      */
     const fuera = Math.abs(desvio) < 6 ? 0 : desvio - Math.sign(desvio) * 6;
-    let giro = -fuera / 14 - (estado.yawRate * 180) / Math.PI / 40;
+    /*
+     * **Y a qué velocidad te acercas a la raya, no solo cuánto te falta.**
+     *
+     * El amortiguador de aquí miraba solo `yawRate`, que frena el **giro** del
+     * avión y no dice nada de si te estás acercando a la raya despacio o a
+     * toda prisa. Con eso la ayuda mete el avión hacia la raya, llega, y como
+     * lo único que la frenaba era el giro, **se pasa**. Medido con
+     * `verificar-asistencia`, soltando el avión ocho metros al costado de un
+     * tramo recto: se quedaba dando bandazos de tres metros de media en los
+     * peldaños de en medio, y clavado a 6,6 en Guyrami — que es el modelo
+     * sencillo, donde el empujón no llega ni a cruzar la raya, así que se
+     * aparcaba justo en el borde de la holgura y ahí se quedaba.
+     *
+     * Esto es la derivada del desvío: cuántos metros por segundo te estás
+     * comiendo. Con ella la corrección afloja **antes** de llegar, que es lo
+     * que hace cualquiera al aparcar.
+     *
+     * **Con tope y flojita, y las dos cosas costaron un vuelo entero.** Sin
+     * tope y con ganancia un sexto, cerca de la plataforma de Pettirossi
+     * —donde la ruta hace codos cerrados y el error de rumbo es enorme— el
+     * término se dispara y manda girar al lado que no es: el avión se lleva un
+     * edificio por delante a los veintiséis segundos de rodaje, reproducible.
+     * Dos metros por segundo de tope y un veinteavo de ganancia dejan el vuelo
+     * de Pettirossi en 14 de 14 y arreglan igual lo que había que arreglar.
+     *
+     * Y el signo **suma**. Con el signo cambiado el avión se va a cincuenta y
+     * siete metros del eje, que es como se descubrió cuál era.
+     */
+    const cerrando = Math.max(
+      -TOPE_DE_ACERCAMIENTO,
+      Math.min(TOPE_DE_ACERCAMIENTO, estado.airspeed * Math.sin(contra)),
+    );
+    let giro =
+      -fuera / 14 + cerrando / 20 - (estado.yawRate * 180) / Math.PI / 40;
 
     /*
      * **La anticipación: mirar a dónde va la calle, no dónde estoy.**
