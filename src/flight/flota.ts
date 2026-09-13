@@ -33,8 +33,8 @@
  *
  * Y queda una comprobación que no la hace un programa: que ninguno de los
  * cinco tenga un sentido coloquial desafortunado para quien habla guaraní.
- * *Kuarahy* y *Mainumby* son seguros; los otros tres conviene verificarlos
- * antes de que salgan a producción.
+ * *Mainumby* está dado por seguro; *Pykasu*, *Panambi*, *Arasunu* y *Arai*
+ * conviene verificarlos antes de que salgan a producción.
  */
 
 /** El fabricante, dentro del mundo del juego. */
@@ -112,24 +112,22 @@ export const FLOTA: readonly Modelo[] = [
   },
   {
     numero: 90,
-    nombre: "Kuarahy",
-    pajaro: "sol",
+    nombre: "Arai",
+    pajaro: "nube",
     silueta: "reactor",
     id: "jaz-90",
     /*
-     * **Y esta raíz ya está tomada**, en el mismo sitio donde se descartó una
-     * vez: *Kuarahy-memby* es la ardilla de Granja Óga, y por eso el biplano
-     * dejó de llamarse Kuarahy y pasó a Mainumby —«dos personajes con el mismo
-     * nombre se confunden en vídeo»—. El reactor se topa con lo mismo.
+     * **Se llamó Kuarahy y duró lo que tardó en verse la colisión.**
      *
-     * Se queda apuntado tal como lo decidió #69 y **no vuela hasta que se
-     * resuelva**, que es la única forma de que no se olvide. Si hace falta
-     * otro: el reactor es el que va por encima de las nubes, así que *Arai*
-     * —nube— nombra lo que hace y no choca con nada del mundo de la granja.
-     * Pero eso lo decide quien bautiza, no esta tabla.
+     * *Kuarahy-memby* es la ardilla de Granja Óga, y esa raíz ya es suya: es
+     * exactamente el motivo por el que el biplano dejó de llamarse Kuarahy y
+     * pasó a Mainumby —«dos personajes con el mismo nombre se confunden en
+     * vídeo»—. El reactor se topó con lo mismo y se quedó reservado hasta que
+     * alguien lo bautizara.
+     *
+     * *Arai* es nube, y nombra lo que hace: es el único de la flota que va por
+     * encima de ellas. Decidido por quien bautiza, que es quien decide esto.
      */
-    enDisputa:
-      "la raíz Kuarahy ya es de Kuarahy-memby, la ardilla de Granja Óga",
   },
 ];
 
@@ -139,6 +137,7 @@ export const ESTA_HECHO: readonly string[] = [
   "jaz-25",
   "jaz-40",
   "jaz-60",
+  "jaz-90",
 ];
 
 /**

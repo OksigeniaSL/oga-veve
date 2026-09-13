@@ -556,9 +556,10 @@ export const ARASUNU: AircraftConfig = {
 };
 
 /**
- * JAZ 90 *Kuarahy* — reactor de ala en flecha.
+ * JAZ 90 *Arai* — reactor de ala en flecha.
  *
- * El último peldaño de la flota y el único con turbinas. *Kuarahy* es el sol.
+ * El último peldaño de la flota y el único con turbinas. *Arai* es nube, y
+ * nombra lo que hace: es el único que va por encima de ellas.
  *
  * Lo que enseña su silueta son dos cosas a la vez: **el ala en flecha** y los
  * motores colgados por debajo. Las dos van juntas y las dos tienen su porqué
@@ -572,23 +573,17 @@ export const ARASUNU: AircraftConfig = {
  * pilotar algo grande. El banco lo mide contra la cuenta de Lanchester, que
  * dice que el período crece con la velocidad — ver `prestaciones.test.ts`.
  *
- * ## Y todavía no vuela, porque le falta el nombre
+ * ## Se llamó Kuarahy durante un rato
  *
- * **No está en `AIRCRAFT`**, y no es un olvido: *Kuarahy* está en disputa. La
- * raíz ya es de *Kuarahy-memby*, la ardilla de Granja Óga, y la regla de la
- * casa —«un nombre no puede estar dos veces en el mundo de Granja Óga»— dice
- * que un nombre en disputa se queda reservado y no vuela. Es la misma
- * colisión que hizo que el biplano dejara de llamarse Kuarahy. Ver `flota.ts`
- * y #69.
- *
- * Así que el avión está entero y medido —el banco de prestaciones lo vuela
- * igual, que para eso está— y entra en la flota el día que tenga nombre. Esa
- * decisión no la toma este fichero.
+ * Y no voló con ese nombre ni un día: la raíz ya es de *Kuarahy-memby*, la
+ * ardilla de Granja Óga, que es la misma colisión por la que el biplano dejó
+ * de llamarse Kuarahy. Estuvo hecho y reservado —medido por el banco, fuera
+ * del hangar— hasta que se bautizó. Ver `flota.ts` y #69.
  */
-export const KUARAHY: AircraftConfig = {
+export const ARAI: AircraftConfig = {
   id: "jaz-90",
   name: nombreEntero(FLOTA[4]!),
-  descriptionKey: "aircraft.kuarahy.description",
+  descriptionKey: "aircraft.arai.description",
   mass: 30000,
   wingArea: 72.0,
   wingSpan: 26.0,
@@ -645,16 +640,19 @@ export const AIRCRAFT: readonly AircraftConfig[] = [
   MAINUMBY,
   PANAMBI,
   ARASUNU,
+  ARAI,
 ];
 
 /**
- * Y los que están hechos pero no vuelan, que hoy es uno.
+ * Y los que están hechos pero todavía no vuelan. Hoy, ninguno.
  *
- * El banco de prestaciones los mide igual —`prestaciones.test.ts` los junta
- * con los de arriba—, porque un avión terminado tiene que estar comprobado
- * aunque le falte el rótulo. Lo que no hace es aparecer en el hangar.
+ * La lista se queda porque el caso se va a repetir: un avión puede estar
+ * terminado y medido y aun así no salir —un nombre por decidir, una silueta
+ * que todavía no convence—, y el banco de prestaciones lo mide igual. Un avión
+ * terminado tiene que estar comprobado aunque le falte el rótulo. Ver
+ * `prestaciones.test.ts`.
  */
-export const RESERVADOS: readonly AircraftConfig[] = [KUARAHY];
+export const RESERVADOS: readonly AircraftConfig[] = [];
 
 export function aircraftById(id: string): AircraftConfig {
   const found = AIRCRAFT.find((a) => a.id === id);
