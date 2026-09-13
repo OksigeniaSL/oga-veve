@@ -92,6 +92,8 @@ export const ES_PY = {
     "Turbohélice regional, cola en T. Grande, y entra en pistas cortas.",
   "aircraft.arai.description":
     "Reactor de ala en flecha. Rápido, y todo pasa más despacio.",
+  "aircraft.yvaga.description":
+    "Cuatrimotor de fuselaje ancho. El grande: cuenta los motores.",
 
   "mission.rio.name": "Ver el río",
   "mission.rioabajo.name": "Seguir el río",

@@ -433,13 +433,28 @@ export function fabricarAeronave(
       "bimotor-ala-baja": 0.86,
       "cola-en-t": 0.96,
       reactor: 1.08,
+      /*
+       * El cuatrimotor es **más corto en proporción**, no más largo: un
+       * fuselaje ancho lleva su volumen en la sección y no en el largo. El
+       * trirradial del informe lo dice con sus números — 59,6 m de
+       * envergadura contra 70 de largo, o sea 1,17 veces; un reactor
+       * estrecho anda por 1,08 respecto de un ala mucho menor.
+       */
+      cuatrimotor: 1.17,
     }[silueta];
   const anchoCuerpo = c * 0.78;
   const altoCuerpo = c * 0.88;
   const piezas: BufferGeometry[] = [];
   const helices: Vector3[] = [];
 
-  const reactor = silueta === "reactor";
+  /**
+   * El cuatrimotor es un reactor en casi todo —ala en flecha, motores
+   * colgados, fuselaje largo— **menos en cuántos hay**, que es lo único que
+   * se cuenta de un vistazo. Así que comparte todas las proporciones y solo
+   * cambia el bucle de los motores.
+   */
+  const cuatrimotor = silueta === "cuatrimotor";
+  const reactor = silueta === "reactor" || cuatrimotor;
   const bimotor = silueta === "bimotor-ala-baja" || silueta === "cola-en-t";
   const biplano = silueta === "biplano";
   const alaArriba = silueta === "ala-alta" || silueta === "cola-en-t";
@@ -564,45 +579,58 @@ export function fabricarAeronave(
 
   // ── Los motores ──────────────────────────────────────────────────────
   if (bimotor || reactor) {
-    const x = b * (reactor ? 0.28 : 0.24);
+    /*
+     * Dónde va cada motor, en fracción de semienvergadura.
+     *
+     * El cuatrimotor lleva los suyos donde los lleva uno de verdad: el
+     * interior a un cuarto del ala y el exterior a la mitad larga, que es lo
+     * que deja sitio al tren y separa los chorros.
+     */
+    const sitios = cuatrimotor ? [0.22, 0.42] : [reactor ? 0.28 : 0.24];
     const largoG = reactor ? c * 1.7 : c * 1.6;
     const radioG = c * (reactor ? 0.34 : 0.24);
-    for (const lado of [-1, 1]) {
-      const g = tubo(gondola(largoG, radioG), paleta.accent);
-      /*
-       * En el turbohélice la góndola va **en** el ala y en el reactor va
-       * **colgada por debajo y por delante**. Es una diferencia de medio metro
-       * y es la que separa las dos siluetas de un vistazo.
-       */
-      /*
-       * **Y la hélice tiene que caber debajo.**
-       *
-       * En el ala baja, una góndola puesta a la altura del ala deja el disco
-       * de la hélice por debajo del suelo: el radio es la novena parte del
-       * ala y el tren no da para tanto. Un bimotor de verdad lo resuelve con
-       * tren más alto o con las góndolas por encima del ala; aquí se sube la
-       * góndola lo justo para que la punta de la pala pase con un palmo.
-       */
-      const sitio = reactor ? alaY - c * 0.62 : alaY + c * 0.16;
-      const cabe = -tren + b * RADIO_DE_HELICE + 0.2;
-      const y = reactor ? sitio : Math.max(sitio, cabe);
-      const z = reactor ? alaZ - c * 1.5 : alaZ - c * 0.75;
-      g.translate(lado * x, y, z);
-      piezas.push(g);
-      if (!reactor) helices.push(new Vector3(lado * x, y, z - largoG * 0.6));
-      if (reactor) {
-        // El pilón que la cuelga del ala: sin él el motor parece flotar.
-        const pilon = tubo(
-          [
-            { z: -c * 0.1, ancho: c * 0.14, alto: c * 0.8, y: c * 0.45 },
-            { z: c * 0.5, ancho: c * 0.14, alto: c * 0.8, y: c * 0.45 },
-          ],
-          paleta.trim,
-        );
-        pilon.translate(lado * x, y, z);
-        piezas.push(pilon);
+    for (const lado of [-1, 1])
+      for (const cuanto of sitios) {
+        const x = b * cuanto;
+        const g = tubo(gondola(largoG, radioG), paleta.accent);
+        /*
+         * En el turbohélice la góndola va **en** el ala y en el reactor va
+         * **colgada por debajo y por delante**. Es una diferencia de medio
+         * metro y es la que separa las dos siluetas de un vistazo.
+         *
+         * **Y la hélice tiene que caber debajo.** En el ala baja, una góndola
+         * puesta a la altura del ala deja el disco de la hélice por debajo del
+         * suelo: el radio es la novena parte del ala y el tren no da para
+         * tanto. Aquí se sube la góndola lo justo para que la punta de la pala
+         * pase con un palmo.
+         */
+        const sitio = reactor ? alaY - c * 0.62 : alaY + c * 0.16;
+        const cabe = -tren + b * RADIO_DE_HELICE + 0.2;
+        const y = reactor ? sitio : Math.max(sitio, cabe);
+        /*
+         * Y el de fuera va un poco más adelante y más alto que el de dentro,
+         * que es lo que hace el ala al llevar flecha y diedro: los cuatro en
+         * línea se ven pegados en el ala y no colgados de ella.
+         */
+        const fuera = cuatrimotor && cuanto > 0.3;
+        const z =
+          (reactor ? alaZ - c * 1.5 : alaZ - c * 0.75) + (fuera ? -c * 0.5 : 0);
+        g.translate(lado * x, y + (fuera ? c * 0.12 : 0), z);
+        piezas.push(g);
+        if (!reactor) helices.push(new Vector3(lado * x, y, z - largoG * 0.6));
+        if (reactor) {
+          // El pilón que la cuelga del ala: sin él el motor parece flotar.
+          const pilon = tubo(
+            [
+              { z: -c * 0.1, ancho: c * 0.14, alto: c * 0.8, y: c * 0.45 },
+              { z: c * 0.5, ancho: c * 0.14, alto: c * 0.8, y: c * 0.45 },
+            ],
+            paleta.trim,
+          );
+          pilon.translate(lado * x, y + (fuera ? c * 0.12 : 0), z);
+          piezas.push(pilon);
+        }
       }
-    }
   } else {
     // Un solo motor delante, con su capó.
     const capo = tubo(
