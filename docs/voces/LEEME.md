@@ -77,6 +77,17 @@ Escribe un fichero por frase en `crudo/<voz>/`, con el nombre que dice la
 tabla, y **salta lo que ya está**: una tanda que se corta —la red, un límite de
 la cuenta, un Ctrl-C— se reanuda sin pagar dos veces lo mismo.
 
+### Lo que cuesta, que es menos de lo que parece
+
+El pack entero son **2.829 caracteres**, o sea otros tantos créditos. El plan
+Creator que hay contratado da **121.000 al mes**: el juego entero cabe
+cuarenta y dos veces en una mensualidad.
+
+Eso no es un dato de contabilidad, es permiso para no conformarse. Una voz que
+no acaba de sonar como tiene que sonar **se vuelve a grabar entera** —con
+`--rehacer`, o borrando su carpeta en `crudo/`— y no hay que pensárselo. Lo
+caro de un pack de voz nunca fue el audio: es volver a montarlo.
+
 Antes hace falta decir qué voz de la cuenta hace de cuál, en
 `docs/voces/voces.json`. Es configuración, no un secreto: un identificador de
 voz no abre nada.
