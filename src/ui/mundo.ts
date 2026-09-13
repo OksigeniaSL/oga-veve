@@ -16,20 +16,20 @@
  * juego no se queda sin mundo: se queda con el otro.
  */
 
-import { leerTexto, ponerTexto } from '../datos/guardado';
+import { leerTexto, ponerTexto } from "../datos/guardado";
 
-const ALMACEN = 'mundo';
+const ALMACEN = "mundo";
 
-export type Mundo = 'foto' | 'dibujado';
+export type Mundo = "foto" | "dibujado";
 
 /** El mundo elegido, o la fotografía si nadie ha elegido todavía. */
 export function mundoElegido(): Mundo {
   try {
-    return leerTexto(ALMACEN) === 'dibujado' ? 'dibujado' : 'foto';
+    return leerTexto(ALMACEN) === "dibujado" ? "dibujado" : "foto";
   } catch {
     // Sin almacén —ventana privada, permisos— se vuela la foto, que es el
     // que enseña el planeta. Perder la preferencia no puede impedir jugar.
-    return 'foto';
+    return "foto";
   }
 }
 

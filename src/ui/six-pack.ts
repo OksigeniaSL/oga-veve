@@ -19,7 +19,7 @@
  * después de setenta años de poder poner números.
  */
 
-import type { FlightState } from '../flight/model';
+import type { FlightState } from "../flight/model";
 
 /** Recorrido de una aguja de esfera completa, en grados. */
 const SWEEP = 300;
@@ -37,12 +37,12 @@ export class SixPack {
   static markup(): string {
     return `
       <div class="seispack" data-hud="sixpack" role="group" aria-label="Instrumentos">
-        ${dial('asi', 'IAS', asiFace(), '<g data-needle="asi">' + needle(38) + '</g>')}
-        ${dial('ai', 'ATT', aiFace(), '')}
-        ${dial('alt', 'ALT', altFace(), '<g data-needle="alt-thousands">' + needle(24) + '</g><g data-needle="alt-hundreds">' + needle(40) + '</g>')}
-        ${dial('tc', 'T/C', tcFace(), '')}
-        ${dial('dg', 'HDG', '<g data-needle="dg-card">' + dgCard() + '</g>', dgAircraft())}
-        ${dial('vsi', 'V/S', vsiFace(), '<g data-needle="vsi">' + needle(38) + '</g>')}
+        ${dial("asi", "IAS", asiFace(), '<g data-needle="asi">' + needle(38) + "</g>")}
+        ${dial("ai", "ATT", aiFace(), "")}
+        ${dial("alt", "ALT", altFace(), '<g data-needle="alt-thousands">' + needle(24) + '</g><g data-needle="alt-hundreds">' + needle(40) + "</g>")}
+        ${dial("tc", "T/C", tcFace(), "")}
+        ${dial("dg", "HDG", '<g data-needle="dg-card">' + dgCard() + "</g>", dgAircraft())}
+        ${dial("vsi", "V/S", vsiFace(), '<g data-needle="vsi">' + needle(38) + "</g>")}
       </div>
     `;
   }
@@ -51,7 +51,9 @@ export class SixPack {
     this.root = root.querySelector('[data-hud="sixpack"]');
     this.needles.clear();
     if (!this.root) return;
-    for (const element of this.root.querySelectorAll<SVGElement>('[data-needle]')) {
+    for (const element of this.root.querySelectorAll<SVGElement>(
+      "[data-needle]",
+    )) {
       this.needles.set(element.dataset.needle!, element);
     }
   }
@@ -65,49 +67,68 @@ export class SixPack {
    * @param feet altitud
    * @param fpm velocidad vertical en pies por minuto
    */
-  update(state: FlightState, knots: number, feet: number, fpm: number, bank: number, pitch: number): void {
+  update(
+    state: FlightState,
+    knots: number,
+    feet: number,
+    fpm: number,
+    bank: number,
+    pitch: number,
+  ): void {
     if (!this.root) return;
 
-    this.rotate('asi', SWEEP_START + clamp01(knots / ASI_MAX_KT) * SWEEP);
+    this.rotate("asi", SWEEP_START + clamp01(knots / ASI_MAX_KT) * SWEEP);
 
     // Altímetro de dos agujas, como el de verdad: la larga da una vuelta
     // cada mil pies y la corta marca los miles.
-    this.rotate('alt-hundreds', ((feet % 1000) / 1000) * 360);
-    this.rotate('alt-thousands', ((feet % 10000) / 10000) * 360);
+    this.rotate("alt-hundreds", ((feet % 1000) / 1000) * 360);
+    this.rotate("alt-thousands", ((feet % 10000) / 10000) * 360);
 
     // Variómetro: cero a las nueve en punto, subida arriba, bajada abajo.
-    this.rotate('vsi', (clamp(fpm / VSI_MAX_FPM, -1, 1) * SWEEP) / 2);
+    this.rotate("vsi", (clamp(fpm / VSI_MAX_FPM, -1, 1) * SWEEP) / 2);
 
     // Direccional: la rosa gira al revés que el avión, porque lo que se
     // mueve es el mundo.
-    this.rotate('dg-card', (-state.heading * 180) / Math.PI);
+    this.rotate("dg-card", (-state.heading * 180) / Math.PI);
 
     // Horizonte artificial: el disco gira contra el alabeo y sube o baja con
     // el cabeceo, así que representa el mundo y no la máquina.
-    const horizon = this.root.querySelector<SVGElement>('[data-ai-disc]');
+    const horizon = this.root.querySelector<SVGElement>("[data-ai-disc]");
     if (horizon) {
       horizon.setAttribute(
-        'transform',
-        `rotate(${(-bank * 180) / Math.PI} 50 50) translate(0 ${(pitch * 180) / Math.PI * 0.9})`,
+        "transform",
+        `rotate(${(-bank * 180) / Math.PI} 50 50) translate(0 ${((pitch * 180) / Math.PI) * 0.9})`,
       );
     }
 
     // Bastón y bola: el avioncito se inclina y la bola se va al exterior del
     // viraje si no está coordinado. Centrar la bola es «dar pie».
-    const plane = this.root.querySelector<SVGElement>('[data-tc-plane]');
-    if (plane) plane.setAttribute('transform', `rotate(${(bank * 180) / Math.PI} 50 44)`);
-    const ball = this.root.querySelector<SVGElement>('[data-tc-ball]');
-    if (ball) ball.setAttribute('cx', String(50 + clamp(state.beta * 9, -1, 1) * 11));
+    const plane = this.root.querySelector<SVGElement>("[data-tc-plane]");
+    if (plane)
+      plane.setAttribute(
+        "transform",
+        `rotate(${(bank * 180) / Math.PI} 50 44)`,
+      );
+    const ball = this.root.querySelector<SVGElement>("[data-tc-ball]");
+    if (ball)
+      ball.setAttribute("cx", String(50 + clamp(state.beta * 9, -1, 1) * 11));
   }
 
   private rotate(name: string, degrees: number): void {
-    this.needles.get(name)?.setAttribute('transform', `rotate(${degrees} 50 50)`);
+    this.needles
+      .get(name)
+      ?.setAttribute("transform", `rotate(${degrees} 50 50)`);
   }
 }
 
 // ── Piezas del dibujo ──────────────────────────────────────────────────
 
-function dial(id: string, label: string, face: string, overlay: string): string {
+function dial(
+  id: string,
+  label: string,
+  face: string,
+  overlay: string,
+): string {
   return `
     <div class="esfera" data-dial="${id}">
       <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -129,14 +150,14 @@ function needle(length: number): string {
 
 /** Marcas de una esfera de recorrido completo, con sus números. */
 function ticks(count: number, labelEvery: number, scale: number): string {
-  let out = '';
+  let out = "";
   for (let i = 0; i <= count; i++) {
     const angle = ((SWEEP_START + (i / count) * SWEEP) * Math.PI) / 180;
     const long = i % labelEvery === 0;
     const r1 = long ? 33 : 37;
     const sin = Math.sin(angle);
     const cos = -Math.cos(angle);
-    out += `<line x1="${50 + sin * r1}" y1="${50 + cos * r1}" x2="${50 + sin * 41}" y2="${50 + cos * 41}" class="esfera__marca${long ? ' esfera__marca--larga' : ''}" />`;
+    out += `<line x1="${50 + sin * r1}" y1="${50 + cos * r1}" x2="${50 + sin * 41}" y2="${50 + cos * 41}" class="esfera__marca${long ? " esfera__marca--larga" : ""}" />`;
     if (long) {
       out += `<text x="${50 + sin * 26}" y="${50 + cos * 26 + 2.6}" class="esfera__cifra">${Math.round((i / count) * scale)}</text>`;
     }
@@ -160,7 +181,7 @@ function altFace(): string {
 }
 
 function vsiFace(): string {
-  let out = '';
+  let out = "";
   for (let i = -4; i <= 4; i++) {
     const angle = ((i / 4) * (SWEEP / 2) * Math.PI) / 180;
     const sin = Math.sin(angle);
@@ -201,12 +222,12 @@ function tcFace(): string {
 function dgCard(): string {
   let out = '<circle cx="50" cy="50" r="43" class="dg__rosa" />';
   const marks: Array<[number, string]> = [
-    [0, 'N'],
-    [90, 'E'],
-    [180, 'S'],
+    [0, "N"],
+    [90, "E"],
+    [180, "S"],
     // W, no O: en una rosa de compás de verdad pone West, y la regla 3 del
     // AGENTS.md dice que la aeronáutica se aprende en su idioma.
-    [270, 'W'],
+    [270, "W"],
   ];
   for (const [degrees, letter] of marks) {
     const angle = (degrees * Math.PI) / 180;
@@ -215,7 +236,7 @@ function dgCard(): string {
     out += `<text x="${50 + sin * 30}" y="${50 + cos * 30 + 3}" class="esfera__cifra esfera__cifra--rumbo">${letter}</text>`;
   }
   for (let i = 0; i < 36; i++) {
-    const angle = ((i * 10) * Math.PI) / 180;
+    const angle = (i * 10 * Math.PI) / 180;
     const sin = Math.sin(angle);
     const cos = -Math.cos(angle);
     const r1 = i % 3 === 0 ? 36 : 39;

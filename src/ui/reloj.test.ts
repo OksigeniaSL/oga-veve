@@ -81,6 +81,8 @@ describe("el reloj dibujado", () => {
   });
 
   it("con el arco a cero sigue dibujando la fila", () => {
-    expect(dibujarReloj(relojDe(MEDIA_HORA * 2), "horas")).toContain("reloj__avion");
+    expect(dibujarReloj(relojDe(MEDIA_HORA * 2), "horas")).toContain(
+      "reloj__avion",
+    );
   });
 });
