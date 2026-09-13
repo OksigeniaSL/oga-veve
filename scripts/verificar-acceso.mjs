@@ -87,7 +87,15 @@ await page.waitForTimeout(12000);
 
 // ── 1. Contraste ─────────────────────────────────────────────────────────
 
-const MEDIR_CONTRASTE = (EXTREMOS) => {
+/**
+ * Mide el contraste de todo texto visible.
+ *
+ * `PIDE` son los dos listones, y son dos porque la WCAG 1.4.3 perdona al texto
+ * grande: `{ normal, grande }`. Con contraste normal se exige AA —4,5 y 3— y
+ * con contraste alto, AAA —7 y 4,5—, que es toda la diferencia entre los dos
+ * ajustes escrita como número.
+ */
+const MEDIR_CONTRASTE = ({ EXTREMOS, PIDE }) => {
   const canal = (c) => {
     const v = c / 255;
     return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
@@ -173,8 +181,9 @@ const MEDIR_CONTRASTE = (EXTREMOS) => {
 
     const tamano = parseFloat(e.fontSize);
     const gordo = +e.fontWeight >= 700;
-    // 1.4.3: 3:1 vale para texto grande —18,66px en negrita o 24px—.
-    const exigido = tamano >= 24 || (gordo && tamano >= 18.66) ? 3 : 4.5;
+    // 1.4.3: el listón flojo vale para texto grande —18,66px en negrita o 24px—.
+    const exigido =
+      tamano >= 24 || (gordo && tamano >= 18.66) ? PIDE.grande : PIDE.normal;
 
     let peor = Infinity;
     let dondePeor = "";
@@ -221,9 +230,87 @@ const MEDIR_CONTRASTE = (EXTREMOS) => {
  * solo sabe mirar a los que tienen `id` es un banco que no mira a los que
  * hacen falta. Ver #70.
  */
-async function auditar(page, donde, encierra = null) {
+/**
+ * El mismo sitio, con el contraste alto puesto, pidiendo AAA.
+ *
+ * **La fila «Contraste: más marcado» tiene que significar un número.** Con
+ * contraste normal el juego cumple AA —4,5 a uno para texto pequeño, 3 para
+ * grande— y lo cumple de sobra. Lo que no tenía era nada por encima: el peor
+ * texto medido se quedaba en 4,81:1, así que **nadie llegaba a AAA**, que es
+ * el 7 a uno que la WCAG 1.4.3 pide para quien necesita más. Mucha baja visión
+ * está ahí. Y una tablet al sol de Paraguay, también.
+ *
+ * Así que el ajuste se define por su listón: puesto, **todo** el texto llega a
+ * 7 a uno. Y por eso esto se llama desde cada pantalla, no solo desde una: un
+ * contraste alto que solo valiera en el vuelo no es un contraste alto.
+ *
+ * Se mide en la misma página y en el mismo momento que la auditoría normal, o
+ * sea con el mismo vuelo, el mismo viento y el mismo panel abierto: lo único
+ * que cambia entre las dos es el ajuste, que es lo que se quiere saber.
+ *
+ * Y se pone por el camino de verdad, con `ponerAjuste`, que escribe el ajuste
+ * y llama a `aplicarAjustes` igual que pulsar la fila. Marcar la raíz a mano
+ * mediría la hoja de estilos y no el juego: pasaría igual de bien el día que
+ * la fila dejara de estar conectada.
+ */
+async function tambienEnAlto(page, donde) {
+  const cambio = await page.evaluate(() => {
+    const raiz = document.documentElement;
+    const antes = getComputedStyle(raiz).getPropertyValue("--barro").trim();
+    globalThis.__oga?.ponerAjuste?.("contraste", "alto");
+    return {
+      marca: raiz.dataset.contraste,
+      antes,
+      despues: getComputedStyle(raiz).getPropertyValue("--barro").trim(),
+    };
+  });
+  /*
+   * Primero, que el ajuste haga algo. Sin esto, la medida de abajo es la de
+   * contraste normal otra vez y da verde por no haber cambiado nada — que es
+   * la forma favorita que tiene un banco de mentir.
+   */
+  if (cambio.marca !== "alto" || cambio.antes === cambio.despues) {
+    comprobar(
+      `${donde}: el contraste alto llega a la pantalla`,
+      false,
+      `marca «${cambio.marca ?? "—"}», --barro ${cambio.antes} → ${cambio.despues}`,
+    );
+    return [];
+  }
+  const medidos = await page.evaluate(MEDIR_CONTRASTE, {
+    EXTREMOS,
+    PIDE: AAA,
+  });
+  const flojos = medidos.filter((c) => c.razon < c.exigido);
+  comprobar(
+    `${donde}: y con contraste alto llega a AAA`,
+    flojos.length === 0,
+    flojos.length
+      ? `${flojos.length} por debajo · ` +
+          flojos
+            .slice(0, 5)
+            .map(
+              (f) =>
+                `${f.que}«${f.texto}» ${f.razon}:1 (pide ${f.exigido}, sobre ${f.sobre})`,
+            )
+            .join(" · ")
+      : `${medidos.length} textos, el peor a ${medidos[0]?.razon ?? "—"}:1`,
+  );
+  await page.evaluate(() =>
+    globalThis.__oga?.ponerAjuste?.("contraste", "normal"),
+  );
+  return medidos;
+}
+
+const AA = { normal: 4.5, grande: 3 };
+const AAA = { normal: 7, grande: 4.5 };
+
+async function auditar(page, donde, encierra = null, pide = AA) {
   const escapados = [];
-  const contrastes = await page.evaluate(MEDIR_CONTRASTE, EXTREMOS);
+  const contrastes = await page.evaluate(MEDIR_CONTRASTE, {
+    EXTREMOS,
+    PIDE: pide,
+  });
   const flojos = contrastes.filter((c) => c.razon < c.exigido);
   comprobar(
     `${donde}: el texto se lee sobre cualquier paisaje`,
@@ -513,6 +600,7 @@ await page.evaluate(() => {
 });
 
 let peores = await auditar(page, "vuelo");
+peores = peores.concat(await tambienEnAlto(page, "vuelo"));
 
 /*
  * **Todas las pantallas que se abren encima, y no las que se acordó alguien.**
@@ -588,6 +676,7 @@ for (const { id: boton, caja } of paneles) {
     nombre ? `«${nombre}»` : "sin nombre",
   );
   peores = peores.concat(await auditar(page, donde, caja));
+  peores = peores.concat(await tambienEnAlto(page, donde));
   await comprobarEscape(page, donde, caja);
   /*
    * Y si Escape no lo cerró, se cierra a mano: lo que se mide es el panel
@@ -625,6 +714,7 @@ const ajustesAbiertos = await page.evaluate(
 );
 if (ajustesAbiertos) {
   peores = peores.concat(await auditar(page, "ajustes", "#ajustes"));
+  peores = peores.concat(await tambienEnAlto(page, "ajustes"));
   await page.keyboard.press("Escape");
   await page.waitForTimeout(400);
   const donde = await page.evaluate(() => ({

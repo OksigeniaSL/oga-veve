@@ -8,10 +8,11 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { escribirYa, olvidar, ponerTexto } from "../datos/guardado";
+import { escribirYa, leerTexto, olvidar, ponerTexto } from "../datos/guardado";
 import {
   ESCALA,
   POR_DEFECTO,
+  VOLUMENES,
   conMovimientoReducido,
   guardarAjuste,
   leerAjustes,
@@ -110,5 +111,46 @@ describe("los otros dos", () => {
     // Ni tanto que deje de leerse ni tan poco que no se note.
     expect(ESCALA.pequeno).toBeGreaterThan(0.7);
     expect(ESCALA.grande).toBeLessThan(1.35);
+  });
+});
+
+describe("el sonido y el contraste, que son los que faltaban", () => {
+  /*
+   * **El volumen se guarda donde ya se guardaba.**
+   *
+   * `volumen` a secas, sin el prefijo `ajuste.` de los demás, porque es la
+   * clave que lleva usando `audio.ts` desde que existe el botón del HUD.
+   * Renombrarla por coherencia le habría borrado el ajuste a todo el que ya
+   * tenía el juego puesto en «bajito» — que es justo la gente a la que le
+   * importa. Esta prueba está para que nadie la «arregle».
+   */
+  it("el volumen sigue en la clave de siempre, la del botón del HUD", () => {
+    ponerTexto("volumen", "bajo");
+    expect(leerAjustes().volumen).toBe("bajo");
+    guardarAjuste("volumen", "mudo");
+    escribirYa();
+    olvidar();
+    expect(leerTexto("volumen")).toBe("mudo");
+  });
+
+  it("y de fábrica se oye y el contraste es el normal", () => {
+    expect(POR_DEFECTO.volumen).toBe("normal");
+    expect(POR_DEFECTO.contraste).toBe("normal");
+  });
+
+  it("un valor que no existe tampoco rompe estos dos", () => {
+    ponerTexto("volumen", "altísimo");
+    ponerTexto("ajuste.contraste", "");
+    expect(leerAjustes().volumen).toBe("normal");
+    expect(leerAjustes().contraste).toBe("normal");
+  });
+
+  /*
+   * Los tres pasos del volumen son los mismos que los del botón del HUD, y
+   * tienen que serlo: son dos mandos sobre una cosa. Si alguien añade aquí un
+   * paso que `audio.ts` no conoce, la fila lo enseña y no hace nada.
+   */
+  it("los pasos del volumen son los que el audio sabe poner", () => {
+    expect([...VOLUMENES]).toEqual(["normal", "bajo", "mudo"]);
   });
 });

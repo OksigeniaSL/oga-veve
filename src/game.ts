@@ -547,7 +547,6 @@ const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
   "comprometido",
 ]);
 
-
 export class Game {
   /** Qué se está enseñando hoy: de aquí sale qué guía se enciende. */
   private readonly leccion: Leccion;
@@ -3274,6 +3273,22 @@ export class Game {
       "--escala-hud",
       String(ESCALA[ajustes.tamano]),
     );
+    /*
+     * El contraste es una marca en la raíz y nada más: la hoja redefine los
+     * mismos tokens con otros valores y ni un componente se entera. Ver
+     * `:root[data-contraste="alto"]` en `style.css`.
+     */
+    document.documentElement.dataset.contraste = ajustes.contraste;
+    /*
+     * **Y el sonido, que ahora se manda desde dos sitios.**
+     *
+     * El botón del HUD y la fila de ajustes son dos mandos sobre una cosa. El
+     * botón ya guarda al pulsarse; esto es el otro sentido — cambiar la fila
+     * tiene que mover el audio de verdad, y además dejar el glifo de la
+     * esquina diciendo la verdad, que si no se contradicen a la vista.
+     */
+    const nivel = this.audio.ponerNivel(ajustes.volumen);
+    this.hud.setSoundLevel(nivel.glyph, t(`sound.${nivel.id}` as never));
   }
 
   /** Pone una hora del día. Lo llama el panel del tiempo. */
@@ -4519,8 +4534,7 @@ export class Game {
        * pasar, y el percance de más abajo no se le aplica. Lo que aprende quien juega sigue siendo lo mismo: detrás de
        * quien te guía, no encima.
        */
-      const cede =
-        gesto !== null || (enBici && aQue < SITIO_PARA_LA_BICI);
+      const cede = gesto !== null || (enBici && aQue < SITIO_PARA_LA_BICI);
       this.sigueme.paso(
         dt,
         { x: s.position.x, z: s.position.z },

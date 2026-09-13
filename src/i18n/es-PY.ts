@@ -41,6 +41,13 @@ export const ES_PY = {
   "ajustes.tamano.pequeno": "Pequeño",
   "ajustes.tamano.normal": "Normal",
   "ajustes.tamano.grande": "Grande",
+  "ajustes.volumen": "Sonido",
+  "ajustes.volumen.normal": "Normal",
+  "ajustes.volumen.bajo": "Bajito",
+  "ajustes.volumen.mudo": "Sin sonido",
+  "ajustes.contraste": "Contraste",
+  "ajustes.contraste.normal": "Normal",
+  "ajustes.contraste.alto": "Más marcado",
   "app.tagline": "Volá sobre Paraguay",
 
   "hud.speed": "Velocidad",

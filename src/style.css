@@ -102,6 +102,105 @@
     "Varela Round", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
 }
 
+/*
+ * ── Contraste alto ──
+ *
+ * No es «otro tema»: son los mismos tokens con otros valores, así que ni un
+ * componente se entera. La marca la pone `Game.aplicarAjustes` en la raíz.
+ *
+ * ## Qué promete exactamente
+ *
+ * **Que todo texto llegue a 7:1, que es el nivel AAA de la WCAG 1.4.3**, y no
+ * el 4,5 de AA que ya se cumple. Medido antes de esto con `npm run acceso`:
+ * las 73 comprobaciones pasaban y el peor texto se quedaba en 4,81:1, o sea
+ * que nadie llegaba a AAA. Quien necesita más contraste que AA —mucha baja
+ * visión, una tablet al sol de Paraguay— no tenía nada.
+ *
+ * Y es un número, no una intención: el banco vuelve a pasar entero con el
+ * contraste puesto y exigiendo siete. Ver `verificar-acceso.mjs`.
+ *
+ * ## Cómo se consigue
+ *
+ * Bajando los tres barros casi a negro y subiendo las tintas, que es la única
+ * forma de ganar contraste sin cambiar de colores: el ocre sigue siendo ocre y
+ * el verde sigue siendo verde, solo que más separados. La marca aguanta.
+ *
+ * Y se quita el barniz. Ese degradado blanco al 5,5 % es la identidad de la
+ * casa y aclara el borde superior de cada panel justo donde suele ir el
+ * título: **quita casi un punto de razón ahí y en ningún otro sitio**. Con
+ * contraste alto no hay barniz, que es exactamente el trato que se está
+ * haciendo.
+ *
+ * Los filos sí se quedan, y más fuertes: quien necesita contraste necesita
+ * también saber dónde acaba un panel y empieza otro.
+ */
+:root[data-contraste="alto"] {
+  --barro: #0d1210;
+  --barro-claro: #141c18;
+  --panel-verde: #101c16;
+
+  --tinta: #ffffff;
+  --tinta-suave: #e6ede7;
+  --ocre-tinta: #ffc978;
+  --terracota-tinta: #ffb094;
+
+  --ok: #a4f28f;
+  --precaucion: #ffd45e;
+  /* El peligro solo rellena y enmarca, nunca escribe. Se sube igual, que un
+     borde de aviso tiene que verse tanto como lo que dice. */
+  --peligro: #d8483c;
+
+  /* Sin barniz: aclara el filo de arriba de cada panel y ahí es donde se
+     pierde el contraste. Ver el porqué arriba. */
+  --barniz: none;
+  --filo: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+
+  --linea: rgba(255, 255, 255, 0.45);
+  --linea-fuerte: rgba(255, 255, 255, 0.8);
+
+  /*
+   * **Y los dos colores de marca que llevan letra encima.**
+   *
+   * Se descubrieron midiendo, no leyendo: los paneles grandes —créditos, ala—
+   * no se pintan con ninguno de los tres barros, sino con el verde de marca, y
+   * el botón de cerrar y la opción elegida de los ajustes con el barro cálido.
+   * Al no estar en esta lista se quedaban como estaban y arrastraban con ellos
+   * todo el texto de encima: «Close» a 5,46, el párrafo de créditos a 6,72.
+   *
+   * El verde sigue siendo verde y el ladrillo sigue siendo ladrillo. Solo
+   * están más lejos de la letra.
+   */
+  --verde-bosque: #12241b;
+  --barro-calido: #75311a;
+  --ocre: #f2b05c;
+}
+
+/*
+ * Y tres sitios donde el contraste no lo decidía un color, sino una
+ * transparencia. No se arreglan con un token porque no usan ninguno.
+ */
+:root[data-contraste="alto"] .tecla__letra,
+:root[data-contraste="alto"] .creditos__dedicatoria {
+  /*
+   * La letra de la tecla vive al 75 % y la dedicatoria al 78 %, y las dos
+   * están así a propósito: son rótulo y pie, no el texto principal. Pero
+   * atenuar es exactamente lo contrario de lo que se viene a pedir aquí —la
+   * opacidad heredada multiplica la alfa del texto—, así que con contraste
+   * alto la jerarquía la lleva el tamaño y no la tinta.
+   */
+  opacity: 1;
+}
+
+:root[data-contraste="alto"] .creditos__destacado {
+  /*
+   * El recuadro destacado aclara su propio fondo con un ocre al 16 %, y eso
+   * le quita casi un punto al texto que lleva dentro: 5,55 contra los 6,72
+   * del párrafo de al lado. Con contraste alto lo destacado lo dice el filo
+   * de la izquierda, que ya estaba y no cuesta contraste.
+   */
+  background: none;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -663,13 +762,13 @@ body {
 .cuaderno__glosa {
   font-size: 13px;
   /* Al 72 % eran 4,36:1, a catorce centésimas de AA. Al 85 %, 5,37. */
-  color: rgba(228, 226, 218, 0.85);
+  color: var(--tinta-suave);
 }
 
 .cuaderno__falta {
   margin: 0;
   text-align: center;
-  color: rgba(228, 226, 218, 0.85);
+  color: var(--tinta-suave);
   font-size: 15px;
 }
 
