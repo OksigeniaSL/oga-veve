@@ -134,7 +134,12 @@ export const FLOTA: readonly Modelo[] = [
 ];
 
 /** Cuáles están construidos de verdad. Los demás son número y nombre reservados. */
-export const ESTA_HECHO: readonly string[] = ["jaz-20", "jaz-25", "jaz-40"];
+export const ESTA_HECHO: readonly string[] = [
+  "jaz-20",
+  "jaz-25",
+  "jaz-40",
+  "jaz-60",
+];
 
 /**
  * El nombre entero: «JAZ 20 Pykasu».

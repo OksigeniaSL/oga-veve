@@ -89,7 +89,16 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { CoefficientFlightModel } from "./fdm";
-import { AIRCRAFT, type AircraftConfig } from "./aircraft";
+import { AIRCRAFT, RESERVADOS, type AircraftConfig } from "./aircraft";
+
+/**
+ * Los que se miden: los que vuelan **y los que están hechos y todavía no**.
+ *
+ * Un avión terminado tiene que estar comprobado aunque le falte el rótulo. El
+ * reactor está entero y no vuela porque su nombre está en disputa; medirlo no
+ * depende de cómo se llame. Ver `aircraft.ts` y #69.
+ */
+const TODOS = [...AIRCRAFT, ...RESERVADOS];
 import { neutralControls } from "./model";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import {
@@ -158,19 +167,44 @@ function nuevo(
  * eran de un avión dando tumbos: el JAZ 20 a todo gas no volaba a 60,5 sino a
  * 64,4.
  */
+
+/**
+ * Cuánta prisa puede darse el piloto del banco con este avión.
+ *
+ * Un lazo de cabeceo no puede ir más rápido que el modo que está controlando.
+ * Las ganancias estaban escritas para el entrenador —corto período de 6,2
+ * radianes por segundo— y con el reactor, que responde a 3,9, se pasaban: al
+ * frenar hacia la pérdida el lazo tiraba de más, el ángulo de ataque se iba
+ * por encima del crítico y **el banco daba la pérdida a 93 metros por segundo
+ * en un avión que pierde a 73**.
+ *
+ * Así que las ganancias se escalan con el corto período de cada uno. El
+ * entrenador se queda exactamente como estaba —es la referencia— y los demás
+ * salen proporcionados.
+ */
+function prisa(a: AircraftConfig): number {
+  const d = derivadasDeLaFicha(a, a.cruiseSpeed);
+  const modos = modosDe(polinomioCaracteristico(d.longitudinal));
+  const corto = Math.max(...modos.map((m) => m.omega));
+  return corto / 6.2;
+}
+
 function nivelado(
   m: CoefficientFlightModel,
+  /** De qué avión es, que hace falta para saber cuánta prisa darse. */
+  a: AircraftConfig,
   segundos: number,
   throttle: number,
   alSalir?: (m: CoefficientFlightModel) => boolean,
 ): boolean {
   let integral = 0;
+  const k1 = prisa(a);
   for (let k = 0; k < Math.round(segundos / DT); k++) {
     const vs = m.state.verticalSpeed;
-    integral = Math.max(-0.6, Math.min(0.6, integral + vs * DT * 0.05));
+    integral = Math.max(-0.6, Math.min(0.6, integral + vs * DT * 0.05 * k1));
     const elevator = Math.max(
       -1,
-      Math.min(1, -vs * 0.12 - integral - m.state.pitchRate * 1.2),
+      Math.min(1, (-vs * 0.12 - integral) * k1 - m.state.pitchRate * 1.2),
     );
     m.step(DT, { ...neutralControls(), engineOn: true, throttle, elevator });
     if (alSalir?.(m)) return true;
@@ -189,13 +223,26 @@ function perdidaDeLaFicha(a: AircraftConfig, conFlaps = false): number {
 
 /** Vuela hasta que el ala avisa, y devuelve a qué velocidad fue. */
 function medirPerdida(a: AircraftConfig, flaps = 0): number {
-  const m = nuevo(a, a.cruiseSpeed * 0.7);
-  nivelado(m, 6, 0.35);
+  /*
+   * **Se arranca cerca de la pérdida, no a siete décimas del crucero.**
+   *
+   * Un avión se acerca a la pérdida desde poco por encima de ella, que es como
+   * se hace de verdad. Arrancando desde el crucero, el reactor —limpio y de
+   * treinta toneladas— tardaba más de los noventa segundos del bucle en
+   * frenar, así que el banco devolvía la velocidad a la que iba cuando se
+   * acabó el tiempo: **cien metros por segundo**, y lo llamaba pérdida. No
+   * perdía: no le daba tiempo a llegar.
+   */
+  const m = nuevo(a, perdidaDeLaFicha(a, flaps > 0.5) * 1.35);
+  nivelado(m, a, 6, 0.35);
   let v = 0;
   let integral = 0;
+  /** Si ya se le ha visto volar recto. Ver más abajo. */
+  let volandoYa = false;
+  const k1 = prisa(a);
   for (let k = 0; k < Math.round(90 / DT); k++) {
     const vs = m.state.verticalSpeed;
-    integral = Math.max(-0.6, Math.min(0.6, integral + vs * DT * 0.05));
+    integral = Math.max(-0.6, Math.min(0.6, integral + vs * DT * 0.05 * k1));
     m.step(DT, {
       ...neutralControls(),
       engineOn: true,
@@ -203,11 +250,28 @@ function medirPerdida(a: AircraftConfig, flaps = 0): number {
       flaps,
       elevator: Math.max(
         -1,
-        Math.min(1, -vs * 0.12 - integral - m.state.pitchRate * 1.2),
+        Math.min(1, (-vs * 0.12 - integral) * k1 - m.state.pitchRate * 1.2),
       ),
     });
     v = m.state.airspeed;
-    if (m.state.stalled) return v;
+    /*
+     * **Y la pérdida no cuenta hasta que el avión ha volado nivelado.**
+     *
+     * Se suelta con las alas a cero ángulo de ataque, o sea fuera de
+     * equilibrio, y lo primero que hace es hundirse mientras el lazo lo
+     * recoge. En una avioneta ese tirón dura dos segundos y no llega a nada;
+     * en el reactor, con trescientas mil unidades de inercia en cabeceo, la
+     * recogida se pasaba hasta los quince grados —su ángulo de pérdida— y el
+     * banco **lo acusaba de perder a 125 metros por segundo**, que es
+     * velocidad de crucero. No perdía el avión: perdía el arranque.
+     *
+     * Alargar el asentamiento no valía: a medio gas, treinta segundos dejan al
+     * avión en otra velocidad y entonces lo que se mide es otra cosa. Lo que
+     * hace falta es decir **cuándo empieza a contar**, y eso es en cuanto se
+     * le ha visto volar recto una vez.
+     */
+    if (Math.abs(m.state.verticalSpeed) < 1.5) volandoYa = true;
+    if (volandoYa && m.state.stalled) return v;
   }
   return v;
 }
@@ -215,11 +279,11 @@ function medirPerdida(a: AircraftConfig, flaps = 0): number {
 /** A qué velocidad se queda, nivelado y con ese gas. */
 function medirCrucero(a: AircraftConfig, throttle: number): number {
   const m = nuevo(a, a.cruiseSpeed);
-  nivelado(m, 90, throttle);
+  nivelado(m, a, 90, throttle);
   return m.state.airspeed;
 }
 
-describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
+describe.each(TODOS.map((a) => [a.id, a] as const))(
   "las prestaciones del %s",
   (_id, a) => {
     const vs = perdidaDeLaFicha(a);
@@ -345,7 +409,12 @@ function mejorPlaneo(a: AircraftConfig): { razon: number; a: number } {
 
 /** Cuánto avanza por cada metro que cae, volando a esa velocidad sin motor. */
 function planeoA(a: AircraftConfig, v: number): number {
-  const m = nuevo(a, v);
+  /*
+   * Tres mil metros: la ventana de medida son ciento cincuenta segundos y el
+   * reactor planea bajando seis por segundo, o sea novecientos. Y no más, que
+   * a esa altura el aire ya es otro.
+   */
+  const m = nuevo(a, v, 3000);
   // El morro persigue la velocidad: así se planea de verdad, y así el avión se
   // asienta en vez de quedarse cabeceando.
   const paso = () => {
@@ -357,11 +426,22 @@ function planeoA(a: AircraftConfig, v: number): number {
       elevator: e,
     });
   };
-  for (let k = 0; k < Math.round(60 / DT); k++) paso();
+  /*
+   * **Noventa segundos para asentarse y sesenta para medir**, que es más de un
+   * fugoide entero en cualquiera de los cinco.
+   *
+   * Iban sesenta y treinta, y con eso el turbohélice daba un planeo de 17,6
+   * contra los 15,0 que permite su ala. La ventana caía en la mitad **de
+   * subida** de un fugoide todavía vivo: el avión bajaba cuatro metros en
+   * treinta segundos y la razón se disparaba. Un planeo medido en una ventana
+   * más corta que el modo que lo mece no es un planeo.
+   */
+  for (let k = 0; k < Math.round(90 / DT); k++) paso();
   const desde = m.state.position.clone();
-  for (let k = 0; k < Math.round(30 / DT); k++) paso();
+  for (let k = 0; k < Math.round(60 / DT); k++) paso();
   const caida = desde.y - m.state.position.y;
-  if (caida < 0.5) return 0;
+  // Y si apenas ha bajado, la muestra no vale: no se estaba planeando.
+  if (caida < 50) return 0;
   return (
     Math.hypot(m.state.position.x - desde.x, m.state.position.z - desde.z) /
     caida
@@ -468,7 +548,7 @@ function carreraTeorica(a: AircraftConfig, superficie: Superficie): number {
   return s;
 }
 
-describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
+describe.each(TODOS.map((a) => [a.id, a] as const))(
   "lo que hace el %s",
   (_id, a) => {
     const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
@@ -579,10 +659,24 @@ describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
      * avión: por debajo no hay ala y por encima la resistencia se come la
      * potencia sobrante.
      */
-    it("sube como una avioneta, y a una Vy que tiene sentido", () => {
+    it("sube en un ángulo que tiene sentido, y a una Vy que también", () => {
       const { subida, a: vy } = mejorAscenso(a);
-      expect(subida).toBeGreaterThan(2);
-      expect(subida).toBeLessThan(7);
+      /*
+       * **La pendiente, no el régimen.**
+       *
+       * Iba en metros por segundo, de dos a siete, y eso era una banda escrita
+       * mirando dos avionetas: en cuanto entraron el turbohélice y el reactor
+       * —8,7 y 9,6 m/s— la comprobación acusó de subir demasiado a dos aviones
+       * que suben lo que tienen que subir. Un avión grande sube más deprisa
+       * porque va más deprisa, y eso no es un defecto.
+       *
+       * Lo que sí se parece en todos es **el ángulo**: la pendiente de subida
+       * de cualquier avión con motor de hélice o de turbina anda entre uno y
+       * quince grados. Por debajo no sube; por encima es un caza.
+       */
+      const pendiente = (Math.asin(subida / vy) * 180) / Math.PI;
+      expect(pendiente).toBeGreaterThan(1);
+      expect(pendiente).toBeLessThan(15);
       expect(vy).toBeGreaterThan(perdidaDeLaFicha(a));
       expect(vy).toBeLessThan(a.cruiseSpeed);
     });
@@ -604,11 +698,26 @@ describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
       const [uno, otro] = modosDe(polinomioCaracteristico(d.longitudinal));
       const fugoide = [uno!, otro!].sort((x, y) => x.omega - y.omega)[0]!;
       const periodo = (2 * Math.PI) / fugoide.omega;
-      // Veinte a sesenta segundos: es el modo que se siente como un balanceo
-      // largo de altura y velocidad, y por eso Guyrami usa otro modelo en vez
-      // de amortiguarlo. Ver `tiers.ts`.
-      expect(periodo).toBeGreaterThan(20);
-      expect(periodo).toBeLessThan(60);
+      /*
+       * **Contra la cuenta de Lanchester, no contra un rango fijo.**
+       *
+       * El período del fugoide no es una propiedad del avión: es
+       * `2π·V/(g·√2)`, o sea que **crece con la velocidad**. Estaba escrito
+       * como «entre veinte y sesenta segundos», que es lo que dura en una
+       * avioneta, y el reactor lo tiró a la primera con noventa y tres — que
+       * es exactamente lo que tiene que durar a ciento ochenta metros por
+       * segundo.
+       *
+       * Eso, además, **es lo que se siente al pilotar algo grande**: no que
+       * vaya rápido, sino que todo tarde más en pasar.
+       *
+       * Lanchester se queda corto siempre —no lleva la resistencia— y los
+       * cinco aviones salen entre un 1,19 y un 1,29 por encima. La banda es
+       * de 0,9 a 1,6.
+       */
+      const lanchester = (2 * Math.PI * a.cruiseSpeed) / (G * Math.SQRT2);
+      expect(periodo).toBeGreaterThan(lanchester * 0.9);
+      expect(periodo).toBeLessThan(lanchester * 1.6);
       // Estable, pero por poco: eso **es** un fugoide.
       expect(fugoide.zeta).toBeGreaterThan(0);
       expect(fugoide.zeta).toBeLessThan(0.35);

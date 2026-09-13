@@ -93,6 +93,10 @@ export const EN: Dictionary = {
   "aircraft.mainumby.description": "Crop duster biplane. Nimble and strong.",
   "aircraft.panambi.description":
     "Low-wing twin. Two engines, faster, and the legs tuck away.",
+  "aircraft.arasunu.description":
+    "Regional turboprop, T-tail. Big, and it fits short runways.",
+  "aircraft.kuarahy.description":
+    "Swept-wing jet. Fast, and everything happens slower.",
 
   "mission.rio.name": "See the river",
   "mission.rioabajo.name": "Follow the river",
