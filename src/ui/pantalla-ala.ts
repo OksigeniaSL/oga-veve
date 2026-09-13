@@ -34,6 +34,7 @@
 
 import { t } from "../i18n";
 import { Panel } from "./panel";
+import { armarPanel, CERRAR } from "./concha";
 import {
   ALFA_MAXIMA,
   ALFA_MINIMA,
@@ -93,7 +94,7 @@ export class PantallaDelAla {
     this.panel = new Panel(root, () => this.cerrar());
     root.innerHTML = this.armazon();
     root
-      .querySelector('[data-ala="cerrar"]')
+      .querySelector('[data-accion="cerrar"]')
       ?.addEventListener("click", () => this.cerrar());
     root.addEventListener("click", (e) => {
       if (e.target === root) this.cerrar();
@@ -138,10 +139,12 @@ export class PantallaDelAla {
      * exactamente lo que el criterio 2.3.3 deja elegir, así que quien tenga
      * puesto el movimiento reducido ve el mismo dibujo, quieto.
      */
-    return `
-      <div class="ala__panel" role="dialog" aria-modal="true"
-           aria-label="${t("ala.titulo")}">
-        <h2>${t("ala.titulo")}</h2>
+    return armarPanel({
+      titulo: t("ala.titulo"),
+      panel: "ala",
+      clase: "ala__panel",
+      acciones: [CERRAR()],
+      cuerpo: `
         <svg class="ala__esquema" viewBox="0 0 ${ANCHO} ${ALTO}" role="img"
              data-ala="dibujo" aria-label="${t("ala.titulo")}">
           <g class="ala__corriente" data-ala="corriente"></g>
@@ -169,11 +172,8 @@ export class PantallaDelAla {
           </label>
         </div>
         <dl class="ala__cifras" data-ala="cifras"></dl>
-        <button class="creditos__cerrar" type="button" data-ala="cerrar">
-          ${t("credits.close")}
-        </button>
-      </div>
-    `;
+      `,
+    });
   }
 
   private pintar(): void {

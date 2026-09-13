@@ -15,10 +15,17 @@
  * dice qué hace cada una con palabras y no solo la tecla.
  */
 
-import { ACCIONES, ORDEN, nombreDeTecla, type Accion, type Keymap } from '../flight/keymap';
-import { t } from '../i18n';
-import { Panel } from './panel';
-import { HELICE_MAS, HELICE_MENOS } from './pictogramas';
+import {
+  ACCIONES,
+  ORDEN,
+  nombreDeTecla,
+  type Accion,
+  type Keymap,
+} from "../flight/keymap";
+import { t } from "../i18n";
+import { Panel } from "./panel";
+import { armarPanel } from "./concha";
+import { HELICE_MAS, HELICE_MENOS } from "./pictogramas";
 
 /*
  * Los dibujos de las teclas. En SVG y no emoji: un emoji se ve distinto en
@@ -28,10 +35,10 @@ import { HELICE_MAS, HELICE_MENOS } from './pictogramas';
 const flecha = (d: string): string =>
   `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" /></svg>`;
 
-const FLECHA_ARR = flecha('M12 4 L20 14 H15 V21 H9 V14 H4 Z');
-const FLECHA_ABA = flecha('M12 21 L4 11 H9 V4 H15 V11 H20 Z');
-const FLECHA_IZQ = flecha('M3 12 L13 4 V9 H21 V15 H13 V20 Z');
-const FLECHA_DER = flecha('M21 12 L11 20 V15 H3 V9 H11 V4 Z');
+const FLECHA_ARR = flecha("M12 4 L20 14 H15 V21 H9 V14 H4 Z");
+const FLECHA_ABA = flecha("M12 21 L4 11 H9 V4 H15 V11 H20 Z");
+const FLECHA_IZQ = flecha("M3 12 L13 4 V9 H21 V15 H13 V20 Z");
+const FLECHA_DER = flecha("M21 12 L11 20 V15 H3 V9 H11 V4 Z");
 
 /*
  * La hélice con su flecha vive en `pictogramas.ts`, que es de donde la sacan
@@ -118,10 +125,56 @@ const GLIFOS: Partial<Record<Accion, string>> = {
  * está enseñando es **una posición**.
  */
 const FILAS: ReadonlyArray<{ sangria: number; teclas: readonly string[] }> = [
-  { sangria: 0, teclas: ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal'] },
-  { sangria: 0.5, teclas: ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP'] },
-  { sangria: 0.8, teclas: ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL'] },
-  { sangria: 1.2, teclas: ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM'] },
+  {
+    sangria: 0,
+    teclas: [
+      "Digit1",
+      "Digit2",
+      "Digit3",
+      "Digit4",
+      "Digit5",
+      "Digit6",
+      "Digit7",
+      "Digit8",
+      "Digit9",
+      "Digit0",
+      "Minus",
+      "Equal",
+    ],
+  },
+  {
+    sangria: 0.5,
+    teclas: [
+      "KeyQ",
+      "KeyW",
+      "KeyE",
+      "KeyR",
+      "KeyT",
+      "KeyY",
+      "KeyU",
+      "KeyI",
+      "KeyO",
+      "KeyP",
+    ],
+  },
+  {
+    sangria: 0.8,
+    teclas: [
+      "KeyA",
+      "KeyS",
+      "KeyD",
+      "KeyF",
+      "KeyG",
+      "KeyH",
+      "KeyJ",
+      "KeyK",
+      "KeyL",
+    ],
+  },
+  {
+    sangria: 1.2,
+    teclas: ["KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM"],
+  },
 ];
 
 export class KeyScreen {
@@ -150,21 +203,21 @@ export class KeyScreen {
     this.panel = new Panel(root, () => this.hide(), false);
     this.root.hidden = true;
 
-    this.root.addEventListener('click', (event) => {
+    this.root.addEventListener("click", (event) => {
       const bruto = event.target as HTMLElement;
       if (bruto === this.root) return this.hide();
       // Del elemento que recibió el clic se sube al botón: si dentro hay un
       // dibujo, el clic llega al dibujo y no al botón, y no pasaba nada.
-      const target = bruto.closest<HTMLElement>('button') ?? bruto;
+      const target = bruto.closest<HTMLElement>("button") ?? bruto;
       const accion = target.dataset.accion as Accion | undefined;
       if (accion) this.capture(accion);
-      if (target.dataset.todo === 'restaurar') {
+      if (target.dataset.todo === "restaurar") {
         this.keymap.restoreAll();
         this.capturando = null;
         this.render();
       }
       if (target.dataset.mano) {
-        this.keymap.setMano(target.dataset.mano as 'izquierda' | 'derecha');
+        this.keymap.setMano(target.dataset.mano as "izquierda" | "derecha");
         this.render();
       }
       if (target.dataset.cerrar !== undefined) this.hide();
@@ -172,12 +225,13 @@ export class KeyScreen {
 
     // La captura se hace aquí y en fase de captura, para llegar antes que el
     // juego: mientras se espera una tecla, esa tecla no debe volar el avión.
-    window.addEventListener('keydown', this.onKeyDown, true);
-    window.addEventListener('keyup', this.onKeyUp, true);
+    window.addEventListener("keydown", this.onKeyDown, true);
+    window.addEventListener("keyup", this.onKeyUp, true);
   }
 
   private onKeyUp = (event: KeyboardEvent): void => {
-    if (this.pulsadas.delete(event.code) || this.pulsadas.delete(event.key)) this.paintPressed();
+    if (this.pulsadas.delete(event.code) || this.pulsadas.delete(event.key))
+      this.paintPressed();
   };
 
   private onKeyDown = (event: KeyboardEvent): void => {
@@ -191,7 +245,7 @@ export class KeyScreen {
       this.paintPressed();
     }
 
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       event.stopPropagation();
       if (this.capturando) {
         this.capturando = null;
@@ -262,24 +316,31 @@ export class KeyScreen {
     // sobrevive a pasar por HTML, así que nunca coincidía ninguna y las
     // teclas no se encendían jamás. Y de paso esto no se queda desfasado
     // cuando alguien cambia una tecla.
-    for (const cap of this.root.querySelectorAll<HTMLElement>('[data-cap]')) {
-      cap.classList.toggle('tecla--pulsada', this.pulsadas.has(cap.dataset.cap!));
+    for (const cap of this.root.querySelectorAll<HTMLElement>("[data-cap]")) {
+      cap.classList.toggle(
+        "tecla--pulsada",
+        this.pulsadas.has(cap.dataset.cap!),
+      );
     }
   }
 
   /** Una tecla del teclado dibujado, encendida si tiene función. */
-  private cap(code: string, extra = ''): string {
+  private cap(code: string, extra = ""): string {
     // **Se encienden las dos, la de cada mano.** Antes solo se encendía una,
     // por no plantar la pregunta «¿en qué quedamos?» en pantalla. Pero es que
     // no hay dos respuestas: el gas se mueve con «+/−» y con «X/Z» desde
     // siempre, y esta pantalla existe para compararla con el teclado de
     // verdad. Enseñar la mitad de lo que funciona es lo que confunde.
-    const accion = this.keymap.isAnnounced(code) ? this.keymap.actionFor(code) : null;
+    const accion = this.keymap.isAnnounced(code)
+      ? this.keymap.actionFor(code)
+      : null;
     const glifo = accion ? GLIFOS[accion] : undefined;
-    const clases = ['tecla', extra, glifo ? 'tecla--activa' : ''].filter(Boolean).join(' ');
+    const clases = ["tecla", extra, glifo ? "tecla--activa" : ""]
+      .filter(Boolean)
+      .join(" ");
     return `
       <div class="${clases}" data-cap="${code}">
-        ${glifo ?? ''}
+        ${glifo ?? ""}
         <span class="tecla__letra">${nombreDeTecla(code)}</span>
       </div>
     `;
@@ -301,25 +362,22 @@ export class KeyScreen {
    */
   private render(): void {
     const teclado = this.mapaDeTeclas();
-    const tabla = this.simple ? '' : this.tablaDeCambios();
-    this.root.innerHTML = `
-      <div class="creditos__panel teclado" role="dialog" aria-modal="true"
-           aria-label="${t('teclas.title')}">
+    const tabla = this.simple ? "" : this.tablaDeCambios();
+    this.root.innerHTML = armarPanel({
+      titulo: t("teclas.title"),
+      panel: "keys",
+      clase: "creditos__panel teclado",
+      acciones: [
+        ...(this.simple
+          ? []
+          : [{ dice: t("teclas.restore"), como: "restaurar" }]),
+        { dice: t("teclas.close"), como: "cerrar", principal: true },
+      ],
+      cuerpo: `
         ${teclado}
         ${tabla}
-        <!--
-          La cruz iba flotando arriba a la derecha y se montaba encima de la
-          última tecla. Va debajo, ancha y centrada: hay que poder darle sin
-          apuntar.
-        -->
-        <div class="teclas__pie">
-          ${this.simple ? '' : `<button type="button" data-todo="restaurar">${t('teclas.restore')}</button>`}
-          <button class="teclado__cerrar" type="button" data-cerrar aria-label="${t('teclas.close')}">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12 L10 17 L19 7" /></svg>
-          </button>
-        </div>
-      </div>
-    `;
+      `,
+    });
     this.paintPressed();
   }
 
@@ -333,24 +391,24 @@ export class KeyScreen {
         // Sin repetidos: las dos mayúsculas o los dos controles se ven como
         // una sola tecla, que es como los ve quien está mirando el teclado.
         .filter((nombre, i, todas) => todas.indexOf(nombre) === i)
-        .join(' · ');
+        .join(" · ");
       return `
         <tr>
           <th scope="row">${t(ACCIONES[accion].label)}</th>
           <td>
-            <button class="teclas__tecla${esperando ? ' teclas__tecla--esperando' : ''}"
+            <button class="teclas__tecla${esperando ? " teclas__tecla--esperando" : ""}"
                     type="button" data-accion="${accion}">
-              ${esperando ? t('teclas.pulsa') : teclas}
+              ${esperando ? t("teclas.pulsa") : teclas}
             </button>
           </td>
         </tr>
       `;
-    }).join('');
+    }).join("");
 
     return `
       <details class="teclas__cambiar">
-        <summary>${t('teclas.cambiar')}</summary>
-        <p class="teclas__pista">${t('teclas.hint')}</p>
+        <summary>${t("teclas.cambiar")}</summary>
+        <p class="teclas__pista">${t("teclas.hint")}</p>
         <table class="teclas__tabla"><tbody>${filas}</tbody></table>
       </details>
     `;
@@ -367,17 +425,17 @@ export class KeyScreen {
   private mapaDeTeclas(): string {
     const filas = FILAS.map(
       ({ sangria, teclas }) =>
-        `<div class="fila" style="padding-left:${sangria * 2.6}em">${teclas.map((k) => this.cap(k)).join('')}</div>`,
-    ).join('');
+        `<div class="fila" style="padding-left:${sangria * 2.6}em">${teclas.map((k) => this.cap(k)).join("")}</div>`,
+    ).join("");
 
     // La barra espaciadora y el bloque de flechas, que en un teclado de
     // verdad están aparte y son lo primero que un niño reconoce.
     const abajo = `
       <div class="fila fila--abajo">
-        <div class="teclado__espacio">${this.cap('Space', 'ancha')}</div>
+        <div class="teclado__espacio">${this.cap("Space", "ancha")}</div>
         <div class="teclado__flechas">
-          <div class="fila">${this.cap('ArrowUp')}</div>
-          <div class="fila">${this.cap('ArrowLeft')}${this.cap('ArrowDown')}${this.cap('ArrowRight')}</div>
+          <div class="fila">${this.cap("ArrowUp")}</div>
+          <div class="fila">${this.cap("ArrowLeft")}${this.cap("ArrowDown")}${this.cap("ArrowRight")}</div>
         </div>
       </div>
     `;
@@ -388,19 +446,23 @@ export class KeyScreen {
           porque es lo primero que hay que decidir y no hace falta leer para
           entenderlo: se toca la mano con la que se maneja.
         -->
-        <div class="mano" role="group" aria-label="${t('teclas.mano')}">
-          ${['izquierda', 'derecha'].map((m) => `
+        <div class="mano" role="group" aria-label="${t("teclas.mano")}">
+          ${["izquierda", "derecha"]
+            .map(
+              (m) => `
             <button class="mano__opcion" type="button" data-mano="${m}"
                     aria-pressed="${this.keymap.mano === m}" aria-label="${t(
-                      m === 'izquierda' ? 'teclas.zurda' : 'teclas.diestra',
+                      m === "izquierda" ? "teclas.zurda" : "teclas.diestra",
                     )}">
               <svg viewBox="0 0 24 24" aria-hidden="true"
-                   style="transform:scaleX(${m === 'izquierda' ? -1 : 1})">
+                   style="transform:scaleX(${m === "izquierda" ? -1 : 1})">
                 <path d="M8 21 v-6.4 l-2.6-2.6 a1.5 1.5 0 0 1 2.1-2.1 L9.4 12.4 V4.4
                          a1.4 1.4 0 0 1 2.8 0 v5.4 V3.8 a1.4 1.4 0 0 1 2.8 0 V9.8
                          V5 a1.4 1.4 0 0 1 2.8 0 V14.6 A6.4 6.4 0 0 1 11.6 21 Z" />
               </svg>
-            </button>`).join('')}
+            </button>`,
+            )
+            .join("")}
         </div>
         <div class="teclado__mapa">${filas}${abajo}</div>
     `;

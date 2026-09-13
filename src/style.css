@@ -2191,13 +2191,6 @@ button.motor__tecla::after {
   opacity: 0.75;
 }
 
-.teclas__pie {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 12px;
-}
-
 .teclas__panel {
   max-height: 82vh;
   overflow-y: auto;
@@ -2228,44 +2221,6 @@ button.motor__tecla::after {
   background: var(--barniz), var(--panel-verde);
   border: 1px solid var(--linea);
   box-shadow: var(--filo), var(--poso);
-}
-
-/*
- * El botón de cerrar: una marca de visto, ancho y debajo de todo.
- *
- * Antes era una cruz flotando arriba a la derecha, y se montaba encima de la
- * última tecla. Y una cruz dice «cancelar»; aquí no se cancela nada, se dice
- * «ya está» — que es lo que dice un visto.
- */
-.teclado__cerrar {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 56px;
-  margin-top: 16px;
-  border: none;
-  border-radius: var(--r-m);
-  background: linear-gradient(180deg, #e8a75c, var(--ocre) 72%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.38),
-    0 3px 0 #96551f;
-  cursor: pointer;
-}
-
-.teclado__cerrar:active {
-  transform: translateY(3px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    0 0 0 #96551f;
-}
-
-.teclado__cerrar svg {
-  width: 30px;
-  fill: none;
-  stroke: #1a1206;
-  stroke-width: 3.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* El botón del HUD que anuncia la pantalla, al lado del de sonido. */
@@ -4141,23 +4096,6 @@ button.motor__tecla::after {
   color: var(--ocre-tinta);
 }
 
-/* El botón de restaurar es secundario: no puede competir con el de cerrar. */
-.teclas__pie [data-todo="restaurar"] {
-  border: 1px solid var(--linea);
-  border-radius: var(--r-m);
-  background: transparent;
-  color: var(--tinta-suave);
-  font: inherit;
-  font-size: 14px;
-  padding: 10px 16px;
-  cursor: pointer;
-}
-
-.teclas__pie [data-todo="restaurar"]:hover {
-  border-color: var(--ocre-tinta);
-  color: var(--tinta);
-}
-
 /*
  * Cada mando del panel del tiempo con su dibujo encima: la manga para el
  * viento, el sol para la hora. Sin esto el panel eran dos círculos sin
@@ -4981,4 +4919,143 @@ button.motor__tecla::after {
 .gafas-boton--puestas {
   background: var(--barro-calido);
   color: #fff;
+}
+
+/*
+ * ── La concha: la anatomía de todos los paneles ──
+ *
+ * Cabecera con dibujo y título, cuerpo, y una fila de acciones abajo. Ver
+ * `ui/concha.ts`, que la monta, y #70, que la pide con esas palabras.
+ *
+ * Las clases viejas —`creditos__panel`, `ajustes__panel`, `ala__panel`,
+ * `cuaderno__panel`— siguen puestas encima de ésta y siguen mandando en lo
+ * suyo: cuánto mide cada panel y cómo se reparte su cuerpo. Lo que ya no
+ * repiten es el fondo, el filo, la cabecera ni el botón de cerrar, que es lo
+ * que estaba escrito cinco veces.
+ */
+.concha {
+  display: grid;
+  /* Cabecera y acciones a lo que ocupen; el cuerpo, lo que quede. */
+  grid-template-rows: auto 1fr auto;
+  gap: 14px;
+  max-height: 100%;
+  padding: 20px 24px 18px;
+  border-radius: var(--r-l);
+  background: var(--barniz), var(--panel-verde);
+  border: 1px solid var(--linea);
+  box-shadow: var(--poso), var(--filo);
+}
+
+/*
+ * La cabecera, y el dibujo antes que el título.
+ *
+ * Antes que él en el orden de lectura y a su izquierda en la pantalla, porque
+ * es lo que se reconoce sin leer — y es **el mismo** dibujo del botón que
+ * acaba de pulsarse, sacado de la misma tabla. Ver `iconoDe`.
+ */
+.concha__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.concha__icono {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  fill: var(--ocre-tinta);
+}
+
+/* Los que van de trazo, como el teclado. Ver `PanelDelVuelo.trazo`. */
+.concha__icono--trazo {
+  fill: none;
+  stroke: var(--ocre-tinta);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.concha__titulo {
+  margin: 0;
+  font-size: 19px;
+  color: var(--tinta);
+}
+
+.concha__cuerpo {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/*
+ * La fila de abajo, a la derecha y con la principal la última.
+ *
+ * Es donde la mano y el pulgar ya están: en una tablet, la esquina de abajo a
+ * la derecha es lo más fácil de alcanzar sin recolocar el aparato.
+ */
+.concha__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--linea);
+}
+
+.concha__accion {
+  min-height: var(--tacto);
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--linea-fuerte);
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/*
+ * Y la principal, en barro cálido y no en la terracota de marca: blanco sobre
+ * terracota se queda en 4,36:1 —a catorce centésimas de AA, que es fallar
+ * igual— y sobre éste llega a 5,46. Es la misma cuenta que ya hacía el botón
+ * de cerrar cuando era suyo. Con contraste alto los dos suben; ver
+ * `[data-contraste="alto"]`.
+ */
+.concha__accion--principal {
+  background: var(--barro-calido);
+  border-color: transparent;
+  color: #fff;
+}
+
+/*
+ * **Y entra con una animación corta**, que es lo que #70 llama «aire de
+ * consola». Ciento sesenta milisegundos: lo justo para que se vea de dónde
+ * sale y no tanto como para tener que esperarla.
+ */
+@keyframes concha-entra {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+
+.concha {
+  animation: concha-entra 160ms ease-out;
+}
+
+/*
+ * Y con movimiento reducido, no. Es el criterio 2.3.3 y aquí se cumple con
+ * las dos preguntas: la del sistema y la de la pantalla de ajustes, que para
+ * eso existe. Ver `Game.aplicarAjustes`.
+ */
+.sin-movimiento .concha,
+.sin-movimiento.concha {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .concha {
+    animation: none;
+  }
 }
