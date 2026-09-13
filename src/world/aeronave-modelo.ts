@@ -80,8 +80,90 @@ const NOMBRES_DE_HELICE = [
  * alrededor del avión** en vez de girar sobre sí mismas. Se describió mejor de
  * lo que yo lo escribiría: «tiene una cosa dándole vueltas en sentido
  * antihorario alrededor, parece una polilla cojonera».
+ *
+ * ## Y un eje por hélice, no uno para todas
+ *
+ * Un solo eje valió mientras la flota fue un monomotor traído de fuera y un
+ * biplano hecho en casa: todas las piezas de hélice que hay en el avión son la
+ * misma hélice, su centro es el buje, y ahí gira. En un bimotor es falso — el
+ * centro de las dos cae en el eje del fuselaje, que es justo donde **no** hay
+ * ninguna, y las dos se pondrían a dar vueltas alrededor del morro. La polilla
+ * cojonera otra vez, pero por duplicado.
+ *
+ * El respaldo de cajas ya lo hacía bien: `AircraftMesh.helices` es una lista
+ * precisamente por esto, y `game.ts` gira todas las que haya. Lo que faltaba
+ * era que el cargador de modelos la rellenara.
+ *
+ * Se agrupan **por cercanía**, que es lo único que no depende de cómo haya
+ * nombrado las piezas quien hizo el modelo — y de fuera vienen nombradas de
+ * cualquier manera. Las piezas de una hélice están todas a un palmo del buje;
+ * dos hélices de un bimotor están a media envergadura la una de la otra. El
+ * umbral es una fracción de lo que mide el avión de ancho, así que vale igual
+ * para el biplano que para el cuatrimotor.
  */
-function ejeDeHelice(raiz: Object3D): Object3D {
+const UMBRAL_DE_HELICE = 0.15;
+
+/**
+ * Dónde está el buje de una hélice, dadas sus piezas.
+ *
+ * **No es el centro de su caja**, y ésa fue la segunda parte del mismo fallo.
+ * Con dos palas —una barra que cruza el buje de punta a punta— el centro de la
+ * caja *es* el buje, y con eso bastó para el biplano. Con **tres** palas, que
+ * es lo que lleva el bimotor, la hélice no es simétrica: una pala apunta a un
+ * lado y las otras dos se reparten el otro, así que la caja sobresale más por
+ * un lado que por el otro y su centro cae a veintiún centímetros del buje.
+ * Medido en el Panambi: los dos ejes salían en −2,24 y +2,66 en vez de ±2,45,
+ * la misma desviación en los dos. Una hélice girando alrededor de un punto a
+ * un palmo de su eje no gira: bambolea.
+ *
+ * El buje es lo que **todas** las palas tienen en común: de ahí salen todas y
+ * el cono lo tapa. Así que se cruzan sus cajas y lo que queda es el buje.
+ *
+ * Y se cruzan las de las **mallas sueltas**, no las de las piezas, que es la
+ * otra mitad de lo mismo: la caja de un objeto incluye la de sus hijas, y en
+ * los modelos de esta casa las palas cuelgan del cono, así que preguntarle su
+ * caja al cono devuelve la hélice entera con su asimetría dentro.
+ *
+ * Si no queda nada en común, es que las piezas ni se tocan y no hay nada mejor
+ * que decir que el centro de todas. Es el caso de un modelo traído de fuera
+ * cuyas piezas de hélice vengan sueltas, que es como venía el Pykasu.
+ */
+type ConGeometria = Object3D & {
+  geometry?: { boundingBox: Box3 | null; computeBoundingBox(): void };
+};
+
+/** La caja de **su** geometría, sin la de sus hijas. Ver `bujeDe`. */
+function cajaPropia(o: ConGeometria): Box3 | null {
+  const geo = o.geometry;
+  if (!geo) return null;
+  if (!geo.boundingBox) geo.computeBoundingBox();
+  if (!geo.boundingBox) return null;
+  return geo.boundingBox.clone().applyMatrix4(o.matrixWorld);
+}
+
+function bujeDe(piezas: Object3D[]): Vector3 {
+  const sueltas: Box3[] = [];
+  for (const p of piezas)
+    p.traverse((o) => {
+      const c = cajaPropia(o as ConGeometria);
+      if (c) sueltas.push(c);
+    });
+  if (!sueltas.length) {
+    const juntas = new Box3();
+    for (const p of piezas) juntas.expandByObject(p);
+    return juntas.getCenter(new Vector3());
+  }
+
+  const juntas = new Box3();
+  const comun = sueltas[0]!.clone();
+  for (const suya of sueltas) {
+    juntas.union(suya);
+    comun.intersect(suya);
+  }
+  return (comun.isEmpty() ? juntas : comun).getCenter(new Vector3());
+}
+
+export function ejesDeHelice(raiz: Object3D): Object3D[] {
   const piezas: Object3D[] = [];
   raiz.traverse((o) => {
     const nombre = o.name.toLowerCase();
@@ -91,23 +173,58 @@ function ejeDeHelice(raiz: Object3D): Object3D {
     if (piezas.some((p) => esAncestro(p, o))) return;
     piezas.push(o);
   });
-  if (!piezas.length) return new Group();
+  if (!piezas.length) return [];
 
   raiz.updateWorldMatrix(true, true);
-  const centro = new Box3();
-  for (const p of piezas) centro.expandByObject(p);
-  const medioEnElMundo = centro.getCenter(new Vector3());
+  const ancho = new Box3().setFromObject(raiz).getSize(new Vector3()).x;
+  const cerca = Math.max(0.05, ancho * UMBRAL_DE_HELICE);
 
-  const eje = new Group();
-  eje.name = "helice";
-  raiz.add(eje);
-  // El centro, traído a las coordenadas del padre. `worldToLocal` necesita las
-  // matrices al día, y por eso el `updateWorldMatrix` de arriba.
-  eje.position.copy(raiz.worldToLocal(medioEnElMundo.clone()));
-  // Y `attach`, no `add`: conserva dónde está cada pieza en el mundo, así que
-  // colgarlas del eje no las mueve ni un milímetro.
-  for (const p of piezas) eje.attach(p);
-  return eje;
+  // Dónde está cada pieza, en el mundo. Se mide una vez: `expandByObject`
+  // recorre la rama entera y no es gratis.
+  const donde = piezas.map((p) =>
+    new Box3().expandByObject(p).getCenter(new Vector3()),
+  );
+
+  /*
+   * Grupos por enlace simple: una pieza entra en un grupo si está cerca de
+   * **alguna** de las que ya están dentro. Es lo que junta un buje con sus
+   * palas aunque la punta de una pala esté más lejos del buje que el buje del
+   * motor de al lado, que pasa en cuanto las hélices son grandes.
+   */
+  const grupos: number[][] = [];
+  for (let i = 0; i < piezas.length; i++) {
+    const suyos = grupos.filter((g) =>
+      g.some((j) => donde[i]!.distanceTo(donde[j]!) <= cerca),
+    );
+    if (!suyos.length) {
+      grupos.push([i]);
+      continue;
+    }
+    // Si toca a varios, es que eran el mismo y no se sabía: se funden.
+    const primero = suyos[0]!;
+    primero.push(i);
+    for (const otro of suyos.slice(1)) {
+      primero.push(...otro);
+      grupos.splice(grupos.indexOf(otro), 1);
+    }
+  }
+
+  // De izquierda a derecha, para que el número de cada hélice sea estable:
+  // `propeller` es siempre la misma pieza entre una carga y otra.
+  grupos.sort((a, b) => donde[a[0]!]!.x - donde[b[0]!]!.x);
+
+  return grupos.map((grupo, n) => {
+    const eje = new Group();
+    eje.name = grupos.length > 1 ? `helice-${n + 1}` : "helice";
+    raiz.add(eje);
+    // El buje, traído a las coordenadas del padre. `worldToLocal` necesita las
+    // matrices al día, y por eso el `updateWorldMatrix` de arriba.
+    eje.position.copy(raiz.worldToLocal(bujeDe(grupo.map((i) => piezas[i]!))));
+    // Y `attach`, no `add`: conserva dónde está cada pieza en el mundo, así
+    // que colgarlas del eje no las mueve ni un milímetro.
+    for (const i of grupo) eje.attach(piezas[i]!);
+    return eje;
+  });
 }
 
 /**
@@ -299,14 +416,34 @@ export async function cargarModelo(
   group.name = `aeronave:${aircraft.id}`;
 
   /*
-   * La escala, por envergadura. Se mide el modelo y se lleva su lado más ancho
-   * a la envergadura que dice la configuración de vuelo, que es la que usa el
-   * modelo de vuelo para calcular la sustentación: si el dibujo y la física no
-   * miden lo mismo, el avión parece de otro tamaño del que vuela.
+   * ¿Es de los nuestros?
+   *
+   * Un modelo salido de `modelos/*.py` trae, del vacío desde el que se gira la
+   * escena antes de exportar, **un nodo llamado `avion`** — ver `aBlender` en
+   * `modelos/comun.py`—, y con él trae la garantía de que ya viene en los ejes
+   * de este juego: la X a lo ancho, la Y arriba y el morro en la Z negativa.
+   *
+   * Eso importa porque lo de abajo son **adivinanzas**, y las adivinanzas
+   * fallan. Son necesarias con un modelo traído de cualquier sitio, que puede
+   * venir tumbado, en pulgadas y mirando hacia atrás; aplicárselas a uno hecho
+   * aquí es tirar una certeza a cambio de una conjetura.
    */
+  const deLaCasa = !!raiz.getObjectByName("avion");
+
   const caja = new Box3().setFromObject(raiz);
   const tam = caja.getSize(new Vector3());
-  const anchoModelo = Math.max(tam.x, tam.z);
+
+  /*
+   * La escala, por envergadura. Se mide el modelo y se lleva su ala a la
+   * envergadura que dice la configuración de vuelo, que es la que usa el
+   * modelo de vuelo para calcular la sustentación: si el dibujo y la física no
+   * miden lo mismo, el avión parece de otro tamaño del que vuela.
+   *
+   * En uno de los nuestros el ala es la X y no hay nada que decidir. En uno de
+   * fuera se coge la mayor de las dos horizontales, que es la adivinanza de
+   * siempre.
+   */
+  const anchoModelo = deLaCasa ? tam.x : Math.max(tam.x, tam.z);
   if (anchoModelo > 0) {
     raiz.scale.multiplyScalar(aircraft.wingSpan / anchoModelo);
   }
@@ -320,8 +457,18 @@ export async function cargarModelo(
    * daba por hecho lo contrario —«un avión es más largo que ancho»—, que es
    * verdad en un caza y mentira en una avioneta, y el modelo entró en el juego
    * cruzado en la calle de rodaje.
+   *
+   * **Y es mentira otra vez en cuanto el avión es grande.** El JAZ 90 mide
+   * veintiséis metros de ala y treinta y uno y medio de morro a cola; el JAZ
+   * 120, sesenta de ala y sesenta y ocho de largo. Los dos son más largos que
+   * anchos, como el caza, así que esta regla los habría metido cruzados en la
+   * calle de rodaje **y además escalados por el largo**: un reactor de
+   * veintiséis metros de punta a punta de fuselaje. Los dos aciertos de esta
+   * adivinanza fueron dos avionetas; el primer avión de línea la rompe.
+   *
+   * De los nuestros no hay que adivinar nada, y por eso no se les toca.
    */
-  if (tam.z > tam.x) raiz.rotation.y = Math.PI / 2;
+  if (!deLaCasa && tam.z > tam.x) raiz.rotation.y = Math.PI / 2;
 
   /*
    * **Y el morro hacia delante, que lo dice la hélice.**
@@ -334,6 +481,9 @@ export async function cargarModelo(
    * No hace falta adivinarlo: **la hélice está en el morro**, y ya se sabe cuál
    * es porque hay que encontrarla igualmente para hacerla girar. Si su centro
    * cae en la Z positiva, el avión está del revés y se le da media vuelta.
+   *
+   * Tampoco vale para todos, y por eso tampoco se le aplica a los nuestros: un
+   * reactor no tiene hélice que mire a ningún sitio.
    */
   raiz.updateWorldMatrix(true, true);
   const morro = new Box3();
@@ -344,7 +494,7 @@ export async function cargarModelo(
     morro.expandByObject(o);
     hayHelice = true;
   });
-  if (hayHelice) {
+  if (!deLaCasa && hayHelice) {
     const centroAvion = new Box3().setFromObject(raiz).getCenter(new Vector3());
     if (morro.getCenter(new Vector3()).z > centroAvion.z)
       raiz.rotation.y += Math.PI;
@@ -376,9 +526,14 @@ export async function cargarModelo(
 
   group.add(raiz);
 
+  const helices = ejesDeHelice(raiz);
+
   return {
     group,
-    propeller: ejeDeHelice(raiz),
+    // La primera, para que lo que ya existía siga funcionando; y todas, para
+    // que un bimotor gire las dos. Ver `AircraftMesh.helices`.
+    propeller: helices[0] ?? new Group(),
+    helices,
     ojo: ojoDePiloto(raiz, group),
     // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
     pantallas: encenderPantallas(raiz, group),

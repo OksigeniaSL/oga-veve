@@ -168,20 +168,28 @@ G1000 dibujado en la textura, que es obra del autor bajo su misma licencia.
 Se descargó la versión **GLB con texturas de 1K**, que son dos megas y medio.
 La de 4K pesa más y no se distingue en una tablet.
 
-### Y la que se hace en casa
+### Y las que se hacen en casa
 
-El **JAZ 25 _Mainumby_** no viene de ningún sitio: se modela aquí, con Blender,
-desde `modelos/jaz-25-mainumby.py`. El guion es el modelo — se ejecuta con
-`blender --background --python modelos/jaz-25-mainumby.py` y escribe
-`public/assets/aeronaves/jaz-25.glb`—, así que no hay un `.blend` binario que
+El **JAZ 25 _Mainumby_** y el **JAZ 40 _Panambi_** no vienen de ningún sitio: se
+modelan aquí, con Blender, desde `modelos/jaz-25-mainumby.py` y
+`modelos/jaz-40-panambi.py`. El guion es el modelo — se ejecuta con
+`blender --background --python modelos/<el que sea>.py` y escribe
+`public/assets/aeronaves/<id>.glb`—, así que no hay un `.blend` binario que
 nadie pueda leer ni un fichero que dependa de acordarse de cómo se hizo.
 
-No lleva texturas, como el resto del juego: un material por pieza y el color se
+Lo que comparten los dos —materiales, perfiles de revolución, alas, cabina,
+exportación— vive en `modelos/comun.py`. No es aseo: con cinco aviones por
+delante, copiar los ayudantes cinco veces es garantizar que los cinco se
+desvíen, y lo que este juego enseña es reconocer un avión por su forma. Si el
+tratamiento cambia de un avión al siguiente, el álbum de postales deja de tener
+nada que enseñar.
+
+No llevan texturas, como el resto del juego: un material por pieza y el color se
 lo pone la ficha del avión al cargarlo, no el fichero. Ver
 `pintarDeLaFlota` en `src/world/aeronave-modelo.ts`.
 
-Es obra de Oksigenia SL y va bajo la licencia del proyecto, Apache-2.0. Los
-únicos nombres que no son libres dentro del guion son dos, y son del juego:
+Son obra de Oksigenia SL y van bajo la licencia del proyecto, Apache-2.0. Los
+únicos nombres que no son libres dentro de los guiones son dos, y son del juego:
 `asiento`, del que sale el sitio de los ojos, y `g1000_display`, que es el
 material con el que el juego encuentra las pantallas del panel.
 

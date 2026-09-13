@@ -18,10 +18,22 @@ imponen al vuelo (ver `src/world/aeronave-modelo.ts`):
 - **La escala sale de la envergadura** que declara la aeronave, no de la del
   fichero — que puede venir en metros, centímetros o pulgadas.
 - **El morro se gira a la Z negativa**, que es adelante en este mundo.
+- **Salvo si el modelo es de casa.** Las dos reglas de arriba son adivinanzas:
+  «el lado mayor es el ala» y «la hélice está en el morro». Aciertan con una
+  avioneta y fallan con un avión de línea —el JAZ 90 mide 26 m de ala y 31,5 de
+  largo, y un reactor no tiene hélice—. Un modelo salido de `modelos/*.py` trae
+  un nodo llamado **`avion`**, que es el vacío desde el que se gira la escena
+  antes de exportar, y con él la garantía de que ya viene en los ejes de este
+  juego. Cuando está, no se adivina nada: se escala por la X y no se gira.
 - **Las ruedas se bajan al origen**, porque el juego coloca la aeronave por su
   tren de aterrizaje.
 - **La hélice se busca por nombre**: `prop`, `helice`, `propeller`, `spinner` o
   `blade`. Si no aparece, se queda quieta y no pasa nada — es un adorno.
+- **Y cada hélice gira sobre la suya.** Las piezas se agrupan por cercanía y
+  cada grupo recibe su propio eje, puesto en el buje — que no es el centro de
+  su caja en cuanto las palas son tres y la hélice deja de ser simétrica. Un
+  eje único para las dos hélices de un bimotor cae en el eje del fuselaje y las
+  pone a orbitar el morro.
 
 ## Licencias
 
@@ -44,17 +56,20 @@ bien; sus texturas de 4K, no — hay que bajarlas a 1K antes de meterlas.
 
 ## Los que se modelan aquí
 
-`jaz-25.glb` no viene de ningún sitio: sale de `modelos/jaz-25-mainumby.py`,
-que es un guion de Blender. Se rehace con
+`jaz-25.glb` y `jaz-40.glb` no vienen de ningún sitio: salen de
+`modelos/jaz-25-mainumby.py` y `modelos/jaz-40-panambi.py`, que son guiones de
+Blender. Se rehacen con
 
 ```bash
 blender --background --python modelos/jaz-25-mainumby.py
+blender --background --python modelos/jaz-40-panambi.py
 ```
 
-y escribe directamente donde el juego lo busca. Va por script y no a mano por
+y escriben directamente donde el juego los busca. Van por script y no a mano por
 el mismo motivo por el que el pack de voz se hornea con un comando: **para que
 el segundo avión pegue con el primero**. Si el tratamiento vive en la cabeza de
 quien modeló el primero, el segundo no pega y se nota en cuanto vuelan juntos.
+Por eso los ayudantes están en `modelos/comun.py` y no copiados en cada guion.
 
 Dos cosas que el guion comprueba y no perdona, porque las dos se han colado ya:
 
