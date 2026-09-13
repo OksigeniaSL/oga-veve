@@ -667,6 +667,9 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       fase: juego.vistaActual?.fase ?? "",
       puntos: juego.plan?.rutaVisible().length ?? 0,
       vecesQueSePuso: juego.plan?.vecesQueSePusoLaRuta ?? 0,
+      // Cuánto se está del tramo **que toca**, que es lo que mide la ayuda de
+      // dirección. Ver `alRamalDeAhora` en `plan-de-vuelo.ts`.
+      alRamal: +(juego.plan?.alRamalDeAhora ?? -1).toFixed(1),
       ...(juego.plan?.comoVaLaRuta ?? {}),
     }),
   };
