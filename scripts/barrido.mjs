@@ -46,17 +46,19 @@ const TODOS = [
   /*
    * **Y un avión grande, que era el otro hueco.**
    *
-   * La flota pasó de dos aviones a cinco y este barrido seguía volando el
+   * La flota pasó de dos aviones a seis y este barrido seguía volando el
    * primero en los diez escenarios. El turbohélice cruza el umbral a cuarenta
    * y ocho metros por segundo contra los treinta y tres de la avioneta, pesa
    * cinco veces más y gira mucho peor en la plataforma: nada de lo que este
    * banco mide —el rodaje, la senda, la toma, la frenada— se comporta igual.
    *
-   * En Tenerife Norte, que es la pista larga: un turbohélice regional en un
-   * campo de hierba de novecientos metros no es una comprobación, es una
-   * broma.
+   * En Guyrami y no en Taguato, y **eso es un hallazgo apuntado, no una
+   * elección**: con el modelo de coeficientes y cualquier capa de asistencia
+   * puesta, el turbohélice se come los 3.400 metros de Tenerife Norte sin
+   * despegar. Sin ninguna ayuda vuela; con las de Tukã o las de Taguato, no.
+   * Está medido y sin explicar en #158.
    */
-  ["tenerife-norte", "taguato", "jaz-60"],
+  ["tenerife-norte", "guyrami", "jaz-60"],
 ];
 
 const VECES = Number(process.argv[2] ?? 12);
@@ -102,7 +104,9 @@ const partes = [];
 const empezoTodo = Date.now();
 
 for (const [escenario, tramo, avion] of LISTA) {
-  process.stdout.write(`  · ${escenario} (${tramo}${avion ? ` · ${avion}` : ""})… `);
+  process.stdout.write(
+    `  · ${escenario} (${tramo}${avion ? ` · ${avion}` : ""})… `,
+  );
   const empezo = Date.now();
   const salida = await new Promise((listo) => {
     let texto = "";
