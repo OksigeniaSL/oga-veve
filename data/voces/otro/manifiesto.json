@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "voz": "otro",
+  "idioma": "es-PY",
+  "piezas": {
+    "otro.buenosDias": {
+      "ms": 1672
+    },
+    "otro.enCola": {
+      "ms": 2538
+    },
+    "otro.final": {
+      "ms": 2136
+    },
+    "otro.pistaLibre": {
+      "ms": 2832
+    },
+    "otro.rodando": {
+      "ms": 3507
+    }
+  },
+  "recetas": {
+    "otro.buenosDias": [
+      "otro.buenosDias"
+    ],
+    "otro.enCola": [
+      "otro.enCola"
+    ],
+    "otro.final": [
+      "otro.final"
+    ],
+    "otro.pistaLibre": [
+      "otro.pistaLibre"
+    ],
+    "otro.rodando": [
+      "otro.rodando"
+    ]
+  }
+}

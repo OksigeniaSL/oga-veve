@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "voz": "torre",
+  "idioma": "en",
+  "piezas": {
+    "torre.clearedLand": {
+      "ms": 899
+    },
+    "torre.clearedTakeoff": {
+      "ms": 1100
+    },
+    "torre.goAround": {
+      "ms": 1497
+    },
+    "torre.holdShort": {
+      "ms": 1294
+    },
+    "torre.lineUpWait": {
+      "ms": 1118
+    },
+    "torre.roja": {
+      "ms": 756
+    },
+    "torre.verde": {
+      "ms": 1047
+    }
+  },
+  "recetas": {
+    "torre.clearedLand": [
+      "torre.clearedLand"
+    ],
+    "torre.clearedTakeoff": [
+      "torre.clearedTakeoff"
+    ],
+    "torre.goAround": [
+      "torre.goAround"
+    ],
+    "torre.holdShort": [
+      "torre.holdShort"
+    ],
+    "torre.lineUpWait": [
+      "torre.lineUpWait"
+    ],
+    "torre.roja": [
+      "torre.roja"
+    ],
+    "torre.verde": [
+      "torre.verde"
+    ]
+  }
+}

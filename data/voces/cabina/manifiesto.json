@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "voz": "cabina",
+  "idioma": "en",
+  "piezas": {
+    "cabina.airspeed": {
+      "ms": 750
+    },
+    "cabina.fifty": {
+      "ms": 657
+    },
+    "cabina.five": {
+      "ms": 631
+    },
+    "cabina.fiveHundred": {
+      "ms": 721
+    },
+    "cabina.forty": {
+      "ms": 462
+    },
+    "cabina.goAround": {
+      "ms": 1515
+    },
+    "cabina.obstacleAhead": {
+      "ms": 949
+    },
+    "cabina.offTheRunway": {
+      "ms": 749
+    },
+    "cabina.oneHundred": {
+      "ms": 624
+    },
+    "cabina.slowDown": {
+      "ms": 1105
+    },
+    "cabina.ten": {
+      "ms": 1464
+    },
+    "cabina.terrainPullUp": {
+      "ms": 1411
+    },
+    "cabina.thirty": {
+      "ms": 556
+    },
+    "cabina.tooFast": {
+      "ms": 789
+    },
+    "cabina.tooHighComeDown": {
+      "ms": 1317
+    },
+    "cabina.tooLow": {
+      "ms": 543
+    },
+    "cabina.tooLowClimb": {
+      "ms": 930
+    },
+    "cabina.twenty": {
+      "ms": 478
+    },
+    "cabina.v1": {
+      "ms": 1030
+    },
+    "cabina.vr": {
+      "ms": 708
+    },
+    "cabina.weHaveAProblem": {
+      "ms": 1050
+    }
+  },
+  "recetas": {
+    "cabina.airspeed": [
+      "cabina.airspeed"
+    ],
+    "cabina.fifty": [
+      "cabina.fifty"
+    ],
+    "cabina.five": [
+      "cabina.five"
+    ],
+    "cabina.fiveHundred": [
+      "cabina.fiveHundred"
+    ],
+    "cabina.forty": [
+      "cabina.forty"
+    ],
+    "cabina.goAround": [
+      "cabina.goAround"
+    ],
+    "cabina.obstacleAhead": [
+      "cabina.obstacleAhead"
+    ],
+    "cabina.offTheRunway": [
+      "cabina.offTheRunway"
+    ],
+    "cabina.oneHundred": [
+      "cabina.oneHundred"
+    ],
+    "cabina.slowDown": [
+      "cabina.slowDown"
+    ],
+    "cabina.ten": [
+      "cabina.ten"
+    ],
+    "cabina.terrainPullUp": [
+      "cabina.terrainPullUp"
+    ],
+    "cabina.thirty": [
+      "cabina.thirty"
+    ],
+    "cabina.tooFast": [
+      "cabina.tooFast"
+    ],
+    "cabina.tooHighComeDown": [
+      "cabina.tooHighComeDown"
+    ],
+    "cabina.tooLow": [
+      "cabina.tooLow"
+    ],
+    "cabina.tooLowClimb": [
+      "cabina.tooLowClimb"
+    ],
+    "cabina.twenty": [
+      "cabina.twenty"
+    ],
+    "cabina.v1": [
+      "cabina.v1"
+    ],
+    "cabina.vr": [
+      "cabina.vr"
+    ],
+    "cabina.weHaveAProblem": [
+      "cabina.weHaveAProblem"
+    ]
+  }
+}
