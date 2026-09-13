@@ -515,6 +515,23 @@ const MEDIA_VUELTA = icono(`
 `);
 
 /**
+ * **Las gafas de sol**, que es el único dibujo de este juego que no dice qué
+ * hacer: dice qué te acabas de llevar.
+ *
+ * Dos cristales y el puente, con la montura marcada, que es la silueta que
+ * reconoce cualquiera sin que se parezca a ninguna marca. Y llenos, no con
+ * línea: un premio se ve mejor sólido. Ver `flight/gafas.ts` y #2.
+ */
+const GAFAS = icono(`
+  <path d="M1.6 8 h20.8" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" />
+  <path d="M1.8 8.6 h8.4 v3.6 a4.2 4.2 0 0 1 -8.4 0 Z" />
+  <path d="M22.2 8.6 h-8.4 v3.6 a4.2 4.2 0 0 0 8.4 0 Z" />
+  <path d="M10.2 10 h3.6" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -535,6 +552,7 @@ export const DIBUJOS: Record<string, string> = {
   ala: ALA,
   senda: SENDA,
   corregido: CORREGIDO,
+  gafas: GAFAS,
   freno: FRENO,
   salida: SALIDA,
   sinVoz: SIN_VOZ,

@@ -94,6 +94,14 @@ export interface Hechos {
    */
   loCorregiste: Record<string, never>;
   /**
+   * Te acabas de ganar las gafas de sol.
+   *
+   * Una vez en la vida del perfil, con el primer aterrizaje que cuenta. Es el
+   * único hecho de esta lista que no informa de nada del vuelo: informa de que
+   * a quien vuela le acaba de pasar algo. Ver `flight/gafas.ts` y #2.
+   */
+  ganasteLasGafas: Record<string, never>;
+  /**
    * El PAPI ha cambiado de lectura: `blancas` luces de cuatro.
    *
    * Tres o cuatro es venir alto, una o ninguna es venir bajo, dos es la senda.

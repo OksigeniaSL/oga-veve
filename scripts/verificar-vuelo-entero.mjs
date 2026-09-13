@@ -434,8 +434,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * curvas salen cerradas; a quince metros fuera, veintidós, que ya es más de
    * lo que el avión gira y el círculo no se cierra.
    */
-  const miraDe = (s, fuera = 0) =>
-    Math.max(12, s.airspeed * 1.6, fuera * 1.5);
+  const miraDe = (s, fuera = 0) => Math.max(12, s.airspeed * 1.6, fuera * 1.5);
   const timon = (s, ruta) => {
     if (ruta.length < 2) return 0;
     let cerca = 0;
@@ -1201,6 +1200,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * frenos puestos durante once minutos. Ver `sufrirPercance`.
      */
     percance: o.percance?.() ?? null,
+    gafas: o.gafas?.() ?? null,
     segundos: +t.toFixed(1),
     veces,
     vueltas: i,
@@ -1393,9 +1393,9 @@ comprobar(
   vuelo.cercaDelCoche < 0
     ? "no llegó a salir"
     : `lo más cerca que llegó a estar: ${vuelo.cercaDelCoche} m · a ${vuelo.ladoAlEstarCerca} m de la raya · ${vuelo.cercaCuando}` +
-      (vuelo.enBici
-        ? " · en bici, que se aparta a propósito y no cuenta como atropello"
-        : ""),
+        (vuelo.enBici
+          ? " · en bici, que se aparta a propósito y no cuenta como atropello"
+          : ""),
   "«con el avión puedo adelantar al coche, le paso por encima»",
 );
 
@@ -1437,6 +1437,30 @@ comprobar(
   vuelo.pidioFreno ? "salió la tarjeta del freno" : "no la pidió",
   "se aterrizaba y la pantalla no decía nada durante quince segundos",
 );
+
+/*
+ * **Y el primer aterrizaje bueno trae las gafas de sol.**
+ *
+ * Es la única comprobación de este banco que no mide si el avión vuela: mide
+ * si el premio llega. El proyecto entero nace de una niña que quiere ser
+ * piloto «con las gafas de sol», y entre la regla escrita en `flight/gafas.ts`
+ * y que unas gafas aparezcan de verdad en la cara de quien acaba de posarse
+ * hay cuatro piezas —el veredicto, el hecho, el botón y el cristal—, que son
+ * cuatro sitios donde se puede cortar sin que nadie se entere.
+ *
+ * Solo cuando se llegó a tocar: un vuelo que no aterriza no las gana, y eso no
+ * es un fallo del premio.
+ */
+if (vuelo.toco > 0) {
+  comprobar(
+    "y con el primer aterrizaje bueno te llevás las gafas de sol",
+    vuelo.gafas?.ganadas === true && vuelo.gafas?.puestas === true,
+    vuelo.gafas
+      ? `ganadas ${vuelo.gafas.ganadas ? "sí" : "no"}, puestas ${vuelo.gafas.puestas ? "sí" : "no"}`
+      : "el juego no sabe decirlo",
+    "«quiero ser piloto con las gafas de sol»",
+  );
+}
 
 comprobar(
   "y el vuelo termina contando lo que te llevás",
