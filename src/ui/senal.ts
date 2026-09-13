@@ -515,6 +515,22 @@ const MEDIA_VUELTA = icono(`
 `);
 
 /**
+ * **Los flaps**: el ala, y el trozo de atrás bajado.
+ *
+ * Es el dibujo de lo que hace el mando, no del mando: un perfil de ala visto
+ * de lado con el borde de salida caído, que es literalmente lo que pasa al
+ * pulsar la tecla. El ala va llena y el flap con su ángulo marcado, porque lo
+ * que hay que entender es **que baja**.
+ */
+const FLAPS = icono(`
+  <path d="M2.4 11.4 q6-3.6 12-3 l3.6 1.2 -3.2 2.6 q-6 1.2 -12.4 0.6 Z" />
+  <path d="M17.6 12.2 L22.4 16.6" fill="none" stroke="currentColor"
+        stroke-width="2.8" stroke-linecap="round" />
+  <path d="M18.6 16.8 h4.4" fill="none" stroke="currentColor"
+        stroke-width="1.6" stroke-linecap="round" opacity="0.5" />
+`);
+
+/**
  * **Las gafas de sol**, que es el único dibujo de este juego que no dice qué
  * hacer: dice qué te acabas de llevar.
  *
@@ -553,6 +569,7 @@ export const DIBUJOS: Record<string, string> = {
   senda: SENDA,
   corregido: CORREGIDO,
   gafas: GAFAS,
+  flaps: FLAPS,
   freno: FRENO,
   salida: SALIDA,
   sinVoz: SIN_VOZ,

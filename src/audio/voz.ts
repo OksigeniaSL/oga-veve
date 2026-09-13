@@ -20,6 +20,8 @@
  */
 
 /** Los avisos son de cabina, y una cabina habla en inglés aeronáutico. */
+import { BOCA, type Urgencia } from "./boca";
+
 const IDIOMA = "en-US";
 
 let permitido = true;
@@ -107,34 +109,52 @@ export function permitirVoz(si: boolean): void {
 /**
  * Dice una frase corta, o no dice nada si no se puede.
  *
- * `cancelar` corta lo que se estuviera diciendo, que es lo que hace falta en
- * una cuenta atrás: si todavía está sonando «twenty» cuando toca «ten», lo que
- * hay que oír es «ten». Una cola de avisos de altura es peor que ninguno,
- * porque la altura que anuncia ya no es la que hay.
+ * **Y pide la palabra en vez de quitársela a quien la tenga.**
+ *
+ * Esto llamaba a `cancel()` y hablaba, y el instructor hacía exactamente lo
+ * mismo por su lado: dos módulos cortándose el uno al otro sobre el único
+ * sintetizador que tiene el navegador. «En V1 te avisa y enseguida dice lo
+ * siguiente y el audio se medio corta para dar paso al otro» — V1 y rotar son
+ * dos cantos separados por un segundo. Ahora manda `audio/boca.ts`.
+ *
+ * `urgencia` por defecto es la normal, que es lo que son casi todos los
+ * cantos. Los que sí interrumpen —el suelo, la pista ocupada— la piden.
+ *
+ * Antes había aquí un motivo escrito para cortar: en una cuenta atrás de
+ * altura, si todavía suena «twenty» cuando toca «ten», lo que hay que oír es
+ * «ten». Sigue siendo verdad y sigue pasando: la boca guarda **una** plaza, y
+ * la última que llega sustituye a la que esperaba.
  */
-export function decir(frase: string): void {
+export function decir(frase: string, urgencia: Urgencia = "normal"): void {
   if (!permitido) return;
-  try {
-    const sintesis = globalThis.speechSynthesis;
-    if (!sintesis) return;
-    sintesis.cancel();
-    const dicho = new SpeechSynthesisUtterance(frase);
-    seguirLaVoz(dicho);
-    dicho.lang = IDIOMA;
-    // Un punto por encima de lo normal: los avisos de cabina son secos y
-    // rápidos, y a los cuatro años una voz lenta se pierde antes de acabar.
-    dicho.rate = 1.15;
-    dicho.volume = volumen;
-    sintesis.speak(dicho);
-  } catch {
-    // Sin voz se juega igual. Ver la cabecera de este fichero.
-  }
+  BOCA.pedir(urgencia, (listo) => {
+    try {
+      const sintesis = globalThis.speechSynthesis;
+      if (!sintesis) {
+        listo();
+        return;
+      }
+      const dicho = new SpeechSynthesisUtterance(frase);
+      seguirLaVoz(dicho);
+      dicho.lang = IDIOMA;
+      // Un punto por encima de lo normal: los avisos de cabina son secos y
+      // rápidos, y a los cuatro años una voz lenta se pierde antes de acabar.
+      dicho.rate = 1.15;
+      dicho.volume = volumen;
+      dicho.onend = listo;
+      dicho.onerror = listo;
+      sintesis.speak(dicho);
+    } catch {
+      // Sin voz se juega igual. Ver la cabecera de este fichero.
+      listo();
+    }
+  });
 }
 
 /** Corta lo que se esté diciendo. Al reiniciar el vuelo, por ejemplo. */
 export function callar(): void {
   try {
-    globalThis.speechSynthesis?.cancel();
+    BOCA.callar();
   } catch {
     // Igual que arriba.
   }

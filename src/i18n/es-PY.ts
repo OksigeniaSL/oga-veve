@@ -344,6 +344,8 @@ export const ES_PY = {
   "vuelo.fuera": "Volvé a la raya verde",
   "vuelo.roto": "Se rompió. Volvemos a empezar",
   "vuelo.rapido": "Vas muy rápido",
+  "vuelo.pediFlaps": "Bajá los flaps para frenar",
+  "palabra.flaps": "Flaps",
   "vuelo.despacio": "Más despacio",
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la
   // tecla del freno. Sin eso, el gesto dice qué pero no cómo.

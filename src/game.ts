@@ -286,6 +286,7 @@ import {
   permitirVoz,
   ponerVolumenDeVoz,
 } from "./audio/voz";
+import type { Urgencia } from "./audio/boca";
 import { Agenda } from "./flight/agenda";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
@@ -1914,15 +1915,27 @@ export class Game {
    * quien juega en silencio no se pierde nada. Por eso esto solo elige quién
    * habla, y nunca decide si hay aviso.
    */
-  private cantar(ingles: string, encasa?: string, clave?: string): void {
+  private cantar(
+    ingles: string,
+    encasa?: string,
+    clave?: string,
+    /**
+     * Y cuánto manda esto sobre lo que se esté diciendo. Ver `audio/boca.ts`.
+     *
+     * Normal casi siempre. Urgente son tres: el terreno, la pista ocupada y la
+     * frustrada — lo que no puede esperar a que termine una frase. Y baja, los
+     * elogios: que te digan «bien» no puede pisar a nadie.
+     */
+    urgencia: Urgencia = "normal",
+  ): void {
     if (canalesDe(this.tier.avisos).cabina) {
-      decir(ingles);
+      decir(ingles, urgencia);
       return;
     }
     // Y con la clave cuando la hay: el instructor grabado busca por clave.
     // Las frases que se componen en caliente no la tienen y las dice la voz
     // del navegador, que es lo que hay hasta que existan las grabaciones.
-    if (encasa) this.instructor.decir(encasa, clave);
+    if (encasa) this.instructor.decir(encasa, clave, urgencia);
   }
 
   /**
@@ -2504,7 +2517,7 @@ export class Game {
         prioridad: IMPORTANTE,
       });
       this.audio.cue("achieved");
-      this.cantar("on the glide path", bien.texto, bien.id);
+      this.cantar("on the glide path", bien.texto, bien.id, "baja");
     });
 
     /*
@@ -3842,14 +3855,52 @@ export class Game {
          * «airspeed» es lo que dice una cabina de verdad — dice las dos cosas
          * a la vez, «mira la velocidad»; cuál de las dos ya lo dice el color.
          */
-        const suave = this.flight.state.onGround
-          ? "vuelo.despacio"
-          : "vuelo.rapido";
-        this.cantar(
-          this.flight.state.onGround ? "slow down" : "airspeed",
-          t(suave),
-          suave,
-        );
+        /*
+         * **Y en el aire, si ya no queda gas que quitar, se dice cómo.**
+         *
+         * «Vas muy rápido» con el motor al ralentí es un aviso sin salida:
+         * bajando por la senda, un avión limpio con el gas cortado acelera, y
+         * eso es física y no un fallo. Lo que era un fallo es lo que faltaba
+         * después de la frase — **el juego tiene flaps y no los mencionaba en
+         * ningún sitio**: ni aquí, ni en la voz, ni en un dibujo. Así que
+         * quien lo oía se quedaba con dos mandos que no sirven para eso.
+         *
+         * Lo dijo quien lo juega, bajando a La Palma: «"vas muy rápido", dice;
+         * pues como no apague el motor y me tire en picado contra Breña Baja,
+         * yo ya no sé».
+         *
+         * Un piloto frena con la resistencia, no con el gas: los flaps son el
+         * mando que sobra. Solo se dice cuando de verdad no queda otra cosa
+         * que hacer —gas casi cerrado y flaps todavía arriba—, que es cuando
+         * el consejo es el consejo y no ruido.
+         */
+        const sinGasQueQuitar =
+          !this.flight.state.onGround &&
+          banda === "rapido" &&
+          this.input.controls.throttle < 0.25 &&
+          this.input.controls.flaps < 0.5;
+        if (sinGasQueQuitar) {
+          this.hud.senal.mostrar(
+            "flaps",
+            this.rotulo("vuelo.pediFlaps", "palabra.flaps"),
+            null,
+            {
+              segundos: SE_QUEDA_EL_ARO,
+              prioridad: IMPORTANTE,
+              tecla: nombreDeTecla(this.input.preferredKey("flaps")),
+            },
+          );
+          this.cantar("flaps", t("vuelo.pediFlaps"), "vuelo.pediFlaps");
+        } else {
+          const suave = this.flight.state.onGround
+            ? "vuelo.despacio"
+            : "vuelo.rapido";
+          this.cantar(
+            this.flight.state.onGround ? "slow down" : "airspeed",
+            t(suave),
+            suave,
+          );
+        }
       }
     } else {
       this.fueraDeBanda = 0;
@@ -4021,6 +4072,8 @@ export class Game {
         terreno === "sube" ? "terrain, pull up" : "too low",
         t(cual),
         cual,
+        // El único aviso que **interrumpe** en vez de informar. Ver `peligro`.
+        "urgente",
       );
     } else if (!terreno) {
       this.terrenoDicho = null;

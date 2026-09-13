@@ -26,6 +26,7 @@
  */
 
 import type { Instructor } from "./instructor";
+import type { Urgencia } from "./boca";
 import {
   BASE,
   CACHE,
@@ -104,13 +105,13 @@ export class InstructorGrabado implements Instructor {
     return null;
   }
 
-  decir(texto: string, clave?: string): void {
+  decir(texto: string, clave?: string, urgencia?: Urgencia): void {
     const suena = this.quienLaDice(clave ?? null);
     if (!suena) {
       // Que hable el navegador, y que se calle lo grabado: dos voces a la vez
       // son ruido, y de las dos manda la que se acaba de pedir.
       this.callarLoGrabado();
-      this.suplente.decir(texto);
+      this.suplente.decir(texto, clave, urgencia);
       return;
     }
     const cadena: AudioBuffer[] = [];
@@ -120,7 +121,7 @@ export class InstructorGrabado implements Instructor {
       // coja. Media frase es peor que ninguna: la dice el navegador entera.
       if (!buffer) {
         this.callarLoGrabado();
-        this.suplente.decir(texto);
+        this.suplente.decir(texto, clave, urgencia);
         return;
       }
       cadena.push(buffer);
@@ -137,7 +138,7 @@ export class InstructorGrabado implements Instructor {
       // No había dónde tocar —el contexto de audio todavía duerme—. Que lo
       // diga el navegador antes que nadie, que es lo que había antes de esto.
       this.sonando = false;
-      this.suplente.decir(texto);
+      this.suplente.decir(texto, clave, urgencia);
     }
   }
 
