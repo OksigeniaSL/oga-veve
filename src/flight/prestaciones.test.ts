@@ -61,6 +61,22 @@
  *
  * Y los modos salen con la misma maquinaria que reproduce los cinco del
  * Navion a la cuarta cifra. Ver `referencia.ts`.
+ *
+ * ## Y la carrera de despegue, que era la última fila
+ *
+ * ```
+ *   jaz-20   rodadura hasta Vr 234 m (cuenta 225) · rotación 43 m más
+ *   jaz-25   rodadura hasta Vr 135 m (cuenta 130) · rotación 25 m más
+ * ```
+ *
+ * **Dos números y no uno**, que es como los separa cualquier tabla de despegue
+ * de verdad. Juntarlos hizo que la primera medida saliera un veintitrés por
+ * ciento larga —y en los dos aviones exactamente igual, que es la pista de que
+ * faltaba un término y no de que sobrara precisión—. Separados cuadran al
+ * cuatro por ciento.
+ *
+ * Comprobado que se cae: quitándole el rozamiento de rodadura al motor, o
+ * dándole un diez por ciento más de empuje, fallan tres comprobaciones.
  */
 
 import { describe, expect, it } from "vitest";
@@ -68,6 +84,7 @@ import { Vector3 } from "three";
 import { CoefficientFlightModel } from "./fdm";
 import { AIRCRAFT, type AircraftConfig } from "./aircraft";
 import { neutralControls } from "./model";
+import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import {
   derivadasDeLaFicha,
   modosDe,
@@ -345,10 +362,143 @@ function mejorAscenso(a: AircraftConfig): { subida: number; a: number } {
   return mejor;
 }
 
+/**
+ * La carrera de despegue: hasta Vr y hasta que las ruedas se van.
+ *
+ * **Dos números y no uno**, que es como los separa cualquier tabla de despegue
+ * de verdad: la rodadura es hasta la velocidad de rotación y lo que viene
+ * después es la rotación, que es otra maniobra. Juntarlos fue lo que hizo que
+ * la primera medida saliera un veintitrés por ciento por encima de la cuenta
+ * —y en los dos aviones exactamente igual, que es la pista de que faltaba un
+ * término y no de que sobrara precisión—. Separados cuadran al cuatro.
+ */
+function carreraDeDespegue(
+  a: AircraftConfig,
+  superficie: Superficie = "asfalto",
+): { hastaVr: number; hastaIrse: number; seVaA: number } {
+  const m = new CoefficientFlightModel({
+    aircraft: a,
+    ground: () => 0,
+    assist: 0,
+  });
+  m.ponerSuperficie(superficie);
+  m.reset({
+    position: new Vector3(0, a.gearHeight, 0),
+    heading: 0,
+    airspeed: 0,
+  });
+  let hastaVr = 0;
+  let hastaIrse = 0;
+  const antes = new Vector3();
+  for (let k = 0; k < Math.round(120 / DT); k++) {
+    antes.copy(m.state.position);
+    const v = m.state.airspeed;
+    m.step(DT, {
+      ...neutralControls(),
+      engineOn: true,
+      throttle: 1,
+      // Se tira al llegar a Vr, que es lo que hace quien pilota.
+      elevator: v >= a.rotationSpeed ? 0.55 : 0,
+    });
+    if (!m.state.onGround) break;
+    const paso = Math.hypot(
+      m.state.position.x - antes.x,
+      m.state.position.z - antes.z,
+    );
+    hastaIrse += paso;
+    if (v < a.rotationSpeed) hastaVr += paso;
+  }
+  return { hastaVr, hastaIrse, seVaA: m.state.airspeed };
+}
+
+/**
+ * Y la que predicen las cuentas: integrar `V·dV/a` hasta Vr.
+ *
+ * `a = (T − D − μ(W − L))/m`, con el empuje cayendo con la velocidad como lo
+ * hace en el modelo y el avión rodando a su sustentación de cero grados. Es la
+ * cuenta de un libro, y no sabe nada del motor de vuelo — que es justo lo que
+ * la hace servir para comprobarlo.
+ */
+function carreraTeorica(a: AircraftConfig, superficie: Superficie): number {
+  const AR = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const peso = a.mass * G;
+  const cl = a.aero.cl0;
+  const cd = a.aero.cd0 + (cl * cl) / (Math.PI * AR * a.aero.oswald);
+  const mu = ROZAMIENTO[superficie];
+  const pasos = 4000;
+  const dv = a.rotationSpeed / pasos;
+  let s = 0;
+  for (let i = 0; i < pasos; i++) {
+    const v = (i + 0.5) * dv;
+    const q = 0.5 * RHO * v * v * a.wingArea;
+    const empuje = a.maxThrust * Math.max(0.2, 1 - v / (2.4 * a.cruiseSpeed));
+    const acc = (empuje - q * cd - mu * Math.max(0, peso - q * cl)) / a.mass;
+    if (acc <= 0) return Infinity;
+    s += (v / acc) * dv;
+  }
+  return s;
+}
+
 describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
   "lo que hace el %s",
   (_id, a) => {
     const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+
+    /*
+     * **La carrera de despegue, contra la cuenta del suelo.**
+     *
+     * Es la última fila de #57 y la única que no se mide en el aire: hacen
+     * falta el rozamiento de rodadura, el empuje cayendo con la velocidad y el
+     * peso que el ala va quitándole a las ruedas. La cuenta es de un libro y no
+     * sabe nada del motor de vuelo, que es lo que la hace servir.
+     *
+     * Medido sobre asfalto: jaz-20 234 m contra 225 de cuenta; jaz-25 135
+     * contra 130. Un cuatro por ciento.
+     */
+    it("rueda hasta Vr lo que dicen el empuje y el rozamiento", () => {
+      const { hastaVr } = carreraDeDespegue(a, "asfalto");
+      const teorica = carreraTeorica(a, "asfalto");
+      expect(hastaVr).toBeGreaterThan(teorica * 0.93);
+      expect(hastaVr).toBeLessThan(teorica * 1.07);
+    });
+
+    /*
+     * **Y la rotación es otra cosa, y se cuenta aparte.**
+     *
+     * Tirar en Vr no despega el avión: lo pone en actitud, y las ruedas se van
+     * unos metros después y un par de metros por segundo más deprisa. Juntar
+     * las dos cosas es lo que hacía que la medida saliera un veintitrés por
+     * ciento larga.
+     *
+     * Medido: cuarenta y tres metros en el entrenador y veinticinco en el
+     * biplano, o sea entre un quinto y un sexto de la rodadura. Lo que este
+     * listón caza es un avión que se va en cuanto se roza la palanca —eso no
+     * es rotar— y uno que no se va nunca.
+     */
+    it("y después rota, que son unos metros más", () => {
+      const { hastaVr, hastaIrse, seVaA } = carreraDeDespegue(a, "asfalto");
+      const rotacion = hastaIrse - hastaVr;
+      expect(rotacion).toBeGreaterThan(5);
+      expect(rotacion).toBeLessThan(hastaVr * 0.5);
+      // Y se va por encima de Vr, nunca por debajo.
+      expect(seVaA).toBeGreaterThanOrEqual(a.rotationSpeed);
+    });
+
+    /*
+     * **Y en hierba cuesta más**, que es lo que el propio modelo dice de sí
+     * mismo: «de ellos sale que una pista de hierba pida más carrera de
+     * despegue que una de asfalto». Estaba escrito y no lo comprobaba nadie —y
+     * es la diferencia entre Yvytu Rape y Tenerife Norte.
+     */
+    it("y en hierba hace falta más pista", () => {
+      const asfalto = carreraDeDespegue(a, "asfalto").hastaVr;
+      const hierba = carreraDeDespegue(a, "hierba").hastaVr;
+      expect(hierba).toBeGreaterThan(asfalto);
+      // Y la cuenta lo dice igual: el rozamiento sube de 0,02 a 0,05.
+      const cuenta = carreraTeorica(a, "hierba") / carreraTeorica(a, "asfalto");
+      expect(hierba / asfalto).toBeGreaterThan(cuenta * 0.9);
+      expect(hierba / asfalto).toBeLessThan(cuenta * 1.1);
+    });
 
     /*
      * **El planeo, contra la cuenta del ala.**
