@@ -8,6 +8,8 @@ instructor	instructor/vuelo.backTaxi.ogg	es-PY	Andá hasta el fondo y dá la vue
 instructor	instructor/vuelo.alineando.ogg	es-PY	Ponete derechito en el eje	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.minimos.ogg	es-PY	Mirá la pista: ¿la ves?	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.noEstabilizada.ogg	es-PY	Así no: andate y volvé a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.noEstabilizada~2.ogg	es-PY	Así no entra: gas y al aire, lo probamos otra vez	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.noEstabilizada~3.ogg	es-PY	Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.rotar.ogg	es-PY	Tirá para arriba	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.comprometido.ogg	es-PY	¡Ya no se puede frenar, volá!	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despegando.ogg	es-PY	Motor a fondo	lo que toca hacer ahora, en vuelo y en tierra
@@ -17,10 +19,20 @@ instructor	instructor/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ah
 instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.terrenoSube.ogg	es-PY	¡Subí!	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	¡Pista ocupada! Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.mandanFrustrar~3.ogg	es-PY	No podés bajar: metele gas y volvé a subir	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.puedeVolver~2.ogg	es-PY	La pista quedó libre: podés volver a bajar	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.frustrada.ogg	es-PY	¡Bien hecho! Te fuiste al aire. Probá de nuevo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.frustrada~2.ogg	es-PY	Muy bien: irse al aire también es volar bien	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.frustrada~3.ogg	es-PY	Eso estuvo bien. Damos otra vuelta y volvemos	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.aroAlto.ogg	es-PY	Vas alto para la pista. Bajá un poco	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aroAlto~2.ogg	es-PY	Estás por encima de la senda: bajá un poquito	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.aroBajo.ogg	es-PY	Vas bajo para la pista. Subí un poco	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aroBajo~2.ogg	es-PY	Te quedaste por debajo: subí un poquito	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.corregido.ogg	es-PY	¡Eso es! Ahora entrás por donde hay que entrar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.corregido~2.ogg	es-PY	Muy bien, así estás en la senda	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.corregido~3.ogg	es-PY	Eso. Ahora venís derecho	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.papiAlto.ogg	es-PY	Luces blancas: vas alto, bajá	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiBajo.ogg	es-PY	Luces rojas: vas bajo, subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiBien.ogg	es-PY	Dos rojas y dos blancas: vas bien	lo que toca hacer ahora, en vuelo y en tierra

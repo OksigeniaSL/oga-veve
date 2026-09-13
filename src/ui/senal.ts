@@ -269,6 +269,27 @@ const SENDA = icono(`
 `);
 
 /**
+ * Lo corregiste: **la senda, y un visto**.
+ *
+ * Es la de la senda con la línea entera en vez de a trazos y una marca de
+ * visto encima: se dibuja igual porque se está hablando de lo mismo, y lo que
+ * cambia es que ahora va bien.
+ *
+ * Hacía falta porque el juego solo sabía decir cuándo ibas mal: te avisaba de
+ * que estabas alto, corregías, y **se callaba**. Callarse no es lo mismo que
+ * decir que lo hiciste bien, y a los cuatro años la diferencia es todo. «Si
+ * corrijo bien estaría bien una voz conciliadora que me indique que lo he
+ * hecho bien.»
+ */
+const CORREGIDO = icono(`
+  <path d="M2 20 h20" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none" />
+  <path d="M3.5 5 L19 17.5" stroke="currentColor" stroke-width="2" fill="none"
+        stroke-linecap="round" />
+  <path d="M13 9.5 L15.6 12.1 L21 5.6" stroke="currentColor" stroke-width="2.8"
+        fill="none" stroke-linecap="round" stroke-linejoin="round" />
+`);
+
+/**
  * Frenar: **el avión y la raya donde se para**.
  *
  * Era un disco con cuatro marcas alrededor, o sea un freno de disco visto de
@@ -513,6 +534,7 @@ export const DIBUJOS: Record<string, string> = {
   motor: MOTOR,
   ala: ALA,
   senda: SENDA,
+  corregido: CORREGIDO,
   freno: FRENO,
   salida: SALIDA,
   sinVoz: SIN_VOZ,

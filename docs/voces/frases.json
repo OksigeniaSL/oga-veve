@@ -63,6 +63,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.noEstabilizada~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Así no entra: gas y al aire, lo probamos otra vez",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.noEstabilizada~3",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
     "id": "vuelo.rotar",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -126,11 +140,32 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.mandanFrustrar~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.mandanFrustrar~3",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "No podés bajar: metele gas y volvé a subir",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
     "id": "vuelo.puedeVolver",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "La torre te deja volver a intentarlo",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.puedeVolver~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La pista quedó libre: podés volver a bajar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
     "id": "vuelo.frustrada",
@@ -140,6 +175,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.frustrada~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Muy bien: irse al aire también es volar bien",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.frustrada~3",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Eso estuvo bien. Damos otra vuelta y volvemos",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
     "id": "vuelo.aroAlto",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -147,11 +196,46 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.aroAlto~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estás por encima de la senda: bajá un poquito",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
     "id": "vuelo.aroBajo",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Vas bajo para la pista. Subí un poco",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.aroBajo~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Te quedaste por debajo: subí un poquito",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.corregido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡Eso es! Ahora entrás por donde hay que entrar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.corregido~2",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Muy bien, así estás en la senda",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.corregido~3",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Eso. Ahora venís derecho",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
     "id": "vuelo.papiAlto",

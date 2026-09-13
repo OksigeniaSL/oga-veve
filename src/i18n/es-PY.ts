@@ -295,6 +295,7 @@ export const ES_PY = {
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   "vuelo.aroAlto": "Vas alto para la pista. Bajá un poco",
   "vuelo.aroBajo": "Vas bajo para la pista. Subí un poco",
+  "vuelo.corregido": "¡Eso es! Ahora entrás por donde hay que entrar",
   "circuito.subida": "Subí derecho por el eje",
   "circuito.cruzado": "Girá a la izquierda: volvemos a la pista",
   "circuito.encola": "Volá al lado de la pista, con ella a tu izquierda",

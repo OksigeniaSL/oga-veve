@@ -7,6 +7,8 @@ Andá hasta el fondo y dá la vuelta
 Ponete derechito en el eje
 Mirá la pista: ¿la ves?
 Así no: andate y volvé a intentarlo
+Así no entra: gas y al aire, lo probamos otra vez
+Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo
 Tirá para arriba
 ¡Ya no se puede frenar, volá!
 Motor a fondo
@@ -16,10 +18,20 @@ Bajá suavecito
 Vas muy bajo
 ¡Subí!
 ¡Pista ocupada! Subí y volvé por el circuito
+¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
+No podés bajar: metele gas y volvé a subir
 La torre te deja volver a intentarlo
+La pista quedó libre: podés volver a bajar
 ¡Bien hecho! Te fuiste al aire. Probá de nuevo
+Muy bien: irse al aire también es volar bien
+Eso estuvo bien. Damos otra vuelta y volvemos
 Vas alto para la pista. Bajá un poco
+Estás por encima de la senda: bajá un poquito
 Vas bajo para la pista. Subí un poco
+Te quedaste por debajo: subí un poquito
+¡Eso es! Ahora entrás por donde hay que entrar
+Muy bien, así estás en la senda
+Eso. Ahora venís derecho
 Luces blancas: vas alto, bajá
 Luces rojas: vas bajo, subí
 Dos rojas y dos blancas: vas bien

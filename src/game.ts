@@ -282,6 +282,7 @@ import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
 import { Reparto } from "./hechos";
+import { unaForma } from "./audio/variantes";
 import { LaAproximacion } from "./flight/la-aproximacion";
 import { asentarAerodromoSobreLaFoto } from "./world/asentar-aerodromo";
 import { limitarElRodaje } from "./flight/tope-de-rodaje";
@@ -1951,6 +1952,35 @@ export class Game {
     return clave ? t(clave as TranslationKey) : "";
   }
 
+  /**
+   * Lo mismo, pero eligiendo **una de las formas** de decirlo.
+   *
+   * Devuelve las tres cosas que hacen falta para un aviso completo y las tres
+   * de la misma forma: lo que se escribe, lo que se dice y **cuál de las
+   * grabaciones** es. Elegir por separado sería que el cartel dijera una cosa
+   * y el instructor otra, o pedir un fichero que no existe.
+   *
+   * En los peldaños que enseñan la frase corta —«¡Al aire!»— el cartel no
+   * cambia: la variante es de la frase larga, que es la que se dice. Ver
+   * `audio/variantes.ts`.
+   */
+  private avisoCon(
+    larga: TranslationKey,
+    corta: TranslationKey,
+  ): { rotulo: string; texto: string; id: string } {
+    const forma = unaForma(larga);
+    const clave = claveDelAviso(this.tier.avisos, larga, corta);
+    return {
+      rotulo: !clave
+        ? ""
+        : clave === larga
+          ? forma.texto
+          : t(clave as TranslationKey),
+      texto: forma.texto,
+      id: forma.id,
+    };
+  }
+
   /** Lo mismo, cuando la frase larga se compone de varias claves. */
   private rotuloCompuesto(larga: string, corta: TranslationKey): string {
     const canales = canalesDe(this.tier.avisos);
@@ -2304,6 +2334,14 @@ export class Game {
     return null;
   }
 
+  /**
+   * Si en esta aproximación ya se avisó de que se venía alto o bajo.
+   *
+   * Es la condición entera de `loCorregiste`: sin aviso previo no hay nada que
+   * corregir, y felicitar a quien no hizo nada convierte el elogio en ruido.
+   */
+  private avisadoDeLaSenda = false;
+
   /** El aviso del bulto, con su antirrebote. Ver `SE_QUEDA_EL_BULTO`. */
   private avisarDelBulto(dibujo: string): void {
     if (this.avisandoDelBulto > 0) return;
@@ -2337,13 +2375,18 @@ export class Game {
      * es cuaderno, esto es voz— y que añadir un quinto (una misión, un logro)
      * no obliga a tocar el trozo que se da cuenta.
      */
+    /*
+     * La forma se elige aquí, una vez, y la usan los dos oyentes que la
+     * necesitan: el que pinta y el que habla. Se guarda entre los dos porque
+     * el reparto los llama en orden y no hay nada en medio.
+     */
+    let laFrustrada = this.avisoCon("vuelo.frustrada", "palabra.bien");
     this.hechos.on("frustrada", () => {
-      this.hud.senal.mostrar(
-        "frustrada",
-        this.rotulo("vuelo.frustrada", "palabra.bien"),
-        null,
-        { segundos: SE_QUEDA_LA_FRUSTRADA, prioridad: URGENTE },
-      );
+      laFrustrada = this.avisoCon("vuelo.frustrada", "palabra.bien");
+      this.hud.senal.mostrar("frustrada", laFrustrada.rotulo, null, {
+        segundos: SE_QUEDA_LA_FRUSTRADA,
+        prioridad: URGENTE,
+      });
     });
     this.hechos.on("frustrada", () => this.audio.cue("achieved"));
     // Al cuaderno: renunciar es ganar, y el grado más alto lo pide.
@@ -2355,8 +2398,8 @@ export class Game {
     this.hechos.on("frustrada", () =>
       this.cantar(
         "going around. good decision",
-        t("vuelo.frustrada"),
-        "vuelo.frustrada",
+        laFrustrada.texto,
+        laFrustrada.id,
       ),
     );
 
@@ -2438,6 +2481,21 @@ export class Game {
     });
 
     /*
+     * **Lo corregiste.** Dibujo, sonido y voz, como todo lo que importa — y
+     * con el sonido de haber ganado algo, no con el de «atención», porque esto
+     * no avisa de nada: dice que salió bien.
+     */
+    this.hechos.on("loCorregiste", () => {
+      const bien = this.avisoCon("vuelo.corregido", "palabra.bien");
+      this.hud.senal.mostrar("corregido", bien.rotulo, null, {
+        segundos: SE_QUEDA_EL_ARO,
+        prioridad: IMPORTANTE,
+      });
+      this.audio.cue("achieved");
+      this.cantar("on the glide path", bien.texto, bien.id);
+    });
+
+    /*
      * **Un tramo nuevo del circuito.** Sin palabra en el peldaño que no lee:
      * ahí el dibujo es el mensaje entero.
      */
@@ -2495,30 +2553,29 @@ export class Game {
         // Y a partir de aquí la luz la lleva la torre.
         this.laTorreMandaEnLaLuz = true;
       }
+      const dicho = this.avisoCon(
+        porque === "pistaOcupada"
+          ? "vuelo.mandanFrustrar"
+          : "vuelo.noEstabilizada",
+        "palabra.alAire",
+      );
       this.hud.senal.mostrar(
         "frustrada",
         porque === "pistaOcupada"
-          ? this.rotulo("vuelo.mandanFrustrar", "palabra.alAire")
+          ? dicho.rotulo
           : this.rotuloCompuesto(
-              `${t(`motivo.${motivo}` as never)}. ${t("vuelo.noEstabilizada")}`,
+              `${t(`motivo.${motivo}` as never)}. ${dicho.texto}`,
               "palabra.alAire",
             ),
         null,
         { segundos: Infinity, prioridad: URGENTE },
       );
       this.audio.cue("peligro");
-      if (porque === "pistaOcupada")
-        this.cantar(
-          "go around, runway occupied",
-          t("vuelo.mandanFrustrar"),
-          "vuelo.mandanFrustrar",
-        );
-      else
-        this.cantar(
-          "go around",
-          t("vuelo.noEstabilizada"),
-          "vuelo.noEstabilizada",
-        );
+      this.cantar(
+        porque === "pistaOcupada" ? "go around, runway occupied" : "go around",
+        dicho.texto,
+        dicho.id,
+      );
     });
 
     /*
@@ -2529,18 +2586,15 @@ export class Game {
     this.hechos.on("pistaLibreOtraVez", () => {
       this.laTorreMandaEnLaLuz = true;
       this.hud.setLuzDeTorre("verde");
-      this.hud.senal.mostrar(
-        "verde",
-        this.rotulo("vuelo.puedeVolver", "palabra.volve"),
-        null,
-        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
-      );
+      const libre = this.avisoCon("vuelo.puedeVolver", "palabra.volve");
+      this.hud.senal.mostrar("verde", libre.rotulo, null, {
+        segundos: SE_QUEDA_EL_ARO,
+        prioridad: IMPORTANTE,
+      });
       this.audio.cue("success");
-      this.cantar(
-        "cleared to land",
-        t("vuelo.puedeVolver"),
-        "vuelo.puedeVolver",
-      );
+      // «cleared to land» no tiene variantes y no las va a tener: es
+      // fraseología fija. Ver `audio/variantes.ts`.
+      this.cantar("cleared to land", libre.texto, libre.id);
       this.agenda.luego(SE_QUEDA_EL_ARO, () => {
         if (this.laAproximacion.mandanFrustrar) return;
         this.hud.setLuzDeTorre(null);
@@ -2728,6 +2782,7 @@ export class Game {
     // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
     // tenerlo junto: antes eran cinco líneas repartidas por este método.
     this.laAproximacion.reiniciar();
+    this.avisadoDeLaSenda = false;
     this.laTorreMandaEnLaLuz = false;
     this.vaca.quitar();
     // Otro vuelo, otra traza: la raya del anterior ya está guardada.
@@ -3984,18 +4039,39 @@ export class Game {
        * queda al lado— y para eso está la raya de la senda.
        */
       const donde = this.runwayGuide.porDonde;
+      /*
+       * **Y si te lo habían dicho y lo arreglaste, se nota.**
+       *
+       * El juego solo sabía decir cuándo ibas mal: te avisaba de que estabas
+       * alto, corregías, y se callaba. Callarse no es lo mismo que decir que
+       * lo hiciste bien, y a los cuatro años esa diferencia es todo.
+       *
+       * Solo después de un aviso, que es lo que lo separa de un premio de
+       * máquina: no se felicita por cruzar un aro —eso ya tiene su destello y
+       * su galón— sino por **haber corregido**. Quien venía bien desde el
+       * principio no oye nada, y hace bien.
+       */
+      if (donde === null && this.avisadoDeLaSenda) {
+        this.avisadoDeLaSenda = false;
+        this.hechos.emit("loCorregiste", {});
+      }
       if (donde === "alto" || donde === "bajo") {
+        this.avisadoDeLaSenda = true;
         this.hud.senal.mostrar(
           donde === "alto" ? "aro-alto" : "aro-bajo",
           this.rotuloDelAro(donde),
           null,
           { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
         );
-        const cual = donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo";
+        // Y de las formas que tiene, una: éste es de los que más se repiten
+        // en una aproximación. Ver `audio/variantes.ts`.
+        const cual = unaForma(
+          donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo",
+        );
         this.cantar(
           donde === "alto" ? "too high, come down" : "too low, climb",
-          t(cual),
-          cual,
+          cual.texto,
+          cual.id,
         );
       }
     }
