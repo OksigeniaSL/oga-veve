@@ -231,6 +231,7 @@ import { nombreDeTecla } from "./flight/keymap";
 import {
   elegirInstructor,
   elegirOtroAvion,
+  elegirTorre,
   type Instructor,
 } from "./audio/instructor";
 import { Radio } from "./flight/radio";
@@ -261,6 +262,7 @@ import { reconocer } from "./flight/reconocimiento";
 import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
+import { conectarLaRadio } from "./audio/radio";
 import { Audio } from "./audio/audio";
 import { InstructorGrabado } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
@@ -905,7 +907,25 @@ export class Game {
    * `flight/radio.ts`, que decide **cuándo** habla, y `audio/instructor.ts`,
    * que le busca una voz que no sea la del instructor.
    */
-  private readonly otroAvion: Instructor = elegirOtroAvion(this.vozDelSistema);
+  /**
+   * La torre, con voz propia y por radio.
+   *
+   * **Hasta hoy la torre no hablaba**: era una lámpara verde o roja con una
+   * palabra escrita debajo, arriba en una esquina. Y quien juega tiene cuatro
+   * años — «una lámpara con texto no lo lee un niño… un niño (ni yo) leemos
+   * esas etiquetitas de arriba ni por asomo». Una orden que solo existe como
+   * texto pequeño no existe.
+   *
+   * Va la primera en la lista de voces cogidas del otro avión porque el orden
+   * manda: ver `elegirVoz`.
+   */
+  private readonly torre: Instructor = elegirTorre(this.vozDelSistema);
+  private readonly otroAvion: Instructor = elegirOtroAvion(
+    this.vozDelSistema,
+    this.torre,
+  );
+  /** Lo último que dijo la lámpara, para que la torre no se repita. */
+  private ultimaLuzDeTorre: string | null = null;
   private readonly radio = new Radio();
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   faseAnunciada = "";
@@ -1322,6 +1342,12 @@ export class Game {
      * Ver `audio/mezcla.ts`.
      */
     conectarLaMezcla(this.audio);
+    /*
+     * Y el pulsador de la radio, que es lo que hace que la torre suene a
+     * torre. Ver `audio/radio.ts`: el chasquido sí pasa por Web Audio aunque
+     * la voz que va en medio no pueda.
+     */
+    conectarLaRadio(this.audio);
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
     this.hud.setSoundLevel(
@@ -2596,7 +2622,7 @@ export class Game {
         } else {
           // Roja, pero la del aire: «¡al aire!», no «esperá acá». Ver
           // `Hud.setLuzDeTorre`.
-          this.hud.setLuzDeTorre("roja", "alAire");
+          this.luzDeTorre("roja", "alAire");
         }
         // Y a partir de aquí la luz la lleva la torre.
         this.laTorreMandaEnLaLuz = true;
@@ -2633,7 +2659,7 @@ export class Game {
      */
     this.hechos.on("pistaLibreOtraVez", () => {
       this.laTorreMandaEnLaLuz = true;
-      this.hud.setLuzDeTorre("verde");
+      this.luzDeTorre("verde");
       const libre = this.avisoCon("vuelo.puedeVolver", "palabra.volve");
       this.hud.senal.mostrar("verde", libre.rotulo, null, {
         segundos: SE_QUEDA_EL_ARO,
@@ -2645,10 +2671,48 @@ export class Game {
       this.cantar("cleared to land", libre.texto, libre.id);
       this.agenda.luego(SE_QUEDA_EL_ARO, () => {
         if (this.laAproximacion.mandanFrustrar) return;
-        this.hud.setLuzDeTorre(null);
+        this.luzDeTorre(null);
         this.laTorreMandaEnLaLuz = false;
       });
     });
+  }
+
+  /**
+   * La luz de la torre, **y su voz**.
+   *
+   * Un solo sitio, y a propósito: la lámpara se encendía desde cuatro puntos
+   * distintos del juego y ninguno decía nada. Con esto, encender la luz **es**
+   * hablar por la radio, y no se puede hacer lo uno sin lo otro.
+   *
+   * Solo habla cuando la luz **cambia**: el último de esos cuatro sitios corre
+   * cada fotograma, y una torre que repite la misma orden sesenta veces por
+   * segundo no es una torre, es una avería.
+   */
+  private luzDeTorre(
+    luz: "verde" | "roja" | null,
+    rojaDice: "esperar" | "alAire" = "esperar",
+  ): void {
+    this.hud.setLuzDeTorre(luz, rojaDice);
+    const cual = luz === null ? null : `${luz}:${rojaDice}`;
+    if (cual === this.ultimaLuzDeTorre) return;
+    this.ultimaLuzDeTorre = cual;
+    if (!luz) return;
+    const clave: TranslationKey =
+      luz === "verde"
+        ? "torre.verde"
+        : rojaDice === "alAire"
+          ? "palabra.alAire"
+          : "torre.roja";
+    /*
+     * La orden de irse al aire **corta lo que haya**: es la única de las tres
+     * que no puede esperar a que termine una frase. Las otras dos son normales
+     * y se ponen en la cola de la boca como todo lo demás. Ver `audio/boca.ts`.
+     */
+    this.torre.decir(
+      t(clave),
+      clave,
+      rojaDice === "alAire" && luz === "roja" ? "urgente" : "normal",
+    );
   }
 
   /**
@@ -4979,7 +5043,7 @@ export class Game {
      * pantalla**. Ver `laTorreMandaEnLaLuz`.
      */
     if (!this.laTorreMandaEnLaLuz) {
-      this.hud.setLuzDeTorre(
+      this.luzDeTorre(
         !enTierraEsperando
           ? null
           : vista.fase === "esperando"

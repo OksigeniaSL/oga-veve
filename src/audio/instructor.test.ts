@@ -16,9 +16,9 @@
  * base antes que variante, y nunca el silencio si hay algo del idioma.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 
-import { elegirVoz } from './instructor';
+import { elegirVoz } from "./instructor";
 
 /** Una voz de mentira, con lo poco que mira `elegirVoz`. */
 const voz = (
@@ -36,78 +36,110 @@ const voz = (
 
 /** Lo que publica Chrome: pocas, de red y con región en el código. */
 const CHROME = [
-  voz('de-DE', 'Google Deutsch'),
-  voz('en-US', 'Google US English'),
-  voz('es-ES', 'Google español'),
-  voz('es-US', 'Google español de Estados Unidos'),
-  voz('fr-FR', 'Google français'),
+  voz("de-DE", "Google Deutsch"),
+  voz("en-US", "Google US English"),
+  voz("es-ES", "Google español"),
+  voz("es-US", "Google español de Estados Unidos"),
+  voz("fr-FR", "Google français"),
 ];
 
 /** Y lo que publica Firefox: espeak-ng, con variantes y en desorden. */
 const FIREFOX = [
-  voz('es', 'Spanish (Spain)+Nguyen'),
-  voz('es-419', 'Spanish (Latin America)+John'),
-  voz('es-419', 'Spanish (Latin America)+Robosoft2'),
-  voz('es', 'Spanish (Spain)'),
-  voz('es-419', 'Spanish (Latin America)'),
-  voz('en-us', 'English (America)+Mike'),
+  voz("es", "Spanish (Spain)+Nguyen"),
+  voz("es-419", "Spanish (Latin America)+John"),
+  voz("es-419", "Spanish (Latin America)+Robosoft2"),
+  voz("es", "Spanish (Spain)"),
+  voz("es-419", "Spanish (Latin America)"),
+  voz("en-us", "English (America)+Mike"),
 ];
 
-describe('elegirVoz', () => {
-  it('en Chrome prefiere el castellano americano al de España', () => {
-    expect(elegirVoz(CHROME, 'es-PY')?.name).toBe(
-      'Google español de Estados Unidos',
+describe("elegirVoz", () => {
+  it("en Chrome prefiere el castellano americano al de España", () => {
+    expect(elegirVoz(CHROME, "es-PY")?.name).toBe(
+      "Google español de Estados Unidos",
     );
   });
 
-  it('en Firefox coge la voz base americana y no una variante', () => {
+  it("en Firefox coge la voz base americana y no una variante", () => {
     // Y no «Spanish (Latin America)+John», que es la primera que casa.
-    expect(elegirVoz(FIREFOX, 'es-PY')?.name).toBe('Spanish (Latin America)');
+    expect(elegirVoz(FIREFOX, "es-PY")?.name).toBe("Spanish (Latin America)");
   });
 
-  it('el acento pesa más que la voz base: América antes que España', () => {
-    const solo = [voz('es', 'Spanish (Spain)'), voz('es-419', 'LatAm+John')];
-    expect(elegirVoz(solo, 'es-PY')?.lang).toBe('es-419');
+  it("el acento pesa más que la voz base: América antes que España", () => {
+    const solo = [voz("es", "Spanish (Spain)"), voz("es-419", "LatAm+John")];
+    expect(elegirVoz(solo, "es-PY")?.lang).toBe("es-419");
   });
 
-  it('si solo hay castellano de España, habla el de España', () => {
+  it("si solo hay castellano de España, habla el de España", () => {
     // El silencio siempre es peor: el peldaño que no lee no tiene otra cosa.
-    const solo = [voz('de-DE', 'Deutsch'), voz('es-ES', 'Google español')];
-    expect(elegirVoz(solo, 'es-PY')?.lang).toBe('es-ES');
+    const solo = [voz("de-DE", "Deutsch"), voz("es-ES", "Google español")];
+    expect(elegirVoz(solo, "es-PY")?.lang).toBe("es-ES");
   });
 
-  it('acepta el guion bajo que devuelven algunos sistemas', () => {
-    expect(elegirVoz([voz('es_MX', 'Paulina')], 'es-PY')?.name).toBe('Paulina');
+  it("acepta el guion bajo que devuelven algunos sistemas", () => {
+    expect(elegirVoz([voz("es_MX", "Paulina")], "es-PY")?.name).toBe("Paulina");
   });
 
-  it('en inglés prefiere el americano', () => {
-    expect(elegirVoz(CHROME, 'en')?.name).toBe('Google US English');
+  it("en inglés prefiere el americano", () => {
+    expect(elegirVoz(CHROME, "en")?.name).toBe("Google US English");
   });
 
-  it('en guaraní se calla, que es lo honesto', () => {
+  it("en guaraní se calla, que es lo honesto", () => {
     // No hay voz de guaraní en ningún sintetizador, y una castellana leyendo
     // guaraní escrito suena a burla. Ver #6.
-    expect(elegirVoz(FIREFOX, 'gug')).toBeNull();
+    expect(elegirVoz(FIREFOX, "gug")).toBeNull();
   });
 
-  it('el otro avión de la radio no coge la voz del instructor', () => {
+  it("el otro avión de la radio no coge la voz del instructor", () => {
     // Una radio en la que contesta tu propio instructor no es una radio, es
     // un eco. Ver `elegirOtroAvion`.
-    const suya = elegirVoz(CHROME, 'es-PY')!;
-    const otra = elegirVoz(CHROME, 'es-PY', suya.name);
+    const suya = elegirVoz(CHROME, "es-PY")!;
+    const otra = elegirVoz(CHROME, "es-PY", [suya.name]);
     expect(otra).not.toBeNull();
     expect(otra!.name).not.toBe(suya.name);
   });
 
-  it('pero si solo hay una, prefiere repetirla a callarse', () => {
-    const unica = [voz('es-ES', 'Google español')];
-    expect(elegirVoz(unica, 'es-PY', 'Google español')?.name).toBe(
-      'Google español',
+  it("pero si solo hay una, prefiere repetirla a callarse", () => {
+    const unica = [voz("es-ES", "Google español")];
+    expect(elegirVoz(unica, "es-PY", ["Google español"])?.name).toBe(
+      "Google español",
     );
   });
 
-  it('sin voces del idioma, ninguna', () => {
-    expect(elegirVoz([voz('de-DE', 'Deutsch')], 'es-PY')).toBeNull();
-    expect(elegirVoz([], 'es-PY')).toBeNull();
+  it("la torre y el otro avión no acaban siendo la misma voz", () => {
+    /*
+     * **Tres bocas y una sola plaza de «cogida» era el fallo.** La torre
+     * esquivaba al instructor y el otro avión también, así que los dos
+     * elegían la misma segunda voz y el reparto quedaba en dos timbres para
+     * tres. Con la lista, cada uno esquiva a todos los anteriores.
+     *
+     * Se prueba con Firefox porque es el que tiene voces de sobra. Chrome
+     * publica dos castellanas y ahí la tercera repite: es el caso de abajo.
+     */
+    const instructor = elegirVoz(FIREFOX, "es-PY")!;
+    const torre = elegirVoz(FIREFOX, "es-PY", [instructor.name])!;
+    const otro = elegirVoz(FIREFOX, "es-PY", [instructor.name, torre.name])!;
+    expect(new Set([instructor.name, torre.name, otro.name]).size).toBe(3);
+  });
+
+  it("con dos voces y tres bocas, la que repite no es la del instructor", () => {
+    /*
+     * Chrome publica dos castellanas. Alguien tiene que repetir, y **el que
+     * no puede repetir es el instructor**: es la voz que se oye todo el rato
+     * y la que tiene que ser reconocible —lo dice `docs/voces/LEEME.md`—. Así
+     * que el tercero se va con la torre, que habla poco y además va con
+     * chasquido de radio, que ya la separa.
+     */
+    const instructor = elegirVoz(CHROME, "es-PY")!;
+    const torre = elegirVoz(CHROME, "es-PY", [instructor.name])!;
+    const otro = elegirVoz(CHROME, "es-PY", [instructor.name, torre.name])!;
+    expect(torre.name).not.toBe(instructor.name);
+    expect(otro.name).not.toBe(instructor.name);
+    expect(otro.name).toBe(torre.name);
+  });
+
+  it("sin voces del idioma, ninguna", () => {
+    expect(elegirVoz([voz("de-DE", "Deutsch")], "es-PY")).toBeNull();
+    expect(elegirVoz([], "es-PY")).toBeNull();
   });
 });

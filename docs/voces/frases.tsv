@@ -46,6 +46,7 @@ instructor	instructor/vuelo.apagado.ogg	es-PY	¡Vuelo terminado!	lo que toca hac
 instructor	instructor/vuelo.fuera.ogg	es-PY	Volvé a la raya verde	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.roto.ogg	es-PY	Se rompió. Volvemos a empezar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.rapido.ogg	es-PY	Vas muy rápido	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.pediFlaps.ogg	es-PY	Bajá los flaps para frenar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despacio.ogg	es-PY	Más despacio	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alto.ogg	es-PY	Pará acá	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.teLoPasaste.ogg	es-PY	Te pasaste. Frená y volvé	lo que toca hacer ahora, en vuelo y en tierra
@@ -105,7 +106,7 @@ instructor	instructor/ala.dice.cerca.ogg	es-PY	Cuidado: un poco más de ángulo 
 instructor	instructor/ala.dice.perdida.ogg	es-PY	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.	lo que explica el esquema del ala
 torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa
 torre	torre/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha en casa
-otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, Óga uno siete dos	el otro avión de la frecuencia
+otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, Zulu Papa Alfa Bravo Charlie	el otro avión de la frecuencia
 otro	otro/otro.rodando.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, rodando a la cabecera	el otro avión de la frecuencia
 otro	otro/otro.enCola.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, viento en cola	el otro avión de la frecuencia
 otro	otro/otro.final.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, en final	el otro avión de la frecuencia

@@ -855,6 +855,69 @@ export class Audio {
   }
 
   /**
+   * El chasquido del pulsador de la radio.
+   *
+   * Dos ruidos distintos y los dos muy cortos, porque en una radio de verdad
+   * son dos cosas distintas: al abrir, el «clac» seco del pulsador; al cerrar,
+   * el «kshh» de la portadora cayendo, que dura un pelo más y se apaga.
+   *
+   * Ruido blanco por un paso de banda de trescientos a tres mil, que es el
+   * ancho de una radio de aviación —y de un teléfono—, con una campana subida
+   * alrededor de los dos mil para que suene metálico. Ese recorte es lo que la
+   * oreja reconoce como «esto viene por un aparato» aunque la voz que va en
+   * medio no esté filtrada, que es la limitación con la que hay que vivir
+   * mientras hable el sintetizador del navegador. Ver `audio/radio.ts`.
+   *
+   * Va por el bus de avisos y no por el de voz: el de voz se agacha cuando
+   * alguien habla —ver `empiezaLaVoz`— y el chasquido de cierre suena
+   * justamente cuando la voz acaba, así que se quedaría a medias.
+   */
+  chasquido(cual: "abre" | "cierra"): void {
+    const ctx = this.context;
+    if (!ctx || ctx.state !== "running") return;
+    const t = ctx.currentTime;
+    const abre = cual === "abre";
+    const largo = abre ? 0.045 : 0.11;
+
+    const fuente = ctx.createBufferSource();
+    fuente.buffer = this.noiseBuffer();
+    // Desde un sitio cualquiera del ruido: dos chasquidos seguidos idénticos
+    // suenan a grabación, y estos suenan muchas veces por vuelo.
+    const desde = Math.random() * (fuente.buffer.duration - largo - 0.01);
+
+    const banda = ctx.createBiquadFilter();
+    banda.type = "bandpass";
+    banda.frequency.value = 1500;
+    banda.Q.value = 0.9;
+
+    const metal = ctx.createBiquadFilter();
+    metal.type = "peaking";
+    metal.frequency.value = 2100;
+    metal.Q.value = 3;
+    metal.gain.value = 9;
+
+    const sobre = ctx.createGain();
+    sobre.gain.setValueAtTime(0.0001, t);
+    if (abre) {
+      // El pulsador: ataque instantáneo y corte. Es un golpe, no un soplo.
+      sobre.gain.linearRampToValueAtTime(0.16, t + 0.004);
+      sobre.gain.exponentialRampToValueAtTime(0.0001, t + largo);
+    } else {
+      // La portadora al soltar: entra deprisa y se va apagando.
+      sobre.gain.linearRampToValueAtTime(0.1, t + 0.012);
+      sobre.gain.exponentialRampToValueAtTime(0.0001, t + largo);
+    }
+
+    fuente
+      .connect(banda)
+      .connect(metal)
+      .connect(sobre)
+      .connect(this.bus("avisos"));
+    fuente.start(t, desde, largo + 0.02);
+    fuente.stop(t + largo + 0.05);
+  }
+
+  /**
    * Toca una cadena de piezas de voz, una detrás de otra, por el bus de voz.
    *
    * **Se programan todas de una vez y en el reloj del audio**, no una detrás
