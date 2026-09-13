@@ -193,6 +193,7 @@ import { CreditsScreen } from "./ui/credits";
 import { PantallaDelAla } from "./ui/pantalla-ala";
 import { PantallaDePausa } from "./ui/pausa";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
+import { PantallaDeMision } from "./ui/pantalla-mision";
 import {
   DESLUMBRE,
   ganarGafas,
@@ -653,6 +654,8 @@ export class Game {
   private pausa: PantallaDePausa | null = null;
   /** La pantalla de ajustes, que se abre desde la pausa. */
   private ajustesUI: PantallaDeAjustes | null = null;
+  /** Qué hay que hacer, si hay misión. Ver `ui/pantalla-mision.ts`. */
+  private misionUI: PantallaDeMision | null = null;
   /** Las gafas de sol: si se han ganado y si se llevan. Ver `flight/gafas.ts`. */
   private gafas: Gafas = SIN_GAFAS;
   /**
@@ -1391,6 +1394,20 @@ export class Game {
         this.audio.cue(que);
       },
     });
+    const misionRaiz = document.getElementById("mision");
+    if (misionRaiz) this.misionUI = new PantallaDeMision(misionRaiz);
+    /*
+     * Y el botón lo ata el HUD, no esto. Atado desde aquí se moría en cuanto
+     * el HUD se rehiciera —cambiar de unidades o de idioma lo rehace entero— y
+     * el botón se quedaba en pantalla sin abrir nada. Ver `Hud.onMision`.
+     */
+    this.hud.onMision(() => this.misionUI?.alternar());
+    // Y la regla de las tres láminas, en los dos sentidos. Ver `Hud`.
+    this.misionUI?.onAbrir(() => {
+      this.hud.mapa.cerrar();
+      this.hud.tiempo.cerrar();
+    });
+    this.hud.alAbrirUnaLamina(() => this.misionUI?.cerrar());
     this.hud.onPausa(() => this.alternarPausa());
     this.hud.onCamara(() => this.cycleCamera());
     this.hud.onGafas(() => this.alternarGafas());
@@ -1591,6 +1608,7 @@ export class Game {
     );
     this.missions.start(mision);
     this.hud.setMissionProgress(this.missions.progress);
+    this.contarLaMision();
     this.hud.flash(t("mission.started", { name: t(mision.nameKey) }), 4);
     this.audio.cue("mision");
     this.updateMissionMarker();
@@ -2882,6 +2900,7 @@ export class Game {
     if (this.missions.active) {
       this.missions.start(this.missions.active);
       this.hud.setMissionProgress(this.missions.progress);
+      this.contarLaMision();
       this.updateMissionMarker();
     }
     this.runwayGuide.reset();
@@ -5524,13 +5543,34 @@ export class Game {
       this.missions.abandon();
       this.hud.setMissionProgress(null);
       this.hud.flash(t("mission.none"), 3);
+      this.contarLaMision();
     } else {
       this.missions.start(mission);
       this.hud.setMissionProgress(this.missions.progress);
       this.hud.flash(t("mission.started", { name: t(mission.nameKey) }), 4);
       this.audio.cue("mision");
+      this.contarLaMision();
     }
     this.updateMissionMarker();
+  }
+
+  /**
+   * Le cuenta al panel de la misión qué hay y por dónde va.
+   *
+   * Y enseña o esconde su botón, que es la otra mitad: sin misión no hay nada
+   * que mirar, y un botón que abre un panel vacío enseña que el juego está
+   * roto. La misma regla que los galones y que las gafas de sol.
+   *
+   * En un solo sitio a propósito: la misión cambia en cuatro —al empezar el
+   * vuelo, al elegir otra, al cumplir un objetivo y al reiniciar— y con cuatro
+   * copias de esto, tres se quedarían viejas.
+   */
+  private contarLaMision(): void {
+    const mision = this.missions.active;
+    this.misionUI?.poner(
+      mision ? { mision, hechos: this.missions.progress.done } : null,
+    );
+    this.hud.setMisionVisible(mision !== null);
   }
 
   /** Avanza la misión y celebra lo que se haya cumplido. */
@@ -5540,6 +5580,7 @@ export class Game {
     if (!event.completed) return;
 
     this.hud.setMissionProgress(this.missions.progress);
+    this.contarLaMision();
     this.updateMissionMarker();
 
     if (event.finished) {

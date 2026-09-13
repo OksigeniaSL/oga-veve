@@ -5097,3 +5097,96 @@ button.motor__tecla::after {
   stroke-width: 2;
   stroke-linecap: round;
 }
+
+/*
+ * ── Qué hay que hacer ──
+ *
+ * La lista de objetivos de la misión, en orden y con el que toca marcado. Se
+ * coloca como el plano —a un lado cuando hay sitio, centrada si no— porque es
+ * lo mismo: algo que se mira **mientras** se vuela. Ver `ui/pantalla-mision.ts`.
+ */
+.mision {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 14, 12, 0.55);
+  pointer-events: auto;
+}
+
+.mision__lista {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: min(80vmin, 320px);
+}
+
+.mision__paso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-s);
+  border: 1px solid transparent;
+}
+
+.mision__dibujo svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
+}
+
+.mision__que {
+  font-size: var(--voz-glosa);
+}
+
+/*
+ * **Tres estados, y se distinguen sin color.**
+ *
+ * Hecho lleva su visto, el que toca lleva filo y fondo, y los que quedan van
+ * atenuados. Si la diferencia fuera solo el color, quien no lo distingue
+ * —criterio 1.4.1— vería una lista de cinco cosas iguales.
+ */
+.mision__paso--hecho {
+  color: var(--tinta-suave);
+}
+
+.mision__paso--ahora {
+  background: var(--barro-claro);
+  border-color: var(--ocre-tinta);
+  color: var(--tinta);
+}
+
+.mision__paso--queda {
+  color: var(--tinta-suave);
+  opacity: 0.7;
+}
+
+.mision__visto {
+  margin-left: auto;
+  color: var(--ok);
+}
+
+.mision__visto svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+@media (min-width: 900px) and (pointer: fine) {
+  .mision {
+    /* Al lado, como el plano, y sin oscurecer el mundo: se mira volando. */
+    inset: 0 auto 0 0;
+    padding-left: 16px;
+    background: none;
+    pointer-events: none;
+  }
+
+  .mision .concha {
+    pointer-events: auto;
+  }
+}

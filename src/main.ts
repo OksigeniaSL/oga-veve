@@ -75,6 +75,7 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
 import { detectLocale, setLocale } from "./i18n";
 import { abrirHangar } from "./ui/hangar";
 import type { Mission } from "./missions/types";
+import { MISSIONS } from "./content/missions";
 import { rememberTier, rememberedTier } from "./flight/tiers";
 import { AIRCRAFT, type AircraftConfig } from "./flight/aircraft";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
@@ -117,6 +118,20 @@ let leccion: Leccion = params.get("leccion")
  * puesta otra vez sería empezar por donde ya estuviste.
  */
 let mision: Mission | null = null;
+/*
+ * **Y `?mision=a-anaga` la pone sin pasar por el hangar.**
+ *
+ * Es lo mismo que `?escenario=`, `?leccion=` y `?tramo=`, y por el mismo
+ * motivo: sin esto, el panel de «qué hay que hacer» solo existe detrás de
+ * cuatro clics en el hangar, así que ningún banco podía abrirlo — y un panel
+ * sin banco es exactamente lo que ya pasó con el plano y con el tiempo, que
+ * estuvieron meses sin encierro del foco y sin Escape sin que nadie lo dijera.
+ * Ver `ui/paneles.ts`.
+ */
+const misionPedida = params.get("mision");
+if (misionPedida) {
+  mision = MISSIONS.find((m) => m.id === misionPedida) ?? null;
+}
 /**
  * Con qué avión se vuela, y se recuerda entre partidas.
  *
