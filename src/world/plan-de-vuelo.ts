@@ -2342,8 +2342,30 @@ export class PlanDeVuelo {
     const donde = avanzarEnRuta(this.rutaMundo, p, this.avance, movido);
     this.avance = donde.recorrido;
     this.dondeEstaba = p;
+    this.alRamalDeAhora = donde.aLaRaya;
     return donde.restante;
   }
+
+  /**
+   * Cuánto se está del **tramo que toca**, y no del más cercano de todos.
+   *
+   * Son dos cosas distintas y una de ellas no vale para medir la ayuda de
+   * dirección. `alaRuta` mide la distancia al punto más próximo de **toda** la
+   * polilínea, que para saber si estás sobre asfalto está bien: en un
+   * aeropuerto la ruta se cruza consigo misma, y estar encima de otro ramal es
+   * estar en una calle igual.
+   *
+   * Para juzgar si la ayuda te lleva por la raya, no. El avión rodando recto
+   * sin tocar nada daba «0 m · 20 m · 0 m · 21 m» a lo largo de trescientos
+   * metros, y eso no es un avión que se aparta y vuelve —no tiene con qué
+   * volver, nadie está girando—: es la cuenta enganchándose a un ramal
+   * distinto cada vez que pasa cerca de uno. Cuatro peldaños con ayudas muy
+   * distintas daban el mismo número por eso.
+   *
+   * Esto es lo que dice `avanzarEnRuta` una vez enganchado el tramo por el que
+   * se va, con su ventana de no retroceder. Ver `scripts/verificar-asistencia`.
+   */
+  alRamalDeAhora = 0;
 
   /** La letra de la calle por la que toca ir ahora mismo. */
   private letraActual(estado: FlightState): string | null {
