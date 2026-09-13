@@ -9,7 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { Vuelo, type Fase, type Situacion } from "./vuelo";
+import { SE_QUEDAN, Vuelo, type Fase, type Situacion } from "./vuelo";
 
 const EN_TIERRA: Situacion = {
   estado: { airspeed: 0, verticalSpeed: 0 } as Situacion["estado"],
@@ -768,5 +768,59 @@ describe("rodando por la pista para ir a la cabecera", () => {
     // torcido, y a ése hay que decirle que se enderece.
     const v = new Vuelo();
     expect(durante(v, enLaPista({ desalineado: 178 }), 2)).toBe("alineando");
+  });
+});
+
+describe("las órdenes que se quedan puestas", () => {
+  /**
+   * Todas las fases que se viven **con las ruedas en el suelo**.
+   *
+   * Es la lista entera menos las tres de volar: en-vuelo, final y el tramo de
+   * circuito no existe como fase. Se escribe a mano a propósito — si mañana
+   * aparece una fase nueva de tierra, el que la escriba tiene que venir aquí y
+   * decidir si su tarjeta espera o pasa.
+   */
+  const EN_EL_SUELO: Fase[] = [
+    "estacionado",
+    "arrancando",
+    "rodando",
+    "esperando",
+    "autorizado",
+    "back-taxi",
+    "alineando",
+    "despegando",
+    "comprometido",
+    "aterrizado",
+    "abandonando",
+    "a-plataforma",
+    "en-puesto",
+    "apagado",
+  ];
+
+  /*
+   * **En el suelo, el juego siempre tiene algo que pedir.**
+   *
+   * Y una tarjeta que caduca a los seis segundos en una fase que dura más deja
+   * la pantalla en blanco: quien juega se queda sin saber qué hacer, que es
+   * literalmente lo que pasó —«en pista, ya aterrizado, nadie me indica por
+   * dónde abandonar la pista»—. Se arregló así cuatro veces, siempre por el
+   * mismo camino: alguien lo notaba jugando o lo cazaba el banco del vuelo
+   * entero. La última, nueve segundos en blanco corriendo por el asfalto a
+   * treinta y cuatro metros por segundo.
+   *
+   * Las dos excepciones son de verdad cortas: arrancar dura lo que tarda la
+   * hélice en coger vueltas, y apagado es el final del vuelo.
+   */
+  it("ninguna fase de tierra que dure deja la pantalla en blanco", () => {
+    expect(EN_EL_SUELO.filter((f) => !SE_QUEDAN.has(f))).toEqual([
+      "arrancando",
+      "apagado",
+    ]);
+  });
+
+  it("y las de volar no se quedan puestas, que ahí las fases pasan solas", () => {
+    for (const f of ["en-vuelo", "final"] as Fase[]) {
+      expect(SE_QUEDAN.has(f)).toBe(false);
+    }
   });
 });

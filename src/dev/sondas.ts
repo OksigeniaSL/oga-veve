@@ -153,6 +153,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * también: si no, mide un coche aparcado al lado del puesto.
      */
     cocheApartado: () => juego.sigueme.yaSeAparto,
+    /**
+     * Si quien sale a buscarte va en bici. Para el banco.
+     *
+     * Cambia la regla entera: al coche no se le adelanta y atropellarlo es un
+     * percance; **a la bici se le deja sitio y ella se aparta**, porque un
+     * coche que se lleva un golpe es un chiste y una persona no. Ver `cede`
+     * en `Game` y `construirBici`. Un banco que mida las dos con la misma
+     * vara falla donde el juego hace lo que tiene que hacer.
+     */
+    enBici: () => juego.sigueme.enBici,
     /*
      * La lista de paneles que se abren encima del vuelo.
      *

@@ -199,9 +199,15 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * avión llega a la altura pedida con toda la subida encima, se pasa, corrige
    * y se pasa más. Con él llega y se queda.
    *
-   * Y por debajo de la velocidad de subida no se tira, pase lo que pase. Es la
-   * única regla del piloto que no admite excepción: una altura que falta se
-   * recupera, una pérdida en viraje no.
+   * Y por debajo de la velocidad que se está volando no se tira, pase lo que
+   * pase: una altura que falta se recupera, una pérdida en viraje no.
+   *
+   * **Cuál es esa velocidad es el tercer argumento, y no siempre es la de
+   * subida.** Estaba fija en la de subida, treinta y cuatro, y en final se
+   * vuela a treinta a propósito — o sea que en toda la aproximación el piloto
+   * tenía prohibido tirar y la senda no mandaba nada hacia arriba: sobraba el
+   * lazo entero. Lo que queda es el suelo de verdad, que es la velocidad que
+   * el propio piloto está pidiendo con el gas en ese momento.
    */
   /**
    * Subir de verdad: la velocidad de subida, **y que además suba**.
@@ -233,7 +239,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     return Math.max(-0.35, Math.min(0.5, base + extra));
   };
 
-  const aLaAltura = (s, objetivo) => {
+  const aLaAltura = (s, objetivo, minima = VELOCIDAD_DE_SUBIDA) => {
     /*
      * Se manda **velocidad vertical**, no palanca, y se limita.
      *
@@ -249,7 +255,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       -0.3,
       Math.min(0.3, (quiere - s.verticalSpeed) * 0.08),
     );
-    return s.airspeed < VELOCIDAD_DE_SUBIDA ? Math.min(0, mando) : mando;
+    return s.airspeed < minima ? Math.min(0, mando) : mando;
   };
 
   /**
@@ -362,6 +368,27 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   };
 
   /**
+   * Cuánto falta para el umbral por el que se entra, a lo largo del eje.
+   *
+   * El compañero de `desvio`: uno dice cuánto te has ido de lado y éste cuánto
+   * te queda por delante. Negativo cuando ya se ha pasado la cabecera, o sea
+   * cuánta pista se lleva gastada.
+   *
+   * Estaba escrito a mano dentro de la etapa de final y en ningún otro sitio,
+   * y por eso el parte del banco no sabía decir **dónde** iba el avión en la
+   * aproximación: la única columna de sitio era el desvío lateral. Un vuelo
+   * que se queda corto y otro que se pasa de largo salían idénticos.
+   */
+  const alUmbral = (s) => {
+    const r = o.pista();
+    const hp = (r.heading * Math.PI) / 180;
+    const along =
+      (s.position.x - r.x) * Math.sin(hp) +
+      (s.position.z - r.z) * -Math.cos(hp);
+    return -r.length / 2 - along;
+  };
+
+  /**
    * Seguir la raya: se mira un punto de la ruta quince metros por delante y se
    * gira hacia él. Es lo que hace quien sigue una raya pintada en el suelo.
    */
@@ -470,6 +497,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   let lejosDondeCoche = "";
   let cercaDelCoche = Infinity;
+  let ladoAlEstarCerca = Infinity;
   let cercaCuando = "";
   let alCocheAhora = -1;
   let ladoDelCoche = -1;
@@ -736,11 +764,14 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       if (guiando && alCoche < cercaDelCoche) {
         cercaDelCoche = alCoche;
         cercaCuando = `a los ${t.toFixed(0)} s, en «${fase}» a ${s.airspeed.toFixed(0)} m/s`;
+        // Y a qué lado de la raya estaba en ese momento, que es lo que dice
+        // si se apartó o si se quedó en medio.
+        ladoAlEstarCerca = ladoDelCoche;
       }
     }
     if (i % 20 === 0) {
       linea.push(
-        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m coche ${alCocheAhora < 0 ? "—" : `${alCocheAhora.toFixed(0)}/${ladoDelCoche.toFixed(0)}`} ${tarjeta.dibujo || "—"}`,
+        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m umbral ${alUmbral(s).toFixed(0)}m coche ${alCocheAhora < 0 ? "—" : `${alCocheAhora.toFixed(0)}/${ladoDelCoche.toFixed(0)}`} ${tarjeta.dibujo || "—"}`,
       );
     }
 
@@ -940,15 +971,10 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * a la entrada en final por coordenadas de pista. Peor, pero llega.
        */
       if (!v) {
-        const r = o.pista();
-        const hp = (r.heading * Math.PI) / 180;
-        const along =
-          (s.position.x - r.x) * Math.sin(hp) +
-          (s.position.z - r.z) * -Math.cos(hp);
-        const alUmbral = -r.length / 2 - along;
+        const falta = alUmbral(s);
         const p = alto(s) > SEGURO_PARA_GIRAR ? o.puntoDeFinal(3000) : null;
         if (p) c.aileron = alPunto(s, p.x, p.z);
-        if (alUmbral > 800 && alUmbral < 4000) etapa = "final";
+        if (falta > 800 && falta < 4000) etapa = "final";
       }
     } else if (etapa === "final") {
       /*
@@ -971,11 +997,9 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       const hp = (r.heading * Math.PI) / 180;
       const fx = Math.sin(hp);
       const fz = -Math.cos(hp);
-      const dx = s.position.x - r.x;
-      const dz = s.position.z - r.z;
-      const along = dx * fx + dz * fz;
-      // El umbral por el que se entra está a media pista por detrás del centro.
-      const alUmbral = -r.length / 2 - along;
+      const along = (s.position.x - r.x) * fx + (s.position.z - r.z) * fz;
+      // Cuánto falta para la cabecera por la que se entra. Ver `alUmbral`.
+      const falta = alUmbral(s);
       /*
        * **Y la senda no apunta al umbral: apunta a un poco más adentro.**
        *
@@ -993,18 +1017,33 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * ochenta.
        */
       const puntoDeToma = Math.min(250, r.length * 0.2);
-      const objetivo = Math.max(0, (alUmbral + puntoDeToma) * SENDA);
-      // Con la misma ley de altura que arriba: bajada limitada y amortiguada.
-      // Ver `aLaAltura`, que cuenta el porqué con lo medido.
-      c.elevator = aLaAltura(s, objetivo);
+      const objetivo = Math.max(0, (falta + puntoDeToma) * SENDA);
       // Sobre la pista se corta el gas: eso es aterrizar. Y antes, la
       // velocidad de aproximación a mano, que el gas no significa lo mismo en
       // los dos modelos de vuelo.
-      const quiere = alUmbral < 60 ? 24 : 30;
+      const quiere = falta < 60 ? 24 : 30;
       c.throttle =
         s.airspeed < quiere
           ? Math.min(1, c.throttle + 0.05)
           : Math.max(0, c.throttle - 0.05);
+      /*
+       * Con la misma ley de altura que arriba: bajada limitada y amortiguada.
+       * Ver `aLaAltura`, que cuenta el porqué con lo medido.
+       *
+       * **Y el suelo para tirar es la velocidad de aproximación, no la de
+       * subida.** Con la de subida —treinta y cuatro— el piloto no podía tirar
+       * en ningún momento del final, porque en final se vuela a treinta a
+       * propósito: la senda solo sabía bajar. Medido en Yvytu Rape con Tukã,
+       * los últimos veinte segundos del vuelo, la senda pedía veintiuno y el
+       * avión iba por catorce y bajando a casi tres metros por segundo, o sea
+       * cinco grados donde tocaban tres. Se posaba en la hierba **ochenta y
+       * siete metros antes del umbral**, en el eje y con el juez cantando
+       * «fuera».
+       *
+       * En Tenerife Norte no se veía: tres mil cuatrocientos metros de pista
+       * perdonan llegar bajo, y el avión acababa dentro igual.
+       */
+      c.elevator = aLaAltura(s, objetivo, quiere);
       /*
        * Y el eje, apuntando a un punto trescientos metros por delante de donde
        * se está: eso corrige el desvío en vez de solo mantener el rumbo.
@@ -1064,7 +1103,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
          * umbral de posarse a mitad de pista.
          */
         tocoDesviado = desvio(s);
-        tocoPasadoElUmbral = alUmbral < 0 ? -alUmbral : 0;
+        tocoPasadoElUmbral = falta < 0 ? -falta : 0;
         tocoA = s.airspeed;
         etapa = "frenar";
       }
@@ -1162,6 +1201,10 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     sinRayaPrimero,
     lejosDelCoche: Math.round(lejosDelCoche),
     lejosDondeCoche,
+    enBici: o.enBici?.() ?? false,
+    ladoAlEstarCerca: Number.isFinite(ladoAlEstarCerca)
+      ? Math.round(ladoAlEstarCerca)
+      : -1,
     cercaDelCoche: Number.isFinite(cercaDelCoche)
       ? Math.round(cercaDelCoche)
       : -1,
@@ -1296,13 +1339,33 @@ if (TRAMO === "guyrami" || TRAMO === "tuka") {
  * por delante es un percance, o sea el final del vuelo en el sitio donde el
  * juego debería estar diciendo «llegaste a casa». Ocho metros es lo que el
  * propio juego considera atropello — el tren de el Pykasu, no pasarle cerca.
+ *
+ * **Y solo donde sale el coche.** En los campos privados —Yvytu Rape— no sale
+ * un coche: sale alguien en bicicleta, y ahí el juego hace lo contrario a
+ * propósito. Un coche que se lleva un golpe es un chiste y enseña que en una
+ * plataforma no se adelanta; una persona en bici, no. Así que la bici **se
+ * aparta** en cuanto la tenés a veinte metros y el percance no se le aplica.
+ * Ver `cede` en `Game` y `construirBici`.
+ *
+ * Medirla con la vara del coche era medir el juego con la regla de otro
+ * juego: en Yvytu Rape la comprobación fallaba unas veces sí y otras no —2, 5,
+ * 6, 7 y 13 metros en carreras seguidas— justo donde el juego estaba haciendo
+ * lo que tiene que hacer. Un banco que falla sin que haya fallo es peor que no
+ * tener banco.
+ *
+ * Lo que sí queda dicho es el número, que hace falta: la bici acaba a dos
+ * metros del avión y encima de la raya, y tenía que haberse echado once a un
+ * lado. Ver #157.
  */
 comprobar(
   "y no se le atropella",
-  vuelo.cercaDelCoche < 0 || vuelo.cercaDelCoche > 8,
+  vuelo.enBici || vuelo.cercaDelCoche < 0 || vuelo.cercaDelCoche > 8,
   vuelo.cercaDelCoche < 0
     ? "no llegó a salir"
-    : `lo más cerca que llegó a estar: ${vuelo.cercaDelCoche} m · ${vuelo.cercaCuando}`,
+    : `lo más cerca que llegó a estar: ${vuelo.cercaDelCoche} m · a ${vuelo.ladoAlEstarCerca} m de la raya · ${vuelo.cercaCuando}` +
+      (vuelo.enBici
+        ? " · en bici, que se aparta a propósito y no cuenta como atropello"
+        : ""),
   "«con el avión puedo adelantar al coche, le paso por encima»",
 );
 
