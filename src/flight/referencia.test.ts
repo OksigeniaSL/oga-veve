@@ -37,6 +37,7 @@ import {
   LONGITUDINAL_DIMENSIONAL,
   margenEstatico,
   matrizLateral,
+  modosDe,
   matrizLongitudinal,
   MODOS,
   multiplicar,
@@ -363,5 +364,41 @@ describe("las derivadas reproducen los modos que el informe imprime", () => {
       ),
       0.2,
     );
+  });
+});
+
+/**
+ * Y el buscador de raíces, validado contra los modos que el informe imprime.
+ *
+ * Hace falta antes de usarlo para nada: `modosDe` es el que va a decir cómo se
+ * comporta cada avión de la flota, y un buscador de raíces sin validar es una
+ * forma elegante de inventarse la dinámica de todos a la vez. Aquí hay un
+ * avión de verdad con sus cinco modos publicados.
+ */
+describe("los modos se sacan del polinomio", () => {
+  it("el corto período y el fugoide del Navion, de sus derivadas", () => {
+    const [a, b] = modosDe(polinomioCaracteristico(matrizLongitudinal()));
+    // Cuál sale primero lo decide Bairstow; se ordenan por frecuencia.
+    const [lento, rapido] = [a!, b!].sort((x, y) => x.omega - y.omega);
+    expect(rapido!.omega).toBeCloseTo(MODOS.cortoPeriodo.omega, 2);
+    expect(rapido!.zeta).toBeCloseTo(MODOS.cortoPeriodo.zeta, 3);
+    expect(lento!.omega).toBeCloseTo(MODOS.fugoide.omega, 3);
+    expect(lento!.zeta).toBeCloseTo(MODOS.fugoide.zeta, 3);
+  });
+
+  /*
+   * El lateral trae los dos a la vez: un par complejo —el balanceo holandés—
+   * y dos raíces reales que son la convergencia de alabeo y la espiral. Que
+   * `modosDe` los separe bien es la mitad de lo que hace.
+   */
+  it("y el balanceo holandés, el alabeo y la espiral", () => {
+    const modos = modosDe(polinomioCaracteristico(matrizLateral()));
+    const holandes = modos.find((m) => m.raices.length === 0);
+    const reales = modos.find((m) => m.raices.length === 2);
+    expect(holandes!.omega).toBeCloseTo(MODOS.balanceoHolandes.omega, 2);
+    expect(holandes!.zeta).toBeCloseTo(MODOS.balanceoHolandes.zeta, 3);
+    const ordenadas = [...reales!.raices].sort((x, y) => x - y);
+    expect(-ordenadas[0]!).toBeCloseTo(MODOS.convergenciaDeAlabeo, 2);
+    expect(-ordenadas[1]!).toBeCloseTo(MODOS.espiral, 4);
   });
 });

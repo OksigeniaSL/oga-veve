@@ -446,3 +446,168 @@ export const comoPolinomio = (m: { omega: number; zeta: number }) => [
   2 * m.zeta * m.omega,
   m.omega * m.omega,
 ];
+
+/**
+ * Las raíces de un polinomio característico, como modos.
+ *
+ * Factoriza una cuártica en dos cuadráticas por Bairstow y devuelve cada una
+ * como frecuencia y amortiguamiento. Un `zeta` de uno o más significa que esa
+ * cuadrática no oscila: son dos raíces reales —la convergencia de alabeo y la
+ * espiral, en el caso lateral— y entonces lo que vale son `raices`.
+ *
+ * **Se escribe aquí y no en una prueba porque aquí está lo que lo valida.** El
+ * informe imprime los cinco modos del Navion, así que este buscador se puede
+ * comprobar contra un avión de verdad antes de usarlo para medir los nuestros.
+ * Un buscador de raíces sin validar es una forma elegante de inventarse la
+ * dinámica de una flota entera.
+ */
+export interface Modo {
+  readonly omega: number;
+  readonly zeta: number;
+  /** Las dos raíces reales, cuando no oscila. Vacío si es un par complejo. */
+  readonly raices: readonly number[];
+}
+
+export function modosDe(p: readonly number[]): Modo[] {
+  if (p.length !== 5) throw new Error("solo cuárticas");
+  const [, a1, a2, a3, a4] = p as [number, number, number, number, number];
+  // Bairstow: se busca el factor s² + us + v y el resto sale por división.
+  let u = a1 / 2;
+  let v = a2 / 2;
+  for (let k = 0; k < 500; k++) {
+    const b1 = a1 - u;
+    const b2 = a2 - u * b1 - v;
+    const b3 = a3 - u * b2 - v * b1;
+    const b4 = a4 - u * b3 - v * b2;
+    const c1 = b1 - u;
+    const c2 = b2 - u * c1 - v;
+    const c3 = b3 - u * c2 - v * c1;
+    const det = c2 * c2 - c3 * c1;
+    if (!Number.isFinite(det) || Math.abs(det) < 1e-16) break;
+    const du = (b3 * c2 - b4 * c1) / det;
+    const dv = (b4 * c2 - b3 * c3) / det;
+    u += du;
+    v += dv;
+    if (Math.abs(du) + Math.abs(dv) < 1e-12) break;
+  }
+  // El otro factor: el cociente de dividir por el primero.
+  return [comoModo(u, v), comoModo(a1 - u, a4 / v)];
+}
+
+/** Una cuadrática `s² + us + v`, dicha como modo. */
+function comoModo(u: number, v: number): Modo {
+  const disc = u * u - 4 * v;
+  if (disc >= 0) {
+    // No oscila: dos raíces reales, y el amortiguamiento no significa nada.
+    const r = Math.sqrt(disc);
+    return {
+      omega: Math.sqrt(Math.abs(v)),
+      zeta: 1,
+      raices: [(-u + r) / 2, (-u - r) / 2],
+    };
+  }
+  const omega = Math.sqrt(v);
+  return { omega, zeta: u / (2 * omega), raices: [] };
+}
+
+/**
+ * Las derivadas dimensionales de una ficha nuestra, en SI y a esa velocidad.
+ *
+ * Es el puente entre `aircraft.ts` y la misma maquinaria que reproduce los
+ * modos del Navion a la cuarta cifra: con esto, «¿cómo se comporta el JAZ 20?»
+ * se contesta con la cuenta de un libro de mecánica del vuelo y no con una
+ * opinión.
+ *
+ * Vuelo nivelado a un g, que es donde están definidas todas las velocidades de
+ * un avión: de ahí sale el `CL` de equilibrio y, con él, la resistencia.
+ *
+ * ## Las dos derivadas que una ficha nuestra no tiene
+ *
+ * `Clr` y `Cnp` —alabeo por guiñada y guiñada por alabeo— no están en
+ * `AeroCoefficients` porque el modelo de vuelo no las usa: son términos
+ * cruzados que casi no se sienten pilotando. Pero el **balanceo holandés** sí
+ * los usa, así que aquí se estiman con las aproximaciones de siempre para un
+ * ala recta, `Clr ≈ CL/4` y `Cnp ≈ −CL/8`. Con los números del Navion dan
+ * 0,10 y −0,05 contra sus 0,107 y −0,0575 medidos: un siete y un trece por
+ * ciento, que para decir si un avión se bambolea o no es de sobra.
+ */
+export function derivadasDeLaFicha(
+  a: {
+    mass: number;
+    wingArea: number;
+    wingSpan: number;
+    chord: number;
+    inertia: { xx: number; yy: number; zz: number };
+    aero: {
+      clAlpha: number;
+      cd0: number;
+      oswald: number;
+      cmAlpha: number;
+      cmQ: number;
+      cyBeta: number;
+      clBeta: number;
+      clP: number;
+      cnBeta: number;
+      cnR: number;
+    };
+  },
+  velocidad: number,
+) {
+  const RHO = 1.225;
+  const G = 9.81;
+  const U = velocidad;
+  const qS = 0.5 * RHO * U * U * a.wingArea;
+  const { xx: Ix, yy: Iy, zz: Iz } = a.inertia;
+  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const pi = Math.PI * alargamiento * a.aero.oswald;
+  /** El CL que hace falta para sostenerse a esta velocidad. */
+  const cl = (2 * a.mass * G) / (RHO * U * U * a.wingArea);
+  const cd = a.aero.cd0 + (cl * cl) / pi;
+  /** Cómo crece la resistencia con el ángulo de ataque, por la inducida. */
+  const cdAlfa = ((2 * cl) / pi) * a.aero.clAlpha;
+  const clR = cl / 4;
+  const cnP = -cl / 8;
+  const porEnvergadura = a.wingSpan / (2 * U);
+  return {
+    U,
+    cl,
+    cd,
+    longitudinal: [
+      [
+        (-2 * cd * qS) / (a.mass * U),
+        ((cl - cdAlfa) * qS) / (a.mass * U),
+        0,
+        -G,
+      ],
+      [
+        (-2 * cl * qS) / (a.mass * U),
+        (-(a.aero.clAlpha + cd) * qS) / (a.mass * U),
+        U,
+        0,
+      ],
+      [
+        0,
+        (a.aero.cmAlpha * qS * a.chord) / (Iy * U),
+        (a.aero.cmQ * (a.chord / (2 * U)) * qS * a.chord) / Iy,
+        0,
+      ],
+      [0, 0, 1, 0],
+    ] as const,
+    lateral: [
+      [(a.aero.cyBeta * qS) / (a.mass * U), 0, -1, G / U],
+      [
+        (a.aero.clBeta * qS * a.wingSpan) / Ix,
+        (a.aero.clP * porEnvergadura * qS * a.wingSpan) / Ix,
+        (clR * porEnvergadura * qS * a.wingSpan) / Ix,
+        0,
+      ],
+      [
+        (a.aero.cnBeta * qS * a.wingSpan) / Iz,
+        (cnP * porEnvergadura * qS * a.wingSpan) / Iz,
+        (a.aero.cnR * porEnvergadura * qS * a.wingSpan) / Iz,
+        0,
+      ],
+      [0, 1, 0, 0],
+    ] as const,
+  };
+}
