@@ -203,6 +203,36 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * única regla del piloto que no admite excepción: una altura que falta se
    * recupera, una pérdida en viraje no.
    */
+  /**
+   * Subir de verdad: la velocidad de subida, **y que además suba**.
+   *
+   * Sostener una velocidad no es subir. Un lazo que solo mira la velocidad se
+   * conforma con cualquier actitud en la que la velocidad cuadre, y la más
+   * fácil es el vuelo nivelado: medido en Tukã recién despegado, velocidad
+   * clavada en 35 m/s, palanca en 0,06 y cuarenta centímetros por segundo de
+   * ascenso. Se iba del extremo de la pista a tres metros del suelo.
+   *
+   * En el modelo sencillo no se notaba porque ahí el avión va donde apunta el
+   * morro y con el gas a fondo sube solo.
+   *
+   * Así que el mando es el de siempre **más un empujón cuando sobra velocidad
+   * y no se sube**. En el modelo sencillo, que ya sube, el empujón vale cero y
+   * no cambia nada; en el de coeficientes es lo que levanta el avión.
+   *
+   * Y se probó lo obvio antes: pedir metros por segundo a secas, como al
+   * nivelar. Con techo de cuatro, en Encarnación el terreno de la salida sube
+   * más deprisa y el avión se metió en la ladera subiendo limpio; con techo de
+   * doce, el modelo de coeficientes se pasa de tirón y pierde el vuelo. El
+   * mando de velocidad con un extra es lo único que valió para los dos.
+   */
+  const subirDeVerdad = (s) => {
+    const base = palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA);
+    const falta = Math.max(0, 3 - s.verticalSpeed);
+    const extra =
+      s.airspeed > VELOCIDAD_DE_SUBIDA ? Math.min(0.25, falta * 0.05) : 0;
+    return Math.max(-0.35, Math.min(0.5, base + extra));
+  };
+
   const aLaAltura = (s, objetivo) => {
     /*
      * Se manda **velocidad vertical**, no palanca, y se limita.
@@ -777,11 +807,25 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * Rotar es un tirón; volar es mantener una velocidad. Son dos cosas
        * distintas y ahora se hacen distinto.
        */
-      c.elevator = s.onGround
-        ? s.airspeed > 27
-          ? 0.5
-          : 0
-        : palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA);
+      /*
+       * **Y en el aire se pide subir, no se pide una velocidad.**
+       *
+       * Aquí se sostenía la velocidad de subida y ya está, y eso no sube: un
+       * lazo que solo mira la velocidad se conforma con **cualquier** actitud
+       * en la que la velocidad cuadre, y la más fácil de todas es el vuelo
+       * nivelado. Medido en Tukã, recién despegado: velocidad clavada en 35
+       * m/s, palanca en 0,06, y el avión ganando cuarenta centímetros por
+       * segundo. Se iba del extremo de la pista a tres metros del suelo y se
+       * posaba en el terreno de más allá — con el percance correspondiente.
+       *
+       * En Guyrami no se veía porque el modelo sencillo sube solo con el gas a
+       * fondo: el avión va donde apunta el morro y el morro estaba arriba.
+       *
+       * `aLaAltura` pide **metros por segundo**, que es lo que se quiere, y ya
+       * lleva dentro la única regla que no admite excepción: por debajo de la
+       * velocidad de subida no se tira, pase lo que pase.
+       */
+      c.elevator = s.onGround ? (s.airspeed > 27 ? 0.5 : 0) : subirDeVerdad(s);
       if (!s.onGround && alto(s) > 30) {
         despego = t;
         etapa = "subir";
@@ -830,9 +874,12 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
             0.3,
             Math.min(1, 0.55 + (VELOCIDAD_DE_CRUCERO - s.airspeed) * 0.04),
           );
-      c.elevator = subiendo
-        ? palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA)
-        : aLaAltura(s, altoQueToca);
+      /*
+       * Y aquí igual: subiendo se pide subir. Sostener la velocidad de subida
+       * no es subir — es quedarse a esa velocidad, y nivelado también se está
+       * a esa velocidad. Ver el mismo comentario en la etapa de despegar.
+       */
+      c.elevator = subiendo ? subirDeVerdad(s) : aLaAltura(s, altoQueToca);
 
       /*
        * **Y no se gira hasta estar alto.** El primer tramo es recto por el eje
@@ -992,6 +1039,23 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       c.elevator = 0;
       c.brakes = 1;
       c.aileron = alRumbo(s, rumboPista);
+      /*
+       * **Y el timón, que es lo único que dirige recién tomado.**
+       *
+       * La carrera de frenada empieza a más de treinta metros por segundo, y a
+       * esa velocidad la rueda de morro ya no tiene autoridad: se apaga entre
+       * los ocho y los veintiocho. Es el mismo agujero que había en la carrera
+       * de despegue, en el otro extremo del vuelo.
+       *
+       * Se vio en Yvytu Rape, que es una pista de hierba de dieciocho metros:
+       * el avión tomaba en el eje, frenaba, se iba de lado y el vuelo acababa
+       * con percance «fuera» a los trescientos sesenta y seis segundos —con el
+       * aterrizaje ya hecho—.
+       */
+      c.rudder = Math.max(
+        -1,
+        Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
+      );
       if (s.airspeed < 8) etapa = "volver";
     } else if (etapa === "volver") {
       tiempoDeRodajeVuelta += paso;
