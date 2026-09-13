@@ -24,7 +24,7 @@
 
 import type { ControlInputs, FlightState } from "../flight/model";
 import type { AircraftSound } from "../flight/aircraft";
-import { leerTexto, ponerTexto } from "../datos/guardado";
+import { guardarAjuste, leerAjustes, type Volumen } from "../ui/ajustes";
 import {
   Agachado,
   BUSES,
@@ -285,18 +285,25 @@ const LEVELS: readonly AudioLevel[] = [
   { id: "mudo", gain: 0, glyph: "🔇" },
 ];
 
-const STORAGE_KEY = "volumen";
-
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
 
+/*
+ * **El volumen es un ajuste, y vive con los ajustes.**
+ *
+ * Tenía su propia clave y su propia lectura aquí, y eso estaba bien mientras
+ * el único sitio donde se tocaba era el botón del HUD. Desde que también hay
+ * una fila en la pantalla de ajustes son dos mandos sobre una cosa, y dos
+ * mandos sobre una cosa con dos copias del estado acaban discrepando: se baja
+ * el volumen desde el menú, se cierra, y el glifo de la esquina sigue diciendo
+ * que suena. La clave guardada es la misma de siempre —`volumen`— para no
+ * borrarle el ajuste a quien ya lo tenía puesto. Ver `ui/ajustes.ts`.
+ */
 function restoreLevel(): number {
   try {
-    const saved = LEVELS.findIndex(
-      (level) => level.id === leerTexto(STORAGE_KEY),
-    );
-    if (saved >= 0) return saved;
+    const i = LEVELS.findIndex((level) => level.id === leerAjustes().volumen);
+    if (i >= 0) return i;
   } catch {
     // Sin almacenamiento se arranca con el volumen normal.
   }
@@ -305,7 +312,7 @@ function restoreLevel(): number {
 
 function persistLevel(index: number): void {
   try {
-    ponerTexto(STORAGE_KEY, LEVELS[index]!.id);
+    guardarAjuste("volumen", LEVELS[index]!.id as Volumen);
   } catch {
     // No poder recordarlo no puede romper nada.
   }
@@ -416,6 +423,22 @@ export class Audio {
     this.levelIndex = (this.levelIndex + 1) % LEVELS.length;
     this.applyMasterGain();
     persistLevel(this.levelIndex);
+    return this.level;
+  }
+
+  /**
+   * Pone un paso concreto. Lo usa la fila de sonido de los ajustes.
+   *
+   * No guarda: quien lo llama ya viene de guardar el ajuste. Guardar aquí
+   * también sería escribir dos veces lo mismo y, el día que las claves no
+   * coincidan, escribir dos cosas distintas.
+   */
+  ponerNivel(id: AudioLevel["id"]): AudioLevel {
+    const i = LEVELS.findIndex((level) => level.id === id);
+    if (i >= 0) {
+      this.levelIndex = i;
+      this.applyMasterGain();
+    }
     return this.level;
   }
 

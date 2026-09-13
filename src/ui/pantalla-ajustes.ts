@@ -1,5 +1,5 @@
 /**
- * La pantalla de ajustes: cuatro filas y ninguna más.
+ * La pantalla de ajustes: seis filas y ninguna más.
  *
  * Se abre desde el menú de pausa, que es donde se busca. Y es corta a
  * propósito: cada fila está porque sin ella alguien no puede jugar, no porque
@@ -15,16 +15,27 @@ import { t } from "../i18n";
 import { Panel } from "./panel";
 import {
   CABECEOS,
+  CONTRASTES,
   MOVIMIENTOS,
   TAMANOS,
   UNIDADES,
+  VOLUMENES,
   guardarAjuste,
   leerAjustes,
   type Ajustes,
 } from "./ajustes";
 
-/** Las cuatro filas, con sus opciones y su clave de traducción. */
+/**
+ * Las seis filas, con sus opciones y su clave de traducción.
+ *
+ * **El sonido va el primero** porque es el que se viene a buscar. Los otros
+ * cinco se cambian una vez y no se vuelven a tocar; el volumen se toca al
+ * entrar en un aula, al llegar alguien, al querer oír el instructor. Lo que
+ * más se usa, arriba.
+ */
 const FILAS = [
+  { cual: "volumen", opciones: VOLUMENES },
+  { cual: "contraste", opciones: CONTRASTES },
   { cual: "movimiento", opciones: MOVIMIENTOS },
   { cual: "cabeceo", opciones: CABECEOS },
   { cual: "unidades", opciones: UNIDADES },

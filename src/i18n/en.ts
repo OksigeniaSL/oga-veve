@@ -48,6 +48,13 @@ export const EN: Dictionary = {
   "ajustes.tamano.pequeno": "Small",
   "ajustes.tamano.normal": "Normal",
   "ajustes.tamano.grande": "Large",
+  "ajustes.volumen": "Sound",
+  "ajustes.volumen.normal": "Normal",
+  "ajustes.volumen.bajo": "Quiet",
+  "ajustes.volumen.mudo": "Off",
+  "ajustes.contraste": "Contrast",
+  "ajustes.contraste.normal": "Normal",
+  "ajustes.contraste.alto": "Stronger",
   "app.tagline": "Fly over Paraguay",
 
   "hud.speed": "Airspeed",

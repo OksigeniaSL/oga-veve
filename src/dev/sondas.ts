@@ -32,6 +32,7 @@ import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { alturaDeEdificio } from "../world/aerodrome";
 import { verticesDelCircuito } from "../world/circuito";
+import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
 
 export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
@@ -252,6 +253,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     }),
     /** Cuántas veces el juego ha decidido decir «ya podés tocar». */
     vecesQueDijoToca: () => juego.vecesQueDijoToca,
+    /**
+     * Cambiar un ajuste desde fuera, por el camino de verdad. Para el banco.
+     *
+     * Y **por el camino de verdad** es la parte que importa: escribe el ajuste
+     * donde se escribe y llama a `aplicarAjustes`, igual que pulsar la fila.
+     * La alternativa —que el banco pusiera `data-contraste` en la raíz a mano—
+     * mediría la hoja de estilos y no el juego: pasaría igual de bien el día
+     * que la fila de ajustes dejara de estar conectada.
+     */
+    ponerAjuste: (cual: keyof Ajustes, valor: string) => {
+      guardarAjuste(cual, valor as never);
+      juego.aplicarAjustes(leerAjustes());
+    },
     /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
     tarjeta: () => juego.hud.senal.puesto,
     /*

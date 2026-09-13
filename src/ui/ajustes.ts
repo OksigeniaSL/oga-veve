@@ -2,7 +2,7 @@
  * Los ajustes: lo poco que se puede cambiar, y por qué es poco.
  *
  * Un panel de ajustes largo es una forma elegante de no decidir. Aquí hay
- * cuatro cosas, y las cuatro están porque **sin ellas alguien no puede jugar**,
+ * seis cosas, y las seis están porque **sin ellas alguien no puede jugar**,
  * no porque estuviera bien tenerlas:
  *
  * - **El movimiento**, para quien se marea. La preferencia del sistema ya se
@@ -16,10 +16,23 @@
  *   excepción consciente, no una preferencia.
  * - **El tamaño**, que en una tablet pequeña es la diferencia entre una barra
  *   de botones en una fila o en tres. Ver #150.
+ * - **El sonido**, que estaba pero **solo en el HUD**: un glifo en una esquina
+ *   que hay que descubrir pulsándolo. Quien busca el volumen lo busca en los
+ *   ajustes, y ahí no estaba. Es el mismo estado, no otro — ver `audio.ts`.
+ * - **El contraste**, que es el que faltaba de #36.
  *
- * Lo que no está y se pidió: el alto contraste. Toca la paleta entera y tiene
- * su propio banco de medida —`npm run acceso`—, así que se hace con eso
- * delante y no de camino.
+ * ## Por qué el sonido son tres pasos y no un deslizador
+ *
+ * Porque ya se decidió, y está escrito en `audio.ts`: un deslizador exige
+ * precisión con el dedo y no dice de un vistazo dónde está. Tres estados
+ * —normal, bajo, mudo— se recorren pulsando y se leen en el icono. El aula
+ * necesita el paso «bajo» tanto como el mudo: veinte tablets a medio volumen
+ * son un aula; a volumen normal, un aviario. Traer un deslizador aquí sería
+ * deshacer esa decisión en la pantalla de al lado.
+ *
+ * **Y de la música no hay deslizador porque no hay música.** El bus existe en
+ * la mezcla y no suena nada por él. Un mando que no manda sobre nada es peor
+ * que no tenerlo: enseña que el ajuste está roto. Cuando haya música, la fila.
  *
  * ## Todo pasa por el guardado con versión
  *
@@ -30,11 +43,15 @@
 import { leerTexto, ponerTexto } from "../datos/guardado";
 
 export const MOVIMIENTOS = ["sistema", "normal", "reducido"] as const;
+export const VOLUMENES = ["normal", "bajo", "mudo"] as const;
+export const CONTRASTES = ["normal", "alto"] as const;
 export const CABECEOS = ["normal", "invertido"] as const;
 export const UNIDADES = ["peldano", "metrico", "aeronautico"] as const;
 export const TAMANOS = ["pequeno", "normal", "grande"] as const;
 
 export type Movimiento = (typeof MOVIMIENTOS)[number];
+export type Volumen = (typeof VOLUMENES)[number];
+export type Contraste = (typeof CONTRASTES)[number];
 export type Cabeceo = (typeof CABECEOS)[number];
 export type Unidades = (typeof UNIDADES)[number];
 export type Tamano = (typeof TAMANOS)[number];
@@ -44,6 +61,8 @@ export interface Ajustes {
   readonly cabeceo: Cabeceo;
   readonly unidades: Unidades;
   readonly tamano: Tamano;
+  readonly volumen: Volumen;
+  readonly contraste: Contraste;
 }
 
 /**
@@ -58,6 +77,8 @@ export const POR_DEFECTO: Ajustes = {
   cabeceo: "normal",
   unidades: "peldano",
   tamano: "normal",
+  volumen: "normal",
+  contraste: "normal",
 };
 
 /** Cuánto se escala el HUD con cada tamaño. */
@@ -72,6 +93,16 @@ const CLAVES = {
   cabeceo: "ajuste.cabeceo",
   unidades: "ajuste.unidades",
   tamano: "ajuste.tamano",
+  /*
+   * **Y el volumen se guarda donde ya se guardaba.**
+   *
+   * `volumen`, a secas, sin el prefijo de los demás: es la clave que lleva
+   * usando `audio.ts` desde que existe el botón del HUD. Cambiarla por
+   * coherencia de nombres le habría borrado el ajuste a todo el que ya tenía
+   * el juego puesto en «bajo» — que es justo la gente a la que le importa.
+   */
+  volumen: "volumen",
+  contraste: "ajuste.contraste",
 } as const;
 
 /** Uno de la lista, o el de fábrica. Lo guardado puede ser cualquier cosa. */
@@ -93,6 +124,12 @@ export function leerAjustes(): Ajustes {
     cabeceo: unoDe(CABECEOS, leerTexto(CLAVES.cabeceo), POR_DEFECTO.cabeceo),
     unidades: unoDe(UNIDADES, leerTexto(CLAVES.unidades), POR_DEFECTO.unidades),
     tamano: unoDe(TAMANOS, leerTexto(CLAVES.tamano), POR_DEFECTO.tamano),
+    volumen: unoDe(VOLUMENES, leerTexto(CLAVES.volumen), POR_DEFECTO.volumen),
+    contraste: unoDe(
+      CONTRASTES,
+      leerTexto(CLAVES.contraste),
+      POR_DEFECTO.contraste,
+    ),
   };
 }
 
