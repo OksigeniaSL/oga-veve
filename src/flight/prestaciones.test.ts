@@ -218,6 +218,11 @@ describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
      * 172 de verdad anda por los cuarenta y cinco o sesenta. No se toca aquí
      * porque bajar `clAileron` cambia cómo se siente el avión en la mano, y eso
      * se decide jugando, no midiendo.
+     *
+     * **Y ahora hay un avión real en esa fila**: el Navion de la NASA
+     * CR-96008, con los recorridos de alerón de su certificado de tipo, sale a
+     * **72 °/s** — en el medio de la banda. El entrenador alabea un 36 % más
+     * que él. Ver `referencia.ts` y #54.
      */
     it("alabea dentro de lo que puede alabear un avión", () => {
       const ritmo =
