@@ -76,6 +76,23 @@ const PAJARO = `
            C12 9.8 9.8 10.4 8 12.6 C6.2 10.4 4 9.8 1 11.4 Z" />
 `;
 
+/**
+ * El horizonte, para la tarjeta de actitud.
+ *
+ * **Gira el mundo, no el avión**, que es como funciona un horizonte
+ * artificial de verdad: el avioncito se queda quieto en el centro y lo que se
+ * inclina es la línea del suelo. Se podría hacer al revés —sería más literal,
+ * «tu avión está torcido así»— y sería un error de los que se pagan tarde:
+ * quien aprenda aquí que la raya está quieta, el día que se siente delante de
+ * uno de verdad tendrá que desaprenderlo.
+ *
+ * Es el mismo instrumento que llevan los peldaños de arriba, sin una cifra.
+ */
+const HORIZONTE = `
+  <rect class="picto__tierra" x="-24" y="0" width="82" height="40" />
+  <line class="picto__raya" x1="-24" y1="0" x2="58" y2="0" />
+`;
+
 /** Cerro con su falda, para la tarjeta de altura. */
 const CERRO = `
   <path d="M0 34 L9 20 L15 26 L24 12 L34 34 Z" />
@@ -86,11 +103,33 @@ const AVION = `
   <path d="M8 5.2 v3.4 M1.6 8.2 h12.8 M5.4 10.4 h5.2" />
 `;
 
+/**
+ * A partir de cuántos grados de alabeo el horizonte se pone ámbar.
+ *
+ * **Treinta y cinco, y el número sale de medirlo, no del manual.** En la
+ * aviación de verdad un viraje normal son treinta grados y uno pronunciado
+ * cuarenta y cinco, y el primer intento puso el ámbar en cuarenta y cinco por
+ * eso.
+ *
+ * No servía: en estos dos peldaños el nivelador de alas está al máximo y **no
+ * deja pasar de ahí**. Medido, con el alerón a fondo sostenido cinco segundos:
+ * Guyrami se planta en 43° y Tukã en 46°. Un aviso en cuarenta y cinco es un
+ * aviso que en Guyrami no sale nunca y en Tukã sale justo al final del
+ * recorrido, cuando ya no queda nada que corregir.
+ *
+ * En treinta y cinco marca lo que de verdad se quiere marcar: que se está
+ * virando fuerte, con sitio todavía para aflojar. Y de paso deja dicho algo
+ * que no se ve por ningún lado — que en estos peldaños el avión **no te deja**
+ * ponerte de canto, por mucho que empujes.
+ */
+const MUCHO_ALABEO = 35;
+
 export class Pictogramas {
   private root: HTMLElement | null = null;
   private speedMark: SVGElement | null = null;
   private altPlane: SVGElement | null = null;
   private propeller: SVGElement | null = null;
+  private horizonte: SVGElement | null = null;
 
   /** Giro acumulado de la hélice, en grados. */
   private spin = 0;
@@ -125,6 +164,26 @@ export class Pictogramas {
         </div>
 
         <!--
+          **Cómo está puesto el avión.** Un horizonte que se inclina, con el
+          avioncito quieto en el centro.
+
+          Faltaba, y no se notaba porque desde la cámara de persecución se ve
+          el mundo entero: parecía evidente. No lo es. «Yo ni escucho ni veo
+          eso de los grados» — con el avión a ochenta grados de alabeo a baja
+          altura, en el peldaño de los cuatro años, no había en pantalla una
+          sola cosa que lo dijera. La tarjeta del horizonte y las esferas solo
+          existen de Taguato para arriba.
+        -->
+        <div class="picto">
+          <svg viewBox="0 0 34 34" aria-hidden="true">
+            <g class="picto__mundo" data-picto="horizonte"
+               transform="translate(17 17)">${HORIZONTE}</g>
+            <g class="picto__avion picto__avion--fijo"
+               transform="translate(9 13)">${AVION}</g>
+          </svg>
+        </div>
+
+        <!--
           Motor. Gira, y gira más deprisa con más gas. No hay nada que
           interpretar: se ve la velocidad, no se lee.
         -->
@@ -148,6 +207,7 @@ export class Pictogramas {
     this.speedMark = this.pick("speed");
     this.altPlane = this.pick("altitude");
     this.propeller = this.pick("prop");
+    this.horizonte = this.pick("horizonte");
   }
 
   get present(): boolean {
@@ -176,6 +236,8 @@ export class Pictogramas {
      * indica nadie», y era literal.
      */
     banda: "lento" | "bien" | "rapido" | null = null,
+    /** Cuánto está alabeado el avión, rad. Positivo a la derecha. */
+    alabeo = 0,
   ): void {
     if (!this.root) return;
 
@@ -211,6 +273,24 @@ export class Pictogramas {
       ? (this.spin + (60 + throttle * 900) * dt) % 360
       : this.spin;
     this.propeller?.setAttribute("transform", `rotate(${this.spin} 17 17)`);
+
+    /*
+     * **Y el horizonte, que gira al revés que el avión.**
+     *
+     * Con un tope: pasados los sesenta grados la raya ya no dice más —está
+     * casi vertical y girar más no se distingue— y lo que sí cambia es el
+     * color, que es lo que se ve de un vistazo sin mirar el dibujo. Ver
+     * `picto__mundo--mucho`.
+     */
+    const grados = (alabeo * 180) / Math.PI;
+    this.horizonte?.setAttribute(
+      "transform",
+      `translate(17 17) rotate(${-Math.max(-60, Math.min(60, grados))})`,
+    );
+    this.horizonte?.classList.toggle(
+      "picto__mundo--mucho",
+      Math.abs(grados) > MUCHO_ALABEO,
+    );
   }
 
   private pick(name: string): SVGElement | null {
