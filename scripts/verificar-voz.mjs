@@ -20,8 +20,14 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readdirSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+} from "node:fs";
+import { dirname, join } from "node:path";
 import { chromium } from "playwright";
 import { createServer } from "vite";
 
@@ -90,32 +96,49 @@ function recoger() {
   }
 }
 
-/**
- * Si ya hay un pack horneado de esta voz, el banco no corre.
- *
- * Porque lo primero que hace es escribir encima con cuatro pitidos, y lo
- * último, borrarlo. Un banco que destruye el trabajo que está comprobando no
- * es un banco.
- */
-function hayPackDeVerdad() {
-  try {
-    return readdirSync(PACK).length > 0;
-  } catch {
-    return false;
-  }
-}
+/** Dónde se guarda el pack de verdad mientras corre el banco. */
+const GUARDADO = join("node_modules", ".cache", "pack-de-voz-guardado");
 
-let navegador;
-let server;
-try {
-  if (hayPackDeVerdad()) {
+/**
+ * Aparta el pack de verdad, si lo hay, y devuelve cómo devolverlo.
+ *
+ * Este banco prueba **el mecanismo**: que no se baje nada antes del primer
+ * gesto, que se baje entero con él, que se guarde en su propia caché y que lo
+ * que no está grabado lo diga el navegador. Para eso hornea un pack de mentira
+ * de cuatro pitidos, y con el pack de verdad puesto no puede: lo de «esto no
+ * está grabado» no se puede comprobar cuando está todo grabado.
+ *
+ * Así que se aparta y se devuelve. Antes se borraba `data/voces` **entero** —
+ * se escribió cuando ahí no había nada que borrar, y el día que lo hubo se
+ * llevó ciento veinticinco frases recién horneadas sin decir una palabra.
+ *
+ * Si una tanda anterior murió a lo bruto y dejó el pack apartado, esto no
+ * empieza: lo dice y lo deja donde está, que es mejor que adivinar.
+ */
+function apartarElPack() {
+  if (existsSync(GUARDADO)) {
     console.error(
-      `\n  Hay un pack horneado en ${PACK}.\n` +
-        "  Este banco escribe encima con cuatro pitidos y luego lo borra, así\n" +
-        "  que no corre: movelo o borralo vos si de verdad querés pasarlo.\n",
+      `\n  Hay un pack apartado en ${GUARDADO}.\n` +
+        "  Una tanda anterior se murió sin devolverlo. Miralo vos: si es el\n" +
+        "  bueno, movelo a data/voces/ y volvé a lanzar esto.\n",
     );
     process.exit(1);
   }
+  if (!existsSync(PACK)) return () => {};
+  mkdirSync(dirname(GUARDADO), { recursive: true });
+  renameSync(PACK, GUARDADO);
+  return () => {
+    rmSync(PACK, { recursive: true, force: true });
+    renameSync(GUARDADO, PACK);
+  };
+}
+
+let navegador;
+/** Cómo devolver el pack de verdad al acabar. Ver `apartarElPack`. */
+let devolverElPack = () => {};
+let server;
+try {
+  devolverElPack = apartarElPack();
   hornear();
   server = await createServer({
     root: process.cwd(),
@@ -316,6 +339,7 @@ try {
   await navegador?.close();
   await server?.close();
   recoger();
+  devolverElPack();
 }
 
 console.log("\n  el pack de voz\n");

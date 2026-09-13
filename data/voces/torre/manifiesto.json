@@ -4,25 +4,25 @@
   "idioma": "en",
   "piezas": {
     "torre.clearedLand": {
-      "ms": 899
+      "ms": 1038
     },
     "torre.clearedTakeoff": {
-      "ms": 1100
+      "ms": 1184
     },
     "torre.goAround": {
-      "ms": 1497
+      "ms": 2129
     },
     "torre.holdShort": {
-      "ms": 1294
+      "ms": 1384
     },
     "torre.lineUpWait": {
-      "ms": 1118
+      "ms": 977
     },
     "torre.roja": {
-      "ms": 756
+      "ms": 812
     },
     "torre.verde": {
-      "ms": 1047
+      "ms": 920
     }
   },
   "recetas": {
