@@ -46,6 +46,16 @@ export interface Accion {
   readonly como: string;
   /** Si es la principal, que va pintada distinto. */
   readonly principal?: boolean;
+  /**
+   * Un dibujo, para las acciones que son herramienta y no respuesta.
+   *
+   * Las lupas del plano son el caso: acercar y alejar no se dicen con una
+   * palabra, se dicen con una lupa y un más. Cuando lo hay, `dice` deja de
+   * escribirse y pasa a ser el nombre accesible — que sigue haciendo falta, y
+   * más que nunca: un botón que solo es un dibujo no tiene otra forma de
+   * decir cómo se llama.
+   */
+  readonly dibujo?: string;
 }
 
 export interface Armado {
@@ -64,6 +74,15 @@ export interface Armado {
   readonly acciones?: readonly Accion[];
   /** Clases de más para la caja, para lo que cada panel necesite del suyo. */
   readonly clase?: string;
+  /**
+   * Si es un instrumento que se consulta volando, y no una pantalla que se lee.
+   *
+   * Cambia dos cosas y las dos por el mismo motivo — que el avión sigue
+   * volando debajo: la cabecera va compacta, y el cuerpo no se lleva el alto
+   * sobrante. Un plano que crece hasta llenar la pantalla tapa justo lo que
+   * uno acaba de abrirlo para comparar. Ver `PanelDelVuelo.congela`.
+   */
+  readonly instrumento?: boolean;
 }
 
 /** El dibujo de un panel, por su `id` en la tabla. */
@@ -94,7 +113,9 @@ export function armarPanel(que: Armado): string {
   const id = `concha-titulo-${++cuantos}`;
   const acciones = que.acciones ?? [];
   return `
-    <div class="concha ${que.clase ?? ""}" role="dialog" aria-modal="true"
+    <div class="concha${que.instrumento ? " concha--instrumento" : ""} ${
+      que.clase ?? ""
+    }" role="dialog" aria-modal="true"
          aria-labelledby="${id}">
       <header class="concha__cabecera">
         ${iconoDe(que.panel)}
@@ -108,8 +129,14 @@ export function armarPanel(que: Armado): string {
           .map(
             (a) =>
               `<button type="button" data-accion="${a.como}"
-                 class="concha__accion${a.principal ? " concha__accion--principal" : ""}"
-               >${a.dice}</button>`,
+                 class="concha__accion${a.dibujo ? " concha__accion--dibujo" : ""}${
+                   a.principal ? " concha__accion--principal" : ""
+                 }"${a.dibujo ? ` aria-label="${a.dice}"` : ""}
+               >${
+                 a.dibujo
+                   ? `<svg viewBox="0 0 24 24" aria-hidden="true">${a.dibujo}</svg>`
+                   : a.dice
+               }</button>`,
           )
           .join("")}
       </div>`

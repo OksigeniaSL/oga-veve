@@ -3706,7 +3706,14 @@ button.motor__tecla::after {
   .mapa {
     /* Pegado al borde izquierdo, y solo el ancho que ocupa. */
     inset: 0 auto 0 0;
-    width: min(38vh, 330px);
+    /*
+     * El ancho es el del plano **más el marco de la concha**, que son sus dos
+     * rellenos y sus dos filos. Sin sumarlo, la cabecera y el botón de cerrar
+     * se los pagaba el plano: pasó de doscientos setenta y tres píxeles a
+     * doscientos treinta y nueve, medido en el navegador. El hueco de al lado
+     * está vacío y no cuesta nada; el plano, sí.
+     */
+    width: calc(min(38vh, 330px) + 34px);
     padding-left: 16px;
     /* Nada de oscurecer el mundo: el mundo es justo lo que hay que ver. */
     background: none;
@@ -3714,9 +3721,21 @@ button.motor__tecla::after {
     pointer-events: none;
   }
 
-  .mapa__lienzos,
-  .mapa__lupas {
+  .mapa__lienzos {
     pointer-events: auto;
+  }
+
+  /*
+   * **Y la concha llena la columna.**
+   *
+   * El plano de al lado mide lo que mide la columna —`width: 100%`— y eso
+   * dejó de funcionar el día que entró la concha en medio: un panel que se
+   * encoge hasta su contenido y un contenido que mide el 100 % de su panel es
+   * una pescadilla, y la pescadilla se resolvía en ciento veintinueve píxeles.
+   * Medido en el navegador: el plano pasó de cuatrocientos sesenta a un sello.
+   */
+  .mapa .concha {
+    width: 100%;
   }
 
   .mapa__lienzos {
@@ -3805,6 +3824,12 @@ button.motor__tecla::after {
   pointer-events: auto;
 }
 
+/*
+ * La caja de los mandos, dentro del cuerpo de la concha.
+ *
+ * El fondo, el filo y el redondeo se los pone ahora la concha, así que aquí
+ * solo queda lo que es suyo: cómo se reparten los dos círculos.
+ */
 .tiempo__caja {
   display: grid;
   /*
@@ -3815,11 +3840,6 @@ button.motor__tecla::after {
   grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
   gap: 14px;
   width: min(88vmin, 380px);
-  padding: 16px;
-  border-radius: var(--r-l);
-  background: var(--barro);
-  background-image: var(--barniz);
-  box-shadow: var(--filo), var(--poso);
 }
 
 .tiempo__rosa {
@@ -3952,65 +3972,6 @@ button.motor__tecla::after {
   width: 38px;
   height: 28px;
   stroke: none;
-}
-
-/*
- * Las lupas del mapa. Dentro del propio mapa y grandes: fuera se leerían como
- * mandos del juego, y pequeñas no se aciertan con un dedo de cuatro años.
- */
-/*
- * **Las lupas van fuera del mapa, encima.**
- *
- * Estaban dentro, en una esquina, y le tapaban la flecha del avión. Y no hay
- * esquina buena: desde que el mapa se estira para alcanzar a quien se ha ido
- * volando, el avión puede aparecer en cualquier parte del recuadro.
- *
- * Debajo tampoco, que ahí vive la tarjeta que dice qué hacer. Encima, que es la
- * única banda libre — y siguen igual de grandes para un dedo.
- */
-.mapa__lupas {
-  position: absolute;
-  left: 50%;
-  top: -14px;
-  transform: translate(-50%, -100%);
-  display: flex;
-  gap: 10px;
-}
-
-.mapa__lupa {
-  display: grid;
-  place-items: center;
-  width: var(--tacto);
-  height: var(--tacto);
-  border: 1px solid var(--linea);
-  border-radius: var(--r-m);
-  background: rgba(20, 29, 25, 0.9);
-  background-image: var(--barniz);
-  box-shadow: var(--filo), var(--poso);
-  color: var(--tinta);
-  cursor: pointer;
-  transition:
-    transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1),
-    border-color 140ms ease;
-}
-
-.mapa__lupa:hover,
-.mapa__lupa:focus-visible {
-  border-color: var(--ocre-tinta);
-  transform: scale(1.06);
-}
-
-.mapa__lupa:active {
-  transform: scale(0.94);
-}
-
-.mapa__lupa svg {
-  width: 26px;
-  height: 26px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
 }
 
 /*
@@ -5058,4 +5019,81 @@ button.motor__tecla::after {
   .concha {
     animation: none;
   }
+}
+
+/*
+ * ── Y la concha de un instrumento ──
+ *
+ * Compacta, y por un motivo concreto: debajo el avión sigue volando. Un plano
+ * que crece hasta llenar la pantalla tapa justo lo que uno acaba de abrirlo
+ * para comparar, y el tiempo se consulta de un vistazo y se cierra. Lo que se
+ * lee —los créditos, el cuaderno, los mandos— puede ocupar lo que quiera.
+ */
+.concha--instrumento {
+  /* El cuerpo a lo que ocupe, no a lo que sobre: un plano cuadrado no se
+     estira, y el panel no crece más que su contenido. */
+  grid-template-rows: auto auto auto;
+  gap: 10px;
+  padding: 14px 16px 12px;
+}
+
+.concha--instrumento .concha__cabecera {
+  padding-bottom: 8px;
+}
+
+.concha--instrumento .concha__titulo {
+  font-size: 16px;
+}
+
+.concha--instrumento .concha__icono {
+  width: 22px;
+  height: 22px;
+}
+
+.concha--instrumento .concha__acciones {
+  padding-top: 8px;
+}
+
+/*
+ * **Y el cuerpo de un instrumento no recorta.**
+ *
+ * Lo que se lee puede necesitar barra —los créditos son largos— y un
+ * instrumento no: es un dibujo de un tamaño. Recortando, las lupas del plano
+ * desaparecían, porque van encima de él y se salen de su caja a propósito.
+ */
+.concha--instrumento .concha__cuerpo {
+  overflow: visible;
+}
+
+/*
+ * Una acción que es un dibujo y no una palabra: cuadrada, del tamaño del
+ * tacto, y la primera de la fila. Las lupas del plano son el caso — acercar y
+ * alejar no se dicen con una palabra.
+ */
+.concha__accion--dibujo {
+  width: var(--tacto);
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+/*
+ * Las herramientas a la izquierda y juntas; lo que manda, en su esquina.
+ *
+ * El hueco se lo lleva la primera acción que **no** es un dibujo, no la última
+ * que sí lo es: puesto al revés, las dos lupas del plano salían separadas —una
+ * pegada al borde y la otra al lado de «Cerrar»—, que es lo que se vio en la
+ * captura.
+ */
+.concha__accion--dibujo + .concha__accion:not(.concha__accion--dibujo) {
+  margin-left: auto;
+}
+
+.concha__accion--dibujo svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }

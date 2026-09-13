@@ -25,6 +25,13 @@
  */
 
 import { t } from "../i18n";
+import { armarPanel, CERRAR } from "./concha";
+
+/** Las dos lupas del plano. Alejar quita el trazo de arriba; acercar lo pone. */
+const LUPA_MENOS = `<circle cx="10.5" cy="10.5" r="6.6" />
+  <path d="M15.4 15.4 L21 21 M7 10.5 h7" />`;
+const LUPA_MAS = `<circle cx="10.5" cy="10.5" r="6.6" />
+  <path d="M15.4 15.4 L21 21 M7 10.5 h7 M10.5 7 v7" />`;
 import type { Scenario } from "../world/scenarios";
 import { puntoDePista } from "../world/rumbo";
 import { Panel } from "./panel";
@@ -81,32 +88,32 @@ export class Mapa {
         tenía; este se quedó sin él el día que dejó de ser una caja suelta y
         pasó a ser un panel.
       -->
-      <div class="mapa" data-hud="mapa" hidden aria-label="${t("mapa.title")}">
+      <div class="mapa" data-hud="mapa" hidden>
+        ${armarPanel({
+          titulo: t("mapa.title"),
+          panel: "mapa-boton",
+          instrumento: true,
+          /*
+           * **Y las lupas son acciones**, no un adorno flotando encima.
+           *
+           * Iban `position: absolute` por encima del plano, y con la concha
+           * «encima del plano» pasó a ser «encima del título»: en la captura
+           * tapaban la mitad de «Ver el plano». La fila de acciones es donde
+           * están las herramientas de todos los paneles, siempre en el mismo
+           * sitio y sin taparle nada a nadie.
+           */
+          acciones: [
+            { dice: t("mapa.lejos"), como: "lejos", dibujo: LUPA_MENOS },
+            { dice: t("mapa.cerca"), como: "cerca", dibujo: LUPA_MAS },
+            CERRAR(),
+          ],
+          cuerpo: `
         <div class="mapa__lienzos">
           <canvas class="mapa__fondo" data-hud="mapa-fondo" width="${LADO}" height="${LADO}"></canvas>
           <canvas class="mapa__encima" data-hud="mapa-encima" width="${LADO}" height="${LADO}"></canvas>
-          <!--
-            Los dos botones van **dentro** del mapa y grandes. Fuera se leen
-            como mandos del juego y aquí no lo son; y pequeños no se aciertan
-            con un dedo de cuatro años.
-          -->
-          <div class="mapa__lupas">
-            <button class="mapa__lupa" type="button" data-hud="mapa-lejos"
-                    aria-label="${t("mapa.lejos")}">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="10.5" cy="10.5" r="6.6" />
-                <path d="M15.4 15.4 L21 21 M7 10.5 h7" />
-              </svg>
-            </button>
-            <button class="mapa__lupa" type="button" data-hud="mapa-cerca"
-                    aria-label="${t("mapa.cerca")}">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="10.5" cy="10.5" r="6.6" />
-                <path d="M15.4 15.4 L21 21 M7 10.5 h7 M10.5 7 v7" />
-              </svg>
-            </button>
-          </div>
         </div>
+          `,
+        })}
       </div>
     `;
   }
@@ -140,13 +147,13 @@ export class Mapa {
       .querySelector('[data-hud="mapa-boton"]')
       ?.addEventListener("click", () => this.alternar());
     raiz
-      .querySelector('[data-hud="mapa-cerca"]')
+      .querySelector('[data-accion="cerca"]')
       ?.addEventListener("click", (e) => {
         e.stopPropagation();
         this.acercar(1);
       });
     raiz
-      .querySelector('[data-hud="mapa-lejos"]')
+      .querySelector('[data-accion="lejos"]')
       ?.addEventListener("click", (e) => {
         e.stopPropagation();
         this.acercar(-1);
@@ -167,6 +174,17 @@ export class Mapa {
     this.caja?.addEventListener("pointerdown", (e) => {
       if (e.target === this.caja) this.cerrar();
     });
+    /*
+     * **Y ahora también hay una equis que buscar**, que es lo que faltaba.
+     *
+     * Tocar el fondo sigue valiendo y sigue siendo la salida obvia con el
+     * dedo, pero era la **única**: con el teclado o con el mando no hay fondo
+     * que tocar, y quedaba Escape, que hay que saberse. La acción de cerrar es
+     * la misma en los ocho paneles desde que hay concha.
+     */
+    this.caja
+      ?.querySelector('[data-accion="cerrar"]')
+      ?.addEventListener("click", () => this.cerrar());
   }
 
   /**

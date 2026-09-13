@@ -56,7 +56,9 @@ describe("el avión que se propone al crear un perfil", () => {
     for (let i = 0; i < 12; i++) {
       const p = siguienteLibre(usados);
       const clave = `${p.bicho}|${p.color}`;
-      expect(usados.some((u) => `${u.avatar}|${u.color}` === clave)).toBe(false);
+      expect(usados.some((u) => `${u.avatar}|${u.color}` === clave)).toBe(
+        false,
+      );
       usados.push({ avatar: p.bicho, color: p.color });
     }
   });

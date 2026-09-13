@@ -140,6 +140,23 @@ describe("ningún panel se escribe su propia anatomía", () => {
   const sinComentarios = (texto: string) =>
     texto.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
+  /*
+   * **Y todos la usan.** Es la otra mitad: que nadie escriba su propia
+   * anatomía no sirve de nada si alguno no tiene ninguna. Los dos
+   * instrumentos —el plano y el tiempo— eran exactamente ese caso: una caja
+   * con un `aria-label` y ni cabecera, ni título a la vista, ni dibujo, ni
+   * manera de cerrarlos que no fuera tocar el fondo o saberse Escape.
+   */
+  it("los ocho paneles de la tabla arman una concha", () => {
+    const sinConcha = PANELES_DEL_VUELO.filter((p) => {
+      const suyo = Object.entries(FUENTES).find(([, texto]) =>
+        texto.includes(`panel: "${p.id}"`),
+      );
+      return !suyo;
+    }).map((p) => p.id);
+    expect(sinConcha).toEqual([]);
+  });
+
   it("solo la concha escribe role=dialog", () => {
     const suyos = Object.entries(FUENTES)
       .filter(([f]) => !f.endsWith(".test.ts") && !f.endsWith("/concha.ts"))

@@ -302,6 +302,31 @@ async function tambienEnAlto(page, donde) {
   return medidos;
 }
 
+/**
+ * Cómo se llama un mando, y **una sola vez**.
+ *
+ * Estaba escrito dos veces —en el recorrido del tabulador y en la lista de lo
+ * que hay que alcanzar— y las dos copias tenían que dar el mismo nombre para
+ * el mismo botón, porque lo que se compara es eso. El día que una aprendió a
+ * leer `data-accion` y la otra no, las siete pantallas con paneles dieron
+ * «sin alcanzar: concha__accion» a la vez: siete cruces y ningún fallo.
+ *
+ * Se pasa como texto a `page.evaluate`, que es la única forma de compartir una
+ * función entre el guion y la página.
+ */
+const COMO_SE_LLAMA = `(e) =>
+  e.getAttribute("data-hud") ??
+  e.getAttribute("data-touch") ??
+  (e.getAttribute("data-ajuste")
+    ? e.getAttribute("data-ajuste") + ":" + e.getAttribute("data-valor")
+    : null) ??
+  e.getAttribute("data-pausa") ??
+  e.getAttribute("data-ala") ??
+  (e.getAttribute("data-accion")
+    ? "accion:" + e.getAttribute("data-accion")
+    : null) ??
+  (e.className || e.tagName).toString().split(" ")[0]`;
+
 const AA = { normal: 4.5, grande: 3 };
 const AAA = { normal: 7, grande: 4.5 };
 
@@ -355,40 +380,36 @@ async function auditar(page, donde, encierra = null, pide = AA) {
      * Enfocar desde el guion no lo enciende, y la primera versión de esto
      * acusó de no marcar el foco a un botón que sí lo marca.
      */
-    const parada = await page.evaluate((encierra) => {
-      const a = document.activeElement;
-      if (!a || a === document.body) return null;
-      /*
-       * El nombre tiene que ser **único por mando**, no por clase: en la
-       * pantalla de ajustes hay once botones con la misma clase, y con el
-       * nombre por clase el recorrido se daba por terminado en el segundo.
-       */
-      const nombre =
-        a.getAttribute("data-hud") ??
-        a.getAttribute("data-touch") ??
-        (a.getAttribute("data-ajuste")
-          ? `${a.getAttribute("data-ajuste")}:${a.getAttribute("data-valor")}`
-          : null) ??
-        a.getAttribute("data-pausa") ??
-        a.getAttribute("data-ala") ??
-        (a.className || a.tagName).toString().split(" ")[0];
-      const retrato = (e) =>
-        `${e.outlineWidth}|${e.outlineStyle}|${e.outlineColor}|${e.boxShadow}|${e.backgroundColor}|${e.borderColor}`;
-      const enfocado = retrato(getComputedStyle(a));
-      a.blur();
-      const suelto = retrato(getComputedStyle(a));
-      a.focus();
-      const repetido = globalThis.__vistos.has(a);
-      globalThis.__vistos.add(a);
-      return {
-        repetido,
-        nombre,
-        marca: enfocado !== suelto,
-        // Y de qué panel es. Un diálogo modal no puede dejar que el
-        // tabulador se vaya por detrás, a lo que está tapado.
-        dentroDe: encierra && a.closest(encierra) ? encierra : null,
-      };
-    }, encierra);
+    const parada = await page.evaluate(
+      ([encierra, comoTexto]) => {
+        const comoSeLlama = eval(comoTexto);
+        const a = document.activeElement;
+        if (!a || a === document.body) return null;
+        /*
+         * El nombre tiene que ser **único por mando**, no por clase: en la
+         * pantalla de ajustes hay once botones con la misma clase, y con el
+         * nombre por clase el recorrido se daba por terminado en el segundo.
+         */
+        const nombre = comoSeLlama(a);
+        const retrato = (e) =>
+          `${e.outlineWidth}|${e.outlineStyle}|${e.outlineColor}|${e.boxShadow}|${e.backgroundColor}|${e.borderColor}`;
+        const enfocado = retrato(getComputedStyle(a));
+        a.blur();
+        const suelto = retrato(getComputedStyle(a));
+        a.focus();
+        const repetido = globalThis.__vistos.has(a);
+        globalThis.__vistos.add(a);
+        return {
+          repetido,
+          nombre,
+          marca: enfocado !== suelto,
+          // Y de qué panel es. Un diálogo modal no puede dejar que el
+          // tabulador se vaya por detrás, a lo que está tapado.
+          dentroDe: encierra && a.closest(encierra) ? encierra : null,
+        };
+      },
+      [encierra, COMO_SE_LLAMA],
+    );
     if (parada === null) continue;
     if (parada.repetido) break;
     if (!recorrido.includes(parada.nombre)) recorrido.push(parada.nombre);
@@ -406,8 +427,9 @@ async function auditar(page, donde, encierra = null, pide = AA) {
    * fallar es peor que no tenerla.
    */
   const visibles = await page.evaluate(
-    (encierra) =>
-      [
+    ([encierra, comoTexto]) => {
+      const comoSeLlama = eval(comoTexto);
+      return [
         ...(encierra
           ? (document.querySelector(encierra) ?? document)
           : document
@@ -431,23 +453,16 @@ async function auditar(page, donde, encierra = null, pide = AA) {
             !e.hasAttribute("disabled"),
         )
         .map((e) => ({
-          nombre:
-            e.getAttribute("data-hud") ??
-            e.getAttribute("data-touch") ??
-            (e.getAttribute("data-ajuste")
-              ? `${e.getAttribute("data-ajuste")}:${e.getAttribute("data-valor")}`
-              : null) ??
-            e.getAttribute("data-pausa") ??
-            e.getAttribute("data-ala") ??
-            (e.className || e.tagName).toString().split(" ")[0],
+          nombre: comoSeLlama(e),
           equivale: e.getAttribute("data-equivale-a"),
-        })),
+        }));
+    },
     /*
      * Con un panel modal abierto solo cuentan sus mandos. Los del vuelo siguen
      * en pantalla, detrás del velo, y **no alcanzarlos es justo lo que tiene que
      * pasar**: para eso está el encierro.
      */
-    encierra,
+    [encierra, COMO_SE_LLAMA],
   );
   const fuera = [];
   const declarados = [];

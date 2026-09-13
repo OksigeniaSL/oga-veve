@@ -58,7 +58,10 @@ export function relojDe(segundos: number, deEsteVuelo = 0): Reloj {
     aviones,
     // Los nuevos solo se marcan si de verdad se ven: pasado el tope, la fila
     // ya no cambia y encender uno sería mentir.
-    nuevos: Math.max(0, Math.min(aviones, ganados) - Math.max(antes, ganados - aviones)),
+    nuevos: Math.max(
+      0,
+      Math.min(aviones, ganados) - Math.max(antes, ganados - aviones),
+    ),
     demas: Math.max(0, ganados - AVIONES_MAXIMOS),
     fraccion: (total % MEDIA_HORA) / MEDIA_HORA,
   };

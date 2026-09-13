@@ -29,6 +29,7 @@
  */
 
 import { t } from "../i18n";
+import { armarPanel, CERRAR } from "./concha";
 import type { Meteo } from "../world/meteo";
 import { Panel } from "./panel";
 
@@ -59,9 +60,22 @@ export class PanelDelTiempo {
 
   static markup(): string {
     return `
-      <div class="tiempo" data-hud="tiempo" hidden role="group"
-           aria-label="${t("tiempo.title")}">
-        <div class="tiempo__caja">
+      <div class="tiempo" data-hud="tiempo" hidden>
+        ${armarPanel({
+          titulo: t("tiempo.title"),
+          panel: "tiempo-boton",
+          instrumento: true,
+          clase: "tiempo__panel",
+          acciones: [CERRAR()],
+          /*
+           * La caja va **dentro** del cuerpo y no encima del panel, que fue el
+           * primer intento: `.tiempo__caja` reparte sus dos círculos en
+           * columnas y la concha reparte cabecera, cuerpo y acciones en filas,
+           * así que puestas en el mismo elemento se pelean — y ganaba la
+           * cabecera, que acababa flotando en medio del panel con los mandos
+           * apretados a un lado. Se vio en una captura.
+           */
+          cuerpo: `<div class="tiempo__caja">
         <!--
           **Cada mando dice qué es, y lo dice con un dibujo.**
           Quien lo probó abrió el panel y dijo «esto no se sabe para qué es»: dos
@@ -187,7 +201,8 @@ export class PanelDelTiempo {
             </svg>
           </button>
         </div>
-        </div>
+          </div>`,
+        })}
       </div>
     `;
   }
@@ -211,6 +226,10 @@ export class PanelDelTiempo {
     this.caja?.addEventListener("pointerdown", (e) => {
       if (e.target === this.caja) this.cerrar();
     });
+    // Y por la equis, que con el teclado o con el mando no hay fondo que tocar.
+    this.caja
+      ?.querySelector('[data-accion="cerrar"]')
+      ?.addEventListener("click", () => this.cerrar());
     raiz
       .querySelector('[data-hud="tiempo-calma"]')
       ?.addEventListener("click", () => this.aplicar(null, 0));
