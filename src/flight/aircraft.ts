@@ -376,7 +376,107 @@ export const MAINUMBY: AircraftConfig = {
   },
 };
 
-export const AIRCRAFT: readonly AircraftConfig[] = [PYKASU, MAINUMBY];
+/**
+ * JAZ 40 *Panambi* — bimotor ligero de ala baja, seis plazas.
+ *
+ * El tercer peldaño de la flota y el primero con **dos motores**, que es lo
+ * que enseña: una silueta con dos góndolas en el ala se reconoce a un
+ * kilómetro y es de las primeras cosas que aprende a mirar quien mira aviones.
+ * *Panambi* es la mariposa — dos alas grandes y vuelo tranquilo.
+ *
+ * ## De dónde sale cada número
+ *
+ * Y ésta es la diferencia con los dos primeros, que se escribieron a ojo y se
+ * comprobaron después: **este avión nació con el banco delante**. Cada
+ * coeficiente sale de una cuenta o de una banda medida, y las diecisiete
+ * comprobaciones de `prestaciones.test.ts` lo miden entero — pérdida, crucero,
+ * planeo, ascenso, carrera de despegue y los cinco modos propios.
+ *
+ * - **`clAlpha`** de la línea sustentadora con su propio alargamiento, 7,45:
+ *   `2π/(1+2/(AR·e))` da 4,67. La cuenta está validada contra el Navion, que
+ *   predice 4,38 donde el informe mide 4,44. Ver `referencia.ts`.
+ * - **`cmAlpha`** de un margen estático del 16 % de la cuerda: `−0,16·clAlpha`.
+ *   El Navion vuela al 15,4 % y una ligera de escuela anda entre el 10 y el 20.
+ * - **`clP`** de la proporción que comparten los dos aviones de referencia:
+ *   el Navion sale a `clAlpha/10,8` y el JAZ 20 a `clAlpha/10,6`. Aquí, 10,7.
+ * - **`clAileron`** de la regla de la casa: `clAileron/|clP| · 2V/b` entre 60 y
+ *   80 grados por segundo, que es lo que rueda una ligera — y lo que rueda el
+ *   Navion con sus recorridos certificados, 72.
+ * - **`cd0`** más bajo que el del JAZ 20 porque este avión mete las patas:
+ *   veintiséis milésimas contra treinta y una.
+ * - Los laterales, dentro de la banda de los dos de referencia. Ver la
+ *   comparación de `referencia.test.ts`.
+ *
+ * El empuje se eligió **midiendo**: con cinco mil ochocientos newtons subía a
+ * seis metros y medio por segundo, que es régimen de avión de transporte
+ * ligero y no de bimotor de seis plazas. Con cinco mil, cinco.
+ */
+export const PANAMBI: AircraftConfig = {
+  id: "jaz-40",
+  name: nombreEntero(FLOTA[2]!),
+  descriptionKey: "aircraft.panambi.description",
+  mass: 2000,
+  wingArea: 19.0,
+  wingSpan: 11.9,
+  chord: 1.6,
+  /*
+   * Las inercias, escaladas del JAZ 20 por masa y por tamaño: crecen con el
+   * peso y con el cuadrado de la distancia a la que está repartido, y en un
+   * bimotor parte de ese peso son dos motores **colgados del ala**, que es lo
+   * que dispara la de alabeo frente a la de un monomotor del mismo peso.
+   */
+  inertia: { xx: 3400, yy: 4200, zz: 6800 },
+  maxThrust: 5000,
+  cruiseSpeed: 80,
+  // 44 m/s son 1,3 veces la pérdida, que es como se cruza el umbral.
+  approachSpeed: 44,
+  decisionSpeed: 34,
+  rotationSpeed: 37,
+  gearHeight: 1.6,
+  maxGroundPitch: 0.19, // 11°
+  flapsLift: 0.5,
+  flapsDrag: 0.07,
+  appearance: {
+    // Blanco de compañía con la franja de la casa: es un avión de trabajo que
+    // lleva gente, y se pinta como se pintan ésos.
+    body: 0xecece6,
+    accent: 0x2f5243,
+    trim: 0xbe5d38,
+    blades: 3,
+  },
+  sound: {
+    // Dos cuatro cilindros. Suena a avioneta pero doble, que es exactamente
+    // lo que es, y el batido de los dos motores casi acompasados es la firma
+    // sonora de un bimotor de pistón.
+    engine: "piston",
+    cylinders: 8,
+    idleRpm: 700,
+    maxRpm: 2600,
+    growlHz: 250,
+    growlRise: 300,
+  },
+  aero: {
+    cl0: 0.25,
+    clAlpha: 4.67,
+    alphaStall: 0.26, // ~15°
+    cd0: 0.026,
+    oswald: 0.78,
+    cyBeta: -0.45,
+    cm0: 0.04,
+    cmAlpha: -0.75,
+    cmQ: -13.5,
+    cmElevator: 0.46,
+    clBeta: -0.075, // Ala baja: menos diedro efectivo que el JAZ 20.
+    clP: -0.44,
+    clAileron: 0.043, // ~70 °/s a fondo, que es lo que rueda una ligera.
+    cnBeta: 0.08,
+    cnR: -0.13,
+    cnRudder: 0.03,
+    cnAileron: -0.0025,
+  },
+};
+
+export const AIRCRAFT: readonly AircraftConfig[] = [PYKASU, MAINUMBY, PANAMBI];
 
 export function aircraftById(id: string): AircraftConfig {
   const found = AIRCRAFT.find((a) => a.id === id);

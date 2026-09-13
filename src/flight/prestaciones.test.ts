@@ -28,10 +28,9 @@
  * ## Lo que sale hoy
  *
  * ```
- *   jaz-20   pérdida 26,7 m/s (coeficientes 25,2) · crucero 75 % 56,2 ·
- *            a tope 60,5 (ficha 60) · Vref 1,31·Vs
- *   jaz-25   pérdida 23,3 m/s (coeficientes 22,2) · crucero 75 % 49,6 ·
- *            a tope 57,3 (ficha 55) · Vref 1,30·Vs
+ *   jaz-20   pérdida 26,7 m/s (coeficientes 25,2) · a tope 64,4 · Vref 1,31·Vs
+ *   jaz-25   pérdida 23,3 m/s (coeficientes 22,2) · a tope 61,5 · Vref 1,30·Vs
+ *   jaz-40   pérdida 34,5 m/s (coeficientes 33,9) · a tope 87,4 · Vref 1,30·Vs
  * ```
  *
  * Las dos fichas están sanas, y el número que más tranquiliza es el último:
@@ -46,13 +45,21 @@
  * cuenta del ala y un avión de verdad.
  *
  * ```
- *   jaz-20   planeo 11,9 (teórico 12,0) a 38 m/s · sube 3,3 m/s a Vy 42
- *            fugoide 33 s ζ 0,09 · corto período 6,2 ζ 0,59
- *            holandés 3,46 ζ 0,20 · alabeo 13,4 · espiral −0,006
- *   jaz-25   planeo 8,0 (teórico 8,1) a 34 m/s · sube 4,4 m/s a Vy 34
- *            fugoide 32 s ζ 0,16 · corto período 7,3 ζ 0,67
- *            holandés 3,79 ζ 0,32 · alabeo 21,6 · espiral −0,0007
+ *   jaz-20   planeo teórico 12,0 · alabeo 98 °/s · margen estático 17,6 %
+ *            fugoide 33 s ζ 0,09 · corto 6,2 ζ 0,59
+ *            holandés 3,41 ζ 0,20 · alabeo 13,4 · espiral −0,013
+ *   jaz-25   planeo teórico  8,1 · alabeo 119 °/s · margen 19,4 %
+ *            fugoide 32 s ζ 0,16 · corto 7,3 ζ 0,67
+ *            holandés 3,76 ζ 0,31 · alabeo 21,6 · espiral −0,006
+ *   jaz-40   planeo teórico 13,3 · alabeo  75 °/s · margen 16,1 %
+ *            fugoide 43 s ζ 0,09 · corto 5,4 ζ 0,55
+ *            holandés 3,40 ζ 0,20 · alabeo  8,6 · espiral −0,014
  * ```
+ *
+ * **Y el bimotor es el primero que rueda dentro de la regla de la casa**: 75
+ * grados por segundo, contra los 98 del entrenador. No es casualidad — es el
+ * primero cuyo `clAileron` se eligió con la cuenta delante en vez de a ojo.
+ * Ver `aircraft.ts`.
  *
  * **El planeo cuadra al uno por ciento con lo que el ala permite**, que es la
  * comprobación que ata el motor de vuelo a la ficha: si los dos discreparan,
@@ -133,7 +140,23 @@ function nuevo(
  * deja un error permanente —el avión se queda subiendo despacio— y entonces la
  * velocidad que se mide no es la de vuelo nivelado.
  *
- * `alSalir` corta antes si pasa algo, y lo que devuelve dice si pasó.
+ * `alSalir` corta antes si pasa antes, y lo que devuelve dice si pasó.
+ *
+ * ## Y con amortiguamiento de cabeceo, que faltaba
+ *
+ * Era un proporcional-integral sobre la velocidad vertical y nada más, y eso
+ * **oscilaba**. En los dos primeros aviones se notaba poco —el JAZ 20 daba
+ * tumbos de ±8° de ángulo de ataque alrededor de lo que buscaba— y las
+ * medidas salían del promedio del bamboleo, no del avión. Al entrar el tercero
+ * la oscilación se hizo divergente: el Panambi se ponía a 38 grados de ángulo
+ * de ataque, entraba en pérdida y se quedaba ahí, y el banco lo acusaba de
+ * perder a cincuenta metros por segundo.
+ *
+ * El término que faltaba es el de siempre en un lazo de cabeceo: **la
+ * velocidad angular**. Con él los dos se asientan en cuatro segundos y se
+ * quedan clavados en vertical cero — y las cifras cambian, porque las de antes
+ * eran de un avión dando tumbos: el JAZ 20 a todo gas no volaba a 60,5 sino a
+ * 64,4.
  */
 function nivelado(
   m: CoefficientFlightModel,
@@ -145,7 +168,10 @@ function nivelado(
   for (let k = 0; k < Math.round(segundos / DT); k++) {
     const vs = m.state.verticalSpeed;
     integral = Math.max(-0.6, Math.min(0.6, integral + vs * DT * 0.05));
-    const elevator = Math.max(-1, Math.min(1, -vs * 0.12 - integral));
+    const elevator = Math.max(
+      -1,
+      Math.min(1, -vs * 0.12 - integral - m.state.pitchRate * 1.2),
+    );
     m.step(DT, { ...neutralControls(), engineOn: true, throttle, elevator });
     if (alSalir?.(m)) return true;
   }
@@ -175,7 +201,10 @@ function medirPerdida(a: AircraftConfig, flaps = 0): number {
       engineOn: true,
       throttle: 0,
       flaps,
-      elevator: Math.max(-1, Math.min(1, -vs * 0.12 - integral)),
+      elevator: Math.max(
+        -1,
+        Math.min(1, -vs * 0.12 - integral - m.state.pitchRate * 1.2),
+      ),
     });
     v = m.state.airspeed;
     if (m.state.stalled) return v;

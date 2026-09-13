@@ -91,6 +91,8 @@ export const EN: Dictionary = {
 
   "aircraft.pykasu.description": "Trainer. Steady and forgiving.",
   "aircraft.mainumby.description": "Crop duster biplane. Nimble and strong.",
+  "aircraft.panambi.description":
+    "Low-wing twin. Two engines, faster, and the legs tuck away.",
 
   "mission.rio.name": "See the river",
   "mission.rioabajo.name": "Follow the river",
