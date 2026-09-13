@@ -2442,12 +2442,24 @@ export class Game {
      * ahí el dibujo es el mensaje entero.
      */
     this.hechos.on("tramoDeCircuito", ({ tramo }) => {
+      const clave = `circuito.${tramo}` as TranslationKey;
       this.hud.senal.mostrar(
         `circuito-${tramo}`,
-        this.tier.instruments === "none" ? "" : t(`circuito.${tramo}` as never),
+        this.tier.instruments === "none" ? "" : t(clave),
         null,
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
       );
+      /*
+       * **Y se dice**, que era lo que faltaba.
+       *
+       * Las cuatro frases del circuito están escritas y grabadas desde que
+       * hay pack de voz, y **no las decía nadie**: esto sacaba el dibujo y se
+       * callaba. Jugando se nota justo donde más falta hace — «los giros no
+       * los anuncia cuando doy la vuelta para volver a tomar la pista»—,
+       * porque el dibujo de un tramo de circuito es una forma abstracta y la
+       * frase es la que dice qué hacer.
+       */
+      this.instructor.decir(t(clave), clave);
     });
 
     /*
@@ -2952,6 +2964,20 @@ export class Game {
    * mundo, y la pista es de todos.
    */
   private oirLaRadio(dt: number): void {
+    /*
+     * **Y solo donde hay alguien con quien compartir la frecuencia.**
+     *
+     * Sonaba en todas partes, y en un campo de hierba privado eso es mentira:
+     * ahí no viene otro. «Volé sobre el aeródromo de hierba, no escuché torre
+     * y no veo mucho sentido a que diga que viene otro, porque en esos
+     * aeródromos normalmente no viene otro.»
+     *
+     * Y no es solo verosimilitud: la radio de este juego existe para enseñar
+     * que **la pista es de todos**, y esa lección solo se puede dar donde de
+     * verdad hay más gente. En la pista de la granja lo que se aprende es lo
+     * contrario, que es igual de cierto y más bonito: estás vos solo.
+     */
+    if (this.scenario.aerodrome?.privado) return;
     const dice = this.radio.update(dt, {
       fase: this.faseDeAhora,
       deDia: this.sky.sunDirection.y > 0,

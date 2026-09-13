@@ -19,8 +19,8 @@ instructor	instructor/vuelo.terrenoSube.ogg	es-PY	¡Subí!	lo que toca hacer aho
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	¡Pista ocupada! Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.frustrada.ogg	es-PY	¡Bien hecho! Te fuiste al aire. Probá de nuevo	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.aroAlto.ogg	es-PY	Pasaste por encima del aro. Bajá un poco	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.aroBajo.ogg	es-PY	Pasaste por debajo del aro. Subí un poco	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aroAlto.ogg	es-PY	Vas alto para la pista. Bajá un poco	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aroBajo.ogg	es-PY	Vas bajo para la pista. Subí un poco	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiAlto.ogg	es-PY	Luces blancas: vas alto, bajá	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiBajo.ogg	es-PY	Luces rojas: vas bajo, subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiBien.ogg	es-PY	Dos rojas y dos blancas: vas bien	lo que toca hacer ahora, en vuelo y en tierra
@@ -40,9 +40,9 @@ instructor	instructor/vuelo.teLoPasaste.ogg	es-PY	Te pasaste. Frená y volvé	lo
 instructor	instructor/vuelo.yaPodesTocar.ogg	es-PY	Ya podés tocar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinPermiso.ogg	es-PY	Entraste sin la luz verde. La próxima, esperala	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/circuito.subida.ogg	es-PY	Subí derecho por el eje	los cuatro tramos del circuito de tráfico
-instructor	instructor/circuito.cruzado.ogg	es-PY	Girá a la izquierda	los cuatro tramos del circuito de tráfico
-instructor	instructor/circuito.encola.ogg	es-PY	Volá al lado de la pista	los cuatro tramos del circuito de tráfico
-instructor	instructor/circuito.base.ogg	es-PY	Girá y empezá a bajar	los cuatro tramos del circuito de tráfico
+instructor	instructor/circuito.cruzado.ogg	es-PY	Girá a la izquierda: volvemos a la pista	los cuatro tramos del circuito de tráfico
+instructor	instructor/circuito.encola.ogg	es-PY	Volá al lado de la pista, con ella a tu izquierda	los cuatro tramos del circuito de tráfico
+instructor	instructor/circuito.base.ogg	es-PY	Girá otra vez y empezá a bajar: ya vamos a aterrizar	los cuatro tramos del circuito de tráfico
 instructor	instructor/percance.ocupada.ogg	es-PY	La pista estaba ocupada y te dijeron que no bajaras	lo que salió mal, en la pantalla de fin
 instructor	instructor/percance.coche.ogg	es-PY	Le pasaste por encima al coche	lo que salió mal, en la pantalla de fin
 instructor	instructor/percance.edificio.ogg	es-PY	Chocaste con un edificio	lo que salió mal, en la pantalla de fin

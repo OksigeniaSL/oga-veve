@@ -18,8 +18,8 @@
 018	vuelo.mandanFrustrar	¡Pista ocupada! Subí y volvé por el circuito
 019	vuelo.puedeVolver	La torre te deja volver a intentarlo
 020	vuelo.frustrada	¡Bien hecho! Te fuiste al aire. Probá de nuevo
-021	vuelo.aroAlto	Pasaste por encima del aro. Bajá un poco
-022	vuelo.aroBajo	Pasaste por debajo del aro. Subí un poco
+021	vuelo.aroAlto	Vas alto para la pista. Bajá un poco
+022	vuelo.aroBajo	Vas bajo para la pista. Subí un poco
 023	vuelo.papiAlto	Luces blancas: vas alto, bajá
 024	vuelo.papiBajo	Luces rojas: vas bajo, subí
 025	vuelo.papiBien	Dos rojas y dos blancas: vas bien
@@ -39,9 +39,9 @@
 039	vuelo.yaPodesTocar	Ya podés tocar
 040	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
 041	circuito.subida	Subí derecho por el eje
-042	circuito.cruzado	Girá a la izquierda
-043	circuito.encola	Volá al lado de la pista
-044	circuito.base	Girá y empezá a bajar
+042	circuito.cruzado	Girá a la izquierda: volvemos a la pista
+043	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
+044	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
 045	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
 046	percance.coche	Le pasaste por encima al coche
 047	percance.edificio	Chocaste con un edificio

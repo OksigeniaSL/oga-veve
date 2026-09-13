@@ -143,14 +143,14 @@
     "id": "vuelo.aroAlto",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Pasaste por encima del aro. Bajá un poco",
+    "texto": "Vas alto para la pista. Bajá un poco",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.aroBajo",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Pasaste por debajo del aro. Subí un poco",
+    "texto": "Vas bajo para la pista. Subí un poco",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -290,21 +290,21 @@
     "id": "circuito.cruzado",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Girá a la izquierda",
+    "texto": "Girá a la izquierda: volvemos a la pista",
     "para": "los cuatro tramos del circuito de tráfico"
   },
   {
     "id": "circuito.encola",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Volá al lado de la pista",
+    "texto": "Volá al lado de la pista, con ella a tu izquierda",
     "para": "los cuatro tramos del circuito de tráfico"
   },
   {
     "id": "circuito.base",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Girá y empezá a bajar",
+    "texto": "Girá otra vez y empezá a bajar: ya vamos a aterrizar",
     "para": "los cuatro tramos del circuito de tráfico"
   },
   {
