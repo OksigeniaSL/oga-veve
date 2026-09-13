@@ -1529,7 +1529,22 @@ export class Game {
      * que las frases estén grabadas esto sobra, porque ya no dependerá del
      * sistema. Ver `docs/voces/`.
      */
-    if (!this.instructor.disponible) {
+    /*
+     * **Y se pregunta a los cuatro segundos, no al arrancar.**
+     *
+     * Esto miraba `disponible` aquí mismo, en el constructor, y solo retrasaba
+     * la tarjeta. Pero es que la respuesta de aquí **no vale todavía**: en
+     * Chrome el primer `getVoices()` devuelve una lista vacía y se llena
+     * luego, con el evento `voiceschanged`. `instructor.ts` lo tiene escrito
+     * dos líneas antes de hacerlo bien —«preguntar una sola vez al arrancar es
+     * el error clásico de esta API»— y aquí se hacía exactamente eso.
+     *
+     * En un sistema con voces que tardan un pelo, el juego decidía «no hay» y
+     * cuatro segundos después sacaba el cartel con el instructor ya hablando.
+     * Ahora la pregunta va dentro de la espera, que es donde tiene sentido.
+     */
+    this.agenda.luego(4, () => {
+      if (this.instructor.disponible) return;
       /*
        * **Y se dice con un dibujo, no solo con una frase.**
        *
@@ -1542,20 +1557,14 @@ export class Game {
        * solo que pasa algo. Cuando el pack grabado esté, esto no saldrá:
        * el instructor hablará aunque el navegador no tenga ni una voz.
        */
-      this.agenda.luego(4, () => {
-        this.hud.senal.mostrar(
-          "sinVoz",
-          this.rotulo("hud.sinVoz", "palabra.mudo"),
-          null,
-          {
-            segundos: 8,
-            prioridad: IMPORTANTE,
-          },
-        );
-        if (this.tier.instruments !== "none")
-          this.hud.flash(t("hud.sinVoz"), 8);
-      });
-    }
+      this.hud.senal.mostrar(
+        "sinVoz",
+        this.rotulo("hud.sinVoz", "palabra.mudo"),
+        null,
+        { segundos: 8, prioridad: IMPORTANTE },
+      );
+      if (this.tier.instruments !== "none") this.hud.flash(t("hud.sinVoz"), 8);
+    });
   }
 
   /** La ventana de pruebas de desarrollo. Vive en `src/dev/sondas.ts`. */
