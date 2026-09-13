@@ -476,7 +476,185 @@ export const PANAMBI: AircraftConfig = {
   },
 };
 
-export const AIRCRAFT: readonly AircraftConfig[] = [PYKASU, MAINUMBY, PANAMBI];
+/**
+ * JAZ 60 *Arasunu* — turbohélice regional de cola en T, diecinueve plazas.
+ *
+ * El primero que no es una avioneta: pesa cinco veces lo que el bimotor y se
+ * vuela con el peldaño de arriba. *Arasunu* es el trueno.
+ *
+ * La silueta es lo que enseña, como siempre: **la cola en T**. Un
+ * estabilizador subido a lo alto de la deriva se reconoce sin saber nada de
+ * aviones, y está ahí por un motivo que se puede contar — mantener la cola
+ * fuera de la estela del ala y de las hélices.
+ *
+ * La referencia de tamaño es el **DHC-6 Twin Otter**, que #54 señala como «la
+ * base defendible para el turbohélice regional» porque tiene derivadas
+ * identificadas en vuelo y publicadas. No es ese avión: es de su clase, y de
+ * ahí salen el peso, la envergadura y la superficie.
+ *
+ * Los coeficientes, por el mismo camino que el Panambi: `clAlpha` de la línea
+ * sustentadora con su alargamiento —diez, que es de ala larga y por eso planea
+ * tan bien—, `cmAlpha` de un margen del 17 %, `clP` de la proporción de
+ * siempre, y `clAileron` de la regla de la casa. **Sesenta grados por segundo
+ * y no setenta**: un avión grande rueda más despacio, y eso también se aprende.
+ */
+export const ARASUNU: AircraftConfig = {
+  id: "jaz-60",
+  name: nombreEntero(FLOTA[3]!),
+  descriptionKey: "aircraft.arasunu.description",
+  mass: 5600,
+  wingArea: 39.0,
+  wingSpan: 19.8,
+  chord: 2.0,
+  // Escaladas por masa y envergadura con la proporción que comparten el Navion
+  // y los tres de la flota: `Ixx ≈ 0,012·m·b²`.
+  inertia: { xx: 26000, yy: 32000, zz: 52000 },
+  maxThrust: 14000,
+  cruiseSpeed: 90,
+  approachSpeed: 48,
+  decisionSpeed: 38,
+  rotationSpeed: 41,
+  gearHeight: 2.2,
+  maxGroundPitch: 0.17, // 10°: la cola en T no perdona rotar de más.
+  // Flaps grandes: es lo que le permite entrar en pistas cortas, que es para
+  // lo que existe un turbohélice regional.
+  flapsLift: 0.65,
+  flapsDrag: 0.09,
+  appearance: {
+    body: 0xecece6,
+    accent: 0x1f4f76,
+    trim: 0xdd923f,
+    blades: 4,
+  },
+  sound: {
+    engine: "turboprop",
+    cylinders: 0,
+    idleRpm: 900,
+    maxRpm: 2000,
+    growlHz: 420,
+    growlRise: 260,
+  },
+  aero: {
+    cl0: 0.3,
+    clAlpha: 5.03,
+    alphaStall: 0.27, // ~15°
+    cd0: 0.028,
+    oswald: 0.8,
+    cyBeta: -0.55,
+    cm0: 0.045,
+    cmAlpha: -0.855,
+    cmQ: -16,
+    cmElevator: 0.5,
+    clBeta: -0.095,
+    clP: -0.47,
+    clAileron: 0.054, // ~60 °/s: un avión grande rueda más despacio.
+    cnBeta: 0.09,
+    cnR: -0.16,
+    cnRudder: 0.035,
+    cnAileron: -0.003,
+  },
+};
+
+/**
+ * JAZ 90 *Kuarahy* — reactor de ala en flecha.
+ *
+ * El último peldaño de la flota y el único con turbinas. *Kuarahy* es el sol.
+ *
+ * Lo que enseña su silueta son dos cosas a la vez: **el ala en flecha** y los
+ * motores colgados por debajo. Las dos van juntas y las dos tienen su porqué
+ * —la flecha retrasa la compresibilidad, los motores bajo el ala descargan la
+ * estructura y se cambian sin desmontar nada—, y las dos se reconocen de un
+ * vistazo, que es la destreza del álbum.
+ *
+ * Y trae consigo lo que un reactor cambia de verdad, que no es la velocidad:
+ * **es que todo tarda más**. El fugoide de este avión dura noventa segundos y
+ * el del entrenador treinta y tres, y eso no es un número, es la sensación de
+ * pilotar algo grande. El banco lo mide contra la cuenta de Lanchester, que
+ * dice que el período crece con la velocidad — ver `prestaciones.test.ts`.
+ *
+ * ## Y todavía no vuela, porque le falta el nombre
+ *
+ * **No está en `AIRCRAFT`**, y no es un olvido: *Kuarahy* está en disputa. La
+ * raíz ya es de *Kuarahy-memby*, la ardilla de Granja Óga, y la regla de la
+ * casa —«un nombre no puede estar dos veces en el mundo de Granja Óga»— dice
+ * que un nombre en disputa se queda reservado y no vuela. Es la misma
+ * colisión que hizo que el biplano dejara de llamarse Kuarahy. Ver `flota.ts`
+ * y #69.
+ *
+ * Así que el avión está entero y medido —el banco de prestaciones lo vuela
+ * igual, que para eso está— y entra en la flota el día que tenga nombre. Esa
+ * decisión no la toma este fichero.
+ */
+export const KUARAHY: AircraftConfig = {
+  id: "jaz-90",
+  name: nombreEntero(FLOTA[4]!),
+  descriptionKey: "aircraft.kuarahy.description",
+  mass: 30000,
+  wingArea: 72.0,
+  wingSpan: 26.0,
+  chord: 3.0,
+  inertia: { xx: 243000, yy: 300000, zz: 487000 },
+  maxThrust: 58000,
+  cruiseSpeed: 180,
+  approachSpeed: 90,
+  decisionSpeed: 72,
+  rotationSpeed: 78,
+  gearHeight: 2.8,
+  maxGroundPitch: 0.16, // 9°: con un fuselaje largo, la cola llega antes.
+  flapsLift: 0.7,
+  flapsDrag: 0.1,
+  appearance: {
+    body: 0xf2f1ec,
+    accent: 0xbe5d38,
+    trim: 0x2f5243,
+    blades: 0,
+  },
+  sound: {
+    engine: "turbofan",
+    cylinders: 0,
+    idleRpm: 2000,
+    maxRpm: 9000,
+    growlHz: 520,
+    growlRise: 700,
+  },
+  aero: {
+    cl0: 0.18,
+    // Menos que lo que daría su alargamiento: la flecha baja la pendiente de
+    // sustentación, y ése es el precio que se paga por ella.
+    clAlpha: 4.6,
+    alphaStall: 0.26, // ~15°
+    cd0: 0.02,
+    oswald: 0.78,
+    cyBeta: -0.6,
+    cm0: 0.04,
+    cmAlpha: -0.69,
+    cmQ: -19,
+    cmElevator: 0.45,
+    clBeta: -0.07,
+    clP: -0.43,
+    clAileron: 0.022, // ~40 °/s, que es lo que rueda un avión de línea.
+    cnBeta: 0.1,
+    cnR: -0.2,
+    cnRudder: 0.035,
+    cnAileron: -0.002,
+  },
+};
+
+export const AIRCRAFT: readonly AircraftConfig[] = [
+  PYKASU,
+  MAINUMBY,
+  PANAMBI,
+  ARASUNU,
+];
+
+/**
+ * Y los que están hechos pero no vuelan, que hoy es uno.
+ *
+ * El banco de prestaciones los mide igual —`prestaciones.test.ts` los junta
+ * con los de arriba—, porque un avión terminado tiene que estar comprobado
+ * aunque le falte el rótulo. Lo que no hace es aparecer en el hangar.
+ */
+export const RESERVADOS: readonly AircraftConfig[] = [KUARAHY];
 
 export function aircraftById(id: string): AircraftConfig {
   const found = AIRCRAFT.find((a) => a.id === id);

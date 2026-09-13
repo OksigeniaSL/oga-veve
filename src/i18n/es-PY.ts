@@ -88,6 +88,10 @@ export const ES_PY = {
     "Biplano fumigador. Ágil y con mucha fuerza.",
   "aircraft.panambi.description":
     "Bimotor de ala baja. Dos motores, más rápido y con las patas guardadas.",
+  "aircraft.arasunu.description":
+    "Turbohélice regional, cola en T. Grande, y entra en pistas cortas.",
+  "aircraft.kuarahy.description":
+    "Reactor de ala en flecha. Rápido, y todo pasa más despacio.",
 
   "mission.rio.name": "Ver el río",
   "mission.rioabajo.name": "Seguir el río",
