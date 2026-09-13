@@ -29,7 +29,7 @@
 
 import { Quaternion, Vector3 } from "three";
 import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
-import type { AircraftConfig } from "./aircraft";
+import { esDeChorro, type AircraftConfig } from "./aircraft";
 import { type AssistLayers, uniformAssists } from "./assists";
 import type {
   ControlInputs,
@@ -383,11 +383,30 @@ export class CoefficientFlightModel implements FlightModel {
     const drag = qS * cd;
     const side = qS * cy;
 
-    // Empuje. Cae con la densidad y con la velocidad: una hélice que ya va
-    // rápida muerde menos aire. No es un modelo de hélice de verdad, pero
-    // reproduce lo que se nota al pilotar.
+    /*
+     * Empuje. Cae con la densidad, y con la velocidad **según qué empuje el
+     * aire**.
+     *
+     * Una hélice que ya va rápida muerde menos aire y pierde empuje deprisa;
+     * un turbofán casi no lo pierde, porque lo que acelera es el aire que él
+     * mismo traga. Ninguna de las dos es un modelo de propulsión de verdad,
+     * pero la diferencia entre ellas sí lo es.
+     *
+     * **Aquí había una sola ley, la de la hélice, para los seis aviones**, y
+     * con seis aviones dejó de valer: medido con el motor sin ayudas, el JAZ
+     * 120 necesitaba 4.404 m para irse del suelo y el JAZ 90, 3.057. La pista
+     * más larga del juego son los 3.516 de Mariscal Estigarribia. O sea que
+     * los dos reactores no despegaban en ningún escenario en cuanto el tramo
+     * usaba este motor — y el Yvága, en ninguno de los once.
+     *
+     * Con la ley de chorro la cuenta da 1.676 m y 1.111 m, que es lo que dicen
+     * los libros: un 747 despega en unos 1.800 m al nivel del mar y un
+     * regional de treinta toneladas en unos 1.600.
+     */
     const densityRatio = density / SEA_LEVEL_DENSITY;
-    const speedFactor = Math.max(0.2, 1 - speed / (2.4 * ac.cruiseSpeed));
+    const speedFactor = esDeChorro(ac)
+      ? Math.max(0.5, 1 - (0.3 * speed) / ac.cruiseSpeed)
+      : Math.max(0.2, 1 - speed / (2.4 * ac.cruiseSpeed));
     const thrust =
       (controls.engineOn ? assisted.throttle : 0) *
       ac.maxThrust *

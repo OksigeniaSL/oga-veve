@@ -148,6 +148,30 @@ export interface AircraftSound {
   growlRise: number;
 }
 
+/**
+ * Si este avión empuja con un chorro o con una hélice.
+ *
+ * **La diferencia manda en el empuje disponible**, y no es un matiz: una
+ * hélice que ya va deprisa muerde menos aire y pierde empuje rápido con la
+ * velocidad; un turbofán casi no lo pierde, porque lo que acelera es el aire
+ * que él mismo traga. Con la ley de la hélice aplicada a los dos reactores, el
+ * JAZ 120 necesitaba 4.404 m para irse del suelo —más que la pista más larga
+ * del juego, que son los 3.516 de Mariscal Estigarribia— y el JAZ 90, 3.057.
+ * O sea: no despegaban en ningún sitio.
+ *
+ * Un turbohélice es una turbina que mueve una hélice, así que para esto cuenta
+ * como hélice: lo que decide la ley no es qué quema el motor, es qué empuja el
+ * aire. Por eso la pregunta es «de chorro» y no «de turbina».
+ *
+ * El dato vive en el bloque de sonido porque es de donde salió —el
+ * sintetizador necesita los cuatro tipos para montar sus capas— y se deriva
+ * aquí en vez de copiarse: el mismo número en dos sitios es el fallo clásico
+ * de esta casa.
+ */
+export function esDeChorro(a: AircraftConfig): boolean {
+  return a.sound.engine === "turbofan";
+}
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */
@@ -589,15 +613,54 @@ export const ARAI: AircraftConfig = {
   wingSpan: 26.0,
   chord: 3.0,
   inertia: { xx: 243000, yy: 300000, zz: 487000 },
-  maxThrust: 58000,
-  cruiseSpeed: 180,
-  approachSpeed: 90,
+  /*
+   * **Dos turbofanes de sesenta kilonewtons, que es lo que lleva su clase.**
+   *
+   * Estaba en 58.000 N para las dos, o sea la mitad: relación empuje/peso
+   * 0,197 cuando un regional de treinta toneladas con dos CF34 va por 0,33
+   * (E-170: 2 × 63,2 kN, ficha de tipo EASA A.135). Con el empuje de antes
+   * necesitaba 3.057 m para irse del suelo; con éste, 1.111, que es lo que
+   * dice el manual de aeropuertos para un avión de esta clase.
+   */
+  maxThrust: 126000,
+  /*
+   * **Doscientos veinte metros por segundo, que son Mach 0,75 arriba.**
+   *
+   * Estaba en 180 —350 nudos— y eso es velocidad de subida, no de crucero: un
+   * regional de esta clase cruza a M 0,78 en el nivel 350, o sea unos 230 m/s
+   * de verdadera. Con 180, el avión sostenía su «crucero» con un tercio de
+   * gas, que es lo que delataba que el número no era el suyo.
+   */
+  cruiseSpeed: 220,
+  /*
+   * **Ciento treinta y dos nudos, que es como entra un regional.**
+   *
+   * Estaba en 90 m/s —175 nudos—, y eso no era una velocidad de aproximación:
+   * era 1,3 veces la pérdida **limpia**. La regla de verdad son 1,3 veces la
+   * pérdida con los flaps de aterrizaje puestos, que en este avión son 52,4
+   * m/s. Un E-170 entra a 125-130 nudos.
+   */
+  approachSpeed: 68,
   decisionSpeed: 72,
   rotationSpeed: 78,
   gearHeight: 2.8,
   maxGroundPitch: 0.16, // 9°: con un fuselaje largo, la cola llega antes.
-  flapsLift: 0.7,
-  flapsDrag: 0.1,
+  /*
+   * **Y los flaps de un reactor, que no son los de una avioneta.**
+   *
+   * La resistencia estaba en 0,1 y la sustentación en 0,7. Con eso, en
+   * configuración de aterrizaje la fineza salía en 5,4 cuando un reactor sucio
+   * anda por 7,5: el avión se hundía a veinte metros por segundo con el gas al
+   * ralentí, se ponía de morro y entraba en pérdida **veinticuatro metros por
+   * segundo por encima** de la pérdida que dicen sus propios coeficientes. Y
+   * despegando no se iba del suelo ni en doce kilómetros de pista.
+   *
+   * Un reactor de línea con los flaps de aterrizaje añade del orden de seis
+   * centésimas de resistencia y llega a un CL máximo cerca de 2,5. Esos son
+   * los números.
+   */
+  flapsLift: 1.05,
+  flapsDrag: 0.055,
   appearance: {
     body: 0xf2f1ec,
     accent: 0xbe5d38,
@@ -691,18 +754,31 @@ export const YVAGA: AircraftConfig = {
    * y el ascenso salgan donde tienen que salir, que con la caída de empuje de
    * `fdm.ts` es bastante menos. Lo eligió el banco, no una tabla.
    */
-  maxThrust: 430000,
+  /*
+   * **Cuatro turbofanes de doscientos kilonewtons.**
+   *
+   * Son los del avión de la CR-2144, que monta JT9D-7: 205 kN cada uno al
+   * despegue, 820 kN en total, relación empuje/peso 0,33. Estaba en 430.000 N
+   * —0,171— y con eso el avión rodaba 3.185 m hasta la rotación y se iba del
+   * suelo a los 4.404, más que la pista más larga del juego. No despegaba en
+   * ningún escenario.
+   */
+  maxThrust: 820000,
   cruiseSpeed: 230,
   // 1,3 veces la pérdida, como manda: con CLmax 1,4 pierde a 76 m/s.
-  approachSpeed: 98,
+  // Ciento cuarenta y seis nudos: 1,3 veces su pérdida con flaps, y lo que
+  // dice el manual de vuelo de un 747 a este peso —145 a 150—. Estaba en 98
+  // m/s, 191 nudos, que es 1,3 veces la pérdida **limpia**. Ver el Arai.
+  approachSpeed: 75,
   decisionSpeed: 80,
   rotationSpeed: 86,
   gearHeight: 5.2,
   maxGroundPitch: 0.15, // 8,6°: un fuselaje de setenta metros toca antes.
   // Triple ranura y Krueger: un ala de línea saca mucho más CL que una
   // avioneta, y es lo que le permite entrar a 98 y no a 140.
-  flapsLift: 0.95,
-  flapsDrag: 0.13,
+  // Lo mismo que el Arai, y por lo mismo. Ver su ficha.
+  flapsLift: 1.0,
+  flapsDrag: 0.065,
   appearance: {
     body: 0xf2f1ec,
     accent: 0x1f4f76,
