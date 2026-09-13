@@ -20,7 +20,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -66,15 +66,56 @@ function hornear() {
   });
 }
 
-/** Y lo borra. Va en `finally`: un banco que deja basura en `data/` es peor. */
+/**
+ * Y lo borra. Va en `finally`: un banco que deja basura en `data/` es peor.
+ *
+ * **Solo lo suyo.** Borraba `data/voces` entero, y eso se escribió cuando ahí
+ * no había nada que borrar: el pack de verdad no existía todavía. El día que
+ * existió, correr este banco se llevó por delante las ciento veinticinco
+ * frases recién horneadas — sin decir nada, porque desde fuera es
+ * indistinguible de «todavía no hay pack». Las tomas se salvaron de milagro,
+ * porque `crudo/` no se toca.
+ *
+ * Ahora se borra la carpeta de **esta** voz, y `data/voces` solo si queda
+ * vacía. Y si había pack de verdad, este banco ni empieza: ver `hayPackDeVerdad`.
+ */
 function recoger() {
   rmSync(TOMAS, { recursive: true, force: true });
-  rmSync(join("data", "voces"), { recursive: true, force: true });
+  rmSync(PACK, { recursive: true, force: true });
+  try {
+    if (readdirSync(join("data", "voces")).length === 0)
+      rmSync(join("data", "voces"), { recursive: true, force: true });
+  } catch {
+    // No existía. Nada que recoger.
+  }
+}
+
+/**
+ * Si ya hay un pack horneado de esta voz, el banco no corre.
+ *
+ * Porque lo primero que hace es escribir encima con cuatro pitidos, y lo
+ * último, borrarlo. Un banco que destruye el trabajo que está comprobando no
+ * es un banco.
+ */
+function hayPackDeVerdad() {
+  try {
+    return readdirSync(PACK).length > 0;
+  } catch {
+    return false;
+  }
 }
 
 let navegador;
 let server;
 try {
+  if (hayPackDeVerdad()) {
+    console.error(
+      `\n  Hay un pack horneado en ${PACK}.\n` +
+        "  Este banco escribe encima con cuatro pitidos y luego lo borra, así\n" +
+        "  que no corre: movelo o borralo vos si de verdad querés pasarlo.\n",
+    );
+    process.exit(1);
+  }
   hornear();
   server = await createServer({
     root: process.cwd(),

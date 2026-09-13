@@ -8,10 +8,10 @@ Si no se puede anotar la licencia, el asset no entra.
 
 ## Mundo fotorrealista
 
-| Qué | De quién | Licencia |
-| --- | --- | --- |
-| [`3d-tiles-renderer`](https://github.com/NASA-AMMOS/3DTilesRendererJS) | NASA-AMMOS | Apache-2.0 |
-| Teselas 3D fotorrealistas | Google Maps Platform | De pago por uso, atribución obligatoria |
+| Qué                                                                    | De quién             | Licencia                                |
+| ---------------------------------------------------------------------- | -------------------- | --------------------------------------- |
+| [`3d-tiles-renderer`](https://github.com/NASA-AMMOS/3DTilesRendererJS) | NASA-AMMOS           | Apache-2.0                              |
+| Teselas 3D fotorrealistas                                              | Google Maps Platform | De pago por uso, atribución obligatoria |
 
 La atribución de Google **no es opcional y cambia con cada tesela**: la recoge
 el propio renderizador y se pinta en la franja de abajo del HUD mientras se ven
@@ -44,14 +44,14 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 
 ## Datos geográficos
 
-| Fuente | Uso | Licencia |
-|---|---|---|
+| Fuente                                                                                                                                                                       | Uso                                                                                                                                    | Licencia                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Guaraní, Encarnación, Mariscal Estigarribia, Pedro Juan Caballero, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
-| [OpenStreetMap](https://www.openstreetmap.org) | Pistas, calles de rodaje, plataformas, estacionamientos, edificios, viario y agua de las ciudades | **ODbL** |
-| [OurAirports](https://github.com/davidmegginson/ourairports-data) | Coordenadas, pistas y elevación de aeropuertos | **Unlicense** (dominio público) |
-| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España | Ortofoto de Tenerife Norte, sobre el relieve | **CC BY 4.0** · scne.es |
-| [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España | Relieve de Tenerife Norte, La Palma y Cuatro Vientos | **CC BY 4.0** |
-| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA | Ortofoto de Silvio Pettirossi, sobre el relieve | **Sin resolver.** Ver abajo |
+| [OpenStreetMap](https://www.openstreetmap.org)                                                                                                                               | Pistas, calles de rodaje, plataformas, estacionamientos, edificios, viario y agua de las ciudades                                      | **ODbL**                                                                |
+| [OurAirports](https://github.com/davidmegginson/ourairports-data)                                                                                                            | Coordenadas, pistas y elevación de aeropuertos                                                                                         | **Unlicense** (dominio público)                                         |
+| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofoto de Tenerife Norte, sobre el relieve                                                                                           | **CC BY 4.0** · scne.es                                                 |
+| [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
+| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofoto de Silvio Pettirossi, sobre el relieve                                                                                        | **Sin resolver.** Ver abajo                                             |
 
 ### Sentinel-2 cloudless: la licencia declarada no es la que dice EOX
 
@@ -128,12 +128,12 @@ contrario de lo que hace el código es peor que no tenerlo.
 
 ## Software de terceros
 
-| Paquete | Uso | Licencia |
-|---|---|---|
-| [three.js](https://github.com/mrdoob/three.js) | Motor de render WebGL | MIT |
-| [Vite](https://vitejs.dev) | Bundler y servidor de desarrollo | MIT |
-| [TypeScript](https://www.typescriptlang.org) | Lenguaje | Apache-2.0 |
-| [Vitest](https://vitest.dev) | Tests | MIT |
+| Paquete                                        | Uso                              | Licencia   |
+| ---------------------------------------------- | -------------------------------- | ---------- |
+| [three.js](https://github.com/mrdoob/three.js) | Motor de render WebGL            | MIT        |
+| [Vite](https://vitejs.dev)                     | Bundler y servidor de desarrollo | MIT        |
+| [TypeScript](https://www.typescriptlang.org)   | Lenguaje                         | Apache-2.0 |
+| [Vitest](https://vitest.dev)                   | Tests                            | MIT        |
 
 ## Assets artísticos
 
@@ -142,8 +142,8 @@ de Oksigenia SL. La aeronave ya no.
 
 ### La aeronave
 
-| Qué | De quién | Licencia |
-|---|---|---|
+| Qué                                                                                                                                         | De quién               | Licencia               |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------- |
 | [Cessna 172Kr (with cockpit) (ver III)](https://sketchfab.com/3d-models/cessna-172kr-with-cockpit-ver-iii-e104f0a64da5499d9b8b9d60dc896cf8) | TonyWony, en Sketchfab | **CC Attribution 4.0** |
 
 La atribución, tal y como la pide el autor:
@@ -158,7 +158,7 @@ porque el juego es también un gancho de la Granja Óga, y eso cuenta como uso
 comercial por mucho que se regale.
 
 Se usa **la forma, no el nombre**. La avioneta del juego se llama **JAZ 20
-*Pykasu***: JAZ es el fabricante ficticio del mundo del juego y *Pykasu* es la
+_Pykasu_**: JAZ es el fabricante ficticio del mundo del juego y _Pykasu_ es la
 paloma en guaraní. Se llamó «Óga 172» hasta que se vio lo que eso decía —ciento
 setenta y dos, delante de un ala alta de cuatro plazas, cita a una avioneta que
 existe—; ver `src/flight/flota.ts`, #69 y el apartado de marcas registradas más
@@ -170,7 +170,7 @@ La de 4K pesa más y no se distingue en una tablet.
 
 ### Y la que se hace en casa
 
-El **JAZ 25 *Mainumby*** no viene de ningún sitio: se modela aquí, con Blender,
+El **JAZ 25 _Mainumby_** no viene de ningún sitio: se modela aquí, con Blender,
 desde `modelos/jaz-25-mainumby.py`. El guion es el modelo — se ejecuta con
 `blender --background --python modelos/jaz-25-mainumby.py` y escribe
 `public/assets/aeronaves/jaz-25.glb`—, así que no hay un `.blend` binario que
@@ -200,6 +200,36 @@ Las únicas fuentes aceptadas son de licencia verificable:
 **Vetado**: aeronaves de FlightGear, que son GPL-2.0 y contaminarían el
 producto, y cualquier modelo sin licencia explícita en su ficha. "Estaba
 disponible para descargar" no es una licencia.
+
+## Las voces
+
+Las ciento veinticinco frases del juego —instructor, cantos de cabina, torre y
+el otro avión de la radio— están **generadas con ElevenLabs** en la cuenta de
+Oksigenia SL, a partir de los guiones de `docs/voces/`, que los escribe el
+propio juego.
+
+Qué hay en el repositorio y por qué:
+
+| carpeta       | qué es                                                     | por qué está                                                                                                                                   |
+| ------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/voces/` | los guiones, y `voces.json` con los identificadores de voz | los genera `scripts/frases-para-grabar.mjs`; un identificador de voz no abre nada                                                              |
+| `crudo/`      | las tomas tal y como vuelven del estudio                   | **son el original.** Sin ellas, la segunda tanda no pega con la primera: el modelo no es determinista y la misma frase no vuelve a salir igual |
+| `data/voces/` | el pack horneado que baja el juego                         | dos formatos del mismo audio —Opus para todo, AAC porque Safari no decodifica Opus de fiar— y el manifiesto                                    |
+
+Entre el original y el pack hay un solo comando, `hacer-pack-de-voz.mjs`, y está
+escrito para que **la frase veintisiete suene igual dentro de un año**: si el
+tratamiento vive en la cabeza de quien mezcló la primera tanda, la segunda no
+pega y se nota en cuanto suenan seguidas.
+
+**La clave de la API no está aquí, ni ha pasado por ningún fichero.** Se
+inyecta por entorno —`ELEVENLABS_API_KEY`, sin `VITE_` delante, que la metería
+en el paquete del navegador— y el guion no la imprime nunca.
+
+**Lo que queda por confirmar:** las condiciones de uso comercial del audio
+generado dependen del plan contratado en ElevenLabs. El juego se regala, pero
+es también un gancho de la Granja Óga, y eso cuenta como uso comercial por
+mucho que no se cobre — igual que se razonó con el modelo de la avioneta. Antes
+de publicar hay que dejar escrito aquí qué plan es y qué permite.
 
 ## Nombres de aeronaves y marcas registradas
 

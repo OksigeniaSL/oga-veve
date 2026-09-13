@@ -1,0 +1,561 @@
+{
+  "version": 1,
+  "voz": "instructor",
+  "idioma": "es-PY",
+  "piezas": {
+    "ala.dice.arrastra": {
+      "ms": 5607
+    },
+    "ala.dice.arriba": {
+      "ms": 6907
+    },
+    "ala.dice.cerca": {
+      "ms": 2642
+    },
+    "ala.dice.perdida": {
+      "ms": 8107
+    },
+    "circuito.base": {
+      "ms": 1213
+    },
+    "circuito.cruzado": {
+      "ms": 1097
+    },
+    "circuito.encola": {
+      "ms": 1267
+    },
+    "circuito.subida": {
+      "ms": 1269
+    },
+    "fin.bien": {
+      "ms": 925
+    },
+    "fin.horas": {
+      "ms": 1087
+    },
+    "fin.llegaste": {
+      "ms": 1335
+    },
+    "fin.muyBien": {
+      "ms": 984
+    },
+    "fin.otra": {
+      "ms": 889
+    },
+    "fin.redondo": {
+      "ms": 2355
+    },
+    "galon.aproximacion": {
+      "ms": 1416
+    },
+    "galon.aros": {
+      "ms": 938
+    },
+    "galon.frustrada": {
+      "ms": 1139
+    },
+    "galon.manga": {
+      "ms": 1371
+    },
+    "galon.rodaje": {
+      "ms": 1190
+    },
+    "galon.toma": {
+      "ms": 1275
+    },
+    "galon.velocidad": {
+      "ms": 966
+    },
+    "grado.aprendiz": {
+      "ms": 830
+    },
+    "grado.comandante": {
+      "ms": 864
+    },
+    "grado.instructora": {
+      "ms": 863
+    },
+    "grado.piloto": {
+      "ms": 694
+    },
+    "mission.anaga.name": {
+      "ms": 616
+    },
+    "mission.cumbre.name": {
+      "ms": 935
+    },
+    "mission.done": {
+      "ms": 914
+    },
+    "mission.first.name": {
+      "ms": 924
+    },
+    "mission.lomas.name": {
+      "ms": 842
+    },
+    "mission.mar.name": {
+      "ms": 866
+    },
+    "mission.none": {
+      "ms": 716
+    },
+    "mission.rio.name": {
+      "ms": 819
+    },
+    "mission.rioabajo.name": {
+      "ms": 871
+    },
+    "mission.started": {
+      "ms": 506
+    },
+    "mission.step": {
+      "ms": 785
+    },
+    "mission.transfer.name": {
+      "ms": 844
+    },
+    "mission.valley.name": {
+      "ms": 1057
+    },
+    "percance.coche": {
+      "ms": 1705
+    },
+    "percance.edificio": {
+      "ms": 1189
+    },
+    "percance.fuera": {
+      "ms": 1631
+    },
+    "percance.golpe": {
+      "ms": 1184
+    },
+    "percance.ocupada": {
+      "ms": 2717
+    },
+    "percance.pasada": {
+      "ms": 1557
+    },
+    "percance.sinpermiso": {
+      "ms": 1830
+    },
+    "tutor.flying": {
+      "ms": 1158
+    },
+    "tutor.frenar": {
+      "ms": 980
+    },
+    "tutor.pull": {
+      "ms": 1058
+    },
+    "tutor.salir": {
+      "ms": 1592
+    },
+    "tutor.slow": {
+      "ms": 986
+    },
+    "tutor.speed": {
+      "ms": 1055
+    },
+    "tutor.throttle": {
+      "ms": 910
+    },
+    "vuelo.aPlataforma": {
+      "ms": 961
+    },
+    "vuelo.abandonando": {
+      "ms": 1788
+    },
+    "vuelo.alineando": {
+      "ms": 1216
+    },
+    "vuelo.alto": {
+      "ms": 1036
+    },
+    "vuelo.apagado": {
+      "ms": 971
+    },
+    "vuelo.aroAlto": {
+      "ms": 2159
+    },
+    "vuelo.aroBajo": {
+      "ms": 2437
+    },
+    "vuelo.arrancando": {
+      "ms": 1635
+    },
+    "vuelo.aterrizado": {
+      "ms": 733
+    },
+    "vuelo.autorizado": {
+      "ms": 1591
+    },
+    "vuelo.backTaxi": {
+      "ms": 1795
+    },
+    "vuelo.bulto": {
+      "ms": 1792
+    },
+    "vuelo.comprometido": {
+      "ms": 1441
+    },
+    "vuelo.despacio": {
+      "ms": 885
+    },
+    "vuelo.despegando": {
+      "ms": 932
+    },
+    "vuelo.enPuesto": {
+      "ms": 1643
+    },
+    "vuelo.enVuelo": {
+      "ms": 1194
+    },
+    "vuelo.enVueloAterrizando": {
+      "ms": 884
+    },
+    "vuelo.esperando": {
+      "ms": 1569
+    },
+    "vuelo.estacionado": {
+      "ms": 991
+    },
+    "vuelo.final": {
+      "ms": 1213
+    },
+    "vuelo.frustrada": {
+      "ms": 2133
+    },
+    "vuelo.fuera": {
+      "ms": 1358
+    },
+    "vuelo.mandanFrustrar": {
+      "ms": 2492
+    },
+    "vuelo.minimos": {
+      "ms": 1243
+    },
+    "vuelo.noEstabilizada": {
+      "ms": 1905
+    },
+    "vuelo.papiAlto": {
+      "ms": 1787
+    },
+    "vuelo.papiBajo": {
+      "ms": 1713
+    },
+    "vuelo.papiBien": {
+      "ms": 2080
+    },
+    "vuelo.pistaLibre": {
+      "ms": 1594
+    },
+    "vuelo.puedeVolver": {
+      "ms": 1848
+    },
+    "vuelo.rapido": {
+      "ms": 1068
+    },
+    "vuelo.rodando": {
+      "ms": 1125
+    },
+    "vuelo.rotar": {
+      "ms": 928
+    },
+    "vuelo.roto": {
+      "ms": 1425
+    },
+    "vuelo.sinPermiso": {
+      "ms": 2826
+    },
+    "vuelo.teLoPasaste": {
+      "ms": 1464
+    },
+    "vuelo.terrenoBajo": {
+      "ms": 929
+    },
+    "vuelo.terrenoSube": {
+      "ms": 575
+    },
+    "vuelo.yaPodesTocar": {
+      "ms": 933
+    }
+  },
+  "recetas": {
+    "ala.dice.arrastra": [
+      "ala.dice.arrastra"
+    ],
+    "ala.dice.arriba": [
+      "ala.dice.arriba"
+    ],
+    "ala.dice.cerca": [
+      "ala.dice.cerca"
+    ],
+    "ala.dice.perdida": [
+      "ala.dice.perdida"
+    ],
+    "circuito.base": [
+      "circuito.base"
+    ],
+    "circuito.cruzado": [
+      "circuito.cruzado"
+    ],
+    "circuito.encola": [
+      "circuito.encola"
+    ],
+    "circuito.subida": [
+      "circuito.subida"
+    ],
+    "fin.bien": [
+      "fin.bien"
+    ],
+    "fin.horas": [
+      "fin.horas"
+    ],
+    "fin.llegaste": [
+      "fin.llegaste"
+    ],
+    "fin.muyBien": [
+      "fin.muyBien"
+    ],
+    "fin.otra": [
+      "fin.otra"
+    ],
+    "fin.redondo": [
+      "fin.redondo"
+    ],
+    "galon.aproximacion": [
+      "galon.aproximacion"
+    ],
+    "galon.aros": [
+      "galon.aros"
+    ],
+    "galon.frustrada": [
+      "galon.frustrada"
+    ],
+    "galon.manga": [
+      "galon.manga"
+    ],
+    "galon.rodaje": [
+      "galon.rodaje"
+    ],
+    "galon.toma": [
+      "galon.toma"
+    ],
+    "galon.velocidad": [
+      "galon.velocidad"
+    ],
+    "grado.aprendiz": [
+      "grado.aprendiz"
+    ],
+    "grado.comandante": [
+      "grado.comandante"
+    ],
+    "grado.instructora": [
+      "grado.instructora"
+    ],
+    "grado.piloto": [
+      "grado.piloto"
+    ],
+    "mission.anaga.name": [
+      "mission.anaga.name"
+    ],
+    "mission.cumbre.name": [
+      "mission.cumbre.name"
+    ],
+    "mission.done": [
+      "mission.done"
+    ],
+    "mission.first.name": [
+      "mission.first.name"
+    ],
+    "mission.lomas.name": [
+      "mission.lomas.name"
+    ],
+    "mission.mar.name": [
+      "mission.mar.name"
+    ],
+    "mission.none": [
+      "mission.none"
+    ],
+    "mission.rio.name": [
+      "mission.rio.name"
+    ],
+    "mission.rioabajo.name": [
+      "mission.rioabajo.name"
+    ],
+    "mission.started": [
+      "mission.started"
+    ],
+    "mission.step": [
+      "mission.step"
+    ],
+    "mission.transfer.name": [
+      "mission.transfer.name"
+    ],
+    "mission.valley.name": [
+      "mission.valley.name"
+    ],
+    "percance.coche": [
+      "percance.coche"
+    ],
+    "percance.edificio": [
+      "percance.edificio"
+    ],
+    "percance.fuera": [
+      "percance.fuera"
+    ],
+    "percance.golpe": [
+      "percance.golpe"
+    ],
+    "percance.ocupada": [
+      "percance.ocupada"
+    ],
+    "percance.pasada": [
+      "percance.pasada"
+    ],
+    "percance.sinpermiso": [
+      "percance.sinpermiso"
+    ],
+    "tutor.flying": [
+      "tutor.flying"
+    ],
+    "tutor.frenar": [
+      "tutor.frenar"
+    ],
+    "tutor.pull": [
+      "tutor.pull"
+    ],
+    "tutor.salir": [
+      "tutor.salir"
+    ],
+    "tutor.slow": [
+      "tutor.slow"
+    ],
+    "tutor.speed": [
+      "tutor.speed"
+    ],
+    "tutor.throttle": [
+      "tutor.throttle"
+    ],
+    "vuelo.aPlataforma": [
+      "vuelo.aPlataforma"
+    ],
+    "vuelo.abandonando": [
+      "vuelo.abandonando"
+    ],
+    "vuelo.alineando": [
+      "vuelo.alineando"
+    ],
+    "vuelo.alto": [
+      "vuelo.alto"
+    ],
+    "vuelo.apagado": [
+      "vuelo.apagado"
+    ],
+    "vuelo.aroAlto": [
+      "vuelo.aroAlto"
+    ],
+    "vuelo.aroBajo": [
+      "vuelo.aroBajo"
+    ],
+    "vuelo.arrancando": [
+      "vuelo.arrancando"
+    ],
+    "vuelo.aterrizado": [
+      "vuelo.aterrizado"
+    ],
+    "vuelo.autorizado": [
+      "vuelo.autorizado"
+    ],
+    "vuelo.backTaxi": [
+      "vuelo.backTaxi"
+    ],
+    "vuelo.bulto": [
+      "vuelo.bulto"
+    ],
+    "vuelo.comprometido": [
+      "vuelo.comprometido"
+    ],
+    "vuelo.despacio": [
+      "vuelo.despacio"
+    ],
+    "vuelo.despegando": [
+      "vuelo.despegando"
+    ],
+    "vuelo.enPuesto": [
+      "vuelo.enPuesto"
+    ],
+    "vuelo.enVuelo": [
+      "vuelo.enVuelo"
+    ],
+    "vuelo.enVueloAterrizando": [
+      "vuelo.enVueloAterrizando"
+    ],
+    "vuelo.esperando": [
+      "vuelo.esperando"
+    ],
+    "vuelo.estacionado": [
+      "vuelo.estacionado"
+    ],
+    "vuelo.final": [
+      "vuelo.final"
+    ],
+    "vuelo.frustrada": [
+      "vuelo.frustrada"
+    ],
+    "vuelo.fuera": [
+      "vuelo.fuera"
+    ],
+    "vuelo.mandanFrustrar": [
+      "vuelo.mandanFrustrar"
+    ],
+    "vuelo.minimos": [
+      "vuelo.minimos"
+    ],
+    "vuelo.noEstabilizada": [
+      "vuelo.noEstabilizada"
+    ],
+    "vuelo.papiAlto": [
+      "vuelo.papiAlto"
+    ],
+    "vuelo.papiBajo": [
+      "vuelo.papiBajo"
+    ],
+    "vuelo.papiBien": [
+      "vuelo.papiBien"
+    ],
+    "vuelo.pistaLibre": [
+      "vuelo.pistaLibre"
+    ],
+    "vuelo.puedeVolver": [
+      "vuelo.puedeVolver"
+    ],
+    "vuelo.rapido": [
+      "vuelo.rapido"
+    ],
+    "vuelo.rodando": [
+      "vuelo.rodando"
+    ],
+    "vuelo.rotar": [
+      "vuelo.rotar"
+    ],
+    "vuelo.roto": [
+      "vuelo.roto"
+    ],
+    "vuelo.sinPermiso": [
+      "vuelo.sinPermiso"
+    ],
+    "vuelo.teLoPasaste": [
+      "vuelo.teLoPasaste"
+    ],
+    "vuelo.terrenoBajo": [
+      "vuelo.terrenoBajo"
+    ],
+    "vuelo.terrenoSube": [
+      "vuelo.terrenoSube"
+    ],
+    "vuelo.yaPodesTocar": [
+      "vuelo.yaPodesTocar"
+    ]
+  }
+}
