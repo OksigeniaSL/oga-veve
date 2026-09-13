@@ -177,8 +177,14 @@
     "vuelo.aroAlto": {
       "ms": 2039
     },
+    "vuelo.aroAlto~2": {
+      "ms": 2530
+    },
     "vuelo.aroBajo": {
       "ms": 2074
+    },
+    "vuelo.aroBajo~2": {
+      "ms": 2043
     },
     "vuelo.arrancando": {
       "ms": 1635
@@ -197,6 +203,15 @@
     },
     "vuelo.comprometido": {
       "ms": 1441
+    },
+    "vuelo.corregido": {
+      "ms": 2641
+    },
+    "vuelo.corregido~2": {
+      "ms": 1661
+    },
+    "vuelo.corregido~3": {
+      "ms": 1678
     },
     "vuelo.despacio": {
       "ms": 885
@@ -225,17 +240,35 @@
     "vuelo.frustrada": {
       "ms": 2133
     },
+    "vuelo.frustrada~2": {
+      "ms": 2411
+    },
+    "vuelo.frustrada~3": {
+      "ms": 2310
+    },
     "vuelo.fuera": {
       "ms": 1358
     },
     "vuelo.mandanFrustrar": {
       "ms": 2492
     },
+    "vuelo.mandanFrustrar~2": {
+      "ms": 3707
+    },
+    "vuelo.mandanFrustrar~3": {
+      "ms": 2158
+    },
     "vuelo.minimos": {
       "ms": 1243
     },
     "vuelo.noEstabilizada": {
       "ms": 1905
+    },
+    "vuelo.noEstabilizada~2": {
+      "ms": 2605
+    },
+    "vuelo.noEstabilizada~3": {
+      "ms": 3307
     },
     "vuelo.papiAlto": {
       "ms": 1787
@@ -251,6 +284,9 @@
     },
     "vuelo.puedeVolver": {
       "ms": 1848
+    },
+    "vuelo.puedeVolver~2": {
+      "ms": 2097
     },
     "vuelo.rapido": {
       "ms": 1068
@@ -455,8 +491,14 @@
     "vuelo.aroAlto": [
       "vuelo.aroAlto"
     ],
+    "vuelo.aroAlto~2": [
+      "vuelo.aroAlto~2"
+    ],
     "vuelo.aroBajo": [
       "vuelo.aroBajo"
+    ],
+    "vuelo.aroBajo~2": [
+      "vuelo.aroBajo~2"
     ],
     "vuelo.arrancando": [
       "vuelo.arrancando"
@@ -475,6 +517,15 @@
     ],
     "vuelo.comprometido": [
       "vuelo.comprometido"
+    ],
+    "vuelo.corregido": [
+      "vuelo.corregido"
+    ],
+    "vuelo.corregido~2": [
+      "vuelo.corregido~2"
+    ],
+    "vuelo.corregido~3": [
+      "vuelo.corregido~3"
     ],
     "vuelo.despacio": [
       "vuelo.despacio"
@@ -503,17 +554,35 @@
     "vuelo.frustrada": [
       "vuelo.frustrada"
     ],
+    "vuelo.frustrada~2": [
+      "vuelo.frustrada~2"
+    ],
+    "vuelo.frustrada~3": [
+      "vuelo.frustrada~3"
+    ],
     "vuelo.fuera": [
       "vuelo.fuera"
     ],
     "vuelo.mandanFrustrar": [
       "vuelo.mandanFrustrar"
     ],
+    "vuelo.mandanFrustrar~2": [
+      "vuelo.mandanFrustrar~2"
+    ],
+    "vuelo.mandanFrustrar~3": [
+      "vuelo.mandanFrustrar~3"
+    ],
     "vuelo.minimos": [
       "vuelo.minimos"
     ],
     "vuelo.noEstabilizada": [
       "vuelo.noEstabilizada"
+    ],
+    "vuelo.noEstabilizada~2": [
+      "vuelo.noEstabilizada~2"
+    ],
+    "vuelo.noEstabilizada~3": [
+      "vuelo.noEstabilizada~3"
     ],
     "vuelo.papiAlto": [
       "vuelo.papiAlto"
@@ -529,6 +598,9 @@
     ],
     "vuelo.puedeVolver": [
       "vuelo.puedeVolver"
+    ],
+    "vuelo.puedeVolver~2": [
+      "vuelo.puedeVolver~2"
     ],
     "vuelo.rapido": [
       "vuelo.rapido"

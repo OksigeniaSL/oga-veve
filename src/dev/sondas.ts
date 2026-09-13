@@ -599,6 +599,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       frustrada: juego.hechos.cuantosEscuchan("frustrada"),
       minimos: juego.hechos.cuantosEscuchan("minimos"),
       papi: juego.hechos.cuantosEscuchan("papi"),
+      loCorregiste: juego.hechos.cuantosEscuchan("loCorregiste"),
       tramoDeCircuito: juego.hechos.cuantosEscuchan("tramoDeCircuito"),
       teLoPasaste: juego.hechos.cuantosEscuchan("teLoPasaste"),
       gestoDelSenalero: juego.hechos.cuantosEscuchan("gestoDelSenalero"),

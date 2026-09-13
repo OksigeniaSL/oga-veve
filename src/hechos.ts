@@ -85,6 +85,15 @@ export interface Hechos {
    */
   tramoDeCircuito: { readonly tramo: string };
   /**
+   * Te habían dicho que ibas alto o bajo, y lo has arreglado.
+   *
+   * **Solo después de un aviso.** Ésa es toda la regla que impide que se
+   * vuelva un premio de máquina: no se felicita por cruzar un aro, se felicita
+   * por **haber corregido** — te lo dijeron, lo hiciste, y alguien lo nota. Si
+   * venías bien desde el principio, esto no salta y no tiene por qué.
+   */
+  loCorregiste: Record<string, never>;
+  /**
    * El PAPI ha cambiado de lectura: `blancas` luces de cuatro.
    *
    * Tres o cuatro es venir alto, una o ninguna es venir bajo, dos es la senda.

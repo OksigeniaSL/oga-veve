@@ -44,8 +44,9 @@
  */
 import { mkdir, readFile, writeFile, access } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { clave, FICHERO } from "./claves.mjs";
 
-const CLAVE = process.env.ELEVENLABS_API_KEY;
+const CLAVE = clave("ELEVENLABS_API_KEY");
 const API = "https://api.elevenlabs.io/v1";
 /**
  * El modelo, y por qué éste.
@@ -76,8 +77,9 @@ const hay = async (f) =>
 async function pedir(ruta, opciones = {}) {
   if (!CLAVE) {
     console.error(
-      "\n  Falta ELEVENLABS_API_KEY en el entorno.\n" +
-        "  export ELEVENLABS_API_KEY=... y volvé a lanzarlo.\n" +
+      "\n  Falta ELEVENLABS_API_KEY.\n" +
+        `  Ponela en ${FICHERO} —una línea, ELEVENLABS_API_KEY=…, y chmod 600—\n` +
+        "  o exportala en el entorno antes de lanzar esto.\n" +
         "  (Sin VITE_ delante: eso la metería en el paquete del navegador.)\n",
     );
     process.exit(2);

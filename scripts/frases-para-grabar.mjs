@@ -154,6 +154,29 @@ const claves = (ruta) => {
 
 const es = claves("src/i18n/es-PY.ts");
 
+/**
+ * Las otras formas de decir cada cosa, leídas de `src/audio/variantes.ts`.
+ *
+ * Se saca del fuente con una expresión regular en vez de importarlo porque
+ * este guion corre en Node a pelo y aquello es TypeScript. La forma del
+ * fichero es una tabla de literales, así que basta.
+ */
+const variantes = (() => {
+  const fuente = readFileSync("src/audio/variantes.ts", "utf8");
+  const cuerpo = fuente.slice(
+    fuente.indexOf("VARIANTES:"),
+    fuente.indexOf("export function cuantasFormas"),
+  );
+  const salida = new Map();
+  for (const m of cuerpo.matchAll(
+    /"([\w.]+)":\s*\[([\s\S]*?)\]/g,
+  )) {
+    const textos = [...m[2].matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((x) => x[1]);
+    if (textos.length) salida.set(m[1], textos);
+  }
+  return salida;
+})();
+
 mkdirSync(SALIDA, { recursive: true });
 
 const filas = [];
@@ -170,6 +193,24 @@ for (const [grupo, voz, para] of HABLADOS) {
     if (k !== grupo && !k.startsWith(`${grupo}.`)) continue;
     filas.push({ id: k, voz, idioma: "es-PY", texto: v, para });
     total += v.length;
+    /*
+     * **Y las otras formas de decirlo**, si esta frase tiene.
+     *
+     * Salen de `src/audio/variantes.ts`, que es donde se escriben, para que
+     * añadir una variante sea escribirla y volver a grabar — sin una segunda
+     * lista que se quede vieja. La primera forma es la de `i18n` y se llama
+     * como la clave; las demás llevan su número.
+     */
+    for (const [n, otra] of (variantes.get(k) ?? []).entries()) {
+      filas.push({
+        id: `${k}~${n + 2}`,
+        voz,
+        idioma: "es-PY",
+        texto: otra,
+        para: `${para} · otra forma de decirlo`,
+      });
+      total += otra.length;
+    }
   }
 }
 for (const [id, texto, para] of CABINA) {
