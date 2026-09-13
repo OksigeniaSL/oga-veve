@@ -31,6 +31,16 @@ const TODOS = [
   ["estigarribia", "guyrami"],
   ["pedro-juan", "guyrami"],
   ["tenerife-norte", "guyrami"],
+  /*
+   * **Y el mismo campo en Tukã**, que era el único peldaño sin vigilancia.
+   *
+   * No es repetir escenario: es repetir **modelo de vuelo**. Guyrami usa el
+   * sencillo y Tukã el de coeficientes, y los dos fallos que tenía este piloto
+   * —sostener la velocidad de subida sin subir, y apuntar la senda al filo del
+   * umbral— solo se veían en el segundo. En el primero el avión sube solo con
+   * el gas a fondo y perdona el aterrizaje corto.
+   */
+  ["tenerife-norte", "tuka"],
   ["la-palma", "taguato"],
   ["cuatro-vientos", "guyrami"],
 ];
