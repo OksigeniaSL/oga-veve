@@ -29,7 +29,8 @@
     "pictos": "node scripts/verificar-pictos.mjs",
     "librea": "node scripts/verificar-librea.mjs",
     "cabina": "node scripts/verificar-cabina.mjs",
-    "carteles": "node scripts/verificar-carteles.mjs"
+    "carteles": "node scripts/verificar-carteles.mjs",
+    "quien-habla": "node scripts/verificar-quien-habla.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",

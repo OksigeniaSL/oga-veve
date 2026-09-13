@@ -45,6 +45,7 @@ Llegaste. Apagá el motor
 Volvé a la raya verde
 Se rompió. Volvemos a empezar
 Vas muy rápido
+Bajá los flaps para frenar
 Más despacio
 Pará acá
 Te pasaste. Frená y volvé

@@ -233,7 +233,22 @@ export const ES_PY = {
    * uno cinco» en Tenerife Norte —que es la 12/30— sería enseñar algo falso
    * por un adorno.
    */
-  "otro.buenosDias": "Buenos días, Óga uno siete dos",
+  /*
+   * **Y se presenta con su matrícula, no con el nombre de tu avión.**
+   *
+   * Aquí decía «Buenos días, Óga uno siete dos», y eso está mal dos veces. Lo
+   * primero, porque «Óga 172» es el nombre que este proyecto **retiró**: ciento
+   * setenta y dos es el número de una avioneta de escuela que existe y cuyo
+   * fabricante protege su nombre como marca, y por eso la flota se llama JAZ.
+   * Ver #69 y `flight/flota.ts`. Que siguiera saliendo por la radio es
+   * exactamente la fuga que aquel cambio quería tapar.
+   *
+   * Y lo segundo, porque en una radio **uno se presenta a sí mismo**. Las otras
+   * cuatro frases de este avión ya lo hacen —«Zulu Papa Alfa Bravo Charlie,
+   * rodando a la cabecera»— y el saludo era el único que nombraba a otro. Con
+   * la flota en seis aviones, además, nombrar uno era nombrar el que no es.
+   */
+  "otro.buenosDias": "Buenos días, Zulu Papa Alfa Bravo Charlie",
   "otro.rodando": "Zulu Papa Alfa Bravo Charlie, rodando a la cabecera",
   "otro.enCola": "Zulu Papa Alfa Bravo Charlie, viento en cola",
   "otro.final": "Zulu Papa Alfa Bravo Charlie, en final",

@@ -329,6 +329,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.pediFlaps",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Bajá los flaps para frenar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.despacio",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -745,7 +752,7 @@
     "id": "otro.buenosDias",
     "voz": "otro",
     "idioma": "es-PY",
-    "texto": "Buenos días, Óga uno siete dos",
+    "texto": "Buenos días, Zulu Papa Alfa Bravo Charlie",
     "para": "el otro avión de la frecuencia"
   },
   {

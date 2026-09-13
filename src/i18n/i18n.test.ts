@@ -71,3 +71,48 @@ describe("los rótulos aeronáuticos", () => {
     }
   });
 });
+
+/**
+ * El nombre que se retiró no vuelve por la puerta de atrás.
+ *
+ * El entrenador se llamó **«Óga 172»** y se le cambió el nombre a propósito:
+ * ciento setenta y dos es el número de una avioneta de escuela que existe y
+ * cuyo fabricante protege su nombre como marca, y puesto detrás de una palabra
+ * y delante de un ala alta de cuatro plazas **cita** a una. Por eso la flota se
+ * llama JAZ. Ver #69, `flight/flota.ts` y `CREDITOS.md`.
+ *
+ * Y aun así seguía saliendo por la radio: el otro avión de la frecuencia
+ * saludaba con «Buenos días, Óga uno siete dos» y lo decía en voz alta en
+ * todos los vuelos. Un nombre retirado en una tabla y vivo en una frase
+ * hablada no está retirado.
+ *
+ * Se comprueba también el número escrito con letra, que es como se dice por
+ * radio y como se escapó.
+ */
+describe("los nombres retirados", () => {
+  const PROHIBIDO = [
+    /óga\s*172/i,
+    /óga\s+uno\s+siete\s+dos/i,
+    /\bcessna\b/i,
+    /\bpiper\b/i,
+    /\bboeing\b/i,
+  ];
+
+  it.each(DICCIONARIOS)(
+    "%s no nombra ninguna marca retirada",
+    (_como, dicc) => {
+      const culpables: string[] = [];
+      for (const [clave, texto] of Object.entries(dicc)) {
+        if (typeof texto !== "string") continue;
+        for (const patron of PROHIBIDO)
+          if (patron.test(texto)) culpables.push(`${clave}: ${texto}`);
+      }
+      /*
+       * Menos los créditos, que **tienen** que nombrar de dónde vino cada cosa:
+       * el modelo traído de fuera es obra de un autor concreto y su ficha se
+       * llama como se llama. Atribuir es lo contrario de apropiarse.
+       */
+      expect(culpables.filter((c) => !c.startsWith("credits."))).toEqual([]);
+    },
+  );
+});
