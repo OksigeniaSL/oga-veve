@@ -114,6 +114,49 @@ describe("la senda reacciona", () => {
     expect(guide.check(aros[1]!)).toBe("cruzado");
   });
 
+  /*
+   * **Pasar lejos por un lado no es pasar por encima.**
+   *
+   * Lo dijo quien lo juega, en La Palma: «despego, giro y me dice que bajé
+   * por encima del aro». El avión iba subiendo, a un kilómetro del eje de la
+   * aproximación y con los aros a su espalda — o sea que no bajó por encima
+   * de nada; pasó por otro sitio.
+   *
+   * El código miraba solo si el desnivel pasaba de un radio y no lo comparaba
+   * nunca con lo que se había ido de lado, que es justo lo que su propio
+   * comentario decía que hacía. Un aviso que dice la lección contraria es peor
+   * que no decir nada: quien lo oye baja, y no era eso.
+   */
+  it("pasar de lado, aunque sea alto, es ancho y no alto", () => {
+    const guide = senda();
+    const aros = enOrden();
+    const eje = new Vector3().subVectors(aros[1]!, aros[0]!).normalize();
+    const alLado = new Vector3(0, 1, 0)
+      .cross(eje)
+      .normalize()
+      .multiplyScalar(1000);
+    /*
+     * Y un empujón por el eje: subir 120 m sobre una senda que baja tres
+     * grados deja el punto seis metros **por delante** del plano del aro, y
+     * ahí todavía no hay veredicto. Es la misma trampa que ya avisa la prueba
+     * de «todavía por delante del aro».
+     */
+    const porAhi = aros[0]!.clone().add(alLado).addScaledVector(eje, 50);
+    porAhi.y += 120;
+    expect(guide.check(porAhi)).toBe("perdido");
+    expect(guide.porDonde).toBe("ancho");
+  });
+
+  it("y pasar de verdad por encima sigue siendo alto", () => {
+    const guide = senda();
+    const aros = enOrden();
+    const eje = new Vector3().subVectors(aros[1]!, aros[0]!).normalize();
+    const encima = aros[0]!.clone().addScaledVector(eje, 50);
+    encima.y += 120;
+    expect(guide.check(encima)).toBe("perdido");
+    expect(guide.porDonde).toBe("alto");
+  });
+
   it("colarse por el tercero no cuenta como cruzarlo", () => {
     const guide = senda();
     const aros = enOrden();
