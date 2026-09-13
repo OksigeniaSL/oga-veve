@@ -16,13 +16,13 @@
       "ms": 8107
     },
     "circuito.base": {
-      "ms": 1213
+      "ms": 2873
     },
     "circuito.cruzado": {
-      "ms": 1097
+      "ms": 2021
     },
     "circuito.encola": {
-      "ms": 1267
+      "ms": 2748
     },
     "circuito.subida": {
       "ms": 1269
@@ -175,10 +175,10 @@
       "ms": 971
     },
     "vuelo.aroAlto": {
-      "ms": 2159
+      "ms": 2039
     },
     "vuelo.aroBajo": {
-      "ms": 2437
+      "ms": 2074
     },
     "vuelo.arrancando": {
       "ms": 1635

@@ -18,8 +18,8 @@ Vas muy bajo
 ¡Pista ocupada! Subí y volvé por el circuito
 La torre te deja volver a intentarlo
 ¡Bien hecho! Te fuiste al aire. Probá de nuevo
-Pasaste por encima del aro. Bajá un poco
-Pasaste por debajo del aro. Subí un poco
+Vas alto para la pista. Bajá un poco
+Vas bajo para la pista. Subí un poco
 Luces blancas: vas alto, bajá
 Luces rojas: vas bajo, subí
 Dos rojas y dos blancas: vas bien
@@ -39,9 +39,9 @@ Te pasaste. Frená y volvé
 Ya podés tocar
 Entraste sin la luz verde. La próxima, esperala
 Subí derecho por el eje
-Girá a la izquierda
-Volá al lado de la pista
-Girá y empezá a bajar
+Girá a la izquierda: volvemos a la pista
+Volá al lado de la pista, con ella a tu izquierda
+Girá otra vez y empezá a bajar: ya vamos a aterrizar
 La pista estaba ocupada y te dijeron que no bajaras
 Le pasaste por encima al coche
 Chocaste con un edificio
