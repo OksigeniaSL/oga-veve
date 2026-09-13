@@ -128,6 +128,37 @@ const PASO = 45;
 const OCRE = 0xdd923f;
 
 /**
+ * Cuánto más grande es el circuito de **este** avión que el del entrenador.
+ *
+ * Todo lo de arriba son metros medidos para una avioneta que se aproxima a
+ * treinta y tres metros por segundo, y así estuvo bien mientras la flota
+ * fueron dos avionetas. Con el reactor y el de fuselaje ancho deja de estarlo,
+ * y no por poco: el JAZ 120 vuela el mismo circuito a ciento cuarenta metros
+ * por segundo, así que **el viento en cola entero le dura siete segundos**
+ * donde al Pykasu le dura treinta y tres. Medido en La Palma: no llega a
+ * doscientos noventa metros de altura en toda la vuelta, entra en final a dos
+ * kilómetros y medio todavía a cien metros por segundo, y se come la montaña.
+ *
+ * > «El vuelo para dar una vuelta y volver a aterrizar me parece que es muy
+ * > corto, no le da tiempo a descender y perder potencia.»
+ *
+ * Es exactamente eso, y es lo que pasa de verdad: **un circuito no se mide en
+ * metros, se mide en tiempo**. El de un reactor de línea tiene la misma forma
+ * y el mismo minuto por tramo que el de una avioneta, y por eso es tres o
+ * cuatro veces más largo. Así que la figura se estira con la velocidad de
+ * aproximación del avión, que es la que dice a qué ritmo se vuela esa parte.
+ *
+ * Nunca se encoge: con el biplano —que se aproxima más despacio que el
+ * entrenador— el circuito se queda como está, porque lo que sobra de circuito
+ * no molesta y lo que falta mata.
+ */
+const APROXIMACION_DEL_ENTRENADOR = 33;
+
+export function escalaDeCircuito(aproximacion: number): number {
+  return Math.max(1, aproximacion / APROXIMACION_DEL_ENTRENADOR);
+}
+
+/**
  * Hasta qué distancia del circuito se considera que se está volando en él, m.
  *
  * Mil doscientos. Más ancho y volar campo a través en dirección contraria
@@ -248,6 +279,7 @@ export function verticesDelCircuito(
   runway: Pista,
   cotaDePista: number,
   mano: Mano = "izquierda",
+  escala = 1,
 ): PuntoDeCircuito[] {
   const h = (runway.heading * Math.PI) / 180;
   // Hacia dónde se despega, y qué es la izquierda desde ahí. Con el circuito
@@ -266,18 +298,39 @@ export function verticesDelCircuito(
     z: runway.z + fz * a + iz * l,
   });
 
-  const circuito = ALTURA_DE_CIRCUITO;
+  const recto = RECTO_TRAS_LA_PISTA * escala;
+  const separacion = SEPARACION * escala;
+  const entrada = ENTRADA_EN_FINAL * escala;
+  /*
+   * **Y la altura sale de la senda, no de otro factor.**
+   *
+   * Estirar la figura sin subirla dejaría la base cayendo casi nada: el avión
+   * llegaría al punto de entrada en final **por debajo** de la senda de tres
+   * grados, que a cinco kilómetros y medio del umbral pasa por trescientos
+   * metros. Así que el circuito va a lo que pide la senda ahí, más ciento
+   * cincuenta metros de base para bajarlos — y nunca por debajo de los
+   * doscientos cincuenta de siempre.
+   *
+   * Con el entrenador la cuenta da doscientos cuarenta y cuatro y manda el
+   * suelo, así que **el circuito de la avioneta no se mueve ni un metro**. Con
+   * el JAZ 120 da cuatrocientos sesenta: mil quinientos pies, que es
+   * exactamente la altura de circuito de un avión de línea.
+   */
+  const circuito = Math.max(
+    ALTURA_DE_CIRCUITO,
+    entrada * Math.tan(SENDA) + 150,
+  );
   return [
     // La cabecera de salida, a ras de pista: el circuito empieza en el suelo.
     en(-medio, 0, 0),
     // Final de la subida, ya a la altura del circuito.
-    en(medio + RECTO_TRAS_LA_PISTA, 0, circuito),
+    en(medio + recto, 0, circuito),
     // La esquina de allá: fin del viento cruzado.
-    en(medio + RECTO_TRAS_LA_PISTA, SEPARACION, circuito),
+    en(medio + recto, separacion, circuito),
     // La esquina de acá: fin del viento en cola, empieza la base.
-    en(-medio - ENTRADA_EN_FINAL, SEPARACION, circuito),
+    en(-medio - entrada, separacion, circuito),
     // Y la entrada en final, sobre el eje y ya en la senda de los aros.
-    en(-medio - ENTRADA_EN_FINAL, 0, ENTRADA_EN_FINAL * Math.tan(SENDA)),
+    en(-medio - entrada, 0, entrada * Math.tan(SENDA)),
   ];
 }
 
@@ -309,11 +362,13 @@ export function crearCircuito(
   runway: Pista,
   cotaDePista: number,
   suelo?: (x: number, z: number) => number,
+  escala = 1,
 ): Circuito {
   const vertices = verticesDelCircuito(
     runway,
     cotaDePista,
     manoDelCircuito(runway, cotaDePista, suelo),
+    escala,
   );
   const grupo = new Group();
   grupo.name = "circuito";
@@ -379,7 +434,11 @@ export function crearCircuito(
     vertices,
     tramoEn(x, z) {
       let mejor: TramoDeCircuito | null = null;
-      let menor = EN_EL_CIRCUITO * EN_EL_CIRCUITO;
+      // Y el ancho con el que se cuenta «estoy en el circuito» crece con la
+      // figura: en un circuito tres veces más largo, mil doscientos metros
+      // son un pasillo estrecho.
+      const ancho = EN_EL_CIRCUITO * escala;
+      let menor = ancho * ancho;
       for (let i = 1; i < vertices.length; i++) {
         const a = vertices[i - 1]!;
         const b = vertices[i]!;

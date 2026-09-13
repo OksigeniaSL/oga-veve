@@ -37,7 +37,11 @@ import { InputManager } from "./flight/input";
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraEnUso } from "./world/terrain";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
-import { crearCircuito, type Circuito } from "./world/circuito";
+import {
+  crearCircuito,
+  escalaDeCircuito,
+  type Circuito,
+} from "./world/circuito";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
@@ -1051,6 +1055,7 @@ export class Game {
         this.scenario.aerodrome,
         this.scenario.runway,
         (x, z) => this.terrain.sampleHeight(x, z),
+        this.aircraft,
       );
       this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
       this.scene.add(this.plan.grupo);
@@ -3107,6 +3112,9 @@ export class Game {
       this.scenario.runway,
       this.terrain.runwayElevation,
       (x, z) => this.terrain.sampleHeight(x, z),
+      // El circuito de **este** avión: el del de fuselaje ancho es tres veces
+      // el de la avioneta. Ver `escalaDeCircuito`.
+      escalaDeCircuito(this.aircraft.approachSpeed),
     );
     this.circuito.grupo.visible = false;
     this.scene.add(this.circuito.grupo);
@@ -3307,6 +3315,7 @@ export class Game {
       this.scenario.aerodrome,
       this.scenario.runway,
       (x, z) => this.terrain.sampleHeight(x, z),
+      this.aircraft,
     );
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
     this.scene.add(this.plan.grupo);

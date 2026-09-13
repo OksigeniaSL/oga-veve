@@ -1275,8 +1275,17 @@ button.motor__tecla::after {
 .tutor {
   position: fixed;
   left: 50%;
-  /* Sube lo que ocupe el cuadro de mandos, que puede no estar. */
-  bottom: calc(8% + var(--panel-alto, 0px));
+  /*
+   * Sube lo que ocupen el cuadro de mandos y la tarjeta de la señal, que
+   * pueden no estar ninguno de los dos.
+   *
+   * **Lo de la señal no es de adorno.** Las dos son fijas, centradas abajo y
+   * con el mismo `z-index`, así que con las dos puestas se apilaban una encima
+   * de otra: se veía el filo naranja de la de atrás asomando por un lado de la
+   * de delante. Ahora la señal publica lo que ocupa —`--senal-alto`, ver
+   * `medirse` en `senal.ts`— y el tutor se le pone encima.
+   */
+  bottom: calc(8% + var(--panel-alto, 0px) + var(--senal-alto, 0px));
   transform: translateX(-50%);
   display: grid;
   justify-items: center;

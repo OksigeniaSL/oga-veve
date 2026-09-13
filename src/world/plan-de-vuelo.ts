@@ -27,7 +27,9 @@ import {
 } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Aerodrome, Punto } from "./aerodrome";
-import { aLaPolilinea, PARA_ENTRAR_Y_DESPEGAR } from "./aerodrome";
+import { aLaPolilinea } from "./aerodrome";
+import type { AircraftConfig } from "../flight/aircraft";
+import { paraEntrarYDespegar, pistaQueHaceFalta } from "../flight/carrera";
 import {
   construirGrafo,
   nudoCercano,
@@ -114,15 +116,24 @@ const ROJO: readonly [number, number, number] = [0.79, 0.29, 0.24];
  */
 export const CRUCERO = 13;
 
-/**
- * Pista que tiene que quedar por delante para salir por una intersección, m.
+/*
+ * **Cuánta pista hace falta lo dice el avión, no una constante.**
  *
- * Mil doscientos. El Pykasu despega en cuatrocientos cincuenta medidos en el
- * banco, así que esto es casi el triple: sitio para el despegue, para un
- * despegue mal hecho y para arrepentirse a mitad. Un piloto de verdad hace
- * esta misma cuenta antes de aceptar una salida por intersección.
+ * Aquí había mil doscientos metros escritos a mano —casi el triple de lo que
+ * corre el Pykasu— y en `aerodrome.ts` seiscientos para entrar y despegar.
+ * Los dos son el primer avión de la flota con propina, y con dos avionetas eso
+ * valía. Con seis aviones no: en La Palma la calle de rodaje muere en el medio
+ * de una pista de dos mil doscientos, así que entrar por ahí deja mil cien por
+ * delante — pista de sobra para el Pykasu y la mitad de lo que necesita el
+ * JAZ 120. «Me hace despegar desde la mitad de la pista, vaya locos.»
+ *
+ * Ahora las dos cuentas salen de `flight/carrera.ts`, que integra la rodadura
+ * de este avión con su empuje, su peso y su rozamiento. Para el Pykasu dan los
+ * mismos seiscientos y mil doscientos de antes, así que **nada de lo que ya
+ * estaba medido en los diez aeródromos cambia**; para el grande dicen que a
+ * ese avión no se le entra por una intersección nunca, y se hace el back-taxi
+ * hasta la cabecera como en la vida real.
  */
-const PISTA_QUE_HACE_FALTA = 1200;
 
 /**
  * Cuánto hay que apartarse del borde de la pista para esperar, m.
@@ -660,6 +671,11 @@ export class PlanDeVuelo {
       length: number;
     },
     private readonly cota: (x: number, z: number) => number,
+    /*
+     * **Y con qué avión se vuela**, que es lo que decide cuánta pista hace
+     * falta por delante. Ver la nota de `pistaQueHaceFalta`.
+     */
+    private readonly avion: AircraftConfig,
   ) {
     this.grupo.name = "plan-de-vuelo";
     this.grafo = construirGrafo(aero);
@@ -1117,7 +1133,7 @@ export class PlanDeVuelo {
         .map((t) => this.grafo.tramos[t]!)
         .filter((t) => !t.pista);
       if (!calles.length) return;
-      if (this.pistaQueQueda(nudo) < PISTA_QUE_HACE_FALTA) return;
+      if (this.pistaQueQueda(nudo) < pistaQueHaceFalta(this.avion)) return;
       const punto = this.atrasPorLaCalle(calles[0]!, nudo);
       if (punto) sitios.push(punto);
     });
@@ -1739,7 +1755,7 @@ export class PlanDeVuelo {
    *
    * **Hasta dónde se vuelve.** Hasta el primer sitio desde el que ya se puede
    * despegar con la pista de una salida por intersección delante
-   * —`PISTA_QUE_HACE_FALTA`, casi el triple de lo que corre el Pykasu—, y si
+   * —`pistaQueHaceFalta`, que sale de lo que corre **este** avión—, y si
    * el campo es más corto que eso, hasta el umbral. Ni un metro más: volver
    * hasta la cabecera por costumbre es rodar de balde, y aquí lo que sobra de
    * rodaje se paga en niños aburridos.
@@ -1761,7 +1777,7 @@ export class PlanDeVuelo {
     const mitad = this.largoDePista / 2;
     // Si desde aquí ya queda pista de sobra, esto no es un back-taxi: es
     // entrar y despegar, que es lo que pasa en casi todos los aeródromos.
-    if (mitad - along >= PARA_ENTRAR_Y_DESPEGAR) return null;
+    if (mitad - along >= paraEntrarYDespegar(this.avion)) return null;
     // Y en una pista estrecha tampoco, porque las dos rayas se confunden.
     // Ver `ANCHO_PARA_LA_VUELTA`.
     if (this.pista.width < ANCHO_PARA_LA_VUELTA) return null;
@@ -1801,7 +1817,7 @@ export class PlanDeVuelo {
     );
     const radio = lado / 2;
     const umbral = -mitad + HUECO_PARA_GIRAR + radio;
-    const giro = Math.max(umbral, mitad - PISTA_QUE_HACE_FALTA);
+    const giro = Math.max(umbral, mitad - pistaQueHaceFalta(this.avion));
     this.giroDelBackTaxi = giro;
 
     const puntos: Punto[] = [
