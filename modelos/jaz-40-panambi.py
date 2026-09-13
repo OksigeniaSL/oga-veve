@@ -26,7 +26,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
-    cabina, cilindro, exportar, limpiar, perfil, pintar, suavizar, ala,
+    ala, caja, cabina, cilindro, exportar, limpiar, perfil, pintar, suavizar,
     ventanillas,
 )
 from mathutils import Vector  # noqa: E402
