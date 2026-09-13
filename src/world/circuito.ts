@@ -26,13 +26,30 @@
  * `runway-guide.ts`. El circuito se acaba justo donde empieza aquello, y por
  * eso el último punto de la base es el primero de la senda.
  *
- * ## Por la izquierda
+ * ## Por la izquierda, salvo que haya una montaña
  *
  * El circuito estándar es a la izquierda en todo el mundo, y no es un
  * capricho: el comandante se sienta a la izquierda y desde ahí ve la pista por
  * su ventanilla durante toda la vuelta. Hay campos con circuito a la derecha
  * —por un pueblo, por una montaña, por un aeropuerto vecino— y se publican
- * como excepción. Aquí, izquierda.
+ * como excepción.
+ *
+ * **Aquí era izquierda y punto, y en La Palma eso se ve.** Lo dijo quien lo
+ * juega, volando allí: «¿de verdad siempre es con la pista en paralelo a la
+ * izquierda? ¿No es más seguro sobrevolar el mar, porque hay menos
+ * obstáculos?». Pues sí: la pista corre pegada a la costa con la isla
+ * subiendo por un lado y el mar por el otro, y el circuito de la izquierda te
+ * mete el viento en cola por encima de la ladera.
+ *
+ * Así que la mano **se decide mirando el terreno**, que es exactamente el
+ * motivo por el que un campo de verdad publica el circuito al revés. Ver
+ * `manoDelCircuito`: se mide cuánto se separa del suelo el tramo de viento en
+ * cola por cada lado y se vuela por donde hay sitio. Y con empate gana la
+ * izquierda, porque la izquierda es la norma y una regla no se rompe por diez
+ * metros.
+ *
+ * No hace falta ninguna carta ni ningún dato nuevo: el juego ya tiene el
+ * relieve de verdad de cada aeródromo.
  *
  * ## Y se dibuja igual que la senda
  *
@@ -126,19 +143,123 @@ const EN_EL_CIRCUITO = 1200;
  * esquina de la base y la entrada en final. Los cuatro tramos son los cuatro
  * huecos entre ellos.
  */
-export function verticesDelCircuito(
-  runway: { x: number; z: number; heading: number; length: number },
+export type Mano = "izquierda" | "derecha";
+
+export interface Pista {
+  x: number;
+  z: number;
+  heading: number;
+  length: number;
+}
+
+/**
+ * Cuánto separa del suelo el viento en cola volado por un lado, en metros.
+ *
+ * Es la cuenta que decide la mano, y es la de un piloto: el tramo largo del
+ * circuito se vuela a `ALTURA_DE_CIRCUITO` sobre la pista, así que lo que
+ * importa es **cuánto sube el terreno por debajo de él**. Se devuelve lo peor
+ * de todo el tramo, que es lo único que cuenta cuando se habla de despejado.
+ */
+export function holguraDelViento(
+  runway: Pista,
   cotaDePista: number,
-): PuntoDeCircuito[] {
+  suelo: (x: number, z: number) => number,
+  mano: Mano,
+): number {
   const h = (runway.heading * Math.PI) / 180;
-  // Hacia dónde se despega, y qué es la izquierda desde ahí.
   const fx = Math.sin(h);
   const fz = -Math.cos(h);
-  const ix = -Math.cos(h);
-  const iz = -Math.sin(h);
+  const signo = mano === "izquierda" ? 1 : -1;
+  const ix = -Math.cos(h) * signo;
+  const iz = -Math.sin(h) * signo;
+  const medio = runway.length / 2;
+  const desde = medio + RECTO_TRAS_LA_PISTA;
+  const hasta = -medio - ENTRADA_EN_FINAL;
+  let peor = Infinity;
+  // Veinte catas a lo largo del tramo: con mil metros de separación y tres
+  // kilómetros de largo, es una cada ciento cincuenta metros.
+  for (let k = 0; k <= 20; k++) {
+    const a = desde + ((hasta - desde) * k) / 20;
+    const x = runway.x + fx * a + ix * SEPARACION;
+    const z = runway.z + fz * a + iz * SEPARACION;
+    peor = Math.min(peor, cotaDePista + ALTURA_DE_CIRCUITO - suelo(x, z));
+  }
+  return peor;
+}
+
+/**
+ * Por qué lado se vuela el circuito de esta pista.
+ *
+ * Izquierda, que es la norma, **salvo que por la derecha haya bastante más
+ * sitio**. Bastante es `VENTAJA`: mover un circuito de lado es cambiar una
+ * regla que todo el mundo conoce, y eso no se hace por unos metros.
+ *
+ * Sin terreno que mirar —una prueba, un escenario sin relieve— izquierda.
+ *
+ * ## Lo medido, sobre el relieve de verdad de los nueve campos
+ *
+ * Holgura del viento en cola por cada lado, por las dos cabeceras:
+ *
+ *     yvytu-rape      140°  izq 232  der 207      320°  izq 217  der 219
+ *     pettirossi      192°  izq 229  der 238       12°  izq 237  der 229
+ *     guarani          41°  izq 239  der 236      221°  izq 239  der 239
+ *     encarnacion      12°  izq 142  der 163      192°  izq 154  der 140
+ *     estigarribia    178°  izq 247  der 244      358°  izq 245  der 247
+ *     pedro-juan       14°  izq 256  der 255      194°  izq 255  der 257
+ *     tenerife-norte  291°  izq 160  der 169      111°  izq 173  der 162
+ *     la-palma        179°  izq 275  der  32      359°  izq  27  der 275
+ *     cuatro-vientos  274°  izq 239  der 243       94°  izq 237  der 239
+ *
+ * **Ocho de los nueve no se enteran de esto**: son llanos, las dos holguras se
+ * parecen en menos de treinta metros y se quedan por la izquierda de siempre.
+ *
+ * Y **La Palma cambia de mano con la cabecera**, que es el campo que hizo
+ * falta. La pista corre pegada a la costa con la isla subiendo por un lado y
+ * el Atlántico por el otro, así que el lado bueno no es el mismo despegando
+ * al norte que al sur: con la izquierda de siempre, salir hacia el norte te
+ * mandaba a volar el viento en cola con **veintisiete metros** por encima de
+ * la isla. Eso no es holgura, es la ladera. Los doscientos setenta y cinco del
+ * otro lado son el mar.
+ *
+ * Lo dijo quien lo juega volando allí: «¿de verdad siempre es con la pista en
+ * paralelo a la izquierda? ¿No es más seguro sobrevolar el mar, porque hay
+ * menos obstáculos?».
+ */
+export function manoDelCircuito(
+  runway: Pista,
+  cotaDePista: number,
+  suelo?: (x: number, z: number) => number,
+): Mano {
+  if (!suelo) return "izquierda";
+  const izq = holguraDelViento(runway, cotaDePista, suelo, "izquierda");
+  const der = holguraDelViento(runway, cotaDePista, suelo, "derecha");
+  return der > izq + VENTAJA ? "derecha" : "izquierda";
+}
+
+/**
+ * Cuánta holgura de más tiene que dar la derecha para ganarse el circuito, m.
+ *
+ * Cien metros. Es un tercio de la altura del circuito: por debajo de eso, los
+ * dos lados son el mismo lado y manda la norma.
+ */
+const VENTAJA = 100;
+
+export function verticesDelCircuito(
+  runway: Pista,
+  cotaDePista: number,
+  mano: Mano = "izquierda",
+): PuntoDeCircuito[] {
+  const h = (runway.heading * Math.PI) / 180;
+  // Hacia dónde se despega, y qué es la izquierda desde ahí. Con el circuito
+  // por la derecha es lo mismo con el signo cambiado, y nada más.
+  const fx = Math.sin(h);
+  const fz = -Math.cos(h);
+  const signo = mano === "izquierda" ? 1 : -1;
+  const ix = -Math.cos(h) * signo;
+  const iz = -Math.sin(h) * signo;
   const medio = runway.length / 2;
 
-  /** Un punto a `a` metros por delante del centro y `l` a la izquierda. */
+  /** Un punto a `a` metros por delante del centro y `l` hacia la mano. */
   const en = (a: number, l: number, alto: number): PuntoDeCircuito => ({
     x: runway.x + fx * a + ix * l,
     y: cotaDePista + alto,
@@ -185,11 +306,15 @@ export interface Circuito {
  * no dice nada.
  */
 export function crearCircuito(
-  runway: { x: number; z: number; heading: number; length: number },
+  runway: Pista,
   cotaDePista: number,
   suelo?: (x: number, z: number) => number,
 ): Circuito {
-  const vertices = verticesDelCircuito(runway, cotaDePista);
+  const vertices = verticesDelCircuito(
+    runway,
+    cotaDePista,
+    manoDelCircuito(runway, cotaDePista, suelo),
+  );
   const grupo = new Group();
   grupo.name = "circuito";
 

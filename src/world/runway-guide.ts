@@ -435,12 +435,30 @@ export class RunwayGuide {
      *
      * Se mira la altura del cruce respecto al centro del aro. Si la diferencia
      * de altura no explica el fallo, es que se pasó ancho: se fue por un lado.
+     *
+     * **Y eso es lo que decía este comentario y no hacía el código.** Miraba
+     * solo si el desnivel pasaba de un radio, sin compararlo nunca con lo que
+     * se había ido de lado, así que cualquier cruce alto decía «alto» por
+     * lejos que quedara el aro. Jugando en La Palma, despegando y girando:
+     * «me dice que bajé por encima del aro» con el avión a un kilómetro del
+     * eje, subiendo, y el aro a su espalda. No bajó por encima de nada — pasó
+     * por otro sitio.
+     *
+     * El fallo lo explica la altura **cuando la altura es la mayor parte del
+     * fallo**. Si lo que se fue de lado pesa más, se pasó ancho, y eso ya se
+     * ve: el aro te queda al lado y para eso está la raya de la senda.
      */
     const desnivel = cruce.y - aro.position.y;
+    /*
+     * Lo que se fue de lado. `fuera` es el fallo entero medido en el plano del
+     * aro y `desnivel` su parte vertical, así que la horizontal sale por
+     * Pitágoras. El `max` es contra el redondeo, que a cero puede dar −1e-13.
+     */
+    const alLado = Math.sqrt(Math.max(0, fuera * fuera - desnivel * desnivel));
     this.porCuanto = cruzado ? 0 : desnivel;
     this.porDonde = cruzado
       ? null
-      : Math.abs(desnivel) > radio
+      : Math.abs(desnivel) > radio && Math.abs(desnivel) >= alLado
         ? desnivel > 0
           ? "alto"
           : "bajo"
