@@ -42,6 +42,7 @@
 
 import { getLocale } from "../i18n";
 import { seguirLaVoz, vozPermitida } from "./voz";
+import { BOCA, type Urgencia } from "./boca";
 
 export interface Instructor {
   /**
@@ -56,7 +57,7 @@ export interface Instructor {
    * caliente y no tienen una clave sola. Esas las dice el navegador, como
    * hasta ahora, en vez de obligar a inventarles un nombre.
    */
-  decir(texto: string, clave?: string): void;
+  decir(texto: string, clave?: string, urgencia?: Urgencia): void;
   /** Se calla ahora mismo. */
   callar(): void;
   /** ¿Hay alguien que pueda hablar en el idioma de ahora? */
@@ -72,7 +73,7 @@ export interface Instructor {
 
 /** Un instructor mudo. Es lo que hay en guaraní, y no pasa nada. */
 export const MUDO: Instructor = {
-  decir: (_texto?: string, _clave?: string) => {},
+  decir: (_texto?: string, _clave?: string, _urgencia?: Urgencia) => {},
   callar: () => {},
   disponible: false,
   hablando: false,
@@ -244,7 +245,7 @@ export class VozDelNavegador implements Instructor {
     return this.voz !== null;
   }
 
-  decir(texto: string): void {
+  decir(texto: string, _clave?: string, urgencia: Urgencia = "normal"): void {
     if (!this.voz || !texto) return;
     /*
      * **Y el mudo del juego también le calla a él.**
@@ -263,22 +264,37 @@ export class VozDelNavegador implements Instructor {
     this.ultima = texto;
     this.desdeUltima = ahora;
 
-    // Cancelar lo anterior. Sin esto las frases se encolan y el instructor
-    // sigue hablando de la calle de rodaje con el avión ya en el aire.
-    speechSynthesis.cancel();
-    const frase = new SpeechSynthesisUtterance(texto);
-    // Y la mezcla se entera: mientras habla, todo lo demás se agacha diez
-    // decibelios. Ver `audio/mezcla.ts`.
-    seguirLaVoz(frase);
-    frase.voice = this.voz;
-    frase.lang = this.voz.lang;
-    frase.rate = this.timbre.rate;
-    frase.pitch = this.timbre.pitch;
-    speechSynthesis.speak(frase);
+    /*
+     * **Y se pide la palabra en vez de quitársela a quien la tenga.**
+     *
+     * Aquí había un `speechSynthesis.cancel()` a pelo, con el motivo escrito
+     * al lado: sin él las frases se encolan y el instructor sigue hablando de
+     * la calle de rodaje con el avión ya en el aire. El motivo es bueno y el
+     * remedio se pasaba — cortaba **todo**, incluido lo que acababa de decir
+     * el canto de cabina, que habla por el mismo sintetizador y hacía lo mismo
+     * en sentido contrario.
+     *
+     * Ahora lo decide `audio/boca.ts`: lo urgente corta, lo demás espera una
+     * plaza, y lo que espera demasiado no se dice. Que es exactamente lo que
+     * ese comentario quería y no conseguía.
+     */
+    BOCA.pedir(urgencia, (listo) => {
+      const frase = new SpeechSynthesisUtterance(texto);
+      // Y la mezcla se entera: mientras habla, todo lo demás se agacha diez
+      // decibelios. Ver `audio/mezcla.ts`.
+      seguirLaVoz(frase);
+      frase.voice = this.voz;
+      frase.lang = this.voz!.lang;
+      frase.rate = this.timbre.rate;
+      frase.pitch = this.timbre.pitch;
+      frase.onend = listo;
+      frase.onerror = listo;
+      speechSynthesis.speak(frase);
+    });
   }
 
   callar(): void {
-    if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
+    BOCA.callar();
     this.ultima = "";
   }
 }
