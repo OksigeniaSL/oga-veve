@@ -13,6 +13,7 @@
 
 import { t } from "../i18n";
 import { Panel } from "./panel";
+import { armarPanel, CERRAR } from "./concha";
 import {
   CABECEOS,
   CONTRASTES,
@@ -79,7 +80,7 @@ export class PantallaDeAjustes {
       }
       if (
         e.target === root ||
-        (e.target as HTMLElement)?.closest?.("[data-cerrar]")
+        (e.target as HTMLElement)?.closest?.('[data-accion="cerrar"]')
       ) {
         this.cerrar();
       }
@@ -101,13 +102,13 @@ export class PantallaDeAjustes {
 
   private pintar(): void {
     const puestos = leerAjustes();
-    this.root.innerHTML = `
-      <div class="ajustes__panel" role="dialog" aria-modal="true"
-           aria-label="${t("ajustes.titulo")}">
-        <h2 class="ajustes__titulo">${t("ajustes.titulo")}</h2>
-        ${FILAS.map(({ cual, opciones }) => {
-          const etiqueta = t(`ajustes.${cual}` as never);
-          return `
+    this.root.innerHTML = armarPanel({
+      titulo: t("ajustes.titulo"),
+      clase: "ajustes__panel",
+      acciones: [CERRAR("ajustes.listo")],
+      cuerpo: FILAS.map(({ cual, opciones }) => {
+        const etiqueta = t(`ajustes.${cual}` as never);
+        return `
           <div class="ajustes__fila">
             <span class="ajustes__que" id="ajuste-${cual}">${etiqueta}</span>
             <div class="ajustes__opciones" role="radiogroup"
@@ -124,11 +125,7 @@ export class PantallaDeAjustes {
                 .join("")}
             </div>
           </div>`;
-        }).join("")}
-        <button type="button" class="creditos__cerrar" data-cerrar>
-          ${t("ajustes.listo")}
-        </button>
-      </div>
-    `;
+      }).join(""),
+    });
   }
 }

@@ -26,6 +26,7 @@ function horasDe(segundos: number): string {
   return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
 }
 import { Panel } from "./panel";
+import { armarPanel, CERRAR } from "./concha";
 import { manga as dibujarManga } from "./manga";
 
 /**
@@ -68,12 +69,14 @@ export class CuadernoScreen {
         <span class="cuaderno__cifra">${valor}</span>
         <span class="cuaderno__glosa">${t(clave as never)}</span>
       </div>`;
-    this.root.innerHTML = `
-      <!-- Con nombre: ver la nota de credits.ts. -->
-      <div class="cuaderno__panel" role="dialog" aria-modal="true"
-           aria-label="${t("cuaderno.title")}">
+    this.root.innerHTML = armarPanel({
+      titulo: t("cuaderno.title"),
+      panel: "cuaderno",
+      clase: "cuaderno__panel",
+      acciones: [CERRAR()],
+      cuerpo: `
         <div class="cuaderno__manga">${dibujarManga(barrasDe(g), CUADERNO_ALTO, t("galon.manga"))}</div>
-        <h2 class="cuaderno__grado">${t(`grado.${g}` as never)}</h2>
+        <h3 class="cuaderno__grado">${t(`grado.${g}` as never)}</h3>
         <div class="cuaderno__datos">
           ${cuenta("cuaderno.horas", horasDe(c.segundos))}
           ${cuenta("cuaderno.despegues", String(c.despegues))}
@@ -100,11 +103,8 @@ export class CuadernoScreen {
                 .join(" · ")}</p>`
             : `<p class="cuaderno__falta">${t("cuaderno.completo")}</p>`
         }
-        <button class="creditos__cerrar" type="button" data-cerrar>
-          ${t("credits.close")}
-        </button>
-      </div>
-    `;
+      `,
+    });
   }
 
   get visible(): boolean {
