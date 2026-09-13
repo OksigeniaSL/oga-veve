@@ -635,12 +635,118 @@ export const ARAI: AircraftConfig = {
   },
 };
 
+/**
+ * JAZ 120 *Yvága* — cuatrimotor de fuselaje ancho.
+ *
+ * El grande. *Yvága* es cielo.
+ *
+ * ## Vuela los números de un 747 de verdad
+ *
+ * Y no «parecidos»: la superficie alar, la envergadura, la cuerda media, la
+ * masa y las tres inercias salen de la **NASA CR-2144** —*Aircraft Handling
+ * Qualities Data*, Heffley y Jewell, 1972—, que publica el juego completo del
+ * B-747 en dominio público, con su trirradial acotado y sus condiciones de
+ * vuelo. <https://ntrs.nasa.gov/citations/19730003312>
+ *
+ *     S = 5.500 ft²   →  511,0 m²
+ *     b = 195,68 ft   →   59,64 m
+ *     c̄ = 27,31 ft   →    8,32 m
+ *     W = 564.000 lb  →  255.826 kg   (configuración de aproximación)
+ *     Ix = 13,7·10⁶ slug-ft²  →  18,57·10⁶ kg·m²
+ *     Iy = 30,5·10⁶           →  41,35·10⁶
+ *     Iz = 43,1·10⁶           →  58,44·10⁶
+ *
+ * Se toma **el peso de aproximación y no el nominal** —255 toneladas en vez de
+ * 289— porque es la condición en la que este juego pasa el rato: un avión de
+ * línea con el depósito lleno es un avión que no aterriza.
+ *
+ * Es lo mismo que se hizo con el entrenador y el Navion: los datos de vuelo de
+ * un avión real son hechos publicados, y volarlos es lo que este juego promete
+ * cuando dice que lo que se enseña es real. **Lo que no se copia es el rótulo
+ * ni la joroba**, que es lo único reconociblemente suyo — un cuatrimotor de
+ * fuselaje ancho sin joroba es el DC-8, el 707 o el A340, o sea una clase
+ * entera y no una marca. Ver `CREDITOS.md`.
+ *
+ * ## Y lo que sí se ha elegido
+ *
+ * Las derivadas que el informe da en gráficas contra Mach se leen en el
+ * extremo de baja velocidad, que es donde vuela esto: `clAlpha` a nivel del
+ * mar y Mach bajo sale sobre 4,8, y `cdAlfa` alrededor de 0,5. El resto —los
+ * amortiguamientos, la veleta, el efecto diedro— se escala desde el JAZ 90 con
+ * el tamaño, y el banco de prestaciones comprueba que los cinco modos salen
+ * donde tienen que salir.
+ */
+export const YVAGA: AircraftConfig = {
+  id: "jaz-120",
+  name: nombreEntero(FLOTA[5]!),
+  descriptionKey: "aircraft.yvaga.description",
+  mass: 255826,
+  wingArea: 511,
+  wingSpan: 59.64,
+  chord: 8.32,
+  inertia: { xx: 18570000, yy: 41350000, zz: 58440000 },
+  /*
+   * Cuatro motores. El empuje de un 747 clásico son cuatro por 220 kN, o sea
+   * 880 en total; aquí se pone lo que el modelo necesita para que el crucero
+   * y el ascenso salgan donde tienen que salir, que con la caída de empuje de
+   * `fdm.ts` es bastante menos. Lo eligió el banco, no una tabla.
+   */
+  maxThrust: 430000,
+  cruiseSpeed: 230,
+  // 1,3 veces la pérdida, como manda: con CLmax 1,4 pierde a 76 m/s.
+  approachSpeed: 98,
+  decisionSpeed: 80,
+  rotationSpeed: 86,
+  gearHeight: 5.2,
+  maxGroundPitch: 0.15, // 8,6°: un fuselaje de setenta metros toca antes.
+  // Triple ranura y Krueger: un ala de línea saca mucho más CL que una
+  // avioneta, y es lo que le permite entrar a 98 y no a 140.
+  flapsLift: 0.95,
+  flapsDrag: 0.13,
+  appearance: {
+    body: 0xf2f1ec,
+    accent: 0x1f4f76,
+    trim: 0xbe5d38,
+    blades: 0,
+  },
+  sound: {
+    engine: "turbofan",
+    cylinders: 0,
+    idleRpm: 2200,
+    maxRpm: 9500,
+    growlHz: 360,
+    growlRise: 620,
+  },
+  aero: {
+    cl0: 0.2,
+    // Leído de la gráfica del informe en el extremo de Mach bajo, nivel del
+    // mar: la curva arranca en 4,7-4,8 y cae al acercarse a Mach 0,8.
+    clAlpha: 4.8,
+    alphaStall: 0.25, // ~14°
+    cd0: 0.017,
+    oswald: 0.8,
+    cyBeta: -0.9,
+    cm0: 0.04,
+    cmAlpha: -0.75,
+    cmQ: -22,
+    cmElevator: 0.42,
+    clBeta: -0.09,
+    clP: -0.45,
+    clAileron: 0.035, // ~25 °/s, que es lo que rueda un avión de este tamaño.
+    cnBeta: 0.13,
+    cnR: -0.26,
+    cnRudder: 0.04,
+    cnAileron: -0.002,
+  },
+};
+
 export const AIRCRAFT: readonly AircraftConfig[] = [
   PYKASU,
   MAINUMBY,
   PANAMBI,
   ARASUNU,
   ARAI,
+  YVAGA,
 ];
 
 /**

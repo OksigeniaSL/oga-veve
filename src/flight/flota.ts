@@ -31,10 +31,10 @@
  * aquí con su número y su nombre reservados, que es el sitio donde tienen que
  * estar para que nadie los bautice dos veces. Ver `ESTA_HECHO`.
  *
- * Y queda una comprobación que no la hace un programa: que ninguno de los
- * cinco tenga un sentido coloquial desafortunado para quien habla guaraní.
- * *Mainumby* está dado por seguro; *Pykasu*, *Panambi*, *Arasunu* y *Arai*
- * conviene verificarlos antes de que salgan a producción.
+ * Y los nombres salen a producción sin esperar a nadie. Si alguno resulta
+ * tener un sentido coloquial desafortunado en guaraní, se cambia la palabra y
+ * ya está: es una fila de esta tabla y una clave de traducción. Retener un
+ * juego por eso cuesta más que arreglarlo.
  */
 
 /** El fabricante, dentro del mundo del juego. */
@@ -43,13 +43,24 @@ export const FABRICANTE = "JAZ";
 /**
  * Las siluetas, que son lo que de verdad distingue un avión de otro.
  *
- * Cinco siluetas y no cinco pinturas: ala alta, biplano, bimotor de ala baja,
- * cola en T y reactor en flecha. Es exactamente la destreza que enseña el
- * álbum de postales —reconocer un avión por su forma—, así que la flota tiene
- * que darle cinco respuestas distintas o el álbum no tiene nada que enseñar.
+ * Seis siluetas y no seis pinturas: ala alta, biplano, bimotor de ala baja,
+ * cola en T, reactor en flecha y cuatrimotor de fuselaje ancho. Es exactamente
+ * la destreza que enseña el álbum de postales —reconocer un avión por su
+ * forma—, así que la flota tiene que darle seis respuestas distintas o el
+ * álbum no tiene nada que enseñar.
  */
 export type Silueta =
-  "ala-alta" | "biplano" | "bimotor-ala-baja" | "cola-en-t" | "reactor";
+  | "ala-alta"
+  | "biplano"
+  | "bimotor-ala-baja"
+  | "cola-en-t"
+  | "reactor"
+  /**
+   * Y el cuatrimotor de fuselaje ancho, que es otra silueta y no un reactor
+   * grande: **cuatro motores bajo el ala** se cuentan desde el suelo y desde
+   * la ventanilla, y contarlos es exactamente la destreza que el álbum enseña.
+   */
+  | "cuatrimotor";
 
 export interface Modelo {
   /** El número: crece con el tamaño y no se repite. */
@@ -129,6 +140,26 @@ export const FLOTA: readonly Modelo[] = [
      * encima de ellas. Decidido por quien bautiza, que es quien decide esto.
      */
   },
+  {
+    numero: 120,
+    nombre: "Yvága",
+    pajaro: "cielo",
+    silueta: "cuatrimotor",
+    id: "jaz-120",
+    /*
+     * **El grande, y vuela los números de un 747 de verdad.**
+     *
+     * La masa, las inercias, la superficie alar, la envergadura y la cuerda
+     * salen de la NASA CR-2144 —*Aircraft Handling Qualities Data*, Heffley y
+     * Jewell, 1972—, que publica el juego entero del B-747 en dominio público.
+     * Ver `aircraft.ts`.
+     *
+     * Lo que no se copia es el rótulo ni la joroba: un cuatrimotor de fuselaje
+     * ancho sin joroba es una clase entera —el DC-8, el 707, el A340— y no una
+     * marca. Volar cómo vuela un avión de verdad es lo que este juego promete;
+     * llamarlo como se llama, no.
+     */
+  },
 ];
 
 /** Cuáles están construidos de verdad. Los demás son número y nombre reservados. */
@@ -138,6 +169,7 @@ export const ESTA_HECHO: readonly string[] = [
   "jaz-40",
   "jaz-60",
   "jaz-90",
+  "jaz-120",
 ];
 
 /**

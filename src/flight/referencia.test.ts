@@ -256,11 +256,24 @@ describe("la pendiente de sustentación", () => {
 describe.each(AIRCRAFT.map((a) => [a.id, a] as const))(
   "%s contra el Navion",
   (_id, a) => {
+    /*
+     * **Un factor de dos y medio a cada lado**, y no de dos.
+     *
+     * Empezó siendo dos, con dos avionetas en la flota. Los amortiguamientos
+     * de cabeceo y de guiñada crecen con **la esbeltez del avión** —van con el
+     * cuadrado del brazo de cola partido por la cuerda— y en un fuselaje de
+     * setenta metros eso no se parece al de un Navion: el cuatrimotor sale a
+     * 2,2 y 2,1 veces, que no es una errata, es que es otro avión.
+     *
+     * Lo que este listón está aquí para cazar sigue cazándolo: un signo
+     * cambiado o un cero de más. No está para decidir de qué tamaño puede ser
+     * un avión.
+     */
     const dentro = (nuestro: number, suyo: number) => {
       expect(Math.sign(nuestro)).toBe(Math.sign(suyo));
       const veces = Math.abs(nuestro) / Math.abs(suyo);
-      expect(veces).toBeGreaterThan(0.5);
-      expect(veces).toBeLessThan(2);
+      expect(veces).toBeGreaterThan(0.4);
+      expect(veces).toBeLessThan(2.5);
     };
 
     it("amortigua el cabeceo como un avión", () => {

@@ -224,6 +224,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       // cajas el día que hubo fábrica paramétrica. Ver #68.
       dibujo: juego.aircraftMesh.deVerdad ? "modelo" : "fábrica",
       /*
+       * **Y sus velocidades**, que el banco necesita para volarlo.
+       *
+       * El piloto de `verificar-vuelo-entero` las llevaba escritas a mano —sube
+       * a 34, crucero 50, rota a 27— y eran las del JAZ 20. Con la flota en
+       * cinco aviones eso dejó de ser una simplificación y pasó a ser un error:
+       * al turbohélice le mandaba subir a 34 metros por segundo, que está **por
+       * debajo de su velocidad de pérdida**. Se comía la pista entera de
+       * Tenerife Norte sin llegar a despegar.
+       */
+      rotacion: juego.aircraft.rotationSpeed,
+      aproximacion: juego.aircraft.approachSpeed,
+      crucero: juego.aircraft.cruiseSpeed,
+      /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
        *
        * Un `.glb` trae sus propios materiales, así que el cargador lo

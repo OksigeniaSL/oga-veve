@@ -48,6 +48,21 @@ const PUERTO = 5289;
  * que pudo poner.
  */
 const VECES = Number(process.argv[4] ?? 12);
+/**
+ * Con qué avión se vuela.
+ *
+ * Existe porque la flota pasó de dos aviones a cinco y **este banco solo
+ * volaba el primero**. Los otros cuatro tenían sus diecisiete comprobaciones
+ * de prestaciones —pérdida, planeo, carrera, los cinco modos— y ni una sola
+ * que los sacara del puesto y los trajera de vuelta. Es exactamente el hueco
+ * que ya tuvieron el plano y el tiempo entre los paneles: lo que no se vuela,
+ * no se mide.
+ *
+ * Y no da igual cuál: un reactor que cruza el umbral a noventa metros por
+ * segundo no cabe en las mismas pistas ni en las mismas curvas de rodaje que
+ * una avioneta, y lo que este banco mide es precisamente eso.
+ */
+const AVION = process.argv[5] ?? "jaz-20";
 
 const server = await createServer({
   root: process.cwd(),
@@ -70,7 +85,8 @@ await page.addInitScript(() => {
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue&tramo=${TRAMO}`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue` +
+    `&tramo=${TRAMO}&avion=${AVION}`,
 );
 await page.waitForTimeout(16000);
 
@@ -178,8 +194,22 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * es el número exacto: es que el piloto **apunte a una velocidad** y no
    * sostenga media palanca, que es como se entra en pérdida subiendo.
    */
-  const VELOCIDAD_DE_SUBIDA = 34;
-  const VELOCIDAD_DE_CRUCERO = 50;
+  /*
+   * **Las velocidades salen de la ficha del avión, no de aquí.**
+   *
+   * Estaban escritas a mano —34 de subida, 50 de crucero— y eran las del JAZ
+   * 20, que era el único que volaba este banco. Con cinco aviones en la flota
+   * dejó de ser una simplificación: al turbohélice, que pierde a 37, se le
+   * mandaba subir a 34. Se comió los tres mil cuatrocientos metros de Tenerife
+   * Norte sin despegar y acabó contra un edificio.
+   *
+   * La de subida es la de rotación más un margen —es lo que se vuela después
+   * de soltar el suelo— y la de crucero es la suya. Con el JAZ 20 salen 32 y
+   * 60, o sea casi lo que había.
+   */
+  const suyas = o.avion?.() ?? {};
+  const VELOCIDAD_DE_SUBIDA = (suyas.rotacion ?? 28) * 1.15;
+  const VELOCIDAD_DE_CRUCERO = suyas.crucero ?? 50;
 
   /**
    * Palanca para mantener una velocidad, con un empujón opcional de altura.
@@ -902,7 +932,16 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * lleva dentro la única regla que no admite excepción: por debajo de la
        * velocidad de subida no se tira, pase lo que pase.
        */
-      c.elevator = s.onGround ? (s.airspeed > 27 ? 0.5 : 0) : subirDeVerdad(s);
+      /*
+       * Y se tira al llegar a **su** velocidad de rotación, con mando de
+       * sobra: medio elevador no levanta cinco toneladas y media, y lo que
+       * limita el morro en tierra es la geometría del tren y no la palanca.
+       */
+      c.elevator = s.onGround
+        ? s.airspeed > (suyas.rotacion ?? 28) * 0.96
+          ? 0.8
+          : 0
+        : subirDeVerdad(s);
       if (!s.onGround && alto(s) > 30) {
         despego = t;
         etapa = "subir";
@@ -1278,15 +1317,28 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
  * aeronave cambió de identificador y el fichero se quedó con el nombre viejo;
  * el salto visual más grande del juego se fue en silencio y ningún banco lo
  * notó. Ahora lo nota este.
+ *
+ * **Y solo para los que tienen modelo.** La regla se escribió cuando la flota
+ * eran dos aviones y los dos tenían su glTF. Ahora son cinco y tres se dibujan
+ * con la fábrica paramétrica, que no es un respaldo: es cómo están hechos, y
+ * #68 lo argumenta —diez aeronaves en glTF son cientos de kilobytes; por
+ * código, decenas—. Acusarlos de volar el respaldo era medirlos con la regla
+ * de otros.
+ *
+ * Lo que sí se sigue cazando es lo que costó caro: un avión que **tiene**
+ * fichero y no lo carga.
  */
-comprobar(
-  "se vuela el modelo de la aeronave y no el respaldo",
-  vuelo.avion?.dibujo === "modelo",
-  vuelo.avion
-    ? `${vuelo.avion.nombre} · ${vuelo.avion.dibujo}`
-    : "no se pudo mirar",
-  "el modelo se apaga en silencio si el fichero no está donde se le espera",
-);
+const CON_MODELO = new Set(["jaz-20", "jaz-25"]);
+if (CON_MODELO.has(AVION)) {
+  comprobar(
+    "se vuela el modelo de la aeronave y no el respaldo",
+    vuelo.avion?.dibujo === "modelo",
+    vuelo.avion
+      ? `${vuelo.avion.nombre} · ${vuelo.avion.dibujo}`
+      : "no se pudo mirar",
+    "el modelo se apaga en silencio si el fichero no está donde se le espera",
+  );
+}
 
 comprobar(
   "el avión parado tiene las ruedas en el suelo",

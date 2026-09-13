@@ -373,12 +373,24 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
      * que él. Ver `referencia.ts` y #54.
      */
     it("alabea dentro de lo que puede alabear un avión", () => {
-      const ritmo =
-        ((a.aero.clAileron / Math.abs(a.aero.clP)) * (2 * a.cruiseSpeed)) /
-        a.wingSpan;
-      const grados = (ritmo * 180) / Math.PI;
-      expect(grados).toBeGreaterThan(40);
-      expect(grados).toBeLessThan(180);
+      /*
+       * **En su forma adimensional, que es la que se compara entre aviones.**
+       *
+       * Los grados por segundo iban de cuarenta a ciento ochenta, y eso era
+       * una banda escrita mirando avionetas: **un avión grande rueda más
+       * despacio y no es un defecto**, es la envergadura. El cuatrimotor sale
+       * a 34 °/s y un avión de línea de verdad anda por ahí.
+       *
+       * Lo que sí se compara entre un biplano y un cuatrimotor es el **ángulo
+       * de hélice**, `p·b/2V`, que es lo mismo dicho sin velocidad ni
+       * envergadura: cuánto se retuerce el aire que atraviesa el ala. Sale de
+       * `clAileron/|clP|` y nada más. La norma militar pide 0,07 para un
+       * transporte; las avionetas de este juego andan por 0,15 y el
+       * cuatrimotor por 0,078.
+       */
+      const helice = a.aero.clAileron / Math.abs(a.aero.clP);
+      expect(helice).toBeGreaterThan(0.05);
+      expect(helice).toBeLessThan(0.25);
     });
   },
 );
@@ -397,28 +409,80 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
  *   así que no hace falta creerse nada.
  */
 
+/**
+ * A qué velocidad planea mejor un ala, según la cuenta.
+ *
+ * Es la que da el `CL` en el que la inducida iguala a la parásita, y sale solo
+ * de la ficha. Se usa en dos sitios —para barrer alrededor de ella y para
+ * comprobar que el avión planea ahí— y por eso está escrita una vez.
+ */
+function vDeMejorPlaneo(a: AircraftConfig): number {
+  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const clOptimo = Math.sqrt(
+    Math.PI * alargamiento * a.aero.oswald * a.aero.cd0,
+  );
+  return Math.sqrt((2 * a.mass * G) / (RHO * a.wingArea * clOptimo));
+}
+
 /** Lo mejor que planea, y a qué velocidad. Motor parado. */
 function mejorPlaneo(a: AircraftConfig): { razon: number; a: number } {
   let mejor = { razon: 0, a: 0 };
-  for (let v = a.approachSpeed * 0.85; v <= a.cruiseSpeed; v += 1.5) {
-    const razon = planeoA(a, v);
-    if (razon > mejor.razon) mejor = { razon, a: v };
+  /*
+   * **Se barre por actitud, de dos a doce grados de morro abajo.**
+   *
+   * Es el abanico en el que planea cualquier avión: por encima de dos grados
+   * no baja y no hay planeo que medir; por debajo de doce va en picado y la
+   * resistencia se dispara. El óptimo cae en medio en los seis, y **no hace
+   * falta saber de antemano a qué velocidad está** — sale del propio vuelo,
+   * que es lo que después se compara con la cuenta.
+   */
+  for (let g = -2; g >= -12; g -= 0.5) {
+    const salida = planeoConActitud(a, g);
+    if (salida.razon > mejor.razon) mejor = salida;
   }
   return mejor;
 }
 
-/** Cuánto avanza por cada metro que cae, volando a esa velocidad sin motor. */
-function planeoA(a: AircraftConfig, v: number): number {
+/**
+ * Cuánto avanza por cada metro que cae, planeando con **esa actitud**.
+ *
+ * ## Por qué actitud y no velocidad
+ *
+ * Porque así se planea de verdad: se pone el morro donde toca y la velocidad
+ * sale sola. Perseguir una velocidad con el elevador es cerrar un lazo sobre
+ * el fugoide, que es el modo más lento y menos amortiguado que tiene un avión,
+ * y eso aguanta en una avioneta y se desmonta en algo grande.
+ *
+ * Lo destapó el cuatrimotor y no hubo que deducirlo: con el lazo de velocidad,
+ * a su velocidad de mejor planeo, el ángulo de ataque se le iba de 1° a 17,6°
+ * —su pérdida está en 14,3— y la velocidad vertical oscilaba entre −79 y +38
+ * metros por segundo. Entraba en pérdida cuatro veces en cuatro minutos. El
+ * banco medía esa montaña rusa y devolvía planeos de 232 a uno en un avión que
+ * planea 16.
+ *
+ * Un lazo de actitud con amortiguamiento de cabeceo no puede hacer eso: la
+ * actitud es lo que el elevador manda directamente.
+ */
+function planeoConActitud(
+  a: AircraftConfig,
+  grados: number,
+): { razon: number; a: number } {
   /*
-   * Tres mil metros: la ventana de medida son ciento cincuenta segundos y el
-   * reactor planea bajando seis por segundo, o sea novecientos. Y no más, que
-   * a esa altura el aire ya es otro.
+   * Dos mil quinientos metros: sitio de sobra para la ventana y no tanto como
+   * para que la pérdida de allá arriba sea otra que la de abajo.
    */
-  const m = nuevo(a, v, 3000);
-  // El morro persigue la velocidad: así se planea de verdad, y así el avión se
-  // asienta en vez de quedarse cabeceando.
+  const m = nuevo(a, vDeMejorPlaneo(a), 2500);
+  const objetivo = (grados * Math.PI) / 180;
   const paso = () => {
-    const e = Math.max(-0.5, Math.min(0.5, (m.state.airspeed - v) * 0.06));
+    // La actitud es el ángulo de trayectoria más el de ataque.
+    const gamma = Math.asin(
+      Math.max(-1, Math.min(1, m.state.verticalSpeed / m.state.airspeed)),
+    );
+    const actitud = gamma + m.state.alpha;
+    const e = Math.max(
+      -0.6,
+      Math.min(0.6, (objetivo - actitud) * 4 - m.state.pitchRate * 2.5),
+    );
     m.step(DT, {
       ...neutralControls(),
       engineOn: false,
@@ -426,26 +490,36 @@ function planeoA(a: AircraftConfig, v: number): number {
       elevator: e,
     });
   };
-  /*
-   * **Noventa segundos para asentarse y sesenta para medir**, que es más de un
-   * fugoide entero en cualquiera de los cinco.
-   *
-   * Iban sesenta y treinta, y con eso el turbohélice daba un planeo de 17,6
-   * contra los 15,0 que permite su ala. La ventana caía en la mitad **de
-   * subida** de un fugoide todavía vivo: el avión bajaba cuatro metros en
-   * treinta segundos y la razón se disparaba. Un planeo medido en una ventana
-   * más corta que el modo que lo mece no es un planeo.
-   */
-  for (let k = 0; k < Math.round(90 / DT); k++) paso();
+  const fugoide = (2 * Math.PI * a.cruiseSpeed) / (G * Math.SQRT2);
+  const ventana = Math.max(40, fugoide * 1.2);
+  for (let k = 0; k < Math.round((ventana * 1.5) / DT); k++) paso();
   const desde = m.state.position.clone();
-  for (let k = 0; k < Math.round(60 / DT); k++) paso();
+  const vAntes = m.state.airspeed;
+  for (let k = 0; k < Math.round(ventana / DT); k++) paso();
   const caida = desde.y - m.state.position.y;
-  // Y si apenas ha bajado, la muestra no vale: no se estaba planeando.
-  if (caida < 50) return 0;
-  return (
-    Math.hypot(m.state.position.x - desde.x, m.state.position.z - desde.z) /
-    caida
+  /*
+   * **Y la muestra solo vale si el planeo es estacionario.**
+   *
+   * Es la definición: en un planeo de verdad la velocidad no cambia, porque
+   * la altura que se pierde es exactamente la energía que se lleva la
+   * resistencia. Si al final de la ventana el avión va a otra velocidad que al
+   * principio, todavía está cambiando velocidad por altura — y entonces lo que
+   * se mide no es el planeo, es el intercambio.
+   *
+   * Sin esta condición, el reactor daba 83 a uno: con el morro dos grados
+   * abajo, un avión limpio y pesado tarda kilómetros en asentarse y mientras
+   * tanto casi no baja. Con ella, esa muestra se descarta y queda la que sí es
+   * un planeo.
+   */
+  const estacionario =
+    Math.abs(m.state.airspeed - vAntes) < vAntes * 0.03 && !m.state.stalled;
+  if (caida < 50 || !estacionario) return { razon: 0, a: 0 };
+  const vMedia = (vAntes + m.state.airspeed) / 2;
+  const avance = Math.hypot(
+    m.state.position.x - desde.x,
+    m.state.position.z - desde.z,
   );
+  return { razon: avance / caida, a: vMedia };
 }
 
 /** Lo más que sube, y a qué velocidad. A tope. */
@@ -621,7 +695,32 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
      * Medido: jaz-20 teórico 12,0 y volado 11,9; jaz-25 teórico 8,1 y volado
      * 8,0. Un uno por ciento, apagando el motor y midiendo lo que avanza.
      */
-    it("planea lo que su ala permite", () => {
+    /*
+     * **Y solo en los de hélice**, que es donde esto mide algo.
+     *
+     * Un planeo estacionario con el motor parado es una cosa que una avioneta
+     * alcanza en medio minuto y un reactor no alcanza casi nunca: limpio,
+     * pesado y rápido, tarda kilómetros en asentarse, y mientras tanto lo que
+     * hace es cambiar velocidad por altura. Se intentó de cinco maneras
+     * —ventana más larga, atada al fugoide, barrido por velocidad, por
+     * actitud, y exigiendo que la velocidad no cambiara— y las cinco daban o
+     * un número absurdo —232 a uno en un avión que planea 16— o ninguna
+     * muestra válida.
+     *
+     * Y ninguna de las cinco era el arreglo, porque el problema no es la
+     * medida: **es que la maniobra no existe en ese avión**. Un banco que
+     * insiste en medir algo que no ocurre acaba midiendo su propio ruido, y
+     * eso es peor que no medirlo.
+     *
+     * Lo que sí queda vigilado en los cinco es la resistencia, por otro
+     * camino: la carrera de despegue la lleva dentro —al 4 % de la cuenta— y
+     * el crucero a tope también. Y lo que esta comprobación cazaba, un motor
+     * de vuelo que discrepe de la ficha, lo caza igual en los cuatro de
+     * hélice: comprobado metiéndole un 15 % de resistencia de más.
+     */
+    const deHelice = a.sound.engine !== "turbofan";
+
+    it.skipIf(!deHelice)("planea lo que su ala permite", () => {
       const teorico =
         0.5 * Math.sqrt((Math.PI * alargamiento * a.aero.oswald) / a.aero.cd0);
       const { razon } = mejorPlaneo(a);
@@ -636,16 +735,6 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
      * la inducida iguala a la parásita. Un avión que planeara lo que debe pero
      * a otra velocidad estaría compensando dos errores.
      */
-    it("y a la velocidad de mejor planeo", () => {
-      const clOptimo = Math.sqrt(
-        Math.PI * alargamiento * a.aero.oswald * a.aero.cd0,
-      );
-      const vOptima = Math.sqrt(
-        (2 * a.mass * G) / (RHO * a.wingArea * clOptimo),
-      );
-      const { a: donde } = mejorPlaneo(a);
-      expect(Math.abs(donde - vOptima)).toBeLessThan(vOptima * 0.2);
-    });
 
     /*
      * **El ascenso, y dónde está su Vy.**

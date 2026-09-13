@@ -43,6 +43,20 @@ const TODOS = [
   ["tenerife-norte", "tuka"],
   ["la-palma", "taguato"],
   ["cuatro-vientos", "guyrami"],
+  /*
+   * **Y un avión grande, que era el otro hueco.**
+   *
+   * La flota pasó de dos aviones a cinco y este barrido seguía volando el
+   * primero en los diez escenarios. El turbohélice cruza el umbral a cuarenta
+   * y ocho metros por segundo contra los treinta y tres de la avioneta, pesa
+   * cinco veces más y gira mucho peor en la plataforma: nada de lo que este
+   * banco mide —el rodaje, la senda, la toma, la frenada— se comporta igual.
+   *
+   * En Tenerife Norte, que es la pista larga: un turbohélice regional en un
+   * campo de hierba de novecientos metros no es una comprobación, es una
+   * broma.
+   */
+  ["tenerife-norte", "taguato", "jaz-60"],
 ];
 
 const VECES = Number(process.argv[2] ?? 12);
@@ -87,14 +101,20 @@ const comoAcabo = (salida) => {
 const partes = [];
 const empezoTodo = Date.now();
 
-for (const [escenario, tramo] of LISTA) {
-  process.stdout.write(`  · ${escenario} (${tramo})… `);
+for (const [escenario, tramo, avion] of LISTA) {
+  process.stdout.write(`  · ${escenario} (${tramo}${avion ? ` · ${avion}` : ""})… `);
   const empezo = Date.now();
   const salida = await new Promise((listo) => {
     let texto = "";
     const hijo = spawn(
       process.execPath,
-      ["scripts/verificar-vuelo-entero.mjs", escenario, tramo, String(VECES)],
+      [
+        "scripts/verificar-vuelo-entero.mjs",
+        escenario,
+        tramo,
+        String(VECES),
+        avion ?? "jaz-20",
+      ],
       { stdio: ["ignore", "pipe", "pipe"] },
     );
     hijo.stdout.on("data", (b) => (texto += b));
@@ -104,7 +124,7 @@ for (const [escenario, tramo] of LISTA) {
   const minutos = (Date.now() - empezo) / 60000;
   const c = cuenta(salida);
   partes.push({
-    escenario,
+    escenario: avion ? `${escenario} ${avion}` : escenario,
     tramo,
     c,
     minutos,

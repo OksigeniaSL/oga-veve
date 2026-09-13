@@ -97,6 +97,8 @@ export const EN: Dictionary = {
     "Regional turboprop, T-tail. Big, and it fits short runways.",
   "aircraft.arai.description":
     "Swept-wing jet. Fast, and everything happens slower.",
+  "aircraft.yvaga.description":
+    "Four-engine widebody. The big one: count the engines.",
 
   "mission.rio.name": "See the river",
   "mission.rioabajo.name": "Follow the river",
