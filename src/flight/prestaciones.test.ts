@@ -89,7 +89,12 @@
 import { describe, expect, it } from "vitest";
 import { Vector3 } from "three";
 import { CoefficientFlightModel } from "./fdm";
-import { AIRCRAFT, RESERVADOS, type AircraftConfig } from "./aircraft";
+import {
+  AIRCRAFT,
+  RESERVADOS,
+  esDeChorro,
+  type AircraftConfig,
+} from "./aircraft";
 
 /**
  * Los que se miden: los que vuelan **y los que están hechos y todavía no**.
@@ -196,6 +201,22 @@ function nivelado(
   segundos: number,
   throttle: number,
   alSalir?: (m: CoefficientFlightModel) => boolean,
+  /**
+   * Con qué flaps se vuela mientras se nivela.
+   *
+   * **Hacía falta y no estaba.** `medirPerdida` arranca a 1,35 veces la
+   * pérdida *con flaps* y luego los pone; pero la puesta a punto volaba
+   * **limpia** a esa velocidad, y limpia esa velocidad no se sostiene: para
+   * dar la sustentación que hace falta sin flaps, el ala pide un ángulo que ya
+   * es pérdida. El JAZ 120 entraba al banco con veinticuatro grados de ángulo
+   * de ataque y en pérdida, y el banco apuntaba esa pérdida de mentira —83
+   * m/s— en vez de la suya, que llega veinte segundos después a 57,9, que es
+   * exactamente la que dicen sus coeficientes.
+   *
+   * Con una avioneta no se veía: entre su pérdida limpia y la de flaps hay tan
+   * poco que el 1,35 despeja las dos. Es la parroquia de siempre.
+   */
+  flaps = 0,
 ): boolean {
   let integral = 0;
   const k1 = prisa(a);
@@ -206,7 +227,13 @@ function nivelado(
       -1,
       Math.min(1, (-vs * 0.12 - integral) * k1 - m.state.pitchRate * 1.2),
     );
-    m.step(DT, { ...neutralControls(), engineOn: true, throttle, elevator });
+    m.step(DT, {
+      ...neutralControls(),
+      engineOn: true,
+      throttle,
+      elevator,
+      flaps,
+    });
     if (alSalir?.(m)) return true;
   }
   return false;
@@ -234,7 +261,7 @@ function medirPerdida(a: AircraftConfig, flaps = 0): number {
    * perdía: no le daba tiempo a llegar.
    */
   const m = nuevo(a, perdidaDeLaFicha(a, flaps > 0.5) * 1.35);
-  nivelado(m, a, 6, 0.35);
+  nivelado(m, a, 6, 0.35, undefined, flaps);
   let v = 0;
   let integral = 0;
   /** Si ya se le ha visto volar recto. Ver más abajo. */
@@ -311,9 +338,28 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
      * coeficientes de los que depende. Cambiar el peso o la superficie alar
      * movía la velocidad de pérdida y dejaba la de aproximación donde estaba.
      */
-    it("cruza el umbral a 1,3 veces la de pérdida, como se hace de verdad", () => {
-      expect(a.approachSpeed / vs).toBeGreaterThan(1.2);
-      expect(a.approachSpeed / vs).toBeLessThan(1.42);
+    /*
+     * **Y la pérdida que manda es la de aterrizar, no la de volar limpio.**
+     *
+     * Esto la comparaba con la pérdida limpia, y la regla de verdad —la que
+     * usa cualquier certificación— es 1,3 veces la pérdida **en configuración
+     * de aterrizaje**, con los flaps puestos, que es como se cruza un umbral.
+     *
+     * Con la limpia salía bien por casualidad en las avionetas, porque entre
+     * sus dos pérdidas hay poco. En los reactores hay mucho: el Arai
+     * aproximaba a 175 nudos y el Yvága a 191, cuando un regional entra a 130
+     * y un 747 a 145-150 (Boeing FCTM, flaps 30). Eran velocidades de avión
+     * sin flaps puestas como si fueran de aterrizaje.
+     *
+     * La banda va de 1,25 a 1,55 y no clavada en 1,3 a propósito: 1,3 es el
+     * mínimo de certificación y las velocidades publicadas de las avionetas
+     * llevan encima el margen que el propio manual les añade. El Pykasu entra
+     * a 64 nudos, que es lo que dice el POH de un 172 con flaps 30.
+     */
+    it("cruza el umbral a 1,3 veces la pérdida con flaps, como manda", () => {
+      const vs0 = perdidaDeLaFicha(a, true);
+      expect(a.approachSpeed / vs0).toBeGreaterThan(1.25);
+      expect(a.approachSpeed / vs0).toBeLessThan(1.55);
     });
 
     /*
@@ -327,10 +373,38 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
       expect(a.decisionSpeed).toBeGreaterThan(vs);
     });
 
-    it("a todo gas y nivelado llega a su velocidad de crucero", () => {
-      const tope = medirCrucero(a, 1);
-      expect(tope).toBeGreaterThan(a.cruiseSpeed * 0.9);
-      expect(tope).toBeLessThan(a.cruiseSpeed * 1.15);
+    /*
+     * **Y el crucero se sostiene con el gas que corresponde a su clase.**
+     *
+     * Esto exigía que a todo gas los seis se quedaran cerca de su velocidad de
+     * crucero, y eso solo es verdad en una avioneta: una avioneta a tope va a
+     * su velocidad máxima y ya está, porque la hélice se queda sin empuje al
+     * subir la velocidad. **Un reactor no.** Un avión de línea a baja altura
+     * con los motores a tope pasa de largo de su velocidad de crucero —por eso
+     * lleva un limitador y una alarma— y su crucero se vuela a poco más de la
+     * mitad de gas.
+     *
+     * Medido con la ley de empuje correcta: el JAZ 90 llega a 261 m/s y el JAZ
+     * 120 a 283, contra cruceros de 180 y 230. Eso no es un fallo: es lo que
+     * hace un reactor al nivel del mar, y el límite que de verdad tiene ahí no
+     * es el empuje sino la estructura.
+     *
+     * Así que la pregunta cambia según qué empuje el aire. A la hélice se le
+     * sigue pidiendo lo de siempre; al reactor, que **sostenga su crucero con
+     * un gas de crucero** —entre menos de la mitad y cuatro quintos—, que es
+     * la pregunta equivalente y la que de verdad dice si el empuje está bien
+     * puesto. Medido a 1.500 m: el Arai sostiene sus 220 con la mitad justa y
+     * el Yvága sus 230 con 0,52.
+     */
+    it("sostiene su crucero con el gas que le toca a su clase", () => {
+      if (!esDeChorro(a)) {
+        const tope = medirCrucero(a, 1);
+        expect(tope).toBeGreaterThan(a.cruiseSpeed * 0.9);
+        expect(tope).toBeLessThan(a.cruiseSpeed * 1.15);
+        return;
+      }
+      expect(medirCrucero(a, 0.45)).toBeLessThan(a.cruiseSpeed);
+      expect(medirCrucero(a, 0.8)).toBeGreaterThan(a.cruiseSpeed);
     });
 
     /*
@@ -760,12 +834,19 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
        * porque va más deprisa, y eso no es un defecto.
        *
        * Lo que sí se parece en todos es **el ángulo**: la pendiente de subida
-       * de cualquier avión con motor de hélice o de turbina anda entre uno y
-       * quince grados. Por debajo no sube; por encima es un caza.
+       * de cualquier avión de transporte anda entre uno y dieciocho grados.
+       * Por debajo no sube; por encima es un caza.
+       *
+       * El techo era quince, y lo subió el JAZ 120 al recibir el empuje que le
+       * toca: sube a 15,7°, y eso no es un defecto sino aritmética. La
+       * pendiente máxima es `asin(T/W − 1/fineza)`, y con T/W 0,33 —cuatro
+       * JT9D en doscientas cincuenta y cinco toneladas— y fineza 17 sale
+       * exactamente eso. Un reactor de línea vacío sube así de verdad; lo que
+       * pasa es que nadie lo vuela a tope porque los pasajeros lo notan.
        */
       const pendiente = (Math.asin(subida / vy) * 180) / Math.PI;
       expect(pendiente).toBeGreaterThan(1);
-      expect(pendiente).toBeLessThan(15);
+      expect(pendiente).toBeLessThan(18);
       expect(vy).toBeGreaterThan(perdidaDeLaFicha(a));
       expect(vy).toBeLessThan(a.cruiseSpeed);
     });

@@ -5,13 +5,13 @@
     "osm": "overpass",
     "extracted": "2026-09-09",
     "ourairports": "29851",
-    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los puestos de estacionamiento están puestos a mano sobre la plataforma: OpenStreetMap no trae ninguno y sin puestos no hay de dónde salir ni a dónde volver."
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los puestos de estacionamiento están puestos a mano sobre la plataforma: OpenStreetMap no trae ninguno y sin puestos no hay de dónde salir ni a dónde volver. · Cota corregida a mano: OurAirports daba 279 pies (85 m) y la de verdad son 659 (199 m). Con 85, el aeródromo quedaba ciento catorce metros por debajo del terreno de alrededor y el Paraná pasaba a dos metros de la pista. Si se vuelve a extraer este fichero, hay que volver a corregirla o arreglar el origen del dato."
   },
   "origin": {
     "lat": -27.227537,
     "lon": -55.837584
   },
-  "elevationM": 85,
+  "elevationM": 199,
   "runways": [
     {
       "ref": "02/20",
@@ -34,7 +34,7 @@
             234.4,
             1031.6
           ],
-          "elevM": 85,
+          "elevM": 199,
           "headingTrue": 192,
           "displacedM": 0,
           "papi": null,
@@ -45,7 +45,7 @@
             -194,
             -912
           ],
-          "elevM": 85,
+          "elevM": 199,
           "headingTrue": 12,
           "displacedM": 0,
           "papi": null,
