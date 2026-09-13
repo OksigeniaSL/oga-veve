@@ -405,7 +405,37 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * Mirar más lejos cuanto más deprisa se va es lo que hace cualquiera
    * conduciendo, y es lo que convierte un zigzag en una curva.
    */
-  const miraDe = (s) => Math.max(12, s.airspeed * 1.6);
+  /**
+   * A qué distancia mira el piloto por delante para seguir la raya, m.
+   *
+   * **Y mira más lejos cuanto más fuera de la raya está.**
+   *
+   * Esto es persecución pura —apuntar a un punto de la ruta y girar hacia
+   * él—, y la persecución pura tiene un fallo conocido: si el punto al que
+   * mirás está más cerca de lo que el bicho puede girar, no llegás nunca.
+   * Girás, te pasás, girás al revés, te pasás otra vez, y lo que sale es **un
+   * círculo eterno**.
+   *
+   * Es exactamente lo que hacía, y se vio en el parte en cuanto dijo dónde
+   * estaba: en Yvytu Rape, saliendo de la pista, «−742 m … −726 m … −742 m»
+   * con el desvío oscilando ±15 m, durante los quinientos segundos que
+   * faltaban hasta rendirse. Un círculo de quince metros de radio. Una de
+   * cada ocho carreras, según por dónde hubiera salido de la pista.
+   *
+   * **Y subir el suelo a secas sale peor.** Con veinte metros fijos, Yvytu
+   * Rape se arregla —ocho carreras seguidas volviendo al puesto en 57-64 s—
+   * pero mirar lejos es cortar las curvas, y el rodaje de ida está lleno de
+   * ellas: Pettirossi se metió en un edificio a los 24 s y Mariscal
+   * Estigarribia atropelló al coche a los 9. Cambiar un fallo de uno de cada
+   * ocho por dos seguros no es arreglarlo.
+   *
+   * Lo que hace falta es lo otro: **la mirada larga solo cuando hace falta**,
+   * que es cuando se está lejos de la raya. Pegado a ella, doce metros y las
+   * curvas salen cerradas; a quince metros fuera, veintidós, que ya es más de
+   * lo que el avión gira y el círculo no se cierra.
+   */
+  const miraDe = (s, fuera = 0) =>
+    Math.max(12, s.airspeed * 1.6, fuera * 1.5);
   const timon = (s, ruta) => {
     if (ruta.length < 2) return 0;
     let cerca = 0;
@@ -426,7 +456,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         ruta[i][0] - s.position.x,
         ruta[i][1] - s.position.z,
       );
-      if (d > miraDe(s)) {
+      if (d > miraDe(s, mejor)) {
         mira = ruta[i];
         break;
       }
