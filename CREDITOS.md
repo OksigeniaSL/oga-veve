@@ -225,11 +225,29 @@ pega y se nota en cuanto suenan seguidas.
 inyecta por entorno —`ELEVENLABS_API_KEY`, sin `VITE_` delante, que la metería
 en el paquete del navegador— y el guion no la imprime nunca.
 
-**Lo que queda por confirmar:** las condiciones de uso comercial del audio
-generado dependen del plan contratado en ElevenLabs. El juego se regala, pero
-es también un gancho de la Granja Óga, y eso cuenta como uso comercial por
-mucho que no se cobre — igual que se razonó con el modelo de la avioneta. Antes
-de publicar hay que dejar escrito aquí qué plan es y qué permite.
+**Y el uso comercial, resuelto.** Oksigenia SL tiene contratado el plan
+**Creator** de ElevenLabs, que es de pago, y eso es lo que decide el asunto. Sus
+condiciones, comprobadas en el sitio el 13 de septiembre de 2026:
+
+- Los términos de uso, apartado 1(c): «if you access or use our Services through
+  a paid subscription plan (such a user, a "Paid User"), you may use the
+  Services for commercial purposes». Los usuarios del plan gratuito quedan
+  limitados a uso no comercial; los de pago, no.
+- Apartado 4(c)(ii), sobre a quién pertenece lo generado: «Except as expressly
+  set forth herein, as between you and ElevenLabs, you retain all rights in and
+  to your Output».
+- La tabla de planes lista **Commercial License** desde Starter en adelante, y
+  Creator la hereda.
+- **No piden atribución.** Ni los términos ni la tabla de planes exigen
+  acreditar a ElevenLabs en el producto.
+
+Eso importaba aquí más de lo que parece: el juego se regala, pero es también un
+gancho de la Granja Óga, y eso cuenta como uso comercial por mucho que no se
+cobre — el mismo razonamiento que se hizo con el modelo de la avioneta.
+
+Que no pidan atribución no cambia lo que hacemos con ella: **la procedencia se
+escribe igual**, que es la regla de esta casa y el motivo de que exista este
+fichero.
 
 ## Nombres de aeronaves y marcas registradas
 
