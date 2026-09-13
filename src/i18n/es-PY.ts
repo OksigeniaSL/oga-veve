@@ -90,7 +90,7 @@ export const ES_PY = {
     "Bimotor de ala baja. Dos motores, más rápido y con las patas guardadas.",
   "aircraft.arasunu.description":
     "Turbohélice regional, cola en T. Grande, y entra en pistas cortas.",
-  "aircraft.kuarahy.description":
+  "aircraft.arai.description":
     "Reactor de ala en flecha. Rápido, y todo pasa más despacio.",
 
   "mission.rio.name": "Ver el río",

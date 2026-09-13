@@ -95,7 +95,7 @@ export const EN: Dictionary = {
     "Low-wing twin. Two engines, faster, and the legs tuck away.",
   "aircraft.arasunu.description":
     "Regional turboprop, T-tail. Big, and it fits short runways.",
-  "aircraft.kuarahy.description":
+  "aircraft.arai.description":
     "Swept-wing jet. Fast, and everything happens slower.",
 
   "mission.rio.name": "See the river",
