@@ -255,29 +255,43 @@ comprobar(
 );
 
 /*
- * **Y el peldaño de los pequeños tiene que ser el que más perdona.**
+ * **Y el peldaño de los pequeños tiene que quedarse dentro de la calle.**
  *
- * Es lo que dice su propia ficha: «girar es de quien juega, en los cuatro
- * peldaños; lo que cambia con la edad es **cuánto perdona salirse**». Guyrami
- * es el de cuatro a seis años y el que más ayuda lleva —0,5 contra 0,35 y
- * 0,25—, así que tiene que ser el que más acerque a la raya.
+ * Una calle de rodaje mide veintitrés metros: once y medio a cada lado del
+ * eje. Cuatro metros es estar dentro con sitio de sobra, y es lo mínimo que se
+ * le puede pedir al peldaño de los cuatro a los seis años, que es el que más
+ * ayuda lleva.
  *
- * Hoy es el que menos. Y no es la cifra de la ayuda: es que Guyrami vuela
- * **otro modelo de vuelo** —el sencillo, donde el avión va donde apunta el
- * morro— y ahí el mismo empujón hace mucho menos. Lo comprobé también bajando
- * el timón automático y el amortiguador extra de Tukã a lo que tiene Taguato,
- * por si la diferencia venía de esas capas: no venía, el número no se movió.
- *
- * Es lo mismo que decía #145, que se cerró con una medida que no medía esto.
+ * Antes se quedaba a 6,6 m — aparcado en el borde de la holgura de la ayuda,
+ * donde ya no tiraba, y con media calle consumida.
  */
 comprobar(
-  "el peldaño de los pequeños es el que más perdona salirse",
-  medido.guyrami !== undefined &&
-    medido.tuka !== undefined &&
+  "el peldaño de los pequeños se queda dentro de la calle",
+  medido.guyrami !== undefined && medido.guyrami < 4,
+  `guyrami ${medido.guyrami ?? "?"} m del eje · media calle son 11,5 m`,
+  "se quedaba a 6,6 m, que es media calle, y ahí se quedaba para siempre",
+);
+
+/*
+ * **Y entre los dos que vuelan el mismo modelo, tira más el que más ayuda
+ * tiene.**
+ *
+ * Solo entre Tukã (0,35) y Taguato (0,25): los dos usan el modelo de
+ * coeficientes, así que la comparación es limpia. Guyrami no entra —vuela el
+ * modelo sencillo, y comparar cuánto tira la ayuda entre dos físicas distintas
+ * no dice nada de la ayuda—.
+ *
+ * Antes salía al revés, 3,3 contra 2,8, y no era la cifra de la ayuda: era que
+ * la corrección se pasaba de largo y lo que se medía era la amplitud del
+ * vaivén.
+ */
+comprobar(
+  "y a más ayuda, más tirón, entre los que vuelan el mismo modelo",
+  medido.tuka !== undefined &&
     medido.taguato !== undefined &&
-    medido.guyrami <= Math.min(medido.tuka, medido.taguato),
-  `guyrami (0,5) ${medido.guyrami ?? "?"} m · tukã (0,35) ${medido.tuka ?? "?"} m · taguato (0,25) ${medido.taguato ?? "?"} m`,
-  "el que más ayuda lleva es el que menos acerca, y es el de cuatro años",
+    medido.tuka <= medido.taguato + 0.2,
+  `tukã (0,35) ${medido.tuka ?? "?"} m · taguato (0,25) ${medido.taguato ?? "?"} m`,
+  "dos números de ayuda distintos que dan el orden cambiado son un mando desafinado",
 );
 
 for (const r of resultados) {
