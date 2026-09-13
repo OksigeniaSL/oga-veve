@@ -242,7 +242,7 @@ import {
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
-import type { Fase } from "./flight/vuelo";
+import { SE_QUEDAN, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
@@ -547,39 +547,6 @@ const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
   "comprometido",
 ]);
 
-/**
- * Las fases cuya tarjeta **espera a que alguien haga algo**, y por eso no
- * caduca: arrancar, parar en la doble raya, frenar, salir de la pista, apagar.
- *
- * Están aquí arriba porque hacen falta en dos sitios: para ponerlas con
- * `Infinity` y para **devolverlas** cuando un aviso de paso se las lleva por
- * delante. Ver `avanzarPlan`.
- */
-const SE_QUEDAN: ReadonlySet<Fase> = new Set<Fase>([
-  "estacionado",
-  "en-puesto",
-  "esperando",
-  "aterrizado",
-  "abandonando",
-  /*
-   * **Y rodar también se queda puesto**, que costó verlo.
-   *
-   * «Seguí la raya verde» y «volvé a tu lugar» duraban seis segundos y después
-   * la pantalla se quedaba en blanco: en el banco del vuelo entero, **sesenta
-   * y ocho segundos seguidos** rodando hacia la plataforma sin una sola
-   * tarjeta. No es una fase de paso como despegar o virar: es una orden que
-   * sigue siendo verdad durante todo el rato que dura, igual que «frená».
-   */
-  "rodando",
-  "a-plataforma",
-  /*
-   * Y las dos de entrar en pista: «luz verde, entrá» y «ponete derechito en el
-   * eje» duran lo que tarde quien juega en hacerlo, que es la maniobra más
-   * delicada del rodaje. También se quedaban en blanco a los seis segundos.
-   */
-  "autorizado",
-  "alineando",
-]);
 
 export class Game {
   /** Qué se está enseñando hoy: de aquí sale qué guía se enciende. */

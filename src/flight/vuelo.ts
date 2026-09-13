@@ -552,6 +552,68 @@ export class Vuelo {
  * la frase que se le dice a alguien en cada momento del vuelo es contenido, y
  * tenerla junto a la máquina de estados evita que las dos se separen.
  */
+/**
+ * Las fases cuya tarjeta **espera a que alguien haga algo**, y por eso no
+ * caduca: arrancar, parar en la doble raya, frenar, salir de la pista, apagar.
+ *
+ * Hace falta en dos sitios: para ponerlas con `Infinity` y para
+ * **devolverlas** cuando un aviso de paso se las lleva por delante.
+ *
+ * Y vive aquí, junto al `GUION` y a la máquina de fases, por lo mismo que el
+ * guión: **cuánto dura una orden es parte de la orden**, no de la pintura.
+ * Estaba en el juego, donde no se podía probar sin montar three.js entero, y
+ * por eso los huecos se descubrían de uno en uno y con el banco de vuelo.
+ */
+export const SE_QUEDAN: ReadonlySet<Fase> = new Set<Fase>([
+  "estacionado",
+  "en-puesto",
+  "esperando",
+  "aterrizado",
+  "abandonando",
+  /*
+   * **Y rodar también se queda puesto**, que costó verlo.
+   *
+   * «Seguí la raya verde» y «volvé a tu lugar» duraban seis segundos y después
+   * la pantalla se quedaba en blanco: en el banco del vuelo entero, **sesenta
+   * y ocho segundos seguidos** rodando hacia la plataforma sin una sola
+   * tarjeta. No es una fase de paso como despegar o virar: es una orden que
+   * sigue siendo verdad durante todo el rato que dura, igual que «frená».
+   */
+  "rodando",
+  "a-plataforma",
+  /*
+   * Y las dos de entrar en pista: «luz verde, entrá» y «ponete derechito en el
+   * eje» duran lo que tarde quien juega en hacerlo, que es la maniobra más
+   * delicada del rodaje. También se quedaban en blanco a los seis segundos.
+   */
+  "autorizado",
+  "alineando",
+  /*
+   * **Y la carrera de despegue, que era el último hueco.**
+   *
+   * «Motor a fondo» y «¡Ya no se puede frenar, volá!» son órdenes que siguen
+   * siendo verdad todo el rato que dura la carrera, igual que «seguí la raya»
+   * — y duraban seis segundos. Medido en el banco del vuelo entero, en Yvytu
+   * Rape: **nueve segundos seguidos con la pantalla en blanco**, corriendo por
+   * el asfalto a treinta y cuatro metros por segundo, entre que se apagaba la
+   * tarjeta del gas y aparecía la flecha de tirar.
+   *
+   * Son justo los segundos que el comentario de las dos velocidades llama «la
+   * lección»: ya no puedo parar y todavía no vuelo. Enseñarlos en blanco es no
+   * enseñarlos.
+   */
+  "despegando",
+  "comprometido",
+  /*
+   * Y el back-taxi, que es el trecho más largo que se rueda de una vez: se
+   * entra por el borde, se va hasta el fondo de la pista y se da la vuelta.
+   * En Encarnación y en Mariscal Estigarribia es la operación normal del
+   * campo. «Andá hasta el fondo y date la vuelta» sigue siendo verdad todo
+   * ese rato.
+   */
+  "back-taxi",
+]);
+
 export const GUION: Record<
   Fase,
   { readonly clave: string; readonly icono: string }
