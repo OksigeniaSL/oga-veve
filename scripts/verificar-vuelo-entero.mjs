@@ -659,8 +659,25 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * lejos es lo correcto: no se le está siguiendo, se va a su encuentro.
      */
     const coche = globalThis.__raiz?.getObjectByName("sigueme");
+    /*
+     * **Y solo mientras el coche esté guiando.**
+     *
+     * Esto contaba la distancia al coche también cuando el coche ya se había
+     * apartado, y un coche apartado es un coche aparcado al lado del puesto:
+     * que esté lejos no significa nada. Daba 36 m en doce carreras de catorce
+     * y setecientos y pico en dos, sin nada en medio — un número bimodal que
+     * no medía lo que decía.
+     *
+     * El parte lo delató en cuanto dijo **dónde** pasaba: «729 m en «» a los
+     * 507 s», con la fase en blanco. La fase en blanco es que el vuelo ya
+     * terminó, y ahí el coche lleva un rato quieto en su sitio.
+     *
+     * La otra mitad de esta misma comprobación —que no se le atropelle— ya
+     * miraba `cocheApartado`. Faltaba aquí.
+     */
+    const guiandoAhora = coche?.visible && !o.cocheApartado?.();
     if (
-      coche?.visible &&
+      guiandoAhora &&
       s.onGround &&
       s.airspeed < 16 &&
       fase !== "aterrizado"
@@ -959,7 +976,24 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       const along = dx * fx + dz * fz;
       // El umbral por el que se entra está a media pista por detrás del centro.
       const alUmbral = -r.length / 2 - along;
-      const objetivo = Math.max(0, alUmbral * SENDA);
+      /*
+       * **Y la senda no apunta al umbral: apunta a un poco más adentro.**
+       *
+       * Apuntando al umbral, la altura que se pide es cero justo en el filo
+       * del asfalto — o sea que el vuelo perfecto toca en el borde y
+       * **cualquier cosa que se quede corta toca fuera**. No hay margen por
+       * construcción. Medido en Tukã, que es donde se notó: de nueve carreras,
+       * cuatro acababan con el avión posándose en la hierba de delante, en el
+       * eje y a tres metros de altura sobre el umbral; y la que salía bien
+       * decía «0 m pasado el umbral», que es el mismo filo por el otro lado.
+       *
+       * Un avión de verdad apunta a las marcas de toma, que están metidas en
+       * la pista. Doscientos cincuenta metros, o la quinta parte de la pista
+       * si es corta: en Yvytu Rape, con novecientos metros, son ciento
+       * ochenta.
+       */
+      const puntoDeToma = Math.min(250, r.length * 0.2);
+      const objetivo = Math.max(0, (alUmbral + puntoDeToma) * SENDA);
       // Con la misma ley de altura que arriba: bajada limitada y amortiguada.
       // Ver `aLaAltura`, que cuenta el porqué con lo medido.
       c.elevator = aLaAltura(s, objetivo);
