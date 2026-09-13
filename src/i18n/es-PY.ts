@@ -86,6 +86,8 @@ export const ES_PY = {
     "Avioneta de escuela. Tranquila y perdonadora.",
   "aircraft.mainumby.description":
     "Biplano fumigador. Ágil y con mucha fuerza.",
+  "aircraft.panambi.description":
+    "Bimotor de ala baja. Dos motores, más rápido y con las patas guardadas.",
 
   "mission.rio.name": "Ver el río",
   "mission.rioabajo.name": "Seguir el río",
