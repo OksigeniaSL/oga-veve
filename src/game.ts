@@ -225,7 +225,7 @@ import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
-import { Sigueme } from "./world/sigueme";
+import { SITIO_PARA_LA_BICI, Sigueme } from "./world/sigueme";
 import { Vaca } from "./world/vaca";
 import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
@@ -4514,12 +4514,13 @@ export class Game {
        *
        * El coche se deja atropellar porque es un chiste y porque enseña algo:
        * en una plataforma no se adelanta. Una persona en bicicleta, no. Así
-       * que en cuanto la tenés encima —el doble de lo que sería atropello— se
-       * echa a un lado y te deja pasar, y el percance de más abajo no se le
-       * aplica. Lo que aprende quien juega sigue siendo lo mismo: detrás de
+       * que en cuanto la tenés a tiro —lo que tarda en echarse a un lado,
+       * contado en metros: ver `SITIO_PARA_LA_BICI`— se aparta y te deja
+       * pasar, y el percance de más abajo no se le aplica. Lo que aprende quien juega sigue siendo lo mismo: detrás de
        * quien te guía, no encima.
        */
-      const cede = gesto !== null || (enBici && aQue < ATROPELLO * 2.5);
+      const cede =
+        gesto !== null || (enBici && aQue < SITIO_PARA_LA_BICI);
       this.sigueme.paso(
         dt,
         { x: s.position.x, z: s.position.z },

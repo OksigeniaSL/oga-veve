@@ -100,6 +100,27 @@ const A_UN_LADO = 11;
 const TARDA_EN_APARTARSE = 2.5;
 
 /**
+ * A qué distancia hay que empezar a dejarle sitio a la bici, m.
+ *
+ * No es un número: es **el tiempo que tarda en apartarse, convertido en
+ * metros** a la velocidad a la que se rueda, más el ancho del propio
+ * encontronazo. Treinta y seis metros con los números de hoy.
+ *
+ * Estaban puestos veinte —dos veces y media el atropello—, y veinte metros
+ * son margen de sobra cuando la alcanzás **por detrás**, que es el caso para
+ * el que se escribió: ahí la diferencia de velocidad es un metro por segundo
+ * y hay veinte segundos para apartarse. De frente no: el avión sale de la
+ * pista hacia ella a once metros por segundo y los veinte metros se comen en
+ * menos de dos segundos, o sea antes de que haya terminado de echarse a un
+ * lado.
+ *
+ * Medido en Yvytu Rape antes de esto: la bici acababa **a dos metros del
+ * avión y encima de la raya**, cuando tenía que haberse echado once a un
+ * lado. Ver #157.
+ */
+export const SITIO_PARA_LA_BICI = 8 + CRUCERO * TARDA_EN_APARTARSE;
+
+/**
  * A cuánto del final de la ruta se aparta solo, m.
  *
  * Porque el final de la ruta es donde para el avión —la doble raya, el
@@ -429,8 +450,45 @@ export class Sigueme {
     const paso = (this.enBici ? EN_BICI : VELOCIDAD) * dt;
     this.s = Math.max(this.s, Math.min(objetivo, this.s + paso));
 
+    /*
+     * **Y esperando en la salida también se aparta.**
+     *
+     * Esto era `!esperaEn && (…)`: mientras hacía de mojón en la boca de la
+     * calle de salida no se apartaba por nada, ni con el avión encima. Y la
+     * boca de la salida es justo donde se encuentran de frente, así que el
+     * avión terminaba la carrera de aterrizaje, rodaba hasta ella y **solo
+     * entonces** —al cambiar la fase y apagarse la espera— empezaba a
+     * apartarse, desde cero y con el avión a dos metros.
+     *
+     * Lo de esperar sin moverse sigue valiendo para lo que se escribió, que
+     * es no perder el mojón antes de tiempo: lo que ya no puede es ganarle a
+     * alguien que te tiene encima.
+     */
     const deja =
-      !esperaEn && (cediendo || this.largo - alLlegar < CEDE_AL_FINAL);
+      cediendo ||
+      /*
+       * **Y la bici, esperando en la salida, espera al lado.**
+       *
+       * Con `cediendo` a secas no llegaba, y no por la distancia: por el
+       * tiempo. Se cede a treinta y seis metros —lo que tarda en apartarse,
+       * contado a velocidad de rodaje—, pero al que llega por la boca de la
+       * salida no está rodando: **está acabando la carrera de aterrizaje**, y
+       * a treinta metros por segundo esos treinta y seis metros se recorren en
+       * poco más de un segundo. Medido en Yvytu Rape: el avión se le plantaba
+       * a dos metros con ella todavía encima de la raya.
+       *
+       * Y la respuesta no es ceder antes, es **no estar ahí**. Quien sale a
+       * esperarte en bicicleta a la boca de una salida se pone al lado, no en
+       * medio; que esté al lado marca la salida igual de bien y además no
+       * obliga a nadie a esquivarla. Ver #157.
+       *
+       * El coche no: el coche espera en la calle, como un sígame de verdad, y
+       * además apartarse es de ida y vuelta —`aparte` no baja—, así que un
+       * coche que se aparta esperando te llevaría después a casa por fuera del
+       * asfalto.
+       */
+      (esperaEn !== null && this.enBici) ||
+      (!esperaEn && this.largo - alLlegar < CEDE_AL_FINAL);
     this.aparte = deja
       ? Math.min(1, this.aparte + dt / TARDA_EN_APARTARSE)
       : this.aparte;
