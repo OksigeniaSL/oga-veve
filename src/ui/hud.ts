@@ -954,6 +954,11 @@ export class Hud {
         dt,
         engineOn,
         this.bandaActual,
+        // Cómo está puesto el avión. Se calcula más abajo para las esferas y
+        // la tarjeta del horizonte, pero esos dos solo existen de Taguato
+        // para arriba: aquí es el único sitio donde se ve en los peldaños de
+        // los pequeños.
+        bankAngleOf(state.orientation),
       );
     }
 

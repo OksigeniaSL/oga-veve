@@ -128,6 +128,67 @@ comprobar(
   `${rodando.alt} → ${volando.alt}`,
   "la altura es el único dibujo que no traduce nada: tiene que subir",
 );
+/*
+ * ── El horizonte ──────────────────────────────────────────────────────────
+ *
+ * El cuarto dibujo, y el que faltaba. Con el avión inclinado no había en los
+ * peldaños sin cifras **una sola cosa en pantalla** que lo dijera: la tarjeta
+ * del horizonte y las esferas solo existen de Taguato para arriba. «Yo ni
+ * escucho ni veo eso de los grados.»
+ *
+ * Se comprueba lo que hace un instrumento de actitud: que la raya se incline
+ * al inclinarse el avión —y al revés que él, que es como funciona uno de
+ * verdad— y que avise cuando el viraje deja de ser un viraje.
+ */
+const alabear = async (grados) =>
+  page.evaluate(async (g) => {
+    const o = globalThis.__oga;
+    o.pilotar((c) => {
+      c.engineOn = true;
+      c.throttle = 0.8;
+      c.elevator = 0;
+      c.rudder = 0;
+      const a = (o.actitud().alabeo * 180) / Math.PI;
+      c.aileron = g === 0 ? -a * 0.05 : a < g ? 1 : 0.2;
+    });
+    await new Promise((r) => setTimeout(r, 4500));
+    return Math.round((o.actitud().alabeo * 180) / Math.PI);
+  }, grados);
+
+const giroDe = () =>
+  page
+    .locator('[data-picto="horizonte"]')
+    .getAttribute("transform")
+    .then((t) => Number(/rotate\(([-0-9.]+)/.exec(t ?? "")?.[1] ?? NaN));
+
+const derecho = await alabear(0);
+const giroDerecho = await giroDe();
+const torcido = await alabear(85);
+const giroTorcido = await giroDe();
+const ambar = await page
+  .locator('[data-picto="horizonte"].picto__mundo--mucho')
+  .count();
+
+comprobar(
+  "el horizonte está en pantalla en los peldaños sin cifras",
+  Number.isFinite(giroDerecho),
+  Number.isFinite(giroDerecho) ? "sale" : "no hay dibujo de actitud",
+  "con el avión de canto no había nada que lo dijera",
+);
+comprobar(
+  "y se inclina al revés que el avión, como uno de verdad",
+  Math.abs(giroTorcido + torcido) < 8 && Math.abs(giroTorcido) > 20,
+  `avión ${torcido}° · horizonte ${giroTorcido.toFixed(0)}°`,
+  "si girase con el avión, quien aprenda aquí tendrá que desaprenderlo",
+);
+comprobar(
+  "y se pone ámbar cuando el viraje deja de ser un viraje",
+  ambar === 1 && giroDerecho !== null,
+  `a ${torcido}° ${ambar ? "ámbar" : "sigue apagado"}`,
+  "el aviso estaba en 45° y el nivelador de alas no deja pasar de 43",
+);
+await page.evaluate(() => globalThis.__oga.pilotar(null));
+
 comprobar(
   "el botón del freno se esconde en el aire",
   volando.boton === 0,

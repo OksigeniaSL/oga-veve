@@ -1877,6 +1877,41 @@ button.motor__tecla::after {
   fill: rgba(255, 255, 255, 0.24);
 }
 
+/* ── El horizonte de los peldaños sin cifras ───────────────────────────────
+
+   La tierra y su raya, que es lo único que se mueve: el avioncito de encima
+   va quieto, como en un horizonte artificial de verdad.
+
+   Sin transición: esto sigue al avión en tiempo real y un suavizado de
+   ciento cuarenta milisegundos —el que lleva el avioncito de la velocidad—
+   aquí se nota como un retardo, que en un instrumento de actitud es
+   exactamente lo que no puede pasar. */
+.picto__tierra {
+  fill: rgba(255, 255, 255, 0.14);
+}
+
+.picto__raya {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 2;
+}
+
+/* Y en ámbar cuando el viraje deja de ser un viraje. Ver `MUCHO_ALABEO`.
+   Es el mismo ámbar que usa el avioncito lento de la escala de velocidad: en
+   este juego el ámbar quiere decir siempre lo mismo — mirá esto. */
+.picto__mundo--mucho .picto__tierra {
+  fill: rgba(255, 179, 71, 0.26);
+}
+
+.picto__mundo--mucho .picto__raya {
+  stroke: #ffb347;
+}
+
+/* El avioncito del horizonte no se desliza: está clavado, y lo que se mueve
+   es el mundo de detrás. */
+.picto__avion--fijo {
+  transition: none;
+}
+
 .picto__helice {
   fill: var(--tinta);
   opacity: 0.94;
