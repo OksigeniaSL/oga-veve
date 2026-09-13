@@ -4933,3 +4933,52 @@ button.motor__tecla::after {
   font-size: 19px;
   font-variant-numeric: tabular-nums;
 }
+
+/*
+ * ── El cristal de las gafas de sol ──
+ *
+ * Ámbar, que es el cristal de las gafas de aviador de toda la vida y no una
+ * elección de color: ese tono sube el contraste del horizonte contra el cielo,
+ * que es para lo que las lleva un piloto además de para no achinar los ojos.
+ *
+ * Va entre el lienzo y el HUD —ver `index.html`— así que **tiñe el mundo y no
+ * los instrumentos**, que es lo que hacen unas gafas de verdad y además lo que
+ * impide que un premio estropee el contraste de todo lo que hay que leer.
+ *
+ * `multiply` y no una capa plana encima: una capa plana lava los negros y deja
+ * el paisaje lechoso; multiplicar oscurece lo claro y respeta lo oscuro, que
+ * es lo que hace un cristal.
+ */
+.cristal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(184, 118, 32, 0.85),
+    rgba(196, 140, 60, 0.6) 62%,
+    rgba(210, 165, 96, 0.45)
+  );
+  mix-blend-mode: multiply;
+  /* Ponerse unas gafas tarda lo que tarda subir la mano. */
+  transition: opacity 0.45s ease;
+}
+
+:root[data-gafas="puestas"] .cristal {
+  opacity: 1;
+}
+
+.sin-movimiento .cristal {
+  transition: none;
+}
+
+/*
+ * Y el botón, que cuando están puestas se enciende como el del sonido: quien
+ * mira la barra tiene que poder decir si las lleva sin acordarse.
+ */
+.gafas-boton--puestas {
+  background: var(--barro-calido);
+  color: #fff;
+}

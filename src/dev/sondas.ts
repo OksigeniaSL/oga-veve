@@ -33,6 +33,7 @@ import { cabeceraEnUso } from "../world/terrain";
 import { alturaDeEdificio } from "../world/aerodrome";
 import { verticesDelCircuito } from "../world/circuito";
 import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
+import { leerGafas } from "../flight/gafas";
 
 export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
@@ -266,6 +267,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       guardarAjuste(cual, valor as never);
       juego.aplicarAjustes(leerAjustes());
     },
+    /** Las gafas de sol: si se han ganado y si se llevan. Para el banco. */
+    gafas: () => leerGafas(),
     /** Qué tarjeta hay puesta ahora mismo. Para el banco. */
     tarjeta: () => juego.hud.senal.puesto,
     /*

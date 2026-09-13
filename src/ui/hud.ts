@@ -282,6 +282,8 @@ export class Hud {
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
   private camaraHandler: (() => void) | null = null;
+  private gafasHandler: (() => void) | null = null;
+  private gafas!: HTMLElement;
   private pausaHandler: (() => void) | null = null;
   private creditsHandler: (() => void) | null = null;
   private alaHandler: (() => void) | null = null;
@@ -368,6 +370,25 @@ export class Hud {
                   stroke-width="1.8" stroke-linejoin="round" />
             <circle cx="12" cy="13.4" r="3.4" fill="none"
                     stroke="currentColor" stroke-width="1.8" />
+          </svg>
+        </button>
+        <!--
+          **Las gafas de sol**, y solo desde el día que se ganan.
+
+          Nace escondido, no apagado: un botón gris con un candado es un
+          reproche, y lo que hay que enseñar aquí es que un día apareció.
+          Ver flight/gafas.ts y el issue 2.
+        -->
+        <button class="sonido gafas-boton" type="button" data-hud="gafas"
+                aria-pressed="false" hidden
+                aria-label="${t("hud.gafas")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2.6 8.4h18.8M8.6 8.4h6.8" fill="none"
+                  stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" />
+            <path d="M2.6 8.4h6v3.2a3.2 3.2 0 0 1-6 .9Z" fill="currentColor" />
+            <path d="M21.4 8.4h-6v3.2a3.2 3.2 0 0 0 6 .9Z"
+                  fill="currentColor" />
           </svg>
         </button>
         <!--
@@ -745,6 +766,8 @@ export class Hud {
     pick(this.root, "camara").addEventListener("click", () =>
       this.camaraHandler?.(),
     );
+    this.gafas = pick(this.root, "gafas");
+    this.gafas.addEventListener("click", () => this.gafasHandler?.());
     pick(this.root, "pausa").addEventListener("click", () =>
       this.pausaHandler?.(),
     );
@@ -1493,6 +1516,25 @@ export class Hud {
   /** Y el de pausa, que no tenía tecla ni botón. */
   onPausa(handler: () => void): void {
     this.pausaHandler = handler;
+  }
+
+  /** El de las gafas de sol. Ver `flight/gafas.ts`. */
+  onGafas(handler: () => void): void {
+    this.gafasHandler = handler;
+  }
+
+  /**
+   * Enseña o esconde el botón de las gafas, y dice si están puestas.
+   *
+   * `aria-pressed` y no una etiqueta que cambie: es un interruptor, y un
+   * lector de pantalla ya sabe decir «gafas de sol, activado». Cambiarle el
+   * nombre según el estado —«ponerse» / «quitarse»— es lo que hace que un
+   * lector diga dos cosas distintas sobre el mismo botón.
+   */
+  setGafas(ganadas: boolean, puestas: boolean): void {
+    this.gafas.hidden = !ganadas;
+    this.gafas.setAttribute("aria-pressed", String(puestas));
+    this.gafas.classList.toggle("gafas-boton--puestas", puestas);
   }
 
   /**

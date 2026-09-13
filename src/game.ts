@@ -194,6 +194,15 @@ import { PantallaDelAla } from "./ui/pantalla-ala";
 import { PantallaDePausa } from "./ui/pausa";
 import { PantallaDeAjustes } from "./ui/pantalla-ajustes";
 import {
+  DESLUMBRE,
+  ganarGafas,
+  lasGana,
+  leerGafas,
+  ponerseLasGafas,
+  SIN_GAFAS,
+  type Gafas,
+} from "./flight/gafas";
+import {
   ESCALA,
   conMovimientoReducido,
   leerAjustes,
@@ -643,6 +652,8 @@ export class Game {
   private pausa: PantallaDePausa | null = null;
   /** La pantalla de ajustes, que se abre desde la pausa. */
   private ajustesUI: PantallaDeAjustes | null = null;
+  /** Las gafas de sol: si se han ganado y si se llevan. Ver `flight/gafas.ts`. */
+  private gafas: Gafas = SIN_GAFAS;
   /**
    * Si lo paró quien juega, y no el navegador.
    *
@@ -1381,6 +1392,8 @@ export class Game {
     });
     this.hud.onPausa(() => this.alternarPausa());
     this.hud.onCamara(() => this.cycleCamera());
+    this.hud.onGafas(() => this.alternarGafas());
+    this.llevarLasGafas(leerGafas());
     /*
      * **Los dos momentos del despegue, cada uno con lo suyo.**
      *
@@ -1869,6 +1882,17 @@ export class Game {
       // Un aterrizaje en la pista, que es lo que cuenta en el cuaderno.
       this.apuntar({ aterrizajes: this.cuaderno.aterrizajes + 1 });
       this.apuntarElSitio();
+      /*
+       * **Y el primero que cuenta trae las gafas de sol.**
+       *
+       * Aquí y no en el galón de la toma, aunque la regla sea la misma: este
+       * es el sitio donde el juego ya ha decidido que esto fue un aterrizaje
+       * de verdad —en la pista, sin percance, sin golpe—. Colgarlo del galón
+       * habría sido tener dos definiciones de aterrizar bien.
+       */
+      if (lasGana(veredicto) && ganarGafas()) {
+        this.hechos.emit("ganasteLasGafas", {});
+      }
     }
     return veredicto;
   }
@@ -2451,6 +2475,28 @@ export class Game {
      * con el sonido de haber ganado algo, no con el de «atención», porque esto
      * no avisa de nada: dice que salió bien.
      */
+    /*
+     * **Las gafas de sol.**
+     *
+     * El proyecto nace de una niña que quiere ser piloto «con las gafas de
+     * sol», así que este es el único premio del juego que no mide nada: no
+     * dice que hayas volado bien, dice que ya sos de los que llevan gafas.
+     *
+     * Se celebra con todo lo que hay —el dibujo, las cuatro notas y la voz—
+     * y **se queda puesto el doble** que un aviso normal: un aviso de paso se
+     * pierde mientras mirás la pista, y este no se puede perder porque pasa
+     * una sola vez. Ver `flight/gafas.ts` y #2.
+     */
+    this.hechos.on("ganasteLasGafas", () => {
+      this.hud.senal.mostrar("gafas", t("gafas.ganadas"), null, {
+        segundos: SE_QUEDA_EL_ARO * 2,
+        prioridad: IMPORTANTE,
+      });
+      this.audio.cue("achieved");
+      this.instructor.decir(t("gafas.ganadas"), "gafas.ganadas");
+      this.llevarLasGafas(leerGafas());
+    });
+
     this.hechos.on("loCorregiste", () => {
       const bien = this.avisoCon("vuelo.corregido", "palabra.bien");
       this.hud.senal.mostrar("corregido", bien.rotulo, null, {
@@ -3289,6 +3335,41 @@ export class Game {
      */
     const nivel = this.audio.ponerNivel(ajustes.volumen);
     this.hud.setSoundLevel(nivel.glyph, t(`sound.${nivel.id}` as never));
+  }
+
+  /**
+   * Ponerse o quitarse las gafas. Lo llama su botón.
+   *
+   * No hace nada si todavía no se han ganado, que es la única regla: el botón
+   * no existe hasta entonces, pero una tecla o un banco pueden llamar igual.
+   */
+  alternarGafas(): void {
+    if (!this.gafas.ganadas) return;
+    const puestas = !this.gafas.puestas;
+    ponerseLasGafas(puestas);
+    this.llevarLasGafas({ ganadas: true, puestas });
+    this.hud.flash(t(puestas ? "gafas.puestas" : "gafas.quitadas"), 1.6);
+  }
+
+  /**
+   * Pone las gafas donde tienen efecto: el botón, el cristal y el sol.
+   *
+   * Las tres cosas en un sitio, porque son la misma: quitar una y dejar las
+   * otras deja al juego diciendo dos cosas distintas sobre lo mismo — el
+   * botón encendido y el mundo sin teñir.
+   */
+  private llevarLasGafas(gafas: Gafas): void {
+    this.gafas = gafas;
+    this.hud.setGafas(gafas.ganadas, gafas.puestas);
+    /*
+     * El tinte es una marca en la raíz, como el contraste: la hoja de estilos
+     * enciende el cristal que hay entre el lienzo y el HUD. Ver `style.css`.
+     */
+    if (gafas.puestas) document.documentElement.dataset.gafas = "puestas";
+    else delete document.documentElement.dataset.gafas;
+    // Y el deslumbre, que es la otra mitad y la que se nota volando de cara
+    // al sol de la tarde. Ver `world/sky.ts`.
+    this.sky.ponerDeslumbre(gafas.puestas ? DESLUMBRE.con : DESLUMBRE.sin);
   }
 
   /** Pone una hora del día. Lo llama el panel del tiempo. */

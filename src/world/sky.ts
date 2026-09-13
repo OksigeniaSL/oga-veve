@@ -56,9 +56,9 @@ import {
   ShaderMaterial,
   SphereGeometry,
   Vector3,
-} from 'three';
-import { mulberry32 } from './noise';
-import type { Scenario } from './scenarios';
+} from "three";
+import { mulberry32 } from "./noise";
+import type { Scenario } from "./scenarios";
 
 const VERTEX_SHADER = /* glsl */ `
   varying vec3 vWorldPosition;
@@ -128,15 +128,55 @@ interface Momento {
 
 const MOMENTOS: readonly Momento[] = [
   // Noche cerrada.
-  { altura: -18, horizonte: 0x0d1626, cenit: 0x04060e, sol: 0x2a3a55, fuerza: 0.05, relleno: 0.12, estrellas: 1 },
+  {
+    altura: -18,
+    horizonte: 0x0d1626,
+    cenit: 0x04060e,
+    sol: 0x2a3a55,
+    fuerza: 0.05,
+    relleno: 0.12,
+    estrellas: 1,
+  },
   // Crepúsculo: el sol ya no se ve pero el horizonte todavía arde.
-  { altura: -6, horizonte: 0x5a4364, cenit: 0x101a35, sol: 0x8c5a6a, fuerza: 0.18, relleno: 0.3, estrellas: 0.55 },
+  {
+    altura: -6,
+    horizonte: 0x5a4364,
+    cenit: 0x101a35,
+    sol: 0x8c5a6a,
+    fuerza: 0.18,
+    relleno: 0.3,
+    estrellas: 0.55,
+  },
   // Amanecer y ocaso, con el sol en el horizonte. La hora buena.
-  { altura: 0, horizonte: 0xf0803c, cenit: 0x3a5a8e, sol: 0xff8c3a, fuerza: 0.9, relleno: 0.5, estrellas: 0.12 },
+  {
+    altura: 0,
+    horizonte: 0xf0803c,
+    cenit: 0x3a5a8e,
+    sol: 0xff8c3a,
+    fuerza: 0.9,
+    relleno: 0.5,
+    estrellas: 0.12,
+  },
   // Sol bajo: sombras largas, luz cálida. Las cinco y media de la tarde.
-  { altura: 12, horizonte: 0xf3cfa4, cenit: 0x4f86c6, sol: 0xffd9a0, fuerza: 2.4, relleno: 0.42, estrellas: 0 },
+  {
+    altura: 12,
+    horizonte: 0xf3cfa4,
+    cenit: 0x4f86c6,
+    sol: 0xffd9a0,
+    fuerza: 2.4,
+    relleno: 0.42,
+    estrellas: 0,
+  },
   // Mediodía.
-  { altura: 60, horizonte: 0xdfe7ea, cenit: 0x4a86c8, sol: 0xfff4e2, fuerza: 3.1, relleno: 0.5, estrellas: 0 },
+  {
+    altura: 60,
+    horizonte: 0xdfe7ea,
+    cenit: 0x4a86c8,
+    sol: 0xfff4e2,
+    fuerza: 3.1,
+    relleno: 0.5,
+    estrellas: 0,
+  },
 ];
 
 export interface SkyRig {
@@ -147,6 +187,15 @@ export interface SkyRig {
   sunDirection: Vector3;
   /** Pone una hora del día, de 0 a 24. */
   ponerHora(hora: number): void;
+  /**
+   * Cuánto deslumbra el sol, de cero a uno. Uno es lo normal.
+   *
+   * Lo bajan las gafas de sol —ver `flight/gafas.ts`—, que es exactamente lo
+   * que hacen unas gafas de sol: no cambian la hora que es, cierran el halo.
+   * Va aparte de `ponerHora` porque no depende de ella y porque la hora se
+   * pone muchas veces; esto, casi nunca.
+   */
+  ponerDeslumbre(cuanto: number): void;
   /** Qué hora es ahora mismo. */
   readonly hora: number;
 }
@@ -188,7 +237,11 @@ function momentoDe(altura: number): Momento {
  * horas y sigue bajando por debajo del horizonte durante la noche, que es lo
  * que hace que el crepúsculo dure lo que dura.
  */
-function solALaHora(hora: number, azimutMediodia: number, alturaMaxima: number): {
+function solALaHora(
+  hora: number,
+  azimutMediodia: number,
+  alturaMaxima: number,
+): {
   altura: number;
   azimut: number;
 } {
@@ -236,7 +289,7 @@ function estrellas(): Points {
   }
 
   const geo = new BufferGeometry();
-  geo.setAttribute('position', new Float32BufferAttribute(posiciones, 3));
+  geo.setAttribute("position", new Float32BufferAttribute(posiciones, 3));
   const puntos = new Points(
     geo,
     new PointsMaterial({
@@ -249,7 +302,7 @@ function estrellas(): Points {
       blending: AdditiveBlending,
     }),
   );
-  puntos.name = 'estrellas';
+  puntos.name = "estrellas";
   puntos.renderOrder = -1;
   return puntos;
 }
@@ -263,10 +316,10 @@ function estrellas(): Points {
  */
 function texturaDeNube(semilla: number): CanvasTexture {
   const lado = 256;
-  const lienzo = document.createElement('canvas');
+  const lienzo = document.createElement("canvas");
   lienzo.width = lado;
   lienzo.height = lado;
-  const g = lienzo.getContext('2d')!;
+  const g = lienzo.getContext("2d")!;
   const imagen = g.createImageData(lado, lado);
   const sorteo = mulberry32(semilla);
 
@@ -279,7 +332,11 @@ function texturaDeNube(semilla: number): CanvasTexture {
   });
 
   const suave = (t: number): number => t * t * (3 - 2 * t);
-  const valor = (o: { n: number; v: Float32Array }, x: number, y: number): number => {
+  const valor = (
+    o: { n: number; v: Float32Array },
+    x: number,
+    y: number,
+  ): number => {
     const fx = x * o.n;
     const fy = y * o.n;
     const x0 = Math.floor(fx) % o.n;
@@ -330,7 +387,7 @@ function texturaDeNube(semilla: number): CanvasTexture {
  */
 function nubes(escenario: Scenario): Group {
   const grupo = new Group();
-  grupo.name = 'nubes';
+  grupo.name = "nubes";
   const lado = escenario.size * 4;
   const capas = 5;
   for (let i = 0; i < capas; i++) {
@@ -383,7 +440,7 @@ export function createSky(scenario: Scenario): SkyRig {
   // sale de él por mucho que se suba.
   dome.scale.setScalar(scenario.size);
   dome.renderOrder = -2;
-  dome.name = 'cielo';
+  dome.name = "cielo";
   group.add(dome);
 
   const cielosEstrellados = estrellas();
@@ -411,6 +468,8 @@ export function createSky(scenario: Scenario): SkyRig {
 
   const fog = new FogExp2(scenario.fog.colour, scenario.fog.density);
   const sunDirection = new Vector3(0, 1, 0);
+  /** Lo que multiplica al halo. Ver `ponerDeslumbre`. */
+  let deslumbre = 1;
 
   const rig: SkyRig = {
     group,
@@ -422,7 +481,11 @@ export function createSky(scenario: Scenario): SkyRig {
       const h = ((hora % 24) + 24) % 24;
       (rig as { hora: number }).hora = h;
 
-      const { altura, azimut } = solALaHora(h, scenario.sun.azimuth, scenario.sun.elevation);
+      const { altura, azimut } = solALaHora(
+        h,
+        scenario.sun.azimuth,
+        scenario.sun.elevation,
+      );
       const m = momentoDe(altura);
 
       const e = (altura * Math.PI) / 180;
@@ -436,14 +499,16 @@ export function createSky(scenario: Scenario): SkyRig {
       (material.uniforms.zenithColour!.value as Color).setHex(m.cenit);
       (material.uniforms.sunColour!.value as Color).setHex(m.sol);
       // El halo se abre cuanto más bajo está el sol. A cero de altura, del todo.
-      material.uniforms.haloFuerza!.value = Math.max(0, 1 - Math.abs(altura) / 22);
+      // Y por el deslumbre, que es lo que quitan las gafas.
+      material.uniforms.haloFuerza!.value =
+        Math.max(0, 1 - Math.abs(altura) / 22) * deslumbre;
 
       sun.position.copy(sunDirection).multiplyScalar(scenario.size * 0.4);
       sun.color.setHex(m.sol);
       sun.intensity = m.fuerza;
       ambient.intensity = m.relleno;
 
-      const cielo = group.getObjectByName('estrellas') as Points | undefined;
+      const cielo = group.getObjectByName("estrellas") as Points | undefined;
       if (cielo) (cielo.material as PointsMaterial).opacity = m.estrellas;
 
       /*
@@ -454,6 +519,12 @@ export function createSky(scenario: Scenario): SkyRig {
        * hay. Es una línea y es de las cosas que más se notan.
        */
       fog.color.setHex(m.horizonte);
+    },
+    ponerDeslumbre(cuanto: number) {
+      deslumbre = Math.max(0, Math.min(1, cuanto));
+      // Se vuelve a poner la hora que ya había: es lo que recalcula el halo, y
+      // así el deslumbre no tiene su propia copia de esa cuenta.
+      rig.ponerHora(rig.hora);
     },
   };
 
@@ -469,8 +540,12 @@ export function createSky(scenario: Scenario): SkyRig {
  * muy opacas siguen siendo un techo, y unas bajas y transparentes siguen siendo
  * un día claro. Lo que cuenta es cuánto tapan.
  */
-export function ponerNubes(rig: SkyRig, alturaM: number | null, tapadura = 0.5): void {
-  const banco = rig.group.getObjectByName('nubes');
+export function ponerNubes(
+  rig: SkyRig,
+  alturaM: number | null,
+  tapadura = 0.5,
+): void {
+  const banco = rig.group.getObjectByName("nubes");
   if (!banco) return;
   banco.visible = alturaM !== null;
   if (alturaM === null) return;
@@ -483,13 +558,13 @@ export function ponerNubes(rig: SkyRig, alturaM: number | null, tapadura = 0.5):
 
 /** El domo sigue a la cámara para que el horizonte no se acerque nunca. */
 export function updateSky(rig: SkyRig, cameraPosition: Vector3): void {
-  const dome = rig.group.getObjectByName('cielo');
+  const dome = rig.group.getObjectByName("cielo");
   if (dome) dome.position.copy(cameraPosition);
-  const estrellado = rig.group.getObjectByName('estrellas');
+  const estrellado = rig.group.getObjectByName("estrellas");
   if (estrellado) estrellado.position.copy(cameraPosition);
   // Las nubes siguen a la cámara **solo en horizontal**: en vertical están
   // donde están, que es lo que permite atravesarlas.
-  const banco = rig.group.getObjectByName('nubes');
+  const banco = rig.group.getObjectByName("nubes");
   if (banco) {
     banco.position.x = cameraPosition.x;
     banco.position.z = cameraPosition.z;
