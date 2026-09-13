@@ -31,7 +31,7 @@ import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { alturaDeEdificio } from "../world/aerodrome";
-import { verticesDelCircuito } from "../world/circuito";
+import { escalaDeCircuito, verticesDelCircuito } from "../world/circuito";
 import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
 import { leerGafas } from "../flight/gafas";
 
@@ -693,7 +693,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     circuito: () =>
       juego.circuito?.vertices ??
-      verticesDelCircuito(juego.scenario.runway, juego.terrain.runwayElevation),
+      verticesDelCircuito(
+        juego.scenario.runway,
+        juego.terrain.runwayElevation,
+        undefined,
+        escalaDeCircuito(juego.aircraft.approachSpeed),
+      ),
     /** A qué caída se tocó, m/s. Para el banco y para las sondas. */
     caida: () => juego.landing.caidaAlTocar,
     /** Los pares puesto + espera que se consideraron, con sus metros. */

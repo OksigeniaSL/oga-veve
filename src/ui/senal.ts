@@ -668,6 +668,29 @@ export class Senal {
     this.letra = raiz.querySelector('[data-hud="senal-letra"]');
     this.tecla = raiz.querySelector('[data-hud="senal-tecla"]');
     this.caja?.addEventListener("click", () => this.accion?.());
+    this.medirse();
+  }
+
+  /**
+   * Publica lo alto que es esta tarjeta, para que el tutor se le suba encima.
+   *
+   * **Los dos viven abajo y en medio.** La señal está ahí porque es donde ya
+   * mira quien pilota —«veo unos símbolos en la esquina inferior izquierda,
+   * pero poco claros y pequeños»— y el tutor, por lo mismo. Con las dos
+   * puestas a la vez se solapaban: se veía el filo naranja de una asomando por
+   * detrás de la otra, que es lo que tiene apilar dos cosas fijas en el mismo
+   * sitio con el mismo `z-index`.
+   *
+   * Se resuelve como ya se resolvía el cuadro de mandos —ver `reserveForPanel`
+   * en `hud.ts`—: se mide y se levanta lo que haga falta. Un número escrito a
+   * mano acertaría con una tarjeta de una línea y fallaría con una de dos, y
+   * las hay de las dos clases.
+   */
+  private medirse(): void {
+    if (!this.raiz) return;
+    const alto =
+      this.caja && !this.caja.hidden ? this.caja.offsetHeight + 12 : 0;
+    this.raiz.style.setProperty("--senal-alto", `${alto}px`);
   }
 
   /**
@@ -748,6 +771,7 @@ export class Senal {
     const boton = this.caja as HTMLButtonElement;
     boton.disabled = !this.accion;
     boton.classList.toggle("senal--pulsable", !!this.accion);
+    this.medirse();
   }
 
   /** El aviso se apaga solo. Un cartel permanente deja de mirarse. */
@@ -777,6 +801,7 @@ export class Senal {
     this.enEspera = null;
     if (this.caja) this.caja.hidden = true;
     this.actual = "";
+    this.medirse();
   }
 
   /** Qué hay puesto y cuánto le queda. Para el banco de pruebas. */
@@ -799,6 +824,7 @@ export class Senal {
       this.caja.hidden = true;
       this.actual = "";
       this.prioridad = 0;
+      this.medirse();
       // Y si algo se quedó esperando turno, ahora es su turno.
       const vuelve = this.enEspera;
       this.enEspera = null;

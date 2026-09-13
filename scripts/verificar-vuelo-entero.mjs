@@ -269,6 +269,46 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     return Math.max(-0.35, Math.min(0.5, base + extra));
   };
 
+  /**
+   * Lo más deprisa que este avión puede bajar sin tirarse, m/s.
+   *
+   * Eran cinco, y cinco es la senda de una avioneta: a treinta y tres metros
+   * por segundo, tres grados son dos metros por segundo de caída, así que
+   * cinco daba margen de sobra. **A noventa y ocho no.** El de fuselaje ancho
+   * necesita cuatro con seis solo para seguir la senda, y con el tope en cinco
+   * y un piloto que no llega del todo a lo que pide, se quedaba en tres y
+   * medio: entraba sobre el umbral a doscientos metros de altura y se iba
+   * derecho por encima de la pista. Se ve en la traza —«umbral 111 m, alto
+   * 223»— y es la misma queja de quien juega, «no le da tiempo a descender».
+   *
+   * Ahora sale de la senda que este avión tiene que volar: su velocidad de
+   * aproximación por el seno de cuatro grados, uno más que la senda, para que
+   * quepa corregir. Con el JAZ 20 da dos y pico y manda el suelo de cinco, o
+   * sea que **la avioneta vuela exactamente como antes**.
+   */
+  const CAIDA_MAXIMA = Math.max(
+    5,
+    (suyas.aproximacion ?? 33) * Math.sin((4 * Math.PI) / 180),
+  );
+
+  /*
+   * **Y aquí no hay término integral, y se probó.**
+   *
+   * El mando es proporcional, así que se planta donde el error da justo la
+   * palanca que hace falta y nunca llega del todo a lo que pide: con el de
+   * fuselaje ancho, pidiendo seis metros por segundo de caída se quedaba en
+   * cuatro. Se le puso un acumulado —despacio y con tope— para cerrar ese
+   * resto, y la cuenta salió mal por los dos lados: al grande no le arregló el
+   * aterrizaje —La Palma se le queda corta igual, que es lo que de verdad le
+   * pasa— y a la avioneta le movió dos escenarios que estaban limpios, porque
+   * seguir la senda más pegado corre la toma y alarga el rodaje de vuelta.
+   * Medido en Pettirossi: de doscientos dos segundos a doscientos setenta y
+   * uno. Separar el acumulado del crucero y el de la senda no cambió nada, así
+   * que no era mezcla: era el acumulado.
+   *
+   * Un banco que cambia de veredicto en dos campos a cambio de no arreglar lo
+   * que iba a arreglar no compensa. Queda escrito para no volver a probarlo.
+   */
   const aLaAltura = (s, objetivo, minima = VELOCIDAD_DE_SUBIDA) => {
     /*
      * Se manda **velocidad vertical**, no palanca, y se limita.
@@ -280,11 +320,22 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * 68 m/s. Pidiendo cinco metros por segundo de bajada, el mismo error se
      * recorre en veinte segundos y el avión llega volando.
      */
-    const quiere = Math.max(-5, Math.min(4, (objetivo - alto(s)) * 0.1));
-    const mando = Math.max(
-      -0.3,
-      Math.min(0.3, (quiere - s.verticalSpeed) * 0.08),
+    const quiere = Math.max(
+      -CAIDA_MAXIMA,
+      Math.min(4, (objetivo - alto(s)) * 0.1),
     );
+    const error = quiere - s.verticalSpeed;
+    /*
+     * **Y tres décimas de palanca, ni una más.**
+     *
+     * Se subió a 0,35 de paso, al probar el término integral, y se quedó
+     * puesto al quitarlo. Cinco centésimas: en Pettirossi movieron la toma
+     * seiscientos metros —el rodaje de vuelta pasó de 202 segundos a 249, por
+     * encima del listón— sin que nada dijera por qué. Lo que un piloto de
+     * banco puede tirar decide dónde se posa el avión, y eso no se ajusta de
+     * pasada.
+     */
+    const mando = Math.max(-0.3, Math.min(0.3, error * 0.08));
     return s.airspeed < minima ? Math.min(0, mando) : mando;
   };
 
@@ -1328,7 +1379,14 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
  * Lo que sí se sigue cazando es lo que costó caro: un avión que **tiene**
  * fichero y no lo carga.
  */
-const CON_MODELO = new Set(["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"]);
+const CON_MODELO = new Set([
+  "jaz-20",
+  "jaz-25",
+  "jaz-40",
+  "jaz-60",
+  "jaz-90",
+  "jaz-120",
+]);
 if (CON_MODELO.has(AVION)) {
   comprobar(
     "se vuela el modelo de la aeronave y no el respaldo",
