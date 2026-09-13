@@ -62,6 +62,29 @@ export interface PanelDelVuelo {
 export const PANELES_DEL_VUELO: readonly PanelDelVuelo[] = [
   {
     /*
+     * **Qué hay que hacer**, y solo mientras haya una misión.
+     *
+     * Su botón nace escondido y lo enseña `Game` al empezar una. No apagado ni
+     * tachado: no está — la misma regla que los galones y que las gafas de
+     * sol. Ver `ui/pantalla-mision.ts`.
+     */
+    id: "mision-boton",
+    caja: "#mision",
+    titulo: "mision.titulo",
+    /*
+     * Instrumento y no pantalla: se consulta volando, como el plano. Parar el
+     * avión para mirar a dónde hay que ir es justo lo contrario de para lo que
+     * se mira.
+     */
+    congela: false,
+    // La bandera del objetivo, que es lo que marca una meta en todas partes.
+    icono: `
+      <path d="M5.4 2.6 v18.8" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" fill="none" />
+      <path d="M7 4 h11.6 l-2.6 3.6 2.6 3.6 H7 Z" />`,
+  },
+  {
+    /*
      * La pantalla de mandos. Existe porque esa pantalla se abría solo con una
      * tecla, y una pantalla que explica los mandos no puede esconderse detrás
      * de un mando. Menos todavía para quien no lee.

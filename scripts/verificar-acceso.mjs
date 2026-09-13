@@ -51,6 +51,8 @@ const ACCIONES = new Set(
 );
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
+/** Y una misión de ese escenario, para poder abrir su panel. Ver más abajo. */
+const MISION = process.argv[3] ?? "a-anaga";
 const PUERTO = 5287;
 
 /** Los dos mundos sobre los que flota el HUD, y entre los que hay que leerlo. */
@@ -82,7 +84,15 @@ const page = await navegador.newPage({
 await page.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
-await page.goto(`http://localhost:${PUERTO}/?escenario=${ESCENARIO}&teselas=0`);
+/*
+ * **Y con una misión puesta**, que si no el panel de «qué hay que hacer» no se
+ * puede abrir: su botón no existe mientras no hay misión, a propósito. Sin
+ * esto, el panel nuevo sería el que se queda sin banco — que es exactamente lo
+ * que ya pasó con el plano y con el tiempo. Ver `ui/paneles.ts`.
+ */
+await page.goto(
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&teselas=0&mision=${MISION}`,
+);
 await page.waitForTimeout(12000);
 
 // ── 1. Contraste ─────────────────────────────────────────────────────────
@@ -661,7 +671,15 @@ for (const { id: boton, caja } of paneles) {
     caja,
   );
   if (!abierta) {
-    comprobar(`${donde}: se abre`, false, "no se abrió al pulsar su botón");
+    const porque = await page.evaluate(
+      ([b, c]) => {
+        const boton = document.querySelector(`[data-hud="${b}"]`);
+        const caja = document.querySelector(c);
+        return `botón ${boton ? `hidden=${boton.hidden}` : "no está"} · caja ${caja ? `hidden=${caja.hidden}, ${caja.innerHTML.length} car` : "no está"}`;
+      },
+      [boton, caja],
+    );
+    comprobar(`${donde}: se abre`, false, `no se abrió · ${porque}`);
     continue;
   }
   /*

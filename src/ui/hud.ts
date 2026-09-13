@@ -284,6 +284,26 @@ export class Hud {
   private camaraHandler: (() => void) | null = null;
   private gafasHandler: (() => void) | null = null;
   private gafas!: HTMLElement;
+  private misionHandler: (() => void) | null = null;
+  private mision!: HTMLElement;
+  /**
+   * Lo que hay que volver a poner después de cada `render()`.
+   *
+   * El HUD se rehace entero al cambiar de unidades o de idioma, y con el
+   * marcado viejo se van **los oyentes y el estado**: un botón que nace
+   * escondido vuelve a salir, y uno que alguien ató desde fuera se queda
+   * muerto. El mapa y el tiempo ya se reataban aquí con ese motivo escrito al
+   * lado; estos dos no existían entonces.
+   *
+   * Se vio con el panel de la misión: su botón seguía en pantalla y no abría
+   * nada, y solo después de que el banco pasara por el ajuste de contraste
+   * —que cambia las unidades y rehace el HUD—. Las gafas de sol tenían el
+   * mismo fallo y nadie lo había notado.
+   */
+  private gafasState = { ganadas: false, puestas: false };
+  private misionState = false;
+  /** Qué cerrar cuando se abre el plano o el tiempo. Ver donde se usa. */
+  private otraLamina: (() => void) | null = null;
   private pausaHandler: (() => void) | null = null;
   private creditsHandler: (() => void) | null = null;
   private alaHandler: (() => void) | null = null;
@@ -768,6 +788,8 @@ export class Hud {
     );
     this.gafas = pick(this.root, "gafas");
     this.gafas.addEventListener("click", () => this.gafasHandler?.());
+    this.mision = pick(this.root, "mision-boton");
+    this.mision.addEventListener("click", () => this.misionHandler?.());
     pick(this.root, "pausa").addEventListener("click", () =>
       this.pausaHandler?.(),
     );
@@ -792,10 +814,22 @@ export class Hud {
     // El panel del tiempo se reata igual, y hay que devolverle sus oyentes:
     // el marcado es nuevo y los de antes se fueron con el viejo.
     this.tiempo.bind(this.root);
-    // Uno u otro, nunca los dos: son dos láminas a pantalla completa y la
-    // segunda taparía a la primera sin que nadie entendiera por qué.
-    this.mapa.onAbrir(() => this.tiempo.cerrar());
-    this.tiempo.onAbrir(() => this.mapa.cerrar());
+    /*
+     * Uno u otro, nunca dos: son láminas que se miran volando y la segunda
+     * taparía a la primera sin que nadie entendiera por qué.
+     *
+     * Y desde que existe el panel de la misión son **tres**, no dos. Se vio en
+     * una captura: «qué hay que hacer» abierto encima del plano, cada uno
+     * tapando la mitad del otro.
+     */
+    this.mapa.onAbrir(() => {
+      this.tiempo.cerrar();
+      this.otraLamina?.();
+    });
+    this.tiempo.onAbrir(() => {
+      this.mapa.cerrar();
+      this.otraLamina?.();
+    });
     if (this.tiempoAtado) {
       this.tiempo.onCambio(this.tiempoAtado.cambio);
       this.tiempo.onDeVerdad(this.tiempoAtado.deVerdad);
@@ -812,6 +846,9 @@ export class Hud {
     this.paintSound();
     this.paintProgress();
     this.paintGalones();
+    // Y los dos que nacen escondidos, que si no reaparecen al repintar.
+    this.setGafas(this.gafasState.ganadas, this.gafasState.puestas);
+    this.setMisionVisible(this.misionState);
     this.hint = pick(this.root, "hint");
     this.fin = pick(this.root, "fin");
     // Se cierra tocando en cualquier parte: a los cuatro años no se busca una
@@ -1523,6 +1560,33 @@ export class Hud {
     this.gafasHandler = handler;
   }
 
+  /** El de «qué hay que hacer». Ver `ui/pantalla-mision.ts`. */
+  onMision(handler: () => void): void {
+    this.misionHandler = handler;
+  }
+
+  /**
+   * Qué más hay que cerrar al abrir el plano o el tiempo.
+   *
+   * El panel de la misión no lo lleva el HUD —lo lleva `Game`— pero es la
+   * tercera lámina de las que solo puede haber una a la vez.
+   */
+  alAbrirUnaLamina(cb: () => void): void {
+    this.otraLamina = cb;
+  }
+
+  /**
+   * Enseña o esconde el botón de la misión.
+   *
+   * Nace escondido: sin misión no hay nada que mirar, y un botón que abre un
+   * panel vacío enseña que el juego está roto. La misma regla que los galones
+   * y que las gafas de sol.
+   */
+  setMisionVisible(hay: boolean): void {
+    this.misionState = hay;
+    this.mision.hidden = !hay;
+  }
+
   /**
    * Enseña o esconde el botón de las gafas, y dice si están puestas.
    *
@@ -1532,6 +1596,7 @@ export class Hud {
    * lector diga dos cosas distintas sobre el mismo botón.
    */
   setGafas(ganadas: boolean, puestas: boolean): void {
+    this.gafasState = { ganadas, puestas };
     this.gafas.hidden = !ganadas;
     this.gafas.setAttribute("aria-pressed", String(puestas));
     this.gafas.classList.toggle("gafas-boton--puestas", puestas);
