@@ -13,6 +13,20 @@ import { FLOTA, nombreEntero } from "./flota";
  * de Granja Óga. No reproducimos modelos reales: los fabricantes protegen
  * sus nombres y sus siluetas como marca registrada, y esto se vende.
  * Ver CREDITOS.md.
+ *
+ * ## Y originales no quiere decir inventados
+ *
+ * Durante mucho tiempo estos números estaban «en el orden de magnitud de una
+ * avioneta ligera real» y en ningún sitio decía **cuál** ni **cuáles**. Ahora
+ * sí: `referencia.ts` trae el juego completo de derivadas del Navion, de la
+ * NASA CR-96008, que es dominio público, y `referencia.test.ts` mide cada
+ * ficha contra él.
+ *
+ * Lo que se compara es lo que la física manda que se parezca —el margen
+ * estático, los amortiguamientos, la autoridad de los mandos por grado de
+ * deflexión—; lo que la configuración manda que no se parezca, como que un ala
+ * alta tenga más efecto diedro que un ala baja, queda dicho con su motivo.
+ * Ver #54.
  */
 
 export interface AeroCoefficients {
@@ -61,6 +75,12 @@ export interface AeroCoefficients {
    *
    * Regla de calibración: el ritmo estabilizado es clAileron/|clP| · 2V/b.
    * Para una ligera de escuela debe salir entre 60 y 80 grados por segundo.
+   *
+   * **Y esos sesenta a ochenta ya no son una opinión.** El Navion de la NASA
+   * CR-96008, con los recorridos de alerón de su propio certificado de tipo
+   * —veinticinco arriba y diecisiete abajo, o sea veintiún grados de media—,
+   * sale a **72 °/s** por esta misma fórmula. Está en el medio de la banda, y
+   * la banda tiene ahora un avión de verdad detrás. Ver `referencia.ts`.
    */
   clAileron: number;
 
