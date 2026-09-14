@@ -138,41 +138,29 @@ contrario de lo que hace el código es peor que no tenerlo.
 ## Assets artísticos
 
 El terreno, el aeródromo y la ciudad se generan por código, y son originales
-de Oksigenia SL. La aeronave ya no.
+de Oksigenia SL. Y las aeronaves también, las seis.
 
-### La aeronave
+### La aeronave que vino de fuera, y ya no
 
-| Qué                                                                                                                                         | De quién               | Licencia               |
-| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------- |
-| [Cessna 172Kr (with cockpit) (ver III)](https://sketchfab.com/3d-models/cessna-172kr-with-cockpit-ver-iii-e104f0a64da5499d9b8b9d60dc896cf8) | TonyWony, en Sketchfab | **CC Attribution 4.0** |
+Hasta septiembre de 2026 el **JAZ 20 _Pykasu_** era un modelo descargado —una
+Cessna 172 de Sketchfab, bajo CC-BY— y esta sección llevaba su fila, su
+atribución y su enlace. Ya no: el Pykasu se modela aquí como los otros cinco,
+desde `modelos/jaz-20-pykasu.py`, y el modelo ajeno se retiró del repositorio.
 
-La atribución, tal y como la pide el autor:
-
-> "Cessna 172Kr (with cockpit) (ver III)" by TonyWony is licensed under
-> Creative Commons Attribution.
-
-Y por qué esta y no otra: **CC-BY convive con Apache-2.0 sin contagiar nada**,
-y la ficha de descarga lo dice sin rodeos — «Author must be credited.
-Commercial use is allowed.» Eso último importa aquí más de lo que parece,
-porque el juego es también un gancho de la Granja Óga, y eso cuenta como uso
-comercial por mucho que se regale.
-
-Se usa **la forma, no el nombre**. La avioneta del juego se llama **JAZ 20
-_Pykasu_**: JAZ es el fabricante ficticio del mundo del juego y _Pykasu_ es la
-paloma en guaraní. Se llamó «Óga 172» hasta que se vio lo que eso decía —ciento
-setenta y dos, delante de un ala alta de cuatro plazas, cita a una avioneta que
-existe—; ver `src/flight/flota.ts`, #69 y el apartado de marcas registradas más
-abajo. En el modelo hay además un panel
-G1000 dibujado en la textura, que es obra del autor bajo su misma licencia.
-
-Se descargó la versión **GLB con texturas de 1K**, que son dos megas y medio.
-La de 4K pesa más y no se distingue en una tablet.
+Queda escrito porque explica una regla de la casa, y la regla vale para todo lo
+que venga: **se puede usar la forma de una clase de avión, nunca el nombre ni la
+silueta de uno concreto**. Un monomotor de ala alta arriostrada con tren
+triciclo es la forma de medio mundo desde los años cincuenta y no es de nadie;
+«Cessna 172» sí es de alguien. Por eso la avioneta del juego se llama **JAZ 20
+_Pykasu_** —JAZ es el fabricante ficticio del mundo del juego y _Pykasu_ es la
+paloma en guaraní— y por eso dejó de llamarse «Óga 172» en cuanto se vio lo que
+ese número decía. Ver `src/flight/flota.ts`, #69 y el apartado de marcas
+registradas más abajo.
 
 ### Y las que se hacen en casa
 
-El **JAZ 25 _Mainumby_** y el **JAZ 40 _Panambi_** no vienen de ningún sitio: se
-modelan aquí, con Blender, desde `modelos/jaz-25-mainumby.py` y
-`modelos/jaz-40-panambi.py`. El guion es el modelo — se ejecuta con
+**Los seis aviones de la flota** no vienen de ningún sitio: se modelan aquí, con
+Blender, desde `modelos/jaz-20-pykasu.py` y los cinco que le siguen. El guion es el modelo — se ejecuta con
 `blender --background --python modelos/<el que sea>.py` y escribe
 `public/assets/aeronaves/<id>.glb`—, así que no hay un `.blend` binario que
 nadie pueda leer ni un fichero que dependa de acordarse de cómo se hizo.
