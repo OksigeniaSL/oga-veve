@@ -60,6 +60,15 @@ const HABLADOS = [
    * hombro.
    */
   ["ala.dice", "instructor", "lo que explica el esquema del ala"],
+  /*
+   * **La torre de Canarias va primero, y por eso el grupo más concreto gana.**
+   *
+   * Sus claves son `torre.canario.*` y empiezan por `torre.`, así que el grupo
+   * de abajo se las llevaría con la voz paraguaya si el orden no importara.
+   * Importa: gana el primero que reclame una clave. Ver `i18n/habla.ts`, que es
+   * quien decide qué campos hablan así —todo lo que empieza por `GC`—.
+   */
+  ["torre.canario", "torre-canarias", "la torre de Canarias, que no vosea"],
   ["torre", "torre", "la lámpara de la torre, dicha en casa"],
   ["otro", "otro", "el otro avión de la frecuencia"],
 ];
@@ -168,9 +177,7 @@ const variantes = (() => {
     fuente.indexOf("export function cuantasFormas"),
   );
   const salida = new Map();
-  for (const m of cuerpo.matchAll(
-    /"([\w.]+)":\s*\[([\s\S]*?)\]/g,
-  )) {
+  for (const m of cuerpo.matchAll(/"([\w.]+)":\s*\[([\s\S]*?)\]/g)) {
     const textos = [...m[2].matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((x) => x[1]);
     if (textos.length) salida.set(m[1], textos);
   }
@@ -180,6 +187,8 @@ const variantes = (() => {
 mkdirSync(SALIDA, { recursive: true });
 
 const filas = [];
+/** Las claves que ya tienen voz asignada. Ver el bucle. */
+const yaPuestas = new Set();
 let total = 0;
 for (const [grupo, voz, para] of HABLADOS) {
   for (const [k, v] of es) {
@@ -191,6 +200,11 @@ for (const [grupo, voz, para] of HABLADOS) {
      * no algo que nadie diga en voz alta.
      */
     if (k !== grupo && !k.startsWith(`${grupo}.`)) continue;
+    // Y una clave la graba **una sola voz**: gana el grupo más concreto, que
+    // es el que va antes en la tabla. Sin esto, la torre canaria se grabaría
+    // dos veces, una con cada voz, y el pack no sabría cuál poner.
+    if (yaPuestas.has(k)) continue;
+    yaPuestas.add(k);
     filas.push({ id: k, voz, idioma: "es-PY", texto: v, para });
     total += v.length;
     /*

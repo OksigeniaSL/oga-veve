@@ -212,6 +212,24 @@ export const ES_PY = {
   // información**: quien no distinga el rojo del verde tiene que poder saberlo.
   "torre.verde": "Podés entrar",
   "torre.roja": "Esperá acá",
+  /*
+   * ── Y la misma torre, en Canarias ──────────────────────────────────────
+   *
+   * **No es el acento: son las palabras.** El castellano del juego es
+   * paraguayo y se vosea, y eso se queda; pero la torre no es el juego, es el
+   * sitio, y en Tenerife nadie dice «podés». Grabar «podés entrar» con voz
+   * canaria sería un canario imitando a un paraguayo.
+   *
+   * Quién habla así lo decide el indicativo OACI del aeródromo y no una lista
+   * escrita a mano: todo lo que empieza por `GC` son las islas. Ver
+   * `i18n/habla.ts`. «No sólo Tenerife y La Palma, si se ponen más
+   * aeropuertos canarios también van.»
+   *
+   * Son claves aparte porque el pack de voz busca por clave: con la misma
+   * clave, las dos torres sonarían con la voz que se hubiera cargado antes.
+   */
+  "torre.canario.verde": "Puedes entrar",
+  "torre.canario.roja": "Espera ahí",
 
   /*
    * ── El otro avión de la frecuencia ──────────────────────────────────────
@@ -292,6 +310,8 @@ export const ES_PY = {
   "palabra.toca": "¡Tocá!",
   "palabra.volve": "¡Volvé!",
   "palabra.alAire": "¡Al aire!",
+  // La de la torre canaria: la misma orden, sin vosear. Ver `i18n/habla.ts`.
+  "palabra.canario.alAire": "¡Al aire!",
   "palabra.laPista": "¿La pista?",
   "palabra.cuidado": "¡Cuidado!",
   "palabra.rapido": "Muy rápido",

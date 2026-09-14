@@ -26,13 +26,18 @@ instructor	instructor/vuelo.puedeVolver~2.ogg	es-PY	La pista quedó libre: podé
 instructor	instructor/vuelo.frustrada.ogg	es-PY	¡Bien hecho! Te fuiste al aire. Probá de nuevo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.frustrada~2.ogg	es-PY	Muy bien: irse al aire también es volar bien	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.frustrada~3.ogg	es-PY	Eso estuvo bien. Damos otra vuelta y volvemos	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
-instructor	instructor/vuelo.aroAlto.ogg	es-PY	Vas alto para la pista. Bajá un poco	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.aroAlto~2.ogg	es-PY	Estás por encima de la senda: bajá un poquito	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
-instructor	instructor/vuelo.aroBajo.ogg	es-PY	Vas bajo para la pista. Subí un poco	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.aroBajo~2.ogg	es-PY	Te quedaste por debajo: subí un poquito	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
-instructor	instructor/vuelo.corregido.ogg	es-PY	¡Eso es! Ahora entrás por donde hay que entrar	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.corregido~2.ogg	es-PY	Muy bien, así estás en la senda	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
-instructor	instructor/vuelo.corregido~3.ogg	es-PY	Eso. Ahora venís derecho	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.aroAlto.ogg	es-PY	Venís un poco alto. Bajá suave	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aroAlto~2.ogg	es-PY	Venís un poco alto. Bajá el morro despacito	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.aroAlto~3.ogg	es-PY	Estás por encima. Soltá un poquito y vas a ir entrando	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.aroAlto~4.ogg	es-PY	Un poco alto para la pista: bajá suave	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.aroBajo.ogg	es-PY	Venís un poco bajo. Subí suave	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.aroBajo~2.ogg	es-PY	Venís bajo. Tirá un poquito y un toque de motor	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.aroBajo~3.ogg	es-PY	Estás por debajo: subí despacio, sin pasarte	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.aroBajo~4.ogg	es-PY	Un poco bajo para la pista: levantá suave	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.corregido.ogg	es-PY	¡Eso es! Así venís bien	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.corregido~2.ogg	es-PY	Muy bien, así venís	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.corregido~3.ogg	es-PY	Eso. Ahora entrás derechito	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.corregido~4.ogg	es-PY	Perfecto, quedate así	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.papiAlto.ogg	es-PY	Luces blancas: vas alto, bajá	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiBajo.ogg	es-PY	Luces rojas: vas bajo, subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.papiBien.ogg	es-PY	Dos rojas y dos blancas: vas bien	lo que toca hacer ahora, en vuelo y en tierra
@@ -104,6 +109,8 @@ instructor	instructor/ala.dice.arriba.ogg	es-PY	Mirá el azul: casi toda la fuer
 instructor	instructor/ala.dice.arrastra.ogg	es-PY	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.	lo que explica el esquema del ala
 instructor	instructor/ala.dice.cerca.ogg	es-PY	Cuidado: un poco más de ángulo y el aire se suelta.	lo que explica el esquema del ala
 instructor	instructor/ala.dice.perdida.ogg	es-PY	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.	lo que explica el esquema del ala
+torre-canarias	torre-canarias/torre.canario.verde.ogg	es-PY	Puedes entrar	la torre de Canarias, que no vosea
+torre-canarias	torre-canarias/torre.canario.roja.ogg	es-PY	Espera ahí	la torre de Canarias, que no vosea
 torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa
 torre	torre/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha en casa
 otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, Zulu Papa Alfa Bravo Charlie	el otro avión de la frecuencia

@@ -179,7 +179,16 @@ export class InstructorGrabado implements Instructor {
      * no sonar nunca. Un pack que se baja a medias no avisa: cada frase que
      * falta cae al navegador una por una y parece que el sistema va lento.
      */
-    voces: readonly string[] = ["instructor", "cabina", "torre", "otro"],
+    voces: readonly string[] = [
+      "instructor",
+      "cabina",
+      "torre",
+      // Y la torre de Canarias, que es otra persona y otras palabras: en las
+      // islas no se vosea. Sus claves son `torre.canario.*` y por eso no se
+      // pisan con las de arriba. Ver `i18n/habla.ts`.
+      "torre-canarias",
+      "otro",
+    ],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,
   ): Promise<number> {

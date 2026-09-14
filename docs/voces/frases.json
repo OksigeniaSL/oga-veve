@@ -192,49 +192,84 @@
     "id": "vuelo.aroAlto",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vas alto para la pista. Bajá un poco",
+    "texto": "Venís un poco alto. Bajá suave",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.aroAlto~2",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Estás por encima de la senda: bajá un poquito",
+    "texto": "Venís un poco alto. Bajá el morro despacito",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.aroAlto~3",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estás por encima. Soltá un poquito y vas a ir entrando",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.aroAlto~4",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Un poco alto para la pista: bajá suave",
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
     "id": "vuelo.aroBajo",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vas bajo para la pista. Subí un poco",
+    "texto": "Venís un poco bajo. Subí suave",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.aroBajo~2",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Te quedaste por debajo: subí un poquito",
+    "texto": "Venís bajo. Tirá un poquito y un toque de motor",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.aroBajo~3",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estás por debajo: subí despacio, sin pasarte",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.aroBajo~4",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Un poco bajo para la pista: levantá suave",
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
     "id": "vuelo.corregido",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "¡Eso es! Ahora entrás por donde hay que entrar",
+    "texto": "¡Eso es! Así venís bien",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.corregido~2",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Muy bien, así estás en la senda",
+    "texto": "Muy bien, así venís",
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
     "id": "vuelo.corregido~3",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Eso. Ahora venís derecho",
+    "texto": "Eso. Ahora entrás derechito",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.corregido~4",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Perfecto, quedate así",
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
@@ -733,6 +768,20 @@
     "idioma": "es-PY",
     "texto": "El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.",
     "para": "lo que explica el esquema del ala"
+  },
+  {
+    "id": "torre.canario.verde",
+    "voz": "torre-canarias",
+    "idioma": "es-PY",
+    "texto": "Puedes entrar",
+    "para": "la torre de Canarias, que no vosea"
+  },
+  {
+    "id": "torre.canario.roja",
+    "voz": "torre-canarias",
+    "idioma": "es-PY",
+    "texto": "Espera ahí",
+    "para": "la torre de Canarias, que no vosea"
   },
   {
     "id": "torre.verde",
