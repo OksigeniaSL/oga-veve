@@ -629,6 +629,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ruta: () => juego.plan?.rutaVisible() ?? [],
     /** Y la misma sin redondear, que es donde se ven las horquillas. */
     rutaCruda: () => juego.plan?.rutaCruda() ?? [],
+    /** Qué mandos de cabina hay, y cuál cae bajo un punto de la pantalla. */
+    botones: () => juego.aircraftMesh.botones?.hay ?? null,
+    mandoEn: (x: number, y: number) => {
+      const lienzo = juego.renderer.domElement;
+      const r = lienzo.getBoundingClientRect();
+      return (
+        juego.aircraftMesh.botones?.cualEsta(
+          ((x - r.left) / r.width) * 2 - 1,
+          -(((y - r.top) / r.height) * 2 - 1),
+          juego.camera,
+        ) ?? null
+      );
+    },
     /** Si esta cabina es de avión de línea: lo dice su panel de techo. */
     deLinea: () => !!juego.aircraftMesh.group.getObjectByName("panel-de-techo"),
     /** Cuántos asientos de pilotaje trae el modelo. */

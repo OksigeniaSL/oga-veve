@@ -1043,6 +1043,26 @@ export class Game {
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? PYKASU;
 
+    /*
+     * El dedo sobre la cabina: mirar qué mando hay debajo y pulsarlo al soltar.
+     * Ver `mirarLosMandos`, `pulsarElMando` y `world/botones-cabina.ts`.
+     */
+    const enPantalla = (e: PointerEvent): [number, number] => {
+      const r = options.canvas.getBoundingClientRect();
+      return [
+        ((e.clientX - r.left) / r.width) * 2 - 1,
+        -(((e.clientY - r.top) / r.height) * 2 - 1),
+      ];
+    };
+    options.canvas.addEventListener("pointermove", (e) => {
+      const [x, y] = enPantalla(e);
+      this.mirarLosMandos(x, y);
+    });
+    options.canvas.addEventListener("pointerup", (e) => {
+      const [x, y] = enPantalla(e);
+      this.pulsarElMando(x, y);
+      this.mirarLosMandos(x, y);
+    });
     this.renderer = new WebGLRenderer({
       canvas: options.canvas,
       antialias: true,
@@ -5626,6 +5646,37 @@ export class Game {
   }
 
   // ── Acciones ──────────────────────────────────────────────────────────
+
+  /**
+   * El dedo —o el ratón— sobre los mandos de la cabina.
+   *
+   * Pedido con las tres formas: «botones que poder pulsar, tanto con clic, tap
+   * como tecla». Las teclas ya estaban; esto es el mando que está **en la
+   * cabina**, donde lo busca quien se ha sentado ahí.
+   *
+   * Solo desde dentro: en las vistas de fuera el avión se ve entero y un clic
+   * ahí es otra cosa —mirar, no tocar—, así que no hay nada que pulsar.
+   *
+   * Y se dispara **al soltar**, no al apretar, que es como funciona cualquier
+   * botón: apretando se puede rectificar sin hacer nada, arrastrando el dedo
+   * fuera. Ver `world/botones-cabina.ts`.
+   */
+  private mirarLosMandos(x: number, y: number): void {
+    const botones = this.aircraftMesh.botones;
+    if (!botones) return;
+    const dentro = this.cameraMode === "cockpit";
+    botones.alumbrar(dentro ? botones.cualEsta(x, y, this.camera) : null);
+  }
+
+  private pulsarElMando(x: number, y: number): void {
+    const botones = this.aircraftMesh.botones;
+    if (!botones || this.cameraMode !== "cockpit") return;
+    const cual = botones.cualEsta(x, y, this.camera);
+    if (!cual) return;
+    if (cual === "motor") this.toggleEngine();
+    else if (cual === "flaps") this.input.alternarFlaps();
+    else this.input.pisarElFreno();
+  }
 
   private cycleCamera(): void {
     const index = CAMERA_MODES.indexOf(this.cameraMode);

@@ -41,6 +41,7 @@ import type { AircraftConfig } from "../flight/aircraft";
 import type { AircraftMesh } from "./aircraft-mesh";
 import { encenderPantallas } from "./pantallas-cabina";
 import { encenderRelojes } from "./relojes-cabina";
+import { encenderBotones } from "./botones-cabina";
 
 /** Dónde se dejan los modelos. Uno por aeronave, con su identificador. */
 const CARPETA = "assets/aeronaves";
@@ -328,7 +329,7 @@ function ojoDePiloto(
   grupo.updateWorldMatrix(true, true);
   const caja = new Box3();
   const centro = new Vector3();
-  let mejor: { z: number; alto: number } | null = null;
+  let mejor: { z: number; alto: number; x: number } | null = null;
   raiz.traverse((o) => {
     const n = o.name.toLowerCase();
     if (!n.includes("chair") && !n.includes("seat") && !n.includes("asiento"))
@@ -339,13 +340,27 @@ function ojoDePiloto(
     const local = grupo.worldToLocal(centro.clone());
     const alto = grupo.worldToLocal(caja.max.clone()).y;
     if (mejor && local.z >= mejor.z) return;
-    mejor = { z: local.z, alto };
+    mejor = { z: local.z, alto, x: local.x };
   });
   if (!mejor) return undefined;
-  const asiento: { z: number; alto: number } = mejor;
+  const asiento: { z: number; alto: number; x: number } = mejor;
 
   return {
-    x: 0,
+    /*
+     * **En el asiento del piloto, no en medio de los dos.**
+     *
+     * Esto devolvía cero, o sea el eje del avión. En una avioneta con dos
+     * plazas juntas eso es medio brazo de diferencia y no se nota; en una
+     * cabina de avión de línea son cuarenta y seis centímetros, y desde el
+     * medio **no hay ningún instrumento delante**: los del comandante quedan a
+     * la izquierda, los del copiloto a la derecha y los dos se salen de la
+     * pantalla por sus bordes. «El cuadro se sale y no veo los datos.»
+     *
+     * Desde el asiento de la izquierda se ve lo que ve quien va sentado ahí:
+     * sus dos pantallas delante y las del otro, de refilón. Que es justo la
+     * gracia de sentarse en un sitio y no en otro.
+     */
+    x: asiento.x,
     /*
      * **Los ojos por encima del respaldo, no a su altura.**
      *
@@ -540,6 +555,8 @@ export async function cargarModelo(
     pantallas: encenderPantallas(raiz, group),
     // Y los relojes, que hasta hoy eran discos grises. Ver `relojes-cabina.ts`.
     relojes: encenderRelojes(raiz),
+    // Y los mandos que se pulsan con el dedo. Ver `botones-cabina.ts`.
+    botones: encenderBotones(raiz),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
   };

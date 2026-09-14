@@ -101,6 +101,31 @@ export class InputManager {
   }
 
   /**
+   * Los flaps, desde un mando que no es una tecla.
+   *
+   * Existe porque el mando de los flaps de la cabina se pulsa con el dedo —ver
+   * `world/botones-cabina.ts`— y los flaps son un conmutador que lleva
+   * `onKeyDown`: sin esto habría que fingir una pulsación de teclado, que es la
+   * clase de atajo que se paga dos veces.
+   */
+  alternarFlaps(): void {
+    this.controls.flaps = this.controls.flaps > 0.5 ? 0 : 1;
+  }
+
+  /**
+   * Y un toque de freno desde la cabina.
+   *
+   * Medio segundo, que es lo que dura pisar y soltar: el mando de la cabina es
+   * un botón y no un pedal, así que no se puede «mantener».
+   */
+  pisarElFreno(): void {
+    this.touchBrakes = true;
+    setTimeout(() => {
+      this.touchBrakes = false;
+    }, 500);
+  }
+
+  /**
    * Motor desde los botones de la pantalla: -1 baja, +1 sube, 0 suelta.
    *
    * No fija un valor: empuja en una dirección, exactamente igual que las
