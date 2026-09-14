@@ -232,7 +232,24 @@ export function caidaSinMotor(a: AircraftConfig, velocidad: number): number {
   const v = Math.max(1, velocidad);
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
   const cl = (2 * a.mass * G) / (RHO * v * v * a.wingArea);
-  const cd = a.aero.cd0 + (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
+  /*
+   * **Y la hélice al ralentí frena, que no es un detalle.**
+   *
+   * Un motor al ralentí no deja la hélice quieta: la deja girando movida por el
+   * aire, y un disco girando así es un freno considerable — por eso un piloto
+   * que pierde el motor de verdad para la hélice si puede. Con el avión limpio
+   * la cuenta da una caída de 2,7 m/s para el entrenador y la de verdad son 3,3
+   * (seiscientos cincuenta pies por minuto, que es lo que baja un 172 con el
+   * gas al mínimo). Seis décimas del cd del avión cubren la diferencia.
+   *
+   * En un reactor no: su ralentí todavía empuja, y el fan no es un disco
+   * parado en medio del aire.
+   */
+  const molinete = esDeChorro(a) ? 0 : a.aero.cd0 * 0.6;
+  const cd =
+    a.aero.cd0 +
+    molinete +
+    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
   return (v * cd) / cl;
 }
 
