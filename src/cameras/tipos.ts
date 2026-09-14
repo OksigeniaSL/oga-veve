@@ -63,15 +63,19 @@ export interface CameraRig {
 export const BASE_FOV = 62;
 
 /**
- * Y el de la cabina, que es más cerrado.
+ * Y el de la cabina, que es un poco más cerrado.
  *
  * Sesenta y dos grados son los que hacen falta volando por fuera, y dentro de
  * la cabina meten en el cuadro el techo, los montantes y los dos respaldos: el
- * mundo se ve por una rendija rodeada de avión. Cincuenta —un objetivo un poco
- * más largo— dejan el parabrisas ocupando lo que ocupa cuando uno va sentado
- * ahí de verdad.
+ * mundo se ve por una rendija rodeada de avión.
+ *
+ * **Cincuenta y ocho, y no cincuenta**, desde que el panel dice cosas. Con
+ * cincuenta cabía el mundo y no cabía el tablero: en el cuatrimotor se salían
+ * por el borde los dos últimos relojes de motor —«todos descentrados y fuera de
+ * margen»— y en la avioneta, el de flaps. Ocho grados no quitan parabrisas y
+ * meten el panel entero, que es lo que hay que poder mirar.
  */
-export const FOV_DE_CABINA = 50;
+export const FOV_DE_CABINA = 58;
 export const FOV_STRETCH = 9;
 
 /**
