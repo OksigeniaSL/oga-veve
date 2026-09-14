@@ -204,6 +204,27 @@ export interface Aproximacion {
    * módulo que cambia: las luces de aproximación se ponen una vez y se quedan.
    */
   mirarDesde(x: number, y: number, z: number): void;
+  /**
+   * A cuántos metros del umbral están las luces, pista adentro.
+   *
+   * **Es el origen de la senda, y hacía falta sacarlo de aquí.** El PAPI define
+   * la senda de tres grados **desde donde están sus luces**, no desde el
+   * umbral, y por eso una aproximación bien hecha cruza el umbral a quince o
+   * dieciséis metros de altura en vez de rozarlo: eso es la altura de cruce de
+   * umbral, y es la de verdad.
+   *
+   * Los aros y el hilo la dibujaban desde el umbral con altura cero, así que
+   * enseñaban una senda **más baja** que la del PAPI del mundo: volando por el
+   * centro de los aros, el PAPI veía 2,74° en el primero y bajaba a 2,02° en
+   * los últimos —cuatro luces rojas— mientras los aros decían que se iba
+   * perfecto. Tres sendas en la misma pantalla y ninguna de acuerdo.
+   *
+   * Sale de donde de verdad estén las luces: si el fichero del aeródromo las
+   * trae mapeadas, de ahí; si no, de la medida normalizada. En Cuatro Vientos
+   * están a 162 m y en La Palma a 297, y esos ciento treinta y cinco metros de
+   * diferencia son siete de altura sobre el umbral.
+   */
+  readonly papiAdentro: number;
   dispose(): void;
 }
 
@@ -342,9 +363,25 @@ export function crearAproximacion(
   };
   mirarDesde(0, cotaUmbral + 100, 0);
 
+  /*
+   * A cuánto del umbral están las luces, medido sobre el eje de la pista.
+   *
+   * **Medido y no supuesto**: en Cuatro Vientos el fichero las trae a 162 m y en
+   * La Palma a 297, y esos ciento treinta y cinco metros son siete de altura
+   * sobre el umbral. Ver `papiAdentro`.
+   */
+  const papiAdentro =
+    sitio.luces.length > 0
+      ? Math.abs(
+          (sitio.luces[0]![0] - entrada.xy[0]) * ux +
+            (sitio.luces[0]![1] - entrada.xy[1]) * uy,
+        )
+      : PAPI_ADENTRO;
+
   return {
     grupo,
     mirarDesde,
+    papiAdentro,
     dispose() {
       grupo.traverse((o) => {
         const g = (o as { geometry?: BufferGeometry }).geometry;

@@ -328,9 +328,18 @@ export const ES_PY = {
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
   "vuelo.puedeVolver": "La torre te deja volver a intentarlo",
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
-  "vuelo.aroAlto": "Vas alto para la pista. Bajá un poco",
-  "vuelo.aroBajo": "Vas bajo para la pista. Subí un poco",
-  "vuelo.corregido": "¡Eso es! Ahora entrás por donde hay que entrar",
+  /*
+   * **Y estos tres hablan como habla una persona.**
+   *
+   * Se pidió tal cual: «más natural, que me diga que baje, que estoy alto y
+   * así, como diría una instructora». Así que ninguno nombra el aro — el aro es
+   * el dibujo con el que el juego lo enseña, y lo que se corrige es la altura
+   * **para la pista**, que es lo que se está mirando. Sus otras formas están en
+   * `audio/variantes.ts`.
+   */
+  "vuelo.aroAlto": "Venís un poco alto. Bajá suave",
+  "vuelo.aroBajo": "Venís un poco bajo. Subí suave",
+  "vuelo.corregido": "¡Eso es! Así venís bien",
   "circuito.subida": "Subí derecho por el eje",
   "circuito.cruzado": "Girá a la izquierda: volvemos a la pista",
   "circuito.encola": "Volá al lado de la pista, con ella a tu izquierda",
