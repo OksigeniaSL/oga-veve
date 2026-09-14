@@ -271,7 +271,7 @@ import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
-import { Audio } from "./audio/audio";
+import { Audio, type Cue } from "./audio/audio";
 import { InstructorGrabado } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
@@ -681,8 +681,32 @@ export class Game {
    * solo levantarla. Ver `main.ts`.
    */
   private pausadoAdrede = false;
+  /**
+   * La tarjeta se cayó y hay que volver a ponerla, **sin volver a decir nada**.
+   *
+   * Una tarjeta de las que se quedan puestas —«esperá la luz», «luz verde,
+   * entrá»— la puede tapar cualquier aviso de paso, y al apagarse ese aviso la
+   * pantalla se queda en blanco con la orden perdida. Eso ya se arreglaba
+   * borrando la fase anunciada para que se volviera a anunciar sola… y con ella
+   * volvían **la voz, el rótulo y la campana**, cada vez, para siempre. Medido:
+   * treinta y nueve campanas en un minuto de rodaje, y «luz verde, entrá a la
+   * pista» una y otra vez.
+   *
+   * Poner la tarjeta otra vez es una cosa; anunciar una fase nueva es otra.
+   */
+  private soloLaTarjeta = false;
   /** Lo que ha ido sonando la concha, solo en desarrollo. Para el banco. */
   readonly loQueSonoLaConcha: string[] = [];
+  /**
+   * Y **todos los avisos sonoros**, con su instante. Solo en desarrollo.
+   *
+   * Hacía falta y no estaba: se jugó y se oyó «una campana como una alarma todo
+   * el rato que estoy en rodadura», y desde fuera no había manera de mirarlo.
+   * Las voces sí se podían espiar —el banco cambia el sintetizador por uno de
+   * mentira— y los avisos no, porque son osciladores dentro del motor de audio.
+   * Con esto, un banco puede contar campanas. Ver `avisar`.
+   */
+  readonly loQueSono: { que: string; cuando: number }[] = [];
   /** Si hay alguno de los que congelan el vuelo. Lo dice `ui/panel.ts`. */
   private hayPanelAbierto = false;
   /**
@@ -1449,7 +1473,7 @@ export class Game {
       },
       suena: (que) => {
         if (import.meta.env.DEV) this.loQueSonoLaConcha.push(que);
-        this.audio.cue(que);
+        this.avisar(que);
       },
     });
     const misionRaiz = document.getElementById("mision");
@@ -1485,11 +1509,11 @@ export class Game {
      */
     this.hud.onVelocidades((cual) => {
       if (cual === "V1") {
-        this.audio.cue("v1");
+        this.avisar("v1");
         this.cantar("V one", t("vuelo.comprometido"), "vuelo.comprometido");
         return;
       }
-      this.audio.cue("rotar");
+      this.avisar("rotar");
       this.cantar("rotate", t("vuelo.rotar"), "vuelo.rotar");
       this.hud.senal.mostrar(
         "tirar",
@@ -1679,7 +1703,7 @@ export class Game {
     this.hud.setMissionProgress(this.missions.progress);
     this.contarLaMision();
     this.hud.flash(t("mission.started", { name: t(mision.nameKey) }), 4);
-    this.audio.cue("mision");
+    this.avisar("mision");
     this.updateMissionMarker();
   }
 
@@ -1899,9 +1923,9 @@ export class Game {
      * aterrizaba a doscientos por hora oía un éxito.
      */
     if (veredicto === "suave" || veredicto === "firme") {
-      this.audio.cue("success");
+      this.avisar("success");
     } else {
-      this.audio.cue("attention");
+      this.avisar("attention");
       const dicho =
         veredicto === "rapido" ? "hud.landedFast" : "hud.landedOffRunway";
       this.cantar(
@@ -2272,7 +2296,7 @@ export class Game {
     this.input.controls.throttle = 0;
     this.input.controls.brakes = 1;
     this.input.releaseAll();
-    this.audio.cue("error");
+    this.avisar("error");
     this.cantar("we have a problem", t("vuelo.roto"), "vuelo.roto");
     this.agenda.luego(TARDA_EL_FINAL, () => {
       if (this.percance !== tipo) return;
@@ -2369,7 +2393,7 @@ export class Game {
           this.tier.instruments === "none" ? "" : t(`grado.${ahora}` as never),
           this.relojDeHoras(),
         );
-        this.audio.cue("achieved");
+        this.avisar("achieved");
         return;
       }
       const final = reconocer(this.galones.lista);
@@ -2384,7 +2408,7 @@ export class Game {
         // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
         this.relojDeHoras(),
       );
-      this.audio.cue("achieved");
+      this.avisar("achieved");
     });
   }
 
@@ -2442,7 +2466,7 @@ export class Game {
       null,
       { segundos: SE_QUEDA_EL_BULTO, prioridad: URGENTE },
     );
-    this.audio.cue("peligro");
+    this.avisar("peligro");
     this.cantar("obstacle ahead", t("vuelo.bulto"), "vuelo.bulto");
   }
 
@@ -2478,7 +2502,7 @@ export class Game {
         prioridad: URGENTE,
       });
     });
-    this.hechos.on("frustrada", () => this.audio.cue("achieved"));
+    this.hechos.on("frustrada", () => this.avisar("achieved"));
     // Al cuaderno: renunciar es ganar, y el grado más alto lo pide.
     this.hechos.on("frustrada", () =>
       this.apuntar({ frustradas: this.cuaderno.frustradas + 1 }),
@@ -2504,7 +2528,7 @@ export class Game {
         null,
         { segundos: SE_QUEDAN_LOS_MINIMOS, prioridad: IMPORTANTE },
       );
-      this.audio.cue("attention");
+      this.avisar("attention");
       this.cantar("minimums", t("vuelo.minimos"), "vuelo.minimos");
     });
 
@@ -2537,7 +2561,7 @@ export class Game {
           tecla: nombreDeTecla(this.input.preferredKey("brakes")),
         },
       );
-      this.audio.cue("error");
+      this.avisar("error");
       this.instructor.decir(t("vuelo.teLoPasaste"), "vuelo.teLoPasaste");
     });
 
@@ -2592,7 +2616,7 @@ export class Game {
         segundos: SE_QUEDA_EL_ARO * 2,
         prioridad: IMPORTANTE,
       });
-      this.audio.cue("achieved");
+      this.avisar("achieved");
       this.instructor.decir(t("gafas.ganadas"), "gafas.ganadas");
       this.llevarLasGafas(leerGafas());
     });
@@ -2603,7 +2627,7 @@ export class Game {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
       });
-      this.audio.cue("achieved");
+      this.avisar("achieved");
       this.cantar("on the glide path", bien.texto, bien.id, "baja");
     });
 
@@ -2697,7 +2721,7 @@ export class Game {
         null,
         { segundos: Infinity, prioridad: URGENTE },
       );
-      this.audio.cue("peligro");
+      this.avisar("peligro");
       this.cantar(
         porque === "pistaOcupada" ? "go around, runway occupied" : "go around",
         dicho.texto,
@@ -2718,7 +2742,7 @@ export class Game {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
       });
-      this.audio.cue("success");
+      this.avisar("success");
       // «cleared to land» no tiene variantes y no las va a tener: es
       // fraseología fija. Ver `audio/variantes.ts`.
       this.cantar("cleared to land", libre.texto, libre.id);
@@ -4257,7 +4281,7 @@ export class Game {
        * otra, y para quien depende del sonido como segundo canal eso es un
        * canal menos.
        */
-      this.audio.cue(terreno === "sube" ? "peligro" : "attention");
+      this.avisar(terreno === "sube" ? "peligro" : "attention");
       // En inglés aeronáutico, como el resto de la voz de cabina.
       const cual =
         terreno === "sube" ? "vuelo.terrenoSube" : "vuelo.terrenoBajo";
@@ -4333,9 +4357,9 @@ export class Game {
       this.flight.state.onGround || !acercandose
         ? null
         : this.runwayGuide.check(this.flight.state.position);
-    if (aro === "cruzado") this.audio.cue("aro");
+    if (aro === "cruzado") this.avisar("aro");
     else if (aro === "perdido") {
-      this.audio.cue("aroFallado");
+      this.avisar("aroFallado");
       /*
        * **Y se dice por dónde se escapó, que es lo único que sirve.**
        *
@@ -4794,7 +4818,9 @@ export class Game {
          */
         this.hechos.emit("gestoDelSenalero", { gesto: enPantalla });
       } else {
+        // Reponer, no volver a anunciar. Ver `soloLaTarjeta`.
         this.faseAnunciada = "";
+        this.soloLaTarjeta = true;
       }
     }
 
@@ -4966,7 +4992,7 @@ export class Game {
     );
     if (!ganado) return;
     this.hud.setGalones(this.galones.lista);
-    this.audio.cue("achieved");
+    this.avisar("achieved");
   }
 
   /**
@@ -5138,6 +5164,7 @@ export class Game {
      */
     if (!this.hud.senal.visible && SE_QUEDAN.has(vista.fase)) {
       this.faseAnunciada = "";
+      this.soloLaTarjeta = true;
     }
 
     // La lámpara de la torre solo tiene sentido en tierra y antes de despegar:
@@ -5193,6 +5220,10 @@ export class Game {
     if (vista.fase !== this.faseAnunciada) {
       const antes = this.faseAnunciada;
       this.faseAnunciada = vista.fase;
+      // Si esto es solo reponer la tarjeta que alguien tapó, se pone y ya: ni
+      // voz, ni rótulo, ni campana. Ver `soloLaTarjeta`.
+      const repuesta = this.soloLaTarjeta;
+      this.soloLaTarjeta = false;
       /*
        * **Y alineado en la pista, su número.**
        *
@@ -5256,7 +5287,7 @@ export class Game {
         antes === "abandonando" &&
         (vista.fase === "a-plataforma" || vista.fase === "en-puesto")
       ) {
-        this.audio.cue("success");
+        this.avisar("success");
         if (conLetras) this.hud.flash(t("vuelo.pistaLibre"), 3.2);
       }
       // Al lado del mensaje va **la tecla**, cuando la fase pide una. «Arrancá
@@ -5348,12 +5379,14 @@ export class Game {
       });
       // Y con su clave: los ficheros de voz se llaman por clave, no por
       // texto. Ver `audio/banco-de-voz.ts`.
-      this.instructor.decir(frase, clave);
-      if (conLetras) {
-        this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
+      if (!repuesta) {
+        this.instructor.decir(frase, clave);
+        if (conLetras) {
+          this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
+        }
+        if (vista.fase === "autorizado" || vista.fase === "apagado")
+          this.avisar("success");
       }
-      if (vista.fase === "autorizado" || vista.fase === "apagado")
-        this.audio.cue("success");
       // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
       // decir qué te llevás. Ver `terminarElVuelo`.
       if (vista.fase === "apagado") this.terminarElVuelo();
@@ -5428,11 +5461,13 @@ export class Game {
             tecla: nombreDeTecla(this.input.preferredKey("brakes")),
           },
         );
-        this.audio.cue("attention");
+        this.avisar("attention");
         this.instructor.decir(t("vuelo.aterrizado"), "vuelo.aterrizado");
       } else {
-        // Que la fase vuelva a anunciarse sola en el próximo fotograma.
+        // Que la tarjeta que tocara vuelva sola en el próximo fotograma, sin
+        // repetir la voz ni la campana. Ver `soloLaTarjeta`.
         this.faseAnunciada = "";
+        this.soloLaTarjeta = true;
       }
     }
 
@@ -5585,6 +5620,20 @@ export class Game {
    * coeficientes con más ayudas. Ver `src/flight/tiers.ts` y
    * `src/flight/arcade.ts`.
    */
+  /**
+   * Toca un aviso, y lo apunta.
+   *
+   * Un solo camino para los treinta y un sitios que avisaban por su cuenta: así
+   * se puede contar desde fuera cuántas veces suena cada cosa, que es lo que
+   * hace falta para cazar una campana repetida. En producción es la misma
+   * llamada de siempre — el apunte se borra del paquete.
+   */
+  private avisar(que: Cue): void {
+    if (import.meta.env.DEV)
+      this.loQueSono.push({ que, cuando: Math.round(this.clock.elapsedTime) });
+    this.audio.cue(que);
+  }
+
   private buildFlightModel(tier: Tier): FlightModel {
     // El avión flota sobre el agua en vez de hundirse: es un juego para
     // chicos, y amerizar de morro y desaparecer no le divierte a nadie.
@@ -5727,7 +5776,7 @@ export class Game {
     if (state.onGround && !this.wasOnGround) {
       // Toque de ruedas. Una toma dura suena distinto de una suave, que es lo
       // que enseña a aterrizar sin necesidad de puntuación ninguna.
-      this.audio.cue(state.touchdownSinkRate > 2.5 ? "error" : "touchdown");
+      this.avisar(state.touchdownSinkRate > 2.5 ? "error" : "touchdown");
     }
     /*
      * **Y el logro de despegar suena una vez por vuelo, no en cada bote.**
@@ -5744,10 +5793,10 @@ export class Game {
       !this.yaDespego
     ) {
       this.yaDespego = true;
-      this.audio.cue("achieved");
+      this.avisar("achieved");
     }
-    if (state.stalled && !this.wasStalled) this.audio.cue("perdida");
-    if (state.crashed && !this.wasCrashed) this.audio.cue("error");
+    if (state.stalled && !this.wasStalled) this.avisar("perdida");
+    if (state.crashed && !this.wasCrashed) this.avisar("error");
 
     this.wasOnGround = state.onGround;
     this.wasStalled = state.stalled;
@@ -5778,7 +5827,7 @@ export class Game {
       this.missions.start(mission);
       this.hud.setMissionProgress(this.missions.progress);
       this.hud.flash(t("mission.started", { name: t(mission.nameKey) }), 4);
-      this.audio.cue("mision");
+      this.avisar("mision");
       this.contarLaMision();
     }
     this.updateMissionMarker();
@@ -5814,10 +5863,10 @@ export class Game {
     this.updateMissionMarker();
 
     if (event.finished) {
-      this.audio.cue("achieved");
+      this.avisar("achieved");
       this.hud.flash(t("mission.done"), 5);
     } else {
-      this.audio.cue("success");
+      this.avisar("success");
       this.hud.flash(t("mission.step"), 2);
     }
   }
