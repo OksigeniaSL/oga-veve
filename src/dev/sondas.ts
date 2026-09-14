@@ -31,7 +31,11 @@ import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { alturaDeEdificio } from "../world/aerodrome";
-import { escalaDeCircuito, verticesDelCircuito } from "../world/circuito";
+import {
+  escalaDeCircuito,
+  manoDelCircuito,
+  verticesDelCircuito,
+} from "../world/circuito";
 import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
 import { leerGafas } from "../flight/gafas";
 
@@ -652,6 +656,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       });
       return n;
     },
+    /**
+     * La cota del asfalto **debajo de un punto**, m.
+     *
+     * Hace falta fuera porque una pista con pendiente no está a una sola cota:
+     * la de La Palma baja once metros y medio, y un piloto que vuele la senda
+     * contra la cota del centro toca ciento veinte metros corto en la cabecera
+     * alta. Ver `Terrain.cotaDeLaPista`.
+     */
+    cotaDePista: (x: number, z: number) => juego.terrain.cotaDeLaPista(x, z),
     /** Por qué cabecera se opera hoy y con qué tiempo. Ver `conViento`. */
     cabecera: () => cabeceraEnUso(juego.scenario),
     meteo: () => juego.scenario.meteo ?? null,
@@ -732,12 +745,31 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * verdad para la misma figura, que es como se acaba midiendo un circuito
      * que no es el que el juego dibuja.
      */
+    /*
+     * **Y por la mano que toque, que es la mitad de la respuesta.**
+     *
+     * Este respaldo pasaba `undefined` y `verticesDelCircuito` entiende por eso
+     * «izquierda», que es la norma. Pero el circuito de verdad lo monta
+     * `crearCircuito` preguntándole al terreno —`manoDelCircuito`—, y hay campos
+     * donde la respuesta es la otra: en La Palma la izquierda es la ladera del
+     * volcán, a doscientos cuarenta metros, y la derecha es el mar.
+     *
+     * O sea que el piloto del banco volaba **un circuito distinto del que el
+     * juego dibuja**, y en La Palma eso es volar contra la isla: medido, el
+     * avión bajando de 80 a 23 metros sobre el terreno con el morro apuntando
+     * al monte. Dos fuentes de verdad para la misma figura, que es justo lo que
+     * este fichero promete no hacer.
+     */
     circuito: () =>
       juego.circuito?.vertices ??
       verticesDelCircuito(
         juego.scenario.runway,
         juego.terrain.runwayElevation,
-        undefined,
+        manoDelCircuito(
+          juego.scenario.runway,
+          juego.terrain.runwayElevation,
+          (x, z) => juego.terrain.sampleHeight(x, z),
+        ),
         escalaDeCircuito(juego.aircraft.approachSpeed),
       ),
     /** A qué caída se tocó, m/s. Para el banco y para las sondas. */

@@ -32,6 +32,22 @@
  * Tarda lo que tarda un vuelo: unos cinco minutos de reloj. Por eso no está en
  * `npm run vuelo` con los demás, sino aparte.
  *
+ * ## Esto no da el mismo número dos veces, y hay que saberlo
+ *
+ * El banco vuela en un navegador de verdad y en tiempo de reloj: el paso de
+ * simulación depende de lo que tarde cada fotograma, así que dos ejecuciones
+ * del mismo código con el mismo escenario **no dan el mismo vuelo**. Medido a
+ * propósito en La Palma, cuatro veces seguidas sin tocar una línea: se tocó a
+ * 0,3 · 9,9 · 5,7 y 1,2 metros del eje, y una de las cuatro cayó del lado malo
+ * del listón.
+ *
+ * Lo que se saca de ahí: un cambio de una comprobación arriba o abajo en un
+ * escenario **no dice nada**, y perseguirlo es afinar contra el ruido —se hizo,
+ * y se perdieron dos vueltas del barrido en ello—. Lo que sí dice algo es un
+ * fallo que se repite, uno que aparece en varios campos a la vez, o un número
+ * que se mueve de escala: la toma que pasa de 150 a 320 metros, el rodaje de
+ * vuelta que se dobla, el percance que sale siempre.
+ *
  * Uso: `node scripts/verificar-vuelo-entero.mjs [escenario] [tramo]`
  */
 import { chromium } from "playwright";
@@ -594,8 +610,19 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
 
   const umbral = o.puntoDeFinal(0);
   const cotaDePista = umbral ? o.suelo(umbral.x, umbral.z) : 0;
-  /** Altura sobre la pista, que es la que importa para volar un circuito. */
-  const alto = (s) => s.position.y - cotaDePista;
+  /**
+   * Altura sobre la pista, que es la que importa para volar un circuito.
+   *
+   * **Y sobre el trozo de pista que toca, no sobre su centro.** Una pista con
+   * pendiente no está a una sola cota: la de La Palma baja once metros y medio
+   * de punta a punta, así que volando la senda contra la cota del centro se
+   * llega seis metros bajo en la cabecera alta — y seis metros de menos en una
+   * senda de tres grados son **ciento veinte metros de terreno antes del
+   * umbral**. Medido allí: el avión tocaba a 122 m del asfalto y el juego lo
+   * cantaba, con razón, como aterrizaje fuera de pista.
+   */
+  const alto = (s) =>
+    s.position.y - (o.cotaDePista?.(s.position.x, s.position.z) ?? cotaDePista);
 
   // Doscientos metros y la entrada en final a dos kilómetros y medio: es un
   // circuito de verdad y es lo más corto que se puede volar sin que parezca
@@ -922,7 +949,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     }
     if (i % 20 === 0) {
       linea.push(
-        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m umbral ${alUmbral(s).toFixed(0)}m coche ${alCocheAhora < 0 ? "—" : `${alCocheAhora.toFixed(0)}/${ladoDelCoche.toFixed(0)}`} ${tarjeta.dibujo || "—"}`,
+        `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m umbral ${alUmbral(s).toFixed(0)}m coche ${alCocheAhora < 0 ? "—" : `${alCocheAhora.toFixed(0)}/${ladoDelCoche.toFixed(0)}`} v${aDonde} suelo ${s.heightAboveGround.toFixed(0)}m en ${s.position.x.toFixed(0)},${s.position.z.toFixed(0)} ${tarjeta.dibujo || "—"}`,
       );
     }
 
@@ -1181,11 +1208,83 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       // Sobre la pista se corta el gas: eso es aterrizar. Y antes, la
       // velocidad de aproximación a mano, que el gas no significa lo mismo en
       // los dos modelos de vuelo.
-      const quiere = falta < 60 ? 24 : 30;
-      c.throttle =
-        s.airspeed < quiere
-          ? Math.min(1, c.throttle + 0.05)
-          : Math.max(0, c.throttle - 0.05);
+      /*
+       * **La velocidad de aproximación es la de este avión, no la de treinta.**
+       *
+       * Estaba clavada en treinta metros por segundo, y treinta es la
+       * aproximación de la avioneta —ni siquiera: la suya son treinta y tres—.
+       * El de fuselaje ancho entra a setenta y cinco. Un piloto de banco que
+       * le pide treinta a un avión que vuela a setenta y cinco no está
+       * aterrizando: está cayéndose despacio. Es la misma constante parroquial
+       * de siempre, ahora en el banco.
+       */
+      /*
+       * **Y en proporción a la suya, no la suya a secas.** Se probó a volar el
+       * final justo a la velocidad de aproximación de la tarjeta —treinta y
+       * tres en la avioneta— y el barrido se cayó por el otro lado: Yvytu
+       * Rape, Encarnación y Cuatro Vientos pasaron a «pasada», con el avión
+       * flotando a un metro del asfalto sin llegar a tocar, y el rodaje de
+       * vuelta de Silvio Pettirossi se fue a 318 segundos porque se tocaba
+       * mucho más allá. Tres metros por segundo de más al cruzar el umbral son
+       * un avión que no se posa.
+       *
+       * Las dos cifras que había —treinta al final y veinticuatro en la
+       * recogida— son 0,91 y 0,73 de la aproximación de la avioneta. Puestas
+       * como proporción, la avioneta vuela exactamente como volaba y el de
+       * fuselaje ancho cruza a sesenta y ocho en vez de a treinta.
+       */
+      const deAproximacion = suyas.aproximacion ?? 33;
+      const quiere = falta < 60 ? deAproximacion * 0.73 : deAproximacion * 0.91;
+      /*
+       * **Y el gas también vuela la senda, no solo la velocidad.**
+       *
+       * Con el gas atado únicamente a la velocidad, el final entero se volaba
+       * al ralentí: el avión iba justo a la velocidad pedida, así que el gas
+       * bajaba a cero, y al ralentí ningún avión baja tres grados — baja
+       * cuatro y pico. Como además el mando de altura tiene prohibido tirar
+       * por debajo de la velocidad pedida, el piloto no tenía con qué
+       * sostenerse y llegaba siempre por debajo de la senda. Medido en La
+       * Palma con el Tukã: en los últimos diez segundos pasó de tres metros
+       * por debajo a tocar **ciento cincuenta y tres metros antes del
+       * umbral**, en el mar.
+       *
+       * Lo que se hace de verdad es lo de siempre: **la velocidad con la
+       * palanca y la senda con el gas**. Aquí se deja la palanca como estaba
+       * —que mueve todos los escenarios— y se le suma al gas lo que pide la
+       * senda cuando se va por debajo. Manda el que más pide, así que por
+       * encima de la senda no cambia nada, y pasado el umbral se apaga: sobre
+       * el asfalto el gas se corta, que es lo que es aterrizar.
+       */
+      /*
+       * **Con banda muerta, y no es adorno.** Este lazo era de dos estados
+       * —o sube o baja—, así que en final el gas oscilaba entre cero y medio
+       * a cada fotograma, y esa oscilación se le nota al avión: medido en La
+       * Palma, con el gas de dos estados se tocaba a **22,6 m del eje** y con
+       * tres metros por segundo de banda muerta, a 0,3. Un avión al que le
+       * mueven el gas veinte veces por minuto no va recto.
+       */
+      const porVelocidad =
+        s.airspeed < quiere ? 0.05 : s.airspeed > quiere + 3 ? -0.05 : 0;
+      /*
+       * Y la senda pide lo suyo: **por debajo, gas, aunque sobre velocidad**,
+       * que es lo único que sostiene a un avión en el aire. Manda el que más
+       * pide, así que por encima de la senda no cambia nada. Pasado el umbral
+       * el término se apaga: sobre el asfalto el gas se corta, que es lo que
+       * es aterrizar.
+       */
+      const bajoLaSenda = objetivo - alto(s);
+      const porSenda =
+        falta <= 0
+          ? -0.05
+          : bajoLaSenda > 2
+            ? 0.06
+            : bajoLaSenda < -2
+              ? -0.04
+              : -0.05;
+      c.throttle = Math.max(
+        0,
+        Math.min(1, c.throttle + Math.max(porVelocidad, porSenda)),
+      );
       /*
        * Con la misma ley de altura que arriba: bajada limitada y amortiguada.
        * Ver `aLaAltura`, que cuenta el porqué con lo medido.
@@ -1250,8 +1349,23 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * interceptación calculado y salió peor —el avión se iba del otro lado—,
        * así que se queda lo que ya funcionaba, con la mirada variable.
        */
-      const tx = r.x + fx * (along + 300);
-      const tz = r.z + fz * (along + 300);
+      /*
+       * **Y la mirada se acorta al acercarse.**
+       *
+       * Trescientos metros fijos convergen despacio: saliendo de la base con
+       * el eje a cincuenta metros, el avión llegaba al umbral todavía a
+       * veinticinco —o sea, en el borde de una pista de cuarenta y cinco— y en
+       * La Palma eso es tocar fuera. Medido allí: 25 m a mil metros del umbral
+       * y 22 al tocar, convergiendo tres metros por kilómetro.
+       *
+       * Mirando más cerca cuando queda menos, el mismo lazo aprieta al final
+       * sin ponerse nervioso lejos, que es lo que hace cualquiera aparcando en
+       * línea. El suelo son ciento veinte metros: por debajo, el punto de mira
+       * se mete dentro de la pista y el avión empieza a serpentear.
+       */
+      const mirada = Math.max(120, Math.min(300, falta * 0.4));
+      const tx = r.x + fx * (along + mirada);
+      const tz = r.z + fz * (along + mirada);
       c.aileron = alPuntoPorElSuelo(s, tx, tz);
       if (s.onGround && s.onRunway) {
         toco = t;
