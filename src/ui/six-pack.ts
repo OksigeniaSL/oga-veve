@@ -20,24 +20,33 @@
  */
 
 import type { FlightState } from "../flight/model";
+import { cuadroDe, type Cuadro } from "./cuadro";
+import { PYKASU } from "../flight/aircraft";
 
 /** Recorrido de una aguja de esfera completa, en grados. */
 const SWEEP = 300;
 const SWEEP_START = -150;
 
-/** Escalas de fondo de escala. */
-const ASI_MAX_KT = 160;
-const VSI_MAX_FPM = 2000;
-
 export class SixPack {
   private root: HTMLElement | null = null;
   private readonly needles = new Map<string, SVGElement>();
+  /**
+   * Las escalas del avión que se vuela.
+   *
+   * **No son las mismas para todos**, y creerlo era un fallo con consecuencia:
+   * con el fondo de escala de la avioneta, el anemómetro del avión de fuselaje
+   * ancho se clavaba en el tope nada más despegar. Ver `cuadro.ts`.
+   *
+   * Empieza con las del entrenador porque el juego empieza con él, y el HUD la
+   * cambia en cuanto se cambia de aeronave.
+   */
+  private cuadro: Cuadro = cuadroDe(PYKASU);
 
   /** Devuelve el marcado completo, para que el HUD lo inserte. */
-  static markup(): string {
+  static markup(c: Cuadro): string {
     return `
       <div class="seispack" data-hud="sixpack" role="group" aria-label="Instrumentos">
-        ${dial("asi", "IAS", asiFace(), '<g data-needle="asi">' + needle(38) + "</g>")}
+        ${dial("asi", "IAS", asiFace(c), '<g data-needle="asi">' + needle(38) + "</g>")}
         ${dial("ai", "ATT", aiFace(), "")}
         ${dial("alt", "ALT", altFace(), '<g data-needle="alt-thousands">' + needle(24) + '</g><g data-needle="alt-hundreds">' + needle(40) + "</g>")}
         ${dial("tc", "T/C", tcFace(), "")}
@@ -45,6 +54,11 @@ export class SixPack {
         ${dial("vsi", "V/S", vsiFace(), '<g data-needle="vsi">' + needle(38) + "</g>")}
       </div>
     `;
+  }
+
+  /** Con qué avión se vuela ahora. Se llama antes de `bind`. */
+  ponerCuadro(c: Cuadro): void {
+    this.cuadro = c;
   }
 
   bind(root: HTMLElement): void {
@@ -77,7 +91,10 @@ export class SixPack {
   ): void {
     if (!this.root) return;
 
-    this.rotate("asi", SWEEP_START + clamp01(knots / ASI_MAX_KT) * SWEEP);
+    this.rotate(
+      "asi",
+      SWEEP_START + clamp01(knots / this.cuadro.asiMax) * SWEEP,
+    );
 
     // Altímetro de dos agujas, como el de verdad: la larga da una vuelta
     // cada mil pies y la corta marca los miles.
@@ -85,7 +102,7 @@ export class SixPack {
     this.rotate("alt-thousands", ((feet % 10000) / 10000) * 360);
 
     // Variómetro: cero a las nueve en punto, subida arriba, bajada abajo.
-    this.rotate("vsi", (clamp(fpm / VSI_MAX_FPM, -1, 1) * SWEEP) / 2);
+    this.rotate("vsi", (clamp(fpm / this.cuadro.vsiMax, -1, 1) * SWEEP) / 2);
 
     // Direccional: la rosa gira al revés que el avión, porque lo que se
     // mueve es el mundo.
@@ -165,14 +182,19 @@ function ticks(count: number, labelEvery: number, scale: number): string {
   return out;
 }
 
-function asiFace(): string {
-  // Arcos de color como los de verdad: verde el rango normal, amarillo el de
-  // precaución y rojo el que no se pasa.
+function asiFace(c: Cuadro): string {
+  /*
+   * Arcos de color como los de verdad, y **con las velocidades de este avión**:
+   * verde de la pérdida al crucero, ámbar hasta la de nunca pasar, rojo de ahí
+   * al final. Estaban en fracciones fijas de la esfera —0,16 a 0,62 y así—, que
+   * es pintar el arco de un avión en la esfera de otro.
+   */
+  const { verde, ambar, rojo } = c.arcos;
   return `
-    <path class="esfera__arco esfera__arco--verde" d="${arcPath(0.16, 0.62)}" />
-    <path class="esfera__arco esfera__arco--ambar" d="${arcPath(0.62, 0.84)}" />
-    <path class="esfera__arco esfera__arco--rojo" d="${arcPath(0.84, 0.92)}" />
-    ${ticks(8, 1, ASI_MAX_KT)}
+    <path class="esfera__arco esfera__arco--verde" d="${arcPath(verde[0], verde[1])}" />
+    <path class="esfera__arco esfera__arco--ambar" d="${arcPath(ambar[0], ambar[1])}" />
+    <path class="esfera__arco esfera__arco--rojo" d="${arcPath(rojo[0], rojo[1])}" />
+    ${ticks(8, 1, c.asiMax)}
   `;
 }
 

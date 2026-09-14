@@ -5869,6 +5869,9 @@ export class Game {
       // Y la velocidad de rotación, que es la que se marca en la pantalla en
       // mitad de la carrera. Ver `Hud.destellar`.
       this.aircraft.rotationSpeed,
+      // Y la ficha, que es de donde sale el cuadro de mandos de este avión y no
+      // el de la avioneta. Ver `ui/cuadro.ts`.
+      this.aircraft,
     );
   }
 

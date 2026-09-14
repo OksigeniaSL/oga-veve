@@ -493,7 +493,8 @@ def asiento_de_una_pieza(nombre, z_atras, medio_ancho=0.24, largo=0.40,
 
 
 def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
-           suelo_atras=0.80, y_suelo=0.32, y_respaldo=0.88, pantallas_en=0.155):
+           suelo_atras=0.80, y_suelo=0.32, y_respaldo=0.88, pantallas_en=0.155,
+           palancas=0, relojes=0):
     """
     Lo que se ve desde el asiento: suelo, panel, visera, pantallas y silla.
 
@@ -515,6 +516,14 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     `plazas` son las x de los asientos: `(0.0,)` es un fumigador, `(-0.32,
     0.32)` una cabina de dos pilotos. La primera es la del piloto y es la que
     lleva el nombre `asiento`.
+
+    `palancas` son las de gas del pedestal central, una por motor, y `relojes`
+    los instrumentos redondos repartidos por el panel. Las dos existen por lo
+    mismo, y lo dijo quien juega: «el cuadro de mandos me sale igual en todos;
+    si estoy en un reactor o en un 747, el niño quiere ver botones y lucecitas,
+    quiere un monstruo de avión, no una avioneta». Una avioneta lleva cero
+    palancas de pedestal y un puñado de relojes; un cuatrimotor lleva cuatro
+    palancas juntas en el centro, que es la imagen de una cabina grande.
 
     Dos nombres no son libres: **`asiento`**, porque `ojoDePiloto` lo busca por
     nombre, y **`g1000_display`**, que es lo que busca `pantallas-cabina.ts`.
@@ -551,6 +560,47 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
                     "g1000_display",
                 )
             )
+    # Los relojes del panel: discos finos pegados al tablero, en fila.
+    #
+    # No son instrumentos que funcionen —lo que se lee de verdad está en el HUD,
+    # en SVG y legible, ver `ui/six-pack.ts`— y no pasa nada: en una cabina de
+    # verdad la mayoría de lo que se ve tampoco se mira casi nunca. Lo que hacen
+    # es que la cabina **parezca** lo que es.
+    for i in range(relojes):
+        fila = i // max(1, relojes // 2 or 1)
+        en_fila = relojes - (relojes // 2) if fila else relojes // 2
+        j = i if not fila else i - (relojes // 2)
+        paso = (ancho * 1.5) / max(1, en_fila)
+        x = -paso * (en_fila - 1) / 2 + paso * j
+        piezas.append(
+            cilindro(
+                f"reloj-{i}",
+                min(0.05, paso * 0.42),
+                0.012,
+                (x, alto_panel - 0.17 - fila * 0.12, panel_z + 0.008),
+                "tablero",
+                giro=(0, math.radians(90), 0),
+            )
+        )
+    # El pedestal central con sus palancas de gas, una por motor.
+    if palancas:
+        piezas.append(
+            caja("pedestal", -0.10, 0.10, y_suelo + 0.02, y_suelo + 0.16,
+                 panel_z, panel_z + 0.46)
+        )
+        for i in range(palancas):
+            paso = 0.16 / max(1, palancas)
+            x = -paso * (palancas - 1) / 2 + paso * i
+            piezas.append(
+                cilindro(
+                    f"palanca-de-gas-{i}",
+                    0.014,
+                    0.20,
+                    (x, y_suelo + 0.24, panel_z + 0.22),
+                    "tablero",
+                )
+            )
+
     for i, x in enumerate(plazas):
         silla = asiento_de_una_pieza(
             "asiento" if i == 0 else f"asiento-{i}", ojos_z,

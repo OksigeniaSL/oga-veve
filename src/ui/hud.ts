@@ -31,6 +31,9 @@ import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
 import { SixPack } from "./six-pack";
+import { Motores, markupDeMotores } from "./motores";
+import { cuadroDe, type Cuadro } from "./cuadro";
+import { PYKASU, type AircraftConfig } from "../flight/aircraft";
 import { Pictogramas, HELICE_MAS, HELICE_MENOS } from "./pictogramas";
 import { Senal } from "./senal";
 import { Mapa } from "./mapa";
@@ -199,6 +202,16 @@ export class Hud {
    * rumbo, y son *la cabina* para quien ya vuela.
    */
   private readonly sixPack = new SixPack();
+  private readonly motores = new Motores();
+  /**
+   * El cuadro de mandos del avión de hoy. Ver `cuadro.ts`.
+   *
+   * Lo pone `setAeronave` y lo miran el marcado y las agujas. Empieza en el
+   * entrenador porque el juego empieza con él.
+   */
+  private cuadro: Cuadro = cuadroDe(PYKASU);
+  /** Y la ficha entera, que es lo que sabe a cuánto gira su motor. */
+  private ficha: AircraftConfig = PYKASU;
 
   /**
    * Los instrumentos del primer peldaño. Sin agujas y sin números: una
@@ -662,7 +675,11 @@ export class Hud {
           que pasaba. Un panel bonito que esconde un «terrain, pull up» es
           peor que no tener panel.
         -->
-        ${panel ? SixPack.markup() : ""}
+        ${
+          panel
+            ? `<div class="cuadro">${markupDeMotores(this.cuadro)}${SixPack.markup(this.cuadro)}</div>`
+            : ""
+        }
       </div>
       <!--
         El final del vuelo.
@@ -871,7 +888,9 @@ export class Hud {
     });
 
     this.badge.textContent = this.badgeText;
+    this.sixPack.ponerCuadro(this.cuadro);
     this.sixPack.bind(this.root);
+    this.motores.bind(this.root);
     this.pictos.bind(this.root);
     this.medirLaBarra();
     this.senal.bind(this.root);
@@ -1214,6 +1233,10 @@ export class Hud {
     // teniendo dos definiciones del mismo signo.
     const bank = bankAngleOf(state.orientation);
     const pitch = pitchAngleOf(state.orientation);
+
+    if (this.motores.present) {
+      this.motores.update(this.ficha, throttle, engineOn);
+    }
 
     if (this.sixPack.present) {
       this.sixPack.update(
@@ -1788,10 +1811,27 @@ export class Hud {
    * pequeños y en el de los mayores tiene techos distintos, y la escala tiene
    * que acabar donde acaba el avión que se está volando.
    */
-  setAeronave(vref: number, vmax = Infinity, vr = Infinity): void {
+  setAeronave(
+    vref: number,
+    vmax = Infinity,
+    vr = Infinity,
+    /**
+     * Y la ficha entera, que es de donde sale el cuadro de mandos.
+     *
+     * Se rehace el panel solo si **cambia de aeronave**: `setAeronave` se llama
+     * también al cambiar de idioma o de peldaño, y rehacer el marcado en cada
+     * una de esas sería tirar y volver a montar seis esferas por nada.
+     */
+    ficha?: AircraftConfig,
+  ): void {
     this.vref = vref;
     this.vmax = vmax;
     this.vr = vr;
+    if (ficha && ficha.id !== this.ficha.id) {
+      this.ficha = ficha;
+      this.cuadro = cuadroDe(ficha);
+      this.render();
+    }
   }
 
   setBadge(text: string): void {

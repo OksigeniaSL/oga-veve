@@ -479,6 +479,17 @@ body {
   grid-column: 1 / -1;
   grid-row: 3;
   justify-self: center;
+  /*
+   * **Apoyado en el borde de abajo, no colgando de arriba.**
+   *
+   * Esta franja lleva el aviso, el mensaje efímero y el cuadro de mandos, y
+   * cuando los tres coinciden mide más que su fila. Alineada al principio, lo
+   * que sobra se sale por debajo de la pantalla — y lo que sobra es siempre lo
+   * último, que son las esferas: medido en una pantalla de 640, el panel
+   * empezaba en el píxel 602 y se veía la mitad de la primera fila. Apoyada al
+   * final, lo que se solapa es hacia arriba, donde hay cielo.
+   */
+  align-self: end;
   text-align: center;
   /* Sin esto, un mensaje largo se sale por el lado derecho de la pantalla
      en vez de partirse en dos líneas. */
@@ -1693,7 +1704,6 @@ button.motor__tecla::after {
 .seispack {
   display: grid;
   width: fit-content;
-  margin: 8px auto 0;
   grid-template-columns: repeat(3, auto);
   gap: 5px;
   padding: 7px;
@@ -1704,8 +1714,125 @@ button.motor__tecla::after {
   pointer-events: none;
 }
 
-/* Apaisado y bajo —tablet de aula en horizontal—: una sola fila de seis. */
-@media (max-height: 620px) {
+/*
+ * La fila de motores, encima de las esferas.
+ *
+ * Una barra por motor, del ancho de un dedo pequeño, con su número debajo y el
+ * rótulo de lo que marcan a la izquierda. En un cuatrimotor son cuatro barras
+ * subiendo a la vez, que es exactamente lo que se quería: «el niño quiere
+ * fliparlo y ver botones y lucecitas».
+ */
+/*
+ * El cuadro de mandos entero: los motores a la izquierda y las seis esferas a
+ * la derecha, apoyados en la misma base.
+ *
+ * **Al lado y no encima**, y eso lo decidió una pantalla: puesta arriba, la
+ * fila empujaba las esferas cuarenta píxeles hacia abajo y en una tablet de
+ * aula en horizontal la fila de abajo del six-pack se salía por el borde. Un
+ * instrumento que no se ve no es un instrumento.
+ */
+.cuadro {
+  /*
+   * **Clavado al borde de abajo, como el panel de una cabina.**
+   *
+   * Iba en el flujo de la franja inferior, detrás del aviso y del mensaje
+   * efímero, y cuando esos dos aparecían a la vez —que es justo cuando hay algo
+   * importante que mirar— empujaban las esferas fuera de la pantalla: medido en
+   * una pantalla de 640 de alto, el panel empezaba en el píxel 602. El cuadro de
+   * mandos no puede depender de cuántos carteles haya hoy.
+   *
+   * Y va fijo y no absoluto porque el HUD entero es fijo: así queda donde está
+   * la mano, que en una tablet es la parte de abajo.
+   */
+  position: fixed;
+  left: 50%;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5px;
+}
+
+.motores {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px;
+  border-radius: var(--r-m);
+  background: var(--barniz), var(--barro);
+  border: 1px solid var(--linea);
+  box-shadow: var(--filo), var(--poso);
+  pointer-events: none;
+}
+
+.motores__rotulo {
+  font-size: calc(10px * var(--escala-hud));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--tinta-suave);
+}
+
+.motores__fila {
+  display: flex;
+  gap: 4px;
+}
+
+.aguja-motor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* La caja es el cristal del instrumento; el relleno crece desde abajo. */
+.aguja-motor__caja {
+  position: relative;
+  width: clamp(8px, 1.4vmin, 12px);
+  height: clamp(26px, 5vmin, 44px);
+  border-radius: 2px;
+  background: rgb(0 0 0 / 0.35);
+  border: 1px solid var(--linea);
+  overflow: hidden;
+}
+
+.aguja-motor__relleno {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 0%;
+  background: var(--ok);
+  transition: height 120ms linear;
+}
+
+/* Régimen de despegue: donde el motor da todo lo que tiene. */
+.aguja-motor__relleno--tope {
+  background: var(--precaucion);
+}
+
+.aguja-motor__numero {
+  font-size: calc(9px * var(--escala-hud));
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aguja-motor__relleno {
+    transition: none;
+  }
+}
+
+/*
+ * Apaisado y bajo —tablet de aula en horizontal—: una sola fila de seis.
+ *
+ * **Y el listón estaba bajo.** Con seiscientos veinte, una pantalla de
+ * seiscientos cuarenta se quedaba con las dos filas de esferas y la de abajo
+ * caída fuera del borde: medido, el panel empezaba en el píxel 602 de una
+ * pantalla de 640. El cuadro de mandos mide unos ciento sesenta en dos filas y
+ * ochenta en una, así que el corte tiene que estar donde deja de caber el
+ * alto, no donde la pantalla parece pequeña.
+ */
+@media (max-height: 780px) {
   .seispack {
     grid-template-columns: repeat(6, auto);
   }
@@ -1873,7 +2000,7 @@ button.motor__tecla::after {
   gap: 4px;
 }
 
-.motor__tecla--ancha {
+.aguja-motor__tecla--ancha {
   min-width: 54px;
   font-size: 15px;
 }
@@ -1886,7 +2013,7 @@ button.motor__tecla::after {
     0 0 0 2px rgba(221, 146, 63, 0.5);
 }
 
-.freno--pisado .motor__tecla--ancha {
+.freno--pisado .aguja-motor__tecla--ancha {
   background: var(--ocre);
   color: #1a1206;
 }
@@ -2080,7 +2207,7 @@ button.motor__tecla::after {
 }
 
 /* Los signos del motor son botones: se pulsan con el dedo y con el ratón. */
-.motor__tecla:active {
+.aguja-motor__tecla:active {
   background: var(--ocre, #dd923f);
   color: #1a1206;
 }
