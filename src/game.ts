@@ -236,6 +236,7 @@ import {
 import { nombreDeTecla } from "./flight/keymap";
 import {
   elegirInstructor,
+  elegirCapitana,
   elegirOtroAvion,
   elegirTorre,
   type Instructor,
@@ -273,6 +274,7 @@ import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
 import { regimen } from "./ui/cuadro";
+import { Megafonia, conPasaje } from "./audio/megafonia";
 import { InstructorGrabado } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
@@ -953,9 +955,27 @@ export class Game {
    * manda: ver `elegirVoz`.
    */
   private readonly torre: Instructor = elegirTorre(this.vozDelSistema);
+  /**
+   * La megafonía de cabina, que solo habla en los aviones con pasaje.
+   *
+   * Va con su propia voz —la comandante Jazlyn— y no comparte timbre con nadie:
+   * es la única del juego que le habla a cien personas por un altavoz, y eso se
+   * reconoce antes de entender una palabra. Ver `audio/megafonia.ts`.
+   */
+  private readonly megafonia = new Megafonia();
   private readonly otroAvion: Instructor = elegirOtroAvion(
     this.vozDelSistema,
     this.torre,
+  );
+  /**
+   * Y su voz. Es la única del juego que **no** es cercana —le habla a cien
+   * personas por un altavoz— y por eso se reconoce sin saber quién es. Con el
+   * pack de voz es Jazlyn; sin él, el timbre que quede libre.
+   */
+  private readonly capitana: Instructor = elegirCapitana(
+    this.vozDelSistema,
+    this.torre,
+    this.otroAvion,
   );
   /** Lo último que dijo la lámpara, para que la torre no se repita. */
   private ultimaLuzDeTorre: string | null = null;
@@ -3101,6 +3121,7 @@ export class Game {
      * `audio/boca.ts`.
      */
     BOCA.empezarDeCero();
+    this.megafonia.reiniciar();
     this.instructor.callar();
     this.updateBadge();
   }
@@ -3264,6 +3285,24 @@ export class Game {
      * verdad hay más gente. En la pista de la granja lo que se aprende es lo
      * contrario, que es igual de cierto y más bonito: estás vos solo.
      */
+    /*
+     * **Y la megafonía de cabina, que solo habla donde hay pasaje.**
+     *
+     * Va antes que la radio a propósito: si las dos quieren hablar en el mismo
+     * fotograma, manda la de dentro del avión. La de fuera es ambiente y puede
+     * esperar; la comandante está contando lo que está pasando ahora.
+     */
+    const anuncio = this.megafonia.paso(dt, {
+      fase: this.faseDeAhora as Fase,
+      conPasaje: conPasaje(this.aircraft.mass),
+      instructorHablando: this.instructor.hablando,
+    });
+    if (anuncio) {
+      const texto = t(anuncio);
+      this.capitana.decir(texto, anuncio, "baja");
+      if (this.tier.instruments !== "none") this.hud.radio(texto);
+    }
+
     if (this.scenario.aerodrome?.privado) return;
     const dice = this.radio.update(dt, {
       fase: this.faseDeAhora,
@@ -3777,6 +3816,7 @@ export class Game {
     this.hud.tutor.reset();
     // Vuelo nuevo, memoria nueva. Ver la nota de arriba.
     BOCA.empezarDeCero();
+    this.megafonia.reiniciar();
     this.instructor.callar();
     this.updateBadge();
   }

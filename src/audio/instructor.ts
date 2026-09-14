@@ -432,3 +432,21 @@ export function elegirOtroAvion(...cogidas: Instructor[]): Instructor {
     cogidas: () => cogidas.map(suVoz),
   });
 }
+
+/**
+ * Y la de la megafonía de cabina: la comandante.
+ *
+ * **Sin efecto de radio y algo más despacio**, que es lo que la separa de las
+ * otras tres voces con altavoz. La torre y el otro avión suenan por una radio
+ * —filtro de banda estrecha y chasquido— y la megafonía suena por el altavoz
+ * del techo, que es otra cosa: se oye entera y sin prisa, porque quien habla no
+ * está pidiendo permiso a nadie. Ver `audio/megafonia.ts`.
+ */
+export function elegirCapitana(...cogidas: Instructor[]): Instructor {
+  if (typeof speechSynthesis === "undefined") return MUDO;
+  return new VozDelNavegador({
+    rate: 0.96,
+    pitch: 1.06,
+    cogidas: () => cogidas.map(suVoz),
+  });
+}

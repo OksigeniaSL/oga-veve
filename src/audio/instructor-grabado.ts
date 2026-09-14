@@ -220,6 +220,9 @@ export class InstructorGrabado implements Instructor {
       // pisan con las de arriba. Ver `i18n/habla.ts`.
       "torre-canarias",
       "otro",
+      // Y la megafonía de cabina, que solo suena en los aviones con pasaje.
+      // Ver `audio/megafonia.ts`.
+      "capitana",
     ],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,

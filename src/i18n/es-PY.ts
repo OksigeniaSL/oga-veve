@@ -232,6 +232,31 @@ export const ES_PY = {
   "torre.canario.roja": "Espera ahí",
 
   /*
+   * ── La megafonía de cabina: la comandante Jazlyn ────────────────────────
+   *
+   * **Solo en los aviones que llevan pasaje.** Una avioneta de escuela no tiene
+   * megafonía ni tiene a quién hablarle, y eso es parte de lo que enseña la
+   * escalera de la flota: cambiar de avión cambia el oficio. Ver `megafonia.ts`.
+   *
+   * Son cortas a propósito. Un anuncio de verdad dura cuarenta segundos y eso
+   * en un juego es una eternidad: se queda lo que suena a anuncio y se corta lo
+   * que solo es trámite.
+   *
+   * Y le habla a cien personas por un altavoz, así que es la primera voz del
+   * juego que **no** es cercana: eso la hace reconocible sin decir quién es.
+   */
+  "capitana.bienvenida":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo.",
+  "capitana.crosscheck": "Tripulación, armar toboganes y verificación cruzada.",
+  "capitana.despegue": "Tripulación, sentados para el despegue.",
+  "capitana.crucero":
+    "Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.",
+  "capitana.descenso":
+    "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
+  "capitana.llegada":
+    "Bienvenidos. Gracias por volar con nosotros, y que les vaya lindo.",
+
+  /*
    * ── El otro avión de la frecuencia ──────────────────────────────────────
    *
    * Cinco frases que no le dicen nada a quien juega y lo cambian todo: **se
