@@ -996,6 +996,24 @@ export class Hud {
     this.render();
   }
 
+  /**
+   * **Desde la cabina, los instrumentos del juego se apartan del panel.**
+   *
+   * Las dos columnas del HUD van centradas a media altura, que es donde no
+   * estorban en la vista de persecución. En la vista de cabina, media altura es
+   * exactamente **donde está el salpicadero**: medido en el de fuselaje ancho,
+   * la tarjeta del freno caía encima del reloj del motor 2 y la bola de
+   * actitud, encima del 4. Dos instrumentos del avión tapados por dos tarjetas
+   * que dicen lo mismo.
+   *
+   * Arriba no estorban a nadie: ahí está el cielo, y el cielo no lleva números.
+   * Es la misma regla que ya aplicaba el teléfono, donde el sitio escaso es el
+   * de abajo.
+   */
+  ponerVistaDeCabina(enCabina: boolean): void {
+    this.root.classList.toggle("hud--cabina", enCabina);
+  }
+
   update(
     state: FlightState,
     throttle: number,

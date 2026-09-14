@@ -412,6 +412,39 @@ body {
   justify-items: end;
 }
 
+/*
+ * **En cabina, las columnas suben y lo que ya dice el panel se calla.**
+ *
+ * Las dos columnas van centradas a media altura, que es donde no estorban en la
+ * vista de persecución. En la vista de cabina, media altura es exactamente
+ * **donde está el salpicadero**: medido en el de fuselaje ancho, la tarjeta del
+ * freno caía encima del reloj del motor 2 y la bola de actitud encima del 4.
+ * Dos instrumentos del avión tapados por dos tarjetas que dicen lo mismo.
+ *
+ * Y ahí está la otra mitad: **decían lo mismo**. Desde la cabina, la velocidad,
+ * la altura, el rumbo, el ascenso y la actitud están en la pantalla de vuelo del
+ * propio avión, dibujadas y a escala. Repetirlas en tarjetas encima del panel no
+ * añade un dato: tapa el instrumento que lo da, que es justo lo que la vista de
+ * cabina venía a enseñar a leer. Se quedan las que el panel **no** dice —el gas,
+ * el freno y lo que queda de pista— y las tarjetas de aviso, que son órdenes y
+ * no medidas.
+ *
+ * Fuera de la cabina vuelven todas: ahí no hay panel que leer. Ver
+ * `ponerVistaDeCabina`.
+ */
+.hud--cabina .hud__izquierda,
+.hud--cabina .hud__derecha {
+  align-self: start;
+}
+
+.hud--cabina [data-hud="tarjeta-speed"],
+.hud--cabina [data-hud="tarjeta-vspeed"],
+.hud--cabina [data-hud="tarjeta-altitude"],
+.hud--cabina [data-hud="tarjeta-heading"],
+.hud--cabina .horizonte {
+  display: none;
+}
+
 .hud__arriba {
   grid-column: 2;
   grid-row: 1;
