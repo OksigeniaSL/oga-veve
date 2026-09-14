@@ -355,6 +355,24 @@ export class ArcadeFlightModel implements FlightModel {
    * No es una analogía: son los mismos metros que decide `cabeEn` para dejar
    * entrar al avión en la pista.
    */
+  /**
+   * La punta de este avión **en el suelo y en esta superficie**, m/s.
+   *
+   * Es la velocidad a la que tiende la carrera, y tiene que ser la misma en la
+   * cuenta del ritmo y en el paso del modelo. No lo era: el ritmo se calculaba
+   * contra la punta de asfalto y la carrera tendía a la de hierba, que es un
+   * siete por ciento menor. Parece poco y no lo es — cuanto más cerca está la
+   * velocidad de rotación de la punta, más tarda en llegar: en hierba la
+   * carrera salía 331 m contra los 266 que dice la física, un veinticinco por
+   * ciento larga. Ver `blando` en `step`.
+   */
+  private puntaEnElSuelo(): number {
+    const cuesta = ROZAMIENTO[this.superficie] / ROZAMIENTO.asfalto;
+    return (
+      this.aircraft.cruiseSpeed * CRUISE_FRACTION * (1 - (cuesta - 1) * 0.05)
+    );
+  }
+
   private frenadaAFondo(): number {
     const toma = velocidadDeToma(this.aircraft);
     return (
@@ -376,7 +394,7 @@ export class ArcadeFlightModel implements FlightModel {
    * ritmo de antes en vez de dividir por cero.
    */
   private ritmoDeCarrera(): number {
-    const punta = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
+    const punta = this.puntaEnElSuelo();
     const r = this.aircraft.rotationSpeed / punta;
     const metros = carreraHastaVr(this.aircraft, this.superficie);
     if (r >= 0.98 || !Number.isFinite(metros) || metros <= 0) return 0.18;

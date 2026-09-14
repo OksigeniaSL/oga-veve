@@ -52,6 +52,16 @@ import { CONDUCE_EL_JUEGO, topeDeRodaje } from "./gobernador";
 const RODAJE = 9;
 
 /**
+ * Lo más que frena por su cuenta el tope de rodaje, de 0 a 1.
+ *
+ * Seis décimas. Bastante para que un avión que se ha venido arriba en una
+ * calle vuelva a velocidad de rodaje en un par de segundos, y poco para que se
+ * clave: frenar a fondo se sigue haciendo con el botón del freno, que es lo que
+ * hay que aprender.
+ */
+const FRENO_QUE_AYUDA = 0.6;
+
+/**
  * Las fases en las que se rueda de verdad, que son en las que hay tope.
  */
 const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
@@ -215,14 +225,35 @@ export function limitarElRodaje(
     gasParaRodar(tope.velocidad),
   );
   /*
-   * Y el freno **no se toca**, ni aquí ni en la carrera de aterrizaje.
+   * **Y rodando, si el gas cerrado no basta, se frena.**
    *
-   * Lo hacía: por encima de cierto exceso el juego frenaba por su cuenta. Se
-   * probó rodando y el avión acababa clavado en cero con la tarjeta del
-   * freno puesta. Pero el fallo de fondo no era la exageración, era la
-   * lección: «si durante todo el rato del aterrizaje el juego está moviendo
-   * y controlando la velocidad de la aeronave, ahora el niño cree que se va
-   * a parar sola. Y si todo se hace solo, vaya aburrimiento».
+   * Aquí ponía «el freno no se toca, ni aquí ni en la carrera de aterrizaje»,
+   * y la razón era buena: «si durante todo el rato del aterrizaje el juego
+   * está moviendo y controlando la velocidad de la aeronave, el niño cree que
+   * se va a parar sola; y si todo se hace solo, vaya aburrimiento». Esa razón
+   * sigue en pie **en la carrera de aterrizaje**, que es de lo que hablaba, y
+   * ahí el freno se sigue sin tocar.
+   *
+   * Lo que ha cambiado es lo que hacía cerrar el gas. En el modelo de Guyrami
+   * soltar el gas frenaba a más de un g —de treinta metros por segundo a cero
+   * en tres segundos—, así que el tope *ya frenaba*, solo que a escondidas y
+   * con una física que no existe. Al poner cada avión a frenar en los metros
+   * que dice la física, cerrar el gas pasó a ser lo que es de verdad: casi
+   * nada. Medido en el barrido: en Yvytu Rape el avión se plantó rodando a
+   * treinta y un metros por segundo y no volvió a bajar en toda la partida.
+   *
+   * Un tope de rodaje que no puede frenar no es un tope. Y quien conduce
+   * frena: es lo que hace el coche del sígame al que se sigue.
+   *
+   * Suave y proporcional al exceso, con un tope propio: esto es la mano de
+   * quien te lleva, no un ancla.
    */
+  const exceso = (porElSuelo - tope.velocidad) / Math.max(1, tope.velocidad);
+  if (exceso > 0.1) {
+    controles.brakes = Math.max(
+      controles.brakes,
+      Math.min(FRENO_QUE_AYUDA, exceso),
+    );
+  }
   return techo;
 }
