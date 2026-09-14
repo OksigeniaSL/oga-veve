@@ -124,6 +124,9 @@ export const ES_PY = {
   "scenario.chaco.name": "Llanura del Chaco",
   "scenario.tenerife.name": "Tenerife Norte",
   "scenario.laPalma.name": "La Palma",
+  "scenario.tenerifeSur.name": "Tenerife Sur",
+  "scenario.granCanaria.name": "Gran Canaria",
+  "scenario.lanzarote.name": "Lanzarote",
   "scenario.cuatroVientos.name": "Cuatro Vientos",
 
   "tutor.throttle": "Dale motor",
