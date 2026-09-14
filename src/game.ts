@@ -264,6 +264,7 @@ import {
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
 import { comoSeDiceAqui, hablaDe } from "./i18n/habla";
+import { BOCA } from "./audio/boca";
 import { SE_QUEDAN, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
@@ -3044,6 +3045,17 @@ export class Game {
     this.wasCrashed = false;
     this.input.releaseAll();
     this.hud.tutor.reset();
+    /*
+     * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
+     *
+     * `callar()` solo corta lo que esté sonando y **no** borra la memoria de lo
+     * dicho, que es lo que impide repetirse. Eso es a propósito: cambiar de
+     * aeronave también llama a `callar`, y con la memoria borrada volvía a
+     * soltar «arrancá el motor» en cada cambio — «con una vez que lo diga,
+     * bien». Aquí sí empieza un vuelo, así que aquí sí se olvida. Ver
+     * `audio/boca.ts`.
+     */
+    BOCA.empezarDeCero();
     this.instructor.callar();
     this.updateBadge();
   }
@@ -3215,7 +3227,13 @@ export class Game {
     });
     if (!dice) return;
     const texto = t(dice);
-    this.otroAvion.decir(texto, dice);
+    /*
+     * **Y el otro avión habla en voz baja**, en el sentido de la boca: lo suyo
+     * es ambiente y no puede quitarle el turno a una instrucción. Sin esto, un
+     * «en final» del otro avión le robaba la plaza a la autorización de la
+     * torre. Ver `Urgencia` en `audio/boca.ts`.
+     */
+    this.otroAvion.decir(texto, dice, "baja");
     if (this.tier.instruments !== "none") this.hud.radio(texto);
   }
 
@@ -3712,6 +3730,8 @@ export class Game {
     this.wasStalled = false;
     this.wasCrashed = false;
     this.hud.tutor.reset();
+    // Vuelo nuevo, memoria nueva. Ver la nota de arriba.
+    BOCA.empezarDeCero();
     this.instructor.callar();
     this.updateBadge();
   }

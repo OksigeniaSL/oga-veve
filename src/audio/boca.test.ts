@@ -7,7 +7,7 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { Boca, CADUCA } from "./boca";
+import { Boca, CADUCA, NO_REPETIR, RIÑEN, SILENCIO } from "./boca";
 
 let reloj = 0;
 let cortes = 0;
@@ -154,5 +154,183 @@ describe("la boca", () => {
     // Y cuando acaba la que de verdad estaba sonando, entonces sí.
     acabar["¡Subí!"]!();
     expect(dicho).toEqual(["la cortada", "¡Subí!", "la que espera"]);
+  });
+});
+
+/**
+ * La cadencia: ni repetirse, ni atropellarse, ni contradecirse.
+ *
+ * Las tres salen de jugar, y las tres se oían a la vez en el mismo vuelo:
+ *
+ * > «Cada vez que pulso P para cambiar de modelo: "Arrancá…", "Arrancá…",
+ * > "Arrancá el motor"… Lo mismo "Seguí la raya verde", "seguí la raya verde",
+ * > "seguí la raya verde". Lo mismo al aterrizar: "Salí de la pista, viene
+ * > otro", "Más despacio", "Salí de la pista, viene otro"… O salgo de la pista
+ * > o me doy prisa para salir.»
+ */
+describe("la cadencia", () => {
+  /** Una boca con reloj y temporizador de mentira, para no esperar de verdad. */
+  function conReloj() {
+    let ahora = 0;
+    const pendientes: { cuando: number; hacer: () => void }[] = [];
+    const boca = new Boca({
+      ahora: () => ahora,
+      cancelar: () => {},
+      esperar: (ms, hacer) =>
+        void pendientes.push({ cuando: ahora + ms, hacer }),
+    });
+    const correr = (ms: number) => {
+      ahora += ms;
+      for (const p of [...pendientes]) {
+        if (p.cuando <= ahora) {
+          pendientes.splice(pendientes.indexOf(p), 1);
+          p.hacer();
+        }
+      }
+    };
+    return { boca, correr };
+  }
+
+  it("la misma frase no se repite antes de tiempo", () => {
+    const { boca, correr } = conReloj();
+    const dichas: string[] = [];
+    const decir = (clave: string) =>
+      boca.pedir(
+        "normal",
+        (listo) => {
+          dichas.push(clave);
+          listo();
+        },
+        clave,
+      );
+
+    decir("vuelo.estacionado");
+    correr(1000);
+    decir("vuelo.estacionado");
+    correr(1000);
+    decir("vuelo.estacionado");
+    expect(dichas).toEqual(["vuelo.estacionado"]);
+  });
+
+  it("y sí cuando ya ha pasado", () => {
+    const { boca, correr } = conReloj();
+    const dichas: string[] = [];
+    const decir = () =>
+      boca.pedir(
+        "normal",
+        (listo) => {
+          dichas.push("rodando");
+          listo();
+        },
+        "vuelo.rodando",
+      );
+    decir();
+    correr(NO_REPETIR + 1);
+    decir();
+    expect(dichas).toHaveLength(2);
+  });
+
+  it("lo urgente se repite todas las veces que haga falta", () => {
+    const { boca, correr } = conReloj();
+    let veces = 0;
+    const avisar = () =>
+      boca.pedir(
+        "urgente",
+        (listo) => {
+          veces++;
+          listo();
+        },
+        "vuelo.terrenoSube",
+      );
+    avisar();
+    correr(500);
+    avisar();
+    expect(veces).toBe(2);
+  });
+
+  it("entre una frase y la siguiente hay un silencio", () => {
+    const { boca, correr } = conReloj();
+    const dichas: string[] = [];
+    boca.pedir(
+      "normal",
+      (listo) => {
+        dichas.push("primera");
+        listo();
+      },
+      "vuelo.rotar",
+    );
+    boca.pedir(
+      "normal",
+      (listo) => {
+        dichas.push("segunda");
+        listo();
+      },
+      "vuelo.enVuelo",
+    );
+    // La segunda no suena pegada a la primera.
+    expect(dichas).toEqual(["primera"]);
+    correr(SILENCIO);
+    expect(dichas).toEqual(["primera", "segunda"]);
+  });
+
+  it("y dos órdenes que se contradicen no van seguidas", () => {
+    const { boca, correr } = conReloj();
+    const dichas: string[] = [];
+    const decir = (clave: string) =>
+      boca.pedir(
+        "normal",
+        (listo) => {
+          dichas.push(clave);
+          listo();
+        },
+        clave,
+      );
+
+    decir("vuelo.abandonando");
+    correr(SILENCIO + 100);
+    decir("vuelo.despacio");
+    expect(dichas).toEqual(["vuelo.abandonando"]);
+  });
+
+  it("pero pasado el rato ya no riñen", () => {
+    const { boca, correr } = conReloj();
+    const dichas: string[] = [];
+    const decir = (clave: string) =>
+      boca.pedir(
+        "normal",
+        (listo) => {
+          dichas.push(clave);
+          listo();
+        },
+        clave,
+      );
+    decir("vuelo.abandonando");
+    correr(RIÑEN + 1);
+    decir("vuelo.despacio");
+    expect(dichas).toEqual(["vuelo.abandonando", "vuelo.despacio"]);
+  });
+
+  it("cambiar de avión no borra lo que se acaba de decir", () => {
+    const { boca, correr } = conReloj();
+    const dichas: string[] = [];
+    const decir = () =>
+      boca.pedir(
+        "normal",
+        (listo) => {
+          dichas.push("arrancá");
+          listo();
+        },
+        "vuelo.estacionado",
+      );
+    decir();
+    // Cambiar de aeronave llama a `callar`, y eso callaba y olvidaba.
+    boca.callar();
+    correr(500);
+    decir();
+    expect(dichas).toHaveLength(1);
+    // Un vuelo nuevo sí empieza de cero.
+    boca.empezarDeCero();
+    decir();
+    expect(dichas).toHaveLength(2);
   });
 });

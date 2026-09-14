@@ -10,7 +10,7 @@
 010	vuelo.noEstabilizada~2	Así no entra: gas y al aire, lo probamos otra vez
 011	vuelo.noEstabilizada~3	Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo
 012	vuelo.rotar	Tirá para arriba
-013	vuelo.comprometido	¡Ya no se puede frenar, volá!
+013	vuelo.comprometido	Ya despegamos: seguí
 014	vuelo.despegando	Motor a fondo
 015	vuelo.enVuelo	Andá a dar una vuelta
 016	vuelo.enVueloAterrizando	Andá a la pista

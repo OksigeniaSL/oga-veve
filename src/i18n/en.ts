@@ -248,7 +248,7 @@ export const EN: Dictionary = {
   "motivo.torcido": "Not lined up",
   "motivo.descolocado": "Off the centreline",
   "vuelo.rotar": "Pull up and fly",
-  "vuelo.comprometido": "Too late to stop — fly!",
+  "vuelo.comprometido": "We're flying now — keep going",
   "vuelo.despegando": "Full power",
   "vuelo.enVuelo": "Go for a fly",
   "vuelo.enVueloAterrizando": "Head for the runway",

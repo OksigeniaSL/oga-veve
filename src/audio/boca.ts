@@ -23,6 +23,30 @@
  *   llega otra, la nueva sustituye a la que aguardaba, porque lo último que ha
  *   pasado es lo que hay que contar.
  *
+ * ## La cadencia: ni repetirse, ni atropellarse, ni contradecirse
+ *
+ * Lo de arriba impide que dos voces suenen a la vez, y no basta. Jugando:
+ *
+ * > «Cada vez que pulso P para cambiar de modelo: "Arrancá…", "Arrancá…",
+ * > "Arrancá el motor", eso suena raro, con una vez que lo diga, bien. Lo mismo
+ * > "Seguí la raya verde", "seguí la raya verde", "seguí la raya verde"… debe
+ * > tener menos repeticiones. Lo mismo al aterrizar, era una locura: "Salí de
+ * > la pista, viene otro", "Más despacio", "Salí de la pista, viene otro", "Más
+ * > despacio"… O salgo de la pista o me doy prisa para salir.»
+ *
+ * Tres reglas más, y las tres son de conversación y no de sonido:
+ *
+ * - **Ni repetirse.** Una frase no se vuelve a decir hasta que pase su tiempo:
+ *   `NO_REPETIR`. Antes eran diez segundos y se medían **por texto y por
+ *   hablante**, así que cambiar de aeronave —que rehace el estado del vuelo—
+ *   volvía a soltar «arrancá el motor» cada vez.
+ * - **Ni atropellarse.** Entre una frase y la siguiente hay un silencio
+ *   —`SILENCIO`—, porque dos frases pegadas no se entienden como dos cosas: se
+ *   entienden como una parrafada. Lo urgente no espera, que para eso es urgente.
+ * - **Ni contradecirse.** Hay pares que no pueden ir seguidos porque dicen lo
+ *   contrario: si acaba de sonar «salí de la pista, que viene otro», «más
+ *   despacio» no se dice. Ver `RIÑEN`.
+ *
  * ## Y lo que espera demasiado no se dice
  *
  * `CADUCA` son cuatro segundos. Un aviso de vuelo habla del avión **ahora**, y
@@ -57,6 +81,35 @@ const PESO: Record<Urgencia, number> = { baja: 0, normal: 1, urgente: 2 };
 export const CADUCA = 4000;
 
 /**
+ * El silencio entre una frase y la siguiente, ms.
+ *
+ * Ocho décimas. Es lo que separa dos frases de una parrafada, y es también lo
+ * que hace que la segunda se entienda como **otra cosa** y no como el final de
+ * la primera: «tirá para arriba» pegado a «muy bien, estás en el aire» no
+ * suena a dos momentos del despegue, suena a un locutor leyendo.
+ */
+export const SILENCIO = 800;
+
+/**
+ * Cuánto tarda una frase en poder repetirse, ms.
+ *
+ * Veinticinco segundos. Eran diez, y diez es poco para lo que se dice mientras
+ * se rueda: el trayecto del puesto a la cabecera son dos minutos, y con diez
+ * segundos «seguí la raya verde» cabía doce veces.
+ *
+ * No vale para lo urgente —el suelo, la pista ocupada—, que se repite todas las
+ * veces que haga falta mientras el peligro siga ahí.
+ */
+export const NO_REPETIR = 25000;
+
+/**
+ * Y cuánto dura la contradicción entre dos frases que riñen, ms.
+ *
+ * Diez segundos: lo que dura la situación de la que hablaban las dos.
+ */
+export const RIÑEN = 10000;
+
+/**
  * Lo que habla, visto desde aquí.
  *
  * Recibe `listo` y tiene que llamarlo cuando la frase termine o se corte. Es
@@ -70,6 +123,44 @@ export interface Reloj {
   ahora(): number;
   /** Corta lo que se esté diciendo. */
   cancelar(): void;
+  /**
+   * Hace algo dentro de un rato. Para el silencio entre frases.
+   *
+   * Va aquí y no con un `setTimeout` suelto por el mismo motivo que `ahora`:
+   * así esto se prueba sin esperar ochocientos milisegundos por cada caso.
+   */
+  esperar?(ms: number, hacer: () => void): void;
+}
+
+/**
+ * Los pares que no pueden ir seguidos porque dicen lo contrario.
+ *
+ * No es una lista de frases que suenan mal juntas: es una lista de **órdenes
+ * incompatibles**. Si acabo de decirte que salgas de la pista porque viene
+ * otro, no puedo pedirte a continuación que vayas más despacio — «o salgo de
+ * la pista o me doy prisa para salir».
+ *
+ * Manda la primera: la que ya se dijo gana, y la otra se calla mientras dure la
+ * situación. Ver `RIÑEN`.
+ */
+export const NO_A_LA_VEZ: readonly (readonly [string, string])[] = [
+  ["vuelo.abandonando", "vuelo.despacio"],
+  ["vuelo.abandonando", "vuelo.alto"],
+  // Frenar y correr tampoco.
+  ["vuelo.aterrizado", "vuelo.despacio"],
+  // Y mandar subir de urgencia no casa con un elogio de vuelo tranquilo.
+  ["vuelo.terrenoSube", "vuelo.enVuelo"],
+  ["vuelo.mandanFrustrar", "vuelo.final"],
+];
+
+/** Con quién riñe esta clave, si riñe con alguien. */
+function riñenCon(clave: string): readonly string[] {
+  const otras: string[] = [];
+  for (const [a, b] of NO_A_LA_VEZ) {
+    if (a === clave) otras.push(b);
+    if (b === clave) otras.push(a);
+  }
+  return otras;
 }
 
 export class Boca {
@@ -78,7 +169,12 @@ export class Boca {
     hacer: Hablar;
     urgencia: Urgencia;
     desde: number;
+    clave?: string;
   } | null = null;
+  /** Cuándo se dijo cada cosa por última vez. Ver `NO_REPETIR` y `RIÑEN`. */
+  private readonly dichas = new Map<string, number>();
+  /** Hasta cuándo hay que callar para no atropellar la frase anterior. */
+  private calladaHasta = 0;
   /**
    * Qué frase es la que está sonando.
    *
@@ -101,9 +197,36 @@ export class Boca {
    * Puede no llamarse nunca: si llega otra cosa mientras espera, o si pasa
    * demasiado tiempo. Es lo correcto — ver la cabecera.
    */
-  pedir(urgencia: Urgencia, hacer: Hablar): void {
+  pedir(urgencia: Urgencia, hacer: Hablar, clave?: string): void {
+    const ahora = this.reloj.ahora();
+    const urgente = urgencia === "urgente";
+
+    /*
+     * **Ni repetirse ni contradecirse**, y las dos comprobaciones van antes de
+     * mirar si hay alguien hablando: una frase que no toca decir no toca
+     * decirla ni aunque haya silencio. Ver la cabecera.
+     */
+    if (clave && !urgente) {
+      const dicha = this.dichas.get(clave);
+      if (dicha !== undefined && ahora - dicha < NO_REPETIR) return;
+      for (const otra of riñenCon(clave)) {
+        const cuando = this.dichas.get(otra);
+        if (cuando !== undefined && ahora - cuando < RIÑEN) return;
+      }
+    }
+
     if (!this.ocupada) {
-      this.arrancar(urgencia, hacer);
+      /*
+       * **Y el silencio entre frases.** Si la anterior acaba de terminar, esta
+       * espera su hueco en vez de pegarse a ella. Lo urgente no espera.
+       */
+      const falta = this.calladaHasta - ahora;
+      if (!urgente && falta > 0 && this.reloj.esperar) {
+        this.enEspera = { hacer, urgencia, desde: ahora, clave };
+        this.reloj.esperar(falta, () => this.soltarLoQueEspera());
+        return;
+      }
+      this.arrancar(urgencia, hacer, clave);
       return;
     }
     if (PESO[urgencia] > PESO[this.hablandoAhora!]) {
@@ -113,14 +236,42 @@ export class Boca {
        */
       this.enEspera = null;
       this.reloj.cancelar();
-      this.arrancar(urgencia, hacer);
+      this.arrancar(urgencia, hacer, clave);
       return;
     }
-    // Y si no, a esperar. Una plaza: la última manda.
-    this.enEspera = { hacer, urgencia, desde: this.reloj.ahora() };
+    /*
+     * Y si no, a esperar. **Una plaza, y la gana la más importante**; entre dos
+     * iguales, la última, que es lo que está pasando ahora.
+     *
+     * Era siempre la última sin mirar nada más, y con eso una charla de la
+     * radio —«Zulu Papa Alfa Bravo Charlie, en final»— le quitaba el sitio a la
+     * autorización de la torre, que es de las pocas frases que hay que oír sí o
+     * sí. Medido en el banco: la torre decía dos frases en un vuelo y pasó a
+     * decir una.
+     */
+    const esperando = this.enEspera;
+    if (esperando && PESO[esperando.urgencia] > PESO[urgencia]) return;
+    this.enEspera = { hacer, urgencia, desde: ahora, clave };
   }
 
-  /** Se calla y se olvida de lo que esperaba. Al reiniciar el vuelo. */
+  /** Suelta lo que esperaba el silencio, si sigue teniendo sentido. */
+  private soltarLoQueEspera(): void {
+    const siguiente = this.enEspera;
+    if (!siguiente || this.ocupada) return;
+    this.enEspera = null;
+    if (this.reloj.ahora() - siguiente.desde > CADUCA) return;
+    this.arrancar(siguiente.urgencia, siguiente.hacer, siguiente.clave);
+  }
+
+  /**
+   * Se calla y se olvida de lo que esperaba. Al reiniciar el vuelo.
+   *
+   * **Y no olvida lo que ya dijo**: eso es memoria de la conversación, no de la
+   * frase que estaba sonando. Borrarla aquí era la mitad del «arrancá,
+   * arrancá, arrancá» — cambiar de aeronave llama a `callar` y con ello se
+   * perdía la cuenta de lo que se acababa de decir. Para olvidarlo del todo
+   * está `empezarDeCero`, que es lo que llama un vuelo nuevo.
+   */
   callar(): void {
     this.enEspera = null;
     this.hablandoAhora = null;
@@ -128,8 +279,16 @@ export class Boca {
     this.reloj.cancelar();
   }
 
-  private arrancar(urgencia: Urgencia, hacer: Hablar): void {
+  /** Vuelo nuevo: se olvida hasta lo que ya había dicho. */
+  empezarDeCero(): void {
+    this.callar();
+    this.dichas.clear();
+    this.calladaHasta = 0;
+  }
+
+  private arrancar(urgencia: Urgencia, hacer: Hablar, clave?: string): void {
     this.hablandoAhora = urgencia;
+    if (clave) this.dichas.set(clave, this.reloj.ahora());
     const mia = ++this.cual;
     hacer(() => {
       if (mia !== this.cual) return;
@@ -139,11 +298,22 @@ export class Boca {
 
   private acabo(): void {
     this.hablandoAhora = null;
+    this.calladaHasta = this.reloj.ahora() + SILENCIO;
     const siguiente = this.enEspera;
     this.enEspera = null;
     if (!siguiente) return;
     if (this.reloj.ahora() - siguiente.desde > CADUCA) return;
-    this.arrancar(siguiente.urgencia, siguiente.hacer);
+    /*
+     * Y la siguiente también respeta el silencio: encadenar dos frases sin
+     * hueco era justo lo que sonaba a parrafada. Si no hay temporizador —en las
+     * pruebas que no lo dan— se dice como antes, seguida.
+     */
+    if (siguiente.urgencia !== "urgente" && this.reloj.esperar) {
+      this.enEspera = siguiente;
+      this.reloj.esperar(SILENCIO, () => this.soltarLoQueEspera());
+      return;
+    }
+    this.arrancar(siguiente.urgencia, siguiente.hacer, siguiente.clave);
   }
 }
 
@@ -156,6 +326,7 @@ export class Boca {
  */
 export const BOCA = new Boca({
   ahora: () => Date.now(),
+  esperar: (ms, hacer) => void setTimeout(hacer, ms),
   cancelar() {
     try {
       globalThis.speechSynthesis?.cancel();
