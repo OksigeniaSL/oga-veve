@@ -129,6 +129,9 @@ export const EN: Dictionary = {
   "scenario.chaco.name": "Chaco Plain",
   "scenario.tenerife.name": "Tenerife North",
   "scenario.laPalma.name": "La Palma",
+  "scenario.tenerifeSur.name": "Tenerife South",
+  "scenario.granCanaria.name": "Gran Canaria",
+  "scenario.lanzarote.name": "Lanzarote",
   "scenario.cuatroVientos.name": "Cuatro Vientos",
 
   "tutor.throttle": "Add power",

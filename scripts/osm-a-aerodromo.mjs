@@ -224,6 +224,87 @@ function centro(elemento) {
 const camino = (elemento, proj) =>
   simplificar((elemento.geometry ?? []).map((p) => proj(p.lat, p.lon)));
 
+/**
+ * Las pistas, **cosidas**: en OpenStreetMap una pista puede venir a trozos.
+ *
+ * Se vio en Fuerteventura. Sus 3.419 metros de asfalto están mapeados en tres
+ * caminos que se tocan de punta a punta —1.950, 1.005 y 466 metros— y solo el
+ * largo lleva el `ref` «01/19». Sin coser, este extractor se quedaba con el
+ * trozo grande y escribía **una pista de 1.950 metros donde hay 3.419**, con
+ * los umbrales de OurAirports colgando a un kilómetro del final del eje y
+ * apuntados como «umbral desplazado 1.001 m», que es una cosa que no existe.
+ *
+ * Y eso no es un detalle de dibujo: `cabeEn` decide con la longitud de la
+ * pista qué aviones se ofrecen, así que media flota se habría quedado sin
+ * Fuerteventura por un fallo de troceado de un mapa.
+ *
+ * Se unen dos caminos cuando **se tocan** —cinco metros, que es el error de
+ * digitalización— y además **siguen recto**: sin la segunda condición, una
+ * calle de rodaje mal etiquetada o el trozo suelto que Lanzarote tiene encima
+ * de su pista se pegarían al asfalto y lo alargarían en falso.
+ */
+function pistasCosidas(trozos) {
+  const juntos = trozos.map((w) => ({
+    ...w,
+    geometry: [...(w.geometry ?? [])],
+  }));
+  /** Cinco metros en grados, que es lo que se mueve un nodo al redibujarlo. */
+  const CERCA = 5e-5;
+  const tocan = (p, q) =>
+    p &&
+    q &&
+    Math.abs(p.lat - q.lat) < CERCA &&
+    Math.abs(p.lon - q.lon) < CERCA;
+  /** El rumbo de los últimos metros de un camino, en grados. */
+  const rumbo = (de, a) =>
+    (Math.atan2(a.lon - de.lon, a.lat - de.lat) * 180) / Math.PI;
+  const separa = (x, y) => {
+    const d = Math.abs(x - y) % 360;
+    return d > 180 ? 360 - d : d;
+  };
+  /** Veinte grados: una pista no dobla, y una calle de rodaje sí. */
+  const RECTO = 20;
+  const sigue = (ga, gb) =>
+    separa(
+      rumbo(ga[ga.length - 2] ?? ga[0], ga[ga.length - 1]),
+      rumbo(gb[0], gb[1] ?? gb[gb.length - 1]),
+    ) < RECTO;
+
+  let cambio = true;
+  while (cambio) {
+    cambio = false;
+    for (let i = 0; i < juntos.length && !cambio; i++)
+      for (let j = i + 1; j < juntos.length && !cambio; j++) {
+        const a = juntos[i];
+        const b = juntos[j];
+        const ga = a.geometry;
+        const gb = b.geometry;
+        if (ga.length < 2 || gb.length < 2) continue;
+        const alReves = (g) => [...g].reverse();
+        let unida = null;
+        for (const [x, y] of [
+          [ga, gb],
+          [ga, alReves(gb)],
+          [alReves(ga), gb],
+          [alReves(ga), alReves(gb)],
+        ]) {
+          if (!tocan(x[x.length - 1], y[0]) || !sigue(x, y)) continue;
+          unida = [...x, ...y.slice(1)];
+          break;
+        }
+        if (!unida) continue;
+        a.geometry = unida;
+        // El `ref` lo pone el trozo que lo tenga: el que lleva el designador
+        // pintado es uno solo, y es el que manda.
+        a.tags = { ...b.tags, ...a.tags };
+        if (!a.tags.ref && b.tags?.ref) a.tags.ref = b.tags.ref;
+        juntos.splice(j, 1);
+        cambio = true;
+      }
+  }
+  return juntos;
+}
+
 /** El aeródromo entero, listo para escribir. */
 async function construir(icao, pistas, aeropuertos) {
   process.stdout.write(`→ ${icao}\n`);
@@ -244,7 +325,7 @@ async function construir(icao, pistas, aeropuertos) {
 
   const de = (tipo) => elementos.filter((e) => e.tags?.aeroway === tipo);
 
-  const runways = de("runway").map((w) => {
+  const runways = pistasCosidas(de("runway")).map((w) => {
     const ref = w.tags.ref ?? "";
     const [a, b] = ref.split("/");
     const eje = camino(w, proj);
@@ -708,6 +789,27 @@ const [pistas, aeropuertos] = await Promise.all([
 for (const icao of icaos) {
   const ficha = await construir(icao, pistas, aeropuertos);
   const destino = join(SALIDA, `${icao.toLowerCase()}.aero.json`);
+  /*
+   * **Un aeródromo sin pista no se escribe, y esto costó dos ficheros buenos.**
+   *
+   * Los espejos de Overpass devuelven `{"elements": []}` con un 200 limpio
+   * cuando están sobrecargados —no un error, una respuesta vacía—, y este
+   * bucle se lo tragaba: construía un aeródromo con cero pistas, cero calles y
+   * cero plataformas y lo escribía encima del bueno. Pasó de verdad, pidiendo
+   * cuatro campos a un espejo de repuesto: Tenerife Norte y La Palma, que
+   * llevaban meses en el repositorio con sus treinta y cinco y quince
+   * rodaduras, salieron del extractor vacíos y se salvaron por el control de
+   * versiones y por nada más.
+   *
+   * Un fichero vacío no es un dato peor: es la desaparición de un aeropuerto.
+   * Se avisa y se sigue con el siguiente.
+   */
+  if (!ficha.runways.length) {
+    process.stdout.write(
+      `  ⚠ sin pistas en la respuesta — no se escribe ${destino}\n`,
+    );
+    continue;
+  }
   const previo = existsSync(destino)
     ? JSON.parse(await readFile(destino, "utf8"))
     : null;

@@ -210,6 +210,9 @@ export const GUG: Dictionary = {
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",
   "scenario.tenerife.name": "Tenerife Norte",
   "scenario.laPalma.name": "La Palma",
+  "scenario.tenerifeSur.name": "Tenerife Sur",
+  "scenario.granCanaria.name": "Gran Canaria",
+  "scenario.lanzarote.name": "Lanzarote",
   "scenario.cuatroVientos.name": "Cuatro Vientos",
 
   // ── Ayuda ──────────────────────────────────────────────────────────────

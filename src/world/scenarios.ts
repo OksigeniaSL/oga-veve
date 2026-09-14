@@ -18,6 +18,9 @@ import SGAS from "../../data/aerodromes/sgas.aero.json";
 import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
 import GCLA from "../../data/aerodromes/gcla.aero.json";
+import GCTS from "../../data/aerodromes/gcts.aero.json";
+import GCLP from "../../data/aerodromes/gclp.aero.json";
+import GCRR from "../../data/aerodromes/gcrr.aero.json";
 import LECU from "../../data/aerodromes/lecu.aero.json";
 import SGES from "../../data/aerodromes/sges.aero.json";
 import SGME from "../../data/aerodromes/sgme.aero.json";
@@ -800,6 +803,179 @@ export const LA_PALMA: Scenario = {
 };
 
 /**
+ * Tenerife Sur — Reina Sofía, que es la otra mitad de la lección de Tenerife.
+ *
+ * **La misma isla y otro tiempo.** Los Rodeos está a 632 metros, o sea dentro
+ * del mar de nubes que el alisio apila contra la cara norte; Reina Sofía está a
+ * 64, al sur de la cumbre y debajo de la inversión, y por eso hay dos
+ * aeropuertos en una isla de ochenta kilómetros. Volar de uno a otro son doce
+ * minutos y el cielo cambia entero por el camino: se sale entre nubes y se
+ * llega a un secarral con sol.
+ *
+ * Y trae lo suyo para el juego: 3.195 metros de pista al nivel del mar contra
+ * los 3.400 a 632 metros del norte. Es el mismo avión y no es la misma carrera.
+ */
+export const TENERIFE_SUR: Scenario = {
+  id: "tenerife-sur",
+  /*
+   * El alisio otra vez, y aquí más recio: el sur de Tenerife está en la
+   * aceleración que hace la isla por los dos costados, y por eso está lleno de
+   * molinos y de cometas. Con él se opera por la 07.
+   */
+  vientoDominante: { vientoDe: 35, vientoKt: 18, techoM: 2400, temp: 24 },
+  nameKey: "scenario.tenerifeSur.name",
+  pais: "es",
+  seed: 19781106,
+  size: 16000,
+  segments: 400,
+  reliefHeight: 1000,
+  reliefScale: 3.2,
+  ridgeMix: 0.55,
+  waterLevel: 2,
+  riverWidth: 0,
+  /*
+   * El sur es otro color. Aquí no hay laurisilva ni pinar: hay malpaís, tabaibal
+   * y picón, o sea ocres, negros y un verde gris que no tapa el suelo. Las
+   * bandas van de la costa a las medianías, que es todo lo que entra en
+   * dieciséis kilómetros.
+   */
+  bands: [
+    { from: -50, colour: 0x6a5f4c },
+    { from: 80, colour: 0x7b6e55 },
+    { from: 250, colour: 0x85775c },
+    { from: 450, colour: 0x7d6f57 },
+    { from: 700, colour: 0x6f6250 },
+    { from: 900, colour: 0x8d8172 },
+  ],
+  water: 0x3f6a80,
+  fill: 0x6d6350,
+  sky: { horizon: 0xe6e9e6, zenith: 0x4f8bcb },
+  // Menos bruma todavía que en el norte: el sur está debajo de la inversión y
+  // el aire de allí es seco.
+  fog: { colour: 0xe2e6e2, density: 0.000014 },
+  sun: { azimuth: 150, elevation: 58 },
+  runway: pistaDe(GCTS as unknown as Aerodrome, "07"),
+  // El asfalto corre a 68,6° verdaderos y la cabecera pone 07.
+  magneticVariation: 1.4,
+  aerodrome: GCTS as unknown as Aerodrome,
+};
+
+/**
+ * Gran Canaria — Gando, que es el cruce de las islas.
+ *
+ * Es el aeropuerto por el que se pasa: **de aquí salen los saltos a las islas
+ * que no tienen vuelo directo entre ellas**, y en un juego de islas eso es la
+ * pieza que faltaba. Dos pistas paralelas de tres kilómetros, a veinticuatro
+ * metros sobre el mar y con el agua pegada al asfalto por el lado de levante.
+ *
+ * Y el viento. Gando está en el pasillo del alisio, que entre La Isleta y el
+ * macizo se estrecha y acelera: veinte nudos del nordeste es un martes
+ * cualquiera. Se opera por la 03 casi siempre.
+ */
+export const GRAN_CANARIA: Scenario = {
+  id: "gran-canaria",
+  vientoDominante: { vientoDe: 25, vientoKt: 20, techoM: 1100, temp: 23 },
+  nameKey: "scenario.granCanaria.name",
+  pais: "es",
+  seed: 19301207,
+  // Veinte kilómetros: los que hacen falta para que entren las cumbres, que
+  // aquí están tierra adentro y suben a mil quinientos.
+  size: 20000,
+  segments: 416,
+  reliefHeight: 1000,
+  reliefScale: 3.4,
+  ridgeMix: 0.55,
+  waterLevel: 2,
+  /*
+   * **Catorce metros, y son los que hay.** Gando tiene la pista pegada al mar
+   * por el lado de levante: su cota medida sobre el relieve de Copernicus es
+   * 16,6 m y la lámina está en 2. El guardarraíl de veinte metros es para
+   * pistas mal colocadas, no para aeropuertos costeros de verdad.
+   */
+  orilla: 12,
+  riverWidth: 0,
+  /*
+   * La cara de levante de Gran Canaria es árida —ésta es la isla que tiene las
+   * dos cosas, y el aeropuerto está en la seca—: costa de callao y picón,
+   * medianías de tabaiba y, arriba, el pinar.
+   */
+  bands: [
+    { from: -50, colour: 0x6b6150 },
+    { from: 100, colour: 0x7c7059 },
+    { from: 300, colour: 0x7e7257 },
+    { from: 600, colour: 0x5d6b45 },
+    { from: 850, colour: 0x4e6340 },
+    { from: 1000, colour: 0x8b7f6f },
+  ],
+  water: 0x3f6a80,
+  fill: 0x6b6150,
+  sky: { horizon: 0xe3e8e7, zenith: 0x4c88c9 },
+  fog: { colour: 0xdfe5e4, density: 0.000016 },
+  sun: { azimuth: 140, elevation: 54 },
+  runway: pistaDe(GCLP as unknown as Aerodrome, "03L"),
+  // El asfalto corre a 22° verdaderos y la cabecera pone 03.
+  magneticVariation: 8,
+  aerodrome: GCLP as unknown as Aerodrome,
+};
+
+/**
+ * Lanzarote — César Manrique, y el paisaje que no se parece a ninguno.
+ *
+ * Una isla **plana y negra**: nada de los dos mil metros de La Palma ni de los
+ * barrancos de Tenerife, sino malpaís hasta el horizonte, conos rojos sueltos y
+ * el Risco de Famara —seiscientos metros— como única pared. Para quien vuela es
+ * la lección contraria a la de La Palma: aquí no hay terreno del que
+ * preocuparse, hay **viento**, que sopla del nordeste sin nada que lo pare.
+ *
+ * Dos mil trescientos metros de pista a catorce sobre el mar. Se opera por la
+ * 03.
+ */
+export const LANZAROTE: Scenario = {
+  id: "lanzarote",
+  vientoDominante: { vientoDe: 30, vientoKt: 18, techoM: 1900, temp: 22 },
+  nameKey: "scenario.lanzarote.name",
+  pais: "es",
+  seed: 19190424,
+  size: 16000,
+  segments: 400,
+  // Seiscientos y no dos mil: el punto más alto de la isla es Peñas del Chache,
+  // 671 m, y está en la otra punta.
+  reliefHeight: 580,
+  reliefScale: 4.2,
+  ridgeMix: 0.4,
+  waterLevel: 2,
+  /*
+   * **Siete metros y medio.** Arrecife está más bajo todavía: la pista corre a
+   * cien metros del agua y su cota medida es 9,5. Es el aeropuerto más a ras
+   * de mar del juego, y es así de verdad.
+   */
+  orilla: 6,
+  riverWidth: 0,
+  /*
+   * Negro, rojo y arena, que es lo que hay. La banda de abajo es lava
+   * reciente; la de arriba, jable — la arena que el viento sube desde la costa.
+   */
+  bands: [
+    { from: -50, colour: 0x4d473f },
+    { from: 50, colour: 0x5e5549 },
+    { from: 140, colour: 0x77694f },
+    { from: 260, colour: 0x8a7a5c },
+    { from: 400, colour: 0x7a6a52 },
+    { from: 530, colour: 0x8f8272 },
+  ],
+  water: 0x3f7a92,
+  fill: 0x5e5549,
+  sky: { horizon: 0xe8e9e3, zenith: 0x4f8ecf },
+  // El aire más seco del archipiélago: desde el aire se ve Fuerteventura.
+  fog: { colour: 0xe4e6de, density: 0.000012 },
+  sun: { azimuth: 145, elevation: 56 },
+  runway: pistaDe(GCRR as unknown as Aerodrome, "03"),
+  // El asfalto corre a 27° verdaderos y la cabecera pone 03.
+  magneticVariation: 3,
+  aerodrome: GCRR as unknown as Aerodrome,
+};
+
+/**
  * Madrid–Cuatro Vientos, que es el aeródromo de las avionetas.
  *
  * Y no Barajas, a propósito. Barajas es el aeropuerto de Madrid y en este
@@ -1199,6 +1375,9 @@ export const SCENARIOS: readonly Scenario[] = [
   PEDRO_JUAN,
   TENERIFE_NORTE,
   LA_PALMA,
+  TENERIFE_SUR,
+  GRAN_CANARIA,
+  LANZAROTE,
   CUATRO_VIENTOS,
 ];
 

@@ -42,6 +42,19 @@ const TODOS = [
    */
   ["tenerife-norte", "tuka"],
   ["la-palma", "taguato"],
+  /*
+   * **Y dos de los tres canarios nuevos.**
+   *
+   * Tenerife Sur y Lanzarote son los dos campos a ras de mar del archipiélago
+   * —64 y 14 metros de cota contra los 632 de Los Rodeos—, y eso cambia la
+   * carrera de despegue y la de frenada sin cambiar nada más: es el caso que
+   * no había. Gran Canaria se queda fuera del barrido a propósito, y no porque
+   * no vuele: su plataforma está a cuatro kilómetros largos de donde se para
+   * el avión y el rodaje de vuelta se sale del listón. Eso es el #156 y está
+   * apuntado allí; un escenario que está siempre en rojo deja de vigilar nada.
+   */
+  ["tenerife-sur", "guyrami"],
+  ["lanzarote", "guyrami"],
   ["cuatro-vientos", "guyrami"],
   /*
    * **Y un avión grande, que era el otro hueco.**
