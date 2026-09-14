@@ -4174,7 +4174,7 @@ export class Game {
         this.faseDeAhora === "final" &&
         !fueraDeLaSenda(
           this.distanceToRunway(),
-          this.flight.state.position.y - this.terrain.runwayElevation,
+          this.flight.state.position.y - this.cotaDeLaPistaAqui(),
           Math.tan(GLIDE_SLOPE),
         ),
       /*
@@ -4217,7 +4217,7 @@ export class Game {
        * metros en un kilómetro— y la altura sobre el terreno diría que se va
        * altísimo justo cuando se está cruzando la valla.
        */
-      this.flight.state.position.y - this.terrain.runwayElevation <
+      this.flight.state.position.y - this.cotaDeLaPistaAqui() <
         ALTURA_DE_TOMA &&
       this.flight.state.verticalSpeed < 1;
     if (puedeTocar && !this.dichoDeLaToma) {
@@ -4252,7 +4252,7 @@ export class Game {
        * orden. Quien vuelve a volar lo vuelve a oír; quien reinicia también,
        * porque colocar el avión lo rearma.
        */
-      this.flight.state.position.y - this.terrain.runwayElevation >
+      this.flight.state.position.y - this.cotaDeLaPistaAqui() >
         ALTURA_DE_TOMA * 4
     ) {
       this.dichoDeLaToma = false;
@@ -5690,6 +5690,21 @@ export class Game {
     if (cual === "motor") this.toggleEngine();
     else if (cual === "flaps") this.input.alternarFlaps();
     else this.input.pisarElFreno();
+  }
+
+  /**
+   * La cota del asfalto **debajo del avión**, en metros.
+   *
+   * Y no la del centro de la pista, que es lo que se usaba: una pista con
+   * pendiente —La Palma baja once metros y medio— no está a esa cota en el
+   * umbral, y todo lo que se decide en el umbral se decidía con seis metros de
+   * error. Ver `Terrain.cotaDeLaPista`.
+   */
+  private cotaDeLaPistaAqui(): number {
+    return this.terrain.cotaDeLaPista(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+    );
   }
 
   private cycleCamera(): void {
