@@ -402,6 +402,48 @@ for (const id of [
     );
   }
 
+  /*
+   * **Y que los instrumentos se vean, que es lo único que este banco no miraba.**
+   *
+   * Daba 64 de 64 mientras quien jugaba decía «todos descentrados y fuera de
+   * los márgenes de la pantalla». No se contradecían: todo lo de arriba mide en
+   * **metros** —que el reloj esté a tantos centímetros del asiento, que la
+   * pantalla caiga sobre el panel— y lo que se ve es otra cosa. Un panel puede
+   * estar perfecto en metros y salir medio fuera del cuadro, que es lo que
+   * pasaba: los cuatro relojes de motor del de fuselaje ancho iban en una fila
+   * de sesenta y ocho centímetros centrada en el eje del fuselaje, y desde el
+   * asiento del comandante el cuarto caía en x 1.227…1.370 de un lienzo de
+   * 1.280.
+   *
+   * Se mira en píxeles y desde la cámara de cabina, que es de donde se mira de
+   * verdad. Ver la sonda `enPantalla`.
+   */
+  const enCabina = await page.evaluate(() => {
+    const o = globalThis.__oga;
+    o.ponerVista("cockpit");
+    return o.enPantalla("^(reloj-(motor|flaps)|boton)");
+  });
+  if (enCabina && enCabina.piezas.length) {
+    const fuera = enCabina.piezas.filter(
+      (p) =>
+        p.detras ||
+        p.x0 < 0 ||
+        p.x1 > enCabina.ancho ||
+        p.y0 < 0 ||
+        p.y1 > enCabina.alto,
+    );
+    comprobar(
+      etiqueta("los instrumentos del piloto caben en la pantalla"),
+      fuera.length === 0,
+      fuera.length
+        ? fuera
+            .map((p) => `${p.nombre} en x ${p.x0}…${p.x1} de ${enCabina.ancho}`)
+            .join(" · ")
+        : `${enCabina.piezas.length} piezas, todas dentro`,
+      "un reloj que se sale del cuadro es un reloj que no existe para quien juega",
+    );
+  }
+
   comprobar(
     etiqueta("sin errores"),
     !errores.length,

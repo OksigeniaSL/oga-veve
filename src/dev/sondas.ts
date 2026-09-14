@@ -408,8 +408,95 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `null` si este avión no tiene cabina de verdad. Ver `verificar-cabina`.
      */
     pantallas: () => juego.aircraftMesh.pantallas?.orden ?? null,
+    /**
+     * **Dónde cae cada trasto de la cabina en la pantalla**, en píxeles.
+     *
+     * Es la sonda que faltaba, y se nota en que el banco de cabina daba 64 de
+     * 64 mientras quien jugaba decía «todos descentrados y fuera de margen».
+     * No se contradecían: el banco mide en el mundo —que el reloj esté a tantos
+     * centímetros del asiento— y lo que se ve es otra cosa. Un panel puede
+     * estar perfecto en metros y salir escorado en pantalla, que es justo lo
+     * que pasa cuando el ojo no está delante de él.
+     *
+     * Devuelve, por cada malla con nombre de la cabina, la caja que ocupa en
+     * píxeles: dónde empieza, dónde acaba y si se sale del cuadro. Con eso se
+     * puede comprobar lo único que importa —que se vea entero, centrado y
+     * derecho— sin que nadie tenga que mirar una captura.
+     */
+    enPantalla: (patron: string) => {
+      const re = new RegExp(patron);
+      const ancho = juego.renderer.domElement.clientWidth;
+      const alto = juego.renderer.domElement.clientHeight;
+      juego.camera.updateMatrixWorld();
+      const v = new Vector3();
+      const salida: {
+        nombre: string;
+        x0: number;
+        x1: number;
+        y0: number;
+        y1: number;
+        detras: boolean;
+      }[] = [];
+      juego.aircraftMesh.group.traverse((o) => {
+        if (!re.test(o.name)) return;
+        const malla = o as unknown as {
+          geometry?: { attributes?: { position?: { count: number } } };
+          matrixWorld: unknown;
+        };
+        const pos = malla.geometry?.attributes?.position;
+        if (!pos) return;
+        let x0 = Infinity;
+        let x1 = -Infinity;
+        let y0 = Infinity;
+        let y1 = -Infinity;
+        let detras = false;
+        const g = o as unknown as {
+          geometry: {
+            attributes: {
+              position: {
+                getX: (i: number) => number;
+                getY: (i: number) => number;
+                getZ: (i: number) => number;
+                count: number;
+              };
+            };
+          };
+        };
+        for (let i = 0; i < g.geometry.attributes.position.count; i++) {
+          v.set(
+            g.geometry.attributes.position.getX(i),
+            g.geometry.attributes.position.getY(i),
+            g.geometry.attributes.position.getZ(i),
+          );
+          o.localToWorld(v);
+          v.project(juego.camera);
+          if (v.z > 1) detras = true;
+          const px = ((v.x + 1) / 2) * ancho;
+          const py = ((1 - v.y) / 2) * alto;
+          x0 = Math.min(x0, px);
+          x1 = Math.max(x1, px);
+          y0 = Math.min(y0, py);
+          y1 = Math.max(y1, py);
+        }
+        salida.push({
+          nombre: o.name,
+          x0: Math.round(x0),
+          x1: Math.round(x1),
+          y0: Math.round(y0),
+          y1: Math.round(y1),
+          detras,
+        });
+      });
+      return { ancho, alto, piezas: salida };
+    },
     /** Con qué vista se está mirando: `chase`, `cockpit`, `wing`… */
     vista: () => juego.cameraMode,
+    /** Y ponerse en una, sin ir pulsando la tecla a ciegas. Para el banco. */
+    ponerVista: (cual: string) => {
+      for (let i = 0; i < 8 && juego.cameraMode !== cual; i++)
+        juego.cicloDeCamara();
+      return juego.cameraMode;
+    },
     camara: () => {
       const gl = juego.renderer.getContext();
       return {

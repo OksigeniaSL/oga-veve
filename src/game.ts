@@ -5930,6 +5930,11 @@ export class Game {
     );
   }
 
+  /** La misma vuelta de cámara, para que el banco pueda pedir una vista. */
+  cicloDeCamara(): void {
+    this.cycleCamera();
+  }
+
   private cycleCamera(): void {
     const index = CAMERA_MODES.indexOf(this.cameraMode);
     this.cameraMode =
