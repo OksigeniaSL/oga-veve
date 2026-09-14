@@ -18,6 +18,7 @@ import SGAS from "../../data/aerodromes/sgas.aero.json";
 import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
 import GCLA from "../../data/aerodromes/gcla.aero.json";
+import GCHI from "../../data/aerodromes/gchi.aero.json";
 import GCTS from "../../data/aerodromes/gcts.aero.json";
 import GCLP from "../../data/aerodromes/gclp.aero.json";
 import GCRR from "../../data/aerodromes/gcrr.aero.json";
@@ -976,6 +977,58 @@ export const LANZAROTE: Scenario = {
 };
 
 /**
+ * El Hierro — el aeropuerto más pequeño y el más lejos de todo.
+ *
+ * Mil doscientos cincuenta y seis metros de asfalto y **treinta de ancho**, en
+ * una lengua de lava al nordeste de la isla, con el mar por delante y la pared
+ * de El Golfo por detrás. Vuelan aquí los turbohélices pequeños y nada más, y
+ * no por costumbre: es que no cabe otra cosa, que es lo que `cabeEn` va a
+ * contestarle a quien se plante en el hangar con un avión grande.
+ *
+ * Es además el campo que cierra el archipiélago: con éste están **los ocho**
+ * aeropuertos canarios, y con los ocho el prefijo `GC` deja de ser una regla
+ * escrita para dos campos y pasa a ser lo que decía que era. Ver
+ * `i18n/habla.ts`.
+ */
+export const EL_HIERRO: Scenario = {
+  id: "el-hierro",
+  // Alisio del nornordeste. Con él se entra por la 34, o sea desde el mar.
+  vientoDominante: { vientoDe: 20, vientoKt: 14, techoM: 1200, temp: 22 },
+  nameKey: "scenario.elHierro.name",
+  pais: "es",
+  seed: 20111010,
+  size: 16000,
+  segments: 400,
+  // El Hierro sube a 1.501 m en Malpaso; dentro del cuadro, a 1.236.
+  reliefHeight: 1230,
+  reliefScale: 3.0,
+  ridgeMix: 0.6,
+  waterLevel: 2,
+  riverWidth: 0,
+  /*
+   * Lava, sabinar y pinar: la isla más joven del archipiélago y la que más se
+   * nota que lo es. Abajo el malpaís negro, arriba el verde que trae la nube.
+   */
+  bands: [
+    { from: -50, colour: 0x554e45 },
+    { from: 100, colour: 0x6b6350 },
+    { from: 350, colour: 0x5f6a47 },
+    { from: 650, colour: 0x44603c },
+    { from: 950, colour: 0x536344 },
+    { from: 1180, colour: 0x7b7061 },
+  ],
+  water: 0x3f6a80,
+  fill: 0x6b6350,
+  sky: { horizon: 0xdde6e9, zenith: 0x4884c6 },
+  fog: { colour: 0xd8e3e7, density: 0.000018 },
+  sun: { azimuth: 160, elevation: 50 },
+  runway: pistaDe(GCHI as unknown as Aerodrome, "34"),
+  // El asfalto corre a 332,6° verdaderos y la cabecera pone 34.
+  magneticVariation: 7.4,
+  aerodrome: GCHI as unknown as Aerodrome,
+};
+
+/**
  * Madrid–Cuatro Vientos, que es el aeródromo de las avionetas.
  *
  * Y no Barajas, a propósito. Barajas es el aeropuerto de Madrid y en este
@@ -1378,6 +1431,7 @@ export const SCENARIOS: readonly Scenario[] = [
   TENERIFE_SUR,
   GRAN_CANARIA,
   LANZAROTE,
+  EL_HIERRO,
   CUATRO_VIENTOS,
 ];
 

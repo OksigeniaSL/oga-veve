@@ -54,6 +54,7 @@ const TODOS = [
    * apuntado allí; un escenario que está siempre en rojo deja de vigilar nada.
    */
   ["tenerife-sur", "guyrami"],
+  ["el-hierro", "guyrami"],
   ["lanzarote", "guyrami"],
   ["cuatro-vientos", "guyrami"],
   /*

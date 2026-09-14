@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import sgas from "../../data/aerodromes/sgas.aero.json";
 import gcxo from "../../data/aerodromes/gcxo.aero.json";
 import sgme from "../../data/aerodromes/sgme.aero.json";
+import gcgm from "../../data/aerodromes/gcgm.aero.json";
 import { construirGrafo, nudoCercano, rodajeEntre, rutaEntre } from "./rodaje";
 import type { Aerodrome, Punto } from "./aerodrome";
 
@@ -98,6 +99,7 @@ describe("la ruta", () => {
       tramos: [],
       puntos: [],
       largo: 0,
+      coste: 0,
       letras: [],
       enganche: 0,
     });
@@ -365,5 +367,45 @@ describe("el recorte no se lleva la curva de entrada", () => {
         ruta.puntos[i + 1]![1] - ruta.puntos[i]![1],
       );
     expect(largo).toBeGreaterThan(150);
+  });
+});
+
+describe("los metros y el coste", () => {
+  /*
+   * **`largo` son metros y `coste` es lo que el buscador pagó por ellos.**
+   *
+   * Eran el mismo número, y el número era el coste: la pista va a seis —ver
+   * `PENALIZACION_PISTA`— así que cualquier ruta que la pisara se declaraba
+   * seis veces más larga de lo que mide. Quien la leía como distancia
+   * —`parDeSalida`, el listón de lo que se rueda para ir a despegar, el parte
+   * de rodaje— decidía con la vara de medir cambiada. Medido en La Gomera: una
+   * vuelta a casa de unos novecientos metros salía de 3.720.
+   */
+  const aero = gcgm as unknown as Aerodrome;
+  const grafo = construirGrafo(aero);
+  const pista = aero.runways[0]!;
+  const eje = pista.centerline as unknown as Punto[];
+  const dentro = (t: number): Punto => {
+    const a = eje[0]!;
+    const b = eje[eje.length - 1]!;
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  };
+
+  it("una ruta por la pista mide sus metros y cuesta más que ellos", () => {
+    const puesto = aero.parkingPositions![0]!.xy as Punto;
+    const ruta = rodajeEntre(grafo, dentro(0.35), puesto, 600);
+    expect(ruta).not.toBeNull();
+    // La pista mide kilómetro y medio, así que la vuelta a casa desde dentro
+    // de ella no puede pasar de un par de kilómetros por ningún camino.
+    expect(ruta!.largo).toBeLessThan(2000);
+    expect(ruta!.coste).toBeGreaterThan(ruta!.largo);
+  });
+
+  it("y una ruta que no pisa la pista cuesta lo que mide", () => {
+    const a = aero.parkingPositions![0]!.xy as Punto;
+    const b = aero.holdingPositions[0]!.xy as Punto;
+    const ruta = rodajeEntre(grafo, a, b);
+    expect(ruta).not.toBeNull();
+    expect(ruta!.coste).toBeCloseTo(ruta!.largo, 6);
   });
 });

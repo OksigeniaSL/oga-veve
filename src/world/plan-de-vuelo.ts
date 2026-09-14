@@ -167,7 +167,12 @@ const SALTO_A_LA_ESPERA = 40;
  * puesto está a ciento cincuenta metros del punto de espera porque **así son
  * esos campos**, y con el listón en doscientos el juego descartaba el
  * aeródromo entero y arrancaba el avión ya autorizado en la pista. De que la
- * ruta sea un camino y no un salto se encarga el número de puntos.
+ * ruta sea un camino y no un salto se encarga el enganche.
+ *
+ * **Y ya no descarta: prefiere.** Ver `parDeSalida`. Sesenta sigue siendo lo
+ * que se quiere rodar, pero El Hierro no lo da —de sus nueve puestos al punto
+ * de espera hay entre 37 y 59 metros, y es así de verdad— y un campo que no lo
+ * da no puede quedarse sin ruta por ello.
  */
 const LO_MINIMO_QUE_SE_RUEDA = 60;
 
@@ -953,13 +958,12 @@ export class PlanDeVuelo {
          */
         if (!ruta) continue;
         if (ruta.enganche > MAXIMO_ENGANCHE) continue;
-        if (ruta.largo < LO_MINIMO_QUE_SE_RUEDA) continue;
         pares.push({
           puesto,
           espera,
           ida: ruta.largo,
           viaje: ruta.largo + casa,
-          cruza: ruta.puntos.some((q) => this.enElAsfalto(q)),
+          cruza: this.cruzaElAsfalto(ruta.puntos),
         });
       }
     }
@@ -1001,8 +1005,26 @@ export class PlanDeVuelo {
      */
     const porTierra = pares.filter((p) => !p.cruza);
     const posibles = porTierra.length ? porTierra : pares;
-    const cortos = posibles.filter((p) => p.ida <= LO_MAXIMO_DE_IDA);
-    const donde = (cortos.length ? cortos : posibles).sort(
+    /*
+     * **Y los metros mínimos de rodaje son un deseo, no un requisito.**
+     *
+     * Estaba puesto como filtro, y un filtro se come el aeródromo entero
+     * cuando el aeródromo no da esos metros. En El Hierro la plataforma está
+     * pegada a la pista: de los nueve puestos a sus puntos de espera hay 37,
+     * 45, 46, 48, 50, 53 y 59 metros — **todos por debajo del listón de
+     * sesenta**. Lo que quedaba después del filtro eran las rutas largas, que
+     * allí son las que bajan al eje y se van por la pista: el juego mandaba al
+     * avión a atravesar el asfalto para cumplir una regla sobre cuánto se
+     * tiene que rodar.
+     *
+     * Un aeropuerto donde se rueda cuarenta metros existe y es éste. Se
+     * prefiere el que dé rodaje de verdad; si ninguno lo da, se rueda lo que
+     * haya.
+     */
+    const conRodaje = posibles.filter((p) => p.ida >= LO_MINIMO_QUE_SE_RUEDA);
+    const bastantes = conRodaje.length ? conRodaje : posibles;
+    const cortos = bastantes.filter((p) => p.ida <= LO_MAXIMO_DE_IDA);
+    const donde = (cortos.length ? cortos : bastantes).sort(
       (a, b) => a.viaje - b.viaje,
     )[0]!;
     this.par = { puesto: donde.puesto, espera: donde.espera };
@@ -1148,6 +1170,29 @@ export class PlanDeVuelo {
   }
 
   /**
+   * Si una ruta **cruza** la pista: entra en el asfalto y vuelve a salir.
+   *
+   * La diferencia con «pisa el asfalto» no es una sutileza, es el caso normal:
+   * **una salida por intersección termina en la pista a propósito**. Los
+   * puntos de espera que calcula `esperasPorInterseccion` son nudos del grafo
+   * que están sobre el asfalto —es donde se entra—, así que mirando punto por
+   * punto salían marcadas como travesía las nueve rutas de El Hierro, que es
+   * todas, y la preferencia de no cruzar se quedaba sin nada que preferir.
+   *
+   * Lo que de verdad hay que evitar es **atravesar**: meterse en la pista para
+   * salir por el otro lado y seguir rodando. Eso se ve solo mirando si después
+   * de estar dentro se vuelve a estar fuera.
+   */
+  private cruzaElAsfalto(puntos: readonly Punto[]): boolean {
+    let dentro = false;
+    for (const q of puntos) {
+      if (this.enElAsfalto(q)) dentro = true;
+      else if (dentro) return true;
+    }
+    return false;
+  }
+
+  /**
    * Se sale al punto de espera más cercano **que no obligue a cruzar la
    * pista**.
    *
@@ -1175,7 +1220,7 @@ export class PlanDeVuelo {
     for (const espera of this.esperasPosibles()) {
       const ruta = rodajeEntre(this.grafo, puesto, espera);
       if (!ruta) continue;
-      const cruza = ruta.puntos.some((q) => this.enElAsfalto(q));
+      const cruza = this.cruzaElAsfalto(ruta.puntos);
       // Primero las que no cruzan; entre iguales, la más corta.
       if (cruza && !mejorCruza) continue;
       if (cruza === mejorCruza && ruta.largo >= corto) continue;
@@ -2122,6 +2167,8 @@ export class PlanDeVuelo {
       tramos: [{ ref: null, puntos }],
       puntos,
       largo,
+      // Trazada a mano: lo que mide es lo que cuesta.
+      coste: largo,
       letras: [],
       // Trazada a mano sobre la pista: no hay puntas que enganchar al grafo.
       enganche: 0,
@@ -2294,6 +2341,8 @@ export class PlanDeVuelo {
       tramos: [{ ref: null, puntos }],
       puntos,
       largo,
+      // Trazada a mano: lo que mide es lo que cuesta.
+      coste: largo,
       letras: [],
       // Trazada a mano sobre la pista: no hay puntas que enganchar al grafo.
       enganche: 0,
