@@ -423,6 +423,20 @@ export interface Vista {
   readonly saltoLaLuz: boolean;
 }
 
+/**
+ * Las fases en las que se rueda por una calle y tiene sentido pedir despacio.
+ *
+ * No están las de la pista —autorizado, alineando, despegando, comprometido,
+ * aterrizado— porque ahí la velocidad es la lección, ni las del aire.
+ */
+const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
+  "arrancando",
+  "rodando",
+  "esperando",
+  "abandonando",
+  "a-plataforma",
+]);
+
 /** A cuántos metros de la raya verde se considera que uno se ha salido. */
 const FUERA_DE_RUTA = 30;
 
@@ -1544,11 +1558,29 @@ export class PlanDeVuelo {
        * a velocidad de rodaje, que es cuando sirve de algo, y no avisa nunca a
        * quien va frenando bien.
        */
+      /*
+       * **Y solo mientras se rueda de verdad.**
+       *
+       * Esto no miraba la fase, así que seguía juzgando la velocidad **en la
+       * carrera de despegue**: con el gas a fondo, acelerando por la pista y lo
+       * que queda de ruta en cero, la cuenta de frenada da que no se para ni
+       * loco y el juego pide «más despacio». Se vio jugando, y no hay manera
+       * más rápida de perder la confianza de quien juega: «estoy saliendo
+       * metiendo motores, todavía en aceleración, y "más despacio"».
+       *
+       * En una pista la velocidad **es** el asunto. Se avisa en las calles, que
+       * es donde una curva se pasa por ir rápido.
+       *
+       * Y se mide por el suelo, no por el aire: con viento de cara, un avión
+       * parado ya marca la velocidad del viento. Es la misma corrección que
+       * hubo que hacer en el tope de rodaje.
+       */
       rapido:
+        RODANDO_DE_VERDAD.has(p.fase) &&
         sobreElSuelo < 3 &&
         this.rutaMundo.length > 1 &&
-        (estado.airspeed > sugerida * MARGEN + 2 ||
-          (estado.airspeed * estado.airspeed) / (2 * FRENADA) >
+        (estado.groundSpeed > sugerida * MARGEN + 2 ||
+          (estado.groundSpeed * estado.groundSpeed) / (2 * FRENADA) >
             s.restante - HOLGURA),
       restante: s.restante,
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
