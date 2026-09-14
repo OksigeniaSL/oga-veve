@@ -57,6 +57,10 @@ export interface Meteo {
  * empate y habría que desempatarlo con una moneda, y un aeropuerto que cambia
  * de cabecera cada partida no se aprende. Tres nudos del norte deciden sin
  * molestar a nadie.
+ *
+ * **Y por encima de esto manda el viento del sitio**, cuando el sitio tiene
+ * uno: ver `vientoDeCasa` y `Scenario.vientoDominante`. Este queda para los
+ * escenarios inventados, que no tienen clima que copiar.
  */
 export const TIEMPO_DE_CASA: Meteo = {
   vientoDe: 0,
@@ -67,6 +71,33 @@ export const TIEMPO_DE_CASA: Meteo = {
   visibilidadM: 10000,
   fuente: "defecto",
 };
+
+/**
+ * El tiempo de por defecto **de un sitio concreto**.
+ *
+ * Sin METAR, el juego daba tres nudos del norte en los once campos, y de ahí
+ * salía la cabecera en uso — que en Tenerife Norte daba siempre la 30. Jugando:
+ *
+ * > «No entiendo por qué en TFN siempre se despega igual, hacia la 30 cuando lo
+ * > normal es 12. Una cosa que no sé si te has olvidado es el realismo: el 80 %
+ * > del tiempo, el viento en ese aeropuerto viene del norte.»
+ *
+ * Y tiene razón, con un matiz que es justo el que decide: en Canarias el viento
+ * dominante es el **alisio**, que viene del nordeste y no del norte franco. Con
+ * norte franco gana la 30 —el juego estaba haciendo bien la cuenta con un dato
+ * equivocado— y con nordeste gana la 12, que es la que opera de verdad y la que
+ * lleva el ILS.
+ *
+ * Así que cada campo trae el suyo, de su climatología, y con él sale sola la
+ * cabecera preferente sin escribirla a mano en ningún sitio. Un METAR de verdad
+ * lo sustituye: ese día se opera como se opere ese día, que es la lección.
+ */
+export function vientoDeCasa(
+  dominante: { readonly de: number; readonly kt: number } | undefined,
+): Meteo {
+  if (!dominante) return TIEMPO_DE_CASA;
+  return { ...TIEMPO_DE_CASA, vientoDe: dominante.de, vientoKt: dominante.kt };
+}
 
 /**
  * Lee un METAR crudo.
@@ -152,17 +183,19 @@ export function leerMetar(crudo: string): Meteo | null {
 export async function pedirMetar(
   icao: string,
   proxy: string | null,
+  /** Y si no hay METAR, el viento del sitio. Ver `vientoDeCasa`. */
+  siNoHay: Meteo = TIEMPO_DE_CASA,
 ): Promise<Meteo> {
-  if (!proxy) return TIEMPO_DE_CASA;
+  if (!proxy) return siNoHay;
   try {
     const corte = AbortSignal.timeout(4000);
     const res = await fetch(`${proxy}?icao=${encodeURIComponent(icao)}`, {
       signal: corte,
     });
-    if (!res.ok) return TIEMPO_DE_CASA;
-    return leerMetar(await res.text()) ?? TIEMPO_DE_CASA;
+    if (!res.ok) return siNoHay;
+    return leerMetar(await res.text()) ?? siNoHay;
   } catch {
-    return TIEMPO_DE_CASA;
+    return siNoHay;
   }
 }
 

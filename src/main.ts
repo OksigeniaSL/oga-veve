@@ -22,12 +22,7 @@ import { cargarOrtofoto } from "./world/ortofoto";
 import { mundoElegido } from "./ui/mundo";
 import { cargarCiudad } from "./world/ciudades";
 import { conViento } from "./world/scenarios";
-import {
-  leerMetar,
-  pedirMetar,
-  TIEMPO_DE_CASA,
-  type Meteo,
-} from "./world/meteo";
+import { leerMetar, pedirMetar, vientoDeCasa, type Meteo } from "./world/meteo";
 
 /**
  * De dónde sale el tiempo de esta partida.
@@ -46,8 +41,12 @@ import {
 async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   const q = new URLSearchParams(location.search);
 
+  // El tiempo de este sitio cuando no hay METAR: su viento dominante. Ver
+  // `vientoDeCasa`, que es de donde sale la cabecera en uso.
+  const deCasa = vientoDeCasa(esc.vientoDominante);
+
   const crudo = q.get("metar");
-  if (crudo) return { ...(leerMetar(crudo) ?? TIEMPO_DE_CASA), fuente: "mano" };
+  if (crudo) return { ...(leerMetar(crudo) ?? deCasa), fuente: "mano" };
 
   const viento = q.get("viento");
   if (viento) {
@@ -55,7 +54,7 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
     if (m) {
       const kt = Number(m[2]);
       return {
-        ...TIEMPO_DE_CASA,
+        ...deCasa,
         vientoDe: kt === 0 ? null : Number(m[1]) % 360,
         vientoKt: kt,
         fuente: "mano",
@@ -66,11 +65,11 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   // El identificador OACI es el `id` del aeródromo: así se llama el fichero y
   // así lo llama el METAR.
   const icao = esc.aerodrome?.id;
-  if (!icao) return TIEMPO_DE_CASA;
+  if (!icao) return deCasa;
   // El proxy se configura al construir; sin él no se pide nada. Ver
   // `workers/meteo.js`, que es el que hace falta y son diez líneas.
   const proxy = q.get("meteo") ?? import.meta.env.VITE_METEO ?? null;
-  return pedirMetar(icao, proxy);
+  return pedirMetar(icao, proxy, deCasa);
 }
 import { detectLocale, setLocale } from "./i18n";
 import { abrirHangar } from "./ui/hangar";
