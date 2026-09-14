@@ -30,6 +30,7 @@ import type { Aerodrome, Punto } from "./aerodrome";
 import { aLaPolilinea } from "./aerodrome";
 import type { AircraftConfig } from "../flight/aircraft";
 import { paraEntrarYDespegar, pistaQueHaceFalta } from "../flight/carrera";
+import { radioDeGiro } from "../flight/cabe";
 import {
   construirGrafo,
   nudoCercano,
@@ -1781,6 +1782,21 @@ export class PlanDeVuelo {
     // Y en una pista estrecha tampoco, porque las dos rayas se confunden.
     // Ver `ANCHO_PARA_LA_VUELTA`.
     if (this.pista.width < ANCHO_PARA_LA_VUELTA) return null;
+    /*
+     * **Ni si este avión no cabe dando la vuelta.**
+     *
+     * Una media vuelta en pista necesita dos radios de giro **más la
+     * envergadura**: el ala de fuera barre por fuera del camino que hacen las
+     * ruedas. Un 747 pide setenta y ocho metros y una pista de línea tiene
+     * cuarenta y cinco — por eso en la vida real esos aviones no dan la vuelta
+     * en la pista, se les hace una raqueta al final o entran por la cabecera.
+     *
+     * Dibujarle la maniobra igualmente es dibujar algo que no puede hacer: la
+     * raya se le iría por la hierba y él detrás. Si no cabe, no hay back-taxi y
+     * se entra por donde se pueda.
+     */
+    if (2 * radioDeGiro(this.avion) + this.avion.wingSpan > this.pista.width)
+      return null;
 
     const [fx, fz] = delante(this.pista.heading);
     const [tx, tz] = traves(this.pista.heading);
@@ -1811,9 +1827,27 @@ export class PlanDeVuelo {
      * se le deja cuatro metros de borde: en una pista de cuarenta metros son
      * dieciséis, más que la envergadura de el Pykasu.
      */
+    /*
+     * **Y lo que cabe lo dicen las alas de este avión, no el ancho a secas.**
+     *
+     * Esto se apartaba `ancho/2 − 4` del eje, o sea cuatro metros del borde,
+     * sin mirar qué avión iba a rodar por ahí. En una pista de cuarenta y cinco
+     * metros eso son dieciocho y medio del eje: con el reactor —veintiséis de
+     * envergadura— el ala quedaba **nueve metros fuera del asfalto**. Se vio
+     * jugando: «esta pista, ¿es normal este dibujo que me hace ir por el
+     * borde?». No lo era.
+     *
+     * Ahora el ala se queda dentro con dos metros de margen. Y el apartado no
+     * puede bajar de dos radios de giro de **este** avión, porque de él sale la
+     * media vuelta del final: una raya más estrecha que eso dibuja un giro que
+     * el avión no puede dar. Cuando las dos condiciones se pelean es que ese
+     * avión no puede dar la vuelta en esta pista, y eso lo dice `cabeEn` antes
+     * de dejarlo entrar. Ver `radioDeGiro`.
+     */
+    const alaDentro = this.pista.width / 2 - this.avion.wingSpan / 2 - 2;
     const lado = Math.max(
-      6,
-      Math.min(2 * RADIO_CURVA, this.pista.width / 2 - 4),
+      2 * radioDeGiro(this.avion),
+      Math.min(2 * RADIO_CURVA, alaDentro),
     );
     const radio = lado / 2;
     const umbral = -mitad + HUECO_PARA_GIRAR + radio;

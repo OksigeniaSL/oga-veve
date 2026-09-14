@@ -8,7 +8,8 @@
 
 import { describe, expect, it } from "vitest";
 import { Color, type InstancedMesh } from "three";
-import { crearAproximacion } from "./aproximacion";
+import { blancasDePapi, crearAproximacion } from "./aproximacion";
+import { GLIDE_SLOPE, SENDA_DESDE } from "./runway-guide";
 import type { Pista, Umbral } from "./aerodrome";
 
 const umbral = (xy: [number, number], headingTrue: number): Umbral => ({
@@ -245,5 +246,54 @@ describe("dónde se planta el PAPI", () => {
     expect(sitiarPapi([0, 0], [1, 0], 45, 3000, fuera).origen).toBe(
       "calculado",
     );
+  });
+});
+
+/**
+ * Que los aros y el PAPI cuenten la misma senda.
+ *
+ * **Contaban dos distintas, y las dos estaban dibujadas en la misma pantalla.**
+ * Los aros y el hilo la medían desde el umbral con altura cero; el PAPI del
+ * mundo está unos trescientos metros pista adentro y calibra desde ahí. Volando
+ * exactamente por el centro de los aros, el PAPI veía 2,74° en el primero y
+ * bajaba a 2,02° en los últimos — las cuatro luces rojas, que quiere decir «vas
+ * muy bajo», mientras los aros decían que se iba perfecto.
+ *
+ * Un PAPI define su senda **desde sus luces**, y por eso una aproximación bien
+ * hecha cruza el umbral a quince o dieciséis metros: es la altura de cruce de
+ * umbral, y es la de verdad. Ahora los aros salen de ahí.
+ */
+describe("los aros y el PAPI, la misma senda", () => {
+  it("volando por el centro de un aro, el PAPI ve dos blancas", () => {
+    /*
+     * La comprobación es directa: a cada distancia de aro, la altura que dicen
+     * los aros tiene que dar, **medida desde las luces**, un ángulo que el PAPI
+     * lea como «dos y dos».
+     */
+    for (const d of [3200, 2610, 2076, 1603, 1196, 864, 620]) {
+      const alto = (d + SENDA_DESDE) * Math.tan(GLIDE_SLOPE);
+      // El PAPI mide desde sus luces, que están `SENDA_DESDE` pista adentro.
+      const grados = (Math.atan2(alto, d + SENDA_DESDE) * 180) / Math.PI;
+      expect(blancasDePapi(grados), `a ${d} m`).toBe(2);
+    }
+  });
+
+  it("y contados desde el umbral, como estaban, marcaba cuatro rojas", () => {
+    /*
+     * **Esta es la prueba de que el fallo era real**, con la cuenta de antes:
+     * altura = distancia al umbral por la tangente, y el ángulo medido desde
+     * las luces. Cerca del umbral se va a cero blancas — «vas muy bajo».
+     */
+    const alto = 620 * Math.tan(GLIDE_SLOPE);
+    const grados = (Math.atan2(alto, 620 + SENDA_DESDE) * 180) / Math.PI;
+    expect(blancasDePapi(grados)).toBeLessThan(2);
+  });
+
+  it("y la senda cruza el umbral a la altura que manda", () => {
+    // Quince metros y pico: la altura de cruce de umbral de cualquier pista con
+    // PAPI. Con la cuenta de antes, la senda rozaba el asfalto.
+    const enElUmbral = SENDA_DESDE * Math.tan(GLIDE_SLOPE);
+    expect(enElUmbral).toBeGreaterThan(12);
+    expect(enElUmbral).toBeLessThan(20);
   });
 });

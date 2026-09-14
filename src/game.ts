@@ -49,6 +49,7 @@ import {
   enElEmbudoDeFinal,
   ENTRADA_EN_FINAL,
   GLIDE_SLOPE,
+  SENDA_DESDE,
   RunwayGuide,
   type PasoDeAro,
 } from "./world/runway-guide";
@@ -932,6 +933,13 @@ export class Game {
   /** Lo último que dijo la lámpara, para que la torre no se repita. */
   private ultimaLuzDeTorre: string | null = null;
   private readonly radio = new Radio();
+  /**
+   * Si los aros de la senda están dibujados en el mundo ahora mismo.
+   *
+   * **Es lo que decide si pueden hablar.** Ver el porqué donde se usa: un aviso
+   * que se refiere a algo que quien juega no tiene delante no enseña, confunde.
+   */
+  private seVenLosAros = false;
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   faseAnunciada = "";
 
@@ -1062,6 +1070,9 @@ export class Game {
       vaca: this.vaca,
       enLaPista: (metros) => this.enLaPista(metros),
       distanceToRunway: () => this.distanceToRunway(),
+      // Se pregunta cada vez y no se copia: al cambiar el viento cambia la
+      // cabecera, y con ella dónde está el PAPI. Ver `SENDA_DESDE`.
+      sendaDesde: () => this.runwayGuide.sendaDesde,
     });
 
     /*
@@ -1248,6 +1259,13 @@ export class Game {
       this.scenario,
       this.terrain.runwayElevation,
       (x: number, z: number) => this.terrain.sampleSurface(x, z),
+      /*
+       * **Desde donde están las luces del PAPI**, que es desde donde se cuenta
+       * una senda de verdad. Con los aros contados desde el umbral, volar por
+       * su centro dejaba al PAPI del mundo marcando cuatro rojas: tres sendas
+       * en la misma pantalla y ninguna de acuerdo. Ver `SENDA_DESDE`.
+       */
+      this.aproximacion?.papiAdentro ?? SENDA_DESDE,
     );
     /*
      * **Y solo cuando toca.** El haz de luz, los postes y los aros de la senda
@@ -1258,8 +1276,10 @@ export class Game {
      * El objeto se construye de todas formas porque hay código que lo reinicia
      * y lo consulta; lo que no entra en la escena es su geometría.
      */
-    if (this.leccion.id === "aterrizaje")
+    if (this.leccion.id === "aterrizaje") {
       this.scene.add(this.runwayGuide.group);
+      this.seVenLosAros = true;
+    }
 
     this.aircraftMesh = createAircraftMesh(this.aircraft);
     this.scene.add(this.aircraftMesh.group);
@@ -1495,6 +1515,17 @@ export class Game {
      * moldeado**, y el juego sin clave tiene que seguir siendo el juego.
      */
     this.ponerAproximacion();
+    /*
+     * **Y la senda, otra vez, porque ahora ya se sabe dónde está el PAPI.**
+     *
+     * Los aros se montan arriba, antes que las luces, porque tienen que existir
+     * aunque no haya aeródromo real. Pero la senda se cuenta desde el PAPI —ver
+     * `SENDA_DESDE`— y hasta aquí no se sabe a cuánto está el de esta pista: en
+     * Cuatro Vientos a 162 m y en La Palma a 297, que son siete metros de
+     * altura sobre el umbral. Rehacerla aquí es la diferencia entre dibujar la
+     * senda de este campo y dibujar una senda genérica.
+     */
+    if (this.aproximacion) this.rehacerLaSenda();
     this.hud.ponerHora(this.horaPedida(), (h) => this.ponerHora(h));
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
@@ -3370,6 +3401,13 @@ export class Game {
       this.scenario,
       this.terrain.runwayElevation,
       (x: number, z: number) => this.terrain.sampleSurface(x, z),
+      /*
+       * **Desde donde están las luces del PAPI**, que es desde donde se cuenta
+       * una senda de verdad. Con los aros contados desde el umbral, volar por
+       * su centro dejaba al PAPI del mundo marcando cuatro rojas: tres sendas
+       * en la misma pantalla y ninguna de acuerdo. Ver `SENDA_DESDE`.
+       */
+      this.aproximacion?.papiAdentro ?? SENDA_DESDE,
     );
     if (estaba) this.scene.add(this.runwayGuide.group);
     this.runwayGuide.reset(this.flight.state.position);
@@ -4291,11 +4329,26 @@ export class Game {
        * su galón— sino por **haber corregido**. Quien venía bien desde el
        * principio no oye nada, y hace bien.
        */
-      if (donde === null && this.avisadoDeLaSenda) {
+      if (donde === null && this.avisadoDeLaSenda && this.seVenLosAros) {
         this.avisadoDeLaSenda = false;
         this.hechos.emit("loCorregiste", {});
       }
-      if (donde === "alto" || donde === "bajo") {
+      /*
+       * **Y solo si los aros se ven.**
+       *
+       * El objeto de la senda se construye siempre —hay código que lo reinicia
+       * y lo consulta— pero su geometría solo entra en la escena en la lección
+       * de aterrizar. Los veredictos, en cambio, salían en todas: en la de
+       * despegar y en la de dar una vuelta, el juego te decía que ibas por
+       * encima **de un aro que no estaba dibujado en ninguna parte**. Quien lo
+       * jugó lo dijo tal cual: «me dice que baje porque estoy por encima del
+       * aro si no hay aro».
+       *
+       * Un aviso que se refiere a algo que no se ve no enseña nada: confunde.
+       * Y la regla de la casa es que nada juzgue por un canal que quien juega
+       * no tiene delante.
+       */
+      if ((donde === "alto" || donde === "bajo") && this.seVenLosAros) {
         this.avisadoDeLaSenda = true;
         this.hud.senal.mostrar(
           donde === "alto" ? "aro-alto" : "aro-bajo",
@@ -5540,6 +5593,28 @@ export class Game {
     const { position, heading, airspeed } = this.flight.state;
     const carried = { position: position.clone(), heading, airspeed };
 
+    /*
+     * **Y si estabas en el suelo, el avión nuevo nace en el suelo.**
+     *
+     * El origen de una aeronave no está en sus ruedas: está a la altura de su
+     * tren por encima de ellas. Conservar la posición tal cual al cambiar de
+     * avión daba por bueno el tren del que se iba, así que pasar del de
+     * fuselaje ancho —cinco metros y veinte de tren— a la avioneta —uno y
+     * cuarenta— dejaba a la avioneta **flotando cuatro metros**. Y desde ahí se
+     * caía, y el juego hacía lo que hace cuando un avión se cae: «se rompió,
+     * volvemos a empezar».
+     *
+     * Quien lo jugó lo contó exactamente así: «la avioneta nace en el aire
+     * porque el juego parte de un avión enorme y es como si se cayera, cuando
+     * en realidad estoy cambiando de aparato».
+     *
+     * Cambiar de avión no es un percance, así que se le baja —o se le sube— lo
+     * que cambia el tren, y aterriza en el sitio donde estaba el anterior.
+     */
+    if (this.flight.state.onGround) {
+      carried.position.y += next.gearHeight - this.aircraft.gearHeight;
+    }
+
     this.aircraft = next;
     this.audio.setEngine(next.sound);
 
@@ -5561,6 +5636,14 @@ export class Game {
     this.flight.reset(carried);
 
     this.updateBadge();
+    /*
+     * Y el esquema del ala, que se quedaba con el avión de antes.
+     *
+     * `montarElAla` solo se llamaba al arrancar y al cambiar de idioma, así que
+     * después de cambiar de aeronave el panel seguía enseñando el ala y la masa
+     * de la anterior — un panel que explica **este** avión enseñando otro.
+     */
+    this.montarElAla();
     this.hud.flash(`${next.name} — ${t(next.descriptionKey as never)}`, 3.5);
   }
 

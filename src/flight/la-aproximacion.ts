@@ -74,6 +74,15 @@ export interface MundoDeLaAproximacion {
   readonly enLaPista: (metros: number) => readonly [number, number];
   /** Cuánto queda hasta el umbral en uso, m. */
   readonly distanceToRunway: () => number;
+  /**
+   * A cuánto del umbral están las luces del PAPI, pista adentro.
+   *
+   * Es **desde donde se cuenta la senda**, y por eso hace falta aquí: la
+   * tarjeta del PAPI medía el ángulo desde el umbral y decía «dos y dos, vas
+   * bien» justo cuando las cuatro luces del mundo estaban rojas. Ver
+   * `SENDA_DESDE` en `world/runway-guide.ts`.
+   */
+  readonly sendaDesde: () => number;
 }
 
 /** Y lo que cambia en cada fotograma. */
@@ -435,8 +444,18 @@ export class LaAproximacion {
     // De quince metros para abajo ya no se corrige nada: se toca. Y por encima
     // de trescientos todavía no se está en final, se está llegando.
     if (alto < 15 || alto > 300) return;
+    /*
+     * **Se mide desde las luces, no desde el umbral.**
+     *
+     * Un PAPI dice si vas alto o bajo **respecto a su propia senda**, y su
+     * senda arranca donde están sus luces: unos trescientos metros pista
+     * adentro. Esto medía el ángulo desde el umbral, así que la tarjeta decía
+     * «dos y dos, vas bien» justo cuando las cuatro luces del mundo estaban
+     * rojas. Dos instrumentos contando cosas distintas sobre lo mismo, y uno
+     * de los dos era el que el juego pinta en el suelo.
+     */
     const [ux, uz] = this.mundo.enLaPista(
-      this.mundo.scenario.runway.length * 0.5,
+      this.mundo.scenario.runway.length * 0.5 - this.mundo.sendaDesde(),
     );
     const suelo = Math.hypot(s.position.x - ux, s.position.z - uz);
     // Muy cerca del umbral el ángulo se dispara y el PAPI de verdad tampoco

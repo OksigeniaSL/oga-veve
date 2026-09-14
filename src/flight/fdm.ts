@@ -186,7 +186,7 @@ const DE_LADO_RODANDO = 6;
  * número vale para los dos y no hay que inventarse una segunda columna en la
  * ficha para decir lo mismo.
  */
-const GIRO_DE_MORRO = (70 * Math.PI) / 180;
+export const GIRO_DE_MORRO = (70 * Math.PI) / 180;
 
 function esteGiro(
   ac: AircraftConfig,

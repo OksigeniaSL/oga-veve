@@ -243,6 +243,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        */
       envergadura: juego.aircraft.wingSpan,
       /*
+       * Y **lo que mide su tren**, que es la diferencia entre las ruedas y el
+       * origen del avión. Sin esto no se puede comprobar desde fuera si un
+       * avión ha nacido apoyado o flotando: el mismo metro y medio sobre el
+       * terreno es estar en el suelo para uno y estar en el aire para otro.
+       */
+      tren: juego.aircraft.gearHeight,
+      /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
        *
        * Un `.glb` trae sus propios materiales, así que el cargador lo

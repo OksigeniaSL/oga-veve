@@ -31,7 +31,9 @@
     "cabina": "node scripts/verificar-cabina.mjs",
     "carteles": "node scripts/verificar-carteles.mjs",
     "quien-habla": "node scripts/verificar-quien-habla.mjs",
-    "modelos": "node scripts/hacer-modelos.mjs"
+    "modelos": "node scripts/hacer-modelos.mjs",
+    "cambio-de-avion": "node scripts/verificar-cambio-de-avion.mjs",
+    "circuito": "node scripts/verificar-circuito.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",

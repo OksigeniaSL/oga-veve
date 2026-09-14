@@ -37,6 +37,7 @@
 
 import type { AircraftConfig } from "./aircraft";
 import { pistaQueNecesita } from "./carrera";
+import { GIRO_DE_MORRO } from "./fdm";
 import type { Superficie } from "../world/superficie";
 
 /** Lo que hace falta saber de un campo para decidir. */
@@ -60,10 +61,15 @@ export interface Veredicto {
 }
 
 /**
- * El ángulo que llega a girar la rueda de morro. **El mismo que el motor de
- * vuelo**, que si no esto diría que cabe y el avión no daría la vuelta.
+ * El radio más cerrado que puede dar este avión, en metros.
+ *
+ * La geometría es la de un coche: `R = batalla / tan δ`. El ángulo de la rueda
+ * de morro se **importa** del motor de vuelo y no se copia aquí, que si no esto
+ * diría que cabe y el avión no daría la vuelta.
  */
-const GIRO_DE_MORRO = (70 * Math.PI) / 180;
+export function radioDeGiro(a: AircraftConfig): number {
+  return a.batalla / Math.tan(GIRO_DE_MORRO);
+}
 
 export function cabeEn(a: AircraftConfig, campo: Campo): Veredicto {
   const necesita = pistaQueNecesita(a, campo.superficie);
@@ -84,7 +90,7 @@ export function cabeEn(a: AircraftConfig, campo: Campo): Veredicto {
    * pista, con un par de metros de borde a cada lado para las ruedas de fuera.
    * Ver `esteGiro` en `fdm.ts`, que es de donde sale el radio.
    */
-  const laVuelta = (2 * a.batalla) / Math.tan(GIRO_DE_MORRO) + 8;
+  const laVuelta = 2 * radioDeGiro(a) + 8;
   if (laVuelta > campo.ancho)
     return {
       cabe: false,

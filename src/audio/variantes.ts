@@ -69,9 +69,27 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
    * **Y los avisos de senda**, que salen varias veces en cada aproximación.
    * Son los que más cansan de oír repetidos, y los que menos se pueden callar:
    * si no se dicen, no se aprende a corregir.
+   *
+   * **Y hablan como habla una persona, no como una máquina de aros.** Quien lo
+   * jugó pidió esto con todas las letras: «más natural, que me diga que baje,
+   * que estoy alto y así, como diría una instructora». Así que ninguna nombra
+   * el aro: nombran **la pista**, que es lo que se está mirando, y dicen qué
+   * hacer. Un aro es el dibujo con el que el juego lo enseña; lo que se corrige
+   * es la altura para la pista.
+   *
+   * Cuatro formas de cada una, que es lo que separa a alguien que te acompaña
+   * de un aviso grabado. Salen tres o cuatro veces por aproximación.
    */
-  "vuelo.aroAlto": ["Estás por encima de la senda: bajá un poquito"],
-  "vuelo.aroBajo": ["Te quedaste por debajo: subí un poquito"],
+  "vuelo.aroAlto": [
+    "Venís un poco alto. Bajá el morro despacito",
+    "Estás por encima. Soltá un poquito y vas a ir entrando",
+    "Un poco alto para la pista: bajá suave",
+  ],
+  "vuelo.aroBajo": [
+    "Venís bajo. Tirá un poquito y un toque de motor",
+    "Estás por debajo: subí despacio, sin pasarte",
+    "Un poco bajo para la pista: levantá suave",
+  ],
 
   /*
    * **Y el que dice que lo arreglaste.** Éste lleva variantes por una razón
@@ -79,8 +97,9 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
    * máquina. Tres formas de decir «muy bien» se parecen más a una persona.
    */
   "vuelo.corregido": [
-    "Muy bien, así estás en la senda",
-    "Eso. Ahora venís derecho",
+    "Muy bien, así venís",
+    "Eso. Ahora entrás derechito",
+    "Perfecto, quedate así",
   ],
 };
 
