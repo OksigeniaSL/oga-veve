@@ -68,6 +68,18 @@ const mirar = () =>
     const o = globalThis.__oga;
     const s = o.estado();
     const a = o.avion();
+    /*
+     * **Y el circuito que tiene puesto**, que es del avión y no del campo.
+     *
+     * `escalaDeCircuito` lo estira con la velocidad de aproximación, pero el
+     * circuito solo se montaba al preparar el aeródromo: cambiar de avión con
+     * la tecla te dejaba volando un reactor por el circuito de la avioneta.
+     * Dicho jugando: «que no me diga que dé el giro cuando todavía no llevo ni
+     * dos segundos en el aire, porque ese tipo de avión necesita más giro».
+     */
+    const v = o.circuito();
+    const subida =
+      v.length > 1 ? Math.hypot(v[1].x - v[0].x, v[1].z - v[0].z) : 0;
     const sobre = s.position.y - o.suelo(s.position.x, s.position.z);
     return {
       avion: a.id,
@@ -80,6 +92,8 @@ const mirar = () =>
        */
       flotando: +(sobre - a.tren).toFixed(2),
       percance: !!o.percance?.(),
+      subida: Math.round(subida),
+      alturaDeCircuito: v.length > 1 ? Math.round(v[1].y - v[0].y) : 0,
     };
   });
 
@@ -170,6 +184,23 @@ comprobar(
     .map((v) => `${v.avion.replace("jaz-", "")}:${v.sobreElSuelo}`)
     .join(" "),
   "seis aviones con seis trenes distintos no pueden apoyarse todos igual",
+);
+
+/*
+ * **Y cada avión con su circuito.**
+ *
+ * La vuelta al aeropuerto de un avión de fuselaje ancho es casi seis kilómetros
+ * de tramo de subida; la de la avioneta, cuatro y pico. No es adorno: es dónde
+ * se canta el giro, y cantárselo a un reactor donde le toca a una avioneta es
+ * pedirle que vire con dos segundos de vuelo. Dos de los seis comparten figura
+ * a propósito —el biplano se aproxima más despacio que el entrenador y el
+ * circuito nunca se encoge—, así que se piden cinco de seis.
+ */
+comprobar(
+  "y cada uno vuela el circuito de su avión",
+  new Set(despues.map((v) => v.subida)).size >= 5,
+  despues.map((v) => `${v.avion.replace("jaz-", "")}:${v.subida}m`).join(" "),
+  "el circuito se monta con la velocidad de aproximación, y al cambiar de avión no se rehacía",
 );
 
 comprobar("sin errores", !errores.length, errores[0] ?? "limpio", "");

@@ -6048,6 +6048,23 @@ export class Game {
      * de la anterior — un panel que explica **este** avión enseñando otro.
      */
     this.montarElAla();
+    /*
+     * **Y el circuito, que es del avión y no del aeropuerto.**
+     *
+     * `escalaDeCircuito` estira la figura con la velocidad de aproximación —el
+     * de fuselaje ancho vuela un circuito de casi seis kilómetros de tramo de
+     * subida donde la avioneta vuela cuatro y pico— y eso estaba bien montado
+     * desde el primer día. Lo que no estaba es **volver a montarlo al cambiar
+     * de avión**: el circuito solo se construía al preparar el aeródromo, así
+     * que quien pulsaba la tecla se llevaba volando un reactor por el circuito
+     * de la avioneta, con el giro cantado donde le tocaba a ella.
+     *
+     * Dicho jugando: «si voy con un cuatrimotor o un bimotor a reacción, que no
+     * me diga que dé el giro cuando todavía no llevo ni dos segundos en el
+     * aire, porque ese tipo de avión necesita más giro». Y era verdad: la
+     * cuenta existía y no se estaba usando.
+     */
+    this.ponerCircuito();
     this.hud.flash(`${next.name} — ${t(next.descriptionKey as never)}`, 3.5);
   }
 
