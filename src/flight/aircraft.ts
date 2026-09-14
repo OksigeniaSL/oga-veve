@@ -236,6 +236,25 @@ export interface AircraftConfig {
    * pasa el punto de no retorno y enseguida se rota.
    */
   rotationSpeed: number;
+  /**
+   * La batalla: del tren de morro al principal, en metros.
+   *
+   * **Es lo que decide cómo gira en el suelo**, y no estaba. El radio de un
+   * avión rodando sale de la misma geometría que el de un coche —`R = batalla /
+   * tan δ`—, así que con la misma cuenta para los seis, un 747 giraba igual que
+   * una avioneta: medido, los seis daban 45°/s con un tercio de palanca y
+   * radios de 5,6 a 8,5 metros, el de fuselaje ancho incluido, y a fondo
+   * pivotaban a 72°/s clavándose en el sitio.
+   *
+   * Con la batalla de cada uno, el radio y el ritmo salen correctos solos y no
+   * hace falta ningún tope escrito a mano. Los números son los publicados de su
+   * clase: 1,65 m un 172, 7,21 un Beech 1900D, 11,5 un E-170, 25,6 un 747. El
+   * biplano es de rueda atrás y su batalla se mide del principal a la de cola,
+   * que es lo que gobierna su giro.
+   *
+   * Ver `esteGiro` en `fdm.ts`.
+   */
+  batalla: number;
   /** Distancia del centro de gravedad al tren, m. */
   gearHeight: number;
   /**
@@ -294,6 +313,7 @@ export const PYKASU: AircraftConfig = {
   decisionSpeed: 26,
   // 28 m/s son 55 nudos: la velocidad de rotación de un 172 de verdad.
   rotationSpeed: 28,
+  batalla: 1.65,
   gearHeight: 1.4,
   maxGroundPitch: 0.21, // 12°
   flapsLift: 0.55,
@@ -358,6 +378,7 @@ export const MAINUMBY: AircraftConfig = {
   approachSpeed: 29,
   decisionSpeed: 24,
   rotationSpeed: 26,
+  batalla: 5.4,
   gearHeight: 1.8,
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
   flapsLift: 0.35,
@@ -456,6 +477,7 @@ export const PANAMBI: AircraftConfig = {
   approachSpeed: 44,
   decisionSpeed: 34,
   rotationSpeed: 37,
+  batalla: 2.8,
   gearHeight: 1.6,
   maxGroundPitch: 0.19, // 11°
   flapsLift: 0.5,
@@ -538,6 +560,7 @@ export const ARASUNU: AircraftConfig = {
   approachSpeed: 48,
   decisionSpeed: 38,
   rotationSpeed: 41,
+  batalla: 7.21,
   gearHeight: 2.2,
   maxGroundPitch: 0.17, // 10°: la cola en T no perdona rotar de más.
   // Flaps grandes: es lo que le permite entrar en pistas cortas, que es para
@@ -643,6 +666,7 @@ export const ARAI: AircraftConfig = {
   approachSpeed: 68,
   decisionSpeed: 72,
   rotationSpeed: 78,
+  batalla: 11.5,
   gearHeight: 2.8,
   maxGroundPitch: 0.16, // 9°: con un fuselaje largo, la cola llega antes.
   /*
@@ -772,6 +796,7 @@ export const YVAGA: AircraftConfig = {
   approachSpeed: 75,
   decisionSpeed: 80,
   rotationSpeed: 86,
+  batalla: 25.6,
   gearHeight: 5.2,
   maxGroundPitch: 0.15, // 8,6°: un fuselaje de setenta metros toca antes.
   // Triple ranura y Krueger: un ala de línea saca mucho más CL que una

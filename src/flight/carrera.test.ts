@@ -8,8 +8,6 @@
  * de fuselaje ancho. «Me hace despegar desde la mitad de la pista, vaya locos.»
  */
 
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
 import {
@@ -17,6 +15,15 @@ import {
   paraEntrarYDespegar,
   pistaQueHaceFalta,
 } from "./carrera";
+import SGAS from "../../data/aerodromes/sgas.aero.json";
+import GCXO from "../../data/aerodromes/gcxo.aero.json";
+import YVYTU from "../../data/aerodromes/yvytu.aero.json";
+import GCLA from "../../data/aerodromes/gcla.aero.json";
+import LECU from "../../data/aerodromes/lecu.aero.json";
+import SGES from "../../data/aerodromes/sges.aero.json";
+import SGME from "../../data/aerodromes/sgme.aero.json";
+import SGPJ from "../../data/aerodromes/sgpj.aero.json";
+import SGEN from "../../data/aerodromes/sgen.aero.json";
 
 const pequeno = aircraftById("jaz-20")!;
 const grande = aircraftById("jaz-120")!;
@@ -103,28 +110,30 @@ describe("la pista que hace falta", () => {
  * lista contra sí misma.
  */
 describe("la flota contra las pistas que hay", () => {
-  const CARPETA = join(process.cwd(), "data", "aerodromes");
-
-  /** Lo que mide cada pista de verdad del juego, en metros. */
-  const PISTAS = readdirSync(CARPETA)
-    .filter((f) => f.endsWith(".aero.json"))
-    .flatMap((f) => {
-      const j = JSON.parse(readFileSync(join(CARPETA, f), "utf8")) as {
-        id?: string;
-        runways?: { ref?: string; centerline?: [number, number][] }[];
+  /**
+   * Lo que mide cada pista de verdad del juego, en metros.
+   *
+   * Los ficheros se importan como los importa el juego —ver `scenarios.ts`— y
+   * no se leen del disco: una prueba que va al sistema de ficheros no compila
+   * en este proyecto (el `tsconfig` solo trae los tipos de Vite, a propósito,
+   * porque esto es una aplicación de navegador) y además estaría comprobando
+   * otra cosa que lo que el juego carga.
+   */
+  const PISTAS = [SGAS, GCXO, YVYTU, GCLA, LECU, SGES, SGME, SGPJ, SGEN]
+    .flatMap((j) =>
+      (j.runways ?? []).map((r) => ({
+        campo: `${j.id} ${r.ref ?? ""}`,
+        ref: r.ref,
+        centerline: r.centerline as number[][] | undefined,
+      })),
+    )
+    .filter((r) => r.ref && r.centerline?.length === 2)
+    .map((r) => {
+      const [a, b] = r.centerline as number[][];
+      return {
+        campo: r.campo,
+        largo: Math.hypot(b![0]! - a![0]!, b![1]! - a![1]!),
       };
-      return (j.runways ?? [])
-        .filter((r) => r.ref && r.centerline?.length === 2)
-        .map((r) => {
-          const [[ax, az], [bx, bz]] = r.centerline as [
-            [number, number],
-            [number, number],
-          ];
-          return {
-            campo: `${j.id ?? f} ${r.ref}`,
-            largo: Math.hypot(bx - ax, bz - az),
-          };
-        });
     });
 
   it("hay pistas de las que hablar", () => {
@@ -142,18 +151,18 @@ describe("la flota contra las pistas que hay", () => {
     },
   );
 
-  it("y se sabe cuántas pistas admiten a cada uno", () => {
+  it("y a cada uno le vale al menos una", () => {
     /*
-     * No es un listón: es **la tabla**, y está aquí para que se vea cambiar.
-     * El día que una ficha se toque, este recuento dice a cuántos campos deja
-     * de poder ir ese avión antes de que nadie lo descubra jugando.
+     * No es un listón nuevo: es **la tabla**, y está aquí para que se vea
+     * cambiar. El día que una ficha se toque, este recuento dice a cuántos
+     * campos deja de poder ir ese avión antes de que nadie lo descubra
+     * jugando.
      */
-    const cuenta = AIRCRAFT.map((a) => {
+    for (const a of AIRCRAFT) {
       const necesita = carreraHastaVr(a) * 1.15;
-      return `${a.id}: ${PISTAS.filter((p) => p.largo > necesita).length} de ${PISTAS.length}`;
-    });
-    expect(cuenta.every((c) => !c.endsWith(`0 de ${PISTAS.length}`))).toBe(
-      true,
-    );
+      expect(PISTAS.filter((p) => p.largo > necesita).length).toBeGreaterThan(
+        0,
+      );
+    }
   });
 });

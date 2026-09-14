@@ -25,9 +25,9 @@
  * aeropuerto.
  */
 
-import { leerTexto, ponerTexto } from '../datos/guardado';
+import { leerTexto, ponerTexto } from "../datos/guardado";
 
-export type LeccionId = 'vuelta' | 'rodaje' | 'despegue' | 'aterrizaje';
+export type LeccionId = "vuelta" | "rodaje" | "despegue" | "aterrizaje";
 
 export interface Leccion {
   readonly id: LeccionId;
@@ -42,7 +42,7 @@ export interface Leccion {
    *   aterrizar. Empezar en el puesto para practicar aterrizajes significaría
    *   rodar dos kilómetros antes de cada intento.
    */
-  readonly arranque: 'puesto' | 'pista' | 'aire';
+  readonly arranque: "puesto" | "pista" | "aire";
   /** La raya verde, las letras y las señales del rodaje. */
   readonly guiaEnTierra: boolean;
   /** La lámpara de la torre y el permiso de entrar en pista. */
@@ -59,8 +59,8 @@ export interface Leccion {
 
 /** Dar una vuelta. Sin nada. */
 export const VUELTA: Leccion = {
-  id: 'vuelta',
-  arranque: 'pista',
+  id: "vuelta",
+  arranque: "pista",
   guiaEnTierra: false,
   torre: false,
   acabaEnLaEspera: false,
@@ -68,8 +68,8 @@ export const VUELTA: Leccion = {
 
 /** Aprender a rodar: del puesto a la doble raya, y parar. */
 export const RODAJE: Leccion = {
-  id: 'rodaje',
-  arranque: 'puesto',
+  id: "rodaje",
+  arranque: "puesto",
   guiaEnTierra: true,
   torre: true,
   acabaEnLaEspera: true,
@@ -77,8 +77,8 @@ export const RODAJE: Leccion = {
 
 /** Aprender a despegar: lo anterior, más el permiso y la carrera. */
 export const DESPEGUE: Leccion = {
-  id: 'despegue',
-  arranque: 'puesto',
+  id: "despegue",
+  arranque: "puesto",
   guiaEnTierra: true,
   torre: true,
   acabaEnLaEspera: false,
@@ -86,14 +86,19 @@ export const DESPEGUE: Leccion = {
 
 /** Aprender a aterrizar: se empieza en el aire, que es donde empieza esto. */
 export const ATERRIZAJE: Leccion = {
-  id: 'aterrizaje',
-  arranque: 'aire',
+  id: "aterrizaje",
+  arranque: "aire",
   guiaEnTierra: true,
   torre: false,
   acabaEnLaEspera: false,
 };
 
-export const LECCIONES: readonly Leccion[] = [VUELTA, RODAJE, DESPEGUE, ATERRIZAJE];
+export const LECCIONES: readonly Leccion[] = [
+  VUELTA,
+  RODAJE,
+  DESPEGUE,
+  ATERRIZAJE,
+];
 
 /** La de siempre, para quien llega sin elegir. */
 export const LECCION_POR_DEFECTO = DESPEGUE;
@@ -102,7 +107,7 @@ export function leccionPorId(id: string | null): Leccion {
   return LECCIONES.find((l) => l.id === id) ?? LECCION_POR_DEFECTO;
 }
 
-const LLAVE = 'leccion';
+const LLAVE = "leccion";
 
 /**
  * Qué lección se eligió la última vez.

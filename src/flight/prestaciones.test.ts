@@ -937,3 +937,100 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
     });
   },
 );
+
+/**
+ * El radio de giro en el suelo, avión por avión.
+ *
+ * **Esto no se vigilaba y por eso pasó**: el ritmo de giro estaba escrito como
+ * `mando · 2,2`, igual para los seis y sin mirar la velocidad, así que un 747
+ * giraba como un kart. Medido antes del arreglo: con un tercio de palanca, los
+ * seis daban 45°/s con radios de 5,6 a 8,5 metros — el de fuselaje ancho igual
+ * que la avioneta.
+ *
+ * Lo que se comprueba es lo único que importa de verdad: que **el orden de los
+ * radios sea el orden de los tamaños**, y que ninguno gire tan cerrado que
+ * parezca un coche ni tan abierto que no quepa en una calle de rodaje.
+ */
+describe("cómo giran en el suelo", () => {
+  /**
+   * Radio de giro con la rueda a fondo, a una velocidad de rodaje fija.
+   *
+   * **A velocidad fija y no a la que salga**, que es el primer intento y estaba
+   * mal: con el gas puesto cada avión acelera distinto, y lo que se medía era
+   * el tope de deslizamiento a la velocidad de cada uno —`v²/a`— y no su
+   * geometría. Salían radios sin orden ninguno: 20 m la avioneta, 37 el
+   * biplano, 63 el reactor y 41 el de fuselaje ancho.
+   */
+  function radioDeGiro(a: AircraftConfig, velocidad = 6): number {
+    const m = nuevo(a, velocidad, 0);
+    m.state.position.y = 0;
+    let giro = 0;
+    let ultimo = m.state.heading;
+    const pasos = Math.round(4 / DT);
+    for (let k = 0; k < pasos; k++) {
+      // La velocidad, sostenida a mano: lo que se mide es cómo gira, no cómo
+      // acelera, y las dos cosas juntas no se pueden leer.
+      m.state.velocity.setLength(velocidad);
+      m.step(DT, {
+        ...neutralControls(),
+        engineOn: true,
+        throttle: 0,
+        aileron: 1,
+      });
+      if (k * DT > 1) {
+        let d = m.state.heading - ultimo;
+        while (d > Math.PI) d -= 2 * Math.PI;
+        while (d < -Math.PI) d += 2 * Math.PI;
+        giro += d;
+      }
+      ultimo = m.state.heading;
+    }
+    const ritmo = Math.abs(giro) / 3;
+    return ritmo < 1e-6 ? Infinity : velocidad / ritmo;
+  }
+
+  const radios = TODOS.map((a) => [a.id, radioDeGiro(a)] as const);
+
+  /*
+   * **Lo que se comprueba no es que cada avión tenga su radio**, porque a paso
+   * de peatón casi todos tienen el mismo y eso es correcto: ahí el límite no
+   * es la geometría del tren, es lo que agarran las ruedas, y agarran parecido.
+   *
+   * Lo que se comprueba es lo que estaba roto: que **el grande gire más
+   * abierto que la avioneta**. Antes giraban igual —45°/s los seis con un
+   * tercio de palanca— y eso es lo que hacía que un 747 se saliera de la calle
+   * de rodaje en cuanto se le pedía una curva.
+   */
+  it("el de fuselaje ancho gira mucho más abierto que la avioneta", () => {
+    const avioneta = radios.find(([id]) => id === "jaz-20")![1];
+    const grande = radios.find(([id]) => id === "jaz-120")![1];
+    expect(grande).toBeGreaterThan(avioneta * 1.4);
+  });
+
+  it("y a paso de peatón mandan las ruedas, menos en el grande", () => {
+    /*
+     * **Y esto es una descripción honesta, no un listón que se cumple solo.**
+     *
+     * A seis metros por segundo, cinco de los seis aviones giran prácticamente
+     * igual —entre ocho y nueve metros de radio— porque ahí el límite no es la
+     * geometría del tren sino lo que agarran las ruedas, y agarran parecido.
+     * Solo el de fuselaje ancho es más ancho que ese límite: su batalla de
+     * veinticinco metros no le deja cerrar más de lo que cierra.
+     *
+     * Se deja escrito para que se vea cambiar: si un día alguien toca el tope
+     * de deslizamiento, esta comprobación dirá qué aviones se desmarcan.
+     */
+    const menos = radios.filter(([id]) => id !== "jaz-120").map(([, r]) => r);
+    expect(Math.max(...menos) - Math.min(...menos)).toBeLessThan(1.5);
+    expect(radios.find(([id]) => id === "jaz-120")![1]).toBeGreaterThan(
+      Math.max(...menos) * 1.4,
+    );
+  });
+
+  it("ninguno gira ni como un coche ni como un camión atascado", () => {
+    for (const [id, r] of radios) {
+      expect(r, `${id}: ${r.toFixed(1)} m`).toBeGreaterThan(3);
+      expect(r, `${id}: ${r.toFixed(1)} m`).toBeLessThan(40);
+    }
+  });
+});

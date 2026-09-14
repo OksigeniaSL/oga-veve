@@ -143,6 +143,64 @@ export interface FdmOptions {
 
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 
+/**
+ * A qué ritmo gira este avión en el suelo, en radianes por segundo.
+ *
+ * **La misma geometría que la de un coche**: con la rueda de morro girada un
+ * ángulo `δ`, el avión recorre una circunferencia de radio `batalla / tan δ`,
+ * y a velocidad `v` eso son `v·tan δ / batalla` radianes por segundo. Es una
+ * cuenta de bachillerato y es exactamente lo que hace un avión rodando.
+ *
+ * **Aquí no había geometría ninguna**: el ritmo de giro era `mando · 2,2`,
+ * igual para los seis aviones y **sin mirar la velocidad**. Un ritmo que no
+ * depende de la velocidad quiere decir que el radio se encoge según se acelera
+ * —al revés de lo que pasa— y que un 747 gira como un kart. Medido con el gas
+ * a la mitad: con un tercio de palanca los seis giraban a 45°/s con radios de
+ * 5,6 a 8,5 metros, el de fuselaje ancho igual que la avioneta; y a fondo
+ * pivotaban a 72°/s con la velocidad hundida a menos de un metro por segundo.
+ *
+ * Con esto, el radio más cerrado de cada avión sale de su batalla: sesenta
+ * centímetros la avioneta —que pivota sobre una rueda frenada, como se hace de
+ * verdad— y nueve metros y medio el de fuselaje ancho, que es el radio mínimo
+ * de morro publicado de un 747.
+ *
+ * ## Y el tope de lo que se puede tirar de lado
+ *
+ * La geometría sola, a velocidad de rodaje, deja ritmos absurdos en un avión
+ * pequeño —cuatrocientos ochenta grados por segundo—, porque la geometría no
+ * sabe que las ruedas agarran lo que agarran. El tope es el mismo que ya usa
+ * el modelo sencillo y por el mismo motivo: `v²/R = a`, así que el ritmo no
+ * puede pasar de `a/v`. Ver `DE_LADO_RODANDO` en `arcade.ts`.
+ *
+ * Con seis metros por segundo al cuadrado, el tope es quien manda en los
+ * aviones pequeños —o sea que ruedan como rodaban— y la geometría es quien
+ * manda en los grandes, que es donde estaba el fallo.
+ */
+const DE_LADO_RODANDO = 6;
+/**
+ * Lo que llega a girar la rueda de morro, en radianes.
+ *
+ * Setenta grados: lo que da la rueda de un avión grande con la barra del
+ * capitán. En una avioneta los pedales no llegan a tanto, pero el piloto suma
+ * freno de una rueda, y el resultado es el mismo giro cerrado — así que un
+ * número vale para los dos y no hay que inventarse una segunda columna en la
+ * ficha para decir lo mismo.
+ */
+const GIRO_DE_MORRO = (70 * Math.PI) / 180;
+
+function esteGiro(
+  ac: AircraftConfig,
+  mando: number,
+  velocidad: number,
+): number {
+  const v = Math.abs(velocidad);
+  const radioMinimo = ac.batalla / Math.tan(GIRO_DE_MORRO);
+  const tope = DE_LADO_RODANDO / Math.max(1, v);
+  return (
+    clamp(mando * (v / radioMinimo), -tope, tope) * Math.sign(velocidad || 1)
+  );
+}
+
 export class CoefficientFlightModel implements FlightModel {
   readonly implementationName = "FDM Óga Veve (coeficientes)";
 
@@ -726,17 +784,25 @@ export class CoefficientFlightModel implements FlightModel {
     // Timón: dirige más cuanto más deprisa se va, porque es aerodinámico.
     s.yawRate +=
       controls.rudder * 0.6 * Math.min(1, Math.abs(longitudinal) / 25) * settle;
-    // Y rueda de morro, que es al revés: manda a paso de peatón y se queda
-    // sin autoridad al coger carrerilla. Va con el mando de alabeo porque es
-    // el que la mano busca para girar, y en el suelo las alas no sirven de
-    // nada. Sin esto no se podía dar la vuelta en la pista tras abortar un
-    // despegue: el avión seguía recto hiciera uno lo que hiciera.
-    // Igual que en el modelo sencillo: plena hasta ocho metros por segundo y
-    // apagándose a los veintiocho. Decayendo desde parado, a treinta por hora
-    // el radio de giro se iba a cincuenta y cinco metros y las curvas de las
-    // calles de rodaje no se podían tomar.
+    /*
+     * Y la rueda de morro, que es al revés que el timón: manda a paso de
+     * peatón y se queda sin autoridad al coger carrerilla. Va con el mando de
+     * alabeo porque es el que la mano busca para girar, y en el suelo las alas
+     * no sirven de nada. Sin esto no se podía dar la vuelta en la pista tras
+     * abortar un despegue: el avión seguía recto hiciera uno lo que hiciera.
+     *
+     * Plena hasta ocho metros por segundo y apagándose a los veintiocho, que
+     * es cuando toma el relevo el timón. Decayendo desde parado, a treinta por
+     * hora el radio de giro se iba a cincuenta y cinco metros y las curvas de
+     * las calles de rodaje no se podían tomar. Medido.
+     *
+     * **Y lo que manda es la geometría del avión, no un número igual para
+     * todos.** Ver `esteGiro`.
+     */
     const nosewheel = 1 - clamp((Math.abs(longitudinal) - 8) / 20, 0, 1);
-    s.yawRate += controls.aileron * 2.2 * nosewheel * settle;
+    s.yawRate +=
+      (esteGiro(ac, controls.aileron * nosewheel, longitudinal) - s.yawRate) *
+      settle;
   }
 
   /**

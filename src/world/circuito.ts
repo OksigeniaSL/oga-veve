@@ -65,6 +65,7 @@ import {
   Points,
   PointsMaterial,
 } from "three";
+import { GLIDE_SLOPE } from "./runway-guide";
 
 /** Un punto del circuito, en coordenadas de mundo. */
 export interface PuntoDeCircuito {
@@ -108,18 +109,40 @@ const SEPARACION = 1000;
 const RECTO_TRAS_LA_PISTA = 1200;
 
 /**
- * A qué distancia del umbral se entra en final, m.
+ * A qué distancia del umbral la base se convierte en final, m.
  *
- * Mil ochocientos: ahí la senda de tres grados pasa a noventa y cuatro metros
- * sobre la pista, así que la base baja desde los doscientos cincuenta del
- * circuito hasta engancharla. Es también donde está el segundo aro de la
- * senda, y eso no es casualidad: **el circuito tiene que morir donde empieza
- * lo que ya estaba dibujado**, o serían dos caminos distintos para lo mismo.
+ * Mil ochocientos, que es donde entra en final un avión ligero de verdad: algo
+ * menos de una milla náutica de recta. Ahí la senda de tres grados pasa a
+ * noventa y cuatro metros sobre la pista, así que la base baja desde los
+ * doscientos cincuenta del circuito hasta engancharla.
+ *
+ * ## Y se llamaba `ENTRADA_EN_FINAL`, que ya existía y valía otra cosa
+ *
+ * `runway-guide.ts` exporta **otra** `ENTRADA_EN_FINAL`, que son 3.600 metros:
+ * la distancia a la que arranca la lección de aterrizar, ya puesto en final y
+ * sin circuito. Dos constantes con el mismo nombre y dos números distintos, y
+ * cada módulo importando la suya. Aquí se llama como lo que es.
+ *
+ * El comentario que había decía además que este punto «es donde está el
+ * segundo aro de la senda, y eso no es casualidad». Era falso: el primer aro
+ * está a 3.200 m y el segundo a 2.610, así que al entrar en final desde el
+ * circuito ya quedaban **tres aros a la espalda**, contados como perdidos. Lo
+ * arregla `reset` al pasar a final; ver `LaAproximacion`.
+ *
+ * Las dos distancias son distintas a propósito y no hay que juntarlas: un
+ * circuito de tráfico y una aproximación directa no entran en final en el
+ * mismo sitio ni en un avión de verdad.
  */
-export const ENTRADA_EN_FINAL = 1800;
+export const BASE_A_FINAL = 1800;
 
-/** La senda de planeo, en radianes. La misma que la de los aros. */
-const SENDA = (3 * Math.PI) / 180;
+/**
+ * La senda de planeo, en radianes.
+ *
+ * **La de los aros, importada y no copiada.** Estaba escrita otra vez aquí con
+ * el mismo número, que es la forma más silenciosa de que dos cosas que tienen
+ * que ir juntas dejen de ir juntas.
+ */
+const SENDA = GLIDE_SLOPE;
 
 /** Cada cuánto se pone un punto del hilo, m. */
 const PASO = 45;
@@ -205,7 +228,7 @@ export function holguraDelViento(
   const iz = -Math.sin(h) * signo;
   const medio = runway.length / 2;
   const desde = medio + RECTO_TRAS_LA_PISTA;
-  const hasta = -medio - ENTRADA_EN_FINAL;
+  const hasta = -medio - BASE_A_FINAL;
   let peor = Infinity;
   // Veinte catas a lo largo del tramo: con mil metros de separación y tres
   // kilómetros de largo, es una cada ciento cincuenta metros.
@@ -300,7 +323,7 @@ export function verticesDelCircuito(
 
   const recto = RECTO_TRAS_LA_PISTA * escala;
   const separacion = SEPARACION * escala;
-  const entrada = ENTRADA_EN_FINAL * escala;
+  const entrada = BASE_A_FINAL * escala;
   /*
    * **Y la altura sale de la senda, no de otro factor.**
    *
