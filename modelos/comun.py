@@ -955,26 +955,37 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     # pegatinas: desde el asiento no se leía ni uno. Un instrumento que no marca
     # sobra, y los que marcan son estos.
     if not grande:
-        # **En una fila debajo de las pantallas**, no en medio de ellas.
+        # **En columna al lado de las pantallas**, no en fila debajo.
         #
-        # Puestos en el centro del panel, a la altura de las pantallas, el
-        # cuentavueltas se dibujaba justo encima del hueco que dejan las dos y
-        # las tapaba por los bordes. Debajo hay sitio de sobra y es además donde
-        # están en una cabina de verdad: lo que se mira todo el rato arriba, lo
-        # que se mira de vez en cuando abajo.
+        # Debajo es donde están en una cabina de verdad, y aquí no se podían
+        # dejar por dos cosas que se ven en cuanto se mira la captura. Una: la
+        # tarjeta de lo que hay que hacer —«arrancá el motor»— vive abajo en el
+        # centro de la pantalla y les caía justo encima, así que los dos únicos
+        # instrumentos que marcan de verdad estaban tapados el noventa por
+        # ciento del vuelo. Y dos: con todo el tablero centrado en el asiento
+        # del piloto, **la mitad derecha del panel es una plancha negra vacía**,
+        # que es media pantalla de nada y es de donde sale lo de «parece un
+        # juguete de los chinos».
+        #
+        # Puestos en columna a la derecha de la pantalla de rumbos, las dos
+        # cosas se arreglan a la vez: se ven siempre y llenan el hueco. Y sigue
+        # siendo una cabina creíble — en muchas avionetas el grupo del motor va
+        # justo ahí, a la derecha del panel de vuelo.
         cuantos = max(1, palancas) + 1
         radioReloj = min(0.07, (ancho * 1.5) / (cuantos * 2.6))
+        columna = plazas[0] + pantallas_en + 0.14 + radioReloj + 0.02
+        arriba = alto_panel - 0.13
         for m in range(cuantos):
-            x = plazas[0] + (m - (cuantos - 1) / 2) * radioReloj * 2.5
+            y = arriba - m * radioReloj * 2.4
             if m < cuantos - 1:
                 piezas += reloj(
                     f"reloj-motor-{m}", mide, radioReloj,
-                    (x, alto_panel - 0.29 - radioReloj, panel_z + 0.008),
+                    (columna, y, panel_z + 0.008),
                 )
             else:
                 piezas += reloj(
                     "reloj-flaps", "flaps", radioReloj,
-                    (x, alto_panel - 0.29 - radioReloj, panel_z + 0.008),
+                    (columna, y, panel_z + 0.008),
                 )
         # Y los tres mandos que se pulsan, **debajo de los relojes y centrados**.
         #
