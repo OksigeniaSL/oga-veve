@@ -248,6 +248,8 @@ for (const id of [
       hayHelices: bujes.length > 0,
       near: o.camara().near,
       pantallas: o.pantallas(),
+      relojes: o.relojes(),
+      motores: o.avion().motores,
     };
   });
 
@@ -293,6 +295,29 @@ for (const id of [
       Math.abs(visto.ojo.y - visto.asiento.arriba) < 0.1,
     `ojos ${visto.ojo.y.toFixed(2)} · alto del asiento ${visto.asiento?.arriba.toFixed(2)}`,
     "con el cojín y el respaldo sueltos ganaba el cojín y el piloto iba sentado en el suelo",
+  );
+
+  /*
+   * **Y un reloj encendido por motor.**
+   *
+   * Los instrumentos redondos del panel eran discos grises sin cara: se
+   * pusieron sin mirarlos nunca desde el asiento y lo que se veía eran manchas.
+   * Ahora los dibuja el juego —ver `world/relojes-cabina.ts`— y esto comprueba
+   * que están y que son los que tienen que ser: uno por motor, más el de flaps.
+   */
+  comprobar(
+    etiqueta("hay un reloj encendido por motor"),
+    (visto.relojes ?? []).filter((r) => r.que !== "flaps").length ===
+      visto.motores,
+    `${(visto.relojes ?? []).map((r) => r.que).join(" · ") || "ninguno"} · ${visto.motores} motores`,
+    "un panel con discos grises sin cara no es un panel",
+  );
+
+  comprobar(
+    etiqueta("y el de flaps, que es lo otro que se mueve"),
+    (visto.relojes ?? []).some((r) => r.que === "flaps"),
+    `${(visto.relojes ?? []).length} relojes`,
+    "",
   );
 
   comprobar(
