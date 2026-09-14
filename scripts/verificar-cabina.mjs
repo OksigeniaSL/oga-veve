@@ -249,6 +249,8 @@ for (const id of [
       near: o.camara().near,
       pantallas: o.pantallas(),
       relojes: o.relojes(),
+      plazas: o.plazas(),
+      deLinea: o.deLinea(),
       motores: o.avion().motores,
     };
   });
@@ -320,11 +322,26 @@ for (const id of [
     "",
   );
 
+  /*
+   * **Dos pantallas por piloto, y todas encendidas.**
+   *
+   * Eran exactamente dos, y en el avión de línea las del copiloto iban apagadas
+   * para que el panel se viera simétrico: lo que se veía eran dos cuadros
+   * negros —«hay cuadros vacíos»—, y una pantalla apagada en un avión que vuela
+   * dice que algo no funciona.
+   */
+  /*
+   * Dos por piloto en un avión de línea y dos en total en una avioneta, que es
+   * como son de verdad: un G1000 lleva una pantalla de vuelo y una de
+   * navegación para los dos asientos, y una cabina de transporte lleva el juego
+   * entero repetido a cada lado.
+   */
+  const cuantasTocan = visto.deLinea ? 2 * visto.plazas : 2;
   comprobar(
-    etiqueta("hay dos pantallas encendidas"),
-    visto.pantallas?.length === 2,
-    `${visto.pantallas?.length ?? 0} pantallas`,
-    "el modelo trae dos, y en blanco quedan peor que sin nada",
+    etiqueta("están todas las pantallas y encendidas"),
+    visto.pantallas?.length === cuantasTocan,
+    `${visto.pantallas?.length ?? 0} de ${cuantasTocan} · ${visto.plazas} plazas`,
+    "una pantalla apagada en un avión que vuela dice que algo no funciona",
   );
 
   /*

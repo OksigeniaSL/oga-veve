@@ -123,12 +123,6 @@ const SIN_FRENO = 0.5;
  */
 const GROUND_TURN = 1.9;
 
-/** Hasta esta velocidad la rueda de morro manda entera, m/s. */
-const GROUND_FULL = 8;
-
-/** Y en estos metros por segundo más se queda sin autoridad. */
-const GROUND_FADE = 20;
-
 /**
  * Lo más que se puede tirar de lado rodando, m/s².
  *
@@ -155,21 +149,6 @@ const GROUND_FADE = 20;
  */
 const DE_LADO_RODANDO = 6;
 
-/**
- * Lo que **nunca** se pierde de autoridad en el suelo.
- *
- * Se apagaba del todo a los veintiocho metros por segundo, que es justo la
- * velocidad de la carrera de despegue: «no puedo moverme en pista acelerando a
- * derecha e izquierda, no puedo entonces corregir ángulo de ladeo en carrera».
- * Y tenía razón — un avión de verdad no se queda sin dirección al acelerar,
- * cambia de mando: deja de mandar la rueda de morro y empieza a mandar el
- * timón, que a esa velocidad va sobrado de aire.
- *
- * Doce centésimas de la autoridad plena son unos trece grados por segundo:
- * bastante para enderezar una desviación en la carrera, poco para tirarse a la
- * hierba de un toque.
- */
-const MANDO_MINIMO = 0.12;
 /**
  * Ritmo de viraje máximo, en radianes por segundo.
  *
@@ -203,6 +182,7 @@ export interface ArcadeOptions {
 }
 
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
+import { radioDeGiro } from "./cabe";
 import {
   ascensoMaximo,
   caidaSinMotor,
@@ -620,21 +600,37 @@ export class ArcadeFlightModel implements FlightModel {
       // rodaje y solo deja de mandar al coger carrerilla. Así que va plena
       // hasta ocho metros por segundo y se apaga a los veintiocho, que es
       // cuando ya toma el relevo el timón.
-      const mando = Math.max(
-        MANDO_MINIMO,
-        1 - clamp01((this.speed - GROUND_FULL) / GROUND_FADE),
-      );
       /*
-       * Y con el tope de lo que se puede tirar de lado: `v²/R = a`, o sea que
-       * la velocidad de giro no puede pasar de `a/v`. Ver `DE_LADO_RODANDO`.
-       * A paso de peatón no muerde —ahí manda la rueda— y lanzado es lo único
-       * que manda.
+       * **Un avión parado no gira, y uno rodando gira lo que le deja su tren.**
+       *
+       * Aquí el tope era `GROUND_TURN` —1,9 rad/s, ciento nueve grados por
+       * segundo— **a cualquier velocidad, incluida cero**. Parado y tocando una
+       * flecha, el avión pivotaba sobre sí mismo como una peonza: «cuando estás
+       * en tierra y le doy a las flechas el avión pega un giro de la hostia,
+       * sobre todo parado». Y en marcha lenta pasaba lo contrario: el mando
+       * perdía autoridad con la velocidad y el radio se abría a veintiocho
+       * metros, «menos rango de giro que un Hummer».
+       *
+       * Las dos cosas se arreglan con la misma cuenta, que es la del coche:
+       * **la velocidad de giro es la velocidad dividida por el radio**. El
+       * radio más cerrado sale de la batalla del avión y del ángulo de su rueda
+       * de morro —`radioDeGiro`, el mismo que usa el motor de coeficientes y el
+       * mismo con el que el juego decide si un avión puede darse la vuelta en
+       * una pista—, así que un cuatrimotor con veinticinco metros de batalla
+       * gira ancho y una avioneta gira sobre la punta del ala, como en la vida.
+       *
+       * Y encima de eso, el tope de siempre: no se puede tirar de lado más de
+       * lo que agarran las ruedas. Ver `DE_LADO_RODANDO`. A paso de peatón
+       * manda la geometría y lanzado manda el agarre.
+       *
+       * Parado, las dos dan cero: un avión no se gira a sí mismo con la rueda
+       * de morro, hay que rodar. Eso es lo que hace que quien juega descubra
+       * que para maniobrar hay que moverse, que es la lección del rodaje.
        */
-      const tope = Math.min(
-        GROUND_TURN,
-        DE_LADO_RODANDO / Math.max(1, this.speed),
-      );
-      const giro = clamp(controls.aileron * GROUND_TURN * mando, -tope, tope);
+      const porLaRueda = this.speed / Math.max(0.5, radioDeGiro(this.aircraft));
+      const porElAgarre = DE_LADO_RODANDO / Math.max(1, this.speed);
+      const tope = Math.min(GROUND_TURN, porLaRueda, porElAgarre);
+      const giro = clamp(controls.aileron * tope, -tope, tope);
       this.heading += giro * step;
       // Y sin inclinar el avión, que en el suelo tiene las ruedas puestas.
       this.bank += (0 - this.bank) * Math.min(1, step * 5);
