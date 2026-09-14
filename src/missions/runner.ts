@@ -6,8 +6,8 @@
  * que es lo que permitió escribir sus tests antes que su interfaz.
  */
 
-import type { FlightState } from '../flight/model';
-import type { Mission, Objective } from './types';
+import type { FlightState } from "../flight/model";
+import type { Mission, Objective } from "./types";
 
 export interface MissionEvent {
   /** Se acaba de cumplir un objetivo. */
@@ -77,22 +77,31 @@ export class MissionRunner {
 
   private satisfied(objective: Objective, state: FlightState): boolean {
     switch (objective.kind) {
-      case 'takeoff':
+      case "takeoff":
         return !state.onGround && state.heightAboveGround > 15;
 
-      case 'reach': {
-        const distance = Math.hypot(state.position.x - objective.x, state.position.z - objective.z);
+      case "reach": {
+        const distance = Math.hypot(
+          state.position.x - objective.x,
+          state.position.z - objective.z,
+        );
         if (distance > objective.radius) return false;
-        return objective.maxHeight === undefined || state.heightAboveGround <= objective.maxHeight;
+        return (
+          objective.maxHeight === undefined ||
+          state.heightAboveGround <= objective.maxHeight
+        );
       }
 
-      case 'land':
+      case "land":
         // Hay que haber volado: si no, arrancar en la pista ya lo cumpliría.
         if (!this.hasFlown || !state.onGround) return false;
         // Y hay que haberse parado, o casi. Tocar y seguir rodando a ciento
         // veinte por hora no es haber aterrizado.
-        if (state.airspeed > 12) return false;
-        return objective.gentle === undefined || state.touchdownSinkRate <= objective.gentle;
+        if (state.groundSpeed > 12) return false;
+        return (
+          objective.gentle === undefined ||
+          state.touchdownSinkRate <= objective.gentle
+        );
     }
   }
 }

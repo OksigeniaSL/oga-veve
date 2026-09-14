@@ -198,6 +198,7 @@ export class ArcadeFlightModel implements FlightModel {
       pitchRate: 0,
       yawRate: 0,
       airspeed: 0,
+      groundSpeed: 0,
       alpha: 0,
       beta: 0,
       heightAboveGround: 0,
@@ -224,6 +225,19 @@ export class ArcadeFlightModel implements FlightModel {
    * perder. Contra un edificio, el juego se encarga: el avión no lo atraviesa
    * y se queda ahí. Ver `Game.mirarSiChocaConAlgo`.
    */
+  /**
+   * El modelo sencillo **no tiene viento**, y es a propósito.
+   *
+   * Aquí el gas *es* la velocidad: no hay fuerzas, no hay masa y no hay
+   * velocidad respecto al aire. Meter un viento sería inventarse una cuenta que
+   * este modelo no hace, y el peldaño de los cuatro años tampoco la necesita —
+   * lo que enseña es tirar, virar y posarse.
+   *
+   * El viento sigue existiendo en su mundo: la manga se mueve, la torre elige
+   * cabecera con él y el panel lo cuenta. Lo que no hace es empujar el avión.
+   */
+  ponerViento(): void {}
+
   romper(): void {}
 
   reset(initial: InitialConditions): void {
@@ -647,6 +661,13 @@ export class ArcadeFlightModel implements FlightModel {
     s.velocity.y = this.climb;
 
     s.airspeed = this.speed;
+    /*
+     * Y la del suelo, que **en este modelo es la misma**: aquí el gas es la
+     * velocidad y no hay viento —ver `ponerViento`—, así que no hay dos
+     * números. Se publica igual para que el resto del juego pueda preguntar
+     * siempre lo mismo sin saber qué peldaño se está jugando.
+     */
+    s.groundSpeed = this.speed;
     s.verticalSpeed = this.climb;
     s.heading = this.heading;
     s.heightAboveGround = s.position.y - ground;

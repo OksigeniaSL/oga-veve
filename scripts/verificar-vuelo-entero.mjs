@@ -219,6 +219,21 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * es lo único que **no puede entrar en pérdida por insistir**: cuanto más
    * cerca de la pérdida está, menos palanca pide.
    */
+  /**
+   * Lo rápido que se avanza **por el suelo**, en m/s.
+   *
+   * **Rodando no vale el anemómetro**, y eso lo destapó el viento: en cuanto el
+   * motor de vuelo empezó a restar el viento, un avión parado con viento de cara
+   * marcaba ya la velocidad del viento. Este piloto decidía el gas de rodaje con
+   * `airspeed`, así que daba por hecho que ya iba deprisa, cerraba el gas y
+   * frenaba: en Guaraní, Tenerife Norte y La Palma se pasó los quince minutos
+   * enteros parado en la plataforma sin llegar nunca al punto de espera.
+   *
+   * Y es lo correcto por sí solo: rodar es avanzar por el suelo, y lo que decide
+   * si te pasas una curva es a qué velocidad la tomas **por el suelo**.
+   */
+  const porElSuelo = (s) => Math.hypot(s.velocity.x, s.velocity.z);
+
   const palancaPorVelocidad = (s, objetivo, extra = 0) =>
     Math.max(-0.35, Math.min(0.35, (s.airspeed - objetivo) * 0.05 + extra));
 
@@ -438,6 +453,32 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   /** Y para ir a un punto. */
   const alPunto = (s, x, z) =>
     alRumbo(s, Math.atan2(x - s.position.x, -(z - s.position.z)));
+
+  /**
+   * Hacia ese punto **por el suelo**, corrigiendo la deriva del viento.
+   *
+   * `alPunto` apunta el **morro** al sitio, y con viento cruzado el morro y la
+   * trayectoria no son lo mismo: el avión mira al eje y el aire lo va llevando
+   * de lado. Medido en Tenerife Norte con el viento del parte: tocaba a trece
+   * metros y medio del eje, con la pista entera por delante y sin enterarse.
+   *
+   * Un piloto de verdad no apunta el morro: apunta **la trayectoria**, y para
+   * eso pone el morro un poco al viento. Se llama cruzarse, y es lo que hace
+   * cualquiera cruzando un río a nado.
+   *
+   * La cuenta no necesita saber cuánto viento hace: el propio avión lo dice
+   * comparando hacia dónde mira con hacia dónde va. Por debajo de cinco metros
+   * por segundo esa comparación es ruido, así que ahí manda el morro.
+   */
+  const alPuntoPorElSuelo = (s, x, z) => {
+    const deseado = Math.atan2(x - s.position.x, -(z - s.position.z));
+    const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
+    if (porElSuelo < 5) return alPunto(s, x, z);
+    const trayectoria = Math.atan2(s.velocity.x, -s.velocity.z);
+    // Lo que el viento se lleva: la diferencia entre a dónde mira y a dónde va.
+    const deriva = error(trayectoria, s.heading);
+    return alRumbo(s, deseado - deriva);
+  };
 
   /** Cuánto se está del eje de la pista, en metros. Para la traza. */
   const desvio = (s) => {
@@ -895,8 +936,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       // La velocidad la pide el juego, y al final de la ruta pide cero: el
       // avión se para solo encima de la raya. Ver `calcularVelocidades`.
       const quiere = o.rodaje() ?? 9;
-      c.throttle = s.airspeed < quiere ? 0.6 : 0;
-      c.brakes = s.airspeed > quiere + 2 ? 1 : 0;
+      c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
+      c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
       c.aileron = timon(s, ruta);
       if (fase === "esperando" || fase === "autorizado") etapa = "esperar";
     } else if (etapa === "esperar") {
@@ -905,7 +946,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       if (fase === "autorizado" || fase === "alineando") etapa = "entrar";
     } else if (etapa === "entrar") {
       c.brakes = 0;
-      c.throttle = s.airspeed < 8 ? 0.5 : 0;
+      c.throttle = porElSuelo(s) < 8 ? 0.5 : 0;
       c.aileron = s.onRunway ? alRumbo(s, rumboPista) : timon(s, ruta);
       if (s.onRunway && Math.abs(error(rumboPista, s.heading)) < 0.15) {
         etapa = "despegar";
@@ -1211,7 +1252,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        */
       const tx = r.x + fx * (along + 300);
       const tz = r.z + fz * (along + 300);
-      c.aileron = alPunto(s, tx, tz);
+      c.aileron = alPuntoPorElSuelo(s, tx, tz);
       if (s.onGround && s.onRunway) {
         toco = t;
         /*
@@ -1248,7 +1289,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         -1,
         Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
       );
-      if (s.airspeed < 8) etapa = "volver";
+      if (porElSuelo(s) < 8) etapa = "volver";
     } else if (etapa === "volver") {
       tiempoDeRodajeVuelta += paso;
       if (antes) {
@@ -1259,8 +1300,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       }
       antes = { x: s.position.x, z: s.position.z };
       const quiere = o.rodaje() ?? 9;
-      c.throttle = s.airspeed < quiere ? 0.6 : 0;
-      c.brakes = s.airspeed > quiere + 2 ? 1 : 0;
+      c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
+      c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
       c.aileron = timon(s, ruta);
       if (fase === "en-puesto" || fase === "apagado") etapa = "apagar";
     } else if (etapa === "apagar") {

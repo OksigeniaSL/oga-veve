@@ -12,7 +12,7 @@
  * ese es el hueco.
  */
 
-import type { Mission } from '../missions/types';
+import type { Mission } from "../missions/types";
 
 /**
  * El primer vuelo. Despegar, ir hasta el cerro y volver a casa.
@@ -22,13 +22,13 @@ import type { Mission } from '../missions/types';
  * aprende que un vuelo tiene principio y final.
  */
 export const PRIMER_VUELO: Mission = {
-  id: 'primer-vuelo',
-  nameKey: 'mission.first.name',
-  scenario: 'valle-cordillera',
+  id: "primer-vuelo",
+  nameKey: "mission.first.name",
+  scenario: "valle-cordillera",
   objectives: [
-    { kind: 'takeoff' },
-    { kind: 'reach', x: 3100, z: 4300, radius: 420 },
-    { kind: 'land' },
+    { kind: "takeoff" },
+    { kind: "reach", x: 3100, z: 4300, radius: 420 },
+    { kind: "land" },
   ],
 };
 
@@ -40,15 +40,15 @@ export const PRIMER_VUELO: Mission = {
  * la vista durante medio siglo.
  */
 export const VUELTA_AL_VALLE: Mission = {
-  id: 'vuelta-al-valle',
-  nameKey: 'mission.valley.name',
-  scenario: 'valle-cordillera',
+  id: "vuelta-al-valle",
+  nameKey: "mission.valley.name",
+  scenario: "valle-cordillera",
   objectives: [
-    { kind: 'takeoff' },
-    { kind: 'reach', x: 3000, z: 3000, radius: 380 },
-    { kind: 'reach', x: 500, z: 1750, radius: 420, maxHeight: 260 },
-    { kind: 'reach', x: -1800, z: 3800, radius: 380 },
-    { kind: 'land' },
+    { kind: "takeoff" },
+    { kind: "reach", x: 3000, z: 3000, radius: 380 },
+    { kind: "reach", x: 500, z: 1750, radius: 420, maxHeight: 260 },
+    { kind: "reach", x: -1800, z: 3800, radius: 380 },
+    { kind: "land" },
   ],
 };
 
@@ -61,13 +61,13 @@ export const VUELTA_AL_VALLE: Mission = {
  * poco motor.
  */
 export const EL_TRASLADO: Mission = {
-  id: 'el-traslado',
-  nameKey: 'mission.transfer.name',
-  scenario: 'valle-cordillera',
+  id: "el-traslado",
+  nameKey: "mission.transfer.name",
+  scenario: "valle-cordillera",
   objectives: [
-    { kind: 'takeoff' },
-    { kind: 'reach', x: -2600, z: 5300, radius: 320, maxHeight: 320 },
-    { kind: 'land', gentle: 2 },
+    { kind: "takeoff" },
+    { kind: "reach", x: -2600, z: 5300, radius: 320, maxHeight: 320 },
+    { kind: "land", gentle: 2 },
   ],
 };
 
@@ -105,14 +105,14 @@ export const EL_TRASLADO: Mission = {
  * doce kilómetros en total, que para un primer vuelo ya es un viaje.
  */
 export const VER_EL_RIO: Mission = {
-  id: 'ver-el-rio',
-  nameKey: 'mission.rio.name',
-  scenario: 'pettirossi',
+  id: "ver-el-rio",
+  nameKey: "mission.rio.name",
+  scenario: "pettirossi",
   objectives: [
-    { kind: 'takeoff' },
+    { kind: "takeoff" },
     // El cauce a 5,9 km al oesnoroeste, donde es ancho y no hay forma de no verlo.
-    { kind: 'reach', x: -4583, z: -3750, radius: 500 },
-    { kind: 'land' },
+    { kind: "reach", x: -4583, z: -3750, radius: 500 },
+    { kind: "land" },
   ],
 };
 
@@ -132,15 +132,15 @@ export const VER_EL_RIO: Mission = {
  * borra— y es la que el propio escenario dice que hay que aprender aquí.
  */
 export const RIO_ABAJO: Mission = {
-  id: 'rio-abajo',
-  nameKey: 'mission.rioabajo.name',
-  scenario: 'pettirossi',
+  id: "rio-abajo",
+  nameKey: "mission.rioabajo.name",
+  scenario: "pettirossi",
   objectives: [
-    { kind: 'takeoff' },
+    { kind: "takeoff" },
     // Donde el cauce corre al oeste, y luego río arriba hacia el norte.
-    { kind: 'reach', x: -5500, z: -2250, radius: 450, maxHeight: 300 },
-    { kind: 'reach', x: -2292, z: -6750, radius: 450, maxHeight: 300 },
-    { kind: 'land' },
+    { kind: "reach", x: -5500, z: -2250, radius: 450, maxHeight: 300 },
+    { kind: "reach", x: -2292, z: -6750, radius: 450, maxHeight: 300 },
+    { kind: "land" },
   ],
 };
 
@@ -152,14 +152,14 @@ export const RIO_ABAJO: Mission = {
  * ya sale solo.
  */
 export const A_LAS_LOMAS: Mission = {
-  id: 'a-las-lomas',
-  nameKey: 'mission.lomas.name',
-  scenario: 'pettirossi',
+  id: "a-las-lomas",
+  nameKey: "mission.lomas.name",
+  scenario: "pettirossi",
   objectives: [
-    { kind: 'takeoff' },
+    { kind: "takeoff" },
     // 9,8 km al sur, y 170 metros: lo más alto que hay dentro del mapa.
-    { kind: 'reach', x: -1833, z: 9797, radius: 550 },
-    { kind: 'land', gentle: 2 },
+    { kind: "reach", x: -1833, z: 9797, radius: 550 },
+    { kind: "land", gentle: 2 },
   ],
 };
 
@@ -189,14 +189,14 @@ export const A_LAS_LOMAS: Mission = {
  * cuando se acaba la tierra se entiende solo.
  */
 export const SALIR_AL_MAR: Mission = {
-  id: 'salir-al-mar',
-  nameKey: 'mission.mar.name',
-  scenario: 'tenerife-norte',
+  id: "salir-al-mar",
+  nameKey: "mission.mar.name",
+  scenario: "tenerife-norte",
   objectives: [
-    { kind: 'takeoff' },
+    { kind: "takeoff" },
     // La costa del norte, a 7,4 km. Lo primero que hay a nivel del mar.
-    { kind: 'reach', x: -2337, z: -7010, radius: 600 },
-    { kind: 'land' },
+    { kind: "reach", x: -2337, z: -7010, radius: 600 },
+    { kind: "land" },
   ],
 };
 
@@ -208,13 +208,13 @@ export const SALIR_AL_MAR: Mission = {
  * mucho en una avioneta que acaba de despegar.
  */
 export const A_ANAGA: Mission = {
-  id: 'a-anaga',
-  nameKey: 'mission.anaga.name',
-  scenario: 'tenerife-norte',
+  id: "a-anaga",
+  nameKey: "mission.anaga.name",
+  scenario: "tenerife-norte",
   objectives: [
-    { kind: 'takeoff' },
-    { kind: 'reach', x: 5625, z: -5538, radius: 600 },
-    { kind: 'land' },
+    { kind: "takeoff" },
+    { kind: "reach", x: 5625, z: -5538, radius: 600 },
+    { kind: "land" },
   ],
 };
 
@@ -227,14 +227,14 @@ export const A_ANAGA: Mission = {
  * kilómetros, que en esta isla es cruzarla.
  */
 export const A_LA_CUMBRE: Mission = {
-  id: 'a-la-cumbre',
-  nameKey: 'mission.cumbre.name',
-  scenario: 'tenerife-norte',
+  id: "a-la-cumbre",
+  nameKey: "mission.cumbre.name",
+  scenario: "tenerife-norte",
   objectives: [
-    { kind: 'takeoff' },
-    { kind: 'reach', x: 6750, z: 4370, radius: 600 },
-    { kind: 'reach', x: -5712, z: 6101, radius: 650 },
-    { kind: 'land', gentle: 2 },
+    { kind: "takeoff" },
+    { kind: "reach", x: 6750, z: 4370, radius: 600 },
+    { kind: "reach", x: -5712, z: 6101, radius: 650 },
+    { kind: "land", gentle: 2 },
   ],
 };
 

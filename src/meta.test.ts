@@ -73,7 +73,9 @@ describe("lo que le decimos a una máquina", () => {
 
   it("y quién lo hace, con su código", () => {
     expect((datos["author"] as { name: string }).name).toBe("Oksigenia SL");
-    expect(datos["codeRepository"]).toContain("github.com/OksigeniaSL/oga-veve");
+    expect(datos["codeRepository"]).toContain(
+      "github.com/OksigeniaSL/oga-veve",
+    );
   });
 
   it("y para quién, que aquí importa más que el género", () => {

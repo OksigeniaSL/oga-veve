@@ -17,11 +17,11 @@
  * para el mismo nombre a secas**, que es siempre un choque y nunca un plan.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 // Con `?raw`, que lo resuelve Vite: leerla con `node:fs` obliga a meter los
 // tipos de Node en el `tsconfig` de la aplicación, y la aplicación no corre en
 // Node.
-import CSS from './style.css?raw';
+import CSS from "./style.css?raw";
 
 /**
  * Los selectores de una sola clase declarados **en el primer nivel**: `.foo {`.
@@ -39,20 +39,22 @@ function clasesBase(css: string): Map<string, number> {
 
   for (let i = 0; i < css.length; i++) {
     const c = css[i];
-    if (c === '{') {
+    if (c === "{") {
       if (profundidad === 0) {
         const selectores = css.slice(desde, i);
         // Una regla `@` —`@media`, `@keyframes`— abre un nivel y lo que lleva
         // dentro no son declaraciones base.
-        if (!selectores.trimStart().startsWith('@')) {
-          for (const sel of selectores.split(',')) {
-            const m = /^\.([a-zA-Z][\w-]*)$/.exec(quitarComentarios(sel).trim());
+        if (!selectores.trimStart().startsWith("@")) {
+          for (const sel of selectores.split(",")) {
+            const m = /^\.([a-zA-Z][\w-]*)$/.exec(
+              quitarComentarios(sel).trim(),
+            );
             if (m) cuenta.set(m[1]!, (cuenta.get(m[1]!) ?? 0) + 1);
           }
         }
       }
       profundidad++;
-    } else if (c === '}') {
+    } else if (c === "}") {
       profundidad = Math.max(0, profundidad - 1);
       if (profundidad === 0) desde = i + 1;
     }
@@ -60,32 +62,35 @@ function clasesBase(css: string): Map<string, number> {
   return cuenta;
 }
 
-const quitarComentarios = (s: string): string => s.replace(/\/\*[\s\S]*?\*\//g, '');
+const quitarComentarios = (s: string): string =>
+  s.replace(/\/\*[\s\S]*?\*\//g, "");
 
-describe('la hoja de estilos', () => {
-  it('no declara dos veces la misma clase base', () => {
+describe("la hoja de estilos", () => {
+  it("no declara dos veces la misma clase base", () => {
     const repetidas = [...clasesBase(CSS)]
       .filter(([, n]) => n > 1)
       .map(([nombre, n]) => `.${nombre} (${n} veces)`);
     expect(repetidas).toEqual([]);
   });
 
-  it('sabe encontrar el choque que provocó esta prueba', () => {
-    const cuenta = clasesBase('.tarjeta { padding: 8px; }\n.tarjeta { padding: 0; }');
-    expect(cuenta.get('tarjeta')).toBe(2);
+  it("sabe encontrar el choque que provocó esta prueba", () => {
+    const cuenta = clasesBase(
+      ".tarjeta { padding: 8px; }\n.tarjeta { padding: 0; }",
+    );
+    expect(cuenta.get("tarjeta")).toBe(2);
   });
 
-  it('no confunde un modificador ni un estado con una redeclaración', () => {
+  it("no confunde un modificador ni un estado con una redeclaración", () => {
     const cuenta = clasesBase(
-      '.ficha { color: red; }\n.ficha:hover { color: blue; }\n.ficha .hijo { color: green; }',
+      ".ficha { color: red; }\n.ficha:hover { color: blue; }\n.ficha .hijo { color: green; }",
     );
-    expect(cuenta.get('ficha')).toBe(1);
+    expect(cuenta.get("ficha")).toBe(1);
   });
 
-  it('deja en paz lo que va dentro de un @media, que para eso está', () => {
+  it("deja en paz lo que va dentro de un @media, que para eso está", () => {
     const cuenta = clasesBase(
-      '.ficha { color: red; }\n@media (min-width: 40em) {\n  .ficha { color: blue; }\n}',
+      ".ficha { color: red; }\n@media (min-width: 40em) {\n  .ficha { color: blue; }\n}",
     );
-    expect(cuenta.get('ficha')).toBe(1);
+    expect(cuenta.get("ficha")).toBe(1);
   });
 });

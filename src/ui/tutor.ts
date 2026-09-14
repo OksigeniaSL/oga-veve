@@ -437,7 +437,7 @@ export function pasoQueToca(
     if (haVolado && throttle >= GAS_DE_DESPEGUE) haVolado = false;
     if (haVolado) {
       // La carrera de aterrizaje: frenar hasta rodaje, y luego salir.
-      if (state.airspeed > RODAJE)
+      if (state.groundSpeed > RODAJE)
         return { paso: "frenar", celebrando, haVolado };
       /*
        * Ya despacio, lo que falta es dejar la pista libre. Fuera de ella el

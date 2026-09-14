@@ -6,11 +6,11 @@
  * aeródromo real.
  */
 
-import type { Ciudad } from './ciudad';
+import type { Ciudad } from "./ciudad";
 
-const CIUDADES = import.meta.glob('../../data/cities/*.city.json', {
-  query: '?url',
-  import: 'default',
+const CIUDADES = import.meta.glob("../../data/cities/*.city.json", {
+  query: "?url",
+  import: "default",
   eager: true,
 }) as Record<string, string>;
 
@@ -29,7 +29,9 @@ function bytes(b64: string): Uint8Array {
  * que es lo que había antes.
  */
 export async function cargarCiudad(id: string): Promise<Ciudad | undefined> {
-  const ruta = Object.entries(CIUDADES).find(([k]) => k.endsWith(`/${id}.city.json`))?.[1];
+  const ruta = Object.entries(CIUDADES).find(([k]) =>
+    k.endsWith(`/${id}.city.json`),
+  )?.[1];
   if (!ruta) return undefined;
   try {
     const res = await fetch(ruta);

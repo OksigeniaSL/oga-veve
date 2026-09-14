@@ -73,7 +73,24 @@ export function limitarElRodaje(
   techo: number,
 ): number {
   if (tier.assists.taxiAssist < CONDUCE_EL_JUEGO) return techo;
+
+  /*
+   * **Lo rápido que se rueda es lo rápido que se avanza por el suelo**, no lo
+   * que marca el anemómetro.
+   *
+   * Esto miraba `airspeed`, y mientras el motor de vuelo no conocía el viento
+   * las dos cosas eran la misma. En cuanto el viento entró, dejaron de serlo — y
+   * el tope se volvió un tapón: con viento de cara, un avión **parado** marca ya
+   * la velocidad del viento, así que el tope daba por hecho que iba deprisa y le
+   * cerraba el gas al mínimo. Medido en el barrido: en Guaraní, Tenerife Norte y
+   * La Palma el avión se pasó los quince minutos enteros en «rodando» sin llegar
+   * nunca al punto de espera.
+   *
+   * Y además es lo correcto por sí solo: un tope de rodaje existe para que no te
+   * pases una curva, y una curva se pasa yendo rápido **por el suelo**.
+   */
   const s = estado;
+  const porElSuelo = Math.hypot(s.velocity.x, s.velocity.z);
   /*
    * **En la pista no se limita nunca; en las calles, siempre.**
    *
@@ -132,8 +149,8 @@ export function limitarElRodaje(
      * casi que se escapa.» El trinquete es para no *añadir* velocidad de
      * aterrizaje, no para dejarte por debajo de lo que rueda cualquiera.
      */
-    const rodaje = topeDeRodaje({ velocidad: s.airspeed, rodaje: RODAJE });
-    techo = Math.min(techo, Math.max(rodaje.velocidad, s.airspeed));
+    const rodaje = topeDeRodaje({ velocidad: porElSuelo, rodaje: RODAJE });
+    techo = Math.min(techo, Math.max(rodaje.velocidad, porElSuelo));
   } else {
     techo = Infinity;
   }
@@ -175,7 +192,7 @@ export function limitarElRodaje(
   }
 
   const tope = topeDeRodaje({
-    velocidad: s.airspeed,
+    velocidad: porElSuelo,
     /*
      * La velocidad de rodaje de **este sitio**, que el plan ya calcula: en
      * una curva cerrada es menor que en una recta larga.

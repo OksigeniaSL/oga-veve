@@ -12,7 +12,17 @@ import { describe, expect, it } from "vitest";
 import { SE_QUEDAN, Vuelo, type Fase, type Situacion } from "./vuelo";
 
 const EN_TIERRA: Situacion = {
-  estado: { airspeed: 0, verticalSpeed: 0 } as Situacion["estado"],
+  /*
+   * **Sin viento, la del aire y la del suelo son la misma**, y estas pruebas no
+   * tienen viento. Se escriben las dos porque la máquina de fases pregunta por
+   * la del suelo —rodar, pararse y arrancar son cosas del suelo— y el resto del
+   * juego por la del aire. Ver `groundSpeed` en `model.ts`.
+   */
+  estado: {
+    airspeed: 0,
+    groundSpeed: 0,
+    verticalSpeed: 0,
+  } as Situacion["estado"],
   alaRuta: 0,
   restante: 500,
   alEjeDePista: 500,
@@ -57,12 +67,20 @@ describe("un vuelo entero", () => {
 
     anotar(durante(v, con({ motor: true }), 1));
     anotar(
-      durante(v, con({ motor: true, estado: { airspeed: 6 } as never }), 1),
+      durante(
+        v,
+        con({ motor: true, estado: { airspeed: 6, groundSpeed: 6 } as never }),
+        1,
+      ),
     );
     anotar(
       durante(
         v,
-        con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }),
+        con({
+          motor: true,
+          restante: 10,
+          estado: { airspeed: 0, groundSpeed: 0 } as never,
+        }),
         1,
       ),
     );
@@ -103,7 +121,7 @@ describe("un vuelo entero", () => {
           sobreElSuelo: 120,
           alEjeDePista: 20,
           desalineado: 3,
-          estado: { airspeed: 30, verticalSpeed: -3 } as never,
+          estado: { airspeed: 30, groundSpeed: 30, verticalSpeed: -3 } as never,
         }),
         1,
       ),
@@ -116,7 +134,7 @@ describe("un vuelo entero", () => {
           sobreElSuelo: 1,
           alEjeDePista: 5,
           enPista: true,
-          estado: { airspeed: 25, verticalSpeed: 0 } as never,
+          estado: { airspeed: 25, groundSpeed: 25, verticalSpeed: 0 } as never,
         }),
         1,
       ),
@@ -124,7 +142,11 @@ describe("un vuelo entero", () => {
     anotar(
       durante(
         v,
-        con({ motor: true, alEjeDePista: 5, estado: { airspeed: 6 } as never }),
+        con({
+          motor: true,
+          alEjeDePista: 5,
+          estado: { airspeed: 6, groundSpeed: 6 } as never,
+        }),
         1,
       ),
     );
@@ -138,7 +160,7 @@ describe("un vuelo entero", () => {
           motor: true,
           alEjeDePista: 200,
           restante: 5,
-          estado: { airspeed: 0 } as never,
+          estado: { airspeed: 0, groundSpeed: 0 } as never,
         }),
         1,
       ),
@@ -173,11 +195,19 @@ describe("las trampas", () => {
     const v = new Vuelo();
     v.reiniciar();
     durante(v, con({ motor: true }), 1);
-    durante(v, con({ motor: true, estado: { airspeed: 6 } as never }), 1);
+    durante(
+      v,
+      con({ motor: true, estado: { airspeed: 6, groundSpeed: 6 } as never }),
+      1,
+    );
     // Llega a la raya pero sin frenar del todo.
     const fase = durante(
       v,
-      con({ motor: true, restante: 5, estado: { airspeed: 5 } as never }),
+      con({
+        motor: true,
+        restante: 5,
+        estado: { airspeed: 5, groundSpeed: 5 } as never,
+      }),
       8,
     );
     expect(fase).toBe("rodando");
@@ -188,10 +218,18 @@ describe("las trampas", () => {
     const v = new Vuelo();
     v.reiniciar();
     durante(v, con({ motor: true }), 1);
-    durante(v, con({ motor: true, estado: { airspeed: 6 } as never }), 1);
     durante(
       v,
-      con({ motor: true, restante: 5, estado: { airspeed: 0 } as never }),
+      con({ motor: true, estado: { airspeed: 6, groundSpeed: 6 } as never }),
+      1,
+    );
+    durante(
+      v,
+      con({
+        motor: true,
+        restante: 5,
+        estado: { airspeed: 0, groundSpeed: 0 } as never,
+      }),
       1,
     );
     durante(v, con({ motor: true, restante: 5 }), 5);
@@ -216,7 +254,7 @@ describe("las trampas", () => {
         enPista: true,
         alEjeDePista: 4,
         sobreElSuelo: 1,
-        estado: { airspeed: 5 } as never,
+        estado: { airspeed: 5, groundSpeed: 5 } as never,
       }),
       6,
     );
@@ -236,7 +274,7 @@ describe("las trampas", () => {
         sobreElSuelo: 1,
         alEjeDePista: 5,
         enPista: true,
-        estado: { airspeed: 20, verticalSpeed: -1 } as never,
+        estado: { airspeed: 20, groundSpeed: 20, verticalSpeed: -1 } as never,
       }),
       1,
     );
@@ -258,7 +296,7 @@ describe("las trampas", () => {
         motor: true,
         sobreElSuelo: 18,
         alEjeDePista: 5,
-        estado: { airspeed: 32, verticalSpeed: -1 } as never,
+        estado: { airspeed: 32, groundSpeed: 32, verticalSpeed: -1 } as never,
       }),
       5,
     );
@@ -277,7 +315,7 @@ describe("las trampas", () => {
         motor: true,
         sobreElSuelo: 120,
         alEjeDePista: 20,
-        estado: { airspeed: 30, verticalSpeed: -3 } as never,
+        estado: { airspeed: 30, groundSpeed: 30, verticalSpeed: -3 } as never,
       }),
       1.5,
     );
@@ -297,7 +335,11 @@ describe("recuperarse de haberse salido del guion", () => {
     // se lo impide, y ahora el juego se entera.
     const v = new Vuelo();
     v.reiniciar();
-    durante(v, con({ motor: true, estado: { airspeed: 8 } as never }), 1);
+    durante(
+      v,
+      con({ motor: true, estado: { airspeed: 8, groundSpeed: 8 } as never }),
+      1,
+    );
     expect(v.actual).toBe("rodando");
     // Se sale de la calle, acelera y se va al aire, sin pasar por la pista.
     const fase = durante(
@@ -307,7 +349,7 @@ describe("recuperarse de haberse salido del guion", () => {
         alaRuta: 200,
         alEjeDePista: 900,
         sobreElSuelo: 60,
-        estado: { airspeed: 40 } as never,
+        estado: { airspeed: 40, groundSpeed: 40 } as never,
       }),
       2,
     );
@@ -324,7 +366,7 @@ describe("recuperarse de haberse salido del guion", () => {
       con({
         motor: true,
         sobreElSuelo: 400,
-        estado: { airspeed: 40 } as never,
+        estado: { airspeed: 40, groundSpeed: 40 } as never,
       }),
       20,
     );
@@ -336,7 +378,7 @@ describe("recuperarse de haberse salido del guion", () => {
         motor: true,
         sobreElSuelo: 1,
         alEjeDePista: 800,
-        estado: { airspeed: 30 } as never,
+        estado: { airspeed: 30, groundSpeed: 30 } as never,
       }),
       1,
     );
@@ -354,16 +396,28 @@ describe("recuperarse de haberse salido del guion", () => {
     // la fase lo sigue, sin parpadear: la histéresis la sostiene medio segundo.
     const v = new Vuelo();
     v.reiniciar();
-    durante(v, con({ motor: true, estado: { airspeed: 8 } as never }), 1);
     durante(
       v,
-      con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }),
+      con({ motor: true, estado: { airspeed: 8, groundSpeed: 8 } as never }),
+      1,
+    );
+    durante(
+      v,
+      con({
+        motor: true,
+        restante: 10,
+        estado: { airspeed: 0, groundSpeed: 0 } as never,
+      }),
       1,
     );
     expect(v.actual).toBe("esperando");
     const fase = durante(
       v,
-      con({ motor: true, restante: 400, estado: { airspeed: 8 } as never }),
+      con({
+        motor: true,
+        restante: 400,
+        estado: { airspeed: 8, groundSpeed: 8 } as never,
+      }),
       2,
     );
     expect(fase).toBe("rodando");
@@ -374,7 +428,11 @@ describe("recuperarse de haberse salido del guion", () => {
     // histéresis esto cambiaba de fase varias veces por segundo.
     const v = new Vuelo();
     v.reiniciar();
-    durante(v, con({ motor: true, estado: { airspeed: 8 } as never }), 1);
+    durante(
+      v,
+      con({ motor: true, estado: { airspeed: 8, groundSpeed: 8 } as never }),
+      1,
+    );
     const inicio = v.actual;
     let cambios = 0;
     let previa = inicio;
@@ -384,7 +442,10 @@ describe("recuperarse de haberse salido del guion", () => {
         con({
           motor: true,
           restante: 10,
-          estado: { airspeed: rapido ? 3 : 0 } as never,
+          estado: {
+            airspeed: rapido ? 3 : 0,
+            groundSpeed: rapido ? 3 : 0,
+          } as never,
         }),
         0.05,
       ).fase;
@@ -402,7 +463,11 @@ describe("saltarse la luz de la torre", () => {
     // hay que enseñar es que no se hace.
     const v = new Vuelo();
     v.reiniciar();
-    durante(v, con({ motor: true, estado: { airspeed: 8 } as never }), 1);
+    durante(
+      v,
+      con({ motor: true, estado: { airspeed: 8, groundSpeed: 8 } as never }),
+      1,
+    );
     let avisos = 0;
     for (let i = 0; i < 40; i++) {
       const p = v.paso(
@@ -410,7 +475,7 @@ describe("saltarse la luz de la torre", () => {
           motor: true,
           enPista: true,
           alEjeDePista: 5,
-          estado: { airspeed: 8 } as never,
+          estado: { airspeed: 8, groundSpeed: 8 } as never,
         }),
         0.05,
       );
@@ -422,10 +487,18 @@ describe("saltarse la luz de la torre", () => {
   it("quien espera la luz no recibe el aviso", () => {
     const v = new Vuelo();
     v.reiniciar();
-    durante(v, con({ motor: true, estado: { airspeed: 8 } as never }), 1);
     durante(
       v,
-      con({ motor: true, restante: 10, estado: { airspeed: 0 } as never }),
+      con({ motor: true, estado: { airspeed: 8, groundSpeed: 8 } as never }),
+      1,
+    );
+    durante(
+      v,
+      con({
+        motor: true,
+        restante: 10,
+        estado: { airspeed: 0, groundSpeed: 0 } as never,
+      }),
       6,
     );
     expect(v.autorizado).toBe(true);
@@ -436,7 +509,7 @@ describe("saltarse la luz de la torre", () => {
           motor: true,
           enPista: true,
           alEjeDePista: 5,
-          estado: { airspeed: 8 } as never,
+          estado: { airspeed: 8, groundSpeed: 8 } as never,
         }),
         0.05,
       );
@@ -457,14 +530,22 @@ describe("el salto de rana, por sus dos puertas", () => {
     const enPista = { motor: true, enPista: true, alEjeDePista: 4 };
     durante(
       v,
-      con({ ...enPista, sobreElSuelo: 20, estado: { airspeed: 42 } as never }),
+      con({
+        ...enPista,
+        sobreElSuelo: 20,
+        estado: { airspeed: 42, groundSpeed: 42 } as never,
+      }),
       2,
     );
     expect(v.actual).toBe("en-vuelo");
     // Vuelve al asfalto: sigue despegando, no aterrizando.
     const fase = durante(
       v,
-      con({ ...enPista, sobreElSuelo: 1, estado: { airspeed: 42 } as never }),
+      con({
+        ...enPista,
+        sobreElSuelo: 1,
+        estado: { airspeed: 42, groundSpeed: 42 } as never,
+      }),
       2,
     );
     expect(fase).toBe("despegando");
@@ -479,7 +560,7 @@ describe("el salto de rana, por sus dos puertas", () => {
       con({
         motor: true,
         sobreElSuelo: 400,
-        estado: { airspeed: 42 } as never,
+        estado: { airspeed: 42, groundSpeed: 42 } as never,
       }),
       20,
     );
@@ -491,7 +572,7 @@ describe("el salto de rana, por sus dos puertas", () => {
         sobreElSuelo: 1,
         alEjeDePista: 4,
         enPista: true,
-        estado: { airspeed: 42 } as never,
+        estado: { airspeed: 42, groundSpeed: 42 } as never,
       }),
       1,
     );
@@ -511,7 +592,7 @@ describe("la aproximación final", () => {
       con({
         motor: true,
         sobreElSuelo: 400,
-        estado: { airspeed: 45 } as never,
+        estado: { airspeed: 45, groundSpeed: 45 } as never,
       }),
       20,
     );
@@ -523,7 +604,7 @@ describe("la aproximación final", () => {
         alEjeDePista: 100,
         alLargoDePista: 4000,
         desalineado: 3,
-        estado: { airspeed: 45, verticalSpeed: -3 } as never,
+        estado: { airspeed: 45, groundSpeed: 45, verticalSpeed: -3 } as never,
       }),
       2,
     );
@@ -538,7 +619,7 @@ describe("la aproximación final", () => {
       con({
         motor: true,
         sobreElSuelo: 400,
-        estado: { airspeed: 45 } as never,
+        estado: { airspeed: 45, groundSpeed: 45 } as never,
       }),
       20,
     );
@@ -550,7 +631,7 @@ describe("la aproximación final", () => {
         alEjeDePista: 100,
         alLargoDePista: -3000,
         desalineado: 3,
-        estado: { airspeed: 45, verticalSpeed: -3 } as never,
+        estado: { airspeed: 45, groundSpeed: 45, verticalSpeed: -3 } as never,
       }),
       2,
     );
@@ -570,7 +651,11 @@ describe("ya no se puede parar", () => {
   const rodando = (kmh: number, pistaRestante: number): Fase => {
     const v = new Vuelo();
     const s = con({
-      estado: { airspeed: kmh / 3.6, verticalSpeed: 0 } as Situacion["estado"],
+      estado: {
+        airspeed: kmh / 3.6,
+        groundSpeed: kmh / 3.6,
+        verticalSpeed: 0,
+      } as Situacion["estado"],
       motor: true,
       enPista: true,
       alEjeDePista: 4,
@@ -637,7 +722,7 @@ describe("la carrera de aterrizaje", () => {
         motor: true,
         enPista: true,
         alEjeDePista: 2,
-        estado: { airspeed: 40 } as never,
+        estado: { airspeed: 40, groundSpeed: 40 } as never,
       }),
       3,
     );
@@ -646,7 +731,7 @@ describe("la carrera de aterrizaje", () => {
       con({
         motor: true,
         sobreElSuelo: 300,
-        estado: { airspeed: 55, verticalSpeed: 4 } as never,
+        estado: { airspeed: 55, groundSpeed: 55, verticalSpeed: 4 } as never,
       }),
       25,
     );
@@ -663,7 +748,7 @@ describe("la carrera de aterrizaje", () => {
       pistaRestante: 3000,
       restante: 3000,
       sobreElSuelo: 0,
-      estado: { airspeed: velocidad } as never,
+      estado: { airspeed: velocidad, groundSpeed: velocidad } as never,
     });
 
   it("al tocar tierra deprisa, la fase es «aterrizado»", () => {
@@ -730,7 +815,7 @@ describe("rodando por la pista para ir a la cabecera", () => {
       motor: true,
       enPista: true,
       alEjeDePista: 4,
-      estado: { airspeed: 8 } as never,
+      estado: { airspeed: 8, groundSpeed: 8 } as never,
       ...mas,
     });
 

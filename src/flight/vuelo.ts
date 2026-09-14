@@ -427,7 +427,7 @@ export class Vuelo {
    * final las distinciones finas de lo que pasa rodando.
    */
   private deducir(s: Situacion): Fase {
-    const parado = s.estado.airspeed < PARADO;
+    const parado = s.estado.groundSpeed < PARADO;
     const enTierra = s.sobreElSuelo <= EN_EL_AIRE;
 
     // ── En el aire ───────────────────────────────────────────────────────
@@ -494,7 +494,7 @@ export class Vuelo {
     if (parado && s.restante < LLEGADA)
       return this.verde ? "autorizado" : "esperando";
     if (this.verde) return "autorizado";
-    if (s.estado.airspeed > RODANDO_YA) return "rodando";
+    if (s.estado.groundSpeed > RODANDO_YA) return "rodando";
     // Motor en marcha, quieto y lejos de la doble raya: acaba de arrancar. Y
     // si ya venía rodando, sigue rodando: un semáforo en rojo a mitad de calle
     // no te devuelve al puesto.
@@ -522,7 +522,7 @@ export class Vuelo {
       this.mirando = 0;
       return;
     }
-    this.quieto = s.estado.airspeed < PARADO ? this.quieto + dt : 0;
+    this.quieto = s.estado.groundSpeed < PARADO ? this.quieto + dt : 0;
     if (this.quieto > ESPERA_MINIMA) this.mirando += dt;
     if (this.mirando > TORRE_TARDA) this.verde = true;
   }
