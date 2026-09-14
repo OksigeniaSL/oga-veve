@@ -4599,7 +4599,21 @@ export class Game {
          */
         this.rehacerPlanDeVuelo();
         this.ponerAproximacion();
-        if (escritos > 0) this.recolocarTrasElMoldeado();
+        /*
+         * **Y se recoloca el avión aunque no se haya escrito una sola cota.**
+         *
+         * Esto solo recolocaba cuando el moldeado había cambiado alturas, y el
+         * suelo se mueve también sin escribir ninguna: `subirTodo` sube el mapa
+         * entero el desfase del datum —cuarenta y siete metros en Tenerife— y
+         * el suelo lejano pasa a mandar de la fotografía. Medido en La Palma
+         * después de cambiar la cabecera en uso: el avión arrancaba **tres
+         * metros bajo tierra** en su puesto, y de ahí no salía nada bueno.
+         *
+         * Recolocar cuesta nada y no toca a quien ya está volando ni a quien ya
+         * ha arrancado: ver `recolocarTrasElMoldeado`.
+         */
+        this.recolocarTrasElMoldeado();
+        void escritos;
       }
     }
     this.advanceMission();
