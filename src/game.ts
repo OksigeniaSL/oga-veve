@@ -269,7 +269,11 @@ import { BOCA } from "./audio/boca";
 import { claveDeCabina } from "./audio/cabina";
 import { SE_QUEDAN, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
-import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
+import {
+  alturaDeEdificio,
+  arranqueEnPista,
+  paraUnAvion,
+} from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
@@ -1312,6 +1316,27 @@ export class Game {
     if (aero) {
       for (const e of aero.buildings) {
         if (e.polygon.length < 3) continue;
+        /*
+         * **Y una marquesina no es una pared.**
+         *
+         * `building=roof` en OpenStreetMap es un tejado sobre pilares y nada
+         * debajo: las marquesinas de la plataforma, el techo del surtidor, el
+         * pasillo cubierto hasta la terminal. No son pocos —Tenerife Sur tiene
+         * treinta y nueve y Tenerife Norte siete— y están **justo donde hay
+         * que rodar**, porque para eso se ponen: para cubrir donde se aparca.
+         *
+         * Convertirlas en prismas macizos de cinco metros pone paredes
+         * invisibles en la plataforma, y eso se cobró un vuelo de cada cinco
+         * en Tenerife Norte: el avión volvía a casa y se estrellaba contra la
+         * número 27, un tejado de dieciséis por veintiséis a doscientos ochenta
+         * y ocho metros del eje de pista. En la traza salía «percance:
+         * edificio» a un metro y medio del suelo, rodando — y buscarlo costó
+         * creer que un avión chocaba con algo en pleno final.
+         *
+         * Se sigue dibujando, que está ahí de verdad; lo que no hace es parar
+         * a un avión.
+         */
+        if (!paraUnAvion(e)) continue;
         let minX = Infinity;
         let maxX = -Infinity;
         let minZ = Infinity;
@@ -1334,6 +1359,16 @@ export class Game {
           (maxZ - minZ) / 2,
           suelo,
           suelo + alturaDeEdificio(e),
+          /*
+           * **Y con su planta, no solo con su caja.**
+           *
+           * Aquí ponía que la caja «para un prisma recto es exacta», y lo es —
+           * si el prisma tiene los lados paralelos a los ejes—. Ninguno de un
+           * aeropuerto los tiene: la terminal de Tenerife Norte son veintidós
+           * vértices en diagonal y su caja mide **2,2 veces su planta**. Más
+           * de la mitad de esa caja es plataforma vacía, y por ahí se rueda.
+           */
+          e.polygon.map(([px, py]) => [px, -py] as const),
         );
       }
     }

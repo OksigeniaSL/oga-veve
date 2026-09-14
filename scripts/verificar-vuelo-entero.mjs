@@ -695,6 +695,42 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   const vistas = new Set();
   /** Cuándo se rompió, si se rompió. */
   let seRompio = 0;
+  /** Dónde y contra qué se rompió, si se rompió. Ver el percance, abajo. */
+  let donde = null;
+  /*
+   * Los edificios del aeródromo, para poder decir contra cuál se chocó.
+   *
+   * Se piden una vez: son decenas de polígonos y no se mueven.
+   */
+  const edificios = o.edificios?.() ?? [];
+  const alBorde = (p, a, b) => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const l2 = dx * dx + dy * dy;
+    const u =
+      l2 < 1e-9
+        ? 0
+        : Math.max(
+            0,
+            Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
+          );
+    return Math.hypot(p[0] - (a[0] + dx * u), p[1] - (a[1] + dy * u));
+  };
+  const cualEdificio = (x, z) => {
+    let mejor = null;
+    for (let k = 0; k < edificios.length; k++) {
+      const e = edificios[k];
+      let d = Infinity;
+      for (let i = 0; i < e.puntos.length; i++)
+        d = Math.min(
+          d,
+          alBorde([x, z], e.puntos[i], e.puntos[(i + 1) % e.puntos.length]),
+        );
+      if (!mejor || d < mejor.d)
+        mejor = { k, d: +d.toFixed(1), alto: +e.alto.toFixed(1) };
+    }
+    return mejor;
+  };
   /** A qué vértice del circuito se va ahora. Ver la etapa «subir». */
   let aDonde = 1;
   let tocaDichas = 0;
@@ -784,7 +820,33 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * que pasó, no lo que dura la pantalla.
      */
     if (o.percance?.()) {
-      if (!seRompio) seRompio = t;
+      /*
+       * **Y dónde fue.**
+       *
+       * Un percance sin sitio no se investiga: el banco decía «percance:
+       * edificio» y nada más, y con eso lo único que se puede hacer es mirar
+       * el aeropuerto entero a ver. Se apunta el punto, la altura, la fase y
+       * —si fue contra un edificio— **contra cuál y a qué distancia de su
+       * borde**, que es lo que dice si el avión se metió dentro o si lo que
+       * pasa es que el juego cuenta un roce como un choque.
+       */
+      if (!seRompio) {
+        seRompio = t;
+        donde = {
+          que: o.percance(),
+          t: +t.toFixed(0),
+          fase,
+          x: Math.round(s.position.x),
+          z: Math.round(s.position.z),
+          alto: +alto(s).toFixed(1),
+          sobreElTerreno: +s.heightAboveGround.toFixed(1),
+          velocidad: +s.airspeed.toFixed(0),
+          edificio: cualEdificio(s.position.x, s.position.z),
+          // Y el bulto de verdad del índice, que no tiene por qué ser un
+          // edificio del aeródromo: ahí están también la ciudad y el coche.
+          bulto: o.bultoCerca?.(s.position.x, s.position.z) ?? null,
+        };
+      }
       if (t - seRompio > 3) break;
       continue;
     }
@@ -1445,6 +1507,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * frenos puestos durante once minutos. Ver `sufrirPercance`.
      */
     percance: o.percance?.() ?? null,
+    donde,
     gafas: o.gafas?.() ?? null,
     segundos: +t.toFixed(1),
     veces,
@@ -1567,6 +1630,23 @@ comprobar(
   vuelo.etapa === "apagar",
   `acabó en «${vuelo.etapa}» a los ${vuelo.segundos.toFixed(0)} s${
     vuelo.percance ? ` · percance: ${vuelo.percance}` : ""
+  }${
+    /*
+     * **Y dónde.** Un percance sin sitio no se investiga: «percance: edificio»
+     * y nada más deja mirar el aeropuerto entero a ver contra cuál fue.
+     */
+    vuelo.donde
+      ? ` · en ${vuelo.donde.x},${vuelo.donde.z} a ${vuelo.donde.alto} m sobre la pista` +
+        ` y ${vuelo.donde.sobreElTerreno} sobre el terreno, a ${vuelo.donde.velocidad} m/s, en «${vuelo.donde.fase}»` +
+        (vuelo.donde.edificio
+          ? ` · edificio ${vuelo.donde.edificio.k} a ${vuelo.donde.edificio.d} m, de ${vuelo.donde.edificio.alto} m de alto`
+          : "") +
+        (vuelo.donde.bulto
+          ? ` · bulto a ${vuelo.donde.bulto.d} m en ${Math.round(vuelo.donde.bulto.x)},${Math.round(vuelo.donde.bulto.z)}` +
+            ` de ${(vuelo.donde.bulto.semiX * 2).toFixed(0)}×${(vuelo.donde.bulto.semiZ * 2).toFixed(0)} m` +
+            ` y ${vuelo.donde.bulto.base.toFixed(0)}…${vuelo.donde.bulto.cima.toFixed(0)} de alto`
+          : "")
+      : ""
   } · fases: ${vuelo.fases}`,
   "el banco medía trozos sueltos y nunca había volado un vuelo de principio a fin",
 );
