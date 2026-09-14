@@ -636,6 +636,7 @@ const despegue = await page.evaluate(async () => {
     )
       break;
   }
+  const ficha = o.avion();
   // La carrera va por donde va la pista. Ver arriba.
   const rumboDeLaCarrera = rumboPista;
   c.throttle = 1;
@@ -784,6 +785,11 @@ const despegue = await page.evaluate(async () => {
     enElAire,
     frenoSeFue,
     largoDePista: pista.length,
+    // Lo que el propio juego calcula que le cuesta llegar a rotar, y su Vr:
+    // es contra eso contra lo que hay que medir, no contra una fracción de la
+    // pista. Ver `cabeEn`.
+    carreraDeFicha: ficha.carreraHastaVr,
+    vr: ficha.rotacion,
     fase: o.fase(),
     partida,
     alto,
@@ -806,11 +812,51 @@ comprobar(
   "con el empuje mal el avión tardaba veinticinco segundos en rotar",
 );
 if (despegue.enElAire) {
+  /*
+   * **Y le sobra pista: la que le sobre a él, no la que le sobraría a una
+   * avioneta.**
+   *
+   * Esto pedía menos del sesenta por ciento de la pista, y el sesenta por
+   * ciento es una cifra de Pykasu: corre doscientos veinticinco metros, así
+   * que en cualquier campo del juego le sobra de todo. El JAZ 120 corre mil
+   * cuatrocientos, y en Tenerife Sur —tres mil ciento noventa y cinco— eso son
+   * dos tercios largos de pista **y está bien**: un avión de fuselaje ancho se
+   * come la pista que se come, y ésa es la lección.
+   *
+   * Lo que sí hay que comprobar es lo que este banco existía para comprobar:
+   * que la carrera de verdad se parezca a la que dice su ficha —de esa cuenta
+   * sale `cabeEn`, o sea a qué campos se le deja ir— y que quede asfalto por
+   * delante al rotar.
+   */
   comprobar(
-    "y le sobra pista de largo",
-    despegue.enElAire.usado < despegue.largoDePista * 0.6,
+    "y rota con pista todavía por delante",
+    despegue.enElAire.usado < despegue.largoDePista - 200,
     `${despegue.enElAire.usado.toFixed(0)} m de ${despegue.largoDePista.toFixed(0)}`,
-    "una carrera que se come la pista entera no es una carrera, es un susto",
+    "rotar en el último suspiro de asfalto no es despegar, es un susto",
+  );
+  /*
+   * **Y rota cerca de su Vr.**
+   *
+   * Los metros no se pueden comparar directamente con `carreraHastaVr`: lo que
+   * mide este banco empieza en el punto de espera e incluye la entrada en
+   * pista y la alineación, que no son carrera. Lo que sí se puede comparar es
+   * **a qué velocidad se va al aire**, que es un número del avión y no del
+   * aeródromo.
+   *
+   * Y ahí hay un hallazgo que se queda apuntado: los tres aviones medidos
+   * rotan entre un veinte y un treinta por ciento por encima de su Vr —36
+   * contra 28 en la avioneta, 107 contra 86 en el de fuselaje ancho—, o sea
+   * que la ayuda tira tarde. No es un fallo de la física: es el piloto
+   * automático del peldaño, y se nota en metros porque la distancia va con el
+   * cuadrado de la velocidad. Un treinta y cinco por ciento de margen deja
+   * pasar eso y caza lo que de verdad importa, que es un avión al que no se le
+   * levanta el morro hasta el final de la pista.
+   */
+  comprobar(
+    "y rota cerca de su velocidad de rotación",
+    despegue.enElAire.v < despegue.vr * 1.35,
+    `a ${despegue.enElAire.v.toFixed(0)} m/s con la Vr en ${despegue.vr} · ${despegue.enElAire.usado.toFixed(0)} m desde el punto de espera, y su ficha dice ${despegue.carreraDeFicha.toFixed(0)} m de carrera`,
+    "irse al aire muy por encima de Vr alarga la carrera con el cuadrado de la velocidad",
   );
   /*
    * **Y V1 se ve, en grande y tenue.**
