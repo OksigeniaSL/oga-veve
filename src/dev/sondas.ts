@@ -629,6 +629,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ruta: () => juego.plan?.rutaVisible() ?? [],
     /** Y la misma sin redondear, que es donde se ven las horquillas. */
     rutaCruda: () => juego.plan?.rutaCruda() ?? [],
+    /** Si esta cabina es de avión de línea: lo dice su panel de techo. */
+    deLinea: () => !!juego.aircraftMesh.group.getObjectByName("panel-de-techo"),
+    /** Cuántos asientos de pilotaje trae el modelo. */
+    plazas: () => {
+      let n = 0;
+      juego.aircraftMesh.group.traverse((o) => {
+        if (/^asiento(-\d+)?$/.test(o.name)) n++;
+      });
+      return n;
+    },
     /** Por qué cabecera se opera hoy y con qué tiempo. Ver `conViento`. */
     cabecera: () => cabeceraEnUso(juego.scenario),
     meteo: () => juego.scenario.meteo ?? null,

@@ -685,15 +685,16 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
         signo = -1 if x < 0 else 1
         dentro = signo * max(abs(x) - 0.14, libre + ancho_p / 2)
         for k, sitio in enumerate((dentro, dentro + signo * (ancho_p + 0.02))):
-            encendida = pantallas and i == 0
+            # **Las cuatro encendidas.** Las del copiloto iban apagadas —cristal
+            # oscuro— para que el panel se viera simétrico, y lo que se veía eran
+            # dos cuadros negros: «hay cuadros vacíos». Una pantalla apagada en
+            # un avión que vuela dice que algo no funciona, y aquí no lo está.
+            # Cada piloto tiene las suyas, como en el avión de verdad.
             piezas.append(
                 cuadro(
-                    ("pantalla-derecha" if k == 0 else "pantalla-izquierda")
-                    if encendida
-                    else f"pantalla-apagada-{i}-{k}",
-                    ancho_p, 0.22,
+                    f"pantalla-{i}-{k}", ancho_p, 0.22,
                     (sitio, alto_panel - 0.16, panel_z + 0.006),
-                    "g1000_display" if encendida else "cristal",
+                    "g1000_display" if pantallas else "cristal",
                 )
             )
 

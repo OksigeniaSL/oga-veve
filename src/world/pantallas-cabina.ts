@@ -75,6 +75,27 @@ export interface DatosDeCabina {
   readonly alabeo: number;
 }
 
+/**
+ * Qué dibujo le toca a la pantalla número `i` de `cuantas`, de izquierda a
+ * derecha.
+ *
+ * Con dos —una avioneta— es el G1000 de siempre: horizonte a la izquierda,
+ * rumbos a la derecha.
+ *
+ * **Con cuatro es una cabina de dos pilotos**, y ahí no se repite el patrón: en
+ * un avión de línea cada piloto tiene su horizonte **por fuera** y la
+ * navegación por dentro, o sea que la mitad derecha va en espejo. Puestas en
+ * fila alterna, el copiloto se encontraba el horizonte en el sitio donde el
+ * comandante tiene la rosa, que es de las pocas cosas de una cabina que no
+ * pueden estar al revés.
+ */
+function queLeToca(i: number, cuantas: number): "horizonte" | "rumbo" {
+  if (cuantas < 4) return i % 2 === 0 ? "horizonte" : "rumbo";
+  const mitad = cuantas / 2;
+  const enSuLado = i < mitad ? i : cuantas - 1 - i;
+  return enSuLado % 2 === 0 ? "horizonte" : "rumbo";
+}
+
 /** Una pantalla: su lienzo, su textura y el material que la lleva. */
 interface Pantalla {
   readonly g: CanvasRenderingContext2D;
@@ -252,7 +273,7 @@ export function encenderPantallas(
       // X sería contarle lo mismo que ya se usó para ordenar, y entonces la
       // comprobación sale bien aunque el orden esté al revés.
       uuid: m.uuid,
-      dibujo: i % 2 === 0 ? "horizonte" : "rumbo",
+      dibujo: queLeToca(i, mallas.length),
     })),
     actualizar(datos, dt) {
       desde += dt;
@@ -262,7 +283,8 @@ export function encenderPantallas(
         // El espejo, deshecho: se dibuja al revés para que se vea del derecho
         // desde el otro lado del cuadrado. Ver `estirarUV`.
         p.g.setTransform(-1, 0, 0, 1, ANCHO, 0);
-        if (i % 2 === 0) pintarHorizonte(p.g, datos);
+        if (queLeToca(i, pantallas.length) === "horizonte")
+          pintarHorizonte(p.g, datos);
         else pintarRumbo(p.g, datos);
         p.textura.needsUpdate = true;
       });
