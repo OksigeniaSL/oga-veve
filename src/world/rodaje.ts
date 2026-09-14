@@ -658,6 +658,93 @@ function recortada(ruta: Ruta, destino: Punto): Ruta {
  * datos reales —hay aeropuertos con la plataforma mapeada y las calles no—, y
  * el juego tiene que saber apañárselas sin ruta, no reventar.
  */
+/**
+ * Cuánto se le perdona al destino estar al lado de la ruta y no al final, m.
+ *
+ * Veinticinco: media calle de rodaje y un margen. Más lejos que eso, el destino
+ * no está *sobre* esta ruta y acercarse a él es una maniobra de verdad, no un
+ * remate.
+ */
+const AL_LADO = 25;
+
+/**
+ * Acaba la ruta **donde está el destino**, no más allá.
+ *
+ * ## El fallo que arregla
+ *
+ * La ruta se cose en tres trozos: las ruedas, el camino del grafo y el destino.
+ * Cuando el camino **pasa de largo** por delante del destino —quince metros en
+ * Tenerife Norte— el último trozo va hacia atrás, y lo que se pinta en el
+ * asfalto es una horquilla: el avión sale, se pasa, y vuelve. Con los codos
+ * redondeados encima sale un bucle de radio un metro alrededor de la línea
+ * amarilla. «No entiendo estas curvas en rodadura para salir en TFN.»
+ *
+ * Medido allí: la ruta en crudo iba 35 m al oeste, 9 de vuelta, 33 al oeste y
+ * 15 de vuelta, con giros de 104 y 164 grados.
+ *
+ * ## Y por qué no se recorta la ruta entera
+ *
+ * Porque el trozo que sobra **no es un trozo de ruta, es el pasarse**. Cortar
+ * la ruta en su punto más cercano al destino ya se probó y se llevaba por
+ * delante el bulbo de giro —ver `EL_TROCITO_QUE_FALTA`—, que es una curva de
+ * verdad y hace falta. Lo que se hace aquí es mover **el último punto** a donde
+ * el destino cae sobre el último tramo: la curva se queda entera y el avión
+ * deja de irse de largo.
+ */
+function sinPasarseDelDestino(
+  puntos: readonly Punto[],
+  destino: Punto,
+  desdeElFinal = true,
+): Punto[] {
+  const salida = puntos.map((p) => [...p] as Punto);
+  if (salida.length < 3) return salida;
+  if (!desdeElFinal) {
+    // El mismo remate por la otra punta: la ruta empieza en las ruedas, y si el
+    // avión ya ha pasado el nudo donde el buscador engancha, el primer tramo va
+    // hacia atrás. Se resuelve dándole la vuelta a la lista.
+    return sinPasarseDelDestino([...salida].reverse(), destino).reverse();
+  }
+  /*
+   * Se mira el último tramo de ruta y se pregunta **dónde cae el destino sobre
+   * él**:
+   *
+   * - Dentro: la ruta acaba ahí, en la proyección, y el remate es el pasito que
+   *   queda. Es el caso de Tenerife Norte.
+   * - Antes de empezar: ese tramo entero sobra —se va y se vuelve por la misma
+   *   línea— y se quita. Es el caso de La Palma, donde la ruta iba diez metros
+   *   de más y volvía **al punto del que acababa de salir**. Y se vuelve a
+   *   mirar, porque debajo puede haber otro.
+   * - Más allá del final: la ruta se queda corta y el remate es legítimo. No se
+   *   toca.
+   */
+  while (salida.length >= 3) {
+    const a = salida[salida.length - 3]!;
+    const b = salida[salida.length - 2]!;
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const l2 = dx * dx + dy * dy;
+    if (l2 < 1) return salida;
+    const t = ((destino[0] - a[0]) * dx + (destino[1] - a[1]) * dy) / l2;
+    if (t >= 0.95) return salida;
+    const px = a[0] + dx * t;
+    const py = a[1] + dy * t;
+    // Y solo si el destino está **al lado** de este tramo: si está lejos, esto
+    // no es pasarse, es que el destino cae en otro sitio.
+    const dentro = Math.max(0, Math.min(1, t));
+    const cerca = Math.hypot(
+      destino[0] - (a[0] + dx * dentro),
+      destino[1] - (a[1] + dy * dentro),
+    );
+    if (cerca > AL_LADO) return salida;
+    if (t > 0.05) {
+      salida[salida.length - 2] = [px, py];
+      return salida;
+    }
+    salida.splice(salida.length - 2, 1);
+  }
+  return salida;
+}
+
 export function rodajeEntre(
   grafo: Grafo,
   origen: Punto,
@@ -677,12 +764,17 @@ export function rodajeEntre(
   // de la calle más próxima, y sin estos dos remates la raya verde nacía lejos
   // del avión: al empezar la partida el juego decía «volvé a la raya verde»
   // antes de que nadie se hubiera movido.
-  const puntos = [origen, ...ruta.puntos, destino].filter((p, i, todos) => {
-    const anterior = todos[i - 1];
-    return (
-      !anterior || Math.hypot(anterior[0] - p[0], anterior[1] - p[1]) > 0.5
-    );
-  });
+  const puntos = sinPasarseDelDestino(
+    [origen, ...ruta.puntos, destino].filter((p, i, todos) => {
+      const anterior = todos[i - 1];
+      return (
+        !anterior || Math.hypot(anterior[0] - p[0], anterior[1] - p[1]) > 0.5
+      );
+    }),
+    destino,
+  );
+  // Y lo mismo por la punta de las ruedas, que también se pasa de largo.
+  const conLasDos = sinPasarseDelDestino(puntos, origen, false);
   // Y el remate se mide desde donde acaba la ruta de verdad, que con el
   // recorte ya no es el nudo del final: cobrarle al camino los noventa metros
   // que se le acaban de quitar lo haría perder contra uno peor.
@@ -692,7 +784,7 @@ export function rodajeEntre(
     : b.distancia;
   return {
     ...ruta,
-    puntos,
+    puntos: conLasDos,
     largo: ruta.largo + a.distancia + remate,
     enganche: Math.max(a.distancia, remate),
   };

@@ -625,6 +625,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         ((c: typeof juego.input.controls) => void) | null;
     },
     ruta: () => juego.plan?.rutaVisible() ?? [],
+    /** Y la misma sin redondear, que es donde se ven las horquillas. */
+    rutaCruda: () => juego.plan?.rutaCruda() ?? [],
     pista: () => juego.scenario.runway,
     /**
      * Los edificios del aeródromo, con su planta y su altura.
