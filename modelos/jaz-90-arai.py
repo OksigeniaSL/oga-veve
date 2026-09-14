@@ -131,6 +131,7 @@ def construir():
         pantallas_en=0.40,
         palancas=2,
         relojes=12,
+        clase="reactor",
         suelo_atras=1.80,
     )
 

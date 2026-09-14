@@ -128,7 +128,9 @@ def construir():
     piezas.append(suavizar(carlinga, subdividir=2, biselar=0))
 
     # Y lo de dentro. Una sola plaza: un fumigador lleva al piloto y nada más.
-    piezas += cabina(ojos_z=-0.90, palancas=1, relojes=6)
+    piezas += cabina(
+        ojos_z=-0.90, palancas=1, relojes=6, mando="palanca",
+    )
 
     # ── Las dos alas ──────────────────────────────────────────────────────
     arriba = ala("ala-alta", ENVERGADURA / 2, CUERDA, CUERDA * 0.86, CUERDA * 0.13,
