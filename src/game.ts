@@ -1637,6 +1637,10 @@ export class Game {
      * moldeado**, y el juego sin clave tiene que seguir siendo el juego.
      */
     this.ponerAproximacion();
+    // Y la vista con la que se arranca, que puede ser la de cabina: la clase
+    // del HUD tiene que estar puesta desde el primer fotograma y no desde la
+    // primera vez que se pulse la tecla de cámara.
+    this.hud.ponerVistaDeCabina(this.cameraMode === "cockpit");
     /*
      * **Y la senda, otra vez, porque ahora ya se sabe dónde está el PAPI.**
      *
@@ -5940,6 +5944,7 @@ export class Game {
     this.cameraMode =
       CAMERA_MODES[(index + 1) % CAMERA_MODES.length] ?? "chase";
     recordarVista(this.cameraMode);
+    this.hud.ponerVistaDeCabina(this.cameraMode === "cockpit");
   }
 
   /**
