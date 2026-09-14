@@ -458,6 +458,32 @@ def montante(x, z, y0, y1, grosor=0.045, material_="detalle"):
     )
 
 
+def puntal(desde, hasta, grosor=0.05, material_="detalle"):
+    """
+    Una barra entre dos puntos cualesquiera, con la inclinación que salga.
+
+    **`montante` solo sabe ponerse de pie**, y hay cosas que no van de pie: el
+    arriostramiento del ala de una avioneta de ala alta sale del costado bajo
+    del fuselaje y sube en diagonal hasta media envergadura. Modelado con
+    montantes verticales, lo que se veía era un avión encima de dos patas de
+    mesa — «con esas patas, como mesa para la barbacoa quedaría curioso».
+
+    Se orienta llevando el eje del cilindro —que aquí, con la Y arriba, es la Y
+    después del giro de `cilindro`— sobre el vector que une los dos puntos.
+    """
+    d = Vector(hasta) - Vector(desde)
+    largo = d.length
+    medio = (Vector(desde) + Vector(hasta)) / 2
+    o = cilindro(
+        f"puntal-{desde[0]:.2f}-{desde[2]:.2f}", grosor, largo, tuple(medio),
+        material_, giro=None,
+    )
+    # El cilindro nace a lo largo de la Z de Blender; se gira para que su eje
+    # caiga sobre la diagonal que une los dos puntos.
+    o.rotation_euler = d.to_track_quat("Z", "Y").to_euler()
+    return o
+
+
 def asiento_de_una_pieza(nombre, z_atras, medio_ancho=0.24, largo=0.40,
                          y_cojin=0.34, alto_cojin=0.08, y_respaldo=0.88,
                          material_="tapiceria"):
