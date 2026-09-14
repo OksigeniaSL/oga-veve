@@ -559,8 +559,21 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         silla.location.x += x
         piezas.append(silla)
     # La palanca. No se toca, pero un avión sin palanca no es un avión.
+    #
+    # **Y sale del suelo de la cabina, no de una altura fija.** Estaba clavada
+    # en 0,54, que es lo que le toca al biplano —suelo a 0,32— y en los otros
+    # cuatro, que tienen el suelo entre −0,42 y −0,66, quedaba entre veinte y
+    # cincuenta centímetros **por encima de la cabeza del piloto**. No se veía
+    # desde el asiento porque cae dentro del plano cercano de la cámara, que es
+    # justo lo que hace que un fallo así dure.
     piezas.append(
-        cilindro("palanca", 0.026, 0.32, (plazas[0], 0.54, panel_z + 0.32), "tablero")
+        cilindro(
+            "palanca",
+            0.026,
+            0.32,
+            (plazas[0], y_suelo + 0.22, panel_z + 0.32),
+            "tablero",
+        )
     )
     return piezas
 
@@ -594,13 +607,117 @@ def aBlender(piezas):
 
 def exportar(piezas, salida, envergadura):
     """
-    Escribe el glTF y **comprueba que el avión no ha salido de pie**.
+    **Primero se comprueba, y después se escribe.**
 
-    Es la comprobación que habría cazado el primer Mainumby sin que hiciera
-    falta abrir el juego: lo ancho de un avión tiene que ser su envergadura.
+    Estaba al revés: exportaba y luego miraba, así que un guion que fallara la
+    comprobación dejaba igualmente el `.glb` malo en `public/` — y el juego lo
+    cargaba tan contento. Una comprobación que corre después de publicar no
+    protege nada; solo avisa de lo que ya está hecho.
+
+    Lo que se comprueba, y cada cosa por un fallo que pasó de verdad:
+
+    - **Que el avión no salga de pie.** Lo ancho de un avión es su envergadura.
+      Es lo que habría cazado el primer Mainumby sin abrir el juego: salía 5,74
+      de ancho, 9,49 de alto y 12,50 de largo.
+    - **Que lo que tiene que estar de pie lo esté.** Blender crea sus cilindros
+      a lo largo de su Z y aquí se modela con la Y arriba, así que montantes,
+      patas y palanca salían tumbados a lo largo del fuselaje.
+    - **Que el cono de la hélice mire al frente.** Iban apuntando al suelo.
+
+    Se mira por el nombre, que en esta casa dice lo que la pieza es.
     """
-    os.makedirs(os.path.dirname(salida), exist_ok=True)
     aBlender(piezas)
+    bpy.context.view_layer.update()
+
+    def caja(p):
+        """La caja de esta pieza en el mundo, en ejes del juego: x, y, z."""
+        c = [p.matrix_world @ Vector(v) for v in p.bound_box]
+        # Blender tiene la Z arriba y la Y hacia delante; el juego, al revés.
+        return (
+            [min(v.x for v in c), max(v.x for v in c)],
+            [min(v.z for v in c), max(v.z for v in c)],
+            [min(v.y for v in c), max(v.y for v in c)],
+        )
+
+    mallas = [p for p in piezas if p.type == "MESH"]
+    if not mallas:
+        raise SystemExit("No hay ni una malla que exportar.")
+
+    # ── Lo ancho es la envergadura ──────────────────────────────────────
+    cajas = [caja(p) for p in mallas]
+    ancho = max(c[0][1] for c in cajas) - min(c[0][0] for c in cajas)
+    alto = max(c[1][1] for c in cajas) - min(c[1][0] for c in cajas)
+    largo = max(c[2][1] for c in cajas) - min(c[2][0] for c in cajas)
+    caras = sum(len(p.data.polygons) for p in mallas)
+    print(f"PIEZAS: {len(piezas)} · caras sin subdividir: {caras}")
+    print(f"MEDIDAS: ancho {ancho:.2f} · alto {alto:.2f} · largo {largo:.2f}")
+    if abs(ancho - envergadura) > 0.6:
+        raise SystemExit(
+            f"El avión no mide de ancho su envergadura ({ancho:.2f} vs "
+            f"{envergadura}): está tumbado o mal escalado."
+        )
+
+    # ── Y cada pieza mirando a donde tiene que mirar ────────────────────
+    #
+    # No se vio en meses porque **medir la caja de la malla engaña**: en
+    # coordenadas locales todas decían estar de pie, porque el giro vive en el
+    # nodo y no en la malla. Hay que mirar el mundo, que es lo que se hace aquí.
+    mal = []
+    for p, (cx, cy, cz) in zip(mallas, cajas):
+        n = p.name.lower()
+        if n.startswith(("montante", "pata", "palanca")):
+            dy, dz = cy[1] - cy[0], cz[1] - cz[0]
+            if dz > dy:
+                mal.append(f"{p.name} tumbado (alto {dy:.2f}, largo {dz:.2f})")
+
+    # ── El cono de la hélice, por dónde es más gordo ────────────────────
+    #
+    # **Y esto no se puede mirar con la caja**, que fue el primer intento y no
+    # servía para nada: un cono tumbado y uno derecho tienen cajas parecidas, y
+    # además la del buje incluye las palas, que cuelgan de él. Lo que distingue
+    # una hélice bien puesta de una apuntando al suelo es **dónde está la
+    # punta**: un cono de hélice es estrecho por delante y gordo por detrás.
+    #
+    # Así que se miran sus vértices: los de la mitad de delante tienen que
+    # quedar más juntos del eje que los de la mitad de atrás.
+    for p in mallas:
+        if not p.name.lower().startswith(("helice", "buje")):
+            continue
+        if p.parent is not None and p.parent.type == "MESH":
+            continue  # una pala, no el cono
+        pts = [p.matrix_world @ v.co for v in p.data.vertices]
+        if len(pts) < 6:
+            continue
+        # En ejes del juego el morro está en la Z negativa, y en los de Blender
+        # eso es la Y positiva.
+        medio = (max(q.y for q in pts) + min(q.y for q in pts)) / 2
+        centro_x = sum(q.x for q in pts) / len(pts)
+        centro_z = sum(q.z for q in pts) / len(pts)
+
+        def gordura(delante):
+            de = [q for q in pts if (q.y > medio) == delante]
+            if not de:
+                return 0.0
+            return max(
+                math.hypot(q.x - centro_x, q.z - centro_z) for q in de
+            )
+
+        if gordura(True) > gordura(False) * 1.1:
+            mal.append(
+                f"{p.name} apunta al revés "
+                f"(delante {gordura(True):.2f}, detrás {gordura(False):.2f})"
+            )
+
+    if mal:
+        raise SystemExit(
+            "Piezas mal orientadas: "
+            + " · ".join(mal)
+            + ". Blender crea los cilindros y los conos a lo largo de su Z y "
+            "aquí se modela con la Y arriba. Ver `cilindro` y `DE_PIE`."
+        )
+
+    # Y ahora sí, se escribe.
+    os.makedirs(os.path.dirname(salida), exist_ok=True)
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.export_scene.gltf(
         filepath=salida,
@@ -608,64 +725,4 @@ def exportar(piezas, salida, envergadura):
         export_apply=True,
         export_yup=True,
     )
-    caras = sum(len(p.data.polygons) for p in piezas if p.type == "MESH")
-    print(f"PIEZAS: {len(piezas)} · caras sin subdividir: {caras}")
-    bpy.context.view_layer.update()
-    xs, ys, zs = [], [], []
-    for p in piezas:
-        if p.type != "MESH":
-            continue
-        for v in p.bound_box:
-            w = p.matrix_world @ Vector(v)
-            xs.append(w.x)
-            ys.append(w.y)
-            zs.append(w.z)
-    ancho, alto, largo = max(xs) - min(xs), max(zs) - min(zs), max(ys) - min(ys)
-    print(f"MEDIDAS: ancho {ancho:.2f} · alto {alto:.2f} · largo {largo:.2f}")
-    if abs(ancho - envergadura) > 0.6:
-        raise SystemExit(
-            f"El avión no mide de ancho su envergadura ({ancho:.2f} vs {envergadura}): "
-            "está tumbado o mal escalado."
-        )
-
-    # ── Y cada pieza mirando a donde tiene que mirar ────────────────────
-    #
-    # Blender crea sus cilindros y sus conos a lo largo de **su** Z, y aquí se
-    # modela con la Y hacia arriba, así que lo que se crea sin girar sale
-    # tumbado a lo largo del fuselaje. Pasó con todo lo que tenía que estar de
-    # pie —los montantes del biplano, sus cabañas, las patas de los cinco
-    # trenes y la palanca de la cabina— y con los conos de hélice, que
-    # apuntaban al suelo en vez de al frente.
-    #
-    # Y no se vio en meses porque **medir la caja de la malla engaña**: en
-    # coordenadas locales todas decían estar de pie, porque el giro vive en el
-    # nodo y no en la malla. Hay que mirar el mundo, que es lo que se hace
-    # aquí, y lo que se mira es el nombre, que en esta casa dice lo que la
-    # pieza es.
-    tumbadas = []
-    for p in piezas:
-        if p.type != "MESH":
-            continue
-        n = p.name.lower()
-        de_pie = n.startswith(("montante", "pata", "palanca"))
-        al_frente = n.startswith(("helice", "buje"))
-        if not de_pie and not al_frente:
-            continue
-        caja = [p.matrix_world @ Vector(v) for v in p.bound_box]
-        dx = max(c.x for c in caja) - min(c.x for c in caja)
-        dy = max(c.z for c in caja) - min(c.z for c in caja)
-        dz = max(c.y for c in caja) - min(c.y for c in caja)
-        # Una hélice se mide por su buje, no por sus palas: las palas cuelgan
-        # de él y son anchas a propósito, así que se mira solo la pieza padre.
-        if de_pie and dz > dy:
-            tumbadas.append(f"{p.name} (alto {dy:.2f}, largo {dz:.2f})")
-        if al_frente and not p.children and dz > max(dx, dy) * 2:
-            tumbadas.append(f"{p.name} (ancho {dx:.2f}, largo {dz:.2f})")
-    if tumbadas:
-        raise SystemExit(
-            "Piezas orientadas al revés: " + " · ".join(tumbadas) +
-            ". Blender crea los cilindros y los conos a lo largo de su Z y aquí"
-            " se modela con la Y arriba. Ver `cilindro` y `DE_PIE`."
-        )
-
     print(f"ESCRITO: {salida}")
