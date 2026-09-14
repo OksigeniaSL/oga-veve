@@ -30,6 +30,7 @@
 
 import { TIERS, type Tier } from "../flight/tiers";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
+import { cabeEn, type Campo, type Veredicto } from "../flight/cabe";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { retratosDeLaFlota } from "./siluetas";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
@@ -491,19 +492,93 @@ const galones = (n: number): string =>
  * pájaro: la estructura de fabricante y modelo es en sí misma algo que se
  * aprende, y el hangar es donde se lee. Ver `flight/flota.ts` y #69.
  */
+/**
+ * El campo elegido, visto por la cuenta de si un avión cabe.
+ *
+ * La superficie sale de la pista de verdad cuando la hay: en Yvytu Rape es
+ * hierba, y en hierba se rueda peor y se frena mejor, así que las dos cuentas
+ * cambian. Un escenario sin aeródromo real tiene su pista inventada, y ésas son
+ * de asfalto — lo dice `superficieEn`.
+ */
+function campoDe(escenario: Scenario): Campo {
+  const pista = escenario.aerodrome?.runways[0];
+  const blanda = /grass|dirt|gravel|earth|sand|ground/i.test(
+    pista?.surface ?? "",
+  );
+  return {
+    largo: escenario.runway.length,
+    ancho: escenario.runway.width,
+    superficie: blanda ? "hierba" : "asfalto",
+  };
+}
+
+/**
+ * El dibujo de «aquí no cabe»: un avión sobre una pista que se le queda corta.
+ *
+ * **Sin una palabra**, que es la regla de esta casa: esto lo mira quien tiene
+ * cuatro años y no lee, y un mensaje de error sería exactamente el canal que no
+ * tiene. Lo que se ve es la silueta del avión sobresaliendo por los dos
+ * extremos de la franja de la pista, que es literalmente lo que pasaría.
+ */
+/** El rótulo de cada motivo, para el lector de pantalla. */
+const PORQUE = {
+  corta: "hangar.nocabe.corta",
+  estrecha: "hangar.nocabe.estrecha",
+  "no-da-la-vuelta": "hangar.nocabe.no-da-la-vuelta",
+} as const;
+
+const NO_CABE = `
+  <svg class="ficha__nocabe" viewBox="0 0 64 34" aria-hidden="true">
+    <rect x="0" y="0" width="64" height="34" rx="7" fill="#12190f"
+          opacity="0.82" />
+    <!--
+      La pista: una franja corta y centrada, con sus dos umbrales marcados.
+      Lo que cuenta la historia es que **empieza y acaba dentro del avión**.
+    -->
+    <rect x="18" y="21" width="28" height="6" rx="1.5" fill="#d8d5c8"
+          opacity="0.85" />
+    <path d="M20 22.5v3M44 22.5v3" stroke="#12190f" stroke-width="1.2"
+          stroke-linecap="round" />
+    <!--
+      Y el avión encima, más largo que ella por los dos lados: un ala de punta
+      a punta y el fuselaje sobresaliendo. No hace falta saber leer.
+    -->
+    <g fill="none" stroke="#dd923f" stroke-width="2.4"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 14h52" />
+      <path d="M32 6v16" />
+      <path d="M24 6h16" />
+    </g>
+  </svg>`;
+
 function fichaDeAvion(
   avion: AircraftConfig,
   retrato: string | undefined,
   elegido: boolean,
+  /**
+   * Si cabe en el campo que está elegido, y por qué no.
+   *
+   * **El hangar ofrecía los seis aviones en los once campos**, sin mirar el
+   * sitio ni una sola vez: el juego colocaba el JAZ 120 en La Palma —2.202 m de
+   * pista para un avión que necesita 2.562—, la torre lo autorizaba y el avión
+   * se salía por el final. Ver `cabeEn`.
+   */
+  veredicto: Veredicto,
 ): string {
   const modelo = modeloPorId(avion.id);
+  const no = !veredicto.cabe;
   return `
-    <button class="ficha ficha--avion" type="button" role="radio"
+    <button class="ficha ficha--avion${no ? " ficha--nocabe" : ""}"
+            type="button" role="radio"
             aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
+            ${no ? "disabled" : ""}
+            aria-label="${FABRICANTE} ${modelo?.numero ?? ""} ${
+              modelo?.nombre ?? avion.name
+            }${no && veredicto.porQueNo ? ` — ${t(PORQUE[veredicto.porQueNo])}` : ""}"
             data-avion="${avion.id}">
       <span class="ficha__lienzo ficha__lienzo--avion">${
         retrato ? `<img class="ficha__retrato" src="${retrato}" alt="" />` : ""
-      }</span>
+      }${no ? NO_CABE : ""}</span>
       <span class="ficha__pie">
         <span class="ficha__dato">${FABRICANTE} ${modelo?.numero ?? ""}</span>
         <span class="ficha__nombre">${modelo?.nombre ?? avion.name}</span>
@@ -1093,7 +1168,12 @@ export function abrirHangar(
           <h2 class="hangar__pregunta" id="hangar-avion">${t("hangar.conque")}</h2>
           <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-avion">
             ${AIRCRAFT.map((a) =>
-              fichaDeAvion(a, retratosDeLaFlota().get(a.id), a.id === avion.id),
+              fichaDeAvion(
+                a,
+                retratosDeLaFlota().get(a.id),
+                a.id === avion.id,
+                cabeEn(a, campoDe(sitio)),
+              ),
             ).join("")}
           </div>
         </section>`
@@ -1227,6 +1307,19 @@ export function abrirHangar(
         // Una misión es de un sitio. Al cambiar de aeropuerto deja de valer, y
         // dejarla puesta sería mandar a alguien a un cerro que no está ahí.
         mision = null;
+        /*
+         * **Y el avión, si no cabe en el campo nuevo.**
+         *
+         * Sin esto se puede llegar a despegar con un avión que el propio
+         * hangar está pintando apagado: se elige el JAZ 120 en Pettirossi y
+         * luego se cambia a La Palma, donde no cabe. Se baja al mayor que sí
+         * quepa, que es lo que haría cualquiera: el avión más grande que entre
+         * en esa pista.
+         */
+        if (!cabeEn(avion, campoDe(sitio)).cabe) {
+          const quepan = AIRCRAFT.filter((a) => cabeEn(a, campoDe(sitio)).cabe);
+          avion = quepan[quepan.length - 1] ?? avion;
+        }
       } else if (atributo === "data-tramo")
         tramo = TIERS.find((x) => x.id === id) ?? tramo;
       else {
@@ -1298,7 +1391,11 @@ export function abrirHangar(
 
       const idAvion = boton.getAttribute("data-avion");
       if (idAvion) {
-        avion = AIRCRAFT.find((a) => a.id === idAvion) ?? avion;
+        const pedido = AIRCRAFT.find((a) => a.id === idAvion);
+        // Un avión que no cabe no se puede elegir. El botón ya va apagado, y
+        // esto es el cinturón: el teclado y los lectores llegan por otro lado.
+        if (pedido && !cabeEn(pedido, campoDe(sitio)).cabe) return;
+        avion = pedido ?? avion;
         pantalla = "inicio";
         pintar();
         return;

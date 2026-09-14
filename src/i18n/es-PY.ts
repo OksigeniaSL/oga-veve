@@ -411,6 +411,16 @@ export const ES_PY = {
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro
   // modelos de avión, que es exactamente la confusión de la que avisa
   // `tiers.ts`. Un tramo no es una aeronave, son tus galones.
+  /*
+   * **Por qué este avión no se puede elegir aquí.**
+   *
+   * No sale en pantalla: el dibujo ya lo dice —el avión sobresaliendo por los
+   * dos extremos de la pista— y quien juega no lee. Esto es para el lector de
+   * pantalla, que es el único canal que le queda a quien no ve el dibujo.
+   */
+  "hangar.nocabe.corta": "la pista es muy corta para este avión",
+  "hangar.nocabe.estrecha": "la pista es muy angosta para sus alas",
+  "hangar.nocabe.no-da-la-vuelta": "no puede dar la vuelta en esta pista",
   "hangar.conque": "¿Con qué volás?",
   "hangar.como": "¿Qué piloto sos?",
   "hangar.despegar": "¡Despegar!",

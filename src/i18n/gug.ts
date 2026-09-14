@@ -89,6 +89,9 @@ export const GUG: Dictionary = {
 
   // ── El hangar ──────────────────────────────────────────────────────────
   "hangar.pais.py": "Paraguái",
+  "hangar.nocabe.corta": "pe pista mbyky eterei ko avión-pe guarã",
+  "hangar.nocabe.estrecha": "pe pista po’i eterei ipepo peguarã",
+  "hangar.nocabe.no-da-la-vuelta": "ndaikatúi ojere ko pista-pe",
   "hangar.donde": "¿Moõpa javeve?",
   "hangar.como": "¿Mba’eichagua piloto piko nde?",
   "hangar.despegar": "¡Javeve!",
