@@ -66,6 +66,11 @@ COLORES = {
     # Y las dos pantallas del panel. El nombre no es libre: `pantallas-cabina.ts`
     # busca exactamente `g1000_display` para encenderlas.
     "g1000_display": (0.02, 0.03, 0.04, 1.0),
+    # La chapa de un panel grande: algo más clara que el tablero, para que se
+    # distingan las cajas del fondo y no sea todo una mancha negra.
+    "chapa": (0.27, 0.28, 0.29, 1.0),
+    # Y el aluminio de las palancas y los cuernos.
+    "metal": (0.62, 0.63, 0.64, 1.0),
 }
 
 
@@ -518,9 +523,208 @@ def asiento_de_una_pieza(nombre, z_atras, medio_ancho=0.24, largo=0.40,
     return cojin
 
 
+def _cuerno(x, y_suelo, panel_z, grande):
+    """
+    El volante de un piloto: la columna y el cuerno.
+
+    Lo que se agarra en un avión de transporte y en casi cualquier avioneta. Va
+    delante de cada plaza, sale del suelo —de la base del panel, en realidad— y
+    termina en una barra con dos empuñaduras.
+    """
+    alto = 0.42 if grande else 0.30
+    ancho_cuerno = 0.22 if grande else 0.16
+    base = y_suelo + 0.02
+    z = panel_z + (0.34 if grande else 0.26)
+    piezas = [
+        cilindro(
+            f"palanca-columna-{x:.2f}", 0.028 if grande else 0.022, alto,
+            (x, base + alto / 2, z), "tablero",
+        ),
+        caja(
+            f"cuerno-{x:.2f}", x - ancho_cuerno / 2, x + ancho_cuerno / 2,
+            base + alto - 0.02, base + alto + 0.03, z - 0.03, z + 0.03,
+            "metal",
+        ),
+    ]
+    # Las dos empuñaduras, que es lo que hace que se lea como un volante y no
+    # como un palo con una tabla.
+    for lado in (-1, 1):
+        piezas.append(
+            caja(
+                f"cuerno-puno-{x:.2f}-{lado}",
+                x + lado * ancho_cuerno / 2 - 0.025,
+                x + lado * ancho_cuerno / 2 + 0.025,
+                base + alto - 0.02, base + alto + 0.10,
+                z - 0.025, z + 0.025, "tablero",
+            )
+        )
+    return piezas
+
+
+def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
+                       motores, relojes, pantallas, pantallas_en):
+    """
+    La cabina de un avión de línea, que no es la de una avioneta estirada.
+
+    Lo que la hace reconocible, y en este orden de importancia:
+
+    1. **La visera**, profunda y de lado a lado. Es lo primero que se ve al
+       sentarse y lo que da la sensación de ir metido dentro de algo grande.
+    2. **Dos puestos iguales**, uno por piloto, cada uno con sus pantallas.
+    3. **La columna de motores en el centro**: una fila de relojes por motor.
+       En un cuatrimotor son cuatro columnas, y eso no lo tiene ningún otro
+       avión del mundo — es *la* imagen de esta cabina.
+    4. **El pedestal entre los dos asientos**, con las palancas de gas: una por
+       motor, juntas, para poder llevarlas las cuatro con una mano.
+    5. **El panel de techo**, con sus filas de interruptores.
+    6. Y los montantes del parabrisas, que es lo que enmarca el mundo.
+
+    Todo son cajas y cilindros: nada de esto se ve desde fuera y nada de esto
+    se subdivide.
+    """
+    piezas = []
+    ojos_y = y_suelo + 1.00
+    borde = ancho + 0.02
+
+    # 1. El panel y su visera.
+    piezas.append(
+        caja("panel", -borde, borde, y_suelo + 0.30, alto_panel,
+             panel_z - 0.14, panel_z, "chapa")
+    )
+    piezas.append(
+        caja("visera", -borde - 0.04, borde + 0.04, alto_panel,
+             alto_panel + 0.07, panel_z - 0.26, panel_z + 0.12)
+    )
+    # El faldón de debajo del panel, para que no se vea el hueco hasta el suelo.
+    piezas.append(
+        caja("faldon", -borde, borde, y_suelo + 0.02, y_suelo + 0.30,
+             panel_z - 0.10, panel_z - 0.04)
+    )
+
+    # 3. La columna de motores: una fila de tres relojes por motor.
+    #
+    # **Va primero porque es la que manda.** Ocupa el centro del panel y las
+    # pantallas de los pilotos se colocan a partir de donde ella acaba: puestas
+    # antes, con una cuenta suya, los relojes del cuatrimotor se dibujaban
+    # encima de la pantalla derecha del comandante.
+    por_motor = 3
+    paso = min(0.13, (ancho * 0.9) / max(1, motores))
+    radio = min(0.045, paso * 0.36)
+    # Hasta aquí llega la columna, con un dedo de margen.
+    libre = paso * (motores - 1) / 2 + radio + 0.02
+    for m in range(motores):
+        x = -paso * (motores - 1) / 2 + paso * m
+        for k in range(por_motor):
+            piezas.append(
+                cilindro(
+                    f"reloj-motor-{m}-{k}", radio, 0.014,
+                    (x, alto_panel - 0.10 - k * 0.12, panel_z + 0.008),
+                    "metal", giro=None,
+                )
+            )
+    # Y los relojes sueltos que queden, **en más filas debajo de la columna**.
+    #
+    # Iban a los lados, y a los lados están las pantallas del piloto: los cuatro
+    # que sobran en el cuatrimotor caían justo encima de una de ellas. Debajo no
+    # estorban a nada y siguen leyéndose como lo que son, la segunda fila de
+    # instrumentos de motor.
+    sobran = max(0, relojes - motores * por_motor)
+    for i in range(sobran):
+        fila = por_motor + i // max(1, motores)
+        columna = i % max(1, motores)
+        x = -paso * (motores - 1) / 2 + paso * columna
+        piezas.append(
+            cilindro(
+                f"reloj-{i}", min(0.04, paso * 0.32), 0.012,
+                (x, alto_panel - 0.10 - fila * 0.12, panel_z + 0.008),
+                "metal", giro=None,
+            )
+        )
+
+    # 2. Un puesto por piloto, con sus dos pantallas.
+    #
+    # Las encendidas son las del comandante —son las que el juego dibuja de
+    # verdad, ver `pantallas-cabina.ts`— y el copiloto lleva las suyas apagadas,
+    # que es lo que se ve desde la izquierda: un panel simétrico. La interior de
+    # cada uno arranca donde acaba la columna de motores, y la exterior a su
+    # lado; así el panel se llena de fuera adentro sin que nada se pise.
+    ancho_p = 0.24
+    for i, x in enumerate(plazas):
+        signo = -1 if x < 0 else 1
+        dentro = signo * max(abs(x) - 0.14, libre + ancho_p / 2)
+        for k, sitio in enumerate((dentro, dentro + signo * (ancho_p + 0.02))):
+            encendida = pantallas and i == 0
+            piezas.append(
+                cuadro(
+                    ("pantalla-derecha" if k == 0 else "pantalla-izquierda")
+                    if encendida
+                    else f"pantalla-apagada-{i}-{k}",
+                    ancho_p, 0.22,
+                    (sitio, alto_panel - 0.16, panel_z + 0.006),
+                    "g1000_display" if encendida else "cristal",
+                )
+            )
+
+    # 4. El pedestal, entre los dos asientos, con las palancas de gas.
+    if motores:
+        alto_pedestal = y_suelo + 0.26
+        piezas.append(
+            caja("pedestal", -0.14, 0.14, y_suelo + 0.02, alto_pedestal,
+                 panel_z + 0.02, ojos_z + 0.10)
+        )
+        hueco = min(0.06, 0.22 / max(1, motores))
+        for i in range(motores):
+            x = -hueco * (motores - 1) / 2 + hueco * i
+            piezas.append(
+                cilindro(
+                    f"palanca-de-gas-{i}", 0.016, 0.20,
+                    (x, alto_pedestal + 0.09, panel_z + 0.30), "metal",
+                )
+            )
+        # Y las dos de siempre detrás: flaps y aerofrenos.
+        for j, dz in enumerate((0.52, 0.66)):
+            piezas.append(
+                cilindro(
+                    f"palanca-{'flaps' if j == 0 else 'frenos'}", 0.014, 0.16,
+                    (0.06 if j else -0.06, alto_pedestal + 0.07, panel_z + dz),
+                    "tablero",
+                )
+            )
+
+    # 5. El panel de techo. Es media cabina de un avión de línea, y es lo que
+    #    un niño señala primero: filas y filas de interruptores.
+    techo = ojos_y + 0.34
+    piezas.append(
+        caja("panel-de-techo", -0.50, 0.50, techo, techo + 0.07,
+             ojos_z - 0.62, ojos_z + 0.12)
+    )
+    for fila in range(3):
+        for k in range(9):
+            x = -0.40 + k * 0.10
+            piezas.append(
+                caja(
+                    f"interruptor-{fila}-{k}", x - 0.032, x + 0.032,
+                    techo - 0.018, techo,
+                    ojos_z - 0.52 + fila * 0.20, ojos_z - 0.52 + fila * 0.20 + 0.12,
+                    "chapa",
+                )
+            )
+
+    # 6. Los montantes del parabrisas, que enmarcan el mundo.
+    for lado in (-1, 1):
+        piezas.append(
+            caja(
+                f"montante-parabrisas-{lado}", lado * 0.42 - 0.035,
+                lado * 0.42 + 0.035, alto_panel + 0.06, techo,
+                panel_z - 0.34, panel_z - 0.26, "chapa",
+            )
+        )
+    return piezas
+
+
 def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
            suelo_atras=0.80, y_suelo=0.32, y_respaldo=0.88, pantallas_en=0.155,
-           palancas=0, relojes=0):
+           palancas=0, relojes=0, clase="avioneta", mando="cuerno"):
     """
     Lo que se ve desde el asiento: suelo, panel, visera, pantallas y silla.
 
@@ -543,36 +747,58 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     0.32)` una cabina de dos pilotos. La primera es la del piloto y es la que
     lleva el nombre `asiento`.
 
-    `palancas` son las de gas del pedestal central, una por motor, y `relojes`
-    los instrumentos redondos repartidos por el panel. Las dos existen por lo
-    mismo, y lo dijo quien juega: «el cuadro de mandos me sale igual en todos;
-    si estoy en un reactor o en un 747, el niño quiere ver botones y lucecitas,
-    quiere un monstruo de avión, no una avioneta». Una avioneta lleva cero
-    palancas de pedestal y un puñado de relojes; un cuatrimotor lleva cuatro
-    palancas juntas en el centro, que es la imagen de una cabina grande.
+    `clase` decide **qué muebles hay**, y ahí está lo que esto vino a arreglar.
+    La primera versión era una sola cabina para los seis aviones, y al de
+    fuselaje ancho se le estiraba la de la avioneta: un tablero negro liso, dos
+    pantallitas y unos puntos sueltos. Visto desde el asiento no era una cabina
+    de avión de línea, era una pared. «Esto es un despropósito de cabina de
+    mandos impropia de un diseño hecho con cuidado; un B-747 no tiene esto así
+    ni jarto de grifa.»
+
+    - `"avioneta"`: panel plano, dos pantallas y sus relojes. Lo de siempre.
+    - `"reactor"`: visera profunda de lado a lado, un puesto por piloto, la
+      **columna de motores** en el centro —una fila de relojes por motor, que
+      es lo que se mira de verdad en un avión de línea—, pedestal entre los dos
+      asientos con sus palancas de gas, **panel de techo** con sus filas de
+      interruptores y los montantes del parabrisas.
+
+    `mando` es lo que se agarra: `"cuerno"` —el volante de un avión de
+    transporte y de casi cualquier avioneta— o `"palanca"`, que es lo que lleva
+    un fumigador. Iba una palanca de bastón en los seis, también en el
+    cuatrimotor.
+
+    `palancas` son las de gas del pedestal, una por motor, y `relojes` los
+    instrumentos redondos del panel.
 
     Dos nombres no son libres: **`asiento`**, porque `ojoDePiloto` lo busca por
     nombre, y **`g1000_display`**, que es lo que busca `pantallas-cabina.ts`.
     """
     piezas = []
     panel_z = ojos_z - 0.58
+    grande = clase == "reactor"
     # El suelo, que si no se ve el interior del fuselaje por debajo de la silla.
     piezas.append(
         caja("suelo-cabina", -ancho, ancho, y_suelo, y_suelo + 0.02,
              panel_z - 0.22, ojos_z + suelo_atras)
     )
+    if grande:
+        piezas += _cabina_de_reactor(
+            ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas, palancas,
+            relojes, pantallas, pantallas_en,
+        )
     # El panel, vertical y mirando al piloto, con la visera por encima: esa
     # visera es lo que en un avión de verdad hace que las pantallas se lean con
     # sol, y aquí además es lo que separa el panel del parabrisas.
-    piezas.append(
-        caja("panel", -ancho - 0.02, ancho + 0.02, y_suelo + 0.08, alto_panel,
-             panel_z - 0.12, panel_z)
-    )
-    piezas.append(
-        caja("visera", -ancho - 0.04, ancho + 0.04, alto_panel, alto_panel + 0.04,
-             panel_z - 0.18, panel_z + 0.08)
-    )
-    if pantallas:
+    if not grande:
+        piezas.append(
+            caja("panel", -ancho - 0.02, ancho + 0.02, y_suelo + 0.08,
+                 alto_panel, panel_z - 0.12, panel_z)
+        )
+        piezas.append(
+            caja("visera", -ancho - 0.04, ancho + 0.04, alto_panel,
+                 alto_panel + 0.04, panel_z - 0.18, panel_z + 0.08)
+        )
+    if pantallas and not grande:
         # Separadas, que es como está un G1000: horizonte a la izquierda,
         # rumbos a la derecha. Un palmo por debajo del borde de arriba del
         # panel, que es donde caen los ojos de quien va sentado.
@@ -592,7 +818,7 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     # en SVG y legible, ver `ui/six-pack.ts`— y no pasa nada: en una cabina de
     # verdad la mayoría de lo que se ve tampoco se mira casi nunca. Lo que hacen
     # es que la cabina **parezca** lo que es.
-    for i in range(relojes):
+    for i in range(relojes if not grande else 0):
         fila = i // max(1, relojes // 2 or 1)
         en_fila = relojes - (relojes // 2) if fila else relojes // 2
         j = i if not fila else i - (relojes // 2)
@@ -604,12 +830,16 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
                 min(0.05, paso * 0.42),
                 0.012,
                 (x, alto_panel - 0.17 - fila * 0.12, panel_z + 0.008),
-                "tablero",
-                giro=(0, math.radians(90), 0),
+                "metal",
+                # **Mirando al piloto**, que es con el eje a lo largo del avión:
+                # la Z de Blender, o sea sin girar. De pie —que es como nace un
+                # cilindro aquí— se quedaban de canto, y lo que se veía en el
+                # tablero eran palitos y no esferas.
+                giro=None,
             )
         )
     # El pedestal central con sus palancas de gas, una por motor.
-    if palancas:
+    if palancas and not grande:
         piezas.append(
             caja("pedestal", -0.10, 0.10, y_suelo + 0.02, y_suelo + 0.16,
                  panel_z, panel_z + 0.46)
@@ -634,7 +864,17 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         )
         silla.location.x += x
         piezas.append(silla)
-    # La palanca. No se toca, pero un avión sin palanca no es un avión.
+    # El mando. No se toca, pero un avión sin nada que agarrar no es un avión.
+    #
+    # **Y lo que se agarra no es lo mismo en todos.** Aquí había una palanca de
+    # bastón en los seis aviones, cuatrimotor incluido: un avión de transporte
+    # lleva un volante —un «cuerno»— delante de cada piloto, y una avioneta de
+    # escuela también. El bastón es de los que se pilotan con una mano y llevan
+    # el brazo entre las rodillas, que en esta flota es el fumigador.
+    if mando == "cuerno":
+        for i, x in enumerate(plazas):
+            piezas += _cuerno(x, y_suelo, panel_z, grande)
+        return piezas
     #
     # **Y sale del suelo de la cabina, no de una altura fija.** Estaba clavada
     # en 0,54, que es lo que le toca al biplano —suelo a 0,32— y en los otros

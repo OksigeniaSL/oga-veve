@@ -209,13 +209,17 @@ def construir():
     # patas de ballesta —aquí, dos cilindros inclinados no: rectos, que a esta
     # escala se ve igual y la comprobación de orientación de `exportar` mide
     # que lo que se llama «pata» esté de pie.
+    #
+    # **Las patas salen de la panza y se abren, que es como es un tren de
+    # ballesta.** Verticales, como estaban, arrancaban a metro y pico del
+    # costado del fuselaje y colgaban del aire: las ruedas debajo del ala y nada
+    # que las sujetara.
     for lado in (-1, 1):
         piezas.append(
-            cilindro(
-                f"pata-{lado}",
-                0.05,
-                TREN - RUEDA,
-                (lado * ENVERGADURA * 0.15, -(TREN - RUEDA) * 0.5, MAINS_Z),
+            puntal(
+                (lado * 0.30, -ALTO_FUSELAJE * 0.36, MAINS_Z),
+                (lado * ENVERGADURA * 0.15, -(TREN - RUEDA), MAINS_Z),
+                grosor=0.045,
             )
         )
         rueda = perfil(f"rueda-{lado}", [
@@ -228,12 +232,18 @@ def construir():
         )
         piezas.append(suavizar(rueda, subdividir=2, biselar=0))
 
+    #
+    # Y la de morro **arranca en la panza, no dentro de la cabina**. Iba desde
+    # la rueda hasta la altura del eje del fuselaje, o sea medio metro por
+    # dentro: desde el asiento se veía un poste verde subiendo por el medio del
+    # tablero.
+    ARRANQUE = -ALTO_FUSELAJE * 0.42
     piezas.append(
         cilindro(
             "pata-de-morro",
             0.045,
-            TREN - RUEDA * 0.88,
-            (0, -(TREN - RUEDA * 0.88) * 0.5, MORRO_Z),
+            ARRANQUE + (TREN - RUEDA * 0.88),
+            (0, (ARRANQUE - (TREN - RUEDA * 0.88)) * 0.5, MORRO_Z),
         )
     )
     morro = perfil("rueda-de-morro", [
