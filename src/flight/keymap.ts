@@ -17,31 +17,36 @@
  * que en uno americano. Ver la nota en `input.ts`.
  */
 
-import type { TranslationKey } from '../i18n';
-import { leerAjuste, leerTexto, ponerAjuste, ponerTexto } from '../datos/guardado';
+import type { TranslationKey } from "../i18n";
+import {
+  leerAjuste,
+  leerTexto,
+  ponerAjuste,
+  ponerTexto,
+} from "../datos/guardado";
 
 export type Accion =
-  | 'pitchUp'
-  | 'pitchDown'
-  | 'rollLeft'
-  | 'rollRight'
-  | 'yawLeft'
-  | 'yawRight'
-  | 'throttleUp'
-  | 'throttleDown'
-  | 'brakes'
-  | 'flaps'
-  | 'camera'
-  | 'assist'
-  | 'reset'
-  | 'aircraft'
-  | 'mission'
-  | 'sound'
-  | 'language'
-  | 'credits'
-  | 'keys'
-  | 'engine'
-  | 'pausa';
+  | "pitchUp"
+  | "pitchDown"
+  | "rollLeft"
+  | "rollRight"
+  | "yawLeft"
+  | "yawRight"
+  | "throttleUp"
+  | "throttleDown"
+  | "brakes"
+  | "flaps"
+  | "camera"
+  | "assist"
+  | "reset"
+  | "aircraft"
+  | "mission"
+  | "sound"
+  | "language"
+  | "credits"
+  | "keys"
+  | "engine"
+  | "pausa";
 
 interface Definicion {
   /** Clave de traducción del nombre de la acción. */
@@ -64,18 +69,30 @@ interface Definicion {
 export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
   // Orden: primero la de la derecha, después la de la izquierda. Ese orden
   // es lo que hace que `PAREJAS` pueda quedarse con la posición y acertar.
-  pitchUp: { label: 'tecla.pitchUp', defecto: ['ArrowUp', 'KeyW'], held: true },
-  pitchDown: { label: 'tecla.pitchDown', defecto: ['ArrowDown', 'KeyS'], held: true },
-  rollLeft: { label: 'tecla.rollLeft', defecto: ['ArrowLeft', 'KeyA'], held: true },
-  rollRight: { label: 'tecla.rollRight', defecto: ['ArrowRight', 'KeyD'], held: true },
-  yawLeft: { label: 'tecla.yawLeft', defecto: ['KeyQ'], held: true },
-  yawRight: { label: 'tecla.yawRight', defecto: ['KeyE'], held: true },
+  pitchUp: { label: "tecla.pitchUp", defecto: ["ArrowUp", "KeyW"], held: true },
+  pitchDown: {
+    label: "tecla.pitchDown",
+    defecto: ["ArrowDown", "KeyS"],
+    held: true,
+  },
+  rollLeft: {
+    label: "tecla.rollLeft",
+    defecto: ["ArrowLeft", "KeyA"],
+    held: true,
+  },
+  rollRight: {
+    label: "tecla.rollRight",
+    defecto: ["ArrowRight", "KeyD"],
+    held: true,
+  },
+  yawLeft: { label: "tecla.yawLeft", defecto: ["KeyQ"], held: true },
+  yawRight: { label: "tecla.yawRight", defecto: ["KeyE"], held: true },
   // El motor, a los dos lados: «+/−» a la derecha y «X/Z» a la izquierda,
   // junto a W A S D. Mayúsculas y Control siguen por costumbre de otros
   // simuladores, y el carácter suelto porque `event.code` nombra la tecla
   // americana y en un teclado español el «−» ni siquiera se llamaba así.
   throttleUp: {
-    label: 'tecla.throttleUp',
+    label: "tecla.throttleUp",
     // El orden importa: quien enseña el mando —el tutor, el teclado
     // dibujado— coge las primeras, así que delante van las dos que se
     // quieren enseñar, y son las de manos distintas. Detrás, las que están
@@ -85,27 +102,27 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
     // selección al capturar la pantalla, así que al ir a sacar una foto del
     // juego el avión se aceleraba y se escapaba justo lo que se quería
     // fotografiar. Un mando de más que estorba vale menos que no tenerlo.
-    defecto: ['+', 'KeyX', 'Equal', 'NumpadAdd'],
+    defecto: ["+", "KeyX", "Equal", "NumpadAdd"],
     held: true,
   },
   throttleDown: {
-    label: 'tecla.throttleDown',
+    label: "tecla.throttleDown",
     // Y sin Control, por lo mismo: es media docena de atajos del navegador.
-    defecto: ['-', 'KeyZ', 'Minus', 'NumpadSubtract'],
+    defecto: ["-", "KeyZ", "Minus", "NumpadSubtract"],
     held: true,
   },
-  brakes: { label: 'tecla.brakes', defecto: ['KeyB', 'Space'], held: true },
-  flaps: { label: 'tecla.flaps', defecto: ['KeyF'], held: false },
-  camera: { label: 'tecla.camera', defecto: ['KeyC'], held: false },
-  assist: { label: 'tecla.assist', defecto: ['KeyM'], held: false },
-  reset: { label: 'tecla.reset', defecto: ['KeyR'], held: false },
-  aircraft: { label: 'tecla.aircraft', defecto: ['KeyP'], held: false },
-  mission: { label: 'tecla.mission', defecto: ['KeyN'], held: false },
-  sound: { label: 'tecla.sound', defecto: ['KeyV'], held: false },
-  language: { label: 'tecla.language', defecto: ['KeyL'], held: false },
-  credits: { label: 'tecla.credits', defecto: ['F1'], held: false },
-  keys: { label: 'tecla.keys', defecto: ['KeyK'], held: false },
-  engine: { label: 'tecla.engine', defecto: ['KeyI'], held: false },
+  brakes: { label: "tecla.brakes", defecto: ["KeyB", "Space"], held: true },
+  flaps: { label: "tecla.flaps", defecto: ["KeyF"], held: false },
+  camera: { label: "tecla.camera", defecto: ["KeyC"], held: false },
+  assist: { label: "tecla.assist", defecto: ["KeyM"], held: false },
+  reset: { label: "tecla.reset", defecto: ["KeyR"], held: false },
+  aircraft: { label: "tecla.aircraft", defecto: ["KeyP"], held: false },
+  mission: { label: "tecla.mission", defecto: ["KeyN"], held: false },
+  sound: { label: "tecla.sound", defecto: ["KeyV"], held: false },
+  language: { label: "tecla.language", defecto: ["KeyL"], held: false },
+  credits: { label: "tecla.credits", defecto: ["F1"], held: false },
+  keys: { label: "tecla.keys", defecto: ["KeyK"], held: false },
+  engine: { label: "tecla.engine", defecto: ["KeyI"], held: false },
   /*
    * Escape para y suelta.
    *
@@ -114,7 +131,7 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    * propio Escape mientras están abiertos y no lo dejan pasar. Ver
    * `ui/panel.ts`.
    */
-  pausa: { label: 'tecla.pausa', defecto: ['Escape'], held: false },
+  pausa: { label: "tecla.pausa", defecto: ["Escape"], held: false },
 };
 
 export const ORDEN: readonly Accion[] = Object.keys(ACCIONES) as Accion[];
@@ -132,10 +149,10 @@ export const ORDEN: readonly Accion[] = Object.keys(ACCIONES) as Accion[];
  * basta con quedarse con la posición y usar esa misma en la pareja.
  */
 export const PAREJAS: readonly (readonly Accion[])[] = [
-  ['throttleUp', 'throttleDown'],
-  ['pitchUp', 'pitchDown'],
-  ['rollLeft', 'rollRight'],
-  ['yawLeft', 'yawRight'],
+  ["throttleUp", "throttleDown"],
+  ["pitchUp", "pitchDown"],
+  ["rollLeft", "rollRight"],
+  ["yawLeft", "yawRight"],
 ];
 
 /** La pareja a la que pertenece una acción, o solo ella misma. */
@@ -143,8 +160,8 @@ export function parejaDe(accion: Accion): readonly Accion[] {
   return PAREJAS.find((p) => p.includes(accion)) ?? [accion];
 }
 
-const ALMACEN = 'teclas';
-const ALMACEN_MANO = 'mano';
+const ALMACEN = "teclas";
+const ALMACEN_MANO = "mano";
 
 /**
  * Con qué mano se lleva el motor.
@@ -161,13 +178,13 @@ const ALMACEN_MANO = 'mano';
  *
  * La posición en la lista de teclas ES el lado: 0 la derecha, 1 la izquierda.
  */
-export type Mano = 'derecha' | 'izquierda';
+export type Mano = "derecha" | "izquierda";
 
 /** Las teclas efectivas: las de fábrica con los cambios de quien juega encima. */
 export class Keymap {
   private readonly cambios = new Map<Accion, string[]>();
 
-  private manoActual: Mano = 'derecha';
+  private manoActual: Mano = "derecha";
 
   constructor() {
     this.load();
@@ -188,8 +205,8 @@ export class Keymap {
    */
   shownKey(accion: Accion): string {
     const teclas = this.keys(accion);
-    const i = this.manoActual === 'izquierda' ? 1 : 0;
-    return teclas[Math.min(i, teclas.length - 1)] ?? '';
+    const i = this.manoActual === "izquierda" ? 1 : 0;
+    return teclas[Math.min(i, teclas.length - 1)] ?? "";
   }
 
   /** ¿Es esta tecla la que se enseña para su mando? */
@@ -245,7 +262,10 @@ export class Keymap {
       if (otra === accion) continue;
       const actuales = this.keys(otra);
       if (actuales.includes(key)) {
-        this.cambios.set(otra, actuales.filter((k) => k !== key));
+        this.cambios.set(
+          otra,
+          actuales.filter((k) => k !== key),
+        );
       }
     }
     this.cambios.set(accion, [key]);
@@ -270,7 +290,7 @@ export class Keymap {
 
   private load(): void {
     const mano = leerTexto(ALMACEN_MANO);
-    if (mano === 'izquierda' || mano === 'derecha') this.manoActual = mano;
+    if (mano === "izquierda" || mano === "derecha") this.manoActual = mano;
     try {
       const datos = leerAjuste(ALMACEN) as Record<string, string[]> | undefined;
       if (!datos) return;
@@ -279,7 +299,10 @@ export class Keymap {
         // Se comprueba la forma antes de creérsela: esto sale de un sitio
         // que cualquiera puede editar a mano, y un teclado corrupto deja el
         // juego injugable sin forma obvia de arreglarlo.
-        if (Array.isArray(teclas) && teclas.every((k) => typeof k === 'string')) {
+        if (
+          Array.isArray(teclas) &&
+          teclas.every((k) => typeof k === "string")
+        ) {
           this.cambios.set(accion, teclas);
         }
       }
@@ -307,8 +330,9 @@ export function mismaTecla(a: string, b: string): boolean {
 }
 
 function canonica(key: string): string {
-  if (key === '-' || key === 'Minus' || key === 'NumpadSubtract') return 'menos';
-  if (key === '+' || key === 'Equal' || key === 'NumpadAdd') return 'mas';
+  if (key === "-" || key === "Minus" || key === "NumpadSubtract")
+    return "menos";
+  if (key === "+" || key === "Equal" || key === "NumpadAdd") return "mas";
   return key;
 }
 
@@ -320,22 +344,22 @@ function canonica(key: string): string {
  */
 export function nombreDeTecla(key: string): string {
   const especiales: Record<string, string> = {
-    ArrowUp: '↑',
-    ArrowDown: '↓',
-    ArrowLeft: '←',
-    ArrowRight: '→',
-    Space: '␣',
-    ShiftLeft: '⇧',
-    ShiftRight: '⇧',
-    ControlLeft: 'Ctrl',
-    ControlRight: 'Ctrl',
-    Equal: '=',
-    Minus: '−',
-    NumpadAdd: '+',
-    NumpadSubtract: '−',
+    ArrowUp: "↑",
+    ArrowDown: "↓",
+    ArrowLeft: "←",
+    ArrowRight: "→",
+    Space: "␣",
+    ShiftLeft: "⇧",
+    ShiftRight: "⇧",
+    ControlLeft: "Ctrl",
+    ControlRight: "Ctrl",
+    Equal: "=",
+    Minus: "−",
+    NumpadAdd: "+",
+    NumpadSubtract: "−",
   };
   if (especiales[key]) return especiales[key]!;
-  if (key.startsWith('Key')) return key.slice(3);
-  if (key.startsWith('Digit')) return key.slice(5);
+  if (key.startsWith("Key")) return key.slice(3);
+  if (key.startsWith("Digit")) return key.slice(5);
   return key;
 }

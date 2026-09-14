@@ -62,12 +62,7 @@ export interface Aproximacion {
 /** Por qué no se puede seguir, o `null` si se puede. */
 export type Motivo =
   /** Ni siquiera se ve la pista: se llegó a mínimos dentro de la nube. */
-  | "sinPista"
-  | "rapido"
-  | "lento"
-  | "cayendo"
-  | "torcido"
-  | "descolocado";
+  "sinPista" | "rapido" | "lento" | "cayendo" | "torcido" | "descolocado";
 
 /**
  * ¿Se ve la pista desde la altura de decisión?

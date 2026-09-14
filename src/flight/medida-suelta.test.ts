@@ -10,13 +10,27 @@ describe("el planeo del grande", () => {
     const AR = (a.wingSpan * a.wingSpan) / a.wingArea;
     const clOpt = Math.sqrt(Math.PI * AR * a.aero.oswald * a.aero.cd0);
     const v = Math.sqrt((2 * a.mass * 9.81) / (1.225 * a.wingArea * clOpt));
-    console.log(`  óptimo teórico ${v.toFixed(1)} m/s, L/D ${(0.5 * Math.sqrt((Math.PI * AR * a.aero.oswald) / a.aero.cd0)).toFixed(1)}`);
-    const m = new CoefficientFlightModel({ aircraft: a, ground: () => 0, assist: 0 });
+    console.log(
+      `  óptimo teórico ${v.toFixed(1)} m/s, L/D ${(0.5 * Math.sqrt((Math.PI * AR * a.aero.oswald) / a.aero.cd0)).toFixed(1)}`,
+    );
+    const m = new CoefficientFlightModel({
+      aircraft: a,
+      ground: () => 0,
+      assist: 0,
+    });
     m.reset({ position: new Vector3(0, 8000, 0), heading: 0, airspeed: v });
     let ultimo = m.state.position.clone();
     for (let k = 0; k < Math.round(400 / DT); k++) {
-      const e = Math.max(-0.5, Math.min(0.5, (m.state.airspeed - v) * 0.06 - m.state.pitchRate * 1.2));
-      m.step(DT, { ...neutralControls(), engineOn: false, throttle: 0, elevator: e });
+      const e = Math.max(
+        -0.5,
+        Math.min(0.5, (m.state.airspeed - v) * 0.06 - m.state.pitchRate * 1.2),
+      );
+      m.step(DT, {
+        ...neutralControls(),
+        engineOn: false,
+        throttle: 0,
+        elevator: e,
+      });
       if (k % Math.round(40 / DT) === 0) {
         const d = m.state.position.clone();
         const caida = ultimo.y - d.y;

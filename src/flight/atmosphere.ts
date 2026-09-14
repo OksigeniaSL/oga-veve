@@ -21,6 +21,11 @@ export function airDensity(altitudeMetres: number): number {
  * dinámica y no velocidad real. Es la que importa para volar —la pérdida
  * ocurre siempre a la misma indicada— y por eso es la que va en el HUD.
  */
-export function indicatedAirspeed(trueAirspeed: number, altitudeMetres: number): number {
-  return trueAirspeed * Math.sqrt(airDensity(altitudeMetres) / SEA_LEVEL_DENSITY);
+export function indicatedAirspeed(
+  trueAirspeed: number,
+  altitudeMetres: number,
+): number {
+  return (
+    trueAirspeed * Math.sqrt(airDensity(altitudeMetres) / SEA_LEVEL_DENSITY)
+  );
 }

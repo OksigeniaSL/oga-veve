@@ -2574,6 +2574,21 @@ export class Game {
      * ahí el dibujo es el mensaje entero.
      */
     this.hechos.on("tramoDeCircuito", ({ tramo }) => {
+      /*
+       * **Y al entrar en la base, la senda empieza donde estás.**
+       *
+       * Los aros arrancan a 3.200 metros del umbral y el circuito entra en
+       * final a 1.800: quien vuela el circuito —que es lo que el juego le pide
+       * que haga— llega a la base con **tres aros ya a la espalda**, y la
+       * senda se los apuntaba como perdidos. Un galón menos por hacer
+       * exactamente lo que se le mandó.
+       *
+       * Las dos distancias son distintas a propósito: un circuito de tráfico y
+       * una aproximación directa no entran en final en el mismo sitio ni en un
+       * avión de verdad. Lo que estaba mal no era la geometría, era contar
+       * como fallo lo que nunca llegó a pedirse.
+       */
+      if (tramo === "base") this.runwayGuide.reset(this.flight.state.position);
       const clave = `circuito.${tramo}` as TranslationKey;
       this.hud.senal.mostrar(
         `circuito-${tramo}`,

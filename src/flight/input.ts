@@ -9,8 +9,8 @@
  * de alguien. Ver AGENTS.md, regla del test Ña Emy.
  */
 
-import { neutralControls, type ControlInputs } from './model';
-import { Keymap, type Accion } from './keymap';
+import { neutralControls, type ControlInputs } from "./model";
+import { Keymap, type Accion } from "./keymap";
 
 /** Velocidad a la que un eje de teclado alcanza el tope, por segundo. */
 const KEY_RAMP = 2.6;
@@ -84,7 +84,6 @@ export class InputManager {
   /** Qué tecla hace qué. Se puede cambiar desde la pantalla de teclas. */
   readonly keymap = new Keymap();
 
-
   private touchBrakes = false;
 
   /** Dirección pedida por los botones de motor de la pantalla. */
@@ -134,7 +133,11 @@ export class InputManager {
 
   /** Eje a partir de dos acciones: +1, 0 o -1. */
   private axis(mas: Accion, menos: Accion): number {
-    return axisFromKeys(this.keys, this.keymap.keys(mas), this.keymap.keys(menos));
+    return axisFromKeys(
+      this.keys,
+      this.keymap.keys(mas),
+      this.keymap.keys(menos),
+    );
   }
 
   /** ¿Está pulsada alguna tecla de esta acción? */
@@ -158,16 +161,16 @@ export class InputManager {
 
   constructor(target: HTMLElement, actions: InputActions) {
     this.actions = actions;
-    window.addEventListener('keydown', this.onKeyDown);
-    window.addEventListener('keyup', this.onKeyUp);
-    window.addEventListener('blur', this.onBlur);
+    window.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("keyup", this.onKeyUp);
+    window.addEventListener("blur", this.onBlur);
     this.bindTouch(target);
   }
 
   dispose(): void {
-    window.removeEventListener('keydown', this.onKeyDown);
-    window.removeEventListener('keyup', this.onKeyUp);
-    window.removeEventListener('blur', this.onBlur);
+    window.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener("keyup", this.onKeyUp);
+    window.removeEventListener("blur", this.onBlur);
   }
 
   update(dt: number): void {
@@ -182,15 +185,27 @@ export class InputManager {
      */
     const pitchTarget =
       this.signoDeCabeceo *
-      (gamepad?.pitch ?? this.touchPitch + this.axis('pitchUp', 'pitchDown'));
+      (gamepad?.pitch ?? this.touchPitch + this.axis("pitchUp", "pitchDown"));
     const rollTarget =
-      gamepad?.roll ?? this.touchRoll + this.axis('rollRight', 'rollLeft');
+      gamepad?.roll ?? this.touchRoll + this.axis("rollRight", "rollLeft");
     const rudderTarget =
-      gamepad?.rudder ?? this.touchRudder + this.axis('yawRight', 'yawLeft');
+      gamepad?.rudder ?? this.touchRudder + this.axis("yawRight", "yawLeft");
 
-    this.controls.elevator = approach(this.controls.elevator, clamp(pitchTarget, -1, 1), dt);
-    this.controls.aileron = approach(this.controls.aileron, clamp(rollTarget, -1, 1), dt);
-    this.controls.rudder = approach(this.controls.rudder, clamp(rudderTarget, -1, 1), dt);
+    this.controls.elevator = approach(
+      this.controls.elevator,
+      clamp(pitchTarget, -1, 1),
+      dt,
+    );
+    this.controls.aileron = approach(
+      this.controls.aileron,
+      clamp(rollTarget, -1, 1),
+      dt,
+    );
+    this.controls.rudder = approach(
+      this.controls.rudder,
+      clamp(rudderTarget, -1, 1),
+      dt,
+    );
 
     // Tocar el motor con el teclado o con los botones **suelta la palanca
     // táctil antes de leer nada**, no después. Yendo después, la palanca
@@ -198,8 +213,9 @@ export class InputManager {
     // porque un botón encima de ella se llevó el `pointerdown` y no el
     // `pointerup`—, el teclado quedaba anulado del todo y el motor clavado
     // donde estuviera. Con el gas a tope eso es un avión que no se para.
-    const teclado = this.axis('throttleUp', 'throttleDown');
-    if (releasesTouchThrottle(teclado, this.buttonThrottle)) this.touchThrottle = null;
+    const teclado = this.axis("throttleUp", "throttleDown");
+    if (releasesTouchThrottle(teclado, this.buttonThrottle))
+      this.touchThrottle = null;
 
     if (this.touchThrottle !== null) {
       this.controls.throttle = this.touchThrottle;
@@ -207,12 +223,20 @@ export class InputManager {
       this.controls.throttle = gamepad.throttle;
     } else {
       const delta = clamp(teclado + this.buttonThrottle, -1, 1);
-      this.controls.throttle = clamp(this.controls.throttle + delta * dt * 0.6, 0, 1);
+      this.controls.throttle = clamp(
+        this.controls.throttle + delta * dt * 0.6,
+        0,
+        1,
+      );
     }
 
     const braking =
-      this.touchBrakes || this.held('brakes') || (gamepad?.brakes ?? false);
-    this.controls.brakes = approach(this.controls.brakes, braking ? 1 : 0, dt * 2);
+      this.touchBrakes || this.held("brakes") || (gamepad?.brakes ?? false);
+    this.controls.brakes = approach(
+      this.controls.brakes,
+      braking ? 1 : 0,
+      dt * 2,
+    );
     // Los flaps no se leen aquí: son un conmutador, y lo lleva `onKeyDown`.
     // Forzarlos también desde el bucle impedía apagarlos sin soltar la tecla.
   }
@@ -243,7 +267,8 @@ export class InputManager {
      */
     if (leTocaAlDeLaPantalla(event.target)) return;
     // Las flechas hacen scroll de la página si no se les para los pies.
-    if (event.code.startsWith('Arrow') || event.code === 'Space') event.preventDefault();
+    if (event.code.startsWith("Arrow") || event.code === "Space")
+      event.preventDefault();
     if (event.repeat) return;
     this.keys.add(event.code);
     // El carácter también: ver la nota de KEYS sobre los teclados que no son
@@ -260,46 +285,47 @@ export class InputManager {
     // Las acciones puntuales salen del mapa de teclas, no de una lista de
     // códigos escrita a mano: así se pueden cambiar todas, y así la pantalla
     // de teclas dice la verdad sobre lo que hace cada una.
-    const accion = this.keymap.actionFor(event.code) ?? this.keymap.actionFor(event.key);
+    const accion =
+      this.keymap.actionFor(event.code) ?? this.keymap.actionFor(event.key);
     switch (accion) {
-      case 'camera':
+      case "camera":
         this.actions.toggleCamera();
         break;
-      case 'assist':
+      case "assist":
         this.actions.toggleAssist();
         break;
-      case 'reset':
+      case "reset":
         this.actions.resetFlight();
         break;
-      case 'language':
+      case "language":
         this.actions.cycleLanguage();
         break;
-      case 'sound':
+      case "sound":
         this.actions.toggleSound();
         break;
-      case 'aircraft':
+      case "aircraft":
         this.actions.cycleAircraft();
         break;
-      case 'mission':
+      case "mission":
         this.actions.cycleMission();
         break;
-      case 'credits':
+      case "credits":
         event.preventDefault();
         this.actions.toggleCredits();
         break;
-      case 'engine':
+      case "engine":
         this.actions.toggleEngine();
         break;
-      case 'keys':
+      case "keys":
         this.actions.toggleKeys();
         break;
-      case 'pausa':
+      case "pausa":
         // Sin `preventDefault`: Escape no hace nada raro en un navegador, y
         // los paneles que se abren encima ya se lo quedan antes de llegar
         // aquí mientras están abiertos. Ver `ui/panel.ts`.
         this.actions.togglePausa();
         break;
-      case 'flaps':
+      case "flaps":
         this.controls.flaps = this.controls.flaps > 0.5 ? 0 : 1;
         break;
       default:
@@ -339,9 +365,17 @@ export class InputManager {
 
   // ── Mando ─────────────────────────────────────────────────────────────
 
-  private readGamepad(): { pitch: number; roll: number; rudder: number; throttle?: number; brakes: boolean } | null {
+  private readGamepad(): {
+    pitch: number;
+    roll: number;
+    rudder: number;
+    throttle?: number;
+    brakes: boolean;
+  } | null {
     const pads = navigator.getGamepads?.() ?? [];
-    const pad = Array.from(pads).find((p): p is Gamepad => p !== null && p.connected);
+    const pad = Array.from(pads).find(
+      (p): p is Gamepad => p !== null && p.connected,
+    );
     if (!pad) return null;
 
     const axis = (index: number): number => applyDeadzone(pad.axes[index] ?? 0);
@@ -363,7 +397,9 @@ export class InputManager {
 
   private bindTouch(target: HTMLElement): void {
     const stick = target.querySelector<HTMLElement>('[data-touch="stick"]');
-    const throttle = target.querySelector<HTMLElement>('[data-touch="throttle"]');
+    const throttle = target.querySelector<HTMLElement>(
+      '[data-touch="throttle"]',
+    );
     const rudder = target.querySelector<HTMLElement>('[data-touch="rudder"]');
     /*
      * El freno táctil **no vive aquí**: es el botón rojo con la mano del HUD.
@@ -372,7 +408,9 @@ export class InputManager {
      * y no una palabra. Se quedó uno.
      */
 
-    window.addEventListener('pointerdown', () => this.noteGesture(), { passive: true });
+    window.addEventListener("pointerdown", () => this.noteGesture(), {
+      passive: true,
+    });
 
     if (stick) {
       bindPad(stick, (x, y) => {
@@ -380,7 +418,10 @@ export class InputManager {
         this.touchPitch = -y;
       });
     }
-    if (rudder) bindPad(rudder, (x) => { this.touchRudder = x; });
+    if (rudder)
+      bindPad(rudder, (x) => {
+        this.touchRudder = x;
+      });
     if (throttle) {
       // Con memoria: la palanca se queda donde la dejas al levantar el dedo,
       // como una palanca de gases de verdad. Antes compartía el
@@ -419,7 +460,10 @@ export function leTocaAlDeLaPantalla(quien: EventTarget | null): boolean {
  * avión que no había forma de parar. La regla es simple y no admite matices:
  * **si alguien toca el teclado o los botones, mandan ellos.**
  */
-export function releasesTouchThrottle(keyboard: number, button: number): boolean {
+export function releasesTouchThrottle(
+  keyboard: number,
+  button: number,
+): boolean {
   return keyboard !== 0 || button !== 0;
 }
 
@@ -441,16 +485,16 @@ function bindPad(
     const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
     onMove(clamp(x, -1, 1), clamp(y, -1, 1));
-    element.style.setProperty('--x', String(clamp(x, -1, 1)));
-    element.style.setProperty('--y', String(clamp(y, -1, 1)));
+    element.style.setProperty("--x", String(clamp(x, -1, 1)));
+    element.style.setProperty("--y", String(clamp(y, -1, 1)));
   };
 
-  element.addEventListener('pointerdown', (event) => {
+  element.addEventListener("pointerdown", (event) => {
     pointerId = event.pointerId;
     element.setPointerCapture(event.pointerId);
     emit(event);
   });
-  element.addEventListener('pointermove', (event) => {
+  element.addEventListener("pointermove", (event) => {
     if (event.pointerId === pointerId) emit(event);
   });
   const release = (event: PointerEvent): void => {
@@ -460,11 +504,11 @@ function bindPad(
     // El acelerador no: se queda donde estaba.
     if (!springLoaded) return;
     onMove(0, 0);
-    element.style.setProperty('--x', '0');
-    element.style.setProperty('--y', '0');
+    element.style.setProperty("--x", "0");
+    element.style.setProperty("--y", "0");
   };
-  element.addEventListener('pointerup', release);
-  element.addEventListener('pointercancel', release);
+  element.addEventListener("pointerup", release);
+  element.addEventListener("pointercancel", release);
 }
 
 function approach(current: number, target: number, dt: number): number {
