@@ -38,7 +38,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
-    limpiar, pintar, suavizar, perfil, ala, montante, cabina, exportar,
+    ala, cabina, cilindro, exportar, helice, limpiar, montante, perfil,
+    pintar, suavizar,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -68,7 +69,14 @@ HUECO = 1.55
 # plano, que es como se vuela un fumigador de verdad.
 ALA_ALTA = 1.25
 ALA_BAJA = -HUECO * 0.38
-TREN = 1.05
+# **Y el tren, alto, porque la hélice es grande.**
+#
+# Estaba en 1,05 y con eso el eje de la hélice quedaba a un metro escaso del
+# suelo: una hélice de dos metros sesenta se clavaría treinta centímetros en el
+# asfalto. Un fumigador de verdad va alto justamente por eso — y por eso tiene
+# esa pinta de zanco. A 1,70 la punta de pala pasa a cuarenta centímetros del
+# suelo, y además cuadra con el 1,8 de su ficha de vuelo.
+TREN = 1.70
 
 SALIDA = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -162,12 +170,22 @@ def construir():
     piezas.append(suavizar(deriva, subdividir=1))
 
     # ── Tren fijo, con carenado ───────────────────────────────────────────
+    #
+    # **Por `cilindro` y con nombre**, no con una llamada suelta a Blender.
+    # Estas tres piezas se creaban a mano y salían tumbadas a lo largo del
+    # fuselaje —como todo lo que Blender crea sin girar, ver `cilindro`—, y
+    # además sin nombre: se llamaban `Cylinder.008` y siguientes, así que la
+    # comprobación de orientación de `exportar`, que mira el nombre porque en
+    # esta casa el nombre dice lo que la pieza es, pasaba de largo por ellas.
     for lado in (-1, 1):
-        bpy.ops.mesh.primitive_cylinder_add(
-            vertices=8, radius=0.05, depth=TREN * 0.78,
-            location=(lado * ENVERGADURA * 0.11, -TREN * 0.42, -LARGO * 0.10),
+        piezas.append(
+            cilindro(
+                f"pata-{lado}",
+                0.05,
+                TREN * 0.78,
+                (lado * ENVERGADURA * 0.11, -TREN * 0.42, -LARGO * 0.10),
+            )
         )
-        piezas.append(pintar(bpy.context.object, "detalle"))
         rueda = perfil(f"rueda-{lado}", [
             (-0.07, TREN * 0.46, TREN * 0.46, 0),
             (0.07, TREN * 0.46, TREN * 0.46, 0),
@@ -176,37 +194,30 @@ def construir():
         rueda.location = Vector((lado * ENVERGADURA * 0.11, -TREN * 0.77, -LARGO * 0.10))
         piezas.append(suavizar(rueda, subdividir=2, biselar=0))
     # Patín de cola: un fumigador es de rueda atrás.
-    bpy.ops.mesh.primitive_cylinder_add(
-        vertices=6, radius=0.04, depth=TREN * 0.34,
-        location=(0, -TREN * 0.26, LARGO * 0.42),
+    piezas.append(
+        cilindro(
+            "pata-de-cola",
+            0.04,
+            TREN * 0.34,
+            (0, -TREN * 0.26, LARGO * 0.42),
+            lados=6,
+        )
     )
-    piezas.append(pintar(bpy.context.object, "detalle"))
 
     # ── Hélice ────────────────────────────────────────────────────────────
     #
-    # Se llama «helice» para que el juego la encuentre y la haga girar: busca
-    # ese nombre dentro del modelo. Ver `NOMBRES_DE_HELICE`.
-    radio = ENVERGADURA * 0.11
-    bpy.ops.mesh.primitive_cone_add(
-        vertices=10, radius1=radio * 0.16, radius2=radio * 0.05, depth=radio * 0.5,
-        location=(0, 0.02, -LARGO * 0.57), rotation=(math.radians(90), 0, 0),
+    # **Tres palas y dos metros sesenta de diámetro**, que es lo que mueve un
+    # radial de fumigador y lo que dice su propia ficha (`appearance.blades`).
+    #
+    # Aquí había una hélice de la mitad: el radio se copió de `RADIO_DE_HELICE`
+    # —la constante del respaldo de cajas, donde ese número **es** un radio
+    # porque la pala se desplaza hacia fuera— y aquí la barra iba centrada en
+    # el buje, así que el mismo número pasaba a ser el diámetro. Y las «dos»
+    # palas eran la misma barra girada media vuelta: una pintada encima de
+    # otra, con la misma geometría y el mismo material.
+    piezas += helice(
+        "helice", (0, 0.02, -LARGO * 0.57), radio=1.30, palas=3, buje=0.22
     )
-    buje = pintar(bpy.context.object, "capo")
-    buje.name = "helice"
-    for i in range(2):
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0.02, -LARGO * 0.57))
-        pala = bpy.context.object
-        pala.scale = (radio, radio * 0.09, radio * 0.035)
-        pala.rotation_euler = (0, 0, i * math.pi)
-        pala.name = f"helice-pala-{i}"
-        # **Con la inversa del padre.** Colgar un objeto de otro sin esto le
-        # suma la transformación del padre a la suya: el buje está girado
-        # noventa grados y las palas se iban a cuatro metros y medio de altura,
-        # que es lo que hacía al avión medir cinco metros setenta de alto.
-        pala.parent = buje
-        pala.matrix_parent_inverse = buje.matrix_world.inverted()
-        piezas.append(suavizar(pintar(pala, "detalle"), subdividir=0, biselar=0.01))
-    piezas.append(buje)
 
     return piezas
 

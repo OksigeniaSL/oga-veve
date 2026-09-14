@@ -26,8 +26,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
-    ala, caja, cabina, cilindro, exportar, limpiar, perfil, pintar, suavizar,
-    ventanillas,
+    ala, caja, cabina, cilindro, exportar, helice, limpiar, perfil, pintar,
+    suavizar, ventanillas,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -83,48 +83,27 @@ def rueda(nombre, en, diametro, ancho=0.18):
     return suavizar(r, subdividir=2, biselar=0)
 
 
-def helice(lado, z):
+def helice_de(lado, z):
     """
-    Una hélice de tres palas, con su buje.
+    La hélice de este motor, con su nombre.
 
-    El nombre lleva «helice» porque es por ahí por donde el juego la encuentra
-    para hacerla girar —ver `NOMBRES_DE_HELICE`—, y **las dos van separadas**:
-    el cargador agrupa las piezas de hélice por cercanía y monta un eje sobre
-    cada grupo, precisamente para que en un bimotor cada una gire sobre su
-    motor y no las dos alrededor del morro. Ver `ejesDeHelice`.
+    El cuerpo está en `comun.py`: estaba copiado en tres guiones y las tres
+    copias se habían desviado ya —una con dos palas superpuestas, otra con tres
+    y otra con cuatro—. Aquí queda lo que es de este avión: dónde va, de qué
+    tamaño y con cuántas palas, que es lo que dice su ficha.
+
+    **Y las dos van separadas**: el cargador agrupa las piezas de hélice por
+    cercanía y monta un eje sobre cada grupo, precisamente para que en un
+    bimotor cada una gire sobre su motor y no las dos alrededor del morro. Ver
+    `ejesDeHelice`.
     """
-    piezas = []
-    buje_en = (lado * MOTOR, ALA_Y, z)
-    bpy.ops.mesh.primitive_cone_add(
-        vertices=12, radius1=0.17, radius2=0.05, depth=0.42,
-        location=buje_en, rotation=(math.radians(90), 0, 0),
+    return helice(
+        f"helice-{'izquierda' if lado < 0 else 'derecha'}",
+        (lado * MOTOR, ALA_Y, z),
+        radio=RADIO_HELICE,
+        palas=3,
+        buje=0.17,
     )
-    buje = pintar(bpy.context.object, "capo")
-    buje.name = f"helice-{'izquierda' if lado < 0 else 'derecha'}"
-
-    # Tres palas, que es lo que dice la ficha (`appearance.blades`). Cada una
-    # sale del buje hacia fuera, no de lado a lado: con tres, una barra que
-    # cruzara el centro saldrían seis.
-    for i in range(3):
-        angulo = i * math.tau / 3
-        bpy.ops.mesh.primitive_cube_add(size=1)
-        pala = bpy.context.object
-        pala.name = f"{buje.name}-pala-{i}"
-        pala.scale = (RADIO_HELICE, RADIO_HELICE * 0.16, RADIO_HELICE * 0.045)
-        pala.rotation_euler = (0, 0, angulo)
-        pala.location = (
-            buje_en[0] + math.cos(angulo) * RADIO_HELICE / 2,
-            buje_en[1] + math.sin(angulo) * RADIO_HELICE / 2,
-            buje_en[2],
-        )
-        # **Con la inversa del padre**, que si no la transformación del buje se
-        # le suma a la suya y las palas se van a tomar el aire. Está contado en
-        # el Mainumby, donde costó que el avión midiera cinco metros de alto.
-        pala.parent = buje
-        pala.matrix_parent_inverse = buje.matrix_world.inverted()
-        piezas.append(suavizar(pintar(pala, "detalle"), subdividir=0, biselar=0.012))
-    piezas.append(buje)
-    return piezas
 
 
 # ── El fuselaje, aro a aro ────────────────────────────────────────────────
@@ -253,7 +232,7 @@ def construir():
         ], "capo")
         gondola.location = Vector((lado * MOTOR, ALA_Y, 0.0))
         piezas.append(suavizar(gondola, subdividir=2, biselar=0))
-        piezas += helice(lado, -1.95)
+        piezas += helice_de(lado, -1.95)
 
     # ── Cola ──────────────────────────────────────────────────────────────
     #

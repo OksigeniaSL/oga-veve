@@ -317,6 +317,61 @@ def pilon(nombre, x, z0, z1, y0, y1, grosor=0.16, material_="casco"):
     return caja(nombre, x - grosor / 2, x + grosor / 2, y0, y1, z0, z1, material_)
 
 
+def helice(nombre, en, radio, palas, buje=None):
+    """
+    Una hélice con su buje, mirando al frente.
+
+    **Estaba copiada en tres guiones** —el biplano, el bimotor y el
+    turbohélice— y las tres copias se habían desviado ya: una con dos palas
+    superpuestas, otra con tres y otra con cuatro, y la del biplano con la
+    mitad del diámetro que le toca. Es exactamente lo que este módulo existe
+    para evitar.
+
+    Tres cosas que no son libres:
+
+    - **El nombre lleva «helice»**, que es por donde el juego la encuentra para
+      hacerla girar. Ver `NOMBRES_DE_HELICE` en `aeronave-modelo.ts`.
+    - **El cono mira al frente**, o sea a la Z negativa, y por eso va sin girar
+      y con el radio pequeño delante. Girarlo noventa grados —que es lo que
+      hacían los tres guiones— lo pone apuntando al suelo.
+    - **Las palas cuelgan del buje con la inversa del padre.** Sin eso, la
+      transformación del buje se les suma a la suya y se van a tomar el aire.
+
+    Y las palas salen del buje **hacia fuera**, no de lado a lado: una barra
+    que cruce el centro son dos palas, así que con tres salían seis y con dos
+    salía una pintada encima de otra.
+    """
+    piezas = []
+    gordo = buje if buje is not None else radio * 0.19
+    bpy.ops.mesh.primitive_cone_add(
+        vertices=12,
+        radius1=gordo * 0.3,
+        radius2=gordo,
+        depth=gordo * 2.4,
+        location=en,
+    )
+    cono = pintar(bpy.context.object, "capo")
+    cono.name = nombre
+
+    for i in range(palas):
+        angulo = i * math.tau / palas
+        bpy.ops.mesh.primitive_cube_add(size=1)
+        pala = bpy.context.object
+        pala.name = f"{nombre}-pala-{i}"
+        pala.scale = (radio, radio * 0.15, radio * 0.042)
+        pala.rotation_euler = (0, 0, angulo)
+        pala.location = (
+            en[0] + math.cos(angulo) * radio / 2,
+            en[1] + math.sin(angulo) * radio / 2,
+            en[2],
+        )
+        pala.parent = cono
+        pala.matrix_parent_inverse = cono.matrix_world.inverted()
+        piezas.append(suavizar(pintar(pala, "detalle"), subdividir=0, biselar=0.012))
+    piezas.append(cono)
+    return piezas
+
+
 def ventanillas(piel_x, z_desde, z_hasta, cada, y_centro,
                 alto=0.32, largo=0.34, grosor=0.03):
     """
@@ -357,8 +412,31 @@ def ventanillas(piel_x, z_desde, z_hasta, cada, y_centro,
     return [partes[0]]
 
 
-def cilindro(nombre, radio, largo, en, material_="detalle", lados=8, giro=None):
-    """Un cilindro: un montante, una pata, una palanca, un pilón."""
+# Un cuarto de vuelta en X: lo que pone de pie un cilindro. Ver `cilindro`.
+DE_PIE = (math.radians(90), 0, 0)
+
+
+def cilindro(nombre, radio, largo, en, material_="detalle", lados=8,
+             giro=DE_PIE):
+    """
+    Un cilindro: un montante, una pata, una palanca, un pilón.
+
+    **De pie por omisión, y ahí estaba el fallo.** Blender crea sus cilindros a
+    lo largo de **su** Z, y aquí se modela con la Y hacia arriba —ver
+    `aBlender`—, así que un cilindro recién creado sale tumbado **a lo largo
+    del fuselaje**. Todo lo que en estos cinco aviones tenía que estar de pie no
+    lo estaba: los montantes entre alas del biplano, sus cabañas, las patas de
+    los trenes de los cinco y hasta la palanca de la cabina.
+
+    Medido en el `.glb` del biplano, en coordenadas de mundo y con las
+    transformaciones de los nodos aplicadas: los once cilindros daban 9 cm de
+    ancho, 9 de alto y **1,84 m de largo**. Un montante de ala a ala convertido
+    en una varilla apuntando al morro.
+
+    No se vio antes porque medir la caja de la malla **en local** dice que sí
+    está de pie: la que engaña es esa, porque el nodo lleva encima el giro de la
+    escena entera. Lo caza `exportar`, que ahora mira el mundo.
+    """
     bpy.ops.mesh.primitive_cylinder_add(
         vertices=lados, radius=radio, depth=largo, location=en
     )
@@ -371,15 +449,13 @@ def cilindro(nombre, radio, largo, en, material_="detalle", lados=8, giro=None):
 
 def montante(x, z, y0, y1, grosor=0.045, material_="detalle"):
     """Un montante vertical entre dos alturas. Redondo, que es lo que es."""
-    bpy.ops.mesh.primitive_cylinder_add(
-        vertices=8,
-        radius=grosor,
-        depth=abs(y1 - y0),
-        location=(x, (y0 + y1) / 2, z),
+    return cilindro(
+        f"montante-{x:.2f}-{z:.2f}",
+        grosor,
+        abs(y1 - y0),
+        (x, (y0 + y1) / 2, z),
+        material_,
     )
-    o = bpy.context.object
-    o.rotation_euler = (0, 0, 0)
-    return pintar(o, material_)
 
 
 def asiento_de_una_pieza(nombre, z_atras, medio_ancho=0.24, largo=0.40,
@@ -551,4 +627,45 @@ def exportar(piezas, salida, envergadura):
             f"El avión no mide de ancho su envergadura ({ancho:.2f} vs {envergadura}): "
             "está tumbado o mal escalado."
         )
+
+    # ── Y cada pieza mirando a donde tiene que mirar ────────────────────
+    #
+    # Blender crea sus cilindros y sus conos a lo largo de **su** Z, y aquí se
+    # modela con la Y hacia arriba, así que lo que se crea sin girar sale
+    # tumbado a lo largo del fuselaje. Pasó con todo lo que tenía que estar de
+    # pie —los montantes del biplano, sus cabañas, las patas de los cinco
+    # trenes y la palanca de la cabina— y con los conos de hélice, que
+    # apuntaban al suelo en vez de al frente.
+    #
+    # Y no se vio en meses porque **medir la caja de la malla engaña**: en
+    # coordenadas locales todas decían estar de pie, porque el giro vive en el
+    # nodo y no en la malla. Hay que mirar el mundo, que es lo que se hace
+    # aquí, y lo que se mira es el nombre, que en esta casa dice lo que la
+    # pieza es.
+    tumbadas = []
+    for p in piezas:
+        if p.type != "MESH":
+            continue
+        n = p.name.lower()
+        de_pie = n.startswith(("montante", "pata", "palanca"))
+        al_frente = n.startswith(("helice", "buje"))
+        if not de_pie and not al_frente:
+            continue
+        caja = [p.matrix_world @ Vector(v) for v in p.bound_box]
+        dx = max(c.x for c in caja) - min(c.x for c in caja)
+        dy = max(c.z for c in caja) - min(c.z for c in caja)
+        dz = max(c.y for c in caja) - min(c.y for c in caja)
+        # Una hélice se mide por su buje, no por sus palas: las palas cuelgan
+        # de él y son anchas a propósito, así que se mira solo la pieza padre.
+        if de_pie and dz > dy:
+            tumbadas.append(f"{p.name} (alto {dy:.2f}, largo {dz:.2f})")
+        if al_frente and not p.children and dz > max(dx, dy) * 2:
+            tumbadas.append(f"{p.name} (ancho {dx:.2f}, largo {dz:.2f})")
+    if tumbadas:
+        raise SystemExit(
+            "Piezas orientadas al revés: " + " · ".join(tumbadas) +
+            ". Blender crea los cilindros y los conos a lo largo de su Z y aquí"
+            " se modela con la Y arriba. Ver `cilindro` y `DE_PIE`."
+        )
+
     print(f"ESCRITO: {salida}")
