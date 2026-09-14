@@ -811,6 +811,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       juego.laAproximacion.ordenes = como;
     },
     /** El percance que ha parado el vuelo, si lo hay. Congela el avión. */
+    /**
+     * Qué bulto hay más cerca de un punto, y de qué tamaño.
+     *
+     * Hizo falta el día que un percance «edificio» señalaba un edificio que
+     * estaba a veintiocho metros: el índice de bultos no lleva solo los del
+     * aeródromo —también la ciudad entera, el coche del sígame y la vaca— y sin
+     * preguntarle a él no hay manera de saber contra qué se chocó.
+     */
+    bultoCerca: (x: number, z: number) => juego.bultos.cercaDe(x, z),
+    /** Y si ahí, a esa altura, hay bulto de verdad. Es la pregunta que vale. */
+    chocaEn: (x: number, y: number, z: number) => juego.bultos.choca(x, y, z),
     percance: () => juego.percance,
     /**
      * Cuántos escuchan cada hecho del vuelo. Ver `src/hechos.ts`.

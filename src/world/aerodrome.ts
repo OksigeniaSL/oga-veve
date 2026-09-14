@@ -105,6 +105,16 @@ export interface Aerodrome {
   readonly buildings: readonly {
     readonly heightM: number | null;
     readonly polygon: readonly Punto[];
+    /**
+     * Qué clase de edificio dice OpenStreetMap que es.
+     *
+     * Hace falta por uno en concreto: **`roof`**, que no es un edificio sino
+     * un tejado sobre pilares —las marquesinas de la plataforma, el techo del
+     * surtidor, el pasillo cubierto—. Se dibujan, porque están ahí, pero no
+     * paran a un avión: ponerles pared pone muros invisibles justo donde hay
+     * que rodar. Ver dónde se apuntan los bultos, en `game.ts`.
+     */
+    readonly kind?: string | null;
   }[];
   readonly windsocks: readonly Punto[];
   /**
@@ -610,6 +620,32 @@ export function createAerodrome(
  * avión no lo atraviese— y dos alturas distintas para el mismo edificio serían
  * un edificio que se ve donde no está.
  */
+/**
+ * Si este edificio **para a un avión**.
+ *
+ * Casi todos sí: una terminal, un hangar o una caseta son volumen macizo y
+ * chocar con ellos es chocar. La excepción es `roof`, que en OpenStreetMap no
+ * es un edificio sino **un tejado sobre pilares**: las marquesinas de la
+ * plataforma, el techo del surtidor, el pasillo cubierto hasta la terminal.
+ *
+ * Y no son cuatro: Tenerife Sur tiene treinta y nueve, Tenerife Norte siete,
+ * Silvio Pettirossi cinco. Están **justo donde hay que rodar**, porque para eso
+ * se ponen — para cubrir donde se aparca —, así que convertirlas en prismas
+ * macizos de cinco metros pone paredes invisibles en la plataforma.
+ *
+ * Costó encontrarlo: en Tenerife Norte se llevaba **un vuelo de cada cuatro**
+ * con percance «edificio», y en la traza salía en fase de final, lo que hacía
+ * pensar en un choque en el aire. No era el aire: era el avión volviendo a
+ * casa, a metro y medio del suelo, rozando una marquesina a doscientos ochenta
+ * y ocho metros del eje de pista.
+ *
+ * Se siguen dibujando, que están ahí de verdad; lo que no hacen es parar a
+ * nadie.
+ */
+export function paraUnAvion(e: { readonly kind?: string | null }): boolean {
+  return e.kind !== "roof";
+}
+
 export function alturaDeEdificio(e: {
   readonly heightM: number | null;
   readonly polygon: readonly Punto[];

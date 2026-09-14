@@ -74,6 +74,41 @@ interface Caja {
   readonly base: number;
   /** Y la de su tejado. */
   readonly cima: number;
+  /**
+   * La planta de verdad, si la tiene. La caja es solo el cribado grueso.
+   *
+   * **Y hace falta.** Una caja envolvente solo es exacta si el edificio es un
+   * rectángulo con los lados paralelos a los ejes, y un aeropuerto no tiene
+   * uno: la terminal de Tenerife Norte son veintidós vértices en diagonal,
+   * 15.739 m² de planta, y su caja mide **34.805 — 2,2 veces**. Más de la
+   * mitad de esa caja es plataforma vacía, y por esa plataforma se rueda para
+   * volver a casa.
+   *
+   * Lo que se veía: un vuelo de cada cuatro en Tenerife Norte terminaba con
+   * «percance: edificio» a metro y medio del suelo, rodando por asfalto limpio
+   * a doscientos metros de la terminal. Se chocaba contra una pared que no
+   * existe.
+   */
+  readonly planta?: readonly (readonly [number, number])[];
+}
+
+/** Si un punto cae dentro de un polígono, por el número de cruces. */
+function dentroDeLaPlanta(
+  x: number,
+  z: number,
+  planta: readonly (readonly [number, number])[],
+): boolean {
+  let dentro = false;
+  for (let i = 0, j = planta.length - 1; i < planta.length; j = i++) {
+    const a = planta[i]!;
+    const b = planta[j]!;
+    if (
+      a[1] > z !== b[1] > z &&
+      x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1]) + a[0]
+    )
+      dentro = !dentro;
+  }
+  return dentro;
 }
 
 /** El índice de bultos del escenario. */
@@ -93,6 +128,41 @@ export class Obstaculos {
    * @param base cota del suelo bajo él
    * @param cima cota de su tejado
    */
+  /**
+   * El bulto más cercano a un punto, con su caja. **Solo para medir.**
+   *
+   * Hizo falta el día que un percance «edificio» apuntaba a un edificio que
+   * estaba a veintidós metros: este índice no lleva solo los del aeródromo
+   * —también la ciudad, el coche del sígame, la vaca— y desde fuera no había
+   * forma de saber contra qué se chocó. Ver `sondas.ts`.
+   */
+  cercaDe(
+    x: number,
+    z: number,
+  ): {
+    x: number;
+    z: number;
+    semiX: number;
+    semiZ: number;
+    base: number;
+    cima: number;
+    d: number;
+  } | null {
+    let mejor = null;
+    let corto = Infinity;
+    for (const lista of this.celdas.values())
+      for (const c of lista) {
+        const dx = Math.max(0, Math.abs(x - c.x) - c.semiX);
+        const dz = Math.max(0, Math.abs(z - c.z) - c.semiZ);
+        const d = Math.hypot(dx, dz);
+        if (d < corto) {
+          corto = d;
+          mejor = { ...c, d: +d.toFixed(1) };
+        }
+      }
+    return mejor;
+  }
+
   anadir(
     x: number,
     z: number,
@@ -100,10 +170,12 @@ export class Obstaculos {
     semiZ: number,
     base: number,
     cima: number,
+    planta?: readonly (readonly [number, number])[],
   ): void {
     const caja: Caja = {
       x,
       z,
+      planta,
       // El margen se come la caja; una casucha más estrecha que el margen
       // simplemente no estorba, que es exactamente lo que se quiere.
       semiX: semiX - MARGEN,
@@ -151,6 +223,8 @@ export class Obstaculos {
       if (y < c.base || y > c.cima) continue;
       if (Math.abs(x - c.x) > c.semiX) continue;
       if (Math.abs(z - c.z) > c.semiZ) continue;
+      // Y dentro de la planta, no solo de la caja. Ver `Caja.planta`.
+      if (c.planta && !dentroDeLaPlanta(x, z, c.planta)) continue;
       if (c.cima > techo) techo = c.cima;
     }
     return techo;
