@@ -1501,6 +1501,11 @@ export class PlanDeVuelo {
     return this.rutaMundo;
   }
 
+  /** La ruta **sin redondear**, tal y como la da el buscador. Para medirla. */
+  rutaCruda(): readonly Punto[] {
+    return this.ruta?.puntos ?? [];
+  }
+
   /** Avanza un fotograma y dice qué hay que enseñar. */
   paso(
     estado: FlightState,

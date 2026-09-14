@@ -331,16 +331,33 @@ describe("el recorte no se lleva la curva de entrada", () => {
     const espera = aero.holdingPositions[0]!.xy;
     const ruta = rodajeEntre(grafo, puesto, espera)!;
     expect(ruta).not.toBeNull();
-    // Lo que se comprueba es que no falte nada: el último punto de calle del
-    // buscador —el que el recorte se llevaba— sigue estando en la ruta.
-    const a = nudoCercano(grafo, puesto);
-    const b = nudoCercano(grafo, espera);
-    const entera = rutaEntre(grafo, a.nudo, b.nudo)!;
-    const finDeCalle = entera.puntos[entera.puntos.length - 1]!;
-    const sigue = ruta.puntos.some(
-      (p) => Math.hypot(p[0] - finDeCalle[0], p[1] - finDeCalle[1]) < 0.5,
-    );
-    expect(sigue).toBe(true);
+    /*
+     * Lo que se comprueba es que no falte nada: la curva de entrada —el bulbo
+     * de giro del final de la calle— sigue estando.
+     *
+     * **Y se comprueba por la forma, no por el último punto.** Antes esto
+     * miraba que el último punto de calle del buscador siguiera en la lista, y
+     * eso ataba la prueba a un detalle que tenía que cambiar: ese punto está
+     * quince metros **por delante** del punto de espera, así que el remate
+     * volvía hacia atrás y lo que se pintaba era una horquilla. Ahora el último
+     * punto es donde el destino cae sobre ese tramo — la curva se queda entera
+     * y el avión ya no se pasa de largo. Ver `sinPasarseDelDestino`.
+     */
+    const vuelveSobreSusPasos = ruta.puntos.some((p, i) => {
+      if (i === 0 || i === ruta.puntos.length - 1) return false;
+      const a = ruta.puntos[i - 1]!;
+      const c = ruta.puntos[i + 1]!;
+      const l1 = Math.hypot(p[0] - a[0], p[1] - a[1]);
+      const l2 = Math.hypot(c[0] - p[0], c[1] - p[1]);
+      if (l1 < 0.01 || l2 < 0.01) return false;
+      const cos =
+        ((p[0] - a[0]) * (c[0] - p[0]) + (p[1] - a[1]) * (c[1] - p[1])) /
+        (l1 * l2);
+      return cos < Math.cos((150 * Math.PI) / 180);
+    });
+    expect(vuelveSobreSusPasos).toBe(false);
+    const fin = ruta.puntos[ruta.puntos.length - 1]!;
+    expect(Math.hypot(fin[0] - espera[0], fin[1] - espera[1])).toBeLessThan(1);
     let largo = 0;
     for (let i = 0; i < ruta.puntos.length - 1; i++)
       largo += Math.hypot(
