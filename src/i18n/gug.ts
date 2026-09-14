@@ -35,6 +35,8 @@ export const GUG: Dictionary = {
   // ── El vuelo completo ──────────────────────────────────────────────────
   "torre.verde": "Ikatúma reike",
   "torre.roja": "Eha'arõ ko'ápe",
+  "torre.canario.verde": "Ikatúma reike",
+  "torre.canario.roja": "Eha'arõ ko'ápe",
   "vuelo.estacionado": "Emyandy motor",
   "vuelo.arrancando": "Epoi freno ha eguata mbegue",
   "vuelo.rodando": "Eho raya hovy rupi",

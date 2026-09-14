@@ -263,6 +263,7 @@ import {
 } from "./flight/cuaderno";
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
+import { comoSeDiceAqui, hablaDe } from "./i18n/habla";
 import { SE_QUEDAN, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
@@ -2748,12 +2749,22 @@ export class Game {
     if (cual === this.ultimaLuzDeTorre) return;
     this.ultimaLuzDeTorre = cual;
     if (!luz) return;
-    const clave: TranslationKey =
+    /*
+     * **Y la dice como se dice aquí.** La torre no habla el castellano del
+     * juego: habla el de su campo, y en Canarias eso quiere decir sin vosear y
+     * con otra voz. La clave cambia con el habla porque el pack de voz busca
+     * por clave — ver `i18n/habla.ts`.
+     */
+    const base =
       luz === "verde"
         ? "torre.verde"
         : rojaDice === "alAire"
           ? "palabra.alAire"
           : "torre.roja";
+    const clave = comoSeDiceAqui(
+      base,
+      hablaDe(this.scenario.aerodrome?.id),
+    ) as TranslationKey;
     /*
      * La orden de irse al aire **corta lo que haya**: es la única de las tres
      * que no puede esperar a que termine una frase. Las otras dos son normales
@@ -5873,6 +5884,11 @@ export class Game {
       // el de la avioneta. Ver `ui/cuadro.ts`.
       this.aircraft,
     );
+    /*
+     * Y cómo habla la torre de este campo, que es cosa del sitio y no del
+     * idioma del juego: en Canarias no se vosea. Ver `i18n/habla.ts`.
+     */
+    this.hud.setHabla(hablaDe(this.scenario.aerodrome?.id));
   }
 
   private onResize = (): void => {

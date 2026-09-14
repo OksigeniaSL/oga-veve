@@ -1,6 +1,6 @@
 # Las voces del juego
 
-Cuatro voces, ciento dieciséis frases y dos mil doscientos setenta y un
+Cinco voces, ciento dieciséis frases y dos mil doscientos setenta y un
 caracteres. Esto dice **qué se graba, con qué voz, cómo vuelve y qué se le
 hace después**.
 
@@ -19,14 +19,15 @@ Escribe en esta carpeta:
 | `guion-<voz>.txt` | **solo el texto**, una frase por línea: es lo que se pega en el estudio |
 | `guion-<voz>.tsv` | el mismo guion numerado, para casar los audios que vuelven              |
 
-## Las cuatro voces
+## Las cinco voces
 
-| voz            | idioma                          | frases | cómo suena                                    | por qué                                                                                                                                                                                                                                                                                                |
-| -------------- | ------------------------------- | ------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **instructor** | castellano paraguayo            | 83     | cercana, tranquila, **hablándole a un chico** | Es la voz que sustituye al texto en el peldaño que empieza a los cuatro años y no lee. Es la que más se oye y la que más importa.                                                                                                                                                                      |
-| **cabina**     | inglés aeronáutico              | 21     | seca, plana, **sin emoción**                  | Son los cantos del avión: _terrain, pull up_, _one hundred_, _V1_. En un avión de verdad los dice una máquina, y por eso una voz con intención suena mal aquí.                                                                                                                                         |
-| **torre**      | inglés aeronáutico y castellano | 7      | neutra, profesional, con prisa                | Va con efecto de radio, y por eso se graba **limpia**: el filtro se pone después.                                                                                                                                                                                                                      |
-| **otro**       | castellano paraguayo            | 5      | otra persona, otro timbre                     | Otro avión en la frecuencia. **Ya suenan en el juego** con la voz del sistema: ver `src/flight/radio.ts`, que las dice en orden —saluda, rueda, viento en cola, final, pista libre— y se calla en cuanto habla el instructor. No hay tráfico dibujado todavía (#118), pero la radio ya no está muerta. |
+| voz                | idioma                                  | frases | cómo suena                                                      | por qué                                                                                                                                                                                                                                                                                                |
+| ------------------ | --------------------------------------- | ------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **instructor**     | castellano paraguayo                    | 83     | cercana, tranquila, **hablándole a un chico**                   | Es la voz que sustituye al texto en el peldaño que empieza a los cuatro años y no lee. Es la que más se oye y la que más importa.                                                                                                                                                                      |
+| **cabina**         | inglés aeronáutico                      | 21     | seca, plana, **sin emoción**                                    | Son los cantos del avión: _terrain, pull up_, _one hundred_, _V1_. En un avión de verdad los dice una máquina, y por eso una voz con intención suena mal aquí.                                                                                                                                         |
+| **torre**          | inglés aeronáutico y castellano         | 7      | neutra, profesional, con prisa                                  | Va con efecto de radio, y por eso se graba **limpia**: el filtro se pone después.                                                                                                                                                                                                                      |
+| **torre-canarias** | castellano canario e inglés aeronáutico | 2      | **Yeray**: hombre, grave y sin prisa, con el habla de las islas | La torre de los campos canarios. No es solo acento: son otras palabras —«puedes entrar», no «podés»—, porque una torre de Tenerife que vosea suena tan rara como una de Asunción que no lo haga. Quién habla así lo dice el indicativo OACI: todo lo que empieza por `GC`. Ver `src/i18n/habla.ts`.    |
+| **otro**           | castellano paraguayo                    | 5      | otra persona, otro timbre                                       | Otro avión en la frecuencia. **Ya suenan en el juego** con la voz del sistema: ver `src/flight/radio.ts`, que las dice en orden —saluda, rueda, viento en cola, final, pista libre— y se calla en cuanto habla el instructor. No hay tráfico dibujado todavía (#118), pero la radio ya no está muerta. |
 
 Tres cosas que no cambian:
 
@@ -36,6 +37,11 @@ Tres cosas que no cambian:
 - **El guaraní no entra.** No hay voz de guaraní en ningún sintetizador y una
   voz castellana leyendo guaraní escrito suena a burla. Esa capa espera a una
   persona que lo hable (#6).
+- **La torre de cada sitio habla como su sitio.** Las siete frases de la torre
+  son cinco de inglés aeronáutico —que no cambian en ningún aeropuerto del
+  mundo, y esa es media lección— y dos de castellano, que son las que cambian.
+  Las canarias van con claves propias (`torre.canario.*`) porque el pack busca
+  por clave: con la misma clave sonaría la voz que se hubiera cargado antes.
 - **La torre y el otro avión pueden ser la misma persona** con distinto tono si
   hiciera falta, pero el instructor no: es la única que se oye todo el rato y
   tiene que ser reconocible.

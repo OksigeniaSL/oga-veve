@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "voz": "torre-canarias",
+  "idioma": "es-PY",
+  "piezas": {
+    "torre.canario.roja": {
+      "ms": 793
+    },
+    "torre.canario.verde": {
+      "ms": 746
+    }
+  },
+  "recetas": {
+    "torre.canario.roja": [
+      "torre.canario.roja"
+    ],
+    "torre.canario.verde": [
+      "torre.canario.verde"
+    ]
+  }
+}

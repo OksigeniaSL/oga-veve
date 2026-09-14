@@ -197,6 +197,10 @@ export const EN: Dictionary = {
 
   "torre.verde": "Cleared to enter",
   "torre.roja": "Hold here",
+  // La torre canaria dice lo mismo en inglés: lo que cambia entre las dos es
+  // el castellano y la voz. Ver `i18n/habla.ts`.
+  "torre.canario.verde": "Cleared to enter",
+  "torre.canario.roja": "Hold here",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
   // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
   "ala.titulo": "How a wing flies",
@@ -222,6 +226,7 @@ export const EN: Dictionary = {
   "palabra.toca": "Land!",
   "palabra.volve": "Try again!",
   "palabra.alAire": "Go around!",
+  "palabra.canario.alAire": "Go around!",
   "palabra.laPista": "Runway?",
   "palabra.cuidado": "Careful!",
   "palabra.rapido": "Too fast",

@@ -259,7 +259,7 @@ describe("el instructor grabado", () => {
 });
 
 /**
- * Las cuatro voces, no solo el instructor.
+ * Todas las voces, no solo el instructor.
  *
  * Se bajaba una, y el juego tiene cuatro encargos: el instructor que le habla
  * al chico, los cantos de cabina en inglés aeronáutico, la torre y el otro
@@ -268,7 +268,7 @@ describe("el instructor grabado", () => {
  * publicado para no sonar nunca. Y no avisa — cada frase que falta cae al
  * navegador una por una, así que parece que el sistema va lento.
  */
-describe("las cuatro voces", () => {
+describe("todas las voces", () => {
   const packDe = (voz: string, clave: string, pieza: string) => ({
     version: 1,
     voz,
@@ -317,11 +317,11 @@ describe("las cuatro voces", () => {
   });
 
   /*
-   * Y **por omisión se bajan las cuatro**. Es lo que de verdad se rompió
+   * Y **por omisión se bajan todas**. Es lo que de verdad se rompió
    * —nadie llamaba a `cargar` con una lista— así que si mañana alguien vuelve
    * a poner una sola voz por defecto, esto lo dice.
    */
-  it("por omisión se piden las cuatro", async () => {
+  it("por omisión se piden todas", async () => {
     const instructor = new InstructorGrabado(new Grabadora(), new Suplente());
     const pedidas: string[] = [];
     const antes = globalThis.fetch;
@@ -332,7 +332,13 @@ describe("las cuatro voces", () => {
     await instructor.cargar(undefined, "data/voces", () => "probably");
     globalThis.fetch = antes;
     const voces = pedidas.map((r) => r.split("/").at(-2));
-    expect(voces).toEqual(["instructor", "cabina", "torre", "otro"]);
+    expect(voces).toEqual([
+      "instructor",
+      "cabina",
+      "torre",
+      "torre-canarias",
+      "otro",
+    ]);
   });
 
   it("y una voz que no está no se lleva por delante a las demás", async () => {

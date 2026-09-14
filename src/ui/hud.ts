@@ -33,6 +33,7 @@ import type { Accion } from "../flight/keymap";
 import { SixPack } from "./six-pack";
 import { Motores, markupDeMotores } from "./motores";
 import { cuadroDe, type Cuadro } from "./cuadro";
+import { comoSeDiceAqui, type Habla } from "../i18n/habla";
 import { PYKASU, type AircraftConfig } from "../flight/aircraft";
 import { Pictogramas, HELICE_MAS, HELICE_MENOS } from "./pictogramas";
 import { Senal } from "./senal";
@@ -210,6 +211,13 @@ export class Hud {
    * entrenador porque el juego empieza con él.
    */
   private cuadro: Cuadro = cuadroDe(PYKASU);
+  /**
+   * Cómo habla la torre de este aeródromo. Ver `i18n/habla.ts`.
+   *
+   * El cartel de la luz tiene que decir lo mismo que se oye, y lo que se oye
+   * cambia con el sitio: en Tenerife la torre no vosea.
+   */
+  private habla: Habla = "paraguayo";
   /** Y la ficha entera, que es lo que sabe a cuánto gira su motor. */
   private ficha: AircraftConfig = PYKASU;
 
@@ -1653,9 +1661,14 @@ export class Hud {
     if (texto)
       texto.textContent =
         luz === "verde"
-          ? t("torre.verde")
+          ? t(comoSeDiceAqui("torre.verde", this.habla) as TranslationKey)
           : luz
-            ? t(rojaDice === "alAire" ? "palabra.alAire" : "torre.roja")
+            ? t(
+                comoSeDiceAqui(
+                  rojaDice === "alAire" ? "palabra.alAire" : "torre.roja",
+                  this.habla,
+                ) as TranslationKey,
+              )
             : "";
     // **Y una forma dentro de la luz**, no solo un color: la mano abierta de
     // parar o la flecha de seguir. Quien no distinga el rojo del verde —que es
@@ -1832,6 +1845,16 @@ export class Hud {
       this.cuadro = cuadroDe(ficha);
       this.render();
     }
+  }
+
+  /**
+   * Cómo se habla en el aeródromo de hoy.
+   *
+   * Lo llama el juego al montar el escenario, y lo mira el cartel de la luz de
+   * la torre. Ver `i18n/habla.ts`.
+   */
+  setHabla(habla: Habla): void {
+    this.habla = habla;
   }
 
   setBadge(text: string): void {
