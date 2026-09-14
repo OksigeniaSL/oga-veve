@@ -4146,7 +4146,37 @@ export class Game {
       llamadas: this.renderer.info.render.calls,
       triangulos: this.renderer.info.render.triangles,
     });
-    if (banda === "lento" || banda === "rapido") {
+    /*
+     * **Y sobre el asfalto de la pista no se habla de velocidad. Ninguna voz.**
+     *
+     * Ésta es la tercera vez que se arregla el mismo «Más despacio» en plena
+     * carrera de despegue, y las dos anteriores se arreglaron en el sitio
+     * equivocado: el aviso de rodaje de `plan-de-vuelo` —ver `rapido`—, que ya
+     * mira `onRunway` y que no era el que hablaba. **El que hablaba es éste**,
+     * que es otro lazo, en otro fichero, con otra cuenta y sin una sola línea
+     * que mire dónde están las ruedas. Acelerando por la pista la banda se
+     * pone en «rápido» a los tres segundos y suelta «Más despacio» con el gas
+     * a fondo.
+     *
+     * «Lo que quiero es que cuando despego no me diga una voz "más despacio",
+     * que llevo un millón de veces que te lo digo.» Y llevaba razón las tres.
+     *
+     * La regla es la de siempre y ahora está en los dos sitios: **en una pista
+     * la velocidad es el asunto**, y ahí no se avisa de nada —ni corriendo
+     * para despegar, ni frenando después de tocar—. Se avisa en las calles,
+     * que es donde una curva se pasa por ir rápido, y en el aire, que es donde
+     * la velocidad de aproximación significa algo.
+     */
+    const enElAsfalto =
+      this.flight.state.onGround && this.flight.state.onRunway;
+    if (enElAsfalto) {
+      // Y se olvida lo acumulado: al salir de la pista se empieza a contar de
+      // cero, que si no el aviso salta en la primera curva de la calle por lo
+      // que pasó en la carrera.
+      this.fueraDeBanda = 0;
+      this.dichoDeBanda = null;
+    }
+    if (!enElAsfalto && (banda === "lento" || banda === "rapido")) {
       this.fueraDeBanda += dt;
       if (this.fueraDeBanda > 3 && this.dichoDeBanda !== banda) {
         this.dichoDeBanda = banda;
