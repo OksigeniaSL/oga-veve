@@ -200,6 +200,8 @@ def construir():
         y_respaldo=0.18,
         plazas=(-0.30, 0.30),
         pantallas_en=0.30,
+        palancas=2,
+        relojes=8,
         suelo_atras=1.70,
     )
     # Y dos plazas atrás. No se pilotan desde ahí —`ojoDePiloto` se queda con

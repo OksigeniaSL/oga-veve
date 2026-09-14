@@ -171,6 +171,8 @@ def construir():
         y_respaldo=0.26,
         plazas=(-0.36, 0.36),
         pantallas_en=0.36,
+        palancas=2,
+        relojes=10,
         suelo_atras=1.60,
     )
 

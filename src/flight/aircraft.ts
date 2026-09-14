@@ -207,6 +207,15 @@ export interface AircraftConfig {
   inertia: { xx: number; yy: number; zz: number };
   /** Empuje estático a nivel del mar, N. */
   maxThrust: number;
+  /**
+   * Cuántos motores lleva.
+   *
+   * Está en el modelo de vuelo como empuje total —lo que empuja es la suma— y
+   * hace falta aparte para **la cabina**: un cuadro de mandos tiene una aguja
+   * por motor, y cuatro agujas es la mitad de lo que hace que un avión grande
+   * parezca un avión grande.
+   */
+  motores: number;
   /** Velocidad de crucero de referencia, m/s. Modula la caída de empuje. */
   cruiseSpeed: number;
   /**
@@ -334,6 +343,7 @@ export const PYKASU: AircraftConfig = {
    * cae el empuje con la velocidad, no aquí.
    */
   maxThrust: 2600,
+  motores: 1,
   cruiseSpeed: 60,
   /*
    * Tres mil metros: un monomotor de escuela sin presurizar cruza entre dos mil
@@ -407,6 +417,7 @@ export const MAINUMBY: AircraftConfig = {
   chord: 1.7,
   inertia: { xx: 1600, yy: 2400, zz: 3600 },
   maxThrust: 5200,
+  motores: 1,
   cruiseSpeed: 55,
   // Dos mil quinientos: el trabajo de un avión así se hace mucho más abajo, y
   // lo que sube es para ir de un campo a otro.
@@ -508,6 +519,7 @@ export const PANAMBI: AircraftConfig = {
    */
   inertia: { xx: 3400, yy: 4200, zz: 6800 },
   maxThrust: 5000,
+  motores: 2,
   cruiseSpeed: 80,
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
@@ -595,6 +607,7 @@ export const ARASUNU: AircraftConfig = {
   // y los tres de la flota: `Ixx ≈ 0,012·m·b²`.
   inertia: { xx: 26000, yy: 32000, zz: 52000 },
   maxThrust: 14000,
+  motores: 2,
   cruiseSpeed: 90,
   // Siete mil seiscientos: veinticinco mil pies, el techo de servicio típico de
   // un turbohélice regional presurizado.
@@ -698,6 +711,7 @@ export const ARAI: AircraftConfig = {
    * de verdadera. Con 180, el avión sostenía su «crucero» con un tercio de
    * gas, que es lo que delataba que el número no era el suyo.
    */
+  motores: 2,
   cruiseSpeed: 220,
   // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
   alturaDeCrucero: 11000,
@@ -845,6 +859,7 @@ export const YVAGA: AircraftConfig = {
    * ningún escenario.
    */
   maxThrust: 820000,
+  motores: 4,
   cruiseSpeed: 230,
   /*
    * Diez mil setecientos: treinta y cinco mil pies, que es donde la CR-2144
