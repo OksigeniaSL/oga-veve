@@ -109,6 +109,12 @@ instructor	instructor/ala.dice.arriba.ogg	es-PY	Mirá el azul: casi toda la fuer
 instructor	instructor/ala.dice.arrastra.ogg	es-PY	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.	lo que explica el esquema del ala
 instructor	instructor/ala.dice.cerca.ogg	es-PY	Cuidado: un poco más de ángulo y el aire se suelta.	lo que explica el esquema del ala
 instructor	instructor/ala.dice.perdida.ogg	es-PY	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.	lo que explica el esquema del ala
+capitana	capitana/capitana.bienvenida.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo.	la megafonía de cabina, para el pasaje
+capitana	capitana/capitana.crosscheck.ogg	es-PY	Tripulación, armar toboganes y verificación cruzada.	la megafonía de cabina, para el pasaje
+capitana	capitana/capitana.despegue.ogg	es-PY	Tripulación, sentados para el despegue.	la megafonía de cabina, para el pasaje
+capitana	capitana/capitana.crucero.ogg	es-PY	Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.	la megafonía de cabina, para el pasaje
+capitana	capitana/capitana.descenso.ogg	es-PY	Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.	la megafonía de cabina, para el pasaje
+capitana	capitana/capitana.llegada.ogg	es-PY	Bienvenidos. Gracias por volar con nosotros, y que les vaya lindo.	la megafonía de cabina, para el pasaje
 torre-canarias	torre-canarias/torre.canario.verde.ogg	es-PY	Puedes entrar	la torre de Canarias, que no vosea
 torre-canarias	torre-canarias/torre.canario.roja.ogg	es-PY	Espera ahí	la torre de Canarias, que no vosea
 torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa

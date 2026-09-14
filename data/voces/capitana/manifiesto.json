@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "voz": "capitana",
+  "idioma": "es-PY",
+  "piezas": {
+    "capitana.bienvenida": {
+      "ms": 4007
+    },
+    "capitana.crosscheck": {
+      "ms": 3407
+    },
+    "capitana.crucero": {
+      "ms": 4707
+    },
+    "capitana.descenso": {
+      "ms": 3707
+    },
+    "capitana.despegue": {
+      "ms": 1850
+    },
+    "capitana.llegada": {
+      "ms": 3107
+    }
+  },
+  "recetas": {
+    "capitana.bienvenida": [
+      "capitana.bienvenida"
+    ],
+    "capitana.crosscheck": [
+      "capitana.crosscheck"
+    ],
+    "capitana.crucero": [
+      "capitana.crucero"
+    ],
+    "capitana.descenso": [
+      "capitana.descenso"
+    ],
+    "capitana.despegue": [
+      "capitana.despegue"
+    ],
+    "capitana.llegada": [
+      "capitana.llegada"
+    ]
+  }
+}

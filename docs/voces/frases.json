@@ -770,6 +770,48 @@
     "para": "lo que explica el esquema del ala"
   },
   {
+    "id": "capitana.bienvenida",
+    "voz": "capitana",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "capitana.crosscheck",
+    "voz": "capitana",
+    "idioma": "es-PY",
+    "texto": "Tripulación, armar toboganes y verificación cruzada.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "capitana.despegue",
+    "voz": "capitana",
+    "idioma": "es-PY",
+    "texto": "Tripulación, sentados para el despegue.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "capitana.crucero",
+    "voz": "capitana",
+    "idioma": "es-PY",
+    "texto": "Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "capitana.descenso",
+    "voz": "capitana",
+    "idioma": "es-PY",
+    "texto": "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "capitana.llegada",
+    "voz": "capitana",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos. Gracias por volar con nosotros, y que les vaya lindo.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
     "id": "torre.canario.verde",
     "voz": "torre-canarias",
     "idioma": "es-PY",
