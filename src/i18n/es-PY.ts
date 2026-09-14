@@ -197,9 +197,6 @@ export const ES_PY = {
   // La cadena que pide EOX, literal. Ver CREDITOS.md.
   "credits.ortoPy":
     "Ortofoto de Paraguay: EOxCloudless (cloudless.eox.at) de EOX IT Services GmbH — contiene datos Copernicus Sentinel modificados, 2020.",
-  // La que pide el autor del modelo, literal.
-  "credits.modelo":
-    "Modelo de la avioneta: «Cessna 172Kr (with cockpit) (ver III)» de TonyWony, bajo Creative Commons Attribution 4.0.",
   "credits.engine": "Modelo de vuelo: {model}",
   "credits.licence":
     "Código libre bajo Apache-2.0. Contenido y marcas, © Oksigenia SL.",

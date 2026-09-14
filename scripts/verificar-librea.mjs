@@ -35,12 +35,18 @@ const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
-/** Los que tienen modelo de verdad hecho aquí, con las ranuras de la casa. */
-const NUESTROS = ["jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
-/** Y uno traído de fuera, que no se toca. */
-const DE_FUERA = "jaz-20";
+/**
+ * Los que tienen modelo de verdad hecho aquí, con las ranuras de la casa.
+ *
+ * **Y ya son los seis.** Aquí había cinco y un sexto aparte, el `jaz-20`, con
+ * su excepción escrita: «uno traído de fuera, que no se toca». Era verdad
+ * mientras el Pykasu fue una Cessna descargada —repintar un modelo ajeno sería
+ * inventarle una librea que no es suya—, y dejó de serlo el día que se modeló
+ * aquí como los otros cinco. La excepción se va con el modelo que la pedía.
+ */
+const NUESTROS = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
 
-for (const id of [...NUESTROS, DE_FUERA]) {
+for (const id of NUESTROS) {
   const page = await navegador.newPage({
     viewport: { width: 900, height: 560 },
   });
@@ -92,23 +98,6 @@ for (const id of [...NUESTROS, DE_FUERA]) {
     visto.deVerdad ? "modelo glTF" : "cajas de respaldo",
     "sin modelo esto no mide nada",
   );
-
-  if (id === DE_FUERA) {
-    /*
-     * Al de fuera no se le toca: trae treinta materiales con nombres suyos
-     * —`fuselarge`, `ruder_petal`— y ninguno coincide con las ranuras de la
-     * casa, así que conserva su librea. Se comprueba que sigue siendo así,
-     * que es lo que dice `CREDITOS.md` de él.
-     */
-    comprobar(
-      `${id}: conserva la librea con la que vino`,
-      Object.keys(visto.colores).length > 5 && !visto.colores.casco,
-      `${Object.keys(visto.colores).length} materiales, ninguno de la casa`,
-      "repintar un modelo ajeno sería inventarle una librea que no es suya",
-    );
-    await page.close();
-    continue;
-  }
 
   const hex = (n) => "#" + n.toString(16).padStart(6, "0");
   for (const [ranura, esperado] of [

@@ -276,8 +276,6 @@ export const GUG: Dictionary = {
     "Ortofoto de España: PNOA © Instituto Geográfico Nacional de España, CC BY 4.0 · scne.es.",
   "credits.ortoPy":
     "Ortofoto de Paraguay: EOxCloudless (cloudless.eox.at) de EOX IT Services GmbH — contiene datos Copernicus Sentinel modificados, 2020.",
-  "credits.modelo":
-    "Modelo de la avioneta: «Cessna 172Kr (with cockpit) (ver III)» de TonyWony, bajo Creative Commons Attribution 4.0.",
   "credits.engine": "Veve modelo: {model}",
   "credits.licence":
     "Código sãso Apache-2.0 guýpe. Mba'ekuaa ha marca, © Oksigenia SL.",
