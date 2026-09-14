@@ -905,13 +905,21 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # Separadas, que es como está un G1000: horizonte a la izquierda,
         # rumbos a la derecha. Un palmo por debajo del borde de arriba del
         # panel, que es donde caen los ojos de quien va sentado.
+        #
+        # **Y centradas en el asiento del piloto, no en el eje del avión.** La
+        # cámara de cabina se sienta donde se sienta él —ver `ojoDePiloto`— así
+        # que un tablero centrado en el fuselaje se ve entero **a la derecha**,
+        # con medio panel vacío a la izquierda: «todos descentrados y fuera de
+        # margen». En un avión de verdad pasa lo mismo y por eso el panel de
+        # vuelo está delante del comandante y no en medio.
         for lado in (-1, 1):
             piezas.append(
                 cuadro(
                     "pantalla-izquierda" if lado < 0 else "pantalla-derecha",
                     0.28,
                     0.20,
-                    (lado * pantallas_en, alto_panel - 0.18, panel_z + 0.005),
+                    (plazas[0] + lado * pantallas_en,
+                     alto_panel - 0.18, panel_z + 0.005),
                     "g1000_display",
                 )
             )
@@ -939,7 +947,7 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         cuantos = max(1, palancas) + 1
         radioReloj = min(0.07, (ancho * 1.5) / (cuantos * 2.6))
         for m in range(cuantos):
-            x = (m - (cuantos - 1) / 2) * radioReloj * 2.5
+            x = plazas[0] + (m - (cuantos - 1) / 2) * radioReloj * 2.5
             if m < cuantos - 1:
                 piezas += reloj(
                     f"reloj-motor-{m}", mide, radioReloj,
@@ -958,7 +966,7 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         for i, que in enumerate(("motor", "flaps", "freno")):
             piezas += boton(
                 que, radioReloj * 1.0, radioReloj * 0.8,
-                ((i - 1) * radioReloj * 1.3,
+                (plazas[0] + (i - 1) * radioReloj * 1.3,
                  alto_panel - 0.29 - radioReloj * 2.6,
                  panel_z + 0.008),
             )

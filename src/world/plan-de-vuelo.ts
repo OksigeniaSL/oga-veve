@@ -1576,6 +1576,20 @@ export class PlanDeVuelo {
        * hubo que hacer en el tope de rodaje.
        */
       rapido:
+        /*
+         * **Y nunca sobre la pista, mire la fase lo que mire.**
+         *
+         * Gatear esto por la fase no bastó: la máquina de fases tarda en pasar
+         * de «rodando» a «alineando», y en ese hueco el avión ya está en la
+         * pista con el gas a fondo. «¿Pero por qué más despacio si acabo de
+         * empezar a arrancar para hacer volar un 747 y no llevo ni dos segundos
+         * acelerando?»
+         *
+         * Lo que no se equivoca es dónde están las ruedas: en una pista la
+         * velocidad **es** el asunto y no hay nada que avisar. Es la misma
+         * pregunta que ya contestaba el tope de rodaje con `onRunway`.
+         */
+        !estado.onRunway &&
         RODANDO_DE_VERDAD.has(p.fase) &&
         sobreElSuelo < 3 &&
         this.rutaMundo.length > 1 &&
