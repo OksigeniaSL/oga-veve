@@ -137,6 +137,22 @@ export interface AircraftSound {
    * un cuatro cilindros suena a moto.
    */
   cylinders: number;
+  /**
+   * Palas del fan o de la hélice, para el tono de una turbina.
+   *
+   * **Un motor de turbina no tiene cilindros**, así que los tres de la flota
+   * que la llevan tenían `cylinders: 0` — y la frecuencia de encendido es
+   * `vueltas × cilindros / 2`, o sea **cero hercios**. Un oscilador a cero
+   * hercios no suena: el turbohélice y los dos reactores volaban sin tono de
+   * motor y nadie lo apuntó porque lo que sí sonaba era el resto de capas.
+   *
+   * Lo que canta en una turbina es el paso de las palas: las del fan en un
+   * turbofán y las de la hélice en un turbohélice. Son un dato real del motor
+   * —cuarenta y seis un JT9D, veintiocho un CF34, cuatro la hélice de un
+   * PT6— y con él la cuenta es la misma que la de los cilindros, solo que con
+   * el número que corresponde.
+   */
+  palasDeFan?: number;
   idleRpm: number;
   maxRpm: number;
   /**
@@ -576,6 +592,8 @@ export const ARASUNU: AircraftConfig = {
   sound: {
     engine: "turboprop",
     cylinders: 0,
+    // Las cuatro palas de su hélice, que es lo que canta en un turbohélice.
+    palasDeFan: 4,
     idleRpm: 900,
     maxRpm: 2000,
     growlHz: 420,
@@ -694,8 +712,19 @@ export const ARAI: AircraftConfig = {
   sound: {
     engine: "turbofan",
     cylinders: 0,
-    idleRpm: 2000,
-    maxRpm: 9000,
+    // Las veintiocho palas del fan de un CF34, que es su motor.
+    palasDeFan: 28,
+    /*
+     * Y las vueltas del fan, que son las de verdad y no un número de adorno.
+     *
+     * Un CF34 gira su fan entre unas mil doscientas al ralentí y siete mil
+     * cuatrocientas al despegue. Con veintiocho palas eso son de 560 a 3.450
+     * hercios, que es exactamente la banda en la que se oye el silbido de un
+     * regional. Estaban en 2.000 y 9.000, que no son de ningún motor, y con
+     * ellas el tono se iba por encima de los cuatro mil.
+     */
+    idleRpm: 1200,
+    maxRpm: 7400,
     growlHz: 520,
     growlRise: 700,
   },
@@ -813,8 +842,16 @@ export const YVAGA: AircraftConfig = {
   sound: {
     engine: "turbofan",
     cylinders: 0,
-    idleRpm: 2200,
-    maxRpm: 9500,
+    // Las cuarenta y seis palas del fan de un JT9D, que son sus motores.
+    palasDeFan: 46,
+    /*
+     * Un JT9D gira su fan entre unas mil al ralentí y tres mil seiscientas al
+     * despegue. Con cuarenta y seis palas, de 767 a 2.760 hercios: el silbido
+     * grave y lleno de un cuatrimotor grande. Con las 9.500 que había puestas,
+     * el tono llegaba a 7.283 y eso no es un avión, es un chillido.
+     */
+    idleRpm: 1000,
+    maxRpm: 3600,
     growlHz: 360,
     growlRise: 620,
   },

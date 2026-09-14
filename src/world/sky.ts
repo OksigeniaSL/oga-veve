@@ -411,6 +411,12 @@ function nubes(escenario: Scenario): Group {
     malla.renderOrder = -1;
     grupo.add(malla);
   }
+  /*
+   * **Cada cuánto se repite el dibujo**, que es lo que permite mover el banco
+   * sin que se note. La textura va con `repeat(3, 3)` sobre un plano de `lado`,
+   * así que el patrón es el mismo cada `lado / 3` metros. Ver `updateSky`.
+   */
+  grupo.userData.paso = lado / 3;
   grupo.visible = false;
   return grupo;
 }
@@ -556,18 +562,42 @@ export function ponerNubes(
   }
 }
 
+/**
+ * Dónde se pone el banco de nubes con la cámara ahí.
+ *
+ * **A saltos, no pegado.** `updateSky` copiaba la posición de la cámara tal
+ * cual, así que el banco entero viajaba con el avión y **las nubes no pasaban
+ * nunca**: volando a doscientos metros por segundo bajo una capa de cúmulos, el
+ * cielo estaba tan quieto como el salpicadero. Y la sensación de velocidad en
+ * vuelo alto es justamente eso, lo que pasa por encima.
+ *
+ * El truco es el de cualquier plano infinito: el dibujo de la nube se repite
+ * cada `paso` metros, así que si el banco se mueve **en múltiplos de ese paso**
+ * el patrón encaja consigo mismo y el salto no se ve. Entre salto y salto las
+ * nubes se quedan quietas en el mundo, que es lo que hace que pasen.
+ *
+ * Está aparte y no dentro de `updateSky` para poder probarla: montar el cielo
+ * entero necesita un lienzo, y este proyecto no trae DOM en las pruebas. Lo que
+ * se puede probar es la cuenta, que es donde estaba el fallo.
+ */
+export function dondeVaElBanco(donde: number, paso: number): number {
+  if (!(paso > 0)) return donde;
+  return Math.round(donde / paso) * paso;
+}
+
 /** El domo sigue a la cámara para que el horizonte no se acerque nunca. */
 export function updateSky(rig: SkyRig, cameraPosition: Vector3): void {
   const dome = rig.group.getObjectByName("cielo");
   if (dome) dome.position.copy(cameraPosition);
   const estrellado = rig.group.getObjectByName("estrellas");
   if (estrellado) estrellado.position.copy(cameraPosition);
-  // Las nubes siguen a la cámara **solo en horizontal**: en vertical están
-  // donde están, que es lo que permite atravesarlas.
+  // Las nubes siguen a la cámara **solo en horizontal y a saltos**: en vertical
+  // están donde están, que es lo que permite atravesarlas. Ver `dondeVaElBanco`.
   const banco = rig.group.getObjectByName("nubes");
   if (banco) {
-    banco.position.x = cameraPosition.x;
-    banco.position.z = cameraPosition.z;
+    const paso = (banco.userData.paso as number | undefined) ?? 0;
+    banco.position.x = dondeVaElBanco(cameraPosition.x, paso);
+    banco.position.z = dondeVaElBanco(cameraPosition.z, paso);
   }
 }
 

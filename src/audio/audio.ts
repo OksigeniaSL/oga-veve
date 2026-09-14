@@ -489,10 +489,23 @@ export class Audio {
     const rpm = controls.engineOn
       ? spec.idleRpm + gas * (spec.maxRpm - spec.idleRpm)
       : 0;
-    // Frecuencia de encendido de un cuatro tiempos: vueltas por segundo, por
-    // cilindros, entre dos. Un radial de siete suena a otra cosa que un
-    // cuatro cilindros porque este número es otro, no por magia.
-    const firing = (rpm / 60) * (spec.cylinders / 2);
+    /*
+     * La nota del motor: cuántas cosas pasan por segundo.
+     *
+     * En un motor de pistón es la frecuencia de encendido —vueltas por
+     * segundo, por cilindros, entre dos—, y un radial de siete suena a otra
+     * cosa que un cuatro cilindros porque este número es otro, no por magia.
+     *
+     * **Y en una turbina no hay cilindros**, así que los tres aviones de la
+     * flota que la llevan tenían `cylinders: 0` y esta cuenta les daba **cero
+     * hercios**. Un oscilador a cero hercios no suena: el turbohélice y los dos
+     * reactores volaban sin tono de motor. Lo que canta ahí es el paso de las
+     * palas —las del fan, o las de la hélice en un turbohélice—, que es un dato
+     * real del motor y la misma cuenta con el número que toca.
+     */
+    const firing = spec.palasDeFan
+      ? (rpm / 60) * spec.palasDeFan
+      : (rpm / 60) * (spec.cylinders / 2);
 
     /*
      * **El viraje se oye.**
