@@ -32,7 +32,13 @@
  */
 
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join, relative } from "node:path";
 
 const RAIZ = process.argv[2] ?? "dist";
@@ -90,7 +96,9 @@ ficheros.sort();
  * dos compilaciones iguales son la misma versión y nadie descarga nada.
  */
 const version = createHash("sha256")
-  .update(ficheros.map((f) => f + readFileSync(join(RAIZ, f.slice(2)))).join(""))
+  .update(
+    ficheros.map((f) => f + readFileSync(join(RAIZ, f.slice(2)))).join(""),
+  )
   .digest("hex")
   .slice(0, 12);
 
@@ -102,8 +110,43 @@ writeFileSync(
     .replace("__ARMAZON__", JSON.stringify(ficheros, null, 2)),
 );
 
+/*
+ * **Y que lo que el juego pide en marcha esté de verdad en `dist/`.**
+ *
+ * Los relieves y los aeródromos entran por `import`, así que si faltaran no
+ * compilaría. El pack de voz no: se pide por `fetch` según hace falta, y por eso
+ * pudo pasar lo que pasó — doscientos setenta y ocho ficheros de voz grabada que
+ * existen en el repositorio, se prueban con su banco, y **no se copiaban al
+ * construir**. El juego caía a la voz del navegador y seguía funcionando, que es
+ * justo lo que hace que un fallo así dure meses.
+ *
+ * Aquí se mira lo que hay en el repositorio y lo que ha llegado al despliegue.
+ * Este guion corre al final de `npm run build`, que es el último sitio donde
+ * alguien puede enterarse antes de publicar.
+ */
+const enElRepo = existsSync("data/voces")
+  ? readdirSync("data/voces", { recursive: true }).filter((f) =>
+      /\.(ogg|m4a|mp3|json)$/.test(String(f)),
+    ).length
+  : 0;
+const enElBulto = existsSync(join(RAIZ, "data/voces"))
+  ? readdirSync(join(RAIZ, "data/voces"), { recursive: true }).filter((f) =>
+      /\.(ogg|m4a|mp3|json)$/.test(String(f)),
+    ).length
+  : 0;
+if (enElRepo > 0 && enElBulto < enElRepo) {
+  process.stderr.write(
+    `\n  ✗ El pack de voz no ha llegado al despliegue: ${enElBulto} de ` +
+      `${enElRepo} ficheros en dist/data/voces.\n` +
+      `    El juego los pide por fetch a esa ruta y sin ellos habla el\n` +
+      `    navegador. Ver el complemento \`pack-de-voz\` en vite.config.ts.\n\n`,
+  );
+  process.exit(1);
+}
+
 process.stdout.write(
   `\n  sw.js · versión ${version}\n` +
+    `  pack de voz · ${enElBulto} ficheros listos para bajarse\n` +
     `  ${ficheros.length} ficheros de armazón · ${(bytes / 1024).toFixed(0)} KB precargados\n` +
     `  lo demás —modelos, relieves, ortofotos— se guarda según se usa\n\n`,
 );

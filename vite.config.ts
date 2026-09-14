@@ -1,10 +1,43 @@
-import { defineConfig } from 'vitest/config';
+import { cp } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { defineConfig, type Plugin } from "vitest/config";
 
 // El juego se sirve como estático detrás de nginx/CloudFlare, igual que el
 // panel admin de la granja. `base` relativa para que funcione tanto en la
 // raíz de un dominio propio como bajo una subruta (/veve/) sin recompilar.
+/**
+ * **Y el pack de voz, que no llegaba a producción.**
+ *
+ * Las grabaciones viven en `data/voces/` y el juego las pide por `fetch` a esa
+ * misma ruta —ver `BASE` en `audio/banco-de-voz.ts`—, pero `data/` no es la
+ * carpeta pública de Vite, así que **no se copiaba al construir**: doscientos
+ * setenta y ocho ficheros de voz grabada que existen en el repositorio, se
+ * prueban con el banco y no oía nadie. El juego caía a la voz del navegador y
+ * seguía funcionando, que es justo lo que hace que un fallo así dure.
+ *
+ * Los relieves y los aeródromos no tienen ese problema porque entran por
+ * `import.meta.glob` y por `import`, así que Vite los empaqueta. El pack de voz
+ * no puede: son doscientos y pico ficheros que se bajan **según hacen falta**,
+ * y meterlos en el paquete sería descargarlos todos al abrir.
+ *
+ * Así que se copian tal cual, con la ruta que el juego espera.
+ */
+function elPackDeVoz(): Plugin {
+  return {
+    name: "pack-de-voz",
+    apply: "build",
+    async closeBundle() {
+      const desde = resolve("data/voces");
+      if (!existsSync(desde)) return;
+      await cp(desde, resolve("dist/data/voces"), { recursive: true });
+    },
+  };
+}
+
 export default defineConfig({
-  base: './',
+  base: "./",
+  plugins: [elPackDeVoz()],
   /*
    * **Las pruebas tienen que ver la hoja de estilos de verdad.**
    *
@@ -19,12 +52,12 @@ export default defineConfig({
    */
   test: { css: true },
   build: {
-    target: 'es2022',
+    target: "es2022",
     // three.js son ~600 KB min. Va en su propio chunk para que el navegador
     // lo cachee entre despliegues: el motor cambia mucho menos que el juego.
     rollupOptions: {
       output: {
-        manualChunks: { three: ['three'] },
+        manualChunks: { three: ["three"] },
       },
     },
   },
