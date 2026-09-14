@@ -26,7 +26,7 @@
  * pruebas, y ahí no la podía usar el juego.
  */
 
-import type { AircraftConfig } from "./aircraft";
+import { esDeChorro, type AircraftConfig } from "./aircraft";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 
 /** Densidad del aire al nivel del mar, kg/m³. */
@@ -127,25 +127,60 @@ export function distanciaDeAterrizaje(
   a: AircraftConfig,
   superficie: Superficie = "asfalto",
 ): number {
+  return enPlaneoDesdeElUmbral(a) + rodaduraDeFrenada(a, superficie);
+}
+
+/**
+ * Lo que se recorre en el aire desde los quince metros del umbral, m.
+ *
+ * La altura por la fineza en configuración de aterrizaje, que con flaps anda
+ * por siete. Es la mitad de la distancia de aterrizaje que **no** se frena.
+ */
+export function enPlaneoDesdeElUmbral(a: AircraftConfig): number {
+  return 15 * finezaDeAterrizaje(a);
+}
+
+/** La fineza con los flaps puestos, que es como se aterriza. */
+function finezaDeAterrizaje(a: AircraftConfig): number {
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
-  const peso = a.mass * G;
-  /*
-   * Con los flaps puestos, que es como se aterriza. Sin ellos la cuenta sale
-   * optimista por los dos lados: menos resistencia en el aire y menos peso
-   * quitado a las ruedas en el suelo.
-   */
   const cl = a.aero.cl0 + a.flapsLift;
   const cd =
     a.aero.cd0 +
     (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
     a.flapsDrag;
-  const fineza = cl / cd;
-  /** Desde quince metros, que es la altura del umbral en cualquier manual. */
-  const enElAire = 15 * fineza;
+  return cl / cd;
+}
 
-  // Y el frenado, el mismo que el motor de vuelo: rodadura más freno a fondo.
+/**
+ * La rodadura de frenada: de tocar tierra a pararse, en metros.
+ *
+ * **Se saca aparte porque hay dos motores de vuelo y los dos tienen que frenar
+ * lo mismo.** El de coeficientes frena con fuerzas y le sale solo; el de
+ * Guyrami no tiene fuerzas —el gas *es* la velocidad— y necesita que alguien le
+ * diga cuánto tarda este avión en pararse. Ese alguien es esta función, y así
+ * los dos peldaños frenan en los mismos metros aunque por dentro no se parezcan
+ * en nada. Ver `ritmoDeFrenada` en `arcade.ts`.
+ *
+ * Se integra desde la velocidad de toma —un pelo por debajo de la de umbral—
+ * con el rozamiento de frenar y la resistencia aerodinámica, que a esa
+ * velocidad todavía cuenta. El coeficiente de frenado es **el mismo que usa el
+ * motor de vuelo** —ver `rolling` en `fdm.ts`—, porque si aquí se frenara
+ * distinto que ahí, esta cuenta diría que el avión cabe y el avión se saldría
+ * igualmente.
+ */
+export function rodaduraDeFrenada(
+  a: AircraftConfig,
+  superficie: Superficie = "asfalto",
+): number {
+  const peso = a.mass * G;
+  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const cl = a.aero.cl0 + a.flapsLift;
+  const cd =
+    a.aero.cd0 +
+    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
+    a.flapsDrag;
   const mu = ROZAMIENTO[superficie] + 0.28;
-  const toma = a.approachSpeed * 0.95;
+  const toma = velocidadDeToma(a);
   const pasos = 400;
   const dv = toma / pasos;
   let s = 0;
@@ -155,7 +190,67 @@ export function distanciaDeAterrizaje(
     const frena = (q * cd + mu * Math.max(0, peso - q * cl)) / a.mass;
     s += (v / frena) * dv;
   }
-  return enElAire + s;
+  return s;
+}
+
+/** A qué velocidad se posa: un pelo por debajo de la de cruzar el umbral. */
+export function velocidadDeToma(a: AircraftConfig): number {
+  return a.approachSpeed * 0.95;
+}
+
+/**
+ * Lo que sube este avión a tope de gas, en metros por segundo.
+ *
+ * La cuenta de toda la vida: **el exceso de empuje sobre la resistencia, por la
+ * velocidad, partido por el peso**. Lo que sobra después de sostener el avión
+ * es lo que lo sube.
+ *
+ * Existe por lo mismo que `rodaduraDeFrenada`: el peldaño de Guyrami tenía un
+ * ritmo de ascenso escrito a mano —siete metros por segundo— igual para los
+ * seis aviones. Siete es mucho para una avioneta de escuela, que sube a tres y
+ * medio de verdad, y es poco para un avión de línea vacío. Un niño que cambia
+ * de avión tiene que notar que el grande sube como un ascensor.
+ *
+ * Se mide a la velocidad de subida —un veinte por ciento por encima de la de
+ * rotación, que es como se sube de verdad— y se acota por arriba: catorce
+ * metros por segundo son dos mil ochocientos pies por minuto, y por encima de
+ * eso ya no es un ascenso, es una exhibición.
+ */
+/**
+ * Lo que baja este avión con el motor al ralentí, en metros por segundo.
+ *
+ * Su planeo a la velocidad que lleve: `v·cd/cl`, con el `cl` que hace falta
+ * para sostenerlo ahí. Un avión pesado y liso planea plano pero **baja
+ * deprisa**, porque baja poco por cada metro que avanza y avanza muchos metros
+ * por segundo. Es la mitad de «el 747 no baja en corto» que se puede calcular.
+ *
+ * Existe por lo mismo que `ascensoMaximo`: en el peldaño de Guyrami esto eran
+ * tres metros y medio por segundo escritos a mano —el planeo de la avioneta—
+ * para los seis aviones.
+ */
+export function caidaSinMotor(a: AircraftConfig, velocidad: number): number {
+  const v = Math.max(1, velocidad);
+  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const cl = (2 * a.mass * G) / (RHO * v * v * a.wingArea);
+  const cd = a.aero.cd0 + (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
+  return (v * cd) / cl;
+}
+
+export function ascensoMaximo(a: AircraftConfig): number {
+  const v = a.rotationSpeed * 1.2;
+  const empuje =
+    a.maxThrust *
+    (esDeChorro(a)
+      ? Math.max(0.5, 1 - (0.3 * v) / a.cruiseSpeed)
+      : Math.max(0.2, 1 - v / (2.4 * a.cruiseSpeed)));
+  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const cl = (2 * a.mass * G) / (RHO * v * v * a.wingArea);
+  const cd = a.aero.cd0 + (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
+  const resistencia = 0.5 * RHO * v * v * a.wingArea * cd;
+  return Math.max(
+    2.5,
+    Math.min(14, ((empuje - resistencia) * v) / (a.mass * G)),
+  );
 }
 
 /**
