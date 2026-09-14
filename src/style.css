@@ -244,6 +244,37 @@ body {
 }
 
 /*
+ * El cartel del cinturón, el de la fila de arriba de un avión de pasaje.
+ *
+ * Ámbar sobre barro y encendido de verdad —con su halo—, que es lo que hace que
+ * se lea como un cartel y no como un icono más de la pantalla. Se enciende solo
+ * y no se toca: ver `Game.atenderAlCinturon`.
+ */
+.cinturon {
+  position: absolute;
+  top: calc(var(--tacto) * 2.2);
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  width: calc(var(--tacto) * 0.9);
+  height: calc(var(--tacto) * 0.9);
+  border-radius: var(--r-m);
+  background: var(--barniz), var(--barro);
+  border: 1px solid var(--linea);
+  color: var(--precaucion);
+  box-shadow:
+    var(--filo),
+    0 0 14px -2px var(--precaucion);
+  pointer-events: none;
+}
+
+.cinturon svg {
+  width: 62%;
+  height: 62%;
+}
+
+/*
  * La pieza de barro. Todo lo que flota sobre el mundo sale de aquí, y por eso
  * los cuatro peldaños se ven de la misma familia aunque enseñen cosas
  * distintas: barro oscuro, barniz arriba, filo de luz y poso de sombra.

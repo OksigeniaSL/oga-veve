@@ -492,6 +492,20 @@ export class Hud {
           <span class="torre__texto" data-hud="torre-texto"></span>
         </div>
         <!--
+          El cartel del cinturón, el de verdad: el de la fila de arriba de un
+          avión de pasaje. Se enciende solo —no se pilota— y solo en los aviones
+          que llevan gente. Lo enciende «atenderAlCinturon», en game.ts.
+
+          Es un dibujo y nada más, como en un avión de verdad: lo que enseña no
+          es el pictograma, es **cuándo** se enciende.
+        -->
+        <div class="cinturon" data-hud="cinturon" hidden role="status">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4v6a5 5 0 0 0 10 0V4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <rect x="9" y="13" width="6" height="7" rx="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <!--
           La radio: lo que se acaba de oír decir a otro avión.
 
           Va aparte de todo lo demás y en pequeño **porque no es una
@@ -1853,6 +1867,19 @@ export class Hud {
    * Lo llama el juego al montar el escenario, y lo mira el cartel de la luz de
    * la torre. Ver `i18n/habla.ts`.
    */
+  /**
+   * Enciende o apaga el cartel del cinturón.
+   *
+   * No lleva texto traducido a propósito: es un cartel, y un cartel de cabina
+   * es un dibujo iluminado. El que lo entiende lo entiende y el que no, aprende
+   * que se enciende cuando se mueve — que es exactamente lo que aprende quien
+   * vuela por primera vez.
+   */
+  ponerCinturon(encendido: boolean): void {
+    const caja = this.root.querySelector<HTMLElement>('[data-hud="cinturon"]');
+    if (caja) caja.hidden = !encendido;
+  }
+
   setHabla(habla: Habla): void {
     this.habla = habla;
   }

@@ -91,12 +91,17 @@ export const TIEMPO_DE_CASA: Meteo = {
  * Así que cada campo trae el suyo, de su climatología, y con él sale sola la
  * cabecera preferente sin escribirla a mano en ningún sitio. Un METAR de verdad
  * lo sustituye: ese día se opera como se opere ese día, que es la lección.
+ *
+ * **Y no solo el viento.** Lo que trae cada campo es su tiempo típico entero:
+ * el alisio **y su capa de estratocúmulos**, que en Canarias es el mar de nubes
+ * y es lo que se ve desde el aire antes que nada; el bochorno del Paraguay con
+ * sus cúmulos de tarde. Sin esto el cielo estaba vacío en todos los vuelos
+ * —solo había nubes si llegaba un METAR que las anunciara— y eso es la mitad de
+ * «falta paisaje».
  */
-export function vientoDeCasa(
-  dominante: { readonly de: number; readonly kt: number } | undefined,
-): Meteo {
+export function vientoDeCasa(dominante: Partial<Meteo> | undefined): Meteo {
   if (!dominante) return TIEMPO_DE_CASA;
-  return { ...TIEMPO_DE_CASA, vientoDe: dominante.de, vientoKt: dominante.kt };
+  return { ...TIEMPO_DE_CASA, ...dominante, fuente: "defecto" };
 }
 
 /**

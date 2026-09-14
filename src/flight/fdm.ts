@@ -330,7 +330,26 @@ export class CoefficientFlightModel implements FlightModel {
   private readonly relativa = new Vector3();
 
   ponerViento(x: number, z: number): void {
-    this.viento.set(x, 0, z);
+    this.vientoDelParte.x = x;
+    this.vientoDelParte.z = z;
+    this.viento.set(x + this.racha.x, this.racha.y, z + this.racha.z);
+  }
+
+  /**
+   * La ráfaga, que se suma al viento del parte.
+   *
+   * Se guarda aparte y se suma en `ponerViento` para que las dos se puedan
+   * mandar por separado y desde sitios distintos: el viento lo pone el parte
+   * cuando cambia, y la ráfaga el bucle en cada fotograma.
+   */
+  private readonly racha = { x: 0, y: 0, z: 0 };
+  private readonly vientoDelParte = { x: 0, z: 0 };
+
+  ponerRacha(x: number, y: number, z: number): void {
+    this.racha.x = x;
+    this.racha.y = y;
+    this.racha.z = z;
+    this.viento.set(this.vientoDelParte.x + x, y, this.vientoDelParte.z + z);
   }
 
   romper(): void {

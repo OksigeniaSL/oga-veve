@@ -196,6 +196,14 @@ export interface FlightModel {
    * modelo no hace.
    */
   ponerViento(x: number, z: number): void;
+  /**
+   * La ráfaga de este instante, en m/s y en ejes del mundo.
+   *
+   * Va aparte del viento del parte porque son dos cosas distintas: el viento es
+   * el dato del día y se mide en el aeropuerto; la ráfaga cambia cada segundo y
+   * es lo que hace que volar se sienta. Ver `flight/turbulencia.ts`.
+   */
+  ponerRacha?(x: number, y: number, z: number): void;
   /** Nombre legible de la implementación, para la pantalla de créditos. */
   readonly implementationName: string;
   reset(initial: InitialConditions): void;
