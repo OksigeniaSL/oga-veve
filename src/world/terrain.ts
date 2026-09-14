@@ -109,6 +109,62 @@ export class Terrain {
   /** Cuánto se ha subido el mundo desde que se construyó. Ver `subirTodo`. */
   private runwayElevationMovida = 0;
 
+  /**
+   * La cota de la pista **debajo de este punto**, en metros.
+   *
+   * ## Por qué no vale un solo número
+   *
+   * `runwayElevation` es la cota del **centro** de la pista, y una pista con
+   * pendiente no está a esa cota en ningún sitio salvo por casualidad: la de La
+   * Palma baja 11,6 metros de una punta a otra, así que en el umbral el asfalto
+   * está casi seis metros por encima —o por debajo— de ese número.
+   *
+   * Y con ese número se decidían cosas que pasan **en el umbral**: si ya se
+   * puede tocar, si se viene alto o bajo en la senda, si se ha aterrizado. Seis
+   * metros ahí lo cambian todo. Medido al cambiar la cabecera en uso de La
+   * Palma —que es lo que destapó esto—: el juego no dijo ni una vez «ya podés
+   * tocar» en un vuelo entero, porque medía la altura contra un asfalto que
+   * estaba seis metros más abajo que el de verdad.
+   *
+   * ## Cómo se calcula
+   *
+   * Se proyecta el punto sobre el eje de la pista y se interpola entre las
+   * cotas de sus dos umbrales, que es exactamente lo que hace el aplanado del
+   * terreno —ver `cota` en `flattenAerodrome`—, así que el asfalto dibujado y
+   * esta cuenta dicen lo mismo por construcción. Fuera de la pista se estira el
+   * mismo plano, que es lo que hace falta en la aproximación: quien viene en
+   * final está alineado con el eje, a kilómetros del umbral.
+   *
+   * Sin umbrales medidos —una pista inventada— es el número de siempre.
+   */
+  cotaDeLaPista(x: number, z: number): number {
+    const umbrales = this.umbralesDePista;
+    if (!umbrales) return this.runwayElevation;
+    const { ax, az, dx, dz, largo2, cotaA, cotaB } = umbrales;
+    const t = ((x - ax) * dx + (z - az) * dz) / largo2;
+    return (
+      cotaA +
+      (cotaB - cotaA) * Math.max(-0.5, Math.min(1.5, t)) +
+      this.runwayElevationMovida
+    );
+  }
+
+  /**
+   * Los dos umbrales de la pista principal en coordenadas de mundo, si los hay.
+   *
+   * Se calcula una vez: son dos puntos que no se mueven, y `cotaDeLaPista` se
+   * llama varias veces por fotograma.
+   */
+  private readonly umbralesDePista: {
+    ax: number;
+    az: number;
+    dx: number;
+    dz: number;
+    largo2: number;
+    cotaA: number;
+    cotaB: number;
+  } | null = null;
+
   /** Cota de la pista. La necesita el juego para colocar el avión. */
   get runwayElevation(): number {
     return this.runwayElevationBase + this.runwayElevationMovida;
@@ -135,6 +191,38 @@ export class Terrain {
         scenario.runway.x,
         scenario.runway.z,
       );
+      /*
+       * Y los dos umbrales en coordenadas de mundo, para poder decir la cota
+       * del asfalto **en cada punto** y no solo en el centro. Ver
+       * `cotaDeLaPista`. En el fichero la Y apunta al norte y aquí el norte es
+       * la Z negativa, de ahí el cambio de signo.
+       */
+      const pista = scenario.aerodrome.runways[0];
+      const dos = pista
+        ? Object.values(pista.thresholds).filter(
+            (u): u is NonNullable<typeof u> =>
+              u !== null && u.xy !== null && u.elevM !== null,
+          )
+        : [];
+      if (dos.length >= 2) {
+        const [a, b] = dos as [
+          NonNullable<(typeof dos)[0]>,
+          NonNullable<(typeof dos)[0]>,
+        ];
+        const ax = a.xy![0];
+        const az = -a.xy![1];
+        const dx = b.xy![0] - ax;
+        const dz = -b.xy![1] - az;
+        this.umbralesDePista = {
+          ax,
+          az,
+          dx,
+          dz,
+          largo2: dx * dx + dz * dz || 1,
+          cotaA: a.elevM!,
+          cotaB: b.elevM!,
+        };
+      }
     } else {
       this.runwayElevationBase = this.sampleHeight(
         scenario.runway.x,
