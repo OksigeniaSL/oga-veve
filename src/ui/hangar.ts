@@ -1020,7 +1020,25 @@ export function abrirHangar(
 ): Promise<Eleccion> {
   let sitio = inicial.scenario;
   let tramo = inicial.tier;
+  /*
+   * **Y el avión tiene que caber en el sitio desde el primer fotograma.**
+   *
+   * El hangar comprobaba `cabeEn` en dos sitios —al pulsar una ficha de avión y
+   * al cambiar de aeropuerto— y en ninguno de los dos comprobaba **el par con
+   * el que se abre**. El sitio y el avión se recuerdan por separado entre
+   * partidas, así que basta con que una sesión guarde uno y otra guarde el otro
+   * para que el hangar arranque con un avión que no cabe, con su ficha marcada
+   * y el botón de volar puesto. Se vio jugando: se despegó un JAZ 120 en El
+   * Hierro, que tiene 1.254 metros de pista y le pide 2.562.
+   *
+   * Se baja al mayor que quepa, que es lo mismo que hace el cambio de sitio y
+   * lo que haría cualquiera: el avión más grande que entre en esa pista.
+   */
   let avion = inicial.aircraft ?? AIRCRAFT[0]!;
+  if (!cabeEn(avion, campoDe(sitio)).cabe) {
+    const quepan = AIRCRAFT.filter((a) => cabeEn(a, campoDe(sitio)).cabe);
+    avion = quepan[quepan.length - 1] ?? avion;
+  }
   let leccion = inicial.leccion;
   let mision: Mission | null = null;
   let pantalla: Pantalla = "inicio";

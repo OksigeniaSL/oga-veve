@@ -24,7 +24,7 @@
  * exactamente lo que **no** promete Taguató, donde la curva es tuya. Correrlo
  * ahí saldría en rojo por la razón contraria a un fallo.
  *
- * Uso: `node scripts/verificar-despegue.mjs [escenario] [tramo] [viento]`
+ * Uso: `node scripts/verificar-despegue.mjs [escenario] [tramo] [viento] [avión]`
  *
  * El viento va como en el juego —`000/14`, del norte a catorce nudos— y sirve
  * para pedir una cabecera concreta. Sin él manda el tiempo de casa, que es lo
@@ -38,6 +38,13 @@ import { createServer } from "vite";
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const TRAMO = process.argv[3] ?? "guyrami";
 const VIENTO = process.argv[4] ?? "";
+/*
+ * **Y con qué avión**, que es media pregunta de este banco desde que la flota
+ * tiene seis. La carrera de despegue del JAZ 120 son mil cuatrocientos metros
+ * y la del JAZ 25, ciento treinta: medir siempre con la avioneta es no medir
+ * lo único que de verdad puede salir mal, que es el grande en una pista corta.
+ */
+const AVION = process.argv[5] ?? "jaz-20";
 const PUERTO = 5281;
 
 const server = await createServer({
@@ -62,6 +69,7 @@ await page.addInitScript(() => {
 });
 await page.goto(
   `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue&tramo=${TRAMO}` +
+    `&avion=${AVION}` +
     (VIENTO ? `&viento=${VIENTO}` : ""),
 );
 await page.waitForTimeout(16000);
@@ -882,7 +890,7 @@ comprobar(
 
 // ── El informe ────────────────────────────────────────────────────────────
 
-console.log(`\n  despegue · ${ESCENARIO} · ${TRAMO}\n`);
+console.log(`\n  despegue · ${ESCENARIO} · ${TRAMO} · ${AVION}\n`);
 let fallos = 0;
 for (const r of resultados) {
   if (!r.ok) fallos++;

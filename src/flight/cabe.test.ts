@@ -57,6 +57,35 @@ describe("qué avión cabe dónde", () => {
     expect(v.necesita).toBeGreaterThan(v.hay);
   });
 
+  it("y en El Hierro no cabe ni el turbohélice, que es lo que pasa de verdad", () => {
+    /*
+     * Mil doscientos cincuenta y cuatro metros de asfalto. Es el campo más
+     * pequeño del juego con designador propio y el que enseña esta lección
+     * sola: allí vuelan turbohélices pequeños y nada más, y no por costumbre.
+     *
+     * Y se vio jugando **con el juego dejándolo despegar**: «¿pero puedo
+     * despegar un 747 en El Hierro?» — pues sí se podía, porque el hangar
+     * comprobaba `cabeEn` al pulsar una ficha y al cambiar de aeropuerto, y no
+     * al abrirse con un par ya puesto. La regla decía que no desde el primer
+     * día; lo que faltaba era preguntárselo.
+     */
+    const elHierro = SCENARIOS.find((e) => e.id === "el-hierro")!;
+    for (const a of [grande, AIRCRAFT.find((x) => x.id === "jaz-90")!]) {
+      const v = cabeEn(a, campoDe(elHierro));
+      expect(v.cabe, a.id).toBe(false);
+      expect(v.porQueNo, a.id).toBe("corta");
+      expect(v.necesita, a.id).toBeGreaterThan(v.hay);
+    }
+  });
+
+  it("pero sí los cuatro pequeños, que son los que vuelan allí", () => {
+    const elHierro = SCENARIOS.find((e) => e.id === "el-hierro")!;
+    for (const id of ["jaz-20", "jaz-25", "jaz-40", "jaz-60"]) {
+      const a = AIRCRAFT.find((x) => x.id === id)!;
+      expect(cabeEn(a, campoDe(elHierro)).cabe, id).toBe(true);
+    }
+  });
+
   it("pero sí en los campos grandes", () => {
     for (const id of [
       "pettirossi",

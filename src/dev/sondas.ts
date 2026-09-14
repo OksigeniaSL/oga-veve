@@ -38,6 +38,7 @@ import {
 } from "../world/circuito";
 import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
 import { leerGafas } from "../flight/gafas";
+import { carreraHastaVr, distanciaDeAterrizaje } from "../flight/carrera";
 import { InstructorGrabado } from "../audio/instructor-grabado";
 
 export function abrirLaVentanaDePruebas(juego: Game): void {
@@ -256,6 +257,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * terreno es estar en el suelo para uno y estar en el aire para otro.
        */
       tren: juego.aircraft.gearHeight,
+      /**
+       * Y **lo que el propio juego calcula que le cuesta despegar**, m.
+       *
+       * De esta cuenta sale `cabeEn`, o sea qué aviones se ofrecen en cada
+       * campo. Sacarla fuera es lo que permite comprobar desde el banco que lo
+       * que el avión hace de verdad se parece a lo que su ficha promete; sin
+       * eso, la regla puede estar diciendo que un JAZ 120 no cabe en El Hierro
+       * mientras el avión despega tan ricamente. Ver `verificar-carrera.mjs`.
+       */
+      carreraHastaVr: carreraHastaVr(juego.aircraft),
+      /** Y lo que le cuesta pararse desde el umbral, m. */
+      aterrizajeEn: distanciaDeAterrizaje(juego.aircraft),
       /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
        *
