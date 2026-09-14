@@ -33,7 +33,8 @@
     "quien-habla": "node scripts/verificar-quien-habla.mjs",
     "modelos": "node scripts/hacer-modelos.mjs",
     "cambio-de-avion": "node scripts/verificar-cambio-de-avion.mjs",
-    "circuito": "node scripts/verificar-circuito.mjs"
+    "circuito": "node scripts/verificar-circuito.mjs",
+    "botones": "node scripts/verificar-botones.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",

@@ -79,6 +79,10 @@ COLORES = {
     "reloj_rpm": (0.04, 0.05, 0.05, 1.0),
     "reloj_par": (0.04, 0.05, 0.05, 1.0),
     "reloj_flaps": (0.04, 0.05, 0.05, 1.0),
+    # Y los mandos que se pueden pulsar. **El nombre tampoco es libre**: lo que
+    # se llame `boton-<qué>` lo enciende `world/botones-cabina.ts` y responde al
+    # dedo, al ratón y a su tecla. Ver `boton`.
+    "boton": (0.72, 0.36, 0.22, 1.0),
 }
 
 
@@ -531,6 +535,34 @@ def asiento_de_una_pieza(nombre, z_atras, medio_ancho=0.24, largo=0.40,
     return cojin
 
 
+def boton(que, ancho, alto, en, fondo=True):
+    """
+    Un mando que se puede pulsar de verdad: el contacto, los flaps, el freno.
+
+    Pedido jugando: «quería también botones que poder pulsar, tanto con clic,
+    tap como tecla». Las teclas ya estaban y los botones del HUD también; lo que
+    faltaba era **el mando que está en la cabina**, que es donde lo busca quien
+    se ha sentado ahí.
+
+    El nombre manda: `boton-<qué>` con `qué` en {`motor`, `flaps`, `freno`}. El
+    juego los busca por ese prefijo, los ilumina al pasar por encima y dispara
+    la acción al soltar. Ver `world/botones-cabina.ts`.
+    """
+    x, y, z = en
+    piezas = []
+    if fondo:
+        piezas.append(
+            caja(f"boton-{que}-hueco", x - ancho * 0.62, x + ancho * 0.62,
+                 y - alto * 0.62, y + alto * 0.62, z - 0.012, z - 0.004,
+                 "tablero")
+        )
+    piezas.append(
+        caja(f"boton-{que}", x - ancho / 2, x + ancho / 2, y - alto / 2,
+             y + alto / 2, z - 0.004, z + 0.012, "boton")
+    )
+    return piezas
+
+
 def reloj(nombre, que, radio, en):
     """
     Un instrumento redondo del panel: su caja y su esfera.
@@ -697,6 +729,22 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
                     "g1000_display" if pantallas else "cristal",
                 )
             )
+
+    # Y los tres mandos que se pulsan, en fila bajo la columna de motores: el
+    # contacto, los flaps y el freno. Ver `boton`.
+    #
+    # **En el centro del panel y no a un lado.** Puestos a la derecha de la
+    # columna de motores caían fuera de lo que ve el comandante —el ojo está en
+    # su asiento, cuarenta y seis centímetros a la izquierda del eje— y no había
+    # manera de pulsarlos: comprobado a barridos, ni un píxel de la pantalla los
+    # tocaba. En el centro los alcanzan los dos pilotos, que es donde están los
+    # mandos que comparten.
+    for i, que in enumerate(("motor", "flaps", "freno")):
+        piezas += boton(
+            que, radio * 0.95, radio * 0.75,
+            (-0.30 + i * radio * 1.15,
+             alto_panel - 0.13 - radio * 2.4, panel_z + 0.008),
+        )
 
     # 4. El pedestal, entre los dos asientos, con las palancas de gas.
     if motores:
@@ -902,6 +950,18 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
                     "reloj-flaps", "flaps", radioReloj,
                     (x, alto_panel - 0.29 - radioReloj, panel_z + 0.008),
                 )
+        # Y los tres mandos que se pulsan, **debajo de los relojes y centrados**.
+        #
+        # A un lado no valen: en el turbohélice, con el ojo en el asiento
+        # izquierdo, los tres caían fuera de la pantalla y no había un píxel que
+        # los tocara. Medido con `npm run botones`, que existe justo para eso.
+        for i, que in enumerate(("motor", "flaps", "freno")):
+            piezas += boton(
+                que, radioReloj * 1.0, radioReloj * 0.8,
+                ((i - 1) * radioReloj * 1.3,
+                 alto_panel - 0.29 - radioReloj * 2.6,
+                 panel_z + 0.008),
+            )
     _ = relojes
     # El pedestal central con sus palancas de gas, una por motor.
     if palancas and not grande:
