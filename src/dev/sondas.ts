@@ -629,6 +629,9 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ruta: () => juego.plan?.rutaVisible() ?? [],
     /** Y la misma sin redondear, que es donde se ven las horquillas. */
     rutaCruda: () => juego.plan?.rutaCruda() ?? [],
+    /** Por qué cabecera se opera hoy y con qué tiempo. Ver `conViento`. */
+    cabecera: () => cabeceraEnUso(juego.scenario),
+    meteo: () => juego.scenario.meteo ?? null,
     /** Qué relojes del panel están encendidos y qué mide cada uno. */
     relojes: () => juego.aircraftMesh.relojes?.hay ?? [],
     /** Todos los avisos sonoros, con su instante. Ver `Game.avisar`. */

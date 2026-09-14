@@ -161,6 +161,21 @@ export interface Scenario {
   /** El tiempo que hace. Lo pone `conViento`, y de él sale la cabecera en uso. */
   meteo?: Meteo;
   /**
+   * El viento que hace aquí **casi siempre**, de dónde viene y cuánto sopla.
+   *
+   * Es climatología del sitio, no el tiempo de hoy: el alisio del nordeste en
+   * Canarias, el norte húmedo del Paraguay. Se usa cuando no hay METAR, que es
+   * casi siempre, y de él sale **la cabecera en uso**.
+   *
+   * Sin esto el juego daba tres nudos del norte en los once campos, y con norte
+   * franco en Tenerife Norte gana la 30 — la cuenta estaba bien y el dato mal.
+   * «No entiendo por qué en TFN siempre se despega igual, hacia la 30 cuando lo
+   * normal es 12; el 80 % del tiempo el viento viene del norte.» Con el alisio
+   * puesto —del nordeste, que es de donde viene de verdad— gana la 12, que es
+   * la que opera y la que lleva el ILS. Ver `vientoDeCasa`.
+   */
+  vientoDominante?: { readonly de: number; readonly kt: number };
+  /**
    * Un aeródromo real extraído, si lo hay.
    *
    * Cuando está, manda él: la cota sale de sus datos medidos, el pavimento lo
@@ -428,6 +443,11 @@ function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario["runway"] {
 
 export const PETTIROSSI: Scenario = {
   id: "pettirossi",
+  /*
+   * El norte del Paraguay: el viento manda del norte y del nordeste casi todo
+   * el año, y solo gira al sur con los frentes fríos. Ocho nudos.
+   */
+  vientoDominante: { de: 20, kt: 8 },
   nameKey: "scenario.pettirossi.name",
   pais: "py",
   seed: 19161017,
@@ -525,6 +545,12 @@ export const PETTIROSSI: Scenario = {
  */
 export const TENERIFE_NORTE: Scenario = {
   id: "tenerife-norte",
+  /*
+   * **El alisio**, que en Canarias sopla del nordeste el año entero y es el que
+   * decide por qué cabecera se opera: con él, la 12. Doce nudos, que es lo
+   * normal de una tarde de alisio en Los Rodeos.
+   */
+  vientoDominante: { de: 40, kt: 12 },
   nameKey: "scenario.tenerife.name",
   pais: "es",
   // Elegida midiendo con `scripts/buscar-semilla.mjs`, que puntúa dos cosas:
@@ -622,6 +648,8 @@ export const TENERIFE_NORTE: Scenario = {
  */
 export const YVYTU_RAPE: Scenario = {
   id: "yvytu-rape",
+  // Yvytu Rape es «el camino del viento», y el de allí es el del norte.
+  vientoDominante: { de: 20, kt: 6 },
   nameKey: "scenario.yvytu.name",
   pais: "py",
   seed: 20260906,
@@ -713,6 +741,8 @@ export const YVYTU_RAPE: Scenario = {
  */
 export const LA_PALMA: Scenario = {
   id: "la-palma",
+  // El mismo alisio, algo más flojo por el abrigo de la isla.
+  vientoDominante: { de: 35, kt: 10 },
   nameKey: "scenario.laPalma.name",
   pais: "es",
   seed: 19710101,
@@ -779,6 +809,11 @@ export const LA_PALMA: Scenario = {
  */
 export const CUATRO_VIENTOS: Scenario = {
   id: "cuatro-vientos",
+  /*
+   * Madrid: el dominante es del suroeste, y por eso Cuatro Vientos opera casi
+   * siempre por la 28. El nombre del campo no es casualidad.
+   */
+  vientoDominante: { de: 240, kt: 8 },
   nameKey: "scenario.cuatroVientos.name",
   pais: "es",
   seed: 19110415,
@@ -844,6 +879,8 @@ export const CUATRO_VIENTOS: Scenario = {
  */
 export const GUARANI: Scenario = {
   id: "guarani",
+  // Ciudad del Este: nordeste flojo casi siempre.
+  vientoDominante: { de: 40, kt: 7 },
   nameKey: "scenario.guarani.name",
   pais: "py",
   seed: 19540101,
@@ -920,6 +957,8 @@ export const GUARANI: Scenario = {
  */
 export const ESTIGARRIBIA: Scenario = {
   id: "estigarribia",
+  // El Chaco: norte, y en verano caliente y seco.
+  vientoDominante: { de: 10, kt: 8 },
   nameKey: "scenario.estigarribia.name",
   pais: "py",
   seed: 19351201,
@@ -1007,6 +1046,7 @@ export const ESTIGARRIBIA: Scenario = {
  */
 export const PEDRO_JUAN: Scenario = {
   id: "pedro-juan",
+  vientoDominante: { de: 40, kt: 7 },
   nameKey: "scenario.pedroJuan.name",
   pais: "py",
   seed: 19450501,
@@ -1069,6 +1109,8 @@ export const PEDRO_JUAN: Scenario = {
  */
 export const ENCARNACION: Scenario = {
   id: "encarnacion",
+  // Encarnación, sobre el Paraná: norte y nordeste.
+  vientoDominante: { de: 20, kt: 8 },
   nameKey: "scenario.encarnacion.name",
   pais: "py",
   seed: 19900101,
