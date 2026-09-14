@@ -276,7 +276,7 @@ export class VozDelNavegador implements Instructor {
     return this.voz !== null;
   }
 
-  decir(texto: string, _clave?: string, urgencia: Urgencia = "normal"): void {
+  decir(texto: string, clave?: string, urgencia: Urgencia = "normal"): void {
     if (!this.voz || !texto) return;
     /*
      * **Y el mudo del juego también le calla a él.**
@@ -288,10 +288,21 @@ export class VozDelNavegador implements Instructor {
      * exactamente lo que promete que no pasa el comentario del botón.
      */
     if (!vozPermitida()) return;
-    // No repetir lo mismo dos veces seguidas en menos de diez segundos: la
-    // fase puede parpadear y un instructor que se repite se ignora.
+    /*
+     * **Y no repetirse lo lleva la boca**, que es quien ve hablar a todos.
+     *
+     * Aquí había una regla propia —diez segundos, por texto y por hablante— y
+     * eso deja dos agujeros: cada voz cuenta los suyos, así que la torre y el
+     * instructor podían decir lo mismo seguido; y cambiar de aeronave rehace
+     * este objeto y con él la cuenta, que es por lo que sonaba «arrancá el
+     * motor» en cada cambio de avión. Ver `NO_REPETIR` en `boca.ts`.
+     *
+     * Se queda solo el caso sin clave —una frase suelta, que las hay— porque
+     * ahí la boca no tiene con qué reconocerla.
+     */
     const ahora = performance.now();
-    if (texto === this.ultima && ahora - this.desdeUltima < 10000) return;
+    if (!clave && texto === this.ultima && ahora - this.desdeUltima < 10000)
+      return;
     this.ultima = texto;
     this.desdeUltima = ahora;
 
@@ -309,42 +320,46 @@ export class VozDelNavegador implements Instructor {
      * plaza, y lo que espera demasiado no se dice. Que es exactamente lo que
      * ese comentario quería y no conseguía.
      */
-    BOCA.pedir(urgencia, (listo) => {
-      const frase = new SpeechSynthesisUtterance(texto);
-      // Y la mezcla se entera: mientras habla, todo lo demás se agacha diez
-      // decibelios. Ver `audio/mezcla.ts`.
-      seguirLaVoz(frase);
-      frase.voice = this.voz;
-      frase.lang = this.voz!.lang;
-      frase.rate = this.timbre.rate;
-      frase.pitch = this.timbre.pitch;
-      /*
-       * Y si esta voz viene por radio, el pulsador.
-       *
-       * El de abrir va **antes de pedir la frase**, no al empezar a sonar: el
-       * sintetizador tarda un par de décimas en arrancar, y ese hueco entre el
-       * «clac» y la voz es exactamente el que hay en una radio de verdad entre
-       * apretar y hablar.
-       *
-       * El de cerrar va en `end` y en `error` con seguro contra el doble
-       * disparo, que es el mismo cuidado que hay en `seguirLaVoz` y por el
-       * mismo motivo: el navegador dispara los dos cuando se cancela.
-       */
-      if (this.timbre.radio) {
-        chasquidoDeRadio("abre");
-        let cerrado = false;
-        const cerrar = (): void => {
-          if (cerrado) return;
-          cerrado = true;
-          chasquidoDeRadio("cierra");
-        };
-        frase.addEventListener("end", cerrar);
-        frase.addEventListener("error", cerrar);
-      }
-      frase.onend = listo;
-      frase.onerror = listo;
-      speechSynthesis.speak(frase);
-    });
+    BOCA.pedir(
+      urgencia,
+      (listo) => {
+        const frase = new SpeechSynthesisUtterance(texto);
+        // Y la mezcla se entera: mientras habla, todo lo demás se agacha diez
+        // decibelios. Ver `audio/mezcla.ts`.
+        seguirLaVoz(frase);
+        frase.voice = this.voz;
+        frase.lang = this.voz!.lang;
+        frase.rate = this.timbre.rate;
+        frase.pitch = this.timbre.pitch;
+        /*
+         * Y si esta voz viene por radio, el pulsador.
+         *
+         * El de abrir va **antes de pedir la frase**, no al empezar a sonar: el
+         * sintetizador tarda un par de décimas en arrancar, y ese hueco entre el
+         * «clac» y la voz es exactamente el que hay en una radio de verdad entre
+         * apretar y hablar.
+         *
+         * El de cerrar va en `end` y en `error` con seguro contra el doble
+         * disparo, que es el mismo cuidado que hay en `seguirLaVoz` y por el
+         * mismo motivo: el navegador dispara los dos cuando se cancela.
+         */
+        if (this.timbre.radio) {
+          chasquidoDeRadio("abre");
+          let cerrado = false;
+          const cerrar = (): void => {
+            if (cerrado) return;
+            cerrado = true;
+            chasquidoDeRadio("cierra");
+          };
+          frase.addEventListener("end", cerrar);
+          frase.addEventListener("error", cerrar);
+        }
+        frase.onend = listo;
+        frase.onerror = listo;
+        speechSynthesis.speak(frase);
+      },
+      clave,
+    );
   }
 
   callar(): void {

@@ -27,6 +27,7 @@
 
 import type { Instructor } from "./instructor";
 import type { Urgencia } from "./boca";
+import { BOCA, Boca } from "./boca";
 import {
   BASE,
   CACHE,
@@ -69,9 +70,20 @@ export class InstructorGrabado implements Instructor {
   /** Lo último dicho, para no repetirlo mientras siga siendo lo mismo. */
   private ultima = "";
 
-  constructor(altavoz: Altavoz, suplente: Instructor) {
+  /**
+   * Y por dónde pide la palabra.
+   *
+   * La boca del juego es una sola —`BOCA`— y es la de verdad. Se puede dar otra
+   * para poder probar el turno y el silencio sin compartir estado entre
+   * pruebas, que con una global es exactamente lo que pasa: una frase que no
+   * termina en la primera prueba deja muda la segunda.
+   */
+  private readonly boca: Boca;
+
+  constructor(altavoz: Altavoz, suplente: Instructor, boca: Boca = BOCA) {
     this.altavoz = altavoz;
     this.suplente = suplente;
+    this.boca = boca;
   }
 
   /** Si hay alguien que pueda hablar: el grabado o el suplente. */
@@ -126,20 +138,40 @@ export class InstructorGrabado implements Instructor {
       }
       cadena.push(buffer);
     }
-    this.suplente.callar();
-    this.callarLoGrabado();
-    this.ultima = clave ?? texto;
-    this.sonando = true;
-    this.cortar = this.altavoz.encadenarVoz(cadena, () => {
-      this.sonando = false;
-      this.cortar = null;
-    });
-    if (!this.cortar) {
-      // No había dónde tocar —el contexto de audio todavía duerme—. Que lo
-      // diga el navegador antes que nadie, que es lo que había antes de esto.
-      this.sonando = false;
-      this.suplente.decir(texto, clave, urgencia);
-    }
+    /*
+     * **Y lo grabado también pide la palabra.**
+     *
+     * Esto tocaba directamente y se saltaba la boca entera, así que en cuanto
+     * el pack de voz está cargado —o sea, en el juego de verdad— no había ni
+     * turno, ni silencio entre frases, ni regla de no repetirse: justo las tres
+     * cosas que se oían mal. La boca no sabe de audio; recibe una función que
+     * habla y avisa al terminar, y eso es lo que se le da aquí. Ver
+     * `audio/boca.ts`.
+     */
+    this.boca.pedir(
+      urgencia ?? "normal",
+      (listo) => {
+        this.suplente.callar();
+        this.callarLoGrabado();
+        this.ultima = clave ?? texto;
+        this.sonando = true;
+        this.cortar = this.altavoz.encadenarVoz(cadena, () => {
+          this.sonando = false;
+          this.cortar = null;
+          listo();
+        });
+        if (!this.cortar) {
+          // No había dónde tocar —el contexto de audio todavía duerme—. Que lo
+          // diga el navegador antes que nadie, que es lo que había antes de
+          // esto. Y la plaza se suelta: si no, la boca se queda esperando a
+          // una frase que nunca sonó.
+          this.sonando = false;
+          listo();
+          this.suplente.decir(texto, clave, urgencia);
+        }
+      },
+      clave,
+    );
   }
 
   callar(): void {

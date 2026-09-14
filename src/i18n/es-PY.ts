@@ -333,7 +333,20 @@ export const ES_PY = {
   "motivo.torcido": "Estás torcido",
   "motivo.descolocado": "Estás fuera del eje",
   "vuelo.rotar": "Tirá para arriba",
-  "vuelo.comprometido": "¡Ya no se puede frenar, volá!",
+  /*
+   * **V1, dicho como lo dice una instructora y no como una alarma.**
+   *
+   * Decía «¡Ya no se puede frenar, volá!», y entre V1 y la rotación pasan dos
+   * segundos: quien juega oía un grito y justo detrás un elogio tranquilo.
+   * «Eso de "¡Sal ya que vamos a morir todos!" tan seguida de una sosegada y
+   * tranquila "Estás en el aire, muy bien" no tiene sentido. ¿En qué quedamos,
+   * estuvimos a punto de morir o todo va sobre la seda?»
+   *
+   * V1 no es un susto: es el momento en que ya se despega, y eso se dice con
+   * calma porque **calma es la información**. El susto se lo guarda la
+   * instructora para cuando de verdad lo haya.
+   */
+  "vuelo.comprometido": "Ya despegamos: seguí",
   "vuelo.despegando": "Motor a fondo",
   "vuelo.enVuelo": "Andá a dar una vuelta",
   "vuelo.enVueloAterrizando": "Andá a la pista",

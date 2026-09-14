@@ -7,6 +7,18 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Boca } from "./boca";
+
+/**
+ * Una boca por prueba, y no la del juego.
+ *
+ * Desde que lo grabado pide la palabra como todo el mundo —ver `decir`—, usar
+ * la boca global aquí ataría unas pruebas a otras: una frase de mentira que no
+ * llama a `listo` deja la boca ocupada para siempre y la prueba siguiente sale
+ * muda sin que nadie sepa por qué.
+ */
+const bocaDePrueba = (): Boca =>
+  new Boca({ ahora: () => Date.now(), cancelar: () => {} });
 import { InstructorGrabado, type Altavoz } from "./instructor-grabado";
 import type { Instructor } from "./instructor";
 import type { Manifiesto } from "./banco-de-voz";
@@ -83,7 +95,7 @@ async function conPack(): Promise<{
 }> {
   const altavoz = new Grabadora();
   const suplente = new Suplente();
-  const instructor = new InstructorGrabado(altavoz, suplente);
+  const instructor = new InstructorGrabado(altavoz, suplente, bocaDePrueba());
   const antes = globalThis.fetch;
   globalThis.fetch = vi.fn(async (ruta: unknown) => {
     const nombre = String(ruta);
@@ -108,7 +120,7 @@ describe("el instructor grabado", () => {
   it("sin pack no dice nada por su cuenta: habla el suplente", () => {
     const altavoz = new Grabadora();
     const suplente = new Suplente();
-    const i = new InstructorGrabado(altavoz, suplente);
+    const i = new InstructorGrabado(altavoz, suplente, bocaDePrueba());
     i.decir("Seguí la raya verde", "vuelo.rodando");
     expect(altavoz.tocadas).toHaveLength(0);
     expect(suplente.dichas).toEqual(["Seguí la raya verde"]);
@@ -158,11 +170,30 @@ describe("el instructor grabado", () => {
     expect(altavoz.cortes).toBe(1);
   });
 
-  it("una frase nueva corta la anterior", async () => {
+  /*
+   * **Y la misma frase dos veces seguidas no suena dos veces.**
+   *
+   * Esto comprobaba lo contrario —que la segunda cortaba a la primera y sonaban
+   * las dos— y era la conducta que se oía jugando: «cada vez que pulso P:
+   * "Arrancá…", "Arrancá…", "Arrancá el motor"; lo mismo "Seguí la raya verde",
+   * "seguí la raya verde", "seguí la raya verde"». Ahora la boca no la deja
+   * repetirse antes de tiempo. Ver `NO_REPETIR` en `boca.ts`.
+   */
+  it("la misma frase no se repite seguida", async () => {
     const { instructor, altavoz } = await conPack();
     instructor.decir("Seguí la raya verde", "vuelo.rodando");
     instructor.decir("Seguí la raya verde", "vuelo.rodando");
-    expect(altavoz.cortes).toBe(1);
+    expect(altavoz.tocadas).toHaveLength(1);
+    expect(altavoz.cortes).toBe(0);
+  });
+
+  it("y otra distinta espera a que acabe la primera", async () => {
+    const { instructor, altavoz } = await conPack();
+    instructor.decir("Seguí la raya verde", "vuelo.rodando");
+    instructor.decir("Seguí la calle", "vuelo.coja");
+    // Todavía no: la primera está sonando.
+    expect(altavoz.tocadas).toHaveLength(1);
+    altavoz.terminar();
     expect(altavoz.tocadas).toHaveLength(2);
   });
 
@@ -199,7 +230,7 @@ describe("el instructor grabado", () => {
   describe("bajar el pack", () => {
     it("un navegador que no puede con ningún formato no baja nada", async () => {
       const altavoz = new Grabadora();
-      const i = new InstructorGrabado(altavoz, new Suplente());
+      const i = new InstructorGrabado(altavoz, new Suplente(), bocaDePrueba());
       expect(await i.cargar(["instructor"], "data/voces", () => "")).toBe(0);
     });
 
@@ -212,7 +243,11 @@ describe("el instructor grabado", () => {
       globalThis.fetch = vi.fn(async () =>
         Promise.resolve(new Response("no está", { status: 404 })),
       ) as typeof fetch;
-      const i = new InstructorGrabado(new Grabadora(), new Suplente());
+      const i = new InstructorGrabado(
+        new Grabadora(),
+        new Suplente(),
+        bocaDePrueba(),
+      );
       await expect(
         i.cargar(["instructor"], "data/voces", () => "probably"),
       ).resolves.toBe(0);
@@ -224,7 +259,11 @@ describe("el instructor grabado", () => {
       globalThis.fetch = vi.fn(async () =>
         Promise.resolve(new Response("<!doctype html><title>404</title>")),
       ) as typeof fetch;
-      const i = new InstructorGrabado(new Grabadora(), new Suplente());
+      const i = new InstructorGrabado(
+        new Grabadora(),
+        new Suplente(),
+        bocaDePrueba(),
+      );
       await expect(
         i.cargar(["instructor"], "data/voces", () => "probably"),
       ).resolves.toBe(0);
@@ -246,7 +285,7 @@ describe("el instructor grabado", () => {
       ) as typeof fetch;
       const altavoz = new Grabadora();
       const suplente = new Suplente();
-      const i = new InstructorGrabado(altavoz, suplente);
+      const i = new InstructorGrabado(altavoz, suplente, bocaDePrueba());
       expect(
         await i.cargar(["instructor"], "data/voces", () => "probably"),
       ).toBe(0);
@@ -282,7 +321,11 @@ describe("todas las voces", () => {
     voces: readonly string[],
     packs: Record<string, unknown>,
   ) => {
-    const instructor = new InstructorGrabado(new Grabadora(), new Suplente());
+    const instructor = new InstructorGrabado(
+      new Grabadora(),
+      new Suplente(),
+      bocaDePrueba(),
+    );
     const pedidas: string[] = [];
     const antes = globalThis.fetch;
     globalThis.fetch = vi.fn(async (ruta: unknown) => {
@@ -322,7 +365,11 @@ describe("todas las voces", () => {
    * a poner una sola voz por defecto, esto lo dice.
    */
   it("por omisión se piden todas", async () => {
-    const instructor = new InstructorGrabado(new Grabadora(), new Suplente());
+    const instructor = new InstructorGrabado(
+      new Grabadora(),
+      new Suplente(),
+      bocaDePrueba(),
+    );
     const pedidas: string[] = [];
     const antes = globalThis.fetch;
     globalThis.fetch = vi.fn(async (ruta: unknown) => {
