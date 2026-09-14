@@ -50,21 +50,43 @@ export interface Altavoz {
   ): (() => void) | null;
 }
 
+/**
+ * Las grabaciones ya bajadas: los manifiestos y las piezas de audio.
+ *
+ * Se saca fuera de la clase para que las cuatro bocas del juego —instructora,
+ * torre, otro avión y comandante— compartan un solo pack bajado una sola vez.
+ * Cada una mantiene su turno de palabra, su suplente y su timbre; lo único que
+ * comparten es de dónde sale el sonido grabado.
+ */
+export interface BancoDeVoces {
+  readonly manifiestos: Manifiesto[];
+  readonly piezas: Map<string, AudioBuffer>;
+}
+
+/** Una bolsa vacía. Cada juego crea la suya y se la pasa a sus cuatro bocas. */
+export function nuevoBancoDeVoces(): BancoDeVoces {
+  return { manifiestos: [], piezas: new Map() };
+}
+
 export class InstructorGrabado implements Instructor {
   private readonly altavoz: Altavoz;
   /** A quién se le pasa lo que todavía no está grabado. */
   private readonly suplente: Instructor;
   /**
-   * Un manifiesto por voz, en el orden en que se buscan.
+   * La bolsa de grabaciones, **compartida**.
    *
-   * Era uno solo, el del instructor, y eso dejaba fuera los cantos de cabina,
-   * la torre y el otro avión: treinta y tres de las ciento veintiuna frases
-   * que hay que grabar. Se buscan en orden y manda el primero que tenga
-   * receta para la clave, que es lo mismo que decir «cada frase la dice quien
-   * le toca», porque ninguna clave está en dos packs.
+   * Un manifiesto por voz y todas las piezas juntas, con la voz delante de la
+   * clave. Se buscan en orden y manda el primero que tenga receta, que es lo
+   * mismo que decir «cada frase la dice quien le toca», porque ninguna clave
+   * está en dos packs.
+   *
+   * **Y es compartida a propósito.** El juego tiene cuatro bocas —la
+   * instructora, la torre, el otro avión y la comandante— y cada una necesita
+   * su propio turno de palabra, pero las cuatro leen del mismo pack. Con una
+   * bolsa por boca habría que bajar seis packs cuatro veces; con ésta se baja
+   * una vez y las cuatro ven lo mismo.
    */
-  private readonly manifiestos: Manifiesto[] = [];
-  private readonly piezas = new Map<string, AudioBuffer>();
+  private readonly banco: BancoDeVoces;
   private cortar: (() => void) | null = null;
   private sonando = false;
   /** Lo último dicho, para no repetirlo mientras siga siendo lo mismo. */
@@ -80,15 +102,21 @@ export class InstructorGrabado implements Instructor {
    */
   private readonly boca: Boca;
 
-  constructor(altavoz: Altavoz, suplente: Instructor, boca: Boca = BOCA) {
+  constructor(
+    altavoz: Altavoz,
+    suplente: Instructor,
+    boca: Boca = BOCA,
+    banco: BancoDeVoces = nuevoBancoDeVoces(),
+  ) {
     this.altavoz = altavoz;
     this.suplente = suplente;
     this.boca = boca;
+    this.banco = banco;
   }
 
   /** Si hay alguien que pueda hablar: el grabado o el suplente. */
   get disponible(): boolean {
-    return this.piezas.size > 0 || this.suplente.disponible;
+    return this.banco.piezas.size > 0 || this.suplente.disponible;
   }
 
   get hablando(): boolean {
@@ -97,7 +125,7 @@ export class InstructorGrabado implements Instructor {
 
   /** Cuántas piezas hay cargadas. Lo mira el banco de pruebas. */
   get cuantasPiezas(): number {
-    return this.piezas.size;
+    return this.banco.piezas.size;
   }
 
   /**
@@ -108,13 +136,25 @@ export class InstructorGrabado implements Instructor {
   private quienLaDice(
     clave: string | null,
   ): { voz: string; piezas: readonly string[] } | null {
-    for (const m of this.manifiestos) {
+    for (const m of this.banco.manifiestos) {
       const suena = queSuena(m, clave, true);
       if (suena.como === "grabado") {
         return { voz: m.voz, piezas: suena.piezas };
       }
     }
     return null;
+  }
+
+  /**
+   * De qué pack sale esta frase, si sale de alguno. `null` si la dice el
+   * suplente del sistema.
+   *
+   * Hace falta fuera para poder comprobar **que cada boca usa su grabación**,
+   * que es lo que estuvo roto desde que existen las grabaciones: el pack
+   * entero se bajaba y solo lo consultaba la instructora. Ver `sondas.ts`.
+   */
+  vozDe(clave: string): string | null {
+    return this.quienLaDice(clave)?.voz ?? null;
   }
 
   decir(texto: string, clave?: string, urgencia?: Urgencia): void {
@@ -128,7 +168,7 @@ export class InstructorGrabado implements Instructor {
     }
     const cadena: AudioBuffer[] = [];
     for (const pieza of suena.piezas) {
-      const buffer = this.piezas.get(`${suena.voz}/${pieza}`);
+      const buffer = this.banco.piezas.get(`${suena.voz}/${pieza}`);
       // Una pieza que el manifiesto promete y no está cargada deja la frase
       // coja. Media frase es peor que ninguna: la dice el navegador entera.
       if (!buffer) {
@@ -246,12 +286,12 @@ export class InstructorGrabado implements Instructor {
          * Funciona igual, pero el instructor cambiaría de voz a mitad del
          * rodaje.
          */
-        this.manifiestos.push(manifiesto);
+        this.banco.manifiestos.push(manifiesto);
       } catch {
         // Una voz que no está no puede llevarse por delante a las otras tres.
       }
     }
-    return this.piezas.size;
+    return this.banco.piezas.size;
   }
 
   private async cargarPiezas(
@@ -270,7 +310,7 @@ export class InstructorGrabado implements Instructor {
         // Con la voz delante: cuatro packs distintos pueden traer una pieza
         // que se llame igual —«uno», «pista»— y la de la torre no es la del
         // instructor.
-        if (buffer) this.piezas.set(`${manifiesto.voz}/${pieza}`, buffer);
+        if (buffer) this.banco.piezas.set(`${manifiesto.voz}/${pieza}`, buffer);
       }),
     );
   }
