@@ -470,6 +470,34 @@ export class Vuelo {
       return "a-plataforma";
     }
 
+    /*
+     * ── En el suelo, con la carrera de despegue ya empezada ──────────────
+     *
+     * **Una carrera empezada no se deshace por salirse un poco del eje.**
+     *
+     * Todo lo de abajo cuelga de `s.enPista`, que es un rectángulo con su
+     * margen; en cuanto el avión se sale de él, esta función caía hasta el
+     * final y devolvía «rodando». Y «rodando» es una de las fases en las que el
+     * tope de rodaje **cierra el gas**, así que un avión a cincuenta y siete
+     * metros por segundo con el gas a fondo se encontraba con que el juego se
+     * lo quitaba, y ya no volvía a subir: no llegaba a la velocidad de
+     * rotación y no despegaba nunca.
+     *
+     * Es el #158 —«el turbohélice no despega con ayudas puestas: se come 3.400
+     * m de pista»— y por eso solo le pasaba a los grandes: son los que se van
+     * del eje en la carrera. Medido en Tenerife Sur con el JAZ 120: 38 m de
+     * desvío máximo en una pista de 45, punta 57 m/s y Vr en 86.
+     *
+     * A cincuenta y siete metros por segundo por el suelo nadie está rodando.
+     * Se sale de la carrera **por abajo** —frenando hasta velocidad de rodaje—
+     * o **por arriba**, volando; no por irse de lado. Es la misma histéresis
+     * que ya tenía la carrera de aterrizaje, en el otro extremo del vuelo.
+     */
+    const enLaCarrera =
+      this.fase === "despegando" || this.fase === "comprometido";
+    if (enLaCarrera && s.estado.airspeed >= YA_ES_RODAJE)
+      return yaNoSePuedeParar(s) ? "comprometido" : "despegando";
+
     // ── En el suelo, yendo hacia la pista ────────────────────────────────
     if (s.enPista) {
       /*
