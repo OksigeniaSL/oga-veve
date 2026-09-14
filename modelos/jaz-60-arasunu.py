@@ -173,6 +173,7 @@ def construir():
         pantallas_en=0.36,
         palancas=2,
         relojes=10,
+        mide="par",
         suelo_atras=1.60,
     )
 

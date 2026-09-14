@@ -132,6 +132,7 @@ def construir():
         palancas=2,
         relojes=12,
         clase="reactor",
+        mide="n1",
         suelo_atras=1.80,
     )
 

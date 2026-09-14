@@ -272,6 +272,7 @@ import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
+import { regimen } from "./ui/cuadro";
 import { InstructorGrabado } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
@@ -4614,6 +4615,26 @@ export class Game {
         declinacion: this.scenario.magneticVariation ?? 0,
         cabeceo: pitchAngleOf(this.flight.state.orientation),
         alabeo: bankAngleOf(this.flight.state.orientation),
+      },
+      dt,
+    );
+    /*
+     * Y los relojes del panel, que marcan lo que el juego sabe de verdad: el
+     * régimen de cada motor y los flaps. El régimen sale del **mismo sitio que
+     * el sonido** —ver `regimen` en `ui/cuadro.ts`—: si la aguja dijera una cosa
+     * y el motor sonara otra, el instrumento dejaría de ser un instrumento.
+     */
+    this.aircraftMesh.relojes?.actualizar(
+      {
+        motores: Array.from({ length: this.aircraft.motores }, () =>
+          regimen(
+            this.aircraft,
+            this.input.controls.throttle,
+            this.input.controls.engineOn,
+          ),
+        ),
+        flaps: this.input.controls.flaps,
+        rpmMaximas: this.aircraft.sound.maxRpm,
       },
       dt,
     );

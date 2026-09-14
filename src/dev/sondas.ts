@@ -242,6 +242,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * `verificar-cabina`.
        */
       envergadura: juego.aircraft.wingSpan,
+      /** Cuántos motores lleva, que es cuántos relojes tiene que haber. */
+      motores: juego.aircraft.motores,
       /*
        * Y **lo que mide su tren**, que es la diferencia entre las ruedas y el
        * origen del avión. Sin esto no se puede comprobar desde fuera si un
@@ -627,6 +629,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ruta: () => juego.plan?.rutaVisible() ?? [],
     /** Y la misma sin redondear, que es donde se ven las horquillas. */
     rutaCruda: () => juego.plan?.rutaCruda() ?? [],
+    /** Qué relojes del panel están encendidos y qué mide cada uno. */
+    relojes: () => juego.aircraftMesh.relojes?.hay ?? [],
     /** Todos los avisos sonoros, con su instante. Ver `Game.avisar`. */
     sonidos: () => juego.loQueSono,
     pista: () => juego.scenario.runway,

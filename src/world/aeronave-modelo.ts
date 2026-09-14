@@ -40,6 +40,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { AircraftConfig } from "../flight/aircraft";
 import type { AircraftMesh } from "./aircraft-mesh";
 import { encenderPantallas } from "./pantallas-cabina";
+import { encenderRelojes } from "./relojes-cabina";
 
 /** Dónde se dejan los modelos. Uno por aeronave, con su identificador. */
 const CARPETA = "assets/aeronaves";
@@ -537,6 +538,8 @@ export async function cargarModelo(
     ojo: ojoDePiloto(raiz, group),
     // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
     pantallas: encenderPantallas(raiz, group),
+    // Y los relojes, que hasta hoy eran discos grises. Ver `relojes-cabina.ts`.
+    relojes: encenderRelojes(raiz),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
   };

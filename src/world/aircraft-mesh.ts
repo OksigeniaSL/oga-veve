@@ -58,6 +58,8 @@ export interface AircraftMesh {
    */
   /** Las pantallas de la cabina, si el modelo las trae. */
   pantallas?: import("./pantallas-cabina").Pantallas | null;
+  /** Y los relojes del panel, encendidos. Ver `relojes-cabina.ts`. */
+  relojes?: import("./relojes-cabina").Relojes | null;
   /**
    * Si esto es el modelo de verdad y no las cajas de respaldo.
    *
