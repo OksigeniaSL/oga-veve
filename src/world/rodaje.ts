@@ -386,8 +386,30 @@ export interface Ruta {
   }[];
   /** La polilínea completa, de principio a fin. */
   readonly puntos: readonly Punto[];
-  /** Metros de rodaje. */
+  /**
+   * Metros de rodaje. **Metros, no coste.**
+   *
+   * Esto devolvía el coste de Dijkstra, que en la pista va multiplicado por
+   * seis —ver `PENALIZACION_PISTA`—, y lo leía como distancia todo el que la
+   * pedía. Medido en La Gomera: la ruta de vuelta a casa son 568 metros de
+   * pista y 250 de calle, o sea unos 900, y aquí salía **3.720**. Con ese
+   * número, `parDeSalida` comparaba puestos que no tocan la pista contra
+   * puestos que sí con la vara de medir cambiada, el listón de «lo más que se
+   * rueda para ir a despegar» se cruzaba sin rodar, y el jugador se quedaba
+   * plantado en mitad del campo esperando una ruta que el juego creía
+   * kilométrica.
+   *
+   * El coste sigue existiendo y sigue eligiendo el camino; lo que no puede es
+   * llamarse metros.
+   */
   readonly largo: number;
+  /**
+   * Lo que le costó al buscador, en metros equivalentes.
+   *
+   * Es lo que decide **qué** camino se elige —la pista va cara a propósito— y
+   * no vale para medir nada del mundo. Se saca fuera para poder mirarlo.
+   */
+  readonly coste: number;
   /**
    * Lo que la ruta se aparta del asfalto por sus dos puntas, m.
    *
@@ -420,7 +442,14 @@ export function rutaEntre(
   hastaNudo: number,
 ): Ruta | null {
   if (desdeNudo === hastaNudo)
-    return { tramos: [], puntos: [], largo: 0, letras: [], enganche: 0 };
+    return {
+      tramos: [],
+      puntos: [],
+      largo: 0,
+      coste: 0,
+      letras: [],
+      enganche: 0,
+    };
 
   const coste = new Array<number>(grafo.nudos.length).fill(Infinity);
   const porTramo = new Array<number>(grafo.nudos.length).fill(-1);
@@ -457,6 +486,8 @@ export function rutaEntre(
   // en que se recorre: la geometría de OSM va en el sentido que le vino bien a
   // quien la dibujó, y una ruta que salta de un lado a otro no se puede pintar.
   const pasos: { ref: string | null; puntos: Punto[] }[] = [];
+  // Los metros de verdad, sumando lo que mide cada tramo del camino elegido.
+  let metros = 0;
   let nodo = hastaNudo;
   while (nodo !== desdeNudo) {
     const iTramo = porTramo[nodo]!;
@@ -465,6 +496,7 @@ export function rutaEntre(
     const anterior = t.a === nodo ? t.b : t.a;
     const puntos = t.b === nodo ? [...t.puntos] : [...t.puntos].reverse();
     pasos.push({ ref: t.ref, puntos });
+    metros += t.largo;
     nodo = anterior;
   }
   pasos.reverse();
@@ -488,7 +520,8 @@ export function rutaEntre(
   return {
     tramos: pasos,
     puntos,
-    largo: coste[hastaNudo]!,
+    largo: metros,
+    coste: coste[hastaNudo]!,
     letras,
     enganche: 0,
   };
@@ -636,15 +669,19 @@ function recortada(ruta: Ruta, destino: Punto): Ruta {
     if (paso.ref && paso.ref !== letras[letras.length - 1])
       letras.push(paso.ref);
   }
-  // El largo es un **coste**, no una longitud: cruzar una pista se paga caro
-  // para que el buscador no lo elija por gusto. Restarle lo que se ha quitado
-  // lo deja algo por encima de lo que cuesta de verdad cuando el trozo que se
-  // va cruzaba pista, y eso es lo prudente: nunca hace parecer un camino más
-  // barato de lo que es.
+  /*
+   * Al largo se le quitan los metros que se han quitado, y al coste lo mismo.
+   *
+   * El coste va por lo alto a propósito: si el trozo recortado era pista,
+   * cruzarla se paga a seis y aquí se descuenta a uno, así que el camino
+   * recortado nunca parece más barato de lo que es. Del largo no hace falta
+   * prudencia ninguna: son metros y se restan metros.
+   */
   return {
     tramos: cortados,
     puntos,
     largo: Math.max(0, ruta.largo - quitado),
+    coste: Math.max(0, ruta.coste - quitado),
     letras,
     enganche: ruta.enganche,
   };
@@ -786,6 +823,7 @@ export function rodajeEntre(
     ...ruta,
     puntos: conLasDos,
     largo: ruta.largo + a.distancia + remate,
+    coste: ruta.coste + a.distancia + remate,
     enganche: Math.max(a.distancia, remate),
   };
 }
