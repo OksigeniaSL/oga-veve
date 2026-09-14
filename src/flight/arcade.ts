@@ -262,6 +262,25 @@ export class ArcadeFlightModel implements FlightModel {
    */
   ponerViento(): void {}
 
+  /**
+   * La ráfaga, en el peldaño que no tiene fuerzas.
+   *
+   * Aquí el gas **es** la velocidad y no hay viento —ver `ponerViento`, que no
+   * hace nada a propósito—, así que una ráfaga no puede entrar como vector: el
+   * modelo no sabría qué hacer con ella. Entra como lo que se nota: **el
+   * bache**. Se guarda la vertical y `step` la suma al ascenso.
+   *
+   * Y solo la vertical. Un empujón de lado en un modelo donde el rumbo lo lleva
+   * el mando sería el avión girando solo, que a los cuatro años es un mando
+   * roto; un bache es el mundo moviéndose, que es lo que es.
+   */
+  ponerRacha(_x: number, y: number): void {
+    this.bache = y;
+  }
+
+  /** El bache de ahora mismo, m/s. Ver `ponerRacha`. */
+  private bache = 0;
+
   romper(): void {}
 
   reset(initial: InitialConditions): void {
@@ -753,7 +772,14 @@ export class ArcadeFlightModel implements FlightModel {
      */
     const mando =
       controls.elevator * ascensoMaximo(this.aircraft) * (0.4 + 0.6 * gas);
-    const wantedClimb = canClimb ? (mando + planeo) * bite : 0;
+    /*
+     * Y el bache del aire, que se suma a lo que pide el mando.
+     *
+     * **Solo volando**: en el suelo las ruedas mandan y un avión no sube porque
+     * pase una ráfaga. Ver `ponerRacha`.
+     */
+    const racha = this.state.onGround ? 0 : this.bache;
+    const wantedClimb = (canClimb ? (mando + planeo) * bite : 0) + racha;
     this.climb += (wantedClimb - this.climb) * Math.min(1, step * 2.2);
 
     // El morro apunta a donde se va, más un pelín para que se vea la

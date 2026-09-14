@@ -275,6 +275,7 @@ import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
 import { regimen } from "./ui/cuadro";
 import { Megafonia, conPasaje } from "./audio/megafonia";
+import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import { InstructorGrabado } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
@@ -1599,9 +1600,31 @@ export class Game {
      * de lo que va esto; las nubes se eligen cuando se quieren, y entonces se
      * atraviesan despegando, que es el momento por el que están.
      */
-    this.hud.ponerCielo(0, (techoM, tapadura) => {
-      this.ponerTecho(techoM, tapadura);
-    });
+    /*
+     * **Y el cielo arranca con el del sitio, no despejado.**
+     *
+     * Aquí ponía siempre el primer botón —cielo raso— con un motivo escrito:
+     * «empieza despejado porque es el que deja ver el mundo». Y era verdad
+     * mientras el tiempo de por defecto fuera el mismo en los once campos y sin
+     * una nube: entonces, o despejado o un techo inventado.
+     *
+     * Ahora cada campo trae su tiempo típico —ver `vientoDominante`— y lo típico
+     * en casi todos es **una capa alta**: el mar de nubes del alisio a
+     * novecientos metros sobre Los Rodeos, los cúmulos de tarde del Paraguay a
+     * mil quinientos. Eso no tapa el mundo, lo pone: se despega, se atraviesa y
+     * se sale por encima, que es justo el momento por el que están.
+     */
+    const deCasa = this.scenario.meteo ?? TIEMPO_DE_CASA;
+    this.hud.ponerCielo(
+      deCasa.techoM === null ? 0 : deCasa.techoM < 300 ? 2 : 1,
+      (techoM, tapadura) => {
+        this.ponerTecho(techoM, tapadura);
+      },
+    );
+    this.ponerTecho(
+      deCasa.techoM,
+      deCasa.techoM === null ? 0 : deCasa.techoM < 300 ? 0.9 : 0.45,
+    );
     this.hud.ponerTiempo(
       this.scenario.meteo ?? TIEMPO_DE_CASA,
       (m) => this.ponerTiempo(m),
@@ -4493,6 +4516,26 @@ export class Game {
       terrenoDicho: this.terrenoDicho,
       vueloTerminado: this.vueloTerminado,
     });
+    /*
+     * **El aire, que no está quieto.**
+     *
+     * La ráfaga va cada fotograma y el viento del parte solo cuando cambia: son
+     * dos cosas distintas —el dato del día y lo que pasa ahora— y por eso entran
+     * por puertas distintas. Ver `flight/turbulencia.ts`.
+     */
+    const aire = {
+      sobreElSuelo: this.flight.state.heightAboveGround,
+      vientoKt: this.scenario.meteo?.vientoKt ?? 0,
+      baseDeNubes:
+        this.techoDeNubes === null
+          ? null
+          : this.terrain.runwayElevation + this.techoDeNubes,
+      altura: this.flight.state.position.y,
+    };
+    const racha = rachaEn(this.clock.elapsedTime, aire);
+    this.flight.ponerRacha?.(racha.x, racha.y, racha.z);
+    this.atenderAlCinturon(cuantoSeMueve(aire), dt);
+
     this.oirLaRadio(dt);
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
@@ -5740,6 +5783,43 @@ export class Game {
    * umbral, y todo lo que se decide en el umbral se decidía con seis metros de
    * error. Ver `Terrain.cotaDeLaPista`.
    */
+  /** Si el cartel del cinturón está encendido ahora mismo. */
+  private cinturonPuesto = false;
+  /** Y cuánto lleva así, para no encenderlo y apagarlo a cada bache. */
+  private desdeElCinturon = 0;
+
+  /**
+   * El cartel del cinturón y su *ding*.
+   *
+   * Pedido con el resto de la cabina de pasaje: «señales de cinturones de
+   * seguridad, etc.». Y es de las pocas cosas del juego que **no se pilotan**:
+   * se encienden solas y lo único que hacen es contar lo que está pasando, que
+   * es justo lo que enseña — el cartel no se enciende porque sí.
+   *
+   * Se enciende cuando el aire se mueve de verdad o cuando se está bajo —el
+   * despegue y la aproximación, que es cuando se enciende en cualquier vuelo— y
+   * se apaga cuando lleva un rato tranquilo. El retardo no es adorno: sin él, un
+   * bache suelto lo enciende y lo apaga cada dos segundos, y un cartel que
+   * parpadea deja de querer decir nada.
+   *
+   * Solo en los aviones con pasaje, como la megafonía: una avioneta de escuela
+   * no lleva cartel ni tiene a quién avisar.
+   */
+  private atenderAlCinturon(movimiento: number, dt: number): void {
+    if (!conPasaje(this.aircraft.mass)) return;
+    const bajo = this.flight.state.heightAboveGround < 900;
+    const toca = bajo || movimiento > 0.9;
+    this.desdeElCinturon += dt;
+    if (toca === this.cinturonPuesto) return;
+    // Encender es inmediato y apagar espera: avisar tarde de que hay baches no
+    // sirve de nada, y apagar pronto es mentir.
+    if (!toca && this.desdeElCinturon < 20) return;
+    this.cinturonPuesto = toca;
+    this.desdeElCinturon = 0;
+    this.avisar("cinturon");
+    this.hud.ponerCinturon(toca);
+  }
+
   private cotaDeLaPistaAqui(): number {
     return this.terrain.cotaDeLaPista(
       this.flight.state.position.x,

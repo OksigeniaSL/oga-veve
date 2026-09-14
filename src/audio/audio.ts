@@ -85,6 +85,15 @@ export type Cue =
    */
   | "aro"
   /**
+   * El *ding* del cartel del cinturón.
+   *
+   * Es el sonido de un avión de línea y no de un juego: dos notas cortas,
+   * limpias y sin prisa, las mismas que suenan sobre tu cabeza cuando la
+   * comandante enciende el cartel. Va con la megafonía —ver `audio/megafonia`—
+   * y solo en los aviones que llevan pasaje.
+   */
+  | "cinturon"
+  /**
    * Y un aro que se ha perdido. Dos notas que bajan.
    *
    * **No suena a error.** Perder un aro no es un fallo, es información: te
@@ -226,6 +235,11 @@ export const MOTIVOS: Record<Cue, Motivo> = {
    * los demás: suenan al vuelo y no pueden entretenerse.
    */
   aro: { notas: [659.25, 880, 1174.66], paso: 0.07, dura: 0.18 },
+  /*
+   * El cinturón: dos notas y punto. Suena a cabina de pasaje porque es lo que
+   * es —un timbre, no un aviso— y por eso no manda callar a nadie.
+   */
+  cinturon: { notas: [1046.5, 783.99], paso: 0.22, dura: 0.45 },
   aroFallado: { notas: [440, 349.23], paso: 0.16, dura: 0.3 },
   /*
    * El peligro y la pérdida van más rápidos que nada: lo que distingue una
