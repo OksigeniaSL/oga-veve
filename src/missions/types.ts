@@ -12,7 +12,7 @@
  * alguien que no programa.
  */
 
-import type { TranslationKey } from '../i18n';
+import type { TranslationKey } from "../i18n";
 
 /** Un punto del mundo al que hay que ir. */
 export interface Waypoint {
@@ -26,14 +26,14 @@ export interface Waypoint {
 
 export type Objective =
   /** Separarse del suelo. */
-  | { kind: 'takeoff' }
+  | { kind: "takeoff" }
   /** Pasar cerca de un punto. */
-  | ({ kind: 'reach' } & Waypoint)
+  | ({ kind: "reach" } & Waypoint)
   /**
    * Tomar tierra. `gentle` es la velocidad de descenso máxima admitida:
    * es lo que convierte un aterrizaje en un aterrizaje y no en una llegada.
    */
-  | { kind: 'land'; gentle?: number };
+  | { kind: "land"; gentle?: number };
 
 export interface Mission {
   id: string;
@@ -44,6 +44,8 @@ export interface Mission {
 }
 
 /** Dónde está el objetivo, si es un sitio. Lo usa la aguja del HUD. */
-export function objectiveTarget(objective: Objective): { x: number; z: number } | null {
-  return objective.kind === 'reach' ? { x: objective.x, z: objective.z } : null;
+export function objectiveTarget(
+  objective: Objective,
+): { x: number; z: number } | null {
+  return objective.kind === "reach" ? { x: objective.x, z: objective.z } : null;
 }

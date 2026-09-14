@@ -12,11 +12,11 @@
  * esas dos cosas se llevan 86 metros por un lado y 223 por el otro.
  */
 
-import { describe, expect, it } from 'vitest';
-import { Mesh } from 'three';
-import { createAerodrome, type Aerodrome } from './aerodrome';
-import gcxo from '../../data/aerodromes/gcxo.aero.json';
-import sgas from '../../data/aerodromes/sgas.aero.json';
+import { describe, expect, it } from "vitest";
+import { Mesh } from "three";
+import { createAerodrome, type Aerodrome } from "./aerodrome";
+import gcxo from "../../data/aerodromes/gcxo.aero.json";
+import sgas from "../../data/aerodromes/sgas.aero.json";
 
 /** Hasta dónde llega la pintura a lo largo del eje, medido desde cada umbral. */
 function alcanceDeLaPintura(aero: Aerodrome): {
@@ -27,16 +27,22 @@ function alcanceDeLaPintura(aero: Aerodrome): {
   const grupo = createAerodrome(aero, 0);
   const pintura: number[] = [];
   grupo.traverse((o) => {
-    if (o instanceof Mesh && o.name === 'pintura') {
-      const pos = o.geometry.getAttribute('position');
-      for (let i = 0; i < pos.count; i++) pintura.push(pos.getX(i), pos.getZ(i));
+    if (o instanceof Mesh && o.name === "pintura") {
+      const pos = o.geometry.getAttribute("position");
+      for (let i = 0; i < pos.count; i++)
+        pintura.push(pos.getX(i), pos.getZ(i));
     }
   });
   expect(pintura.length).toBeGreaterThan(0);
 
   const pista = aero.runways[0]!;
-  const umbrales = Object.values(pista.thresholds).flatMap((t) => (t?.xy ? [t.xy] : []));
-  const [a, b] = umbrales as [readonly [number, number], readonly [number, number]];
+  const umbrales = Object.values(pista.thresholds).flatMap((t) =>
+    t?.xy ? [t.xy] : [],
+  );
+  const [a, b] = umbrales as [
+    readonly [number, number],
+    readonly [number, number],
+  ];
   // Del fichero al mundo: el norte del fichero es la Z negativa del mundo.
   const ax = a[0];
   const az = -a[1];
@@ -54,10 +60,10 @@ function alcanceDeLaPintura(aero: Aerodrome): {
   return { largo, desdeUnUmbral: min, desdeElOtro: largo - max };
 }
 
-describe('la pintura de la pista', () => {
+describe("la pintura de la pista", () => {
   for (const [nombre, aero] of [
-    ['Tenerife Norte', gcxo],
-    ['Silvio Pettirossi', sgas],
+    ["Tenerife Norte", gcxo],
+    ["Silvio Pettirossi", sgas],
   ] as const) {
     it(`${nombre}: llega a las dos cabeceras`, () => {
       const r = alcanceDeLaPintura(aero as unknown as Aerodrome);

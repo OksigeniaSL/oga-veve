@@ -105,7 +105,9 @@ describe("la migración de las trece claves sueltas", () => {
 
   it("y la bitácora entera, con su traza", () => {
     const g = migrarDeClavesSueltas((k) => FORMATO_VIEJO[k] ?? null);
-    const vuelos = g.perfiles[0]!.progreso["bitacora"] as { traza: number[][] }[];
+    const vuelos = g.perfiles[0]!.progreso["bitacora"] as {
+      traza: number[][];
+    }[];
     expect(vuelos).toHaveLength(1);
     expect(vuelos[0]!.traza).toEqual([
       [0, 0],
@@ -138,7 +140,10 @@ describe("al abrir el juego", () => {
 
     // La copia está, entera y sin tocar: si la migración estuvo mal, los
     // datos siguen ahí.
-    const copia = JSON.parse(memoria.get(LLAVE_COPIA)!) as Record<string, string>;
+    const copia = JSON.parse(memoria.get(LLAVE_COPIA)!) as Record<
+      string,
+      string
+    >;
     expect(copia["oga-veve:cuaderno"]).toBe(FORMATO_VIEJO["oga-veve:cuaderno"]);
     // Y las claves sueltas ya no están: manda el documento.
     expect(memoria.has("oga-veve:cuaderno")).toBe(false);
@@ -200,7 +205,9 @@ describe("del formato 1 al 2: el emoji pasa a ser un avión", () => {
     expect(g.version).toBe(VERSION);
     const p = g.perfiles[0]!;
     // Lo que importa: las horas siguen ahí.
-    expect((p.progreso["cuaderno"] as { segundos: number }).segundos).toBe(7200);
+    expect((p.progreso["cuaderno"] as { segundos: number }).segundos).toBe(
+      7200,
+    );
     expect(p.ajustes["vista"]).toBe("cockpit");
     expect(p.id).toBe("p-viejo");
     expect(g.activo).toBe("p-viejo");

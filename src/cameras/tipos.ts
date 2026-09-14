@@ -27,7 +27,11 @@ export interface Contexto {
    * Sale del asiento delantero de la malla. Cuando no hay malla —una caja— se
    * calcula sobre la cuerda del ala, que es lo que había antes.
    */
-  readonly ojo: { readonly x: number; readonly y: number; readonly z: number } | null;
+  readonly ojo: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  } | null;
   /** La cota del terreno, para que la cámara no se meta debajo. */
   readonly suelo: (x: number, z: number) => number;
   /** Si el sistema pide movimiento reducido. Apaga traqueteo y zoom. */

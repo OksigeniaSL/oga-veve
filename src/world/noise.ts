@@ -29,7 +29,8 @@ export class ValueNoise2D {
     const random = mulberry32(seed);
     const size = ValueNoise2D.SIZE;
     this.permutation = new Float32Array(size * size);
-    for (let i = 0; i < this.permutation.length; i++) this.permutation[i] = random();
+    for (let i = 0; i < this.permutation.length; i++)
+      this.permutation[i] = random();
   }
 
   private lattice(ix: number, iy: number): number {
@@ -59,7 +60,13 @@ export class ValueNoise2D {
    * es lo que hace que una montaña tenga a la vez ladera grande y textura
    * pequeña. Devuelve valores en [0, 1] aproximadamente.
    */
-  fbm(x: number, y: number, octaves: number, lacunarity = 2.0, gain = 0.5): number {
+  fbm(
+    x: number,
+    y: number,
+    octaves: number,
+    lacunarity = 2.0,
+    gain = 0.5,
+  ): number {
     let amplitude = 1;
     let frequency = 1;
     let sum = 0;

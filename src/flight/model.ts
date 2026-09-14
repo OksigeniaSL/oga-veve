@@ -75,6 +75,24 @@ export interface FlightState {
   // ── Derivados, recalculados en cada paso ────────────────────────────
   /** Velocidad respecto al aire, m/s. */
   airspeed: number;
+  /**
+   * Velocidad respecto al **suelo**, m/s. Solo la horizontal.
+   *
+   * **No es lo mismo que la de arriba, y por eso está.** Mientras el motor de
+   * vuelo no conocía el viento eran el mismo número, y medio juego preguntaba
+   * «¿se está moviendo?» mirando el anemómetro. En cuanto el viento entró, un
+   * avión **parado** con viento de cara marcaba ya la velocidad del viento: el
+   * tope de rodaje le cerraba el gas creyendo que iba deprisa, la máquina de
+   * fases no le dejaba pasar de «arrancando» porque no se había parado nunca, y
+   * el avión se quedaba clavado en la plataforma. Medido en el barrido: tres
+   * escenarios enteros sin llegar al punto de espera en quince minutos.
+   *
+   * La regla es sencilla y no tiene excepciones: **lo que hace volar es el
+   * aire; lo que hace avanzar es el suelo.** Sustentación, resistencia,
+   * pérdida y el anemómetro de la cabina van con `airspeed`; rodar, frenar,
+   * pararse, atropellar y «¿ya se mueve?» van con ésta.
+   */
+  groundSpeed: number;
   /** Ángulo de ataque, rad. */
   alpha: number;
   /** Ángulo de derrape, rad. Positivo = viento por la derecha. */
@@ -158,6 +176,26 @@ export interface FlightModel {
    * puede perder, y quien lo llama ya lo sabe.
    */
   romper(): void;
+  /**
+   * El viento que sopla aquí: a dónde va, en m/s y en ejes del mundo.
+   *
+   * **Y hacía falta porque el viento existía en todas partes menos donde
+   * importa.** El panel del tiempo lo enseña, la manga lo señala, el aeródromo
+   * elige cabecera con él y el METAR lo trae de verdad — y el avión no se
+   * enteraba: `integrate` calculaba la velocidad respecto al aire con la
+   * velocidad inercial, con un comentario que decía literalmente «sin viento
+   * todavía». O sea que despegar con quince nudos de cola y con quince de cara
+   * era exactamente lo mismo, y el juego enseña justo lo contrario.
+   *
+   * Va como método y por el mismo motivo que `setOnRunway`: `state` es de solo
+   * lectura a propósito, y esto es de las poquísimas cosas que van en sentido
+   * contrario.
+   *
+   * El modelo sencillo puede ignorarlo, y lo ignora: en ese peldaño el gas
+   * **es** la velocidad y meter viento ahí sería enseñar una cuenta que ese
+   * modelo no hace.
+   */
+  ponerViento(x: number, z: number): void;
   /** Nombre legible de la implementación, para la pantalla de créditos. */
   readonly implementationName: string;
   reset(initial: InitialConditions): void;

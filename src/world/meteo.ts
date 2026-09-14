@@ -47,7 +47,7 @@ export interface Meteo {
   /** Visibilidad, m. Diez mil quiere decir «diez o más». */
   readonly visibilidadM: number;
   /** De dónde salió: `'metar'` si es de verdad, `'defecto'` si es el de casa. */
-  readonly fuente: 'metar' | 'defecto' | 'mano';
+  readonly fuente: "metar" | "defecto" | "mano";
 }
 
 /**
@@ -65,7 +65,7 @@ export const TIEMPO_DE_CASA: Meteo = {
   temp: 20,
   techoM: null,
   visibilidadM: 10000,
-  fuente: 'defecto',
+  fuente: "defecto",
 };
 
 /**
@@ -95,9 +95,9 @@ export function leerMetar(crudo: string): Meteo | null {
       const fuerza = Number(v[2]);
       // En metros por segundo en algunos países; a nudos, que es lo que canta
       // la manga y lo que dice la carta.
-      vientoKt = v[4] === 'MPS' ? Math.round(fuerza * 1.94384) : fuerza;
+      vientoKt = v[4] === "MPS" ? Math.round(fuerza * 1.94384) : fuerza;
       // Variable o en calma no es una dirección: es la ausencia de una.
-      vientoDe = v[1] === 'VRB' || vientoKt === 0 ? null : Number(v[1]);
+      vientoDe = v[1] === "VRB" || vientoKt === 0 ? null : Number(v[1]);
       vistoViento = true;
       continue;
     }
@@ -112,7 +112,7 @@ export function leerMetar(crudo: string): Meteo | null {
     // tapan —cielo roto o cubierto—, que son las que ponen techo.
     const n = /^(FEW|SCT|BKN|OVC)(\d{3})$/.exec(p);
     if (n) {
-      if (n[1] === 'BKN' || n[1] === 'OVC') {
+      if (n[1] === "BKN" || n[1] === "OVC") {
         const pies = Number(n[2]) * 100;
         const m = Math.round(pies * 0.3048);
         techoM = techoM === null ? m : Math.min(techoM, m);
@@ -123,7 +123,7 @@ export function leerMetar(crudo: string): Meteo | null {
     // Temperatura y rocío: 21/18, M03/M07 con la eme de menos.
     const t = /^(M?\d{2})\/(M?\d{2})$/.exec(p);
     if (t) {
-      temp = Number(t[1]!.replace('M', '-'));
+      temp = Number(t[1]!.replace("M", "-"));
       continue;
     }
 
@@ -138,7 +138,7 @@ export function leerMetar(crudo: string): Meteo | null {
   }
 
   return vistoViento
-    ? { vientoDe, vientoKt, qnh, temp, techoM, visibilidadM, fuente: 'metar' }
+    ? { vientoDe, vientoKt, qnh, temp, techoM, visibilidadM, fuente: "metar" }
     : null;
 }
 
@@ -149,11 +149,16 @@ export function leerMetar(crudo: string): Meteo | null {
  * tarda demasiado. **Volar no puede depender de que haya red**: quien juega en
  * un colegio con la conexión caída tiene que poder despegar igual.
  */
-export async function pedirMetar(icao: string, proxy: string | null): Promise<Meteo> {
+export async function pedirMetar(
+  icao: string,
+  proxy: string | null,
+): Promise<Meteo> {
   if (!proxy) return TIEMPO_DE_CASA;
   try {
     const corte = AbortSignal.timeout(4000);
-    const res = await fetch(`${proxy}?icao=${encodeURIComponent(icao)}`, { signal: corte });
+    const res = await fetch(`${proxy}?icao=${encodeURIComponent(icao)}`, {
+      signal: corte,
+    });
     if (!res.ok) return TIEMPO_DE_CASA;
     return leerMetar(await res.text()) ?? TIEMPO_DE_CASA;
   } catch {
@@ -167,8 +172,30 @@ export async function pedirMetar(icao: string, proxy: string | null): Promise<Me
  * Negativo quiere decir viento de cola, que es lo que **no** se quiere: alarga
  * la carrera de despegue y acorta la pista que queda al aterrizar.
  */
+/**
+ * El viento como vector del mundo: **a dónde va el aire**, en m/s.
+ *
+ * El METAR dice de dónde viene y en nudos, que es como se habla por radio; el
+ * motor de vuelo necesita lo contrario y en unidades del sistema. La conversión
+ * va aquí y en un solo sitio, porque es de las que se hacen mal: un viento
+ * «del 360» sopla **hacia el sur**, y el sur en este mundo es la Z positiva.
+ *
+ * Y con la Z del juego, que mira al sur: el norte es la Z negativa.
+ */
+export function vientoComoVector(meteo: Meteo): { x: number; z: number } {
+  if (meteo.vientoDe === null || meteo.vientoKt <= 0) return { x: 0, z: 0 };
+  const ms = meteo.vientoKt * 0.514444;
+  const de = (meteo.vientoDe * Math.PI) / 180;
+  // De dónde viene, en vector: norte (0°) es −Z, este (90°) es +X.
+  const vieneX = Math.sin(de);
+  const vieneZ = -Math.cos(de);
+  // Y a dónde va, que es lo contrario.
+  return { x: -vieneX * ms, z: -vieneZ * ms };
+}
+
 export function deFrente(rumboPista: number, meteo: Meteo): number {
   if (meteo.vientoDe === null) return 0;
-  const angulo = (((meteo.vientoDe - rumboPista + 540) % 360) - 180) * (Math.PI / 180);
+  const angulo =
+    (((meteo.vientoDe - rumboPista + 540) % 360) - 180) * (Math.PI / 180);
   return meteo.vientoKt * Math.cos(angulo);
 }

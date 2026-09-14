@@ -54,7 +54,12 @@ import {
 } from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
 import { LECCION_POR_DEFECTO, type Leccion } from "./flight/lecciones";
-import { pedirMetar, TIEMPO_DE_CASA, type Meteo } from "./world/meteo";
+import {
+  pedirMetar,
+  TIEMPO_DE_CASA,
+  vientoComoVector,
+  type Meteo,
+} from "./world/meteo";
 
 /**
  * El proxy del parte meteorológico. Ver `workers/meteo.js`.
@@ -2108,7 +2113,7 @@ export class Game {
      * una plataforma— y por eso hay un listón: por debajo de `ROCE` el mundo
      * sigue impidiendo el paso y ya está. Por encima, esto ha sido un choque.
      */
-    if (s.airspeed > ROCE) this.sufrirPercance("edificio");
+    if (s.groundSpeed > ROCE) this.sufrirPercance("edificio");
 
     if (this.tier.model !== "simple") {
       this.flight.romper();
@@ -2891,12 +2896,12 @@ export class Game {
      * ya arranca. Dejar a un chico de cuatro años delante de una tecla que no
      * hace nada es peor que moverle un mando y contárselo.
      */
-    if (s.onGround && s.airspeed <= 2 && c.throttle > 0.05) {
+    if (s.onGround && s.groundSpeed <= 2 && c.throttle > 0.05) {
       c.throttle = 0;
       this.hud.flash(t("hud.engineBusy"));
       return;
     }
-    if (!s.onGround || s.airspeed > 2) {
+    if (!s.onGround || s.groundSpeed > 2) {
       this.hud.flash(t("hud.engineBusy"));
       return;
     }
@@ -3298,7 +3303,7 @@ export class Game {
    */
   private recolocarTrasElMoldeado(): void {
     const s = this.flight.state;
-    const empezado = this.input.controls.engineOn || s.airspeed > 0.5;
+    const empezado = this.input.controls.engineOn || s.groundSpeed > 0.5;
     if (!empezado) {
       this.resetFlight();
       return;
@@ -3518,6 +3523,18 @@ export class Game {
    */
   ponerTiempo(meteo: Meteo): void {
     this.scenario = conViento(this.scenario, meteo);
+    /*
+     * **Y el avión se entera, que era lo que faltaba.**
+     *
+     * El viento existía en todas partes menos donde importa: el panel lo
+     * enseñaba, la manga lo señalaba, la torre elegía cabecera con él y el
+     * METAR lo traía de verdad — y el motor de vuelo calculaba la velocidad
+     * respecto al aire con la velocidad inercial. Despegar con quince nudos de
+     * cola y con quince de cara era exactamente lo mismo, que es lo contrario
+     * de lo que este juego enseña. Ver `ponerViento` y `perfilDeViento`.
+     */
+    const aire = vientoComoVector(meteo);
+    this.flight.ponerViento(aire.x, aire.z);
     /*
      * **Y las nubes del parte, que estaban ahí sin usar.**
      *
@@ -5489,13 +5506,24 @@ export class Game {
     // chicos, y amerizar de morro y desaparecer no le divierte a nadie.
     const ground = (x: number, z: number): number =>
       this.terrain.sampleSurface(x, z);
-    return tier.model === "simple"
-      ? new ArcadeFlightModel({ aircraft: this.aircraft, ground })
-      : new CoefficientFlightModel({
-          aircraft: this.aircraft,
-          ground,
-          assist: tier.assists,
-        });
+    const modelo =
+      tier.model === "simple"
+        ? new ArcadeFlightModel({ aircraft: this.aircraft, ground })
+        : new CoefficientFlightModel({
+            aircraft: this.aircraft,
+            ground,
+            assist: tier.assists,
+          });
+    /*
+     * **Y el viento que ya sopla, que si no se pierde al cambiar de modelo.**
+     *
+     * `ponerTiempo` se lo dice al motor de vuelo, pero cambiar de peldaño o de
+     * avión construye uno nuevo y el nuevo nace en calma. Se vería como un
+     * viento que desaparece al cambiar de avión en mitad del vuelo.
+     */
+    const aire = vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA);
+    modelo.ponerViento(aire.x, aire.z);
+    return modelo;
   }
 
   /**

@@ -201,6 +201,29 @@ function esteGiro(
   );
 }
 
+/**
+ * Cuánto del viento llega a esta altura sobre el suelo, de 0 a 1.
+ *
+ * El viento no sopla igual a ras de suelo que arriba: el terreno lo frena, y eso
+ * es la capa límite. La forma que tiene de verdad es una potencia de la altura;
+ * la raíz vale de sobra para esto.
+ *
+ * **La referencia son diez metros, y no es un número cualquiera**: es la altura
+ * a la que se mide el viento que da un METAR, o sea el que el juego enseña en su
+ * panel. Así que a diez metros llega entero, que es lo que de verdad siente un
+ * avión en la pista — y por debajo baja hasta un sesenta por ciento al ras,
+ * porque el suelo frena las capas de abajo.
+ *
+ * El primer intento dejaba solo una quinta parte al ras y no llegaba al viento
+ * entero hasta los cien metros. Con eso, un viento de veinte nudos acortaba la
+ * carrera de despegue un diecinueve por ciento en vez de un cuarenta, y la
+ * lección de por qué se despega contra el viento se quedaba en un matiz.
+ */
+export function perfilDeViento(altoSobreElSuelo: number): number {
+  const h = Math.max(0, altoSobreElSuelo);
+  return 0.6 + 0.4 * Math.min(1, Math.sqrt(h / 10));
+}
+
 export class CoefficientFlightModel implements FlightModel {
   readonly implementationName = "FDM Óga Veve (coeficientes)";
 
@@ -245,6 +268,7 @@ export class CoefficientFlightModel implements FlightModel {
       pitchRate: 0,
       yawRate: 0,
       airspeed: 0,
+      groundSpeed: 0,
       alpha: 0,
       beta: 0,
       heightAboveGround: 0,
@@ -294,6 +318,21 @@ export class CoefficientFlightModel implements FlightModel {
   }
 
   /** Se rompió: por el mismo camino que una toma dura. */
+  /**
+   * El viento que sopla, en ejes del mundo y en metros por segundo.
+   *
+   * Va a dónde **va** el aire, no de dónde viene: un viento del norte de diez
+   * nudos es un vector que apunta al sur. La conversión la hace quien lo pone,
+   * que es el que tiene el dato del METAR. Ver `ponerViento`.
+   */
+  private readonly viento = new Vector3();
+  /** Velocidad respecto al aire. Se reusa para no crear un vector por paso. */
+  private readonly relativa = new Vector3();
+
+  ponerViento(x: number, z: number): void {
+    this.viento.set(x, 0, z);
+  }
+
   romper(): void {
     this.state.crashed = true;
   }
@@ -384,13 +423,23 @@ export class CoefficientFlightModel implements FlightModel {
 
     this.updateBodyAxes();
 
-    // Velocidad respecto al aire, en ejes cuerpo. Sin viento todavía: el día
-    // que se añada, se resta aquí el vector de viento y todo lo demás sigue
-    // funcionando igual.
-    const u = s.velocity.dot(this.forward);
-    const v = s.velocity.dot(this.right);
-    const w = s.velocity.dot(this.down);
-    const speed = Math.sqrt(u * u + v * v + w * w);
+    /*
+     * Velocidad **respecto al aire**, en ejes cuerpo: la del avión menos la del
+     * viento. Es la que hace la sustentación, la resistencia y todo lo demás.
+     *
+     * Aquí ponía «sin viento todavía», y ese todavía duró: el panel del tiempo
+     * enseñaba el viento, la manga lo señalaba, la torre elegía cabecera con él
+     * y el METAR lo traía de verdad — y el avión no lo notaba. Despegar con
+     * quince nudos de cola y con quince de cara era exactamente lo mismo, que
+     * es lo contrario de lo que este juego enseña.
+     *
+     * **Y con perfil de altura**, que es lo que impide que el rodaje se vuelva
+     * un despropósito: el viento no sopla igual a ras de suelo que a cien
+     * metros, porque el suelo lo frena. Una quinta parte abajo y entero arriba,
+     * subiendo con la raíz de la altura — que es la forma que tiene de verdad
+     * la capa límite y lo que usa cualquier tabla de viento en superficie.
+     */
+    const { u, v, w, speed } = this.respectoAlAire();
 
     const density = airDensity(s.position.y);
 
@@ -974,6 +1023,35 @@ export class CoefficientFlightModel implements FlightModel {
     return { ...controls, rudder, elevator };
   }
 
+  /**
+   * La velocidad respecto al aire, en ejes cuerpo.
+   *
+   * **Una sola cuenta, y por eso está aquí.** La hacían dos sitios: `integrate`,
+   * para las fuerzas, y `updateDerived`, para el dato que publica el estado. Al
+   * meter el viento se cambió una y no la otra, con lo cual el ala lo notaba y
+   * el anemómetro no: el avión rotaba a velocidad **respecto al suelo** y un
+   * viento de cara, en vez de acortar la carrera, la alargaba —porque añadía
+   * resistencia sin adelantar la rotación—. Justo lo contrario de lo que pasa.
+   *
+   * Es el fallo clásico de esta casa: el mismo número calculado en dos sitios.
+   */
+  private respectoAlAire(): {
+    u: number;
+    v: number;
+    w: number;
+    speed: number;
+  } {
+    const s = this.state;
+    const cuanto = perfilDeViento(
+      s.position.y - this.ground(s.position.x, s.position.z),
+    );
+    this.relativa.copy(s.velocity).addScaledVector(this.viento, -cuanto);
+    const u = this.relativa.dot(this.forward);
+    const v = this.relativa.dot(this.right);
+    const w = this.relativa.dot(this.down);
+    return { u, v, w, speed: Math.sqrt(u * u + v * v + w * w) };
+  }
+
   private updateDerived(): void {
     const s = this.state;
     this.updateBodyAxes();
@@ -982,10 +1060,10 @@ export class CoefficientFlightModel implements FlightModel {
     // sea correcto nada más llamar a `reset()`, antes del primer paso. Quien
     // lea `airspeed` justo después de reiniciar tiene que ver la velocidad
     // con la que ha arrancado, no un cero.
-    const u = s.velocity.dot(this.forward);
-    const v = s.velocity.dot(this.right);
-    const w = s.velocity.dot(this.down);
-    s.airspeed = Math.sqrt(u * u + v * v + w * w);
+    const { u, v, w, speed } = this.respectoAlAire();
+    s.airspeed = speed;
+    // Y la del suelo, que es otra cosa desde que hay viento. Ver `groundSpeed`.
+    s.groundSpeed = Math.hypot(s.velocity.x, s.velocity.z);
     if (s.airspeed > MIN_AIRSPEED) {
       s.alpha = Math.atan2(w, u);
       s.beta = Math.asin(clamp(v / s.airspeed, -1, 1));

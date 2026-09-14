@@ -18,7 +18,7 @@
  * arreglado.
  */
 
-import type { Scenario } from './scenarios';
+import type { Scenario } from "./scenarios";
 
 /**
  * Con `import.meta.glob` y no con una URL construida a mano.
@@ -27,9 +27,9 @@ import type { Scenario } from './scenarios';
  * relativa a `import.meta.url` funciona en desarrollo y desaparece en
  * producción, que es la clase de fallo que solo se ve una vez desplegado.
  */
-const RELIEVES = import.meta.glob('../../data/terrain/*.bin', {
-  query: '?url',
-  import: 'default',
+const RELIEVES = import.meta.glob("../../data/terrain/*.bin", {
+  query: "?url",
+  import: "default",
   eager: true,
 }) as Record<string, string>;
 
@@ -44,15 +44,19 @@ export function hayRelieve(id: string): boolean {
  * Que falle no puede dejar a nadie sin volar: sin mapa se juega con el relieve
  * generado, que es lo que había antes y sigue funcionando.
  */
-export async function cargarRelieve(id: string): Promise<Scenario['relieve']> {
-  const ruta = Object.entries(RELIEVES).find(([k]) => k.endsWith(`/${id}.bin`))?.[1];
+export async function cargarRelieve(id: string): Promise<Scenario["relieve"]> {
+  const ruta = Object.entries(RELIEVES).find(([k]) =>
+    k.endsWith(`/${id}.bin`),
+  )?.[1];
   if (!ruta) return undefined;
   try {
     const res = await fetch(ruta);
     if (!res.ok) return undefined;
     const datos = new Int16Array(await res.arrayBuffer());
     const resolucion = Math.round(Math.sqrt(datos.length));
-    return resolucion * resolucion === datos.length ? { datos, resolucion } : undefined;
+    return resolucion * resolucion === datos.length
+      ? { datos, resolucion }
+      : undefined;
   } catch {
     return undefined;
   }

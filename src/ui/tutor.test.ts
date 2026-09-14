@@ -12,8 +12,20 @@ import type { FlightState } from "../flight/model";
 import { pasoQueToca } from "./tutor";
 
 /** Un avión en el suelo, con lo poco que mira el tutor. */
+/*
+ * Sin viento, la velocidad respecto al aire y la del suelo son la misma, y aquí
+ * no hay viento. Se ponen las dos porque el tutor pregunta por la del suelo
+ * —correr por la pista es cosa del suelo— y otros por la del aire. Ver
+ * `groundSpeed` en `flight/model.ts`.
+ */
 const enElSuelo = (airspeed: number, onRunway = true) =>
-  ({ onGround: true, onRunway, airspeed, heightAboveGround: 0 }) as FlightState;
+  ({
+    onGround: true,
+    onRunway,
+    airspeed,
+    groundSpeed: airspeed,
+    heightAboveGround: 0,
+  }) as FlightState;
 
 const enElAire = (airspeed: number, heightAboveGround = 300) =>
   ({

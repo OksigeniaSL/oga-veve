@@ -41,11 +41,7 @@ export class CamaraDeDentro implements CameraRig {
     const ojo = ctx.ojo;
     if (ojo) this.offset.set(ojo.x, ojo.y, ojo.z);
     else
-      this.offset.set(
-        0,
-        ctx.aircraft.chord * 0.55,
-        -ctx.aircraft.chord * 0.4,
-      );
+      this.offset.set(0, ctx.aircraft.chord * 0.55, -ctx.aircraft.chord * 0.4);
     this.offset.applyQuaternion(state.orientation);
     camera.position.copy(state.position).add(this.offset);
     camera.quaternion.copy(state.orientation);

@@ -188,8 +188,7 @@ export function sitiarPapi(
    * completa con la separación de siempre, y el nodo se toma por la luz de
    * dentro, que es equivocarse hacia fuera y no hacia la pista.
    */
-  const adentro =
-    grupo.reduce((suma, a) => suma + a.adentro, 0) / grupo.length;
+  const adentro = grupo.reduce((suma, a) => suma + a.adentro, 0) / grupo.length;
   return {
     luces: calculada(adentro, Math.abs(grupo[0]!.lado), signo),
     origen: "osm",
