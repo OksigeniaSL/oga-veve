@@ -38,6 +38,7 @@ import {
 } from "../world/circuito";
 import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
 import { leerGafas } from "../flight/gafas";
+import { InstructorGrabado } from "../audio/instructor-grabado";
 
 export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
@@ -327,6 +328,22 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     decirlo: (clave: string) =>
       juego.instructor.decir(t(clave as TranslationKey), clave),
+    /**
+     * Qué boca dice esta frase y **con qué pack**, o `null` si le toca a la
+     * voz del navegador.
+     *
+     * Es la sonda que faltaba el día que se grabaron seis voces y solo sonó
+     * una: cada boca tiene su propio objeto, y hasta hoy tres de las cuatro no
+     * miraban las grabaciones ni una sola vez.
+     */
+    quienDice: (clave: string) => {
+      const salida: Record<string, string | null> = {};
+      for (const [quien, boca] of Object.entries(juego.bocas)) {
+        salida[quien] =
+          boca instanceof InstructorGrabado ? boca.vozDe(clave) : null;
+      }
+      return salida;
+    },
     /** Si está puesta la pantalla de fin de vuelo. Para el banco. */
     finDeVuelo: () => juego.hud.finPuesto,
     /**

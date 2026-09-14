@@ -34,6 +34,7 @@
     "modelos": "node scripts/hacer-modelos.mjs",
     "cambio-de-avion": "node scripts/verificar-cambio-de-avion.mjs",
     "circuito": "node scripts/verificar-circuito.mjs",
+    "voces": "node scripts/verificar-voces.mjs",
     "botones": "node scripts/verificar-botones.mjs"
   },
   "dependencies": {

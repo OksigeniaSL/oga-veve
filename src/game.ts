@@ -266,6 +266,7 @@ import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
 import { comoSeDiceAqui, hablaDe } from "./i18n/habla";
 import { BOCA } from "./audio/boca";
+import { claveDeCabina } from "./audio/cabina";
 import { SE_QUEDAN, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import { alturaDeEdificio, arranqueEnPista } from "./world/aerodrome";
@@ -276,7 +277,11 @@ import { Audio, type Cue } from "./audio/audio";
 import { regimen } from "./ui/cuadro";
 import { Megafonia, conPasaje } from "./audio/megafonia";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
-import { InstructorGrabado } from "./audio/instructor-grabado";
+import {
+  InstructorGrabado,
+  nuevoBancoDeVoces,
+  type BancoDeVoces,
+} from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
 import { superficieEn, TRAQUETEO, type Superficie } from "./world/superficie";
@@ -932,9 +937,32 @@ export class Game {
    * propio instructor no es una radio, es un eco.
    */
   private readonly vozDelSistema: Instructor = elegirInstructor();
+  /**
+   * Las grabaciones, **una sola bolsa para las cuatro bocas**.
+   *
+   * El pack de voz trae seis voces —instructora, cabina, torre, torre de
+   * Canarias, otro avión y comandante— y se bajaban las seis enteras... para
+   * que las consultara **una sola de las cuatro bocas del juego**. La torre, el
+   * otro avión y la comandante se construían con `elegirTorre`,
+   * `elegirOtroAvion` y `elegirCapitana`, que devuelven la voz sintética del
+   * navegador y no preguntan por una grabación en ningún momento. O sea:
+   * treinta y tres frases grabadas, horneadas, publicadas y bajadas a cada
+   * tablet **para no sonar nunca**.
+   *
+   * Se vio jugando, y con estas palabras: «que se escuche la torre, que todavía
+   * a día de hoy la única voz es la de la instructora… tenemos a Yeray, a
+   * Jazlyn, a todos esos, ¿para qué?».
+   *
+   * Ahora cada boca es un `InstructorGrabado` con **su** suplente del sistema
+   * —que es lo que le da su timbre cuando una frase no está grabada— y las
+   * cuatro leen de esta bolsa. Se baja una vez.
+   */
+  private readonly grabaciones: BancoDeVoces = nuevoBancoDeVoces();
   readonly instructor: InstructorGrabado = new InstructorGrabado(
     this.audio,
     this.vozDelSistema,
+    BOCA,
+    this.grabaciones,
   );
   /**
    * El otro avión de la frecuencia, con su propia voz.
@@ -955,7 +983,12 @@ export class Game {
    * Va la primera en la lista de voces cogidas del otro avión porque el orden
    * manda: ver `elegirVoz`.
    */
-  private readonly torre: Instructor = elegirTorre(this.vozDelSistema);
+  private readonly torre: Instructor = new InstructorGrabado(
+    this.audio,
+    elegirTorre(this.vozDelSistema),
+    BOCA,
+    this.grabaciones,
+  );
   /**
    * La megafonía de cabina, que solo habla en los aviones con pasaje.
    *
@@ -964,20 +997,41 @@ export class Game {
    * reconoce antes de entender una palabra. Ver `audio/megafonia.ts`.
    */
   private readonly megafonia = new Megafonia();
-  private readonly otroAvion: Instructor = elegirOtroAvion(
-    this.vozDelSistema,
-    this.torre,
+  private readonly otroAvion: Instructor = new InstructorGrabado(
+    this.audio,
+    elegirOtroAvion(this.vozDelSistema, this.torre),
+    BOCA,
+    this.grabaciones,
   );
   /**
    * Y su voz. Es la única del juego que **no** es cercana —le habla a cien
    * personas por un altavoz— y por eso se reconoce sin saber quién es. Con el
    * pack de voz es Jazlyn; sin él, el timbre que quede libre.
    */
-  private readonly capitana: Instructor = elegirCapitana(
-    this.vozDelSistema,
-    this.torre,
-    this.otroAvion,
+  private readonly capitana: Instructor = new InstructorGrabado(
+    this.audio,
+    elegirCapitana(this.vozDelSistema, this.torre, this.otroAvion),
+    BOCA,
+    this.grabaciones,
   );
+  /**
+   * Las cuatro bocas del juego, para poder preguntarles desde fuera.
+   *
+   * Existe por el fallo que arregló este cableado: la torre, el otro avión y
+   * la comandante se construían con voz del navegador y no consultaban una
+   * sola grabación, así que el pack sonaba a una voz cuando tiene seis. Sin
+   * una manera de preguntarle a cada boca qué va a usar, eso no se ve desde
+   * ningún banco. Ver `sondas.ts` y `verificar-voz.mjs`.
+   */
+  get bocas(): Readonly<Record<string, Instructor>> {
+    return {
+      instructor: this.instructor,
+      torre: this.torre,
+      otro: this.otroAvion,
+      capitana: this.capitana,
+    };
+  }
+
   /** Lo último que dijo la lámpara, para que la torre no se repita. */
   private ultimaLuzDeTorre: string | null = null;
   private readonly radio = new Radio();
@@ -2104,6 +2158,25 @@ export class Game {
     urgencia: Urgencia = "normal",
   ): void {
     if (canalesDe(this.tier.avisos).cabina) {
+      /*
+       * **Y con la grabación de cabina si la hay.**
+       *
+       * Esto mandaba el inglés al sintetizador del navegador sin más, y por eso
+       * las veintiuna frases de cabina grabadas —«V one», «rotate», «five
+       * hundred», «terrain, pull up»— se bajaban a cada tablet con el resto del
+       * pack **para no sonar nunca**. Se preguntó jugando: «¿y qué hay de esas
+       * voces robóticas? "Minimals", "five hundred"… o "Terrain!"».
+       *
+       * La cabina habla por la boca de la instructora a propósito: es el mismo
+       * altavoz de dentro del avión, no una radio. Ver `audio/cabina.ts`, que
+       * es lo que une lo que pide el código con lo que hay grabado, y tiene su
+       * prueba para que no vuelva a sobrar ninguna grabación.
+       */
+      const deCabina = claveDeCabina(ingles);
+      if (deCabina && this.instructor.vozDe(deCabina)) {
+        this.instructor.decir(ingles, deCabina, urgencia);
+        return;
+      }
       decir(ingles, urgencia);
       return;
     }
