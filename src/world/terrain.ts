@@ -141,12 +141,23 @@ export class Terrain {
     const umbrales = this.umbralesDePista;
     if (!umbrales) return this.runwayElevation;
     const { ax, az, dx, dz, largo2, cotaA, cotaB } = umbrales;
-    const t = ((x - ax) * dx + (z - az) * dz) / largo2;
-    return (
-      cotaA +
-      (cotaB - cotaA) * Math.max(-0.5, Math.min(1.5, t)) +
-      this.runwayElevationMovida
+    /*
+     * **Fuera del asfalto manda el umbral, no la prolongación del plano.**
+     *
+     * Esto estiraba la pendiente de la pista media longitud por cada punta, y
+     * parecía lo natural hasta que se miró contra qué se mide una
+     * aproximación: **contra el umbral**, que es el punto al que se llega, y
+     * no contra un asfalto imaginario que sigue subiendo por detrás. En La
+     * Palma —once metros y medio de desnivel en 2.202— la prolongación pone la
+     * referencia hasta 5,8 m por encima del umbral alto, y todo lo que se
+     * decide ahí —«ya podés tocar», el aviso de terreno, la senda— se decidía
+     * con esos metros de error.
+     */
+    const t = Math.max(
+      0,
+      Math.min(1, ((x - ax) * dx + (z - az) * dz) / largo2),
     );
+    return cotaA + (cotaB - cotaA) * t + this.runwayElevationMovida;
   }
 
   /**
