@@ -713,8 +713,13 @@ export class PlanDeVuelo {
    * Todos los pares que se consideraron, con sus metros. **Para medir**: sin
    * esto, discutir si el rodaje se puede acortar es discutir de memoria.
    */
-  paresVistos: readonly { ref: string | null; ida: number; viaje: number }[] =
-    [];
+  paresVistos: readonly {
+    ref: string | null;
+    ida: number;
+    viaje: number;
+    /** Si la ida pisa el asfalto de la pista. Ver `parDeSalida`. */
+    cruza: boolean;
+  }[] = [];
   /** El par puesto + espera con el que menos se rueda. Ver `parDeSalida`. */
   private par:
     | { puesto: { ref: string | null; xy: Punto }; espera: Punto }
@@ -917,6 +922,7 @@ export class PlanDeVuelo {
       espera: Punto;
       ida: number;
       viaje: number;
+      cruza: boolean;
     }[] = [];
     for (const puesto of this.puestosCandidatos()) {
       const vuelta = rodajeEntre(this.grafo, traeDeVuelta, puesto.xy, 600);
@@ -953,6 +959,7 @@ export class PlanDeVuelo {
           espera,
           ida: ruta.largo,
           viaje: ruta.largo + casa,
+          cruza: ruta.puntos.some((q) => this.enElAsfalto(q)),
         });
       }
     }
@@ -973,9 +980,29 @@ export class PlanDeVuelo {
       ref: p.puesto.ref,
       ida: Math.round(p.ida),
       viaje: Math.round(p.viaje),
+      cruza: p.cruza,
     }));
-    const cortos = pares.filter((p) => p.ida <= LO_MAXIMO_DE_IDA);
-    const donde = (cortos.length ? cortos : pares).sort(
+    /*
+     * **Y antes que nada: que la ida no cruce la pista.**
+     *
+     * En El Hierro la plataforma cae a un lado y el punto de espera más
+     * cercano al otro, así que la ruta más corta atravesaba el asfalto en
+     * diagonal —veintiséis de sus cuarenta y siete puntos sobre la pista— y el
+     * juego hacía lo correcto en cuanto el avión pisaba: percance «entraste en
+     * la pista sin la luz verde», a los veinte segundos de arrancar y sin que
+     * nadie hubiera hecho nada más que seguir la raya verde que el propio
+     * juego pintaba. Lo mismo en Fuerteventura.
+     *
+     * Cruzar una pista es una autorización aparte, y el juego todavía no la
+     * sabe pedir ni dar. Hasta que la sepa, se rodea. Es **preferencia y no
+     * prohibición**: hay campos donde la única calle cruza la pista —Pedro
+     * Juan Caballero es uno— y allí se cruza, porque la alternativa es no
+     * salir del puesto.
+     */
+    const porTierra = pares.filter((p) => !p.cruza);
+    const posibles = porTierra.length ? porTierra : pares;
+    const cortos = posibles.filter((p) => p.ida <= LO_MAXIMO_DE_IDA);
+    const donde = (cortos.length ? cortos : posibles).sort(
       (a, b) => a.viaje - b.viaje,
     )[0]!;
     this.par = { puesto: donde.puesto, espera: donde.espera };
@@ -1099,6 +1126,44 @@ export class PlanDeVuelo {
     return mejor;
   }
 
+  /**
+   * Si un punto cae **dentro del rectángulo de la pista**.
+   *
+   * A lo ancho y a lo largo, con el mismo margen con el que el juego decide
+   * que el avión está en pista. Ver `enPista` en `paso`.
+   */
+  private enElAsfalto(p: Punto): boolean {
+    const [fx, fz] = delante(this.pista.heading);
+    // El eje, en las coordenadas del plan, donde la y es la z cambiada de signo.
+    const ux = fx;
+    const uy = -fz;
+    const dx = p[0] - this.pista.x;
+    const dy = p[1] - -this.pista.z;
+    const along = dx * ux + dy * uy;
+    const across = dx * -uy + dy * ux;
+    return (
+      Math.abs(across) < this.pista.width / 2 + 3 &&
+      Math.abs(along) < this.pista.length / 2 + 3
+    );
+  }
+
+  /**
+   * Se sale al punto de espera más cercano **que no obligue a cruzar la
+   * pista**.
+   *
+   * Esto elegía por distancia y nada más, y en El Hierro eso salía carísimo:
+   * la plataforma está a un lado y el punto de espera más cercano al otro, así
+   * que la ruta más corta **atravesaba la pista en diagonal** —veintiséis de
+   * sus cuarenta y siete puntos caen sobre el asfalto— y el juego hacía lo
+   * correcto: percance «entraste en la pista sin la luz verde», a los veinte
+   * segundos de arrancar y sin que nadie hubiera hecho nada mal salvo seguir
+   * la raya verde que el propio juego pintaba.
+   *
+   * Cruzar una pista es una autorización aparte y el juego todavía no la sabe
+   * dar, así que de momento se rodea. Y es **preferencia, no prohibición**:
+   * hay campos donde la única calle cruza la pista —Pedro Juan Caballero es
+   * uno— y ahí se cruza, porque la alternativa es no salir.
+   */
   private esperaDeSalida(): Punto | null {
     const puesto = this.puestoElegido;
     // Sin puesto a mano manda el par calculado; con uno —el mejor estaba
@@ -1106,11 +1171,17 @@ export class PlanDeVuelo {
     if (!puesto) return this.parDeSalida()?.espera ?? null;
     let mejor: Punto | null = null;
     let corto = Infinity;
+    let mejorCruza = true;
     for (const espera of this.esperasPosibles()) {
       const ruta = rodajeEntre(this.grafo, puesto, espera);
-      if (!ruta || ruta.largo >= corto) continue;
+      if (!ruta) continue;
+      const cruza = ruta.puntos.some((q) => this.enElAsfalto(q));
+      // Primero las que no cruzan; entre iguales, la más corta.
+      if (cruza && !mejorCruza) continue;
+      if (cruza === mejorCruza && ruta.largo >= corto) continue;
       corto = ruta.largo;
       mejor = espera;
+      mejorCruza = cruza;
     }
     return mejor;
   }
@@ -2314,7 +2385,24 @@ export class PlanDeVuelo {
       restante,
       alEjeDePista,
       alLargoDePista: along,
-      enPista: alEjeDePista < this.pista.width / 2 + 3,
+      /*
+       * **Y estar en la pista es estar dentro del rectángulo, no del pasillo.**
+       *
+       * Esto miraba solo la distancia al eje, y un eje es una recta infinita:
+       * cualquier punto alineado con la pista contaba como estar en ella,
+       * estuviera a un kilómetro por delante del umbral o rodando por la
+       * plataforma. En casi todos los campos no se notaba porque la
+       * plataforma cae a un lado; en El Hierro y en Fuerteventura la calle de
+       * salida sale por la prolongación del eje, y allí el juego decía que el
+       * avión se había metido en la pista **sin haber salido de la
+       * plataforma**: percance «entraste en la pista sin la luz verde» a los
+       * veinte segundos de arrancar, sin haber pisado asfalto.
+       *
+       * Una pista es un rectángulo. Se mira a lo ancho y también a lo largo.
+       */
+      enPista:
+        alEjeDePista < this.pista.width / 2 + 3 &&
+        Math.abs(along) < this.pista.length / 2 + 3,
       backTaxi: this.giroDelBackTaxi !== null,
       pistaRestante: Math.max(0, this.pista.length / 2 - along),
       sobreElSuelo,
