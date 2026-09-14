@@ -930,13 +930,25 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # con medio panel vacío a la izquierda: «todos descentrados y fuera de
         # margen». En un avión de verdad pasa lo mismo y por eso el panel de
         # vuelo está delante del comandante y no en medio.
+        #
+        # **Y juntas, aunque el panel sea ancho.**
+        #
+        # La separación la daba cada avión, y en los paneles anchos se iba de
+        # las manos: el bimotor las ponía a treinta y seis centímetros del eje
+        # del asiento, o sea cuarenta y cuatro de hueco entre ellas. Lo que se
+        # ve entonces son **dos islas con medio metro de plancha negra en
+        # medio**, que es exactamente la pinta de cabina sin terminar que se
+        # quería quitar. Las dos pantallas de un piloto van una al lado de la
+        # otra porque se leen a la vez; lo que crece con el panel es lo que hay
+        # **alrededor**, no el hueco entre ellas.
+        separa = min(pantallas_en, 0.16)
         for lado in (-1, 1):
             piezas.append(
                 cuadro(
                     "pantalla-izquierda" if lado < 0 else "pantalla-derecha",
                     0.28,
                     0.20,
-                    (plazas[0] + lado * pantallas_en,
+                    (plazas[0] + lado * separa,
                      alto_panel - 0.18, panel_z + 0.005),
                     "g1000_display",
                 )
@@ -972,31 +984,52 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # siendo una cabina creíble — en muchas avionetas el grupo del motor va
         # justo ahí, a la derecha del panel de vuelo.
         cuantos = max(1, palancas) + 1
-        radioReloj = min(0.07, (ancho * 1.5) / (cuantos * 2.6))
-        columna = plazas[0] + pantallas_en + 0.14 + radioReloj + 0.02
+        # **Una sola columna, y los relojes encogen para que quepa.**
+        #
+        # La columna va pegada al borde derecho de lo que se ve desde el
+        # asiento, así que **a lo ancho no hay sitio**: se probó a ponerlos en
+        # bloque de dos como en el cuatrimotor y la segunda columna se salía por
+        # el canto derecho —medido, x hasta 1.399 de un lienzo de 1.280—. Lo que
+        # sí hay es alto, y lo que sobra es tamaño: tres relojes de siete
+        # centímetros no caben entre la visera y los botones, y de cinco y medio
+        # sí. Con el monomotor —dos relojes— no cambia nada.
+        radioReloj = min(0.07, 0.175 / max(2, cuantos))
+        cols = 1
+        paso_r = radioReloj * 2.4
+        izq = plazas[0] + min(pantallas_en, 0.16) + 0.14 + radioReloj + 0.02
+        columna = izq + (cols - 1) * paso_r / 2
         arriba = alto_panel - 0.13
+        filas_r = (cuantos + cols - 1) // cols
         for m in range(cuantos):
-            y = arriba - m * radioReloj * 2.4
+            x = izq + (m % cols) * paso_r
+            y = arriba - (m // cols) * paso_r
             if m < cuantos - 1:
                 piezas += reloj(
                     f"reloj-motor-{m}", mide, radioReloj,
-                    (columna, y, panel_z + 0.008),
+                    (x, y, panel_z + 0.008),
                 )
             else:
                 piezas += reloj(
                     "reloj-flaps", "flaps", radioReloj,
-                    (columna, y, panel_z + 0.008),
+                    (x, y, panel_z + 0.008),
                 )
-        # Y los tres mandos que se pulsan, **debajo de los relojes y centrados**.
+        # Y los tres mandos que se pulsan, **debajo de la columna de relojes**.
         #
-        # A un lado no valen: en el turbohélice, con el ojo en el asiento
-        # izquierdo, los tres caían fuera de la pantalla y no había un píxel que
-        # los tocara. Medido con `npm run botones`, que existe justo para eso.
+        # Estuvieron centrados debajo de las pantallas, y ahí los tapaba la
+        # tarjeta de lo que hay que hacer igual que a los relojes: abajo y en el
+        # centro es donde vive ese cartel el vuelo entero. Un mando que no se ve
+        # no se pulsa, y éstos existen precisamente porque se pidió poder
+        # pulsarlos «tanto con clic, tap como tecla».
+        #
+        # A un lado a secas tampoco valían —en el turbohélice, con el ojo en el
+        # asiento izquierdo, los tres caían fuera de la pantalla, medido con
+        # `npm run botones`—, y por eso van pegados a la columna de relojes, que
+        # ya está comprobado que se ve entera.
         for i, que in enumerate(("motor", "flaps", "freno")):
             piezas += boton(
                 que, radioReloj * 1.0, radioReloj * 0.8,
-                (plazas[0] + (i - 1) * radioReloj * 1.3,
-                 alto_panel - 0.29 - radioReloj * 2.6,
+                (columna + (i - 1) * radioReloj * 1.3,
+                 arriba - (filas_r - 1) * paso_r - radioReloj * 1.7,
                  panel_z + 0.008),
             )
     _ = relojes
