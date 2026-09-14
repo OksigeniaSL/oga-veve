@@ -100,3 +100,83 @@ export function paraEntrarYDespegar(a: AircraftConfig): number {
 export function pistaQueHaceFalta(a: AircraftConfig): number {
   return Math.max(1200, carreraHastaVr(a) * 4.8);
 }
+
+/**
+ * Lo que tarda en parar desde que cruza el umbral, en metros.
+ *
+ * **No estaba, y hace falta tanto como la de despegue.** Un avión que cabe
+ * despegando puede no caber aterrizando: llega más rápido de lo que sale y con
+ * el peso todavía alto, y frenar cuesta más que acelerar. El JAZ 120 rueda
+ * 1.423 m hasta la rotación y necesita más del doble para pararse.
+ *
+ * Son dos trozos, como en cualquier manual:
+ *
+ * - **El aire**, desde los quince metros del umbral hasta tocar. Se recorre en
+ *   planeo poco profundo a la velocidad de aproximación, y se toma la cuenta
+ *   de siempre: la altura por la fineza en configuración de aterrizaje, que
+ *   con flaps anda por siete.
+ * - **El suelo**, integrando la frenada desde la velocidad de toma —un pelo
+ *   por debajo de la de umbral— con el rozamiento de frenar y la resistencia
+ *   aerodinámica, que a esa velocidad todavía cuenta.
+ *
+ * El coeficiente de frenado es **el mismo que usa el motor de vuelo** —ver
+ * `rolling` en `fdm.ts`—, porque si aquí se frenara distinto que ahí, esta
+ * cuenta diría que el avión cabe y el avión se saldría igualmente.
+ */
+export function distanciaDeAterrizaje(
+  a: AircraftConfig,
+  superficie: Superficie = "asfalto",
+): number {
+  const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
+  const peso = a.mass * G;
+  /*
+   * Con los flaps puestos, que es como se aterriza. Sin ellos la cuenta sale
+   * optimista por los dos lados: menos resistencia en el aire y menos peso
+   * quitado a las ruedas en el suelo.
+   */
+  const cl = a.aero.cl0 + a.flapsLift;
+  const cd =
+    a.aero.cd0 +
+    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
+    a.flapsDrag;
+  const fineza = cl / cd;
+  /** Desde quince metros, que es la altura del umbral en cualquier manual. */
+  const enElAire = 15 * fineza;
+
+  // Y el frenado, el mismo que el motor de vuelo: rodadura más freno a fondo.
+  const mu = ROZAMIENTO[superficie] + 0.28;
+  const toma = a.approachSpeed * 0.95;
+  const pasos = 400;
+  const dv = toma / pasos;
+  let s = 0;
+  for (let i = 0; i < pasos; i++) {
+    const v = (i + 0.5) * dv;
+    const q = 0.5 * RHO * v * v * a.wingArea;
+    const frena = (q * cd + mu * Math.max(0, peso - q * cl)) / a.mass;
+    s += (v / frena) * dv;
+  }
+  return enElAire + s;
+}
+
+/**
+ * La pista que este avión necesita en este campo, en metros.
+ *
+ * La mayor de las dos, con propina: se despega una vez y se aterriza otra, y no
+ * sirve de nada caber en una si no se cabe en la otra.
+ *
+ * El factor de la de despegue no es prudencia: `carreraHastaVr` acaba **en la
+ * rotación**, y desde ahí el avión todavía recorre un trecho antes de separarse
+ * y otro antes de pasar los quince metros del final. La proporción entre esa
+ * rodadura y la distancia de despegue publicada anda por 1,8 en los manuales
+ * —un 172 rueda 265 m y despega en 500; un 747 a este peso rueda 1.800 y
+ * despega en 2.500—, y ése es el número.
+ */
+export function pistaQueNecesita(
+  a: AircraftConfig,
+  superficie: Superficie = "asfalto",
+): number {
+  return Math.max(
+    carreraHastaVr(a, superficie) * 1.8,
+    distanciaDeAterrizaje(a, superficie),
+  );
+}

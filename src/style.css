@@ -5199,3 +5199,47 @@ button.motor__tecla::after {
     pointer-events: auto;
   }
 }
+
+/*
+ * **El avión que no cabe en este campo.**
+ *
+ * Apagado, sin tocar, y con el dibujo encima: un avión sobresaliendo por los dos
+ * extremos de la franja de la pista. Ni un mensaje de error ni una palabra —
+ * esto lo mira quien tiene cuatro años y no lee, y un texto sería el canal que
+ * justamente no tiene.
+ *
+ * No se esconde, y es a propósito: un avión que desaparece del hangar según el
+ * campo desconcierta más de lo que ayuda, y además el juego quiere que se vea
+ * que **ese avión existe y necesita una pista más larga**, que es media lección
+ * de aviación. Ver `cabeEn`.
+ */
+.ficha--nocabe {
+  cursor: not-allowed;
+}
+
+/*
+ * El avión se apaga; el aviso **no**. Si se atenuara la ficha entera —que es lo
+ * primero que uno escribe— el dibujo que explica el porqué se apagaría con
+ * ella, y entonces solo queda una ficha gris sin motivo.
+ */
+.ficha--nocabe .ficha__retrato,
+.ficha--nocabe .ficha__pie {
+  opacity: 0.38;
+  filter: saturate(0.35);
+}
+
+.ficha--nocabe .ficha__lienzo {
+  position: relative;
+}
+
+.ficha__nocabe {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 72%;
+  /* Por encima del retrato, que es lo que tiene que tapar. */
+  z-index: 1;
+  /* Y con su propia sombra, para que despegue del dibujo de debajo. */
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+}
