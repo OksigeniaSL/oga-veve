@@ -685,21 +685,39 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # sobraran— y lo que se veía desde el asiento eran manchas. Lo que se ve de
     # un motor en esta cabina es su N1, que es el mando con el que se vuela de
     # verdad; lo demás sería inventarse números que el juego no calcula.
-    radio = min(0.075, (ancho * 0.62) / max(1, motores * 2))
+    # **En bloque, no en fila.**
+    #
+    # Iban los cuatro en una sola fila centrada en el eje del fuselaje, y el eje
+    # del fuselaje no es donde se sienta nadie: con cuatro motores la fila mide
+    # sesenta y ocho centímetros, así que desde el asiento del comandante —a
+    # treinta y dos a la izquierda— el cuarto reloj quedaba a sesenta y seis
+    # centímetros de su cara hacia la derecha. Medido en pantalla con la sonda
+    # `enPantalla`: el reloj del motor 4 caía en x 1.227…1.370 de un lienzo de
+    # 1.280. Fuera del cuadro, literalmente.
+    #
+    # Y no es solo que se saliera: **en un avión de línea los regímenes de los
+    # motores se leen juntos**, en un bloque, porque lo que se mira es si van
+    # iguales. Cuatro agujas en fila de casi un metro no se comparan de un
+    # vistazo; dos filas de dos, sí. Es como están en un EICAS de verdad.
+    columnas = 1 if motores == 1 else 2
+    filas = (motores + columnas - 1) // columnas
+    radio = min(0.075, (ancho * 0.62) / max(1, columnas * 2))
     paso = radio * 2.35
-    libre = paso * (motores - 1) / 2 + radio + 0.03
+    libre = paso * (columnas - 1) / 2 + radio + 0.03
     que = mide
     for m in range(motores):
-        x = -paso * (motores - 1) / 2 + paso * m
+        col = m % columnas
+        fila = m // columnas
+        x = -paso * (columnas - 1) / 2 + paso * col
         piezas += reloj(
             f"reloj-motor-{m}", que, radio,
-            (x, alto_panel - 0.13, panel_z + 0.008),
+            (x, alto_panel - 0.13 - paso * fila, panel_z + 0.008),
         )
     # Y debajo de la columna, los flaps: en un avión de línea es de las pocas
     # cosas que quien juega mueve y puede ver moverse.
     piezas += reloj(
         "reloj-flaps", "flaps", radio * 0.8,
-        (0, alto_panel - 0.13 - radio * 2.3, panel_z + 0.008),
+        (0, alto_panel - 0.13 - paso * filas, panel_z + 0.008),
     )
     # `relojes` ya no cuenta discos sueltos: los instrumentos de esta cabina son
     # los motores y los flaps, y ninguno es de adorno.
