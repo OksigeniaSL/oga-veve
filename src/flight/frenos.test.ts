@@ -91,9 +91,37 @@ describe("con el motor a cero", () => {
     // Sin frenar siquiera: gas a cero es gas a cero. El modelo sencillo
     // tenía un suelo de velocidad pensado para el vuelo y lo aplicaba
     // también rodando, así que el avión se iba caminando él solo.
+    //
+    // **Y el tiempo que se le da es de verdad.** Eran treinta segundos, y con
+    // ellos pasaba porque el modelo frenaba al ralentí a más de un g: soltar el
+    // gas a treinta metros por segundo dejaba el avión parado en tres segundos,
+    // que es lo que hacía increíble la frenada del grande. Ahora al ralentí solo
+    // frena lo que frena un avión sin tocar el freno —ver `SIN_FRENO`— y lo que
+    // esta prueba defiende sigue siendo lo suyo: que **no hay suelo de
+    // velocidad**, o sea que acaba parándose del todo y no reptando para
+    // siempre.
     const model = enPista(TIERS[0]!);
-    rodar(model, 30, 0);
+    rodar(model, 120, 0);
     expect(model.state.airspeed).toBeLessThan(0.5);
+  });
+
+  it("y al ralentí no frena como si pisara el freno", () => {
+    /*
+     * El contraste que faltaba, y el que se coló entre las dos pruebas de
+     * arriba: si soltar el gas frena tanto como frenar, el freno no enseña
+     * nada y **ningún avión se sale nunca de una pista**. Con el avión de
+     * fuselaje ancho eso se veía a ojo: paraba en veintiún metros.
+     */
+    const DESDE = 30;
+    const sinFreno = enPista(TIERS[0]!);
+    rodar(sinFreno, 5, 0);
+    const conFreno = enPista(TIERS[0]!);
+    rodar(conFreno, 5, 1);
+    // Pisando el freno se pierde al menos el triple de velocidad que sin
+    // pisarlo. Con la avioneta son 2,4 m/s² contra medio.
+    expect(DESDE - conFreno.state.airspeed).toBeGreaterThan(
+      3 * (DESDE - sinFreno.state.airspeed),
+    );
   });
 });
 
@@ -127,11 +155,17 @@ describe("quitar gas", () => {
     model.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 0 });
     rodar(model, 25, 0, 1);
     const rapido = model.state.airspeed;
-    // Tres segundos a ralentí. Antes seguía casi igual de rápido, porque
-    // subir y bajar iban al mismo ritmo lento y quien lo probaba creía que
-    // el avión aceleraba solo.
-    rodar(model, 3, 0, 0);
-    expect(model.state.airspeed).toBeLessThan(rapido * 0.45);
+    /*
+     * Diez segundos a ralentí, y lo que se mide es que **baja de verdad**: que
+     * quitar gas se nota y no hay que esperar medio minuto a enterarse. Eran
+     * tres segundos y se pedía perder más de la mitad de la velocidad, que es
+     * una deceleración de coche de carreras — el mismo número que hacía parar
+     * al de fuselaje ancho en veintiún metros. Lo que esta prueba vino a cazar
+     * era lo contrario: un avión que seguía acelerando después de soltar el gas
+     * porque subir y bajar iban al mismo ritmo lento.
+     */
+    rodar(model, 10, 0, 0);
+    expect(model.state.airspeed).toBeLessThan(rapido - 4);
   });
 });
 

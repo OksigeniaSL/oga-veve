@@ -39,7 +39,16 @@ import type {
 } from "./model";
 import type { AircraftConfig } from "./aircraft";
 
-/** Velocidad de crucero cómoda, como fracción de la del avión. */
+/**
+ * Velocidad de crucero cómoda **a nivel del mar**, como fracción de la ficha.
+ *
+ * La cifra de crucero de un avión es verdad arriba, no abajo: un avión de línea
+ * cruza a doscientos treinta metros por segundo a once kilómetros, donde el
+ * aire es la cuarta parte de denso, y a ras de suelo no llega ni de lejos —se
+ * lo impide la presión dinámica, que es lo que rompe estructuras—. Así que este
+ * modelo sale de una fracción del crucero y **sube hasta el crucero entero con
+ * la altura**. Ver `alturaDeCrucero` en la ficha.
+ */
 const CRUISE_FRACTION = 0.62;
 /** Velocidad mínima rodando y a la que se separa del suelo, en m/s. */
 const IDLE_SPEED = 2;
@@ -70,17 +79,38 @@ const RODANDO_TRAS_TOMAR = 12;
 
 const MOTOR_QUE_SOSTIENE = 0.55;
 
-/** Lo que se baja con el motor al ralentí, m/s. El planeo de una avioneta. */
-const CAIDA_SIN_MOTOR = 3.5;
-
-/** Y lo que se sube a todo gas sin tocar la palanca, m/s. */
-const SUBIDA_CON_MOTOR = 2.5;
+/**
+ * Qué parte del ascenso de este avión da el motor solo, sin tocar la palanca.
+ *
+ * Aquí había dos números para los seis aviones —«se baja 3,5 m/s al ralentí» y
+ * «se sube 2,5 a todo gas»— y los dos eran de la avioneta. Con siete metros por
+ * segundo de palanca, 2,5 son poco más de un tercio; esa proporción se queda, y
+ * los metros los pone cada avión: `ascensoMaximo` lo que sube y `caidaSinMotor`
+ * lo que baja. Ver `flight/carrera.ts`.
+ *
+ * Y el que baja distinto es el que se nota: el de fuselaje ancho planea plano y
+ * aun así **baja a nueve metros por segundo**, porque avanza a ciento cuarenta.
+ * «Esa bestia no da ese giro, no baja en corto» — pues no, y ahora tampoco en
+ * el juego.
+ */
+const SUBE_SOLO = 0.36;
 
 /** Cuánta holgura se permite para considerar que las ruedas siguen tocando, m. */
 const PEGADO_AL_SUELO = 1;
 
 /** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
 const STATIC_GRIP = 1.2;
+
+/**
+ * Lo menos que frena un avión al que no se le pisa el freno, m/s².
+ *
+ * Medio metro por segundo al cuadrado. El rozamiento de rodadura solo daría una
+ * décima larga en asfalto —un avión de verdad rueda y rueda, y por eso hay que
+ * frenar— y eso, en un juego donde se rueda hasta la cabecera, es una eternidad.
+ * Medio incluye lo que no se modela aquí: el ralentí que ya no empuja, la
+ * resistencia del aire y la hélice haciendo de freno.
+ */
+const SIN_FRENO = 0.5;
 
 /**
  * Autoridad de la rueda de morro a paso de peatón, rad/s.
@@ -155,8 +185,15 @@ const MANDO_MINIMO = 0.12;
  * parece a lo que hace el avión de al lado.
  */
 const MAX_TURN_RATE = 0.25;
-/** Ritmo de ascenso máximo, en metros por segundo. */
-const MAX_CLIMB = 7;
+/*
+ * **El ascenso también lo pone el avión.**
+ *
+ * Aquí había siete metros por segundo para los seis: el doble de lo que sube
+ * una avioneta de escuela y la mitad de lo que sube un avión de línea con poco
+ * peso. Ahora sale del exceso de empuje sobre la resistencia —ver
+ * `ascensoMaximo` en `carrera.ts`—, que es la cuenta de toda la vida, y así el
+ * niño que cambia de avión nota que el grande sube como un ascensor.
+ */
 /** Inclinación aparente en viraje a fondo, en radianes. Ver `MAX_TURN_RATE`. */
 const VISUAL_BANK = 0.75;
 
@@ -166,6 +203,13 @@ export interface ArcadeOptions {
 }
 
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
+import {
+  ascensoMaximo,
+  caidaSinMotor,
+  carreraHastaVr,
+  rodaduraDeFrenada,
+  velocidadDeToma,
+} from "./carrera";
 
 export class ArcadeFlightModel implements FlightModel {
   readonly implementationName = "Modelo sencillo Óga Veve";
@@ -279,8 +323,64 @@ export class ArcadeFlightModel implements FlightModel {
     this.superficie = superficie;
   }
 
+  /**
+   * Lo más rápido que va este avión **aquí**, en metros por segundo.
+   *
+   * Abajo, la fracción de siempre; a su altura de crucero, la cifra entera de
+   * su ficha. En medio, lo que toque.
+   *
+   * Esto contesta a una queja concreta: «el 747 no pasaba de unos 500 km/h
+   * cuando ese pájaro pasa de los 800». Las dos cosas son verdad y no se
+   * contradicen — 500 a ras de suelo y 828 a once kilómetros son el mismo
+   * avión—, y hasta hoy el juego solo sabía la primera. Con esto, subir sirve
+   * para algo y el niño lo descubre volando.
+   */
+  private punta(altura = this.state.position.y): number {
+    const alto = clamp01(altura / this.aircraft.alturaDeCrucero);
+    return (
+      this.aircraft.cruiseSpeed *
+      (CRUISE_FRACTION + (1 - CRUISE_FRACTION) * alto)
+    );
+  }
+
   velocidadMaxima(): number {
-    return this.aircraft.cruiseSpeed * CRUISE_FRACTION;
+    return this.punta();
+  }
+
+  /**
+   * Con cuánto frena este avión a fondo en esta superficie, en m/s².
+   *
+   * Parar desde la velocidad de toma en los metros que dice la física
+   * —`rodaduraDeFrenada`— pide `v²/2s`, y eso es una deceleración, no un ritmo.
+   * No es una analogía: son los mismos metros que decide `cabeEn` para dejar
+   * entrar al avión en la pista.
+   */
+  private frenadaAFondo(): number {
+    const toma = velocidadDeToma(this.aircraft);
+    return (
+      (toma * toma) /
+      (2 * Math.max(1, rodaduraDeFrenada(this.aircraft, this.superficie)))
+    );
+  }
+
+  /**
+   * Y el de la carrera de despegue, en 1/s.
+   *
+   * Yendo hacia la punta `V`, la velocidad es `V(1−e^{−kt})` y la distancia
+   * hasta llegar a `v` sale `(V/k)·(−ln(1−v/V) − v/V)`. Despejando `k` con los
+   * metros que dice `carreraHastaVr`, la carrera de este modelo dura lo que
+   * dura la de verdad.
+   *
+   * Si la punta de este modelo no llega a la velocidad de rotación —no pasa con
+   * ningún avión de la flota, pero pasaría con uno mal fichado— se deja el
+   * ritmo de antes en vez de dividir por cero.
+   */
+  private ritmoDeCarrera(): number {
+    const punta = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
+    const r = this.aircraft.rotationSpeed / punta;
+    const metros = carreraHastaVr(this.aircraft, this.superficie);
+    if (r >= 0.98 || !Number.isFinite(metros) || metros <= 0) return 0.18;
+    return (punta * (-Math.log(1 - r) - r)) / metros;
   }
 
   /**
@@ -303,11 +403,12 @@ export class ArcadeFlightModel implements FlightModel {
   }
 
   velocidadDeEntradaEnFinal(): number {
+    // A ras de suelo, que es donde se entra en final: la altura no pinta nada.
     return this.aircraft.cruiseSpeed * CRUISE_FRACTION * 0.94;
   }
 
   gasPara(velocidad: number): number {
-    const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
+    const cruise = this.punta();
     const floor = this.aircraft.approachSpeed * MINIMA_DE_VUELO;
     if (cruise <= floor) return 1;
     return Math.max(0, Math.min(1, (velocidad - floor) / (cruise - floor)));
@@ -320,6 +421,7 @@ export class ArcadeFlightModel implements FlightModel {
    * recta que usa `step` cuando `onGround`.
    */
   gasParaRodar(velocidad: number): number {
+    // En el suelo no hay altura que valga: la punta es la de abajo.
     const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
     return Math.max(0, Math.min(1, velocidad / cruise));
   }
@@ -330,7 +432,9 @@ export class ArcadeFlightModel implements FlightModel {
     // esta se quedó, que es justo la del primer peldaño — el que más se juega.
     // Ver `MAX_PASO`.
     const step = Math.min(dt, MAX_PASO);
-    const cruise = this.aircraft.cruiseSpeed * CRUISE_FRACTION;
+    const cruise = this.state.onGround
+      ? this.aircraft.cruiseSpeed * CRUISE_FRACTION
+      : this.punta();
 
     // La velocidad la lleva el gas, sin más. Nada de empuje contra
     // resistencia: se va hacia la velocidad pedida y ya está.
@@ -382,7 +486,35 @@ export class ArcadeFlightModel implements FlightModel {
     // En un avión de verdad la asimetría es aún mayor: el empuje tarda en
     // subir y la resistencia frena en cuanto se suelta.
     const frenando = target < this.speed;
-    const base = this.state.onGround && frenando ? 0.55 : 0.18;
+    /*
+     * **Y el ritmo lo pone el avión, no una constante.**
+     *
+     * Aquí había dos números —0,55 para frenar en el suelo y 0,18 para todo lo
+     * demás— y eran los mismos para los seis aviones. Medido con el banco:
+     *
+     * ```
+     *              frenada de la toma a parado      carrera hasta rotar
+     *   jaz-20         9 m   (la cuenta: 157)        133 m  (225)
+     *   jaz-120       21 m   (la cuenta: 840)        255 m  (1.424)
+     * ```
+     *
+     * O sea que **el avión de fuselaje ancho paraba en veintiún metros**, poco
+     * más que su propio largo, y despegaba en doscientos cincuenta. Quien lo
+     * jugó lo dijo antes que el banco: «frené el 747 en Los Rodeos en una
+     * distancia muy poco creíble; cuando se aterriza con un bicho de este
+     * tamaño, el avión se está un rato para perder velocidad y se come un buen
+     * tramo de pista».
+     *
+     * La forma de este modelo es un retardo de primer orden, y de ahí sale el
+     * ritmo con una cuenta cerrada: yendo hacia cero, la distancia recorrida es
+     * `v/k`, así que para parar en los metros que dice la física basta con
+     * `k = v/metros`. Acelerando hacia la punta sale la misma integral con un
+     * logaritmo. Los metros los pone `flight/carrera.ts`, que es el mismo sitio
+     * del que salen la pista que hace falta y el veredicto de si el avión cabe
+     * — o sea que **frenar, caber y despegar dejan de ser tres opiniones**.
+     */
+    const base =
+      this.state.onGround && !frenando ? this.ritmoDeCarrera() : 0.18;
     /*
      * **Y sobre hierba se acelera peor y se frena solo.**
      *
@@ -405,10 +537,36 @@ export class ArcadeFlightModel implements FlightModel {
      * banco de despegue, que es de donde salen los exponentes.
      */
     const blando = this.state.onGround ? 1 - (cuesta - 1) * 0.05 : 1;
-    const suelo = this.state.onGround && !frenando ? 1 / cuesta ** 0.2 : 1;
-    const rate =
-      (this.state.onGround ? base * (1 + controls.brakes * 5) : 0.18) * suelo;
-    this.speed += (target * blando - this.speed) * Math.min(1, step * rate);
+    /*
+     * **La hierba ya no entra dos veces.** Lo que cuesta acelerar en un campo
+     * blando lo dice ya `carreraHastaVr` con el rozamiento de la superficie, y
+     * eso está dentro del ritmo. Lo que queda aquí es solo la punta, que también
+     * baja un poco: ver `blando`.
+     */
+    const suelo = 1;
+    const rate = base * suelo;
+    if (this.state.onGround && frenando) {
+      /*
+       * **Frenar es una deceleración, no un ritmo.**
+       *
+       * El resto de este modelo va hacia la velocidad pedida con un retardo, y
+       * para acelerar eso es exactamente la forma correcta —el empuje pelea
+       * contra la resistencia y la diferencia se encoge—. Para frenar no: un
+       * avión frenando pierde velocidad a un ritmo **casi constante**, y un
+       * retardo exponencial nunca llega a cero, así que el avión reptaba.
+       *
+       * La deceleración sale de los metros que dice la física: parar desde la
+       * velocidad de toma en `rodaduraDeFrenada` metros pide `v²/2s`. Y el freno
+       * a medias frena a medias, en la misma proporción que usan las dos cuentas
+       * de `carrera.ts`: el pie suelto deja solo la rodadura.
+       */
+      const mu = ROZAMIENTO[this.superficie];
+      const parte = (mu + 0.28 * controls.brakes) / (mu + 0.28);
+      const decel = Math.max(SIN_FRENO, this.frenadaAFondo() * parte);
+      this.speed = Math.max(target * blando, this.speed - decel * step);
+    } else {
+      this.speed += (target * blando - this.speed) * Math.min(1, step * rate);
+    }
     // Rozamiento estático. Un decaimiento exponencial se acerca a cero para
     // siempre y nunca llega, y lo que se ve en pantalla es un avión que
     // repta eternamente después de frenar. Un avión parado está parado.
@@ -562,8 +720,9 @@ export class ArcadeFlightModel implements FlightModel {
     const planeo =
       gas >= MOTOR_QUE_SOSTIENE
         ? ((gas - MOTOR_QUE_SOSTIENE) / (1 - MOTOR_QUE_SOSTIENE)) *
-          SUBIDA_CON_MOTOR
-        : ((gas - MOTOR_QUE_SOSTIENE) / MOTOR_QUE_SOSTIENE) * CAIDA_SIN_MOTOR;
+          (ascensoMaximo(this.aircraft) * SUBE_SOLO)
+        : ((gas - MOTOR_QUE_SOSTIENE) / MOTOR_QUE_SOSTIENE) *
+          caidaSinMotor(this.aircraft, this.speed);
     /*
      * **Y sin motor no se puede volar recto, por mucho que se tire.**
      *
@@ -578,7 +737,8 @@ export class ArcadeFlightModel implements FlightModel {
      * puede alargar mucho el planeo —eso es lo que hace un piloto— pero no
      * cancelarlo. Sigue sin poder caerse nadie: aquí no hay pérdida ni rotura.
      */
-    const mando = controls.elevator * MAX_CLIMB * (0.4 + 0.6 * gas);
+    const mando =
+      controls.elevator * ascensoMaximo(this.aircraft) * (0.4 + 0.6 * gas);
     const wantedClimb = canClimb ? (mando + planeo) * bite : 0;
     this.climb += (wantedClimb - this.climb) * Math.min(1, step * 2.2);
 

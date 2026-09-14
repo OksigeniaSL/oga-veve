@@ -210,6 +210,17 @@ export interface AircraftConfig {
   /** Velocidad de crucero de referencia, m/s. Modula la caída de empuje. */
   cruiseSpeed: number;
   /**
+   * A qué altura se hace ese crucero, m.
+   *
+   * **La cifra de crucero de un avión es verdad arriba y no abajo**, y sin esta
+   * segunda mitad la primera engaña: el peldaño de Guyrami enseñaba un avión de
+   * fuselaje ancho que no pasaba de quinientos por hora, «cuando ese pájaro pasa
+   * de los 800». Los dos números son del mismo avión —quinientos a ras de suelo,
+   * ochocientos a once kilómetros— y lo que faltaba era la altura a la que se
+   * cumple el segundo. Ver `punta` en `arcade.ts`.
+   */
+  alturaDeCrucero: number;
+  /**
    * Velocidad de aproximación, m/s. **Vref.**
    *
    * A la que hay que cruzar el umbral. Es el número que más veces estropea un
@@ -324,6 +335,12 @@ export const PYKASU: AircraftConfig = {
    */
   maxThrust: 2600,
   cruiseSpeed: 60,
+  /*
+   * Tres mil metros: un monomotor de escuela sin presurizar cruza entre dos mil
+   * quinientos y tres mil quinientos, y por encima el motor atmosférico se
+   * queda sin aire.
+   */
+  alturaDeCrucero: 3000,
   // 33 m/s son 119 km/h, que es la corta final de un 172 de verdad.
   approachSpeed: 33,
   decisionSpeed: 26,
@@ -391,6 +408,9 @@ export const MAINUMBY: AircraftConfig = {
   inertia: { xx: 1600, yy: 2400, zz: 3600 },
   maxThrust: 5200,
   cruiseSpeed: 55,
+  // Dos mil quinientos: el trabajo de un avión así se hace mucho más abajo, y
+  // lo que sube es para ir de un campo a otro.
+  alturaDeCrucero: 2500,
   approachSpeed: 29,
   decisionSpeed: 24,
   rotationSpeed: 26,
@@ -489,6 +509,9 @@ export const PANAMBI: AircraftConfig = {
   inertia: { xx: 3400, yy: 4200, zz: 6800 },
   maxThrust: 5000,
   cruiseSpeed: 80,
+  // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
+  // ahí arriba, con oxígeno a bordo.
+  alturaDeCrucero: 5500,
   // 44 m/s son 1,3 veces la pérdida, que es como se cruza el umbral.
   approachSpeed: 44,
   decisionSpeed: 34,
@@ -573,6 +596,9 @@ export const ARASUNU: AircraftConfig = {
   inertia: { xx: 26000, yy: 32000, zz: 52000 },
   maxThrust: 14000,
   cruiseSpeed: 90,
+  // Siete mil seiscientos: veinticinco mil pies, el techo de servicio típico de
+  // un turbohélice regional presurizado.
+  alturaDeCrucero: 7600,
   approachSpeed: 48,
   decisionSpeed: 38,
   rotationSpeed: 41,
@@ -673,6 +699,8 @@ export const ARAI: AircraftConfig = {
    * gas, que es lo que delataba que el número no era el suyo.
    */
   cruiseSpeed: 220,
+  // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
+  alturaDeCrucero: 11000,
   /*
    * **Ciento treinta y dos nudos, que es como entra un regional.**
    *
@@ -818,6 +846,12 @@ export const YVAGA: AircraftConfig = {
    */
   maxThrust: 820000,
   cruiseSpeed: 230,
+  /*
+   * Diez mil setecientos: treinta y cinco mil pies, que es donde la CR-2144
+   * da los doscientos treinta metros por segundo de arriba. El techo de
+   * servicio está más alto —trece mil setecientos— pero ahí ya no se cruza.
+   */
+  alturaDeCrucero: 10700,
   // 1,3 veces la pérdida, como manda: con CLmax 1,4 pierde a 76 m/s.
   // Ciento cuarenta y seis nudos: 1,3 veces su pérdida con flaps, y lo que
   // dice el manual de vuelo de un 747 a este peso —145 a 150—. Estaba en 98
