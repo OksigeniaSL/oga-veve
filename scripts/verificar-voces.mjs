@@ -20,6 +20,8 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const PUERTO = 5292;
 
@@ -82,6 +84,81 @@ const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
+/*
+ * **Y antes de nada, que el pack y su manifiesto digan lo mismo.**
+ *
+ * Esto no necesita navegador y sin embargo es la mitad del problema. Un
+ * horneado que deja atrás los ficheros de la tanda anterior no da ningún
+ * error: el manifiesto queda bien, el juego funciona, y lo que pasa es que se
+ * publican y se bajan **audios que no van a sonar nunca**. Pasó al montar el
+ * indicativo del otro avión por piezas — las cinco frases viejas, con «Zulu
+ * Papa Alfa Bravo Charlie» pegado dentro, se quedaron en la carpeta después de
+ * dejar de estar en ninguna receta: diez ficheros de audio muerto viajando a
+ * cada tablet.
+ *
+ * Es el tercer agujero de la misma familia en este pack —las cinco de torre
+ * que no pedía nadie, los veintiún cantos de cabina antes que ellas—. Todos se
+ * ven igual: algo grabado que nadie llega a oír.
+ */
+{
+  const RAIZ = "data/voces";
+  const voces = readdirSync(RAIZ).filter((v) =>
+    existsSync(join(RAIZ, v, "manifiesto.json")),
+  );
+  const sobran = [];
+  const faltan = [];
+  const sueltas = [];
+  for (const voz of voces) {
+    const m = JSON.parse(readFileSync(join(RAIZ, voz, "manifiesto.json")));
+    const piezas = new Set(Object.keys(m.piezas));
+    const enDisco = new Set();
+    for (const f of readdirSync(join(RAIZ, voz))) {
+      const trozo = /^(.*)\.(ogg|m4a)$/.exec(f);
+      if (trozo) enDisco.add(trozo[1]);
+    }
+    for (const f of enDisco) if (!piezas.has(f)) sobran.push(`${voz}/${f}`);
+    for (const p of piezas) if (!enDisco.has(p)) faltan.push(`${voz}/${p}`);
+
+    /*
+     * Y que cada pieza entre en alguna receta. Con huecos, las piezas que los
+     * rellenan no aparecen por su nombre en ninguna: son justo las
+     * intercambiables, y se reconocen por su propia receta de una pieza.
+     */
+    const usadas = new Set();
+    let hayHuecos = false;
+    for (const receta of Object.values(m.recetas)) {
+      for (const trozo of receta) {
+        if (/^\{\w+\}$/.test(trozo)) hayHuecos = true;
+        else usadas.add(trozo);
+      }
+    }
+    for (const p of piezas) {
+      if (usadas.has(p)) continue;
+      const suya = m.recetas[p];
+      if (hayHuecos && suya?.length === 1 && suya[0] === p) continue;
+      sueltas.push(`${voz}/${p}`);
+    }
+  }
+  comprobar(
+    "en el pack no sobra ningún audio",
+    !sobran.length,
+    sobran.length ? sobran.join(" ") : `${voces.length} voces cuadran`,
+    "un audio que ya no nombra nadie se publica y se baja para no sonar nunca",
+  );
+  comprobar(
+    "y no falta ninguno que el manifiesto prometa",
+    !faltan.length,
+    faltan.length ? faltan.join(" ") : "ninguno",
+    "media frase es peor que ninguna: el juego la descarta entera",
+  );
+  comprobar(
+    "y cada pieza entra en alguna receta",
+    !sueltas.length,
+    sueltas.length ? sueltas.join(" ") : "todas montan algo",
+    "una grabación que no monta nada es una grabación tirada",
+  );
+}
+
 const piezas = await page.evaluate(() => globalThis.__oga.voz().piezas);
 comprobar(
   "el pack de voz llega entero",
@@ -90,10 +167,25 @@ comprobar(
   "sin pack no hay nada que repartir y esto no mide nada",
 );
 
+/*
+ * **Y el indicativo del otro avión se monta, así que hay que rellenarlo.**
+ *
+ * Sus recetas llevan cinco huecos, uno por letra, y una receta con huecos sin
+ * rellenar no monta nada —a propósito: media frase es peor que ninguna—. El
+ * relleno de este vuelo lo da el juego. Ver `flight/matricula.ts`.
+ */
+const indicativo = await page.evaluate(() => globalThis.__oga.indicativo());
+comprobar(
+  "el otro avión tiene indicativo, y del país del aeródromo",
+  /^EC-[A-Z]{3}$/.test(indicativo.matricula),
+  `${indicativo.matricula} · «${indicativo.dicho}» · en Tenerife`,
+  "ZP- es Paraguay, y en Canarias sonaba igual: era siempre el mismo avión",
+);
+
 for (const [quien, clave, pack] of REPARTO) {
   const dicho = await page.evaluate(
-    (c) => globalThis.__oga.quienDice(c),
-    clave,
+    ([c, r]) => globalThis.__oga.quienDice(c, r),
+    [clave, clave.startsWith("otro.") ? indicativo.relleno : undefined],
   );
   comprobar(
     `«${clave}» la dice ${quien} con el pack ${pack}`,

@@ -50,6 +50,8 @@ Llegaste. Apagá el motor
 Volvé a la raya verde
 Se rompió. Volvemos a empezar
 Vas muy rápido
+Muy rápido: bajá el motor
+Muy rápido para esta altura
 Bajá los flaps para frenar
 Más despacio
 Pará acá

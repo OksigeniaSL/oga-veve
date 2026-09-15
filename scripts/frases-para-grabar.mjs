@@ -141,6 +141,73 @@ const TORRE = [
   ["torre.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
 ];
 
+/**
+ * El alfabeto aeronáutico, una sílaba por pieza.
+ *
+ * Es lo que convierte cinco frases en infinitas: con veintiséis piezas se monta
+ * **cualquier** indicativo, y así el otro avión de la frecuencia deja de
+ * llamarse siempre Zulu Papa Alfa Bravo Charlie. Se oyó jugando: «hay unas
+ * pocas frases y en cada vuelo dice lo mismo».
+ *
+ * Y es exactamente lo que hace un GPS con el nombre de la calle. El mecanismo
+ * de huecos —`{c1}`, `{c2}`…— llevaba construido y probado desde el principio
+ * sin que lo usara nadie. Ver `recetaDe` en `src/audio/banco-de-voz.ts` y
+ * `src/flight/matricula.ts`.
+ *
+ * **En castellano, no en inglés.** Quien lo dice es un piloto de la frecuencia
+ * en Asunción o en Tenerife, no una torre internacional: dice «Alfa, Bravo,
+ * Charlie» con su boca, que es lo que se oye en una radio de VFR local. Lo que
+ * sí va en inglés es la fraseología de la torre, y eso ya está arriba.
+ */
+const FONETICO = [
+  "Alfa",
+  "Bravo",
+  "Charlie",
+  "Delta",
+  "Echo",
+  "Foxtrot",
+  "Golf",
+  "Hotel",
+  "India",
+  "Juliett",
+  "Kilo",
+  "Lima",
+  "Mike",
+  "November",
+  "Oscar",
+  "Papa",
+  "Quebec",
+  "Romeo",
+  "Sierra",
+  "Tango",
+  "Uniform",
+  "Victor",
+  "Whiskey",
+  "X-ray",
+  "Yankee",
+  "Zulu",
+];
+
+/** Y la pieza de cada letra, que es como se llama su fichero. */
+const piezaFonetica = (letra) =>
+  `fonetico.${letra.toLowerCase().replace("-", "")}`;
+
+/**
+ * Los cinco mensajes del otro avión **sin el indicativo delante**.
+ *
+ * El indicativo estaba pegado dentro de cada una de las cinco grabaciones, así
+ * que no había forma de cambiarlo. Separado, la receta lo monta: las letras que
+ * toquen y después el mensaje. Y «buenos días» lleva el indicativo detrás, que
+ * es como se saluda por radio.
+ */
+const OTRO_SOLO = [
+  ["otro.solo.buenosDias", "Buenos días,", "el saludo, antes del indicativo"],
+  ["otro.solo.rodando", "rodando a la cabecera", "sale del puesto"],
+  ["otro.solo.enCola", "viento en cola", "entra en el circuito"],
+  ["otro.solo.final", "en final", "ya viene a la pista"],
+  ["otro.solo.pistaLibre", "pista libre", "y la deja"],
+];
+
 /*
  * **El otro avión ya no vive aquí.**
  *
@@ -234,6 +301,20 @@ for (const [id, texto, para] of CABINA) {
 }
 for (const [id, texto, para] of TORRE) {
   filas.push({ id, voz: "torre", idioma: "en", texto, para });
+  total += texto.length;
+}
+for (const letra of FONETICO) {
+  filas.push({
+    id: piezaFonetica(letra),
+    voz: "otro",
+    idioma: "es",
+    texto: letra,
+    para: "una letra del indicativo",
+  });
+  total += letra.length;
+}
+for (const [id, texto, para] of OTRO_SOLO) {
+  filas.push({ id, voz: "otro", idioma: "es", texto, para });
   total += texto.length;
 }
 

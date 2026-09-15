@@ -3,3 +3,34 @@
 003	otro.enCola	Zulu Papa Alfa Bravo Charlie, viento en cola
 004	otro.final	Zulu Papa Alfa Bravo Charlie, en final
 005	otro.pistaLibre	Zulu Papa Alfa Bravo Charlie, pista libre
+006	fonetico.alfa	Alfa
+007	fonetico.bravo	Bravo
+008	fonetico.charlie	Charlie
+009	fonetico.delta	Delta
+010	fonetico.echo	Echo
+011	fonetico.foxtrot	Foxtrot
+012	fonetico.golf	Golf
+013	fonetico.hotel	Hotel
+014	fonetico.india	India
+015	fonetico.juliett	Juliett
+016	fonetico.kilo	Kilo
+017	fonetico.lima	Lima
+018	fonetico.mike	Mike
+019	fonetico.november	November
+020	fonetico.oscar	Oscar
+021	fonetico.papa	Papa
+022	fonetico.quebec	Quebec
+023	fonetico.romeo	Romeo
+024	fonetico.sierra	Sierra
+025	fonetico.tango	Tango
+026	fonetico.uniform	Uniform
+027	fonetico.victor	Victor
+028	fonetico.whiskey	Whiskey
+029	fonetico.xray	X-ray
+030	fonetico.yankee	Yankee
+031	fonetico.zulu	Zulu
+032	otro.solo.buenosDias	Buenos días,
+033	otro.solo.rodando	rodando a la cabecera
+034	otro.solo.enCola	viento en cola
+035	otro.solo.final	en final
+036	otro.solo.pistaLibre	pista libre
