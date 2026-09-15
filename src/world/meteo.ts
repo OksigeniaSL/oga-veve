@@ -46,9 +46,39 @@ export interface Meteo {
   readonly techoM: number | null;
   /** Visibilidad, m. Diez mil quiere decir «diez o más». */
   readonly visibilidadM: number;
+  /**
+   * Si llueve, y de qué manera.
+   *
+   * Pedido con el resto del tiempo: «falta paisaje… climatología, atravesar
+   * mar de nubes o nubes, **lluvia, tormenta**, sol, amanecer, atardecer».
+   *
+   * Cuatro escalones y no un número, porque **no son lo mismo**: la llovizna
+   * moja el parabrisas y no se oye; la lluvia se oye y quita visibilidad; la
+   * tormenta además tiene rayos y baches. Un solo número de «cuánto llueve» no
+   * puede decir eso, y un niño que oiga un trueno tiene que estar en tormenta
+   * y no en «lluvia 0,9».
+   */
+  readonly lluvia: Lluvia;
+  /**
+   * Con cuánta fuerza cae, de cero a uno.
+   *
+   * Es el `-` y el `+` del METAR: `-RA` es lluvia floja y `+RA` es un
+   * aguacero. Van aparte de la clase porque son cosas distintas — puede
+   * caer una tormenta floja y una lluvia muy fuerte.
+   */
+  readonly fuerzaDeLluvia: number;
   /** De dónde salió: `'metar'` si es de verdad, `'defecto'` si es el de casa. */
   readonly fuente: "metar" | "defecto" | "mano";
 }
+
+/**
+ * Las cuatro maneras de que caiga agua que este juego distingue.
+ *
+ * Ni nieve ni granizo: en Asunción y en Canarias no cae nieve en ninguno de los
+ * aeropuertos del juego, y meter un caso que no se puede ver ni probar es
+ * meter código muerto. El día que haya un campo donde nieve, entra aquí.
+ */
+export type Lluvia = "nada" | "llovizna" | "lluvia" | "tormenta";
 
 /**
  * El tiempo de por defecto: día bueno y viento flojo.
@@ -69,6 +99,8 @@ export const TIEMPO_DE_CASA: Meteo = {
   temp: 20,
   techoM: null,
   visibilidadM: 10000,
+  lluvia: "nada",
+  fuerzaDeLluvia: 0,
   fuente: "defecto",
 };
 
@@ -122,6 +154,8 @@ export function leerMetar(crudo: string): Meteo | null {
   let temp = TIEMPO_DE_CASA.temp;
   let techoM: number | null = null;
   let visibilidadM = TIEMPO_DE_CASA.visibilidadM;
+  let lluvia: Lluvia = "nada";
+  let fuerzaDeLluvia = 0;
   let vistoViento = false;
 
   for (const p of partes) {
@@ -141,6 +175,38 @@ export function leerMetar(crudo: string): Meteo | null {
     // Visibilidad: 9999 son diez kilómetros o más.
     if (/^\d{4}$/.test(p) && vistoViento) {
       visibilidadM = Number(p) === 9999 ? 10000 : Number(p);
+      continue;
+    }
+
+    /*
+     * El tiempo presente: `RA`, `-RA`, `+TSRA`, `SHRA`, `DZ`, `VCTS`…
+     *
+     * El grupo lleva tres cosas pegadas y en este orden: la intensidad —`-`
+     * flojo, nada moderado, `+` fuerte—, el descriptor —`SH` chubascos, `TS`
+     * tormenta, `FZ` engelante— y lo que cae. Se mira lo que cae y si hay
+     * tormenta; lo demás no cambia lo que se ve por el parabrisas.
+     *
+     * `VCTS` es «tormenta en las cercanías» y cuenta como tormenta: los rayos
+     * se ven desde lejos, que es justo cuando impresionan.
+     */
+    const w =
+      /^(VC)?([-+])?(MI|BC|PR|DR|BL|SH|TS|FZ)?(DZ|RA|SN|GR|GS|UP)?$/.exec(p);
+    if (w && (w[3] === "TS" || w[4])) {
+      const cae = w[4];
+      const tormenta = w[3] === "TS";
+      const clase: Lluvia = tormenta
+        ? "tormenta"
+        : cae === "DZ"
+          ? "llovizna"
+          : "lluvia";
+      // Manda la más gorda: un METAR puede traer dos grupos —«-RA TS»— y lo
+      // que hay fuera es lo peor de los dos.
+      const orden: Lluvia[] = ["nada", "llovizna", "lluvia", "tormenta"];
+      if (orden.indexOf(clase) > orden.indexOf(lluvia)) lluvia = clase;
+      // Flojo, moderado, fuerte. Y en las cercanías, a medio gas: está ahí,
+      // pero no encima.
+      const fuerza = w[2] === "-" ? 0.35 : w[2] === "+" ? 1 : 0.7;
+      fuerzaDeLluvia = Math.max(fuerzaDeLluvia, w[1] ? fuerza * 0.5 : fuerza);
       continue;
     }
 
@@ -174,7 +240,17 @@ export function leerMetar(crudo: string): Meteo | null {
   }
 
   return vistoViento
-    ? { vientoDe, vientoKt, qnh, temp, techoM, visibilidadM, fuente: "metar" }
+    ? {
+        vientoDe,
+        vientoKt,
+        qnh,
+        temp,
+        techoM,
+        visibilidadM,
+        lluvia,
+        fuerzaDeLluvia,
+        fuente: "metar",
+      }
     : null;
 }
 
