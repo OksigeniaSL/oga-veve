@@ -3976,7 +3976,8 @@ export class Game {
   }
 
   /** Vuelve a pedir el parte de verdad y lo pone. */
-  private async tiempoDeVerdad(): Promise<void> {
+  /** Vuelve a pedir el parte de verdad y lo pone. Público para el banco. */
+  async tiempoDeVerdad(): Promise<void> {
     const icao = this.scenario.aerodrome?.id;
     if (!icao) return;
     const meteo = await pedirMetar(icao, PROXY_METEO);

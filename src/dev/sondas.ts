@@ -613,6 +613,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * Y poner lluvia a mano, que es lo que permite verla sin esperar a que el
      * METAR de verdad traiga un día malo. Para el banco y para mirarla.
      */
+    /** Pide el METAR de verdad, como el botón del panel del tiempo. */
+    tiempoDeVerdad: () => juego.tiempoDeVerdad(),
     /** Qué está cayendo, y cuánta niebla hay. Para mirar la lluvia. */
     lloviendo: () => juego.lloviendo,
     nieblaAhora: () => juego.sky.fog.density,
