@@ -463,7 +463,33 @@ export class Vuelo {
        */
       const liston =
         this.fase === "aterrizado" ? YA_ES_RODAJE : AÚN_ATERRIZANDO;
-      if (s.estado.airspeed >= liston) return "aterrizado";
+      /*
+       * **Y aterrizando se está en la pista. Fuera de ella, ya se rueda.**
+       *
+       * Esto solo miraba la velocidad, así que un avión que salía del asfalto
+       * todavía deprisa seguía «aterrizado» **por toda la plataforma**, y en
+       * esa fase el tope de rodaje es un trinquete: impide acelerar y no
+       * frena. Resultado medido en Tenerife Norte, dos vuelos de cada seis:
+       * el avión dejaba la pista a **veintisiete metros por segundo**
+       * —noventa y siete por hora—, cruzaba la plataforma a esa velocidad y se
+       * metía dentro de la terminal. Percance «edificio», y con toda la razón.
+       *
+       * Es la misma queja que ya se oyó con otras palabras: «a toda leche me
+       * pasé E5 y nada me avisó, puedo ir a la velocidad que me da la gana por
+       * la pista después de un aterrizaje».
+       *
+       * Fuera del rectángulo de la pista no se aterriza: se rueda, y rodando
+       * hay un tope que sí frena. La histéresis de la velocidad se queda para
+       * lo suyo, que es no salirse de la carrera por un bote.
+       *
+       * **Y no es lo contrario del despegue**, aunque lo parezca. Allí salirse
+       * del rectángulo **no** deshace la carrera, porque lo que hace falta en
+       * una carrera de despegue es que nadie te quite el gas. Aquí lo que hace
+       * falta es lo otro: que nadie te deje llevarte a la plataforma una
+       * velocidad de pista. Una regla protege lo que necesitás; la otra te
+       * quita lo que ya no te toca.
+       */
+      if (s.enPista && s.estado.airspeed >= liston) return "aterrizado";
       // La pista hay que dejarla libre: hay otro detrás.
       if (s.alEjeDePista <= PISTA_LIBRE) return "abandonando";
       if (parado && s.restante < LLEGADA) return "en-puesto";

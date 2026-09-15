@@ -359,6 +359,15 @@ describe("recuperarse de haberse salido del guion", () => {
   it("al volver a tierra fuera de la pista, retoma y manda a la plataforma", () => {
     // «Al volver ya no puedo aterrizar para retomar la guía por la calle de
     // rodadura, ya estoy en vuelo.» Ahora sí puede.
+    //
+    // **Y sin pasar por «aterrizado».** Esto esperaba que tocar tierra a
+    // ochocientos metros del eje contara como carrera de aterrizaje mientras
+    // se fuera deprisa, y eso es lo que había que quitar: en esa fase el tope
+    // de rodaje es un trinquete que impide acelerar y **no frena**, así que un
+    // avión que deja el asfalto a veintisiete metros por segundo se lleva esa
+    // velocidad por toda la plataforma. En Tenerife Norte acababa dentro de la
+    // terminal dos veces de cada seis. Fuera del rectángulo de la pista no se
+    // aterriza: se rueda, y rodando hay un tope que sí frena.
     const v = new Vuelo();
     v.reiniciar();
     durante(
@@ -382,13 +391,62 @@ describe("recuperarse de haberse salido del guion", () => {
       }),
       1,
     );
-    expect(v.actual).toBe("aterrizado");
+    expect(v.actual).toBe("a-plataforma");
     const fase = durante(
       v,
       con({ motor: true, sobreElSuelo: 1, alEjeDePista: 800, restante: 900 }),
       2,
     );
     expect(fase).toBe("a-plataforma");
+  });
+
+  it("y saliendo de la pista deprisa deja de aterrizar y pasa a rodar", () => {
+    /*
+     * El fallo entero, en una prueba: el avión toca, frena poco, sale del
+     * asfalto todavía a veintisiete metros por segundo **y sigue en
+     * «aterrizado»**, que es la fase en la que el tope de rodaje no frena. En
+     * Tenerife Norte eso acababa dentro de la terminal dos vuelos de cada
+     * seis; se ve en la traza a metro y medio del suelo, a doscientos noventa
+     * metros del eje de pista y a noventa y siete por hora.
+     */
+    const v = new Vuelo();
+    v.reiniciar();
+    durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 400,
+        estado: { airspeed: 40, groundSpeed: 40 } as never,
+      }),
+      20,
+    );
+    expect(v.actual).toBe("en-vuelo");
+    // Toca en la pista y corre: eso sí es aterrizar.
+    durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 1,
+        enPista: true,
+        alEjeDePista: 2,
+        estado: { airspeed: 30, groundSpeed: 30 } as never,
+      }),
+      2,
+    );
+    expect(v.actual).toBe("aterrizado");
+    // Y sale del asfalto sin haber frenado. Ya no aterriza: rueda.
+    const fase = durante(
+      v,
+      con({
+        motor: true,
+        sobreElSuelo: 1,
+        enPista: false,
+        alEjeDePista: 40,
+        estado: { airspeed: 27, groundSpeed: 27 } as never,
+      }),
+      2,
+    );
+    expect(fase).not.toBe("aterrizado");
   });
 
   it("rodar hacia atrás desde la doble raya no deja al tutor colgado", () => {
