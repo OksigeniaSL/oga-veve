@@ -19,6 +19,7 @@ import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
 import GCLA from "../../data/aerodromes/gcla.aero.json";
 import GCHI from "../../data/aerodromes/gchi.aero.json";
+import GCGM from "../../data/aerodromes/gcgm.aero.json";
 import GCTS from "../../data/aerodromes/gcts.aero.json";
 import GCLP from "../../data/aerodromes/gclp.aero.json";
 import GCRR from "../../data/aerodromes/gcrr.aero.json";
@@ -1029,6 +1030,40 @@ export const EL_HIERRO: Scenario = {
 };
 
 /**
+ * La Gomera — la pista corta, y el campo que le dice que no a media flota.
+ */
+export const LA_GOMERA: Scenario = {
+  id: "la-gomera",
+  vientoDominante: { vientoDe: 45, vientoKt: 12, techoM: 1300, temp: 23 },
+  nameKey: "scenario.laGomera.name",
+  pais: "es",
+  seed: 19991122,
+  size: 16000,
+  segments: 400,
+  reliefHeight: 1400,
+  reliefScale: 3.0,
+  ridgeMix: 0.65,
+  waterLevel: 2,
+  riverWidth: 0,
+  bands: [
+    { from: -50, colour: 0x6b6151 },
+    { from: 120, colour: 0x7a6d57 },
+    { from: 400, colour: 0x6d6b4c },
+    { from: 750, colour: 0x46603c },
+    { from: 1050, colour: 0x3b5a38 },
+    { from: 1300, colour: 0x5f6a4a },
+  ],
+  water: 0x3f6a80,
+  fill: 0x6b6151,
+  sky: { horizon: 0xe0e7e8, zenith: 0x4b87c7 },
+  fog: { colour: 0xdbe4e7, density: 0.000017 },
+  sun: { azimuth: 155, elevation: 52 },
+  runway: pistaDe(GCGM as unknown as Aerodrome, "09"),
+  magneticVariation: 8.8,
+  aerodrome: GCGM as unknown as Aerodrome,
+};
+
+/**
  * Madrid–Cuatro Vientos, que es el aeródromo de las avionetas.
  *
  * Y no Barajas, a propósito. Barajas es el aeropuerto de Madrid y en este
@@ -1432,6 +1467,7 @@ export const SCENARIOS: readonly Scenario[] = [
   GRAN_CANARIA,
   LANZAROTE,
   EL_HIERRO,
+  LA_GOMERA,
   CUATRO_VIENTOS,
 ];
 

@@ -213,6 +213,16 @@ const TORRE_TARDA = 2.2;
 const PISTA_LIBRE = 75;
 
 /**
+ * A cuánto del eje deja de ser una carrera de despegue, m.
+ *
+ * Trescientos. Irse un poco de lado en la carrera es normal —el de fuselaje
+ * ancho se va treinta y ocho metros en una pista de cuarenta y cinco, ver el
+ * #158— y por eso el pestillo de la carrera no mira el rectángulo de la pista.
+ * Pero a trescientos metros del eje ya no se está despegando de esa pista.
+ */
+const FUERA_DE_LA_CARRERA = 300;
+
+/**
  * La velocidad a la que se deja de estar aterrizando, m/s. **Dos números.**
  *
  * Era uno solo, doce, y con un solo número la fase se pone a parpadear: en la
@@ -490,9 +500,27 @@ export class Vuelo {
        * quita lo que ya no te toca.
        */
       if (s.enPista && s.estado.airspeed >= liston) return "aterrizado";
+      /*
+       * **Y haber llegado gana a estar saliendo.**
+       *
+       * Esto preguntaba primero por la pista, y con eso un avión que ya está
+       * parado en su puesto seguía «abandonando» si el puesto cae a menos de
+       * setenta y cinco metros del eje. En La Gomera cae a sesenta y nueve: la
+       * plataforma está pegada a la pista porque el campo mide lo que mide.
+       *
+       * Y no era solo una etiqueta equivocada: el juego le pedía **las dos
+       * cosas a la vez** —«frená» y «salí de la pista»— alternándolas, con el
+       * avión quieto, hasta que se acababa el tiempo. Cuatrocientos noventa y
+       * seis segundos para recorrer doscientos noventa y seis metros. Es la
+       * contradicción que ya se oyó en otro sitio: «"salí de la pista, viene
+       * otro", "más despacio" — o salgo de la pista o me doy prisa».
+       *
+       * Un puesto está donde está el puesto. Si el aeropuerto lo puso a
+       * sesenta y nueve metros del eje, llegar ahí es llegar.
+       */
+      if (parado && s.restante < LLEGADA) return "en-puesto";
       // La pista hay que dejarla libre: hay otro detrás.
       if (s.alEjeDePista <= PISTA_LIBRE) return "abandonando";
-      if (parado && s.restante < LLEGADA) return "en-puesto";
       return "a-plataforma";
     }
 
@@ -521,7 +549,27 @@ export class Vuelo {
      */
     const enLaCarrera =
       this.fase === "despegando" || this.fase === "comprometido";
-    if (enLaCarrera && s.estado.airspeed >= YA_ES_RODAJE)
+    /*
+     * **Y una carrera se hace en la pista o cerca de ella.**
+     *
+     * El pestillo de arriba sostiene la carrera mientras se corra, y eso está
+     * bien mientras se corra **por donde se corre**. En Fuerteventura —cuyo
+     * grafo de calles se va del campo, ver #163— el avión salía del puesto, no
+     * llegaba nunca a la pista y acababa dando vueltas a tres kilómetros al
+     * norte del aeropuerto, a treinta y un metros por segundo y en fase
+     * «comprometido», con la tarjeta de «ya no podés parar» puesta, hasta que
+     * se acababa el tiempo.
+     *
+     * Un avión a trescientos metros del eje no está despegando de esa pista,
+     * esté a la velocidad que esté. Y trescientos son de sobra: el de fuselaje
+     * ancho se va treinta y ocho metros de lado en la carrera —era el #158— y
+     * eso tiene que seguir contando como carrera.
+     */
+    if (
+      enLaCarrera &&
+      s.alEjeDePista < FUERA_DE_LA_CARRERA &&
+      s.estado.airspeed >= YA_ES_RODAJE
+    )
       return yaNoSePuedeParar(s) ? "comprometido" : "despegando";
 
     // ── En el suelo, yendo hacia la pista ────────────────────────────────
