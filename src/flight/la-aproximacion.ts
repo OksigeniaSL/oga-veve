@@ -127,6 +127,25 @@ export class LaAproximacion {
 
   /** Si la torre —o la vaca— ha mandado irse al aire y todavía manda. */
   mandanFrustrar = false;
+  /**
+   * **Y por qué la mandaron**, que no es un detalle: decide qué pasa si no se
+   * obedece.
+   *
+   * Las dos órdenes encendían la misma bandera y el juego solo miraba esa, así
+   * que aterrizar con cualquiera de las dos puestas rompía el avión «por
+   * llevarse por delante lo que hubiera en la pista». Con la de la torre es
+   * verdad —hay una vaca—. Con la de aproximación no estabilizada **no hay
+   * nada en la pista**: el avión se rompía contra un obstáculo que no existe.
+   *
+   * Se vio jugando con el 747: «al aterrizar me ordena una frustrada… cuando
+   * estoy llegando "así no entra" con 3400 m de pista y la velocidad al
+   * mínimo, tomo tierra y se rompió, volvemos a empezar».
+   *
+   * Una aproximación no estabilizada que se continúa no explota: sale larga,
+   * dura o descolocada, y para eso ya están los veredictos de siempre —golpe,
+   * fuera de pista—. El aviso enseña; la consecuencia la pone la física.
+   */
+  porqueMandaron: "pistaOcupada" | "noEstabilizada" | null = null;
 
   /**
    * Cómo se sortean las órdenes de irse al aire.
@@ -171,6 +190,7 @@ export class LaAproximacion {
   /** Se empieza de nuevo: ni orden puesta, ni PAPI dicho, ni tramo. */
   reiniciar(): void {
     this.mandanFrustrar = false;
+    this.porqueMandaron = null;
     this.yaLoMandaron = false;
     this.altoAlMandar = 0;
     this.porQueSeMando = null;
@@ -288,6 +308,7 @@ export class LaAproximacion {
     if (this.ordenes === "siempre") this.ordenes = "auto";
     this.yaLoMandaron = true;
     this.mandanFrustrar = true;
+    this.porqueMandaron = "pistaOcupada";
     this.altoAlMandar = alto;
 
     this.mundo.hechos.emit("mandaronIrseAlAire", { porque: "pistaOcupada" });
@@ -303,6 +324,7 @@ export class LaAproximacion {
    */
   levantarLaOrden(): void {
     this.mandanFrustrar = false;
+    this.porqueMandaron = null;
     this.mundo.vaca.quitar();
     this.mundo.hechos.emit("pistaLibreOtraVez", {});
   }
@@ -395,6 +417,7 @@ export class LaAproximacion {
      */
     this.yaLoMandaron = true;
     this.mandanFrustrar = true;
+    this.porqueMandaron = "noEstabilizada";
     this.altoAlMandar = alto;
     /*
      * Y **por qué**, con sus números. Para el banco.

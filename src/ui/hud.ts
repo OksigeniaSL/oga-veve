@@ -168,6 +168,35 @@ export class Hud {
   private units: UnitSystem = METRIC;
   /** Si ya se marcó V1 en esta carrera de despegue. Ver `update`. */
   private dijoV1 = false;
+  /**
+   * Si esto **ya es** una carrera de despegue, aunque ahora mismo parpadee.
+   *
+   * La condición de V1 era una conjunción de cuatro cosas —fase de despegue,
+   * en la pista, por encima de la velocidad de decisión y con gas— mirada
+   * fotograma a fotograma. Basta con que **una** de ellas parpadee justo en el
+   * instante en que la aguja cruza V1 para perder el aviso, y entonces ya no
+   * vuelve: el destello se marca una sola vez por carrera. Medido en el banco,
+   * el mismo avión en el mismo aeropuerto lo canta en una tirada y no en la
+   * siguiente, y pasa con la avioneta igual que con el 747. Se vio jugando:
+   * «al despegar no me avisa del V1 ni VR ni nada».
+   *
+   * Y no es así como se canta una V1: se canta **cuando la aguja pasa**, no si
+   * en ese fotograma se daban cuatro condiciones. Empezada la carrera, esto se
+   * queda puesto hasta que la carrera acaba —se vuela, o el avión se para—, y
+   * los dos avisos solo miran la velocidad.
+   */
+  private enLaCarrera = false;
+
+  /** Lo que ve el detector de V1, para los bancos. Ver `sondas.ts`. */
+  get sondaDeV1(): Record<string, number | boolean> {
+    return {
+      enLaCarrera: this.enLaCarrera,
+      dijoV1: this.dijoV1,
+      dijoVr: this.dijoVr,
+      vr: this.vr,
+      destello: +this.destelloRestante.toFixed(2),
+    };
+  }
   /** Y si ya se marcó Vr, que va justo detrás. */
   private dijoVr = false;
   /** Velocidad de rotación de la aeronave de hoy, m/s. Ver `setAeronave`. */
@@ -1152,11 +1181,12 @@ export class Hud {
      * abortar, hay una pista que se acaba. Quién está en qué lo sabe el plan
      * de vuelo, no la velocidad.
      */
-    const despegando =
-      enDespegue &&
-      state.onRunway &&
-      state.airspeed > decisionSpeed &&
-      throttle > 0.55;
+    // Empezar la carrera sí pide las cuatro cosas a la vez; seguir en ella, no.
+    if (enDespegue && state.onRunway && throttle > 0.55)
+      this.enLaCarrera = true;
+    if (!enDespegue || (enSuelo && state.airspeed < 5))
+      this.enLaCarrera = false;
+    const despegando = this.enLaCarrera && state.airspeed > decisionSpeed;
     // La tecla del freno, la que se enseña para la mano elegida.
     const tecla = this.teclaDe?.("brakes") ?? "";
     if (tecla && this.brakeKey.textContent !== tecla)
@@ -1228,6 +1258,7 @@ export class Hud {
     ) {
       this.dijoV1 = false;
       this.dijoVr = false;
+      this.enLaCarrera = false;
     }
 
     const escondeBoton =
