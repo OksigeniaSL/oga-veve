@@ -441,6 +441,8 @@ export const ES_PY = {
   "vuelo.fuera": "Volvé a la raya verde",
   "vuelo.roto": "Se rompió. Volvemos a empezar",
   "vuelo.rapido": "Vas muy rápido",
+  "vuelo.sobrevelocidad": "Muy rápido: bajá el motor",
+  "vuelo.sobrevelocidadAire": "Muy rápido para esta altura",
   "vuelo.pediFlaps": "Bajá los flaps para frenar",
   "palabra.flaps": "Flaps",
   "vuelo.despacio": "Más despacio",

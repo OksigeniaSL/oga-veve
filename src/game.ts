@@ -4766,6 +4766,7 @@ export class Game {
     const racha = rachaEn(this.clock.elapsedTime, aire);
     this.flight.ponerRacha?.(racha.x, racha.y, racha.z);
     this.atenderAlCinturon(cuantoSeMueve(aire), dt);
+    this.atenderALaSobrevelocidad(dt);
 
     this.oirLaRadio(dt);
     this.syncAircraftMesh(dt);
@@ -6037,6 +6038,58 @@ export class Game {
    * Solo en los aviones con pasaje, como la megafonía: una avioneta de escuela
    * no lleva cartel ni tiene a quién avisar.
    */
+  /** Cuánto lleva por encima del tope, para no cantarlo por un bache. */
+  private sobrandoVelocidad = 0;
+  /** Y si ya se dijo, para no repetirlo mientras siga pasando. */
+  private dichoDeSobrevelocidad = false;
+
+  /**
+   * **El tope de velocidad del avión, que hasta hoy no existía.**
+   *
+   * El empuje peleaba contra la resistencia y donde se cruzaban, ahí se
+   * quedaba: el JAZ 90 daba mil cincuenta por hora a quinientos metros, o sea
+   * Mach 0,86 a ras de suelo. Era el #159.
+   *
+   * Y se avisa **diciendo cuál de los dos topes es**, porque son cosas
+   * distintas y la diferencia es la lección: abajo te frena la estructura del
+   * avión y arriba te frena el aire, y subiendo el límite cambia de dueño. Un
+   * solo cartel de «vas rápido» no puede contar eso.
+   *
+   * Dos segundos por encima antes de decir nada: un avión que pasa el tope
+   * medio segundo en una ráfaga no está en sobrevelocidad, y un aviso que salta
+   * con cada bache se aprende a no oír.
+   */
+  private atenderALaSobrevelocidad(dt: number): void {
+    const s = this.flight.state;
+    if (s.onGround) {
+      this.sobrandoVelocidad = 0;
+      this.dichoDeSobrevelocidad = false;
+      return;
+    }
+    const tope = this.flight.limiteDeVelocidad();
+    const pasado = s.airspeed > tope;
+    this.sobrandoVelocidad = pasado ? this.sobrandoVelocidad + dt : 0;
+    if (!pasado) {
+      // Se rearma al volver a estar dentro con holgura: si no, volvería a
+      // cantar en cuanto la aguja rozara el tope otra vez.
+      if (s.airspeed < tope * 0.94) this.dichoDeSobrevelocidad = false;
+      return;
+    }
+    if (this.sobrandoVelocidad < 2 || this.dichoDeSobrevelocidad) return;
+    this.dichoDeSobrevelocidad = true;
+    const clave =
+      this.flight.quienLimita() === "aire"
+        ? "vuelo.sobrevelocidadAire"
+        : "vuelo.sobrevelocidad";
+    this.hud.senal.mostrar(
+      "sobrevelocidad",
+      this.rotulo(clave as TranslationKey, "palabra.rapido"),
+      null,
+      { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+    );
+    this.cantar("too fast", t(clave as TranslationKey), clave, "urgente");
+  }
+
   private atenderAlCinturon(movimiento: number, dt: number): void {
     if (!conPasaje(this.aircraft.mass)) return;
     const bajo = this.flight.state.heightAboveGround < 900;

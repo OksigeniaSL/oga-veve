@@ -183,6 +183,7 @@ export interface ArcadeOptions {
 
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import { radioDeGiro } from "./cabe";
+import { topeDeVelocidad, type QuienManda } from "./limites";
 import {
   ascensoMaximo,
   caidaSinMotor,
@@ -340,6 +341,23 @@ export class ArcadeFlightModel implements FlightModel {
       this.aircraft.cruiseSpeed *
       (CRUISE_FRACTION + (1 - CRUISE_FRACTION) * alto)
     );
+  }
+
+  /**
+   * El tope de verdad **también aquí**, aunque este modelo no llegue nunca.
+   *
+   * Guyrami tiene su propia punta —el gas es la velocidad y sube con la altura
+   * hasta el crucero de la ficha— así que en la práctica no toca Vmo jamás. Se
+   * responde igual porque el juego pregunta lo mismo a los dos modelos, y un
+   * peldaño que conteste `Infinity` obliga a quien pregunta a saber en cuál
+   * está. Ver `flight/limites.ts`.
+   */
+  limiteDeVelocidad(): number {
+    return topeDeVelocidad(this.aircraft, this.state.position.y).verdadera;
+  }
+
+  quienLimita(): QuienManda {
+    return topeDeVelocidad(this.aircraft, this.state.position.y).manda;
   }
 
   velocidadMaxima(): number {
