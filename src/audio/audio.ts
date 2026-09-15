@@ -380,6 +380,12 @@ export class Audio {
   private windBody: BiquadFilterNode | null = null;
   private windWhistle: BiquadFilterNode | null = null;
   private windGain: GainNode | null = null;
+  /** La lluvia: el siseo agudo y el cuerpo grave. Ver el montaje de los nodos. */
+  private rainGain: GainNode | null = null;
+  private rainBody: BiquadFilterNode | null = null;
+  private rainBodyGain: GainNode | null = null;
+  /** Y el trueno, que es un golpe de ruido muy grave con cola. */
+  private thunderGain: GainNode | null = null;
   private buffetGain: GainNode | null = null;
   private buffetOscillator: OscillatorNode | null = null;
 
@@ -419,6 +425,55 @@ export class Audio {
       return;
     }
     this.build();
+  }
+
+  /**
+   * Pone la lluvia que se oye: cuánta y de qué clase.
+   *
+   * Y **sube con la velocidad**, que es lo que la hace lluvia de cabina y no
+   * lluvia de ventana: parado bajo un aguacero se oye un siseo; a doscientos
+   * por hora, el agua contra el morro suena como grava. La cuenta es la misma
+   * que usa el viento, para que las dos crezcan juntas y no se peleen.
+   */
+  ponerLluvia(clase: string, fuerza: number, velocidad: number): void {
+    if (!this.rainGain || !this.rainBodyGain || !this.rainBody) return;
+    const cae = clase === "nada" ? 0 : clase === "llovizna" ? 0.35 : 1;
+    const cuanta = cae * (0.35 + 0.65 * Math.max(0, Math.min(1, fuerza)));
+    // Con el avión parado ya se oye; corriendo, el triple.
+    const porVelocidad = 0.35 + 0.65 * Math.min(1, velocidad / 60);
+    const ahora = this.context?.currentTime ?? 0;
+    this.rainGain.gain.setTargetAtTime(cuanta * porVelocidad * 0.5, ahora, 0.4);
+    // El cuerpo grave solo con lluvia de verdad: la llovizna es siseo y ya.
+    this.rainBodyGain.gain.setTargetAtTime(
+      clase === "llovizna" ? 0.05 : 0.35 + 0.3 * fuerza,
+      ahora,
+      0.4,
+    );
+    // Y el grave se abre al correr: más agua por segundo contra el mismo morro.
+    this.rainBody.frequency.setTargetAtTime(
+      360 + 220 * Math.min(1, velocidad / 60),
+      ahora,
+      0.4,
+    );
+  }
+
+  /**
+   * Un trueno, ahora.
+   *
+   * Un golpe de ruido muy grave que se abre en cincuenta milisegundos y tarda
+   * dos segundos y medio en irse: es literalmente lo que es un trueno —aire
+   * reventando y el eco tardando en volver—. `fuerza` es lo cerca que cayó.
+   */
+  trueno(fuerza = 1): void {
+    if (!this.thunderGain || !this.context) return;
+    const ahora = this.context.currentTime;
+    const pico = 0.5 + 0.5 * Math.max(0, Math.min(1, fuerza));
+    const g = this.thunderGain.gain;
+    g.cancelScheduledValues(ahora);
+    g.setValueAtTime(0, ahora);
+    g.linearRampToValueAtTime(pico, ahora + 0.05);
+    g.exponentialRampToValueAtTime(0.001, ahora + 2.5);
+    g.setValueAtTime(0, ahora + 2.55);
   }
 
   /** Cambia el motor al de otra aeronave. */
@@ -799,6 +854,55 @@ export class Audio {
     this.hornPulse.connect(pulseDepth).connect(hornShape.gain);
     hornShape.gain.value = 0.5;
     this.hornPulse.start();
+
+    /*
+     * ── Lluvia: ruido filtrado, y un trueno que es el mismo ruido ────────
+     *
+     * Pedida con el resto del tiempo —«lluvia, tormenta»— y aquí no había nada,
+     * aunque la cabecera de `mezcla.ts` lleva desde el primer día diciendo «con
+     * motor, **lluvia**, viento y una voz de cabina a la vez».
+     *
+     * Dos capas, que es lo que distingue la llovizna del aguacero para el oído:
+     * un siseo agudo —las gotas pequeñas contra el cristal— y un cuerpo grave
+     * —el agua contra el fuselaje—. La llovizna es casi todo siseo; un aguacero
+     * tiene los dos y el grave manda.
+     */
+    this.rainGain = ctx.createGain();
+    this.rainGain.gain.value = 0;
+    this.rainGain.connect(this.bus("ambiente"));
+
+    const rainHiss = ctx.createBiquadFilter();
+    rainHiss.type = "highpass";
+    rainHiss.frequency.value = 2200;
+    this.loopNoise(noise).connect(rainHiss).connect(this.rainGain);
+
+    this.rainBody = ctx.createBiquadFilter();
+    this.rainBody.type = "bandpass";
+    this.rainBody.frequency.value = 420;
+    this.rainBody.Q.value = 0.6;
+    this.rainBodyGain = ctx.createGain();
+    this.rainBodyGain.gain.value = 0;
+    this.loopNoise(noise)
+      .connect(this.rainBody)
+      .connect(this.rainBodyGain)
+      .connect(this.rainGain);
+
+    /*
+     * **Y el trueno.** Un golpe de ruido muy grave con una cola larga: es
+     * literalmente lo que es —aire reventando y el eco tardando en volver— y
+     * suena mejor que cualquier muestra de cinco kilobytes. Va al bus de
+     * ambiente, no al de avisos: un trueno no es una orden.
+     */
+    const thunderFilter = ctx.createBiquadFilter();
+    thunderFilter.type = "lowpass";
+    thunderFilter.frequency.value = 180;
+    thunderFilter.Q.value = 0.9;
+    this.thunderGain = ctx.createGain();
+    this.thunderGain.gain.value = 0;
+    this.loopNoise(noise)
+      .connect(thunderFilter)
+      .connect(this.thunderGain)
+      .connect(this.bus("ambiente"));
 
     // ── Rodadura ────────────────────────────────────────────────────────
     const rollFilter = ctx.createBiquadFilter();

@@ -43,6 +43,8 @@ import {
   type Circuito,
 } from "./world/circuito";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
+import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
+import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
@@ -763,6 +765,18 @@ export class Game {
    * cuentan para los mínimos. Ver `flight/minimos.ts`.
    */
   techoDeNubes: number | null = null;
+  /** El agua que cae, si cae. Ver `world/lluvia.ts`. */
+  private lluvia!: LluviaEnElMundo;
+  /**
+   * La niebla que le toca a este sitio con buen tiempo.
+   *
+   * Se guarda al arrancar porque la lluvia la espesa y hay que saber a dónde
+   * volver: sin esto, poner y quitar lluvia tres veces dejaba el escenario en
+   * una sopa permanente. Ver `ponerLluvia`.
+   */
+  private nieblaDeCasa = 0;
+  /** Lo que está cayendo ahora mismo, para las sondas y el sonido. */
+  lloviendo: { clase: Lluvia; fuerza: number } = { clase: "nada", fuerza: 0 };
   /** Contra qué se choca además del suelo. Ver `world/obstaculos.ts`. */
   readonly bultos = new Obstaculos();
   /** Dónde estaba el avión antes de este paso, para mirar el camino entero. */
@@ -1234,6 +1248,17 @@ export class Game {
     }
 
     this.sky = createSky(this.scenario);
+    /*
+     * **Y la lluvia, que cuelga de la escena y no del cielo.**
+     *
+     * El cielo es un domo que sigue a la cámara; la lluvia es una caja de
+     * gotas que también la sigue pero que **se cruza con el avión**, y mezclar
+     * las dos cosas en el mismo grupo dejaría las gotas girando con el domo.
+     * Ver `world/lluvia.ts`.
+     */
+    this.lluvia = crearLluvia();
+    this.scene.add(this.lluvia.grupo);
+    this.nieblaDeCasa = this.sky.fog.density;
     /*
      * **Las cinco y media de la tarde**, y no el mediodía.
      *
@@ -3834,6 +3859,13 @@ export class Game {
       meteo.techoM,
       meteo.techoM === null ? 0 : meteo.techoM < 300 ? 0.9 : 0.45,
     );
+    /*
+     * **Y el agua del parte.** `Meteo.lluvia` sale del grupo de tiempo presente
+     * del METAR —`RA`, `+TSRA`, `DZ`— y hasta hoy no la miraba nadie: se podía
+     * pedir el tiempo de verdad de un día de tormenta en Tenerife y volar con
+     * el cielo despejado y seco. Ver `world/lluvia.ts`.
+     */
+    this.ponerLluvia(meteo.lluvia, meteo.fuerzaDeLluvia);
     this.terrain.rehacerAerodromo(this.scenario);
     // Y las luces de aproximación, que van en la cabecera por la que se entra:
     // si el viento gira, se mudan al otro extremo con todo lo demás.
@@ -3876,6 +3908,63 @@ export class Game {
    * Tenerife Norte, que está a seiscientos treinta y dos. Es como se mide un
    * techo de verdad y como venía del METAR.
    */
+  /**
+   * Pone el agua que cae.
+   *
+   * Y con ella la visibilidad: **la lluvia tapa**, y esa es la mitad de lo que
+   * enseña un día malo. Un aguacero deja el horizonte en un par de kilómetros
+   * aunque el METAR diga diez, porque el METAR mide desde la torre y quien
+   * vuela mira a través de veinte kilómetros de agua.
+   */
+  ponerLluvia(clase: Lluvia, fuerza: number): void {
+    this.lloviendo = { clase, fuerza };
+    this.lluvia?.poner(clase, fuerza);
+    const espesa =
+      clase === "nada"
+        ? 0
+        : (clase === "llovizna" ? 0.4 : 1) * (0.3 + 0.7 * fuerza);
+    this.sky.fog.density = this.nieblaDeCasa * (1 + espesa * 5);
+  }
+
+  /**
+   * Un fotograma de lluvia: mueve las gotas y alumbra si hay rayo.
+   *
+   * El fogonazo entra por la luz del sol y no por una capa blanca encima de la
+   * pantalla: un relámpago ilumina **el mundo**, y lo que se ve de él es el
+   * suelo y las nubes encendiéndose un cuarto de segundo. Una cortina blanca
+   * delante sería un flash de cámara.
+   */
+  private pasoDeLluvia(dt: number): void {
+    if (!this.lluvia) return;
+    const alumbra = this.lluvia.paso(
+      dt,
+      this.camera.position,
+      this.flight.state.velocity,
+    );
+    if (alumbra > 0 || this.fogonazoAnterior > 0) {
+      this.sky.ponerDeslumbre(1 + alumbra * 2.2);
+      /*
+       * **Y el trueno con el rayo, no después.**
+       *
+       * Un trueno de verdad llega segundos más tarde —el sonido tarda tres
+       * segundos por kilómetro— y esa espera es preciosa y aquí no vale: a los
+       * cuatro años, un ruido que llega cinco segundos después del destello no
+       * es el mismo suceso. Suena con él y su fuerza dice lo cerca que cayó.
+       */
+      if (alumbra > 0 && this.fogonazoAnterior === 0)
+        this.audio.trueno(this.lloviendo.fuerza);
+      this.fogonazoAnterior = alumbra;
+    }
+    this.audio.ponerLluvia(
+      this.lloviendo.clase,
+      this.lloviendo.fuerza,
+      this.flight.state.airspeed,
+    );
+  }
+
+  /** Lo que alumbraba el rayo del fotograma anterior. Ver `pasoDeLluvia`. */
+  private fogonazoAnterior = 0;
+
   ponerTecho(techoM: number | null, tapadura: number): void {
     this.techoDeNubes = techoM;
     if (!this.sky) return;
@@ -4682,6 +4771,7 @@ export class Game {
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
+    this.pasoDeLluvia(dt);
 
     /*
      * El mundo de verdad. Va **después** de mover la cámara y antes de pintar:

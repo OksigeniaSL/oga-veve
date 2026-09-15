@@ -89,3 +89,57 @@ describe("deFrente", () => {
     expect(deFrente(180, { ...TIEMPO_DE_CASA, vientoDe: null })).toBe(0);
   });
 });
+
+describe("la lluvia del METAR", () => {
+  /*
+   * Pedido con el resto del tiempo: «falta paisaje… climatología, atravesar mar
+   * de nubes o nubes, lluvia, tormenta, sol, amanecer, atardecer». El grupo de
+   * tiempo presente es el que lo dice, y el lector lo ignoraba entero.
+   */
+  const con = (grupo: string) =>
+    leerMetar(`GCXO 121130Z 04012KT 9999 ${grupo} BKN012 18/14 Q1018`);
+
+  it("sin grupo de tiempo, no llueve", () => {
+    expect(
+      leerMetar("GCXO 121130Z 04012KT 9999 BKN012 18/14 Q1018")?.lluvia,
+    ).toBe("nada");
+  });
+
+  it("distingue llovizna, lluvia y tormenta", () => {
+    expect(con("DZ")?.lluvia).toBe("llovizna");
+    expect(con("RA")?.lluvia).toBe("lluvia");
+    expect(con("TSRA")?.lluvia).toBe("tormenta");
+    // Tormenta sin lluvia sigue siendo tormenta: lo que asusta es el rayo.
+    expect(con("TS")?.lluvia).toBe("tormenta");
+  });
+
+  it("y el chubasco es lluvia, no otra cosa", () => {
+    expect(con("SHRA")?.lluvia).toBe("lluvia");
+  });
+
+  it("lee la fuerza del signo", () => {
+    expect(con("-RA")?.fuerzaDeLluvia).toBeLessThan(con("RA")!.fuerzaDeLluvia);
+    expect(con("+RA")?.fuerzaDeLluvia).toBeGreaterThan(
+      con("RA")!.fuerzaDeLluvia,
+    );
+    expect(con("+RA")?.fuerzaDeLluvia).toBe(1);
+  });
+
+  it("y en las cercanías cuenta a medias", () => {
+    // `VCTS` es tormenta a la vista, no encima: se ve el rayo y no se moja.
+    const cerca = con("VCTS");
+    expect(cerca?.lluvia).toBe("tormenta");
+    expect(cerca?.fuerzaDeLluvia).toBeLessThan(con("TS")!.fuerzaDeLluvia);
+  });
+
+  it("manda lo peor cuando hay dos grupos", () => {
+    const m = leerMetar("GCXO 121130Z 04012KT 9999 -RA TS BKN012 18/14 Q1018");
+    expect(m?.lluvia).toBe("tormenta");
+  });
+
+  it("y un grupo raro no se lleva por delante el resto del parte", () => {
+    const m = leerMetar("GCXO 121130Z 04012KT 9999 XYZ BKN012 18/14 Q1018");
+    expect(m?.vientoKt).toBe(12);
+    expect(m?.lluvia).toBe("nada");
+  });
+});

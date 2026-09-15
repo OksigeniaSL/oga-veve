@@ -30,6 +30,7 @@ import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
+import type { Lluvia } from "../world/meteo";
 import { alturaDeEdificio } from "../world/aerodrome";
 import {
   escalaDeCircuito,
@@ -604,8 +605,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         temp: 24,
         techoM: juego.techoDeNubes,
         visibilidadM: 10000,
+        lluvia: "nada",
+        fuerzaDeLluvia: 0,
         fuente: "mano",
       }),
+    /**
+     * Y poner lluvia a mano, que es lo que permite verla sin esperar a que el
+     * METAR de verdad traiga un día malo. Para el banco y para mirarla.
+     */
+    /** Qué está cayendo, y cuánta niebla hay. Para mirar la lluvia. */
+    lloviendo: () => juego.lloviendo,
+    nieblaAhora: () => juego.sky.fog.density,
+    ponerLluvia: (clase: string, fuerza = 0.7) =>
+      juego.ponerLluvia(clase as Lluvia, fuerza),
     /**
      * Vuelve a armar la senda desde donde está el avión.
      *
