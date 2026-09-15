@@ -1,0 +1,5 @@
+{
+  "name": "oga-veve-meteo",
+  "compatibility_date": "2026-09-11",
+  "main": "workers/meteo.js"
+}

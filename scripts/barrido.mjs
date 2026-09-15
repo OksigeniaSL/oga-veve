@@ -43,17 +43,21 @@ const TODOS = [
   ["tenerife-norte", "tuka"],
   ["la-palma", "taguato"],
   /*
-   * **Y dos de los tres canarios nuevos.**
+   * **Y los canarios nuevos, los cinco.**
    *
    * Tenerife Sur y Lanzarote son los dos campos a ras de mar del archipiélago
    * —64 y 14 metros de cota contra los 632 de Los Rodeos—, y eso cambia la
-   * carrera de despegue y la de frenada sin cambiar nada más: es el caso que
-   * no había. Gran Canaria se queda fuera del barrido a propósito, y no porque
-   * no vuele: su plataforma está a cuatro kilómetros largos de donde se para
-   * el avión y el rodaje de vuelta se sale del listón. Eso es el #156 y está
-   * apuntado allí; un escenario que está siempre en rojo deja de vigilar nada.
+   * carrera de despegue y la de frenada sin cambiar nada más. El Hierro y La
+   * Gomera son los dos pequeños, que es el otro extremo.
+   *
+   * **Y Gran Canaria, que estuvo fuera y ya no tiene por qué.** Se quedó
+   * apartada con el rodaje de vuelta en 4.206 metros y 384 segundos —el #156—,
+   * y eso resultó no ser del campo: el plan elegía puesto comparando viajes
+   * medidos con `Ruta.largo`, que decía metros y devolvía el coste de Dijkstra,
+   * con la pista multiplicada por seis. Arreglado eso, vuela 15 de 15.
    */
   ["tenerife-sur", "guyrami"],
+  ["gran-canaria", "guyrami"],
   ["el-hierro", "guyrami"],
   ["la-gomera", "guyrami"],
   ["lanzarote", "guyrami"],
