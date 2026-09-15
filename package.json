@@ -26,6 +26,7 @@
     "sin-red": "node scripts/verificar-sin-red.mjs",
     "voz": "node scripts/verificar-voz.mjs",
     "frenos": "node scripts/verificar-frenos.mjs",
+    "rodaje": "node scripts/verificar-asistencia.mjs",
     "pictos": "node scripts/verificar-pictos.mjs",
     "librea": "node scripts/verificar-librea.mjs",
     "cabina": "node scripts/verificar-cabina.mjs",

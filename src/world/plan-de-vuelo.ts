@@ -394,12 +394,45 @@ const TOPE_DE_ACERCAMIENTO = 2;
 /**
  * A partir de qué error de rumbo la ayuda deja de ayudar, en radianes.
  *
- * Setenta grados. Por debajo es una curva de calle de rodaje —cerrada, pero
- * una curva—; por encima ya no se está corrigiendo un rumbo, se está pidiendo
- * media vuelta, y eso no lo hace una ayuda: lo hace quien pilota. Ver
+ * Ciento veinte grados. Por debajo es una curva de calle de rodaje —cerrada,
+ * pero una curva—; por encima ya no se está corrigiendo un rumbo, se está
+ * pidiendo media vuelta, y eso no lo hace una ayuda: lo hace quien pilota. Ver
  * `asistencia`.
+ *
+ * **Estaba en setenta, y setenta prohíbe la curva que hay que dar.** La salida
+ * de un puesto a su calle es una esquina de noventa grados largos —medida en
+ * Pettirossi, noventa y seis— así que el guardia se disparaba justo ahí y la
+ * ayuda callaba en la primera curva del rodaje. Una esquina de noventa grados
+ * es lo más corriente que hay en un aeropuerto; media vuelta es lo que se
+ * acerca a ciento ochenta.
+ *
+ * Y lo que este número protegía —la pirueta al pasar la boca de la salida, con
+ * el avión girando sobre sí mismo y retrocediendo por la pista— hace tiempo
+ * que lo protege algo mejor y en el sitio que le toca: la autoridad de la rueda
+ * de morro cae con la velocidad, que es física y no una regla de ayuda. Ver
+ * `arcade-rodaje.test.ts`. Aquí solo queda el caso de verdad: el punto de la
+ * ruta que toca ha quedado a la espalda.
  */
-const VUELTA_EN_U = (70 * Math.PI) / 180;
+export const VUELTA_EN_U = (120 * Math.PI) / 180;
+
+/**
+ * El error de rumbo para ir de un sitio a otro, en radianes y entre ±π.
+ *
+ * Suelto y exportado porque es la cuenta con la que la ayuda de rodaje decide
+ * si lo que tiene delante es una curva o una media vuelta, y esa decisión se
+ * comprueba sin navegador. Ver `VUELTA_EN_U` y `asistencia`.
+ */
+export function errorDeRumbo(
+  desde: Punto,
+  rumbo: number,
+  hacia: Punto,
+): number {
+  const quiero = Math.atan2(hacia[0] - desde[0], -(hacia[1] - desde[1]));
+  let e = quiero - rumbo;
+  while (e > Math.PI) e -= Math.PI * 2;
+  while (e < -Math.PI) e += Math.PI * 2;
+  return e;
+}
 
 export interface Vista {
   readonly fase: Fase;
@@ -1619,7 +1652,37 @@ export class PlanDeVuelo {
     let contra = rumboDeLaRaya - estado.heading;
     while (contra > Math.PI) contra -= Math.PI * 2;
     while (contra < -Math.PI) contra += Math.PI * 2;
-    if (Math.abs(contra) > VUELTA_EN_U) return 0;
+
+    /*
+     * **Y la pregunta se le hace al punto de delante, no al trozo de al lado.**
+     *
+     * Esto miraba el rumbo del trozo de ruta más cercano, y un trozo cercano no
+     * dice hacia dónde hay que ir: dice por dónde va la calle **ahí**. En una
+     * esquina de noventa grados —la de cualquier puesto con su calle— el trozo
+     * más cercano cambia de golpe al doblarla, así que el número saltaba de
+     * doce grados a ochenta y ocho **sin que el avión girase**, y la ayuda se
+     * apagaba justo en la curva que estaba para ayudar a tomar.
+     *
+     * Medido con `verificar-asistencia`: en Guyrami, con gas y sin tocar el
+     * volante, el avión salía del puesto de Pettirossi, doblaba, la ayuda
+     * callaba a los tres segundos y medio, y de quinientos cuarenta metros de
+     * ruta hacía cuarenta y tres. Al peldaño de cuatro años no le llegaba la
+     * calle de rodaje a ninguna parte.
+     *
+     * Lo que sí separa «tomar la curva» de «dar media vuelta» es si el sitio al
+     * que iría queda **delante o detrás**, y eso es justo lo que contesta
+     * `puntoDeLaRutaTrasMi`: pasada la boca de la salida, el punto que toca es
+     * el final de la ruta, que queda a la espalda, y ahí la ayuda sigue
+     * callándose como tiene que hacer.
+     */
+    const adelante = this.puntoDeLaRutaTrasMi(
+      p,
+      Math.max(15, estado.airspeed * 2),
+    );
+    const haciaDondeToca = adelante
+      ? errorDeRumbo(p, estado.heading, adelante)
+      : contra;
+    if (Math.abs(haciaDondeToca) > VUELTA_EN_U) return 0;
 
     /*
      * Seis metros de holgura: medio ancho de calle. Dentro de eso no se toca
@@ -1669,19 +1732,9 @@ export class PlanDeVuelo {
      * morro y la ayuda tiembla— y se corrige el rumbo hacia él. Es lo que hace
      * cualquiera que conduce: se mira a la salida de la curva.
      */
-    if (anticipa > 0) {
-      const mira = this.puntoDeLaRutaTrasMi(
-        p,
-        Math.max(15, estado.airspeed * 2),
-      );
-      if (mira) {
-        const quiero = Math.atan2(mira[0] - p[0], -(mira[1] - p[1]));
-        let error = quiero - estado.heading;
-        while (error > Math.PI) error -= Math.PI * 2;
-        while (error < -Math.PI) error += Math.PI * 2;
-        giro += anticipa * (error / 0.7);
-      }
-    }
+    // Y es el mismo punto que ya se buscó arriba para saber si esto era una
+    // curva o una media vuelta: `haciaDondeToca` es su error de rumbo.
+    if (anticipa > 0 && adelante) giro += anticipa * (haciaDondeToca / 0.7);
     /*
      * **Y con tope, que es lo que separa «te sujeta» de «te lleva».**
      *

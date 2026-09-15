@@ -34,6 +34,7 @@ import {
 } from "./flight/tiers";
 import { AIRCRAFT, PYKASU, type AircraftConfig } from "./flight/aircraft";
 import { InputManager } from "./flight/input";
+import { anticipacionDeRodaje } from "./flight/gobernador";
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraEnUso } from "./world/terrain";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
@@ -5487,7 +5488,7 @@ export class Game {
      * ayuda solo evita que te salgas: la curva es tuya. Sale de la misma
      * escalera para no añadir otro mando que se pueda desafinar por su cuenta.
      */
-    const anticipa = Math.max(0, (fuerza - 0.5) * 2);
+    const anticipa = anticipacionDeRodaje(fuerza);
     const sugerido = this.plan.asistencia(s, suelo, anticipa);
     if (sugerido === 0) return;
 
