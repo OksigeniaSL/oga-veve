@@ -300,6 +300,8 @@ export const EN: Dictionary = {
   "vuelo.fuera": "Back to the green line",
   "vuelo.roto": "We have a problem",
   "vuelo.rapido": "Too fast",
+  "vuelo.sobrevelocidad": "Too fast: ease the power",
+  "vuelo.sobrevelocidadAire": "Too fast for this altitude",
   "vuelo.pediFlaps": "Flaps down to slow",
   "palabra.flaps": "Flaps",
   "vuelo.despacio": "Slow down",

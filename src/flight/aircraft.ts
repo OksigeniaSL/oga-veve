@@ -230,6 +230,23 @@ export interface AircraftConfig {
    */
   alturaDeCrucero: number;
   /**
+   * **Vmo**: velocidad indicada máxima, en nudos.
+   *
+   * Es un límite de **estructura**: lo que aguanta un fuselaje es presión
+   * dinámica, y eso es justo lo que mide el anemómetro. Manda abajo, donde el
+   * aire es denso. Ver `flight/limites.ts`.
+   */
+  vmoKt: number;
+  /**
+   * **Mmo**: el Mach máximo.
+   *
+   * Es un límite **aerodinámico** —por encima, el aire se comprime sobre el ala
+   * y el avión hace cosas feas— y manda arriba, donde el frío baja la velocidad
+   * del sonido. En una avioneta de hélice no se alcanza jamás y va puesto de
+   * todas formas: la ficha dice lo que es el avión, no lo que le va a pasar.
+   */
+  mmo: number;
+  /**
    * Velocidad de aproximación, m/s. **Vref.**
    *
    * A la que hay que cruzar el umbral. Es el número que más veces estropea un
@@ -351,6 +368,9 @@ export const PYKASU: AircraftConfig = {
    * queda sin aire.
    */
   alturaDeCrucero: 3000,
+  // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
+  vmoKt: 163,
+  mmo: 0.3,
   // 33 m/s son 119 km/h, que es la corta final de un 172 de verdad.
   approachSpeed: 33,
   decisionSpeed: 26,
@@ -422,6 +442,9 @@ export const MAINUMBY: AircraftConfig = {
   // Dos mil quinientos: el trabajo de un avión así se hace mucho más abajo, y
   // lo que sube es para ir de un campo a otro.
   alturaDeCrucero: 2500,
+  // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
+  vmoKt: 130,
+  mmo: 0.28,
   approachSpeed: 29,
   decisionSpeed: 24,
   rotationSpeed: 26,
@@ -524,6 +547,9 @@ export const PANAMBI: AircraftConfig = {
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
+  // Bimotor ligero presurizado.
+  vmoKt: 230,
+  mmo: 0.48,
   // 44 m/s son 1,3 veces la pérdida, que es como se cruza el umbral.
   approachSpeed: 44,
   decisionSpeed: 34,
@@ -612,6 +638,9 @@ export const ARASUNU: AircraftConfig = {
   // Siete mil seiscientos: veinticinco mil pies, el techo de servicio típico de
   // un turbohélice regional presurizado.
   alturaDeCrucero: 7600,
+  // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
+  vmoKt: 250,
+  mmo: 0.55,
   approachSpeed: 48,
   decisionSpeed: 38,
   rotationSpeed: 41,
@@ -715,6 +744,9 @@ export const ARAI: AircraftConfig = {
   cruiseSpeed: 220,
   // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
   alturaDeCrucero: 11000,
+  // Reactor regional.
+  vmoKt: 320,
+  mmo: 0.82,
   /*
    * **Ciento treinta y dos nudos, que es como entra un regional.**
    *
@@ -867,6 +899,13 @@ export const YVAGA: AircraftConfig = {
    * servicio está más alto —trece mil setecientos— pero ahí ya no se cruza.
    */
   alturaDeCrucero: 10700,
+  /*
+   * Los del de fuselaje ancho, que son los del avión del que sale: 365 nudos y
+   * Mach 0,92. Y es el único de la flota donde el cruce cae a una altura a la
+   * que se vuela de verdad, que es lo que hace visible la lección.
+   */
+  vmoKt: 365,
+  mmo: 0.92,
   // 1,3 veces la pérdida, como manda: con CLmax 1,4 pierde a 76 m/s.
   // Ciento cuarenta y seis nudos: 1,3 veces su pérdida con flaps, y lo que
   // dice el manual de vuelo de un 747 a este peso —145 a 150—. Estaba en 98

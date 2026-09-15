@@ -29,6 +29,7 @@
 
 import { Quaternion, Vector3 } from "three";
 import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
+import { topeDeVelocidad, type QuienManda } from "./limites";
 import { esDeChorro, type AircraftConfig } from "./aircraft";
 import { type AssistLayers, uniformAssists } from "./assists";
 import type {
@@ -389,9 +390,39 @@ export class CoefficientFlightModel implements FlightModel {
   /**
    * El crucero de la ficha. Aquí el modelo llega bastante más arriba en
    * picado, pero como listón de «esto ya es demasiado» el crucero es honesto.
+   *
+   * **Y no es Vmo**, aunque lo parezca. Esto lo usan el juez del aterrizaje
+   * —«tocaste demasiado rápido»— y la escala del velocímetro, y para las dos
+   * cosas lo que hace falta es la velocidad a la que se vuela, no la que
+   * rompe el avión. Poner Vmo aquí dejaría al de fuselaje ancho aterrizando a
+   * seiscientos por hora sin que nadie dijera nada. El tope de verdad está
+   * abajo, en `limiteDeVelocidad`.
    */
   velocidadMaxima(): number {
     return this.aircraft.cruiseSpeed;
+  }
+
+  /**
+   * **Vmo o Mmo, el que mande a esta altura.** El tope de verdad.
+   *
+   * Este modelo no tenía velocidad máxima ninguna: el empuje peleaba contra la
+   * resistencia y donde se cruzaban, ahí se quedaba. Medido nivelado a tope de
+   * gas y sin asistencia, el JAZ 90 daba **1.054 km/h a quinientos metros** —
+   * Mach 0,86 a ras de suelo, con una presión dinámica que no aguanta ningún
+   * fuselaje de esa clase. El avión no se rompía porque el juego no sabía que
+   * eso se rompe.
+   *
+   * Y **cambia con la altura**: abajo lo pone la estructura y arriba el aire.
+   * Ver `flight/limites.ts`, que es donde está la cuenta y el porqué. Es el
+   * #159.
+   */
+  limiteDeVelocidad(): number {
+    return topeDeVelocidad(this.aircraft, this.state.position.y).verdadera;
+  }
+
+  /** Y quién lo pone aquí: la estructura o el aire. Para poder decirlo. */
+  quienLimita(): QuienManda {
+    return topeDeVelocidad(this.aircraft, this.state.position.y).manda;
   }
 
   /** El mismo con el que se rompe de verdad. Ver `crashLimits`. */

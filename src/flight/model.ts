@@ -260,6 +260,16 @@ export interface FlightModel {
    * Un listón que el mundo no puede alcanzar no es un listón.
    */
   velocidadMaxima(): number;
+  /**
+   * **El tope de verdad: Vmo o Mmo, el que mande a esta altura.**
+   *
+   * Distinto de `velocidadMaxima`, que es «a esto ya se le llama rápido». Éste
+   * es el que rompe el avión, y **cambia con la altura**: abajo lo pone la
+   * estructura y arriba el aire. Ver `flight/limites.ts`.
+   */
+  limiteDeVelocidad(): number;
+  /** Cuál de los dos manda aquí, para poder decirlo con un dibujo. */
+  quienLimita(): "estructura" | "aire";
 
   /**
    * A qué régimen de descenso al tocar deja de ser un aterrizaje, m/s.
