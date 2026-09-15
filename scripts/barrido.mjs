@@ -55,6 +55,7 @@ const TODOS = [
    */
   ["tenerife-sur", "guyrami"],
   ["el-hierro", "guyrami"],
+  ["la-gomera", "guyrami"],
   ["lanzarote", "guyrami"],
   ["cuatro-vientos", "guyrami"],
   /*

@@ -214,6 +214,7 @@ export const GUG: Dictionary = {
   "scenario.granCanaria.name": "Gran Canaria",
   "scenario.lanzarote.name": "Lanzarote",
   "scenario.elHierro.name": "El Hierro",
+  "scenario.laGomera.name": "La Gomera",
   "scenario.cuatroVientos.name": "Cuatro Vientos",
 
   // ── Ayuda ──────────────────────────────────────────────────────────────
