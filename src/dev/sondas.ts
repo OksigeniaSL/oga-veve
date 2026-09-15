@@ -31,7 +31,7 @@ import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import type { Lluvia } from "../world/meteo";
-import { alturaDeEdificio } from "../world/aerodrome";
+import { alturaDeEdificio, enElPavimento } from "../world/aerodrome";
 import {
   escalaDeCircuito,
   manoDelCircuito,
@@ -639,6 +639,20 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     reiniciarSenda: () => juego.runwayGuide.reset(juego.flight.state.position),
     /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
     suelo: (x: number, z: number) => juego.terrain.sampleHeight(x, z),
+    /**
+     * ¿Pisa asfalto el avión ahora mismo?
+     *
+     * Pista, calle o plataforma. Los bancos medían metros de desvío de la raya
+     * verde, que no es lo mismo: una plataforma es ancha y treinta metros de
+     * desvío ahí siguen siendo asfalto; una calle de rodaje son veintitrés y
+     * doce metros ya son hierba. Ver `enElPavimento`.
+     */
+    enElPavimento: (margen = 0) => {
+      const aero = juego.scenario.aerodrome;
+      if (!aero) return null;
+      const s = juego.flight.state;
+      return enElPavimento(aero, [s.position.x, -s.position.z], margen);
+    },
     /** El eje de la pista y las calles de rodaje, en coordenadas del mundo. */
     caminos: () => {
       const aero = juego.scenario.aerodrome;

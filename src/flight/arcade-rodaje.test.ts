@@ -140,3 +140,61 @@ describe("el gas de rodar", () => {
     expect(m.gasParaRodar(9)).toBeGreaterThan(0.1);
   });
 });
+
+/**
+ * Y **el modelo dice cuánto está girando**, que es lo que se le pregunta.
+ *
+ * Aquí se publicaba `yawRate = 0` siempre, al lado del alabeo y el cabeceo.
+ * Pero no es lo mismo: el alabeo y el cabeceo de este modelo son de adorno —el
+ * avión se inclina para que se vea bien—, mientras que **la guiñada es el giro
+ * de verdad**, el número con el que se mueve el rumbo. Un cero ahí es decir que
+ * el avión no gira mientras gira.
+ *
+ * Y lo leía alguien: la ayuda de rodaje amortigua con `yawRate` para aflojar
+ * antes de llegar a la raya, así que en Guyrami —el único peldaño que vuela
+ * este modelo— el amortiguador valía cero y la corrección era un proporcional
+ * puro con tope. En la primera esquina del rodaje de Pettirossi el avión se
+ * abría veinticuatro metros, que es fuera de una calle de veintitrés.
+ */
+describe("el modelo sencillo dice cuánto gira", () => {
+  it("rodando, la guiñada es la que mueve el rumbo", () => {
+    const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
+    m.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 6 });
+    const mandos = {
+      ...neutralControls(),
+      engineOn: true,
+      throttle: m.gasPara(6),
+      aileron: 1,
+    };
+    const antes = m.state.heading;
+    m.step(0.02, mandos);
+    const medido = (m.state.heading - antes) / 0.02;
+    expect(m.state.yawRate).toBeGreaterThan(0);
+    expect(m.state.yawRate).toBeCloseTo(medido, 6);
+  });
+
+  it("y con el volante quieto no gira", () => {
+    const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
+    m.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 6 });
+    m.step(0.02, { ...neutralControls(), engineOn: true, throttle: 0.3 });
+    expect(m.state.yawRate).toBe(0);
+  });
+
+  /*
+   * Y el signo, que es de las cosas que se descubren tarde y caras: a la
+   * derecha, positivo. Lo dice `model.ts` y lo dan por hecho el amortiguador de
+   * la ayuda de rodaje y todo lo que mire esta cifra.
+   */
+  it("y a la izquierda gira al revés", () => {
+    const m = new ArcadeFlightModel({ aircraft: PYKASU, ground: () => 0 });
+    m.reset({ position: new Vector3(0, 0, 0), heading: 0, airspeed: 6 });
+    const mandos = {
+      ...neutralControls(),
+      engineOn: true,
+      throttle: m.gasPara(6),
+      aileron: -1,
+    };
+    m.step(0.02, mandos);
+    expect(m.state.yawRate).toBeLessThan(0);
+  });
+});

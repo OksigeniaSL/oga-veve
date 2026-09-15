@@ -1601,7 +1601,9 @@ export class PlanDeVuelo {
      * La cuenta base sale de **lo desviado que vas del eje**, con su signo, y
      * de nada más. Sobre la raya vale cero, así que en una curva la ayuda calla
      * y giras tú; si te vas yendo, tira suavemente hacia dentro. Con el
-     * amortiguador de guiñada para que no oscile.
+     * amortiguador de guiñada para que no oscile — que **en Guyrami valía
+     * cero**, porque el modelo sencillo publicaba `yawRate = 0` siempre, aunque
+     * el avión estuviera girando. Ver `arcade.ts`.
      *
      * Y encima, **solo en los peldaños de abajo**, la anticipación: apuntar a
      * un punto de la ruta por delante. Ver el parámetro `anticipa`.
@@ -1721,35 +1723,42 @@ export class PlanDeVuelo {
       -TOPE_DE_ACERCAMIENTO,
       Math.min(TOPE_DE_ACERCAMIENTO, estado.airspeed * Math.sin(contra)),
     );
-    let giro =
-      -fuera / 14 + cerrando / 20 - (estado.yawRate * 180) / Math.PI / 40;
+    let giro = Math.max(
+      -TOPE_DE_AYUDA,
+      Math.min(
+        TOPE_DE_AYUDA,
+        -fuera / 14 + cerrando / 20 - (estado.yawRate * 180) / Math.PI / 40,
+      ),
+    );
 
     /*
      * **La anticipación: mirar a dónde va la calle, no dónde estoy.**
      *
-     * Se apunta a un punto de la ruta **dos segundos por delante** —y nunca a
-     * menos de quince metros, que a paso de tortuga si no el punto se pega al
-     * morro y la ayuda tiembla— y se corrige el rumbo hacia él. Es lo que hace
-     * cualquiera que conduce: se mira a la salida de la curva.
+     * Se apunta al punto de la ruta que toca —el mismo que ya se buscó arriba
+     * para saber si esto era una curva o una media vuelta— y se corrige el
+     * rumbo hacia él. Es lo que hace cualquiera que conduce: se mira a la
+     * salida de la curva.
+     *
+     * **Y esto sí puede llegar al volante entero.** El tope de arriba está
+     * para el término del desvío, que es de donde salía la sensación del imán:
+     * un proporcional que a veinte metros de la raya pedía volante a fondo para
+     * arrastrarte hasta ella. Tomar la curva **en la que ya estás** no es eso, y
+     * con el tope puesto no salía la cuenta: una esquina de dieciocho metros a
+     * siete por segundo pide 0,45 de volante, y la ayuda de Guyrami llegaba a
+     * 0,35 —0,7 de tope por 0,5 que pesa el peldaño—. O sea que **el juego
+     * dibujaba una raya que su propio peldaño conductor no podía seguir**, y el
+     * avión se salía a la hierba en la primera esquina.
+     *
+     * Se probaron antes otras dos formas de la cuenta y las dos salieron peor,
+     * porque las dos atacaban el síntoma: la persecución pura —pedir curvatura,
+     * `ω = 2·v·sen(ε)/L`— da 29,7 m, porque el seno se queda en casi uno entre
+     * sesenta y ciento veinte grados y pide lo mismo durante toda la parte
+     * cerrada de la curva; y descontar el giro que el avión ya lleva, para
+     * soltar el volante antes de estar alineado, da 28,0. Contra 24,6 del
+     * ángulo pelado. El sobrepaso no era de soltar tarde: era de no caber.
      */
-    // Y es el mismo punto que ya se buscó arriba para saber si esto era una
-    // curva o una media vuelta: `haciaDondeToca` es su error de rumbo.
     if (anticipa > 0 && adelante) giro += anticipa * (haciaDondeToca / 0.7);
-    /*
-     * **Y con tope, que es lo que separa «te sujeta» de «te lleva».**
-     *
-     * Esto es un proporcional sobre el desvío sin techo: a veinte metros de la
-     * raya mandaba alerón a fondo. Y en una curva, con el mando suelto, el
-     * desvío crece solo — así que corregir el desvío y girar por ti pasaban a
-     * ser la misma cosa. «Ese giro del final no lo di yo, el juego me obliga
-     * moviendo el avión, parece que hay una línea oculta que me imanta la
-     * aeronave»: era exactamente esto.
-     *
-     * Con el tope, la ayuda empuja hacia la raya y nunca da la vuelta al
-     * avión: el giro sigue siendo de quien pilota. Cuánto se aplica de esto lo
-     * decide el peldaño, que es donde vive esa escalera.
-     */
-    return Math.max(-TOPE_DE_AYUDA, Math.min(TOPE_DE_AYUDA, giro));
+    return Math.max(-1, Math.min(1, giro));
   }
 
   /** La ruta en coordenadas de mundo. Para las herramientas de comprobación. */

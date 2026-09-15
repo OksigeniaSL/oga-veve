@@ -159,6 +159,49 @@ export interface Aerodrome {
 /** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */
 const ANCHO_RODADURA = 23;
 
+/**
+ * ¿Pisa asfalto el avión, o está en la hierba?
+ *
+ * Pista, calle de rodaje o plataforma. Es la pregunta de verdad del rodaje —lo
+ * que se ve por la ventanilla y lo que nota quien juega—, y hasta ahora solo se
+ * podía contestar mirando. Los bancos medían metros de desvío de la raya, que
+ * es un número relacionado pero no el mismo: una plataforma es ancha y treinta
+ * metros de desvío ahí siguen siendo asfalto, mientras que en una calle de
+ * veintitrés metros doce ya son hierba.
+ *
+ * `margen` ensancha el pavimento para preguntar por el ala en vez de por el eje
+ * del avión.
+ */
+export function enElPavimento(aero: Aerodrome, p: Punto, margen = 0): boolean {
+  for (const pista of aero.runways)
+    if (aLaPolilinea(p, pista.centerline) < (pista.widthM ?? 45) / 2 + margen)
+      return true;
+  for (const calle of aero.taxiways)
+    if (
+      aLaPolilinea(p, calle.path) <
+      (calle.widthM ?? ANCHO_RODADURA) / 2 + margen
+    )
+      return true;
+  for (const plataforma of aero.aprons)
+    if (dentroDelRecinto(p, plataforma.polygon)) return true;
+  return false;
+}
+
+/** Punto dentro de un polígono, por el número de cruces. */
+function dentroDelRecinto(p: Punto, poligono: readonly Punto[]): boolean {
+  let dentro = false;
+  for (let i = 0, j = poligono.length - 1; i < poligono.length; j = i++) {
+    const a = poligono[i]!;
+    const b = poligono[j]!;
+    if (
+      a[1] > p[1] !== b[1] > p[1] &&
+      p[0] < ((b[0] - a[0]) * (p[1] - a[1])) / (b[1] - a[1]) + a[0]
+    )
+      dentro = !dentro;
+  }
+  return dentro;
+}
+
 /** Colores del pavimento. Mate, como el asfalto de verdad. */
 const COLORES: Record<string, ColorRepresentation> = {
   // Gris de verdad, no tierra. El primer tono era cálido y bajo el sol de

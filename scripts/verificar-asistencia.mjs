@@ -479,6 +479,16 @@ comprobar(
     let lejos = 0;
     let quieto = 0;
     let llego = false;
+    /*
+     * **Y si pisó hierba, que es la pregunta de verdad.**
+     *
+     * Los metros de desvío de la raya no dicen si el avión se salió: una
+     * plataforma es ancha y treinta metros de desvío ahí siguen siendo asfalto,
+     * mientras que en una calle de veintitrés, doce ya son hierba. Así que se
+     * pregunta por el pavimento, que es lo que se ve por la ventanilla.
+     */
+    let enHierba = 0;
+    let cuadros = 0;
     const empezoCon = restante();
     const limite = performance.now() + 220000;
     let fase = o.fase();
@@ -488,6 +498,8 @@ comprobar(
       const d = aLaRuta();
       if (Number.isFinite(d)) lejos = Math.max(lejos, d);
       quieto = o.estado().airspeed < 0.5 ? quieto + 1 : 0;
+      cuadros++;
+      if (o.enElPavimento() === false) enHierba++;
       // El punto de espera, que es donde termina el rodaje de salida: o lo
       // dice la fase, o se ha llegado a la doble raya y ahí se para.
       if (
@@ -512,6 +524,7 @@ comprobar(
       parado: quieto > 600,
       ruta: Math.round(empezoCon),
       falta: Math.round(restante()),
+      hierba: cuadros ? Math.round((enHierba / cuadros) * 100) : 0,
     };
   });
   await page.close();
@@ -520,8 +533,23 @@ comprobar(
     "y con el mando suelto, el peldaño de los pequeños llega al punto de espera",
     r.llego && !r.roto,
     `guyrami acabó en «${r.fase}»${r.roto ? " y roto" : ""}${r.parado ? " y parado" : ""} · ` +
-      `le faltaban ${r.falta} m de ${r.ruta} · lo más que se apartó de la ruta, ${r.lejos} m`,
+      `le faltaban ${r.falta} m de ${r.ruta} · lo más que se apartó de la ruta, ${r.lejos} m` +
+      ` · fuera del asfalto el ${r.hierba} % del rodaje`,
     "si no llega, la ayuda de los cuatro años no cumple lo que promete",
+  );
+
+  /*
+   * **Y sin pisar hierba**, que es lo que se ve por la ventanilla.
+   *
+   * Los metros de desvío no lo contestan —una plataforma es ancha y treinta
+   * metros de desvío ahí siguen siendo asfalto—, así que esto se pregunta
+   * aparte y contra el pavimento de verdad del aeródromo.
+   */
+  comprobar(
+    "y sin irse a la hierba por el camino",
+    r.hierba <= 5,
+    `guyrami rodó fuera del asfalto el ${r.hierba} % del rodaje`,
+    "una ayuda que te lleva por la hierba no te lleva",
   );
 }
 
