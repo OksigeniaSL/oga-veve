@@ -200,6 +200,14 @@ export class ArcadeFlightModel implements FlightModel {
   private readonly ground: GroundSampler;
 
   private heading = 0;
+  /**
+   * Lo que gira el rumbo ahora mismo, rad/s, positivo morro a la derecha.
+   *
+   * Se guarda porque el rumbo se mueve en dos sitios —rodando y volando— y lo
+   * que el resto del juego pregunta es la velocidad de guiñada, no el rumbo.
+   * Ver `yawRate` en `publicar`.
+   */
+  private guinada = 0;
   private speed = 0;
   /** Ha tocado tierra viniendo de volar y todavía no ha rodado despacio. */
   private haTocado = false;
@@ -286,6 +294,8 @@ export class ArcadeFlightModel implements FlightModel {
 
   reset(initial: InitialConditions): void {
     this.heading = initial.heading;
+    // Avión recolocado, avión que no viene girando de antes.
+    this.guinada = 0;
     this.speed = initial.airspeed;
     this.climb = 0;
     this.bank = 0;
@@ -669,12 +679,14 @@ export class ArcadeFlightModel implements FlightModel {
       const tope = Math.min(GROUND_TURN, porLaRueda, porElAgarre);
       const giro = clamp(controls.aileron * tope, -tope, tope);
       this.heading += giro * step;
+      this.guinada = giro;
       // Y sin inclinar el avión, que en el suelo tiene las ruedas puestas.
       this.bank += (0 - this.bank) * Math.min(1, step * 5);
     } else {
       // Viraje en vuelo. El morro gira y el avión se inclina para acompañar;
       // en un avión de verdad es al revés, pero lo que ve el ojo es lo mismo.
-      this.heading += controls.aileron * MAX_TURN_RATE * bite * step;
+      this.guinada = controls.aileron * MAX_TURN_RATE * bite;
+      this.heading += this.guinada * step;
       this.bank +=
         (controls.aileron * VISUAL_BANK * bite - this.bank) *
         Math.min(1, step * 3.5);
@@ -893,7 +905,26 @@ export class ArcadeFlightModel implements FlightModel {
     s.beta = 0;
     s.rollRate = 0;
     s.pitchRate = 0;
-    s.yawRate = 0;
+    /*
+     * **Y la guiñada sí se publica, porque este modelo la sabe.**
+     *
+     * Aquí iba un cero, junto a los otros dos, y no era lo mismo: el alabeo y
+     * el cabeceo de este modelo son de mentira —el avión se inclina para que se
+     * vea bien, no porque nada gire—, pero **la guiñada es el giro de verdad**:
+     * es el número con el que se mueve el rumbo dos líneas más arriba. Decir
+     * cero era decir que el avión no está girando mientras está girando.
+     *
+     * Y lo leía alguien. La ayuda de rodaje lleva un amortiguador sobre
+     * `yawRate` para que la corrección afloje antes de llegar a la raya, así
+     * que en Guyrami —el único peldaño que vuela este modelo— ese amortiguador
+     * valía cero y la ayuda era un proporcional puro con tope: metía el alerón
+     * a fondo hasta casi estar alineada. Medido en la primera esquina del
+     * rodaje de Pettirossi, el avión se abría **veinticuatro metros** antes de
+     * volver al eje, o sea fuera de una calle de veintitrés.
+     *
+     * No es un ajuste nuevo: es dejar de mentir sobre un número que ya existía.
+     */
+    s.yawRate = this.guinada;
     s.loadFactor = 1;
     // Ni pérdida ni choque: en este peldaño no se puede perder.
     s.stalled = false;
