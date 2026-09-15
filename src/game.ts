@@ -34,6 +34,7 @@ import {
 } from "./flight/tiers";
 import { AIRCRAFT, PYKASU, type AircraftConfig } from "./flight/aircraft";
 import { InputManager } from "./flight/input";
+import { claveDeTorre } from "./audio/torre";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraEnUso } from "./world/terrain";
@@ -2997,11 +2998,31 @@ export class Game {
      * que no puede esperar a que termine una frase. Las otras dos son normales
      * y se ponen en la cola de la boca como todo lo demás. Ver `audio/boca.ts`.
      */
-    this.torre.decir(
-      t(clave),
-      clave,
-      rojaDice === "alAire" && luz === "roja" ? "urgente" : "normal",
-    );
+    const urgencia =
+      rojaDice === "alAire" && luz === "roja" ? "urgente" : "normal";
+    this.torre.decir(t(clave), clave, urgencia);
+
+    /*
+     * **Y detrás, la misma orden en fraseología de verdad.**
+     *
+     * No se pisan: la boca hace cola y las dice una tras otra, con su silencio
+     * en medio. Ver `audio/boca.ts`.
+     *
+     * Y esa pareja **es la lección**. `i18n/habla.ts` ya lo tenía escrito: «lo
+     * que no cambia es el inglés aeronáutico —`cleared for take-off` se dice
+     * igual en Tenerife, en Asunción y en cualquier torre del mundo—, y esa es
+     * media lección del juego». El castellano del sitio dice qué hay que
+     * hacer, para quien tiene cuatro años y no lee; el inglés dice cómo se
+     * llama eso en una radio, para cuando tenga diez. Ver `audio/torre.ts`.
+     */
+    const enRadio =
+      luz === "verde"
+        ? "cleared for take-off"
+        : rojaDice === "alAire"
+          ? "go around, runway occupied"
+          : "hold short of the runway";
+    const suClave = claveDeTorre(enRadio);
+    if (suClave) this.torre.decir(enRadio, suClave, urgencia);
   }
 
   /**
@@ -5630,6 +5651,47 @@ export class Game {
       ) {
         const cabecera = cabeceraEnUso(this.scenario);
         if (cabecera) this.hud.destellar(cabecera);
+      }
+
+      /*
+       * **Y la torre dice lo que dice una torre.**
+       *
+       * Tenía siete frases grabadas y decía dos. Las otras cinco —«cleared for
+       * take-off», «cleared to land», «go around», «hold short», «line up and
+       * wait»— estaban grabadas, horneadas y bajadas a cada tablet **sin que
+       * nada en `src/` las nombrara**. Se oyó jugando: «las voces de torre y
+       * radio parece que se oyen, pero hay unas pocas frases». Ver
+       * `audio/torre.ts`, que une lo que pide el código con lo que hay grabado
+       * y tiene su prueba para que no vuelva a sobrar ninguna.
+       *
+       * Aquí va la del final, que es la única que no cuelga de la lámpara.
+       * Las otras tres las dice `luzDeTorre`, detrás de su frase en castellano.
+       *
+       * **Y el primer intento fue por la fase «alineando», y no sonó nunca.**
+       * Esa fase no existe en todos los campos: en Pettirossi el vuelo va
+       * «autorizado → back-taxi → en vuelo» y no pasa por ella. Medido, no
+       * deducido.
+       */
+      if (this.leccion.torre && !repuesta) {
+        /*
+         * **Y se autoriza al alinearse viniendo de la autorización, no cada
+         * vez que la fase diga «alineando».**
+         *
+         * Esa fase describe dos cosas que se parecen poco —ponerse en el eje
+         * antes de dar gas, y corregir un desvío **en plena carrera**, que la
+         * máquina ve igual: en pista y torcido—. Un bandazo a media carrera
+         * vuelve a «alineando» viniendo de «despegando», y una torre que
+         * autoriza a despegar a un avión que ya va a treinta metros por
+         * segundo no es una torre. Viniendo de «autorizado» solo se pasa una
+         * vez, y es el momento de verdad.
+         *
+         * El primer intento miró la velocidad, como hace el destello del
+         * número de pista, y no sonó nunca: al entrar en «alineando» el avión
+         * ya viene rodando desde la calle. Medido en Pettirossi.
+         */
+        const clave =
+          vista.fase === "final" ? claveDeTorre("cleared to land") : null;
+        if (clave) this.torre.decir("cleared to land", clave);
       }
       /*
        * **Dejar la pista libre es una victoria, y hay que decirlo.**

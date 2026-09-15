@@ -31,6 +31,17 @@ const REPARTO = [
   ["torre", "torre.canario.roja", "torre-canarias"],
   ["otro", "otro.enCola", "otro"],
   ["otro", "otro.pistaLibre", "otro"],
+  /*
+   * Y las cinco de fraseología, que estaban grabadas y no las decía nadie.
+   * Aquí se comprueba que **salen del pack**; que alguien las pida está en
+   * `src/audio/torre.test.ts`, y hacen falta las dos cosas: una grabación que
+   * nadie nombra y una que nadie encuentra suenan igual de poco.
+   */
+  ["torre", "torre.clearedTakeoff", "torre"],
+  ["torre", "torre.clearedLand", "torre"],
+  ["torre", "torre.holdShort", "torre"],
+  ["torre", "torre.lineUpWait", "torre"],
+  ["torre", "torre.goAround", "torre"],
   ["capitana", "capitana.bienvenida", "capitana"],
   ["capitana", "capitana.crucero", "capitana"],
   ["instructor", "cabina.v1", "cabina"],

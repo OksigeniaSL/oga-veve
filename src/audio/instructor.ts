@@ -58,7 +58,26 @@ export interface Instructor {
    * caliente y no tienen una clave sola. Esas las dice el navegador, como
    * hasta ahora, en vez de obligar a inventarles un nombre.
    */
-  decir(texto: string, clave?: string, urgencia?: Urgencia): void;
+  decir(
+    texto: string,
+    clave?: string,
+    urgencia?: Urgencia,
+    /**
+     * Con qué se rellenan los huecos de la receta, si los tiene.
+     *
+     * Una receta grabada puede llevar huecos —`{letra}`, `{c1}`— que se
+     * cambian por otra pieza al montarla. Es lo que hace un GPS con el nombre
+     * de la calle, y es lo que permite que veintiséis piezas de una sílaba
+     * cubran **todos** los indicativos y todas las calles de rodaje del juego.
+     * Ver `recetaDe` en `banco-de-voz.ts`.
+     *
+     * El mecanismo llevaba construido y probado desde el principio y **no lo
+     * usaba nadie**, porque no había forma de hacer llegar el relleno hasta
+     * aquí. Esto es esa forma. La voz del navegador lo ignora: lee el texto,
+     * que ya viene montado.
+     */
+    relleno?: Readonly<Record<string, string>>,
+  ): void;
   /** Se calla ahora mismo. */
   callar(): void;
   /** ¿Hay alguien que pueda hablar en el idioma de ahora? */
@@ -74,7 +93,12 @@ export interface Instructor {
 
 /** Un instructor mudo. Es lo que hay en guaraní, y no pasa nada. */
 export const MUDO: Instructor = {
-  decir: (_texto?: string, _clave?: string, _urgencia?: Urgencia) => {},
+  decir: (
+    _texto?: string,
+    _clave?: string,
+    _urgencia?: Urgencia,
+    _relleno?: Readonly<Record<string, string>>,
+  ) => {},
   callar: () => {},
   disponible: false,
   hablando: false,

@@ -333,6 +333,23 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       hablando: juego.instructor.hablando,
     }),
     /**
+     * Y lo último que dijo **cada boca**, no solo la instructora.
+     *
+     * `voz().ultima` mira la instructora, y con eso no se puede comprobar que
+     * la torre haya dicho algo: son objetos distintos. Es la misma ceguera que
+     * dejó cinco frases de torre grabadas sin que sonara ninguna —resolver la
+     * clave no es lo mismo que decirla en un vuelo—, y sin esta sonda el banco
+     * no sabe distinguir las dos cosas.
+     */
+    dicho: () => {
+      const salida: Record<string, string | null> = {};
+      for (const [quien, boca] of Object.entries(juego.bocas)) {
+        salida[quien] =
+          boca instanceof InstructorGrabado ? boca.loUltimo : null;
+      }
+      return salida;
+    },
+    /**
      * Y pedirle que diga una frase, para poder oírla sin volar hasta ella.
      *
      * Media docena de las frases grabadas solo salen en un momento concreto
