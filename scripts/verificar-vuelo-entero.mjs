@@ -691,6 +691,15 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   let tocoPasadoElUmbral = 0;
   let tocoA = 0;
   const fases = new Set();
+  /*
+   * **Y todo lo que llegó a decir la torre.**
+   *
+   * Tenía siete frases grabadas y decía dos: las otras cinco viajaban en el
+   * pack a cada tablet sin que nada en `src/` las nombrara. Que la clave
+   * resuelva no basta —eso ya lo comprueba `verificar-voces`—; lo que hace
+   * falta saber es si **suenan en un vuelo**, que es donde estaba el agujero.
+   */
+  const deLaTorre = new Set();
   /** Todas las tarjetas que llegaron a verse. Para saber qué faltó. */
   const vistas = new Set();
   /** Cuándo se rompió, si se rompió. */
@@ -807,6 +816,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     const ruta = o.ruta();
     const tarjeta = o.tarjeta();
     fases.add(fase);
+    const bocas = o.dicho?.();
+    if (bocas?.torre) deLaTorre.add(bocas.torre);
 
     // ── Lo que se mide, pase lo que pase ─────────────────────────────────
     /*
@@ -1513,6 +1524,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     veces,
     vueltas: i,
     fases: [...fases].join(" "),
+    torreDijo: [...deLaTorre],
     tarjetas: [...vistas].join(" "),
     vecesQueDijoToca: o.vecesQueDijoToca?.() ?? null,
     porQueSeMando: o.porQueSeMando?.() ?? null,
@@ -1649,6 +1661,31 @@ comprobar(
       : ""
   } · fases: ${vuelo.fases}`,
   "el banco medía trozos sueltos y nunca había volado un vuelo de principio a fin",
+);
+
+/*
+ * **Y la torre autoriza, que para eso hay una torre.**
+ *
+ * Tenía siete frases grabadas y decía dos. Las otras cinco —«cleared for
+ * take-off», «cleared to land», «go around», «hold short», «line up and
+ * wait»— estaban grabadas, horneadas, publicadas y bajadas a cada tablet
+ * **sin que nada en `src/` las nombrara**: solo vivían en el guion que las
+ * generó. Se oyó jugando: «las voces de torre y radio parece que se oyen, pero
+ * hay unas pocas frases».
+ *
+ * Que la clave resuelva ya lo comprueba `verificar-voces`. Lo que se comprueba
+ * aquí es lo otro, que es donde estaba el agujero: **que suenan en un vuelo**.
+ */
+const DE_UN_VUELO = [
+  "torre.holdShort",
+  "torre.clearedTakeoff",
+  "torre.clearedLand",
+];
+comprobar(
+  "la torre dice la fraseología del vuelo",
+  DE_UN_VUELO.every((c) => vuelo.torreDijo?.includes(c)),
+  `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
+  "cinco frases grabadas y horneadas que no las pedía nadie",
 );
 
 comprobar(

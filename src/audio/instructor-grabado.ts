@@ -135,9 +135,10 @@ export class InstructorGrabado implements Instructor {
    */
   private quienLaDice(
     clave: string | null,
+    relleno: Readonly<Record<string, string>> = {},
   ): { voz: string; piezas: readonly string[] } | null {
     for (const m of this.banco.manifiestos) {
-      const suena = queSuena(m, clave, true);
+      const suena = queSuena(m, clave, true, relleno);
       if (suena.como === "grabado") {
         return { voz: m.voz, piezas: suena.piezas };
       }
@@ -157,12 +158,27 @@ export class InstructorGrabado implements Instructor {
     return this.quienLaDice(clave)?.voz ?? null;
   }
 
-  decir(texto: string, clave?: string, urgencia?: Urgencia): void {
-    const suena = this.quienLaDice(clave ?? null);
+  decir(
+    texto: string,
+    clave?: string,
+    urgencia?: Urgencia,
+    relleno?: Readonly<Record<string, string>>,
+  ): void {
+    const suena = this.quienLaDice(clave ?? null, relleno);
     if (!suena) {
       // Que hable el navegador, y que se calle lo grabado: dos voces a la vez
       // son ruido, y de las dos manda la que se acaba de pedir.
       this.callarLoGrabado();
+      /*
+       * **Y se apunta igual, que es lo que dice que hace.**
+       *
+       * `loUltimo` se documenta como «lo último que se pidió decir» y solo se
+       * apuntaba por el camino de la grabación, así que sin pack cargado se
+       * quedaba viejo para siempre. Lo nota cualquiera que pregunte qué dijo
+       * esta boca: el banco de vuelo daba «la torre no dijo nada» cuando la
+       * torre lo había dicho por la voz del navegador.
+       */
+      this.ultima = clave ?? texto;
       this.suplente.decir(texto, clave, urgencia);
       return;
     }
