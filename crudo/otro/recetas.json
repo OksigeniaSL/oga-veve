@@ -1,0 +1,135 @@
+{
+  "fonetico.alfa": [
+    "fonetico.alfa"
+  ],
+  "fonetico.bravo": [
+    "fonetico.bravo"
+  ],
+  "fonetico.charlie": [
+    "fonetico.charlie"
+  ],
+  "fonetico.delta": [
+    "fonetico.delta"
+  ],
+  "fonetico.echo": [
+    "fonetico.echo"
+  ],
+  "fonetico.foxtrot": [
+    "fonetico.foxtrot"
+  ],
+  "fonetico.golf": [
+    "fonetico.golf"
+  ],
+  "fonetico.hotel": [
+    "fonetico.hotel"
+  ],
+  "fonetico.india": [
+    "fonetico.india"
+  ],
+  "fonetico.juliett": [
+    "fonetico.juliett"
+  ],
+  "fonetico.kilo": [
+    "fonetico.kilo"
+  ],
+  "fonetico.lima": [
+    "fonetico.lima"
+  ],
+  "fonetico.mike": [
+    "fonetico.mike"
+  ],
+  "fonetico.november": [
+    "fonetico.november"
+  ],
+  "fonetico.oscar": [
+    "fonetico.oscar"
+  ],
+  "fonetico.papa": [
+    "fonetico.papa"
+  ],
+  "fonetico.quebec": [
+    "fonetico.quebec"
+  ],
+  "fonetico.romeo": [
+    "fonetico.romeo"
+  ],
+  "fonetico.sierra": [
+    "fonetico.sierra"
+  ],
+  "fonetico.tango": [
+    "fonetico.tango"
+  ],
+  "fonetico.uniform": [
+    "fonetico.uniform"
+  ],
+  "fonetico.victor": [
+    "fonetico.victor"
+  ],
+  "fonetico.whiskey": [
+    "fonetico.whiskey"
+  ],
+  "fonetico.xray": [
+    "fonetico.xray"
+  ],
+  "fonetico.yankee": [
+    "fonetico.yankee"
+  ],
+  "fonetico.zulu": [
+    "fonetico.zulu"
+  ],
+  "otro.solo.buenosDias": [
+    "otro.solo.buenosDias"
+  ],
+  "otro.solo.rodando": [
+    "otro.solo.rodando"
+  ],
+  "otro.solo.enCola": [
+    "otro.solo.enCola"
+  ],
+  "otro.solo.final": [
+    "otro.solo.final"
+  ],
+  "otro.solo.pistaLibre": [
+    "otro.solo.pistaLibre"
+  ],
+  "otro.buenosDias": [
+    "otro.solo.buenosDias",
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}"
+  ],
+  "otro.rodando": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "otro.solo.rodando"
+  ],
+  "otro.enCola": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "otro.solo.enCola"
+  ],
+  "otro.final": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "otro.solo.final"
+  ],
+  "otro.pistaLibre": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "otro.solo.pistaLibre"
+  ]
+}

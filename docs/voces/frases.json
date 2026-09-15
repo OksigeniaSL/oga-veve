@@ -364,6 +364,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.sobrevelocidad",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Muy rápido: bajá el motor",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.sobrevelocidadAire",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Muy rápido para esta altura",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.pediFlaps",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1055,5 +1069,222 @@
     "idioma": "en",
     "texto": "line up and wait",
     "para": "entrá y esperá en el eje"
+  },
+  {
+    "id": "fonetico.alfa",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Alfa",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.bravo",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Bravo",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.charlie",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Charlie",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.delta",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Delta",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.echo",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Echo",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.foxtrot",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Foxtrot",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.golf",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Golf",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.hotel",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Hotel",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.india",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "India",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.juliett",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Juliett",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.kilo",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Kilo",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.lima",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Lima",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.mike",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Mike",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.november",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "November",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.oscar",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Oscar",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.papa",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Papa",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.quebec",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Quebec",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.romeo",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Romeo",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.sierra",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Sierra",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.tango",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Tango",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.uniform",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Uniform",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.victor",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Victor",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.whiskey",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Whiskey",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.xray",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "X-ray",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.yankee",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Yankee",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "fonetico.zulu",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Zulu",
+    "para": "una letra del indicativo"
+  },
+  {
+    "id": "otro.solo.buenosDias",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "Buenos días,",
+    "para": "el saludo, antes del indicativo"
+  },
+  {
+    "id": "otro.solo.rodando",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "rodando a la cabecera",
+    "para": "sale del puesto"
+  },
+  {
+    "id": "otro.solo.enCola",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "viento en cola",
+    "para": "entra en el circuito"
+  },
+  {
+    "id": "otro.solo.final",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "en final",
+    "para": "ya viene a la pista"
+  },
+  {
+    "id": "otro.solo.pistaLibre",
+    "voz": "otro",
+    "idioma": "es",
+    "texto": "pista libre",
+    "para": "y la deja"
   }
 ]

@@ -154,8 +154,11 @@ export class InstructorGrabado implements Instructor {
    * que es lo que estuvo roto desde que existen las grabaciones: el pack
    * entero se bajaba y solo lo consultaba la instructora. Ver `sondas.ts`.
    */
-  vozDe(clave: string): string | null {
-    return this.quienLaDice(clave)?.voz ?? null;
+  vozDe(
+    clave: string,
+    relleno?: Readonly<Record<string, string>>,
+  ): string | null {
+    return this.quienLaDice(clave, relleno)?.voz ?? null;
   }
 
   decir(

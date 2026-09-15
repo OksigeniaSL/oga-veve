@@ -3,37 +3,233 @@
   "voz": "otro",
   "idioma": "es-PY",
   "piezas": {
-    "otro.buenosDias": {
-      "ms": 1913
+    "fonetico.alfa": {
+      "ms": 647
     },
-    "otro.enCola": {
-      "ms": 2321
+    "fonetico.bravo": {
+      "ms": 872
     },
-    "otro.final": {
-      "ms": 2027
+    "fonetico.charlie": {
+      "ms": 472
     },
-    "otro.pistaLibre": {
-      "ms": 2503
+    "fonetico.delta": {
+      "ms": 874
     },
-    "otro.rodando": {
-      "ms": 3207
+    "fonetico.echo": {
+      "ms": 544
+    },
+    "fonetico.foxtrot": {
+      "ms": 1072
+    },
+    "fonetico.golf": {
+      "ms": 648
+    },
+    "fonetico.hotel": {
+      "ms": 935
+    },
+    "fonetico.india": {
+      "ms": 863
+    },
+    "fonetico.juliett": {
+      "ms": 846
+    },
+    "fonetico.kilo": {
+      "ms": 707
+    },
+    "fonetico.lima": {
+      "ms": 612
+    },
+    "fonetico.mike": {
+      "ms": 1028
+    },
+    "fonetico.november": {
+      "ms": 696
+    },
+    "fonetico.oscar": {
+      "ms": 666
+    },
+    "fonetico.papa": {
+      "ms": 830
+    },
+    "fonetico.quebec": {
+      "ms": 953
+    },
+    "fonetico.romeo": {
+      "ms": 874
+    },
+    "fonetico.sierra": {
+      "ms": 982
+    },
+    "fonetico.tango": {
+      "ms": 549
+    },
+    "fonetico.uniform": {
+      "ms": 763
+    },
+    "fonetico.victor": {
+      "ms": 731
+    },
+    "fonetico.whiskey": {
+      "ms": 646
+    },
+    "fonetico.xray": {
+      "ms": 735
+    },
+    "fonetico.yankee": {
+      "ms": 829
+    },
+    "fonetico.zulu": {
+      "ms": 921
+    },
+    "otro.solo.buenosDias": {
+      "ms": 1256
+    },
+    "otro.solo.enCola": {
+      "ms": 1100
+    },
+    "otro.solo.final": {
+      "ms": 816
+    },
+    "otro.solo.pistaLibre": {
+      "ms": 986
+    },
+    "otro.solo.rodando": {
+      "ms": 1256
     }
   },
   "recetas": {
+    "fonetico.alfa": [
+      "fonetico.alfa"
+    ],
+    "fonetico.bravo": [
+      "fonetico.bravo"
+    ],
+    "fonetico.charlie": [
+      "fonetico.charlie"
+    ],
+    "fonetico.delta": [
+      "fonetico.delta"
+    ],
+    "fonetico.echo": [
+      "fonetico.echo"
+    ],
+    "fonetico.foxtrot": [
+      "fonetico.foxtrot"
+    ],
+    "fonetico.golf": [
+      "fonetico.golf"
+    ],
+    "fonetico.hotel": [
+      "fonetico.hotel"
+    ],
+    "fonetico.india": [
+      "fonetico.india"
+    ],
+    "fonetico.juliett": [
+      "fonetico.juliett"
+    ],
+    "fonetico.kilo": [
+      "fonetico.kilo"
+    ],
+    "fonetico.lima": [
+      "fonetico.lima"
+    ],
+    "fonetico.mike": [
+      "fonetico.mike"
+    ],
+    "fonetico.november": [
+      "fonetico.november"
+    ],
+    "fonetico.oscar": [
+      "fonetico.oscar"
+    ],
+    "fonetico.papa": [
+      "fonetico.papa"
+    ],
+    "fonetico.quebec": [
+      "fonetico.quebec"
+    ],
+    "fonetico.romeo": [
+      "fonetico.romeo"
+    ],
+    "fonetico.sierra": [
+      "fonetico.sierra"
+    ],
+    "fonetico.tango": [
+      "fonetico.tango"
+    ],
+    "fonetico.uniform": [
+      "fonetico.uniform"
+    ],
+    "fonetico.victor": [
+      "fonetico.victor"
+    ],
+    "fonetico.whiskey": [
+      "fonetico.whiskey"
+    ],
+    "fonetico.xray": [
+      "fonetico.xray"
+    ],
+    "fonetico.yankee": [
+      "fonetico.yankee"
+    ],
+    "fonetico.zulu": [
+      "fonetico.zulu"
+    ],
+    "otro.solo.buenosDias": [
+      "otro.solo.buenosDias"
+    ],
+    "otro.solo.rodando": [
+      "otro.solo.rodando"
+    ],
+    "otro.solo.enCola": [
+      "otro.solo.enCola"
+    ],
+    "otro.solo.final": [
+      "otro.solo.final"
+    ],
+    "otro.solo.pistaLibre": [
+      "otro.solo.pistaLibre"
+    ],
     "otro.buenosDias": [
-      "otro.buenosDias"
-    ],
-    "otro.enCola": [
-      "otro.enCola"
-    ],
-    "otro.final": [
-      "otro.final"
-    ],
-    "otro.pistaLibre": [
-      "otro.pistaLibre"
+      "otro.solo.buenosDias",
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}"
     ],
     "otro.rodando": [
-      "otro.rodando"
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "otro.solo.rodando"
+    ],
+    "otro.enCola": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "otro.solo.enCola"
+    ],
+    "otro.final": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "otro.solo.final"
+    ],
+    "otro.pistaLibre": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "otro.solo.pistaLibre"
     ]
   }
 }

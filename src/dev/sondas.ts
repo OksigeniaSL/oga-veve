@@ -41,6 +41,7 @@ import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
 import { leerGafas } from "../flight/gafas";
 import { carreraHastaVr, distanciaDeAterrizaje } from "../flight/carrera";
 import { InstructorGrabado } from "../audio/instructor-grabado";
+import { rellenoDe } from "../flight/matricula";
 
 export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
@@ -367,14 +368,28 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * una: cada boca tiene su propio objeto, y hasta hoy tres de las cuatro no
      * miraban las grabaciones ni una sola vez.
      */
-    quienDice: (clave: string) => {
+    quienDice: (clave: string, relleno?: Record<string, string>) => {
       const salida: Record<string, string | null> = {};
       for (const [quien, boca] of Object.entries(juego.bocas)) {
         salida[quien] =
-          boca instanceof InstructorGrabado ? boca.vozDe(clave) : null;
+          boca instanceof InstructorGrabado ? boca.vozDe(clave, relleno) : null;
       }
       return salida;
     },
+    /**
+     * Cómo se llama el otro avión en **este** vuelo.
+     *
+     * Estaba escrito a mano dentro de las cinco grabaciones, así que era el
+     * mismo avión siempre y en todas partes. Ahora se sortea por vuelo y se
+     * monta letra a letra, y el banco necesita ver las tres cosas: lo que se
+     * lee, la matrícula, y con qué piezas se monta lo que se oye. Ver
+     * `flight/matricula.ts`.
+     */
+    indicativo: () => ({
+      dicho: juego.indicativoDeLaRadio.dicho,
+      matricula: juego.indicativoDeLaRadio.matricula,
+      relleno: rellenoDe(juego.indicativoDeLaRadio),
+    }),
     /** Si está puesta la pantalla de fin de vuelo. Para el banco. */
     finDeVuelo: () => juego.hud.finPuesto,
     /**

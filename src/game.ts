@@ -36,6 +36,11 @@ import { AIRCRAFT, PYKASU, type AircraftConfig } from "./flight/aircraft";
 import { InputManager } from "./flight/input";
 import { claveDeTorre } from "./audio/torre";
 import { anticipacionDeRodaje } from "./flight/gobernador";
+import {
+  rellenoDe,
+  sortearIndicativo,
+  type Indicativo,
+} from "./flight/matricula";
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraEnUso } from "./world/terrain";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
@@ -1064,6 +1069,21 @@ export class Game {
   private seVenLosAros = false;
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   faseAnunciada = "";
+  /**
+   * Cómo se llama hoy el otro avión de la frecuencia.
+   *
+   * Se sortea por vuelo y con el prefijo del país del aeródromo. Antes estaba
+   * escrito a mano dentro de las cinco grabaciones —«Zulu Papa Alfa Bravo
+   * Charlie»— y era el mismo avión en todos los vuelos y en todos los
+   * aeropuertos, incluidos los canarios, donde ZP- no tiene ningún sentido.
+   * Ver `flight/matricula.ts`.
+   */
+  private indicativoDelOtro: Indicativo = sortearIndicativo(null);
+
+  /** Y el banco de pruebas necesita verlo. Ver `sondas.ts`. */
+  get indicativoDeLaRadio(): Indicativo {
+    return this.indicativoDelOtro;
+  }
 
   cameraMode: CameraMode = vistaRecordada();
   private propellerAngle = 0;
@@ -3220,8 +3240,10 @@ export class Game {
     // Una cuenta atrás a medias de un vuelo que ya no existe.
     this.avisosDeAltura.reiniciar();
     this.alturaEnGrande.reiniciar();
-    // Y el otro avión vuelve a empezar su vuelo con nosotros.
+    // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
+    // nombre**: es otro avión, no el mismo dando vueltas para siempre.
     this.radio.reiniciar();
+    this.indicativoDelOtro = sortearIndicativo(this.scenario.aerodrome?.id);
     callar();
     /*
      * **Y todo lo que el paso siguiente va a leer.**
@@ -3492,14 +3514,31 @@ export class Game {
       instructorHablando: this.instructor.hablando,
     });
     if (!dice) return;
-    const texto = t(dice);
+    /*
+     * **Y el indicativo se monta, no está escrito.**
+     *
+     * El texto lleva un hueco —`{indicativo}`— y la receta grabada lleva otros
+     * cinco —`{c1}`…`{c5}`—, uno por letra. Los dos se rellenan aquí con el
+     * mismo sorteo, así que lo que se lee y lo que se oye son el mismo avión.
+     *
+     * Y esa es la gracia de verdad: con veintiséis sílabas grabadas suena
+     * cualquier indicativo, y el alfabeto aeronáutico se oye una y otra vez
+     * **en contexto**, que es como se aprende sin estudiarlo. Ver
+     * `flight/matricula.ts` y `recetaDe` en `audio/banco-de-voz.ts`.
+     */
+    const texto = t(dice, { indicativo: this.indicativoDelOtro.dicho });
     /*
      * **Y el otro avión habla en voz baja**, en el sentido de la boca: lo suyo
      * es ambiente y no puede quitarle el turno a una instrucción. Sin esto, un
      * «en final» del otro avión le robaba la plaza a la autorización de la
      * torre. Ver `Urgencia` en `audio/boca.ts`.
      */
-    this.otroAvion.decir(texto, dice, "baja");
+    this.otroAvion.decir(
+      texto,
+      dice,
+      "baja",
+      rellenoDe(this.indicativoDelOtro),
+    );
     if (this.tier.instruments !== "none") this.hud.radio(texto);
   }
 

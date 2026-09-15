@@ -51,6 +51,8 @@ instructor	instructor/vuelo.apagado.ogg	es-PY	¡Vuelo terminado!	lo que toca hac
 instructor	instructor/vuelo.fuera.ogg	es-PY	Volvé a la raya verde	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.roto.ogg	es-PY	Se rompió. Volvemos a empezar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.rapido.ogg	es-PY	Vas muy rápido	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.sobrevelocidad.ogg	es-PY	Muy rápido: bajá el motor	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.sobrevelocidadAire.ogg	es-PY	Muy rápido para esta altura	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pediFlaps.ogg	es-PY	Bajá los flaps para frenar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despacio.ogg	es-PY	Más despacio	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alto.ogg	es-PY	Pará acá	lo que toca hacer ahora, en vuelo y en tierra
@@ -150,3 +152,34 @@ torre	torre/torre.clearedLand.ogg	en	cleared to land	podés volver a intentarlo
 torre	torre/torre.goAround.ogg	en	go around, runway occupied	la pista está ocupada
 torre	torre/torre.holdShort.ogg	en	hold short of the runway	pará en la doble raya
 torre	torre/torre.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
+otro	otro/fonetico.alfa.ogg	es	Alfa	una letra del indicativo
+otro	otro/fonetico.bravo.ogg	es	Bravo	una letra del indicativo
+otro	otro/fonetico.charlie.ogg	es	Charlie	una letra del indicativo
+otro	otro/fonetico.delta.ogg	es	Delta	una letra del indicativo
+otro	otro/fonetico.echo.ogg	es	Echo	una letra del indicativo
+otro	otro/fonetico.foxtrot.ogg	es	Foxtrot	una letra del indicativo
+otro	otro/fonetico.golf.ogg	es	Golf	una letra del indicativo
+otro	otro/fonetico.hotel.ogg	es	Hotel	una letra del indicativo
+otro	otro/fonetico.india.ogg	es	India	una letra del indicativo
+otro	otro/fonetico.juliett.ogg	es	Juliett	una letra del indicativo
+otro	otro/fonetico.kilo.ogg	es	Kilo	una letra del indicativo
+otro	otro/fonetico.lima.ogg	es	Lima	una letra del indicativo
+otro	otro/fonetico.mike.ogg	es	Mike	una letra del indicativo
+otro	otro/fonetico.november.ogg	es	November	una letra del indicativo
+otro	otro/fonetico.oscar.ogg	es	Oscar	una letra del indicativo
+otro	otro/fonetico.papa.ogg	es	Papa	una letra del indicativo
+otro	otro/fonetico.quebec.ogg	es	Quebec	una letra del indicativo
+otro	otro/fonetico.romeo.ogg	es	Romeo	una letra del indicativo
+otro	otro/fonetico.sierra.ogg	es	Sierra	una letra del indicativo
+otro	otro/fonetico.tango.ogg	es	Tango	una letra del indicativo
+otro	otro/fonetico.uniform.ogg	es	Uniform	una letra del indicativo
+otro	otro/fonetico.victor.ogg	es	Victor	una letra del indicativo
+otro	otro/fonetico.whiskey.ogg	es	Whiskey	una letra del indicativo
+otro	otro/fonetico.xray.ogg	es	X-ray	una letra del indicativo
+otro	otro/fonetico.yankee.ogg	es	Yankee	una letra del indicativo
+otro	otro/fonetico.zulu.ogg	es	Zulu	una letra del indicativo
+otro	otro/otro.solo.buenosDias.ogg	es	Buenos días,	el saludo, antes del indicativo
+otro	otro/otro.solo.rodando.ogg	es	rodando a la cabecera	sale del puesto
+otro	otro/otro.solo.enCola.ogg	es	viento en cola	entra en el circuito
+otro	otro/otro.solo.final.ogg	es	en final	ya viene a la pista
+otro	otro/otro.solo.pistaLibre.ogg	es	pista libre	y la deja
