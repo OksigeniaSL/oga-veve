@@ -30,6 +30,7 @@ import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
+import { enEjesDePista } from "../world/rumbo";
 import type { Lluvia } from "../world/meteo";
 import { alturaDeEdificio, enElPavimento } from "../world/aerodrome";
 import {
@@ -385,6 +386,23 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * lee, la matrícula, y con qué piezas se monta lo que se oye. Ver
      * `flight/matricula.ts`.
      */
+    /**
+     * Todo lo que se le fue pidiendo a cada boca, en orden.
+     *
+     * `dicho()` da lo último, y con el reloj a doce eso no basta: la carrera de
+     * despegue entera cabe en dos fotogramas y entre V1 y Vr no hay ninguno.
+     * Ver `historial` en `instructor-grabado.ts`.
+     */
+    /** Lo que ve el detector de V1. Ver `sondaDeV1` en `hud.ts`. */
+    v1: () => juego.hud.sondaDeV1,
+    dichoTodo: () => {
+      const salida: Record<string, string[]> = {};
+      for (const [quien, boca] of Object.entries(juego.bocas)) {
+        salida[quien] =
+          boca instanceof InstructorGrabado ? [...boca.historial] : [];
+      }
+      return salida;
+    },
     indicativo: () => ({
       dicho: juego.indicativoDeLaRadio.dicho,
       matricula: juego.indicativoDeLaRadio.matricula,
@@ -671,6 +689,27 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     reiniciarSenda: () => juego.runwayGuide.reset(juego.flight.state.position),
     /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
     suelo: (x: number, z: number) => juego.terrain.sampleHeight(x, z),
+    /**
+     * Dónde está el avión **en ejes de pista**: a lo largo y al costado.
+     *
+     * Es con lo que el juego decide `onRunway`, y de ahí cuelgan cosas que no
+     * lo parecen: el destello de V1, el canto de Vr, el tope de velocidad en
+     * tierra y qué fase es ésta. Cuando algo de eso no sale, la pregunta
+     * siempre es la misma —¿se cree el juego que estás en la pista?— y no
+     * había forma de contestarla desde fuera.
+     */
+    ejesDePista: () => {
+      const r = juego.scenario.runway;
+      const s = juego.flight.state;
+      const e = enEjesDePista(s.position.x, s.position.z, r.x, r.z, r.heading);
+      return {
+        along: +e.along.toFixed(1),
+        across: +e.across.toFixed(1),
+        largo: r.length,
+        ancho: r.width,
+        rumbo: r.heading,
+      };
+    },
     /**
      * ¿Pisa asfalto el avión ahora mismo?
      *

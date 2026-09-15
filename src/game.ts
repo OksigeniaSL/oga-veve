@@ -2177,7 +2177,27 @@ export class Game {
      * No es un castigo por fallar una maniobra: es lo que pasa por seguir
      * bajando después de la orden. Ver `mirarSiMandanFrustrar`.
      */
-    if (this.laAproximacion.mandanFrustrar) this.sufrirPercance("ocupada");
+    /*
+     * **Y solo con la orden de la torre, que es la que tiene una vaca detrás.**
+     *
+     * Esto miraba `mandanFrustrar` a secas, y esa bandera la encienden **dos**
+     * cosas muy distintas: la torre, porque hay algo en la pista, y la
+     * aproximación no estabilizada, donde la pista está vacía. Así que
+     * continuar una aproximación mal estabilizada rompía el avión «por
+     * llevarse por delante lo que hubiera en la pista» — contra un obstáculo
+     * que no existe.
+     *
+     * Se vio jugando con el 747: «al aterrizar me ordena una frustrada… cuando
+     * estoy llegando "así no entra" con 3400 m de pista y la velocidad al
+     * mínimo, tomo tierra y se rompió, volvemos a empezar».
+     *
+     * Una aproximación mal estabilizada que se continúa no explota: sale
+     * larga, dura o descolocada, y para eso están los veredictos de siempre
+     * —golpe, fuera de pista— que vienen justo debajo. El aviso enseña; la
+     * consecuencia la pone la física.
+     */
+    if (this.laAproximacion.porqueMandaron === "pistaOcupada")
+      this.sufrirPercance("ocupada");
     else if (veredicto === "fuera") this.sufrirPercance("fuera");
     /*
      * Y llegar dando un golpe, aunque sea sobre el asfalto.
@@ -2958,6 +2978,22 @@ export class Game {
      * y dejarla encendida diría algo que ya no es verdad.
      */
     this.hechos.on("pistaLibreOtraVez", () => {
+      /*
+       * **Y lo primero: retirar la orden de la pantalla.**
+       *
+       * La orden se pinta con prioridad URGENTE y `segundos: Infinity`, que es
+       * lo correcto —es una orden y espera respuesta, no caduca sola—. Pero
+       * levantarla solo mostraba la tarjeta verde, que es IMPORTANTE, o sea
+       * **de menos prioridad**: la roja no se dejaba desplazar y se quedaba
+       * puesta para siempre. Se vio jugando: «me ordena una frustrada, la
+       * hago, pero el símbolo no se quita nunca aunque me dice "la torre ya te
+       * deja"».
+       *
+       * La voz sonaba y la pantalla decía lo contrario, que es la peor de las
+       * dos formas de estar mal. `caducar` está escrito justo para esto: para
+       * lo que deja de ser verdad.
+       */
+      this.hud.senal.caducar("frustrada");
       this.laTorreMandaEnLaLuz = true;
       this.luzDeTorre("verde");
       const libre = this.avisoCon("vuelo.puedeVolver", "palabra.volve");

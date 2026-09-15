@@ -700,6 +700,22 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * falta saber es si **suenan en un vuelo**, que es donde estaba el agujero.
    */
   const deLaTorre = new Set();
+  /*
+   * Y lo que canta la cabina, que va por la boca de la instructora. «V one» y
+   * «rotate» son los dos momentos del despegue y con el 747 no salía ninguno:
+   * «en ese mismo vuelo, al despegar no me avisa del V1 ni VR ni nada».
+   */
+  const deLaCabina = new Set();
+  /*
+   * Y **lo más rápido que llegó a ir creyéndose en la pista**, que es la
+   * condición que enciende V1: `onRunway && airspeed > decisionSpeed`. Si el
+   * avión se sale del rectángulo antes de llegar a su velocidad de decisión,
+   * el destello y el canto no salen nunca y no hay forma de saber por qué.
+   */
+  let masRapidoEnPista = 0;
+  let seSalioEnPista = 0;
+  let gasEnLaCarrera = 0;
+  const verV1 = new Set();
   /** Todas las tarjetas que llegaron a verse. Para saber qué faltó. */
   const vistas = new Set();
   /** Cuándo se rompió, si se rompió. */
@@ -766,6 +782,26 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   const veces = o.acelerar?.(vecesPedidas) ?? 1;
   /*
+   * **Y el reloj baja en la carrera de despegue.**
+   *
+   * A doce, la carrera de una avioneta —doscientos veinticinco metros, diez
+   * segundos— cabe en un fotograma, y entre V1 y Vr no hay ninguno: el banco
+   * no puede ver lo que pasa ahí. Daba «no canta V1» con aviones que sí la
+   * cantan, y daba una cosa distinta en cada tirada según dónde cayera el
+   * muestreo. Una regla de medir que no resuelve lo que mide no mide.
+   */
+  let relojAhora = veces;
+  const relojPara = (fase) => {
+    const enLaCarrera = ["alineando", "despegando", "comprometido"].includes(
+      fase,
+    );
+    const quiere = enLaCarrera ? Math.min(2, veces) : veces;
+    if (quiere !== relojAhora) {
+      relojAhora = quiere;
+      o.acelerar?.(quiere);
+    }
+  };
+  /*
    * Quince minutos **de vuelo**. Un vuelo entero son unos ocho; el resto es
    * margen para que, cuando algo falle, se vea **dónde** se quedó parado.
    */
@@ -816,8 +852,38 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     const ruta = o.ruta();
     const tarjeta = o.tarjeta();
     fases.add(fase);
+    relojPara(fase);
     const bocas = o.dicho?.();
     if (bocas?.torre) deLaTorre.add(bocas.torre);
+    /*
+     * **Y se apunta la clave o el texto**, que no siempre es lo mismo.
+     *
+     * Sin pack de voz cargado —que es lo normal en este banco: el pack se baja
+     * tras el primer gesto y aquí no hay gestos— la frase la dice el navegador
+     * y lo que queda apuntado es **el texto en inglés**, no la clave
+     * `cabina.v1`. Mirando solo la clave, el banco daba «la cabina no dijo
+     * nada» también con la avioneta, donde sí se oye.
+     */
+    if (bocas?.instructor) deLaCabina.add(bocas.instructor);
+    /*
+     * Las cuatro condiciones que encienden V1, medidas donde importan: en la
+     * carrera de despegue. Sin mirar si está en el suelo, que la condición del
+     * juego tampoco lo mira.
+     */
+    if (["alineando", "despegando", "comprometido"].includes(fase)) {
+      const ejes = o.ejesDePista?.();
+      if (s.onRunway) {
+        masRapidoEnPista = Math.max(masRapidoEnPista, s.airspeed);
+        gasEnLaCarrera = Math.max(gasEnLaCarrera, o.controles().throttle);
+        const v1 = o.v1?.();
+        if (v1)
+          verV1.add(
+            `carrera:${v1.enLaCarrera} v1:${v1.dijoV1} vr:${v1.dijoVr} Vr=${v1.vr}`,
+          );
+      }
+      if (ejes)
+        seSalioEnPista = Math.max(seSalioEnPista, Math.abs(ejes.across));
+    }
 
     // ── Lo que se mide, pase lo que pase ─────────────────────────────────
     /*
@@ -1524,7 +1590,14 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     veces,
     vueltas: i,
     fases: [...fases].join(" "),
-    torreDijo: [...deLaTorre],
+    torreDijo: [...(o.dichoTodo?.().torre ?? deLaTorre)],
+    // Del historial de la boca, no del muestreo: ver `dichoTodo`.
+    cabinaDijo: o.dichoTodo?.().instructor ?? [...deLaCabina],
+    torreDijoTodo: o.dichoTodo?.().torre ?? [],
+    masRapidoEnPista: Math.round(masRapidoEnPista),
+    seSalioEnPista: Math.round(seSalioEnPista),
+    gasEnLaCarrera: +gasEnLaCarrera.toFixed(2),
+    verV1: [...verV1],
     tarjetas: [...vistas].join(" "),
     vecesQueDijoToca: o.vecesQueDijoToca?.() ?? null,
     porQueSeMando: o.porQueSeMando?.() ?? null,
@@ -1686,6 +1759,38 @@ comprobar(
   DE_UN_VUELO.every((c) => vuelo.torreDijo?.includes(c)),
   `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
   "cinco frases grabadas y horneadas que no las pedía nadie",
+);
+
+/*
+ * **Y la cabina canta los dos momentos del despegue.**
+ *
+ * V1 es la decisión —a partir de ahí se vuela pase lo que pase— y Vr la
+ * acción. Son la mitad de lo que hace que un despegue se entienda, y con el
+ * 747 no salía ninguno de los dos: «en ese mismo vuelo, al despegar no me
+ * avisa del V1 ni VR ni nada». El banco volaba siempre la avioneta, donde sí
+ * salen, así que nadie se enteró.
+ */
+comprobar(
+  "se anuncian los dos momentos del despegue, V1 y rotar",
+  /*
+   * **En inglés o en castellano, según el peldaño.** De Taguató para abajo el
+   * canal de cabina está apagado y lo mismo se dice con `vuelo.comprometido` y
+   * `vuelo.rotar`. Lo que se comprueba es que **los dos momentos se
+   * anuncien**, no en qué idioma. Ver `cantar` y `flight/escalera.ts`.
+   *
+   * Y sin pack de voz cargado —que es lo normal aquí: se baja tras el primer
+   * gesto y este banco no da ninguno— lo que queda apuntado es el texto en
+   * inglés y no la clave, así que valen las tres formas.
+   */
+  ["cabina.v1", "V one", "vuelo.comprometido"].some((c) =>
+    vuelo.cabinaDijo?.includes(c),
+  ) &&
+    ["cabina.vr", "rotate", "vuelo.rotar"].some((c) =>
+      vuelo.cabinaDijo?.includes(c),
+    ),
+  `del despegue salió: ${(vuelo.cabinaDijo ?? []).filter((c) => /^(cabina\.|V one|rotate|vuelo\.(comprometido|rotar))/.test(c)).join(" · ") || "nada"}` +
+    ` · en la carrera: hasta ${vuelo.masRapidoEnPista} m/s en pista, gas ${vuelo.gasEnLaCarrera}, ${vuelo.seSalioEnPista} m del eje · ${vuelo.verV1?.join(" | ")}`,
+  "sin V1 ni Vr, un despegue es acelerar y que pase algo",
 );
 
 comprobar(

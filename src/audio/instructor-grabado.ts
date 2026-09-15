@@ -182,6 +182,7 @@ export class InstructorGrabado implements Instructor {
        * torre lo había dicho por la voz del navegador.
        */
       this.ultima = clave ?? texto;
+      this.apuntar();
       this.suplente.decir(texto, clave, urgencia);
       return;
     }
@@ -213,6 +214,7 @@ export class InstructorGrabado implements Instructor {
         this.suplente.callar();
         this.callarLoGrabado();
         this.ultima = clave ?? texto;
+        this.apuntar();
         this.sonando = true;
         this.cortar = this.altavoz.encadenarVoz(cadena, () => {
           this.sonando = false;
@@ -238,6 +240,12 @@ export class InstructorGrabado implements Instructor {
     this.suplente.callar();
   }
 
+  /** Apunta lo último en el historial, sin dejarlo crecer sin fin. */
+  private apuntar(): void {
+    this.historial.push(this.ultima);
+    if (this.historial.length > 400) this.historial.shift();
+  }
+
   private callarLoGrabado(): void {
     const cortar = this.cortar;
     this.cortar = null;
@@ -249,6 +257,21 @@ export class InstructorGrabado implements Instructor {
   get loUltimo(): string {
     return this.ultima;
   }
+
+  /**
+   * **Y todo lo que se le fue pidiendo**, para los bancos de pruebas.
+   *
+   * Preguntar «lo último» fotograma a fotograma no sirve para saber si algo se
+   * dijo: los bancos corren el reloj a doce, así que una carrera de despegue
+   * entera cabe en dos o tres fotogramas y entre V1 y Vr no hay ninguno. El
+   * banco daba «no canta V1» con aviones que sí la cantan, y daba cosas
+   * distintas en cada tirada según dónde cayera el muestreo.
+   *
+   * Es una lista y no un contador porque lo que se comprueba es **qué** se
+   * dijo y en qué orden. Con tope, que un vuelo son cientos de frases y esto
+   * vive en memoria mientras dure la partida.
+   */
+  readonly historial: string[] = [];
 
   /**
    * Baja el pack y lo deja listo. Se llama después del primer gesto.
