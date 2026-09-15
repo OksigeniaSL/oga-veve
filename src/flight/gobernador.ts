@@ -62,6 +62,63 @@
  */
 export const CONDUCE_EL_JUEGO = 0.3;
 
+/**
+ * Lo más que conduce la escalera: la ayuda de rodaje del peldaño de abajo.
+ *
+ * No es un número suelto: es el `taxiAssist` de Guyrami, y `tiers.test.ts`
+ * comprueba que sigue siéndolo. Está aquí y no en `tiers.ts` porque de él no se
+ * necesita el valor sino **el extremo de arriba de la escala**, que es lo que
+ * convierte una fuerza en una anticipación.
+ */
+export const LA_QUE_MAS_CONDUCE = 0.5;
+
+/**
+ * De cuánta ayuda a **de qué clase**: cuánto anticipa la ayuda de rodaje.
+ *
+ * `taxiAssist` dice cuánto se aplica la corrección; esto dice si la ayuda
+ * *sujeta* o *conduce*. Con cero solo corrige la deriva —sobre la raya calla y
+ * la curva la das tú—; con uno apunta además a un punto de la ruta por delante,
+ * o sea toma la curva. Es la escalera de siempre, y sale del mismo umbral que
+ * decide el tope de velocidad en tierra: Guyrami conduce, Tukã ayuda un poco en
+ * las curvas, y de Taguató para arriba la ayuda solo evita que te salgas.
+ *
+ * ## El umbral estaba escrito a mano, y en el sitio que no era
+ *
+ * La cuenta era `(fuerza − 0,5) × 2`, y medio es justo lo que tiene Guyrami —el
+ * peldaño que más conduce—, así que daba **cero en los cuatro**: la
+ * anticipación no se ejecutaba nunca, ni siquiera en el peldaño de cuatro años
+ * cuya promesa entera es llevarte. Todo lo que dice la documentación de
+ * `asistencia()` sobre conducir describía una rama muerta, y el comentario de
+ * `tiers.test.ts` se lo creyó al revés: daba por decidido que la anticipación
+ * estaba apagada a propósito.
+ *
+ * Es el mismo bicho que ya se cazó en `CONDUCE_EL_JUEGO`, que también empezó
+ * valiendo 0,5 y también dejaba fuera a quien no debía. Por eso ahora el umbral
+ * **es** esa constante en vez de un número nuevo, y por eso los cuatro peldaños
+ * están clavados en `tiers.test.ts`.
+ *
+ * ## Y no es que se hubiera apagado por gusto
+ *
+ * Apagada, `verificar-asistencia` lo mide en una línea: en Guyrami, con gas y
+ * sin tocar el volante, el avión acaba el rodaje de Pettirossi **en «rodando»**
+ * —nunca llega al punto de espera— y se va a treinta y ocho metros de la ruta.
+ * A los cuatro años eso no es un reto: es una calle de rodaje que no lleva a
+ * ninguna parte.
+ *
+ * Lo que sí hubo fue una queja, y de las buenas: «no tiene mucho sentido que el
+ * juego conduzca por el jugador. Y si todo se hace solo, vaya aburrimiento». Esa
+ * queja es contra que **todos** los peldaños condujeran, que es lo que pasaba
+ * cuando la anticipación no salía de la escalera. Contra eso va esta función:
+ * conduce **uno** de los cuatro, el de cuatro a seis años, y el giro sigue
+ * teniendo el mismo techo que todo lo demás —`TOPE_DE_AYUDA`—, así que ni
+ * siquiera ahí da la vuelta al avión por ti.
+ */
+export function anticipacionDeRodaje(fuerza: number): number {
+  const margen = LA_QUE_MAS_CONDUCE - CONDUCE_EL_JUEGO;
+  if (margen <= 0) return 0;
+  return Math.max(0, Math.min(1, (fuerza - CONDUCE_EL_JUEGO) / margen));
+}
+
 export interface Rodaje {
   /** Velocidad actual, m/s. */
   readonly velocidad: number;

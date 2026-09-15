@@ -3,7 +3,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { CONDUCE_EL_JUEGO } from "./gobernador";
+import {
+  anticipacionDeRodaje,
+  CONDUCE_EL_JUEGO,
+  LA_QUE_MAS_CONDUCE,
+} from "./gobernador";
 import { TIERS } from "./tiers";
 
 /**
@@ -16,10 +20,18 @@ import { TIERS } from "./tiers";
  * incluida, y lo que salía era una demostración: «no tiene mucho sentido que
  * el juego conduzca por el jugador. Y si todo se hace solo, vaya aburrimiento».
  *
- * Medio es el punto exacto en el que se apaga la anticipación —ver
- * `asistirRodaje` en `game.ts`—, así que la ayuda deja de meter el avión en la
- * curva y se queda tirando hacia la raya cuando te vas de ella. Este número no
- * puede volver a subir sin que alguien lo lea aquí.
+ * **Este comentario decía justo lo contrario, y se lo creyó de un fallo.**
+ * Decía que medio era «el punto exacto en el que se apaga la anticipación»
+ * porque la cuenta de `asistirRodaje` era `(fuerza − 0,5) × 2` y en Guyrami
+ * daba cero. Pero medio es el techo de la escalera, no su umbral: lo que esa
+ * cuenta apagaba no era el peldaño de abajo, eran **los cuatro**. Nadie
+ * conducía, y la queja de arriba —«si todo se hace solo, vaya aburrimiento»—
+ * llevaba resuelta desde entonces por accidente.
+ *
+ * Lo que sí sigue en pie es el techo: ningún peldaño pasa de medio, porque la
+ * anticipación de Guyrami es lo más que el juego llega a conducir y ahí se
+ * acaba. Ver `anticipacionDeRodaje`. Este número no puede subir sin que
+ * alguien lo lea aquí.
  */
 describe("la dirección en tierra", () => {
   it("nunca llega a conducir sola", () => {
@@ -33,6 +45,41 @@ describe("la dirección en tierra", () => {
     for (let i = 1; i < escalera.length; i++) {
       expect(escalera[i]!).toBeLessThan(escalera[i - 1]!);
     }
+  });
+
+  /**
+   * Y **el techo de la escalera es el techo de la escalera**.
+   *
+   * `LA_QUE_MAS_CONDUCE` vive en `gobernador.ts` porque lo que se necesita de
+   * él no es el valor de Guyrami sino el extremo de arriba de la escala. Eso
+   * son dos sitios para una misma cifra, que es exactamente la forma que tenía
+   * el fallo de `CONDUCE_EL_JUEGO`. Aquí se atan.
+   */
+  it("y el tope de la escala es el peldaño de abajo", () => {
+    const masAyuda = Math.max(...TIERS.map((t) => t.assists.taxiAssist));
+    expect(LA_QUE_MAS_CONDUCE).toBe(masAyuda);
+  });
+
+  /**
+   * Y **quién conduce y quién solo sujeta**, que es la otra mitad de la
+   * escalera y llevaba sin existir desde que se escribió.
+   *
+   * Cuánto anticipa la ayuda no es lo mismo que cuánta ayuda hay: lo primero
+   * dice si el juego toma la curva por ti. Con la cuenta vieja daba cero en los
+   * cuatro peldaños —ver `anticipacionDeRodaje`—, así que ni el de cuatro años
+   * llegaba al punto de espera con el mando suelto. Los cuatro números están
+   * aquí para que apagarla otra vez sin querer cueste romper un test.
+   */
+  it("y solo conduce el peldaño de abajo", () => {
+    const anticipa = Object.fromEntries(
+      TIERS.map((t) => [t.id, anticipacionDeRodaje(t.assists.taxiAssist)]),
+    );
+    // Guyrami toma la curva; Tukã la insinúa; de Taguató para arriba, nada.
+    expect(anticipa.guyrami).toBe(1);
+    expect(anticipa.tuka).toBeGreaterThan(0);
+    expect(anticipa.tuka).toBeLessThan(0.5);
+    expect(anticipa.taguato).toBe(0);
+    expect(anticipa["taguato-ruvicha"]).toBe(0);
   });
 });
 
