@@ -20,6 +20,15 @@
  * llevar, y se mide si se tocan. En cuatro tamaños de pantalla, que es donde
  * la cuenta de porcentajes cambia.
  *
+ * Y lo mismo con **los carteles que se encienden solos**: la lámpara de la
+ * torre y el cartel del cinturón. Ésos nadie los pide, así que cuando uno de
+ * ellos se queda debajo de otra cosa no se ve como un solape — se ve como que
+ * el juego suena y no enseña nada. Pasó con el cinturón: vivía arriba en el
+ * centro, que es donde va la fila de tarjetas de «qué toca hacer ahora», y se
+ * encendía detrás de ellas. «Oigo como un timbre después de despegar y
+ * aproximándome, pero no veo señales de cinturón ni nada, ¿está detrás de
+ * algo?» Estaba.
+ *
  * Uso: `node scripts/verificar-carteles.mjs`
  */
 import { chromium } from "playwright";
@@ -104,6 +113,55 @@ for (const [ancho, alto] of PANTALLAS) {
     };
   });
 
+  /*
+   * Y los que se encienden solos, encendidos a la fuerza: se mira **quién les
+   * cae encima**. Se descartan los velos que cubren la pantalla entera —la
+   * viñeta y el destello de V1—, que se solapan con todo por definición y no
+   * tapan nada: son transparentes.
+   */
+  const tapados = await page.evaluate(() => {
+    const salida = [];
+    for (const que of ["cinturon", "torre"]) {
+      const el = document.querySelector(`[data-hud="${que}"]`);
+      if (!el) continue;
+      el.hidden = false;
+      const c = el.getBoundingClientRect();
+      /*
+       * **Y «se ve» no es «no se solapa»: es estar por delante.**
+       *
+       * En una pantalla estrecha el HUD va apretado y solaparse con algo es
+       * inevitable; lo que no puede pasar es quedar **debajo**. Así que en vez
+       * de medir cajas se pregunta lo único que importa: en el centro del
+       * cartel, ¿quién está pintado delante? Se le devuelven los clics un
+       * instante para poder preguntarlo, y se le quitan después: un cartel que
+       * se enciende solo no se pulsa.
+       */
+      const antes = el.style.pointerEvents;
+      el.style.pointerEvents = "auto";
+      const punto = document.elementFromPoint(
+        c.left + c.width / 2,
+        c.top + c.height / 2,
+      );
+      el.style.pointerEvents = antes;
+      const encima =
+        punto && !el.contains(punto) && punto !== el ? [punto] : [];
+      el.hidden = true;
+      salida.push({
+        que,
+        dentro:
+          c.left >= 0 &&
+          c.top >= 0 &&
+          c.right <= window.innerWidth &&
+          c.bottom <= window.innerHeight,
+        encima: [...new Set(encima.map((o) => String(o.className)))].slice(
+          0,
+          4,
+        ),
+      });
+    }
+    return salida;
+  });
+
   const donde = `${ancho}×${alto}`;
   if (!visto) {
     comprobar(`${donde}: están las dos tarjetas`, false, "no se encontraron");
@@ -124,6 +182,15 @@ for (const [ancho, alto] of PANTALLAS) {
     visto.fuera ? "alguna se sale" : "dentro",
     "subir una encima de la otra no vale si la de arriba se va por el borde",
   );
+
+  for (const t of tapados) {
+    comprobar(
+      `${donde}: el cartel de ${t.que} se ve entero`,
+      t.dentro && t.encima.length === 0,
+      t.encima.length ? `tapado por ${t.encima.join(" · ")}` : "libre",
+      "un cartel que suena y no se ve es peor que no tener cartel",
+    );
+  }
 
   comprobar(
     `${donde}: sin errores`,

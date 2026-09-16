@@ -296,11 +296,25 @@ body {
  * se lea como un cartel y no como un icono más de la pantalla. Se enciende solo
  * y no se toca: ver `Game.atenderAlCinturon`.
  */
+/*
+ * **El cartel del cinturón, y por qué ya no va arriba en el centro.**
+ *
+ * Ahí estaba, y ahí es donde vive la fila de tarjetas de «qué toca hacer
+ * ahora»: el cartel se encendía debajo de ellas y no se veía ni un píxel. Se
+ * oía el *ding* y no aparecía nada, que es peor que no tener cartel — suena
+ * una alarma y no se ve de qué. Dicho jugando: «oigo como un timbre después de
+ * despegar y aproximándome, pero no veo señales de cinturón ni nada, ¿está
+ * detrás de algo?». Estaba.
+ *
+ * Va debajo de la cámara y la pausa, en la columna de la izquierda, que es la
+ * única franja del HUD que está libre en los cuatro peldaños. Y lleva su capa
+ * puesta: un cartel que se puede tapar no es un cartel, y esto ya pasó una vez.
+ */
 .cinturon {
   position: absolute;
-  top: calc(var(--tacto) * 2.2);
-  left: 50%;
-  transform: translateX(-50%);
+  top: calc(max(16px, env(safe-area-inset-top)) + var(--tacto) * 2.3);
+  left: max(16px, env(safe-area-inset-left));
+  z-index: 7;
   display: grid;
   place-items: center;
   width: calc(var(--tacto) * 0.9);
@@ -3895,9 +3909,24 @@ button.motor__tecla::after {
 .torre {
   position: fixed;
   left: 50%;
-  top: 14%;
+  /*
+   * **Debajo de lo que haya arriba, no a un catorce por ciento.**
+   *
+   * Un porcentaje no sabe qué tiene encima: en una tablet de aula en
+   * horizontal ese catorce por ciento son noventa píxeles, o sea justo la fila
+   * de botones redondos, y la lámpara se encendía detrás de ellos. Lo mide el
+   * HUD y lo deja en `--arriba-alto`. Ver `reservarArriba`.
+   */
+  top: calc(var(--arriba-alto, 14%) + 14px);
+  /*
+   * Y por encima de lo demás del HUD. La lámpara es **la instrucción**: es lo
+   * que le dice a alguien de cuatro años si puede entrar en la pista o no, y
+   * mientras esté encendida gana a cualquier botón. Se tapa igual con
+   * `pointer-events: none`, así que lo de debajo se sigue pudiendo pulsar.
+   */
+  pointer-events: none;
   transform: translateX(-50%);
-  z-index: 6;
+  z-index: 8;
   display: flex;
   align-items: center;
   gap: 14px;
