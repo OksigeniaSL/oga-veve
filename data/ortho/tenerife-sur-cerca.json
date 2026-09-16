@@ -1,0 +1,24 @@
+{
+  "id": "tenerife-sur",
+  "encuadre": "cerca",
+  "fuente": "PNOA · Instituto Geográfico Nacional de España",
+  "licencia": "CC BY 4.0 · scne.es",
+  "servicio": "https://www.ign.es/wmts/pnoa-ma",
+  "capa": "OI.OrthoimageCoverage",
+  "esquina": {
+    "col": 29745,
+    "fila": 27440
+  },
+  "origen": {
+    "lat": 28.0445,
+    "lon": -16.5725
+  },
+  "tamanoM": 6000,
+  "zoom": 16,
+  "metrosPorPixel": 2.108,
+  "pixeles": {
+    "ancho": 3072,
+    "alto": 3072
+  },
+  "huecos": 0
+}

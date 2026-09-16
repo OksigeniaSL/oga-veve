@@ -1,0 +1,24 @@
+{
+  "id": "pedro-juan",
+  "encuadre": "lejos",
+  "fuente": "Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA",
+  "licencia": "CC BY 4.0 · EOX & contribuidores, datos Copernicus Sentinel",
+  "servicio": "https://tiles.maps.eox.at/wmts",
+  "capa": "s2cloudless-2020_3857",
+  "esquina": {
+    "col": 5646,
+    "fila": 9245
+  },
+  "origen": {
+    "lat": -22.641427,
+    "lon": -55.829993
+  },
+  "tamanoM": 22000,
+  "zoom": 14,
+  "metrosPorPixel": 8.818,
+  "pixeles": {
+    "ancho": 2560,
+    "alto": 2816
+  },
+  "huecos": 0
+}

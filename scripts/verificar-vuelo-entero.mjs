@@ -1731,6 +1731,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     mudoDonde,
     vueltaMetros: Math.round(vueltaMetros),
     largoDeLaRuta: Math.round(largoDeLaRuta),
+    ortofoto: o.ortofoto?.() ?? null,
     verBackTaxi: (() => {
       const v = [...verBackTaxi];
       return v.length > 6
@@ -1818,6 +1819,29 @@ if (CON_MODELO.has(AVION)) {
     "el modelo se apaga en silencio si el fichero no está donde se le espera",
   );
 }
+
+/*
+ * **Y este escenario vuela sobre fotografía.**
+ *
+ * Catorce de dieciséis volaban sobre relieve pelado con las casas del sorteo
+ * encima, que es lo peor de los dos mundos, y el síntoma que se contaba jugando
+ * era otro: «no me gusta volar sobre Maincraft… casi todos los aeropuertos
+ * están sin paisaje realista, encima tú le metes edificios inventados».
+ *
+ * No era de licencias ni de diseño: el guion que baja la ortofoto estaba
+ * escrito y probado, y su tabla tenía dos entradas. Eran catorce descargas que
+ * nadie había lanzado, y desde fuera «no tiene foto» y «la foto no cargó» se
+ * ven igual — terreno liso—. Por eso se comprueba aquí, escenario por
+ * escenario, en vez de fiarlo a que alguien mire.
+ */
+comprobar(
+  "el escenario vuela sobre fotografía y no sobre terreno pelado",
+  !!vuelo.ortofoto,
+  vuelo.ortofoto
+    ? `${vuelo.ortofoto.ancho}×${vuelo.ortofoto.alto} px de ortofoto`
+    : "sin ortofoto: relieve pelado",
+  "volar sobre cajas de colores no se parece a volar",
+);
 
 comprobar(
   "el avión parado tiene las ruedas en el suelo",
