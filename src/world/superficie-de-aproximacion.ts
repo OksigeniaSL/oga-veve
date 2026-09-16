@@ -102,6 +102,31 @@ const DOS_PLANTAS = 8;
 const ZONA_DE_INFLUENCIA = 2500;
 const ANCHO_DE_INFLUENCIA = 800;
 
+/**
+ * El corredor que va **vacío**, contado desde el final de la pista, m.
+ *
+ * Novecientos metros por delante de cada umbral y ciento cincuenta a cada lado
+ * del eje. No es una cifra de altura: es que ahí **no hay nada**.
+ *
+ * Sale de lo que hay de verdad en ese trozo de suelo. La franja de una pista se
+ * mantiene despejada por norma, y justo detrás va el sistema de luces de
+ * aproximación, que llega hasta novecientos metros y es lo único que se planta
+ * en el eje —y frangible, para que se rompa si alguien lo toca—. Los ciento
+ * cincuenta a los lados son el medio ancho de la franja.
+ *
+ * **Hizo falta porque limitar la altura no bastaba**, y se vio jugando dos
+ * veces: «había edificios en la ruta de aproximación que en realidad no
+ * están». La primera vez se arregló bajándolos a dos plantas, y siguieron
+ * estando. Una casa de tres metros en la prolongación del eje es tan falsa como
+ * una de diez: lo que está mal no es lo que mide, es que esté.
+ *
+ * Medido en Los Rodeos: el sorteo había plantado una de 12×16 m **en el eje
+ * exacto, a 730 m de la cabecera**, y el bimotor se la llevaba por delante al
+ * rotar.
+ */
+const CORREDOR_LARGO = 900;
+const CORREDOR_ANCHO = 150;
+
 export interface Pista {
   readonly x: number;
   readonly z: number;
@@ -201,6 +226,17 @@ export function techoDeLoQueSeConstruye(
   const techo = techoSobreLaPista(x, z, pista);
   const { along, across } = enEjes(x, z, pista);
   const fuera = Math.abs(along) - pista.length / 2;
+  /*
+   * Lo primero, el corredor vacío: `-Infinity` no es un techo bajo, es «aquí no
+   * se construye». Quien lo lee sabe qué hacer con eso — ver `ciudad.ts`, donde
+   * una casa que no cabe deja de plantarse en vez de aplastarse.
+   */
+  if (
+    fuera > 0 &&
+    fuera <= CORREDOR_LARGO &&
+    Math.abs(across) <= CORREDOR_ANCHO
+  )
+    return -Infinity;
   if (fuera <= 0 || fuera > ZONA_DE_INFLUENCIA) return techo;
   if (Math.abs(across) > ANCHO_DE_INFLUENCIA) return techo;
   return Math.min(DOS_PLANTAS, techo);

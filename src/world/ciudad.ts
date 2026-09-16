@@ -477,9 +477,27 @@ export function crearCiudad(
         const fondo = ancho * (0.7 + sorteo() * 0.6);
         const libre =
           perfil.alto[0] + sorteo() * (perfil.alto[1] - perfil.alto[0]);
-        // Recortado contra la superficie de obstáculos, si aquí manda alguna.
+        /*
+         * **Y donde no cabe nada, no se construye.**
+         *
+         * Esto recortaba contra la superficie de obstáculos y después subía el
+         * resultado hasta `BAJITA`, así que **el recorte no podía borrar una
+         * casa nunca**: la aplastaba a tres metros y la dejaba puesta. Donde la
+         * superficie decía cero salía una caja de tres metros igual.
+         *
+         * O sea que el arreglo de la altura **garantizaba** que hubiera
+         * edificio, que es justo lo contrario de lo que hacía falta. Se dijo
+         * jugando, y dos veces: «había edificios en la ruta de aproximación que
+         * en realidad no están… si sabré yo que está prohibidísimo construir
+         * más de tres pisos en zona de aeropuerto». La segunda vez con razón:
+         * el primer arreglo fue en el sitio equivocado.
+         *
+         * Una casa que no cabe no se recorta: no está.
+         */
         const techo = techoDeObstaculos?.(x, z) ?? Infinity;
-        const alto = Math.max(BAJITA, Math.min(libre, techo - suelo));
+        const cabe = techo - suelo;
+        if (cabe < BAJITA) continue;
+        const alto = Math.min(libre, cabe);
         posicion.set(x, suelo + alto / 2, z);
         // Alineadas a la trama, no al azar: cuatro orientaciones y un pelo de
         // desvío. Un barrio de casas giradas al azar se lee como escombrera.
