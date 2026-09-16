@@ -884,6 +884,54 @@ describe("rodando por la pista para ir a la cabecera", () => {
     );
   });
 
+  /*
+   * **Y si se despega antes de llegar al sitio de girar, se despega.**
+   *
+   * El punto de giro se traza con la pista que uno **querría** tener —casi
+   * cinco veces la carrera de despegue: sitio para el despegue, para uno mal
+   * hecho y para arrepentirse a mitad—, así que en una pista larga queda muy
+   * atrás: en Pettirossi, con 3359 m, el Pykasu tendría que volver 920 metros
+   * para ganar los 1200 que el plan le quiere dejar delante.
+   *
+   * Nadie hace eso, y hace bien. Pero como la bandera seguía puesta, el juego
+   * pensaba que aquello era rodaje: **ni V1, ni Vr, ni la flecha de tirar**.
+   * Medido en el banco, las fases de un vuelo entero en Pettirossi iban
+   * «autorizado → back-taxi → en vuelo» sin pasar por ninguna de las tres de
+   * despegue.
+   */
+  it("pero si ya se está despegando, el hecho gana al plan", () => {
+    const v = new Vuelo();
+    durante(v, enLaPista({ backTaxi: true, desalineado: 178 }), 2);
+    expect(
+      durante(
+        v,
+        enLaPista({
+          backTaxi: true,
+          desalineado: 1,
+          alEjeDePista: 2,
+          estado: { airspeed: 30, groundSpeed: 30 } as never,
+        }),
+        2,
+      ),
+    ).toBe("despegando");
+  });
+
+  /*
+   * Y **rodar no es despegar**: con la bandera puesta, derecho en el eje pero a
+   * paso de rodaje, sigue siendo back-taxi. Si no, la propia entrada en la
+   * pista —que se hace alineada— ya contaría como carrera.
+   */
+  it("y a paso de rodaje sigue siendo back-taxi, aunque vaya derecho", () => {
+    const v = new Vuelo();
+    expect(
+      durante(
+        v,
+        enLaPista({ backTaxi: true, desalineado: 1, alEjeDePista: 2 }),
+        2,
+      ),
+    ).toBe("back-taxi");
+  });
+
   it("y en cuanto se llega al sitio de girar, vuelve a ser alinearse", () => {
     const v = new Vuelo();
     durante(v, enLaPista({ backTaxi: true, desalineado: 178 }), 2);

@@ -2324,16 +2324,36 @@ export class Game {
        */
       const deCabina = claveDeCabina(ingles);
       if (deCabina && this.instructor.vozDe(deCabina)) {
+        this.apuntarCanto(`${ingles}→${deCabina}`);
         this.instructor.decir(ingles, deCabina, urgencia);
         return;
       }
+      this.apuntarCanto(`${ingles}→navegador${deCabina ? "(sin voz)" : ""}`);
       decir(ingles, urgencia);
       return;
     }
     // Y con la clave cuando la hay: el instructor grabado busca por clave.
     // Las frases que se componen en caliente no la tienen y las dice la voz
     // del navegador, que es lo que hay hasta que existan las grabaciones.
+    this.apuntarCanto(`${ingles}→${encasa ? (clave ?? "sin clave") : "NADA"}`);
     if (encasa) this.instructor.decir(encasa, clave, urgencia);
+  }
+
+  /**
+   * Por dónde salió cada canto, para el banco.
+   *
+   * `cantar` tiene tres salidas y las tres suenan distinto de puertas afuera:
+   * la grabación de cabina, la voz del navegador **saltándose las bocas**, y la
+   * frase en castellano por la boca de la instructora. Persiguiendo «al
+   * despegar no me avisa del V1 ni VR ni nada» resultó imposible saber por cuál
+   * se iba, porque dos de las tres no dejan rastro en ningún historial.
+   */
+  readonly cantados: string[] = [];
+
+  private apuntarCanto(que: string): void {
+    if (!import.meta.env.DEV) return;
+    this.cantados.push(que);
+    if (this.cantados.length > 4000) this.cantados.shift();
   }
 
   /**

@@ -588,8 +588,32 @@ export class Vuelo {
        * En cuanto se pasa el punto donde toca girar, el plan baja la bandera y
        * esto vuelve a ser lo de siempre: alinearse y despegar.
        */
-      if (s.backTaxi) return "back-taxi";
       const alineado = Math.abs(s.desalineado) < 8 && s.alEjeDePista < 12;
+      /*
+       * **Pero despegar es un hecho, y el back-taxi solo un plan.**
+       *
+       * Esto devolvía «back-taxi» sin mirar nada más, dando por supuesto que se
+       * rueda hasta el punto de giro que trazó el plan. Y ese punto se calcula
+       * con la pista que uno **querría** tener —`pistaQueHaceFalta`, casi cinco
+       * veces la carrera de despegue: sitio para el despegue, para uno mal
+       * hecho y para arrepentirse a mitad—, que en una pista larga queda muy
+       * atrás. En Pettirossi, con 3359 m, el Pykasu tiene que volver 920 metros
+       * para ganar los 1200 que el plan le quiere dejar delante.
+       *
+       * Nadie hace eso. Quien tiene tres kilómetros por delante se alinea y se
+       * va, y hace bien. Pero como la bandera seguía puesta, el juego pensaba
+       * que aquello era rodaje: **ni V1, ni Vr, ni la flecha de tirar**, que son
+       * las tres cosas que marcan ese medio minuto. Se ve en el banco: en
+       * Pettirossi las fases de un vuelo entero van «autorizado → back-taxi →
+       * en vuelo» y no pasan por ninguna de las tres de despegue.
+       *
+       * Así que el hecho gana al plan: derecho en el eje y más rápido de lo que
+       * rueda nadie, esto es un despegue lo diga quien lo diga. La misma regla
+       * que ya hizo falta para que un cuatrimotor no volviera a «rodando» a
+       * mitad de carrera por irse un poco del eje.
+       */
+      const despegandoYa = alineado && s.estado.airspeed >= YA_ES_RODAJE;
+      if (s.backTaxi && !despegandoYa) return "back-taxi";
       if (!alineado) return "alineando";
       return yaNoSePuedeParar(s) ? "comprometido" : "despegando";
     }
