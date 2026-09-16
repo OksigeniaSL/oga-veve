@@ -10,7 +10,6 @@
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, PYKASU, aircraftById } from "../flight/aircraft";
 import { cuadroDe, regimen } from "./cuadro";
-import { markupDeMotores } from "./motores";
 
 const NUDOS = 1.94384;
 
@@ -50,29 +49,16 @@ describe("las escalas del cuadro", () => {
   });
 });
 
-describe("la fila de motores", () => {
-  it("hay una aguja por motor", () => {
-    for (const a of AIRCRAFT) {
-      const marcado = markupDeMotores(cuadroDe(a));
-      if (!marcado) continue;
-      expect(marcado.match(/data-motor="/g)?.length).toBe(a.motores);
-    }
-  });
-
-  it("el cuatrimotor enseña cuatro y dice N1", () => {
-    const c = cuadroDe(aircraftById("jaz-120"));
-    expect(c.motores).toBe(4);
-    expect(c.rotulo).toBe("N1");
-    expect(markupDeMotores(c)).toContain("N1");
-  });
-
+describe("las agujas de motor", () => {
   it("el turbohélice marca par y el pistón vueltas", () => {
     expect(cuadroDe(aircraftById("jaz-60")).rotulo).toBe("TRQ");
     expect(cuadroDe(aircraftById("jaz-40")).rotulo).toBe("RPM");
   });
 
-  it("y la avioneta de un motor no lleva fila", () => {
-    expect(markupDeMotores(cuadroDe(PYKASU))).toBe("");
+  it("y el cuatrimotor cuenta cuatro y dice N1", () => {
+    const c = cuadroDe(aircraftById("jaz-120"));
+    expect(c.motores).toBe(4);
+    expect(c.rotulo).toBe("N1");
   });
 });
 

@@ -300,27 +300,40 @@ for (const id of [
   );
 
   /*
-   * **Y un reloj encendido por motor.**
+   * **Y el motor, donde lo lleva este avión.**
    *
    * Los instrumentos redondos del panel eran discos grises sin cara: se
    * pusieron sin mirarlos nunca desde el asiento y lo que se veía eran manchas.
-   * Ahora los dibuja el juego —ver `world/relojes-cabina.ts`— y esto comprueba
-   * que están y que son los que tienen que ser: uno por motor, más el de flaps.
+   * Ahora los dibuja el juego —ver `world/relojes-cabina.ts`—.
+   *
+   * Pero **no todos los aviones llevan relojes**, y darlo por hecho era enseñar
+   * una cabina que no existe: un reactor lleva pantalla de motores —el EICAS—,
+   * y los relojes redondos son de los de hélice. Así que se comprueba lo que a
+   * cada uno le toca, y no lo mismo para los seis. Ver `ui/familia.ts`.
    */
-  comprobar(
-    etiqueta("hay un reloj encendido por motor"),
-    (visto.relojes ?? []).filter((r) => r.que !== "flaps").length ===
-      visto.motores,
-    `${(visto.relojes ?? []).map((r) => r.que).join(" · ") || "ninguno"} · ${visto.motores} motores`,
-    "un panel con discos grises sin cara no es un panel",
-  );
+  if (visto.deLinea) {
+    comprobar(
+      etiqueta("los motores tienen su pantalla, que es lo que lleva un reactor"),
+      (visto.pantallas ?? []).some((p) => p.dibujo === "motores"),
+      `${(visto.pantallas ?? []).map((p) => p.dibujo).join(" · ")}`,
+      "un reactor no lleva relojes de motor: lleva EICAS",
+    );
+  } else {
+    comprobar(
+      etiqueta("hay un reloj encendido por motor"),
+      (visto.relojes ?? []).filter((r) => r.que !== "flaps").length ===
+        visto.motores,
+      `${(visto.relojes ?? []).map((r) => r.que).join(" · ") || "ninguno"} · ${visto.motores} motores`,
+      "un panel con discos grises sin cara no es un panel",
+    );
 
-  comprobar(
-    etiqueta("y el de flaps, que es lo otro que se mueve"),
-    (visto.relojes ?? []).some((r) => r.que === "flaps"),
-    `${(visto.relojes ?? []).length} relojes`,
-    "",
-  );
+    comprobar(
+      etiqueta("y el de flaps, que es lo otro que se mueve"),
+      (visto.relojes ?? []).some((r) => r.que === "flaps"),
+      `${(visto.relojes ?? []).length} relojes`,
+      "",
+    );
+  }
 
   /*
    * **Dos pantallas por piloto, y todas encendidas.**
@@ -336,7 +349,12 @@ for (const id of [
    * navegación para los dos asientos, y una cabina de transporte lleva el juego
    * entero repetido a cada lado.
    */
-  const cuantasTocan = visto.deLinea ? 2 * visto.plazas : 2;
+  /*
+   * Y en el de línea, **una más**: el EICAS del centro, que es de los dos y no
+   * de ninguno. Ahí es donde el reactor enseña sus motores y sus flaps, que es
+   * lo que los aviones de hélice llevan en relojes redondos.
+   */
+  const cuantasTocan = visto.deLinea ? 2 * visto.plazas + 1 : 2;
   comprobar(
     etiqueta("están todas las pantallas y encendidas"),
     visto.pantallas?.length === cuantasTocan,

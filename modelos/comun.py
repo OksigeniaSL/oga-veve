@@ -699,28 +699,33 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # motores se leen juntos**, en un bloque, porque lo que se mira es si van
     # iguales. Cuatro agujas en fila de casi un metro no se comparan de un
     # vistazo; dos filas de dos, sí. Es como están en un EICAS de verdad.
-    columnas = 1 if motores == 1 else 2
-    filas = (motores + columnas - 1) // columnas
-    radio = min(0.075, (ancho * 0.62) / max(1, columnas * 2))
-    paso = radio * 2.35
-    libre = paso * (columnas - 1) / 2 + radio + 0.03
-    que = mide
-    for m in range(motores):
-        col = m % columnas
-        fila = m // columnas
-        x = -paso * (columnas - 1) / 2 + paso * col
-        piezas += reloj(
-            f"reloj-motor-{m}", que, radio,
-            (x, alto_panel - 0.13 - paso * fila, panel_z + 0.008),
+    # **El EICAS, y no una rejilla de relojes.**
+    #
+    # Aquí había una fila de esferas redondas de N1, una por motor, y un reloj
+    # de flaps debajo. Eso no lo lleva ningún avión de línea desde 1980: lo que
+    # hay en el centro de una cabina de reactor es **una pantalla** con lo que
+    # hacen los motores, la que miran los dos pilotos. Se dijo jugando, y con
+    # razón: «que un 747 no parezca un juguete».
+    #
+    # Y hay un motivo además del parecido, el mismo que ya decía el comentario
+    # de las dos filas: lo que se mira de cuatro motores no es cuánto da cada
+    # uno, es **si dan lo mismo**. Cuatro cintas una al lado de otra se leen de
+    # un vistazo; cuatro agujas hay que leerlas una por una, y por eso un EICAS
+    # de verdad las pone en cintas.
+    #
+    # Aquí sólo va el cristal. Lo que se dibuja encima está en `pintarMotores`,
+    # en `world/pantallas-cabina.ts`, y los flaps van dentro — que es donde se
+    # miran: con el empuje, en la misma ojeada de la aproximación.
+    ancho_eicas = min(0.30, ancho * 0.42)
+    libre = ancho_eicas / 2 + 0.03
+    piezas.append(
+        cuadro(
+            "pantalla-motores", ancho_eicas, 0.24,
+            (0, alto_panel - 0.17, panel_z + 0.006),
+            "g1000_display" if pantallas else "cristal",
         )
-    # Y debajo de la columna, los flaps: en un avión de línea es de las pocas
-    # cosas que quien juega mueve y puede ver moverse.
-    piezas += reloj(
-        "reloj-flaps", "flaps", radio * 0.8,
-        (0, alto_panel - 0.13 - paso * filas, panel_z + 0.008),
     )
-    # `relojes` ya no cuenta discos sueltos: los instrumentos de esta cabina son
-    # los motores y los flaps, y ninguno es de adorno.
+    _ = mide
     _ = relojes
 
     # 2. Un puesto por piloto, con sus dos pantallas.
@@ -730,11 +735,31 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # que es lo que se ve desde la izquierda: un panel simétrico. La interior de
     # cada uno arranca donde acaba la columna de motores, y la exterior a su
     # lado; así el panel se llena de fuera adentro sin que nada se pise.
+    # **Y las dos pantallas de cada piloto, centradas en su asiento.**
+    #
+    # Iban hacia afuera desde el centro del avión —la primera pegada a la
+    # columna de motores y la segunda más allá—, así que desde el asiento del
+    # comandante no había nada delante: su par quedaba a la izquierda, el EICAS
+    # a la derecha y las del copiloto cortadas por el borde. «Esto no está
+    # centrado ni aunque venga Cristo y me lo diga.»
+    #
+    # En un avión de verdad cada piloto tiene **su** horizonte y **su** rosa
+    # justo delante de la cara, no repartidos a los lados: el puesto es del
+    # piloto y por eso se llama puesto. Es exactamente lo que ya hacía la
+    # cabina de avioneta —ver `plazas[0] ± separa` más abajo— y lo que aquí
+    # faltaba.
+    #
+    # El EICAS queda entonces entre los dos puestos, que es su sitio: la
+    # pantalla que miran los dos.
     ancho_p = 0.24
+    separa_p = ancho_p / 2 + 0.01
     for i, x in enumerate(plazas):
         signo = -1 if x < 0 else 1
-        dentro = signo * max(abs(x) - 0.14, libre + ancho_p / 2)
-        for k, sitio in enumerate((dentro, dentro + signo * (ancho_p + 0.02))):
+        # Sin invadir el cristal del EICAS: si el puesto queda muy adentro, se
+        # aparta lo justo. Con una cabina estrecha eso pasa, y más vale un
+        # puesto descentrado que dos pantallas superpuestas.
+        centro_p = signo * max(abs(x), libre + ancho_p + 0.02)
+        for k, sitio in enumerate((centro_p - separa_p, centro_p + separa_p)):
             # **Las cuatro encendidas.** Las del copiloto iban apagadas —cristal
             # oscuro— para que el panel se viera simétrico, y lo que se veía eran
             # dos cuadros negros: «hay cuadros vacíos». Una pantalla apagada en
@@ -757,11 +782,14 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # manera de pulsarlos: comprobado a barridos, ni un píxel de la pantalla los
     # tocaba. En el centro los alcanzan los dos pilotos, que es donde están los
     # mandos que comparten.
+    # El tamaño sale del cristal del EICAS y no de un radio de reloj, que ya no
+    # hay relojes: un botón es un dedo, y un dedo mide lo que mide.
+    lado_boton = ancho_eicas * 0.22
     for i, que in enumerate(("motor", "flaps", "freno")):
         piezas += boton(
-            que, radio * 0.95, radio * 0.75,
-            (-0.30 + i * radio * 1.15,
-             alto_panel - 0.13 - radio * 2.4, panel_z + 0.008),
+            que, lado_boton * 0.95, lado_boton * 0.75,
+            (-lado_boton * 1.15 + i * lado_boton * 1.15,
+             alto_panel - 0.34, panel_z + 0.008),
         )
 
     # 4. El pedestal, entre los dos asientos, con las palancas de gas.

@@ -254,7 +254,12 @@ import {
 } from "./audio/instructor";
 import { Radio } from "./flight/radio";
 import type { ControlInputs } from "./flight/model";
-import { delante, enEjesDePista, puntoDePista } from "./world/rumbo";
+import {
+  delante,
+  enEjesDePista,
+  puntoDePista,
+  rumboHacia,
+} from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
@@ -289,7 +294,7 @@ import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
-import { regimen } from "./ui/cuadro";
+import { cuadroDe, regimen } from "./ui/cuadro";
 import { Megafonia, conPasaje } from "./audio/megafonia";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import {
@@ -5195,6 +5200,20 @@ export class Game {
         declinacion: this.scenario.magneticVariation ?? 0,
         cabeceo: pitchAngleOf(this.flight.state.orientation),
         alabeo: bankAngleOf(this.flight.state.orientation),
+        /*
+         * Y lo que hacen los motores, para el EICAS del centro. Uno por motor
+         * y en su orden; hoy todos dan lo mismo porque el modelo de vuelo lleva
+         * un solo empuje, y el día que haya un motor parado esto ya lo enseña.
+         */
+        motores: Array.from({ length: this.aircraft.motores }, () =>
+          regimen(
+            this.aircraft,
+            this.input.controls.throttle,
+            this.input.controls.engineOn,
+          ),
+        ),
+        rotuloDeMotor: cuadroDe(this.aircraft).rotulo,
+        flaps: this.input.controls.flaps,
       },
       dt,
     );
@@ -5244,6 +5263,33 @@ export class Game {
       EN_DESPEGUE.has(this.vistaActual?.fase ?? "en-vuelo"),
       // Y si la reversa está metida, que se vea: es el motor empujando al revés.
       this.input.controls.reversa > 0 && this.flight.state.onGround,
+      /*
+       * Y lo que el cuadro de mandos necesita y antes no le llegaba: los
+       * flaps —que se movían en el ala y no en ningún instrumento—, adónde se
+       * va y de dónde sopla. Con esto la pantalla de navegación deja de ser un
+       * adorno y la regla de flaps dice la verdad.
+       */
+      {
+        flaps: this.input.controls.flaps,
+        objetivo: objetivo
+          ? (() => {
+              const donde = objectiveTarget(objetivo);
+              if (!donde) return null;
+              const p = this.flight.state.position;
+              return {
+                rumbo: rumboHacia(p.x, p.z, donde.x, donde.z),
+                distancia: Math.hypot(donde.x - p.x, donde.z - p.z),
+              };
+            })()
+          : null,
+        viento:
+          this.scenario.meteo && this.scenario.meteo.vientoDe !== null
+            ? {
+                desde: this.scenario.meteo.vientoDe,
+                nudos: this.scenario.meteo.vientoKt,
+              }
+            : null,
+      },
     );
     const toma = this.checkLanding(dt);
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una

@@ -37,6 +37,7 @@ import {
   Vector3,
   type Mesh,
 } from "three";
+import { PALETA } from "../ui/paleta";
 
 /** Tamaño del lienzo de cada pantalla, en píxeles. */
 const ANCHO = 512;
@@ -45,11 +46,29 @@ const ALTO = 384;
 /** Cuántas veces por segundo se repinta. Ver `Pantallas.actualizar`. */
 const POR_SEGUNDO = 12;
 
-/** Los colores del G1000: cielo, tierra, y el verde de los rótulos. */
-const CIELO = "#2f6fb5";
-const TIERRA = "#6b4a24";
-const TINTA = "#e9f2ee";
-const VERDE = "#79e08a";
+/*
+ * Los colores salen de la paleta de la cabina, **la misma que el cuadro del
+ * HUD**, y no de una lista propia.
+ *
+ * Tenían su propia lista —un cielo más apagado, un verde más claro, un ámbar
+ * distinto— y eso rompe lo único que hace que esto se pueda aprender: que un
+ * color signifique siempre lo mismo. Un niño que aprende «verde es que va
+ * bien» mirando la pantalla de dentro de la cabina tiene que encontrarse el
+ * mismo verde en el cuadro de abajo. Ver `ui/paleta.ts`.
+ */
+const CIELO = PALETA.cielo;
+const TIERRA = PALETA.tierra;
+const TINTA = PALETA.valor;
+const VERDE = PALETA.normal;
+/** El fondo de una pantalla de cristal, y el canal vacío de una cinta. */
+const FONDO = PALETA.pantalla;
+const CANAL = PALETA.esfera;
+/** Me acerco al límite. */
+const AMBAR = PALETA.precaucion;
+/** Rótulo apagado: está, pero no es lo que se mira. */
+const TENUE = PALETA.apagado;
+/** El avioncito símbolo, que tiene que leerse sobre el cielo y sobre la tierra. */
+const SIMBOLO = PALETA.simbolo;
 
 export interface DatosDeCabina {
   /** Velocidad indicada, m/s. */
@@ -73,6 +92,18 @@ export interface DatosDeCabina {
   readonly cabeceo: number;
   /** Alabeo, radianes. Positivo, ala derecha abajo. */
   readonly alabeo: number;
+  /**
+   * Cuánto da cada motor, de 0 a 1, y cómo se llama eso en esta cabina.
+   *
+   * Uno por motor y en su orden: el 1 es el de más a la izquierda. Es lo que
+   * pinta el EICAS —ver `pintarMotores`—, y el rótulo sale de la ficha del
+   * avión porque no es lo mismo: un pistón enseña vueltas, un turbohélice su
+   * par y un turbofán el régimen del fan, que es con lo que se vuela de verdad.
+   */
+  readonly motores: readonly number[];
+  readonly rotuloDeMotor: string;
+  /** Flaps, 0 a 1. Van en el EICAS, debajo de los motores. */
+  readonly flaps: number;
 }
 
 /**
@@ -89,10 +120,30 @@ export interface DatosDeCabina {
  * comandante tiene la rosa, que es de las pocas cosas de una cabina que no
  * pueden estar al revés.
  */
-function queLeToca(i: number, cuantas: number): "horizonte" | "rumbo" {
-  if (cuantas < 4) return i % 2 === 0 ? "horizonte" : "rumbo";
-  const mitad = cuantas / 2;
-  const enSuLado = i < mitad ? i : cuantas - 1 - i;
+function queLeToca(
+  i: number,
+  cuantas: number,
+): "horizonte" | "rumbo" | "motores" {
+  /*
+   * **Y con un número impar, la de en medio es la de los motores.**
+   *
+   * En una cabina de línea el puesto de cada piloto lleva su horizonte y su
+   * rosa, y **en el centro va el EICAS** —lo que hacen los motores—, que es la
+   * pantalla que miran los dos. Es la disposición del 747-400 y la de casi
+   * todo lo que vuela desde 1980: seis pantallas, dos por piloto y dos en el
+   * centro.
+   *
+   * Antes ahí había una rejilla de relojes redondos de N1, uno por motor, y
+   * eso no lo lleva ningún avión de línea: es lo que hacía que un
+   * cuatrimotor de fuselaje ancho pareciera un juguete. Se dijo jugando: «que
+   * un 747 no parezca un juguete».
+   */
+  if (cuantas % 2 === 1 && i === (cuantas - 1) / 2) return "motores";
+  const sinLaDelMedio = cuantas % 2 === 1 ? cuantas - 1 : cuantas;
+  const suSitio = cuantas % 2 === 1 && i > (cuantas - 1) / 2 ? i - 1 : i;
+  if (sinLaDelMedio < 4) return suSitio % 2 === 0 ? "horizonte" : "rumbo";
+  const mitad = sinLaDelMedio / 2;
+  const enSuLado = suSitio < mitad ? suSitio : sinLaDelMedio - 1 - suSitio;
   return enSuLado % 2 === 0 ? "horizonte" : "rumbo";
 }
 
@@ -283,8 +334,9 @@ export function encenderPantallas(
         // El espejo, deshecho: se dibuja al revés para que se vea del derecho
         // desde el otro lado del cuadrado. Ver `estirarUV`.
         p.g.setTransform(-1, 0, 0, 1, ANCHO, 0);
-        if (queLeToca(i, pantallas.length) === "horizonte")
-          pintarHorizonte(p.g, datos);
+        const toca = queLeToca(i, pantallas.length);
+        if (toca === "horizonte") pintarHorizonte(p.g, datos);
+        else if (toca === "motores") pintarMotores(p.g, datos);
         else pintarRumbo(p.g, datos);
         p.textura.needsUpdate = true;
       });
@@ -389,7 +441,7 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.restore();
 
   // El avión, clavado en el centro: es lo único que no se mueve.
-  g.strokeStyle = "#ffd23f";
+  g.strokeStyle = SIMBOLO;
   g.lineWidth = 6;
   g.beginPath();
   g.moveTo(ANCHO / 2 - 68, ALTO / 2);
@@ -397,7 +449,7 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.moveTo(ANCHO / 2 + 22, ALTO / 2);
   g.lineTo(ANCHO / 2 + 68, ALTO / 2);
   g.stroke();
-  g.fillStyle = "#ffd23f";
+  g.fillStyle = SIMBOLO;
   g.beginPath();
   g.arc(ANCHO / 2, ALTO / 2, 5, 0, Math.PI * 2);
   g.fill();
@@ -411,9 +463,106 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
 }
 
 /** La derecha: la rosa de rumbos y la velocidad vertical. */
+/**
+ * El EICAS: qué están haciendo los motores.
+ *
+ * Es la pantalla del centro de una cabina de línea —la que miran los dos
+ * pilotos— y sustituye a la rejilla de relojes redondos que había antes, que no
+ * la lleva ningún avión de línea desde 1980. Se dijo jugando, y era verdad:
+ * «que un 747 no parezca un juguete».
+ *
+ * ## Por qué cintas y no esferas
+ *
+ * Porque lo que se mira de cuatro motores no es cuánto da cada uno: es **si dan
+ * lo mismo**. Cuatro cintas verticales una al lado de otra se leen de un
+ * vistazo —parejas o no parejas— y cuatro agujas redondas hay que leerlas una
+ * por una. Es exactamente por eso que un EICAS de verdad las pone así.
+ *
+ * Cada cinta lleva su número grande debajo, porque la cifra es la que se canta
+ * por radio y la que se apunta, y su arco verde: la banda donde el motor
+ * trabaja a gusto. El ámbar del final no es decoración — es el empuje de
+ * despegue, que se usa unos minutos y no una hora.
+ */
+function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
+  g.fillStyle = FONDO;
+  g.fillRect(0, 0, ANCHO, ALTO);
+
+  const cuantos = Math.max(1, d.motores.length);
+  const margen = 46;
+  const hueco = (ANCHO - margen * 2) / cuantos;
+  const anchoCinta = Math.min(58, hueco * 0.52);
+  const arriba = 56;
+  const alto = 190;
+
+  g.font = "600 26px system-ui, sans-serif";
+  g.fillStyle = VERDE;
+  g.textAlign = "center";
+  g.fillText(d.rotuloDeMotor, ANCHO / 2, 34);
+
+  d.motores.forEach((valor, i) => {
+    const x = margen + hueco * (i + 0.5);
+    const v = Math.max(0, Math.min(1, valor));
+
+    // El canal, y dentro la banda verde: de ralentí a empuje de crucero.
+    g.fillStyle = CANAL;
+    g.fillRect(x - anchoCinta / 2, arriba, anchoCinta, alto);
+    g.fillStyle = "rgba(53, 199, 89, 0.28)";
+    g.fillRect(
+      x - anchoCinta / 2,
+      arriba + alto * 0.1,
+      anchoCinta,
+      alto * 0.75,
+    );
+
+    // Lo que da ahora, creciendo desde abajo, que es como se lee un empuje.
+    const h = alto * v;
+    g.fillStyle = v > 0.92 ? AMBAR : VERDE;
+    g.fillRect(x - anchoCinta / 2, arriba + alto - h, anchoCinta, h);
+
+    // Y la línea del valor, gruesa, que es lo que se compara entre motores.
+    g.fillStyle = TINTA;
+    g.fillRect(
+      x - anchoCinta / 2 - 6,
+      arriba + alto - h - 2,
+      anchoCinta + 12,
+      4,
+    );
+
+    g.font = "700 34px system-ui, sans-serif";
+    g.fillStyle = TINTA;
+    g.fillText(`${Math.round(v * 100)}`, x, arriba + alto + 40);
+    g.font = "500 20px system-ui, sans-serif";
+    g.fillStyle = TENUE;
+    g.fillText(`${i + 1}`, x, arriba - 14);
+  });
+
+  /*
+   * Y los flaps abajo, en cinta horizontal y no en un reloj.
+   *
+   * Van aquí porque es donde se miran: con el tren y el empuje, en la misma
+   * ojeada de la aproximación. Un reloj de flaps aparte es un instrumento que
+   * nadie mira hasta que ya es tarde.
+   */
+  const yF = ALTO - 46;
+  g.textAlign = "left";
+  g.font = "500 22px system-ui, sans-serif";
+  g.fillStyle = TENUE;
+  g.fillText("FLAPS", margen, yF - 12);
+  g.fillStyle = CANAL;
+  g.fillRect(margen, yF, ANCHO - margen * 2, 18);
+  g.fillStyle = d.flaps > 0.02 ? AMBAR : TENUE;
+  g.fillRect(
+    margen,
+    yF,
+    (ANCHO - margen * 2) * Math.max(0, Math.min(1, d.flaps)),
+    18,
+  );
+  g.textAlign = "center";
+}
+
 function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.save();
-  g.fillStyle = "#0d1512";
+  g.fillStyle = FONDO;
   g.fillRect(0, 0, ANCHO, ALTO);
 
   const cx = ANCHO / 2 - 40;
@@ -453,7 +602,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
 
   // El avión, quieto en el centro y mirando siempre arriba: la rosa gira
   // debajo, que es como se lee un rumbo sin saber leer.
-  g.fillStyle = "#ffd23f";
+  g.fillStyle = SIMBOLO;
   g.beginPath();
   g.moveTo(cx, cy - 26);
   g.lineTo(cx + 17, cy + 20);
@@ -472,7 +621,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.lineTo(bx + 44, ALTO / 2);
   g.stroke();
   const trozo = Math.max(-1, Math.min(1, d.vertical / 6)) * ((ALTO - 120) / 2);
-  g.fillStyle = trozo < 0 ? "#ff9a6a" : VERDE;
+  g.fillStyle = trozo < 0 ? AMBAR : VERDE;
   g.fillRect(bx + 6, ALTO / 2, 32, -trozo);
   escribir(g, "V/S", bx + 22, 36, "bold 20px system-ui, sans-serif", VERDE);
   escribir(

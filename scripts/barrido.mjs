@@ -105,11 +105,24 @@ const cuenta = (salida) => {
  */
 const rodando = (salida) => {
   const ida = /(\d+) s del puesto al punto de espera/.exec(salida);
-  const vuelta = /(\d+) s y (\d+) m de la pista al puesto/.exec(salida);
+  /*
+   * **Y esta lectura se había quedado ciega sin que nadie lo notara.**
+   *
+   * El banco medía el rodaje de vuelta contra la línea recta y decía «81 s y
+   * 798 m de la pista al puesto»; al arreglar #166 pasó a medirlo contra la
+   * ruta que el juego dibuja —que es lo correcto— y con ello cambió la frase.
+   * Aquí seguía el patrón viejo, así que la tabla de «cuánto se pasa rodando»
+   * llevaba desde entonces imprimiendo «no llegó a terminar» en los diecisiete
+   * escenarios, incluidos los que terminaban perfectamente.
+   *
+   * Es la misma trampa de siempre: un instrumento que deja de ver no falla,
+   * simplemente calla, y un silencio se lee como «no hay nada que contar».
+   */
+  const vuelta = /· (\d+) m rodados sobre (\d+) trazados · (\d+) s/.exec(salida);
   const total = /acabó en «[^»]+» a los (\d+) s/.exec(salida);
   if (!ida || !vuelta || !total) return null;
-  const suma = +ida[1] + +vuelta[1];
-  return { ida: +ida[1], vuelta: +vuelta[1], total: +total[1], suma };
+  const suma = +ida[1] + +vuelta[3];
+  return { ida: +ida[1], vuelta: +vuelta[3], total: +total[1], suma };
 };
 
 /** Y la línea del final del vuelo, que es lo que dice dónde se quedó. */

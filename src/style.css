@@ -100,6 +100,52 @@
 
   --hud-fuente:
     "Varela Round", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+
+  /*
+   * ── Los colores de la cabina ──
+   *
+   * Semántica cerrada y global: se aprende una vez, en la avioneta, y vale en
+   * los seis aviones y en los cuatro peldaños. **Ningún color significa dos
+   * cosas y ninguna cosa tiene dos colores.**
+   *
+   *   blanco → lo que tengo · magenta → lo que quiero · verde → normal
+   *   ámbar → me acerco al límite · rojo → el límite · cian → dato auxiliar
+   *
+   * Eso obliga a una decisión que en la aviación real no está cerrada: el
+   * magenta único para todo objetivo. Un Boeing y un Garmin no se ponen de
+   * acuerdo en el color de los bugs; aquí quien mira tiene cuatro años, así
+   * que gana la regla sobre la fidelidad. Están repetidos en `ui/paleta.ts`
+   * porque hay tres sitios que pintan estos mismos instrumentos y el SVG no
+   * lee variables de CSS desde JavaScript.
+   */
+  --cabina-pantalla: #0b0d10;
+  --cabina-esfera: #101214;
+  --cabina-fascia: #23262b;
+  --cabina-visera: #141517;
+  --cabina-bisel: #0e1013;
+  --cabina-filo: #3a3f45;
+  --cabina-valor: #f2f5f7;
+  --cabina-cielo: #1f9ad6;
+  --cabina-tierra: #8a5a2b;
+  --cabina-simbolo: #ffc933;
+  --cabina-normal: #35c759;
+  --cabina-precaucion: #ffb02e;
+  --cabina-limite: #ff3b30;
+  --cabina-objetivo: #e14fd8;
+  --cabina-auxiliar: #3fd6e0;
+  --cabina-apagado: #6b7178;
+
+  /*
+   * Condensada, mayúsculas, nunca cursiva. Las tipografías de verdad de un
+   * Boeing y de un Garmin son humanistas anchas; aquí va condensada porque el
+   * píxel escasea y una condensada da un veinte por ciento más de cifra por
+   * milímetro. Es la desviación que más se nota y la que menos importa
+   * defender: legibilidad primero. Y ninguna se descarga: todo son fuentes
+   * que ya están en el sistema.
+   */
+  --cabina-fuente:
+    "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow",
+    "DejaVu Sans Condensed", ui-sans-serif, sans-serif;
 }
 
 /*
@@ -1178,7 +1224,12 @@ button.motor__tecla::after {
   transform: translate(-50%, -50%);
 }
 
-.motor__fila /*
+.motor__fila .motor__pista {
+  flex: 1;
+  margin-top: 0;
+}
+
+/*
  * La reversa metida.
  *
  * Ámbar y no rojo: el rojo de este juego es de peligro —«¡al aire!», el
@@ -1197,11 +1248,6 @@ button.motor__tecla::after {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-align: center;
-}
-
-.motor__pista {
-  flex: 1;
-  margin-top: 0;
 }
 
 .motor__pista {
@@ -1776,301 +1822,586 @@ button.motor__tecla::after {
 }
 
 /*
- * El cuadro de mandos, solo en el peldaño más alto.
+ * ── El cuadro de mandos ──
  *
- * Va abajo y centrado, que es donde está en un avión: se mira apartando la
- * vista del horizonte un instante y se vuelve. Si estuviera en una esquina
- * se leería como un adorno, y esto no es un adorno.
+ * **Un solo dibujo, y por eso ya no se descentra.**
  *
- * En dos filas de tres, como el panel real: arriba los tres primarios
- * —velocidad, actitud, altitud—, abajo los tres de apoyo. Ese orden es un
- * estándar mundial, y aprenderlo aquí sirve fuera.
- */
-.seispack {
-  display: grid;
-  width: fit-content;
-  grid-template-columns: repeat(3, auto);
-  gap: 5px;
-  padding: 7px;
-  border-radius: var(--r-m);
-  background: var(--barniz), var(--barro);
-  border: 1px solid var(--linea);
-  box-shadow: var(--filo), var(--poso);
-  pointer-events: none;
-}
-
-/*
- * La fila de motores, encima de las esferas.
+ * Antes eran cajas de HTML: una fila de motores, una rejilla de seis esferas,
+ * y cada avión las colocaba como le salía. Con seis aviones de anchos
+ * distintos el resultado era inevitable y se dijo así: «esto no está centrado
+ * ni aunque venga Cristo y me lo diga». Ahora el cuadro entero es un SVG con
+ * su caja de mil doscientos ochenta por quinientos cuarenta que se escala de
+ * una pieza. El centro de la caja **es** el centro de la pantalla, y dentro de
+ * la caja el reparto lo decide `familia.ts` con margen duro de veinte píxeles
+ * a cada lado. Comprobado en `familia.test.ts`, no en un comentario.
  *
- * Una barra por motor, del ancho de un dedo pequeño, con su número debajo y el
- * rótulo de lo que marcan a la izquierda. En un cuatrimotor son cuatro barras
- * subiendo a la vez, que es exactamente lo que se quería: «el niño quiere
- * fliparlo y ver botones y lucecitas».
- */
-/*
- * El cuadro de mandos entero: los motores a la izquierda y las seis esferas a
- * la derecha, apoyados en la misma base.
- *
- * **Al lado y no encima**, y eso lo decidió una pantalla: puesta arriba, la
- * fila empujaba las esferas cuarenta píxeles hacia abajo y en una tablet de
- * aula en horizontal la fila de abajo del six-pack se salía por el borde. Un
- * instrumento que no se ve no es un instrumento.
+ * Y con el anclaje resuelto, lo otro que se pidió: «que cada aeronave parezca
+ * lo que es, que un 747 no parezca un juguete». Los de pistón llevan relojes
+ * redondos, el turbohélice dos pantallas, y los reactores la cabina de línea
+ * entera con su EICAS. Ver `tablero.ts`.
  */
 .cuadro {
   /*
-   * **Clavado al borde de abajo, como el panel de una cabina.**
+   * Clavado al borde de abajo, como el panel de una cabina.
    *
    * Iba en el flujo de la franja inferior, detrás del aviso y del mensaje
-   * efímero, y cuando esos dos aparecían a la vez —que es justo cuando hay algo
-   * importante que mirar— empujaban las esferas fuera de la pantalla: medido en
-   * una pantalla de 640 de alto, el panel empezaba en el píxel 602. El cuadro de
-   * mandos no puede depender de cuántos carteles haya hoy.
-   *
-   * Y va fijo y no absoluto porque el HUD entero es fijo: así queda donde está
-   * la mano, que en una tablet es la parte de abajo.
+   * efímero, y cuando esos dos aparecían a la vez —que es justo cuando hay
+   * algo importante que mirar— empujaban las esferas fuera de la pantalla. El
+   * cuadro de mandos no puede depender de cuántos carteles haya hoy.
    */
   position: fixed;
   left: 50%;
-  bottom: max(8px, env(safe-area-inset-bottom));
+  bottom: max(6px, env(safe-area-inset-bottom));
   transform: translateX(-50%);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 5px;
-}
-
-.motores {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 6px;
-  border-radius: var(--r-m);
-  background: var(--barniz), var(--barro);
-  border: 1px solid var(--linea);
-  box-shadow: var(--filo), var(--poso);
+  /*
+   * El ancho sale del **alto** que puede ocupar, no al revés.
+   *
+   * El cuadro no puede comerse el vuelo: en una tablet de aula en horizontal
+   * la pantalla tiene seiscientos cuarenta de alto y esto se queda en poco más
+   * de un tercio, lo justo para leerse sin tapar el horizonte de fuera, que es
+   * el instrumento que de verdad importa. Y como la proporción del dibujo está
+   * fija, dejar que mande el alto evita lo que pasaba con un `max-height`
+   * suelto: la caja se quedaba ancha, el dibujo se encogía dentro y sobraban
+   * doscientos píxeles de negro a cada lado.
+   */
+  --cuadro-proporcion: 2.37;
+  width: min(calc(100vw - 16px), 1180px, calc(38vh * var(--cuadro-proporcion)));
   pointer-events: none;
 }
 
-.motores__rotulo {
-  font-size: calc(10px * var(--escala-hud));
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--tinta-suave);
-}
-
-.motores__fila {
-  display: flex;
-  gap: 4px;
-}
-
-.aguja-motor {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-/* La caja es el cristal del instrumento; el relleno crece desde abajo. */
-.aguja-motor__caja {
-  position: relative;
-  width: clamp(8px, 1.4vmin, 12px);
-  height: clamp(26px, 5vmin, 44px);
-  border-radius: 2px;
-  background: rgb(0 0 0 / 0.35);
-  border: 1px solid var(--linea);
-  overflow: hidden;
-}
-
-.aguja-motor__relleno {
+/*
+ * La línea que lee un lector de pantalla. No se ve y ocupa cero, pero está en
+ * el árbol: escondiéndola con `display:none` o `visibility:hidden` dejaría de
+ * existir también para él, que es el error clásico de este apaño.
+ */
+.tablero__lectura {
   position: absolute;
-  inset: auto 0 0 0;
-  height: 0%;
-  background: var(--ok);
-  transition: height 120ms linear;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* Régimen de despegue: donde el motor da todo lo que tiene. */
-.aguja-motor__relleno--tope {
-  background: var(--precaucion);
-}
-
-.aguja-motor__numero {
-  font-size: calc(9px * var(--escala-hud));
-  font-weight: 600;
-  color: var(--tinta-suave);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aguja-motor__relleno {
-    transition: none;
-  }
-}
-
-/*
- * Apaisado y bajo —tablet de aula en horizontal—: una sola fila de seis.
- *
- * **Y el listón estaba bajo.** Con seiscientos veinte, una pantalla de
- * seiscientos cuarenta se quedaba con las dos filas de esferas y la de abajo
- * caída fuera del borde: medido, el panel empezaba en el píxel 602 de una
- * pantalla de 640. El cuadro de mandos mide unos ciento sesenta en dos filas y
- * ochenta en una, así que el corte tiene que estar donde deja de caber el
- * alto, no donde la pantalla parece pequeña.
- */
-@media (max-height: 780px) {
-  .seispack {
-    grid-template-columns: repeat(6, auto);
-  }
-}
-
-/*
- * Cada instrumento es la esfera y su rótulo debajo, apilados. El rótulo iba
- * superpuesto y se comía el borde de la esfera; en un panel real el nombre
- * está serigrafiado fuera del cristal, no encima de las agujas.
- */
-.esfera {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: clamp(52px, 8vmin, 88px);
-}
-
-.esfera svg {
+.tablero {
   display: block;
   width: 100%;
-  aspect-ratio: 1;
-  overflow: visible;
+  height: auto;
+  filter: drop-shadow(0 -6px 18px rgb(0 0 0 / 0.55));
 }
 
-/* Caja y fondo: metal oscuro con un aro claro, como un instrumento montado. */
+/* ── El mueble: lo que hace que esto sea un objeto y no una pegatina ── */
+
+.tablero__fascia {
+  fill: var(--cabina-fascia);
+}
+
+/*
+ * La visera, y su sombra sobre la fascia.
+ *
+ * No es un adorno: es lo que le da bulto al cuadro. Un panel de verdad vive
+ * debajo de un alero, y sin ese alero los instrumentos flotan sobre una losa
+ * negra — que es literalmente lo que se dijo de la versión anterior.
+ */
+.tablero__visera {
+  fill: var(--cabina-visera);
+}
+
+.tablero__sombra {
+  fill: url(#cabina-sombra);
+  opacity: 0.85;
+}
+
+.tablero__hueco {
+  fill: rgb(0 0 0 / 0.28);
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
+.tablero__pantalla {
+  fill: var(--cabina-pantalla);
+}
+
+/*
+ * La chapa del fabricante, en el hueco de la izquierda de las avionetas.
+ *
+ * Pequeña, pero enseña a reconocer tipos — que es lo anterior a saber leer un
+ * instrumento, y a los cuatro años es la mitad de la gracia de un juego de
+ * aviones.
+ */
+.tablero__chapa {
+  fill: var(--cabina-apagado);
+  font-family: var(--cabina-fuente);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.tablero__chapa--nombre {
+  fill: var(--cabina-valor);
+  opacity: 0.55;
+  font-size: 22px;
+}
+
+.tablero__filete {
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
+/* La placa con el nombre del avión: pequeña, pero enseña a reconocer tipos. */
+.tablero__placa {
+  fill: var(--cabina-apagado);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+}
+
+/*
+ * El MCP de la visera: las tres ventanillas donde un avión de línea guarda lo
+ * que le has pedido. Es la firma visual de una cabina grande, y aquí además es
+ * coherente con el resto: lo que se quiere va en magenta, en los seis aviones.
+ */
+.tablero__mcp rect {
+  fill: #05070a;
+  stroke: var(--cabina-filo);
+  stroke-width: 1;
+}
+
+/* ── Las esferas ── */
+
 .esfera__caja {
-  fill: #2a2f38;
-  stroke: rgba(255, 255, 255, 0.22);
+  fill: var(--cabina-bisel);
+  stroke: #05070a;
+  stroke-width: 1;
+}
+
+/* El filo de luz de arriba: un anillo mecanizado coge la luz por el borde. */
+.esfera__filo {
+  fill: none;
+  stroke: var(--cabina-filo);
   stroke-width: 1.4;
 }
 
 .esfera__fondo {
-  fill: #0d1014;
+  fill: var(--cabina-esfera);
+}
+
+.esfera__tornillo {
+  fill: #2a2f35;
+  stroke: #05070a;
+  stroke-width: 0.4;
+}
+
+/*
+ * El reflejo del cristal, **fijo**. Un brillo que se mueve sin que se mueva el
+ * sol delata el truco al instante; uno quieto es lo que hace ver que hay un
+ * cristal delante.
+ */
+.esfera__reflejo {
+  fill: #fff;
+  opacity: 0.07;
+  pointer-events: none;
 }
 
 .esfera__marca {
-  stroke: rgba(255, 255, 255, 0.72);
-  stroke-width: 1.6;
-  stroke-linecap: round;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.1;
+}
+
+.esfera__marca--larga {
+  stroke-width: 1.8;
 }
 
 .esfera__marca--punto {
-  fill: rgba(255, 255, 255, 0.72);
+  fill: var(--cabina-valor);
 }
 
 .esfera__cifra {
-  fill: rgba(255, 255, 255, 0.82);
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
   font-size: 9px;
   font-weight: 600;
   text-anchor: middle;
-  dominant-baseline: middle;
 }
 
 .esfera__cifra--rumbo {
-  font-size: 11px;
+  font-size: 10px;
 }
 
-/*
- * Los arcos del anemómetro. No son decoración: el verde es el margen normal
- * de operación, el ámbar avisa y el rojo es la velocidad que no se pasa. Un
- * niño aprende «no salgas del verde» antes de saber qué es un nudo, y eso
- * es exactamente lo que se le enseña a un piloto de verdad.
- */
 .esfera__arco {
   fill: none;
-  stroke-width: 4;
+  stroke-width: 5;
+  stroke-linecap: butt;
 }
 
 .esfera__arco--verde {
-  stroke: #35c46a;
+  stroke: var(--cabina-normal);
 }
+
 .esfera__arco--ambar {
-  stroke: #e8b13a;
+  stroke: var(--cabina-precaucion);
 }
+
 .esfera__arco--rojo {
-  stroke: #e2453c;
+  stroke: var(--cabina-limite);
 }
 
 .esfera__aguja {
-  fill: #f2f4f7;
-  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.7));
+  fill: var(--cabina-valor);
 }
 
 .esfera__buje {
-  fill: #c9ced6;
-  stroke: #1a1d22;
-  stroke-width: 1;
+  fill: #2a2f35;
+  stroke: #05070a;
+  stroke-width: 0.6;
 }
 
-/* Mismo ocre-tinta que las abreviaturas del peldaño anterior: ese es el hilo
-   que cose los dos peldaños de arriba. Y a 8,5 px no se leía en una tablet. */
+/* El rótulo va serigrafiado fuera del cristal, no encima de las agujas. */
 .esfera__rotulo {
-  margin-top: 3px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  color: var(--ocre-tinta);
+  fill: var(--cabina-apagado);
+  font-family: var(--cabina-fuente);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-anchor: middle;
 }
 
-/* Horizonte artificial: cielo arriba, tierra abajo, avión fijo en el medio. */
 .ai__cielo {
-  fill: #3d7fd0;
+  fill: var(--cabina-cielo);
 }
+
 .ai__tierra {
-  fill: #8a5a2b;
+  fill: var(--cabina-tierra);
 }
+
 .ai__horizonte {
-  stroke: #ffffff;
-  stroke-width: 1.6;
+  stroke: #fff;
+  stroke-width: 1.4;
 }
+
+/* Amarillo: es el único símbolo que se dibuja sobre el cielo y sobre la
+   tierra a la vez, y tiene que leerse sobre los dos. */
 .ai__avion {
   fill: none;
-  stroke: #ffcf3f;
-  stroke-width: 2.2;
+  stroke: var(--cabina-simbolo);
+  stroke-width: 2;
+  stroke-linecap: round;
+  paint-order: stroke;
+}
+
+.dg__rosa {
+  fill: var(--cabina-esfera);
+}
+
+.dg__avion {
+  fill: none;
+  stroke: var(--cabina-simbolo);
+  stroke-width: 1.8;
   stroke-linecap: round;
 }
 
-/*
- * Direccional: la rosa gira y el avioncito no, que es lo que hace difícil
- * de leer este instrumento y por lo que hay que verlo moverse para
- * entenderlo. La rosa es la cara oscura del disco, no una mancha blanca:
- * lo que se lee son las marcas y las letras pintadas encima.
- */
-.dg__rosa {
-  fill: #14181e;
+.tc__tubo {
+  fill: rgb(184 230 255 / 0.2);
+  stroke: var(--cabina-filo);
+  stroke-width: 0.8;
 }
-.dg__avion {
-  fill: none;
-  stroke: #f2f4f7;
+
+.tc__bola {
+  fill: #05070a;
+  stroke: #000;
+  stroke-width: 0.4;
+}
+
+.tc__ala {
+  stroke: var(--cabina-simbolo);
   stroke-width: 2;
   stroke-linecap: round;
 }
 
-/* Bastón y bola. El tubo es cristal, la bola es la que hay que centrar. */
-.tc__tubo {
-  fill: rgba(255, 255, 255, 0.1);
-  stroke: rgba(255, 255, 255, 0.35);
-  stroke-width: 1;
-}
-.tc__bola {
-  fill: #1c1f25;
-  stroke: #f2f4f7;
-  stroke-width: 1.2;
-}
-.tc__ala {
-  fill: none;
-  stroke: #f2f4f7;
-  stroke-width: 2.2;
+.tc__deriva {
+  stroke: var(--cabina-simbolo);
+  stroke-width: 2;
   stroke-linecap: round;
 }
-.tc__deriva {
-  stroke: rgba(255, 255, 255, 0.45);
+
+/* ── Las pantallas de cristal ── */
+
+.cr__ventana {
+  fill: #05070a;
+  stroke: #2c3136;
+  stroke-width: 1;
+}
+
+.cr__franja {
+  fill: var(--cabina-pantalla);
+  stroke: #2c3136;
+  stroke-width: 1;
+}
+
+.cr__marca {
+  stroke: var(--cabina-valor);
   stroke-width: 1.2;
+}
+
+.cr__cifra {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.cr__rotulo {
+  fill: var(--cabina-apagado);
+  font-family: var(--cabina-fuente);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+}
+
+/* Lo que tengo: blanco, grande, en su caja. */
+.cr__valor {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lo que quiero: magenta, siempre, en toda la flota. */
+.cr__objetivo {
+  fill: var(--cabina-objetivo);
+  font-family: var(--cabina-fuente);
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dato auxiliar: cian. Viento, velocidad respecto al suelo, Mach. */
+.cr__aux {
+  fill: var(--cabina-auxiliar);
+  font-family: var(--cabina-fuente);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__caja {
+  fill: #05070a;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.4;
+}
+
+/* Ámbar: me acerco al límite. Rojo: el límite. Nunca otra cosa. */
+.cr__caja--precaucion {
+  stroke: var(--cabina-precaucion);
+  stroke-width: 2.6;
+}
+
+.cr__caja--limite {
+  stroke: var(--cabina-limite);
+  stroke-width: 3;
+}
+
+.cr__banda {
+  stroke: none;
+}
+
+.cr__banda--verde {
+  fill: var(--cabina-normal);
+}
+
+.cr__banda--ambar {
+  fill: var(--cabina-precaucion);
+}
+
+.cr__banda--roja {
+  fill: var(--cabina-limite);
+}
+
+/*
+ * El vector de tendencia: dónde estarás dentro de seis segundos si no tocas
+ * nada. Es la animación que más enseña de todo el cuadro, porque lo que enseña
+ * es anticipación.
+ */
+.cr__tendencia {
+  fill: var(--cabina-objetivo);
+}
+
+.cr__bug {
+  fill: var(--cabina-objetivo);
+}
+
+/* Lo que se le ha pedido al motor. Magenta, porque magenta es «lo que quiero». */
+.cr__mando {
+  fill: var(--cabina-objetivo);
+}
+
+.cr__rotulo--menudo {
+  font-size: 10px;
+}
+
+.cr__pista {
+  fill: var(--cabina-simbolo);
+}
+
+.cr__horizonte {
+  stroke: #fff;
+  stroke-width: 2.4;
+}
+
+.cr__paso {
+  stroke: #fff;
+  stroke-width: 1.6;
+}
+
+.cr__paso-cifra {
+  fill: #fff;
+  font-family: var(--cabina-fuente);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.cr__alabeo {
+  stroke: #fff;
+  stroke-width: 1.8;
+}
+
+.cr__flecha-alabeo {
+  fill: #fff;
+}
+
+.cr__deslizamiento {
+  fill: #fff;
+}
+
+.cr__simbolo {
+  fill: none;
+  stroke: var(--cabina-simbolo);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+/*
+ * La pérdida: marco rojo alrededor del horizonte, que es donde mira quien ya
+ * está en apuros. Rojo quiere decir «actuá ya» y no significa ninguna otra
+ * cosa en todo el juego.
+ */
+.cr__alerta {
+  fill: none;
+  stroke: var(--cabina-limite);
+  stroke-width: 5;
+}
+
+/* En una esfera el aro va dentro del cristal, así que más fino. */
+.cr__alerta--esfera {
+  stroke-width: 3;
+}
+
+.cr__fe {
+  stroke: var(--cabina-simbolo);
+  stroke-width: 2;
+}
+
+.cr__rosa {
+  fill: rgb(0 0 0 / 0.35);
+}
+
+/*
+ * La rosa del horizonte va sobre el cielo y la tierra, así que necesita su
+ * propio fondo: transparente, las cifras de rumbo se perdían sobre el marrón.
+ */
+.cr__rosa-caja {
+  fill: rgb(5 7 10 / 0.9);
+  stroke: #2c3136;
+  stroke-width: 1;
+}
+
+.cr__arco-rango {
+  fill: none;
+  stroke: #2c3136;
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+}
+
+.cr__ruta {
+  fill: none;
+  stroke: var(--cabina-objetivo);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.cr__aguja-vsi {
+  stroke: var(--cabina-valor);
+  stroke-width: 2.4;
+}
+
+.cr__dial {
+  fill: #05070a;
+  stroke: #2c3136;
+  stroke-width: 1;
+}
+
+.cr__arco {
+  fill: none;
+  stroke-width: 4;
+}
+
+.cr__arco--verde {
+  stroke: var(--cabina-normal);
+}
+
+.cr__arco--ambar {
+  fill: var(--cabina-precaucion);
+  stroke: var(--cabina-precaucion);
+}
+
+.cr__limite {
+  stroke: var(--cabina-limite);
+  stroke-width: 3;
+}
+
+.cr__aguja {
+  fill: var(--cabina-valor);
+}
+
+.cr__buje {
+  fill: #2a2f35;
+}
+
+.cr__barra {
+  fill: var(--cabina-normal);
+}
+
+/* Régimen de despegue: donde el motor da todo lo que tiene. */
+.cr__barra--tope {
+  fill: var(--cabina-precaucion);
+}
+
+.cr--tope .cr__aguja {
+  fill: var(--cabina-precaucion);
+}
+
+/* Verde = tren abajo y trabado. En este juego no se recoge, así que están
+   siempre verdes — y esa quietud también es información. */
+.cr__tren {
+  fill: var(--cabina-normal);
+  opacity: 0.85;
+}
+
+.cr__puntero {
+  fill: var(--cabina-valor);
+}
+
+.cr__reversa {
+  fill: var(--cabina-precaucion);
+  font-family: var(--cabina-fuente);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
 }
 
 /*
@@ -2085,7 +2416,7 @@ button.motor__tecla::after {
   gap: 4px;
 }
 
-.aguja-motor__tecla--ancha {
+.motor__tecla--ancha {
   min-width: 54px;
   font-size: 15px;
 }
@@ -2098,7 +2429,7 @@ button.motor__tecla::after {
     0 0 0 2px rgba(221, 146, 63, 0.5);
 }
 
-.freno--pisado .aguja-motor__tecla--ancha {
+.freno--pisado .motor__tecla--ancha {
   background: var(--ocre);
   color: #1a1206;
 }
@@ -2292,7 +2623,7 @@ button.motor__tecla::after {
 }
 
 /* Los signos del motor son botones: se pulsan con el dedo y con el ratón. */
-.aguja-motor__tecla:active {
+.motor__tecla:active {
   background: var(--ocre, #dd923f);
   color: #1a1206;
 }
