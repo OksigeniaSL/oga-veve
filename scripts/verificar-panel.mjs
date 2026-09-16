@@ -73,13 +73,17 @@ for (const id of FLOTA) {
 
   const visto = await page.evaluate(() => {
     const o = globalThis.__oga;
-    /*
-     * Solo lo que se enciende: las pantallas y los relojes. El panel, la
-     * visera y los montantes también caen en pantalla, pero de ellos no se
-     * espera que estén centrados — lo que se lee son los instrumentos.
-     */
+    // Primero lo que se enciende: las pantallas y los relojes.
     const { ancho, alto, piezas } = o.enPantalla("^(pantalla|reloj)");
-    return { ancho, alto, piezas, vista: o.vista() };
+    /*
+     * Y **el mueble**, que es lo otro que se ve torcido y que no medía nadie.
+     * Los instrumentos pueden estar centrados en la cara del piloto y la
+     * cabina entera seguir escorada, porque se construye simétrica respecto al
+     * eje del fuselaje y él no se sienta ahí: «descentradas las cabinas, no el
+     * cuadro de mando».
+     */
+    const mueble = o.enPantalla("^(montante|visera|panel-de-techo)").piezas;
+    return { ancho, alto, piezas, mueble, vista: o.vista() };
   });
 
   const etiqueta = (que) => `${id}: ${que}`;
@@ -145,6 +149,24 @@ for (const id of FLOTA) {
       pisadas === 0,
       pisadas ? `${pisadas} solapes` : "ninguna",
       "",
+    );
+  }
+
+  /*
+   * La cabina en sí: lo que enmarca el mundo tiene que enmarcarlo derecho. Se
+   * mide con los montantes del parabrisas, la visera y el panel de techo, que
+   * son piezas simétricas por definición — si ésas salen torcidas, la cabina
+   * entera lo está.
+   */
+  const mueble = (visto.mueble ?? []).filter((p) => !p.detras);
+  if (mueble.length) {
+    const izq = Math.min(...mueble.map((p) => p.x0));
+    const der = visto.ancho - Math.max(...mueble.map((p) => p.x1));
+    comprobar(
+      etiqueta("y la cabina se ve derecha desde el asiento"),
+      Math.abs(izq - der) <= visto.ancho * 0.06,
+      `sobran ${izq.toFixed(0)} px por la izquierda y ${der.toFixed(0)} por la derecha`,
+      "«descentradas las cabinas, no el cuadro de mando»",
     );
   }
 
