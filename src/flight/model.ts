@@ -39,6 +39,20 @@ export interface ControlInputs {
   engineOn: boolean;
   /** Flaps, 0 a 1. */
   flaps: number;
+  /**
+   * Reversa, 0 a 1. Solo en tierra y solo en el avión que la lleva.
+   *
+   * No existía, y se echó de menos jugando: «cuando tomo tierra no tengo
+   * reversa». En un avión de línea es la mitad de la parada — el chorro se
+   * desvía hacia delante y frena sin gastar frenos ni neumáticos, que es
+   * justamente lo que se cuida en una pista mojada o corta.
+   *
+   * Va aparte del gas y no como un gas negativo porque en la cabina son dos
+   * mandos distintos: el gas se deja al ralentí **y entonces** se levantan los
+   * gatillos de la reversa. Hacerlo con un solo número enseñaría un avión que
+   * no existe.
+   */
+  reversa: number;
 }
 
 export function neutralControls(): ControlInputs {
@@ -49,6 +63,7 @@ export function neutralControls(): ControlInputs {
     throttle: 0,
     brakes: 0,
     flaps: 0,
+    reversa: 0,
     engineOn: true,
   };
 }

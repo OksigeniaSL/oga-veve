@@ -30,7 +30,19 @@
 import { Quaternion, Vector3 } from "three";
 import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
 import { topeDeVelocidad, type QuienManda } from "./limites";
-import { esDeChorro, type AircraftConfig } from "./aircraft";
+import { esDeChorro, tieneReversa, type AircraftConfig } from "./aircraft";
+import { REVERSA_HASTA } from "./arcade";
+
+/**
+ * Cuánto empuje da la reversa, como fracción del empuje máximo.
+ *
+ * Cuatro décimas. Un turbofán con las compuertas desplegadas da entre un tercio
+ * y la mitad de su empuje hacia delante —no más, porque el chorro se desvía y
+ * pierde—, y un turbohélice con la hélice en paso negativo anda por ahí. Es
+ * bastante para acortar una parada y muy poco para mover el avión hacia atrás,
+ * que es lo que hace que no se pueda usar de marcha atrás.
+ */
+const REVERSA_DA = 0.4;
 import { type AssistLayers, uniformAssists } from "./assists";
 import type {
   ControlInputs,
@@ -857,6 +869,29 @@ export class CoefficientFlightModel implements FlightModel {
      */
     const rolling = ROZAMIENTO[this.superficie] + 0.28 * controls.brakes;
     const longitudinal = s.velocity.dot(this.forward);
+    /*
+     * **Y la reversa, que frena sin tocar las ruedas.**
+     *
+     * No existía: «cuando tomo tierra no tengo reversa». Se suma a la rodadura
+     * porque en un avión es otra fuerza y no un freno mejor — y por eso es la
+     * que salva una pista mojada, donde la rueda patina y el chorro no.
+     *
+     * Y se apaga sola por debajo de treinta nudos, como en un avión de verdad:
+     * más despacio deja de frenar y empieza a levantar del suelo lo que haya y
+     * a metérselo al motor. Ver `REVERSA_HASTA` en `arcade.ts`.
+     */
+    if (
+      tieneReversa(this.aircraft) &&
+      controls.reversa > 0 &&
+      Math.abs(longitudinal) > REVERSA_HASTA
+    ) {
+      const empuje =
+        Math.min(1, controls.reversa) * this.aircraft.maxThrust * REVERSA_DA;
+      s.velocity.addScaledVector(
+        this.forward,
+        (-Math.sign(longitudinal) * empuje * dt) / this.aircraft.mass,
+      );
+    }
     s.velocity.addScaledVector(
       this.forward,
       -Math.sign(longitudinal) *

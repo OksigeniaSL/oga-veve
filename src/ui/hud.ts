@@ -280,6 +280,8 @@ export class Hud {
   private fpsMedia = 0;
   private vspeed: HTMLElement | null = null;
   private throttleFill!: HTMLElement;
+  /** El rótulo de reversa metida, si este peldaño lo enseña. */
+  private reversaAviso!: HTMLElement | null;
   private brakes!: HTMLElement;
   private brakeKey!: HTMLElement;
   private brakesTouch!: HTMLElement;
@@ -622,6 +624,15 @@ export class Hud {
                     aria-label="${t("hud.throttleUp")}">${pictos ? HELICE_MAS : "+"}</button>
           </div>
           ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
+          <!--
+            Y la reversa, encima del gas y solo cuando está metida.
+
+            Va aquí y no con el freno porque **no es un freno**: es el motor
+            empujando al revés, y en la cabina se maneja con el mando de
+            potencia. Un avión que la lleva metida y no lo dice es un avión que
+            miente sobre lo que están haciendo sus motores.
+          -->
+          <span class="motor__reversa" data-hud="reversa" hidden>REV</span>
         </div>
         <!--
           El freno. Sale solo cuando se está en el suelo, porque en el aire
@@ -814,6 +825,7 @@ export class Hud {
     this.radioCaja = optional(this.root, "radio");
     this.vspeed = optional(this.root, "vspeed");
     this.throttleFill = pick(this.root, "throttle");
+    this.reversaAviso = optional(this.root, "reversa");
     this.brakes = pick(this.root, "brakes");
     this.brakeKey = pick(this.root, "brake-key");
     this.brakesTouch = pick(this.root, "brakes-touch");
@@ -1061,6 +1073,8 @@ export class Hud {
      * la velocidad: en pista, rápido y con gas. Ver `despegando`.
      */
     enDespegue = true,
+    /** Si la reversa está metida. Se enseña, porque es el motor al revés. */
+    reversa = false,
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
@@ -1143,6 +1157,8 @@ export class Hud {
     }
 
     this.throttleFill.style.width = `${Math.round(throttle * 100)}%`;
+    // Y la reversa, si está metida. Ver el marcado de `motor__reversa`.
+    if (this.reversaAviso) this.reversaAviso.hidden = !reversa;
 
     // El freno aparece al tocar suelo y se enciende al pisarlo.
     // Sin cifras, botón; con cifras, tarjeta con su tecla. Nunca los dos.

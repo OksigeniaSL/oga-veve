@@ -161,6 +161,7 @@ export const ES_PY = {
   "tecla.throttleUp": "Más motor",
   "tecla.throttleDown": "Menos motor",
   "tecla.brakes": "Frenos",
+  "tecla.reversa": "Reversa",
   "tecla.flaps": "Flaps",
   "tecla.camera": "Cambiar cámara",
   "tecla.assist": "Nivel de dificultad",

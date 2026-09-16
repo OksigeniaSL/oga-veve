@@ -165,6 +165,7 @@ export const EN: Dictionary = {
   "tecla.throttleUp": "More power",
   "tecla.throttleDown": "Less power",
   "tecla.brakes": "Brakes",
+  "tecla.reversa": "Reverse thrust",
   "tecla.flaps": "Flaps",
   "tecla.camera": "Change view",
   "tecla.assist": "Difficulty tier",

@@ -36,6 +36,7 @@ export type Accion =
   | "throttleDown"
   | "brakes"
   | "flaps"
+  | "reversa"
   | "camera"
   | "assist"
   | "reset"
@@ -112,6 +113,14 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
     held: true,
   },
   brakes: { label: "tecla.brakes", defecto: ["KeyB", "Space"], held: true },
+  /*
+   * **La reversa, en la tecla de al lado del freno.**
+   *
+   * Mantenida y no conmutada, que es como se usa: se levantan los gatillos, se
+   * frena, y se sueltan antes de parar. Una reversa que se queda puesta sola
+   * enseñaría el gesto al revés. Ver `ControlInputs.reversa`.
+   */
+  reversa: { label: "tecla.reversa", defecto: ["KeyV"], held: true },
   flaps: { label: "tecla.flaps", defecto: ["KeyF"], held: false },
   camera: { label: "tecla.camera", defecto: ["KeyC"], held: false },
   assist: { label: "tecla.assist", defecto: ["KeyM"], held: false },

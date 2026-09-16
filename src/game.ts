@@ -5242,6 +5242,8 @@ export class Game {
        * y con gas describe igual de bien las dos carreras. Ver `hud.update`.
        */
       EN_DESPEGUE.has(this.vistaActual?.fase ?? "en-vuelo"),
+      // Y si la reversa está metida, que se vea: es el motor empujando al revés.
+      this.input.controls.reversa > 0 && this.flight.state.onGround,
     );
     const toma = this.checkLanding(dt);
     // El tutor recibe la distancia a **la pista**, no a la aguja. Con una

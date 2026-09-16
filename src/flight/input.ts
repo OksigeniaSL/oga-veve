@@ -257,6 +257,13 @@ export class InputManager {
 
     const braking =
       this.touchBrakes || this.held("brakes") || (gamepad?.brakes ?? false);
+    /*
+     * **Y la reversa.** Solo tiene efecto en tierra y en el avión que la lleva
+     * —ver `tieneReversa`—, así que aquí no se filtra nada: se pasa lo que se
+     * pide y el modelo de vuelo decide si eso hace algo. Quien no la tiene,
+     * aprieta y no pasa nada, que es exactamente lo que le pasaría de verdad.
+     */
+    this.controls.reversa = this.held("reversa") ? 1 : 0;
     this.controls.brakes = approach(
       this.controls.brakes,
       braking ? 1 : 0,

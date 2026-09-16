@@ -188,6 +188,25 @@ export function esDeChorro(a: AircraftConfig): boolean {
   return a.sound.engine === "turbofan";
 }
 
+/**
+ * ¿Tiene reversa este avión?
+ *
+ * Los turbofanes la tienen —las compuertas que desvían el chorro hacia
+ * delante— y los turbohélices también, aunque la suyą es otra cosa: la hélice
+ * cambia el paso y empuja al revés, y por eso en una cabina de ATR el mando de
+ * potencia baja por debajo del ralentí en vez de tener un gatillo aparte.
+ *
+ * **Los de pistón no.** Una avioneta para con los frenos y con la pista que
+ * tenga, y esa es justamente la lección de por qué necesita menos pista y por
+ * qué un 747 no puede aterrizar donde ella.
+ *
+ * Se decide por el motor y no por una lista, que es la misma regla con la que
+ * el cuadro decide si la aguja marca RPM, par o N1. Ver `ui/cuadro.ts`.
+ */
+export function tieneReversa(a: AircraftConfig): boolean {
+  return a.sound.engine === "turbofan" || a.sound.engine === "turboprop";
+}
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */

@@ -1178,7 +1178,28 @@ button.motor__tecla::after {
   transform: translate(-50%, -50%);
 }
 
-.motor__fila .motor__pista {
+.motor__fila /*
+ * La reversa metida.
+ *
+ * Ámbar y no rojo: el rojo de este juego es de peligro —«¡al aire!», el
+ * terreno— y la reversa no lo es; es un motor haciendo su trabajo al revés. En
+ * una cabina de verdad el aviso de reversa desplegada también es ámbar, por lo
+ * mismo: hay que enterarse, no hay que asustarse.
+ */
+.motor__reversa {
+  display: block;
+  margin-top: 0.25rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.2rem;
+  background: #7a4a12;
+  color: #ffd79a;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.motor__pista {
   flex: 1;
   margin-top: 0;
 }
