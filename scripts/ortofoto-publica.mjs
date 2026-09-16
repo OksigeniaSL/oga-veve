@@ -75,11 +75,23 @@ const PROVEEDORES = {
     fuente: 'Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA',
     licencia: 'CC BY 4.0 · EOX & contribuidores, datos Copernicus Sentinel',
     servicio: 'https://tiles.maps.eox.at/wmts',
-    capa: 's2cloudless-2020_3857',
+    /*
+     * **La tanda de 2025, no la de 2020.**
+     *
+     * EOX publica una capa por año y se estaba pidiendo la de hace cinco. La
+     * resolución es la misma —diez metros es el dato de Sentinel-2 y no hay
+     * más— pero la imagen es otra: Asunción y Ciudad del Este han crecido en
+     * cinco años, y el compuesto sin nubes de cada año se hace con más pasadas
+     * que el anterior.
+     *
+     * Cambiar de año cuesta una palabra y no cuesta licencia: es la misma
+     * fuente y la misma atribución.
+     */
+    capa: 's2cloudless-2025_3857',
     // Diez metros de píxel: a z14 ya se está pidiendo el dato entero.
     tope: 14,
     url: (z, col, fila) =>
-      'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default' +
+      'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default' +
       `/GoogleMapsCompatible/${z}/${fila}/${col}.jpg`,
   },
 };
