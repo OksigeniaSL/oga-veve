@@ -61,6 +61,7 @@ const TODOS = [
   ["el-hierro", "guyrami"],
   ["la-gomera", "guyrami"],
   ["lanzarote", "guyrami"],
+  ["fuerteventura", "guyrami"],
   ["cuatro-vientos", "guyrami"],
   /*
    * **Y un avión grande, que era el otro hueco.**

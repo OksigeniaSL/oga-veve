@@ -132,6 +132,7 @@ export const EN: Dictionary = {
   "scenario.tenerifeSur.name": "Tenerife South",
   "scenario.granCanaria.name": "Gran Canaria",
   "scenario.lanzarote.name": "Lanzarote",
+  "scenario.fuerteventura.name": "Fuerteventura",
   "scenario.elHierro.name": "El Hierro",
   "scenario.laGomera.name": "La Gomera",
   "scenario.cuatroVientos.name": "Cuatro Vientos",

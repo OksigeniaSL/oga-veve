@@ -127,6 +127,7 @@ export const ES_PY = {
   "scenario.tenerifeSur.name": "Tenerife Sur",
   "scenario.granCanaria.name": "Gran Canaria",
   "scenario.lanzarote.name": "Lanzarote",
+  "scenario.fuerteventura.name": "Fuerteventura",
   "scenario.elHierro.name": "El Hierro",
   "scenario.laGomera.name": "La Gomera",
   "scenario.cuatroVientos.name": "Cuatro Vientos",
