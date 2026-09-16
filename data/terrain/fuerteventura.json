@@ -1,0 +1,13 @@
+{
+  "id": "fuerteventura",
+  "fuente": "PNOA-LiDAR MDT05 (IGN)",
+  "atribucion": "Modelo Digital del Terreno MDT05 del PNOA-LiDAR © Instituto Geográfico Nacional de España, CC BY 4.0",
+  "origen": {
+    "lat": 28.4527,
+    "lon": -13.8638
+  },
+  "tamanoM": 16000,
+  "resolucion": 401,
+  "minM": 0,
+  "maxM": 591
+}

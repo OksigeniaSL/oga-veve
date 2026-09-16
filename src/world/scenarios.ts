@@ -23,6 +23,7 @@ import GCGM from "../../data/aerodromes/gcgm.aero.json";
 import GCTS from "../../data/aerodromes/gcts.aero.json";
 import GCLP from "../../data/aerodromes/gclp.aero.json";
 import GCRR from "../../data/aerodromes/gcrr.aero.json";
+import GCFV from "../../data/aerodromes/gcfv.aero.json";
 import LECU from "../../data/aerodromes/lecu.aero.json";
 import SGES from "../../data/aerodromes/sges.aero.json";
 import SGME from "../../data/aerodromes/sgme.aero.json";
@@ -977,6 +978,55 @@ export const LANZAROTE: Scenario = {
   aerodrome: GCRR as unknown as Aerodrome,
 };
 
+export const FUERTEVENTURA: Scenario = {
+  id: "fuerteventura",
+  /*
+   * El alisio, que aquí sopla más constante que en ninguna otra isla: del
+   * nordeste y sin descanso. Es lo que hace que la 01 sea la cabecera de casa.
+   */
+  vientoDominante: { vientoDe: 30, vientoKt: 20, techoM: 2000, temp: 23 },
+  nameKey: "scenario.fuerteventura.name",
+  pais: "es",
+  seed: 28452786,
+  size: 16000,
+  segments: 400,
+  /*
+   * **Ochocientos y no dos mil.** Fuerteventura es la isla más vieja y la más
+   * gastada: el Pico de la Zarza son 807 m y está en Jandía, en la otra punta.
+   * Alrededor del aeropuerto, que está en la costa de El Matorral, el suelo no
+   * pasa de doscientos.
+   */
+  reliefHeight: 700,
+  reliefScale: 4.6,
+  ridgeMix: 0.35,
+  waterLevel: 2,
+  orilla: 6,
+  riverWidth: 0,
+  /*
+   * La paleta de la isla seca: arena, picón y malpaís. Sin el verde que tienen
+   * las de arriba, porque aquí no llueve.
+   */
+  bands: [
+    { from: -50, colour: 0x6b5f4c },
+    { from: 40, colour: 0x8a7a5e },
+    { from: 130, colour: 0x9c8a68 },
+    { from: 250, colour: 0x8f7d5d },
+    { from: 400, colour: 0x7d6c50 },
+    { from: 600, colour: 0x8b7c60 },
+  ],
+  water: 0x3f7f9a,
+  fill: 0x8a7a5e,
+  sky: { horizon: 0xe9e8e0, zenith: 0x4f8ecf },
+  // El aire más seco y más limpio del archipiélago: desde el aire se ve Lanzarote.
+  fog: { colour: 0xe6e5dc, density: 0.000011 },
+  sun: { azimuth: 150, elevation: 58 },
+  runway: pistaDe(GCFV as unknown as Aerodrome, "01"),
+  // El asfalto corre a 1,6° verdaderos y la cabecera pone 01: seis grados de
+  // declinación al oeste, que es la de Canarias.
+  magneticVariation: 6,
+  aerodrome: GCFV as unknown as Aerodrome,
+};
+
 /**
  * El Hierro — el aeropuerto más pequeño y el más lejos de todo.
  *
@@ -1466,6 +1516,7 @@ export const SCENARIOS: readonly Scenario[] = [
   TENERIFE_SUR,
   GRAN_CANARIA,
   LANZAROTE,
+  FUERTEVENTURA,
   EL_HIERRO,
   LA_GOMERA,
   CUATRO_VIENTOS,
