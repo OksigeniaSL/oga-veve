@@ -237,7 +237,39 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina] = await Promise.all([
     ? cargarOrtofoto(escenario.id, "cerca")
     : Promise.resolve(undefined),
 ]);
-escenario = conViento(ciudad ? { ...conMapa, ciudad } : conMapa, meteo);
+/**
+ * **Y donde la foto ya enseña la ciudad, la ciudad es la foto.**
+ *
+ * Las casas de la rejilla se sortearon para cuando no había fotografía: «el
+ * aeródromo flotaba en un bosque de ciento noventa kilómetros cuadrados, sin
+ * una casa ni una carretera». Encima de una ortofoto a dos metros por píxel
+ * hacen lo contrario de lo que se pretendía — se ven las dos ciudades, la de la
+ * foto y la nuestra, y la nuestra no coincide con nada—. Se dijo jugando: «no
+ * me gusta volar sobre Maincraft… encima tú le metes edificios inventados».
+ *
+ * Comparado en la misma aproximación a Los Rodeos, con las cajas y sin ellas:
+ * sin ellas la isla se lee como una isla y con ellas como bloques esparcidos
+ * sobre una alfombra. El sorteo no está mal hecho; es que su trabajo ya lo hace
+ * la foto.
+ *
+ * Así que la regla mira el dato y no el gusto: **si el píxel de la foto es más
+ * fino que una casa, no se sortea nada**. Con Sentinel-2 a ocho metros y medio
+ * sí se sortea, porque ahí la foto da color y uso del suelo pero no dice dónde
+ * hay un edificio.
+ *
+ * Y lo que queda sólido en la ciudad son los edificios **de verdad** del
+ * aeródromo —terminal, hangares, torre—, que salen de OpenStreetMap y están
+ * donde están. Chocar con uno inventado es peor que no chocar con ninguno.
+ */
+const FINA_DE_VERDAD = 4;
+const laFotoYaEnsenaLaCiudad =
+  (ortofotoFina ?? ortofoto) !== undefined &&
+  ((ortofotoFina ?? ortofoto)!.ficha.metrosPorPixel ?? Infinity) <=
+    FINA_DE_VERDAD;
+escenario = conViento(
+  ciudad && !laFotoYaEnsenaLaCiudad ? { ...conMapa, ciudad } : conMapa,
+  meteo,
+);
 
 try {
   ponerTexto("escenario", escenario.id);

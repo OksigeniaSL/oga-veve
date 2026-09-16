@@ -715,6 +715,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * trabajo. Catorce escenarios de dieciséis volaban sin foto y el síntoma que
      * se contaba era otro: «no me gusta volar sobre Maincraft».
      */
+    /** La escena, para poder apagar capas y comparar. Solo desarrollo. */
+    escena: () => juego.scene,
     ortofoto: () => {
       const malla = juego.terrain.group.getObjectByName("terreno") as
         | {
