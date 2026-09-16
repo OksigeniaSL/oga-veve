@@ -843,6 +843,9 @@ export class PlanDeVuelo {
 
   /** Dónde empieza el vuelo: el puesto de estacionamiento, si lo hay. */
   arranque(): readonly [number, number] | null {
+    // Si esta lección sale de la cabecera, no hay puesto del que salir aunque
+    // el aeropuerto tenga plataforma. Ver `reiniciar`.
+    if (this.desdeLaPista) return null;
     if (this.puestoElegido)
       return [this.puestoElegido[0], -this.puestoElegido[1]];
     const puesto = this.puestoDeSalida();
@@ -1409,8 +1412,23 @@ export class PlanDeVuelo {
   }
 
   /** Empieza un vuelo. Devuelve `false` si este aeródromo no da para rodar. */
-  reiniciar(): boolean {
-    const puesto = this.puestoDeSalida();
+  /** Si esta lección empieza alineado en la cabecera. Ver `reiniciar`. */
+  private desdeLaPista = false;
+
+  reiniciar(desdeLaPista = false): boolean {
+    /*
+     * **Y a veces no se sale del puesto, aunque el puesto exista.**
+     *
+     * La lección «dar una vuelta» empieza alineado en la cabecera y con el
+     * motor en marcha, y hasta hoy eso se conseguía **no montando el plan**.
+     * El precio era caro y estaba escondido: sin plan no hay fases, y de las
+     * fases cuelgan el aviso de V1, la megafonía de la comandante, la lámpara
+     * de la torre y los silencios de la radio. Todo mudo en esa lección sin
+     * que nada fallara. Ahora el plan se monta siempre y es **la lección**
+     * quien dice de dónde se sale, que es de quien tenía que depender.
+     */
+    this.desdeLaPista = desdeLaPista;
+    const puesto = desdeLaPista ? null : this.puestoDeSalida();
     const espera = this.esperaDeSalida();
     if (!puesto || !espera) {
       this.vuelo.reiniciar(true);

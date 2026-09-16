@@ -65,6 +65,38 @@ export interface InputActions {
   firstGesture: () => void;
 }
 
+/**
+ * Las cuatro muescas de la palanca de flaps, en fracción del recorrido.
+ *
+ * Cero, un tercio, dos tercios y todo: las mismas que rotula el cuadro de
+ * mandos como 0, 10, 20 y 30 grados, que son los detentes de casi cualquier
+ * avión de línea. La palanca de un avión no es un mando continuo: tiene topes,
+ * y se baja de uno en uno.
+ */
+export const DETENTES = [0, 1 / 3, 2 / 3, 1] as const;
+
+/**
+ * En qué muesca está ahora y cuál viene después, dando la vuelta al llegar
+ * abajo del todo.
+ *
+ * Se busca la más cercana en vez de suponer que el valor es exactamente uno de
+ * los cuatro: el mando puede venir de un guion, de un banco o de una partida
+ * guardada con otro reparto de muescas, y un `indexOf` sobre coma flotante
+ * devuelve −1 el día menos pensado.
+ */
+export function siguienteDetente(flaps: number): number {
+  let cual = 0;
+  let cerca = Infinity;
+  DETENTES.forEach((d, i) => {
+    const lejos = Math.abs(d - flaps);
+    if (lejos < cerca) {
+      cerca = lejos;
+      cual = i;
+    }
+  });
+  return (cual + 1) % DETENTES.length;
+}
+
 export class InputManager {
   readonly controls: ControlInputs = { ...neutralControls(), throttle: 0 };
 
@@ -101,15 +133,23 @@ export class InputManager {
   }
 
   /**
-   * Los flaps, desde un mando que no es una tecla.
+   * Los flaps, de detente en detente.
    *
    * Existe porque el mando de los flaps de la cabina se pulsa con el dedo —ver
    * `world/botones-cabina.ts`— y los flaps son un conmutador que lleva
    * `onKeyDown`: sin esto habría que fingir una pulsación de teclado, que es la
    * clase de atajo que se paga dos veces.
+   *
+   * **Y va por muescas, no de todo a nada.** Era un interruptor de dos
+   * posiciones —cero o todo— y eso no es una palanca de flaps de ningún avión:
+   * «¿por qué los flaps se ponen todo o nada?». La palanca de verdad tiene
+   * topes y se baja de uno en uno, y cada tope hace algo distinto — el primero
+   * es para despegar y el último para aterrizar. Es la diferencia entre un
+   * mando y un botón, y la regla del cuadro de mandos ya dibujaba las cuatro
+   * muescas desde el primer día. Ver `reglaDeFlaps`.
    */
   alternarFlaps(): void {
-    this.controls.flaps = this.controls.flaps > 0.5 ? 0 : 1;
+    this.controls.flaps = DETENTES[siguienteDetente(this.controls.flaps)]!;
   }
 
   /**
@@ -358,7 +398,10 @@ export class InputManager {
         this.actions.togglePausa();
         break;
       case "flaps":
-        this.controls.flaps = this.controls.flaps > 0.5 ? 0 : 1;
+        // La misma palanca que el botón de la cabina, y por el mismo camino:
+        // dos sitios que bajaban flaps con dos cuentas distintas era la vía
+        // rápida a que un día dijeran cosas distintas.
+        this.alternarFlaps();
         break;
       default:
         break;
