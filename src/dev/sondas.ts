@@ -408,6 +408,16 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       }
       return salida;
     },
+    /**
+     * Quiénes están ahora mismo en la frecuencia.
+     *
+     * Van cambiando: cada uno hace su vuelo y cuando lo termina se va y llega
+     * otro con otra matrícula. Hay que **muestrearlo a lo largo del rato**,
+     * porque en un instante solo se ven los dos que hay, y lo que se quiere
+     * comprobar es justo que no sean siempre los mismos dos. Ver
+     * `flight/radio.ts`.
+     */
+    enLaFrecuencia: () => [...juego.matriculasDeLaRadio],
     indicativo: () => {
       const otro = juego.indicativoDeLaRadio;
       const yo = juego.miMatricula;

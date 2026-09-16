@@ -127,7 +127,7 @@ def construir():
         alto_panel=0.22,
         y_suelo=-0.60,
         y_respaldo=0.30,
-        plazas=(-0.40, 0.40),
+        plazas=(-0.30, 0.30),
         pantallas_en=0.40,
         palancas=2,
         relojes=12,

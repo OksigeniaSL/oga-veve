@@ -38,6 +38,26 @@ import {
   type Mesh,
 } from "three";
 import { PALETA } from "../ui/paleta";
+import type { Cuadro } from "../ui/cuadro";
+import {
+  QUIETA_LA_ALTITUD,
+  QUIETA_LA_VELOCIDAD,
+  TARDA_EL_MOTOR,
+  conRetardo,
+  marcasDeCinta,
+  rodillo,
+  tendencia,
+} from "../ui/cinta";
+
+/**
+ * La tipografía de la cabina: condensada, y la misma que el cuadro del HUD.
+ *
+ * Condensada porque el píxel escasea —una pantalla de estas mide 512 de ancho
+ * y se ve a escala— y una condensada da un veinte por ciento más de cifra por
+ * milímetro. Y sin descargar nada: todas están ya en el sistema.
+ */
+const FUENTE =
+  '"Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "DejaVu Sans Condensed", ui-sans-serif, sans-serif';
 
 /** Tamaño del lienzo de cada pantalla, en píxeles. */
 const ANCHO = 512;
@@ -59,12 +79,8 @@ const POR_SEGUNDO = 12;
 const CIELO = PALETA.cielo;
 const TIERRA = PALETA.tierra;
 const TINTA = PALETA.valor;
-const VERDE = PALETA.normal;
-/** El fondo de una pantalla de cristal, y el canal vacío de una cinta. */
+/** El fondo de una pantalla de cristal. */
 const FONDO = PALETA.pantalla;
-const CANAL = PALETA.esfera;
-/** Me acerco al límite. */
-const AMBAR = PALETA.precaucion;
 /** Rótulo apagado: está, pero no es lo que se mira. */
 const TENUE = PALETA.apagado;
 /** El avioncito símbolo, que tiene que leerse sobre el cielo y sobre la tierra. */
@@ -104,6 +120,22 @@ export interface DatosDeCabina {
   readonly rotuloDeMotor: string;
   /** Flaps, 0 a 1. Van en el EICAS, debajo de los motores. */
   readonly flaps: number;
+  /**
+   * Las escalas de **este** avión: fondo de anemómetro, de variómetro y los
+   * arcos de color.
+   *
+   * Sin esto las cintas se dibujaban con una escala inventada igual para los
+   * seis, que es el mismo fallo que ya se arregló una vez en las esferas del
+   * HUD: el de fuselaje ancho volaba con la aguja clavada en el tope. Sale de
+   * la ficha, por `cuadroDe`. Ver `ui/cuadro.ts`.
+   */
+  readonly cuadro: Cuadro;
+  /** Cuántas patas tiene el tren. Tres, y cinco en el grande. */
+  readonly patas: number;
+  /** Velocidad respecto al suelo, m/s. Dato auxiliar: va en cian. */
+  readonly sobreElSuelo: number;
+  /** Si está en pérdida: marco rojo alrededor del horizonte. */
+  readonly perdida: boolean;
 }
 
 /**
@@ -123,7 +155,24 @@ export interface DatosDeCabina {
 function queLeToca(
   i: number,
   cuantas: number,
+  nombre = "",
 ): "horizonte" | "rumbo" | "motores" {
+  /*
+   * **Y si la pantalla dice cómo se llama, se le hace caso.**
+   *
+   * Lo de abajo es aritmética sobre la posición, y funciona mientras el
+   * reparto sea el que esa aritmética supone. En cuanto el avión de línea pasó
+   * a llevar tres pantallas seguidas —actitud, navegación y motores, todas
+   * delante del comandante— dejó de valer: la regla decía que la de en medio
+   * es la de motores, y ahí la de en medio es la de navegación.
+   *
+   * Las que hace este repositorio llevan su nombre puesto en Blender, así que
+   * no hace falta adivinar. La aritmética se queda para el modelo traído de
+   * fuera, que no lo lleva.
+   */
+  if (/horizonte/.test(nombre)) return "horizonte";
+  if (/rumbo/.test(nombre)) return "rumbo";
+  if (/motores/.test(nombre)) return "motores";
   /*
    * **Y con un número impar, la de en medio es la de los motores.**
    *
@@ -298,7 +347,10 @@ export function encenderPantallas(
   mallas.sort((a, b) => (enElAvion.get(a) ?? 0) - (enElAvion.get(b) ?? 0));
 
   const pantallas: Pantalla[] = [];
+  /** Cómo se llama cada una, en el orden en que quedaron. */
+  const nombres: string[] = [];
   mallas.forEach((malla, i) => {
+    nombres.push(malla.name ?? "");
     const p = nuevaPantalla();
     if (!p) return;
     estirarUV(malla);
@@ -324,9 +376,16 @@ export function encenderPantallas(
       // X sería contarle lo mismo que ya se usó para ordenar, y entonces la
       // comprobación sale bien aunque el orden esté al revés.
       uuid: m.uuid,
-      dibujo: queLeToca(i, mallas.length),
+      dibujo: queLeToca(i, mallas.length, m.name ?? ""),
     })),
     actualizar(datos, dt) {
+      /*
+       * Lo que tarda cada cosa se mide **con el paso de tiempo de verdad**, no
+       * con el del repintado: si se midiera solo al pintar, el retardo de un
+       * reactor dependería de a cuántas imágenes por segundo se dibuje la
+       * pantalla, que es justo lo que no puede pasar.
+       */
+      medirLoQueTarda(datos, dt);
       desde += dt;
       if (desde < 1 / POR_SEGUNDO) return;
       desde = 0;
@@ -334,7 +393,7 @@ export function encenderPantallas(
         // El espejo, deshecho: se dibuja al revés para que se vea del derecho
         // desde el otro lado del cuadrado. Ver `estirarUV`.
         p.g.setTransform(-1, 0, 0, 1, ANCHO, 0);
-        const toca = queLeToca(i, pantallas.length);
+        const toca = queLeToca(i, pantallas.length, nombres[i] ?? "");
         if (toca === "horizonte") pintarHorizonte(p.g, datos);
         else if (toca === "motores") pintarMotores(p.g, datos);
         else pintarRumbo(p.g, datos);
@@ -377,260 +436,860 @@ function escribir(
   g.restore();
 }
 
-/** Un rótulo con su caja, como los del HUD. */
-function cartel(
-  g: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  ancho: number,
-  texto: string,
-  alto = 46,
-): void {
-  g.fillStyle = "rgba(12, 18, 16, 0.82)";
-  g.fillRect(x, y - alto / 2, ancho, alto);
-  g.strokeStyle = "rgba(233, 242, 238, 0.5)";
-  g.lineWidth = 2;
-  g.strokeRect(x, y - alto / 2, ancho, alto);
-  escribir(
-    g,
-    texto,
-    x + ancho / 2,
-    y + 1,
-    "bold 30px system-ui, sans-serif",
-    TINTA,
-  );
-}
+/**
+ * ── Las medidas de una pantalla de cabina ──
+ *
+ * Son las mismas que el cuadro del HUD porque **son los mismos instrumentos**:
+ * velocidad a la izquierda, actitud en medio, altitud a la derecha, rumbo
+ * abajo. Lo que cambia es el tamaño del lienzo y que aquí se dibuja con pincel
+ * en vez de con SVG; las cuentas de las cintas son las mismas y salen del
+ * mismo sitio. Ver `ui/cinta.ts`.
+ */
+const CINTA = 66;
+const VSI = 22;
+const RUMBO_ABAJO = 38;
+/** Píxeles por nudo, por pie y por grado en este lienzo. */
+const POR_NUDO = 3;
+const POR_PIE = 0.34;
+const POR_GRADO = 2.2;
+/** De cuánto en cuánto está grabado el tambor de la altitud, en pies. */
+const PASO_TAMBOR = 20;
+const NUDOS = 1.94384;
+const PIES = 3.28084;
+const PIES_POR_MINUTO = 196.85;
 
-/** La izquierda: horizonte, velocidad y altura. */
+/** El alto de la parte de arriba: todo menos la cinta de rumbo. */
+const ALTO_CINTAS = ALTO - RUMBO_ABAJO;
+
+/**
+ * La pantalla de actitud: **el mismo cuadro que el del HUD, con pincel.**
+ *
+ * Lo que había aquí era un horizonte con dos carteles, uno con los kilómetros
+ * por hora y otro con los metros. Dos cosas mal a la vez: un anemómetro no
+ * marca kilómetros por hora en ninguna cabina del mundo, y un número suelto no
+ * es un instrumento — no dice si sube, ni cuánto falta, ni si te estás
+ * pasando. Lo que dice todo eso es la **cinta**: una ventana sobre una
+ * magnitud que fluye, con el puntero quieto y el mundo pasando por delante.
+ */
 function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.save();
-  g.clearRect(0, 0, ANCHO, ALTO);
-
-  // El horizonte gira con el alabeo y sube y baja con el cabeceo. Se dibuja
-  // sobre un cuadrado más grande que la pantalla para que al girar no asome
-  // el fondo por las esquinas.
-  g.save();
-  g.beginPath();
-  g.rect(0, 0, ANCHO, ALTO);
-  g.clip();
-  g.translate(ANCHO / 2, ALTO / 2);
-  g.rotate(-d.alabeo);
-  const subida = ((d.cabeceo * 180) / Math.PI) * 4.2;
-  g.translate(0, subida);
-  g.fillStyle = CIELO;
-  g.fillRect(-ANCHO, -ALTO * 1.6, ANCHO * 2, ALTO * 1.6);
-  g.fillStyle = TIERRA;
-  g.fillRect(-ANCHO, 0, ANCHO * 2, ALTO * 1.6);
-  g.strokeStyle = TINTA;
-  g.lineWidth = 3;
-  g.beginPath();
-  g.moveTo(-ANCHO, 0);
-  g.lineTo(ANCHO, 0);
-  g.stroke();
-  // Las escalerillas de diez en diez grados, que es lo que da la sensación de
-  // estar subiendo o bajando cuando el horizonte se sale de la pantalla.
-  g.lineWidth = 2.5;
-  for (const grados of [-20, -10, 10, 20]) {
-    const y = grados * 4.2;
-    const ancho = Math.abs(grados) === 10 ? 46 : 70;
-    g.beginPath();
-    g.moveTo(-ancho, y);
-    g.lineTo(ancho, y);
-    g.stroke();
-  }
-  g.restore();
-
-  // El avión, clavado en el centro: es lo único que no se mueve.
-  g.strokeStyle = SIMBOLO;
-  g.lineWidth = 6;
-  g.beginPath();
-  g.moveTo(ANCHO / 2 - 68, ALTO / 2);
-  g.lineTo(ANCHO / 2 - 22, ALTO / 2);
-  g.moveTo(ANCHO / 2 + 22, ALTO / 2);
-  g.lineTo(ANCHO / 2 + 68, ALTO / 2);
-  g.stroke();
-  g.fillStyle = SIMBOLO;
-  g.beginPath();
-  g.arc(ANCHO / 2, ALTO / 2, 5, 0, Math.PI * 2);
-  g.fill();
-
-  // Velocidad a la izquierda y altura a la derecha, como en el de verdad.
-  cartel(g, 10, ALTO / 2, 128, `${Math.round(d.velocidad * 3.6)}`);
-  cartel(g, ANCHO - 138, ALTO / 2, 128, `${Math.round(d.altura)}`);
-  escribir(g, "IAS", 74, 30, "bold 20px system-ui, sans-serif", VERDE);
-  escribir(g, "ALT", ANCHO - 74, 30, "bold 20px system-ui, sans-serif", VERDE);
-  g.restore();
-}
-
-/** La derecha: la rosa de rumbos y la velocidad vertical. */
-/**
- * El EICAS: qué están haciendo los motores.
- *
- * Es la pantalla del centro de una cabina de línea —la que miran los dos
- * pilotos— y sustituye a la rejilla de relojes redondos que había antes, que no
- * la lleva ningún avión de línea desde 1980. Se dijo jugando, y era verdad:
- * «que un 747 no parezca un juguete».
- *
- * ## Por qué cintas y no esferas
- *
- * Porque lo que se mira de cuatro motores no es cuánto da cada uno: es **si dan
- * lo mismo**. Cuatro cintas verticales una al lado de otra se leen de un
- * vistazo —parejas o no parejas— y cuatro agujas redondas hay que leerlas una
- * por una. Es exactamente por eso que un EICAS de verdad las pone así.
- *
- * Cada cinta lleva su número grande debajo, porque la cifra es la que se canta
- * por radio y la que se apunta, y su arco verde: la banda donde el motor
- * trabaja a gusto. El ámbar del final no es decoración — es el empuje de
- * despegue, que se usa unos minutos y no una hora.
- */
-function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.fillStyle = FONDO;
   g.fillRect(0, 0, ANCHO, ALTO);
 
-  const cuantos = Math.max(1, d.motores.length);
-  const margen = 46;
-  const hueco = (ANCHO - margen * 2) / cuantos;
-  const anchoCinta = Math.min(58, hueco * 0.52);
-  const arriba = 56;
-  const alto = 190;
-
-  g.font = "600 26px system-ui, sans-serif";
-  g.fillStyle = VERDE;
-  g.textAlign = "center";
-  g.fillText(d.rotuloDeMotor, ANCHO / 2, 34);
-
-  d.motores.forEach((valor, i) => {
-    const x = margen + hueco * (i + 0.5);
-    const v = Math.max(0, Math.min(1, valor));
-
-    // El canal, y dentro la banda verde: de ralentí a empuje de crucero.
-    g.fillStyle = CANAL;
-    g.fillRect(x - anchoCinta / 2, arriba, anchoCinta, alto);
-    g.fillStyle = "rgba(53, 199, 89, 0.28)";
-    g.fillRect(
-      x - anchoCinta / 2,
-      arriba + alto * 0.1,
-      anchoCinta,
-      alto * 0.75,
-    );
-
-    // Lo que da ahora, creciendo desde abajo, que es como se lee un empuje.
-    const h = alto * v;
-    g.fillStyle = v > 0.92 ? AMBAR : VERDE;
-    g.fillRect(x - anchoCinta / 2, arriba + alto - h, anchoCinta, h);
-
-    // Y la línea del valor, gruesa, que es lo que se compara entre motores.
-    g.fillStyle = TINTA;
-    g.fillRect(
-      x - anchoCinta / 2 - 6,
-      arriba + alto - h - 2,
-      anchoCinta + 12,
-      4,
-    );
-
-    g.font = "700 34px system-ui, sans-serif";
-    g.fillStyle = TINTA;
-    g.fillText(`${Math.round(v * 100)}`, x, arriba + alto + 40);
-    g.font = "500 20px system-ui, sans-serif";
-    g.fillStyle = TENUE;
-    g.fillText(`${i + 1}`, x, arriba - 14);
-  });
-
-  /*
-   * Y los flaps abajo, en cinta horizontal y no en un reloj.
-   *
-   * Van aquí porque es donde se miran: con el tren y el empuje, en la misma
-   * ojeada de la aproximación. Un reloj de flaps aparte es un instrumento que
-   * nadie mira hasta que ya es tarde.
-   */
-  const yF = ALTO - 46;
-  g.textAlign = "left";
-  g.font = "500 22px system-ui, sans-serif";
-  g.fillStyle = TENUE;
-  g.fillText("FLAPS", margen, yF - 12);
-  g.fillStyle = CANAL;
-  g.fillRect(margen, yF, ANCHO - margen * 2, 18);
-  g.fillStyle = d.flaps > 0.02 ? AMBAR : TENUE;
-  g.fillRect(
-    margen,
-    yF,
-    (ANCHO - margen * 2) * Math.max(0, Math.min(1, d.flaps)),
-    18,
-  );
-  g.textAlign = "center";
+  const x0 = CINTA + 6;
+  const anchoAct = ANCHO - CINTA * 2 - VSI - 18;
+  horizonteDe(g, x0, 0, anchoAct, ALTO_CINTAS, d);
+  cintaDeVelocidad(g, 0, 0, CINTA, ALTO_CINTAS, d);
+  cintaDeAltitud(g, ANCHO - VSI - CINTA, 0, CINTA, ALTO_CINTAS, d);
+  variometro(g, ANCHO - VSI, 0, VSI, ALTO_CINTAS, d);
+  cintaDeRumbo(g, x0, ALTO_CINTAS, anchoAct, RUMBO_ABAJO, d);
+  g.restore();
 }
 
+/** El horizonte de dentro de la pantalla de actitud. */
+function horizonteDe(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  d: DatosDeCabina,
+): void {
+  const cx = x + w / 2;
+  const cy = y + h * 0.46;
+  const porGrado = h / 46;
+  g.save();
+  g.beginPath();
+  g.rect(x, y, w, h);
+  g.clip();
+
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(-d.alabeo);
+  g.translate(0, ((d.cabeceo * 180) / Math.PI) * porGrado);
+  g.fillStyle = CIELO;
+  g.fillRect(-w, -h * 2, w * 2, h * 2);
+  g.fillStyle = TIERRA;
+  g.fillRect(-w, 0, w * 2, h * 2);
+  g.strokeStyle = "#fff";
+  g.lineWidth = 3;
+  g.beginPath();
+  g.moveTo(-w, 0);
+  g.lineTo(w, 0);
+  g.stroke();
+  // La escalerilla de cabeceo: de cinco en cinco, con cifra cada diez.
+  g.lineWidth = 2;
+  for (let grados = -30; grados <= 30; grados += 5) {
+    if (grados === 0) continue;
+    const yy = -grados * porGrado;
+    const largo = grados % 10 === 0 ? 34 : 17;
+    g.beginPath();
+    g.moveTo(-largo, yy);
+    g.lineTo(largo, yy);
+    g.stroke();
+    if (grados % 10 === 0) {
+      escribir(
+        g,
+        String(Math.abs(grados)),
+        -largo - 12,
+        yy,
+        "500 13px " + FUENTE,
+        "#fff",
+      );
+    }
+  }
+  g.restore();
+
+  // El arco de alabeo, con sus marcas, y el triángulo que dice dónde estás.
+  g.strokeStyle = "#fff";
+  g.lineWidth = 2;
+  const r = w * 0.38;
+  for (const grados of [-60, -45, -30, -20, -10, 10, 20, 30, 45, 60]) {
+    const a = (grados * Math.PI) / 180;
+    const largo =
+      Math.abs(grados) % 30 === 0 || Math.abs(grados) === 45 ? 11 : 6;
+    g.beginPath();
+    g.moveTo(cx + Math.sin(a) * r, cy - Math.cos(a) * r);
+    g.lineTo(cx + Math.sin(a) * (r + largo), cy - Math.cos(a) * (r + largo));
+    g.stroke();
+  }
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(-d.alabeo);
+  g.fillStyle = "#fff";
+  g.beginPath();
+  g.moveTo(0, -r);
+  g.lineTo(-7, -r - 12);
+  g.lineTo(7, -r - 12);
+  g.closePath();
+  g.fill();
+  g.restore();
+
+  /*
+   * El avioncito símbolo, clavado en el centro. **Amarillo**, y no es gusto:
+   * es el único dibujo que cae encima del cielo y encima de la tierra a la
+   * vez, así que tiene que leerse sobre los dos. Por eso los de verdad son
+   * amarillos.
+   */
+  g.strokeStyle = SIMBOLO;
+  g.lineWidth = 5;
+  g.lineCap = "round";
+  g.beginPath();
+  g.moveTo(cx - 52, cy);
+  g.lineTo(cx - 22, cy);
+  g.lineTo(cx - 22, cy + 11);
+  g.moveTo(cx + 52, cy);
+  g.lineTo(cx + 22, cy);
+  g.lineTo(cx + 22, cy + 11);
+  g.moveTo(cx - 5, cy);
+  g.lineTo(cx + 5, cy);
+  g.stroke();
+  g.lineCap = "butt";
+
+  // Y la pérdida: marco rojo alrededor del horizonte, que es donde mira quien
+  // ya está en apuros.
+  if (d.perdida) {
+    g.strokeStyle = PALETA.limite;
+    g.lineWidth = 6;
+    g.strokeRect(x + 3, y + 3, w - 6, h - 6);
+  }
+  g.restore();
+}
+
+/** La ventana oscura de una cinta, con su filete. */
+function ventana(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): void {
+  g.fillStyle = "#05070a";
+  g.fillRect(x, y, w, h);
+  g.strokeStyle = "#2c3136";
+  g.lineWidth = 1;
+  g.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+}
+
+/** La caja del valor de ahora: fija en el centro, con filete blanco. */
+function caja(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color = TINTA,
+): void {
+  g.fillStyle = "#05070a";
+  g.fillRect(x, y - h / 2, w, h);
+  g.strokeStyle = color;
+  g.lineWidth = 2;
+  g.strokeRect(x + 1, y - h / 2 + 1, w - 2, h - 2);
+}
+
+/** La cinta de velocidad, en **nudos**, con los arcos de este avión. */
+function cintaDeVelocidad(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  d: DatosDeCabina,
+): void {
+  const kt = d.velocidad * NUDOS;
+  const c = d.cuadro;
+  ventana(g, x, y, w, h);
+  g.save();
+  g.beginPath();
+  g.rect(x, y, w, h);
+  g.clip();
+  const medio = y + h / 2;
+
+  // Las bandas de color de la ficha, en el borde de dentro.
+  const banda = (desde: number, hasta: number, color: string) => {
+    const y1 = medio + (kt - hasta * c.asiMax) * POR_NUDO;
+    const y2 = medio + (kt - desde * c.asiMax) * POR_NUDO;
+    g.fillStyle = color;
+    g.fillRect(x + w - 5, y1, 5, y2 - y1);
+  };
+  banda(c.arcos.verde[0], c.arcos.verde[1], PALETA.normal);
+  banda(c.arcos.ambar[0], c.arcos.ambar[1], PALETA.precaucion);
+  banda(c.arcos.rojo[0], c.arcos.rojo[1], PALETA.limite);
+
+  for (const m of marcasDeCinta({
+    valor: kt,
+    paso: 10,
+    rotulaCada: 2,
+    porUnidad: POR_NUDO,
+    alto: h,
+    minimo: 0,
+  })) {
+    const yy = medio + m.y;
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(x + w - (m.rotula ? 10 : 6), yy);
+    g.lineTo(x + w, yy);
+    g.stroke();
+    if (m.rotula) {
+      escribir(
+        g,
+        String(m.valor),
+        x + w - 14,
+        yy,
+        "500 15px " + FUENTE,
+        TINTA,
+        "right",
+      );
+    }
+  }
+
+  /*
+   * El vector de tendencia: dónde estarás dentro de seis segundos si no tocás
+   * nada. Es la animación que más enseña de todo el cuadro, porque lo que
+   * enseña es anticipación.
+   */
+  const salto = tendencia(aceleracion(), QUIETA_LA_VELOCIDAD);
+  if (salto !== null) {
+    const largo = Math.max(-h / 2 + 6, Math.min(h / 2 - 6, salto * POR_NUDO));
+    g.fillStyle = PALETA.objetivo;
+    g.fillRect(x + w - 3, medio - Math.max(0, largo), 3, Math.abs(largo));
+  }
+  g.restore();
+
+  caja(g, x, medio, w, 30);
+  escribir(
+    g,
+    String(Math.round(kt)),
+    x + w - 6,
+    medio,
+    "600 24px " + FUENTE,
+    TINTA,
+    "right",
+  );
+  escribir(g, "IAS", x + w / 2, y + 12, "500 11px " + FUENTE, TENUE);
+}
+
+/**
+ * La cinta de altitud, en **pies**, con el tambor de los últimos dígitos.
+ *
+ * Los dos últimos ruedan en vez de saltar, como el de un altímetro de tambor
+ * de verdad. Una cifra que salta es invisible para la atención de un niño; una
+ * que rueda la captura.
+ */
+function cintaDeAltitud(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  d: DatosDeCabina,
+): void {
+  const pies = d.altura * PIES;
+  ventana(g, x, y, w, h);
+  g.save();
+  g.beginPath();
+  g.rect(x, y, w, h);
+  g.clip();
+  const medio = y + h / 2;
+  for (const m of marcasDeCinta({
+    valor: pies,
+    paso: 100,
+    rotulaCada: 2,
+    porUnidad: POR_PIE,
+    alto: h,
+    minimo: -1000,
+  })) {
+    const yy = medio + m.y;
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(x, yy);
+    g.lineTo(x + (m.rotula ? 10 : 6), yy);
+    g.stroke();
+    if (m.rotula) {
+      escribir(
+        g,
+        String(m.valor),
+        x + 14,
+        yy,
+        "500 14px " + FUENTE,
+        TINTA,
+        "left",
+      );
+    }
+  }
+  /*
+   * Y **la pista vive en el cero**: quien juegue sin saber leer descubrirá que
+   * el suelo está en el cero antes de saber leer la altitud.
+   */
+  const suelo = medio + pies * POR_PIE;
+  g.fillStyle = SIMBOLO;
+  g.fillRect(x + 2, suelo - 1, w - 16, 2);
+
+  const salto = tendencia(
+    (d.vertical * PIES_POR_MINUTO) / 60,
+    QUIETA_LA_ALTITUD / 60,
+  );
+  if (salto !== null) {
+    const largo = Math.max(-h / 2 + 6, Math.min(h / 2 - 6, salto * POR_PIE));
+    g.fillStyle = PALETA.objetivo;
+    g.fillRect(x, medio - Math.max(0, largo), 3, Math.abs(largo));
+  }
+  g.restore();
+
+  caja(g, x, medio, w, 30);
+  const { centro, fraccion } = rodillo(pies, PASO_TAMBOR);
+  escribir(
+    g,
+    String(Math.floor(pies / 100)),
+    x + w - 29,
+    medio,
+    "600 21px " + FUENTE,
+    TINTA,
+    "right",
+  );
+  /*
+   * **El tambor se recorta a la altura de un dígito, ni uno más.**
+   *
+   * Con la ventana más alta que el paso del rollo, los dos números vecinos
+   * asomaban por arriba y por abajo y lo que se leía era un amasijo: «2», y
+   * debajo otro número a medias. Un tambor de verdad enseña **una** cifra, y
+   * la de al lado solo mientras está rodando.
+   */
+  const PASO_ROLLO = 26;
+  g.save();
+  g.beginPath();
+  g.rect(x + w - 28, medio - 13, 28, 26);
+  g.clip();
+  for (const k of [-1, 0, 1]) {
+    const valor = centro - k * PASO_TAMBOR;
+    escribir(
+      g,
+      String(((valor % 100) + 100) % 100).padStart(2, "0"),
+      x + w - 4,
+      medio + k * PASO_ROLLO + fraccion * PASO_ROLLO,
+      "600 21px " + FUENTE,
+      TINTA,
+      "right",
+    );
+  }
+  g.restore();
+  escribir(g, "ALT", x + w / 2, y + 12, "500 11px " + FUENTE, TENUE);
+}
+
+/** El variómetro: una franja al borde de la cinta de altitud. */
+function variometro(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  d: DatosDeCabina,
+): void {
+  ventana(g, x, y, w, h);
+  const medio = y + h / 2;
+  const ampl = h / 2 - 12;
+  g.strokeStyle = TINTA;
+  for (let i = -2; i <= 2; i++) {
+    const yy = medio - (i / 2) * ampl;
+    g.lineWidth = i % 2 === 0 ? 1.5 : 1;
+    g.beginPath();
+    g.moveTo(x, yy);
+    g.lineTo(x + (i % 2 === 0 ? 8 : 5), yy);
+    g.stroke();
+  }
+  const f = Math.max(
+    -1,
+    Math.min(1, (d.vertical * PIES_POR_MINUTO) / d.cuadro.vsiMax),
+  );
+  g.strokeStyle = TINTA;
+  g.lineWidth = 2.5;
+  g.beginPath();
+  g.moveTo(x, medio - f * ampl);
+  g.lineTo(x + w, medio - f * ampl);
+  g.stroke();
+  escribir(g, "VS", x + w / 2, y + 10, "500 10px " + FUENTE, TENUE);
+}
+
+/** La cinta de rumbo al pie del horizonte: treinta grados a cada lado. */
+function cintaDeRumbo(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  d: DatosDeCabina,
+): void {
+  const grados = magnetico(d);
+  ventana(g, x, y, w, h);
+  g.save();
+  g.beginPath();
+  g.rect(x, y, w, h);
+  g.clip();
+  const centro = x + w / 2;
+  const desde = Math.ceil((grados - w / 2 / POR_GRADO) / 5) * 5;
+  for (let gg = desde; gg <= grados + w / 2 / POR_GRADO; gg += 5) {
+    const xx = centro + (gg - grados) * POR_GRADO;
+    const larga = gg % 10 === 0;
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(xx, y);
+    g.lineTo(xx, y + (larga ? 8 : 5));
+    g.stroke();
+    if ((((gg % 360) + 360) % 360) % 30 === 0) {
+      escribir(
+        g,
+        String((((gg % 360) + 360) % 360) / 10).padStart(2, "0"),
+        xx,
+        y + 22,
+        "500 14px " + FUENTE,
+        TINTA,
+      );
+    }
+  }
+  g.restore();
+  caja(g, centro - 26, y + 15, 52, 24);
+  escribir(
+    g,
+    String(Math.round(((grados % 360) + 360) % 360)).padStart(3, "0"),
+    centro,
+    y + 15,
+    "600 18px " + FUENTE,
+    TINTA,
+  );
+  g.strokeStyle = SIMBOLO;
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(centro, y);
+  g.lineTo(centro, y + h);
+  g.stroke();
+}
+
+/** El rumbo magnético, que es el que se dice y el que marca el HUD. */
+function magnetico(d: DatosDeCabina): number {
+  return (d.rumbo * 180) / Math.PI + d.declinacion;
+}
+
+/**
+ * Cuánto acelera, para el vector de tendencia.
+ *
+ * Se guarda entre imágenes porque la tendencia es una **derivada** y la
+ * pantalla solo recibe el valor: derivarla aquí, con la del cuadro anterior,
+ * es la única fuente que hay. Suavizada medio segundo, o el vector baila y un
+ * vector que baila no enseña a anticipar nada.
+ */
+let nudosAntes: number | null = null;
+let aceleraActual = 0;
+function aceleracion(): number {
+  return aceleraActual;
+}
+
+/**
+ * Y dónde va la aguja de cada motor, que **no es donde va el mando**.
+ *
+ * Un pistón obedece en tres décimas y un turbofán tarda tres segundos en
+ * despertar. Ese retardo es real y es lo que hace que un avión de línea se
+ * vuele con paciencia, adelantándose. Que la aguja tarde no es un defecto del
+ * dibujo: **es la lección**. Ver `TARDA_EL_MOTOR` en `ui/cinta.ts`.
+ */
+let agujas: number[] = [];
+
+/** Lo llama el refresco, una vez por imagen y antes de pintar. */
+function medirLoQueTarda(d: DatosDeCabina, dt: number): void {
+  const kt = d.velocidad * NUDOS;
+  if (dt > 0 && nudosAntes !== null) {
+    aceleraActual = conRetardo(aceleraActual, (kt - nudosAntes) / dt, dt, 0.5);
+  }
+  nudosAntes = kt;
+  const tau =
+    TARDA_EL_MOTOR[d.cuadro.queMarca as keyof typeof TARDA_EL_MOTOR] ?? 1;
+  if (agujas.length !== d.motores.length) {
+    agujas = d.motores.map(() => 0);
+  }
+  for (let i = 0; i < agujas.length; i++) {
+    agujas[i] = conRetardo(agujas[i]!, d.motores[i] ?? 0, dt, tau);
+  }
+}
+
+/**
+ * La pantalla de navegación: la rosa entera, y el avión en el centro.
+ *
+ * Gira la carta, no el avión: lo que se mueve es el mundo. Es la forma de leer
+ * un rumbo sin saber leer — «lo que tengas delante es hacia donde vas»— y es
+ * la misma rosa que la del cuadro del HUD, con las mismas cifras aeronáuticas:
+ * «3» por treinta grados, «21» por doscientos diez.
+ *
+ * Y el variómetro **ya no está aquí**: estaba en esta pantalla y también en la
+ * de al lado, y dos veces el mismo instrumento en la misma cabina es la clase
+ * de cosa que hace dudar de los dos. Vive con la cinta de altitud, que es de
+ * donde no se despega.
+ */
 function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.save();
   g.fillStyle = FONDO;
   g.fillRect(0, 0, ANCHO, ALTO);
 
-  const cx = ANCHO / 2 - 40;
-  const cy = ALTO / 2;
-  const r = 138;
+  const grados = magnetico(d);
+  const cx = ANCHO / 2;
+  const cy = ALTO * 0.54;
+  const r = Math.min(ANCHO / 2 - 30, cy - 34, ALTO - cy - 26);
+
+  // Los arcos de rango, tenues: dan sensación de distancia sin decir cifras.
+  g.strokeStyle = "#2c3136";
+  g.setLineDash([3, 6]);
+  g.lineWidth = 1;
+  for (const f of [0.5, 0.75]) {
+    g.beginPath();
+    g.arc(cx, cy, r * f, 0, Math.PI * 2);
+    g.stroke();
+  }
+  g.setLineDash([]);
 
   g.save();
   g.translate(cx, cy);
-  g.rotate(-d.rumbo);
-  g.strokeStyle = "rgba(233, 242, 238, 0.75)";
-  g.lineWidth = 2.5;
+  g.rotate((-grados * Math.PI) / 180);
+  g.fillStyle = "rgba(0, 0, 0, 0.35)";
   g.beginPath();
   g.arc(0, 0, r, 0, Math.PI * 2);
-  g.stroke();
-  // Las cuatro cardinales y las rayas de treinta en treinta.
-  for (let a = 0; a < 360; a += 30) {
+  g.fill();
+  for (let a = 0; a < 360; a += 5) {
     const rad = (a * Math.PI) / 180;
-    const larga = a % 90 === 0;
+    const larga = a % 10 === 0;
+    const r1 = r - (larga ? 12 : 7);
+    g.strokeStyle = TINTA;
+    g.lineWidth = larga ? 2 : 1.2;
     g.beginPath();
-    g.moveTo(Math.sin(rad) * r, -Math.cos(rad) * r);
-    g.lineTo(
-      Math.sin(rad) * (r - (larga ? 22 : 12)),
-      -Math.cos(rad) * (r - (larga ? 22 : 12)),
-    );
-    g.lineWidth = larga ? 4 : 2.5;
+    g.moveTo(Math.sin(rad) * r1, -Math.cos(rad) * r1);
+    g.lineTo(Math.sin(rad) * r, -Math.cos(rad) * r);
     g.stroke();
+    if (a % 30 === 0) {
+      const letra =
+        a === 0
+          ? "N"
+          : a === 90
+            ? "E"
+            : a === 180
+              ? "S"
+              : a === 270
+                ? "W"
+                : String(a / 10);
+      g.save();
+      g.translate(Math.sin(rad) * (r - 28), -Math.cos(rad) * (r - 28));
+      g.rotate((grados * Math.PI) / 180);
+      escribir(g, letra, 0, 0, "500 17px " + FUENTE, TINTA);
+      g.restore();
+    }
   }
-  ["N", "E", "S", "O"].forEach((letra, i) => {
-    const rad = (i * 90 * Math.PI) / 180;
-    g.save();
-    g.translate(Math.sin(rad) * (r - 44), -Math.cos(rad) * (r - 44));
-    g.rotate(d.rumbo);
-    escribir(g, letra, 0, 0, "bold 26px system-ui, sans-serif", TINTA);
-    g.restore();
-  });
   g.restore();
 
-  // El avión, quieto en el centro y mirando siempre arriba: la rosa gira
-  // debajo, que es como se lee un rumbo sin saber leer.
-  g.fillStyle = SIMBOLO;
+  // La línea de fe, arriba, que es contra la que se lee la carta.
+  g.strokeStyle = SIMBOLO;
+  g.lineWidth = 2.5;
   g.beginPath();
-  g.moveTo(cx, cy - 26);
-  g.lineTo(cx + 17, cy + 20);
-  g.lineTo(cx, cy + 11);
-  g.lineTo(cx - 17, cy + 20);
-  g.closePath();
-  g.fill();
-
-  // Y la velocidad vertical, en una barra: arriba es subir.
-  const bx = ANCHO - 62;
-  g.strokeStyle = "rgba(233, 242, 238, 0.5)";
-  g.lineWidth = 2;
-  g.strokeRect(bx, 60, 44, ALTO - 120);
-  g.beginPath();
-  g.moveTo(bx, ALTO / 2);
-  g.lineTo(bx + 44, ALTO / 2);
+  g.moveTo(cx, cy - r - 8);
+  g.lineTo(cx, cy - r + 10);
   g.stroke();
-  const trozo = Math.max(-1, Math.min(1, d.vertical / 6)) * ((ALTO - 120) / 2);
-  g.fillStyle = trozo < 0 ? AMBAR : VERDE;
-  g.fillRect(bx + 6, ALTO / 2, 32, -trozo);
-  escribir(g, "V/S", bx + 22, 36, "bold 20px system-ui, sans-serif", VERDE);
+
+  // El avión, quieto en el centro y mirando siempre arriba.
+  g.strokeStyle = SIMBOLO;
+  g.lineWidth = 4;
+  g.lineCap = "round";
+  g.beginPath();
+  g.moveTo(cx, cy - 20);
+  g.lineTo(cx, cy + 22);
+  g.moveTo(cx - 20, cy + 4);
+  g.lineTo(cx + 20, cy + 4);
+  g.moveTo(cx - 9, cy + 20);
+  g.lineTo(cx + 9, cy + 20);
+  g.stroke();
+  g.lineCap = "butt";
+
+  // Y el rumbo en cifras, arriba, con su rótulo debajo.
+  caja(g, cx - 36, 24, 72, 30);
   escribir(
     g,
-    `${Math.round((d.rumbo * 180) / Math.PI + d.declinacion + 720) % 360}`,
+    String(Math.round(((grados % 360) + 360) % 360)).padStart(3, "0"),
     cx,
-    cy + r + 34,
-    "bold 26px system-ui, sans-serif",
+    24,
+    "600 24px " + FUENTE,
     TINTA,
   );
+  escribir(g, "HDG", cx, 48, "500 11px " + FUENTE, TENUE);
+  escribir(
+    g,
+    `GS ${Math.round(d.sobreElSuelo * NUDOS)}`,
+    12,
+    22,
+    "500 15px " + FUENTE,
+    PALETA.auxiliar,
+    "left",
+  );
   g.restore();
+}
+
+/**
+ * El EICAS: qué están haciendo los motores, los flaps y el tren.
+ *
+ * **Los instrumentos de motor tienen que ser aburridos.** Verdes y quietos el
+ * noventa y nueve por ciento del tiempo; solo hablan cuando algo se sale de
+ * rango. Esa quietud es lo que separa una cabina de línea de una máquina
+ * recreativa, y es la razón de que aquí no parpadee nada porque sí.
+ *
+ * Y una aguja por motor, en fila, porque lo que se mira de cuatro motores no
+ * es cuánto da cada uno: es **si dan lo mismo**. Cuatro columnas de N1 es al
+ * grande lo que la joroba al fuselaje.
+ */
+function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
+  g.save();
+  g.fillStyle = FONDO;
+  g.fillRect(0, 0, ANCHO, ALTO);
+
+  const n = Math.max(1, d.motores.length);
+  const hueco = ANCHO - 28;
+  const paso = hueco / n;
+  const r = Math.min(paso / 2 - 8, 74);
+  const cy = 40 + r;
+  escribir(g, d.rotuloDeMotor, ANCHO / 2, 20, "500 15px " + FUENTE, TENUE);
+
+  for (let i = 0; i < n; i++) {
+    const cx = 14 + paso * (i + 0.5);
+    dialDeMotor(g, cx, cy, r, i + 1, agujas[i] ?? 0, d.motores[i] ?? 0);
+  }
+
+  /*
+   * Y lo que se le ha **pedido** a cada motor, debajo de lo que está dando.
+   * Es la lección entera de un reactor en una fila de barras: el mando se
+   * mueve al momento y la aguja tarda tres segundos en alcanzarlo.
+   */
+  const yMando = cy + r + 44;
+  escribir(g, "MANDO", ANCHO / 2, yMando - 12, "500 11px " + FUENTE, TENUE);
+  for (let i = 0; i < n; i++) {
+    const ancho = Math.min(paso - 22, 86);
+    const bx = 14 + paso * (i + 0.5) - ancho / 2;
+    ventana(g, bx, yMando, ancho, 10);
+    g.fillStyle = PALETA.objetivo;
+    g.fillRect(bx, yMando, ancho * clamp01(d.motores[i] ?? 0), 10);
+  }
+
+  reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps);
+  lucesDeTren(g, 16, ALTO - 30, d.patas);
+  g.restore();
+}
+
+function clamp01(v: number): number {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
+/**
+ * Un dial de motor: arco de doscientos cuarenta grados, aguja blanca, la marca
+ * roja del límite, la banda ámbar del último tramo y el bug magenta de lo que
+ * se le ha pedido. Debajo, la cifra.
+ */
+function dialDeMotor(
+  g: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  numero: number,
+  da: number,
+  pide: number,
+): void {
+  const INICIO = -120;
+  const RECORRIDO = 240;
+  const rad = (f: number) => ((INICIO + f * RECORRIDO) * Math.PI) / 180;
+  const punto = (f: number, rr: number): [number, number] => [
+    cx + Math.sin(rad(f)) * rr,
+    cy - Math.cos(rad(f)) * rr,
+  ];
+
+  g.fillStyle = "#05070a";
+  g.beginPath();
+  g.arc(cx, cy, r, 0, Math.PI * 2);
+  g.fill();
+  g.strokeStyle = "#2c3136";
+  g.lineWidth = 1;
+  g.stroke();
+
+  const arco = (desde: number, hasta: number, color: string) => {
+    g.strokeStyle = color;
+    g.lineWidth = 4;
+    g.beginPath();
+    g.arc(cx, cy, r - 4, rad(desde) - Math.PI / 2, rad(hasta) - Math.PI / 2);
+    g.stroke();
+  };
+  arco(0, 0.95, PALETA.normal);
+  arco(0.95, 1, PALETA.precaucion);
+
+  g.strokeStyle = TINTA;
+  for (let k = 0; k <= 10; k++) {
+    const rr = k % 5 === 0 ? r - 12 : r - 8;
+    const [x1, y1] = punto(k / 10, rr);
+    const [x2, y2] = punto(k / 10, r);
+    g.lineWidth = k % 5 === 0 ? 2 : 1.2;
+    g.beginPath();
+    g.moveTo(x1, y1);
+    g.lineTo(x2, y2);
+    g.stroke();
+  }
+
+  // El límite, en rojo, al final del recorrido.
+  g.strokeStyle = PALETA.limite;
+  g.lineWidth = 3;
+  const [lx1, ly1] = punto(1, r - 14);
+  const [lx2, ly2] = punto(1, r + 2);
+  g.beginPath();
+  g.moveTo(lx1, ly1);
+  g.lineTo(lx2, ly2);
+  g.stroke();
+
+  // Lo que se le ha pedido, en magenta: magenta es siempre «lo que quiero».
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(rad(clamp01(pide)));
+  g.fillStyle = PALETA.objetivo;
+  g.beginPath();
+  g.moveTo(0, -r - 2);
+  g.lineTo(-5, -r - 11);
+  g.lineTo(5, -r - 11);
+  g.closePath();
+  g.fill();
+  g.restore();
+
+  // Y la aguja, con lo que está dando.
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(rad(clamp01(da)));
+  g.fillStyle = da > 0.95 ? PALETA.precaucion : TINTA;
+  g.beginPath();
+  g.moveTo(-3, 0);
+  g.lineTo(-2, -r * 0.74);
+  g.lineTo(0, -r * 0.84);
+  g.lineTo(2, -r * 0.74);
+  g.lineTo(3, 0);
+  g.closePath();
+  g.fill();
+  g.restore();
+  g.fillStyle = "#2a2f35";
+  g.beginPath();
+  g.arc(cx, cy, 4, 0, Math.PI * 2);
+  g.fill();
+
+  escribir(g, String(numero), cx, cy + 4, "500 12px " + FUENTE, TENUE);
+  escribir(
+    g,
+    String(Math.round(da * 100)),
+    cx,
+    cy + r + 18,
+    "600 22px " + FUENTE,
+    TINTA,
+  );
+}
+
+/**
+ * La regla de flaps, con sus cuatro detentes y su puntero.
+ *
+ * Cuatro muescas y un puntero que se para en ellas, igual que la palanca de
+ * verdad — que no es un mando continuo, es una palanca con topes, y eso se
+ * aprende viéndolo.
+ */
+function reglaDeFlaps(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  flaps: number,
+): void {
+  escribir(g, "FLAP", x - 8, y + h / 2, "500 12px " + FUENTE, TENUE, "right");
+  ventana(g, x, y, w, h);
+  for (let k = 0; k <= 3; k++) {
+    const xx = x + (k / 3) * w;
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(xx, y);
+    g.lineTo(xx, y + h);
+    g.stroke();
+    escribir(g, String(k * 10), xx, y + h + 12, "500 11px " + FUENTE, TENUE);
+  }
+  const px = x + clamp01(flaps) * w;
+  g.fillStyle = TINTA;
+  g.beginPath();
+  g.moveTo(px, y - 3);
+  g.lineTo(px - 6, y - 12);
+  g.lineTo(px + 6, y - 12);
+  g.closePath();
+  g.fill();
+}
+
+/**
+ * Las luces del tren. Verde = abajo y trabada.
+ *
+ * Tres en toda la flota y **cinco en el grande**: un 747 tiene cinco patas, y
+ * quien las cuente va a sonreír. Ese detalle no enseña a volar, enseña a
+ * mirar, que es lo anterior.
+ */
+function lucesDeTren(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  patas: number,
+): void {
+  for (let k = 0; k < patas; k++) {
+    g.fillStyle = PALETA.normal;
+    g.globalAlpha = 0.85;
+    g.fillRect(x + k * 20, y, 14, 14);
+    g.globalAlpha = 1;
+  }
+  escribir(
+    g,
+    "GEAR",
+    x + patas * 20 + 6,
+    y + 8,
+    "500 12px " + FUENTE,
+    TENUE,
+    "left",
+  );
 }

@@ -34,7 +34,7 @@ import {
 } from "./flight/tiers";
 import { AIRCRAFT, PYKASU, type AircraftConfig } from "./flight/aircraft";
 import { InputManager } from "./flight/input";
-import { claveDeTorre, NOMBRA_LA_PISTA } from "./audio/torre";
+import { claveDeTorre, DICE_LA_TORRE, NOMBRA_LA_PISTA } from "./audio/torre";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   matriculaDe,
@@ -252,7 +252,7 @@ import {
   elegirTorre,
   type Instructor,
 } from "./audio/instructor";
-import { Radio } from "./flight/radio";
+import { Frecuencia } from "./flight/radio";
 import type { ControlInputs } from "./flight/model";
 import {
   delante,
@@ -295,6 +295,7 @@ import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
 import { cuadroDe, regimen } from "./ui/cuadro";
+import { patasDe } from "./ui/familia";
 import { Megafonia, conPasaje } from "./audio/megafonia";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import {
@@ -1093,7 +1094,7 @@ export class Game {
 
   /** Lo último que dijo la lámpara, para que la torre no se repita. */
   private ultimaLuzDeTorre: string | null = null;
-  private readonly radio = new Radio();
+  private readonly radio = new Frecuencia();
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
    *
@@ -1103,16 +1104,6 @@ export class Game {
   private seVenLosAros = false;
   /** La última fase anunciada, para no repetir el aviso cada fotograma. */
   faseAnunciada = "";
-  /**
-   * Cómo se llama hoy el otro avión de la frecuencia.
-   *
-   * Se sortea por vuelo y con el prefijo del país del aeródromo. Antes estaba
-   * escrito a mano dentro de las cinco grabaciones —«Zulu Papa Alfa Bravo
-   * Charlie»— y era el mismo avión en todos los vuelos y en todos los
-   * aeropuertos, incluidos los canarios, donde ZP- no tiene ningún sentido.
-   * Ver `flight/matricula.ts`.
-   */
-  private indicativoDelOtro: Indicativo = sortearIndicativo(null);
   /**
    * Y **el tuyo**, que no se sortea: es el que lleva pintado tu avión.
    *
@@ -1124,9 +1115,21 @@ export class Game {
     return matriculaDe(this.aircraft.id, this.scenario.aerodrome?.id);
   }
 
-  /** Y el banco de pruebas necesita verlo. Ver `sondas.ts`. */
+  /**
+   * Quiénes están hoy en la frecuencia, aparte de vos.
+   *
+   * Son varios y cambian: cada uno hace su propio vuelo y cuando lo termina se
+   * va y aparece otro con otra matrícula. Lo mira el banco de pruebas, que
+   * comprueba que el prefijo es el del país del aeródromo. Ver `sondas.ts` y
+   * `flight/radio.ts`.
+   */
   get indicativoDeLaRadio(): Indicativo {
-    return this.indicativoDelOtro;
+    return this.radio.quienes[0] ?? sortearIndicativo(null);
+  }
+
+  /** Todas las de la frecuencia, para el banco. */
+  get matriculasDeLaRadio(): readonly string[] {
+    return this.radio.matriculas;
   }
 
   /** La matrícula de tu avión, para el banco. Ver `miIndicativo`. */
@@ -3119,8 +3122,28 @@ export class Game {
   private porRadio(dice: string, urgencia: Urgencia = "normal"): void {
     const base = claveDeTorre(dice);
     if (!base) return;
-    const yo = this.miIndicativo;
-    const relleno: Record<string, string> = rellenoDe(yo);
+    const montada = this.deTorre(base, this.miIndicativo);
+    if (montada) {
+      this.torre.decir(montada.texto, montada.clave, urgencia, montada.relleno);
+    }
+  }
+
+  /**
+   * Una llamada de la torre montada entera: a quién, con qué pista y cómo
+   * suena.
+   *
+   * Está aparte porque **la torre no habla solo con vos**. La misma cuenta
+   * vale para la autorización que te dan a vos y para la que le dan al que va
+   * delante, y tener dos copias de ella era la manera segura de que un día una
+   * dijera la pista y la otra no.
+   */
+  private deTorre(
+    base: string,
+    quien: Indicativo,
+  ): { clave: string; relleno: Record<string, string>; texto: string } | null {
+    const dice = DICE_LA_TORRE[base];
+    if (!dice) return null;
+    const relleno: Record<string, string> = rellenoDe(quien);
     let clave = base;
     const pista = NOMBRA_LA_PISTA.has(base)
       ? pistaEnPiezas(cabeceraEnUso(this.scenario))
@@ -3135,10 +3158,10 @@ export class Game {
      * en una tarjeta. Que el respaldo diga menos que la grabación es de las
      * cosas que hacen que un fallo de audio parezca un fallo del juego.
      */
-    const entero = pista
-      ? `${yo.dicho}, runway ${pista.dicho}, ${dice}`
-      : `${yo.dicho}, ${dice}`;
-    this.torre.decir(entero, clave, urgencia, relleno);
+    const texto = pista
+      ? `${quien.dicho}, runway ${pista.dicho}, ${dice}`
+      : `${quien.dicho}, ${dice}`;
+    return { clave, relleno, texto };
   }
 
   /**
@@ -3405,8 +3428,7 @@ export class Game {
     this.alturaEnGrande.reiniciar();
     // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
     // nombre**: es otro avión, no el mismo dando vueltas para siempre.
-    this.radio.reiniciar();
-    this.indicativoDelOtro = sortearIndicativo(this.scenario.aerodrome?.id);
+    this.radio.reiniciar(this.scenario.aerodrome?.id);
     callar();
     /*
      * **Y todo lo que el paso siguiente va a leer.**
@@ -3677,31 +3699,46 @@ export class Game {
       instructorHablando: this.instructor.hablando,
     });
     if (!dice) return;
+
+    /*
+     * **Cuando la que habla es la torre, se le habla a otro.**
+     *
+     * Y es la mitad de lo que hace que esto suene a un aeropuerto: oír a la
+     * torre decir una matrícula que no es la tuya, y a alguien contestarle.
+     * Sale gratis de grabación porque las frases de la torre ya se grabaron
+     * con el hueco del indicativo puesto —se hizo para poder llamarte a vos—,
+     * y un hueco no sabe de quién es. Ver `flight/radio.ts`.
+     */
+    if (dice.voz === "torre") {
+      const montada = this.deTorre(dice.clave, dice.de);
+      if (!montada) return;
+      this.torre.decir(montada.texto, montada.clave, "baja", montada.relleno);
+      if (this.tier.instruments !== "none") this.hud.radio(montada.texto);
+      return;
+    }
+
     /*
      * **Y el indicativo se monta, no está escrito.**
      *
      * El texto lleva un hueco —`{indicativo}`— y la receta grabada lleva otros
      * cinco —`{c1}`…`{c5}`—, uno por letra. Los dos se rellenan aquí con el
-     * mismo sorteo, así que lo que se lee y lo que se oye son el mismo avión.
+     * mismo avión, así que lo que se lee y lo que se oye son el mismo.
      *
      * Y esa es la gracia de verdad: con veintiséis sílabas grabadas suena
      * cualquier indicativo, y el alfabeto aeronáutico se oye una y otra vez
      * **en contexto**, que es como se aprende sin estudiarlo. Ver
      * `flight/matricula.ts` y `recetaDe` en `audio/banco-de-voz.ts`.
      */
-    const texto = t(dice, { indicativo: this.indicativoDelOtro.dicho });
+    const texto = t(dice.clave as TranslationKey, {
+      indicativo: dice.de.dicho,
+    });
     /*
      * **Y el otro avión habla en voz baja**, en el sentido de la boca: lo suyo
      * es ambiente y no puede quitarle el turno a una instrucción. Sin esto, un
      * «en final» del otro avión le robaba la plaza a la autorización de la
      * torre. Ver `Urgencia` en `audio/boca.ts`.
      */
-    this.otroAvion.decir(
-      texto,
-      dice,
-      "baja",
-      rellenoDe(this.indicativoDelOtro),
-    );
+    this.otroAvion.decir(texto, dice.clave, "baja", rellenoDe(dice.de));
     if (this.tier.instruments !== "none") this.hud.radio(texto);
   }
 
@@ -5214,6 +5251,18 @@ export class Game {
         ),
         rotuloDeMotor: cuadroDe(this.aircraft).rotulo,
         flaps: this.input.controls.flaps,
+        /*
+         * Y las escalas de **este** avión, que es lo que hace que la cinta de
+         * velocidad de la cabina diga la verdad. Sin ellas se dibujaba con una
+         * escala inventada igual para los seis — el mismo fallo que ya se
+         * arregló una vez en las esferas del HUD. Ver `ui/cuadro.ts`.
+         */
+        cuadro: cuadroDe(this.aircraft),
+        patas: patasDe(this.aircraft),
+        sobreElSuelo: this.flight.state.groundSpeed,
+        perdida:
+          !this.flight.state.onGround &&
+          this.flight.state.alpha > this.aircraft.aero.alphaStall,
       },
       dt,
     );

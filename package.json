@@ -37,7 +37,9 @@
     "circuito": "node scripts/verificar-circuito.mjs",
     "voces": "node scripts/verificar-voces.mjs",
     "botones": "node scripts/verificar-botones.mjs",
-    "cuadro": "node scripts/verificar-cuadro.mjs"
+    "cuadro": "node scripts/verificar-cuadro.mjs",
+    "panel": "node scripts/verificar-panel.mjs",
+    "frecuencia": "node scripts/verificar-frecuencia.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.5.2",
