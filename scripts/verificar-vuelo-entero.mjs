@@ -965,8 +965,22 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * juego tampoco lo mira.
      */
     if (
-      !s.onGround &&
       !subidaDesde &&
+      /*
+       * **Y la cuenta empieza volando de verdad, no en un bote.**
+       *
+       * `onGround` parpadea durante la carrera —el modelo da por volando al
+       * avión en cuanto la sustentación lo levanta un palmo, ver
+       * `PEGADO_AL_SUELO`—, así que con el primer fotograma sin ruedas en el
+       * suelo el punto de partida podía quedar fijado trescientos metros antes
+       * del despegue, y esos trescientos metros de rodadura entraban en el
+       * denominador. De ahí salían los 2,8 % de una tirada frente a los 8,2 y
+       * 12,6 de la siguiente con el mismo avión y el mismo campo.
+       *
+       * Cinco metros sobre el terreno es más alto que cualquier bote y más bajo
+       * que cualquier subida.
+       */
+      s.heightAboveGround > 5 &&
       ["despegando", "comprometido"].includes(fase)
     )
       subidaDesde = { x: s.position.x, z: s.position.z, y: s.position.y };
