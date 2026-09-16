@@ -267,10 +267,16 @@ export class Boca {
      */
     if (clave && !urgente) {
       const dicha = this.dichas.get(clave);
-      if (dicha !== undefined && ahora - dicha < NO_REPETIR) return;
+      if (dicha !== undefined && ahora - dicha < NO_REPETIR) {
+        this.apuntarDescarte(clave, "repetida");
+        return;
+      }
       for (const otra of riñenCon(clave)) {
         const cuando = this.dichas.get(otra);
-        if (cuando !== undefined && ahora - cuando < RIÑEN) return;
+        if (cuando !== undefined && ahora - cuando < RIÑEN) {
+          this.apuntarDescarte(clave, `riñe con ${otra}`);
+          return;
+        }
       }
     }
 
@@ -327,7 +333,10 @@ export class Boca {
     const cuenta = laCuentaDe(esta.clave);
     if (cuenta) {
       for (let i = this.cola.length - 1; i >= 0; i--) {
-        if (laCuentaDe(this.cola[i]!.clave) === cuenta) this.cola.splice(i, 1);
+        if (laCuentaDe(this.cola[i]!.clave) === cuenta) {
+          this.apuntarDescarte(this.cola[i]!.clave, "la pisó una más nueva");
+          this.cola.splice(i, 1);
+        }
       }
     }
     this.cola.push(esta);
@@ -342,6 +351,7 @@ export class Boca {
       )
         peor = i;
     }
+    this.apuntarDescarte(this.cola[peor]!.clave, "no cabía en la cola");
     this.cola.splice(peor, 1);
   }
 
@@ -350,7 +360,10 @@ export class Boca {
     const ahora = this.reloj.ahora();
     // Lo caducado no se dice: contar el pasado es peor que callarse.
     for (let i = this.cola.length - 1; i >= 0; i--) {
-      if (ahora - this.cola[i]!.desde > CADUCA) this.cola.splice(i, 1);
+      if (ahora - this.cola[i]!.desde > CADUCA) {
+        this.apuntarDescarte(this.cola[i]!.clave, "caducó esperando");
+        this.cola.splice(i, 1);
+      }
     }
     if (!this.cola.length) return undefined;
     let mejor = 0;
@@ -365,6 +378,22 @@ export class Boca {
         mejor = i;
     }
     return this.cola.splice(mejor, 1)[0];
+  }
+
+  /**
+   * Lo que se descartó y por qué, para los bancos.
+   *
+   * Esta boca **tira frases en silencio**, y tiene razones buenas para hacerlo
+   * —no repetirse, no contradecirse, no contar el pasado—. Pero una frase que
+   * desaparece sin rastro es imposible de perseguir desde fuera: costó media
+   * tarde averiguar por dónde se perdía el canto de V1, y la respuesta estaba
+   * aquí todo el rato.
+   */
+  readonly descartadas: string[] = [];
+
+  private apuntarDescarte(clave: string | undefined, porque: string): void {
+    this.descartadas.push(`${clave ?? "sin clave"}: ${porque}`);
+    if (this.descartadas.length > 200) this.descartadas.shift();
   }
 
   /** Suelta lo que esperaba el silencio, si sigue teniendo sentido. */

@@ -242,8 +242,18 @@ export class InstructorGrabado implements Instructor {
 
   /** Apunta lo último en el historial, sin dejarlo crecer sin fin. */
   private apuntar(): void {
+    if (!import.meta.env.DEV) return;
     this.historial.push(this.ultima);
-    if (this.historial.length > 400) this.historial.shift();
+    /*
+     * **Y el tope da para un vuelo entero, que es lo que se mide.**
+     *
+     * Estaba en cuatrocientas y un vuelo pasa de dos mil quinientas frases, así
+     * que lo que se decía en el despegue **se caía por el otro extremo** antes
+     * de que nadie lo mirara. El banco daba «no canta V1» con aviones que sí la
+     * cantan, y se fue media tarde persiguiendo un fallo que no existía: la
+     * regla de medir se estaba comiendo la prueba.
+     */
+    if (this.historial.length > 5000) this.historial.shift();
   }
 
   private callarLoGrabado(): void {

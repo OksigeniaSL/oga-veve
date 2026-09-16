@@ -911,7 +911,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         const v1 = o.v1?.();
         if (v1)
           verV1.add(
-            `carrera:${v1.enLaCarrera} v1:${v1.dijoV1} vr:${v1.dijoVr} escucha:${v1.hayQuienEscuche}`,
+            `carrera:${v1.enLaCarrera} v1:${v1.dijoV1} vr:${v1.dijoVr}`,
           );
       }
       if (ejes)
@@ -1626,6 +1626,13 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     torreDijo: [...(o.dichoTodo?.().torre ?? deLaTorre)],
     // Del historial de la boca, no del muestreo: ver `dichoTodo`.
     cabinaDijo: o.dichoTodo?.().instructor ?? [...deLaCabina],
+    cantados: [
+      `total:${(o.cantados?.() ?? []).length}`,
+      ...(o.cantados?.() ?? []).filter((c) => /V one|rotate|manejador/.test(c)),
+      ...(o.descartadas?.() ?? []).filter((c) =>
+        /comprometido|rotar|cabina\.v/.test(c),
+      ),
+    ],
     torreDijoTodo: o.dichoTodo?.().torre ?? [],
     masRapidoEnPista: Math.round(masRapidoEnPista),
     seSalioEnPista: Math.round(seSalioEnPista),
@@ -1828,7 +1835,8 @@ comprobar(
       vuelo.cabinaDijo?.includes(c),
     ),
   `del despegue salió: ${(vuelo.cabinaDijo ?? []).filter((c) => /^(cabina\.|V one|rotate|vuelo\.(comprometido|rotar))/.test(c)).join(" · ") || "nada"}` +
-    ` · en la carrera: hasta ${vuelo.masRapidoEnPista} m/s en pista, gas ${vuelo.gasEnLaCarrera}, ${vuelo.seSalioEnPista} m del eje · ${vuelo.verV1?.join(" | ")}`,
+    ` · cantar() hizo: ${vuelo.cantados?.join(" | ") || "nada"}` +
+    ` · en la carrera: hasta ${vuelo.masRapidoEnPista} m/s en pista, gas ${vuelo.gasEnLaCarrera} · ${vuelo.verV1?.join(" | ")}`,
   "sin V1 ni Vr, un despegue es acelerar y que pase algo",
 );
 

@@ -43,6 +43,7 @@ import { leerGafas } from "../flight/gafas";
 import { carreraHastaVr, distanciaDeAterrizaje } from "../flight/carrera";
 import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
+import { BOCA } from "../audio/boca";
 
 export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
@@ -395,6 +396,10 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     /** Lo que ve el detector de V1. Ver `sondaDeV1` en `hud.ts`. */
     v1: () => juego.hud.sondaDeV1,
+    /** Por dónde salió cada canto de cabina. Ver `cantados` en `game.ts`. */
+    cantados: () => [...juego.cantados],
+    /** Lo que la boca tiró y por qué. Ver `descartadas` en `boca.ts`. */
+    descartadas: () => [...BOCA.descartadas],
     dichoTodo: () => {
       const salida: Record<string, string[]> = {};
       for (const [quien, boca] of Object.entries(juego.bocas)) {
