@@ -1,68 +1,138 @@
 /**
- * El otro avión de la frecuencia.
+ * La frecuencia: **los otros que están ahí fuera, y la torre contestándoles**.
  *
- * Un aeropuerto donde la radio está muerta es un decorado. Con cinco frases
- * sueltas y bien puestas deja de serlo: **se oye a alguien más ahí fuera**, y
- * eso cuenta —sin explicarlo— que uno no está solo en el mundo, que hay que
- * esperar turno y que la pista es de todos. Todavía no hay tráfico dibujado
- * —eso es #118—, pero esto vale desde hoy y no depende de aquello.
+ * Un aeropuerto donde la radio está muerta es un decorado. Pero una radio con
+ * un solo avión que hace siempre lo mismo también acaba siéndolo, y se oyó
+ * jugando: «hay unas pocas frases y en cada vuelo dice lo mismo: charlie,
+ * papa, zulú… viento de cola». El diagnóstico era exacto. Había **un** avión,
+ * con **un** guion de cuatro llamadas, dichas siempre en el mismo orden.
  *
- * ## Es una historia, no cinco frases al azar
+ * Lo que hace que una frecuencia suene a frecuencia son tres cosas, y ninguna
+ * es tener más frases sueltas:
  *
- * Zulu Papa Alfa Bravo Charlie hace su propio vuelo detrás del tuyo, y lo
- * cuenta en orden: saluda, rueda a la cabecera, entra en viento en cola,
- * anuncia final y deja la pista libre. Sueltas y barajadas serían ruido; en
- * orden son otro avión. Cuando acaba, se calla un buen rato y vuelve a
- * empezar, que es lo que pasa en un aeródromo pequeño.
+ * 1. **Hay más de uno.** Dos aviones con su propia matrícula, cada uno en un
+ *    punto distinto de su propio vuelo, turnándose el canal. Oís a uno rodar
+ *    mientras el otro va en final, que es lo que pasa de verdad.
+ * 2. **Alguien contesta.** Una radio en la que todos anuncian y nadie
+ *    responde es una megafonía. Cuando la torre dice una matrícula que no es
+ *    la tuya y otro le contesta, el mundo tiene gente dentro — y cuando dice
+ *    la tuya, **te está hablando a vos**, que es lo que hace que valga la pena
+ *    escuchar.
+ * 3. **No todos hacen lo mismo.** Uno sale, otro llega, a otro lo paran en el
+ *    punto de espera, y a otro lo mandan al aire porque la pista está ocupada.
+ *
+ * ## Y sale a coste cero de grabación
+ *
+ * Esa es la parte bonita del asunto. Las frases de la torre **ya estaban
+ * grabadas con un hueco para el indicativo** —se hicieron así para poder
+ * llamar al jugador por su matrícula—, y un hueco no sabe de quién es: la
+ * misma grabación que dice «Zulu Papa Yankee Victor Alfa, runway zero three,
+ * cleared for take-off» dice cualquier otra matrícula sin tocar nada. O sea
+ * que la torre podía llevar todo este tiempo hablando con los demás y lo único
+ * que faltaba era pedírselo. Ver `audio/torre.ts` y `flight/matricula.ts`.
  *
  * ## Y se calla cuando hay que callarse
  *
- * Dos reglas, y las dos por el mismo motivo: **la radio es ambiente y el
+ * Tres reglas, y las tres por el mismo motivo: **la radio es ambiente y el
  * instructor es la lección**. Si hablan a la vez, la que se pierde es la que
  * hacía falta.
  *
  * - Nunca en final ni en la toma. Ahí quien habla es el instructor y quien
  *   escucha tiene las manos ocupadas.
- * - Nunca encima de otra frase, ni antes de que pase un silencio decente.
+ * - Nunca encima del instructor.
+ * - Nunca dos a la vez, y con un silencio decente entre transmisiones. Una
+ *   frecuencia en la que se pisan no es realismo, es ruido.
  *
  * Y «buenos días» solo de día, que decirlo a las ocho de la tarde es de las
  * cosas que un chico nota antes que nadie.
  */
 
+import { sortearIndicativo, type Indicativo } from "./matricula";
+
+/** Quién habla: otro avión de la frecuencia, o la torre. */
+export type Voz = "otro" | "torre";
+
+/** Un paso del guion: quién dice qué, y si viene pegado a lo anterior. */
+export interface Paso {
+  readonly voz: Voz;
+  readonly clave: string;
+  /**
+   * Si es una **respuesta** y por tanto llega en segundos, no en minutos.
+   *
+   * Es el detalle que separa una conversación de dos monólogos. Una torre que
+   * contesta cuarenta segundos después no está contestando: está diciendo otra
+   * cosa por su cuenta, y se nota aunque nadie sepa decir por qué.
+   */
+  readonly seguido?: boolean;
+}
+
 /**
- * Las cuatro, en el orden en que las dice.
+ * Lo que hace cada uno de los que están en la frecuencia.
  *
- * **El saludo ya no va solo.** Era «Buenos días» y cinco letras, y así sonaba:
- * «eco charli lima lima… ¿y ya está, no dice nada después, sólo unas letras?».
- * Un avión que abre la frecuencia dice quién es **y a qué viene**, y ahora lo
- * dice en la misma llamada: «Buenos días, Echo Charlie Lima Lima Alfa, rodando
- * a la cabecera». No hizo falta grabar nada: la receta junta el saludo, el
- * indicativo y el mensaje que ya existían por separado.
+ * Son vuelos enteros contados por radio, no frases sueltas barajadas: sueltas
+ * serían ruido; en orden son un avión. Y usan **solo lo que ya está grabado**,
+ * que es lo que permitió hacer esto sin pisar el estudio.
  */
-export const LLAMADAS = [
-  "otro.rodando",
-  "otro.enCola",
-  "otro.final",
-  "otro.pistaLibre",
-] as const;
+export const GUIONES = {
+  /** Uno que sale sin esperar a nadie: rueda, le paran, le autorizan. */
+  sale: [
+    { voz: "otro", clave: "otro.rodando" },
+    { voz: "torre", clave: "torre.holdShort", seguido: true },
+    { voz: "torre", clave: "torre.clearedTakeoff" },
+  ],
+  /**
+   * Y uno al que **le toca esperar**, que es la lección entera de la radio:
+   * la pista es de todos y hay turnos. Entra en el eje, se queda ahí, y hasta
+   * que no despega el de delante no le autorizan.
+   */
+  espera: [
+    { voz: "otro", clave: "otro.rodando" },
+    { voz: "torre", clave: "torre.holdShort", seguido: true },
+    { voz: "torre", clave: "torre.lineUpWait" },
+    { voz: "torre", clave: "torre.clearedTakeoff" },
+  ],
+  /** Uno que llega: viento en cola, autorizado, final, y deja la pista. */
+  llega: [
+    { voz: "otro", clave: "otro.enCola" },
+    { voz: "torre", clave: "torre.clearedLand", seguido: true },
+    { voz: "otro", clave: "otro.final" },
+    { voz: "otro", clave: "otro.pistaLibre" },
+  ],
+  /**
+   * Y uno al que mandan al aire con la pista ocupada.
+   *
+   * Está aquí porque es **lo mismo que el juego te hace a vos** cuando te
+   * manda una frustrada, y oírselo hacer a otro antes de que te pase a vos
+   * vale más que cualquier explicación: no es un castigo, es lo normal.
+   */
+  frustrada: [
+    { voz: "otro", clave: "otro.enCola" },
+    { voz: "otro", clave: "otro.final" },
+    { voz: "torre", clave: "torre.goAround", seguido: true },
+    { voz: "otro", clave: "otro.enCola" },
+    { voz: "torre", clave: "torre.clearedLand", seguido: true },
+    { voz: "otro", clave: "otro.pistaLibre" },
+  ],
+} satisfies Record<string, readonly Paso[]>;
+
+export type Guion = keyof typeof GUIONES;
+
+/** Los guiones, en el orden en que se sortean. */
+export const CUALES = Object.keys(GUIONES) as Guion[];
 
 /**
  * Y **el saludo no es una llamada: es cómo se dice la primera.**
  *
  * Estaba en la lista como una más, así que de noche —que no se saluda— se
- * saltaba **la llamada entera** y el otro avión no anunciaba que salía. Con el
- * saludo dentro de la misma frase eso pasó de ser un detalle a ser un agujero:
- * media hora de frecuencia sin que nadie diga que está rodando.
- *
- * Ahora la primera llamada es siempre «rodando a la cabecera», y de día se dice
- * con los buenos días delante. Es la misma frase con una pieza más. Ver la
- * receta en `crudo/otro/recetas.json`.
+ * saltaba **la llamada entera** y el otro avión no anunciaba que salía. Ahora
+ * la primera llamada de quien sale es siempre «rodando a la cabecera», y de
+ * día se dice con los buenos días delante: es la misma frase con una pieza
+ * más. Ver la receta en `crudo/otro/recetas.json`.
  */
 export const CON_SALUDO = "otro.buenosDias";
+const SE_SALUDA_EN = "otro.rodando";
 
-export type Llamada = (typeof LLAMADAS)[number] | typeof CON_SALUDO;
-
-/** Lo que la radio mira del vuelo para saber si puede hablar. */
+/** Lo que la frecuencia mira del vuelo para saber si puede hablar. */
 export interface Momento {
   /** La fase del juego. En final y en la toma, la radio calla. */
   readonly fase: string;
@@ -72,30 +142,111 @@ export interface Momento {
   readonly instructorHablando: boolean;
 }
 
+/** Lo que se oye: quién, qué, y de quién es la matrícula que se nombra. */
+export interface Transmision {
+  readonly voz: Voz;
+  readonly clave: string;
+  /** A quién nombra la frase. En una respuesta es el avión, no la torre. */
+  readonly de: Indicativo;
+  /**
+   * Si esto **contesta** a lo anterior o abre un asunto nuevo.
+   *
+   * Lo dice el guion y sale hacia fuera porque es lo que hay que poder
+   * comprobar: una respuesta llega en segundos y una llamada nueva en
+   * decenas, y esa diferencia es toda la diferencia entre una conversación y
+   * dos monólogos que casualmente se turnan.
+   */
+  readonly respuesta: boolean;
+}
+
 /** Las fases en las que no se habla por encima de nadie. */
 const CALLADAS = new Set(["final", "aterrizado", "comprometido", "percance"]);
 
-/** Segundos hasta la primera frase, y entre una y la siguiente. */
+/** Cuántos comparten la frecuencia. */
+export const CUANTOS = 2;
+
+/** Segundos hasta la primera frase, y entre una llamada y la siguiente. */
 export const ESPERA_PRIMERA = 12;
 export const ESPERA_MINIMA = 35;
 export const ESPERA_MAXIMA = 75;
-/** Y el silencio largo cuando el otro avión termina su vuelo. */
+/** Lo que tarda en contestar quien contesta. Segundos, no decenas. */
+export const RESPUESTA_MINIMA = 2.5;
+export const RESPUESTA_MAXIMA = 5;
+/** Y el silencio largo cuando uno termina su vuelo y se va otro en su sitio. */
 export const ESPERA_ENTRE_VUELOS = 150;
+/**
+ * El hueco mínimo entre dos transmisiones **de cualquiera**.
+ *
+ * Sin esto, dos aviones con los relojes cerca sueltan sus frases en el mismo
+ * segundo y lo que se oye no es una frecuencia concurrida: es un atasco. En
+ * una radio de verdad se espera a que el otro suelte el pulsador.
+ */
+export const HUECO_DEL_CANAL = 4;
 
-export class Radio {
+/** Cuántas veces se vuelve a sortear una matrícula que ya está sonando. */
+const INTENTOS = 8;
+
+interface EnLaFrecuencia {
+  indicativo: Indicativo;
+  guion: Guion;
+  paso: number;
+  falta: number;
+  /** Si todavía no ha dicho nada: es quien puede dar los buenos días. */
+  estrena: boolean;
+}
+
+export class Frecuencia {
   private readonly azar: () => number;
-  private siguiente = 0;
-  private falta = ESPERA_PRIMERA;
+  private aviones: EnLaFrecuencia[] = [];
+  /** Lo que queda de silencio obligatorio en el canal. */
+  private canal = 0;
   /** Lo último que se oyó, para que la pantalla lo pueda enseñar. */
-  private dicho: Llamada | null = null;
+  private dicho: Transmision | null = null;
+  private aerodromo: string | null = null;
 
-  constructor(azar: () => number = Math.random) {
+  constructor(azar: () => number = Math.random, aerodromo?: string | null) {
     this.azar = azar;
+    this.reiniciar(aerodromo ?? null);
   }
 
-  /** Lo último que dijo el otro avión, o `null` si todavía no dijo nada. */
-  get ultima(): Llamada | null {
+  /** Lo último que se dijo en la frecuencia, o `null` si todavía nada. */
+  get ultima(): Transmision | null {
     return this.dicho;
+  }
+
+  /** Quiénes están hoy en la frecuencia. */
+  get quienes(): readonly Indicativo[] {
+    return this.aviones.map((a) => a.indicativo);
+  }
+
+  /** Y sus matrículas escritas, que es lo que mira el banco de pruebas. */
+  get matriculas(): readonly string[] {
+    return this.aviones.map((a) => a.indicativo.matricula);
+  }
+
+  /**
+   * Vuelve a empezar, con el prefijo de matrícula del aeródromo de hoy.
+   *
+   * Los indicativos se sortean por vuelo: en Tenerife los otros son EC- y en
+   * Asunción ZP-, porque un avión que anda por ahí es de ahí. El tuyo no se
+   * sortea nunca — ése lo lleva pintado. Ver `matriculaDe`.
+   */
+  reiniciar(aerodromo: string | null | undefined = this.aerodromo): void {
+    this.aerodromo = aerodromo ?? null;
+    this.canal = 0;
+    this.dicho = null;
+    /*
+     * Escalonados a propósito: si los dos arrancan con la misma espera, el
+     * primer minuto de cada vuelo suena igual que el anterior, que es
+     * exactamente la queja de la que sale todo esto.
+     */
+    this.aviones = [];
+    for (let i = 0; i < CUANTOS; i++) {
+      this.aviones.push({
+        ...this.nuevo(),
+        falta: ESPERA_PRIMERA + i * (ESPERA_MINIMA / 2 + this.azar() * 20),
+      });
+    }
   }
 
   /**
@@ -103,38 +254,89 @@ export class Radio {
    *
    * Cuando toca hablar pero el momento no es bueno **no se pierde el turno**:
    * se espera. Una frase que se salta deja el relato cojo, y el relato es lo
-   * único que hace que esto suene a otro avión y no a un altavoz.
+   * único que hace que esto suene a otros aviones y no a un altavoz.
    */
-  update(dt: number, m: Momento): Llamada | null {
-    this.falta -= dt;
-    if (this.falta > 0) return null;
+  update(dt: number, m: Momento): Transmision | null {
+    this.canal -= dt;
+    for (const a of this.aviones) a.falta -= dt;
+    if (this.canal > 0) return null;
     if (CALLADAS.has(m.fase) || m.instructorHablando) return null;
 
     /*
-     * Y «buenos días» solo de día. No se salta la llamada —eso dejaba al otro
-     * avión sin anunciar que salía durante toda la noche—: se dice la misma
-     * frase sin el saludo delante. Ver `CON_SALUDO`.
+     * Habla el que lleva más rato esperando, no el primero de la lista. Con lo
+     * segundo, el avión de arriba se come el canal siempre que los dos estén
+     * listos y el de abajo no llega a decir nunca la suya.
      */
-    const cual = LLAMADAS[this.siguiente]!;
-    const dice: Llamada =
-      cual === "otro.rodando" && m.deDia ? CON_SALUDO : cual;
-    this.avanzar();
+    let quien: EnLaFrecuencia | null = null;
+    for (const a of this.aviones) {
+      if (a.falta > 0) continue;
+      if (!quien || a.falta < quien.falta) quien = a;
+    }
+    if (!quien) return null;
+
+    const paso = GUIONES[quien.guion][quien.paso]!;
+    /*
+     * Y «buenos días» solo de día, y solo de quien abre la frecuencia. No se
+     * salta la llamada —eso dejaba al otro avión sin anunciar que salía
+     * durante toda la noche—: se dice la misma frase sin el saludo delante.
+     */
+    const clave =
+      paso.clave === SE_SALUDA_EN && m.deDia && quien.estrena
+        ? CON_SALUDO
+        : paso.clave;
+    const dice: Transmision = {
+      voz: paso.voz,
+      clave,
+      de: quien.indicativo,
+      respuesta: paso.seguido === true,
+    };
+    quien.estrena = false;
+    this.avanzar(quien);
+    this.canal = HUECO_DEL_CANAL;
     this.dicho = dice;
     return dice;
   }
 
-  private avanzar(): void {
-    const eraLaUltima = this.siguiente === LLAMADAS.length - 1;
-    this.siguiente = (this.siguiente + 1) % LLAMADAS.length;
-    this.falta = eraLaUltima
-      ? ESPERA_ENTRE_VUELOS
+  /** Pasa al siguiente paso, o empieza otro vuelo con otra matrícula. */
+  private avanzar(a: EnLaFrecuencia): void {
+    const guion = GUIONES[a.guion];
+    a.paso += 1;
+    if (a.paso >= guion.length) {
+      /*
+       * Se acabó su vuelo: se va y en su sitio aparece otro, con otra
+       * matrícula y otro asunto. Reciclar el mismo indicativo es lo que hacía
+       * que la frecuencia sonara a un bucle en vez de a un aeropuerto.
+       */
+      Object.assign(a, this.nuevo(), { falta: ESPERA_ENTRE_VUELOS });
+      return;
+    }
+    const siguiente = guion[a.paso]!;
+    a.falta = siguiente.seguido
+      ? RESPUESTA_MINIMA + this.azar() * (RESPUESTA_MAXIMA - RESPUESTA_MINIMA)
       : ESPERA_MINIMA + this.azar() * (ESPERA_MAXIMA - ESPERA_MINIMA);
   }
 
-  /** Vuelve al principio. Al reiniciar el vuelo, el otro avión también. */
-  reiniciar(): void {
-    this.siguiente = 0;
-    this.falta = ESPERA_PRIMERA;
-    this.dicho = null;
+  /**
+   * Un recién llegado a la frecuencia: matrícula nueva y asunto nuevo.
+   *
+   * Y **una matrícula que no esté ya sonando**. Dos aviones con el mismo
+   * indicativo en la misma frecuencia no es un detalle estético: es la única
+   * cosa que de verdad no puede pasar en una radio, porque una instrucción
+   * deja de saberse para quién es. Con tres letras libres el choque es raro,
+   * pero raro no es nunca y esto cuesta tres intentos.
+   */
+  private nuevo(): EnLaFrecuencia {
+    const puestas = new Set(this.aviones?.map((a) => a.indicativo.matricula));
+    let indicativo = sortearIndicativo(this.aerodromo, this.azar);
+    for (let i = 0; i < INTENTOS && puestas.has(indicativo.matricula); i++) {
+      indicativo = sortearIndicativo(this.aerodromo, this.azar);
+    }
+    return {
+      indicativo,
+      guion: CUALES[Math.floor(this.azar() * CUALES.length)] ?? "sale",
+      paso: 0,
+      falta: 0,
+      estrena: true,
+    };
   }
 }

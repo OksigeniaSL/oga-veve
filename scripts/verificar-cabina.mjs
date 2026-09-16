@@ -350,11 +350,21 @@ for (const id of [
    * entero repetido a cada lado.
    */
   /*
-   * Y en el de línea, **una más**: el EICAS del centro, que es de los dos y no
-   * de ninguno. Ahí es donde el reactor enseña sus motores y sus flaps, que es
-   * lo que los aviones de hélice llevan en relojes redondos.
+   * **Tres en el de línea, y las tres del comandante.**
+   *
+   * Llevaba un puesto completo por piloto más el EICAS en el eje, que es como
+   * está un avión de verdad. Desde el asiento eso se veía así: las del
+   * copiloto cortadas por el canto derecho de la pantalla y el grupo entero
+   * escorado, con cuatrocientos píxeles de negro a la izquierda. En un 747 el
+   * comandante ve exactamente eso y está bien, porque hay otro señor sentado
+   * ahí; **aquí no hay otro señor**, y la cámara vive siempre en el asiento de
+   * la izquierda. Así que el puesto del copiloto no era realismo: eran cuatro
+   * instrumentos cortados que se veían todos los vuelos.
+   *
+   * Ahora el reactor lleva las tres del comandante en fila y centradas en su
+   * cara: actitud, navegación y motores. Ver `_cabina_de_reactor`.
    */
-  const cuantasTocan = visto.deLinea ? 2 * visto.plazas + 1 : 2;
+  const cuantasTocan = visto.deLinea ? 3 : 2;
   comprobar(
     etiqueta("están todas las pantallas y encendidas"),
     visto.pantallas?.length === cuantasTocan,

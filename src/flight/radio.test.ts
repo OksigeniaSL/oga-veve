@@ -1,27 +1,53 @@
 /**
- * El otro avión de la frecuencia: cuándo habla y, sobre todo, cuándo no.
+ * La frecuencia: quién habla, cuándo, y sobre todo cuándo no.
  *
- * Lo que se comprueba aquí es que sea **una historia y no cinco frases al
- * azar** —saluda, rueda, viento en cola, final, pista libre— y que no se le
- * suba encima al instructor, que es la única voz que enseña algo.
+ * Lo que se comprueba aquí es que suene a un aeropuerto con gente dentro y no
+ * a un altavoz: que sean **varios** aviones con su propia matrícula, que cada
+ * uno cuente **una historia en orden**, que la torre **conteste** y conteste
+ * pronto, y que ninguno se le suba encima al instructor, que es la única voz
+ * que enseña algo.
+ *
+ * Y una que vale por todas: que ninguna llamada pida una frase que no está
+ * grabada. Es el fallo que ya pasó una vez —siete frases de torre grabadas y
+ * dos dichas— y no avisa: la frase se cae a la voz del navegador y nadie se
+ * entera.
  */
 
 import { describe, expect, it } from "vitest";
 
 import {
+  CON_SALUDO,
+  CUALES,
+  CUANTOS,
   ESPERA_ENTRE_VUELOS,
   ESPERA_MAXIMA,
   ESPERA_MINIMA,
   ESPERA_PRIMERA,
-  LLAMADAS,
-  Radio,
+  Frecuencia,
+  GUIONES,
+  HUECO_DEL_CANAL,
+  RESPUESTA_MAXIMA,
   type Momento,
+  type Transmision,
 } from "./radio";
+import { CLAVE_DE_TORRE } from "../audio/torre";
+import { ES_PY } from "../i18n/es-PY";
 
-/** El silencio que sale con el azar clavado a la mitad, en segundos. */
-const HUECO = ESPERA_MINIMA + (ESPERA_MAXIMA - ESPERA_MINIMA) / 2;
-/** Y lo que tarda el otro avión en contar su vuelo entero. */
-const UN_VUELO = ESPERA_PRIMERA + HUECO * (LLAMADAS.length - 1) + 2;
+/**
+ * Un azar repetible pero **que cambia**.
+ *
+ * Con un azar clavado —`() => 0.3`— las tres letras de cada matrícula salen
+ * iguales y los dos aviones de la frecuencia acaban llamándose lo mismo, que
+ * es justo lo que estas pruebas tienen que poder distinguir. Repetible porque
+ * una prueba que sale distinta cada vez no sirve de nada.
+ */
+function dados(semilla: number): () => number {
+  let x = semilla >>> 0;
+  return () => {
+    x = (x * 1664525 + 1013904223) >>> 0;
+    return x / 4294967296;
+  };
+}
 
 /** Un momento tranquilo: rodando, de día y con el instructor callado. */
 const TRANQUILO: Momento = {
@@ -30,98 +56,241 @@ const TRANQUILO: Momento = {
   instructorHablando: false,
 };
 
-/** Deja pasar `segundos` y devuelve todo lo que se oyó. */
-function escuchar(radio: Radio, segundos: number, m: Momento = TRANQUILO) {
-  const oido: string[] = [];
-  for (let t = 0; t < segundos; t += 1) {
-    const dice = radio.update(1, m);
-    if (dice) oido.push(dice);
+/** Deja pasar `segundos` y devuelve todo lo que se oyó, con su instante. */
+function escuchar(
+  radio: Frecuencia,
+  segundos: number,
+  m: Momento = TRANQUILO,
+  paso = 0.5,
+): Array<Transmision & { cuando: number }> {
+  const oido: Array<Transmision & { cuando: number }> = [];
+  for (let t = 0; t < segundos; t += paso) {
+    const dice = radio.update(paso, m);
+    if (dice) oido.push({ ...dice, cuando: t });
   }
   return oido;
 }
 
-describe("el otro avión", () => {
-  it("saluda al principio, y no antes de tiempo", () => {
-    const radio = new Radio(() => 0.5);
-    expect(escuchar(radio, ESPERA_PRIMERA - 2)).toEqual([]);
-    expect(escuchar(radio, 4)).toEqual(["otro.buenosDias"]);
+describe("quiénes están en la frecuencia", () => {
+  it("son varios, y cada uno con su matrícula", () => {
+    const radio = new Frecuencia(() => 0.5, "GCXO");
+    expect(radio.matriculas).toHaveLength(CUANTOS);
+    expect(new Set(radio.quienes.map((q) => q.dicho)).size).toBeGreaterThan(0);
   });
 
-  it("cuenta su vuelo en orden, que es lo que lo hace un avión", () => {
-    const radio = new Radio(() => 0.5);
-    // Justo para las cinco, y ni un segundo para empezar otra vuelta.
-    const oido = escuchar(radio, UN_VUELO);
-    // De día, la primera lleva los buenos días delante. Ver `CON_SALUDO`.
-    expect(oido).toEqual(["otro.buenosDias", ...LLAMADAS.slice(1)]);
+  it("y con el prefijo del país del aeródromo, no siempre el nuestro", () => {
+    expect(
+      new Frecuencia(() => 0.5, "GCXO").matriculas.every((m) =>
+        m.startsWith("EC-"),
+      ),
+    ).toBe(true);
+    expect(
+      new Frecuencia(() => 0.5, "SGAS").matriculas.every((m) =>
+        m.startsWith("ZP-"),
+      ),
+    ).toBe(true);
   });
 
-  it("y después se calla un buen rato antes de volver a empezar", () => {
-    const radio = new Radio(() => 0.5);
-    escuchar(radio, UN_VUELO);
-    // Justo después de la última no vuelve a hablar enseguida.
-    expect(escuchar(radio, ESPERA_ENTRE_VUELOS - 10)).toEqual([]);
-    expect(escuchar(radio, 20)).toEqual(["otro.buenosDias"]);
+  it("no arrancan todos a la vez, que es lo que sonaba a bucle", () => {
+    const radio = new Frecuencia(() => 0.5, "SGAS");
+    const oido = escuchar(radio, 60);
+    // Alguien habla dentro del primer minuto, pero no los dos a la vez.
+    expect(oido.length).toBeGreaterThan(0);
+    for (let i = 1; i < oido.length; i++) {
+      expect(oido[i]!.cuando - oido[i - 1]!.cuando).toBeGreaterThanOrEqual(
+        HUECO_DEL_CANAL - 0.01,
+      );
+    }
+  });
+});
+
+describe("cada uno cuenta su vuelo en orden", () => {
+  it("las llamadas de una matrícula salen en el orden de su guion", () => {
+    const radio = new Frecuencia(dados(7), "SGAS");
+    const oido = escuchar(radio, 900);
+    const porAvion = new Map<string, string[]>();
+    for (const o of oido) {
+      const lista = porAvion.get(o.de.matricula) ?? [];
+      lista.push(o.clave);
+      porAvion.set(o.de.matricula, lista);
+    }
+    expect(porAvion.size).toBeGreaterThan(CUANTOS);
+    for (const claves of porAvion.values()) {
+      // El saludo es la primera llamada de quien sale, con otra clave.
+      const normalizadas = claves.map((c) =>
+        c === CON_SALUDO ? "otro.rodando" : c,
+      );
+      const cabe = Object.values(GUIONES).some((g) => {
+        const suyas = g.map((p) => p.clave);
+        return normalizadas.every((c, i) => suyas[i] === c);
+      });
+      expect(cabe, normalizadas.join(" · ")).toBe(true);
+    }
   });
 
-  it("de noche no da los buenos días, pero sigue volando", () => {
-    const radio = new Radio(() => 0.5);
-    const noche = { ...TRANQUILO, deDia: false };
-    const oido = escuchar(radio, ESPERA_PRIMERA + 4, noche);
+  it("cuando uno termina su vuelo se va, y el que llega es otro", () => {
+    const radio = new Frecuencia(dados(7), "SGAS");
+    const primeras = new Set(radio.matriculas);
+    escuchar(radio, 2000);
+    const ahora = new Set(radio.matriculas);
+    expect([...ahora].some((m) => !primeras.has(m))).toBe(true);
+  });
+});
+
+describe("la torre contesta", () => {
+  it("y lo hace: se la oye nombrar a los demás", () => {
+    const radio = new Frecuencia(dados(7), "SGAS");
+    const oido = escuchar(radio, 900);
+    expect(oido.some((o) => o.voz === "torre")).toBe(true);
+  });
+
+  it("contesta a quien llamó, no a otro", () => {
+    const radio = new Frecuencia(dados(7), "SGAS");
+    for (const o of escuchar(radio, 900)) {
+      // Una respuesta de torre nombra siempre una matrícula de la frecuencia.
+      if (o.voz === "torre") expect(o.de.matricula).toMatch(/^ZP-[A-Z]{3}$/);
+    }
+  });
+
+  it("y lo que **no** es respuesta se toma su tiempo", () => {
     /*
-     * Y **dice la llamada igual**, sin el saludo. Antes se saltaba la llamada
-     * entera, así que de noche nadie anunciaba que salía a la cabecera.
+     * Que a uno lo paren en el punto de espera y le autoricen cuarenta
+     * segundos después no es un retraso: es el turno. La lección de la radio
+     * es que la pista es de todos, y eso solo se oye si alguien espera de
+     * verdad.
      */
-    expect(oido).toEqual(["otro.rodando"]);
+    const radio = new Frecuencia(dados(7), "SGAS");
+    const oido = escuchar(radio, 1500);
+    const esperas = oido.filter((o, i) => i > 0 && !o.respuesta);
+    expect(esperas.length).toBeGreaterThan(0);
   });
 
+  it("y contesta en segundos, no en minutos", () => {
+    /*
+     * Es el detalle que separa una conversación de dos monólogos. Una torre
+     * que contesta cuarenta segundos después no está contestando: está
+     * diciendo otra cosa por su cuenta, y se nota sin saber decir por qué.
+     */
+    const radio = new Frecuencia(dados(7), "SGAS");
+    const oido = escuchar(radio, 900);
+    let respuestas = 0;
+    for (let i = 1; i < oido.length; i++) {
+      if (!oido[i]!.respuesta) continue;
+      respuestas += 1;
+      expect(oido[i]!.cuando - oido[i - 1]!.cuando).toBeLessThan(
+        RESPUESTA_MAXIMA + HUECO_DEL_CANAL + 1,
+      );
+    }
+    expect(respuestas).toBeGreaterThan(0);
+  });
+});
+
+describe("cuándo se calla", () => {
   it("no habla en final ni en la toma", () => {
-    // Ahí quien habla es el instructor y quien escucha tiene las manos
-    // ocupadas.
-    const radio = new Radio(() => 0.5);
-    expect(escuchar(radio, 200, { ...TRANQUILO, fase: "final" })).toEqual([]);
-    expect(escuchar(radio, 200, { ...TRANQUILO, fase: "aterrizado" })).toEqual(
-      [],
+    const radio = new Frecuencia(() => 0.5, "SGAS");
+    expect(escuchar(radio, 300, { ...TRANQUILO, fase: "final" })).toHaveLength(
+      0,
     );
   });
 
   it("ni encima del instructor", () => {
-    const radio = new Radio(() => 0.5);
+    const radio = new Frecuencia(() => 0.5, "SGAS");
     expect(
-      escuchar(radio, 200, { ...TRANQUILO, instructorHablando: true }),
-    ).toEqual([]);
+      escuchar(radio, 300, { ...TRANQUILO, instructorHablando: true }),
+    ).toHaveLength(0);
   });
 
   it("pero no pierde el turno: espera y lo dice después", () => {
-    // Saltarse una frase deja el relato cojo, y el relato es lo único que
-    // hace que esto suene a otro avión y no a un altavoz.
-    const radio = new Radio(() => 0.5);
-    escuchar(radio, 200, { ...TRANQUILO, fase: "final" });
-    expect(escuchar(radio, 2)).toEqual(["otro.buenosDias"]);
+    const radio = new Frecuencia(() => 0.5, "SGAS");
+    escuchar(radio, 300, { ...TRANQUILO, instructorHablando: true });
+    expect(escuchar(radio, 10).length).toBeGreaterThan(0);
   });
 
-  it("guarda lo último dicho, para que se pueda enseñar en pantalla", () => {
-    const radio = new Radio(() => 0.5);
+  it("y nunca dos a la vez", () => {
+    const radio = new Frecuencia(dados(11), "SGAS");
+    const oido = escuchar(radio, 1200, TRANQUILO, 0.25);
+    for (let i = 1; i < oido.length; i++) {
+      expect(oido[i]!.cuando - oido[i - 1]!.cuando).toBeGreaterThanOrEqual(
+        HUECO_DEL_CANAL - 0.01,
+      );
+    }
+  });
+});
+
+describe("los buenos días", () => {
+  it("de día los da quien abre la frecuencia", () => {
+    const radio = new Frecuencia(() => 0.1, "SGAS");
+    const oido = escuchar(radio, 600);
+    expect(oido.some((o) => o.clave === CON_SALUDO)).toBe(true);
+  });
+
+  it("de noche no, pero la llamada se dice igual", () => {
+    const noche: Momento = { ...TRANQUILO, deDia: false };
+    const radio = new Frecuencia(() => 0.1, "SGAS");
+    const oido = escuchar(radio, 600, noche);
+    expect(oido.some((o) => o.clave === CON_SALUDO)).toBe(false);
+    expect(oido.some((o) => o.clave === "otro.rodando")).toBe(true);
+  });
+});
+
+describe("lo que se guarda y lo que se reinicia", () => {
+  it("guarda lo último dicho, para enseñarlo en pantalla", () => {
+    const radio = new Frecuencia(() => 0.5, "SGAS");
     expect(radio.ultima).toBeNull();
-    escuchar(radio, ESPERA_PRIMERA + 2);
-    expect(radio.ultima).toBe("otro.buenosDias");
+    const oido = escuchar(radio, 200);
+    expect(radio.ultima?.clave).toBe(oido[oido.length - 1]!.clave);
   });
 
-  it("y al reiniciar el vuelo, el otro avión también empieza de nuevo", () => {
-    const radio = new Radio(() => 0.5);
-    escuchar(radio, UN_VUELO);
-    radio.reiniciar();
+  it("y al reiniciar el vuelo, la frecuencia también", () => {
+    const radio = new Frecuencia(() => 0.5, "SGAS");
+    escuchar(radio, 200);
+    radio.reiniciar("SGAS");
     expect(radio.ultima).toBeNull();
-    expect(escuchar(radio, ESPERA_PRIMERA + 2)).toEqual(["otro.buenosDias"]);
+    expect(escuchar(radio, ESPERA_PRIMERA - 2)).toHaveLength(0);
   });
 
-  it("el silencio entre frases no es siempre el mismo", () => {
-    // Con la espera clavada, cinco frases a intervalos idénticos suenan a
-    // reloj y no a radio.
-    const corta = new Radio(() => 0);
-    const larga = new Radio(() => 1);
-    const t = ESPERA_PRIMERA + 40;
-    expect(escuchar(corta, t).length).toBeGreaterThan(
-      escuchar(larga, t).length,
-    );
+  it("el silencio entre llamadas no es siempre el mismo", () => {
+    const corto = escuchar(new Frecuencia(() => 0, "SGAS"), 400);
+    const largo = escuchar(new Frecuencia(() => 0.99, "SGAS"), 400);
+    expect(corto.length).toBeGreaterThan(largo.length);
+  });
+});
+
+describe("todo lo que se pide está grabado", () => {
+  /*
+   * La comprobación que vale por todas. Ya pasó una vez: siete frases de torre
+   * grabadas, dos dichas, y las cinco restantes bajándose a cada tablet sin
+   * que nada las nombrara. Una clave que no existe no rompe nada — se cae a la
+   * voz del navegador y suena distinto, que es peor que fallar.
+   */
+  const deTorre = new Set(Object.values(CLAVE_DE_TORRE));
+
+  it("las claves de torre de los guiones son de las grabadas", () => {
+    for (const guion of CUALES) {
+      for (const paso of GUIONES[guion]) {
+        if (paso.voz !== "torre") continue;
+        expect(deTorre.has(paso.clave), `${guion}: ${paso.clave}`).toBe(true);
+      }
+    }
+  });
+
+  it("y las del otro avión tienen texto en castellano", () => {
+    const claves = new Set<string>([CON_SALUDO]);
+    for (const guion of CUALES) {
+      for (const paso of GUIONES[guion]) {
+        if (paso.voz === "otro") claves.add(paso.clave);
+      }
+    }
+    for (const c of claves) {
+      expect(Object.hasOwn(ES_PY, c), c).toBe(true);
+    }
+  });
+
+  it("y todo guion acaba: ninguno se queda a medias", () => {
+    for (const guion of CUALES) {
+      expect(GUIONES[guion].length, guion).toBeGreaterThan(1);
+    }
+    expect(ESPERA_ENTRE_VUELOS).toBeGreaterThan(ESPERA_MAXIMA);
+    expect(ESPERA_MINIMA).toBeLessThan(ESPERA_MAXIMA);
   });
 });

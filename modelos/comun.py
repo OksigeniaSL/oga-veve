@@ -716,62 +716,64 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # Aquí sólo va el cristal. Lo que se dibuja encima está en `pintarMotores`,
     # en `world/pantallas-cabina.ts`, y los flaps van dentro — que es donde se
     # miran: con el empuje, en la misma ojeada de la aproximación.
-    ancho_eicas = min(0.30, ancho * 0.42)
-    libre = ancho_eicas / 2 + 0.03
-    piezas.append(
-        cuadro(
-            "pantalla-motores", ancho_eicas, 0.24,
-            (0, alto_panel - 0.17, panel_z + 0.006),
-            "g1000_display" if pantallas else "cristal",
+    # **Un solo juego de pantallas, y delante del comandante.**
+    #
+    # Aquí había dos puestos completos —dos pantallas por piloto— más el EICAS
+    # en el eje del fuselaje, y desde el asiento eso se veía así: las del
+    # copiloto cortadas por el canto derecho de la pantalla —medido,
+    # `pantalla-1-1` de 1419 a 1681 en un cuadro de 1280— y el grupo entero
+    # escorado, con 417 píxeles de negro a la izquierda. Con una brújula del
+    # copiloto asomando a medias por el borde, que es lo que se ve en una
+    # captura y lo que hizo decir «tú me estás vacilando».
+    #
+    # En un 747 de verdad eso es exactamente lo que ve el comandante, y está
+    # bien: él tiene su puesto y el otro el suyo. Pero **aquí solo hay un
+    # piloto y la cámara vive siempre en su asiento**, así que el puesto del
+    # copiloto no es realismo: es media pantalla de instrumentos cortados que
+    # se ven todos los vuelos y no sirven para nada.
+    #
+    # Así que el avión de línea lleva lo que lleva su comandante, en fila y
+    # centrado en su cara: **actitud, navegación y motores**. Es el orden de
+    # barrido real —de dentro hacia fuera— y es el mismo que el cuadro del HUD,
+    # que es media lección del juego: lo que se aprende en una avioneta se lee
+    # en un Boeing.
+    #
+    # *Desviación consciente:* en el avión de verdad el EICAS va entre los dos
+    # asientos porque lo miran los dos. Aquí no hay dos.
+    # **El tamaño sale de lo que cabe centrado en su cara, no al revés.**
+    #
+    # Es la regla de anclaje del cuadro del HUD, dicha entera: si el grupo no
+    # cabe **se encoge lo de dentro; jamás se empuja el grupo a un lado**. Se
+    # probó al revés —pantallas de treinta centímetros y luego arrimarlas al
+    # borde del panel— y el resultado fue el de siempre: el comandante se
+    # encontraba su grupo entero medio metro a la derecha de su cara. Medido
+    # desde el asiento: 391 píxeles de sobra por la izquierda y 64 por la
+    # derecha.
+    #
+    # Lo que cabe simétrico alrededor del asiento es lo que va del asiento al
+    # costado más cercano, dos veces. En el de fuselaje ancho salen pantallas
+    # de veintiún centímetros, que es más o menos lo que mide una de verdad en
+    # un 747: las suyas son de veinte.
+    hueco_p = 0.014
+    cabe = 2 * (ancho - abs(plazas[0])) - 0.04
+    ancho_p = max(0.14, min(0.30, (cabe - hueco_p * 2) / 3))
+    grupo = ancho_p * 3 + hueco_p * 2
+    borde = plazas[0] - grupo / 2
+    alto_p = ancho_p * 0.86
+    y_p = alto_panel - 0.035 - alto_p / 2
+    for k, nombre in enumerate(("horizonte", "rumbo", "motores")):
+        piezas.append(
+            cuadro(
+                f"pantalla-{nombre}", ancho_p, alto_p,
+                (borde + ancho_p / 2 + k * (ancho_p + hueco_p),
+                 y_p, panel_z + 0.006),
+                "g1000_display" if pantallas else "cristal",
+            )
         )
-    )
+    ancho_eicas = ancho_p
     _ = mide
     _ = relojes
-
-    # 2. Un puesto por piloto, con sus dos pantallas.
-    #
-    # Las encendidas son las del comandante —son las que el juego dibuja de
-    # verdad, ver `pantallas-cabina.ts`— y el copiloto lleva las suyas apagadas,
-    # que es lo que se ve desde la izquierda: un panel simétrico. La interior de
-    # cada uno arranca donde acaba la columna de motores, y la exterior a su
-    # lado; así el panel se llena de fuera adentro sin que nada se pise.
-    # **Y las dos pantallas de cada piloto, centradas en su asiento.**
-    #
-    # Iban hacia afuera desde el centro del avión —la primera pegada a la
-    # columna de motores y la segunda más allá—, así que desde el asiento del
-    # comandante no había nada delante: su par quedaba a la izquierda, el EICAS
-    # a la derecha y las del copiloto cortadas por el borde. «Esto no está
-    # centrado ni aunque venga Cristo y me lo diga.»
-    #
-    # En un avión de verdad cada piloto tiene **su** horizonte y **su** rosa
-    # justo delante de la cara, no repartidos a los lados: el puesto es del
-    # piloto y por eso se llama puesto. Es exactamente lo que ya hacía la
-    # cabina de avioneta —ver `plazas[0] ± separa` más abajo— y lo que aquí
-    # faltaba.
-    #
-    # El EICAS queda entonces entre los dos puestos, que es su sitio: la
-    # pantalla que miran los dos.
-    ancho_p = 0.24
-    separa_p = ancho_p / 2 + 0.01
-    for i, x in enumerate(plazas):
-        signo = -1 if x < 0 else 1
-        # Sin invadir el cristal del EICAS: si el puesto queda muy adentro, se
-        # aparta lo justo. Con una cabina estrecha eso pasa, y más vale un
-        # puesto descentrado que dos pantallas superpuestas.
-        centro_p = signo * max(abs(x), libre + ancho_p + 0.02)
-        for k, sitio in enumerate((centro_p - separa_p, centro_p + separa_p)):
-            # **Las cuatro encendidas.** Las del copiloto iban apagadas —cristal
-            # oscuro— para que el panel se viera simétrico, y lo que se veía eran
-            # dos cuadros negros: «hay cuadros vacíos». Una pantalla apagada en
-            # un avión que vuela dice que algo no funciona, y aquí no lo está.
-            # Cada piloto tiene las suyas, como en el avión de verdad.
-            piezas.append(
-                cuadro(
-                    f"pantalla-{i}-{k}", ancho_p, 0.22,
-                    (sitio, alto_panel - 0.16, panel_z + 0.006),
-                    "g1000_display" if pantallas else "cristal",
-                )
-            )
+    _ = pantallas_en
 
     # Y los tres mandos que se pulsan, en fila bajo la columna de motores: el
     # contacto, los flaps y el freno. Ver `boton`.
@@ -784,12 +786,14 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # mandos que comparten.
     # El tamaño sale del cristal del EICAS y no de un radio de reloj, que ya no
     # hay relojes: un botón es un dedo, y un dedo mide lo que mide.
+    # Y **bajo las pantallas del comandante**, no en el eje del avión: es su
+    # mano la que los pulsa, y el eje del avión no es donde se sienta nadie.
     lado_boton = ancho_eicas * 0.22
     for i, que in enumerate(("motor", "flaps", "freno")):
         piezas += boton(
             que, lado_boton * 0.95, lado_boton * 0.75,
-            (-lado_boton * 1.15 + i * lado_boton * 1.15,
-             alto_panel - 0.34, panel_z + 0.008),
+            (plazas[0] - lado_boton * 1.15 + i * lado_boton * 1.15,
+             y_p - alto_p / 2 - lado_boton, panel_z + 0.008),
         )
 
     # 4. El pedestal, entre los dos asientos, con las palancas de gas.
@@ -948,39 +952,53 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
                  alto_panel + 0.04, panel_z - 0.18, panel_z + 0.08)
         )
     if pantallas and not grande:
-        # Separadas, que es como está un G1000: horizonte a la izquierda,
-        # rumbos a la derecha. Un palmo por debajo del borde de arriba del
-        # panel, que es donde caen los ojos de quien va sentado.
+        # **El grupo entero centrado en el ojo del piloto.**
         #
-        # **Y centradas en el asiento del piloto, no en el eje del avión.** La
-        # cámara de cabina se sienta donde se sienta él —ver `ojoDePiloto`— así
-        # que un tablero centrado en el fuselaje se ve entero **a la derecha**,
-        # con medio panel vacío a la izquierda: «todos descentrados y fuera de
-        # margen». En un avión de verdad pasa lo mismo y por eso el panel de
-        # vuelo está delante del comandante y no en medio.
+        # Las pantallas ya se centraban en su asiento, pero la columna de
+        # relojes se colgaba **a la derecha de ellas**, así que el conjunto de
+        # lo que se lee quedaba escorado: medido desde el asiento con la sonda
+        # `enPantalla`, sobraban 376 píxeles por la izquierda y 235 por la
+        # derecha en un cuadro de 1280. Eso es lo que se ve en una captura y lo
+        # que se dijo mirándola.
         #
-        # **Y juntas, aunque el panel sea ancho.**
+        # Es la misma regla que el cuadro del HUD: **se centra el grupo, no una
+        # de sus piezas**. Y si algo no cupiera se encoge lo de dentro; jamás se
+        # empuja el grupo a un lado. Ver `ui/familia.ts`.
         #
-        # La separación la daba cada avión, y en los paneles anchos se iba de
-        # las manos: el bimotor las ponía a treinta y seis centímetros del eje
-        # del asiento, o sea cuarenta y cuatro de hueco entre ellas. Lo que se
-        # ve entonces son **dos islas con medio metro de plancha negra en
-        # medio**, que es exactamente la pinta de cabina sin terminar que se
-        # quería quitar. Las dos pantallas de un piloto van una al lado de la
-        # otra porque se leen a la vez; lo que crece con el panel es lo que hay
-        # **alrededor**, no el hueco entre ellas.
-        separa = min(pantallas_en, 0.16)
-        for lado in (-1, 1):
+        # **Y las dos pantallas pegadas, sin solaparse.** La separación era un
+        # desplazamiento desde el centro —`min(pantallas_en, 0.16)`— y con un
+        # panel estrecho eso las metía una dentro de otra: 0,28 de ancho cada
+        # una a 0,31 de distancia entre centros. Se veía como una sola pantalla
+        # ancha partida por una raya. Ahora se colocan por su borde, que es lo
+        # que no se puede equivocar.
+        ancho_p = 0.28
+        alto_p = 0.24
+        hueco_p = 0.012
+        par = ancho_p * 2 + hueco_p
+        # Lo que ocupa la columna de relojes, si la hay, con su hueco.
+        radio_reloj = min(0.07, 0.175 / max(2, max(1, palancas) + 1))
+        columna = 0.0 if grande else radio_reloj * 2 + 0.03
+        grupo = par + columna
+        borde = plazas[0] - grupo / 2
+        # **Arrimadas a la visera, no en mitad del tablero.**
+        #
+        # Estaban dieciocho centímetros por debajo del borde de arriba, o sea
+        # en el centro de la plancha, y lo que se veía desde el asiento era un
+        # tablero enorme con dos cuadraditos en medio. En cualquier cabina del
+        # mundo los instrumentos de vuelo empiezan justo debajo de la visera,
+        # porque es donde cae la vista al bajarla del horizonte: lo que se mira
+        # todo el rato va lo más cerca posible de lo que se mira todo el rato.
+        y_p = alto_panel - 0.04 - alto_p / 2
+        for k, nombre in enumerate(("horizonte", "rumbo")):
             piezas.append(
                 cuadro(
-                    "pantalla-izquierda" if lado < 0 else "pantalla-derecha",
-                    0.28,
-                    0.20,
-                    (plazas[0] + lado * separa,
-                     alto_panel - 0.18, panel_z + 0.005),
+                    f"pantalla-{nombre}", ancho_p, alto_p,
+                    (borde + ancho_p / 2 + k * (ancho_p + hueco_p),
+                     y_p, panel_z + 0.005),
                     "g1000_display",
                 )
             )
+
     # Los relojes del panel: discos finos pegados al tablero, en fila.
     #
     # No son instrumentos que funcionen —lo que se lee de verdad está en el HUD,
@@ -1024,9 +1042,19 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         radioReloj = min(0.07, 0.175 / max(2, cuantos))
         cols = 1
         paso_r = radioReloj * 2.4
-        izq = plazas[0] + min(pantallas_en, 0.16) + 0.14 + radioReloj + 0.02
+        # **Donde acaba el par de pantallas**, que es lo que fija el grupo.
+        #
+        # Salía de una cuenta suya —el centro del asiento más un puñado de
+        # sumandos— y por eso el conjunto quedaba escorado a la derecha. Ahora
+        # el reparto lo decide un sitio solo, arriba, y esto se limita a
+        # ponerse detrás.
+        ancho_p_r = 0.28
+        par_r = ancho_p_r * 2 + 0.012
+        grupo_r = par_r + radioReloj * 2 + 0.03
+        izq = plazas[0] - grupo_r / 2 + par_r + 0.03 + radioReloj
         columna = izq + (cols - 1) * paso_r / 2
-        arriba = alto_panel - 0.13
+        # A la altura de las pantallas, que ahora están arriba del todo.
+        arriba = alto_panel - 0.04 - radioReloj
         filas_r = (cuantos + cols - 1) // cols
         for m in range(cuantos):
             x = izq + (m % cols) * paso_r

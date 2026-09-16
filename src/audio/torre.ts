@@ -85,3 +85,19 @@ export function claveDeTorre(dice: string): string | null {
   }
   return null;
 }
+
+/**
+ * Y al revés: de la clave grabada a lo que se dice.
+ *
+ * Hace falta desde que la torre habla **con los demás aviones de la
+ * frecuencia** y no solo con vos: allí la orden nace ya como clave —la elige
+ * el guion de la radio— y lo que falta es el texto, que es lo que dice la voz
+ * del navegador cuando no hay pack y lo que se lee en la tira de la pantalla.
+ *
+ * Se deriva de la tabla de arriba en vez de escribirse a mano, que es la
+ * diferencia entre una tabla y dos tablas que un día dejan de coincidir.
+ */
+export const DICE_LA_TORRE: Readonly<Record<string, string>> =
+  Object.fromEntries(
+    Object.entries(CLAVE_DE_TORRE).map(([dice, clave]) => [clave, dice]),
+  );
