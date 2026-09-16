@@ -799,13 +799,17 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # 4. El pedestal, entre los dos asientos, con las palancas de gas.
     if motores:
         alto_pedestal = y_suelo + 0.26
+        # **Entre los dos asientos**, que ya no es el eje del avión: con el
+        # comandante puesto en el eje, el pedestal centrado ahí le quedaba
+        # entre las piernas. Va donde va: en el hueco que dejan los dos.
+        entre = (plazas[0] + plazas[-1]) / 2
         piezas.append(
-            caja("pedestal", -0.14, 0.14, y_suelo + 0.02, alto_pedestal,
-                 panel_z + 0.02, ojos_z + 0.10)
+            caja("pedestal", entre - 0.14, entre + 0.14, y_suelo + 0.02,
+                 alto_pedestal, panel_z + 0.02, ojos_z + 0.10)
         )
         hueco = min(0.06, 0.22 / max(1, motores))
         for i in range(motores):
-            x = -hueco * (motores - 1) / 2 + hueco * i
+            x = entre - hueco * (motores - 1) / 2 + hueco * i
             piezas.append(
                 cilindro(
                     f"palanca-de-gas-{i}", 0.016, 0.20,
@@ -817,7 +821,8 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
             piezas.append(
                 cilindro(
                     f"palanca-{'flaps' if j == 0 else 'frenos'}", 0.014, 0.16,
-                    (0.06 if j else -0.06, alto_pedestal + 0.07, panel_z + dz),
+                    (entre + (0.06 if j else -0.06),
+                     alto_pedestal + 0.07, panel_z + dz),
                     "tablero",
                 )
             )
@@ -911,6 +916,30 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     piezas = []
     panel_z = ojos_z - 0.58
     grande = clase == "reactor"
+    #
+    # ── **El piloto vuela en el eje del avión** ──
+    #
+    # Y es lo último que quedaba del «esto no está centrado». Los instrumentos
+    # ya se centraban en su asiento, pero **el mueble no**: el panel, la visera,
+    # los montantes del parabrisas, el panel de techo y el suelo se construyen
+    # simétricos respecto al eje del fuselaje, y el piloto se sentaba treinta
+    # centímetros a la izquierda de él. Desde ahí la cabina entera se ve
+    # torcida: un montante cerca y el otro lejos, media plancha a un lado.
+    # Dicho mirando las capturas: «descentradas las cabinas, no el cuadro de
+    # mando».
+    #
+    # En un avión de verdad eso es así y está bien, porque a la derecha hay otro
+    # señor sentado. **Aquí no lo hay**: hay un piloto y la cámara vive siempre
+    # en su asiento. Así que las plazas se corren para que la primera —la suya—
+    # caiga en el eje, y la segunda queda a su lado. Nada de esto se ve desde
+    # fuera: el cristal es oscuro.
+    #
+    # Se hace aquí y no en los seis modelos para que la regla sea una sola, y
+    # para que cada avión pueda seguir diciendo lo suyo —«hay dos plazas y están
+    # a sesenta y ocho centímetros»—, que es lo que de verdad describe su cabina.
+    if plazas:
+        corrimiento = plazas[0]
+        plazas = tuple(x - corrimiento for x in plazas)
     #
     # **La visera cae un palmo por debajo de los ojos. En todos.**
     #
