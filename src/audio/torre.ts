@@ -51,6 +51,25 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Cuáles de esas órdenes **nombran la pista**, y por tanto llevan su lado.
+ *
+ * «Cleared for take-off» se dice con la pista delante —«runway zero three
+ * left, cleared for take-off»— porque en un aeropuerto con dos paralelas decir
+ * «zero three» a secas es no decir cuál. «Hold short» y «go around» no la
+ * nombran: paras donde estás, o te vas al aire.
+ *
+ * Hace falta escrito porque el lado se le pegaba **a todas**, y una clave con
+ * lado que no tiene receta no se monta: la frase se caía a la voz del
+ * navegador sin que nadie se enterara. Medido en Gran Canaria:
+ * `torre.holdShort.L`, que no existe.
+ */
+export const NOMBRA_LA_PISTA: ReadonlySet<string> = new Set([
+  "torre.clearedTakeoff",
+  "torre.clearedLand",
+  "torre.lineUpWait",
+]);
+
+/**
  * La clave de una frase de torre, o `null` si esa frase no está grabada.
  *
  * Se compara en minúsculas y sin puntuación final, que es como se pide desde

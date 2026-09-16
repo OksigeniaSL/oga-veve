@@ -857,35 +857,35 @@
     "id": "otro.buenosDias",
     "voz": "otro",
     "idioma": "es-PY",
-    "texto": "Buenos días, Zulu Papa Alfa Bravo Charlie",
+    "texto": "Buenos días, {indicativo}",
     "para": "el otro avión de la frecuencia"
   },
   {
     "id": "otro.rodando",
     "voz": "otro",
     "idioma": "es-PY",
-    "texto": "Zulu Papa Alfa Bravo Charlie, rodando a la cabecera",
+    "texto": "{indicativo}, rodando a la cabecera",
     "para": "el otro avión de la frecuencia"
   },
   {
     "id": "otro.enCola",
     "voz": "otro",
     "idioma": "es-PY",
-    "texto": "Zulu Papa Alfa Bravo Charlie, viento en cola",
+    "texto": "{indicativo}, viento en cola",
     "para": "el otro avión de la frecuencia"
   },
   {
     "id": "otro.final",
     "voz": "otro",
     "idioma": "es-PY",
-    "texto": "Zulu Papa Alfa Bravo Charlie, en final",
+    "texto": "{indicativo}, en final",
     "para": "el otro avión de la frecuencia"
   },
   {
     "id": "otro.pistaLibre",
     "voz": "otro",
     "idioma": "es-PY",
-    "texto": "Zulu Papa Alfa Bravo Charlie, pista libre",
+    "texto": "{indicativo}, pista libre",
     "para": "el otro avión de la frecuencia"
   },
   {
@@ -1286,5 +1286,320 @@
     "idioma": "es",
     "texto": "pista libre",
     "para": "y la deja"
+  },
+  {
+    "id": "fonetico.alfa",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Alfa",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.bravo",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Bravo",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.charlie",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Charlie",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.delta",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Delta",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.echo",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Echo",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.foxtrot",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Foxtrot",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.golf",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Golf",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.hotel",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Hotel",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.india",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "India",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.juliett",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Juliett",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.kilo",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Kilo",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.lima",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Lima",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.mike",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Mike",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.november",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "November",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.oscar",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Oscar",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.papa",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Papa",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.quebec",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Quebec",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.romeo",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Romeo",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.sierra",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Sierra",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.tango",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Tango",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.uniform",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Uniform",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.victor",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Victor",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.whiskey",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Whiskey",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.xray",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "X-ray",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.yankee",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Yankee",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "fonetico.zulu",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "Zulu",
+    "para": "una letra de la matrícula"
+  },
+  {
+    "id": "cifra.0",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "zero",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.1",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "one",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.2",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "two",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.3",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "three",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.4",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "four",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.5",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "five",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.6",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "six",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.7",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "seven",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.8",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "eight",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "cifra.9",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "niner",
+    "para": "una cifra del número de pista"
+  },
+  {
+    "id": "torre.solo.runway",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "runway",
+    "para": "antes del número de pista"
+  },
+  {
+    "id": "lado.left",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "left",
+    "para": "pista izquierda, donde hay dos paralelas"
+  },
+  {
+    "id": "lado.right",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "right",
+    "para": "pista derecha"
+  },
+  {
+    "id": "lado.center",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "center",
+    "para": "y la del medio, si algún día hay tres"
+  },
+  {
+    "id": "torre.solo.clearedTakeoff",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "cleared for take-off",
+    "para": "el permiso"
+  },
+  {
+    "id": "torre.solo.clearedLand",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "cleared to land",
+    "para": "el de llegada"
+  },
+  {
+    "id": "torre.solo.goAround",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "go around, runway occupied",
+    "para": "la pista está ocupada"
+  },
+  {
+    "id": "torre.solo.holdShort",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "hold short of the runway",
+    "para": "pará en la doble raya"
+  },
+  {
+    "id": "torre.solo.lineUpWait",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "line up and wait",
+    "para": "entrá y esperá en el eje"
   }
 ]

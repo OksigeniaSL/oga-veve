@@ -10,7 +10,15 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { FONETICO, prefijoDe, rellenoDe, sortearIndicativo } from "./matricula";
+import { AIRCRAFT } from "./aircraft";
+import {
+  FONETICO,
+  matriculaDe,
+  pistaEnPiezas,
+  prefijoDe,
+  rellenoDe,
+  sortearIndicativo,
+} from "./matricula";
 
 /** Un azar de mentira, para que lo que monta se pueda comprobar. */
 const fijo = (...xs: number[]) => {
@@ -91,5 +99,85 @@ describe("el indicativo se monta letra a letra", () => {
   it("y el alfabeto está entero y sin repetidos", () => {
     expect(FONETICO).toHaveLength(26);
     expect(new Set(FONETICO).size).toBe(26);
+  });
+});
+
+/**
+ * Y **tu** avión, que no se sortea: lleva su matrícula pintada.
+ *
+ * «Al menos una matrícula para cada avión.» Es lo que hace que la radio deje de
+ * ser ruido de fondo: cuando dicen tu nombre, te están hablando a vos.
+ */
+describe("la matrícula de tu avión", () => {
+  it("es fija y del país de la flota", () => {
+    for (const a of AIRCRAFT) {
+      const i = matriculaDe(a.id);
+      expect(i.matricula).toMatch(/^ZP-[A-Z]{3}$/);
+      expect(i.letras).toHaveLength(5);
+      expect(i.letras.slice(0, 2)).toEqual(["zulu", "papa"]);
+    }
+  });
+
+  it("y cada avión tiene la suya, sin repetir", () => {
+    const todas = AIRCRAFT.map((a) => matriculaDe(a.id).matricula);
+    expect(new Set(todas).size).toBe(AIRCRAFT.length);
+  });
+
+  /*
+   * Y **no cambia al cruzar una frontera**, que es como funciona una matrícula
+   * de verdad: en Tenerife te llaman «Zulu Papa…» y está bien.
+   */
+  it("y no cambia por volar en Canarias", () => {
+    expect(matriculaDe("jaz-120", "GCXO").matricula).toBe(
+      matriculaDe("jaz-120", "SGAS").matricula,
+    );
+  });
+
+  it("y el Yvága es el ZP-YVA", () => {
+    const i = matriculaDe("jaz-120");
+    expect(i.matricula).toBe("ZP-YVA");
+    expect(i.dicho).toBe("Zulu Papa Yankee Victor Alfa");
+  });
+});
+
+/**
+ * El número de pista, que es lo primero que un piloto lee en su vida.
+ */
+describe("la pista, dicha por radio", () => {
+  it("se dice cifra a cifra, como está pintada", () => {
+    const p = pistaEnPiezas("03");
+    expect(p?.dicho).toBe("zero three");
+    expect(p?.relleno).toEqual({ r1: "cifra.0", r2: "cifra.3" });
+    expect(p?.sufijo).toBe("");
+  });
+
+  it("y una de una cifra lleva su cero delante", () => {
+    expect(pistaEnPiezas("7")?.dicho).toBe("zero seven");
+  });
+
+  /*
+   * Y «niner», que por una radio con ruido «nine» y «five» se confunden —y en
+   * alemán *nein* es que no—. Es de las cosas que suenan a capricho hasta que
+   * se sabe por qué.
+   */
+  it("y el nueve se dice niner", () => {
+    expect(pistaEnPiezas("09")?.dicho).toBe("zero niner");
+  });
+
+  /*
+   * Y el lado, donde hay paralelas: en Gran Canaria, decir «zero three» a secas
+   * es no decir cuál de las dos.
+   */
+  it("y donde hay dos paralelas, de qué lado", () => {
+    const p = pistaEnPiezas("03L");
+    expect(p?.dicho).toBe("zero three left");
+    expect(p?.sufijo).toBe(".L");
+    expect(pistaEnPiezas("21R")?.dicho).toBe("two one right");
+  });
+
+  it("y lo que no es un número de pista no se inventa", () => {
+    expect(pistaEnPiezas(null)).toBe(null);
+    expect(pistaEnPiezas("")).toBe(null);
+    expect(pistaEnPiezas("ABC")).toBe(null);
   });
 });

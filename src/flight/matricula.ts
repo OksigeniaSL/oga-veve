@@ -148,6 +148,102 @@ export function sortearIndicativo(
 }
 
 /**
+ * **Y la matrícula de cada avión de la flota, que no se sortea.**
+ *
+ * Al otro avión de la frecuencia se le sortea el indicativo porque es otro cada
+ * vez. El tuyo no: es **tu** avión, lleva su matrícula pintada y la torre te
+ * llama por ella. Se pidió así —«al menos una matrícula para cada avión»— y es
+ * lo que hace que la radio deje de ser ruido de fondo: cuando dicen tu nombre,
+ * te están hablando a vos.
+ *
+ * Las tres letras son las de su nombre guaraní, que es lo que un hangar hace de
+ * verdad con sus aviones. Y el prefijo es ZP-, de Paraguay, en los seis: la
+ * flota es de allí y **un avión no cambia de matrícula al cruzar una frontera**
+ * —por eso en Tenerife te llamarán «Zulu Papa…» y estará bien—.
+ */
+const MATRICULAS: Readonly<Record<string, string>> = {
+  "jaz-20": "ZP-PYK",
+  "jaz-25": "ZP-MBY",
+  "jaz-40": "ZP-PNB",
+  "jaz-60": "ZP-ARS",
+  "jaz-90": "ZP-ARI",
+  "jaz-120": "ZP-YVA",
+};
+
+/** De una matrícula escrita —«ZP-PYK»— al indicativo que se dice y se monta. */
+export function indicativoDe(matricula: string): Indicativo {
+  const limpia = matricula.toUpperCase().replace(/[^A-Z]/g, "");
+  const letras: Letra[] = [];
+  for (const c of limpia) {
+    const l = POR_INICIAL.get(c);
+    if (l) letras.push(l);
+  }
+  return {
+    letras,
+    dicho: letras.map((l) => ESCRITA[l]).join(" "),
+    matricula,
+  };
+}
+
+/**
+ * La matrícula de este avión de la flota.
+ *
+ * Sin ficha —o con una que no está en la tabla— sale una del país del sitio,
+ * que es lo honesto: antes que callar, decir algo verdadero.
+ */
+export function matriculaDe(
+  avion: string | null | undefined,
+  aerodromo?: string | null,
+): Indicativo {
+  const suya = avion ? MATRICULAS[avion] : undefined;
+  if (suya) return indicativoDe(suya);
+  return sortearIndicativo(aerodromo, () => 0);
+}
+
+/**
+ * El número de pista, en piezas: `{r1}`, `{r2}` y de qué lado.
+ *
+ * «03L» son dos cifras y un lado. La cifra se dice una a una —«zero three», no
+ * «three»— porque es lo que se pinta en el asfalto y lo que se dice por radio,
+ * y el lado solo existe donde hay pistas paralelas. Devuelve también el sufijo
+ * de la receta, que es lo que elige la versión con lado o sin él.
+ */
+export function pistaEnPiezas(cabecera: string | null | undefined): {
+  relleno: Record<string, string>;
+  sufijo: string;
+  dicho: string;
+} | null {
+  const m = /^(\d{1,2})([LCR])?$/.exec((cabecera ?? "").trim().toUpperCase());
+  if (!m) return null;
+  const cifras = m[1]!.padStart(2, "0");
+  const lado = m[2] ?? "";
+  const nombres: Record<string, string> = {
+    L: "left",
+    C: "center",
+    R: "right",
+  };
+  const comoSeDice: Record<string, string> = {
+    "0": "zero",
+    "1": "one",
+    "2": "two",
+    "3": "three",
+    "4": "four",
+    "5": "five",
+    "6": "six",
+    "7": "seven",
+    "8": "eight",
+    "9": "niner",
+  };
+  return {
+    relleno: { r1: `cifra.${cifras[0]}`, r2: `cifra.${cifras[1]}` },
+    sufijo: lado ? `.${lado}` : "",
+    dicho:
+      `${comoSeDice[cifras[0]!]} ${comoSeDice[cifras[1]!]}` +
+      (lado ? ` ${nombres[lado]}` : ""),
+  };
+}
+
+/**
  * El relleno de la receta grabada: `{c1}`…`{c5}` a sus piezas.
  *
  * Las piezas del alfabeto se llaman `fonetico.<letra>` y las graba cualquier

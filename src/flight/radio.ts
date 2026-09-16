@@ -29,16 +29,38 @@
  * cosas que un chico nota antes que nadie.
  */
 
-/** Las cinco, en el orden en que las dice. */
+/**
+ * Las cuatro, en el orden en que las dice.
+ *
+ * **El saludo ya no va solo.** Era «Buenos días» y cinco letras, y así sonaba:
+ * «eco charli lima lima… ¿y ya está, no dice nada después, sólo unas letras?».
+ * Un avión que abre la frecuencia dice quién es **y a qué viene**, y ahora lo
+ * dice en la misma llamada: «Buenos días, Echo Charlie Lima Lima Alfa, rodando
+ * a la cabecera». No hizo falta grabar nada: la receta junta el saludo, el
+ * indicativo y el mensaje que ya existían por separado.
+ */
 export const LLAMADAS = [
-  "otro.buenosDias",
   "otro.rodando",
   "otro.enCola",
   "otro.final",
   "otro.pistaLibre",
 ] as const;
 
-export type Llamada = (typeof LLAMADAS)[number];
+/**
+ * Y **el saludo no es una llamada: es cómo se dice la primera.**
+ *
+ * Estaba en la lista como una más, así que de noche —que no se saluda— se
+ * saltaba **la llamada entera** y el otro avión no anunciaba que salía. Con el
+ * saludo dentro de la misma frase eso pasó de ser un detalle a ser un agujero:
+ * media hora de frecuencia sin que nadie diga que está rodando.
+ *
+ * Ahora la primera llamada es siempre «rodando a la cabecera», y de día se dice
+ * con los buenos días delante. Es la misma frase con una pieza más. Ver la
+ * receta en `crudo/otro/recetas.json`.
+ */
+export const CON_SALUDO = "otro.buenosDias";
+
+export type Llamada = (typeof LLAMADAS)[number] | typeof CON_SALUDO;
 
 /** Lo que la radio mira del vuelo para saber si puede hablar. */
 export interface Momento {
@@ -89,21 +111,16 @@ export class Radio {
     if (CALLADAS.has(m.fase) || m.instructorHablando) return null;
 
     /*
-     * «Buenos días» de noche se salta, y **sin gastar el turno**: se pasa a la
-     * siguiente y se dice ahora. Gastar la espera dejaba al otro avión mudo
-     * casi un minuto por no poder saludar.
+     * Y «buenos días» solo de día. No se salta la llamada —eso dejaba al otro
+     * avión sin anunciar que salía durante toda la noche—: se dice la misma
+     * frase sin el saludo delante. Ver `CON_SALUDO`.
      */
-    for (let vueltas = 0; vueltas < LLAMADAS.length; vueltas++) {
-      const cual = LLAMADAS[this.siguiente]!;
-      if (cual === "otro.buenosDias" && !m.deDia) {
-        this.siguiente = (this.siguiente + 1) % LLAMADAS.length;
-        continue;
-      }
-      this.avanzar();
-      this.dicho = cual;
-      return cual;
-    }
-    return null;
+    const cual = LLAMADAS[this.siguiente]!;
+    const dice: Llamada =
+      cual === "otro.rodando" && m.deDia ? CON_SALUDO : cual;
+    this.avanzar();
+    this.dicho = dice;
+    return dice;
   }
 
   private avanzar(): void {

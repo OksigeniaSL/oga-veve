@@ -121,11 +121,11 @@ torre-canarias	torre-canarias/torre.canario.verde.ogg	es-PY	Puedes entrar	la tor
 torre-canarias	torre-canarias/torre.canario.roja.ogg	es-PY	Espera ahí	la torre de Canarias, que no vosea
 torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa
 torre	torre/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha en casa
-otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, Zulu Papa Alfa Bravo Charlie	el otro avión de la frecuencia
-otro	otro/otro.rodando.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, rodando a la cabecera	el otro avión de la frecuencia
-otro	otro/otro.enCola.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, viento en cola	el otro avión de la frecuencia
-otro	otro/otro.final.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, en final	el otro avión de la frecuencia
-otro	otro/otro.pistaLibre.ogg	es-PY	Zulu Papa Alfa Bravo Charlie, pista libre	el otro avión de la frecuencia
+otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, {indicativo}	el otro avión de la frecuencia
+otro	otro/otro.rodando.ogg	es-PY	{indicativo}, rodando a la cabecera	el otro avión de la frecuencia
+otro	otro/otro.enCola.ogg	es-PY	{indicativo}, viento en cola	el otro avión de la frecuencia
+otro	otro/otro.final.ogg	es-PY	{indicativo}, en final	el otro avión de la frecuencia
+otro	otro/otro.pistaLibre.ogg	es-PY	{indicativo}, pista libre	el otro avión de la frecuencia
 cabina	cabina/cabina.v1.ogg	en	V one	el punto de no retorno del despegue
 cabina	cabina/cabina.vr.ogg	en	rotate	la velocidad de rotación: tirar
 cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
@@ -183,3 +183,48 @@ otro	otro/otro.solo.rodando.ogg	es	rodando a la cabecera	sale del puesto
 otro	otro/otro.solo.enCola.ogg	es	viento en cola	entra en el circuito
 otro	otro/otro.solo.final.ogg	es	en final	ya viene a la pista
 otro	otro/otro.solo.pistaLibre.ogg	es	pista libre	y la deja
+torre	torre/fonetico.alfa.ogg	en	Alfa	una letra de la matrícula
+torre	torre/fonetico.bravo.ogg	en	Bravo	una letra de la matrícula
+torre	torre/fonetico.charlie.ogg	en	Charlie	una letra de la matrícula
+torre	torre/fonetico.delta.ogg	en	Delta	una letra de la matrícula
+torre	torre/fonetico.echo.ogg	en	Echo	una letra de la matrícula
+torre	torre/fonetico.foxtrot.ogg	en	Foxtrot	una letra de la matrícula
+torre	torre/fonetico.golf.ogg	en	Golf	una letra de la matrícula
+torre	torre/fonetico.hotel.ogg	en	Hotel	una letra de la matrícula
+torre	torre/fonetico.india.ogg	en	India	una letra de la matrícula
+torre	torre/fonetico.juliett.ogg	en	Juliett	una letra de la matrícula
+torre	torre/fonetico.kilo.ogg	en	Kilo	una letra de la matrícula
+torre	torre/fonetico.lima.ogg	en	Lima	una letra de la matrícula
+torre	torre/fonetico.mike.ogg	en	Mike	una letra de la matrícula
+torre	torre/fonetico.november.ogg	en	November	una letra de la matrícula
+torre	torre/fonetico.oscar.ogg	en	Oscar	una letra de la matrícula
+torre	torre/fonetico.papa.ogg	en	Papa	una letra de la matrícula
+torre	torre/fonetico.quebec.ogg	en	Quebec	una letra de la matrícula
+torre	torre/fonetico.romeo.ogg	en	Romeo	una letra de la matrícula
+torre	torre/fonetico.sierra.ogg	en	Sierra	una letra de la matrícula
+torre	torre/fonetico.tango.ogg	en	Tango	una letra de la matrícula
+torre	torre/fonetico.uniform.ogg	en	Uniform	una letra de la matrícula
+torre	torre/fonetico.victor.ogg	en	Victor	una letra de la matrícula
+torre	torre/fonetico.whiskey.ogg	en	Whiskey	una letra de la matrícula
+torre	torre/fonetico.xray.ogg	en	X-ray	una letra de la matrícula
+torre	torre/fonetico.yankee.ogg	en	Yankee	una letra de la matrícula
+torre	torre/fonetico.zulu.ogg	en	Zulu	una letra de la matrícula
+torre	torre/cifra.0.ogg	en	zero	una cifra del número de pista
+torre	torre/cifra.1.ogg	en	one	una cifra del número de pista
+torre	torre/cifra.2.ogg	en	two	una cifra del número de pista
+torre	torre/cifra.3.ogg	en	three	una cifra del número de pista
+torre	torre/cifra.4.ogg	en	four	una cifra del número de pista
+torre	torre/cifra.5.ogg	en	five	una cifra del número de pista
+torre	torre/cifra.6.ogg	en	six	una cifra del número de pista
+torre	torre/cifra.7.ogg	en	seven	una cifra del número de pista
+torre	torre/cifra.8.ogg	en	eight	una cifra del número de pista
+torre	torre/cifra.9.ogg	en	niner	una cifra del número de pista
+torre	torre/torre.solo.runway.ogg	en	runway	antes del número de pista
+torre	torre/lado.left.ogg	en	left	pista izquierda, donde hay dos paralelas
+torre	torre/lado.right.ogg	en	right	pista derecha
+torre	torre/lado.center.ogg	en	center	y la del medio, si algún día hay tres
+torre	torre/torre.solo.clearedTakeoff.ogg	en	cleared for take-off	el permiso
+torre	torre/torre.solo.clearedLand.ogg	en	cleared to land	el de llegada
+torre	torre/torre.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada
+torre	torre/torre.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya
+torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
