@@ -29,7 +29,11 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import type { Aerodrome, Punto } from "./aerodrome";
 import { aLaPolilinea } from "./aerodrome";
 import type { AircraftConfig } from "../flight/aircraft";
-import { paraEntrarYDespegar, pistaQueHaceFalta } from "../flight/carrera";
+import {
+  paraEntrarYDespegar,
+  pistaQueHaceFalta,
+  pistaQueNecesita,
+} from "../flight/carrera";
 import { radioDeGiro } from "../flight/cabe";
 import {
   construirGrafo,
@@ -2507,6 +2511,11 @@ export class PlanDeVuelo {
    */
   private giroDelBackTaxi: number | null = null;
 
+  /** Dónde toca girar en el back-taxi, para los bancos. Ver `sondas.ts`. */
+  get dondeSeGira(): number | null {
+    return this.giroDelBackTaxi;
+  }
+
   /** A dónde va ahora mismo. Sirve para no recalcular la misma ruta cada fase. */
   private destino: "espera" | "puesto" | "pista" | null = null;
   /** Segundos desde el último trazado. Ver `rehacerSiHaceFalta`. */
@@ -2589,6 +2598,7 @@ export class PlanDeVuelo {
         Math.abs(along) < this.pista.length / 2 + 3,
       backTaxi: this.giroDelBackTaxi !== null,
       pistaRestante: Math.max(0, this.pista.length / 2 - along),
+      pistaQueNecesita: pistaQueNecesita(this.avion),
       sobreElSuelo,
       motor,
       desalineado,

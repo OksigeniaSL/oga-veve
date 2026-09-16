@@ -29,6 +29,8 @@ const EN_TIERRA: Situacion = {
   backTaxi: false,
   alLargoDePista: -900,
   pistaRestante: 2400,
+  // Pista de sobra: lo que se prueba aquí son las fases, no si cabe.
+  pistaQueNecesita: 0,
   enPista: false,
   sobreElSuelo: 0,
   motor: false,

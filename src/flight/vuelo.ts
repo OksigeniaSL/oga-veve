@@ -107,6 +107,17 @@ export interface Situacion {
    * Es lo que decide el punto de no retorno del despegue. Ver `yaNoSePuedeParar`.
    */
   readonly pistaRestante: number;
+  /**
+   * Y cuánta pista necesita **este** avión para despegar entero, en metros.
+   *
+   * El mínimo de verdad —`pistaQueNecesita`, el que decide si un avión cabe en
+   * un campo—, no el que uno querría tener. Son dos preguntas distintas y el
+   * juego tiene las dos: aquélla dice cuánta pista se **quiere** teniéndola y
+   * es la que traza el punto de giro del back-taxi; ésta dice cuándo ya no hay
+   * alternativa. Para reconocer que alguien está despegando de verdad manda la
+   * segunda. Ver `flight/carrera.ts`.
+   */
+  readonly pistaQueNecesita: number;
   /** Metros de altura sobre el terreno. */
   readonly sobreElSuelo: number;
   /** ¿Está el motor en marcha? */
@@ -612,7 +623,23 @@ export class Vuelo {
        * que ya hizo falta para que un cuatrimotor no volviera a «rodando» a
        * mitad de carrera por irse un poco del eje.
        */
-      const despegandoYa = alineado && s.estado.airspeed >= YA_ES_RODAJE;
+      /*
+       * **Y con pista suficiente por delante, que si no esto es una trampa.**
+       *
+       * Sin esta condición, el hecho ganaba al plan en cuanto alguien se
+       * alineaba y aceleraba — y con ello se levantaba el tope de velocidad de
+       * rodaje, que era lo único que impedía despegar desde donde no se puede.
+       * Medido: el bimotor en Tenerife Norte empezaba la carrera a mitad del
+       * back-taxi, rotaba justo encima de un edificio y se lo llevaba por
+       * delante a cuarenta y seis metros por segundo.
+       *
+       * Así que el hecho gana al plan, pero no a la pista: sin el mínimo
+       * delante, esto sigue siendo rodaje y el tope sigue puesto.
+       */
+      const despegandoYa =
+        alineado &&
+        s.estado.airspeed >= YA_ES_RODAJE &&
+        s.pistaRestante >= s.pistaQueNecesita;
       if (s.backTaxi && !despegandoYa) return "back-taxi";
       if (!alineado) return "alineando";
       return yaNoSePuedeParar(s) ? "comprometido" : "despegando";
