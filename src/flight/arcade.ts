@@ -37,7 +37,7 @@ import type {
   GroundSampler,
   InitialConditions,
 } from "./model";
-import type { AircraftConfig } from "./aircraft";
+import { tieneReversa, type AircraftConfig } from "./aircraft";
 
 /**
  * Velocidad de crucero cómoda **a nivel del mar**, como fracción de la ficha.
@@ -52,6 +52,49 @@ import type { AircraftConfig } from "./aircraft";
 const CRUISE_FRACTION = 0.62;
 /** Velocidad mínima rodando y a la que se separa del suelo, en m/s. */
 const IDLE_SPEED = 2;
+
+/**
+ * Cuánto baja la velocidad mínima de vuelo con los flaps fuera.
+ *
+ * Un cuarto del coeficiente de sustentación que la ficha le da a sus flaps. Con
+ * el Pykasu —0,55— eso son catorce centésimas: se vuela un catorce por ciento
+ * más despacio, o sea unos cinco nudos menos de aproximación. Es la cifra que
+ * dice el manual de cualquier avioneta y es lo que se nota cruzando el umbral.
+ */
+const MANDAN_LOS_FLAPS = 0.25;
+
+/**
+ * Y cuánto frenan.
+ *
+ * La resistencia de los flaps no se nota en la velocidad máxima —ahí manda el
+ * motor— sino en que con el gas bajo se pierde velocidad antes. Multiplicado
+ * por cuatro porque el coeficiente de la ficha es de resistencia y aquí se usa
+ * contra una velocidad, no contra una fuerza: con el 0,06 del Pykasu sale un
+ * veinticuatro por ciento menos de velocidad a igualdad de gas, que es lo que
+ * hace que una aproximación con flaps entre donde no entra sin ellos.
+ */
+const FRENAN_LOS_FLAPS = 4;
+
+/**
+ * Cuánto frena la reversa, comparado con los frenos a fondo.
+ *
+ * La mitad. En un avión de línea la reversa aporta bastante menos que las ruedas
+ * sobre pista seca —los frenos son los que paran— pero es la que salva la pista
+ * mojada, donde la rueda patina y el chorro no. Media frenada es de sobra para
+ * que se note y no tanto como para que sobre la pista.
+ */
+export const REVERSA_FRENA = 0.5;
+
+/**
+ * Y por debajo de cuántos metros por segundo se apaga sola.
+ *
+ * Quince, que son unos treinta nudos. Por debajo de ahí la reversa deja de
+ * frenar y empieza a levantar del suelo lo que haya —piedras, agua, nieve— y a
+ * metérselo al motor, así que en un avión de verdad se cancela antes de parar.
+ * Aquí se cancela sola porque lo que se enseña es el gesto correcto, no el
+ * castigo por no saberlo.
+ */
+export const REVERSA_HASTA = 15;
 
 /**
  * Lo más lento que vuela, como fracción de la velocidad de aproximación.
@@ -505,11 +548,35 @@ export class ArcadeFlightModel implements FlightModel {
      * Sale de la ficha del avión, de su velocidad de aproximación: un poco por
      * debajo de la que se cruza el umbral es lo más lento que vuela.
      */
+    /*
+     * **Y los flaps, que en este modelo no hacían absolutamente nada.**
+     *
+     * El mando existía —tecla y botón de cabina—, la aguja se movía y el avión
+     * no se enteraba: `flaps` no aparecía ni una vez en este fichero. El motor
+     * de coeficientes sí los usaba, así que en los peldaños de arriba volaban y
+     * en el de los pequeños no. Se dijo jugando, y sin rodeos: «los flaps no
+     * funcionan».
+     *
+     * Hacen las dos cosas que hacen de verdad, y las dos salen de la ficha del
+     * avión —`flapsLift` y `flapsDrag`— y no de un número inventado:
+     *
+     * - **Se vuela más despacio.** El suelo de velocidad en vuelo baja, que es
+     *   para lo que se ponen: cruzar el umbral más lento y tocar más corto.
+     * - **Y se frena.** La velocidad que da un gas cualquiera baja, así que con
+     *   flaps y motor al ralentí se pierde velocidad antes y se baja más
+     *   empinado sin coger carrerilla. Eso es lo que hace que una aproximación
+     *   con flaps entre donde no entra sin ellos.
+     */
+    const flaps = clamp01(controls.flaps);
+    const masSustentacion =
+      1 - this.aircraft.flapsLift * flaps * MANDAN_LOS_FLAPS;
+    const masResistencia =
+      1 - this.aircraft.flapsDrag * flaps * FRENAN_LOS_FLAPS;
     const floor = this.state.onGround
       ? 0
-      : this.aircraft.approachSpeed * MINIMA_DE_VUELO;
+      : this.aircraft.approachSpeed * MINIMA_DE_VUELO * masSustentacion;
     const gas = controls.engineOn ? controls.throttle : 0;
-    const wanted = floor + gas * (cruise - floor);
+    const wanted = (floor + gas * (cruise - floor)) * masResistencia;
     // Constante de tiempo de unos cinco segundos y medio. Con la primera,
     // mucho más rápida, el avión llegaba a velocidad de vuelo en menos de dos
     // segundos y despegaba sin carrera: se perdía justo la parte que sí se
@@ -607,7 +674,25 @@ export class ArcadeFlightModel implements FlightModel {
        */
       const mu = ROZAMIENTO[this.superficie];
       const parte = (mu + 0.28 * controls.brakes) / (mu + 0.28);
-      const decel = Math.max(SIN_FRENO, this.frenadaAFondo() * parte);
+      /*
+       * **Y la reversa, que es la otra mitad de parar un avión grande.**
+       *
+       * No existía: «cuando tomo tierra no tengo reversa». Frena aparte de las
+       * ruedas —el chorro se desvía hacia delante, o la hélice cambia el paso—
+       * así que se **suma** a la deceleración del freno en vez de sustituirla.
+       *
+       * Y se apaga sola por debajo de `REVERSA_HASTA`. No es un capricho: por
+       * debajo de unos treinta nudos la reversa deja de frenar y empieza a
+       * levantar del suelo lo que haya —piedras, agua, nieve— y a metérselo al
+       * motor. Por eso en un avión de verdad se cancela antes de parar, y por
+       * eso aquí se cancela sola: lo que se aprende es el gesto correcto.
+       */
+      const conReversa =
+        tieneReversa(this.aircraft) && this.speed > REVERSA_HASTA
+          ? clamp01(controls.reversa) * this.frenadaAFondo() * REVERSA_FRENA
+          : 0;
+      const decel =
+        Math.max(SIN_FRENO, this.frenadaAFondo() * parte) + conReversa;
       this.speed = Math.max(target * blando, this.speed - decel * step);
     } else {
       this.speed += (target * blando - this.speed) * Math.min(1, step * rate);
