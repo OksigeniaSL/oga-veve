@@ -708,6 +708,25 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
     suelo: (x: number, z: number) => juego.terrain.sampleHeight(x, z),
     /**
+     * Si el terreno lleva puesta la ortofoto, y de qué tamaño.
+     *
+     * Hacía falta porque «el escenario no tiene foto» y «la foto no se cargó»
+     * se ven igual desde fuera —terreno liso— y la diferencia es de una hora de
+     * trabajo. Catorce escenarios de dieciséis volaban sin foto y el síntoma que
+     * se contaba era otro: «no me gusta volar sobre Maincraft».
+     */
+    ortofoto: () => {
+      const malla = juego.terrain.group.getObjectByName("terreno") as
+        | {
+            material?: {
+              map?: { image?: { width?: number; height?: number } };
+            };
+          }
+        | undefined;
+      const img = malla?.material?.map?.image;
+      return img ? { ancho: img.width ?? 0, alto: img.height ?? 0 } : null;
+    },
+    /**
      * Dónde está el avión **en ejes de pista**: a lo largo y al costado.
      *
      * Es con lo que el juego decide `onRunway`, y de ahí cuelgan cosas que no

@@ -1,0 +1,24 @@
+{
+  "id": "guarani",
+  "encuadre": "lejos",
+  "fuente": "Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA",
+  "licencia": "CC BY 4.0 · EOX & contribuidores, datos Copernicus Sentinel",
+  "servicio": "https://tiles.maps.eox.at/wmts",
+  "capa": "s2cloudless-2020_3857",
+  "esquina": {
+    "col": 5691,
+    "fila": 9385
+  },
+  "origen": {
+    "lat": -25.457186,
+    "lon": -54.839544
+  },
+  "tamanoM": 22000,
+  "zoom": 14,
+  "metrosPorPixel": 8.627,
+  "pixeles": {
+    "ancho": 2816,
+    "alto": 2816
+  },
+  "huecos": 0
+}

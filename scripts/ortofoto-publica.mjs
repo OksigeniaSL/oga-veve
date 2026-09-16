@@ -114,10 +114,42 @@ const ENCUADRES = {
   cerca: { lado: 6000, zoom: 16 },
 };
 
-/** Qué aeródromo y qué proveedor le toca a cada escenario. */
+/**
+ * Qué aeródromo y qué proveedor le toca a cada escenario.
+ *
+ * **Estaban dos de dieciséis**, y eso era todo el problema del paisaje. Se dijo
+ * jugando: «no me gusta volar sobre Maincraft… casi todos los aeropuertos están
+ * sin paisaje realista, encima tú le metes edificios inventados». Y era exacto:
+ * catorce escenarios volaban sobre relieve pelado con las casas del sorteo
+ * encima, que es lo peor de los dos mundos.
+ *
+ * No era un problema de licencias ni de diseño — el guion estaba escrito y
+ * probado. Eran catorce descargas que nadie había lanzado.
+ *
+ * Y la mitad salen a veinticinco centímetros por píxel: PNOA cubre **toda**
+ * España, Canarias incluida, así que los ocho campos españoles pueden tener la
+ * misma foto que Los Rodeos. Los paraguayos se quedan en los diez metros de
+ * Sentinel-2, y no es decisión nuestra: España publica ortofoto nacional y
+ * Paraguay todavía no de forma alcanzable.
+ */
 const ESCENARIOS = {
+  // España — PNOA del IGN, hasta 25 cm/píxel.
   'tenerife-norte': { aero: 'gcxo', proveedor: 'pnoa', lado: 18000 },
+  'tenerife-sur': { aero: 'gcts', proveedor: 'pnoa', lado: 18000 },
+  'la-palma': { aero: 'gcla', proveedor: 'pnoa', lado: 18000 },
+  'gran-canaria': { aero: 'gclp', proveedor: 'pnoa', lado: 18000 },
+  'el-hierro': { aero: 'gchi', proveedor: 'pnoa', lado: 18000 },
+  'la-gomera': { aero: 'gcgm', proveedor: 'pnoa', lado: 18000 },
+  lanzarote: { aero: 'gcrr', proveedor: 'pnoa', lado: 18000 },
+  fuerteventura: { aero: 'gcfv', proveedor: 'pnoa', lado: 18000 },
+  'cuatro-vientos': { aero: 'lecu', proveedor: 'pnoa', lado: 18000 },
+  // Paraguay — Sentinel-2 cloudless, 10 m/píxel. Es lo que hay y es real.
   pettirossi: { aero: 'sgas', proveedor: 'sentinel', lado: 22000 },
+  guarani: { aero: 'sges', proveedor: 'sentinel', lado: 22000 },
+  encarnacion: { aero: 'sgen', proveedor: 'sentinel', lado: 22000 },
+  estigarribia: { aero: 'sgme', proveedor: 'sentinel', lado: 22000 },
+  'pedro-juan': { aero: 'sgpj', proveedor: 'sentinel', lado: 22000 },
+  'yvytu-rape': { aero: 'yvytu', proveedor: 'sentinel', lado: 22000 },
 };
 
 /** De grados a la tesela que le toca en el mosaico de Web Mercator. */
