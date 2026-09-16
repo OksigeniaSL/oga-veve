@@ -954,6 +954,7 @@ export class Hud {
     this.senal.bind(this.root);
     this.tutor.bind(this.root);
     this.reserveForPanel();
+    this.reservarArriba();
   }
 
   /**
@@ -964,6 +965,38 @@ export class Hud {
    * apaisado, y un número escrito a mano acertaría en un caso y fallaría en
    * los otros.
    */
+  /**
+   * Cuánto ocupa la franja de arriba, para que la lámpara de la torre no se
+   * meta debajo de ella.
+   *
+   * La lámpara vivía a un catorce por ciento de la altura, y un porcentaje no
+   * sabe qué hay encima: en una tablet de aula en horizontal ese catorce por
+   * ciento son noventa píxeles, o sea justo la fila de botones redondos, y la
+   * lámpara se encendía detrás. Es el mismo fallo que el del cartel del
+   * cinturón y del mismo tipo: un aviso que se enciende solo y queda tapado no
+   * se lee como un solape, se lee como que el juego no avisa.
+   *
+   * Es la hermana de `reserveForPanel`: se mide lo que hay y se reserva, en
+   * vez de escribir un número que acierta en una pantalla y falla en las otras.
+   */
+  private reservarArriba(): void {
+    let abajo = 0;
+    for (const sel of ['[data-hud="pictos"]', ".hud__arriba", ".hud__vistas"]) {
+      const caja = this.root.querySelector(sel)?.getBoundingClientRect();
+      if (!caja) continue;
+      /*
+       * Y solo cuenta mientras **siga siendo una barra**. En una pantalla
+       * estrecha la fila de botones de arriba se parte y se convierte en una
+       * columna que baja media pantalla: preguntarle «dónde acabas» devuelve
+       * 558 de 780, y la lámpara se iría a parar encima de la tarjeta de abajo.
+       * Una columna no tiene un «debajo» que sirva para nada.
+       */
+      if (caja.height > caja.width) continue;
+      abajo = Math.max(abajo, caja.bottom);
+    }
+    this.root.style.setProperty("--arriba-alto", `${Math.round(abajo)}px`);
+  }
+
   private reserveForPanel(): void {
     /*
      * Se mide con la caja del dibujo y no con `offsetHeight`: el cuadro es un
