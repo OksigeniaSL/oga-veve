@@ -106,6 +106,26 @@ await page.goto(
 );
 await page.waitForTimeout(16000);
 
+/*
+ * **Y un clic, para que baje el pack de voz.**
+ *
+ * El pack se baja tras el primer gesto, como en el juego. Sin él, `cantar` no
+ * encuentra grabación para «V one» y se la manda **directamente al
+ * sintetizador del navegador**, saltándose la boca entera: la frase suena, pero
+ * no pasa por ninguna de las cuatro bocas y por tanto no queda en ningún
+ * historial. El banco daba «no canta V1» con aviones que sí la cantan, y no
+ * medía en absoluto el camino que recorre la voz en el juego de verdad.
+ *
+ * Con el clic, un vuelo entero de este banco ejercita las grabaciones, que es
+ * lo que oye quien juega.
+ */
+await page.mouse.click(450, 300);
+await page
+  .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, {
+    timeout: 60000,
+  })
+  .catch(() => {});
+
 const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
@@ -891,7 +911,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         const v1 = o.v1?.();
         if (v1)
           verV1.add(
-            `carrera:${v1.enLaCarrera} v1:${v1.dijoV1} vr:${v1.dijoVr} Vr=${v1.vr}`,
+            `carrera:${v1.enLaCarrera} v1:${v1.dijoV1} vr:${v1.dijoVr} escucha:${v1.hayQuienEscuche}`,
           );
       }
       if (ejes)

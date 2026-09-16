@@ -8,7 +8,7 @@ instructor	instructor/vuelo.backTaxi.ogg	es-PY	Andá hasta el fondo y dá la vue
 instructor	instructor/vuelo.alineando.ogg	es-PY	Ponete derechito en el eje	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.minimos.ogg	es-PY	Mirá la pista: ¿la ves?	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.noEstabilizada.ogg	es-PY	Así no: andate y volvé a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.noEstabilizada~2.ogg	es-PY	Así no entra: gas y al aire, lo probamos otra vez	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.noEstabilizada~2.ogg	es-PY	Venís mal para bajar: gas y al aire, lo probamos otra vez	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.noEstabilizada~3.ogg	es-PY	Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.rotar.ogg	es-PY	Tirá para arriba	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.comprometido.ogg	es-PY	Ya despegamos: seguí	lo que toca hacer ahora, en vuelo y en tierra
@@ -94,6 +94,12 @@ instructor	instructor/tutor.flying.ogg	es-PY	¡Estás volando!	los consejos de l
 instructor	instructor/tutor.frenar.ogg	es-PY	Frená	los consejos de los primeros minutos
 instructor	instructor/tutor.salir.ogg	es-PY	Seguí la raya y salí de la pista	los consejos de los primeros minutos
 instructor	instructor/tutor.slow.ogg	es-PY	Bajá el motor	los consejos de los primeros minutos
+instructor	instructor/motivo.sinPista.ogg	es-PY	No se ve la pista	por qué no se puede bajar así
+instructor	instructor/motivo.lento.ogg	es-PY	Vas muy despacio	por qué no se puede bajar así
+instructor	instructor/motivo.cayendo.ogg	es-PY	Estás cayendo muy rápido	por qué no se puede bajar así
+instructor	instructor/motivo.rapido.ogg	es-PY	Vas muy rápido	por qué no se puede bajar así
+instructor	instructor/motivo.torcido.ogg	es-PY	Estás torcido	por qué no se puede bajar así
+instructor	instructor/motivo.descolocado.ogg	es-PY	Estás fuera del eje	por qué no se puede bajar así
 instructor	instructor/mission.rio.name.ogg	es-PY	Ver el río	las misiones
 instructor	instructor/mission.rioabajo.name.ogg	es-PY	Seguir el río	las misiones
 instructor	instructor/mission.mar.name.ogg	es-PY	Salir al mar	las misiones
@@ -121,7 +127,7 @@ torre-canarias	torre-canarias/torre.canario.verde.ogg	es-PY	Puedes entrar	la tor
 torre-canarias	torre-canarias/torre.canario.roja.ogg	es-PY	Espera ahí	la torre de Canarias, que no vosea
 torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa
 torre	torre/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha en casa
-otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, {indicativo}	el otro avión de la frecuencia
+otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, {indicativo}, rodando a la cabecera	el otro avión de la frecuencia
 otro	otro/otro.rodando.ogg	es-PY	{indicativo}, rodando a la cabecera	el otro avión de la frecuencia
 otro	otro/otro.enCola.ogg	es-PY	{indicativo}, viento en cola	el otro avión de la frecuencia
 otro	otro/otro.final.ogg	es-PY	{indicativo}, en final	el otro avión de la frecuencia
