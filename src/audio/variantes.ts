@@ -55,8 +55,19 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
     "¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje",
     "No podés bajar: metele gas y volvé a subir",
   ],
+  /*
+   * **Y ninguna dice «no entra».**
+   *
+   * Decía «Así no entra: gas y al aire», y se entendió como que el avión no
+   * cabía en la pista: «"así no entra" con 3400 m de pista y la velocidad al
+   * mínimo». Con un 747 delante y una pista larguísima, eso es una acusación
+   * falsa y además desconcertante — el avión cabe de sobra; lo que no va a
+   * salir es **esta** aproximación.
+   *
+   * Lo que hay que decir es que venís mal, no que no quepas.
+   */
   "vuelo.noEstabilizada": [
-    "Así no entra: gas y al aire, lo probamos otra vez",
+    "Venís mal para bajar: gas y al aire, lo probamos otra vez",
     "Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo",
   ],
   "vuelo.frustrada": [

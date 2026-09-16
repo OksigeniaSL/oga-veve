@@ -81,18 +81,40 @@ describe("la boca", () => {
   });
 
   /*
-   * Una plaza y nada más. Es lo que el comentario de `voz.ts` pedía desde
-   * siempre para la cuenta atrás de altura: si todavía suena «twenty» cuando
-   * toca «ten», lo que hay que oír es «ten» — no los dos.
+   * **Una cuenta atrás se pisa a sí misma.** Es lo que el comentario de `voz.ts`
+   * pedía desde siempre: si todavía suena «twenty» cuando toca «ten», lo que
+   * hay que oír es «ten» — no los dos. Decirlas seguidas es contar el pasado.
    */
-  it("solo guarda una, y manda la última", () => {
+  it("de una misma cuenta solo queda la última", () => {
     const b = boca();
     const { dicho, acabar, frase } = coro();
-    b.pedir("normal", frase("thirty"));
-    b.pedir("normal", frase("twenty"));
-    b.pedir("normal", frase("ten"));
+    b.pedir("normal", frase("thirty"), "cabina.thirty");
+    b.pedir("normal", frase("twenty"), "cabina.twenty");
+    b.pedir("normal", frase("ten"), "cabina.ten");
     acabar["thirty"]!();
     expect(dicho).toEqual(["thirty", "ten"]);
+  });
+
+  /*
+   * **Pero dos sucesos distintos esperan los dos.**
+   *
+   * V1 y Vr son los dos momentos del despegue —«ya no puedo parar» y «ahora
+   * toca tirar»— y van a un segundo el uno del otro. Con una sola plaza de
+   * espera, Vr le quitaba el sitio a V1 y salía una de las dos sin que se
+   * supiera cuál: medido en el banco, el detector dispara las dos y de la boca
+   * no salía ninguna. Se oyó jugando: «al despegar no me avisa del V1 ni VR ni
+   * nada».
+   */
+  it("y dos sucesos distintos se dicen los dos, en orden", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("alineando"), "vuelo.alineando");
+    b.pedir("normal", frase("V one"), "cabina.v1");
+    b.pedir("normal", frase("rotate"), "cabina.vr");
+    acabar["alineando"]!();
+    expect(dicho).toEqual(["alineando", "V one"]);
+    acabar["V one"]!();
+    expect(dicho).toEqual(["alineando", "V one", "rotate"]);
   });
 
   /*

@@ -66,7 +66,7 @@
     "id": "vuelo.noEstabilizada~2",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Así no entra: gas y al aire, lo probamos otra vez",
+    "texto": "Venís mal para bajar: gas y al aire, lo probamos otra vez",
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
@@ -665,6 +665,48 @@
     "para": "los consejos de los primeros minutos"
   },
   {
+    "id": "motivo.sinPista",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "No se ve la pista",
+    "para": "por qué no se puede bajar así"
+  },
+  {
+    "id": "motivo.lento",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vas muy despacio",
+    "para": "por qué no se puede bajar así"
+  },
+  {
+    "id": "motivo.cayendo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estás cayendo muy rápido",
+    "para": "por qué no se puede bajar así"
+  },
+  {
+    "id": "motivo.rapido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vas muy rápido",
+    "para": "por qué no se puede bajar así"
+  },
+  {
+    "id": "motivo.torcido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estás torcido",
+    "para": "por qué no se puede bajar así"
+  },
+  {
+    "id": "motivo.descolocado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estás fuera del eje",
+    "para": "por qué no se puede bajar así"
+  },
+  {
     "id": "mission.rio.name",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -857,7 +899,7 @@
     "id": "otro.buenosDias",
     "voz": "otro",
     "idioma": "es-PY",
-    "texto": "Buenos días, {indicativo}",
+    "texto": "Buenos días, {indicativo}, rodando a la cabecera",
     "para": "el otro avión de la frecuencia"
   },
   {

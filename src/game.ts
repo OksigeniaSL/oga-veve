@@ -590,6 +590,18 @@ const BIEN_FUERA_DE_LA_PISTA = 40;
  */
 const ALINEANDO_DE_VERDAD = 12;
 
+/**
+ * Cuánto tiene que durar la calma para que el aviso de terreno vuelva a sonar.
+ *
+ * Tres segundos. La cuenta del aviso se apaga en cuanto la vertical es positiva
+ * —«subiendo no se avisa»—, así que un avión que cabecea cerca del suelo la
+ * cruza varias veces por segundo y el aviso se encendía y apagaba con ella.
+ *
+ * Tres segundos es bastante menos de lo que tarda en dejar de haber peligro de
+ * verdad y bastante más que un cabeceo, que es justo lo que hace falta separar.
+ */
+const SE_REARMA = 3;
+
 const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
   "alineando",
   "despegando",
@@ -672,6 +684,21 @@ export class Game {
   private dichoDeBanda: "lento" | "rapido" | null = null;
   /** El último aviso de terreno dicho, para no repetirlo cada fotograma. */
   terrenoDicho: "bajo" | "sube" | null = null;
+  /**
+   * Cuánto lleva el terreno sin avisar de nada, en segundos.
+   *
+   * El aviso se rearmaba en cuanto la cuenta daba `null` **un solo fotograma**,
+   * y esa cuenta se apaga con la vertical: «subiendo no se avisa, que quien
+   * sube ya está haciendo lo que había que hacer». Con un avión grande cabeceando
+   * cerca del suelo, la vertical cruza el cero una y otra vez, así que el aviso
+   * se apaga y se vuelve a encender sin parar. Se oyó jugando, y con estas
+   * palabras: «y el "¡Subí! ¡Subí!", qué pesada».
+   *
+   * No es lo mismo que callarlo: mientras el peligro dura, el aviso sigue
+   * puesto y no se repite —eso ya era así—. Esto solo pide que **haya dejado de
+   * haber peligro de verdad** antes de volver a poder avisar. Ver `SE_REARMA`.
+   */
+  private terrenoTranquiloDesde = 0;
 
   /** La misión elegida en el hangar, hasta que arranca. Ver `start`. */
   private misionInicial: Mission | null;
@@ -2982,10 +3009,25 @@ export class Game {
         { segundos: Infinity, prioridad: URGENTE },
       );
       this.avisar("peligro");
+      /*
+       * **Y la voz dice por qué, no solo qué hacer.**
+       *
+       * El motivo lo llevaba la tarjeta —«Vas muy despacio. Venís mal para
+       * bajar…»— y la voz no, porque los seis motivos no estaban grabados. A
+       * los cuatro años la voz **es** el canal, y una orden sin motivo no
+       * enseña: enseña a obedecer. Ahora se pide la receta que junta las dos
+       * piezas, y si no existe se cae sola a la de siempre. Ver `recetaDe`.
+       */
+      const conMotivo =
+        porque === "noEstabilizada" && motivo
+          ? `${dicho.id}+${motivo}`
+          : dicho.id;
       this.cantar(
         porque === "pistaOcupada" ? "go around, runway occupied" : "go around",
-        dicho.texto,
-        dicho.id,
+        porque === "pistaOcupada"
+          ? dicho.texto
+          : `${t(`motivo.${motivo}` as never)}. ${dicho.texto}`,
+        conMotivo,
       );
     });
 
@@ -4731,7 +4773,17 @@ export class Game {
        */
       this.hechos.emit("frustrada", { mandada });
     }
-    if (terreno && terreno !== this.terrenoDicho) {
+    /*
+     * **Y el aviso no se rearma con un parpadeo.**
+     *
+     * Un aviso que va y viene cada segundo deja de ser un aviso: es una voz
+     * pesada, y lo peor que le puede pasar a la única frase del juego que tiene
+     * que interrumpir es que se aprenda a desoírla. Ver `terrenoTranquiloDesde`.
+     */
+    this.terrenoTranquiloDesde = terreno ? 0 : this.terrenoTranquiloDesde + dt;
+    const puedeAvisar =
+      this.terrenoDicho === null || this.terrenoTranquiloDesde >= SE_REARMA;
+    if (terreno && terreno !== this.terrenoDicho && puedeAvisar) {
       this.terrenoDicho = terreno;
       this.hud.senal.mostrar(
         "terreno",
@@ -4765,7 +4817,7 @@ export class Game {
         // El único aviso que **interrumpe** en vez de informar. Ver `peligro`.
         "urgente",
       );
-    } else if (!terreno) {
+    } else if (!terreno && this.terrenoTranquiloDesde >= SE_REARMA) {
       this.terrenoDicho = null;
     }
 

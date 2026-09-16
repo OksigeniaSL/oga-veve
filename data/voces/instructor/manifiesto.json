@@ -117,6 +117,24 @@
     "mission.valley.name": {
       "ms": 1057
     },
+    "motivo.cayendo": {
+      "ms": 1239
+    },
+    "motivo.descolocado": {
+      "ms": 1032
+    },
+    "motivo.lento": {
+      "ms": 1076
+    },
+    "motivo.rapido": {
+      "ms": 1097
+    },
+    "motivo.sinPista": {
+      "ms": 917
+    },
+    "motivo.torcido": {
+      "ms": 1072
+    },
     "percance.coche": {
       "ms": 1705
     },
@@ -180,11 +198,23 @@
     "vuelo.aroAlto~2": {
       "ms": 2530
     },
+    "vuelo.aroAlto~3": {
+      "ms": 3407
+    },
+    "vuelo.aroAlto~4": {
+      "ms": 2310
+    },
     "vuelo.aroBajo": {
       "ms": 2074
     },
     "vuelo.aroBajo~2": {
       "ms": 2043
+    },
+    "vuelo.aroBajo~3": {
+      "ms": 2655
+    },
+    "vuelo.aroBajo~4": {
+      "ms": 2574
     },
     "vuelo.arrancando": {
       "ms": 1635
@@ -212,6 +242,9 @@
     },
     "vuelo.corregido~3": {
       "ms": 1678
+    },
+    "vuelo.corregido~4": {
+      "ms": 1189
     },
     "vuelo.despacio": {
       "ms": 885
@@ -262,7 +295,7 @@
       "ms": 1243
     },
     "vuelo.noEstabilizada": {
-      "ms": 1905
+      "ms": 2930
     },
     "vuelo.noEstabilizada~2": {
       "ms": 2605
@@ -278,6 +311,9 @@
     },
     "vuelo.papiBien": {
       "ms": 2080
+    },
+    "vuelo.pediFlaps": {
+      "ms": 1614
     },
     "vuelo.pistaLibre": {
       "ms": 1594
@@ -302,6 +338,12 @@
     },
     "vuelo.sinPermiso": {
       "ms": 2826
+    },
+    "vuelo.sobrevelocidad": {
+      "ms": 1354
+    },
+    "vuelo.sobrevelocidadAire": {
+      "ms": 1442
     },
     "vuelo.teLoPasaste": {
       "ms": 1464
@@ -431,6 +473,24 @@
     "mission.valley.name": [
       "mission.valley.name"
     ],
+    "motivo.cayendo": [
+      "motivo.cayendo"
+    ],
+    "motivo.descolocado": [
+      "motivo.descolocado"
+    ],
+    "motivo.lento": [
+      "motivo.lento"
+    ],
+    "motivo.rapido": [
+      "motivo.rapido"
+    ],
+    "motivo.sinPista": [
+      "motivo.sinPista"
+    ],
+    "motivo.torcido": [
+      "motivo.torcido"
+    ],
     "percance.coche": [
       "percance.coche"
     ],
@@ -494,11 +554,23 @@
     "vuelo.aroAlto~2": [
       "vuelo.aroAlto~2"
     ],
+    "vuelo.aroAlto~3": [
+      "vuelo.aroAlto~3"
+    ],
+    "vuelo.aroAlto~4": [
+      "vuelo.aroAlto~4"
+    ],
     "vuelo.aroBajo": [
       "vuelo.aroBajo"
     ],
     "vuelo.aroBajo~2": [
       "vuelo.aroBajo~2"
+    ],
+    "vuelo.aroBajo~3": [
+      "vuelo.aroBajo~3"
+    ],
+    "vuelo.aroBajo~4": [
+      "vuelo.aroBajo~4"
     ],
     "vuelo.arrancando": [
       "vuelo.arrancando"
@@ -526,6 +598,9 @@
     ],
     "vuelo.corregido~3": [
       "vuelo.corregido~3"
+    ],
+    "vuelo.corregido~4": [
+      "vuelo.corregido~4"
     ],
     "vuelo.despacio": [
       "vuelo.despacio"
@@ -593,6 +668,9 @@
     "vuelo.papiBien": [
       "vuelo.papiBien"
     ],
+    "vuelo.pediFlaps": [
+      "vuelo.pediFlaps"
+    ],
     "vuelo.pistaLibre": [
       "vuelo.pistaLibre"
     ],
@@ -617,6 +695,12 @@
     "vuelo.sinPermiso": [
       "vuelo.sinPermiso"
     ],
+    "vuelo.sobrevelocidad": [
+      "vuelo.sobrevelocidad"
+    ],
+    "vuelo.sobrevelocidadAire": [
+      "vuelo.sobrevelocidadAire"
+    ],
     "vuelo.teLoPasaste": [
       "vuelo.teLoPasaste"
     ],
@@ -628,6 +712,78 @@
     ],
     "vuelo.yaPodesTocar": [
       "vuelo.yaPodesTocar"
+    ],
+    "vuelo.noEstabilizada+cayendo": [
+      "motivo.cayendo",
+      "vuelo.noEstabilizada"
+    ],
+    "vuelo.noEstabilizada+descolocado": [
+      "motivo.descolocado",
+      "vuelo.noEstabilizada"
+    ],
+    "vuelo.noEstabilizada+lento": [
+      "motivo.lento",
+      "vuelo.noEstabilizada"
+    ],
+    "vuelo.noEstabilizada+rapido": [
+      "motivo.rapido",
+      "vuelo.noEstabilizada"
+    ],
+    "vuelo.noEstabilizada+sinPista": [
+      "motivo.sinPista",
+      "vuelo.noEstabilizada"
+    ],
+    "vuelo.noEstabilizada+torcido": [
+      "motivo.torcido",
+      "vuelo.noEstabilizada"
+    ],
+    "vuelo.noEstabilizada~2+cayendo": [
+      "motivo.cayendo",
+      "vuelo.noEstabilizada~2"
+    ],
+    "vuelo.noEstabilizada~2+descolocado": [
+      "motivo.descolocado",
+      "vuelo.noEstabilizada~2"
+    ],
+    "vuelo.noEstabilizada~2+lento": [
+      "motivo.lento",
+      "vuelo.noEstabilizada~2"
+    ],
+    "vuelo.noEstabilizada~2+rapido": [
+      "motivo.rapido",
+      "vuelo.noEstabilizada~2"
+    ],
+    "vuelo.noEstabilizada~2+sinPista": [
+      "motivo.sinPista",
+      "vuelo.noEstabilizada~2"
+    ],
+    "vuelo.noEstabilizada~2+torcido": [
+      "motivo.torcido",
+      "vuelo.noEstabilizada~2"
+    ],
+    "vuelo.noEstabilizada~3+cayendo": [
+      "motivo.cayendo",
+      "vuelo.noEstabilizada~3"
+    ],
+    "vuelo.noEstabilizada~3+descolocado": [
+      "motivo.descolocado",
+      "vuelo.noEstabilizada~3"
+    ],
+    "vuelo.noEstabilizada~3+lento": [
+      "motivo.lento",
+      "vuelo.noEstabilizada~3"
+    ],
+    "vuelo.noEstabilizada~3+rapido": [
+      "motivo.rapido",
+      "vuelo.noEstabilizada~3"
+    ],
+    "vuelo.noEstabilizada~3+sinPista": [
+      "motivo.sinPista",
+      "vuelo.noEstabilizada~3"
+    ],
+    "vuelo.noEstabilizada~3+torcido": [
+      "motivo.torcido",
+      "vuelo.noEstabilizada~3"
     ]
   }
 }

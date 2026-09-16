@@ -1,4 +1,4 @@
-Buenos días, {indicativo}
+Buenos días, {indicativo}, rodando a la cabecera
 {indicativo}, rodando a la cabecera
 {indicativo}, viento en cola
 {indicativo}, en final

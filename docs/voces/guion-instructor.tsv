@@ -7,7 +7,7 @@
 007	vuelo.alineando	Ponete derechito en el eje
 008	vuelo.minimos	Mirá la pista: ¿la ves?
 009	vuelo.noEstabilizada	Así no: andate y volvé a intentarlo
-010	vuelo.noEstabilizada~2	Así no entra: gas y al aire, lo probamos otra vez
+010	vuelo.noEstabilizada~2	Venís mal para bajar: gas y al aire, lo probamos otra vez
 011	vuelo.noEstabilizada~3	Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo
 012	vuelo.rotar	Tirá para arriba
 013	vuelo.comprometido	Ya despegamos: seguí
@@ -93,20 +93,26 @@
 093	tutor.frenar	Frená
 094	tutor.salir	Seguí la raya y salí de la pista
 095	tutor.slow	Bajá el motor
-096	mission.rio.name	Ver el río
-097	mission.rioabajo.name	Seguir el río
-098	mission.mar.name	Salir al mar
-099	mission.anaga.name	A Anaga
-100	mission.cumbre.name	A la cumbre
-101	mission.lomas.name	A las lomas
-102	mission.first.name	Tu primer vuelo
-103	mission.valley.name	La vuelta al valle
-104	mission.transfer.name	El traslado
-105	mission.started	{name}
-106	mission.step	¡Bien! Seguí
-107	mission.done	¡Misión cumplida!
-108	mission.none	Vuelo libre
-109	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
-110	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
-111	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
-112	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+096	motivo.sinPista	No se ve la pista
+097	motivo.lento	Vas muy despacio
+098	motivo.cayendo	Estás cayendo muy rápido
+099	motivo.rapido	Vas muy rápido
+100	motivo.torcido	Estás torcido
+101	motivo.descolocado	Estás fuera del eje
+102	mission.rio.name	Ver el río
+103	mission.rioabajo.name	Seguir el río
+104	mission.mar.name	Salir al mar
+105	mission.anaga.name	A Anaga
+106	mission.cumbre.name	A la cumbre
+107	mission.lomas.name	A las lomas
+108	mission.first.name	Tu primer vuelo
+109	mission.valley.name	La vuelta al valle
+110	mission.transfer.name	El traslado
+111	mission.started	{name}
+112	mission.step	¡Bien! Seguí
+113	mission.done	¡Misión cumplida!
+114	mission.none	Vuelo libre
+115	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
+116	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
+117	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
+118	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.

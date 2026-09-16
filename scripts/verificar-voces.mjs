@@ -46,6 +46,13 @@ const REPARTO = [
   ["torre", "torre.goAround", "torre"],
   ["capitana", "capitana.bienvenida", "capitana"],
   ["capitana", "capitana.crucero", "capitana"],
+  /*
+   * Y la orden de irse al aire **con su motivo**, que es la receta que junta
+   * las dos piezas. Sin ella la voz decía qué hacer y no por qué, que a los
+   * cuatro años es una orden sin lección.
+   */
+  ["instructor", "vuelo.noEstabilizada+lento", "instructor"],
+  ["instructor", "vuelo.noEstabilizada+descolocado", "instructor"],
   ["instructor", "cabina.v1", "cabina"],
   ["instructor", "cabina.vr", "cabina"],
 ];

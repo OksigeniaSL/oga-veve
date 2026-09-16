@@ -47,6 +47,15 @@ const HABLADOS = [
   ["grado", "instructor", "los cuatro grados del cuaderno"],
   ["galon", "instructor", "los galones que se ganan en el vuelo"],
   ["tutor", "instructor", "los consejos de los primeros minutos"],
+  /*
+   * **Y por qué no se puede bajar así**, que es la mitad que faltaba.
+   *
+   * La orden de irse al aire se decía sin decir el motivo: la tarjeta lo
+   * llevaba —«Vas muy despacio. Venís mal para bajar…»— y la voz no, porque
+   * estos seis no estaban grabados. A los cuatro años la voz **es** el canal, y
+   * una orden sin motivo no enseña nada: enseña a obedecer.
+   */
+  ["motivo", "instructor", "por qué no se puede bajar así"],
   ["mission", "instructor", "las misiones"],
   /*
    * **Y lo que explican los paneles.**

@@ -81,6 +81,46 @@ const PESO: Record<Urgencia, number> = { baja: 0, normal: 1, urgente: 2 };
 export const CADUCA = 4000;
 
 /**
+ * Cuántas frases pueden esperar turno a la vez.
+ *
+ * Tres. Había **una**, y entre dos de igual peso ganaba la última: en una
+ * carrera de despegue, Vr le quitaba el sitio a V1 y salía una de las dos sin
+ * que se supiera cuál. Medido en el banco, el detector dispara las dos y de la
+ * boca no sale ninguna.
+ *
+ * Tres son las que caben en el hueco que deja una frase antes de que la
+ * siguiente deje de describir lo que pasa —para eso está `CADUCA`—, y bastante
+ * menos de las que harían falta para que esto sonara a parrafada.
+ */
+const PLAZAS_DE_ESPERA = 3;
+
+/**
+ * Las frases que **se sustituyen entre sí** en vez de hacer cola.
+ *
+ * Una cuenta atrás no es una conversación: si todavía suena «twenty» cuando
+ * toca «ten», lo que hay que oír es **ten**, no las dos. Decirlas seguidas es
+ * contar el pasado, y encima tarde.
+ *
+ * Y eso es justo lo contrario de lo que necesitan V1 y Vr, que son **dos
+ * sucesos distintos** del mismo medio minuto: perder uno es perder la mitad de
+ * la lección. Con una sola plaza de espera no se podía tener las dos cosas —la
+ * última ganaba siempre— y lo que se perdía era el canto. Con la cola y esta
+ * lista se tienen: lo que es una cuenta se pisa, lo que es un suceso espera.
+ *
+ * Se reconocen por el principio de la clave, que es lo que tienen en común: son
+ * la misma cuenta dicha en distintos números.
+ */
+const MISMA_CUENTA: readonly string[] = ["cabina.", "altura."];
+
+/** A qué cuenta pertenece esta clave, si pertenece a alguna. */
+function laCuentaDe(clave: string | undefined): string | null {
+  if (!clave) return null;
+  // Los cantos del despegue son sucesos, no cuenta: cada uno se dice una vez.
+  if (clave === "cabina.v1" || clave === "cabina.vr") return null;
+  return MISMA_CUENTA.find((c) => clave.startsWith(c)) ?? null;
+}
+
+/**
  * El silencio entre una frase y la siguiente, ms.
  *
  * Ocho décimas. Es lo que separa dos frases de una parrafada, y es también lo
@@ -165,12 +205,31 @@ function riñenCon(clave: string): readonly string[] {
 
 export class Boca {
   private hablandoAhora: Urgencia | null = null;
-  private enEspera: {
+  /**
+   * Lo que espera turno. **Tres plazas, no una.**
+   *
+   * Había una sola, y entre dos de igual peso ganaba la última. En una carrera
+   * de despegue eso se traduce en algo muy concreto: V1 llega, se pone a
+   * esperar, y un segundo después **Vr le quita el sitio**. Sale una de las dos
+   * y nunca se sabe cuál. Medido en el banco: el detector dispara los dos
+   * —`v1:true vr:true`— y de la boca no sale ninguno.
+   *
+   * Y esas dos no son charla: son cantos atados a un instante. «Ya no puedo
+   * parar y todavía no vuelo» son los dos segundos que ese peldaño existe para
+   * enseñar, y perder uno es perder la mitad de la lección. Se oyó jugando: «al
+   * despegar no me avisa del V1 ni VR ni nada».
+   *
+   * Tres y no más, y cada una con su caducidad: la regla de no pisarse no se
+   * toca, lo que se quita es **tirar** lo que no cabe. Una frase que esperó
+   * demasiado se cae sola —ver `CADUCA`—, que es lo que impide que esto se
+   * convierta en una parrafada a destiempo.
+   */
+  private readonly cola: {
     hacer: Hablar;
     urgencia: Urgencia;
     desde: number;
     clave?: string;
-  } | null = null;
+  }[] = [];
   /** Cuándo se dijo cada cosa por última vez. Ver `NO_REPETIR` y `RIÑEN`. */
   private readonly dichas = new Map<string, number>();
   /** Hasta cuándo hay que callar para no atropellar la frase anterior. */
@@ -222,7 +281,7 @@ export class Boca {
        */
       const falta = this.calladaHasta - ahora;
       if (!urgente && falta > 0 && this.reloj.esperar) {
-        this.enEspera = { hacer, urgencia, desde: ahora, clave };
+        this.encolar({ hacer, urgencia, desde: ahora, clave });
         this.reloj.esperar(falta, () => this.soltarLoQueEspera());
         return;
       }
@@ -234,7 +293,9 @@ export class Boca {
        * Más urgente: corta. El que estaba hablando no vuelve — lo suyo era
        * menos importante que esto, y repetirlo después sería contar el pasado.
        */
-      this.enEspera = null;
+      // Lo urgente corta y **vacía la cola**: lo que esperaba era menos
+      // importante que esto y ya no describe lo que está pasando.
+      this.cola.length = 0;
       this.reloj.cancelar();
       this.arrancar(urgencia, hacer, clave);
       return;
@@ -249,17 +310,68 @@ export class Boca {
      * sí. Medido en el banco: la torre decía dos frases en un vuelo y pasó a
      * decir una.
      */
-    const esperando = this.enEspera;
-    if (esperando && PESO[esperando.urgencia] > PESO[urgencia]) return;
-    this.enEspera = { hacer, urgencia, desde: ahora, clave };
+    this.encolar({ hacer, urgencia, desde: ahora, clave });
+  }
+
+  /**
+   * Mete una frase en la cola de espera, por peso y sin pasar de tres.
+   *
+   * Cuando no cabe se cae **la menos importante**, y entre iguales la más
+   * vieja: la que más cerca está de dejar de describir lo que pasa.
+   */
+  private encolar(esta: (typeof this.cola)[number]): void {
+    /*
+     * Y lo que es la misma cuenta no hace cola: la sustituye. Ver
+     * `MISMA_CUENTA`.
+     */
+    const cuenta = laCuentaDe(esta.clave);
+    if (cuenta) {
+      for (let i = this.cola.length - 1; i >= 0; i--) {
+        if (laCuentaDe(this.cola[i]!.clave) === cuenta) this.cola.splice(i, 1);
+      }
+    }
+    this.cola.push(esta);
+    if (this.cola.length <= PLAZAS_DE_ESPERA) return;
+    let peor = 0;
+    for (let i = 1; i < this.cola.length; i++) {
+      const a = this.cola[i]!;
+      const b = this.cola[peor]!;
+      if (
+        PESO[a.urgencia] < PESO[b.urgencia] ||
+        (PESO[a.urgencia] === PESO[b.urgencia] && a.desde < b.desde)
+      )
+        peor = i;
+    }
+    this.cola.splice(peor, 1);
+  }
+
+  /** La siguiente que toca decir, o `undefined` si no queda ninguna viva. */
+  private siguienteViva(): (typeof this.cola)[number] | undefined {
+    const ahora = this.reloj.ahora();
+    // Lo caducado no se dice: contar el pasado es peor que callarse.
+    for (let i = this.cola.length - 1; i >= 0; i--) {
+      if (ahora - this.cola[i]!.desde > CADUCA) this.cola.splice(i, 1);
+    }
+    if (!this.cola.length) return undefined;
+    let mejor = 0;
+    for (let i = 1; i < this.cola.length; i++) {
+      const a = this.cola[i]!;
+      const b = this.cola[mejor]!;
+      // Manda el peso; entre iguales, la que llegó antes: se dicen en orden.
+      if (
+        PESO[a.urgencia] > PESO[b.urgencia] ||
+        (PESO[a.urgencia] === PESO[b.urgencia] && a.desde < b.desde)
+      )
+        mejor = i;
+    }
+    return this.cola.splice(mejor, 1)[0];
   }
 
   /** Suelta lo que esperaba el silencio, si sigue teniendo sentido. */
   private soltarLoQueEspera(): void {
-    const siguiente = this.enEspera;
-    if (!siguiente || this.ocupada) return;
-    this.enEspera = null;
-    if (this.reloj.ahora() - siguiente.desde > CADUCA) return;
+    if (this.ocupada) return;
+    const siguiente = this.siguienteViva();
+    if (!siguiente) return;
     this.arrancar(siguiente.urgencia, siguiente.hacer, siguiente.clave);
   }
 
@@ -273,7 +385,7 @@ export class Boca {
    * está `empezarDeCero`, que es lo que llama un vuelo nuevo.
    */
   callar(): void {
-    this.enEspera = null;
+    this.cola.length = 0;
     this.hablandoAhora = null;
     this.cual++;
     this.reloj.cancelar();
@@ -299,21 +411,19 @@ export class Boca {
   private acabo(): void {
     this.hablandoAhora = null;
     this.calladaHasta = this.reloj.ahora() + SILENCIO;
-    const siguiente = this.enEspera;
-    this.enEspera = null;
-    if (!siguiente) return;
-    if (this.reloj.ahora() - siguiente.desde > CADUCA) return;
+    if (!this.cola.length) return;
     /*
      * Y la siguiente también respeta el silencio: encadenar dos frases sin
      * hueco era justo lo que sonaba a parrafada. Si no hay temporizador —en las
      * pruebas que no lo dan— se dice como antes, seguida.
      */
-    if (siguiente.urgencia !== "urgente" && this.reloj.esperar) {
-      this.enEspera = siguiente;
+    if (this.reloj.esperar) {
       this.reloj.esperar(SILENCIO, () => this.soltarLoQueEspera());
       return;
     }
-    this.arrancar(siguiente.urgencia, siguiente.hacer, siguiente.clave);
+    const siguiente = this.siguienteViva();
+    if (siguiente)
+      this.arrancar(siguiente.urgencia, siguiente.hacer, siguiente.clave);
   }
 }
 

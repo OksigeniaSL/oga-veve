@@ -7,7 +7,7 @@ Andá hasta el fondo y dá la vuelta
 Ponete derechito en el eje
 Mirá la pista: ¿la ves?
 Así no: andate y volvé a intentarlo
-Así no entra: gas y al aire, lo probamos otra vez
+Venís mal para bajar: gas y al aire, lo probamos otra vez
 Dejá el aterrizaje. Gas, subí, y volvemos a intentarlo
 Tirá para arriba
 Ya despegamos: seguí
@@ -93,6 +93,12 @@ Tirá para arriba
 Frená
 Seguí la raya y salí de la pista
 Bajá el motor
+No se ve la pista
+Vas muy despacio
+Estás cayendo muy rápido
+Vas muy rápido
+Estás torcido
+Estás fuera del eje
 Ver el río
 Seguir el río
 Salir al mar

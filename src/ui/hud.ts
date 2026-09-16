@@ -193,6 +193,8 @@ export class Hud {
       enLaCarrera: this.enLaCarrera,
       dijoV1: this.dijoV1,
       dijoVr: this.dijoVr,
+      // Y si hay alguien escuchando, que es la pregunta que faltaba.
+      hayQuienEscuche: this.velocidadesHandler !== null,
       vr: this.vr,
       destello: +this.destelloRestante.toFixed(2),
     };
