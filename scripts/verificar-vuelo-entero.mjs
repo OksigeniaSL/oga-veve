@@ -679,6 +679,23 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   let mudoMaximo = 0;
   let mudoDonde = "";
   let vueltaMetros = 0;
+  /*
+   * **Dónde se quedó el avión al frenar, y dónde acabó.**
+   *
+   * El rodaje de vuelta empieza donde cae el avión después de la toma, y eso
+   * depende de dónde tocó y de cuánto rodó frenando: variación física legítima
+   * de cientos de metros. Cronometrarlo mide esa variación tanto como mide la
+   * ruta —medido, la misma vuelta da entre 189 y 237 segundos—, así que el
+   * listón acababa dentro de su propio ruido y la comprobación salía a cara o
+   * cruz. Ver #166.
+   *
+   * Lo que no hereda esa varianza es **cuánto rodea**: los metros rodados
+   * partidos por los que hay en línea recta desde donde se paró hasta el
+   * puesto. Eso sí dice si la ruta se va por donde no debe, que es lo que la
+   * comprobación quería vigilar.
+   */
+  let largoDeLaRuta = 0;
+  const verBackTaxi = new Set();
   let antes = null;
   let sinRaya = 0;
   let sinRayaDonde = "";
@@ -835,10 +852,17 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     }
   };
   /*
-   * Quince minutos **de vuelo**. Un vuelo entero son unos ocho; el resto es
+   * Veinte minutos **de vuelo**. Un vuelo entero son unos ocho; el resto es
    * margen para que, cuando algo falle, se vea **dónde** se quedó parado.
+   *
+   * Eran quince y se quedaron cortos el día que el banco empezó a volar los
+   * back-taxi de verdad: en Pettirossi la plataforma cae junto a la cabecera
+   * contraria, así que hay que rodar mil doscientos metros por la propia pista
+   * antes de despegar, y eso son dos minutos largos que antes el banco se
+   * saltaba yendo al campo. Un vuelo que tarda más porque **hace más** no es un
+   * vuelo que falle.
    */
-  const TOPE = 900;
+  const TOPE = 1200;
   /*
    * Y el tiempo se lee del juego, no se cuenta por vueltas.
    *
@@ -886,6 +910,11 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     const tarjeta = o.tarjeta();
     fases.add(fase);
     relojPara(fase);
+    if (fase === "back-taxi" || fase === "autorizado") {
+      const b = o.backTaxi?.();
+      if (b)
+        verBackTaxi.add(`giro=${b.giro} along=${b.along} queda=${b.restante}`);
+    }
     const bocas = o.dicho?.();
     if (bocas?.torre) deLaTorre.add(bocas.torre);
     /*
@@ -1145,10 +1174,34 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       if (fase === "autorizado" || fase === "alineando") etapa = "entrar";
     } else if (etapa === "entrar") {
       c.brakes = 0;
-      c.throttle = porElSuelo(s) < 8 ? 0.5 : 0;
-      c.aileron = s.onRunway ? alRumbo(s, rumboPista) : timon(s, ruta);
-      if (s.onRunway && Math.abs(error(rumboPista, s.heading)) < 0.15) {
-        etapa = "despegar";
+      /*
+       * **Y si toca back-taxi, se hace.**
+       *
+       * Esto pasaba a despegar en cuanto el avión estaba en pista y apuntando
+       * al rumbo de salida, sin mirar si el plan le mandaba rodar hasta el otro
+       * extremo primero. Donde la plataforma cae junto a la cabecera contraria
+       * —Pettirossi— el avión entra ya apuntando bien y **con ocho metros de
+       * pista por delante**: el banco aceleraba ahí mismo, se iba al campo y
+       * despegaba pasado el final, y el vuelo se daba por bueno.
+       *
+       * O sea que el banco no había volado un back-taxi **nunca**, y por eso
+       * nadie vio que en esos campos no salían ni V1 ni Vr: la fase no llegaba
+       * a cambiar porque el avión nunca llegaba al punto de girar.
+       *
+       * Mientras el plan diga back-taxi se rueda por la raya, como haría
+       * cualquiera siguiendo la línea verde.
+       */
+      if (fase === "back-taxi") {
+        const quiere = o.rodaje() ?? 9;
+        c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
+        c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
+        c.aileron = timon(s, ruta);
+      } else {
+        c.throttle = porElSuelo(s) < 8 ? 0.5 : 0;
+        c.aileron = s.onRunway ? alRumbo(s, rumboPista) : timon(s, ruta);
+        if (s.onRunway && Math.abs(error(rumboPista, s.heading)) < 0.15) {
+          etapa = "despegar";
+        }
       }
     } else if (etapa === "despegar") {
       c.throttle = 1;
@@ -1589,6 +1642,24 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
       c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
       c.aileron = timon(s, ruta);
+      /*
+       * Y el largo de **la ruta que el juego trazó** para volver, que es el
+       * denominador bueno: dice si el avión siguió su camino o se fue por ahí,
+       * y a diferencia del reloj no hereda dónde cayó el avión al frenar.
+       *
+       * Se queda con **la más larga que se llegó a ver** durante la vuelta, y
+       * no con la del primer fotograma: la ruta de vuelta se traza un momento
+       * después de tocar, así que mirándola una sola vez salía a medias —o
+       * vacía, que es lo que daba La Gomera: «270 m rodados sobre 0 trazados»—.
+       */
+      {
+        const r = o.ruta();
+        let suma = 0;
+        for (let i = 0; i < r.length - 1; i++) {
+          suma += Math.hypot(r[i + 1][0] - r[i][0], r[i + 1][1] - r[i][1]);
+        }
+        largoDeLaRuta = Math.max(largoDeLaRuta, suma);
+      }
       if (fase === "en-puesto" || fase === "apagado") etapa = "apagar";
     } else if (etapa === "apagar") {
       c.throttle = 0;
@@ -1659,6 +1730,13 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     mudoMaximo: +mudoMaximo.toFixed(1),
     mudoDonde,
     vueltaMetros: Math.round(vueltaMetros),
+    largoDeLaRuta: Math.round(largoDeLaRuta),
+    verBackTaxi: (() => {
+      const v = [...verBackTaxi];
+      return v.length > 6
+        ? [...v.slice(0, 2), `…${v.length - 5}…`, ...v.slice(-3)]
+        : v;
+    })(),
     sinRaya: +sinRaya.toFixed(1),
     sinRayaDonde,
     sinRayaPrimero,
@@ -1836,7 +1914,7 @@ comprobar(
     ),
   `del despegue salió: ${(vuelo.cabinaDijo ?? []).filter((c) => /^(cabina\.|V one|rotate|vuelo\.(comprometido|rotar))/.test(c)).join(" · ") || "nada"}` +
     ` · cantar() hizo: ${vuelo.cantados?.join(" | ") || "nada"}` +
-    ` · en la carrera: hasta ${vuelo.masRapidoEnPista} m/s en pista, gas ${vuelo.gasEnLaCarrera} · ${vuelo.verV1?.join(" | ")}`,
+    ` · back-taxi: ${vuelo.verBackTaxi?.join(" | ")}`,
   "sin V1 ni Vr, un despegue es acelerar y que pase algo",
 );
 
@@ -1864,10 +1942,50 @@ comprobar(
  * verdad es un aeródromo pequeño para el peldaño de los pequeños, y eso es una
  * decisión de producto, no un ajuste.
  */
+const rodeo = vuelo.vueltaMetros / Math.max(1, vuelo.largoDeLaRuta);
 comprobar(
   "y el de vuelta no se dispara",
-  vuelo.vuelta > 0 && vuelo.vuelta <= 220,
-  `${vuelo.vuelta} s y ${vuelo.vueltaMetros} m de la pista al puesto`,
+  /*
+   * **Y se mide el rodeo, no el reloj.**
+   *
+   * El listón estaba en 220 segundos y el ruido propio de esta medida va de 189
+   * a 237: la comprobación salía a cara o cruz, y dos barridos seguidos sobre
+   * el mismo código fallaban escenarios distintos. Comprobado con tres tiradas
+   * a cada lado de un cambio —218 s de media con él, 217 sin él—, o sea que no
+   * medía el cambio: medía la suerte.
+   *
+   * El ruido es legítimo y no se puede quitar: la vuelta empieza donde cae el
+   * avión al frenar, y eso depende de dónde tocó. Lo que **no** hereda esa
+   * varianza es cuánto rodea la ruta, o sea los metros rodados partidos por los
+   * que hay en línea recta. Medido, eso sale ×1,1 o ×1,2 en cuatro aeródromos
+   * de tamaños muy distintos —Pettirossi 2113 m, Tenerife Norte 1045, Gran
+   * Canaria 1050, El Hierro 714—, que es justo lo que se espera de una medida
+   * que mide la ruta y no el campo. Ver #166.
+   *
+   * **Y el primer intento de arreglarlo salió mal, que es de lo que va esto.**
+   * Probé a medir el rodeo contra la línea recta hasta el puesto, salió ×1,1 o
+   * ×1,2 en cuatro aeródromos y lo di por bueno. En los otros doce sale entre
+   * ×1,9 y ×5,7 — en La Palma, 742 metros rodados con 177 en línea recta,
+   * porque la plataforma está al lado de la pista y hay que rodearla—. Cuatro
+   * muestras que coinciden no son una regla: son cuatro muestras.
+   *
+   * Contra la ruta trazada, en cambio, sale ×0,89 · ×0,95 · ×0,96 · ×0,97 ·
+   * ×0,98 · ×1,07 en seis campos de tamaños que no se parecen en nada. Por
+   * debajo de uno porque el avión corta las curvas redondeadas. Uno y medio es
+   * holgura de sobra y muy poco para un avión que se va por donde no debe.
+   *
+   * **Y lo que esto ya no comprueba**, dicho para que no se dé por cubierto: si
+   * la ruta **en sí** es buena. Un elector de puesto que mande al hueco más
+   * lejano traza una ruta larguísima y el avión la sigue clavada, así que este
+   * número sale en uno igual. Eso es lo que pasó en #156 y lo que vigilan los
+   * segundos de aquí abajo —quinientos, o sea «esto se rompió»— y la tabla de
+   * porcentajes de rodaje que imprime el barrido.
+   */
+  vuelo.vuelta > 0 &&
+    vuelo.largoDeLaRuta > 0 &&
+    rodeo <= 1.4 &&
+    vuelo.vuelta <= 500,
+  `×${rodeo.toFixed(2)} de su ruta · ${vuelo.vueltaMetros} m rodados sobre ${vuelo.largoDeLaRuta} trazados · ${vuelo.vuelta} s`,
   "la vuelta es más larga que la ida y nadie la había cronometrado",
 );
 

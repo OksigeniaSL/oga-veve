@@ -867,6 +867,22 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ruta: () => juego.plan?.rutaVisible() ?? [],
     /** Y la misma sin redondear, que es donde se ven las horquillas. */
     rutaCruda: () => juego.plan?.rutaCruda() ?? [],
+    /**
+     * El back-taxi: dónde toca girar y dónde está el avión, en ejes de pista.
+     *
+     * De aquí cuelga que haya V1 o no: mientras la bandera esté puesta, el
+     * juego cree que esto es rodaje. Ver `deducir` en `flight/vuelo.ts`.
+     */
+    backTaxi: () => {
+      const r = juego.scenario.runway;
+      const s = juego.flight.state;
+      const e = enEjesDePista(s.position.x, s.position.z, r.x, r.z, r.heading);
+      return {
+        giro: juego.plan?.dondeSeGira ?? null,
+        along: +e.along.toFixed(0),
+        restante: +Math.max(0, r.length / 2 - e.along).toFixed(0),
+      };
+    },
     /** Qué mandos de cabina hay, y cuál cae bajo un punto de la pantalla. */
     botones: () => juego.aircraftMesh.botones?.hay ?? null,
     mandoEn: (x: number, y: number) => {
