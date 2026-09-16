@@ -176,6 +176,13 @@ comprobar(
  */
 const indicativo = await page.evaluate(() => globalThis.__oga.indicativo());
 comprobar(
+  "y tu avión tiene la suya, con la pista en uso",
+  /^ZP-[A-Z]{3}$/.test(indicativo.yo) && !!indicativo.pista,
+  `${indicativo.yo} · «${indicativo.yoDicho}, runway ${indicativo.pista}»`,
+  "una torre que nunca te llama por tu nombre no es una torre, es un altavoz",
+);
+
+comprobar(
   "el otro avión tiene indicativo, y del país del aeródromo",
   /^EC-[A-Z]{3}$/.test(indicativo.matricula),
   `${indicativo.matricula} · «${indicativo.dicho}» · en Tenerife`,
@@ -185,7 +192,16 @@ comprobar(
 for (const [quien, clave, pack] of REPARTO) {
   const dicho = await page.evaluate(
     ([c, r]) => globalThis.__oga.quienDice(c, r),
-    [clave, clave.startsWith("otro.") ? indicativo.relleno : undefined],
+    [
+      clave.startsWith("torre.") && !clave.startsWith("torre.canario")
+        ? `${clave}${indicativo.sufijo}`
+        : clave,
+      clave.startsWith("otro.")
+        ? indicativo.relleno
+        : clave.startsWith("torre.")
+          ? indicativo.deTorre
+          : undefined,
+    ],
   );
   comprobar(
     `«${clave}» la dice ${quien} con el pack ${pack}`,

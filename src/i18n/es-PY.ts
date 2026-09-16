@@ -293,7 +293,7 @@ export const ES_PY = {
    * rodando a la cabecera»— y el saludo era el único que nombraba a otro. Con
    * la flota en seis aviones, además, nombrar uno era nombrar el que no es.
    */
-  "otro.buenosDias": "Buenos días, {indicativo}",
+  "otro.buenosDias": "Buenos días, {indicativo}, rodando a la cabecera",
   "otro.rodando": "{indicativo}, rodando a la cabecera",
   "otro.enCola": "{indicativo}, viento en cola",
   "otro.final": "{indicativo}, en final",

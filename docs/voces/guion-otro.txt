@@ -1,8 +1,8 @@
-Buenos días, Zulu Papa Alfa Bravo Charlie
-Zulu Papa Alfa Bravo Charlie, rodando a la cabecera
-Zulu Papa Alfa Bravo Charlie, viento en cola
-Zulu Papa Alfa Bravo Charlie, en final
-Zulu Papa Alfa Bravo Charlie, pista libre
+Buenos días, {indicativo}
+{indicativo}, rodando a la cabecera
+{indicativo}, viento en cola
+{indicativo}, en final
+{indicativo}, pista libre
 Alfa
 Bravo
 Charlie

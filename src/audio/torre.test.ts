@@ -24,10 +24,31 @@ describe("lo que dice la torre", () => {
    */
   const DE_LA_LAMPARA = new Set(["torre.verde", "torre.roja"]);
 
+  /*
+   * Y **las piezas sueltas no son frases**: el alfabeto, las cifras, los lados
+   * y los trozos de orden existen para rellenar huecos, no para pedirse por su
+   * nombre. Se reconocen porque su receta es ella misma, que es lo que les deja
+   * puesto el horneado. Ver `recetaDe` y `flight/matricula.ts`.
+   */
+  const recetas = (manifiesto as { recetas: Record<string, string[]> }).recetas;
+  const esRelleno = (c: string) =>
+    recetas[c]?.length === 1 && recetas[c]?.[0] === c;
+
+  /*
+   * Y las variantes por lado —`.L`, `.C`, `.R`— son la misma orden dicha en un
+   * aeropuerto con pistas paralelas: en Gran Canaria, «zero three» a secas es
+   * no decir cuál de las dos. Las elige `porRadio` a partir de la cabecera en
+   * uso, no la tabla.
+   */
+  const sinLado = (c: string) => c.replace(/\.[LCR]$/, "");
+
   it("cada grabación de torre la pide alguien", () => {
     const apuntadas = new Set(Object.values(CLAVE_DE_TORRE));
     expect(
-      grabadas.filter((c) => !apuntadas.has(c) && !DE_LA_LAMPARA.has(c)),
+      grabadas.filter(
+        (c) =>
+          !apuntadas.has(sinLado(c)) && !DE_LA_LAMPARA.has(c) && !esRelleno(c),
+      ),
     ).toEqual([]);
   });
 
@@ -36,6 +57,19 @@ describe("lo que dice la torre", () => {
     expect(Object.values(CLAVE_DE_TORRE).filter((c) => !hay.has(c))).toEqual(
       [],
     );
+  });
+
+  /*
+   * Y **cada una de las que nombran la pista tiene sus tres lados**. Si falta
+   * uno, en el aeropuerto que lo use la frase no se monta y la dice la voz del
+   * navegador, que suena a otra cosa y nadie se entera de por qué.
+   */
+  it("y las que nombran la pista tienen su versión de cada lado", () => {
+    for (const cual of ["clearedTakeoff", "clearedLand", "lineUpWait"]) {
+      for (const lado of ["L", "C", "R"]) {
+        expect(grabadas).toContain(`torre.${cual}.${lado}`);
+      }
+    }
   });
 
   it("reconoce la llamada tal y como la pide el juego", () => {

@@ -3,49 +3,446 @@
   "voz": "torre",
   "idioma": "en",
   "piezas": {
-    "torre.clearedLand": {
-      "ms": 1038
+    "cifra.0": {
+      "ms": 575
     },
-    "torre.clearedTakeoff": {
-      "ms": 1184
+    "cifra.1": {
+      "ms": 418
     },
-    "torre.goAround": {
-      "ms": 2129
+    "cifra.2": {
+      "ms": 599
     },
-    "torre.holdShort": {
-      "ms": 1384
+    "cifra.3": {
+      "ms": 455
     },
-    "torre.lineUpWait": {
-      "ms": 977
+    "cifra.4": {
+      "ms": 568
+    },
+    "cifra.5": {
+      "ms": 608
+    },
+    "cifra.6": {
+      "ms": 611
+    },
+    "cifra.7": {
+      "ms": 619
+    },
+    "cifra.8": {
+      "ms": 458
+    },
+    "cifra.9": {
+      "ms": 649
+    },
+    "fonetico.alfa": {
+      "ms": 599
+    },
+    "fonetico.bravo": {
+      "ms": 616
+    },
+    "fonetico.charlie": {
+      "ms": 620
+    },
+    "fonetico.delta": {
+      "ms": 526
+    },
+    "fonetico.echo": {
+      "ms": 528
+    },
+    "fonetico.foxtrot": {
+      "ms": 717
+    },
+    "fonetico.golf": {
+      "ms": 585
+    },
+    "fonetico.hotel": {
+      "ms": 579
+    },
+    "fonetico.india": {
+      "ms": 670
+    },
+    "fonetico.juliett": {
+      "ms": 787
+    },
+    "fonetico.kilo": {
+      "ms": 549
+    },
+    "fonetico.lima": {
+      "ms": 650
+    },
+    "fonetico.mike": {
+      "ms": 568
+    },
+    "fonetico.november": {
+      "ms": 739
+    },
+    "fonetico.oscar": {
+      "ms": 696
+    },
+    "fonetico.papa": {
+      "ms": 586
+    },
+    "fonetico.quebec": {
+      "ms": 569
+    },
+    "fonetico.romeo": {
+      "ms": 761
+    },
+    "fonetico.sierra": {
+      "ms": 681
+    },
+    "fonetico.tango": {
+      "ms": 556
+    },
+    "fonetico.uniform": {
+      "ms": 820
+    },
+    "fonetico.victor": {
+      "ms": 707
+    },
+    "fonetico.whiskey": {
+      "ms": 601
+    },
+    "fonetico.xray": {
+      "ms": 604
+    },
+    "fonetico.yankee": {
+      "ms": 618
+    },
+    "fonetico.zulu": {
+      "ms": 681
+    },
+    "lado.center": {
+      "ms": 699
+    },
+    "lado.left": {
+      "ms": 521
+    },
+    "lado.right": {
+      "ms": 540
     },
     "torre.roja": {
       "ms": 812
+    },
+    "torre.solo.clearedLand": {
+      "ms": 1015
+    },
+    "torre.solo.clearedTakeoff": {
+      "ms": 1095
+    },
+    "torre.solo.goAround": {
+      "ms": 1787
+    },
+    "torre.solo.holdShort": {
+      "ms": 1366
+    },
+    "torre.solo.lineUpWait": {
+      "ms": 1195
+    },
+    "torre.solo.runway": {
+      "ms": 556
     },
     "torre.verde": {
       "ms": 920
     }
   },
   "recetas": {
-    "torre.clearedLand": [
-      "torre.clearedLand"
+    "fonetico.alfa": [
+      "fonetico.alfa"
     ],
-    "torre.clearedTakeoff": [
-      "torre.clearedTakeoff"
+    "fonetico.bravo": [
+      "fonetico.bravo"
     ],
-    "torre.goAround": [
-      "torre.goAround"
+    "fonetico.charlie": [
+      "fonetico.charlie"
     ],
-    "torre.holdShort": [
-      "torre.holdShort"
+    "fonetico.delta": [
+      "fonetico.delta"
     ],
-    "torre.lineUpWait": [
-      "torre.lineUpWait"
+    "fonetico.echo": [
+      "fonetico.echo"
+    ],
+    "fonetico.foxtrot": [
+      "fonetico.foxtrot"
+    ],
+    "fonetico.golf": [
+      "fonetico.golf"
+    ],
+    "fonetico.hotel": [
+      "fonetico.hotel"
+    ],
+    "fonetico.india": [
+      "fonetico.india"
+    ],
+    "fonetico.juliett": [
+      "fonetico.juliett"
+    ],
+    "fonetico.kilo": [
+      "fonetico.kilo"
+    ],
+    "fonetico.lima": [
+      "fonetico.lima"
+    ],
+    "fonetico.mike": [
+      "fonetico.mike"
+    ],
+    "fonetico.november": [
+      "fonetico.november"
+    ],
+    "fonetico.oscar": [
+      "fonetico.oscar"
+    ],
+    "fonetico.papa": [
+      "fonetico.papa"
+    ],
+    "fonetico.quebec": [
+      "fonetico.quebec"
+    ],
+    "fonetico.romeo": [
+      "fonetico.romeo"
+    ],
+    "fonetico.sierra": [
+      "fonetico.sierra"
+    ],
+    "fonetico.tango": [
+      "fonetico.tango"
+    ],
+    "fonetico.uniform": [
+      "fonetico.uniform"
+    ],
+    "fonetico.victor": [
+      "fonetico.victor"
+    ],
+    "fonetico.whiskey": [
+      "fonetico.whiskey"
+    ],
+    "fonetico.xray": [
+      "fonetico.xray"
+    ],
+    "fonetico.yankee": [
+      "fonetico.yankee"
+    ],
+    "fonetico.zulu": [
+      "fonetico.zulu"
+    ],
+    "cifra.0": [
+      "cifra.0"
+    ],
+    "cifra.1": [
+      "cifra.1"
+    ],
+    "cifra.2": [
+      "cifra.2"
+    ],
+    "cifra.3": [
+      "cifra.3"
+    ],
+    "cifra.4": [
+      "cifra.4"
+    ],
+    "cifra.5": [
+      "cifra.5"
+    ],
+    "cifra.6": [
+      "cifra.6"
+    ],
+    "cifra.7": [
+      "cifra.7"
+    ],
+    "cifra.8": [
+      "cifra.8"
+    ],
+    "cifra.9": [
+      "cifra.9"
+    ],
+    "lado.left": [
+      "lado.left"
+    ],
+    "lado.right": [
+      "lado.right"
+    ],
+    "lado.center": [
+      "lado.center"
+    ],
+    "torre.solo.runway": [
+      "torre.solo.runway"
+    ],
+    "torre.solo.clearedTakeoff": [
+      "torre.solo.clearedTakeoff"
+    ],
+    "torre.solo.clearedLand": [
+      "torre.solo.clearedLand"
+    ],
+    "torre.solo.goAround": [
+      "torre.solo.goAround"
+    ],
+    "torre.solo.holdShort": [
+      "torre.solo.holdShort"
+    ],
+    "torre.solo.lineUpWait": [
+      "torre.solo.lineUpWait"
+    ],
+    "torre.verde": [
+      "torre.verde"
     ],
     "torre.roja": [
       "torre.roja"
     ],
-    "torre.verde": [
-      "torre.verde"
+    "torre.clearedTakeoff": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "torre.solo.clearedTakeoff"
+    ],
+    "torre.clearedTakeoff.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.left",
+      "torre.solo.clearedTakeoff"
+    ],
+    "torre.clearedTakeoff.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.right",
+      "torre.solo.clearedTakeoff"
+    ],
+    "torre.clearedTakeoff.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.center",
+      "torre.solo.clearedTakeoff"
+    ],
+    "torre.clearedLand": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "torre.solo.clearedLand"
+    ],
+    "torre.clearedLand.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.left",
+      "torre.solo.clearedLand"
+    ],
+    "torre.clearedLand.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.right",
+      "torre.solo.clearedLand"
+    ],
+    "torre.clearedLand.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.center",
+      "torre.solo.clearedLand"
+    ],
+    "torre.lineUpWait": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "torre.solo.lineUpWait"
+    ],
+    "torre.lineUpWait.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.left",
+      "torre.solo.lineUpWait"
+    ],
+    "torre.lineUpWait.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.right",
+      "torre.solo.lineUpWait"
+    ],
+    "torre.lineUpWait.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runway",
+      "{r1}",
+      "{r2}",
+      "lado.center",
+      "torre.solo.lineUpWait"
+    ],
+    "torre.holdShort": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.holdShort"
+    ],
+    "torre.goAround": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.goAround"
     ]
   }
 }

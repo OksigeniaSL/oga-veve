@@ -34,9 +34,11 @@ import {
 } from "./flight/tiers";
 import { AIRCRAFT, PYKASU, type AircraftConfig } from "./flight/aircraft";
 import { InputManager } from "./flight/input";
-import { claveDeTorre } from "./audio/torre";
+import { claveDeTorre, NOMBRA_LA_PISTA } from "./audio/torre";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
+  matriculaDe,
+  pistaEnPiezas,
   rellenoDe,
   sortearIndicativo,
   type Indicativo,
@@ -1079,10 +1081,25 @@ export class Game {
    * Ver `flight/matricula.ts`.
    */
   private indicativoDelOtro: Indicativo = sortearIndicativo(null);
+  /**
+   * Y **el tuyo**, que no se sortea: es el que lleva pintado tu avión.
+   *
+   * Se pidió así —«al menos una matrícula para cada avión»— y es lo que hace
+   * que la radio deje de ser ruido de fondo: cuando la torre dice tu nombre, te
+   * está hablando a vos. Ver `flight/matricula.ts`.
+   */
+  private get miIndicativo(): Indicativo {
+    return matriculaDe(this.aircraft.id, this.scenario.aerodrome?.id);
+  }
 
   /** Y el banco de pruebas necesita verlo. Ver `sondas.ts`. */
   get indicativoDeLaRadio(): Indicativo {
     return this.indicativoDelOtro;
+  }
+
+  /** La matrícula de tu avión, para el banco. Ver `miIndicativo`. */
+  get miMatricula(): Indicativo {
+    return this.miIndicativo;
   }
 
   cameraMode: CameraMode = vistaRecordada();
@@ -3014,6 +3031,50 @@ export class Game {
   }
 
   /**
+   * Una llamada de la torre, **con tu matrícula y el número de pista**.
+   *
+   * La fraseología estaba grabada entera y suelta —«cleared for take-off» y ya
+   * está—, o sea una torre que nunca te llama por tu nombre, que no es una
+   * torre: es un altavoz. Ahora se monta: las cinco letras de tu matrícula, la
+   * pista en uso cifra a cifra —y de qué lado, donde hay dos paralelas— y la
+   * orden. «Zulu Papa Yankee Victor Alfa, runway zero three left, cleared for
+   * take-off.»
+   *
+   * Y el número de pista no es un adorno: es **lo único que hay escrito en el
+   * suelo de un aeropuerto**, y está pintado justo delante del morro mientras
+   * la torre lo dice. A los cuatro años eso son dos cifras que aparecen siempre
+   * en el mismo sitio; a los diez, un rumbo. Ver `cabeceraEnUso`.
+   *
+   * Si la receta no se puede montar —falta una pieza, no hay cabecera— se pide
+   * igual y el pack ya decide: la dice entera la voz del navegador antes que
+   * quedarse a medias. Ver `recetaDe`.
+   */
+  private porRadio(dice: string, urgencia: Urgencia = "normal"): void {
+    const base = claveDeTorre(dice);
+    if (!base) return;
+    const yo = this.miIndicativo;
+    const relleno: Record<string, string> = rellenoDe(yo);
+    let clave = base;
+    const pista = NOMBRA_LA_PISTA.has(base)
+      ? pistaEnPiezas(cabeceraEnUso(this.scenario))
+      : null;
+    if (pista) {
+      Object.assign(relleno, pista.relleno);
+      clave = `${base}${pista.sufijo}`;
+    }
+    /*
+     * Y el texto va montado también, no solo la receta: es lo que dice la voz
+     * del navegador cuando no hay pack, y lo que se lee si algún día esto sale
+     * en una tarjeta. Que el respaldo diga menos que la grabación es de las
+     * cosas que hacen que un fallo de audio parezca un fallo del juego.
+     */
+    const entero = pista
+      ? `${yo.dicho}, runway ${pista.dicho}, ${dice}`
+      : `${yo.dicho}, ${dice}`;
+    this.torre.decir(entero, clave, urgencia, relleno);
+  }
+
+  /**
    * La luz de la torre, **y su voz**.
    *
    * Un solo sitio, y a propósito: la lámpara se encendía desde cuatro puntos
@@ -3077,8 +3138,7 @@ export class Game {
         : rojaDice === "alAire"
           ? "go around, runway occupied"
           : "hold short of the runway";
-    const suClave = claveDeTorre(enRadio);
-    if (suClave) this.torre.decir(enRadio, suClave, urgencia);
+    this.porRadio(enRadio, urgencia);
   }
 
   /**
@@ -5764,9 +5824,7 @@ export class Game {
          * número de pista, y no sonó nunca: al entrar en «alineando» el avión
          * ya viene rodando desde la calle. Medido en Pettirossi.
          */
-        const clave =
-          vista.fase === "final" ? claveDeTorre("cleared to land") : null;
-        if (clave) this.torre.decir("cleared to land", clave);
+        if (vista.fase === "final") this.porRadio("cleared to land");
       }
       /*
        * **Dejar la pista libre es una victoria, y hay que decirlo.**

@@ -51,7 +51,8 @@ describe("el otro avión", () => {
     const radio = new Radio(() => 0.5);
     // Justo para las cinco, y ni un segundo para empezar otra vuelta.
     const oido = escuchar(radio, UN_VUELO);
-    expect(oido).toEqual([...LLAMADAS]);
+    // De día, la primera lleva los buenos días delante. Ver `CON_SALUDO`.
+    expect(oido).toEqual(["otro.buenosDias", ...LLAMADAS.slice(1)]);
   });
 
   it("y después se calla un buen rato antes de volver a empezar", () => {
@@ -66,6 +67,10 @@ describe("el otro avión", () => {
     const radio = new Radio(() => 0.5);
     const noche = { ...TRANQUILO, deDia: false };
     const oido = escuchar(radio, ESPERA_PRIMERA + 4, noche);
+    /*
+     * Y **dice la llamada igual**, sin el saludo. Antes se saltaba la llamada
+     * entera, así que de noche nadie anunciaba que salía a la cabecera.
+     */
     expect(oido).toEqual(["otro.rodando"]);
   });
 

@@ -188,6 +188,54 @@ const FONETICO = [
   "Zulu",
 ];
 
+/**
+ * Y las cifras, que en radio no se dicen como en la calle.
+ *
+ * «Niner» y no «nine», porque por una radio con ruido «nine» y «five» se
+ * confunden y en alemán *nein* significa que no. Es de las cosas que suenan a
+ * capricho hasta que se sabe por qué, y entonces ya no se olvidan. Con diez
+ * piezas se dice el número de cualquier pista del mundo.
+ */
+const CIFRAS = [
+  ["zero", "0"],
+  ["one", "1"],
+  ["two", "2"],
+  ["three", "3"],
+  ["four", "4"],
+  ["five", "5"],
+  ["six", "6"],
+  ["seven", "7"],
+  ["eight", "8"],
+  ["niner", "9"],
+];
+
+/**
+ * Lo que dice la torre **sin el indicativo ni el número de pista**.
+ *
+ * Igual que con el otro avión: pegados dentro de la grabación no se pueden
+ * cambiar, y una torre que nunca te llama por tu nombre no es una torre, es un
+ * altavoz. Separados, la receta los monta.
+ */
+const TORRE_SOLO = [
+  ["torre.solo.runway", "runway", "antes del número de pista"],
+  /*
+   * Y el lado, para los aeropuertos con dos pistas paralelas: Gran Canaria
+   * tiene la 03L y la 03R, y decir «zero three» a secas allí es no decir cuál.
+   */
+  ["lado.left", "left", "pista izquierda, donde hay dos paralelas"],
+  ["lado.right", "right", "pista derecha"],
+  ["lado.center", "center", "y la del medio, si algún día hay tres"],
+  ["torre.solo.clearedTakeoff", "cleared for take-off", "el permiso"],
+  ["torre.solo.clearedLand", "cleared to land", "el de llegada"],
+  [
+    "torre.solo.goAround",
+    "go around, runway occupied",
+    "la pista está ocupada",
+  ],
+  ["torre.solo.holdShort", "hold short of the runway", "pará en la doble raya"],
+  ["torre.solo.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
+];
+
 /** Y la pieza de cada letra, que es como se llama su fichero. */
 const piezaFonetica = (letra) =>
   `fonetico.${letra.toLowerCase().replace("-", "")}`;
@@ -315,6 +363,36 @@ for (const letra of FONETICO) {
 }
 for (const [id, texto, para] of OTRO_SOLO) {
   filas.push({ id, voz: "otro", idioma: "es", texto, para });
+  total += texto.length;
+}
+/*
+ * **Y la torre también monta.** El alfabeto y las cifras, para poder llamar a
+ * cada uno por su matrícula y nombrar la pista en uso. Es inglés aeronáutico y
+ * se dice igual en Tenerife que en Asunción, así que lo graba **una** voz y
+ * vale para los dos campos. Ver `i18n/habla.ts`.
+ */
+for (const letra of FONETICO) {
+  filas.push({
+    id: piezaFonetica(letra),
+    voz: "torre",
+    idioma: "en",
+    texto: letra,
+    para: "una letra de la matrícula",
+  });
+  total += letra.length;
+}
+for (const [palabra, cifra] of CIFRAS) {
+  filas.push({
+    id: `cifra.${cifra}`,
+    voz: "torre",
+    idioma: "en",
+    texto: palabra,
+    para: "una cifra del número de pista",
+  });
+  total += palabra.length;
+}
+for (const [id, texto, para] of TORRE_SOLO) {
+  filas.push({ id, voz: "torre", idioma: "en", texto, para });
   total += texto.length;
 }
 

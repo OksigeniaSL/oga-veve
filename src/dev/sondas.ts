@@ -42,7 +42,7 @@ import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
 import { leerGafas } from "../flight/gafas";
 import { carreraHastaVr, distanciaDeAterrizaje } from "../flight/carrera";
 import { InstructorGrabado } from "../audio/instructor-grabado";
-import { rellenoDe } from "../flight/matricula";
+import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
 
 export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
@@ -403,11 +403,24 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       }
       return salida;
     },
-    indicativo: () => ({
-      dicho: juego.indicativoDeLaRadio.dicho,
-      matricula: juego.indicativoDeLaRadio.matricula,
-      relleno: rellenoDe(juego.indicativoDeLaRadio),
-    }),
+    indicativo: () => {
+      const otro = juego.indicativoDeLaRadio;
+      const yo = juego.miMatricula;
+      const pista = pistaEnPiezas(cabeceraEnUso(juego.scenario));
+      return {
+        // El otro avión de la frecuencia, que se sortea por vuelo.
+        dicho: otro.dicho,
+        matricula: otro.matricula,
+        relleno: rellenoDe(otro),
+        // Y el tuyo, que es el que lleva pintado tu avión y no cambia.
+        yo: yo.matricula,
+        yoDicho: yo.dicho,
+        // Con lo que hace falta para montar una llamada de la torre entera.
+        deTorre: { ...rellenoDe(yo), ...(pista?.relleno ?? {}) },
+        pista: pista?.dicho ?? null,
+        sufijo: pista?.sufijo ?? "",
+      };
+    },
     /** Si está puesta la pantalla de fin de vuelo. Para el banco. */
     finDeVuelo: () => juego.hud.finPuesto,
     /**

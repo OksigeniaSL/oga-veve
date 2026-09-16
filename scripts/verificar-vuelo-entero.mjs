@@ -792,9 +792,22 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   let relojAhora = veces;
   const relojPara = (fase) => {
-    const enLaCarrera = ["alineando", "despegando", "comprometido"].includes(
-      fase,
-    );
+    /*
+     * **Desde el punto de espera, no desde «alineando».**
+     *
+     * Si se espera a que la fase sea de despegue para bajar el reloj, ya es
+     * tarde: a doce, la carrera de una avioneta cabe en un fotograma y **no cae
+     * ni un muestreo dentro**, así que el banco no veía ninguna de las tres
+     * fases y decía «no canta V1» donde sí la canta. En Pettirossi, además, se
+     * sale con back-taxi, y ese medio minuto también hay que verlo.
+     */
+    const enLaCarrera = [
+      "autorizado",
+      "back-taxi",
+      "alineando",
+      "despegando",
+      "comprometido",
+    ].includes(fase);
     const quiere = enLaCarrera ? Math.min(2, veces) : veces;
     if (quiere !== relojAhora) {
       relojAhora = quiere;
@@ -1756,7 +1769,13 @@ const DE_UN_VUELO = [
 ];
 comprobar(
   "la torre dice la fraseología del vuelo",
-  DE_UN_VUELO.every((c) => vuelo.torreDijo?.includes(c)),
+  /*
+   * Sin el lado: donde hay pistas paralelas la misma orden lleva su `.L` o su
+   * `.R`, que es la que nombra cuál de las dos. Ver `porRadio`.
+   */
+  DE_UN_VUELO.every((c) =>
+    (vuelo.torreDijo ?? []).some((d) => d.replace(/\.[LCR]$/, "") === c),
+  ),
   `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
   "cinco frases grabadas y horneadas que no las pedía nadie",
 );
