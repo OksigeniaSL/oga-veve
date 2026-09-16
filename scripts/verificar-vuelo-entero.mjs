@@ -315,8 +315,27 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   const subirDeVerdad = (s) => {
     const base = palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA);
     const falta = Math.max(0, 3 - s.verticalSpeed);
-    const extra =
-      s.airspeed > VELOCIDAD_DE_SUBIDA ? Math.min(0.25, falta * 0.05) : 0;
+    /*
+     * **Y el empujón entra en cuanto hay margen de pérdida, no cuando ya se ha
+     * alcanzado la velocidad de subida.**
+     *
+     * Pedía `airspeed > VELOCIDAD_DE_SUBIDA`, que es la de rotación más un
+     * quince por ciento. O sea que el avión rotaba y **se quedaba nivelado a
+     * cinco metros acelerando** hasta alcanzarla: medido en Los Rodeos con el
+     * bimotor, a setecientos treinta metros de la cabecera seguía a 5,7 m sobre
+     * la cota del campo. Eso es una pendiente del 0,8 %; un bimotor sube al 6 o
+     * al 10 %.
+     *
+     * Y no es la técnica: se rota, se comprueba régimen positivo y se sube.
+     * Nadie mantiene cinco metros durante setecientos, y quien lo hace se lleva
+     * por delante lo que haya —fue así como apareció el choque de #169—.
+     *
+     * Un cinco por ciento sobre la de rotación es margen de pérdida de sobra
+     * para levantar el morro, y por debajo de eso el empujón sigue sin entrar,
+     * que es lo que evita rotar demasiado pronto.
+     */
+    const conMargen = s.airspeed > (suyas.rotacion ?? 28) * 1.05;
+    const extra = conMargen ? Math.min(0.25, falta * 0.05) : 0;
     return Math.max(-0.35, Math.min(0.5, base + extra));
   };
 
@@ -750,6 +769,19 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * el destello y el canto no salen nunca y no hay forma de saber por qué.
    */
   let masRapidoEnPista = 0;
+  /*
+   * **Y con qué pendiente sube después de rotar.**
+   *
+   * Es lo que decide si un despegue libra lo que hay delante, y no se medía.
+   * El piloto del banco subía al 0,8 % —nivelado a cinco metros acelerando— y
+   * el síntoma que se veía era otro: un choque contra un bulto a setecientos
+   * metros de la cabecera. Ver #169.
+   *
+   * Se mide donde importa: desde que las ruedas dejan el suelo hasta los cien
+   * metros sobre la cota de la pista, que es el primer minuto del vuelo.
+   */
+  let subidaDesde = null;
+  let pendiente = null;
   let seSalioEnPista = 0;
   let gasEnLaCarrera = 0;
   const verV1 = new Set();
@@ -932,6 +964,20 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * carrera de despegue. Sin mirar si está en el suelo, que la condición del
      * juego tampoco lo mira.
      */
+    if (
+      !s.onGround &&
+      !subidaDesde &&
+      ["despegando", "comprometido"].includes(fase)
+    )
+      subidaDesde = { x: s.position.x, z: s.position.z, y: s.position.y };
+    if (subidaDesde && pendiente === null) {
+      const gana = s.position.y - subidaDesde.y;
+      const anda = Math.hypot(
+        s.position.x - subidaDesde.x,
+        s.position.z - subidaDesde.z,
+      );
+      if (gana > 100) pendiente = anda > 0 ? gana / anda : null;
+    }
     if (["alineando", "despegando", "comprometido"].includes(fase)) {
       const ejes = o.ejesDePista?.();
       if (s.onRunway) {
@@ -1732,6 +1778,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     vueltaMetros: Math.round(vueltaMetros),
     largoDeLaRuta: Math.round(largoDeLaRuta),
     ortofoto: o.ortofoto?.() ?? null,
+    pendiente: pendiente === null ? null : +(pendiente * 100).toFixed(1),
     verBackTaxi: (() => {
       const v = [...verBackTaxi];
       return v.length > 6
@@ -1834,6 +1881,24 @@ if (CON_MODELO.has(AVION)) {
  * ven igual — terreno liso—. Por eso se comprueba aquí, escenario por
  * escenario, en vez de fiarlo a que alguien mire.
  */
+/*
+ * **Y se sube después de rotar, no se acelera a ras de suelo.**
+ *
+ * Un avión ligero sube al seis por ciento largo y uno de línea al cinco; por
+ * debajo del tres, lo que hay delante empieza a importar. Se midió persiguiendo
+ * un choque contra un bulto a setecientos metros de la cabecera de Los Rodeos:
+ * el avión llevaba 730 m recorridos y 5,7 m de altura, o sea **0,8 %**. Ver
+ * #169.
+ */
+comprobar(
+  "y sube de verdad después de rotar",
+  vuelo.pendiente !== null && vuelo.pendiente >= 3,
+  vuelo.pendiente === null
+    ? "no llegó a subir cien metros"
+    : `${vuelo.pendiente} % desde que suelta el suelo hasta los cien metros`,
+  "subir al uno por ciento es acelerar a ras de suelo, y ahí es donde están los bultos",
+);
+
 comprobar(
   "el escenario vuela sobre fotografía y no sobre terreno pelado",
   !!vuelo.ortofoto,
