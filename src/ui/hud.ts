@@ -1304,7 +1304,17 @@ export class Hud {
        * y por eso Vr espera a que se apague el destello de V1 en vez de
        * salir encima. Ver `DURA_EL_DESTELLO`.
        */
-      despegando &&
+      /*
+       * **Y Vr no vuelve a preguntar si esto sigue siendo una carrera.**
+       *
+       * Lo hacía, y en un reactor eso se traga el aviso: en el 747 la de
+       * decisión y la de rotación van a cinco nudos una de otra —ochenta y uno
+       * y ochenta y seis metros por segundo, medido— o sea poco más de un
+       * segundo, y el destello de V1 dura uno y medio. Cuando el destello se
+       * apaga, el avión ya está en el aire y la carrera ha terminado: Vr se
+       * perdía siempre. Haber cantado V1 **ya dice** que esto era un despegue;
+       * lo único que falta es que la aguja pase.
+       */
       this.dijoV1 &&
       !this.dijoVr &&
       ias >= this.vr &&

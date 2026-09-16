@@ -1290,17 +1290,28 @@ export class Game {
     });
 
     /*
-     * El plan de vuelo, si este aeródromo da para uno **y la lección lo pide**.
+     * El plan de vuelo, si este aeródromo da para uno.
      *
      * Va aquí, justo detrás del terreno, porque necesita la cota ya aplanada
      * para pintar la ruta a ras de asfalto.
      *
-     * Y lo de la lección no es un detalle: quien eligió «dar una vuelta» no
-     * quiere una raya verde, una diana ni una doble raya. Antes salían siempre,
-     * y sin haberlas pedido son cosas raras en el suelo: «las señales de
-     * aterrizaje en principio no se sabe para qué está eso ahí».
+     * **Y se monta siempre, aunque la lección no quiera que se vea.**
+     *
+     * Estaba atado a `guiaEnTierra`, o sea que en «dar una vuelta» no había
+     * plan — y sin plan no hay **fases**, que es otra cosa muy distinta de una
+     * raya verde en el suelo. De las fases cuelga medio juego: el aviso de V1 y
+     * de Vr, la megafonía de la comandante, la lámpara de la torre y los
+     * silencios de la radio. Todo eso se quedaba mudo en esa lección sin que
+     * nada fallara, y se oyó jugando: «¿por qué no veo V1 cuando despego con el
+     * 747?», «¿por qué no oigo a la comandante?». Las dos cosas eran la misma.
+     *
+     * Lo que la lección apaga es **el dibujo**: la raya verde, la diana, la
+     * doble raya y la gente que te espera. Eso sí es un estorbo para quien solo
+     * quiere dar una vuelta: «las señales de aterrizaje en principio no se sabe
+     * para qué está eso ahí». Saber en qué fase del vuelo estás no estorba a
+     * nadie.
      */
-    if (this.scenario.aerodrome && this.leccion.guiaEnTierra) {
+    if (this.scenario.aerodrome) {
       this.plan = new PlanDeVuelo(
         this.scenario.aerodrome,
         this.scenario.runway,
@@ -1308,13 +1319,16 @@ export class Game {
         this.aircraft,
       );
       this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
+    }
+    if (this.plan && this.leccion.guiaEnTierra) {
       this.scene.add(this.plan.grupo);
       /*
-       * Y con el plan, quien te espera al final de él.
+       * Y con la guía, quien te espera al final de ella.
        *
-       * Va atado al plan y no al aeródromo porque **sin ruta no hay puesto al
-       * que volver**: quien eligió dar una vuelta no tiene a nadie esperándole,
-       * y una persona plantada en la plataforma sin motivo es un adorno raro.
+       * Va atado al dibujo y no al aeródromo porque **sin ruta pintada no hay
+       * puesto al que volver**: quien eligió dar una vuelta no tiene a nadie
+       * esperándole, y una persona plantada en la plataforma sin motivo es un
+       * adorno raro.
        */
       this.scene.add(this.senalero.grupo);
       this.scene.add(this.sigueme.grupo);
@@ -3228,7 +3242,26 @@ export class Game {
         : rojaDice === "alAire"
           ? "go around, runway occupied"
           : "hold short of the runway";
-    this.porRadio(enRadio, urgencia);
+    /*
+     * **Pero no en los dos peldaños de abajo.**
+     *
+     * La pareja castellano + inglés es la lección, y la lección tiene su edad:
+     * a los cuatro años el inglés no enseña nada y lo que hace es decir dos
+     * veces lo mismo cada vez que la torre abre la boca. Se oyó así: «¿por qué
+     * se oye la locución en español y justo después lo mismo pero en inglés
+     * siempre?».
+     *
+     * En Guyrami y en Tukã se dice lo que hay que hacer, y ya. De Taguató para
+     * arriba —que es donde ya hay cifras y rumbos en pantalla— se dice además
+     * cómo se llama eso en una radio de verdad, que es lo que servirá a los
+     * diez. La escalera de peldaños es exactamente para esto.
+     */
+    if (
+      this.tier.instruments === "numeric" ||
+      this.tier.instruments === "full"
+    ) {
+      this.porRadio(enRadio, urgencia);
+    }
   }
 
   /**
@@ -3471,7 +3504,8 @@ export class Game {
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
     // dónde aparece.
-    const rodando = this.plan?.reiniciar() ?? false;
+    const rodando =
+      this.plan?.reiniciar(this.leccion.arranque === "pista") ?? false;
     this.colocarSenalero();
     const start = this.startPosition();
     const heading = rodando
@@ -3974,8 +4008,11 @@ export class Game {
       this.aircraft,
     );
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
-    this.scene.add(this.plan.grupo);
-    this.colocarSenalero();
+    // Y se vuelve a enseñar solo si esta lección lo enseñaba. Ver dónde se monta.
+    if (this.leccion.guiaEnTierra) {
+      this.scene.add(this.plan.grupo);
+      this.colocarSenalero();
+    }
   }
 
   /**
