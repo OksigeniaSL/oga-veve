@@ -71,3 +71,19 @@ export function puntoDePista(
   const [fx, fz] = delante(runway.heading);
   return [runway.x - fx * atras, runway.z - fz * atras];
 }
+
+/**
+ * El rumbo que lleva de un punto a otro, en radianes.
+ *
+ * Es la inversa exacta de `delante`, y está aquí por la misma razón que todo
+ * lo demás de este fichero: escrita a mano sale `atan2(dz, dx)` y da un rumbo
+ * girado noventa grados, que con pistas a 90° acierta de casualidad.
+ */
+export function rumboHacia(
+  desdeX: number,
+  desdeZ: number,
+  hastaX: number,
+  hastaZ: number,
+): number {
+  return Math.atan2(hastaX - desdeX, -(hastaZ - desdeZ));
+}

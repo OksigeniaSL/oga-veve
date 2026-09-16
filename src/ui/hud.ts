@@ -25,16 +25,15 @@
  */
 
 import type { FlightState } from "../flight/model";
-import { indicatedAirspeed } from "../flight/atmosphere";
+import { indicatedAirspeed, velocidadDelSonido } from "../flight/atmosphere";
 import { t, type TranslationKey } from "../i18n";
 import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
-import { SixPack } from "./six-pack";
-import { Motores, markupDeMotores } from "./motores";
-import { cuadroDe, type Cuadro } from "./cuadro";
+import { Tablero } from "./tablero";
+import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
-import { PYKASU, type AircraftConfig } from "../flight/aircraft";
+import { PYKASU, esDeChorro, type AircraftConfig } from "../flight/aircraft";
 import { Pictogramas, HELICE_MAS, HELICE_MENOS } from "./pictogramas";
 import { Senal } from "./senal";
 import { Mapa } from "./mapa";
@@ -229,19 +228,15 @@ export class Hud {
   private escalera: Peldano = "cifra";
 
   /**
-   * El cuadro de mandos clásico. Solo existe en el peldaño más alto: seis
-   * esferas son ruido para quien todavía está aprendiendo a mantener el
-   * rumbo, y son *la cabina* para quien ya vuela.
-   */
-  private readonly sixPack = new SixPack();
-  private readonly motores = new Motores();
-  /**
-   * El cuadro de mandos del avión de hoy. Ver `cuadro.ts`.
+   * El cuadro de mandos. Solo existe en el peldaño más alto: seis esferas son
+   * ruido para quien todavía está aprendiendo a mantener el rumbo, y son *la
+   * cabina* para quien ya vuela.
    *
-   * Lo pone `setAeronave` y lo miran el marcado y las agujas. Empieza en el
-   * entrenador porque el juego empieza con él.
+   * Y no es el mismo cuadro en los seis aviones: un pistón lleva relojes, el
+   * turbohélice cristal y los reactores la cabina de línea entera. Ver
+   * `tablero.ts` y `familia.ts`.
    */
-  private cuadro: Cuadro = cuadroDe(PYKASU);
+  private readonly tablero = new Tablero();
   /**
    * Cómo habla la torre de este aeródromo. Ver `i18n/habla.ts`.
    *
@@ -741,7 +736,7 @@ export class Hud {
         -->
         ${
           panel
-            ? `<div class="cuadro">${markupDeMotores(this.cuadro)}${SixPack.markup(this.cuadro)}</div>`
+            ? `<div class="cuadro">${this.tablero.markup(this.ficha)}</div>`
             : ""
         }
       </div>
@@ -953,9 +948,7 @@ export class Hud {
     });
 
     this.badge.textContent = this.badgeText;
-    this.sixPack.ponerCuadro(this.cuadro);
-    this.sixPack.bind(this.root);
-    this.motores.bind(this.root);
+    this.tablero.bind(this.root, this.ficha);
     this.pictos.bind(this.root);
     this.medirLaBarra();
     this.senal.bind(this.root);
@@ -972,11 +965,16 @@ export class Hud {
    * los otros.
    */
   private reserveForPanel(): void {
-    const panel = this.root.querySelector<HTMLElement>('[data-hud="sixpack"]');
-    this.root.style.setProperty(
-      "--panel-alto",
-      `${panel ? panel.offsetHeight + 10 : 0}px`,
-    );
+    /*
+     * Se mide con la caja del dibujo y no con `offsetHeight`: el cuadro es un
+     * SVG, y un SVG no tiene `offsetHeight` — da `undefined`, y `undefined +
+     * 10` es `NaN`, que en CSS no es cero sino «esta propiedad no existe». El
+     * cartel del tutor se habría plantado encima de las esferas sin que nada
+     * fallara por ningún sitio.
+     */
+    const panel = this.root.querySelector('[data-hud="tablero"]');
+    const alto = panel ? panel.getBoundingClientRect().height : 0;
+    this.root.style.setProperty("--panel-alto", `${alto ? alto + 10 : 0}px`);
   }
 
   /**
@@ -1075,6 +1073,24 @@ export class Hud {
     enDespegue = true,
     /** Si la reversa está metida. Se enseña, porque es el motor al revés. */
     reversa = false,
+    /**
+     * Lo que el cuadro de mandos necesita y el HUD no tenía de antes: los
+     * flaps, adónde se va y de dónde sopla. Va en un solo objeto porque son
+     * datos del **cuadro**, no del aviso ni del acelerador, y engordar la
+     * lista de argumentos con tres más era la vía rápida a equivocarse de
+     * posición al llamar.
+     */
+    mandos?: {
+      readonly flaps: number;
+      readonly objetivo: {
+        readonly rumbo: number;
+        readonly distancia: number;
+      } | null;
+      readonly viento: {
+        readonly desde: number;
+        readonly nudos: number;
+      } | null;
+    },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
     // la que marcaría el instrumento de un avión real.
@@ -1323,21 +1339,42 @@ export class Hud {
     const bank = bankAngleOf(state.orientation);
     const pitch = pitchAngleOf(state.orientation);
 
-    if (this.motores.present) {
-      this.motores.update(this.ficha, throttle, engineOn);
-    }
-
-    if (this.sixPack.present) {
-      this.sixPack.update(
-        state,
-        // Nudos y pies, siempre, sin pasar por el selector de unidades: un
-        // anemómetro de verdad marca nudos aunque el resto de la pantalla
-        // esté en kilómetros por hora. La esfera no negocia.
-        ias * 1.94384,
-        state.position.y * 3.28084,
-        state.verticalSpeed * 196.85,
-        bank,
-        pitch,
+    if (this.tablero.presente) {
+      /*
+       * Nudos y pies, siempre, sin pasar por el selector de unidades: un
+       * anemómetro de verdad marca nudos aunque el resto de la pantalla esté
+       * en kilómetros por hora. El instrumento no negocia.
+       */
+      const nudos = ias * 1.94384;
+      this.tablero.medirAceleracion(nudos, dt);
+      this.tablero.update(
+        {
+          estado: state,
+          nudos,
+          pies: state.position.y * 3.28084,
+          fpm: state.verticalSpeed * 196.85,
+          alabeo: bank,
+          cabeceo: pitch,
+          sobreElSuelo:
+            Math.hypot(state.velocity.x, state.velocity.z) * 1.94384,
+          mach: esDeChorro(this.ficha)
+            ? state.airspeed / velocidadDelSonido(state.position.y)
+            : null,
+          motores: Array.from({ length: this.ficha.motores }, () =>
+            regimen(this.ficha, throttle, engineOn),
+          ),
+          flaps: mandos?.flaps ?? 0,
+          reversa,
+          v1: decisionSpeed * 1.94384,
+          vr: this.vr * 1.94384,
+          vref: this.vref * 1.94384,
+          objetivo: mandos?.objetivo ?? null,
+          viento: mandos?.viento ?? null,
+          // La pérdida: marco rojo alrededor del horizonte, que es donde mira
+          // quien ya está en apuros. Ver `cinta.ts` para el parpadeo.
+          perdida: !state.onGround && state.alpha > this.ficha.aero.alphaStall,
+        },
+        dt,
       );
     }
 
@@ -1923,7 +1960,6 @@ export class Hud {
     this.vr = vr;
     if (ficha && ficha.id !== this.ficha.id) {
       this.ficha = ficha;
-      this.cuadro = cuadroDe(ficha);
       this.render();
     }
   }

@@ -17,11 +17,28 @@
  * aguja enseña tendencia**. De un vistazo se ve no solo cuánto sino hacia
  * dónde va, y eso es exactamente por lo que un avión de verdad las lleva
  * después de setenta años de poder poner números.
+ *
+ * ## Y por qué esto ya no es el cuadro entero
+ *
+ * Las seis esferas son **la familia de pistón**, no la cabina de los seis
+ * aviones. Un turbohélice de línea y un reactor no llevan relojes, y ponérselos
+ * era enseñar una cabina que no existe: «que cada aeronave parezca lo que es,
+ * que un 747 no parezca un juguete». Ver `familia.ts` para el reparto y
+ * `tablero.ts` para quien coloca esto dentro del cuadro.
+ *
+ * Lo que **no** cambia entre familias es dónde está cada cosa: en una avioneta
+ * son seis esferas y en un Boeing son seis regiones de una pantalla, en las
+ * mismas posiciones relativas. Ese parecido es el hallazgo que se lleva quien
+ * aprende aquí, y la retícula entera está hecha para protegerlo.
  */
 
 import type { FlightState } from "../flight/model";
 import { cuadroDe, type Cuadro } from "./cuadro";
+import { BANDA, cajaDe } from "./familia";
 import { PYKASU } from "../flight/aircraft";
+
+/** Lo que se dejan entre sí dos esferas vecinas, en píxeles del cuadro. */
+const SEPARA = 16;
 
 /** Recorrido de una aguja de esfera completa, en grados. */
 const SWEEP = 300;
@@ -42,18 +59,62 @@ export class SixPack {
    */
   private cuadro: Cuadro = cuadroDe(PYKASU);
 
-  /** Devuelve el marcado completo, para que el HUD lo inserte. */
-  static markup(c: Cuadro): string {
-    return `
-      <div class="seispack" data-hud="sixpack" role="group" aria-label="Instrumentos">
-        ${dial("asi", "IAS", asiFace(c), '<g data-needle="asi">' + needle(38) + "</g>")}
-        ${dial("ai", "ATT", aiFace(), "")}
-        ${dial("alt", "ALT", altFace(), '<g data-needle="alt-thousands">' + needle(24) + '</g><g data-needle="alt-hundreds">' + needle(40) + "</g>")}
-        ${dial("tc", "T/C", tcFace(), "")}
-        ${dial("dg", "HDG", '<g data-needle="dg-card">' + dgCard() + "</g>", dgAircraft())}
-        ${dial("vsi", "V/S", vsiFace(), '<g data-needle="vsi">' + needle(38) + "</g>")}
-      </div>
-    `;
+  /**
+   * El grupo de las seis esferas, ya colocado dentro del cuadro.
+   *
+   * Devuelve un `<g>` de SVG y no una fila de cajas HTML: **el cuadro entero
+   * es un solo dibujo que se escala de una pieza**, y por eso ya no hay forma
+   * de que se descentre. Cuando eran cajas, cada avión colocaba las suyas como
+   * podía y el resultado era el «esto no está centrado ni aunque venga Cristo
+   * y me lo diga».
+   *
+   * Dónde cae cada esfera **sale del reparto**, no de seis números escritos
+   * aquí. Es la misma cuenta que comprueba `familia.test.ts`, y hacerla dos
+   * veces es la forma segura de que un día digan cosas distintas: la columna
+   * del medio tiene que caer clavada en el centro de la pantalla, porque el
+   * horizonte es el ancla de todo el cuadro.
+   */
+  static grupo(c: Cuadro): string {
+    const caja = cajaDe("esferas", "seispack");
+    // Tres columnas de esferas con su separación: el diámetro sale de ahí.
+    const diametro = (caja.ancho - SEPARA * 2) / 3;
+    const radio = diametro / 2;
+    const columnas = [0, 1, 2].map(
+      (k) => caja.x + radio + k * (diametro + SEPARA),
+    );
+    const filas = [0, 1].map((k) => BANDA.y + radio + k * (diametro + SEPARA));
+    const sitio = (i: number) => ({
+      x: columnas[i % 3]!,
+      y: filas[Math.floor(i / 3)]!,
+      radio,
+    });
+    const esferas: Array<[string, string, string, string]> = [
+      ["asi", "IAS", asiFace(c), '<g data-needle="asi">' + needle(38) + "</g>"],
+      ["ai", "ATT", aiFace(), ""],
+      [
+        "alt",
+        "ALT",
+        altFace(),
+        '<g data-needle="alt-thousands">' +
+          needle(24) +
+          '</g><g data-needle="alt-hundreds">' +
+          needle(40) +
+          "</g>",
+      ],
+      ["tc", "T/C", tcFace(), ""],
+      [
+        "dg",
+        "HDG",
+        '<g data-needle="dg-card">' + dgCard() + "</g>",
+        dgAircraft(),
+      ],
+      ["vsi", "V/S", vsiFace(), '<g data-needle="vsi">' + needle(38) + "</g>"],
+    ];
+    return `<g data-hud="sixpack">${esferas
+      .map(([id, rotulo, face, overlay], i) =>
+        dial(id, rotulo, face, overlay, sitio(i)),
+      )
+      .join("")}</g>`;
   }
 
   /** Con qué avión se vuela ahora. Se llama antes de `bind`. */
@@ -145,19 +206,66 @@ function dial(
   label: string,
   face: string,
   overlay: string,
+  donde: { x: number; y: number; radio: number },
 ): string {
+  /*
+   * El dibujo vive en un cuadrado de cien y se escala a lo que mida la esfera.
+   * Así las medidas de dentro siguen siendo las de siempre y no hay que
+   * retocar ni una aguja al cambiar el reparto.
+   */
+  const escala = donde.radio / 50;
   return `
-    <div class="esfera" data-dial="${id}">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <circle cx="50" cy="50" r="48" class="esfera__caja" />
-        <circle cx="50" cy="50" r="43" class="esfera__fondo" />
-        ${face}
-        ${overlay}
-        <circle cx="50" cy="50" r="3.4" class="esfera__buje" />
-      </svg>
-      <span class="esfera__rotulo">${label}</span>
-    </div>
+    <g class="esfera" data-dial="${id}"
+       transform="translate(${donde.x - donde.radio} ${donde.y - donde.radio}) scale(${escala})">
+      ${empotrada()}
+      ${face}
+      ${overlay}
+      <circle cx="50" cy="50" r="3.4" class="esfera__buje" />
+      ${reflejo()}
+      <text x="50" y="86" class="esfera__rotulo">${label}</text>
+    </g>
   `;
+}
+
+/**
+ * El anillo mecanizado, los tornillos y el filo de luz.
+ *
+ * Es lo que convierte una esfera dibujada en una esfera **empotrada**. Un
+ * instrumento de verdad va metido en un agujero del salpicadero con un aro
+ * alrededor y cuatro tornillos, y cuando eso falta el panel entero parece una
+ * pegatina sobre una losa negra — que es justo lo que se dijo de este.
+ */
+function empotrada(): string {
+  const tornillos = [
+    [50, 6],
+    [94, 50],
+    [50, 94],
+    [6, 50],
+  ]
+    .map(
+      ([x, y]) =>
+        `<circle cx="${x}" cy="${y}" r="1.5" class="esfera__tornillo" />`,
+    )
+    .join("");
+  return `
+    <circle data-fondo="esfera" cx="50" cy="50" r="49" class="esfera__caja" />
+    <circle cx="50" cy="50" r="45" class="esfera__filo" />
+    <circle cx="50" cy="50" r="43" class="esfera__fondo" />
+    ${tornillos}
+  `;
+}
+
+/**
+ * El reflejo del cristal. **Fijo, siempre el mismo.**
+ *
+ * Un brillo que se mueve sin que se mueva el sol delata el truco al instante;
+ * uno quieto, arriba a la izquierda, es lo que hace que se vea que hay un
+ * cristal delante. Es de las pocas cosas del cuadro que no cambian nunca, y
+ * esa es la gracia.
+ */
+function reflejo(): string {
+  return `<path class="esfera__reflejo"
+    d="M14 36 A43 43 0 0 1 64 9 A54 54 0 0 0 14 36 Z" />`;
 }
 
 /** Aguja apuntando hacia arriba desde el centro. */
@@ -227,6 +335,14 @@ function aiFace(): string {
       </g>
     </g>
     <path class="ai__avion" d="M28 50 L42 50 M58 50 L72 50 M50 50 m-3 0 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0" />
+    <!--
+      La pérdida: un aro rojo alrededor del horizonte, que es donde mira quien
+      ya está en apuros. Lo lleva igual el avión de línea y esta avioneta, con
+      el mismo color y en el mismo sitio, porque **rojo quiere decir «actuá
+      ya»** y no significa ninguna otra cosa en todo el juego.
+    -->
+    <circle data-cristal="perdida" cx="50" cy="50" r="41" class="cr__alerta cr__alerta--esfera"
+            visibility="hidden" />
   `;
 }
 

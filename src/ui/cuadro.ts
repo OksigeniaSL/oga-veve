@@ -75,7 +75,26 @@ function perdida(a: AircraftConfig): number {
   return Math.sqrt((2 * a.mass * 9.81) / (1.225 * a.wingArea * clMax));
 }
 
+/**
+ * Las escalas de cada avión, calculadas una vez.
+ *
+ * Esto se pregunta en cada imagen desde dos sitios —el cuadro de la cabina en
+ * tres dimensiones y el del HUD—, y la respuesta no cambia nunca para un avión
+ * dado: es su ficha. Calcularla sesenta veces por segundo no rompe nada, pero
+ * es trabajo tirado, y sobre todo es la puerta a que alguien guarde una copia
+ * «para no recalcular» y acabemos con dos cifras para lo mismo.
+ */
+const YA_CALCULADO = new WeakMap<AircraftConfig, Cuadro>();
+
 export function cuadroDe(a: AircraftConfig): Cuadro {
+  const guardado = YA_CALCULADO.get(a);
+  if (guardado) return guardado;
+  const hecho = calcularCuadro(a);
+  YA_CALCULADO.set(a, hecho);
+  return hecho;
+}
+
+function calcularCuadro(a: AircraftConfig): Cuadro {
   /*
    * El fondo de escala deja un cuarto por encima del crucero, que es donde
    * están la de nunca pasar y el pico de un picado. Con la avioneta da los

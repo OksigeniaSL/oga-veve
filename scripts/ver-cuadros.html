@@ -1,0 +1,142 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Los cuadros de mandos</title>
+<link rel="stylesheet" href="/src/style.css" />
+<style>
+  body {
+    margin: 0;
+    background: #0a0c0e;
+    font:
+      13px system-ui,
+      sans-serif;
+  }
+  .ficha {
+    padding: 10px 0 0;
+  }
+  .ficha > h2 {
+    margin: 0 0 4px 14px;
+    color: #9aa4ab;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  /* Aquí el cuadro no va clavado abajo: se miran los seis en fila. */
+  .ficha .cuadro {
+    position: static;
+    transform: none;
+    width: 1180px;
+    margin: 0 auto;
+  }
+  .ficha .tablero {
+    max-height: none;
+  }
+  /* La regla de los veinte píxeles, dibujada, para verla y no creérsela. */
+  .ficha .cuadro::before,
+  .ficha .cuadro::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgb(225 79 216 / 0.45);
+  }
+</style>
+<div id="todo"></div>
+<script type="module">
+  import { Quaternion, Vector3 } from "three";
+  import { Tablero } from "/src/ui/tablero.ts";
+  import { FLOTA } from "/src/flight/flota.ts";
+  import { aircraftById } from "/src/flight/aircraft.ts";
+
+  const estado = (kt, pies, alabeo, cabeceo) => ({
+    position: new Vector3(0, pies / 3.28084, 0),
+    velocity: new Vector3(kt / 1.94384, 2.5, 0),
+    orientation: new Quaternion(),
+    rollRate: 0,
+    pitchRate: 0,
+    yawRate: 0,
+    airspeed: kt / 1.94384,
+    groundSpeed: kt / 1.94384,
+    alpha: 0.04,
+    beta: 0.03,
+    heightAboveGround: pies / 3.28084,
+    onRunway: false,
+    verticalSpeed: 6.1,
+    loadFactor: 1,
+    heading: (247 * Math.PI) / 180,
+    onGround: false,
+    stalled: false,
+    crashed: false,
+    secondsToImpact: Infinity,
+    touchdownSinkRate: 0,
+    _alabeo: alabeo,
+    _cabeceo: cabeceo,
+  });
+
+  // Cada avión a una velocidad y una altura que le pegan: un cuadro con la
+  // aguja clavada en el tope no enseña nada, y mirarlos todos a la misma
+  // velocidad es justo lo que escondía que las escalas estaban mal.
+  const VUELO = {
+    "jaz-20": [78, 1400],
+    "jaz-25": [92, 2100],
+    "jaz-40": [140, 4500],
+    "jaz-60": [190, 9000],
+    "jaz-90": [280, 18000],
+    "jaz-120": [320, 31000],
+  };
+
+  const todo = document.getElementById("todo");
+  globalThis.__cuadros = [];
+  // Para poder volver a pintar con otro estado desde fuera: así se comprueba
+  // que un aviso **se enciende**, que es lo que ninguna foto quieta enseña.
+  globalThis.__pintar = {};
+  const solo = new URLSearchParams(location.search).get("solo");
+  for (const m of FLOTA) {
+    const id = `jaz-${m.numero}`;
+    if (solo && id !== solo) continue;
+    const ficha = aircraftById(id);
+    const [kt, pies] = VUELO[id];
+    const caja = document.createElement("div");
+    caja.className = "ficha";
+    caja.innerHTML = `<h2>${ficha.name.toUpperCase()}</h2><div class="cuadro"></div>`;
+    todo.appendChild(caja);
+    const tablero = new Tablero();
+    caja.querySelector(".cuadro").innerHTML = tablero.markup(ficha);
+    tablero.bind(caja, ficha);
+    const s = estado(kt, pies, 0.18, 0.06);
+    const pintar = (extra, dt) => {
+      tablero.medirAceleracion(extra.nudos ?? kt, dt);
+      tablero.update(
+        {
+          estado: s,
+          nudos: kt,
+          pies,
+          fpm: 1200,
+          alabeo: 0.18,
+          cabeceo: 0.06,
+          sobreElSuelo: kt + 12,
+          mach: ficha.sound.engine === "turbofan" ? 0.82 : null,
+          motores: Array.from({ length: ficha.motores }, () => 0.86),
+          flaps: 0.33,
+          reversa: false,
+          v1: kt * 0.55,
+          vr: kt * 0.6,
+          vref: kt * 0.5,
+          objetivo: { rumbo: (300 * Math.PI) / 180, distancia: 24000 },
+          viento: { desde: 210, nudos: 14 },
+          perdida: false,
+          ...extra,
+        },
+        dt,
+      );
+    };
+    // Dos pasadas: la primera arranca los retardos, la segunda los asienta en
+    // un sitio creíble. Con una sola, las agujas de un reactor saldrían a cero
+    // —tardan tres segundos— y parecería que el EICAS no funciona.
+    pintar({}, 0.016);
+    pintar({}, 3);
+    globalThis.__pintar[id] = pintar;
+    globalThis.__cuadros.push(id);
+  }
+  globalThis.__listo = true;
+</script>

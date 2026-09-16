@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { delante, traves, enEjesDePista, puntoDePista } from "./rumbo";
+import {
+  delante,
+  traves,
+  enEjesDePista,
+  puntoDePista,
+  rumboHacia,
+} from "./rumbo";
 
 const cerca = (a: readonly [number, number], b: readonly [number, number]) => {
   expect(a[0]).toBeCloseTo(b[0], 6);
@@ -92,5 +98,20 @@ describe("la cabecera de una pista", () => {
     );
     expect(x).toBeCloseTo(esperado[0]!, 0);
     expect(z).toBeCloseTo(esperado[1]!, 0);
+  });
+});
+
+describe("el rumbo de un punto a otro", () => {
+  it("es la inversa de delante", () => {
+    for (const grados of [0, 30, 90, 192.45, 270, 359]) {
+      const [dx, dz] = delante(grados);
+      const r = (rumboHacia(0, 0, dx * 100, dz * 100) * 180) / Math.PI;
+      expect(((r % 360) + 360) % 360).toBeCloseTo(grados, 6);
+    }
+  });
+
+  it("el norte es la zeta negativa", () => {
+    expect(rumboHacia(0, 0, 0, -100)).toBeCloseTo(0, 9);
+    expect((rumboHacia(0, 0, 100, 0) * 180) / Math.PI).toBeCloseTo(90, 9);
   });
 });
