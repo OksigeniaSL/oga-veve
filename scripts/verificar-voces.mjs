@@ -44,6 +44,18 @@ const REPARTO = [
   ["torre", "torre.holdShort", "torre"],
   ["torre", "torre.lineUpWait", "torre"],
   ["torre", "torre.goAround", "torre"],
+  /*
+   * **Y las mismas dichas en Canarias, que es donde se oía el fallo.**
+   *
+   * La lámpara la decía la torre canaria y la radio la torre de casa, así que
+   * en Tenerife sonaba una orden y un segundo después la misma con otra voz:
+   * «voz de hombre primero y luego de mujer». Ahora la torre canaria tiene su
+   * juego entero —su alfabeto, sus cifras y sus cinco órdenes— y esto
+   * comprueba que de verdad salen de su pack y no del de casa.
+   */
+  ["torre", "torre.canario.clearedTakeoff", "torre-canarias"],
+  ["torre", "torre.canario.holdShort", "torre-canarias"],
+  ["torre", "torre.canario.goAround", "torre-canarias"],
   ["capitana", "capitana.bienvenida", "capitana"],
   ["capitana", "capitana.crucero", "capitana"],
   /*

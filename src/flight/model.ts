@@ -40,6 +40,18 @@ export interface ControlInputs {
   /** Flaps, 0 a 1. */
   flaps: number;
   /**
+   * Dónde está el tren: 0 dentro, 1 fuera y trabado.
+   *
+   * Es **la posición y no la orden**, porque un tren tarda diez segundos en
+   * salir y ese rato es justo lo que hay que aprender a dejar. Lo mueve
+   * `Input.update` y lo miran el modelo de vuelo —le cuesta resistencia—, el
+   * cuadro de mandos y las patas del modelo. Ver `flight/tren.ts`.
+   *
+   * En los aviones que no lo meten vale 1 siempre, que es la verdad: sus patas
+   * están al aire.
+   */
+  tren: number;
+  /**
    * Reversa, 0 a 1. Solo en tierra y solo en el avión que la lleva.
    *
    * No existía, y se echó de menos jugando: «cuando tomo tierra no tengo
@@ -63,6 +75,9 @@ export function neutralControls(): ControlInputs {
     throttle: 0,
     brakes: 0,
     flaps: 0,
+    // Fuera, que es como está un avión en su puesto y como están siempre los
+    // que no lo meten. Ver `flight/tren.ts`.
+    tren: 1,
     reversa: 0,
     engineOn: true,
   };

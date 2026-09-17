@@ -29,6 +29,7 @@
  */
 
 import { Euler, Quaternion, Vector3 } from "three";
+import { loQueCambiaElTren } from "./tren";
 import { MAX_PASO } from "./fdm";
 import type {
   ControlInputs,
@@ -74,6 +75,16 @@ const MANDAN_LOS_FLAPS = 0.25;
  * hace que una aproximación con flaps entre donde no entra sin ellos.
  */
 const FRENAN_LOS_FLAPS = 4;
+
+/**
+ * Y cuánto frena el tren, con la misma regla de tres que los flaps.
+ *
+ * El coeficiente de `tren.ts` es de resistencia y aquí se usa contra una
+ * velocidad: con las dos centésimas del tren fuera sale un ocho por ciento
+ * menos de velocidad a igualdad de gas. Se nota al soltar el gas, que es donde
+ * tiene que notarse.
+ */
+const FRENAN_EL_TREN = 4;
 
 /**
  * Cuánto frena la reversa, comparado con los frenos a fondo.
@@ -570,8 +581,19 @@ export class ArcadeFlightModel implements FlightModel {
     const flaps = clamp01(controls.flaps);
     const masSustentacion =
       1 - this.aircraft.flapsLift * flaps * MANDAN_LOS_FLAPS;
+    /*
+     * Y el tren fuera frena también, por lo mismo que los flaps: aquí la
+     * resistencia no se nota en el tope sino en que con el gas bajo se pierde
+     * velocidad antes. En este peldaño no se puede meter —no hay palanca a los
+     * cuatro años— pero el avión que empieza con él fuera lo lleva contado, y
+     * los peldaños de arriba lo notan de verdad. Ver `flight/tren.ts`.
+     */
     const masResistencia =
-      1 - this.aircraft.flapsDrag * flaps * FRENAN_LOS_FLAPS;
+      1 -
+      this.aircraft.flapsDrag * flaps * FRENAN_LOS_FLAPS -
+      (this.aircraft.trenRetractil
+        ? loQueCambiaElTren(controls.tren) * FRENAN_EL_TREN
+        : 0);
     const floor = this.state.onGround
       ? 0
       : this.aircraft.approachSpeed * MINIMA_DE_VUELO * masSustentacion;

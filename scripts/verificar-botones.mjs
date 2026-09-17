@@ -19,6 +19,14 @@ import { createServer } from "vite";
 
 const PUERTO = 5287;
 const AVIONES = ["jaz-20", "jaz-60", "jaz-120"];
+/**
+ * Los que lleva cualquier cabina. El del tren **solo donde hay tren**, así que
+ * no se exige: lo que se exige es que **todo lo que el modelo dibuja como
+ * mando se pueda alcanzar**, que es lo que de verdad falla — al aparecer la
+ * palanca del tren la fila se corrió a la derecha y el último quedó fuera de
+ * lo que ve el comandante, exactamente el fallo que este banco nació para
+ * cazar.
+ */
 const MANDOS = ["motor", "flaps", "freno"];
 
 const server = await createServer({
@@ -58,7 +66,7 @@ for (const avion of AVIONES) {
 
   const hay = await page.evaluate(() => globalThis.__oga.botones?.() ?? []);
   comprobar(
-    `${avion}: la cabina trae sus tres mandos`,
+    `${avion}: la cabina trae sus mandos`,
     MANDOS.every((m) => hay.includes(m)),
     hay.join(" · ") || "ninguno",
     "un panel donde no se puede tocar nada enseña que los mandos son adorno",
@@ -69,7 +77,11 @@ for (const avion of AVIONES) {
    * dónde cae cada uno. Lo que no se puede tocar no es un mando.
    */
   const donde = {};
-  for (let y = ALTO * 0.45; y < ALTO && Object.keys(donde).length < 3; y += 8) {
+  for (
+    let y = ALTO * 0.45;
+    y < ALTO && Object.keys(donde).length < hay.length;
+    y += 8
+  ) {
     for (let x = 20; x < ANCHO; x += 8) {
       const cual = await page.evaluate(
         ([px, py]) => globalThis.__oga.mandoEn?.(px, py) ?? null,
@@ -80,10 +92,13 @@ for (const avion of AVIONES) {
   }
   comprobar(
     `${avion}: y se alcanzan con el dedo`,
-    MANDOS.every((m) => donde[m]),
-    MANDOS.map((m) => `${m}${donde[m] ? "" : " (fuera de la pantalla)"}`).join(
-      " · ",
-    ),
+    // **Todos los que el modelo trae**, no una lista escrita a mano. Con una
+    // lista fija, el día que apareció la palanca del tren nadie se enteró de
+    // que se había quedado fuera de la pantalla.
+    hay.every((m) => donde[m]),
+    hay
+      .map((m) => `${m}${donde[m] ? "" : " (fuera de la pantalla)"}`)
+      .join(" · "),
     "el ojo está en el asiento del piloto, no en el eje del avión",
   );
 

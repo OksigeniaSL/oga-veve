@@ -625,18 +625,23 @@ export function reglaDeFlaps(
 }
 
 /**
- * Las luces del tren. Verde = abajo y trabada.
+ * Las luces del tren. **Verde solo cuando está abajo y trabado.**
  *
- * Tres en toda la flota y **cinco en el grande**: un 747 tiene cinco patas, y
- * quien las cuente va a sonreír. Ese detalle no enseña a volar, enseña a
- * mirar, que es lo anterior.
+ * Tres estados y no dos, y el de en medio es el que enseña: dentro, moviéndose
+ * y fuera. Un tren tarda diez segundos en salir, y una luz verde con el tren a
+ * medio camino es la clase de mentira que en un avión de verdad se paga cara.
+ * Ver `flight/tren.ts`.
+ *
+ * Tres luces en toda la flota y **cinco en el grande**: un 747 tiene cinco
+ * patas, y quien las cuente va a sonreír. Ese detalle no enseña a volar,
+ * enseña a mirar, que es lo anterior.
  */
 export function lucesDeTren(x: number, y: number, patas: number): string {
   let luces = "";
   for (let k = 0; k < patas; k++) {
     luces += `<rect x="${k * 22}" y="0" width="16" height="16" rx="2" class="cr__tren" />`;
   }
-  return `<g transform="translate(${x} ${y})">${luces}
+  return `<g data-cristal="tren" transform="translate(${x} ${y})">${luces}
     <text x="${patas * 22 + 6}" y="13" class="cr__rotulo">GEAR</text></g>`;
 }
 

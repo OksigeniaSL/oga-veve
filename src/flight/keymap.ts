@@ -36,6 +36,7 @@ export type Accion =
   | "throttleDown"
   | "brakes"
   | "flaps"
+  | "tren"
   | "reversa"
   | "camera"
   | "assist"
@@ -122,6 +123,12 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    */
   reversa: { label: "tecla.reversa", defecto: ["KeyV"], held: true },
   flaps: { label: "tecla.flaps", defecto: ["KeyF"], held: false },
+  /*
+   * **La G del tren**, que es la de *gear* y la que lleva cualquier simulador
+   * desde hace treinta años. Quien venga de otro sitio la va a encontrar
+   * puesta, y quien no venga de ningún sitio se la va a aprender igual.
+   */
+  tren: { label: "tecla.tren", defecto: ["KeyG"], held: false },
   camera: { label: "tecla.camera", defecto: ["KeyC"], held: false },
   assist: { label: "tecla.assist", defecto: ["KeyM"], held: false },
   reset: { label: "tecla.reset", defecto: ["KeyR"], held: false },

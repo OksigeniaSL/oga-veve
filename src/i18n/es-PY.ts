@@ -163,6 +163,7 @@ export const ES_PY = {
   "tecla.brakes": "Frenos",
   "tecla.reversa": "Reversa",
   "tecla.flaps": "Flaps",
+  "tecla.tren": "Tren",
   "tecla.camera": "Cambiar cámara",
   "tecla.assist": "Nivel de dificultad",
   "tecla.reset": "Volver a empezar",
@@ -447,6 +448,9 @@ export const ES_PY = {
   "vuelo.sobrevelocidadAire": "Muy rápido para esta altura",
   "vuelo.pediFlaps": "Bajá los flaps para frenar",
   "palabra.flaps": "Flaps",
+  "vuelo.meteElTren": "Metélo, el tren te frena",
+  "vuelo.sacaElTren": "¡El tren! Sacá el tren",
+  "palabra.tren": "Tren",
   "vuelo.despacio": "Más despacio",
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la
   // tecla del freno. Sin eso, el gesto dice qué pero no cómo.

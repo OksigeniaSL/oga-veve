@@ -568,6 +568,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       });
       return { ancho, alto, piezas: salida };
     },
+    /**
+     * Tocar un mando de la cabina desde fuera, sin apuntar con el ratón.
+     *
+     * Hace falta para poder comprobar lo que hace **el mando**, que no siempre
+     * es lo que hace la tecla: el del tren, por ejemplo, solo existe en el
+     * avión que lo mete. Ver `world/botones-cabina.ts`.
+     */
+    tocarMando: (cual: string) => {
+      juego.pulsarMandoDeCabina(cual as never);
+    },
+    /** Cuántas piezas de tren se mueven en el modelo. Ver `world/patas.ts`. */
+    patas: () => juego.aircraftMesh.patas?.cuantas ?? 0,
     /** Con qué vista se está mirando: `chase`, `cockpit`, `wing`… */
     vista: () => juego.cameraMode,
     /** Y ponerse en una, sin ir pulsando la tecla a ciegas. Para el banco. */

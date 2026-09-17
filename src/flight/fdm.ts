@@ -28,6 +28,7 @@
  */
 
 import { Quaternion, Vector3 } from "three";
+import { loQueCambiaElTren } from "./tren";
 import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
 import { topeDeVelocidad, type QuienManda } from "./limites";
 import { esDeChorro, tieneReversa, type AircraftConfig } from "./aircraft";
@@ -529,7 +530,23 @@ export class CoefficientFlightModel implements FlightModel {
       a.cd0 +
       (cl * cl) / (Math.PI * aspectRatio * a.oswald) +
       postStallDrag(s.alpha, stallAngle) +
-      ac.flapsDrag * assisted.flaps;
+      ac.flapsDrag * assisted.flaps +
+      /*
+       * **Y el tren, que fuera frena.**
+       *
+       * Es la lección que hay detrás de medio oficio: una cosa que te hace
+       * falta para aterrizar te estorba para volar. Veinte milésimas, que en
+       * una avioneta es casi tanto como el avión entero limpio — así que el
+       * mando se **nota**, que es justamente lo que tiene que pasar para que
+       * quien juega aprenda a meterlo pronto y a sacarlo tarde.
+       *
+       * **Solo en los que lo meten.** El `cd0` de una ficha es el del avión de
+       * verdad con lo que lleve puesto: el del entrenador ya incluye sus patas
+       * porque las lleva siempre, y sumárselas otra vez sería contarlas dos
+       * veces. El del bimotor es el limpio —lo dice su ficha— y a ése sí.
+       * Ver `flight/tren.ts`.
+       */
+      (ac.trenRetractil ? loQueCambiaElTren(assisted.tren) : 0);
     const cy = a.cyBeta * s.beta;
 
     // ── Pérdida, con histéresis y con paciencia ──────────────────────────

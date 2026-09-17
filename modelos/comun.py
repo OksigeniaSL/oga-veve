@@ -634,7 +634,8 @@ def _cuerno(x, y_suelo, panel_z, grande):
 
 
 def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
-                       motores, relojes, pantallas, pantallas_en, mide="n1"):
+                       motores, relojes, pantallas, pantallas_en, mide="n1",
+                       mandos=("motor", "flaps", "freno")):
     """
     La cabina de un avión de línea, que no es la de una avioneta estirada.
 
@@ -788,11 +789,19 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     # hay relojes: un botón es un dedo, y un dedo mide lo que mide.
     # Y **bajo las pantallas del comandante**, no en el eje del avión: es su
     # mano la que los pulsa, y el eje del avión no es donde se sienta nadie.
+    # **Y la fila centrada en su cara, sean tres o cuatro.**
+    #
+    # El sitio del primero estaba escrito a mano —«uno y pico a la izquierda»—
+    # y eso acierta con tres y falla con cuatro: al aparecer la palanca del
+    # tren, la fila se corría a la derecha y el último quedaba fuera de lo que
+    # se ve. Medido con `npm run botones`: el del tren no se alcanzaba con el
+    # dedo en ninguno de los dos reactores.
     lado_boton = ancho_eicas * 0.22
-    for i, que in enumerate(("motor", "flaps", "freno")):
+    paso_boton = lado_boton * 1.15
+    for i, que in enumerate(mandos):
         piezas += boton(
             que, lado_boton * 0.95, lado_boton * 0.75,
-            (plazas[0] - lado_boton * 1.15 + i * lado_boton * 1.15,
+            (plazas[0] + (i - (len(mandos) - 1) / 2) * paso_boton,
              y_p - alto_p / 2 - lado_boton, panel_z + 0.008),
         )
 
@@ -861,7 +870,7 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
 def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
            suelo_atras=0.80, y_suelo=0.32, y_respaldo=0.88, pantallas_en=0.155,
            palancas=0, relojes=0, clase="avioneta", mando="cuerno",
-           mide="rpm"):
+           mide="rpm", tren=False):
     """
     Lo que se ve desde el asiento: suelo, panel, visera, pantallas y silla.
 
@@ -940,6 +949,11 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     if plazas:
         corrimiento = plazas[0]
         plazas = tuple(x - corrimiento for x in plazas)
+
+    # Los mandos que se pulsan. **El del tren solo donde hay tren**: en un
+    # entrenador de escuela esa palanca no existe, y un botón que se pulsa y no
+    # hace nada enseña que los mandos son decoración. Ver `botones-cabina.ts`.
+    mandos = ("motor", "flaps", "freno") + (("tren",) if tren else ())
     #
     # **La visera cae un palmo por debajo de los ojos. En todos.**
     #
@@ -966,7 +980,7 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     if grande:
         piezas += _cabina_de_reactor(
             ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas, palancas,
-            relojes, pantallas, pantallas_en, mide,
+            relojes, pantallas, pantallas_en, mide, mandos,
         )
     # El panel, vertical y mirando al piloto, con la visera por encima: esa
     # visera es lo que en un avión de verdad hace que las pantallas se lean con
@@ -1110,10 +1124,12 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # asiento izquierdo, los tres caían fuera de la pantalla, medido con
         # `npm run botones`—, y por eso van pegados a la columna de relojes, que
         # ya está comprobado que se ve entera.
-        for i, que in enumerate(("motor", "flaps", "freno")):
+        # Y centrados en la columna, sean tres o cuatro: el «−1» de antes daba
+        # por hecho que eran tres y con el del tren corría la fila a la derecha.
+        for i, que in enumerate(mandos):
             piezas += boton(
                 que, radioReloj * 1.0, radioReloj * 0.8,
-                (columna + (i - 1) * radioReloj * 1.3,
+                (columna + (i - (len(mandos) - 1) / 2) * radioReloj * 1.3,
                  arriba - (filas_r - 1) * paso_r - radioReloj * 1.7,
                  panel_z + 0.008),
             )

@@ -385,6 +385,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.meteElTren",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Metélo, el tren te frena",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.sacaElTren",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "¡El tren! Sacá el tren",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.despacio",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1643,5 +1657,320 @@
     "idioma": "en",
     "texto": "line up and wait",
     "para": "entrá y esperá en el eje"
+  },
+  {
+    "id": "fonetico.alfa",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Alfa",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.bravo",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Bravo",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.charlie",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Charlie",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.delta",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Delta",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.echo",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Echo",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.foxtrot",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Foxtrot",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.golf",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Golf",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.hotel",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Hotel",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.india",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "India",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.juliett",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Juliett",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.kilo",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Kilo",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.lima",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Lima",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.mike",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Mike",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.november",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "November",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.oscar",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Oscar",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.papa",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Papa",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.quebec",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Quebec",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.romeo",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Romeo",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.sierra",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Sierra",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.tango",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Tango",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.uniform",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Uniform",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.victor",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Victor",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.whiskey",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Whiskey",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.xray",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "X-ray",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.yankee",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Yankee",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "fonetico.zulu",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "Zulu",
+    "para": "una letra de la matrícula, dicha en Canarias"
+  },
+  {
+    "id": "cifra.0",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "zero",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.1",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "one",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.2",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "two",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.3",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "three",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.4",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "four",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.5",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "five",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.6",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "six",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.7",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "seven",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.8",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "eight",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "cifra.9",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "niner",
+    "para": "una cifra del número de pista, dicha en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.runway",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "runway",
+    "para": "antes del número de pista, en Canarias"
+  },
+  {
+    "id": "lado.left",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "left",
+    "para": "pista izquierda, donde hay dos paralelas, en Canarias"
+  },
+  {
+    "id": "lado.right",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "right",
+    "para": "pista derecha, en Canarias"
+  },
+  {
+    "id": "lado.center",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "center",
+    "para": "y la del medio, si algún día hay tres, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.clearedTakeoff",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "cleared for take-off",
+    "para": "el permiso, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.clearedLand",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "cleared to land",
+    "para": "el de llegada, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.goAround",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "go around, runway occupied",
+    "para": "la pista está ocupada, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.holdShort",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "hold short of the runway",
+    "para": "pará en la doble raya, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.lineUpWait",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "line up and wait",
+    "para": "entrá y esperá en el eje, en Canarias"
   }
 ]
