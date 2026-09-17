@@ -2194,6 +2194,22 @@ button.motor__tecla::after {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * El radioaltímetro: cuánto hay hasta el suelo. Blanco mientras sobra y ámbar
+ * en los últimos doscientos pies, donde deja de ser un dato y es un aviso.
+ */
+.cr__radio {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr--bajito .cr__radio {
+  fill: var(--cabina-precaucion);
+}
+
 /* Dato auxiliar: cian. Viento, velocidad respecto al suelo, Mach. */
 .cr__aux {
   fill: var(--cabina-auxiliar);

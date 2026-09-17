@@ -63,7 +63,11 @@ const REPARTO = [
    * las dos piezas. Sin ella la voz decía qué hacer y no por qué, que a los
    * cuatro años es una orden sin lección.
    */
-  ["instructor", "vuelo.noEstabilizada+lento", "instructor"],
+  ["instructor", "vuelo.noEstabilizada+lento", "instructor"], // Y las dos del tren, que son nuevas: una frase que se pide y no está
+  // grabada se cae a la voz del navegador y suena a otra persona.
+  ["instructor", "vuelo.meteElTren", "instructor"],
+  ["instructor", "vuelo.sacaElTren", "instructor"],
+
   ["instructor", "vuelo.noEstabilizada+descolocado", "instructor"],
   ["instructor", "cabina.v1", "cabina"],
   ["instructor", "cabina.vr", "cabina"],

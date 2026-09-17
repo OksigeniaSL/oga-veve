@@ -135,6 +135,14 @@ export interface DatosDeCabina {
   readonly patas: number;
   /** Y dónde está: 0 dentro, 1 fuera y trabado. Ver `flight/tren.ts`. */
   readonly tren: number;
+  /**
+   * Altura **sobre el suelo**, m. La del radioaltímetro.
+   *
+   * No es la del altímetro de al lado, y esa diferencia es la lección: uno mide
+   * sobre el mar y el otro sobre lo que tenés debajo. En La Palma o El Hierro
+   * eso son seiscientos metros de montaña.
+   */
+  readonly sobreElTerreno: number;
   /** Velocidad respecto al suelo, m/s. Dato auxiliar: va en cian. */
   readonly sobreElSuelo: number;
   /** Si está en pérdida: marco rojo alrededor del horizonte. */
@@ -499,8 +507,41 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   cintaDeAltitud(g, ANCHO - VSI - CINTA, 0, CINTA, ALTO_CINTAS, d);
   variometro(g, ANCHO - VSI, 0, VSI, ALTO_CINTAS, d);
   cintaDeRumbo(g, x0, ALTO_CINTAS, anchoAct, RUMBO_ABAJO, d);
+  radioaltimetro(g, x0 + anchoAct / 2, ALTO_CINTAS - 34, d);
   g.restore();
 }
+
+/**
+ * El radioaltímetro: **cuánto hay hasta el suelo**, no hasta el mar.
+ *
+ * Aparece por debajo de dos mil quinientos pies y desaparece por encima, que es
+ * como funciona el de verdad: mientras sobra altura no dice nada, y en cuanto
+ * empieza a faltar es el único número que se mira. Ámbar en los últimos
+ * doscientos, donde deja de ser un dato y es un aviso.
+ */
+function radioaltimetro(
+  g: CanvasRenderingContext2D,
+  cx: number,
+  y: number,
+  d: DatosDeCabina,
+): void {
+  const pies = d.sobreElTerreno * PIES;
+  if (pies >= DESDE_EL_RADIO) return;
+  const color = pies < YA_ES_BAJO ? PALETA.precaucion : TINTA;
+  escribir(
+    g,
+    String(Math.max(0, Math.round(pies))),
+    cx,
+    y,
+    "600 20px " + FUENTE,
+    color,
+  );
+  escribir(g, "RA", cx, y + 15, "500 10px " + FUENTE, TENUE);
+}
+
+/** Desde qué altura sobre el suelo aparece, y dónde se pone ámbar. Pies. */
+const DESDE_EL_RADIO = 2500;
+const YA_ES_BAJO = 200;
 
 /** El horizonte de dentro de la pantalla de actitud. */
 function horizonteDe(

@@ -291,6 +291,9 @@
     "vuelo.mandanFrustrar~3": {
       "ms": 2158
     },
+    "vuelo.meteElTren": {
+      "ms": 1161
+    },
     "vuelo.minimos": {
       "ms": 1243
     },
@@ -335,6 +338,9 @@
     },
     "vuelo.roto": {
       "ms": 1425
+    },
+    "vuelo.sacaElTren": {
+      "ms": 1430
     },
     "vuelo.sinPermiso": {
       "ms": 2826
@@ -784,6 +790,12 @@
     "vuelo.noEstabilizada~3+torcido": [
       "motivo.torcido",
       "vuelo.noEstabilizada~3"
+    ],
+    "vuelo.meteElTren": [
+      "vuelo.meteElTren"
+    ],
+    "vuelo.sacaElTren": [
+      "vuelo.sacaElTren"
     ]
   }
 }

@@ -110,11 +110,10 @@
 110	mission.first.name	Tu primer vuelo
 111	mission.valley.name	La vuelta al valle
 112	mission.transfer.name	El traslado
-113	mission.started	{name}
-114	mission.step	¡Bien! Seguí
-115	mission.done	¡Misión cumplida!
-116	mission.none	Vuelo libre
-117	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
-118	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
-119	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
-120	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+113	mission.step	¡Bien! Seguí
+114	mission.done	¡Misión cumplida!
+115	mission.none	Vuelo libre
+116	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
+117	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
+118	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
+119	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.

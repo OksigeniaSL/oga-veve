@@ -640,6 +640,59 @@ const despegue = await page.evaluate(async () => {
   // La carrera va por donde va la pista. Ver arriba.
   const rumboDeLaCarrera = rumboPista;
   c.throttle = 1;
+
+  /*
+   * ── **Y el que pilota la carrera va por `pilotar`, no escribiendo mandos** ──
+   *
+   * Es la diferencia entre medir el avión y medir el bucle de entrada.
+   * Escribir en `controles()` desde fuera no sirve: `input.update()` los
+   * reescribe enteros cada fotograma y el elevador se acerca a su objetivo
+   * poco a poco, así que de medio recorrido de palanca llegaba una fracción.
+   * Resultado medido: el entrenador se iba al aire a cuarenta metros por
+   * segundo con la Vr en veintiocho —un cuarenta por ciento largo— y con ello
+   * la carrera salía casi el triple de la que dice su física.
+   *
+   * Y no era el avión: pilotado por `pilotar`, ese mismo entrenador rota a
+   * 29,5 y el de fuselaje ancho a 95 con la Vr en 86, que es lo que tiene que
+   * pasar. La regla de medir se estaba comiendo la prueba, y lo que se dio por
+   * bueno durante meses fue una carrera de despegue que el juego no tiene.
+   * Ver `pilotar` en `src/dev/sondas.ts`.
+   */
+  o.pilotar((m) => {
+    const s = o.estado();
+    m.engineOn = true;
+    m.brakes = 0;
+    m.throttle = 1;
+    if (s.onGround) {
+      /*
+       * No basta con poner el morro en el rumbo de la pista: hay que ir al
+       * eje. Con solo el rumbo, un avión que entra por una calle y queda
+       * pegado al borde sale de la pista por el costado sin dejar de apuntar
+       * bien — y fuera de la pista este modelo no deja despegar, a propósito.
+       * Se apunta a un punto del eje trescientos metros por delante, que es lo
+       * que hace quien despega.
+       */
+      const dx = s.position.x - pista.x;
+      const dz = s.position.z - pista.z;
+      const along =
+        dx * Math.sin(rumboDeLaCarrera) - dz * Math.cos(rumboDeLaCarrera);
+      const tx = pista.x + Math.sin(rumboDeLaCarrera) * (along + 300);
+      const tz = pista.z - Math.cos(rumboDeLaCarrera) * (along + 300);
+      m.aileron = alRumbo(
+        s,
+        Math.atan2(tx - s.position.x, -(tz - s.position.z)),
+      );
+    } else {
+      m.aileron = 0;
+    }
+    /*
+     * Y el tirón **a la Vr de este avión**, no a veintisiete metros por
+     * segundo. Veintisiete es la Vr del entrenador y de nadie más: es el
+     * umbral escrito a mano de siempre, que acierta en el avión con el que se
+     * escribió y miente en los otros cinco.
+     */
+    m.elevator = s.airspeed > ficha.rotacion ? 0.5 : 0;
+  });
   let frenoSeFue = null;
   let enElAire = null;
   let usado = 0;
@@ -709,22 +762,6 @@ const despegue = await page.evaluate(async () => {
      * metro de altura. Se apunta a un punto del eje trescientos metros por
      * delante, que es lo que hace quien despega.
      */
-    if (s.onGround) {
-      const dx = s.position.x - pista.x;
-      const dz = s.position.z - pista.z;
-      const along =
-        dx * Math.sin(rumboDeLaCarrera) - dz * Math.cos(rumboDeLaCarrera);
-      const tx = pista.x + Math.sin(rumboDeLaCarrera) * (along + 300);
-      const tz = pista.z - Math.cos(rumboDeLaCarrera) * (along + 300);
-      c.aileron = alRumbo(
-        s,
-        Math.atan2(tx - s.position.x, -(tz - s.position.z)),
-      );
-    } else {
-      c.aileron = 0;
-    }
-    // Un empujón de palanca cuando ya corre, que es lo que pide el tutor.
-    if (s.airspeed > 27) c.elevator = 0.5;
     const boton = document.querySelector('[data-hud="brakes-touch"]');
     if (frenoSeFue === null && boton?.hidden) frenoSeFue = s.airspeed;
     if (inicio) {
@@ -910,6 +947,14 @@ if (despegue.enElAire) {
 
 const enVuelo = await page.evaluate(async () => {
   const o = globalThis.__oga;
+  /*
+   * **Y se sueltan los mandos de verdad.**
+   *
+   * Lo que se comprueba aquí es que el avión siga subiendo con el gas a tope y
+   * la palanca suelta, así que el piloto de la carrera tiene que soltarla: si
+   * se queda puesto, lo que se mide es su tirón y no el avión.
+   */
+  o.pilotar(null);
   const c = o.controles();
   c.elevator = 0;
   await new Promise((r) => setTimeout(r, 4000));

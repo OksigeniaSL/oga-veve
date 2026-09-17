@@ -70,6 +70,8 @@ export interface DatosDelTablero {
   readonly pies: number;
   /** Velocidad vertical, en pies por minuto. */
   readonly fpm: number;
+  /** Altura **sobre el suelo**, en pies. La del radioaltímetro. */
+  readonly sobreElTerreno: number;
   readonly alabeo: number;
   readonly cabeceo: number;
   /** Velocidad respecto al suelo, en nudos. Dato auxiliar: va en cian. */
@@ -412,6 +414,22 @@ export class Tablero {
       d.objetivo ? `${(d.objetivo.distancia / 1852).toFixed(1)} NM` : "",
     );
 
+    /*
+     * El radioaltímetro, que aparece por debajo de dos mil quinientos pies y
+     * desaparece por encima: mientras sobra altura no dice nada, y en cuanto
+     * empieza a faltar es el único número que se mira.
+     */
+    const radio = raiz.querySelector<SVGElement>('[data-cristal="radio"]');
+    if (radio) {
+      const cerca = d.sobreElTerreno < DESDE_EL_RADIO;
+      radio.setAttribute("visibility", cerca ? "visible" : "hidden");
+      radio.classList.toggle("cr--bajito", d.sobreElTerreno < YA_ES_BAJO);
+      const cifra = radio.querySelector("text");
+      if (cifra && cerca) {
+        cifra.textContent = String(Math.max(0, Math.round(d.sobreElTerreno)));
+      }
+    }
+
     this.vsi(raiz, d.fpm);
     this.tendencias(raiz, d);
     this.bugs(raiz, d, dt, rumbo);
@@ -740,6 +758,15 @@ const ENTRE_LECTURAS = 5;
 
 /** Cuántos nudos antes de la de nunca pasar se enciende el ámbar. */
 const AVISA_CINCO_ANTES = 5;
+
+/**
+ * Desde qué altura sobre el suelo aparece el radioaltímetro, en pies.
+ *
+ * Dos mil quinientos, que es donde lo encienden los de verdad. Y por debajo de
+ * doscientos se pone ámbar: ahí ya no es un dato, es un aviso.
+ */
+const DESDE_EL_RADIO = 2500;
+const YA_ES_BAJO = 200;
 
 function pad3(g: number): string {
   return String(((g % 360) + 360) % 360).padStart(3, "0");

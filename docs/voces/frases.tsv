@@ -111,7 +111,6 @@ instructor	instructor/mission.lomas.name.ogg	es-PY	A las lomas	las misiones
 instructor	instructor/mission.first.name.ogg	es-PY	Tu primer vuelo	las misiones
 instructor	instructor/mission.valley.name.ogg	es-PY	La vuelta al valle	las misiones
 instructor	instructor/mission.transfer.name.ogg	es-PY	El traslado	las misiones
-instructor	instructor/mission.started.ogg	es-PY	{name}	las misiones
 instructor	instructor/mission.step.ogg	es-PY	¡Bien! Seguí	las misiones
 instructor	instructor/mission.done.ogg	es-PY	¡Misión cumplida!	las misiones
 instructor	instructor/mission.none.ogg	es-PY	Vuelo libre	las misiones
@@ -129,11 +128,6 @@ torre-canarias	torre-canarias/torre.canario.verde.ogg	es-PY	Puedes entrar	la tor
 torre-canarias	torre-canarias/torre.canario.roja.ogg	es-PY	Espera ahí	la torre de Canarias, que no vosea
 torre	torre/torre.verde.ogg	es-PY	Podés entrar	la lámpara de la torre, dicha en casa
 torre	torre/torre.roja.ogg	es-PY	Esperá acá	la lámpara de la torre, dicha en casa
-otro	otro/otro.buenosDias.ogg	es-PY	Buenos días, {indicativo}, rodando a la cabecera	el otro avión de la frecuencia
-otro	otro/otro.rodando.ogg	es-PY	{indicativo}, rodando a la cabecera	el otro avión de la frecuencia
-otro	otro/otro.enCola.ogg	es-PY	{indicativo}, viento en cola	el otro avión de la frecuencia
-otro	otro/otro.final.ogg	es-PY	{indicativo}, en final	el otro avión de la frecuencia
-otro	otro/otro.pistaLibre.ogg	es-PY	{indicativo}, pista libre	el otro avión de la frecuencia
 cabina	cabina/cabina.v1.ogg	en	V one	el punto de no retorno del despegue
 cabina	cabina/cabina.vr.ogg	en	rotate	la velocidad de rotación: tirar
 cabina	cabina/cabina.terrainPullUp.ogg	en	terrain, pull up	aviso de terreno, el más urgente
@@ -155,11 +149,6 @@ cabina	cabina/cabina.thirty.ogg	en	thirty	altura de la toma
 cabina	cabina/cabina.twenty.ogg	en	twenty	altura de la toma
 cabina	cabina/cabina.ten.ogg	en	ten	altura de la toma
 cabina	cabina/cabina.five.ogg	en	five	altura de la toma, en metros
-torre	torre/torre.clearedTakeoff.ogg	en	cleared for take-off	luz verde para despegar
-torre	torre/torre.clearedLand.ogg	en	cleared to land	podés volver a intentarlo
-torre	torre/torre.goAround.ogg	en	go around, runway occupied	la pista está ocupada
-torre	torre/torre.holdShort.ogg	en	hold short of the runway	pará en la doble raya
-torre	torre/torre.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
 otro	otro/fonetico.alfa.ogg	es	Alfa	una letra del indicativo
 otro	otro/fonetico.bravo.ogg	es	Bravo	una letra del indicativo
 otro	otro/fonetico.charlie.ogg	es	Charlie	una letra del indicativo

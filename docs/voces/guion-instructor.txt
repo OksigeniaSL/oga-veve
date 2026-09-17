@@ -110,7 +110,6 @@ A las lomas
 Tu primer vuelo
 La vuelta al valle
 El traslado
-{name}
 ¡Bien! Seguí
 ¡Misión cumplida!
 Vuelo libre

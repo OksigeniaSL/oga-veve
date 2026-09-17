@@ -5323,6 +5323,7 @@ export class Game {
         patas: patasDe(this.aircraft),
         tren: this.input.controls.tren,
         sobreElSuelo: this.flight.state.groundSpeed,
+        sobreElTerreno: this.flight.state.heightAboveGround,
         perdida:
           !this.flight.state.onGround &&
           this.flight.state.alpha > this.aircraft.aero.alphaStall,
