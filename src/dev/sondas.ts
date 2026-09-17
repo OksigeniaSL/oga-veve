@@ -32,6 +32,7 @@ import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { enEjesDePista } from "../world/rumbo";
 import { rotulosDeLaCabina } from "../world/pantallas-cabina";
+import { familiaDe } from "../ui/familia";
 import type { Lluvia } from "../world/meteo";
 import { alturaDeEdificio, enElPavimento } from "../world/aerodrome";
 import {
@@ -1051,6 +1052,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     rotulosDeCabina: () => rotulosDeLaCabina(),
     /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
     trafico: () => juego.trafico?.quienes() ?? [],
+    /**
+     * De qué familia es el cuadro de este avión, que lo manda el motor.
+     *
+     * Hace falta fuera porque el banco de cabina exigía dos cristales a los
+     * seis aviones —un G1000 en un entrenador de escuela— y sin esto no tenía
+     * con qué distinguirlos. Ver `familiaDe`.
+     */
+    familia: () => familiaDe(juego.aircraft),
     /** Si esta cabina es de avión de línea: lo dice su panel de techo. */
     deLinea: () => !!juego.aircraftMesh.group.getObjectByName("panel-de-techo"),
     /** Cuántos asientos de pilotaje trae el modelo. */

@@ -38,7 +38,6 @@ import {
   type Mesh,
 } from "three";
 import { PALETA } from "../ui/paleta";
-import type { Cuadro } from "../ui/cuadro";
 import { luzDeTren } from "../flight/tren";
 import {
   QUIETA_LA_ALTITUD,
@@ -49,6 +48,7 @@ import {
   rodillo,
   tendencia,
 } from "../ui/cinta";
+import { NUDOS, PIES, PIES_POR_MINUTO, type Cuadro } from "../ui/cuadro";
 import { LETRAS_DESDE, type Peldano } from "../ui/familia";
 
 /**
@@ -517,9 +517,7 @@ const POR_PIE = 0.34;
 const POR_GRADO = 2.2;
 /** De cuánto en cuánto está grabado el tambor de la altitud, en pies. */
 const PASO_TAMBOR = 20;
-const NUDOS = 1.94384;
-const PIES = 3.28084;
-const PIES_POR_MINUTO = 196.85;
+// Las tres, de donde viven: `ui/cuadro.ts`. Ver el porqué allí.
 
 /** El alto de la parte de arriba: todo menos la cinta de rumbo. */
 const ALTO_CINTAS = ALTO - RUMBO_ABAJO;

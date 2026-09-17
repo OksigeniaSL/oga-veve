@@ -297,7 +297,7 @@ import { KeyScreen } from "./ui/teclas";
 import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
-import { cuadroDe, regimen } from "./ui/cuadro";
+import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import { patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
@@ -5458,6 +5458,21 @@ export class Game {
         flaps: this.input.controls.flaps,
         peldano: peldanoDe(this.tier.instruments),
         rpmMaximas: this.aircraft.sound.maxRpm,
+        /*
+         * **Y lo que hace falta para que los seis de vuelo marquen.**
+         *
+         * Los relojes del tablero de una avioneta eran dos —motor y flaps— y
+         * el comentario que lo explicaba decía que lo que se lee de verdad
+         * está en el HUD. Desde que en la cabina el cuadro es el del avión,
+         * eso dejó de ser cierto: son estos. Ver `pintarVuelo`.
+         */
+        velocidad: this.flight.state.airspeed * NUDOS,
+        pies: this.flight.state.position.y * PIES,
+        fpm: this.flight.state.verticalSpeed * PIES_POR_MINUTO,
+        rumbo: this.flight.state.heading,
+        cabeceo: pitchAngleOf(this.flight.state.orientation),
+        alabeo: bankAngleOf(this.flight.state.orientation),
+        cuadro: cuadroDe(this.aircraft),
       },
       dt,
     );

@@ -251,6 +251,7 @@ for (const id of [
       relojes: o.relojes(),
       plazas: o.plazas(),
       deLinea: o.deLinea(),
+      familia: o.familia(),
       motores: o.avion().motores,
     };
   });
@@ -313,17 +314,31 @@ for (const id of [
    */
   if (visto.deLinea) {
     comprobar(
-      etiqueta("los motores tienen su pantalla, que es lo que lleva un reactor"),
+      etiqueta(
+        "los motores tienen su pantalla, que es lo que lleva un reactor",
+      ),
       (visto.pantallas ?? []).some((p) => p.dibujo === "motores"),
       `${(visto.pantallas ?? []).map((p) => p.dibujo).join(" · ")}`,
       "un reactor no lleva relojes de motor: lleva EICAS",
     );
   } else {
+    /*
+     * **Los de motor, que ya no son los únicos.**
+     *
+     * Este banco contaba todos los relojes del tablero contra el número de
+     * motores, y eso valía mientras en el tablero de una avioneta solo hubiera
+     * relojes de motor. Desde que un avión de pistón lleva su six-pack, los
+     * seis de vuelo son relojes también — y no son motores. Ver `DE_VUELO` en
+     * `world/relojes-cabina.ts`.
+     */
+    const DE_VUELO = ["asi", "ai", "alt", "tc", "dg", "vsi"];
+    const deMotor = (visto.relojes ?? []).filter(
+      (r) => r.que !== "flaps" && !DE_VUELO.includes(r.que),
+    );
     comprobar(
       etiqueta("hay un reloj encendido por motor"),
-      (visto.relojes ?? []).filter((r) => r.que !== "flaps").length ===
-        visto.motores,
-      `${(visto.relojes ?? []).map((r) => r.que).join(" · ") || "ninguno"} · ${visto.motores} motores`,
+      deMotor.length === visto.motores,
+      `${deMotor.map((r) => r.que).join(" · ") || "ninguno"} · ${visto.motores} motores`,
       "un panel con discos grises sin cara no es un panel",
     );
 
@@ -364,13 +379,36 @@ for (const id of [
    * Ahora el reactor lleva las tres del comandante en fila y centradas en su
    * cara: actitud, navegación y motores. Ver `_cabina_de_reactor`.
    */
-  const cuantasTocan = visto.deLinea ? 3 : 2;
+  /*
+   * **Y un avión de pistón no lleva ninguna**, que es lo que este banco daba
+   * por hecho al revés.
+   *
+   * Exigía dos cristales a los seis aviones, así que el entrenador de escuela,
+   * el fumigador y el bimotor volaban con un G1000 delante — una cabina que
+   * ese avión no tiene. La familia la manda el motor y no el peldaño: los de
+   * pistón llevan seis esferas redondas, el turbohélice dos pantallas y los
+   * reactores las tres del comandante. Es lo mismo que decide el cuadro plano.
+   * Ver `familiaDe` en `ui/familia.ts`.
+   */
+  const DE_VUELO = ["asi", "ai", "alt", "tc", "dg", "vsi"];
+  const esferas = visto.familia === "esferas";
+  const cuantasTocan = esferas ? 0 : visto.deLinea ? 3 : 2;
   comprobar(
     etiqueta("están todas las pantallas y encendidas"),
-    visto.pantallas?.length === cuantasTocan,
-    `${visto.pantallas?.length ?? 0} de ${cuantasTocan} · ${visto.plazas} plazas`,
+    (visto.pantallas?.length ?? 0) === cuantasTocan,
+    `${visto.pantallas?.length ?? 0} de ${cuantasTocan} · familia ${visto.familia}`,
     "una pantalla apagada en un avión que vuela dice que algo no funciona",
   );
+
+  if (esferas) {
+    const hay = (visto.relojes ?? []).map((r) => r.que);
+    comprobar(
+      etiqueta("y un avión de pistón lleva sus seis de vuelo"),
+      DE_VUELO.every((q) => hay.includes(q)),
+      DE_VUELO.filter((q) => !hay.includes(q)).join(" · ") || "los seis",
+      "el six-pack que lleva cualquier avioneta del mundo, y el mismo que dibuja el cuadro plano",
+    );
+  }
 
   /*
    * Y el horizonte a la izquierda del piloto, que es la −X del avión. En un
@@ -383,12 +421,13 @@ for (const id of [
   }));
   const horizonte = conSitio.find((p) => p.dibujo === "horizonte");
   const rumbo = conSitio.find((p) => p.dibujo === "rumbo");
-  comprobar(
-    etiqueta("el horizonte va a la izquierda, como en un G1000"),
-    horizonte !== undefined && rumbo !== undefined && horizonte.x < rumbo.x,
-    conSitio.map((p) => `${p.x} ${p.dibujo}`).join(" · ") || "sin pantallas",
-    "el orden salía del centro de la geometría, que en un modelo hecho aquí es cero en las dos",
-  );
+  if (!esferas)
+    comprobar(
+      etiqueta("el horizonte va a la izquierda, como en un G1000"),
+      horizonte !== undefined && rumbo !== undefined && horizonte.x < rumbo.x,
+      conSitio.map((p) => `${p.x} ${p.dibujo}`).join(" · ") || "sin pantallas",
+      "el orden salía del centro de la geometría, que en un modelo hecho aquí es cero en las dos",
+    );
 
   /*
    * **Que el avión haya entrado derecho y del tamaño que dice su ficha.**
