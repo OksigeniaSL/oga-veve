@@ -222,7 +222,10 @@ for (const [quien, clave, pack] of REPARTO) {
       clave.startsWith("otro.")
         ? indicativo.relleno
         : clave.startsWith("torre.")
-          ? indicativo.deTorre
+          ? // La lámpara también lleva hueco desde que te llama por tu
+            // matrícula, y `deTorre` trae el indicativo y la pista: sobra lo de
+            // la pista y falta nada.
+            indicativo.deTorre
           : undefined,
     ],
   );

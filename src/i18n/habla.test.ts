@@ -73,8 +73,26 @@ describe("lo que dice la torre canaria", () => {
   });
 
   it("y dice lo mismo que la de casa, con otras palabras", () => {
-    expect(dicc["torre.canario.verde"]).toBe("Puedes entrar");
-    expect(dicc["torre.canario.roja"]).toBe("Espera ahí");
+    expect(dicc["torre.canario.verde"]).toBe("{indicativo}, puedes entrar");
+    expect(dicc["torre.canario.roja"]).toBe("{indicativo}, espera ahí");
+  });
+
+  it("y las dos llaman al avión por su matrícula", () => {
+    /*
+     * **Porque una torre que nunca te llama por tu nombre no es una torre.**
+     *
+     * Lo hacía solo la fraseología en inglés, y desde que ésa se guardó para
+     * los peldaños de arriba —a los cuatro años el inglés no enseña nada— en
+     * Guyrami la torre no decía tu matrícula ni una vez en todo el vuelo.
+     * Ahora la dice la lámpara, que es la que se oye siempre. Ver
+     * `flight/matricula.ts`.
+     */
+    for (const clave of ["torre.verde", "torre.roja"]) {
+      expect(dicc[clave], clave).toContain("{indicativo}");
+      expect(dicc[`torre.canario.${clave.slice(6)}`], clave).toContain(
+        "{indicativo}",
+      );
+    }
   });
 });
 

@@ -120,9 +120,6 @@
     "lado.right": {
       "ms": 540
     },
-    "torre.roja": {
-      "ms": 812
-    },
     "torre.solo.clearedLand": {
       "ms": 1015
     },
@@ -138,10 +135,13 @@
     "torre.solo.lineUpWait": {
       "ms": 1195
     },
+    "torre.solo.roja": {
+      "ms": 812
+    },
     "torre.solo.runway": {
       "ms": 556
     },
-    "torre.verde": {
+    "torre.solo.verde": {
       "ms": 920
     }
   },
@@ -280,12 +280,6 @@
     ],
     "torre.solo.lineUpWait": [
       "torre.solo.lineUpWait"
-    ],
-    "torre.verde": [
-      "torre.verde"
-    ],
-    "torre.roja": [
-      "torre.roja"
     ],
     "torre.clearedTakeoff": [
       "{c1}",
@@ -443,6 +437,28 @@
       "{c4}",
       "{c5}",
       "torre.solo.goAround"
+    ],
+    "torre.solo.verde": [
+      "torre.solo.verde"
+    ],
+    "torre.verde": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.verde"
+    ],
+    "torre.solo.roja": [
+      "torre.solo.roja"
+    ],
+    "torre.roja": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.roja"
     ]
   }
 }

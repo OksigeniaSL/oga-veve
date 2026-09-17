@@ -218,8 +218,8 @@ export const ES_PY = {
   // leen de reojo y con las manos ocupadas.
   // La lámpara de la torre. El texto existe porque **un color solo no es
   // información**: quien no distinga el rojo del verde tiene que poder saberlo.
-  "torre.verde": "Podés entrar",
-  "torre.roja": "Esperá acá",
+  "torre.verde": "{indicativo}, podés entrar",
+  "torre.roja": "{indicativo}, esperá acá",
   /*
    * ── Y la misma torre, en Canarias ──────────────────────────────────────
    *
@@ -236,8 +236,8 @@ export const ES_PY = {
    * Son claves aparte porque el pack de voz busca por clave: con la misma
    * clave, las dos torres sonarían con la voz que se hubiera cargado antes.
    */
-  "torre.canario.verde": "Puedes entrar",
-  "torre.canario.roja": "Espera ahí",
+  "torre.canario.verde": "{indicativo}, puedes entrar",
+  "torre.canario.roja": "{indicativo}, espera ahí",
 
   /*
    * ── La megafonía de cabina: la comandante Jazlyn ────────────────────────
