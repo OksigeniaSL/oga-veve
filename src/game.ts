@@ -298,7 +298,7 @@ import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
 import { cuadroDe, regimen } from "./ui/cuadro";
-import { patasDe } from "./ui/familia";
+import { patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
@@ -5410,6 +5410,16 @@ export class Game {
          * arregló una vez en las esferas del HUD. Ver `ui/cuadro.ts`.
          */
         cuadro: cuadroDe(this.aircraft),
+        /*
+         * **Y el peldaño, que es lo que decide si aquí dentro hay letras.**
+         *
+         * El cuadro plano crecía con la escalera y las pantallas de la cabina
+         * no se enteraban: el mismo avión en el peldaño de los pequeños
+         * enseñaba fuera un cuadro sin una palabra y dentro, a diez
+         * centímetros de la cara, «IAS», «ALT», «V/S», «GS», «HDG» y once
+         * cifras. Y la de dentro es la que mira quien vuela desde la cabina.
+         */
+        peldano: peldanoDe(this.tier.instruments),
         patas: patasDe(this.aircraft),
         tren: this.input.controls.tren,
         sobreElSuelo: this.flight.state.groundSpeed,
@@ -5446,6 +5456,7 @@ export class Game {
           ),
         ),
         flaps: this.input.controls.flaps,
+        peldano: peldanoDe(this.tier.instruments),
         rpmMaximas: this.aircraft.sound.maxRpm,
       },
       dt,

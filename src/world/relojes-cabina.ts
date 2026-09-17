@@ -43,6 +43,7 @@ import {
   type Mesh,
   type Object3D,
 } from "three";
+import { LETRAS_DESDE, type Peldano } from "../ui/familia";
 
 /** Lado del lienzo de cada reloj, en píxeles. */
 const LADO = 256;
@@ -82,6 +83,14 @@ export interface DatosDeRelojes {
   readonly flaps: number;
   /** Las vueltas de verdad, para poder escribir la cifra de un pistón. */
   readonly rpmMaximas: number;
+  /**
+   * El peldaño, de uno a cuatro. **Decide si el reloj lleva letras.**
+   *
+   * Un reloj de motor con su banda verde y su aguja se lee sin saber leer; el
+   * «RPM 1» y el «2400» de debajo, no. Misma regla que las pantallas grandes y
+   * que el cuadro plano. Ver `LETRAS_DESDE` en `ui/familia.ts`.
+   */
+  readonly peldano: Peldano;
 }
 
 interface Esfera {
@@ -334,6 +343,9 @@ function pintarEsfera(
    * vueltas por minuto —el número que canta un piloto— y en una turbina el tanto
    * por ciento, que es como se dice N1 en todo el mundo.
    */
+  // Sin letras en los dos peldaños de abajo: quedan la banda de color y la
+  // aguja, que es exactamente lo que un reloj enseña sin palabras.
+  if (datos.peldano < LETRAS_DESDE) return;
   const cifra =
     que === "flaps"
       ? `${Math.round(valor * 100)}%`

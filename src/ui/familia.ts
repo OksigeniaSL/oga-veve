@@ -162,3 +162,43 @@ export function centroDe(caja: Caja): number {
 export function patasDe(a: AircraftConfig): number {
   return a.motores >= 4 && a.sound.engine === "turbofan" ? 5 : 3;
 }
+
+/** Los cuatro peldaños de la escalera, por número. */
+export type Peldano = 1 | 2 | 3 | 4;
+
+/**
+ * Qué peldaño es éste, de uno a cuatro.
+ *
+ * **Estaba escrito a mano dentro del HUD**, y por eso el cuadro plano crecía
+ * con la escalera y las pantallas de la cabina no se enteraban: el mismo avión
+ * en el mismo peldaño enseñaba fuera un cuadro sin una letra y dentro una
+ * cabina de cristal llena de cifras en inglés. Dicho mirándolo: «pero has
+ * dejado el cuadro anterior».
+ *
+ * De aquí lo sacan los dos, que es lo único que los mantiene diciendo lo
+ * mismo. Ver `markup` en `tablero.ts` y `escribir` en `pantallas-cabina.ts`.
+ */
+export function peldanoDe(cuantos: Peldanos): Peldano {
+  return cuantos === "none"
+    ? 1
+    : cuantos === "pictorial"
+      ? 2
+      : cuantos === "numeric"
+        ? 3
+        : 4;
+}
+
+/** Cuántos instrumentos enseña un peldaño. Ver `Tier` en `flight/tiers.ts`. */
+export type Peldanos = "none" | "pictorial" | "numeric" | "full";
+
+/**
+ * Desde qué peldaño se enseña una letra. **Todas, sin excepción.**
+ *
+ * En el primero no va ni una palabra —se empieza a los cuatro años y no se
+ * lee— y en el segundo tampoco: ahí lo que hay son formas, bandas de color y
+ * agujas. Los números y los rótulos empiezan en el tercero, que es el que ya
+ * lee. Es la misma regla que la hoja de estilo le aplica al cuadro plano con
+ * `data-desde="3"`; aquí está escrita una sola vez para que las dos
+ * superficies no puedan discrepar.
+ */
+export const LETRAS_DESDE: Peldano = 3;

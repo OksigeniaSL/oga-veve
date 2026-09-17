@@ -31,6 +31,7 @@ import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { enEjesDePista } from "../world/rumbo";
+import { rotulosDeLaCabina } from "../world/pantallas-cabina";
 import type { Lluvia } from "../world/meteo";
 import { alturaDeEdificio, enElPavimento } from "../world/aerodrome";
 import {
@@ -1037,6 +1038,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * distancia.
      */
     camaraViva: () => juego.camera,
+    /**
+     * Cuántas letras salieron en el último repintado de las pantallas de
+     * cabina.
+     *
+     * Es la misma cuenta que el banco del cuadro plano ya hacía contando
+     * rótulos del SVG —«en el primer peldaño el cuadro no tiene ni una
+     * letra»—, traída a la superficie donde de verdad se mira. Sin ella, las
+     * dos podían decir cosas distintas y de hecho las decían. Ver
+     * `rotulosDeLaCabina`.
+     */
+    rotulosDeCabina: () => rotulosDeLaCabina(),
     /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
     trafico: () => juego.trafico?.quienes() ?? [],
     /** Si esta cabina es de avión de línea: lo dice su panel de techo. */
