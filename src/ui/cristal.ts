@@ -116,8 +116,8 @@ export function pantallaDeActitud(
           })()
         : cintaDeRumbo(act.x, alto - ALTO_RUMBO, act.ancho, ALTO_RUMBO, yo)
     }
-    ${opciones.mach ? `<text data-cristal="mach" x="${ANCHO_CINTA / 2}" y="${alto - 8}" class="cr__aux" text-anchor="middle"></text>` : ""}
-    <text data-cristal="gs" x="${xAlt + ANCHO_CINTA / 2}" y="${alto - 8}" class="cr__aux" text-anchor="middle"></text>
+    ${opciones.mach ? `<text data-cristal="mach" x="${ANCHO_CINTA / 2}" y="${alto - 8}" data-desde="4" class="cr__aux" text-anchor="middle"></text>` : ""}
+    <text data-cristal="gs" x="${xAlt + ANCHO_CINTA / 2}" y="${alto - 8}" data-desde="3" class="cr__aux" text-anchor="middle"></text>
     ${radioaltimetro(act.x + act.ancho / 2, altoAct - 30)}
   `;
 }
@@ -137,9 +137,9 @@ export function pantallaDeActitud(
  */
 function radioaltimetro(cx: number, y: number): string {
   return `
-    <g data-cristal="radio" visibility="hidden">
+    <g data-cristal="radio" data-desde="4" visibility="hidden">
       <text x="${cx}" y="${y}" class="cr__radio" text-anchor="middle"></text>
-      <text x="${cx}" y="${y + 13}" class="cr__rotulo cr__rotulo--menudo"
+      <text x="${cx}" y="${y + 13}" data-desde="3" class="cr__rotulo cr__rotulo--menudo"
             text-anchor="middle">RA</text>
     </g>
   `;
@@ -172,8 +172,8 @@ function horizonte(
     const largo = g % 10 === 0 ? 34 : 17;
     escala += `<line x1="${cx - largo}" y1="${-g * porGrado}" x2="${cx + largo}" y2="${-g * porGrado}" class="cr__paso" />`;
     if (g % 10 === 0) {
-      escala += `<text x="${cx - largo - 6}" y="${-g * porGrado + 4}" class="cr__paso-cifra" text-anchor="end">${Math.abs(g)}</text>`;
-      escala += `<text x="${cx + largo + 6}" y="${-g * porGrado + 4}" class="cr__paso-cifra">${Math.abs(g)}</text>`;
+      escala += `<text x="${cx - largo - 6}" y="${-g * porGrado + 4}" data-desde="3" class="cr__paso-cifra" text-anchor="end">${Math.abs(g)}</text>`;
+      escala += `<text x="${cx + largo + 6}" y="${-g * porGrado + 4}" data-desde="3" class="cr__paso-cifra">${Math.abs(g)}</text>`;
     }
   }
   let arco = "";
@@ -231,7 +231,7 @@ function cintaDeVelocidad(
       return (
         `<line x1="${w - largo}" y1="${yy}" x2="${w}" y2="${yy}" class="cr__marca" />` +
         (m.rotula
-          ? `<text x="${w - 16}" y="${yy + 5}" class="cr__cifra" text-anchor="end">${m.valor}</text>`
+          ? `<text x="${w - 16}" y="${yy + 5}" data-desde="3" class="cr__cifra" text-anchor="end">${m.valor}</text>`
           : "")
       );
     })
@@ -258,13 +258,14 @@ function cintaDeVelocidad(
           ${banda(c.arcos.ambar[0], c.arcos.ambar[1], "cr__banda cr__banda--ambar")}
           ${banda(c.arcos.rojo[0], c.arcos.rojo[1], "cr__banda cr__banda--roja")}
           ${tira}
-          <g data-bug="v1">${bug(w)}</g>
-          <g data-bug="vr">${bug(w)}</g>
-          <g data-bug="vref">${bug(w)}</g>
+          <g data-bug="v1" data-desde="4">${bug(w)}</g>
+          <g data-bug="vr" data-desde="4">${bug(w)}</g>
+          <g data-bug="vref" data-desde="4">${bug(w)}</g>
         </g>
         <rect data-tendencia="ias" data-medio="${h / 2}" data-porunidad="${POR_NUDO}"
               x="${w - 3}" y="${h / 2}" width="3" height="0" class="cr__tendencia" />
       </g>
+      ${punteroDeCinta(w, h, true)}
       ${lectura(w, h, "ias")}
     </g>
   `;
@@ -273,6 +274,21 @@ function cintaDeVelocidad(
 /** Un bug de velocidad: una escuadra magenta pegada al borde de dentro. */
 function bug(w: number): string {
   return `<path class="cr__bug" d="M${w} -7 l7 0 l0 14 l-7 0 Z" />`;
+}
+
+/**
+ * El puntero de una cinta: **la línea de fe**, fija en el centro.
+ *
+ * En el peldaño de arriba queda escondido detrás de la caja de la cifra, y en
+ * el primero es lo único que hay. Y con eso basta para volar: la aguja no dice
+ * cuánto, dice **dónde** —en el verde o fuera de él—, que es exactamente lo que
+ * se le pide a alguien de cuatro años. Un arco de color y algo que lo señala es
+ * el instrumento más viejo que existe.
+ */
+function punteroDeCinta(w: number, h: number, haciaDentro: boolean): string {
+  const x = haciaDentro ? w : 0;
+  const s = haciaDentro ? -1 : 1;
+  return `<path class="cr__fe-cinta" d="M${x} ${h / 2} l${s * 11} -7 l0 14 Z" />`;
 }
 
 /** La caja del valor de ahora: fija en el centro, con filete blanco. */
@@ -284,8 +300,8 @@ function lectura(w: number, h: number, que: string): string {
    * del tiempo no está.
    */
   return `
-    <path data-alerta="${que}" class="cr__caja" d="M0 ${h / 2 - 18} l${w} 0 l0 36 l${-w} 0 Z" />
-    <text data-cristal="${que}" x="${w - 8}" y="${h / 2 + 9}" class="cr__valor" text-anchor="end"></text>
+    <path data-alerta="${que}" data-desde="2" class="cr__caja" d="M0 ${h / 2 - 18} l${w} 0 l0 36 l${-w} 0 Z" />
+    <text data-cristal="${que}" x="${w - 8}" y="${h / 2 + 9}" data-desde="2" class="cr__valor" text-anchor="end"></text>
   `;
 }
 
@@ -318,7 +334,7 @@ function cintaDeAltitud(
       return (
         `<line x1="0" y1="${yy}" x2="${largo}" y2="${yy}" class="cr__marca" />` +
         (m.rotula
-          ? `<text x="${largo + 4}" y="${yy + 5}" class="cr__cifra">${m.valor}</text>`
+          ? `<text x="${largo + 4}" y="${yy + 5}" data-desde="3" class="cr__cifra">${m.valor}</text>`
           : "")
       );
     })
@@ -326,7 +342,7 @@ function cintaDeAltitud(
   const tambor = [-1, 0, 1]
     .map(
       (k) =>
-        `<text data-tambor-cifra="${k + 1}" x="${w - 4}" y="${h / 2 + 9 + k * 26}" class="cr__valor" text-anchor="end"></text>`,
+        `<text data-tambor-cifra="${k + 1}" x="${w - 4}" y="${h / 2 + 9 + k * 26}" data-desde="2" class="cr__valor" text-anchor="end"></text>`,
     )
     .join("");
   return `
@@ -345,8 +361,9 @@ function cintaDeAltitud(
         <rect data-tendencia="alt" data-medio="${h / 2}" data-porunidad="${POR_PIE}"
               x="0" y="${h / 2}" width="3" height="0" class="cr__tendencia" />
       </g>
-      <path class="cr__caja" d="M0 ${h / 2 - 18} l${w} 0 l0 36 l${-w} 0 Z" />
-      <text data-cristal="alt" x="${w - 36}" y="${h / 2 + 9}" class="cr__valor" text-anchor="end"></text>
+      ${punteroDeCinta(w, h, false)}
+      <path data-desde="2" class="cr__caja" d="M0 ${h / 2 - 18} l${w} 0 l0 36 l${-w} 0 Z" />
+      <text data-cristal="alt" x="${w - 36}" y="${h / 2 + 9}" data-desde="2" class="cr__valor" text-anchor="end"></text>
       <g clip-path="url(#${yo}-tambor)"><g data-tambor="alt" data-paso="26">${tambor}</g></g>
     </g>
   `;
@@ -369,8 +386,8 @@ function variometro(
     <g transform="translate(${x} ${y})">
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       ${marcas}
-      <text x="${w / 2}" y="11" class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">VS</text>
-      <text x="${w / 2}" y="${h - 4}" class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">${Math.round(c.vsiMax / 1000)}</text>
+      <text x="${w / 2}" y="11" data-desde="3" class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">VS</text>
+      <text x="${w / 2}" y="${h - 4}" data-desde="3" class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">${Math.round(c.vsiMax / 1000)}</text>
       <g data-cristal="vsi" data-ampl="${h / 2 - 10}" data-max="${c.vsiMax}">
         <path class="cr__aguja-vsi" d="M0 ${h / 2} l${w} 0" />
       </g>
@@ -392,7 +409,7 @@ function cintaDeRumbo(
     const larga = g % 10 === 0;
     tira += `<line x1="${xx}" y1="0" x2="${xx}" y2="${larga ? 9 : 5}" class="cr__marca" />`;
     if (g % 30 === 0) {
-      tira += `<text x="${xx}" y="${h - 10}" class="cr__cifra" text-anchor="middle">${((g % 360) / 10).toFixed(0).padStart(2, "0")}</text>`;
+      tira += `<text x="${xx}" y="${h - 10}" data-desde="3" class="cr__cifra" text-anchor="middle">${((g % 360) / 10).toFixed(0).padStart(2, "0")}</text>`;
     }
   }
   return `
@@ -406,8 +423,8 @@ function cintaDeRumbo(
           <g data-bug="hdg"><path class="cr__bug" d="M-7 0 l14 0 l0 7 l-7 -5 l-7 5 Z" /></g>
         </g>
       </g>
-      <path class="cr__caja" d="M${w / 2 - 26} 0 l52 0 l0 20 l-52 0 Z" />
-      <text data-cristal="hdg" x="${w / 2}" y="${15}" class="cr__valor" text-anchor="middle"></text>
+      <path data-desde="2" class="cr__caja" d="M${w / 2 - 26} 0 l52 0 l0 20 l-52 0 Z" />
+      <text data-cristal="hdg" x="${w / 2}" y="${15}" data-desde="2" class="cr__valor" text-anchor="middle"></text>
       <path class="cr__fe" d="M${w / 2} 0 l0 ${h}" />
     </g>
   `;
@@ -442,7 +459,7 @@ export function rosaDeRumbo(
               : g === 270
                 ? "W"
                 : String(g / 10);
-      carta += `<text x="${Math.sin(a) * (r - 22)}" y="${-Math.cos(a) * (r - 22) + 5}" class="cr__cifra" text-anchor="middle">${letra}</text>`;
+      carta += `<text x="${Math.sin(a) * (r - 22)}" y="${-Math.cos(a) * (r - 22) + 5}" data-desde="3" class="cr__cifra" text-anchor="middle">${letra}</text>`;
     }
   }
   return `
@@ -482,10 +499,10 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
     </g>
     <path class="cr__simbolo" transform="translate(${cx} ${cy})"
           d="M0 -14 l0 26 M-12 4 l24 0 M-6 12 l12 0" />
-    <text data-cristal="nd-rumbo" x="${cx}" y="22" class="cr__valor" text-anchor="middle"></text>
-    <text x="${cx}" y="36" class="cr__rotulo" text-anchor="middle">HDG</text>
-    <text data-cristal="viento" x="12" y="22" class="cr__aux"></text>
-    <text data-cristal="distancia" x="${ancho - 12}" y="22" class="cr__aux" text-anchor="end"></text>
+    <text data-cristal="nd-rumbo" x="${cx}" y="22" data-desde="2" class="cr__valor" text-anchor="middle"></text>
+    <text x="${cx}" y="36" data-desde="3" class="cr__rotulo" text-anchor="middle">HDG</text>
+    <text data-cristal="viento" x="12" y="22" data-desde="3" class="cr__aux"></text>
+    <text data-cristal="distancia" x="${ancho - 12}" y="22" data-desde="3" class="cr__aux" text-anchor="end"></text>
   `;
 }
 
@@ -530,13 +547,13 @@ export function pantallaDeMotores(
   const yTren = alto - 26;
   return `
     <rect data-fondo="eicas" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
-    <text x="${ancho / 2}" y="20" class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
+    <text x="${ancho / 2}" y="20" data-desde="3" class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
     ${mandoDeMotor(12, cy + r + 46, hueco, n)}
     ${reglaDeFlaps(40, alto - 96, ancho - 80, 26)}
     ${lucesDeTren(14, yTren, patas)}
     <text data-cristal="reversa" x="${ancho - 14}" y="${yTren + 13}"
-          class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
+          data-desde="2" class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
   `;
 }
 
@@ -562,7 +579,7 @@ function mandoDeMotor(x: number, y: number, ancho: number, n: number): string {
   }
   return `
     <g transform="translate(${x} ${y})">
-      <text x="${ancho / 2}" y="-8" class="cr__rotulo cr__rotulo--menudo"
+      <text x="${ancho / 2}" y="-8" data-desde="3" class="cr__rotulo cr__rotulo--menudo"
             text-anchor="middle">MANDO</text>
       ${barras}
     </g>
@@ -602,8 +619,8 @@ function dialDeMotor(cx: number, cy: number, r: number, i: number): string {
         </g>
       </g>
       <circle cx="${cx}" cy="${cy}" r="3" class="cr__buje" />
-      <text data-motor-cifra="${i}" x="${cx}" y="${cy + r + 18}" class="cr__valor" text-anchor="middle"></text>
-      <text x="${cx}" y="${cy + 4}" class="cr__rotulo" text-anchor="middle">${i + 1}</text>
+      <text data-motor-cifra="${i}" x="${cx}" y="${cy + r + 18}" data-desde="2" class="cr__valor" text-anchor="middle"></text>
+      <text x="${cx}" y="${cy + 4}" data-desde="3" class="cr__rotulo" text-anchor="middle">${i + 1}</text>
     </g>
   `;
 }
@@ -629,14 +646,14 @@ export function reglaDeFlaps(
     const d = (k / 3) * largo;
     detentes += tumbada
       ? `<line x1="${d}" y1="0" x2="${d}" y2="${h}" class="cr__marca" />` +
-        `<text x="${d}" y="${h + 15}" class="cr__rotulo" text-anchor="middle">${k * 10}</text>`
+        `<text x="${d}" y="${h + 15}" data-desde="3" class="cr__rotulo" text-anchor="middle">${k * 10}</text>`
       : `<line x1="0" y1="${d}" x2="${w}" y2="${d}" class="cr__marca" />` +
-        `<text x="${w + 5}" y="${d + 4}" class="cr__rotulo">${k * 10}</text>`;
+        `<text x="${w + 5}" y="${d + 4}" data-desde="3" class="cr__rotulo">${k * 10}</text>`;
   }
   return `
     <g transform="translate(${x} ${y})">
       <text x="${tumbada ? -10 : w / 2}" y="${tumbada ? h - 8 : -8}"
-            class="cr__rotulo" text-anchor="${tumbada ? "end" : "middle"}">FLAP</text>
+            data-desde="3" class="cr__rotulo" text-anchor="${tumbada ? "end" : "middle"}">FLAP</text>
       <rect width="${w}" height="${h}" rx="2" class="cr__ventana" />
       ${detentes}
       <g data-cristal="flaps" data-largo="${largo}" data-tumbada="${tumbada ? 1 : 0}">
@@ -666,7 +683,7 @@ export function lucesDeTren(x: number, y: number, patas: number): string {
     luces += `<rect x="${k * 22}" y="0" width="16" height="16" rx="2" class="cr__tren" />`;
   }
   return `<g data-cristal="tren" transform="translate(${x} ${y})">${luces}
-    <text x="${patas * 22 + 6}" y="13" class="cr__rotulo">GEAR</text></g>`;
+    <text x="${patas * 22 + 6}" y="13" data-desde="3" class="cr__rotulo">GEAR</text></g>`;
 }
 
 /**
@@ -688,12 +705,12 @@ export function columnaDeMotor(ancho: number, alto: number, c: Cuadro): string {
   }
   return `
     <rect data-fondo="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
-    <text x="${ancho / 2}" y="22" class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
+    <text x="${ancho / 2}" y="22" data-desde="3" class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
     ${mandoDeMotor(16, cy + r + 46, ancho - 32, n)}
     ${reglaDeFlaps(34, alto - 74, ancho - 68, 26)}
     <text data-cristal="reversa" x="${ancho - 12}" y="${alto - 14}"
-          class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
+          data-desde="2" class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
   `;
 }
 
@@ -725,17 +742,17 @@ export function franjaDeMotor(
               class="cr__barra" />
         <rect x="${bx}" y="24" width="${anchoBarra}" height="${altoBarra * 0.05}" class="cr__arco--ambar" />
         <text data-motor-cifra="${i}" x="${bx + anchoBarra / 2}" y="${24 + altoBarra + 18}"
-              class="cr__valor" text-anchor="middle"></text>
+              data-desde="2" class="cr__valor" text-anchor="middle"></text>
       </g>`;
   }
   return `
     <rect data-fondo="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
-    <text x="${ancho / 2}" y="16" class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
+    <text x="${ancho / 2}" y="16" data-desde="3" class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${barras}
     ${reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34)}
     ${lucesDeTren(12, alto - 24, patasDe(a))}
     <text data-cristal="reversa" x="${ancho / 2}" y="${alto - 8}"
-          class="cr__reversa" text-anchor="middle" visibility="hidden">REV</text>
+          data-desde="2" class="cr__reversa" text-anchor="middle" visibility="hidden">REV</text>
   `;
 }
 

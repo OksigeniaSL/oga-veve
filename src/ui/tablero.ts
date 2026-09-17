@@ -139,8 +139,29 @@ export class Tablero {
   private lectura: HTMLElement | null = null;
   private desdeLaLectura = 0;
 
-  /** El dibujo entero. Se llama al montar el HUD y al cambiar de aeronave. */
-  markup(a: AircraftConfig): string {
+  /**
+   * El dibujo entero. Se llama al montar el HUD y al cambiar de aeronave.
+   *
+   * ## **El cuadro no cambia entre peldaños: crece**
+   *
+   * Es la apuesta central del diseño de cabinas y la última que quedaba por
+   * aplicar. Mismas posiciones, mismos colores, mismos movimientos en los
+   * cuatro; lo que aparece es **lenguaje**. Un niño que sube de peldaño
+   * reconoce su cabina al instante y descubre que siempre estuvo diciéndole
+   * más de lo que él podía oír.
+   *
+   * Antes el cuadro aparecía de golpe en el peldaño de arriba y abajo no había
+   * nada, así que quien empezaba a los cuatro años volaba sin instrumentos y a
+   * los catorce se encontraba seis de golpe. Ahora en el primero hay cintas con
+   * sus bandas de color, una rosa con su flecha y una aguja de motor en el
+   * verde — sin una sola cifra, porque no se lee— y de ahí para arriba se van
+   * encendiendo los números, las escalas, los rótulos y los objetivos.
+   *
+   * Y el mecanismo es el que tiene que ser: **un solo dibujo**, con cada pieza
+   * marcada con el peldaño desde el que se ve. Nadie dibuja cuatro cuadros.
+   * Ver `data-desde` y las reglas de `.tablero[data-peldano]` en la hoja.
+   */
+  markup(a: AircraftConfig, peldano = 4): string {
     const c = cuadroDe(a);
     const familia = familiaDe(a);
     this.seisPack.ponerCuadro(c);
@@ -163,6 +184,7 @@ export class Tablero {
       -->
       <p class="tablero__lectura" data-hud="lectura" aria-live="polite"></p>
       <svg class="tablero" data-hud="tablero" data-familia="${familia}"
+           data-peldano="${Math.max(1, Math.min(4, peldano))}"
            viewBox="0 0 ${ANCHO_DEL_CUADRO} ${ALTO_DEL_CUADRO}"
            preserveAspectRatio="xMidYMid meet"
            aria-hidden="true" focusable="false">
@@ -192,7 +214,7 @@ export class Tablero {
       <rect width="${ANCHO_DEL_CUADRO}" height="${VISERA}" class="tablero__visera" />
       ${familia === "linea" ? this.mcp() : ""}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
-            class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
+            data-desde="3" class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
     `;
   }
 
@@ -208,9 +230,15 @@ export class Tablero {
       .map((r, i) => {
         const x = 490 + i * 100;
         return `
-          <g class="tablero__mcp">
+          <g class="tablero__mcp" data-desde="2">
             <rect x="${x}" y="12" width="84" height="40" rx="3" />
-            <text x="${x + 42}" y="24" class="cr__rotulo" text-anchor="middle">${r}</text>
+            <!--
+              Y el rótulo con la ventanilla, desde el mismo peldaño: tres
+              cifras magenta sin decir de qué son no son tres objetivos, son
+              tres números. La ventanilla y su nombre son la misma cosa.
+            -->
+            <text x="${x + 42}" y="24" data-desde="2" class="cr__rotulo"
+                  text-anchor="middle">${r}</text>
             <text data-mcp="${r.toLowerCase()}" x="${x + 42}" y="45"
                   class="cr__objetivo" text-anchor="middle">---</text>
           </g>`;
@@ -231,7 +259,7 @@ export class Tablero {
         <rect data-fondo="placa" width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
         ${this.chapa(a, placa.ancho)}
         <text data-cristal="gs" x="${placa.ancho / 2}" y="${BANDA.alto - 74}"
-              class="cr__aux" text-anchor="middle"></text>
+              data-desde="3" class="cr__aux" text-anchor="middle"></text>
         ${lucesDeTren(
           (placa.ancho - patasDe(a) * 22 + 6) / 2,
           BANDA.alto - 48,
@@ -255,8 +283,8 @@ export class Tablero {
     const arriba = partes.slice(0, 2).join(" ");
     const abajo = partes.slice(2).join(" ");
     return `
-      <text x="${ancho / 2}" y="46" class="tablero__chapa" text-anchor="middle">${arriba}</text>
-      <text x="${ancho / 2}" y="76" class="tablero__chapa tablero__chapa--nombre"
+      <text x="${ancho / 2}" y="46" data-desde="3" class="tablero__chapa" text-anchor="middle">${arriba}</text>
+      <text x="${ancho / 2}" y="76" data-desde="3" class="tablero__chapa tablero__chapa--nombre"
             text-anchor="middle">${abajo}</text>
       <line x1="${ancho * 0.2}" y1="94" x2="${ancho * 0.8}" y2="94" class="tablero__filete" />
     `;

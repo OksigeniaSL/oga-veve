@@ -249,9 +249,9 @@ for (const a of avisos) {
 const quietos = await page.evaluate(() => {
   const salida = [];
   const marcoDe = (i) =>
-    document.querySelectorAll("svg.tablero")[i].querySelector(
-      '[data-cristal="perdida"]',
-    );
+    document
+      .querySelectorAll("svg.tablero")
+      [i].querySelector('[data-cristal="perdida"]');
   globalThis.__cuadros.forEach((id, i) => {
     const pintar = globalThis.__pintar[id];
     // Primero moviéndose: a los 0,6 s de nacer, el parpadeo lo tiene apagado.
@@ -286,6 +286,75 @@ for (const q of quietos) {
 await page.evaluate(() => {
   for (const id of globalThis.__cuadros) globalThis.__pintar[id]({}, 6);
 });
+
+/*
+ * ── **Y que el cuadro crezca con el peldaño** ──
+ *
+ * Es la apuesta central del diseño de cabinas: el cuadro no cambia entre
+ * peldaños, crece. Mismas posiciones, mismos colores, mismos movimientos; lo
+ * que aparece es **lenguaje**. Así que lo que se comprueba es exactamente eso,
+ * y en este orden: que en el primero no haya ni una letra —porque a los cuatro
+ * años no se lee—, que cada peldaño enseñe más que el anterior y nunca menos, y
+ * que **las piezas sean siempre las mismas**: si el dibujo cambiara de forma en
+ * vez de crecer, el número de piezas marcadas no cuadraría.
+ */
+const crecer = await page.evaluate(() => {
+  const salida = [];
+  for (const svg of document.querySelectorAll("svg.tablero")) {
+    const marcadas = [...svg.querySelectorAll("[data-desde]")];
+    const porPeldano = [1, 2, 3, 4].map((p) => {
+      svg.dataset.peldano = String(p);
+      const letras = [...svg.querySelectorAll("text")].filter((t) => {
+        if (!t.textContent.trim()) return false;
+        for (let n = t; n && n !== svg; n = n.parentElement) {
+          if (getComputedStyle(n).display === "none") return false;
+          if (n.getAttribute?.("visibility") === "hidden") return false;
+        }
+        return true;
+      }).length;
+      return {
+        p,
+        deja: marcadas.filter((e) => Number(e.dataset.desde) <= p).length,
+        letras,
+      };
+    });
+    svg.dataset.peldano = "4";
+    salida.push({
+      familia: svg.dataset.familia,
+      marcadas: marcadas.length,
+      porPeldano,
+    });
+  }
+  return salida;
+});
+
+for (const c of crecer) {
+  const p = c.porPeldano;
+  comprobar(
+    `${c.familia}: en el primer peldaño el cuadro no tiene ni una letra`,
+    p[0].letras === 0,
+    `${p[0].letras} rótulos`,
+    "a los cuatro años no se lee: lo que se lee es el color y la posición",
+  );
+  /*
+   * **Crece, y nunca encoge.** Entre el tercero y el cuarto puede no cambiar
+   * nada en una avioneta —sus esferas no llevan bugs de V-speeds ni Mach— y eso
+   * está bien; lo que no puede pasar nunca es que un peldaño enseñe **menos**
+   * que el de abajo.
+   */
+  comprobar(
+    `${c.familia}: y cada peldaño enseña al menos tanto como el anterior`,
+    p.every((x, i) => i === 0 || x.deja >= p[i - 1].deja),
+    p.map((x) => `p${x.p}:${x.deja}`).join(" → "),
+    "«el cuadro no cambia entre peldaños: crece»",
+  );
+  comprobar(
+    `${c.familia}: y del primero al último crece de verdad`,
+    p[3].deja > p[0].deja * 2,
+    `${p[0].deja} → ${p[3].deja} piezas encendidas`,
+    "si no crece, la escalera de peldaños no está haciendo nada",
+  );
+}
 
 await page.screenshot({ path: SALIDA, fullPage: true });
 console.log(`\n  ${SALIDA}`);
