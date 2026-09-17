@@ -1018,6 +1018,25 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       }
       return vistos;
     },
+    /**
+     * El pintor, para poder hacerle una foto a algo que está lejos.
+     *
+     * Plantar una cámara al lado de una pieza del mundo y pintar un fotograma
+     * es la única forma de enseñar cómo se ve algo que está a dos kilómetros
+     * sin volar hasta allí. Solo desarrollo, como toda esta bolsa.
+     */
+    pintor: () => juego.renderer,
+    /**
+     * Y la cámara de verdad, para poder clonarla y mirar desde otro sitio.
+     *
+     * **No se llama `camara` porque ese nombre ya estaba cogido** —lo usa la
+     * sonda que cuenta los bits de profundidad— y en un objeto de JavaScript
+     * la segunda clave repetida gana en silencio: puesta así, la otra dejaba
+     * de existir sin que nada fallara. Lo cazó el compilador, que para eso
+     * está; a ojo no se ve, porque las dos líneas están a cuatrocientas de
+     * distancia.
+     */
+    camaraViva: () => juego.camera,
     /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
     trafico: () => juego.trafico?.quienes() ?? [],
     /** Si esta cabina es de avión de línea: lo dice su panel de techo. */
