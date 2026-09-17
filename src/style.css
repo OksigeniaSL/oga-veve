@@ -2336,6 +2336,36 @@ button.motor__tecla::after {
   stroke-width: 2;
 }
 
+/*
+ * La línea de fe de una cinta. En el peldaño de arriba queda detrás de la caja
+ * de la cifra; en el primero es lo único que hay — y con eso basta para volar,
+ * porque la aguja no dice cuánto: dice **dónde**, en el verde o fuera de él.
+ */
+.cr__fe-cinta {
+  fill: var(--cabina-simbolo);
+}
+
+/*
+ * ── **El cuadro no cambia entre peldaños: crece** ──
+ *
+ * Cada pieza lleva escrito desde qué peldaño se ve, y aquí se apaga lo que
+ * todavía no toca. Mismas posiciones, mismos colores, mismos movimientos en
+ * los cuatro: lo que aparece es **lenguaje**. Quien sube de peldaño reconoce su
+ * cabina al instante y descubre que siempre estuvo diciéndole más de lo que él
+ * podía oír.
+ *
+ * Se hace aquí y no dibujando cuatro cuadros porque cuatro dibujos divergen: el
+ * día que alguien mueva una cinta en uno, los otros tres se quedan atrás.
+ */
+.tablero[data-peldano="1"] [data-desde="2"],
+.tablero[data-peldano="1"] [data-desde="3"],
+.tablero[data-peldano="1"] [data-desde="4"],
+.tablero[data-peldano="2"] [data-desde="3"],
+.tablero[data-peldano="2"] [data-desde="4"],
+.tablero[data-peldano="3"] [data-desde="4"] {
+  display: none;
+}
+
 .cr__rosa {
   fill: rgb(0 0 0 / 0.35);
 }

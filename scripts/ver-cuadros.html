@@ -91,6 +91,9 @@
   // que un aviso **se enciende**, que es lo que ninguna foto quieta enseña.
   globalThis.__pintar = {};
   const solo = new URLSearchParams(location.search).get("solo");
+  const peldano = Number(
+    new URLSearchParams(location.search).get("peldano") ?? 4,
+  );
   for (const m of FLOTA) {
     const id = `jaz-${m.numero}`;
     if (solo && id !== solo) continue;
@@ -101,7 +104,7 @@
     caja.innerHTML = `<h2>${ficha.name.toUpperCase()}</h2><div class="cuadro"></div>`;
     todo.appendChild(caja);
     const tablero = new Tablero();
-    caja.querySelector(".cuadro").innerHTML = tablero.markup(ficha);
+    caja.querySelector(".cuadro").innerHTML = tablero.markup(ficha, peldano);
     tablero.bind(caja, ficha);
     const s = estado(kt, pies, 0.18, 0.06);
     const pintar = (extra, dt) => {

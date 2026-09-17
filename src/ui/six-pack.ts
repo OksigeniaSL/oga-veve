@@ -222,7 +222,7 @@ function dial(
       ${overlay}
       <circle cx="50" cy="50" r="3.4" class="esfera__buje" />
       ${reflejo()}
-      <text x="50" y="86" class="esfera__rotulo">${label}</text>
+      <text x="50" y="86" data-desde="3" class="esfera__rotulo">${label}</text>
     </g>
   `;
 }
@@ -284,7 +284,7 @@ function ticks(count: number, labelEvery: number, scale: number): string {
     const cos = -Math.cos(angle);
     out += `<line x1="${50 + sin * r1}" y1="${50 + cos * r1}" x2="${50 + sin * 41}" y2="${50 + cos * 41}" class="esfera__marca${long ? " esfera__marca--larga" : ""}" />`;
     if (long) {
-      out += `<text x="${50 + sin * 26}" y="${50 + cos * 26 + 2.6}" class="esfera__cifra">${Math.round((i / count) * scale)}</text>`;
+      out += `<text x="${50 + sin * 26}" y="${50 + cos * 26 + 2.6}" data-desde="3" class="esfera__cifra">${Math.round((i / count) * scale)}</text>`;
     }
   }
   return out;
@@ -371,7 +371,7 @@ function dgCard(): string {
     const angle = (degrees * Math.PI) / 180;
     const sin = Math.sin(angle);
     const cos = -Math.cos(angle);
-    out += `<text x="${50 + sin * 30}" y="${50 + cos * 30 + 3}" class="esfera__cifra esfera__cifra--rumbo">${letter}</text>`;
+    out += `<text x="${50 + sin * 30}" y="${50 + cos * 30 + 3}" data-desde="3" class="esfera__cifra esfera__cifra--rumbo">${letter}</text>`;
   }
   for (let i = 0; i < 36; i++) {
     const angle = (i * 10 * Math.PI) / 180;

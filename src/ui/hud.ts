@@ -394,18 +394,43 @@ export class Hud {
   render(): void {
     const gauges = this.instruments !== "none";
     const pictorial = this.instruments === "pictorial";
-    const panel = this.instruments === "full";
+    /*
+     * **El cuadro de mandos sale en los cuatro peldaños.**
+     *
+     * Aparecía de golpe en el de arriba, así que quien empezaba a los cuatro
+     * años volaba sin instrumentos y a los catorce se encontraba seis de golpe.
+     * Lo que hace el peldaño no es tener cuadro o no tenerlo: es **cuánto dice
+     * el cuadro**. En el primero hay cintas con sus bandas de color, una rosa
+     * con su flecha y una aguja de motor en el verde, sin una sola cifra —
+     * porque no se lee—, y de ahí para arriba se encienden los números, las
+     * escalas, los rótulos y los objetivos. Ver `markup` en `tablero.ts`.
+     */
+    const panel = true;
+    /** Qué peldaño es éste, de uno a cuatro. Lo mira el cuadro para crecer. */
+    const peldano =
+      this.instruments === "none"
+        ? 1
+        : this.instruments === "pictorial"
+          ? 2
+          : this.instruments === "numeric"
+            ? 3
+            : 4;
     // Los pictogramas cubren los dos peldaños de abajo. En el primero eran
     // «ningún instrumento», que sobre el papel suena limpio y en la práctica
     // dejaba a un niño de cuatro años volando a ciegas: sin saber si iba
     // deprisa, si subía, ni si el motor estaba puesto. Una tortuga no es un
     // instrumento, es un dibujo, y por eso sí cabe ahí.
     const pictos = this.instruments === "none" || pictorial;
-    // En el peldaño más alto las cifras sueltas desaparecen: lo que se lee
-    // son las seis esferas, que es como se lee una cabina de verdad. Dejar
-    // las dos cosas sería enseñar a mirar el número y no el instrumento,
-    // justo el hábito que este peldaño existe para quitar.
-    const numbers = this.instruments === "numeric";
+    /*
+     * **Y las cifras sueltas ya no existen en ningún peldaño.**
+     *
+     * Eran cuatro tarjetas —velocidad, vertical, altitud y rumbo— y vivían solo
+     * en el tercero, porque en el cuarto ya estaban las esferas: «dejar las dos
+     * cosas sería enseñar a mirar el número y no el instrumento». Ese argumento
+     * vale igual ahora que el cuadro está en los cuatro, y encima el cuadro las
+     * dice mejor: con su escala al lado, con su banda de color y moviéndose.
+     */
+    const numbers = false;
 
     this.root.innerHTML =
       `
@@ -736,7 +761,7 @@ export class Hud {
         -->
         ${
           panel
-            ? `<div class="cuadro">${this.tablero.markup(this.ficha)}</div>`
+            ? `<div class="cuadro">${this.tablero.markup(this.ficha, peldano)}</div>`
             : ""
         }
       </div>
