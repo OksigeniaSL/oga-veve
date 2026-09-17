@@ -836,7 +836,11 @@ function cintaDeAltitud(
   g.restore();
 
   caja(g, x, medio, w, 30);
-  const { centro, fraccion } = rodillo(pies, PASO_TAMBOR);
+  const { centro, fraccion } = rodillo(
+    pies,
+    PASO_TAMBOR,
+    Math.abs(d.vertical * PIES_POR_MINUTO) >= QUIETA_LA_ALTITUD,
+  );
   escribir(
     g,
     String(Math.floor(pies / 100)),

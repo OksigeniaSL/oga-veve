@@ -128,10 +128,48 @@ export interface Rodillo {
  *
  * `paso` es de cuánto en cuánto está grabado el rollo — veinte pies en un
  * altímetro de verdad, porque a menor detalle el tambor sería un borrón.
+ *
+ * ## Y rueda al final del paso, no a lo largo de él
+ *
+ * Con la fracción cruda —`(valor − centro) / paso`— el rollo se desplaza
+ * proporcionalmente a la altitud, así que **en la mayor parte del recorrido la
+ * ventana enseña dos medios dígitos**: a doscientos diez pies, medio «00»
+ * abajo y medio «20» arriba. Parado en la pista de Tenerife Sur, que está a
+ * doscientos, se veía un «2» y debajo un amasijo cortado — sale en cualquier
+ * captura de cabina de los seis aviones.
+ *
+ * Un tambor de verdad no hace eso: se queda quieto enseñando su cifra y rueda
+ * deprisa al final, cuando el diente engancha el siguiente. Lo decía ya el
+ * comentario del dibujo —«un tambor de verdad enseña una cifra, y la de al
+ * lado solo mientras está rodando»— y el recorte a la altura de un dígito se
+ * puso para tapar justo esto. Se tapaba la mitad de un síntoma.
+ *
+ * ## Y quieto no rueda, por muy mal que caiga el número
+ *
+ * Aun rodando solo al final, quedaba el caso que se ve en toda captura de
+ * cabina: **el avión parado**. Tenerife Sur está a ciento noventa y ocho pies,
+ * que cae dentro de ese último cuarto, así que el altímetro de los seis
+ * aviones enseñaba dos medias cifras cortadas de forma permanente. Y un
+ * tambor parado a medio camino no existe: si la altitud no cambia, el diente
+ * está encajado.
+ *
+ * `rodando` es si la altitud se está moviendo de verdad — la misma banda
+ * muerta que ya usa la flecha de tendencia, ver `QUIETA_LA_ALTITUD`.
  */
-export function rodillo(valor: number, paso: number): Rodillo {
+export function rodillo(valor: number, paso: number, rodando = true): Rodillo {
   const centro = Math.floor(valor / paso) * paso;
-  return { centro, fraccion: (valor - centro) / paso };
+  if (!rodando) return { centro, fraccion: 0 };
+  return { centro, fraccion: rodandoAlFinal((valor - centro) / paso) };
+}
+
+/** Qué parte del paso se pasa rodando. El resto, quieto. */
+export const RUEDA_EL_ULTIMO = 0.25;
+
+/** La fracción cruda, apretada contra el final del paso. */
+function rodandoAlFinal(f: number): number {
+  const quieto = 1 - RUEDA_EL_ULTIMO;
+  if (f <= quieto) return 0;
+  return (f - quieto) / RUEDA_EL_ULTIMO;
 }
 
 /**
