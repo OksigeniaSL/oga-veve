@@ -128,8 +128,27 @@ def construir():
     piezas.append(suavizar(carlinga, subdividir=2, biselar=0))
 
     # Y lo de dentro. Una sola plaza: un fumigador lleva al piloto y nada más.
+    # ── **Y el piloto va dentro del fuselaje, no encima** ──
+    #
+    # Era el único de los seis que se sentaba con los valores por defecto de
+    # `cabina`, y esos valores están escritos para un fuselaje más hondo. Aquí
+    # dejaban el respaldo en 0,88 y el borde del panel en 0,66, con la piel del
+    # avión llegando a 0,47: **la cabina entera montada un palmo por encima del
+    # avión**. Desde el asiento eso se ve como un arco naranja cruzando por
+    # delante de los instrumentos, que es el lomo del fuselaje pasando entre el
+    # ojo y el panel — la mirada baja de 0,88 a 0,46 para leer el panel y se
+    # come el lomo a dos centímetros de llegar. Medido con `queHayEn`: piel a
+    # 0,72 m, panel a 0,78, y cuarenta y ocho de los ciento setenta puntos de
+    # la rejilla tapados.
+    #
+    # Un fumigador de verdad va con la cabeza al aire, sí, y para eso hace
+    # falta un recorte en el lomo que aquí no hay forma de hacer con cajas. Así
+    # que se vuela desde dentro, como los otros cinco, con el cristal que este
+    # modelo ya tenía. Las cifras son las del entrenador, que tiene el fuselaje
+    # casi igual de hondo: 0,54 de lomo contra estos 0,47.
     piezas += cabina(
         ojos_z=-0.90, palancas=1, relojes=6, mando="palanca",
+        alto_panel=0.42, y_suelo=-0.28, y_respaldo=0.32,
     )
 
     # ── Las dos alas ──────────────────────────────────────────────────────

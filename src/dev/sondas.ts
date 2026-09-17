@@ -24,7 +24,7 @@
  * Si alguna cambia de nombre, esto deja de compilar, que es justo lo que se
  * quiere: la alternativa era un `as unknown as` y enterarse en la pista.
  */
-import { Box3, Vector3 } from "three";
+import { Box3, Raycaster, Vector2, Vector3, type Object3D } from "three";
 import type { Game } from "../game";
 import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
@@ -973,6 +973,50 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
           juego.camera,
         ) ?? null
       );
+    },
+    /**
+     * **Qué pieza del avión hay en este píxel de la pantalla.**
+     *
+     * La sonda que faltaba, y se echó de menos delante de una captura: en la
+     * cabina del biplano cruzaba un arco naranja por delante del salpicadero y
+     * no había forma de saber qué era. Leyendo el guion de Blender salían tres
+     * candidatos igual de plausibles —la hélice, el ala baja y el capó— y los
+     * tres se podían defender con una regla de tres. Dos de los tres eran
+     * mentira.
+     *
+     * Es la versión general de `mandoEn`, que ya hacía esto mismo pero solo
+     * con los botones. Se mira **desde donde mira quien juega**, que es la
+     * única forma de contestar a una queja que viene con foto: en píxeles de
+     * pantalla, y contra la escena entera.
+     *
+     * Devuelve los nombres desde lo más cerca a lo más lejos, porque saber qué
+     * hay detrás de lo que tapa es justo la mitad de la respuesta.
+     */
+    queHayEn: (x: number, y: number, cuantos = 4) => {
+      const lienzo = juego.renderer.domElement;
+      const r = lienzo.getBoundingClientRect();
+      const rayo = new Raycaster();
+      rayo.setFromCamera(
+        new Vector2(
+          ((x - r.left) / r.width) * 2 - 1,
+          -(((y - r.top) / r.height) * 2 - 1),
+        ),
+        juego.camera,
+      );
+      const vistos: { nombre: string; a: number }[] = [];
+      for (const t of rayo.intersectObject(juego.aircraftMesh.group, true)) {
+        // El nombre que sirve es el de la pieza, y una malla sin nombre lo
+        // hereda del grupo que la cuelga: lo contrario devuelve una lista de
+        // cadenas vacías, que es no contestar.
+        let quien: Object3D | null = t.object;
+        while (quien && !quien.name) quien = quien.parent;
+        vistos.push({
+          nombre: quien?.name ?? "?",
+          a: Math.round(t.distance * 100) / 100,
+        });
+        if (vistos.length >= cuantos) break;
+      }
+      return vistos;
     },
     /** Si esta cabina es de avión de línea: lo dice su panel de techo. */
     deLinea: () => !!juego.aircraftMesh.group.getObjectByName("panel-de-techo"),

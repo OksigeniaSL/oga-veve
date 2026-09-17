@@ -170,6 +170,58 @@ for (const id of FLOTA) {
     );
   }
 
+  /*
+   * **Y que no haya avión por delante de los instrumentos.**
+   *
+   * El fallo que este banco no veía y que se vio en una captura: el biplano
+   * llevaba la cabina entera montada un palmo por encima de su propio
+   * fuselaje —era el único de los seis que se sentaba con los valores por
+   * defecto de `cabina()`, escritos para un fuselaje más hondo—, y el lomo del
+   * avión pasaba entre el ojo del piloto y el panel. Desde el asiento eso es
+   * un arco naranja cruzando por delante de los relojes; desde aquí eran
+   * cuarenta y ocho de ciento setenta puntos tapados y el banco decía 42 de 42.
+   *
+   * Se barre una rejilla sobre el panel y se pregunta **qué hay en cada
+   * píxel**, que es la pregunta que se hace quien mira la pantalla. Lo que
+   * tapa un instrumento estando más cerca que él no es un detalle de dibujo:
+   * es el instrumento que no está.
+   *
+   * Los mandos no cuentan: un botón está en el panel a propósito, y la
+   * palanca de vuelo cruza el tablero en cualquier avión del mundo.
+   */
+  const SE_PUEDE_PONER_DELANTE = /^(boton|palanca|cuerno|pedestal|manche)/;
+  const tapando = await page.evaluate(
+    ([re]) => {
+      const cuenta = {};
+      const suyo = new RegExp(re);
+      for (let x = 340; x <= 1000; x += 40)
+        for (let y = 440; y <= 800; y += 40) {
+          const v = globalThis.__oga.queHayEn(x, y, 3);
+          const i = v.findIndex(
+            (o) =>
+              o.nombre === "panel" ||
+              o.nombre.startsWith("pantalla") ||
+              o.nombre.startsWith("reloj"),
+          );
+          if (i > 0)
+            for (const o of v.slice(0, i))
+              if (!suyo.test(o.nombre))
+                cuenta[o.nombre] = (cuenta[o.nombre] ?? 0) + 1;
+        }
+      return cuenta;
+    },
+    [SE_PUEDE_PONER_DELANTE.source],
+  );
+  const estorbos = Object.entries(tapando);
+  comprobar(
+    etiqueta("y no hay avión por delante de los instrumentos"),
+    estorbos.length === 0,
+    estorbos.length
+      ? estorbos.map(([n, c]) => `${n} (${c} puntos)`).join(" · ")
+      : "nada por delante",
+    "la cabina va dentro del fuselaje, no encima",
+  );
+
   comprobar(
     etiqueta("sin errores"),
     !errores.length,
