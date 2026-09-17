@@ -79,6 +79,15 @@ COLORES = {
     "reloj_rpm": (0.04, 0.05, 0.05, 1.0),
     "reloj_par": (0.04, 0.05, 0.05, 1.0),
     "reloj_flaps": (0.04, 0.05, 0.05, 1.0),
+    # Y los seis de vuelo, que es lo que lleva delante quien vuela un avión de
+    # pistón: velocidad, actitud, altímetro, viraje, rumbo y variómetro. Ver
+    # `six-pack.ts`, que dibuja estos mismos en el cuadro plano.
+    "reloj_asi": (0.04, 0.05, 0.05, 1.0),
+    "reloj_ai": (0.04, 0.05, 0.05, 1.0),
+    "reloj_alt": (0.04, 0.05, 0.05, 1.0),
+    "reloj_tc": (0.04, 0.05, 0.05, 1.0),
+    "reloj_dg": (0.04, 0.05, 0.05, 1.0),
+    "reloj_vsi": (0.04, 0.05, 0.05, 1.0),
     # Y los mandos que se pueden pulsar. **El nombre tampoco es libre**: lo que
     # se llame `boton-<qué>` lo enciende `world/botones-cabina.ts` y responde al
     # dedo, al ratón y a su tecla. Ver `boton`.
@@ -994,7 +1003,86 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
             caja("visera", -ancho - 0.04, ancho + 0.04, alto_panel,
                  alto_panel + 0.04, panel_z - 0.18, panel_z + 0.08)
         )
-    if pantallas and not grande:
+    # ── **Un avión de pistón lleva relojes, no cristal** ──
+    #
+    # La familia la manda el motor y no el peldaño: los de pistón llevan seis
+    # esferas redondas, el turbohélice dos pantallas y los reactores la cabina
+    # de línea entera. Eso ya lo decía el cuadro plano —ver `familiaDe` en
+    # `ui/familia.ts`— y aquí dentro no se cumplía: el entrenador de escuela,
+    # el fumigador y el bimotor volaban con dos cristales de G1000 delante.
+    #
+    # Y lo que había en el tablero eran **dos relojes de motor y nada más**,
+    # con un comentario que lo explicaba así: «no son instrumentos que
+    # funcionen; lo que se lee de verdad está en el HUD». Eso valía mientras el
+    # HUD se viera desde la cabina. Ya no se ve —ahí el cuadro es el del
+    # avión—, así que la decoración se quedó de único panel.
+    #
+    # Seis, en dos filas de tres y en el orden de siempre: velocidad, actitud y
+    # altímetro arriba; viraje, rumbo y variómetro abajo. Es el «six-pack» que
+    # lleva cualquier avioneta del mundo, y el mismo que dibuja `six-pack.ts`
+    # en el cuadro plano.
+    seispack = mide == "rpm" and not grande
+
+    # ── **Cuánto sitio hay de verdad, decidido una sola vez** ──
+    #
+    # Todo lo que va en el tablero —el six-pack, la columna de motor y la fila
+    # de botones— se reparte este hueco, y cada pieza se encoge si hace falta.
+    # Es la regla del cuadro plano traída aquí: **se encoge lo de dentro, nunca
+    # se empuja el grupo a un lado**. Ver `ui/familia.ts`.
+    #
+    # El techo no es el borde del panel: **la visera sobresale ocho centímetros
+    # hacia el piloto**, así que lo que caiga justo debajo de ella se ve
+    # cortado desde el asiento. Se vio en el bimotor, con la fila de arriba del
+    # six-pack partida por la mitad.
+    techo_inst = alto_panel - 0.05
+    suelo_inst = y_suelo + 0.10
+    alto_util = max(0.12, techo_inst - suelo_inst)
+    cuantos_r = max(1, palancas) + 1
+    # La columna de motor mide `r*(2,4·n − 0,4)` y debajo va la fila de
+    # botones, que pide otro `1,7·r`. De ahí sale el tope.
+    radio_reloj = min(0.07, alto_util / (2.4 * cuantos_r + 1.3))
+    # Y el six-pack, dos filas.
+    #
+    # **El paso se mide por el aro, no por la esfera.** La caja de un reloj es
+    # un cilindro de `radio·1,12` —ver `reloj`—, o sea que dos esferas
+    # separadas por su propio diámetro tienen los aros montados uno encima del
+    # otro. Se veía poco a ojo y el banco lo cantó de golpe: ocho solapes en
+    # los tres aviones de pistón.
+    PASO_DE_ESFERA = 2.45
+    radio_s = min(0.058, alto_util / (PASO_DE_ESFERA + 2)) if seispack else 0.0
+    paso_s = radio_s * PASO_DE_ESFERA
+    columna_s = radio_reloj * 2 + 0.03
+    if seispack:
+        # Y a lo ancho, lo mismo: si el grupo entero no cabe en el tablero, se
+        # encoge; nunca se sale ni se descentra.
+        sobra = paso_s * 3 + columna_s - ancho * 2
+        if sobra > 0:
+            radio_s = max(0.026, radio_s - sobra / (PASO_DE_ESFERA * 3))
+            paso_s = radio_s * PASO_DE_ESFERA
+        grupo_s = paso_s * 3 + columna_s
+        borde_s = plazas[0] - grupo_s / 2
+        # Arrimado a la visera, por lo mismo que las pantallas: es donde cae la
+        # vista al bajarla del horizonte.
+        arriba_s = techo_inst - radio_s
+        for i, que in enumerate(("asi", "ai", "alt", "tc", "dg", "vsi")):
+            piezas += reloj(
+                f"reloj-{que}",
+                que,
+                radio_s,
+                (
+                    borde_s + radio_s + (i % 3) * paso_s,
+                    arriba_s - (i // 3) * paso_s,
+                    # **Delante de la plancha, no clavado en ella.** A ras del
+                    # panel las dos caras pelean por el mismo plano y lo que
+                    # sale es media esfera sí y media no, distinta según desde
+                    # dónde se mire: en el bimotor desaparecía la fila de abajo
+                    # entera. Los relojes de motor ya iban ocho milímetros por
+                    # delante, por esto mismo.
+                    panel_z + 0.008,
+                ),
+            )
+
+    if pantallas and not grande and not seispack:
         # **El grupo entero centrado en el ojo del piloto.**
         #
         # Las pantallas ya se centraban en su asiento, pero la columna de
@@ -1072,17 +1160,20 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # cosas se arreglan a la vez: se ven siempre y llenan el hueco. Y sigue
         # siendo una cabina creíble — en muchas avionetas el grupo del motor va
         # justo ahí, a la derecha del panel de vuelo.
-        cuantos = max(1, palancas) + 1
+        cuantos = cuantos_r
         # **Una sola columna, y los relojes encogen para que quepa.**
         #
         # La columna va pegada al borde derecho de lo que se ve desde el
         # asiento, así que **a lo ancho no hay sitio**: se probó a ponerlos en
         # bloque de dos como en el cuatrimotor y la segunda columna se salía por
         # el canto derecho —medido, x hasta 1.399 de un lienzo de 1.280—. Lo que
-        # sí hay es alto, y lo que sobra es tamaño: tres relojes de siete
-        # centímetros no caben entre la visera y los botones, y de cinco y medio
-        # sí. Con el monomotor —dos relojes— no cambia nada.
-        radioReloj = min(0.07, 0.175 / max(2, cuantos))
+        # sí hay es alto, y lo que sobra es tamaño.
+        #
+        # **Y el tamaño ya está decidido arriba**, del hueco que hay entre la
+        # visera y el canto de abajo, que es de donde come todo. Estaba aquí
+        # con una cuenta suya —`0,175 / n`— y por eso en el bimotor la tercera
+        # esfera se salía por debajo del panel y se metía entre los botones.
+        radioReloj = radio_reloj
         cols = 1
         paso_r = radioReloj * 2.4
         # **Donde acaba el par de pantallas**, que es lo que fija el grupo.
@@ -1091,13 +1182,17 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # sumandos— y por eso el conjunto quedaba escorado a la derecha. Ahora
         # el reparto lo decide un sitio solo, arriba, y esto se limita a
         # ponerse detrás.
-        ancho_p_r = 0.28
-        par_r = ancho_p_r * 2 + 0.012
+        # **Y lo que fija el grupo es lo que haya a su izquierda**, que ya no
+        # es siempre el par de pantallas: en un avión de pistón son las tres
+        # esferas del six-pack. Con la cuenta del par escrita a pelo, la
+        # columna de motor se plantaba donde estarían los cristales que ese
+        # avión ya no lleva.
+        par_r = paso_s * 3 if seispack else 0.28 * 2 + 0.012
         grupo_r = par_r + radioReloj * 2 + 0.03
         izq = plazas[0] - grupo_r / 2 + par_r + 0.03 + radioReloj
         columna = izq + (cols - 1) * paso_r / 2
-        # A la altura de las pantallas, que ahora están arriba del todo.
-        arriba = alto_panel - 0.04 - radioReloj
+        # A la altura de lo que tiene al lado, y por debajo de la visera.
+        arriba = techo_inst - radioReloj
         filas_r = (cuantos + cols - 1) // cols
         for m in range(cuantos):
             x = izq + (m % cols) * paso_r
@@ -1143,8 +1238,15 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # botón del freno asomaba un centímetro al aire.
         paso_boton = radioReloj * 1.3
         medio_fila = (len(mandos) - 1) * paso_boton / 2 + radioReloj
+        # **Y centrados en el piloto, no debajo de la columna de motor.**
+        #
+        # Iban ahí por una razón que ya no existe: abajo y en el centro vivía
+        # la tarjeta de «lo que toca hacer ahora» y les caía encima. Desde que
+        # esa tarjeta sube a la franja de arriba en la vista de cabina, el
+        # centro está libre — y el centro es donde va la mano. Amontonados a un
+        # costado se veían torcidos en el biplano y en el bimotor.
         centro_fila = max(
-            -ancho + medio_fila, min(ancho - medio_fila, columna)
+            -ancho + medio_fila, min(ancho - medio_fila, plazas[0])
         )
         for i, que in enumerate(mandos):
             piezas += boton(

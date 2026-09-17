@@ -44,6 +44,7 @@ import {
   type Object3D,
 } from "three";
 import { LETRAS_DESDE, type Peldano } from "../ui/familia";
+import type { Cuadro } from "../ui/cuadro";
 
 /** Lado del lienzo de cada reloj, en píxeles. */
 const LADO = 256;
@@ -59,8 +60,25 @@ const AGUJA = "#f2f1ec";
 const TOPE = "#e8b13a";
 const ARCO = "#7ec86a";
 
-/** Lo que se puede marcar, que es lo que el juego sabe de verdad. */
-export type QueMide = "n1" | "rpm" | "par" | "flaps";
+/** Lo que marca un reloj de motor. */
+export type DeMotor = "n1" | "rpm" | "par" | "flaps";
+
+/**
+ * Y los seis de vuelo, **que son los que de verdad se vuelan**.
+ *
+ * Hasta hoy en el tablero de una avioneta había dos relojes de motor y dos
+ * cristales de G1000, y un comentario que lo justificaba así: «no son
+ * instrumentos que funcionen; lo que se lee de verdad está en el HUD». Eso
+ * valía mientras el HUD se viera desde la cabina. Desde que ahí el cuadro es
+ * el del avión, la decoración se quedó de único panel — y encima era la de
+ * otra familia: un entrenador de escuela con pantallas de cristal.
+ *
+ * Son los mismos seis que `ui/six-pack.ts` dibuja en el cuadro plano, en el
+ * mismo orden y con las mismas escalas. Ver `familiaDe` en `ui/familia.ts`.
+ */
+export type DeVuelo = "asi" | "ai" | "alt" | "tc" | "dg" | "vsi";
+
+export type QueMide = DeMotor | DeVuelo;
 
 /** El rótulo serigrafiado de cada uno. */
 const ROTULO: Record<QueMide, string> = {
@@ -68,7 +86,16 @@ const ROTULO: Record<QueMide, string> = {
   rpm: "RPM",
   par: "TRQ",
   flaps: "FLAPS",
+  asi: "IAS",
+  ai: "ATT",
+  alt: "ALT",
+  tc: "T/C",
+  dg: "HDG",
+  vsi: "V/S",
 };
+
+/** Los seis de vuelo, para poder preguntar si uno lo es. */
+const DE_VUELO = new Set<string>(["asi", "ai", "alt", "tc", "dg", "vsi"]);
 
 export interface DatosDeRelojes {
   /**
@@ -91,6 +118,19 @@ export interface DatosDeRelojes {
    * que el cuadro plano. Ver `LETRAS_DESDE` en `ui/familia.ts`.
    */
   readonly peldano: Peldano;
+  /** Velocidad indicada, en nudos. */
+  readonly velocidad: number;
+  /** Altitud, en pies. */
+  readonly pies: number;
+  /** Velocidad vertical, en pies por minuto. */
+  readonly fpm: number;
+  /** Rumbo magnético, en grados. */
+  readonly rumbo: number;
+  /** Cabeceo y alabeo, en grados. */
+  readonly cabeceo: number;
+  readonly alabeo: number;
+  /** Las escalas de **este** avión: sin ellas la esfera miente. */
+  readonly cuadro: Cuadro;
 }
 
 interface Esfera {
@@ -185,7 +225,10 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
     if (!m.isMesh || !nombre.startsWith("reloj_")) return;
     const que = nombre.slice("reloj_".length) as QueMide;
     if (!(que in ROTULO)) return;
-    if (que === "flaps") otros.push({ malla: m, que });
+    // Los de vuelo no se ordenan por su sitio: cada uno mide lo suyo y ya.
+    // Los de motor sí, de izquierda a derecha, para que el número 1 sea el de
+    // la izquierda como en cualquier cabina.
+    if (que === "flaps" || DE_VUELO.has(que)) otros.push({ malla: m, que });
     else
       deMotor.push({ malla: m, que, x: m.getWorldPosition(new Vector3()).x });
   });
@@ -230,6 +273,11 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
          * «3596» escritos de derecha a izquierda.
          */
         e.g.setTransform(1, 0, 0, 1, 0, 0);
+        if (DE_VUELO.has(e.que)) {
+          pintarVuelo(e.g, e.que as DeVuelo, datos);
+          e.textura.needsUpdate = true;
+          continue;
+        }
         const valor =
           e.que === "flaps" ? datos.flaps : (datos.motores[e.motor] ?? 0);
         pintarEsfera(e.g, e.que, valor, datos, e.motor);
@@ -267,6 +315,25 @@ function escribir(
 const DESDE = (140 * Math.PI) / 180;
 const RECORRIDO = (260 * Math.PI) / 180;
 
+/** El aro de la caja, para que la esfera no se funda con el tablero. */
+function aro(g: CanvasRenderingContext2D): { c: number; r: number } {
+  const c = LADO / 2;
+  const r = LADO * 0.42;
+  g.fillStyle = FONDO;
+  g.fillRect(0, 0, LADO, LADO);
+  g.strokeStyle = "#39413f";
+  g.lineWidth = LADO * 0.045;
+  g.beginPath();
+  g.arc(c, c, r, 0, Math.PI * 2);
+  g.stroke();
+  return { c, r };
+}
+
+/** Cuánto barre una aguja de esfera completa, desde `DESDE`. */
+function angulo(v: number): number {
+  return DESDE + RECORRIDO * Math.max(0, Math.min(1, v));
+}
+
 function pintarEsfera(
   g: CanvasRenderingContext2D,
   que: QueMide,
@@ -274,21 +341,9 @@ function pintarEsfera(
   datos: DatosDeRelojes,
   motor: number,
 ): void {
-  const c = LADO / 2;
-  const r = LADO * 0.42;
-  g.fillStyle = FONDO;
-  g.fillRect(0, 0, LADO, LADO);
-
-  // El aro de la caja, para que la esfera tenga borde y no se funda con el
-  // tablero.
-  g.strokeStyle = "#39413f";
-  g.lineWidth = LADO * 0.045;
-  g.beginPath();
-  g.arc(c, c, r, 0, Math.PI * 2);
-  g.stroke();
+  const { c, r } = aro(g);
 
   const cuantas = que === "flaps" ? 4 : 10;
-  const angulo = (v: number) => DESDE + RECORRIDO * Math.max(0, Math.min(1, v));
 
   /*
    * El arco de régimen normal y el de despegue, como los de un instrumento de
@@ -370,4 +425,249 @@ function pintarEsfera(
     `600 ${LADO * 0.11}px system-ui, sans-serif`,
     MARCA,
   );
+}
+
+/**
+ * Los seis de vuelo, pintados en la esfera que les toca.
+ *
+ * Cada uno es el mismo instrumento que dibuja `ui/six-pack.ts` en el cuadro
+ * plano, con **las escalas de este avión** —ver `Cuadro`—: sin ellas la aguja
+ * de velocidad de una avioneta y la de un reactor barrerían lo mismo, que es
+ * el fallo que ya se arregló una vez en el HUD y que aquí habría vuelto a
+ * entrar por la puerta de atrás.
+ *
+ * Y las letras solo desde el tercer peldaño, como todo lo demás.
+ */
+function pintarVuelo(
+  g: CanvasRenderingContext2D,
+  que: DeVuelo,
+  d: DatosDeRelojes,
+): void {
+  const { c, r } = aro(g);
+  const marcas = (cuantas: number, rotula: (i: number) => string | null) => {
+    for (let i = 0; i <= cuantas; i++) {
+      const a = angulo(i / cuantas);
+      g.strokeStyle = MARCA;
+      g.lineWidth = LADO * 0.02;
+      g.beginPath();
+      g.moveTo(c + Math.cos(a) * r * 0.62, c + Math.sin(a) * r * 0.62);
+      g.lineTo(c + Math.cos(a) * r * 0.76, c + Math.sin(a) * r * 0.76);
+      g.stroke();
+      const texto = rotula(i);
+      if (texto !== null && d.peldano >= LETRAS_DESDE)
+        escribir(
+          g,
+          texto,
+          c + Math.cos(a) * r * 0.46,
+          c + Math.sin(a) * r * 0.46,
+          `600 ${LADO * 0.1}px system-ui, sans-serif`,
+          TINTA,
+        );
+    }
+  };
+  const aguja = (v: number, largo = 0.66, color = AGUJA) => {
+    const a = angulo(v);
+    g.strokeStyle = color;
+    g.lineWidth = LADO * 0.032;
+    g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(c - Math.cos(a) * r * 0.1, c - Math.sin(a) * r * 0.1);
+    g.lineTo(c + Math.cos(a) * r * largo, c + Math.sin(a) * r * largo);
+    g.stroke();
+    g.fillStyle = color;
+    g.beginPath();
+    g.arc(c, c, LADO * 0.04, 0, Math.PI * 2);
+    g.fill();
+  };
+
+  if (que === "asi") {
+    /*
+     * El anemómetro, **con los arcos de este avión**: verde donde se vuela,
+     * ámbar donde se está poco rato y rojo donde no se pasa. Es lo que hace
+     * que la esfera enseñe el avión que se está volando y no un avión
+     * genérico.
+     */
+    const { verde, ambar, rojo } = d.cuadro.arcos;
+    for (const [tramo, color] of [
+      [verde, ARCO],
+      [ambar, TOPE],
+      [rojo, "#d7503f"],
+    ] as const) {
+      g.strokeStyle = color;
+      g.lineWidth = LADO * 0.05;
+      g.beginPath();
+      g.arc(c, c, r * 0.84, angulo(tramo[0]), angulo(tramo[1]));
+      g.stroke();
+    }
+    marcas(8, (i) =>
+      i % 2 === 0 ? String(Math.round((d.cuadro.asiMax * i) / 8)) : null,
+    );
+    aguja(d.velocidad / d.cuadro.asiMax);
+    return;
+  }
+
+  if (que === "ai") {
+    /*
+     * El horizonte artificial, que no es una aguja: es el mundo girando
+     * dentro de un agujero redondo. Se recorta al aro, que es lo que le da la
+     * gracia — y sin recortar, el marrón se comía la esfera entera.
+     */
+    g.save();
+    g.beginPath();
+    g.arc(c, c, r * 0.9, 0, Math.PI * 2);
+    g.clip();
+    g.translate(c, c);
+    g.rotate((-d.alabeo * Math.PI) / 180);
+    const porGrado = (r * 0.9) / 25;
+    g.translate(0, d.cabeceo * porGrado);
+    g.fillStyle = "#4fb3e8";
+    g.fillRect(-LADO, -LADO, LADO * 2, LADO);
+    g.fillStyle = "#b98f56";
+    g.fillRect(-LADO, 0, LADO * 2, LADO);
+    g.strokeStyle = TINTA;
+    g.lineWidth = LADO * 0.012;
+    g.beginPath();
+    g.moveTo(-r, 0);
+    g.lineTo(r, 0);
+    g.stroke();
+    for (const grados of [-20, -10, 10, 20]) {
+      const y = grados * porGrado;
+      const ancho = grados % 20 === 0 ? r * 0.34 : r * 0.2;
+      g.beginPath();
+      g.moveTo(-ancho, y);
+      g.lineTo(ancho, y);
+      g.stroke();
+    }
+    g.restore();
+    // Y el avioncito fijo por encima, que es contra lo que se lee todo.
+    g.strokeStyle = "#f2c14e";
+    g.lineWidth = LADO * 0.028;
+    g.beginPath();
+    g.moveTo(c - r * 0.42, c);
+    g.lineTo(c - r * 0.14, c);
+    g.moveTo(c + r * 0.14, c);
+    g.lineTo(c + r * 0.42, c);
+    g.stroke();
+    g.beginPath();
+    g.arc(c, c, LADO * 0.022, 0, Math.PI * 2);
+    g.fillStyle = "#f2c14e";
+    g.fill();
+    return;
+  }
+
+  if (que === "alt") {
+    // Dos agujas, como un altímetro de verdad: la corta son los miles y la
+    // larga los cientos. Es lo único que lo distingue de un reloj.
+    marcas(10, (i) => (i < 10 ? String(i) : null));
+    aguja(((d.pies / 1000) % 10) / 10, 0.44);
+    aguja(((d.pies / 100) % 10) / 10, 0.7);
+    return;
+  }
+
+  if (que === "vsi") {
+    // El variómetro barre a los dos lados del cero, que está arriba: subir es
+    // a la derecha y bajar a la izquierda, como en cualquier avión.
+    marcas(8, (i) =>
+      i % 2 === 0
+        ? String(Math.round((d.cuadro.vsiMax * (i / 4 - 1)) / 100) / 10)
+        : null,
+    );
+    const f = Math.max(-1, Math.min(1, d.fpm / d.cuadro.vsiMax));
+    aguja((f + 1) / 2);
+    return;
+  }
+
+  if (que === "dg") {
+    /*
+     * La rosa de rumbos: **gira la rosa, no la aguja**. Es al revés que todos
+     * los demás y es lo que la hace legible sin leer — lo que uno lleva
+     * delante siempre está arriba.
+     */
+    g.save();
+    g.translate(c, c);
+    g.rotate((-d.rumbo * Math.PI) / 180);
+    for (let k = 0; k < 36; k++) {
+      const a = (k * 10 * Math.PI) / 180 - Math.PI / 2;
+      const larga = k % 3 === 0;
+      g.strokeStyle = MARCA;
+      g.lineWidth = larga ? LADO * 0.02 : LADO * 0.01;
+      g.beginPath();
+      g.moveTo(
+        Math.cos(a) * r * (larga ? 0.64 : 0.7),
+        Math.sin(a) * r * (larga ? 0.64 : 0.7),
+      );
+      g.lineTo(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8);
+      g.stroke();
+      if (k % 9 === 0 && d.peldano >= LETRAS_DESDE) {
+        g.save();
+        g.translate(Math.cos(a) * r * 0.48, Math.sin(a) * r * 0.48);
+        g.rotate((d.rumbo * Math.PI) / 180);
+        escribir(
+          g,
+          ["N", "E", "S", "W"][k / 9] ?? "",
+          0,
+          0,
+          `700 ${LADO * 0.12}px system-ui, sans-serif`,
+          TINTA,
+        );
+        g.restore();
+      }
+    }
+    g.restore();
+    // El avioncito, fijo y mirando arriba: lo que se lee es lo que tiene
+    // encima.
+    g.strokeStyle = "#f2c14e";
+    g.lineWidth = LADO * 0.026;
+    g.beginPath();
+    g.moveTo(c, c - r * 0.3);
+    g.lineTo(c, c + r * 0.26);
+    g.moveTo(c - r * 0.22, c);
+    g.lineTo(c + r * 0.22, c);
+    g.stroke();
+    return;
+  }
+
+  /*
+   * El coordinador de viraje: el avioncito se inclina con el alabeo y la bola
+   * se va al lado de fuera si no se da pie. Es el instrumento que enseña que
+   * girar no es solo mover el volante.
+   */
+  g.save();
+  g.translate(c, c);
+  g.rotate((d.alabeo * Math.PI) / 180);
+  g.strokeStyle = "#f2c14e";
+  g.lineWidth = LADO * 0.028;
+  g.beginPath();
+  g.moveTo(-r * 0.5, 0);
+  g.lineTo(r * 0.5, 0);
+  g.moveTo(0, 0);
+  g.lineTo(0, -r * 0.22);
+  g.stroke();
+  g.restore();
+  // Las dos marcas del viraje normalizado, a dos minutos la vuelta.
+  g.strokeStyle = MARCA;
+  g.lineWidth = LADO * 0.018;
+  for (const lado of [-1, 1]) {
+    g.beginPath();
+    g.moveTo(c + lado * r * 0.62, c - r * 0.22);
+    g.lineTo(c + lado * r * 0.62, c + r * 0.02);
+    g.stroke();
+  }
+  // Y la bola, en su tubo curvo.
+  const bola = Math.max(-1, Math.min(1, d.alabeo / 30));
+  g.strokeStyle = "#39413f";
+  g.lineWidth = LADO * 0.09;
+  g.beginPath();
+  g.arc(c, c - r * 0.5, r * 0.95, (65 * Math.PI) / 180, (115 * Math.PI) / 180);
+  g.stroke();
+  g.fillStyle = AGUJA;
+  g.beginPath();
+  g.arc(
+    c + bola * r * 0.32,
+    c - r * 0.5 + r * 0.95 * Math.cos((bola * 25 * Math.PI) / 180),
+    LADO * 0.035,
+    0,
+    Math.PI * 2,
+  );
+  g.fill();
 }

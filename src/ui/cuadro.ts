@@ -29,10 +29,20 @@
 import { esDeChorro, type AircraftConfig } from "../flight/aircraft";
 import { ascensoMaximo } from "../flight/carrera";
 
-/** Un metro por segundo, en nudos. */
-const NUDOS = 1.94384;
-/** Y en pies por minuto. */
-const PIES_POR_MINUTO = 196.85;
+/**
+ * Las tres conversiones del cuadro de mandos, en un solo sitio.
+ *
+ * Estaban escritas a pelo en cada fichero que las necesitaba —`1.94384`,
+ * `3.28084`, `196.85`, repetidas en el HUD, en las pantallas de la cabina y
+ * aquí— y ese es el camino conocido a que dos instrumentos del mismo avión
+ * digan cifras distintas. Un cuadro de mandos tiene una escala; la conversión
+ * es parte de la escala.
+ */
+export const NUDOS = 1.94384;
+/** Un metro, en pies. */
+export const PIES = 3.28084;
+/** Un metro por segundo, en pies por minuto. */
+export const PIES_POR_MINUTO = 196.85;
 
 /** Qué marca cada aguja de motor, y cómo se llama en la cabina. */
 export type Motor = "rpm" | "par" | "n1";

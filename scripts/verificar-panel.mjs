@@ -136,14 +136,34 @@ for (const id of FLOTA) {
 
     // Y que no se monten unas encima de otras.
     const ordenadas = [...dentro].sort((a, b) => a.x0 - b.x0);
+    /**
+     * De qué instrumento es esta pieza.
+     *
+     * **Un reloj y su aro no se pisan: son el mismo reloj.** `reloj-asi` es la
+     * esfera y `reloj-asi-caja` el cilindro que la enmarca, y el cilindro va
+     * detrás a propósito. Contándolos como dos, el six-pack daba ocho solapes
+     * el día que apareció y ninguno era real; con dos relojes en el tablero no
+     * se notaba porque el orden por x los separaba de casualidad.
+     */
+    const suyo = (p) => p.nombre.replace(/-caja$/, "");
+    /*
+     * Y **se comparan todas contra todas**, no cada una con la siguiente.
+     *
+     * Comparar solo vecinas en la lista ordenada por x deja fuera las que se
+     * pisan sin ser consecutivas — que en una rejilla de dos filas son
+     * justamente las de filas distintas. Dieciséis piezas: doscientas
+     * cincuenta comparaciones, que no es nada.
+     */
     let pisadas = 0;
-    for (let i = 1; i < ordenadas.length; i++) {
-      const a = ordenadas[i - 1];
-      const b = ordenadas[i];
-      const solapaX = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
-      const solapaY = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
-      if (solapaX > 4 && solapaY > 4) pisadas += 1;
-    }
+    for (let i = 0; i < ordenadas.length; i++)
+      for (let j = i + 1; j < ordenadas.length; j++) {
+        const a = ordenadas[i];
+        const b = ordenadas[j];
+        if (suyo(a) === suyo(b)) continue;
+        const solapaX = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+        const solapaY = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+        if (solapaX > 4 && solapaY > 4) pisadas += 1;
+      }
     comprobar(
       etiqueta("y no se pisan entre ellas"),
       pisadas === 0,
@@ -243,6 +263,39 @@ for (const id of FLOTA) {
     rotulos === 0,
     rotulos < 0 ? "no se pudo contar" : `${rotulos} rótulos`,
     "se empieza a los cuatro años y no se lee",
+  );
+
+  /*
+   * **Y que las dos superficies enseñen lo mismo.**
+   *
+   * Es la comprobación que faltaba y por la que se pudo llegar a esto: el
+   * cuadro plano dibujaba seis esferas redondas para un avión de pistón y la
+   * cabina del mismo avión, dos cristales de G1000. Los dos bancos daban todo
+   * verde porque cada uno miraba su lado.
+   *
+   * Aquí se preguntan las dos a la vez: la familia sale de `familiaDe` y **los
+   * dos dibujos tienen que obedecerla**. Si un día alguien cambia una y se
+   * olvida de la otra, esto lo dice.
+   */
+  const acuerdo = await page.evaluate(() => {
+    const o = globalThis.__oga;
+    const plano = !!document.querySelector('[data-hud="sixpack"]');
+    const dentro = o
+      .enPantalla("^reloj")
+      .piezas.map((p) => p.nombre.replace(/-caja$/, ""));
+    const seis = ["asi", "ai", "alt", "tc", "dg", "vsi"];
+    return {
+      familia: o.familia(),
+      plano,
+      dentro: seis.every((q) => dentro.includes(`reloj-${q}`)),
+    };
+  });
+  comprobar(
+    etiqueta("y el cuadro plano y la cabina son de la misma familia"),
+    (acuerdo.familia === "esferas") === acuerdo.plano &&
+      acuerdo.plano === acuerdo.dentro,
+    `${acuerdo.familia}: plano ${acuerdo.plano ? "esferas" : "cristal"}, cabina ${acuerdo.dentro ? "esferas" : "cristal"}`,
+    "la familia la manda el motor, y la mandan las dos superficies o no la manda nadie",
   );
 
   comprobar(
