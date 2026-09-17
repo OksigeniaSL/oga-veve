@@ -28,7 +28,7 @@
 
 import type { AircraftConfig } from "../flight/aircraft";
 import { PALETA } from "./paleta";
-import { marcasDeCinta, rodillo } from "./cinta";
+import { QUIETA_LA_ALTITUD, marcasDeCinta, rodillo } from "./cinta";
 import type { Cuadro } from "./cuadro";
 import { ANCLA_DE_ACTITUD, patasDe } from "./familia";
 
@@ -756,10 +756,19 @@ export function franjaDeMotor(
   `;
 }
 
-/** Dónde se planta el tambor de la altitud. Lo usa el actualizador. */
-export function tamborDeAltitud(pies: number): {
+/**
+ * Dónde se planta el tambor de la altitud. Lo usa el actualizador.
+ *
+ * `fpm` es lo que sube o baja: un tambor solo rueda si la altitud se mueve.
+ * Sin eso, el avión parado enseñaba dos medias cifras cortadas para siempre.
+ * Ver `rodillo`.
+ */
+export function tamborDeAltitud(
+  pies: number,
+  fpm = 0,
+): {
   centro: number;
   fraccion: number;
 } {
-  return rodillo(pies, PASO_DE_TAMBOR);
+  return rodillo(pies, PASO_DE_TAMBOR, Math.abs(fpm) >= QUIETA_LA_ALTITUD);
 }

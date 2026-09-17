@@ -91,10 +91,17 @@ describe("el vector de tendencia", () => {
 
 describe("el tambor", () => {
   it("rueda en vez de saltar", () => {
+    // Y rueda **al final del paso**: a mitad de camino sigue enseñando su
+    // cifra quieta, que es lo que hace un tambor de verdad. Esto decía antes
+    // que a 1230 la fracción era media, y de ahí salían los dos medios
+    // dígitos cortados que se ven en cualquier captura de cabina.
     const a = rodillo(1230, 20);
+    const rodando = rodillo(1237.5, 20);
     const b = rodillo(1240, 20);
     expect(a.centro).toBe(1220);
-    expect(a.fraccion).toBeCloseTo(0.5, 6);
+    expect(a.fraccion).toBe(0);
+    expect(rodando.centro).toBe(1220);
+    expect(rodando.fraccion).toBeCloseTo(0.5, 6);
     expect(b.centro).toBe(1240);
     expect(b.fraccion).toBe(0);
   });
@@ -179,5 +186,29 @@ describe("la precesión de la carta", () => {
     }
     expect(Number.isFinite(e.desviacion)).toBe(true);
     expect(e.desviacion).toBeCloseTo(90, 1);
+  });
+});
+
+describe("el tambor rueda al final del paso, no a lo largo de él", () => {
+  it("enseña su cifra quieta en la mayor parte del recorrido", () => {
+    // A doscientos diez pies —justo en medio de un paso de veinte— un tambor
+    // de verdad sigue enseñando el «00», no medio «00» y medio «20».
+    expect(rodillo(210, 20)).toEqual({ centro: 200, fraccion: 0 });
+    expect(rodillo(200, 20).fraccion).toBe(0);
+    expect(rodillo(214, 20).fraccion).toBe(0);
+  });
+
+  it("y rueda entero justo antes de cambiar de cifra", () => {
+    expect(rodillo(215, 20).fraccion).toBe(0);
+    expect(rodillo(217.5, 20).fraccion).toBeCloseTo(0.5);
+    expect(rodillo(219.99, 20).fraccion).toBeGreaterThan(0.99);
+    // Y al llegar, el siguiente está centrado y la fracción vuelve a cero.
+    expect(rodillo(220, 20)).toEqual({ centro: 220, fraccion: 0 });
+  });
+
+  it("y por debajo del cero también, que es donde se rompen estas cuentas", () => {
+    expect(rodillo(-10, 20)).toEqual({ centro: -20, fraccion: 0 });
+    expect(rodillo(-1, 20).fraccion).toBeGreaterThan(0);
+    expect(rodillo(-1, 20).centro).toBe(-20);
   });
 });

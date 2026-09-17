@@ -434,7 +434,7 @@ export class Tablero {
     }
 
     this.texto(raiz, "ias", String(Math.round(d.nudos)));
-    this.altitud(raiz, d.pies);
+    this.altitud(raiz, d.pies, d.fpm);
     this.texto(raiz, "hdg", pad3(Math.round(rumbo) % 360));
     this.texto(raiz, "nd-rumbo", pad3(Math.round(rumbo) % 360));
     if (d.mach !== null && d.mach >= 0.4) {
@@ -561,12 +561,12 @@ export class Tablero {
    * La altitud: la caja con lo de delante y el tambor con los dos últimos
    * dígitos rodando. Que es como se lee un altímetro de verdad de un vistazo.
    */
-  private altitud(raiz: SVGElement, pies: number): void {
+  private altitud(raiz: SVGElement, pies: number, fpm: number): void {
     this.texto(raiz, "alt", String(Math.floor(pies / 100)));
     const tambor = raiz.querySelector<SVGElement>('[data-tambor="alt"]');
     if (!tambor) return;
     const paso = Number(tambor.dataset.paso) || 26;
-    const { centro, fraccion } = tamborDeAltitud(pies);
+    const { centro, fraccion } = tamborDeAltitud(pies, fpm);
     tambor.setAttribute("transform", `translate(0 ${fraccion * paso})`);
     for (const t of tambor.querySelectorAll<SVGTextElement>(
       "[data-tambor-cifra]",
