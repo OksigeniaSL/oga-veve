@@ -505,6 +505,48 @@ body {
   display: none;
 }
 
+/*
+ * **Y el cuadro de mandos entero, que era el que más tapaba.**
+ *
+ * La regla de arriba estaba escrita y se aplicaba a cinco tarjetas pequeñas
+ * mientras el que de verdad la incumplía —novecientos por cuatrocientos,
+ * clavado al borde de abajo— se quedaba fuera de la lista. Visto en los seis
+ * aviones a la vez: en el JAZ 90 le cortaba la cinta de velocidad de la
+ * pantalla de vuelo, en el 40 el segundo reloj de motor y en el 60 la esfera
+ * de potencia. Dos cuadros de mando, uno encima del otro, diciendo lo mismo, y
+ * el de abajo era el del avión.
+ *
+ * Desde la cabina, **el cuadro es el del avión**. Es el mismo argumento que ya
+ * estaba escrito unas líneas más arriba, llevado a donde tenía que estar: la
+ * vista de cabina existe para enseñar a leer el panel que tiene delante, y
+ * pintarle otro encima es enseñarle a no mirarlo.
+ *
+ * Fuera de la cabina vuelve entero y con sus cuatro peldaños, que es donde no
+ * hay ningún panel que leer.
+ */
+.hud--cabina .cuadro {
+  display: none;
+}
+
+/*
+ * **La señal, que caía en mitad de la pantalla de navegación.**
+ *
+ * Va centrada a media altura porque en la vista de persecución ahí está el
+ * cielo. En la de cabina, media altura es el salpicadero: medida en una
+ * ventana de 1336×1030 caía en 566,408 y la pantalla de navegación empieza en
+ * 585,470. Es un botón grande y opaco encima de la brújula, en los seis
+ * aviones de la flota.
+ *
+ * Sube a la franja de arriba, debajo de los pictogramas, que es la única que
+ * está despejada en las tres familias de cabina. Y sigue siendo lo más grande
+ * que hay en pantalla, que es lo que tiene que ser: es lo que hay que pulsar.
+ */
+.hud--cabina .senal {
+  top: calc(max(16px, env(safe-area-inset-top)) + var(--tacto) * 3.4);
+  bottom: auto;
+  transform: translateX(-50%);
+}
+
 .hud__arriba {
   grid-column: 2;
   grid-row: 1;

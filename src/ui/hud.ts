@@ -1111,6 +1111,16 @@ export class Hud {
    */
   ponerVistaDeCabina(enCabina: boolean): void {
     this.root.classList.toggle("hud--cabina", enCabina);
+    /*
+     * Y se vuelve a medir el cuadro, porque acaba de cambiar de alto.
+     *
+     * Desde la cabina no se dibuja —ahí el cuadro es el del avión— así que
+     * `--panel-alto` pasa a cero y todo lo que se apoyaba en él baja a ocupar
+     * el sitio. Sin esta línea, la variable se queda con el alto de la última
+     * vista y deja una franja muerta de cuatrocientos píxeles encima del
+     * salpicadero.
+     */
+    this.reserveForPanel();
   }
 
   update(

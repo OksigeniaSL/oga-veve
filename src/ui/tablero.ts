@@ -256,7 +256,20 @@ export class Tablero {
         ${columnaDeMotor(motor.ancho, BANDA.alto, c)}
       </g>
       <g transform="translate(${placa.x} ${BANDA.y})">
-        <rect data-fondo="placa" width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
+        <!--
+          El hueco de la placa aparece **con lo que lleva dentro**.
+
+          La chapa con el nombre es letra, así que empieza en el tercer
+          peldaño; el recuadro empezaba en el primero. En los dos peldaños de
+          los pequeños quedaba un rectángulo negro con su filete y nada
+          escrito: un tercio del cuadro de mandos pareciendo un instrumento
+          roto, que es peor que un hueco. Visto en el JAZ 20, el 25 y el 40.
+
+          Que no haya nada ahí abajo es correcto —el cuadro no se recoloca
+          entre peldaños, crece— pero un sitio vacío se deja vacío, no se
+          enmarca.
+        -->
+        <rect data-fondo="placa" data-desde="3" width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
         ${this.chapa(a, placa.ancho)}
         <text data-cristal="gs" x="${placa.ancho / 2}" y="${BANDA.alto - 74}"
               data-desde="3" class="cr__aux" text-anchor="middle"></text>
