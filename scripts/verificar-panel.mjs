@@ -222,6 +222,29 @@ for (const id of FLOTA) {
     "la cabina va dentro del fuselaje, no encima",
   );
 
+  /*
+   * **Y que en el peldaño de los pequeños no haya una sola letra aquí dentro.**
+   *
+   * Todo este banco vuela en `guyrami`, que es el primero. El banco del cuadro
+   * plano ya exigía esto mismo —«en el primer peldaño el cuadro no tiene ni
+   * una letra»— y lo cumplía, mientras la cabina del mismo avión en el mismo
+   * peldaño enseñaba «IAS», «ALT», «V/S», «GS», «HDG», «RPM», «FLAPS» y once
+   * cifras a diez centímetros de la cara. Dos superficies, dos bancos, y solo
+   * uno de los dos sabía cuál es la promesa: se empieza a los cuatro años y no
+   * se lee.
+   *
+   * Se mide en la de dentro, que es la que mira quien vuela desde la cabina.
+   */
+  const rotulos = await page.evaluate(
+    () => globalThis.__oga.rotulosDeCabina?.() ?? -1,
+  );
+  comprobar(
+    etiqueta("y en el primer peldaño no tiene ni una letra"),
+    rotulos === 0,
+    rotulos < 0 ? "no se pudo contar" : `${rotulos} rótulos`,
+    "se empieza a los cuatro años y no se lee",
+  );
+
   comprobar(
     etiqueta("sin errores"),
     !errores.length,
@@ -230,6 +253,45 @@ for (const id of FLOTA) {
   );
 
   if (FOTOS) await page.screenshot({ path: join(FOTOS, `${id}.png`) });
+  await page.close();
+}
+
+/*
+ * **Y una pasada en el peldaño de arriba, porque cero no basta.**
+ *
+ * «Ni una letra» se cumple igual de bien con la pantalla apagada, con el
+ * módulo sin cargar o con la cuenta devolviendo siempre cero. Lo que hace que
+ * la comprobación de arriba signifique algo es que en el cuarto peldaño
+ * salgan letras: entonces cero en el primero es una decisión y no una avería.
+ */
+{
+  const page = await navegador.newPage({
+    viewport: { width: 1280, height: 720 },
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem("oga-veve:teclas-vistas", "1");
+  });
+  await page.goto(
+    `http://localhost:${PUERTO}/?escenario=tenerife-sur&leccion=despegue&tramo=taguato-ruvicha&avion=jaz-120`,
+  );
+  await page
+    .waitForFunction(
+      () => globalThis.__oga?.aeronave?.().deVerdad === true,
+      null,
+      { timeout: 60000 },
+    )
+    .catch(() => {});
+  await page.evaluate(() => globalThis.__oga.ponerVista("cockpit"));
+  await page.waitForTimeout(1200);
+  const rotulos = await page.evaluate(
+    () => globalThis.__oga.rotulosDeCabina?.() ?? -1,
+  );
+  comprobar(
+    "jaz-120 en el cuarto peldaño: y ahí sí escribe, que el cuadro crece",
+    rotulos > 0,
+    rotulos < 0 ? "no se pudo contar" : `${rotulos} rótulos`,
+    "«ni una letra» se cumple igual de bien con la pantalla apagada",
+  );
   await page.close();
 }
 

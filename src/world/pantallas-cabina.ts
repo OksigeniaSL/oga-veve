@@ -49,6 +49,7 @@ import {
   rodillo,
   tendencia,
 } from "../ui/cinta";
+import { LETRAS_DESDE, type Peldano } from "../ui/familia";
 
 /**
  * La tipografía de la cabina: condensada, y la misma que el cuadro del HUD.
@@ -130,6 +131,16 @@ export interface DatosDeCabina {
    * HUD: el de fuselaje ancho volaba con la aguja clavada en el tope. Sale de
    * la ficha, por `cuadroDe`. Ver `ui/cuadro.ts`.
    */
+  /**
+   * En qué peldaño de la escalera se está volando, de uno a cuatro.
+   *
+   * **Lo que decide si en esta pantalla hay letras.** Sin esto, el mismo avión
+   * en el peldaño de los pequeños enseñaba fuera un cuadro sin una palabra y
+   * dentro, a diez centímetros de la cara, «IAS», «ALT», «V/S», «GS», «HDG»,
+   * «RPM», «FLAPS» y once cifras. Y la de dentro es la que mira quien vuela
+   * desde la cabina. Ver `peldanoDe` en `ui/familia.ts`.
+   */
+  readonly peldano: Peldano;
   readonly cuadro: Cuadro;
   /** Cuántas patas tiene el tren. Tres, y cinco en el grande. */
   readonly patas: number;
@@ -413,6 +424,10 @@ export function encenderPantallas(
       desde += dt;
       if (desde < 1 / POR_SEGUNDO) return;
       desde = 0;
+      // El peldaño de este repintado, para las veintisiete letras. Y la cuenta
+      // a cero: lo que se mide es lo que sale **en esta pasada**.
+      peldanoDeAhora = datos.peldano;
+      rotulosPintados = 0;
       pantallas.forEach((p, i) => {
         // El espejo, deshecho: se dibuja al revés para que se vea del derecho
         // desde el otro lado del cuadrado. Ver `estirarUV`.
@@ -441,6 +456,22 @@ export function encenderPantallas(
  * no a una letra. Así que cada texto deshace el espejo en su sitio: se pone
  * donde toca y se dibuja al derecho.
  */
+/**
+ * En qué peldaño se está pintando ahora mismo, y cuántas letras han salido.
+ *
+ * Va en el módulo y no de parámetro en parámetro porque `escribir` se llama
+ * veintisiete veces desde ocho sitios distintos y encadenarlo por todos ellos
+ * era la forma segura de olvidarse de uno — y un rótulo olvidado en el primer
+ * peldaño rompe la promesa entera. Se pone al empezar cada repintado.
+ */
+let peldanoDeAhora: Peldano = 4;
+let rotulosPintados = 0;
+
+/** Cuántas letras salieron en el último repintado. Para el banco. */
+export function rotulosDeLaCabina(): number {
+  return rotulosPintados;
+}
+
 function escribir(
   g: CanvasRenderingContext2D,
   texto: string,
@@ -450,6 +481,14 @@ function escribir(
   color: string,
   alineado: CanvasTextAlign = "center",
 ): void {
+  /*
+   * **Todo lo que se escribe es letra, y las letras empiezan en el tercero.**
+   *
+   * Aquí y no en cada sitio que llama: es el cuello por donde pasan las
+   * veintisiete, y la regla es una sola. Ver `LETRAS_DESDE`.
+   */
+  if (peldanoDeAhora < LETRAS_DESDE) return;
+  rotulosPintados += 1;
   g.save();
   g.translate(x, y);
   g.fillStyle = color;
@@ -669,6 +708,15 @@ function ventana(
 }
 
 /** La caja del valor de ahora: fija en el centro, con filete blanco. */
+/**
+ * El recuadro de una lectura. **Y sin lectura no hay recuadro.**
+ *
+ * Los cuatro de estas pantallas existen para enmarcar una cifra, así que en
+ * los dos peldaños que no llevan cifras quedaban cuatro cajas negras vacías
+ * con su filete: en la cinta de velocidad, en la de altitud, al pie de la de
+ * rumbo y encima de la rosa. Es el mismo error que la placa del cuadro plano,
+ * y la regla es la misma: **un sitio vacío se deja vacío, no se enmarca**.
+ */
 function caja(
   g: CanvasRenderingContext2D,
   x: number,
@@ -677,6 +725,7 @@ function caja(
   h: number,
   color = TINTA,
 ): void {
+  if (peldanoDeAhora < LETRAS_DESDE) return;
   g.fillStyle = "#05070a";
   g.fillRect(x, y - h / 2, w, h);
   g.strokeStyle = color;

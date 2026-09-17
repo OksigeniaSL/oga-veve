@@ -30,6 +30,7 @@ import { t, type TranslationKey } from "../i18n";
 import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
+import { peldanoDe } from "./familia";
 import { Tablero } from "./tablero";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
@@ -406,15 +407,14 @@ export class Hud {
      * escalas, los rótulos y los objetivos. Ver `markup` en `tablero.ts`.
      */
     const panel = true;
-    /** Qué peldaño es éste, de uno a cuatro. Lo mira el cuadro para crecer. */
-    const peldano =
-      this.instruments === "none"
-        ? 1
-        : this.instruments === "pictorial"
-          ? 2
-          : this.instruments === "numeric"
-            ? 3
-            : 4;
+    /*
+     * Qué peldaño es éste, de uno a cuatro. Lo mira el cuadro para crecer.
+     *
+     * **Y lo miran también las pantallas de la cabina**, que es por lo que la
+     * cuenta ya no está escrita aquí: mientras vivió en el HUD, el cuadro
+     * plano crecía con la escalera y la cabina no se enteraba. Ver `peldanoDe`.
+     */
+    const peldano = peldanoDe(this.instruments);
     // Los pictogramas cubren los dos peldaños de abajo. En el primero eran
     // «ningún instrumento», que sobre el papel suena limpio y en la práctica
     // dejaba a un niño de cuatro años volando a ciegas: sin saber si iba
