@@ -203,12 +203,12 @@ export const EN: Dictionary = {
     "For Guillermo Ayala, of Teide National Park, who has spent forty years teaching that mountain to schoolchildren. The rule this game runs on is his: safety, safety, safety — everything after that is learning.",
   "credits.close": "Close",
 
-  "torre.verde": "Cleared to enter",
-  "torre.roja": "Hold here",
+  "torre.verde": "{indicativo}, cleared to enter",
+  "torre.roja": "{indicativo}, hold here",
   // La torre canaria dice lo mismo en inglés: lo que cambia entre las dos es
   // el castellano y la voz. Ver `i18n/habla.ts`.
-  "torre.canario.verde": "Cleared to enter",
-  "torre.canario.roja": "Hold here",
+  "torre.canario.verde": "{indicativo}, cleared to enter",
+  "torre.canario.roja": "{indicativo}, hold here",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
   // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
   "ala.titulo": "How a wing flies",

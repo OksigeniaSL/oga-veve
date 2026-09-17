@@ -134,12 +134,6 @@
   "torre.solo.lineUpWait": [
     "torre.solo.lineUpWait"
   ],
-  "torre.verde": [
-    "torre.verde"
-  ],
-  "torre.roja": [
-    "torre.roja"
-  ],
   "torre.clearedTakeoff": [
     "{c1}",
     "{c2}",
@@ -296,5 +290,27 @@
     "{c4}",
     "{c5}",
     "torre.solo.goAround"
+  ],
+  "torre.solo.verde": [
+    "torre.solo.verde"
+  ],
+  "torre.verde": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.verde"
+  ],
+  "torre.solo.roja": [
+    "torre.solo.roja"
+  ],
+  "torre.roja": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.roja"
   ]
 }

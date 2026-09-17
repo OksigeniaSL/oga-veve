@@ -3234,7 +3234,27 @@ export class Game {
      */
     const urgencia =
       rojaDice === "alAire" && luz === "roja" ? "urgente" : "normal";
-    this.torre.decir(t(clave), clave, urgencia);
+    /*
+     * **Y la lámpara te llama por tu matrícula.**
+     *
+     * Una torre que nunca te llama por tu nombre no es una torre, es un
+     * altavoz. Lo hacía solo la fraseología en inglés, y desde que ésa se
+     * guardó para los peldaños de arriba —a los cuatro años el inglés no
+     * enseña nada y decía dos veces lo mismo— en Guyrami no se oía la
+     * matrícula ni una vez en todo el vuelo. Ahora la dice la lámpara, que es
+     * la que se oye siempre y en los cuatro peldaños.
+     *
+     * Y sale gratis de grabación: el alfabeto ya estaba grabado con las dos
+     * voces de torre —se grabó para la radio en inglés— y un hueco no sabe en
+     * qué idioma va la frase de después. Ver `flight/matricula.ts`.
+     */
+    const yo = this.miIndicativo;
+    this.torre.decir(
+      t(clave, { indicativo: yo.dicho }),
+      clave,
+      urgencia,
+      rellenoDe(yo),
+    );
 
     /*
      * **Y detrás, la misma orden en fraseología de verdad.**

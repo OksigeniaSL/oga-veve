@@ -120,9 +120,6 @@
     "lado.right": {
       "ms": 404
     },
-    "torre.canario.roja": {
-      "ms": 793
-    },
     "torre.canario.solo.clearedLand": {
       "ms": 899
     },
@@ -138,10 +135,13 @@
     "torre.canario.solo.lineUpWait": {
       "ms": 951
     },
+    "torre.canario.solo.roja": {
+      "ms": 793
+    },
     "torre.canario.solo.runway": {
       "ms": 1121
     },
-    "torre.canario.verde": {
+    "torre.canario.solo.verde": {
       "ms": 746
     }
   },
@@ -280,12 +280,6 @@
     ],
     "torre.canario.solo.lineUpWait": [
       "torre.canario.solo.lineUpWait"
-    ],
-    "torre.canario.verde": [
-      "torre.canario.verde"
-    ],
-    "torre.canario.roja": [
-      "torre.canario.roja"
     ],
     "torre.canario.clearedTakeoff": [
       "{c1}",
@@ -443,6 +437,28 @@
       "{c4}",
       "{c5}",
       "torre.canario.solo.goAround"
+    ],
+    "torre.canario.solo.verde": [
+      "torre.canario.solo.verde"
+    ],
+    "torre.canario.verde": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.verde"
+    ],
+    "torre.canario.solo.roja": [
+      "torre.canario.solo.roja"
+    ],
+    "torre.canario.roja": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.roja"
     ]
   }
 }

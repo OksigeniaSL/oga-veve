@@ -33,10 +33,10 @@ export const GUG: Dictionary = {
   "app.tagline": "Eveve Paraguay ári",
 
   // ── El vuelo completo ──────────────────────────────────────────────────
-  "torre.verde": "Ikatúma reike",
-  "torre.roja": "Eha'arõ ko'ápe",
-  "torre.canario.verde": "Ikatúma reike",
-  "torre.canario.roja": "Eha'arõ ko'ápe",
+  "torre.verde": "{indicativo}, ikatúma reike",
+  "torre.roja": "{indicativo}, eha'arõ ko'ápe",
+  "torre.canario.verde": "{indicativo}, ikatúma reike",
+  "torre.canario.roja": "{indicativo}, eha'arõ ko'ápe",
   "vuelo.estacionado": "Emyandy motor",
   "vuelo.arrancando": "Epoi freno ha eguata mbegue",
   "vuelo.rodando": "Eho raya hovy rupi",

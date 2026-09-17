@@ -24,7 +24,7 @@
  * Si alguna cambia de nombre, esto deja de compilar, que es justo lo que se
  * quiere: la alternativa era un `as unknown as` y enterarse en la pista.
  */
-import { Vector3 } from "three";
+import { Box3, Vector3 } from "three";
 import type { Game } from "../game";
 import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
@@ -577,6 +577,41 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     tocarMando: (cual: string) => {
       juego.pulsarMandoDeCabina(cual as never);
+    },
+    /**
+     * La caja de cada pieza de la cabina **en el avión**, en metros.
+     *
+     * La hermana de `enPantalla`: aquélla dice dónde cae algo en el cuadro y
+     * ésta dónde está en el aparato. Hacen falta las dos y miden cosas
+     * distintas — una pieza puede verse perfectamente y estar colgando fuera
+     * del tablero, que es lo que pasaba con los botones del turbohélice: se
+     * alcanzaban con el dedo y sobresalían por el canto.
+     */
+    enElAvion: (patron: string) => {
+      const re = new RegExp(patron);
+      juego.aircraftMesh.group.updateWorldMatrix(true, true);
+      const salida: {
+        nombre: string;
+        x0: number;
+        x1: number;
+        y0: number;
+        y1: number;
+      }[] = [];
+      juego.aircraftMesh.group.traverse((o) => {
+        if (!re.test(o.name)) return;
+        const caja = new Box3().setFromObject(o);
+        if (!Number.isFinite(caja.min.x)) return;
+        const a = juego.aircraftMesh.group.worldToLocal(caja.min.clone());
+        const b = juego.aircraftMesh.group.worldToLocal(caja.max.clone());
+        salida.push({
+          nombre: o.name,
+          x0: Math.min(a.x, b.x),
+          x1: Math.max(a.x, b.x),
+          y0: Math.min(a.y, b.y),
+          y1: Math.max(a.y, b.y),
+        });
+      });
+      return salida;
     },
     /** Cuántas piezas de tren se mueven en el modelo. Ver `world/patas.ts`. */
     patas: () => juego.aircraftMesh.patas?.cuantas ?? 0,

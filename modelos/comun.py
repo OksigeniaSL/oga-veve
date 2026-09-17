@@ -1126,11 +1126,31 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # ya está comprobado que se ve entera.
         # Y centrados en la columna, sean tres o cuatro: el «−1» de antes daba
         # por hecho que eran tres y con el del tren corría la fila a la derecha.
+        #
+        # **Y dentro del tablero, no colgando por debajo.** La fila caía donde
+        # acabara la columna de relojes, y eso en el fumigador y en el bimotor
+        # era por debajo del canto del panel: medido en el avión, los botones
+        # del Panambi asomaban siete centímetros al aire. Un mando que flota
+        # fuera del tablero no es un mando, es un error de dibujo — y encima se
+        # veía, porque es justo lo que queda a la vista al mirar hacia abajo.
+        alto_boton = radioReloj * 0.8
+        y_boton = max(
+            y_suelo + 0.08 + alto_boton,
+            arriba - (filas_r - 1) * paso_r - radioReloj * 1.7,
+        )
+        # Y por los costados igual: la fila se arrima lo justo para caber
+        # entera. En el fumigador, con la columna pegada al borde derecho, el
+        # botón del freno asomaba un centímetro al aire.
+        paso_boton = radioReloj * 1.3
+        medio_fila = (len(mandos) - 1) * paso_boton / 2 + radioReloj
+        centro_fila = max(
+            -ancho + medio_fila, min(ancho - medio_fila, columna)
+        )
         for i, que in enumerate(mandos):
             piezas += boton(
-                que, radioReloj * 1.0, radioReloj * 0.8,
-                (columna + (i - (len(mandos) - 1) / 2) * radioReloj * 1.3,
-                 arriba - (filas_r - 1) * paso_r - radioReloj * 1.7,
+                que, radioReloj * 1.0, alto_boton,
+                (centro_fila + (i - (len(mandos) - 1) / 2) * paso_boton,
+                 y_boton,
                  panel_z + 0.008),
             )
     _ = relojes
