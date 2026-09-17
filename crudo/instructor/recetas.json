@@ -424,5 +424,11 @@
   "vuelo.noEstabilizada~3+torcido": [
     "motivo.torcido",
     "vuelo.noEstabilizada~3"
+  ],
+  "vuelo.meteElTren": [
+    "vuelo.meteElTren"
+  ],
+  "vuelo.sacaElTren": [
+    "vuelo.sacaElTren"
   ]
 }

@@ -1397,6 +1397,10 @@ export class Hud {
           nudos,
           pies: state.position.y * 3.28084,
           fpm: state.verticalSpeed * 196.85,
+          // Y la altura **sobre el suelo**, que es otra cosa: la del
+          // radioaltímetro. En La Palma o El Hierro la diferencia con la del
+          // altímetro son seiscientos metros de montaña.
+          sobreElTerreno: state.heightAboveGround * 3.28084,
           alabeo: bank,
           cabeceo: pitch,
           sobreElSuelo:

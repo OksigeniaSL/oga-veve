@@ -1975,15 +1975,36 @@ const DE_UN_VUELO = [
   "torre.clearedTakeoff",
   "torre.clearedLand",
 ];
+
+/*
+ * **Y la fraseología tiene edad.**
+ *
+ * La pareja castellano + inglés es la lección, y a los cuatro años el inglés no
+ * enseña nada: lo que hace es decir dos veces lo mismo cada vez que la torre
+ * abre la boca. Se oyó así: «¿por qué se oye la locución en español y justo
+ * después lo mismo pero en inglés siempre?». De Taguató para arriba se dicen
+ * los dos; en Guyrami y en Tukã, solo lo que hay que hacer. Así que en esos dos
+ * peldaños lo que se comprueba es que la torre **hable**, no que recite en
+ * inglés. Ver `luzDeTorre` en `game.ts`.
+ */
+const conFraseologia = TRAMO === "taguato" || TRAMO === "taguato-ruvicha";
 comprobar(
-  "la torre dice la fraseología del vuelo",
-  /*
-   * Sin el lado: donde hay pistas paralelas la misma orden lleva su `.L` o su
-   * `.R`, que es la que nombra cuál de las dos. Ver `porRadio`.
-   */
-  DE_UN_VUELO.every((c) =>
-    (vuelo.torreDijo ?? []).some((d) => d.replace(/\.[LCR]$/, "") === c),
-  ),
+  conFraseologia
+    ? "la torre dice la fraseología del vuelo"
+    : "la torre manda, y en este peldaño sin el inglés",
+  conFraseologia
+    ? /*
+       * Sin el lado —donde hay pistas paralelas la misma orden lleva su `.L` o
+       * su `.R`— y **sin el habla**: en Canarias la misma orden la dice la voz
+       * de allí y su clave lleva `canario` en medio, que es lo que arregló que
+       * una torre sonara a dos personas. Ver `comoSeDiceAqui`.
+       */
+      DE_UN_VUELO.every((c) =>
+        (vuelo.torreDijo ?? []).some(
+          (d) => d.replace(/\.[LCR]$/, "").replace(".canario.", ".") === c,
+        ),
+      )
+    : (vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
   `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
   "cinco frases grabadas y horneadas que no las pedía nadie",
 );

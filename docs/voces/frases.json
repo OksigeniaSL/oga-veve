@@ -784,13 +784,6 @@
     "para": "las misiones"
   },
   {
-    "id": "mission.started",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "{name}",
-    "para": "las misiones"
-  },
-  {
     "id": "mission.step",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -908,41 +901,6 @@
     "idioma": "es-PY",
     "texto": "Esperá acá",
     "para": "la lámpara de la torre, dicha en casa"
-  },
-  {
-    "id": "otro.buenosDias",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "Buenos días, {indicativo}, rodando a la cabecera",
-    "para": "el otro avión de la frecuencia"
-  },
-  {
-    "id": "otro.rodando",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "{indicativo}, rodando a la cabecera",
-    "para": "el otro avión de la frecuencia"
-  },
-  {
-    "id": "otro.enCola",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "{indicativo}, viento en cola",
-    "para": "el otro avión de la frecuencia"
-  },
-  {
-    "id": "otro.final",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "{indicativo}, en final",
-    "para": "el otro avión de la frecuencia"
-  },
-  {
-    "id": "otro.pistaLibre",
-    "voz": "otro",
-    "idioma": "es-PY",
-    "texto": "{indicativo}, pista libre",
-    "para": "el otro avión de la frecuencia"
   },
   {
     "id": "cabina.v1",
@@ -1090,41 +1048,6 @@
     "idioma": "en",
     "texto": "five",
     "para": "altura de la toma, en metros"
-  },
-  {
-    "id": "torre.clearedTakeoff",
-    "voz": "torre",
-    "idioma": "en",
-    "texto": "cleared for take-off",
-    "para": "luz verde para despegar"
-  },
-  {
-    "id": "torre.clearedLand",
-    "voz": "torre",
-    "idioma": "en",
-    "texto": "cleared to land",
-    "para": "podés volver a intentarlo"
-  },
-  {
-    "id": "torre.goAround",
-    "voz": "torre",
-    "idioma": "en",
-    "texto": "go around, runway occupied",
-    "para": "la pista está ocupada"
-  },
-  {
-    "id": "torre.holdShort",
-    "voz": "torre",
-    "idioma": "en",
-    "texto": "hold short of the runway",
-    "para": "pará en la doble raya"
-  },
-  {
-    "id": "torre.lineUpWait",
-    "voz": "torre",
-    "idioma": "en",
-    "texto": "line up and wait",
-    "para": "entrá y esperá en el eje"
   },
   {
     "id": "fonetico.alfa",

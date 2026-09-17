@@ -118,6 +118,30 @@ export function pantallaDeActitud(
     }
     ${opciones.mach ? `<text data-cristal="mach" x="${ANCHO_CINTA / 2}" y="${alto - 8}" class="cr__aux" text-anchor="middle"></text>` : ""}
     <text data-cristal="gs" x="${xAlt + ANCHO_CINTA / 2}" y="${alto - 8}" class="cr__aux" text-anchor="middle"></text>
+    ${radioaltimetro(act.x + act.ancho / 2, altoAct - 30)}
+  `;
+}
+
+/**
+ * El radioaltímetro: **cuánto hay hasta el suelo**, no hasta el mar.
+ *
+ * Aparece por debajo de dos mil quinientos pies y desaparece por encima, que es
+ * como funciona el de verdad: mientras sobra altura no dice nada, y en cuanto
+ * empieza a faltar es el único número que se mira. La diferencia con el
+ * altímetro de al lado es la lección entera —uno mide sobre el mar y el otro
+ * sobre lo que tenés debajo— y en un sitio como La Palma o El Hierro esa
+ * diferencia son seiscientos metros de montaña.
+ *
+ * Y se pone ámbar en los últimos doscientos pies: ahí ya no es un dato, es un
+ * aviso.
+ */
+function radioaltimetro(cx: number, y: number): string {
+  return `
+    <g data-cristal="radio" visibility="hidden">
+      <text x="${cx}" y="${y}" class="cr__radio" text-anchor="middle"></text>
+      <text x="${cx}" y="${y + 13}" class="cr__rotulo cr__rotulo--menudo"
+            text-anchor="middle">RA</text>
+    </g>
   `;
 }
 

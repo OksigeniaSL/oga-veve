@@ -142,13 +142,17 @@ const CABINA = [
  * graba limpio y el efecto se pone después, así que estas frases se pueden
  * sacar de la misma sesión.
  */
-const TORRE = [
-  ["torre.clearedTakeoff", "cleared for take-off", "luz verde para despegar"],
-  ["torre.clearedLand", "cleared to land", "podés volver a intentarlo"],
-  ["torre.goAround", "go around, runway occupied", "la pista está ocupada"],
-  ["torre.holdShort", "hold short of the runway", "pará en la doble raya"],
-  ["torre.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
-];
+/*
+ * **Y éstas ya no se graban enteras: se montan.**
+ *
+ * Estaban aquí como cinco frases sueltas, de cuando la torre no sabía tu
+ * matrícula. Ahora cada una es una receta —las letras de tu indicativo, el
+ * número de pista y la orden— así que grabarlas enteras es pagar por un
+ * fichero que además **tapa al montaje**: el pack busca por clave y encuentra
+ * el churro antes que la receta. Lo que se graba son sus piezas, que están más
+ * abajo en `TORRE_SOLO`. Ver `recetaDe` en `src/audio/banco-de-voz.ts`.
+ */
+const TORRE = [];
 
 /**
  * El alfabeto aeronáutico, una sílaba por pieza.
@@ -311,7 +315,7 @@ const variantes = (() => {
 
 mkdirSync(SALIDA, { recursive: true });
 
-const filas = [];
+let filas = [];
 /** Las claves que ya tienen voz asignada. Ver el bucle. */
 const yaPuestas = new Set();
 let total = 0;
@@ -449,6 +453,26 @@ for (const [id, texto, para] of TORRE_SOLO) {
     para: `${para}, en Canarias`,
   });
   total += texto.length;
+}
+
+/*
+ * **Y fuera lo que no se graba: lo que se monta.**
+ *
+ * Las frases con hueco —«{indicativo}, en final»— no son frases: son recetas.
+ * Lo que se graba son sus piezas, que ya están en la lista por su cuenta. Si se
+ * quedan aquí, el día que alguien pida grabar esa voz se gasta saldo en que
+ * alguien lea en voz alta «llave indicativo coma en final», y encima ese
+ * fichero tapa a la receta: el pack busca por clave y encuentra el churro antes
+ * que el montaje. Se cuela solo, porque salen del diccionario y el diccionario
+ * las tiene con hueco.
+ */
+const conHueco = filas.filter((f) => f.texto.includes("{"));
+if (conHueco.length) {
+  filas = filas.filter((f) => !f.texto.includes("{"));
+  console.log(
+    `\n  ${conHueco.length} no se graban, se montan: ` +
+      conHueco.map((f) => f.id).join(", "),
+  );
 }
 
 const tsv = [

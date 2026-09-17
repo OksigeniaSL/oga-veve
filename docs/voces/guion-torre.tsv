@@ -1,52 +1,47 @@
 001	torre.verde	Podés entrar
 002	torre.roja	Esperá acá
-003	torre.clearedTakeoff	cleared for take-off
-004	torre.clearedLand	cleared to land
-005	torre.goAround	go around, runway occupied
-006	torre.holdShort	hold short of the runway
-007	torre.lineUpWait	line up and wait
-008	fonetico.alfa	Alfa
-009	fonetico.bravo	Bravo
-010	fonetico.charlie	Charlie
-011	fonetico.delta	Delta
-012	fonetico.echo	Echo
-013	fonetico.foxtrot	Foxtrot
-014	fonetico.golf	Golf
-015	fonetico.hotel	Hotel
-016	fonetico.india	India
-017	fonetico.juliett	Juliett
-018	fonetico.kilo	Kilo
-019	fonetico.lima	Lima
-020	fonetico.mike	Mike
-021	fonetico.november	November
-022	fonetico.oscar	Oscar
-023	fonetico.papa	Papa
-024	fonetico.quebec	Quebec
-025	fonetico.romeo	Romeo
-026	fonetico.sierra	Sierra
-027	fonetico.tango	Tango
-028	fonetico.uniform	Uniform
-029	fonetico.victor	Victor
-030	fonetico.whiskey	Whiskey
-031	fonetico.xray	X-ray
-032	fonetico.yankee	Yankee
-033	fonetico.zulu	Zulu
-034	cifra.0	zero
-035	cifra.1	one
-036	cifra.2	two
-037	cifra.3	three
-038	cifra.4	four
-039	cifra.5	five
-040	cifra.6	six
-041	cifra.7	seven
-042	cifra.8	eight
-043	cifra.9	niner
-044	torre.solo.runway	runway
-045	lado.left	left
-046	lado.right	right
-047	lado.center	center
-048	torre.solo.clearedTakeoff	cleared for take-off
-049	torre.solo.clearedLand	cleared to land
-050	torre.solo.goAround	go around, runway occupied
-051	torre.solo.holdShort	hold short of the runway
-052	torre.solo.lineUpWait	line up and wait
+003	fonetico.alfa	Alfa
+004	fonetico.bravo	Bravo
+005	fonetico.charlie	Charlie
+006	fonetico.delta	Delta
+007	fonetico.echo	Echo
+008	fonetico.foxtrot	Foxtrot
+009	fonetico.golf	Golf
+010	fonetico.hotel	Hotel
+011	fonetico.india	India
+012	fonetico.juliett	Juliett
+013	fonetico.kilo	Kilo
+014	fonetico.lima	Lima
+015	fonetico.mike	Mike
+016	fonetico.november	November
+017	fonetico.oscar	Oscar
+018	fonetico.papa	Papa
+019	fonetico.quebec	Quebec
+020	fonetico.romeo	Romeo
+021	fonetico.sierra	Sierra
+022	fonetico.tango	Tango
+023	fonetico.uniform	Uniform
+024	fonetico.victor	Victor
+025	fonetico.whiskey	Whiskey
+026	fonetico.xray	X-ray
+027	fonetico.yankee	Yankee
+028	fonetico.zulu	Zulu
+029	cifra.0	zero
+030	cifra.1	one
+031	cifra.2	two
+032	cifra.3	three
+033	cifra.4	four
+034	cifra.5	five
+035	cifra.6	six
+036	cifra.7	seven
+037	cifra.8	eight
+038	cifra.9	niner
+039	torre.solo.runway	runway
+040	lado.left	left
+041	lado.right	right
+042	lado.center	center
+043	torre.solo.clearedTakeoff	cleared for take-off
+044	torre.solo.clearedLand	cleared to land
+045	torre.solo.goAround	go around, runway occupied
+046	torre.solo.holdShort	hold short of the runway
+047	torre.solo.lineUpWait	line up and wait
