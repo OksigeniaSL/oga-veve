@@ -6,8 +6,10 @@
  * se ha enseñado es que la radio miente.
  */
 import { describe, expect, it } from "vitest";
+import { ESPERA_ENTRE_VUELOS, ESPERA_MAXIMA } from "../flight/radio";
 import {
   ENTRE_MARCAS,
+  SE_VA_A_LOS,
   RUEDA_A,
   VUELA_A,
   caminosDe,
@@ -179,5 +181,18 @@ describe("y va a una velocidad de avión", () => {
     const fin = porElCamino(m.camino, largoDelCamino(m.camino.slice(0, 4)))!;
     const grados = ((fin.rumbo * 180) / Math.PI + 360) % 360;
     expect(Math.abs(grados - PISTA.heading)).toBeLessThan(5);
+  });
+});
+
+describe("y se va cuando deja de estar en la frecuencia", () => {
+  it("el plazo cae entre el hueco más largo y el relevo", () => {
+    /*
+     * Las dos maneras de equivocarse, y el banco del juego encontró la
+     * primera: con un plazo largo, el que terminó su vuelo sigue dibujado
+     * cuando llega su relevo y se acumulan —cuatro aviones con dos en la
+     * frecuencia—; con uno corto, desaparece a mitad de su propio vuelo.
+     */
+    expect(SE_VA_A_LOS).toBeGreaterThan(ESPERA_MAXIMA);
+    expect(SE_VA_A_LOS).toBeLessThan(ESPERA_ENTRE_VUELOS);
   });
 });

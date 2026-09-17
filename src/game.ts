@@ -49,8 +49,11 @@ import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
   crearCircuito,
   escalaDeCircuito,
+  manoDelCircuito,
   type Circuito,
 } from "./world/circuito";
+import { FLOTA, modeloPorId } from "./flight/flota";
+import { crearTrafico, type Trafico } from "./world/trafico";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
 import type { Lluvia } from "./world/meteo";
@@ -650,6 +653,16 @@ export class Game {
    * `world/circuito.ts`.
    */
   circuito: Circuito | null = null;
+
+  /**
+   * El otro avión de la frecuencia, **dibujado**.
+   *
+   * Lleva tiempo hablando y no estaba: se le oía decir «en final» y la pista
+   * seguía vacía, que es la manera más rápida de enseñar que la radio es un
+   * adorno. Cada llamada suya lo coloca donde acaba de decir que está, y de
+   * ahí sigue volando el circuito. Ver `world/trafico.ts`.
+   */
+  trafico: Trafico | null = null;
   /**
    * Segundos desde la última vez que se preguntó por los edificios de la foto.
    *
@@ -3661,6 +3674,7 @@ export class Game {
      * en Yvytu Rape no salía ninguno.
      */
     this.ponerCircuito();
+    this.ponerTrafico();
     /*
      * **Y solo donde las hay.**
      *
@@ -3768,12 +3782,26 @@ export class Game {
     }
 
     if (this.scenario.aerodrome?.privado) return;
+    this.trafico?.paso(dt);
     const dice = this.radio.update(dt, {
       fase: this.faseDeAhora,
       deDia: this.sky.sunDirection.y > 0,
       instructorHablando: this.instructor.hablando,
     });
     if (!dice) return;
+
+    /*
+     * **Y lo primero que se hace con una llamada es colocar a quien la hace.**
+     *
+     * Antes de decidir cómo suena, porque eso es lo que la vuelve verdad: se
+     * anuncia y el avión está ahí. Va con la matrícula y no con el indicativo
+     * dicho, que es la misma cosa escrita de dos maneras y solo una de las dos
+     * sirve de llave.
+     *
+     * También con las de la torre: «line up and wait» y «cleared for takeoff»
+     * mueven a alguien, y el que las recibe es `dice.de`. Ver `caminosDe`.
+     */
+    this.trafico?.anuncia(dice.de.matricula, dice.clave);
 
     /*
      * **Cuando la que habla es la torre, se le habla a otro.**
@@ -3842,6 +3870,48 @@ export class Game {
     );
     this.circuito.grupo.visible = false;
     this.scene.add(this.circuito.grupo);
+  }
+
+  /**
+   * El tráfico que se oye, puesto en el aire.
+   *
+   * Va aparte del circuito dibujado y **no se gasta con él**: el hilo ocre es
+   * una ayuda que los peldaños de arriba se quitan, y el otro avión no es una
+   * ayuda — está ahí porque está. Pero vuela por los mismos cinco vértices y
+   * con la misma escala, que es lo que hace que lo que se oye y lo que se ve
+   * sean el mismo vuelo.
+   *
+   * Y no lo lleva quien lo dibuja, lo lleva quien lo oye: si un día la radio
+   * calla en este campo —una pista privada—, aquí no aparece nadie.
+   */
+  private ponerTrafico(): void {
+    if (this.trafico) {
+      this.scene.remove(this.trafico.grupo);
+      this.trafico.dispose();
+      this.trafico = null;
+    }
+    if (!this.scenario.aerodrome || this.scenario.aerodrome.privado) return;
+    /*
+     * **Y no tiene tu silueta.** Ver tu propio avión pasando por el viento en
+     * cola es un espejo, no un vecino: lo primero que se aprende mirando al
+     * cielo de un aeródromo es que no todos son iguales. Se coge el entrenador,
+     * o el biplano si el entrenador sos vos.
+     */
+    const mia = modeloPorId(this.aircraft.id)?.silueta;
+    const otra = FLOTA.find((m) => m.silueta !== mia)?.silueta;
+    if (!otra) return;
+    this.trafico = crearTrafico(
+      this.scenario.runway,
+      this.terrain.runwayElevation,
+      otra,
+      manoDelCircuito(
+        this.scenario.runway,
+        this.terrain.runwayElevation,
+        (x: number, z: number) => this.terrain.sampleHeight(x, z),
+      ),
+      escalaDeCircuito(this.aircraft.approachSpeed),
+    );
+    this.scene.add(this.trafico.grupo);
   }
 
   /**
@@ -6818,6 +6888,7 @@ export class Game {
      * cuenta existía y no se estaba usando.
      */
     this.ponerCircuito();
+    this.ponerTrafico();
     this.hud.flash(`${next.name} — ${t(next.descriptionKey as never)}`, 3.5);
   }
 

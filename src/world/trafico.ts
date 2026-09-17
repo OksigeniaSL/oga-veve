@@ -50,6 +50,7 @@ import {
 import type { Silueta } from "../flight/flota";
 import { fabricarAeronave } from "./fabrica-de-aeronaves";
 import { verticesDelCircuito, type Mano, type Pista } from "./circuito";
+import { ESPERA_ENTRE_VUELOS, ESPERA_MAXIMA } from "../flight/radio";
 
 /** Un sitio del mundo, con su altura. */
 export interface Sitio {
@@ -262,8 +263,23 @@ function unitario(a: Sitio, b: Sitio): { x: number; z: number } {
   return { x: dx / d, z: dz / d };
 }
 
-/** Lo que tarda en irse un avión al que nadie nombra, s. */
-const SE_VA_A_LOS = 200;
+/**
+ * Lo que tarda en irse un avión al que nadie nombra, s.
+ *
+ * **No es un número a ojo: cae entre dos de la frecuencia y por eso funciona.**
+ * Estaba en doscientos y el banco contó cuatro aviones dibujados con dos en la
+ * frecuencia. La cuenta es esta: cuando alguien termina su vuelo se va y pasan
+ * `ESPERA_ENTRE_VUELOS` hasta que llega otro con otra matrícula, así que con un
+ * plazo más largo que esa espera el que se fue **sigue dibujado cuando aparece
+ * su relevo**, y se acumulan. Y con uno más corto que `ESPERA_MAXIMA` —el hueco
+ * más largo que puede haber entre dos llamadas suyas— desaparecería a mitad de
+ * su propio vuelo, que es peor.
+ *
+ * O sea que el plazo tiene que caer entre las dos, y aquí se pone en medio. Se
+ * importan las dos y no se copian: son de la radio, y este módulo existe
+ * justamente para no contradecirla. Ver `flight/radio.ts`.
+ */
+export const SE_VA_A_LOS = (ESPERA_MAXIMA + ESPERA_ENTRE_VUELOS) / 2;
 
 interface Volando {
   readonly grupo: Group;

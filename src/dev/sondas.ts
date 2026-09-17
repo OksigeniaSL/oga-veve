@@ -1018,6 +1018,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       }
       return vistos;
     },
+    /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
+    trafico: () => juego.trafico?.quienes() ?? [],
     /** Si esta cabina es de avión de línea: lo dice su panel de techo. */
     deLinea: () => !!juego.aircraftMesh.group.getObjectByName("panel-de-techo"),
     /** Cuántos asientos de pilotaje trae el modelo. */
