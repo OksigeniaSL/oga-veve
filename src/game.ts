@@ -296,6 +296,8 @@ import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
 import { cuadroDe, regimen } from "./ui/cuadro";
 import { patasDe } from "./ui/familia";
+import { avisaDelTren } from "./flight/tren";
+import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import {
@@ -607,6 +609,15 @@ const ALINEANDO_DE_VERDAD = 12;
  * verdad y bastante más que un cabeceo, que es justo lo que hace falta separar.
  */
 const SE_REARMA = 3;
+
+/**
+ * A qué altura sobre el suelo se pide meter el tren, en metros.
+ *
+ * Trescientos: es la altura a la que un despegue deja de poder volver a la
+ * pista de la que salió, o sea el momento exacto en el que el tren pasa de ser
+ * un seguro a ser un lastre. Ver `atenderAlTren`.
+ */
+const METE_EL_TREN = 300;
 
 const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
   "alineando",
@@ -3158,13 +3169,15 @@ export class Game {
     const dice = DICE_LA_TORRE[base];
     if (!dice) return null;
     const relleno: Record<string, string> = rellenoDe(quien);
-    let clave = base;
+    // Y con la voz de este campo, que es lo que hacía que una torre sonara a
+    // dos personas. Ver `comoSeDiceAqui` en `i18n/habla.ts`.
+    let clave = comoSeDiceAqui(base, hablaDe(this.scenario.aerodrome?.id));
     const pista = NOMBRA_LA_PISTA.has(base)
       ? pistaEnPiezas(cabeceraEnUso(this.scenario))
       : null;
     if (pista) {
       Object.assign(relleno, pista.relleno);
-      clave = `${base}${pista.sufijo}`;
+      clave = `${clave}${pista.sufijo}`;
     }
     /*
      * Y el texto va montado también, no solo la receta: es lo que dice la voz
@@ -3235,6 +3248,14 @@ export class Game {
      * media lección del juego». El castellano del sitio dice qué hay que
      * hacer, para quien tiene cuatro años y no lee; el inglés dice cómo se
      * llama eso en una radio, para cuando tenga diez. Ver `audio/torre.ts`.
+     *
+     * **Pero lo dice la misma persona.** El inglés se dice igual en los dos
+     * campos, sí; no lo dice la misma voz. La lámpara la decía la torre canaria
+     * y la radio la torre de casa, así que en Tenerife se oía una orden y un
+     * segundo después la misma orden con otra voz: «voz de hombre primero y
+     * luego de mujer». Ahora la torre canaria tiene su juego entero grabado
+     * —su alfabeto, sus cifras y sus cinco órdenes— y la clave lleva el habla,
+     * como la de la lámpara. Ver `comoSeDiceAqui`.
      */
     const enRadio =
       luz === "verde"
@@ -4046,6 +4067,8 @@ export class Game {
       this.reducedMotion,
     );
     this.input.ponerSignoDeCabeceo(signoDeCabeceo(ajustes));
+    // Y si el avión de hoy mete las patas, que decide si hay palanca de tren.
+    this.input.ponerAeronave(this.aircraft.trenRetractil);
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
     // Y el tamaño, que es una escala sobre el tacto y la letra del HUD.
@@ -4738,6 +4761,8 @@ export class Game {
       this.dichoDeBanda = null;
     }
 
+    this.atenderAlTren(dt);
+
     /*
      * **El aviso de terreno**, que es el que salva.
      *
@@ -5296,10 +5321,15 @@ export class Game {
          */
         cuadro: cuadroDe(this.aircraft),
         patas: patasDe(this.aircraft),
+        tren: this.input.controls.tren,
         sobreElSuelo: this.flight.state.groundSpeed,
         perdida:
           !this.flight.state.onGround &&
           this.flight.state.alpha > this.aircraft.aero.alphaStall,
+        // Y adónde vas, que es de lo que va una pantalla de navegación:
+        // «¿por qué no tengo datos como distancia al aeropuerto?».
+        objetivo: this.aDondeVoy,
+        viento: this.vientoDeHoy,
       },
       dt,
     );
@@ -5309,6 +5339,12 @@ export class Game {
      * el sonido** —ver `regimen` en `ui/cuadro.ts`—: si la aguja dijera una cosa
      * y el motor sonara otra, el instrumento dejaría de ser un instrumento.
      */
+    /*
+     * Y las patas, donde toque. Es la mitad visible del tren: la otra —la
+     * resistencia que quita meterlo— se siente pero no se ve, y un mando que
+     * no cambia nada en la pantalla no parece un mando. Ver `world/patas.ts`.
+     */
+    this.aircraftMesh.patas?.poner(this.input.controls.tren);
     this.aircraftMesh.relojes?.actualizar(
       {
         motores: Array.from({ length: this.aircraft.motores }, () =>
@@ -5357,24 +5393,9 @@ export class Game {
        */
       {
         flaps: this.input.controls.flaps,
-        objetivo: objetivo
-          ? (() => {
-              const donde = objectiveTarget(objetivo);
-              if (!donde) return null;
-              const p = this.flight.state.position;
-              return {
-                rumbo: rumboHacia(p.x, p.z, donde.x, donde.z),
-                distancia: Math.hypot(donde.x - p.x, donde.z - p.z),
-              };
-            })()
-          : null,
-        viento:
-          this.scenario.meteo && this.scenario.meteo.vientoDe !== null
-            ? {
-                desde: this.scenario.meteo.vientoDe,
-                nudos: this.scenario.meteo.vientoKt,
-              }
-            : null,
+        tren: this.input.controls.tren,
+        objetivo: this.aDondeVoy,
+        viento: this.vientoDeHoy,
       },
     );
     const toma = this.checkLanding(dt);
@@ -6405,9 +6426,20 @@ export class Game {
     const botones = this.aircraftMesh.botones;
     if (!botones || this.cameraMode !== "cockpit") return;
     const cual = botones.cualEsta(x, y, this.camera);
-    if (!cual) return;
+    if (cual) this.pulsarMandoDeCabina(cual);
+  }
+
+  /**
+   * Lo que hace cada mando de la cabina, ya sabiendo cuál es.
+   *
+   * Aparte de dónde se pulsa porque un banco tiene que poder tocarlo sin
+   * apuntar con el ratón, y porque lo que hace un mando no debería depender de
+   * dónde esté dibujado. Ver `sondas.ts`.
+   */
+  pulsarMandoDeCabina(cual: MandoDeCabina): void {
     if (cual === "motor") this.toggleEngine();
     else if (cual === "flaps") this.input.alternarFlaps();
+    else if (cual === "tren") this.input.alternarTren();
     else this.input.pisarElFreno();
   }
 
@@ -6491,6 +6523,113 @@ export class Game {
       { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
     );
     this.cantar("too fast", t(clave as TranslationKey), clave, "urgente");
+  }
+
+  /** Cuánto lleva pidiendo lo del tren, para no repetirse. */
+  private desdeLoDelTren = 0;
+  /** Y qué fue lo último que pidió: meterlo o sacarlo. */
+  private dichoDelTren: "mete" | "saca" | null = null;
+
+  /**
+   * El tren: cuándo se pide meterlo y cuándo sacarlo.
+   *
+   * Son los dos únicos momentos en los que un tren se toca, y los dos enseñan
+   * la misma idea desde los dos lados: **una cosa que te hace falta para
+   * aterrizar te estorba para volar**.
+   *
+   * - Arriba y subiendo con las patas fuera: metélas, que frenan. Es el premio
+   *   del mando —se mete y el avión corre más— y llega cuando se ha ganado.
+   * - Bajo, bajando y sin tren trabado: sacálo **ya**. Ese aviso lo lleva toda
+   *   cabina de avión retráctil desde hace setenta años, y existe por lo mismo
+   *   que aquí: porque se olvida, y a quien se le olvida no es a los novatos.
+   *
+   * Y solo en el avión que lo mete, claro. Ver `flight/tren.ts`.
+   */
+  /**
+   * Adónde se va y a qué distancia, para las pantallas que lo enseñan.
+   *
+   * Lo miran el cuadro del HUD y la pantalla de navegación de la cabina, y por
+   * eso está aquí y no en cada uno: dos sitios que calculan la misma distancia
+   * con dos cuentas es la vía rápida a que un día digan cosas distintas.
+   */
+  private get aDondeVoy(): { rumbo: number; distancia: number } | null {
+    const objetivo = this.missions.current;
+    if (!objetivo) return null;
+    const donde = objectiveTarget(objetivo);
+    if (!donde) return null;
+    const p = this.flight.state.position;
+    return {
+      rumbo: rumboHacia(p.x, p.z, donde.x, donde.z),
+      distancia: Math.hypot(donde.x - p.x, donde.z - p.z),
+    };
+  }
+
+  /** Y de dónde sopla hoy, que es dato auxiliar y va en cian. */
+  private get vientoDeHoy(): { desde: number; nudos: number } | null {
+    const m = this.scenario.meteo;
+    return m && m.vientoDe !== null
+      ? { desde: m.vientoDe, nudos: m.vientoKt }
+      : null;
+  }
+
+  private atenderAlTren(dt: number): void {
+    this.desdeLoDelTren += dt;
+    if (!this.aircraft.trenRetractil) return;
+    const s = this.flight.state;
+    const donde = this.input.controls.tren;
+    const sobreElSuelo = s.heightAboveGround;
+
+    /*
+     * El de sacarlo es un aviso de seguridad y manda: se dice aunque se acabe
+     * de decir lo otro. El de meterlo es un consejo y espera su turno.
+     */
+    if (avisaDelTren(donde, sobreElSuelo, s.verticalSpeed < -0.5)) {
+      if (this.dichoDelTren === "saca" && this.desdeLoDelTren < 12) return;
+      this.dichoDelTren = "saca";
+      this.desdeLoDelTren = 0;
+      this.hud.senal.mostrar(
+        "tren",
+        this.rotulo("vuelo.sacaElTren", "palabra.tren"),
+        null,
+        {
+          segundos: SE_QUEDA_EL_ARO,
+          prioridad: IMPORTANTE,
+          tecla: nombreDeTecla(this.input.preferredKey("tren")),
+        },
+      );
+      this.cantar(
+        "gear down",
+        t("vuelo.sacaElTren"),
+        "vuelo.sacaElTren",
+        "urgente",
+      );
+      return;
+    }
+
+    /*
+     * Y metélo, cuando ya no hace falta: en el aire, subiendo y con pista de
+     * sobra debajo. Los trescientos metros no son un capricho — es la altura a
+     * la que un despegue deja de poder volver a la pista de la que salió, o
+     * sea el momento en que el tren pasa de ser un seguro a ser un lastre.
+     */
+    const yaNoHaceFalta =
+      !s.onGround && s.verticalSpeed > 1 && sobreElSuelo > METE_EL_TREN;
+    if (yaNoHaceFalta && donde > 0.99 && this.input.trenQueSePide) {
+      if (this.dichoDelTren === "mete" && this.desdeLoDelTren < 30) return;
+      this.dichoDelTren = "mete";
+      this.desdeLoDelTren = 0;
+      this.hud.senal.mostrar(
+        "tren",
+        this.rotulo("vuelo.meteElTren", "palabra.tren"),
+        null,
+        {
+          segundos: SE_QUEDA_EL_ARO,
+          prioridad: IMPORTANTE,
+          tecla: nombreDeTecla(this.input.preferredKey("tren")),
+        },
+      );
+      this.cantar("gear up", t("vuelo.meteElTren"), "vuelo.meteElTren");
+    }
   }
 
   private atenderAlCinturon(movimiento: number, dt: number): void {
@@ -6612,6 +6751,8 @@ export class Game {
 
     this.aircraft = next;
     this.audio.setEngine(next.sound);
+    // Y si este avión mete las patas o no, que es lo que decide si hay palanca.
+    this.input.ponerAeronave(next.trenRetractil);
 
     this.scene.remove(this.aircraftMesh.group);
     this.aircraftMesh = createAircraftMesh(next);

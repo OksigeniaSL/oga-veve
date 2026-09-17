@@ -1115,6 +1115,7 @@ export class Hud {
      */
     mandos?: {
       readonly flaps: number;
+      readonly tren: number;
       readonly objetivo: {
         readonly rumbo: number;
         readonly distancia: number;
@@ -1407,6 +1408,7 @@ export class Hud {
             regimen(this.ficha, throttle, engineOn),
           ),
           flaps: mandos?.flaps ?? 0,
+          tren: mandos?.tren ?? 1,
           reversa,
           v1: decisionSpeed * 1.94384,
           vr: this.vr * 1.94384,

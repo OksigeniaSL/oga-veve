@@ -10,6 +10,7 @@
  */
 
 import { neutralControls, type ControlInputs } from "./model";
+import { mueveElTren } from "./tren";
 import { Keymap, type Accion } from "./keymap";
 
 /** Velocidad a la que un eje de teclado alcanza el tope, por segundo. */
@@ -150,6 +151,47 @@ export class InputManager {
    */
   alternarFlaps(): void {
     this.controls.flaps = DETENTES[siguienteDetente(this.controls.flaps)]!;
+  }
+
+  /**
+   * Y el tren, que es lo otro que se pide y tarda.
+   *
+   * **Se guarda la orden, no la posición**: entre pedirlo y tenerlo pasan diez
+   * segundos, y ese rato es medio mando. Quien lo pide tarde aterriza sin él.
+   * Ver `flight/tren.ts`.
+   */
+  alternarTren(): void {
+    this.trenPedido = !this.trenPedido;
+  }
+
+  /** Si se ha pedido el tren fuera. Empieza fuera, como está en su puesto. */
+  private trenPedido = true;
+  /** Y si este avión lo mete siquiera. Lo pone el juego al cambiar de avión. */
+  private trenQueSeMete = false;
+
+  /**
+   * Qué avión se vuela hoy, para los mandos que no todos llevan.
+   *
+   * El del tren es el primero: en un entrenador de escuela la palanca no
+   * existe, y fingir que sí —que el mando se pulse y no pase nada— sería
+   * enseñar un avión que no es. Ver `trenRetractil` en `aircraft.ts`.
+   */
+  ponerAeronave(trenRetractil: boolean): void {
+    this.trenQueSeMete = trenRetractil;
+    if (!trenRetractil) {
+      this.trenPedido = true;
+      this.controls.tren = 1;
+    }
+  }
+
+  /** Si este avión tiene palanca de tren. Lo miran el HUD y la cabina. */
+  get hayPalancaDeTren(): boolean {
+    return this.trenQueSeMete;
+  }
+
+  /** Lo que se le ha pedido al tren, para el cuadro. */
+  get trenQueSePide(): boolean {
+    return this.trenPedido;
   }
 
   /**
@@ -311,6 +353,18 @@ export class InputManager {
     );
     // Los flaps no se leen aquí: son un conmutador, y lo lleva `onKeyDown`.
     // Forzarlos también desde el bucle impedía apagarlos sin soltar la tecla.
+
+    /*
+     * **El tren sí, porque se mueve solo.**
+     *
+     * Los demás mandos están donde los dejás; éste tarda diez segundos en ir
+     * de un sitio a otro, así que entre la orden y la posición hay un camino
+     * que alguien tiene que recorrer cada fotograma. Y en el avión que no lo
+     * mete se queda fuera, que es la verdad de sus patas.
+     */
+    this.controls.tren = this.trenQueSeMete
+      ? mueveElTren({ donde: this.controls.tren, quiero: this.trenPedido }, dt)
+      : 1;
   }
 
   /** Invertir o no el cabeceo. Ver `ui/ajustes.ts`. */
@@ -402,6 +456,9 @@ export class InputManager {
         // dos sitios que bajaban flaps con dos cuentas distintas era la vía
         // rápida a que un día dijeran cosas distintas.
         this.alternarFlaps();
+        break;
+      case "tren":
+        this.alternarTren();
         break;
       default:
         break;

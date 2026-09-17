@@ -104,7 +104,7 @@ pantalla. Nadie elige «el modo de bebés»: elige el colibrí.
 | | Mainumby (4-6) | Tukã (7-9) | Taguato (10-13) | Taguato Ruvicha (14+) |
 |---|---|---|---|---|
 | Pantalla | nada: solo paisaje | dos instrumentos pictóricos | HUD numérico completo | seis instrumentos analógicos |
-| Mandos | solo el morro | + motor en tres pasos | + gases continuos, flaps | todo, incluido compensador |
+| Mandos | solo el morro | + motor en tres pasos | + gases continuos, flaps, tren | todo, incluido compensador |
 | Ayudas | envolvente protegida | pérdida protegida | aviso de pérdida | ninguna |
 | Fracaso | no existe | gag y reaparición en 2 s | fin de vuelo con traza | consecuencia real |
 | Sesión | 5-8 min | 10-15 min | 15-25 min | 20-40 min |

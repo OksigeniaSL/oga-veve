@@ -39,6 +39,7 @@ import {
 } from "three";
 import { PALETA } from "../ui/paleta";
 import type { Cuadro } from "../ui/cuadro";
+import { luzDeTren } from "../flight/tren";
 import {
   QUIETA_LA_ALTITUD,
   QUIETA_LA_VELOCIDAD,
@@ -132,10 +133,25 @@ export interface DatosDeCabina {
   readonly cuadro: Cuadro;
   /** Cuántas patas tiene el tren. Tres, y cinco en el grande. */
   readonly patas: number;
+  /** Y dónde está: 0 dentro, 1 fuera y trabado. Ver `flight/tren.ts`. */
+  readonly tren: number;
   /** Velocidad respecto al suelo, m/s. Dato auxiliar: va en cian. */
   readonly sobreElSuelo: number;
   /** Si está en pérdida: marco rojo alrededor del horizonte. */
   readonly perdida: boolean;
+  /**
+   * Adónde se va y a qué distancia, si se va a algún sitio.
+   *
+   * Es lo que le faltaba a la pantalla de navegación para ser una pantalla de
+   * navegación y no un dibujo bonito: «¿por qué no tengo datos como distancia
+   * al aeropuerto?». Rumbo en radianes, distancia en metros.
+   */
+  readonly objetivo: {
+    readonly rumbo: number;
+    readonly distancia: number;
+  } | null;
+  /** De dónde sopla y cuánto. Dato auxiliar: va en cian. */
+  readonly viento: { readonly desde: number; readonly nudos: number } | null;
 }
 
 /**
@@ -1066,6 +1082,45 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     PALETA.auxiliar,
     "left",
   );
+  /*
+   * **Y adónde vas, que es de lo que va esta pantalla.**
+   *
+   * La ruta en magenta —lo que quiero— y la distancia en millas, que es como
+   * se mide una distancia en el aire en todo el mundo. Y el viento en cian, de
+   * dónde sopla y cuánto: es el dato que decide por qué cabecera se aterriza,
+   * y hasta hoy solo estaba en el panel del tiempo.
+   */
+  if (d.objetivo) {
+    const rel = ((d.objetivo.rumbo * 180) / Math.PI - grados) * (Math.PI / 180);
+    g.strokeStyle = PALETA.objetivo;
+    g.lineWidth = 3;
+    g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(cx, cy);
+    g.lineTo(cx + Math.sin(rel) * r * 0.92, cy - Math.cos(rel) * r * 0.92);
+    g.stroke();
+    g.lineCap = "butt";
+    escribir(
+      g,
+      `${(d.objetivo.distancia / 1852).toFixed(1)} NM`,
+      ANCHO - 12,
+      22,
+      "500 15px " + FUENTE,
+      PALETA.auxiliar,
+      "right",
+    );
+  }
+  if (d.viento) {
+    escribir(
+      g,
+      `${String(Math.round(d.viento.desde)).padStart(3, "0")}/${Math.round(d.viento.nudos)}`,
+      12,
+      ALTO - 14,
+      "500 14px " + FUENTE,
+      PALETA.auxiliar,
+      "left",
+    );
+  }
   g.restore();
 }
 
@@ -1114,7 +1169,7 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   }
 
   reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps);
-  lucesDeTren(g, 16, ALTO - 30, d.patas);
+  lucesDeTren(g, 16, ALTO - 30, d.patas, d.tren);
   g.restore();
 }
 
@@ -1265,21 +1320,32 @@ function reglaDeFlaps(
 }
 
 /**
- * Las luces del tren. Verde = abajo y trabada.
+ * Las luces del tren. **Verde solo cuando está abajo y trabado.**
  *
- * Tres en toda la flota y **cinco en el grande**: un 747 tiene cinco patas, y
- * quien las cuente va a sonreír. Ese detalle no enseña a volar, enseña a
- * mirar, que es lo anterior.
+ * Tres estados y no dos, y el de en medio es el que enseña: dentro, moviéndose
+ * y fuera. Un tren tarda diez segundos en salir, y una luz verde con el tren a
+ * medio camino es la clase de mentira que en un avión de verdad se paga cara.
+ * Ver `flight/tren.ts`.
+ *
+ * Tres luces en toda la flota y **cinco en el grande**: un 747 tiene cinco
+ * patas, y quien las cuente va a sonreír.
  */
 function lucesDeTren(
   g: CanvasRenderingContext2D,
   x: number,
   y: number,
   patas: number,
+  donde: number,
 ): void {
+  const luz = luzDeTren(donde);
   for (let k = 0; k < patas; k++) {
-    g.fillStyle = PALETA.normal;
-    g.globalAlpha = 0.85;
+    g.fillStyle =
+      luz === "fuera"
+        ? PALETA.normal
+        : luz === "moviendose"
+          ? PALETA.precaucion
+          : PALETA.apagado;
+    g.globalAlpha = luz === "dentro" ? 0.45 : 0.85;
     g.fillRect(x + k * 20, y, 14, 14);
     g.globalAlpha = 1;
   }

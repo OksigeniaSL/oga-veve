@@ -404,6 +404,52 @@ for (const [id, texto, para] of TORRE_SOLO) {
   filas.push({ id, voz: "torre", idioma: "en", texto, para });
   total += texto.length;
 }
+/*
+ * **Y la torre de Canarias dice lo mismo, con su voz.**
+ *
+ * Aquí había un agujero que se oía y nadie había medido: en Tenerife la
+ * lámpara la dice la voz canaria —«Puedes entrar»— y un segundo después la
+ * radio dice «cleared for take-off» con la voz de torre general. La misma
+ * torre, dos personas. Se oyó jugando: «voz de hombre primero y luego de
+ * mujer».
+ *
+ * El inglés aeronáutico se dice igual en Tenerife que en Asunción, sí — pero
+ * **no lo dice la misma persona**, y eso es lo que se nota. Así que la torre
+ * canaria graba su juego entero: su alfabeto, sus cifras y sus cinco órdenes.
+ * Cuarenta y cuatro piezas para que una torre suene a una torre.
+ */
+for (const letra of FONETICO) {
+  filas.push({
+    id: piezaFonetica(letra),
+    voz: "torre-canarias",
+    idioma: "en",
+    texto: letra,
+    para: "una letra de la matrícula, dicha en Canarias",
+  });
+  total += letra.length;
+}
+for (const [palabra, cifra] of CIFRAS) {
+  filas.push({
+    id: `cifra.${cifra}`,
+    voz: "torre-canarias",
+    idioma: "en",
+    texto: palabra,
+    para: "una cifra del número de pista, dicha en Canarias",
+  });
+  total += palabra.length;
+}
+for (const [id, texto, para] of TORRE_SOLO) {
+  filas.push({
+    // Las claves llevan el habla en medio para no pisarse con las de casa.
+    // Ver `comoSeDiceAqui` en `i18n/habla.ts`.
+    id: id.startsWith("torre.") ? id.replace("torre.", "torre.canario.") : id,
+    voz: "torre-canarias",
+    idioma: "en",
+    texto,
+    para: `${para}, en Canarias`,
+  });
+  total += texto.length;
+}
 
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),

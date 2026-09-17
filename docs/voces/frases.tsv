@@ -54,6 +54,8 @@ instructor	instructor/vuelo.rapido.ogg	es-PY	Vas muy rápido	lo que toca hacer a
 instructor	instructor/vuelo.sobrevelocidad.ogg	es-PY	Muy rápido: bajá el motor	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sobrevelocidadAire.ogg	es-PY	Muy rápido para esta altura	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pediFlaps.ogg	es-PY	Bajá los flaps para frenar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.meteElTren.ogg	es-PY	Metélo, el tren te frena	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.sacaElTren.ogg	es-PY	¡El tren! Sacá el tren	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despacio.ogg	es-PY	Más despacio	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alto.ogg	es-PY	Pará acá	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.teLoPasaste.ogg	es-PY	Te pasaste. Frená y volvé	lo que toca hacer ahora, en vuelo y en tierra
@@ -234,3 +236,48 @@ torre	torre/torre.solo.clearedLand.ogg	en	cleared to land	el de llegada
 torre	torre/torre.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada
 torre	torre/torre.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
+torre-canarias	torre-canarias/fonetico.alfa.ogg	en	Alfa	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.bravo.ogg	en	Bravo	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.charlie.ogg	en	Charlie	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.delta.ogg	en	Delta	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.echo.ogg	en	Echo	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.foxtrot.ogg	en	Foxtrot	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.golf.ogg	en	Golf	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.hotel.ogg	en	Hotel	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.india.ogg	en	India	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.juliett.ogg	en	Juliett	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.kilo.ogg	en	Kilo	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.lima.ogg	en	Lima	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.mike.ogg	en	Mike	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.november.ogg	en	November	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.oscar.ogg	en	Oscar	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.papa.ogg	en	Papa	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.quebec.ogg	en	Quebec	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.romeo.ogg	en	Romeo	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.sierra.ogg	en	Sierra	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.tango.ogg	en	Tango	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.uniform.ogg	en	Uniform	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.victor.ogg	en	Victor	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.whiskey.ogg	en	Whiskey	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.xray.ogg	en	X-ray	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.yankee.ogg	en	Yankee	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/fonetico.zulu.ogg	en	Zulu	una letra de la matrícula, dicha en Canarias
+torre-canarias	torre-canarias/cifra.0.ogg	en	zero	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.1.ogg	en	one	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.2.ogg	en	two	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.3.ogg	en	three	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.4.ogg	en	four	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.5.ogg	en	five	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.6.ogg	en	six	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.7.ogg	en	seven	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.8.ogg	en	eight	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/cifra.9.ogg	en	niner	una cifra del número de pista, dicha en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.runway.ogg	en	runway	antes del número de pista, en Canarias
+torre-canarias	torre-canarias/lado.left.ogg	en	left	pista izquierda, donde hay dos paralelas, en Canarias
+torre-canarias	torre-canarias/lado.right.ogg	en	right	pista derecha, en Canarias
+torre-canarias	torre-canarias/lado.center.ogg	en	center	y la del medio, si algún día hay tres, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.clearedTakeoff.ogg	en	cleared for take-off	el permiso, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.clearedLand.ogg	en	cleared to land	el de llegada, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias

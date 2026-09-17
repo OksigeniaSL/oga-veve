@@ -40,6 +40,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { AircraftConfig } from "../flight/aircraft";
 import type { AircraftMesh } from "./aircraft-mesh";
 import { encenderPantallas } from "./pantallas-cabina";
+import { prepararPatas } from "./patas";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
 
@@ -557,6 +558,8 @@ export async function cargarModelo(
     relojes: encenderRelojes(raiz),
     // Y los mandos que se pulsan con el dedo. Ver `botones-cabina.ts`.
     botones: encenderBotones(raiz),
+    // Y las patas, que en el avión que las mete se meten. Ver `patas.ts`.
+    patas: prepararPatas(raiz),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
   };

@@ -2399,11 +2399,25 @@ button.motor__tecla::after {
   fill: var(--cabina-precaucion);
 }
 
-/* Verde = tren abajo y trabado. En este juego no se recoge, así que están
-   siempre verdes — y esa quietud también es información. */
+/*
+ * Verde = tren abajo **y trabado**.
+ *
+ * Tres estados y no dos: ámbar mientras se mueve —diez segundos, que es media
+ * lección del mando— y apagado cuando está dentro. Una luz verde con el tren a
+ * medio camino es la clase de mentira que en un avión de verdad se paga cara.
+ */
 .cr__tren {
   fill: var(--cabina-normal);
   opacity: 0.85;
+}
+
+.cr--moviendose .cr__tren {
+  fill: var(--cabina-precaucion);
+}
+
+.cr--dentro .cr__tren {
+  fill: var(--cabina-apagado);
+  opacity: 0.45;
 }
 
 .cr__puntero {

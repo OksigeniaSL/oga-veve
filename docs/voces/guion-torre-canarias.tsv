@@ -1,2 +1,47 @@
 001	torre.canario.verde	Puedes entrar
 002	torre.canario.roja	Espera ahí
+003	fonetico.alfa	Alfa
+004	fonetico.bravo	Bravo
+005	fonetico.charlie	Charlie
+006	fonetico.delta	Delta
+007	fonetico.echo	Echo
+008	fonetico.foxtrot	Foxtrot
+009	fonetico.golf	Golf
+010	fonetico.hotel	Hotel
+011	fonetico.india	India
+012	fonetico.juliett	Juliett
+013	fonetico.kilo	Kilo
+014	fonetico.lima	Lima
+015	fonetico.mike	Mike
+016	fonetico.november	November
+017	fonetico.oscar	Oscar
+018	fonetico.papa	Papa
+019	fonetico.quebec	Quebec
+020	fonetico.romeo	Romeo
+021	fonetico.sierra	Sierra
+022	fonetico.tango	Tango
+023	fonetico.uniform	Uniform
+024	fonetico.victor	Victor
+025	fonetico.whiskey	Whiskey
+026	fonetico.xray	X-ray
+027	fonetico.yankee	Yankee
+028	fonetico.zulu	Zulu
+029	cifra.0	zero
+030	cifra.1	one
+031	cifra.2	two
+032	cifra.3	three
+033	cifra.4	four
+034	cifra.5	five
+035	cifra.6	six
+036	cifra.7	seven
+037	cifra.8	eight
+038	cifra.9	niner
+039	torre.canario.solo.runway	runway
+040	lado.left	left
+041	lado.right	right
+042	lado.center	center
+043	torre.canario.solo.clearedTakeoff	cleared for take-off
+044	torre.canario.solo.clearedLand	cleared to land
+045	torre.canario.solo.goAround	go around, runway occupied
+046	torre.canario.solo.holdShort	hold short of the runway
+047	torre.canario.solo.lineUpWait	line up and wait

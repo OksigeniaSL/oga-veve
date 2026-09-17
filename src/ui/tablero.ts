@@ -49,6 +49,7 @@ import {
   pantallaDeNavegacion,
   tamborDeAltitud,
 } from "./cristal";
+import { luzDeTren } from "../flight/tren";
 import {
   QUIETA_LA_ALTITUD,
   QUIETA_LA_VELOCIDAD,
@@ -78,6 +79,8 @@ export interface DatosDelTablero {
   /** A cuánto va cada motor, de 0 a 1, en su orden. */
   readonly motores: readonly number[];
   readonly flaps: number;
+  /** Dónde está el tren: 0 dentro, 1 fuera y trabado. Ver `flight/tren.ts`. */
+  readonly tren: number;
   readonly reversa: boolean;
   /** Las velocidades que se cantan, en nudos. `Infinity` si no aplican. */
   readonly v1: number;
@@ -665,6 +668,19 @@ export class Tablero {
     }
     const rev = raiz.querySelector<SVGElement>('[data-cristal="reversa"]');
     rev?.setAttribute("visibility", d.reversa ? "visible" : "hidden");
+
+    /*
+     * Y las luces del tren, con sus tres estados. Verde solo cuando está fuera
+     * **y trabado**: con el tren a medio camino la luz es ámbar, que quiere
+     * decir «esperá», y esa espera de diez segundos es media lección del
+     * mando. Ver `flight/tren.ts`.
+     */
+    const tren = raiz.querySelector<SVGElement>('[data-cristal="tren"]');
+    if (tren) {
+      const luz = luzDeTren(d.tren);
+      tren.classList.toggle("cr--moviendose", luz === "moviendose");
+      tren.classList.toggle("cr--dentro", luz === "dentro");
+    }
   }
 
   /**

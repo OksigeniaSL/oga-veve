@@ -330,6 +330,15 @@ export interface AircraftConfig {
   /** Distancia del centro de gravedad al tren, m. */
   gearHeight: number;
   /**
+   * Si el tren se mete.
+   *
+   * No lo lleva todo el mundo, y esa es media lección: meter las patas cuesta
+   * peso, piezas y averías, y por debajo de cierta velocidad no compensa. Un
+   * entrenador de escuela y un fumigador las llevan al aire a propósito.
+   * Ver `flight/tren.ts`.
+   */
+  trenRetractil: boolean;
+  /**
    * Cabeceo máximo con las ruedas en el suelo, rad. Lo impone la geometría
    * del tren: más allá, la cola toca. Sin este límite el avión rota hasta
    * ponerse de pie en la pista y se queda en pérdida sin llegar a despegar.
@@ -397,6 +406,7 @@ export const PYKASU: AircraftConfig = {
   rotationSpeed: 28,
   batalla: 1.65,
   gearHeight: 1.4,
+  trenRetractil: false,
   maxGroundPitch: 0.21, // 12°
   flapsLift: 0.55,
   flapsDrag: 0.06,
@@ -469,6 +479,7 @@ export const MAINUMBY: AircraftConfig = {
   rotationSpeed: 26,
   batalla: 5.4,
   gearHeight: 1.8,
+  trenRetractil: false,
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
   flapsLift: 0.35,
   flapsDrag: 0.05,
@@ -575,6 +586,7 @@ export const PANAMBI: AircraftConfig = {
   rotationSpeed: 37,
   batalla: 2.8,
   gearHeight: 1.6,
+  trenRetractil: true,
   maxGroundPitch: 0.19, // 11°
   flapsLift: 0.5,
   flapsDrag: 0.07,
@@ -665,6 +677,7 @@ export const ARASUNU: AircraftConfig = {
   rotationSpeed: 41,
   batalla: 7.21,
   gearHeight: 2.2,
+  trenRetractil: true,
   maxGroundPitch: 0.17, // 10°: la cola en T no perdona rotar de más.
   // Flaps grandes: es lo que le permite entrar en pistas cortas, que es para
   // lo que existe un turbohélice regional.
@@ -779,6 +792,7 @@ export const ARAI: AircraftConfig = {
   rotationSpeed: 78,
   batalla: 11.5,
   gearHeight: 2.8,
+  trenRetractil: true,
   maxGroundPitch: 0.16, // 9°: con un fuselaje largo, la cola llega antes.
   /*
    * **Y los flaps de un reactor, que no son los de una avioneta.**
@@ -934,6 +948,7 @@ export const YVAGA: AircraftConfig = {
   rotationSpeed: 86,
   batalla: 25.6,
   gearHeight: 5.2,
+  trenRetractil: true,
   maxGroundPitch: 0.15, // 8,6°: un fuselaje de setenta metros toca antes.
   // Triple ranura y Krueger: un ala de línea saca mucho más CL que una
   // avioneta, y es lo que le permite entrar a 98 y no a 140.

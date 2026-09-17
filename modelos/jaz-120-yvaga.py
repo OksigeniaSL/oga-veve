@@ -135,6 +135,8 @@ def construir():
     )
 
     piezas += cabina(
+        # Este avión mete las patas, así que lleva su palanca.
+        tren=True,
         ojos_z=-27.40,
         ancho=0.80,
         alto_panel=0.26,

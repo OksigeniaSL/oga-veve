@@ -193,6 +193,8 @@ def construir():
     # Lo de dentro: dos plazas de frente, suelo bajo en la panza y el panel a
     # setenta centímetros de la cara. Ver `cabina` en `comun.py`.
     piezas += cabina(
+        # Este avión mete las patas, así que lleva su palanca.
+        tren=True,
         ojos_z=-1.30,
         ancho=0.50,
         alto_panel=0.10,

@@ -1,2 +1,47 @@
 Puedes entrar
 Espera ahí
+Alfa
+Bravo
+Charlie
+Delta
+Echo
+Foxtrot
+Golf
+Hotel
+India
+Juliett
+Kilo
+Lima
+Mike
+November
+Oscar
+Papa
+Quebec
+Romeo
+Sierra
+Tango
+Uniform
+Victor
+Whiskey
+X-ray
+Yankee
+Zulu
+zero
+one
+two
+three
+four
+five
+six
+seven
+eight
+niner
+runway
+left
+right
+center
+cleared for take-off
+cleared to land
+go around, runway occupied
+hold short of the runway
+line up and wait

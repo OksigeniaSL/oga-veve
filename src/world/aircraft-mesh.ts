@@ -63,6 +63,14 @@ export interface AircraftMesh {
   /** Y los mandos que se pueden pulsar. Ver `botones-cabina.ts`. */
   botones?: import("./botones-cabina").BotonesDeCabina | null;
   /**
+   * Y las patas, en el avión que las mete.
+   *
+   * `null` en el respaldo de cajas y en los modelos que no traen tren con
+   * nombre: ésos vuelan igual, solo que con el tren siempre puesto. Ver
+   * `world/patas.ts`.
+   */
+  patas?: import("./patas").Patas | null;
+  /**
    * Si esto es el modelo de verdad y no las cajas de respaldo.
    *
    * Existe para poder **mirarlo desde fuera**, y hace falta porque el respaldo

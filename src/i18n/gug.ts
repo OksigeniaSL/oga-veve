@@ -244,6 +244,7 @@ export const GUG: Dictionary = {
   "tecla.throttleDown": "Motor sa'ive",
   "tecla.brakes": "Freno",
   "tecla.flaps": "Flaps",
+  "tecla.tren": "Tren",
   "tecla.camera": "Emoambue cámara",
   "tecla.assist": "Nivel",
   "tecla.reset": "Eñepyrũ jey",

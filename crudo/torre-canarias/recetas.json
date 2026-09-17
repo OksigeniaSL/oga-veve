@@ -1,0 +1,300 @@
+{
+  "fonetico.alfa": [
+    "fonetico.alfa"
+  ],
+  "fonetico.bravo": [
+    "fonetico.bravo"
+  ],
+  "fonetico.charlie": [
+    "fonetico.charlie"
+  ],
+  "fonetico.delta": [
+    "fonetico.delta"
+  ],
+  "fonetico.echo": [
+    "fonetico.echo"
+  ],
+  "fonetico.foxtrot": [
+    "fonetico.foxtrot"
+  ],
+  "fonetico.golf": [
+    "fonetico.golf"
+  ],
+  "fonetico.hotel": [
+    "fonetico.hotel"
+  ],
+  "fonetico.india": [
+    "fonetico.india"
+  ],
+  "fonetico.juliett": [
+    "fonetico.juliett"
+  ],
+  "fonetico.kilo": [
+    "fonetico.kilo"
+  ],
+  "fonetico.lima": [
+    "fonetico.lima"
+  ],
+  "fonetico.mike": [
+    "fonetico.mike"
+  ],
+  "fonetico.november": [
+    "fonetico.november"
+  ],
+  "fonetico.oscar": [
+    "fonetico.oscar"
+  ],
+  "fonetico.papa": [
+    "fonetico.papa"
+  ],
+  "fonetico.quebec": [
+    "fonetico.quebec"
+  ],
+  "fonetico.romeo": [
+    "fonetico.romeo"
+  ],
+  "fonetico.sierra": [
+    "fonetico.sierra"
+  ],
+  "fonetico.tango": [
+    "fonetico.tango"
+  ],
+  "fonetico.uniform": [
+    "fonetico.uniform"
+  ],
+  "fonetico.victor": [
+    "fonetico.victor"
+  ],
+  "fonetico.whiskey": [
+    "fonetico.whiskey"
+  ],
+  "fonetico.xray": [
+    "fonetico.xray"
+  ],
+  "fonetico.yankee": [
+    "fonetico.yankee"
+  ],
+  "fonetico.zulu": [
+    "fonetico.zulu"
+  ],
+  "cifra.0": [
+    "cifra.0"
+  ],
+  "cifra.1": [
+    "cifra.1"
+  ],
+  "cifra.2": [
+    "cifra.2"
+  ],
+  "cifra.3": [
+    "cifra.3"
+  ],
+  "cifra.4": [
+    "cifra.4"
+  ],
+  "cifra.5": [
+    "cifra.5"
+  ],
+  "cifra.6": [
+    "cifra.6"
+  ],
+  "cifra.7": [
+    "cifra.7"
+  ],
+  "cifra.8": [
+    "cifra.8"
+  ],
+  "cifra.9": [
+    "cifra.9"
+  ],
+  "lado.left": [
+    "lado.left"
+  ],
+  "lado.right": [
+    "lado.right"
+  ],
+  "lado.center": [
+    "lado.center"
+  ],
+  "torre.canario.solo.runway": [
+    "torre.canario.solo.runway"
+  ],
+  "torre.canario.solo.clearedTakeoff": [
+    "torre.canario.solo.clearedTakeoff"
+  ],
+  "torre.canario.solo.clearedLand": [
+    "torre.canario.solo.clearedLand"
+  ],
+  "torre.canario.solo.goAround": [
+    "torre.canario.solo.goAround"
+  ],
+  "torre.canario.solo.holdShort": [
+    "torre.canario.solo.holdShort"
+  ],
+  "torre.canario.solo.lineUpWait": [
+    "torre.canario.solo.lineUpWait"
+  ],
+  "torre.canario.verde": [
+    "torre.canario.verde"
+  ],
+  "torre.canario.roja": [
+    "torre.canario.roja"
+  ],
+  "torre.canario.clearedTakeoff": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "torre.canario.solo.clearedTakeoff"
+  ],
+  "torre.canario.clearedTakeoff.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.left",
+    "torre.canario.solo.clearedTakeoff"
+  ],
+  "torre.canario.clearedTakeoff.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.right",
+    "torre.canario.solo.clearedTakeoff"
+  ],
+  "torre.canario.clearedTakeoff.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.center",
+    "torre.canario.solo.clearedTakeoff"
+  ],
+  "torre.canario.clearedLand": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "torre.canario.solo.clearedLand"
+  ],
+  "torre.canario.clearedLand.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.left",
+    "torre.canario.solo.clearedLand"
+  ],
+  "torre.canario.clearedLand.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.right",
+    "torre.canario.solo.clearedLand"
+  ],
+  "torre.canario.clearedLand.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.center",
+    "torre.canario.solo.clearedLand"
+  ],
+  "torre.canario.lineUpWait": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "torre.canario.solo.lineUpWait"
+  ],
+  "torre.canario.lineUpWait.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.left",
+    "torre.canario.solo.lineUpWait"
+  ],
+  "torre.canario.lineUpWait.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.right",
+    "torre.canario.solo.lineUpWait"
+  ],
+  "torre.canario.lineUpWait.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runway",
+    "{r1}",
+    "{r2}",
+    "lado.center",
+    "torre.canario.solo.lineUpWait"
+  ],
+  "torre.canario.holdShort": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.holdShort"
+  ],
+  "torre.canario.goAround": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.goAround"
+  ]
+}
