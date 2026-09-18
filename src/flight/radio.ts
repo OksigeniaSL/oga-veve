@@ -159,8 +159,33 @@ export interface Transmision {
   readonly respuesta: boolean;
 }
 
-/** Las fases en las que no se habla por encima de nadie. */
-const CALLADAS = new Set(["final", "aterrizado", "comprometido", "percance"]);
+/**
+ * Las fases en las que no se habla por encima de nadie.
+ *
+ * Estaban las cuatro de abajo y **faltaban las dos del despegue**, que es donde
+ * más se nota: alineado y rodando por la pista es cuando hablan a la vez la
+ * instructora —«ya no se puede seguir, volá»—, la comandante, los cantos de
+ * cabina y el otro avión deletreando su matrícula. Contado jugando: «todos a
+ * la vez, como el camarote de los Hermanos Marx pero en versión aeronave».
+ *
+ * Y no es solo ruido: es que **ahí no se atiende una radio**. Entre alinearse
+ * y tener las ruedas en el aire, un piloto no contesta ni escucha charla; la
+ * frecuencia existe, pero lo que se hace es volar el avión. Callarla en esos
+ * dos momentos no le quita nada al juego y le devuelve el momento entero a
+ * quien está despegando.
+ *
+ * `comprometido` ya estaba —pasada la V1— y `despegando` es lo de antes: la
+ * carrera. Que una estuviera y la otra no era lo que dejaba entrar la charla
+ * justo en la mitad ruidosa.
+ */
+const CALLADAS = new Set([
+  "alineando",
+  "despegando",
+  "comprometido",
+  "final",
+  "aterrizado",
+  "percance",
+]);
 
 /** Cuántos comparten la frecuencia. */
 export const CUANTOS = 2;

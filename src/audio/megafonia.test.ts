@@ -9,7 +9,17 @@ import { describe, expect, it } from "vitest";
 import { Megafonia, conPasaje } from "./megafonia";
 import type { Fase } from "../flight/vuelo";
 
-const CON_PASAJE = { conPasaje: true, instructorHablando: false };
+/*
+ * Por defecto, **arriba y asentado**: así las pruebas de fase siguen midiendo
+ * la fase y no se les cuela la condición del cinturón. Las que van de eso la
+ * ponen a mano.
+ */
+const CON_PASAJE = {
+  conPasaje: true,
+  instructorHablando: false,
+  sobreElCampo: 900,
+  vertical: 0,
+};
 
 /** Corre unos segundos en una fase y devuelve lo que se dijo. */
 function correr(m: Megafonia, fase: Fase, segundos: number, extra = {}) {
@@ -115,5 +125,58 @@ describe("quién lleva megafonía", () => {
     expect(conPasaje(1100)).toBe(false);
     expect(conPasaje(1500)).toBe(false);
     expect(conPasaje(2100)).toBe(false);
+  });
+});
+
+describe("y el del cinturón pide altura, no fase", () => {
+  /*
+   * «¿Cómo dice la comandante que ya estamos arriba y pueden soltarse el
+   * cinturón si todavía estoy empezando a levantar el avión en la pista?»
+   *
+   * La fase `en-vuelo` empieza en el instante en que las ruedas dejan el
+   * asfalto, así que el anuncio salía a veinte metros con el avión rotando.
+   */
+  it("no se dice recién despegado, a ras del campo", () => {
+    const m = new Megafonia();
+    expect(
+      correr(m, "en-vuelo", 40, { sobreElCampo: 20, vertical: 6 }),
+    ).toEqual([]);
+  });
+
+  it("ni subiendo fuerte, por muy alto que se vaya", () => {
+    const m = new Megafonia();
+    expect(
+      correr(m, "en-vuelo", 40, { sobreElCampo: 1200, vertical: 7 }),
+    ).toEqual([]);
+  });
+
+  it("ni volando el circuito, que es donde nadie se suelta el cinturón", () => {
+    const m = new Megafonia();
+    expect(
+      correr(m, "en-vuelo", 60, { sobreElCampo: 250, vertical: 0 }),
+    ).toEqual([]);
+  });
+
+  it("y sí arriba y asentado", () => {
+    const m = new Megafonia();
+    expect(
+      correr(m, "en-vuelo", 12, { sobreElCampo: 900, vertical: 0 }),
+    ).toEqual(["capitana.crucero"]);
+  });
+
+  it("y la ventana se cuenta desde que se cumplen, no desde la fase", () => {
+    /*
+     * El anuncio pide altura y calma, y eso llega cuando llega. Medido desde
+     * el cambio de fase, los veinticinco segundos de ventana se agotaban
+     * durante la subida y no salía nunca — que es el otro modo de fallar,
+     * más silencioso y por eso peor.
+     */
+    const m = new Megafonia();
+    expect(
+      correr(m, "en-vuelo", 90, { sobreElCampo: 80, vertical: 6 }),
+    ).toEqual([]);
+    expect(
+      correr(m, "en-vuelo", 12, { sobreElCampo: 900, vertical: 0 }),
+    ).toEqual(["capitana.crucero"]);
   });
 });

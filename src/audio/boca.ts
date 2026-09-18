@@ -156,7 +156,23 @@ export const RIÑEN = 10000;
  * todo lo que la boca necesita saber, y por eso esto se puede probar sin
  * navegador: quien habla es una función que avisa cuando acaba.
  */
-export type Hablar = (listo: () => void) => void;
+/**
+ * Lo que hace hablar a alguien, y **cómo se le hace callar**.
+ *
+ * Devuelve la forma de cortar lo que acaba de empezar a decir, o nada si no
+ * hay nada que cortar. Eso segundo es lo que faltaba y es todo el fallo del
+ * camarote: la boca daba la palabra al siguiente **sin decirle al anterior que
+ * se callara**.
+ *
+ * Y no se veía leyendo una boca sola, porque cada una sí se calla a sí misma
+ * antes de empezar. El problema es que en este juego hay cuatro —el
+ * instructor, la torre, el otro avión y la comandante—, cada una con su propio
+ * audio sonando: cuando la torre cortaba a la comandante, la torre se callaba
+ * a sí misma (que no estaba diciendo nada) y la comandante seguía hablando.
+ * Al despegar coinciden las cuatro, y lo que se oye es exactamente eso: «como
+ * el camarote de los Hermanos Marx, pero en versión aeronave».
+ */
+export type Hablar = (listo: () => void) => (() => void) | void;
 
 /** El reloj, aparte para poder probar la caducidad sin esperar. */
 export interface Reloj {
@@ -428,17 +444,35 @@ export class Boca {
   }
 
   private arrancar(urgencia: Urgencia, hacer: Hablar, clave?: string): void {
+    /*
+     * **Y antes de nada, que se calle quien estuviera hablando.**
+     *
+     * Va aquí y no en cada boca porque el que habla no sabe quién es el otro
+     * —ni tiene por qué—: quien sabe quién tiene la palabra es esto.
+     */
+    this.callarAlQueHabla();
     this.hablandoAhora = urgencia;
     if (clave) this.dichas.set(clave, this.reloj.ahora());
     const mia = ++this.cual;
-    hacer(() => {
-      if (mia !== this.cual) return;
-      this.acabo();
-    });
+    this.callaAhora =
+      hacer(() => {
+        if (mia !== this.cual) return;
+        this.acabo();
+      }) ?? null;
+  }
+
+  /** Cómo callar a quien tiene la palabra ahora mismo, si alguien la tiene. */
+  private callaAhora: (() => void) | null = null;
+
+  private callarAlQueHabla(): void {
+    const callar = this.callaAhora;
+    this.callaAhora = null;
+    callar?.();
   }
 
   private acabo(): void {
     this.hablandoAhora = null;
+    this.callaAhora = null;
     this.calladaHasta = this.reloj.ahora() + SILENCIO;
     if (!this.cola.length) return;
     /*

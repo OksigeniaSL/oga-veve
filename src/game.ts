@@ -3777,6 +3777,14 @@ export class Game {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
       instructorHablando: this.instructor.hablando,
+      /*
+       * Y a qué altura se va **sobre el campo**, no sobre el mar: el cartel
+       * del cinturón se apaga cuando el avión está arriba, y «arriba» en La
+       * Palma con el aeródromo a treinta y tres metros no es lo mismo que en
+       * un aeropuerto al nivel del mar. Ver `ARRIBA_DEL_TODO`.
+       */
+      sobreElCampo: this.flight.state.position.y - this.terrain.runwayElevation,
+      vertical: this.flight.state.verticalSpeed,
     });
     if (anuncio) {
       const texto = t(anuncio);

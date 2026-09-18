@@ -221,15 +221,25 @@ export class InstructorGrabado implements Instructor {
           this.cortar = null;
           listo();
         });
-        if (!this.cortar) {
-          // No había dónde tocar —el contexto de audio todavía duerme—. Que lo
-          // diga el navegador antes que nadie, que es lo que había antes de
-          // esto. Y la plaza se suelta: si no, la boca se queda esperando a
-          // una frase que nunca sonó.
-          this.sonando = false;
-          listo();
-          this.suplente.decir(texto, clave, urgencia);
+        if (this.cortar) {
+          /*
+           * **Y se le dice a la boca cómo callarnos.**
+           *
+           * Cada boca se calla a sí misma antes de empezar, y con cuatro en el
+           * juego eso no basta: la que corta se calla a sí misma —que no
+           * estaba diciendo nada— y la anterior sigue sonando. Ver `Hablar`.
+           */
+          return () => this.callarLoGrabado();
         }
+        // No había dónde tocar —el contexto de audio todavía duerme—. Que lo
+        // diga el navegador antes que nadie, que es lo que había antes de
+        // esto. Y la plaza se suelta: si no, la boca se queda esperando a
+        // una frase que nunca sonó.
+        this.sonando = false;
+        listo();
+        this.suplente.decir(texto, clave, urgencia);
+        // Y al suplente se le calla igual, que también es una voz.
+        return () => this.suplente.callar();
       },
       clave,
     );
