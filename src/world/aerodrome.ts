@@ -1051,6 +1051,46 @@ function letreros(
 }
 
 /** Distancia de un punto a una polilínea. */
+/**
+ * El punto de la polilínea más cercano a `p`, o `null` si no hay polilínea.
+ *
+ * Es la misma cuenta que `aLaPolilinea` pero devolviendo **dónde** en vez de
+ * **cuánto**, y hace falta porque decirle a alguien que vuelva a la raya sin
+ * decirle hacia dónde está es medio consejo. Contado jugando, rodando perdido
+ * por Fuerteventura: «la instructora me dice que vuelva a la raya verde, será
+ * que se la metió por la nariz, porque yo no la veo».
+ *
+ * Y es que puede no verla: la raya está dibujada, pero si te has ido lo
+ * bastante lejos te queda fuera de la pantalla. Un aviso correcto que no se
+ * puede obedecer es tan inútil como uno equivocado.
+ */
+export function puntoMasCercanoDe(
+  p: Punto,
+  eje: readonly Punto[],
+): Punto | null {
+  let mejor = Infinity;
+  let donde: Punto | null = null;
+  for (let i = 0; i < eje.length - 1; i++) {
+    const [ax, ay] = eje[i]!;
+    const [bx, by] = eje[i + 1]!;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const l = dx * dx + dy * dy || 1;
+    const t = Math.max(
+      0,
+      Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / l),
+    );
+    const qx = ax + t * dx;
+    const qy = ay + t * dy;
+    const d = Math.hypot(p[0] - qx, p[1] - qy);
+    if (d < mejor) {
+      mejor = d;
+      donde = [qx, qy];
+    }
+  }
+  return donde;
+}
+
 export function aLaPolilinea(p: Punto, eje: readonly Punto[]): number {
   let mejor = Infinity;
   for (let i = 0; i < eje.length - 1; i++) {

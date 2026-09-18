@@ -10,7 +10,14 @@
 import { describe, expect, it } from "vitest";
 import sgas from "../../data/aerodromes/sgas.aero.json";
 import gcxo from "../../data/aerodromes/gcxo.aero.json";
-import { createAerodrome, extension, type Aerodrome } from "./aerodrome";
+import {
+  createAerodrome,
+  extension,
+  type Aerodrome,
+  aLaPolilinea,
+  puntoMasCercanoDe,
+  type Punto,
+} from "./aerodrome";
 
 const AERODROMOS = [sgas as unknown as Aerodrome, gcxo as unknown as Aerodrome];
 
@@ -85,5 +92,57 @@ describe("el tamaño del aeródromo", () => {
     const { radio } = extension(sgas as unknown as Aerodrome);
     expect(radio).toBeGreaterThan(1500);
     expect(radio).toBeLessThan(4000);
+  });
+});
+
+describe("el punto más cercano de la raya", () => {
+  /*
+   * Decir «volvé a la raya verde» sin decir hacia dónde es medio consejo: si
+   * te has ido lejos, la raya está dibujada pero te queda fuera de la
+   * pantalla. «Será que se la metió por la nariz, porque yo no la veo.»
+   * Ver `puntoMasCercanoDe` y `updateHomeIndicator`.
+   */
+  const raya: Punto[] = [
+    [0, 0],
+    [100, 0],
+    [100, 100],
+  ];
+
+  it("perpendicular a un tramo, cae en el tramo", () => {
+    expect(puntoMasCercanoDe([50, 40], raya)).toEqual([50, 0]);
+  });
+
+  it("y pasado el final, cae en el final", () => {
+    expect(puntoMasCercanoDe([200, 200], raya)).toEqual([100, 100]);
+  });
+
+  it("elige el tramo bueno cuando hay varios cerca", () => {
+    // Junto al codo: lo que hay que devolver es el punto del tramo vertical,
+    // no el del horizontal, porque es el que tiene más cerca.
+    const q = puntoMasCercanoDe([140, 60], raya)!;
+    expect(q[0]).toBeCloseTo(100, 5);
+    expect(q[1]).toBeCloseTo(60, 5);
+  });
+
+  it("y dice lo mismo que la distancia, que es la otra mitad de la cuenta", () => {
+    // Las dos funciones tienen que estar de acuerdo o la aguja apuntaría a un
+    // sitio distinto del que mide el aviso.
+    for (const p of [
+      [50, 40],
+      [200, 200],
+      [140, 60],
+      [-30, -30],
+    ] as Punto[]) {
+      const q = puntoMasCercanoDe(p, raya)!;
+      expect(Math.hypot(p[0] - q[0], p[1] - q[1])).toBeCloseTo(
+        aLaPolilinea(p, raya),
+        5,
+      );
+    }
+  });
+
+  it("sin raya no hay punto", () => {
+    expect(puntoMasCercanoDe([0, 0], [])).toBe(null);
+    expect(puntoMasCercanoDe([0, 0], [[5, 5]])).toBe(null);
   });
 });

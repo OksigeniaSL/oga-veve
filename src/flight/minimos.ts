@@ -163,3 +163,37 @@ export class Minimos {
     this.cantado = false;
   }
 }
+
+/** Por qué se mandó irse al aire. */
+export type PorQueMandaron = "pistaOcupada" | "noEstabilizada" | null;
+
+/**
+ * Si una orden de irse al aire ya no describe nada y hay que retirarla.
+ *
+ * ## Por qué es una función y no un `if` en el sitio
+ *
+ * Porque en el sitio faltaba. La orden salía por tres puertas —tocar tierra,
+ * subir, alejarse— y ninguna es la que usa quien hace caso a medias:
+ * **corregir**. Así que quien enderezaba la aproximación seguía con el
+ * «abandoná» puesto hasta el final, aterrizaba bien, y el juego le daba el
+ * aterrizaje por bueno sin retirar nunca la orden. Contado jugando: «me lo
+ * validó, pero me dijo que abandonara, no le hice caso porque ya me dirás
+ * tú».
+ *
+ * Y tenía razón en lo de «ya me dirás tú». Un juego que manda abandonar y
+ * después felicita por no abandonar no enseña una regla: enseña que sus
+ * reglas dan igual, que es lo contrario de la regla de las tres eses.
+ *
+ * ## Y solo la de no estabilizada
+ *
+ * La de pista ocupada no se levanta volando mejor: la vaca sigue ahí y eso no
+ * depende de cómo vueles. Esa se retira cuando la pista queda libre, que lo
+ * decide la torre y no el piloto. Confundir las dos sería dejar entrar a
+ * alguien en una pista ocupada por haber estabilizado la aproximación.
+ */
+export function seLevantaLaOrden(
+  porque: PorQueMandaron,
+  estabilizada: boolean,
+): boolean {
+  return porque === "noEstabilizada" && estabilizada;
+}
