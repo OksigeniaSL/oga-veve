@@ -1537,6 +1537,17 @@ function reglaDeFlaps(
  *
  * Tres luces en toda la flota y **cinco en el grande**: un 747 tiene cinco
  * patas, y quien las cuente va a sonreír.
+ *
+ * ## Y son ruedas, no cuadraditos
+ *
+ * Eran tres rectángulos de catorce por catorce en una esquina, con la palabra
+ * «GEAR» al lado y esa palabra solo desde el tercer peldaño: en los dos
+ * peldaños de abajo, el indicador del tren era **tres cuadrados grises sin
+ * nombre**. Pasó lo que tenía que pasar — «¿en qué parte del panel veo que se
+ * está poniendo o quitando?». Una rueda con su llanta se reconoce sin saber
+ * leer, que es la regla de la casa para el primer peldaño; y más grandes,
+ * porque esto es una de las tres cosas que hay que mirar antes de tocar el
+ * suelo. Igual que en el cuadro plano: ver `lucesDeTren` en `ui/cristal.ts`.
  */
 function lucesDeTren(
   g: CanvasRenderingContext2D,
@@ -1546,7 +1557,10 @@ function lucesDeTren(
   donde: number,
 ): void {
   const luz = luzDeTren(donde);
+  const R = 9;
+  const PASO = R * 2 + 6;
   for (let k = 0; k < patas; k++) {
+    const cx = x + k * PASO + R;
     g.fillStyle =
       luz === "fuera"
         ? PALETA.normal
@@ -1554,14 +1568,22 @@ function lucesDeTren(
           ? PALETA.precaucion
           : PALETA.apagado;
     g.globalAlpha = luz === "dentro" ? 0.45 : 0.85;
-    g.fillRect(x + k * 20, y, 14, 14);
+    g.beginPath();
+    g.arc(cx, y + R, R, 0, Math.PI * 2);
+    g.fill();
+    // El hueco de la llanta, del color del fondo: es lo que la vuelve una
+    // rueda y no un punto, y se lee igual en verde, en ámbar y apagada.
     g.globalAlpha = 1;
+    g.fillStyle = FONDO;
+    g.beginPath();
+    g.arc(cx, y + R, R * 0.42, 0, Math.PI * 2);
+    g.fill();
   }
   escribir(
     g,
     "GEAR",
-    x + patas * 20 + 6,
-    y + 8,
+    x + patas * PASO + 4,
+    y + R,
     "500 12px " + FUENTE,
     TENUE,
     "left",

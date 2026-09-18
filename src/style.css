@@ -2508,6 +2508,18 @@ button.motor__tecla::after {
   opacity: 0.45;
 }
 
+/*
+ * El hueco de la llanta, que es lo que convierte el punto en una rueda.
+ *
+ * Va del color del fondo del instrumento y no de un gris propio: así la rueda
+ * se lee igual de bien encendida en verde, en ámbar o apagada, que son los
+ * tres estados por los que pasa. Un agujero pintado de un color fijo se ve
+ * como una mancha en cuanto la rueda cambia de color.
+ */
+.cr__tren-buje {
+  fill: var(--cabina-pantalla);
+}
+
 .cr__puntero {
   fill: var(--cabina-valor);
 }
