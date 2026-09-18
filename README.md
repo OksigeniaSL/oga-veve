@@ -3,7 +3,7 @@
 Simulador de vuelo para navegador. Se vuela sobre Paraguay —el relieve es
 real, el paisaje lo pintamos nosotros— y se aterriza donde se pueda.
 
-### ▶ [Jugar ahora](https://oksigeniasl.github.io/oga-veve/)
+### ▶ Para jugar: `npm install && npm run dev`
 
 > **Estado**: se puede volar de principio a fin. Del puesto de
 > estacionamiento a la pista siguiendo la raya verde, despegue con V1 y Vr,
