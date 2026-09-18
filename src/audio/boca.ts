@@ -329,10 +329,37 @@ export class Boca {
       this.arrancar(urgencia, hacer, clave);
       return;
     }
-    if (PESO[urgencia] > PESO[this.hablandoAhora!]) {
+    /*
+     * **Y solo lo urgente corta. Lo demás espera a que termine la frase.**
+     *
+     * Esto decía «más urgente que quien habla», con tres pesos: baja, normal y
+     * urgente. Y la comandante habla en baja —es megafonía, no tiene prisa—
+     * mientras la instructora, la torre y el otro tráfico hablan en normal. O
+     * sea que **por diseño cualquiera la cortaba a media frase**, y con una
+     * frase larga eso pasa siempre.
+     *
+     * Contado jugando, aterrizando en La Gomera:
+     *
+     *     Comandante: «Bienvenidos a La Gomera, aquí la gent…»
+     *     Voz inglesa: «eco charlie, charlie…»
+     *
+     * «No, eso no puede ser. Se solapan… la española ni tiempo, se le
+     * interrumpe. Y la instructora es la que más interrumpe.»
+     *
+     * Una frase cortada es peor que no decirla: quien la oye se queda con
+     * media información y con la sensación de que nadie manda. Y la regla ya
+     * estaba escrita en este mismo fichero —lo urgente son el terreno, la
+     * pista ocupada y la frustrada, y poco más—; lo que no estaba era
+     * aplicada. Ahora cortar es potestad de lo urgente y de nadie más; el
+     * resto espera su turno, que para eso hay cola.
+     *
+     * Y un urgente no corta a otro urgente: dos avisos de ese peso en el mismo
+     * segundo son dos cosas graves, y la primera merece acabarse.
+     */
+    if (urgente && this.hablandoAhora !== "urgente") {
       /*
-       * Más urgente: corta. El que estaba hablando no vuelve — lo suyo era
-       * menos importante que esto, y repetirlo después sería contar el pasado.
+       * Lo urgente corta. El que estaba hablando no vuelve — lo suyo era menos
+       * importante que esto, y repetirlo después sería contar el pasado.
        */
       // Lo urgente corta y **vacía la cola**: lo que esperaba era menos
       // importante que esto y ya no describe lo que está pasando.

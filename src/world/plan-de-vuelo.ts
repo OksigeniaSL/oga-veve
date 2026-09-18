@@ -997,6 +997,50 @@ export class PlanDeVuelo {
     return this.parDeSalida()?.puesto ?? donde[0]!;
   }
 
+  /**
+   * El puesto al que se vuelve: **el más cercano rodando desde donde estás**.
+   *
+   * Se volvía siempre al puesto de salida, y eso es lo que hacía que en los
+   * campos grandes el rodaje fuera más de la mitad del vuelo: medido en el
+   * barrido, doscientos setenta y un segundos de vuelta en Silvio Pettirossi
+   * sobre seiscientos doce de vuelo entero — el cincuenta y siete por ciento
+   * del vuelo rodando. Y quien juega tiene cuatro años y ha venido a volar.
+   *
+   * **Y es lo que pasa de verdad.** A un avión que llega se le asigna una
+   * puerta libre; nadie cruza un aeropuerto para dejarlo donde lo cogió. Así
+   * que esto no es un atajo para ahorrar tiempo: es la regla de la casa
+   * —cuando la realidad y la comodidad coinciden, mejor— y encima quita el
+   * número que peor sentaba.
+   *
+   * Se mide **rodando** y no en línea recta, que es la diferencia que ya costó
+   * una medida: en Tenerife Norte el puesto que gana en línea recta está a la
+   * vista de la cabecera y hay que dar la vuelta al aeropuerto para llegar.
+   * Ver `parDeSalida`.
+   *
+   * Y del mismo grupo de siempre —el tercio más alejado de los edificios— para
+   * no aparcar pegado a la terminal entre dos aviones de línea: «que me suba a
+   * la chepa del Iberia». Ver `puestosCandidatos`.
+   */
+  private puestoDeLlegada(
+    desde: Punto,
+  ): { ref: string | null; xy: Punto } | null {
+    const puestos = this.puestosCandidatos();
+    if (!puestos.length) return null;
+    let mejor: { ref: string | null; xy: Punto } | null = null;
+    let corto = Infinity;
+    for (const p of puestos) {
+      const ruta = rodajeEntre(this.grafo, desde, p.xy, 600);
+      const d = ruta ? ruta.largo : Infinity;
+      if (d < corto) {
+        corto = d;
+        mejor = p;
+      }
+    }
+    // Si ninguno se deja alcanzar por asfalto, el de salida: mejor una vuelta
+    // larga que no tener adónde ir.
+    return mejor ?? this.puestoDeSalida();
+  }
+
   /** Los puestos de los que puede salir una avioneta, sin ordenar. */
   private puestosCandidatos(): { ref: string | null; xy: Punto }[] {
     const puestos = this.aero.parkingPositions;
@@ -1985,8 +2029,21 @@ export class PlanDeVuelo {
       return;
     }
 
+    /*
+     * **Y al volver, al puesto más cercano; al salir, al de siempre.**
+     *
+     * La ruta de vuelta iba al puesto de salida, o sea a cruzar el aeropuerto
+     * entero para dejar el avión donde se cogió. Ver `puestoDeLlegada`.
+     */
     const meta =
-      quiere === "puesto" ? this.puestoDeSalida()?.xy : this.esperaDeSalida();
+      quiere === "puesto"
+        ? (fase === "aterrizado" ||
+          fase === "abandonando" ||
+          fase === "a-plataforma"
+            ? this.puestoDeLlegada(this.ultimaPos)
+            : this.puestoDeSalida()
+          )?.xy
+        : this.esperaDeSalida();
     if (!meta) {
       this.ponerRuta(null);
       return;

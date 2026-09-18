@@ -140,6 +140,31 @@ const MAS_DE_LA_CUENTA = 4;
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
+/**
+ * Lo mismo, pero **solo si el vuelo llegó a terminar**.
+ *
+ * Todo lo que se mide después de aterrizar falla a la vez cuando no se llega a
+ * aterrizar, y eso no son ocho defectos: es uno, contado ocho veces. Ver
+ * `seQuedoSinTiempo` y el `TOPE` del presupuesto.
+ *
+ * No se marca en verde ni en rojo: se dice que no se midió, que es la verdad.
+ * Dar por bueno lo que no se ha mirado es la otra forma de mentir con un
+ * banco.
+ */
+const comprobarSiVolo = (nombre, ok, detalle, porque) => {
+  if (seQuedoSinTiempo) {
+    resultados.push({
+      nombre,
+      ok: true,
+      sinMedir: true,
+      detalle: "no se midió: el vuelo no llegó a terminar",
+      porque,
+    });
+    return;
+  }
+  comprobar(nombre, ok, detalle, porque);
+};
+
 // ── El vuelo ──────────────────────────────────────────────────────────────
 
 const vuelo = await page.evaluate(async (vecesPedidas) => {
@@ -936,7 +961,26 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * saltaba yendo al campo. Un vuelo que tarda más porque **hace más** no es un
    * vuelo que falle.
    */
-  const TOPE = 1200;
+  /*
+   * **Y treinta minutos, no veinte, porque una frustrada es un circuito más.**
+   *
+   * Con veinte, un vuelo con **dos** frustradas no cabía: la torre manda
+   * irse al aire, se da otra vuelta al circuito —doscientos y pico segundos—
+   * y el presupuesto se acaba con el avión todavía volando. Medido, el mismo
+   * banco tres veces seguidas: con cero y con una frustrada, 22 de 22; con
+   * dos, ocho fallos de golpe.
+   *
+   * Y esos ocho fallos no eran ocho cosas rotas: eran **una**, contada ocho
+   * veces, porque todo lo que se mide después de aterrizar falla cuando no se
+   * llega a aterrizar. Costó dos investigaciones en falso — una de ellas
+   * culpándome de haber editado el código mientras el banco volaba. Un
+   * instrumento que reporta su propio reloj agotado como ocho defectos manda a
+   * buscar fantasmas. Ver `seQuedoSinTiempo`.
+   *
+   * Frustrar es parte del vuelo y está en la lección; un vuelo que tarda más
+   * porque **hace más** no es un vuelo que falle.
+   */
+  const TOPE = 1800;
   /*
    * Y el tiempo se lee del juego, no se cuenta por vueltas.
    *
@@ -1854,6 +1898,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     sinRaya: +sinRaya.toFixed(1),
     sinRayaDonde,
     sinRayaPrimero,
+    // El tiempo que hizo: lo único que cambia entre pasadas. Ver el informe.
+    meteo: o.meteo?.() ?? null,
     lejosDelCoche: Math.round(lejosDelCoche),
     cocheEnPista: Number.isFinite(cocheEnPista)
       ? Math.round(cocheEnPista)
@@ -1894,6 +1940,16 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     flota: alPrincipioFlotaba,
   };
 }, VECES);
+
+/**
+ * Si el vuelo se quedó sin presupuesto de tiempo.
+ *
+ * Una frustrada es un circuito más, y con dos el vuelo no cabía en los veinte
+ * minutos que había antes. Lo que hacía el banco entonces era reportar ocho
+ * fallos —todo lo que se mide después de aterrizar— cuando el defecto era uno:
+ * no se llegó a aterrizar. Ver `comprobarSiVolo`.
+ */
+const seQuedoSinTiempo = vuelo.etapa !== "apagar" && vuelo.segundos >= 1750;
 
 // ── Lo que se comprueba ───────────────────────────────────────────────────
 
@@ -1986,6 +2042,25 @@ comprobar(
     : `${vuelo.flota > 0 ? "flota" : "hundido"} ${Math.abs(vuelo.flota).toFixed(2)} m`,
   "el modelo se bajaba lo que mide él y no lo que el juego lo había subido",
 );
+
+/*
+ * **Y si se acabó el reloj, se dice una vez y no ocho.**
+ *
+ * Todo lo que este banco mide después de aterrizar —dónde se tocó, si pidió
+ * frenar, las gafas, la vuelta al puesto— falla a la vez cuando el vuelo no
+ * llega a aterrizar. Y no son ocho defectos: es uno, contado ocho veces, y
+ * manda a buscar fantasmas donde no los hay.
+ *
+ * Así que si el vuelo se quedó sin presupuesto, eso es **el** fallo, y lo que
+ * depende de haber aterrizado no se juzga: no se midió.
+ */
+if (seQuedoSinTiempo) {
+  console.log(
+    `\n  ⏱  el vuelo no cupo en el presupuesto: se quedó en «${vuelo.etapa}»` +
+      ` a los ${vuelo.segundos.toFixed(0)} s.\n` +
+      `     Lo que se mide después de aterrizar no se juzga en esta pasada.\n`,
+  );
+}
 
 comprobar(
   "un vuelo entero se puede completar sin ayuda de nadie",
@@ -2123,7 +2198,7 @@ comprobar(
  * decisión de producto, no un ajuste.
  */
 const rodeo = vuelo.vueltaMetros / Math.max(1, vuelo.largoDeLaRuta);
-comprobar(
+comprobarSiVolo(
   "y el de vuelta no se dispara",
   /*
    * **Y se mide el rodeo, no el reloj.**
@@ -2176,7 +2251,7 @@ comprobar(
   "«la llave salió, se apagó a los seis segundos, y ya no había forma de enterarse»",
 );
 
-comprobar(
+comprobarSiVolo(
   "la raya verde no falta mientras se rueda",
   vuelo.sinRaya < 1,
   vuelo.sinRaya
@@ -2256,7 +2331,7 @@ comprobar(
   "«me avisa que voy a terrain cuando ya estoy sobre la cabecera de la pista»",
 );
 
-comprobar(
+comprobarSiVolo(
   "antes de tocar, el juego dice que ya se puede tocar",
   vuelo.dijoToca,
   vuelo.dijoToca
@@ -2270,7 +2345,7 @@ comprobar(
  * Yvytu Rape, que mide dieciocho de ancho: es el listón que hace falta para
  * poder decir que este piloto sabe posarse ahí. Ver #147.
  */
-comprobar(
+comprobarSiVolo(
   "se toca cerca del eje y dentro de la pista",
   vuelo.toco > 0 && Math.abs(vuelo.tocoDesviado) < 9,
   vuelo.toco
@@ -2293,7 +2368,7 @@ comprobar(
  */
 if (vuelo.toco > 0 && vuelo.avion) {
   const listón = Math.round((vuelo.avion?.aterrizajeEn ?? 0) / 3);
-  comprobar(
+  comprobarSiVolo(
     "y frenar le cuesta la pista que dice su ficha",
     vuelo.rodaduraMedida >= listón,
     `rodó ${vuelo.rodaduraMedida} m desde que tocó a ${vuelo.tocoA} m/s` +
@@ -2302,7 +2377,7 @@ if (vuelo.toco > 0 && vuelo.avion) {
   );
 }
 
-comprobar(
+comprobarSiVolo(
   "y después de tocar, pide frenar",
   vuelo.pidioFreno,
   vuelo.pidioFreno ? "salió la tarjeta del freno" : "no la pidió",
@@ -2323,7 +2398,7 @@ comprobar(
  * es un fallo del premio.
  */
 if (vuelo.toco > 0) {
-  comprobar(
+  comprobarSiVolo(
     "y con el primer aterrizaje bueno te llevás las gafas de sol",
     vuelo.gafas?.ganadas === true && vuelo.gafas?.puestas === true,
     vuelo.gafas
@@ -2333,7 +2408,7 @@ if (vuelo.toco > 0) {
   );
 }
 
-comprobar(
+comprobarSiVolo(
   "y el vuelo termina contando lo que te llevás",
   vuelo.fin && vuelo.galones.length > 0,
   `${vuelo.galones.length} galones: ${vuelo.galones.join(", ") || "ninguno"}${vuelo.fin ? "" : " · sin pantalla de fin"}`,
@@ -2379,14 +2454,32 @@ comprobar(
 
 // ── El informe ────────────────────────────────────────────────────────────
 
+/*
+ * **Y con qué tiempo se voló.**
+ *
+ * Es lo único que cambia de una pasada a la siguiente: el relieve, el avión y
+ * el piloto del banco son los mismos. Así que cuando dos pasadas del mismo
+ * comando dan resultados distintos —y pasa— lo primero que hay que poder
+ * comparar es esto, y hasta hoy no se imprimía. Se perdieron dos
+ * investigaciones por no tenerlo delante.
+ */
+const queTiempoHizo = vuelo.meteo
+  ? ` · viento ${String(Math.round(vuelo.meteo.vientoDe ?? 0)).padStart(3, "0")}/${Math.round(vuelo.meteo.vientoKt ?? 0)} kt` +
+    (vuelo.meteo.techoM ? ` · techo ${Math.round(vuelo.meteo.techoM)} m` : "") +
+    (vuelo.meteo.temp != null ? ` · ${Math.round(vuelo.meteo.temp)} °C` : "")
+  : "";
 console.log(
   `\n  vuelo entero · ${ESCENARIO} · ${TRAMO} · reloj ×${vuelo.veces}` +
-    ` · ${vuelo.vueltas} muestras en ${vuelo.segundos.toFixed(0)} s de vuelo\n`,
+    ` · ${vuelo.vueltas} muestras en ${vuelo.segundos.toFixed(0)} s de vuelo` +
+    queTiempoHizo +
+    "\n",
 );
 let fallos = 0;
 for (const r of resultados) {
   if (!r.ok) fallos++;
-  console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);
+  console.log(
+    `  ${r.sinMedir ? "·" : r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`,
+  );
   if (!r.ok) console.log(`      volvió: ${r.porque}`);
 }
 if (errores.length) {
@@ -2428,8 +2521,11 @@ if (fallos) {
   }
 }
 
+const sinMedir = resultados.filter((r) => r.sinMedir).length;
 console.log(
-  `\n  ${resultados.length - fallos} de ${resultados.length} comprobaciones\n`,
+  `\n  ${resultados.length - fallos - sinMedir} de ${resultados.length - sinMedir} comprobaciones` +
+    (sinMedir ? ` · ${sinMedir} sin medir` : "") +
+    "\n",
 );
 
 await navegador.close();

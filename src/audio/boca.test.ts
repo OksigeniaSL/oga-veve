@@ -438,3 +438,65 @@ describe("un suceso, una sola voz", () => {
     expect(dicho).toEqual(["terreno", "papi"]);
   });
 });
+
+describe("y una frase no se corta por la mitad", () => {
+  /*
+   * Esto cortaba en cuanto llegaba algo «más urgente», con tres pesos. Y la
+   * comandante habla en baja —es megafonía, no tiene prisa— mientras la
+   * instructora y la torre hablan en normal: por diseño, cualquiera la cortaba
+   * a media frase.
+   *
+   *     Comandante: «Bienvenidos a La Gomera, aquí la gent…»
+   *     Voz inglesa: «eco charlie, charlie…»
+   *
+   * «No, eso no puede ser… la española ni tiempo, se le interrumpe. Y la
+   * instructora es la que más interrumpe.»
+   */
+  const montar = () => {
+    const cortados: string[] = [];
+    const vivos = new Map<string, () => void>();
+    const b = boca();
+    const decir = (clave: string, urgencia: "baja" | "normal" | "urgente") =>
+      b.pedir(
+        urgencia,
+        (listo) => {
+          vivos.set(clave, listo);
+          // Lo que devuelve una frase es cómo callarla. Si alguien la llama,
+          // es que la han cortado. Ver `Hablar` en `boca.ts`.
+          return () => cortados.push(clave);
+        },
+        clave,
+      );
+    return { b, decir, cortados, acabar: (c: string) => vivos.get(c)?.() };
+  };
+
+  it("la instructora no corta a la comandante", () => {
+    const { decir, cortados } = montar();
+    decir("comandante.llegada.la-gomera", "baja");
+    decir("vuelo.rapido", "normal");
+    expect(cortados).toEqual([]);
+  });
+
+  it("ni la torre, ni el otro avión", () => {
+    const { decir, cortados } = montar();
+    decir("comandante.llegada.la-gomera", "baja");
+    decir("torre.canario.clearedLand", "normal");
+    decir("otro.final", "normal");
+    expect(cortados).toEqual([]);
+  });
+
+  it("pero el aviso de terreno sí, que para eso es urgente", () => {
+    const { decir, cortados } = montar();
+    decir("comandante.llegada.la-gomera", "baja");
+    decir("vuelo.terrenoSube", "urgente");
+    expect(cortados).toEqual(["comandante.llegada.la-gomera"]);
+  });
+
+  it("y un urgente no corta a otro urgente", () => {
+    // Dos cosas graves en el mismo segundo: la primera merece acabarse.
+    const { decir, cortados } = montar();
+    decir("vuelo.terrenoSube", "urgente");
+    decir("vuelo.mandanFrustrar", "urgente");
+    expect(cortados).toEqual([]);
+  });
+});
