@@ -1022,6 +1022,19 @@ export class Hud {
     this.root.style.setProperty("--arriba-alto", `${Math.round(abajo)}px`);
   }
 
+  /**
+   * Cuánto alto le come el cuadro de mandos a la pantalla, en píxeles.
+   *
+   * Lo mide el HUD porque es suyo, y lo lee la cámara para no encuadrar el
+   * avión detrás de él. Cero desde la cabina, donde el cuadro no se dibuja.
+   */
+  get altoDelCuadro(): number {
+    const panel = this.root.querySelector('[data-hud="tablero"]');
+    if (!panel) return 0;
+    const caja = panel.getBoundingClientRect();
+    return caja.height > 0 ? caja.height : 0;
+  }
+
   private reserveForPanel(): void {
     /*
      * Se mide con la caja del dibujo y no con `offsetHeight`: el cuadro es un
