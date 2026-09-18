@@ -335,6 +335,7 @@ import {
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
+import { puntoMasCercanoDe } from "./world/aerodrome";
 import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
@@ -6713,19 +6714,47 @@ export class Game {
       this.scenario.runway.length * 0.5,
     );
 
-    // Con misión en curso, la aguja señala el objetivo; sin ella, la pista.
-    // Es la misma aguja: no hay dos cosas que aprender.
+    /*
+     * Con misión en curso, la aguja señala el objetivo; sin ella, la pista.
+     * Es la misma aguja: no hay dos cosas que aprender.
+     *
+     * **Y si te has salido de la raya, señala la raya.**
+     *
+     * Cuando el juego dice «volvé a la raya verde» es porque estás lejos de
+     * ella — lo bastante como para que te quede fuera de la pantalla. Un
+     * consejo correcto que no se puede obedecer es tan inútil como uno
+     * equivocado: «la instructora me dice que vuelva a la raya verde, será que
+     * se la metió por la nariz, porque yo no la veo».
+     *
+     * Así que mientras estés fuera, la aguja deja de apuntar a la plataforma
+     * lejana y apunta al **punto más cercano de la raya**, que es adonde hay
+     * que ir primero. En cuanto vuelves, vuelve ella también a lo de siempre.
+     * Es la misma aguja otra vez: sigue habiendo una sola cosa que aprender.
+     */
     const objective = this.missions.current;
     const target = objective ? objectiveTarget(objective) : null;
-    const dx = (target?.x ?? thresholdX) - this.flight.state.position.x;
-    const dz = (target?.z ?? thresholdZ) - this.flight.state.position.z;
+    const aLaRaya =
+      this.vistaActual?.fuera === true && this.plan
+        ? puntoMasCercanoDe(
+            [this.flight.state.position.x, this.flight.state.position.z],
+            this.plan.laRaya,
+          )
+        : null;
+    const dx =
+      (aLaRaya?.[0] ?? target?.x ?? thresholdX) - this.flight.state.position.x;
+    const dz =
+      (aLaRaya?.[1] ?? target?.z ?? thresholdZ) - this.flight.state.position.z;
     const bearing = Math.atan2(dx, -dz);
 
     let relative = bearing - this.flight.state.heading;
     while (relative > Math.PI) relative -= Math.PI * 2;
     while (relative < -Math.PI) relative += Math.PI * 2;
 
-    this.hud.setHome(relative, Math.hypot(dx, dz), target !== null);
+    this.hud.setHome(
+      relative,
+      Math.hypot(dx, dz),
+      target !== null || aLaRaya !== null,
+    );
   }
 
   private syncAircraftMesh(dt: number): void {

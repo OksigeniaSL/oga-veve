@@ -30,7 +30,7 @@
 
 import type { AircraftConfig } from "./aircraft";
 import type { FlightState } from "./model";
-import { Minimos, porQueNoSeSigue } from "./minimos";
+import { Minimos, porQueNoSeSigue, seLevantaLaOrden } from "./minimos";
 import type { Reparto } from "../hechos";
 import type { Scenario } from "../world/scenarios";
 import type { Terrain } from "../world/terrain";
@@ -194,6 +194,41 @@ export class LaAproximacion {
     this.seguirElCircuito(ahora.acercandose);
   }
 
+  /**
+   * Si la aproximación está estabilizada **ahora mismo**.
+   *
+   * Es la misma cuenta que decide dar la orden, sacada aparte para poder
+   * preguntarla también al revés: para levantarla. Dos cuentas para «¿está
+   * bien esta aproximación?» acabarían discrepando, y entonces el juego
+   * mandaría abandonar y a la vez daría por buena la misma aproximación.
+   */
+  private yaEstabilizada(): boolean {
+    const s = this.ahora.estado;
+    const { across } = enEjesDePista(
+      s.position.x,
+      s.position.z,
+      this.mundo.scenario.runway.x,
+      this.mundo.scenario.runway.z,
+      this.mundo.scenario.runway.heading,
+    );
+    let torcido =
+      ((s.heading * 180) / Math.PI - this.mundo.scenario.runway.heading + 540) %
+      360;
+    torcido -= 180;
+    return (
+      porQueNoSeSigue(
+        {
+          velocidad: s.airspeed,
+          referencia: this.mundo.aircraft.approachSpeed,
+          vertical: s.verticalSpeed,
+          delEje: across,
+          torcido,
+        },
+        this.ahora.techoDeNubes,
+      ) === null
+    );
+  }
+
   /** Se empieza de nuevo: ni orden puesta, ni PAPI dicho, ni tramo. */
   reiniciar(): void {
     this.mandanFrustrar = false;
@@ -264,6 +299,33 @@ export class LaAproximacion {
        * describe nada y se retira.
        */
       if (s.onGround) {
+        this.levantarLaOrden();
+        return;
+      }
+      /*
+       * **Y arreglar la aproximación también la levanta.**
+       *
+       * Esto solo salía por tres puertas —tocar tierra, subir, alejarse— y
+       * ninguna es la que usa quien hace caso a medias: corregir. Así que
+       * quien enderezaba la aproximación seguía con la orden puesta hasta el
+       * final, aterrizaba bien y el juego le daba el aterrizaje por bueno sin
+       * retirar nunca el «abandoná». Contado jugando: «me lo validó, pero me
+       * dijo que abandonara, no le hice caso porque ya me dirás tú».
+       *
+       * Y tenía razón en lo de «ya me dirás tú»: un juego que manda abandonar
+       * y después felicita por no abandonar no está enseñando una regla, está
+       * enseñando que sus reglas dan igual. Que es lo contrario de lo que
+       * busca la regla de las tres eses.
+       *
+       * **Solo la de no estabilizada.** La de pista ocupada no se levanta
+       * corrigiendo nada: la vaca sigue ahí y eso no depende de cómo vueles.
+       * Esa se levanta cuando la pista queda libre, que es lo de arriba.
+       *
+       * Al levantarla se enciende la luz verde y se dice, igual que cuando la
+       * retira la torre: quien obedece a medias tiene derecho a saber que ya
+       * puede seguir. Ver `levantarLaOrden`.
+       */
+      if (seLevantaLaOrden(this.porqueMandaron, this.yaEstabilizada())) {
         this.levantarLaOrden();
         return;
       }

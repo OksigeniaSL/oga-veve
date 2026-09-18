@@ -784,6 +784,18 @@ export class PlanDeVuelo {
   private ruta: Ruta | null = null;
   /** La ruta en coordenadas de mundo, que es donde vive el avión. */
   private rutaMundo: Punto[] = [];
+
+  /**
+   * La raya, en coordenadas del mundo, para quien tenga que señalarla.
+   *
+   * La usa la aguja del HUD cuando el avión se sale: decir «volvé a la raya
+   * verde» sin decir hacia dónde es medio consejo, y si te has ido lejos la
+   * raya te queda fuera de la pantalla. Ver `updateHomeIndicator` en
+   * `game.ts` y `puntoMasCercanoDe`.
+   */
+  get laRaya(): readonly Punto[] {
+    return this.rutaMundo;
+  }
   /**
    * Cuánta ruta se lleva recorrida, en metros. Se acuerda entre fotogramas.
    *

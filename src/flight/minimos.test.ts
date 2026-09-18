@@ -17,6 +17,7 @@ import {
   estabilizada,
   porQueNoSeSigue,
   type Aproximacion,
+  seLevantaLaOrden,
 } from "./minimos";
 
 /** Una aproximación de manual: a la velocidad de referencia y en el eje. */
@@ -131,5 +132,59 @@ describe("el momento de decidir", () => {
     m.paso(ALTURA_DE_DECISION - 2, true);
     m.reiniciar();
     expect(m.paso(ALTURA_DE_DECISION - 2, true)).toBe(true);
+  });
+});
+
+describe("y una orden de irse al aire que ya no describe nada se retira", () => {
+  /*
+   * La orden salía por tres puertas —tocar tierra, subir, alejarse— y ninguna
+   * es la que usa quien hace caso a medias: corregir. Así que quien enderezaba
+   * la aproximación seguía con el «abandoná» puesto hasta el final, aterrizaba
+   * bien, y el juego le daba el aterrizaje por bueno sin retirar nunca la
+   * orden. «Me lo validó, pero me dijo que abandonara.» Ver `seLevantaLaOrden`.
+   */
+  it("enderezar la aproximación la levanta", () => {
+    expect(seLevantaLaOrden("noEstabilizada", true)).toBe(true);
+  });
+
+  it("y seguir mal, no", () => {
+    expect(seLevantaLaOrden("noEstabilizada", false)).toBe(false);
+  });
+
+  it("pero la pista ocupada no se arregla volando mejor", () => {
+    /*
+     * La vaca sigue ahí, y eso no depende de cómo vueles. Confundir las dos
+     * sería dejar entrar a alguien en una pista ocupada por haber estabilizado
+     * la aproximación, que es exactamente lo que la orden existe para evitar.
+     */
+    expect(seLevantaLaOrden("pistaOcupada", true)).toBe(false);
+    expect(seLevantaLaOrden("pistaOcupada", false)).toBe(false);
+  });
+
+  it("y sin orden puesta no hay nada que levantar", () => {
+    expect(seLevantaLaOrden(null, true)).toBe(false);
+  });
+
+  it("y lo que decide «estabilizada» es la misma cuenta que dio la orden", () => {
+    /*
+     * Dos cuentas para «¿está bien esta aproximación?» acabarían discrepando,
+     * y entonces el juego mandaría abandonar y daría por buena la misma
+     * aproximación a la vez — que es de donde venimos.
+     */
+    const bien = {
+      velocidad: 75,
+      referencia: 75,
+      vertical: -3,
+      delEje: 5,
+      torcido: 2,
+    };
+    expect(porQueNoSeSigue(bien)).toBe(null);
+    expect(seLevantaLaOrden("noEstabilizada", estabilizada(bien))).toBe(true);
+
+    const rapido = { ...bien, velocidad: 75 * 1.5 };
+    expect(porQueNoSeSigue(rapido)).toBe("rapido");
+    expect(seLevantaLaOrden("noEstabilizada", estabilizada(rapido))).toBe(
+      false,
+    );
   });
 });
