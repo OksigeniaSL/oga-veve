@@ -257,6 +257,31 @@ export interface AircraftConfig {
    */
   vmoKt: number;
   /**
+   * Lo más rápido que se puede ir **con el tren fuera**, en nudos indicados.
+   *
+   * Es un límite distinto del de la estructura entera y mucho más bajo: unas
+   * compuertas y unas patas metidas en la corriente aguantan bastante menos
+   * que el fuselaje. En un avión de línea son unos doscientos setenta nudos
+   * contra los trescientos sesenta y cinco del avión limpio.
+   *
+   * Existe porque el juego ya enseña la mitad de esta lección —el tren frena—
+   * y le faltaba la otra mitad: **el tren también se rompe**. Ir a trescientos
+   * con las patas fuera no es solo ineficiente, es pasarse de lo que aguantan.
+   *
+   * En los que no lo meten no hay límite que dar: sus patas están calculadas
+   * para todo su rango. Ver `trenRetractil`.
+   */
+  vleKt: number;
+  /**
+   * Y lo mismo con los flaps fuera, en nudos indicados.
+   *
+   * Más bajo todavía que el del tren: un flap es una superficie grande, con
+   * poco brazo y mucha palanca, y es lo primero que se dobla. Por eso en
+   * cualquier cabina la cinta de velocidad lleva su marca y por eso se sacan
+   * **después** de frenar, no antes.
+   */
+  vfeKt: number;
+  /**
    * **Mmo**: el Mach máximo.
    *
    * Es un límite **aerodinámico** —por encima, el aire se comprime sobre el ala
@@ -398,6 +423,8 @@ export const PYKASU: AircraftConfig = {
   alturaDeCrucero: 3000,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
   vmoKt: 163,
+  vleKt: 85,
+  vfeKt: 85,
   mmo: 0.3,
   // 33 m/s son 119 km/h, que es la corta final de un 172 de verdad.
   approachSpeed: 33,
@@ -473,6 +500,8 @@ export const MAINUMBY: AircraftConfig = {
   alturaDeCrucero: 2500,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
   vmoKt: 130,
+  vleKt: 80,
+  vfeKt: 80,
   mmo: 0.28,
   approachSpeed: 29,
   decisionSpeed: 24,
@@ -579,6 +608,8 @@ export const PANAMBI: AircraftConfig = {
   alturaDeCrucero: 5500,
   // Bimotor ligero presurizado.
   vmoKt: 230,
+  vleKt: 152,
+  vfeKt: 122,
   mmo: 0.48,
   // 44 m/s son 1,3 veces la pérdida, que es como se cruza el umbral.
   approachSpeed: 44,
@@ -671,6 +702,8 @@ export const ARASUNU: AircraftConfig = {
   alturaDeCrucero: 7600,
   // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
   vmoKt: 250,
+  vleKt: 184,
+  vfeKt: 157,
   mmo: 0.55,
   approachSpeed: 48,
   decisionSpeed: 38,
@@ -778,6 +811,20 @@ export const ARAI: AircraftConfig = {
   alturaDeCrucero: 11000,
   // Reactor regional.
   vmoKt: 320,
+  /*
+   * **Y estos dos salen de su propia Vref, no de un avión real que no es.**
+   *
+   * Los primeros números vinieron del arquetipo —un regional de verdad— y su
+   * tope de flaps quedaba en ciento cincuenta contra una Vref de ciento
+   * treinta y dos: trece por ciento de margen, que no da ni para una
+   * corrección en final. O sea que aterrizar de manual rompía los flaps.
+   *
+   * Lo cazó la prueba que dice que un límite que se pasa volando la
+   * aproximación de manual no es un límite, es una trampa. Ahora van a vez y
+   * pico de su Vref, como el resto de la flota.
+   */
+  vleKt: 205,
+  vfeKt: 180,
   mmo: 0.82,
   /*
    * **Ciento treinta y dos nudos, que es como entra un regional.**
@@ -938,6 +985,8 @@ export const YVAGA: AircraftConfig = {
    * que se vuela de verdad, que es lo que hace visible la lección.
    */
   vmoKt: 365,
+  vleKt: 270,
+  vfeKt: 240,
   mmo: 0.92,
   // 1,3 veces la pérdida, como manda: con CLmax 1,4 pierde a 76 m/s.
   // Ciento cuarenta y seis nudos: 1,3 veces su pérdida con flaps, y lo que
