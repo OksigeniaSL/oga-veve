@@ -176,3 +176,47 @@ export function bandaDeAhora(
     bandaDeVelocidad(s, vref)
   );
 }
+
+/**
+ * Qué hay que decir en cada banda, volando o en el suelo.
+ *
+ * ## Por qué es una función y no un ternario en el sitio
+ *
+ * Porque en el sitio era un ternario, y el ternario no miraba la banda:
+ *
+ * ```ts
+ * const suave = enElSuelo ? "vuelo.despacio" : "vuelo.rapido";
+ * ```
+ *
+ * Entraba con las dos bandas —`lento` y `rapido`— y solo preguntaba dónde
+ * estaban las ruedas. Así que a quien venía **despacio** el juego le decía
+ * «vas muy rápido», y quien obedecía bajaba el gas: que es exactamente cómo se
+ * entra en pérdida a cien metros del suelo. Dicho jugando con el de fuselaje
+ * ancho a ciento dieciséis nudos sobre una Vref de ciento cuarenta y seis:
+ * «¿es serio, esto es ir muy rápido?», y después: «me hace ir tan lento que me
+ * caigo al agua».
+ *
+ * Con la decisión aquí, la prueba puede recorrer las cuatro combinaciones y
+ * ninguna puede volver a salir cambiada. Un aviso que dice lo contrario de lo
+ * que pasa no es un aviso mal redactado: es el consejo que mata.
+ *
+ * En el suelo no hay «lento» —la banda de rodaje no lo tiene, porque rodar
+ * despacio no tiene nada de malo— y por eso ahí solo cabe pedir calma.
+ */
+export function queSeDice(
+  banda: BandaDeVelocidad,
+  enElSuelo: boolean,
+): "vuelo.rapido" | "vuelo.despacio" | "vuelo.lentoYBajo" | null {
+  if (banda !== "lento" && banda !== "rapido") return null;
+  /*
+   * **Y en el suelo, «lento» se calla.**
+   *
+   * No llega nunca —la banda de rodaje no devuelve «lento», porque rodar
+   * despacio no tiene nada de malo— pero la primera versión de esto contestaba
+   * «más despacio» a cualquier cosa que llegara en tierra, y eso es el mismo
+   * fallo que esta función existe para impedir, escrito otra vez. Lo cazó su
+   * propia prueba: ninguna banda puede compartir frase con su contraria.
+   */
+  if (enElSuelo) return banda === "rapido" ? "vuelo.despacio" : null;
+  return banda === "lento" ? "vuelo.lentoYBajo" : "vuelo.rapido";
+}
