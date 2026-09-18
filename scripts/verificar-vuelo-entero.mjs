@@ -1765,6 +1765,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       ),
     ],
     torreDijoTodo: o.dichoTodo?.().torre ?? [],
+    // Todo lo que dijo cada boca, para poder contarlo al final del parte.
+    todoLoDicho: o.dichoTodo?.() ?? {},
     masRapidoEnPista: Math.round(masRapidoEnPista),
     seSalioEnPista: Math.round(seSalioEnPista),
     gasEnLaCarrera: +gasEnLaCarrera.toFixed(2),
@@ -2265,6 +2267,37 @@ if (fallos) {
   console.log("\n  últimos instantes del vuelo:");
   for (const l of vuelo.linea) console.log(`    ${l}`);
 }
+/*
+ * ── **Y qué se oyó, y cuántas veces** ──
+ *
+ * El pack de la instructora tiene ciento cinco frases distintas y quien juega
+ * decía oír siempre las mismas cuatro: «hay un montón de sonidos y yo solo le
+ * oigo decir siempre las mismas cuatro cosas». No había forma de contestar a
+ * eso sin volar y apuntar a mano, que es justo lo que este banco ya hace.
+ *
+ * Así que lo cuenta: por boca, qué dijo y cuántas veces, ordenado por lo más
+ * repetido. Una voz que dice cuatro cosas cincuenta veces y una que dice
+ * cuarenta una vez cada una son dos juegos distintos, y hasta hoy se veían
+ * igual desde fuera.
+ */
+{
+  const bocas = vuelo.todoLoDicho ?? {};
+  const nombres = Object.keys(bocas).filter((b) => (bocas[b] ?? []).length);
+  if (nombres.length) {
+    console.log("\n  lo que se oyó en el vuelo:\n");
+    for (const boca of nombres) {
+      const cuenta = new Map();
+      for (const c of bocas[boca]) cuenta.set(c, (cuenta.get(c) ?? 0) + 1);
+      const orden = [...cuenta].sort((a, b) => b[1] - a[1]);
+      console.log(
+        `  ${boca}: ${bocas[boca].length} frases · ${cuenta.size} distintas`,
+      );
+      for (const [c, n] of orden)
+        console.log(`      ${String(n).padStart(3)} ×  ${c}`);
+    }
+  }
+}
+
 console.log(
   `\n  ${resultados.length - fallos} de ${resultados.length} comprobaciones\n`,
 );

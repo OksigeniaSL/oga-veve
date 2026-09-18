@@ -6,6 +6,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { MARGENES } from "./minimos";
 import {
   bandaDeRodaje,
   bandaDeVelocidad,
@@ -27,7 +28,14 @@ describe("la banda de velocidad", () => {
   });
 
   it("avisa de lento antes que de rápido, que es lo que mata", () => {
-    // Un cinco por ciento por debajo ya avisa; un cinco por encima todavía no.
+    /*
+     * Un cinco por ciento por debajo ya avisa. Por encima aguanta mucho más, y
+     * **el listón sale del que usa el juego para juzgar**: avisa diez puntos
+     * antes del treinta y cinco por ciento con el que una aproximación deja de
+     * valer. Antes avisaba al doce, o sea que regañaba durante veintitrés
+     * puntos de velocidad que el propio juego daba por buenos — y un aviso que
+     * salta donde no pasa nada se aprende a no oír.
+     */
     expect(bandaDeVelocidad(bajando({ velocidad: VREF * 0.95 }), VREF)).toBe(
       "lento",
     );
@@ -35,8 +43,31 @@ describe("la banda de velocidad", () => {
       "bien",
     );
     expect(bandaDeVelocidad(bajando({ velocidad: VREF * 1.2 }), VREF)).toBe(
+      "bien",
+    );
+    expect(bandaDeVelocidad(bajando({ velocidad: VREF * 1.3 }), VREF)).toBe(
       "rapido",
     );
+  });
+
+  it("y el aviso llega antes que el suspenso, no después", () => {
+    /*
+     * La propiedad que ata los dos números: la voz tiene que avisar **dentro**
+     * de lo que el juego todavía da por bueno, y con sitio para corregir. Si
+     * el aviso saltara igual o más tarde que el listón, sería un aviso que
+     * llega cuando ya no sirve.
+     */
+    const avisa = bandaDeVelocidad(
+      bajando({ velocidad: VREF * MARGENES.rapido }),
+      VREF,
+    );
+    expect(avisa).toBe("rapido");
+    expect(
+      bandaDeVelocidad(
+        bajando({ velocidad: VREF * (MARGENES.rapido - 0.05) }),
+        VREF,
+      ),
+    ).toBe("rapido");
   });
 
   it("se calla en crucero, por deprisa que se vaya", () => {
@@ -55,8 +86,10 @@ describe("la banda de velocidad", () => {
   });
 
   it("cada avión con la suya: lo que es bien para uno es rápido para otro", () => {
+    // Treinta y tres es su velocidad para uno y un treinta y siete por ciento
+    // de más para otro que se aproxima a veinticuatro.
     expect(bandaDeVelocidad(bajando({ velocidad: 33 }), 33)).toBe("bien");
-    expect(bandaDeVelocidad(bajando({ velocidad: 33 }), 29)).toBe("rapido");
+    expect(bandaDeVelocidad(bajando({ velocidad: 33 }), 24)).toBe("rapido");
   });
 });
 
