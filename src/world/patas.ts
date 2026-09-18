@@ -20,7 +20,7 @@
  * solo se ve desde debajo del avión y con el tren a medias.
  */
 
-import type { Object3D } from "three";
+import { Box3, Vector3, type Object3D } from "three";
 
 /**
  * Cómo se llaman las piezas del tren en los modelos.
@@ -54,23 +54,31 @@ export interface Patas {
  * deje a nadie sin volar.
  */
 export function prepararPatas(raiz: Object3D): Patas | null {
-  const patas: Pata[] = [];
+  const piezas: Object3D[] = [];
   raiz.traverse((o) => {
-    if (!SE_LLAMAN.test(o.name)) return;
-    /*
-     * Lo que sube cada pieza es **su propia altura más un poco**, medida del
-     * modelo y no escrita a mano: una pata de morro de un 747 mide dos metros
-     * y medio y la de una avioneta medio metro, y un número fijo dejaría a una
-     * colgando fuera y a la otra atravesando el techo de la cabina.
-     */
-    const alto = alturaDe(o);
-    patas.push({
-      pieza: o,
-      abajo: o.position.y,
-      recorrido: alto * 1.15,
-    });
+    if (SE_LLAMAN.test(o.name)) piezas.push(o);
   });
-  if (!patas.length) return null;
+  if (!piezas.length) return null;
+  /*
+   * **Lo que sube es el tren entero, y sube lo mismo.**
+   *
+   * Cada pieza subía **su propia altura**, y eso parecía razonable hasta que
+   * se miró el modelo: la rueda no cuelga de la pata, es **su hermana**. Así
+   * que la pata subía su metro veinte y la rueda su medio metro, y lo que se
+   * veía era un tren descuartizado a medio camino y, al final del recorrido,
+   * media rueda todavía al aire. Dicho jugando: «si pulsé la G para meter el
+   * tren, ¿por qué sigo viéndolo?».
+   *
+   * Un tren de aterrizaje se recoge de una pieza. Se mide **el conjunto** —lo
+   * más alto que hay entre todas— y todas suben eso, que además es lo único
+   * que garantiza que la última en entrar entre del todo.
+   */
+  const alto = alturaDeTodas(piezas);
+  const patas: Pata[] = piezas.map((pieza) => ({
+    pieza,
+    abajo: pieza.position.y,
+    recorrido: alto * 1.15,
+  }));
   return {
     cuantas: patas.length,
     poner(donde: number) {
@@ -85,27 +93,45 @@ export function prepararPatas(raiz: Object3D): Patas | null {
   };
 }
 
-/** Lo que mide de alto una pieza, en su propio sistema. */
-function alturaDe(o: Object3D): number {
-  const g = (
-    o as {
-      geometry?: {
-        boundingBox?: unknown;
-        computeBoundingBox?: () => void;
-        attributes?: {
-          position?: { getY: (i: number) => number; count: number };
-        };
-      };
-    }
-  ).geometry;
-  const pos = g?.attributes?.position;
-  if (!pos) return 1;
-  let min = Infinity;
-  let max = -Infinity;
-  for (let i = 0; i < pos.count; i++) {
-    const y = pos.getY(i);
-    if (y < min) min = y;
-    if (y > max) max = y;
+/**
+ * Lo que mide de alto una pieza, **con lo que lleva colgando**.
+ *
+ * Se medía solo la geometría propia del nodo, y en estos modelos una pata
+ * **no tiene geometría propia**: es un grupo con la caña y la rueda dentro.
+ * Así que la cuenta se caía al valor por defecto —un metro— y todas las patas
+ * de la flota subían lo mismo: uno con quince, fuera del 747 y de la avioneta.
+ *
+ * Lo que se veía es esto, dicho jugando: «si pulsé la G para meter el tren,
+ * ¿por qué sigo viéndolo?». La pata del morro de un reactor mide dos metros y
+ * medio y subía uno: se quedaba metro y medio al aire, a plena vista, con las
+ * luces del panel diciendo que estaba entrando. Y no fallaba nada por ningún
+ * sitio: el mando bajaba de 1 a 0, la pieza se movía, el indicador avisaba.
+ * Solo que se movía **la mitad de poco**.
+ *
+ * `Box3.setFromObject` mira el nodo y todo lo que cuelga de él, que es lo que
+ * «su propia altura» quería decir desde el principio.
+ *
+ * **Y se devuelve en las unidades del padre**, que son en las que vive
+ * `position.y`. La caja sale en coordenadas del mundo y estos modelos van
+ * escalados —cada avión se normaliza por su envergadura—, así que medir en uno
+ * y mover en el otro es el mismo error otra vez, solo que con un factor en vez
+ * de con un valor por defecto.
+ */
+function alturaDeTodas(piezas: readonly Object3D[]): number {
+  const caja = new Box3();
+  for (const o of piezas) {
+    o.updateWorldMatrix(true, true);
+    caja.union(new Box3().setFromObject(o));
   }
-  return Number.isFinite(max - min) ? Math.max(0.2, max - min) : 1;
+  const alto = caja.max.y - caja.min.y;
+  if (!Number.isFinite(alto)) return 1;
+  /*
+   * Y en las unidades del padre, que son en las que vive `position.y`: la caja
+   * sale en coordenadas del mundo y estos modelos van escalados. Medir en uno
+   * y mover en el otro es el mismo error con otro disfraz.
+   */
+  const escala = piezas[0]?.parent
+    ? Math.abs(piezas[0]!.parent!.getWorldScale(new Vector3()).y) || 1
+    : 1;
+  return Math.max(0.2, alto / escala);
 }

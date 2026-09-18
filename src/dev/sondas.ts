@@ -619,6 +619,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     },
     /** Cuántas piezas de tren se mueven en el modelo. Ver `world/patas.ts`. */
     patas: () => juego.aircraftMesh.patas?.cuantas ?? 0,
+    /** Mover el tren a mano, para ver si el que no se mueve es el mando. */
+    patasPoner: (donde: number) => juego.aircraftMesh.patas?.poner(donde),
     /** Con qué vista se está mirando: `chase`, `cockpit`, `wing`… */
     vista: () => juego.cameraMode,
     /** Y ponerse en una, sin ir pulsando la tecla a ciegas. Para el banco. */
