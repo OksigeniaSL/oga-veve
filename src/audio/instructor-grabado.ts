@@ -68,6 +68,24 @@ export function nuevoBancoDeVoces(): BancoDeVoces {
   return { manifiestos: [], piezas: new Map() };
 }
 
+/**
+ * Las grabaciones que se hicieron a voces y no se usan hasta rehacerlas.
+ *
+ * No es una lista de frases que no gusten: es una lista de **tonos que enseñan
+ * mal**. Un aviso que grita no enseña a reaccionar, enseña a asustarse, y este
+ * juego lo empieza alguien de cuatro años.
+ */
+const A_VOCES: ReadonlySet<string> = new Set([
+  // «Ya no se puede seguir» en el punto de no retorno del despegue.
+  "vuelo.comprometido",
+  // «Subí», del aviso de terreno y de la senda.
+  "vuelo.terrenoSube",
+  "palabra.subi",
+  // Y la de sacar el tren, que se pidió por su nombre: «el tren si hay que
+  // quitarlo, se dice y ya está, no hace falta pegar un grito».
+  "vuelo.sacaElTren",
+]);
+
 export class InstructorGrabado implements Instructor {
   private readonly altavoz: Altavoz;
   /** A quién se le pasa lo que todavía no está grabado. */
@@ -137,6 +155,20 @@ export class InstructorGrabado implements Instructor {
     clave: string | null,
     relleno: Readonly<Record<string, string>> = {},
   ): { voz: string; piezas: readonly string[] } | null {
+    /*
+     * **Las que se grabaron gritando no se tocan.**
+     *
+     * El tono vive en el fichero de audio, no en el texto: cambiar la frase
+     * cambia lo que lee la voz del navegador y no lo que se grabó. Y estas se
+     * grabaron a voces — pedido más de una vez, y la última sin rodeos:
+     * «quita de una vez a la loca que grita "ya no se puede seguir, subí"».
+     *
+     * Así que estas claves **se saltan el pack** y las dice la voz del
+     * sistema, que lee el texto tal cual y no grita. Es un apaño y está
+     * escrito como tal: lo que corresponde es volver a grabarlas en tono de
+     * aviso, y eso cuesta crédito y se pregunta antes. Ver `A_VOCES`.
+     */
+    if (clave && A_VOCES.has(clave)) return null;
     for (const m of this.banco.manifiestos) {
       const suena = queSuena(m, clave, true, relleno);
       if (suena.como === "grabado") {

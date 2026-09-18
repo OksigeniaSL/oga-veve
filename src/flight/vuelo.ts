@@ -350,6 +350,9 @@ export class Vuelo {
     this.techo = 0;
     this.enElAire = 0;
     this.avisadoDeLaLuz = false;
+    // Y a «todavía no se ha mirado», que es lo que hace que empezar dentro de
+    // la pista no cuente como haber entrado. Ver `vigilarLaLuz`.
+    this.estabaEnPista = null;
     this.uso = desdePista;
   }
 
@@ -689,13 +692,45 @@ export class Vuelo {
    * exactamente la pinta de habérselo saltado. Sin esto, quien hacía las cosas
    * bien recibía la reprimenda.
    */
+  /**
+   * Si se acaba de **entrar** en la pista sin la luz verde.
+   *
+   * ## Entrar, no estar
+   *
+   * Esto miraba `s.enPista` a secas, así que saltaba con solo **estar** en la
+   * pista. Y media flota empieza ahí: la lección de despegue coloca el avión
+   * en la cabecera, alineado y listo. O sea que meter gas rompía el avión por
+   * incursión en pista y el vuelo volvía a empezar — medido volando un
+   * despegue entero en Lanzarote con el de fuselaje ancho: **tres veces en un
+   * minuto**, con el mismo percance cada vez.
+   *
+   * Una incursión es cruzar la doble raya viniendo de fuera. Si el avión ya
+   * estaba dentro cuando empezó el vuelo, no ha cruzado nada: sólo se mira el
+   * **canto de subida** de `enPista`, y la primera lectura se toma como punto
+   * de partida y no como cruce.
+   *
+   * La lámpara, la doble raya y el punto de espera siguen sirviendo para lo
+   * que servían, y quien de verdad se salte el rojo rodando desde la calle lo
+   * sigue pagando. Ver `sinpermiso` en `game.ts`.
+   */
   private vigilarLaLuz(s: Situacion): boolean {
+    const entra = s.enPista && this.estabaEnPista === false;
+    // Se apunta siempre, incluso cuando lo de abajo corta: lo que interesa es
+    // el canto, y un canto se pierde si se deja de mirar un fotograma.
+    this.estabaEnPista = s.enPista;
     if (this.haVolado || this.verde || this.uso || this.avisadoDeLaLuz)
       return false;
-    if (!s.enPista || s.sobreElSuelo > EN_EL_AIRE) return false;
+    if (!entra || s.sobreElSuelo > EN_EL_AIRE) return false;
     this.avisadoDeLaLuz = true;
     return true;
   }
+
+  /**
+   * Si en la lectura anterior estaba en la pista. `null` es «todavía no se ha
+   * mirado», y por eso un vuelo que **empieza** en la pista no cuenta como
+   * entrada: no hay lectura anterior desde fuera.
+   */
+  private estabaEnPista: boolean | null = null;
 }
 
 /**

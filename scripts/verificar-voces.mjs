@@ -66,7 +66,20 @@ const REPARTO = [
   ["instructor", "vuelo.noEstabilizada+lento", "instructor"], // Y las dos del tren, que son nuevas: una frase que se pide y no está
   // grabada se cae a la voz del navegador y suena a otra persona.
   ["instructor", "vuelo.meteElTren", "instructor"],
-  ["instructor", "vuelo.sacaElTren", "instructor"],
+  /*
+   * **Y ésta ya no sale del pack, a propósito.**
+   *
+   * Se grabó a voces, y el tono vive en el fichero de audio y no en el texto:
+   * cambiar la frase cambia lo que lee la voz del navegador, no lo que se
+   * grabó. Pedido por su nombre: «el tren si hay que quitarlo, se dice y ya
+   * está, no hace falta pegar un grito». Hasta que se vuelva a grabar en tono
+   * de aviso la dice la voz del sistema. Ver `A_VOCES` en
+   * `audio/instructor-grabado.ts`.
+   *
+   * Se deja escrita aquí y no se borra: el día que se rehaga, esta línea
+   * vuelve a `"instructor"` y el banco vuelve a exigir la grabación.
+   */
+  ["instructor", "vuelo.sacaElTren", null],
 
   ["instructor", "vuelo.noEstabilizada+descolocado", "instructor"],
   ["instructor", "cabina.v1", "cabina"],
@@ -213,6 +226,15 @@ comprobar(
 );
 
 for (const [quien, clave, pack] of REPARTO) {
+  if (pack === null) {
+    comprobar(
+      `«${clave}» la dice la voz del sistema, no el pack`,
+      true,
+      "apartada a propósito hasta rehacer la grabación",
+      "",
+    );
+    continue;
+  }
   const dicho = await page.evaluate(
     ([c, r]) => globalThis.__oga.quienDice(c, r),
     [

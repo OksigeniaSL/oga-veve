@@ -48,6 +48,7 @@ export const GUG: Dictionary = {
   "circuito.encola": "Eveve pista ykére",
   "circuito.base": "Ejere ha eguejy pistápe",
   "vuelo.papiAlto": "Tesãi morotĩ: reho yvate, eguejy",
+  "vuelo.lentoYBajo": "Venís lento: metéle gas",
   "vuelo.papiBajo": "Tesãi pytã: reho yvýpe, ejupi",
   "vuelo.papiBien": "Mokõi pytã ha mokõi morotĩ: iporã",
   "vuelo.despegando": "Motor opa peve",

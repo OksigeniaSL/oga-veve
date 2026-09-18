@@ -714,6 +714,13 @@ export class Game {
   private fueraDeBanda = 0;
   /** Qué se dijo la última vez, para no repetirlo mientras siga igual. */
   private dichoDeBanda: "lento" | "rapido" | null = null;
+  /**
+   * En qué banda va la velocidad **ahora mismo**. Ver `bandaDeVelocidad`.
+   *
+   * Se guarda porque lo necesitan los avisos de senda, y por una razón que es
+   * de pilotar y no de código: **ir bajo y ir lento se arreglan al revés**.
+   */
+  private bandaDeAhora: BandaDeVelocidad = null;
   /** El último aviso de terreno dicho, para no repetirlo cada fotograma. */
   terrenoDicho: "bajo" | "sube" | null = null;
   /**
@@ -2468,6 +2475,28 @@ export class Game {
    * peldaño en el que se empieza a leer un instrumento en vez de un dibujo.
    * En pies donde la cabina va en pies, como todo lo demás.
    */
+  /**
+   * **Si se viene lento, «subí» es el consejo contrario.**
+   *
+   * Un avión bajo la senda porque va lento no se arregla tirando: se arregla
+   * con gas. Tirar con poca velocidad es exactamente como se entra en pérdida
+   * a cien metros del suelo, y es lo que este juego estaba enseñando — dicho
+   * por quien lo juega, bajando con el de fuselaje ancho: «voy a una velocidad
+   * que no es real, un 747 se cae así, pero se empeña en que no, que tengo que
+   * subir y no es verdad».
+   *
+   * Tenía razón en las dos mitades: el avión se caía porque iba lento, y el
+   * juego le pedía lo único que lo empeora.
+   *
+   * Así que cuando la velocidad está por debajo de la banda, la senda se calla
+   * y habla la velocidad, que es la que sabe por qué se está bajo. Es la misma
+   * regla de «un suceso, una sola voz» — aquí con la causa mandando sobre el
+   * síntoma. Ver `NO_A_LA_VEZ` en `audio/boca.ts`.
+   */
+  private get bajoPorqueVaLento(): boolean {
+    return this.bandaDeAhora === "lento";
+  }
+
   private rotuloDelAro(donde: "alto" | "bajo"): string {
     const clave = donde === "alto" ? "vuelo.aroAlto" : "vuelo.aroBajo";
     const corta = donde === "alto" ? "palabra.baja" : "palabra.subi";
@@ -2897,7 +2926,10 @@ export class Game {
         blancas >= 3
           ? this.rotulo("vuelo.papiAlto", "palabra.baja")
           : blancas <= 1
-            ? this.rotulo("vuelo.papiBajo", "palabra.subi")
+            ? this.bajoPorqueVaLento
+              ? // Bajo **por ir lento**: lo que falta es gas, no cabeceo.
+                this.rotulo("vuelo.lentoYBajo", "palabra.gas")
+              : this.rotulo("vuelo.papiBajo", "palabra.subi")
             : this.rotulo("vuelo.papiBien", "palabra.bien"),
         null,
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
@@ -4767,6 +4799,7 @@ export class Game {
         },
         this.aircraft.approachSpeed,
       );
+    this.bandaDeAhora = banda;
     this.hud.setBandaDeVelocidad(banda);
     this.hud.mostrarFps(dt, {
       llamadas: this.renderer.info.render.calls,
@@ -5155,7 +5188,10 @@ export class Game {
        * Y la regla de la casa es que nada juzgue por un canal que quien juega
        * no tiene delante.
        */
-      if ((donde === "alto" || donde === "bajo") && this.seVenLosAros) {
+      if (donde === "bajo" && this.bajoPorqueVaLento) {
+        // Se calla la senda: lo que hay que hacer es meter gas, y de eso
+        // habla la banda de velocidad. Ver `bajoPorqueVaLento`.
+      } else if ((donde === "alto" || donde === "bajo") && this.seVenLosAros) {
         this.avisadoDeLaSenda = true;
         this.hud.senal.mostrar(
           donde === "alto" ? "aro-alto" : "aro-bajo",
