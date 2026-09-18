@@ -153,6 +153,10 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       })(),
     /** Si la torre está mandando frustrar ahora mismo. Para el banco. */
     aproximacionManda: () => juego.laAproximacion?.mandanFrustrar ?? false,
+    /** El tope de velocidad de este avión a esta altura, m/s. Para el banco. */
+    limiteDeVelocidad: () => juego.flight.limiteDeVelocidad(),
+    /** Y cuál de los dos topes manda ahora. Ver `topeDeVelocidad`. */
+    quienLimita: () => juego.flight.quienLimita(),
     /** El escenario entero, para poder mirarle el aeródromo medido. */
     escenario: () => juego.scenario,
     /** El viario de la ciudad, para comprobar que no se construye encima. */
@@ -950,6 +954,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       juego.pilotoDePruebas = fn as
         ((c: typeof juego.input.controls) => void) | null;
     },
+    /** Si la torre ya dio la luz verde para entrar en pista. Para el banco. */
+    luzVerde: () => juego.plan?.autorizado ?? null,
     ruta: () => juego.plan?.rutaVisible() ?? [],
     /** Y la misma sin redondear, que es donde se ven las horquillas. */
     rutaCruda: () => juego.plan?.rutaCruda() ?? [],

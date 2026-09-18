@@ -776,6 +776,11 @@ export class PlanDeVuelo {
   readonly grupo = new Group();
   private readonly grafo: Grafo;
   private readonly vuelo = new Vuelo();
+
+  /** Si la torre ya dio la luz verde para entrar en pista. Para el banco. */
+  get autorizado(): boolean {
+    return this.vuelo.autorizado;
+  }
   private ruta: Ruta | null = null;
   /** La ruta en coordenadas de mundo, que es donde vive el avión. */
   private rutaMundo: Punto[] = [];
