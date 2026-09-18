@@ -231,9 +231,6 @@
     "vuelo.bulto": {
       "ms": 1792
     },
-    "vuelo.comprometido": {
-      "ms": 1441
-    },
     "vuelo.corregido": {
       "ms": 2641
     },
@@ -592,9 +589,6 @@
     ],
     "vuelo.bulto": [
       "vuelo.bulto"
-    ],
-    "vuelo.comprometido": [
-      "vuelo.comprometido"
     ],
     "vuelo.corregido": [
       "vuelo.corregido"
