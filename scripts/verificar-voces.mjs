@@ -4,7 +4,7 @@
  * El juego tiene cuatro bocas —la instructora, la torre, el otro avión de la
  * frecuencia y la comandante— y un pack de voz con seis voces grabadas. Hasta
  * hoy, tres de las cuatro se construían con `elegirTorre`, `elegirOtroAvion` y
- * `elegirCapitana`, que devuelven la voz sintética del navegador y **no
+ * `elegirComandante`, que devuelven la voz sintética del navegador y **no
  * preguntan por una grabación en ningún momento**: treinta y tres frases
  * grabadas, horneadas, publicadas y bajadas a cada tablet para no sonar nunca.
  *
@@ -56,8 +56,8 @@ const REPARTO = [
   ["torre", "torre.canario.clearedTakeoff", "torre-canarias"],
   ["torre", "torre.canario.holdShort", "torre-canarias"],
   ["torre", "torre.canario.goAround", "torre-canarias"],
-  ["capitana", "capitana.bienvenida", "capitana"],
-  ["capitana", "capitana.crucero", "capitana"],
+  ["comandante", "comandante.bienvenida", "comandante"],
+  ["comandante", "comandante.crucero", "comandante"],
   /*
    * Y la orden de irse al aire **con su motivo**, que es la receta que junta
    * las dos piezas. Sin ella la voz decía qué hacer y no por qué, que a los

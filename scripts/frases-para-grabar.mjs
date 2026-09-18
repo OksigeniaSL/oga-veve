@@ -77,7 +77,7 @@ const HABLADOS = [
    * Importa: gana el primero que reclame una clave. Ver `i18n/habla.ts`, que es
    * quien decide qué campos hablan así —todo lo que empieza por `GC`—.
    */
-  ["capitana", "capitana", "la megafonía de cabina, para el pasaje"],
+  ["comandante", "comandante", "la megafonía de cabina, para el pasaje"],
   ["torre.canario", "torre-canarias", "la torre de Canarias, que no vosea"],
   ["torre", "torre", "la lámpara de la torre, dicha en casa"],
   ["otro", "otro", "el otro avión de la frecuencia"],

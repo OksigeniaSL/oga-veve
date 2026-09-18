@@ -475,7 +475,7 @@ export function elegirOtroAvion(...cogidas: Instructor[]): Instructor {
  * del techo, que es otra cosa: se oye entera y sin prisa, porque quien habla no
  * está pidiendo permiso a nadie. Ver `audio/megafonia.ts`.
  */
-export function elegirCapitana(...cogidas: Instructor[]): Instructor {
+export function elegirComandante(...cogidas: Instructor[]): Instructor {
   if (typeof speechSynthesis === "undefined") return MUDO;
   return new VozDelNavegador({
     rate: 0.96,

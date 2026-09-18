@@ -84,6 +84,22 @@ export function getLocale(): Locale {
  * falta también ahí devuelve la clave: en desarrollo eso canta a la primera
  * y no deja pasar un texto olvidado.
  */
+/**
+ * Si esa clave existe de verdad, o `t` devolvería la clave misma.
+ *
+ * Hace falta para las frases que **puede que no estén**: la llegada de la
+ * comandante tiene una por aeródromo y la clave se arma con el `id` del campo,
+ * así que un escenario nuevo sin frase propia pediría una clave inventada. Sin
+ * esto, lo que diría por megafonía es «comandante.llegada.tal», que es peor que
+ * la frase genérica y además no se nota hasta que suena.
+ *
+ * Se pregunta al castellano y no al idioma activo, que es donde viven todas
+ * las claves: los demás diccionarios caen a él por diseño.
+ */
+export function hayTexto(key: string): key is TranslationKey {
+  return key in ES_PY;
+}
+
 export function t(
   key: TranslationKey,
   values?: Record<string, string | number>,

@@ -385,7 +385,7 @@ describe("todas las voces", () => {
       "torre",
       "torre-canarias",
       "otro",
-      "capitana",
+      "comandante",
     ]);
   });
 

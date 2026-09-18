@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "voz": "comandante",
+  "idioma": "es-PY",
+  "piezas": {
+    "comandante.bienvenida": {
+      "ms": 4007
+    },
+    "comandante.crosscheck": {
+      "ms": 3407
+    },
+    "comandante.crucero": {
+      "ms": 4707
+    },
+    "comandante.descenso": {
+      "ms": 3707
+    },
+    "comandante.despegue": {
+      "ms": 1850
+    },
+    "comandante.llegada": {
+      "ms": 3107
+    }
+  },
+  "recetas": {
+    "comandante.bienvenida": [
+      "comandante.bienvenida"
+    ],
+    "comandante.crosscheck": [
+      "comandante.crosscheck"
+    ],
+    "comandante.crucero": [
+      "comandante.crucero"
+    ],
+    "comandante.descenso": [
+      "comandante.descenso"
+    ],
+    "comandante.despegue": [
+      "comandante.despegue"
+    ],
+    "comandante.llegada": [
+      "comandante.llegada"
+    ]
+  }
+}
