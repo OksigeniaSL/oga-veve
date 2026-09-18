@@ -16,9 +16,11 @@
  * de fuselaje ancho solo en los grandes, y ninguno entra donde no puede.
  */
 
+import { SCENARIOS } from "../world/scenarios";
+import { AIRCRAFT } from "./aircraft";
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
-import { cabeEn, type Campo } from "./cabe";
+import { cabeEn, type Campo, campoDe, elQueQuepa } from "./cabe";
 import { SCENARIOS } from "../world/scenarios";
 
 /** El campo de un escenario, igual que lo arma el hangar. */
@@ -158,5 +160,51 @@ describe("qué avión cabe dónde", () => {
       expect(cabeEn(a, hierba).necesita, a.id).toBeGreaterThan(
         cabeEn(a, asfalto).necesita,
       );
+  });
+});
+
+describe("y el que se vuela de verdad, quepa o no el pedido", () => {
+  /*
+   * Esta regla vivía **solo dentro del hangar**, y el hangar no siempre se
+   * abre: con `?escenario=` en la dirección se va derecho a volar y el avión
+   * sale de la dirección o del perfil guardado. Contado jugando: «despegar y
+   * aterrizar en La Gomera con un 747, no sé si eso puede ser real, pero aquí
+   * se hace». No lo es. Ver `elQueQuepa`.
+   */
+  const gomera = SCENARIOS.find((s) => s.id === "la-gomera")!;
+  const ancho = AIRCRAFT[AIRCRAFT.length - 1]!;
+  const avioneta = AIRCRAFT[0]!;
+
+  it("el de fuselaje ancho no cabe en La Gomera, y se cambia", () => {
+    expect(cabeEn(ancho, campoDe(gomera)).cabe).toBe(false);
+    const vuela = elQueQuepa(ancho, campoDe(gomera), AIRCRAFT);
+    expect(vuela).not.toBe(ancho);
+    expect(cabeEn(vuela, campoDe(gomera)).cabe).toBe(true);
+  });
+
+  it("y se queda con el mayor que quepa, no con el primero", () => {
+    const vuela = elQueQuepa(ancho, campoDe(gomera), AIRCRAFT);
+    const quepan = AIRCRAFT.filter((a) => cabeEn(a, campoDe(gomera)).cabe);
+    expect(vuela).toBe(quepan[quepan.length - 1]);
+  });
+
+  it("y si el pedido cabe, se respeta tal cual", () => {
+    // Por identidad, que es lo que permite a quien llama enterarse de si hubo
+    // cambio y decirlo.
+    expect(elQueQuepa(avioneta, campoDe(gomera), AIRCRAFT)).toBe(avioneta);
+  });
+
+  it("y en un campo grande cabe el grande", () => {
+    const sur = SCENARIOS.find((s) => s.id === "tenerife-sur")!;
+    expect(elQueQuepa(ancho, campoDe(sur), AIRCRAFT)).toBe(ancho);
+  });
+
+  it("y en todos los campos sale algo que de verdad cabe", () => {
+    // La regla no puede dejar a nadie con un avión que no entra, y tampoco
+    // puede quedarse sin candidatos en ningún aeródromo de la lista.
+    for (const e of SCENARIOS) {
+      const vuela = elQueQuepa(ancho, campoDe(e), AIRCRAFT);
+      expect(cabeEn(vuela, campoDe(e)).cabe).toBe(true);
+    }
   });
 });

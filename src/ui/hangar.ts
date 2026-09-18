@@ -30,7 +30,7 @@
 
 import { TIERS, type Tier } from "../flight/tiers";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
-import { cabeEn, type Campo, type Veredicto } from "../flight/cabe";
+import { cabeEn, campoDe, elQueQuepa, type Veredicto } from "../flight/cabe";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { retratosDeLaFlota } from "./siluetas";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
@@ -500,18 +500,6 @@ const galones = (n: number): string =>
  * cambian. Un escenario sin aeródromo real tiene su pista inventada, y ésas son
  * de asfalto — lo dice `superficieEn`.
  */
-function campoDe(escenario: Scenario): Campo {
-  const pista = escenario.aerodrome?.runways[0];
-  const blanda = /grass|dirt|gravel|earth|sand|ground/i.test(
-    pista?.surface ?? "",
-  );
-  return {
-    largo: escenario.runway.length,
-    ancho: escenario.runway.width,
-    superficie: blanda ? "hierba" : "asfalto",
-  };
-}
-
 /**
  * El dibujo de «aquí no cabe»: un avión sobre una pista que se le queda corta.
  *
@@ -1035,10 +1023,7 @@ export function abrirHangar(
    * lo que haría cualquiera: el avión más grande que entre en esa pista.
    */
   let avion = inicial.aircraft ?? AIRCRAFT[0]!;
-  if (!cabeEn(avion, campoDe(sitio)).cabe) {
-    const quepan = AIRCRAFT.filter((a) => cabeEn(a, campoDe(sitio)).cabe);
-    avion = quepan[quepan.length - 1] ?? avion;
-  }
+  avion = elQueQuepa(avion, campoDe(sitio), AIRCRAFT);
   let leccion = inicial.leccion;
   let mision: Mission | null = null;
   let pantalla: Pantalla = "inicio";
@@ -1334,10 +1319,7 @@ export function abrirHangar(
          * quepa, que es lo que haría cualquiera: el avión más grande que entre
          * en esa pista.
          */
-        if (!cabeEn(avion, campoDe(sitio)).cabe) {
-          const quepan = AIRCRAFT.filter((a) => cabeEn(a, campoDe(sitio)).cabe);
-          avion = quepan[quepan.length - 1] ?? avion;
-        }
+        avion = elQueQuepa(avion, campoDe(sitio), AIRCRAFT);
       } else if (atributo === "data-tramo")
         tramo = TIERS.find((x) => x.id === id) ?? tramo;
       else {
