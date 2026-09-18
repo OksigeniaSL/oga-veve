@@ -130,3 +130,94 @@ export function extremosDePista(pista: {
     { x: pista.x + fx * medio, z: pista.z + fz * medio },
   ];
 }
+
+/**
+ * El mundo que necesita una carta para dibujarse.
+ *
+ * Vive aquí y no en una de las dos superficies porque **las dos la dibujan**:
+ * el cuadro plano en SVG y las pantallas de la cabina en lienzo. Declarada en
+ * una de ellas, la otra acababa con su propia copia — y de ahí a que digan
+ * cosas distintas hay un commit.
+ */
+export interface Mapa {
+  /** Dónde estoy, en metros del mundo. */
+  readonly x: number;
+  readonly z: number;
+  /** La pista de casa, con su sitio, su rumbo y su largo. */
+  readonly pista: {
+    readonly x: number;
+    readonly z: number;
+    readonly heading: number;
+    readonly length: number;
+  } | null;
+  /** Y los otros aviones, los que se oyen por la radio. Ver `trafico.ts`. */
+  readonly otros: readonly { readonly x: number; readonly z: number }[];
+}
+
+/**
+ * Lo que hay que dibujar en la carta, ya resuelto en píxeles.
+ *
+ * Una sola cuenta para las dos superficies: el SVG mueve atributos y el lienzo
+ * pinta trazos, pero **dónde** va cada cosa se decide aquí. Es lo que impide
+ * que la cabina enseñe la pista a la izquierda y el cuadro plano a la derecha.
+ */
+export interface Dibujo {
+  readonly rango: number;
+  /** Las dos cabeceras, en píxeles desde el centro de la rosa. */
+  readonly pista:
+    readonly [{ dx: number; dy: number }, { dx: number; dy: number }] | null;
+  /** El eje de entrada: del umbral por el que se entra, hacia quien viene. */
+  readonly eje: {
+    desde: { dx: number; dy: number };
+    hasta: { dx: number; dy: number };
+  } | null;
+  readonly otros: readonly { dx: number; dy: number }[];
+}
+
+/** Cuántas millas de final prolongado se dibujan. */
+export const EJE_DE_ENTRADA = 8;
+
+/**
+ * Resuelve la carta: del mundo a píxeles desde el centro de la rosa.
+ *
+ * `rumbo` en grados **verdaderos**, que es en lo que está el mundo; la rosa va
+ * en magnéticos y la diferencia entre las dos es la declinación, que es lo
+ * correcto: una pista rotulada 07 cae bajo el 07 de la rosa.
+ */
+export function dibujarLaCarta(
+  m: Mapa | null,
+  rumbo: number,
+  r: number,
+): Dibujo {
+  const lejos = m?.pista ? millasHasta(m.pista, m) : RANGOS[1]!;
+  const rango = rangoPara(lejos);
+  const por = pixelesPorMetro(rango, r);
+  if (!m) return { rango, pista: null, eje: null, otros: [] };
+  const aqui = (p: Punto) => enLaCarta(p, m, rumbo, por);
+  let pista: Dibujo["pista"] = null;
+  let eje: Dibujo["eje"] = null;
+  if (m.pista) {
+    const [a, b] = extremosDePista(m.pista);
+    const pa = aqui(a);
+    const pb = aqui(b);
+    pista = [pa, pb];
+    /*
+     * **Por la cabecera más cercana**, que es la que se cruza primero al
+     * aterrizar; y el eje sale de ella alejándose de la pista, o sea hacia
+     * quien viene. Con la más lejana salían ocho millas de raya al otro lado
+     * de la pista, invitando a seguir de largo.
+     */
+    const entraPorA = Math.hypot(pa.dx, pa.dy) < Math.hypot(pb.dx, pb.dy);
+    const umbral = entraPorA ? pa : pb;
+    const otro = entraPorA ? pb : pa;
+    const largo = Math.hypot(otro.dx - umbral.dx, otro.dy - umbral.dy) || 1;
+    const ux = (umbral.dx - otro.dx) / largo;
+    const uy = (umbral.dy - otro.dy) / largo;
+    const ocho = EJE_DE_ENTRADA * MILLA * por;
+    eje = {
+      desde: umbral,
+      hasta: { dx: umbral.dx + ux * ocho, dy: umbral.dy + uy * ocho },
+    };
+  }
+  return { rango, pista, eje, otros: m.otros.map(aqui) };
+}

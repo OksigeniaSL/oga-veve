@@ -2520,6 +2520,32 @@ button.motor__tecla::after {
   fill: var(--cabina-pantalla);
 }
 
+/*
+ * ── La carta de la pantalla de navegación ──
+ *
+ * La pista es lo único sólido: blanca y gorda, porque es a lo que se va. El
+ * eje de entrada, magenta y a trazos, que es el color de «lo que quiero» en
+ * todo el cuadro. Y los otros aviones en cian, el color de lo auxiliar, con la
+ * forma de rombo de toda la vida.
+ */
+.cr__pista {
+  stroke: var(--cabina-valor);
+  stroke-width: 7;
+  stroke-linecap: butt;
+}
+
+.cr__eje {
+  stroke: var(--cabina-objetivo);
+  stroke-width: 1.6;
+  stroke-dasharray: 7 5;
+}
+
+.cr__otro {
+  fill: none;
+  stroke: var(--cabina-auxiliar);
+  stroke-width: 2;
+}
+
 .cr__puntero {
   fill: var(--cabina-valor);
 }

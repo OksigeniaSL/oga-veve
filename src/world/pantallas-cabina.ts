@@ -49,15 +49,7 @@ import {
   tendencia,
 } from "../ui/cinta";
 import { NUDOS, PIES, PIES_POR_MINUTO, type Cuadro } from "../ui/cuadro";
-import {
-  MILLA,
-  RANGOS,
-  enLaCarta,
-  extremosDePista,
-  millasHasta,
-  pixelesPorMetro,
-  rangoPara,
-} from "../ui/carta";
+import { dibujarLaCarta, millasHasta } from "../ui/carta";
 import {
   CIFRAS_DESDE,
   apunta,
@@ -1156,7 +1148,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
    * diferencia entre los dos es la declinación — que es lo correcto: una pista
    * rotulada 07 cae bajo el 07 de la rosa.
    */
-  pintarLaCarta(g, d, cx, cy, r, (d.rumbo * 180) / Math.PI);
+  pintarLaCarta(g, d, cx, cy, r);
 
   g.save();
   g.translate(cx, cy);
@@ -1618,16 +1610,17 @@ function pintarLaCarta(
   cx: number,
   cy: number,
   r: number,
-  grados: number,
 ): void {
   const m = d.mapa;
-  const lejos = m?.pista
-    ? millasHasta({ x: m.pista.x, z: m.pista.z }, m)
-    : RANGOS[1]!;
-  const rango = rangoPara(lejos);
-  const por = pixelesPorMetro(rango, r);
-  const aqui = (p: { x: number; z: number }) =>
-    m ? enLaCarta(p, m, grados, por) : { dx: 0, dy: 0 };
+  /*
+   * **Y la cuenta es la de `ui/carta.ts`, no una copia.**
+   *
+   * Estaba resuelta aquí dentro, y cuando el cuadro plano tuvo que dibujar lo
+   * mismo la copia era inevitable: dos superficies, dos versiones de dónde
+   * está la pista. El dibujo sí es distinto —aquí lienzo, allí SVG— pero
+   * **dónde va cada cosa, no**.
+   */
+  const dibujo = dibujarLaCarta(m ?? null, (d.rumbo * 180) / Math.PI, r);
 
   // ── Los anillos, con su cifra ──
   g.strokeStyle = "#2c3136";
@@ -1645,7 +1638,7 @@ function pintarLaCarta(
    */
   escribir(
     g,
-    `${rango} NM`,
+    `${dibujo.rango} NM`,
     ANCHO - 14,
     ALTO - 14,
     "500 12px " + FUENTE,
@@ -1662,41 +1655,21 @@ function pintarLaCarta(
   g.arc(cx, cy, r, 0, Math.PI * 2);
   g.clip();
 
-  if (m.pista) {
-    const [a, b] = extremosDePista(m.pista);
-    const pa = aqui(a);
-    const pb = aqui(b);
-    /*
-     * **El eje de entrada, por la cabecera que toca.**
-     *
-     * La que toca es **la más cercana**, que es la que se cruza primero al
-     * aterrizar; y el eje sale de ella alejándose de la pista, o sea hacia
-     * quien viene. Estaba escrito con la más lejana y el resultado se ve en
-     * cuanto se mira: ocho millas de raya magenta dibujadas **al otro lado de
-     * la pista**, invitando a seguir de largo.
-     */
-    const entraPorA = Math.hypot(pa.dx, pa.dy) < Math.hypot(pb.dx, pb.dy);
-    const umbral = entraPorA ? pa : pb;
-    const otro = entraPorA ? pb : pa;
-    const largo = Math.hypot(otro.dx - umbral.dx, otro.dy - umbral.dy) || 1;
-    const ux = (umbral.dx - otro.dx) / largo;
-    const uy = (umbral.dy - otro.dy) / largo;
-    const ocho = 8 * MILLA * por;
+  if (dibujo.eje) {
     g.strokeStyle = PALETA.objetivo;
     g.lineWidth = 1.5;
     g.setLineDash([6, 5]);
     g.beginPath();
-    g.moveTo(cx + umbral.dx, cy + umbral.dy);
-    g.lineTo(cx + umbral.dx + ux * ocho, cy + umbral.dy + uy * ocho);
+    g.moveTo(cx + dibujo.eje.desde.dx, cy + dibujo.eje.desde.dy);
+    g.lineTo(cx + dibujo.eje.hasta.dx, cy + dibujo.eje.hasta.dy);
     g.stroke();
     g.setLineDash([]);
-
-    // Y la pista, gorda y blanca: es lo único sólido de la carta.
+  }
+  if (dibujo.pista) {
+    // La pista, gorda y blanca: es lo único sólido de la carta.
+    const [pa, pb] = dibujo.pista;
     g.strokeStyle = TINTA;
-    // El ancho de verdad de una pista son cuarenta y cinco metros, que a diez
-    // millas de rango es menos de un píxel. Una pista es la única cosa sólida
-    // de esta carta y tiene que leerse como tal, así que se le pone un mínimo.
-    g.lineWidth = Math.max(6, Math.min(12, 45 * por));
+    g.lineWidth = 7;
     g.lineCap = "butt";
     g.beginPath();
     g.moveTo(cx + pa.dx, cy + pa.dy);
@@ -1711,8 +1684,7 @@ function pintarLaCarta(
    * peldaño de arriba: lo que hay que aprender de ellos es que están, y que
    * son los mismos que se acaban de oír por la radio.
    */
-  for (const otro of m.otros) {
-    const p = aqui(otro);
+  for (const p of dibujo.otros) {
     const lado = 6;
     g.strokeStyle = PALETA.auxiliar;
     g.lineWidth = 2;
