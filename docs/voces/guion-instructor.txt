@@ -16,8 +16,8 @@ Andá a dar una vuelta
 Andá a la pista
 Bajá suavecito
 Vas muy bajo
-¡Subí!
-¡Pista ocupada! Subí y volvé por el circuito
+Terreno. Subí
+Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir
 La torre te deja volver a intentarlo
@@ -38,6 +38,7 @@ Muy bien, así venís
 Eso. Ahora entrás derechito
 Perfecto, quedate así
 Luces blancas: vas alto, bajá
+Venís lento: metéle gas
 Luces rojas: vas bajo, subí
 Dos rojas y dos blancas: vas bien
 Por ahí no se pasa: hay un edificio
@@ -54,7 +55,7 @@ Muy rápido: bajá el motor
 Muy rápido para esta altura
 Bajá los flaps para frenar
 Metélo, el tren te frena
-¡El tren! Sacá el tren
+Sacá el tren
 Más despacio
 Pará acá
 Te pasaste. Frená y volvé

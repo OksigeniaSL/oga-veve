@@ -284,7 +284,18 @@ const OTRO_SOLO = [
 const claves = (ruta) => {
   const s = readFileSync(ruta, "utf8");
   const salida = new Map();
-  for (const m of s.matchAll(/"([\w.]+)":\s*\n?\s*"((?:[^"\\]|\\.)*)"/g)) {
+  /*
+   * **Y el guion cuenta como parte de la clave.**
+   *
+   * Esto decía `[\w.]+`, y `\w` no incluye el guion: toda clave con guion se
+   * caía de la lista **sin decir nada**. El día que la comandante tuvo una
+   * llegada por aeródromo se llevó por delante a diez de los diecisiete
+   * —`la-palma`, `el-hierro`, `la-gomera`, `tenerife-norte`…— y el recuento
+   * seguía dando un número creíble, que es lo que lo hace peligroso: se paga
+   * una tanda de estudio a la que le faltan diez frases y no se nota hasta que
+   * el juego aterriza en La Palma y calla.
+   */
+  for (const m of s.matchAll(/"([\w.-]+)":\s*\n?\s*"((?:[^"\\]|\\.)*)"/g)) {
     salida.set(m[1], m[2]);
   }
   return salida;
@@ -306,7 +317,7 @@ const variantes = (() => {
     fuente.indexOf("export function cuantasFormas"),
   );
   const salida = new Map();
-  for (const m of cuerpo.matchAll(/"([\w.]+)":\s*\[([\s\S]*?)\]/g)) {
+  for (const m of cuerpo.matchAll(/"([\w.-]+)":\s*\[([\s\S]*?)\]/g)) {
     const textos = [...m[2].matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((x) => x[1]);
     if (textos.length) salida.set(m[1], textos);
   }
