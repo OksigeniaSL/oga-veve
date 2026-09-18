@@ -4,22 +4,70 @@
   "idioma": "es-PY",
   "piezas": {
     "comandante.bienvenida": {
-      "ms": 4007
+      "ms": 4107
     },
     "comandante.crosscheck": {
-      "ms": 3407
+      "ms": 3207
     },
     "comandante.crucero": {
-      "ms": 4707
+      "ms": 4507
     },
     "comandante.descenso": {
-      "ms": 3707
+      "ms": 3807
     },
     "comandante.despegue": {
-      "ms": 1850
+      "ms": 2015
     },
-    "comandante.llegada": {
-      "ms": 3107
+    "comandante.llegada.chaco": {
+      "ms": 6507
+    },
+    "comandante.llegada.cuatro-vientos": {
+      "ms": 9107
+    },
+    "comandante.llegada.el-hierro": {
+      "ms": 8407
+    },
+    "comandante.llegada.encarnacion": {
+      "ms": 7707
+    },
+    "comandante.llegada.estigarribia": {
+      "ms": 7507
+    },
+    "comandante.llegada.fuerteventura": {
+      "ms": 6507
+    },
+    "comandante.llegada.gran-canaria": {
+      "ms": 7707
+    },
+    "comandante.llegada.guarani": {
+      "ms": 8407
+    },
+    "comandante.llegada.la-gomera": {
+      "ms": 6907
+    },
+    "comandante.llegada.la-palma": {
+      "ms": 8907
+    },
+    "comandante.llegada.lanzarote": {
+      "ms": 8807
+    },
+    "comandante.llegada.pedro-juan": {
+      "ms": 8307
+    },
+    "comandante.llegada.pettirossi": {
+      "ms": 12007
+    },
+    "comandante.llegada.tenerife-norte": {
+      "ms": 9407
+    },
+    "comandante.llegada.tenerife-sur": {
+      "ms": 8807
+    },
+    "comandante.llegada.valle-cordillera": {
+      "ms": 7607
+    },
+    "comandante.llegada.yvytu-rape": {
+      "ms": 7807
     }
   },
   "recetas": {
@@ -38,8 +86,56 @@
     "comandante.despegue": [
       "comandante.despegue"
     ],
-    "comandante.llegada": [
-      "comandante.llegada"
+    "comandante.llegada.chaco": [
+      "comandante.llegada.chaco"
+    ],
+    "comandante.llegada.cuatro-vientos": [
+      "comandante.llegada.cuatro-vientos"
+    ],
+    "comandante.llegada.el-hierro": [
+      "comandante.llegada.el-hierro"
+    ],
+    "comandante.llegada.encarnacion": [
+      "comandante.llegada.encarnacion"
+    ],
+    "comandante.llegada.estigarribia": [
+      "comandante.llegada.estigarribia"
+    ],
+    "comandante.llegada.fuerteventura": [
+      "comandante.llegada.fuerteventura"
+    ],
+    "comandante.llegada.gran-canaria": [
+      "comandante.llegada.gran-canaria"
+    ],
+    "comandante.llegada.guarani": [
+      "comandante.llegada.guarani"
+    ],
+    "comandante.llegada.la-gomera": [
+      "comandante.llegada.la-gomera"
+    ],
+    "comandante.llegada.la-palma": [
+      "comandante.llegada.la-palma"
+    ],
+    "comandante.llegada.lanzarote": [
+      "comandante.llegada.lanzarote"
+    ],
+    "comandante.llegada.pedro-juan": [
+      "comandante.llegada.pedro-juan"
+    ],
+    "comandante.llegada.pettirossi": [
+      "comandante.llegada.pettirossi"
+    ],
+    "comandante.llegada.tenerife-norte": [
+      "comandante.llegada.tenerife-norte"
+    ],
+    "comandante.llegada.tenerife-sur": [
+      "comandante.llegada.tenerife-sur"
+    ],
+    "comandante.llegada.valle-cordillera": [
+      "comandante.llegada.valle-cordillera"
+    ],
+    "comandante.llegada.yvytu-rape": [
+      "comandante.llegada.yvytu-rape"
     ]
   }
 }

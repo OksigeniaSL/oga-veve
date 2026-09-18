@@ -16,8 +16,8 @@
 016	vuelo.enVueloAterrizando	Andá a la pista
 017	vuelo.final	Bajá suavecito
 018	vuelo.terrenoBajo	Vas muy bajo
-019	vuelo.terrenoSube	¡Subí!
-020	vuelo.mandanFrustrar	¡Pista ocupada! Subí y volvé por el circuito
+019	vuelo.terrenoSube	Terreno. Subí
+020	vuelo.mandanFrustrar	Pista ocupada. Subí y volvé por el circuito
 021	vuelo.mandanFrustrar~2	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 022	vuelo.mandanFrustrar~3	No podés bajar: metele gas y volvé a subir
 023	vuelo.puedeVolver	La torre te deja volver a intentarlo
@@ -38,82 +38,83 @@
 038	vuelo.corregido~3	Eso. Ahora entrás derechito
 039	vuelo.corregido~4	Perfecto, quedate así
 040	vuelo.papiAlto	Luces blancas: vas alto, bajá
-041	vuelo.papiBajo	Luces rojas: vas bajo, subí
-042	vuelo.papiBien	Dos rojas y dos blancas: vas bien
-043	vuelo.bulto	Por ahí no se pasa: hay un edificio
-044	vuelo.aterrizado	Frená
-045	vuelo.abandonando	Salí de la pista, que viene otro
-046	vuelo.pistaLibre	¡Pista libre! Bien hecho
-047	vuelo.aPlataforma	Volvé a tu lugar
-048	vuelo.enPuesto	Llegaste. Apagá el motor
-049	vuelo.apagado	¡Vuelo terminado!
-050	vuelo.fuera	Volvé a la raya verde
-051	vuelo.roto	Se rompió. Volvemos a empezar
-052	vuelo.rapido	Vas muy rápido
-053	vuelo.sobrevelocidad	Muy rápido: bajá el motor
-054	vuelo.sobrevelocidadAire	Muy rápido para esta altura
-055	vuelo.pediFlaps	Bajá los flaps para frenar
-056	vuelo.meteElTren	Metélo, el tren te frena
-057	vuelo.sacaElTren	¡El tren! Sacá el tren
-058	vuelo.despacio	Más despacio
-059	vuelo.alto	Pará acá
-060	vuelo.teLoPasaste	Te pasaste. Frená y volvé
-061	vuelo.yaPodesTocar	Ya podés tocar
-062	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
-063	circuito.subida	Subí derecho por el eje
-064	circuito.cruzado	Girá a la izquierda: volvemos a la pista
-065	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
-066	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
-067	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
-068	percance.coche	Le pasaste por encima al coche
-069	percance.edificio	Chocaste con un edificio
-070	percance.fuera	Tocaste tierra fuera de la pista
-071	percance.golpe	Llegaste dando un golpe
-072	percance.pasada	Te pasaste del final de la pista
-073	percance.sinpermiso	Entraste en la pista sin la luz verde
-074	fin.horas	Lo que llevás volado
-075	fin.llegaste	¡Llegaste! Ya estás en casa
-076	fin.bien	¡Buen vuelo!
-077	fin.muyBien	¡Gran vuelo!
-078	fin.otra	Otro vuelo
-079	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
-080	grado.aprendiz	Aprendiz
-081	grado.piloto	Piloto
-082	grado.comandante	Comandante
-083	grado.instructora	Instructora
-084	galon.manga	Los galones de este vuelo
-085	galon.aproximacion	Galón de la aproximación
-086	galon.toma	Galón del aterrizaje
-087	galon.aros	Galón de los aros
-088	galon.velocidad	Galón de la velocidad
-089	galon.rodaje	Galón del rodaje
-090	galon.frustrada	Galón de la frustrada
-091	tutor.throttle	Dale motor
-092	tutor.speed	Esperá a que corra
-093	tutor.pull	Tirá para arriba
-094	tutor.flying	¡Estás volando!
-095	tutor.frenar	Frená
-096	tutor.salir	Seguí la raya y salí de la pista
-097	tutor.slow	Bajá el motor
-098	motivo.sinPista	No se ve la pista
-099	motivo.lento	Vas muy despacio
-100	motivo.cayendo	Estás cayendo muy rápido
-101	motivo.rapido	Vas muy rápido
-102	motivo.torcido	Estás torcido
-103	motivo.descolocado	Estás fuera del eje
-104	mission.rio.name	Ver el río
-105	mission.rioabajo.name	Seguir el río
-106	mission.mar.name	Salir al mar
-107	mission.anaga.name	A Anaga
-108	mission.cumbre.name	A la cumbre
-109	mission.lomas.name	A las lomas
-110	mission.first.name	Tu primer vuelo
-111	mission.valley.name	La vuelta al valle
-112	mission.transfer.name	El traslado
-113	mission.step	¡Bien! Seguí
-114	mission.done	¡Misión cumplida!
-115	mission.none	Vuelo libre
-116	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
-117	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
-118	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
-119	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+041	vuelo.lentoYBajo	Venís lento: metéle gas
+042	vuelo.papiBajo	Luces rojas: vas bajo, subí
+043	vuelo.papiBien	Dos rojas y dos blancas: vas bien
+044	vuelo.bulto	Por ahí no se pasa: hay un edificio
+045	vuelo.aterrizado	Frená
+046	vuelo.abandonando	Salí de la pista, que viene otro
+047	vuelo.pistaLibre	¡Pista libre! Bien hecho
+048	vuelo.aPlataforma	Volvé a tu lugar
+049	vuelo.enPuesto	Llegaste. Apagá el motor
+050	vuelo.apagado	¡Vuelo terminado!
+051	vuelo.fuera	Volvé a la raya verde
+052	vuelo.roto	Se rompió. Volvemos a empezar
+053	vuelo.rapido	Vas muy rápido
+054	vuelo.sobrevelocidad	Muy rápido: bajá el motor
+055	vuelo.sobrevelocidadAire	Muy rápido para esta altura
+056	vuelo.pediFlaps	Bajá los flaps para frenar
+057	vuelo.meteElTren	Metélo, el tren te frena
+058	vuelo.sacaElTren	Sacá el tren
+059	vuelo.despacio	Más despacio
+060	vuelo.alto	Pará acá
+061	vuelo.teLoPasaste	Te pasaste. Frená y volvé
+062	vuelo.yaPodesTocar	Ya podés tocar
+063	vuelo.sinPermiso	Entraste sin la luz verde. La próxima, esperala
+064	circuito.subida	Subí derecho por el eje
+065	circuito.cruzado	Girá a la izquierda: volvemos a la pista
+066	circuito.encola	Volá al lado de la pista, con ella a tu izquierda
+067	circuito.base	Girá otra vez y empezá a bajar: ya vamos a aterrizar
+068	percance.ocupada	La pista estaba ocupada y te dijeron que no bajaras
+069	percance.coche	Le pasaste por encima al coche
+070	percance.edificio	Chocaste con un edificio
+071	percance.fuera	Tocaste tierra fuera de la pista
+072	percance.golpe	Llegaste dando un golpe
+073	percance.pasada	Te pasaste del final de la pista
+074	percance.sinpermiso	Entraste en la pista sin la luz verde
+075	fin.horas	Lo que llevás volado
+076	fin.llegaste	¡Llegaste! Ya estás en casa
+077	fin.bien	¡Buen vuelo!
+078	fin.muyBien	¡Gran vuelo!
+079	fin.otra	Otro vuelo
+080	fin.redondo	¡Vuelo redondo! No se puede hacer mejor
+081	grado.aprendiz	Aprendiz
+082	grado.piloto	Piloto
+083	grado.comandante	Comandante
+084	grado.instructora	Instructora
+085	galon.manga	Los galones de este vuelo
+086	galon.aproximacion	Galón de la aproximación
+087	galon.toma	Galón del aterrizaje
+088	galon.aros	Galón de los aros
+089	galon.velocidad	Galón de la velocidad
+090	galon.rodaje	Galón del rodaje
+091	galon.frustrada	Galón de la frustrada
+092	tutor.throttle	Dale motor
+093	tutor.speed	Esperá a que corra
+094	tutor.pull	Tirá para arriba
+095	tutor.flying	¡Estás volando!
+096	tutor.frenar	Frená
+097	tutor.salir	Seguí la raya y salí de la pista
+098	tutor.slow	Bajá el motor
+099	motivo.sinPista	No se ve la pista
+100	motivo.lento	Vas muy despacio
+101	motivo.cayendo	Estás cayendo muy rápido
+102	motivo.rapido	Vas muy rápido
+103	motivo.torcido	Estás torcido
+104	motivo.descolocado	Estás fuera del eje
+105	mission.rio.name	Ver el río
+106	mission.rioabajo.name	Seguir el río
+107	mission.mar.name	Salir al mar
+108	mission.anaga.name	A Anaga
+109	mission.cumbre.name	A la cumbre
+110	mission.lomas.name	A las lomas
+111	mission.first.name	Tu primer vuelo
+112	mission.valley.name	La vuelta al valle
+113	mission.transfer.name	El traslado
+114	mission.step	¡Bien! Seguí
+115	mission.done	¡Misión cumplida!
+116	mission.none	Vuelo libre
+117	ala.dice.arriba	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
+118	ala.dice.arrastra	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
+119	ala.dice.cerca	Cuidado: un poco más de ángulo y el aire se suelta.
+120	ala.dice.perdida	El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
