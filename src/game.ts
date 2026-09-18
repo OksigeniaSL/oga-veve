@@ -5088,6 +5088,36 @@ export class Game {
      * contrario: el aviso de terreno dice que algo va mal, y esto dice que
      * alguien lo ha resuelto. Ver `flight/frustrada.ts`.
      */
+    /*
+     * **Y mientras te mandan frustrar, la senda desaparece.**
+     *
+     * Los aros dicen por dónde bajar a esta pista. Una orden de irse al aire
+     * dice exactamente lo contrario: esa bajada se abandona. Seguir
+     * dibujándolos es el juego contradiciéndose a sí mismo, y encima con el
+     * objeto más grande que tiene en pantalla — un aro de la senda visto desde
+     * dentro ocupa media pantalla y le queda al avión alrededor.
+     *
+     * Contado con una captura de una frustrada y dos palabras: «hasta los
+     * huevos». En esa pantalla había tres cosas distintas diciendo lo mismo y
+     * las tres encima del avión: el aro verde, la luz roja de la torre y la
+     * tarjeta. Quitando la senda queda **una orden y su luz**, que es lo que
+     * hay que mirar.
+     *
+     * Y con la geometría se callan también sus veredictos, que ya miraban
+     * `seVenLosAros` por esta misma razón escrita allí: nada juzga por un
+     * canal que quien juega no tiene delante.
+     *
+     * Vuelve sola al levantarse la orden —la pista vuelve a ser tuya y la
+     * senda también—, que es lo que hace `levantarLaOrden`.
+     */
+    if (this.leccion.id === "aterrizaje") {
+      const conSenda = !this.laAproximacion.mandanFrustrar;
+      if (this.runwayGuide.group.visible !== conSenda) {
+        this.runwayGuide.group.visible = conSenda;
+        this.seVenLosAros = conSenda;
+      }
+    }
+
     const renuncio = this.frustrada.paso(cerca);
     if (renuncio) {
       // Y si te lo habían mandado, la orden se levanta: la pista vuelve a ser
