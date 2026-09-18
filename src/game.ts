@@ -1897,6 +1897,12 @@ export class Game {
     }
 
     this.hud.onSoundClick(() => this.toggleSound());
+    /*
+     * Y el tren y los flaps desde fuera, por el mismo camino que los botones
+     * de dentro de la cabina: un mando que se toca en dos sitios tiene que
+     * hacer una sola cosa. Ver `pulsarMandoDeCabina`.
+     */
+    this.hud.onMandoDeCabina((cual) => this.pulsarMandoDeCabina(cual));
     // `?fps=1` enciende el contador de fotogramas. Ver `Hud.mostrarFps`.
     if (new URLSearchParams(location.search).get("fps")) this.hud.pedirFps();
     // Y el botón del final: otro vuelo, que es lo que uno quiere hacer ahí.

@@ -497,7 +497,14 @@ comprobar(
       fase = o.fase();
       const d = aLaRuta();
       if (Number.isFinite(d)) lejos = Math.max(lejos, d);
-      quieto = o.estado().airspeed < 0.5 ? quieto + 1 : 0;
+      /*
+       * **Quieto se mide contra el suelo.** `airspeed` es la velocidad
+       * respecto al aire: un avión parado con el freno puesto marca la del
+       * viento que le da, así que con brisa esto no contaba un solo cuadro de
+       * avión quieto. La regla está en `flight/model.ts`: «lo que hace volar
+       * es el aire; lo que hace avanzar es el suelo».
+       */
+      quieto = o.estado().groundSpeed < 0.5 ? quieto + 1 : 0;
       cuadros++;
       if (o.enElPavimento() === false) enHierba++;
       // El punto de espera, que es donde termina el rodaje de salida: o lo
