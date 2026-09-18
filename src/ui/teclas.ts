@@ -220,7 +220,10 @@ export class KeyScreen {
         this.keymap.setMano(target.dataset.mano as "izquierda" | "derecha");
         this.render();
       }
-      if (target.dataset.cerrar !== undefined) this.hide();
+      // Y el mismo atributo muerto que tenía el cuaderno: el botón se dibuja
+      // con `data-accion="cerrar"` desde que los paneles tienen anatomía
+      // común. Ver `cuaderno.ts` y `concha.ts`.
+      if (target.closest?.('[data-accion="cerrar"]')) this.hide();
     });
 
     // La captura se hace aquí y en fase de captura, para llegar antes que el

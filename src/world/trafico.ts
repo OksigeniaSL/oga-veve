@@ -1,3 +1,4 @@
+import { giroDelModelo } from "./rumbo";
 /**
  * El otro avión, **dibujado**.
  *
@@ -394,5 +395,25 @@ function colocar(quien: Volando): void {
   const donde = porElCamino(quien.marca.camino, quien.recorrido);
   if (!donde) return;
   quien.grupo.position.set(donde.sitio.x, donde.sitio.y, donde.sitio.z);
-  quien.grupo.rotation.y = donde.rumbo;
+  /*
+   * **Y el giro del modelo es el rumbo negado, no el rumbo.**
+   *
+   * `porElCamino` devuelve un **rumbo de brújula** —la misma cuenta que
+   * `rumboHacia`, `atan2(dx, -dz)`— y eso no es lo que pide `rotation.y`. Con
+   * el morro del modelo mirando a −Z, girar un objeto para que apunte a un
+   * rumbo pide el ángulo contrario; es la misma cuenta que ya hace la sombra
+   * del avión del jugador: `blobShadow.rotation.y = -state.heading`.
+   *
+   * Con el signo cambiado el avión no queda al revés, queda **espejado en el
+   * eje norte-sur**: acierta yendo al norte y al sur y falla en todo lo demás,
+   * que en pantalla se ve como un avión rodando de medio lado. Dicho jugando:
+   * «esa avioneta que se ve rodando de medio lado ya me dirás lo que
+   * significa».
+   *
+   * Que acierte en dos de los cuatro rumbos cardinales es lo que lo hizo
+   * durar: mirando una captura cualquiera hay una de cada dos de que parezca
+   * bien. La conversión vive en `giroDelModelo`, con nombre y con prueba,
+   * porque el fallo fue confundir dos números que se parecen.
+   */
+  quien.grupo.rotation.y = giroDelModelo(donde.rumbo);
 }

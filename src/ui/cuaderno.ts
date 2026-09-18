@@ -50,7 +50,23 @@ export class CuadernoScreen {
     this.pintar();
     root.addEventListener("click", (e) => {
       if (e.target === root) this.hide();
-      if ((e.target as HTMLElement)?.dataset?.cerrar !== undefined) this.hide();
+      /*
+       * **Y el de cerrar se llama `data-accion="cerrar"`, como en todos.**
+       *
+       * Esto miraba `data-cerrar`, que es una de las cuatro maneras que había
+       * antes de que los paneles tuvieran una anatomía común. El botón se
+       * dibuja desde entonces con la nueva —hay hasta una prueba que lo
+       * exige— así que aquí quedó escuchando un atributo que ya no existe: el
+       * clic sonaba, porque suena al pulsar cualquier cosa, y el panel no se
+       * cerraba. Contado jugando: «el botón naranja cerrar no cierra, pero sí
+       * se oye una notificación; hay que hacer clic por fuera para salir».
+       *
+       * Y con `closest`, no con `e.target`: lo que se pulsa puede ser el texto
+       * de dentro del botón, y entonces el `target` es el texto y no el botón.
+       * Es la misma forma que ya usan los otros paneles. Ver `concha.ts`.
+       */
+      if ((e.target as HTMLElement)?.closest?.('[data-accion="cerrar"]'))
+        this.hide();
     });
   }
 

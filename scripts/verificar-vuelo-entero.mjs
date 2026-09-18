@@ -741,6 +741,21 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   let lejosDondeCoche = "";
   let cercaDelCoche = Infinity;
+  /*
+   * **Y si el coche llegó a pisar la pista con el avión encima de ella.**
+   *
+   * Un sígame no circula por una pista en uso, y el juego ya lo sabía: el tope
+   * que lo hace esperar en la boca de la salida está escrito y explicado. Lo
+   * que fallaba es que miraba **una fase** —«aterrizado»— y en cuanto pasaba a
+   * «abandonando», que es justo cuando te dicen que salgas, el coche volvía a
+   * ponerse treinta metros por delante del morro. Y va a velocidad de coche:
+   * quien acelera hacia una salida lejana lo alcanza y se lo lleva puesto.
+   *
+   * «Acelero porque en esta pista las salidas están lejos, y se rompió,
+   * volvemos a empezar.» Se apunta lo más cerca que llegó a estar **mientras
+   * los dos estaban en pista**, que es la situación imposible de esquivar.
+   */
+  let cocheEnPista = Infinity;
   let ladoAlEstarCerca = Infinity;
   let cercaCuando = "";
   let alCocheAhora = -1;
@@ -1193,6 +1208,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * pasa **en todos**. Ver #154.
        */
       alCocheAhora = alCoche;
+      if (s.onRunway) cocheEnPista = Math.min(cocheEnPista, alCoche);
       // Y apartado ya no cuenta: ahí es un coche aparcado al lado del puesto,
       // no alguien a quien se adelanta. Ver `yaSeAparto`.
       const guiando = !o.cocheApartado?.();
@@ -1839,6 +1855,9 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     sinRayaDonde,
     sinRayaPrimero,
     lejosDelCoche: Math.round(lejosDelCoche),
+    cocheEnPista: Number.isFinite(cocheEnPista)
+      ? Math.round(cocheEnPista)
+      : null,
     lejosDondeCoche,
     enBici: o.enBici?.() ?? false,
     ladoAlEstarCerca: Number.isFinite(ladoAlEstarCerca)
@@ -2167,6 +2186,22 @@ comprobar(
 );
 
 if (TRAMO === "guyrami" || TRAMO === "tuka") {
+  /*
+   * **Y el sígame no se mete en la pista contigo dentro.**
+   *
+   * Cincuenta metros: lo bastante lejos como para que no sea un obstáculo
+   * saliendo a velocidad de calle, y lo bastante cerca como para cazar al
+   * coche plantado delante del morro, que es lo que pasaba —treinta metros—.
+   * `null` quiere decir que nunca coincidieron en pista, que es lo ideal.
+   */
+  comprobar(
+    "y el sígame no baja a la pista contigo encima",
+    vuelo.cocheEnPista === null || vuelo.cocheEnPista > 50,
+    vuelo.cocheEnPista === null
+      ? "nunca coincidieron en pista"
+      : `lo más cerca, ${vuelo.cocheEnPista} m con los dos en pista`,
+    "«acelero porque las salidas están lejos, y se rompió, volvemos a empezar»",
+  );
   comprobar(
     "al coche del sígame se le puede seguir",
     vuelo.lejosDelCoche < 150,
