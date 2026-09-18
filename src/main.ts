@@ -364,6 +364,31 @@ guardarAlSalir();
  * ventana privada o un servidor sin HTTPS son razones para no tener el juego
  * sin conexión, no para no tener juego. Ver `scripts/hacer-sw.mjs`.
  */
+/*
+ * **Y en desarrollo se echa al que hubiera, que no basta con no registrarlo.**
+ *
+ * Un service worker vive atado al **origen, puerto incluido**, y no a lo que
+ * lo puso ahí. Así que basta con haber abierto una vez una compilación de
+ * producción en `localhost:5173` para que su worker se quede mandando en ese
+ * puerto: después sirve su caché a cualquier cosa que se levante ahí, incluido
+ * el servidor de desarrollo, y lo hace sobre todo **cuando el servidor se
+ * cae** — que es cuando parece que todo sigue bien.
+ *
+ * Eso costó una tarde: al reiniciar la máquina se cayó vite, la pestaña siguió
+ * funcionando con la caché de semanas atrás, y lo que se vio en pantalla era
+ * un juego viejo que ya no existía en el disco. Dicho por quien lo sufrió:
+ * «se cayó y lo que quedaba siguió funcionando con algún tipo de caché».
+ *
+ * No registrar en desarrollo no impide nada de esto: el que ya está puesto no
+ * se va solo. Hay que echarlo.
+ */
+if (import.meta.env.DEV && "serviceWorker" in navigator) {
+  void navigator.serviceWorker
+    .getRegistrations()
+    .then((puestos) => Promise.all(puestos.map((r) => r.unregister())))
+    .catch(() => {});
+}
+
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   const registrar = (): void => {
     void navigator.serviceWorker.register("./sw.js").catch(() => {});
