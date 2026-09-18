@@ -76,8 +76,13 @@ export function nuevoBancoDeVoces(): BancoDeVoces {
  * juego lo empieza alguien de cuatro años.
  */
 const A_VOCES: ReadonlySet<string> = new Set([
-  // «Ya no se puede seguir» en el punto de no retorno del despegue.
-  "vuelo.comprometido",
+  /*
+   * La del punto de no retorno —«ya despegamos, seguí»— ya no está aquí
+   * porque **ya no está en el pack**: se borró del disco y del manifiesto.
+   * Era la que más molestaba, dicha tres veces y con nombre y apellido: «esta,
+   * me tiene desesperado». Un segundo y medio de grito que además viajaba a
+   * cada tablet para eso.
+   */
   // «Subí», del aviso de terreno y de la senda.
   "vuelo.terrenoSube",
   "palabra.subi",
