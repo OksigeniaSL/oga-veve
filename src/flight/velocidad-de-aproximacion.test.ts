@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import { MARGENES } from "./minimos";
 import {
+  bandaDeAhora,
   bandaDeRodaje,
   bandaDeVelocidad,
   type Aproximando,
@@ -113,5 +114,77 @@ describe("la banda de rodaje", () => {
   it("se calla en el aire y estando parado", () => {
     expect(bandaDeRodaje(60, false, false)).toBeNull();
     expect(bandaDeRodaje(0.5, true, false)).toBeNull();
+  });
+});
+
+describe("y en la pista no hay banda: ni voz ni color", () => {
+  /*
+   * El de fuselaje ancho tocando: ochenta y dos nudos, Vref ciento cuarenta y
+   * seis. La banda de aproximación dice «lento» —viene a la mitad—; la que
+   * decía «rápido» era la de rodaje, que avisa desde los veintitrés nudos y
+   * que se creía en una calle porque la fase aún no había pasado a
+   * «aterrizado». «¿Voy muy rápido? ¡¿EN SERIO!?». Ver `bandaDeAhora`.
+   */
+  const tocando = {
+    sobreElSuelo: 0,
+    enElSuelo: true,
+    enLaPista: true,
+    vertical: -1,
+    velocidad: 42,
+  };
+  const VREF_ANCHO = 75;
+
+  it("tocando a ochenta y dos nudos no dice nada", () => {
+    expect(bandaDeAhora(tocando, VREF_ANCHO, false)).toBe(null);
+  });
+
+  it("y la banda de rodaje sola sí lo diría: por eso hace falta la regla", () => {
+    expect(bandaDeRodaje(tocando.velocidad, true, false)).toBe("rapido");
+  });
+
+  it("ni corriendo para despegar, con el gas a fondo", () => {
+    expect(
+      bandaDeAhora(
+        { ...tocando, velocidad: 30, vertical: 0 },
+        VREF_ANCHO,
+        true,
+      ),
+    ).toBe(null);
+  });
+
+  it("ni rodando por la pista para ir a la cabecera", () => {
+    // Lo dice la regla escrita: se avisa en las calles, que es donde una curva
+    // se pasa por ir rápido.
+    expect(
+      bandaDeAhora(
+        { ...tocando, velocidad: 20, vertical: 0 },
+        VREF_ANCHO,
+        false,
+      ),
+    ).toBe(null);
+  });
+
+  it("pero en una calle de rodaje sí, que es para lo que existe", () => {
+    expect(
+      bandaDeAhora(
+        { ...tocando, enLaPista: false, velocidad: 20, vertical: 0 },
+        VREF_ANCHO,
+        false,
+      ),
+    ).toBe("rapido");
+  });
+
+  it("y en el aire manda la de aproximación, no la de rodaje", () => {
+    const enFinal = {
+      sobreElSuelo: 120,
+      enElSuelo: false,
+      enLaPista: false,
+      vertical: -3,
+      velocidad: 42,
+    };
+    // Cuarenta y dos metros por segundo son ochenta y dos nudos: en una calle
+    // eso es «rápido»; bajando hacia el umbral con Vref setenta y cinco es
+    // «lento», que es lo contrario y es lo que hay que decir.
+    expect(bandaDeAhora(enFinal, VREF_ANCHO, false)).toBe("lento");
   });
 });

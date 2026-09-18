@@ -12,6 +12,7 @@ import {
   mueveElTren,
   loQueCambiaElTren,
   sePuedeMeter,
+  seVuelveADecir,
 } from "./tren";
 
 describe("el tren se mueve, no salta", () => {
@@ -134,5 +135,75 @@ describe("y no se avisa de lo que ya se ha hecho", () => {
     expect(avisaDelTren(0, 100, false, false)).toBe(false);
     // Y con el tren fuera del todo tampoco, esté pedido o no.
     expect(avisaDelTren(1, 100, true, false)).toBe(false);
+  });
+});
+
+describe("y solo viniendo a aterrizar", () => {
+  /*
+   * «Bajo y bajando» describe también el despegue: se mete el tren, el avión
+   * pega la sacudida de quedarse limpio, baja medio metro por segundo un par
+   * de segundos y sigue por debajo de los doscientos cincuenta. Dicho jugando:
+   * «me ha vuelto a poner el icono del tren cuando ya lo había guardado».
+   */
+  it("fuera del embudo de final no avisa, aunque esté bajo y bajando", () => {
+    expect(avisaDelTren(0, 120, true, false, false)).toBe(false);
+  });
+
+  it("y dentro sí, que es para lo que existe", () => {
+    expect(avisaDelTren(0, 120, true, false, true)).toBe(true);
+  });
+
+  it("y lo ya pedido manda sobre todo lo demás", () => {
+    // Aunque se venga en final, bajo y bajando: si ya lo pediste, no hay nada
+    // que avisar. Ver `sePide`.
+    expect(avisaDelTren(0.3, 120, true, true, true)).toBe(false);
+  });
+});
+
+describe("el aviso se dice una vez por decisión, no cada rato", () => {
+  /*
+   * Medido con el instrumento de cantos: subiendo de trescientos a novecientos
+   * metros, «metélo, el tren» salía ocho veces. Nada había cambiado entre una
+   * y la siguiente salvo el reloj. Ver `seVuelveADecir`.
+   */
+  it("sin nada dicho, se dice", () => {
+    expect(seVuelveADecir(null, "mete", true)).toBe(true);
+    expect(seVuelveADecir(null, "saca", false)).toBe(true);
+  });
+
+  it("y dicho ya, con el mando igual, se calla", () => {
+    const dicho = { que: "mete", pedido: true } as const;
+    expect(seVuelveADecir(dicho, "mete", true)).toBe(false);
+  });
+
+  it("aunque pase todo el rato del mundo: no hay reloj que lo rearme", () => {
+    // La firma no tiene tiempo a propósito. Si algún día vuelve a tenerlo,
+    // esta prueba deja de compilar y hay que explicar por qué.
+    expect(seVuelveADecir.length).toBe(3);
+  });
+
+  it("y en cuanto se toca el mando, vuelve a tener sentido", () => {
+    const dicho = { que: "mete", pedido: true } as const;
+    expect(seVuelveADecir(dicho, "mete", false)).toBe(true);
+  });
+
+  it("y el otro aviso no lo tapa el primero", () => {
+    // Dicho «metélo» y después, ya sin tren pedido, toca «sacálo»: son dos
+    // cosas distintas y la segunda se dice.
+    const dicho = { que: "mete", pedido: true } as const;
+    expect(seVuelveADecir(dicho, "saca", false)).toBe(true);
+  });
+
+  it("una subida entera con las patas fuera se avisa una sola vez", () => {
+    let dicho: { que: "mete" | "saca"; pedido: boolean } | null = null;
+    let veces = 0;
+    // Cuatro minutos de subida, paso de medio segundo, sin tocar el mando.
+    for (let t = 0; t < 240; t += 0.5) {
+      if (seVuelveADecir(dicho, "mete", true)) {
+        veces++;
+        dicho = { que: "mete", pedido: true };
+      }
+    }
+    expect(veces).toBe(1);
   });
 });
