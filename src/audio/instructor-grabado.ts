@@ -361,7 +361,7 @@ export class InstructorGrabado implements Instructor {
       "otro",
       // Y la megafonía de cabina, que solo suena en los aviones con pasaje.
       // Ver `audio/megafonia.ts`.
-      "capitana",
+      "comandante",
     ],
     base = BASE,
     puede: (mime: string) => string = miraSiPuede,

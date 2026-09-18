@@ -252,7 +252,7 @@ import {
 import { nombreDeTecla } from "./flight/keymap";
 import {
   elegirInstructor,
-  elegirCapitana,
+  elegirComandante,
   elegirOtroAvion,
   elegirTorre,
   type Instructor,
@@ -297,7 +297,13 @@ import {
   paraUnAvion,
 } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
-import { LOCALE_NAMES, cycleLocale, t, type TranslationKey } from "./i18n";
+import {
+  LOCALE_NAMES,
+  cycleLocale,
+  hayTexto,
+  t,
+  type TranslationKey,
+} from "./i18n";
 import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
@@ -1039,7 +1045,7 @@ export class Game {
    * Canarias, otro avión y comandante— y se bajaban las seis enteras... para
    * que las consultara **una sola de las cuatro bocas del juego**. La torre, el
    * otro avión y la comandante se construían con `elegirTorre`,
-   * `elegirOtroAvion` y `elegirCapitana`, que devuelven la voz sintética del
+   * `elegirOtroAvion` y `elegirComandante`, que devuelven la voz sintética del
    * navegador y no preguntan por una grabación en ningún momento. O sea:
    * treinta y tres frases grabadas, horneadas, publicadas y bajadas a cada
    * tablet **para no sonar nunca**.
@@ -1103,9 +1109,9 @@ export class Game {
    * personas por un altavoz— y por eso se reconoce sin saber quién es. Con el
    * pack de voz es Jazlyn; sin él, el timbre que quede libre.
    */
-  private readonly capitana: Instructor = new InstructorGrabado(
+  private readonly comandante: Instructor = new InstructorGrabado(
     this.audio,
-    elegirCapitana(this.vozDelSistema, this.torre, this.otroAvion),
+    elegirComandante(this.vozDelSistema, this.torre, this.otroAvion),
     BOCA,
     this.grabaciones,
   );
@@ -1123,7 +1129,7 @@ export class Game {
       instructor: this.instructor,
       torre: this.torre,
       otro: this.otroAvion,
-      capitana: this.capitana,
+      comandante: this.comandante,
     };
   }
 
@@ -3856,7 +3862,24 @@ export class Game {
        * Y por `unaForma`, que es lo que hace que aterrizar once veces no
        * suene once veces igual. Ver `audio/variantes.ts`.
        */
-      const forma = unaForma(anuncio, Math.random, {
+      /*
+       * **Y la llegada, la de este campo si la tiene.**
+       *
+       * Cada aeródromo tiene la suya y cuenta algo verdadero del sitio — el
+       * silbo de La Gomera, la tierra negra de Lanzarote, el piloto que le da
+       * nombre a Asunción. La genérica con el hueco del nombre queda de
+       * reserva, para un campo nuevo que todavía no tenga la suya: sirve y no
+       * dice nada de él, que era justo la pega — «dirá cosas distintas en cada
+       * aeropuerto y no una frase siempre igual con un hueco».
+       *
+       * Se pregunta por el diccionario y no por una lista: si la clave no
+       * está, `hayTexto` dice que no y sale la de reserva. Añadir un campo es
+       * escribir su frase, y nada más.
+       */
+      const suya = `${anuncio}.${this.scenario.id}` as TranslationKey;
+      const cual =
+        anuncio === "comandante.llegada" && hayTexto(suya) ? suya : anuncio;
+      const forma = unaForma(cual, Math.random, {
         /*
          * Y el nombre **dicho**, no escrito. Cinco campos llevan un punto
          * medio que en pantalla separa el aeropuerto de su ciudad —«Guaraní ·
@@ -3867,7 +3890,7 @@ export class Game {
         campo: t(this.scenario.nameKey as TranslationKey).replace(" · ", ", "),
       });
       const texto = forma.texto;
-      this.capitana.decir(texto, forma.id, "baja");
+      this.comandante.decir(texto, forma.id, "baja");
       if (this.tier.instruments !== "none") this.hud.radio(texto);
     }
 

@@ -107,7 +107,7 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
    * Y una de ellas aplaude a quien acaba de aterrizar, que a los cuatro años
    * es media razón para volver a jugar.
    */
-  "capitana.llegada": [
+  "comandante.llegada": [
     "Señores pasajeros, acabamos de llegar a {campo}. Gracias por acompañarnos, y no se olviden nada en el bolsillo del asiento.",
     "Bienvenidos a {campo}. De parte de toda la tripulación, muchas gracias — y un aplauso para quien iba a los mandos.",
     "Señores pasajeros, ya estamos en {campo}. Cuidado al abrir los compartimentos, que en el vuelo las cosas se mudan de sitio.",

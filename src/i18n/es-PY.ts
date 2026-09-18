@@ -253,13 +253,13 @@ export const ES_PY = {
    * Y le habla a cien personas por un altavoz, así que es la primera voz del
    * juego que **no** es cercana: eso la hace reconocible sin decir quién es.
    */
-  "capitana.bienvenida":
+  "comandante.bienvenida":
     "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo.",
-  "capitana.crosscheck": "Tripulación, armar toboganes y verificación cruzada.",
-  "capitana.despegue": "Tripulación, sentados para el despegue.",
-  "capitana.crucero":
+  "comandante.crosscheck": "Tripulación, armar toboganes y verificación cruzada.",
+  "comandante.despegue": "Tripulación, sentados para el despegue.",
+  "comandante.crucero":
     "Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.",
-  "capitana.descenso":
+  "comandante.descenso":
     "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
   /*
    * **Y la llegada dice dónde has llegado.**
@@ -278,8 +278,61 @@ export const ES_PY = {
    * `{campo}` sale del escenario, así que no hay una lista que mantener al
    * lado. Ver `nameKey` en `world/scenarios.ts`.
    */
-  "capitana.llegada":
+  "comandante.llegada":
     "Señores pasajeros, bienvenidos a {campo}. Gracias por volar con nosotros, y que les vaya lindo.",
+
+  /*
+   * ── **Y una llegada propia de cada campo** ──────────────────────────────
+   *
+   * La de arriba es la de reserva: sirve, nombra el sitio y no dice nada de
+   * él. Y eso era exactamente la pega — «dirá cosas distintas en cada
+   * aeropuerto y no una frase siempre igual con un hueco».
+   *
+   * Así que cada campo tiene la suya, y cada una cuenta algo **verdadero** de
+   * dónde acabás de posarte: el silbo de La Gomera, el mar de nubes de Los
+   * Rodeos, la tierra negra de Lanzarote, el piloto que le da nombre a
+   * Asunción. Es la regla de la casa aplicada a lo que parecía un adorno: lo
+   * que se enseña es real, y quien aprenda algo aquí tiene que reconocerlo el
+   * día que lo vea de verdad.
+   *
+   * No hay una lista que mantener al lado: la clave se arma con el `id` del
+   * escenario y, si algún campo nuevo no tiene la suya, sale la de reserva.
+   * Ver `oirLaRadio` en `game.ts`.
+   */
+  "comandante.llegada.pettirossi":
+    "Señores pasajeros, bienvenidos a Asunción. Este aeropuerto lleva el nombre de Silvio Pettirossi, que fue el primer paraguayo en volar — así que están en buen sitio para aterrizar. Gracias por acompañarnos.",
+  "comandante.llegada.guarani":
+    "Bienvenidos a Ciudad del Este. Si miran hacia el sur, por ahí andan las cataratas y tres países que se tocan en la misma esquina. Gracias por volar con nosotros.",
+  "comandante.llegada.encarnacion":
+    "Señores pasajeros, estamos en Encarnación, a la orilla del Paraná. Gracias por venir — y si se quedan para el carnaval, abríguense poco.",
+  "comandante.llegada.estigarribia":
+    "Bienvenidos a Mariscal Estigarribia, en pleno Chaco. Acá la pista es larguísima y el horizonte también. Gracias por volar con nosotros.",
+  "comandante.llegada.pedro-juan":
+    "Señores pasajeros, bienvenidos a Pedro Juan Caballero, en Amambay. Acá la frontera con Brasil pasa por el medio de la calle. Gracias por acompañarnos.",
+  "comandante.llegada.yvytu-rape":
+    "Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.",
+  "comandante.llegada.valle-cordillera":
+    "Señores pasajeros, bienvenidos al Valle de la Cordillera. Miren por la ventanilla antes de bajar, que esto de verde no se cansa. Gracias por venir.",
+  "comandante.llegada.chaco":
+    "Bienvenidos a la Llanura del Chaco. Acá el cielo empieza en el suelo y no se acaba nunca. Gracias por volar con nosotros.",
+  "comandante.llegada.tenerife-norte":
+    "Señores pasajeros, bienvenidos a Tenerife Norte. Si al salir les recibe una nube, no se asusten: acá el mar de nubes llega hasta la puerta. Gracias por acompañarnos.",
+  "comandante.llegada.tenerife-sur":
+    "Bienvenidos a Tenerife Sur. Acá abajo casi siempre hace sol y casi siempre sopla — las dos cosas a la vez. Gracias por volar con nosotros.",
+  "comandante.llegada.gran-canaria":
+    "Señores pasajeros, bienvenidos a Gran Canaria. Dicen que esta isla tiene todos los climas del mundo en una tarde; ya nos contarán. Gracias por venir.",
+  "comandante.llegada.lanzarote":
+    "Bienvenidos a Lanzarote. Esa tierra negra que ven no es sombra: es lava, y es más joven que casi todo lo demás. Gracias por volar con nosotros.",
+  "comandante.llegada.fuerteventura":
+    "Señores pasajeros, bienvenidos a Fuerteventura. Acá el viento es el que manda, y por eso la arena cambia de sitio. Gracias por acompañarnos.",
+  "comandante.llegada.la-palma":
+    "Bienvenidos a La Palma. Acá arriba hay telescopios mirando el cielo, así que esta noche no miren la pantalla: miren para arriba. Gracias por volar con nosotros.",
+  "comandante.llegada.el-hierro":
+    "Señores pasajeros, bienvenidos a El Hierro. Durante siglos esta isla fue el final del mapa: desde acá, ya no había nada dibujado. Gracias por venir.",
+  "comandante.llegada.la-gomera":
+    "Bienvenidos a La Gomera. Acá la gente se habla de un barranco a otro silbando, y se entiende todo. Gracias por volar con nosotros.",
+  "comandante.llegada.cuatro-vientos":
+    "Señores pasajeros, bienvenidos a Cuatro Vientos. Este es el aeródromo más antiguo de España y todavía trabaja: no se jubila nadie acá. Gracias por acompañarnos.",
 
   /*
    * ── El otro avión de la frecuencia ──────────────────────────────────────

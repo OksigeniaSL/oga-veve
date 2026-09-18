@@ -34,7 +34,7 @@ function correr(m: Megafonia, fase: Fase, segundos: number, extra = {}) {
 describe("la megafonía de cabina", () => {
   it("saluda al pasaje mientras se rueda", () => {
     const m = new Megafonia();
-    expect(correr(m, "rodando", 12)).toEqual(["capitana.bienvenida"]);
+    expect(correr(m, "rodando", 12)).toEqual(["comandante.bienvenida"]);
   });
 
   it("pero no en el primer segundo, que ahí habla la instructora", () => {
@@ -72,12 +72,12 @@ describe("la megafonía de cabina", () => {
       ...correr(m, "abandonando", 10),
     ];
     expect(todo).toEqual([
-      "capitana.bienvenida",
-      "capitana.crosscheck",
-      "capitana.despegue",
-      "capitana.crucero",
-      "capitana.descenso",
-      "capitana.llegada",
+      "comandante.bienvenida",
+      "comandante.crosscheck",
+      "comandante.despegue",
+      "comandante.crucero",
+      "comandante.descenso",
+      "comandante.llegada",
     ]);
   });
 
@@ -109,7 +109,7 @@ describe("la megafonía de cabina", () => {
     const m = new Megafonia();
     correr(m, "rodando", 10);
     m.reiniciar();
-    expect(correr(m, "rodando", 10)).toEqual(["capitana.bienvenida"]);
+    expect(correr(m, "rodando", 10)).toEqual(["comandante.bienvenida"]);
   });
 });
 
@@ -161,7 +161,7 @@ describe("y el del cinturón pide altura, no fase", () => {
     const m = new Megafonia();
     expect(
       correr(m, "en-vuelo", 12, { sobreElCampo: 900, vertical: 0 }),
-    ).toEqual(["capitana.crucero"]);
+    ).toEqual(["comandante.crucero"]);
   });
 
   it("y la ventana se cuenta desde que se cumplen, no desde la fase", () => {
@@ -177,6 +177,6 @@ describe("y el del cinturón pide altura, no fase", () => {
     ).toEqual([]);
     expect(
       correr(m, "en-vuelo", 12, { sobreElCampo: 900, vertical: 0 }),
-    ).toEqual(["capitana.crucero"]);
+    ).toEqual(["comandante.crucero"]);
   });
 });

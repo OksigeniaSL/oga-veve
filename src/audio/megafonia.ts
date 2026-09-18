@@ -34,12 +34,12 @@ import type { Fase } from "../flight/vuelo";
 
 /** Lo que puede decir, en el orden en que pasa un vuelo. */
 export const ANUNCIOS = [
-  "capitana.bienvenida",
-  "capitana.crosscheck",
-  "capitana.despegue",
-  "capitana.crucero",
-  "capitana.descenso",
-  "capitana.llegada",
+  "comandante.bienvenida",
+  "comandante.crosscheck",
+  "comandante.despegue",
+  "comandante.crucero",
+  "comandante.descenso",
+  "comandante.llegada",
 ] as const;
 
 export type Anuncio = (typeof ANUNCIOS)[number];
@@ -66,12 +66,12 @@ export type Anuncio = (typeof ANUNCIOS)[number];
  * no una — a mitad de una subida fuerte tampoco se suelta nadie el cinturón.
  */
 const CUANDO: Record<Anuncio, Fase> = {
-  "capitana.bienvenida": "rodando",
-  "capitana.crosscheck": "autorizado",
-  "capitana.despegue": "alineando",
-  "capitana.crucero": "en-vuelo",
-  "capitana.descenso": "final",
-  "capitana.llegada": "abandonando",
+  "comandante.bienvenida": "rodando",
+  "comandante.crosscheck": "autorizado",
+  "comandante.despegue": "alineando",
+  "comandante.crucero": "en-vuelo",
+  "comandante.descenso": "final",
+  "comandante.llegada": "abandonando",
 };
 
 /**
@@ -135,7 +135,7 @@ export interface Momento {
  * no como una tabla: lo demás sí es cosa de la fase. Ver `ARRIBA_DEL_TODO`.
  */
 function seDanLasCondiciones(anuncio: Anuncio, m: Momento): boolean {
-  if (anuncio !== "capitana.crucero") return true;
+  if (anuncio !== "comandante.crucero") return true;
   return m.sobreElCampo >= ARRIBA_DEL_TODO && Math.abs(m.vertical) < YA_NO_SUBE;
 }
 
