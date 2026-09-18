@@ -9,6 +9,7 @@
  */
 
 import {
+  Box3,
   CanvasTexture,
   CircleGeometry,
   Clock,
@@ -1195,7 +1196,7 @@ export class Game {
    * ni recoger. Se rellena justo antes de mover la cámara.
    */
   private readonly contextoDeCamara = {
-    aircraft: { wingSpan: 0, chord: 0 },
+    aircraft: { wingSpan: 0, chord: 0, largo: 0 },
     ojo: null as Contexto["ojo"],
     suelo: (x: number, z: number): number => this.terrain.sampleSurface(x, z),
     movimientoReducido: false,
@@ -4167,6 +4168,52 @@ export class Game {
     this.scene.remove(this.aircraftMesh.group);
     this.aircraftMesh = modelo;
     this.scene.add(this.aircraftMesh.group);
+    // Y se vuelve a medir: el modelo de verdad no mide lo que medían las
+    // cajas, y de esa medida sale a qué distancia va la cámara de costado.
+    this.largoMedido = 0;
+  }
+
+  /** Lo que mide el avión de morro a cola, m. Cero hasta que se mide. */
+  private largoMedido = 0;
+
+  /**
+   * Lo largo que es el avión **que se está dibujando**, m.
+   *
+   * De morro a cola, sacado de la caja que ocupa la malla, y no de la ficha:
+   * la ficha no lo tiene —lleva envergadura y cuerda, que es lo que necesita
+   * el modelo de vuelo— y sobre todo porque lo que hay que encuadrar es lo que
+   * se ve. Si un día el modelo cambia, la cámara cambia con él sin que nadie
+   * tenga que acordarse de un número.
+   *
+   * **Y se mide con el avión puesto recto**, que es lo que costó la primera
+   * vez: `setFromObject` da la caja en coordenadas del mundo, así que con el
+   * avión alineado a una pista 03 lo que sale por el eje Z es una mezcla del
+   * largo y de la envergadura, y el número no significa nada. Se le quita la
+   * rotación un instante, se mide y se le devuelve.
+   *
+   * Una vez por modelo y guardado: recorrer la malla entera sesenta veces por
+   * segundo para un número que no cambia sería pagar un repintado por nada.
+   * Ver `ponerModeloSiLoHay` y `CamaraDeFuera`.
+   */
+  private get largoDelAvion(): number {
+    if (this.largoMedido <= 0) {
+      const g = this.aircraftMesh.group;
+      const giro = g.quaternion.clone();
+      const donde = g.position.clone();
+      g.quaternion.identity();
+      g.position.set(0, 0, 0);
+      g.updateMatrixWorld(true);
+      const caja = new Box3().setFromObject(g);
+      g.quaternion.copy(giro);
+      g.position.copy(donde);
+      g.updateMatrixWorld(true);
+      const largo = caja.max.z - caja.min.z;
+      // Si la caja sale vacía —la malla todavía no tiene geometría— se
+      // devuelve la envergadura, que es lo que se usaba antes y nunca es cero.
+      this.largoMedido =
+        Number.isFinite(largo) && largo > 0 ? largo : this.aircraft.wingSpan;
+    }
+    return this.largoMedido;
   }
 
   /**
@@ -6657,6 +6704,7 @@ export class Game {
     const ctx = this.contextoDeCamara;
     ctx.aircraft.wingSpan = this.aircraft.wingSpan;
     ctx.aircraft.chord = this.aircraft.chord;
+    ctx.aircraft.largo = this.largoDelAvion;
     ctx.ojo = this.aircraftMesh.ojo ?? null;
     ctx.movimientoReducido = this.reducedMotion;
     ctx.traqueteo = TRAQUETEO[this.superficie];
@@ -7387,7 +7435,22 @@ export class Game {
   private encuadrarSobreElCuadro(): void {
     const ancho = window.innerWidth;
     const alto = window.innerHeight;
-    const cuadro = this.hud.altoDelCuadro;
+    /*
+     * **Y solo donde el cuadro tapa de verdad.**
+     *
+     * Esto sube la imagen lo que ocupa el cuadro de mandos para que no esconda
+     * el avión, y en la vista de persecución es exactamente lo que hace falta:
+     * el avión está en el medio y el cuadro se le come los pies.
+     *
+     * De costado no: ahí el avión ya queda en la mitad de arriba, y subirlo
+     * otro tanto lo mete debajo de la fila de pictogramas. O sea que el
+     * desplazamiento que le quita un estorbo abajo le pone otro arriba. Se ve
+     * en cuanto se mira: el JAZ 90 de lado queda con medio fuselaje detrás de
+     * las tarjetas.
+     */
+    const deLado =
+      this.cameraMode === "wing" || this.cameraMode === "izquierda";
+    const cuadro = deLado ? 0 : this.hud.altoDelCuadro;
     if (cuadro <= 0) this.camera.clearViewOffset();
     else
       this.camera.setViewOffset(ancho, alto + cuadro, 0, cuadro, ancho, alto);

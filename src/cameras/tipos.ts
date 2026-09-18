@@ -19,8 +19,21 @@ import type { FlightState } from "../flight/model";
 
 /** Lo que una vista necesita del mundo, y no puede sacar del estado del avión. */
 export interface Contexto {
-  /** Las medidas del avión: lo que separa una vista de ala de una de cola. */
-  readonly aircraft: { readonly wingSpan: number; readonly chord: number };
+  /**
+   * Las medidas del avión: lo que separa una vista de ala de una de cola.
+   *
+   * `largo` es de morro a cola, **medido en la malla que se está dibujando**.
+   * Hace falta aparte de la envergadura porque mirando de costado lo que hay
+   * que encuadrar es el largo, y las dos medidas no guardan proporción entre
+   * sí a lo largo de la flota: una avioneta es más ancha que larga —once
+   * metros de ala y ocho de morro a cola— y un regional es tan largo como
+   * ancho. Ver `CamaraDeFuera`.
+   */
+  readonly aircraft: {
+    readonly wingSpan: number;
+    readonly chord: number;
+    readonly largo: number;
+  };
   /**
    * Dónde tiene los ojos el piloto en este modelo, si el modelo lo dice.
    *

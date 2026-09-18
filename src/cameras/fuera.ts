@@ -88,12 +88,39 @@ export class CamaraDeFuera implements CameraRig {
         ctx.aircraft.wingSpan * 1.6,
       );
     } else {
-      // El mismo sitio a un lado y al otro: lo único que cambia es de qué
-      // costado se mira.
+      /*
+       * El mismo sitio a un lado y al otro: lo único que cambia es de qué
+       * costado se mira.
+       *
+       * **Y de lejos, que es lo que faltaba.** La distancia salía de la
+       * envergadura casi a uno por uno: la cámara quedaba a veintisiete metros
+       * de un avión de veintiséis, o sea con el aparato ocupando la pantalla
+       * de lado a lado y cortado por los dos extremos. Lo que se veía era una
+       * plancha gris con la deriva asomando, y quien lo jugó lo dijo así:
+       * «¿me has vuelto a poner los aviones asquerosamente diseñados de hace
+       * semanas?». Era el modelo de siempre, cargado y sin tocar — visto desde
+       * dentro del ala.
+       *
+       * Y la medida que manda es **el largo**, no la envergadura: de costado
+       * lo que ocupa la pantalla es el fuselaje de morro a cola. Las dos no
+       * guardan proporción entre sí a lo largo de la flota —la avioneta mide
+       * once de ala y ocho de largo; el regional, veintiséis y veintiséis— así
+       * que una distancia sacada de la envergadura encuadra bien a una y mete
+       * la cámara dentro de la otra. Sacada del largo, las dos quedan igual de
+       * lejos **en proporción a lo que se está mirando**, que es lo único que
+       * importa aquí.
+       *
+       * Uno coma cuatro veces el largo es lo que ya tenía la avioneta cuando
+       * se veía bien —once metros para ocho de avión—, así que el número no es
+       * nuevo: es el que había, aplicado a la medida correcta.
+       *
+       * Medido con captura en las dos puntas de la flota.
+       */
+      const lejos = ctx.aircraft.largo * 1.4;
       this.offset.set(
-        ctx.aircraft.wingSpan * 0.9 * (this.sitio === "derecha" ? 1 : -1),
+        lejos * (this.sitio === "derecha" ? 1 : -1),
         ctx.aircraft.chord * 1.4,
-        ctx.aircraft.wingSpan * 0.5,
+        lejos * 0.55,
       );
     }
 
