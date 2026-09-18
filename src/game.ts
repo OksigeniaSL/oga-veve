@@ -1813,6 +1813,9 @@ export class Game {
     // del HUD tiene que estar puesta desde el primer fotograma y no desde la
     // primera vez que se pulse la tecla de cámara.
     this.hud.ponerVistaDeCabina(this.cameraMode === "cockpit");
+    // Y el encuadre, que cambia con ella: desde la cabina no hay cuadro que
+    // esquivar. Ver `encuadrarSobreElCuadro`.
+    this.encuadrarSobreElCuadro();
     /*
      * **Y la senda, otra vez, porque ahora ya se sabe dónde está el PAPI.**
      *
@@ -6797,6 +6800,9 @@ export class Game {
       CAMERA_MODES[(index + 1) % CAMERA_MODES.length] ?? "chase";
     recordarVista(this.cameraMode);
     this.hud.ponerVistaDeCabina(this.cameraMode === "cockpit");
+    // Y el encuadre, que cambia con ella: desde la cabina no hay cuadro que
+    // esquivar. Ver `encuadrarSobreElCuadro`.
+    this.encuadrarSobreElCuadro();
   }
 
   /**
@@ -7171,8 +7177,38 @@ export class Game {
     const height = window.innerHeight;
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
+    this.encuadrarSobreElCuadro();
   };
+
+  /**
+   * **Le reserva sitio al cuadro de mandos en vez de dejar que tape el avión.**
+   *
+   * Desde fuera, el cuadro va clavado al borde de abajo y ocupa más de un
+   * tercio de la pantalla; la cámara de cola encuadra el avión en el centro,
+   * así que el avión quedaba justo detrás. Dicho mirándolo: «me gusta la idea,
+   * pero tapa al avión».
+   *
+   * Lo que **no** se hace es mover la cámara: el sitio desde donde se mira un
+   * avión es una decisión de cámara —la de cola está a seis décimas de
+   * envergadura de alto y a una y media de atrás, y eso es lo que hace que se
+   * vea como se ve— y torcerla para esquivar un adorno de pantalla estropea
+   * las dos cosas. Lo que se mueve es **el encuadre**: se le dice a la lente
+   * que el lienzo es más alto de lo que es y se recorta la parte de arriba, o
+   * sea exactamente lo que hace un fotógrafo con un objetivo descentrable.
+   * El avión sube media altura de cuadro y el mundo no se deforma.
+   *
+   * Desde la cabina no hay cuadro que esquivar —ahí el cuadro es el del
+   * avión— y el encuadre vuelve al centro.
+   */
+  private encuadrarSobreElCuadro(): void {
+    const ancho = window.innerWidth;
+    const alto = window.innerHeight;
+    const cuadro = this.hud.altoDelCuadro;
+    if (cuadro <= 0) this.camera.clearViewOffset();
+    else
+      this.camera.setViewOffset(ancho, alto + cuadro, 0, cuadro, ancho, alto);
+    this.camera.updateProjectionMatrix();
+  }
 }
 
 /**
