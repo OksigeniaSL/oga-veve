@@ -140,3 +140,39 @@ export function bandaDeRodaje(
   if (velocidad < APENAS_SE_MUEVE) return null;
   return velocidad > RODAJE * (1 + MARGEN_RODAJE) ? "rapido" : "bien";
 }
+
+/**
+ * La banda que manda ahora mismo, mirando las tres a la vez.
+ *
+ * ## Por qué es una función y no tres llamadas encadenadas
+ *
+ * Porque encadenadas se rompen por la mitad. Había dos bandas —la de rodar y
+ * la de aproximar— y una regla encima: **en la pista no se habla de
+ * velocidad**. La regla se aplicó a la voz y no a lo que se pinta, así que el
+ * avión callaba y la tortuga se ponía en rojo igual; y en los peldaños de los
+ * pequeños la tortuga *es* el aviso. Dicho jugando, con el de fuselaje ancho
+ * en la cabecera a ochenta y dos nudos: «¿voy muy rápido? ¡¿en serio!?».
+ *
+ * Con un solo sitio del que sale el veredicto no hay dos sitios que puedan
+ * discrepar. La voz y el color beben del mismo vaso.
+ *
+ * ## Y por qué la pista calla
+ *
+ * Una pista es el único trozo de suelo donde la velocidad es el asunto: se
+ * corre para despegar y se frena después de tocar, y las dos cosas son
+ * justamente lo que hay que hacer. La banda de rodaje, que no sabe de fases,
+ * ve ochenta nudos y dice lo que diría en una calle de rodaje —«más
+ * despacio»— porque a ochenta nudos por una calle uno se sale en la primera
+ * curva. Pero eso no era una calle: era una toma.
+ */
+export function bandaDeAhora(
+  s: Aproximando & { readonly enLaPista: boolean },
+  vref: number,
+  corriendo: boolean,
+): BandaDeVelocidad {
+  if (s.enElSuelo && s.enLaPista) return null;
+  return (
+    bandaDeRodaje(s.velocidad, s.enElSuelo, corriendo) ??
+    bandaDeVelocidad(s, vref)
+  );
+}

@@ -301,7 +301,8 @@ import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import { patasDe, peldanoDe } from "./ui/familia";
-import { avisaDelTren } from "./flight/tren";
+import { avisaDelTren, seVuelveADecir } from "./flight/tren";
+import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
@@ -327,8 +328,7 @@ import {
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
-  bandaDeRodaje,
-  bandaDeVelocidad,
+  bandaDeAhora,
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
 import {
@@ -2410,7 +2410,22 @@ export class Game {
 
   private apuntarCanto(que: string): void {
     if (!import.meta.env.DEV) return;
-    this.cantados.push(que);
+    /*
+     * **Y con los números del momento en que se dijo.**
+     *
+     * Dos veces se buscó leyendo el código de dónde salía un «vas muy rápido»
+     * con el avión a la mitad de su velocidad de aproximación, y dos veces no
+     * se encontró. Un canto apuntado sin las cifras que lo provocaron no sirve
+     * para eso: dice qué se dijo y no por qué.
+     *
+     * Van la indicada, la de aproximación de este avión y la altura sobre el
+     * suelo, que son las tres de las que dependen todas las bandas.
+     */
+    const s = this.flight.state;
+    const kt = Math.round(s.airspeed * NUDOS);
+    const vref = Math.round(this.aircraft.approachSpeed * NUDOS);
+    const alto = Math.round(s.heightAboveGround);
+    this.cantados.push(`${que} [${kt} kt · vref ${vref} · ${alto} m]`);
     if (this.cantados.length > 4000) this.cantados.shift();
   }
 
@@ -4783,22 +4798,39 @@ export class Game {
      * aguja roza el borde de la banda es ruido, y el ruido se aprende a no
      * oír. Tres segundos fuera es una tendencia, no un bache.
      */
-    const banda =
-      bandaDeRodaje(
-        this.flight.state.airspeed,
-        this.flight.state.onGround,
-        // Correr es despegar o aterrizar. Lo demás, en el suelo, es rodar.
-        CORRIENDO.has(this.faseDeAhora),
-      ) ??
-      bandaDeVelocidad(
-        {
-          sobreElSuelo: this.flight.state.heightAboveGround,
-          enElSuelo: this.flight.state.onGround,
-          vertical: this.flight.state.verticalSpeed,
-          velocidad: this.flight.state.airspeed,
-        },
-        this.aircraft.approachSpeed,
-      );
+    /*
+     * **Y sobre el asfalto de la pista no hay banda. Ni voz, ni color.**
+     *
+     * Se calcula aquí arriba y no diez líneas más abajo porque la vez anterior
+     * se calculó abajo y **solo calló a la voz**: la banda se seguía pintando,
+     * y en los peldaños de los pequeños la banda *es* el aviso —la tortuga se
+     * pone en rojo y no hay ninguna frase que matizar—. Contado jugando, con
+     * el de fuselaje ancho en la cabecera a ochenta y dos nudos: «¿voy muy
+     * rápido? ¡¿en serio!?».
+     *
+     * Y llevaba razón. A esa velocidad la banda de aproximación dice «lento»
+     * —viene a la mitad de su Vref—; la que decía «rápido» era la de
+     * **rodaje**, que avisa desde los veintitrés nudos y que se creía en una
+     * calle porque la fase todavía no había pasado a «aterrizado» en el
+     * instante en que las ruedas tocan. Una banda para rodar juzgando una toma.
+     *
+     * La regla ya estaba escrita y ya estaba explicada; lo que faltaba era
+     * aplicarla donde se ve. Ver `bandaDeAhora`.
+     */
+    const enElAsfalto =
+      this.flight.state.onGround && this.flight.state.onRunway;
+    const banda = bandaDeAhora(
+      {
+        sobreElSuelo: this.flight.state.heightAboveGround,
+        enElSuelo: this.flight.state.onGround,
+        enLaPista: this.flight.state.onRunway,
+        vertical: this.flight.state.verticalSpeed,
+        velocidad: this.flight.state.airspeed,
+      },
+      this.aircraft.approachSpeed,
+      // Correr es despegar o aterrizar. Lo demás, en el suelo, es rodar.
+      CORRIENDO.has(this.faseDeAhora),
+    );
     this.bandaDeAhora = banda;
     this.hud.setBandaDeVelocidad(banda);
     this.hud.mostrarFps(dt, {
@@ -4806,28 +4838,18 @@ export class Game {
       triangulos: this.renderer.info.render.triangles,
     });
     /*
-     * **Y sobre el asfalto de la pista no se habla de velocidad. Ninguna voz.**
+     * Y con la banda callada en la pista, aquí solo queda olvidar la cuenta.
      *
-     * Ésta es la tercera vez que se arregla el mismo «Más despacio» en plena
-     * carrera de despegue, y las dos anteriores se arreglaron en el sitio
-     * equivocado: el aviso de rodaje de `plan-de-vuelo` —ver `rapido`—, que ya
-     * mira `onRunway` y que no era el que hablaba. **El que hablaba es éste**,
-     * que es otro lazo, en otro fichero, con otra cuenta y sin una sola línea
-     * que mire dónde están las ruedas. Acelerando por la pista la banda se
-     * pone en «rápido» a los tres segundos y suelta «Más despacio» con el gas
-     * a fondo.
+     * Es el cuarto arreglo del mismo «Más despacio», y los tres anteriores
+     * fueron en el sitio equivocado: primero el aviso de rodaje de
+     * `plan-de-vuelo` —que ya miraba `onRunway` y que no era el que hablaba—,
+     * después este lazo, que calló la voz y dejó el color puesto. El sitio
+     * bueno es de dónde sale el veredicto, arriba, porque de ahí beben los
+     * dos. Ver `enElAsfalto`.
      *
      * «Lo que quiero es que cuando despego no me diga una voz "más despacio",
-     * que llevo un millón de veces que te lo digo.» Y llevaba razón las tres.
-     *
-     * La regla es la de siempre y ahora está en los dos sitios: **en una pista
-     * la velocidad es el asunto**, y ahí no se avisa de nada —ni corriendo
-     * para despegar, ni frenando después de tocar—. Se avisa en las calles,
-     * que es donde una curva se pasa por ir rápido, y en el aire, que es donde
-     * la velocidad de aproximación significa algo.
+     * que llevo un millón de veces que te lo digo.» Y llevaba razón las cuatro.
      */
-    const enElAsfalto =
-      this.flight.state.onGround && this.flight.state.onRunway;
     if (enElAsfalto) {
       // Y se olvida lo acumulado: al salir de la pista se empieza a contar de
       // cero, que si no el aviso salta en la primera curva de la calle por lo
@@ -4897,7 +4919,7 @@ export class Game {
       this.dichoDeBanda = null;
     }
 
-    this.atenderAlTren(dt);
+    this.atenderAlTren();
 
     /*
      * **El aviso de terreno**, que es el que salva.
@@ -6713,10 +6735,8 @@ export class Game {
     this.cantar("too fast", t(clave as TranslationKey), clave);
   }
 
-  /** Cuánto lleva pidiendo lo del tren, para no repetirse. */
-  private desdeLoDelTren = 0;
-  /** Y qué fue lo último que pidió: meterlo o sacarlo. */
-  private dichoDelTren: "mete" | "saca" | null = null;
+  /** Lo último que avisó del tren, para no repetírselo. Ver `seVuelveADecir`. */
+  private dichoDelTren: LoDichoDelTren | null = null;
 
   /**
    * El tren: cuándo se pide meterlo y cuándo sacarlo.
@@ -6760,11 +6780,11 @@ export class Game {
       : null;
   }
 
-  private atenderAlTren(dt: number): void {
-    this.desdeLoDelTren += dt;
+  private atenderAlTren(): void {
     if (!this.aircraft.trenRetractil) return;
     const s = this.flight.state;
     const donde = this.input.controls.tren;
+    const pedido = this.input.trenQueSePide;
     const sobreElSuelo = s.heightAboveGround;
 
     /*
@@ -6778,12 +6798,20 @@ export class Game {
         s.verticalSpeed < -0.5,
         // Y lo que ya se ha pedido: el tren tarda diez segundos en salir, y
         // avisar de lo que acabás de hacer enseña a no hacer caso.
-        this.input.trenQueSePide,
+        pedido,
+        /*
+         * Y **solo viniendo en final**. Sin esto, meter el tren justo después
+         * de despegar disparaba el aviso de sacarlo: el avión se queda limpio,
+         * pega una bajadita de un par de segundos y sigue por debajo de los
+         * doscientos cincuenta metros. Es el mismo embudo que usan los mínimos
+         * y la orden de frustrar. Ver `enElEmbudoDeFinal`.
+         */
+        enElEmbudoDeFinal(this.scenario.runway, s.position.x, s.position.z) !==
+          null,
       )
     ) {
-      if (this.dichoDelTren === "saca" && this.desdeLoDelTren < 12) return;
-      this.dichoDelTren = "saca";
-      this.desdeLoDelTren = 0;
+      if (!seVuelveADecir(this.dichoDelTren, "saca", pedido)) return;
+      this.dichoDelTren = { que: "saca", pedido };
       this.hud.senal.mostrar(
         "tren",
         this.rotulo("vuelo.sacaElTren", "palabra.tren"),
@@ -6808,10 +6836,9 @@ export class Game {
      */
     const yaNoHaceFalta =
       !s.onGround && s.verticalSpeed > 1 && sobreElSuelo > METE_EL_TREN;
-    if (yaNoHaceFalta && donde > 0.99 && this.input.trenQueSePide) {
-      if (this.dichoDelTren === "mete" && this.desdeLoDelTren < 30) return;
-      this.dichoDelTren = "mete";
-      this.desdeLoDelTren = 0;
+    if (yaNoHaceFalta && donde > 0.99 && pedido) {
+      if (!seVuelveADecir(this.dichoDelTren, "mete", pedido)) return;
+      this.dichoDelTren = { que: "mete", pedido };
       this.hud.senal.mostrar(
         "tren",
         this.rotulo("vuelo.meteElTren", "palabra.tren"),

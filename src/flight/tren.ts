@@ -135,16 +135,81 @@ export function luzDeTren(donde: number): LuzDeTren {
  *
  * Un aviso que salta por lo que todavía no ha terminado de pasar no avisa de
  * nada: enseña a no hacer caso de los avisos.
+ *
+ * ## Y solo viniendo a aterrizar
+ *
+ * «Bajo y bajando» describe también **el despegue**: se mete el tren, el avión
+ * pega la sacudida de quedarse limpio, baja medio metro por segundo un par de
+ * segundos, y como sigue por debajo de los doscientos cincuenta el aviso
+ * salta. Contado jugando: «me ha vuelto a poner el icono del tren cuando ya lo
+ * había guardado».
+ *
+ * Un tren se saca **para aterrizar**, así que el aviso solo tiene sentido
+ * viniendo en final. `enFinal` lo dice el juego, que es quien sabe dónde está
+ * la pista — el mismo embudo que ya usan los mínimos y la orden de frustrar,
+ * y por la misma razón escrita allí: «cerca del umbral y acercándose» no
+ * distingue una aproximación de un tramo del circuito.
  */
 export function avisaDelTren(
   donde: number,
   alturaSobreElSuelo: number,
   bajando: boolean,
   sePide = false,
+  enFinal = true,
 ): boolean {
-  if (sePide) return false;
+  if (sePide || !enFinal) return false;
   return donde < 1 && bajando && alturaSobreElSuelo < AVISA_DESDE;
 }
 
 /** Desde qué altura sobre el suelo se avisa, en metros. */
 export const AVISA_DESDE = 250;
+
+/**
+ * Lo último que se avisó del tren, para no repetirlo.
+ *
+ * `pedido` es lo que estaba pedido el mando cuando se dijo —no dónde estaba el
+ * tren, que tarda diez segundos en llegar.
+ */
+export interface LoDichoDelTren {
+  readonly que: "mete" | "saca";
+  readonly pedido: boolean;
+}
+
+/**
+ * Si el aviso del tren se vuelve a decir, o ya está dicho.
+ *
+ * ## El reloj no es el motivo
+ *
+ * Antes esto era un tiempo de espera: dicho el aviso, treinta segundos callado
+ * y vuelta a empezar. Y como subir hasta la altura de crucero lleva minutos,
+ * «metélo, el tren» salía **ocho veces en una misma subida** —medido, de
+ * trescientos a novecientos metros— sin que hubiera pasado nada nuevo entre
+ * una vez y la siguiente. Contado jugando: «me dice que meta el tren, luego
+ * que lo saque, luego que lo vuelva a meter, joder».
+ *
+ * Un aviso que se repite solo porque ha pasado el rato no informa de nada: la
+ * segunda vez ya no dice nada que no dijera la primera, y a la tercera se
+ * aprende a no escuchar los avisos — justo lo contrario de lo que están para
+ * enseñar.
+ *
+ * ## Lo que sí lo rearma
+ *
+ * **Tocar el mando.** Si el tren sigue pedido igual que cuando se avisó, el
+ * aviso sigue siendo el mismo y ya está dado; en cuanto se mueve —se mete, se
+ * saca— la situación es otra y vuelve a tener sentido decirlo. Así el aviso
+ * sale una vez por cada decisión, que es cuando sirve.
+ *
+ * Y no puede oscilar: el mando tiene dos posiciones y las pone quien juega, no
+ * un número que tiembla. La velocidad vertical, que es lo que mira la
+ * condición de meterlo, sube y baja del metro por segundo sola en cualquier
+ * subida; rearmar con ella sería el mismo fallo con otro nombre.
+ */
+export function seVuelveADecir(
+  dicho: LoDichoDelTren | null,
+  que: "mete" | "saca",
+  pedido: boolean,
+): boolean {
+  if (!dicho) return true;
+  if (dicho.pedido !== pedido) return true;
+  return dicho.que !== que;
+}
