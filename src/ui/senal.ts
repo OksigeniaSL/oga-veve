@@ -752,9 +752,24 @@ export class Senal {
    */
   private medirse(): void {
     if (!this.raiz) return;
-    const alto =
-      this.caja && !this.caja.hidden ? this.caja.offsetHeight + 12 : 0;
+    const puesta = !!this.caja && !this.caja.hidden;
+    const alto = puesta ? this.caja!.offsetHeight + 12 : 0;
     this.raiz.style.setProperty("--senal-alto", `${alto}px`);
+    /*
+     * **Y lo ancha que es, para que la luz de la torre se aparte.**
+     *
+     * Las dos viven arriba y en medio, y las dos hablan de lo mismo cuando la
+     * torre manda irse al aire: la lámpara dice el estado y la tarjeta dice
+     * qué hacer. Apiladas, con el mismo centro, se leen como una sola cosa a
+     * medio tapar — y en una frustrada caían además encima del avión.
+     *
+     * Se resuelve como todo lo demás que convive en este HUD: midiendo. Cada
+     * una se corre media anchura de la otra, así que juntas quedan centradas y
+     * separadas, y cuando solo hay una, esa se queda en el medio. Ver `.torre`
+     * y `.senal` en `style.css`.
+     */
+    const ancho = puesta ? this.caja!.offsetWidth + 14 : 0;
+    this.raiz.style.setProperty("--senal-ancho", `${ancho}px`);
   }
 
   /**

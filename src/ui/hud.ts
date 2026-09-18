@@ -1986,6 +1986,16 @@ export class Hud {
     caja.hidden = luz === null;
     caja.classList.toggle("torre--verde", luz === "verde");
     caja.classList.toggle("torre--roja", luz === "roja");
+    /*
+     * Y lo ancha que es, para que la tarjeta se aparte de ella. Es la otra
+     * mitad de lo que hace `medirse` en `ui/senal.ts`: cada una se corre media
+     * anchura de la otra, así que juntas quedan centradas y separadas, y sola,
+     * cada una se queda en el medio.
+     */
+    this.root.style.setProperty(
+      "--torre-ancho",
+      caja.hidden ? "0px" : `${caja.offsetWidth + 14}px`,
+    );
     const texto = caja.querySelector('[data-hud="torre-texto"]');
     if (texto)
       texto.textContent =
