@@ -684,12 +684,31 @@ export function reglaDeFlaps(
  * enseña a mirar, que es lo anterior.
  */
 export function lucesDeTren(x: number, y: number, patas: number): string {
+  /*
+   * **Ruedas, y no cuadraditos.**
+   *
+   * Eran tres rectángulos de dieciséis por dieciséis en una esquina, con la
+   * palabra «GEAR» al lado y esa palabra solo desde el tercer peldaño. O sea
+   * que en los dos peldaños de abajo el indicador del tren era **tres
+   * cuadrados grises sin nombre**, y lo que pasó fue exactamente lo que tenía
+   * que pasar: «¿en qué parte del panel veo que se está poniendo o quitando?».
+   *
+   * Una rueda con su llanta se reconoce sin saber leer, que es la regla de
+   * toda la casa para el primer peldaño. Y más grandes: esto es una de las
+   * tres cosas que hay que mirar antes de tocar el suelo, no un detalle.
+   */
+  const R = 11;
+  const PASO = R * 2 + 8;
   let luces = "";
   for (let k = 0; k < patas; k++) {
-    luces += `<rect x="${k * 22}" y="0" width="16" height="16" rx="2" class="cr__tren" />`;
+    const cx = k * PASO + R;
+    luces +=
+      `<circle cx="${cx}" cy="${R}" r="${R}" class="cr__tren" />` +
+      // El hueco de la llanta: es lo que la vuelve una rueda y no un punto.
+      `<circle cx="${cx}" cy="${R}" r="${R * 0.42}" class="cr__tren-buje" />`;
   }
   return `<g data-cristal="tren" transform="translate(${x} ${y})">${luces}
-    <text x="${patas * 22 + 6}" y="13" ${MARCA_ROTULO} class="cr__rotulo">GEAR</text></g>`;
+    <text x="${patas * PASO + 4}" y="${R + 5}" ${MARCA_ROTULO} class="cr__rotulo">GEAR</text></g>`;
 }
 
 /**
