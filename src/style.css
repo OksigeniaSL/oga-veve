@@ -6055,3 +6055,20 @@ button.motor__tecla::after {
     animation: none;
   }
 }
+
+/*
+ * **El tope de a qué velocidad se aterriza**, en la vía de la tortuga y el
+ * pájaro.
+ *
+ * Del verde de «así vas bien», que es el color que ya usa el avioncito cuando
+ * acierta: la marca y el acierto son la misma idea y tienen que ser el mismo
+ * color, o hay dos cosas verdes que quieren decir cosas distintas.
+ *
+ * Y más gruesa que la vía para que se lea a la primera en una tablet de aula,
+ * donde esto se mira de reojo mientras se pilota. Ver `picto__via`.
+ */
+.picto__vref {
+  stroke: #79e08a;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
