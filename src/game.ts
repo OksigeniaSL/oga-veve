@@ -335,6 +335,7 @@ import {
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
+import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
   queSeDice,
@@ -5103,6 +5104,24 @@ export class Game {
        * hay que hacer y el avión todavía no pisa nada.
        */
       sobreLaPista: this.sobreLaPista(),
+      /*
+       * **Y puesto para aterrizar: tren, flaps y ritmo de bajada.**
+       *
+       * Los tres a la vez, porque cada uno solo miente. El tren fuera puede
+       * ser que se te olvidó meterlo; los flaps fuera, que vas lento; y bajar
+       * despacio, cualquier cosa. Juntos no hay otra lectura posible: eso es
+       * un avión aterrizando.
+       *
+       * El ritmo va con el mismo número que usan los mínimos para decir que
+       * una aproximación se ha ido de las manos —`MARGENES.cayendo`— y no con
+       * uno nuevo: caer más que eso no es aterrizar, sea cual sea la
+       * configuración, y ahí el aviso tiene que seguir. Ver
+       * `puestoParaAterrizar` en `flight/aviso-de-terreno.ts`.
+       */
+      puestoParaAterrizar:
+        this.input.controls.tren > 0.9 &&
+        this.input.controls.flaps > 0.3 &&
+        this.flight.state.verticalSpeed > MARGENES.cayendo,
     };
     const terreno = avisoDeTerreno(cerca);
 
