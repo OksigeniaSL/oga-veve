@@ -463,10 +463,37 @@ body {
   transition: transform 160ms ease;
 }
 
+/*
+ * **Lo que se toca va abajo; lo que se lee, arriba.**
+ *
+ * Esta columna iba centrada a media altura, y ahí se encontró con el rincón de
+ * los pictogramas cuando éste se fue a la esquina de arriba: la tarjeta de
+ * aviso le caía encima del mando de gases y del botón del tren.
+ *
+ * Y la solución no es apretarlos: es que cada cosa esté donde se usa. Aquí
+ * viven el gas, el freno, el tren y los flaps —mandos, cosas que se pulsan— y
+ * en una tablet eso se pulsa con el pulgar, que llega abajo y no arriba. Los
+ * pictogramas y la tarjeta se consultan de reojo y por eso están arriba, lejos
+ * de los dedos y fuera de la vista de frente. Ver `.rincon`.
+ */
 .hud__derecha {
   grid-column: 3;
   grid-row: 2;
-  align-self: center;
+  /*
+   * **Se apoya en el cuadro de mandos, que es el borde de abajo de verdad.**
+   *
+   * Aquí viven el gas, el freno, el tren y los flaps: mandos, cosas que se
+   * pulsan, y en una tablet eso se pulsa con el pulgar, que llega abajo. Pero
+   * «abajo» no es el fondo de la pantalla — es justo encima del cuadro, que
+   * ocupa toda la franja inferior. Sin esa cuenta los botones del tren y de
+   * los flaps quedaban **detrás del cuadro**, asomando por el borde y sin
+   * poder tocarse; y centrados se les metía encima la tarjeta de aviso, que
+   * ahora vive en el rincón de arriba.
+   *
+   * Lo mide el HUD y ya lo usaban el tutor y la cámara. Ver `reserveForPanel`.
+   */
+  align-self: start;
+  margin-top: calc(var(--rincon-alto, 0px) + 12px);
   display: grid;
   gap: 10px;
   justify-items: end;
@@ -2603,18 +2630,27 @@ button.motor__tecla::after {
  * sola letra ni cifra. Van donde iban las tarjetas de números porque ocupan
  * el sitio de los instrumentos: son los instrumentos de ese peldaño.
  */
+/*
+ * **Los pictogramas viven arriba a la derecha, no en medio.**
+ *
+ * Iban en fila y centrados, que es donde se mira para volar: justo delante del
+ * morro. Y ahí tapan lo único que hace falta ver para aterrizar —la pista, de
+ * lejos, que es cuando se decide la aproximación— y lo único que hace falta
+ * ver para despegar, que es adónde vas. Dicho jugando: «eso me está tapando el
+ * campo para aterrizar, no veo la pista de lejos… en lugar de tener todos esos
+ * obstáculos visuales delante de mis gafas».
+ *
+ * Un instrumento se consulta de reojo; el mundo se mira de frente. El que se
+ * consulta se aparta.
+ *
+ * **Y en dos por dos, no en columna.** Una columna de cuatro baja hasta media
+ * pantalla y se mete en la columna de mandos de la derecha, que está centrada
+ * a esa altura. En bloque ocupan la mitad de alto y caben encima de ella.
+ */
 .pictos {
-  position: absolute;
-  /*
-   * Debajo de la barra, **la mida lo que mida**. Estaba clavado en 74 px, que
-   * es lo que mide la barra de una sola fila; el día que se partió en dos, las
-   * tarjetas se quedaron encima de los botones. Lo mide el HUD y lo escribe
-   * aquí. Ver `Hud.medirLaBarra`.
-   */
-  top: calc(var(--alto-de-la-barra, 58px) + 16px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-items: end;
   align-items: center;
   gap: 10px;
   pointer-events: none;
@@ -4065,8 +4101,13 @@ button.motor__tecla::after {
    * `pointer-events: none`, así que lo de debajo se sigue pudiendo pulsar.
    */
   pointer-events: none;
-  /* Y corrida media tarjeta, cuando hay tarjeta. Ver `.senal`. */
-  transform: translateX(calc(-50% - var(--senal-ancho, 0px) / 2));
+  /*
+   * Centrada otra vez: la tarjeta se fue a la esquina derecha con los
+   * pictogramas, así que ya no hay dos cosas disputándose este sitio. La
+   * lámpara se queda donde se mira, que es lo que es — la instrucción de la
+   * torre. Ver `.senal`.
+   */
+  transform: translateX(-50%);
   z-index: 8;
   display: flex;
   align-items: center;
@@ -4209,20 +4250,23 @@ button.motor__tecla::after {
  * para la luz de la torre. Ver `reservarArriba`.
  */
 .senal {
-  position: fixed;
-  left: 50%;
   /*
-   * Y corrida media luz de la torre, que comparte esta banda y este centro.
-   * Ver `medirse` en `ui/senal.ts`: cada una se aparta media anchura de la
-   * otra, así que juntas quedan centradas y separadas.
+   * **Y la tarjeta se va con ellos, a la derecha.**
+   *
+   * Estuvo abajo tapando el fuselaje, subió al medio arriba y ahí seguía en el
+   * camino de la vista: delante del morro es delante del morro, esté arriba o
+   * abajo. Va con los pictogramas porque son la misma cosa —lo que el juego te
+   * enseña sin que se lo pidas— y todo eso junto en una esquina deja el centro
+   * de la pantalla para el mundo. Ver `.pictos`.
+   *
+   * Debajo del bloque, que lo mide el HUD: `--arriba-alto` es lo que ocupan la
+   * barra de botones y los pictogramas juntos. Ver `reservarArriba`.
    */
-  transform: translateX(calc(-50% + var(--torre-ancho, 0px) / 2));
-  top: calc(var(--arriba-alto, 14%) + 14px);
   z-index: 5;
   display: flex;
   align-items: center;
   gap: 16px;
-  max-width: min(calc(78vw - var(--torre-ancho, 0px)), 560px);
+  max-width: min(58vw, 420px);
   padding: 14px 24px 14px 16px;
   border-radius: var(--r-l);
   background: var(--barro);
@@ -4258,7 +4302,7 @@ button.motor__tecla::after {
 }
 
 .senal--pulsable:active {
-  transform: translateX(calc(-50% + var(--torre-ancho, 0px) / 2)) scale(0.97);
+  transform: scale(0.97);
 }
 
 .senal--pulsable:focus-visible {
@@ -6071,4 +6115,34 @@ button.motor__tecla::after {
   stroke: #79e08a;
   stroke-width: 3;
   stroke-linecap: round;
+}
+
+/*
+ * **La esquina de lo que el juego te enseña**: pictogramas y tarjeta de aviso.
+ *
+ * Los dos iban sueltos y centrados arriba, cada uno colocado por su cuenta —la
+ * tarjeta, con una medida que el HUD publicaba—. Y una medida se toma una vez:
+ * en cuanto el bloque de pictogramas cambió de forma, la tarjeta se le puso
+ * encima. Dos cajas que tienen que ir una debajo de otra no se miden, se meten
+ * en la misma caja y las apila el navegador.
+ *
+ * A la derecha porque el centro de la pantalla es del mundo: es donde se busca
+ * la pista de lejos, que es cuando se decide una aproximación, y donde se mira
+ * adónde vas al despegar. «Eso me está tapando el campo para aterrizar, no veo
+ * la pista de lejos.» Un instrumento se consulta de reojo; el mundo se mira de
+ * frente, y el que se consulta se aparta.
+ *
+ * Debajo de la barra de botones, **la mida lo que mida**: en una pantalla
+ * estrecha se parte en dos filas. Lo mide el HUD. Ver `Hud.medirLaBarra`.
+ */
+.rincon {
+  position: absolute;
+  top: calc(var(--alto-de-la-barra, 58px) + 16px);
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+  z-index: 5;
 }

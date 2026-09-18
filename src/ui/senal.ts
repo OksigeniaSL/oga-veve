@@ -770,6 +770,22 @@ export class Senal {
      */
     const ancho = puesta ? this.caja!.offsetWidth + 14 : 0;
     this.raiz.style.setProperty("--senal-ancho", `${ancho}px`);
+    /*
+     * **Y lo que ocupa el rincón entero**, que es lo que de verdad hace falta
+     * fuera: la columna de mandos de la derecha se coloca debajo de él.
+     *
+     * Se mide aquí y no solo al montar el HUD porque el rincón **cambia de
+     * alto cuando esta tarjeta sale y cuando se va**, y una medida tomada una
+     * sola vez se queda vieja justo en ese momento: los mandos se quedaban
+     * donde estaban y la tarjeta les caía encima. Esto ya se llama en las dos
+     * transiciones, así que es el sitio. Ver `--rincon-alto` en `hud.ts`.
+     */
+    const rincon = this.raiz.querySelector(".rincon")?.getBoundingClientRect();
+    if (rincon)
+      this.raiz.style.setProperty(
+        "--rincon-alto",
+        `${Math.round(rincon.height)}px`,
+      );
   }
 
   /**

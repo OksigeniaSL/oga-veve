@@ -768,6 +768,21 @@ export class Hud {
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
         </div>
       </div>
+      <!--
+        **La esquina de lo que el juego te enseña.**
+
+        Los pictogramas y la tarjeta de aviso van juntos y en un solo
+        contenedor, apilados por el navegador. Estaban cada uno por su lado,
+        colocados con una medida que publicaba el HUD, y esa medida se toma
+        una vez: en cuanto el bloque de pictogramas cambió de forma, la
+        tarjeta se quedó encima de ellos. Dos cajas que tienen que ir una
+        debajo de otra no se miden, se meten en la misma caja.
+
+        Y en la esquina y no en medio porque el centro de la pantalla es del
+        mundo: es donde se busca la pista de lejos y donde se mira adónde vas
+        al despegar. Ver .rincon y .pictos en style.css.
+      -->
+      <div class="rincon">
       ${pictos ? Pictogramas.markup() : ""}
       <!--
         La señal del vuelo: qué toca hacer ahora, dibujado. Va en **todos** los
@@ -776,6 +791,7 @@ export class Hud {
         juego que solo se puede seguir con sonido excluye por diseño.
       -->
       ${Senal.markup()}
+      </div>
       ${Mapa.markup()}
       ${PanelDelTiempo.markup()}
       <div class="vineta" data-hud="vignette"></div>
@@ -1084,6 +1100,20 @@ export class Hud {
       abajo = Math.max(abajo, caja.bottom);
     }
     this.root.style.setProperty("--arriba-alto", `${Math.round(abajo)}px`);
+    /*
+     * Y lo que ocupa el rincón de la derecha —pictogramas y tarjeta—, para que
+     * la columna de mandos no se le meta debajo.
+     *
+     * Los dos viven pegados al borde derecho y el rincón está fuera de la
+     * rejilla: si estuviera dentro ensancharía su columna y le robaría sitio a
+     * la barra de arriba, que es un fallo que ya costó una medida —ver
+     * `.hud__vistas`—. Así que se mide y la columna de mandos se aparta.
+     */
+    const rincon = this.root.querySelector(".rincon")?.getBoundingClientRect();
+    this.root.style.setProperty(
+      "--rincon-alto",
+      `${rincon ? Math.round(rincon.height) : 0}px`,
+    );
   }
 
   /**
