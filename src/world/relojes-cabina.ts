@@ -43,7 +43,7 @@ import {
   type Mesh,
   type Object3D,
 } from "three";
-import { LETRAS_DESDE, type Peldano } from "../ui/familia";
+import { LETRAS_DESDE, desdePara, type Peldano } from "../ui/familia";
 import type { Cuadro } from "../ui/cuadro";
 
 /** Lado del lienzo de cada reloj, en píxeles. */
@@ -294,6 +294,26 @@ export function encenderRelojes(raiz: Object3D): Relojes | null {
 }
 
 /** Escribe centrado. Sin espejos: ver la nota de `actualizar`. */
+/**
+ * Escribe, **si a este peldaño le toca ese texto**.
+ *
+ * Igual que en las pantallas grandes: la cifra de un régimen es parte de la
+ * medida y entra en el segundo peldaño; el «RPM 1» de al lado es un nombre y
+ * espera al tercero. Ver `desdePara` en `ui/familia.ts`.
+ */
+function escribirSiToca(
+  peldano: Peldano,
+  g: CanvasRenderingContext2D,
+  texto: string,
+  x: number,
+  y: number,
+  fuente: string,
+  color: string,
+): void {
+  if (peldano < desdePara(texto)) return;
+  escribir(g, texto, x, y, fuente, color);
+}
+
 function escribir(
   g: CanvasRenderingContext2D,
   texto: string,
@@ -398,16 +418,14 @@ function pintarEsfera(
    * vueltas por minuto —el número que canta un piloto— y en una turbina el tanto
    * por ciento, que es como se dice N1 en todo el mundo.
    */
-  // Sin letras en los dos peldaños de abajo: quedan la banda de color y la
-  // aguja, que es exactamente lo que un reloj enseña sin palabras.
-  if (datos.peldano < LETRAS_DESDE) return;
   const cifra =
     que === "flaps"
       ? `${Math.round(valor * 100)}%`
       : que === "rpm"
         ? String(Math.round((valor * datos.rpmMaximas) / 10) * 10)
         : `${Math.round(valor * 100)}%`;
-  escribir(
+  escribirSiToca(
+    datos.peldano,
     g,
     cifra,
     c,
@@ -417,7 +435,8 @@ function pintarEsfera(
   );
   const rotulo =
     que === "flaps" || motor < 0 ? ROTULO[que] : `${ROTULO[que]} ${motor + 1}`;
-  escribir(
+  escribirSiToca(
+    datos.peldano,
     g,
     rotulo,
     c,
@@ -454,8 +473,9 @@ function pintarVuelo(
       g.lineTo(c + Math.cos(a) * r * 0.76, c + Math.sin(a) * r * 0.76);
       g.stroke();
       const texto = rotula(i);
-      if (texto !== null && d.peldano >= LETRAS_DESDE)
-        escribir(
+      if (texto !== null)
+        escribirSiToca(
+          d.peldano,
           g,
           texto,
           c + Math.cos(a) * r * 0.46,
@@ -598,6 +618,7 @@ function pintarVuelo(
       );
       g.lineTo(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8);
       g.stroke();
+      // Las cuatro letras de la rosa —N, E, S, W— son nombres, no cifras.
       if (k % 9 === 0 && d.peldano >= LETRAS_DESDE) {
         g.save();
         g.translate(Math.cos(a) * r * 0.48, Math.sin(a) * r * 0.48);

@@ -202,3 +202,55 @@ export type Peldanos = "none" | "pictorial" | "numeric" | "full";
  * superficies no puedan discrepar.
  */
 export const LETRAS_DESDE: Peldano = 3;
+
+/**
+ * Y desde cuál se enseña una **cifra**, que no es lo mismo.
+ *
+ * La regla era una sola —«todo lo que se escribe es letra, y las letras
+ * empiezan en el tercer peldaño»— y para el six-pack de una avioneta estaba
+ * bien: una aguja en el arco verde se lee sin saber leer. Para una cabina de
+ * cuatro motores, no. Dicho mirándolo: **«¿y los relojes no llevan números?
+ * ¿cómo sabe el jugador los valores?»**. Cuatro agujas idénticas sin una cifra
+ * dicen que todo va bien y nada más; no dicen cuánto, ni cuál.
+ *
+ * Así que se parte en dos, y la raya cae donde tiene sentido:
+ *
+ * - Una **cifra** es parte de la medida. El «80» de una escala o el «45» de un
+ *   régimen son el instrumento; sin ellos la aguja señala a un sitio que no
+ *   tiene nombre. Y un número se reconoce por su forma antes de saber leer:
+ *   cualquier niño de cinco años sabe que 8 es más que 2 aunque no sepa
+ *   deletrear «ocho».
+ * - Un **rótulo** es un nombre. «IAS», «ALT», «N1», «FLAP» son inglés
+ *   aeronáutico y están ahí para quien ya lee.
+ *
+ * En el primer peldaño sigue sin haber ni una cosa ni la otra: se arranca a
+ * los cuatro años y ahí lo que se lee es la posición, el color y la forma.
+ */
+export const CIFRAS_DESDE: Peldano = 2;
+
+/**
+ * Si esto es una cifra y no un nombre.
+ *
+ * Se decide **por el texto y no por quién lo escribe**, que es lo único que
+ * puede aplicarse igual en las dos superficies: el cuadro plano lo dibuja en
+ * SVG y las pantallas de la cabina en lienzo, y cualquier regla que hubiera
+ * que recordar en cada sitio se olvidaría en uno de los treinta.
+ *
+ * Cuentan como cifra los signos que acompañan a un número en un instrumento:
+ * el punto decimal, el menos de un descenso, la barra del viento, el grado y
+ * el tanto por ciento.
+ */
+export function esCifra(texto: string): boolean {
+  const t = texto.trim();
+  return t.length > 0 && /^[\d.,:+\-/°%]+$/.test(t);
+}
+
+/** Desde qué peldaño se enseña este texto. Ver `esCifra`. */
+export function desdePara(texto: string): Peldano {
+  return esCifra(texto) ? CIFRAS_DESDE : LETRAS_DESDE;
+}
+
+/** Lo mismo, como atributo para el SVG del cuadro plano. */
+export function marca(texto: string): string {
+  return `data-desde="${desdePara(texto)}"`;
+}

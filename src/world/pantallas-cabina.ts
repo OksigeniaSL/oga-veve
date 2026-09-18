@@ -58,7 +58,7 @@ import {
   pixelesPorMetro,
   rangoPara,
 } from "../ui/carta";
-import { LETRAS_DESDE, type Peldano } from "../ui/familia";
+import { CIFRAS_DESDE, desdePara, type Peldano } from "../ui/familia";
 
 /**
  * La tipografía de la cabina: condensada, y la misma que el cuadro del HUD.
@@ -518,12 +518,14 @@ function escribir(
   alineado: CanvasTextAlign = "center",
 ): void {
   /*
-   * **Todo lo que se escribe es letra, y las letras empiezan en el tercero.**
+   * **Una cifra entra un peldaño antes que un rótulo.**
    *
    * Aquí y no en cada sitio que llama: es el cuello por donde pasan las
-   * veintisiete, y la regla es una sola. Ver `LETRAS_DESDE`.
+   * veintisiete. Y se decide por el texto, no por quién lo escribe, que es lo
+   * único que se puede aplicar igual en el lienzo y en el SVG del cuadro
+   * plano. Ver `desdePara` en `ui/familia.ts`.
    */
-  if (peldanoDeAhora < LETRAS_DESDE) return;
+  if (peldanoDeAhora < desdePara(texto)) return;
   rotulosPintados += 1;
   g.save();
   g.translate(x, y);
@@ -759,7 +761,8 @@ function caja(
   h: number,
   color = TINTA,
 ): void {
-  if (peldanoDeAhora < LETRAS_DESDE) return;
+  // Un recuadro existe para enmarcar una cifra, así que aparece con ella.
+  if (peldanoDeAhora < CIFRAS_DESDE) return;
   g.fillStyle = "#05070a";
   g.fillRect(x, y - h / 2, w, h);
   g.strokeStyle = color;
