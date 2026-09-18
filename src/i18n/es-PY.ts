@@ -449,7 +449,7 @@ export const ES_PY = {
   "vuelo.pediFlaps": "Bajá los flaps para frenar",
   "palabra.flaps": "Flaps",
   "vuelo.meteElTren": "Metélo, el tren te frena",
-  "vuelo.sacaElTren": "¡El tren! Sacá el tren",
+  "vuelo.sacaElTren": "Sacá el tren",
   "palabra.tren": "Tren",
   "vuelo.despacio": "Más despacio",
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la

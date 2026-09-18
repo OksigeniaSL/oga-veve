@@ -1036,6 +1036,19 @@ export class Hud {
     return caja.height > 0 ? caja.height : 0;
   }
 
+  /**
+   * Cuánto le come el HUD por arriba, en píxeles.
+   *
+   * La fila de botones y la de pictogramas. Lo mide `reservarArriba` para el
+   * tutor, y lo lee la cámara por lo mismo que lee el cuadro: **la franja útil
+   * de la pantalla es la que queda entre los dos**, y es en ésa donde hay que
+   * encuadrar. Ver `encuadrarSobreElCuadro`.
+   */
+  get altoDeArriba(): number {
+    const v = this.root.style.getPropertyValue("--arriba-alto");
+    return Number.parseFloat(v) || 0;
+  }
+
   private reserveForPanel(): void {
     /*
      * Se mide con la caja del dibujo y no con `offsetHeight`: el cuadro es un

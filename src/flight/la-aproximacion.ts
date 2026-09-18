@@ -159,6 +159,13 @@ export class LaAproximacion {
 
   /** Y si ya lo mandaron en este vuelo, que se manda una vez. */
   yaLoMandaron = false;
+  /**
+   * Si a **esta** aproximación le toca frustrada, sorteado una sola vez.
+   *
+   * `null` es «todavía no se ha sorteado». Se decide al entrar en el embudo de
+   * final y se olvida al reiniciar, que es cuando empieza otra aproximación.
+   */
+  private leToca: boolean | null = null;
 
   /** A qué altura sobre la pista se dio la orden. Ver `levantarLaOrden`. */
   altoAlMandar = 0;
@@ -192,6 +199,7 @@ export class LaAproximacion {
     this.mandanFrustrar = false;
     this.porqueMandaron = null;
     this.yaLoMandaron = false;
+    this.leToca = null;
     this.altoAlMandar = 0;
     this.porQueSeMando = null;
     this.papiEnPantalla = null;
@@ -295,15 +303,28 @@ export class LaAproximacion {
     )
       return;
     /*
-     * **Una de cada cuatro**, y sorteada con el propio vuelo.
+     * **Una de cada cuatro, y sorteada UNA VEZ POR APROXIMACIÓN.**
      *
      * Ni siempre —una aproximación que siempre acaba en frustrada deja de ser
-     * una aproximación— ni tan raro que no llegue a pasar en una tarde. El
-     * sorteo usa los segundos volados, así que dos vuelos seguidos no salen
-     * igual y el banco de pruebas puede forzarlo cuando lo necesita.
+     * una aproximación— ni tan raro que no llegue a pasar en una tarde.
+     *
+     * Y aquí estaba el fallo, que es de los que se leen como correctos: el
+     * sorteo se tiraba **en cada fotograma**. Cruzar la banda de los sesenta a
+     * los ciento sesenta metros lleva unos quince segundos, o sea novecientos
+     * fotogramas a sesenta por segundo: la probabilidad de librarse era
+     * `0,75^900`, que es cero. Dicho jugando: «no puede ser que todas las
+     * veces me haga hacer una frustrada, lo hace un montón de veces».
+     *
+     * El comentario decía «una de cada cuatro» y la cuenta decía «una de cada
+     * cuatro»; lo que no decía ninguno de los dos es **cada cuánto se
+     * pregunta**. Ahora se sortea al entrar en el embudo y la respuesta dura
+     * toda la aproximación.
      */
     if (this.ordenes === "nunca") return;
-    if (this.ordenes === "auto" && Math.random() > UNA_DE_CADA) return;
+    if (this.ordenes === "auto") {
+      this.leToca ??= Math.random() <= UNA_DE_CADA;
+      if (!this.leToca) return;
+    }
     // Forzada, se gasta: el banco pide una y quiere una, no todas.
     if (this.ordenes === "siempre") this.ordenes = "auto";
     this.yaLoMandaron = true;

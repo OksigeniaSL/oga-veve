@@ -151,6 +151,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         juego.percance = null;
         juego.hud.cerrarFinDeVuelo();
       })(),
+    /** Si la torre está mandando frustrar ahora mismo. Para el banco. */
+    aproximacionManda: () => juego.laAproximacion?.mandanFrustrar ?? false,
     /** El escenario entero, para poder mirarle el aeródromo medido. */
     escenario: () => juego.scenario,
     /** El viario de la ciudad, para comprobar que no se construye encima. */
