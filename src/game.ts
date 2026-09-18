@@ -3844,8 +3844,30 @@ export class Game {
       vertical: this.flight.state.verticalSpeed,
     });
     if (anuncio) {
-      const texto = t(anuncio);
-      this.capitana.decir(texto, anuncio, "baja");
+      /*
+       * **Y con el nombre del campo de hoy, y en una de sus formas.**
+       *
+       * La llegada lleva `{campo}` —«bienvenidos a Lanzarote»— porque una
+       * llegada que no nombra el sitio no es una llegada: en un avión de
+       * verdad es lo primero que se dice al parar, y es de las pocas frases
+       * del vuelo que quien viaja escucha entera. Los demás anuncios no
+       * llevan huecos y el relleno no les hace nada.
+       *
+       * Y por `unaForma`, que es lo que hace que aterrizar once veces no
+       * suene once veces igual. Ver `audio/variantes.ts`.
+       */
+      const forma = unaForma(anuncio, Math.random, {
+        /*
+         * Y el nombre **dicho**, no escrito. Cinco campos llevan un punto
+         * medio que en pantalla separa el aeropuerto de su ciudad —«Guaraní ·
+         * Ciudad del Este»— y que en voz alta no es nada: se lee como un
+         * tropiezo o no se lee. En coma es una frase: «bienvenidos a Guaraní,
+         * Ciudad del Este», que además es como lo diría cualquiera.
+         */
+        campo: t(this.scenario.nameKey as TranslationKey).replace(" · ", ", "),
+      });
+      const texto = forma.texto;
+      this.capitana.decir(texto, forma.id, "baja");
       if (this.tier.instruments !== "none") this.hud.radio(texto);
     }
 

@@ -261,8 +261,25 @@ export const ES_PY = {
     "Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.",
   "capitana.descenso":
     "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
+  /*
+   * **Y la llegada dice dónde has llegado.**
+   *
+   * Era «bienvenidos, gracias por volar con nosotros» y valía igual para los
+   * once campos: una llegada que no nombra el sitio no es una llegada, es una
+   * despedida genérica. En un avión de verdad lo primero que dice la
+   * comandante al parar es el nombre del aeropuerto, y es de las pocas frases
+   * del vuelo que quien viaja escucha entera — porque le dice dónde está.
+   *
+   * Pedido jugando: «en cada aeropuerto se le nombra, para que se sepa dónde
+   * aterrizas». Y es de las cosas que este juego puede enseñar sin proponerse
+   * enseñar nada: se aterriza once veces en once sitios con nombre y los
+   * nombres se quedan.
+   *
+   * `{campo}` sale del escenario, así que no hay una lista que mantener al
+   * lado. Ver `nameKey` en `world/scenarios.ts`.
+   */
   "capitana.llegada":
-    "Bienvenidos. Gracias por volar con nosotros, y que les vaya lindo.",
+    "Señores pasajeros, bienvenidos a {campo}. Gracias por volar con nosotros, y que les vaya lindo.",
 
   /*
    * ── El otro avión de la frecuencia ──────────────────────────────────────
