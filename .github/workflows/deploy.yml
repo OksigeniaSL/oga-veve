@@ -11,6 +11,12 @@ name: Deploy
 on:
   push:
     branches: [main]
+    # Lo que no cambia lo que se sirve no se despliega. Ver `ci.yml`.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   workflow_dispatch:
 
 # El token del despliegue necesita estos tres permisos y ninguno más.

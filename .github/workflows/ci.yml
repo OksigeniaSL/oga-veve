@@ -5,14 +5,33 @@
 # minuto: si tarda más, deja de mirarse y deja de servir.
 #
 # Node 20 es el mínimo declarado en `package.json`. Se prueba también en 22
-# para que una regresión de runtime no aparezca solo en producción.
+# **en las propuestas**, que es donde una regresión de runtime hay que cazarla:
+# después de entrar en main ya es tarde y cuesta el doble.
 name: CI
 
 on:
   push:
     branches: [main]
+    # Lo que no puede romper una compilación no la dispara. Un cambio en el
+    # README encendía cuatro trabajos: dos de CI y dos de despliegue.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
     branches: [main]
+
+# **Una tanda por rama, y gana la última.**
+#
+# El despliegue ya lo hacía y CI no, y eso se ve en el calendario: noventa y
+# cuatro tandas en un solo día, doce de septiembre. Se trabaja a ráfagas de
+# commits seguidos, así que la mitad de esas tandas estaban comprobando un
+# commit que ya no era la punta de la rama cuando terminaron. Lo que importa
+# es que la punta esté verde.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verificar:
@@ -21,7 +40,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ['20', '22']
+        # **Las dos versiones en la propuesta, una al entrar.**
+        #
+        # Probar en 20 y en 22 existe para que una regresión de runtime no
+        # aparezca solo en producción, y el sitio donde eso hay que cazarlo es
+        # **antes** de entrar, no después. En cada push a main era pagar el
+        # doble por enterarse más tarde. Ver `engines` en `package.json`.
+        node: ${{ github.event_name == 'pull_request' && fromJSON('["20","22"]') || fromJSON('["22"]') }}
 
     steps:
       - name: Checkout
