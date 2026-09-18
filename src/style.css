@@ -1474,16 +1474,16 @@ button.motor__tecla::after {
   position: fixed;
   left: 50%;
   /*
-   * Sube lo que ocupen el cuadro de mandos y la tarjeta de la señal, que
-   * pueden no estar ninguno de los dos.
+   * Sube lo que ocupe el cuadro de mandos, que puede no estar.
    *
-   * **Lo de la señal no es de adorno.** Las dos son fijas, centradas abajo y
-   * con el mismo `z-index`, así que con las dos puestas se apilaban una encima
-   * de otra: se veía el filo naranja de la de atrás asomando por un lado de la
-   * de delante. Ahora la señal publica lo que ocupa —`--senal-alto`, ver
-   * `medirse` en `senal.ts`— y el tutor se le pone encima.
+   * **Y ya no lo que ocupe la tarjeta de la señal.** Subía por las dos porque
+   * las dos vivían aquí abajo, fijas y centradas, y se apilaban: se veía el
+   * filo naranja de la de atrás asomando por un lado de la de delante. Desde
+   * que la tarjeta se fue arriba con los pictogramas —ver `.senal`— ese hueco
+   * no tapa nada: solo levanta el tutor contra el avión, que es el sitio que
+   * se acaba de despejar.
    */
-  bottom: calc(8% + var(--panel-alto, 0px) + var(--senal-alto, 0px));
+  bottom: calc(8% + var(--panel-alto, 0px));
   transform: translateX(-50%);
   display: grid;
   justify-items: center;
@@ -4065,7 +4065,8 @@ button.motor__tecla::after {
    * `pointer-events: none`, así que lo de debajo se sigue pudiendo pulsar.
    */
   pointer-events: none;
-  transform: translateX(-50%);
+  /* Y corrida media tarjeta, cuando hay tarjeta. Ver `.senal`. */
+  transform: translateX(calc(-50% - var(--senal-ancho, 0px) / 2));
   z-index: 8;
   display: flex;
   align-items: center;
@@ -4193,16 +4194,35 @@ button.motor__tecla::after {
  * Ahora va abajo y centrada, encima del cuadro de mandos si lo hay, que es
  * donde ya está mirando quien pilota.
  */
+/*
+ * **La tarjeta vive arriba, con los pictogramas.**
+ *
+ * Vivía abajo y en medio, justo encima del cuadro de mandos. Y la cámara sube
+ * el avión para que el cuadro no lo tape — ver `encuadrarSobreElCuadro` —, así
+ * que los dos acababan en la misma franja y la tarjeta se plantaba en mitad
+ * del fuselaje. Con una captura de una frustrada y dos palabras: «hasta los
+ * huevos».
+ *
+ * Arriba hay sitio y ya está la fila de pictogramas, que es lo otro que avisa:
+ * **todo lo que avisa, en el mismo sitio**, y el centro de la pantalla entero
+ * para el avión y la pista. `--arriba-alto` lo mide el HUD, igual que lo mide
+ * para la luz de la torre. Ver `reservarArriba`.
+ */
 .senal {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(9% + var(--panel-alto, 0px));
+  /*
+   * Y corrida media luz de la torre, que comparte esta banda y este centro.
+   * Ver `medirse` en `ui/senal.ts`: cada una se aparta media anchura de la
+   * otra, así que juntas quedan centradas y separadas.
+   */
+  transform: translateX(calc(-50% + var(--torre-ancho, 0px) / 2));
+  top: calc(var(--arriba-alto, 14%) + 14px);
   z-index: 5;
   display: flex;
   align-items: center;
   gap: 16px;
-  max-width: min(78vw, 560px);
+  max-width: min(calc(78vw - var(--torre-ancho, 0px)), 560px);
   padding: 14px 24px 14px 16px;
   border-radius: var(--r-l);
   background: var(--barro);
@@ -4238,7 +4258,7 @@ button.motor__tecla::after {
 }
 
 .senal--pulsable:active {
-  transform: translateX(-50%) scale(0.97);
+  transform: translateX(calc(-50% + var(--torre-ancho, 0px) / 2)) scale(0.97);
 }
 
 .senal--pulsable:focus-visible {
