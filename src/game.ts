@@ -5431,6 +5431,21 @@ export class Game {
         // «¿por qué no tengo datos como distancia al aeropuerto?».
         objetivo: this.aDondeVoy,
         viento: this.vientoDeHoy,
+        /*
+         * **Y el mundo, para que la pantalla de navegación lo dibuje.**
+         *
+         * Era una brújula sobre un fondo vacío: giraba y ya. Con esto pasa a
+         * ser lo que dice su nombre — dónde estoy, dónde está la pista con su
+         * forma y su rumbo, y quién más anda por aquí. Ver `ui/carta.ts`.
+         */
+        mapa: {
+          x: this.flight.state.position.x,
+          z: this.flight.state.position.z,
+          pista: this.scenario.aerodrome ? this.scenario.runway : null,
+          // Los mismos que se oyen por la radio y se ven por la ventana: uno
+          // solo, para que no puedan contarse tres versiones de lo mismo.
+          otros: this.trafico?.quienes() ?? [],
+        },
       },
       dt,
     );

@@ -49,6 +49,15 @@ import {
   tendencia,
 } from "../ui/cinta";
 import { NUDOS, PIES, PIES_POR_MINUTO, type Cuadro } from "../ui/cuadro";
+import {
+  MILLA,
+  RANGOS,
+  enLaCarta,
+  extremosDePista,
+  millasHasta,
+  pixelesPorMetro,
+  rangoPara,
+} from "../ui/carta";
 import { LETRAS_DESDE, type Peldano } from "../ui/familia";
 
 /**
@@ -171,6 +180,33 @@ export interface DatosDeCabina {
   } | null;
   /** De dónde sopla y cuánto. Dato auxiliar: va en cian. */
   readonly viento: { readonly desde: number; readonly nudos: number } | null;
+  /**
+   * **El mundo, para poder dibujarlo.**
+   *
+   * Sin esto la pantalla de navegación era una brújula sobre un fondo vacío:
+   * giraba, y ya. Con dónde estoy, dónde está la pista y quién más anda por
+   * aquí, pasa a ser lo que dice su nombre — una carta. Ver `ui/carta.ts`.
+   */
+  readonly mapa: {
+    /** Dónde estoy, en metros del mundo. */
+    readonly x: number;
+    readonly z: number;
+    /** La pista de casa, con su sitio, su rumbo y su largo. */
+    readonly pista: {
+      readonly x: number;
+      readonly z: number;
+      readonly heading: number;
+      readonly length: number;
+    } | null;
+    /**
+     * Y los otros aviones, los que se oyen por la radio.
+     *
+     * Aparecen en la carta por el mismo motivo por el que se dibujan en el
+     * cielo: se les oye decir dónde están, y una pantalla que no los enseña
+     * enseña que la radio es un adorno. Ver `world/trafico.ts`.
+     */
+    readonly otros: readonly { readonly x: number; readonly z: number }[];
+  } | null;
 }
 
 /**
@@ -1084,16 +1120,19 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   const cy = ALTO * 0.54;
   const r = Math.min(ANCHO / 2 - 30, cy - 34, ALTO - cy - 26);
 
-  // Los arcos de rango, tenues: dan sensación de distancia sin decir cifras.
-  g.strokeStyle = "#2c3136";
-  g.setLineDash([3, 6]);
-  g.lineWidth = 1;
-  for (const f of [0.5, 0.75]) {
-    g.beginPath();
-    g.arc(cx, cy, r * f, 0, Math.PI * 2);
-    g.stroke();
-  }
-  g.setLineDash([]);
+  /*
+   * **La carta gira con el rumbo verdadero, no con el magnético.**
+   *
+   * El mundo está en grados verdaderos —la pista, el terreno, todo— y la rosa
+   * de rumbos en magnéticos, que es lo que lee un piloto. Girando el mapa con
+   * el magnético, la pista sale desviada por la declinación del sitio: poco,
+   * unos grados, pero es exactamente el fallo de mezclar dos referencias para
+   * un mismo ángulo, y en un aeródromo con mucha declinación se convierte en
+   * un eje de entrada que no lleva a la pista. Cada uno con el suyo, y la
+   * diferencia entre los dos es la declinación — que es lo correcto: una pista
+   * rotulada 07 cae bajo el 07 de la rosa.
+   */
+  pintarLaCarta(g, d, cx, cy, r, (d.rumbo * 180) / Math.PI);
 
   g.save();
   g.translate(cx, cy);
@@ -1194,7 +1233,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     g.lineCap = "butt";
     escribir(
       g,
-      `${(d.objetivo.distancia / 1852).toFixed(1)} NM`,
+      `${d.objetivo.distancia < 0 ? "" : ""}${(d.objetivo.distancia / 1852).toFixed(1)} NM`,
       ANCHO - 12,
       22,
       "500 15px " + FUENTE,
@@ -1202,7 +1241,60 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
       "right",
     );
   }
+  /*
+   * **Y a cuánto está la pista, que es lo que se preguntó jugando.**
+   *
+   * «¿Por qué no tengo datos como distancia al aeropuerto?» Estaba solo cuando
+   * había una misión en curso con su objetivo; sin misión, la pantalla no
+   * decía a qué distancia estaba tu propia casa. Sale del mismo sitio que el
+   * rango de la carta —`millasHasta`— para que la cifra y el dibujo no puedan
+   * discrepar: una carta que dice «4,0 NM» con la pista fuera del cristal es
+   * peor que una carta sin cifra.
+   */
+  if (!d.objetivo && d.mapa?.pista) {
+    escribir(
+      g,
+      `${millasHasta(d.mapa.pista, d.mapa).toFixed(1)} NM`,
+      ANCHO - 12,
+      22,
+      "500 15px " + FUENTE,
+      TINTA,
+      "right",
+    );
+  }
   if (d.viento) {
+    /*
+     * **El viento, como una flecha y no como una cifra.**
+     *
+     * «090/18» no se lee a los cuatro años, y es el dato que decide por qué
+     * cabecera se aterriza. La flecha apunta **hacia donde sopla** —que es
+     * hacia donde te empuja— y gira con la carta, así que se ve de un vistazo
+     * si viene de frente o de cola. La cifra sigue ahí desde el tercer
+     * peldaño, para quien ya lee.
+     */
+    const haciaDonde = ((d.viento.desde + 180 - grados) * Math.PI) / 180;
+    const fx = cx - r - 4;
+    const fy = ALTO - 40;
+    const largo = 20;
+    const px = Math.sin(haciaDonde) * largo;
+    const py = -Math.cos(haciaDonde) * largo;
+    g.strokeStyle = PALETA.auxiliar;
+    g.lineWidth = 2.5;
+    g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(fx - px, fy - py);
+    g.lineTo(fx + px, fy + py);
+    g.stroke();
+    // La punta, que es lo que dice hacia dónde.
+    const ala = 7;
+    for (const lado of [-1, 1]) {
+      const a = haciaDonde + lado * 2.5;
+      g.beginPath();
+      g.moveTo(fx + px, fy + py);
+      g.lineTo(fx + px + Math.sin(a) * ala, fy + py - Math.cos(a) * ala);
+      g.stroke();
+    }
+    g.lineCap = "butt";
     escribir(
       g,
       `${String(Math.round(d.viento.desde)).padStart(3, "0")}/${Math.round(d.viento.nudos)}`,
@@ -1450,4 +1542,142 @@ function lucesDeTren(
     TENUE,
     "left",
   );
+}
+
+/**
+ * La carta: el mundo debajo de la rosa de rumbos.
+ *
+ * Lo que convierte una brújula grande en una pantalla de navegación. Se dibuja
+ * **antes** que la rosa y que el avión, para que esos dos queden encima: lo
+ * que hay que leer primero es dónde estoy yo, y lo de debajo es el sitio.
+ *
+ * Por orden de lo que enseña:
+ *
+ * 1. **Los anillos de distancia**, con su cifra desde el tercer peldaño. Antes
+ *    eran dos arcos de puntos sin número: daban «sensación de distancia», que
+ *    es otra manera de decir que no medían nada.
+ * 2. **La pista, con su forma y en su sitio.** No un punto: sus dos cabeceras,
+ *    su largo de verdad y su rumbo de verdad. Es lo que enseña a mirar por la
+ *    ventana en la dirección correcta.
+ * 3. **El eje de entrada**, ocho millas de final prolongado desde la cabecera
+ *    en uso. Es la línea por la que hay que venir, y verla dibujada es la
+ *    mitad de aprender a aproximarse.
+ * 4. **Los otros aviones**, los que se oyen por la radio. Ver `trafico.ts`.
+ *
+ * Y el rango se elige solo, para que la pista quepa siempre. Ver `rangoPara`.
+ */
+function pintarLaCarta(
+  g: CanvasRenderingContext2D,
+  d: DatosDeCabina,
+  cx: number,
+  cy: number,
+  r: number,
+  grados: number,
+): void {
+  const m = d.mapa;
+  const lejos = m?.pista
+    ? millasHasta({ x: m.pista.x, z: m.pista.z }, m)
+    : RANGOS[1]!;
+  const rango = rangoPara(lejos);
+  const por = pixelesPorMetro(rango, r);
+  const aqui = (p: { x: number; z: number }) =>
+    m ? enLaCarta(p, m, grados, por) : { dx: 0, dy: 0 };
+
+  // ── Los anillos, con su cifra ──
+  g.strokeStyle = "#2c3136";
+  g.setLineDash([3, 6]);
+  g.lineWidth = 1;
+  for (const f of [0.5, 1]) {
+    g.beginPath();
+    g.arc(cx, cy, r * f, 0, Math.PI * 2);
+    g.stroke();
+  }
+  g.setLineDash([]);
+  /*
+   * La cifra del rango, **fuera de la rosa**. Puesta dentro caía encima de las
+   * marcas de grados y lo que se leía era «5 NM» tachado por cuatro rayas.
+   */
+  escribir(
+    g,
+    `${rango} NM`,
+    ANCHO - 14,
+    ALTO - 14,
+    "500 12px " + FUENTE,
+    TENUE,
+    "right",
+  );
+
+  if (!m) return;
+
+  // Todo lo del mundo se recorta al círculo de la rosa: una pista que asome
+  // por fuera del cristal deja de ser una carta y pasa a ser una mancha.
+  g.save();
+  g.beginPath();
+  g.arc(cx, cy, r, 0, Math.PI * 2);
+  g.clip();
+
+  if (m.pista) {
+    const [a, b] = extremosDePista(m.pista);
+    const pa = aqui(a);
+    const pb = aqui(b);
+    /*
+     * **El eje de entrada, por la cabecera que toca.**
+     *
+     * La que toca es **la más cercana**, que es la que se cruza primero al
+     * aterrizar; y el eje sale de ella alejándose de la pista, o sea hacia
+     * quien viene. Estaba escrito con la más lejana y el resultado se ve en
+     * cuanto se mira: ocho millas de raya magenta dibujadas **al otro lado de
+     * la pista**, invitando a seguir de largo.
+     */
+    const entraPorA = Math.hypot(pa.dx, pa.dy) < Math.hypot(pb.dx, pb.dy);
+    const umbral = entraPorA ? pa : pb;
+    const otro = entraPorA ? pb : pa;
+    const largo = Math.hypot(otro.dx - umbral.dx, otro.dy - umbral.dy) || 1;
+    const ux = (umbral.dx - otro.dx) / largo;
+    const uy = (umbral.dy - otro.dy) / largo;
+    const ocho = 8 * MILLA * por;
+    g.strokeStyle = PALETA.objetivo;
+    g.lineWidth = 1.5;
+    g.setLineDash([6, 5]);
+    g.beginPath();
+    g.moveTo(cx + umbral.dx, cy + umbral.dy);
+    g.lineTo(cx + umbral.dx + ux * ocho, cy + umbral.dy + uy * ocho);
+    g.stroke();
+    g.setLineDash([]);
+
+    // Y la pista, gorda y blanca: es lo único sólido de la carta.
+    g.strokeStyle = TINTA;
+    // El ancho de verdad de una pista son cuarenta y cinco metros, que a diez
+    // millas de rango es menos de un píxel. Una pista es la única cosa sólida
+    // de esta carta y tiene que leerse como tal, así que se le pone un mínimo.
+    g.lineWidth = Math.max(6, Math.min(12, 45 * por));
+    g.lineCap = "butt";
+    g.beginPath();
+    g.moveTo(cx + pa.dx, cy + pa.dy);
+    g.lineTo(cx + pb.dx, cy + pb.dy);
+    g.stroke();
+  }
+
+  /*
+   * **Y los otros, con la forma con la que se dibuja un tráfico.**
+   *
+   * Un rombo hueco, que es el símbolo de toda la vida. No llevan cifra ni al
+   * peldaño de arriba: lo que hay que aprender de ellos es que están, y que
+   * son los mismos que se acaban de oír por la radio.
+   */
+  for (const otro of m.otros) {
+    const p = aqui(otro);
+    const lado = 6;
+    g.strokeStyle = PALETA.auxiliar;
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(cx + p.dx, cy + p.dy - lado);
+    g.lineTo(cx + p.dx + lado, cy + p.dy);
+    g.lineTo(cx + p.dx, cy + p.dy + lado);
+    g.lineTo(cx + p.dx - lado, cy + p.dy);
+    g.closePath();
+    g.stroke();
+  }
+
+  g.restore();
 }
