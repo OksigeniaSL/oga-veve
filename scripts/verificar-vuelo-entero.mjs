@@ -127,6 +127,16 @@ await page
   .catch(() => {});
 
 const resultados = [];
+/**
+ * Cuántas veces puede decir la instructora una misma cosa en un vuelo entero.
+ *
+ * Cuatro es generoso a propósito: hay avisos que pertenecen legítimamente a
+ * varios momentos del vuelo —se sale, se vuelve, se vuelve a entrar en final—
+ * y no hay que convertir el banco en un cepo. Lo que caza es lo otro: el aviso
+ * que sale ocho veces seguidas porque se rearma solo.
+ */
+const MAS_DE_LA_CUENTA = 4;
+
 const comprobar = (nombre, ok, detalle, porque) =>
   resultados.push({ nombre, ok: !!ok, detalle, porque });
 
@@ -746,6 +756,23 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   let tocoDesviado = 0;
   let tocoPasadoElUmbral = 0;
   let tocoA = 0;
+  /*
+   * **Y cuánta pista se come frenando**, que es lo que faltaba medir.
+   *
+   * Contado jugando: «freno en la pista en dos metros, eso no se lo cree
+   * nadie». Las dos cuentas —la física de `rodaduraDeFrenada` y la prueba por
+   * avión que la comprueba paso a paso— dicen que no, que el de fuselaje ancho
+   * necesita más de un kilómetro; pero ninguna de las dos vuela: las dos miden
+   * el modelo a solas, con el avión puesto a mano a la velocidad de toma y sin
+   * nada más del juego encima. Y encima hay un tope de rodaje que toca el
+   * freno, un trinquete que baja el techo y una máquina de fases.
+   *
+   * Aquí se mide **lo que pasa aterrizando de verdad**: los metros que separan
+   * el punto donde tocaron las ruedas del punto donde el avión ya va a paso de
+   * rodaje. Si algún día vuelve a pararse en dos metros, se ve aquí.
+   */
+  let rodaduraMedida = 0;
+  let antesDeFrenar = null;
   const fases = new Set();
   /*
    * **Y todo lo que llegó a decir la torre.**
@@ -1667,6 +1694,13 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         etapa = "frenar";
       }
     } else if (etapa === "frenar") {
+      if (antesDeFrenar) {
+        rodaduraMedida += Math.hypot(
+          s.position.x - antesDeFrenar.x,
+          s.position.z - antesDeFrenar.z,
+        );
+      }
+      antesDeFrenar = { x: s.position.x, z: s.position.z };
       c.throttle = 0;
       c.elevator = 0;
       c.brakes = 1;
@@ -1824,6 +1858,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     tocoDesviado: +tocoDesviado.toFixed(1),
     tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
     tocoA: +tocoA.toFixed(0),
+    rodaduraMedida: Math.round(rodaduraMedida),
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
     avion: o.avion?.() ?? null,
@@ -2209,6 +2244,29 @@ comprobar(
   "en una pista de dieciocho metros, «aterrizó» sin decir a cuánto del eje no significa nada",
 );
 
+/*
+ * **Y la frenada dura lo que tiene que durar.**
+ *
+ * El listón sale de la propia ficha del avión: `aterrizajeEn` es la distancia
+ * de aterrizaje entera —el planeo desde el umbral más la rodadura de
+ * frenada—, y la rodadura es la parte gorda de las dos. Pedir que sea al menos
+ * un tercio de esa distancia es holgado de sobra para cualquier toma razonable
+ * y sigue cazando lo que hay que cazar: un avión que se planta.
+ *
+ * Y se mide hasta paso de rodaje, no hasta cero: ahí acaba la frenada y
+ * empieza el rodaje de vuelta, que ya tiene su propia comprobación.
+ */
+if (vuelo.toco > 0 && vuelo.avion) {
+  const listón = Math.round((vuelo.avion?.aterrizajeEn ?? 0) / 3);
+  comprobar(
+    "y frenar le cuesta la pista que dice su ficha",
+    vuelo.rodaduraMedida >= listón,
+    `rodó ${vuelo.rodaduraMedida} m desde que tocó a ${vuelo.tocoA} m/s` +
+      ` · su ficha pide ${Math.round(vuelo.avion?.aterrizajeEn ?? 0)} m de aterrizaje, o sea al menos ${listón} de frenada`,
+    "«freno en la pista en 2 metros, eso no se lo cree nadie»",
+  );
+}
+
 comprobar(
   "y después de tocar, pide frenar",
   vuelo.pidioFreno,
@@ -2246,6 +2304,43 @@ comprobar(
   `${vuelo.galones.length} galones: ${vuelo.galones.join(", ") || "ninguno"}${vuelo.fin ? "" : " · sin pantalla de fin"}`,
   "un vuelo que termina sin decir que ha terminado deja mirando la pantalla",
 );
+
+/*
+ * **Y que nadie se repita.**
+ *
+ * El banco ya apuntaba qué se oyó y cuántas veces, pero solo lo *imprimía*: un
+ * número en un listado que nadie lee no impide nada. Y esa cuenta era la que
+ * tenía la respuesta delante — «metélo, el tren» ocho veces en una misma
+ * subida, de trescientos a novecientos metros, porque el aviso se rearmaba con
+ * un reloj. Se descubrió mirando el listado a mano, y a mano no se mira todos
+ * los días.
+ *
+ * Así que ahora falla. Un aviso que sale cinco veces en un vuelo es un aviso
+ * que no se está escuchando: o la situación no ha cambiado entre una vez y la
+ * siguiente —y entonces la segunda ya sobraba— o el rearme mira un número que
+ * tiembla en vez de algo que pasa. Ver `seVuelveADecir` en `flight/tren.ts`.
+ *
+ * Solo la instructora: la torre y el otro tráfico repiten a propósito —cuatro
+ * autorizaciones de aterrizaje son cuatro vueltas al circuito, y cada una es
+ * un suceso distinto—, mientras que la instructora habla de lo que está
+ * pasando ahora y lo que está pasando ahora no pasa cinco veces.
+ */
+{
+  const dichas = (vuelo.todoLoDicho ?? {}).instructor ?? [];
+  const cuenta = new Map();
+  for (const c of dichas) cuenta.set(c, (cuenta.get(c) ?? 0) + 1);
+  const pesadas = [...cuenta]
+    .filter(([, n]) => n > MAS_DE_LA_CUENTA)
+    .sort((a, b) => b[1] - a[1]);
+  comprobar(
+    "y la instructora no se repite",
+    pesadas.length === 0,
+    pesadas.length
+      ? pesadas.map(([c, n]) => `${c} ×${n}`).join(", ")
+      : `${cuenta.size} frases distintas, ninguna más de ${MAS_DE_LA_CUENTA} veces`,
+    "«me dice que meta el tren, luego que lo saque, luego que lo vuelva a meter, joder»",
+  );
+}
 
 // ── El informe ────────────────────────────────────────────────────────────
 
