@@ -1898,6 +1898,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     sinRaya: +sinRaya.toFixed(1),
     sinRayaDonde,
     sinRayaPrimero,
+    // Los cantos con sus números, para poder ver dónde se repite algo.
+    cantados: o.cantados?.() ?? [],
     // El tiempo que hizo: lo único que cambia entre pasadas. Ver el informe.
     meteo: o.meteo?.() ?? null,
     lejosDelCoche: Math.round(lejosDelCoche),
@@ -2442,11 +2444,44 @@ comprobarSiVolo(
   const pesadas = [...cuenta]
     .filter(([, n]) => n > MAS_DE_LA_CUENTA)
     .sort((a, b) => b[1] - a[1]);
+  /*
+   * **Y con las primeras veces y sus números**, que es lo que hace falta para
+   * arreglarlo.
+   *
+   * Saber que algo se dijo trescientas veces no dice **dónde**. El registro de
+   * cantos lleva la velocidad y la altura de cada uno, así que con las
+   * primeras a la vista se ve en qué tramo del vuelo pasa: en la aproximación,
+   * en el circuito o rodando. Sin esto se adivina, y adivinar costó cuatro
+   * arreglos seguidos que movieron el número sin llevarlo a cero.
+   */
+  /*
+   * Y se cuenta **por su cuenta**, sin cruzar los dos nombres: el recuento de
+   * arriba usa la palabra de casa —«cien»— y el registro de cantos la de
+   * cabina —«one hundred»—, así que casar uno con otro por texto no funciona.
+   * Lo que interesa es lo mismo de todas formas: qué canto se repite y con qué
+   * números salió las primeras veces.
+   */
+  const porCanto = new Map();
+  for (const l of vuelo.cantados ?? []) {
+    const k = String(l).split("→")[0].trim();
+    if (!porCanto.has(k)) porCanto.set(k, []);
+    porCanto.get(k).push(l);
+  }
+  const elQueMas = [...porCanto.entries()].sort(
+    (a, b) => b[1].length - a[1].length,
+  )[0];
+  const conNumeros =
+    pesadas.length && elQueMas && elQueMas[1].length > MAS_DE_LA_CUENTA
+      ? elQueMas[1]
+      : [];
   comprobar(
     "y la instructora no se repite",
     pesadas.length === 0,
     pesadas.length
-      ? pesadas.map(([c, n]) => `${c} ×${n}`).join(", ")
+      ? pesadas.map(([c, n]) => `${c} ×${n}`).join(", ") +
+          (conNumeros.length
+            ? `\n      las primeras:\n        ${conNumeros.slice(0, 8).join("\n        ")}`
+            : "")
       : `${cuenta.size} frases distintas, ninguna más de ${MAS_DE_LA_CUENTA} veces`,
     "«me dice que meta el tren, luego que lo saque, luego que lo vuelva a meter, joder»",
   );

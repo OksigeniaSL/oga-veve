@@ -719,6 +719,8 @@ export class Game {
    * que enseña el ritmo de la recogida, y se dice **y** se dibuja.
    */
   private readonly avisosDeAltura: AvisosDeAltura;
+  /** Si el avión viene a posarse: embudo de final o sobre la pista. */
+  private esUnaToma = false;
   /** La altura sobre la pista en grande: 150, 100 y 50. Ver `escalera.ts`. */
   private readonly alturaEnGrande: AvisosDeAltura;
   /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
@@ -4865,10 +4867,38 @@ export class Game {
      * Los avisos de la toma. Se dicen **y** se enseñan, siempre: hay quien
      * juega en silencio, hay quien tiene la pestaña muteada y hay quien no
      * oye. La voz acompaña; el número manda.
+     *
+     * **Y solo si esto es una toma.** Viniendo por el embudo de final o ya
+     * sobre la pista — el mismo embudo que usan los mínimos, la orden de
+     * frustrar y el aviso del tren, y por la misma razón escrita allí: «cerca
+     * del suelo» no distingue una aproximación de un vuelo bajo.
+     *
+     * Sin esto, sobre un sitio de barrancos la cuenta atrás se dispara con
+     * cada pliegue del terreno, porque el rearme mira la altura sobre el
+     * suelo. Medido en el barrido, en La Palma: **«cien» seiscientas siete
+     * veces** en un vuelo. Ver `aterrizando` en `avisos-de-altura.ts`.
      */
+    this.esUnaToma =
+      enElEmbudoDeFinal(
+        this.scenario.runway,
+        this.flight.state.position.x,
+        this.flight.state.position.z,
+      ) !== null || this.sobreLaPista();
     const aviso = this.avisosDeAltura.paso(
       this.flight.state.heightAboveGround,
       !this.flight.state.onGround,
+      /*
+       * **Y solo si esto es una toma.** Viniendo por el embudo de final o ya
+       * sobre la pista — el mismo embudo que usan los mínimos, la orden de
+       * frustrar y el aviso del tren, y por la misma razón escrita allí:
+       * «cerca del suelo» no distingue una aproximación de un vuelo bajo.
+       *
+       * Sin esto, sobre un sitio de barrancos la cuenta atrás se dispara con
+       * cada pliegue del terreno. Medido en La Palma: «cien» seiscientas siete
+       * veces en un vuelo. Ver `aterrizando` en `avisos-de-altura.ts`.
+       */
+      this.esUnaToma,
+      this.flight.state.verticalSpeed < 0,
     );
     if (aviso) this.cantar(aviso.dice, aviso.encasa);
 
@@ -4885,6 +4915,10 @@ export class Game {
     const grande = this.alturaEnGrande.paso(
       this.flight.state.heightAboveGround,
       !this.flight.state.onGround,
+      // Y con las mismas guardas: el número en grande usa la misma máquina,
+      // así que parpadeaba tantas veces como se cantaba. Ver arriba.
+      this.esUnaToma,
+      this.flight.state.verticalSpeed < 0,
     );
     if (grande && canalesDe(this.tier.avisos).cifra) {
       this.hud.flash(
