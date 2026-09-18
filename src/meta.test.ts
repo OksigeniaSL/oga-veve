@@ -16,30 +16,44 @@ import html from "../index.html?raw";
 import llms from "../public/llms.txt?raw";
 import robots from "../public/robots.txt?raw";
 
-/** La dirección donde vive, que es la que tienen que decir las etiquetas. */
-const CASA = "https://oksigeniasl.github.io/oga-veve/";
+/**
+ * **Y ahora mismo no vive en ninguna parte, a propósito.**
+ *
+ * La demo de GitHub Pages se retiró —«esa página sólo está ocupando»— y el
+ * juego se juega en local hasta que aterrice en su sitio definitivo. Así que
+ * estas pruebas ya no exigen una dirección concreta: exigen que **si la hay,
+ * esté completa**, que es lo que de verdad se rompe en silencio.
+ *
+ * Una `og:url` apuntando a un enlace muerto es peor que no tenerla: le promete
+ * a quien comparte el enlace que hay algo ahí. Y el día que haya dirección, lo
+ * que no puede pasar es que se escriba a medias —la página sí y la imagen no,
+ * o una de las dos relativa—, y eso sí se comprueba aquí abajo.
+ */
+const CASA = /property="og:url"\s+content="([^"]+)"/.exec(html)?.[1] ?? null;
 
 describe("la tarjeta que se ve al compartir el enlace", () => {
-  it("tiene título, descripción, imagen y dirección", () => {
-    for (const propiedad of [
-      "og:title",
-      "og:description",
-      "og:image",
-      "og:url",
-      "og:type",
-    ]) {
+  it("tiene título, descripción y tipo, que no dependen de dónde viva", () => {
+    for (const propiedad of ["og:title", "og:description", "og:type"]) {
       expect(html).toContain(`property="${propiedad}"`);
     }
     expect(html).toContain('name="twitter:card"');
   });
 
-  it("y la imagen va con dirección absoluta", () => {
+  it("y o no tiene dirección, o la tiene entera", () => {
     /*
      * Quien lee estas etiquetas es un servidor ajeno, no un navegador: una
      * ruta relativa no le sirve de nada y la tarjeta sale sin imagen, que es
      * como sale un enlace que nadie abre.
+     *
+     * Y van juntas. Media tarjeta —la página sí y la imagen no— es el estado
+     * peor de los tres: se comparte, se ve el recuadro y sale vacío.
      */
     const imagen = /property="og:image"\s+content="([^"]+)"/.exec(html)?.[1];
+    if (CASA === null) {
+      expect(imagen).toBeUndefined();
+      return;
+    }
+    expect(CASA.startsWith("https://")).toBe(true);
     expect(imagen).toBeDefined();
     expect(imagen!.startsWith("https://")).toBe(true);
     expect(imagen).toContain("og.png");
@@ -61,7 +75,9 @@ describe("lo que le decimos a una máquina", () => {
 
   it("el JSON-LD se puede leer y dice qué es esto", () => {
     expect(datos["@type"]).toBe("VideoGame");
-    expect(datos["url"]).toBe(CASA);
+    // Y la dirección, la misma que las etiquetas o ninguna en las dos: dos
+    // sitios diciendo dónde vive esto es la forma de que un día discrepen.
+    expect(datos["url"] ?? null).toBe(CASA);
   });
 
   it("y dice que es gratis, que es la promesa del proyecto", () => {
