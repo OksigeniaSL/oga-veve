@@ -399,3 +399,42 @@ describe("y calla a quien tenía la palabra", () => {
     expect(() => b.pedir("urgente", () => undefined)).not.toThrow();
   });
 });
+
+describe("un suceso, una sola voz", () => {
+  /*
+   * «Eso no pega ni con pegamento»: la de terreno diciendo «subí» agobiada y,
+   * un segundo después, el aro diciendo «venís un poco bajo, subí suave» tan
+   * tranquilo. No sobra una frase: sobra **decir lo mismo dos veces con
+   * registros opuestos**.
+   */
+  it("después del aviso de terreno, la senda se calla", () => {
+    for (const otra of ["vuelo.aroBajo", "vuelo.papiBajo", "vuelo.enVuelo"]) {
+      const { dicho, acabar, frase } = coro();
+      const b = boca();
+      b.pedir("urgente", frase("terreno"), "vuelo.terrenoSube");
+      acabar["terreno"]!();
+      b.pedir("normal", frase(otra), otra);
+      expect(dicho, otra).toEqual(["terreno"]);
+    }
+  });
+
+  it("y en una frustrada tampoco se comenta la senda", () => {
+    const { dicho, acabar, frase } = coro();
+    const b = boca();
+    b.pedir("urgente", frase("frustrada"), "vuelo.mandanFrustrar");
+    acabar["frustrada"]!();
+    b.pedir("normal", frase("papi"), "vuelo.papiBajo");
+    expect(dicho).toEqual(["frustrada"]);
+  });
+
+  it("pero pasado el rato vuelve a poder decirse", () => {
+    // Callarse para siempre sería el otro extremo: la situación pasa.
+    const { dicho, acabar, frase } = coro();
+    const b = boca();
+    b.pedir("urgente", frase("terreno"), "vuelo.terrenoSube");
+    acabar["terreno"]!();
+    reloj += RIÑEN + 1;
+    b.pedir("normal", frase("papi"), "vuelo.papiBajo");
+    expect(dicho).toEqual(["terreno", "papi"]);
+  });
+});

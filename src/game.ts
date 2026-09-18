@@ -6662,7 +6662,13 @@ export class Game {
       null,
       { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
     );
-    this.cantar("too fast", t(clave as TranslationKey), clave, "urgente");
+    /*
+     * **Y avisa, no corta.** Era «urgente», o sea que se llevaba por delante
+     * a quien estuviera hablando — y venir rápido no es una emergencia: es un
+     * dato que se dice y ya. Lo urgente son el terreno, la pista ocupada y la
+     * frustrada, y poco más. Ver `audio/boca.ts`.
+     */
+    this.cantar("too fast", t(clave as TranslationKey), clave);
   }
 
   /** Cuánto lleva pidiendo lo del tren, para no repetirse. */
@@ -6737,12 +6743,9 @@ export class Game {
           tecla: nombreDeTecla(this.input.preferredKey("tren")),
         },
       );
-      this.cantar(
-        "gear down",
-        t("vuelo.sacaElTren"),
-        "vuelo.sacaElTren",
-        "urgente",
-      );
+      // Sacar el tren se avisa, no se grita: quedan diez segundos de tren y
+      // kilómetros de final. Era «urgente» y cortaba a quien hablara.
+      this.cantar("gear down", t("vuelo.sacaElTren"), "vuelo.sacaElTren");
       return;
     }
 
