@@ -42,7 +42,12 @@ import {
 } from "../world/circuito";
 import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
 import { leerGafas } from "../flight/gafas";
-import { carreraHastaVr, distanciaDeAterrizaje } from "../flight/carrera";
+import {
+  carreraHastaVr,
+  distanciaDeAterrizaje,
+  rodaduraDeFrenada,
+  velocidadDeToma,
+} from "../flight/carrera";
 import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA } from "../audio/boca";
@@ -283,6 +288,20 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       carreraHastaVr: carreraHastaVr(juego.aircraft),
       /** Y lo que le cuesta pararse desde el umbral, m. */
       aterrizajeEn: distanciaDeAterrizaje(juego.aircraft),
+      /*
+       * Y **la frenada sola**, sin el planeo: los metros de rodadura y la
+       * velocidad a la que se posa.
+       *
+       * De las dos sale la deceleración que este avión es capaz de dar
+       * —`v²/2s`— y con ella un banco puede calcular cuánto tiene que costar
+       * pararse desde cualquier velocidad, en vez de llevar un número a mano.
+       * Y hace falta: el banco de frenos llevaba «se para en seis metros»
+       * escrito de cuando el modelo sencillo frenaba a más de un g, y se quedó
+       * en rojo el día que la frenada se hizo realista — exigiendo la avería.
+       * Ver `rodaduraDeFrenada` en `flight/carrera.ts`.
+       */
+      frenadaEn: rodaduraDeFrenada(juego.aircraft),
+      tomaA: velocidadDeToma(juego.aircraft),
       /*
        * Y los colores de su ficha, que es quien manda sobre el modelo.
        *

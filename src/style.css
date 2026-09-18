@@ -5955,3 +5955,83 @@ button.motor__tecla::after {
   /* Y con su propia sombra, para que despegue del dibujo de debajo. */
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
 }
+
+/*
+ * **El tren y los flaps desde fuera.**
+ *
+ * Más pequeños que el freno y sin su rojo, a propósito: el freno es el mando
+ * de urgencia —se busca con la mano sin mirar— y estos dos son mandos que se
+ * piensan. En una cabina de verdad pasa igual: el freno es grande y rojo, y el
+ * tren es una palanca a la que hay que ir.
+ *
+ * Y el ancho es el mismo `--tacto` que el resto: lo que se toca con el dedo
+ * tiene su tamaño mínimo, y aquí no se negocia por hacer sitio.
+ */
+.mando {
+  pointer-events: auto;
+  margin-top: 8px;
+  width: clamp(var(--tacto), 8vmin, 62px);
+  aspect-ratio: 1;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(180deg, #33414f, #202b35 70%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 3px 0 #131a20,
+    var(--poso);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    transform 90ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.mando svg {
+  width: 62%;
+  fill: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* Puesto: verde, y el mismo verde que la luz del cuadro. */
+.mando--fuera {
+  border-color: var(--verde, #57c785);
+  background: linear-gradient(180deg, #2d4a3a, #1d3327 70%);
+}
+
+.mando--fuera svg {
+  fill: var(--verde, #57c785);
+  color: var(--verde, #57c785);
+}
+
+/*
+ * Y moviéndose: ámbar y parpadeando, que quiere decir «esperá». Esos diez
+ * segundos son media lección del mando, y un botón que se enciende del tirón
+ * se la come entera. Ver `luzDeTren` en flight/tren.ts.
+ */
+.mando--moviendose {
+  border-color: var(--ocre);
+  animation: mando-espera 700ms steps(1, end) infinite;
+}
+
+.mando--moviendose svg {
+  fill: var(--ocre);
+  color: var(--ocre);
+}
+
+@keyframes mando-espera {
+  50% {
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+}
+
+.mando:active {
+  transform: scale(0.93);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mando--moviendose {
+    animation: none;
+  }
+}

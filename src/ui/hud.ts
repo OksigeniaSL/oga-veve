@@ -37,7 +37,8 @@ import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
 import { PYKASU, esDeChorro, type AircraftConfig } from "../flight/aircraft";
 import { Pictogramas, HELICE_MAS, HELICE_MENOS } from "./pictogramas";
-import { Senal } from "./senal";
+import { DIBUJOS, Senal } from "./senal";
+import { luzDeTren } from "../flight/tren";
 import { Mapa } from "./mapa";
 import { botonesDeLosPaneles } from "./paneles";
 import { PanelDelTiempo } from "./tiempo";
@@ -282,6 +283,23 @@ export class Hud {
   private brakes!: HTMLElement;
   private brakeKey!: HTMLElement;
   private brakesTouch!: HTMLElement;
+  /** El botón del tren y el de los flaps, que solo existen desde fuera. */
+  private trenTouch!: HTMLElement;
+  private flapsTouch!: HTMLElement;
+  /** A quién se le cuenta que se han pulsado. Ver `onMandoDeCabina`. */
+  private alTocarMando: ((cual: "tren" | "flaps") => void) | null = null;
+
+  /**
+   * Si este avión tiene tren que meter.
+   *
+   * Sale de la ficha que el HUD ya tiene —la misma de la que sale el cuadro de
+   * mandos— y no de un dato aparte que haya que acordarse de poner al día. Un
+   * entrenador de escuela lleva las patas al aire y ahí no hay botón que
+   * valga. Ver `trenRetractil` en `flight/aircraft.ts`.
+   */
+  private get hayTren(): boolean {
+    return this.ficha.trenRetractil;
+  }
   private brakeHandler: ((pressed: boolean) => void) | null = null;
   private throttleDown!: HTMLElement;
   private throttleUp!: HTMLElement;
@@ -706,6 +724,36 @@ export class Hud {
           <span class="motor__tecla motor__tecla--ancha" data-hud="brake-key" aria-hidden="true"></span>
           ${gauges ? `<span class="medidor__glosa">${t("hud.brakes")}</span>` : ""}
         </div>
+        <!--
+          **El tren y los flaps, que hasta hoy no se podían tocar.**
+
+          Volando desde fuera había palanca, gases, timón y freno al alcance
+          del dedo, y nada más: el tren y los flaps solo existían como tecla
+          —la G y la F— y como botón dentro de la cabina. O sea que en una
+          tablet no existían, porque ahí no hay teclado; y en la vista de
+          fuera, que es en la que se juega, tampoco.
+
+          Dicho jugando, con el tren metido y el dibujo todavía puesto: «si
+          pulsé la G para meter el tren ¿por qué sigo viéndolo? ¿en qué parte
+          del panel veo que se está poniendo o quitando?». Las dos preguntas
+          tienen la misma respuesta y hasta hoy no estaba en ninguna parte.
+
+          Llevan **el mismo dibujo que la tarjeta que los pide**, que es la
+          regla que ya se aprendió con el freno: lo que hace que un botón se
+          entienda sin leer no es afinar su símbolo, es que sea el dibujo que
+          se acaba de ver en pantalla pidiendo esa acción. Ver DIBUJOS en
+          ui/senal.ts.
+
+          Y el del tren **dice en qué estado está**, que es la otra mitad de
+          la pregunta: apagado con el tren dentro, parpadeando mientras se
+          mueve —esos diez segundos son media lección del mando— y encendido
+          cuando está fuera y trabado. Los mismos tres estados que las luces
+          del cuadro, porque son la misma cosa mirada desde otro sitio.
+        -->
+        <button class="mando mando--tren" type="button" data-hud="tren-touch" hidden
+                aria-label="${t("tecla.tren")}">${DIBUJOS.tren}</button>
+        <button class="mando mando--flaps" type="button" data-hud="flaps-touch" hidden
+                aria-label="${t("tecla.flaps")}">${DIBUJOS.flaps}</button>
         ${
           numbers
             ? `<div class="tarjeta horizonte">
@@ -853,6 +901,21 @@ export class Hud {
     this.brakesTouch.addEventListener("pointerdown", () =>
       this.setBraking(true),
     );
+    /*
+     * El tren y los flaps van **al soltar**, no al apretar, que es como
+     * funciona cualquier botón: apretando se puede rectificar arrastrando el
+     * dedo fuera. Es la misma regla que ya siguen los mandos de la cabina, y
+     * la contraria que el freno — que es un pedal y se pisa. Ver
+     * `pulsarMandoDeCabina` en `game.ts`.
+     */
+    this.trenTouch = pick(this.root, "tren-touch");
+    this.flapsTouch = pick(this.root, "flaps-touch");
+    for (const [boton, cual] of [
+      [this.trenTouch, "tren"],
+      [this.flapsTouch, "flaps"],
+    ] as const) {
+      boton.addEventListener("click", () => this.alTocarMando?.(cual));
+    }
     // El «soltar» se escucha en la ventana y no en el botón: al despegar, el
     // botón se oculta con el dedo todavía encima, y un elemento oculto ya no
     // recibe el `pointerup`. El freno se quedaba puesto para siempre, y al
@@ -1439,6 +1502,35 @@ export class Hud {
     const pisado = braking > 0.05;
     this.brakes.classList.toggle("freno--pisado", pisado);
     this.brakesTouch.classList.toggle("freno--pisado", pisado);
+
+    /*
+     * **El tren y los flaps, que no se esconden al despegar.**
+     *
+     * El freno sí: en el aire no sirve de nada. Éstos dos son justamente los
+     * que se tocan volando —el tren se mete al subir y se saca en final, los
+     * flaps se mueven en los dos extremos— así que están puestos todo el rato.
+     *
+     * Y el del tren **solo donde hay tren que meter**: un entrenador de
+     * escuela lleva las patas al aire, y un botón que no hace nada enseña que
+     * los mandos son adorno. Lo dice el avión, no una lista. Ver
+     * `hayPalancaDeTren` en `flight/input.ts`.
+     */
+    this.trenTouch.hidden = !this.hayTren;
+    this.flapsTouch.hidden = false;
+    /*
+     * Y los tres estados del tren, que son la pregunta que se hizo jugando:
+     * «¿en qué parte del panel veo que se está poniendo o quitando?». Dentro,
+     * apagado; moviéndose, en ámbar; fuera y trabado, en verde. Los mismos
+     * que las luces del cuadro, y con la misma regla: verde solo cuando de
+     * verdad está trabado. Ver `luzDeTren` en `flight/tren.ts`.
+     */
+    const luz = luzDeTren(mandos?.tren ?? 1);
+    this.trenTouch.classList.toggle("mando--fuera", luz === "fuera");
+    this.trenTouch.classList.toggle("mando--moviendose", luz === "moviendose");
+    this.flapsTouch.classList.toggle(
+      "mando--fuera",
+      (mandos?.flaps ?? 0) > 0.01,
+    );
 
     // Alabeo y cabeceo los quieren dos consumidores —la tarjeta del horizonte
     // y el cuadro de mandos—, y solo uno de los dos existe a la vez. Se
@@ -2028,6 +2120,17 @@ export class Hud {
   /** Quién abre los créditos. Ver el botón en el marcado. */
   onCredits(handler: () => void): void {
     this.creditsHandler = handler;
+  }
+
+  /**
+   * Quién atiende al tren y a los flaps cuando se tocan desde fuera.
+   *
+   * Lo mismo que hace el botón de dentro de la cabina, y por el mismo camino:
+   * dos sitios que bajaran flaps con dos cuentas distintas sería la vía rápida
+   * a que un día dijeran cosas distintas. Ver `pulsarMandoDeCabina`.
+   */
+  onMandoDeCabina(handler: (cual: "tren" | "flaps") => void): void {
+    this.alTocarMando = handler;
   }
 
   /** Quién abre el esquema de cómo vuela un ala. */
