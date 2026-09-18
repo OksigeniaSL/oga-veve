@@ -87,3 +87,24 @@ export function rumboHacia(
 ): number {
   return Math.atan2(hastaX - desdeX, -(hastaZ - desdeZ));
 }
+
+/**
+ * El giro que hay que darle a un modelo para que mire a ese rumbo, en radianes.
+ *
+ * **Un rumbo de brújula y un giro de modelo no son el mismo número**, y
+ * confundirlos es lo que puso a rodar de medio lado al tráfico del aeropuerto.
+ * `rumboHacia` devuelve `atan2(dx, -dz)`, que es el rumbo; y el morro de los
+ * modelos de este juego mira a −Z, así que girarlo hasta ese rumbo pide el
+ * ángulo **contrario**. Es la misma cuenta que ya hacía la sombra del avión
+ * —`blobShadow.rotation.y = -state.heading`— escrita donde se pueda nombrar y
+ * probar.
+ *
+ * Lo traicionero de equivocarse aquí es que **no queda al revés: queda
+ * espejado en el eje norte-sur**. Yendo al norte o al sur acierta, y falla en
+ * todo lo demás, así que una captura cualquiera tiene una de cada dos de
+ * parecer correcta. Dicho jugando: «esa avioneta que se ve rodando de medio
+ * lado ya me dirás lo que significa».
+ */
+export function giroDelModelo(rumbo: number): number {
+  return -rumbo;
+}

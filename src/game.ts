@@ -6015,7 +6015,31 @@ export class Game {
        * ponerse treinta metros por delante del morro **en la pista**, que es
        * justo lo que se arregló: se le acaba pasando por encima.
        */
-      const espera = fase === "aterrizado" ? this.bocaDeLaSalida() : null;
+      /*
+       * **Y te espera en la salida mientras sigas en la pista, no solo
+       * mientras frenás.**
+       *
+       * Esto miraba una sola fase —«aterrizado»— y en cuanto pasaba a
+       * «abandonando», que es justo cuando la instructora dice «salí de la
+       * pista, que viene otro», el tope desaparecía: el coche volvía a
+       * plantarse treinta metros por delante del morro, **en la pista**. Y un
+       * sígame va a velocidad de coche; quien acelera hacia una salida lejana
+       * va mucho más rápido, lo alcanza y se lo lleva por delante.
+       *
+       * Contado jugando en Fuerteventura: «ya la locución me había dicho salí
+       * de la pista que viene otro, acelero porque en esta pista las salidas
+       * están lejos, y "se rompió, volvemos a empezar"». Te mandan salir, te
+       * ponen el coche delante y adelantarlo cuesta el vuelo.
+       *
+       * El porqué ya estaba escrito aquí al lado —«por una pista en uso no
+       * circula nadie»— y la guarda cubría una fase de las tres. Ahora la
+       * condición es **dónde están las ruedas**, que es el hecho, y no en qué
+       * fase cree el plan que va el vuelo: mientras el avión pise pista, el
+       * coche espera en la boca de la salida.
+       */
+      const enLaPistaAun = s.onGround && s.onRunway;
+      const espera =
+        fase === "aterrizado" || enLaPistaAun ? this.bocaDeLaSalida() : null;
       const donde = this.sigueme.donde;
       const aQue = donde
         ? Math.hypot(donde.x - s.position.x, donde.z - s.position.z)
@@ -6034,7 +6058,11 @@ export class Game {
       this.sigueme.paso(
         dt,
         { x: s.position.x, z: s.position.z },
-        rodando && s.onGround && !(fase === "aterrizado" && !espera),
+        // Y si está en la pista y no hay salida que esperar, no sale: lo
+        // contrario es ponerlo a correr por una pista en uso. Ver `espera`.
+        rodando &&
+          s.onGround &&
+          !((fase === "aterrizado" || enLaPistaAun) && !espera),
         cede,
         (x, z) => this.terrain.sampleHeight(x, z),
         espera,

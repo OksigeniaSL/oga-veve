@@ -6,6 +6,7 @@
  * se ha enseñado es que la radio miente.
  */
 import { describe, expect, it } from "vitest";
+import { giroDelModelo } from "./rumbo";
 import { ESPERA_ENTRE_VUELOS, ESPERA_MAXIMA } from "../flight/radio";
 import {
   ENTRE_MARCAS,
@@ -195,4 +196,46 @@ describe("y se va cuando deja de estar en la frecuencia", () => {
     expect(SE_VA_A_LOS).toBeGreaterThan(ESPERA_MAXIMA);
     expect(SE_VA_A_LOS).toBeLessThan(ESPERA_ENTRE_VUELOS);
   });
+});
+
+describe("y el avión mira hacia donde va", () => {
+  /*
+   * `porElCamino` devuelve un **rumbo de brújula** —`atan2(dx, -dz)`, la misma
+   * cuenta que `rumboHacia`— y girar el modelo hasta ese rumbo pide el ángulo
+   * contrario, porque su morro mira a −Z. Confundir los dos números es lo que
+   * puso el tráfico a rodar de medio lado.
+   *
+   * **Y esta prueba llama a `giroDelModelo`, que es lo que usa el dibujo.** La
+   * primera versión se calculaba el giro ella misma y por eso pasaba con el
+   * fallo puesto y sin él: comprobaba su propia aritmética, no el código.
+   */
+  const mirandoA = (rumbo: number): [number, number] => {
+    const t = giroDelModelo(rumbo);
+    return [-Math.sin(t), -Math.cos(t)];
+  };
+
+  const casos: ReadonlyArray<readonly [string, number, number]> = [
+    ["norte", 0, -1],
+    ["este", 1, 0],
+    ["sur", 0, 1],
+    ["oeste", -1, 0],
+    ["sureste", 1, 1],
+  ];
+
+  for (const [nombre, dx, dz] of casos) {
+    it(`yendo al ${nombre}, el morro apunta al ${nombre}`, () => {
+      const paso = porElCamino(
+        [
+          { x: 0, y: 0, z: 0 },
+          { x: dx * 100, y: 0, z: dz * 100 },
+        ],
+        50,
+      );
+      expect(paso).not.toBeNull();
+      const [mx, mz] = mirandoA(paso!.rumbo);
+      const n = Math.hypot(dx, dz);
+      expect(mx).toBeCloseTo(dx / n, 5);
+      expect(mz).toBeCloseTo(dz / n, 5);
+    });
+  }
 });
