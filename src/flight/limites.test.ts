@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
 import {
+  resistenciaDeOnda,
   alturaDelCruce,
   machDe,
   NUDO,
@@ -92,5 +93,60 @@ describe("la flota entera", () => {
     const grande = aircraftById("jaz-120");
     expect(grande.vmoKt * NUDO).toBeCloseTo(187.8, 0);
     expect(topeDeVelocidad(grande, 0).verdadera).toBeCloseTo(187.8, 0);
+  });
+});
+
+describe("la barrera del sonido cuesta lo que tiene que costar", () => {
+  /*
+   * Sin esto, el de fuselaje ancho llegaba a Mach 1,06 nivelado y con gas a
+   * fondo: medido en el juego, setecientos seis nudos a tres mil metros.
+   * Ver `resistenciaDeOnda`.
+   */
+  const CD0 = 0.021;
+  const MMO = 0.92;
+
+  it("por debajo del crítico no cuesta nada", () => {
+    for (const m of [0, 0.3, 0.6, 0.8]) {
+      expect(resistenciaDeOnda(m, MMO, CD0)).toBe(0);
+    }
+  });
+
+  it("y en el propio Mmo ya se nota, que para eso está el margen", () => {
+    expect(resistenciaDeOnda(MMO, MMO, CD0)).toBeGreaterThan(0);
+  });
+
+  it("sube con el Mach, nunca baja", () => {
+    let antes = -1;
+    for (let m = 0.8; m <= 1.05; m += 0.01) {
+      const ahora = resistenciaDeOnda(m, MMO, CD0);
+      expect(ahora).toBeGreaterThanOrEqual(antes);
+      antes = ahora;
+    }
+  });
+
+  it("y en Mach uno multiplica la resistencia por más de diez", () => {
+    // Doce veces el cd0 limpio: el orden que miden los túneles para un perfil
+    // de línea. Es lo que hace que un avión de pasaje no cruce la barrera
+    // aunque le sobre empuje.
+    expect(resistenciaDeOnda(1, MMO, CD0) / CD0).toBeGreaterThan(10);
+  });
+
+  it("y el codo es un codo: casi plano y luego vertical", () => {
+    // La cuarta potencia. Entre el crítico y el punto medio hasta Mach uno se
+    // gasta menos de la décima parte de lo que cuesta el tramo siguiente.
+    const critico = MMO * 0.94;
+    const medio = (critico + 1) / 2;
+    const primera = resistenciaDeOnda(medio, MMO, CD0);
+    const total = resistenciaDeOnda(1, MMO, CD0);
+    expect(primera / total).toBeLessThan(0.1);
+  });
+
+  it("y un avión lento, con Mmo bajo, empieza a pagarla antes", () => {
+    // La avioneta no llega, pero la regla sale de su propia ficha y no de un
+    // número escrito para el reactor.
+    const lenta = resistenciaDeOnda(0.55, 0.55, CD0);
+    const rapida = resistenciaDeOnda(0.55, 0.92, CD0);
+    expect(lenta).toBeGreaterThan(0);
+    expect(rapida).toBe(0);
   });
 });

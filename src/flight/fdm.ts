@@ -30,7 +30,12 @@
 import { Quaternion, Vector3 } from "three";
 import { loQueCambiaElTren } from "./tren";
 import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
-import { topeDeVelocidad, type QuienManda } from "./limites";
+import {
+  topeDeVelocidad,
+  type QuienManda,
+  machDe,
+  resistenciaDeOnda,
+} from "./limites";
 import { esDeChorro, tieneReversa, type AircraftConfig } from "./aircraft";
 import { REVERSA_HASTA } from "./arcade";
 
@@ -546,7 +551,20 @@ export class CoefficientFlightModel implements FlightModel {
        * veces. El del bimotor es el limpio —lo dice su ficha— y a ése sí.
        * Ver `flight/tren.ts`.
        */
-      (ac.trenRetractil ? loQueCambiaElTren(assisted.tren) : 0);
+      (ac.trenRetractil ? loQueCambiaElTren(assisted.tren) : 0) +
+      /*
+       * **Y la onda, que es lo que impide cruzar la barrera del sonido.**
+       *
+       * Sin ella el empuje y la resistencia se igualaban donde les daba la
+       * gana: medido, el de fuselaje ancho nivelado y con gas a fondo llegaba
+       * a Mach 1,06 a tres mil metros. Ningún avión de pasaje hace eso, y el
+       * aviso de sobrevelocidad quedaba avisando de un límite que luego no
+       * costaba nada pasar — que es como se enseña a desoír los avisos.
+       *
+       * Ver `resistenciaDeOnda` en `flight/limites.ts`, donde está la curva y
+       * el porqué de cada número.
+       */
+      resistenciaDeOnda(machDe(speed, this.state.position.y), ac.mmo, a.cd0);
     const cy = a.cyBeta * s.beta;
 
     // ── Pérdida, con histéresis y con paciencia ──────────────────────────

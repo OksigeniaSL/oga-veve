@@ -107,3 +107,58 @@ export function alturaDelCruce(a: AircraftConfig): number | null {
   }
   return Math.round((bajo + alto) / 2);
 }
+
+/**
+ * A qué Mach empieza a dispararse la resistencia, como fracción del Mmo.
+ *
+ * El Mach crítico de un ala es donde el aire que la rodea llega a la velocidad
+ * del sonido aunque el avión no; de ahí para arriba se forma una onda de
+ * choque sobre el extradós y la resistencia sube a plomo. En un avión de línea
+ * ese punto queda un poco por debajo de su Mmo —el Mmo se fija con margen,
+ * precisamente para no vivir ahí— así que sale del propio Mmo de la ficha en
+ * vez de ser un número más que mantener.
+ */
+const EMPIEZA_LA_ONDA = 0.94;
+
+/**
+ * Cuánto multiplica la resistencia al llegar a Mach uno.
+ *
+ * Doce veces el `cd0` limpio, que es el orden de magnitud que miden los
+ * túneles para un perfil de línea: la barrera del sonido no es una pared, pero
+ * cuesta como si lo fuera, y por eso un avión de pasaje no la cruza aunque le
+ * sobre empuje.
+ */
+const LO_QUE_CUESTA = 12;
+
+/**
+ * Lo que **suma** la resistencia de onda a ese Mach. Cero por debajo del
+ * crítico.
+ *
+ * ## Por qué hace falta
+ *
+ * Sin esto, empuje y resistencia se igualan donde les da la gana: medido en el
+ * juego, el de fuselaje ancho nivelado y con gas a fondo llegaba a **706
+ * nudos** a tres mil metros, o sea Mach 1,06. Ningún avión de pasaje hace eso
+ * ni de lejos, y el juego lo contaba como normal —«¿por qué a cinco mil metros
+ * no pasa de 302?» era la pregunta buena, y la respuesta fea era que por
+ * arriba no había nada que lo parara—.
+ *
+ * Y no es solo verosimilitud. El aviso de sobrevelocidad avisa de pasar un
+ * límite que luego no tiene ninguna consecuencia, y un aviso así se aprende a
+ * desoír. Con la onda puesta, pasarse **cuesta**: el avión deja de acelerar
+ * solo, que es exactamente lo que enseña por qué existe el límite.
+ *
+ * La subida va con la cuarta potencia, que es la forma que tiene la curva de
+ * verdad: casi plana hasta el codo y vertical después. Ver `MMO` en la ficha
+ * de cada aeronave y `topeDeVelocidad`.
+ */
+export function resistenciaDeOnda(
+  mach: number,
+  mmo: number,
+  cd0: number,
+): number {
+  const critico = mmo * EMPIEZA_LA_ONDA;
+  if (!Number.isFinite(mach) || mach <= critico) return 0;
+  const pasado = (mach - critico) / Math.max(0.01, 1 - critico);
+  return cd0 * LO_QUE_CUESTA * Math.min(1, pasado) ** 4;
+}
