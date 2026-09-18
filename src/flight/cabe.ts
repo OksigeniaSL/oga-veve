@@ -36,6 +36,8 @@
  */
 
 import type { AircraftConfig } from "./aircraft";
+// Solo el tipo: se borra al compilar, así que no ata `flight` a `world`.
+import type { Scenario } from "../world/scenarios";
 import { pistaQueNecesita } from "./carrera";
 import { GIRO_DE_MORRO } from "./fdm";
 import type { Superficie } from "../world/superficie";
@@ -100,4 +102,61 @@ export function cabeEn(a: AircraftConfig, campo: Campo): Veredicto {
     };
 
   return { cabe: true, porQueNo: null, necesita, hay: campo.largo };
+}
+
+/**
+ * El avión que se va a volar de verdad en ese campo: el pedido si cabe, y si
+ * no, **el mayor de los que caben**.
+ *
+ * ## Por qué hace falta fuera del hangar
+ *
+ * Porque esta regla vivía solo dentro de él, escrita dos veces, y el hangar no
+ * siempre se abre: con `?escenario=` en la dirección se va derecho a volar, y
+ * el avión sale de la dirección o del perfil guardado. Nadie volvía a mirar si
+ * cabía.
+ *
+ * Contado jugando: «despegar y aterrizar en La Gomera con un 747, no sé si eso
+ * puede ser real, pero aquí se hace». Y no lo es: esa pista mide mil
+ * doscientos cincuenta metros y ese avión necesita mil cuatrocientos
+ * veinticuatro para rotar. El juego se lo permitió porque la comprobación no
+ * estaba en ese camino.
+ *
+ * Y esto no es una manía de exactitud: es la regla de la casa —lo que se
+ * enseña es real— aplicada a lo que más se nota. Un simulador donde un
+ * fuselaje ancho opera en una pista de isla pequeña enseña, sin decirlo, que
+ * el tamaño de la pista da igual. Y da igual de todo menos igual.
+ *
+ * Devuelve el mismo objeto cuando cabe, para que quien llama pueda comparar
+ * por identidad y enterarse de si hubo cambio.
+ */
+/**
+ * El campo tal como lo ve esta regla: lo que mide su pista y de qué es.
+ *
+ * Vivía en el hangar, y por eso la comprobación de si un avión cabe solo se
+ * hacía allí. La regla y su entrada van juntas o la regla no se puede usar
+ * desde ningún otro sitio — que es exactamente lo que pasó.
+ */
+export function campoDe(escenario: Scenario): Campo {
+  const pista = escenario.aerodrome?.runways[0];
+  const blanda = /grass|dirt|gravel|earth|sand|ground/i.test(
+    pista?.surface ?? "",
+  );
+  return {
+    largo: escenario.runway.length,
+    ancho: escenario.runway.width,
+    superficie: blanda ? "hierba" : "asfalto",
+  };
+}
+
+export function elQueQuepa(
+  pedido: AircraftConfig,
+  campo: Campo,
+  flota: readonly AircraftConfig[],
+): AircraftConfig {
+  if (cabeEn(pedido, campo).cabe) return pedido;
+  const quepan = flota.filter((a) => cabeEn(a, campo).cabe);
+  // El mayor de los que caben, que es el que más se parece a lo que se pidió.
+  // Y si no cabe ninguno —no debería pasar—, el pedido: mejor volar algo que
+  // quedarse en una pantalla en blanco.
+  return quepan[quepan.length - 1] ?? pedido;
 }
