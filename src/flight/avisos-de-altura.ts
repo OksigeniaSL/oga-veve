@@ -64,13 +64,33 @@ export const ESCALONES_EN_PIES: readonly Escalon[] = [
   { metros: 3, dice: "ten", encasa: "diez" },
 ];
 
-/**
- * Cuánto hay que subir por encima de un escalón para volver a armarlo.
+/*
+ * **Ya no hay rearme por altura, y ese era el fallo.**
  *
- * Sin esta holgura, volar rozando justo un escalón lo dispara en cada
- * fotograma. Con ella hay que subir de verdad para que vuelva a contar.
+ * Había uno: subir ocho metros por encima de un escalón lo volvía a armar. La
+ * holgura evitaba que rozarlo lo disparara cada fotograma, pero no evitaba lo
+ * que de verdad pasa volando sobre relieve: la altura **sobre el suelo** salta
+ * con cada pliegue del terreno, y cada salto rearma y vuelve a cantar. Medido
+ * en el barrido, en La Palma —una isla de barrancos con la pista sobre el
+ * mar—: «cien» **seiscientas siete veces** en un solo vuelo. Acotarlo a la
+ * toma lo dejó en trescientas diecinueve, porque dentro del propio embudo el
+ * terreno cae al mar.
+ *
+ * La regla buena no necesita holgura ninguna: **en una toma la cuenta baja y
+ * no vuelve a subir.** Rearmar es cosa de empezar **otra** aproximación, y eso
+ * ya lo cubre salir de la toma —ver `aterrizando`—, que es lo que pasa al
+ * irse al aire, al tocar o al alejarse de la pista.
+ *
+ * Y de paso desaparece el número mágico.
  */
-const REARME = 8;
+
+/**
+ * Cuántos fotogramas seguidos fuera de la toma cuentan como haberse ido.
+ *
+ * Unos tres segundos a sesenta por segundo. Rozar el borde del embudo dura un
+ * puñado de fotogramas; irse al aire dura mucho más. Ver `paso`.
+ */
+const SE_FUE_DE_VERDAD = 180;
 
 export interface Escalon {
   readonly metros: number;
@@ -89,8 +109,34 @@ export type Aviso = Escalon;
  * toca, o `null`. No sabe hablar ni dibujar: eso es de quien lo use.
  */
 export class AvisosDeAltura {
-  /** Escalones ya dados, hasta que se suba lo bastante para rearmarlos. */
+  /** Escalones ya dados en esta toma. Ver `paso`. */
   private dados = new Set<number>();
+
+  /**
+   * Cuántos fotogramas seguidos lleva sin venir a posarse.
+   *
+   * Se cuenta en fotogramas y no en segundos porque esto no recibe el reloj, y
+   * lo que hace falta es distinguir «rozó el borde del embudo» de «se fue al
+   * aire»: cualquier umbral de unos segundos separa las dos cosas.
+   */
+  private fuera = 0;
+
+  /**
+   * Si se ha estado por encima del escalón más alto desde el último contacto
+   * con el suelo.
+   *
+   * **Es lo que separa una recogida de una carrera de despegue**, y ninguna de
+   * las otras guardas lo conseguía. En la carrera el avión rebota: las ruedas
+   * tocan y dejan de tocar, está «en el aire» a dos metros, está sobre la
+   * pista, y entre bote y bote **baja** — así que «en el aire», «es una toma»
+   * y «va bajando» daban verdad las tres, y la cuenta entera se soltaba desde
+   * arriba una y otra vez.
+   *
+   * Pero para contar desde cien metros hay que haber estado por encima de cien
+   * metros. Un despegue empieza en el suelo; una recogida viene de arriba. Eso
+   * no lo puede falsear ni un rebote ni un barranco.
+   */
+  private vinoDeArriba = false;
 
   /**
    * Los escalones de hoy: los métricos o los de pies.
@@ -110,19 +156,97 @@ export class AvisosDeAltura {
    * `sobreElSuelo` en metros; `enElAire` para no cantar mientras se rueda —al
    * rodar se está a un metro del suelo todo el rato y no hay toma que anunciar.
    */
-  paso(sobreElSuelo: number, enElAire: boolean): Aviso | null {
+  paso(
+    sobreElSuelo: number,
+    enElAire: boolean,
+    /**
+     * Si esto es una toma: viniendo en final o ya sobre la pista.
+     *
+     * **Sin esto la cuenta atrás es del terreno, no de la recogida.** El
+     * rearme mira la altura sobre el suelo, y sobrevolando un sitio de
+     * barrancos esa altura salta de treinta a doscientos metros y vuelve con
+     * cada pliegue: cada oscilación rearma un escalón y lo vuelve a cantar.
+     * Medido en el barrido, en La Palma: **«cien» seiscientas siete veces** en
+     * un solo vuelo, «cincuenta» cuatrocientas veintisiete.
+     *
+     * Y estos avisos no son del terreno. Lo dice la cabecera de este fichero:
+     * «enseñan solos el ritmo de la recogida». Fuera de una toma no enseñan
+     * nada — son ruido, y del que se aprende a no oír.
+     */
+    aterrizando: boolean,
+    /**
+     * Y si va **bajando**. La cuenta atrás es de la recogida: subiendo no se
+     * recoge nada.
+     *
+     * **Aquí estaba el fallo de verdad**, y no en el terreno. En la carrera de
+     * despegue el avión va rebotando por la pista: las ruedas tocan y dejan de
+     * tocar, y cada contacto borra la cuenta —«en tierra se olvida todo»—. Al
+     * fotograma siguiente está «en el aire» a dos metros y **sobre la pista**,
+     * o sea que hasta la guarda de «esto es una toma» daba verdad, y la cuenta
+     * entera se soltaba desde arriba. Y otra vez. Y otra.
+     *
+     * Medido en La Palma con el registro de cantos, que lo encontró a la
+     * primera cuando cuatro arreglos a ojo no lo habían conseguido:
+     *
+     *     one hundred [42 kt · 2 m] · fifty [42 kt · 2 m] · thirty [42 kt · 2 m]
+     *     one hundred [42 kt · 2 m] · fifty [42 kt · 2 m] · …
+     *
+     * Cuarenta y dos nudos y dos metros de altura son una carrera de despegue,
+     * no una toma. Y la cabecera de este fichero ya lo decía desde el primer
+     * día —«solo bajando: un aviso se da al cruzar hacia abajo, nunca al
+     * subir»—; lo que no había era quien lo comprobara.
+     */
+    bajando: boolean,
+  ): Aviso | null {
+    /*
+     * **Y lo que olvida la cuenta no puede depender del terreno.**
+     *
+     * Costó tres intentos y los tres movieron el número sin llevarlo a cero.
+     * Medido en La Palma —isla de barrancos, con la pista sobre el mar— y en
+     * este orden:
+     *
+     *   - de salida, 607 repeticiones de «cien» en un vuelo;
+     *   - acotando los avisos a la toma, 319;
+     *   - quitando además el rearme por altura, 509;
+     *   - borrando la cuenta por encima de doscientos metros, **654**.
+     *
+     * Y el patrón estaba a la vista desde el principio: para cantar «cien»
+     * seiscientas veces hay que **olvidar la cuenta seiscientas veces**. Cada
+     * arreglo cambiaba de camino de olvido sin quitar ninguno, y todos los
+     * caminos colgaban de lo mismo: `sobreElSuelo`, que sobre relieve sube y
+     * baja con cada pliegue aunque el avión vaya clavado.
+     *
+     * Así que la cuenta se olvida por **sucesos**, y ninguno lo puede fabricar
+     * el terreno:
+     *
+     *   - **tocar tierra** — la toma se acabó, la próxima empieza entera;
+     *   - **dejar de venir a posarse durante un rato seguido** — irse al aire
+     *     de verdad. Un rato, y no un fotograma: el embudo de final es una
+     *     figura geométrica y un avión que la roza entra y sale de ella
+     *     muchas veces sin dejar de aproximar.
+     *
+     * Y la altura solo decide **qué** se canta, que es para lo que sirve.
+     */
+    const masAlto = this.escalones[0]?.metros ?? 0;
     if (!enElAire) {
-      // En tierra se olvida todo: la próxima toma empieza de cero.
       this.dados.clear();
+      this.fuera = 0;
+      // Tocar el suelo cierra la cuenta: para volver a contar hay que volver a
+      // subir. Ver `vinoDeArriba`.
+      this.vinoDeArriba = false;
       return null;
     }
-
-    // Rearme: lo que ha quedado bien por encima vuelve a estar disponible.
-    for (const e of this.escalones) {
-      if (this.dados.has(e.metros) && sobreElSuelo > e.metros + REARME) {
-        this.dados.delete(e.metros);
-      }
+    if (sobreElSuelo > masAlto) this.vinoDeArriba = true;
+    if (!aterrizando) {
+      this.fuera++;
+      if (this.fuera > SE_FUE_DE_VERDAD) this.dados.clear();
+      return null;
     }
+    this.fuera = 0;
+    // Y subiendo no se canta, aunque no se olvide lo dicho. Ver `bajando`.
+    if (!bajando) return null;
+    // Ni sin haber venido de arriba: eso es una carrera, no una recogida.
+    if (!this.vinoDeArriba) return null;
 
     // Y el aviso: el más alto de los que se acaban de cruzar hacia abajo. Se
     // da uno solo por fotograma —caer diez metros de golpe no puede soltar
@@ -139,5 +263,7 @@ export class AvisosDeAltura {
   /** Vuelta a empezar. La llama el juego al reiniciar el vuelo. */
   reiniciar(): void {
     this.dados.clear();
+    this.fuera = 0;
+    this.vinoDeArriba = false;
   }
 }
