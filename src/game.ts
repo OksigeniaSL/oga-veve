@@ -5580,6 +5580,8 @@ export class Game {
     this.aircraftMesh.pantallas?.actualizar(
       {
         velocidad: this.flight.state.airspeed,
+        // Y a cuál hay que ir para aterrizar, que es lo que la cinta no decía.
+        vref: this.aircraft.approachSpeed,
         altura: this.flight.state.position.y,
         vertical: this.flight.state.verticalSpeed,
         rumbo: this.flight.state.heading,

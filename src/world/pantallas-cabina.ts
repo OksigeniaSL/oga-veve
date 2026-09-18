@@ -99,6 +99,21 @@ const SIMBOLO = PALETA.simbolo;
 export interface DatosDeCabina {
   /** Velocidad indicada, m/s. */
   readonly velocidad: number;
+  /**
+   * La velocidad de aproximación de esta aeronave, m/s.
+   *
+   * Es el número al que hay que volar para aterrizar, y en esta cabina **no
+   * estaba en ninguna parte**: la cinta decía a qué velocidad vas y ninguna
+   * marca decía a cuál hay que ir. Preguntado jugando, con el de fuselaje
+   * ancho sobre la cabecera: «¿se puede saber sobre qué tortuga tengo que
+   * volar para que el aterrizaje me valga?».
+   *
+   * En el peldaño de los dibujos esa respuesta ya existe —un tope en la vía de
+   * la tortuga y el pájaro— y aquí faltaba. Es el mismo arreglo en la otra
+   * superficie, que es el fallo que más veces se ha repetido en este cuadro:
+   * se arregla donde se mira y no donde también se mira.
+   */
+  readonly vref: number;
   /** Altura sobre el nivel del mar, m. */
   readonly altura: number;
   /** Velocidad vertical, m/s. */
@@ -838,6 +853,30 @@ function cintaDeVelocidad(
         "right",
       );
     }
+  }
+
+  /*
+   * **El bug de Vref: a qué velocidad se aterriza este avión.**
+   *
+   * Magenta y en el borde de fuera, que es donde lo lleva cualquier cinta de
+   * verdad y por qué: el borde de dentro es de las bandas del avión —lo que la
+   * estructura aguanta— y el de fuera es de lo que ha pedido quien vuela. Son
+   * dos cosas distintas y no se mezclan.
+   *
+   * Sale de la ficha, así que cambia solo con el aparato. Y va dentro del
+   * recorte de la cinta: cuando la velocidad de aproximación se sale de la
+   * ventana, el bug se sale con ella — que es lo que tiene que pasar, porque
+   * entonces lo que dice es «estás lejísimos».
+   */
+  {
+    const yv = medio + (kt - d.vref * NUDOS) * POR_NUDO;
+    g.fillStyle = PALETA.objetivo;
+    g.beginPath();
+    g.moveTo(x + w, yv);
+    g.lineTo(x + w + 9, yv - 6);
+    g.lineTo(x + w + 9, yv + 6);
+    g.closePath();
+    g.fill();
   }
 
   /*

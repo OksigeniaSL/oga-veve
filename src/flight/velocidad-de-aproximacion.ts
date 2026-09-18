@@ -110,6 +110,26 @@ const RODAJE = 9;
 /** Por debajo de esto no se está rodando, se está saliendo o llegando. */
 const APENAS_SE_MUEVE = 2;
 
+/**
+ * Y por encima de esto tampoco se está rodando: se está aterrizando.
+ *
+ * **Dos veces y media la de rodaje**, que son cuarenta y cuatro nudos: muy por
+ * encima de cualquier margen que esta banda vaya a avisar, y por debajo de lo
+ * que se posa el avión más lento de la flota —el fumigador toca a cincuenta y
+ * cuatro—. Entre las dos cosas no hay nada que confundir.
+ *
+ * Hace falta porque callar la banda «en la pista» no basta, y está medido:
+ * tocando un metro fuera del asfalto, el juego soltaba «más despacio»
+ * **aterrizando a ciento treinta y dos nudos**. La pregunta de quien lo sufría
+ * era la correcta: «vas muy bajo, vas muy rápido, deja el aterrizaje ¿se puede
+ * saber sobre qué tortuga tengo que volar?».
+ *
+ * El sitio es un dato que se puede equivocar —el borde de una pista es un
+ * polígono, y las ruedas caen donde caen—; la velocidad no. Un avión a ciento
+ * treinta nudos no está rodando por ninguna calle del mundo.
+ */
+const YA_NO_ES_RODAJE = RODAJE * 2.5;
+
 /** Cuánto se puede pasar de la de rodaje antes de avisar. */
 const MARGEN_RODAJE = 0.35;
 
@@ -138,6 +158,8 @@ export function bandaDeRodaje(
    */
   if (!enElSuelo || corriendo) return null;
   if (velocidad < APENAS_SE_MUEVE) return null;
+  // Y ni aterrizando ni despegando, lo diga la fase o no. Ver `YA_NO_ES_RODAJE`.
+  if (velocidad > YA_NO_ES_RODAJE) return null;
   return velocidad > RODAJE * (1 + MARGEN_RODAJE) ? "rapido" : "bien";
 }
 

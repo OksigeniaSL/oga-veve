@@ -139,8 +139,28 @@ describe("y en la pista no hay banda: ni voz ni color", () => {
     expect(bandaDeAhora(tocando, VREF_ANCHO, false)).toBe(null);
   });
 
-  it("y la banda de rodaje sola sí lo diría: por eso hace falta la regla", () => {
-    expect(bandaDeRodaje(tocando.velocidad, true, false)).toBe("rapido");
+  it("y a esa velocidad la banda de rodaje ya no dice nada, ni a solas", () => {
+    /*
+     * Antes sí lo decía, y por eso nació la regla de callar en la pista. Pero
+     * esa regla mira el **sitio**, y el sitio se puede errar por un metro: con
+     * las ruedas fuera del asfalto volvía a soltar «más despacio» aterrizando
+     * a ciento treinta y dos nudos. Ahora la propia banda tiene un techo de
+     * velocidad, que no se puede errar. Ver `YA_NO_ES_RODAJE`.
+     */
+    expect(bandaDeRodaje(tocando.velocidad, true, false)).toBe(null);
+  });
+
+  it("y la regla de la pista sigue haciendo falta, a velocidad de calle", () => {
+    // Rodando por la pista para ir a la cabecera: la banda de rodaje sí
+    // hablaría, y ahí calla porque una pista no es una calle.
+    expect(bandaDeRodaje(20, true, false)).toBe("rapido");
+    expect(
+      bandaDeAhora(
+        { ...tocando, velocidad: 20, vertical: 0 },
+        VREF_ANCHO,
+        false,
+      ),
+    ).toBe(null);
   });
 
   it("ni corriendo para despegar, con el gas a fondo", () => {
@@ -222,5 +242,43 @@ describe("y lo que se dice no puede ser lo contrario de lo que pasa", () => {
       const rapido = queSeDice("rapido", suelo);
       if (lento !== null && rapido !== null) expect(lento).not.toBe(rapido);
     }
+  });
+});
+
+describe("y a velocidad de aterrizaje no se está rodando, toque donde toque", () => {
+  /*
+   * Medido en el juego: el de fuselaje ancho tocando a ciento treinta y dos
+   * nudos un metro fuera del asfalto, y el juego pidiéndole «más despacio».
+   * Callar la banda «en la pista» no bastaba: el borde de una pista es un
+   * polígono y las ruedas caen donde caen. Ver `YA_NO_ES_RODAJE`.
+   */
+  it("a ciento treinta nudos por el suelo no hay banda de rodaje", () => {
+    expect(bandaDeRodaje(68, true, false)).toBe(null);
+  });
+
+  it("ni fuera de la pista, que es donde se colaba", () => {
+    expect(
+      bandaDeAhora(
+        {
+          sobreElSuelo: 0,
+          enElSuelo: true,
+          enLaPista: false,
+          vertical: -1,
+          velocidad: 68,
+        },
+        75,
+        false,
+      ),
+    ).toBe(null);
+  });
+
+  it("pero a velocidad de calle sí, que es para lo que existe", () => {
+    expect(bandaDeRodaje(20, true, false)).toBe("rapido");
+    expect(bandaDeRodaje(8, true, false)).toBe("bien");
+  });
+
+  it("y el fumigador, que es el que más despacio se posa, queda por encima", () => {
+    // Toca a cincuenta y cuatro nudos: la banda de rodaje ya está callada ahí.
+    expect(bandaDeRodaje(54 / 1.94384, true, false)).toBe(null);
   });
 });
