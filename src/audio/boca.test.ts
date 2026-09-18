@@ -356,3 +356,46 @@ describe("la cadencia", () => {
     expect(dichas).toHaveLength(2);
   });
 });
+
+describe("y calla a quien tenía la palabra", () => {
+  /*
+   * El fallo del camarote. En este juego hay cuatro bocas —la instructora, la
+   * torre, el otro avión y la comandante— y **cada una solo se callaba a sí
+   * misma** antes de empezar. Cuando la torre cortaba a la comandante, la
+   * torre se callaba a sí misma (que no estaba diciendo nada) y la comandante
+   * seguía sonando. Al despegar coinciden las cuatro.
+   */
+  it("al cortar, se le dice al anterior que se calle", () => {
+    const b = boca();
+    let callada = false;
+    b.pedir("normal", () => () => {
+      callada = true;
+    });
+    expect(callada).toBe(false);
+    b.pedir("urgente", () => undefined);
+    expect(callada).toBe(true);
+  });
+
+  it("y no se le calla dos veces, ni al que ya terminó", () => {
+    const b = boca();
+    let veces = 0;
+    let acabar = () => {};
+    b.pedir("normal", (listo) => {
+      acabar = listo;
+      return () => {
+        veces += 1;
+      };
+    });
+    acabar();
+    b.pedir("urgente", () => undefined);
+    expect(veces).toBe(0);
+  });
+
+  it("y quien no sabe callarse tampoco rompe nada", () => {
+    // Una boca puede no tener con qué cortarse —la voz del navegador cuando
+    // el audio todavía duerme—, y eso no puede tirar a la que llega.
+    const b = boca();
+    b.pedir("normal", () => undefined);
+    expect(() => b.pedir("urgente", () => undefined)).not.toThrow();
+  });
+});

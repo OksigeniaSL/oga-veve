@@ -381,6 +381,15 @@ export class VozDelNavegador implements Instructor {
         frase.onend = listo;
         frase.onerror = listo;
         speechSynthesis.speak(frase);
+        /*
+         * Y cómo callarla, para cuando otra voz tenga que cortarla.
+         *
+         * `speechSynthesis` es uno solo para todo el navegador, así que
+         * cancelarlo calla a cualquiera que estuviera sintetizando — que es lo
+         * que se quiere: la boca solo llama a esto cuando le da la palabra a
+         * otro. Ver `Hablar` en `audio/boca.ts`.
+         */
+        return () => speechSynthesis.cancel();
       },
       clave,
     );
