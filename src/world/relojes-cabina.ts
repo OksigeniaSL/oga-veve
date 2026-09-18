@@ -43,7 +43,7 @@ import {
   type Mesh,
   type Object3D,
 } from "three";
-import { LETRAS_DESDE, desdePara, type Peldano } from "../ui/familia";
+import { LETRAS_DESDE, apunta, desdePara, type Peldano } from "../ui/familia";
 import type { Cuadro } from "../ui/cuadro";
 
 /** Lado del lienzo de cada reloj, en píxeles. */
@@ -311,6 +311,9 @@ function escribirSiToca(
   color: string,
 ): void {
   if (peldano < desdePara(texto)) return;
+  // Y se apunta, en el mismo sitio que las pantallas de cristal: el banco no
+  // puede contar lo que hay en un lienzo, así que lo cuenta quien lo pinta.
+  apunta(texto);
   escribir(g, texto, x, y, fuente, color);
 }
 

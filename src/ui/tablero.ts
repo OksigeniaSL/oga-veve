@@ -37,6 +37,8 @@ import {
   familiaDe,
   patasDe,
   type Familia,
+  MARCA_CON_SU_APARATO,
+  MARCA_ROTULO,
 } from "./familia";
 import {
   POR_GRADO,
@@ -214,7 +216,7 @@ export class Tablero {
       <rect width="${ANCHO_DEL_CUADRO}" height="${VISERA}" class="tablero__visera" />
       ${familia === "linea" ? this.mcp() : ""}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
-            data-desde="3" class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
+            ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
     `;
   }
 
@@ -230,14 +232,14 @@ export class Tablero {
       .map((r, i) => {
         const x = 490 + i * 100;
         return `
-          <g class="tablero__mcp" data-desde="2">
+          <g class="tablero__mcp" ${MARCA_CON_SU_APARATO}>
             <rect x="${x}" y="12" width="84" height="40" rx="3" />
             <!--
               Y el rótulo con la ventanilla, desde el mismo peldaño: tres
               cifras magenta sin decir de qué son no son tres objetivos, son
               tres números. La ventanilla y su nombre son la misma cosa.
             -->
-            <text x="${x + 42}" y="24" data-desde="2" class="cr__rotulo"
+            <text x="${x + 42}" y="24" ${MARCA_CON_SU_APARATO} class="cr__rotulo"
                   text-anchor="middle">${r}</text>
             <text data-mcp="${r.toLowerCase()}" x="${x + 42}" y="45"
                   class="cr__objetivo" text-anchor="middle">---</text>
@@ -269,10 +271,10 @@ export class Tablero {
           entre peldaños, crece— pero un sitio vacío se deja vacío, no se
           enmarca.
         -->
-        <rect data-fondo="placa" data-desde="3" width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
+        <rect data-fondo="placa" ${MARCA_ROTULO} width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
         ${this.chapa(a, placa.ancho)}
         <text data-cristal="gs" x="${placa.ancho / 2}" y="${BANDA.alto - 74}"
-              data-desde="3" class="cr__aux" text-anchor="middle"></text>
+              ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
         ${lucesDeTren(
           (placa.ancho - patasDe(a) * 22 + 6) / 2,
           BANDA.alto - 48,
@@ -296,8 +298,8 @@ export class Tablero {
     const arriba = partes.slice(0, 2).join(" ");
     const abajo = partes.slice(2).join(" ");
     return `
-      <text x="${ancho / 2}" y="46" data-desde="3" class="tablero__chapa" text-anchor="middle">${arriba}</text>
-      <text x="${ancho / 2}" y="76" data-desde="3" class="tablero__chapa tablero__chapa--nombre"
+      <text x="${ancho / 2}" y="46" ${MARCA_ROTULO} class="tablero__chapa" text-anchor="middle">${arriba}</text>
+      <text x="${ancho / 2}" y="76" ${MARCA_ROTULO} class="tablero__chapa tablero__chapa--nombre"
             text-anchor="middle">${abajo}</text>
       <line x1="${ancho * 0.2}" y1="94" x2="${ancho * 0.8}" y2="94" class="tablero__filete" />
     `;

@@ -58,7 +58,14 @@ import {
   pixelesPorMetro,
   rangoPara,
 } from "../ui/carta";
-import { CIFRAS_DESDE, desdePara, type Peldano } from "../ui/familia";
+import {
+  CIFRAS_DESDE,
+  apunta,
+  desdePara,
+  empiezaElRepintado,
+  loEscrito,
+  type Peldano,
+} from "../ui/familia";
 
 /**
  * La tipografía de la cabina: condensada, y la misma que el cuadro del HUD.
@@ -463,7 +470,9 @@ export function encenderPantallas(
       // El peldaño de este repintado, para las veintisiete letras. Y la cuenta
       // a cero: lo que se mide es lo que sale **en esta pasada**.
       peldanoDeAhora = datos.peldano;
-      rotulosPintados = 0;
+      // Las dos superficies de lienzo apuntan en el mismo sitio, y el
+      // repintado de las pantallas es el que abre la pasada. Ver `apunta`.
+      empiezaElRepintado();
       pantallas.forEach((p, i) => {
         // El espejo, deshecho: se dibuja al revés para que se vea del derecho
         // desde el otro lado del cuadrado. Ver `estirarUV`.
@@ -501,11 +510,23 @@ export function encenderPantallas(
  * peldaño rompe la promesa entera. Se pone al empezar cada repintado.
  */
 let peldanoDeAhora: Peldano = 4;
-let rotulosPintados = 0;
 
-/** Cuántas letras salieron en el último repintado. Para el banco. */
+/**
+ * Cuántas **palabras** salieron en el último repintado. Para el banco.
+ *
+ * Palabras y no textos: lo que se le promete a un prelector no es un panel sin
+ * números, es un panel sin palabras — y además en inglés aeronáutico. Contando
+ * las dos cosas juntas, la comprobación exigía un cuatrimotor con cuatro
+ * agujas y ni una cifra, que es lo que se vio jugando: «no veo números ni
+ * datos en ninguno».
+ */
 export function rotulosDeLaCabina(): number {
-  return rotulosPintados;
+  return loEscrito().rotulos;
+}
+
+/** Y cuántas cifras, que es lo otro que hay que poder medir. */
+export function cifrasDeLaCabina(): number {
+  return loEscrito().cifras;
 }
 
 function escribir(
@@ -526,7 +547,7 @@ function escribir(
    * plano. Ver `desdePara` en `ui/familia.ts`.
    */
   if (peldanoDeAhora < desdePara(texto)) return;
-  rotulosPintados += 1;
+  apunta(texto);
   g.save();
   g.translate(x, y);
   g.fillStyle = color;

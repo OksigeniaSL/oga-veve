@@ -255,14 +255,29 @@ for (const id of FLOTA) {
    *
    * Se mide en la de dentro, que es la que mira quien vuela desde la cabina.
    */
-  const rotulos = await page.evaluate(
-    () => globalThis.__oga.rotulosDeCabina?.() ?? -1,
-  );
+  const escrito = await page.evaluate(() => ({
+    rotulos: globalThis.__oga.rotulosDeCabina?.() ?? -1,
+    cifras: globalThis.__oga.cifrasDeCabina?.() ?? -1,
+  }));
   comprobar(
-    etiqueta("y en el primer peldaño no tiene ni una letra"),
-    rotulos === 0,
-    rotulos < 0 ? "no se pudo contar" : `${rotulos} rótulos`,
-    "se empieza a los cuatro años y no se lee",
+    etiqueta("y en el primer peldaño no tiene ni una palabra"),
+    escrito.rotulos === 0,
+    escrito.rotulos < 0 ? "no se pudo contar" : `${escrito.rotulos} palabras`,
+    "se empieza a los cuatro años y no se lee inglés aeronáutico",
+  );
+  /*
+   * **Pero cifras sí, desde el primero.**
+   *
+   * Es lo que se vio jugando: «¿y los relojes no llevan números? ¿cómo sabe el
+   * jugador los valores?». Un dígito no es lectura —un niño de cuatro años
+   * reconoce el 8 y el 2 por su forma— y sin él la aguja señala a un sitio que
+   * no tiene nombre. Lo que espera al tercer peldaño es la palabra.
+   */
+  comprobar(
+    etiqueta("y cifras sí, que si no la aguja no señala a nada"),
+    escrito.cifras > 0,
+    escrito.cifras < 0 ? "no se pudo contar" : `${escrito.cifras} cifras`,
+    "«no veo números ni datos en ninguno»",
   );
 
   /*
@@ -340,7 +355,7 @@ for (const id of FLOTA) {
     () => globalThis.__oga.rotulosDeCabina?.() ?? -1,
   );
   comprobar(
-    "jaz-120 en el cuarto peldaño: y ahí sí escribe, que el cuadro crece",
+    "jaz-120 en el cuarto peldaño: y ahí sí hay palabras, que el cuadro crece",
     rotulos > 0,
     rotulos < 0 ? "no se pudo contar" : `${rotulos} rótulos`,
     "«ni una letra» se cumple igual de bien con la pantalla apagada",
