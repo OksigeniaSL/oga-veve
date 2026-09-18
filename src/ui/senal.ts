@@ -522,6 +522,50 @@ const MEDIA_VUELTA = icono(`
  * pulsar la tecla. El ala va llena y el flap con su ángulo marcado, porque lo
  * que hay que entender es **que baja**.
  */
+/**
+ * **El tren de aterrizaje**: la pata con su rueda, y la flecha hacia abajo.
+ *
+ * Faltaba, sin más. La tarjeta se pedía con `"tren"` y `DIBUJOS` no tenía esa
+ * clave, así que salía el cuadrado naranja y nada dentro — contado jugando:
+ * «el icono del tren, cuando avisa, se ve vacío, es sólo el cuadrado naranja».
+ * Un aviso sin dibujo es media tarjeta, y en el peldaño que no lee es una
+ * tarjeta entera de nada.
+ *
+ * La rueda con su hueco es la misma forma que las luces del cuadro —ver
+ * `lucesDeTren`—, para que quien vea la tarjeta reconozca lo que tiene que
+ * mirar en el panel. Y la flecha dice hacia dónde: abajo, que es lo que se
+ * está pidiendo.
+ */
+const TREN = icono(`
+  <path d="M12 3.4 v6.2" fill="none" stroke="currentColor"
+        stroke-width="2.4" stroke-linecap="round" />
+  <path d="M8.4 9.6 h7.2" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" />
+  <circle cx="12" cy="15.6" r="5.2" />
+  <circle class="senal__hueco" cx="12" cy="15.6" r="2" />
+`);
+
+/**
+ * **Sobrevelocidad**: la aguja pasada de la raya roja.
+ *
+ * El otro dibujo que faltaba, y lo encontró el compilador en cuanto los
+ * nombres dejaron de ser cadenas sueltas. Se pedía con `"sobrevelocidad"` y no
+ * existía, así que el aviso de ir pasado de velocidad salía en blanco — igual
+ * que el del tren, y por lo mismo.
+ *
+ * Una esfera con su arco rojo arriba y la aguja metida en él. Es el gesto que
+ * se reconoce sin leer: la aguja donde no debe estar.
+ */
+const SOBREVELOCIDAD = icono(`
+  <path d="M4 18 a8.6 8.6 0 1 1 16 0" fill="none" stroke="currentColor"
+        stroke-width="2.2" stroke-linecap="round" />
+  <path class="senal__tachon" d="M15.4 5.6 a8.6 8.6 0 0 1 4.6 5.2"
+        fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" />
+  <path d="M12 17.4 L17.6 9.4" fill="none" stroke="currentColor"
+        stroke-width="2.4" stroke-linecap="round" />
+  <circle cx="12" cy="17.6" r="2" />
+`);
+
 const FLAPS = icono(`
   <path d="M2.4 11.4 q6-3.6 12-3 l3.6 1.2 -3.2 2.6 q-6 1.2 -12.4 0.6 Z" />
   <path d="M17.6 12.2 L22.4 16.6" fill="none" stroke="currentColor"
@@ -555,7 +599,7 @@ const GAFAS = icono(`
  * escribió sin envolver y durante meses la señal de levantar el morro fue un
  * recuadro naranja vacío.
  */
-export const DIBUJOS: Record<string, string> = {
+export const DIBUJOS = {
   llave: LLAVE,
   helice: HELICE,
   amarillo: RAYA,
@@ -570,6 +614,8 @@ export const DIBUJOS: Record<string, string> = {
   corregido: CORREGIDO,
   gafas: GAFAS,
   flaps: FLAPS,
+  tren: TREN,
+  sobrevelocidad: SOBREVELOCIDAD,
   freno: FRENO,
   salida: SALIDA,
   sinVoz: SIN_VOZ,
@@ -597,7 +643,25 @@ export const DIBUJOS: Record<string, string> = {
   "senalero-derecha": SENALERO_DERECHA,
   "senalero-despacio": SENALERO_DESPACIO,
   "senalero-frenos": SENALERO_FRENOS,
-};
+} as const;
+
+/** Los nombres de dibujo que existen. Ver `mostrar`. */
+export type DibujoDeSenal = keyof typeof DIBUJOS;
+
+/**
+ * Convierte un nombre montado en caliente en uno de los que existen.
+ *
+ * Algunos se componen —`papi3`, `senalero-frenos`, `circuito-base`— y esos no
+ * se pueden escribir en el tipo. Pasan por aquí, que es el único sitio donde
+ * la cadena vuelve a ser un nombre de dibujo: si no existe, **se ve en la
+ * consola en vez de salir un cuadrado vacío**, que es justo lo que hacía falta.
+ */
+export function comoDibujo(nombre: string): DibujoDeSenal {
+  if (nombre in DIBUJOS) return nombre as DibujoDeSenal;
+  if (import.meta.env.DEV)
+    console.error(`señal: no hay dibujo «${nombre}»; saldrá en blanco`);
+  return nombre as DibujoDeSenal;
+}
 
 /**
  * La tarjeta de señal del vuelo.
@@ -701,7 +765,21 @@ export class Senal {
    * saber leer.
    */
   mostrar(
-    dibujo: string,
+    /*
+     * **Y el nombre del dibujo no es una cadena cualquiera: es una de éstas.**
+     *
+     * `DIBUJOS[dibujo] ?? ""` no falla nunca — enseña el cuadrado de color y
+     * nada dentro. Así salió el aviso del tren, que se pedía con `"tren"`
+     * cuando no existía ese dibujo: «el icono del tren, cuando avisa, se ve
+     * vacío, es sólo el cuadrado naranja». La prueba de dibujos cubría las
+     * fases del vuelo, y esto no es una fase: lo levanta el juego a mano.
+     *
+     * Escrito como `keyof typeof DIBUJOS`, pedir uno que no está deja de ser
+     * una tarjeta en blanco y pasa a ser un error de compilación. Es la misma
+     * idea que el contrato de nombres con Blender: lo que cruza dos sitios se
+     * escribe una vez.
+     */
+    dibujo: DibujoDeSenal,
     texto: string,
     letra: string | null,
     opciones: {
