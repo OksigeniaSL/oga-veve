@@ -127,6 +127,8 @@ const MUCHO_ALABEO = 35;
 export class Pictogramas {
   private root: HTMLElement | null = null;
   private speedMark: SVGElement | null = null;
+  /** El tope de Vref en la vía. Ver el marcado. */
+  private vrefMark: SVGElement | null = null;
   private altPlane: SVGElement | null = null;
   private propeller: SVGElement | null = null;
   private horizonte: SVGElement | null = null;
@@ -147,6 +149,28 @@ export class Pictogramas {
             <g class="picto__bicho" transform="translate(2 12)">${TORTUGA}</g>
             <g class="picto__bicho" transform="translate(82 12)">${PAJARO}</g>
             <line class="picto__via" x1="20" y1="19" x2="80" y2="19" />
+            <!--
+              **Y la marca de a qué velocidad se aterriza.**
+
+              La vía decía dónde estás y no decía **dónde hay que estar**. El
+              avioncito se teñía de verde al acertar, que es avisar después:
+              sirve para corregir, no para apuntar. Y sin nada a lo que apuntar
+              solo queda tantear — con un avión de fuselaje ancho, cada tanteo
+              que se pasa de lento acaba en el agua. Contado jugando: «me hace
+              ir tan lento que me caigo al agua».
+
+              La velocidad de aproximación de este avión cae en el veinticinco
+              por ciento del recorrido, muy cerca de la tortuga, y eso no lo
+              adivina nadie. Ahora hay un tope ahí: se pone el avioncito encima
+              de la marca y ya está. Sin leer, sin números y sin saber lo que
+              es una Vref.
+
+              **Y solo cuando significa algo**, que es la regla de esta escala:
+              fuera de la aproximación la velocidad no tiene un valor bueno y
+              marcar uno sería mentir. Aparece con la banda —bajando hacia el
+              suelo— y se va con ella. Ver bandaDeVelocidad en flight/.
+            -->
+            <line class="picto__vref" data-picto="vref" x1="20" y1="14" x2="20" y2="24" />
             <g class="picto__avion" data-picto="speed" transform="translate(20 11)">${AVION}</g>
           </svg>
         </div>
@@ -205,6 +229,7 @@ export class Pictogramas {
   bind(root: HTMLElement): void {
     this.root = root.querySelector('[data-hud="pictos"]');
     this.speedMark = this.pick("speed");
+    this.vrefMark = this.pick("vref");
     this.altPlane = this.pick("altitude");
     this.propeller = this.pick("prop");
     this.horizonte = this.pick("horizonte");
@@ -238,6 +263,15 @@ export class Pictogramas {
     banda: "lento" | "bien" | "rapido" | null = null,
     /** Cuánto está alabeado el avión, rad. Positivo a la derecha. */
     alabeo = 0,
+    /**
+     * Dónde cae la velocidad de aproximación en esta misma escala, de 0 a 1,
+     * o `null` si aquí no hay aproximación que marcar.
+     *
+     * Viene ya normalizada por quien llama, con la misma cuenta que `speed`:
+     * dos escalas para la misma vía es la vía rápida a que la marca y el
+     * avioncito digan cosas distintas del mismo número.
+     */
+    vref: number | null = null,
   ): void {
     if (!this.root) return;
 
@@ -245,6 +279,17 @@ export class Pictogramas {
       "transform",
       `translate(${20 + clamp01(speed) * 60} 11)`,
     );
+
+    // La marca de Vref: donde hay que poner el avioncito para aterrizar.
+    if (this.vrefMark) {
+      const hay = vref !== null && banda !== null;
+      this.vrefMark.setAttribute("visibility", hay ? "visible" : "hidden");
+      if (hay) {
+        const x = 20 + clamp01(vref) * 60;
+        this.vrefMark.setAttribute("x1", String(x));
+        this.vrefMark.setAttribute("x2", String(x));
+      }
+    }
     // El avioncito de la escala se tiñe con la banda. Verde es «así», y los
     // otros dos dicen hacia dónde hay que moverlo sin decir una palabra.
     const marca = this.speedMark?.classList;

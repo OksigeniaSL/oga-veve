@@ -1300,6 +1300,19 @@ export class Hud {
         // para arriba: aquí es el único sitio donde se ve en los peldaños de
         // los pequeños.
         bankAngleOf(state.orientation),
+        /*
+         * **Y dónde cae su velocidad de aproximación en esta misma vía.**
+         *
+         * Con la misma cuenta que la aguja, y por eso va aquí y no dentro del
+         * pictograma: dos sitios normalizando el mismo número con dos fórmulas
+         * es la vía rápida a que la marca y el avioncito discrepen — y una
+         * marca que miente es peor que ninguna.
+         *
+         * Sale de la ficha de cada aeronave, así que se mueve sola al cambiar
+         * de avión: la avioneta y el de fuselaje ancho no aterrizan a la misma
+         * velocidad y la marca tiene que decirlo.
+         */
+        (this.vref - lenta) / (rapida - lenta),
       );
     }
 
