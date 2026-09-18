@@ -207,6 +207,25 @@ export const NO_A_LA_VEZ: readonly (readonly [string, string])[] = [
   // Y mandar subir de urgencia no casa con un elogio de vuelo tranquilo.
   ["vuelo.terrenoSube", "vuelo.enVuelo"],
   ["vuelo.mandanFrustrar", "vuelo.final"],
+  /*
+   * **Y un mismo suceso lo canta una sola voz.**
+   *
+   * Lo peor que se oye no es una frase de más: es **la misma cosa dicha dos
+   * veces con registros opuestos**. La de terreno dice «subí» agobiada y, un
+   * segundo después, el aro o el PAPI dicen «venís un poco bajo, subí suave»
+   * tan tranquilos. Contado jugando: «eso no pega ni con pegamento».
+   *
+   * Manda la primera, que es la que sabe por qué. Las otras se callan mientras
+   * dure la situación.
+   */
+  ["vuelo.terrenoSube", "vuelo.aroBajo"],
+  ["vuelo.terrenoSube", "vuelo.papiBajo"],
+  ["vuelo.terrenoBajo", "vuelo.aroBajo"],
+  ["vuelo.terrenoBajo", "vuelo.papiBajo"],
+  // Y en una frustrada, lo que hay que hacer es irse: que la senda diga que
+  // venías bajo ya no describe nada.
+  ["vuelo.mandanFrustrar", "vuelo.papiBajo"],
+  ["vuelo.mandanFrustrar", "vuelo.aroBajo"],
 ];
 
 /** Con quién riñe esta clave, si riñe con alguien. */
