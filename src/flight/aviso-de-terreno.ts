@@ -119,11 +119,40 @@ export interface Cerca {
    * sobre la cabecera habiéndose salido de la senda hace rato.
    */
   readonly sobreLaPista: boolean;
+  /**
+   * Si el avión viene **puesto para aterrizar**: tren fuera, flaps fuera y
+   * bajando a un ritmo de aproximación.
+   *
+   * **Y esto manda sobre la fase.** El aviso ya se callaba «en final», pero
+   * eso lo decide una máquina de estados con seis condiciones a la vez
+   * —alineado, antes del centro de la pista, por debajo de trescientos metros,
+   * bajando, con menos de treinta grados de desalineación y a menos de
+   * cuatrocientos del eje— y basta con que una parpadee para que el aviso
+   * vuelva. Medido en una aproximación clavada a Vref: la fase se salía de
+   * «final» a ciento treinta y ocho metros y ya no volvía, así que el juego
+   * soltaba «terrain, pull up» a sesenta y tres metros de la pista.
+   *
+   * Contado jugando: «tres veces que voy muy bajo y la señal de que me voy a
+   * dar contra el suelo, pero si estoy aterrizando qué esperan».
+   *
+   * Un avión con el tren fuera, los flaps fuera y bajando a tres metros por
+   * segundo **está aterrizando**, lo diga la fase o no. Los sistemas de verdad
+   * hacen exactamente esto —inhiben el aviso en configuración de aterrizaje—
+   * y por el mismo motivo: si no, sonaría en cada toma de cada vuelo, y un
+   * aviso que suena siempre deja de avisar.
+   *
+   * Lo que **no** inhibe es bajar rápido: caer a plomo con el tren fuera sigue
+   * siendo caer a plomo, y eso lo sigue cazando `BAJANDO`.
+   */
+  readonly puestoParaAterrizar: boolean;
 }
 
 /** Qué hay que decir, o `null` si no hay nada que decir. */
 export function avisoDeTerreno(s: Cerca): AvisoDeTerreno {
   if (s.enElSuelo || s.enFinal || s.sobreLaPista) return null;
+  // Y puesto para aterrizar, que es lo que la fase no siempre acierta a decir.
+  // Ver `puestoParaAterrizar`.
+  if (s.puestoParaAterrizar) return null;
   if (s.sobreElSuelo > ATENCION || s.sobreElSuelo < YA_ES_TARDE) return null;
   // Subiendo no se avisa: quien sube ya está haciendo lo que había que hacer.
   if (s.vertical >= 0) return null;

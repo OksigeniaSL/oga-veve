@@ -15,6 +15,7 @@ const volando = (c: Partial<Cerca> = {}): Cerca => ({
   enElSuelo: false,
   enFinal: false,
   sobreLaPista: false,
+  puestoParaAterrizar: false,
   ...c,
 });
 
@@ -114,5 +115,63 @@ describe("sobre la pista", () => {
     expect(
       avisoDeTerreno(volando({ sobreElSuelo: 20, vertical: -3 })),
     ).not.toBe(null);
+  });
+});
+
+describe("y puesto para aterrizar no se avisa, lo diga la fase o no", () => {
+  /*
+   * El aviso ya se callaba «en final», pero eso lo decide una máquina de
+   * estados con seis condiciones a la vez y basta con que una parpadee para
+   * que vuelva. Medido en una aproximación clavada a Vref: la fase se salía de
+   * «final» a ciento treinta y ocho metros y ya no volvía, así que el juego
+   * soltaba «terrain, pull up» a sesenta y tres metros de la pista.
+   *
+   * «Tres veces que voy muy bajo y la señal de que me voy a dar contra el
+   * suelo, pero si estoy aterrizando qué esperan.»
+   */
+  it("bajando bonito con todo fuera, callado — aunque la fase diga que no", () => {
+    expect(
+      avisoDeTerreno(
+        volando({
+          sobreElSuelo: 63,
+          vertical: -3.3,
+          enFinal: false,
+          sobreLaPista: false,
+          puestoParaAterrizar: true,
+        }),
+      ),
+    ).toBe(null);
+  });
+
+  it("y sin configurar sí avisa, que es para lo que existe", () => {
+    // El mismo avión, a la misma altura y bajando igual, pero limpio: eso no
+    // es una aproximación, es alguien acercándose al suelo sin querer.
+    expect(
+      avisoDeTerreno(
+        volando({
+          sobreElSuelo: 63,
+          vertical: -3.3,
+          puestoParaAterrizar: false,
+        }),
+      ),
+    ).not.toBe(null);
+  });
+
+  it("pero caer a plomo con el tren fuera sigue avisando", () => {
+    /*
+     * Lo que inhibe la configuración es acercarse al suelo **despacio**, que es
+     * lo que hace un avión aterrizando. Caer a seis metros por segundo no lo
+     * es, y ahí el aviso tiene que estar: es la diferencia entre aterrizar y
+     * estrellarse con las patas fuera.
+     */
+    expect(
+      avisoDeTerreno(
+        volando({
+          sobreElSuelo: 63,
+          vertical: -9,
+          puestoParaAterrizar: false,
+        }),
+      ),
+    ).toBe("sube");
   });
 });
