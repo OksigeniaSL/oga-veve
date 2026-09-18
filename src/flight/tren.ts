@@ -123,12 +123,26 @@ export function luzDeTren(donde: number): LuzDeTren {
  * Bajo, bajando y con el tren que no está fuera. Es el aviso que lleva toda
  * cabina de avión retráctil desde hace setenta años, y suena por lo mismo que
  * aquí: porque **se olvida**, y a quien se le olvida no es a los novatos.
+ *
+ * ## Y no se avisa de lo que ya se ha hecho
+ *
+ * `sePide` es lo que el piloto **ya ha pedido**, que no es lo mismo que dónde
+ * está el tren: tarda diez segundos en salir. Mirando solo la posición, quien
+ * bajaba el tren a trescientos metros y seguía descendiendo cruzaba los
+ * doscientos cincuenta con el tren a medio camino y se llevaba la bronca por
+ * algo que acababa de hacer. Dicho jugando: «si ya bajé el tren en la
+ * aproximación, ¿para qué me dice "sacá el tren"?».
+ *
+ * Un aviso que salta por lo que todavía no ha terminado de pasar no avisa de
+ * nada: enseña a no hacer caso de los avisos.
  */
 export function avisaDelTren(
   donde: number,
   alturaSobreElSuelo: number,
   bajando: boolean,
+  sePide = false,
 ): boolean {
+  if (sePide) return false;
   return donde < 1 && bajando && alturaSobreElSuelo < AVISA_DESDE;
 }
 

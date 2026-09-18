@@ -109,3 +109,30 @@ describe("el aviso de aterrizar sin tren", () => {
     expect(avisaDelTren(0.8, 100, true)).toBe(true);
   });
 });
+
+describe("y no se avisa de lo que ya se ha hecho", () => {
+  /*
+   * «Si ya bajé el tren en la aproximación, ¿para qué me dice "sacá el tren"?»
+   *
+   * Porque el aviso miraba **dónde está** el tren y no **qué se ha pedido**, y
+   * un tren tarda diez segundos en salir: quien lo bajaba a trescientos metros
+   * y seguía descendiendo cruzaba los doscientos cincuenta con el tren a medio
+   * camino y se llevaba la bronca por algo que acababa de hacer.
+   */
+  it("con el tren a medio salir pero ya pedido, no avisa", () => {
+    expect(avisaDelTren(0.4, 200, true, true)).toBe(false);
+    expect(avisaDelTren(0, 200, true, true)).toBe(false);
+  });
+
+  it("y sin pedirlo sí, que para eso está", () => {
+    expect(avisaDelTren(0.4, 200, true, false)).toBe(true);
+    expect(avisaDelTren(0, 200, true, false)).toBe(true);
+  });
+
+  it("y lo demás sigue mandando: alto o sin bajar, no hay aviso", () => {
+    expect(avisaDelTren(0, AVISA_DESDE + 1, true, false)).toBe(false);
+    expect(avisaDelTren(0, 100, false, false)).toBe(false);
+    // Y con el tren fuera del todo tampoco, esté pedido o no.
+    expect(avisaDelTren(1, 100, true, false)).toBe(false);
+  });
+});

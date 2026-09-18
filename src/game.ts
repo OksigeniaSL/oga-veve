@@ -6729,7 +6729,16 @@ export class Game {
      * El de sacarlo es un aviso de seguridad y manda: se dice aunque se acabe
      * de decir lo otro. El de meterlo es un consejo y espera su turno.
      */
-    if (avisaDelTren(donde, sobreElSuelo, s.verticalSpeed < -0.5)) {
+    if (
+      avisaDelTren(
+        donde,
+        sobreElSuelo,
+        s.verticalSpeed < -0.5,
+        // Y lo que ya se ha pedido: el tren tarda diez segundos en salir, y
+        // avisar de lo que acabás de hacer enseña a no hacer caso.
+        this.input.trenQueSePide,
+      )
+    ) {
       if (this.dichoDelTren === "saca" && this.desdeLoDelTren < 12) return;
       this.dichoDelTren = "saca";
       this.desdeLoDelTren = 0;
