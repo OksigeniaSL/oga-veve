@@ -91,6 +91,29 @@ export const VARIANTES: Partial<Record<TranslationKey, readonly string[]>> = {
    * Cuatro formas de cada una, que es lo que separa a alguien que te acompaña
    * de un aviso grabado. Salen tres o cuatro veces por aproximación.
    */
+  /*
+   * **La llegada de la comandante, que es el único sitio del juego donde una
+   * variante existe para hacer gracia y no para no cansar.**
+   *
+   * Todas nombran el aeropuerto —eso no es adorno, es lo que convierte la
+   * frase en una llegada— y todas cierran distinto. Pedido jugando: «algún
+   * chascarrillo o algo simpático de la comandante, pero sin repetir el
+   * chiste».
+   *
+   * Un chiste que sale siempre deja de ser un chiste a la segunda vez, y a la
+   * quinta es el ruido de fondo del que habla la cabecera de este fichero. Con
+   * cinco cierres, aterrizar once veces en once campos no suena nunca igual.
+   *
+   * Y una de ellas aplaude a quien acaba de aterrizar, que a los cuatro años
+   * es media razón para volver a jugar.
+   */
+  "capitana.llegada": [
+    "Señores pasajeros, acabamos de llegar a {campo}. Gracias por acompañarnos, y no se olviden nada en el bolsillo del asiento.",
+    "Bienvenidos a {campo}. De parte de toda la tripulación, muchas gracias — y un aplauso para quien iba a los mandos.",
+    "Señores pasajeros, ya estamos en {campo}. Cuidado al abrir los compartimentos, que en el vuelo las cosas se mudan de sitio.",
+    "Bienvenidos a {campo}. Gracias por volar con nosotros; la próxima vez les guardamos la ventanilla.",
+    "Señores pasajeros, {campo}. Gracias por venir, y que sigan teniendo un lindo día allá abajo.",
+  ],
   "vuelo.aroAlto": [
     "Venís un poco alto. Bajá el morro despacito",
     "Estás por encima. Soltá un poquito y vas a ir entrando",
@@ -141,12 +164,27 @@ export function idDeLaForma(clave: TranslationKey, n: number): string {
 export function unaForma(
   clave: TranslationKey,
   azar: () => number = Math.random,
+  /**
+   * Lo que va en los huecos de la frase, si los tiene.
+   *
+   * **Y hace falta aquí y no solo en `t()`**: las variantes son cadenas
+   * escritas en este fichero y no pasan por el diccionario, así que un
+   * `{campo}` dentro de una variante se quedaba sin rellenar y la comandante
+   * le daba la bienvenida a «{campo}». La primera forma sí pasaba por `t()` y
+   * salía bien, que es la peor manera de tener este fallo: funciona cuatro de
+   * cada cinco veces.
+   */
+  valores?: Record<string, string | number>,
 ): { readonly texto: string; readonly id: string } {
+  const rellenar = (texto: string): string =>
+    valores
+      ? texto.replace(/\{(\w+)\}/g, (m, n: string) => String(valores[n] ?? m))
+      : texto;
   const otras = VARIANTES[clave];
-  if (!otras?.length) return { texto: t(clave), id: clave };
+  if (!otras?.length) return { texto: t(clave, valores), id: clave };
   const n = Math.min(otras.length, Math.floor(azar() * (otras.length + 1)));
   return {
-    texto: n === 0 ? t(clave) : otras[n - 1]!,
+    texto: n === 0 ? t(clave, valores) : rellenar(otras[n - 1]!),
     id: idDeLaForma(clave, n),
   };
 }
