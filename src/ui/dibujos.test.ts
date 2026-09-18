@@ -18,7 +18,7 @@ import { GUION } from "../flight/vuelo";
 
 describe("los dibujos de la señal", () => {
   it.each(Object.keys(DIBUJOS))("«%s» es un svg entero", (nombre) => {
-    const d = DIBUJOS[nombre]!;
+    const d = DIBUJOS[nombre as keyof typeof DIBUJOS];
     expect(d.trimStart().startsWith("<svg")).toBe(true);
     expect(d.trimEnd().endsWith("</svg>")).toBe(true);
   });

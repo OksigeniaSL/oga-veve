@@ -265,6 +265,7 @@ import {
   rumboHacia,
 } from "./world/rumbo";
 import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
+import { comoDibujo } from "./ui/senal";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
 import { SITIO_PARA_LA_BICI, Sigueme } from "./world/sigueme";
@@ -2818,7 +2819,7 @@ export class Game {
     if (this.avisandoDelBulto > 0) return;
     this.avisandoDelBulto = SE_QUEDA_EL_BULTO;
     this.hud.senal.mostrar(
-      dibujo,
+      comoDibujo(dibujo),
       this.rotulo("vuelo.bulto", "palabra.cuidado"),
       null,
       { segundos: SE_QUEDA_EL_BULTO, prioridad: URGENTE },
@@ -2892,7 +2893,7 @@ export class Game {
     /** El PAPI: alto, bajo o en la senda, con su dibujo. */
     this.hechos.on("papi", ({ blancas }) => {
       this.hud.senal.mostrar(
-        `papi${blancas}`,
+        comoDibujo(`papi${blancas}`),
         blancas >= 3
           ? this.rotulo("vuelo.papiAlto", "palabra.baja")
           : blancas <= 1
@@ -2939,7 +2940,7 @@ export class Game {
      */
     this.hechos.on("gestoDelSenalero", ({ gesto }) => {
       const parando = gesto === "alto" || gesto === "despacio";
-      this.hud.senal.mostrar(`senalero-${gesto}`, "", null, {
+      this.hud.senal.mostrar(comoDibujo(`senalero-${gesto}`), "", null, {
         segundos: Infinity,
         tecla: parando
           ? nombreDeTecla(this.input.preferredKey("brakes"))
@@ -3010,7 +3011,7 @@ export class Game {
       if (tramo === "base") this.runwayGuide.reset(this.flight.state.position);
       const clave = `circuito.${tramo}` as TranslationKey;
       this.hud.senal.mostrar(
-        `circuito-${tramo}`,
+        comoDibujo(`circuito-${tramo}`),
         this.tier.instruments === "none" ? "" : t(clave),
         null,
         { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
@@ -6293,25 +6294,30 @@ export class Game {
        * pulsar ni tarjeta que tocar; solo hay que seguir viéndolo.
        */
       const seQueda = SE_QUEDAN.has(vista.fase);
-      this.hud.senal.mostrar(vista.icono, conLetras ? frase : "", letra, {
-        segundos:
-          pendiente || esperando || seQueda
-            ? Infinity
-            : vista.fase === "apagado"
-              ? 9
-              : 6,
-        // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
-        // ninguna manera de saber que el contacto es la I.
-        tecla: pendiente
-          ? nombreDeTecla(this.input.preferredKey("engine"))
-          : esperando
-            ? nombreDeTecla(this.input.preferredKey("brakes"))
-            : null,
-        // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
-        // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
-        // timón, gas y freno, y el contacto no estaba por ningún lado.
-        accion: pendiente ? () => this.toggleEngine() : null,
-      });
+      this.hud.senal.mostrar(
+        comoDibujo(vista.icono),
+        conLetras ? frase : "",
+        letra,
+        {
+          segundos:
+            pendiente || esperando || seQueda
+              ? Infinity
+              : vista.fase === "apagado"
+                ? 9
+                : 6,
+          // La tecla, dibujada. Sin esto, en el peldaño sin palabras no había
+          // ninguna manera de saber que el contacto es la I.
+          tecla: pendiente
+            ? nombreDeTecla(this.input.preferredKey("engine"))
+            : esperando
+              ? nombreDeTecla(this.input.preferredKey("brakes"))
+              : null,
+          // Y la tarjeta **hace** lo que dice al tocarla. En una tablet no había
+          // ninguna forma de arrancar el motor: los mandos táctiles son palanca,
+          // timón, gas y freno, y el contacto no estaba por ningún lado.
+          accion: pendiente ? () => this.toggleEngine() : null,
+        },
+      );
       // Y con su clave: los ficheros de voz se llaman por clave, no por
       // texto. Ver `audio/banco-de-voz.ts`.
       if (!repuesta) {
