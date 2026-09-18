@@ -1,3 +1,5 @@
+import { MARGENES } from "./minimos";
+
 /**
  * La velocidad de la aproximación: rápido, bien o lento.
  *
@@ -30,11 +32,29 @@ const SUELO = 4;
 /** Bajando de verdad, m/s. Volar bajo y nivelado no es aproximar. */
 const DESCENSO = -0.6;
 
-/** Cuánto se puede ir por debajo de Vref antes de avisar. */
+/**
+ * Cuánto se puede ir por debajo de Vref antes de avisar.
+ *
+ * Poco, y a propósito: ir lento es lo que pone un avión en pérdida a cien
+ * metros del suelo. En esta dirección el aviso llega pronto.
+ */
 const MARGEN_LENTO = 0.04;
 
-/** Y cuánto por encima. Más ancho a propósito. Ver la cabecera. */
-const MARGEN_RAPIDO = 0.12;
+/**
+ * Y cuánto por encima antes de decir nada.
+ *
+ * **Sale del listón con el que el juego juzga**, no de un número aparte. Era
+ * doce por ciento mientras `MARGENES.rapido` —lo que de verdad hace que una
+ * aproximación no valga— está en el treinta y cinco: o sea que la voz regañaba
+ * durante veintitrés puntos de velocidad que el propio juego daba por buenos.
+ * Y no es un detalle de tono: un aviso que salta donde no pasa nada se aprende
+ * a no oír, y entonces tampoco se oye el día que sí pasa.
+ *
+ * Se avisa **diez puntos antes** del listón, que es sitio de sobra para
+ * corregir bajando por la senda. Ir rápido es incómodo y se come pista; no es
+ * lo que mata. Ver `MARGENES` en `minimos.ts`.
+ */
+const MARGEN_RAPIDO = MARGENES.rapido - 1 - 0.1;
 
 export type BandaDeVelocidad = "lento" | "bien" | "rapido" | null;
 
