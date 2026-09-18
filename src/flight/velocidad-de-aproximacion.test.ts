@@ -10,6 +10,7 @@ import { MARGENES } from "./minimos";
 import {
   bandaDeAhora,
   bandaDeRodaje,
+  queSeDice,
   bandaDeVelocidad,
   type Aproximando,
 } from "./velocidad-de-aproximacion";
@@ -186,5 +187,40 @@ describe("y en la pista no hay banda: ni voz ni color", () => {
     // eso es «rápido»; bajando hacia el umbral con Vref setenta y cinco es
     // «lento», que es lo contrario y es lo que hay que decir.
     expect(bandaDeAhora(enFinal, VREF_ANCHO, false)).toBe("lento");
+  });
+});
+
+describe("y lo que se dice no puede ser lo contrario de lo que pasa", () => {
+  /*
+   * `airspeed→vuelo.rapido [118 kt · vref 146 · 154 m]`, medido en el juego.
+   * Veintiocho nudos por debajo de su Vref, y el juego pidiendo menos gas.
+   * Ver `queSeDice`.
+   */
+  it("volando lento se pide gas, nunca calma", () => {
+    expect(queSeDice("lento", false)).toBe("vuelo.lentoYBajo");
+  });
+
+  it("volando rápido sí se pide calma", () => {
+    expect(queSeDice("rapido", false)).toBe("vuelo.rapido");
+  });
+
+  it("rodando pasado se pide calma, que es la única banda que hay en tierra", () => {
+    expect(queSeDice("rapido", true)).toBe("vuelo.despacio");
+  });
+
+  it("y cuando se va bien, o no hay banda, no se dice nada", () => {
+    expect(queSeDice("bien", false)).toBe(null);
+    expect(queSeDice(null, false)).toBe(null);
+    expect(queSeDice("bien", true)).toBe(null);
+  });
+
+  it("ninguna banda comparte frase con su contraria", () => {
+    // La regla de fondo, escrita como prueba: lento y rápido no pueden
+    // terminar diciendo lo mismo, ni en el aire ni en el suelo.
+    for (const suelo of [true, false]) {
+      const lento = queSeDice("lento", suelo);
+      const rapido = queSeDice("rapido", suelo);
+      if (lento !== null && rapido !== null) expect(lento).not.toBe(rapido);
+    }
   });
 });

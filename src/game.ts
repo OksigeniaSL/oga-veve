@@ -329,6 +329,7 @@ import {
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import {
   bandaDeAhora,
+  queSeDice,
   type BandaDeVelocidad,
 } from "./flight/velocidad-de-aproximacion";
 import {
@@ -4909,15 +4910,57 @@ export class Game {
             },
           );
           this.cantar("flaps", t("vuelo.pediFlaps"), "vuelo.pediFlaps");
-        } else {
-          const suave = this.flight.state.onGround
-            ? "vuelo.despacio"
-            : "vuelo.rapido";
-          this.cantar(
-            this.flight.state.onGround ? "slow down" : "airspeed",
-            t(suave),
-            suave,
+        } else if (
+          queSeDice(banda, this.flight.state.onGround) === "vuelo.lentoYBajo"
+        ) {
+          /*
+           * **Venís lento: metéle gas.** Y esta rama faltaba entera.
+           *
+           * Aquí ponía una sola línea —«en el suelo, más despacio; en el aire,
+           * vas muy rápido»— que **no miraba la banda**. Y el `if` de arriba
+           * entra con las dos: `lento` y `rapido`. O sea que volando despacio,
+           * el juego decía «vas muy rápido».
+           *
+           * No es un mensaje mal elegido: es el consejo contrario al que salva
+           * la vida. Quien lo oye baja el gas, y bajar el gas yendo lento en
+           * aproximación es exactamente cómo se entra en pérdida a cien metros
+           * del suelo. Contado jugando, con el de fuselaje ancho a ciento
+           * dieciséis nudos sobre una Vref de ciento cuarenta y seis: «¿es
+           * serio, esto es ir muy rápido?» — y, después de obedecer: «me hace
+           * ir tan lento que me caigo al agua».
+           *
+           * Medido con el instrumento de cantos, que es lo que lo encontró:
+           * `airspeed→vuelo.rapido [118 kt · vref 146 · 154 m]`.
+           *
+           * La frase ya existía —`vuelo.lentoYBajo`, «venís lento: metéle
+           * gas»— y no la decía nadie. Y el dibujo es el del motor, que es el
+           * mando que hay que tocar: en este peldaño no se lee, así que lo que
+           * enseña es **qué mando**, no qué pasa.
+           *
+           * En el suelo no hay rama de lento porque la banda de rodaje no la
+           * tiene: rodar despacio no tiene nada de malo. Ver `bandaDeRodaje`.
+           */
+          this.hud.senal.mostrar(
+            "motor",
+            this.rotulo("vuelo.lentoYBajo", "palabra.gas"),
+            null,
+            { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
           );
+          this.cantar(
+            "airspeed low",
+            t("vuelo.lentoYBajo"),
+            "vuelo.lentoYBajo",
+          );
+        } else {
+          // Y el resto, también de `queSeDice`: la decisión vive en un solo
+          // sitio y tiene prueba. Ver `flight/velocidad-de-aproximacion.ts`.
+          const suave = queSeDice(banda, this.flight.state.onGround);
+          if (suave)
+            this.cantar(
+              this.flight.state.onGround ? "slow down" : "airspeed",
+              t(suave),
+              suave,
+            );
         }
       }
     } else {
