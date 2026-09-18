@@ -40,6 +40,11 @@ import {
   MARCA_CON_SU_APARATO,
   MARCA_ROTULO,
 } from "./familia";
+import { CUANTOS_OTROS } from "./cristal";
+import { dibujarLaCarta, type Mapa } from "./carta";
+
+/** Un punto de la carta, en píxeles desde el centro de la rosa. */
+type Punto2 = { dx: number; dy: number };
 import {
   POR_GRADO,
   POR_NUDO,
@@ -98,6 +103,14 @@ export interface DatosDelTablero {
   /** De dónde sopla y cuánto. */
   readonly viento: { readonly desde: number; readonly nudos: number } | null;
   readonly perdida: boolean;
+  /**
+   * El mundo, para la carta de la pantalla de navegación.
+   *
+   * Llegaba solo a las pantallas de la cabina, así que el cuadro plano —el que
+   * se ve desde fuera— seguía con la brújula sobre el fondo vacío: «en
+   * Lanzarote no veo la pista». Ver `ui/carta.ts`.
+   */
+  readonly mapa: Mapa | null;
 }
 
 const GRADOS = 180 / Math.PI;
@@ -736,12 +749,76 @@ export class Tablero {
      * decir «esperá», y esa espera de diez segundos es media lección del
      * mando. Ver `flight/tren.ts`.
      */
+    this.laCarta(raiz, d);
     const tren = raiz.querySelector<SVGElement>('[data-cristal="tren"]');
     if (tren) {
       const luz = luzDeTren(d.tren);
       tren.classList.toggle("cr--moviendose", luz === "moviendose");
       tren.classList.toggle("cr--dentro", luz === "dentro");
     }
+  }
+
+  /**
+   * La carta: pone la pista, el eje de entrada y los otros donde toca.
+   *
+   * Solo mueve atributos de piezas que ya existen —las deja puestas `carta()`
+   * en `cristal.ts`—: rehacer el marcado sesenta veces por segundo para cuatro
+   * líneas sería pagar un repintado entero por nada.
+   *
+   * Y las cuentas son las de `ui/carta.ts`, las mismas que usan las pantallas
+   * de la cabina. El dibujo puede ser distinto —aquí SVG, allí lienzo— pero
+   * **dónde va cada cosa, no**: de eso se trataba.
+   */
+  private laCarta(raiz: SVGElement, d: DatosDelTablero): void {
+    const grupo = raiz.querySelector('[data-carta="grupo"]');
+    if (!grupo) return;
+    const rosa = raiz.querySelector('[data-cristal="rosa"]');
+    const radio = Number(rosa?.getAttribute("data-radio")) || 120;
+    /*
+     * Con el rumbo **verdadero**, que es en lo que está el mundo. La rosa va
+     * en magnéticos y la diferencia entre las dos es la declinación: una pista
+     * rotulada 07 cae bajo el 07 de la rosa, que es lo correcto.
+     */
+    const dibujo = dibujarLaCarta(
+      d.mapa,
+      (d.estado.heading * 180) / Math.PI,
+      radio,
+    );
+    const poner = (sel: string, a: Punto2 | null, b: Punto2 | null): void => {
+      const el = grupo.querySelector(sel);
+      if (!el) return;
+      if (!a || !b) {
+        el.setAttribute("visibility", "hidden");
+        return;
+      }
+      el.setAttribute("visibility", "visible");
+      el.setAttribute("x1", String(a.dx));
+      el.setAttribute("y1", String(a.dy));
+      el.setAttribute("x2", String(b.dx));
+      el.setAttribute("y2", String(b.dy));
+    };
+    poner(
+      '[data-carta="eje"]',
+      dibujo.eje?.desde ?? null,
+      dibujo.eje?.hasta ?? null,
+    );
+    poner(
+      '[data-carta="pista"]',
+      dibujo.pista?.[0] ?? null,
+      dibujo.pista?.[1] ?? null,
+    );
+    for (let i = 0; i < CUANTOS_OTROS; i++) {
+      const rombo = grupo.querySelector(`[data-carta="otro-${i}"]`);
+      if (!rombo) continue;
+      const donde = dibujo.otros[i];
+      if (!donde) {
+        rombo.setAttribute("visibility", "hidden");
+        continue;
+      }
+      rombo.setAttribute("visibility", "visible");
+      rombo.setAttribute("transform", `translate(${donde.dx} ${donde.dy})`);
+    }
+    this.texto(raiz, "rango", `${dibujo.rango} NM`);
   }
 
   /**

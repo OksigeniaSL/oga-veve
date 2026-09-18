@@ -54,6 +54,7 @@ import {
 } from "./world/circuito";
 import { FLOTA, modeloPorId } from "./flight/flota";
 import { crearTrafico, type Trafico } from "./world/trafico";
+import type { Mapa } from "./ui/carta";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
 import type { Lluvia } from "./world/meteo";
@@ -5449,14 +5450,7 @@ export class Game {
          * ser lo que dice su nombre — dónde estoy, dónde está la pista con su
          * forma y su rumbo, y quién más anda por aquí. Ver `ui/carta.ts`.
          */
-        mapa: {
-          x: this.flight.state.position.x,
-          z: this.flight.state.position.z,
-          pista: this.scenario.aerodrome ? this.scenario.runway : null,
-          // Los mismos que se oyen por la radio y se ven por la ventana: uno
-          // solo, para que no puedan contarse tres versiones de lo mismo.
-          otros: this.trafico?.quienes() ?? [],
-        },
+        mapa: this.elMapa(),
       },
       dt,
     );
@@ -5539,6 +5533,9 @@ export class Game {
         tren: this.input.controls.tren,
         objetivo: this.aDondeVoy,
         viento: this.vientoDeHoy,
+        // Y el mismo mundo que reciben las pantallas de la cabina: una sola
+        // cuenta, dos dibujos. Ver `elMapa`.
+        mapa: this.elMapa(),
       },
     );
     const toma = this.checkLanding(dt);
@@ -7208,6 +7205,25 @@ export class Game {
    * Desde la cabina no hay cuadro que esquivar —ahí el cuadro es el del
    * avión— y el encuadre vuelve al centro.
    */
+  /**
+   * El mundo que necesita una carta para dibujarse.
+   *
+   * Lo piden las dos superficies —las pantallas de la cabina y el cuadro
+   * plano— y sale de aquí para las dos. Estaba escrito en línea en la llamada
+   * de la cabina, así que el cuadro plano se quedó sin él y seguía enseñando
+   * una brújula sobre un fondo vacío: «en Lanzarote no veo la pista».
+   */
+  private elMapa(): Mapa {
+    return {
+      x: this.flight.state.position.x,
+      z: this.flight.state.position.z,
+      pista: this.scenario.aerodrome ? this.scenario.runway : null,
+      // Los mismos que se oyen por la radio y se ven por la ventana: uno
+      // solo, para que no puedan contarse tres versiones de lo mismo.
+      otros: this.trafico?.quienes() ?? [],
+    };
+  }
+
   private encuadrarSobreElCuadro(): void {
     const ancho = window.innerWidth;
     const alto = window.innerHeight;

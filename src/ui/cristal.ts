@@ -437,6 +437,67 @@ function cintaDeRumbo(
 }
 
 /**
+ * El mundo debajo de la rosa: la pista, el eje de entrada y los otros aviones.
+ *
+ * **Estaba solo en las pantallas de la cabina.** Se hizo mirando una captura
+ * de cabina y ahí se quedó, mientras el cuadro plano —el que se ve desde
+ * fuera, que es desde donde se vuela la mayor parte del tiempo— seguía con la
+ * brújula sobre el fondo vacío. Dicho al llegar a Lanzarote: «no veo la
+ * pista». Es el mismo error de siempre, arreglar la superficie que uno tiene
+ * delante; ver `familia.ts` y el porqué de que las reglas vivan fuera.
+ *
+ * Aquí se dibuja el hueco con sus piezas quietas, y `Tablero.carta` las mueve.
+ * Las cuentas son las de `ui/carta.ts`, las mismas que usa la cabina: el
+ * dibujo puede ser distinto —SVG y lienzo— pero **dónde va cada cosa, no**.
+ *
+ * Va **encima de la rosa y debajo del avión**. Puesta debajo de la rosa —que
+ * es donde parece que debe ir, porque el mapa es el fondo— no se veía nada: el
+ * disco de la rosa es opaco y se la comía entera. En el lienzo de la cabina no
+ * pasaba porque allí el disco va al treinta y cinco por ciento, y ése es
+ * exactamente el tipo de diferencia que hace que dos superficies que deberían
+ * enseñar lo mismo enseñen cosas distintas.
+ */
+function carta(cx: number, cy: number, r: number): string {
+  const recorte = nuevoNombre();
+  // Un recorte al círculo de la rosa: una pista que asome por fuera deja de
+  // ser una carta y pasa a ser una mancha.
+  const rombos = Array.from(
+    { length: CUANTOS_OTROS },
+    (_, i) =>
+      `<path data-carta="otro-${i}" class="cr__otro" visibility="hidden" d="M0 -6 L6 0 L0 6 L-6 0 Z" />`,
+  ).join("");
+  return `
+    <!--
+      **El recorte, en el sitio del grupo y no en el de la pantalla.**
+
+      Un recorte se aplica en el espacio del elemento que lo usa, y ese
+      grupo ya va trasladado al centro de la rosa: con el círculo escrito en
+      coordenadas de pantalla acababa al doble de distancia, o sea fuera, y
+      recortaba la carta **entera**. Se veía como si no se dibujara nada, que
+      es la peor forma de fallar: todo correcto en el árbol y negro en la
+      pantalla.
+    -->
+    <clipPath id="${recorte}"><circle cx="0" cy="0" r="${r}" /></clipPath>
+    <g data-carta="grupo" transform="translate(${cx} ${cy})" clip-path="url(#${recorte})">
+      <line data-carta="eje" class="cr__eje" visibility="hidden" />
+      <line data-carta="pista" class="cr__pista" visibility="hidden" />
+      ${rombos}
+    </g>
+    <!--
+      La cifra del rango lleva «NM» pegado, así que es rótulo y no cifra: lo
+      que hay que saber leer para entenderla es la palabra. Misma regla que
+      «2.3 NM» y «GS 108»; ver esCifra en familia.ts. En el primer peldaño los
+      anillos se quedan sin número, que es lo que toca — ahí la carta son
+      formas y la pista es la barra blanca.
+    -->
+    <text data-cristal="rango" x="${cx + r - 4}" y="${cy + r + 14}"
+          ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo" text-anchor="end"></text>`;
+}
+
+/** Cuántos tráficos caben en la carta. Ver `CUANTOS` en `flight/radio.ts`. */
+export const CUANTOS_OTROS = 4;
+
+/**
  * La rosa de rumbo. Gira la carta, no el avión: lo que se mueve es el mundo.
  *
  * @param conAvion si lleva el avioncito fijo en el centro (la del horizonte) o
@@ -471,7 +532,7 @@ export function rosaDeRumbo(
   return `
     <g transform="translate(${cx} ${cy})">
       <circle cx="0" cy="0" r="${r + 3}" class="cr__rosa-caja" />
-      <g data-cristal="rosa">${carta}
+      <g data-cristal="rosa" data-radio="${r}">${carta}
         <g data-bug="rosa"><path class="cr__bug" d="M0 ${-r} l-6 -9 l12 0 Z" /></g>
       </g>
       <path class="cr__fe" d="M0 ${-r - 4} l0 10" />
@@ -500,6 +561,7 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
     <rect data-fondo="nd" width="${ancho}" height="${alto}" rx="6" fill="${PALETA.pantalla}" />
     ${arcos}
     ${rosaDeRumbo(cx, cy, r, false)}
+    ${carta(cx, cy, r)}
     <g data-cristal="ruta" transform="translate(${cx} ${cy})">
       <path class="cr__ruta" d="M0 0 l0 0" />
     </g>

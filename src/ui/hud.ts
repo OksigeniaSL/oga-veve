@@ -31,6 +31,7 @@ import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
 import { peldanoDe } from "./familia";
+import type { Mapa as MapaDeLaCarta } from "./carta";
 import { Tablero } from "./tablero";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
@@ -1172,6 +1173,8 @@ export class Hud {
         readonly desde: number;
         readonly nudos: number;
       } | null;
+      /** El mundo, para la carta de la pantalla de navegación. */
+      readonly mapa: MapaDeLaCarta | null;
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -1470,6 +1473,12 @@ export class Hud {
           // La pérdida: marco rojo alrededor del horizonte, que es donde mira
           // quien ya está en apuros. Ver `cinta.ts` para el parpadeo.
           perdida: !state.onGround && state.alpha > this.ficha.aero.alphaStall,
+          /*
+           * Y el mundo, para la carta. Llegaba solo a las pantallas de la
+           * cabina y por eso el cuadro plano seguía con la brújula sobre el
+           * fondo vacío: «en Lanzarote no veo la pista».
+           */
+          mapa: mandos?.mapa ?? null,
         },
         dt,
       );
