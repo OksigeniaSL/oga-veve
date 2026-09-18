@@ -41,7 +41,7 @@ const avion = (cambios: Partial<FlightState> = {}): FlightState =>
   }) as FlightState;
 
 const contexto = (cambios: Partial<Contexto> = {}): Contexto => ({
-  aircraft: { wingSpan: 11, chord: 1.5 },
+  aircraft: { wingSpan: 11, chord: 1.5, largo: 8.2 },
   ojo: null,
   suelo: () => 0,
   movimientoReducido: false,
@@ -195,5 +195,59 @@ describe("el traqueteo", () => {
     expect(
       tiembla(contexto({ traqueteo: 3, movimientoReducido: true })),
     ).toBeLessThan(1e-4);
+  });
+});
+
+/*
+ * ── La cámara de costado encuadra el avión que hay ─────────────────────────
+ *
+ * Se colocaba por la envergadura, y de costado lo que ocupa la pantalla es el
+ * largo. Las dos no guardan proporción a lo largo de la flota: la avioneta
+ * mide once de ala y ocho de morro a cola; el regional, veintiséis y
+ * veintiséis. Así que una distancia sacada de la envergadura encuadraba bien a
+ * la avioneta y metía la cámara dentro del regional — lo que se veía era una
+ * plancha gris con la deriva asomando. Dicho jugando con el JAZ 90: «¿me has
+ * vuelto a poner los aviones asquerosamente diseñados de hace semanas?», y era
+ * el modelo de siempre visto desde dos metros.
+ */
+describe("la cámara de costado encuadra el avión que hay", () => {
+  const aLado = (a: { wingSpan: number; largo: number }): number => {
+    const ctx = contexto({
+      aircraft: { wingSpan: a.wingSpan, chord: 1.5, largo: a.largo },
+    });
+    const cam = volar(construirCamaras().wing, avion(), ctx);
+    return Math.hypot(cam.position.x, cam.position.z);
+  };
+
+  it("manda el largo, no la envergadura", () => {
+    // Misma ala, distinto fuselaje: la cámara tiene que separarse.
+    expect(aLado({ wingSpan: 11, largo: 26 })).toBeGreaterThan(
+      aLado({ wingSpan: 11, largo: 8 }) * 2.5,
+    );
+    // Mismo fuselaje, distinta ala: la cámara se queda donde estaba.
+    expect(aLado({ wingSpan: 30, largo: 8 })).toBeCloseTo(
+      aLado({ wingSpan: 11, largo: 8 }),
+      5,
+    );
+  });
+
+  it("y los dos extremos de la flota quedan igual de lejos en proporción", () => {
+    const avioneta = aLado({ wingSpan: 11, largo: 9 }) / 9;
+    const regional = aLado({ wingSpan: 26, largo: 31 }) / 31;
+    // Tres decimales y no cinco: lo que queda por debajo es el suavizado de
+    // la cámara terminando de posarse, no una diferencia de encuadre.
+    expect(regional).toBeCloseTo(avioneta, 3);
+  });
+
+  it("y nunca dentro del avión", () => {
+    for (const a of [
+      { wingSpan: 11, largo: 9 },
+      { wingSpan: 26, largo: 31 },
+      { wingSpan: 60, largo: 70 },
+    ]) {
+      // Más lejos que el propio avión: dentro de esa distancia la cámara está
+      // pegada al fuselaje, que es exactamente lo que se veía.
+      expect(aLado(a)).toBeGreaterThan(a.largo);
+    }
   });
 });
