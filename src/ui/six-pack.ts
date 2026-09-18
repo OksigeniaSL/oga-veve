@@ -34,7 +34,7 @@
 
 import type { FlightState } from "../flight/model";
 import { cuadroDe, type Cuadro } from "./cuadro";
-import { BANDA, cajaDe, marca } from "./familia";
+import { BANDA, cajaDe, marca, MARCA_CIFRA, MARCA_ROTULO } from "./familia";
 import { PYKASU } from "../flight/aircraft";
 
 /** Lo que se dejan entre sí dos esferas vecinas, en píxeles del cuadro. */
@@ -222,7 +222,7 @@ function dial(
       ${overlay}
       <circle cx="50" cy="50" r="3.4" class="esfera__buje" />
       ${reflejo()}
-      <text x="50" y="86" data-desde="3" class="esfera__rotulo">${label}</text>
+      <text x="50" y="86" ${MARCA_ROTULO} class="esfera__rotulo">${label}</text>
     </g>
   `;
 }
@@ -286,7 +286,7 @@ function ticks(count: number, labelEvery: number, scale: number): string {
     if (long) {
       // La cifra de la escala es la medida: entra en el segundo peldaño, un
       // paso antes que el nombre del instrumento. Ver `CIFRAS_DESDE`.
-      out += `<text x="${50 + sin * 26}" y="${50 + cos * 26 + 2.6}" data-desde="2" class="esfera__cifra">${Math.round((i / count) * scale)}</text>`;
+      out += `<text x="${50 + sin * 26}" y="${50 + cos * 26 + 2.6}" ${MARCA_CIFRA} class="esfera__cifra">${Math.round((i / count) * scale)}</text>`;
     }
   }
   return out;

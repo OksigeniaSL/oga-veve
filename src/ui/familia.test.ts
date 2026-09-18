@@ -133,8 +133,9 @@ describe("una cifra no es un rótulo", () => {
     expect(CIFRAS_DESDE).toBeLessThan(LETRAS_DESDE);
     expect(desdePara("45")).toBe(CIFRAS_DESDE);
     expect(desdePara("N1")).toBe(LETRAS_DESDE);
-    // Y en el primero no entra ninguna de las dos.
-    expect(CIFRAS_DESDE).toBeGreaterThan(1);
+    // Y las cifras salen desde el primero: un dígito no es lectura. Lo que
+    // espera es el nombre del instrumento, que además está en inglés.
+    expect(CIFRAS_DESDE).toBe(1);
   });
 
   it("y la marca del SVG dice lo mismo que la del lienzo", () => {

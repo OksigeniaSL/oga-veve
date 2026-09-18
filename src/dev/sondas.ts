@@ -31,7 +31,7 @@ import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { enEjesDePista } from "../world/rumbo";
-import { rotulosDeLaCabina } from "../world/pantallas-cabina";
+import { cifrasDeLaCabina, rotulosDeLaCabina } from "../world/pantallas-cabina";
 import { familiaDe } from "../ui/familia";
 import type { Lluvia } from "../world/meteo";
 import { alturaDeEdificio, enElPavimento } from "../world/aerodrome";
@@ -1052,6 +1052,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `rotulosDeLaCabina`.
      */
     rotulosDeCabina: () => rotulosDeLaCabina(),
+    /** Y cuántas cifras, que es lo otro que hay que poder medir. */
+    cifrasDeCabina: () => cifrasDeLaCabina(),
     /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
     trafico: () => juego.trafico?.quienes() ?? [],
     /**

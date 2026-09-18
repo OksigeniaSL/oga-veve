@@ -304,8 +304,20 @@ const crecer = await page.evaluate(() => {
     const marcadas = [...svg.querySelectorAll("[data-desde]")];
     const porPeldano = [1, 2, 3, 4].map((p) => {
       svg.dataset.peldano = String(p);
+      /*
+       * **Y letra es letra, no cualquier texto.**
+       *
+       * Contaba todo lo que se escribiera, así que exigir «cero en el primer
+       * peldaño» exigía también cero cifras — y con eso un cuatrimotor
+       * enseñaba cuatro agujas y ni un número. Lo que se promete a un
+       * prelector no es un panel sin números: es un panel **sin palabras**,
+       * que además están en inglés aeronáutico. Un dígito no es lectura. Ver
+       * `esCifra` en `ui/familia.ts`.
+       */
+      const esCifra = (t) => /^[\d.,:+\-/°%]+$/.test(t);
       const letras = [...svg.querySelectorAll("text")].filter((t) => {
-        if (!t.textContent.trim()) return false;
+        const texto = t.textContent.trim();
+        if (!texto || esCifra(texto)) return false;
         for (let n = t; n && n !== svg; n = n.parentElement) {
           if (getComputedStyle(n).display === "none") return false;
           if (n.getAttribute?.("visibility") === "hidden") return false;
@@ -331,7 +343,7 @@ const crecer = await page.evaluate(() => {
 for (const c of crecer) {
   const p = c.porPeldano;
   comprobar(
-    `${c.familia}: en el primer peldaño el cuadro no tiene ni una letra`,
+    `${c.familia}: en el primer peldaño el cuadro no tiene ni una palabra`,
     p[0].letras === 0,
     `${p[0].letras} rótulos`,
     "a los cuatro años no se lee: lo que se lee es el color y la posición",
@@ -350,9 +362,25 @@ for (const c of crecer) {
   );
   comprobar(
     `${c.familia}: y del primero al último crece de verdad`,
-    p[3].deja > p[0].deja * 2,
+    p[3].deja > p[0].deja,
     `${p[0].deja} → ${p[3].deja} piezas encendidas`,
     "si no crece, la escalera de peldaños no está haciendo nada",
+  );
+  /*
+   * **Y lo que aparece es lenguaje**, que es la frase exacta del diseño.
+   *
+   * Esta es la comprobación de verdad, y es la que faltaba: antes se pedía que
+   * el último peldaño enseñara **el doble** que el primero, un número redondo
+   * que solo se cumplía porque el primero estaba casi vacío. Con las cifras en
+   * el primero deja de cumplirse sin que nada esté mal — y lo que importa
+   * nunca fue cuántas piezas más, sino **cuáles**: en el primero no hay una
+   * palabra y en el último sí. Eso es la escalera.
+   */
+  comprobar(
+    `${c.familia}: y lo que aparece por el camino son palabras`,
+    p[0].letras === 0 && p[3].letras > 0,
+    `p1:${p[0].letras} → p4:${p[3].letras} palabras`,
+    "«el cuadro no cambia entre peldaños: crece», y lo que crece es el lenguaje",
   );
 }
 

@@ -223,10 +223,25 @@ export const LETRAS_DESDE: Peldano = 3;
  * - Un **rótulo** es un nombre. «IAS», «ALT», «N1», «FLAP» son inglés
  *   aeronáutico y están ahí para quien ya lee.
  *
- * En el primer peldaño sigue sin haber ni una cosa ni la otra: se arranca a
- * los cuatro años y ahí lo que se lee es la posición, el color y la forma.
+ * ## Y las cifras salen **desde el primero**
+ *
+ * Primero se dejaron en el segundo, con el argumento de que a los cuatro años
+ * no se lee. Puesto delante de un cuatrimotor, el argumento no se sostiene:
+ * «no veo números ni datos en ninguno». Un panel con cuatro agujas y ni una
+ * cifra no enseña a leer un instrumento, enseña que los instrumentos son
+ * adorno — que es lo contrario de lo que este juego hace.
+ *
+ * Y la premisa era falsa: **un dígito no es lectura**. Un niño de cuatro años
+ * reconoce el 8 y el 2 por su forma y sabe cuál es más mucho antes de saber
+ * deletrear «ocho»; los números están en los ascensores, en los portales y en
+ * las velas de la tarta. Lo que sí es lectura es «IAS», «FLAP» o «GEAR», que
+ * además están en inglés — y eso sigue esperando al tercer peldaño.
+ *
+ * Lo que distingue al primer peldaño no es que no haya cifras: es que **no
+ * hacen falta para volarlo**. El color, la posición y la forma bastan. La
+ * cifra está para quien quiera mirarla, que es como se aprende a leerla.
  */
-export const CIFRAS_DESDE: Peldano = 2;
+export const CIFRAS_DESDE: Peldano = 1;
 
 /**
  * Si esto es una cifra y no un nombre.
@@ -253,4 +268,66 @@ export function desdePara(texto: string): Peldano {
 /** Lo mismo, como atributo para el SVG del cuadro plano. */
 export function marca(texto: string): string {
   return `data-desde="${desdePara(texto)}"`;
+}
+
+/**
+ * Y las dos marcas ya escritas, para lo que se sabe de antemano qué es.
+ *
+ * Buena parte de los textos del cuadro plano son cifras por construcción —el
+ * «0, 10, 20, 30» de una regla de flaps no va a dejar de ser un número— y
+ * escribir ahí `data-desde="2"` a mano es **poner el número del peldaño en
+ * treinta sitios**. Se hizo, y al bajar las cifras al primer peldaño se
+ * quedaron diecinueve de ellos en el segundo: el cuadro plano enseñaba doce
+ * cifras donde la cabina enseñaba cincuenta, para el mismo avión y el mismo
+ * peldaño. El número vive en `CIFRAS_DESDE` y en ningún otro sitio.
+ */
+export const MARCA_CIFRA = `data-desde="${CIFRAS_DESDE}"`;
+export const MARCA_ROTULO = `data-desde="${LETRAS_DESDE}"`;
+
+/**
+ * Y el tercero: **lo que aparece con el aparato al que pertenece.**
+ *
+ * Hay palabras que no se pueden separar de su instrumento. El «SPD» de una
+ * ventanilla del piloto automático no es un nombre que se pueda dejar para
+ * después: tres cifras magenta sin decir de qué son no son tres objetivos,
+ * son tres números sueltos. Lo mismo el «REV» de la reversa, que no marca un
+ * valor sino un estado — sin la palabra no hay nada que enseñar.
+ *
+ * Aparecen en el segundo peldaño, con el aparato. Es la excepción a la regla
+ * de que las palabras esperan al tercero, y está escrita aquí para que se vea
+ * que es una excepción y no un descuido: son cuatro en todo el cuadro.
+ */
+export const MARCA_CON_SU_APARATO = 'data-desde="2"';
+
+/*
+ * ── **Y la cuenta de lo que de verdad ha salido** ──
+ *
+ * El cuadro plano se puede medir desde fuera contando sus `<text>`; un lienzo,
+ * no: lo que se pinta deja de ser un objeto en cuanto se pinta. Así que las
+ * dos superficies de lienzo —las pantallas de cristal y los relojes redondos—
+ * apuntan aquí lo que escriben, y el banco lo lee.
+ *
+ * Vive en este módulo y no en una de las dos porque **las dos escriben**: con
+ * el contador en las pantallas de cristal, un avión de pistón —que no las
+ * lleva— daba cero cifras y el banco lo cantaba como un panel mudo. Era el
+ * contador el que estaba ciego.
+ */
+let rotulosEscritos = 0;
+let cifrasEscritas = 0;
+
+/** A cero, al empezar a repintar. Lo que se mide es esta pasada. */
+export function empiezaElRepintado(): void {
+  rotulosEscritos = 0;
+  cifrasEscritas = 0;
+}
+
+/** Apunta un texto que **sí** ha salido. */
+export function apunta(texto: string): void {
+  if (esCifra(texto)) cifrasEscritas += 1;
+  else rotulosEscritos += 1;
+}
+
+/** Cuántas palabras y cuántas cifras salieron en el último repintado. */
+export function loEscrito(): { rotulos: number; cifras: number } {
+  return { rotulos: rotulosEscritos, cifras: cifrasEscritas };
 }
