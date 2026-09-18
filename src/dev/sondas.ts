@@ -151,6 +151,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         juego.percance = null;
         juego.hud.cerrarFinDeVuelo();
       })(),
+    /** El escenario entero, para poder mirarle el aeródromo medido. */
+    escenario: () => juego.scenario,
     /** El viario de la ciudad, para comprobar que no se construye encima. */
     vias: () => juego.scenario.ciudad?.vias ?? [],
     /** Los galones ganados en este vuelo, para comprobarlos desde el banco. */
