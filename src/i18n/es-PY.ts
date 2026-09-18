@@ -518,6 +518,16 @@ export const ES_PY = {
   "vuelo.rapido": "Vas muy rápido",
   "vuelo.sobrevelocidad": "Muy rápido: bajá el motor",
   "vuelo.sobrevelocidadAire": "Muy rápido para esta altura",
+  /*
+   * **Y los dos límites de lo que llevás sacado.**
+   *
+   * No son el de la estructura: un tren y unos flaps aguantan mucho menos que
+   * el fuselaje, y por eso se recogen antes de acelerar. Dicen qué recoger,
+   * que es lo accionable — «vas muy rápido» a secas deja a quien lo oye sin
+   * saber qué tocar.
+   */
+  "vuelo.trenPasado": "Muy rápido con el tren fuera: metélo",
+  "vuelo.flapsPasados": "Muy rápido con los flaps: recogélos",
   "vuelo.pediFlaps": "Bajá los flaps para frenar",
   "palabra.flaps": "Flaps",
   "vuelo.meteElTren": "Metélo, el tren te frena",

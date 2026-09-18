@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
 import {
+  loQueSePasa,
   resistenciaDeOnda,
   alturaDelCruce,
   machDe,
@@ -148,5 +149,71 @@ describe("la barrera del sonido cuesta lo que tiene que costar", () => {
     const rapida = resistenciaDeOnda(0.55, 0.92, CD0);
     expect(lenta).toBeGreaterThan(0);
     expect(rapida).toBe(0);
+  });
+});
+
+describe("y el tope de lo que llevás sacado", () => {
+  /*
+   * El aviso de sobrevelocidad miraba lo que aguanta el avión —Vmo y Mmo— y
+   * no lo que aguanta lo que lleva fuera. Así el juego enseñaba media lección:
+   * que el tren frena, y no que el tren se rompe. Ver `loQueSePasa`.
+   */
+  const ancho = { vleKt: 270, vfeKt: 240, trenRetractil: true };
+  const fijo = { vleKt: 85, vfeKt: 85, trenRetractil: false };
+  const nada = { tren: 0, flaps: 0 };
+
+  it("limpio y rápido, no se fuerza nada", () => {
+    expect(loQueSePasa(340, ancho, nada)).toBe(null);
+  });
+
+  it("con el tren fuera a trescientos dos, sí", () => {
+    // Es la velocidad de la captura que lo destapó: «¿por qué a cinco mil
+    // metros no pasa de 302?» — y a 302 con las patas fuera ya iba pasado.
+    expect(loQueSePasa(302, ancho, { tren: 1, flaps: 0 })).toBe("tren");
+  });
+
+  it("y por debajo de su límite, no", () => {
+    expect(loQueSePasa(260, ancho, { tren: 1, flaps: 0 })).toBe(null);
+  });
+
+  it("los flaps van antes que el tren, porque se rompen antes", () => {
+    // Pasándose de los dos, lo que hay que recoger primero es lo que antes
+    // cede. Mismo criterio que `porQueNoSeSigue`: de lo que más mata a lo que
+    // menos.
+    expect(loQueSePasa(300, ancho, { tren: 1, flaps: 1 })).toBe("flaps");
+  });
+
+  it("y el que no mete el tren no tiene ese límite", () => {
+    // Sus patas están calculadas para todo su rango: avisarle sería inventar
+    // una avería que no existe.
+    expect(loQueSePasa(160, fijo, { tren: 1, flaps: 0 })).toBe(null);
+    // Pero sus flaps sí tienen el suyo.
+    expect(loQueSePasa(160, fijo, { tren: 1, flaps: 1 })).toBe("flaps");
+  });
+
+  it("y un tren a medio camino ya cuenta", () => {
+    // Lo que está en la corriente está en la corriente, trabado o no.
+    expect(loQueSePasa(302, ancho, { tren: 0.3, flaps: 0 })).toBe("tren");
+  });
+});
+
+describe("y la flota entera tiene sus topes en orden", () => {
+  it("los flaps ceden antes que el tren, y el tren antes que la estructura", () => {
+    for (const a of AIRCRAFT) {
+      expect(a.vfeKt).toBeLessThanOrEqual(a.vleKt);
+      expect(a.vleKt).toBeLessThanOrEqual(a.vmoKt);
+    }
+  });
+
+  it("y se puede aterrizar sin pasarse: Vref cabe holgada bajo el de flaps", () => {
+    /*
+     * Un límite que se pasa volando la aproximación de manual no es un
+     * límite: es una trampa. Se cruza el umbral a Vref, así que el tope de
+     * flaps tiene que quedar por encima con margen para las correcciones.
+     */
+    for (const a of AIRCRAFT) {
+      const vrefKt = a.approachSpeed * 1.94384;
+      expect(a.vfeKt).toBeGreaterThan(vrefKt * 1.15);
+    }
   });
 });

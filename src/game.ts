@@ -334,6 +334,7 @@ import {
   EN_GRANDE_EN_PIES,
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
+import { loQueSePasa } from "./flight/limites";
 import {
   bandaDeAhora,
   queSeDice,
@@ -6907,7 +6908,26 @@ export class Game {
       this.dichoDeSobrevelocidad = false;
       return;
     }
-    const tope = this.flight.limiteDeVelocidad();
+    /*
+     * **Y el tope no es solo el del avión: es el de lo que lleva sacado.**
+     *
+     * Un avión con las patas fuera no es el mismo avión. Sus compuertas
+     * aguantan mucho menos que el fuselaje —doscientos setenta nudos contra
+     * trescientos sesenta y cinco en uno de línea— y un flap, menos todavía.
+     * Sin esto el juego enseñaba media lección: contaba que el tren frena y no
+     * que el tren **se rompe**.
+     *
+     * El de lo sacado manda cuando es más bajo, que es siempre que haya algo
+     * fuera, y entonces el aviso dice **qué recoger** — que es lo accionable.
+     * «Vas muy rápido» a secas deja a quien lo oye sin saber qué tocar. Ver
+     * `loQueSePasa` en `flight/limites.ts`.
+     */
+    const kt = s.airspeed * NUDOS;
+    const forzando = loQueSePasa(kt, this.aircraft, this.input.controls);
+    const tope = forzando
+      ? (forzando === "flaps" ? this.aircraft.vfeKt : this.aircraft.vleKt) /
+        NUDOS
+      : this.flight.limiteDeVelocidad();
     const pasado = s.airspeed > tope;
     this.sobrandoVelocidad = pasado ? this.sobrandoVelocidad + dt : 0;
     if (!pasado) {
@@ -6919,9 +6939,13 @@ export class Game {
     if (this.sobrandoVelocidad < 2 || this.dichoDeSobrevelocidad) return;
     this.dichoDeSobrevelocidad = true;
     const clave =
-      this.flight.quienLimita() === "aire"
-        ? "vuelo.sobrevelocidadAire"
-        : "vuelo.sobrevelocidad";
+      forzando === "flaps"
+        ? "vuelo.flapsPasados"
+        : forzando === "tren"
+          ? "vuelo.trenPasado"
+          : this.flight.quienLimita() === "aire"
+            ? "vuelo.sobrevelocidadAire"
+            : "vuelo.sobrevelocidad";
     this.hud.senal.mostrar(
       "sobrevelocidad",
       this.rotulo(clave as TranslationKey, "palabra.rapido"),

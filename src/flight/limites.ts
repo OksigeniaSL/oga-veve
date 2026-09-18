@@ -162,3 +162,52 @@ export function resistenciaDeOnda(
   const pasado = (mach - critico) / Math.max(0.01, 1 - critico);
   return cd0 * LO_QUE_CUESTA * Math.min(1, pasado) ** 4;
 }
+
+/** Qué se está forzando, o `null` si nada. */
+export type LoQueSePasa = "tren" | "flaps" | null;
+
+/**
+ * Si se va demasiado rápido para lo que se lleva sacado.
+ *
+ * ## Por qué es otro límite y no el de siempre
+ *
+ * El aviso de sobrevelocidad mira lo que aguanta **el avión**: Vmo abajo y Mmo
+ * arriba. Pero un avión con las patas fuera no es el mismo avión: unas
+ * compuertas y unas patas metidas en la corriente aguantan bastante menos que
+ * el fuselaje —doscientos setenta nudos contra trescientos sesenta y cinco en
+ * uno de línea— y un flap, menos todavía.
+ *
+ * Y sin esto el juego enseñaba media lección. Ya contaba que el tren frena; le
+ * faltaba que **el tren también se rompe**. Preguntado jugando, con el de
+ * fuselaje ancho a trescientos dos nudos y las patas fuera: «¿por qué a cinco
+ * mil metros no pasa de 302?». La respuesta honesta tenía dos partes, y la
+ * segunda es que a esa velocidad ya estaba por encima de lo que aguanta su
+ * tren.
+ *
+ * ## El orden importa
+ *
+ * Primero los flaps y después el tren, porque el de los flaps siempre es el
+ * más bajo: si se están pasando los dos, lo que hay que recoger antes es lo
+ * que antes se rompe. Es el mismo criterio que ordena `porQueNoSeSigue` en
+ * `minimos.ts`: de lo que más mata a lo que menos.
+ *
+ * Se mide en **nudos indicados**, que es lo que marca la cinta y lo que dicen
+ * los manuales: un límite estructural es de presión dinámica, no de velocidad
+ * real, y por eso no cambia con la altura.
+ */
+export function loQueSePasa(
+  indicadaKt: number,
+  a: {
+    readonly vleKt: number;
+    readonly vfeKt: number;
+    readonly trenRetractil: boolean;
+  },
+  sacado: { readonly tren: number; readonly flaps: number },
+): LoQueSePasa {
+  if (sacado.flaps > 0.05 && indicadaKt > a.vfeKt) return "flaps";
+  // En los que no lo meten no hay límite que dar: sus patas están calculadas
+  // para todo su rango de velocidades. Ver `trenRetractil`.
+  if (a.trenRetractil && sacado.tren > 0.05 && indicadaKt > a.vleKt)
+    return "tren";
+  return null;
+}
