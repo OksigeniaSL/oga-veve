@@ -29,6 +29,7 @@
 import type { AircraftConfig } from "../flight/aircraft";
 import { PALETA } from "./paleta";
 import { QUIETA_LA_ALTITUD, marcasDeCinta, rodillo } from "./cinta";
+import { marca } from "./familia";
 import type { Cuadro } from "./cuadro";
 import { ANCLA_DE_ACTITUD, patasDe } from "./familia";
 
@@ -172,8 +173,8 @@ function horizonte(
     const largo = g % 10 === 0 ? 34 : 17;
     escala += `<line x1="${cx - largo}" y1="${-g * porGrado}" x2="${cx + largo}" y2="${-g * porGrado}" class="cr__paso" />`;
     if (g % 10 === 0) {
-      escala += `<text x="${cx - largo - 6}" y="${-g * porGrado + 4}" data-desde="3" class="cr__paso-cifra" text-anchor="end">${Math.abs(g)}</text>`;
-      escala += `<text x="${cx + largo + 6}" y="${-g * porGrado + 4}" data-desde="3" class="cr__paso-cifra">${Math.abs(g)}</text>`;
+      escala += `<text x="${cx - largo - 6}" y="${-g * porGrado + 4}" data-desde="2" class="cr__paso-cifra" text-anchor="end">${Math.abs(g)}</text>`;
+      escala += `<text x="${cx + largo + 6}" y="${-g * porGrado + 4}" data-desde="2" class="cr__paso-cifra">${Math.abs(g)}</text>`;
     }
   }
   let arco = "";
@@ -231,7 +232,7 @@ function cintaDeVelocidad(
       return (
         `<line x1="${w - largo}" y1="${yy}" x2="${w}" y2="${yy}" class="cr__marca" />` +
         (m.rotula
-          ? `<text x="${w - 16}" y="${yy + 5}" data-desde="3" class="cr__cifra" text-anchor="end">${m.valor}</text>`
+          ? `<text x="${w - 16}" y="${yy + 5}" data-desde="2" class="cr__cifra" text-anchor="end">${m.valor}</text>`
           : "")
       );
     })
@@ -334,7 +335,7 @@ function cintaDeAltitud(
       return (
         `<line x1="0" y1="${yy}" x2="${largo}" y2="${yy}" class="cr__marca" />` +
         (m.rotula
-          ? `<text x="${largo + 4}" y="${yy + 5}" data-desde="3" class="cr__cifra">${m.valor}</text>`
+          ? `<text x="${largo + 4}" y="${yy + 5}" data-desde="2" class="cr__cifra">${m.valor}</text>`
           : "")
       );
     })
@@ -387,7 +388,7 @@ function variometro(
       <rect width="${w}" height="${h}" rx="3" class="cr__ventana" />
       ${marcas}
       <text x="${w / 2}" y="11" data-desde="3" class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">VS</text>
-      <text x="${w / 2}" y="${h - 4}" data-desde="3" class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">${Math.round(c.vsiMax / 1000)}</text>
+      <text x="${w / 2}" y="${h - 4}" data-desde="2" class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">${Math.round(c.vsiMax / 1000)}</text>
       <g data-cristal="vsi" data-ampl="${h / 2 - 10}" data-max="${c.vsiMax}">
         <path class="cr__aguja-vsi" d="M0 ${h / 2} l${w} 0" />
       </g>
@@ -409,7 +410,7 @@ function cintaDeRumbo(
     const larga = g % 10 === 0;
     tira += `<line x1="${xx}" y1="0" x2="${xx}" y2="${larga ? 9 : 5}" class="cr__marca" />`;
     if (g % 30 === 0) {
-      tira += `<text x="${xx}" y="${h - 10}" data-desde="3" class="cr__cifra" text-anchor="middle">${((g % 360) / 10).toFixed(0).padStart(2, "0")}</text>`;
+      tira += `<text x="${xx}" y="${h - 10}" data-desde="2" class="cr__cifra" text-anchor="middle">${((g % 360) / 10).toFixed(0).padStart(2, "0")}</text>`;
     }
   }
   return `
@@ -459,7 +460,7 @@ export function rosaDeRumbo(
               : g === 270
                 ? "W"
                 : String(g / 10);
-      carta += `<text x="${Math.sin(a) * (r - 22)}" y="${-Math.cos(a) * (r - 22) + 5}" data-desde="3" class="cr__cifra" text-anchor="middle">${letra}</text>`;
+      carta += `<text x="${Math.sin(a) * (r - 22)}" y="${-Math.cos(a) * (r - 22) + 5}" ${marca(letra)} class="cr__cifra" text-anchor="middle">${letra}</text>`;
     }
   }
   return `
@@ -501,7 +502,7 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
           d="M0 -14 l0 26 M-12 4 l24 0 M-6 12 l12 0" />
     <text data-cristal="nd-rumbo" x="${cx}" y="22" data-desde="2" class="cr__valor" text-anchor="middle"></text>
     <text x="${cx}" y="36" data-desde="3" class="cr__rotulo" text-anchor="middle">HDG</text>
-    <text data-cristal="viento" x="12" y="22" data-desde="3" class="cr__aux"></text>
+    <text data-cristal="viento" x="12" y="22" data-desde="2" class="cr__aux"></text>
     <text data-cristal="distancia" x="${ancho - 12}" y="22" data-desde="3" class="cr__aux" text-anchor="end"></text>
   `;
 }
@@ -620,7 +621,7 @@ function dialDeMotor(cx: number, cy: number, r: number, i: number): string {
       </g>
       <circle cx="${cx}" cy="${cy}" r="3" class="cr__buje" />
       <text data-motor-cifra="${i}" x="${cx}" y="${cy + r + 18}" data-desde="2" class="cr__valor" text-anchor="middle"></text>
-      <text x="${cx}" y="${cy + 4}" data-desde="3" class="cr__rotulo" text-anchor="middle">${i + 1}</text>
+      <text x="${cx}" y="${cy + 4}" data-desde="2" class="cr__rotulo" text-anchor="middle">${i + 1}</text>
     </g>
   `;
 }
@@ -646,9 +647,9 @@ export function reglaDeFlaps(
     const d = (k / 3) * largo;
     detentes += tumbada
       ? `<line x1="${d}" y1="0" x2="${d}" y2="${h}" class="cr__marca" />` +
-        `<text x="${d}" y="${h + 15}" data-desde="3" class="cr__rotulo" text-anchor="middle">${k * 10}</text>`
+        `<text x="${d}" y="${h + 15}" data-desde="2" class="cr__rotulo" text-anchor="middle">${k * 10}</text>`
       : `<line x1="0" y1="${d}" x2="${w}" y2="${d}" class="cr__marca" />` +
-        `<text x="${w + 5}" y="${d + 4}" data-desde="3" class="cr__rotulo">${k * 10}</text>`;
+        `<text x="${w + 5}" y="${d + 4}" data-desde="2" class="cr__rotulo">${k * 10}</text>`;
   }
   return `
     <g transform="translate(${x} ${y})">
