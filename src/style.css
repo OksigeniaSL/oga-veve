@@ -2189,7 +2189,16 @@ button.motor__tecla::after {
    * Ahora es una barra de doscientos, que además es lo que parece: se agarra
    * por arriba y se tira, como la persiana que es.
    */
-  width: min(200px, 40vw);
+  /*
+   * **Y del ancho del cuadro, no de doscientos.**
+   *
+   * Cuarto informe del mismo mando. Doscientos píxeles ya eran cuatro veces
+   * el botón original y seguían sin acertarse. Una persiana se agarra por
+   * **todo** el borde de arriba, no por una pestañita en el medio: ahora la
+   * barra ocupa el ancho entero del cuadro, que es lo que además se parece a
+   * lo que hace.
+   */
+  width: 100%;
   height: 34px;
   border: 0;
   border-radius: 16px 16px 0 0;

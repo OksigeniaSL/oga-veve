@@ -187,6 +187,33 @@ const ANCHO_RODADURA = 23;
  * `margen` ensancha el pavimento para preguntar por el ala en vez de por el eje
  * del avión.
  */
+/**
+ * Si un punto cae sobre **la pista** —no sobre cualquier asfalto—.
+ *
+ * Hace falta para lo contrario de lo que suele hacer falta: para **quitar**
+ * cosas de ahí. En una pista en uso no hay nada que no sea de la pista, y lo
+ * que se colaba eran las luces azules de calle de rodaje: OpenStreetMap
+ * dibuja las salidas rápidas hasta el eje de la pista, así que las luces
+ * calculadas de sus bordes acababan cruzándola.
+ *
+ * Contado jugando, con foto de noche en Los Rodeos: «luces cruzando la
+ * pista». Y el azul dice «esto no es pista», así que cruzarla con azules
+ * enseña justo lo contrario de lo que enseñan.
+ *
+ * `margen` ensancha la pista: para quitar algo conviene pasarse un poco, que
+ * una bombilla pegada al borde tampoco está.
+ */
+export function sobreLaPista(
+  aero: Aerodrome,
+  p: Punto,
+  margen = 0,
+): boolean {
+  for (const pista of aero.runways)
+    if (aLaPolilinea(p, pista.centerline) < (pista.widthM ?? 45) / 2 + margen)
+      return true;
+  return false;
+}
+
 export function enElPavimento(aero: Aerodrome, p: Punto, margen = 0): boolean {
   for (const pista of aero.runways)
     if (aLaPolilinea(p, pista.centerline) < (pista.widthM ?? 45) / 2 + margen)

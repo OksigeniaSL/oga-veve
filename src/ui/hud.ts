@@ -417,9 +417,31 @@ export class Hud {
      * Escuchando en la raíz y buscando el cuadro **en el momento del clic**,
      * no hay nada que se pueda quedar viejo.
      */
-    this.root.addEventListener("click", (e) => {
+    /*
+     * **Y se escucha `pointerdown`, no `click`.**
+     *
+     * Cuarto informe del mismo mando —«esto sigue ahí de adorno»— contra
+     * pruebas que pasan: clic por coordenadas en ventanas de 1280, 1920 y
+     * 2400, en dos peldaños, con tarjeta puesta y midiendo que el clic entra
+     * en el tirador y que el cuadro baja. Cuando la prueba dice que va cuatro
+     * veces y la persona dice que no cuatro veces, lo que está mal es la
+     * prueba: mide un `click` de libro.
+     *
+     * Un `click` del navegador pide que el botón baje y suba **sobre el mismo
+     * elemento y sin moverse**. En un panel táctil basta con que el dedo
+     * resbale un píxel para que no llegue nunca; y si algo de encima se queda
+     * el `pointerup`, tampoco. `pointerdown` no tiene ninguna de esas dos
+     * condiciones: si el dedo aterriza ahí, el cuadro baja.
+     *
+     * No se pierde nada por el camino: esto no es un botón que dispare algo
+     * irreversible, es una persiana.
+     */
+    this.root.addEventListener("pointerdown", (e) => {
       const donde = e.target as HTMLElement | null;
       if (!donde?.closest('[data-hud="cuadro-tirador"]')) return;
+      // Y que no siga su camino: sin esto el gesto lo recoge además la palanca
+      // táctil que hay debajo y el motor se mueve al bajar el cuadro.
+      e.preventDefault();
       /*
        * **Lo que se invierte es lo que hay en la pantalla, no lo que yo creo.**
        *

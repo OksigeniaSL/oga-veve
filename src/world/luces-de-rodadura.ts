@@ -50,7 +50,7 @@ import {
   PointsMaterial,
   SphereGeometry,
 } from "three";
-import type { Aerodrome, Punto } from "./aerodrome";
+import { sobreLaPista, type Aerodrome, type Punto } from "./aerodrome";
 
 /** Cada cuántos metros va una luz de borde. Es la separación de verdad. */
 export const SEPARACION_BORDE = 30;
@@ -62,7 +62,7 @@ export const AZUL = 0x2f6fd0;
 export const VERDE = 0x2fd36b;
 
 /** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */
-const ANCHO_POR_DEFECTO = 23;
+export const ANCHO_POR_DEFECTO = 23;
 
 /**
  * Reparte puntos cada `paso` metros a lo largo de una polilínea.
@@ -161,6 +161,19 @@ export function crearLucesDeRodadura(
    */
   if (!aero.runways.some((p) => p.lit)) return null;
 
+  const puestas = dondeVanLasLuces(aero);
+  if (!puestas.length) return null;
+  return montarLasLuces(puestas, altura);
+}
+
+/**
+ * Dónde va cada luz y de qué color, sin tocar three.js.
+ *
+ * Separado para poder comprobarlo: lo que decide si esto está bien o mal son
+ * **puntos y rectángulos**, y eso no necesita un navegador. Ver
+ * `luces-fuera-de-pista.test.ts`.
+ */
+export function dondeVanLasLuces(aero: Aerodrome): [Punto, number][] {
   const puestas: [Punto, number][] = [];
   for (const calle of aero.taxiways) {
     if (calle.path.length < 2) continue;
@@ -184,8 +197,29 @@ export function crearLucesDeRodadura(
     for (const a of ejes) puestas.push([a.xy, VERDE]);
   }
 
-  if (!puestas.length) return null;
+  /*
+   * **Y ninguna encima de la pista.**
+   *
+   * OpenStreetMap dibuja las salidas rápidas hasta el eje de la pista, así
+   * que los bordes calculados de esas calles acaban cruzándola: hileras
+   * azules atravesando el asfalto por el que aterriza todo el mundo. Contado
+   * jugando, con foto de noche en Los Rodeos: «luces cruzando la pista».
+   *
+   * Y no es un detalle de dibujo. El azul dice **«esto no es pista»**; una
+   * fila de azules cruzándola enseña exactamente lo contrario de lo que
+   * enseña. En un aeropuerto de verdad las azules se paran en el punto de
+   * espera y de ahí para dentro mandan las blancas del borde de pista.
+   *
+   * Tres metros de margen: una bombilla pegada al filo tampoco está.
+   */
+  return puestas.filter(([p]) => !sobreLaPista(aero, p, 3));
+}
 
+/** Y el montaje en three.js, que es lo que no se puede comprobar sin pantalla. */
+function montarLasLuces(
+  puestas: readonly [Punto, number][],
+  altura: (p: Punto) => number,
+): LucesDeRodadura {
   const grupo = new Group();
   grupo.name = "luces-de-rodadura";
   const tono = new Color();

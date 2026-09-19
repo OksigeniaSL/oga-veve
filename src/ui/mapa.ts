@@ -385,10 +385,31 @@ export class Mapa {
     if (!g) return;
     g.clearRect(0, 0, LADO, LADO);
 
-    const escala = LADO / this.metrosPorLado();
-    const c = this.centro();
-    const px = LADO / 2 + (x - c[0]) * escala;
-    const py = LADO / 2 + (z - c[1]) * escala;
+    /*
+     * **Y la flecha va con el encuadre que hay pintado, no con el de ahora.**
+     *
+     * El fondo se pinta de tanto en tanto —cuesta, y no cambia casi nunca— y
+     * la flecha se dibuja cada fotograma. Cogiendo cada uno su encuadre, el
+     * dibujo se queda con el de hace un rato y la flecha con el de ahora: el
+     * mapa entero se desplaza debajo de ella.
+     *
+     * Contado jugando, volando sobre el mar al oeste de Tenerife: «el mapa no
+     * dice la verdad, voy sobre el mar y me indica que estoy sobrevolando la
+     * isla por el oeste». Y era exactamente eso — la isla dibujada con un
+     * centro y la flecha puesta con otro.
+     *
+     * Se guarda el encuadre al pintar y la flecha usa **ése**. Si hace falta
+     * moverlo, se repinta el fondo, que es lo que ya decide el trozo de
+     * arriba.
+     */
+    const puesto = this.encuadrePintado ?? {
+      cx: this.centro()[0],
+      cz: this.centro()[1],
+      escala: LADO / this.metrosPorLado(),
+    };
+    const escala = puesto.escala;
+    const px = LADO / 2 + (x - puesto.cx) * escala;
+    const py = LADO / 2 + (z - puesto.cz) * escala;
 
     /*
      * **Y si estás fuera del recuadro, la flecha se queda en el borde.**
@@ -436,8 +457,8 @@ export class Mapa {
      * es el extra.
      */
     if (this.destino) {
-      const dx = LADO / 2 + (this.destino.x - c[0]) * escala;
-      const dz = LADO / 2 + (this.destino.z - c[1]) * escala;
+      const dx = LADO / 2 + (this.destino.x - puesto.cx) * escala;
+      const dz = LADO / 2 + (this.destino.z - puesto.cz) * escala;
       g.save();
       g.strokeStyle = "#ffd27a";
       g.lineWidth = 2.2;
@@ -551,6 +572,18 @@ export class Mapa {
     return [(x0 + x1) / 2, (z0 + z1) / 2];
   }
 
+  /**
+   * El encuadre con el que está pintado el fondo ahora mismo.
+   *
+   * Lo necesita la flecha: los dos lienzos tienen que estar de acuerdo o el
+   * mapa miente. Ver dónde se dibuja la flecha.
+   */
+  private encuadrePintado: {
+    cx: number;
+    cz: number;
+    escala: number;
+  } | null = null;
+
   private pintarFondo(): void {
     const esc = this.escenario;
     const cota = this.cota;
@@ -561,6 +594,7 @@ export class Mapa {
     const lado = this.metrosPorLado();
     const [cx, cz] = this.centro();
     const escala = LADO / lado;
+    this.encuadrePintado = { cx, cz, escala };
     const paso = lado / MUESTRAS;
     const px = LADO / MUESTRAS;
 
