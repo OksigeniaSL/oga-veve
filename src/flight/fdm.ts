@@ -633,11 +633,20 @@ export class CoefficientFlightModel implements FlightModel {
 
     const clMoment =
       a.clBeta * s.beta + a.clP * pHat + a.clAileron * assisted.aileron;
+    /*
+     * **El timón de profundidad es el mando más el compensador.**
+     *
+     * El mando vuelve al centro al soltarlo; el compensador se queda. Sumados
+     * dan la posición real de la superficie, que es exactamente cómo funciona
+     * en un avión: la rueda mueve el punto de reposo y la palanca se mueve
+     * alrededor de él. Ver `ControlInputs.trim`.
+     *
+     * Y se satura, que un timón tiene topes: con el compensador al final del
+     * recorrido, tirar más no da más.
+     */
+    const timon = clamp(assisted.elevator + controls.trim, -1, 1);
     const cmMoment =
-      a.cm0 +
-      a.cmAlpha * s.alpha +
-      a.cmQ * qHat +
-      a.cmElevator * assisted.elevator;
+      a.cm0 + a.cmAlpha * s.alpha + a.cmQ * qHat + a.cmElevator * timon;
     const cnMoment =
       a.cnBeta * s.beta +
       a.cnR * rHat +

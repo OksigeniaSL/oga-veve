@@ -329,6 +329,67 @@ body {
   pointer-events: none;
 }
 
+/*
+ * ── El compensador ──
+ *
+ * Una vía vertical con su centro marcado y una aguja. Sale **solo cuando está
+ * fuera del centro**, que es cuando dice algo: un indicador siempre encendido
+ * es un indicador que no se mira. Va en la columna de la izquierda, con el
+ * cartel del cinturón y el piloto automático, porque es de la misma familia:
+ * mandos de cabina que no pilotan el avión, lo gobiernan.
+ */
+.trim {
+  position: absolute;
+  top: calc(max(16px, env(safe-area-inset-top)) + var(--tacto) * 3.5);
+  left: max(16px, env(safe-area-inset-left));
+  z-index: 7;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 6px 0 8px;
+  width: calc(var(--tacto) * 0.9);
+  border-radius: var(--r-m);
+  background: var(--barniz), var(--barro);
+  border: 1px solid var(--linea);
+  color: var(--tinta, #e8e2d4);
+}
+
+.trim__rotulo {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+
+.trim__via {
+  position: relative;
+  width: 3px;
+  height: calc(var(--tacto) * 1.1);
+  border-radius: 2px;
+  background: var(--linea);
+}
+
+/* La raya del centro: el compensador neutro, que es de donde se sale. */
+.trim__via::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.trim__marca {
+  position: absolute;
+  left: -5px;
+  width: 13px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--precaucion, #ffb454);
+  top: calc(50% + var(--trim, 0) * 48% - 1.5px);
+}
+
 .cinturon svg {
   width: 62%;
   height: 62%;

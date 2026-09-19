@@ -161,6 +161,16 @@ export const ES_PY = {
   "teclas.close": "Cerrar",
   "tecla.pitchUp": "Subir el morro",
   "tecla.pitchDown": "Bajar el morro",
+  /*
+   * **El compensador**, que no es «subir el morro» otra vez.
+   *
+   * La diferencia es la que hay entre empujar una puerta y dejarla apoyada:
+   * el mando vuelve al centro al soltarlo y el compensador se queda. Por eso
+   * el rótulo dice «dejar» y no «subir» — es lo único que separa las dos
+   * parejas de teclas cuando se ven juntas en el cuadro de mandos.
+   */
+  "tecla.trimUp": "Dejar el morro más arriba",
+  "tecla.trimDown": "Dejar el morro más abajo",
   "tecla.rollLeft": "Girar a la izquierda",
   "tecla.rollRight": "Girar a la derecha",
   "tecla.yawLeft": "Timón a la izquierda",
@@ -549,6 +559,13 @@ export const ES_PY = {
      bajarlo o volver a mostrarlo». */
   "hud.bajarCuadro": "Bajar el tablero",
   "hud.pilotoAutomatico": "Piloto automático",
+  /*
+   * El compensador. Solo lo lee un lector de pantalla: en la pantalla hay una
+   * aguja y el rótulo «TRIM», que es lo que pone en la cabina y no se
+   * traduce. Ver la regla 3 de AGENTS.md.
+   */
+  "hud.trimArriba": "Compensador, morro arriba",
+  "hud.trimAbajo": "Compensador, morro abajo",
   "hud.mandarCinturon": "Cartel del cinturón",
   "hud.subirCuadro": "Subir el tablero",
   "gafas.ganadas": "¡Tus gafas de sol!",

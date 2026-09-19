@@ -165,6 +165,9 @@ export const EN: Dictionary = {
   "teclas.close": "Close",
   "tecla.pitchUp": "Nose up",
   "tecla.pitchDown": "Nose down",
+  /* Trim, which is not "nose up" again: the stick springs back, trim stays. */
+  "tecla.trimUp": "Trim nose up",
+  "tecla.trimDown": "Trim nose down",
   "tecla.rollLeft": "Turn left",
   "tecla.rollRight": "Turn right",
   "tecla.yawLeft": "Rudder left",
@@ -296,6 +299,8 @@ export const EN: Dictionary = {
   "hud.gafas": "Sunglasses",
   "hud.bajarCuadro": "Lower the panel",
   "hud.pilotoAutomatico": "Autopilot",
+  "hud.trimArriba": "Trim, nose up",
+  "hud.trimAbajo": "Trim, nose down",
   "hud.mandarCinturon": "Seatbelt sign",
   "hud.subirCuadro": "Raise the panel",
   "gafas.ganadas": "Your sunglasses!",

@@ -6238,6 +6238,11 @@ export class Game {
       this.flight.state.heading,
       objetivo ? objectiveTarget(objetivo) : null,
     );
+    /*
+     * Y dónde está el compensador, que es un mando que **se queda puesto** y
+     * por tanto hay que poder verlo sin tocarlo. Ver `ControlInputs.trim`.
+     */
+    this.hud.setTrim(this.input.controls.trim);
     this.hud.update(
       this.flight.state,
       this.input.controls.throttle,

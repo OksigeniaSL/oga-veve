@@ -40,6 +40,15 @@ const DEADZONE = 0.12;
  * Función pura y exportada para poder probarla sin navegador, que es lo que
  * faltaba cuando se invirtió el cabeceo.
  */
+/**
+ * Cuánto se mueve el compensador por segundo con la tecla apretada.
+ *
+ * Medio recorrido por segundo, o sea cuatro segundos de tope a tope. Sale de
+ * lo que tarda en girarse una rueda de compensador de verdad, y sobre todo de
+ * que con menos no se afina: lo que se pide de este mando son pasos pequeños.
+ */
+export const PASO_DE_TRIM = 0.25;
+
 export function axisFromKeys(
   held: ReadonlySet<string>,
   positive: readonly string[],
@@ -257,6 +266,13 @@ export class InputManager {
     this.buttonThrottle = 0;
     this.touchBrakes = false;
     this.controls.throttle = 0;
+    /*
+     * Y el compensador al centro, que es como se encuentra un avión al
+     * subirse a él. Dejarlo puesto del vuelo anterior es empezar el siguiente
+     * con el morro tirando para arriba sin que nadie haya tocado nada — el
+     * mismo fallo que el gas clavado, y más difícil de ver.
+     */
+    this.controls.trim = 0;
   }
 
   setButtonThrottle(direction: number): void {
@@ -303,6 +319,28 @@ export class InputManager {
       clamp(pitchTarget, -1, 1),
       dt,
     );
+
+    /*
+     * **Y el compensador, que no es un muelle.**
+     *
+     * El cabeceo vuelve al centro en cuanto se suelta la tecla —eso es un
+     * mando— y por eso volar nivelado a mano obligaba a tener la tecla medio
+     * pulsada para siempre. El compensador se mueve mientras se aprieta y
+     * **se queda donde se suelte**, que es lo que hace la rueda de cualquier
+     * cabina. Ver `ControlInputs.trim`.
+     *
+     * Despacio a propósito: `PASO_DE_TRIM` por segundo son unos cuatro
+     * segundos de recorrido de tope a tope. Un compensador rápido es un
+     * compensador con el que no se puede afinar, y afinar es para lo único
+     * que sirve.
+     */
+    const trim = this.axis("trimUp", "trimDown");
+    if (trim !== 0)
+      this.controls.trim = clamp(
+        this.controls.trim + trim * PASO_DE_TRIM * dt,
+        -1,
+        1,
+      );
     this.controls.aileron = approach(
       this.controls.aileron,
       clamp(rollTarget, -1, 1),

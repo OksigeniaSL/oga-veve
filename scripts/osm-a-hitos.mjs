@@ -82,6 +82,19 @@ const CUPO = { montana: 4, isla: 4, ciudad: 5 };
  */
 const SEPARACION = 8000;
 
+/**
+ * Una isla más cerca que esto **es donde estás**, no algo que señalar.
+ *
+ * Salió de una lista mal: volando desde La Palma, la primera isla era **La
+ * Palma**, a once kilómetros. Señalar la isla que tenés debajo no enseña
+ * geografía; es decirle a alguien que a su izquierda está el suelo.
+ *
+ * Veinticinco kilómetros: más que el radio de cualquiera de las islas
+ * pequeñas y mucho menos que lo que hay hasta la de al lado —sesenta hasta La
+ * Gomera desde Tenerife, cien de Lanzarote a Fuerteventura—.
+ */
+const SOBRE_LA_QUE_ESTOY = 25000;
+
 /** Las clases que se piden, con lo que hace falta para quedarse una. */
 const CLASES = [
   {
@@ -217,6 +230,20 @@ for (const esc of escenarios) {
      */
     for (const h of suyos) {
       if (escogidos.length >= (CUPO[clase.clase] ?? 0)) break;
+      /*
+       * **Y lo que cae fuera del cuadro, fuera.**
+       *
+       * Overpass devuelve una relación entera cuando **su contorno toca** el
+       * rectángulo, y con `out center` lo que llega es su centro, que puede
+       * estar lejísimos: desde La Palma salía «La Gomera» a setenta y siete
+       * kilómetros con un cuadro de cuarenta y ocho de medio lado. El hito
+       * caía fuera del mundo del escenario, o sea en un sitio donde no hay
+       * ni terreno. Lo cazó la prueba de datos, que es justo para lo que está.
+       */
+      if (Math.abs(h.x) > medio || Math.abs(h.z) > medio) continue;
+      // Y la isla que se tiene debajo no se señala. Ver `SOBRE_LA_QUE_ESTOY`.
+      if (h.clase === 'isla' && Math.hypot(h.x, h.z) < SOBRE_LA_QUE_ESTOY)
+        continue;
       if (escogidos.some((o) => Math.hypot(o.x - h.x, o.z - h.z) < SEPARACION))
         continue;
       escogidos.push(h);

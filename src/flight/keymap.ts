@@ -28,6 +28,8 @@ import {
 export type Accion =
   | "pitchUp"
   | "pitchDown"
+  | "trimUp"
+  | "trimDown"
   | "rollLeft"
   | "rollRight"
   | "yawLeft"
@@ -75,6 +77,28 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
   pitchDown: {
     label: "tecla.pitchDown",
     defecto: ["ArrowDown", "KeyS"],
+    held: true,
+  },
+  /*
+   * **El compensador**, que es el mando que faltaba para volar nivelado.
+   *
+   * Página arriba y página abajo a la derecha, y el ocho y el dos del teclado
+   * numérico a la izquierda —que es donde lo lleva cualquier simulador desde
+   * hace treinta años, y donde además las dos teclas están una encima de la
+   * otra, que es la mitad de la explicación—.
+   *
+   * Mantenidas: el compensador de verdad es una rueda que se gira, no un
+   * botón, así que aquí se mueve mientras se aprieta y se queda donde se
+   * suelte. Ver `ControlInputs.trim`.
+   */
+  trimUp: {
+    label: "tecla.trimUp",
+    defecto: ["PageUp", "Numpad8"],
+    held: true,
+  },
+  trimDown: {
+    label: "tecla.trimDown",
+    defecto: ["PageDown", "Numpad2"],
     held: true,
   },
   rollLeft: {

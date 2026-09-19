@@ -632,6 +632,24 @@ export class Hud {
           </svg>
         </div>
         <!--
+          **El compensador de profundidad**, que es el mando que faltaba.
+
+          Contado jugando: «las flechas no tienen stops, o subo o bajo, y eso
+          impide mantener el avión estable». El cabeceo es un muelle y vuelve
+          al centro; el compensador se queda donde lo dejes, y es lo que
+          permite volar nivelado sin tener una tecla apretada.
+
+          El rótulo va en inglés y no se traduce, como IAS o ALT: es lo que
+          pone en la cabina. Lo que se lee sin palabras es la aguja: arriba,
+          el morro se queda arriba. Ver flight/model.ts, ControlInputs.trim.
+        -->
+        <div class="trim" data-hud="trim" hidden role="status">
+          <span class="trim__rotulo">TRIM</span>
+          <span class="trim__via">
+            <span class="trim__marca" data-hud="trim-marca"></span>
+          </span>
+        </div>
+        <!--
           Y el interruptor, que es lo que tiene un comandante de verdad.
 
           Pedido tal cual: «es una decisión del piloto mandar a ponerlo
@@ -2139,6 +2157,34 @@ export class Hud {
    * Apagada quiere decir que ahora mismo la torre no tiene nada que decirte,
    * que es lo normal durante casi todo el vuelo.
    */
+  /**
+   * Dónde está el compensador, de −1 a 1.
+   *
+   * Se enseña **solo cuando hay instrumentos**: en el peldaño del dibujo el
+   * avión lo vuela el modelo sencillo, donde el cabeceo no es un timón sino
+   * directamente cuánto sube, y ahí un compensador no compensa nada. Ver
+   * `ControlInputs.trim`.
+   *
+   * Y se esconde en el centro, que es lo que hace que se vea cuando no lo
+   * está: un indicador siempre encendido es un indicador que no se mira.
+   */
+  setTrim(valor: number): void {
+    const caja = this.root.querySelector<HTMLElement>('[data-hud="trim"]');
+    const marca = this.root.querySelector<HTMLElement>('[data-hud="trim-marca"]');
+    if (!caja || !marca) return;
+    const hay = this.instruments !== "none" && Math.abs(valor) > 0.005;
+    caja.hidden = !hay;
+    if (!hay) return;
+    const v = Math.max(-1, Math.min(1, valor));
+    // Arriba en la escala es morro arriba, así que el signo se invierte: en
+    // pantalla la Y crece hacia abajo.
+    marca.style.setProperty("--trim", String(-v));
+    caja.setAttribute(
+      "aria-label",
+      `${t(v > 0 ? "hud.trimArriba" : "hud.trimAbajo")} ${Math.round(Math.abs(v) * 100)}%`,
+    );
+  }
+
   setLuzDeTorre(
     luz: "verde" | "roja" | null,
     /**

@@ -20,6 +20,33 @@ import type { Quaternion, Vector3 } from "three";
 export interface ControlInputs {
   /** Cabeceo. +1 = tirar de la palanca = morro arriba. */
   elevator: number;
+  /**
+   * **El compensador de profundidad.** −1 a 1, y se queda donde lo dejes.
+   *
+   * Contado jugando con el de fuselaje ancho: «cuando uso las teclas de
+   * flecha el avión no tiene *stops*: o bajo o subo, pero no me deja marcar
+   * pequeños pasos, y eso impide que pueda mantener el avión estable. Si
+   * subo velocidad, sube el avión; si bajo, baja. Entiendo que debo tener un
+   * mando para decidir si a cualquier velocidad puedo mantener el avión a una
+   * altitud fija».
+   *
+   * Y es exactamente eso: **el mando que falta es el compensador**. El
+   * cabeceo es un muelle —se suelta la tecla y el timón vuelve al centro—,
+   * así que volar nivelado obligaba a tener la tecla medio pulsada para
+   * siempre, que no se puede. El compensador no vuelve: mueve el punto de
+   * equilibrio del timón y ahí se queda. Es el volante o la rueda que hay en
+   * cualquier cabina del mundo, al lado de la pierna del piloto, y es lo
+   * primero que se toca después de nivelar.
+   *
+   * Se suma al mando: el timón que ve el avión es `elevator + trim`. Así, con
+   * el compensador puesto, soltar la palanca deja el avión donde estaba en
+   * vez de devolverlo al centro — que es justo lo que se pedía.
+   *
+   * **El modelo sencillo no lo usa.** En Guyrami el cabeceo no es un timón:
+   * es directamente cuánto sube el avión, y el avión ya se sostiene solo. Un
+   * compensador allí no compensaría nada. Ver `flight/arcade.ts`.
+   */
+  trim: number;
   /** Alabeo. +1 = alabear a la derecha. */
   aileron: number;
   /** Guiñada. +1 = pie derecho = morro a la derecha. */
@@ -70,6 +97,7 @@ export interface ControlInputs {
 export function neutralControls(): ControlInputs {
   return {
     elevator: 0,
+    trim: 0,
     aileron: 0,
     rudder: 0,
     throttle: 0,
