@@ -874,11 +874,30 @@ export class PlanDeVuelo {
     this.destino = null;
     /*
      * Y la raya se apaga: la que había iba por las calles del otro campo, y
-     * dejarla puesta es peor que no tener ninguna. La de aquí la traza el
-     * cambio de fase al tomar tierra.
+     * dejarla puesta es peor que no tener ninguna.
      */
     this.ponerRuta(null);
+    /*
+     * **Y se pide una raya nueva para la fase en la que se va, sin esperar a
+     * que cambie.**
+     *
+     * Esto es un seguro, y conviene decirlo: hoy la mudanza siempre ocurre
+     * volando —el campo de ahora es el de la pista más cerca, así que cambia a
+     * mitad de camino— y después hay un cambio de fase seguro, el de tomar
+     * tierra, que traza la ruta. Con lo cual esto no se ha visto hacer falta
+     * nunca.
+     *
+     * Está porque el agujero que tapa es de los que no avisan: `mudarseA` deja
+     * el destino a nulo, y mientras el destino sea nulo `rehacerSiHaceFalta`
+     * no hace nada. Una mudanza que cayera en una fase que ya no va a cambiar
+     * dejaría el plan **sin ruta y sin manera de recuperarla**, y eso en
+     * pantalla es quedarse sin raya verde en un aeropuerto desconocido.
+     */
+    this.acabaDeMudarse = true;
   }
+
+  /** Ver `mudarseA`: lo consume el primer `paso` que venga detrás. */
+  private acabaDeMudarse = false;
 
   /** Que la torre no autorice nunca: es la lección de rodar. */
   set soloRodaje(si: boolean) {
@@ -1932,8 +1951,12 @@ export class PlanDeVuelo {
     const p: Paso = this.vuelo.paso(s, dt);
     const sugerida = this.velocidadAqui();
 
-    if (p.cambio) this.alCambiarDeFase(p.fase);
-    else this.rehacerSiHaceFalta(p.fase, dt);
+    if (p.cambio || this.acabaDeMudarse) {
+      // Mudarse de aeropuerto es, para la ruta, lo mismo que cambiar de fase:
+      // lo que había ya no vale y hay que trazar desde donde se está.
+      this.acabaDeMudarse = false;
+      this.alCambiarDeFase(p.fase);
+    } else this.rehacerSiHaceFalta(p.fase, dt);
 
     return {
       fase: p.fase,
