@@ -39,6 +39,7 @@ import {
 } from "three";
 import { PALETA } from "../ui/paleta";
 import { anillosDe, type Eco } from "../flight/tormentas";
+import { temperaturaExterior } from "../flight/atmosphere";
 
 /**
  * De cada escalón del radar a su color.
@@ -130,6 +131,14 @@ export interface DatosDeCabina {
   readonly vref: number;
   /** Altura sobre el nivel del mar, m. */
   readonly altura: number;
+  /**
+   * A qué altura está **la cabina**, m.
+   *
+   * No es la del avión: un presurizado va a diez mil metros con la cabina a
+   * dos mil cuatrocientos, y eso es lo único que separa a quien va dentro de
+   * un aire que no se respira. Ver `flight/cabina-presurizada.ts`.
+   */
+  readonly cabina: number;
   /** Velocidad vertical, m/s. */
   readonly vertical: number;
   /** Rumbo verdadero, radianes. */
@@ -1420,6 +1429,41 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     g.fillStyle = PALETA.objetivo;
     g.fillRect(bx, yMando, ancho * clamp01(d.motores[i] ?? 0), 10);
   }
+
+  /*
+   * **La temperatura de fuera y la altura de la cabina.**
+   *
+   * Pedidas las dos: «no veo temperatura exterior, ni presurización de
+   * cabina». Y las dos son de las que enseñan sin proponérselo — que a diez
+   * mil metros hace cincuenta bajo cero, y que la cabina **también sube**,
+   * aunque mucho menos, que es por lo que duelen los oídos al bajar.
+   *
+   * Los rótulos en inglés de cabina y sin traducir, como IAS o ALT: OAT es
+   * *outside air temperature* y CAB ALT es la altitud de cabina, y así es
+   * como están escritos en el avión que van a ver algún día.
+   */
+  const yAire = yMando + 34;
+  const oat = Math.round(temperaturaExterior(d.altura));
+  escribir(g, "OAT", ANCHO * 0.28, yAire, "500 11px " + FUENTE, TENUE, "right");
+  escribir(
+    g,
+    `${oat > 0 ? "+" : ""}${oat}°C`,
+    ANCHO * 0.31,
+    yAire,
+    "600 15px " + FUENTE,
+    TINTA,
+    "left",
+  );
+  escribir(g, "CAB ALT", ANCHO * 0.72, yAire, "500 11px " + FUENTE, TENUE, "right");
+  escribir(
+    g,
+    `${Math.round(d.cabina / 0.3048 / 50) * 50}`,
+    ANCHO * 0.75,
+    yAire,
+    "600 15px " + FUENTE,
+    TINTA,
+    "left",
+  );
 
   reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps);
   lucesDeTren(g, 16, ALTO - 30, d.patas, d.tren);

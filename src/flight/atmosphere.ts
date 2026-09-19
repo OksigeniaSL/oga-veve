@@ -44,6 +44,22 @@ export function indicatedAirspeed(
  * del sonido con ella.
  */
 export function velocidadDelSonido(altitudeMetres: number): number {
+  return 20.0468 * Math.sqrt(temperaturaExterior(altitudeMetres) + 273.15);
+}
+
+/**
+ * La temperatura del aire de fuera a esa altura, en grados centígrados.
+ *
+ * Atmósfera estándar: quince grados abajo, seis y medio menos por kilómetro y
+ * quieta en −56,5 a partir de la tropopausa. Es la misma cuenta que ya hacía
+ * `velocidadDelSonido` —de hecho es la que tenía dentro—, sacada aparte
+ * porque ahora también se enseña.
+ *
+ * **Y se enseña porque se pidió, y porque es de las cosas que un simulador
+ * puede enseñar sin proponérselo**: que a diez mil metros hace cincuenta bajo
+ * cero no se le olvida a nadie que lo haya visto bajar mientras subía.
+ */
+export function temperaturaExterior(altitudeMetres: number): number {
   const T = Math.max(216.65, 288.15 - 0.0065 * Math.max(0, altitudeMetres));
-  return 20.0468 * Math.sqrt(T);
+  return T - 273.15;
 }

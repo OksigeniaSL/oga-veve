@@ -314,6 +314,7 @@ import { avisaDelTren, seVuelveADecir } from "./flight/tren";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
+import { altitudDeCabina } from "./flight/cabina-presurizada";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
 import { hitosDe, sinRepetidos, type Hito } from "./world/hitos";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
@@ -6146,6 +6147,12 @@ export class Game {
           ),
         ),
         rotuloDeMotor: cuadroDe(this.aircraft).rotulo,
+        /*
+         * Y dónde está la cabina, que no es donde está el avión. Ver
+         * `flight/cabina-presurizada.ts`, y la pregunta que lo trajo: «¿qué
+         * pasa si tengo una despresurización a mucha altitud?».
+         */
+        cabina: altitudDeCabina(this.flight.state.position.y, this.aircraft),
         flaps: this.input.controls.flaps,
         /*
          * Y las escalas de **este** avión, que es lo que hace que la cinta de

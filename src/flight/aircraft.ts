@@ -249,6 +249,19 @@ export interface AircraftConfig {
    */
   alturaDeCrucero: number;
   /**
+   * Si la cabina va soplada a presión.
+   *
+   * No es un detalle de ficha: **es lo que decide a qué altura puede ir la
+   * gente de dentro**. Un avión sin presurizar no sube por encima de unos
+   * tres mil metros porque allí el aire ya no da, y uno presurizado cruza a
+   * diez mil con la cabina a dos mil cuatrocientos. Es la misma razón por la
+   * que sus `alturaDeCrucero` son las que son.
+   *
+   * Ver `flight/cabina-presurizada.ts`, que es donde se convierte en un
+   * número que se puede leer en el cuadro.
+   */
+  presurizada: boolean;
+  /**
    * **Vmo**: velocidad indicada máxima, en nudos.
    *
    * Es un límite de **estructura**: lo que aguanta un fuselaje es presión
@@ -421,6 +434,7 @@ export const PYKASU: AircraftConfig = {
    * queda sin aire.
    */
   alturaDeCrucero: 3000,
+  presurizada: false,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
   vmoKt: 163,
   vleKt: 85,
@@ -498,6 +512,7 @@ export const MAINUMBY: AircraftConfig = {
   // Dos mil quinientos: el trabajo de un avión así se hace mucho más abajo, y
   // lo que sube es para ir de un campo a otro.
   alturaDeCrucero: 2500,
+  presurizada: false,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
   vmoKt: 130,
   vleKt: 80,
@@ -606,7 +621,8 @@ export const PANAMBI: AircraftConfig = {
   // Cinco mil quinientos: un bimotor de pistón sin presurizar vuela sus etapas
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
-  // Bimotor ligero presurizado.
+  presurizada: false,
+  // Y los límites, tomados de un bimotor ligero de esta clase.
   vmoKt: 230,
   vleKt: 152,
   vfeKt: 122,
@@ -700,6 +716,7 @@ export const ARASUNU: AircraftConfig = {
   // Siete mil seiscientos: veinticinco mil pies, el techo de servicio típico de
   // un turbohélice regional presurizado.
   alturaDeCrucero: 7600,
+  presurizada: true,
   // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
   vmoKt: 250,
   vleKt: 184,
@@ -809,6 +826,7 @@ export const ARAI: AircraftConfig = {
   cruiseSpeed: 220,
   // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
   alturaDeCrucero: 11000,
+  presurizada: true,
   // Reactor regional.
   vmoKt: 320,
   /*
@@ -979,6 +997,7 @@ export const YVAGA: AircraftConfig = {
    * servicio está más alto —trece mil setecientos— pero ahí ya no se cruza.
    */
   alturaDeCrucero: 10700,
+  presurizada: true,
   /*
    * Los del de fuselaje ancho, que son los del avión del que sale: 365 nudos y
    * Mach 0,92. Y es el único de la flota donde el cruce cae a una altura a la
