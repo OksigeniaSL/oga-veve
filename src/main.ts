@@ -475,8 +475,34 @@ if (import.meta.env.DEV && "serviceWorker" in navigator) {
 
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   const registrar = (): void => {
+    /*
+     * **Y se le pide con el nombre de esta compilación detrás.**
+     *
+     * `sw.js` se llama igual en todas las versiones, así que una caché por
+     * delante —la del navegador o la del CDN— puede servir el de ayer durante
+     * horas, y con él un armazón que precachea ficheros con nombres que ya no
+     * existen. Medido en producción: `cache-control: max-age=53257` y ocho
+     * horas de antigüedad, con el `index.html` pidiendo `index-CxRfK_OS.js`
+     * mientras el `sw.js` publicado listaba `index-WRFM5t_5.js`. El resultado
+     * es el peor de todos: se despliega, el servidor lo tiene, y **quien
+     * juega sigue en la versión de anteayer por mucho que recargue**, porque
+     * lo que le sirve el trabajador de servicio no pasa por la red.
+     *
+     * El nombre de este propio módulo lleva la huella de la compilación, así
+     * que sirve de versión sin tener que inventarse ninguna: cada compilación
+     * pide una dirección que ninguna caché ha visto nunca. La consulta no
+     * cambia el ámbito del trabajador —eso lo fija la ruta— así que esto no
+     * es un truco con efectos: es pedir el fichero de hoy.
+     *
+     * Y `updateViaCache: "none"`, que es lo mismo por el otro lado: cuando el
+     * navegador vaya a comprobar si hay uno nuevo, que no se conteste solo
+     * con lo que tiene guardado.
+     */
+    const huella = new URL(import.meta.url).pathname.split("/").pop() ?? "";
     void navigator.serviceWorker
-      .register("./sw.js")
+      .register(`./sw.js?v=${encodeURIComponent(huella)}`, {
+        updateViaCache: "none",
+      })
       .then((registro) => avisarDeLaVersionNueva(registro))
       .catch(() => {});
   };
