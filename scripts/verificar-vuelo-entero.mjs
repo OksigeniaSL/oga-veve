@@ -2309,7 +2309,7 @@ comprobarSiVolo(
    */
   vuelo.vuelta > 0 &&
     vuelo.largoDeLaRuta > 0 &&
-    rodeo <= 1.4 &&
+    rodeo <= 1.55 &&
     vuelo.vuelta <= 500,
   `×${rodeo.toFixed(2)} de su ruta · ${vuelo.vueltaMetros} m rodados sobre ${vuelo.largoDeLaRuta} trazados · ${vuelo.vuelta} s`,
   "la vuelta es más larga que la ida y nadie la había cronometrado",
@@ -2327,6 +2327,17 @@ comprobarSiVolo(
  * Medido antes de arreglarlo: Tenerife Sur ×1,53 —1682 metros rodados sobre
  * 1098 trazados— y La Palma ×1,40. Contado jugando: «estoy paseando por el
  * aeropuerto y ni coche, ni señor de las balizas, ni rayas verdes».
+ *
+ * **Y el listón sube de 1,4 a 1,55, con el motivo medido.** Tenerife Sur da
+ * ×1,08, ×1,31, ×1,31 y ×1,43 en cuatro tiradas del mismo código: su banda de
+ * ruido pasa por encima de 1,4, así que la comprobación fallaba a cara o cruz
+ * — exactamente el mal que ya costó una tarde con el listón de los 220
+ * segundos. Y esta comprobación tiene hoy menos trabajo que cuando se escribió:
+ * el baile de puertas, que era lo que disparaba el rodeo a ×1,53, lo caza
+ * ahora su propia prueba, que no depende de volar.
+ *
+ * Lo que sigue cazando —y para lo que se queda— es un avión que se va por
+ * donde no debe: con el denominador equivocado eso daba de ×1,9 a ×5,7.
  *
  * **Y esto detecta el síntoma, no demuestra la regla.** Con el arreglo deshecho
  * a propósito, una tirada lo cazó —dos puertas— y la siguiente pasó en verde:
