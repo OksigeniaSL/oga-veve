@@ -42,6 +42,23 @@ import {
 } from "./banco-de-voz";
 
 /** Lo que este instructor necesita del motor de audio, y nada más. */
+/**
+ * Cada cuánto se mira si la voz del navegador ya calló, en milisegundos.
+ *
+ * Ciento veinte: lo bastante corto para que el silencio entre frases no se
+ * note, y lo bastante largo para no preguntarlo sesenta veces por segundo. Ver
+ * el porqué en `decir`.
+ */
+const MIRAR_SI_CALLO = 120;
+
+/**
+ * Y cuánto se le aguanta como mucho, en milisegundos.
+ *
+ * Doce segundos. Una voz del sistema que se queda colgada —pasa, y no avisa—
+ * no puede dejar mudo el resto del vuelo.
+ */
+const HASTA_QUE_CALLE = 12000;
+
 export interface Altavoz {
   decodificar(bytes: ArrayBuffer): Promise<AudioBuffer | null>;
   encadenarVoz(
@@ -268,21 +285,63 @@ export class InstructorGrabado implements Instructor {
            */
           return () => this.callarLoGrabado();
         }
-        // No había dónde tocar —el contexto de audio todavía duerme—. Que lo
-        // diga el navegador antes que nadie, que es lo que había antes de
-        // esto. Y la plaza se suelta: si no, la boca se queda esperando a
-        // una frase que nunca sonó.
-        this.sonando = false;
-        listo();
+        /*
+         * **No hay grabación: habla el suplente del navegador, y la plaza se
+         * suelta cuando termina él, no antes.**
+         *
+         * Se soltaba en el acto, con este motivo escrito: «si no, la boca se
+         * queda esperando a una frase que nunca sonó». El motivo vale cuando
+         * de verdad no suena nada —el contexto de audio dormido— y es falso
+         * cuando sí suena: el suplente se pone a hablar **fuera del turno**, y
+         * lo siguiente le entra por encima.
+         *
+         * Y eso es lo que se oía, porque las frases que no están grabadas son
+         * las de inglés: «la voz inglesa corta la española, eso lo hace
+         * siempre».
+         *
+         *     Otro avión: «Echo Charlie Sierra November November, viendo en
+         *                  col…»
+         *     Torre:      «Echo Charlie Sierra November November… cleared to
+         *                  land»
+         *
+         * Así que se espera a que calle. No sabe avisar —la interfaz de un
+         * instructor no tiene aviso de fin— pero sí sabe decir si está
+         * hablando, así que se le pregunta. Con un tope: una voz del sistema
+         * que se queda colgada no puede dejar mudo el resto del vuelo.
+         */
+        this.sonando = true;
         this.suplente.decir(texto, clave, urgencia);
+        let quedan = Math.ceil(HASTA_QUE_CALLE / MIRAR_SI_CALLO);
+        const mirar = (): void => {
+          if (this.suplente.hablando && quedan-- > 0) {
+            this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
+            return;
+          }
+          this.esperando = null;
+          this.sonando = false;
+          listo();
+        };
+        // Un primer respiro antes de mirar: algunas voces del sistema tardan
+        // un pelo en declararse hablando, y preguntar en el mismo instante
+        // devuelve «no» y suelta la plaza igual que antes.
+        this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
         // Y al suplente se le calla igual, que también es una voz.
-        return () => this.suplente.callar();
+        return () => {
+          if (this.esperando !== null) clearTimeout(this.esperando);
+          this.esperando = null;
+          this.suplente.callar();
+        };
       },
       clave,
     );
   }
 
+  /** El reloj que espera a que calle el suplente, si hay uno en marcha. */
+  private esperando: ReturnType<typeof setTimeout> | null = null;
+
   callar(): void {
+    if (this.esperando !== null) clearTimeout(this.esperando);
+    this.esperando = null;
     this.callarLoGrabado();
     this.suplente.callar();
   }

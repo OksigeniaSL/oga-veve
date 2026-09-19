@@ -180,3 +180,69 @@ describe("y el del cinturón pide altura, no fase", () => {
     ).toEqual(["comandante.crucero"]);
   });
 });
+
+describe("y los anuncios no se pierden porque una lección salte una fase", () => {
+  /*
+   * **La queja, y era buena:** «hace tiempo que no oigo a la comandante, ¿ya
+   * dejó la compañía y se fue a Egyptair?».
+   *
+   * «Dar una vuelta» arranca en la pista —ver `lecciones.ts`—, así que las
+   * fases `rodando`, `autorizado` y `alineando` no ocurren nunca. Con una sola
+   * fase por anuncio, eso se llevaba por delante tres de los seis.
+   */
+  const momento = (fase: string, extra = {}) => ({
+    fase: fase as never,
+    conPasaje: true,
+    instructorHablando: false,
+    sobreElCampo: 1000,
+    vertical: 0,
+    ...extra,
+  });
+
+  /** Deja correr `segundos` en una fase y devuelve lo que se dijo. */
+  function correr(m: Megafonia, fase: string, segundos: number): string[] {
+    const dichos: string[] = [];
+    for (let t = 0; t < segundos; t += 1 / 30) {
+      const a = m.paso(1 / 30, momento(fase));
+      if (a) dichos.push(a);
+    }
+    return dichos;
+  }
+
+  it("empezando en la pista, la comandante saluda igual", () => {
+    const m = new Megafonia();
+    // Nada de rodar, nada de autorización: alineado y a volar.
+    const dichos = correr(m, "alineando", 20);
+    expect(dichos).toContain("comandante.bienvenida");
+  });
+
+  it("y empezando por el puesto también, que no se rompe lo que ya iba", () => {
+    const m = new Megafonia();
+    expect(correr(m, "rodando", 20)).toContain("comandante.bienvenida");
+  });
+
+  it("y el de crucero no se pierde por subir a ratos", () => {
+    /*
+     * El otro fallo, y es de reloj: la ventana se contaba con el reloj de la
+     * fase, así que se agotaba **mientras las condiciones no se cumplían**. Un
+     * avión que nivela un momento y vuelve a subir la gastaba entera sin haber
+     * podido decir nada.
+     */
+    const m = new Megafonia();
+    // Un minuto subiendo de verdad: no toca decirlo y no debe gastarse nada.
+    for (let t = 0; t < 60; t += 1 / 30)
+      m.paso(1 / 30, momento("en-vuelo", { vertical: 6 }));
+    // Y ahora se nivela: aquí sí.
+    expect(correr(m, "en-vuelo", 20)).toContain("comandante.crucero");
+  });
+
+  it("y aun así cada anuncio se dice una sola vez", () => {
+    const m = new Megafonia();
+    const dichos = [
+      ...correr(m, "alineando", 40),
+      ...correr(m, "en-vuelo", 40),
+      ...correr(m, "final", 40),
+    ];
+    expect(new Set(dichos).size).toBe(dichos.length);
+  });
+});

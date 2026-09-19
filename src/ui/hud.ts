@@ -580,6 +580,25 @@ export class Hud {
           </svg>
         </div>
         <!--
+          Y el interruptor, que es lo que tiene un comandante de verdad.
+
+          Pedido tal cual: «es una decisión del piloto mandar a ponerlo
+          (turbulencia, inicio de aproximación, etc.)». Se enciende y se apaga
+          solo cuando el vuelo lo pide; esto es para cuando lo pide quien
+          vuela, que es lo que pasa en cualquier avión con gente detrás.
+
+          Solo en los aviones con pasaje, como el cartel: una avioneta de
+          escuela no tiene a quién avisar. Ver flight/cinturon.ts.
+        -->
+        <button class="sonido cinturon-mando" type="button"
+                data-hud="cinturon-mando" aria-pressed="false" hidden
+                aria-label="${t("hud.mandarCinturon")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4v6a5 5 0 0 0 10 0V4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <rect x="9" y="13" width="6" height="7" rx="1.5" fill="currentColor"/>
+          </svg>
+        </button>
+        <!--
           La radio: lo que se acaba de oír decir a otro avión.
 
           Va aparte de todo lo demás y en pequeño **porque no es una
@@ -996,6 +1015,9 @@ export class Hud {
     );
     this.gafas = pick(this.root, "gafas");
     this.gafas.addEventListener("click", () => this.gafasHandler?.());
+    this.root
+      .querySelector('[data-hud="cinturon-mando"]')
+      ?.addEventListener("click", () => this.cinturonHandler?.());
     /*
      * **El tirador del cuadro**, y se acuerda de cómo lo dejaste.
      *
@@ -2315,6 +2337,26 @@ export class Hud {
    * Lo llama el juego al montar el escenario, y lo mira el cartel de la luz de
    * la torre. Ver `i18n/habla.ts`.
    */
+  /** Quién se entera de que han tocado el interruptor del cinturón. */
+  private cinturonHandler: (() => void) | null = null;
+
+  onCinturon(fn: () => void): void {
+    this.cinturonHandler = fn;
+  }
+
+  /**
+   * Y si el interruptor del cinturón está puesto a mano.
+   *
+   * Se enseña en el propio botón, que es donde se mira: puesto a mano se queda
+   * encendido, y en automático se apaga. Un mando que no dice en qué posición
+   * está no es un mando.
+   */
+  ponerMandoDeCinturon(aMano: boolean): void {
+    const b = this.root.querySelector<HTMLElement>('[data-hud="cinturon-mando"]');
+    b?.setAttribute("aria-pressed", String(aMano));
+    b?.classList.toggle("boton--puesto", aMano);
+  }
+
   /**
    * Enciende o apaga el cartel del cinturón.
    *
@@ -2326,6 +2368,20 @@ export class Hud {
   ponerCinturon(encendido: boolean): void {
     const caja = this.root.querySelector<HTMLElement>('[data-hud="cinturon"]');
     if (caja) caja.hidden = !encendido;
+  }
+
+  /**
+   * Y si este avión lleva cartel del cinturón, para enseñar su interruptor.
+   *
+   * El cartel se esconde y se enseña según se enciende; el interruptor tiene
+   * que estar **siempre** en los aviones con pasaje, porque si solo apareciera
+   * con el cartel puesto no habría forma de ponerlo. Ver `flight/cinturon.ts`.
+   */
+  ponerHayCinturon(hay: boolean): void {
+    const b = this.root.querySelector<HTMLElement>(
+      '[data-hud="cinturon-mando"]',
+    );
+    if (b) b.hidden = !hay;
   }
 
   setHabla(habla: Habla): void {

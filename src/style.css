@@ -1988,6 +1988,41 @@ button.motor__tecla::after {
  * cuadro esté abajo: si se escondiera con él, bajarlo sería un viaje sin
  * vuelta. Ver `hud.ts`.
  */
+/*
+ * El interruptor del cinturón: el mando de la cabina, no el cartel.
+ *
+ * Va junto a los demás botones de la esquina y se queda encendido cuando está
+ * puesto a mano, que es lo que hace un interruptor de verdad: dice en qué
+ * posición está. Ver flight/cinturon.ts.
+ */
+.cinturon-mando {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.45);
+  color: var(--tinta-suave, #cfd6dd);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.cinturon-mando svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cinturon-mando[aria-pressed="true"] {
+  background: var(--aviso-ambar, #e0a13a);
+  color: #1b1b1b;
+}
+
+.cinturon-mando:focus-visible {
+  outline: 3px solid var(--foco, #ffb454);
+  outline-offset: 2px;
+}
+
 .cuadro__tirador {
   position: absolute;
   left: 50%;

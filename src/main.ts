@@ -228,7 +228,7 @@ const destinoDeHoy = aDondeSeVa
   ? SCENARIOS.find((e) => e.id === aDondeSeVa)
   : undefined;
 
-const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecino] =
+const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecino, fotoVecino] =
   await Promise.all([
     conRelieve(escenario),
     cargarCiudad(escenario.id),
@@ -260,6 +260,17 @@ const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecino] =
      * kilobytes.
      */
     destinoDeHoy ? conRelieve(destinoDeHoy) : Promise.resolve(undefined),
+    /*
+     * Y su fotografía, para que la isla de enfrente no salga de polígonos.
+     *
+     * La de lejos y no la fina: el vecino se mira desde el aire y de lejos
+     * durante casi todo el vuelo, y la fina cubre seis kilómetros alrededor de
+     * su pista. Cuando el aterrizaje allí sea un aterrizaje de verdad, la fina
+     * también.
+     */
+    destinoDeHoy && mundoElegido() === "foto"
+      ? cargarOrtofoto(destinoDeHoy.id, "lejos")
+      : Promise.resolve(undefined),
   ]);
 /**
  * **Y donde la foto ya enseña la ciudad, la ciudad es la foto.**
@@ -343,6 +354,7 @@ const game = new Game({
   ortofoto,
   ortofotoFina,
   vecino,
+  fotoVecino,
 });
 game.start();
 

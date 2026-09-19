@@ -30,10 +30,16 @@
  * si la pregunta no cae en su mapa, lo que hubiera antes.
  */
 
-import { Group } from "three";
+import { Group, type Texture } from "three";
 import { Terrain } from "./terrain";
 import type { Scenario } from "./scenarios";
 import { dondeCae } from "./entre-aerodromos";
+
+/** Lo que devuelve la proyección de una ortofoto para un punto del mundo. */
+interface Punto2 {
+  u: number;
+  v: number;
+}
 
 /**
  * El mismo escenario, sin el relieve del horizonte.
@@ -60,7 +66,22 @@ export class MundoVecino {
   /** Hasta dónde llega su mapa fino, medido desde su centro. */
   private readonly medioLado: number;
 
-  constructor(salida: Scenario, vecino: Scenario) {
+  constructor(
+    salida: Scenario,
+    vecino: Scenario,
+    /**
+     * Su fotografía, si la tiene.
+     *
+     * **Sin ella el vecino sale de polígonos**, y eso se ve a la primera: se
+     * cruza el canal con la isla de enfrente hecha de ladera lisa mientras la
+     * de casa lleva la foto puesta. Contado jugando: «el paisaje era el de
+     * fantasía, no el de las capas, no es realista».
+     *
+     * Es la misma del escenario cuando se juega solo en él: no hay fichero
+     * nuevo que generar ni que bajar dos veces.
+     */
+    foto?: { textura: Texture; uv(x: number, z: number): Punto2 } | undefined,
+  ) {
     const aquí = salida.aerodrome?.origin;
     const allí = vecino.aerodrome?.origin;
     if (!aquí || !allí)
@@ -70,6 +91,7 @@ export class MundoVecino {
     this.desplazamiento = dondeCae(aquí, allí);
     this.medioLado = vecino.size / 2;
     this.terreno = new Terrain(sinHorizonte(vecino));
+    if (foto) this.terreno.ponerOrtofoto(foto);
     this.grupo.add(this.terreno.group);
     this.grupo.position.set(this.desplazamiento.x, 0, this.desplazamiento.z);
   }

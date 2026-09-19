@@ -288,6 +288,7 @@ export const EN: Dictionary = {
   "hud.camara": "Change view",
   "hud.gafas": "Sunglasses",
   "hud.bajarCuadro": "Lower the panel",
+  "hud.mandarCinturon": "Seatbelt sign",
   "hud.subirCuadro": "Raise the panel",
   "gafas.ganadas": "Your sunglasses!",
   "gafas.puestas": "Sunglasses on",

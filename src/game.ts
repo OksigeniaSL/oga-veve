@@ -338,6 +338,7 @@ import { loQueSePasa } from "./flight/limites";
 import { puntoMasCercanoDe } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { horaSolarEn } from "./world/hora";
+import { Cinturon } from "./flight/cinturon";
 import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
@@ -502,6 +503,12 @@ export interface GameOptions {
    * `Scenario.destino` y `MundoVecino`.
    */
   vecino?: Scenario;
+
+  /**
+   * Y su fotografía, para que la isla de enfrente no salga de polígonos.
+   * Ver `MundoVecino`.
+   */
+  fotoVecino?: Ortofoto;
 }
 
 /**
@@ -1350,7 +1357,11 @@ export class Game {
      * de detalle, y si la pregunta no cae ahí, lo que hubiera antes.
      */
     if (options.vecino) {
-      this.vecino = new MundoVecino(this.scenario, options.vecino);
+      this.vecino = new MundoVecino(
+        this.scenario,
+        options.vecino,
+        options.fotoVecino,
+      );
       this.vecinoPista = {
         x: options.vecino.runway.x,
         z: options.vecino.runway.z,
@@ -1897,6 +1908,9 @@ export class Game {
      */
     if (this.aproximacion) this.rehacerLaSenda();
     this.hud.ponerHora(this.horaPedida(), (h) => this.ponerHora(h));
+    // El interruptor del cinturón, en los aviones que llevan gente detrás.
+    this.hud.ponerHayCinturon(conPasaje(this.aircraft.mass));
+    this.hud.onCinturon(() => this.mandarElCinturon());
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
      * de lo que va esto; las nubes se eligen cuando se quieren, y entonces se
@@ -3946,6 +3960,7 @@ export class Game {
        * está, `hayTexto` dice que no y sale la de reserva. Añadir un campo es
        * escribir su frase, y nada más.
        */
+      if (anuncio === "comandante.crucero") this.dijoSoltarse = true;
       const suya = `${anuncio}.${this.scenario.id}` as TranslationKey;
       const cual =
         anuncio === "comandante.llegada" && hayTexto(suya) ? suya : anuncio;
@@ -5551,7 +5566,14 @@ export class Game {
     };
     const racha = rachaEn(this.clock.elapsedTime, aire);
     this.flight.ponerRacha?.(racha.x, racha.y, racha.z);
-    this.atenderAlCinturon(cuantoSeMueve(aire), dt);
+    /*
+     * Y el cartel del cinturón, que se apaga **con** el anuncio de la
+     * comandante y no por su cuenta. La bandera se consume aquí: es un suceso
+     * de un fotograma. Ver `flight/cinturon.ts`.
+     */
+    const loDijo = this.dijoSoltarse;
+    this.dijoSoltarse = false;
+    this.atenderAlCinturon(cuantoSeMueve(aire), loDijo);
     this.atenderALaSobrevelocidad(dt);
 
     this.oirLaRadio(dt);
@@ -7007,8 +7029,22 @@ export class Game {
    */
   /** Si el cartel del cinturón está encendido ahora mismo. */
   private cinturonPuesto = false;
-  /** Y cuánto lleva así, para no encenderlo y apagarlo a cada bache. */
-  private desdeElCinturon = 0;
+
+  /**
+   * Y quién decide si está puesto. Ver `flight/cinturon.ts`, que cuenta por
+   * qué esto dejó de mirar la altura sobre el terreno.
+   */
+  private readonly cinturon = new Cinturon();
+
+  /**
+   * Si la comandante acaba de decir que ya se pueden soltar el cinturón.
+   *
+   * Un suceso de un fotograma: lo pone la megafonía y lo consume el cartel. Se
+   * pasa así y no como estado para que no puedan separarse — el cartel y la
+   * frase tienen que contar lo mismo, y antes no lo hacían: «dice que se
+   * pueden quitar el cinturón pero la señal ya hace rato que se apagó».
+   */
+  private dijoSoltarse = false;
 
   /**
    * El cartel del cinturón y su *ding*.
@@ -7226,19 +7262,32 @@ export class Game {
     }
   }
 
-  private atenderAlCinturon(movimiento: number, dt: number): void {
-    if (!conPasaje(this.aircraft.mass)) return;
-    const bajo = this.flight.state.heightAboveGround < 900;
-    const toca = bajo || movimiento > 0.9;
-    this.desdeElCinturon += dt;
+  private atenderAlCinturon(movimiento: number, loDijo: boolean): void {
+    const toca = this.cinturon.paso({
+      fase: this.faseDeAhora as Fase,
+      conPasaje: conPasaje(this.aircraft.mass),
+      movimiento,
+      loDijoLaComandante: loDijo,
+    });
     if (toca === this.cinturonPuesto) return;
-    // Encender es inmediato y apagar espera: avisar tarde de que hay baches no
-    // sirve de nada, y apagar pronto es mentir.
-    if (!toca && this.desdeElCinturon < 20) return;
     this.cinturonPuesto = toca;
-    this.desdeElCinturon = 0;
     this.avisar("cinturon");
     this.hud.ponerCinturon(toca);
+  }
+
+  /**
+   * El interruptor del cinturón, el de la cabina.
+   *
+   * Pedido tal cual: «es una decisión del piloto mandar a ponerlo
+   * (turbulencia, inicio de aproximación, etc.)». Va y viene entre automático
+   * y puesto a mano, que son los dos que hacen falta: quitarlo a mano en plena
+   * aproximación no lo pide nadie y enseñaría lo contrario de lo que hay que
+   * enseñar.
+   */
+  mandarElCinturon(): void {
+    const ahora = this.cinturon.comoEsta === "puesto" ? "auto" : "puesto";
+    this.cinturon.ponerMando(ahora);
+    this.hud.ponerMandoDeCinturon(ahora === "puesto");
   }
 
   private cotaDeLaPistaAqui(): number {
