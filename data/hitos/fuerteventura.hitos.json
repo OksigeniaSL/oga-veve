@@ -1,0 +1,38 @@
+{
+  "id": "fuerteventura",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": 28.4527,
+    "lon": -13.8638
+  },
+  "hitos": [
+    {
+      "nombre": "Arrecife",
+      "clase": "ciudad",
+      "lat": 28.96397,
+      "lon": -13.5499,
+      "x": 30688,
+      "z": -56850,
+      "ele": 10
+    },
+    {
+      "nombre": "Puerto del Rosario",
+      "clase": "ciudad",
+      "lat": 28.49934,
+      "lon": -13.85991,
+      "x": 381,
+      "z": -5186,
+      "ele": 17
+    },
+    {
+      "nombre": "Tías",
+      "clase": "ciudad",
+      "lat": 28.95431,
+      "lon": -13.65292,
+      "x": 20617,
+      "z": -55777,
+      "ele": 199
+    }
+  ]
+}

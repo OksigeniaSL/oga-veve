@@ -96,10 +96,25 @@ const CLASES = [
      */
     vale: (t) => Number.isFinite(Number(t.ele)) && Number(t.ele) >= 1000,
     peso: (t) => Number(t.ele),
+    porNotoriedad: true,
   },
   {
     clase: 'isla',
     consulta: '[place=island]',
+    /*
+     * **Y aquí no basta con los nodos.**
+     *
+     * Una isla de verdad está mapeada como el contorno de su costa —una
+     * relación o un camino cerrado—, no como un punto. Pidiendo solo nodos,
+     * La Palma daba una isla: «Roque de Santo Domingo», un peñasco; y
+     * Tenerife, ninguna. O sea que la clase que más falta hacía en Canarias
+     * —la isla de enfrente es media lección de geografía— salía vacía.
+     *
+     * Con `nwr` y `out center` se piden también caminos y relaciones y
+     * Overpass devuelve su centro, que es exactamente lo que hace falta: un
+     * sitio al que apuntar.
+     */
+    todo: true,
     /*
      * `islet` fuera. Los peñascos de la costa de Tenerife están mapeados como
      * islote y son de verdad, pero «a la derecha vamos dejando Piedra del
@@ -109,6 +124,7 @@ const CLASES = [
      */
     vale: () => true,
     peso: (t) => Number(t.population ?? 0),
+    porNotoriedad: true,
   },
   {
     clase: 'ciudad',
@@ -149,11 +165,15 @@ for (const esc of escenarios) {
   const aMetros = proyector(origen.lat, origen.lon);
   const hitos = [];
   for (const clase of CLASES) {
-    const consulta = `[out:json][timeout:60];node(${caja})${clase.consulta};out;`;
+    const consulta = clase.todo
+      ? `[out:json][timeout:90];nwr(${caja})${clase.consulta};out center;`
+      : `[out:json][timeout:60];node(${caja})${clase.consulta};out;`;
     const datos = await overpass(consulta);
     const escogidos = [];
     const suyos = (datos.elements ?? [])
-      .filter((n) => n.tags?.name && clase.vale(n.tags))
+      // Un camino o una relación traen su centro en `center`; un nodo, su sitio.
+      .map((n) => ({ ...n, lat: n.lat ?? n.center?.lat, lon: n.lon ?? n.center?.lon }))
+      .filter((n) => n.tags?.name && n.lat !== undefined && clase.vale(n.tags))
       .map((n) => {
         const [x, norte] = aMetros(n.lat, n.lon);
         return {
@@ -168,9 +188,28 @@ for (const esc of escenarios) {
             ? Math.round(Number(n.tags.ele))
             : null,
           peso: clase.peso(n.tags) || 0,
+          notable: 'wikidata' in n.tags || 'wikipedia' in n.tags,
         };
       })
-      .sort((a, b) => b.peso - a.peso);
+      .sort((a, b) =>
+        /*
+         * **Y primero lo que alguien se ha molestado en describir.**
+         *
+         * Ordenando solo por altura, Tenerife daba «Roque del Almendro»,
+         * «Montaña Abreu» y «Montaña de Palo»: cumbres de verdad, dentro de
+         * la caldera del Teide, que no nombraría ninguna comandante. Lo que
+         * separa un hito de una cota es la notoriedad, y en OpenStreetMap eso
+         * está escrito: quien tiene `wikidata` o `wikipedia` es un sitio del
+         * que se habla.
+         *
+         * Es un indicio y no una verdad —hay cumbres famosas sin etiquetar—,
+         * por eso ordena en vez de filtrar: si no hay bastantes con ficha, el
+         * cupo lo completan las de siempre.
+         */
+        clase.porNotoriedad && a.notable !== b.notable
+          ? Number(b.notable) - Number(a.notable)
+          : b.peso - a.peso,
+      );
     /*
      * La separación se mide **dentro de la clase**, no contra todo. Dos
      * cumbres del mismo macizo son la misma cosa dicha dos veces; una cumbre y
@@ -187,7 +226,7 @@ for (const esc of escenarios) {
 
   const finales = hitos
     .sort((a, b) => orden(a) - orden(b))
-    .map(({ peso: _, ...resto }) => resto);
+    .map(({ peso: _p, notable: _n, ...resto }) => resto);
 
   const fichero = `${SALIDA}/${esc.id}.hitos.json`;
   writeFileSync(

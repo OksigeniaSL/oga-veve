@@ -1,0 +1,83 @@
+{
+  "id": "gran-canaria",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": 27.9319,
+    "lon": -15.3866
+  },
+  "hitos": [
+    {
+      "nombre": "Morrón de la Agujereada",
+      "clase": "montana",
+      "lat": 27.96086,
+      "lon": -15.57119,
+      "x": -18134,
+      "z": -3220,
+      "ele": 1956
+    },
+    {
+      "nombre": "Montañón Negro",
+      "clase": "montana",
+      "lat": 28.03009,
+      "lon": -15.61181,
+      "x": -22125,
+      "z": -10918,
+      "ele": 1668
+    },
+    {
+      "nombre": "Montaña de Sándara",
+      "clase": "montana",
+      "lat": 27.9496,
+      "lon": -15.69263,
+      "x": -30065,
+      "z": -1968,
+      "ele": 1575
+    },
+    {
+      "nombre": "Morro de la Hierba Huerto",
+      "clase": "montana",
+      "lat": 27.90258,
+      "lon": -15.62936,
+      "x": -23849,
+      "z": 3260,
+      "ele": 1315
+    },
+    {
+      "nombre": "Las Palmas de Gran Canaria",
+      "clase": "ciudad",
+      "lat": 28.12887,
+      "lon": -15.4349,
+      "x": -4745,
+      "z": -21902,
+      "ele": 32
+    },
+    {
+      "nombre": "Telde",
+      "clase": "ciudad",
+      "lat": 27.99845,
+      "lon": -15.41668,
+      "x": -2955,
+      "z": -7400,
+      "ele": 147
+    },
+    {
+      "nombre": "Ingenio",
+      "clase": "ciudad",
+      "lat": 27.91838,
+      "lon": -15.43579,
+      "x": -4833,
+      "z": 1504,
+      "ele": 265
+    },
+    {
+      "nombre": "Gáldar",
+      "clase": "ciudad",
+      "lat": 28.14424,
+      "lon": -15.65425,
+      "x": -26294,
+      "z": -23611,
+      "ele": 108
+    }
+  ]
+}

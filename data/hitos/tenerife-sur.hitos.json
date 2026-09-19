@@ -1,0 +1,92 @@
+{
+  "id": "tenerife-sur",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": 28.0445,
+    "lon": -16.5725
+  },
+  "hitos": [
+    {
+      "nombre": "Teide",
+      "clase": "montana",
+      "lat": 28.27269,
+      "lon": -16.64227,
+      "x": -6847,
+      "z": -25374,
+      "ele": 3715
+    },
+    {
+      "nombre": "Roque del Almendro",
+      "clase": "montana",
+      "lat": 28.201,
+      "lon": -16.65985,
+      "x": -8572,
+      "z": -17402,
+      "ele": 2524
+    },
+    {
+      "nombre": "Montaña Abreu",
+      "clase": "montana",
+      "lat": 28.28808,
+      "lon": -16.53333,
+      "x": 3844,
+      "z": -27084,
+      "ele": 2406
+    },
+    {
+      "nombre": "Montaña de Palo",
+      "clase": "montana",
+      "lat": 28.22449,
+      "lon": -16.57645,
+      "x": -387,
+      "z": -20014,
+      "ele": 2281
+    },
+    {
+      "nombre": "Santa Cruz de Tenerife",
+      "clase": "ciudad",
+      "lat": 28.46718,
+      "lon": -16.25078,
+      "x": 31573,
+      "z": -47000,
+      "ele": null
+    },
+    {
+      "nombre": "La Orotava",
+      "clase": "ciudad",
+      "lat": 28.38988,
+      "lon": -16.52357,
+      "x": 4802,
+      "z": -38405,
+      "ele": 363
+    },
+    {
+      "nombre": "Los Cristianos",
+      "clase": "ciudad",
+      "lat": 28.05263,
+      "lon": -16.717,
+      "x": -14181,
+      "z": -904,
+      "ele": 19
+    },
+    {
+      "nombre": "Candelaria",
+      "clase": "ciudad",
+      "lat": 28.35467,
+      "lon": -16.37101,
+      "x": 19774,
+      "z": -34489,
+      "ele": 18
+    },
+    {
+      "nombre": "San Sebastián de la Gomera",
+      "clase": "ciudad",
+      "lat": 28.09104,
+      "lon": -17.11101,
+      "x": -52848,
+      "z": -5175,
+      "ele": 4
+    }
+  ]
+}
