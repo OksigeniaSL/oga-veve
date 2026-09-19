@@ -35,9 +35,54 @@ function elPackDeVoz(): Plugin {
   };
 }
 
+/**
+ * **Y el trabajador de servicio, escrito por la propia compilación.**
+ *
+ * Estaba en el `build` del `package.json` —`vite build && node
+ * scripts/hacer-sw.mjs`— y eso lo hacía saltable: quien compile con `npx vite
+ * build` a secas se lleva un `dist/` nuevo y un `sw.js` **del build
+ * anterior**, que precachea unos ficheros que ya no existen con ese nombre.
+ *
+ * Y no falla de forma visible: la página se despliega bien, el `index.html`
+ * publicado apunta a lo nuevo, y el trabajador de servicio de cada pestaña
+ * sigue sirviendo el armazón viejo. O sea que se despliega, se comprueba que
+ * el servidor lo tiene, y **quien juega sigue con el juego de anteayer**. Se
+ * perdió media tarde con eso: «he recargado vaciando caché y sigue igual», y
+ * tenía razón — el `sw.js` publicado listaba `index-WRFM5t_5.js` mientras el
+ * `index.html` pedía `index-DhgMLvKE.js`.
+ *
+ * Aquí dentro no se puede saltar: cierra el paquete y lo escribe. La línea del
+ * `package.json` se queda porque no molesta y es idempotente.
+ */
+function elTrabajadorDeServicio(): Plugin {
+  return {
+    name: "hacer-sw",
+    apply: "build",
+    /*
+     * **Y de verdad después del pack de voz, no «después» a secas.**
+     *
+     * `closeBundle` lo ejecuta Rollup **en paralelo** para todos los
+     * complementos —`hookParallel`—, así que `enforce: "post"` no basta: el
+     * trabajador de servicio se ponía a listar `dist/data/voces` mientras el
+     * otro complemento todavía estaba copiándolo, y contaba cero de quinientos
+     * ochenta. La forma de pedir turno es `sequential`.
+     */
+    closeBundle: {
+      order: "post",
+      sequential: true,
+      async handler() {
+        const { execFileSync } = await import("node:child_process");
+        execFileSync(process.execPath, ["scripts/hacer-sw.mjs"], {
+          stdio: "inherit",
+        });
+      },
+    },
+  };
+}
+
 export default defineConfig({
   base: "./",
-  plugins: [elPackDeVoz()],
+  plugins: [elPackDeVoz(), elTrabajadorDeServicio()],
   /*
    * **Las pruebas tienen que ver la hoja de estilos de verdad.**
    *

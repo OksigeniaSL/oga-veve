@@ -573,6 +573,13 @@ export const ES_PY = {
    * leer. Ver `avisarDeLaVersionNueva` en `main.ts`.
    */
   "version.nueva": "Hay una versión nueva",
+
+  /*
+   * Cuando se pide cambiar de avión y no hay otro que quepa en esta pista.
+   * Una tecla que no hace nada se aprieta más fuerte; ésta contesta, y lo que
+   * contesta es la lección: manda la pista. Ver `cycleAircraft`.
+   */
+  "avion.noCabeAqui": "En esta pista no cabe otro avión",
   "hud.mandarCinturon": "Cartel del cinturón",
   "hud.subirCuadro": "Subir el tablero",
   "gafas.ganadas": "¡Tus gafas de sol!",

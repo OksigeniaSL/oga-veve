@@ -54,6 +54,7 @@ import {
   type Circuito,
 } from "./world/circuito";
 import { FLOTA, modeloPorId } from "./flight/flota";
+import { cabeEn, campoDe } from "./flight/cabe";
 import { crearTrafico, type Trafico } from "./world/trafico";
 import type { Mapa } from "./ui/carta";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
@@ -7971,9 +7972,41 @@ export class Game {
    * aire, y el avión nuevo aparece donde estaba el anterior.
    */
   private cycleAircraft(): void {
+    /*
+     * **Y solo entre los que caben en esta pista.**
+     *
+     * El hangar ya lo comprobaba —`cabeEn`— y esta tecla no: se podía estar en
+     * El Hierro, con mil doscientos cincuenta y cuatro metros, y pasar al de
+     * fuselaje ancho, que necesita dos mil quinientos sesenta. A partir de ahí
+     * no hay pilotaje que valga: el avión no llega nunca a la velocidad de
+     * rotación, se va de la pista con el viento cruzado y acaba en el agua.
+     *
+     * Contado jugando, y las tres quejas eran la misma: «¿por qué con Tukã se
+     * me va a la derecha?», «le doy a la flecha como un desesperado», «y ahora
+     * es un barco».
+     *
+     * La regla ya estaba escrita y ya estaba en su módulo para poder usarse
+     * desde cualquier sitio. Lo que faltaba era usarla aquí. Es la misma
+     * lección de siempre en este proyecto: se arregla donde se mira y no donde
+     * también se mira.
+     */
+    const campo = campoDe(this.scenario);
+    const quepan = AIRCRAFT.filter(
+      (a) => a === this.aircraft || cabeEn(a, campo).cabe,
+    );
     const next =
-      AIRCRAFT[(AIRCRAFT.indexOf(this.aircraft) + 1) % AIRCRAFT.length] ??
-      PYKASU;
+      quepan[(quepan.indexOf(this.aircraft) + 1) % quepan.length] ?? PYKASU;
+    /*
+     * Y si no hay otro, se dice. Una tecla que no hace nada se aprieta más
+     * fuerte; una tecla que contesta «aquí no cabe otro» enseña algo — que la
+     * pista manda, que es media lección de este juego.
+     */
+    if (next === this.aircraft) {
+      this.hud.senal.mostrar("fuera", t("avion.noCabeAqui"), null, {
+        segundos: 4,
+      });
+      return;
+    }
     const { position, heading, airspeed } = this.flight.state;
     const carried = { position: position.clone(), heading, airspeed };
 

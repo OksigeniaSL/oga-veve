@@ -251,6 +251,7 @@ export const GUG: Dictionary = {
   "tecla.trimUp": "Eheja tĩ yvateve",
   "tecla.trimDown": "Eheja tĩ yvykueve",
   "version.nueva": "Oĩ peteĩ versión pyahu",
+  "avion.noCabeAqui": "Ko pistápe ndoikéi ambue avión",
   "tecla.rollLeft": "Ejere asúpe",
   "tecla.rollRight": "Ejere akatúape",
   "tecla.yawLeft": "Timón asúpe",

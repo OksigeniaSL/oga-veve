@@ -302,6 +302,7 @@ export const EN: Dictionary = {
   "hud.trimArriba": "Trim, nose up",
   "hud.trimAbajo": "Trim, nose down",
   "version.nueva": "A new version is ready",
+  "avion.noCabeAqui": "No other aircraft fits on this runway",
   "hud.mandarCinturon": "Seatbelt sign",
   "hud.subirCuadro": "Raise the panel",
   "gafas.ganadas": "Your sunglasses!",
