@@ -19,6 +19,7 @@ const CON_PASAJE = {
   instructorHablando: false,
   sobreElCampo: 900,
   vertical: 0,
+  desdeLoMasAlto: 0,
 };
 
 /** Corre unos segundos en una fase y devuelve lo que se dijo. */
@@ -196,6 +197,7 @@ describe("y los anuncios no se pierden porque una lección salte una fase", () =
     instructorHablando: false,
     sobreElCampo: 1000,
     vertical: 0,
+    desdeLoMasAlto: 0,
     ...extra,
   });
 
@@ -244,5 +246,54 @@ describe("y los anuncios no se pierden porque una lección salte una fase", () =
       ...correr(m, "final", 40),
     ];
     expect(new Set(dichos).size).toBe(dichos.length);
+  });
+});
+
+describe("y el anuncio de crucero es del final de la subida", () => {
+  /*
+   * Contado jugando, bajando de Tenerife Sur a Tenerife Norte: «ahora la
+   * comandante dice que ya estamos arriba y que se suelten el cinturón… no es
+   * el momento de quitarse el cinturón, es el momento de ponérselo».
+   *
+   * Y tenía razón. En una ruta entre dos aeropuertos el descenso entero pasa
+   * dentro de la misma fase, `en-vuelo`, y la velocidad vertical cruza el cero
+   * cada poco: con mirar solo la fase y la vertical, la frase salía bajando.
+   */
+  const enRuta = (extra = {}) => ({
+    fase: "en-vuelo" as Fase,
+    conPasaje: true,
+    instructorHablando: false,
+    sobreElCampo: 3000,
+    vertical: 0,
+    desdeLoMasAlto: 0,
+    ...extra,
+  });
+
+  const correrlo = (m: Megafonia, extra: object, segundos: number) => {
+    const dichos: string[] = [];
+    for (let t = 0; t < segundos; t += 0.5) {
+      const d = m.paso(0.5, enRuta(extra));
+      if (d) dichos.push(d);
+    }
+    return dichos;
+  };
+
+  it("nivelado arriba y sin haber bajado, se dice", () => {
+    expect(correrlo(new Megafonia(), {}, 20)).toContain("comandante.crucero");
+  });
+
+  it("**pero bajando hacia el destino, no**", () => {
+    // Quinientos metros por debajo de lo más alto: eso es un descenso que
+    // alguien decidió, no la oscilación de un crucero.
+    expect(
+      correrlo(new Megafonia(), { desdeLoMasAlto: 500 }, 40),
+    ).not.toContain("comandante.crucero");
+  });
+
+  it("y la oscilación normal del crucero no lo impide", () => {
+    // Nadie mantiene el nivel al metro. Cien metros siguen siendo crucero.
+    expect(correrlo(new Megafonia(), { desdeLoMasAlto: 100 }, 20)).toContain(
+      "comandante.crucero",
+    );
   });
 });

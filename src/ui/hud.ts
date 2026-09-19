@@ -405,7 +405,46 @@ export class Hud {
 
   constructor(root: HTMLElement) {
     this.root = root;
+    /*
+     * **El tirador del cuadro, cableado una sola vez y por delegación.**
+     *
+     * Estaba dentro de `render`, que rehace el marcado entero al cambiar de
+     * idioma, de unidades o de peldaño: con la escucha en el botón y la clase
+     * puesta sobre un nodo capturado, cualquier repintado dejaba el mando
+     * apuntando a algo que ya no estaba en la pantalla.
+     *
+     * Escuchando en la raíz y buscando el cuadro **en el momento del clic**,
+     * no hay nada que se pueda quedar viejo.
+     */
+    this.root.addEventListener("click", (e) => {
+      const donde = e.target as HTMLElement | null;
+      if (!donde?.closest('[data-hud="cuadro-tirador"]')) return;
+      this.ponerCuadroBajado(!this.cuadroBajado);
+      ponerTexto("cuadro-bajado", this.cuadroBajado ? "1" : "0");
+    });
     this.render();
+  }
+
+  /** Si el cuadro está bajado ahora mismo. Se guarda por perfil. */
+  private cuadroBajado = leerTexto("cuadro-bajado") === "1";
+
+  /**
+   * Baja o sube el cuadro de mandos.
+   *
+   * Se vuelve a aplicar después de cada repintado, porque el marcado nuevo
+   * nace sin la clase: sin esto, cambiar de idioma con el cuadro bajado lo
+   * subía solo.
+   */
+  private ponerCuadroBajado(bajado: boolean): void {
+    this.cuadroBajado = bajado;
+    const cuadro = this.root.querySelector('[data-hud="cuadro"]');
+    cuadro?.classList.toggle("cuadro--bajado", bajado);
+    const tirador = this.root.querySelector('[data-hud="cuadro-tirador"]');
+    tirador?.setAttribute("aria-pressed", String(bajado));
+    tirador?.setAttribute(
+      "aria-label",
+      t(bajado ? "hud.subirCuadro" : "hud.bajarCuadro"),
+    );
   }
 
   /**
@@ -1043,33 +1082,6 @@ export class Hud {
     this.root
       .querySelector('[data-hud="piloto-auto"]')
       ?.addEventListener("click", () => this.pilotoAutoHandler?.());
-    /*
-     * **El tirador del cuadro**, y se acuerda de cómo lo dejaste.
-     *
-     * Quien lo baja es porque quiere ver el mundo, y eso no es de este vuelo:
-     * es de cómo le gusta jugar. Se guarda por perfil, igual que el escenario
-     * y el peldaño.
-     */
-    const tirador = this.root.querySelector<HTMLElement>(
-      '[data-hud="cuadro-tirador"]',
-    );
-    const cuadro = this.root.querySelector<HTMLElement>('[data-hud="cuadro"]');
-    if (tirador && cuadro) {
-      const poner = (bajado: boolean): void => {
-        cuadro.classList.toggle("cuadro--bajado", bajado);
-        tirador.setAttribute("aria-pressed", String(bajado));
-        tirador.setAttribute(
-          "aria-label",
-          t(bajado ? "hud.subirCuadro" : "hud.bajarCuadro"),
-        );
-      };
-      poner(leerTexto("cuadro-bajado") === "1");
-      tirador.addEventListener("click", () => {
-        const bajado = !cuadro.classList.contains("cuadro--bajado");
-        poner(bajado);
-        ponerTexto("cuadro-bajado", bajado ? "1" : "0");
-      });
-    }
     this.mision = pick(this.root, "mision-boton");
     this.mision.addEventListener("click", () => this.misionHandler?.());
     pick(this.root, "pausa").addEventListener("click", () =>
@@ -1160,6 +1172,9 @@ export class Hud {
     this.tutor.bind(this.root);
     this.reserveForPanel();
     this.reservarArriba();
+    // Y el cuadro se queda como lo dejó quien juega: el marcado nuevo nace
+    // sin la clase. Ver `ponerCuadroBajado`.
+    this.ponerCuadroBajado(this.cuadroBajado);
   }
 
   /**
@@ -2404,7 +2419,9 @@ export class Hud {
    * está no es un mando.
    */
   ponerMandoDeCinturon(aMano: boolean): void {
-    const b = this.root.querySelector<HTMLElement>('[data-hud="cinturon-mando"]');
+    const b = this.root.querySelector<HTMLElement>(
+      '[data-hud="cinturon-mando"]',
+    );
     b?.setAttribute("aria-pressed", String(aMano));
     b?.classList.toggle("boton--puesto", aMano);
   }

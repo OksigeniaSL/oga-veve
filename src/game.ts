@@ -260,6 +260,7 @@ import {
 import { Frecuencia } from "./flight/radio";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
+import { indicatedAirspeed } from "./flight/atmosphere";
 import {
   delante,
   enEjesDePista,
@@ -3834,6 +3835,7 @@ export class Game {
      */
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
     this.updateBadge();
   }
@@ -4023,6 +4025,10 @@ export class Game {
      * fotograma, manda la de dentro del avión. La de fuera es ambiente y puede
      * esperar; la comandante está contando lo que está pasando ahora.
      */
+    this.loMasAltoDelVuelo = Math.max(
+      this.loMasAltoDelVuelo,
+      this.flight.state.position.y,
+    );
     const anuncio = this.megafonia.paso(dt, {
       fase: this.faseDeAhora as Fase,
       conPasaje: conPasaje(this.aircraft.mass),
@@ -4035,6 +4041,16 @@ export class Game {
        */
       sobreElCampo: this.flight.state.position.y - this.terrain.runwayElevation,
       vertical: this.flight.state.verticalSpeed,
+      /*
+       * Y cuánto se ha bajado ya desde lo más alto del vuelo, que es lo único
+       * que distingue «acabo de llegar arriba» de «voy bajando al destino».
+       * La fase no lo distingue: en una ruta entre dos aeropuertos el descenso
+       * entero pasa dentro de `en-vuelo`.
+       */
+      desdeLoMasAlto: Math.max(
+        0,
+        this.loMasAltoDelVuelo - this.flight.state.position.y,
+      ),
     });
     if (anuncio) {
       /*
@@ -4807,6 +4823,7 @@ export class Game {
     // Vuelo nuevo, memoria nueva. Ver la nota de arriba.
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
     this.updateBadge();
   }
@@ -5890,7 +5907,27 @@ export class Game {
     // apagan solas cuando se cambia a un modelo que no las tiene.
     this.aircraftMesh.pantallas?.actualizar(
       {
-        velocidad: this.flight.state.airspeed,
+        /*
+         * **Velocidad indicada, no verdadera. Aquí iba la verdadera.**
+         *
+         * Lo vio quien juega poniendo las dos pantallas una al lado de la
+         * otra: la cabina marcaba 321 nudos y el cuadro plano 302 en el mismo
+         * vuelo. A cuatro mil cuatrocientos pies, 321 verdaderos son 300
+         * indicados — o sea que no era ruido ni dos instantes distintos: eran
+         * dos magnitudes.
+         *
+         * Y la que hay que enseñar es la indicada, por dos motivos que van en
+         * el mismo sentido: es la que marca el instrumento de cualquier avión,
+         * y es la que dice si te caés. Un ala entra en pérdida a una indicada
+         * fija, suba lo que suba la verdadera con la altura.
+         *
+         * Es el fallo recurrente de esta casa —dos superficies que enseñan lo
+         * mismo y una se queda atrás— y esta vez le tocó a la de dentro.
+         */
+        velocidad: indicatedAirspeed(
+          this.flight.state.airspeed,
+          this.flight.state.position.y,
+        ),
         // Y a cuál hay que ir para aterrizar, que es lo que la cinta no decía.
         vref: this.aircraft.approachSpeed,
         altura: this.flight.state.position.y,
@@ -7171,6 +7208,9 @@ export class Game {
    * pueden quitar el cinturón pero la señal ya hace rato que se apagó».
    */
   private dijoSoltarse = false;
+
+  /** Lo más alto que se ha llegado en este vuelo, en metros. */
+  private loMasAltoDelVuelo = 0;
 
   /**
    * A dónde le manda ir el piloto automático, si está puesto.

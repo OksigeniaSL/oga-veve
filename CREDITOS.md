@@ -140,6 +140,23 @@ contrario de lo que hace el código es peor que no tenerlo.
 El terreno, el aeródromo y la ciudad se generan por código, y son originales
 de Oksigenia SL. Y las aeronaves también, las seis.
 
+### El logotipo de Granja Óga
+
+`src/assets/granja-oga.svg` y `src/assets/granja-oga.png` son el logotipo de
+**Granja Óga**, la marca bajo la que se publica este juego. Son de **Oksigenia
+SL**, que es quien publica, así que no hay licencia de terceros que respetar:
+hay una marca que respetar.
+
+Y eso no es menos exigente. Un logotipo no se recolorea, no se recorta, no se
+estira y no se pone a media opacidad — y aquí se cumple: entra tal cual, con
+sus colores y su proporción, y lo único que cambia entre pantallas es el
+tamaño. Ver `src/ui/marca.ts`, que además explica **dónde** aparece y por qué
+durante el vuelo no aparece en ninguna parte.
+
+El fichero SVG es el mismo que se usa para BIMI en el correo de la granja, que
+es la versión pensada para verse pequeña y cuadrada. El PNG queda de respaldo
+para donde haga falta un mapa de bits.
+
 ### La aeronave que vino de fuera, y ya no
 
 Hasta septiembre de 2026 el **JAZ 20 _Pykasu_** era un modelo descargado —una

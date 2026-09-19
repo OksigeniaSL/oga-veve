@@ -14,6 +14,7 @@
  */
 
 import { t } from "../i18n";
+import logotipo from "../assets/granja-oga.svg";
 
 /**
  * El cielo del hangar: Paraguay al atardecer visto desde la ventanilla.
@@ -121,40 +122,23 @@ export function cielo(): string {
 }
 
 /**
- * El sello de Granja Óga: avión sobre el horizonte, en un cuadrado terracota.
+ * El logotipo de Granja Óga, el de verdad.
  *
- * Silueta de avión de verdad y no una mascota con cara. La tentación de
- * «Granja» era una gallina, y la regla de que lo que se enseña es real vale
- * también para el logo: quien vea este sello y luego vea un avión tiene que
- * reconocer lo mismo.
+ * Hubo un sello inventado aquí —un avión dentro de un cuadrado terracota— y
+ * duró lo que tardó en verse en pantalla: «está bien, pero el logotipo de
+ * Granja Óga debe ir». Y con razón. Un producto no lleva un logotipo parecido
+ * al de su marca; lleva el de su marca.
+ *
+ * El de verdad es el tejado, el sol y las hojas: *óga* es casa en guaraní, y
+ * el tejado es la casa. Entra tal cual, con sus colores y su proporción; lo
+ * único que cambia entre pantallas es el tamaño. Un logotipo no se recolorea,
+ * no se recorta y no se pone a media opacidad. Ver `CREDITOS.md`.
  */
 export function sello(lado: number): string {
-  return `
-  <svg class="sello" viewBox="0 0 48 48" width="${lado}" height="${lado}"
-       aria-hidden="true">
-    <rect x="1" y="1" width="46" height="46" rx="13" fill="var(--terracota)" />
-    <ellipse cx="24" cy="21" rx="14" ry="3.8" fill="var(--beige)" />
-    <path fill="var(--beige)" d="M23 19 L12 9 L16 9 L26 18 Z" />
-    <path fill="var(--beige)" d="M31 19 L36 14 L34 13 L29 18 Z" />
-    <path d="M8 35 Q24 27 40 35" stroke="var(--ocre)" stroke-width="3"
-          fill="none" stroke-linecap="round" />
-  </svg>`;
+  return `<img class="sello" src="${logotipo}" width="${lado}" height="${lado}"
+               alt="" aria-hidden="true" />`;
 }
 
-/**
- * El pie: quién hizo esto y desde dónde.
- *
- * Pedido tal cual: «un pie de página que diga Granja Óga, hecho en Paraguay»
- * y «alguna referencia a Desarrollado por Oksigenia con enlace».
- *
- * Y no parece un aviso legal por tres cosas concretas: nada en mayúsculas,
- * nada en gris de diez píxeles, y la última línea es una promesa en voseo en
- * vez de letra chica. Un pie de cuatro columnas con privacidad y términos
- * sería mentira estética: este juego no recoge nada que avisar.
- *
- * El sitio se escribe **Capiibary** —municipalidad de San Pedro, que es
- * donde está la granja de verdad— por la misma regla que lo demás.
- */
 /**
  * La marca arriba a la izquierda: sello y palabra.
  *
