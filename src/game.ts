@@ -4163,6 +4163,7 @@ export class Game {
      * de ahí sale dónde están. Sin estado y repetible — ver
      * `flight/trafico-en-ruta.ts`.
      */
+    this.pilotoSeSolto = Math.max(0, this.pilotoSeSolto - dt);
     this.relojDeRuta += dt;
     this.avionesDeRuta?.paso(this.relojDeRuta, this.flight.state.position);
     const dice = this.radio.update(dt, {
@@ -5424,6 +5425,27 @@ export class Game {
         this.flight.state.verticalSpeed > MARGENES.cayendo,
     };
     const terreno = avisoDeTerreno(cerca);
+    /*
+     * **Y el panel de avisos, que cuenta estados y no sucesos.**
+     *
+     * Las tarjetas y las voces ya avisan de todo esto una vez. Una luz es otra
+     * cosa: se queda encendida **mientras la cosa siga pasando**, que es lo
+     * que hace falta cuando se mira tarde. Ver `flight/avisos-de-cabina.ts`.
+     *
+     * Ninguna luz inventa un estado: todas cuelgan de algo que el juego ya
+     * sabe y ya dice por otro canal.
+     */
+    this.hud.ponerLucesDeAviso({
+      terreno: terreno !== null,
+      perdida: this.flight.state.stalled,
+      rapido: this.sobrandoVelocidad > 0,
+      trenMal: this.trenFueraDeSitio(),
+      frustrada: this.laAproximacion.mandanFrustrar,
+      pilotoSuelto: this.pilotoSeSolto > 0,
+      frenoPuesto:
+        this.input.controls.brakes > 0.5 &&
+        this.input.controls.throttle > 0.25,
+    });
 
     /*
      * **Y lo contrario del aviso de terreno: ya podés tocar.**
@@ -7267,6 +7289,33 @@ export class Game {
    */
   private dijoSoltarse = false;
 
+  /**
+   * Cuántos segundos lleva encendida la luz de piloto automático suelto.
+   *
+   * Un piloto automático que se desengancha es un suceso, no un estado, así
+   * que su luz necesita un rato propio: en una cabina de verdad el aviso se
+   * queda hasta que alguien lo reconoce. Aquí se apaga sola a los diez
+   * segundos, que es lo que tarda en enterarse quien estaba mirando fuera.
+   */
+  private pilotoSeSolto = 0;
+
+  /**
+   * Si el tren no está donde tendría que estar.
+   *
+   * Fuera con el avión arriba y rápido —que es lastre y rompe compuertas— o
+   * dentro con el avión bajo y lento, que es lo que enciende la luz de verdad
+   * en cualquier cabina. Ver `flight/tren.ts`, que es quien decide cuándo se
+   * pide cada cosa.
+   */
+  private trenFueraDeSitio(): boolean {
+    const s = this.flight.state;
+    if (s.onGround) return false;
+    const fuera = this.input.controls.tren > 0.5;
+    const bajoYLento =
+      s.heightAboveGround < 300 && s.airspeed < this.aircraft.approachSpeed * 1.4;
+    return bajoYLento ? !fuera : false;
+  }
+
   /** Lo más alto que se ha llegado en este vuelo, en metros. */
   private loMasAltoDelVuelo = 0;
 
@@ -7294,6 +7343,8 @@ export class Game {
    * de asustar a quien va dentro.
    */
   ponerPilotoAutomatico(puesto = !this.pilotoPuesto): void {
+    // Al soltarse, la luz de cabina se enciende un rato. Ver `pilotoSeSolto`.
+    if (!puesto && this.pilotoPuesto) this.pilotoSeSolto = 10;
     const s = this.flight.state;
     this.objetivos = puesto
       ? { rumbo: s.heading, altitud: s.position.y }

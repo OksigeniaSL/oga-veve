@@ -51,6 +51,13 @@ export const ES_PY = {
   "app.tagline": "Volá sobre Paraguay",
 
   "hud.speed": "Velocidad",
+  "luz.terreno": "SUELO",
+  "luz.perdida": "PÉRDIDA",
+  "luz.rapido": "RÁPIDO",
+  "luz.tren": "TREN",
+  "luz.frustrada": "AL AIRE",
+  "luz.piloto": "SIN PILOTO",
+  "luz.freno": "FRENO",
   "hud.altitude": "Altura",
   "hud.heading": "Rumbo",
   "hud.throttleDown": "Menos motor",

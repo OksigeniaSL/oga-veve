@@ -854,6 +854,16 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   let frenadaFotogramas = 0;
   let frenadaEnElAire = 0;
+  /*
+   * **Y si el vuelo se dio por terminado con el avión todavía en la pista.**
+   *
+   * Frenando se está sobre el asfalto por definición, así que si en ese tramo
+   * la fase salta a «en puesto» o «apagado», el juego ha dado por estacionado
+   * a alguien que está bloqueando la pista. Contado jugando dos veces:
+   * «llegaste, apagá el motor — pero si estoy en la pista todavía» y «apago el
+   * motor en mitad de la pista y vuelo terminado, y gano hasta galones».
+   */
+  let acaboEnLaPista = false;
   const fases = new Set();
   /*
    * **Y todo lo que llegó a decir la torre.**
@@ -1814,6 +1824,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       }
     } else if (etapa === "frenar") {
       frenadaFotogramas++;
+    if (fase === "en-puesto" || fase === "apagado") acaboEnLaPista = true;
       if (!s.onGround) frenadaEnElAire++;
       if (antesDeFrenar) {
         rodaduraMedida += Math.hypot(
@@ -1994,6 +2005,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     tocoSuelo: +tocoSuelo.toFixed(1),
     frenadaFotogramas,
     frenadaEnElAire,
+    acaboEnLaPista,
     dejoDeFrenarA: +dejoDeFrenarA.toFixed(1),
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
@@ -2501,6 +2513,22 @@ if (vuelo.toco > 0 && vuelo.rodaduraMedida > 0 && vuelo.tocoSuelo > 0) {
     "«freno en la pista en 2 metros, eso no se lo cree nadie»",
   );
 }
+
+/*
+ * **Y el vuelo no se da por terminado con el avión en la pista.**
+ *
+ * La pista se deja libre: hay otro detrás, y ése es el motivo por el que
+ * existen el punto de espera y la doble raya. Un juego que te felicita por
+ * pararte en medio enseña justo lo contrario.
+ */
+comprobarSiVolo(
+  "y no se da por llegado con el avión en la pista",
+  !vuelo.acaboEnLaPista,
+  vuelo.acaboEnLaPista
+    ? "dijo «llegaste» con el avión todavía sobre el asfalto"
+    : "esperó a que dejara la pista",
+  "«apago el motor en mitad de la pista y vuelo terminado, y gano hasta galones»",
+);
 
 comprobarSiVolo(
   "y después de tocar, pide frenar",

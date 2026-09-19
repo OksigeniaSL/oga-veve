@@ -58,6 +58,7 @@ import {
 } from "./cristal";
 import { luzDeTren } from "../flight/tren";
 import { anillosDe } from "../flight/tormentas";
+import { t, type TranslationKey } from "../i18n";
 import {
   encendidas,
   LUCES,
@@ -268,12 +269,19 @@ export class Tablero {
         <g class="aviso-luz" data-luz="${l.id}" data-grado="${l.grado}"
            transform="translate(8 ${y})" visibility="hidden">
           <rect width="${ancho}" height="${alto}" rx="3" class="aviso-luz__caja" />
-          <text x="${ancho / 2}" y="${alto - 6}" ${MARCA_ROTULO}
-                class="aviso-luz__palabra" text-anchor="middle"
-                data-desde="4">${l.cabina}</text>
-          <text x="${ancho / 2}" y="${alto - 6}" ${MARCA_ROTULO}
+          <!--
+            Y aquí NO va MARCA_ROTULO, que es la marca de rótulo que usa el
+            resto del cuadro: esa constante ya escribe data-desde="2", así que
+            poner otro detrás dejaba el atributo repetido y ganaba el primero
+            — las dos palabras salían a la vez en el peldaño de las cifras.
+            Estas dos son la excepción de la escalera: una sustituye a la
+            otra en vez de sumarse.
+          -->
+          <text x="${ancho / 2}" y="${alto - 6}" data-desde="4"
+                class="aviso-luz__palabra" text-anchor="middle">${l.cabina}</text>
+          <text x="${ancho / 2}" y="${alto - 6}" data-desde="2" data-hasta="3"
                 class="aviso-luz__palabra aviso-luz__palabra--casa"
-                text-anchor="middle" data-luz-casa="${l.id}"></text>
+                text-anchor="middle">${t(l.clave as TranslationKey)}</text>
         </g>`;
     }).join("");
   }
