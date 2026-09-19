@@ -517,13 +517,13 @@ export interface GameOptions {
    * encadenarlo detrás de los otros duplicaría la espera del arranque. Ver
    * `Scenario.destino` y `MundoVecino`.
    */
-  vecino?: Scenario;
+  vecinos?: readonly Scenario[];
 
   /**
-   * Y su fotografía, para que la isla de enfrente no salga de polígonos.
-   * Ver `MundoVecino`.
+   * Y sus fotografías, una por vecino y en el mismo orden, para que las islas
+   * de enfrente no salgan de polígonos. Ver `MundoVecino`.
    */
-  fotoVecino?: Ortofoto;
+  fotosVecinas?: readonly (Ortofoto | undefined)[];
 
   /** La del horizonte: el anillo lejano. Ver `Terrain.ponerOrtofotoLejana`. */
   ortofotoHorizonte?: Ortofoto;
@@ -731,17 +731,29 @@ export class Game {
   readonly terrain: Terrain;
 
   /**
-   * El otro aeropuerto de la ruta, si lo hay: un escenario entero puesto a su
+   * Los otros aeropuertos de la ruta: escenarios enteros puestos a su
    * distancia. Ver `mundo-vecino.ts`.
+   *
+   * **Eran uno.** Nació como «volar a otro aeropuerto» —ADR 0007— y con uno
+   * se quedó corto en cuanto alguien voló de verdad: desde El Hierro se ven
+   * La Gomera y La Palma las dos en el horizonte, se pone rumbo a la que se
+   * quiera, y solo una tenía pista. «¿Y el aeropuerto de La Palma?»
+   *
+   * Cada uno trae su mundo, su pista ya corrida a coordenadas de aquí y su
+   * aeródromo corrido igual, que es lo que necesita el plan de tierra para
+   * trazar la raya de vuelta al hangar allí.
    */
-  readonly vecino: MundoVecino | null = null;
+  private readonly vecinos: {
+    readonly mundo: MundoVecino;
+    readonly escenario: Scenario;
+    readonly pista: Pista;
+    readonly aerodromo: Aerodrome | null;
+  }[] = [];
 
-  /**
-   * La pista del vecino, en coordenadas **de él**. Se suma a su desplazamiento
-   * para tener el punto al que de verdad se va, que es la pista y no el centro
-   * de su mapa.
-   */
-  private vecinoPista: Pista | null = null;
+  /** El primero, para lo que todavía habla de «el vecino» en singular. */
+  get vecino(): MundoVecino | null {
+    return this.vecinos[0]?.mundo ?? null;
+  }
 
   /** Los otros aviones de la ruta, si esta ruta lleva a alguna parte. */
   private avionesDeRuta: AvionesDeRuta | null = null;
@@ -787,24 +799,49 @@ export class Game {
    * y esto es por dónde se empieza.
    */
   private elCampoDeAhora(): Scenario {
-    if (!this.vecinoEscenario || !this.vecinoPista) return this.scenario;
-    const s = this.flight.state.position;
-    const cerca = laMasCerca(this.pistasDelVuelo(), s.x, s.z);
-    return cerca === this.vecinoPista ? this.vecinoEscenario : this.scenario;
+    return this.elVecinoDeAhora()?.escenario ?? this.scenario;
   }
 
   /**
-   * El campo que **no** se tiene debajo, en coordenadas del mundo.
+   * El vecino cuya pista se tiene más cerca, o `null` si es la de casa.
    *
-   * Es a donde se va: saliendo de casa, el destino; ya en el destino, la
-   * vuelta a casa. Devuelve `null` si esta ruta no lleva a ningún sitio.
+   * Una sola cuenta para todos los sitios que preguntan «¿dónde estoy?»: el
+   * campo, su aeródromo y su pista salen de aquí, y así no hay forma de que
+   * uno diga una cosa y otro diga otra.
+   */
+  private elVecinoDeAhora(): (typeof this.vecinos)[number] | null {
+    if (this.vecinos.length === 0) return null;
+    const s = this.flight.state.position;
+    const cerca = laMasCerca(this.pistasDelVuelo(), s.x, s.z);
+    return this.vecinos.find((v) => v.pista === cerca) ?? null;
+  }
+
+  /**
+   * El campo al que se va, en coordenadas del mundo.
+   *
+   * Saliendo de casa, **el destino más cercano**; ya en un destino, la vuelta
+   * a casa. Devuelve `null` si esta ruta no lleva a ningún sitio.
+   *
+   * Con varios destinos «el otro» dejó de ser uno: desde El Hierro se puede
+   * ir a La Gomera o a La Palma. Se enseña el más cercano, que es el que se
+   * está usando en cuanto se pone rumbo a él — y el que deja de serlo en
+   * cuanto se pone rumbo al otro.
    */
   private elOtroCampo(): { x: number; z: number } | null {
-    if (!this.vecinoPista) return null;
-    const aqui = this.elCampoDeAhora();
-    return aqui === this.scenario
-      ? { x: this.vecinoPista.x, z: this.vecinoPista.z }
-      : { x: this.scenario.runway.x, z: this.scenario.runway.z };
+    if (this.vecinos.length === 0) return null;
+    const aqui = this.elVecinoDeAhora();
+    if (aqui) return { x: this.scenario.runway.x, z: this.scenario.runway.z };
+    const s = this.flight.state.position;
+    let mejor: { x: number; z: number } | null = null;
+    let corto = Infinity;
+    for (const v of this.vecinos) {
+      const d = Math.hypot(v.pista.x - s.x, v.pista.z - s.z);
+      if (d < corto) {
+        corto = d;
+        mejor = { x: v.pista.x, z: v.pista.z };
+      }
+    }
+    return mejor;
   }
 
   /** En qué campo está el avión ahora, para los bancos. */
@@ -812,26 +849,14 @@ export class Game {
     return this.elCampoDeAhora().id;
   }
 
-  /** El escenario del otro aeropuerto, si esta ruta lleva a alguno. */
-  private vecinoEscenario: Scenario | null = null;
-
-  /**
-   * Y su aeródromo con las coordenadas ya puestas en este mundo.
-   *
-   * Es lo único que hace falta para que el plan de tierra —la raya verde, el
-   * coche del sígame, el señalero— funcione en el campo de llegada igual que
-   * en el de casa. Ver `mudarElPlanSiCambiaDeCampo`.
-   */
-  private vecinoAerodromo: Aerodrome | null = null;
-
-  /** La pista del otro aeropuerto, para los bancos. */
+  /** La pista del primer vecino, para los bancos. */
   get pistaDelVecino(): Pista | null {
-    return this.vecinoPista;
+    return this.vecinos[0]?.pista ?? null;
   }
 
   private pistasDelVuelo(): readonly Pista[] {
     const casa = this.scenario.aerodrome ? [this.scenario.runway] : [];
-    return this.vecinoPista ? [...casa, this.vecinoPista] : casa;
+    return [...casa, ...this.vecinos.map((v) => v.pista)];
   }
   readonly sky: SkyRig;
   aircraftMesh: AircraftMesh;
@@ -1502,33 +1527,40 @@ export class Game {
      * hay fuera de su mapa: primero el vecino, que sabe de su isla con un metro
      * de detalle, y si la pregunta no cae ahí, lo que hubiera antes.
      */
-    if (options.vecino) {
-      this.vecino = new MundoVecino(
+    for (const [i, quien] of (options.vecinos ?? []).entries()) {
+      const mundo = new MundoVecino(
         this.scenario,
-        options.vecino,
-        options.fotoVecino,
+        quien,
+        options.fotosVecinas?.[i],
       );
       // La pista del vecino, ya trasladada: a partir de aquí es una pista de
       // este mundo como cualquier otra.
-      this.vecinoEscenario = options.vecino;
-      this.vecinoPista = {
-        ...options.vecino.runway,
-        x: this.vecino.desplazamiento.x + options.vecino.runway.x,
-        z: this.vecino.desplazamiento.z + options.vecino.runway.z,
-      };
-      /*
-       * Y su aeródromo corrido igual, que es lo que le hace falta al plan de
-       * tierra para trazar la raya de vuelta al hangar **allí**. Se calcula
-       * una vez: son unos miles de puntos. Ver `aerodromo-desplazado.ts`.
-       */
-      this.vecinoAerodromo = options.vecino.aerodrome
-        ? desplazarAerodromo(
-            options.vecino.aerodrome,
-            this.vecino.desplazamiento.x,
-            this.vecino.desplazamiento.z,
-          )
-        : null;
-      this.scene.add(this.vecino.grupo);
+      this.vecinos.push({
+        mundo,
+        escenario: quien,
+        pista: {
+          ...quien.runway,
+          x: mundo.desplazamiento.x + quien.runway.x,
+          z: mundo.desplazamiento.z + quien.runway.z,
+        },
+        /*
+         * Y su aeródromo corrido igual, que es lo que le hace falta al plan
+         * de tierra para trazar la raya de vuelta al hangar **allí**. Se
+         * calcula una vez: son unos miles de puntos. Ver
+         * `aerodromo-desplazado.ts`.
+         */
+        aerodromo: quien.aerodrome
+          ? desplazarAerodromo(
+              quien.aerodrome,
+              mundo.desplazamiento.x,
+              mundo.desplazamiento.z,
+            )
+          : null,
+      });
+      this.scene.add(mundo.grupo);
+    }
+
+    if (this.vecinos.length > 0) {
       /*
        * **Y los otros aviones de la ruta.**
        *
@@ -1551,10 +1583,23 @@ export class Game {
        */
       this.avionesDeRuta = crearAvionesDeRuta(
         { x: this.scenario.runway.x, z: this.scenario.runway.z },
-        { x: this.vecinoPista.x, z: this.vecinoPista.z },
+        // El corredor es el del primer destino: es el que más se vuela, y dos
+        // corredores cruzados serían más tráfico del que hay.
+        { x: this.vecinos[0]!.pista.x, z: this.vecinos[0]!.pista.z },
       );
       this.scene.add(this.avionesDeRuta.grupo);
-      this.terrain.ponerSueloLejano((x, z) => this.vecino?.cota(x, z) ?? null);
+      /*
+       * Y el suelo se encadena por **todos** los vecinos: cada uno contesta de
+       * su isla y `null` fuera de ella, así que preguntarles por orden da el
+       * primero que sepa. Ver `MundoVecino.cota`.
+       */
+      this.terrain.ponerSueloLejano((x, z) => {
+        for (const v of this.vecinos) {
+          const y = v.mundo.cota(x, z);
+          if (y !== null) return y;
+        }
+        return null;
+      });
     }
 
     /*
@@ -1575,13 +1620,13 @@ export class Game {
      */
     const hitosDelVuelo = sinRepetidos([
       ...hitosDe(this.scenario.id),
-      ...(this.vecino && this.vecinoEscenario
-        ? hitosDe(this.vecinoEscenario.id).map((h) => ({
-            ...h,
-            x: h.x + this.vecino!.desplazamiento.x,
-            z: h.z + this.vecino!.desplazamiento.z,
-          }))
-        : []),
+      ...this.vecinos.flatMap((v) =>
+        hitosDe(v.escenario.id).map((h) => ({
+          ...h,
+          x: h.x + v.mundo.desplazamiento.x,
+          z: h.z + v.mundo.desplazamiento.z,
+        })),
+      ),
     ]);
     this.ventanilla.ponerHitos(hitosDelVuelo);
     // Y se guardan para el plano, que todavía no existe en este punto del
@@ -1912,7 +1957,8 @@ export class Game {
      * vuela sobre el mar entre dos islas no tiene forma de saber en cuál de
      * las dos puede bajar. Ver `Mapa.ponerOtraPista`.
      */
-    if (this.vecinoPista) this.hud.mapa.ponerOtraPista(this.vecinoPista);
+    if (this.vecinos.length > 0)
+      this.hud.mapa.ponerOtrasPistas(this.vecinos.map((v) => v.pista));
     this.medidor = new Medidor(document.body, this.renderer);
     this.hud.setEscalera(this.tier.avisos);
     this.hud.setInstruments(this.tier.instruments);
@@ -4662,13 +4708,11 @@ export class Game {
      * viento con el avión ya rodando por la plataforma del destino devolvía el
      * plan a sesenta kilómetros de allí y dejaba a quien juega sin raya.
      */
-    const enCasa = this.plan.aerodromoActual === this.scenario.aerodrome;
-    const aero =
-      enCasa || !this.vecinoAerodromo
-        ? this.scenario.aerodrome
-        : this.vecinoAerodromo;
-    const pista =
-      enCasa || !this.vecinoPista ? this.scenario.runway : this.vecinoPista;
+    const suyo = this.vecinos.find(
+      (v) => v.aerodromo === this.plan!.aerodromoActual,
+    );
+    const aero = suyo?.aerodromo ?? this.scenario.aerodrome;
+    const pista = suyo?.pista ?? this.scenario.runway;
     this.scene.remove(this.plan.grupo);
     this.plan = new PlanDeVuelo(
       aero,
@@ -6384,12 +6428,11 @@ export class Game {
    * Y se vuelve a sacar a quien te espera, porque es otra gente en otro campo.
    */
   private mudarElPlanSiCambiaDeCampo(): void {
-    if (!this.plan || !this.vecinoAerodromo || !this.vecinoPista) return;
-    const aqui = this.elCampoDeAhora();
-    const toca =
-      aqui === this.scenario
-        ? { aero: this.scenario.aerodrome, pista: this.scenario.runway }
-        : { aero: this.vecinoAerodromo, pista: this.vecinoPista };
+    if (!this.plan || this.vecinos.length === 0) return;
+    const aqui = this.elVecinoDeAhora();
+    const toca = aqui
+      ? { aero: aqui.aerodromo, pista: aqui.pista }
+      : { aero: this.scenario.aerodrome, pista: this.scenario.runway };
     if (!toca.aero || toca.aero === this.plan.aerodromoActual) return;
     this.plan.mudarseA(toca.aero, toca.pista);
     if (this.leccion.guiaEnTierra) this.colocarSenalero();

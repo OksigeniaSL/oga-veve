@@ -93,21 +93,23 @@ export class Mapa {
    * sitio donde se pudiera mirar antes de salir. Un mapa es exactamente el
    * sitio.
    */
-  private otraPista: {
+  private otrasPistas: readonly {
     x: number;
     z: number;
     heading: number;
     length: number;
-  } | null = null;
+  }[] = [];
 
-  /** La pista del destino, en coordenadas de este mundo. Ver `otraPista`. */
-  ponerOtraPista(pista: {
-    x: number;
-    z: number;
-    heading: number;
-    length: number;
-  }): void {
-    this.otraPista = pista;
+  /** Las pistas de los destinos, en coordenadas de este mundo. */
+  ponerOtrasPistas(
+    pistas: readonly {
+      x: number;
+      z: number;
+      heading: number;
+      length: number;
+    }[],
+  ): void {
+    this.otrasPistas = pistas;
     this.pintado = false;
     if (this.abierto) {
       this.pintarFondo();
@@ -511,9 +513,7 @@ export class Mapa {
     const lejos = [
       [0, 0] as const,
       [this.avionX, this.avionZ] as const,
-      ...(this.otraPista
-        ? [[this.otraPista.x, this.otraPista.z] as const]
-        : []),
+      ...this.otrasPistas.map((p) => [p.x, p.z] as const),
     ].reduce(
       (peor, [x, z]) =>
         Math.max(peor, Math.abs(x - cx), Math.abs(z - cz)),
@@ -532,8 +532,23 @@ export class Mapa {
    */
   private centro(): readonly [number, number] {
     if (this.alcance !== 0) return [this.avionX, this.avionZ];
-    if (!this.otraPista) return [0, 0];
-    return [this.otraPista.x / 2, this.otraPista.z / 2];
+    if (this.otrasPistas.length === 0) return [0, 0];
+    /*
+     * El centro de todo lo que hay que ver: casa en el origen y los destinos
+     * donde caigan. Con dos destinos —El Hierro ve La Gomera y La Palma— el
+     * punto medio de uno solo dejaba al otro fuera del papel.
+     */
+    let x0 = 0;
+    let x1 = 0;
+    let z0 = 0;
+    let z1 = 0;
+    for (const p of this.otrasPistas) {
+      x0 = Math.min(x0, p.x);
+      x1 = Math.max(x1, p.x);
+      z0 = Math.min(z0, p.z);
+      z1 = Math.max(z1, p.z);
+    }
+    return [(x0 + x1) / 2, (z0 + z1) / 2];
   }
 
   private pintarFondo(): void {
@@ -726,7 +741,7 @@ export class Mapa {
      * ir?». Se pinta igual que la de casa —barra blanca con reborde oscuro—
      * porque es lo mismo: una pista.
      */
-    if (this.otraPista) pintarPista(this.otraPista);
+    for (const p of this.otrasPistas) pintarPista(p);
   }
 
   /** Cumbres y pueblos: el dibujo siempre, el nombre si ya se oyó. */

@@ -155,6 +155,32 @@ vez de cuatro, y 3684 m de cota máxima.
   está contemplado.
 - Cinco rutas nuevas sin extraer un aeródromo más, tres de ellas sobre agua.
 
+## Y después: varios destinos, no uno
+
+*19 de septiembre de 2026.*
+
+Esta decisión se escribió con **un** destino por escenario, y con uno se quedó
+corta en cuanto alguien voló de verdad. Desde El Hierro se ven dos islas con
+pista —La Gomera a 70 km al 070 y La Palma a 91 al 008—, se pone rumbo a la
+que se quiera, y solo una tenía aeropuerto. Contado así, con las dos preguntas
+juntas: «¿y el aeropuerto de La Palma?, ¿y el mapa?».
+
+Lo que cambia es poco y es esto: `Scenario.destino` admite una lista, el juego
+monta un mundo vecino por cada uno, y todo lo que preguntaba «¿estoy en casa o
+en el otro?» pasa a preguntar **cuál** de todos —con la misma cuenta de
+siempre, la pista que se tiene más cerca—. El mundo de El Hierro se ensancha
+de 160 a 208 kilómetros, que es lo que pide La Palma con sitio para aproximar,
+y su relieve y su ortofoto del horizonte se vuelven a extraer a esa medida.
+
+Y el mapa deja de enseñar una sola pista. Era la otra mitad del problema: sin
+verlas las dos, quien vuela sobre el mar no tiene forma de saber a cuál de las
+dos islas puede ir.
+
+Medido con el avión puesto sobre la pista de La Palma saliendo de El Hierro:
+el juego dice que el campo de ahora es `la-palma`, el suelo está a 26 metros
+—su terreno, no el mar— y el plan de tierra traza 34 puntos de raya hasta el
+puesto.
+
 ## Referencias
 
 - ADR 0006 — el mundo de verdad: de dónde sale el relieve y por qué hay dos capas.

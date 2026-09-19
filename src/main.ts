@@ -223,22 +223,22 @@ if (!escenario) {
  * de lo que valga dentro de una función que la capture. Con el valor ya
  * copiado, la búsqueda es una búsqueda.
  */
-/*
- * **El primero de la lista, por ahora.**
+/**
+ * Los escenarios a los que lleva esta ruta.
  *
- * `destino` admite varios desde que El Hierro ve dos islas con pista —La
- * Gomera y La Palma— y el mundo se ensanchó para que las dos quepan. Lo que
- * todavía no admite es el juego: monta **un** mundo vecino, no una lista, y
- * eso son doce sitios de `game.ts` que hablan de «el vecino» en singular.
+ * Son varios desde que El Hierro ve dos islas con pista —La Gomera a 70 km y
+ * La Palma a 91— y se preguntó lo evidente: «¿y el aeropuerto de La Palma?».
+ * Cada uno cuesta su relieve y su fotografía, y los dos se piden en la misma
+ * tanda que todo lo demás: encadenarlos sumaría su espera a la del arranque.
  *
- * Así que de momento se vuela al primero, que es exactamente lo que había
- * antes, y el segundo se ve en el relieve del horizonte sin pista. Escrito
- * aquí para que el día que se haga el cambio se encuentre el sitio.
+ * Los identificadores se copian a una constante antes de buscarlos, y no es
+ * manía: `escenario` es una variable que el hangar reasigna, y TypeScript no
+ * se fía de lo que valga dentro de una función que la capture.
  */
-const aDondeSeVa = destinosDe(escenario)[0];
-const destinoDeHoy = aDondeSeVa
-  ? SCENARIOS.find((e) => e.id === aDondeSeVa)
-  : undefined;
+const aDondeSeVa = destinosDe(escenario);
+const destinosDeHoy = aDondeSeVa
+  .map((id) => SCENARIOS.find((e) => e.id === id))
+  .filter((e): e is Scenario => e !== undefined);
 
 const [
   conMapa,
@@ -246,8 +246,8 @@ const [
   meteo,
   ortofoto,
   ortofotoFina,
-  vecino,
-  fotoVecino,
+  vecinos,
+  fotosVecinas,
   ortofotoHorizonte,
 ] = await Promise.all([
   conRelieve(escenario),
@@ -279,7 +279,7 @@ const [
    * detrás sumaría su espera a la del arranque, y son otros trescientos
    * kilobytes.
    */
-  destinoDeHoy ? conRelieve(destinoDeHoy) : Promise.resolve(undefined),
+  Promise.all(destinosDeHoy.map((d) => conRelieve(d))),
   /*
    * Y su fotografía, para que la isla de enfrente no salga de polígonos.
    *
@@ -288,9 +288,13 @@ const [
    * su pista. Cuando el aterrizaje allí sea un aterrizaje de verdad, la fina
    * también.
    */
-  destinoDeHoy && mundoElegido() === "foto"
-    ? cargarOrtofoto(destinoDeHoy.id, "lejos")
-    : Promise.resolve(undefined),
+  Promise.all(
+    destinosDeHoy.map((d) =>
+      mundoElegido() === "foto"
+        ? cargarOrtofoto(d.id, "lejos")
+        : Promise.resolve(undefined),
+    ),
+  ),
   /*
    * Y la del horizonte: el anillo lejano entero, a setenta metros por píxel.
    *
@@ -382,8 +386,8 @@ const game = new Game({
   aircraft: avion,
   ortofoto,
   ortofotoFina,
-  vecino,
-  fotoVecino,
+  vecinos,
+  fotosVecinas,
   ortofotoHorizonte,
 });
 game.start();
