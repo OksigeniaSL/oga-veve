@@ -59,6 +59,17 @@ const MIRAR_SI_CALLO = 120;
  */
 const HASTA_QUE_CALLE = 12000;
 
+/**
+ * Y cuánto se le da para **arrancar**, en milisegundos.
+ *
+ * Dos segundos. Una voz del navegador no empieza a hablar en el instante en
+ * que se le pide: hay que pedir la lista de voces, elegir una y arrancar el
+ * sintetizador. Preguntarle a los ciento veinte milisegundos si está hablando
+ * devuelve «no» casi siempre — y con eso el turno se soltaba antes de que
+ * sonara una sílaba, que es justo el fallo que esto viene a arreglar.
+ */
+const TARDA_EN_ARRANCAR = 2000;
+
 export interface Altavoz {
   decodificar(bytes: ArrayBuffer): Promise<AudioBuffer | null>;
   encadenarVoz(
@@ -311,9 +322,36 @@ export class InstructorGrabado implements Instructor {
          */
         this.sonando = true;
         this.suplente.decir(texto, clave, urgencia);
+        /*
+         * **Y se espera en dos tiempos, porque una voz del sistema tarda en
+         * arrancar.**
+         *
+         * El primer intento miraba a los ciento veinte milisegundos y soltaba
+         * la plaza si en ese instante no se declaraba hablando. Las voces del
+         * navegador tardan bastante más que eso en empezar — hay que pedir la
+         * lista, elegir una y arrancar el sintetizador— así que la respuesta
+         * casi siempre era «no» y el turno se soltaba igual que antes de
+         * arreglarlo. Se oyó tal cual: «Bienvenidos a Lanzarote, esa tierra
+         * negra que ven… Charlie, bravo, zulú».
+         *
+         * Así que primero se espera a que **empiece** —hasta dos segundos, que
+         * es de sobra para cualquier sintetizador— y solo después se espera a
+         * que calle. Y si no llega a empezar en esos dos segundos, entonces sí
+         * se suelta: una frase que nunca sonó no puede dejar mudo el resto del
+         * vuelo.
+         */
+        let paraEmpezar = Math.ceil(TARDA_EN_ARRANCAR / MIRAR_SI_CALLO);
         let quedan = Math.ceil(HASTA_QUE_CALLE / MIRAR_SI_CALLO);
+        let empezo = false;
         const mirar = (): void => {
-          if (this.suplente.hablando && quedan-- > 0) {
+          if (!empezo) {
+            if (this.suplente.hablando) empezo = true;
+            else if (paraEmpezar-- > 0) {
+              this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
+              return;
+            }
+          }
+          if (empezo && this.suplente.hablando && quedan-- > 0) {
             this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
             return;
           }
@@ -321,9 +359,6 @@ export class InstructorGrabado implements Instructor {
           this.sonando = false;
           listo();
         };
-        // Un primer respiro antes de mirar: algunas voces del sistema tardan
-        // un pelo en declararse hablando, y preguntar en el mismo instante
-        // devuelve «no» y suelta la plaza igual que antes.
         this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
         // Y al suplente se le calla igual, que también es una voz.
         return () => {

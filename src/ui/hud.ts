@@ -35,6 +35,7 @@ import type { Accion } from "../flight/keymap";
 import { peldanoDe } from "./familia";
 import type { Mapa as MapaDeLaCarta } from "./carta";
 import { Tablero } from "./tablero";
+import type { Estado as EstadoDeAvisos } from "../flight/avisos-de-cabina";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
 import { PYKASU, esDeChorro, type AircraftConfig } from "../flight/aircraft";
@@ -419,7 +420,19 @@ export class Hud {
     this.root.addEventListener("click", (e) => {
       const donde = e.target as HTMLElement | null;
       if (!donde?.closest('[data-hud="cuadro-tirador"]')) return;
-      this.ponerCuadroBajado(!this.cuadroBajado);
+      /*
+       * **Lo que se invierte es lo que hay en la pantalla, no lo que yo creo.**
+       *
+       * Si por lo que sea el estado guardado y la clase del elemento se
+       * separan —un repintado a destiempo, una pestaña vieja con el código
+       * anterior— invertir el estado interno deja el clic sin efecto visible,
+       * y quien lo pulsa solo sabe que «esto no cierra el panel». Leyendo la
+       * clase, el mando siempre hace lo contrario de lo que se ve.
+       */
+      const bajadoAhora = !!this.root
+        .querySelector('[data-hud="cuadro"]')
+        ?.classList.contains("cuadro--bajado");
+      this.ponerCuadroBajado(!bajadoAhora);
       ponerTexto("cuadro-bajado", this.cuadroBajado ? "1" : "0");
     });
     this.render();
@@ -2446,6 +2459,18 @@ export class Hud {
    * que estar **siempre** en los aviones con pasaje, porque si solo apareciera
    * con el cartel puesto no habría forma de ponerlo. Ver `flight/cinturon.ts`.
    */
+  /**
+   * Enciende y apaga las señales luminosas del cuadro.
+   *
+   * El HUD no decide cuáles: le pasa el estado entero al tablero, que sabe qué
+   * luces hay y en qué orden van. Ver `flight/avisos-de-cabina.ts`.
+   */
+  ponerLucesDeAviso(estado: EstadoDeAvisos): void {
+    const raiz = this.root.querySelector('[data-hud="tablero"]');
+    if (raiz) this.tablero.ponerLucesDeAviso(raiz, estado);
+  }
+
+
   ponerHayCinturon(hay: boolean): void {
     const b = this.root.querySelector<HTMLElement>(
       '[data-hud="cinturon-mando"]',

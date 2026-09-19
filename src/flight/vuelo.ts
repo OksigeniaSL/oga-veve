@@ -471,10 +471,25 @@ export class Vuelo {
 
     // ── En el suelo, con el motor parado ─────────────────────────────────
     if (!s.motor) {
-      // Apagar el motor en el suelo termina el vuelo, se esté donde se esté.
-      // Es a propósito: «ya aterricé y esto gasta queroseno» es una razón
-      // perfectamente válida para terminar, y obligar a rodar hasta el puesto
-      // sería un juego, no un simulador.
+      /*
+       * Apagar el motor en el suelo termina el vuelo, se esté donde se esté.
+       * Es a propósito: «ya aterricé y esto gasta queroseno» es una razón
+       * perfectamente válida para terminar, y obligar a rodar hasta el puesto
+       * sería un juego, no un simulador.
+       *
+       * **Menos en la pista.** Ahí no es terminar: es dejar la pista
+       * bloqueada con el avión apagado encima, que es de las cosas más graves
+       * que pueden pasar en un aeropuerto. Contado jugando: «apago el motor en
+       * mitad de la pista y "vuelo terminado", y gano hasta galones, vaya por
+       * dios».
+       *
+       * Y no se castiga —aquí nunca se castiga—: no se da por terminado, se
+       * sigue pidiendo lo mismo que se venía pidiendo, que es dejarla libre. El
+       * motor se vuelve a arrancar con la misma tecla con la que se apagó, así
+       * que no es una trampa sin salida; es la consecuencia, que es lo que
+       * este juego enseña en vez de un castigo.
+       */
+      if (s.enPista && this.despego) return "abandonando";
       return this.despego ? "apagado" : "estacionado";
     }
 
@@ -532,7 +547,22 @@ export class Vuelo {
        * Un puesto está donde está el puesto. Si el aeropuerto lo puso a
        * sesenta y nueve metros del eje, llegar ahí es llegar.
        */
-      if (parado && s.restante < LLEGADA) return "en-puesto";
+      /*
+       * **Y parado en la pista no es haber llegado.**
+       *
+       * Faltaba `!s.enPista`, y sin eso pararse sobre el asfalto para dar la
+       * vuelta contaba como estacionar: «llegaste, apagá el motor — pero si
+       * estoy en la pista todavía». Es un error gordo y de los que enseñan lo
+       * contrario de lo que hay que enseñar, porque **la pista se deja libre**:
+       * hay otro detrás, y ese es el motivo por el que existe el punto de
+       * espera y la doble raya.
+       *
+       * No vale exigir además que esté lejos del eje: un puesto está donde
+       * está el puesto, y en La Gomera cae a sesenta y nueve metros porque el
+       * campo mide lo que mide. Lo que no puede caer nunca dentro del
+       * rectángulo de la pista es un puesto de estacionamiento.
+       */
+      if (parado && !s.enPista && s.restante < LLEGADA) return "en-puesto";
       // La pista hay que dejarla libre: hay otro detrás.
       if (s.alEjeDePista <= PISTA_LIBRE) return "abandonando";
       return "a-plataforma";

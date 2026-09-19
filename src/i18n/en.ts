@@ -58,6 +58,13 @@ export const EN: Dictionary = {
   "app.tagline": "Fly over Paraguay",
 
   "hud.speed": "Airspeed",
+  "luz.terreno": "TERRAIN",
+  "luz.perdida": "STALL",
+  "luz.rapido": "OVERSPEED",
+  "luz.tren": "GEAR",
+  "luz.frustrada": "GO AROUND",
+  "luz.piloto": "A/P OFF",
+  "luz.freno": "PARK BRK",
   "hud.altitude": "Altitude",
   "hud.heading": "Heading",
   "hud.throttleDown": "Less power",

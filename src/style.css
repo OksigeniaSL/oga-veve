@@ -2623,6 +2623,52 @@ button.motor__tecla::after {
   display: none;
 }
 
+/*
+ * **Y el reverso: lo que deja de salir al subir de peldaño.**
+ *
+ * Solo lo usan las señales luminosas, y por un motivo concreto: su palabra en
+ * casa —«PÉRDIDA», «SUELO»— es un escalón de la escalera, no el destino. En el
+ * peldaño de arriba esa misma luz dice STALL y TERRAIN, que es lo que va a
+ * leer el día que se suba a uno de verdad, y las dos a la vez serían dos
+ * palabras para la misma bombilla.
+ */
+.tablero[data-peldano="4"] [data-hasta="3"] {
+  display: none;
+}
+
+/*
+ * ── Las señales luminosas ──
+ *
+ * Dos escalones y nada más, que son los de un avión: ámbar es «mirá esto, no
+ * ahora mismo» y rojo es «ahora». La diferencia es el tiempo que tenés, y se
+ * aprende sola con el color sin leer una palabra. Ver
+ * `flight/avisos-de-cabina.ts`.
+ */
+.aviso-luz__caja {
+  fill: #1b1d20;
+  stroke: rgb(0 0 0 / 0.5);
+  stroke-width: 1;
+}
+
+.aviso-luz__palabra {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.aviso-luz[data-grado="precaucion"] .aviso-luz__caja {
+  fill: var(--cabina-precaucion);
+}
+
+.aviso-luz[data-grado="aviso"] .aviso-luz__caja {
+  fill: var(--cabina-limite);
+}
+
+/* Tinta oscura sobre el color, que es como se lee un aviso encendido. */
+.aviso-luz .aviso-luz__palabra {
+  fill: #14161a;
+}
+
 .cr__rosa {
   fill: rgb(0 0 0 / 0.35);
 }
