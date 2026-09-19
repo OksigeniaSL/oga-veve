@@ -8,6 +8,42 @@
   },
   "hitos": [
     {
+      "nombre": "Roque de los Muchachos",
+      "clase": "montana",
+      "lat": 28.75423,
+      "lon": -17.88488,
+      "x": -12619,
+      "z": -14203,
+      "ele": 2426
+    },
+    {
+      "nombre": "Pico Nambroque",
+      "clase": "montana",
+      "lat": 28.58326,
+      "lon": -17.83335,
+      "x": -7589,
+      "z": 4808,
+      "ele": 1922
+    },
+    {
+      "nombre": "Pico Ovejas",
+      "clase": "montana",
+      "lat": 28.68484,
+      "lon": -17.83248,
+      "x": -7504,
+      "z": -6487,
+      "ele": 1854
+    },
+    {
+      "nombre": "Montaña de los Pérez",
+      "clase": "montana",
+      "lat": 28.51145,
+      "lon": -17.8475,
+      "x": -8970,
+      "z": 12793,
+      "ele": 1042
+    },
+    {
       "nombre": "Roque de Santo Domingo",
       "clase": "isla",
       "lat": 28.82889,

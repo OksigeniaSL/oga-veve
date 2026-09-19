@@ -168,6 +168,7 @@ export const EN: Dictionary = {
   /* Trim, which is not "nose up" again: the stick springs back, trim stays. */
   "tecla.trimUp": "Trim nose up",
   "tecla.trimDown": "Trim nose down",
+  "tecla.cuadro": "Lower or raise the panel",
   "tecla.rollLeft": "Turn left",
   "tecla.rollRight": "Turn right",
   "tecla.yawLeft": "Rudder left",

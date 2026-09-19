@@ -131,7 +131,7 @@ const MINIMA_DE_VUELO = 0.9;
  */
 const RODANDO_TRAS_TOMAR = 12;
 
-const MOTOR_QUE_SOSTIENE = 0.55;
+export const MOTOR_QUE_SOSTIENE = 0.55;
 
 /**
  * Qué parte del ascenso de este avión da el motor solo, sin tocar la palanca.

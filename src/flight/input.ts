@@ -64,6 +64,8 @@ export interface InputActions {
   toggleAssist: () => void;
   resetFlight: () => void;
   toggleKeys: () => void;
+  /** Baja o sube el cuadro de mandos. Ver la acción `cuadro` del teclado. */
+  toggleCuadro: () => void;
   togglePausa: () => void;
   toggleEngine: () => void;
   toggleCredits: () => void;
@@ -482,6 +484,9 @@ export class InputManager {
         break;
       case "keys":
         this.actions.toggleKeys();
+        break;
+      case "cuadro":
+        this.actions.toggleCuadro();
         break;
       case "pausa":
         // Sin `preventDefault`: Escape no hace nada raro en un navegador, y

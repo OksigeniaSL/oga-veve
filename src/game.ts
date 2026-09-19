@@ -25,7 +25,7 @@ import {
   WebGLRenderer,
 } from "three";
 import { CoefficientFlightModel } from "./flight/fdm";
-import { ArcadeFlightModel } from "./flight/arcade";
+import { ArcadeFlightModel, MOTOR_QUE_SOSTIENE } from "./flight/arcade";
 import {
   GUYRAMI,
   TIERS,
@@ -1943,6 +1943,7 @@ export class Game {
       toggleAssist: () => this.cycleTier(),
       resetFlight: () => this.resetFlight(),
       toggleKeys: () => this.keyScreen?.toggle(),
+      toggleCuadro: () => this.hud.alternarCuadro(),
       togglePausa: () => this.alternarPausa(),
       toggleEngine: () => this.toggleEngine(),
       toggleCredits: () => this.credits.toggle(),
@@ -2165,6 +2166,10 @@ export class Game {
      * que se suelta en cuanto tocás los mandos.
      */
     this.hud.ponerHayPilotoAutomatico(this.tier.id !== "guyrami");
+    // Y la marca del gas de nivel, que es del modelo. Ver `ponerGasDeNivel`.
+    this.hud.ponerGasDeNivel(
+      this.tier.model === "simple" ? MOTOR_QUE_SOSTIENE : null,
+    );
     this.hud.onPilotoAutomatico(() => this.ponerPilotoAutomatico());
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
@@ -5249,7 +5254,7 @@ export class Game {
       // Con un instrumento abierto —el plano, el tiempo— el avión se
       // mantiene solo. Ver `mantenerElVueloRecto`.
       if (this.hayInstrumentoAbierto) this.mantenerElVueloRecto();
-      this.flight.step(dt, this.conElPilotoAutomatico());
+      this.flight.step(dt, this.conElPilotoAutomatico(dt));
       this.mirarSiChocaConAlgo();
     }
     this.avisarDeLosBultos(dt);
@@ -7572,7 +7577,11 @@ export class Game {
    * cuenta por qué existe: desde que se puede ir a otro aeropuerto hay rectas
    * de cuarenta minutos, y una recta de cuarenta minutos a mano no enseña nada.
    */
-  private objetivos: Objetivos = { rumbo: null, altitud: null };
+  private objetivos: Objetivos = {
+    rumbo: null,
+    altitud: null,
+    velocidad: null,
+  };
 
   /** Si el piloto automático está gobernando algo ahora mismo. */
   get pilotoPuesto(): boolean {
@@ -7593,8 +7602,21 @@ export class Game {
     if (!puesto && this.pilotoPuesto) this.pilotoSeSolto = 10;
     const s = this.flight.state;
     this.objetivos = puesto
-      ? { rumbo: s.heading, altitud: s.position.y }
-      : { rumbo: null, altitud: null };
+      ? {
+          rumbo: s.heading,
+          altitud: s.position.y,
+          /*
+           * **Y la velocidad que llevás**, que es la pieza que faltaba.
+           *
+           * Sin ella el automático sostenía la altura solo con el morro, y con
+           * el gas a tope eso no se puede: un reactor con empuje de sobra pica
+           * para no subir, se pasa de velocidad, corrige, y arranca el vaivén.
+           * «Me sube a la estratosfera y ahora me baja, hice un bucle y todo.»
+           * Ver `Objetivos.velocidad`.
+           */
+          velocidad: indicatedAirspeed(s.airspeed, s.position.y),
+        }
+      : { rumbo: null, altitud: null, velocidad: null };
     this.hud.ponerPilotoAutomatico(puesto);
     this.avisar(puesto ? "success" : "attention");
   }
@@ -7606,7 +7628,7 @@ export class Game {
    * sitio que las ayudas: primero se lee lo que pide quien vuela —que puede
    * ser soltarlo— y luego se manda.
    */
-  private conElPilotoAutomatico(): ControlInputs {
+  private conElPilotoAutomatico(dt: number): ControlInputs {
     const c = this.input.controls;
     if (!this.pilotoPuesto) return c;
     const s = this.flight.state;
@@ -7625,8 +7647,11 @@ export class Game {
         cabeceo: pitchAngleOf(s.orientation),
         altitud: s.position.y,
         vertical: s.velocity.y,
+        velocidad: indicatedAirspeed(s.airspeed, s.position.y),
+        gas: c.throttle,
       },
       this.objetivos,
+      dt,
     );
     /*
      * **Y el piloto automático NO escribe en los mandos del piloto.**
@@ -7651,6 +7676,20 @@ export class Game {
     Object.assign(this.mandosConAutomatico, c);
     this.mandosConAutomatico.aileron = m.aileron;
     this.mandosConAutomatico.elevator = m.elevator;
+    /*
+     * **Y el gas sí se escribe en los mandos de quien vuela.**
+     *
+     * Es la excepción a la regla de arriba, y tiene motivo: el gas **no vuelve
+     * al centro solo** —no es un muelle, es una palanca que se queda donde se
+     * deja—, así que escribirlo no engaña a la comprobación de «me han tocado
+     * los mandos». Y hace falta escribirlo: al soltar el automático, la
+     * palanca tiene que quedarse donde él la dejó, que es lo que hace un avión
+     * de verdad. Si no, el motor daría un salto justo al desconectar.
+     */
+    if (m.throttle !== null) {
+      c.throttle = m.throttle;
+      this.mandosConAutomatico.throttle = m.throttle;
+    }
     return this.mandosConAutomatico;
   }
 
@@ -8119,6 +8158,15 @@ export class Game {
      * él para siempre: «yo no veo piloto automático». Ver `ponerHayPilotoAutomatico`.
      */
     this.hud.ponerHayPilotoAutomatico(next.id !== "guyrami");
+    /*
+     * Y la marca del gas que sostiene el nivel, que **solo es verdad en el
+     * modelo sencillo**: allí el motor es la velocidad y hay un punto exacto
+     * en el que no se sube ni se baja. En el de coeficientes eso lo hace el
+     * compensador, y una marca aquí mentiría. Ver `ponerGasDeNivel`.
+     */
+    this.hud.ponerGasDeNivel(
+      next.model === "simple" ? MOTOR_QUE_SOSTIENE : null,
+    );
     this.keyScreen?.setSimple(
       next.instruments === "none" || next.instruments === "pictorial",
     );

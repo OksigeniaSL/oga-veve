@@ -67,6 +67,19 @@ export function vecesLejosDe(esc: Pick<Scenario, "vecesLejos">): number {
   return esc.vecesLejos ?? VECES_LEJOS;
 }
 
+/**
+ * A qué aeropuertos se puede ir desde éste, siempre como lista.
+ *
+ * `destino` admite uno suelto o varios porque casi todos tienen uno y
+ * escribirlo en una lista de un elemento es ruido. Quien lo lee no se entera
+ * de la diferencia: aquí siempre es una lista, vacía incluida.
+ */
+export function destinosDe(esc: Pick<Scenario, "destino">): readonly string[] {
+  const d = esc.destino;
+  if (!d) return [];
+  return typeof d === "string" ? [d] : d;
+}
+
 export interface Scenario {
   id: string;
   nameKey: string;
@@ -178,8 +191,18 @@ export interface Scenario {
    *
    * Y tiene que caber en el mundo: el banco lo comprueba contra `vecesLejos`,
    * con sitio de sobra para la aproximación. Ver `entre-aerodromos.ts`.
+   *
+   * **Pueden ser varios.** Nació como uno solo —«volar a otro aeropuerto»,
+   * ADR 0007— y con uno se quedó corto en cuanto alguien voló de verdad:
+   * desde El Hierro se ven La Gomera y La Palma las dos en el horizonte, se
+   * pone rumbo a la que se quiera, y solo una tenía pista. Contado así: «¿y
+   * el aeropuerto de La Palma?».
+   *
+   * Cada destino de la lista cuesta un mundo vecino entero —su relieve, su
+   * ortofoto, su aeródromo— así que no se ponen por poner: se ponen los que
+   * se ven desde aquí y a los que iría alguien. Ver `destinosDe`.
    */
-  destino?: string;
+  destino?: string | readonly string[];
 
   /**
    * El relieve del horizonte, si lo hay: el mismo sitio, seis veces más ancho.
@@ -1126,8 +1149,16 @@ export const EL_HIERRO: Scenario = {
    * sitio para la aproximación, y ni un kilómetro más: lo comprueba
    * `destinos.test.ts` por los dos lados. Ver el ADR 0007.
    */
-  destino: "la-gomera",
-  vecesLejos: 10,
+  /*
+   * **Dos destinos, y por eso el mundo es tan ancho.**
+   *
+   * La Gomera a 70 km al 070 y La Palma a 91 al 008. Desde El Hierro se ven
+   * las dos en el horizonte y solo una tenía pista: «¿y el aeropuerto de La
+   * Palma?». La que manda el ancho es La Palma, que cae a 90 km en el eje
+   * norte-sur y pide 99 con sitio para aproximar.
+   */
+  destino: ["la-gomera", "la-palma"],
+  vecesLejos: 13,
   // Alisio del nornordeste. Con él se entra por la 34, o sea desde el mar.
   vientoDominante: { vientoDe: 20, vientoKt: 14, techoM: 1200, temp: 22 },
   nameKey: "scenario.elHierro.name",

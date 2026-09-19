@@ -687,6 +687,19 @@ export const DIBUJOS = {
   "senalero-derecha": SENALERO_DERECHA,
   "senalero-despacio": SENALERO_DESPACIO,
   "senalero-frenos": SENALERO_FRENOS,
+  /*
+   * **El piloto automático suelto**: el mismo avión con la raya recta detrás
+   * que lleva su botón, tachado. Que se parezcan es la mitad del aviso —lo
+   * que se apagó es eso que está ahí— y por eso no se dibuja otra cosa.
+   */
+  "piloto-fuera": icono(`
+    <path d="M3 18h18" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" opacity="0.5" />
+    <path d="M12 4 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z"
+          opacity="0.5" />
+    <path class="senal__tachon" d="M4 20 L20 4" fill="none" stroke="currentColor"
+          stroke-width="2.8" stroke-linecap="round" />
+  `),
   "hito-montana-izquierda": hito("montana", "izquierda"),
   "hito-montana-derecha": hito("montana", "derecha"),
   "hito-isla-izquierda": hito("isla", "izquierda"),
@@ -697,6 +710,33 @@ export const DIBUJOS = {
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */
 export type DibujoDeSenal = keyof typeof DIBUJOS;
+
+/**
+ * El mismo dibujo, colocado dentro de otro SVG.
+ *
+ * Existe porque el panel de avisos del cuadro de mandos es un SVG y sus luces
+ * eran **rectángulos de color y nada más** en el peldaño de los pequeños. Se
+ * preguntó exactamente eso, con una foto de la banda roja: «¿qué significa la
+ * banda roja?». Y no significaba nada — no había con qué saberlo.
+ *
+ * La escalera lo tiene escrito desde el principio: **el dibujo va en los
+ * cuatro peldaños**, la palabra desde el segundo. Un color solo no es un
+ * canal; es un color. Ver `flight/escalera.ts`.
+ *
+ * Un `<svg>` anidado con su propio `viewBox` es SVG de manual y escala el
+ * dibujo de veinticuatro a lo que se le diga sin tocar ni una ruta.
+ */
+export function dibujoEn(
+  nombre: DibujoDeSenal,
+  x: number,
+  y: number,
+  lado: number,
+): string {
+  return (DIBUJOS[nombre] ?? "").replace(
+    "<svg ",
+    `<svg x="${x}" y="${y}" width="${lado}" height="${lado}" `,
+  );
+}
 
 /**
  * Convierte un nombre montado en caliente en uno de los que existen.

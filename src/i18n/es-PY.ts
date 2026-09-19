@@ -171,6 +171,7 @@ export const ES_PY = {
    */
   "tecla.trimUp": "Dejar el morro más arriba",
   "tecla.trimDown": "Dejar el morro más abajo",
+  "tecla.cuadro": "Bajar o subir el cuadro",
   "tecla.rollLeft": "Girar a la izquierda",
   "tecla.rollRight": "Girar a la derecha",
   "tecla.yawLeft": "Timón a la izquierda",

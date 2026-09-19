@@ -49,6 +49,7 @@ export type Accion =
   | "language"
   | "credits"
   | "keys"
+  | "cuadro"
   | "engine"
   | "pausa";
 
@@ -162,6 +163,23 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
   language: { label: "tecla.language", defecto: ["KeyL"], held: false },
   credits: { label: "tecla.credits", defecto: ["F1"], held: false },
   keys: { label: "tecla.keys", defecto: ["KeyK"], held: false },
+  /*
+   * **Bajar y subir el cuadro de mandos, con una tecla.**
+   *
+   * El tirador ya existe y funciona —medido con el ratón en ventanas de 1280,
+   * 1920 y 2400, en dos peldaños y con tarjeta puesta: el clic entra y el
+   * cuadro baja—. Y aun así se contó tres veces que no hacía nada: «esto
+   * sigue ahí de adorno».
+   *
+   * No se puede arreglar lo que no se reproduce, pero sí se puede dejar de
+   * depender de ello. Un mando que solo tiene una vía de entrada es un mando
+   * que se pierde entero cuando esa vía falla, y la pantalla es el sitio del
+   * juego donde más cosas se solapan. La tecla es la segunda vía, y además
+   * sale en la lista de teclas, que es donde se busca.
+   *
+   * La hache es de «hundir», y está libre.
+   */
+  cuadro: { label: "tecla.cuadro", defecto: ["KeyH"], held: false },
   engine: { label: "tecla.engine", defecto: ["KeyI"], held: false },
   /*
    * Escape para y suelta.

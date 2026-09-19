@@ -14,6 +14,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  type Objetivos,
   ALABEO_MAXIMO,
   loSolto,
   mandosPara,
@@ -24,6 +25,7 @@ import {
 import { CoefficientFlightModel } from "./fdm";
 import { AIRCRAFT } from "./aircraft";
 import { neutralControls } from "./model";
+import { airDensity, SEA_LEVEL_DENSITY } from "./atmosphere";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
 
 const grados = (g: number): number => (g * Math.PI) / 180;
@@ -35,6 +37,9 @@ const quieto = {
   cabeceo: 0,
   altitud: 1000,
   vertical: 0,
+  // El canal de gas quiere saber a qué va y con cuánto motor. Ver `Estado`.
+  velocidad: 120,
+  gas: 0.6,
 };
 
 describe("el lado corto de un rumbo", () => {
@@ -63,12 +68,12 @@ describe("el lado corto de un rumbo", () => {
 
 describe("las leyes de mando", () => {
   it("con el rumbo a la derecha, alerón a la derecha", () => {
-    const m = mandosPara(quieto, { rumbo: grados(30), altitud: null });
+    const m = mandosPara(quieto, { rumbo: grados(30), altitud: null, velocidad: null });
     expect(m.aileron).toBeGreaterThan(0);
   });
 
   it("y a la izquierda, a la izquierda", () => {
-    const m = mandosPara(quieto, { rumbo: grados(-30), altitud: null });
+    const m = mandosPara(quieto, { rumbo: grados(-30), altitud: null, velocidad: null });
     expect(m.aileron).toBeLessThan(0);
   });
 
@@ -78,7 +83,7 @@ describe("las leyes de mando", () => {
      * a ciento ochenta grados, el alabeo pedido tiene que ser el máximo y ni
      * un grado más — y el máximo son veinticinco, no noventa.
      */
-    const m = mandosPara(quieto, { rumbo: grados(179), altitud: null });
+    const m = mandosPara(quieto, { rumbo: grados(179), altitud: null, velocidad: null });
     // Con el ala a nivel, el alerón pedido es proporcional al alabeo que falta.
     expect(m.aileron).toBeCloseTo(Math.min(1, ALABEO_MAXIMO * 2.2), 3);
     expect(enGrados(ALABEO_MAXIMO)).toBeCloseTo(25, 6);
@@ -89,24 +94,24 @@ describe("las leyes de mando", () => {
     // metiendo alabeo hasta darse la vuelta.
     const m = mandosPara(
       { ...quieto, alabeo: ALABEO_MAXIMO },
-      { rumbo: grados(179), altitud: null },
+      { rumbo: grados(179), altitud: null, velocidad: null },
     );
     expect(Math.abs(m.aileron)).toBeLessThan(0.01);
   });
 
   it("con la altura por encima, tira; por debajo, empuja", () => {
     expect(
-      mandosPara(quieto, { rumbo: null, altitud: 1500 }).elevator,
+      mandosPara(quieto, { rumbo: null, altitud: 1500, velocidad: null }).elevator,
     ).toBeGreaterThan(0);
     expect(
-      mandosPara(quieto, { rumbo: null, altitud: 500 }).elevator,
+      mandosPara(quieto, { rumbo: null, altitud: 500, velocidad: null }).elevator,
     ).toBeLessThan(0);
   });
 
   it("y no pide subir más deprisa de lo cómodo", () => {
     // Con la altura muy por encima, el morro pedido es el tope y ni un grado
     // más; el timón sale de perseguir ese morro.
-    const m = mandosPara(quieto, { rumbo: null, altitud: 100000 });
+    const m = mandosPara(quieto, { rumbo: null, altitud: 100000, velocidad: null });
     expect(m.elevator).toBeCloseTo(Math.min(1, CABECEO_MAXIMO * 3), 3);
     expect((CABECEO_MAXIMO * 180) / Math.PI).toBeCloseTo(12, 6);
     expect(RITMO_MAXIMO).toBe(7.5);
@@ -114,9 +119,9 @@ describe("las leyes de mando", () => {
 
   it("y el eje que no gobierna lo deja quieto", () => {
     // Con solo el rumbo puesto, la altura es de quien vuela.
-    const m = mandosPara(quieto, { rumbo: grados(90), altitud: null });
+    const m = mandosPara(quieto, { rumbo: grados(90), altitud: null, velocidad: null });
     expect(m.elevator).toBe(0);
-    const n = mandosPara(quieto, { rumbo: null, altitud: 2000 });
+    const n = mandosPara(quieto, { rumbo: null, altitud: 2000, velocidad: null });
     expect(n.aileron).toBe(0);
   });
 });
@@ -124,13 +129,13 @@ describe("las leyes de mando", () => {
 describe("y se suelta cuando lo tocan", () => {
   it("mover el alerón suelta el rumbo", () => {
     expect(
-      loSolto({ rumbo: 0, altitud: null }, { aileron: 0.5, elevator: 0 }),
+      loSolto({ rumbo: 0, altitud: null, velocidad: null }, { aileron: 0.5, elevator: 0 }),
     ).toBe(true);
   });
 
   it("pero un roce no", () => {
     expect(
-      loSolto({ rumbo: 0, altitud: null }, { aileron: 0.05, elevator: 0 }),
+      loSolto({ rumbo: 0, altitud: null, velocidad: null }, { aileron: 0.05, elevator: 0 }),
     ).toBe(false);
   });
 
@@ -140,7 +145,7 @@ describe("y se suelta cuando lo tocan", () => {
      * el avión no estaba llevando la altura, así que no hay nada que quitarle.
      */
     expect(
-      loSolto({ rumbo: 0, altitud: null }, { aileron: 0, elevator: 0.9 }),
+      loSolto({ rumbo: 0, altitud: null, velocidad: null }, { aileron: 0, elevator: 0.9 }),
     ).toBe(false);
   });
 });
@@ -154,7 +159,7 @@ describe("y pilotando de verdad, llega y se queda", () => {
    */
   function volar(
     id: string,
-    objetivos: { rumbo: number | null; altitud: number | null },
+    objetivos: Objetivos,
     segundos: number,
   ) {
     const aircraft = AIRCRAFT.find((a) => a.id === id)!;
@@ -166,11 +171,29 @@ describe("y pilotando de verdad, llega y se queda", () => {
     const s = modelo.state;
     s.onGround = false;
     s.position.set(0, 2000, 0);
-    s.velocity.set(0, 0, -aircraft.cruiseSpeed);
+    /*
+     * Y se arranca **a la velocidad que se le va a pedir**, que es como se
+     * engancha un piloto automático: coge el avión como está. Arrancando al
+     * crucero de la ficha y pidiéndole otra cosa, lo que se mediría es el
+     * frenazo inicial y no si mantiene.
+     */
+    const tasPedida =
+      objetivos.velocidad === null
+        ? aircraft.cruiseSpeed
+        : objetivos.velocidad /
+          Math.sqrt(airDensity(objetivos.altitud ?? 2000) / SEA_LEVEL_DENSITY);
+    s.velocity.set(0, 0, -tasPedida);
     s.heading = 0;
     const dt = 1 / 60;
     let peorAlabeo = 0;
+    let peorAltura = 0;
+    let masRapido = 0;
+    // El gas también lo lleva el automático cuando hay velocidad pedida; si
+    // no, se queda donde estaba, como el de quien vuela.
+    let gas = 0.7;
     for (let t = 0; t < segundos; t += dt) {
+      const ias =
+        s.airspeed * Math.sqrt(airDensity(s.position.y) / SEA_LEVEL_DENSITY);
       const m = mandosPara(
         {
           heading: s.heading,
@@ -178,24 +201,33 @@ describe("y pilotando de verdad, llega y se queda", () => {
           cabeceo: pitchAngleOf(s.orientation),
           altitud: s.position.y,
           vertical: s.velocity.y,
+          velocidad: ias,
+          gas,
         },
         objetivos,
       );
+      if (m.throttle !== null) gas = m.throttle;
       modelo.step(dt, {
         ...neutralControls(),
-        throttle: 0.7,
+        throttle: gas,
         aileron: m.aileron,
         elevator: m.elevator,
       });
       peorAlabeo = Math.max(peorAlabeo, Math.abs(bankAngleOf(s.orientation)));
+      if (objetivos.altitud !== null)
+        peorAltura = Math.max(
+          peorAltura,
+          Math.abs(s.position.y - objetivos.altitud),
+        );
+      masRapido = Math.max(masRapido, ias);
     }
-    return { estado: s, peorAlabeo };
+    return { estado: s, peorAlabeo, peorAltura, masRapido };
   }
 
   it("llega al rumbo pedido y se queda", () => {
     const { estado } = volar(
       "jaz-60",
-      { rumbo: grados(90), altitud: 2000 },
+      { rumbo: grados(90), altitud: 2000, velocidad: null },
       120,
     );
     const falta = Math.abs(
@@ -207,7 +239,7 @@ describe("y pilotando de verdad, llega y se queda", () => {
   it("y sin ponerse de canto por el camino", () => {
     const { peorAlabeo } = volar(
       "jaz-60",
-      { rumbo: grados(90), altitud: 2000 },
+      { rumbo: grados(90), altitud: 2000, velocidad: null },
       120,
     );
     expect(
@@ -222,12 +254,61 @@ describe("y pilotando de verdad, llega y se queda", () => {
     // un piloto automático de verdad valga la pena.
     const { estado } = volar(
       "jaz-60",
-      { rumbo: grados(90), altitud: 2000 },
+      { rumbo: grados(90), altitud: 2000, velocidad: null },
       120,
     );
     expect(
       Math.abs(estado.position.y - 2000),
       `${Math.round(estado.position.y)} m`,
     ).toBeLessThan(120);
+  });
+
+  describe("y el de fuselaje ancho, que es donde se rompió", () => {
+    /*
+     * Contado jugando con el JAZ 120 y el gas a tope: «me sube a la
+     * estratosfera y ahora me baja, hice un bucle y todo»; «sube mucho, baja en
+     * barrena, *too fast*, vuelve a subir mucho, vuelve a bajar en barrena».
+     *
+     * No era el fugoide del avión —medido, son 137 segundos con ζ 0,10, que es
+     * un 747 de verdad—: era este piloto automático alimentándolo. Sostenía la
+     * altura solo con el morro y dejaba el gas donde estaba, y un reactor con
+     * empuje de sobra **no puede** mantener nivel así: pica para no subir, se
+     * pasa de velocidad, corrige, y arranca el vaivén.
+     *
+     * Así que lo que se mide aquí es lo que se contó: cuánto se va de la altura
+     * pedida y si se pasa de Vmo. Tres minutos, que es donde el vaivén ya había
+     * dado dos vueltas enteras.
+     */
+    it("mantiene la altura sin irse a la estratosfera", () => {
+      const { peorAltura } = volar(
+        "jaz-120",
+        { rumbo: null, altitud: 2000, velocidad: 120 },
+        180,
+      );
+      // Doscientos metros: un piloto automático de verdad no se va de cien, y
+      // el vaivén que se contó pasaba de tres mil.
+      expect(peorAltura, `se fue ${Math.round(peorAltura)} m`).toBeLessThan(200);
+    });
+
+    it("y sin pasarse de Vmo por el camino", () => {
+      const { masRapido } = volar(
+        "jaz-120",
+        { rumbo: null, altitud: 2000, velocidad: 120 },
+        180,
+      );
+      const vmo = 365 * 0.514444;
+      expect(masRapido, `llegó a ${Math.round(masRapido / 0.514444)} kt`).toBeLessThan(vmo);
+    });
+
+    it("y llevando rumbo a la vez, que es como se usa", () => {
+      const { peorAltura, estado } = volar(
+        "jaz-120",
+        { rumbo: grados(90), altitud: 2000, velocidad: 120 },
+        180,
+      );
+      expect(peorAltura, `se fue ${Math.round(peorAltura)} m`).toBeLessThan(300);
+      const falta = Math.abs(enGrados(porElLadoCorto(estado.heading, grados(90))));
+      expect(falta, `${falta.toFixed(1)}° de error`).toBeLessThan(5);
+    });
   });
 });

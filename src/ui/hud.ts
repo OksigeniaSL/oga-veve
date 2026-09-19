@@ -438,6 +438,22 @@ export class Hud {
     this.render();
   }
 
+  /**
+   * Baja el cuadro si está subido y al revés. La segunda vía del mismo mando.
+   *
+   * Lee **la clase que hay en la pantalla**, no el estado interno, por lo
+   * mismo que el tirador: si los dos se separan, el mando siempre hace lo
+   * contrario de lo que se ve. Ver el comentario del tirador en el
+   * constructor.
+   */
+  alternarCuadro(): void {
+    const bajado = !!this.root
+      .querySelector('[data-hud="cuadro"]')
+      ?.classList.contains("cuadro--bajado");
+    this.ponerCuadroBajado(!bajado);
+    ponerTexto("cuadro-bajado", this.cuadroBajado ? "1" : "0");
+  }
+
   /** Si el cuadro está bajado ahora mismo. Se guarda por perfil. */
   private cuadroBajado = leerTexto("cuadro-bajado") === "1";
 
@@ -771,7 +787,11 @@ export class Hud {
             <button class="motor__tecla" type="button" data-hud="throttle-down"
                     data-objetivo="extendido"
                     aria-label="${t("hud.throttleDown")}">${pictos ? HELICE_MENOS : "−"}</button>
-            <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div></div>
+            <!--
+              Y la marca del gas que **sostiene el nivel**, en el peldaño donde
+              eso existe. Ver ponerGasDeNivel.
+            -->
+            <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div><span class="motor__nivel" data-hud="gas-nivel" hidden></span></div>
             <button class="motor__tecla" type="button" data-hud="throttle-up" data-objetivo="extendido"
                     aria-label="${t("hud.throttleUp")}">${pictos ? HELICE_MAS : "+"}</button>
           </div>
@@ -1224,6 +1244,7 @@ export class Hud {
      */
     this.ponerHayPilotoAutomatico(this.hayPilotoAuto);
     this.ponerHayCinturon(this.hayCinturon);
+    this.ponerGasDeNivel(this.gasDeNivel);
   }
 
   /**
@@ -2202,6 +2223,37 @@ export class Hud {
       `${t(v > 0 ? "hud.trimArriba" : "hud.trimAbajo")} ${Math.round(Math.abs(v) * 100)}%`,
     );
   }
+
+  /**
+   * Dónde está el gas que **mantiene el nivel**, de 0 a 1, o `null` si en este
+   * modelo no hay uno.
+   *
+   * En el peldaño de los pequeños el motor *es* la velocidad y hay un punto
+   * exacto en el que el avión ni sube ni baja: por encima sube solo, por
+   * debajo planea. Esa es la lección entera de ese peldaño y **no había nada
+   * que la señalara**, así que había que descubrirla a ciegas. Contado
+   * jugando: «no puedo estabilizar el avión, o sube o baja, pero las flechas
+   * no me lo mantienen estable».
+   *
+   * Y no lo mantienen porque ahí no es cosa de las flechas: es del gas. Con
+   * la marca puesta se ve, y se entiende sin una palabra — que es exactamente
+   * cómo tiene que entenderse a los cuatro años.
+   *
+   * En el modelo de coeficientes **no existe ese punto**: la velocidad de
+   * equilibrio sale de la actitud, y ahí lo que mantiene el nivel es el
+   * compensador. Por eso se apaga, en vez de enseñar una marca que mentiría.
+   */
+  ponerGasDeNivel(fraccion: number | null): void {
+    this.gasDeNivel = fraccion;
+    const m = this.root.querySelector<HTMLElement>('[data-hud="gas-nivel"]');
+    if (!m) return;
+    m.hidden = fraccion === null;
+    if (fraccion !== null)
+      m.style.setProperty("--nivel", `${Math.round(fraccion * 100)}%`);
+  }
+
+  /** Se recuerda: `render()` rehace el marcado. Ver `ponerGasDeNivel`. */
+  private gasDeNivel: number | null = null;
 
   setLuzDeTorre(
     luz: "verde" | "roja" | null,

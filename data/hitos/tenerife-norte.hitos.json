@@ -17,31 +17,40 @@
       "ele": 3715
     },
     {
-      "nombre": "Roque del Almendro",
+      "nombre": "El Sombrero",
       "clase": "montana",
-      "lat": 28.201,
-      "lon": -16.65985,
-      "x": -31094,
-      "z": 31329,
-      "ele": 2524
+      "lat": 28.19503,
+      "lon": -16.64546,
+      "x": -29687,
+      "z": 31993,
+      "ele": 2407
     },
     {
-      "nombre": "Montaña Abreu",
+      "nombre": "Izaña",
       "clase": "montana",
-      "lat": 28.28808,
-      "lon": -16.53333,
-      "x": -18728,
-      "z": 21647,
-      "ele": 2406
+      "lat": 28.30725,
+      "lon": -16.50214,
+      "x": -15680,
+      "z": 19514,
+      "ele": 2383
     },
     {
-      "nombre": "Montaña de Palo",
+      "nombre": "Montaña Bermeja",
       "clase": "montana",
-      "lat": 28.22449,
-      "lon": -16.57645,
-      "x": -22943,
-      "z": 28717,
-      "ele": 2281
+      "lat": 28.2362,
+      "lon": -16.55822,
+      "x": -21161,
+      "z": 27416,
+      "ele": 2221
+    },
+    {
+      "nombre": "Tenerife",
+      "clase": "isla",
+      "lat": 28.30174,
+      "lon": -16.52265,
+      "x": -17685,
+      "z": 20128,
+      "ele": null
     },
     {
       "nombre": "Santa Cruz de Tenerife",

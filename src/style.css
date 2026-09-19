@@ -1433,11 +1433,29 @@ button.motor__tecla::after {
 }
 
 .motor__pista {
+  position: relative;
   height: 10px;
   border-radius: 6px;
   background: rgba(228, 226, 218, 0.18);
   overflow: hidden;
   margin-top: 6px;
+}
+
+/*
+ * La marca del gas que sostiene el nivel: por encima el avión sube solo, por
+ * debajo planea. Solo sale en el peldaño donde eso es verdad. Ver
+ * `ponerGasDeNivel` en `hud.ts`.
+ */
+.motor__nivel {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: var(--nivel, 55%);
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--tinta, #e8e2d4);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45);
 }
 
 .motor__relleno {
@@ -2732,6 +2750,17 @@ button.motor__tecla::after {
  * palabras para la misma bombilla.
  */
 .tablero[data-peldano="4"] [data-hasta="3"] {
+  display: none;
+}
+
+/*
+ * Y lo que solo sale en el primero: el dibujo de la luz en medio de su caja.
+ * Desde el segundo se corre a un lado y deja sitio a la palabra, que es otra
+ * copia. Ver `panelDeAvisos`.
+ */
+.tablero[data-peldano="2"] [data-hasta="1"],
+.tablero[data-peldano="3"] [data-hasta="1"],
+.tablero[data-peldano="4"] [data-hasta="1"] {
   display: none;
 }
 

@@ -64,6 +64,7 @@ import {
   LUCES,
   type Estado as EstadoDeAvisos,
 } from "../flight/avisos-de-cabina";
+import { dibujoEn, type DibujoDeSenal } from "./senal";
 import {
   QUIETA_LA_ALTITUD,
   QUIETA_LA_VELOCIDAD,
@@ -121,6 +122,17 @@ export interface DatosDelTablero {
 }
 
 const GRADOS = 180 / Math.PI;
+
+/** El dibujo de cada luz. Ver `panelDeAvisos`. */
+const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
+  terreno: "terreno",
+  perdida: "ala",
+  rapido: "sobrevelocidad",
+  tren: "tren",
+  frustrada: "frustrada",
+  piloto: "piloto-fuera",
+  freno: "freno",
+};
 
 export class Tablero {
   private raiz: SVGElement | null = null;
@@ -260,6 +272,16 @@ export class Tablero {
    * el segundo la palabra de casa, y desde el cuarto la de cabina en inglés
    * aeronáutico. Ver `escalera.ts`.
    */
+  /**
+   * Qué dibujo lleva cada luz.
+   *
+   * Vive aquí y no en `avisos-de-cabina.ts` porque aquello es la regla —qué
+   * luces hay, en qué orden y de qué grado— y esto es cómo se pinta. Y se
+   * reusan los dibujos que ya existen: el del terreno, el del ala, el del
+   * tren, el de la frustrada y el del freno son **los mismos** que salen en
+   * la tarjeta grande, y que sean los mismos es media lección — quien
+   * aprendió el dibujo en la tarjeta lo reconoce en la luz.
+   */
   private panelDeAvisos(): string {
     const ancho = 96;
     const alto = 20;
@@ -277,9 +299,25 @@ export class Tablero {
             Estas dos son la excepción de la escalera: una sustituye a la
             otra en vez de sumarse.
           -->
-          <text x="${ancho / 2}" y="${alto - 6}" data-desde="4"
+          <!--
+            **Y el dibujo, que va en los cuatro peldaños.**
+
+            Sin él, en el primero la luz era un rectángulo de color y nada
+            más. Se preguntó con una foto delante: «¿qué significa la banda
+            roja?». Y no significaba nada, porque no había con qué saberlo —
+            un color solo no es un canal, es un color. La escalera lo tiene
+            escrito desde el principio: el dibujo en los cuatro, la palabra
+            desde el segundo. Ver flight/escalera.ts.
+
+            Dos copias, como las dos palabras: en el peldaño del dibujo va en
+            medio, porque es lo único que hay; desde el segundo se corre a la
+            izquierda y le deja el sitio a la palabra.
+          -->
+          <g data-hasta="1">${dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", ancho / 2 - 7, 3, 14)}</g>
+          <g data-desde="2">${dibujoEn(DIBUJO_DE_LUZ[l.id] ?? "fuera", 3, 3, 14)}</g>
+          <text x="${(ancho + 17) / 2}" y="${alto - 6}" data-desde="4"
                 class="aviso-luz__palabra" text-anchor="middle">${l.cabina}</text>
-          <text x="${ancho / 2}" y="${alto - 6}" data-desde="2" data-hasta="3"
+          <text x="${(ancho + 17) / 2}" y="${alto - 6}" data-desde="2" data-hasta="3"
                 class="aviso-luz__palabra aviso-luz__palabra--casa"
                 text-anchor="middle">${t(l.clave as TranslationKey)}</text>
         </g>`;

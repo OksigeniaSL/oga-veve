@@ -10,7 +10,7 @@
 // HUD ya está maquetado antes de que el navegador termine de leer el módulo,
 // en vez de aparecer sin estilo durante un instante.
 import { Game } from "./game";
-import { SCENARIOS, type Scenario } from "./world/scenarios";
+import { destinosDe, SCENARIOS, type Scenario } from "./world/scenarios";
 import {
   leccionPorId,
   leccionRecordada,
@@ -223,7 +223,19 @@ if (!escenario) {
  * de lo que valga dentro de una función que la capture. Con el valor ya
  * copiado, la búsqueda es una búsqueda.
  */
-const aDondeSeVa = escenario.destino;
+/*
+ * **El primero de la lista, por ahora.**
+ *
+ * `destino` admite varios desde que El Hierro ve dos islas con pista —La
+ * Gomera y La Palma— y el mundo se ensanchó para que las dos quepan. Lo que
+ * todavía no admite es el juego: monta **un** mundo vecino, no una lista, y
+ * eso son doce sitios de `game.ts` que hablan de «el vecino» en singular.
+ *
+ * Así que de momento se vuela al primero, que es exactamente lo que había
+ * antes, y el segundo se ve en el relieve del horizonte sin pista. Escrito
+ * aquí para que el día que se haga el cambio se encuentre el sitio.
+ */
+const aDondeSeVa = destinosDe(escenario)[0];
 const destinoDeHoy = aDondeSeVa
   ? SCENARIOS.find((e) => e.id === aDondeSeVa)
   : undefined;

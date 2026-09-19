@@ -12,7 +12,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { SCENARIOS, vecesLejosDe, type Scenario } from "./scenarios";
+import {
+  destinosDe,
+  SCENARIOS,
+  vecesLejosDe,
+  type Scenario,
+} from "./scenarios";
 import { distanciaEntre, dondeCae, rumboHacia } from "./entre-aerodromos";
 
 /**
@@ -25,7 +30,7 @@ import { distanciaEntre, dondeCae, rumboHacia } from "./entre-aerodromos";
  */
 const SITIO_PARA_APROXIMAR = 9000;
 
-const conDestino = SCENARIOS.filter((e) => e.destino);
+const conDestino = SCENARIOS.filter((e) => destinosDe(e).length > 0);
 const por = (id: string): Scenario | undefined =>
   SCENARIOS.find((e) => e.id === id);
 
@@ -39,7 +44,8 @@ describe("las rutas a otro aeropuerto", () => {
 
   it("el destino de cada ruta es un escenario de la lista", () => {
     for (const e of conDestino)
-      expect(por(e.destino!), `${e.id} → ${e.destino}`).toBeDefined();
+      for (const d of destinosDe(e))
+        expect(por(d), `${e.id} → ${d}`).toBeDefined();
   });
 
   it("y los dos extremos tienen aeródromo extraído, que es donde se aterriza", () => {
@@ -49,23 +55,27 @@ describe("las rutas a otro aeropuerto", () => {
      */
     for (const e of conDestino) {
       expect(sitioDe(e), e.id).not.toBeNull();
-      expect(sitioDe(por(e.destino!)!), e.destino).not.toBeNull();
+      for (const d of destinosDe(e))
+        expect(sitioDe(por(d)!), d).not.toBeNull();
     }
   });
 
-  it("y el destino cabe en el mundo, con sitio para aproximar", () => {
+  it("y **cada** destino cabe en el mundo, con sitio para aproximar", () => {
+    // Cada uno: una ruta que no cabe no se salva porque su hermana sí quepa.
     for (const e of conDestino) {
-      const otro = por(e.destino!)!;
-      const { x, z } = dondeCae(sitioDe(e)!, sitioDe(otro)!);
-      const medioMundo = (e.size * vecesLejosDe(e)) / 2;
-      // El mundo es un cuadrado, así que lo que manda es el eje más largo.
-      const alBorde = medioMundo - Math.max(Math.abs(x), Math.abs(z));
-      expect(
-        alBorde,
-        `${e.id} → ${e.destino}: ${Math.round(distanciaEntre(sitioDe(e)!, sitioDe(otro)!) / 1000)} km` +
-          ` en un mundo de ${Math.round(medioMundo / 1000)} km de radio` +
-          ` · quedan ${Math.round(alBorde / 1000)} km al borde`,
-      ).toBeGreaterThan(SITIO_PARA_APROXIMAR);
+      for (const d of destinosDe(e)) {
+        const otro = por(d)!;
+        const { x, z } = dondeCae(sitioDe(e)!, sitioDe(otro)!);
+        const medioMundo = (e.size * vecesLejosDe(e)) / 2;
+        // El mundo es un cuadrado, así que lo que manda es el eje más largo.
+        const alBorde = medioMundo - Math.max(Math.abs(x), Math.abs(z));
+        expect(
+          alBorde,
+          `${e.id} → ${d}: ${Math.round(distanciaEntre(sitioDe(e)!, sitioDe(otro)!) / 1000)} km` +
+            ` en un mundo de ${Math.round(medioMundo / 1000)} km de radio` +
+            ` · quedan ${Math.round(alBorde / 1000)} km al borde`,
+        ).toBeGreaterThan(SITIO_PARA_APROXIMAR);
+      }
     }
   });
 
@@ -76,17 +86,22 @@ describe("las rutas a otro aeropuerto", () => {
      * cobrando por nada, y esto lo dice en vez de que se quede para siempre.
      */
     for (const e of SCENARIOS) {
-      if (!e.destino) {
+      const destinos = destinosDe(e);
+      if (destinos.length === 0) {
         expect(
           e.vecesLejos,
           `${e.id} ensancha el mundo sin ir a ningún sitio`,
         ).toBeUndefined();
         continue;
       }
-      const otro = por(e.destino!)!;
-      const { x, z } = dondeCae(sitioDe(e)!, sitioDe(otro)!);
-      const hacenFalta =
-        Math.max(Math.abs(x), Math.abs(z)) + SITIO_PARA_APROXIMAR;
+      // Manda el que más lejos cae: es el que fija el ancho, y los demás
+      // viajan gratis dentro de él.
+      const hacenFalta = Math.max(
+        ...destinos.map((d) => {
+          const { x, z } = dondeCae(sitioDe(e)!, sitioDe(por(d)!)!);
+          return Math.max(Math.abs(x), Math.abs(z)) + SITIO_PARA_APROXIMAR;
+        }),
+      );
       const conUnaMenos = (e.size * (vecesLejosDe(e) - 1)) / 2;
       expect(
         conUnaMenos,
@@ -99,18 +114,21 @@ describe("las rutas a otro aeropuerto", () => {
     // Una ruta declarada solo en un sentido es un vuelo sin regreso, y eso hay
     // que decidirlo a propósito, no que salga de un olvido.
     for (const e of conDestino) {
-      const otro = por(e.destino!)!;
-      if (otro.destino !== e.id) continue;
-      const ida = rumboHacia(sitioDe(e)!, sitioDe(otro)!);
-      const vuelta = rumboHacia(sitioDe(otro)!, sitioDe(e)!);
-      expect((ida - vuelta + 360) % 360, `${e.id} ↔ ${otro.id}`).toBeCloseTo(
-        180,
-        0,
-      );
+      for (const d of destinosDe(e)) {
+        const otro = por(d)!;
+        if (!destinosDe(otro).includes(e.id)) continue;
+        const ida = rumboHacia(sitioDe(e)!, sitioDe(otro)!);
+        const vuelta = rumboHacia(sitioDe(otro)!, sitioDe(e)!);
+        expect((ida - vuelta + 360) % 360, `${e.id} ↔ ${otro.id}`).toBeCloseTo(
+          180,
+          0,
+        );
+      }
     }
   });
 
   it("y ningún escenario se manda a sí mismo", () => {
-    for (const e of conDestino) expect(e.destino, e.id).not.toBe(e.id);
+    for (const e of conDestino)
+      for (const d of destinosDe(e)) expect(d, e.id).not.toBe(e.id);
   });
 });

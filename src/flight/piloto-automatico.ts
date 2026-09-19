@@ -70,6 +70,16 @@ export const CABECEO_MAXIMO = (12 * Math.PI) / 180;
  */
 export const TOQUE = 0.1;
 
+/**
+ * Cuánto **por segundo** se mueve la palanca por cada metro por segundo que
+ * falte de velocidad.
+ *
+ * Cinco centésimas: diez nudos de error mueven la palanca un cuarto por
+ * segundo, o sea que la recorre entera en cuatro. Es lo que tarda una mano, y
+ * es lo que separa una corrección de un tirón.
+ */
+export const POR_NUDO = 0.05;
+
 export interface Estado {
   /** Rumbo verdadero, en radianes. */
   readonly heading: number;
@@ -81,6 +91,10 @@ export interface Estado {
   readonly altitud: number;
   /** Velocidad vertical, en metros por segundo. */
   readonly vertical: number;
+  /** Velocidad indicada de ahora, m/s. Para el canal de gas. */
+  readonly velocidad: number;
+  /** Y cuánto gas lleva puesto, de 0 a 1: se corrige sobre lo que hay. */
+  readonly gas: number;
 }
 
 /** A dónde se le manda ir. `null` en uno de los dos es no mandarle nada. */
@@ -89,12 +103,39 @@ export interface Objetivos {
   readonly rumbo: number | null;
   /** Altitud pedida, en metros, o `null`. */
   readonly altitud: number | null;
+  /**
+   * La velocidad indicada que hay que sostener, m/s, o `null`.
+   *
+   * **Sin esto el canal de altura no puede funcionar, y no es una opinión:
+   * es aritmética.** Un reactor de línea con el gas a tope tiene empuje de
+   * sobra para subir a siete metros por segundo; mandarle mantener la altura
+   * con el morro y dejarle el gas donde estaba es pedirle que se coma toda esa
+   * energía picando, y eso acaba en sobrevelocidad. Luego el aviso, luego la
+   * corrección, y vuelta a empezar.
+   *
+   * Contado jugando, y con razón: «me sube a la estratosfera y ahora me baja,
+   * hice un bucle y todo», «sube mucho, baja en barrena, *too fast*, vuelve a
+   * subir mucho…». Eso no era el fugoide del avión: era **este** piloto
+   * automático alimentándolo, porque le faltaba la mitad.
+   *
+   * Un piloto automático de verdad lleva las dos manos: una en el morro y otra
+   * en las palancas. La altura la sostiene el morro y la velocidad, el gas.
+   */
+  readonly velocidad: number | null;
 }
 
 /** Lo que el piloto automático pide a los mandos. */
 export interface Mandos {
   readonly aileron: number;
   readonly elevator: number;
+  /**
+   * El gas que pide, de 0 a 1, o `null` si no gobierna la velocidad.
+   *
+   * `null` y no cero: cero **es** una orden —quitar motor— y dejar el eje en
+   * manos de quien vuela es otra cosa. Es la misma distinción que ya tenían
+   * los otros dos ejes con sus objetivos en nulo.
+   */
+  readonly throttle: number | null;
 }
 
 /**
@@ -121,9 +162,24 @@ const acotar = (v: number, tope: number): number =>
  * dejar ese eje en manos de quien vuela: con el rumbo puesto y la altura no, el
  * avión mantiene el rumbo y sube y baja a gusto de uno.
  */
-export function mandosPara(e: Estado, o: Objetivos): Mandos {
+export function mandosPara(
+  e: Estado,
+  o: Objetivos,
+  /**
+   * Cuánto ha pasado desde el fotograma anterior, s.
+   *
+   * Solo lo usa el canal de gas, y por un motivo: los otros dos son
+   * proporcionales —piden una actitud y la persiguen— y el del gas **corrige
+   * sobre el gas que ya hay**, o sea que integra. Un integrador sin reloj va
+   * a la velocidad del ordenador: medido a sesenta por segundo, la palanca
+   * saltaba de 0,01 a 1,00 y de vuelta. Con el reloj delante se mueve como una
+   * palanca de verdad.
+   */
+  dt = 1 / 60,
+): Mandos {
   let aileron = 0;
   let elevator = 0;
+  let throttle: number | null = null;
 
   if (o.rumbo !== null) {
     /*
@@ -165,7 +221,25 @@ export function mandosPara(e: Estado, o: Objetivos): Mandos {
     elevator = acotar((cabeceoPedido - e.cabeceo) * 3, 1);
   }
 
-  return { aileron, elevator };
+  if (o.velocidad !== null) {
+    /*
+     * **Y la otra mano, la del gas.**
+     *
+     * Una ley proporcional sobre el gas que ya se llevaba, no sobre cero: el
+     * automático coge el avión como está y lo corrige, que es lo que hace que
+     * no dé un tirón al engancharse — el mismo criterio que el resto de este
+     * módulo.
+     *
+     * `POR_NUDO` es suave a propósito. El gas de un reactor mueve mucha
+     * energía y tarda segundos en dar lo que se le pide; una ganancia viva
+     * aquí es exactamente lo que convierte una corrección en un vaivén, que es
+     * de lo que se venía.
+     */
+    const falta = o.velocidad - e.velocidad;
+    throttle = Math.max(0, Math.min(1, e.gas + falta * POR_NUDO * dt));
+  }
+
+  return { aileron, elevator, throttle };
 }
 
 /**
