@@ -48,6 +48,29 @@ import { spawn } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SCENARIOS, vecesLejosDe } from '../src/world/scenarios.ts';
+
+/**
+ * Cuántas veces más ancho es el mapa lejano de este escenario.
+ *
+ * Sale de la misma tabla que usan el terreno y el extractor de relieve, porque
+ * si aquí se usara otro número la foto del horizonte se dibujaría a una escala
+ * distinta de la del relieve que cubre. Ver `vecesLejosDe`.
+ */
+function ladoDelHorizonte(id) {
+  const esc = SCENARIOS.find((e) => e.id === id);
+  if (!esc) throw new Error(`${id} no está en SCENARIOS`);
+  /*
+   * **Y el lado sale del `size` del escenario, no del de la ortofoto fina.**
+   *
+   * La tabla de aquí abajo dice 18.000 para los campos canarios, que es lo que
+   * cubre su foto de dieciocho kilómetros — pero el mapa lejano se dibuja sobre
+   * `size`, que en casi todos es 16.000. Con el número equivocado la foto
+   * cubriría 144 km donde el terreno mide 128 y el paisaje saldría desplazado
+   * un ocho por ciento: bastante para que la costa no caiga en la costa.
+   */
+  return esc.size * vecesLejosDe(esc);
+}
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -124,6 +147,24 @@ const TESELA = 256;
 const ENCUADRES = {
   lejos: { zoom: 14 },
   cerca: { lado: 6000, zoom: 16 },
+  /*
+   * **Y el horizonte: el mapa lejano entero, a zoom de mapa de pared.**
+   *
+   * Sin esto, donde acaba la ortofoto de dieciocho kilómetros empieza una
+   * llanura de color plano. Contado jugando, y dos veces: «el paisaje es de
+   * estilo Minecraft, no se extiende el mapa realista en todo el trayecto» y
+   * «aparte de lo mal que se ve la topografía…».
+   *
+   * Zoom once son unos setenta y seis metros por píxel. Suena poco y es de
+   * sobra: la geometría de ese mapa va a trescientos veinte metros por
+   * muestra, o sea que la foto es **cuatro veces más fina que el relieve que
+   * viste**. Pedir más sería pagar megabytes por detalle que no se puede
+   * apoyar en ninguna forma.
+   *
+   * El lado no es fijo: es el del mapa lejano de cada escenario, que desde que
+   * hay rutas ya no es el mismo para todos. Ver `vecesLejosDe`.
+   */
+  horizonte: { zoom: 11 },
 };
 
 /**
@@ -196,14 +237,25 @@ const ffmpeg = (args) =>
 async function main() {
   const [id, ...opciones] = process.argv.slice(2);
   if (!id || !ESCENARIOS[id]) {
-    console.error('uso: node scripts/ortofoto-publica.mjs <escenario> [--cerca]');
+    console.error(
+      'uso: node scripts/ortofoto-publica.mjs <escenario> [--cerca|--horizonte]',
+    );
     console.error(`escenarios: ${Object.keys(ESCENARIOS).join(', ')}`);
     process.exit(1);
   }
-  const cual = opciones.includes('--cerca') ? 'cerca' : 'lejos';
+  const cual = opciones.includes('--cerca')
+    ? 'cerca'
+    : opciones.includes('--horizonte')
+      ? 'horizonte'
+      : 'lejos';
   const escenario = ESCENARIOS[id];
   const prov = PROVEEDORES[escenario.proveedor];
-  const lado = cual === 'cerca' ? ENCUADRES.cerca.lado : escenario.lado;
+  const lado =
+    cual === 'cerca'
+      ? ENCUADRES.cerca.lado
+      : cual === 'horizonte'
+        ? ladoDelHorizonte(id)
+        : escenario.lado;
 
   /*
    * **El zoom se recorta al tope del proveedor**, y se dice.

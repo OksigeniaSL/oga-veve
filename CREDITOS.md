@@ -49,9 +49,19 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Guaraní, Encarnación, Mariscal Estigarribia, Pedro Juan Caballero, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
 | [OpenStreetMap](https://www.openstreetmap.org)                                                                                                                               | Pistas, calles de rodaje, plataformas, estacionamientos, edificios, viario y agua de las ciudades                                      | **ODbL**                                                                |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data)                                                                                                            | Coordenadas, pistas y elevación de aeropuertos                                                                                         | **Unlicense** (dominio público)                                         |
-| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofoto de Tenerife Norte, sobre el relieve                                                                                           | **CC BY 4.0** · scne.es                                                 |
+| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en tres encuadres                                                                         | **CC BY 4.0** · scne.es                                                 |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
-| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofoto de Silvio Pettirossi, sobre el relieve                                                                                        | **Sin resolver.** Ver abajo                                             |
+| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los seis escenarios paraguayos, en tres encuadres                                                                         | **Sin resolver.** Ver abajo                                             |
+
+**Tres encuadres de la misma fuente**, y cada uno existe por un motivo
+distinto: `cerca` cubre seis kilómetros a dos metros por píxel, que es donde se
+rueda; `lejos`, dieciocho a ocho, que es donde se vuela el circuito; y
+`horizonte`, el mapa lejano entero —de ochenta y cuatro a ciento sesenta
+kilómetros según el escenario— a unos setenta metros por píxel. La última entró
+el 19 de septiembre de 2026 porque sin ella, donde acababa la foto de dieciocho
+kilómetros empezaba una llanura de color plano: «el paisaje es de estilo
+Minecraft, no se extiende el mapa realista en todo el trayecto». Son ciento
+cincuenta kilobytes por isla y solo se baja la del escenario que se abre.
 
 ### Sentinel-2 cloudless: la licencia declarada no es la que dice EOX
 

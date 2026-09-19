@@ -658,6 +658,44 @@ export class Terrain {
   }
 
   /**
+   * Y la fotografía del **horizonte**, sobre el anillo lejano.
+   *
+   * Esto es lo que quita la llanura de color plano que empezaba donde acababa
+   * la ortofoto de dieciocho kilómetros. Contado jugando, dos veces: «el
+   * paisaje es de estilo Minecraft, no se extiende el mapa realista en todo el
+   * trayecto» y «lo mal que se ve la topografía».
+   *
+   * El anillo mide ciento veintiocho o ciento sesenta kilómetros según el
+   * escenario y su foto va a setenta metros por píxel — que suena poco y es de
+   * sobra, porque **la geometría de ese anillo va a trescientos veinte metros
+   * por muestra**: la foto es cuatro veces más fina que el relieve que viste.
+   * Pedir más sería pagar megabytes por detalle que no se puede apoyar en
+   * ninguna forma. Ciento cincuenta kilobytes por isla.
+   *
+   * Y se le apagan los colores por vértice, como a la del mapa fino: dejarlos
+   * multiplicaría la foto por el verde del relieve y saldría todo teñido.
+   */
+  ponerOrtofotoLejana(orto: {
+    textura: Texture;
+    uv(x: number, z: number): { u: number; v: number };
+  }): void {
+    const malla = this.group.getObjectByName("horizonte") as Mesh | undefined;
+    if (!malla) return;
+    const pos = malla.geometry.getAttribute("position");
+    const uvs = new Float32Array(pos.count * 2);
+    for (let i = 0; i < pos.count; i++) {
+      const { u, v } = orto.uv(pos.getX(i), pos.getZ(i));
+      uvs[i * 2] = u;
+      uvs[i * 2 + 1] = v;
+    }
+    malla.geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
+    const mat = malla.material as MeshLambertMaterial;
+    mat.map = orto.textura;
+    mat.vertexColors = false;
+    mat.needsUpdate = true;
+  }
+
+  /**
    * Le pone encima la fotografía **fina**, recortada sobre el aeródromo.
    *
    * La ancha cubre dieciocho kilómetros a ocho metros por píxel, que desde

@@ -1,0 +1,24 @@
+{
+  "id": "estigarribia",
+  "encuadre": "horizonte",
+  "fuente": "Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA",
+  "licencia": "CC BY 4.0 · EOX & contribuidores, datos Copernicus Sentinel",
+  "servicio": "https://tiles.maps.eox.at/wmts",
+  "capa": "s2cloudless-2025_3857",
+  "esquina": {
+    "col": 675,
+    "fila": 1149
+  },
+  "origen": {
+    "lat": -22.046499,
+    "lon": -60.6217
+  },
+  "tamanoM": 120000,
+  "zoom": 11,
+  "metrosPorPixel": 70.848,
+  "pixeles": {
+    "ancho": 2048,
+    "alto": 1792
+  },
+  "huecos": 0
+}

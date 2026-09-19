@@ -1,0 +1,24 @@
+{
+  "id": "gran-canaria",
+  "encuadre": "horizonte",
+  "fuente": "PNOA · Instituto Geográfico Nacional de España",
+  "licencia": "CC BY 4.0 · scne.es",
+  "servicio": "https://www.ign.es/wmts/pnoa-ma",
+  "capa": "OI.OrthoimageCoverage",
+  "esquina": {
+    "col": 932,
+    "fila": 854
+  },
+  "origen": {
+    "lat": 27.9319,
+    "lon": -15.3866
+  },
+  "tamanoM": 120000,
+  "zoom": 11,
+  "metrosPorPixel": 67.532,
+  "pixeles": {
+    "ancho": 2048,
+    "alto": 2048
+  },
+  "huecos": 0
+}
