@@ -336,6 +336,7 @@ import {
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
 import { puntoMasCercanoDe } from "./world/aerodrome";
+import { MundoVecino } from "./world/mundo-vecino";
 import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
@@ -489,6 +490,17 @@ export interface GameOptions {
    * `Terrain.ponerOrtofotoFina`.
    */
   ortofotoFina?: Ortofoto;
+
+  /**
+   * El escenario de destino, ya con su relieve, si esta ruta lleva a otro
+   * aeropuerto.
+   *
+   * Viene de fuera y no se carga aquí por lo mismo que el relieve y la ciudad:
+   * es un fichero que hay que tener **antes** de construir el mundo, y
+   * encadenarlo detrás de los otros duplicaría la espera del arranque. Ver
+   * `Scenario.destino` y `MundoVecino`.
+   */
+  vecino?: Scenario;
 }
 
 /**
@@ -691,6 +703,12 @@ export class Game {
   private readonly clock = new Clock();
 
   readonly terrain: Terrain;
+
+  /**
+   * El otro aeropuerto de la ruta, si lo hay: un escenario entero puesto a su
+   * distancia. Ver `mundo-vecino.ts`.
+   */
+  readonly vecino: MundoVecino | null = null;
   readonly sky: SkyRig;
   aircraftMesh: AircraftMesh;
   aircraft: AircraftConfig;
@@ -1311,6 +1329,23 @@ export class Game {
 
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
+    /*
+     * **Y el otro aeropuerto, si esta ruta lleva a alguno.**
+     *
+     * Un escenario entero puesto a su distancia: su mapa de alturas medido, su
+     * pista con sus marcas, sus calles y su plataforma. No hace falta ni un
+     * dato nuevo porque **el destino ya es un escenario** — ver
+     * `mundo-vecino.ts`.
+     *
+     * Y su suelo se encadena al gancho que el terreno ya tenía para saber qué
+     * hay fuera de su mapa: primero el vecino, que sabe de su isla con un metro
+     * de detalle, y si la pregunta no cae ahí, lo que hubiera antes.
+     */
+    if (options.vecino) {
+      this.vecino = new MundoVecino(this.scenario, options.vecino);
+      this.scene.add(this.vecino.grupo);
+      this.terrain.ponerSueloLejano((x, z) => this.vecino?.cota(x, z) ?? null);
+    }
 
     /*
      * **La aproximación, con lo que no cambia en todo el vuelo.**

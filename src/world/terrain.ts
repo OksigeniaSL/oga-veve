@@ -534,6 +534,39 @@ export class Terrain {
    */
   private sueloLejano: ((x: number, z: number) => number | null) | null = null;
 
+  /**
+   * La cota que dice el mapa del horizonte, o `null` si no hay mapa o si el
+   * punto tampoco cabe en él.
+   *
+   * Interpola igual que el mapa fino: un escalón de trescientos metros entre
+   * muestras se nota volando aunque no se vea.
+   */
+  private cotaDelHorizonte(x: number, z: number): number | null {
+    const lejos = this.scenario.relieveLejano;
+    if (!lejos) return null;
+    const lado = this.scenario.size * vecesLejosDe(this.scenario);
+    const mitad = lado / 2;
+    if (Math.abs(x) > mitad || Math.abs(z) > mitad) return null;
+
+    const paso = lado / (lejos.resolucion - 1);
+    const gx = (x + mitad) / paso;
+    const gz = (z + mitad) / paso;
+    const max = lejos.resolucion - 1;
+    const x0 = clampInt(Math.floor(gx), 0, max);
+    const z0 = clampInt(Math.floor(gz), 0, max);
+    const x1 = clampInt(x0 + 1, 0, max);
+    const z1 = clampInt(z0 + 1, 0, max);
+    const tx = clamp01(gx - x0);
+    const tz = clamp01(gz - z0);
+    const h = (col: number, fila: number): number =>
+      lejos.datos[fila * lejos.resolucion + col] ?? 0;
+    return lerp(
+      lerp(h(x0, z0), h(x1, z0), tx),
+      lerp(h(x0, z1), h(x1, z1), tx),
+      tz,
+    );
+  }
+
   ponerSueloLejano(
     fuente: ((x: number, z: number) => number | null) | null,
   ): void {
@@ -543,12 +576,27 @@ export class Terrain {
   sampleHeight(x: number, z: number): number {
     // Fuera del mapa, si hay quien sepa qué hay ahí, se le pregunta. Dentro no
     // se pregunta nunca: esto se llama doscientas cuarenta veces por segundo.
-    if (
-      this.sueloLejano &&
-      (Math.abs(x) > this.half || Math.abs(z) > this.half)
-    ) {
-      const fuera = this.sueloLejano(x, z);
-      if (fuera !== null) return fuera;
+    if (Math.abs(x) > this.half || Math.abs(z) > this.half) {
+      if (this.sueloLejano) {
+        const fuera = this.sueloLejano(x, z);
+        if (fuera !== null) return fuera;
+      }
+      /*
+       * **Y si nadie sabe, lo sabe el mapa del horizonte.**
+       *
+       * Está ahí desde que el Teide no cabía, se dibuja, y hasta ahora no se
+       * pisaba: fuera del mapa fino el suelo era el borde repetido, o sea una
+       * meseta invisible a la cota del último nudo. Medido volando de Tenerife
+       * Norte a Tenerife Sur: a treinta kilómetros, donde hay mar, el suelo
+       * daba **mil cuatrocientos nueve metros**.
+       *
+       * Con el mapa lejano puesto ahí da lo que hay: cero, que es el mar. Es
+       * grueso —trescientos metros por muestra— y da igual, porque el sitio
+       * donde un metro importa es el aeropuerto, y de eso se encargan el mapa
+       * fino de casa y el del vecino, que contestan antes.
+       */
+      const horizonte = this.cotaDelHorizonte(x, z);
+      if (horizonte !== null) return horizonte;
     }
 
     const gx = (x + this.half) / this.step;

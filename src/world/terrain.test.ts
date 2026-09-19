@@ -139,3 +139,70 @@ describe("emplazamiento de las pistas", () => {
     },
   );
 });
+
+describe("el suelo fuera del mapa fino", () => {
+  /*
+   * **Fuera del escenario el suelo era una meseta invisible.**
+   *
+   * El mapa de alturas cubre dieciocho kilómetros y fuera devolvía el borde
+   * repetido: una llanura a la cota del último nudo, sin dibujar, contra la que
+   * se choca. Con el mundo de la foto puesto se tapaba con las teselas; sin
+   * ellas —y a cuentas del Espacio Económico Europeo no se sirven— quedaba al
+   * aire.
+   *
+   * Medido volando de Tenerife Norte a Tenerife Sur, a treinta kilómetros y
+   * sobre mar abierto: **1409 metros de suelo**. El mapa del horizonte, que
+   * lleva ahí desde que el Teide no cabía y solo se dibujaba, dice cero.
+   */
+  const conHorizonte = (cotas: number[], lado: number) => {
+    const resolucion = Math.round(Math.sqrt(cotas.length));
+    return {
+      ...VALLE_CORDILLERA,
+      relieveLejano: { datos: Int16Array.from(cotas), resolucion },
+      vecesLejos: lado / VALLE_CORDILLERA.size,
+    };
+  };
+
+  it("sale del mapa del horizonte y no del borde repetido", () => {
+    // Un horizonte de 2×2 nudos: todo a cien metros menos la esquina.
+    const lado = VALLE_CORDILLERA.size * 6;
+    const t = new Terrain(conHorizonte([100, 100, 100, 100], lado));
+    const fuera = VALLE_CORDILLERA.size / 2 + 1000;
+    expect(t.sampleHeight(fuera, 0)).toBeCloseTo(100, 0);
+    // Y dentro del mapa fino manda el mapa fino, no el horizonte.
+    expect(t.sampleHeight(0, 0)).not.toBeCloseTo(100, 0);
+  });
+
+  it("y quien sabe más contesta antes", () => {
+    /*
+     * El orden importa y es el que se rompe solo: el vecino —otro aeropuerto
+     * puesto a su distancia, con su mapa de un metro— tiene que contestar
+     * antes que el horizonte, que va a trescientos metros por muestra.
+     */
+    const lado = VALLE_CORDILLERA.size * 6;
+    const t = new Terrain(conHorizonte([100, 100, 100, 100], lado));
+    const fuera = VALLE_CORDILLERA.size / 2 + 1000;
+    t.ponerSueloLejano((x) => (x > 0 ? 777 : null));
+    expect(t.sampleHeight(fuera, 0)).toBe(777);
+    // Y donde el de más detalle dice «no sé», contesta el horizonte.
+    expect(t.sampleHeight(-fuera, 0)).toBeCloseTo(100, 0);
+  });
+
+  it("y más allá del horizonte se vuelve al borde repetido", () => {
+    // El mundo se acaba en alguna parte, y ahí lo que había antes sigue
+    // valiendo: es suelo que nadie va a pisar en un vuelo.
+    const lado = VALLE_CORDILLERA.size * 6;
+    const t = new Terrain(conHorizonte([100, 100, 100, 100], lado));
+    expect(t.sampleHeight(lado, 0)).not.toBeCloseTo(100, 0);
+  });
+
+  it("y sin mapa del horizonte se comporta como siempre", () => {
+    // Los escenarios sin relieve medido no cambian de comportamiento.
+    const t = new Terrain(VALLE_CORDILLERA);
+    const borde = VALLE_CORDILLERA.size / 2;
+    expect(t.sampleHeight(borde + 5000, 0)).toBeCloseTo(
+      t.sampleHeight(borde, 0),
+      1,
+    );
+  });
+});
