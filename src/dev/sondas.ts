@@ -796,6 +796,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** La cota del suelo en un punto del mundo. Para medir el suelo, no el vuelo. */
     suelo: (x: number, z: number) => juego.terrain.sampleHeight(x, z),
     /**
+     * Y el suelo **tal y como lo ve el modelo de vuelo**, que no es el mismo.
+     *
+     * `suelo` da el terreno; el motor de vuelo usa `sampleSurface`, que además
+     * levanta el suelo hasta el nivel del agua. Tenerlos separados es lo que
+     * permite ver una diferencia entre los dos, que es justo lo que se estaba
+     * buscando cuando esto se añadió.
+     */
+    sueloDeVuelo: (x: number, z: number) => juego.terrain.sampleSurface(x, z),
+    /**
      * Si el terreno lleva puesta la ortofoto, y de qué tamaño.
      *
      * Hacía falta porque «el escenario no tiene foto» y «la foto no se cargó»

@@ -852,8 +852,25 @@ export class CoefficientFlightModel implements FlightModel {
      *
      * Es lo que ya hacía el modelo sencillo: allí solo se pega cuando no se
      * está pidiendo subir.
+     *
+     * **Y por eso se pega también hacia abajo mientras no se esté subiendo.**
+     * Sin eso, en una pista con pendiente el suelo se escapa por debajo y el
+     * avión se queda flotando: en tierra la velocidad vertical negativa se
+     * anula —justo aquí abajo—, así que las ruedas no pueden seguir una pista
+     * que baja. Cuando el hueco pasa del palmo de holgura, `onGround` se apaga;
+     * la gravedad lo baja, vuelve a tocar, y otra vez, todo el recorrido.
+     *
+     * Medido en La Palma, cuya pista cae dos metros en los cuatrocientos de la
+     * frenada: **el 73 % de la frenada con la bandera en el aire**, y como el
+     * freno solo frena si la rueda toca, frenaba a 0,09 g en vez de a los 0,32
+     * que frena en llano. El banco lo contaba como «este avión frena mal», y
+     * frenaba perfectamente: no tocaba el suelo.
+     *
+     * La condición es «mientras no se esté subiendo», y no «siempre», porque
+     * siempre vuelve a ser el trinquete que impedía despegar.
      */
-    if (s.position.y < wheelLevel) s.position.y = wheelLevel;
+    if (s.position.y < wheelLevel || s.velocity.y <= 0)
+      s.position.y = wheelLevel;
 
     if (wasFlying) {
       s.touchdownSinkRate = Math.max(0, sinkRate);
