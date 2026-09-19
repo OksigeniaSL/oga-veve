@@ -385,6 +385,30 @@ export class InstructorGrabado implements Instructor {
     clave: string | undefined,
     urgencia: Urgencia | undefined,
   ): void {
+    /*
+     * **Y un suplente que no puede hablar no pide turno.**
+     *
+     * Pedir la palabra para no decir nada es lo peor de los dos mundos: la
+     * frase no suena **y** bloquea la boca mientras se espera a que arranque
+     * un sintetizador que no existe. Dos segundos por frase —lo que aguanta
+     * `TARDA_EN_ARRANCAR`— y con tres plazas de cola y cuatro segundos de
+     * caducidad, lo que viene detrás se cae.
+     *
+     * Medido en el barrido, que es donde saltó: en un vuelo entero de Cuatro
+     * Vientos la torre **dijo una sola frase**, `clearedLand`, y ni el
+     * «esperá» ni el «podés entrar» llegaron a sonar. Trece de diecisiete
+     * escenarios igual.
+     *
+     * Y no es cosa del banco. En el banco no hay voces porque el navegador va
+     * sin pantalla, pero en una tablet paraguaya sin el paquete de voz en
+     * castellano pasa exactamente lo mismo, y ahí se lleva por delante media
+     * lección. Lo que suena, suena; lo que no, no estorba.
+     */
+    if (!this.suplente.disponible) {
+      this.ultima = clave ?? texto;
+      this.apuntar();
+      return;
+    }
     this.boca.pedir(
       urgencia ?? "normal",
       (listo) => {

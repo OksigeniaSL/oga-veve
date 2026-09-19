@@ -1,0 +1,29 @@
+{
+  "id": "la-palma",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": 28.626499,
+    "lon": -17.7556
+  },
+  "hitos": [
+    {
+      "nombre": "Roque de Santo Domingo",
+      "clase": "isla",
+      "lat": 28.82889,
+      "lon": -17.96844,
+      "x": -20774,
+      "z": -22505,
+      "ele": null
+    },
+    {
+      "nombre": "Santa Cruz de La Palma",
+      "clase": "ciudad",
+      "lat": 28.68189,
+      "lon": -17.76634,
+      "x": -1048,
+      "z": -6159,
+      "ele": 6
+    }
+  ]
+}

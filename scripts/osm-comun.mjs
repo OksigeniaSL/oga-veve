@@ -19,6 +19,9 @@ const ESPEJOS = [
 
 export const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** Lo que se espera a un espejo antes de darlo por colgado, ms. Ver `overpass`. */
+const PLAZO = 180000;
+
 /**
  * Overpass es gratuito y lo mantienen voluntarios, así que se satura. Un 504 o
  * un 429 no significan que la consulta esté mal: significan «ahora no». Se
@@ -43,9 +46,25 @@ export async function overpass(query) {
             'User-Agent': 'oga-veve/0.1 (+https://github.com/OksigeniaSL/oga-veve)',
           },
           body: 'data=' + encodeURIComponent(query),
+          /*
+           * **Y con reloj.**
+           *
+           * `fetch` no tiene plazo por su cuenta: un espejo que acepta la
+           * conexión y no contesta nunca deja la extracción colgada para
+           * siempre, y la política de reintentos de aquí abajo —que es el
+           * motivo de que este fichero exista— no llega a ejecutarse. Medido
+           * extrayendo hitos: veinticinco minutos parado en una conexión
+           * abierta a un espejo, con cero bytes en cola y sin un solo mensaje.
+           *
+           * Tres minutos es más de lo que tarda cualquier consulta de estos
+           * extractores —la más gorda, el viario de Asunción, no llega a uno—
+           * y menos de lo que tarda nadie en notar que algo va mal.
+           */
+          signal: AbortSignal.timeout(PLAZO),
         });
       } catch (err) {
         ultimo = err;
+        console.warn(`  ⚠ ${servidor}: ${err.message ?? err}, reintentando…`);
         continue;
       }
       if (res.ok) return res.json();

@@ -1,0 +1,29 @@
+{
+  "id": "pedro-juan",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": -22.641427,
+    "lon": -55.829993
+  },
+  "hitos": [
+    {
+      "nombre": "Pedro Juan Caballero",
+      "clase": "ciudad",
+      "lat": -22.54978,
+      "lon": -55.73843,
+      "x": 9397,
+      "z": -10191,
+      "ele": 670
+    },
+    {
+      "nombre": "Aral Moreira",
+      "clase": "ciudad",
+      "lat": -22.95114,
+      "lon": -55.62684,
+      "x": 20848,
+      "z": 34439,
+      "ele": null
+    }
+  ]
+}
