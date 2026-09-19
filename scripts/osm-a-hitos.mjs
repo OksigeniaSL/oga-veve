@@ -29,8 +29,9 @@
  * el aire**:
  *
  *   - `natural=volcano` y `natural=peak` con cota — la montaña que se ve.
- *   - `place=island` e `islet` — la isla de enfrente, que en Canarias es
- *     media lección de geografía.
+ *   - `place=island` — la isla de enfrente, que en Canarias es media lección
+ *     de geografía. Los islotes no: «a la derecha vamos dejando Piedra del
+ *     Gallo» no lo diría nadie.
  *   - `place=city` y `town` — el pueblo de abajo.
  *
  * No se traen polígonos: un río o un embalse es una geometría grande y lo que

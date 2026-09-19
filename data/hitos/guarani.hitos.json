@@ -1,0 +1,65 @@
+{
+  "id": "guarani",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": -25.457186,
+    "lon": -54.839544
+  },
+  "hitos": [
+    {
+      "nombre": "Ilhas Taquaras",
+      "clase": "isla",
+      "lat": -25.60161,
+      "lon": -54.36014,
+      "x": 48131,
+      "z": 16059,
+      "ele": null
+    },
+    {
+      "nombre": "Ciudad del Este",
+      "clase": "ciudad",
+      "lat": -25.5169,
+      "lon": -54.61686,
+      "x": 22357,
+      "z": 6640,
+      "ele": null
+    },
+    {
+      "nombre": "Hernandarias",
+      "clase": "ciudad",
+      "lat": -25.40418,
+      "lon": -54.63204,
+      "x": 20833,
+      "z": -5894,
+      "ele": 243
+    },
+    {
+      "nombre": "Puerto Iguazú",
+      "clase": "ciudad",
+      "lat": -25.61075,
+      "lon": -54.57642,
+      "x": 26417,
+      "z": 17076,
+      "ele": null
+    },
+    {
+      "nombre": "Santa Rita",
+      "clase": "ciudad",
+      "lat": -25.80049,
+      "lon": -55.09345,
+      "x": -25491,
+      "z": 38173,
+      "ele": null
+    },
+    {
+      "nombre": "Santa Terezinha de Itaipu",
+      "clase": "ciudad",
+      "lat": -25.43908,
+      "lon": -54.40199,
+      "x": 43930,
+      "z": -2013,
+      "ele": null
+    }
+  ]
+}

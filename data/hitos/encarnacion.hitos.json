@@ -1,0 +1,65 @@
+{
+  "id": "encarnacion",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": -27.227537,
+    "lon": -55.837584
+  },
+  "hitos": [
+    {
+      "nombre": "Isla de los Pajaros",
+      "clase": "isla",
+      "lat": -27.47572,
+      "lon": -55.82455,
+      "x": 1289,
+      "z": 27596,
+      "ele": null
+    },
+    {
+      "nombre": "Posadas",
+      "clase": "ciudad",
+      "lat": -27.36648,
+      "lon": -55.89429,
+      "x": -5607,
+      "z": 15450,
+      "ele": null
+    },
+    {
+      "nombre": "Cambyretá",
+      "clase": "ciudad",
+      "lat": -27.35905,
+      "lon": -55.76137,
+      "x": 7536,
+      "z": 14624,
+      "ele": null
+    },
+    {
+      "nombre": "Garupá",
+      "clase": "ciudad",
+      "lat": -27.48371,
+      "lon": -55.82966,
+      "x": 784,
+      "z": 28485,
+      "ele": null
+    },
+    {
+      "nombre": "San Pedro del Paraná",
+      "clase": "ciudad",
+      "lat": -26.83379,
+      "lon": -56.20914,
+      "x": -36738,
+      "z": -43782,
+      "ele": null
+    },
+    {
+      "nombre": "Leandro N. Alem",
+      "clase": "ciudad",
+      "lat": -27.60364,
+      "lon": -55.32353,
+      "x": 50826,
+      "z": 41820,
+      "ele": null
+    }
+  ]
+}

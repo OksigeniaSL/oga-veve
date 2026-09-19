@@ -63,6 +63,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     // al navegador, y rodar ciento cuarenta metros así tardaba minutos.
     /** Los mandos, para poder mirarlos desde una comprobación. */
     controles: () => juego.input.controls,
+    /**
+     * Cuántos hitos del paisaje lleva señalados el vuelo.
+     *
+     * Es lo único que se puede mirar desde fuera de una cosa que es voz y
+     * tarjeta: el número sube cuando la comandante dice «a la izquierda, el
+     * Teide». Ver `flight/lo-que-se-ve.ts`.
+     */
+    ventanilla: () => juego.hitosSenalados,
     /** La cota que da la foto sin filtrar, para comprobar lejos del aeropuerto. */
     cotaCruda: (x: number, z: number) =>
       juego.teselas?.medidaDirecta(x, z) ?? null,

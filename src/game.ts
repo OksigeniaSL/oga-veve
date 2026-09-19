@@ -1251,6 +1251,11 @@ export class Game {
    * cuarenta minutos no sea una recta. Ver `flight/lo-que-se-ve.ts`.
    */
   private readonly ventanilla = new LoQueSeVe();
+
+  /** Cuántos hitos lleva señalados este vuelo. Para los bancos. */
+  get hitosSenalados(): number {
+    return this.ventanilla.cuantos;
+  }
   private readonly otroAvion: Instructor = new InstructorGrabado(
     this.audio,
     elegirOtroAvion(this.vozDelSistema, this.torre),
