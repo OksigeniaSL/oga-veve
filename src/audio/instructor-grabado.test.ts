@@ -163,11 +163,27 @@ describe("el instructor grabado", () => {
     expect(suplente.callado).toBeGreaterThan(0);
   });
 
-  it("y al hablar el navegador, se corta lo grabado", async () => {
+  it("y una frase sin grabar **no** corta a la que está sonando", async () => {
+    /*
+     * **Esta prueba afirmaba lo contrario, y afirmaba el fallo.**
+     *
+     * Decía «y al hablar el navegador, se corta lo grabado» y comprobaba que
+     * hubiera un corte. Era exactamente lo que se oía jugando, tres veces:
+     *
+     * > «Bienvenidos a Lanzarote, esa tierra negra que ven… Charlie, bravo,
+     * > zulú.» · «La voz inglesa corta la española, eso lo hace siempre.» ·
+     * > «El que habla en inglés habla dos veces, es como si saliera inglés,
+     * > español, inglés, con el charlie, papa, hotel interrumpiéndose.»
+     *
+     * La causa era que los dos caminos del suplente —sin receta y con una
+     * pieza que falta— hablaban **sin pedir la palabra**, y al hacerlo
+     * callaban lo que estuviera sonando. Ahora piden turno como cualquiera y
+     * esperan, que es lo que hace una radio: habla uno cada vez.
+     */
     const { instructor, altavoz } = await conPack();
     instructor.decir("Seguí la raya verde", "vuelo.rodando");
     instructor.decir("Arrancá el motor", "vuelo.estacionado");
-    expect(altavoz.cortes).toBe(1);
+    expect(altavoz.cortes).toBe(0);
   });
 
   /*

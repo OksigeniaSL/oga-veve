@@ -554,3 +554,37 @@ export const BOCA = new Boca({
     }
   },
 });
+
+/**
+ * Y la segunda boca: **la megafonía de cabina**, que es otra vía.
+ *
+ * Esto empezó siendo una sola para todo, con este argumento: una radio es un
+ * solo canal, y si dos hablan a la vez no se oyen los dos, se pisan. El
+ * argumento es correcto **y no se aplica a la comandante**, y lo corrigió
+ * quien juega:
+ *
+ * > «Pero en la realidad, la comandante le habla a los pasajeros por la
+ * > megafonía interna del avión, y lo que escucha en sus auriculares va por
+ * > otra vía.»
+ *
+ * Exacto. En un avión de verdad hay dos vías y **se solapan**: la comandante
+ * suena por los altavoces del pasaje mientras la torre entra por los
+ * auriculares. Meterlas en el mismo turno no era prudencia, era un error de
+ * modelo — y se pagaba con la frase larga de la llegada cortada por un
+ * indicativo.
+ *
+ * Así que dos suelos: la radio —torre, otro avión e instructora— se turnan
+ * entre ellos, y la megafonía va por su cuenta.
+ *
+ * **Y ésta no cancela la voz del navegador.** `speechSynthesis.cancel()` es
+ * global: si la megafonía lo llamara, callaría a la radio, que es justo lo
+ * que se quiere evitar. La megafonía habla con grabaciones y se corta con su
+ * propio mando; si algún día una frase suya no estuviera grabada, sonaría por
+ * el navegador y ahí sí competirían — la respuesta a eso es grabarla, no
+ * volver a juntar los dos canales.
+ */
+export const MEGAFONIA = new Boca({
+  ahora: () => Date.now(),
+  esperar: (ms, hacer) => void setTimeout(hacer, ms),
+  cancelar() {},
+});
