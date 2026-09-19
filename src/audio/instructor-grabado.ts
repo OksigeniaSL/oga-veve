@@ -234,31 +234,25 @@ export class InstructorGrabado implements Instructor {
   ): void {
     const suena = this.quienLaDice(clave ?? null, relleno);
     if (!suena) {
-      // Que hable el navegador, y que se calle lo grabado: dos voces a la vez
-      // son ruido, y de las dos manda la que se acaba de pedir.
-      this.callarLoGrabado();
       /*
-       * **Y se apunta igual, que es lo que dice que hace.**
+       * Sin receta grabada, la dice el navegador — **pidiendo la palabra**.
        *
-       * `loUltimo` se documenta como «lo último que se pidió decir» y solo se
-       * apuntaba por el camino de la grabación, así que sin pack cargado se
-       * quedaba viejo para siempre. Lo nota cualquiera que pregunte qué dijo
-       * esta boca: el banco de vuelo daba «la torre no dijo nada» cuando la
-       * torre lo había dicho por la voz del navegador.
+       * Ver `porElSuplente`, que cuenta por qué este camino no puede saltarse
+       * el turno.
        */
-      this.ultima = clave ?? texto;
-      this.apuntar();
-      this.suplente.decir(texto, clave, urgencia);
+      this.porElSuplente(texto, clave, urgencia);
       return;
     }
     const cadena: AudioBuffer[] = [];
     for (const pieza of suena.piezas) {
       const buffer = this.banco.piezas.get(`${suena.voz}/${pieza}`);
-      // Una pieza que el manifiesto promete y no está cargada deja la frase
-      // coja. Media frase es peor que ninguna: la dice el navegador entera.
+      /*
+       * Una pieza que el manifiesto promete y no está cargada deja la frase
+       * coja. Media frase es peor que ninguna: la dice el navegador entera —
+       * **y también pidiendo la palabra**. Ver `porElSuplente`.
+       */
       if (!buffer) {
-        this.callarLoGrabado();
-        this.suplente.decir(texto, clave, urgencia);
+        this.porElSuplente(texto, clave, urgencia);
         return;
       }
       cadena.push(buffer);
@@ -322,44 +316,8 @@ export class InstructorGrabado implements Instructor {
          */
         this.sonando = true;
         this.suplente.decir(texto, clave, urgencia);
-        /*
-         * **Y se espera en dos tiempos, porque una voz del sistema tarda en
-         * arrancar.**
-         *
-         * El primer intento miraba a los ciento veinte milisegundos y soltaba
-         * la plaza si en ese instante no se declaraba hablando. Las voces del
-         * navegador tardan bastante más que eso en empezar — hay que pedir la
-         * lista, elegir una y arrancar el sintetizador— así que la respuesta
-         * casi siempre era «no» y el turno se soltaba igual que antes de
-         * arreglarlo. Se oyó tal cual: «Bienvenidos a Lanzarote, esa tierra
-         * negra que ven… Charlie, bravo, zulú».
-         *
-         * Así que primero se espera a que **empiece** —hasta dos segundos, que
-         * es de sobra para cualquier sintetizador— y solo después se espera a
-         * que calle. Y si no llega a empezar en esos dos segundos, entonces sí
-         * se suelta: una frase que nunca sonó no puede dejar mudo el resto del
-         * vuelo.
-         */
-        let paraEmpezar = Math.ceil(TARDA_EN_ARRANCAR / MIRAR_SI_CALLO);
-        let quedan = Math.ceil(HASTA_QUE_CALLE / MIRAR_SI_CALLO);
-        let empezo = false;
-        const mirar = (): void => {
-          if (!empezo) {
-            if (this.suplente.hablando) empezo = true;
-            else if (paraEmpezar-- > 0) {
-              this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
-              return;
-            }
-          }
-          if (empezo && this.suplente.hablando && quedan-- > 0) {
-            this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
-            return;
-          }
-          this.esperando = null;
-          this.sonando = false;
-          listo();
-        };
-        this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
+        // La misma espera en dos tiempos que el resto. Ver `porElSuplente`.
+        this.esperarAlSuplente(listo);
         // Y al suplente se le calla igual, que también es una voz.
         return () => {
           if (this.esperando !== null) clearTimeout(this.esperando);
@@ -369,6 +327,91 @@ export class InstructorGrabado implements Instructor {
       },
       clave,
     );
+  }
+
+  /**
+   * Que hable el navegador **con turno**, como cualquier otra voz.
+   *
+   * ## El fallo que esto arregla, que duró tres arreglos
+   *
+   * Había tres caminos por los que la voz del navegador podía hablar: sin
+   * receta grabada, con una pieza del pack que falta, y con el contexto de
+   * audio dormido. El tercero pedía la palabra; **los otros dos hablaban al
+   * instante, sin pedirla**, así que se le echaban encima a lo que estuviera
+   * sonando. Y las piezas que faltan son justo las letras del indicativo, o
+   * sea las de inglés.
+   *
+   * Contado jugando, tres veces y la última con razón y sin paciencia:
+   *
+   * > «Bienvenidos a Lanzarote, esa tierra negra que ven… Charlie, bravo,
+   * > zulú.» · «La voz inglesa corta la española, eso lo hace siempre.» · «El
+   * > que habla en inglés habla dos veces, es como si saliera inglés, español,
+   * > inglés, con el charlie, papa, hotel interrumpiéndose.»
+   *
+   * Esa última descripción es exacta y es la que lo localizó: no era una voz
+   * cortando a otra, eran **dos frases sonando a la vez** y sus trozos
+   * alternándose.
+   *
+   * ## Y por qué no se arregla con dos canales de audio
+   *
+   * Se propuso, y la respuesta es que no: **una radio es un solo canal**. Si
+   * dos hablan a la vez en una frecuencia real no se oyen los dos, se pisan.
+   * Que aquí hable uno cada vez no es una limitación técnica: es la lección.
+   *
+   * ## La espera en dos tiempos
+   *
+   * Una voz del sistema tarda en arrancar —pide la lista de voces, elige y
+   * enciende el sintetizador— así que primero se espera a que **empiece** y
+   * solo después a que calle. Preguntar a los ciento veinte milisegundos si
+   * está hablando devuelve «no» casi siempre, y con eso el turno se soltaba
+   * antes de que sonara una sílaba.
+   */
+  private porElSuplente(
+    texto: string,
+    clave: string | undefined,
+    urgencia: Urgencia | undefined,
+  ): void {
+    this.boca.pedir(
+      urgencia ?? "normal",
+      (listo) => {
+        this.callarLoGrabado();
+        this.ultima = clave ?? texto;
+        this.apuntar();
+        this.sonando = true;
+        this.suplente.decir(texto, clave, urgencia);
+        this.esperarAlSuplente(listo);
+        return () => {
+          if (this.esperando !== null) clearTimeout(this.esperando);
+          this.esperando = null;
+          this.suplente.callar();
+        };
+      },
+      clave,
+    );
+  }
+
+  /** Espera a que el suplente empiece y después a que calle. Ver arriba. */
+  private esperarAlSuplente(listo: () => void): void {
+    let paraEmpezar = Math.ceil(TARDA_EN_ARRANCAR / MIRAR_SI_CALLO);
+    let quedan = Math.ceil(HASTA_QUE_CALLE / MIRAR_SI_CALLO);
+    let empezo = false;
+    const mirar = (): void => {
+      if (!empezo) {
+        if (this.suplente.hablando) empezo = true;
+        else if (paraEmpezar-- > 0) {
+          this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
+          return;
+        }
+      }
+      if (empezo && this.suplente.hablando && quedan-- > 0) {
+        this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
+        return;
+      }
+      this.esperando = null;
+      this.sonando = false;
+      listo();
+    };
+    this.esperando = setTimeout(mirar, MIRAR_SI_CALLO);
   }
 
   /** El reloj que espera a que calle el suplente, si hay uno en marcha. */

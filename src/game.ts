@@ -289,7 +289,7 @@ import {
 import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
 import { comoSeDiceAqui, hablaDe } from "./i18n/habla";
-import { BOCA } from "./audio/boca";
+import { BOCA, MEGAFONIA } from "./audio/boca";
 import { claveDeCabina } from "./audio/cabina";
 import { SE_QUEDAN, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
@@ -1245,7 +1245,15 @@ export class Game {
   private readonly comandante: Instructor = new InstructorGrabado(
     this.audio,
     elegirComandante(this.vozDelSistema, this.torre, this.otroAvion),
-    BOCA,
+    /*
+     * **Y la comandante va por la megafonía, no por la radio.**
+     *
+     * Son dos vías distintas en un avión de verdad y se solapan: ella suena
+     * por los altavoces del pasaje y la torre entra por los auriculares.
+     * Tenerlas en el mismo turno hacía que un indicativo le cortara la frase
+     * de la llegada por la mitad. Ver `MEGAFONIA` en `audio/boca.ts`.
+     */
+    MEGAFONIA,
     this.grabaciones,
   );
   /**

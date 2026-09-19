@@ -7,7 +7,15 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { Boca, CADUCA, NO_REPETIR, RIÑEN, SILENCIO } from "./boca";
+import {
+  Boca,
+  BOCA,
+  CADUCA,
+  MEGAFONIA,
+  NO_REPETIR,
+  RIÑEN,
+  SILENCIO,
+} from "./boca";
 
 let reloj = 0;
 let cortes = 0;
@@ -498,5 +506,38 @@ describe("y una frase no se corta por la mitad", () => {
     decir("vuelo.terrenoSube", "urgente");
     decir("vuelo.mandanFrustrar", "urgente");
     expect(cortados).toEqual([]);
+  });
+});
+
+describe("y la megafonía va por otra vía", () => {
+  /*
+   * **Lo corrigió quien juega, y tenía razón.**
+   *
+   * Esto empezó con una sola boca para todo el juego, con el argumento de que
+   * una radio es un solo canal. El argumento vale para la radio y no para la
+   * comandante:
+   *
+   * > «Pero en la realidad, la comandante le habla a los pasajeros por la
+   * > megafonía interna del avión, y lo que escucha en sus auriculares va por
+   * > otra vía.»
+   *
+   * En un avión hay dos vías y se solapan. Meterlas en el mismo turno no era
+   * prudencia: era un error de modelo, y se pagaba con la frase larga de la
+   * llegada cortada por un indicativo.
+   */
+  it("son dos suelos distintos, no el mismo", () => {
+    expect(MEGAFONIA).not.toBe(BOCA);
+  });
+
+  it("y hablar por una no ocupa la otra", () => {
+    const dichas: string[] = [];
+    BOCA.pedir("normal", () => {
+      dichas.push("radio");
+      // No se llama a `listo`: la radio se queda hablando.
+    });
+    MEGAFONIA.pedir("baja", () => {
+      dichas.push("megafonia");
+    });
+    expect(dichas).toEqual(["radio", "megafonia"]);
   });
 });
