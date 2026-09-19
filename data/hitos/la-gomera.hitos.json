@@ -1,0 +1,92 @@
+{
+  "id": "la-gomera",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": 28.0296,
+    "lon": -17.2146
+  },
+  "hitos": [
+    {
+      "nombre": "Teide",
+      "clase": "montana",
+      "lat": 28.27269,
+      "lon": -16.64227,
+      "x": 56175,
+      "z": -27031,
+      "ele": 3715
+    },
+    {
+      "nombre": "Roque del Almendro",
+      "clase": "montana",
+      "lat": 28.201,
+      "lon": -16.65985,
+      "x": 54450,
+      "z": -19059,
+      "ele": 2524
+    },
+    {
+      "nombre": "Montaña Abreu",
+      "clase": "montana",
+      "lat": 28.28808,
+      "lon": -16.53333,
+      "x": 66868,
+      "z": -28741,
+      "ele": 2406
+    },
+    {
+      "nombre": "Roque Chico",
+      "clase": "montana",
+      "lat": 28.74847,
+      "lon": -17.89266,
+      "x": -66553,
+      "z": -79934,
+      "ele": 2371
+    },
+    {
+      "nombre": "La Orotava",
+      "clase": "ciudad",
+      "lat": 28.38988,
+      "lon": -16.52357,
+      "x": 67826,
+      "z": -40062,
+      "ele": 363
+    },
+    {
+      "nombre": "Los Cristianos",
+      "clase": "ciudad",
+      "lat": 28.05263,
+      "lon": -16.717,
+      "x": 48841,
+      "z": -2561,
+      "ele": 19
+    },
+    {
+      "nombre": "Santa Cruz de La Palma",
+      "clase": "ciudad",
+      "lat": 28.68189,
+      "lon": -17.76634,
+      "x": -54154,
+      "z": -72531,
+      "ele": 6
+    },
+    {
+      "nombre": "Güímar",
+      "clase": "ciudad",
+      "lat": 28.31502,
+      "lon": -16.40995,
+      "x": 78978,
+      "z": -31737,
+      "ele": 279
+    },
+    {
+      "nombre": "San Sebastián de la Gomera",
+      "clase": "ciudad",
+      "lat": 28.09104,
+      "lon": -17.11101,
+      "x": 10168,
+      "z": -6832,
+      "ele": 4
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "id": "el-hierro",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": 27.8148,
+    "lon": -17.8871
+  },
+  "hitos": [
+    {
+      "nombre": "Malpaso",
+      "clase": "montana",
+      "lat": 27.7293,
+      "lon": -18.04047,
+      "x": -15084,
+      "z": 9507,
+      "ele": 1501
+    },
+    {
+      "nombre": "Montaña de Igualero",
+      "clase": "montana",
+      "lat": 28.10686,
+      "lon": -17.24912,
+      "x": 62744,
+      "z": -32475,
+      "ele": 1484
+    },
+    {
+      "nombre": "Montaña Pelada",
+      "clase": "montana",
+      "lat": 28.52878,
+      "lon": -17.84296,
+      "x": 4341,
+      "z": -79391,
+      "ele": 1445
+    },
+    {
+      "nombre": "Montaña del Jablito",
+      "clase": "montana",
+      "lat": 27.77432,
+      "lon": -17.95225,
+      "x": -6407,
+      "z": 4501,
+      "ele": 1176
+    },
+    {
+      "nombre": "San Sebastián de la Gomera",
+      "clase": "ciudad",
+      "lat": 28.09104,
+      "lon": -17.11101,
+      "x": 76327,
+      "z": -30716,
+      "ele": 4
+    }
+  ]
+}

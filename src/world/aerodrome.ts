@@ -30,6 +30,7 @@ import {
   CylinderGeometry,
   InstancedMesh,
   Matrix4,
+  CanvasTexture,
   MeshBasicMaterial,
   SphereGeometry,
   Group,
@@ -117,6 +118,20 @@ export interface Aerodrome {
     readonly kind?: string | null;
   }[];
   readonly windsocks: readonly Punto[];
+  /**
+   * Los helipuertos del campo: el círculo con la hache pintado en el suelo.
+   *
+   * Se extraían desde el principio —`aeroway=helipad`— y hasta ahora se
+   * tiraban por el camino, porque aquí no estaban declarados. Son datos de
+   * verdad y se ven desde el aire: Lanzarote tiene tres, Tenerife Sur tres,
+   * Silvio Pettirossi dos.
+   *
+   * Se dibujan ya, aunque todavía no haya helicópteros que se posen en ellos,
+   * por lo mismo que se dibujan las mangas y los letreros de calle: **un
+   * aeródromo se señaliza como se señaliza uno de verdad**. Y el día que
+   * lleguen los helicópteros, el sitio donde van ya está.
+   */
+  readonly helipads?: readonly Punto[];
   /**
    * Dónde para un avión que rueda antes de pisar la pista.
    *
@@ -644,6 +659,7 @@ export function createAerodrome(
   }
   grupo.add(rodadura(aero, cota));
   grupo.add(mangas(aero, cota, viento));
+  grupo.add(helipuertos(aero, cota));
   grupo.add(edificios(aero, cota));
 
   return grupo;
@@ -1496,6 +1512,82 @@ function luces(
  * saber leer. Un niño que aprende a mirar la manga sabe de dónde viene el
  * viento antes que muchos adultos.
  */
+/**
+ * Los helipuertos: el círculo y la hache.
+ *
+ * Es la marca de un área de toma de contacto de verdad —una **H** blanca
+ * dentro de un círculo blanco— y está donde OpenStreetMap dice que está. No
+ * se inventa el sitio ni el tamaño: el círculo de la señal mide unos dieciocho
+ * metros en un helipuerto de aeropuerto, y la hache un tercio de eso.
+ *
+ * Todavía no se puede aterrizar en ellos, y aun así se pintan. Es lo mismo que
+ * con las mangas y los letreros de calle: el campo se señaliza como se
+ * señaliza uno de verdad, y quien lo vea desde el aire está viendo lo que hay.
+ * El día que haya helicópteros, el sitio ya está marcado.
+ */
+function helipuertos(
+  aero: Aerodrome,
+  altura: (p: Punto) => number,
+): Group {
+  const grupo = new Group();
+  grupo.name = "helipuertos";
+  const sitios = aero.helipads ?? [];
+  if (sitios.length === 0) return grupo;
+  const textura = helipuertoTextura();
+  if (!textura) return grupo;
+  for (const [x, y] of sitios) {
+    const geo = new PlaneGeometry(LADO_HELIPUERTO, LADO_HELIPUERTO);
+    geo.rotateX(-Math.PI / 2);
+    const malla = new Mesh(
+      geo,
+      /*
+       * Lambert y no básico: la pintura de un aeródromo se apaga de noche
+       * como todo lo demás. Un material sin luz deja la hache blanca
+       * brillando sobre una plataforma a oscuras.
+       */
+      new MeshLambertMaterial({
+        map: textura,
+        transparent: true,
+        depthWrite: false,
+        ...ENCIMA_PINTURA,
+      }),
+    );
+    malla.position.set(x, altura([x, y]) + 0.06, -y);
+    grupo.add(malla);
+  }
+  return grupo;
+}
+
+/** Lo que mide de lado la señal, m. Ver `helipuertos`. */
+const LADO_HELIPUERTO = 20;
+
+/** El dibujo de la señal, una vez y compartido por todas. */
+let dibujoDelHelipuerto: CanvasTexture | null | undefined;
+function helipuertoTextura(): CanvasTexture | null {
+  if (dibujoDelHelipuerto !== undefined) return dibujoDelHelipuerto;
+  if (typeof document === "undefined") {
+    dibujoDelHelipuerto = null;
+    return null;
+  }
+  const lado = 256;
+  const lienzo = document.createElement("canvas");
+  lienzo.width = lado;
+  lienzo.height = lado;
+  const c = lienzo.getContext("2d")!;
+  c.strokeStyle = "#e8e2d4";
+  c.lineWidth = lado * 0.05;
+  c.beginPath();
+  c.arc(lado / 2, lado / 2, lado * 0.42, 0, Math.PI * 2);
+  c.stroke();
+  c.fillStyle = "#e8e2d4";
+  c.font = `bold ${lado * 0.5}px system-ui, sans-serif`;
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  c.fillText("H", lado / 2, lado / 2 + lado * 0.02);
+  dibujoDelHelipuerto = new CanvasTexture(lienzo);
+  return dibujoDelHelipuerto;
+}
+
 function mangas(
   aero: Aerodrome,
   altura: (p: Punto) => number,

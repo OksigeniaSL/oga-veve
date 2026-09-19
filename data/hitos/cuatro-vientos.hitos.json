@@ -1,0 +1,47 @@
+{
+  "id": "cuatro-vientos",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": 40.370701,
+    "lon": -3.78514
+  },
+  "hitos": [
+    {
+      "nombre": "La Peñota",
+      "clase": "montana",
+      "lat": 40.74798,
+      "lon": -4.10066,
+      "x": -26730,
+      "z": -41951,
+      "ele": 1944
+    },
+    {
+      "nombre": "Cueva Valiente",
+      "clase": "montana",
+      "lat": 40.68985,
+      "lon": -4.19258,
+      "x": -34517,
+      "z": -35487,
+      "ele": 1903
+    },
+    {
+      "nombre": "Los Tientos",
+      "clase": "montana",
+      "lat": 40.61824,
+      "lon": -4.16147,
+      "x": -31881,
+      "z": -27525,
+      "ele": 1754
+    },
+    {
+      "nombre": "Peña del Águila",
+      "clase": "montana",
+      "lat": 40.60444,
+      "lon": -4.26235,
+      "x": -40427,
+      "z": -25991,
+      "ele": 1657
+    }
+  ]
+}
