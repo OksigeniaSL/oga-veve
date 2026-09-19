@@ -339,6 +339,7 @@ import { loQueSePasa } from "./flight/limites";
 import { puntoMasCercanoDe } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
+import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import { horaSolarEn } from "./world/hora";
 import { Cinturon } from "./flight/cinturon";
 import {
@@ -731,6 +732,17 @@ export class Game {
    * de su mapa.
    */
   private vecinoPista: Pista | null = null;
+
+  /** Los otros aviones de la ruta, si esta ruta lleva a alguna parte. */
+  private avionesDeRuta: AvionesDeRuta | null = null;
+
+  /** Los de la ruta, para los bancos. */
+  get avionesDeRutaParaBanco(): AvionesDeRuta | null {
+    return this.avionesDeRuta;
+  }
+
+  /** El reloj del vuelo que mueve a los de la ruta, en segundos. */
+  private relojDeRuta = 0;
 
   /**
    * Las pistas de este vuelo: la de casa y, si la ruta lleva a otro
@@ -1395,6 +1407,31 @@ export class Game {
         z: this.vecino.desplazamiento.z + options.vecino.runway.z,
       };
       this.scene.add(this.vecino.grupo);
+      /*
+       * **Y los otros aviones de la ruta.**
+       *
+       * Con el destino puesto aparecen cuarenta minutos de recta, y un cielo
+       * vacío enseña que volar es estar solo. No lo es: el corredor entre dos
+       * islas de Canarias es de los más transitados de España.
+       *
+       * Vuelan **en su nivel** —ver `flight/nivel-de-crucero.ts`— así que los
+       * que vienen de frente van siempre a otra altura. Quien vuele hacia el
+       * este los verá pasar siempre por el mismo lado, y el día que alguien le
+       * cuente la regla semicircular ya la sabía.
+       */
+      this.avionesDeRuta = crearAvionesDeRuta(
+        { x: this.scenario.runway.x, z: this.scenario.runway.z },
+        { x: this.vecinoPista.x, z: this.vecinoPista.z },
+        /*
+         * Y no tienen tu silueta, por lo mismo que el del circuito: ver tu
+         * propio avión cruzando la ruta es un espejo, no un vecino. Aquí se
+         * coge un reactor de línea, que es lo que de verdad se cruza en un
+         * corredor entre islas.
+         */
+        FLOTA.find((m) => m.silueta !== modeloPorId(this.aircraft.id)?.silueta)
+          ?.silueta ?? "ala-alta",
+      );
+      this.scene.add(this.avionesDeRuta.grupo);
       this.terrain.ponerSueloLejano((x, z) => this.vecino?.cota(x, z) ?? null);
     }
 
@@ -4020,6 +4057,13 @@ export class Game {
 
     if (this.scenario.aerodrome?.privado) return;
     this.trafico?.paso(dt);
+    /*
+     * Y los de la ruta, que no llevan reloj propio: se les da el del vuelo y
+     * de ahí sale dónde están. Sin estado y repetible — ver
+     * `flight/trafico-en-ruta.ts`.
+     */
+    this.relojDeRuta += dt;
+    this.avionesDeRuta?.paso(this.relojDeRuta, this.flight.state.position);
     const dice = this.radio.update(dt, {
       fase: this.faseDeAhora,
       deDia: this.sky.sunDirection.y > 0,
@@ -7854,7 +7898,15 @@ export class Game {
       pista: this.scenario.aerodrome ? this.scenario.runway : null,
       // Los mismos que se oyen por la radio y se ven por la ventana: uno
       // solo, para que no puedan contarse tres versiones de lo mismo.
-      otros: this.trafico?.quienes() ?? [],
+      /*
+       * Los del circuito y los de la ruta, en la misma lista: para la carta un
+       * tráfico es un tráfico, y separarlos aquí sería enseñar una diferencia
+       * que no existe mirando por la ventana.
+       */
+      otros: [
+        ...(this.trafico?.quienes() ?? []),
+        ...(this.avionesDeRuta?.quienes() ?? []),
+      ],
       /*
        * **Y el aeropuerto de destino, si esta ruta lleva a otro.**
        *
