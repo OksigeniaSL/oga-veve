@@ -215,29 +215,52 @@ if (!escenario) {
  * proxy no está puesto— y eso no puede dejar a nadie sin volar: `pedirMetar`
  * devuelve el tiempo de casa y el juego ni se entera.
  */
-const [conMapa, ciudad, meteo, ortofoto, ortofotoFina] = await Promise.all([
-  conRelieve(escenario),
-  cargarCiudad(escenario.id),
-  tiempoPedido(escenario),
-  /*
-   * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.
-   *
-   * Va aquí con los demás y no dentro del juego porque es lo mismo que el
-   * relieve y la ciudad: un fichero que hay que tener antes de construir el
-   * mundo, y encadenarlo triplicaría la espera del arranque.
-   */
-  mundoElegido() === "foto"
-    ? cargarOrtofoto(escenario.id, "lejos")
-    : Promise.resolve(undefined),
-  /*
-   * Y la fina del aeródromo, que puede no existir: hay proveedores que no
-   * tienen más detalle que dar —Sentinel-2 se acaba a ocho metros por píxel—
-   * y entonces solo hay una capa y no pasa nada.
-   */
-  mundoElegido() === "foto"
-    ? cargarOrtofoto(escenario.id, "cerca")
-    : Promise.resolve(undefined),
-]);
+/**
+ * El escenario al que lleva esta ruta, si lleva a alguno.
+ *
+ * El identificador se saca a una constante antes de buscarlo, y no es manía:
+ * `escenario` es una variable que el hangar reasigna, y TypeScript no se fía
+ * de lo que valga dentro de una función que la capture. Con el valor ya
+ * copiado, la búsqueda es una búsqueda.
+ */
+const aDondeSeVa = escenario.destino;
+const destinoDeHoy = aDondeSeVa
+  ? SCENARIOS.find((e) => e.id === aDondeSeVa)
+  : undefined;
+
+const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecino] =
+  await Promise.all([
+    conRelieve(escenario),
+    cargarCiudad(escenario.id),
+    tiempoPedido(escenario),
+    /*
+     * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.
+     *
+     * Va aquí con los demás y no dentro del juego porque es lo mismo que el
+     * relieve y la ciudad: un fichero que hay que tener antes de construir el
+     * mundo, y encadenarlo triplicaría la espera del arranque.
+     */
+    mundoElegido() === "foto"
+      ? cargarOrtofoto(escenario.id, "lejos")
+      : Promise.resolve(undefined),
+    /*
+     * Y la fina del aeródromo, que puede no existir: hay proveedores que no
+     * tienen más detalle que dar —Sentinel-2 se acaba a ocho metros por píxel—
+     * y entonces solo hay una capa y no pasa nada.
+     */
+    mundoElegido() === "foto"
+      ? cargarOrtofoto(escenario.id, "cerca")
+      : Promise.resolve(undefined),
+    /*
+     * Y el aeropuerto de destino, si esta ruta lleva a otro.
+     *
+     * Con su relieve, porque allí se va a aterrizar y el suelo que se pisa sale
+     * de ahí. Va en esta misma tanda por el motivo de siempre: encadenarlo
+     * detrás sumaría su espera a la del arranque, y son otros trescientos
+     * kilobytes.
+     */
+    destinoDeHoy ? conRelieve(destinoDeHoy) : Promise.resolve(undefined),
+  ]);
 /**
  * **Y donde la foto ya enseña la ciudad, la ciudad es la foto.**
  *
@@ -319,6 +342,7 @@ const game = new Game({
   aircraft: avion,
   ortofoto,
   ortofotoFina,
+  vecino,
 });
 game.start();
 
