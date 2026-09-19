@@ -91,6 +91,16 @@ export interface Instructor {
   readonly hablando: boolean;
 }
 
+/**
+ * Quién tiene ahora mismo el sintetizador del navegador.
+ *
+ * Hay **uno solo** para toda la página y `cancel()` no distingue: calla a
+ * quien esté hablando, sea quien sea. Apuntar el dueño es lo único que
+ * permite que dos vías —la radio y la megafonía del pasaje— convivan sin
+ * cortarse. Ver `callarLoMio`.
+ */
+let duenoDelSintetizador: unknown = null;
+
 /** Un instructor mudo. Es lo que hay en guaraní, y no pasa nada. */
 export const MUDO: Instructor = {
   decir: (
@@ -400,14 +410,54 @@ export class VozDelNavegador implements Instructor {
          * que se quiere: la boca solo llama a esto cuando le da la palabra a
          * otro. Ver `Hablar` en `audio/boca.ts`.
          */
-        return () => speechSynthesis.cancel();
+        duenoDelSintetizador = this;
+        const soltar = (): void => {
+          if (duenoDelSintetizador === this) duenoDelSintetizador = null;
+        };
+        frase.addEventListener("end", soltar);
+        frase.addEventListener("error", soltar);
+        return () => this.callarLoMio();
       },
       clave,
     );
   }
 
+  /**
+   * Calla **lo suyo**, y solo lo suyo.
+   *
+   * `speechSynthesis` es uno para todo el navegador y `cancel()` no distingue
+   * quién habla: calla a todos. Mientras hubo una sola boca eso daba igual;
+   * desde que la comandante habla por la megafonía del pasaje —otra vía, otro
+   * turno— dejó de darlo, y en la peor forma posible:
+   *
+   *     Comandante: «Buenos días, Echo Charlie…»
+   *     Torre:      «Echo Charlie, …»  ← y la de arriba se corta
+   *
+   * Contado así: «una cosa es que la radio se mezcle y otra es que SIEMPRE el
+   * español se quede pisado por el inglés, que viene a decir lo mismo pero él
+   * sí se la termina».
+   *
+   * No era la cola: la cola estaba bien. Era esto — cualquier voz que empezaba
+   * a hablar llamaba a `cancel()` y se llevaba por delante a la de la otra
+   * vía. Con el dueño apuntado, cada una calla la suya.
+   */
+  private callarLoMio(): void {
+    if (duenoDelSintetizador !== this) return;
+    duenoDelSintetizador = null;
+    speechSynthesis.cancel();
+  }
+
+  /**
+   * Y el `callar()` público **tampoco vacía la boca de todos**.
+   *
+   * Llamaba a `BOCA.callar()`, que es la cola entera: una voz pidiendo callar
+   * se llevaba por delante lo que estuviera esperando cualquier otra. Es una
+   * inversión de capas —el que habla no manda sobre el turno— y era la otra
+   * mitad del mismo destrozo. Para vaciar la cola está `BOCA` misma, que es
+   * de quien es.
+   */
   callar(): void {
-    BOCA.callar();
+    this.callarLoMio();
     this.ultima = "";
   }
 }

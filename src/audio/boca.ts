@@ -281,6 +281,11 @@ export class Boca {
   constructor(private readonly reloj: Reloj) {}
 
   /** ¿Hay alguien hablando ahora mismo? */
+  /** Cuántas frases esperan turno. Para poder comprobarlo sin oír nada. */
+  get cuantasEsperan(): number {
+    return this.cola.length;
+  }
+
   get ocupada(): boolean {
     return this.hablandoAhora !== null;
   }
