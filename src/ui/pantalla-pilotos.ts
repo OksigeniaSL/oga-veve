@@ -12,6 +12,7 @@
  */
 
 import { t } from "../i18n";
+import { cielo, marca, pie } from "./marca";
 import {
   CUANTOS_PERFILES,
   borrarPerfil,
@@ -92,8 +93,21 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
     const pintar = (): void => {
       const { lista, activo } = perfiles();
       root.hidden = false;
+      /*
+       * **Y con el cielo, la marca y el pie, igual que el hangar.**
+       *
+       * Ésta es la primera pantalla que ve nadie, y estaba tan desnuda como
+       * estaba el hangar: fondo plano, sin logo y sin firma. Lo pedido era
+       * continuidad — «hay que mostrar el producto con cierta continuidad»— y
+       * continuidad es exactamente esto: las dos pantallas de antes de volar
+       * comparten el mismo cielo, el mismo sello en el mismo sitio y el mismo
+       * pie. Ver `marca.ts`.
+       */
       root.innerHTML =
-        vista === "lista" ? rejilla(lista, activo) : creador(propuesta);
+        cielo() +
+        marca() +
+        (vista === "lista" ? rejilla(lista, activo) : creador(propuesta)) +
+        pie();
       root.querySelector<HTMLElement>("button")?.focus();
     };
 
