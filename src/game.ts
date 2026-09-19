@@ -864,6 +864,34 @@ export class Game {
     const casa = this.scenario.aerodrome ? [this.scenario.runway] : [];
     return [...casa, ...this.vecinos.map((v) => v.pista)];
   }
+
+  /**
+   * **La pista que se tiene debajo ahora mismo.**
+   *
+   * Todo lo que pregunta «¿estoy sobre la pista?», «¿cuánta me queda?» o «¿me
+   * he pasado del final?» preguntaba por `this.scenario.runway`, que es la
+   * **del campo de salida** y solo esa. Mientras el vuelo empezaba y acababa
+   * en el mismo sitio daba igual; desde que se puede ir a otro aeropuerto, no:
+   *
+   * Aterrizando en Gran Canaria, a ciento ochenta kilómetros de Los Rodeos, la
+   * distancia al centro de la pista de casa vale ciento ochenta mil metros. O
+   * sea que en cuanto la fase pasaba a «aterrizado» se cumplía «te has pasado
+   * del final» y saltaba el percance, **tocaras donde tocaras**; y al mismo
+   * tiempo `setOnRunway` te declaraba fuera de pista, que en el modelo
+   * sencillo es lo que decide si las ruedas están sobre asfalto, así que
+   * encima frenabas sobre tierra. Contado jugando: «toqué tierra a principio
+   * de pista, me quedaba para poder frenar, pero la instructora tenía ganas de
+   * romper un 747».
+   *
+   * No hacía falta inventar nada: `pistasDelVuelo` y `laMasCerca` existen
+   * justo para esto y este fichero ya las usa en otros sitios. Es el fallo de
+   * siempre del repositorio — se arregló donde se mira y no donde también se
+   * mira.
+   */
+  private laPistaDeAhora(): Pista {
+    const s = this.flight.state.position;
+    return laMasCerca(this.pistasDelVuelo(), s.x, s.z) ?? this.scenario.runway;
+  }
   readonly sky: SkyRig;
   aircraftMesh: AircraftMesh;
   aircraft: AircraftConfig;
@@ -3230,7 +3258,7 @@ export class Game {
    */
   private bocaDeLaSalida(): { x: number; z: number } | null {
     const ruta = this.plan?.rutaVisible() ?? [];
-    const r = this.scenario.runway;
+    const r = this.laPistaDeAhora();
     for (const [x, z] of ruta) {
       const ejes = enEjesDePista(x, z, r.x, r.z, r.heading);
       if (
@@ -3875,7 +3903,7 @@ export class Game {
    * pista que se acabe.
    */
   private runwayRemaining(): number {
-    const r = this.scenario.runway;
+    const r = this.laPistaDeAhora();
     const p = this.flight.state.position;
     const { along, across: lado } = enEjesDePista(
       p.x,
@@ -4323,6 +4351,15 @@ export class Game {
 
     this.mirarPorLaVentanilla(dt);
 
+    /*
+     * **El reloj, antes de la puerta.**
+     *
+     * Estaba debajo del `return` de los campos privados, o sea que en Yvytu
+     * Rape no avanzaba nunca — y de él cuelga el destello de la luz de choque,
+     * que con el reloj parado se queda **encendida fija**. Un aparato no deja
+     * de tener reloj porque el campo no tenga torre.
+     */
+    this.relojDeRuta += dt;
     if (this.scenario.aerodrome?.privado) return;
     this.trafico?.paso(dt);
     /*
@@ -4331,7 +4368,6 @@ export class Game {
      * `flight/trafico-en-ruta.ts`.
      */
     this.pilotoSeSolto = Math.max(0, this.pilotoSeSolto - dt);
-    this.relojDeRuta += dt;
     this.avionesDeRuta?.paso(this.relojDeRuta, this.flight.state.position);
     const dice = this.radio.update(dt, {
       fase: this.faseDeAhora,
@@ -5156,7 +5192,7 @@ export class Game {
      * hierba. Lo mira el modelo sencillo para no dejar despegar desde
      * cualquier sitio. Ver `arcade.ts`: no es física, es la regla del juego.
      */
-    const r = this.scenario.runway;
+    const r = this.laPistaDeAhora();
     const ejes = enEjesDePista(
       this.flight.state.position.x,
       this.flight.state.position.z,
@@ -6818,7 +6854,7 @@ export class Game {
   }
 
   private sobreLaPista(): boolean {
-    const r = this.scenario.runway;
+    const r = this.laPistaDeAhora();
     const { along, across } = enEjesDePista(
       this.flight.state.position.x,
       this.flight.state.position.z,
@@ -7933,8 +7969,11 @@ export class Game {
          * doscientos cincuenta metros. Es el mismo embudo que usan los mínimos
          * y la orden de frustrar. Ver `enElEmbudoDeFinal`.
          */
-        enElEmbudoDeFinal(this.scenario.runway, s.position.x, s.position.z) !==
-          null,
+        enElEmbudoDeFinal(
+          this.laPistaDeAhora(),
+          s.position.x,
+          s.position.z,
+        ) !== null,
       )
     ) {
       if (!seVuelveADecir(this.dichoDelTren, "saca", pedido)) return;

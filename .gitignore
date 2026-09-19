@@ -26,3 +26,6 @@ Thumbs.db
 
 # Lo que deja Python al importar `modelos/comun.py`.
 __pycache__/
+
+# Permisos locales de la sesión de desarrollo: son de esta máquina, no del proyecto.
+.claude/settings.local.json

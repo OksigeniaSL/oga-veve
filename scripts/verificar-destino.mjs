@@ -11,6 +11,16 @@
  * verdad ocurre volando, que es otra cosa: depende de en qué campo cree el
  * juego que está, y eso solo se sabe con el avión puesto allí.
  *
+ * **Y desde hoy comprueba también que se pueda aterrizar allí.** Media docena
+ * de sitios preguntaban «¿estoy sobre la pista?» y «¿me he pasado del final?»
+ * mirando la pista **del campo de salida**, que a ciento ochenta kilómetros da
+ * una distancia de ciento ochenta mil metros: el percance de salida de pista
+ * saltaba en cuanto la fase pasaba a «aterrizado», tocaras donde tocaras, y
+ * las ruedas se declaraban fuera de asfalto. Contado jugando: «toqué tierra a
+ * principio de pista, me quedaba para poder frenar, pero la instructora tenía
+ * ganas de romper un 747». Esta prueba deja el avión rodando por la pista del
+ * vecino, que es lo que aquello rompía.
+ *
  *   node scripts/verificar-destino.mjs
  */
 import { chromium } from 'playwright';
@@ -72,6 +82,31 @@ const alto = await page.evaluate(() => {
   };
 });
 console.log(`fase: ${fase} · ${JSON.stringify(alto)}`);
+
+/*
+ * Y ahora rodando por esa misma pista, deprisa y con el morro por ella: es la
+ * carrera de frenada de un aterrizaje, que es cuando salta el percance de
+ * salida de pista. Parado no mide nada — la condición pide más de cinco
+ * metros por segundo.
+ */
+await page.evaluate(
+  ([x, z, rumbo]) => {
+    const suelo = globalThis.__oga.suelo(x, z);
+    globalThis.__oga.colocar(x, suelo + 1.2, z, 45, (rumbo * Math.PI) / 180);
+  },
+  [vecino.x, vecino.z, vecino.heading],
+);
+await page.waitForTimeout(3000);
+const rodando = await page.evaluate(() => {
+  const s = globalThis.__oga.estado();
+  return {
+    percance: globalThis.__oga.percance(),
+    enPista: s.onRunway,
+    velocidad: Math.round(s.airspeed),
+    campo: globalThis.__oga.campoDeAhora?.() ?? null,
+  };
+});
+console.log(`rodando por la pista del vecino: ${JSON.stringify(rodando)}`);
 const lejos = ruta.length
   ? Math.max(...ruta.map(([x, z]) => Math.hypot(x - vecino.x, z - vecino.z)))
   : Infinity;
@@ -83,6 +118,18 @@ for (const e of errores) console.log('ERROR:', e);
 await navegador.close();
 await server.close();
 
+if (!alto.enPista) {
+  console.log('✖ Parado en la pista del vecino y el juego dice que no está en pista.');
+  process.exit(1);
+}
+if (rodando.percance) {
+  console.log(`✖ Percance «${rodando.percance}» rodando por la pista del destino.`);
+  process.exit(1);
+}
+if (!rodando.enPista) {
+  console.log('✖ Rodando por la pista del destino y el juego lo cree fuera de pista.');
+  process.exit(1);
+}
 if (ruta.length < 2) {
   console.log('✖ No hay raya en el campo de destino.');
   process.exit(1);

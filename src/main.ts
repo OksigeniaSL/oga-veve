@@ -589,6 +589,25 @@ function avisarDeLaVersionNueva(registro: ServiceWorkerRegistration): void {
   if (registro.waiting && navigator.serviceWorker.controller)
     enseñar(registro.waiting);
 
+  /*
+   * **Y se pregunta cada tanto, que si no nadie pregunta.**
+   *
+   * Esto solo miraba al registrarse, o sea una vez por carga de página. Quien
+   * deja la pestaña abierta —que es exactamente lo que hace quien está
+   * probando— se queda en la versión de hace horas y **vuelve a contar fallos
+   * que ya están arreglados**: pasó una tarde entera con las luces de
+   * posición, con capturas de un juego que ya no existía.
+   *
+   * Dos minutos es un compromiso cómodo: es una petición condicional de unos
+   * pocos cientos de bytes, y el navegador contesta 304 casi siempre. Y al
+   * volver a la pestaña también, que es cuando se mira.
+   */
+  const preguntar = (): void => void registro.update().catch(() => {});
+  setInterval(preguntar, 120_000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") preguntar();
+  });
+
   // Y el que llegue mientras se juega.
   registro.addEventListener("updatefound", () => {
     const nuevo = registro.installing;
