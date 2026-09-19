@@ -343,6 +343,14 @@ export class Audio {
    * que entender de lo que hay que sentir. Ver `audio/mezcla.ts`.
    */
   private buses: Record<Bus, GainNode> | null = null;
+
+  /**
+   * Por dónde entra lo que tiene que sonar a radio.
+   *
+   * Es la cabeza de la cadena de filtros, no el bus: quien quiera sonar a
+   * radio se conecta aquí y el bus queda al final. Ver dónde se arma.
+   */
+  private entradaDeRadio: BiquadFilterNode | null = null;
   /** Cuánta gente está hablando ahora mismo. Manda el ducking. */
   private readonly hablando = new Agachado();
   /**
@@ -761,6 +769,50 @@ export class Audio {
       }),
     ) as Record<Bus, GainNode>;
 
+    /*
+     * ── Y la radio suena a radio ──────────────────────────────────────
+     *
+     * Una radio de aviación no es una voz más floja: es una voz **estrecha**.
+     * El canal va de unos trescientos hercios a unos dos mil quinientos, y ese
+     * recorte es lo que hace que se reconozca al instante — quita el cuerpo
+     * grave de la voz y le deja el filo. Pedido jugando: «las voces de radio
+     * deben sonar más a radio y no tan altas».
+     *
+     * Y son los números de verdad, no un efecto: el ancho de banda de una
+     * radio VHF aeronáutica es ése. Quien lo oiga aquí y luego oiga una de
+     * verdad va a reconocer la misma voz.
+     *
+     * Dos filtros en cadena y no uno de paso de banda: con un solo biquad, la
+     * caída a cada lado es la misma y demasiado suave. Con un paso alto y un
+     * paso bajo se elige cada lado por separado, que es lo que hace la
+     * diferencia entre «voz apagada» y «voz por radio».
+     *
+     * Lo que pasa por aquí son las **grabaciones**. La voz del navegador no
+     * puede: `speechSynthesis` toca por su cuenta y no entra en el grafo de
+     * audio, así que a ésa se le baja el volumen y nada más. Un motivo más
+     * para acabar grabando todas las frases de radio.
+     */
+    const agudo = ctx.createBiquadFilter();
+    agudo.type = "highpass";
+    agudo.frequency.value = 300;
+    agudo.Q.value = 0.7;
+    const grave = ctx.createBiquadFilter();
+    grave.type = "lowpass";
+    grave.frequency.value = 2500;
+    grave.Q.value = 0.7;
+    /*
+     * Y un poco de realce alrededor de los dos kilohercios, que es donde está
+     * la inteligibilidad de una consonante. Una radio recorta y **a la vez**
+     * empuja ahí: sin eso, estrechar la banda solo suena a tapado.
+     */
+    const filo = ctx.createBiquadFilter();
+    filo.type = "peaking";
+    filo.frequency.value = 2000;
+    filo.Q.value = 1.2;
+    filo.gain.value = 4;
+    agudo.connect(grave).connect(filo).connect(this.buses.radio);
+    this.entradaDeRadio = agudo;
+
     const noise = this.noiseBuffer();
 
     // ── Motor: dos tonos y una capa de ruido de hélice ──────────────────
@@ -1063,6 +1115,11 @@ export class Audio {
   encadenarVoz(
     piezas: readonly AudioBuffer[],
     alAcabar: () => void,
+    /**
+     * Si esta voz llega por radio: se va por la cadena de filtros en vez de
+     * por el bus de voz. Ver dónde se arma la cadena.
+     */
+    porRadio = false,
   ): (() => void) | null {
     const ctx = this.context;
     if (!ctx || ctx.state !== "running" || piezas.length === 0) return null;
@@ -1071,7 +1128,11 @@ export class Audio {
     for (const pieza of piezas) {
       const fuente = ctx.createBufferSource();
       fuente.buffer = pieza;
-      fuente.connect(this.bus("voz"));
+      fuente.connect(
+        porRadio && this.entradaDeRadio
+          ? this.entradaDeRadio
+          : this.bus("voz"),
+      );
       fuente.start(cuando);
       cuando += pieza.duration;
       fuentes.push(fuente);

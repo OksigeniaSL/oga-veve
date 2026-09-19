@@ -75,6 +75,7 @@ export interface Altavoz {
   encadenarVoz(
     piezas: readonly AudioBuffer[],
     alAcabar: () => void,
+    porRadio?: boolean,
   ): (() => void) | null;
 }
 
@@ -158,6 +159,15 @@ export class InstructorGrabado implements Instructor {
     suplente: Instructor,
     boca: Boca = BOCA,
     banco: BancoDeVoces = nuevoBancoDeVoces(),
+    /**
+     * Si esta voz llega **por radio**.
+     *
+     * Las grabaciones se van entonces por la cadena de filtros —banda de
+     * trescientos a dos mil quinientos hercios, que es la de una radio VHF de
+     * verdad— y suenan más bajas. La instructora y la comandante no: una está
+     * sentada a tu lado y la otra habla por los altavoces del pasaje.
+     */
+    private readonly porRadio = false,
   ) {
     this.altavoz = altavoz;
     this.suplente = suplente;
@@ -275,11 +285,15 @@ export class InstructorGrabado implements Instructor {
         this.ultima = clave ?? texto;
         this.apuntar();
         this.sonando = true;
-        this.cortar = this.altavoz.encadenarVoz(cadena, () => {
-          this.sonando = false;
-          this.cortar = null;
-          listo();
-        });
+        this.cortar = this.altavoz.encadenarVoz(
+          cadena,
+          () => {
+            this.sonando = false;
+            this.cortar = null;
+            listo();
+          },
+          this.porRadio,
+        );
         if (this.cortar) {
           /*
            * **Y se le dice a la boca cómo callarnos.**

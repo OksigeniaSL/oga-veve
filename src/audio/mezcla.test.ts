@@ -36,6 +36,26 @@ describe("la prioridad", () => {
     expect(ganancia(NIVEL.voz)).toBe(1);
   });
 
+  it("la radio va por debajo de quien te habla al lado", () => {
+    /*
+     * «Las voces de radio deben sonar más a radio y no tan altas; las de la
+     * instructora y la comandante ya sí se pueden escuchar con el volumen
+     * actual.» La instructora va por `voz` y la comandante por megafonía; la
+     * torre y el otro avión, por aquí.
+     */
+    expect(NIVEL.radio).toBeLessThan(NIVEL.voz);
+    // Pero por encima del motor: una autorización se tiene que entender.
+    expect(NIVEL.radio).toBeGreaterThan(NIVEL.motor);
+  });
+
+  it("y no se agacha a sí misma, que entonces no se oiría", () => {
+    // El agachado lo dispara quien habla. Si la radio no mandara, la torre se
+    // bajaría diez decibelios justo mientras canta la autorización.
+    expect(MANDAN).toContain("radio");
+    const n = nivelesAhora(true);
+    expect(n.radio).toBeCloseTo(ganancia(NIVEL.radio), 6);
+  });
+
   it("y la música va dieciocho por debajo de todo", () => {
     // Si se nota que hay música, ya está demasiado alta.
     expect(NIVEL.musica).toBe(-18);

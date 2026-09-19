@@ -1222,6 +1222,8 @@ export class Game {
     elegirTorre(this.vozDelSistema),
     BOCA,
     this.grabaciones,
+    // Por radio: banda estrecha y más baja. Ver `porRadio`.
+    true,
   );
   /**
    * La megafonía de cabina, que solo habla en los aviones con pasaje.
@@ -1236,6 +1238,8 @@ export class Game {
     elegirOtroAvion(this.vozDelSistema, this.torre),
     BOCA,
     this.grabaciones,
+    // También por radio: es otro avión en la misma frecuencia.
+    true,
   );
   /**
    * Y su voz. Es la única del juego que **no** es cercana —le habla a cien

@@ -356,6 +356,17 @@ export class VozDelNavegador implements Instructor {
         frase.rate = this.timbre.rate;
         frase.pitch = this.timbre.pitch;
         /*
+         * Y más baja si viene por radio.
+         *
+         * Las grabaciones pasan por la cadena de filtros de `audio.ts` y salen
+         * por el bus `radio`, que ya va agachado. El sintetizador del navegador
+         * no se puede encaminar por el grafo de Web Audio —habla por su cuenta,
+         * fuera del `AudioContext`—, así que lo único que hay para igualarlo es
+         * este volumen. La torre y el otro avión suenan de fondo; la instructora
+         * y la comandante te hablan a vos.
+         */
+        if (this.timbre.radio) frase.volume = 0.55;
+        /*
          * Y si esta voz viene por radio, el pulsador.
          *
          * El de abrir va **antes de pedir la frase**, no al empezar a sonar: el

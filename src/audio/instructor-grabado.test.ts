@@ -41,6 +41,8 @@ const PACK: Manifiesto = {
 /** Un altavoz de mentira que apunta lo que le mandan tocar. */
 class Grabadora implements Altavoz {
   tocadas: AudioBuffer[][] = [];
+  /** Si cada frase salió por la vía de radio o por la de voz cercana. */
+  porRadio: boolean[] = [];
   cortes = 0;
   /** Si `encadenarVoz` puede tocar. Falso es «el audio todavía duerme». */
   puede = true;
@@ -54,9 +56,11 @@ class Grabadora implements Altavoz {
   encadenarVoz(
     piezas: readonly AudioBuffer[],
     alAcabar: () => void,
+    porRadio = false,
   ): (() => void) | null {
     if (!this.puede) return null;
     this.tocadas.push([...piezas]);
+    this.porRadio.push(porRadio);
     this.acabar = alAcabar;
     return () => {
       this.cortes++;
@@ -88,14 +92,20 @@ class Suplente implements Instructor {
 }
 
 /** Monta un instructor con el pack ya cargado, sin pasar por la red. */
-async function conPack(): Promise<{
+async function conPack(porRadio = false): Promise<{
   instructor: InstructorGrabado;
   altavoz: Grabadora;
   suplente: Suplente;
 }> {
   const altavoz = new Grabadora();
   const suplente = new Suplente();
-  const instructor = new InstructorGrabado(altavoz, suplente, bocaDePrueba());
+  const instructor = new InstructorGrabado(
+    altavoz,
+    suplente,
+    bocaDePrueba(),
+    undefined,
+    porRadio,
+  );
   const antes = globalThis.fetch;
   globalThis.fetch = vi.fn(async (ruta: unknown) => {
     const nombre = String(ruta);
@@ -437,5 +447,28 @@ describe("todas las voces", () => {
       torre: packDe("torre", "torre.uno", "uno"),
     });
     expect(cuantas).toBe(2);
+  });
+});
+
+describe("y quien habla por radio suena a radio", () => {
+  /*
+   * Contado jugando: «las voces de radio deben sonar más a radio y no tan
+   * altas; las de la instructora y la comandante ya se escuchan bien».
+   *
+   * La diferencia no es de volumen a secas: la torre y el otro avión están al
+   * otro lado de un VHF y la instructora está sentada al lado. Aquí solo se
+   * comprueba que la grabación se va por la vía que lleva los filtros; cómo
+   * suena esa vía es cosa de `audio.ts`.
+   */
+  it("la instructora va por la vía de siempre", async () => {
+    const { instructor, altavoz } = await conPack();
+    instructor.decir("Seguí la raya verde", "vuelo.rodando");
+    expect(altavoz.porRadio).toEqual([false]);
+  });
+
+  it("y la torre por la de radio", async () => {
+    const { instructor, altavoz } = await conPack(true);
+    instructor.decir("Seguí la raya verde", "vuelo.rodando");
+    expect(altavoz.porRadio).toEqual([true]);
   });
 });

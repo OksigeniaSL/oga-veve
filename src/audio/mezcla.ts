@@ -39,6 +39,7 @@ export const BUSES = [
   "voz",
   "avisos",
   "interfaz",
+  "radio",
   "motor",
   "ambiente",
   "musica",
@@ -57,6 +58,17 @@ export const NIVEL: Record<Bus, number> = {
   voz: 0,
   avisos: -1.5,
   interfaz: -5,
+  /*
+   * **La radio suena más baja que quien te habla al lado.**
+   *
+   * Pedido jugando: «las voces de radio deben sonar más a radio y no tan
+   * altas; las voces de la instructora y de la comandante ya sí se pueden
+   * escuchar con el volumen actual». Y es lo que pasa en una cabina: la
+   * instructora está sentada a tu lado y la torre entra por un altavoz
+   * pequeño. Cinco decibelios y medio por debajo, que es bastante para
+   * notarlo y poco para perderse una autorización.
+   */
+  radio: -5.5,
   motor: -6.5,
   ambiente: -8,
   musica: -18,
@@ -69,8 +81,15 @@ export const AGACHADO_DB = -10;
 export const TARDA_EN_BAJAR = 0.05;
 export const TARDA_EN_SUBIR = 0.4;
 
-/** Los buses que **no** se agachan: los que mandan agacharse a los demás. */
-export const MANDAN: readonly Bus[] = ["voz", "avisos"];
+/**
+ * Los buses que **no** se agachan: los que mandan agacharse a los demás.
+ *
+ * La radio está aquí porque una transmisión **es** voz: el agachado lo dispara
+ * quien habla, y si la radio no mandara, la torre se bajaría a sí misma diez
+ * decibelios justo mientras canta la autorización. Ya va cinco y medio por
+ * debajo por decisión; veinte por accidente es no oírla.
+ */
+export const MANDAN: readonly Bus[] = ["voz", "avisos", "radio"];
 
 /** De decibelios a ganancia lineal, que es lo que entiende un `GainNode`. */
 export const ganancia = (db: number): number => Math.pow(10, db / 20);
