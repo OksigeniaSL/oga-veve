@@ -1166,6 +1166,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     percance: () => juego.percance,
     /** La pista del otro aeropuerto, ya en coordenadas de este mundo. */
     pistaDelVecino: () => juego.pistaDelVecino,
+    /** Los otros aviones de la ruta, con su nivel. */
+    traficoDeRuta: () =>
+      (juego.avionesDeRutaParaBanco?.quienes() ?? []).map((a) => ({
+        id: a.id,
+        rumbo: Math.round(a.rumbo),
+        pies: a.pies,
+        x: Math.round(a.x),
+        z: Math.round(a.z),
+      })),
     /** El piloto automático: ponerlo, quitarlo y ver si está puesto. */
     /** El alabeo de ahora, en radianes, para ver qué hace el piloto. */
     alabeo: () => bankAngleOf(juego.flight.state.orientation),
