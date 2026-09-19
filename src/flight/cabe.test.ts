@@ -16,25 +16,10 @@
  * de fuselaje ancho solo en los grandes, y ninguno entra donde no puede.
  */
 
-import { SCENARIOS } from "../world/scenarios";
-import { AIRCRAFT } from "./aircraft";
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
-import { cabeEn, type Campo, campoDe, elQueQuepa } from "./cabe";
+import { cabeEn, campoDe, elQueQuepa, type Campo } from "./cabe";
 import { SCENARIOS } from "../world/scenarios";
-
-/** El campo de un escenario, igual que lo arma el hangar. */
-function campoDe(e: (typeof SCENARIOS)[number]): Campo {
-  const pista = e.aerodrome?.runways[0];
-  const blanda = /grass|dirt|gravel|earth|sand|ground/i.test(
-    pista?.surface ?? "",
-  );
-  return {
-    largo: e.runway.length,
-    ancho: e.runway.width,
-    superficie: blanda ? "hierba" : "asfalto",
-  };
-}
 
 const pequeno = aircraftById("jaz-20")!;
 const grande = aircraftById("jaz-120")!;
