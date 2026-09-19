@@ -150,3 +150,23 @@ export function hitosDe(id: string): readonly Hito[] {
   }
   return [];
 }
+
+/**
+ * La misma lista sin nombres repetidos, quedándose con el primero.
+ *
+ * Hace falta al juntar los hitos de los dos extremos de una ruta: Tenerife Sur
+ * y Los Rodeos están en la misma isla, así que los dos traen el Teide. Medido
+ * con las dos listas puestas en el mundo, las dos copias caen a **dos metros**
+ * la una de la otra —que es lo que confirma que las dos proyecciones casan— y
+ * aun así son dos entradas donde hay una montaña.
+ */
+export function sinRepetidos(hitos: readonly Hito[]): Hito[] {
+  const vistos = new Set<string>();
+  const salida: Hito[] = [];
+  for (const h of hitos) {
+    if (vistos.has(h.nombre)) continue;
+    vistos.add(h.nombre);
+    salida.push(h);
+  }
+  return salida;
+}

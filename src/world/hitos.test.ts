@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { ALCANCE, queSeVe, type Hito } from "./hitos";
+import { ALCANCE, queSeVe, sinRepetidos, type Hito } from "./hitos";
 
 /** Un hito en `(x, z)`, con la Z hacia el sur como en todo el juego. */
 const en = (nombre: string, x: number, z: number): Hito => ({
@@ -66,5 +66,33 @@ describe("qué se ve desde donde se va", () => {
 
   it("sin hitos no pasa nada", () => {
     expect(queSeVe([], alNorte)).toBeNull();
+  });
+});
+
+describe("juntar los hitos de los dos extremos de una ruta", () => {
+  /*
+   * Los dos escenarios de una ruta se solapan —Tenerife Sur y Los Rodeos
+   * están en la misma isla— y cada uno trae el Teide en su lista. Medido con
+   * las dos puestas en el mundo, las copias caen a dos metros la una de la
+   * otra: las proyecciones casan, y aun así son dos entradas donde hay una
+   * montaña.
+   */
+  it("se queda con una de cada nombre", () => {
+    const juntos = sinRepetidos([
+      en("Teide", -29376, 23357),
+      en("Guajara", -26446, 29551),
+      en("Teide", -29378, 23359),
+    ]);
+    expect(juntos.map((h) => h.nombre)).toEqual(["Teide", "Guajara"]);
+  });
+
+  it("y con la primera, que es la del campo de casa", () => {
+    const juntos = sinRepetidos([en("Teide", 1, 2), en("Teide", 500, 600)]);
+    expect(juntos[0]!.x).toBe(1);
+  });
+
+  it("y no se inventa nada cuando no hay repetidos", () => {
+    const lista = [en("a", 1, 1), en("b", 2, 2)];
+    expect(sinRepetidos(lista)).toEqual(lista);
   });
 });

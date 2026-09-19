@@ -654,7 +654,15 @@ export class Mapa {
   ): void {
     if (this.hitos.length === 0) return;
     const dichos = this.dichos();
-    g.font = "600 10px system-ui, sans-serif";
+    /*
+     * **Y se ven.** La primera versión dibujaba triángulos de cuatro píxeles
+     * de lado y círculos de tres, y en el plano de verdad —que en pantalla
+     * mide unos doscientos setenta, no los cuatrocientos sesenta del lienzo—
+     * eso son dos píxeles: medido en una captura, no se distinguían del
+     * relieve. La raya de la pista se dibuja con cinco de grueso por el mismo
+     * motivo.
+     */
+    g.font = "600 11px system-ui, sans-serif";
     g.textAlign = "left";
     g.textBaseline = "middle";
     for (const hito of this.hitos) {
@@ -664,17 +672,24 @@ export class Mapa {
       const px = LADO / 2 + (hito.x - cx) * escala;
       const py = LADO / 2 + (hito.z - cz) * escala;
       if (px < -20 || px > LADO + 20 || py < -20 || py > LADO + 20) continue;
+      /*
+       * Con reborde claro, como los rótulos: un símbolo oscuro sobre monte
+       * oscuro es un símbolo que no está.
+       */
+      g.lineWidth = 2;
+      g.strokeStyle = "#f4efe6";
       g.fillStyle = "#1d1b19";
       g.beginPath();
       if (hito.clase === "montana") {
         // El triángulo de cota de las cartas de verdad.
-        g.moveTo(px, py - 4.5);
-        g.lineTo(px + 4, py + 3);
-        g.lineTo(px - 4, py + 3);
+        g.moveTo(px, py - 7);
+        g.lineTo(px + 6, py + 4.5);
+        g.lineTo(px - 6, py + 4.5);
         g.closePath();
       } else {
-        g.arc(px, py, 3, 0, Math.PI * 2);
+        g.arc(px, py, 4.5, 0, Math.PI * 2);
       }
+      g.stroke();
       g.fill();
       if (!dichos.has(hito.nombre)) continue;
       /*
@@ -684,8 +699,16 @@ export class Mapa {
        */
       g.lineWidth = 3;
       g.strokeStyle = "#f4efe6";
-      g.strokeText(hito.nombre, px + 7, py);
-      g.fillText(hito.nombre, px + 7, py);
+      /*
+       * Y al lado que quepa. Medido en una captura: «Santa Cruz de Tenerife»
+       * escrito siempre a la derecha se salía del lienzo y se leía «Sa».
+       */
+      const ancho = g.measureText(hito.nombre).width;
+      const aLaIzquierda = px + 9 + ancho > LADO - 2;
+      g.textAlign = aLaIzquierda ? "right" : "left";
+      const tx = aLaIzquierda ? px - 9 : px + 9;
+      g.strokeText(hito.nombre, tx, py);
+      g.fillText(hito.nombre, tx, py);
     }
   }
 }

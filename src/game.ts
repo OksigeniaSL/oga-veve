@@ -315,7 +315,7 @@ import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
-import { hitosDe, type Hito } from "./world/hitos";
+import { hitosDe, sinRepetidos, type Hito } from "./world/hitos";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import {
   InstructorGrabado,
@@ -1564,7 +1564,14 @@ export class Game {
      * detrás y la otra mitad sin nada que señalar, que es justo el rato en que
      * se ve la isla de enfrente. Ver `world/hitos.ts`.
      */
-    const hitosDelVuelo = [
+    /*
+     * **Y sin repetidos.** Los dos escenarios de una ruta se solapan —Tenerife
+     * Sur y Los Rodeos están en la misma isla— y cada uno trae el Teide en su
+     * propia lista. Medido: las dos copias caen a dos metros la una de la
+     * otra, que es lo que confirma que las proyecciones casan, y aun así son
+     * dos entradas donde hay una montaña.
+     */
+    const hitosDelVuelo = sinRepetidos([
       ...hitosDe(this.scenario.id),
       ...(this.vecino && this.vecinoEscenario
         ? hitosDe(this.vecinoEscenario.id).map((h) => ({
@@ -1573,7 +1580,7 @@ export class Game {
             z: h.z + this.vecino!.desplazamiento.z,
           }))
         : []),
-    ];
+    ]);
     this.ventanilla.ponerHitos(hitosDelVuelo);
     // Y se guardan para el plano, que todavía no existe en este punto del
     // constructor: se le dan unas líneas más abajo, al montar el HUD.

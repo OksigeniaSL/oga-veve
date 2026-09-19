@@ -8,6 +8,42 @@
   },
   "hitos": [
     {
+      "nombre": "Isla Ypecuá",
+      "clase": "isla",
+      "lat": -25.00793,
+      "lon": -57.32978,
+      "x": 19054,
+      "z": -25822,
+      "ele": null
+    },
+    {
+      "nombre": "Isla Laguna",
+      "clase": "isla",
+      "lat": -25.675,
+      "lon": -57.76254,
+      "x": -24472,
+      "z": 48353,
+      "ele": null
+    },
+    {
+      "nombre": "Isla Itá-Pirú",
+      "clase": "isla",
+      "lat": -25.58188,
+      "lon": -57.61583,
+      "x": -9716,
+      "z": 37998,
+      "ele": null
+    },
+    {
+      "nombre": "Isla Lambaré",
+      "clase": "isla",
+      "lat": -25.37623,
+      "lon": -57.63282,
+      "x": -11425,
+      "z": 15131,
+      "ele": null
+    },
+    {
       "nombre": "Asunción",
       "clase": "ciudad",
       "lat": -25.28005,
