@@ -953,19 +953,29 @@ export class Terrain {
     if (!lejos) return null;
 
     /*
-     * **Se dibuja una muestra de cada dos.**
+     * **Y se dibujan todas las muestras que trae el fichero.**
      *
-     * El fichero trae cuatrocientas diecisiete por lado, y mallarlas todas son
-     * trescientos cuarenta y seis mil triángulos: tantos como el mapa fino
-     * entero, o sea el doble de terreno para pintar el fondo. Con una de cada
-     * dos son ochenta y siete mil, medio kilómetro por cuadro y, a treinta y
-     * siete kilómetros, exactamente la misma montaña.
+     * Eran una de cada dos, con este argumento escrito al lado: ochenta y
+     * siete mil triángulos en vez de trescientos cuarenta y seis mil, y «a
+     * treinta y siete kilómetros, exactamente la misma montaña». Lo primero
+     * es cierto y lo segundo no lo era: con una de cada dos, cada cuadro del
+     * horizonte mide **seiscientos metros de lado**, y eso a veinte
+     * kilómetros son facetas que se ven una por una. Contado jugando, dos
+     * veces, y con foto: «el paisaje es de estilo Minecraft» y «lo mal que se
+     * ve la topografía».
      *
-     * El fichero se queda a resolución completa a propósito: si algún día hay
-     * que subir la calidad, se cambia este número y no hay que volver a bajar
-     * nada.
+     * Con todas, el cuadro baja a trescientos dos metros —que es lo que mide
+     * el dato de Copernicus y por tanto todo lo que hay— y el coste está
+     * medido: en el banco de rendimiento, a cuatro veces más lento que este
+     * portátil —que es una tablet de gama media—, la mediana en el aire pasa
+     * de 11,3 ms a 11,5, con 904k triángulos en vez de 1.159k. Lo exigido son
+     * 33,3 ms, así que esto era detalle que estaba pagado y sin cobrar. Ver
+     * `scripts/verificar-rendimiento.mjs`.
+     *
+     * Se deja el número aquí y no se borra la idea: el día que haga falta
+     * bajar el coste en un aparato flojo, éste es el sitio.
      */
-    const SALTO = 2;
+    const SALTO = 1;
     const res = Math.floor((lejos.resolucion - 1) / SALTO) + 1;
     const tamano = this.scenario.size * vecesLejosDe(this.scenario);
     const paso = (tamano / (lejos.resolucion - 1)) * SALTO;
