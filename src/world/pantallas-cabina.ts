@@ -38,6 +38,20 @@ import {
   type Mesh,
 } from "three";
 import { PALETA } from "../ui/paleta";
+import { anillosDe, type Eco } from "../flight/tormentas";
+
+/**
+ * De cada escalón del radar a su color.
+ *
+ * Son los de siempre en cualquier radar meteorológico y no se cambian por
+ * «bajo, medio, alto»: quien pilote de verdad va a ver exactamente estos.
+ */
+const COLOR_DEL_ECO: Record<Exclude<Eco, "nada">, string> = {
+  verde: PALETA.normal,
+  ambar: PALETA.precaucion,
+  rojo: PALETA.limite,
+  magenta: PALETA.objetivo,
+};
 import { luzDeTren } from "../flight/tren";
 import {
   QUIETA_LA_ALTITUD,
@@ -1693,6 +1707,29 @@ function pintarLaCarta(
   g.beginPath();
   g.arc(cx, cy, r, 0, Math.PI * 2);
   g.clip();
+
+  /*
+   * **El radar, debajo de todo lo demás.**
+   *
+   * Va primero a propósito: la tormenta es el fondo sobre el que se decide, y
+   * la pista, la senda y los tráficos tienen que verse **encima** de ella. Un
+   * radar que tapa la pista deja de ser un instrumento de decidir.
+   *
+   * Los colores son los de siempre en cualquier radar meteorológico —verde,
+   * ámbar, rojo, magenta— y no se traducen ni se cambian por «bajo, medio,
+   * alto»: quien pilote de verdad va a ver exactamente estos. Ver
+   * `flight/tormentas.ts`.
+   */
+  for (const c of dibujo.celdas) {
+    for (const { parte, color } of anillosDe(c.fuerza)) {
+      g.globalAlpha = 0.5;
+      g.fillStyle = COLOR_DEL_ECO[color];
+      g.beginPath();
+      g.arc(cx + c.dx, cy + c.dy, c.radio * parte, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.globalAlpha = 1;
+  }
 
   if (dibujo.eje) {
     g.strokeStyle = PALETA.objetivo;

@@ -340,6 +340,7 @@ import { puntoMasCercanoDe } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
+import { celdasDe, cuantoSacude, type Celda } from "./flight/tormentas";
 import { horaSolarEn } from "./world/hora";
 import { Cinturon } from "./flight/cinturon";
 import {
@@ -743,6 +744,21 @@ export class Game {
 
   /** El reloj del vuelo que mueve a los de la ruta, en segundos. */
   private relojDeRuta = 0;
+
+  /**
+   * Las células de tormenta de hoy, si el tiempo las trae.
+   *
+   * Salen del parte meteorológico del sitio y de la semilla del escenario, así
+   * que el mismo vuelo tiene la misma tormenta en el mismo sitio. Una tormenta
+   * que cambia de sitio cada vez es un enemigo, no un fenómeno. Ver
+   * `flight/tormentas.ts`.
+   */
+  private celdas: readonly Celda[] = [];
+
+  /** Las células, para los bancos. */
+  get celdasParaBanco(): readonly Celda[] {
+    return this.celdas;
+  }
 
   /**
    * Las pistas de este vuelo: la de casa y, si la ruta lleva a otro
@@ -1381,6 +1397,17 @@ export class Game {
 
     this.terrain = new Terrain(this.scenario);
     this.scene.add(this.terrain.group);
+    /*
+     * Las tormentas del día. Salen del tiempo de verdad: con buen tiempo no hay
+     * ninguna y el radar está encendido sin pintar nada, que es lo que hace un
+     * radar el noventa por ciento de los días.
+     */
+    this.celdas = celdasDe(
+      this.scenario.meteo?.lluvia ?? "nada",
+      this.scenario.meteo?.fuerzaDeLluvia ?? 0,
+      this.scenario.size,
+      this.scenario.seed,
+    );
     /*
      * **Y el otro aeropuerto, si esta ruta lleva a alguno.**
      *
@@ -5656,7 +5683,21 @@ export class Game {
      */
     const loDijo = this.dijoSoltarse;
     this.dijoSoltarse = false;
-    this.atenderAlCinturon(cuantoSeMueve(aire), loDijo);
+    /*
+     * **Y lo que sacude es lo que el radar pinta.**
+     *
+     * El mismo número: lo que el radar ve es el agua subiendo y bajando, y lo
+     * que sacude es esa agua subiendo y bajando. Que el instrumento y la
+     * sensación salgan del mismo sitio es lo que hace que se aprenda a creerle
+     * al instrumento — si no coincidieran, lo que se aprendería es lo
+     * contrario. Ver `flight/tormentas.ts`.
+     */
+    const s0 = this.flight.state.position;
+    const enLaTormenta = cuantoSacude(this.celdas, s0.x, s0.z);
+    this.atenderAlCinturon(
+      Math.max(cuantoSeMueve(aire), enLaTormenta),
+      loDijo,
+    );
     this.atenderALaSobrevelocidad(dt);
 
     this.oirLaRadio(dt);
@@ -7918,6 +7959,7 @@ export class Game {
        * Pedido jugando: «si salgo de un aeropuerto y me estoy acercando a otro,
        * estaría bien que se fuera mostrando también en el cuadro».
        */
+      celdas: this.celdas,
       destino: this.vecino
         ? {
             x: this.vecino.desplazamiento.x + (this.vecinoPista?.x ?? 0),
