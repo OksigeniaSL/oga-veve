@@ -228,50 +228,67 @@ const destinoDeHoy = aDondeSeVa
   ? SCENARIOS.find((e) => e.id === aDondeSeVa)
   : undefined;
 
-const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecino, fotoVecino] =
-  await Promise.all([
-    conRelieve(escenario),
-    cargarCiudad(escenario.id),
-    tiempoPedido(escenario),
-    /*
-     * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.
-     *
-     * Va aquí con los demás y no dentro del juego porque es lo mismo que el
-     * relieve y la ciudad: un fichero que hay que tener antes de construir el
-     * mundo, y encadenarlo triplicaría la espera del arranque.
-     */
-    mundoElegido() === "foto"
-      ? cargarOrtofoto(escenario.id, "lejos")
-      : Promise.resolve(undefined),
-    /*
-     * Y la fina del aeródromo, que puede no existir: hay proveedores que no
-     * tienen más detalle que dar —Sentinel-2 se acaba a ocho metros por píxel—
-     * y entonces solo hay una capa y no pasa nada.
-     */
-    mundoElegido() === "foto"
-      ? cargarOrtofoto(escenario.id, "cerca")
-      : Promise.resolve(undefined),
-    /*
-     * Y el aeropuerto de destino, si esta ruta lleva a otro.
-     *
-     * Con su relieve, porque allí se va a aterrizar y el suelo que se pisa sale
-     * de ahí. Va en esta misma tanda por el motivo de siempre: encadenarlo
-     * detrás sumaría su espera a la del arranque, y son otros trescientos
-     * kilobytes.
-     */
-    destinoDeHoy ? conRelieve(destinoDeHoy) : Promise.resolve(undefined),
-    /*
-     * Y su fotografía, para que la isla de enfrente no salga de polígonos.
-     *
-     * La de lejos y no la fina: el vecino se mira desde el aire y de lejos
-     * durante casi todo el vuelo, y la fina cubre seis kilómetros alrededor de
-     * su pista. Cuando el aterrizaje allí sea un aterrizaje de verdad, la fina
-     * también.
-     */
-    destinoDeHoy && mundoElegido() === "foto"
-      ? cargarOrtofoto(destinoDeHoy.id, "lejos")
-      : Promise.resolve(undefined),
-  ]);
+const [
+  conMapa,
+  ciudad,
+  meteo,
+  ortofoto,
+  ortofotoFina,
+  vecino,
+  fotoVecino,
+  ortofotoHorizonte,
+] = await Promise.all([
+  conRelieve(escenario),
+  cargarCiudad(escenario.id),
+  tiempoPedido(escenario),
+  /*
+   * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.
+   *
+   * Va aquí con los demás y no dentro del juego porque es lo mismo que el
+   * relieve y la ciudad: un fichero que hay que tener antes de construir el
+   * mundo, y encadenarlo triplicaría la espera del arranque.
+   */
+  mundoElegido() === "foto"
+    ? cargarOrtofoto(escenario.id, "lejos")
+    : Promise.resolve(undefined),
+  /*
+   * Y la fina del aeródromo, que puede no existir: hay proveedores que no
+   * tienen más detalle que dar —Sentinel-2 se acaba a ocho metros por píxel—
+   * y entonces solo hay una capa y no pasa nada.
+   */
+  mundoElegido() === "foto"
+    ? cargarOrtofoto(escenario.id, "cerca")
+    : Promise.resolve(undefined),
+  /*
+   * Y el aeropuerto de destino, si esta ruta lleva a otro.
+   *
+   * Con su relieve, porque allí se va a aterrizar y el suelo que se pisa sale
+   * de ahí. Va en esta misma tanda por el motivo de siempre: encadenarlo
+   * detrás sumaría su espera a la del arranque, y son otros trescientos
+   * kilobytes.
+   */
+  destinoDeHoy ? conRelieve(destinoDeHoy) : Promise.resolve(undefined),
+  /*
+   * Y su fotografía, para que la isla de enfrente no salga de polígonos.
+   *
+   * La de lejos y no la fina: el vecino se mira desde el aire y de lejos
+   * durante casi todo el vuelo, y la fina cubre seis kilómetros alrededor de
+   * su pista. Cuando el aterrizaje allí sea un aterrizaje de verdad, la fina
+   * también.
+   */
+  destinoDeHoy && mundoElegido() === "foto"
+    ? cargarOrtofoto(destinoDeHoy.id, "lejos")
+    : Promise.resolve(undefined),
+  /*
+   * Y la del horizonte: el anillo lejano entero, a setenta metros por píxel.
+   *
+   * Es la que quita la llanura de color plano que empezaba donde acababa la
+   * foto de dieciocho kilómetros. Ciento cincuenta kilobytes por isla.
+   */
+  mundoElegido() === "foto"
+    ? cargarOrtofoto(escenario.id, "horizonte")
+    : Promise.resolve(undefined),
+]);
 /**
  * **Y donde la foto ya enseña la ciudad, la ciudad es la foto.**
  *
@@ -355,6 +372,7 @@ const game = new Game({
   ortofotoFina,
   vecino,
   fotoVecino,
+  ortofotoHorizonte,
 });
 game.start();
 

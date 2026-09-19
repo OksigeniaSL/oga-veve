@@ -41,7 +41,7 @@ import {
 /** Lo que el extractor deja escrito al lado de cada imagen. */
 export interface FichaDeOrtofoto {
   readonly id: string;
-  readonly encuadre: "cerca" | "lejos";
+  readonly encuadre: "cerca" | "lejos" | "horizonte";
   readonly fuente: string;
   readonly licencia: string;
   readonly esquina: { readonly col: number; readonly fila: number };
@@ -129,7 +129,7 @@ function enPixelesDelMundo(lat: number, lon: number, zoom: number) {
  */
 export async function cargarOrtofoto(
   id: string,
-  encuadre: "cerca" | "lejos",
+  encuadre: "cerca" | "lejos" | "horizonte",
 ): Promise<Ortofoto | undefined> {
   const nombre = `${id}-${encuadre}`;
   const urlImagen = Object.entries(IMAGENES).find(([k]) =>

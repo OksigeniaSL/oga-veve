@@ -519,6 +519,9 @@ export interface GameOptions {
    * Ver `MundoVecino`.
    */
   fotoVecino?: Ortofoto;
+
+  /** La del horizonte: el anillo lejano. Ver `Terrain.ponerOrtofotoLejana`. */
+  ortofotoHorizonte?: Ortofoto;
 }
 
 /**
@@ -1598,6 +1601,8 @@ export class Game {
     // no plantar un bosque donde hay un barrio.
     // La manta del mundo, antes que nada de lo que va encima.
     if (options.ortofoto) this.terrain.ponerOrtofoto(options.ortofoto);
+    if (options.ortofotoHorizonte)
+      this.terrain.ponerOrtofotoLejana(options.ortofotoHorizonte);
     if (options.ortofotoFina) {
       this.terrain.ponerOrtofotoFina(options.ortofotoFina);
     }
