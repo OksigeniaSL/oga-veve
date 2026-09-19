@@ -1164,6 +1164,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Y si ahí, a esa altura, hay bulto de verdad. Es la pregunta que vale. */
     chocaEn: (x: number, y: number, z: number) => juego.bultos.choca(x, y, z),
     percance: () => juego.percance,
+    /** La pista del otro aeropuerto, ya en coordenadas de este mundo. */
+    pistaDelVecino: () => juego.pistaDelVecino,
     /**
      * Cuántos escuchan cada hecho del vuelo. Ver `src/hechos.ts`.
      *

@@ -337,6 +337,7 @@ import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
 import { puntoMasCercanoDe } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
+import { sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
 import { horaSolarEn } from "./world/hora";
 import { Cinturon } from "./flight/cinturon";
 import { MARGENES } from "./flight/minimos";
@@ -723,7 +724,25 @@ export class Game {
    * para tener el punto al que de verdad se va, que es la pista y no el centro
    * de su mapa.
    */
-  private vecinoPista: { x: number; z: number } | null = null;
+  private vecinoPista: Pista | null = null;
+
+  /**
+   * Las pistas de este vuelo: la de casa y, si la ruta lleva a otro
+   * aeropuerto, la suya — ya en coordenadas de este mundo.
+   *
+   * Existe porque todo el juego preguntaba «¿estoy sobre la pista?» mirando
+   * una sola, y desde que se puede volar a otro sitio eso rompe el avión de
+   * quien acaba de aterrizar bien. Ver `world/pistas-del-vuelo.ts`.
+   */
+  /** La pista del otro aeropuerto, para los bancos. */
+  get pistaDelVecino(): Pista | null {
+    return this.vecinoPista;
+  }
+
+  private pistasDelVuelo(): readonly Pista[] {
+    const casa = this.scenario.aerodrome ? [this.scenario.runway] : [];
+    return this.vecinoPista ? [...casa, this.vecinoPista] : casa;
+  }
   readonly sky: SkyRig;
   aircraftMesh: AircraftMesh;
   aircraft: AircraftConfig;
@@ -1362,9 +1381,12 @@ export class Game {
         options.vecino,
         options.fotoVecino,
       );
+      // La pista del vecino, ya trasladada: a partir de aquí es una pista de
+      // este mundo como cualquier otra.
       this.vecinoPista = {
-        x: options.vecino.runway.x,
-        z: options.vecino.runway.z,
+        ...options.vecino.runway,
+        x: this.vecino.desplazamiento.x + options.vecino.runway.x,
+        z: this.vecino.desplazamiento.z + options.vecino.runway.z,
       };
       this.scene.add(this.vecino.grupo);
       this.terrain.ponerSueloLejano((x, z) => this.vecino?.cota(x, z) ?? null);
@@ -6322,16 +6344,18 @@ export class Game {
    * Ver `LA_FRANJA`.
    */
   private tocoEnElCampoDeVuelo(): boolean {
-    const r = this.scenario.runway;
-    const { along, across } = enEjesDePista(
+    /*
+     * **Y mira todas las pistas del vuelo, no solo la de casa.**
+     *
+     * Mirando una sola, tomar tierra en el otro aeropuerto daba «fuera de
+     * pista» y rompía el avión: «tomé tierra con estos parámetros y se rompió,
+     * no lo considera un aterrizaje». Aterrizar bien no puede ser un percance.
+     */
+    return sobreAlguna(
+      this.pistasDelVuelo(),
       this.flight.state.position.x,
       this.flight.state.position.z,
-      r.x,
-      r.z,
-      r.heading,
-    );
-    return (
-      Math.abs(across) < r.width && Math.abs(along) < r.length / 2 + LA_FRANJA
+      LA_FRANJA,
     );
   }
 
