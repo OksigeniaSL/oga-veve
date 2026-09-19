@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 import { MundoVecino, sinHorizonte } from "./mundo-vecino";
-import { SCENARIOS, type Scenario } from "./scenarios";
+import { destinosDe, SCENARIOS, type Scenario } from "./scenarios";
 import { distanciaEntre } from "./entre-aerodromos";
 
 const por = (id: string): Scenario => SCENARIOS.find((e) => e.id === id)!;
@@ -99,7 +99,10 @@ describe("el mundo de al lado", () => {
   it("y la ruta declarada es la que se monta", () => {
     // Que el escenario apunte a uno y se monte otro sería un vuelo a un sitio
     // que no es el que dice la tarjeta.
-    expect(norte.destino).toBe(sur.id);
+    //
+    // Y son varios desde que Los Rodeos tiene la red de Binter entera: cinco
+    // islas, de Tenerife Sur a El Hierro. Ver `destinosDe`.
+    expect(destinosDe(norte)).toContain(sur.id);
     expect(
       distanciaEntre(norte.aerodrome!.origin, sur.aerodrome!.origin) / 1000,
     ).toBeCloseTo(53.8, 0);

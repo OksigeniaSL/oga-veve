@@ -287,10 +287,19 @@ if (!esc.aerodrome) {
 const LEJOS = process.argv.includes('--lejos');
 
 const { lat: lat0, lon: lon0 } = esc.aerodrome.origin;
-const res = esc.segments + 1;
+/*
+ * **Y el mapa lejano puede tener sus propias muestras.**
+ *
+ * Estaba atado a `segments`, el del mapa fino, y con mundos de ciento y pico
+ * kilómetros eso valía. Con los de trescientos que pide la red canaria, no:
+ * repartir 416 muestras en 324 km deja cada una en 779 metros, que es el
+ * paisaje de cuadros que se acababa de arreglar. Ver `segmentosLejos`.
+ */
+const segmentos = (LEJOS && esc.segmentosLejos) || esc.segments;
+const res = segmentos + 1;
 const tamano = LEJOS ? esc.size * vecesLejosDe(esc) : esc.size;
 const sufijo = LEJOS ? '-lejos' : '';
-const paso = tamano / esc.segments;
+const paso = tamano / segmentos;
 const mitad = tamano / 2;
 
 // La inversa de la proyección del extractor de aeródromos, para que el relieve

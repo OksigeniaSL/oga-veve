@@ -144,6 +144,17 @@ const TESELA = 256;
  * La pintura de la pista no se pierde por bajar a dos metros: la dibuja el
  * juego encima con su geometría, no sale de la fotografía.
  */
+/**
+ * Lo más ancho que cubre el horizonte a su zoom de siempre, m.
+ *
+ * Ciento sesenta kilómetros a sesenta y siete metros por píxel son dos mil
+ * cuatrocientos de lado, que es una imagen de ciento cincuenta kilobytes. Por
+ * encima de eso se baja un nivel de zoom por cada duplicación: la foto sigue
+ * siendo más fina que el relieve que viste, que es lo único que tiene que
+ * cumplir. Ver dónde se elige el zoom.
+ */
+const LO_MAS_ANCHO = 160000;
+
 const ENCUADRES = {
   lejos: { zoom: 14 },
   cerca: { lado: 6000, zoom: 16 },
@@ -264,8 +275,35 @@ async function main() {
    * a un satélite de diez metros devuelve el mismo píxel ampliado cuatro
    * veces. Antes que fabricar detalle que no existe, se avisa y se baja.
    */
+  /*
+   * **Y el zoom del horizonte baja si el mundo es muy ancho.**
+   *
+   * El z11 se eligió para anillos de ciento veinte kilómetros: sesenta y
+   * siete metros por píxel dan una imagen de dos mil y pico, que son ciento
+   * cincuenta kilobytes. Con los trescientos veinticuatro que pide Los Rodeos
+   * para alcanzar La Palma y El Hierro, ese mismo zoom da **cuatro mil
+   * ochocientos píxeles de lado** y varios megabytes: una foto de pared para
+   * mirarla desde cincuenta kilómetros.
+   *
+   * Y no hace falta. Lo que tiene que cumplir esta foto es ser más fina que
+   * el relieve que viste, no más fina que la vista: con el mapa lejano a
+   * trescientos dieciséis metros por muestra, ciento treinta y cuatro por
+   * píxel siguen siendo el doble de detalle del que se puede apoyar en una
+   * forma.
+   */
   const pedido = ENCUADRES[cual].zoom;
-  const zoom = Math.min(pedido, prov.tope);
+  const deMas =
+    cual === 'horizonte'
+      // Redondeo y no techo: 324 km son 2,02 veces el tope, y un techo baja
+      // dos niveles enteros por ese dos por ciento de más — de 67 metros por
+      // píxel a 269, que ya no es más fino que el relieve.
+      ? Math.max(0, Math.round(Math.log2(lado / LO_MAS_ANCHO)))
+      : 0;
+  const zoom = Math.min(pedido - deMas, prov.tope);
+  if (deMas > 0)
+    console.log(
+      `  (${Math.round(lado / 1000)} km no caben a z${pedido}: se baja a z${zoom})`,
+    );
   if (zoom !== pedido) {
     console.log(`  (z${pedido} pedido, z${zoom} es todo lo que da ${escenario.proveedor})`);
   }

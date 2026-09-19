@@ -182,6 +182,25 @@ export interface Scenario {
   vecesLejos?: number;
 
   /**
+   * Cuántas muestras por lado tiene el **mapa lejano**, si no las mismas que
+   * el fino.
+   *
+   * Nació atado a `segments`, y con un solo destino eso valía: el mundo era
+   * siete veces el mapa fino y cada muestra cubría trescientos metros. Con la
+   * red de verdad deja de valer — Tenerife Norte necesita 324 km para
+   * alcanzar La Palma y El Hierro, y repartir las mismas 416 muestras en ese
+   * ancho deja cada una en **779 metros**: exactamente el «Minecraft» que se
+   * acababa de quitar, y con el Teide dentro.
+   *
+   * Así que se desatan. El mapa fino sigue con las suyas —es el que se pisa y
+   * el que cuesta triángulos— y el lejano lleva las que haga falta para que
+   * el horizonte siga siendo un horizonte. Se paga en kilobytes de fichero,
+   * que es donde se puede pagar: mil muestras por lado son dos megas de
+   * relieve, y las ortofotos de ese escenario ya pesan más.
+   */
+  segmentosLejos?: number;
+
+  /**
    * El aeropuerto al que se puede ir volando desde aquí.
    *
    * Es el identificador de **otro escenario** de esta misma lista, y no un
@@ -629,8 +648,36 @@ export const TENERIFE_NORTE: Scenario = {
    * sesenta y tres: nueve kilómetros de margen, que es una aproximación
    * entera. Lo comprueba `destinos.test.ts`.
    */
-  destino: "tenerife-sur",
-  vecesLejos: 7,
+  /*
+   * **La red de Binter, que es como se vuela Canarias de verdad.**
+   *
+   * Desde Los Rodeos se va todos los días a media provincia, y el juego
+   * declaraba un solo destino. Preguntado jugando después de despegar hacia
+   * el oeste: «desde TFN no veo La Palma, ¿al final puedo hacer ese trayecto
+   * o no lo tenemos contemplado?».
+   *
+   * Cinco, ordenados por distancia: Tenerife Sur 54 km, La Gomera 99, Gran
+   * Canaria 112, La Palma 139 y El Hierro 169. El que manda el ancho es El
+   * Hierro, que pide 178 km con sitio para aproximar.
+   *
+   * Lanzarote y Fuerteventura quedan fuera a propósito: están a 272 y 242, y
+   * pedirle a un escenario un mundo de 550 kilómetros ya no es ensancharlo.
+   * Ésas se vuelan desde Gran Canaria, que es exactamente como se hace.
+   */
+  destino: [
+    "tenerife-sur",
+    "la-gomera",
+    "gran-canaria",
+    "la-palma",
+    "el-hierro",
+  ],
+  vecesLejos: 18,
+  /*
+   * Y con sus propias muestras en el mapa lejano: con las 416 del fino, 324
+   * km dan 779 metros por muestra. Con 1.024 se quedan en 316, que es lo que
+   * hay hoy con un mundo cinco veces más pequeño. Ver `segmentosLejos`.
+   */
+  segmentosLejos: 1024,
   /*
    * **El alisio**, que en Canarias sopla del nordeste el año entero y es el que
    * decide por qué cabecera se opera: con él, la 12. Doce nudos, que es lo
