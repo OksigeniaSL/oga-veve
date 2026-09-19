@@ -65,13 +65,28 @@ export type Anuncio = (typeof ANUNCIOS)[number];
  * se dice cuando el avión está arriba y ha dejado de subir. Las dos cosas, y
  * no una — a mitad de una subida fuerte tampoco se suelta nadie el cinturón.
  */
-const CUANDO: Record<Anuncio, Fase> = {
-  "comandante.bienvenida": "rodando",
-  "comandante.crosscheck": "autorizado",
-  "comandante.despegue": "alineando",
-  "comandante.crucero": "en-vuelo",
-  "comandante.descenso": "final",
-  "comandante.llegada": "abandonando",
+/*
+ * **Y cada anuncio tiene más de una fase buena, que es lo que faltaba.**
+ *
+ * Había una sola por anuncio, y eso se rompe en cuanto una lección no pasa por
+ * ella. «Dar una vuelta» arranca **en la pista** —ver `lecciones.ts`— así que
+ * las fases `rodando`, `autorizado` y `alineando` no ocurren nunca, y con
+ * ellas se caían tres de los seis anuncios. Contado jugando, y con razón:
+ * «hace tiempo que no oigo a la comandante, ¿ya dejó la compañía?».
+ *
+ * Así que cada anuncio lleva **las fases en las que todavía viene a cuento**,
+ * en orden. La bienvenida se da rodando, y quien empieza en la pista la oye
+ * antes de soltar frenos; el crosscheck, al recibir la autorización o ya
+ * alineado. Lo que no se hace es decirlo fuera de tiempo: no hay bienvenida
+ * después de despegar.
+ */
+const CUANDO: Record<Anuncio, readonly Fase[]> = {
+  "comandante.bienvenida": ["rodando", "esperando", "alineando"],
+  "comandante.crosscheck": ["autorizado", "alineando"],
+  "comandante.despegue": ["alineando", "despegando"],
+  "comandante.crucero": ["en-vuelo"],
+  "comandante.descenso": ["final"],
+  "comandante.llegada": ["abandonando", "a-plataforma"],
 };
 
 /**
@@ -171,7 +186,7 @@ export class Megafonia {
     if (!m.conPasaje) return null;
     for (const anuncio of ANUNCIOS) {
       if (this.dichos.has(anuncio)) continue;
-      if (CUANDO[anuncio] !== m.fase) continue;
+      if (!CUANDO[anuncio].includes(m.fase)) continue;
       if (!seDanLasCondiciones(anuncio, m)) continue;
       /*
        * **Y la ventana se cuenta desde que se puede decir, no desde la fase.**
@@ -186,10 +201,22 @@ export class Megafonia {
        * no venía a cuento — que es justo lo que este módulo prometía y lo que
        * se rompía apuntando la hora solo cuando había silencio.
        */
-      const listo = this.listoDesde.get(anuncio) ?? this.desde;
-      this.listoDesde.set(anuncio, listo);
+      /*
+       * **Y el reloj cuenta el tiempo con las condiciones puestas, no el de
+       * pared.**
+       *
+       * Antes se apuntaba el instante en que se cumplieron por primera vez y
+       * se comparaba con el reloj de la fase. En una subida con el avión
+       * nivelando un momento y volviendo a subir, la ventana de veinticinco
+       * segundos se agotaba **mientras las condiciones no se cumplían**, y el
+       * anuncio de crucero no salía jamás. Es la misma lección que ya está
+       * escrita en otro sitio de esta casa: un reloj que corre cuando no pasa
+       * nada no mide nada.
+       */
+      const llevaba = this.listoDesde.get(anuncio) ?? 0;
+      const espera = llevaba + dt;
+      this.listoDesde.set(anuncio, espera);
       if (m.instructorHablando) return null;
-      const espera = this.desde - listo;
       if (espera < ESPERA || espera > ESPERA + SE_PASA) continue;
       this.dichos.add(anuncio);
       return anuncio;

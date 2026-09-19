@@ -224,7 +224,21 @@ describe("el instructor grabado", () => {
     altavoz.puede = false;
     instructor.decir("Seguí la raya verde", "vuelo.rodando");
     expect(suplente.dichas).toEqual(["Seguí la raya verde"]);
-    expect(instructor.hablando).toBe(false);
+    /*
+     * **Y mientras el navegador habla, esta boca está hablando.**
+     *
+     * Aquí se afirmaba lo contrario, y era el fallo visto desde otro lado:
+     * `hablando` es lo que consulta la radio antes de abrir la boca —«si
+     * hablan a la vez, la voz que se pierde es la que enseñaba»— así que decir
+     * que no hay nadie hablando es invitar a que le pisen. Las frases que caen
+     * al navegador son las que no están grabadas, o sea las de inglés, y eso
+     * es exactamente lo que se oía: «la voz inglesa corta la española, eso lo
+     * hace siempre». Ver `decir` en `instructor-grabado.ts`.
+     */
+    expect(instructor.hablando).toBe(true);
+    // Y al callarla, se calla de verdad: la plaza no se queda tomada.
+    instructor.callar();
+    expect(suplente.callado).toBeGreaterThan(0);
   });
 
   describe("bajar el pack", () => {
