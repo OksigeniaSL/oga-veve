@@ -47,7 +47,7 @@ await page.addInitScript(() => {
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=tenerife-sur&leccion=vuelta&tramo=guyrami`,
+  `http://localhost:${PUERTO}/?escenario=tenerife-sur&hora=16&leccion=vuelta&tramo=guyrami`,
 );
 await page
   .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })

@@ -102,7 +102,7 @@ await page.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=tenerife-norte&leccion=despegue&tramo=guyrami&avion=jaz-20`,
+  `http://localhost:${PUERTO}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=guyrami&avion=jaz-20`,
 );
 await page
   .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })

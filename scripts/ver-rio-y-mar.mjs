@@ -21,7 +21,7 @@ const mirar = async (escenario, tomas) => {
   const page = await b.newPage({ viewport: { width: 1280, height: 720 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5249/?escenario=${escenario}`);
+  await page.goto(`http://localhost:5249/?escenario=${escenario}&hora=16`);
   await page.waitForTimeout(32000);
   for (const [nombre, sitio] of tomas) {
     await page.evaluate((p) => {

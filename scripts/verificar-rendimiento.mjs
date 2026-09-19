@@ -94,7 +94,7 @@ for (const escenario of ESCENARIOS) {
   });
   const cdp = await page.context().newCDPSession(page);
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=${escenario}&leccion=despegue&tramo=guyrami`,
+    `http://localhost:${PUERTO}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami`,
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 60000,

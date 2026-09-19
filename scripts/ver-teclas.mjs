@@ -12,7 +12,7 @@ for (const tramo of ['guyrami', 'taguato']) {
     localStorage.setItem('oga-veve:teclas-vistas', '1');
     localStorage.setItem('oga-veve:tramo', t);
   }, tramo);
-  await page.goto('http://localhost:5243/?escenario=tenerife-norte&leccion=despegue&teselas=0');
+  await page.goto('http://localhost:5243/?escenario=tenerife-norte&hora=16&leccion=despegue&teselas=0');
   await page.waitForTimeout(3500);
   await page.click('[data-hud="keys"]');
   await page.waitForTimeout(500);

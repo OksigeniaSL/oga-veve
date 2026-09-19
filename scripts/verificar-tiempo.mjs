@@ -15,7 +15,7 @@ const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage({ viewport: { width: 1280, height: 800 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5229/?escenario=tenerife-norte&leccion=despegue');
+await page.goto('http://localhost:5229/?escenario=tenerife-norte&hora=16&leccion=despegue');
 await page.waitForTimeout(4000);
 await page.click('[data-hud="tiempo-boton"]');
 await page.waitForTimeout(400);

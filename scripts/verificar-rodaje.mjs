@@ -63,7 +63,7 @@ for (const [esc, tramo] of [
    * que hubiera nada que medir.
    */
   await page.goto(
-    `http://localhost:5279/?escenario=${esc}&leccion=aterrizaje&tramo=${tramo}`,
+    `http://localhost:5279/?escenario=${esc}&hora=16&leccion=aterrizaje&tramo=${tramo}`,
   );
   /*
    * **Y la pestaña, al frente.**

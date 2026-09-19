@@ -27,6 +27,8 @@
 import type { FlightState } from "../flight/model";
 import { indicatedAirspeed, velocidadDelSonido } from "../flight/atmosphere";
 import { t, type TranslationKey } from "../i18n";
+import { leerTexto, ponerTexto } from "../datos/guardado";
+import { cuantaLuz } from "../world/hora";
 import { Tutor } from "./tutor";
 import { bankAngleOf, pitchAngleOf } from "./actitud";
 import type { Accion } from "../flight/keymap";
@@ -826,7 +828,31 @@ export class Hud {
         -->
         ${
           panel
-            ? `<div class="cuadro">${this.tablero.markup(this.ficha, peldano)}</div>`
+            ? `<div class="cuadro" data-hud="cuadro">
+                 <!--
+                   **El tirador para bajar el cuadro.**
+
+                   Pedido jugando: «un botón para bajarlo o volver a
+                   mostrarlo». Y tiene su motivo de verdad además del sitio en
+                   pantalla: lo que se mira por la ventana es el instrumento
+                   más importante que hay, y en un juego que enseña a mirar
+                   fuera tiene que poder quitarse lo de dentro.
+
+                   Es un tirador y no un aspa: se agarra por arriba y baja,
+                   como la persiana que es. Sin texto, que aquí no se sabe
+                   leer — la flecha dice a dónde va.
+                 -->
+                 <button class="sonido cuadro__tirador" type="button"
+                         data-hud="cuadro-tirador" aria-pressed="false"
+                         aria-label="${t("hud.bajarCuadro")}">
+                   <svg viewBox="0 0 24 24" aria-hidden="true">
+                     <path d="M6 9.5 12 15l6-5.5" fill="none"
+                           stroke="currentColor" stroke-width="2.4"
+                           stroke-linecap="round" stroke-linejoin="round" />
+                   </svg>
+                 </button>
+                 ${this.tablero.markup(this.ficha, peldano)}
+               </div>`
             : ""
         }
       </div>
@@ -970,6 +996,33 @@ export class Hud {
     );
     this.gafas = pick(this.root, "gafas");
     this.gafas.addEventListener("click", () => this.gafasHandler?.());
+    /*
+     * **El tirador del cuadro**, y se acuerda de cómo lo dejaste.
+     *
+     * Quien lo baja es porque quiere ver el mundo, y eso no es de este vuelo:
+     * es de cómo le gusta jugar. Se guarda por perfil, igual que el escenario
+     * y el peldaño.
+     */
+    const tirador = this.root.querySelector<HTMLElement>(
+      '[data-hud="cuadro-tirador"]',
+    );
+    const cuadro = this.root.querySelector<HTMLElement>('[data-hud="cuadro"]');
+    if (tirador && cuadro) {
+      const poner = (bajado: boolean): void => {
+        cuadro.classList.toggle("cuadro--bajado", bajado);
+        tirador.setAttribute("aria-pressed", String(bajado));
+        tirador.setAttribute(
+          "aria-label",
+          t(bajado ? "hud.subirCuadro" : "hud.bajarCuadro"),
+        );
+      };
+      poner(leerTexto("cuadro-bajado") === "1");
+      tirador.addEventListener("click", () => {
+        const bajado = !cuadro.classList.contains("cuadro--bajado");
+        poner(bajado);
+        ponerTexto("cuadro-bajado", bajado ? "1" : "0");
+      });
+    }
     this.mision = pick(this.root, "mision-boton");
     this.mision.addEventListener("click", () => this.misionHandler?.());
     pick(this.root, "pausa").addEventListener("click", () =>
@@ -2096,6 +2149,23 @@ export class Hud {
     this.horaAtada = { hora, cambio };
     this.tiempo.onHora(cambio);
     this.tiempo.ponerHoraSinAvisar(hora);
+    this.ponerLuzDeFuera(hora);
+  }
+
+  /**
+   * Cuánta luz hay fuera, para que el cuadro se comporte como un cuadro.
+   *
+   * Un panel de verdad no se ve igual a mediodía que de noche: de día se lee
+   * por la luz que le da y de noche **se enciende él**, con sus números
+   * brillando sobre el negro. Pedido jugando: «el cuadro encendido en
+   * oscuridad o más clarito en el momento claro».
+   *
+   * Va como variable de CSS y no como clase para que el paso sea continuo: el
+   * anochecer dura, y un cuadro que salta de apagado a encendido de un
+   * fotograma a otro se ve falso. Ver `cuantaLuz`.
+   */
+  private ponerLuzDeFuera(hora: number): void {
+    this.root.style.setProperty("--luz-de-fuera", cuantaLuz(hora).toFixed(3));
   }
 
   /** Quién se entera de que han cambiado las nubes. */

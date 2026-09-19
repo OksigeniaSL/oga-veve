@@ -44,7 +44,7 @@ await page.addInitScript(() => {
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=tenerife-norte&leccion=despegue&tramo=taguato-ruvicha`,
+  `http://localhost:${PUERTO}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=taguato-ruvicha`,
 );
 await page.waitForFunction(
   () => globalThis.__oga?.indicativo !== undefined,

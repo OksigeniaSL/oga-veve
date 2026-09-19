@@ -107,7 +107,7 @@ async function partida(tramo) {
       localStorage.setItem("oga-veve:tramo", t);
     }, tramo);
     await page.goto(
-      `http://localhost:${PUERTO}/?escenario=pettirossi&viento=${VIENTO}`,
+      `http://localhost:${PUERTO}/?escenario=pettirossi&hora=16&viento=${VIENTO}`,
     );
     try {
       await page.waitForFunction(

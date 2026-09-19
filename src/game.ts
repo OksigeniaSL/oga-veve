@@ -337,6 +337,7 @@ import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
 import { puntoMasCercanoDe } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
+import { horaSolarEn } from "./world/hora";
 import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
@@ -709,6 +710,13 @@ export class Game {
    * distancia. Ver `mundo-vecino.ts`.
    */
   readonly vecino: MundoVecino | null = null;
+
+  /**
+   * La pista del vecino, en coordenadas **de él**. Se suma a su desplazamiento
+   * para tener el punto al que de verdad se va, que es la pista y no el centro
+   * de su mapa.
+   */
+  private vecinoPista: { x: number; z: number } | null = null;
   readonly sky: SkyRig;
   aircraftMesh: AircraftMesh;
   aircraft: AircraftConfig;
@@ -1343,6 +1351,10 @@ export class Game {
      */
     if (options.vecino) {
       this.vecino = new MundoVecino(this.scenario, options.vecino);
+      this.vecinoPista = {
+        x: options.vecino.runway.x,
+        z: options.vecino.runway.z,
+      };
       this.scene.add(this.vecino.grupo);
       this.terrain.ponerSueloLejano((x, z) => this.vecino?.cota(x, z) ?? null);
     }
@@ -3720,7 +3732,25 @@ export class Game {
   private horaPedida(): number {
     const q = new URLSearchParams(location.search).get("hora");
     const h = q === null ? NaN : Number(q);
-    return Number.isFinite(h) ? h : HORA_BUENA;
+    if (Number.isFinite(h)) return h;
+    /*
+     * **Y si no se pide ninguna, la que es de verdad donde se está volando.**
+     *
+     * Era siempre `HORA_BUENA`, y por eso todos los vuelos tenían el mismo
+     * cielo aunque el tiempo fuera de verdad: «no aprecio el cambio de clima,
+     * parece como que siempre esté igual el cielo en todas las pruebas que
+     * hago». El METAR llegaba bien —viento, nubes y temperatura del sitio— y la
+     * luz no se enteraba.
+     *
+     * Hora **solar** del aeródromo, no de reloj de pared: lo que hace falta
+     * saber es dónde está el sol, y eso lo dice la longitud y no el huso, que
+     * cambia con la política. Ver `hora.ts`.
+     *
+     * Sin aeródromo extraído no hay longitud de la que tirar, y entonces se
+     * queda la hora buena de siempre.
+     */
+    const lon = this.scenario.aerodrome?.origin.lon;
+    return lon === undefined ? HORA_BUENA : horaSolarEn(lon, new Date());
   }
 
   /**
@@ -7645,6 +7675,23 @@ export class Game {
       // Los mismos que se oyen por la radio y se ven por la ventana: uno
       // solo, para que no puedan contarse tres versiones de lo mismo.
       otros: this.trafico?.quienes() ?? [],
+      /*
+       * **Y el aeropuerto de destino, si esta ruta lleva a otro.**
+       *
+       * Sale del mundo vecino y no de una cuenta aparte: el sitio donde está
+       * dibujado y el sitio que dice la carta tienen que ser **el mismo**, y la
+       * única forma de que no puedan separarse es que salgan del mismo dato.
+       * Ver `MundoVecino.desplazamiento`.
+       *
+       * Pedido jugando: «si salgo de un aeropuerto y me estoy acercando a otro,
+       * estaría bien que se fuera mostrando también en el cuadro».
+       */
+      destino: this.vecino
+        ? {
+            x: this.vecino.desplazamiento.x + (this.vecinoPista?.x ?? 0),
+            z: this.vecino.desplazamiento.z + (this.vecinoPista?.z ?? 0),
+          }
+        : null,
     };
   }
 

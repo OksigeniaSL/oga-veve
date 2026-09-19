@@ -152,6 +152,17 @@ export interface Mapa {
   } | null;
   /** Y los otros aviones, los que se oyen por la radio. Ver `trafico.ts`. */
   readonly otros: readonly { readonly x: number; readonly z: number }[];
+
+  /**
+   * El aeropuerto al que se va, si esta ruta lleva a otro.
+   *
+   * Pedido jugando, y es lo que convierte la rosa en una carta de navegación:
+   * «si salgo de un aeropuerto y me estoy acercando a otro, estaría bien que
+   * se fuera mostrando también en el cuadro». Es lo que hace cualquier
+   * navegador de verdad, y es la primera lección de navegación que este juego
+   * puede dar: **poner rumbo a algo que todavía no se ve**.
+   */
+  readonly destino?: { readonly x: number; readonly z: number } | null;
 }
 
 /**
@@ -172,6 +183,25 @@ export interface Dibujo {
     hasta: { dx: number; dy: number };
   } | null;
   readonly otros: readonly { dx: number; dy: number }[];
+
+  /**
+   * El aeropuerto de destino, con las millas que faltan.
+   *
+   * Las millas van aquí y no se recalculan en cada superficie porque si no
+   * acabarían siendo dos números distintos en la misma pantalla, que es
+   * exactamente lo que este fichero existe para impedir.
+   *
+   * `dentro` dice si cae en el disco de la rosa. Cuando no cae —al principio
+   * del vuelo, con el destino a treinta millas y la carta a diez— lo que se
+   * enseña es una flecha en el borde, que es lo que hace un navegador de
+   * verdad: el sitio no se ve todavía, pero se sabe por dónde cae.
+   */
+  readonly destino: {
+    dx: number;
+    dy: number;
+    millas: number;
+    dentro: boolean;
+  } | null;
 }
 
 /** Cuántas millas de final prolongado se dibujan. */
@@ -192,7 +222,7 @@ export function dibujarLaCarta(
   const lejos = m?.pista ? millasHasta(m.pista, m) : RANGOS[1]!;
   const rango = rangoPara(lejos);
   const por = pixelesPorMetro(rango, r);
-  if (!m) return { rango, pista: null, eje: null, otros: [] };
+  if (!m) return { rango, pista: null, eje: null, otros: [], destino: null };
   const aqui = (p: Punto) => enLaCarta(p, m, rumbo, por);
   let pista: Dibujo["pista"] = null;
   let eje: Dibujo["eje"] = null;
@@ -219,5 +249,27 @@ export function dibujarLaCarta(
       hasta: { dx: umbral.dx + ux * ocho, dy: umbral.dy + uy * ocho },
     };
   }
-  return { rango, pista, eje, otros: m.otros.map(aqui) };
+  /*
+   * **Y el destino, que puede caer fuera de la carta y aun así hay que verlo.**
+   *
+   * Al despegar de Tenerife Norte el otro aeropuerto está a veintinueve
+   * millas y la carta enseña diez: dibujarlo sin más lo pondría en mitad del
+   * negro, tres veces más lejos que el borde. Un navegador de verdad no lo
+   * esconde ni miente con la distancia — lo pega al borde y sigue diciendo
+   * cuántas millas faltan. Así se aprende lo que hay que aprender: que el
+   * sitio está por ahí y todavía no se ve.
+   */
+  let destino: Dibujo["destino"] = null;
+  if (m.destino) {
+    const p = aqui(m.destino);
+    const d = Math.hypot(p.dx, p.dy);
+    const dentro = d <= r;
+    destino = {
+      dx: dentro ? p.dx : (p.dx / (d || 1)) * r,
+      dy: dentro ? p.dy : (p.dy / (d || 1)) * r,
+      millas: millasHasta(m.destino, m),
+      dentro,
+    };
+  }
+  return { rango, pista, eje, otros: m.otros.map(aqui), destino };
 }

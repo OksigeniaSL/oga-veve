@@ -26,7 +26,7 @@ for (const [escenario, leccion] of [
   const fallos = [];
   page.on('pageerror', (e) => fallos.push(e.message.slice(0, 140)));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5241/?escenario=${escenario}&leccion=${leccion}`);
+  await page.goto(`http://localhost:5241/?escenario=${escenario}&hora=16&leccion=${leccion}`);
   await page.waitForTimeout(28000);
 
   const r = await page.evaluate(() => {

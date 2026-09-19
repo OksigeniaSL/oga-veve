@@ -8,7 +8,7 @@ for (const leccion of (process.argv[2] ?? 'despegue,vuelta').split(',')) {
   const page = await b.newPage({ viewport: { width: 1000, height: 700 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5239/?escenario=${process.argv[3] ?? 'tenerife-norte'}&leccion=${leccion}`);
+  await page.goto(`http://localhost:5239/?escenario=${process.argv[3] ?? 'tenerife-norte'}&hora=16&leccion=${leccion}`);
   await page.waitForTimeout(3500);
 
   const antes = await page.evaluate(() => {

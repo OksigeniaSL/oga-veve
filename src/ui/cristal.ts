@@ -273,8 +273,41 @@ function cintaDeVelocidad(
       </g>
       ${punteroDeCinta(w, h, true)}
       ${lectura(w, h, "ias")}
+      ${rotuloDeCinta(w, h, "IAS", "KT")}
     </g>
   `;
+}
+
+/**
+ * El rótulo de una cinta: qué instrumento es y en qué unidad va.
+ *
+ * **No estaba, y se notó a la primera pregunta.** Las esferas llevan IAS y ALT
+ * desde siempre; las pantallas de cristal no llevaban nada, así que no había de
+ * dónde deducir la unidad. Preguntado jugando, delante de un 2020 en la cinta
+ * de altitud: «¿Tenerife está a 2020? ¿Esos son pies o metros?».
+ *
+ * Eran pies —Tenerife Norte está a 632,8 m, que son 2076— y la pregunta era
+ * buena: el número solo no lo dice.
+ *
+ * El rótulo va en inglés aeronáutico y no se traduce nunca, que es la regla 3:
+ * IAS y ALT son los mismos en toda cabina del mundo y quien juegue aquí se los
+ * va a encontrar tal cual. Lo que se añade es **la unidad debajo**, en pequeño,
+ * que es la glosa que sí se puede leer sin haber volado nunca.
+ *
+ * Y va arriba y abajo de la ventana y no en medio: en medio está la cifra, que
+ * es lo que hay que poder leer de un vistazo.
+ */
+function rotuloDeCinta(
+  w: number,
+  h: number,
+  que: string,
+  unidad: string,
+): string {
+  return `
+    <text x="${w / 2}" y="11" ${MARCA_ROTULO}
+          class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">${que}</text>
+    <text x="${w / 2}" y="${h - 4}" ${MARCA_ROTULO}
+          class="cr__rotulo cr__rotulo--menudo" text-anchor="middle">${unidad}</text>`;
 }
 
 /** Un bug de velocidad: una escuadra magenta pegada al borde de dentro. */
@@ -371,6 +404,7 @@ function cintaDeAltitud(
       <path ${MARCA_CIFRA} class="cr__caja" d="M0 ${h / 2 - 18} l${w} 0 l0 36 l${-w} 0 Z" />
       <text data-cristal="alt" x="${w - 36}" y="${h / 2 + 9}" ${MARCA_CIFRA} class="cr__valor" text-anchor="end"></text>
       <g clip-path="url(#${yo}-tambor)"><g data-tambor="alt" data-paso="26">${tambor}</g></g>
+      ${rotuloDeCinta(w, h, "ALT", "FT")}
     </g>
   `;
 }
@@ -482,6 +516,24 @@ function carta(cx: number, cy: number, r: number): string {
       <line data-carta="eje" class="cr__eje" visibility="hidden" />
       <line data-carta="pista" class="cr__pista" visibility="hidden" />
       ${rombos}
+      <!--
+        **El aeropuerto de destino.**
+
+        Un círculo con una barra dentro, que es el símbolo de aeródromo de
+        cualquier carta del mundo: el círculo es el campo y la barra, la pista.
+        Quien lo aprenda aquí lo va a reconocer en una carta de verdad, que es
+        la prueba de la regla 4.
+
+        Y cuando todavía cae fuera del alcance de la carta, el mismo símbolo se
+        pega al borde con una punta de flecha: el sitio no se ve, pero se sabe
+        por dónde cae. Ver Dibujo.destino en ui/carta.ts.
+      -->
+      <g data-carta="destino" class="cr__destino" visibility="hidden">
+        <circle cx="0" cy="0" r="7" />
+        <line x1="-4.5" y1="0" x2="4.5" y2="0" />
+        <path data-carta="destino-punta" d="M0 -13 L5 -7 L-5 -7 Z"
+              visibility="hidden" />
+      </g>
     </g>
     <!--
       La cifra del rango lleva «NM» pegado, así que es rótulo y no cifra: lo
@@ -491,7 +543,14 @@ function carta(cx: number, cy: number, r: number): string {
       formas y la pista es la barra blanca.
     -->
     <text data-cristal="rango" x="${cx + r - 4}" y="${cy + r + 14}"
-          ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo" text-anchor="end"></text>`;
+          ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo" text-anchor="end"></text>
+    <!--
+      Y las millas que faltan para el destino, en la esquina de enfrente del
+      rango. Con «NM» pegado, que es lo que la hace legible: el rótulo es la
+      palabra, no la cifra.
+    -->
+    <text data-cristal="millas-destino" x="${cx - r + 4}" y="${cy + r + 14}"
+          ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo"></text>`;
 }
 
 /** Cuántos tráficos caben en la carta. Ver `CUANTOS` en `flight/radio.ts`. */

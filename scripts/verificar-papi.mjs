@@ -20,7 +20,7 @@ const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome',
 const page = await b.newPage({ viewport: { width: 1280, height: 720 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5254/?escenario=pettirossi&teselas=0');
+await page.goto('http://localhost:5254/?escenario=pettirossi&hora=16&teselas=0');
 await page.waitForTimeout(6000);
 // Motor en marcha: si no, el juego recoloca el avión al puesto al moldear.
 await page.keyboard.press('i');

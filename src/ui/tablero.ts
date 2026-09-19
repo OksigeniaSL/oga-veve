@@ -818,6 +818,36 @@ export class Tablero {
       rombo.setAttribute("visibility", "visible");
       rombo.setAttribute("transform", `translate(${donde.dx} ${donde.dy})`);
     }
+    /*
+     * **Y el aeropuerto de destino**, si esta ruta lleva a otro.
+     *
+     * Va aquí y en el lienzo de la cabina, que es la regla de esta casa: dos
+     * superficies que enseñan lo mismo se tocan las dos o no se toca ninguna.
+     * Las cuentas son las mismas para las dos — ver `ui/carta.ts`.
+     */
+    const destino = grupo.querySelector('[data-carta="destino"]');
+    if (destino) {
+      const d2 = dibujo.destino;
+      destino.setAttribute("visibility", d2 ? "visible" : "hidden");
+      if (d2) {
+        destino.setAttribute("transform", `translate(${d2.dx} ${d2.dy})`);
+        const punta = destino.querySelector('[data-carta="destino-punta"]');
+        // La punta solo cuando está pegado al borde: dentro de la carta el
+        // símbolo ya dice dónde está y una flecha encima sobra.
+        punta?.setAttribute("visibility", d2.dentro ? "hidden" : "visible");
+        // Y apuntando hacia fuera, que es hacia donde queda el aeropuerto.
+        if (!d2.dentro)
+          punta?.setAttribute(
+            "transform",
+            `rotate(${(Math.atan2(d2.dx, -d2.dy) * 180) / Math.PI})`,
+          );
+      }
+    }
+    this.texto(
+      raiz,
+      "millas-destino",
+      dibujo.destino ? `${dibujo.destino.millas.toFixed(1)} NM` : "",
+    );
     this.texto(raiz, "rango", `${dibujo.rango} NM`);
   }
 

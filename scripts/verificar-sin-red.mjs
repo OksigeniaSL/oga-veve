@@ -72,7 +72,7 @@ const resultados = [];
 const comprobar = (nombre, ok, detalle) =>
   resultados.push({ nombre, ok: !!ok, detalle });
 
-const url = `http://localhost:${PUERTO}/?escenario=${ESCENARIO}`;
+const url = `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16`;
 const entrar = async () => {
   await page.goto(url, { waitUntil: "load" });
   await page.waitForTimeout(14000);

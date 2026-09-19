@@ -152,7 +152,7 @@ await page.addInitScript((voces) => {
 }, VOCES);
 
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue&tramo=${TRAMO}&avion=${AVION}`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}&avion=${AVION}`,
 );
 await page
   .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })

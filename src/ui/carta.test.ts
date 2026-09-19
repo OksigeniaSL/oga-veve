@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MILLA,
+  dibujarLaCarta,
   RANGOS,
   enLaCarta,
   extremosDePista,
@@ -139,5 +140,74 @@ describe("la pista se dibuja con su forma", () => {
     });
     expect((a.x + b.x) / 2).toBeCloseTo(300);
     expect((a.z + b.z) / 2).toBeCloseTo(-400);
+  });
+});
+
+describe("el aeropuerto de destino en la carta", () => {
+  /*
+   * Pedido jugando: «si salgo de un aeropuerto y me estoy acercando a otro,
+   * estaría bien que se fuera mostrando también en el cuadro». Es lo que hace
+   * cualquier navegador, y es la primera lección de navegación que se puede
+   * dar aquí: poner rumbo a algo que todavía no se ve.
+   */
+  const RADIO = 100;
+  const yo = { x: 0, z: 0 };
+  /*
+   * La pista de casa a ocho millas, y no a quinientos metros: **el rango de la
+   * carta sale de lo lejos que esté ella**, así que con la pista debajo la
+   * carta enseña dos millas y cualquier destino cae fuera. No es un detalle de
+   * la prueba: es cómo funciona, y ponerlo mal hacía fallar la prueba y no el
+   * código.
+   */
+  const mapa = (destino: { x: number; z: number } | null) => ({
+    ...yo,
+    pista: { x: 0, z: 8 * MILLA, heading: 0, length: 2000 },
+    otros: [],
+    destino,
+  });
+
+  it("sin destino no se dibuja nada, y eso no es un hueco", () => {
+    expect(dibujarLaCarta(mapa(null), 0, RADIO).destino).toBeNull();
+  });
+
+  it("cerca, cae dentro del disco y en su sitio", () => {
+    // A tres millas al norte, volando al norte: arriba del todo.
+    const tres = 3 * MILLA;
+    const d = dibujarLaCarta(mapa({ x: 0, z: -tres }), 0, RADIO).destino!;
+    expect(d.dentro).toBe(true);
+    expect(d.millas).toBeCloseTo(3, 1);
+    expect(Math.abs(d.dx)).toBeLessThan(1);
+    expect(d.dy).toBeLessThan(0);
+  });
+
+  it("y lejos se pega al borde, sin mentir con las millas", () => {
+    /*
+     * **Ésta es la que importa.** Al despegar, el otro aeropuerto está a
+     * veintinueve millas y la carta enseña diez. Dibujarlo sin más lo pondría
+     * tres veces más lejos que el borde, o sea en ninguna parte.
+     */
+    const lejos = 29 * MILLA;
+    const d = dibujarLaCarta(mapa({ x: 0, z: -lejos }), 0, RADIO).destino!;
+    expect(d.dentro).toBe(false);
+    // Pegado al borde, ni un píxel más.
+    expect(Math.hypot(d.dx, d.dy)).toBeCloseTo(RADIO, 5);
+    // Y las millas siguen siendo las de verdad, que es lo que no se puede
+    // falsear: el dibujo se recorta, el número no.
+    expect(d.millas).toBeCloseTo(29, 1);
+  });
+
+  it("y gira con la rosa, como todo lo demás", () => {
+    // El mismo destino al norte, pero volando al este: tiene que salir a la
+    // izquierda. Si no girara, el rumbo no serviría para nada.
+    const tres = 3 * MILLA;
+    const d = dibujarLaCarta(mapa({ x: 0, z: -tres }), 90, RADIO).destino!;
+    expect(d.dx).toBeLessThan(0);
+    expect(Math.abs(d.dy)).toBeLessThan(1);
+  });
+
+  it("y el que está detrás sale detrás", () => {
+    const tres = 3 * MILLA;
+    const d = dibujarLaCarta(mapa({ x: 0, z: tres }), 0, RADIO).destino!;
+    expect(d.dy).toBeGreaterThan(0);
   });
 });

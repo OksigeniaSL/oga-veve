@@ -59,7 +59,7 @@ for (const id of FLOTA) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=tenerife-sur&leccion=despegue&tramo=guyrami&avion=${id}`,
+    `http://localhost:${PUERTO}/?escenario=tenerife-sur&hora=16&leccion=despegue&tramo=guyrami&avion=${id}`,
   );
   await page
     .waitForFunction(
@@ -340,7 +340,7 @@ for (const id of FLOTA) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=tenerife-sur&leccion=despegue&tramo=taguato-ruvicha&avion=jaz-120`,
+    `http://localhost:${PUERTO}/?escenario=tenerife-sur&hora=16&leccion=despegue&tramo=taguato-ruvicha&avion=jaz-120`,
   );
   await page
     .waitForFunction(
