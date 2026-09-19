@@ -26,22 +26,22 @@
       "ele": 1668
     },
     {
-      "nombre": "Montaña de Sándara",
+      "nombre": "Montaña de las Monjas",
       "clase": "montana",
-      "lat": 27.9496,
-      "lon": -15.69263,
-      "x": -30065,
-      "z": -1968,
-      "ele": 1575
+      "lat": 27.95168,
+      "lon": -15.7261,
+      "x": -33353,
+      "z": -2199,
+      "ele": 1468
     },
     {
-      "nombre": "Morro de la Hierba Huerto",
+      "nombre": "Cumbre de Trujillo",
       "clase": "montana",
-      "lat": 27.90258,
-      "lon": -15.62936,
-      "x": -23849,
-      "z": 3260,
-      "ele": 1315
+      "lat": 27.88024,
+      "lon": -15.59552,
+      "x": -20525,
+      "z": 5745,
+      "ele": 1132
     },
     {
       "nombre": "Las Palmas de Gran Canaria",

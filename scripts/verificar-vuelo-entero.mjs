@@ -1934,6 +1934,9 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       ),
     ],
     torreDijoTodo: o.dichoTodo?.().torre ?? [],
+    // Y por qué se cayó lo que se cayó, que sin esto una boca muda es un
+    // misterio. Ver `apuntarDescarte` en `audio/boca.ts`.
+    descartes: o.descartadas?.() ?? [],
     // Todo lo que dijo cada boca, para poder contarlo al final del parte.
     todoLoDicho: o.dichoTodo?.() ?? {},
     masRapidoEnPista: Math.round(masRapidoEnPista),
@@ -2219,7 +2222,10 @@ comprobar(
         ),
       )
     : (vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
-  `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
+  `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}` +
+    (vuelo.descartes?.length
+      ? ` · se cayeron: ${vuelo.descartes.slice(-6).join(" | ")}`
+      : ""),
   "cinco frases grabadas y horneadas que no las pedía nadie",
 );
 

@@ -6,5 +6,42 @@
     "lat": 28.945499,
     "lon": -13.6052
   },
-  "hitos": []
+  "hitos": [
+    {
+      "nombre": "Isla de Lobos",
+      "clase": "isla",
+      "lat": 28.75095,
+      "lon": -13.8233,
+      "x": -21222,
+      "z": 21632,
+      "ele": null
+    },
+    {
+      "nombre": "Fuerteventura",
+      "clase": "isla",
+      "lat": 28.40475,
+      "lon": -14.16025,
+      "x": -54009,
+      "z": 60128,
+      "ele": null
+    },
+    {
+      "nombre": "La Graciosa",
+      "clase": "isla",
+      "lat": 29.25373,
+      "lon": -13.51037,
+      "x": 9227,
+      "z": -34273,
+      "ele": null
+    },
+    {
+      "nombre": "Alegranza",
+      "clase": "isla",
+      "lat": 29.39935,
+      "lon": -13.50996,
+      "x": 9268,
+      "z": -50466,
+      "ele": null
+    }
+  ]
 }

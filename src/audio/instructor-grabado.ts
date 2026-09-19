@@ -328,6 +328,23 @@ export class InstructorGrabado implements Instructor {
          * hablando, así que se le pregunta. Con un tope: una voz del sistema
          * que se queda colgada no puede dejar mudo el resto del vuelo.
          */
+        /*
+         * **Y si el suplente no puede hablar, la plaza se suelta ya.**
+         *
+         * Es la misma regla que en `porElSuplente` y le faltaba a este camino:
+         * esperar dos segundos a que arranque un sintetizador que no existe es
+         * bloquear la boca por nada, y con tres plazas de cola lo que viene
+         * detrás se cae. Medido en el barrido después de quitar un
+         * `BOCA.callar()` que lo estaba tapando por accidente: la torre pasó a
+         * decir **una frase** en un vuelo entero en cuatro escenarios.
+         *
+         * Lo que suena, suena; lo que no, no estorba.
+         */
+        if (!this.suplente.disponible) {
+          this.sonando = false;
+          listo();
+          return;
+        }
         this.sonando = true;
         this.suplente.decir(texto, clave, urgencia);
         // La misma espera en dos tiempos que el resto. Ver `porElSuplente`.
