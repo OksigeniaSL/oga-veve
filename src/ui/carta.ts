@@ -163,6 +163,21 @@ export interface Mapa {
    * puede dar: **poner rumbo a algo que todavía no se ve**.
    */
   readonly destino?: { readonly x: number; readonly z: number } | null;
+
+  /**
+   * Las células de tormenta, si el tiempo las trae. Ver `flight/tormentas.ts`.
+   *
+   * Van en el mapa y no en una capa aparte por lo mismo que todo lo demás de
+   * este fichero: **dónde** va cada cosa se decide una vez. Un radar que pinta
+   * la tormenta en un sitio distinto del que la pinta la otra pantalla enseña
+   * a no creerle a ninguna de las dos.
+   */
+  readonly celdas?: readonly {
+    readonly x: number;
+    readonly z: number;
+    readonly radio: number;
+    readonly fuerza: number;
+  }[];
 }
 
 /**
@@ -202,6 +217,20 @@ export interface Dibujo {
     millas: number;
     dentro: boolean;
   } | null;
+
+  /**
+   * Las células, ya en píxeles desde el centro de la rosa y con su radio.
+   *
+   * Se dan **todas**, incluidas las que caen fuera del disco: recortar aquí
+   * dejaría media tormenta sin pintar al borde de la carta, que es justo
+   * cuando hay que verla — se está llegando a ella.
+   */
+  readonly celdas: readonly {
+    dx: number;
+    dy: number;
+    radio: number;
+    fuerza: number;
+  }[];
 }
 
 /** Cuántas millas de final prolongado se dibujan. */
@@ -222,7 +251,15 @@ export function dibujarLaCarta(
   const lejos = m?.pista ? millasHasta(m.pista, m) : RANGOS[1]!;
   const rango = rangoPara(lejos);
   const por = pixelesPorMetro(rango, r);
-  if (!m) return { rango, pista: null, eje: null, otros: [], destino: null };
+  if (!m)
+    return {
+      rango,
+      pista: null,
+      eje: null,
+      otros: [],
+      destino: null,
+      celdas: [],
+    };
   const aqui = (p: Punto) => enLaCarta(p, m, rumbo, por);
   let pista: Dibujo["pista"] = null;
   let eje: Dibujo["eje"] = null;
@@ -271,5 +308,9 @@ export function dibujarLaCarta(
       dentro,
     };
   }
-  return { rango, pista, eje, otros: m.otros.map(aqui), destino };
+  const celdas = (m.celdas ?? []).map((c) => {
+    const p = aqui(c);
+    return { dx: p.dx, dy: p.dy, radio: c.radio * por, fuerza: c.fuerza };
+  });
+  return { rango, pista, eje, otros: m.otros.map(aqui), destino, celdas };
 }

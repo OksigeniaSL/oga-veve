@@ -2715,6 +2715,36 @@ button.motor__tecla::after {
   stroke-dasharray: 7 5;
 }
 
+/*
+ * ── El radar meteorológico ──
+ *
+ * Los colores son los de siempre en cualquier radar de a bordo, y no se
+ * traducen ni se cambian por «bajo, medio, alto»: quien pilote de verdad va a
+ * ver exactamente estos cuatro. Ver `flight/tormentas.ts`.
+ *
+ * A media tinta para que la pista y los tráficos se lean **encima**: el radar
+ * es el fondo sobre el que se decide, no lo que hay que mirar.
+ */
+.cr__eco {
+  opacity: 0.5;
+}
+
+.cr__eco--verde {
+  fill: var(--cabina-normal);
+}
+
+.cr__eco--ambar {
+  fill: var(--cabina-precaucion);
+}
+
+.cr__eco--rojo {
+  fill: var(--cabina-limite);
+}
+
+.cr__eco--magenta {
+  fill: var(--cabina-objetivo);
+}
+
 .cr__otro {
   fill: none;
   stroke: var(--cabina-auxiliar);

@@ -57,6 +57,7 @@ import {
   tamborDeAltitud,
 } from "./cristal";
 import { luzDeTren } from "../flight/tren";
+import { anillosDe } from "../flight/tormentas";
 import {
   QUIETA_LA_ALTITUD,
   QUIETA_LA_VELOCIDAD,
@@ -818,6 +819,26 @@ export class Tablero {
       rombo.setAttribute("visibility", "visible");
       rombo.setAttribute("transform", `translate(${donde.dx} ${donde.dy})`);
     }
+    /*
+     * **Y el radar meteorológico.**
+     *
+     * Éste sí se rehace entero cada vez, y es la excepción del fichero: las
+     * células son cuatro como mucho y cambian de sitio con el avión, así que
+     * mantener piezas puestas costaría más de lo que ahorra. Todo lo demás de
+     * aquí mueve atributos de piezas que ya existen.
+     */
+    const radar = grupo.querySelector('[data-carta="radar"]');
+    if (radar) {
+      radar.innerHTML = dibujo.celdas
+        .flatMap((c) =>
+          anillosDe(c.fuerza).map(
+            ({ parte, color }) =>
+              `<circle class="cr__eco cr__eco--${color}" cx="${c.dx.toFixed(1)}" cy="${c.dy.toFixed(1)}" r="${(c.radio * parte).toFixed(1)}" />`,
+          ),
+        )
+        .join("");
+    }
+
     /*
      * **Y el aeropuerto de destino**, si esta ruta lleva a otro.
      *

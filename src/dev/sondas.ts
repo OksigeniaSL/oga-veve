@@ -1166,6 +1166,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     percance: () => juego.percance,
     /** La pista del otro aeropuerto, ya en coordenadas de este mundo. */
     pistaDelVecino: () => juego.pistaDelVecino,
+    /** Las células de tormenta de hoy. */
+    celdasDeHoy: () => juego.celdasParaBanco,
     /** Los otros aviones de la ruta, con su nivel. */
     traficoDeRuta: () =>
       (juego.avionesDeRutaParaBanco?.quienes() ?? []).map((a) => ({

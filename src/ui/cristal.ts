@@ -513,6 +513,13 @@ function carta(cx: number, cy: number, r: number): string {
     -->
     <clipPath id="${recorte}"><circle cx="0" cy="0" r="${r}" /></clipPath>
     <g data-carta="grupo" transform="translate(${cx} ${cy})" clip-path="url(#${recorte})">
+      <!--
+        El radar meteorológico, debajo de todo lo demás: la tormenta es el
+        fondo sobre el que se decide, y la pista y los tráficos tienen que
+        verse encima. Un radar que tapa la pista deja de ser un instrumento de
+        decidir. Ver flight/tormentas.ts.
+      -->
+      <g data-carta="radar"></g>
       <line data-carta="eje" class="cr__eje" visibility="hidden" />
       <line data-carta="pista" class="cr__pista" visibility="hidden" />
       ${rombos}
