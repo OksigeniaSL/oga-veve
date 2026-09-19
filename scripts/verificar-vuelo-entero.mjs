@@ -821,6 +821,30 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   let rodaduraMedida = 0;
   let antesDeFrenar = null;
+  /*
+   * **Y la velocidad respecto al suelo al tocar, que es la que frena.**
+   *
+   * Sin esto, esta medida comparaba una velocidad del aire contra una
+   * distancia del suelo: en Canarias sopla el alisio casi siempre, y tocar a
+   * 32 m/s de aire con quince nudos de cara son bastantes menos de suelo. La
+   * carrera se acorta **de verdad**, porque aterrizar contra el viento acorta
+   * la carrera — eso es la lección, no un fallo. Pero el listón se sacaba de
+   * la ficha del avión, que no sabe de viento, así que el banco fallaba en la
+   * frontera: «rodó 97 m, su ficha pide al menos 101», y el avión frenaba
+   * perfectamente. Ver `src/flight/frenada.test.ts`.
+   */
+  let tocoSuelo = 0;
+  let dejoDeFrenarA = 0;
+  /*
+   * **Y cuántos fotogramas de la frenada se pasan con las ruedas en el aire.**
+   *
+   * Porque un freno solo frena si la rueda toca. Si la pista bota, el avión
+   * pisa el freno la mitad del tiempo y frena la mitad, y eso no se ve en
+   * ninguno de los números de arriba: la frenada sale larga y parece que el
+   * avión frena mal, cuando lo que pasa es que la pista está mal.
+   */
+  let frenadaFotogramas = 0;
+  let frenadaEnElAire = 0;
   const fases = new Set();
   /*
    * **Y todo lo que llegó a decir la torre.**
@@ -1776,9 +1800,12 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         tocoDesviado = desvio(s);
         tocoPasadoElUmbral = falta < 0 ? -falta : 0;
         tocoA = s.airspeed;
+        tocoSuelo = porElSuelo(s);
         etapa = "frenar";
       }
     } else if (etapa === "frenar") {
+      frenadaFotogramas++;
+      if (!s.onGround) frenadaEnElAire++;
       if (antesDeFrenar) {
         rodaduraMedida += Math.hypot(
           s.position.x - antesDeFrenar.x,
@@ -1807,7 +1834,10 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         -1,
         Math.min(1, error(rumboPista, s.heading) * 1.5 - desvio(s) * 0.02),
       );
-      if (porElSuelo(s) < 8) etapa = "volver";
+      if (porElSuelo(s) < 8) {
+        dejoDeFrenarA = porElSuelo(s);
+        etapa = "volver";
+      }
     } else if (etapa === "volver") {
       tiempoDeRodajeVuelta += paso;
       if (antes) {
@@ -1952,6 +1982,10 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
     tocoA: +tocoA.toFixed(0),
     rodaduraMedida: Math.round(rodaduraMedida),
+    tocoSuelo: +tocoSuelo.toFixed(1),
+    frenadaFotogramas,
+    frenadaEnElAire,
+    dejoDeFrenarA: +dejoDeFrenarA.toFixed(1),
     galones: o.galones().map((g) => g.id ?? g),
     fin: o.finDeVuelo(),
     avion: o.avion?.() ?? null,
@@ -2411,24 +2445,39 @@ comprobarSiVolo(
 );
 
 /*
- * **Y la frenada dura lo que tiene que durar.**
+ * **Y la frenada frena lo que tiene que frenar.**
  *
- * El listón sale de la propia ficha del avión: `aterrizajeEn` es la distancia
- * de aterrizaje entera —el planeo desde el umbral más la rodadura de
- * frenada—, y la rodadura es la parte gorda de las dos. Pedir que sea al menos
- * un tercio de esa distancia es holgado de sobra para cualquier toma razonable
- * y sigue cazando lo que hay que cazar: un avión que se planta.
+ * Lo que se mide es la **deceleración media en g**, y no los metros. Los
+ * metros era lo que había, y era una regla de medir rota: el listón salía de
+ * la ficha del avión —«al menos un tercio de su distancia de aterrizaje»— y
+ * una ficha no sabe de viento. En Canarias sopla el alisio casi siempre, así
+ * que tocar a 32 m/s de aire son bastantes menos respecto al suelo, y la
+ * carrera de frenada se acorta **de verdad**: aterrizar contra el viento
+ * acorta la carrera, y eso es justo la lección, no un fallo.
  *
- * Y se mide hasta paso de rodaje, no hasta cero: ahí acaba la frenada y
- * empieza el rodaje de vuelta, que ya tiene su propia comprobación.
+ * El resultado era un fallo en la frontera —«rodó 97 m desde que tocó a 32
+ * m/s, su ficha pide al menos 101»— con el avión frenando perfectamente. Lo
+ * comprobó, sin volar y sin viento, `src/flight/frenada.test.ts`: los seis
+ * aviones frenan entre 0,31 y 0,33 g, que es lo que frena una avioneta en
+ * asfalto seco.
+ *
+ * En g no hay nada que descontar: es la misma cifra con viento y sin él, y
+ * sigue cazando lo que hay que cazar —«freno en la pista en 2 metros, eso no
+ * se lo cree nadie»—, que en g son cuatro o cinco.
  */
-if (vuelo.toco > 0 && vuelo.avion) {
-  const listón = Math.round((vuelo.avion?.aterrizajeEn ?? 0) / 3);
+if (vuelo.toco > 0 && vuelo.rodaduraMedida > 0 && vuelo.tocoSuelo > 0) {
+  const g =
+    (vuelo.tocoSuelo * vuelo.tocoSuelo -
+      vuelo.dejoDeFrenarA * vuelo.dejoDeFrenarA) /
+    (2 * vuelo.rodaduraMedida) /
+    9.80665;
   comprobarSiVolo(
-    "y frenar le cuesta la pista que dice su ficha",
-    vuelo.rodaduraMedida >= listón,
-    `rodó ${vuelo.rodaduraMedida} m desde que tocó a ${vuelo.tocoA} m/s` +
-      ` · su ficha pide ${Math.round(vuelo.avion?.aterrizajeEn ?? 0)} m de aterrizaje, o sea al menos ${listón} de frenada`,
+    "y frenar le cuesta lo que frena un avión",
+    g > 0.15 && g < 0.6,
+    `${g.toFixed(2)} g · ${vuelo.rodaduraMedida} m desde ${vuelo.tocoSuelo} m/s de suelo` +
+      ` (${vuelo.tocoA} de aire) hasta ${vuelo.dejoDeFrenarA}` +
+      ` · en el aire el ${Math.round((100 * vuelo.frenadaEnElAire) / Math.max(1, vuelo.frenadaFotogramas))} % de la frenada`,
+
     "«freno en la pista en 2 metros, eso no se lo cree nadie»",
   );
 }
