@@ -53,6 +53,28 @@ export default defineConfig({
   test: { css: true },
   build: {
     target: "es2022",
+    /**
+     * **Los ficheros de datos no se incrustan como `data:`.**
+     *
+     * Vite mete en el propio paquete todo asset por debajo de cuatro kilobytes,
+     * como una URL `data:`. Con una imagen pequeña eso es una petición menos y
+     * está bien. Con los **ficheros de datos que el juego pide por `fetch`** es
+     * otra cosa: una política de seguridad de contenido razonable no lleva
+     * `data:` en `connect-src`, así que el navegador se niega a leerlos y el
+     * juego se queda sin ortofoto **en producción y solo en producción** —en
+     * desarrollo son ficheros de verdad y todo funciona—.
+     *
+     * Medido en el sitio publicado: «Refused to connect to
+     * data:application/json;base64,…» para las fichas de las dos ortofotos de
+     * Tenerife Norte. O sea el mundo dibujado en vez del fotográfico, sin que
+     * nada lo avisara.
+     *
+     * Se arregla aquí y no pidiendo `data:` en la política, que es la
+     * dirección correcta: pedir permiso para algo que no hace falta es hacer
+     * más débil la política de todo el sitio.
+     */
+    assetsInlineLimit: (ruta: string) =>
+      ruta.endsWith(".json") ? false : undefined,
     // three.js son ~600 KB min. Va en su propio chunk para que el navegador
     // lo cachee entre despliegues: el motor cambia mucho menos que el juego.
     rollupOptions: {
