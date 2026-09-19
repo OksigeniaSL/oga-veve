@@ -989,6 +989,17 @@ export const GRAN_CANARIA: Scenario = {
  */
 export const LANZAROTE: Scenario = {
   id: "lanzarote",
+  /*
+   * Sesenta kilómetros hasta Fuerteventura, con el estrecho de La Bocayna en
+   * medio. Las dos islas se ven la una a la otra desde el suelo, así que aquí
+   * el destino no hay ni que buscarlo: está a la vista desde la cabecera.
+   *
+   * El mundo se ensancha lo justo para que el otro campo caiga dentro con
+   * sitio para la aproximación, y ni un kilómetro más: lo comprueba
+   * `destinos.test.ts` por los dos lados. Ver el ADR 0007.
+   */
+  destino: "fuerteventura",
+  vecesLejos: 8,
   vientoDominante: { vientoDe: 30, vientoKt: 18, techoM: 1900, temp: 22 },
   nameKey: "scenario.lanzarote.name",
   pais: "es",
@@ -1034,6 +1045,15 @@ export const LANZAROTE: Scenario = {
 
 export const FUERTEVENTURA: Scenario = {
   id: "fuerteventura",
+  /*
+   * Y la de vuelta. Ver `lanzarote`.
+   *
+   * El mundo se ensancha lo justo para que el otro campo caiga dentro con
+   * sitio para la aproximación, y ni un kilómetro más: lo comprueba
+   * `destinos.test.ts` por los dos lados. Ver el ADR 0007.
+   */
+  destino: "lanzarote",
+  vecesLejos: 8,
   /*
    * El alisio, que aquí sopla más constante que en ninguna otra isla: del
    * nordeste y sin descanso. Es lo que hace que la 01 sea la cabecera de casa.
@@ -1097,6 +1117,17 @@ export const FUERTEVENTURA: Scenario = {
  */
 export const EL_HIERRO: Scenario = {
   id: "el-hierro",
+  /*
+   * Setenta kilómetros hasta La Gomera. La ruta del Hierro con el resto del
+   * archipiélago pasa siempre por otra isla: es el sitio más apartado de
+   * España y eso se aprende volándolo.
+   *
+   * El mundo se ensancha lo justo para que el otro campo caiga dentro con
+   * sitio para la aproximación, y ni un kilómetro más: lo comprueba
+   * `destinos.test.ts` por los dos lados. Ver el ADR 0007.
+   */
+  destino: "la-gomera",
+  vecesLejos: 10,
   // Alisio del nornordeste. Con él se entra por la 34, o sea desde el mar.
   vientoDominante: { vientoDe: 20, vientoKt: 14, techoM: 1200, temp: 22 },
   nameKey: "scenario.elHierro.name",
@@ -1138,6 +1169,18 @@ export const EL_HIERRO: Scenario = {
  */
 export const LA_GOMERA: Scenario = {
   id: "la-gomera",
+  /*
+   * Y de aquí a Tenerife Sur, sesenta y tres kilómetros de agua. Es el vuelo
+   * que se hace a diario con turbohélice, y el que se intentó volar cuando
+   * todavía no existía: «si voy de una isla a otra no encuentro nada más allá
+   * de Finisterre».
+   *
+   * El mundo se ensancha lo justo para que el otro campo caiga dentro con
+   * sitio para la aproximación, y ni un kilómetro más: lo comprueba
+   * `destinos.test.ts` por los dos lados. Ver el ADR 0007.
+   */
+  destino: "tenerife-sur",
+  vecesLejos: 10,
   vientoDominante: { vientoDe: 45, vientoKt: 12, techoM: 1300, temp: 23 },
   nameKey: "scenario.laGomera.name",
   pais: "es",
