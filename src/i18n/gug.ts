@@ -303,4 +303,14 @@ export const GUG: Dictionary = {
     "Código sãso Apache-2.0 guýpe. Mba'ekuaa ha marca, © Oksigenia SL.",
   "credits.dedication":
     "Guillermo Ayala-pe, Parque Nacional del Teide pegua, omoarandúva cuarenta año pukukue mbo'esyry kuérape upe yvyty. Ko ñembosarái rembiapoukapy ha'e imba'e: tekorosã, tekorosã, tekorosã — upégui, opa ambue ha'e ñemoarandu.",
+
+  /* Mba'épa ojehecha ovetãgui. Téra ha yvatekue OpenStreetMap-gui ou. */
+  "hito.izquierda": "asu",
+  "hito.derecha": "akatúa",
+  "hito.montana": "Pemaña ovetã rupi, {lado} gotyo: {nombre}, {altura} metros.",
+  "hito.isla": "{lado} gotyo jahejahína {nombre}.",
+  "hito.ciudad": "Upépe yvýpe, {lado} gotyo, {nombre}.",
+  "hito.montana.vos": "Emaña ovetã rupi, {lado} gotyo: {nombre}, {altura} metros.",
+  "hito.isla.vos": "{lado} gotyo jahejahína {nombre}.",
+  "hito.ciudad.vos": "Upépe yvýpe, {lado} gotyo, {nombre}.",
 };

@@ -268,6 +268,46 @@ export const ES_PY = {
     "Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.",
   "comandante.descenso":
     "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
+
+  /*
+   * ── **Lo que se ve por la ventanilla** ──────────────────────────────────
+   *
+   * Lo que hace una comandante en un vuelo largo: señalar lo que se pasa por
+   * debajo. Responde a una pega concreta —«durante los vuelos largos pueden
+   * pasar cosas, entretener a la niña que vuela mucho rato»— y de paso enseña
+   * geografía sin proponérselo, que es como se aprende.
+   *
+   * `{nombre}` y `{altura}` son **datos**: salen de OpenStreetMap con
+   * `scripts/osm-a-hitos.mjs`, no de una lista escrita aquí. Por eso las
+   * frases no llevan artículo delante del nombre: «el Teide» se puede, pero
+   * «el Montaña de Chío» no, y el nombre viene tal cual lo tiene mapeado
+   * quien vive allí.
+   *
+   * Y el lado va en palabra y en flecha. La flecha es la que entiende quien
+   * todavía no lee, y es la que va primero. Ver `hito()` en `ui/senal.ts`.
+   */
+  "hito.izquierda": "izquierda",
+  "hito.derecha": "derecha",
+  "hito.montana": "Miren por la ventanilla, a la {lado}: {nombre}, {altura} metros.",
+  "hito.isla": "A la {lado} vamos dejando {nombre}.",
+  "hito.ciudad": "Ahí abajo, a la {lado}, {nombre}.",
+
+  /*
+   * ── **Y lo mismo, pero dicho por la instructora** ───────────────────────
+   *
+   * Porque no todos los aviones llevan megafonía, y un Pykasu no tiene a
+   * quién hablarle por un altavoz: la comandante solo existe donde hay pasaje
+   * —ver `conPasaje`—. En una avioneta quien señala el paisaje es la
+   * instructora, que está sentada al lado, y entonces no habla de usted a
+   * cien personas: te habla **a vos**.
+   *
+   * Es la misma información y otro registro, y mezclarlos se nota: una
+   * comandante que tutea suena a monitora y una monitora que dice «señores
+   * pasajeros» suena a broma.
+   */
+  "hito.montana.vos": "Mirá por la ventanilla, a la {lado}: {nombre}, {altura} metros.",
+  "hito.isla.vos": "A la {lado} vamos dejando {nombre}.",
+  "hito.ciudad.vos": "Ahí abajo, a la {lado}, {nombre}.",
   /*
    * **Y la llegada dice dónde has llegado.**
    *

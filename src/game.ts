@@ -314,6 +314,8 @@ import { avisaDelTren, seVuelveADecir } from "./flight/tren";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
+import { LoQueSeVe } from "./flight/lo-que-se-ve";
+import { hitosDe } from "./world/hitos";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import {
   InstructorGrabado,
@@ -1243,6 +1245,12 @@ export class Game {
    * reconoce antes de entender una palabra. Ver `audio/megafonia.ts`.
    */
   private readonly megafonia = new Megafonia();
+
+  /**
+   * Y lo que se ve por la ventanilla, que es lo que hace que un crucero de
+   * cuarenta minutos no sea una recta. Ver `flight/lo-que-se-ve.ts`.
+   */
+  private readonly ventanilla = new LoQueSeVe();
   private readonly otroAvion: Instructor = new InstructorGrabado(
     this.audio,
     elegirOtroAvion(this.vozDelSistema, this.torre),
@@ -1538,6 +1546,26 @@ export class Game {
       this.scene.add(this.avionesDeRuta.grupo);
       this.terrain.ponerSueloLejano((x, z) => this.vecino?.cota(x, z) ?? null);
     }
+
+    /*
+     * **Y lo que se ve por la ventanilla, de los dos lados del canal.**
+     *
+     * Los del campo de salida van tal cual; los del vecino, corridos hasta
+     * donde cae su isla, que es la misma cuenta que mueve su aeródromo. Sin
+     * eso, la mitad de un vuelo entre islas se pasa mirando hitos que están
+     * detrás y la otra mitad sin nada que señalar, que es justo el rato en que
+     * se ve la isla de enfrente. Ver `world/hitos.ts`.
+     */
+    this.ventanilla.ponerHitos([
+      ...hitosDe(this.scenario.id),
+      ...(this.vecino && this.vecinoEscenario
+        ? hitosDe(this.vecinoEscenario.id).map((h) => ({
+            ...h,
+            x: h.x + this.vecino!.desplazamiento.x,
+            z: h.z + this.vecino!.desplazamiento.z,
+          }))
+        : []),
+    ]);
 
     /*
      * **La aproximación, con lo que no cambia en todo el vuelo.**
@@ -3921,6 +3949,7 @@ export class Game {
      */
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.ventanilla.reiniciar();
     this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
     this.updateBadge();
@@ -4197,6 +4226,8 @@ export class Game {
       this.comandante.decir(texto, forma.id, "baja");
       if (this.tier.instruments !== "none") this.hud.radio(texto);
     }
+
+    this.mirarPorLaVentanilla(dt);
 
     if (this.scenario.aerodrome?.privado) return;
     this.trafico?.paso(dt);
@@ -4938,6 +4969,7 @@ export class Game {
     // Vuelo nuevo, memoria nueva. Ver la nota de arriba.
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
+    this.ventanilla.reiniciar();
     this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
     this.updateBadge();
@@ -6759,6 +6791,85 @@ export class Game {
    * repite sesenta veces por segundo no se lee, parpadea. Lo único que sí se
    * repite es el aviso de haberse salido de la raya, y con cuentagotas.
    */
+  /**
+   * Lo que se ve por la ventanilla.
+   *
+   * Es lo que hace una comandante en un vuelo largo —«miren a la izquierda,
+   * el Teide»— y aquí arregla tres cosas de una vez: el rato muerto del
+   * crucero, que era la pega («durante los vuelos largos pueden pasar cosas»),
+   * la geografía, que se aprende mirando, y una razón para mirar por la
+   * ventana en vez de a los relojes.
+   *
+   * **Y no es solo la voz.** Sale la tarjeta con el dibujo de lo que es y una
+   * flecha al lado hacia el que hay que mirar, que es lo que entiende quien
+   * todavía no lee. El nombre —que es el dato, y sale de OpenStreetMap— se
+   * escribe a partir del segundo peldaño y la cota a partir del tercero.
+   *
+   * Cuándo se puede hablar lo decide `LoQueSeVe`; aquí solo se dice.
+   */
+  private mirarPorLaVentanilla(dt: number): void {
+    const s = this.flight.state;
+    const mirada = this.ventanilla.paso(dt, {
+      fase: this.faseDeAhora as Fase,
+      x: s.position.x,
+      z: s.position.z,
+      rumbo: MathUtils.radToDeg(s.heading),
+      sobreElCampo: s.position.y - this.terrain.runwayElevation,
+      /*
+       * Cualquiera de las cuatro bocas. Esto es lo que menos urge de todo lo
+       * que suena: una autorización no puede esperar y el paisaje sí.
+       */
+      alguienHabla:
+        this.instructor.hablando ||
+        this.comandante.hablando ||
+        this.torre.hablando ||
+        this.otroAvion.hablando,
+    });
+    if (!mirada) return;
+
+    /*
+     * **Y lo dice quien de verdad lo diría.**
+     *
+     * Un Pykasu no lleva megafonía ni a quién hablarle por ella: la comandante
+     * solo existe donde hay pasaje. En una avioneta quien señala el paisaje es
+     * la instructora, que va sentada al lado — y entonces no es «miren», es
+     * «mirá». Ver `conPasaje` y los dos registros del castellano en AGENTS.md.
+     */
+    const conGente = conPasaje(this.aircraft.mass);
+    const lado = t(`hito.${mirada.lado}` as TranslationKey);
+    const clave = `hito.${mirada.hito.clase}${conGente ? "" : ".vos"}`;
+    const texto = t(clave as TranslationKey, {
+      lado,
+      nombre: mirada.hito.nombre,
+      altura: mirada.hito.ele ?? 0,
+    });
+    const boca = conGente ? this.comandante : this.instructor;
+    boca.decir(texto, `hito.${mirada.hito.nombre}`, "baja");
+
+    const canales = canalesDe(this.tier.avisos);
+    /*
+     * Y en el peldaño del dibujo, la tarjeta va sin una palabra: la flecha y
+     * la figura dicen «mirá hacia allá, es una montaña», que es todo lo que
+     * hace falta para girar la cabeza. El nombre lo dice la voz igual.
+     */
+    const rotulo = !canales.texto
+      ? ""
+      : canales.cifra && mirada.hito.ele !== null
+        ? `${mirada.hito.nombre} · ${mirada.hito.ele} m`
+        : mirada.hito.nombre;
+    this.hud.senal.mostrar(
+      comoDibujo(`hito-${mirada.hito.clase}-${mirada.lado}`),
+      rotulo,
+      null,
+      /*
+       * Prioridad cero: esto es lo que menos importa de todo lo que sale en
+       * esa esquina. Un aviso de terreno, un tren sin bajar o la orden de la
+       * torre tapan al paisaje, y hacen bien.
+       */
+      { segundos: 7, prioridad: 0 },
+    );
+  }
+
   private avanzarPlan(dt: number): void {
     if (!this.plan) return;
     this.mudarElPlanSiCambiaDeCampo();

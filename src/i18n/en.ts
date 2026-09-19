@@ -406,4 +406,18 @@ export const EN: Dictionary = {
 
   "language.label": "Language",
   "language.changed": "Language: {name}",
+
+  /*
+   * What you can see out of the window. The name and the height are data,
+   * straight from OpenStreetMap, so no article goes in front of the name.
+   */
+  "hito.izquierda": "left",
+  "hito.derecha": "right",
+  "hito.montana": "Look out of the window, on your {lado}: {nombre}, {altura} metres.",
+  "hito.isla": "On your {lado} we are leaving {nombre} behind.",
+  "hito.ciudad": "Down there, on your {lado}, {nombre}.",
+  /* The same, said by the instructor sitting beside you in a light aircraft. */
+  "hito.montana.vos": "Look out of the window, on your {lado}: {nombre}, {altura} metres.",
+  "hito.isla.vos": "On your {lado} we are leaving {nombre} behind.",
+  "hito.ciudad.vos": "Down there, on your {lado}, {nombre}.",
 };

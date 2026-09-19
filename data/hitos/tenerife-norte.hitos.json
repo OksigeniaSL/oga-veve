@@ -1,0 +1,128 @@
+{
+  "id": "tenerife-norte",
+  "fuente": "OpenStreetMap",
+  "licencia": "ODbL 1.0",
+  "origen": {
+    "lat": 28.482752,
+    "lon": -16.341707
+  },
+  "hitos": [
+    {
+      "nombre": "Teide",
+      "clase": "montana",
+      "lat": 28.27269,
+      "lon": -16.64227,
+      "x": -29376,
+      "z": 23357,
+      "ele": 3715
+    },
+    {
+      "nombre": "Guajara",
+      "clase": "montana",
+      "lat": 28.21699,
+      "lon": -16.61229,
+      "x": -26446,
+      "z": 29551,
+      "ele": 2718
+    },
+    {
+      "nombre": "El Sombrero",
+      "clase": "montana",
+      "lat": 28.20717,
+      "lon": -16.66701,
+      "x": -31794,
+      "z": 30643,
+      "ele": 2532
+    },
+    {
+      "nombre": "Montaña Abreu",
+      "clase": "montana",
+      "lat": 28.28808,
+      "lon": -16.53333,
+      "x": -18728,
+      "z": 21647,
+      "ele": 2406
+    },
+    {
+      "nombre": "Montaña de la Angostura",
+      "clase": "montana",
+      "lat": 28.24248,
+      "lon": -16.56514,
+      "x": -21837,
+      "z": 26717,
+      "ele": 2384
+    },
+    {
+      "nombre": "Montaña de Chío",
+      "clase": "montana",
+      "lat": 28.25382,
+      "lon": -16.69305,
+      "x": -34339,
+      "z": 25456,
+      "ele": 2345
+    },
+    {
+      "nombre": "Roque Chico",
+      "clase": "isla",
+      "lat": 28.40442,
+      "lon": -16.57467,
+      "x": -22769,
+      "z": 8711,
+      "ele": 23
+    },
+    {
+      "nombre": "Roque de Santa Úrsula",
+      "clase": "isla",
+      "lat": 28.43966,
+      "lon": -16.48682,
+      "x": -14183,
+      "z": 4792,
+      "ele": 12
+    },
+    {
+      "nombre": "Piedra del Gallo",
+      "clase": "isla",
+      "lat": 28.39698,
+      "lon": -16.63229,
+      "x": -28400,
+      "z": 9538,
+      "ele": 3
+    },
+    {
+      "nombre": "Santa Cruz de Tenerife",
+      "clase": "ciudad",
+      "lat": 28.46718,
+      "lon": -16.25078,
+      "x": 8886,
+      "z": 1732,
+      "ele": null
+    },
+    {
+      "nombre": "San Cristóbal de La Laguna",
+      "clase": "ciudad",
+      "lat": 28.48577,
+      "lon": -16.31594,
+      "x": 2518,
+      "z": -336,
+      "ele": 549
+    },
+    {
+      "nombre": "La Orotava",
+      "clase": "ciudad",
+      "lat": 28.38988,
+      "lon": -16.52357,
+      "x": -17774,
+      "z": 10327,
+      "ele": 363
+    },
+    {
+      "nombre": "Los Cristianos",
+      "clase": "ciudad",
+      "lat": 28.05263,
+      "lon": -16.717,
+      "x": -36680,
+      "z": 47827,
+      "ele": 19
+    }
+  ]
+}

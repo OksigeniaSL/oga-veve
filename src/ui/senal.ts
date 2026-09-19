@@ -477,6 +477,50 @@ const circuito = (tramo: string): string =>
 `);
 
 /**
+ * Lo que se ve por la ventanilla: la cosa, y por qué lado mirar.
+ *
+ * Seis tarjetas que son dos ideas: **qué es** —una montaña, una isla, un
+ * pueblo— y **hacia dónde girar la cabeza**. La flecha va al borde que
+ * corresponde y el dibujo va corrido al otro lado, como quien se aparta para
+ * dejar mirar.
+ *
+ * Funciona sin una palabra, que es lo que hace falta: quien tiene cuatro años
+ * ve una flecha a la izquierda y un volcán, y mira a la izquierda. El nombre
+ * —que sí es el dato de verdad, y sale de OpenStreetMap— lo dice la voz, y a
+ * partir del segundo peldaño también se escribe. Ver `world/hitos.ts`.
+ */
+const FIGURA: Record<string, string> = {
+  // La montaña: dos crestas y la de atrás asomando, que es como se dibuja una
+  // cordillera desde que se dibujan cordilleras.
+  montana: `<path d="M2 20 L8 9 L12 15 L15.5 10 L22 20 Z" />
+            <path class="senal__hueco" d="M6.2 12.6 L8 9.8 L9.8 12.6 Z" />`,
+  // La isla: tierra con su playa y el mar por debajo en dos rayas.
+  isla: `<path d="M4 15 q3-4 8-4 q5 0 8 4 Z" />
+         <path d="M2 18.4 h7 M12 18.4 h10 M2 21.4 h4 M9 21.4 h13"
+               stroke="currentColor" stroke-width="1.5" fill="none"
+               stroke-linecap="round" opacity="0.65" />`,
+  // El pueblo: tres bloques de distinto alto, que es la silueta de cualquiera
+  // visto desde el aire.
+  ciudad: `<rect x="3" y="13" width="5" height="8" rx="0.6" />
+           <rect x="9.5" y="8" width="5" height="13" rx="0.6" />
+           <rect x="16" y="11" width="5" height="10" rx="0.6" />
+           <rect class="senal__hueco" x="11" y="10.4" width="2" height="2" />`,
+};
+
+/** La flecha del lado, pegada al borde: es lo primero que se mira. */
+const HACIA: Record<string, string> = {
+  izquierda: `<path d="M5.4 4.2 L1.4 7.2 L5.4 10.2 Z" />
+              <path d="M5.4 7.2 H10.6" stroke="currentColor" stroke-width="1.8"
+                    fill="none" stroke-linecap="round" />`,
+  derecha: `<path d="M18.6 4.2 L22.6 7.2 L18.6 10.2 Z" />
+            <path d="M18.6 7.2 H13.4" stroke="currentColor" stroke-width="1.8"
+                  fill="none" stroke-linecap="round" />`,
+};
+
+const hito = (clase: string, lado: string): string =>
+  icono(`${HACIA[lado] ?? ""}<g transform="translate(0 2) scale(1 0.86)">${FIGURA[clase] ?? ""}</g>`);
+
+/**
  * Tirar: levantá el morro.
  *
  * Es la señal de Vr, y por eso es una acción y no un estado: la avioneta de
@@ -643,6 +687,12 @@ export const DIBUJOS = {
   "senalero-derecha": SENALERO_DERECHA,
   "senalero-despacio": SENALERO_DESPACIO,
   "senalero-frenos": SENALERO_FRENOS,
+  "hito-montana-izquierda": hito("montana", "izquierda"),
+  "hito-montana-derecha": hito("montana", "derecha"),
+  "hito-isla-izquierda": hito("isla", "izquierda"),
+  "hito-isla-derecha": hito("isla", "derecha"),
+  "hito-ciudad-izquierda": hito("ciudad", "izquierda"),
+  "hito-ciudad-derecha": hito("ciudad", "derecha"),
 } as const;
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */
