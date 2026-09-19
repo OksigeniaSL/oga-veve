@@ -54,10 +54,43 @@ while (Date.now() < hasta) {
 
 const fase = await page.evaluate(() => globalThis.__oga.fase());
 console.log(`hitos señalados: ${cuantos} · fase: ${fase}`);
+
+/*
+ * **Y el plano se abre con ellos dentro.**
+ *
+ * Los hitos se dibujan en el mapa —triángulo si es cumbre, círculo si es
+ * pueblo— y el nombre sale solo de los que ya se han oído. El mapa se pinta en
+ * un lienzo, así que lo único que se puede mirar desde fuera sin ponerse a
+ * comparar píxeles es lo que de verdad rompe: que abrirlo no reviente y que no
+ * salga en blanco.
+ */
+await page.evaluate(() =>
+  document.querySelector('[data-hud="mapa-boton"]')?.click(),
+);
+await page.waitForTimeout(2500);
+const plano = await page.evaluate(() => {
+  const c = document.querySelector('[data-hud="mapa-fondo"]');
+  if (!c) return { hay: false };
+  const g = c.getContext('2d');
+  const d = g.getImageData(0, 0, c.width, c.height).data;
+  const colores = new Set();
+  for (let i = 0; i < d.length; i += 4 * 97)
+    colores.add(`${d[i]},${d[i + 1]},${d[i + 2]}`);
+  return { hay: true, colores: colores.size };
+});
+console.log(`plano: ${plano.hay ? `${plano.colores} colores distintos` : 'no está'}`);
 for (const e of errores) console.log('ERROR:', e);
 
 await navegador.close();
 await server.close();
+if (errores.length) {
+  console.log('✖ La página dio errores.');
+  process.exit(1);
+}
+if (!plano.hay || plano.colores < 5) {
+  console.log('✖ El plano no se pintó.');
+  process.exit(1);
+}
 if (cuantos < 1) {
   console.log('✖ La comandante no señaló nada en dos minutos de crucero.');
   process.exit(1);

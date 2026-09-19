@@ -315,7 +315,7 @@ import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
-import { hitosDe } from "./world/hitos";
+import { hitosDe, type Hito } from "./world/hitos";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import {
   InstructorGrabado,
@@ -1252,6 +1252,9 @@ export class Game {
    */
   private readonly ventanilla = new LoQueSeVe();
 
+  /** Los hitos de este vuelo, para dárselos al plano cuando exista. */
+  private hitosDelVuelo: readonly Hito[] = [];
+
   /** Cuántos hitos lleva señalados este vuelo. Para los bancos. */
   get hitosSenalados(): number {
     return this.ventanilla.cuantos;
@@ -1561,7 +1564,7 @@ export class Game {
      * detrás y la otra mitad sin nada que señalar, que es justo el rato en que
      * se ve la isla de enfrente. Ver `world/hitos.ts`.
      */
-    this.ventanilla.ponerHitos([
+    const hitosDelVuelo = [
       ...hitosDe(this.scenario.id),
       ...(this.vecino && this.vecinoEscenario
         ? hitosDe(this.vecinoEscenario.id).map((h) => ({
@@ -1570,7 +1573,11 @@ export class Game {
             z: h.z + this.vecino!.desplazamiento.z,
           }))
         : []),
-    ]);
+    ];
+    this.ventanilla.ponerHitos(hitosDelVuelo);
+    // Y se guardan para el plano, que todavía no existe en este punto del
+    // constructor: se le dan unas líneas más abajo, al montar el HUD.
+    this.hitosDelVuelo = hitosDelVuelo;
 
     /*
      * **La aproximación, con lo que no cambia en todo el vuelo.**
@@ -1881,6 +1888,16 @@ export class Game {
     this.flight = this.buildFlightModel(this.tier);
 
     this.hud = new Hud(options.hudRoot);
+    /*
+     * Y el plano lleva los hitos también: con su dibujo desde el principio y
+     * con su **nombre** en cuanto la comandante lo haya señalado. El mapa se
+     * va llenando de nombres a medida que se vuela, y sigue sin haber nada que
+     * haya que leer para saber dónde está uno. Ver `Mapa.ponerHitos`.
+     */
+    this.hud.mapa.ponerHitos(
+      this.hitosDelVuelo,
+      () => this.ventanilla.yaDichos,
+    );
     this.medidor = new Medidor(document.body, this.renderer);
     this.hud.setEscalera(this.tier.avisos);
     this.hud.setInstruments(this.tier.instruments);

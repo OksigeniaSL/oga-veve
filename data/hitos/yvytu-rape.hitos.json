@@ -6,24 +6,5 @@
     "lat": -24.830009,
     "lon": -56.147041
   },
-  "hitos": [
-    {
-      "nombre": "San Estanislao",
-      "clase": "ciudad",
-      "lat": -24.66574,
-      "lon": -56.44168,
-      "x": -29734,
-      "z": -18266,
-      "ele": null
-    },
-    {
-      "nombre": "Vaquería",
-      "clase": "ciudad",
-      "lat": -25.00169,
-      "lon": -55.8225,
-      "x": 32751,
-      "z": 19091,
-      "ele": null
-    }
-  ]
+  "hitos": []
 }

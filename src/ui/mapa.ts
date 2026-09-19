@@ -34,6 +34,7 @@ const LUPA_MAS = `<circle cx="10.5" cy="10.5" r="6.6" />
   <path d="M15.4 15.4 L21 21 M7 10.5 h7 M10.5 7 v7" />`;
 import { vecesLejosDe, type Scenario } from "../world/scenarios";
 import { puntoDePista } from "../world/rumbo";
+import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
 
 /** Lado del lienzo, en píxeles. */
@@ -78,6 +79,32 @@ export class Mapa {
   private alcance = 0;
   private escenario: Scenario | null = null;
   private cota: ((x: number, z: number) => number) | null = null;
+  /** Los hitos del paisaje, y quién sabe cuáles se han nombrado ya. */
+  private hitos: readonly Hito[] = [];
+  private dichos: () => ReadonlySet<string> = () => new Set();
+
+  /**
+   * Los sitios con nombre que hay alrededor, y de cuáles ya se ha hablado.
+   *
+   * El mapa de este juego presume de no tener una sola palabra, y eso se
+   * queda como está: cada hito se dibuja con su símbolo —un triángulo si es
+   * cumbre, un círculo si es pueblo—, que es lo que se entiende sin leer.
+   *
+   * **El nombre solo sale cuando ya se ha oído.** La comandante dice «a la
+   * izquierda, el Teide» y a partir de ahí ese triángulo del plano lleva su
+   * nombre escrito. El mapa se va llenando a medida que se vuela, que es
+   * bastante más bonito que venir lleno, y sigue sin haber nada que haya que
+   * leer para saber dónde está uno. Ver `flight/lo-que-se-ve.ts`.
+   */
+  ponerHitos(hitos: readonly Hito[], dichos: () => ReadonlySet<string>): void {
+    this.hitos = hitos;
+    this.dichos = dichos;
+    this.pintado = false;
+    if (this.abierto) {
+      this.pintarFondo();
+      this.pintado = true;
+    }
+  }
 
   static markup(): string {
     return `
@@ -593,6 +620,12 @@ export class Mapa {
       }
     }
 
+    // ── Los hitos del paisaje ───────────────────────────────────────────
+    //
+    // Antes que la pista y después del aeropuerto: son referencia del
+    // terreno, y lo que se busca al abrir el plano sigue siendo la pista.
+    this.pintarHitos(g, cx, cz, escala);
+
     // ── La pista, que es lo que hay que encontrar ───────────────────────
     //
     // Se dibuja la última y en blanco: cuando uno mira este mapa es porque no
@@ -611,9 +644,54 @@ export class Mapa {
     g.lineWidth = Math.max(2.6, 2.6 * (LADO / this.metrosPorLado()) * 4);
     g.stroke();
   }
+
+  /** Cumbres y pueblos: el dibujo siempre, el nombre si ya se oyó. */
+  private pintarHitos(
+    g: CanvasRenderingContext2D,
+    cx: number,
+    cz: number,
+    escala: number,
+  ): void {
+    if (this.hitos.length === 0) return;
+    const dichos = this.dichos();
+    g.font = "600 10px system-ui, sans-serif";
+    g.textAlign = "left";
+    g.textBaseline = "middle";
+    for (const hito of this.hitos) {
+      // Las islas no llevan símbolo: la isla **es** la forma del relieve, y
+      // un punto encima de una isla no dice nada que el mapa no diga ya.
+      if (hito.clase === "isla") continue;
+      const px = LADO / 2 + (hito.x - cx) * escala;
+      const py = LADO / 2 + (hito.z - cz) * escala;
+      if (px < -20 || px > LADO + 20 || py < -20 || py > LADO + 20) continue;
+      g.fillStyle = "#1d1b19";
+      g.beginPath();
+      if (hito.clase === "montana") {
+        // El triángulo de cota de las cartas de verdad.
+        g.moveTo(px, py - 4.5);
+        g.lineTo(px + 4, py + 3);
+        g.lineTo(px - 4, py + 3);
+        g.closePath();
+      } else {
+        g.arc(px, py, 3, 0, Math.PI * 2);
+      }
+      g.fill();
+      if (!dichos.has(hito.nombre)) continue;
+      /*
+       * Y el nombre con su reborde claro, que sobre relieve verde y monte
+       * marrón un texto oscuro a secas no se lee. Es lo mismo que hacen los
+       * rótulos de una carta aeronáutica y por el mismo motivo.
+       */
+      g.lineWidth = 3;
+      g.strokeStyle = "#f4efe6";
+      g.strokeText(hito.nombre, px + 7, py);
+      g.fillText(hito.nombre, px + 7, py);
+    }
+  }
 }
 
 const colorHex = (n: number): string => `#${n.toString(16).padStart(6, "0")}`;
+
 
 /** El color que le toca a una cota, con las mismas bandas que el terreno. */
 function colorDeCota(esc: Scenario, h: number): string {

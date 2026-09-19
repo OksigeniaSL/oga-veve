@@ -91,6 +91,18 @@ export class LoQueSeVe {
   }
 
   /**
+   * Los que ya se han señalado en este vuelo.
+   *
+   * Lo mira el mapa: un sitio que la comandante ha nombrado **aparece escrito
+   * en el plano**, y los que no, solo con su dibujo. Así el mapa se va
+   * llenando de nombres a medida que se vuela, y nunca obliga a leer para
+   * saber dónde está uno. Ver `ui/mapa.ts`.
+   */
+  get yaDichos(): ReadonlySet<string> {
+    return this.dichos;
+  }
+
+  /**
    * Un fotograma. Devuelve lo que toca señalar, o `null`, que es lo normal.
    *
    * El reloj **no corre fuera del crucero**, y eso es a propósito: si corriera,
