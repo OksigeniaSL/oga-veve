@@ -39,6 +39,7 @@ import { Box3, Group, Vector3, type Color, type Object3D } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { AircraftConfig } from "../flight/aircraft";
 import type { AircraftMesh } from "./aircraft-mesh";
+import { crearLucesDePosicion } from "./luces-de-posicion";
 import { encenderPantallas } from "./pantallas-cabina";
 import { prepararPatas } from "./patas";
 import { encenderRelojes } from "./relojes-cabina";
@@ -545,8 +546,24 @@ export async function cargarModelo(
 
   const helices = ejesDeHelice(raiz);
 
+  /*
+   * **Y las luces de posición, aquí también.**
+   *
+   * Se pusieron en `createAircraftMesh` —el avión de cajas— y este es el otro
+   * constructor de una aeronave: el que carga el modelo de Blender y
+   * **sustituye** al anterior entero. O sea que los aviones con modelo, que
+   * son los que más se miran, se quedaron sin ellas. «No veo las luces en el
+   * avión», y no estaban.
+   *
+   * Es el fallo de siempre en este proyecto, el de las dos superficies: se
+   * arregla donde se mira y no donde también se mira.
+   */
+  const luces = crearLucesDePosicion(aircraft);
+  group.add(luces.grupo);
+
   return {
     group,
+    luces,
     // La primera, para que lo que ya existía siga funcionando; y todas, para
     // que un bimotor gire las dos. Ver `AircraftMesh.helices`.
     propeller: helices[0] ?? new Group(),
