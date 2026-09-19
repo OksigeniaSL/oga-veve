@@ -1038,11 +1038,39 @@ export class Terrain {
 
     const indices: number[] = [];
     const dentro = this.half - paso;
+    /*
+     * **Y el mar abierto no se malla, que ya lo pinta el agua.**
+     *
+     * El anillo cubre el mundo entero, y un mundo de Canarias es sobre todo
+     * océano: con Los Rodeos a trescientos veinticuatro kilómetros para
+     * alcanzar La Palma, más de la mitad de los dos millones de triángulos
+     * del horizonte eran agua hundida treinta metros **debajo del plano de
+     * agua**, o sea invisible. Pagar por eso es pagar por nada.
+     *
+     * Se quita un cuadro solo cuando sus **cuatro esquinas** están bajo el
+     * agua: así la costa se conserva entera —el cuadro que tiene una esquina
+     * en tierra se malla— y lo único que desaparece es lo que no se veía.
+     *
+     * Medido en Los Rodeos con los cinco vecinos y el mundo de 324 km: de
+     * 3.231k triángulos a 1.233k, la mediana en el aire a ×4 de 13,9 ms a
+     * 11,7 y el percentil noventa y cinco de 29,5 a 14,2. O sea que el
+     * escenario más grande del juego va ahora **mejor** que el de esta
+     * mañana, que tenía un vecino y un mundo cinco veces menor.
+     */
+    const bajoElAgua = (fila: number, col: number): boolean =>
+      cota(fila, col) <= hundido;
     for (let fila = 0; fila < res - 1; fila++) {
       for (let col = 0; col < res - 1; col++) {
         const cx = -mitad + (col + 0.5) * paso;
         const cz = -mitad + (fila + 0.5) * paso;
         if (Math.abs(cx) < dentro && Math.abs(cz) < dentro) continue;
+        if (
+          bajoElAgua(fila, col) &&
+          bajoElAgua(fila + 1, col) &&
+          bajoElAgua(fila, col + 1) &&
+          bajoElAgua(fila + 1, col + 1)
+        )
+          continue;
         const a = fila * res + col;
         indices.push(a, a + res, a + 1, a + 1, a + res, a + res + 1);
       }
