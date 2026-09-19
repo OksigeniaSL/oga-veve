@@ -4972,6 +4972,25 @@ button.motor__tecla::after {
     pointer-events: none;
   }
 
+  /*
+   * **Y los eventos vuelven en toda la concha, no solo en el plano.**
+   *
+   * Aquí solo los recuperaba `.mapa__lienzos`, y la fila de botones —las dos
+   * lupas y «Cerrar»— vive en la concha, fuera de los lienzos. O sea que el
+   * clic los atravesaba y se lo comía el lienzo del juego que hay detrás.
+   *
+   * Contado jugando dos veces, con meses de por medio: «el botón naranja
+   * cerrar no cierra, pero sí se oye una notificación, hay que hacer clic por
+   * fuera para salir» y «esto sigue sin cerrar el panel». Medido:
+   * `elementFromPoint` sobre el botón devolvía el lienzo del juego, y el
+   * propio botón daba `pointer-events: none`.
+   *
+   * Lo que sí tiene que seguir atravesándose es **el hueco alrededor**: en
+   * escritorio el plano se pega a la izquierda con fondo transparente justo
+   * para poder seguir volando con él abierto. Por eso el `none` se queda en
+   * `.mapa` y se levanta en lo que es panel de verdad.
+   */
+  .mapa .concha,
   .mapa__lienzos {
     pointer-events: auto;
   }

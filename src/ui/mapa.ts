@@ -32,7 +32,7 @@ const LUPA_MENOS = `<circle cx="10.5" cy="10.5" r="6.6" />
   <path d="M15.4 15.4 L21 21 M7 10.5 h7" />`;
 const LUPA_MAS = `<circle cx="10.5" cy="10.5" r="6.6" />
   <path d="M15.4 15.4 L21 21 M7 10.5 h7 M10.5 7 v7" />`;
-import type { Scenario } from "../world/scenarios";
+import { vecesLejosDe, type Scenario } from "../world/scenarios";
 import { puntoDePista } from "../world/rumbo";
 import { Panel } from "./panel";
 
@@ -466,17 +466,25 @@ export class Mapa {
         const x = cx - lado / 2 + (col + 0.5) * paso;
         const z = cz - lado / 2 + (fila + 0.5) * paso;
         /*
-         * **Fuera del escenario, mar.**
+         * **Fuera del mundo, mar. Y el mundo ya no es el mapa fino.**
          *
-         * El mapa de alturas solo cubre el mundo del juego, y consultarlo fuera
-         * devuelve el borde repetido: al estirar el mapa para alcanzar a quien
-         * se ha ido volando, alrededor aparecía una franja con el color de la
-         * última fila de terreno, como si la isla se prolongara. Los dos
-         * aeródromos están junto al agua y lo que hay más allá es agua; el día
-         * que haya uno de interior, esto se cambia por lo que corresponda.
+         * Esto recortaba al tamaño del escenario —dieciocho kilómetros— porque
+         * el mapa de alturas solo cubría eso y fuera devolvía el borde
+         * repetido: al estirar el plano aparecía una franja con el color de la
+         * última fila, como si la isla se prolongara.
+         *
+         * **Dejó de ser verdad** el día que el mapa del horizonte pasó a ser
+         * suelo de verdad y no solo dibujo: ahora `sampleHeight` contesta bien
+         * hasta ciento sesenta kilómetros. El apaño de entonces es el que
+         * estorba ahora — pintaba mar encima de la isla de al lado, y quien
+         * volaba a otro aeropuerto abría el plano y se veía a sí mismo como
+         * una flecha en mitad del océano.
+         *
+         * Se recorta al mundo de verdad, que es el mapa lejano. Más allá sí
+         * que no hay nada, y ahí el mar es lo honesto.
          */
-        const dentro =
-          Math.abs(x) <= esc.size / 2 && Math.abs(z) <= esc.size / 2;
+        const medioMundo = (esc.size * vecesLejosDe(esc)) / 2;
+        const dentro = Math.abs(x) <= medioMundo && Math.abs(z) <= medioMundo;
         const h = dentro ? cota(x, z) : esc.waterLevel;
         g.fillStyle =
           h <= esc.waterLevel ? colorHex(esc.water) : colorDeCota(esc, h);
