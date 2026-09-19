@@ -31,10 +31,19 @@ import {
 } from "three";
 import type { AircraftConfig } from "../flight/aircraft";
 import { modeloPorId } from "../flight/flota";
+import {
+  crearLucesDePosicion,
+  type LucesDePosicion,
+} from "./luces-de-posicion";
 import { fabricarAeronave, RADIO_DE_HELICE } from "./fabrica-de-aeronaves";
 
 export interface AircraftMesh {
   group: Group;
+  /**
+   * Las luces de posición: verde a estribor, roja a babor, blanca a la cola y
+   * la de choque parpadeando. Ver `luces-de-posicion.ts`.
+   */
+  luces?: LucesDePosicion;
   /** Se hace girar con el motor. */
   propeller: Object3D;
   /**
@@ -169,8 +178,18 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
     helices.push(helice);
   }
 
+  /*
+   * **Y las luces de posición**, que son lo que hace que un avión de noche
+   * sea un avión y no una silueta gris. Ver `luces-de-posicion.ts`.
+   */
+  const luces = crearLucesDePosicion(aircraft);
+  // Al mismo cero que el casco: la fábrica deja la panza en el origen.
+  luces.grupo.position.y = -aircraft.gearHeight;
+  group.add(luces.grupo);
+
   return {
     group,
+    luces,
     // `propeller` es la primera, para que lo que ya existía siga funcionando.
     propeller: helices[0] ?? new Group(),
     helices,

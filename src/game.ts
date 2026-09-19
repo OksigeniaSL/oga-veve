@@ -6266,6 +6266,15 @@ export class Game {
      * no cambia nada en la pantalla no parece un mando. Ver `world/patas.ts`.
      */
     this.aircraftMesh.patas?.poner(this.input.controls.tren);
+    /*
+     * Y las luces de posición: la de choque parpadea con el motor en marcha,
+     * que es su regla de verdad —se enciende **antes** de arrancar y dice
+     * «esto está vivo, no te acerques»—. Ver `world/luces-de-posicion.ts`.
+     */
+    this.aircraftMesh.luces?.paso(
+      this.relojDeRuta,
+      this.input.controls.engineOn,
+    );
     this.aircraftMesh.relojes?.actualizar(
       {
         motores: Array.from({ length: this.aircraft.motores }, () =>
