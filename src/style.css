@@ -1953,8 +1953,20 @@ button.motor__tecla::after {
    *
    * Con 38vh y tope de 1180, en un portátil de 1856×989 el cuadro salía de 891
    * píxeles y dejaba medio metro de nada a cada lado: «puedes alargar más el
-   * cuadro para que entre hacia los lados». Con 50vh y tope de 1400 sale de
-   * 1172 en esa misma pantalla — un tercio más de instrumento.
+   * cuadro para que entre hacia los lados».
+   *
+   * **Y con 50vh se pasó al otro lado**: en una pantalla de 1022 de alto son
+   * 511 de cuadro, media pantalla, y hubo que bajar el zoom del navegador al
+   * treinta y tres por ciento para poder ver por la ventana. Cuarenta y cuatro
+   * es el punto medio: 1066 de ancho en esa misma pantalla, un veinte por
+   * ciento más que el original y sin comerse el vuelo.
+   *
+   * **Y la proporción no se puede tocar sin rediseñar el cuadro**, que es la
+   * razón de que esto sea un compromiso y no una solución. Los instrumentos
+   * son redondos y van en fila: para que el grupo ocupe más ancho sin crecer a
+   * lo alto habría que separarlos, y separarlos deja huecos en medio en vez de
+   * en los lados. «Más ancho» y «que no ocupe media pantalla» son, con esta
+   * retícula, la misma petición en sentidos contrarios. Ver `familia.ts`.
    *
    * El motivo de que mande el alto sigue valiendo entero: el cuadro no puede
    * comerse el vuelo. Lo que cambia es cuánto se le deja, y medio alto de
@@ -1962,7 +1974,7 @@ button.motor__tecla::after {
    * asiento. En una tablet de aula en horizontal —640 de alto— son 320, y por
    * debajo manda el ancho, así que no se desborda.
    */
-  width: min(calc(100vw - 16px), 1400px, calc(50vh * var(--cuadro-proporcion)));
+  width: min(calc(100vw - 16px), 1400px, calc(44vh * var(--cuadro-proporcion)));
   pointer-events: none;
   /*
    * Y baja entero cuando se tira de él. Queda asomando el tirador, que es por
@@ -1972,7 +1984,22 @@ button.motor__tecla::after {
   transition: transform 260ms ease;
 }
 
+/*
+ * **Y bajado, el cuadro sube de capa.**
+ *
+ * Aquí estaba el fallo de verdad, y lo dio quien juega con una frase exacta:
+ * «se me cerró, pero ahora no se vuelve a abrir». Bajar funcionaba siempre —
+ * por eso las pruebas pasaban— y subir no, porque con el cuadro abajo el
+ * tirador queda por detrás de lo que comparte la franja inferior: el aviso y
+ * la tarjeta. El clic llegaba, pero no a él.
+ *
+ * Subirlo de capa solo cuando está bajado es seguro: ahí el cuadro está fuera
+ * de la pantalla y no puede tapar nada. Con el cuadro arriba se queda donde
+ * estaba, que es lo que impide que un panel bonito esconda un «terrain, pull
+ * up».
+ */
 .cuadro--bajado {
+  z-index: 5;
   transform: translate(-50%, calc(100% - var(--tirador-asoma, 34px)));
 }
 
@@ -2032,10 +2059,23 @@ button.motor__tecla::after {
   left: 50%;
   top: 0;
   transform: translate(-50%, -76%);
-  width: 58px;
-  height: 30px;
+  /*
+   * **Ancho, y no un botoncito.**
+   *
+   * Con cincuenta y ocho píxeles hubo tres informes seguidos de «esto sigue
+   * sin funcionar», y las pruebas automáticas —clic por coordenadas, en su
+   * mismo peldaño— pasaban. Cuando la prueba dice que va y la persona dice que
+   * no, la que tiene razón es la persona: lo que fallaba era el blanco. A un
+   * tercio de zoom un botón de 58 px son 19 de pantalla, y eso no se acierta
+   * con un dedo ni con un ratón con prisa.
+   *
+   * Ahora es una barra de doscientos, que además es lo que parece: se agarra
+   * por arriba y se tira, como la persiana que es.
+   */
+  width: min(200px, 40vw);
+  height: 34px;
   border: 0;
-  border-radius: 14px 14px 0 0;
+  border-radius: 16px 16px 0 0;
   background: var(--cabina-fascia, #22262b);
   color: var(--tinta-suave, #cfd6dd);
   display: grid;

@@ -130,6 +130,15 @@ export const ARRIBA_DEL_TODO = 400;
  */
 export const YA_NO_SUBE = 2.5;
 
+/**
+ * Cuántos metros por debajo de lo más alto del vuelo cuentan como «ya baja».
+ *
+ * Ciento cincuenta. Por debajo de eso es la oscilación normal de un avión en
+ * crucero —nadie mantiene el nivel al metro— y por encima ya es un descenso
+ * que alguien decidió.
+ */
+export const YA_EMPEZO_A_BAJAR = 150;
+
 /** Lo que la megafonía mira del vuelo para saber si le toca hablar. */
 export interface Momento {
   readonly fase: Fase;
@@ -141,6 +150,19 @@ export interface Momento {
   readonly sobreElCampo: number;
   /** Y cuánto se sube o se baja, en metros por segundo. */
   readonly vertical: number;
+  /**
+   * Cuántos metros se ha bajado ya desde lo más alto de este vuelo.
+   *
+   * Sirve para una cosa sola y hace falta: **saber si el vuelo ya empezó a
+   * bajar**. La fase no lo dice —en una ruta entre dos aeropuertos el descenso
+   * entero ocurre dentro de `en-vuelo`— y la velocidad vertical tampoco, porque
+   * un descenso suave pasa por cero muchas veces.
+   *
+   * Sin esto, la comandante decía «ya estamos arriba, pueden soltarse el
+   * cinturón» **bajando hacia el destino**: «no es el momento de quitarse el
+   * cinturón, es el momento de ponérselo».
+   */
+  readonly desdeLoMasAlto: number;
 }
 
 /**
@@ -151,7 +173,21 @@ export interface Momento {
  */
 function seDanLasCondiciones(anuncio: Anuncio, m: Momento): boolean {
   if (anuncio !== "comandante.crucero") return true;
-  return m.sobreElCampo >= ARRIBA_DEL_TODO && Math.abs(m.vertical) < YA_NO_SUBE;
+  return (
+    m.sobreElCampo >= ARRIBA_DEL_TODO &&
+    Math.abs(m.vertical) < YA_NO_SUBE &&
+    /*
+     * **Y que el vuelo no haya empezado a bajar.**
+     *
+     * Este anuncio es del final de la subida, no de cualquier momento
+     * nivelado. En una ruta entre dos aeropuertos el descenso entero pasa
+     * dentro de la misma fase y con la vertical cruzando el cero cada poco,
+     * así que sin mirar cuánto se ha bajado ya desde lo más alto, la frase
+     * salía **descendiendo hacia el destino** — justo cuando el cinturón se
+     * pone, no se quita. Ver `YA_EMPEZO_A_BAJAR`.
+     */
+    m.desdeLoMasAlto < YA_EMPEZO_A_BAJAR
+  );
 }
 
 export class Megafonia {

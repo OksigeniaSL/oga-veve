@@ -59,6 +59,11 @@ import {
 import { luzDeTren } from "../flight/tren";
 import { anillosDe } from "../flight/tormentas";
 import {
+  encendidas,
+  LUCES,
+  type Estado as EstadoDeAvisos,
+} from "../flight/avisos-de-cabina";
+import {
   QUIETA_LA_ALTITUD,
   QUIETA_LA_VELOCIDAD,
   TARDA_EL_MOTOR,
@@ -229,9 +234,62 @@ export class Tablero {
       <rect y="${VISERA}" width="${ANCHO_DEL_CUADRO}" height="24" class="tablero__sombra" />
       <rect width="${ANCHO_DEL_CUADRO}" height="${VISERA}" class="tablero__visera" />
       ${familia === "linea" ? this.mcp() : ""}
+      ${this.panelDeAvisos()}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
             ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
     `;
+  }
+
+  /**
+   * El panel de avisos, en la visera y a la izquierda.
+   *
+   * **En la visera y no entre los instrumentos**, que es donde va en una
+   * cabina de verdad: un aviso tiene que estar donde se ve sin buscarlo, y
+   * entre los instrumentos se busca. Y a la izquierda porque la derecha ya es
+   * del MCP en los reactores; que los dos no se estorben es lo que permite que
+   * el mismo sitio valga para las tres familias.
+   *
+   * Las piezas se dejan puestas y apagadas —`Tablero.avisos` solo cambia
+   * clases—, por lo mismo que el resto del cuadro: rehacer el marcado sesenta
+   * veces por segundo cuesta fotogramas y esto tiene que costar cero cuando no
+   * pasa nada, que es casi siempre.
+   *
+   * La palabra que lleva encima la decide el peldaño, con las reglas de
+   * `data-desde` que ya usa todo lo demás: en el primero solo el color, desde
+   * el segundo la palabra de casa, y desde el cuarto la de cabina en inglés
+   * aeronáutico. Ver `escalera.ts`.
+   */
+  private panelDeAvisos(): string {
+    const ancho = 96;
+    const alto = 20;
+    return LUCES.map((l, i) => {
+      const y = 8 + i * (alto + 3);
+      return `
+        <g class="aviso-luz" data-luz="${l.id}" data-grado="${l.grado}"
+           transform="translate(8 ${y})" visibility="hidden">
+          <rect width="${ancho}" height="${alto}" rx="3" class="aviso-luz__caja" />
+          <text x="${ancho / 2}" y="${alto - 6}" ${MARCA_ROTULO}
+                class="aviso-luz__palabra" text-anchor="middle"
+                data-desde="4">${l.cabina}</text>
+          <text x="${ancho / 2}" y="${alto - 6}" ${MARCA_ROTULO}
+                class="aviso-luz__palabra aviso-luz__palabra--casa"
+                text-anchor="middle" data-luz-casa="${l.id}"></text>
+        </g>`;
+    }).join("");
+  }
+
+  /**
+   * Enciende y apaga las luces del panel.
+   *
+   * Se le da el estado entero y él decide: quien llama no tiene que saber qué
+   * luces hay ni en qué orden van. Ver `flight/avisos-de-cabina.ts`.
+   */
+  ponerLucesDeAviso(raiz: Element, estado: EstadoDeAvisos): void {
+    const puestas = new Set(encendidas(estado).map((l) => l.id));
+    for (const l of LUCES) {
+      const g = raiz.querySelector(`[data-luz="${l.id}"]`);
+      g?.setAttribute("visibility", puestas.has(l.id) ? "visible" : "hidden");
+    }
   }
 
   /**

@@ -28,6 +28,7 @@ import { Box3, Raycaster, Vector2, Vector3, type Object3D } from "three";
 import type { Game } from "../game";
 import { PANELES_DEL_VUELO, type PanelDelVuelo } from "../ui/paneles";
 import { bankAngleOf, pitchAngleOf } from "../ui/actitud";
+import { indicatedAirspeed } from "../flight/atmosphere";
 import { t, type TranslationKey } from "../i18n";
 import { cabeceraEnUso } from "../world/terrain";
 import { enEjesDePista } from "../world/rumbo";
@@ -1166,6 +1167,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     percance: () => juego.percance,
     /** La pista del otro aeropuerto, ya en coordenadas de este mundo. */
     pistaDelVecino: () => juego.pistaDelVecino,
+    /** La velocidad que recibe la pantalla de la cabina, en nudos. */
+    velocidadDeCabina: () =>
+      Math.round(
+        indicatedAirspeed(
+          juego.flight.state.airspeed,
+          juego.flight.state.position.y,
+        ) * 1.94384,
+      ),
     /** Las células de tormenta de hoy. */
     celdasDeHoy: () => juego.celdasParaBanco,
     /** Los otros aviones de la ruta, con su nivel. */
