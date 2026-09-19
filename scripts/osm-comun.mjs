@@ -67,7 +67,29 @@ export async function overpass(query) {
         console.warn(`  ⚠ ${servidor}: ${err.message ?? err}, reintentando…`);
         continue;
       }
-      if (res.ok) return res.json();
+      if (res.ok) {
+        const datos = await res.json();
+        /*
+         * **Y un 200 con nota al pie es un fallo disfrazado.**
+         *
+         * Cuando a Overpass se le acaba el tiempo o la memoria a media
+         * consulta no devuelve un error: devuelve un 200 con la lista de
+         * elementos **vacía** y un `remark` explicándolo. Quien no lo mire se
+         * lleva un resultado que parece bueno y dice que allí no hay nada.
+         *
+         * Medido extrayendo hitos: Lanzarote salió sin un solo hito —ni
+         * Arrecife, que tiene sesenta mil habitantes y estaba a cinco
+         * kilómetros de la pista— y el escenario de al lado, con un cuadro que
+         * se solapa con el suyo, sí lo encontró. Un dato vacío que se versiona
+         * es peor que una extracción que falla, porque la que falla se ve.
+         */
+        if (datos?.remark) {
+          ultimo = new Error(`Overpass (${servidor}) avisó: ${datos.remark}`);
+          console.warn(`  ⚠ ${ultimo.message}, reintentando…`);
+          continue;
+        }
+        return datos;
+      }
       ultimo = new Error(`Overpass (${servidor}) respondió ${res.status}`);
       // Un 400 es culpa de la consulta: reintentar no la va a arreglar.
       if (res.status === 400) throw ultimo;
