@@ -1166,6 +1166,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     percance: () => juego.percance,
     /** La pista del otro aeropuerto, ya en coordenadas de este mundo. */
     pistaDelVecino: () => juego.pistaDelVecino,
+    /** El piloto automático: ponerlo, quitarlo y ver si está puesto. */
+    /** El alabeo de ahora, en radianes, para ver qué hace el piloto. */
+    alabeo: () => bankAngleOf(juego.flight.state.orientation),
+    pilotoAutomatico: (puesto?: boolean) => {
+      if (puesto !== undefined) juego.ponerPilotoAutomatico(puesto);
+      return juego.pilotoPuesto;
+    },
     /**
      * Cuántos escuchan cada hecho del vuelo. Ver `src/hechos.ts`.
      *

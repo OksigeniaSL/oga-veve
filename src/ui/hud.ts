@@ -590,6 +590,28 @@ export class Hud {
           Solo en los aviones con pasaje, como el cartel: una avioneta de
           escuela no tiene a quién avisar. Ver flight/cinturon.ts.
         -->
+        <!--
+          **El piloto automático.**
+
+          Va junto al cinturón porque son la misma clase de cosa: mandos de la
+          cabina que no pilotan el avión, lo gobiernan. Y va con dibujo y sin
+          texto, como todo lo que tiene que entenderse a los cuatro años: un
+          avión con una línea recta detrás.
+
+          Lo que hace y lo que no está en flight/piloto-automatico.ts. En
+          corto: mantiene el rumbo y la altura que llevabas al apretarlo, y se
+          suelta en cuanto tocás los mandos.
+        -->
+        <button class="sonido piloto-auto" type="button"
+                data-hud="piloto-auto" aria-pressed="false" hidden
+                aria-label="${t("hud.pilotoAutomatico")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 18h18" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" />
+            <path d="M12 4 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z"
+                  fill="currentColor" />
+          </svg>
+        </button>
         <button class="sonido cinturon-mando" type="button"
                 data-hud="cinturon-mando" aria-pressed="false" hidden
                 aria-label="${t("hud.mandarCinturon")}">
@@ -1018,6 +1040,9 @@ export class Hud {
     this.root
       .querySelector('[data-hud="cinturon-mando"]')
       ?.addEventListener("click", () => this.cinturonHandler?.());
+    this.root
+      .querySelector('[data-hud="piloto-auto"]')
+      ?.addEventListener("click", () => this.pilotoAutoHandler?.());
     /*
      * **El tirador del cuadro**, y se acuerda de cómo lo dejaste.
      *
@@ -2337,6 +2362,33 @@ export class Hud {
    * Lo llama el juego al montar el escenario, y lo mira el cartel de la luz de
    * la torre. Ver `i18n/habla.ts`.
    */
+  /**
+   * Enciende o apaga el botón del piloto automático.
+   *
+   * El botón dice en qué posición está, que es lo que hace que sea un mando y
+   * no un disparador: un piloto automático que no se ve si está puesto es la
+   * forma más rápida de que alguien crea que el avión se pilota solo cuando
+   * no. Ver `flight/piloto-automatico.ts`.
+   */
+  ponerPilotoAutomatico(puesto: boolean): void {
+    const b = this.root.querySelector<HTMLElement>('[data-hud="piloto-auto"]');
+    b?.setAttribute("aria-pressed", String(puesto));
+    b?.classList.toggle("boton--puesto", puesto);
+  }
+
+  /** Y si este avión lo lleva, para enseñar el botón. */
+  ponerHayPilotoAutomatico(hay: boolean): void {
+    const b = this.root.querySelector<HTMLElement>('[data-hud="piloto-auto"]');
+    if (b) b.hidden = !hay;
+  }
+
+  /** Quién se entera de que han tocado el botón del piloto automático. */
+  private pilotoAutoHandler: (() => void) | null = null;
+
+  onPilotoAutomatico(fn: () => void): void {
+    this.pilotoAutoHandler = fn;
+  }
+
   /** Quién se entera de que han tocado el interruptor del cinturón. */
   private cinturonHandler: (() => void) | null = null;
 

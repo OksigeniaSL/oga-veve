@@ -1995,6 +1995,7 @@ button.motor__tecla::after {
  * puesto a mano, que es lo que hace un interruptor de verdad: dice en qué
  * posición está. Ver flight/cinturon.ts.
  */
+.piloto-auto,
 .cinturon-mando {
   display: grid;
   place-items: center;
@@ -2008,16 +2009,19 @@ button.motor__tecla::after {
   pointer-events: auto;
 }
 
+.piloto-auto svg,
 .cinturon-mando svg {
   width: 24px;
   height: 24px;
 }
 
+.piloto-auto[aria-pressed="true"],
 .cinturon-mando[aria-pressed="true"] {
   background: var(--aviso-ambar, #e0a13a);
   color: #1b1b1b;
 }
 
+.piloto-auto:focus-visible,
 .cinturon-mando:focus-visible {
   outline: 3px solid var(--foco, #ffb454);
   outline-offset: 2px;
