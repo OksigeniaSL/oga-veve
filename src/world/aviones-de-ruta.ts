@@ -48,25 +48,52 @@ export interface AvionesDeRuta {
   dispose(): void;
 }
 
+/**
+ * Cuánto mide cada uno, para que no sean todos el mismo avión de otro color.
+ *
+ * Un turbohélice regional tiene veintisiete metros de envergadura y un
+ * fuselaje ancho sesenta: verlos del mismo tamaño a la misma distancia
+ * deshace la mitad de lo que enseña tener cuatro siluetas. Son los números
+ * redondos de aparatos de verdad.
+ */
+const ENVERGADURA: Partial<Record<Silueta, number>> = {
+  "bimotor-ala-baja": 27,
+  reactor: 34,
+  "cola-en-t": 17,
+  cuatrimotor: 60,
+};
+
 export function crearAvionesDeRuta(
   desde: Punto,
   hasta: Punto,
-  silueta: Silueta,
   semilla = 1,
 ): AvionesDeRuta {
   const grupo = new Group();
   grupo.name = "aviones-de-ruta";
-  let geometria: BufferGeometry | null = null;
+  /*
+   * Una geometría **por silueta**, no una por avión: son cuatro siluetas como
+   * mucho y varios aviones pueden compartir la misma. Fabricar un avión entero
+   * por cada uno sigue siendo lo que no se hace.
+   */
+  const geometrias = new Map<Silueta, BufferGeometry>();
   const cuerpos = new Map<string, Mesh>();
   let ultimos: readonly EnRuta[] = [];
 
-  const cuerpo = (): Mesh => {
-    geometria ??= fabricarAeronave(
-      silueta,
-      { envergadura: 28, cuerda: 3.2, tren: 1.6 },
-      { body: 0xe7e3d8, accent: 0x8f99a2, trim: 0x39403a },
-    ).geometria;
-    return new Mesh(geometria, new MeshLambertMaterial({ vertexColors: true }));
+  const cuerpo = (silueta: Silueta): Mesh => {
+    let geo = geometrias.get(silueta);
+    if (!geo) {
+      geo = fabricarAeronave(
+        silueta,
+        {
+          envergadura: ENVERGADURA[silueta] ?? 28,
+          cuerda: 3.2,
+          tren: 1.6,
+        },
+        { body: 0xe7e3d8, accent: 0x8f99a2, trim: 0x39403a },
+      ).geometria;
+      geometrias.set(silueta, geo);
+    }
+    return new Mesh(geo, new MeshLambertMaterial({ vertexColors: true }));
   };
 
   return {
@@ -76,7 +103,7 @@ export function crearAvionesDeRuta(
       for (const a of ultimos) {
         let malla = cuerpos.get(a.id);
         if (!malla) {
-          malla = cuerpo();
+          malla = cuerpo(a.silueta);
           cuerpos.set(a.id, malla);
           grupo.add(malla);
         }
@@ -91,7 +118,8 @@ export function crearAvionesDeRuta(
     },
     quienes: () => ultimos,
     dispose() {
-      geometria?.dispose();
+      for (const g of geometrias.values()) g.dispose();
+      geometrias.clear();
       for (const m of cuerpos.values()) {
         const mat = m.material;
         if (Array.isArray(mat)) mat.forEach((x) => x.dispose());

@@ -107,3 +107,53 @@ describe("quiénes andan por la ruta", () => {
     expect(traficoEnRuta(CASA, CASA, 0)).toEqual([]);
   });
 });
+
+describe("y no son todos el mismo avión", () => {
+  /*
+   * Pedido así: «otros aviones —jets privados, aviones veloces sin entrar en
+   * aviones de combate, de investigación—». El primer paso son los que pasan,
+   * y lo que hay que comprobar es que de verdad **pasan distintos**: si todos
+   * salieran con la misma silueta y la misma velocidad, el cielo tendría
+   * cuatro aviones y un solo avión a la vez.
+   */
+  it("hay más de una silueta en el cielo de una ruta", () => {
+    const formas = new Set(
+      traficoEnRuta(CASA, ALLA, 0, 3).map((a) => a.silueta),
+    );
+    expect(formas.size).toBeGreaterThan(1);
+  });
+
+  it("y ninguna es una avioneta, que a nivel cien no las hay", () => {
+    for (let semilla = 1; semilla < 30; semilla++) {
+      for (const a of traficoEnRuta(CASA, ALLA, 0, semilla)) {
+        expect(a.silueta).not.toBe("ala-alta");
+        expect(a.silueta).not.toBe("biplano");
+      }
+    }
+  });
+
+  it("y cada avión conserva su silueta a lo largo del vuelo", () => {
+    // Si cambiara con el reloj, el reactor que se ve venir se convertiría en
+    // un turbohélice al pasar por el lado.
+    const antes = new Map(traficoEnRuta(CASA, ALLA, 0, 5).map((a) => [a.id, a.silueta]));
+    for (const a of traficoEnRuta(CASA, ALLA, 420, 5)) {
+      expect(a.silueta).toBe(antes.get(a.id));
+    }
+  });
+
+  it("y los que van más deprisa recorren más en el mismo rato", () => {
+    /*
+     * La velocidad va con el tipo: un turbohélice a 270 nudos y un fuselaje
+     * ancho a 480. Medido sobre el propio tráfico, sin mirar la tabla: en diez
+     * segundos, el que más corre tiene que haber avanzado bastante más que el
+     * que menos.
+     */
+    const ahora = traficoEnRuta(CASA, ALLA, 1000, 11);
+    const luego = traficoEnRuta(CASA, ALLA, 1010, 11);
+    const avances = ahora.map((a, i) => {
+      const b = luego[i]!;
+      return Math.hypot(b.x - a.x, b.z - a.z);
+    });
+    expect(Math.max(...avances)).toBeGreaterThan(Math.min(...avances) * 1.3);
+  });
+});

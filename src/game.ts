@@ -1539,17 +1539,17 @@ export class Game {
        * este los verá pasar siempre por el mismo lado, y el día que alguien le
        * cuente la regla semicircular ya la sabía.
        */
+      /*
+       * **Y cada uno con su forma y su paso.** Eran todos el mismo avión, y
+       * eso deshace lo que enseña el álbum de postales: un turbohélice
+       * regional, un reactor de línea, un jet privado y uno de fuselaje ancho
+       * se distinguen desde lejos por la silueta y desde más lejos todavía
+       * por lo deprisa que cruzan. Quién anda por el corredor lo decide
+       * `flight/trafico-en-ruta.ts`.
+       */
       this.avionesDeRuta = crearAvionesDeRuta(
         { x: this.scenario.runway.x, z: this.scenario.runway.z },
         { x: this.vecinoPista.x, z: this.vecinoPista.z },
-        /*
-         * Y no tienen tu silueta, por lo mismo que el del circuito: ver tu
-         * propio avión cruzando la ruta es un espejo, no un vecino. Aquí se
-         * coge un reactor de línea, que es lo que de verdad se cruza en un
-         * corredor entre islas.
-         */
-        FLOTA.find((m) => m.silueta !== modeloPorId(this.aircraft.id)?.silueta)
-          ?.silueta ?? "ala-alta",
       );
       this.scene.add(this.avionesDeRuta.grupo);
       this.terrain.ponerSueloLejano((x, z) => this.vecino?.cota(x, z) ?? null);

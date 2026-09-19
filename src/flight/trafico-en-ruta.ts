@@ -33,6 +33,7 @@
  */
 
 import { nivelPara } from "./nivel-de-crucero";
+import type { Silueta } from "./flota";
 
 /** Un punto del mundo, en metros. */
 export interface Punto {
@@ -43,6 +44,8 @@ export interface Punto {
 /** Uno de los que andan por la ruta. */
 export interface EnRuta {
   readonly id: string;
+  /** Qué forma tiene. Es lo que se reconoce desde lejos. Ver `EN_EL_CORREDOR`. */
+  readonly silueta: Silueta;
   readonly x: number;
   /** Altitud en metros, ya convertida desde su nivel. */
   readonly y: number;
@@ -64,8 +67,36 @@ const PIE = 0.3048;
  */
 export const CUANTOS_EN_RUTA = 4;
 
-/** A cuánto van, en metros por segundo. Unos 250 nudos. */
-const VAN_A = 128;
+/**
+ * Quién anda por un corredor entre islas, y a cuánto va.
+ *
+ * Cuatro siluetas y cuatro velocidades, y las dos cosas son el mismo dato:
+ * **un avión se reconoce por su forma y se delata por su paso**. Un
+ * turbohélice regional cruza a doscientos setenta nudos y un reactor de línea
+ * a cuatrocientos cincuenta, y verlos ir todos igual de rápido es exactamente
+ * lo que enseña que un avión es un avión y ya está.
+ *
+ * Pedido así: «otros aviones —jets privados, aviones veloces sin entrar en
+ * aviones de combate, de investigación—». Esto es el primer paso y el barato:
+ * los que **pasan**, con las siluetas que ya sabe fabricar la flota. Un jet
+ * privado es una cola en T pequeña y rápida, y eso ya se puede ver.
+ *
+ * Nada de ala alta ni de biplano: a nivel cien no hay avionetas, y poner una
+ * ahí sería enseñar algo falso en el sitio donde más se mira.
+ */
+const EN_EL_CORREDOR = [
+  /** El turbohélice regional, que es el que más vuela entre islas. */
+  { silueta: "bimotor-ala-baja", kt: 270 },
+  /** El reactor de línea. */
+  { silueta: "reactor", kt: 450 },
+  /** El jet privado: cola en T, pequeño y con prisa. */
+  { silueta: "cola-en-t", kt: 420 },
+  /** Y el de fuselaje ancho, que pasa alto y de largo. */
+  { silueta: "cuatrimotor", kt: 480 },
+] as const satisfies readonly { silueta: Silueta; kt: number }[];
+
+/** De nudos a metros por segundo. */
+const NUDO = 0.514444;
 
 /**
  * Cuánto se apartan del eje de la ruta, en metros.
@@ -113,6 +144,17 @@ export function traficoEnRuta(
 
   const salida: EnRuta[] = [];
   for (let i = 0; i < CUANTOS_EN_RUTA; i++) {
+    /*
+     * Qué avión es. Se sortea con la semilla del vuelo, así que el cielo de
+     * una ruta es siempre el mismo cielo —que es lo que permite aprendérselo—
+     * y el de otra no.
+     */
+    const cual =
+      EN_EL_CORREDOR[
+        Math.floor(sorteo(semilla, i * 29 + 3) * EN_EL_CORREDOR.length) %
+          EN_EL_CORREDOR.length
+      ]!;
+    const vaA = cual.kt * NUDO;
     // La mitad van en un sentido y la mitad en el otro.
     const alReves = i % 2 === 1;
     const rumbo = alReves ? (rumboIda + 180) % 360 : rumboIda;
@@ -132,7 +174,7 @@ export function traficoEnRuta(
      */
     const margen = largo * 0.3;
     const recorrido = largo + margen * 2;
-    const cuanto = recorrido / VAN_A;
+    const cuanto = recorrido / vaA;
     const desfase = sorteo(semilla, i * 13 + 1) * cuanto;
     const t = ((ahora + desfase) % cuanto) / cuanto;
     const avance = alReves ? 1 - t : t;
@@ -141,6 +183,7 @@ export function traficoEnRuta(
     const lado = (sorteo(semilla, i * 19 + 2) - 0.5) * ANCHO_DEL_CORREDOR;
     salida.push({
       id: `ruta-${i}`,
+      silueta: cual.silueta,
       x: desde.x + ux * s + px * lado,
       z: desde.z + uz * s + pz * lado,
       y: pies * PIE,
