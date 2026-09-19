@@ -976,6 +976,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Si la torre ya dio la luz verde para entrar en pista. Para el banco. */
     luzVerde: () => juego.plan?.autorizado ?? null,
     ruta: () => juego.plan?.rutaVisible() ?? [],
+    /** La puerta asignada a esta llegada. Tiene que ser siempre la misma. */
+    puerta: () => juego.plan?.puertaAsignada ?? null,
     /** Y la misma sin redondear, que es donde se ven las horquillas. */
     rutaCruda: () => juego.plan?.rutaCruda() ?? [],
     /**
