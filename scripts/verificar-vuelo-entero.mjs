@@ -749,6 +749,14 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * comprobación quería vigilar.
    */
   let largoDeLaRuta = 0;
+  /**
+   * Las puertas distintas que se asignaron durante una misma llegada.
+   *
+   * Tiene que haber **una**. A un avión que llega se le da una puerta y nadie
+   * se la cambia mientras rueda; aquí se la cambiaban en cada fotograma, y el
+   * avión iba detrás de la raya verde de un lado a otro del aeropuerto.
+   */
+  const puertas = [];
   const verBackTaxi = new Set();
   let antes = null;
   let sinRaya = 0;
@@ -1027,6 +1035,23 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     const ruta = o.ruta();
     const tarjeta = o.tarjeta();
     fases.add(fase);
+    /*
+     * **La puerta se mira desde el fotograma en que se toca, y esto ya falló.**
+     *
+     * La primera versión la miraba dentro de la etapa «volver» del guion, que
+     * empieza cuando el avión ha frenado por debajo de ocho metros por segundo.
+     * Para entonces el baile de puertas ya ha pasado: ocurre mientras se
+     * abandona la pista, que se hace deprisa. Con el arreglo deshecho a
+     * propósito, el rodeo salía ×1,63 y esta comprobación seguía en verde —o
+     * sea, no medía lo que dice medir.
+     */
+    {
+      const p = o.puerta?.();
+      if (p) {
+        const clave = `${Math.round(p[0])},${Math.round(p[1])}`;
+        if (!puertas.includes(clave)) puertas.push(clave);
+      }
+    }
     relojPara(fase);
     if (fase === "back-taxi" || fase === "autorizado") {
       const b = o.backTaxi?.();
@@ -1885,6 +1910,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     linea: [...linea.slice(0, 4), "…", ...linea.slice(-45)],
     mudoMaximo: +mudoMaximo.toFixed(1),
     mudoDonde,
+    puertas,
     vueltaMetros: Math.round(vueltaMetros),
     largoDeLaRuta: Math.round(largoDeLaRuta),
     ortofoto: o.ortofoto?.() ?? null,
@@ -2244,6 +2270,34 @@ comprobarSiVolo(
     vuelo.vuelta <= 500,
   `×${rodeo.toFixed(2)} de su ruta · ${vuelo.vueltaMetros} m rodados sobre ${vuelo.largoDeLaRuta} trazados · ${vuelo.vuelta} s`,
   "la vuelta es más larga que la ida y nadie la había cronometrado",
+);
+
+/*
+ * **Y la puerta asignada no cambia, que es de dónde salía el rodeo.**
+ *
+ * El rodeo de arriba dice que el avión rodó de más, pero no dice por qué. Esto
+ * sí: `puestoDeLlegada` mide «el más cercano rodando **desde donde estás**» y
+ * se llamaba en cada fotograma del tramo de abandonar la pista, así que al
+ * avanzar el avión cambiaba el ganador — la ruta saltaba de un puesto a otro y
+ * la raya verde con ella.
+ *
+ * Medido antes de arreglarlo: Tenerife Sur ×1,53 —1682 metros rodados sobre
+ * 1098 trazados— y La Palma ×1,40. Contado jugando: «estoy paseando por el
+ * aeropuerto y ni coche, ni señor de las balizas, ni rayas verdes».
+ *
+ * **Y esto detecta el síntoma, no demuestra la regla.** Con el arreglo deshecho
+ * a propósito, una tirada lo cazó —dos puertas— y la siguiente pasó en verde:
+ * un vuelo entero tiene varianza de sobra para tapar el fallo en una tirada.
+ * Quien demuestra la regla sin depender de la suerte es
+ * `src/world/puerta-asignada.test.ts`. Esto es la red de abajo.
+ */
+comprobarSiVolo(
+  "y la puerta asignada es una sola",
+  vuelo.puertas.length === 1,
+  vuelo.puertas.length === 1
+    ? "la misma de principio a fin"
+    : `${vuelo.puertas.length} puertas distintas en una llegada: ${vuelo.puertas.join(" · ")}`,
+  "a un avión que llega se le da una puerta, y nadie se la cambia rodando",
 );
 
 comprobar(

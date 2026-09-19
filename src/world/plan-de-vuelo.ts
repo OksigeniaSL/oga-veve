@@ -35,6 +35,7 @@ import {
   pistaQueNecesita,
 } from "../flight/carrera";
 import { radioDeGiro } from "../flight/cabe";
+import { PuertaAsignada } from "./puerta-asignada";
 import {
   construirGrafo,
   nudoCercano,
@@ -1023,22 +1024,37 @@ export class PlanDeVuelo {
    */
   private puestoDeLlegada(
     desde: Punto,
+    /**
+     * Si esta elección es la definitiva. Ver `puestoEnFirme`.
+     *
+     * **Y aquí estaba el paseo por el aeropuerto.** Esto se llamaba en cada
+     * fotograma del tramo de abandonar la pista, y como mide «el más cercano
+     * rodando **desde donde estás**», al avanzar el avión cambiaba el ganador:
+     * la ruta saltaba de un puesto a otro, la raya verde con ella, y el avión
+     * iba detrás. Medido en el barrido: en Tenerife Sur, 1682 metros rodados
+     * para una ruta de 1098 —×1,53—, y en La Palma ×1,40. Contado jugando:
+     * «estoy paseando por el aeropuerto y ni coche, ni señor de las balizas,
+     * ni rayas verdes».
+     */
+    enFirme: boolean,
   ): { ref: string | null; xy: Punto } | null {
-    const puestos = this.puestosCandidatos();
-    if (!puestos.length) return null;
-    let mejor: { ref: string | null; xy: Punto } | null = null;
-    let corto = Infinity;
-    for (const p of puestos) {
-      const ruta = rodajeEntre(this.grafo, desde, p.xy, 600);
-      const d = ruta ? ruta.largo : Infinity;
-      if (d < corto) {
-        corto = d;
-        mejor = p;
+    return this.puerta.pedir(enFirme, () => {
+      const puestos = this.puestosCandidatos();
+      if (!puestos.length) return null;
+      let mejor: { ref: string | null; xy: Punto } | null = null;
+      let corto = Infinity;
+      for (const p of puestos) {
+        const ruta = rodajeEntre(this.grafo, desde, p.xy, 600);
+        const d = ruta ? ruta.largo : Infinity;
+        if (d < corto) {
+          corto = d;
+          mejor = p;
+        }
       }
-    }
-    // Si ninguno se deja alcanzar por asfalto, el de salida: mejor una vuelta
-    // larga que no tener adónde ir.
-    return mejor ?? this.puestoDeSalida();
+      // Si ninguno se deja alcanzar por asfalto, el de salida: mejor una vuelta
+      // larga que no tener adónde ir.
+      return mejor ?? this.puestoDeSalida();
+    });
   }
 
   /** Los puestos de los que puede salir una avioneta, sin ordenar. */
@@ -1956,6 +1972,10 @@ export class PlanDeVuelo {
    * desde donde esté el avión. Da igual cómo haya llegado ahí.
    */
   private alCambiarDeFase(fase: Fase): void {
+    // La de antes, y se apunta ya la de ahora: el cuerpo de esto sale por seis
+    // sitios distintos y apuntarla al final se olvidaría en cinco.
+    const antes = this.faseAnterior;
+    this.faseAnterior = fase;
     /*
      * **Alinearse también se guía.**
      *
@@ -1997,6 +2017,8 @@ export class PlanDeVuelo {
       this.ponerRuta(null);
       this.destino = null;
       this.giroDelBackTaxi = null;
+      // Volando no hay puerta asignada: la siguiente llegada se asigna sola.
+      this.puerta.olvidar();
       return;
     }
 
@@ -2020,7 +2042,7 @@ export class PlanDeVuelo {
      * que es cuando la pregunta «¿por dónde vuelvo?» tiene una respuesta
      * buena.
      */
-    if (fase === "abandonando") this.destino = null;
+    if (fase === "abandonando" && antes !== "abandonando") this.destino = null;
 
     if (quiere === this.destino) return;
     this.destino = quiere;
@@ -2040,7 +2062,7 @@ export class PlanDeVuelo {
         ? (fase === "aterrizado" ||
           fase === "abandonando" ||
           fase === "a-plataforma"
-            ? this.puestoDeLlegada(this.ultimaPos)
+            ? this.puestoDeLlegada(this.ultimaPos, fase !== "aterrizado")
             : this.puestoDeSalida()
           )?.xy
         : this.esperaDeSalida();
@@ -2608,8 +2630,42 @@ export class PlanDeVuelo {
     return this.giroDelBackTaxi;
   }
 
+  /**
+   * La puerta asignada **en firme** a esta llegada, si ya la hay.
+   *
+   * Existe para poder comprobar desde fuera **que no cambia**, que es la regla
+   * que se rompía. Y es la firme y no la provisional a propósito: la
+   * provisional se elige con el avión todavía en el aire y se sustituye una
+   * vez, a posta, al dejar la pista. Lo que no puede cambiar es la de después.
+   * Ver `puestoDeLlegada` y `puestoEnFirme`.
+   */
+  get puertaAsignada(): Punto | null {
+    return this.puerta.enFirme?.xy ?? null;
+  }
+
   /** A dónde va ahora mismo. Sirve para no recalcular la misma ruta cada fase. */
   private destino: "espera" | "puesto" | "pista" | null = null;
+
+  /**
+   * La puerta de esta llegada. Una llegada, una puerta.
+   *
+   * La regla vive en su propio módulo porque **así se puede probar sin
+   * volar**: ver `puerta-asignada.ts`, que cuenta lo que pasaba y por qué el
+   * banco no bastaba para comprobarlo.
+   */
+  private readonly puerta = new PuertaAsignada<{
+    ref: string | null;
+    xy: Punto;
+  }>();
+
+  /**
+   * La fase del fotograma anterior, para distinguir **entrar** en una fase de
+   * **estar** en ella.
+   *
+   * Sin esto, el «al dejar la pista se vuelve a trazar» de abajo se ejecutaba
+   * los cientos de fotogramas que dura abandonar la pista, no una vez.
+   */
+  private faseAnterior: Fase | null = null;
   /** Segundos desde el último trazado. Ver `rehacerSiHaceFalta`. */
   private desdeElUltimoTrazado = 0;
 
