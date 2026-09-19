@@ -1175,6 +1175,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
           juego.flight.state.position.y,
         ) * 1.94384,
       ),
+    /** En qué campo está el avión ahora: el de salida o el de destino. */
+    campoDeAhora: () => juego.campoDeAhoraParaBanco,
     /** Las células de tormenta de hoy. */
     celdasDeHoy: () => juego.celdasParaBanco,
     /** Los otros aviones de la ruta, con su nivel. */

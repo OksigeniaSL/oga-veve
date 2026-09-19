@@ -339,7 +339,7 @@ import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
 import { puntoMasCercanoDe } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
-import { sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
+import { laMasCerca, sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import { celdasDe, cuantoSacude, type Celda } from "./flight/tormentas";
 import { horaSolarEn } from "./world/hora";
@@ -769,6 +769,44 @@ export class Game {
    * una sola, y desde que se puede volar a otro sitio eso rompe el avión de
    * quien acaba de aterrizar bien. Ver `world/pistas-del-vuelo.ts`.
    */
+  /**
+   * En qué campo está el avión ahora: el de salida o el de destino.
+   *
+   * El de la pista que tiene más cerca, que es la misma cuenta que decide si
+   * una toma cuenta como aterrizaje. Hasta que hubo rutas, «el escenario» y
+   * «dónde estoy» eran lo mismo y por eso medio juego pregunta por el
+   * escenario; desde que se puede ir a otro aeropuerto hay que distinguirlos,
+   * y esto es por dónde se empieza.
+   */
+  private elCampoDeAhora(): Scenario {
+    if (!this.vecinoEscenario || !this.vecinoPista) return this.scenario;
+    const s = this.flight.state.position;
+    const cerca = laMasCerca(this.pistasDelVuelo(), s.x, s.z);
+    return cerca === this.vecinoPista ? this.vecinoEscenario : this.scenario;
+  }
+
+  /**
+   * El campo que **no** se tiene debajo, en coordenadas del mundo.
+   *
+   * Es a donde se va: saliendo de casa, el destino; ya en el destino, la
+   * vuelta a casa. Devuelve `null` si esta ruta no lleva a ningún sitio.
+   */
+  private elOtroCampo(): { x: number; z: number } | null {
+    if (!this.vecinoPista) return null;
+    const aqui = this.elCampoDeAhora();
+    return aqui === this.scenario
+      ? { x: this.vecinoPista.x, z: this.vecinoPista.z }
+      : { x: this.scenario.runway.x, z: this.scenario.runway.z };
+  }
+
+  /** En qué campo está el avión ahora, para los bancos. */
+  get campoDeAhoraParaBanco(): string {
+    return this.elCampoDeAhora().id;
+  }
+
+  /** El escenario del otro aeropuerto, si esta ruta lleva a alguno. */
+  private vecinoEscenario: Scenario | null = null;
+
   /** La pista del otro aeropuerto, para los bancos. */
   get pistaDelVecino(): Pista | null {
     return this.vecinoPista;
@@ -1429,6 +1467,7 @@ export class Game {
       );
       // La pista del vecino, ya trasladada: a partir de aquí es una pista de
       // este mundo como cualquier otra.
+      this.vecinoEscenario = options.vecino;
       this.vecinoPista = {
         ...options.vecino.runway,
         x: this.vecino.desplazamiento.x + options.vecino.runway.x,
@@ -4080,7 +4119,21 @@ export class Game {
        * escribir su frase, y nada más.
        */
       if (anuncio === "comandante.crucero") this.dijoSoltarse = true;
-      const suya = `${anuncio}.${this.scenario.id}` as TranslationKey;
+      /*
+       * **Y la llegada nombra el campo donde se aterrizó, no el de salida.**
+       *
+       * Contado jugando, tras volar de Tenerife Sur a Tenerife Norte: «¿bien-
+       * venidos al Tenerife Sur? Aterricé en Tenerife Norte Los Rodeos». El
+       * anuncio salía del escenario que se abrió, que hasta que hubo rutas era
+       * lo mismo que el sitio donde se acaba — y desde que se puede ir a otro
+       * aeropuerto, no.
+       *
+       * De quién es la pista que se tiene debajo ya lo sabe el juego: es la
+       * misma cuenta que decide si una toma es un aterrizaje o un percance.
+       * Ver `world/pistas-del-vuelo.ts`.
+       */
+      const donde = this.elCampoDeAhora();
+      const suya = `${anuncio}.${donde.id}` as TranslationKey;
       const cual =
         anuncio === "comandante.llegada" && hayTexto(suya) ? suya : anuncio;
       const forma = unaForma(cual, Math.random, {
@@ -4091,7 +4144,7 @@ export class Game {
          * tropiezo o no se lee. En coma es una frase: «bienvenidos a Guaraní,
          * Ciudad del Este», que además es como lo diría cualquiera.
          */
-        campo: t(this.scenario.nameKey as TranslationKey).replace(" · ", ", "),
+        campo: t(donde.nameKey as TranslationKey).replace(" · ", ", "),
       });
       const texto = forma.texto;
       this.comandante.decir(texto, forma.id, "baja");
@@ -7976,7 +8029,24 @@ export class Game {
     return {
       x: this.flight.state.position.x,
       z: this.flight.state.position.z,
-      pista: this.scenario.aerodrome ? this.scenario.runway : null,
+      /*
+       * **La pista que se dibuja es la del campo que se tiene debajo.**
+       *
+       * Era siempre la del escenario de salida, que hasta que hubo rutas era
+       * lo mismo. Contado jugando, ya en Tenerife Norte tras salir del Sur:
+       * «no veo la pista en mi pantalla». Y no la veía porque la carta seguía
+       * enseñando la de casa, a cincuenta kilómetros y fuera del alcance.
+       *
+       * La de más cerca es la misma cuenta que decide si una toma es un
+       * aterrizaje. Ver `world/pistas-del-vuelo.ts`.
+       */
+      pista: this.scenario.aerodrome
+        ? (laMasCerca(
+            this.pistasDelVuelo(),
+            this.flight.state.position.x,
+            this.flight.state.position.z,
+          ) ?? this.scenario.runway)
+        : null,
       // Los mismos que se oyen por la radio y se ven por la ventana: uno
       // solo, para que no puedan contarse tres versiones de lo mismo.
       /*
@@ -8000,12 +8070,13 @@ export class Game {
        * estaría bien que se fuera mostrando también en el cuadro».
        */
       celdas: this.celdas,
-      destino: this.vecino
-        ? {
-            x: this.vecino.desplazamiento.x + (this.vecinoPista?.x ?? 0),
-            z: this.vecino.desplazamiento.z + (this.vecinoPista?.z ?? 0),
-          }
-        : null,
+      /*
+       * Y el símbolo de destino marca **el otro** campo, no el que se tiene
+       * debajo: llegando a Tenerife Norte, el destino que queda por delante es
+       * volver al Sur. Con los dos señalando lo mismo, la carta diría que
+       * queda por llegar a donde ya se está.
+       */
+      destino: this.elOtroCampo(),
     };
   }
 
