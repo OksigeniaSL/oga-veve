@@ -259,6 +259,7 @@ import {
 } from "./audio/instructor";
 import { Frecuencia } from "./flight/radio";
 import type { ControlInputs } from "./flight/model";
+import { neutralControls } from "./flight/model";
 import {
   delante,
   enEjesDePista,
@@ -340,6 +341,11 @@ import { MundoVecino } from "./world/mundo-vecino";
 import { sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
 import { horaSolarEn } from "./world/hora";
 import { Cinturon } from "./flight/cinturon";
+import {
+  loSolto,
+  mandosPara,
+  type Objetivos,
+} from "./flight/piloto-automatico";
 import { MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
@@ -1933,6 +1939,17 @@ export class Game {
     // El interruptor del cinturón, en los aviones que llevan gente detrás.
     this.hud.ponerHayCinturon(conPasaje(this.aircraft.mass));
     this.hud.onCinturon(() => this.mandarElCinturon());
+    /*
+     * **Y el piloto automático, en los peldaños que ya vuelan de verdad.**
+     *
+     * No en el primero: a los cuatro años lo que se aprende es que el avión va
+     * a donde tú lo llevas, y un botón que lo lleva solo enseña lo contrario.
+     * Desde el segundo sí, que es donde empiezan los vuelos largos — y ahí
+     * enseña lo que enseña de verdad: que en crucero nadie pilota a mano, y
+     * que se suelta en cuanto tocás los mandos.
+     */
+    this.hud.ponerHayPilotoAutomatico(this.tier.id !== "guyrami");
+    this.hud.onPilotoAutomatico(() => this.ponerPilotoAutomatico());
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
      * de lo que va esto; las nubes se eligen cuando se quieren, y entonces se
@@ -4960,7 +4977,7 @@ export class Game {
       // Con un instrumento abierto —el plano, el tiempo— el avión se
       // mantiene solo. Ver `mantenerElVueloRecto`.
       if (this.hayInstrumentoAbierto) this.mantenerElVueloRecto();
-      this.flight.step(dt, this.input.controls);
+      this.flight.step(dt, this.conElPilotoAutomatico());
       this.mirarSiChocaConAlgo();
     }
     this.avisarDeLosBultos(dt);
@@ -7069,6 +7086,96 @@ export class Game {
    * pueden quitar el cinturón pero la señal ya hace rato que se apagó».
    */
   private dijoSoltarse = false;
+
+  /**
+   * A dónde le manda ir el piloto automático, si está puesto.
+   *
+   * `null` en los dos es estar apagado. Ver `flight/piloto-automatico.ts`, que
+   * cuenta por qué existe: desde que se puede ir a otro aeropuerto hay rectas
+   * de cuarenta minutos, y una recta de cuarenta minutos a mano no enseña nada.
+   */
+  private objetivos: Objetivos = { rumbo: null, altitud: null };
+
+  /** Si el piloto automático está gobernando algo ahora mismo. */
+  get pilotoPuesto(): boolean {
+    return this.objetivos.rumbo !== null || this.objetivos.altitud !== null;
+  }
+
+  /**
+   * Pone o quita el piloto automático.
+   *
+   * Al ponerlo coge **lo que se está haciendo ahora**: el rumbo y la altura de
+   * este instante. Es lo que hace cualquier piloto automático del mundo al
+   * apretar el botón, y es lo que hace que no dé un tirón al engancharse —
+   * enganchar con un objetivo distinto del vuelo actual es la forma más rápida
+   * de asustar a quien va dentro.
+   */
+  ponerPilotoAutomatico(puesto = !this.pilotoPuesto): void {
+    const s = this.flight.state;
+    this.objetivos = puesto
+      ? { rumbo: s.heading, altitud: s.position.y }
+      : { rumbo: null, altitud: null };
+    this.hud.ponerPilotoAutomatico(puesto);
+    this.avisar(puesto ? "success" : "attention");
+  }
+
+  /**
+   * Un fotograma del piloto automático.
+   *
+   * Va **después** de quien pilota y antes del modelo de vuelo, en el mismo
+   * sitio que las ayudas: primero se lee lo que pide quien vuela —que puede
+   * ser soltarlo— y luego se manda.
+   */
+  private conElPilotoAutomatico(): ControlInputs {
+    const c = this.input.controls;
+    if (!this.pilotoPuesto) return c;
+    const s = this.flight.state;
+    /*
+     * **Y se suelta en cuanto lo tocan.** No hay nada más desconcertante que
+     * un avión que se resiste, y en uno de verdad pasa exactamente lo mismo.
+     */
+    if (s.onGround || loSolto(this.objetivos, c)) {
+      this.ponerPilotoAutomatico(false);
+      return c;
+    }
+    const m = mandosPara(
+      {
+        heading: s.heading,
+        alabeo: bankAngleOf(s.orientation),
+        cabeceo: pitchAngleOf(s.orientation),
+        altitud: s.position.y,
+        vertical: s.velocity.y,
+      },
+      this.objetivos,
+    );
+    /*
+     * **Y el piloto automático NO escribe en los mandos del piloto.**
+     *
+     * Escribía, y se desenganchaba solo al fotograma siguiente: el módulo de
+     * entrada no borra los mandos, los devuelve al centro poco a poco, así que
+     * al leerlos otra vez encontraba **sus propios valores** y creía que
+     * alguien había tocado la palanca. Medido: enganchaba, mandaba un
+     * fotograma —alerón 0,55— y a los ciento cincuenta milisegundos ya estaba
+     * suelto; el avión se iba con el ala caída y el rumbo derivaba cincuenta
+     * grados en tres cuartos de minuto.
+     *
+     * Es la misma lección que este código ya tenía escrita en el banco de
+     * despegue —«el guion le ponía timón al avión y el teclado se lo quitaba
+     * al instante»— y que aquí se había vuelto a colar por el otro lado.
+     *
+     * Así que los mandos del piloto se quedan como están, y lo que va al
+     * modelo de vuelo es una copia con lo del automático encima. Y la copia es
+     * **la misma siempre**, para no reservar memoria sesenta veces por
+     * segundo.
+     */
+    Object.assign(this.mandosConAutomatico, c);
+    this.mandosConAutomatico.aileron = m.aileron;
+    this.mandosConAutomatico.elevator = m.elevator;
+    return this.mandosConAutomatico;
+  }
+
+  /** La copia de los mandos que se le pasa al modelo. Ver arriba. */
+  private readonly mandosConAutomatico: ControlInputs = neutralControls();
 
   /**
    * El cartel del cinturón y su *ding*.
