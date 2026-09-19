@@ -71,7 +71,7 @@ async function tiempoPedido(esc: Scenario): Promise<Meteo> {
   const proxy = q.get("meteo") ?? import.meta.env.VITE_METEO ?? null;
   return pedirMetar(icao, proxy, deCasa);
 }
-import { detectLocale, setLocale } from "./i18n";
+import { detectLocale, setLocale, t } from "./i18n";
 import { abrirHangar } from "./ui/hangar";
 import type { Mission } from "./missions/types";
 import { MISSIONS } from "./content/missions";
@@ -475,7 +475,10 @@ if (import.meta.env.DEV && "serviceWorker" in navigator) {
 
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   const registrar = (): void => {
-    void navigator.serviceWorker.register("./sw.js").catch(() => {});
+    void navigator.serviceWorker
+      .register("./sw.js")
+      .then((registro) => avisarDeLaVersionNueva(registro))
+      .catch(() => {});
   };
   /*
    * **Y se mira si la página ya cargó, en vez de esperar a que cargue.**
@@ -490,4 +493,67 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
    */
   if (document.readyState === "complete") registrar();
   else window.addEventListener("load", registrar);
+}
+
+/**
+ * Y avisar de que hay una versión nueva esperando.
+ *
+ * **Esto es la otra mitad de una decisión que estaba a medias.** El trabajador
+ * de servicio no se salta la espera a propósito —cambiar los ficheros por
+ * debajo de una pestaña que está volando deja al avión sin lo que pida
+ * después— y eso está bien. Lo que faltaba es que alguien lo dijera: quien
+ * tiene la pestaña abierta se queda en la versión de ayer sin enterarse, y
+ * entonces vuelve a contar un fallo que ya está arreglado.
+ *
+ * Costó caro y por eso está escrito: el tirador del cuadro de mandos se
+ * arregló, se desplegó y se midió funcionando, y seguía sin funcionar —porque
+ * lo que corría en esa pestaña era el juego de antes—.
+ *
+ * Así que se avisa y se ofrece. No se cambia nada por las bravas: se enciende
+ * un botón pequeño en una esquina, y si lo tocan, entonces sí. Ver el mensaje
+ * `estrenar` en `scripts/plantilla-sw.js`.
+ */
+function avisarDeLaVersionNueva(registro: ServiceWorkerRegistration): void {
+  const enseñar = (esperando: ServiceWorker): void => {
+    if (document.querySelector(".version-nueva")) return;
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "version-nueva";
+    boton.innerHTML =
+      `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+      `<path d="M20 12a8 8 0 1 1-2.3-5.6" fill="none" stroke="currentColor"` +
+      ` stroke-width="2.2" stroke-linecap="round"/>` +
+      `<path d="M20 3.5V9h-5.5" fill="none" stroke="currentColor"` +
+      ` stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `</svg><span>${t("version.nueva")}</span>`;
+    boton.addEventListener("click", () => {
+      /*
+       * Primero se le dice que se estrene y **después se recarga**, cuando el
+       * navegador avisa de que hay otro al mando. Recargar antes vuelve a
+       * pedirle las piezas al de siempre, o sea a la versión vieja otra vez,
+       * que es la forma más fácil de que esto parezca que no hace nada.
+       */
+      navigator.serviceWorker.addEventListener(
+        "controllerchange",
+        () => location.reload(),
+        { once: true },
+      );
+      esperando.postMessage("estrenar");
+    });
+    document.body.appendChild(boton);
+  };
+
+  // El que ya estaba esperando cuando se abrió la página.
+  if (registro.waiting && navigator.serviceWorker.controller)
+    enseñar(registro.waiting);
+
+  // Y el que llegue mientras se juega.
+  registro.addEventListener("updatefound", () => {
+    const nuevo = registro.installing;
+    if (!nuevo) return;
+    nuevo.addEventListener("statechange", () => {
+      if (nuevo.state === "installed" && navigator.serviceWorker.controller)
+        enseñar(nuevo);
+    });
+  });
 }

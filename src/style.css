@@ -330,6 +330,44 @@ body {
 }
 
 /*
+ * ── El aviso de versión nueva ──
+ *
+ * Abajo a la derecha, pequeño y sin tapar nada. No interrumpe ni bloquea: lo
+ * que hace es **existir**, que era justo lo que faltaba. Ver
+ * `avisarDeLaVersionNueva` en `main.ts`.
+ */
+.version-nueva {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--linea);
+  background: var(--barniz), var(--barro);
+  color: var(--tinta, #e8e2d4);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: var(--filo), 0 6px 18px rgb(0 0 0 / 0.35);
+}
+
+.version-nueva svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--precaucion, #ffb454);
+}
+
+.version-nueva:hover,
+.version-nueva:focus-visible {
+  border-color: var(--precaucion, #ffb454);
+}
+
+/*
  * ── El compensador ──
  *
  * Una vía vertical con su centro marcado y una aguja. Sale **solo cuando está

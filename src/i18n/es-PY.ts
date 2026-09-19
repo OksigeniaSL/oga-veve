@@ -566,6 +566,13 @@ export const ES_PY = {
    */
   "hud.trimArriba": "Compensador, morro arriba",
   "hud.trimAbajo": "Compensador, morro abajo",
+
+  /*
+   * El aviso de versión nueva. Corto porque es un botón pequeño en una
+   * esquina, y con la flecha circular al lado, que es lo que se entiende sin
+   * leer. Ver `avisarDeLaVersionNueva` en `main.ts`.
+   */
+  "version.nueva": "Hay una versión nueva",
   "hud.mandarCinturon": "Cartel del cinturón",
   "hud.subirCuadro": "Subir el tablero",
   "gafas.ganadas": "¡Tus gafas de sol!",

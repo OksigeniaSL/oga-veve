@@ -28,6 +28,26 @@ self.addEventListener("install", (evento) => {
    */
 });
 
+/*
+ * **Y se estrena cuando lo pide quien juega, no antes.**
+ *
+ * La decisión de arriba —no saltarse la espera— es buena y se queda: nadie
+ * debe quedarse sin ficheros a media aproximación. Lo que faltaba era la otra
+ * mitad, y costó caro: quien deja la pestaña abierta **no se entera nunca de
+ * que hay una versión nueva**, así que vuelve a contar un fallo ya arreglado y
+ * se persigue dos veces. Pasó con el tirador del cuadro de mandos: arreglado,
+ * desplegado, medido —y seguía sin funcionar, porque lo que corría en esa
+ * pestaña era el juego de antes.
+ *
+ * Con esto, la página avisa y **ofrece**; si dicen que sí, manda este mensaje
+ * y la versión nueva entra en ese momento. El consentimiento es la diferencia:
+ * no es lo mismo cambiar el suelo mientras alguien vuela que preguntarle
+ * antes. Ver `main.ts`.
+ */
+self.addEventListener("message", (evento) => {
+  if (evento.data === "estrenar") self.skipWaiting();
+});
+
 self.addEventListener("activate", (evento) => {
   evento.waitUntil(
     (async () => {
