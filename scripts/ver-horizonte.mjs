@@ -21,7 +21,7 @@ await page.addInitScript(() => {
   localStorage.setItem('oga-veve:tramo', 'taguato-ruvicha');
 });
 const ESC = process.argv[3] ?? 'tenerife-norte';
-await page.goto(`http://localhost:5219/?escenario=${ESC}`);
+await page.goto(`http://localhost:5219/?escenario=${ESC}&hora=16`);
 await page.waitForTimeout(4000);
 
 /** Adónde mirar en cada sitio, en grados de verdad. */

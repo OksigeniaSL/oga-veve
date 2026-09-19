@@ -56,7 +56,7 @@ for (const id of NUESTROS) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=tenerife-norte&leccion=despegue&tramo=guyrami&avion=${id}`,
+    `http://localhost:${PUERTO}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=guyrami&avion=${id}`,
   );
   /*
    * **Y hay que esperar a que el modelo entre.**

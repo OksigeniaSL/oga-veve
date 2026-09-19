@@ -37,7 +37,7 @@ await page.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=aterrizaje&tramo=guyrami`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=guyrami`,
 );
 await page.bringToFront();
 await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {

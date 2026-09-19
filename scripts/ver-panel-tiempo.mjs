@@ -8,7 +8,7 @@ const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage({ viewport: { width: 1100, height: 700 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5235/?escenario=tenerife-norte&leccion=aterrizaje');
+await page.goto('http://localhost:5235/?escenario=tenerife-norte&hora=16&leccion=aterrizaje');
 await page.waitForTimeout(4000);
 await page.click('[data-hud="tiempo-boton"]');
 await page.waitForTimeout(500);

@@ -498,6 +498,10 @@ export const ES_PY = {
   "hud.pausa": "Parar el juego",
   "hud.camara": "Cambiar de vista",
   "hud.gafas": "Gafas de sol",
+  /* El tirador del cuadro de mandos. Lo pidió quien juega: «un botón para
+     bajarlo o volver a mostrarlo». */
+  "hud.bajarCuadro": "Bajar el tablero",
+  "hud.subirCuadro": "Subir el tablero",
   "gafas.ganadas": "¡Tus gafas de sol!",
   "gafas.puestas": "Gafas puestas",
   "gafas.quitadas": "Gafas quitadas",

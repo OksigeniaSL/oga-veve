@@ -56,7 +56,7 @@ await page.addInitScript(() => {
  * juego perdona porque lo sube al suelo, y no se habría visto nunca.
  */
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue&tramo=${TRAMO}&avion=jaz-120`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}&avion=jaz-120`,
 );
 await page
   .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })

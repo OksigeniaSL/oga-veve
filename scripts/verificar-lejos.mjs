@@ -23,7 +23,7 @@ const b = await chromium.launch({
 const page = await b.newPage({ viewport: { width: 1100, height: 700 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5247/?escenario=tenerife-norte&leccion=aterrizaje');
+await page.goto('http://localhost:5247/?escenario=tenerife-norte&hora=16&leccion=aterrizaje');
 // Tiempo para que el mundo se asiente y se moldee.
 await page.waitForTimeout(30000);
 

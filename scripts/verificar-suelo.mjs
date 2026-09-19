@@ -59,7 +59,7 @@ for (const esc of ESCENARIOS) {
   const page = await b.newPage({ viewport: { width: 900, height: 600 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5278/?escenario=${esc}`);
+  await page.goto(`http://localhost:5278/?escenario=${esc}&hora=16`);
   await page.waitForTimeout(95000);
 
   const r = await page.evaluate((umbral) => {

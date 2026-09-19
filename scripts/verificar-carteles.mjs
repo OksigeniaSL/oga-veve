@@ -75,7 +75,7 @@ for (const [ancho, alto] of PANTALLAS) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=la-palma&leccion=despegue&tramo=taguato&avion=jaz-90`,
+    `http://localhost:${PUERTO}/?escenario=la-palma&hora=16&leccion=despegue&tramo=taguato&avion=jaz-90`,
   );
   await page
     .waitForFunction(() => globalThis.__oga?.estado?.(), null, {

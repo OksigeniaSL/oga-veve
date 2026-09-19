@@ -23,7 +23,7 @@ const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome',
 const page = await b.newPage({ viewport: { width: 900, height: 600 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5286/?escenario=tenerife-norte');
+await page.goto('http://localhost:5286/?escenario=tenerife-norte&hora=16');
 await page.waitForTimeout(95000);
 console.log('— altura de cada malla sobre el suelo —');
 for (const l of await page.evaluate(() => globalThis.__oga.alturaDeLasMallas?.() ?? [])) {

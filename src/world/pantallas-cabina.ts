@@ -1736,5 +1736,62 @@ function pintarLaCarta(
     g.stroke();
   }
 
+  /*
+   * **Y el aeropuerto de destino.**
+   *
+   * Un círculo con una barra dentro: el símbolo de aeródromo de cualquier
+   * carta del mundo, el círculo es el campo y la barra la pista. Quien lo
+   * aprenda aquí lo reconoce en una carta de verdad, que es la prueba de la
+   * regla 4.
+   *
+   * Y cuando todavía cae fuera del alcance, se pega al borde con una punta:
+   * el sitio no se ve, pero se sabe por dónde cae. La cuenta de dónde pegarlo
+   * está en `ui/carta.ts`, la misma que usa el cuadro plano — porque esto es
+   * exactamente la clase de cosa que acaba dibujándose distinta en cada
+   * superficie si cada una se la resuelve.
+   */
+  if (dibujo.destino) {
+    const { dx, dy, dentro } = dibujo.destino;
+    g.strokeStyle = PALETA.objetivo;
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(cx + dx, cy + dy, 7, 0, Math.PI * 2);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(cx + dx - 4.5, cy + dy);
+    g.lineTo(cx + dx + 4.5, cy + dy);
+    g.stroke();
+    if (!dentro) {
+      const a = Math.atan2(dy, dx);
+      g.save();
+      g.translate(cx + dx, cy + dy);
+      g.rotate(a);
+      g.fillStyle = PALETA.objetivo;
+      g.beginPath();
+      g.moveTo(13, 0);
+      g.lineTo(7, 5);
+      g.lineTo(7, -5);
+      g.closePath();
+      g.fill();
+      g.restore();
+    }
+  }
+
   g.restore();
+
+  /*
+   * Las millas que faltan, en la esquina de enfrente del rango. Fuera del
+   * recorte a propósito: es un rótulo de la pantalla, no algo del mundo.
+   */
+  if (dibujo.destino) {
+    escribir(
+      g,
+      `${dibujo.destino.millas.toFixed(1)} NM`,
+      14,
+      ALTO - 14,
+      "500 12px " + FUENTE,
+      PALETA.objetivo,
+      "left",
+    );
+  }
 }

@@ -22,7 +22,7 @@ await server.listen();
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage();
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
-await page.goto('http://localhost:5197/?escenario=valle-cordillera');
+await page.goto('http://localhost:5197/?escenario=valle-cordillera&hora=16');
 
 const r = await page.evaluate(async (id) => {
   const THREE = await import('/node_modules/three/build/three.module.js');

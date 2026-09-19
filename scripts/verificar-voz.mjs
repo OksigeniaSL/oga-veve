@@ -165,7 +165,7 @@ try {
   await page.addInitScript(() =>
     localStorage.setItem("oga-veve:teclas-vistas", "1"),
   );
-  const direccion = `http://localhost:${PUERTO}/?escenario=tenerife-norte&leccion=rodaje&tramo=guyrami`;
+  const direccion = `http://localhost:${PUERTO}/?escenario=tenerife-norte&hora=16&leccion=rodaje&tramo=guyrami`;
   await page.goto(direccion);
   await page.waitForFunction(() => !!globalThis.__oga?.voz, null, {
     timeout: 120000,

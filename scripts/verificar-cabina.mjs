@@ -58,7 +58,7 @@ for (const id of [
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=tenerife-norte&leccion=despegue&tramo=taguato&avion=${id}`,
+    `http://localhost:${PUERTO}/?escenario=tenerife-norte&hora=16&leccion=despegue&tramo=taguato&avion=${id}`,
   );
   await page
     .waitForFunction(

@@ -34,7 +34,7 @@ for (const esc of ['tenerife-norte', 'pettirossi']) {
   const page = await b.newPage({ viewport: { width: 900, height: 600 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5272/?escenario=${esc}`);
+  await page.goto(`http://localhost:5272/?escenario=${esc}&hora=16`);
 
   const saltos = [];
   let antes = null;

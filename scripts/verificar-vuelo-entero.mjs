@@ -100,8 +100,17 @@ page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
 await page.addInitScript(() => {
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
+/*
+ * **Y la hora se fija, que si no el banco mide la hora a la que se ejecuta.**
+ *
+ * Desde que el cielo lleva la hora de verdad del sitio —ver `world/hora.ts`—,
+ * un vuelo a las tres de la mañana y otro a mediodía no se parecen: cambia la
+ * luz, se encienden las balizas y el cuadro. Eso está bien en el juego y es
+ * veneno en un banco, donde dos tiradas del mismo código tienen que dar lo
+ * mismo. Las cuatro de la tarde, que es la hora con la que se diseñó todo.
+ */
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=despegue` +
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=despegue` +
     `&tramo=${TRAMO}&avion=${AVION}`,
 );
 await page.waitForTimeout(16000);

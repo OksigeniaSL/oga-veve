@@ -29,7 +29,7 @@ await page.addInitScript(() => {
   localStorage.setItem("oga-veve:tramo", "guyrami");
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
-await page.goto("http://localhost:5196/?escenario=valle-cordillera");
+await page.goto("http://localhost:5196/?escenario=valle-cordillera&hora=16");
 await page.waitForSelector('[data-picto="speed"]', { timeout: 60000 });
 await page.waitForTimeout(2200);
 

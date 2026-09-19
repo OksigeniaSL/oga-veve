@@ -1948,8 +1948,82 @@ button.motor__tecla::after {
    * doscientos píxeles de negro a cada lado.
    */
   --cuadro-proporcion: 2.37;
-  width: min(calc(100vw - 16px), 1180px, calc(38vh * var(--cuadro-proporcion)));
+  /*
+   * **Y se ensancha, porque sobraba pantalla a los lados.**
+   *
+   * Con 38vh y tope de 1180, en un portátil de 1856×989 el cuadro salía de 891
+   * píxeles y dejaba medio metro de nada a cada lado: «puedes alargar más el
+   * cuadro para que entre hacia los lados». Con 50vh y tope de 1400 sale de
+   * 1172 en esa misma pantalla — un tercio más de instrumento.
+   *
+   * El motivo de que mande el alto sigue valiendo entero: el cuadro no puede
+   * comerse el vuelo. Lo que cambia es cuánto se le deja, y medio alto de
+   * pantalla es lo que ocupa el panel en una cabina de verdad vista desde el
+   * asiento. En una tablet de aula en horizontal —640 de alto— son 320, y por
+   * debajo manda el ancho, así que no se desborda.
+   */
+  width: min(calc(100vw - 16px), 1400px, calc(50vh * var(--cuadro-proporcion)));
   pointer-events: none;
+  /*
+   * Y baja entero cuando se tira de él. Queda asomando el tirador, que es por
+   * donde se vuelve a subir: un cuadro que desaparece del todo no se puede
+   * recuperar sin saber leer un menú.
+   */
+  transition: transform 260ms ease;
+}
+
+.cuadro--bajado {
+  transform: translate(-50%, calc(100% - var(--tirador-asoma, 34px)));
+}
+
+.sin-movimiento .cuadro {
+  transition: none;
+}
+
+/*
+ * ── El tirador del cuadro ──
+ *
+ * Se agarra por arriba y baja, como la persiana que es. Va pegado al borde
+ * superior del cuadro y **por fuera de él**, para que siga a mano cuando el
+ * cuadro esté abajo: si se escondiera con él, bajarlo sería un viaje sin
+ * vuelta. Ver `hud.ts`.
+ */
+.cuadro__tirador {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -76%);
+  width: 58px;
+  height: 30px;
+  border: 0;
+  border-radius: 14px 14px 0 0;
+  background: var(--cabina-fascia, #22262b);
+  color: var(--tinta-suave, #cfd6dd);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 -3px 10px rgb(0 0 0 / 0.45);
+}
+
+.cuadro__tirador svg {
+  width: 26px;
+  height: 26px;
+  transition: transform 260ms ease;
+}
+
+/* Bajado, la flecha apunta arriba: dice a dónde va, no dónde está. */
+.cuadro--bajado .cuadro__tirador svg {
+  transform: rotate(180deg);
+}
+
+.sin-movimiento .cuadro__tirador svg {
+  transition: none;
+}
+
+.cuadro__tirador:focus-visible {
+  outline: 3px solid var(--foco, #ffb454);
+  outline-offset: 2px;
 }
 
 /*
@@ -1973,7 +2047,44 @@ button.motor__tecla::after {
   display: block;
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 -6px 18px rgb(0 0 0 / 0.55));
+  /*
+   * ── Y el cuadro se comporta según la luz que hay fuera ──
+   *
+   * `--luz-de-fuera` va de 0 —noche cerrada— a 1 —pleno día—, y la pone el HUD
+   * con la hora del sitio. Ver `cuantaLuz` en `world/hora.ts`.
+   *
+   * Lo que cambia es lo que cambia de verdad en una cabina:
+   *
+   * - **De día** el panel se ve por la luz que le da, así que sube algo el
+   *   contraste y la sombra de la visera se marca.
+   * - **De noche** el panel es lo único que hay: los números se encienden con
+   *   su halo y el mueble se apaga, que es exactamente lo que se ve desde
+   *   fuera de un avión de noche.
+   *
+   * Es un filtro y no seis reglas de color porque el cuadro son seiscientos
+   * elementos de SVG y repintarlos uno a uno cada minuto de juego cuesta
+   * fotogramas. Un filtro lo hace la tarjeta gráfica y no toca el árbol.
+   */
+  --luz-de-fuera: 1;
+  --cuadro-encendido: calc(1 - var(--luz-de-fuera));
+  filter: drop-shadow(0 -6px 18px rgb(0 0 0 / 0.55))
+    brightness(calc(0.82 + 0.18 * var(--luz-de-fuera)))
+    saturate(calc(1 + 0.35 * var(--cuadro-encendido)));
+}
+
+/*
+ * El halo de los números encendidos, solo de noche.
+ *
+ * Un instrumento retroiluminado no es un instrumento más claro: es uno que
+ * **emite**, y lo que se ve de noche a diez metros de un avión es justo eso,
+ * las cifras flotando. Se le pone al texto y a las agujas, que es lo que lleva
+ * luz detrás en un panel de verdad; el mueble no se ilumina solo.
+ */
+.tablero text,
+.tablero__aguja {
+  filter: drop-shadow(
+    0 0 calc(3px * var(--cuadro-encendido, 0)) currentColor
+  );
 }
 
 /* ── El mueble: lo que hace que esto sea un objeto y no una pegatina ── */
@@ -2571,6 +2682,23 @@ button.motor__tecla::after {
   fill: none;
   stroke: var(--cabina-auxiliar);
   stroke-width: 2;
+}
+
+/*
+ * El aeropuerto de destino: círculo con barra, el símbolo de aeródromo de
+ * cualquier carta. En el color del objetivo —el mismo de la senda de entrada—
+ * porque es lo mismo: a dónde se va. Ver ui/carta.ts.
+ */
+.cr__destino circle,
+.cr__destino line {
+  fill: none;
+  stroke: var(--cabina-objetivo);
+  stroke-width: 2;
+}
+
+.cr__destino path {
+  fill: var(--cabina-objetivo);
+  stroke: none;
 }
 
 .cr__puntero {

@@ -93,7 +93,7 @@ await page.addInitScript(() => {
 const medidas = [];
 for (const [escenario, avion] of LISTA) {
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=${escenario}&leccion=circuito&avion=${avion}`,
+    `http://localhost:${PUERTO}/?escenario=${escenario}&hora=16&leccion=circuito&avion=${avion}`,
   );
   await page
     .waitForFunction(() => globalThis.__oga?.circuito?.()?.length, null, {

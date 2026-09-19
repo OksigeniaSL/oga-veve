@@ -49,7 +49,7 @@ await page.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&leccion=aterrizaje&tramo=taguato`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=taguato`,
 );
 // El juego se para cuando nadie mira, y «nadie mira» incluye una pestaña que
 // nunca se trajo al frente. Ver `main.ts`.

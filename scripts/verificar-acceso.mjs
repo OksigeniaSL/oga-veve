@@ -91,7 +91,7 @@ await page.addInitScript(() =>
  * que ya pasó con el plano y con el tiempo. Ver `ui/paneles.ts`.
  */
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&teselas=0&mision=${MISION}`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&teselas=0&mision=${MISION}`,
 );
 await page.waitForTimeout(12000);
 
@@ -778,7 +778,7 @@ await tableta.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
 await tableta.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&teselas=0`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&teselas=0`,
 );
 await tableta.waitForTimeout(12000);
 peores = peores.concat(await auditar(tableta, "tableta"));
@@ -812,7 +812,7 @@ await quieta.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
 await quieta.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&teselas=0`,
+  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&teselas=0`,
 );
 await quieta.waitForTimeout(12000);
 /*
