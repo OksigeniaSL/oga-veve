@@ -318,6 +318,7 @@ import { Megafonia, conPasaje } from "./audio/megafonia";
 import { altitudDeCabina } from "./flight/cabina-presurizada";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
 import { hitosDe, sinRepetidos, type Hito } from "./world/hitos";
+import { focoEncendido } from "./world/luces-de-posicion";
 import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import {
   InstructorGrabado,
@@ -6274,6 +6275,16 @@ export class Game {
     this.aircraftMesh.luces?.paso(
       this.relojDeRuta,
       this.input.controls.engineOn,
+      /*
+       * Y el foco: con el tren fuera o por debajo de diez mil pies, que es la
+       * regla de verdad y tiene porqué — a esa altura es donde hay tráfico y
+       * donde hay pájaros, y el foco es lo que hace que te vean. Ver
+       * `focoEncendido`.
+       */
+      focoEncendido(
+        this.flight.state.position.y - this.terrain.runwayElevation,
+        this.input.controls.tren > 0.5,
+      ),
     );
     this.aircraftMesh.relojes?.actualizar(
       {

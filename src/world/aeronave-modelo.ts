@@ -558,7 +558,9 @@ export async function cargarModelo(
    * Es el fallo de siempre en este proyecto, el de las dos superficies: se
    * arregla donde se mira y no donde también se mira.
    */
-  const luces = crearLucesDePosicion(aircraft);
+  // Con el avión ya montado: las puntas de ala son las suyas, no las de la
+  // ficha. Ver `crearLucesDePosicion`.
+  const luces = crearLucesDePosicion(aircraft, raiz);
   group.add(luces.grupo);
 
   return {

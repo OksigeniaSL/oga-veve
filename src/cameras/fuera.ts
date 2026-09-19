@@ -44,7 +44,7 @@ const MIRA_LEJOS = 2.4;
 const MIRA_LO_MINIMO = 32;
 
 /** Desde dónde mira cada una de las tres. */
-export type Sitio = "cola" | "derecha" | "izquierda";
+export type Sitio = "cola" | "derecha" | "izquierda" | "morro";
 
 export class CamaraDeFuera implements CameraRig {
   readonly muestraElAvion = true;
@@ -78,7 +78,29 @@ export class CamaraDeFuera implements CameraRig {
     this.ultimaVelocidad = state.airspeed;
     this.surge += (Math.min(bruta, 6) - this.surge) * Math.min(1, dt * 4);
 
-    if (this.sitio === "cola") {
+    if (this.sitio === "morro") {
+      /*
+       * **De frente, que es como se mira un avión.**
+       *
+       * Pedida así: «un POV para ver el avión de frente, podría quedar
+       * bonito». Y no es solo bonito: de frente es donde se lee el diedro del
+       * ala, dónde van los motores y **de qué lado viene** —la verde a tu
+       * izquierda quiere decir que te va a pasar por ahí—, que es media
+       * lección de las luces de posición.
+       *
+       * Delante y algo por encima del morro, y mirando hacia atrás: el avión
+       * viene hacia la cámara, que es lo que hace que se vea venir.
+       *
+       * **Y la distancia sale del largo, no de la envergadura.** Sacada de la
+       * envergadura, el 747 quedaba a sesenta y cinco metros del origen y
+       * treinta del morro: en captura, el radomo ocupando media pantalla y el
+       * avión saliéndose por los cuatro lados. Delante lo que hay que librar
+       * es el fuselaje entero, y eso lo mide el largo — el mismo criterio que
+       * las de costado, por el mismo motivo.
+       */
+      const lejos = Math.max(ctx.aircraft.largo * 1.6, 26);
+      this.offset.set(0, ctx.aircraft.chord * 1.4, -lejos);
+    } else if (this.sitio === "cola") {
       // Más alta y algo más atrás que en la primera versión: estaba a la
       // altura del avión y el fuselaje tapaba justo el centro de la pantalla,
       // que es donde uno quiere mirar para saber adónde va.
@@ -124,11 +146,18 @@ export class CamaraDeFuera implements CameraRig {
       );
     }
 
-    // Retroceso por aceleración: la cámara se queda un poco atrás cuando el
-    // avión empuja y vuelve a su sitio al estabilizarse. Es el mismo truco que
-    // usa cualquier juego de coches y es lo que hace que se *sienta* la
-    // aceleración en vez de solo verla en el marcador.
-    this.offset.z += ACCELERATION_LAG * Math.max(0, this.surge);
+    /*
+     * Retroceso por aceleración: la cámara se queda un poco atrás cuando el
+     * avión empuja y vuelve a su sitio al estabilizarse. Es el mismo truco que
+     * usa cualquier juego de coches y es lo que hace que se *sienta* la
+     * aceleración en vez de solo verla en el marcador.
+     *
+     * **Menos de frente.** Ahí la cámara está delante, así que quedarse atrás
+     * es metérsela al avión por el morro: con la aceleración de un despegue se
+     * comía los veintidós metros de separación.
+     */
+    if (this.sitio !== "morro")
+      this.offset.z += ACCELERATION_LAG * Math.max(0, this.surge);
     this.offset.applyQuaternion(state.orientation);
     this.deseada.copy(state.position).add(this.offset);
     this.traquetear(state, dt, ctx);
@@ -149,6 +178,18 @@ export class CamaraDeFuera implements CameraRig {
         .normalize()
         .multiplyScalar(lejos)
         .add(state.position);
+    } else if (this.sitio === "morro") {
+      /*
+       * **De frente se mira al avión, y a nada más.**
+       *
+       * Las demás miran un poco por delante del avión, hacia donde va, y eso
+       * desde detrás y desde el costado encuadra bien. Desde delante no: la
+       * cámara está veintidós metros por delante y el punto de mira, a un
+       * tercio de segundo de vuelo, caía **otros veinte por delante de la
+       * cámara**. O sea que la vista nueva miraba al horizonte de espaldas al
+       * avión: en captura, pantalla vacía de día y de noche.
+       */
+      this.mirando.copy(state.position);
     } else {
       this.mirando.copy(state.position).addScaledVector(state.velocity, 0.35);
     }

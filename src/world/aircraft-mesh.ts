@@ -182,9 +182,12 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
    * **Y las luces de posición**, que son lo que hace que un avión de noche
    * sea un avión y no una silueta gris. Ver `luces-de-posicion.ts`.
    */
-  const luces = crearLucesDePosicion(aircraft);
-  // Al mismo cero que el casco: la fábrica deja la panza en el origen.
-  luces.grupo.position.y = -aircraft.gearHeight;
+  /*
+   * Y **sin volver a bajarlo**: las puntas se miden sobre el casco con su
+   * matriz puesta, así que la altura del tren ya está descontada en ellas.
+   * Restarla otra vez aquí ponía las luces un tren por debajo del avión.
+   */
+  const luces = crearLucesDePosicion(aircraft, casco);
   group.add(luces.grupo);
 
   return {

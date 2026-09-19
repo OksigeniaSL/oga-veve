@@ -251,3 +251,49 @@ describe("la cámara de costado encuadra el avión que hay", () => {
     }
   });
 });
+
+/*
+ * ── La de frente tiene que ver el avión ────────────────────────────────────
+ *
+ * Pedida así: «un POV para ver el avión de frente, podría quedar bonito». La
+ * primera versión la puso delante y le dejó la mira de las demás —un poco por
+ * delante del avión, hacia donde va—, y desde delante eso apunta al horizonte
+ * **de espaldas al avión**: en captura, pantalla vacía de día y de noche.
+ */
+describe("la vista de frente", () => {
+  it("se pone delante del avión", () => {
+    const camara = volar(construirCamaras().morro, avion(), contexto());
+    // El avión mira al norte —z negativa—, así que delante es z negativa.
+    expect(camara.position.z).toBeLessThan(-10);
+  });
+
+  it("y mira al avión, que es lo único que tiene que salir", () => {
+    const state = avion();
+    const camara = volar(construirCamaras().morro, state, contexto());
+    const haciaElAvion = state.position
+      .clone()
+      .sub(camara.position)
+      .normalize();
+    const aDondeMira = new Vector3(0, 0, -1).applyQuaternion(camara.quaternion);
+    // Alineadas: el avión en el centro del cuadro y no a la espalda.
+    expect(aDondeMira.dot(haciaElAvion)).toBeGreaterThan(0.99);
+  });
+
+  it("y acelerando no se la traga el avión", () => {
+    /*
+     * El retroceso por aceleración empuja la cámara hacia atrás en el marco
+     * del avión, y delante «atrás» es hacia el morro. En un despegue a tope
+     * eso se comía la separación entera.
+     */
+    const ctx = contexto();
+    const rig = construirCamaras().morro;
+    const camara = new PerspectiveCamera(BASE_FOV, 16 / 9, 0.1, 1e6);
+    let v = 0;
+    for (let i = 0; i < 240; i++) {
+      v += 6 / 60;
+      rig.update(camara, avion({ airspeed: v }), 1 / 60, ctx);
+    }
+    const separacion = Math.hypot(camara.position.x, camara.position.z);
+    expect(separacion).toBeGreaterThan(20);
+  });
+});

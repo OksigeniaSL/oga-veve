@@ -36,6 +36,13 @@ export const CAMERA_MODES = [
   "cockpit",
   "wing",
   "izquierda",
+  /*
+   * Y `morro`, de frente. Pedida así: «un POV para ver el avión de frente,
+   * podría quedar bonito». Y de paso enseña: de frente es donde se lee el
+   * diedro del ala y **de qué lado viene** el avión por sus luces, que es la
+   * mitad de para qué están.
+   */
+  "morro",
   "pajaro",
 ] as const;
 
@@ -53,6 +60,7 @@ export function construirCamaras(): Readonly<Record<CameraMode, CameraRig>> {
     chase: new CamaraDeFuera("cola"),
     wing: new CamaraDeFuera("derecha"),
     izquierda: new CamaraDeFuera("izquierda"),
+    morro: new CamaraDeFuera("morro"),
     cockpit: new CamaraDeDentro(true, true),
     // La de pájaro es la cabina sin el avión delante.
     pajaro: new CamaraDeDentro(false, false),
