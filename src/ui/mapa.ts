@@ -79,6 +79,42 @@ export class Mapa {
   private alcance = 0;
   private escenario: Scenario | null = null;
   private cota: ((x: number, z: number) => number) | null = null;
+  /**
+   * La pista del otro aeropuerto de la ruta, si esta ruta lleva a alguno.
+   *
+   * En coordenadas de este mundo, ya corrida. Sin ella el plano enseñaba **un
+   * solo sitio donde se puede bajar**, y eso es medio mapa: quien sale de El
+   * Hierro y ve dos islas en el horizonte no tiene forma de saber cuál de las
+   * dos tiene aeropuerto. Contado jugando después de volar noventa kilómetros
+   * hasta La Palma: «¿y el aeropuerto de La Palma?, ¿y el mapa?».
+   *
+   * La Palma no lo tiene porque el destino de El Hierro es **La Gomera**, a
+   * setenta kilómetros al 070. Eso el juego lo sabía y no lo decía en ningún
+   * sitio donde se pudiera mirar antes de salir. Un mapa es exactamente el
+   * sitio.
+   */
+  private otraPista: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+  } | null = null;
+
+  /** La pista del destino, en coordenadas de este mundo. Ver `otraPista`. */
+  ponerOtraPista(pista: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+  }): void {
+    this.otraPista = pista;
+    this.pintado = false;
+    if (this.abierto) {
+      this.pintarFondo();
+      this.pintado = true;
+    }
+  }
+
   /** Los hitos del paisaje, y quién sabe cuáles se han nombrado ya. */
   private hitos: readonly Hito[] = [];
   private dichos: () => ReadonlySet<string> = () => new Set();
@@ -460,13 +496,44 @@ export class Mapa {
   private metrosPorLado(): number {
     const base = (this.escenario?.size ?? 1) * ALCANCES[this.alcance]!;
     if (this.alcance > 0) return base;
-    const lejos = Math.max(Math.abs(this.avionX), Math.abs(this.avionZ)) * 2.3;
-    return Math.max(base, lejos);
+    const [cx, cz] = this.centro();
+    /*
+     * **Y en el encuadre ancho cabe todo lo que importa: los dos aeropuertos
+     * y vos.**
+     *
+     * Era el escenario y el avión, y con rutas eso se quedó corto: volando de
+     * El Hierro a La Gomera —setenta kilómetros— el plano se estiraba hasta
+     * donde estuviera el avión y **el destino se quedaba fuera del papel**.
+     * Un mapa en el que no se ve a dónde vas contesta la mitad de la pregunta
+     * que se hace quien lo abre. Contado jugando, con las dos preguntas
+     * juntas: «¿y el aeropuerto de La Palma?, ¿y el mapa?».
+     */
+    const lejos = [
+      [0, 0] as const,
+      [this.avionX, this.avionZ] as const,
+      ...(this.otraPista
+        ? [[this.otraPista.x, this.otraPista.z] as const]
+        : []),
+    ].reduce(
+      (peor, [x, z]) =>
+        Math.max(peor, Math.abs(x - cx), Math.abs(z - cz)),
+      0,
+    );
+    // Dos y seis y no dos y tres: con el ajustado, la isla de casa se salía
+    // por el borde aunque su pista cupiera. Un mapa que corta la costa por la
+    // mitad se lee peor que uno con mar de sobra.
+    return Math.max(base, lejos * 2.6);
   }
 
-  /** El centro del encuadre: el escenario de lejos, el avión de cerca. */
+  /**
+   * El centro del encuadre: de cerca, el avión; de lejos, el escenario — y con
+   * ruta, **el punto medio entre los dos aeropuertos**, que es lo que deja el
+   * viaje entero dentro del papel. Sin ruta se comporta como siempre.
+   */
   private centro(): readonly [number, number] {
-    return this.alcance === 0 ? [0, 0] : [this.avionX, this.avionZ];
+    if (this.alcance !== 0) return [this.avionX, this.avionZ];
+    if (!this.otraPista) return [0, 0];
+    return [this.otraPista.x / 2, this.otraPista.z / 2];
   }
 
   private pintarFondo(): void {
@@ -630,19 +697,36 @@ export class Mapa {
     //
     // Se dibuja la última y en blanco: cuando uno mira este mapa es porque no
     // sabe dónde está, y lo que busca casi siempre es por dónde se vuelve.
-    const media = esc.runway.length / 2;
-    const a = puntoDePista(esc.runway, media);
-    const b = puntoDePista(esc.runway, -media);
-    g.strokeStyle = "#1d1b19";
-    g.lineWidth = Math.max(5, 5 * (LADO / this.metrosPorLado()) * 4);
-    g.lineCap = "butt";
-    g.beginPath();
-    g.moveTo(LADO / 2 + (a[0] - cx) * escala, LADO / 2 + (a[1] - cz) * escala);
-    g.lineTo(LADO / 2 + (b[0] - cx) * escala, LADO / 2 + (b[1] - cz) * escala);
-    g.stroke();
-    g.strokeStyle = "#f4efe6";
-    g.lineWidth = Math.max(2.6, 2.6 * (LADO / this.metrosPorLado()) * 4);
-    g.stroke();
+    const pintarPista = (pista: {
+      x: number;
+      z: number;
+      heading: number;
+      length: number;
+    }): void => {
+      const media = pista.length / 2;
+      const a = puntoDePista(pista, media);
+      const b = puntoDePista(pista, -media);
+      g.strokeStyle = "#1d1b19";
+      g.lineWidth = Math.max(5, 5 * (LADO / this.metrosPorLado()) * 4);
+      g.lineCap = "butt";
+      g.beginPath();
+      g.moveTo(LADO / 2 + (a[0] - cx) * escala, LADO / 2 + (a[1] - cz) * escala);
+      g.lineTo(LADO / 2 + (b[0] - cx) * escala, LADO / 2 + (b[1] - cz) * escala);
+      g.stroke();
+      g.strokeStyle = "#f4efe6";
+      g.lineWidth = Math.max(2.6, 2.6 * (LADO / this.metrosPorLado()) * 4);
+      g.stroke();
+    };
+    pintarPista(esc.runway);
+    /*
+     * **Y la del destino, que es la otra mitad del mapa.**
+     *
+     * Un plano con un solo sitio donde bajar no contesta la pregunta que se
+     * hace quien está volando sobre el mar: «¿a cuál de esas dos islas puedo
+     * ir?». Se pinta igual que la de casa —barra blanca con reborde oscuro—
+     * porque es lo mismo: una pista.
+     */
+    if (this.otraPista) pintarPista(this.otraPista);
   }
 
   /** Cumbres y pueblos: el dibujo siempre, el nombre si ya se oyó. */

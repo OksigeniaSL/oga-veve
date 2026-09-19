@@ -8,6 +8,24 @@
   },
   "hitos": [
     {
+      "nombre": "Ilhas Taquaras",
+      "clase": "isla",
+      "lat": -25.60161,
+      "lon": -54.36014,
+      "x": 48131,
+      "z": 16059,
+      "ele": null
+    },
+    {
+      "nombre": "Isla Paranambú",
+      "clase": "isla",
+      "lat": -25.97749,
+      "lon": -54.63497,
+      "x": 20539,
+      "z": 57855,
+      "ele": null
+    },
+    {
       "nombre": "Ciudad del Este",
       "clase": "ciudad",
       "lat": -25.5169,

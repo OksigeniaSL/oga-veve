@@ -1907,6 +1907,12 @@ export class Game {
       this.hitosDelVuelo,
       () => this.ventanilla.yaDichos,
     );
+    /*
+     * Y la pista del destino, que es la otra mitad del plano: sin ella, quien
+     * vuela sobre el mar entre dos islas no tiene forma de saber en cuál de
+     * las dos puede bajar. Ver `Mapa.ponerOtraPista`.
+     */
+    if (this.vecinoPista) this.hud.mapa.ponerOtraPista(this.vecinoPista);
     this.medidor = new Medidor(document.body, this.renderer);
     this.hud.setEscalera(this.tier.avisos);
     this.hud.setInstruments(this.tier.instruments);
