@@ -34,7 +34,7 @@ import {
   type Punto,
 } from "./aerodrome";
 import { delante } from "./rumbo";
-import { VECES_LEJOS, type Scenario } from "./scenarios";
+import { vecesLejosDe, type Scenario } from "./scenarios";
 
 /**
  * Dirección desde la que viene la luz, derivada del sol del escenario.
@@ -870,7 +870,7 @@ export class Terrain {
      */
     const SALTO = 2;
     const res = Math.floor((lejos.resolucion - 1) / SALTO) + 1;
-    const tamano = this.scenario.size * VECES_LEJOS;
+    const tamano = this.scenario.size * vecesLejosDe(this.scenario);
     const paso = (tamano / (lejos.resolucion - 1)) * SALTO;
     const mitad = tamano / 2;
 
@@ -963,7 +963,7 @@ export class Terrain {
     // una llanura verde.
     const lado =
       this.scenario.size *
-      (this.scenario.relieveLejano ? VECES_LEJOS * 1.05 : 1.4);
+      (this.scenario.relieveLejano ? vecesLejosDe(this.scenario) * 1.05 : 1.4);
     const geometry = new PlaneGeometry(lado, lado);
     geometry.rotateX(-Math.PI / 2);
     const mesh = new Mesh(
