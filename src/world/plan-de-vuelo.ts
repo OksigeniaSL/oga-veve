@@ -775,7 +775,11 @@ function redondear(
 
 export class PlanDeVuelo {
   readonly grupo = new Group();
-  private readonly grafo: Grafo;
+  /*
+   * El grafo, el aeródromo y la pista dejaron de ser `readonly` el día que se
+   * pudo aterrizar en otro aeropuerto. Ver `mudarseA`.
+   */
+  private grafo: Grafo;
   private readonly vuelo = new Vuelo();
 
   /** Si la torre ya dio la luz verde para entrar en pista. Para el banco. */
@@ -810,8 +814,8 @@ export class PlanDeVuelo {
   private radios: number[] = [];
 
   constructor(
-    private readonly aero: Aerodrome,
-    private readonly pista: {
+    private aero: Aerodrome,
+    private pista: {
       x: number;
       z: number;
       heading: number;
@@ -827,6 +831,53 @@ export class PlanDeVuelo {
   ) {
     this.grupo.name = "plan-de-vuelo";
     this.grafo = construirGrafo(aero);
+  }
+
+  /** En qué aeródromo está trabajando el plan ahora mismo. */
+  get aerodromoActual(): Aerodrome {
+    return this.aero;
+  }
+
+  /**
+   * Cambia de aeropuerto sin cambiar de vuelo.
+   *
+   * **Lo que se muda es el suelo, no el vuelo.** La máquina de fases sigue
+   * siendo la misma —se despegó una vez y se aterriza una vez—, pero el grafo
+   * de rodaje, los puestos y los puntos de espera pasan a ser los del campo en
+   * el que se va a tomar tierra. Sin esto, quien aterrizaba fuera se
+   * encontraba lo que contó jugando: «no hay coche, no sé la ruta a mi
+   * hangar». La raya verde la dibuja el grafo, y el grafo era el de casa.
+   *
+   * Se tira todo lo que estaba cacheado del campo anterior: el par de salida
+   * —que se eligió para salir de allí—, el puesto elegido y la puerta de
+   * llegada. La puerta sobre todo: una llegada, una puerta, y ésta es otra
+   * llegada.
+   */
+  mudarseA(
+    aero: Aerodrome,
+    pista: {
+      x: number;
+      z: number;
+      heading: number;
+      width: number;
+      length: number;
+    },
+  ): void {
+    if (aero === this.aero) return;
+    this.aero = aero;
+    this.pista = pista;
+    this.grafo = construirGrafo(aero);
+    this.par = undefined;
+    this.paresVistos = [];
+    this.puestoElegido = null;
+    this.puerta.olvidar();
+    this.destino = null;
+    /*
+     * Y la raya se apaga: la que había iba por las calles del otro campo, y
+     * dejarla puesta es peor que no tener ninguna. La de aquí la traza el
+     * cambio de fase al tomar tierra.
+     */
+    this.ponerRuta(null);
   }
 
   /** Que la torre no autorice nunca: es la lección de rodar. */

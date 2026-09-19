@@ -337,8 +337,9 @@ import {
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
-import { puntoMasCercanoDe } from "./world/aerodrome";
+import { puntoMasCercanoDe, type Aerodrome } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
+import { desplazarAerodromo } from "./world/aerodromo-desplazado";
 import { laMasCerca, sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import { celdasDe, cuantoSacude, type Celda } from "./flight/tormentas";
@@ -809,6 +810,15 @@ export class Game {
 
   /** El escenario del otro aeropuerto, si esta ruta lleva a alguno. */
   private vecinoEscenario: Scenario | null = null;
+
+  /**
+   * Y su aeródromo con las coordenadas ya puestas en este mundo.
+   *
+   * Es lo único que hace falta para que el plan de tierra —la raya verde, el
+   * coche del sígame, el señalero— funcione en el campo de llegada igual que
+   * en el de casa. Ver `mudarElPlanSiCambiaDeCampo`.
+   */
+  private vecinoAerodromo: Aerodrome | null = null;
 
   /** La pista del otro aeropuerto, para los bancos. */
   get pistaDelVecino(): Pista | null {
@@ -1488,6 +1498,18 @@ export class Game {
         x: this.vecino.desplazamiento.x + options.vecino.runway.x,
         z: this.vecino.desplazamiento.z + options.vecino.runway.z,
       };
+      /*
+       * Y su aeródromo corrido igual, que es lo que le hace falta al plan de
+       * tierra para trazar la raya de vuelta al hangar **allí**. Se calcula
+       * una vez: son unos miles de puntos. Ver `aerodromo-desplazado.ts`.
+       */
+      this.vecinoAerodromo = options.vecino.aerodrome
+        ? desplazarAerodromo(
+            options.vecino.aerodrome,
+            this.vecino.desplazamiento.x,
+            this.vecino.desplazamiento.z,
+          )
+        : null;
       this.scene.add(this.vecino.grupo);
       /*
        * **Y los otros aviones de la ruta.**
@@ -4552,10 +4574,24 @@ export class Game {
    */
   private rehacerPlanDeVuelo(): void {
     if (!this.plan || !this.scenario.aerodrome) return;
+    /*
+     * **Y se rehace en el campo en el que se está, no siempre en el de casa.**
+     *
+     * Esto tomaba el aeródromo del escenario sin mirar, así que un cambio de
+     * viento con el avión ya rodando por la plataforma del destino devolvía el
+     * plan a sesenta kilómetros de allí y dejaba a quien juega sin raya.
+     */
+    const enCasa = this.plan.aerodromoActual === this.scenario.aerodrome;
+    const aero =
+      enCasa || !this.vecinoAerodromo
+        ? this.scenario.aerodrome
+        : this.vecinoAerodromo;
+    const pista =
+      enCasa || !this.vecinoPista ? this.scenario.runway : this.vecinoPista;
     this.scene.remove(this.plan.grupo);
     this.plan = new PlanDeVuelo(
-      this.scenario.aerodrome,
-      this.scenario.runway,
+      aero,
+      pista,
       (x, z) => this.terrain.sampleHeight(x, z),
       this.aircraft,
     );
@@ -6237,6 +6273,36 @@ export class Game {
   }
 
   /**
+   * Y si el campo de abajo ya es el otro, el plan se muda con el avión.
+   *
+   * **La raya verde no viaja sola.** El mundo vecino trae su pista, sus calles
+   * y su plataforma dibujadas y pisables desde que se puede volar a otro
+   * aeropuerto, pero el plan de tierra seguía siendo el de casa: se aterrizaba
+   * en La Gomera y lo que contaba quien jugaba era «no hay coche, no sé la
+   * ruta a mi hangar». Y no la había: el grafo de rodaje que la traza estaba a
+   * sesenta kilómetros.
+   *
+   * El criterio de «en qué campo estoy» es el mismo que ya decide si una toma
+   * cuenta como aterrizaje —la pista que se tiene más cerca—, y por eso el
+   * cambio ocurre a mitad de camino, con el avión en el aire. Que es cuando
+   * tiene que ocurrir: a partir de ahí la fase de final, el número de pista
+   * que se canta y la salida por la que se deja el asfalto son las de allí.
+   *
+   * Y se vuelve a sacar a quien te espera, porque es otra gente en otro campo.
+   */
+  private mudarElPlanSiCambiaDeCampo(): void {
+    if (!this.plan || !this.vecinoAerodromo || !this.vecinoPista) return;
+    const aqui = this.elCampoDeAhora();
+    const toca =
+      aqui === this.scenario
+        ? { aero: this.scenario.aerodrome, pista: this.scenario.runway }
+        : { aero: this.vecinoAerodromo, pista: this.vecinoPista };
+    if (!toca.aero || toca.aero === this.plan.aerodromoActual) return;
+    this.plan.mudarseA(toca.aero, toca.pista);
+    if (this.leccion.guiaEnTierra) this.colocarSenalero();
+  }
+
+  /**
    * El señalero, un fotograma.
    *
    * Solo señala **de vuelta**: al salir no hay nadie con bastones delante del
@@ -6687,6 +6753,7 @@ export class Game {
    */
   private avanzarPlan(dt: number): void {
     if (!this.plan) return;
+    this.mudarElPlanSiCambiaDeCampo();
     const suelo =
       this.flight.state.position.y -
       this.terrain.sampleHeight(
