@@ -39,6 +39,7 @@ import { objectiveTarget, type Mission } from "../missions/types";
 import { SCENARIOS, type Scenario } from "../world/scenarios";
 import { PROXIMAMENTE } from "../world/proximamente";
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
+import { cielo, marca, pie } from "./marca";
 import { elegirMundo, mundoElegido } from "./mundo";
 import { leerProgreso, ponerProgreso } from "../datos/guardado";
 
@@ -1065,6 +1066,8 @@ export function abrirHangar(
 
   const pintar = (): void => {
     root.innerHTML = `
+      ${cielo()}
+      ${marca()}
       <div class="hangar__marco">
         <!--
           El idioma, aquí y no escondido detrás de una tecla del vuelo.
@@ -1293,6 +1296,7 @@ export function abrirHangar(
           <span>${t("hangar.despegar")}</span>
         </button>
       </div>
+      ${pie()}
     `;
   };
 

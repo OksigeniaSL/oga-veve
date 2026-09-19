@@ -2121,9 +2121,7 @@ button.motor__tecla::after {
  */
 .tablero text,
 .tablero__aguja {
-  filter: drop-shadow(
-    0 0 calc(3px * var(--cuadro-encendido, 0)) currentColor
-  );
+  filter: drop-shadow(0 0 calc(3px * var(--cuadro-encendido, 0)) currentColor);
 }
 
 /* ── El mueble: lo que hace que esto sea un objeto y no una pegatina ── */
@@ -3355,8 +3353,13 @@ button.motor__tecla::after {
   background:
     radial-gradient(120% 90% at 50% -10%, #2c4a3d, transparent 70%),
     var(--barro);
-  display: grid;
-  place-items: center;
+  /*
+   * En columna, que es lo que deja el pie abajo del todo con su margen
+   * automático. Con `place-items` el pie quedaba pegado al panel. Ver `.pie`.
+   */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: clamp(14px, 3vh, 34px) 16px;
 
   /*
@@ -3378,9 +3381,189 @@ button.motor__tecla::after {
   display: none;
 }
 
+/*
+ * ── El cielo del hangar ──
+ *
+ * Paraguay al atardecer visto desde la ventanilla. Va fijo y detrás de todo, y
+ * no recoge un solo clic. El porqué de la composición está en `hangar.ts`; lo
+ * de aquí es solo dónde se pone y cómo se mueve.
+ */
+.cielo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--barro);
+  pointer-events: none;
+}
+
+.cielo__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * El avioncito, lo único que se mueve.
+ *
+ * Solo `transform`, en un solo elemento: es lo que la tarjeta gráfica hace
+ * gratis. Cuarenta y cuatro segundos de travesía — lo bastante lento para que
+ * no distraiga de las tarjetas y lo bastante vivo para que se note que algo
+ * vuela. Y con movimiento reducido, no existe.
+ */
+.cielo__avion {
+  animation: cielo-vuelo 44s linear infinite;
+  will-change: transform;
+}
+
+@keyframes cielo-vuelo {
+  /*
+   * **En unidades del dibujo, no de la pantalla.**
+   *
+   * Iba en `vw` y `vh`, y dentro de un SVG con `viewBox` eso no significa lo
+   * que parece: el grupo vive en el espacio del dibujo, que está escalado, así
+   * que la trayectoria cambiaba con la proporción de la ventana. En ancho, el
+   * avión pasaba por encima del logotipo.
+   *
+   * Con números del `viewBox` —1440 por 810— la travesía es la misma en
+   * cualquier pantalla y se queda en la franja de cielo alto: por debajo de la
+   * marca y muy por encima de las tarjetas.
+   */
+  0% {
+    transform: translate(-220px, 150px) rotate(3deg);
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  34% {
+    transform: translate(420px, 96px) rotate(-3deg);
+  }
+  62% {
+    transform: translate(900px, 132px) rotate(2deg);
+  }
+  93% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(1680px, 78px) rotate(-3deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cielo__avion {
+    display: none;
+  }
+}
+
+.sin-movimiento .cielo__avion {
+  display: none;
+}
+
+/*
+ * ── La marca, arriba a la izquierda ──
+ *
+ * Con sitio libre alrededor —un ancho de sello— y nunca en las esquinas de
+ * abajo, que es donde viven los mandos. Y nunca translúcida: una marca a media
+ * opacidad es una marca que estorba y encima no se lee.
+ */
+.marca {
+  position: absolute;
+  top: max(20px, env(safe-area-inset-top));
+  left: max(20px, env(safe-area-inset-left));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--beige);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 22px;
+}
+
+.marca__palabra {
+  letter-spacing: 0.01em;
+}
+
+/* En pantalla estrecha se queda el sello: la palabra le robaría sitio al
+   título, que es lo que hay que leer primero. */
+@media (max-width: 640px) {
+  .marca__palabra {
+    display: none;
+  }
+}
+
+/*
+ * ── El pie ──
+ *
+ * Quién hizo esto y desde dónde. No parece un aviso legal a propósito: nada en
+ * mayúsculas, nada en gris de diez píxeles, y la última línea es una promesa en
+ * voseo en vez de letra chica.
+ */
+.pie {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  width: min(1280px, 100%);
+  /*
+   * Abajo del todo, y no pegado al panel.
+   *
+   * Con un margen fijo el pie se quedaba flotando en mitad de la pantalla en
+   * cuanto el panel era pequeño —la pantalla de pilotos con dos tarjetas— y
+   * ahí parecía cualquier cosa menos un pie. `auto` lo empuja al fondo de la
+   * columna, que es donde vive un pie.
+   */
+  margin-top: auto;
+  padding: 12px 4px;
+  border-top: 1px solid rgb(228 226 218 / 0.16);
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgb(228 226 218 / 0.85);
+}
+
+.pie__marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--beige);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pie__enlace {
+  color: var(--ocre);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pie__enlace:hover,
+.pie__enlace:focus-visible {
+  color: var(--terracota-tinta);
+  text-decoration: underline;
+}
+
+.pie__promesa {
+  margin-left: auto;
+  opacity: 0.75;
+}
+
+@media (max-width: 760px) {
+  .pie__promesa {
+    display: none;
+  }
+}
+
 .hangar__marco {
   /* Ancla de los dos mundos, que van fijos arriba a la derecha. */
   position: relative;
+  /* Por encima del cielo, que va en el cero. Ver `.cielo`. */
+  z-index: 1;
+  /* Y centrado: el otro `auto` es el del pie. Ver `.pilotos__panel`. */
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.8vh, 20px);
@@ -5352,12 +5535,31 @@ button.motor__tecla::after {
   position: fixed;
   inset: 0;
   z-index: 80;
-  display: grid;
-  place-items: center;
+  /*
+   * Y en columna, que es lo que deja sitio al pie debajo del panel. Con
+   * `place-items: center` el pie quedaba centrado en medio de la nada.
+   */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 16px;
   overflow: auto;
   background: var(--barro);
   background-image: var(--barniz);
+}
+
+/*
+ * Por encima del cielo, que va en el cero (ver `.cielo`), y centrado.
+ *
+ * Los dos márgenes automáticos —el de aquí arriba y el del pie— se reparten el
+ * hueco sobrante: el panel queda en el medio y el pie abajo del todo. Con
+ * `justify-content` solo, el `auto` del pie se comía el centrado y el panel se
+ * iba a la primera línea.
+ */
+.pilotos__panel {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
 }
 
 .pilotos__panel {
