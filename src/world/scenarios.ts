@@ -50,6 +50,23 @@ export interface TerrainBand {
  */
 export const VECES_LEJOS = 6;
 
+/**
+ * Y cuántas veces es este escenario en concreto.
+ *
+ * Seis para todos hasta que apareció el primer escenario con **un segundo
+ * aeropuerto al que ir**: el mundo tiene que llegar hasta él con sitio para la
+ * aproximación, y Tenerife Norte a Tenerife Sur son cincuenta y cuatro
+ * kilómetros, justo en el borde de los cincuenta y cuatro que da un seis.
+ *
+ * **Y ensanchar no es repartir las mismas muestras sobre más kilómetros**: el
+ * mapa lejano se regenera con más muestras, de forma que los metros por muestra
+ * no suban de los doscientos sesenta de hoy, que son los que hacen que el Teide
+ * se reconozca. Ver el ADR 0007.
+ */
+export function vecesLejosDe(esc: Pick<Scenario, "vecesLejos">): number {
+  return esc.vecesLejos ?? VECES_LEJOS;
+}
+
 export interface Scenario {
   id: string;
   nameKey: string;
@@ -142,6 +159,27 @@ export interface Scenario {
    * atribución. Ver `docs/adr/0005-que-se-puede-comprar.md`.
    */
   relieve?: { readonly datos: Int16Array; readonly resolucion: number };
+
+  /**
+   * Cuántas veces más ancho que el mapa fino es el del horizonte.
+   *
+   * Seis si no se dice otra cosa. Lo sube un escenario que tenga un segundo
+   * aeropuerto al que volar, para que quepa. Ver `vecesLejosDe`.
+   */
+  vecesLejos?: number;
+
+  /**
+   * El aeropuerto al que se puede ir volando desde aquí.
+   *
+   * Es el identificador de **otro escenario** de esta misma lista, y no un
+   * aeródromo suelto: lo que hace falta para aterrizar allí es todo lo que
+   * tiene un escenario —su pista, su torre, su plataforma, su meteorología—, y
+   * eso ya está escrito una vez.
+   *
+   * Y tiene que caber en el mundo: el banco lo comprueba contra `vecesLejos`,
+   * con sitio de sobra para la aproximación. Ver `entre-aerodromos.ts`.
+   */
+  destino?: string;
 
   /**
    * El relieve del horizonte, si lo hay: el mismo sitio, seis veces más ancho.
@@ -558,6 +596,19 @@ export const PETTIROSSI: Scenario = {
 export const TENERIFE_NORTE: Scenario = {
   id: "tenerife-norte",
   /*
+   * **La primera ruta del juego a otro aeropuerto**, y la más corta de las que
+   * se pueden hacer con los campos que ya están extraídos: cincuenta y cuatro
+   * kilómetros hasta Tenerife Sur, por encima de la cumbre o por la costa. Es
+   * un vuelo de verdad, de los que se hacen a diario.
+   *
+   * Con seis, el mundo llega a cincuenta y cuatro y el aeropuerto de destino
+   * caería justo en el borde, sin sitio para el circuito. Con siete llega a
+   * sesenta y tres: nueve kilómetros de margen, que es una aproximación
+   * entera. Lo comprueba `destinos.test.ts`.
+   */
+  destino: "tenerife-sur",
+  vecesLejos: 7,
+  /*
    * **El alisio**, que en Canarias sopla del nordeste el año entero y es el que
    * decide por qué cabecera se opera: con él, la 12. Doce nudos, que es lo
    * normal de una tarde de alisio en Los Rodeos.
@@ -820,6 +871,9 @@ export const LA_PALMA: Scenario = {
  */
 export const TENERIFE_SUR: Scenario = {
   id: "tenerife-sur",
+  /* Y la de vuelta, que es el mismo vuelo al revés. Ver `tenerife-norte`. */
+  destino: "tenerife-norte",
+  vecesLejos: 8,
   /*
    * El alisio otra vez, y aquí más recio: el sur de Tenerife está en la
    * aceleración que hace la isla por los dos costados, y por eso está lleno de

@@ -64,11 +64,19 @@ Tres piezas, en este orden:
 1. **El mundo se ensancha lo justo.** `VECES_LEJOS` deja de ser una constante
    única y pasa a ser propiedad del escenario, porque no todos necesitan lo
    mismo: un escenario sin destino sigue con seis, y uno con destino usa el
-   ancho que hace falta para que el otro campo caiga dentro con margen. **Y se
-   ensancha regenerando el mapa con más muestras, no repartiendo las mismas
-   sobre más kilómetros**: el detalle por muestra no baja de los 259 m de hoy,
-   porque ése es el que hace que el Teide se reconozca. Un mapa lejano de 144 km
-   con 557 muestras son 620 KB, y se bajan cuando hacen falta.
+   ancho que hace falta para que el otro campo caiga dentro con margen, y ni
+   uno más — lo comprueba `destinos.test.ts` por los dos lados.
+
+   **Y se ensancha con las mismas muestras, que es lo contrario de lo que se
+   escribió aquí el primer día.** La versión anterior de este ADR decía que
+   había que regenerar el mapa con más muestras para no bajar de los 259 m por
+   muestra de hoy. Suena bien y no resiste una medida: el anillo del horizonte
+   **ya se dibuja una muestra de cada dos** —así son 87.000 triángulos en vez
+   de 346.000— así que el paso que de verdad se ve no son 259 m sino 519. Al
+   ensanchar Tenerife Norte de 108 a 126 km ese paso pasa a 605 m, a treinta y
+   siete kilómetros de distancia, donde el Teide ocupa muchísimo más que un
+   cuadro. Subir las muestras habría costado un 35 % más de triángulos para no
+   cambiar un píxel.
 
 2. **El aeródromo de destino se monta como el de salida.** Sale de su propio
    `.aero.json` —pista, calles, plataformas, umbrales medidos— y se asienta
@@ -117,6 +125,20 @@ todas partes», sino **dar nombre a lo que ya se estaba diciendo sin nombre**:
 el de salida hasta despegar, el de destino a partir de ahí. Los sitios que de
 verdad necesitan ver los dos a la vez son tres —el relieve, el plan de vuelo y
 el hangar— y son justo los que esta decisión toca.
+
+## Lo que apareció al hacerlo
+
+Ensanchar el mapa destapó un fallo que llevaba ahí desde el principio y que
+ningún escenario había podido enseñar: **el extractor de relieve pedía las
+teselas de un grado mirando solo las cuatro esquinas del mapa**. Con mapas de
+menos de un grado de lado eso coincide. En cuanto el mapa abarca tres bandas de
+latitud, la de en medio no la toca ninguna esquina y se queda fuera — y la de
+en medio es justo la del aeropuerto, porque está en el centro.
+
+Lo cazó el número que el propio script imprime al acabar: «cotas de 0 a 1470 m»
+en una isla cuyo Teide tiene 3715. Un mapa de Tenerife sin el Teide es un mapa
+de otro sitio. Arreglado enumerando todas las teselas del rectángulo: seis en
+vez de cuatro, y 3684 m de cota máxima.
 
 ## Consecuencias
 

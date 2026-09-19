@@ -34,7 +34,7 @@
 
 import { inflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { SCENARIOS, VECES_LEJOS } from '../src/world/scenarios.ts';
+import { SCENARIOS, vecesLejosDe } from '../src/world/scenarios.ts';
 
 const BASE = 'https://copernicus-dem-30m.s3.amazonaws.com';
 const SALIDA = 'data/terrain';
@@ -288,7 +288,7 @@ const LEJOS = process.argv.includes('--lejos');
 
 const { lat: lat0, lon: lon0 } = esc.aerodrome.origin;
 const res = esc.segments + 1;
-const tamano = LEJOS ? esc.size * VECES_LEJOS : esc.size;
+const tamano = LEJOS ? esc.size * vecesLejosDe(esc) : esc.size;
 const sufijo = LEJOS ? '-lejos' : '';
 const paso = tamano / esc.segments;
 const mitad = tamano / 2;
@@ -305,18 +305,24 @@ const aLatLon = (x, y) => [
 console.log(`${esc.id} · ${esc.aerodrome.name}`);
 console.log(`  centro ${lat0.toFixed(5)}, ${lon0.toFixed(5)} · ${tamano / 1000} km · ${res}×${res} muestras · ${(paso).toFixed(0)} m por muestra`);
 
-// Qué grados hacen falta.
-const esquinas = [
-  aLatLon(-mitad, -mitad),
-  aLatLon(mitad, -mitad),
-  aLatLon(-mitad, mitad),
-  aLatLon(mitad, mitad),
-];
+/*
+ * Qué teselas de un grado hacen falta: **todas las del rectángulo**, no las
+ * cuatro esquinas.
+ *
+ * Miraba las esquinas, y con mapas de menos de un grado de lado eso coincide.
+ * En cuanto el mapa abarca tres bandas de latitud, la de en medio no la toca
+ * ninguna esquina y se queda fuera — que es justo la del aeropuerto, porque
+ * está en el centro.
+ *
+ * Lo cazó el número que imprime el final: al ensanchar Tenerife Norte a 126 km
+ * salió «cotas de 0 a 1470 m» en una isla cuyo Teide tiene 3715. Un mapa de
+ * Tenerife sin el Teide es un mapa de otro sitio.
+ */
+const [suroeste, noreste] = [aLatLon(-mitad, -mitad), aLatLon(mitad, mitad)];
 const grados = new Map();
-for (const [la, lo] of esquinas) {
-  const clave = `${Math.floor(la)},${Math.floor(lo)}`;
-  if (!grados.has(clave)) grados.set(clave, [Math.floor(la), Math.floor(lo)]);
-}
+for (let la = Math.floor(suroeste[0]); la <= Math.floor(noreste[0]); la++)
+  for (let lo = Math.floor(suroeste[1]); lo <= Math.floor(noreste[1]); lo++)
+    grados.set(`${la},${lo}`, [la, lo]);
 console.log(`  teselas de un grado necesarias: ${grados.size}`);
 
 const abiertos = new Map();
