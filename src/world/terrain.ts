@@ -675,10 +675,19 @@ export class Terrain {
    * Y se le apagan los colores por vértice, como a la del mapa fino: dejarlos
    * multiplicaría la foto por el verde del relieve y saldría todo teñido.
    */
-  ponerOrtofotoLejana(orto: {
-    textura: Texture;
-    uv(x: number, z: number): { u: number; v: number };
-  }): void {
+  ponerOrtofotoLejana(
+    orto: {
+      textura: Texture;
+      uv(x: number, z: number): { u: number; v: number };
+    },
+    /**
+     * Cuánto se oscurece para casar con el mapa fino, de medio a uno.
+     *
+     * Es una multiplicación en el material, o sea gratis. Ver `exposicionDe`
+     * en `ortofoto.ts` y la nota de `FichaDeOrtofoto.exposicion`.
+     */
+    exposicion = 1,
+  ): void {
     const malla = this.group.getObjectByName("horizonte") as Mesh | undefined;
     if (!malla) return;
     const pos = malla.geometry.getAttribute("position");
@@ -692,6 +701,8 @@ export class Terrain {
     const mat = malla.material as MeshLambertMaterial;
     mat.map = orto.textura;
     mat.vertexColors = false;
+    // El color multiplica a la textura, que es justo lo que hace falta.
+    mat.color.setScalar(exposicion);
     mat.needsUpdate = true;
   }
 

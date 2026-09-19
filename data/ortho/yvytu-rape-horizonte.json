@@ -20,5 +20,6 @@
     "ancho": 1280,
     "alto": 1280
   },
-  "huecos": 0
+  "huecos": 0,
+  "exposicion": 1
 }

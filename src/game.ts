@@ -202,7 +202,7 @@ import {
   type Scenario,
 } from "./world/scenarios";
 import { crearTeselas, type Teselas } from "./world/teselas";
-import type { Ortofoto } from "./world/ortofoto";
+import { exposicionDe, type Ortofoto } from "./world/ortofoto";
 import { mundoElegido } from "./ui/mundo";
 
 /**
@@ -1636,7 +1636,15 @@ export class Game {
     // La manta del mundo, antes que nada de lo que va encima.
     if (options.ortofoto) this.terrain.ponerOrtofoto(options.ortofoto);
     if (options.ortofotoHorizonte)
-      this.terrain.ponerOrtofotoLejana(options.ortofotoHorizonte);
+      /*
+       * Con su exposición casada: el anillo del horizonte y el mapa fino son
+       * dos fotos distintas del mismo sitio, y juntarlas sin corregir dejaba
+       * un cuadrado dibujado en el suelo. Ver `exposicionDe`.
+       */
+      this.terrain.ponerOrtofotoLejana(
+        options.ortofotoHorizonte,
+        exposicionDe(options.ortofotoHorizonte.ficha),
+      );
     if (options.ortofotoFina) {
       this.terrain.ponerOrtofotoFina(options.ortofotoFina);
     }

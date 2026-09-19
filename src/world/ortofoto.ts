@@ -49,6 +49,22 @@ export interface FichaDeOrtofoto {
   readonly zoom: number;
   readonly metrosPorPixel: number;
   readonly pixeles: { readonly ancho: number; readonly alto: number };
+  /**
+   * Cuánto hay que multiplicar esta foto para que case con la del mapa fino.
+   *
+   * Solo lo llevan las del horizonte, y solo si se ha medido. El anillo lejano
+   * y el mapa fino son dos fotografías distintas del mismo sitio —otro vuelo,
+   * otro día, otra compresión— y se juntan a tope: **un cuadrado dibujado en
+   * el suelo**, que es lo que se contó jugando como «las ortofotos siguen
+   * mal». Medido en el trozo que las dos cubren, el horizonte de Fuerteventura
+   * salía un cuarenta y siete por ciento más claro.
+   *
+   * El número lo calcula `scripts/casar-exposicion.mjs` y siempre es menor o
+   * igual que uno: se oscurece el horizonte, que es lo que sabe hacer el color
+   * de un material sin tocar la textura, y manda el mapa fino, que es el que
+   * se mira de cerca.
+   */
+  readonly exposicion?: number;
 }
 
 export interface Ortofoto {
@@ -83,6 +99,23 @@ export interface Ortofoto {
     readonly z0: number;
     readonly z1: number;
   };
+}
+
+/**
+ * Cuánto se oscurece esta foto para que case con la del mapa fino.
+ *
+ * Uno cuando no se ha medido —no corregir es la respuesta correcta cuando no
+ * se sabe— y nunca más de uno: aclarar una textura no se puede hacer con el
+ * color de un material, y además el que manda es el mapa fino. El suelo de
+ * medio está para que una ficha estropeada no apague el paisaje entero sin
+ * que nadie se entere; el peor caso medido pide 0,68.
+ *
+ * Ver `scripts/casar-exposicion.mjs`, que es quien saca el número.
+ */
+export function exposicionDe(ficha: Pick<FichaDeOrtofoto, "exposicion">): number {
+  const e = ficha.exposicion;
+  if (typeof e !== "number" || !Number.isFinite(e)) return 1;
+  return Math.min(1, Math.max(0.5, e));
 }
 
 /*

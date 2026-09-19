@@ -20,5 +20,6 @@
     "ancho": 2048,
     "alto": 2048
   },
-  "huecos": 0
+  "huecos": 0,
+  "exposicion": 0.703
 }
