@@ -26,22 +26,67 @@
       "ele": 1903
     },
     {
-      "nombre": "Los Tientos",
+      "nombre": "Abantos",
       "clase": "montana",
-      "lat": 40.61824,
-      "lon": -4.16147,
-      "x": -31881,
-      "z": -27525,
-      "ele": 1754
+      "lat": 40.61609,
+      "lon": -4.15084,
+      "x": -30981,
+      "z": -27286,
+      "ele": 1753
     },
     {
-      "nombre": "Peña del Águila",
+      "nombre": "Cerro de San Pedro",
       "clase": "montana",
-      "lat": 40.60444,
-      "lon": -4.26235,
-      "x": -40427,
-      "z": -25991,
-      "ele": 1657
+      "lat": 40.72933,
+      "lon": -3.71036,
+      "x": 6335,
+      "z": -39877,
+      "ele": 1425
+    },
+    {
+      "nombre": "Madrid",
+      "clase": "ciudad",
+      "lat": 40.41678,
+      "lon": -3.70351,
+      "x": 6916,
+      "z": -5124,
+      "ele": 655
+    },
+    {
+      "nombre": "Alcalá de Henares",
+      "clase": "ciudad",
+      "lat": 40.48195,
+      "lon": -3.36398,
+      "x": 35679,
+      "z": -12371,
+      "ele": 587
+    },
+    {
+      "nombre": "Móstoles",
+      "clase": "ciudad",
+      "lat": 40.32385,
+      "lon": -3.86492,
+      "x": -6759,
+      "z": 5209,
+      "ele": 660
+    },
+    {
+      "nombre": "Leganés",
+      "clase": "ciudad",
+      "lat": 40.32819,
+      "lon": -3.76527,
+      "x": 1683,
+      "z": 4727,
+      "ele": 667
+    },
+    {
+      "nombre": "Torrejón de Ardoz",
+      "clase": "ciudad",
+      "lat": 40.45878,
+      "lon": -3.47933,
+      "x": 25907,
+      "z": -9794,
+      "ele": 586
     }
   ]
 }

@@ -127,6 +127,26 @@ export function permitirVoz(si: boolean): void {
  */
 export function decir(frase: string, urgencia: Urgencia = "normal"): void {
   if (!permitido) return;
+  /*
+   * **Y sin voces instaladas no se pide turno.**
+   *
+   * Es la misma regla que ya tienen los dos caminos del instructor, y aquí
+   * faltaba — que es el tercer sitio donde ha aparecido el mismo agujero.
+   * Pedir la palabra para no decir nada es lo peor de los dos mundos: la
+   * frase no suena **y** ocupa la boca. Y peor aquí, porque
+   * `speechSynthesis.speak()` sin voces ni siquiera avisa de que ha
+   * terminado: la plaza se queda tomada para siempre y todo lo que venga
+   * detrás se cae por la cola.
+   *
+   * Medido en el barrido, con el banco imprimiendo ya el motivo: «otro.buenosDias:
+   * no cabía en la cola», «torre.canario.holdShort: no cabía en la cola»,
+   * «torre.canario.goAround: no cabía en la cola».
+   *
+   * No es solo cosa del banco: un aparato sin el paquete de voz del sistema
+   * —una tablet de aula recién puesta— se quedaba sin **ninguna** voz, no
+   * solo sin ésta.
+   */
+  if (!hayVozDelSistema()) return;
   BOCA.pedir(urgencia, (listo) => {
     try {
       const sintesis = globalThis.speechSynthesis;
@@ -149,6 +169,22 @@ export function decir(frase: string, urgencia: Urgencia = "normal"): void {
       listo();
     }
   });
+}
+
+/**
+ * Si el navegador tiene alguna voz con la que hablar.
+ *
+ * `getVoices()` puede devolver vacío por tres motivos y los tres se tratan
+ * igual: el sistema no tiene voces, todavía no las ha cargado, o no hay
+ * sintetizador. En los tres, callar.
+ */
+function hayVozDelSistema(): boolean {
+  try {
+    const s = globalThis.speechSynthesis;
+    return !!s && s.getVoices().length > 0;
+  } catch {
+    return false;
+  }
 }
 
 /** Corta lo que se esté diciendo. Al reiniciar el vuelo, por ejemplo. */
