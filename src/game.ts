@@ -8105,6 +8105,14 @@ export class Game {
     this.hud.setUnits(next.units);
     this.hud.setEscalera(next.avisos);
     this.hud.setInstruments(next.instruments);
+    /*
+     * **Y el piloto automático, que es del peldaño y no del avión.**
+     *
+     * Se encendía una sola vez al arrancar el juego, así que quien empezaba en
+     * Guyrami —que es donde abre el juego— y subía de peldaño se quedaba sin
+     * él para siempre: «yo no veo piloto automático». Ver `ponerHayPilotoAutomatico`.
+     */
+    this.hud.ponerHayPilotoAutomatico(next.id !== "guyrami");
     this.keyScreen?.setSimple(
       next.instruments === "none" || next.instruments === "pictorial",
     );

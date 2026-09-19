@@ -1206,6 +1206,24 @@ export class Hud {
     // Y el cuadro se queda como lo dejó quien juega: el marcado nuevo nace
     // sin la clase. Ver `ponerCuadroBajado`.
     this.ponerCuadroBajado(this.cuadroBajado);
+    /*
+     * **Y los mandos que este avión y este peldaño sí tienen, también.**
+     *
+     * Nacen `hidden` en el marcado y se encienden una vez al arrancar. Como
+     * `render()` rehace el marcado entero —lo llaman cambiar de peldaño,
+     * cambiar de unidades y cambiar de avión—, el botón volvía a esconderse y
+     * **no había forma de recuperarlo en toda la partida**.
+     *
+     * Contado jugando después de pasar de Guyrami a Taguató: «yo no veo
+     * piloto automático». Y no lo había: lo apagó el propio cambio de
+     * peldaño que se hizo para tenerlo.
+     *
+     * Es el mismo fallo que el del tirador del cuadro, en el mismo sitio y por
+     * el mismo motivo. Lo que dura más que un repintado se vuelve a aplicar
+     * después de cada repintado.
+     */
+    this.ponerHayPilotoAutomatico(this.hayPilotoAuto);
+    this.ponerHayCinturon(this.hayCinturon);
   }
 
   /**
@@ -2450,8 +2468,12 @@ export class Hud {
     b?.classList.toggle("boton--puesto", puesto);
   }
 
+  /** Si este peldaño lo trae. Se recuerda: `render()` rehace el marcado. */
+  private hayPilotoAuto = false;
+
   /** Y si este avión lo lleva, para enseñar el botón. */
   ponerHayPilotoAutomatico(hay: boolean): void {
+    this.hayPilotoAuto = hay;
     const b = this.root.querySelector<HTMLElement>('[data-hud="piloto-auto"]');
     if (b) b.hidden = !hay;
   }
@@ -2517,7 +2539,11 @@ export class Hud {
   }
 
 
+  /** Si este avión lleva pasaje. Se recuerda, por lo mismo. */
+  private hayCinturon = false;
+
   ponerHayCinturon(hay: boolean): void {
+    this.hayCinturon = hay;
     const b = this.root.querySelector<HTMLElement>(
       '[data-hud="cinturon-mando"]',
     );
