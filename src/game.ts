@@ -849,6 +849,11 @@ export class Game {
     return this.elCampoDeAhora().id;
   }
 
+  /** Las pistas de todos los destinos, para los bancos. */
+  get pistasDeLosVecinos(): readonly Pista[] {
+    return this.vecinos.map((v) => v.pista);
+  }
+
   /** La pista del primer vecino, para los bancos. */
   get pistaDelVecino(): Pista | null {
     return this.vecinos[0]?.pista ?? null;

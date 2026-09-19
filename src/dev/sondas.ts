@@ -1175,6 +1175,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     percance: () => juego.percance,
     /** La pista del otro aeropuerto, ya en coordenadas de este mundo. */
     pistaDelVecino: () => juego.pistaDelVecino,
+    /** Las pistas de todos los destinos, en coordenadas de este mundo. */
+    pistasDeLosVecinos: () => juego.pistasDeLosVecinos,
     /** La velocidad que recibe la pantalla de la cabina, en nudos. */
     velocidadDeCabina: () =>
       Math.round(

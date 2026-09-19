@@ -8,40 +8,13 @@
   },
   "hitos": [
     {
-      "nombre": "Teide",
-      "clase": "montana",
-      "lat": 28.27269,
-      "lon": -16.64227,
-      "x": -29376,
-      "z": 23357,
-      "ele": 3715
-    },
-    {
-      "nombre": "El Sombrero",
-      "clase": "montana",
-      "lat": 28.19503,
-      "lon": -16.64546,
-      "x": -29687,
-      "z": 31993,
-      "ele": 2407
-    },
-    {
-      "nombre": "Izaña",
-      "clase": "montana",
-      "lat": 28.30725,
-      "lon": -16.50214,
-      "x": -15680,
-      "z": 19514,
-      "ele": 2383
-    },
-    {
-      "nombre": "Montaña Bermeja",
-      "clase": "montana",
-      "lat": 28.2362,
-      "lon": -16.55822,
-      "x": -21161,
-      "z": 27416,
-      "ele": 2221
+      "nombre": "La Palma",
+      "clase": "isla",
+      "lat": 28.65514,
+      "lon": -17.86574,
+      "x": -148952,
+      "z": -19169,
+      "ele": null
     },
     {
       "nombre": "Tenerife",
@@ -53,6 +26,33 @@
       "ele": null
     },
     {
+      "nombre": "Gran Canaria",
+      "clase": "isla",
+      "lat": 27.95801,
+      "lon": -15.59647,
+      "x": 72837,
+      "z": 58349,
+      "ele": null
+    },
+    {
+      "nombre": "La Gomera",
+      "clase": "isla",
+      "lat": 28.11923,
+      "lon": -17.22366,
+      "x": -86198,
+      "z": 40422,
+      "ele": null
+    },
+    {
+      "nombre": "Las Palmas de Gran Canaria",
+      "clase": "ciudad",
+      "lat": 28.12887,
+      "lon": -15.4349,
+      "x": 88628,
+      "z": 39350,
+      "ele": 32
+    },
+    {
       "nombre": "Santa Cruz de Tenerife",
       "clase": "ciudad",
       "lat": 28.46718,
@@ -60,6 +60,15 @@
       "x": 8886,
       "z": 1732,
       "ele": null
+    },
+    {
+      "nombre": "Telde",
+      "clase": "ciudad",
+      "lat": 27.99845,
+      "lon": -15.41668,
+      "x": 90409,
+      "z": 53852,
+      "ele": 147
     },
     {
       "nombre": "La Orotava",
@@ -71,31 +80,13 @@
       "ele": 363
     },
     {
-      "nombre": "Los Cristianos",
+      "nombre": "Ingenio",
       "clase": "ciudad",
-      "lat": 28.05263,
-      "lon": -16.717,
-      "x": -36680,
-      "z": 47827,
-      "ele": 19
-    },
-    {
-      "nombre": "Candelaria",
-      "clase": "ciudad",
-      "lat": 28.35467,
-      "lon": -16.37101,
-      "x": -2864,
-      "z": 14242,
-      "ele": 18
-    },
-    {
-      "nombre": "Icod de los Vinos",
-      "clase": "ciudad",
-      "lat": 28.36805,
-      "lon": -16.71764,
-      "x": -36742,
-      "z": 12754,
-      "ele": 233
+      "lat": 27.91838,
+      "lon": -15.43579,
+      "x": 88540,
+      "z": 62756,
+      "ele": 265
     }
   ]
 }
