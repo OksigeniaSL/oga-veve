@@ -535,6 +535,69 @@ export class Terrain {
   private sueloLejano: ((x: number, z: number) => number | null) | null = null;
 
   /**
+   * Los trozos del horizonte que no se mallan porque otro mapa fino los cubre.
+   *
+   * El anillo del horizonte ya se recortaba sobre el mapa fino **de casa** —
+   * dos superficies a la misma cota se pelean por el fondo de profundidad—,
+   * pero no sobre el del vecino, y desde que se vuela a otra isla el vecino
+   * trae el suyo. Resultado: encima del aeropuerto de destino hay la malla
+   * detallada del aeródromo **y, pisándola, un cuadro de trescientos metros
+   * de lado** a la cota media de la zona. Donde ese cuadro queda por encima
+   * del asfalto aplanado, se traga lo que haya: el avión, el coche del sígame
+   * y al señalero.
+   *
+   * Contado jugando, dos veces y en dos islas, las dos siendo destino: «el
+   * avión está metido en una duna, el coche no se ve, ese ya quedó enterrado
+   * del todo», «el señor que me señala está enterrado bajo la arena», «las
+   * dunas de Tenerife Sur».
+   *
+   * Y no era arena: era el horizonte por encima del aeropuerto.
+   */
+  private huecosDelHorizonte: readonly {
+    readonly x: number;
+    readonly z: number;
+    readonly medio: number;
+  }[] = [];
+
+  /**
+   * Recorta el horizonte donde otro mapa fino se hace cargo, y lo rehace.
+   *
+   * Se llama después de montar los vecinos, que es cuando se sabe dónde caen.
+   * Rehacer el anillo cuesta una vez al cargar y **quita** triángulos, así
+   * que no se paga nada por esto: se cobra.
+   */
+  recortarElHorizonte(
+    huecos: readonly { x: number; z: number; medio: number }[],
+  ): void {
+    if (!huecos.length || !this.scenario.relieveLejano) return;
+    this.huecosDelHorizonte = huecos;
+    const viejo = this.group.getObjectByName("horizonte");
+    if (viejo) {
+      this.group.remove(viejo);
+      (viejo as Mesh).geometry?.dispose();
+    }
+    const nuevo = this.buildFarMesh();
+    // Detrás de todo, como el que quita: el mapa fino lo tapa por delante.
+    if (nuevo) this.group.add(nuevo);
+  }
+
+  /**
+   * Si un cuadro del horizonte cae dentro de un mapa fino ajeno.
+   *
+   * Con el mismo margen que el de casa —un paso menos por cada lado—: así el
+   * cuadro del borde se queda y no hay ranura entre las dos superficies.
+   */
+  private enUnHueco(cx: number, cz: number, paso: number): boolean {
+    for (const h of this.huecosDelHorizonte) {
+      const dentro = h.medio - paso;
+      if (dentro <= 0) continue;
+      if (Math.abs(cx - h.x) < dentro && Math.abs(cz - h.z) < dentro)
+        return true;
+    }
+    return false;
+  }
+
+  /**
    * La cota que dice el mapa del horizonte, o `null` si no hay mapa o si el
    * punto tampoco cabe en él.
    *
@@ -1064,6 +1127,8 @@ export class Terrain {
         const cx = -mitad + (col + 0.5) * paso;
         const cz = -mitad + (fila + 0.5) * paso;
         if (Math.abs(cx) < dentro && Math.abs(cz) < dentro) continue;
+        // Y lo mismo sobre el mapa fino del vecino. Ver `huecosDelHorizonte`.
+        if (this.enUnHueco(cx, cz, paso)) continue;
         if (
           bajoElAgua(fila, col) &&
           bajoElAgua(fila + 1, col) &&

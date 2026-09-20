@@ -1634,6 +1634,29 @@ export class Game {
         }
         return null;
       });
+      /*
+       * **Y el horizonte se aparta donde manda el mapa fino del vecino.**
+       *
+       * El anillo del horizonte ya tenía un agujero recortado sobre el mapa
+       * fino de casa —dos superficies a la misma cota se pelean por el fondo
+       * de profundidad— y no lo tenía sobre el del vecino. Así que encima del
+       * aeropuerto de destino había la malla detallada del aeródromo **y un
+       * cuadro de trescientos metros de lado pisándola**, a la cota media de
+       * la zona: donde ese cuadro queda por encima del asfalto aplanado, se
+       * traga el avión, el coche del sígame y al señalero.
+       *
+       * Contado jugando en dos islas distintas, las dos siendo destino: «el
+       * avión está metido en una duna, el coche no se ve», «el señor que me
+       * señala está enterrado bajo la arena», «las dunas de Tenerife Sur». Y
+       * no era arena.
+       */
+      this.terrain.recortarElHorizonte(
+        this.vecinos.map((v) => ({
+          x: v.mundo.desplazamiento.x,
+          z: v.mundo.desplazamiento.z,
+          medio: v.escenario.size / 2,
+        })),
+      );
     }
 
     /*
