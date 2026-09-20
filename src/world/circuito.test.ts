@@ -71,3 +71,38 @@ describe("el circuito de tráfico", () => {
     c.dispose();
   });
 });
+
+/*
+ * ── Y el circuito tiene techo, no solo suelo ─────────────────────────────
+ *
+ * `la-aproximacion` tenía suelo —por debajo de sesenta metros o despegás o
+ * aterrizás— y no tenía techo, así que pasando por encima del aeropuerto a
+ * mil ochocientos metros y a trescientos nudos, o sea yéndose a otra isla,
+ * la instructora seguía mandando: «girá otra vez y empezá a bajar, ya vamos
+ * a aterrizar».
+ *
+ * «Si despego y me voy a otro sitio, la instructora que se deje de insistir
+ * en dar las instrucciones de lo que ya está claro que NO voy a hacer.»
+ */
+describe("el techo del circuito", () => {
+  it("es el doble de la altura a la que se vuela", () => {
+    /*
+     * No es un número redondo puesto a ojo: un circuito se vuela **a su
+     * altura**, y estar al doble de ella no es ir alto en el circuito, es no
+     * estar en el circuito.
+     */
+    expect(ALTURA_DE_CIRCUITO * 2).toBe(500);
+  });
+
+  it("y deja fuera a quien pasa por encima camino de otra isla", () => {
+    // La altura de la foto que lo contó: 5.920 pies sobre un campo a 2.076.
+    const sobreElCampo = (5920 - 2076) * 0.3048;
+    expect(sobreElCampo).toBeGreaterThan(ALTURA_DE_CIRCUITO * 2);
+  });
+
+  it("pero no a quien va alto dentro del circuito, que eso se corrige", () => {
+    // Cien metros por encima de su altura sigue siendo el circuito: es un
+    // error de pilotaje, no una salida. Ahí la lección es bajar.
+    expect(ALTURA_DE_CIRCUITO + 100).toBeLessThan(ALTURA_DE_CIRCUITO * 2);
+  });
+});

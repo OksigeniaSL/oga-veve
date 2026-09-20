@@ -35,6 +35,7 @@ import type { Reparto } from "../hechos";
 import type { Scenario } from "../world/scenarios";
 import type { Terrain } from "../world/terrain";
 import type { Circuito, TramoDeCircuito } from "../world/circuito";
+import { ALTURA_DE_CIRCUITO } from "../world/circuito";
 import { blancasDePapi } from "../world/aproximacion";
 import { enElEmbudoDeFinal } from "../world/runway-guide";
 import { enEjesDePista } from "../world/rumbo";
@@ -62,6 +63,25 @@ const SUBIR_PARA_IRSE = 60;
 
 /** Desde qué altura sobre la pista empieza a contar el circuito, m. */
 const ALTO_PARA_EL_CIRCUITO = 60;
+
+/**
+ * Y hasta cuál, que es la que faltaba.
+ *
+ * Había suelo y no había techo, así que pasando por encima del aeropuerto a
+ * mil ochocientos metros y a trescientos nudos —o sea yéndose a otra isla—
+ * la máquina seguía viendo tramos de circuito y la instructora seguía
+ * mandando: «girá otra vez y empezá a bajar, ya vamos a aterrizar». Contado
+ * jugando: «si despego y me voy a otro sitio, la instructora que se deje de
+ * insistir en dar las instrucciones de lo que ya está claro que NO voy a
+ * hacer».
+ *
+ * El doble de la altura del circuito. No es un número redondo puesto a ojo:
+ * un circuito se vuela **a su altura**, y estar al doble de ella no es ir
+ * alto en el circuito, es no estar en el circuito. Es la misma idea que el
+ * suelo —por debajo de sesenta metros o despegás o aterrizás— dicha por el
+ * otro lado.
+ */
+const TECHO_DEL_CIRCUITO = ALTURA_DE_CIRCUITO * 2;
 
 /** Lo que no cambia en todo un vuelo. */
 export interface MundoDeLaAproximacion {
@@ -666,7 +686,11 @@ export class LaAproximacion {
             s.position.z,
           ) !== null));
     c.grupo.visible =
-      preparando || (enElAire && alto >= ALTO_PARA_EL_CIRCUITO && !enLlegada);
+      preparando ||
+      (enElAire &&
+        alto >= ALTO_PARA_EL_CIRCUITO &&
+        alto <= TECHO_DEL_CIRCUITO &&
+        !enLlegada);
     if (!enElAire) {
       // En tierra se olvida lo dicho, que la vuelta siguiente empieza de cero.
       if (fase !== "despegando") this.tramoDelCircuito = null;
@@ -684,6 +708,9 @@ export class LaAproximacion {
      * tienen su propia lección.
      */
     if (alto < ALTO_PARA_EL_CIRCUITO) return;
+    // Ni por encima del techo: eso ya no es volar el circuito, es irse. Ver
+    // `TECHO_DEL_CIRCUITO`.
+    if (alto > TECHO_DEL_CIRCUITO) return;
     const tramo = c.tramoEn(s.position.x, s.position.z);
     if (!tramo || tramo === this.tramoDelCircuito) return;
     /*
