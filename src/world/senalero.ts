@@ -263,6 +263,18 @@ export class Senalero {
    * Pasarse de un sitio exige haber estado en él: el aviso se arma cuando el
    * avión entra en el alcance del señalero, que es donde el señalero existe.
    */
+  /**
+   * En qué puesto está esperando, o `null` si todavía no lo han puesto.
+   *
+   * Lo pregunta el juego para saber si hay que **recolocarlo**: el puesto de
+   * llegada puede no ser el de salida —se cambia de avión, se aterriza en
+   * otro campo— y un señalero plantado donde ya no para nadie es un señalero
+   * que no aparece. Ver `atenderAlSenalero` en `game.ts`.
+   */
+  get donde(): { readonly x: number; readonly z: number } | null {
+    return this.parada;
+  }
+
   get pasado(): number {
     if (!this.llegoAsuAlcance || !Number.isFinite(this.restante)) return 0;
     return Math.max(0, -this.restante);

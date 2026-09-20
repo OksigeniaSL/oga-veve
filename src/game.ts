@@ -6489,6 +6489,26 @@ export class Game {
   }
 
   /**
+   * Pone al señalero en el puesto al que lleva la raya, si no estaba ya.
+   *
+   * Solo mueve al señalero: `colocarSenalero` reinicia además el coche del
+   * sígame, y reiniciarlo a mitad de la vuelta sería quitarlo de en medio
+   * justo cuando está guiando.
+   */
+  private senaleroAlPuestoDeLlegada(): void {
+    const puesto = this.plan?.arranque();
+    if (!puesto) return;
+    const donde = this.senalero.donde;
+    // Un metro de holgura: el puesto no se mueve solo, y comparar en coma
+    // flotante exacta sería recolocarlo cada fotograma.
+    if (donde && Math.hypot(donde.x - puesto[0], donde.z - puesto[1]) < 1)
+      return;
+    this.senalero.colocar(puesto, this.plan?.primerPaso() ?? null, (x, z) =>
+      this.terrain.sampleHeight(x, z),
+    );
+  }
+
+  /**
    * Y si el campo de abajo ya es el otro, el plan se muda con el avión.
    *
    * **La raya verde no viaja sola.** El mundo vecino trae su pista, sus calles
@@ -6539,6 +6559,21 @@ export class Game {
      */
     const volviendo =
       fase === "abandonando" || fase === "a-plataforma" || fase === "en-puesto";
+    /*
+     * **Y en el puesto al que se va ahora, no en el que se salió.**
+     *
+     * Se colocaba una vez, al empezar el vuelo, y ahí se quedaba. El puesto
+     * de llegada puede ser otro —se cambia de aeronave a mitad y la grande no
+     * cabe donde cabía la chica, o se aterriza en otro campo y el plan se
+     * muda— y entonces el señalero se queda de pie donde ya no para nadie. No
+     * es que llegue tarde: es que **no aparece**, porque solo se le ve a
+     * doscientos veinte metros de su sitio. Contado dos veces, y las dos con
+     * el mismo tono: «no estaba el de las lucecitas para ayudarme a aparcar,
+     * yo que le iba a dar un eurito».
+     *
+     * Comprobarlo cuesta una resta por fotograma y solo mientras se vuelve.
+     */
+    if (volviendo) this.senaleroAlPuestoDeLlegada();
     const s = this.flight.state;
     const gesto = this.senalero.paso(
       dt,

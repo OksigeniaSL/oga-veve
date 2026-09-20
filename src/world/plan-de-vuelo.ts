@@ -758,7 +758,7 @@ export class PlanDeVuelo {
     private readonly avion: AircraftConfig,
   ) {
     this.grupo.name = "plan-de-vuelo";
-    this.grafo = construirGrafo(aero);
+    this.grafo = construirGrafo(aero, this.avion.wingSpan / 2);
   }
 
   /** En qué aeródromo está trabajando el plan ahora mismo. */
@@ -794,7 +794,7 @@ export class PlanDeVuelo {
     if (aero === this.aero) return;
     this.aero = aero;
     this.pista = pista;
-    this.grafo = construirGrafo(aero);
+    this.grafo = construirGrafo(aero, this.avion.wingSpan / 2);
     this.par = undefined;
     this.paresVistos = [];
     this.puestoElegido = null;

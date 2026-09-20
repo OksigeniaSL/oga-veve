@@ -409,3 +409,44 @@ describe("los metros y el coste", () => {
     expect(ruta!.coste).toBeCloseTo(ruta!.largo, 6);
   });
 });
+
+/*
+ * ── Y por dónde no cabe el ala ────────────────────────────────────────────
+ *
+ * En Silvio Pettirossi hay diecisiete edificios con una esquina a menos de
+ * quince metros de un eje de calle, y el peor a **cuatro y medio**. Eso es
+ * una calle de servicio entre hangares: pasa la avioneta y no pasa el de
+ * fuselaje ancho, que tiene treinta metros de ala a cada lado.
+ *
+ * Contado jugando con el 747: «hay edificios en mitad de las calles de
+ * rodadura y el ala del avión pasa a través de ellos, aquí no cabe un avión».
+ */
+describe("los tramos por los que no cabe el ala", () => {
+  const aero = sgas as unknown as Aerodrome;
+
+  it("son más cuantos más metros de ala se lleven", () => {
+    const conAla = (m: number) =>
+      construirGrafo(aero, m / 2).tramos.filter((t) => t.estrecho).length;
+    // Medido: la avioneta 10 de 142, el de fuselaje ancho 29.
+    expect(conAla(11)).toBeGreaterThan(0);
+    expect(conAla(59.6)).toBeGreaterThan(conAla(11) * 2);
+  });
+
+  it("y sin decir envergadura no hay ninguno, que es como estaba", () => {
+    expect(construirGrafo(aero).tramos.some((t) => t.estrecho)).toBe(false);
+  });
+
+  it("y la pista nunca es estrecha, que es lo más ancho que hay", () => {
+    const g = construirGrafo(aero, 59.6 / 2);
+    expect(g.tramos.some((t) => t.pista)).toBe(true);
+    for (const t of g.tramos) if (t.pista) expect(t.estrecho).toBe(false);
+  });
+
+  it("y un tramo estrecho cuesta cuarenta veces lo que mide", () => {
+    // Penalización y no prohibición: hay campos donde la única salida del
+    // puesto es estrecha, y dejar al avión sin ruta es peor.
+    const g = construirGrafo(aero, 59.6 / 2);
+    const estrecho = g.tramos.find((t) => t.estrecho)!;
+    expect(estrecho.coste).toBeCloseTo(estrecho.largo * 40, 3);
+  });
+});

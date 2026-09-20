@@ -66,6 +66,20 @@ export interface Tramo {
    * mundo por la pista, que es de las cosas que más asustan a una torre.
    */
   readonly coste?: number;
+  /**
+   * Si por aquí no cabe el avión que se está volando.
+   *
+   * No es un dato del aeropuerto: depende de la envergadura. Un callejón
+   * entre hangares por el que pasa la avioneta es un sitio donde el de
+   * fuselaje ancho mete el ala dentro del hangar — medido en Silvio
+   * Pettirossi, donde hay diecisiete edificios con una esquina a menos de
+   * quince metros de un eje de calle y el peor a **cuatro y medio**.
+   *
+   * Contado jugando con el 747: «hay edificios en mitad de las calles de
+   * rodadura y el ala del avión pasa a través de ellos, aquí no cabe un
+   * avión».
+   */
+  readonly estrecho?: boolean;
 }
 
 export interface Grafo {
@@ -74,6 +88,26 @@ export interface Grafo {
   /** Tramos que salen de cada nudo, por índice de nudo. */
   readonly desde: readonly (readonly number[])[];
 }
+
+/**
+ * Cuánto se encarece un tramo por el que el avión no pasa sin rozar.
+ *
+ * Cuarenta: mucho más que la pista, porque esto no es una preferencia sino un
+ * «por aquí no». Y **penalización y no prohibición**, por el mismo motivo que
+ * con la pista: hay aeródromos donde la única salida del puesto es estrecha,
+ * y dejar al avión sin ruta es peor que hacerle pasar justo. Lo que no puede
+ * pasar es que se elija un callejón entre hangares **habiendo calle**.
+ */
+const PENALIZACION_ESTRECHO = 40;
+
+/**
+ * Lo que se le deja de sobra a cada punta de ala, en metros.
+ *
+ * Siete y medio. OACI pide entre 3 y 10,5 metros de margen entre la punta del
+ * ala y un obstáculo según la clave de referencia del aeródromo; siete y
+ * medio es el de la clave C, que es la de casi todos los campos del juego.
+ */
+const MARGEN_DE_ALA = 7.5;
 
 /**
  * Cuánto se encarece rodar por la pista frente a rodar por una calle.
@@ -149,7 +183,17 @@ function densificar(path: Punto[], paso: number): Punto[] {
   return salida;
 }
 
-export function construirGrafo(aero: Aerodrome): Grafo {
+export function construirGrafo(
+  aero: Aerodrome,
+  /**
+   * Media envergadura del avión que va a rodar, en metros.
+   *
+   * Cero —lo de siempre— deja el grafo como estaba: todas las calles valen.
+   * Con un valor, los tramos que no dejan pasar el ala se encarecen. Ver
+   * `PENALIZACION_ESTRECHO`.
+   */
+  semiala = 0,
+): Grafo {
   /*
    * **Y la pista también es un camino por el que se rueda.**
    *
@@ -335,12 +379,35 @@ export function construirGrafo(aero: Aerodrome): Grafo {
     return nudos.length - 1;
   };
 
+  /*
+   * Los edificios, con su caja envolvente, para no medir contra los ciento
+   * treinta y cinco de Asunción en cada tramo.
+   */
+  const estorbos = (aero.buildings ?? []).map((e) => {
+    const xs = e.polygon.map((p) => p[0]);
+    const ys = e.polygon.map((p) => p[1]);
+    return {
+      poligono: e.polygon,
+      minX: Math.min(...xs),
+      maxX: Math.max(...xs),
+      minY: Math.min(...ys),
+      maxY: Math.max(...ys),
+    };
+  });
+
   const tramos: Tramo[] = [];
   for (const t of trozos) {
     const a = nudoDe(t.path[0]!);
     const b = nudoDe(t.path[t.path.length - 1]!);
     if (a === b) continue;
     const largo = largoDe(t.path);
+    /*
+     * Y si el ala no pasa, el tramo se encarece. La pista nunca es estrecha:
+     * es lo más ancho que hay y además tiene su propia penalización.
+     */
+    const estrecho =
+      !t.pista && semiala > 0 && aprieta(t.path, estorbos, semiala);
+    const base = t.pista ? largo * PENALIZACION_PISTA : largo;
     tramos.push({
       a,
       b,
@@ -348,7 +415,8 @@ export function construirGrafo(aero: Aerodrome): Grafo {
       ref: t.ref,
       puntos: t.path,
       pista: !!t.pista,
-      coste: t.pista ? largo * PENALIZACION_PISTA : largo,
+      estrecho,
+      coste: estrecho ? base * PENALIZACION_ESTRECHO : base,
     });
   }
 
@@ -826,4 +894,46 @@ export function rodajeEntre(
     coste: ruta.coste + a.distancia + remate,
     enganche: Math.max(a.distancia, remate),
   };
+}
+
+/** Si el ala de este avión no pasa por este tramo sin rozar un edificio. */
+function aprieta(
+  path: readonly Punto[],
+  estorbos: readonly {
+    poligono: readonly Punto[];
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  }[],
+  semiala: number,
+): boolean {
+  const holgura = semiala + MARGEN_DE_ALA;
+  for (let i = 0; i < path.length - 1; i++) {
+    const a = path[i]!;
+    const b = path[i + 1]!;
+    const minX = Math.min(a[0], b[0]) - holgura;
+    const maxX = Math.max(a[0], b[0]) + holgura;
+    const minY = Math.min(a[1], b[1]) - holgura;
+    const maxY = Math.max(a[1], b[1]) + holgura;
+    for (const e of estorbos) {
+      if (e.maxX < minX || e.minX > maxX || e.maxY < minY || e.minY > maxY)
+        continue;
+      for (const v of e.poligono) if (alSegmento(v, a, b) < holgura) return true;
+    }
+  }
+  return false;
+}
+
+/** Distancia de un punto a un segmento, en metros. */
+function alSegmento(p: Punto, a: Punto, b: Punto): number {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const l2 = dx * dx + dy * dy;
+  if (l2 < 1e-9) return Math.hypot(p[0] - a[0], p[1] - a[1]);
+  const u = Math.max(
+    0,
+    Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
+  );
+  return Math.hypot(p[0] - (a[0] + dx * u), p[1] - (a[1] + dy * u));
 }
