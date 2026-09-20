@@ -86,6 +86,27 @@ const server = await createServer({
 });
 await server.listen();
 
+/*
+ * **Y la dirección se pregunta, no se supone.**
+ *
+ * El puerto estaba escrito a mano en dos sitios: al levantar el servidor y
+ * al navegar. Y Vite, si el puerto está ocupado, **se muda al siguiente sin
+ * decir nada** — así que el banco levantaba su servidor en el 5290 y pedía la
+ * página al 5289, donde no había nadie o había el servidor del escenario
+ * anterior todavía cerrándose. La página salía en blanco, el banco no
+ * imprimía su línea de cuentas y el barrido lo contaba como «sin parte».
+ *
+ * Y esa es la firma exacta de lo que llevaba tres tiradas pasando: «sin
+ * parte» en un escenario distinto cada vez, siempre al minuto y pico, y los
+ * mismos escenarios pasando 24 de 24 corridos solos.
+ *
+ * Preguntándole al servidor por dónde escucha, el problema no puede existir.
+ */
+const BASE = server.resolvedUrls?.local?.[0]?.replace(/\/$/, "");
+if (!BASE) throw new Error("el servidor de pruebas no dijo por dónde escucha");
+if (!BASE.endsWith(`:${PUERTO}`))
+  console.log(`  (el ${PUERTO} estaba ocupado: se usa ${BASE})`);
+
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
@@ -110,7 +131,7 @@ await page.addInitScript(() => {
  * mismo. Las cuatro de la tarde, que es la hora con la que se diseñó todo.
  */
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=despegue` +
+  `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue` +
     `&tramo=${TRAMO}&avion=${AVION}`,
 );
 await page.waitForTimeout(16000);
@@ -767,6 +788,21 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   const puertas = [];
   const verBackTaxi = new Set();
+  /*
+   * **Y el señalero, que no lo miraba nadie.**
+   *
+   * Veinticuatro comprobaciones por escenario y ni una del señor de los
+   * bastones — que es, además, «lo único que hace un aeropuerto cuando el
+   * avión ya no vuela». Se arregló una vez que se quedaba plantado en el
+   * puesto de salida cuando el de llegada era otro, y no había nada que
+   * dijera si seguía arreglado. Contado jugando: «nadie me esperaba en Gran
+   * Canaria».
+   *
+   * Se apunta lo mínimo que hace falta para poder afirmar algo: si llegó a
+   * verse, qué gestos hizo y a cuánto de su sitio estaba el avión cuando se
+   * le vio.
+   */
+  const senalero = { visto: false, gestos: new Set(), masCerca: Infinity };
   let antes = null;
   let sinRaya = 0;
   let sinRayaDonde = "";
@@ -1100,6 +1136,21 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       const b = o.backTaxi?.();
       if (b)
         verBackTaxi.add(`giro=${b.giro} along=${b.along} queda=${b.restante}`);
+    }
+    {
+      const sen = o.senalero?.();
+      const donde = sen?.donde;
+      if (donde) {
+        const s = o.estado();
+        senalero.masCerca = Math.min(
+          senalero.masCerca,
+          Math.hypot(s.position.x - donde.x, s.position.z - donde.z),
+        );
+      }
+      if (sen?.grupo?.visible) {
+        senalero.visto = true;
+        if (sen.gestoDeAhora) senalero.gestos.add(sen.gestoDeAhora);
+      }
     }
     const bocas = o.dicho?.();
     if (bocas?.torre) deLaTorre.add(bocas.torre);
@@ -1975,6 +2026,11 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     largoDeLaRuta: Math.round(largoDeLaRuta),
     ortofoto: o.ortofoto?.() ?? null,
     pendiente: pendiente === null ? null : +(pendiente * 100).toFixed(1),
+    senalero: {
+      visto: senalero.visto,
+      gestos: [...senalero.gestos],
+      masCerca: Math.round(senalero.masCerca),
+    },
     verBackTaxi: (() => {
       const v = [...verBackTaxi];
       return v.length > 6
@@ -2279,6 +2335,28 @@ comprobar(
     ` · cantar() hizo: ${vuelo.cantados?.join(" | ") || "nada"}` +
     ` · back-taxi: ${vuelo.verBackTaxi?.join(" | ")}`,
   "sin V1 ni Vr, un despegue es acelerar y que pase algo",
+);
+
+/*
+ * **Y que haya alguien esperando en el puesto.**
+ *
+ * Es «lo único que hace un aeropuerto cuando el avión ya no vuela», y no lo
+ * miraba nadie: veinticuatro comprobaciones por escenario y ni una del señor
+ * de los bastones. Se arregló una vez —se quedaba plantado en el puesto de
+ * salida cuando el de llegada era otro— y no había con qué defender el
+ * arreglo. Contado jugando: «nadie me esperaba en Gran Canaria».
+ *
+ * Se pide poco y se pide lo que importa: que se le llegue a ver y que haga
+ * al menos un gesto. Dónde se planta y con qué lateralidad ya lo comprueba
+ * `senalero.test.ts` sin navegador.
+ */
+comprobar(
+  "y en el puesto hay alguien esperando, con sus bastones",
+  !!vuelo.senalero?.visto && (vuelo.senalero?.gestos?.length ?? 0) > 0,
+  `visto: ${vuelo.senalero?.visto ? "sí" : "no"} · gestos: ${
+    vuelo.senalero?.gestos?.join(", ") || "ninguno"
+  } · lo más cerca que se estuvo de su sitio: ${vuelo.senalero?.masCerca} m`,
+  "«nadie me esperaba en Gran Canaria», y no había prueba que lo mirara",
 );
 
 comprobar(

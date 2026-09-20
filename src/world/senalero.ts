@@ -275,6 +275,17 @@ export class Senalero {
     return this.parada;
   }
 
+  /**
+   * Qué está señalando ahora mismo, para los bancos.
+   *
+   * Mirar los brazos desde fuera no se puede: son dos cajas girando. Y sin
+   * esto, «el señalero estaba» y «el señalero hizo algo» son la misma frase,
+   * que es lo que dejó pasar una tarde entera sin señalero en el destino.
+   */
+  get gestoDeAhora(): Gesto {
+    return this.gesto;
+  }
+
   get pasado(): number {
     if (!this.llegoAsuAlcance || !Number.isFinite(this.restante)) return 0;
     return Math.max(0, -this.restante);

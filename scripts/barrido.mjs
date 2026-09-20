@@ -174,6 +174,26 @@ for (const [escenario, tramo, avion] of LISTA) {
       ? `${c.bien} de ${c.total} · ${minutos.toFixed(1)} min`
       : `sin parte · ${minutos.toFixed(1)} min`,
   );
+  /*
+   * **Y si no hubo parte, se enseña por qué.**
+   *
+   * «Sin parte» quiere decir que el banco de ese escenario no llegó a
+   * imprimir su línea de cuentas: se cayó. Y lo que se cayó estaba **aquí
+   * dentro**, en `salida`, y se tiraba a la basura — así que el barrido
+   * decía «algo pasó» sin decir qué, y encima cambiaba de escenario en cada
+   * tirada, que es lo que convierte una cifra en humo.
+   *
+   * Se enseñan las últimas líneas con contenido, que es donde está el
+   * motivo: una excepción, un tiempo agotado o una página en blanco.
+   */
+  if (!c) {
+    const cola = salida
+      .split("\n")
+      .map((l) => l.trimEnd())
+      .filter(Boolean)
+      .slice(-12);
+    for (const l of cola) console.log(`      ${l}`);
+  }
 }
 
 // ── La tabla ──────────────────────────────────────────────────────────────
