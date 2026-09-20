@@ -160,3 +160,25 @@ export function elQueQuepa(
   // quedarse en una pantalla en blanco.
   return quepan[quepan.length - 1] ?? pedido;
 }
+
+/**
+ * De los destinos de una ruta, **los que valen para este avión**.
+ *
+ * La regla de arriba —«si un avión no cabe en una pista, no se ofrece»— se
+ * aplicaba al campo del que se sale y a ninguno más, o sea a la mitad del
+ * vuelo. Desde Los Rodeos con el de fuselaje ancho, el juego cargaba La
+ * Gomera (1.498 m), El Hierro (1.256) y La Palma (2.119), las pintaba en la
+ * carta y dejaba poner rumbo a ellas — y ese avión necesita 2.562 metros para
+ * pararse. No hay pilotaje que arregle eso, y la consecuencia no enseña nada
+ * porque el error no fue de quien volaba.
+ *
+ * Filtrado, desde Los Rodeos el grande tiene Tenerife Sur y Gran Canaria y la
+ * avioneta las cinco, que es lo que pasa de verdad: a La Gomera va el
+ * turbohélice y no el reactor, y por este mismo motivo.
+ */
+export function destinosParaEsteAvion<T extends Scenario>(
+  a: AircraftConfig,
+  destinos: readonly T[],
+): readonly T[] {
+  return destinos.filter((d) => cabeEn(a, campoDe(d)).cabe);
+}

@@ -438,6 +438,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     cantados: () => [...juego.cantados],
     /** Lo que la boca tiró y por qué. Ver `descartadas` en `boca.ts`. */
     descartadas: () => [...BOCA.descartadas],
+    /**
+     * Y la conversación en orden: qué sonó y cuándo, en segundos desde la
+     * primera frase. Con esto y `descartadas` se lee un amontonamiento de
+     * voces desde fuera. Ver `habladas` en `boca.ts`.
+     */
+    habladas: () => {
+      const cero = BOCA.habladas[0]?.t ?? 0;
+      return BOCA.habladas.map(
+        (h) => `${((h.t - cero) / 1000).toFixed(1)}s ${h.clave}`,
+      );
+    },
     dichoTodo: () => {
       const salida: Record<string, string[]> = {};
       for (const [quien, boca] of Object.entries(juego.bocas)) {

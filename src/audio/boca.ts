@@ -458,6 +458,17 @@ export class Boca {
    */
   readonly descartadas: string[] = [];
 
+  /**
+   * Y lo que **sí** se dijo, en orden y con su instante.
+   *
+   * El gemelo de `descartadas`, y hace la misma falta. Con las dos listas se
+   * puede leer una conversación entera desde fuera —qué sonó, cuándo, y qué
+   * se cayó entre medias— que es la única forma de perseguir un
+   * amontonamiento de voces: oyéndolo no se distingue «se dijeron cuatro
+   * cosas seguidas» de «se dijeron dos y se perdieron otras dos».
+   */
+  readonly habladas: { t: number; clave: string }[] = [];
+
   private apuntarDescarte(clave: string | undefined, porque: string): void {
     this.descartadas.push(`${clave ?? "sin clave"}: ${porque}`);
     if (this.descartadas.length > 200) this.descartadas.shift();
@@ -503,7 +514,10 @@ export class Boca {
      */
     this.callarAlQueHabla();
     this.hablandoAhora = urgencia;
-    if (clave) this.dichas.set(clave, this.reloj.ahora());
+    const cuando = this.reloj.ahora();
+    if (clave) this.dichas.set(clave, cuando);
+    this.habladas.push({ t: cuando, clave: clave ?? "sin clave" });
+    if (this.habladas.length > 300) this.habladas.shift();
     const mia = ++this.cual;
     this.callaAhora =
       hacer(() => {

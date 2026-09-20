@@ -18,6 +18,8 @@
 
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
+import { destinosDe } from "../world/scenarios";
+import { destinosParaEsteAvion } from "./cabe";
 import { cabeEn, campoDe, elQueQuepa, type Campo } from "./cabe";
 import { SCENARIOS } from "../world/scenarios";
 
@@ -190,6 +192,51 @@ describe("y el que se vuela de verdad, quepa o no el pedido", () => {
     for (const e of SCENARIOS) {
       const vuela = elQueQuepa(ancho, campoDe(e), AIRCRAFT);
       expect(cabeEn(vuela, campoDe(e)).cabe).toBe(true);
+    }
+  });
+});
+
+/*
+ * ── Y la regla vale para el vuelo entero, no solo para el despegue ─────────
+ *
+ * Se aplicaba al campo del que se sale y a ninguno más. Desde Los Rodeos con
+ * el de fuselaje ancho, el juego cargaba La Gomera, El Hierro y La Palma,
+ * las pintaba en la carta y dejaba poner rumbo a ellas. Y ahí no hay
+ * pilotaje que valga: el error no es de quien vuela, así que la consecuencia
+ * no enseña nada.
+ */
+describe("los destinos también tienen que dar la talla", () => {
+  const ancho = AIRCRAFT[AIRCRAFT.length - 1]!;
+  const avioneta = AIRCRAFT[0]!;
+  const por = (id: string) => SCENARIOS.find((e) => e.id === id)!;
+  const deLosRodeos = () =>
+    destinosDe(por("tenerife-norte")).map(por).filter(Boolean);
+
+  it("el de fuselaje ancho pierde las islas de pista corta", () => {
+    const valen = destinosParaEsteAvion(ancho, deLosRodeos()).map((e) => e.id);
+    expect(valen).toContain("tenerife-sur");
+    expect(valen).toContain("gran-canaria");
+    // Las tres que no: 1.498, 1.256 y 2.119 metros contra los 2.562 que pide.
+    expect(valen).not.toContain("la-gomera");
+    expect(valen).not.toContain("el-hierro");
+    expect(valen).not.toContain("la-palma");
+  });
+
+  it("y la avioneta las conserva todas, que para eso es una avioneta", () => {
+    const todos = deLosRodeos();
+    expect(destinosParaEsteAvion(avioneta, todos)).toHaveLength(todos.length);
+  });
+
+  it("y en ningún escenario se ofrece un destino donde el avión no quepa", () => {
+    for (const e of SCENARIOS) {
+      const destinos = destinosDe(e).map(por).filter(Boolean);
+      if (!destinos.length) continue;
+      for (const a of AIRCRAFT)
+        for (const d of destinosParaEsteAvion(a, destinos))
+          expect(
+            cabeEn(a, campoDe(d)).cabe,
+            `${a.id} no cabe en ${d.id} y se ofrecía`,
+          ).toBe(true);
     }
   });
 });

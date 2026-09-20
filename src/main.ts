@@ -77,7 +77,7 @@ import type { Mission } from "./missions/types";
 import { MISSIONS } from "./content/missions";
 import { rememberTier, rememberedTier } from "./flight/tiers";
 import { AIRCRAFT, type AircraftConfig } from "./flight/aircraft";
-import { campoDe, elQueQuepa } from "./flight/cabe";
+import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 
@@ -208,6 +208,35 @@ if (!escenario) {
 }
 
 /*
+ * **Y que el avión quepa en el campo, se haya pasado por el hangar o no.**
+ *
+ * La regla vive en `cabe.ts` y el hangar la aplica al elegir. Pero el hangar
+ * **no siempre se abre**: con `?escenario=` en la dirección se va derecho a
+ * volar, y entonces el avión sale de la dirección o del perfil guardado sin
+ * que nadie vuelva a mirar dónde va a aterrizar.
+ *
+ * Contado jugando: «despegar y aterrizar en La Gomera con un 747, no sé si eso
+ * puede ser real, pero aquí se hace». Y no lo es: esa pista mide mil
+ * doscientos cincuenta metros y ese avión necesita mil cuatrocientos
+ * veinticuatro para rotar.
+ *
+ * No es una manía de exactitud. Un simulador donde un fuselaje ancho opera en
+ * la pista de una isla pequeña enseña, sin decirlo, que el tamaño de la pista
+ * da igual — y es de lo poco que no da igual. Ver `elQueQuepa`.
+ */
+{
+  const cabe = elQueQuepa(avion, campoDe(escenario), AIRCRAFT);
+  if (cabe !== avion) {
+    // Y se dice en la consola, que es donde mira quien juega con la dirección
+    // a mano. Callarlo sería cambiarle el avión a alguien sin avisar.
+    console.info(
+      `Óga Veve · ${avion.name} no cabe en ${escenario.id}: se vuela ${cabe.name}.`,
+    );
+    avion = cabe;
+  }
+}
+
+/*
  * El relieve, la ciudad y el tiempo van a la vez.
  *
  * Son tres cosas que no dependen unas de otras y encadenarlas triplicaba la
@@ -236,9 +265,33 @@ if (!escenario) {
  * se fía de lo que valga dentro de una función que la capture.
  */
 const aDondeSeVa = destinosDe(escenario);
-const destinosDeHoy = aDondeSeVa
+/*
+ * **Y los que no valgan para este avión no son destinos.**
+ *
+ * La regla estaba escrita en `cabe.ts` desde el día que se escribió —«si un
+ * avión no cabe en una pista, no se ofrece»— y se aplicaba a **la mitad del
+ * vuelo**: al campo del que se sale y a ninguno más. Desde Los Rodeos con el
+ * de fuselaje ancho, el juego cargaba La Gomera (1.498 m), El Hierro (1.256)
+ * y La Palma (2.119), las pintaba en la carta y ponía rumbo a ellas — y ese
+ * avión necesita 2.562 para pararse. No hay pilotaje que arregle eso.
+ *
+ * Con el filtro, desde Los Rodeos el 747 tiene Tenerife Sur y Gran Canaria, y
+ * la avioneta las cinco. Que es exactamente lo que pasa de verdad: a La Gomera
+ * va el turbohélice y no el reactor grande, y por el mismo motivo.
+ *
+ * Y sale gratis en arranque: cada destino que se descarta es su relieve y su
+ * ortofoto que no se bajan.
+ */
+const todosLosDestinos = aDondeSeVa
   .map((id) => SCENARIOS.find((e) => e.id === id))
   .filter((e): e is Scenario => e !== undefined);
+const destinosDeHoy = destinosParaEsteAvion(avion, todosLosDestinos);
+for (const fuera of todosLosDestinos.filter((e) => !destinosDeHoy.includes(e)))
+  // Se dice, que cambiarle los destinos a alguien sin avisar es lo mismo que
+  // cambiarle el avión sin avisar. Ver `elQueQuepa` arriba.
+  console.info(
+    `Óga Veve · ${avion.name} no cabe en ${fuera.id}: hoy no es un destino.`,
+  );
 
 const [
   conMapa,
@@ -343,35 +396,6 @@ try {
   ponerTexto("escenario", escenario.id);
 } catch {
   // Sin almacenamiento se juega igual, solo que no se recuerda.
-}
-
-/*
- * **Y que el avión quepa en el campo, se haya pasado por el hangar o no.**
- *
- * La regla vive en `cabe.ts` y el hangar la aplica al elegir. Pero el hangar
- * **no siempre se abre**: con `?escenario=` en la dirección se va derecho a
- * volar, y entonces el avión sale de la dirección o del perfil guardado sin
- * que nadie vuelva a mirar dónde va a aterrizar.
- *
- * Contado jugando: «despegar y aterrizar en La Gomera con un 747, no sé si eso
- * puede ser real, pero aquí se hace». Y no lo es: esa pista mide mil
- * doscientos cincuenta metros y ese avión necesita mil cuatrocientos
- * veinticuatro para rotar.
- *
- * No es una manía de exactitud. Un simulador donde un fuselaje ancho opera en
- * la pista de una isla pequeña enseña, sin decirlo, que el tamaño de la pista
- * da igual — y es de lo poco que no da igual. Ver `elQueQuepa`.
- */
-{
-  const cabe = elQueQuepa(avion, campoDe(escenario), AIRCRAFT);
-  if (cabe !== avion) {
-    // Y se dice en la consola, que es donde mira quien juega con la dirección
-    // a mano. Callarlo sería cambiarle el avión a alguien sin avisar.
-    console.info(
-      `Óga Veve · ${avion.name} no cabe en ${escenario.id}: se vuela ${cabe.name}.`,
-    );
-    avion = cabe;
-  }
 }
 
 // Y la ortofoto al terreno, si la hay. Ver `Terrain.ponerOrtofoto`.
