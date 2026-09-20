@@ -37,6 +37,12 @@
  *   node scripts/casar-exposicion.mjs            # todos
  *   node scripts/casar-exposicion.mjs la-palma   # uno
  *   node scripts/casar-exposicion.mjs --ver      # solo mide, no escribe
+ *   node scripts/casar-exposicion.mjs --medio    # la capa de en medio
+ *
+ * **Y vale para las dos capas anchas**, que desde que existe la de en medio
+ * son dos: el mismo problema y la misma cuenta. Una foto que no casa con la
+ * del mapa fino dibuja un cuadrado en el suelo, y da igual si el cuadrado
+ * mide dieciocho kilómetros o cincuenta y cuatro.
  *
  * Hace falta `ffmpeg`, como el extractor. Corre aquí una vez y lo que se
  * versiona es el número.
@@ -46,6 +52,14 @@ import { spawn } from 'node:child_process';
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 
 const CARPETA = 'data/ortho';
+
+/**
+ * Qué capa ancha se casa: la del horizonte o la de en medio.
+ *
+ * Las dos tienen el mismo problema —son otra fotografía del mismo sitio— y
+ * las dos se miden contra la misma referencia, el mapa fino.
+ */
+const CAPA = process.argv.includes('--medio') ? 'medio' : 'horizonte';
 
 /**
  * Hasta dónde se deja oscurecer el horizonte.
@@ -87,8 +101,8 @@ const pedidos = args.filter((a) => !a.startsWith('--'));
 const ficheros = await readdir(CARPETA);
 const ids = [...new Set(
   ficheros
-    .filter((f) => f.endsWith('-horizonte.json'))
-    .map((f) => f.replace('-horizonte.json', '')),
+    .filter((f) => f.endsWith(`-${CAPA}.json`))
+    .map((f) => f.replace(`-${CAPA}.json`, '')),
 )].filter((id) => pedidos.length === 0 || pedidos.includes(id));
 
 let escritos = 0;
@@ -99,14 +113,14 @@ for (const id of ids.sort()) {
     console.log(`${id.padEnd(18)} sin mapa fino: no hay con qué casar`);
     continue;
   }
-  const lejosFicha = `${CARPETA}/${id}-horizonte.json`;
+  const lejosFicha = `${CARPETA}/${id}-${CAPA}.json`;
   const lejos = JSON.parse(await readFile(lejosFicha, 'utf8'));
 
   // El trozo que las dos cubren: el centro del horizonte, recortado a lo que
   // abarca la foto fina. Las dos están centradas en el mismo punto.
   const fraccion = fina.tamanoM / lejos.tamanoM;
   const aqui = await media(`${CARPETA}/${id}-lejos.jpg`, 0.999);
-  const alli = await media(`${CARPETA}/${id}-horizonte.jpg`, fraccion);
+  const alli = await media(`${CARPETA}/${id}-${CAPA}.jpg`, fraccion);
 
   const crudo = luminancia(aqui) / luminancia(alli);
   const exposicion = Math.round(Math.min(1, Math.max(LO_MAS_OSCURO, crudo)) * 1000) / 1000;

@@ -41,12 +41,20 @@ import {
 /** Lo que el extractor deja escrito al lado de cada imagen. */
 export interface FichaDeOrtofoto {
   readonly id: string;
-  readonly encuadre: "cerca" | "lejos" | "horizonte";
+  readonly encuadre: "cerca" | "lejos" | "medio" | "horizonte";
   readonly fuente: string;
   readonly licencia: string;
   readonly esquina: { readonly col: number; readonly fila: number };
   readonly origen: { readonly lat: number; readonly lon: number };
   readonly zoom: number;
+  /**
+   * Lo que cubre de lado, en metros. Lo escribe el extractor.
+   *
+   * Lo necesita quien tenga que saber **hasta dónde llega** esta foto sin
+   * mirar la imagen: el anillo del horizonte se parte en dos justo por el
+   * borde de la de en medio. Ver `partirElHorizonte`.
+   */
+  readonly tamanoM?: number;
   readonly metrosPorPixel: number;
   readonly pixeles: { readonly ancho: number; readonly alto: number };
   /**
@@ -162,7 +170,7 @@ function enPixelesDelMundo(lat: number, lon: number, zoom: number) {
  */
 export async function cargarOrtofoto(
   id: string,
-  encuadre: "cerca" | "lejos" | "horizonte",
+  encuadre: "cerca" | "lejos" | "medio" | "horizonte",
 ): Promise<Ortofoto | undefined> {
   const nombre = `${id}-${encuadre}`;
   const urlImagen = Object.entries(IMAGENES).find(([k]) =>

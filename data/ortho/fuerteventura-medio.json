@@ -1,0 +1,25 @@
+{
+  "id": "fuerteventura",
+  "encuadre": "medio",
+  "fuente": "PNOA · Instituto Geográfico Nacional de España",
+  "licencia": "CC BY 4.0 · scne.es",
+  "servicio": "https://www.ign.es/wmts/pnoa-ma",
+  "capa": "OI.OrthoimageCoverage",
+  "esquina": {
+    "col": 3774,
+    "fila": 3413
+  },
+  "origen": {
+    "lat": 28.4527,
+    "lon": -13.8638
+  },
+  "tamanoM": 54000,
+  "zoom": 13,
+  "metrosPorPixel": 16.801,
+  "pixeles": {
+    "ancho": 3328,
+    "alto": 3584
+  },
+  "huecos": 0,
+  "exposicion": 0.762
+}

@@ -1,0 +1,25 @@
+{
+  "id": "pettirossi",
+  "encuadre": "medio",
+  "fuente": "Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA",
+  "licencia": "CC BY 4.0 · EOX & contribuidores, datos Copernicus Sentinel",
+  "servicio": "https://tiles.maps.eox.at/wmts",
+  "capa": "s2cloudless-2025_3857",
+  "esquina": {
+    "col": 2781,
+    "fila": 4683
+  },
+  "origen": {
+    "lat": -25.240156,
+    "lon": -57.519227
+  },
+  "tamanoM": 54000,
+  "zoom": 13,
+  "metrosPorPixel": 17.285,
+  "pixeles": {
+    "ancho": 3328,
+    "alto": 3328
+  },
+  "huecos": 0,
+  "exposicion": 1
+}

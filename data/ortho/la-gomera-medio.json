@@ -1,0 +1,25 @@
+{
+  "id": "la-gomera",
+  "encuadre": "medio",
+  "fuente": "PNOA · Instituto Geográfico Nacional de España",
+  "licencia": "CC BY 4.0 · scne.es",
+  "servicio": "https://www.ign.es/wmts/pnoa-ma",
+  "capa": "OI.OrthoimageCoverage",
+  "esquina": {
+    "col": 3698,
+    "fila": 3424
+  },
+  "origen": {
+    "lat": 28.0296,
+    "lon": -17.2146
+  },
+  "tamanoM": 54000,
+  "zoom": 13,
+  "metrosPorPixel": 16.868,
+  "pixeles": {
+    "ancho": 3328,
+    "alto": 3584
+  },
+  "huecos": 0,
+  "exposicion": 0.705
+}

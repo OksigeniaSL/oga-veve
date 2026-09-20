@@ -528,6 +528,18 @@ export interface GameOptions {
 
   /** La del horizonte: el anillo lejano. Ver `Terrain.ponerOrtofotoLejana`. */
   ortofotoHorizonte?: Ortofoto;
+
+  /**
+   * Y la de en medio: la franja por la que de verdad se vuela.
+   *
+   * Cincuenta y cuatro kilómetros a diecisiete metros por píxel. Entre el
+   * borde del mapa fino —nueve kilómetros— y el del mundo, el detalle caía
+   * de ocho metros por píxel a ciento treinta y cuatro de golpe, y esa
+   * franja es justo lo que se mira desde el aire: «¿de qué me sirven unos
+   * triángulos o paisajes sin nada en un juego donde quiero contar historia,
+   * enseñar, que descubran, que vean ríos, bosques, ciudades?».
+   */
+  ortofotoMedia?: Ortofoto;
 }
 
 /**
@@ -1786,6 +1798,17 @@ export class Game {
     // no plantar un bosque donde hay un barrio.
     // La manta del mundo, antes que nada de lo que va encima.
     if (options.ortofoto) this.terrain.ponerOrtofoto(options.ortofoto);
+    /*
+     * **Y el anillo se parte en dos si hay foto de en medio.**
+     *
+     * Va antes de ponerles nada: partir después dejaría las dos mallas
+     * nuevas sin textura. Ver `partirElHorizonte`.
+     */
+    const partido =
+      options.ortofotoMedia !== undefined &&
+      this.terrain.partirElHorizonte(
+        (options.ortofotoMedia.ficha.tamanoM ?? 0) / 2,
+      );
     if (options.ortofotoHorizonte)
       /*
        * Con su exposición casada: el anillo del horizonte y el mapa fino son
@@ -1795,6 +1818,12 @@ export class Game {
       this.terrain.ponerOrtofotoLejana(
         options.ortofotoHorizonte,
         exposicionDe(options.ortofotoHorizonte.ficha),
+      );
+    if (partido && options.ortofotoMedia)
+      this.terrain.ponerOrtofotoLejana(
+        options.ortofotoMedia,
+        exposicionDe(options.ortofotoMedia.ficha),
+        "horizonte-medio",
       );
     if (options.ortofotoFina) {
       this.terrain.ponerOrtofotoFina(options.ortofotoFina);

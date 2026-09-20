@@ -566,19 +566,63 @@ export class Terrain {
    * Rehacer el anillo cuesta una vez al cargar y **quita** triángulos, así
    * que no se paga nada por esto: se cobra.
    */
+  /**
+   * Parte el anillo del horizonte en dos para que cada trozo lleve su foto.
+   *
+   * La de en medio cubre cincuenta y cuatro kilómetros a diecisiete metros
+   * por píxel; la del horizonte, el mundo entero a ciento treinta y cuatro.
+   * Entre el borde del mapa fino —nueve kilómetros— y el del mundo había un
+   * salto de ocho a uno en detalle, y es justo la franja por la que se vuela:
+   * «¿dónde están los paisajes?».
+   *
+   * Se llama antes de ponerles la foto, y devuelve si de verdad se partió:
+   * sin foto de en medio no se parte nada.
+   */
+  partirElHorizonte(medio: number): boolean {
+    if (!this.scenario.relieveLejano || medio <= 0) return false;
+    const viejo = this.group.getObjectByName("horizonte") as Mesh | undefined;
+    if (!viejo) return false;
+    this.group.remove(viejo);
+    viejo.geometry.dispose();
+    this.medioDelHorizonte = medio;
+    for (const dentro of [true, false]) {
+      const m = this.buildFarMesh({ medio, dentro });
+      if (m) this.group.add(m);
+    }
+    return true;
+  }
+
+  /** Hasta dónde llega la foto de en medio, si la hay. Ver `partirElHorizonte`. */
+  private medioDelHorizonte = 0;
+
   recortarElHorizonte(
     huecos: readonly { x: number; z: number; medio: number }[],
   ): void {
     if (!huecos.length || !this.scenario.relieveLejano) return;
     this.huecosDelHorizonte = huecos;
-    const viejo = this.group.getObjectByName("horizonte");
-    if (viejo) {
+    /*
+     * Y se rehace **como estuviera**: entero si no hay foto de en medio, y
+     * partido en dos si la hay. Rehacer solo la de fuera dejaría la de dentro
+     * con el agujero sin recortar, que es el fallo que esto viene a arreglar.
+     */
+    const partido = this.medioDelHorizonte > 0;
+    for (const nombre of ["horizonte", "horizonte-medio"]) {
+      const viejo = this.group.getObjectByName(nombre);
+      if (!viejo) continue;
       this.group.remove(viejo);
       (viejo as Mesh).geometry?.dispose();
     }
-    const nuevo = this.buildFarMesh();
-    // Detrás de todo, como el que quita: el mapa fino lo tapa por delante.
-    if (nuevo) this.group.add(nuevo);
+    const trozos = partido
+      ? [
+          { medio: this.medioDelHorizonte, dentro: true },
+          { medio: this.medioDelHorizonte, dentro: false },
+        ]
+      : [null];
+    for (const t of trozos) {
+      const nuevo = this.buildFarMesh(t);
+      // Detrás de todo: el mapa fino lo tapa por delante.
+      if (nuevo) this.group.add(nuevo);
+    }
   }
 
   /**
@@ -750,8 +794,15 @@ export class Terrain {
      * en `ortofoto.ts` y la nota de `FichaDeOrtofoto.exposicion`.
      */
     exposicion = 1,
+    /**
+     * A cuál de las dos mallas del anillo. Ver `partirElHorizonte`.
+     *
+     * Por omisión, la de siempre: así el escenario sin capa de en medio no
+     * se entera de que esto existe.
+     */
+    cual: "horizonte" | "horizonte-medio" = "horizonte",
   ): void {
-    const malla = this.group.getObjectByName("horizonte") as Mesh | undefined;
+    const malla = this.group.getObjectByName(cual) as Mesh | undefined;
     if (!malla) return;
     const pos = malla.geometry.getAttribute("position");
     const uvs = new Float32Array(pos.count * 2);
@@ -1011,7 +1062,19 @@ export class Terrain {
    * **Y sin aplanar el aeropuerto**, que aquí no hace falta y a doscientos
    * sesenta metros por muestra sería aplanar medio valle.
    */
-  private buildFarMesh(): Mesh | null {
+  private buildFarMesh(
+    /**
+     * Qué mitad del anillo se construye, cuando hay capa de en medio.
+     *
+     * `null` es el anillo entero, como siempre. Con un lado, se parte en dos
+     * mallas: la de dentro lleva la foto de en medio —diecisiete metros por
+     * píxel— y la de fuera la del horizonte, que va a ciento treinta y
+     * cuatro. Una malla no puede llevar dos texturas sin escribir un shader,
+     * y aquí no hace falta ninguno: es el mismo reparto que ya hacen el mapa
+     * fino y el lejano.
+     */
+    trozo: { readonly medio: number; readonly dentro: boolean } | null = null,
+  ): Mesh | null {
     const lejos = this.scenario.relieveLejano;
     if (!lejos) return null;
 
@@ -1129,6 +1192,17 @@ export class Terrain {
         if (Math.abs(cx) < dentro && Math.abs(cz) < dentro) continue;
         // Y lo mismo sobre el mapa fino del vecino. Ver `huecosDelHorizonte`.
         if (this.enUnHueco(cx, cz, paso)) continue;
+        /*
+         * Y el reparto entre la foto de en medio y la del horizonte. El
+         * cuadro del borde va en las dos —se pisan por un cuadro— y así no
+         * queda ranura entre una y otra.
+         */
+        if (trozo) {
+          const aqui =
+            Math.abs(cx) < trozo.medio + paso &&
+            Math.abs(cz) < trozo.medio + paso;
+          if (aqui !== trozo.dentro) continue;
+        }
         if (
           bajoElAgua(fila, col) &&
           bajoElAgua(fila + 1, col) &&
@@ -1152,7 +1226,7 @@ export class Terrain {
       geo,
       new MeshLambertMaterial({ vertexColors: true }),
     );
-    malla.name = "horizonte";
+    malla.name = trozo?.dentro ? "horizonte-medio" : "horizonte";
     malla.matrixAutoUpdate = false;
     return malla;
   }

@@ -1,0 +1,25 @@
+{
+  "id": "cuatro-vientos",
+  "encuadre": "medio",
+  "fuente": "PNOA · Instituto Geográfico Nacional de España",
+  "licencia": "CC BY 4.0 · scne.es",
+  "servicio": "https://www.ign.es/wmts/pnoa-ma",
+  "capa": "OI.OrthoimageCoverage",
+  "esquina": {
+    "col": 4002,
+    "fila": 3083
+  },
+  "origen": {
+    "lat": 40.370701,
+    "lon": -3.78514
+  },
+  "tamanoM": 54000,
+  "zoom": 13,
+  "metrosPorPixel": 14.559,
+  "pixeles": {
+    "ancho": 4096,
+    "alto": 3840
+  },
+  "huecos": 0,
+  "exposicion": 0.932
+}

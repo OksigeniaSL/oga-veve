@@ -49,19 +49,33 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [Copernicus DEM GLO-30](https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM) — ESA / Airbus / DLR | Relieve de Silvio Pettirossi, Guaraní, Encarnación, Mariscal Estigarribia, Pedro Juan Caballero, Yvytu Rape y los anillos de horizonte | **Gratuito, uso comercial permitido, atribución obligatoria y literal** |
 | [OpenStreetMap](https://www.openstreetmap.org)                                                                                                                               | Pistas, calles de rodaje, plataformas, estacionamientos, edificios, viario y agua de las ciudades, y los hitos del paisaje —cumbres, islas y pueblos— que la comandante señala en ruta | **ODbL**                                                                |
 | [OurAirports](https://github.com/davidmegginson/ourairports-data)                                                                                                            | Coordenadas, pistas y elevación de aeropuertos                                                                                         | **Unlicense** (dominio público)                                         |
-| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en tres encuadres                                                                         | **CC BY 4.0** · scne.es                                                 |
+| [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en cuatro encuadres                                                                         | **CC BY 4.0** · scne.es                                                 |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
-| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los seis escenarios paraguayos, en tres encuadres                                                                         | **Sin resolver.** Ver abajo                                             |
+| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los seis escenarios paraguayos, en cuatro encuadres                                                                         | **Sin resolver.** Ver abajo                                             |
 
-**Tres encuadres de la misma fuente**, y cada uno existe por un motivo
+**Cuatro encuadres de la misma fuente**, y cada uno existe por un motivo
 distinto: `cerca` cubre seis kilómetros a dos metros por píxel, que es donde se
-rueda; `lejos`, dieciocho a ocho, que es donde se vuela el circuito; y
-`horizonte`, el mapa lejano entero —de ochenta y cuatro a ciento sesenta
-kilómetros según el escenario— a unos setenta metros por píxel. La última entró
-el 19 de septiembre de 2026 porque sin ella, donde acababa la foto de dieciocho
+rueda; `lejos`, dieciocho a ocho, que es donde se vuela el circuito; `medio`,
+cincuenta y cuatro a diecisiete; y `horizonte`, el mapa lejano entero —de
+ochenta y cuatro a trescientos veinticuatro kilómetros según el escenario— a
+entre setenta y ciento treinta y cuatro metros por píxel. El horizonte entró
+el 19 de septiembre de 2026 porque sin él, donde acababa la foto de dieciocho
 kilómetros empezaba una llanura de color plano: «el paisaje es de estilo
-Minecraft, no se extiende el mapa realista en todo el trayecto». Son ciento
-cincuenta kilobytes por isla y solo se baja la del escenario que se abre.
+Minecraft, no se extiende el mapa realista en todo el trayecto».
+
+`medio` entró al día siguiente, y por lo contrario: entre el borde de `lejos`
+—nueve kilómetros— y el del mundo había un salto de detalle **de ocho a uno**,
+y esa franja es justo por la que se vuela. Tenerife mide ochenta kilómetros y
+el escenario dieciocho, así que casi todo lo que se miraba desde el aire caía
+en la capa basta. Dicho durante semanas y de muchas maneras: «las ortofotos de
+Tenerife, fatal», «¿dónde están los paisajes?», «¿de qué me sirven unos
+triángulos o paisajes sin nada en un juego donde quiero contar historia,
+enseñar, que descubran, que vean ríos, bosques, ciudades?».
+
+Pesos medidos: el horizonte anda por los cien kilobytes y `medio` va de
+doscientos veinticinco —El Hierro, que es casi todo mar— a dos megas y pico
+—Cuatro Vientos, que es Madrid entero—. Solo se baja la del escenario que se
+abre, y se guarda.
 
 ### Sentinel-2 cloudless: la licencia declarada no es la que dice EOX
 

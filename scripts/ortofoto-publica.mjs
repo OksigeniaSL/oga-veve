@@ -159,6 +159,31 @@ const ENCUADRES = {
   lejos: { zoom: 14 },
   cerca: { lado: 6000, zoom: 16 },
   /*
+   * **Y la de en medio, que era el agujero grande.**
+   *
+   * Había tres capas y un salto enorme entre la segunda y la tercera: la
+   * ancha cubre el escenario —dieciocho kilómetros— a ocho metros por píxel,
+   * y a partir de ahí manda la del horizonte, que en un mundo de
+   * trescientos veinticuatro kilómetros va a **ciento treinta y cuatro**.
+   *
+   * Tenerife mide ochenta kilómetros. O sea que en cuanto te alejas nueve de
+   * Los Rodeos —enseguida— todo lo que mirás está en la de 134, y eso desde
+   * seis mil pies es barro. Contado jugando, y llevaba semanas dicho de
+   * muchas maneras: «las ortofotos de Tenerife, fatal», «¿dónde están los
+   * paisajes?», «¿de qué me sirven unos triángulos o paisajes sin nada en un
+   * juego donde quiero contar historia, enseñar, que descubran, que vean
+   * ríos, bosques, ciudades?».
+   *
+   * Cincuenta y cuatro kilómetros a diecisiete metros por píxel: la isla
+   * entera, **ocho veces más fina** que lo que había, en tres mil doscientos
+   * píxeles de lado. Es la franja donde de verdad se vuela.
+   *
+   * Y cincuenta y cuatro y no más porque es lo que cabe en el presupuesto de
+   * píxeles de esta casa —unos tres mil de lado— sin bajar otro nivel de
+   * zoom y volver a donde estábamos.
+   */
+  medio: { lado: 54000, zoom: 13 },
+  /*
    * **Y el horizonte: el mapa lejano entero, a zoom de mapa de pared.**
    *
    * Sin esto, donde acaba la ortofoto de dieciocho kilómetros empieza una
@@ -249,7 +274,7 @@ async function main() {
   const [id, ...opciones] = process.argv.slice(2);
   if (!id || !ESCENARIOS[id]) {
     console.error(
-      'uso: node scripts/ortofoto-publica.mjs <escenario> [--cerca|--horizonte]',
+      'uso: node scripts/ortofoto-publica.mjs <escenario> [--cerca|--medio|--horizonte]',
     );
     console.error(`escenarios: ${Object.keys(ESCENARIOS).join(', ')}`);
     process.exit(1);
@@ -258,15 +283,21 @@ async function main() {
     ? 'cerca'
     : opciones.includes('--horizonte')
       ? 'horizonte'
-      : 'lejos';
+      : opciones.includes('--medio')
+        ? 'medio'
+        : 'lejos';
   const escenario = ESCENARIOS[id];
   const prov = PROVEEDORES[escenario.proveedor];
   const lado =
     cual === 'cerca'
       ? ENCUADRES.cerca.lado
-      : cual === 'horizonte'
-        ? ladoDelHorizonte(id)
-        : escenario.lado;
+      : cual === 'medio'
+        ? // Sin pasarse del mundo que hay: en un escenario sin vecinos el
+          // mapa lejano puede ser más pequeño que estos cincuenta y cuatro.
+          Math.min(ENCUADRES.medio.lado, ladoDelHorizonte(id))
+        : cual === 'horizonte'
+          ? ladoDelHorizonte(id)
+          : escenario.lado;
 
   /*
    * **El zoom se recorta al tope del proveedor**, y se dice.

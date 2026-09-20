@@ -299,6 +299,7 @@ const [
   meteo,
   ortofoto,
   ortofotoFina,
+  ortofotoMedia,
   vecinos,
   fotosVecinas,
   ortofotoHorizonte,
@@ -323,6 +324,18 @@ const [
    */
   mundoElegido() === "foto"
     ? cargarOrtofoto(escenario.id, "cerca")
+    : Promise.resolve(undefined),
+  /*
+   * **Y la de en medio: la franja por la que de verdad se vuela.**
+   *
+   * Entre el borde del mapa fino —nueve kilómetros— y el del mundo, el
+   * detalle caía de ocho metros por píxel a ciento treinta y cuatro de
+   * golpe. Tenerife mide ochenta kilómetros: casi todo lo que se mira desde
+   * el aire estaba en la capa basta. Ver `ENCUADRES.medio` en
+   * `scripts/ortofoto-publica.mjs`.
+   */
+  mundoElegido() === "foto"
+    ? cargarOrtofoto(escenario.id, "medio")
     : Promise.resolve(undefined),
   /*
    * Y el aeropuerto de destino, si esta ruta lleva a otro.
@@ -410,6 +423,7 @@ const game = new Game({
   aircraft: avion,
   ortofoto,
   ortofotoFina,
+  ortofotoMedia,
   vecinos,
   fotosVecinas,
   ortofotoHorizonte,

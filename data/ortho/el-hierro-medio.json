@@ -1,0 +1,25 @@
+{
+  "id": "el-hierro",
+  "encuadre": "medio",
+  "fuente": "PNOA · Instituto Geográfico Nacional de España",
+  "licencia": "CC BY 4.0 · scne.es",
+  "servicio": "https://www.ign.es/wmts/pnoa-ma",
+  "capa": "OI.OrthoimageCoverage",
+  "esquina": {
+    "col": 3682,
+    "fila": 3430
+  },
+  "origen": {
+    "lat": 27.8148,
+    "lon": -17.8871
+  },
+  "tamanoM": 54000,
+  "zoom": 13,
+  "metrosPorPixel": 16.901,
+  "pixeles": {
+    "ancho": 3584,
+    "alto": 3328
+  },
+  "huecos": 1,
+  "exposicion": 0.867
+}
