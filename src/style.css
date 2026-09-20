@@ -6796,3 +6796,31 @@ button.motor__tecla::after {
   pointer-events: none;
   z-index: 5;
 }
+
+/*
+ * ── El idioma en la pantalla de los pilotos ──
+ *
+ * Arriba a la derecha, enfrente del sello. Es la primera pantalla que ve
+ * nadie y el idioma es lo primero que hace falta para entender lo demás:
+ * «estaría bien poder elegir el idioma desde la pantalla de inicio». Los
+ * mismos botones que en el hangar —clase `.idioma`— para que sean el mismo
+ * mando en los dos sitios y no dos cosas que hacen lo mismo.
+ */
+.pilotos__idiomas {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+}
+
+@media (max-width: 520px) {
+  /* En un teléfono el sello y los idiomas no caben en la misma línea. */
+  .pilotos__idiomas {
+    top: auto;
+    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 44px);
+    right: 50%;
+    transform: translateX(50%);
+  }
+}

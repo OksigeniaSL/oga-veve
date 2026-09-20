@@ -11,7 +11,7 @@
  * es una pantalla; «este es el tuyo, ¿lo cambiás?» es un avión.
  */
 
-import { t } from "../i18n";
+import { getLocale, LOCALES, LOCALE_NAMES, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import {
   CUANTOS_PERFILES,
@@ -106,10 +106,38 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
       root.innerHTML =
         cielo() +
         marca() +
+        idiomas() +
         (vista === "lista" ? rejilla(lista, activo) : creador(propuesta)) +
         pie();
       root.querySelector<HTMLElement>("button")?.focus();
     };
+
+    /*
+     * **El idioma, en la primera pantalla.**
+     *
+     * Estaba solo dentro del hangar, en el bloque de ajustes, y eso quiere
+     * decir que quien abre el juego en un idioma que no es el suyo tiene que
+     * atravesar dos pantallas en ese idioma para poder cambiarlo. Pedido así:
+     * «estaría bien poder elegir el idioma desde la pantalla de inicio».
+     *
+     * Y encaja con la regla de la casa: ésta es la pantalla de antes de saber
+     * nada, y el idioma es lo primero que hace falta para entender lo demás.
+     * Tres botones con el nombre de cada idioma **escrito en ese idioma**, que
+     * es lo que se busca en un selector y lo único que se lee sin saber leer
+     * el de al lado.
+     */
+    const idiomas = (): string => `
+      <div class="pilotos__idiomas" role="radiogroup"
+           aria-label="${t("language.label")}">
+        ${LOCALES.map(
+          (l) => `
+        <button class="idioma" type="button" role="radio"
+                lang="${l === "gug" ? "gn" : l}"
+                aria-checked="${l === getLocale()}"
+                tabindex="${l === getLocale() ? 0 : -1}"
+                data-idioma="${l}">${LOCALE_NAMES[l]}</button>`,
+        ).join("")}
+      </div>`;
 
     const rejilla = (
       lista: readonly { id: string; avatar: string; color?: string }[],
@@ -189,6 +217,13 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
         elegirPerfil(elegir);
         root.hidden = true;
         listo();
+        return;
+      }
+      const idIdioma = el.closest("[data-idioma]")?.getAttribute("data-idioma");
+      if (idIdioma) {
+        setLocale(idIdioma as (typeof LOCALES)[number]);
+        pintar();
+        root.querySelector<HTMLElement>(`[data-idioma="${idIdioma}"]`)?.focus();
         return;
       }
       const borrar = el.closest("[data-borrar]")?.getAttribute("data-borrar");
