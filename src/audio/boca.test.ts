@@ -541,3 +541,55 @@ describe("y la megafonía va por otra vía", () => {
     expect(dichas).toEqual(["radio", "megafonia"]);
   });
 });
+
+/*
+ * ── Cuando la cola se llena, la cola es una cola ──────────────────────────
+ *
+ * Se caía la más vieja, con este argumento: «la que más cerca está de dejar
+ * de describir lo que pasa». El argumento es bueno y ya lo cumple otro —
+ * `CADUCA` tira a los cuatro segundos lo que dejó de ser verdad—, así que
+ * tirar además la más vieja era cobrar dos veces por lo mismo. Y lo que se
+ * cobraba era siempre lo primero que había pasado.
+ *
+ * Al final de un vuelo, lo primero que pasa es la torre. Medido en el
+ * barrido, cinco escenarios fallando la misma prueba y siempre así:
+ * `torre.clearedTakeoff: no cabía en la cola`.
+ */
+describe("qué se cae cuando la cola se llena", () => {
+  /** Ocupa la boca y llena la cola con lo que se diga. */
+  function conLaColaLlena(...claves: string[]) {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    for (const c of claves) b.pedir("normal", frase(c), c);
+    return { b, dicho, acabar };
+  }
+
+  it("se queda la que llegó primero, no la última", () => {
+    // Tres plazas: la cuarta no cabe. Antes se caía «torre», que era la
+    // primera en llegar; ahora se cae la que llega con la cola llena.
+    const { b } = conLaColaLlena("torre", "despacio", "alto", "tarde");
+    expect(b.cuantasEsperan).toBe(3);
+    expect(b.descartadas.at(-1)).toBe("tarde: no cabía en la cola");
+  });
+
+  it("y se dicen en orden de llegada", () => {
+    const { dicho, acabar } = conLaColaLlena("torre", "despacio", "alto");
+    acabar["hablando"]!();
+    expect(dicho.at(-1)).toBe("torre");
+  });
+
+  it("pero lo de menos peso se cae antes que lo de más, venga cuando venga", () => {
+    // El orden de llegada manda **entre iguales**. Un elogio no le quita el
+    // sitio a una instrucción por haber llegado antes.
+    const b = boca();
+    const { frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("baja", frase("elogio"), "elogio");
+    b.pedir("normal", frase("uno"), "uno");
+    b.pedir("normal", frase("dos"), "dos");
+    b.pedir("normal", frase("tres"), "tres");
+    expect(b.descartadas.at(-1)).toBe("elogio: no cabía en la cola");
+    expect(b.cuantasEsperan).toBe(3);
+  });
+});

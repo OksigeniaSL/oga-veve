@@ -389,8 +389,27 @@ export class Boca {
   /**
    * Mete una frase en la cola de espera, por peso y sin pasar de tres.
    *
-   * Cuando no cabe se cae **la menos importante**, y entre iguales la más
-   * vieja: la que más cerca está de dejar de describir lo que pasa.
+   * Cuando no cabe se cae **la menos importante**, y entre iguales **la más
+   * nueva**: una cola es una cola.
+   *
+   * ## Y esto estaba al revés
+   *
+   * Se caía la más vieja, con este argumento: «la que más cerca está de dejar
+   * de describir lo que pasa». El argumento es bueno y ya lo cumple otro:
+   * `CADUCA` tira a los cuatro segundos lo que dejó de ser verdad, y
+   * `MISMA_CUENTA` hace que una cuenta atrás se sustituya en vez de hacer
+   * cola. Con esos dos puestos, tirar además la más vieja es tirar dos veces
+   * por el mismo motivo — y lo que se tira es siempre lo primero que pasó.
+   *
+   * Y lo primero que pasa, al final de un vuelo, es la torre. Medido en el
+   * barrido, cinco escenarios fallando la misma prueba y siempre por lo
+   * mismo: `torre.clearedTakeoff: no cabía en la cola`, `torre.clearedLand:
+   * no cabía en la cola`. La autorización entraba en la cola, se ponía a
+   * esperar, y el tercer «más despacio» la echaba.
+   *
+   * Con la cola en orden de llegada, la autorización se dice y lo que se cae
+   * es el comentario de más — que es lo que pasa en una frecuencia de verdad:
+   * quien llega tarde espera, y si ya no viene a cuento, no lo dice.
    */
   private encolar(esta: (typeof this.cola)[number]): void {
     /*
@@ -414,7 +433,13 @@ export class Boca {
       const b = this.cola[peor]!;
       if (
         PESO[a.urgencia] < PESO[b.urgencia] ||
-        (PESO[a.urgencia] === PESO[b.urgencia] && a.desde < b.desde)
+        /*
+         * Y **mayor o igual**, no mayor: dos frases pedidas en el mismo
+         * milisegundo tienen el mismo `desde`, y con la comparación estricta
+         * ganaba la primera de la lista — o sea, otra vez la más vieja. Con
+         * el igual incluido gana la última, que es la que acaba de llegar.
+         */
+        (PESO[a.urgencia] === PESO[b.urgencia] && a.desde >= b.desde)
       )
         peor = i;
     }
