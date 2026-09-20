@@ -32,9 +32,28 @@
  * aceleración **es** la lección — no es una lista de números, es un ritmo que
  * dice «ya, ya, ya».
  */
+/*
+ * **Y falta cuarenta, que sí es de la cuenta de verdad.**
+ *
+ * Entre cincuenta y treinta hay un escalón en cualquier radioaltímetro, y es
+ * justo donde la cuenta se aprieta y dice «ya». Estaba en la lista de pies y
+ * no en ésta.
+ *
+ * ## Lo que se pidió y todavía no está
+ *
+ * «Se echa de menos un indicador de voz indicando la aproximación y la
+ * distancia a tierra: five hundred, four hundred… fifty, forty.» Los tres
+ * cientos de en medio —cuatrocientos, trescientos, doscientos— **no están
+ * grabados**, y esta lista no puede pedir lo que no se grabó: una cuenta en
+ * la que tres números los dice otra voz suena peor que una cuenta corta. Las
+ * tres frases están apuntadas para la próxima tanda de estudio; el día que
+ * existan, entran aquí y en `audio/cabina.ts`, que es donde una prueba
+ * comprueba que la tabla no apunta a grabaciones que no hay.
+ */
 export const ESCALONES: readonly Escalon[] = [
   { metros: 100, dice: "one hundred", encasa: "cien" },
   { metros: 50, dice: "fifty", encasa: "cincuenta" },
+  { metros: 40, dice: "forty", encasa: "cuarenta" },
   { metros: 30, dice: "thirty", encasa: "treinta" },
   { metros: 20, dice: "twenty", encasa: "veinte" },
   { metros: 10, dice: "ten", encasa: "diez" },
@@ -56,6 +75,11 @@ export const ESCALONES: readonly Escalon[] = [
  */
 export const ESCALONES_EN_PIES: readonly Escalon[] = [
   { metros: 152, dice: "five hundred", encasa: "quinientos" },
+  /*
+   * Y aquí faltan los tres de en medio —cuatrocientos, trescientos,
+   * doscientos—, que un radioaltímetro sí canta. No están grabados; ver la
+   * nota de `ESCALONES`.
+   */
   { metros: 30.5, dice: "one hundred", encasa: "cien" },
   { metros: 15.2, dice: "fifty", encasa: "cincuenta" },
   { metros: 12.2, dice: "forty", encasa: "cuarenta" },
@@ -132,11 +156,19 @@ export class AvisosDeAltura {
    * y «va bajando» daban verdad las tres, y la cuenta entera se soltaba desde
    * arriba una y otra vez.
    *
-   * Pero para contar desde cien metros hay que haber estado por encima de cien
-   * metros. Un despegue empieza en el suelo; una recogida viene de arriba. Eso
-   * no lo puede falsear ni un rebote ni un barranco.
+   * Pero para cantar un escalón hay que haber estado por encima de **ese**
+   * escalón. Un despegue empieza en el suelo; una recogida viene de arriba.
+   * Eso no lo puede falsear ni un rebote ni un barranco.
+   *
+   * **Y se guarda la altura, no un sí o un no.** Era una bandera que se
+   * encendía al pasar del escalón más alto de la lista, y eso ataba la cuenta
+   * entera al primer número: el día que la lista empezó en trescientos metros
+   * en vez de en cien, un circuito a doscientos cincuenta se quedó **sin
+   * cantar nada**. Con la altura máxima alcanzada, cada escalón se arma solo
+   * cuando se ha estado por encima de él, que es lo que la regla decía desde
+   * el principio.
    */
-  private vinoDeArriba = false;
+  private masAltoVisto = 0;
 
   /**
    * Los escalones de hoy: los métricos o los de pies.
@@ -227,16 +259,15 @@ export class AvisosDeAltura {
      *
      * Y la altura solo decide **qué** se canta, que es para lo que sirve.
      */
-    const masAlto = this.escalones[0]?.metros ?? 0;
     if (!enElAire) {
       this.dados.clear();
       this.fuera = 0;
       // Tocar el suelo cierra la cuenta: para volver a contar hay que volver a
-      // subir. Ver `vinoDeArriba`.
-      this.vinoDeArriba = false;
+      // subir. Ver `masAltoVisto`.
+      this.masAltoVisto = 0;
       return null;
     }
-    if (sobreElSuelo > masAlto) this.vinoDeArriba = true;
+    this.masAltoVisto = Math.max(this.masAltoVisto, sobreElSuelo);
     if (!aterrizando) {
       this.fuera++;
       if (this.fuera > SE_FUE_DE_VERDAD) this.dados.clear();
@@ -245,8 +276,6 @@ export class AvisosDeAltura {
     this.fuera = 0;
     // Y subiendo no se canta, aunque no se olvide lo dicho. Ver `bajando`.
     if (!bajando) return null;
-    // Ni sin haber venido de arriba: eso es una carrera, no una recogida.
-    if (!this.vinoDeArriba) return null;
 
     // Y el aviso: el más alto de los que se acaban de cruzar hacia abajo. Se
     // da uno solo por fotograma —caer diez metros de golpe no puede soltar
@@ -254,6 +283,9 @@ export class AvisosDeAltura {
     // toca cantarlos.
     for (const e of this.escalones) {
       if (this.dados.has(e.metros) || sobreElSuelo > e.metros) continue;
+      // Y sin haber estado por encima de él: eso es una carrera de despegue
+      // rebotando, no una recogida. Ver `masAltoVisto`.
+      if (this.masAltoVisto <= e.metros) continue;
       this.dados.add(e.metros);
       return e;
     }
@@ -264,6 +296,6 @@ export class AvisosDeAltura {
   reiniciar(): void {
     this.dados.clear();
     this.fuera = 0;
-    this.vinoDeArriba = false;
+    this.masAltoVisto = 0;
   }
 }

@@ -28,9 +28,9 @@ function seVaAlAire(a: AvisosDeAltura): void {
 /**
  * Venir de arriba: un fotograma por encima del escalón más alto.
  *
- * Hace falta porque **para contar desde cien hay que haber estado por encima
- * de cien**, y una prueba que empieza a cuarenta y cinco metros no ha estado.
- * Ver `vinoDeArriba`.
+ * Hace falta porque **para cantar un escalón hay que haber estado por encima
+ * de ese escalón**, y una prueba que empieza a cuarenta y cinco metros no ha
+ * estado por encima de cincuenta. Ver `masAltoVisto`.
  */
 function vieneDeArriba(a: AvisosDeAltura, alto = 400): void {
   a.paso(alto, true, true, true);
@@ -48,9 +48,14 @@ const bajarDe = (a: AvisosDeAltura, desde: number, hasta: number): string[] => {
 
 describe("los avisos de altura", () => {
   it("cantan la cuenta entera al bajar", () => {
+    /*
+     * Desde 120: los de por encima no se cantan porque no se ha estado ahí
+     * arriba, que es justo lo que arma cada escalón. Ver `masAltoVisto`.
+     */
     expect(bajarDe(new AvisosDeAltura(), 120, 0)).toEqual([
       "one hundred",
       "fifty",
+      "forty",
       "thirty",
       "twenty",
       "ten",
@@ -103,7 +108,8 @@ describe("los avisos de altura", () => {
   it("una caída de golpe no suelta cuatro palabras a la vez", () => {
     const a = new AvisosDeAltura();
     a.paso(120, true, true, true);
-    // De ciento veinte a ocho en un solo fotograma: se canta uno, el más alto.
+    // De ciento veinte a ocho en un solo fotograma: se canta uno, el más alto
+    // de los que se han cruzado **y sobre los que se ha estado**.
     expect(a.paso(8, true, true, true)?.dice).toBe("one hundred");
   });
 
@@ -117,7 +123,7 @@ describe("los avisos de altura", () => {
     const a = new AvisosDeAltura();
     bajarDe(a, 120, 0);
     a.paso(0.5, false, true, true);
-    expect(bajarDe(a, 120, 0).length).toBe(6);
+    expect(bajarDe(a, 120, 0).length).toBe(7);
   });
 
   /*
@@ -177,6 +183,7 @@ describe("y la cuenta atrás es de la recogida, no del terreno", () => {
     expect(dichos).toEqual([
       "cien",
       "cincuenta",
+      "cuarenta",
       "treinta",
       "veinte",
       "diez",
@@ -303,10 +310,49 @@ describe("y la carrera de despegue no es una toma", () => {
     expect(dichos).toEqual([
       "cien",
       "cincuenta",
+      "cuarenta",
       "treinta",
       "veinte",
       "diez",
       "cinco",
     ]);
+  });
+});
+
+/*
+ * ── Cada escalón se arma solo cuando se ha estado por encima de él ────────
+ *
+ * Era una bandera contra el escalón **más alto de la lista**, y eso ataba la
+ * cuenta entera al primer número: el día que la lista empezó en trescientos
+ * metros en vez de en cien, un circuito a doscientos cincuenta se quedó sin
+ * cantar nada. Ver `masAltoVisto`.
+ */
+describe("la cuenta no depende de cuál sea el escalón más alto", () => {
+  it("un circuito bajo canta lo suyo aunque no pase del más alto", () => {
+    const a = new AvisosDeAltura();
+    // Doscientos cincuenta metros: bien por encima de cien, que es el más
+    // alto de la lista métrica. Tiene que cantar la cuenta entera.
+    a.paso(250, true, true, true);
+    const dichos = bajarDe(a, 250, 0);
+    expect(dichos).toContain("one hundred");
+    expect(dichos).toContain("fifty");
+    expect(dichos[dichos.length - 1]).toBe("five");
+  });
+
+  it("y uno de treinta metros no canta ni cincuenta ni cien", () => {
+    const a = new AvisosDeAltura();
+    a.paso(30, true, true, true);
+    const dichos = bajarDe(a, 30, 0);
+    expect(dichos).not.toContain("one hundred");
+    expect(dichos).not.toContain("fifty");
+    expect(dichos).not.toContain("forty");
+    expect(dichos).toContain("twenty");
+  });
+
+  it("y la cuenta de pies lleva los cientos que hay grabados", () => {
+    const cientos = ESCALONES_EN_PIES.filter((e) => e.dice.includes("hundred"));
+    // Faltan cuatrocientos, trescientos y doscientos: no están grabados. Ver
+    // la nota de `ESCALONES`.
+    expect(cientos.map((e) => e.dice)).toEqual(["five hundred", "one hundred"]);
   });
 });
