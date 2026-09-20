@@ -16,12 +16,15 @@ import { describe, expect, it } from "vitest";
 import gcts from "../../data/aerodromes/gcts.aero.json";
 import gcgm from "../../data/aerodromes/gcgm.aero.json";
 import gcla from "../../data/aerodromes/gcla.aero.json";
+import gchi from "../../data/aerodromes/gchi.aero.json";
+import lecu from "../../data/aerodromes/lecu.aero.json";
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
 import { ARAI, PYKASU } from "../flight/aircraft";
 import { carreraHastaVr } from "../flight/carrera";
 import { delante } from "./rumbo";
 import type { Aerodrome } from "./aerodrome";
+import { aLaPolilinea } from "./aerodrome";
 
 const SUR = gcts as unknown as Aerodrome;
 const GOMERA = gcgm as unknown as Aerodrome;
@@ -52,6 +55,9 @@ const plano = (): number => 0;
 
 /** La Palma: dos kilómetros escasos y un punto de espera a media pista. */
 const laPalma = (): Aerodrome => gcla as unknown as Aerodrome;
+/** El Hierro y Cuatro Vientos: los dos que rompió el filtro. */
+const elHierro = (): Aerodrome => gchi as unknown as Aerodrome;
+const cuatroVientos = (): Aerodrome => lecu as unknown as Aerodrome;
 
 describe("mudarse de aeropuerto sin cambiar de vuelo", () => {
   const gomeraAlli = desplazarAerodromo(GOMERA, DX, DZ);
@@ -186,4 +192,41 @@ describe("de dónde se entra a la pista", () => {
     const espera = ruta[ruta.length - 1]!;
     expect(porDelante(espera)).toBeGreaterThan(carreraHastaVr(PYKASU) * 2);
   });
+});
+
+/*
+ * ── Y antes que la pista que queda, no cruzar la pista ────────────────────
+ *
+ * El primer intento de «que deje pista bastante por delante» lo puso como
+ * filtro sobre los puntos de espera, y en una pista de mil doscientos metros
+ * eso los tira casi todos: en El Hierro quedaba **uno**, al otro lado del
+ * asfalto que la plataforma, así que la única ruta posible cruzaba la pista
+ * en diagonal y el juego hacía lo correcto — percance «entraste en la pista
+ * sin la luz verde» a los veinte segundos de arrancar. Medido en el barrido:
+ * El Hierro 11 de 22 y Cuatro Vientos 12 de 22.
+ *
+ * Entrar sin permiso es lo más grave que se puede hacer rodando; salir por
+ * una intersección es como mucho incómodo. El orden es ése.
+ */
+describe("la raya de salida no cruza la pista", () => {
+  const campos: readonly [string, Aerodrome][] = [
+    ["el-hierro", elHierro()],
+    ["cuatro-vientos", cuatroVientos()],
+    ["la-palma", laPalma()],
+  ];
+
+  for (const [id, aero] of campos)
+    for (const avion of [PYKASU, ARAI])
+      it(`${id} con el ${avion.id}`, () => {
+        const plan = new PlanDeVuelo(aero, pistaDe(aero), plano, avion);
+        plan.reiniciar();
+        const pista = aero.runways[0]!;
+        const media = (pista.widthM ?? 45) / 2;
+        const encima = plan
+          .rutaCruda()
+          .filter((p) => aLaPolilinea(p, pista.centerline) < media);
+        expect(encima, `${encima.length} puntos sobre el asfalto`).toHaveLength(
+          0,
+        );
+      });
 });

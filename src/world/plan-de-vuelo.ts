@@ -1116,6 +1116,8 @@ export class PlanDeVuelo {
       ida: number;
       viaje: number;
       cruza: boolean;
+      /** Metros de pista que quedan por delante entrando por ahí. */
+      porDelante: number;
     }[] = [];
     for (const puesto of this.puestosCandidatos()) {
       const vuelta = rodajeEntre(this.grafo, traeDeVuelta, puesto.xy, 600);
@@ -1152,6 +1154,7 @@ export class PlanDeVuelo {
           ida: ruta.largo,
           viaje: ruta.largo + casa,
           cruza: this.cruzaElAsfalto(ruta.puntos),
+          porDelante: this.pistaQueQueda(espera),
         });
       }
     }
@@ -1212,9 +1215,40 @@ export class PlanDeVuelo {
     const conRodaje = posibles.filter((p) => p.ida >= LO_MINIMO_QUE_SE_RUEDA);
     const bastantes = conRodaje.length ? conRodaje : posibles;
     const cortos = bastantes.filter((p) => p.ida <= LO_MAXIMO_DE_IDA);
-    const donde = (cortos.length ? cortos : bastantes).sort(
-      (a, b) => a.viaje - b.viaje,
-    )[0]!;
+    const entre = cortos.length ? cortos : bastantes;
+    /*
+     * **Y entre los que quedan, el que más pista deja por delante.**
+     *
+     * Entrando por el punto de espera más cómodo se salía a media pista:
+     * «¿qué sentido tiene darme poca pista para salir? Motor a fondo a mitad
+     * de pista, a ver si no nos caemos al mar».
+     *
+     * Va aquí y no como filtro, y las dos cosas importan:
+     *
+     * - **Aquí abajo**, o sea por debajo de no cruzar la pista. Filtrándolo
+     *   de raíz se rompía El Hierro: en mil doscientos metros de pista casi
+     *   ningún punto de espera deja los mil doscientos que se piden, quedaba
+     *   uno, estaba al otro lado del asfalto y la única ruta cruzaba la
+     *   pista. Percance «entraste en la pista sin la luz verde» a los veinte
+     *   segundos de arrancar. Entrar sin permiso es lo más grave que se
+     *   puede hacer rodando; salir por una intersección es como mucho
+     *   incómodo.
+     *
+     * - **Y saturado en lo que hace falta**, con `min`. Sin saturar, el que
+     *   más pista deja gana siempre y todo el mundo se va a la cabecera, que
+     *   es el rodaje eterno de antes. Con la saturación, en cuanto dos dejan
+     *   pista de sobra empatan y decide el viaje: la avioneta sigue saliendo
+     *   por la intersección de al lado de su puesto y el reactor se va a la
+     *   cabecera, que es lo que hace cada uno de verdad.
+     */
+    const quiere = pistaQueHaceFalta(this.avion);
+    const bastante = (p: (typeof entre)[number]): number =>
+      Math.min(quiere, p.porDelante);
+    const donde = [...entre].sort((a, b) => {
+      const d = bastante(b) - bastante(a);
+      // Un metro de holgura: por debajo de eso los dos dejan lo mismo.
+      return Math.abs(d) > 1 ? d : a.viaje - b.viaje;
+    })[0]!;
     this.par = { puesto: donde.puesto, espera: donde.espera };
     return this.par;
   }
@@ -1336,10 +1370,25 @@ export class PlanDeVuelo {
      * ninguna pista de menos de 4.172 m y al JAZ 120 en ninguna de menos de
      * 6.833: hacen el recorrido hasta la cabecera, como en la vida real.
      */
-    const quiere = pistaQueHaceFalta(this.avion);
+    /*
+     * **Y se quedan todos, que tirarlos rompió El Hierro.**
+     *
+     * El primer intento filtraba aquí los que no dejan pista bastante por
+     * delante, y en una pista de mil doscientos metros eso los tira casi
+     * todos: en El Hierro quedaba **uno**, al otro lado del asfalto que la
+     * plataforma, así que la única ruta posible cruzaba la pista en diagonal
+     * y el juego hacía lo correcto —percance «entraste en la pista sin la luz
+     * verde», a los veinte segundos de arrancar—. Medido en el barrido: 11 de
+     * 22 en El Hierro y 12 de 22 en Cuatro Vientos.
+     *
+     * No cruzar la pista manda sobre cuánta pista queda, y con razón: entrar
+     * sin permiso es lo más grave que se puede hacer rodando, y salir por una
+     * intersección es como mucho incómodo. Así que la pista que queda deja de
+     * ser un filtro y pasa a ser **un criterio de la elección**, por debajo
+     * de no cruzar. Ver `elegirPuestoYEspera`.
+     */
     for (const e of this.aero.holdingPositions) {
       if (this.alGrafo(e.xy) > SALTO_A_LA_ESPERA) continue;
-      if (this.pistaQueQueda(e.xy) < quiere) continue;
       sitios.push(e.xy);
     }
     /*
