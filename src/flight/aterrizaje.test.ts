@@ -192,3 +192,60 @@ describe("un bote no es un vuelo", () => {
     expect(segundo).toBeNull();
   });
 });
+
+/*
+ * ── El tren, que se guarda al tocar porque después ya no se sabe ──────────
+ *
+ * Una toma de panza puede ser suavísima: el avión se posa sobre el fuselaje
+ * sin caída ninguna y todos los veredictos de aquí dicen «suave». Quien
+ * decide que eso no es un aterrizaje es el juego, y para decidirlo necesita
+ * saber cómo estaba el tren **en el instante del contacto** — dos segundos
+ * después ya va rodando sobre la panza y a nadie le cuesta bajarlo.
+ *
+ * Contado jugando: «me está dando por válida la toma sin que me diga nada
+ * acerca del tren de aterrizaje, no lo había sacado».
+ */
+describe("y con qué tren se tocó", () => {
+  /** Vuela y toca con el tren donde se diga; devuelve el vigilante. */
+  function conTren(trenFuera: boolean): LandingWatcher {
+    const w = new LandingWatcher();
+    const paso = 0.5;
+    w.update(true, 0, 0, false, true, VREF, paso, Infinity, true);
+    for (let i = 0; i < 40; i++)
+      w.update(false, VREF, 0, false, false, VREF, paso, Infinity, trenFuera);
+    w.update(true, VREF, 0.2, false, true, VREF, paso, Infinity, trenFuera);
+    for (let i = 0; i < 6; i++)
+      w.update(true, 40 - i * 4, 0, false, true, VREF, paso, Infinity, true);
+    return w;
+  }
+
+  it("con el tren fuera, lo dice", () => {
+    expect(conTren(true).trenAlTocar).toBe(true);
+  });
+
+  it("y sin él también, aunque después se saque rodando", () => {
+    // Es el caso que importa: el bajarlo de después no borra la panza.
+    expect(conTren(false).trenAlTocar).toBe(false);
+  });
+
+  it("y una toma de panza sigue saliendo suave para el juez de aquí", () => {
+    /*
+     * A propósito: este vigilante mide **cómo** se tocó y no juzga el tren.
+     * Quien convierte eso en percance es el juego, que es quien sabe si esta
+     * aeronave tiene tren retráctil. Si la suavidad desapareciera aquí, el
+     * percance de panza taparía el de golpe y se perdería el motivo.
+     */
+    const w = conTren(false);
+    expect(w.trenAlTocar).toBe(false);
+    expect(w.caidaAlTocar).toBeLessThan(1);
+  });
+
+  it("y sin decir nada se supone puesto, que es lo que hace un avión fijo", () => {
+    const w = new LandingWatcher();
+    const paso = 0.5;
+    w.update(true, 0, 0, false, true, VREF, paso);
+    for (let i = 0; i < 40; i++) w.update(false, VREF, 0, false, false, VREF, paso);
+    w.update(true, VREF, 0.2, false, true, VREF, paso);
+    expect(w.trenAlTocar).toBe(true);
+  });
+});

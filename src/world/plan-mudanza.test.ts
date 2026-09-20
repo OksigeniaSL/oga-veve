@@ -15,9 +15,12 @@
 import { describe, expect, it } from "vitest";
 import gcts from "../../data/aerodromes/gcts.aero.json";
 import gcgm from "../../data/aerodromes/gcgm.aero.json";
+import gcla from "../../data/aerodromes/gcla.aero.json";
 import { PlanDeVuelo } from "./plan-de-vuelo";
 import { desplazarAerodromo } from "./aerodromo-desplazado";
-import { PYKASU } from "../flight/aircraft";
+import { ARAI, PYKASU } from "../flight/aircraft";
+import { carreraHastaVr } from "../flight/carrera";
+import { delante } from "./rumbo";
 import type { Aerodrome } from "./aerodrome";
 
 const SUR = gcts as unknown as Aerodrome;
@@ -46,6 +49,9 @@ function pistaDe(
 }
 
 const plano = (): number => 0;
+
+/** La Palma: dos kilómetros escasos y un punto de espera a media pista. */
+const laPalma = (): Aerodrome => gcla as unknown as Aerodrome;
 
 describe("mudarse de aeropuerto sin cambiar de vuelo", () => {
   const gomeraAlli = desplazarAerodromo(GOMERA, DX, DZ);
@@ -107,5 +113,77 @@ describe("mudarse de aeropuerto sin cambiar de vuelo", () => {
     plan.mudarseA(SUR, pistaDe(SUR));
     expect(plan.vecesQueSePusoLaRuta).toBe(veces);
     expect(plan.rutaVisible().length).toBeGreaterThan(1);
+  });
+});
+
+/*
+ * ── Y la pista que queda por delante ──────────────────────────────────────
+ *
+ * El punto de espera se elige por lo corto que sea el rodaje hasta él, y los
+ * **publicados** entraban en el sorteo sin que nadie mirara cuánta pista
+ * dejan por delante. Como el más cercano al puesto suele estar a media
+ * pista, ganaba ése: el reactor regional salía de La Palma —2.119 m— desde
+ * la mitad.
+ *
+ * «¿Qué sentido tiene darme poca pista para salir? Motor a fondo a mitad de
+ * pista, a ver si no nos caemos al mar.»
+ */
+describe("de dónde se entra a la pista", () => {
+  const gcla = laPalma();
+  const pista = pistaDe(gcla);
+
+  /**
+   * Lo que queda de pista por delante desde un punto, en metros.
+   *
+   * En coordenadas del plan, donde la y es la z cambiada de signo, y con el
+   * «delante» del juego —`delante()` devuelve [sen h, −cos h]—. Escrito con
+   * el signo al revés decía que el punto de espera bueno era el malo, que es
+   * la regla de medir comiéndose la prueba.
+   */
+  function porDelante(p: readonly [number, number]): number {
+    const [fx, fz] = delante(pista.heading);
+    const media = pista.length / 2;
+    const finX = pista.x + fx * media;
+    const finY = -(pista.z + fz * media);
+    return (finX - p[0]) * fx + (finY - p[1]) * -fz;
+  }
+
+  it("el reactor coge el punto de espera que más pista deja, no el más cómodo", () => {
+    /*
+     * La Palma tiene cinco puntos de espera publicados y **ninguno en el
+     * umbral**: el mejor deja 1,6 km de los 2,1 que mide la pista. Lo que
+     * este arreglo garantiza no es la pista entera —eso lo termina el
+     * recorrido de vuelta por la pista, ver `dondeSeGira`— sino que de los
+     * cinco se coja el que más deja, y no el que pilla más cerca del puesto,
+     * que es lo que hacía.
+     */
+    const plan = new PlanDeVuelo(gcla, pista, plano, ARAI);
+    plan.reiniciar();
+    // El final de la raya verde **es** el punto de espera: ahí se para.
+    const ruta = plan.rutaCruda();
+    const espera = ruta[ruta.length - 1];
+    expect(espera).toBeDefined();
+    const elMejor = Math.max(
+      ...gcla.holdingPositions.map((h) => porDelante(h.xy)),
+    );
+    expect(porDelante(espera!)).toBeCloseTo(elMejor, -2);
+    // Y el peor, que es el que se cogía, deja setecientos metros menos.
+    const elPeor = Math.min(
+      ...gcla.holdingPositions.map((h) => porDelante(h.xy)),
+    );
+    expect(elMejor - elPeor).toBeGreaterThan(400);
+  });
+
+  it("y la avioneta sí puede entrar por donde le pille", () => {
+    /*
+     * No es una excepción: es lo que hace todos los días una avioneta que
+     * aparca a mitad de campo, y tiene nombre —salida por intersección—. La
+     * regla no es «todos a la cabecera», es «con sitio de sobra por delante».
+     */
+    const plan = new PlanDeVuelo(gcla, pista, plano, PYKASU);
+    plan.reiniciar();
+    const ruta = plan.rutaCruda();
+    const espera = ruta[ruta.length - 1]!;
+    expect(porDelante(espera)).toBeGreaterThan(carreraHastaVr(PYKASU) * 2);
   });
 });

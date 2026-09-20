@@ -110,6 +110,24 @@ const PASADA = lienzo(`
 `);
 
 /**
+ * La panza contra el asfalto: el avión posado sin patas y las ruedas dentro.
+ *
+ * El dibujo tiene que decir **qué faltó**, no que te hayas caído, así que las
+ * ruedas se dibujan: están, se ven, y están recogidas dentro del fuselaje en
+ * vez de debajo. Al lado, la pista. A los cuatro años eso se lee entero —el
+ * avión de al lado del hangar tiene patas y éste no— sin una palabra.
+ */
+const SIN_TREN = lienzo(`
+  ${CHISPAS}
+  <path d="M6 54 h52" stroke="currentColor" stroke-width="3.4"
+        stroke-linecap="round" fill="none" />
+  <g transform="translate(0 14)">${AVIONETA}</g>
+  <circle class="percance__hueco" cx="27" cy="45" r="2.6" />
+  <circle class="percance__hueco" cx="37" cy="45" r="2.6" />
+  ${HUMO}
+`);
+
+/**
  * Entrar en pista sin permiso: la doble raya cruzada y la luz en rojo.
  *
  * El dibujo es el sitio donde había que parar, y por eso no lleva avión roto:
@@ -177,6 +195,7 @@ const DIBUJOS: Record<string, string> = {
   golpe: GOLPE,
   pasada: PASADA,
   sinpermiso: SIN_PERMISO,
+  sintren: SIN_TREN,
   ocupada: OCUPADA,
   "ocupada-avion": OCUPADA_AVION,
 };

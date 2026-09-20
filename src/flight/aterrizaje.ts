@@ -83,6 +83,7 @@ export class LandingWatcher {
   private enElAire = 0;
   /** A qué velocidad se tocó. Al frenar ya no se sabría. */
   private velocidadAlTocar = 0;
+  private trenPuestoAlTocar = true;
 
   /**
    * @param onGround si las ruedas tocan
@@ -112,6 +113,14 @@ export class LandingWatcher {
      * podía llegar a tope de gas y oír «suave». Ver `velocidadMaxima`.
      */
     vmax = Infinity,
+    /**
+     * Si el tren estaba fuera **en el momento del contacto**.
+     *
+     * Se guarda igual que el régimen de descenso y por el mismo motivo: dos
+     * segundos después ya no se sabe, porque a nadie le cuesta bajarlo una
+     * vez que va rodando sobre la panza.
+     */
+    trenFuera = true,
   ): Aterrizaje {
     if (!onGround) {
       this.enElAire += dt;
@@ -126,6 +135,7 @@ export class LandingWatcher {
       this.pendiente = true;
       this.descenso = sinkRate;
       this.velocidadAlTocar = airspeed;
+      this.trenPuestoAlTocar = trenFuera;
       this.enPista = onRunway;
       this.desdeQueToco = 0;
       return null;
@@ -163,7 +173,19 @@ export class LandingWatcher {
     return this.descenso;
   }
 
+  /**
+   * Y si llevaba el tren puesto al tocar.
+   *
+   * Se guarda por lo mismo que la caída: al preguntar ya es tarde. Contado
+   * jugando, con la toma dada por buena: «me está dando por válida la toma
+   * sin que me diga nada acerca del tren de aterrizaje, no lo había sacado».
+   */
+  get trenAlTocar(): boolean {
+    return this.trenPuestoAlTocar;
+  }
+
   reset(): void {
+    this.trenPuestoAlTocar = true;
     this.volando = false;
     this.pendiente = false;
     this.desdeQueToco = 0;

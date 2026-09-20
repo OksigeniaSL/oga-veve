@@ -65,6 +65,8 @@ describe("la megafonía de cabina", () => {
   it("dice lo suyo en cada fase del vuelo, y en orden", () => {
     const m = new Megafonia();
     const todo = [
+      // En el puesto, con las puertas cerradas: los toboganes.
+      ...correr(m, "estacionado", 10),
       ...correr(m, "rodando", 10),
       ...correr(m, "autorizado", 10),
       ...correr(m, "alineando", 10),
@@ -73,13 +75,32 @@ describe("la megafonía de cabina", () => {
       ...correr(m, "abandonando", 10),
     ];
     expect(todo).toEqual([
-      "comandante.bienvenida",
       "comandante.crosscheck",
+      "comandante.bienvenida",
       "comandante.despegue",
       "comandante.crucero",
       "comandante.descenso",
       "comandante.llegada",
     ]);
+  });
+
+  it("y los toboganes se arman parados, nunca rodando ni autorizado", () => {
+    /*
+     * «Armar rampas y verificación cruzada» arma los toboganes de evacuación
+     * y se canta con las puertas cerradas, antes de empujar. Dicho con el
+     * avión ya rodando y autorizado no es tarde: es otro procedimiento.
+     *
+     * «La comandante le dice a la tripulación que armen rampas y verificación
+     * cruzada cuando ya salí y estoy en rodadura con permiso para salir, eso
+     * se dice antes de arrancar motores.»
+     */
+    const m = new Megafonia();
+    const rodando = [
+      ...correr(m, "rodando", 30),
+      ...correr(m, "autorizado", 30),
+      ...correr(m, "alineando", 30),
+    ];
+    expect(rodando).not.toContain("comandante.crosscheck");
   });
 
   it("y en un vuelo entero habla seis veces y ni una más", () => {

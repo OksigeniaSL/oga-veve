@@ -76,6 +76,7 @@ export const GUG: Dictionary = {
   "percance.golpe": "Reguejy hatã",
   "percance.pasada": "Rehasapa pista paha",
   "percance.sinpermiso": "Reike pistape tesape hovy'ỹre",
+  "percance.sintren": "Reguejy yvýpe nemopyrãnguéra okẽ'ỹre",
   "grado.aprendiz": "Temimbo'e",
   "grado.piloto": "Piloto",
   "grado.comandante": "Comandante",

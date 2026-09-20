@@ -630,6 +630,7 @@ export const ES_PY = {
   "percance.golpe": "Llegaste dando un golpe",
   "percance.pasada": "Te pasaste del final de la pista",
   "percance.sinpermiso": "Entraste en la pista sin la luz verde",
+  "percance.sintren": "Tocaste tierra sin sacar el tren",
   "grado.aprendiz": "Aprendiz",
   "grado.piloto": "Piloto",
   "grado.comandante": "Comandante",

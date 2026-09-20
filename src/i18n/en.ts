@@ -343,6 +343,7 @@ export const EN: Dictionary = {
   "percance.golpe": "That landing was a thump",
   "percance.pasada": "You ran off the end of the runway",
   "percance.sinpermiso": "You entered the runway without clearance",
+  "percance.sintren": "You touched down with the gear up",
   "grado.aprendiz": "Student",
   "grado.piloto": "Pilot",
   "grado.comandante": "Captain",

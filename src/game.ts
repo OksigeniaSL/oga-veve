@@ -2625,6 +2625,8 @@ export class Game {
       this.aircraft.approachSpeed,
       dt,
       this.flight.velocidadMaxima(),
+      // Y con qué tren tocó. Ver `trenAlTocar`.
+      !this.aircraft.trenRetractil || this.input.controls.tren > 0.5,
     );
     if (!veredicto) return null;
     this.hud.flash(
@@ -2721,6 +2723,22 @@ export class Game {
     if (this.laAproximacion.porqueMandaron === "pistaOcupada")
       this.sufrirPercance("ocupada");
     else if (veredicto === "fuera") this.sufrirPercance("fuera");
+    /*
+     * **Y sin tren, que es un aterrizaje de panza y no un aterrizaje.**
+     *
+     * Va por delante del golpe porque una toma de panza puede ser suavísima
+     * —el avión se posa sobre el fuselaje sin caída ninguna— y hasta hoy eso
+     * entraba en el cuaderno como aterrizaje bueno: «me está dando por válida
+     * la toma sin que me diga nada acerca del tren de aterrizaje, no lo había
+     * sacado».
+     *
+     * No es un castigo añadido: es lo que pasa. Se va el tren, se van los
+     * motores de debajo del ala y la pista se cierra. Y no llega sin avisar
+     * —`avisaDelTren` canta desde doscientos cincuenta metros viniendo en
+     * final, con su dibujo—, que es la regla de la casa: la norma se enseña
+     * antes de que se vea la consecuencia.
+     */
+    else if (!this.landing.trenAlTocar) this.sufrirPercance("sintren");
     /*
      * Y llegar dando un golpe, aunque sea sobre el asfalto.
      *

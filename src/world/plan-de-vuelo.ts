@@ -1358,6 +1358,15 @@ export class PlanDeVuelo {
    * intersecciones con pista de sobra por delante y el punto de espera
    * publicado de la cabecera, que es el que siempre vale.
    */
+  /**
+   * Los puntos de espera que se consideraron, para los bancos y las pruebas.
+   *
+   * Se apunta en cada elección. Sin esto, «el avión entra a media pista» es
+   * imposible de perseguir desde fuera: no se sabe si es que el bueno no
+   * estaba en la lista o si es que perdió el sorteo.
+   */
+  esperasVistas: readonly Punto[] = [];
+
   private esperasPosibles(): Punto[] {
     const cabecera = this.cabeceraDeSalida();
     const publicada = [...this.aero.holdingPositions].sort(
@@ -1377,10 +1386,40 @@ export class PlanDeVuelo {
      * es cruzar el campo, y eso ya se vio: «salgo por E4 atravesando los
      * jardines».
      */
+    /*
+     * **Y con la misma vara de medir que las intersecciones.**
+     *
+     * Éstos entraban sin que nadie mirara cuánta pista dejan por delante, y
+     * como después se elige **el más corto de rodar**, ganaba siempre el que
+     * está más cerca del puesto — que en La Palma y en Fuerteventura es uno
+     * de media pista. Resultado: el reactor regional con 2.119 metros de
+     * pista entrando por la mitad, y el de fuselaje ancho igual.
+     *
+     * Contado jugando: «¿qué sentido tiene darme poca pista para salir?
+     * Motor a fondo a mitad de pista, a ver si no nos caemos al mar. Esto en
+     * aviación debería estar penalizado, ir con la pista justa cuando hay
+     * media de sobra para poder realizar un despegue seguro».
+     *
+     * Tiene razón entera, y la regla ya estaba escrita para las
+     * intersecciones calculadas: `pistaQueHaceFalta` pide casi cinco veces la
+     * rodadura hasta rotar, que es sitio para el despegue, para uno mal hecho
+     * y para arrepentirse a mitad. Lo que faltaba era aplicarla también a los
+     * puntos publicados. Con ella, al JAZ 90 no se le ofrece intersección en
+     * ninguna pista de menos de 4.172 m y al JAZ 120 en ninguna de menos de
+     * 6.833: hacen el recorrido hasta la cabecera, como en la vida real.
+     */
+    const quiere = pistaQueHaceFalta(this.avion);
     for (const e of this.aero.holdingPositions) {
-      if (this.alGrafo(e.xy) <= SALTO_A_LA_ESPERA) sitios.push(e.xy);
+      if (this.alGrafo(e.xy) > SALTO_A_LA_ESPERA) continue;
+      if (this.pistaQueQueda(e.xy) < quiere) continue;
+      sitios.push(e.xy);
     }
+    /*
+     * Y la publicada de la cabecera va siempre, sin filtro: es la que da la
+     * pista entera y es la que tiene que quedar cuando no queda ninguna otra.
+     */
     if (publicada) sitios.push(publicada);
+    this.esperasVistas = sitios;
     return sitios;
   }
 

@@ -60,7 +60,23 @@ export type Percance =
    * No es un castigo por fallar la maniobra: es la consecuencia de haber
    * seguido bajando cuando ya te habían dicho que te fueras al aire.
    */
-  | "ocupada";
+  | "ocupada"
+  /**
+   * Tomar tierra sin sacar el tren.
+   *
+   * Lo que en aviación se llama **aterrizaje de panza**, y es un accidente
+   * con todas las letras: se va el tren, se van los motores de debajo del
+   * ala y la pista se cierra. No hay avión retráctil en el mundo que no lleve
+   * un aviso sonoro para esto, precisamente porque se olvida — y el juego lo
+   * lleva también: `avisaDelTren` canta desde doscientos cincuenta metros
+   * viniendo en final.
+   *
+   * Hasta hoy la toma se daba por buena y entraba en el cuaderno: «me está
+   * dando por válida la toma sin que me diga nada acerca del tren de
+   * aterrizaje, no lo había sacado». Un simulador que puntúa un aterrizaje de
+   * panza enseña que el tren es opcional.
+   */
+  | "sintren";
 
 /**
  * A qué velocidad un contacto deja de ser un roce y pasa a ser un percance,

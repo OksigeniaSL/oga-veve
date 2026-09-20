@@ -34,8 +34,8 @@ import type { Fase } from "../flight/vuelo";
 
 /** Lo que puede decir, en el orden en que pasa un vuelo. */
 export const ANUNCIOS = [
-  "comandante.bienvenida",
   "comandante.crosscheck",
+  "comandante.bienvenida",
   "comandante.despegue",
   "comandante.crucero",
   "comandante.descenso",
@@ -80,10 +80,32 @@ export type Anuncio = (typeof ANUNCIOS)[number];
  * alineado. Lo que no se hace es decirlo fuera de tiempo: no hay bienvenida
  * después de despegar.
  */
+/*
+ * **Y en el orden en que pasa de verdad, que no era éste.**
+ *
+ * «Armar rampas y verificación cruzada» estaba puesto con la autorización de
+ * despegue, y ahí no lo dice nadie: en un avión de verdad eso se canta con
+ * las puertas ya cerradas, **antes de empujar y antes de arrancar motores** —
+ * es lo que arma los toboganes de evacuación para que salgan solos si hace
+ * falta, y por eso se hace parado en el puesto y no rodando—.
+ *
+ * Contado jugando, tres veces y en tres aeropuertos: «la comandante le dice a
+ * la tripulación que armen rampas y verificación cruzada cuando ya salí y
+ * estoy en rodadura con permiso para salir, eso se dice antes de arrancar
+ * motores»; «pero si ya saqué el avión del hangar, es absurdo».
+ *
+ * Así que la secuencia queda como es: los toboganes en el puesto, la
+ * bienvenida rodando, y «sentados para el despegue» con la autorización —que
+ * es cuando la tripulación se sienta de verdad—.
+ *
+ * Y el que no cabe, no se dice: una lección que empieza en la pista no tiene
+ * puesto ni puertas que cerrar, así que ahí no hay crosscheck. Es la misma
+ * regla que ya gobierna la bienvenida: no se dice fuera de tiempo.
+ */
 const CUANDO: Record<Anuncio, readonly Fase[]> = {
+  "comandante.crosscheck": ["estacionado", "arrancando"],
   "comandante.bienvenida": ["rodando", "esperando", "alineando"],
-  "comandante.crosscheck": ["autorizado", "alineando"],
-  "comandante.despegue": ["alineando", "despegando"],
+  "comandante.despegue": ["autorizado", "alineando", "despegando"],
   "comandante.crucero": ["en-vuelo"],
   "comandante.descenso": ["final"],
   "comandante.llegada": ["abandonando", "a-plataforma"],
