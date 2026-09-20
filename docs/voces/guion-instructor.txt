@@ -53,6 +53,8 @@ Se rompió. Volvemos a empezar
 Vas muy rápido
 Muy rápido: bajá el motor
 Muy rápido para esta altura
+Muy rápido con el tren fuera: metélo
+Muy rápido con los flaps: recogélos
 Bajá los flaps para frenar
 Metélo, el tren te frena
 Sacá el tren
@@ -72,6 +74,7 @@ Tocaste tierra fuera de la pista
 Llegaste dando un golpe
 Te pasaste del final de la pista
 Entraste en la pista sin la luz verde
+Tocaste tierra sin sacar el tren
 Lo que llevás volado
 ¡Llegaste! Ya estás en casa
 ¡Buen vuelo!

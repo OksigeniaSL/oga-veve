@@ -4,19 +4,87 @@
 004	comandante.crucero	Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.
 005	comandante.descenso	Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.
 006	comandante.llegada.pettirossi	Señores pasajeros, bienvenidos a Asunción. Este aeropuerto lleva el nombre de Silvio Pettirossi, que fue el primer paraguayo en volar — así que están en buen sitio para aterrizar. Gracias por acompañarnos.
-007	comandante.llegada.guarani	Bienvenidos a Ciudad del Este. Si miran hacia el sur, por ahí andan las cataratas y tres países que se tocan en la misma esquina. Gracias por volar con nosotros.
-008	comandante.llegada.encarnacion	Señores pasajeros, estamos en Encarnación, a la orilla del Paraná. Gracias por venir — y si se quedan para el carnaval, abríguense poco.
-009	comandante.llegada.estigarribia	Bienvenidos a Mariscal Estigarribia, en pleno Chaco. Acá la pista es larguísima y el horizonte también. Gracias por volar con nosotros.
-010	comandante.llegada.pedro-juan	Señores pasajeros, bienvenidos a Pedro Juan Caballero, en Amambay. Acá la frontera con Brasil pasa por el medio de la calle. Gracias por acompañarnos.
-011	comandante.llegada.yvytu-rape	Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.
-012	comandante.llegada.valle-cordillera	Señores pasajeros, bienvenidos al Valle de la Cordillera. Miren por la ventanilla antes de bajar, que esto de verde no se cansa. Gracias por venir.
-013	comandante.llegada.chaco	Bienvenidos a la Llanura del Chaco. Acá el cielo empieza en el suelo y no se acaba nunca. Gracias por volar con nosotros.
-014	comandante.llegada.tenerife-norte	Señores pasajeros, bienvenidos a Tenerife Norte. Si al salir les recibe una nube, no se asusten: acá el mar de nubes llega hasta la puerta. Gracias por acompañarnos.
-015	comandante.llegada.tenerife-sur	Bienvenidos a Tenerife Sur. Acá abajo casi siempre hace sol y casi siempre sopla — las dos cosas a la vez. Gracias por volar con nosotros.
-016	comandante.llegada.gran-canaria	Señores pasajeros, bienvenidos a Gran Canaria. Dicen que esta isla tiene todos los climas del mundo en una tarde; ya nos contarán. Gracias por venir.
-017	comandante.llegada.lanzarote	Bienvenidos a Lanzarote. Esa tierra negra que ven no es sombra: es lava, y es más joven que casi todo lo demás. Gracias por volar con nosotros.
-018	comandante.llegada.fuerteventura	Señores pasajeros, bienvenidos a Fuerteventura. Acá el viento es el que manda, y por eso la arena cambia de sitio. Gracias por acompañarnos.
-019	comandante.llegada.la-palma	Bienvenidos a La Palma. Acá arriba hay telescopios mirando el cielo, así que esta noche no miren la pantalla: miren para arriba. Gracias por volar con nosotros.
-020	comandante.llegada.el-hierro	Señores pasajeros, bienvenidos a El Hierro. Durante siglos esta isla fue el final del mapa: desde acá, ya no había nada dibujado. Gracias por venir.
-021	comandante.llegada.la-gomera	Bienvenidos a La Gomera. Acá la gente se habla de un barranco a otro silbando, y se entiende todo. Gracias por volar con nosotros.
-022	comandante.llegada.cuatro-vientos	Señores pasajeros, bienvenidos a Cuatro Vientos. Este es el aeródromo más antiguo de España y todavía trabaja: no se jubila nadie acá. Gracias por acompañarnos.
+007	comandante.llegada.pettirossi~2	Bienvenidos a Asunción. Este campo está en Luque, así que técnicamente todavía no llegaron a la capital: les falta un puente. Gracias por volar con nosotros.
+008	comandante.llegada.pettirossi~3	Señores pasajeros, estamos en Asunción. Si van para el centro, el río Paraguay les va a quedar a la derecha todo el camino. Gracias por acompañarnos.
+009	comandante.llegada.pettirossi~4	Bienvenidos a Asunción. Silvio Pettirossi hacía acrobacias cuando volar era todavía cosa de valientes; nosotros hoy lo hicimos tranquilo. Gracias por venir.
+010	comandante.llegada.pettirossi~5	Señores pasajeros, Asunción. Acá al lado está el Ñu Guasú, que de arriba se ve verde y de abajo también. Gracias por volar con nosotros.
+011	comandante.llegada.guarani	Bienvenidos a Ciudad del Este. Si miran hacia el sur, por ahí andan las cataratas y tres países que se tocan en la misma esquina. Gracias por volar con nosotros.
+012	comandante.llegada.guarani~2	Señores pasajeros, bienvenidos a Ciudad del Este. Acá cerca el Paraná mueve una de las represas más grandes del mundo. Gracias por acompañarnos.
+013	comandante.llegada.guarani~3	Bienvenidos a Ciudad del Este. Desde este campo, cruzando el Puente de la Amistad, se está en Brasil en diez minutos. Gracias por volar con nosotros.
+014	comandante.llegada.guarani~4	Señores pasajeros, estamos en Ciudad del Este. Si oyen un ruido de fondo que no es el motor, son las cataratas. Gracias por venir.
+015	comandante.llegada.guarani~5	Bienvenidos a Ciudad del Este, en Alto Paraná. Tres países se tocan acá al lado, y cada uno con su bandera en la punta. Gracias por acompañarnos.
+016	comandante.llegada.encarnacion	Señores pasajeros, estamos en Encarnación, a la orilla del Paraná. Gracias por venir — y si se quedan para el carnaval, abríguense poco.
+017	comandante.llegada.encarnacion~2	Bienvenidos a Encarnación. Enfrente, al otro lado del Paraná, ya es Argentina: el puente se ve desde la ventanilla. Gracias por volar con nosotros.
+018	comandante.llegada.encarnacion~3	Señores pasajeros, estamos en Encarnación. A media hora de acá están las ruinas de Trinidad, que llevan ahí desde antes que existiera el avión. Gracias por venir.
+019	comandante.llegada.encarnacion~4	Bienvenidos a Encarnación, la perla del sur. Acá la playa es de río, y no por eso es menos playa. Gracias por acompañarnos.
+020	comandante.llegada.encarnacion~5	Señores pasajeros, Encarnación. Bajen despacio la escalera, que después del carnaval las piernas no siempre responden. Gracias por volar con nosotros.
+021	comandante.llegada.estigarribia	Bienvenidos a Mariscal Estigarribia, en pleno Chaco. Acá la pista es larguísima y el horizonte también. Gracias por volar con nosotros.
+022	comandante.llegada.estigarribia~2	Señores pasajeros, bienvenidos a Mariscal Estigarribia. Esta pista mide más de tres kilómetros: sobra avión para lo que sobra asfalto. Gracias por acompañarnos.
+023	comandante.llegada.estigarribia~3	Bienvenidos a Mariscal Estigarribia. Acá en el Chaco el aire se mueve poco y calienta mucho; tomen agua. Gracias por volar con nosotros.
+024	comandante.llegada.estigarribia~4	Señores pasajeros, estamos en el Chaco Boreal. Desde acá hasta la próxima esquina hay más kilómetros que casas. Gracias por venir.
+025	comandante.llegada.estigarribia~5	Bienvenidos a Mariscal Estigarribia. Al norte están las colonias, al sur el camino, y en medio esto: sitio. Gracias por acompañarnos.
+026	comandante.llegada.pedro-juan	Señores pasajeros, bienvenidos a Pedro Juan Caballero, en Amambay. Acá la frontera con Brasil pasa por el medio de la calle. Gracias por acompañarnos.
+027	comandante.llegada.pedro-juan~2	Bienvenidos a Pedro Juan Caballero. Si cruzan la avenida, ya están en Ponta Porã y en otro país, sin mostrar nada. Gracias por volar con nosotros.
+028	comandante.llegada.pedro-juan~3	Señores pasajeros, estamos en Amambay. Acá los cerros se levantan de golpe en medio del campo, como si los hubieran puesto a mano. Gracias por venir.
+029	comandante.llegada.pedro-juan~4	Bienvenidos a Pedro Juan Caballero. Cerro Corá queda acá cerca, y en ese parque se acabó la Guerra Grande. Gracias por acompañarnos.
+030	comandante.llegada.pedro-juan~5	Señores pasajeros, Pedro Juan Caballero. Dos países, una calle y un solo aeropuerto: éste. Gracias por volar con nosotros.
+031	comandante.llegada.yvytu-rape	Bienvenidos a Yvytu Rape, la pista de la Granja Óga. Acá no hay cintas ni pasillos: se baja, se estira uno y ya está en casa. Gracias por volar con nosotros.
+032	comandante.llegada.yvytu-rape~2	Señores pasajeros, estamos en Yvytu Rape. El nombre quiere decir camino del viento, y hoy el viento nos dejó pasar. Gracias por acompañarnos.
+033	comandante.llegada.yvytu-rape~3	Bienvenidos a la pista de la Granja Óga. Cuidado al bajar, que acá el pasto se moja de noche. Gracias por volar con nosotros.
+034	comandante.llegada.yvytu-rape~4	Señores pasajeros, Yvytu Rape. Esto no tiene terminal, ni falta que hace: la casa está a cien metros. Gracias por venir.
+035	comandante.llegada.yvytu-rape~5	Bienvenidos a Yvytu Rape. Si ven animales cerca de la pista, no se preocupen: viven acá y nosotros somos las visitas. Gracias por acompañarnos.
+036	comandante.llegada.valle-cordillera	Señores pasajeros, bienvenidos al Valle de la Cordillera. Miren por la ventanilla antes de bajar, que esto de verde no se cansa. Gracias por venir.
+037	comandante.llegada.valle-cordillera~2	Bienvenidos al Valle de la Cordillera. Estas lomas no son montañas, pero desde el aire disimulan muy bien. Gracias por volar con nosotros.
+038	comandante.llegada.valle-cordillera~3	Señores pasajeros, estamos en el valle. Abajo hay río, y el río va para donde quiere. Gracias por venir.
+039	comandante.llegada.valle-cordillera~4	Bienvenidos al Valle de la Cordillera. Acá el verde tiene como seis colores distintos y todos se llaman verde. Gracias por acompañarnos.
+040	comandante.llegada.valle-cordillera~5	Señores pasajeros, el Valle de la Cordillera. Se aterriza mirando al campo, que es la mejor manera de aterrizar. Gracias por volar con nosotros.
+041	comandante.llegada.chaco	Bienvenidos a la Llanura del Chaco. Acá el cielo empieza en el suelo y no se acaba nunca. Gracias por volar con nosotros.
+042	comandante.llegada.chaco~2	Señores pasajeros, bienvenidos a la Llanura del Chaco. Acá no hay cuesta ninguna: se mire donde se mire, es recto. Gracias por acompañarnos.
+043	comandante.llegada.chaco~3	Bienvenidos al Chaco. Si buscan una referencia en el horizonte, la referencia es el horizonte. Gracias por volar con nosotros.
+044	comandante.llegada.chaco~4	Señores pasajeros, estamos en la llanura. De noche acá se ven estrellas que en la ciudad no existen. Gracias por venir.
+045	comandante.llegada.chaco~5	Bienvenidos a la Llanura del Chaco. Poca gente, mucho bicho y un cielo enorme: eso es todo, y es bastante. Gracias por acompañarnos.
+046	comandante.llegada.tenerife-norte	Señores pasajeros, bienvenidos a Tenerife Norte. Si al salir les recibe una nube, no se asusten: acá el mar de nubes llega hasta la puerta. Gracias por acompañarnos.
+047	comandante.llegada.tenerife-norte~2	Bienvenidos a Tenerife Norte. Estamos a más de seiscientos metros sobre el mar, así que acá arriba abriga un poco más. Gracias por volar con nosotros.
+048	comandante.llegada.tenerife-norte~3	Señores pasajeros, estamos en Los Rodeos. La Laguna queda acá al lado, y su casco viejo es Patrimonio de la Humanidad. Gracias por venir.
+049	comandante.llegada.tenerife-norte~4	Bienvenidos a Tenerife Norte. Durante medio siglo éste fue el único aeropuerto de la isla; el del sur es el hermano pequeño. Gracias por acompañarnos.
+050	comandante.llegada.tenerife-norte~5	Señores pasajeros, Tenerife Norte. Si el Teide se dejó ver en el camino, hoy tuvieron suerte. Gracias por volar con nosotros.
+051	comandante.llegada.tenerife-sur	Bienvenidos a Tenerife Sur. Acá abajo casi siempre hace sol y casi siempre sopla — las dos cosas a la vez. Gracias por volar con nosotros.
+052	comandante.llegada.tenerife-sur~2	Señores pasajeros, bienvenidos a Tenerife Sur. Este aeropuerto se abrió porque el del norte se llenaba de nubes; acá casi nunca. Gracias por acompañarnos.
+053	comandante.llegada.tenerife-sur~3	Bienvenidos a Tenerife Sur, en Granadilla. Acá al lado, en El Médano, el viento se usa para navegar encima de una tabla. Gracias por volar con nosotros.
+054	comandante.llegada.tenerife-sur~4	Señores pasajeros, estamos en el sur de Tenerife. Esa montaña colorada que se ve desde la pista es justo eso: colorada. Gracias por venir.
+055	comandante.llegada.tenerife-sur~5	Bienvenidos a Tenerife Sur. Misma isla que el norte y otro clima: eso también es Canarias. Gracias por acompañarnos.
+056	comandante.llegada.gran-canaria	Señores pasajeros, bienvenidos a Gran Canaria. Dicen que esta isla tiene todos los climas del mundo en una tarde; ya nos contarán. Gracias por venir.
+057	comandante.llegada.gran-canaria~2	Bienvenidos a Gran Canaria. Este campo lo comparte la aviación civil con una base aérea, así que no se extrañen de los vecinos. Gracias por volar con nosotros.
+058	comandante.llegada.gran-canaria~3	Señores pasajeros, estamos en Gando. Al sur están las dunas de Maspalomas, que son arena de verdad y no de mentira. Gracias por venir.
+059	comandante.llegada.gran-canaria~4	Bienvenidos a Gran Canaria. A esta isla la llaman un continente en miniatura, y en una hora de coche se entiende por qué. Gracias por acompañarnos.
+060	comandante.llegada.gran-canaria~5	Señores pasajeros, Gran Canaria. Si se van al centro de la isla, lleven algo de abrigo: allá arriba no es playa. Gracias por volar con nosotros.
+061	comandante.llegada.lanzarote	Bienvenidos a Lanzarote. Esa tierra negra que ven no es sombra: es lava, y es más joven que casi todo lo demás. Gracias por volar con nosotros.
+062	comandante.llegada.lanzarote~2	Señores pasajeros, bienvenidos a Lanzarote. Este aeropuerto lleva el nombre de César Manrique, que se pasó la vida peleando para que la isla siguiera pareciéndose a sí misma. Gracias por acompañarnos.
+063	comandante.llegada.lanzarote~3	Bienvenidos a Lanzarote. En Timanfaya el suelo todavía está caliente a unos metros de profundidad. Gracias por volar con nosotros.
+064	comandante.llegada.lanzarote~4	Señores pasajeros, estamos en Lanzarote. Acá las viñas crecen en hoyos cavados en la ceniza, una por hoyo. Gracias por venir.
+065	comandante.llegada.lanzarote~5	Bienvenidos a Lanzarote. Los volcanes que ven estuvieron seis años seguidos en erupción, y de eso hace nada: el siglo dieciocho. Gracias por acompañarnos.
+066	comandante.llegada.fuerteventura	Señores pasajeros, bienvenidos a Fuerteventura. Acá el viento es el que manda, y por eso la arena cambia de sitio. Gracias por acompañarnos.
+067	comandante.llegada.fuerteventura~2	Bienvenidos a Fuerteventura. Ésta es la isla más vieja del archipiélago: lleva millones de años dejándose gastar por el viento. Gracias por volar con nosotros.
+068	comandante.llegada.fuerteventura~3	Señores pasajeros, estamos en Fuerteventura. Al norte, en Corralejo, hay un desierto de arena que se mueve solo. Gracias por venir.
+069	comandante.llegada.fuerteventura~4	Bienvenidos a Fuerteventura. Acá hay más cabras que gente, y el queso lo demuestra. Gracias por acompañarnos.
+070	comandante.llegada.fuerteventura~5	Señores pasajeros, Fuerteventura. Las playas de esta isla se miden en kilómetros, no en metros. Gracias por volar con nosotros.
+071	comandante.llegada.la-palma	Bienvenidos a La Palma. Acá arriba hay telescopios mirando el cielo, así que esta noche no miren la pantalla: miren para arriba. Gracias por volar con nosotros.
+072	comandante.llegada.la-palma~2	Señores pasajeros, bienvenidos a La Palma. A esta isla la llaman la isla bonita, y desde el aire no hay mucho que discutir. Gracias por acompañarnos.
+073	comandante.llegada.la-palma~3	Bienvenidos a La Palma. En el centro tiene una caldera enorme, y dentro caben barrancos, bosque y niebla. Gracias por volar con nosotros.
+074	comandante.llegada.la-palma~4	Señores pasajeros, estamos en La Palma. Hace poco un volcán cambió el mapa de esta isla; lo que ven es más nuevo que ustedes. Gracias por venir.
+075	comandante.llegada.la-palma~5	Bienvenidos a La Palma. Acá el cielo de noche está protegido por ley, para que se siga viendo. Gracias por acompañarnos.
+076	comandante.llegada.el-hierro	Señores pasajeros, bienvenidos a El Hierro. Durante siglos esta isla fue el final del mapa: desde acá, ya no había nada dibujado. Gracias por venir.
+077	comandante.llegada.el-hierro~2	Bienvenidos a El Hierro. Es la más pequeña y la más lejana, y llegar acá siempre tiene algo de hazaña. Gracias por volar con nosotros.
+078	comandante.llegada.el-hierro~3	Señores pasajeros, estamos en El Hierro. Durante siglos los mapas empezaban a contar los grados desde esta isla. Gracias por venir.
+079	comandante.llegada.el-hierro~4	Bienvenidos a El Hierro. Acá el viento y el agua le dan luz a la isla entera: se lo inventaron ellos. Gracias por acompañarnos.
+080	comandante.llegada.el-hierro~5	Señores pasajeros, El Hierro. Hay sabinas retorcidas por el viento que llevan así cientos de años y no se quejan. Gracias por volar con nosotros.
+081	comandante.llegada.la-gomera	Bienvenidos a La Gomera. Acá la gente se habla de un barranco a otro silbando, y se entiende todo. Gracias por volar con nosotros.
+082	comandante.llegada.la-gomera~2	Señores pasajeros, bienvenidos a La Gomera. El silbo con el que se hablan acá está reconocido por la Unesco, y no es un juego: es un idioma. Gracias por acompañarnos.
+083	comandante.llegada.la-gomera~3	Bienvenidos a La Gomera. Arriba, en Garajonay, hay un bosque de niebla que ya existía cuando Europa era otra cosa. Gracias por volar con nosotros.
+084	comandante.llegada.la-gomera~4	Señores pasajeros, estamos en La Gomera. De San Sebastián salió Colón para el último viaje antes de América. Gracias por venir.
+085	comandante.llegada.la-gomera~5	Bienvenidos a La Gomera. Esta isla es casi toda cuesta, así que lo llano que pisan ahora es raro. Gracias por acompañarnos.
+086	comandante.llegada.cuatro-vientos	Señores pasajeros, bienvenidos a Cuatro Vientos. Este es el aeródromo más antiguo de España y todavía trabaja: no se jubila nadie acá. Gracias por acompañarnos.
+087	comandante.llegada.cuatro-vientos~2	Bienvenidos a Cuatro Vientos. Acá se vuela desde mil novecientos once, y todavía no se han cansado. Gracias por volar con nosotros.
+088	comandante.llegada.cuatro-vientos~3	Señores pasajeros, estamos en Cuatro Vientos. Al lado hay un museo lleno de aviones que ya no vuelan y merecen que se los mire. Gracias por venir.
+089	comandante.llegada.cuatro-vientos~4	Bienvenidos a Cuatro Vientos. De este campo salió el avión que cruzó el Atlántico y le puso el nombre al sitio. Gracias por acompañarnos.
+090	comandante.llegada.cuatro-vientos~5	Señores pasajeros, Cuatro Vientos. Acá aprenden a volar los que después van a los grandes: buen sitio para aterrizar. Gracias por volar con nosotros.
