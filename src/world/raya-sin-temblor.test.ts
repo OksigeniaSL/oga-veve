@@ -15,8 +15,9 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { sinTemblor } from "./plan-de-vuelo";
+import { sinTemblor } from "./sin-temblor";
 import type { Punto } from "./aerodrome";
+import gcxo from "../../data/aerodromes/gcxo.aero.json";
 
 describe("la raya sin temblor", () => {
   it("se come el serpenteo de un par de metros", () => {
@@ -99,6 +100,68 @@ describe("la raya sin temblor", () => {
         );
       }
       expect(mejor).toBeLessThanOrEqual(2.5);
+    }
+  });
+});
+
+/*
+ * ── Y la que se pinta en el asfalto, también ──────────────────────────────
+ *
+ * Esto vivía solo en el plan de tierra, así que la raya **verde** salía
+ * limpia y la **amarilla** —la que se mira desde la cabina para rodar—
+ * seguía culebreando con el pulso de quien la dibujó sobre la foto aérea.
+ * Quien seguía la pintura culebreaba con ella: «mira los fotogramas y verás
+ * el avión haciendo en tierra el movimiento izquierda derecha como si el
+ * piloto estuviera borracho».
+ */
+describe("los ejes de calle que se pintan", () => {
+  /** Cuántos codos tiene una polilínea y cuánto suman, en grados. */
+  function culebreo(p: readonly Punto[]): { codos: number; grados: number } {
+    let grados = 0;
+    let codos = 0;
+    for (let i = 1; i < p.length - 1; i++) {
+      const [ax, ay] = p[i - 1]!;
+      const [bx, by] = p[i]!;
+      const [cx, cy] = p[i + 1]!;
+      const v1 = [bx - ax, by - ay] as const;
+      const v2 = [cx - bx, cy - by] as const;
+      const l1 = Math.hypot(v1[0], v1[1]);
+      const l2 = Math.hypot(v2[0], v2[1]);
+      if (l1 < 0.5 || l2 < 0.5) continue;
+      const cos = (v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2);
+      grados += (Math.acos(Math.max(-1, Math.min(1, cos))) * 180) / Math.PI;
+      codos++;
+    }
+    return { codos, grados };
+  }
+
+  it("en Los Rodeos se quedan en menos de la mitad de codos", () => {
+    const aero = gcxo as unknown as { taxiways: { path: Punto[] }[] };
+    let antes = 0;
+    let despues = 0;
+    for (const calle of aero.taxiways) {
+      antes += culebreo(calle.path).codos;
+      despues += culebreo(sinTemblor(calle.path)).codos;
+    }
+    // Medido: 106 codos y 1.463° se quedan en 46 y 1.224°.
+    expect(antes).toBeGreaterThan(90);
+    expect(despues).toBeLessThan(antes / 2);
+  });
+
+  it("y sin acortar las calles, que eso sería moverlas de sitio", () => {
+    const aero = gcxo as unknown as { taxiways: { path: Punto[] }[] };
+    const largo = (p: readonly Punto[]): number =>
+      p.reduce(
+        (t, q, i) =>
+          i ? t + Math.hypot(q[0] - p[i - 1]![0], q[1] - p[i - 1]![1]) : 0,
+        0,
+      );
+    for (const calle of aero.taxiways) {
+      const a = largo(calle.path);
+      if (a < 20) continue;
+      // Quitar temblor acorta un pelo —la cuerda es más corta que el zigzag—
+      // pero no puede comerse un codo de verdad: un 3 % como mucho.
+      expect(largo(sinTemblor(calle.path))).toBeGreaterThan(a * 0.97);
     }
   });
 });

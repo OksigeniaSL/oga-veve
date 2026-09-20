@@ -47,6 +47,7 @@ import {
   type ColorRepresentation,
 } from "three";
 import { RESALTE } from "./terrain";
+import { sinTemblor } from "./sin-temblor";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 
@@ -874,7 +875,26 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
      * se corta donde empieza el asfalto de la pista, que es donde se corta de
      * verdad.
      */
-    const eje = densificar(calle.path, 2);
+    /*
+     * **Y sin el temblor del trazado, que la que se sigue es ésta.**
+     *
+     * La geometría de las calles la dibuja alguien siguiendo una foto aérea
+     * con el ratón, y eso deja los ejes con un serpenteo de un par de metros
+     * que sobre el mapa no se ve y en el suelo del juego sí. La raya **verde**
+     * ya se limpiaba —ver `sinTemblor`—; la amarilla no, y la amarilla es la
+     * que se mira desde la cabina para rodar. Resultado: el plan iba recto y
+     * la pintura culebreaba, y quien seguía la pintura culebreaba con ella.
+     *
+     * Contado con el vídeo delante: «esas curvas no las hago yo, he dejado que
+     * el avión se guíe por las rayas que has pintado… mira los fotogramas y
+     * verás el avión haciendo en tierra el movimiento izquierda derecha como
+     * si el piloto estuviera borracho».
+     *
+     * Va **antes** de densificar: quitar el temblor de una línea ya partida en
+     * trozos de dos metros no quita nada, porque cada trozo es recto por
+     * construcción.
+     */
+    const eje = densificar(sinTemblor(calle.path), 2);
     for (let i = 0; i < eje.length - 1; i++) {
       const [ax, ay] = eje[i]!;
       const [bx, by] = eje[i + 1]!;
