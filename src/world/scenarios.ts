@@ -13,7 +13,6 @@
  */
 
 import type { Aerodrome } from "./aerodrome";
-import { PARA_ENTRAR_Y_DESPEGAR, pistaTrasLaCalle } from "./aerodrome";
 import SGAS from "../../data/aerodromes/sgas.aero.json";
 import GCXO from "../../data/aerodromes/gcxo.aero.json";
 import YVYTU from "../../data/aerodromes/yvytu.aero.json";
@@ -450,19 +449,32 @@ export function conViento(esc: Scenario, meteo: Meteo): Scenario {
         pistaDe(aero as unknown as Aerodrome, n).heading - esc.runway.heading,
       ) < 1,
   );
+  /*
+   * **Y la preferente se mantiene con poco viento, haya back-taxi o no.**
+   *
+   * Esto protegía a la cabecera escrita solo cuando la otra pedía un
+   * back-taxi. Fuera de ese caso, **cuatro nudos de brisa daban la vuelta al
+   * aeropuerto**: en Los Rodeos, una mañana con 250/4 —la brisa terrestre de
+   * madrugada, que ahí es de todos los días— movía la operación a la otra
+   * cabecera. Contado jugando: «¿por qué SIEMPRE despego desde TFN justamente
+   * del lado contrario al más frecuente?».
+   *
+   * Un aeropuerto de verdad no hace eso. Tiene **pista preferente** —por
+   * procedimientos, por ayudas a la aproximación, por ruido— y la mantiene
+   * mientras el viento de cola no pase de cinco nudos, que es el número de
+   * OACI y el mismo que ya estaba escrito aquí para el back-taxi. Sobre eso,
+   * se cambia.
+   *
+   * Y hay un motivo de juego además del real, y es el de siempre: **un
+   * aeropuerto que cambia de cabecera cada partida no se aprende**, y
+   * aprenderse un sitio es de lo que va esto.
+   */
   if (escrita && escrita !== mejor) {
-    const cuestaVolver =
-      pistaTrasLaCalle(aero as unknown as Aerodrome, mejor) <
-      PARA_ENTRAR_Y_DESPEGAR;
-    const seLlegaRodando =
-      pistaTrasLaCalle(aero as unknown as Aerodrome, escrita) >=
-      PARA_ENTRAR_Y_DESPEGAR;
     const cola = -deFrente(
       pistaDe(aero as unknown as Aerodrome, escrita).heading,
       meteo,
     );
-    if (cuestaVolver && seLlegaRodando && cola <= COLA_QUE_SE_AGUANTA)
-      mejor = escrita;
+    if (cola <= COLA_QUE_SE_AGUANTA) mejor = escrita;
   }
 
   return {
@@ -741,8 +753,22 @@ export const TENERIFE_NORTE: Scenario = {
    */
   fog: { colour: 0xdae4e8, density: 0.000018 },
   sun: { azimuth: 108, elevation: 44 },
-  // Se opera por la 30, que es la preferente de verdad.
-  runway: pistaDe(GCXO as unknown as Aerodrome, "30"),
+  /*
+   * **La preferente es la 12.**
+   *
+   * Aquí estuvo la 30 y era un error, y conviene dejarlo escrito porque el
+   * dato vino de un testimonio y el testimonio se corrigió a sí mismo: «¿por
+   * qué SIEMPRE despego desde TFN justamente del lado contrario al más
+   * frecuente?». Lo que lo decide sin depender de nadie son dos cosas
+   * objetivas: el alisio sopla del nordeste el año entero —con él la 30 lleva
+   * viento de cola— y **el ILS de Los Rodeos está en la 12**, que es como se
+   * llega los días que la meseta está metida en el mar de nubes, que son
+   * muchos.
+   *
+   * Se mantiene con hasta cinco nudos de cola. Por encima se opera la 30, que
+   * es lo que pasa las mañanas de brisa terrestre del suroeste.
+   */
+  runway: pistaDe(GCXO as unknown as Aerodrome, "12"),
   /**
    * Nueve grados, y no es la declinación geomagnética de Canarias —que anda
    * por los cinco al oeste—. Es la que hace que **el número pintado y la

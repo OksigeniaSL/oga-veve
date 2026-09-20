@@ -122,12 +122,41 @@ describe("el viento y el back-taxi", () => {
     expect(con.runway.heading).toBeCloseTo(177.8, 0);
   });
 
-  it("donde se llega rodando a las dos, manda el viento y punto", () => {
-    // Tenerife Norte tiene calle hasta las dos cabeceras: aquí la tolerancia
-    // no pinta nada y dos nudos bastan para cambiar de cabecera.
+  /*
+   * ── Y la preferente aguanta, se llegue rodando o no ──────────────────────
+   *
+   * Aquí la tolerancia solo protegía a la cabecera escrita cuando la otra
+   * pedía back-taxi, así que en Tenerife Norte —que tiene calle hasta las
+   * dos— **dos nudos daban la vuelta al aeropuerto**. Una mañana con 250/4,
+   * que es la brisa terrestre de todos los días en Los Rodeos, movía la
+   * operación al otro lado: «¿por qué SIEMPRE despego desde TFN justamente
+   * del lado contrario al más frecuente?».
+   *
+   * Un aeropuerto tiene pista preferente y la mantiene hasta cinco nudos de
+   * cola. Es la regla de OACI y es también la de este juego: un aeropuerto
+   * que cambia de cabecera cada partida no se aprende.
+   */
+  it("la preferente aguanta cinco nudos de cola aunque haya calle a las dos", () => {
     const escrita = TENERIFE_NORTE.runway.heading;
     const alReves = (escrita + 180) % 360;
     const con = conViento(TENERIFE_NORTE, viento(Math.round(alReves), 2));
+    expect(con.runway.heading).toBeCloseTo(escrita, 0);
+  });
+
+  it("y por encima de cinco, se cambia", () => {
+    const escrita = TENERIFE_NORTE.runway.heading;
+    const alReves = (escrita + 180) % 360;
+    const con = conViento(TENERIFE_NORTE, viento(Math.round(alReves), 12));
     expect(con.runway.heading).toBeCloseTo(alReves, 0);
+  });
+
+  it("y la preferente de Los Rodeos es la 12, que es la del ILS", () => {
+    /*
+     * Estuvo la 30 y venía de un testimonio que después se corrigió solo.
+     * Lo que no depende de nadie: el alisio sopla del nordeste todo el año
+     * —con él la 30 lleva cola— y el ILS está en la 12, que es como se llega
+     * los días que la meseta está metida en el mar de nubes.
+     */
+    expect(TENERIFE_NORTE.runway.heading).toBeCloseTo(111, -1);
   });
 });
