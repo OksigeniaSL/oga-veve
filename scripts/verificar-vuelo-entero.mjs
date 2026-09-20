@@ -1937,6 +1937,13 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     // Y por qué se cayó lo que se cayó, que sin esto una boca muda es un
     // misterio. Ver `apuntarDescarte` en `audio/boca.ts`.
     descartes: o.descartadas?.() ?? [],
+    /*
+     * Y la conversación entera en orden, que es el gemelo del anterior: sin
+     * las dos listas no se distingue «se dijeron cuatro cosas seguidas» de
+     * «se dijeron dos y se perdieron otras dos». Ver `habladas` en
+     * `audio/boca.ts`.
+     */
+    habladas: o.habladas?.() ?? [],
     // Todo lo que dijo cada boca, para poder contarlo al final del parte.
     todoLoDicho: o.dichoTodo?.() ?? {},
     masRapidoEnPista: Math.round(masRapidoEnPista),
@@ -2223,6 +2230,18 @@ comprobar(
       )
     : (vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
   `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}` +
+    /*
+     * **Y lo que se cayó de la torre, todo, no los últimos seis.**
+     *
+     * Con la cola del final de vuelo, los seis últimos descartes son siempre
+     * comentarios de rodaje y lo que se busca —qué pasó con la autorización—
+     * ya se salió por arriba. Se filtra a lo de torre y se enseña entero.
+     */
+    (vuelo.descartes?.some((d) => d.startsWith("torre."))
+      ? ` · de la torre se cayeron: ${vuelo.descartes
+          .filter((d) => d.startsWith("torre."))
+          .join(" | ")}`
+      : "") +
     (vuelo.descartes?.length
       ? ` · se cayeron: ${vuelo.descartes.slice(-6).join(" | ")}`
       : ""),

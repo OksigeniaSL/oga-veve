@@ -593,3 +593,54 @@ describe("qué se cae cuando la cola se llena", () => {
     expect(b.cuantasEsperan).toBe(3);
   });
 });
+
+/*
+ * ── El escalón de la torre ────────────────────────────────────────────────
+ *
+ * En una frecuencia de verdad una instrucción de control manda sobre
+ * cualquier comentario. Aquí no mandaba: la autorización iba en `normal`,
+ * igual que «más despacio», y al final de un vuelo hay tres de ésas por
+ * segundo. Medido en El Hierro: la torre abrió la boca cinco veces en un
+ * vuelo entero y se oyó **una**.
+ */
+describe("lo que manda la torre", () => {
+  it("no lo echa de la cola un comentario", () => {
+    const b = boca();
+    const { frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("mando", frase("autorizado"), "autorizado");
+    b.pedir("normal", frase("uno"), "uno");
+    b.pedir("normal", frase("dos"), "dos");
+    b.pedir("normal", frase("tres"), "tres");
+    expect(b.descartadas.some((d) => d.startsWith("autorizado"))).toBe(false);
+    expect(b.descartadas.at(-1)).toBe("tres: no cabía en la cola");
+  });
+
+  it("y se dice antes que los comentarios que ya esperaban", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("normal", frase("comentario"), "comentario");
+    b.pedir("mando", frase("autorizado"), "autorizado");
+    acabar["hablando"]!();
+    expect(dicho.at(-1)).toBe("autorizado");
+  });
+
+  it("pero no corta a nadie, que cortar es de lo urgente y de nadie más", () => {
+    const b = boca();
+    const { dicho, frase } = coro();
+    b.pedir("normal", frase("hablando"), "hablando");
+    b.pedir("mando", frase("autorizado"), "autorizado");
+    // Sigue hablando el primero: el mando espera turno como todos.
+    expect(dicho).toEqual(["hablando"]);
+    expect(cortes).toBe(0);
+  });
+
+  it("y el aviso de terreno sí se lo lleva por delante", () => {
+    const b = boca();
+    const { dicho, frase } = coro();
+    b.pedir("mando", frase("autorizado"), "autorizado");
+    b.pedir("urgente", frase("terreno"), "terreno");
+    expect(dicho).toEqual(["autorizado", "terreno"]);
+  });
+});

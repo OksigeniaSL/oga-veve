@@ -68,14 +68,39 @@
  * Tres escalones, y el de en medio es casi todo: los cantos de cabina, los
  * avisos de aro, las fases del vuelo.
  *
- * - `baja`: los elogios. Que te digan «bien» no puede pisar nada.
+ * - `baja`: los elogios y la charla de la frecuencia. Que te digan «bien» no
+ *   puede pisar nada, y que otro avión salude, tampoco.
  * - `normal`: lo que enseña.
+ * - `mando`: **lo que te ordena la torre**. Ver abajo.
  * - `urgente`: el suelo, la pista ocupada, la frustrada. Lo que no puede
  *   esperar a que termine una frase.
+ *
+ * ## Por qué hay un escalón para la torre
+ *
+ * Porque en una frecuencia de verdad una instrucción de control manda sobre
+ * cualquier comentario, y aquí no mandaba: la autorización iba en `normal`,
+ * como «más despacio» y «venís un poco alto», y al final de un vuelo hay
+ * tres de ésas por segundo. Medido en el barrido, en El Hierro:
+ *
+ *     torre.canario.verde: no cabía en la cola
+ *     torre.canario.roja: caducó esperando
+ *     torre.canario.holdShort: no cabía en la cola
+ *     torre.canario.lineUpWait: no cabía en la cola
+ *
+ * La torre abrió la boca cinco veces en un vuelo entero y se oyó **una**.
+ *
+ * `mando` **no corta**: cortar sigue siendo cosa de `urgente` y de nadie más,
+ * que para eso se quitó esa potestad al resto. Lo único que hace es no
+ * dejarse echar de la cola por un comentario.
  */
-export type Urgencia = "baja" | "normal" | "urgente";
+export type Urgencia = "baja" | "normal" | "mando" | "urgente";
 
-const PESO: Record<Urgencia, number> = { baja: 0, normal: 1, urgente: 2 };
+const PESO: Record<Urgencia, number> = {
+  baja: 0,
+  normal: 1,
+  mando: 2,
+  urgente: 3,
+};
 
 /** Lo que espera más de esto ya no se dice. Ver la cabecera. */
 export const CADUCA = 4000;

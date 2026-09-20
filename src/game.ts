@@ -3699,7 +3699,15 @@ export class Game {
    * igual y el pack ya decide: la dice entera la voz del navegador antes que
    * quedarse a medias. Ver `recetaDe`.
    */
-  private porRadio(dice: string, urgencia: Urgencia = "normal"): void {
+  /**
+   * Una frase de la torre **dirigida a vos**, en fraseología.
+   *
+   * Va en `mando` por omisión y no en `normal`: una instrucción de control
+   * manda sobre cualquier comentario, y al final de un vuelo hay tres
+   * comentarios por segundo. Lo que la torre le dice a **otro** avión no pasa
+   * por aquí — eso es charla de la frecuencia y va en `baja`.
+   */
+  private porRadio(dice: string, urgencia: Urgencia = "mando"): void {
     const base = claveDeTorre(dice);
     if (!base) return;
     const montada = this.deTorre(base, this.miIndicativo);
@@ -3787,8 +3795,14 @@ export class Game {
      * que no puede esperar a que termine una frase. Las otras dos son normales
      * y se ponen en la cola de la boca como todo lo demás. Ver `audio/boca.ts`.
      */
+    /*
+     * Y las otras dos van en `mando`, que es el escalón de la torre: no
+     * cortan a nadie, pero tampoco se dejan echar de la cola por un «más
+     * despacio». Medido en El Hierro antes de tener ese escalón: la torre
+     * abrió la boca cinco veces en un vuelo y se oyó una. Ver `Urgencia`.
+     */
     const urgencia =
-      rojaDice === "alAire" && luz === "roja" ? "urgente" : "normal";
+      rojaDice === "alAire" && luz === "roja" ? "urgente" : "mando";
     /*
      * **Y la lámpara te llama por tu matrícula.**
      *
