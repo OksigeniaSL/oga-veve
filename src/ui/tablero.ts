@@ -123,6 +123,37 @@ export interface DatosDelTablero {
 
 const GRADOS = 180 / Math.PI;
 
+/** Lo que mide una luz del panel de avisos, en unidades del cuadro. */
+const ANCHO_DE_LUZ = 96;
+const ALTO_DE_LUZ = 20;
+
+/**
+ * Cuántas caben encendidas a la vez en la visera.
+ *
+ * Cuatro: dos columnas por dos filas. La visera mide 64 de alto y una luz 20,
+ * así que dos filas es lo que entra —`8 + 2 × 23 = 54`— y dos columnas de 96
+ * acaban en la 208, lejos del MCP, que empieza en la 490.
+ */
+const HUECOS_DE_AVISO = 4;
+
+/**
+ * Dónde va cada aviso encendido, en unidades del cuadro.
+ *
+ * Aparte y pura porque es la cuenta que se equivocaba, y una cuenta que se
+ * equivoca dentro de un método que toca el DOM no se puede comprobar sin un
+ * navegador. Recibe las luces **ya ordenadas por gravedad** —`encendidas` las
+ * devuelve así— y devuelve el hueco de las que caben.
+ */
+export function huecosDeAviso(
+  ids: readonly string[],
+): readonly { id: string; x: number; y: number }[] {
+  return ids.slice(0, HUECOS_DE_AVISO).map((id, i) => ({
+    id,
+    x: 8 + (i % 2) * (ANCHO_DE_LUZ + 8),
+    y: 8 + Math.floor(i / 2) * (ALTO_DE_LUZ + 3),
+  }));
+}
+
 /** El dibujo de cada luz. Ver `panelDeAvisos`. */
 const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
   terreno: "terreno",
@@ -283,13 +314,12 @@ export class Tablero {
    * aprendió el dibujo en la tarjeta lo reconoce en la luz.
    */
   private panelDeAvisos(): string {
-    const ancho = 96;
-    const alto = 20;
-    return LUCES.map((l, i) => {
-      const y = 8 + i * (alto + 3);
+    const ancho = ANCHO_DE_LUZ;
+    const alto = ALTO_DE_LUZ;
+    return LUCES.map((l) => {
       return `
         <g class="aviso-luz" data-luz="${l.id}" data-grado="${l.grado}"
-           transform="translate(8 ${y})" visibility="hidden">
+           transform="translate(8 8)" visibility="hidden">
           <rect width="${ancho}" height="${alto}" rx="3" class="aviso-luz__caja" />
           <!--
             Y aquí NO va MARCA_ROTULO, que es la marca de rótulo que usa el
@@ -331,10 +361,32 @@ export class Tablero {
    * luces hay ni en qué orden van. Ver `flight/avisos-de-cabina.ts`.
    */
   ponerLucesDeAviso(raiz: Element, estado: EstadoDeAvisos): void {
-    const puestas = new Set(encendidas(estado).map((l) => l.id));
+    /*
+     * **Y se colocan al encenderlas, no al dibujarlas.**
+     *
+     * Cada luz tenía su sitio fijo en una columna de ocho, y ocho por
+     * veintitrés píxeles son ciento ochenta y cuatro: la visera mide sesenta
+     * y cuatro. O sea que **de la tercera en adelante el aviso salía por
+     * debajo de la banda negra**, encima de los instrumentos. Contado
+     * jugando: «el aviso rojo se pone por debajo de la banda negra».
+     *
+     * Lo que se dibuja ahora es solo lo que está encendido, apretado contra
+     * la esquina de arriba a la izquierda en cuatro huecos —dos columnas por
+     * dos filas— que sí caben en la visera y que quedan lejos del MCP, que
+     * empieza en la 490. `encendidas` las devuelve por gravedad, así que si
+     * alguna vez hubiera más de cuatro a la vez, las que se ven son las que
+     * hay que ver.
+     */
+    const donde = new Map(
+      huecosDeAviso(encendidas(estado).map((l) => l.id)).map((h) => [h.id, h]),
+    );
     for (const l of LUCES) {
       const g = raiz.querySelector(`[data-luz="${l.id}"]`);
-      g?.setAttribute("visibility", puestas.has(l.id) ? "visible" : "hidden");
+      if (!g) continue;
+      const hueco = donde.get(l.id);
+      g.setAttribute("visibility", hueco ? "visible" : "hidden");
+      if (!hueco) continue;
+      g.setAttribute("transform", `translate(${hueco.x} ${hueco.y})`);
     }
   }
 

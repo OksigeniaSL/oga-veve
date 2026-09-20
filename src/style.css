@@ -311,10 +311,19 @@ body {
  * puesta: un cartel que se puede tapar no es un cartel, y esto ya pasó una vez.
  */
 .cinturon {
-  position: absolute;
-  top: calc(max(16px, env(safe-area-inset-top)) + var(--tacto) * 2.3);
-  left: max(16px, env(safe-area-inset-left));
-  z-index: 7;
+  /*
+   * **Y dentro de la columna, no flotando sobre ella.**
+   *
+   * Estaba en posición absoluta con el hueco contado a mano —«dos botones y
+   * pico por encima»—, y esa cuenta vale mientras la columna tenga dos
+   * botones. Con el sol bajo aparece el de las gafas y son tres: el cartel
+   * caía justo encima. Dicho dos veces: «sigo diciendo que la señal de
+   * cinturón está encima de otra indicación en el HUD».
+   *
+   * Metido en la propia columna, la apila el flex y no hay número que
+   * mantener. Es la misma lección de siempre: un desplazamiento escrito a
+   * mano es una cuenta que alguien tiene que acordarse de actualizar.
+   */
   display: grid;
   place-items: center;
   width: calc(var(--tacto) * 0.9);

@@ -608,6 +608,20 @@ export class Hud {
             <rect x="13.5" y="5" width="4" height="14" rx="1.4" />
           </svg>
         </button>
+        <!--
+          El cartel del cinturón, el de verdad: el de la fila de arriba de un
+          avión de pasaje. Se enciende solo —no se pilota— y solo en los aviones
+          que llevan gente. Lo enciende «atenderAlCinturon», en game.ts.
+
+          Es un dibujo y nada más, como en un avión de verdad: lo que enseña no
+          es el pictograma, es **cuándo** se enciende.
+        -->
+        <div class="cinturon" data-hud="cinturon" hidden role="status">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4v6a5 5 0 0 0 10 0V4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <rect x="9" y="13" width="6" height="7" rx="1.5" fill="currentColor"/>
+          </svg>
+        </div>
       </div>
       <div class="hud__arriba">
         <div class="tarjeta insignia" data-hud="badge"></div>
@@ -654,20 +668,6 @@ export class Hud {
         <div class="torre" data-hud="torre" hidden role="status">
           <span class="torre__luz" data-hud="torre-luz"></span>
           <span class="torre__texto" data-hud="torre-texto"></span>
-        </div>
-        <!--
-          El cartel del cinturón, el de verdad: el de la fila de arriba de un
-          avión de pasaje. Se enciende solo —no se pilota— y solo en los aviones
-          que llevan gente. Lo enciende «atenderAlCinturon», en game.ts.
-
-          Es un dibujo y nada más, como en un avión de verdad: lo que enseña no
-          es el pictograma, es **cuándo** se enciende.
-        -->
-        <div class="cinturon" data-hud="cinturon" hidden role="status">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 4v6a5 5 0 0 0 10 0V4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <rect x="9" y="13" width="6" height="7" rx="1.5" fill="currentColor"/>
-          </svg>
         </div>
         <!--
           **El compensador de profundidad**, que es el mando que faltaba.

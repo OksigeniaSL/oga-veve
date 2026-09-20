@@ -10,9 +10,15 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { Tablero } from "./tablero";
+import { huecosDeAviso, Tablero } from "./tablero";
+import { LUCES } from "../flight/avisos-de-cabina";
 import { AIRCRAFT, aircraftById } from "../flight/aircraft";
-import { ALTO_DEL_CUADRO, ANCHO_DEL_CUADRO, familiaDe } from "./familia";
+import {
+  ALTO_DEL_CUADRO,
+  ANCHO_DEL_CUADRO,
+  familiaDe,
+  VISERA,
+} from "./familia";
 
 const dibujo = (id: string) => new Tablero().markup(aircraftById(id));
 
@@ -89,5 +95,43 @@ describe("las patas del tren", () => {
     expect(dibujo("jaz-120").match(/class="cr__tren"/g)).toHaveLength(5);
     expect(dibujo("jaz-90").match(/class="cr__tren"/g)).toHaveLength(3);
     expect(dibujo("jaz-20").match(/class="cr__tren"/g)).toHaveLength(3);
+  });
+});
+
+/*
+ * ── Los avisos, dentro de la visera ───────────────────────────────────────
+ *
+ * Cada luz tenía su sitio fijo en una columna de ocho, y ocho por veintitrés
+ * píxeles son 184: la visera mide 64. De la tercera en adelante el aviso
+ * salía por debajo de la banda negra, encima de los instrumentos. «El aviso
+ * rojo se pone por debajo de la banda negra.»
+ */
+describe("el panel de avisos cabe en la visera", () => {
+  const todas = LUCES.map((l) => l.id);
+
+  it("con todas encendidas, ninguna se sale de los 64 de la visera", () => {
+    const puestos = huecosDeAviso(todas);
+    expect(puestos.length).toBeGreaterThan(0);
+    // 20 de alto: el borde de abajo no puede pasar de la visera.
+    for (const h of puestos) expect(h.y + 20).toBeLessThanOrEqual(VISERA);
+  });
+
+  it("y ninguna se mete en el MCP, que empieza en la 490", () => {
+    for (const h of huecosDeAviso(todas)) expect(h.x + 96).toBeLessThan(490);
+  });
+
+  it("y la que esté encendida va a la esquina, no al hueco que le tocara", () => {
+    /*
+     * Lo que fallaba: la del freno es la última de la lista, así que se
+     * dibujaba a y=146 —ochenta píxeles por debajo de la banda— aunque fuera
+     * la única encendida.
+     */
+    expect(huecosDeAviso(["freno"])).toEqual([{ id: "freno", x: 8, y: 8 }]);
+  });
+
+  it("y si hubiera más de las que caben, se ven las primeras", () => {
+    // `encendidas` las da por gravedad, así que las primeras son las graves.
+    expect(huecosDeAviso(todas)).toHaveLength(4);
+    expect(huecosDeAviso(todas).map((h) => h.id)).toEqual(todas.slice(0, 4));
   });
 });
