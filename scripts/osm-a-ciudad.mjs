@@ -36,7 +36,7 @@
  * con su licencia, separada del código.
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { SCENARIOS } from '../src/world/scenarios.ts';
 import { overpass, simplificar, proyector, R_TIERRA } from './osm-comun.mjs';
 
@@ -301,5 +301,44 @@ const salida = {
   agua,
 };
 const texto = `${JSON.stringify(salida)}\n`;
+
+/*
+ * **Y no se pisa una extracción buena con una peor.**
+ *
+ * Overpass contesta o no contesta según le pilles, y cuando no contesta no
+ * da un error: **da menos**. En una tirada de quince escenarios salieron tres
+ * ficheros perfectamente válidos y perfectamente vacíos — Pedro Juan con cero
+ * celdas y cero vías, Cuatro Vientos con 3.451 celdas y **ninguna calle**, que
+ * es Madrid sin carreteras—. Repetidos, Cuatro Vientos dio 4.738 celdas y
+ * 4.952 vías.
+ *
+ * Un fichero así no se distingue de uno bueno mirándolo: hay que saber qué
+ * había antes. Así que se compara, y si lo nuevo trae menos ciudad que lo que
+ * ya estaba, no se escribe y se dice. Repetir la tirada es gratis; darse
+ * cuenta dentro de tres semanas de que una isla no tiene luces, no.
+ */
+const antes = (() => {
+  try {
+    const viejo = JSON.parse(
+      readFileSync(`${SALIDA}/${esc.id}.city.json`, 'utf8'),
+    );
+    const clase = Buffer.from(viejo.rejilla.clase, 'base64');
+    let celdas = 0;
+    for (const c of clase) if (c) celdas++;
+    return { celdas, vias: viejo.vias?.length ?? 0 };
+  } catch {
+    return null;
+  }
+})();
+let celdasAhora = 0;
+for (const c of clase) if (c) celdasAhora++;
+if (antes && (celdasAhora < antes.celdas || vias.length < antes.vias)) {
+  console.error(
+    `  ✖ lo de ahora trae menos que lo que ya había ` +
+      `(${celdasAhora} celdas y ${vias.length} vías contra ${antes.celdas} y ${antes.vias}).`,
+  );
+  console.error('    No se escribe. Overpass ha contestado a medias: repetí.');
+  process.exit(1);
+}
 writeFileSync(`${SALIDA}/${esc.id}.city.json`, texto);
 console.log(`  ${(texto.length / 1024).toFixed(0)} KB → ${SALIDA}/${esc.id}.city.json`);
