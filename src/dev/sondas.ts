@@ -499,6 +499,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     avisoDeTerreno: () => juego.terrenoDicho,
     /** El señalero, para mirarle los brazos sin rodar hasta el puesto. */
     senalero: () => juego.senalero,
+    /**
+     * El depósito: kilos, reserva y en qué estado va.
+     *
+     * Hace falta desde que el combustible se gasta de verdad: un vuelo de
+     * banco corre con el reloj acelerado y el motor a fondo mucho más rato
+     * que un vuelo de persona, así que **quedarse seco es un desenlace
+     * posible** y hay que poder distinguirlo de un avión que no sube.
+     */
+    combustible: () => juego.depositoParaBanco,
     /** La aeronave montada: para saber si vuela el modelo o las cajas. */
     aeronave: () => ({
       grupo: juego.aircraftMesh.group,

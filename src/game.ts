@@ -836,6 +836,16 @@ export class Game {
     return this.celdas;
   }
 
+  /** Y el depósito, para los bancos. Ver `elDeposito`. */
+  get depositoParaBanco(): {
+    kilos: number;
+    cabe: number;
+    reserva: number;
+    estado: "bien" | "reserva" | "poco";
+  } {
+    return this.elDeposito();
+  }
+
   /**
    * Las pistas de este vuelo: la de casa y, si la ruta lleva a otro
    * aeropuerto, la suya — ya en coordenadas de este mundo.

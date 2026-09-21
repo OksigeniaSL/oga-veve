@@ -286,6 +286,32 @@ export class Senalero {
     return this.gesto;
   }
 
+  /**
+   * Cómo va, para los bancos: lo justo para saber **por qué no se le ve**.
+   *
+   * «No estaba el de las lucecitas» se ha contado tres veces, y las tres
+   * veces el banco decía «visto: no» y nada más — que es el síntoma, no la
+   * causa. Estar o no estar depende de tres cosas y hay que poder mirarlas
+   * por separado: si le han dado puesto, si se está volviendo, y cuánto
+   * queda para llegar.
+   */
+  get comoVa(): {
+    readonly visible: boolean;
+    readonly puesto: boolean;
+    readonly volviendo: boolean;
+    readonly restante: number;
+  } {
+    return {
+      visible: this.grupo.visible,
+      puesto: this.parada !== null,
+      volviendo: this.ultimoVolviendo,
+      restante: Number.isFinite(this.restante) ? Math.round(this.restante) : -1,
+    };
+  }
+
+  /** Lo último que le dijeron sobre si el avión viene de vuelta. Ver `comoVa`. */
+  private ultimoVolviendo = false;
+
   get pasado(): number {
     if (!this.llegoAsuAlcance || !Number.isFinite(this.restante)) return 0;
     return Math.max(0, -this.restante);
@@ -386,6 +412,7 @@ export class Senalero {
     avion: { x: number; z: number; velocidad: number; enElSuelo: boolean },
     volviendo: boolean,
   ): Gesto {
+    this.ultimoVolviendo = volviendo;
     if (this.posado) return this.animar(dt, this.posado);
     if (!this.parada) return null;
 

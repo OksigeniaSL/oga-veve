@@ -26,7 +26,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
-    ala, caja, cabina, cilindro, exportar, helice, limpiar, perfil, pintar,
+    ala, caja, cabina, cilindro, exportar, helice, limpiar, parabrisas, perfil, pintar,
     suavizar, ventanillas,
 )
 from mathutils import Vector  # noqa: E402
@@ -138,41 +138,35 @@ def aro(z):
 
 def carlinga():
     """
-    El parabrisas: **la piel del fuselaje, un poco más gorda y un poco subida**.
+    El parabrisas, con su techo en medio. Ver `parabrisas` en `comun.py`.
 
-    Los dos primeros intentos lo hicieron como un cuerpo aparte encima del
-    lomo, y las dos veces se leyó como un techo solar: un óvalo negro pegado al
-    morro, con fuselaje blanco entre él y las ventanillas. Un parabrisas de
-    verdad no está *encima* del fuselaje, **es** el fuselaje en ese tramo.
+    Aquí se probaron tres cosas antes de dar con la de ahora, y las dos
+    primeras están contadas porque explican qué se pide.
 
-    Así que se calcula desde los mismos aros: tres centímetros más ancho y más
-    alto, y el centro subido seis. Con eso la elipse del cristal asoma por
-    arriba y por los hombros —ocho centímetros en la corona, uno y medio en el
-    costado— y se queda metida por debajo, que es exactamente la forma que
-    tiene un parabrisas envolvente visto de lado. Y se apaga sola en los dos
-    extremos, donde el crecimiento es menor que el del fuselaje.
+    Un cuerpo aparte **encima** del lomo se leía como un techo solar: un óvalo
+    negro pegado al morro, con fuselaje blanco entre él y las ventanillas. Un
+    parabrisas de verdad no está *encima* del fuselaje, **es** el fuselaje en
+    ese tramo. Así que el segundo intento fue la piel entera un poco más gorda
+    y un poco subida, a ver si asomaba solo por arriba — y aquí, con tres
+    centímetros sobre un morro pequeño, asomaba bien. Pero es una receta que
+    hay que ajustar avión por avión, y en los dos reactores, con el morro
+    mucho más grande, el mismo truco pintaba **la cara entera de negro**: «los
+    aviones deben parecer aviones, no supositorios gigantes».
 
-    **Y la cabeza del piloto queda dentro**, que es la otra condición. Todos los
-    materiales llevan la cara de atrás quitada —ver `material` en `comun.py`—,
-    así que desde dentro el cristal desaparece... siempre que se esté dentro.
-    Con el cristal a la altura del lomo y los ojos a dieciséis centímetros del
-    eje, el piloto lo miraba **por debajo**: una banda negra cruzando el cielo
-    de lado a lado. Aquí el suelo del cristal cae a sesenta y seis centímetros
-    por debajo del eje, medio metro más abajo que los ojos.
+    Lo de ahora no se ajusta: se pide el sector que ocupa un parabrisas y sale
+    ese sector, con la tira de chapa del techo en medio. Mismo resultado aquí y
+    predecible en los seis.
+
+    **Y la cabeza del piloto sigue quedando dentro**, que es la otra
+    condición. Todos los materiales llevan la cara de atrás quitada —ver
+    `material` en `comun.py`—, así que desde dentro el cristal desaparece...
+    siempre que se esté dentro. El cristal va pegado a la piel, y los ojos
+    están en el eje, medio metro por debajo del hombro: se mira por él, no por
+    debajo.
     """
-    # z, cuánto crece respecto del fuselaje, y cuánto sube el centro.
-    tramo = [
-        (-3.00, -0.04, 0.03),
-        (-2.55, 0.03, 0.08),
-        (-1.90, 0.03, 0.08),
-        (-1.20, 0.02, 0.06),
-        (-0.60, -0.04, 0.02),
-    ]
-    aros = []
-    for z, gordo, sube in tramo:
-        ancho, alto, y = aro(z)
-        aros.append((z, ancho + gordo, alto + gordo, y + sube))
-    return perfil("parabrisas", aros, "cristal")
+    tramo = [-2.90, -2.50, -1.85, -1.20]
+    aros = [(z, *aro(z)) for z in tramo]
+    return parabrisas("parabrisas", aros, fuera=0.02)
 
 
 def construir():

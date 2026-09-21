@@ -26,7 +26,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
-    ala, cabina, cilindro, exportar, helice, limpiar, perfil, pintar,
+    ala, cabina, cilindro, exportar, helice, limpiar, parabrisas, perfil, pintar,
     suavizar, ventanillas,
 )
 from mathutils import Vector  # noqa: E402
@@ -99,18 +99,9 @@ def carlinga():
     centímetros de más y el centro subido nueve, para que asome lo mismo en
     proporción sobre un morro que mide casi dos metros de ancho.
     """
-    tramo = [
-        (-6.55, -0.06, 0.04),
-        (-5.95, 0.05, 0.11),
-        (-5.05, 0.05, 0.11),
-        (-4.35, 0.03, 0.08),
-        (-3.70, -0.06, 0.03),
-    ]
-    aros = []
-    for z, gordo, sube in tramo:
-        ancho, alto, y = aro(z)
-        aros.append((z, ancho + gordo, alto + gordo, y + sube))
-    return perfil("parabrisas", aros, "cristal")
+    tramo = [-6.40, -5.95, -5.15, -4.45]
+    aros = [(z, *aro(z)) for z in tramo]
+    return parabrisas("parabrisas", aros, fuera=0.02)
 
 
 def rueda(nombre, en, diametro, ancho=0.24):

@@ -802,7 +802,13 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * verse, qué gestos hizo y a cuánto de su sitio estaba el avión cuando se
    * le vio.
    */
-  const senalero = { visto: false, gestos: new Set(), masCerca: Infinity };
+  const senalero = {
+  visto: false,
+  gestos: new Set(),
+  masCerca: Infinity,
+  /* Y por qué no se le vio, que es lo que faltaba. Ver `comoVa`. */
+  porQueNo: new Set(),
+};
   let antes = null;
   let sinRaya = 0;
   let sinRayaDonde = "";
@@ -1150,6 +1156,16 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       if (sen?.grupo?.visible) {
         senalero.visto = true;
         if (sen.gestoDeAhora) senalero.gestos.add(sen.gestoDeAhora);
+      } else if (sen?.comoVa) {
+        const v = sen.comoVa;
+        /*
+         * Con la fase delante, que es lo que faltaba: sin ella la lista se
+         * llenaba de la salida —donde es correcto que no se le vea— y la
+         * vuelta, que es lo que se busca, quedaba escondida entre repetidos.
+         */
+        senalero.porQueNo.add(
+          `${fase}: puesto=${v.puesto} volviendo=${v.volviendo}`,
+        );
       }
     }
     const bocas = o.dicho?.();
@@ -2028,6 +2044,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     pendiente: pendiente === null ? null : +(pendiente * 100).toFixed(1),
     senalero: {
       visto: senalero.visto,
+      porQueNo: [...senalero.porQueNo],
       gestos: [...senalero.gestos],
       masCerca: Math.round(senalero.masCerca),
     },
@@ -2355,7 +2372,11 @@ comprobar(
   !!vuelo.senalero?.visto && (vuelo.senalero?.gestos?.length ?? 0) > 0,
   `visto: ${vuelo.senalero?.visto ? "sí" : "no"} · gestos: ${
     vuelo.senalero?.gestos?.join(", ") || "ninguno"
-  } · lo más cerca que se estuvo de su sitio: ${vuelo.senalero?.masCerca} m`,
+  } · lo más cerca que se estuvo de su sitio: ${vuelo.senalero?.masCerca} m${
+    vuelo.senalero?.visto
+      ? ""
+      : ` · y no se le vio porque: ${vuelo.senalero?.porQueNo?.join(" | ") || "ni idea"}`
+  }`,
   "«nadie me esperaba en Gran Canaria», y no había prueba que lo mirara",
 );
 

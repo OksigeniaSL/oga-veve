@@ -199,6 +199,102 @@ def perfil(nombre, aros, material_="casco"):
     return pintar(obj, material_)
 
 
+def casquete(nombre, aros, desde=-55, hasta=55, fuera=0.03,
+             material_="cristal", lados=10):
+    """
+    Un trozo de la piel, en un sector de ángulo, despegado un pelo hacia fuera.
+
+    Lo que hace falta para poner un **parabrisas** y no una venda. Hasta ahora
+    la carlinga se hacía con `perfil`: una copia del fuselaje algo más gorda y
+    subida, en cristal, a ver si asomaba solo por arriba. Asomaba por arriba y
+    por los costados y por debajo, y el resultado era que todos los aviones de
+    la flota tenían **la cara negra** — un casco de buzo en vez de un morro.
+    Se dijo con la palabra exacta: «los aviones deben parecer aviones, no
+    supositorios gigantes».
+
+    Un parabrisas de verdad ocupa un sector de arriba y nada más. Aquí se pide
+    ese sector y se construye solo esa tira de superficie, separada `fuera`
+    metros de la piel para que no pelee con ella en el búfer de profundidad.
+
+    Los ángulos van en grados y **cero es arriba**, que es como se piensa un
+    parabrisas: «de menos cincuenta y cinco a más cincuenta y cinco» es lo que
+    se ve desde el asiento. Los aros son los mismos `(z, ancho, alto, y)` que
+    come `perfil`, así que salen de la misma tabla que el fuselaje y no puede
+    haber dos verdades sobre dónde está la piel.
+    """
+    malla = bpy.data.meshes.new(nombre)
+    bm = bmesh.new()
+    a0 = math.radians(desde)
+    a1 = math.radians(hasta)
+    anillos = []
+    for z, ancho, alto, y in aros:
+        vs = []
+        for i in range(lados + 1):
+            # Cero arriba y creciendo hacia el costado derecho, que es como se
+            # describe un parabrisas. De ahí el seno en x y el coseno en y.
+            a = a0 + (a1 - a0) * (i / lados)
+            vs.append(
+                bm.verts.new((
+                    math.sin(a) * (ancho / 2 + fuera),
+                    y + math.cos(a) * (alto / 2 + fuera),
+                    z,
+                ))
+            )
+        anillos.append(vs)
+    for p, q in zip(anillos, anillos[1:]):
+        for i in range(lados):
+            bm.faces.new((p[i], p[i + 1], q[i + 1], q[i]))
+    bm.normal_update()
+    """
+    **Y mirando hacia fuera.**
+
+    Esto es una superficie abierta, así que el orden en que se escriben los
+    cuatro vértices decide hacia dónde mira, y ese orden depende de por qué
+    lado del avión se esté. Con la cara del revés el cristal sale **gris
+    claro** en vez de oscuro —se ve la trasera, que en este proyecto va
+    quitada— y el parabrisas parece una pegatina. Se arregla preguntándoselo a
+    la geometría en vez de acertar el orden: si la normal apunta hacia el eje,
+    se le da la vuelta.
+    """
+    for cara in bm.faces:
+        centro = cara.calc_center_median()
+        radial = Vector((centro.x, centro.y - aros[0][3], 0.0))
+        if radial.length > 1e-6 and cara.normal.dot(radial.normalized()) < 0:
+            cara.normal_flip()
+    bm.normal_update()
+    bm.to_mesh(malla)
+    bm.free()
+    obj = bpy.data.objects.new(nombre, malla)
+    bpy.context.collection.objects.link(obj)
+    return pintar(obj, material_)
+
+
+def parabrisas(nombre, aros, desde=24, hasta=84, fuera=0.03):
+    """
+    El parabrisas: dos casquetes, uno por costado, con su techo en medio.
+
+    Dos y no uno, porque **un avión tiene techo**. Un solo sector centrado en
+    la corona pondría cristal justo donde va la chapa del morro, que es lo que
+    distingue una cabina de un casco de moto. Entre los dos queda una tira
+    blanca de cuarenta y ocho grados: eso es el techo, y visto de lado es la
+    línea que separa el parabrisas del lomo.
+
+    Los ángulos se cuentan desde arriba, así que «de veinticuatro a ochenta y
+    cuatro» quiere decir que el cristal empieza un poco por debajo de la
+    corona y baja hasta casi el costado — que es donde acaba la ventanilla
+    lateral del comandante. Ver `casquete`.
+    """
+    izq = casquete(f"{nombre}-i", aros, -hasta, -desde, fuera)
+    der = casquete(f"{nombre}-d", aros, desde, hasta, fuera)
+    bpy.ops.object.select_all(action="DESELECT")
+    izq.select_set(True)
+    der.select_set(True)
+    bpy.context.view_layer.objects.active = izq
+    bpy.ops.object.join()
+    izq.name = nombre
+    return izq
+
+
 def ala(
     nombre,
     media_envergadura,

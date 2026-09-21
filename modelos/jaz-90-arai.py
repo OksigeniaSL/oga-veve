@@ -28,7 +28,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
-    ala, cabina, cilindro, exportar, limpiar, perfil, pilon, suavizar,
+    ala, cabina, cilindro, exportar, limpiar, parabrisas, perfil, pilon, suavizar,
     turbofan, ventanillas,
 )
 from mathutils import Vector  # noqa: E402
@@ -83,19 +83,10 @@ def aro(z):
 
 
 def carlinga():
-    """El parabrisas: la piel del fuselaje, más gorda y subida. Ver el Panambi."""
-    tramo = [
-        (-14.10, -0.10, 0.06),
-        (-13.40, 0.08, 0.17),
-        (-12.50, 0.08, 0.17),
-        (-11.70, 0.05, 0.12),
-        (-10.90, -0.10, 0.04),
-    ]
-    aros = []
-    for z, gordo, sube in tramo:
-        ancho, alto, y = aro(z)
-        aros.append((z, ancho + gordo, alto + gordo, y + sube))
-    return perfil("parabrisas", aros, "cristal")
+    """El parabrisas del puesto de pilotaje. Ver `parabrisas` en `comun.py`."""
+    tramo = [-13.90, -13.30, -12.40, -11.50]
+    aros = [(z, *aro(z)) for z in tramo]
+    return parabrisas("parabrisas", aros, fuera=0.02)
 
 
 def rueda(nombre, en, diametro, ancho=0.28):
