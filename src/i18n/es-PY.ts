@@ -616,6 +616,8 @@ export const ES_PY = {
   "vuelo.pediFlaps": "Bajá los flaps para frenar",
   "palabra.flaps": "Flaps",
   "vuelo.meteElTren": "Metélo, el tren te frena",
+  "vuelo.tormenta": "Hay lluvia delante: rodeála, no la cruces",
+  "palabra.tormenta": "Lluvia",
   "vuelo.sacaElTren": "Sacá el tren",
   "palabra.tren": "Tren",
   "vuelo.despacio": "Más despacio",

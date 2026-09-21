@@ -351,7 +351,12 @@ import { MundoVecino } from "./world/mundo-vecino";
 import { desplazarAerodromo } from "./world/aerodromo-desplazado";
 import { laMasCerca, sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
-import { celdasDe, cuantoSacude, type Celda } from "./flight/tormentas";
+import {
+  celdasDe,
+  cuantoSacude,
+  laQueVieneDelante,
+  type Celda,
+} from "./flight/tormentas";
 import { horaSolarEn } from "./world/hora";
 import { Cinturon } from "./flight/cinturon";
 import {
@@ -6136,6 +6141,7 @@ export class Game {
      */
     const s0 = this.flight.state.position;
     const enLaTormenta = cuantoSacude(this.celdas, s0.x, s0.z);
+    this.avisarDeLaTormenta();
     this.atenderAlCinturon(
       Math.max(cuantoSeMueve(aire), enLaTormenta),
       loDijo,
@@ -6657,6 +6663,44 @@ export class Game {
    * avión en su hueco, que es cuando un aeropuerto de verdad saca a alguien a
    * la plataforma.
    */
+  /**
+   * Y decir qué son los círculos del radar, la primera vez que aparecen.
+   *
+   * Preguntado jugando con una foto de la pantalla de navegación delante:
+   * «¿qué son esos círculos?». Y ahí estaba el fallo: el radar los pintaba
+   * con la escala de color de verdad —verde, ámbar, rojo, magenta— y **no
+   * los nombraba nadie**. En este juego lo esencial se entiende sin leer, y
+   * un color en una pantalla no es un canal: hace falta que alguien lo diga
+   * la primera vez, con su dibujo.
+   *
+   * Y lo que se dice es la lección, no el dato: a una tormenta no se entra,
+   * se rodea. Es la regla de las tres eses dicha en meteorología.
+   *
+   * Una vez por vuelo, que de eso ya se encarga `NO_REPETIR` en la boca — y
+   * solo de lo que viene por delante, dentro del cono del morro. Ver
+   * `laQueVieneDelante`.
+   */
+  private avisarDeLaTormenta(): void {
+    // Rodando no se rodea nada: esto es un aviso de vuelo.
+    if (!this.celdas.length || this.flight.state.onGround) return;
+    const s = this.flight.state;
+    const viene = laQueVieneDelante(
+      this.celdas,
+      s.position.x,
+      s.position.z,
+      s.heading,
+    );
+    if (!viene) return;
+    const dicho = this.avisoCon("vuelo.tormenta", "palabra.tormenta");
+    /*
+     * El dibujo va en los cuatro peldaños y el rótulo desde el segundo: eso
+     * lo resuelve `avisoCon` devolviendo el rótulo vacío donde no toca. Ver
+     * `flight/escalera.ts`.
+     */
+    this.hud.senal.mostrar("tormenta", dicho.rotulo, null, { segundos: 5 });
+    this.instructor.decir(dicho.texto, dicho.id);
+  }
+
   private atenderAlSenalero(dt: number): void {
     const fase = this.vistaActual?.fase;
     /*

@@ -15,6 +15,7 @@ import {
   cuantoSacude,
   ecoEn,
   type Celda,
+  laQueVieneDelante,
 } from "./tormentas";
 
 const LADO = 18000;
@@ -188,5 +189,52 @@ describe("los anillos con los que se pinta una célula", () => {
       const dentro = ecoEn(una, a.parte * 5000 * 0.98, 0);
       expect(colorDelEco(dentro), a.color).toBe(a.color);
     }
+  });
+});
+
+/*
+ * ── Y decir que viene una, que nadie las nombraba ─────────────────────────
+ *
+ * El radar las pintaba con la escala de color de verdad y no las nombraba
+ * nadie. Preguntado con una foto delante: «¿qué son esos círculos?». Un
+ * color en una pantalla no es un canal.
+ */
+describe("la que viene delante", () => {
+  const celda = (x: number, z: number, radio = 3000) => ({
+    x,
+    z,
+    radio,
+    fuerza: 0.6,
+  });
+
+  it("la de delante se ve, la de atrás no", () => {
+    // Rumbo cero: el morro mira al norte, que en el juego es la Z negativa.
+    const delante = laQueVieneDelante([celda(0, -9000)], 0, 0, 0);
+    expect(delante?.distancia).toBeCloseTo(9000, -1);
+    expect(laQueVieneDelante([celda(0, 9000)], 0, 0, 0)).toBeNull();
+  });
+
+  it("y la que queda de costado tampoco, que ésa no se rodea", () => {
+    expect(laQueVieneDelante([celda(9000, 0)], 0, 0, 0)).toBeNull();
+  });
+
+  it("ni la que está más lejos que el alcance", () => {
+    expect(laQueVieneDelante([celda(0, -40000)], 0, 0, 0)).toBeNull();
+  });
+
+  it("ni una en la que ya se está metido: se anuncia lo que viene", () => {
+    expect(laQueVieneDelante([celda(0, -1000, 3000)], 0, 0, 0)).toBeNull();
+  });
+
+  it("y de dos, la más cercana", () => {
+    const dos = [celda(0, -12000), celda(0, -6000)];
+    expect(laQueVieneDelante(dos, 0, 0, 0)?.distancia).toBeCloseTo(6000, -1);
+  });
+
+  it("y el rumbo manda: la misma célula deja de venir si se vira", () => {
+    const una = [celda(0, -9000)];
+    expect(laQueVieneDelante(una, 0, 0, 0)).not.toBeNull();
+    // Noventa grados a la derecha: la célula se queda a la izquierda.
+    expect(laQueVieneDelante(una, 0, 0, Math.PI / 2)).toBeNull();
   });
 });

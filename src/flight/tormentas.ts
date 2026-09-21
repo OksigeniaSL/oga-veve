@@ -195,3 +195,46 @@ export function cuantoSacude(
 ): number {
   return ecoEn(celdas, x, z);
 }
+
+/**
+ * La célula que se tiene delante, si hay alguna, y a qué distancia.
+ *
+ * Existe porque **los círculos del radar no los nombraba nadie**. Se preguntó
+ * con una foto delante: «¿qué son esos círculos?». Y ahí está el fallo: en
+ * este juego lo esencial se entiende sin leer, y un color en una pantalla no
+ * es un canal — hace falta que alguien lo diga la primera vez.
+ *
+ * «Delante» es delante de verdad: dentro de un cono por el morro. Una célula
+ * que queda a la espalda o a noventa grados no se rodea, se ignora, y avisar
+ * de ella enseñaría a no hacer caso de los avisos.
+ *
+ * Pura y con el rumbo en radianes, como todo lo que decide algo en vuelo.
+ */
+export function laQueVieneDelante(
+  celdas: readonly Celda[],
+  x: number,
+  z: number,
+  rumbo: number,
+  /** Hasta dónde se mira, en metros. Quince kilómetros: dos minutos de vuelo. */
+  alcance = 15000,
+): { readonly celda: Celda; readonly distancia: number } | null {
+  // En el marco del juego el morro mira a −Z, que es de donde sale este seno.
+  const fx = Math.sin(rumbo);
+  const fz = -Math.cos(rumbo);
+  let mejor: { celda: Celda; distancia: number } | null = null;
+  for (const c of celdas) {
+    const dx = c.x - x;
+    const dz = c.z - z;
+    const d = Math.hypot(dx, dz);
+    // Ya dentro de ella no hay nada que anunciar: se anuncia lo que viene.
+    if (d < c.radio || d > alcance) continue;
+    /*
+     * Treinta grados a cada lado. Es el cono en el que un radar de a bordo
+     * de verdad enseña lo que importa, y es también lo que se ve por el
+     * parabrisas sin girar la cabeza.
+     */
+    if ((dx * fx + dz * fz) / d < Math.cos((30 * Math.PI) / 180)) continue;
+    if (!mejor || d < mejor.distancia) mejor = { celda: c, distancia: d };
+  }
+  return mejor;
+}

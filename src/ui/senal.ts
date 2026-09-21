@@ -580,6 +580,26 @@ const MEDIA_VUELTA = icono(`
  * mirar en el panel. Y la flecha dice hacia dónde: abajo, que es lo que se
  * está pidiendo.
  */
+/**
+ * **Tormenta**: la nube con su chaparrón debajo.
+ *
+ * Los círculos verdes y ámbar del radar no los nombraba nadie, y se preguntó
+ * exactamente eso con una foto delante: «¿qué son esos círculos?». Un color
+ * en una pantalla no es un canal — la escalera lo tiene escrito desde el
+ * principio: el dibujo en los cuatro peldaños, la palabra desde el segundo.
+ *
+ * Nube y lluvia, y no un rayo: lo que pinta un radar meteorológico es agua,
+ * y lo que sacude al avión es esa agua subiendo y bajando. El rayo es otra
+ * cosa y sale menos veces.
+ */
+const TORMENTA = icono(`
+  <path d="M6.6 13.4 a3.4 3.4 0 0 1 0.6 -6.7 a4.6 4.6 0 0 1 8.7 -1
+           a3.9 3.9 0 0 1 1.2 7.7 Z" />
+  <path d="M8 16.6 l-1.4 3.6 M12 16.6 l-1.4 3.6 M16 16.6 l-1.4 3.6"
+        fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" />
+`);
+
 const TREN = icono(`
   <path d="M12 3.4 v6.2" fill="none" stroke="currentColor"
         stroke-width="2.4" stroke-linecap="round" />
@@ -659,6 +679,7 @@ export const DIBUJOS = {
   gafas: GAFAS,
   flaps: FLAPS,
   tren: TREN,
+  tormenta: TORMENTA,
   sobrevelocidad: SOBREVELOCIDAD,
   freno: FRENO,
   salida: SALIDA,

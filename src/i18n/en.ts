@@ -331,6 +331,8 @@ export const EN: Dictionary = {
   "vuelo.pediFlaps": "Flaps down to slow",
   "palabra.flaps": "Flaps",
   "vuelo.meteElTren": "Gear up — it is slowing you down",
+  "vuelo.tormenta": "Rain ahead: go around it, don't fly through",
+  "palabra.tormenta": "Rain",
   "vuelo.sacaElTren": "Gear down",
   "palabra.tren": "Gear",
   "vuelo.despacio": "Slow down",
