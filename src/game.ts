@@ -6655,16 +6655,85 @@ export class Game {
    * justo cuando está guiando.
    */
   private senaleroAlPuestoDeLlegada(): void {
-    const puesto = this.plan?.arranque();
-    if (!puesto) return;
+    /*
+     * **Donde acaba la raya, que no es donde empezó.**
+     *
+     * Esto preguntaba por `plan.arranque()`, o sea el puesto **de salida**. Y
+     * el propio plan tiene escrito lo contrario tres mil líneas más arriba:
+     * «al volver, al puesto más cercano; al salir, al de siempre» — la ruta
+     * de vuelta iba a cruzar el aeropuerto entero para dejar el avión donde
+     * se cogió, y se cambió. O sea que el señalero esperaba en un sitio y el
+     * avión aparcaba en otro. Medido en Silvio Pettirossi: **novecientos
+     * metros**, con el avión ya en el puesto y el señalero todavía a
+     * novecientos de distancia.
+     *
+     * Contado tres veces y siempre con el mismo tono: «nadie me esperaba en
+     * Gran Canaria», «no estaba el de las lucecitas para ayudarme a aparcar,
+     * yo que le iba a dar un eurito».
+     *
+     * El final de la raya **es** el puesto al que se va, y no puede
+     * discrepar de adónde va el avión porque es lo mismo que sigue el avión.
+     * Y el tramo anterior dice por dónde entra, que es la otra mitad: el
+     * señalero se pone mirando a la llegada, y si la llegada viene por el
+     * otro lado se le da la vuelta. Sin eso se queda de espaldas y tampoco
+     * aparece, aunque esté en el sitio bueno. Ver `senalero.test.ts`.
+     */
+    const ruta = this.plan?.rutaVisible() ?? [];
+    const fin = ruta[ruta.length - 1];
+    /*
+     * **Y solo si la raya acaba en un puesto de verdad.**
+     *
+     * Al empezar a abandonar la pista, la ruta que hay puesta todavía puede
+     * ser la anterior —la que acababa en el punto de espera— y plantar ahí al
+     * señalero sería ponerlo en mitad de una calle de rodaje durante un par
+     * de fotogramas. Se comprueba contra los puestos del aeródromo, que es lo
+     * único que de verdad es un puesto.
+     */
+    if (!fin || !this.esUnPuesto(fin)) return;
+    const puesto = [fin[0], fin[1]] as const;
+    const porDonde = this.plan?.ultimoPaso() ?? null;
     const donde = this.senalero.donde;
     // Un metro de holgura: el puesto no se mueve solo, y comparar en coma
     // flotante exacta sería recolocarlo cada fotograma.
-    if (donde && Math.hypot(donde.x - puesto[0], donde.z - puesto[1]) < 1)
-      return;
-    this.senalero.colocar(puesto, this.plan?.primerPaso() ?? null, (x, z) =>
+    const enSuSitio =
+      donde !== null &&
+      Math.hypot(donde.x - puesto[0], donde.z - puesto[1]) < 1;
+    if (enSuSitio && !this.deEspaldas(puesto, porDonde)) return;
+    this.senalero.colocar(puesto, porDonde, (x, z) =>
       this.terrain.sampleHeight(x, z),
     );
+  }
+
+  /** Si ese punto del mundo es uno de los puestos de este aeródromo. */
+  private esUnPuesto(donde: readonly [number, number]): boolean {
+    const puestos = this.scenario.aerodrome?.parkingPositions;
+    if (!puestos?.length) return false;
+    // Los puestos vienen en coordenadas del aeródromo, con la Y al revés que
+    // la Z del mundo. Diez metros de holgura: la ruta acaba en el nudo del
+    // puesto, que no cae clavado en el punto de la ficha.
+    return puestos.some(
+      (p) => Math.hypot(p.xy[0] - donde[0], -p.xy[1] - donde[1]) < 10,
+    );
+  }
+
+  /**
+   * Si el señalero está mirando al revés de por donde llega el avión.
+   *
+   * El listón es generoso —se da la vuelta solo cuando el avión viene de más
+   * atrás que de costado— porque recolocarlo por dos grados le reiniciaría la
+   * postura cada fotograma, y eso se ve peor que mirar un poco torcido.
+   */
+  private deEspaldas(
+    puesto: readonly [number, number],
+    porDonde: readonly [number, number] | null,
+  ): boolean {
+    if (!porDonde) return false;
+    const vx = puesto[0] - porDonde[0];
+    const vz = puesto[1] - porDonde[1];
+    const largo = Math.hypot(vx, vz);
+    if (largo < 1) return false;
+    const mira = this.senalero.mirando;
+    return (vx / largo) * mira.x + (vz / largo) * mira.z < 0;
   }
 
   /**

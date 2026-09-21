@@ -276,6 +276,17 @@ export class Senalero {
   }
 
   /**
+   * Hacia dónde mira: la dirección **en la que viene** el avión que espera.
+   *
+   * Lo pregunta el juego para saber si hay que darle la vuelta. Un señalero
+   * colocado para una llegada por el este no vale para una por el oeste: se
+   * queda de espaldas y no aparece nunca, porque solo se le ve por delante.
+   */
+  get mirando(): { readonly x: number; readonly z: number } {
+    return this.hacia;
+  }
+
+  /**
    * Qué está señalando ahora mismo, para los bancos.
    *
    * Mirar los brazos desde fuera no se puede: son dos cajas girando. Y sin

@@ -1624,6 +1624,25 @@ export class PlanDeVuelo {
   }
 
   /**
+   * Y el último punto de la ruta que no es el propio destino.
+   *
+   * El espejo de `primerPaso`, y hace falta por el señalero: se planta
+   * **mirando por donde viene el avión**, y al salir lo único que se sabe es
+   * por dónde se va. A la vuelta suele ser lo mismo... salvo cuando no lo es,
+   * que es en cuanto el rodaje de vuelta entra al puesto por el otro lado.
+   * Ver `senaleroAlPuestoDeLlegada` en `game.ts` y `senalero.test.ts`.
+   */
+  ultimoPaso(): readonly [number, number] | null {
+    const fin = this.rutaMundo[this.rutaMundo.length - 1];
+    if (!fin) return null;
+    for (let i = this.rutaMundo.length - 1; i >= 0; i--) {
+      const p = this.rutaMundo[i]!;
+      if (Math.hypot(p[0] - fin[0], p[1] - fin[1]) > 25) return p;
+    }
+    return this.rutaMundo[0] ?? null;
+  }
+
+  /**
    * Un punto de la ruta a `adelanto` metros por delante de donde estoy.
    *
    * «Por delante» se mide **sobre la propia ruta**, no en línea recta: en una

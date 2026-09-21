@@ -2380,7 +2380,11 @@ comprobar(
   } · su puesto: ${vuelo.senalero?.donde} · lo más cerca que se estuvo: ${vuelo.senalero?.masCerca} m${
     vuelo.senalero?.visto
       ? ""
-      : ` · y no se le vio porque: ${vuelo.senalero?.porQueNo?.join(" | ") || "ni idea"}`
+      : // Los últimos, que son los de la llegada: la lista entera se llena
+        // de la salida, donde es correcto que no se le vea.
+        ` · y no se le vio porque: ${
+          vuelo.senalero?.porQueNo?.slice(-8).join(" | ") || "ni idea"
+        }`
   }`,
   "«nadie me esperaba en Gran Canaria», y no había prueba que lo mirara",
 );
