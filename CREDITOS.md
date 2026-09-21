@@ -240,10 +240,10 @@ disponible para descargar" no es una licencia.
 
 ## Las voces
 
-Las ciento veinticinco frases del juego —instructor, cantos de cabina, torre y
-el otro avión de la radio— están **generadas con ElevenLabs** en la cuenta de
-Oksigenia SL, a partir de los guiones de `docs/voces/`, que los escribe el
-propio juego.
+Las trescientas cincuenta y ocho frases del juego —instructor, comandante,
+cantos de cabina, las dos torres y el otro avión de la radio— están
+**generadas con ElevenLabs** en la cuenta de Oksigenia SL, a partir de los
+guiones de `docs/voces/`, que los escribe el propio juego.
 
 Qué hay en el repositorio y por qué:
 

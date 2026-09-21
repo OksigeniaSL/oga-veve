@@ -413,6 +413,27 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.tormenta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hay lluvia delante: rodeála, no la cruces",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.reserva",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Entraste en la reserva: buscá dónde aterrizar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.sinCombustible",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se acabó el combustible: planeá hasta la pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.sacaElTren",
     "voz": "instructor",
     "idioma": "es-PY",
