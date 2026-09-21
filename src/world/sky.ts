@@ -390,11 +390,26 @@ function nubes(escenario: Scenario): Group {
   grupo.name = "nubes";
   const lado = escenario.size * 4;
   const capas = 5;
+  /*
+   * **Cuántas veces se repite el dibujo, o sea cómo de grande es una nube.**
+   *
+   * Eran tres, y tres sobre un plano de `size × 4` son **veinticuatro
+   * kilómetros de baldosa**: en Gran Canaria, una nube del tamaño de la
+   * isla. Y no se lee como nube, se lee como una mancha rara en el cielo —
+   * «vaya sol este más raro», con la foto de un lobanillo naranja encima de
+   * la cumbre.
+   *
+   * Con doce, la baldosa baja a seis kilómetros y cada borrón del dibujo
+   * anda por el kilómetro y medio, que es lo que mide un cúmulo. No cuesta
+   * nada: misma geometría, mismos triángulos, la misma textura repetida más
+   * veces.
+   */
+  const repite = 12;
   for (let i = 0; i < capas; i++) {
     const geo = new PlaneGeometry(lado, lado);
     geo.rotateX(-Math.PI / 2);
     const textura = texturaDeNube(0xc10d + i * 977);
-    textura.repeat.set(3, 3);
+    textura.repeat.set(repite, repite);
     textura.offset.set(i * 0.17, i * 0.31);
     const malla = new Mesh(
       geo,
@@ -413,10 +428,13 @@ function nubes(escenario: Scenario): Group {
   }
   /*
    * **Cada cuánto se repite el dibujo**, que es lo que permite mover el banco
-   * sin que se note. La textura va con `repeat(3, 3)` sobre un plano de `lado`,
-   * así que el patrón es el mismo cada `lado / 3` metros. Ver `updateSky`.
+   * sin que se note. La textura va con `repeat(repite, repite)` sobre un plano
+   * de `lado`, así que el patrón es el mismo cada `lado / repite` metros. Sale
+   * de la misma constante y no de un número escrito dos veces: con los dos
+   * desacompasados, el banco salta a un sitio donde el dibujo no encaja y las
+   * nubes dan un respingo. Ver `updateSky`.
    */
-  grupo.userData.paso = lado / 3;
+  grupo.userData.paso = lado / repite;
   grupo.visible = false;
   return grupo;
 }
