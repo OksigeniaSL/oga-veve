@@ -6,5 +6,15 @@
     "lat": -22.046499,
     "lon": -60.6217
   },
-  "hitos": []
+  "hitos": [
+    {
+      "nombre": "Mariscal Estigarribia",
+      "clase": "ciudad",
+      "lat": -22.02979,
+      "lon": -60.59845,
+      "x": 2396,
+      "z": -1858,
+      "ele": null
+    }
+  ]
 }

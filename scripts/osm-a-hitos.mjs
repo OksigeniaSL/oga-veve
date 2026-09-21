@@ -142,8 +142,25 @@ const CLASES = [
   {
     clase: 'ciudad',
     consulta: '[place~"^(city|town)$"]',
-    vale: (t) => Number(t.population ?? 0) >= 5000,
+    /*
+     * **Y vale la etiqueta, no el censo.**
+     *
+     * Esto pedía cinco mil habitantes escritos en el nodo, y en media América
+     * del Sur ese campo no está puesto. Resultado: Mariscal Estigarribia
+     * —etiquetada `place=town`, o sea un pueblo de verdad, con su aeropuerto
+     * al lado— **no salía en su propio mapa**, y con ella los treinta y cinco
+     * lugares de su comarca. El escenario entero tenía cero hitos, y desde
+     * fuera eso se lee como «ahí no hay nada», que es lo que no es.
+     *
+     * La etiqueta ya hace el trabajo que hacía el número: en OpenStreetMap
+     * `town` es un pueblo y `village` es una aldea, y la consulta ya deja
+     * fuera las aldeas. El censo se queda **para ordenar** —quien lo tiene
+     * escrito sale antes— y la notoriedad desempata a los que no lo tienen,
+     * igual que en las montañas.
+     */
+    vale: () => true,
     peso: (t) => Number(t.population ?? 0),
+    porNotoriedad: true,
   },
 ];
 

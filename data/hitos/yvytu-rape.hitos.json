@@ -24,6 +24,33 @@
       "x": 32751,
       "z": 19091,
       "ele": null
+    },
+    {
+      "nombre": "Guayaibí",
+      "clase": "ciudad",
+      "lat": -24.52768,
+      "lon": -56.4067,
+      "x": -26204,
+      "z": -33618,
+      "ele": null
+    },
+    {
+      "nombre": "Yataity del Norte",
+      "clase": "ciudad",
+      "lat": -24.84593,
+      "lon": -56.35604,
+      "x": -21092,
+      "z": 1770,
+      "ele": null
+    },
+    {
+      "nombre": "Capiibary",
+      "clase": "ciudad",
+      "lat": -24.7261,
+      "lon": -56.01622,
+      "x": 13202,
+      "z": -11555,
+      "ele": null
     }
   ]
 }
