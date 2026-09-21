@@ -190,7 +190,11 @@ const POR_ENCIMA_DEL_TEJADO = 3;
 const TARDA_EL_FINAL = 0.5;
 /** Lo menos que se pasa por encima del terreno de debajo, m. */
 const SUELO_MINIMO = 150;
-import { crearCiudad } from "./world/ciudad";
+import { crearCiudad, type Ciudad } from "./world/ciudad";
+import {
+  crearLucesDeCiudad,
+  type LucesDeCiudad,
+} from "./world/luces-de-ciudad";
 import { Obstaculos } from "./world/obstaculos";
 import { MissionMarker } from "./world/mission-marker";
 import { MissionRunner } from "./missions/runner";
@@ -525,6 +529,17 @@ export interface GameOptions {
    * de enfrente no salgan de polígonos. Ver `MundoVecino`.
    */
   fotosVecinas?: readonly (Ortofoto | undefined)[];
+
+  /**
+   * La rejilla de ciudad **para las luces**, aunque no se construya nada.
+   *
+   * `scenario.ciudad` se quita cuando la fotografía fina ya enseña la ciudad
+   * —a dos metros por píxel un tejado es un tejado y nuestra malla encima es
+   * una losa gris—, y eso vale de día. **De noche la foto no enseña nada**:
+   * sin esto, los dos escenarios con ciudad extraída eran justo los dos que
+   * se quedaban a oscuras. Ver `world/luces-de-ciudad.ts`.
+   */
+  luzDeCiudad?: Ciudad;
 
   /** La del horizonte: el anillo lejano. Ver `Terrain.ponerOrtofotoLejana`. */
   ortofotoHorizonte?: Ortofoto;
@@ -1040,6 +1055,8 @@ export class Game {
    * bajo. Se montan con las de aproximación, después de moldear el terreno.
    */
   private rodadura: LucesDeRodadura | null = null;
+  /** Las luces del pueblo de noche. Ver `world/luces-de-ciudad.ts`. */
+  private lucesDeCiudad: LucesDeCiudad | null = null;
   private credits: CreditsScreen;
   private readonly creditsRoot: HTMLElement;
   /**
@@ -1876,6 +1893,33 @@ export class Game {
           this.bultos,
         ),
       );
+    }
+    /*
+     * **Y las luces del pueblo, que de noche son la ciudad entera.**
+     *
+     * Contado jugando al llegar al anochecer: «Gran Canaria sin luces». Y no
+     * era de Gran Canaria: de noche se apagaba el mundo salvo el aeropuerto,
+     * y una isla a oscuras no es una isla de noche, es un agujero.
+     *
+     * Van de `luzDeCiudad` y no de `scenario.ciudad`, y esa es la mitad del
+     * arreglo: la segunda se quita cuando la fotografía fina ya enseña la
+     * ciudad, y eso vale de día — de noche la foto no enseña nada. Sin esto,
+     * los dos escenarios con ciudad extraída eran justo los dos que se
+     * quedaban a oscuras. Ver `world/luces-de-ciudad.ts`.
+     */
+    const paraLuces = options.luzDeCiudad ?? this.scenario.ciudad;
+    if (paraLuces) {
+      this.lucesDeCiudad = crearLucesDeCiudad(
+        paraLuces,
+        (x, z) => this.terrain.sampleHeight(x, z),
+        // El mismo vacío alrededor de la pista que usa la ciudad para no
+        // construir: una farola en la zona de toma dice «aquí hay calle»
+        // donde hay pista.
+        zonaDeAeropuerto(this.scenario, 60),
+        this.scenario.waterLevel,
+      );
+      this.scene.add(this.lucesDeCiudad.grupo);
+      this.lucesDeCiudad.ponerSol(this.sky.sunDirection.y);
     }
     /*
      * **Y los edificios del aeródromo también paran a un avión.**
@@ -4953,6 +4997,7 @@ export class Game {
     // Y con ella se enciende o se apaga el balizamiento. `sunDirection.y` es
     // el seno de la altura del sol, que el cielo acaba de recalcular.
     this.rodadura?.ponerSol(this.sky.sunDirection.y);
+    this.lucesDeCiudad?.ponerSol(this.sky.sunDirection.y);
   }
 
   /**

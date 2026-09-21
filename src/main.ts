@@ -424,6 +424,11 @@ const game = new Game({
   ortofoto,
   ortofotoFina,
   ortofotoMedia,
+  /*
+   * Y la rejilla de ciudad **siempre**, aunque la foto ya la enseñe: de día
+   * sobra y de noche es lo único que hay. Ver `luzDeCiudad` en `game.ts`.
+   */
+  luzDeCiudad: ciudad,
   vecinos,
   fotosVecinas,
   ortofotoHorizonte,
