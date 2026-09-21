@@ -42,6 +42,51 @@
       "x": 23068,
       "z": -43790,
       "ele": null
+    },
+    {
+      "nombre": "Asunción",
+      "clase": "ciudad",
+      "lat": -25.28005,
+      "lon": -57.63438,
+      "x": -11582,
+      "z": 4436,
+      "ele": 89
+    },
+    {
+      "nombre": "San Lorenzo",
+      "clase": "ciudad",
+      "lat": -25.34252,
+      "lon": -57.5094,
+      "x": 989,
+      "z": 11383,
+      "ele": null
+    },
+    {
+      "nombre": "Luque",
+      "clase": "ciudad",
+      "lat": -25.26654,
+      "lon": -57.49269,
+      "x": 2669,
+      "z": 2934,
+      "ele": null
+    },
+    {
+      "nombre": "Villa Elisa",
+      "clase": "ciudad",
+      "lat": -25.37152,
+      "lon": -57.58983,
+      "x": -7101,
+      "z": 14607,
+      "ele": 116
+    },
+    {
+      "nombre": "Itauguá",
+      "clase": "ciudad",
+      "lat": -25.39473,
+      "lon": -57.35329,
+      "x": 16690,
+      "z": 17188,
+      "ele": 170
     }
   ]
 }
