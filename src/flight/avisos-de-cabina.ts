@@ -130,7 +130,7 @@ export interface Estado {
    */
   readonly trenMal: boolean;
   /**
-   * Se está entrando en la reserva. Ver `comoVaElCombustible`.
+   * Se está entrando en la reserva. Ver `comoVaElDeposito`.
    *
    * Ámbar y no rojo a propósito: no dice «se acabó», dice «estás gastando lo
    * que no era para gastar», que es el aviso que todavía da tiempo a decidir.

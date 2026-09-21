@@ -49,9 +49,8 @@
   import { aircraftById } from "/src/flight/aircraft.ts";
   import {
     cargaParaLaRuta,
-    comoVaElCombustible,
+    comoVaElDeposito,
     loQueCabe,
-    quemaPorSegundo,
     reservaEnKilos,
   } from "/src/flight/combustible.ts";
 
@@ -147,12 +146,11 @@
             // que un vuelo de verdad está casi siempre.
             const kilos =
               reserva + (cargaParaLaRuta(ficha, 300_000) - reserva) * 0.5;
-            const quema = quemaPorSegundo(ficha, ficha.maxThrust / 3);
             return {
               kilos,
               cabe: loQueCabe(ficha),
               reserva: reservaEnKilos(ficha),
-              estado: comoVaElCombustible(kilos, quema),
+              estado: comoVaElDeposito(ficha, kilos),
             };
           })(),
           ...extra,

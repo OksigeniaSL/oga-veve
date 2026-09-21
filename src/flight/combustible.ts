@@ -100,12 +100,23 @@ export function loQueCabe(avion: AircraftConfig): number {
 /**
  * Cuánto se tarda en recorrer una distancia, en segundos, a su crucero.
  *
- * Con un suelo: un vuelo nunca es solo crucero. Rodar, subir, dar la vuelta
- * al circuito y aproximar son minutos que no cuentan kilómetros y sí queman.
+ * Con un suelo, porque **un vuelo nunca es solo crucero**: rodar hasta la
+ * cabecera, subir, dar la vuelta al circuito y aproximar son minutos que no
+ * cuentan un metro de ruta y sí queman. En un plan de verdad eso son tres
+ * partidas —combustible de rodaje, de contingencia y de aproximación— y aquí
+ * se juntan en una porque lo que enseña es que **existen**, no cómo se
+ * llaman.
+ *
+ * Media hora, y no los diez minutos que había: con diez, una lección de
+ * circuito salía con setenta minutos de autonomía y el aviso de reserva
+ * entraba antes de la tercera vuelta. Media hora es además lo que tarda de
+ * verdad un reactor en subir a crucero.
  */
+const MANIOBRA_SEGUNDOS = 30 * 60;
+
 function cuantoDura(avion: AircraftConfig, metros: number): number {
   const crucero = Math.max(20, avion.cruiseSpeed);
-  return metros / crucero + 600;
+  return metros / crucero + MANIOBRA_SEGUNDOS;
 }
 
 /**
@@ -173,13 +184,32 @@ export function loQueQueda(kilos: number, porSegundo: number): number {
  * gastar lo que no era para gastar**. Es el aviso que da tiempo a decidir, y
  * por eso es ámbar y no rojo — el rojo es para cuando ya no quedan ni los
  * cuarenta y cinco minutos de ley.
+ *
+ * ## Y se mide en kilos, no en minutos
+ *
+ * Que es lo contrario de lo que parece, porque la reserva **es** minutos. La
+ * primera versión preguntaba cuánto vuelo queda al consumo de ahora, que es
+ * la definición de manual, y el banco la tumbó en el primer vuelo: con el
+ * motor a fondo en la carrera de despegue se quema tres veces más que en
+ * crucero, así que la autonomía instantánea de cualquier avión cae por debajo
+ * de los cuarenta y cinco minutos **durante el despegue**, y el aviso saltaba
+ * en todos los vuelos a los veinte segundos de empezar.
+ *
+ * No era un fallo del número: era la pregunta. Un despacho de vuelo no dice
+ * «cuarenta y cinco minutos», dice los kilos que son cuarenta y cinco minutos
+ * al consumo de crucero, y ese número se decide en tierra y ya no se toca. Se
+ * compara contra eso. De paso, la barra del instrumento y la raya de la
+ * reserva pasan a decir lo mismo, que es lo mínimo que se le pide a un
+ * instrumento.
  */
-export function comoVaElCombustible(
+export function comoVaElDeposito(
+  avion: AircraftConfig,
   kilos: number,
-  porSegundo: number,
 ): "bien" | "reserva" | "poco" {
-  const quedan = loQueQueda(kilos, porSegundo);
-  if (quedan > RESERVA_SEGUNDOS) return "bien";
-  if (quedan > RESERVA_SEGUNDOS / 3) return "reserva";
+  const reserva = reservaEnKilos(avion);
+  if (kilos > reserva) return "bien";
+  // Un tercio de la reserva: quince minutos. Por debajo ya no hay decisión que
+  // tomar, hay que estar aterrizando.
+  if (kilos > reserva / 3) return "reserva";
   return "poco";
 }

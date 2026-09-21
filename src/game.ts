@@ -318,7 +318,7 @@ import { patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren, seVuelveADecir } from "./flight/tren";
 import {
   cargaParaLaRuta,
-  comoVaElCombustible,
+  comoVaElDeposito,
   loQueCabe,
   quemaPorSegundo,
   reservaEnKilos,
@@ -3190,8 +3190,6 @@ export class Game {
      */
     if (this.flight.state.onGround) {
       this.avisandoDelBulto = 0;
-    // Y el depósito, lleno para lo que se va a volar hoy. Ver `repostar`.
-    this.repostar();
       this.hud.senal.caducar("edificio");
       this.hud.senal.caducar("terreno");
       // Y la celebración de la frustrada, que con ruedas en el suelo ya no
@@ -4175,6 +4173,8 @@ export class Game {
     this.dichoDeBanda = null;
     this.terrenoDicho = null;
     this.avisandoDelBulto = 0;
+    // Y el depósito, lleno para lo que se va a volar hoy. Ver `repostar`.
+    this.repostar();
     /*
      * Y lo de arriba va **antes** de la bifurcación, que es la otra mitad del
      * mismo problema: hay dos caminos de reinicio —éste y `reiniciarEnFinal`,
@@ -5820,7 +5820,7 @@ export class Game {
       // Y el depósito, que es la única luz de este panel que se enciende
       // sola con el tiempo: las demás las enciende algo que se hizo.
       pocoCombustible:
-        comoVaElCombustible(this.combustible, this.quemaDeAhora) !== "bien",
+        comoVaElDeposito(this.aircraft, this.combustible) !== "bien",
       frenoPuesto:
         this.input.controls.brakes > 0.5 &&
         this.input.controls.throttle > 0.25,
@@ -6740,7 +6740,7 @@ export class Game {
      * acelera decide peor. La luz del panel se queda encendida mientras dure,
      * que es lo que hace una luz. Ver `flight/avisos-de-cabina.ts`.
      */
-    const como = comoVaElCombustible(this.combustible, this.quemaDeAhora);
+    const como = comoVaElDeposito(this.aircraft, this.combustible);
     if (como !== "bien" && !this.avisadoDeLaReserva && antes > 0) {
       this.avisadoDeLaReserva = true;
       const dicho = this.avisoCon("vuelo.reserva", "palabra.reserva");
@@ -6782,7 +6782,7 @@ export class Game {
       kilos: this.combustible,
       cabe: loQueCabe(this.aircraft),
       reserva: reservaEnKilos(this.aircraft),
-      estado: comoVaElCombustible(this.combustible, this.quemaDeAhora),
+      estado: comoVaElDeposito(this.aircraft, this.combustible),
     };
   }
 
@@ -6790,18 +6790,22 @@ export class Game {
    * Llenar para este vuelo: lo de la ruta más la reserva.
    *
    * Lo de la ruta sale del destino **más lejano** que tenga hoy este
-   * escenario, no del que se acabe elegir: desde El Hierro se puede salir
+   * escenario, no del que se acabe de elegir: desde El Hierro se puede salir
    * hacia La Gomera y cambiar de idea en el aire, y un avión que sale con lo
    * justo para lo que creía que iba a hacer es un avión que aprendió mal.
    * Cargar para la peor de las salidas posibles es lo que hace de verdad un
    * despacho de vuelo.
+   *
+   * Y de ida y vuelta, que es la otra mitad: aquí no hay camión de combustible
+   * en el otro campo. Quien sale de Tenerife Norte a La Palma tiene que poder
+   * volver, y cargar solo la ida sería enseñar a quedarse tirado.
    */
   private repostar(): void {
     const casa = this.scenario.runway;
     let lejos = 0;
     for (const v of this.vecinos)
       lejos = Math.max(lejos, Math.hypot(v.pista.x - casa.x, v.pista.z - casa.z));
-    this.combustible = cargaParaLaRuta(this.aircraft, lejos);
+    this.combustible = cargaParaLaRuta(this.aircraft, lejos * 2);
     this.quemaDeAhora = 0;
     this.avisadoDeLaReserva = false;
   }

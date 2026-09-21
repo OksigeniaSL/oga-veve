@@ -2293,9 +2293,9 @@ comprobar(
      * comentarios de rodaje y lo que se busca —qué pasó con la autorización—
      * ya se salió por arriba. Se filtra a lo de torre y se enseña entero.
      */
-    (vuelo.descartes?.some((d) => d.startsWith("torre."))
+    (vuelo.descartes?.some((d) => / torre\./.test(` ${d}`))
       ? ` · de la torre se cayeron: ${vuelo.descartes
-          .filter((d) => d.startsWith("torre."))
+          .filter((d) => / torre\./.test(` ${d}`))
           .join(" | ")}`
       : "") +
     (vuelo.descartes?.length

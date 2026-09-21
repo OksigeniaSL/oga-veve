@@ -54,6 +54,13 @@
  * pista» dicho cuando ya has corregido no es tarde, es mentira. Una cola que
  * lo suelta todo es peor que cortar.
  *
+ * **Salvo lo que la torre autoriza**, que no caduca igual. Una autorización no
+ * describe un instante: describe un permiso, y un permiso sigue siendo verdad
+ * mientras nadie lo retire. «Cleared for take-off» dicho ocho segundos tarde
+ * sigue siendo la autorización de despegar; «cien pies» dicho ocho segundos
+ * tarde es una mentira sobre dónde estás. Son dos clases de frase y tenían el
+ * mismo reloj. Ver `CADUCA_LA_ORDEN`.
+ *
  * ## Esto no sabe hablar
  *
  * No construye frases ni elige voces: recibe una función que habla y la llama
@@ -106,6 +113,28 @@ const PESO: Record<Urgencia, number> = {
 export const CADUCA = 4000;
 
 /**
+ * Y lo que la torre autoriza aguanta el triple. Ver la cabecera.
+ *
+ * Doce segundos. Salió de medir: en Guaraní, que es el campo con más tráfico
+ * del juego, la secuencia de salida entera —esperá, alineá, autorizado—
+ * llegaba a la boca en cinco segundos y se caía por caducidad antes de que la
+ * frase anterior terminara. Lo que se veía era una torre muda en el
+ * aeropuerto más ocupado, que es exactamente al revés.
+ */
+export const CADUCA_LA_ORDEN = 12000;
+
+/**
+ * Cuánto aguanta esperando esta frase, según lo que sea.
+ *
+ * Lo decide la clave y no quien la pide, por el mismo motivo por el que la
+ * escalera decide por el texto y no por quien escribe: es lo único que se
+ * puede aplicar igual en los tres sitios que hablan.
+ */
+export function cuantoAguanta(clave: string | undefined): number {
+  return clave?.startsWith("torre.") ? CADUCA_LA_ORDEN : CADUCA;
+}
+
+/**
  * Cuántas frases pueden esperar turno a la vez.
  *
  * Tres. Había **una**, y entre dos de igual peso ganaba la última: en una
@@ -113,11 +142,20 @@ export const CADUCA = 4000;
  * que se supiera cuál. Medido en el banco, el detector dispara las dos y de la
  * boca no sale ninguna.
  *
- * Tres son las que caben en el hueco que deja una frase antes de que la
- * siguiente deje de describir lo que pasa —para eso está `CADUCA`—, y bastante
- * menos de las que harían falta para que esto sonara a parrafada.
+ * Y tres se quedaron cortas en cuanto la torre habló de verdad. Un cambio de
+ * la lámpara son **dos frases** —lo que hay que hacer, y cómo se llama eso en
+ * una radio— así que dos cambios seguidos son cuatro, y en una salida los dos
+ * cambios van pegados: esperá, y treinta segundos después autorizado. Con tres
+ * plazas la cuarta se echaba a sí misma, y la que se caía era siempre la
+ * última: **el «cleared for take-off» no se oyó en Guaraní en ningún vuelo**.
+ * La cola tiene que poder sostener un intercambio entero.
+ *
+ * Cuatro siguen siendo las que caben en el hueco que deja una frase antes de
+ * que la siguiente deje de describir lo que pasa —para eso está `CADUCA`, que
+ * sigue tirando a los cuatro segundos todo lo que no sea una autorización— y
+ * bastante menos de las que harían falta para que esto sonara a parrafada.
  */
-const PLAZAS_DE_ESPERA = 3;
+const PLAZAS_DE_ESPERA = 4;
 
 /**
  * Las frases que **se sustituyen entre sí** en vez de hacer cola.
@@ -477,7 +515,7 @@ export class Boca {
     const ahora = this.reloj.ahora();
     // Lo caducado no se dice: contar el pasado es peor que callarse.
     for (let i = this.cola.length - 1; i >= 0; i--) {
-      if (ahora - this.cola[i]!.desde > CADUCA) {
+      if (ahora - this.cola[i]!.desde > cuantoAguanta(this.cola[i]!.clave)) {
         this.apuntarDescarte(this.cola[i]!.clave, "caducó esperando");
         this.cola.splice(i, 1);
       }
@@ -520,7 +558,18 @@ export class Boca {
   readonly habladas: { t: number; clave: string }[] = [];
 
   private apuntarDescarte(clave: string | undefined, porque: string): void {
-    this.descartadas.push(`${clave ?? "sin clave"}: ${porque}`);
+    /*
+     * **Con la hora**, que es lo que faltaba para poder leerlo.
+     *
+     * Una lista de descartes sin reloj dice qué se cayó y no dice nada de por
+     * qué: tres frases de torre perdidas pueden ser tres momentos distintos
+     * del vuelo o una ráfaga de medio segundo, y son dos averías que no se
+     * parecen en nada. Puesta la hora al lado de `habladas`, que ya la lleva,
+     * la cola se lee como lo que es — una conversación.
+     */
+    const cero = this.habladas[0]?.t ?? this.reloj.ahora();
+    const t = ((this.reloj.ahora() - cero) / 1000).toFixed(1);
+    this.descartadas.push(`${t}s ${clave ?? "sin clave"}: ${porque}`);
     if (this.descartadas.length > 200) this.descartadas.shift();
   }
 

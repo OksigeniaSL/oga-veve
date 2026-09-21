@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cargaParaLaRuta,
-  comoVaElCombustible,
+  comoVaElDeposito,
   loQueCabe,
   loQueQueda,
   quemaPorSegundo,
@@ -85,29 +85,46 @@ describe("lo que se carga para la ruta", () => {
 });
 
 describe("el aviso", () => {
-  const crucero = quemaPorSegundo(YVAGA, YVAGA.maxThrust / 3);
-
   it("con el viaje entero por delante, no dice nada", () => {
-    expect(comoVaElCombustible(cargaParaLaRuta(YVAGA, 200_000), crucero)).toBe(
+    expect(comoVaElDeposito(YVAGA, cargaParaLaRuta(YVAGA, 200_000))).toBe(
       "bien",
     );
   });
 
   it("y salta al empezar a gastar la reserva, no al acabarse", () => {
-    // Justo por debajo de los cuarenta y cinco minutos.
-    const kilos = crucero * (RESERVA_SEGUNDOS - 60);
-    expect(comoVaElCombustible(kilos, crucero)).toBe("reserva");
+    expect(comoVaElDeposito(YVAGA, reservaEnKilos(YVAGA) * 0.9)).toBe(
+      "reserva",
+    );
   });
 
   it("y se pone serio cuando ya no quedan ni esos", () => {
-    expect(comoVaElCombustible(crucero * 300, crucero)).toBe("poco");
+    expect(comoVaElDeposito(YVAGA, reservaEnKilos(YVAGA) * 0.2)).toBe("poco");
   });
 
-  it("y con los motores parados no queda «poco»: queda todo", () => {
+  /*
+   * **Y no salta despegando**, que es lo que tumbó la primera versión.
+   *
+   * Medía la autonomía al consumo de ahora, y con el motor a fondo la
+   * autonomía de cualquier avión se cae por debajo de los cuarenta y cinco
+   * minutos: el aviso sonaba en todos los despegues, con el depósito recién
+   * llenado. Medido en el banco de Guaraní. Ver `comoVaElDeposito`.
+   */
+  it("y no salta con el motor a fondo y el depósito lleno", () => {
+    for (const a of AIRCRAFT) {
+      const lleno = cargaParaLaRuta(a, 40_000);
+      expect(comoVaElDeposito(a, lleno)).toBe("bien");
+      // Y que la trampa era de verdad: al consumo de despegue, ese mismo
+      // depósito da para bastante menos de los cuarenta y cinco minutos.
+      const aFondo = quemaPorSegundo(a, a.maxThrust);
+      expect(loQueQueda(lleno, aFondo)).toBeLessThan(RESERVA_SEGUNDOS);
+    }
+  });
+
+  it("y con los motores parados el reloj no sirve de nada: por eso no se usa", () => {
     expect(loQueQueda(1000, 0)).toBe(Infinity);
-    expect(comoVaElCombustible(1000, 0)).toBe("bien");
   });
 });
+
 
 /*
  * ── La raya del instrumento ──────────────────────────────────────────────

@@ -555,6 +555,17 @@ describe("y la megafonía va por otra vía", () => {
  * barrido, cinco escenarios fallando la misma prueba y siempre así:
  * `torre.clearedTakeoff: no cabía en la cola`.
  */
+/**
+ * Un descarte sin su sello de hora.
+ *
+ * `apuntarDescarte` antepone el segundo del vuelo —«12.4s torre.verde: …»—
+ * porque una lista de descartes sin reloj no dice si tres frases perdidas son
+ * tres momentos del vuelo o una ráfaga de medio segundo. Aquí lo que se clava
+ * es qué se cayó y por qué; el cuándo lo lee quien mira un banco.
+ */
+const sinHora = (d: string | undefined): string =>
+  (d ?? "").replace(/^[\d.]+s /, "");
+
 describe("qué se cae cuando la cola se llena", () => {
   /** Ocupa la boca y llena la cola con lo que se diga. */
   function conLaColaLlena(...claves: string[]) {
@@ -566,11 +577,11 @@ describe("qué se cae cuando la cola se llena", () => {
   }
 
   it("se queda la que llegó primero, no la última", () => {
-    // Tres plazas: la cuarta no cabe. Antes se caía «torre», que era la
+    // Cuatro plazas: la quinta no cabe. Antes se caía «torre», que era la
     // primera en llegar; ahora se cae la que llega con la cola llena.
-    const { b } = conLaColaLlena("torre", "despacio", "alto", "tarde");
-    expect(b.cuantasEsperan).toBe(3);
-    expect(b.descartadas.at(-1)).toBe("tarde: no cabía en la cola");
+    const { b } = conLaColaLlena("torre", "despacio", "alto", "otra", "tarde");
+    expect(b.cuantasEsperan).toBe(4);
+    expect(sinHora(b.descartadas.at(-1))).toBe("tarde: no cabía en la cola");
   });
 
   it("y se dicen en orden de llegada", () => {
@@ -589,8 +600,9 @@ describe("qué se cae cuando la cola se llena", () => {
     b.pedir("normal", frase("uno"), "uno");
     b.pedir("normal", frase("dos"), "dos");
     b.pedir("normal", frase("tres"), "tres");
-    expect(b.descartadas.at(-1)).toBe("elogio: no cabía en la cola");
-    expect(b.cuantasEsperan).toBe(3);
+    b.pedir("normal", frase("cuatro"), "cuatro");
+    expect(sinHora(b.descartadas.at(-1))).toBe("elogio: no cabía en la cola");
+    expect(b.cuantasEsperan).toBe(4);
   });
 });
 
@@ -612,8 +624,11 @@ describe("lo que manda la torre", () => {
     b.pedir("normal", frase("uno"), "uno");
     b.pedir("normal", frase("dos"), "dos");
     b.pedir("normal", frase("tres"), "tres");
-    expect(b.descartadas.some((d) => d.startsWith("autorizado"))).toBe(false);
-    expect(b.descartadas.at(-1)).toBe("tres: no cabía en la cola");
+    b.pedir("normal", frase("cuatro"), "cuatro");
+    expect(b.descartadas.some((d) => sinHora(d).startsWith("autorizado"))).toBe(
+      false,
+    );
+    expect(sinHora(b.descartadas.at(-1))).toBe("cuatro: no cabía en la cola");
   });
 
   it("y se dice antes que los comentarios que ya esperaban", () => {

@@ -940,10 +940,12 @@ export class Tablero {
    * **este** avión y no se mueve: es la meta, y una meta que se desplaza no
    * enseña nada. Lo que se mueve es la barra. Ver `reservaEnKilos`.
    *
-   * El color sí sale del consumo de ahora —`comoVaElCombustible`— porque la
-   * reserva se mide en minutos y los minutos dependen del acelerador: con el
-   * gas a fondo se entra en ella antes. Que las dos cosas coincidan en crucero
-   * no es casualidad; es de donde sale el número.
+   * Y el color dice lo mismo que la raya, porque sale del mismo número. Fue
+   * al revés un rato —el color por la autonomía de ahora, la raya por la de
+   * crucero— y el banco enseñó por qué no: con el motor a fondo despegando, la
+   * autonomía instantánea de cualquier avión baja de los cuarenta y cinco
+   * minutos, y el aviso saltaba en todos los despegues. Ver
+   * `comoVaElDeposito`.
    */
   private deposito(raiz: SVGElement, d: DatosDelTablero): void {
     const g = raiz.querySelector<SVGElement>('[data-cristal="combustible"]');
