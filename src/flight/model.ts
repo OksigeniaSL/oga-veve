@@ -222,6 +222,18 @@ export interface FlightModel {
    */
   setOnRunway(enPista: boolean): void;
   /**
+   * El empuje que están dando los motores ahora mismo, en newtons.
+   *
+   * Lo pregunta el combustible, y tiene que preguntarlo **al modelo** y no
+   * calcularlo por su cuenta: el empuje de un motor cae con la altura y con
+   * la velocidad, y eso es justo lo que hace que volar alto salga a cuenta.
+   * Repetir esa cuenta fuera sería tener dos, y el día que una cambiara, el
+   * indicador de combustible empezaría a mentir sin que nadie se enterara.
+   *
+   * Ver `flight/combustible.ts`.
+   */
+  empujeAhora(): number;
+  /**
    * Rompe el avión. Lo llama el juego cuando se ha metido en un edificio.
    *
    * Va aquí y por el mismo motivo que `setOnRunway`: `state` es de solo

@@ -29,6 +29,7 @@
  */
 
 import { Euler, Quaternion, Vector3 } from "three";
+import { airDensity } from "./atmosphere";
 import { loQueCambiaElTren } from "./tren";
 import { MAX_PASO } from "./fdm";
 import type {
@@ -300,6 +301,24 @@ export class ArcadeFlightModel implements FlightModel {
       touchdownSinkRate: 0,
     };
   }
+
+  /**
+   * El empuje que se está dando, en newtons.
+   *
+   * Este modelo no calcula fuerzas —persigue una velocidad objetivo— así que
+   * no hay un empuje que devolver: se reconstruye del gas y de la densidad,
+   * que es de donde saldría. Es una estimación y se dice; lo que tiene que
+   * cumplir es que gastar dependa del gas y de la altura, que es la lección.
+   * Ver `flight/combustible.ts`.
+   */
+  empujeAhora(): number {
+    if (!this.ultimoGas) return 0;
+    const densidad = airDensity(this.state.position.y) / airDensity(0);
+    return this.ultimoGas * this.aircraft.maxThrust * Math.pow(densidad, 0.7);
+  }
+
+  /** El gas del último paso, para `empujeAhora`. */
+  private ultimoGas = 0;
 
   setOnRunway(enPista: boolean): void {
     this.state.onRunway = enPista;
@@ -598,6 +617,7 @@ export class ArcadeFlightModel implements FlightModel {
       ? 0
       : this.aircraft.approachSpeed * MINIMA_DE_VUELO * masSustentacion;
     const gas = controls.engineOn ? controls.throttle : 0;
+    this.ultimoGas = gas;
     const wanted = (floor + gas * (cruise - floor)) * masResistencia;
     // Constante de tiempo de unos cinco segundos y medio. Con la primera,
     // mucho más rápida, el avión llegaba a velocidad de vuelo en menos de dos

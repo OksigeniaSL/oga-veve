@@ -332,6 +332,13 @@ export class CoefficientFlightModel implements FlightModel {
     this.superficie = superficie;
   }
 
+  /** El último empuje calculado, para el combustible. Ver `empujeAhora`. */
+  private ultimoEmpuje = 0;
+
+  empujeAhora(): number {
+    return this.ultimoEmpuje;
+  }
+
   setOnRunway(enPista: boolean): void {
     this.state.onRunway = enPista;
   }
@@ -616,6 +623,9 @@ export class CoefficientFlightModel implements FlightModel {
       ac.maxThrust *
       Math.pow(densityRatio, 0.7) *
       speedFactor;
+    // Se guarda para el combustible, que gasta por el empuje que se da y no
+    // por el gas que se pide. Ver `empujeAhora` en `model.ts`.
+    this.ultimoEmpuje = thrust;
 
     const sinA = Math.sin(s.alpha);
     const cosA = Math.cos(s.alpha);
