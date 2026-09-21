@@ -21,53 +21,257 @@
     "comandante.llegada.chaco": {
       "ms": 6507
     },
+    "comandante.llegada.chaco~2": {
+      "ms": 8007
+    },
+    "comandante.llegada.chaco~3": {
+      "ms": 6407
+    },
+    "comandante.llegada.chaco~4": {
+      "ms": 6407
+    },
+    "comandante.llegada.chaco~5": {
+      "ms": 7807
+    },
     "comandante.llegada.cuatro-vientos": {
       "ms": 9107
+    },
+    "comandante.llegada.cuatro-vientos~2": {
+      "ms": 6907
+    },
+    "comandante.llegada.cuatro-vientos~3": {
+      "ms": 7407
+    },
+    "comandante.llegada.cuatro-vientos~4": {
+      "ms": 8107
+    },
+    "comandante.llegada.cuatro-vientos~5": {
+      "ms": 8707
     },
     "comandante.llegada.el-hierro": {
       "ms": 8407
     },
+    "comandante.llegada.el-hierro~2": {
+      "ms": 8007
+    },
+    "comandante.llegada.el-hierro~3": {
+      "ms": 7207
+    },
+    "comandante.llegada.el-hierro~4": {
+      "ms": 7307
+    },
+    "comandante.llegada.el-hierro~5": {
+      "ms": 8107
+    },
     "comandante.llegada.encarnacion": {
       "ms": 7707
+    },
+    "comandante.llegada.encarnacion~2": {
+      "ms": 8607
+    },
+    "comandante.llegada.encarnacion~3": {
+      "ms": 8607
+    },
+    "comandante.llegada.encarnacion~4": {
+      "ms": 6507
+    },
+    "comandante.llegada.encarnacion~5": {
+      "ms": 9607
     },
     "comandante.llegada.estigarribia": {
       "ms": 7507
     },
+    "comandante.llegada.estigarribia~2": {
+      "ms": 8207
+    },
+    "comandante.llegada.estigarribia~3": {
+      "ms": 8307
+    },
+    "comandante.llegada.estigarribia~4": {
+      "ms": 6607
+    },
+    "comandante.llegada.estigarribia~5": {
+      "ms": 8107
+    },
     "comandante.llegada.fuerteventura": {
       "ms": 6507
+    },
+    "comandante.llegada.fuerteventura~2": {
+      "ms": 8107
+    },
+    "comandante.llegada.fuerteventura~3": {
+      "ms": 7507
+    },
+    "comandante.llegada.fuerteventura~4": {
+      "ms": 5807
+    },
+    "comandante.llegada.fuerteventura~5": {
+      "ms": 6907
     },
     "comandante.llegada.gran-canaria": {
       "ms": 7707
     },
+    "comandante.llegada.gran-canaria~2": {
+      "ms": 8507
+    },
+    "comandante.llegada.gran-canaria~3": {
+      "ms": 7707
+    },
+    "comandante.llegada.gran-canaria~4": {
+      "ms": 7207
+    },
+    "comandante.llegada.gran-canaria~5": {
+      "ms": 8207
+    },
     "comandante.llegada.guarani": {
       "ms": 8407
+    },
+    "comandante.llegada.guarani~2": {
+      "ms": 8607
+    },
+    "comandante.llegada.guarani~3": {
+      "ms": 7607
+    },
+    "comandante.llegada.guarani~4": {
+      "ms": 7107
+    },
+    "comandante.llegada.guarani~5": {
+      "ms": 8207
     },
     "comandante.llegada.la-gomera": {
       "ms": 6907
     },
+    "comandante.llegada.la-gomera~2": {
+      "ms": 9607
+    },
+    "comandante.llegada.la-gomera~3": {
+      "ms": 8407
+    },
+    "comandante.llegada.la-gomera~4": {
+      "ms": 6907
+    },
+    "comandante.llegada.la-gomera~5": {
+      "ms": 7007
+    },
     "comandante.llegada.la-palma": {
       "ms": 8907
+    },
+    "comandante.llegada.la-palma~2": {
+      "ms": 8807
+    },
+    "comandante.llegada.la-palma~3": {
+      "ms": 8007
+    },
+    "comandante.llegada.la-palma~4": {
+      "ms": 8307
+    },
+    "comandante.llegada.la-palma~5": {
+      "ms": 6507
     },
     "comandante.llegada.lanzarote": {
       "ms": 8807
     },
+    "comandante.llegada.lanzarote~2": {
+      "ms": 10507
+    },
+    "comandante.llegada.lanzarote~3": {
+      "ms": 6807
+    },
+    "comandante.llegada.lanzarote~4": {
+      "ms": 7007
+    },
+    "comandante.llegada.lanzarote~5": {
+      "ms": 9107
+    },
     "comandante.llegada.pedro-juan": {
       "ms": 8307
+    },
+    "comandante.llegada.pedro-juan~2": {
+      "ms": 8307
+    },
+    "comandante.llegada.pedro-juan~3": {
+      "ms": 7807
+    },
+    "comandante.llegada.pedro-juan~4": {
+      "ms": 6607
+    },
+    "comandante.llegada.pedro-juan~5": {
+      "ms": 8207
     },
     "comandante.llegada.pettirossi": {
       "ms": 12007
     },
+    "comandante.llegada.pettirossi~2": {
+      "ms": 9007
+    },
+    "comandante.llegada.pettirossi~3": {
+      "ms": 7307
+    },
+    "comandante.llegada.pettirossi~4": {
+      "ms": 8407
+    },
+    "comandante.llegada.pettirossi~5": {
+      "ms": 7507
+    },
     "comandante.llegada.tenerife-norte": {
       "ms": 9407
+    },
+    "comandante.llegada.tenerife-norte~2": {
+      "ms": 7707
+    },
+    "comandante.llegada.tenerife-norte~3": {
+      "ms": 7707
+    },
+    "comandante.llegada.tenerife-norte~4": {
+      "ms": 9207
+    },
+    "comandante.llegada.tenerife-norte~5": {
+      "ms": 6907
     },
     "comandante.llegada.tenerife-sur": {
       "ms": 8807
     },
+    "comandante.llegada.tenerife-sur~2": {
+      "ms": 8407
+    },
+    "comandante.llegada.tenerife-sur~3": {
+      "ms": 8607
+    },
+    "comandante.llegada.tenerife-sur~4": {
+      "ms": 8707
+    },
+    "comandante.llegada.tenerife-sur~5": {
+      "ms": 5907
+    },
     "comandante.llegada.valle-cordillera": {
       "ms": 7607
     },
+    "comandante.llegada.valle-cordillera~2": {
+      "ms": 7807
+    },
+    "comandante.llegada.valle-cordillera~3": {
+      "ms": 5607
+    },
+    "comandante.llegada.valle-cordillera~4": {
+      "ms": 6707
+    },
+    "comandante.llegada.valle-cordillera~5": {
+      "ms": 7307
+    },
     "comandante.llegada.yvytu-rape": {
       "ms": 7807
+    },
+    "comandante.llegada.yvytu-rape~2": {
+      "ms": 7207
+    },
+    "comandante.llegada.yvytu-rape~3": {
+      "ms": 6507
+    },
+    "comandante.llegada.yvytu-rape~4": {
+      "ms": 6907
+    },
+    "comandante.llegada.yvytu-rape~5": {
+      "ms": 8107
     }
   },
   "recetas": {
@@ -89,53 +293,257 @@
     "comandante.llegada.chaco": [
       "comandante.llegada.chaco"
     ],
+    "comandante.llegada.chaco~2": [
+      "comandante.llegada.chaco~2"
+    ],
+    "comandante.llegada.chaco~3": [
+      "comandante.llegada.chaco~3"
+    ],
+    "comandante.llegada.chaco~4": [
+      "comandante.llegada.chaco~4"
+    ],
+    "comandante.llegada.chaco~5": [
+      "comandante.llegada.chaco~5"
+    ],
     "comandante.llegada.cuatro-vientos": [
       "comandante.llegada.cuatro-vientos"
+    ],
+    "comandante.llegada.cuatro-vientos~2": [
+      "comandante.llegada.cuatro-vientos~2"
+    ],
+    "comandante.llegada.cuatro-vientos~3": [
+      "comandante.llegada.cuatro-vientos~3"
+    ],
+    "comandante.llegada.cuatro-vientos~4": [
+      "comandante.llegada.cuatro-vientos~4"
+    ],
+    "comandante.llegada.cuatro-vientos~5": [
+      "comandante.llegada.cuatro-vientos~5"
     ],
     "comandante.llegada.el-hierro": [
       "comandante.llegada.el-hierro"
     ],
+    "comandante.llegada.el-hierro~2": [
+      "comandante.llegada.el-hierro~2"
+    ],
+    "comandante.llegada.el-hierro~3": [
+      "comandante.llegada.el-hierro~3"
+    ],
+    "comandante.llegada.el-hierro~4": [
+      "comandante.llegada.el-hierro~4"
+    ],
+    "comandante.llegada.el-hierro~5": [
+      "comandante.llegada.el-hierro~5"
+    ],
     "comandante.llegada.encarnacion": [
       "comandante.llegada.encarnacion"
+    ],
+    "comandante.llegada.encarnacion~2": [
+      "comandante.llegada.encarnacion~2"
+    ],
+    "comandante.llegada.encarnacion~3": [
+      "comandante.llegada.encarnacion~3"
+    ],
+    "comandante.llegada.encarnacion~4": [
+      "comandante.llegada.encarnacion~4"
+    ],
+    "comandante.llegada.encarnacion~5": [
+      "comandante.llegada.encarnacion~5"
     ],
     "comandante.llegada.estigarribia": [
       "comandante.llegada.estigarribia"
     ],
+    "comandante.llegada.estigarribia~2": [
+      "comandante.llegada.estigarribia~2"
+    ],
+    "comandante.llegada.estigarribia~3": [
+      "comandante.llegada.estigarribia~3"
+    ],
+    "comandante.llegada.estigarribia~4": [
+      "comandante.llegada.estigarribia~4"
+    ],
+    "comandante.llegada.estigarribia~5": [
+      "comandante.llegada.estigarribia~5"
+    ],
     "comandante.llegada.fuerteventura": [
       "comandante.llegada.fuerteventura"
+    ],
+    "comandante.llegada.fuerteventura~2": [
+      "comandante.llegada.fuerteventura~2"
+    ],
+    "comandante.llegada.fuerteventura~3": [
+      "comandante.llegada.fuerteventura~3"
+    ],
+    "comandante.llegada.fuerteventura~4": [
+      "comandante.llegada.fuerteventura~4"
+    ],
+    "comandante.llegada.fuerteventura~5": [
+      "comandante.llegada.fuerteventura~5"
     ],
     "comandante.llegada.gran-canaria": [
       "comandante.llegada.gran-canaria"
     ],
+    "comandante.llegada.gran-canaria~2": [
+      "comandante.llegada.gran-canaria~2"
+    ],
+    "comandante.llegada.gran-canaria~3": [
+      "comandante.llegada.gran-canaria~3"
+    ],
+    "comandante.llegada.gran-canaria~4": [
+      "comandante.llegada.gran-canaria~4"
+    ],
+    "comandante.llegada.gran-canaria~5": [
+      "comandante.llegada.gran-canaria~5"
+    ],
     "comandante.llegada.guarani": [
       "comandante.llegada.guarani"
+    ],
+    "comandante.llegada.guarani~2": [
+      "comandante.llegada.guarani~2"
+    ],
+    "comandante.llegada.guarani~3": [
+      "comandante.llegada.guarani~3"
+    ],
+    "comandante.llegada.guarani~4": [
+      "comandante.llegada.guarani~4"
+    ],
+    "comandante.llegada.guarani~5": [
+      "comandante.llegada.guarani~5"
     ],
     "comandante.llegada.la-gomera": [
       "comandante.llegada.la-gomera"
     ],
+    "comandante.llegada.la-gomera~2": [
+      "comandante.llegada.la-gomera~2"
+    ],
+    "comandante.llegada.la-gomera~3": [
+      "comandante.llegada.la-gomera~3"
+    ],
+    "comandante.llegada.la-gomera~4": [
+      "comandante.llegada.la-gomera~4"
+    ],
+    "comandante.llegada.la-gomera~5": [
+      "comandante.llegada.la-gomera~5"
+    ],
     "comandante.llegada.la-palma": [
       "comandante.llegada.la-palma"
+    ],
+    "comandante.llegada.la-palma~2": [
+      "comandante.llegada.la-palma~2"
+    ],
+    "comandante.llegada.la-palma~3": [
+      "comandante.llegada.la-palma~3"
+    ],
+    "comandante.llegada.la-palma~4": [
+      "comandante.llegada.la-palma~4"
+    ],
+    "comandante.llegada.la-palma~5": [
+      "comandante.llegada.la-palma~5"
     ],
     "comandante.llegada.lanzarote": [
       "comandante.llegada.lanzarote"
     ],
+    "comandante.llegada.lanzarote~2": [
+      "comandante.llegada.lanzarote~2"
+    ],
+    "comandante.llegada.lanzarote~3": [
+      "comandante.llegada.lanzarote~3"
+    ],
+    "comandante.llegada.lanzarote~4": [
+      "comandante.llegada.lanzarote~4"
+    ],
+    "comandante.llegada.lanzarote~5": [
+      "comandante.llegada.lanzarote~5"
+    ],
     "comandante.llegada.pedro-juan": [
       "comandante.llegada.pedro-juan"
+    ],
+    "comandante.llegada.pedro-juan~2": [
+      "comandante.llegada.pedro-juan~2"
+    ],
+    "comandante.llegada.pedro-juan~3": [
+      "comandante.llegada.pedro-juan~3"
+    ],
+    "comandante.llegada.pedro-juan~4": [
+      "comandante.llegada.pedro-juan~4"
+    ],
+    "comandante.llegada.pedro-juan~5": [
+      "comandante.llegada.pedro-juan~5"
     ],
     "comandante.llegada.pettirossi": [
       "comandante.llegada.pettirossi"
     ],
+    "comandante.llegada.pettirossi~2": [
+      "comandante.llegada.pettirossi~2"
+    ],
+    "comandante.llegada.pettirossi~3": [
+      "comandante.llegada.pettirossi~3"
+    ],
+    "comandante.llegada.pettirossi~4": [
+      "comandante.llegada.pettirossi~4"
+    ],
+    "comandante.llegada.pettirossi~5": [
+      "comandante.llegada.pettirossi~5"
+    ],
     "comandante.llegada.tenerife-norte": [
       "comandante.llegada.tenerife-norte"
+    ],
+    "comandante.llegada.tenerife-norte~2": [
+      "comandante.llegada.tenerife-norte~2"
+    ],
+    "comandante.llegada.tenerife-norte~3": [
+      "comandante.llegada.tenerife-norte~3"
+    ],
+    "comandante.llegada.tenerife-norte~4": [
+      "comandante.llegada.tenerife-norte~4"
+    ],
+    "comandante.llegada.tenerife-norte~5": [
+      "comandante.llegada.tenerife-norte~5"
     ],
     "comandante.llegada.tenerife-sur": [
       "comandante.llegada.tenerife-sur"
     ],
+    "comandante.llegada.tenerife-sur~2": [
+      "comandante.llegada.tenerife-sur~2"
+    ],
+    "comandante.llegada.tenerife-sur~3": [
+      "comandante.llegada.tenerife-sur~3"
+    ],
+    "comandante.llegada.tenerife-sur~4": [
+      "comandante.llegada.tenerife-sur~4"
+    ],
+    "comandante.llegada.tenerife-sur~5": [
+      "comandante.llegada.tenerife-sur~5"
+    ],
     "comandante.llegada.valle-cordillera": [
       "comandante.llegada.valle-cordillera"
     ],
+    "comandante.llegada.valle-cordillera~2": [
+      "comandante.llegada.valle-cordillera~2"
+    ],
+    "comandante.llegada.valle-cordillera~3": [
+      "comandante.llegada.valle-cordillera~3"
+    ],
+    "comandante.llegada.valle-cordillera~4": [
+      "comandante.llegada.valle-cordillera~4"
+    ],
+    "comandante.llegada.valle-cordillera~5": [
+      "comandante.llegada.valle-cordillera~5"
+    ],
     "comandante.llegada.yvytu-rape": [
       "comandante.llegada.yvytu-rape"
+    ],
+    "comandante.llegada.yvytu-rape~2": [
+      "comandante.llegada.yvytu-rape~2"
+    ],
+    "comandante.llegada.yvytu-rape~3": [
+      "comandante.llegada.yvytu-rape~3"
+    ],
+    "comandante.llegada.yvytu-rape~4": [
+      "comandante.llegada.yvytu-rape~4"
+    ],
+    "comandante.llegada.yvytu-rape~5": [
+      "comandante.llegada.yvytu-rape~5"
     ]
   }
 }

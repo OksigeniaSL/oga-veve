@@ -152,6 +152,9 @@
   "percance.sinpermiso": [
     "percance.sinpermiso"
   ],
+  "percance.sintren": [
+    "percance.sintren"
+  ],
   "tutor.flying": [
     "tutor.flying"
   ],
@@ -266,6 +269,9 @@
   "vuelo.final": [
     "vuelo.final"
   ],
+  "vuelo.flapsPasados": [
+    "vuelo.flapsPasados"
+  ],
   "vuelo.frustrada": [
     "vuelo.frustrada"
   ],
@@ -278,6 +284,9 @@
   "vuelo.fuera": [
     "vuelo.fuera"
   ],
+  "vuelo.lentoYBajo": [
+    "vuelo.lentoYBajo"
+  ],
   "vuelo.mandanFrustrar": [
     "vuelo.mandanFrustrar"
   ],
@@ -287,16 +296,91 @@
   "vuelo.mandanFrustrar~3": [
     "vuelo.mandanFrustrar~3"
   ],
+  "vuelo.meteElTren": [
+    "vuelo.meteElTren"
+  ],
   "vuelo.minimos": [
     "vuelo.minimos"
   ],
   "vuelo.noEstabilizada": [
     "vuelo.noEstabilizada"
   ],
+  "vuelo.noEstabilizada+cayendo": [
+    "motivo.cayendo",
+    "vuelo.noEstabilizada"
+  ],
+  "vuelo.noEstabilizada+descolocado": [
+    "motivo.descolocado",
+    "vuelo.noEstabilizada"
+  ],
+  "vuelo.noEstabilizada+lento": [
+    "motivo.lento",
+    "vuelo.noEstabilizada"
+  ],
+  "vuelo.noEstabilizada+rapido": [
+    "motivo.rapido",
+    "vuelo.noEstabilizada"
+  ],
+  "vuelo.noEstabilizada+sinPista": [
+    "motivo.sinPista",
+    "vuelo.noEstabilizada"
+  ],
+  "vuelo.noEstabilizada+torcido": [
+    "motivo.torcido",
+    "vuelo.noEstabilizada"
+  ],
   "vuelo.noEstabilizada~2": [
     "vuelo.noEstabilizada~2"
   ],
+  "vuelo.noEstabilizada~2+cayendo": [
+    "motivo.cayendo",
+    "vuelo.noEstabilizada~2"
+  ],
+  "vuelo.noEstabilizada~2+descolocado": [
+    "motivo.descolocado",
+    "vuelo.noEstabilizada~2"
+  ],
+  "vuelo.noEstabilizada~2+lento": [
+    "motivo.lento",
+    "vuelo.noEstabilizada~2"
+  ],
+  "vuelo.noEstabilizada~2+rapido": [
+    "motivo.rapido",
+    "vuelo.noEstabilizada~2"
+  ],
+  "vuelo.noEstabilizada~2+sinPista": [
+    "motivo.sinPista",
+    "vuelo.noEstabilizada~2"
+  ],
+  "vuelo.noEstabilizada~2+torcido": [
+    "motivo.torcido",
+    "vuelo.noEstabilizada~2"
+  ],
   "vuelo.noEstabilizada~3": [
+    "vuelo.noEstabilizada~3"
+  ],
+  "vuelo.noEstabilizada~3+cayendo": [
+    "motivo.cayendo",
+    "vuelo.noEstabilizada~3"
+  ],
+  "vuelo.noEstabilizada~3+descolocado": [
+    "motivo.descolocado",
+    "vuelo.noEstabilizada~3"
+  ],
+  "vuelo.noEstabilizada~3+lento": [
+    "motivo.lento",
+    "vuelo.noEstabilizada~3"
+  ],
+  "vuelo.noEstabilizada~3+rapido": [
+    "motivo.rapido",
+    "vuelo.noEstabilizada~3"
+  ],
+  "vuelo.noEstabilizada~3+sinPista": [
+    "motivo.sinPista",
+    "vuelo.noEstabilizada~3"
+  ],
+  "vuelo.noEstabilizada~3+torcido": [
+    "motivo.torcido",
     "vuelo.noEstabilizada~3"
   ],
   "vuelo.papiAlto": [
@@ -323,6 +407,9 @@
   "vuelo.rapido": [
     "vuelo.rapido"
   ],
+  "vuelo.reserva": [
+    "vuelo.reserva"
+  ],
   "vuelo.rodando": [
     "vuelo.rodando"
   ],
@@ -331,6 +418,12 @@
   ],
   "vuelo.roto": [
     "vuelo.roto"
+  ],
+  "vuelo.sacaElTren": [
+    "vuelo.sacaElTren"
+  ],
+  "vuelo.sinCombustible": [
+    "vuelo.sinCombustible"
   ],
   "vuelo.sinPermiso": [
     "vuelo.sinPermiso"
@@ -350,85 +443,13 @@
   "vuelo.terrenoSube": [
     "vuelo.terrenoSube"
   ],
+  "vuelo.tormenta": [
+    "vuelo.tormenta"
+  ],
+  "vuelo.trenPasado": [
+    "vuelo.trenPasado"
+  ],
   "vuelo.yaPodesTocar": [
     "vuelo.yaPodesTocar"
-  ],
-  "vuelo.noEstabilizada+cayendo": [
-    "motivo.cayendo",
-    "vuelo.noEstabilizada"
-  ],
-  "vuelo.noEstabilizada+descolocado": [
-    "motivo.descolocado",
-    "vuelo.noEstabilizada"
-  ],
-  "vuelo.noEstabilizada+lento": [
-    "motivo.lento",
-    "vuelo.noEstabilizada"
-  ],
-  "vuelo.noEstabilizada+rapido": [
-    "motivo.rapido",
-    "vuelo.noEstabilizada"
-  ],
-  "vuelo.noEstabilizada+sinPista": [
-    "motivo.sinPista",
-    "vuelo.noEstabilizada"
-  ],
-  "vuelo.noEstabilizada+torcido": [
-    "motivo.torcido",
-    "vuelo.noEstabilizada"
-  ],
-  "vuelo.noEstabilizada~2+cayendo": [
-    "motivo.cayendo",
-    "vuelo.noEstabilizada~2"
-  ],
-  "vuelo.noEstabilizada~2+descolocado": [
-    "motivo.descolocado",
-    "vuelo.noEstabilizada~2"
-  ],
-  "vuelo.noEstabilizada~2+lento": [
-    "motivo.lento",
-    "vuelo.noEstabilizada~2"
-  ],
-  "vuelo.noEstabilizada~2+rapido": [
-    "motivo.rapido",
-    "vuelo.noEstabilizada~2"
-  ],
-  "vuelo.noEstabilizada~2+sinPista": [
-    "motivo.sinPista",
-    "vuelo.noEstabilizada~2"
-  ],
-  "vuelo.noEstabilizada~2+torcido": [
-    "motivo.torcido",
-    "vuelo.noEstabilizada~2"
-  ],
-  "vuelo.noEstabilizada~3+cayendo": [
-    "motivo.cayendo",
-    "vuelo.noEstabilizada~3"
-  ],
-  "vuelo.noEstabilizada~3+descolocado": [
-    "motivo.descolocado",
-    "vuelo.noEstabilizada~3"
-  ],
-  "vuelo.noEstabilizada~3+lento": [
-    "motivo.lento",
-    "vuelo.noEstabilizada~3"
-  ],
-  "vuelo.noEstabilizada~3+rapido": [
-    "motivo.rapido",
-    "vuelo.noEstabilizada~3"
-  ],
-  "vuelo.noEstabilizada~3+sinPista": [
-    "motivo.sinPista",
-    "vuelo.noEstabilizada~3"
-  ],
-  "vuelo.noEstabilizada~3+torcido": [
-    "motivo.torcido",
-    "vuelo.noEstabilizada~3"
-  ],
-  "vuelo.meteElTren": [
-    "vuelo.meteElTren"
-  ],
-  "vuelo.sacaElTren": [
-    "vuelo.sacaElTren"
   ]
 }
