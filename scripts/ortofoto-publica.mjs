@@ -274,11 +274,41 @@ async function main() {
   const [id, ...opciones] = process.argv.slice(2);
   if (!id || !ESCENARIOS[id]) {
     console.error(
-      'uso: node scripts/ortofoto-publica.mjs <escenario> [--cerca|--medio|--horizonte]',
+      'uso: node scripts/ortofoto-publica.mjs <escenario> [--cerca|--medio|--horizonte]' +
+      ' [--zoom N] [--lado M] [--a carpeta]',
     );
     console.error(`escenarios: ${Object.keys(ESCENARIOS).join(', ')}`);
     process.exit(1);
   }
+  /*
+   * **Y a dónde va, que no siempre es a `data/ortho`.**
+   *
+   * Probar otro encuadre —más zoom, menos lado— exigía sobrescribir el
+   * fichero bueno y bajarlo otra vez si no convencía, con lo que probar
+   * costaba dos descargas y un susto. Con `--a <carpeta>` se deja en otro
+   * sitio y se comparan los dos al lado.
+   */
+  const donde = opciones.indexOf('--a');
+  const carpeta =
+    donde >= 0 && opciones[donde + 1]
+      ? opciones[donde + 1]
+      : join(RAIZ, 'data', 'ortho');
+  /*
+   * Y el zoom, también a mano: `--zoom 17` sobre el mismo encuadre es
+   * exactamente la pregunta «¿cuánto se gana con el doble de nitidez?», y sin
+   * poder hacerla no se puede contestar con un número.
+   */
+  const pideZoom = opciones.indexOf('--zoom');
+  const zoomAMano =
+    pideZoom >= 0 && Number.isFinite(Number(opciones[pideZoom + 1]))
+      ? Number(opciones[pideZoom + 1])
+      : null;
+  const pideLado = opciones.indexOf('--lado');
+  const ladoAMano =
+    pideLado >= 0 && Number.isFinite(Number(opciones[pideLado + 1]))
+      ? Number(opciones[pideLado + 1])
+      : null;
+
   const cual = opciones.includes('--cerca')
     ? 'cerca'
     : opciones.includes('--horizonte')
@@ -289,7 +319,8 @@ async function main() {
   const escenario = ESCENARIOS[id];
   const prov = PROVEEDORES[escenario.proveedor];
   const lado =
-    cual === 'cerca'
+    ladoAMano ??
+    (cual === 'cerca'
       ? ENCUADRES.cerca.lado
       : cual === 'medio'
         ? // Sin pasarse del mundo que hay: en un escenario sin vecinos el
@@ -297,7 +328,7 @@ async function main() {
           Math.min(ENCUADRES.medio.lado, ladoDelHorizonte(id))
         : cual === 'horizonte'
           ? ladoDelHorizonte(id)
-          : escenario.lado;
+          : escenario.lado);
 
   /*
    * **El zoom se recorta al tope del proveedor**, y se dice.
@@ -322,7 +353,7 @@ async function main() {
    * píxel siguen siendo el doble de detalle del que se puede apoyar en una
    * forma.
    */
-  const pedido = ENCUADRES[cual].zoom;
+  const pedido = zoomAMano ?? ENCUADRES[cual].zoom;
   const deMas =
     cual === 'horizonte'
       // Redondeo y no techo: 324 km son 2,02 veces el tope, y un techo baja
@@ -362,7 +393,7 @@ async function main() {
   console.log(`  ${lado} m de lado a z${zoom} → ${mpp.toFixed(2)} m/píxel`);
   console.log(`  ${columnas * filas} teselas (${columnas} × ${filas})`);
 
-  const salida = join(RAIZ, 'data', 'ortho');
+  const salida = carpeta;
   await mkdir(salida, { recursive: true });
   const tmp = join(salida, `.tmp-${id}-${cual}`);
   await rm(tmp, { recursive: true, force: true });
