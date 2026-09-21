@@ -2347,13 +2347,39 @@ comprobar(
    * gesto y este banco no da ninguno— lo que queda apuntado es el texto en
    * inglés y no la clave, así que valen las tres formas.
    */
+  /*
+   * **Y se mira lo que el juego pide, no lo que el navegador consigue decir.**
+   *
+   * Esto miraba el historial de la boca, o sea lo que de verdad **sonó**. Y en
+   * este banco no suena nada: Chrome sin pantalla no trae voces instaladas y
+   * el pack de voz no se baja hasta el primer gesto, que aquí no lo da nadie.
+   * Así que el resultado dependía de por cuál de los tres caminos de `cantar`
+   * se hubiera ido esa tirada, y **cambiaba de escenario entre tiradas con el
+   * mismo código**: Tenerife un día, Guaraní al siguiente. Un banco que da un
+   * rojo distinto cada vez no está midiendo el juego.
+   *
+   * Lo que sí es del juego —y es lo que el fallo original era, «con el 747 no
+   * salía ninguno de los dos»— es que el detector de velocidades dispare las
+   * dos. Eso se pide por `cantar()` y queda apuntado siempre, suene o no.
+   * Que además se oigan es cosa del pack de voz, y lo mide `verificar-voces`.
+   */
   ["cabina.v1", "V one", "vuelo.comprometido"].some((c) =>
-    vuelo.cabinaDijo?.includes(c),
+    vuelo.cantados?.some((x) => x.includes(c)),
   ) &&
     ["cabina.vr", "rotate", "vuelo.rotar"].some((c) =>
-      vuelo.cabinaDijo?.includes(c),
+      vuelo.cantados?.some((x) => x.includes(c)),
     ),
   `del despegue salió: ${(vuelo.cabinaDijo ?? []).filter((c) => /^(cabina\.|V one|rotate|vuelo\.(comprometido|rotar))/.test(c)).join(" · ") || "nada"}` +
+    /*
+     * **Y qué pasó con el que falta.** Los seis últimos descartes son siempre
+     * del final del vuelo, así que el del despegue se salía por arriba y el
+     * banco decía «no salió» sin decir por qué. Se filtra a lo del despegue.
+     */
+    (vuelo.descartes?.some((d) => /(rotar|comprometido|cabina\.v)/.test(d))
+      ? ` · del despegue se cayeron: ${vuelo.descartes
+          .filter((d) => /(rotar|comprometido|cabina\.v)/.test(d))
+          .join(" | ")}`
+      : "") +
     ` · cantar() hizo: ${vuelo.cantados?.join(" | ") || "nada"}` +
     ` · back-taxi: ${vuelo.verBackTaxi?.join(" | ")}`,
   "sin V1 ni Vr, un despegue es acelerar y que pase algo",

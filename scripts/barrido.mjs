@@ -96,10 +96,18 @@ const VECES = Number(process.argv[2] ?? 12);
  * ×4, 23 de 23**. No es del juego, es del cronómetro. Y bajar el reloj de
  * todo el barrido para esto sería triplicar la media hora que tarda.
  *
- * Así que el que lo necesita va más despacio y aquí queda escrito por qué.
+ * Así que los que lo necesitan van más despacio y aquí queda escrito por qué.
+ *
+ * **Dos y no uno**, y no son los que más fallan: son uno de cada familia de
+ * voz. La Palma habla con la torre canaria y Guaraní con la de casa, y las
+ * dos tienen el tráfico apretado que es lo que satura la cola. Lo que se
+ * mide en ellos —que la torre llegue a decir sus tres autorizaciones— es lo
+ * único de este banco que depende de cuántos segundos de pared haya, y por
+ * eso es lo único que corre despacio.
+ *
  * Ver `CADUCA` en `audio/boca.ts`.
  */
-const A_SU_RITMO = { "la-palma": 4 };
+const A_SU_RITMO = { "la-palma": 4, guarani: 4 };
 const PEDIDOS = process.argv.slice(3);
 const LISTA = PEDIDOS.length
   ? TODOS.filter(([e]) => PEDIDOS.includes(e))
@@ -159,7 +167,10 @@ for (const [escenario, tramo, avion] of LISTA) {
     `  · ${escenario} (${tramo}${avion ? ` · ${avion}` : ""})… `,
   );
   const empezo = Date.now();
-  const suVeces = Math.min(VECES, A_SU_RITMO[escenario] ?? VECES);
+  const suVeces = Math.min(
+    VECES,
+    A_SU_RITMO[`${escenario}:${avion}`] ?? A_SU_RITMO[escenario] ?? VECES,
+  );
   const salida = await new Promise((listo) => {
     let texto = "";
     const hijo = spawn(
