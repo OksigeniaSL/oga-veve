@@ -82,6 +82,24 @@ const TODOS = [
 ];
 
 const VECES = Number(process.argv[2] ?? 12);
+
+/**
+ * Los escenarios que no se pueden medir con el reloj a tope, y a cuánto van.
+ *
+ * **El reloj acelerado no acelera todo por igual.** El vuelo va doce veces
+ * más rápido; hablar, no — una frase dura lo que dura. Así que a ×12 la boca
+ * tiene doce veces menos hueco para decir lo mismo, y en un campo corto y
+ * con tráfico la cola se satura: la torre se queda esperando turno y el banco
+ * lo cuenta como que la torre no habla.
+ *
+ * Medido en La Palma con el mismo código el mismo día: **a ×12, 22 de 23; a
+ * ×4, 23 de 23**. No es del juego, es del cronómetro. Y bajar el reloj de
+ * todo el barrido para esto sería triplicar la media hora que tarda.
+ *
+ * Así que el que lo necesita va más despacio y aquí queda escrito por qué.
+ * Ver `CADUCA` en `audio/boca.ts`.
+ */
+const A_SU_RITMO = { "la-palma": 4 };
 const PEDIDOS = process.argv.slice(3);
 const LISTA = PEDIDOS.length
   ? TODOS.filter(([e]) => PEDIDOS.includes(e))
@@ -141,6 +159,7 @@ for (const [escenario, tramo, avion] of LISTA) {
     `  · ${escenario} (${tramo}${avion ? ` · ${avion}` : ""})… `,
   );
   const empezo = Date.now();
+  const suVeces = Math.min(VECES, A_SU_RITMO[escenario] ?? VECES);
   const salida = await new Promise((listo) => {
     let texto = "";
     const hijo = spawn(
@@ -149,7 +168,7 @@ for (const [escenario, tramo, avion] of LISTA) {
         "scripts/verificar-vuelo-entero.mjs",
         escenario,
         tramo,
-        String(VECES),
+        String(suVeces),
         avion ?? "jaz-20",
       ],
       { stdio: ["ignore", "pipe", "pipe"] },
@@ -163,6 +182,7 @@ for (const [escenario, tramo, avion] of LISTA) {
   partes.push({
     escenario: avion ? `${escenario} ${avion}` : escenario,
     tramo,
+    veces: suVeces,
     c,
     minutos,
     fin: comoAcabo(salida),
@@ -204,7 +224,10 @@ for (const p of partes) {
   const marca = p.c && p.c.bien === p.c.total ? "✓" : "✗";
   const cuantas = p.c ? `${p.c.bien} de ${p.c.total}` : "sin parte";
   console.log(
-    `  ${marca} ${p.escenario.padEnd(ancho)}  ${cuantas.padStart(9)}  ${p.minutos.toFixed(1).padStart(5)} min  ${p.fin}`,
+    `  ${marca} ${p.escenario.padEnd(ancho)}  ${cuantas.padStart(9)}  ${p.minutos.toFixed(1).padStart(5)} min  ${p.fin}` +
+      // Y si fue más despacio, que se vea: un número de otra tirada no se
+      // compara con los demás sin saberlo. Ver `A_SU_RITMO`.
+      (p.veces !== VECES ? `  (a ×${p.veces})` : ""),
   );
 }
 

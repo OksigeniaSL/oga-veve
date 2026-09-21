@@ -2313,14 +2313,34 @@ export class Game {
      * tirar**, que es la única de las dos que pide mover algo y la única que
      * se entiende sin leer. Ver #105.
      */
+    /*
+     * **Y las dos van en el escalón de mando, no en el normal.**
+     *
+     * Iban en normal, o sea por debajo de la torre, y eso las dejaba fuera de
+     * la cola en cuanto la torre abría la boca: medido en Los Rodeos, el
+     * detector cantó «rotate» a 56 nudos y de la boca no salió. Es la misma
+     * avería que hizo que la cola pasara de una plaza a tres —«en una carrera
+     * de despegue, Vr le quitaba el sitio a V1»— y aquí se la quitaba la
+     * torre.
+     *
+     * Y el orden es el correcto, no una excepción: una autorización **sigue
+     * siendo verdad** cuando se dice tarde, y por eso aguanta doce segundos
+     * en la cola. Un «V1» dicho tres segundos tarde ya no es un V1, es un
+     * dato sobre el pasado. Lo que menos puede esperar es lo que va delante.
+     */
     this.hud.onVelocidades((cual) => {
       if (cual === "V1") {
         this.avisar("v1");
-        this.cantar("V one", t("vuelo.comprometido"), "vuelo.comprometido");
+        this.cantar(
+          "V one",
+          t("vuelo.comprometido"),
+          "vuelo.comprometido",
+          "mando",
+        );
         return;
       }
       this.avisar("rotar");
-      this.cantar("rotate", t("vuelo.rotar"), "vuelo.rotar");
+      this.cantar("rotate", t("vuelo.rotar"), "vuelo.rotar", "mando");
       this.hud.senal.mostrar(
         "tirar",
         this.rotulo("vuelo.rotar", "palabra.tira"),
