@@ -808,6 +808,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   masCerca: Infinity,
   /* Y por qué no se le vio, que es lo que faltaba. Ver `comoVa`. */
   porQueNo: new Set(),
+  donde: "sin puesto",
 };
   let antes = null;
   let sinRaya = 0;
@@ -1147,6 +1148,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       const sen = o.senalero?.();
       const donde = sen?.donde;
       if (donde) {
+        senalero.donde = `${Math.round(donde.x)},${Math.round(donde.z)}`;
         const s = o.estado();
         senalero.masCerca = Math.min(
           senalero.masCerca,
@@ -1164,7 +1166,9 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
          * vuelta, que es lo que se busca, quedaba escondida entre repetidos.
          */
         senalero.porQueNo.add(
-          `${fase}: puesto=${v.puesto} volviendo=${v.volviendo}`,
+          `${fase}: puesto=${v.puesto} volviendo=${v.volviendo} queda≈${
+            Math.round(v.restante / 100) * 100
+          }`,
         );
       }
     }
@@ -2044,6 +2048,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     pendiente: pendiente === null ? null : +(pendiente * 100).toFixed(1),
     senalero: {
       visto: senalero.visto,
+      donde: senalero.donde,
       porQueNo: [...senalero.porQueNo],
       gestos: [...senalero.gestos],
       masCerca: Math.round(senalero.masCerca),
@@ -2372,7 +2377,7 @@ comprobar(
   !!vuelo.senalero?.visto && (vuelo.senalero?.gestos?.length ?? 0) > 0,
   `visto: ${vuelo.senalero?.visto ? "sí" : "no"} · gestos: ${
     vuelo.senalero?.gestos?.join(", ") || "ninguno"
-  } · lo más cerca que se estuvo de su sitio: ${vuelo.senalero?.masCerca} m${
+  } · su puesto: ${vuelo.senalero?.donde} · lo más cerca que se estuvo: ${vuelo.senalero?.masCerca} m${
     vuelo.senalero?.visto
       ? ""
       : ` · y no se le vio porque: ${vuelo.senalero?.porQueNo?.join(" | ") || "ni idea"}`

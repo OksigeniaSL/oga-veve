@@ -104,3 +104,69 @@ describe("el señalero", () => {
     );
   });
 });
+
+/*
+ * ── Y por dónde llega el avión ────────────────────────────────────────────
+ *
+ * «Nadie me esperaba en Gran Canaria.» «No estaba el de las lucecitas para
+ * ayudarme a aparcar, yo que le iba a dar un eurito.» Dicho tres veces, y las
+ * tres el banco decía «visto: no» y nada más, que es el síntoma.
+ *
+ * La causa es esta: el señalero se coloca **mirando por donde el avión se
+ * fue**, porque al empezar el vuelo es lo único que se sabe. Y solo se le ve
+ * cuando el avión está por delante de él —doscientos veinte metros de
+ * alcance—. Si a la vuelta el rodaje trae el avión al mismo puesto **por el
+ * otro lado**, el señalero se pasa la llegada entera de espaldas y no aparece
+ * nunca. No es que llegue tarde: no aparece.
+ */
+describe("y por dónde llega el avión", () => {
+  /** Si se le ve con el avión ahí, viniendo de vuelta. */
+  const seLeVe = (s: Senalero, x: number, z: number): boolean => {
+    s.paso(0.05, { x, z, velocidad: 6, enElSuelo: true }, true);
+    return s.grupo.visible;
+  };
+
+  it("viniendo por donde se salió, se le ve desde bien lejos", () => {
+    const s = puesto();
+    expect(seLeVe(s, 200, 0)).toBe(true);
+    expect(seLeVe(s, 60, 0)).toBe(true);
+    expect(seLeVe(s, 5, 0)).toBe(true);
+  });
+
+  it("y a trescientos todavía no, que aparece con tiempo pero no de lejos", () => {
+    expect(seLeVe(puesto(), 300, 0)).toBe(false);
+  });
+
+  /*
+   * **Y aquí estaba el fallo.** Mismo puesto, misma persona, y el avión
+   * llegando por el lado contrario: invisible todo el rato, hasta con el
+   * morro dentro del puesto.
+   */
+  it("pero llegando por el otro lado no se le ve nunca", () => {
+    const s = puesto();
+    expect(seLeVe(s, -200, 0)).toBe(false);
+    expect(seLeVe(s, -60, 0)).toBe(false);
+  });
+
+  it("y se arregla diciéndole por dónde llega de verdad", () => {
+    const s = puesto();
+    // El avión viene del oeste: el punto por el que llega está en la −X.
+    s.colocar([0, 0], [-100, 0], () => 0);
+    expect(seLeVe(s, -200, 0)).toBe(true);
+    expect(seLeVe(s, -60, 0)).toBe(true);
+  });
+
+  it("y entonces se planta al otro lado, que es donde le ve el comandante", () => {
+    const porElEste = puesto();
+    const porElOeste = new Senalero();
+    porElOeste.colocar([0, 0], [-100, 0], () => 0);
+    /*
+     * Catorce metros **por delante del morro** del avión ya parado, o sea al
+     * otro lado del puesto de por donde viene. Los dos casos son simétricos,
+     * y que lo sean es lo que dice que la colocación depende de la llegada y
+     * no de una constante.
+     */
+    expect(donde(porElEste).x).toBeLessThan(-10);
+    expect(donde(porElOeste).x).toBeGreaterThan(10);
+  });
+});

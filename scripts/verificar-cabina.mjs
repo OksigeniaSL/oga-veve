@@ -215,8 +215,23 @@ for (const id of [
         maxX = -Infinity,
         minZ = Infinity,
         maxZ = -Infinity;
+      /*
+       * **Y sin las luces**, que no son estructura.
+       *
+       * Una luz de navegación va *sobre* la puntera del ala y su destello se
+       * dibuja un poco por fuera, para que no lo tape la propia ala. Contarlo
+       * como envergadura decía que el JAZ 90 mide 26,63 m cuando su ficha
+       * —y el modelo de vuelo— dicen 26: sesenta y tres centímetros de avión
+       * que no existen, y una comprobación en rojo que no señalaba ningún
+       * fallo. Lo que se mide aquí es el avión, no lo que le brilla encima.
+       */
+      const enLasLuces = (n) => {
+        for (let p = n; p; p = p.parent)
+          if (p.name === "luces-de-posicion") return true;
+        return false;
+      };
       g.traverse((n) => {
-        if (!n.geometry) return;
+        if (!n.geometry || enLasLuces(n)) return;
         const pos = n.geometry.attributes.position;
         for (let i = 0; i < pos.count; i++) {
           const v = new n.position.constructor(

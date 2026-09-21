@@ -52,7 +52,7 @@
  * `CREDITOS.md` con el resto de lo que sale de ahí.
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { SCENARIOS, vecesLejosDe } from '../src/world/scenarios.ts';
 import { overpass, proyector } from './osm-comun.mjs';
 
@@ -157,6 +157,8 @@ if (escenarios.length === 0) {
 }
 
 mkdirSync(SALIDA, { recursive: true });
+/** Los escenarios que volvieron a medias. Ver la guarda de más abajo. */
+const fallos = [];
 
 for (const esc of escenarios) {
   // El origen es el del aeródromo extraído: el mismo punto que usan el relieve
@@ -256,6 +258,50 @@ for (const esc of escenarios) {
     .map(({ peso: _p, notable: _n, ...resto }) => resto);
 
   const fichero = `${SALIDA}/${esc.id}.hitos.json`;
+
+  /*
+   * **Y una tirada a medias no pisa a una buena.**
+   *
+   * Overpass contesta o no contesta según le pilles, y cuando no contesta no
+   * da un error: **da menos**. Aquí eso no se ve mirando el fichero, porque
+   * un fichero con cuatro islas y ninguna ciudad es perfectamente válido.
+   *
+   * Lo que lo delató fue abrir el mapa: **Silvio Pettirossi tenía cuatro
+   * hitos y los cuatro eran islas del río. Asunción no estaba en el mapa de
+   * Asunción**, ni Luque, ni Lambaré, mientras La Gomera salía con doce. No
+   * es que Paraguay tenga menos que nombrar: es que la consulta de ciudades
+   * volvió vacía y nadie se enteró.
+   *
+   * Es la misma avería que ya se tapó en `osm-a-ciudad.mjs`, así que va la
+   * misma guarda y **por clase**, que es donde se nota: perder las cuatro
+   * montañas y ganar una isla suma lo mismo y no es lo mismo.
+   */
+  const antes = (() => {
+    try {
+      const viejo = JSON.parse(readFileSync(fichero, 'utf8'));
+      const cuenta = {};
+      for (const h of viejo.hitos ?? [])
+        cuenta[h.clase] = (cuenta[h.clase] ?? 0) + 1;
+      return cuenta;
+    } catch {
+      return null;
+    }
+  })();
+  const ahora = {};
+  for (const h of finales) ahora[h.clase] = (ahora[h.clase] ?? 0) + 1;
+  const peores = antes
+    ? Object.keys(antes).filter((c) => (ahora[c] ?? 0) < antes[c])
+    : [];
+  if (peores.length) {
+    console.error(
+      `  ✖ ${esc.id}: lo de ahora trae menos ` +
+        peores.map((c) => `${c} (${ahora[c] ?? 0} contra ${antes[c]})`).join(', ') +
+        `.\n    No se escribe. Overpass ha contestado a medias: repetí.`,
+    );
+    fallos.push(esc.id);
+    continue;
+  }
+
   writeFileSync(
     fichero,
     `${JSON.stringify(
@@ -270,12 +316,15 @@ for (const esc of escenarios) {
       2,
     )}\n`,
   );
-  const cuenta = {};
-  for (const h of finales) cuenta[h.clase] = (cuenta[h.clase] ?? 0) + 1;
   console.log(
     `${esc.id.padEnd(18)} ${String(finales.length).padStart(2)} hitos · ` +
-      Object.entries(cuenta).map(([c, n]) => `${n} ${c}`).join(', '),
+      Object.entries(ahora).map(([c, n]) => `${n} ${c}`).join(', '),
   );
+}
+
+if (fallos.length) {
+  console.error(`\n  ✖ ${fallos.length} a medias: ${fallos.join(', ')}`);
+  process.exitCode = 1;
 }
 
 /** Un orden estable entre clases: primero lo que más se ve. */

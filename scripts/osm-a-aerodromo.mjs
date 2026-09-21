@@ -830,6 +830,40 @@ for (const icao of icaos) {
   ) {
     salida.source.note = notaVieja;
   }
+  /*
+   * **Y tampoco un aeródromo con menos de lo que ya tenía.**
+   *
+   * La guarda de arriba pilla la respuesta vacía del todo, que es el caso
+   * gordo. Pero Overpass también contesta **a medias**: una pista y ninguna
+   * calle, o las calles y ningún puesto. Eso pasa el filtro de «tiene pista»
+   * y escribe encima un aeropuerto al que le falta la mitad — y desde fuera
+   * no se distingue, porque un aeropuerto con pocas calles es un aeropuerto
+   * pequeño.
+   *
+   * Es la misma avería que ya se tapó en `osm-a-ciudad.mjs` y en
+   * `osm-a-hitos.mjs`, y en los tres sitios la respuesta es la misma: si lo
+   * nuevo trae menos que lo que había, no se escribe. Repetir es gratis.
+   */
+  const cuentas = (a) => ({
+    pistas: a?.runways?.length ?? 0,
+    rodaduras: a?.taxiways?.length ?? 0,
+    plataformas: a?.aprons?.length ?? 0,
+    puestos: a?.parkingPositions?.length ?? 0,
+    esperas: a?.holdingPositions?.length ?? 0,
+  });
+  const habia = previo ? cuentas(previo) : null;
+  const hay = cuentas(salida);
+  const menos = habia
+    ? Object.keys(habia).filter((k) => hay[k] < habia[k])
+    : [];
+  if (menos.length) {
+    process.stdout.write(
+      `  ⚠ trae menos que lo que había —` +
+        menos.map((k) => ` ${k} ${hay[k]} contra ${habia[k]}`).join(",") +
+        `— no se escribe ${destino}\n`,
+    );
+    continue;
+  }
   await writeFile(destino, JSON.stringify(salida, null, 2) + "\n");
   const r = ficha.runways[0];
   process.stdout.write(
