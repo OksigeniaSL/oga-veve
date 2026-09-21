@@ -2890,6 +2890,42 @@ button.motor__tecla::after {
   fill: var(--cabina-precaucion);
 }
 
+/*
+ * El depósito, con los tres estados de `comoVaElCombustible`.
+ *
+ * Verde mientras sobra, ámbar en cuanto se entra en la reserva y rojo cuando
+ * ya no quedan ni los cuarenta y cinco minutos de ley. Son los tres colores
+ * que este juego usa para lo mismo en todas partes, y no significan ninguna
+ * otra cosa en ningún sitio.
+ */
+.cr__deposito rect {
+  fill: var(--cabina-normal);
+}
+
+.cr--reserva .cr__deposito rect {
+  fill: var(--cabina-precaucion);
+}
+
+.cr--poco .cr__deposito rect {
+  fill: var(--cabina-limite);
+}
+
+/*
+ * Y la franja de la reserva, al fondo: es una zona del instrumento, no un
+ * valor, así que va apagada. Si se pintara igual de viva que la barra serían
+ * dos cosas compitiendo por el mismo sitio y ganaría la que no cuenta nada.
+ */
+.cr__reserva rect {
+  fill: var(--cabina-precaucion);
+  opacity: 0.28;
+}
+
+/* Y su raya, que sí manda: es la meta y se ve desde el primer segundo. */
+.cr__reserva-raya line {
+  stroke: var(--cabina-precaucion);
+  stroke-width: 2;
+}
+
 .cr--tope .cr__aguja {
   fill: var(--cabina-precaucion);
 }

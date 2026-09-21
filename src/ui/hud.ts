@@ -1488,6 +1488,13 @@ export class Hud {
       } | null;
       /** El mundo, para la carta de la pantalla de navegación. */
       readonly mapa: MapaDeLaCarta | null;
+      /** El depósito. Ver `flight/combustible.ts`. */
+      readonly combustible: {
+        readonly kilos: number;
+        readonly cabe: number;
+        readonly reserva: number;
+        readonly estado: "bien" | "reserva" | "poco";
+      } | null;
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -1834,6 +1841,7 @@ export class Hud {
            * fondo vacío: «en Lanzarote no veo la pista».
            */
           mapa: mandos?.mapa ?? null,
+          combustible: mandos?.combustible ?? null,
         },
         dt,
       );

@@ -15,6 +15,7 @@ import {
   loQueCabe,
   loQueQueda,
   quemaPorSegundo,
+  reservaEnKilos,
   RESERVA_SEGUNDOS,
 } from "./combustible";
 import { aircraftById, AIRCRAFT } from "./aircraft";
@@ -105,5 +106,36 @@ describe("el aviso", () => {
   it("y con los motores parados no queda «poco»: queda todo", () => {
     expect(loQueQueda(1000, 0)).toBe(Infinity);
     expect(comoVaElCombustible(1000, 0)).toBe("bien");
+  });
+});
+
+/*
+ * ── La raya del instrumento ──────────────────────────────────────────────
+ *
+ * El indicador pinta la reserva como una franja fija al principio de la
+ * escala. Que sea fija es la mitad de lo que enseña —ver bajar la barra hacia
+ * una meta que estaba ahí desde el despegue— y que quepa en la escala es lo
+ * que impide que la franja se coma el instrumento entero.
+ */
+describe("la franja de la reserva", () => {
+  it("son los cuarenta y cinco minutos de crucero de cada avión", () => {
+    for (const a of AIRCRAFT) {
+      const crucero = quemaPorSegundo(a, a.maxThrust / 3);
+      expect(reservaEnKilos(a) / crucero).toBeCloseTo(RESERVA_SEGUNDOS, 3);
+    }
+  });
+
+  it("y cabe holgada en el depósito de los seis: nunca más de un tercio", () => {
+    // Si la franja ocupara media escala, el instrumento diría «vas justo»
+    // desde el primer segundo y dejaría de significar nada.
+    for (const a of AIRCRAFT) {
+      expect(reservaEnKilos(a)).toBeGreaterThan(0);
+      expect(reservaEnKilos(a)).toBeLessThan(loQueCabe(a) / 3);
+    }
+  });
+
+  it("y sale de la carga: lo que se lleva de más es la ruta", () => {
+    for (const a of AIRCRAFT)
+      expect(cargaParaLaRuta(a, 0)).toBeGreaterThan(reservaEnKilos(a));
   });
 });

@@ -21,6 +21,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const PUERTO = 5197;
 const server = await createServer({
@@ -28,6 +29,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
@@ -65,7 +67,7 @@ for (const [tramo, tactil, boton, tarjeta] of [
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=valle-cordillera&hora=16&leccion=despegue&tramo=${tramo}`,
+    `${BASE}/?escenario=valle-cordillera&hora=16&leccion=despegue&tramo=${tramo}`,
   );
   await page.waitForFunction(() => globalThis.__oga?.estado, null, {
     timeout: 60000,
@@ -143,7 +145,7 @@ for (const tramo of ["guyrami", "taguato"]) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=valle-cordillera&hora=16&leccion=despegue&tramo=${tramo}`,
+    `${BASE}/?escenario=valle-cordillera&hora=16&leccion=despegue&tramo=${tramo}`,
   );
   await page.waitForFunction(() => globalThis.__oga?.estado, null, {
     timeout: 60000,
@@ -310,7 +312,7 @@ for (const [avion, hayTren] of [
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=tenerife-sur&hora=16&leccion=aterrizaje&tramo=guyrami&avion=${avion}`,
+    `${BASE}/?escenario=tenerife-sur&hora=16&leccion=aterrizaje&tramo=guyrami&avion=${avion}`,
   );
   await page.waitForFunction(() => globalThis.__oga?.estado, null, {
     timeout: 60000,

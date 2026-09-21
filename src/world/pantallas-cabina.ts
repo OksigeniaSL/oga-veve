@@ -218,6 +218,20 @@ export interface DatosDeCabina {
   /** De dónde sopla y cuánto. Dato auxiliar: va en cian. */
   readonly viento: { readonly desde: number; readonly nudos: number } | null;
   /**
+   * El depósito: lo que queda, lo que cabe y dónde empieza la reserva.
+   *
+   * Lo mismo que recibe el cuadro plano y de la misma cuenta. Ver
+   * `flight/combustible.ts` — y ver también por qué llega a las dos: un
+   * instrumento que existe fuera y no dentro es el fallo que esta casa lleva
+   * cometido media docena de veces.
+   */
+  readonly combustible: {
+    readonly kilos: number;
+    readonly cabe: number;
+    readonly reserva: number;
+    readonly estado: "bien" | "reserva" | "poco";
+  } | null;
+  /**
    * **El mundo, para poder dibujarlo.**
    *
    * Sin esto la pantalla de navegación era una brújula sobre un fondo vacío:
@@ -1465,6 +1479,7 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     "left",
   );
 
+  reglaDeCombustible(g, 48, ALTO - 100, ANCHO - 160, 14, d.combustible);
   reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps);
   lucesDeTren(g, 16, ALTO - 30, d.patas, d.tren);
   g.restore();
@@ -1586,6 +1601,72 @@ function dialDeMotor(
  * verdad — que no es un mando continuo, es una palanca con topes, y eso se
  * aprende viéndolo.
  */
+/**
+ * El depósito: la barra que se acorta y la franja de la reserva.
+ *
+ * El mismo instrumento que el del cuadro plano —`reglaDeCombustible` en
+ * `ui/cristal.ts`— con pincel en vez de con SVG. Se dibuja dos veces porque
+ * son dos superficies, pero las dos cuentas salen del mismo sitio: lo que no
+ * puede pasar es que la cabina y el cuadro digan cosas distintas del mismo
+ * depósito.
+ *
+ * La franja ámbar del fondo son los cuarenta y cinco minutos de ley y **no se
+ * mueve**: es la meta. Lo que se mueve es la barra.
+ */
+function reglaDeCombustible(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  deposito: DatosDeCabina["combustible"],
+): void {
+  escribir(g, "FUEL", x - 8, y + h / 2, "500 12px " + FUENTE, TENUE, "right");
+  ventana(g, x, y, w, h);
+  if (!deposito) return;
+  const cabe = Math.max(1, deposito.cabe);
+  const parte = (k: number) => clamp01(k / cabe);
+
+  // Primero la franja de la reserva, apagada: es una zona del instrumento y
+  // no un valor, y tiene que quedar **debajo** de la barra.
+  g.save();
+  g.globalAlpha = 0.28;
+  g.fillStyle = PALETA.precaucion;
+  g.fillRect(x, y, parte(deposito.reserva) * w, h);
+  g.restore();
+
+  g.fillStyle =
+    deposito.estado === "poco"
+      ? PALETA.limite
+      : deposito.estado === "reserva"
+        ? PALETA.precaucion
+        : PALETA.normal;
+  g.fillRect(x, y, parte(deposito.kilos) * w, h);
+
+  /*
+   * Y la raya de la reserva, encima de todo: la franja sola se queda debajo
+   * de la barra mientras sobre combustible, y una meta que solo se ve cuando
+   * ya llegaste no es una meta.
+   */
+  const raya = x + parte(deposito.reserva) * w;
+  g.strokeStyle = PALETA.precaucion;
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(raya, y - 3);
+  g.lineTo(raya, y + h + 3);
+  g.stroke();
+
+  escribir(
+    g,
+    `${Math.round(deposito.kilos)} KG`,
+    x + w + 12,
+    y + h / 2,
+    "600 13px " + FUENTE,
+    TINTA,
+    "left",
+  );
+}
+
 function reglaDeFlaps(
   g: CanvasRenderingContext2D,
   x: number,

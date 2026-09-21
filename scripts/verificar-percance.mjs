@@ -20,6 +20,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
 const PUERTO = 5296;
@@ -29,6 +30,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
@@ -39,7 +41,7 @@ await page.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=taguato-ruvicha`,
+  `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=taguato-ruvicha`,
 );
 await page.bringToFront();
 await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {

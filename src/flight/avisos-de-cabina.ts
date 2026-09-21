@@ -38,8 +38,10 @@
  *
  * No inventa estados. Cada luz cuelga de algo que el juego ya sabe y ya dice
  * por otros canales: si algún día hay una luz sin nada detrás, será una luz
- * que miente. Y no hay luz de combustible porque este juego todavía no tiene
- * combustible — una luz apagada para siempre enseñaría que ese aviso no existe.
+ * que miente. Aquí estuvo escrito durante meses que no había luz de
+ * combustible porque no había combustible, que es la forma correcta de no
+ * tener una luz: una luz apagada para siempre enseña que ese aviso no existe.
+ * Ahora lo hay —ver `flight/combustible.ts`— y la luz entra con él.
  */
 
 /** Los dos escalones de un panel de avisos de verdad. */
@@ -89,6 +91,12 @@ export const LUCES: readonly Luz[] = [
     clave: "luz.tren",
   },
   {
+    id: "combustible",
+    grado: "precaucion",
+    cabina: "FUEL LOW",
+    clave: "luz.combustible",
+  },
+  {
     id: "frustrada",
     grado: "precaucion",
     cabina: "GO AROUND",
@@ -121,6 +129,13 @@ export interface Estado {
    * con el avión bajo y lento. Ver `tren.ts`.
    */
   readonly trenMal: boolean;
+  /**
+   * Se está entrando en la reserva. Ver `comoVaElCombustible`.
+   *
+   * Ámbar y no rojo a propósito: no dice «se acabó», dice «estás gastando lo
+   * que no era para gastar», que es el aviso que todavía da tiempo a decidir.
+   */
+  readonly pocoCombustible: boolean;
   /** La torre mandó irse al aire y todavía no se ha obedecido. */
   readonly frustrada: boolean;
   /** El piloto automático acaba de soltarse. Ver `piloto-automatico.ts`. */
@@ -142,6 +157,7 @@ export function encendidas(e: Estado): readonly Luz[] {
     perdida: e.perdida,
     rapido: e.rapido,
     tren: e.trenMal,
+    combustible: e.pocoCombustible,
     frustrada: e.frustrada,
     piloto: e.pilotoSuelto,
     freno: e.frenoPuesto,

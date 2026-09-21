@@ -36,6 +36,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const PUERTO = 5239;
 const server = await createServer({
@@ -43,6 +44,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
@@ -107,7 +109,7 @@ async function partida(tramo) {
       localStorage.setItem("oga-veve:tramo", t);
     }, tramo);
     await page.goto(
-      `http://localhost:${PUERTO}/?escenario=pettirossi&hora=16&viento=${VIENTO}`,
+      `${BASE}/?escenario=pettirossi&hora=16&viento=${VIENTO}`,
     );
     try {
       await page.waitForFunction(

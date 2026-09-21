@@ -39,6 +39,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const PUERTO = 5281;
 const ESCENARIOS = process.argv.slice(2).length
@@ -63,6 +64,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   /*
@@ -94,7 +96,7 @@ for (const escenario of ESCENARIOS) {
   });
   const cdp = await page.context().newCDPSession(page);
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami`,
+    `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami`,
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 60000,

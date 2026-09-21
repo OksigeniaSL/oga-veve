@@ -640,6 +640,75 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
   `;
 }
 
+/**
+ * El depósito: cuánto queda y dónde empieza la reserva.
+ *
+ * Pedido jugando —«se echa de menos un indicador de combustible»— y es el
+ * único instrumento del cuadro que cuenta hacia atrás, así que se dibuja como
+ * lo que es: **un depósito que se vacía**. La barra se acorta, y eso se
+ * entiende a los cuatro años sin una palabra encima, que es la regla de la
+ * casa.
+ *
+ * Lo que enseña no es «queda poco»: es **la reserva**. La franja ámbar del
+ * fondo está pintada donde empiezan los cuarenta y cinco minutos de ley, y no
+ * se mueve. Ver bajar la barra hacia una raya que estaba ahí desde el
+ * principio es la lección entera —se decide antes, con margen— y es lo
+ * contrario de un aviso que salta cuando ya no hay nada que decidir.
+ *
+ * La franja se coloca desde fuera porque no es un porcentaje: son los kilos
+ * que este avión concreto necesita para volar cuarenta y cinco minutos, y eso
+ * depende de su motor. Ver `reservaEnKilos`.
+ */
+export function reglaDeCombustible(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): string {
+  const tumbada = w > h;
+  const largo = tumbada ? w : h;
+  /*
+   * La barra crece desde el borde por el que se vacía: por la izquierda si
+   * está tumbada y **desde abajo** si está de pie. Un depósito de pie que se
+   * vaciara por abajo dejando el líquido arriba no se parecería a nada.
+   */
+  const fondo = tumbada
+    ? `<rect data-combustible="reserva" x="0" y="0" width="0" height="${h}" />`
+    : `<rect data-combustible="reserva" x="0" y="${h}" width="${w}" height="0" />`;
+  const barra = tumbada
+    ? `<rect data-combustible="barra" x="0" y="0" width="0" height="${h}" />`
+    : `<rect data-combustible="barra" x="0" y="${h}" width="${w}" height="0" />`;
+  /*
+   * **Y la raya, encima de todo.**
+   *
+   * La franja sola no basta: mientras sobre combustible la barra la tapa
+   * entera, y una meta que solo se ve cuando ya llegaste no es una meta. La
+   * raya se ve desde el primer segundo, sobresale un poco por los dos lados
+   * —como la marca roja de un manómetro— y es la que convierte el
+   * instrumento en una cuenta atrás con final escrito.
+   */
+  const raya = tumbada
+    ? `<line data-combustible="raya" x1="0" y1="-3" x2="0" y2="${h + 3}" />`
+    : `<line data-combustible="raya" x1="-3" y1="${h}" x2="${w + 3}" y2="${h}" />`;
+  return `
+    <g data-cristal="combustible" data-largo="${largo}" data-tumbada="${tumbada ? 1 : 0}">
+      <g transform="translate(${x} ${y})">
+        <text x="${tumbada ? -10 : w / 2}" y="${tumbada ? h - 8 : -8}"
+              ${MARCA_ROTULO} class="cr__rotulo"
+              text-anchor="${tumbada ? "end" : "middle"}">FUEL</text>
+        <rect width="${w}" height="${h}" rx="2" class="cr__ventana" />
+        <g class="cr__reserva">${fondo}</g>
+        <g class="cr__deposito">${barra}</g>
+        <g class="cr__reserva-raya">${raya}</g>
+        <text data-combustible="cifra"
+              x="${tumbada ? w : w / 2}" y="${tumbada ? -6 : h + 16}"
+              ${MARCA_CIFRA} class="cr__aux"
+              text-anchor="${tumbada ? "end" : "middle"}"></text>
+      </g>
+    </g>
+  `;
+}
+
 // ── La pantalla de motores ────────────────────────────────────────────
 
 /**
@@ -684,6 +753,7 @@ export function pantallaDeMotores(
     <text x="${ancho / 2}" y="20" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
     ${mandoDeMotor(12, cy + r + 46, hueco, n)}
+    ${reglaDeCombustible(40, alto - 156, ancho - 80, 16)}
     ${reglaDeFlaps(40, alto - 96, ancho - 80, 26)}
     ${lucesDeTren(14, yTren, patas)}
     <text data-cristal="reversa" x="${ancho - 14}" y="${yTren + 13}"
@@ -861,6 +931,7 @@ export function columnaDeMotor(ancho: number, alto: number, c: Cuadro): string {
     <text x="${ancho / 2}" y="22" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
     ${mandoDeMotor(16, cy + r + 46, ancho - 32, n)}
+    ${reglaDeCombustible(34, alto - 118, ancho - 68, 16)}
     ${reglaDeFlaps(34, alto - 74, ancho - 68, 26)}
     <text data-cristal="reversa" x="${ancho - 12}" y="${alto - 14}"
           ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
@@ -903,6 +974,7 @@ export function franjaDeMotor(
     <text x="${ancho / 2}" y="16" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${barras}
     ${reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34)}
+    ${reglaDeCombustible(78, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 56)}
     ${lucesDeTren(12, alto - 24, patasDe(a))}
     <text data-cristal="reversa" x="${ancho / 2}" y="${alto - 8}"
           ${MARCA_CIFRA} class="cr__reversa" text-anchor="middle" visibility="hidden">REV</text>

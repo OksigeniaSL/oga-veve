@@ -316,6 +316,13 @@ import { Audio, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import { patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren, seVuelveADecir } from "./flight/tren";
+import {
+  cargaParaLaRuta,
+  comoVaElCombustible,
+  loQueCabe,
+  quemaPorSegundo,
+  reservaEnKilos,
+} from "./flight/combustible";
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
@@ -798,6 +805,21 @@ export class Game {
 
   /** El reloj del vuelo que mueve a los de la ruta, en segundos. */
   private relojDeRuta = 0;
+
+  /**
+   * Lo que queda en los depósitos, en kilos.
+   *
+   * Se carga al empezar el vuelo con lo de la ruta más la reserva —ver
+   * `cargaParaLaRuta`— y baja con el empuje que está dando el avión. Es la
+   * única cuenta atrás de verdad que hay aquí.
+   */
+  private combustible = 0;
+
+  /** Lo que se está quemando ahora mismo, en kilos por segundo. */
+  private quemaDeAhora = 0;
+
+  /** Si ya se avisó de que se entró en la reserva, para no repetirlo. */
+  private avisadoDeLaReserva = false;
 
   /**
    * Las células de tormenta de hoy, si el tiempo las trae.
@@ -3168,6 +3190,8 @@ export class Game {
      */
     if (this.flight.state.onGround) {
       this.avisandoDelBulto = 0;
+    // Y el depósito, lleno para lo que se va a volar hoy. Ver `repostar`.
+    this.repostar();
       this.hud.senal.caducar("edificio");
       this.hud.senal.caducar("terreno");
       // Y la celebración de la frustrada, que con ruedas en el suelo ya no
@@ -5477,6 +5501,7 @@ export class Game {
       this.flight.step(dt, this.conElPilotoAutomatico(dt));
       this.mirarSiChocaConAlgo();
     }
+    this.quemarCombustible(dt);
     this.avisarDeLosBultos(dt);
 
     /*
@@ -5792,6 +5817,10 @@ export class Game {
       trenMal: this.trenFueraDeSitio(),
       frustrada: this.laAproximacion.mandanFrustrar,
       pilotoSuelto: this.pilotoSeSolto > 0,
+      // Y el depósito, que es la única luz de este panel que se enciende
+      // sola con el tiempo: las demás las enciende algo que se hizo.
+      pocoCombustible:
+        comoVaElCombustible(this.combustible, this.quemaDeAhora) !== "bien",
       frenoPuesto:
         this.input.controls.brakes > 0.5 &&
         this.input.controls.throttle > 0.25,
@@ -6415,6 +6444,8 @@ export class Game {
         // «¿por qué no tengo datos como distancia al aeropuerto?».
         objetivo: this.aDondeVoy,
         viento: this.vientoDeHoy,
+        // Y el depósito, el mismo que ve el cuadro plano. Ver `elDeposito`.
+        combustible: this.elDeposito(),
         /*
          * **Y el mundo, para que la pantalla de navegación lo dibuje.**
          *
@@ -6532,6 +6563,7 @@ export class Game {
         // Y el mismo mundo que reciben las pantallas de la cabina: una sola
         // cuenta, dos dibujos. Ver `elMapa`.
         mapa: this.elMapa(),
+        combustible: this.elDeposito(),
       },
     );
     const toma = this.checkLanding(dt);
@@ -6680,6 +6712,100 @@ export class Game {
    * solo de lo que viene por delante, dentro del cono del morro. Ver
    * `laQueVieneDelante`.
    */
+/**
+   * Lo que se quema en este fotograma, y lo que pasa cuando ya no queda.
+   *
+   * Por el empuje que el avión está dando de verdad y no por el gas que se
+   * pide: arriba, donde el aire es cuarto de denso, el mismo mando da mucho
+   * menos empuje y gasta mucho menos. Con eso, subir a volar alto sale a
+   * cuenta solo — que es exactamente la lección de por qué se vuela alto, y no
+   * hay que contarla. Ver `flight/combustible.ts`.
+   *
+   * Y cuando se acaba, **el motor se para**. No es un castigo ni una pantalla
+   * roja: es lo que pasa, y a partir de ahí el avión planea, que es una cosa
+   * que los aviones hacen. Quedarse sin combustible y que no pase nada sería
+   * enseñar que el combustible no importa, que es lo contrario de por qué está
+   * aquí.
+   */
+  private quemarCombustible(dt: number): void {
+    const antes = this.combustible;
+    this.quemaDeAhora = this.input.controls.engineOn
+      ? quemaPorSegundo(this.aircraft, this.flight.empujeAhora())
+      : 0;
+    this.combustible = Math.max(0, antes - this.quemaDeAhora * dt);
+
+    /*
+     * El aviso de reserva, una vez. Ámbar y en voz de aviso —nunca de
+     * alarma—, porque lo que hay que hacer con él es decidir, y quien se
+     * acelera decide peor. La luz del panel se queda encendida mientras dure,
+     * que es lo que hace una luz. Ver `flight/avisos-de-cabina.ts`.
+     */
+    const como = comoVaElCombustible(this.combustible, this.quemaDeAhora);
+    if (como !== "bien" && !this.avisadoDeLaReserva && antes > 0) {
+      this.avisadoDeLaReserva = true;
+      const dicho = this.avisoCon("vuelo.reserva", "palabra.reserva");
+      this.hud.senal.mostrar("combustible", dicho.rotulo, null, { segundos: 6 });
+      this.instructor.decir(dicho.texto, dicho.id);
+    }
+
+    /*
+     * Y sin combustible el motor no arranca, por mucho que se pida. La llave
+     * está siempre a mano —es el primer paso del vuelo— y sin esto se podía
+     * volver a arrancar con el depósito a cero y seguir volando para siempre,
+     * que es la forma más rápida de enseñar que el combustible no importa.
+     */
+    if (this.combustible <= 0) this.input.controls.engineOn = false;
+    if (antes > 0 && this.combustible <= 0) {
+      const dicho = this.avisoCon(
+        "vuelo.sinCombustible",
+        "palabra.sinCombustible",
+      );
+      this.hud.senal.mostrar("combustible", dicho.rotulo, null, { segundos: 8 });
+      this.instructor.decir(dicho.texto, dicho.id);
+    }
+  }
+
+  /**
+   * El depósito, para los dos sitios que lo dibujan.
+   *
+   * Uno solo, porque el cuadro plano y las pantallas de la cabina son dos
+   * dibujos de **la misma** cabina: que uno diga una cosa y el otro otra es el
+   * fallo clásico de esta casa y no se va a estrenar con el combustible.
+   */
+  private elDeposito(): {
+    kilos: number;
+    cabe: number;
+    reserva: number;
+    estado: "bien" | "reserva" | "poco";
+  } {
+    return {
+      kilos: this.combustible,
+      cabe: loQueCabe(this.aircraft),
+      reserva: reservaEnKilos(this.aircraft),
+      estado: comoVaElCombustible(this.combustible, this.quemaDeAhora),
+    };
+  }
+
+  /**
+   * Llenar para este vuelo: lo de la ruta más la reserva.
+   *
+   * Lo de la ruta sale del destino **más lejano** que tenga hoy este
+   * escenario, no del que se acabe elegir: desde El Hierro se puede salir
+   * hacia La Gomera y cambiar de idea en el aire, y un avión que sale con lo
+   * justo para lo que creía que iba a hacer es un avión que aprendió mal.
+   * Cargar para la peor de las salidas posibles es lo que hace de verdad un
+   * despacho de vuelo.
+   */
+  private repostar(): void {
+    const casa = this.scenario.runway;
+    let lejos = 0;
+    for (const v of this.vecinos)
+      lejos = Math.max(lejos, Math.hypot(v.pista.x - casa.x, v.pista.z - casa.z));
+    this.combustible = cargaParaLaRuta(this.aircraft, lejos);
+    this.quemaDeAhora = 0;
+    this.avisadoDeLaReserva = false;
+  }
+
   private avisarDeLaTormenta(): void {
     // Rodando no se rodea nada: esto es un aviso de vuelo.
     if (!this.celdas.length || this.flight.state.onGround) return;

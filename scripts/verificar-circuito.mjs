@@ -22,6 +22,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const PUERTO = 5294;
 
@@ -79,6 +80,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
@@ -93,7 +95,7 @@ await page.addInitScript(() => {
 const medidas = [];
 for (const [escenario, avion] of LISTA) {
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=${escenario}&hora=16&leccion=circuito&avion=${avion}`,
+    `${BASE}/?escenario=${escenario}&hora=16&leccion=circuito&avion=${avion}`,
   );
   await page
     .waitForFunction(() => globalThis.__oga?.circuito?.()?.length, null, {

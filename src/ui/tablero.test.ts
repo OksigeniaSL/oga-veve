@@ -135,3 +135,33 @@ describe("el panel de avisos cabe en la visera", () => {
     expect(huecosDeAviso(todas).map((h) => h.id)).toEqual(todas.slice(0, 4));
   });
 });
+
+/*
+ * ── El depósito, en los seis y en las dos superficies ──────────────────────
+ *
+ * Esto es el fallo clásico de esta casa: un instrumento que existe en el
+ * cuadro plano —el que se ve desde fuera— y no en las pantallas de la cabina,
+ * o al revés. Ha pasado con la carta, con las cifras y con las luces del
+ * tren, y las tres veces se contó jugando y no lo vio ningún test. Aquí se
+ * clava lo que sí se puede clavar sin navegador: que el marcado del cuadro lo
+ * lleva, y que el módulo de la cabina también lo dibuja.
+ */
+describe("el indicador de combustible", () => {
+  it("está en el cuadro de los seis aviones", () => {
+    for (const a of AIRCRAFT) {
+      const marcado = new Tablero().markup(a);
+      expect(marcado).toContain('data-cristal="combustible"');
+      expect(marcado).toContain('data-combustible="barra"');
+      // Y la franja de la reserva, que es la meta hacia la que baja la barra.
+      expect(marcado).toContain('data-combustible="reserva"');
+      expect(marcado).toContain(">FUEL<");
+    }
+  });
+
+  it("y uno solo por cuadro: dos depósitos serían dos aviones", () => {
+    for (const a of AIRCRAFT) {
+      const marcado = new Tablero().markup(a);
+      expect(marcado.match(/data-cristal="combustible"/g)).toHaveLength(1);
+    }
+  });
+});

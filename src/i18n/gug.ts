@@ -156,6 +156,7 @@ export const GUG: Dictionary = {
   "luz.perdida": "OPYTA",
   "luz.rapido": "PYA'E",
   "luz.tren": "PYSÃ",
+  "luz.combustible": "COMBUSTIBLE",
   "luz.frustrada": "JEHUPI",
   "luz.piloto": "NDAIPÓRI",
   "luz.freno": "JEJOKO",

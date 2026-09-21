@@ -33,6 +33,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const PUERTO = 5291;
 const server = await createServer({
@@ -40,6 +41,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
@@ -75,7 +77,7 @@ for (const [ancho, alto] of PANTALLAS) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=la-palma&hora=16&leccion=despegue&tramo=taguato&avion=jaz-90`,
+    `${BASE}/?escenario=la-palma&hora=16&leccion=despegue&tramo=taguato&avion=jaz-90`,
   );
   await page
     .waitForFunction(() => globalThis.__oga?.estado?.(), null, {

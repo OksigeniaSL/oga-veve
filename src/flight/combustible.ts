@@ -127,6 +127,22 @@ function cuantoDura(avion: AircraftConfig, metros: number): number {
  */
 export const RESERVA_SEGUNDOS = 45 * 60;
 
+/**
+ * La reserva de este avión, en kilos.
+ *
+ * Los cuarenta y cinco minutos de ley al consumo de crucero, que es con lo
+ * que se calculan de verdad: un plan de vuelo no dice «cuarenta y cinco
+ * minutos», dice los kilos que son cuarenta y cinco minutos, y ese número se
+ * decide en tierra y ya no se toca.
+ *
+ * Por eso el instrumento pinta la franja ámbar aquí y no donde caiga según lo
+ * que se esté gastando ahora: una raya que se mueve con el acelerador no es
+ * una raya, y lo que hay que ver bajar es la barra, no la meta.
+ */
+export function reservaEnKilos(avion: AircraftConfig): number {
+  return quemaPorSegundo(avion, avion.maxThrust / 3) * RESERVA_SEGUNDOS;
+}
+
 export function cargaParaLaRuta(
   avion: AircraftConfig,
   /** Lo que se va a volar, en metros. Un circuito son unos pocos miles. */

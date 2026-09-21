@@ -20,6 +20,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const PUERTO = 5281;
 const ESCENARIO = process.argv[2] ?? "pettirossi";
@@ -32,6 +33,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 
 // Con WebGL por software, como el resto de los bancos. Sin esto el juego no
 // arranca su bucle y lo que se mediría es un avión congelado — o sea, verde
@@ -49,7 +51,7 @@ await page.addInitScript(() =>
   localStorage.setItem("oga-veve:teclas-vistas", "1"),
 );
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=taguato`,
+  `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=aterrizaje&tramo=taguato`,
 );
 // El juego se para cuando nadie mira, y «nadie mira» incluye una pestaña que
 // nunca se trajo al frente. Ver `main.ts`.

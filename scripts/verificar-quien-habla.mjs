@@ -32,6 +32,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const PUERTO = 5292;
 const ESCENARIO = process.argv[2] ?? "tenerife-norte";
@@ -58,6 +59,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
@@ -152,7 +154,7 @@ await page.addInitScript((voces) => {
 }, VOCES);
 
 await page.goto(
-  `http://localhost:${PUERTO}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}&avion=${AVION}`,
+  `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue&tramo=${TRAMO}&avion=${AVION}`,
 );
 await page
   .waitForFunction(() => globalThis.__oga?.estado?.(), null, { timeout: 60000 })

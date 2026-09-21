@@ -55,6 +55,7 @@ export const ES_PY = {
   "luz.perdida": "PÉRDIDA",
   "luz.rapido": "RÁPIDO",
   "luz.tren": "TREN",
+  "luz.combustible": "COMBUSTIBLE",
   "luz.frustrada": "AL AIRE",
   "luz.piloto": "SIN PILOTO",
   "luz.freno": "FRENO",
@@ -618,6 +619,15 @@ export const ES_PY = {
   "vuelo.meteElTren": "Metélo, el tren te frena",
   "vuelo.tormenta": "Hay lluvia delante: rodeála, no la cruces",
   "palabra.tormenta": "Lluvia",
+  /*
+   * El combustible, en sus dos escalones. El primero no es una emergencia y
+   * no se escribe como tal: entrar en la reserva es el momento de decidir, y
+   * decidir bien pide calma. El segundo ya no pide decidir: pide planear.
+   */
+  "vuelo.reserva": "Entraste en la reserva: buscá dónde aterrizar",
+  "palabra.reserva": "Combustible",
+  "vuelo.sinCombustible": "Se acabó el combustible: planeá hasta la pista",
+  "palabra.sinCombustible": "Sin combustible",
   "vuelo.sacaElTren": "Sacá el tren",
   "palabra.tren": "Tren",
   "vuelo.despacio": "Más despacio",

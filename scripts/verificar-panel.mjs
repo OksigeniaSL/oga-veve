@@ -28,6 +28,7 @@ import { chromium } from "playwright";
 import { createServer } from "vite";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { baseDe } from "./servidor.mjs";
 
 const FOTOS = process.argv[2] ?? "";
 const PUERTO = 5301;
@@ -40,6 +41,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
@@ -59,7 +61,7 @@ for (const id of FLOTA) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=tenerife-sur&hora=16&leccion=despegue&tramo=guyrami&avion=${id}`,
+    `${BASE}/?escenario=tenerife-sur&hora=16&leccion=despegue&tramo=guyrami&avion=${id}`,
   );
   await page
     .waitForFunction(
@@ -340,7 +342,7 @@ for (const id of FLOTA) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `http://localhost:${PUERTO}/?escenario=tenerife-sur&hora=16&leccion=despegue&tramo=taguato-ruvicha&avion=jaz-120`,
+    `${BASE}/?escenario=tenerife-sur&hora=16&leccion=despegue&tramo=taguato-ruvicha&avion=jaz-120`,
   );
   await page
     .waitForFunction(

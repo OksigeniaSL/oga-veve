@@ -112,6 +112,22 @@ export interface DatosDelTablero {
   readonly viento: { readonly desde: number; readonly nudos: number } | null;
   readonly perdida: boolean;
   /**
+   * El depósito: lo que queda, lo que cabe y dónde empieza la reserva.
+   *
+   * `null` mientras no haya vuelo del que decirlo — el instrumento se queda
+   * vacío, que es lo que hace un instrumento sin señal, y no marcando cero,
+   * que sería mentir.
+   */
+  readonly combustible: {
+    /** Lo que queda, en kilos. */
+    readonly kilos: number;
+    /** Lo que cabe en los depósitos, en kilos. Ver `loQueCabe`. */
+    readonly cabe: number;
+    /** Los kilos de la reserva de ley, al consumo de ahora. */
+    readonly reserva: number;
+    readonly estado: "bien" | "reserva" | "poco";
+  } | null;
+  /**
    * El mundo, para la carta de la pantalla de navegación.
    *
    * Llegaba solo a las pantallas de la cabina, así que el cuadro plano —el que
@@ -163,6 +179,7 @@ const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
   frustrada: "frustrada",
   piloto: "piloto-fuera",
   freno: "freno",
+  combustible: "combustible",
 };
 
 export class Tablero {
@@ -897,6 +914,7 @@ export class Tablero {
           : `translate(0 ${cuanto})`,
       );
     }
+    this.deposito(raiz, d);
     const rev = raiz.querySelector<SVGElement>('[data-cristal="reversa"]');
     rev?.setAttribute("visibility", d.reversa ? "visible" : "hidden");
 
@@ -913,6 +931,64 @@ export class Tablero {
       tren.classList.toggle("cr--moviendose", luz === "moviendose");
       tren.classList.toggle("cr--dentro", luz === "dentro");
     }
+  }
+
+  /**
+   * El depósito: la barra que se acorta y la franja de la reserva.
+   *
+   * La franja está donde empiezan los cuarenta y cinco minutos de ley de
+   * **este** avión y no se mueve: es la meta, y una meta que se desplaza no
+   * enseña nada. Lo que se mueve es la barra. Ver `reservaEnKilos`.
+   *
+   * El color sí sale del consumo de ahora —`comoVaElCombustible`— porque la
+   * reserva se mide en minutos y los minutos dependen del acelerador: con el
+   * gas a fondo se entra en ella antes. Que las dos cosas coincidan en crucero
+   * no es casualidad; es de donde sale el número.
+   */
+  private deposito(raiz: SVGElement, d: DatosDelTablero): void {
+    const g = raiz.querySelector<SVGElement>('[data-cristal="combustible"]');
+    if (!g) return;
+    if (!d.combustible) {
+      g.setAttribute("visibility", "hidden");
+      return;
+    }
+    g.setAttribute("visibility", "visible");
+    const { kilos, cabe, reserva, estado } = d.combustible;
+    g.classList.toggle("cr--reserva", estado === "reserva");
+    g.classList.toggle("cr--poco", estado === "poco");
+
+    const largo = Number(g.dataset.largo) || 1;
+    const tumbada = g.dataset.tumbada === "1";
+    const parte = (k: number) => Math.max(0, Math.min(1, k / Math.max(1, cabe)));
+    const poner = (sel: string, k: number): void => {
+      const r = g.querySelector<SVGElement>(sel);
+      if (!r) return;
+      const cuanto = parte(k) * largo;
+      if (tumbada) r.setAttribute("width", String(cuanto));
+      else {
+        // De pie se vacía por arriba: el suelo del rectángulo no se mueve.
+        r.setAttribute("y", String(largo - cuanto));
+        r.setAttribute("height", String(cuanto));
+      }
+    };
+    poner('[data-combustible="barra"]', kilos);
+    poner('[data-combustible="reserva"]', reserva);
+
+    // Y la raya, que no se estira: se coloca. Ver `reglaDeCombustible`.
+    const raya = g.querySelector<SVGElement>('[data-combustible="raya"]');
+    if (raya) {
+      const donde = parte(reserva) * largo;
+      if (tumbada) {
+        raya.setAttribute("x1", String(donde));
+        raya.setAttribute("x2", String(donde));
+      } else {
+        raya.setAttribute("y1", String(largo - donde));
+        raya.setAttribute("y2", String(largo - donde));
+      }
+    }
+
+    const cifra = g.querySelector('[data-combustible="cifra"]');
+    if (cifra) cifra.textContent = `${Math.round(kilos)} KG`;
   }
 
   /**

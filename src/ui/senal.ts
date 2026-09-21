@@ -656,6 +656,27 @@ const GAFAS = icono(`
 `);
 
 /**
+ * **El combustible que queda poco**: el surtidor.
+ *
+ * Es el mismo dibujo que lleva el salpicadero de cualquier coche y el mismo
+ * que hay en cualquier gasolinera, así que no hay que aprenderlo: ya se sabe
+ * antes de entrar en la cabina. Y esa es exactamente la razón de elegirlo
+ * frente a una gota —que se lee como agua— o frente a la palabra FUEL, que
+ * aquí no se puede leer.
+ *
+ * El surtidor entero, con su manguera: la silueta de la máquina sola se
+ * confunde con una nevera pequeña.
+ */
+const COMBUSTIBLE = icono(`
+  <path d="M3.4 22 V4.4 A1.8 1.8 0 0 1 5.2 2.6 h6.4 A1.8 1.8 0 0 1 13.4 4.4 V22 Z" />
+  <rect class="senal__hueco" x="5.4" y="5" width="6" height="4.4" rx="0.7" />
+  <path d="M2 22 h12.8 v1.6 H2 Z" />
+  <path d="M14.6 7.4 h2.4 a2 2 0 0 1 2 2 v7.4 a1.6 1.6 0 0 0 3.2 0 V10.6 l-2-2.4"
+        fill="none" stroke="currentColor" stroke-width="1.7"
+        stroke-linecap="round" stroke-linejoin="round" />
+`);
+
+/**
  * Todos los dibujos, por su nombre.
  *
  * Se exporta para poder comprobar la única regla que tienen en común: **cada
@@ -682,6 +703,7 @@ export const DIBUJOS = {
   tormenta: TORMENTA,
   sobrevelocidad: SOBREVELOCIDAD,
   freno: FRENO,
+  combustible: COMBUSTIBLE,
   salida: SALIDA,
   sinVoz: SIN_VOZ,
   toma: TOMA,

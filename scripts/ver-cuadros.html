@@ -47,6 +47,13 @@
   import { Tablero } from "/src/ui/tablero.ts";
   import { FLOTA } from "/src/flight/flota.ts";
   import { aircraftById } from "/src/flight/aircraft.ts";
+  import {
+    cargaParaLaRuta,
+    comoVaElCombustible,
+    loQueCabe,
+    quemaPorSegundo,
+    reservaEnKilos,
+  } from "/src/flight/combustible.ts";
 
   const estado = (kt, pies, alabeo, cabeceo) => ({
     position: new Vector3(0, pies / 3.28084, 0),
@@ -128,6 +135,26 @@
           objetivo: { rumbo: (300 * Math.PI) / 180, distancia: 24000 },
           viento: { desde: 210, nudos: 14 },
           perdida: false,
+          /*
+           * El depósito a media travesía, que es donde se ve lo que enseña:
+           * la barra ya bajando y la franja ámbar de la reserva quieta al
+           * principio de la escala. Lleno del todo no se distingue de un
+           * instrumento roto.
+           */
+          combustible: (() => {
+            const reserva = reservaEnKilos(ficha);
+            // La mitad del viaje gastada y la reserva entera: el punto en el
+            // que un vuelo de verdad está casi siempre.
+            const kilos =
+              reserva + (cargaParaLaRuta(ficha, 300_000) - reserva) * 0.5;
+            const quema = quemaPorSegundo(ficha, ficha.maxThrust / 3);
+            return {
+              kilos,
+              cabe: loQueCabe(ficha),
+              reserva: reservaEnKilos(ficha),
+              estado: comoVaElCombustible(kilos, quema),
+            };
+          })(),
           ...extra,
         },
         dt,

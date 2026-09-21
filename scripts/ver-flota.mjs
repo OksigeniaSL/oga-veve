@@ -15,6 +15,7 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const SALIDA = process.argv[2] ?? "flota.png";
 const PUERTO = 5292;
@@ -24,6 +25,7 @@ const server = await createServer({
   server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
   args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
@@ -34,7 +36,7 @@ page.on("console", (m) => {
   if (m.type() === "error") console.log("CONSOLA:", m.text());
 });
 
-await page.goto(`http://localhost:${PUERTO}/scripts/ver-flota.html`);
+await page.goto(`${BASE}/scripts/ver-flota.html`);
 await page.waitForFunction(() => globalThis.__listo === true, null, {
   timeout: 60000,
 });
