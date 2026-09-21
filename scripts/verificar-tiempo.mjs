@@ -7,15 +7,18 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5229, hmr: false } });
+const PUERTO = 5229;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage({ viewport: { width: 1280, height: 800 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5229/?escenario=tenerife-norte&hora=16&leccion=despegue');
+await page.goto(`${BASE}/?escenario=tenerife-norte&hora=16&leccion=despegue`);
 await page.waitForTimeout(4000);
 await page.click('[data-hud="tiempo-boton"]');
 await page.waitForTimeout(400);

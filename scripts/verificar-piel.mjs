@@ -1,8 +1,11 @@
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
-const server = await createServer({ root: process.cwd(), server: { port: 5189, hmr: false } });
+const PUERTO = 5189;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 
 // Contraste WCAG entre dos colores ya compuestos.
@@ -20,7 +23,7 @@ for (const tramo of ['guyrami', 'tuka', 'taguato', 'taguato-ruvicha']) {
     localStorage.setItem('oga-veve:tramo', t);
     localStorage.setItem('oga-veve:teclas-vistas', '1');
   }, tramo);
-  await page.goto('http://localhost:5189/?escenario=valle-cordillera&hora=16');
+  await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
   await page.waitForTimeout(2200);
 
   // Contraste medido sobre los elementos de verdad, no sobre valores teóricos.

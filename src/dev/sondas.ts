@@ -1102,6 +1102,31 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     camaraViva: () => juego.camera,
     /**
+     * Dónde cae el sol en la pantalla, en píxeles, y a qué altura está.
+     *
+     * Hace falta para poder decir si una mancha rara del cielo **es** el sol o
+     * es otra cosa. Sin esto se contesta mirando una captura y adivinando, que
+     * es como se contestó la primera vez y se adivinó mal dos veces seguidas.
+     *
+     * `dentro` dice si cae en el cuadro; `altura` es la del sol sobre el
+     * horizonte, en grados, que es lo que decide el color del cielo.
+     */
+    solEnPantalla: () => {
+      const d = juego.sky.sunDirection;
+      const lienzo = juego.renderer.domElement;
+      const v = new Vector3(d.x, d.y, d.z)
+        .multiplyScalar(1000)
+        .add(juego.camera.position);
+      juego.camera.updateMatrixWorld();
+      v.project(juego.camera);
+      return {
+        x: Math.round(((v.x + 1) / 2) * lienzo.clientWidth),
+        y: Math.round(((1 - v.y) / 2) * lienzo.clientHeight),
+        dentro: v.x >= -1 && v.x <= 1 && v.y >= -1 && v.y <= 1 && v.z < 1,
+        altura: Math.round((Math.asin(d.y) * 180) / Math.PI * 10) / 10,
+      };
+    },
+    /**
      * Cuántas letras salieron en el último repintado de las pantallas de
      * cabina.
      *

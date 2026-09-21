@@ -9,10 +9,13 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5241, hmr: false } });
+const PUERTO = 5241;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
@@ -26,7 +29,7 @@ for (const [escenario, leccion] of [
   const fallos = [];
   page.on('pageerror', (e) => fallos.push(e.message.slice(0, 140)));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5241/?escenario=${escenario}&hora=16&leccion=${leccion}`);
+  await page.goto(`${BASE}/?escenario=${escenario}&hora=16&leccion=${leccion}`);
   await page.waitForTimeout(28000);
 
   const r = await page.evaluate(() => {

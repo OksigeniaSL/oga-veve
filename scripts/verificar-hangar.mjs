@@ -8,13 +8,16 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const D = process.argv[2] ?? "/tmp";
+const PUERTO = 5199;
 const server = await createServer({
   root: process.cwd(),
-  server: { port: 5199, hmr: false },
+  server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: "/usr/bin/google-chrome" });
 
 const lum = (rgb) => {
@@ -44,7 +47,7 @@ for (const [ancho, alto, nombre] of [
     locale: "es-PY",
   });
   page.on("pageerror", (e) => console.log("ERROR:", e.message));
-  await page.goto("http://localhost:5199/");
+  await page.goto(`${BASE}/`);
   /*
    * **Y antes del hangar hay que decir quién vuela.**
    *

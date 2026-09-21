@@ -16,14 +16,17 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
-const server = await createServer({ root: process.cwd(), server: { port: 5286, hmr: false } });
+import { baseDe } from './servidor.mjs';
+const PUERTO = 5286;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'] });
 const page = await b.newPage({ viewport: { width: 900, height: 600 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5286/?escenario=tenerife-norte&hora=16');
+await page.goto(`${BASE}/?escenario=tenerife-norte&hora=16`);
 await page.waitForTimeout(95000);
 console.log('— altura de cada malla sobre el suelo —');
 for (const l of await page.evaluate(() => globalThis.__oga.alturaDeLasMallas?.() ?? [])) {

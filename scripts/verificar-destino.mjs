@@ -25,12 +25,15 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
+const PUERTO = 5263;
 const server = await createServer({
   root: process.cwd(),
-  server: { port: 5263, hmr: false },
+  server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const navegador = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
@@ -43,7 +46,7 @@ const errores = [];
 page.on('pageerror', (e) => errores.push(e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
 // Tenerife Norte, cuyo destino es Tenerife Sur. Ver `destino` en scenarios.ts.
-await page.goto('http://localhost:5263/?escenario=tenerife-norte&hora=12&leccion=aterrizaje');
+await page.goto(`${BASE}/?escenario=tenerife-norte&hora=12&leccion=aterrizaje`);
 await page.waitForTimeout(25000);
 
 const vecino = await page.evaluate(() => globalThis.__oga.pistaDelVecino?.() ?? null);

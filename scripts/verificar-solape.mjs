@@ -1,8 +1,11 @@
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
-const server = await createServer({ root: process.cwd(), server: { port: 5198, hmr: false } });
+const PUERTO = 5198;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 
 // Tres formas de pantalla: portátil, tablet apaisada baja y móvil vertical.
@@ -42,7 +45,7 @@ const solape = (a, b) => {
 for (const [nombre, width, height] of formas) {
   const page = await b.newPage({ viewport: { width, height } });
   await page.addInitScript(() => localStorage.setItem('oga-veve:tramo', 'taguato-ruvicha'));
-  await page.goto('http://localhost:5198/?escenario=valle-cordillera&hora=16');
+  await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
   await page.waitForTimeout(2200);
   const tutor = await page.locator('.tutor:not([hidden])').boundingBox().catch(() => null);
   const panel = await page.locator('.seispack').boundingBox();

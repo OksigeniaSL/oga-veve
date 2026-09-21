@@ -60,11 +60,37 @@ import {
 import { mulberry32 } from "./noise";
 import type { Scenario } from "./scenarios";
 
+/*
+ * **La dirección se mide desde el centro de la cúpula, no desde el origen.**
+ *
+ * Esto decía `modelMatrix * position` y le pasaba al fragmento la posición en
+ * el mundo. Suena inofensivo y es el fallo entero: la cúpula **viaja con la
+ * cámara** —ver `updateSky`, que le copia la posición cada fotograma— así que
+ * lo que llegaba era «dónde está este trozo de cielo en el mapa», no «hacia
+ * dónde hay que mirar para verlo». Normalizado, eso es la dirección desde el
+ * origen del escenario, y el avión no está en el origen del escenario: está a
+ * cinco o diez kilómetros. La cuenta del cielo entero salía torcida esos
+ * grados.
+ *
+ * Lo que se veía: el degradado del horizonte inclinado, y el sol **dibujado
+ * donde no está** — «el sol, literalmente, debajo del horizonte». No era una
+ * mancha rara ni una nube: era el sol, en el sitio equivocado, con su disco
+ * más apagado que el resplandor que lo rodea.
+ *
+ * La esfera es de radio uno, así que su vértice **es** la dirección.
+ *
+ * Y con ella se fue el `offset`, que sumaba 0,12 a la dirección antes de
+ * normalizarla. Sobre una esfera unidad eso levanta el cielo unos siete
+ * grados —o sea, **pinta el sol siete grados más abajo de donde está**, que es
+ * la misma avería que se viene a arreglar—. Sobre una de dieciséis mil metros
+ * de radio, que es lo que había, no hacía absolutamente nada. Llevaba meses
+ * siendo un cero, así que quitarlo no cambia lo que se ve; dejarlo puesto
+ * ahora sí lo habría cambiado, y para peor.
+ */
 const VERTEX_SHADER = /* glsl */ `
-  varying vec3 vWorldPosition;
+  varying vec3 vDireccion;
   void main() {
-    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-    vWorldPosition = worldPosition.xyz;
+    vDireccion = position;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -74,12 +100,11 @@ const FRAGMENT_SHADER = /* glsl */ `
   uniform vec3 zenithColour;
   uniform vec3 sunColour;
   uniform vec3 sunDirection;
-  uniform float offset;
   uniform float haloFuerza;
-  varying vec3 vWorldPosition;
+  varying vec3 vDireccion;
 
   void main() {
-    vec3 dir = normalize(vWorldPosition + vec3(0.0, offset, 0.0));
+    vec3 dir = normalize(vDireccion);
 
     // La potencia comprime el degradado hacia el horizonte, que es donde el
     // ojo espera ver la transición. Un lerp lineal se ve plano.
@@ -97,11 +122,47 @@ const FRAGMENT_SHADER = /* glsl */ `
     float halo = pow(toSun, mix(60.0, 5.0, haloFuerza)) * (0.35 + haloFuerza * 0.85);
     float disc = smoothstep(0.9986, 0.9994, toSun);
     sky += sunColour * halo;
-    sky = mix(sky, sunColour, disc);
+    /*
+     * **Y el disco suma, no sustituye.**
+     *
+     * Esto era una mezcla hacia el color del sol con el disco de factor: en
+     * el sitio exacto donde está el sol se tiraba todo lo anterior y se
+     * ponía el color del sol a secas. Pero justo ahí el halo ya había sumado casi el doble de ese
+     * mismo color, así que el disco salía **más oscuro que el resplandor que
+     * lo rodea**: un agujero en su propio brillo. Al atardecer, con el halo
+     * abierto del todo, eso es una mancha parda en mitad del cielo naranja.
+     *
+     * El sol es la fuente: tiene que ser lo más claro del cielo, nunca un
+     * hueco. Sumando, lo es siempre.
+     */
+    sky += sunColour * disc;
 
     gl_FragColor = vec4(sky, 1.0);
   }
 `;
+
+/**
+ * Los dos programas y los gajos, para poder comprobarlos sin tarjeta gráfica.
+ *
+ * Un shader no se puede ejecutar en una prueba de las de este proyecto —no hay
+ * contexto de GL, y montar uno sería traerse medio navegador—. Lo que sí se
+ * puede clavar es **el texto**, y resulta que las dos averías que tuvo este
+ * cielo eran de texto: una palabra de más (`modelMatrix`), un sumando de más
+ * (`offset`) y un `mix` donde tenía que haber un `+=`. Ver `sky.test.ts`.
+ */
+export const GLSL_DEL_CIELO = {
+  vertice: VERTEX_SHADER,
+  fragmento: FRAGMENT_SHADER,
+} as const;
+
+/**
+ * En cuántos trozos se parte la cúpula.
+ *
+ * Aquí y no escrito dentro de la llamada porque es una decisión con motivo
+ * —ver `createSky`— y porque es lo que se comprueba.
+ */
+export const GAJOS_DEL_CIELO = { ancho: 64, alto: 48 } as const;
+
 
 /**
  * Las cinco horas del cielo, por altura del sol en grados.
@@ -442,14 +503,31 @@ function nubes(escenario: Scenario): Group {
 export function createSky(scenario: Scenario): SkyRig {
   const group = new Group();
 
-  const geometry = new SphereGeometry(1, 24, 16);
+  /*
+   * **Y con gajos de sobra.**
+   *
+   * Eran 24×16, o sea trozos de quince grados de ancho y once de alto. La
+   * dirección se interpola linealmente por la cara del triángulo, y sobre un
+   * trozo tan grande eso no es una dirección: es una aproximación que se
+   * separa varios grados por el medio. Con el degradado centrado como toca
+   * —ver `VERTEX_SHADER`— eso deja el cielo cruzado por unas cuñas en aspa que
+   * antes escondía el error de la cámara.
+   *
+   * A 64×48 los trozos bajan a cinco grados por cuatro y el aspa desaparece.
+   * Son tres mil caras sin textura ni luz: no se nota en ninguna máquina, y
+   * menos en una que ya dibuja un terreno entero.
+   */
+  const geometry = new SphereGeometry(
+    1,
+    GAJOS_DEL_CIELO.ancho,
+    GAJOS_DEL_CIELO.alto,
+  );
   const material = new ShaderMaterial({
     uniforms: {
       horizonColour: { value: new Color(scenario.sky.horizon) },
       zenithColour: { value: new Color(scenario.sky.zenith) },
       sunColour: { value: new Color(0xfff4e2) },
       sunDirection: { value: new Vector3(0, 1, 0) },
-      offset: { value: 0.12 },
       haloFuerza: { value: 0 },
     },
     vertexShader: VERTEX_SHADER,

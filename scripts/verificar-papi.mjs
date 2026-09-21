@@ -12,15 +12,18 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5254, hmr: false } });
+const PUERTO = 5254;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'] });
 const page = await b.newPage({ viewport: { width: 1280, height: 720 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5254/?escenario=pettirossi&hora=16&teselas=0');
+await page.goto(`${BASE}/?escenario=pettirossi&hora=16&teselas=0`);
 await page.waitForTimeout(6000);
 // Motor en marcha: si no, el juego recoloca el avión al puesto al moldear.
 await page.keyboard.press('i');

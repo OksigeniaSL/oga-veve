@@ -12,10 +12,13 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5173, hmr: false } });
+const PUERTO = 5173;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
@@ -36,7 +39,7 @@ for (const [sitio, alt] of PLAN) {
 
   const atras = Number(alt) < 300 ? 420 : 2600;
   await page.goto(
-    `http://localhost:5173/spike/mundo-real.html?sitio=${sitio}&alt=${alt}&atras=${atras}`,
+    `${BASE}/spike/mundo-real.html?sitio=${sitio}&alt=${alt}&atras=${atras}`,
   );
   // Tiempo para que baje el árbol hasta el detalle fino.
   await page.waitForTimeout(22000);

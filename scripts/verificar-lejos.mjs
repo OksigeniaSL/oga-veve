@@ -12,10 +12,13 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5247, hmr: false } });
+const PUERTO = 5247;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
@@ -23,7 +26,7 @@ const b = await chromium.launch({
 const page = await b.newPage({ viewport: { width: 1100, height: 700 }, locale: 'es-PY' });
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
 await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-await page.goto('http://localhost:5247/?escenario=tenerife-norte&hora=16&leccion=aterrizaje');
+await page.goto(`${BASE}/?escenario=tenerife-norte&hora=16&leccion=aterrizaje`);
 // Tiempo para que el mundo se asiente y se moldee.
 await page.waitForTimeout(30000);
 

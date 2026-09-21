@@ -6,16 +6,19 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
-const server = await createServer({ root: process.cwd(), server: { port: 5227, hmr: false } });
+const PUERTO = 5227;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 
 for (const leccion of ['vuelta', 'rodaje', 'despegue', 'aterrizaje']) {
   const page = await b.newPage({ viewport: { width: 1000, height: 700 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5227/?escenario=tenerife-norte&hora=16&leccion=${leccion}`);
+  await page.goto(`${BASE}/?escenario=tenerife-norte&hora=16&leccion=${leccion}`);
   await page.waitForTimeout(3500);
 
   const r = await page.evaluate(async () => {

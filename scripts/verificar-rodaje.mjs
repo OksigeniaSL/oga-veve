@@ -22,12 +22,15 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
+const PUERTO = 5279;
 const server = await createServer({
   root: process.cwd(),
-  server: { port: 5279, hmr: false },
+  server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 /*
  * Con WebGL por software, como el resto de los bancos.
  *
@@ -63,7 +66,7 @@ for (const [esc, tramo] of [
    * que hubiera nada que medir.
    */
   await page.goto(
-    `http://localhost:5279/?escenario=${esc}&hora=16&leccion=aterrizaje&tramo=${tramo}`,
+    `${BASE}/?escenario=${esc}&hora=16&leccion=aterrizaje&tramo=${tramo}`,
   );
   /*
    * **Y la pestaña, al frente.**

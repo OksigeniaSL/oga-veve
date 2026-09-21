@@ -1,15 +1,18 @@
 /** Una foto del mapa abierto, que es lo único que dice si se entiende. */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5225, hmr: false } });
+const PUERTO = 5225;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 for (const esc of ['pettirossi', 'tenerife-norte']) {
   const page = await b.newPage({ viewport: { width: 1280, height: 800 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5225/?escenario=${esc}&hora=16`);
+  await page.goto(`${BASE}/?escenario=${esc}&hora=16`);
   await page.waitForTimeout(4500);
   await page.click('[data-hud="mapa-boton"]');
   await page.waitForTimeout(600);

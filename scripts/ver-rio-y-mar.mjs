@@ -8,10 +8,13 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5249, hmr: false } });
+const PUERTO = 5249;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
@@ -21,7 +24,7 @@ const mirar = async (escenario, tomas) => {
   const page = await b.newPage({ viewport: { width: 1280, height: 720 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5249/?escenario=${escenario}&hora=16`);
+  await page.goto(`${BASE}/?escenario=${escenario}&hora=16`);
   await page.waitForTimeout(32000);
   for (const [nombre, sitio] of tomas) {
     await page.evaluate((p) => {

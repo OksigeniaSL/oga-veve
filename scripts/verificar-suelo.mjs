@@ -24,12 +24,15 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
 /** Caída por metro, en metros, que ya despega al avión rodando. */
 const CAIDA_QUE_DESPEGA = 0.12;
 
-const server = await createServer({ root: process.cwd(), server: { port: 5278, hmr: false } });
+const PUERTO = 5278;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
@@ -59,7 +62,7 @@ for (const esc of ESCENARIOS) {
   const page = await b.newPage({ viewport: { width: 900, height: 600 }, locale: 'es-PY' });
   page.on('pageerror', (e) => console.log('ERROR:', e.message));
   await page.addInitScript(() => localStorage.setItem('oga-veve:teclas-vistas', '1'));
-  await page.goto(`http://localhost:5278/?escenario=${esc}&hora=16`);
+  await page.goto(`${BASE}/?escenario=${esc}&hora=16`);
   await page.waitForTimeout(95000);
 
   const r = await page.evaluate((umbral) => {

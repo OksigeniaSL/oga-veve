@@ -14,13 +14,16 @@
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
+import { baseDe } from "./servidor.mjs";
 
 const D = process.argv[2] ?? null;
+const PUERTO = 5196;
 const server = await createServer({
   root: process.cwd(),
-  server: { port: 5196, hmr: false },
+  server: { port: PUERTO, hmr: false },
 });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: "/usr/bin/google-chrome" });
 const page = await b.newPage({ viewport: { width: 1280, height: 800 } });
 const errores = [];
@@ -29,7 +32,7 @@ await page.addInitScript(() => {
   localStorage.setItem("oga-veve:tramo", "guyrami");
   localStorage.setItem("oga-veve:teclas-vistas", "1");
 });
-await page.goto("http://localhost:5196/?escenario=valle-cordillera&hora=16");
+await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
 await page.waitForSelector('[data-picto="speed"]', { timeout: 60000 });
 await page.waitForTimeout(2200);
 

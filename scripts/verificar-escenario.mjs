@@ -13,16 +13,19 @@
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { writeFileSync } from 'node:fs';
+import { baseDe } from './servidor.mjs';
 
 const id = process.argv[2] ?? 'tenerife-norte';
 const salida = process.argv[3] ?? `/tmp/escenario-${id}.png`;
 
-const server = await createServer({ root: process.cwd(), server: { port: 5197, hmr: false } });
+const PUERTO = 5197;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome' });
 const page = await b.newPage();
 page.on('pageerror', (e) => console.log('ERROR:', e.message));
-await page.goto('http://localhost:5197/?escenario=valle-cordillera&hora=16');
+await page.goto(`${BASE}/?escenario=valle-cordillera&hora=16`);
 
 const r = await page.evaluate(async (id) => {
   const THREE = await import('/node_modules/three/build/three.module.js');

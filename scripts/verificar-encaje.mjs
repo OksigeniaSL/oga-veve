@@ -10,10 +10,13 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5173, hmr: false } });
+const PUERTO = 5173;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
@@ -24,7 +27,7 @@ for (const sitio of (process.argv[4] ?? 'gcxo,sgas').split(',')) {
     const page = await b.newPage({ viewport: { width: 1280, height: 800 } });
     const fallos = [];
     page.on('pageerror', (e) => fallos.push(e.message.slice(0, 140)));
-    await page.goto(`http://localhost:5173/spike/aerodromo-real.html?sitio=${sitio}&vista=${vista}` +
+    await page.goto(`${BASE}/spike/aerodromo-real.html?sitio=${sitio}&vista=${vista}` +
         (process.argv[5] === 'tinte' ? '&tinte=1' : ''));
     await page.waitForTimeout(vista === 'aproximacion' ? 26000 : 16000);
 

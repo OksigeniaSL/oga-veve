@@ -1,9 +1,12 @@
 /** Las casas nuestras sobre el suelo de Google. */
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
+import { baseDe } from './servidor.mjs';
 const D = process.argv[2] ?? '/tmp';
-const server = await createServer({ root: process.cwd(), server: { port: 5237, hmr: false } });
+const PUERTO = 5237;
+const server = await createServer({ root: process.cwd(), server: { port: PUERTO, hmr: false } });
 await server.listen();
+const BASE = baseDe(server, PUERTO);
 const b = await chromium.launch({
   executablePath: '/usr/bin/google-chrome',
   args: ['--use-gl=angle', '--use-angle=gl', '--enable-unsafe-swiftshader'],
@@ -13,7 +16,7 @@ for (const [sitio, vista, alt] of [['sgas', 'cenital', 700]]) {
   const fallos = [];
   page.on('pageerror', (e) => fallos.push(e.message.slice(0, 160)));
   await page.goto(
-    `http://localhost:5237/spike/aerodromo-real.html?sitio=${sitio}&vista=${vista}&alt=${alt}`,
+    `${BASE}/spike/aerodromo-real.html?sitio=${sitio}&vista=${vista}&alt=${alt}`,
   );
   await page.waitForTimeout(30000);
   const r = await page.evaluate(() => {
