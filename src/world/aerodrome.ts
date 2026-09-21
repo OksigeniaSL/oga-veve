@@ -51,6 +51,25 @@ import { sinTemblor } from "./sin-temblor";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 
+/**
+ * Lo más corto que puede medir algo para que cuente como pista, m.
+ *
+ * Quinientos. OpenStreetMap trae trozos sueltos etiquetados como pista —en
+ * Lanzarote, noventa metros con los mismos umbrales que la buena; en La Palma
+ * y en Mariscal Estigarribia, ochenta y cero— y son restos del trazado, no
+ * pistas. La más corta del juego mide novecientos.
+ */
+const PISTA_DE_VERDAD = 500;
+
+/** Lo que mide una pista de umbral a umbral, o de punta a punta del eje. */
+function largoDePista(pista: Pista): number {
+  const c = pista.centerline;
+  const a = c[0];
+  const b = c[c.length - 1];
+  if (!a || !b) return 0;
+  return Math.hypot(b[0] - a[0], b[1] - a[1]);
+}
+
 /** Un punto en metros sobre el plano local del aeródromo. */
 export type Punto = readonly [number, number];
 
@@ -681,8 +700,33 @@ export function createAerodrome(
     grupo.add(malla);
   }
 
+  /*
+   * **Las marcas, en todas las pistas que sean una pista.**
+   *
+   * Se pintaban solo en la primera, y hay aeropuertos con dos: Gran Canaria
+   * tiene la 03L/21R y la 03R/21L, las dos de tres kilómetros, y Cuatro
+   * Vientos tiene sus dos paralelas. La segunda salía como una franja de
+   * asfalto pelado, sin número, sin umbral y sin zona de toma — o sea, sin
+   * nada de lo que dice que eso es una pista. Preguntado jugando delante de
+   * las dos: «¿cómo sé cuál es la pista que debo elegir?».
+   *
+   * Con las dos pintadas, la pregunta la contesta el suelo: el número lleva
+   * su lado —«03L», que sale del nombre del umbral y no del rumbo— y es lo
+   * único que hay escrito en el suelo de un aeropuerto.
+   *
+   * **Y las luces, solo en la que se opera.** Eso también es de verdad —en un
+   * campo con dos pistas se encienden las de la que está en servicio— y de
+   * paso es la respuesta a esa misma pregunta vista desde el aire: la que
+   * está iluminada es la tuya.
+   */
+  for (const pista of aero.runways) {
+    // Los fragmentos que trae OpenStreetMap no son pistas: Lanzarote tiene un
+    // trozo de noventa metros con los mismos umbrales que la buena, y
+    // pintarlo sería pintar dos veces encima.
+    if (largoDePista(pista) < PISTA_DE_VERDAD) continue;
+    grupo.add(marcas(pista, cota));
+  }
   if (principal) {
-    grupo.add(marcas(principal, cota));
     grupo.add(luces(principal, cota, cabeceraEnUso));
   }
   grupo.add(rodadura(aero, cota));
