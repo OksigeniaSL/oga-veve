@@ -134,7 +134,30 @@ await page.goto(
   `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue` +
     `&tramo=${TRAMO}&avion=${AVION}`,
 );
-await page.waitForTimeout(16000);
+/*
+ * **Y se espera a que el juego esté, no a que pasen dieciséis segundos.**
+ *
+ * Aquí había un `waitForTimeout(16000)` a secas y luego se usaba `__oga` como
+ * si estuviera. Mientras los escenarios cargaban en diez segundos coló; en
+ * cuanto un mundo pasó a trescientos kilómetros con tres islas de vecinos,
+ * dejó de colar — y el banco no falla diciendo «tardó en cargar», falla con
+ * un `TypeError` de una sonda que no existe todavía y el escenario sale
+ * **«sin parte»**, que es la forma más cara de fallar: no dice qué pasó.
+ *
+ * Medido en el barrido de cierre: Encarnación y La Palma, las dos a 1,3
+ * minutos y las dos con el mismo `Cannot read properties of undefined`.
+ *
+ * Es el mismo error de siempre en este banco —cruzar dos relojes, el de la
+ * espera y el de la carga— y se arregla igual: se pregunta por lo que se
+ * necesita en vez de contar segundos. Un minuto de tope, que es de sobra
+ * para el escenario más gordo y poco para quedarse colgado.
+ */
+await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
+  timeout: 60000,
+});
+// Y un respiro para que el mundo termine de posarse: el relieve y las
+// ortofotos llegan con la primera tanda, pero las mallas se montan después.
+await page.waitForTimeout(4000);
 
 /*
  * **Y un clic, para que baje el pack de voz.**
