@@ -232,7 +232,7 @@ const comprobar = (nombre, ok, detalle, porque) =>
  * banco.
  */
 const comprobarSiVolo = (nombre, ok, detalle, porque) => {
-  if (seQuedoSinTiempo) {
+  if (seQuedoSinTiempo || seQuedoSinPared) {
     resultados.push({
       nombre,
       ok: true,
@@ -1160,12 +1160,41 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     return bajo === Infinity ? null : +(bajo - o.suelo(p.x, p.z)).toFixed(2);
   })();
 
+  /*
+   * **Y un segundo tope, éste de reloj de pared, porque el de arriba no basta.**
+   *
+   * El presupuesto se mide en segundos **de juego**, y eso está bien pensado:
+   * todo lo que mide este banco son duraciones, y contarlas por vueltas miente
+   * en cuanto la máquina va cargada. Pero tiene un agujero que se tragó media
+   * tarde: **si el reloj del juego deja de avanzar, `t` no crece y el bucle no
+   * tiene salida.** Playwright no le pone tope a un `evaluate`, así que el
+   * banco se queda esperando para siempre, sin imprimir una sola línea.
+   *
+   * Medido en Guaraní, con el reloj a ×4: treinta minutos de pared, cero
+   * líneas de salida y un `timeout` externo teniendo que matarlo. En el
+   * barrido eso sale como «sin parte», que es justo lo que se arregló esta
+   * madrugada para el arranque — y aquí volvía por la puerta de atrás.
+   *
+   * Es la avería de siempre en esta casa: **dos relojes cruzados**. La cura no
+   * es cambiar el presupuesto de reloj —el de juego es el correcto para lo que
+   * mide— sino ponerle al lado un tope del otro reloj, generoso, que solo se
+   * agota cuando algo va mal de verdad. El doble de lo que el vuelo puede
+   * tardar legítimamente a la velocidad que el juego dice que va.
+   */
+  const paredEmpezo = Date.now();
+  const TOPE_DE_PARED = Math.max(180, (TOPE / veces) * 2) * 1000;
+  let seQuedoSinPared = false;
+
   const empezo = o.reloj();
   let leidoAntes = empezo;
   let t = 0;
   let i = 0;
   for (; t < TOPE; i++) {
     await new Promise((r) => setTimeout(r, (PASO / veces) * 1000));
+    if (Date.now() - paredEmpezo > TOPE_DE_PARED) {
+      seQuedoSinPared = true;
+      break;
+    }
     const ahora = o.reloj();
     /** Lo que ha pasado de verdad desde la muestra anterior. */
     const paso = ahora - leidoAntes;
@@ -2092,6 +2121,12 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     gafas: o.gafas?.() ?? null,
     segundos: +t.toFixed(1),
     veces,
+    /*
+     * Los dos relojes, para poder compararlos: si el de juego avanzó mucho
+     * menos que el de pared × `veces`, el vuelo no iba lento — iba parado.
+     */
+    paredSegundos: +((Date.now() - paredEmpezo) / 1000).toFixed(1),
+    seQuedoSinPared,
     vueltas: i,
     fases: [...fases].join(" "),
     torreDijo: [...(o.dichoTodo?.().torre ?? deLaTorre)],
@@ -2224,6 +2259,21 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
  */
 const seQuedoSinTiempo = vuelo.etapa !== "apagar" && vuelo.segundos >= 1750;
 
+/*
+ * **Y lo mismo cuando el que se agota es el reloj de pared.**
+ *
+ * Vale lo de arriba entero: todo lo que se mide después de aterrizar falla a
+ * la vez cuando no se llega a aterrizar, y eso es **un** defecto contado
+ * veinte veces. La diferencia es qué hay que ir a mirar: con el presupuesto
+ * de juego agotado, el vuelo hizo más de lo que cabía; con éste, el vuelo no
+ * avanzó. Ver `TOPE_DE_PARED`.
+ */
+const seQuedoSinPared = !!vuelo.seQuedoSinPared;
+
+/** Cuánto juego se movió por cada segundo de pared, de verdad. */
+const relojDeVerdad =
+  vuelo.paredSegundos > 0 ? vuelo.segundos / vuelo.paredSegundos : 0;
+
 // ── Lo que se comprueba ───────────────────────────────────────────────────
 
 /*
@@ -2334,6 +2384,35 @@ if (seQuedoSinTiempo) {
       `     Lo que se mide después de aterrizar no se juzga en esta pasada.\n`,
   );
 }
+
+/*
+ * **Y si el que se agotó fue el de pared, eso es el fallo y se dice con los
+ * dos relojes al lado.**
+ *
+ * Un solo número no distingue «va lento» de «está parado». Los dos juntos sí:
+ * si el juego pidió ×4 y de verdad se movió a ×0,2, no hay nada que afinar en
+ * el vuelo — hay algo que no corre.
+ */
+if (seQuedoSinPared) {
+  console.log(
+    `\n  ⏱  el vuelo no avanzó: ${vuelo.segundos.toFixed(0)} s de juego en` +
+      ` ${vuelo.paredSegundos.toFixed(0)} s de pared, o sea ×${relojDeVerdad.toFixed(2)}` +
+      ` donde el juego dijo ×${vuelo.veces}.\n` +
+      `     Se quedó en «${vuelo.etapa}», fase «${vuelo.fases.split(" ").pop()}».` +
+      ` Lo que depende de haber volado no se juzga en esta pasada.\n`,
+  );
+}
+
+comprobar(
+  "el vuelo avanza al ritmo que dice que avanza",
+  !seQuedoSinPared,
+  seQuedoSinPared
+    ? `×${relojDeVerdad.toFixed(2)} de verdad frente a ×${vuelo.veces} pedidos` +
+      ` · ${vuelo.segundos.toFixed(0)} s de juego en ${vuelo.paredSegundos.toFixed(0)} s de pared` +
+      ` · ${vuelo.vueltas} vueltas · se quedó en «${vuelo.etapa}»`
+    : `×${relojDeVerdad.toFixed(2)} de verdad frente a ×${vuelo.veces} pedidos`,
+  "el bucle salía por el reloj del juego y se colgaba para siempre si ese reloj se paraba",
+);
 
 comprobar(
   "un vuelo entero se puede completar sin ayuda de nadie",
