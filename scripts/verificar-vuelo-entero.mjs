@@ -1210,8 +1210,24 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * Cinco metros sobre el terreno es más alto que cualquier bote y más bajo
        * que cualquier subida.
        */
-      s.heightAboveGround > 5 &&
-      ["despegando", "comprometido"].includes(fase)
+      s.heightAboveGround > 5
+      /*
+       * **Y sin mirar en qué fase dice el plan que va.**
+       *
+       * Aquí se exigía además que la fase fuera «despegando» o «comprometido»
+       * *en el instante* en que el avión cruza los cinco metros, y eso es una
+       * carrera entre dos relojes que no tienen por qué coincidir: si el plan
+       * ya ha pasado a «en vuelo» cuando el avión llega a esa altura, la
+       * medida no arranca nunca y el banco dice «no llegó a subir cien
+       * metros» de un vuelo que subió, despegó y aterrizó sin un rasguño.
+       * Pasó en Guaraní, que entra en pista por una intersección y cambia de
+       * fase antes que los demás.
+       *
+       * Y la condición no hacía falta: este banco **siempre sale del puesto**
+       * —`leccion=despegue`—, así que la primera vez en todo el vuelo que las
+       * ruedas están a más de cinco metros del suelo es el despegue, y no
+       * puede ser otra cosa. Lo de una sola vez lo garantiza `!subidaDesde`.
+       */
     )
       subidaDesde = { x: s.position.x, z: s.position.z, y: s.position.y };
     if (subidaDesde && pendiente === null) {
