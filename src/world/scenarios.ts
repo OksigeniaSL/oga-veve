@@ -1069,6 +1069,40 @@ export const GRAN_CANARIA: Scenario = {
   // El asfalto corre a 22° verdaderos y la cabecera pone 03.
   magneticVariation: 8,
   aerodrome: GCLP as unknown as Aerodrome,
+  /*
+   * **Y desde aquí se sale, que para eso es el centro de la red.**
+   *
+   * Gando es por donde pasa todo en Canarias —es el aeropuerto con más
+   * tráfico del archipiélago y el nudo de la red insular— y era el único que
+   * no llevaba a ninguna parte: se podía volar **a** Gran Canaria desde Los
+   * Rodeos y no se podía salir de Gran Canaria. Un centro del que no sale
+   * nada no es un centro.
+   *
+   * Tres destinos, y son las tres rutas con más aviones al día que salen de
+   * aquí. Gando–Los Rodeos es de las más transitadas del mundo.
+   *
+   * **Y tres y no siete.** Cada destino carga su isla entera —relieve,
+   * ortofoto y aeródromo—, y el mundo tiene que ser lo bastante ancho para
+   * que quepan con sitio para aproximar. La cuenta está en `destinos.test.ts`
+   * y sale así desde aquí, con el eje más largo mandando porque el mundo es
+   * un cuadrado:
+   *
+   *     Tenerife Norte    94 km de eje  ·  veces ≥ 10,3
+   *     Tenerife Sur     116 km         ·  veces ≥ 12,6
+   *     Fuerteventura    149 km         ·  veces ≥ 15,9
+   *     Lanzarote        174 km         ·  veces ≥ 18,4
+   *     La Gomera        180 km         ·  veces ≥ 18,9
+   *     La Palma         232 km         ·  veces ≥ 24,1
+   *     El Hierro        246 km         ·  veces ≥ 25,5
+   *
+   * Con dieciséis el mundo mide trescientos veinte kilómetros, que es el
+   * mismo que ya vuela Los Rodeos. Llegar a Lanzarote y La Gomera costaría
+   * diecinueve y **cinco vecinos cargados a la vez** —más que ningún
+   * escenario de hoy— y otro nivel de zoom menos en la foto del horizonte.
+   * Las dos islas del oeste no caben de ninguna manera razonable.
+   */
+  destino: ["tenerife-norte", "tenerife-sur", "fuerteventura"],
+  vecesLejos: 16,
 };
 
 /**
