@@ -1212,8 +1212,32 @@ export const FUERTEVENTURA: Scenario = {
    * sitio para la aproximación, y ni un kilómetro más: lo comprueba
    * `destinos.test.ts` por los dos lados. Ver el ADR 0007.
    */
-  destino: "lanzarote",
-  vecesLejos: 8,
+  /*
+   * **Y Gando, que apuntaba aquí y no recibía vuelta.**
+   *
+   * Fuerteventura era destino de Lanzarote y ahora también de Gran Canaria, y
+   * sólo devolvía el vuelo a Lanzarote. Mismo criterio que en las demás: una
+   * ruta se vuela en los dos sentidos. Y Gando–Fuerteventura es de las que
+   * tienen aviones a todas horas.
+   *
+   * Sale cara, y es la más cara de las cuatro, porque esta isla está en el
+   * extremo de levante y todo lo demás le queda lejos:
+   *
+   *     Lanzarote         55 km de eje  ·  veces ≥  8,0
+   *     Gran Canaria     149 km         ·  veces ≥ 19,8
+   *     Tenerife Norte   242 km         ·  veces ≥ 31,5
+   *     Tenerife Sur     265 km         ·  veces ≥ 34,3
+   *     La Gomera        328 km         ·  veces ≥ 42,2
+   *     La Palma         380 km         ·  veces ≥ 48,7
+   *     El Hierro        395 km         ·  veces ≥ 50,5
+   *
+   * De ocho a veinte: el mundo pasa de ciento veintiocho kilómetros a
+   * trescientos veinte, y con ello la foto del horizonte baja un nivel de
+   * zoom. Es el precio de que el archipiélago se vea desde aquí, y las islas
+   * del oeste siguen sin caber de ninguna manera razonable.
+   */
+  destino: ["lanzarote", "gran-canaria"],
+  vecesLejos: 20,
   /*
    * El alisio, que aquí sopla más constante que en ninguna otra isla: del
    * nordeste y sin descanso. Es lo que hace que la 01 sea la cabecera de casa.
@@ -1347,8 +1371,29 @@ export const LA_GOMERA: Scenario = {
    * sitio para la aproximación, y ni un kilómetro más: lo comprueba
    * `destinos.test.ts` por los dos lados. Ver el ADR 0007.
    */
-  destino: "tenerife-sur",
-  vecesLejos: 10,
+  /*
+   * **Y los dos que ya apuntaban aquí.**
+   *
+   * Los Rodeos y El Hierro tenían a La Gomera en su lista y La Gomera no les
+   * devolvía el vuelo: se podía venir y no se podía volver. El criterio de
+   * los destinos nuevos no es la distancia, es que una ruta se vuele en los
+   * dos sentidos.
+   *
+   * Y sale barato, porque la isla está en el centro del archipiélago —con el
+   * eje más largo mandando, que el mundo es un cuadrado—:
+   *
+   *     Tenerife Sur      63 km de eje  ·  veces ≥  9,1
+   *     El Hierro         66 km         ·  veces ≥  9,4
+   *     La Palma          66 km         ·  veces ≥  9,5
+   *     Tenerife Norte    85 km         ·  veces ≥ 11,9
+   *     Gran Canaria     180 km         ·  veces ≥ 23,6
+   *
+   * De diez a doce: treinta y dos kilómetros más de mundo y entra Los Rodeos.
+   * El Hierro ya cabía. La Palma también, y se queda fuera por ahora porque
+   * no apunta aquí — El Hierro sí lo hace y por eso entra.
+   */
+  destino: ["tenerife-sur", "tenerife-norte", "el-hierro"],
+  vecesLejos: 12,
   vientoDominante: { vientoDe: 45, vientoKt: 12, techoM: 1300, temp: 23 },
   nameKey: "scenario.laGomera.name",
   pais: "es",

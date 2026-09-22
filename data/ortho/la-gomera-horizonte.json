@@ -6,19 +6,19 @@
   "servicio": "https://www.ign.es/wmts/pnoa-ma",
   "capa": "OI.OrthoimageCoverage",
   "esquina": {
-    "col": 921,
-    "fila": 853
+    "col": 920,
+    "fila": 852
   },
   "origen": {
     "lat": 28.0296,
     "lon": -17.2146
   },
-  "tamanoM": 160000,
+  "tamanoM": 192000,
   "zoom": 11,
   "metrosPorPixel": 67.471,
   "pixeles": {
-    "ancho": 2560,
-    "alto": 2560
+    "ancho": 3072,
+    "alto": 3072
   },
   "huecos": 0,
   "exposicion": 0.936
