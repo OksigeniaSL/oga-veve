@@ -34,6 +34,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # **Y que la historia no acredite a ninguna herramienta.**
+  #
+  # El gancho de `.githooks/commit-msg` ataja esto antes de que el commit
+  # exista, que es donde hay que atajarlo. Esto de aquí es el cerrojo de
+  # detrás: un `--no-verify`, un clon sin `npm install`, o una reescritura que
+  # vuelva a meter lo que se acaba de sacar.
+  #
+  # Mira la historia **entera** y no solo lo que llega nuevo, a propósito: lo
+  # que se quiere garantizar no es que este push venga limpio, es que el
+  # repositorio lo esté. Se paga con un clon completo, y por eso este trabajo
+  # no instala nada ni compila nada — son unos segundos y va en paralelo con
+  # el que sí trabaja.
+  atribucion:
+    name: Sin acreditar herramientas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout con la historia entera
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ningún commit acredita una herramienta
+        run: |
+          # `--grep` busca en el mensaje entero —asunto y cuerpo— y devuelve
+          # **qué commit**, que es lo que hace falta para arreglarlo. Un grep
+          # sobre la salida daría el número de línea de un río de texto.
+          sucios=$(git log --all --extended-regexp --regexp-ignore-case \
+            --grep='(<noreply@anthropic\.com>|^Claude-Session:|^Co-Authored-By:.*\bClaude\b|Generated with \[|claude\.ai/code/)' \
+            --format='  %h %s')
+          if [ -n "$sucios" ]; then
+            echo "✗ Estos commits acreditan una herramienta:"
+            echo "$sucios"
+            echo ""
+            echo "Ver AGENTS.md, apartado «Publicación»."
+            exit 1
+          fi
+          echo "✓ historia limpia"
+
   verificar:
     name: Tipos, tests y build (Node ${{ matrix.node }})
     runs-on: ubuntu-latest

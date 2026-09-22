@@ -9,6 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
     "dev": "vite --host",
     "build": "tsc --noEmit && vite build && node scripts/hacer-sw.mjs",
     "preview": "vite preview",

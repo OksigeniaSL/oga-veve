@@ -130,3 +130,11 @@ tomó con argumentos, y si se cambia hay que escribir el ADR que la revierte.
 Los créditos del juego y el `NOTICE` mencionan a Oksigenia SL y Granja Óga.
 No se acreditan herramientas de desarrollo, ni de asistencia, ni de
 generación, ni en el repositorio ni en el juego ni en los mensajes de commit.
+
+Y esto último dejó de ser solo una frase escrita aquí, porque como frase no
+se cumplió: la coletilla de una herramienta se coló en 539 de 619 commits
+—463 de ellos ya publicados— sin que nada la parara. Ahora hay dos cerrojos:
+el gancho `.githooks/commit-msg`, que la ataja antes de que el commit exista
+y se instala solo con `npm install`, y un trabajo de CI que mira la historia
+entera por si alguien comitea con `--no-verify`. Una regla que solo vive en
+un documento se cumple mientras alguien se acuerda.
