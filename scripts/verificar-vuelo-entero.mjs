@@ -152,9 +152,36 @@ await page.goto(
  * necesita en vez de contar segundos. Un minuto de tope, que es de sobra
  * para el escenario más gordo y poco para quedarse colgado.
  */
-await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
-  timeout: 60000,
-});
+/*
+ * Y si no arranca, **se dice**: un banco no sale nunca «sin parte».
+ *
+ * Reventar con una excepción de Playwright deja al barrido enseñando una
+ * traza de pila donde debería haber un motivo, y el escenario cuenta como
+ * «sin parte», que no distingue «el juego no cargó» de «el banco está roto».
+ * Son dos averías muy distintas y una de ellas no es del juego.
+ *
+ * Dos minutos de tope: en esta máquina el escenario más gordo arranca en
+ * veinte segundos, así que dos minutos solo se agotan si algo va mal de
+ * verdad — y entonces lo que hace falta es el error de la consola, que es lo
+ * único que dice por qué.
+ */
+try {
+  await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
+    timeout: 120000,
+  });
+} catch {
+  console.log(
+    `\n  ✗ el juego no arrancó en 120 s · ${ESCENARIO} · ${TRAMO} · ${AVION}`,
+  );
+  console.log(
+    errores.length
+      ? `    la consola dijo: ${errores.slice(0, 3).join(" | ")}`
+      : "    y la consola no dijo nada: o tardó de más, o se quedó esperando un dato",
+  );
+  await navegador.close();
+  await server.close();
+  process.exit(1);
+}
 // Y un respiro para que el mundo termine de posarse: el relieve y las
 // ortofotos llegan con la primera tanda, pero las mallas se montan después.
 await page.waitForTimeout(4000);
