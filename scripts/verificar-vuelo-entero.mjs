@@ -758,6 +758,11 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   ]);
 
   const linea = [];
+  /** Un renglón por cambio de fase: por dónde se torció el vuelo. */
+  const hitos = [];
+  /** La carrera de despegue, con el mando delante. Ver más abajo. */
+  const carrera = [];
+  let faseAnterior = "";
   let etapa = "arrancar";
   let mudo = 0;
   let mudoMaximo = 0;
@@ -1434,6 +1439,35 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         ladoAlEstarCerca = ladoDelCoche;
       }
     }
+    /*
+     * **Y una línea en cada cambio de fase, pase lo que pase.**
+     *
+     * El muestreo de uno de cada veinte guarda las últimas cuarenta y cinco,
+     * o sea el final del vuelo. Cuando lo que hay que mirar es **por dónde se
+     * torció** —un despegue que no despega, un rodaje que se va al campo— el
+     * final no dice nada: para entonces ya lleva un cuarto de hora dando
+     * vueltas. Los cambios de fase son pocos y son justo los momentos en los
+     * que algo pasó.
+     */
+    /*
+     * **Y la carrera de despegue con el mando delante.**
+     *
+     * «No llegó a subir cien metros» dice que no subió y no dice si es que no
+     * se tiró de la palanca, si se tiró y el avión no respondió, o si respondió
+     * y se volvió a posar. Son tres averías distintas y desde fuera se ven
+     * igual. Con el elevador, la velocidad y lo que sube al lado, se ven
+     * distintas de un vistazo.
+     */
+    if ((etapa === "despegar" || fase === "comprometido") && i % 40 === 0)
+      carrera.push(
+        `${t.toFixed(0)}s ${s.airspeed.toFixed(0)}m/s elev ${c.elevator.toFixed(2)} sube ${s.verticalSpeed.toFixed(1)}m/s suelo ${s.heightAboveGround.toFixed(1)}m ${s.onGround ? "ruedas" : "aire"} ${s.onRunway ? "enPista" : "FUERA"} eje ${desvio(s).toFixed(0)}m`,
+      );
+    if (fase !== faseAnterior) {
+      faseAnterior = fase;
+      hitos.push(
+        `${t.toFixed(0)}s → ${fase} · ${s.airspeed.toFixed(0)}m/s · ${s.heightAboveGround.toFixed(0)}m del suelo · cabeceo ${((s._cabeceo ?? 0) * 57.3).toFixed(0)}° · gas ${c.throttle.toFixed(1)} · ${s.onRunway ? "en pista" : "fuera"} · umbral ${alUmbral(s).toFixed(0)}m`,
+      );
+    }
     if (i % 20 === 0) {
       linea.push(
         `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m umbral ${alUmbral(s).toFixed(0)}m coche ${alCocheAhora < 0 ? "—" : `${alCocheAhora.toFixed(0)}/${ladoDelCoche.toFixed(0)}`} v${aDonde} suelo ${s.heightAboveGround.toFixed(0)}m en ${s.position.x.toFixed(0)},${s.position.z.toFixed(0)} ${tarjeta.dibujo || "—"}`,
@@ -2039,6 +2073,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * percance, y una ventana fija cae en cualquier otro sitio.
      */
     linea: [...linea.slice(0, 4), "…", ...linea.slice(-45)],
+    hitos,
+    carrera: carrera.slice(0, 40),
     mudoMaximo: +mudoMaximo.toFixed(1),
     mudoDonde,
     puertas,
@@ -2832,6 +2868,14 @@ if (errores.length) {
   console.log(`\n  ✗ errores en la consola: ${errores[0]}`);
 }
 if (fallos) {
+  if (vuelo.carrera?.length) {
+    console.log("\n  la carrera de despegue:");
+    for (const l of vuelo.carrera) console.log(`    ${l}`);
+  }
+  if (vuelo.hitos?.length) {
+    console.log("\n  por dónde fue el vuelo:");
+    for (const h of vuelo.hitos) console.log(`    ${h}`);
+  }
   console.log("\n  últimos instantes del vuelo:");
   for (const l of vuelo.linea) console.log(`    ${l}`);
 }

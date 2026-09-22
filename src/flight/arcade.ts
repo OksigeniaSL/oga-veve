@@ -132,6 +132,27 @@ const MINIMA_DE_VUELO = 0.9;
  */
 const RODANDO_TRAS_TOMAR = 12;
 
+/**
+ * Cuánto hay que haber volado para que un contacto sea una toma, m.
+ *
+ * Tres metros. Por debajo de eso no se ha volado: se ha dado un bote.
+ *
+ * Y la diferencia no es un matiz, es un avión que no despega. La regla de
+ * «aterrizado es aterrizado» mira si las ruedas venían del aire, y en una
+ * carrera de despegue el avión **se levanta un palmo y vuelve a tocar** —un
+ * bache, una ráfaga, o tirar y soltar—. Ese palmo se apuntaba como toma, y a
+ * partir de ahí el modelo se negaba a dejarlo subir hasta rodar por debajo de
+ * doce metros por segundo... que es justo lo que no va a pasar, porque está
+ * acelerando. Resultado medido en Mariscal Estigarribia: el avión recorre la
+ * pista entera y dos kilómetros y medio de campo **con el gas a fondo y la
+ * palanca atrás**, sin despegar y sin que nada lo explique.
+ *
+ * Desde la cabina eso es lo peor que puede pasar: estoy haciendo lo correcto
+ * y no pasa nada. Tres metros es más que cualquier bote y menos que cualquier
+ * vuelo.
+ */
+const VUELO_DE_VERDAD = 3;
+
 export const MOTOR_QUE_SOSTIENE = 0.55;
 
 /**
@@ -268,6 +289,8 @@ export class ArcadeFlightModel implements FlightModel {
   private haTocado = false;
   /** Si el fotograma anterior estaba volando. Para ver el instante del contacto. */
   private enElAire = false;
+  /** Lo más alto que llegó a estar en este trozo de aire, m. Ver `VUELO_DE_VERDAD`. */
+  private loQueSubio = 0;
   private climb = 0;
   private bank = 0;
   private pitch = 0;
@@ -856,10 +879,27 @@ export class ArcadeFlightModel implements FlightModel {
      * pasar por el hangar.
      */
     if (this.state.onGround) {
-      // Acaba de tocar viniendo de volar: la toma empieza aquí.
-      if (this.enElAire) this.haTocado = true;
+      /*
+       * Acaba de tocar viniendo de volar: la toma empieza aquí. **Si venía de
+       * volar de verdad**, que es lo que distingue una toma de un bote en la
+       * carrera de despegue. Ver `VUELO_DE_VERDAD`.
+       */
+      if (this.enElAire && this.loQueSubio > VUELO_DE_VERDAD)
+        this.haTocado = true;
       // Y se acaba al rodar despacio: a partir de ahí, despegue nuevo.
       if (this.speed < RODANDO_TRAS_TOMAR) this.haTocado = false;
+      this.loQueSubio = 0;
+    } else {
+      /*
+       * **Y lo que cuenta es lo que separa las ruedas del suelo**, no la
+       * altura que publica el estado: ésa se mide desde el origen del avión y
+       * con las ruedas apoyadas ya vale lo que mide el tren —un metro y medio
+       * en la avioneta—. Comparando contra ella, medio bote pasaba por vuelo.
+       */
+      this.loQueSubio = Math.max(
+        this.loQueSubio,
+        this.state.heightAboveGround - this.aircraft.gearHeight,
+      );
     }
     this.enElAire = !this.state.onGround;
 
