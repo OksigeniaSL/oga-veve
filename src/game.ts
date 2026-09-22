@@ -8124,6 +8124,12 @@ export class Game {
     velocidad: null,
   };
 
+  /**
+   * El último timón que pidió el automático, para dejarlo en el trim al
+   * soltar. Ver `ponerPilotoAutomatico`.
+   */
+  private timonDelAutomatico = 0;
+
   /** Si el piloto automático está gobernando algo ahora mismo. */
   get pilotoPuesto(): boolean {
     return this.objetivos.rumbo !== null || this.objetivos.altitud !== null;
@@ -8141,6 +8147,20 @@ export class Game {
   ponerPilotoAutomatico(puesto = !this.pilotoPuesto): void {
     // Al soltarse, la luz de cabina se enciende un rato. Ver `pilotoSeSolto`.
     if (!puesto && this.pilotoPuesto) this.pilotoSeSolto = 10;
+    /*
+     * **Y al soltarlo deja el avión trimado donde lo llevaba.**
+     *
+     * Mientras gobierna la altura, el timón lo pone él y el trim queda a cero
+     * —ver `conElPilotoAutomatico`—. Si al desconectar no se devolviera ese
+     * timón al trim, el avión se quedaría de golpe sin nada de lo que lo
+     * estaba sosteniendo y daría un bandazo en el momento exacto en que quien
+     * vuela acaba de coger los mandos.
+     *
+     * Es lo que hace un piloto automático de verdad: trima antes de soltar.
+     */
+    if (!puesto && this.objetivos.altitud !== null) {
+      this.input.controls.trim = this.timonDelAutomatico;
+    }
     const s = this.flight.state;
     this.objetivos = puesto
       ? {
@@ -8217,6 +8237,38 @@ export class Game {
     Object.assign(this.mandosConAutomatico, c);
     this.mandosConAutomatico.aileron = m.aileron;
     this.mandosConAutomatico.elevator = m.elevator;
+    /*
+     * **Y el automático toma el trim; no pelea contra él.**
+     *
+     * El trim se **suma** al timón —`fdm.ts`: `clamp(elevator + trim, -1, 1)`—
+     * así que copiar los mandos de quien vuela con el trim dentro y pisar solo
+     * `elevator` deja al automático corrigiendo contra un sesgo constante. Y
+     * no es un sesgo cualquiera: quien engancha el automático **acaba de
+     * subir**, o sea que lleva el trim con morro arriba, que es justo el que
+     * lo manda hacia arriba.
+     *
+     * Contado jugando: «¿por qué el piloto automático sube hasta la
+     * estratosfera el avión cuando estoy en modo que permite el piloto?». Y
+     * medido, con el automático pidiendo mantener dos mil metros durante cinco
+     * minutos:
+     *
+     *     trim   jaz-60    jaz-90    jaz-120
+     *     0      2.014 m   1.996 m   1.969 m
+     *     0,5    2.123 m   2.056 m   2.359 m
+     *     1      3.996 m   8.774 m   7.205 m
+     *
+     * Ocho mil setecientos metros es, literalmente, la estratosfera.
+     *
+     * La cura es la misma frase que este módulo ya tenía escrita dos veces
+     * —«coge el avión como está»— aplicada al tercer mando: mientras el
+     * automático lleva la altura, el timón que ve el avión es **solo** el
+     * suyo. La prueba de lazo cerrado no lo veía porque volaba con
+     * `neutralControls()`, y ahí el trim vale cero.
+     */
+    if (this.objetivos.altitud !== null) {
+      this.mandosConAutomatico.trim = 0;
+      this.timonDelAutomatico = m.elevator;
+    }
     /*
      * **Y el gas sí se escribe en los mandos de quien vuela.**
      *

@@ -312,3 +312,151 @@ describe("y pilotando de verdad, llega y se queda", () => {
     });
   });
 });
+/**
+ * **Y con el avión trimado, que es como se engancha de verdad.**
+ *
+ * El lazo cerrado de arriba vuela con los mandos a cero, y con eso no se ve
+ * la avería que se ve jugando: «¿por qué el piloto automático sube hasta la
+ * estratosfera el avión?».
+ *
+ * El trim **se suma** al timón —`fdm.ts`: `clamp(assisted.elevator + trim)`—
+ * y el automático, en el juego, copia los mandos de quien vuela con el trim
+ * dentro y sólo pisa `elevator`. O sea que no toma el avión: **pelea contra
+ * él**. Y quien engancha un piloto automático acaba de subir, así que lleva
+ * el trim con morro arriba, que es justo el sesgo que lo manda a la
+ * estratosfera.
+ *
+ * Un piloto automático de verdad no pelea con el trim: lo lleva él. Es la
+ * misma lección que ya tiene este módulo escrita dos veces —«coge el avión
+ * como está»— aplicada al tercer mando.
+ */
+describe("y con el avión trimado, que es como se engancha de verdad", () => {
+  function volarConTrim(
+    id: string,
+    objetivos: Objetivos,
+    segundos: number,
+    trim: number,
+    /**
+     * Si el automático toma el trim, que es lo que hace el juego desde que
+     * esto se arregló: mientras lleva la altura, el timón es solo el suyo.
+     */
+    loToma = false,
+  ) {
+    const aircraft = AIRCRAFT.find((a) => a.id === id)!;
+    const modelo = new CoefficientFlightModel({
+      aircraft,
+      ground: () => 0,
+      assist: 0,
+    });
+    const s = modelo.state;
+    s.onGround = false;
+    s.position.set(0, 2000, 0);
+    const tasPedida =
+      objetivos.velocidad === null
+        ? aircraft.cruiseSpeed
+        : objetivos.velocidad /
+          Math.sqrt(airDensity(objetivos.altitud ?? 2000) / SEA_LEVEL_DENSITY);
+    s.velocity.set(0, 0, -tasPedida);
+    s.heading = 0;
+    const dt = 1 / 60;
+    let gas = 0.7;
+    let masAlto = s.position.y;
+    for (let t = 0; t < segundos; t += dt) {
+      const ias =
+        s.airspeed * Math.sqrt(airDensity(s.position.y) / SEA_LEVEL_DENSITY);
+      const m = mandosPara(
+        {
+          heading: s.heading,
+          alabeo: bankAngleOf(s.orientation),
+          cabeceo: pitchAngleOf(s.orientation),
+          altitud: s.position.y,
+          vertical: s.velocity.y,
+          velocidad: ias,
+          gas,
+        },
+        objetivos,
+      );
+      if (m.throttle !== null) gas = m.throttle;
+      // Lo que hace `game.ts`: los mandos de quien vuela —trim incluido— con
+      // lo del automático encima.
+      modelo.step(dt, {
+        ...neutralControls(),
+        // Ver `conElPilotoAutomatico`: con la altura puesta, el trim va a cero.
+        trim: loToma && objetivos.altitud !== null ? 0 : trim,
+        throttle: gas,
+        aileron: m.aileron,
+        elevator: m.elevator,
+      });
+      masAlto = Math.max(masAlto, s.position.y);
+    }
+    return { estado: s, masAlto, subio: masAlto - 2000 };
+  }
+
+  it("sin trim mantiene la altura, que es lo que ya se sabía", () => {
+    const { subio } = volarConTrim(
+      "jaz-60",
+      { rumbo: null, altitud: 2000, velocidad: 140 },
+      180,
+      0,
+    );
+    expect(subio).toBeLessThan(120);
+  });
+
+  /*
+   * **Y con el trim arriba del todo, que es como queda quien acaba de subir.**
+   *
+   * Medido antes de tomar el trim, mandando mantener dos mil metros durante
+   * cinco minutos: el jaz-60 acababa en 3.996 m, el jaz-120 en 7.205 y el
+   * jaz-90 en **8.774** — literalmente la estratosfera, que es la palabra que
+   * se usó al contarlo.
+   *
+   * Lo que se comprueba aquí es la cura: mientras el automático lleva la
+   * altura, el timón que ve el avión es solo el suyo, así que da igual cómo
+   * estuviera trimado. Ver `conElPilotoAutomatico` en `game.ts`.
+   */
+  it.each([0, 0.5, 1])(
+    "y con el trim en %s, porque el automático lo toma en vez de pelearlo",
+    (trim) => {
+      const { subio } = volarConTrim(
+        "jaz-60",
+        { rumbo: null, altitud: 2000, velocidad: 140 },
+        180,
+        trim,
+        // Lo que hace el juego desde que el automático toma el trim.
+        true,
+      );
+      expect(subio).toBeLessThan(120);
+    },
+  );
+
+  /*
+   * **Y la prueba de que estas pruebas podían fallar.**
+   *
+   * Un «no se va» solo vale si el aparejo era capaz de ver que se iba. Esta
+   * mide justo lo contrario que las de arriba: con el trim sumándose al timón
+   * —como estaba antes— el avión **sí** se va, y por eso las otras significan
+   * algo. Si algún día ésta deja de pasar, lo primero que hay que mirar no es
+   * el piloto automático: es si el trim sigue llegando al modelo de vuelo.
+   */
+  it("y sin tomar el trim se iba de verdad: la prueba podía fallar", () => {
+    const { subio } = volarConTrim(
+      "jaz-90",
+      { rumbo: null, altitud: 2000, velocidad: 140 },
+      300,
+      1,
+      false,
+    );
+    expect(subio).toBeGreaterThan(5000);
+  });
+
+  it("y el avión más pesado tampoco se va, que es donde más se notaba", () => {
+    const { subio } = volarConTrim(
+      "jaz-90",
+      { rumbo: null, altitud: 2000, velocidad: 140 },
+      300,
+      1,
+      true,
+    );
+    expect(subio).toBeLessThan(200);
+  });
+});
