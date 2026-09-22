@@ -950,6 +950,36 @@ export const LA_PALMA: Scenario = {
    */
   magneticVariation: 1,
   aerodrome: GCLA as unknown as Aerodrome,
+  /*
+   * **Y desde aquí también se vuelve.**
+   *
+   * La Palma era destino de Los Rodeos y de El Hierro y no tenía ninguno
+   * propio: dos flechas entrando y ninguna saliendo. Eso no es una isla mal
+   * comunicada, es una ruta a medias — se podía venir y no se podía volver,
+   * que en un juego donde la lección es el viaje entero sobra explicación.
+   *
+   * Así que los dos destinos son **los dos que ya apuntaban aquí**. El
+   * criterio no es la distancia: es que una ruta se vuele en los dos
+   * sentidos. Santa Cruz de La Palma–Los Rodeos es además la ruta de verdad,
+   * la que tiene aviones a todas horas.
+   *
+   * La cuenta del mundo, con el eje más largo mandando porque es un cuadrado
+   * —ver `destinos.test.ts`—:
+   *
+   *     La Gomera         66 km de eje  ·  veces ≥  9,5
+   *     El Hierro         90 km         ·  veces ≥ 12,5
+   *     Tenerife Sur     116 km         ·  veces ≥ 15,6
+   *     Tenerife Norte   138 km         ·  veces ≥ 18,4
+   *     Gran Canaria     232 km         ·  veces ≥ 30,2
+   *
+   * Con diecinueve el mundo mide trescientos cuatro kilómetros y caben los
+   * cuatro primeros. Se cargan dos, que son los que devuelven un vuelo; La
+   * Gomera y Tenerife Sur entrarían sin ensanchar nada más el día que haya
+   * motivo, porque lo caro —el relieve y la foto de trescientos kilómetros—
+   * ya está pagado. Gran Canaria no cabe de ninguna manera razonable.
+   */
+  destino: ["tenerife-norte", "el-hierro"],
+  vecesLejos: 19,
 };
 
 /**
