@@ -1190,8 +1190,22 @@ export const GRAN_CANARIA: Scenario = {
    * escenario de hoy— y otro nivel de zoom menos en la foto del horizonte.
    * Las dos islas del oeste no caben de ninguna manera razonable.
    */
-  destino: ["tenerife-norte", "tenerife-sur", "fuerteventura"],
-  vecesLejos: 16,
+  destino: ["tenerife-norte", "tenerife-sur", "fuerteventura", "lanzarote"],
+  /*
+   * **Y Lanzarote, que se pidió y se dijo que no cabía.**
+   *
+   * «Desde Gran Canaria no localizo Fuerteventura ni Lanzarote.» Fuerteventura
+   * entró con dieciséis; Lanzarote se quedó fuera con la tabla de arriba
+   * delante —174 km de eje, veces ≥ 18,4— y la frase «no cabe». No era verdad
+   * que no cupiera: costaba un mundo más grande, y eso se mide en vez de
+   * suponerse.
+   *
+   * Con diecinueve el mundo llega a 190 km de radio y hacen falta 183: y ni
+   * uno más, que lo vigila `destinos.test.ts` — cada vez de mundo de sobra es
+   * foto del horizonte que baja de nivel y memoria que se gasta en mar.
+   * Medido en esta máquina, antes y después: ver el commit que lo metió.
+   */
+  vecesLejos: 19,
 };
 
 /**
