@@ -412,7 +412,37 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   const suyas = o.avion?.() ?? {};
   const VELOCIDAD_DE_SUBIDA = (suyas.rotacion ?? 28) * 1.15;
-  const VELOCIDAD_DE_CRUCERO = suyas.crucero ?? 50;
+  /**
+   * **Y por debajo de diez mil pies no se vuela a velocidad de crucero.**
+   *
+   * `crucero` es la velocidad de crucero **a nivel de vuelo**, y este banco
+   * vuela un circuito a doscientos metros. Para una avioneta da igual —su
+   * crucero son 117 nudos y ahí cabe— pero para un reactor no: el JAZ 90 tiene
+   * 220 m/s, o sea **428 nudos**, que además está por encima de su propia Vmo.
+   *
+   * Y lo que hacía el piloto del banco era exactamente eso: mantener 428
+   * nudos a doscientos metros del suelo. Medido en Tenerife Sur — a los 157 s
+   * iba a 98 m/s y doce metros de altura, y a los 282 s a **212 m/s y tres
+   * metros**, trece kilómetros pasado el umbral. No se desviaba: aceleraba a
+   * ras de suelo hasta el terreno.
+   *
+   * Por eso el barrido nunca voló los reactores, y por eso «diecisiete
+   * escenarios limpios» quería decir diecisiete con avioneta.
+   *
+   * El tope son los **250 nudos por debajo de diez mil pies** que rige en
+   * medio mundo, y que existe justo por esto: abajo hay tráfico, pájaros y
+   * terreno, y a esa velocidad no da tiempo a ver nada. Para los cuatro
+   * primeros de la flota no cambia nada, porque ya vuelan por debajo.
+   *
+   * Es la tercera vez en el mismo día que aparece esta forma —un número igual
+   * para toda la flota donde tenía que salir de cada avión—: antes fueron la
+   * altura de meter el tren y el tope de morro abajo.
+   */
+  const ABAJO_NO_SE_CORRE = 128.6;
+  const VELOCIDAD_DE_CRUCERO = Math.min(
+    suyas.crucero ?? 50,
+    ABAJO_NO_SE_CORRE,
+  );
 
   /**
    * Palanca para mantener una velocidad, con un empujón opcional de altura.
@@ -437,7 +467,39 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    */
   const porElSuelo = (s) => Math.hypot(s.velocity.x, s.velocity.z);
 
+  /**
+   * **Cuánto mando da el timón a esta velocidad, respecto a la de ajuste.**
+   *
+   * La fuerza de un timón va con la **presión dinámica**, o sea con el cuadrado
+   * de la velocidad. Las leyes de este piloto se ajustaron volando la
+   * avioneta, y a la velocidad de un reactor el mismo tirón da muchísimo más:
+   * a 135 m/s contra los 33 de aproximación de la avioneta son (135/33)² ≈
+   * **diecisiete veces**.
+   *
+   * Medido en Tenerife Sur con el JAZ 90, segundo a segundo, antes de esto: el
+   * despegue salía perfecto —diez grados de morro, subiendo a siete metros por
+   * segundo— y en cuanto la etapa de subir pedía velocidad con la palanca, el
+   * morro se iba a **cincuenta y siete grados** subiendo a setenta y seis
+   * metros por segundo. Después, el timón de +0,30 a −0,30 cada dos segundos,
+   * el cabeceo oscilando entre −11° y +14°, y la altura desangrándose hasta el
+   * suelo. Una oscilación inducida por el piloto de libro.
+   *
+   * Es lo mismo que el juego ya aprendió con su piloto automático —«una ley de
+   * un solo piso no amortigua el fugoide, lo alimenta»—. Aquí se resuelve como
+   * lo resuelve cualquier mando de vuelo de verdad: la ganancia se reparte
+   * según la presión dinámica.
+   *
+   * **Y a propósito, sin tocar a los que hoy pasan.** La ganancia no sube de
+   * uno: por debajo de 90 m/s —el crucero del turbohélice, que es el avión más
+   * rápido que el barrido ya volaba limpio— no cambia nada. Solo se recorta por
+   * encima, que es donde vuelan los reactores.
+   */
+  const AJUSTADO_HASTA = 90;
+  const ganancia = (s) =>
+    Math.min(1, (AJUSTADO_HASTA / Math.max(1, s.airspeed)) ** 2);
+
   const palancaPorVelocidad = (s, objetivo, extra = 0) =>
+    ganancia(s) *
     Math.max(-0.35, Math.min(0.35, (s.airspeed - objetivo) * 0.05 + extra));
 
   /**
@@ -479,7 +541,50 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * doce, el modelo de coeficientes se pasa de tirón y pierde el vuelo. El
    * mando de velocidad con un extra es lo único que valió para los dos.
    */
+  /**
+   * El cabeceo de ahora, en radianes, sacado del cuaternión del avión.
+   *
+   * Hace falta porque la subida inicial **no se vuela por velocidad**: se
+   * rota a una actitud y se mantiene. Ver `subirDeVerdad`.
+   */
+  const cabeceoDe = (s) => {
+    const q = s.orientation;
+    const v = 2 * (q.w * q.x - q.y * q.z);
+    return Math.asin(Math.max(-1, Math.min(1, v)));
+  };
+
+  /**
+   * La actitud de la subida inicial, rad.
+   *
+   * Doce grados. Es lo que se rota en cualquier avión de transporte y algo más
+   * de lo que necesita una avioneta, pero **sostener una actitud es lo mismo
+   * en los dos** y es lo que de verdad se hace: se tira hasta el morro que
+   * toca, se deja ahí, y la velocidad sale sola.
+   */
+  const CABECEO_DE_SUBIDA = (12 * Math.PI) / 180;
+
+  /** Hasta cuándo se vuela por actitud y no por velocidad, m sobre el suelo. */
+  const ASENTAR_LA_SUBIDA = 120;
+
   const subirDeVerdad = (s) => {
+    /*
+     * **Los primeros metros, por actitud.**
+     *
+     * La ley de abajo pide una **velocidad**, y cerca de la de subida el timón
+     * que saca es 0,15. A una avioneta le sobra; a un reactor de treinta y un
+     * metros no le da para asentar la subida — despegaba, llegaba a doce
+     * metros, se volvía a posar, y el juego lo daba por aterrizado mientras
+     * seguía a ciento treinta metros por segundo campo a través. Medido en
+     * Tenerife Sur, Gran Canaria y Los Rodeos: los tres igual.
+     *
+     * Y así no se despega en ningún avión: **se rota a una actitud y se
+     * mantiene**. La velocidad sale sola de ahí. Volar por velocidad es de
+     * después, cuando ya se está arriba.
+     */
+    if (s.heightAboveGround < ASENTAR_LA_SUBIDA) {
+      const falta = CABECEO_DE_SUBIDA - cabeceoDe(s);
+      return ganancia(s) * Math.max(-0.35, Math.min(0.6, falta * 4));
+    }
     const base = palancaPorVelocidad(s, VELOCIDAD_DE_SUBIDA);
     const falta = Math.max(0, 3 - s.verticalSpeed);
     /*
@@ -573,7 +678,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * pasada.
      */
     const mando = Math.max(-0.3, Math.min(0.3, error * 0.08));
-    return s.airspeed < minima ? Math.min(0, mando) : mando;
+    const conSuMando = mando * ganancia(s);
+    return s.airspeed < minima ? Math.min(0, conSuMando) : conSuMando;
   };
 
   /**
@@ -1237,6 +1343,11 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   const TOPE_DE_PARED = Math.max(180, (TOPE / veces) * 2) * 1000;
   let seQuedoSinPared = false;
 
+  /** La última altura a la que el piloto creía que tenía que ir, m. */
+  let ultimoAltoQueToca = null;
+  /** Traza de la subida: qué se pidió y qué hizo el avión. */
+  const subida = [];
+
   const empezo = o.reloj();
   let leidoAntes = empezo;
   let t = 0;
@@ -1254,6 +1365,15 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     t = ahora - empezo;
     const s = o.estado();
     const fase = o.fase();
+    if (subida.length < 45 && !s.onGround && i % 10 === 0) {
+      const cc = o.controles();
+      subida.push(
+        `${t.toFixed(0)}s ${etapa}/${fase} alto ${s.heightAboveGround.toFixed(0)}m` +
+          ` vel ${s.airspeed.toFixed(0)} sube ${s.verticalSpeed.toFixed(1)}` +
+          ` elev ${cc.elevator.toFixed(2)} trim ${(cc.trim ?? 0).toFixed(2)}` +
+          ` cabeceo ${((cabeceoDe(s) * 180) / Math.PI).toFixed(1)}°`,
+      );
+    }
     const ruta = o.ruta();
     const tarjeta = o.tarjeta();
     fases.add(fase);
@@ -1612,7 +1732,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     if (fase !== faseAnterior) {
       faseAnterior = fase;
       hitos.push(
-        `${t.toFixed(0)}s → ${fase} · ${s.airspeed.toFixed(0)}m/s · ${s.heightAboveGround.toFixed(0)}m del suelo · cabeceo ${((s._cabeceo ?? 0) * 57.3).toFixed(0)}° · gas ${c.throttle.toFixed(1)} · ${s.onRunway ? "en pista" : "fuera"} · umbral ${alUmbral(s).toFixed(0)}m`,
+        `${t.toFixed(0)}s → ${fase} · ${s.airspeed.toFixed(0)}m/s · ${s.heightAboveGround.toFixed(0)}m del suelo · cabeceo ${((s._cabeceo ?? 0) * 57.3).toFixed(0)}° · gas ${c.throttle.toFixed(1)} · ${s.onRunway ? "en pista" : "fuera"} · umbral ${alUmbral(s).toFixed(0)}m · quiere ${ultimoAltoQueToca === null ? "—" : ultimoAltoQueToca.toFixed(0) + "m"}`,
       );
     }
     if (i % 20 === 0) {
@@ -1794,6 +1914,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * medido en Guaraní, 185 → 219 → 147 → 236 → 99 → 34 metros.
        */
       const altoQueToca = meta ? meta.y - cotaDePista : CRUCERO;
+      ultimoAltoQueToca = altoQueToca;
       const subiendo = alto(s) < altoQueToca - 15;
       c.throttle = subiendo
         ? 1
@@ -2173,6 +2294,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     gafas: o.gafas?.() ?? null,
     segundos: +t.toFixed(1),
     veces,
+    subida,
     /*
      * Los dos relojes, para poder compararlos: si el de juego avanzó mucho
      * menos que el de pared × `veces`, el vuelo no iba lento — iba parado.
@@ -3046,6 +3168,9 @@ const queTiempoHizo = vuelo.meteo
     (vuelo.meteo.techoM ? ` · techo ${Math.round(vuelo.meteo.techoM)} m` : "") +
     (vuelo.meteo.temp != null ? ` · ${Math.round(vuelo.meteo.temp)} °C` : "")
   : "";
+if (vuelo.subida?.length)
+  console.log("\n  la subida:\n" + vuelo.subida.map((l) => "    " + l).join("\n"));
+
 console.log(
   `\n  vuelo entero · ${ESCENARIO} · ${TRAMO} · reloj ×${vuelo.veces}` +
     ` · arrancó en ${tardoEnArrancar.toFixed(1)} s` +
