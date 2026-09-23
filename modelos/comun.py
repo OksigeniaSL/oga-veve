@@ -534,6 +534,99 @@ def ventanillas(piel_x, z_desde, z_hasta, cada, y_centro,
     return [partes[0]]
 
 
+def franja(nombre, aro, z_desde, z_hasta, y_centro, alto,
+           material_="capo", grosor=0.04, paso=0.6):
+    """
+    Una franja de color a lo largo del costado: la **línea de cintura**.
+
+    Es la pieza que faltaba y la que explica la queja que la destapó: «los
+    aviones siguen pareciendo supositorios gigantes». Y es verdad, y no era la
+    forma: las proporciones están bien —esbeltez de siete a diez y media, que
+    es la de un avión de verdad— y los aros afinan por los dos extremos. Lo que
+    fallaba es que el costado era **liso y de un solo color** de punta a punta,
+    y un cuerpo de revolución liso y monocolor se lee como una cápsula por
+    bien proporcionado que esté.
+
+    Ninguna compañía del mundo pinta un avión de un solo color: todas llevan
+    una banda a la altura de las ventanillas, y es por lo mismo que aquí —
+    porque un tubo blanco no parece nada. También sirve para algo que este
+    juego sí necesita: da **referencia de actitud** desde fuera, que es cómo se
+    ve si el avión va con el morro arriba cuando la cámara va detrás.
+
+    Se hace con el mismo truco que `ventanillas`: una piel fina pegada por
+    fuera del casco, siguiendo los aros, que asoma donde el costado se estrecha.
+    `aro(z)` es la función que cada avión ya tiene para saber cuánto mide su
+    fuselaje ahí.
+    """
+    malla = bpy.data.meshes.new(nombre)
+    bm = bmesh.new()
+    cuantos = max(2, int((z_hasta - z_desde) / paso) + 1)
+    anillos = []
+    for i in range(cuantos):
+        z = z_desde + i * (z_hasta - z_desde) / (cuantos - 1)
+        ancho, altoAro, y = aro(z)
+        for lado in (-1, 1):
+            pass
+        anillos.append((z, ancho, altoAro, y))
+    caras = []
+    for lado in (-1, 1):
+        borde = []
+        for (z, ancho, altoAro, y) in anillos:
+            # El costado a la altura de la franja: la elipse resuelta en x.
+            dy = (y_centro - y) / max(altoAro / 2, 1e-6)
+            dy = max(-0.999, min(0.999, dy))
+            x = (ancho / 2 + grosor) * math.sqrt(1 - dy * dy)
+            arriba = bm.verts.new((lado * x, y_centro + alto / 2, z))
+            abajo = bm.verts.new((lado * x, y_centro - alto / 2, z))
+            borde.append((arriba, abajo))
+        for a, b in zip(borde, borde[1:]):
+            caras.append((a[0], a[1], b[1], b[0]) if lado > 0
+                         else (b[0], b[1], a[1], a[0]))
+    for c in caras:
+        try:
+            bm.faces.new(c)
+        except ValueError:
+            pass
+    bm.normal_update()
+    bm.to_mesh(malla)
+    bm.free()
+    obj = bpy.data.objects.new(nombre, malla)
+    bpy.context.collection.objects.link(obj)
+    return pintar(obj, material_)
+
+
+def puerta(nombre, aro, z, y_centro, alto=1.75, ancho=0.80,
+           material_="detalle", grosor=0.035):
+    """
+    Una puerta de pasaje: el rectángulo alto del costado delantero.
+
+    Va por el mismo procedimiento que la franja y las ventanillas —una piel
+    fina pegada por fuera— y está por lo mismo: **da escala**. Un tubo sin
+    puerta no dice de qué tamaño es; con ella, cualquiera sabe al instante si
+    lo que mira es una avioneta o un avión de línea, porque una puerta mide lo
+    que mide una persona y eso no hay que explicarlo.
+    """
+    a, h, y = aro(z)
+    dy = (y_centro - y) / max(h / 2, 1e-6)
+    dy = max(-0.999, min(0.999, dy))
+    x = (a / 2 + grosor) * math.sqrt(1 - dy * dy)
+    piezas = []
+    for lado in (-1, 1):
+        x0, x1 = sorted((lado * x, lado * (x + grosor)))
+        piezas.append(
+            caja(f"{nombre}-{'i' if lado < 0 else 'd'}",
+                 x0, x1, y_centro - alto / 2, y_centro + alto / 2,
+                 z - ancho / 2, z + ancho / 2, material_)
+        )
+    bpy.ops.object.select_all(action="DESELECT")
+    for p in piezas:
+        p.select_set(True)
+    bpy.context.view_layer.objects.active = piezas[0]
+    bpy.ops.object.join()
+    piezas[0].name = nombre
+    return [piezas[0]]
+
+
 # Un cuarto de vuelta en X: lo que pone de pie un cilindro. Ver `cilindro`.
 DE_PIE = (math.radians(90), 0, 0)
 

@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
     ala, caja, cabina, cilindro, exportar, helice, limpiar, parabrisas, perfil, pintar,
     suavizar, ventanillas,
+    franja,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -183,6 +184,10 @@ def construir():
         piel_x=ANCHO_FUSELAJE * 0.49, z_desde=-0.15, z_hasta=0.85, cada=1.00,
         y_centro=0.16, alto=0.36, largo=0.80,
     )
+
+    # La línea de cintura: lo que hace que un fuselaje no parezca una cápsula.
+    # Ver `franja` en `comun.py`.
+    piezas.append(franja("cintura", aro, -2.6, 2.6, -0.26, 0.24))
 
     # Lo de dentro: dos plazas de frente, suelo bajo en la panza y el panel a
     # setenta centímetros de la cara. Ver `cabina` en `comun.py`.
