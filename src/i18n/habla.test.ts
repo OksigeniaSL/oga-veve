@@ -6,10 +6,11 @@
  * que es la que decide cómo se implementa: «no sólo Tenerife y La Palma, si se
  * ponen más aeropuertos canarios también van».
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { comoSeDiceAqui, hablaDe } from "./habla";
 import { SCENARIOS } from "../world/scenarios";
 import { ES_PY } from "./es-PY";
+import { LOCALES, setLocale, t, type TranslationKey } from "./index";
 
 describe("cómo se habla en cada campo", () => {
   it("los dos aeropuertos canarios del juego hablan canario", () => {
@@ -93,6 +94,30 @@ describe("lo que dice la torre canaria", () => {
         "{indicativo}",
       );
     }
+  });
+});
+
+describe("lo que se lee en la tarjeta de la torre", () => {
+  it("con la matrícula puesta, no queda ningún hueco sin llenar", () => {
+    /*
+     * La tarjeta de la luz traducía la frase **sin pasarle el indicativo**, y
+     * en la web se leía «{indicativo}, podés entrar» encima de la pista. La
+     * voz sí lo pasaba; la pantalla no. Lo que se comprueba aquí es la otra
+     * mitad: que con el indicativo basta, en todos los idiomas y las dos hablas,
+     * y que nadie añada mañana un segundo hueco que nadie llena.
+     */
+    vi.stubGlobal("document", { documentElement: {} });
+    for (const idioma of LOCALES) {
+      setLocale(idioma);
+      for (const habla of ["paraguayo", "canario"] as const)
+        for (const base of ["torre.verde", "torre.roja", "palabra.alAire"]) {
+          const clave = comoSeDiceAqui(base, habla) as TranslationKey;
+          const dicho = t(clave, { indicativo: "Zulu Papa Alfa" });
+          expect(dicho, `${idioma} ${clave}`).not.toMatch(/\{\w+\}/);
+        }
+    }
+    setLocale("es-PY");
+    vi.unstubAllGlobals();
   });
 });
 

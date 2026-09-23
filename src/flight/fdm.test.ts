@@ -271,3 +271,27 @@ describe("determinismo", () => {
     expect(run()).toEqual(run());
   });
 });
+
+describe("reiniciar", () => {
+  it("un avión colocado en el aire no está en el suelo antes del primer paso", () => {
+    /*
+     * La bandera se quedaba en `true` hasta el primer paso, y el juego
+     * recoloca en ese hueco: la lección de aterrizar de Yvytu Rape empezaba
+     * rodando por un potrero en vez de a ciento cincuenta metros.
+     */
+    const model = makeModel();
+    model.reset({ position: new Vector3(0, 150, 0), heading: 0, airspeed: 40 });
+    expect(model.state.onGround).toBe(false);
+  });
+
+  it("y uno colocado sobre sus ruedas, sí", () => {
+    const model = makeModel();
+    model.reset({ position: new Vector3(0, 150, 0), heading: 0, airspeed: 40 });
+    model.reset({
+      position: new Vector3(0, PYKASU.gearHeight, 0),
+      heading: 0,
+      airspeed: 0,
+    });
+    expect(model.state.onGround).toBe(true);
+  });
+});

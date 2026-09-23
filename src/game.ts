@@ -954,6 +954,16 @@ export class Game {
       };
     const aMano =
       this.destinoAMano === null ? null : this.vecinos[this.destinoAMano];
+    /*
+     * **En la lección de aterrizar, la pista es la de delante.**
+     *
+     * Se empieza en final, con los aros encendidos, y la tarjeta señalaba el
+     * campo vecino más cercano: en El Hierro, «69,9 km La Gomera» con la pista
+     * a tres kilómetros por el parabrisas. Dos flechas diciendo cosas
+     * distintas, y la que sobra es la que más se mira. Quien quiera irse a
+     * otro sitio lo elige a mano, y entonces sí.
+     */
+    if (!aMano && this.leccion.arranque === "aire") return null;
     if (aMano)
       return {
         x: aMano.pista.x,
@@ -3980,7 +3990,7 @@ export class Game {
     luz: "verde" | "roja" | null,
     rojaDice: "esperar" | "alAire" = "esperar",
   ): void {
-    this.hud.setLuzDeTorre(luz, rojaDice);
+    this.hud.setLuzDeTorre(luz, rojaDice, this.miIndicativo.dicho);
     const cual = luz === null ? null : `${luz}:${rojaDice}`;
     if (cual === this.ultimaLuzDeTorre) return;
     this.ultimaLuzDeTorre = cual;

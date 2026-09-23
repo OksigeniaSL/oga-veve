@@ -2332,6 +2332,12 @@ export class Hud {
      * sube y se vuelve a probar.
      */
     rojaDice: "esperar" | "alAire" = "esperar",
+    /**
+     * Quién es el que oye la luz. Las frases de la torre empiezan por el
+     * indicativo —«Kilo Papa, podés entrar»— y sin él el hueco `{indicativo}`
+     * salía tal cual en la tarjeta: se vio en la web, en Pettirossi.
+     */
+    indicativo = "",
   ): void {
     const caja = this.torre;
     if (!caja) return;
@@ -2352,13 +2358,16 @@ export class Hud {
     if (texto)
       texto.textContent =
         luz === "verde"
-          ? t(comoSeDiceAqui("torre.verde", this.habla) as TranslationKey)
+          ? t(comoSeDiceAqui("torre.verde", this.habla) as TranslationKey, {
+              indicativo,
+            })
           : luz
             ? t(
                 comoSeDiceAqui(
                   rojaDice === "alAire" ? "palabra.alAire" : "torre.roja",
                   this.habla,
                 ) as TranslationKey,
+                { indicativo },
               )
             : "";
     // **Y una forma dentro de la luz**, no solo un color: la mano abierta de

@@ -398,6 +398,19 @@ export class CoefficientFlightModel implements FlightModel {
     this.trimClimb = null;
     this.trimSettle = 0;
     this.updateDerived();
+    /*
+     * **Y en el suelo solo si las ruedas tocan.**
+     *
+     * `onGround` se quedaba con lo que dijera el vuelo anterior —y el primero
+     * empieza en `true`—, así que un avión colocado ciento cincuenta metros en
+     * el aire seguía «en el suelo» hasta el primer paso. Y en ese hueco llega
+     * `recolocarTrasElMoldeado`, que se fía de la bandera y lo **baja al
+     * suelo**: la lección de aterrizar de Yvytu Rape empezaba rodando por un
+     * potrero a tres kilómetros de la pista, de morros contra un árbol. El
+     * modelo sencillo no lo tenía porque su `reset` ya pasa por el suelo.
+     */
+    s.onGround =
+      s.heightAboveGround <= this.aircraft.gearHeight + PEGADO_AL_SUELO;
   }
 
   /**
