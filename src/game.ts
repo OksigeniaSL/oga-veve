@@ -393,6 +393,10 @@ import type { Urgencia } from "./audio/boca";
 import { Agenda } from "./flight/agenda";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
+import {
+  avisoDeActitud,
+  type AvisoDeActitud,
+} from "./flight/avisos-de-actitud";
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
 import { Reparto } from "./hechos";
 import { unaForma } from "./audio/variantes";
@@ -5981,6 +5985,7 @@ export class Game {
      * enseña a no hacer caso.
      */
     this.cantarLaPerdida();
+    this.cantarLaActitud();
 
     this.hud.ponerLucesDeAviso({
       terreno: terreno !== null,
@@ -8592,6 +8597,43 @@ export class Game {
    * propósito. Ver `cantarLaPerdida`.
    */
   private static readonly ALTO_PARA_LA_PERDIDA = 30;
+
+  /** El último aviso de actitud que se cantó, para no repetirlo. */
+  private actitudDicha: AvisoDeActitud = null;
+
+  /**
+   * «Sink rate» y «bank angle»: los dos avisos de **cómo** se vuela.
+   *
+   * La cuenta de altura dice dónde estás y el aviso de terreno dice qué tienes
+   * debajo. Éstos dicen que lo que estás haciendo con el avión no da para lo
+   * que queda, y los dos salían de números que el juego calcula desde siempre
+   * sin decirlos nunca. Ver `flight/avisos-de-actitud.ts`, donde están las dos
+   * cuentas con su derivación.
+   *
+   * **El rearme va en la condición, no en un reloj**, que es la regla de esta
+   * casa: mientras siga siendo el mismo aviso no se repite, y vuelve cuando
+   * deja de darse y se vuelve a dar. Un avión que ronda el umbral no suelta
+   * una frase por fotograma.
+   *
+   * Y en `normal`, que es lo que son: avisos. No cortan a nadie — lo que corta
+   * son el terreno, la pista ocupada y la orden de irse al aire.
+   */
+  private cantarLaActitud(): void {
+    const s = this.flight.state;
+    const ahora = avisoDeActitud({
+      enSuelo: s.onGround,
+      altura: s.heightAboveGround,
+      vertical: s.velocity.y,
+      alabeo: bankAngleOf(s.orientation),
+    });
+    if (ahora === this.actitudDicha) return;
+    this.actitudDicha = ahora;
+    if (!ahora) return;
+    this.avisar("attention");
+    const clave =
+      ahora === "sink rate" ? "vuelo.bajasRapido" : "vuelo.muyInclinado";
+    this.cantar(ahora, t(clave), clave, "normal");
+  }
 
   /** Si la pérdida ya se cantó, para no repetirla mientras dure. */
   private perdidaDicha = false;

@@ -8,6 +8,8 @@ airspeed
 four hundred
 three hundred
 two hundred
+sink rate
+bank angle
 stall, stall
 autopilot disconnect
 minimums

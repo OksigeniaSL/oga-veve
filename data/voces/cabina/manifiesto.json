@@ -9,6 +9,9 @@
     "cabina.autopilotDisconnect": {
       "ms": 1091
     },
+    "cabina.bankAngle": {
+      "ms": 670
+    },
     "cabina.fifty": {
       "ms": 657
     },
@@ -38,6 +41,9 @@
     },
     "cabina.oneHundred": {
       "ms": 624
+    },
+    "cabina.sinkRate": {
+      "ms": 742
     },
     "cabina.slowDown": {
       "ms": 1105
@@ -92,6 +98,9 @@
     "cabina.autopilotDisconnect": [
       "cabina.autopilotDisconnect"
     ],
+    "cabina.bankAngle": [
+      "cabina.bankAngle"
+    ],
     "cabina.fifty": [
       "cabina.fifty"
     ],
@@ -121,6 +130,9 @@
     ],
     "cabina.oneHundred": [
       "cabina.oneHundred"
+    ],
+    "cabina.sinkRate": [
+      "cabina.sinkRate"
     ],
     "cabina.slowDown": [
       "cabina.slowDown"

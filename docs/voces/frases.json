@@ -1596,6 +1596,20 @@
     "para": "cuenta de altura en la toma"
   },
   {
+    "id": "cabina.sinkRate",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "sink rate",
+    "para": "bajás muy rápido para lo bajo que estás"
+  },
+  {
+    "id": "cabina.bankAngle",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "bank angle",
+    "para": "el avión va demasiado inclinado"
+  },
+  {
     "id": "cabina.stall",
     "voz": "cabina",
     "idioma": "en",

@@ -520,6 +520,8 @@ export const ES_PY = {
   "vuelo.terrenoBajo": "Vas muy bajo",
   "vuelo.terrenoSube": "Terreno. Subí",
   "vuelo.perdida": "Pérdida. Bajá el morro",
+  "vuelo.bajasRapido": "Bajás muy rápido",
+  "vuelo.muyInclinado": "Estás muy inclinado",
   "vuelo.pilotoSuelto": "Se soltó el piloto automático",
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",

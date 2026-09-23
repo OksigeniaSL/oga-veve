@@ -8,20 +8,22 @@
 008	cabina.fourHundred	four hundred
 009	cabina.threeHundred	three hundred
 010	cabina.twoHundred	two hundred
-011	cabina.stall	stall, stall
-012	cabina.autopilotDisconnect	autopilot disconnect
-013	cabina.minimums	minimums
-014	cabina.slowDown	slow down
-015	cabina.tooHighComeDown	too high, come down
-016	cabina.tooLowClimb	too low, climb
-017	cabina.obstacleAhead	obstacle ahead
-018	cabina.goAround	going around. good decision
-019	cabina.weHaveAProblem	we have a problem
-020	cabina.fiveHundred	five hundred
-021	cabina.oneHundred	one hundred
-022	cabina.fifty	fifty
-023	cabina.forty	forty
-024	cabina.thirty	thirty
-025	cabina.twenty	twenty
-026	cabina.ten	ten
-027	cabina.five	five
+011	cabina.sinkRate	sink rate
+012	cabina.bankAngle	bank angle
+013	cabina.stall	stall, stall
+014	cabina.autopilotDisconnect	autopilot disconnect
+015	cabina.minimums	minimums
+016	cabina.slowDown	slow down
+017	cabina.tooHighComeDown	too high, come down
+018	cabina.tooLowClimb	too low, climb
+019	cabina.obstacleAhead	obstacle ahead
+020	cabina.goAround	going around. good decision
+021	cabina.weHaveAProblem	we have a problem
+022	cabina.fiveHundred	five hundred
+023	cabina.oneHundred	one hundred
+024	cabina.fifty	fifty
+025	cabina.forty	forty
+026	cabina.thirty	thirty
+027	cabina.twenty	twenty
+028	cabina.ten	ten
+029	cabina.five	five

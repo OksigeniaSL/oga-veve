@@ -53,13 +53,16 @@ describe("los cantos de cabina", () => {
      * toma pasó a tener clave. La prueba falló, y eso está bien — un ejemplo
      * que caduca avisa de que caducó.
      *
-     * Ahora son dos que siguen sin grabación y que el juego tampoco pide:
-     * «sink rate» y «positive rate», del guion de #65. Cuando se graben, esta
-     * prueba volverá a fallar y habrá que buscar otras — que es exactamente
-     * lo que tiene que pasar.
+     * Y volvió a pasar con «sink rate» al día siguiente, que era uno de los
+     * dos ejemplos nuevos. Van tres: el ejemplo caduca cada vez que alguien
+     * hace su trabajo, y esta prueba es la que lo cuenta.
+     *
+     * Quedan sin toma y sin que el juego los pida: «positive rate» —la llamada
+     * de después del despegue— y «retard», que es de reactor con
+     * autoempuje. Del guion de #65.
      */
-    expect(claveDeCabina("sink rate")).toBe(null);
     expect(claveDeCabina("positive rate")).toBe(null);
+    expect(claveDeCabina("retard")).toBe(null);
     expect(claveDeCabina("cleared to land")).toBe(null);
   });
 });

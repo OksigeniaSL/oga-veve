@@ -77,6 +77,8 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
    *
    * Y no está `overspeed`: de eso el juego dice «too fast», que ya estaba.
    */
+  "sink rate": "cabina.sinkRate",
+  "bank angle": "cabina.bankAngle",
   "stall, stall": "cabina.stall",
   "autopilot disconnect": "cabina.autopilotDisconnect",
   minimums: "cabina.minimums",

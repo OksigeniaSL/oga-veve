@@ -140,6 +140,15 @@ const CABINA = [
   ["cabina.fourHundred", "four hundred", "cuenta de altura en la toma"],
   ["cabina.threeHundred", "three hundred", "cuenta de altura en la toma"],
   ["cabina.twoHundred", "two hundred", "cuenta de altura en la toma"],
+  /*
+   * **Y los dos que miran cómo se vuela, no dónde se está.**
+   *
+   * «Sink rate» es bajar más deprisa de lo que esa altura aguanta; «bank
+   * angle», ir demasiado inclinado. Los dos los calcula el avión desde
+   * siempre y ninguno se decía. Ver `flight/avisos-de-actitud.ts`.
+   */
+  ["cabina.sinkRate", "sink rate", "bajás muy rápido para lo bajo que estás"],
+  ["cabina.bankAngle", "bank angle", "el avión va demasiado inclinado"],
   ["cabina.stall", "stall, stall", "el ala dejó de sustentar"],
   [
     "cabina.autopilotDisconnect",
