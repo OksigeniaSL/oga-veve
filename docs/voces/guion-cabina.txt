@@ -5,6 +5,9 @@ too low
 too fast
 off the runway
 airspeed
+stall, stall
+autopilot disconnect
+minimums
 slow down
 too high, come down
 too low, climb

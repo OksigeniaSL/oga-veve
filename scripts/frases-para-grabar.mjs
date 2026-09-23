@@ -110,6 +110,31 @@ const CABINA = [
   ["cabina.tooFast", "too fast", "veredicto de toma rápida"],
   ["cabina.offTheRunway", "off the runway", "tomaste fuera de la pista"],
   ["cabina.airspeed", "airspeed", "vas rápido en el aire"],
+  /*
+   * **Las tres que el juego ya dice y todavía no están tomadas.**
+   *
+   * Los tres estados los calcula el avión desde hace tiempo y los tres tienen
+   * su luz en el panel; lo que no había era voz. Quien mira la pantalla se
+   * enteraba y quien depende del sonido, no — un canal menos, y en los avisos
+   * que más importan.
+   *
+   * Van aquí y **no** en `CLAVE_DE_CABINA` todavía, que es donde estaba el
+   * círculo: aquella tabla tiene que cuadrar con el manifiesto en las dos
+   * direcciones —una clave sin grabación apunta a un audio que no existe— así
+   * que una frase nueva entra allí **con su toma**. Y esta lista es la que
+   * dice qué tomar. Primero se piden aquí, luego se graban, y entonces se
+   * apuntan allí.
+   *
+   * Hasta entonces el juego las dice con la voz del navegador, que es lo que
+   * hay, y con su luz y su texto al lado.
+   */
+  ["cabina.stall", "stall, stall", "el ala dejó de sustentar"],
+  [
+    "cabina.autopilotDisconnect",
+    "autopilot disconnect",
+    "el piloto automático se soltó y los mandos son tuyos otra vez",
+  ],
+  ["cabina.minimums", "minimums", "la altura de decisión: o la ves, o te vas"],
   ["cabina.slowDown", "slow down", "vas rápido en el suelo"],
   [
     "cabina.tooHighComeDown",

@@ -519,6 +519,8 @@ export const ES_PY = {
   "vuelo.final": "Bajá suavecito",
   "vuelo.terrenoBajo": "Vas muy bajo",
   "vuelo.terrenoSube": "Terreno. Subí",
+  "vuelo.perdida": "Pérdida. Bajá el morro",
+  "vuelo.pilotoSuelto": "Se soltó el piloto automático",
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",

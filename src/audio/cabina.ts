@@ -50,6 +50,22 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   // Y el final que no acaba en toma.
   "go around": "cabina.goAround",
   "off the runway": "cabina.offTheRunway",
+  /*
+   * **Y lo que el juego dice y todavía no está grabado, no entra aquí.**
+   *
+   * La tabla y el manifiesto cuadran en las dos direcciones, y las dos pruebas
+   * de `cabina.test.ts` lo exigen: una grabación sin clave es una frase que se
+   * baja a cada tablet para no sonar nunca, y una clave sin grabación apunta a
+   * un audio que no existe.
+   *
+   * Así que una frase nueva entra aquí **con su toma**, no antes. Hasta
+   * entonces la dice la voz del navegador, que es lo que hay — y el juego sí
+   * la dice, que es lo que importa.
+   *
+   * Pendientes de tomar, con el juego pidiéndolas ya: «stall, stall»,
+   * «autopilot disconnect» y «minimums». Las tres cuelgan de estados que el
+   * avión calcula desde hace tiempo y que hasta ahora solo tenían luz.
+   */
 };
 
 /**

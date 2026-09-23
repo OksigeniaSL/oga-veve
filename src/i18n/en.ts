@@ -279,6 +279,8 @@ export const EN: Dictionary = {
   "vuelo.final": "Come down gently",
   "vuelo.terrenoBajo": "You are very low",
   "vuelo.terrenoSube": "Terrain. Pull up",
+  "vuelo.perdida": "Stall. Lower the nose",
+  "vuelo.pilotoSuelto": "Autopilot disconnected",
   "vuelo.mandanFrustrar": "Runway occupied: go around and rejoin the circuit",
   "percance.ocupada": "The runway was occupied and you were told to go around",
   "vuelo.puedeVolver": "Cleared to try again",

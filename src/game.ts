@@ -5963,6 +5963,25 @@ export class Game {
      * Ninguna luz inventa un estado: todas cuelgan de algo que el juego ya
      * sabe y ya dice por otro canal.
      */
+    /*
+     * **Y la pérdida se canta, que es el aviso que no tenía voz.**
+     *
+     * El estado estaba calculado desde siempre y tenía su luz en el panel, y
+     * el canto de cabina no existía: quien mira la pantalla se enteraba y
+     * quien depende del sonido, no. Un canal menos, y justo en el aviso más
+     * importante que da un avión.
+     *
+     * «Stall, stall» en inglés aeronáutico y sin traducir jamás, como IAS o
+     * HDG: el día que alguien lo oiga en una cabina de verdad tiene que
+     * reconocerlo. Ver `audio/cabina.ts`.
+     *
+     * **Y se rearma saliendo de la pérdida, no con un reloj.** Un aviso vuelve
+     * cuando cambia algo que pasa, no cuando pasa un rato: si volviera por
+     * tiempo, un avión que se queda colgado lo repetiría en bucle y el bucle
+     * enseña a no hacer caso.
+     */
+    this.cantarLaPerdida();
+
     this.hud.ponerLucesDeAviso({
       terreno: terreno !== null,
       perdida: this.flight.state.stalled,
@@ -8322,6 +8341,24 @@ export class Game {
     if (!puesto && this.objetivos.altitud !== null) {
       this.input.controls.trim = this.timonDelAutomatico;
     }
+    /*
+     * **Y al soltarse se canta**, que es la otra mitad de la luz.
+     *
+     * Un piloto automático que se desconecta lo dice en toda cabina del mundo,
+     * y por un motivo que no es de adorno: quien no estaba mirando acaba de
+     * quedarse a los mandos sin saberlo. Aquí había luz y no había voz.
+     *
+     * Solo al soltarse, no al ponerlo: enganchar es una decisión que se toma
+     * mirando; soltarse es lo que pasa sin querer.
+     */
+    if (!puesto && this.pilotoPuesto) {
+      this.cantar(
+        "autopilot disconnect",
+        t("vuelo.pilotoSuelto"),
+        "vuelo.pilotoSuelto",
+        "mando",
+      );
+    }
     const s = this.flight.state;
     this.objetivos = puesto
       ? {
@@ -8546,6 +8583,80 @@ export class Game {
      * frustrada, y poco más. Ver `audio/boca.ts`.
      */
     this.cantar("too fast", t(clave as TranslationKey), clave);
+  }
+
+  /**
+   * Por encima de cuánto sobre el suelo una pérdida es una pérdida, m.
+   *
+   * Por debajo es la recogida del aterrizaje, que es una pérdida hecha a
+   * propósito. Ver `cantarLaPerdida`.
+   */
+  private static readonly ALTO_PARA_LA_PERDIDA = 30;
+
+  /** Si la pérdida ya se cantó, para no repetirla mientras dure. */
+  private perdidaDicha = false;
+
+  /**
+   * El canto de pérdida: «stall, stall».
+   *
+   * Urgente, y es de los pocos que lo son: el terreno, la pista ocupada, la
+   * frustrada y esto. Una pérdida no es un dato que se dice y ya — es lo único
+   * que hay que arreglar **ahora**, y por eso corta lo que haya.
+   *
+   * En el suelo no, claro: el modelo marca pérdida a cero nudos con el avión
+   * parado en la plataforma, y un avión aparcado gritando «stall» es ruido.
+   *
+   * **Y en la recogida tampoco, que es la parte que hubo que medir.**
+   *
+   * Un aterrizaje **es** una pérdida: se toma tirando hasta que el ala deja de
+   * sustentar, a un palmo del asfalto y a propósito. El primer intento cantaba
+   * ahí, y con urgencia —o sea cortando—, así que se comía las autorizaciones
+   * de la torre: el banco de vuelo entero pasó de 24 de 24 a 22 de 24, con
+   * «torre.clearedTakeoff: caducó esperando» en la traza.
+   *
+   * Un avión de verdad hace lo mismo: el aviso de pérdida se inhibe cerca del
+   * suelo, porque ahí ya no avisa de nada —estás haciendo lo correcto— y solo
+   * tapa lo que sí importa. Y encaja con la regla de la casa: aterrizar no se
+   * dramatiza.
+   *
+   * Treinta metros: por encima de eso una pérdida es una pérdida; por debajo,
+   * es la recogida.
+   */
+  private cantarLaPerdida(): void {
+    const s = this.flight.state;
+    const hay =
+      s.stalled && !s.onGround && s.heightAboveGround > Game.ALTO_PARA_LA_PERDIDA;
+    /*
+     * **Y se rearma con holgura, no en cuanto deja de estar en pérdida.**
+     *
+     * El ala entra y sale del ángulo crítico varias veces por segundo cuando
+     * se vuela justo en el filo, y con el rearme pegado al umbral eso son diez
+     * «stall, stall» en cinco segundos — que es un aviso que enseña a no hacer
+     * caso, y que además haría saltar la comprobación del banco que cuenta
+     * cuántas veces se dice cada frase.
+     *
+     * La holgura va en el **ángulo de ataque** y no en un reloj, que es la
+     * regla de esta casa: un aviso vuelve cuando cambia algo que pasa, no
+     * cuando pasa un rato. Hasta que el ala no está claramente volando otra
+     * vez —un diez por ciento por debajo del crítico— no se vuelve a cantar.
+     */
+    const volandoDeVerdad = s.alpha < this.aircraft.aero.alphaStall * 0.9;
+    if (hay && !this.perdidaDicha) {
+      this.perdidaDicha = true;
+      this.avisar("attention");
+      /*
+       * **Y en `mando`, no en `urgente`.**
+       *
+       * `urgente` corta a quien esté hablando, y eso se reserva a lo que no
+       * puede esperar a que acabe una frase: el terreno que sube, la pista
+       * ocupada y la orden de irse al aire. Una pérdida en altura se arregla
+       * bajando el morro y da tiempo a oír la frase entera — cortar aquí solo
+       * conseguía tirar autorizaciones de la torre. Ver `Urgencia`.
+       */
+      this.cantar("stall, stall", t("vuelo.perdida"), "vuelo.perdida", "mando");
+    } else if (!hay && (volandoDeVerdad || s.onGround)) {
+      this.perdidaDicha = false;
+    }
   }
 
   /** Lo último que avisó del tren, para no repetírselo. Ver `seVuelveADecir`. */

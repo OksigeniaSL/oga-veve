@@ -133,6 +133,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.perdida",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pérdida. Bajá el morro",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.pilotoSuelto",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Se soltó el piloto automático",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.mandanFrustrar",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1559,6 +1573,27 @@
     "idioma": "en",
     "texto": "airspeed",
     "para": "vas rápido en el aire"
+  },
+  {
+    "id": "cabina.stall",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "stall, stall",
+    "para": "el ala dejó de sustentar"
+  },
+  {
+    "id": "cabina.autopilotDisconnect",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "autopilot disconnect",
+    "para": "el piloto automático se soltó y los mandos son tuyos otra vez"
+  },
+  {
+    "id": "cabina.minimums",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "minimums",
+    "para": "la altura de decisión: o la ves, o te vas"
   },
   {
     "id": "cabina.slowDown",
