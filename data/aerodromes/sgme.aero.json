@@ -3,7 +3,7 @@
   "name": "Dr. Luis María Argaña International Airport",
   "source": {
     "osm": "overpass",
-    "extracted": "2026-09-08",
+    "extracted": "2026-09-23",
     "ourairports": "6093",
     "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los tres puestos de estacionamiento están puestos a mano sobre la plataforma del sur, que es la que toca la calle de rodaje: OpenStreetMap no trae ninguno. Van marcados «manual» para que la próxima extracción no se los lleve por delante."
   },
@@ -422,24 +422,24 @@
     {
       "ref": "1",
       "xy": [
-        215.0,
-        1420.0
+        215,
+        1420
       ],
       "manual": true
     },
     {
       "ref": "2",
       "xy": [
-        215.0,
-        1390.0
+        215,
+        1390
       ],
       "manual": true
     },
     {
       "ref": "3",
       "xy": [
-        215.0,
-        1360.0
+        215,
+        1360
       ],
       "manual": true
     }

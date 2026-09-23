@@ -336,7 +336,25 @@ async function construir(icao, pistas, aeropuertos) {
   }
 
   const ficha = aeropuertos.find((a) => a.ident === icao);
-  if (!ficha) throw new Error(`${icao} no está en OurAirports`);
+  /*
+   * **Y un campo que no está en OurAirports no mata la tirada.**
+   *
+   * Pasó pidiendo los quince de una vez: YVYTU —la pista de la granja, que es
+   * privada y no tiene código OACI— iba la última, lanzó una excepción y se
+   * llevó por delante el proceso entero. Da la casualidad de que iba la
+   * última y no se perdió nada; si hubiera ido la primera, no se habría
+   * extraído ninguno de los catorce.
+   *
+   * Es la misma lección que este fichero ya tiene escrita dos párrafos más
+   * abajo para las respuestas vacías —«se avisa y se sigue con el
+   * siguiente»—, que se aplicó a un caso y no al otro. Una tirada de horas no
+   * puede depender de que ninguna de sus quince entradas sea rara.
+   *
+   * Y el aeródromo de la granja no lo necesita: su fichero está hecho a mano
+   * y se conserva. No todo campo de este juego existe en un registro
+   * internacional, y eso es a propósito.
+   */
+  if (!ficha) return null;
   const lat0 = Number(ficha.latitude_deg);
   const lon0 = Number(ficha.longitude_deg);
   const proj = proyector(lat0, lon0);
@@ -826,6 +844,12 @@ const [pistas, aeropuertos] = await Promise.all([
 
 for (const icao of icaos) {
   const ficha = await construir(icao, pistas, aeropuertos);
+  if (!ficha) {
+    process.stdout.write(
+      `  ⚠ ${icao} no está en OurAirports — se salta, y su fichero se queda\n`,
+    );
+    continue;
+  }
   const destino = join(SALIDA, `${icao.toLowerCase()}.aero.json`);
   /*
    * **Un aeródromo sin pista no se escribe, y esto costó dos ficheros buenos.**
