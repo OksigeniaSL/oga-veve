@@ -1064,6 +1064,71 @@ body {
   min-width: 74px;
 }
 
+/* ── Los vuelos del cuaderno ───────────────────────────────────────────────
+
+   La bitácora se escribía desde el primer día y no se enseñaba en ninguna
+   parte. Aquí se enseña, y con el dibujo delante: a los cuatro años «lo que
+   hice el sábado» no es una fila de una tabla, es por dónde fui.
+
+   Rejilla que se adapta sola: tres tarjetas en una tablet apaisada, dos en
+   una vertical y una en un teléfono, sin una sola consulta de medios. Lo que
+   manda es el ancho mínimo de una tarjeta para que el plano se lea. */
+.cuaderno__grado--vuelos {
+  margin-top: 22px;
+}
+
+.bitacora {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 12px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.bitacora__vuelo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--r-m);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* El plano manda: es lo único de la tarjeta que se lee sin saber leer, así
+   que se lleva el sitio y el pie se queda en una línea debajo. */
+.bitacora__plano {
+  aspect-ratio: 5 / 3;
+  overflow: hidden;
+  border-radius: var(--r-s, 6px);
+}
+
+.bitacora__plano svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bitacora__pie {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bitacora__duracion {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Los galones que salieron de ese vuelo, con la misma barra de la manga y en
+   su mismo ocre: quien ya sabe contar las barras de la bocamanga las
+   reconoce aquí sin que nadie se lo diga. Ver `ui/manga.ts`. */
+.bitacora__galones {
+  color: var(--ocre);
+  letter-spacing: 1px;
+}
+
 .cuaderno__cifra {
   font-size: 26px;
   font-weight: 700;

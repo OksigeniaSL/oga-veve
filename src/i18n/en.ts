@@ -366,6 +366,7 @@ export const EN: Dictionary = {
   "cuaderno.aerodromos": "airfields",
   "cuaderno.falta": "For {grado} you still need:",
   "cuaderno.completo": "That is all of them. Keep flying",
+  "cuaderno.vuelos": "Your flights",
   "vuelo.sinPermiso":
     "You went in without the green light. Wait for it next time",
 

@@ -89,6 +89,7 @@ export const GUG: Dictionary = {
   "cuaderno.aerodromos": "aeródromo",
   "cuaderno.falta": "{grado} peve oĩ gueteri:",
   "cuaderno.completo": "Opaite oĩma. Eveve katu",
+  "cuaderno.vuelos": "Nde veve",
   "vuelo.mandanFrustrar": "¡Pista ojeporúma! Ejupi ha eju jey circuito rupi",
   "percance.ocupada": "Pista ojeporu ha oje'e ndéve ani reguejy",
   "vuelo.sinPermiso": "Reike tesape hovy'ỹre. Ambuévape eha'arõ",

@@ -658,6 +658,7 @@ export const ES_PY = {
   "cuaderno.aerodromos": "aeródromos",
   "cuaderno.falta": "Para {grado} te falta:",
   "cuaderno.completo": "¡Ya está todo! A seguir volando",
+  "cuaderno.vuelos": "Tus vuelos",
   // Se dice una vez y sin regañar. Lo que hay que aprender no es que el juego
   // te lo impida: es que en un aeropuerto de verdad ahí puede venir otro.
   "vuelo.sinPermiso": "Entraste sin la luz verde. La próxima, esperala",
