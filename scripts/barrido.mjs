@@ -113,6 +113,22 @@ const LISTA = PEDIDOS.length
   ? TODOS.filter(([e]) => PEDIDOS.includes(e))
   : TODOS;
 
+/**
+ * Saca cuánto tardó el juego en arrancar, del parte del banco.
+ *
+ * Está aquí porque el barrido sacaba **un falso rojo por tirada** —siempre en
+ * otro escenario, y corrido solo pasa entero— y con «arrancó / no arrancó» no
+ * hay forma de saber si el caído tardó veintidós segundos o ciento
+ * diecinueve. Con los diecisiete tiempos en fila, un atípico se ve como lo
+ * que es y el tope se decide con datos y no a ojo.
+ *
+ * Subir el tope sin mirar esto sería tapar el instrumento en vez de medirlo.
+ */
+const arranque = (salida) => {
+  const m = /arrancó en ([\d.]+) s/.exec(salida);
+  return m ? Number(m[1]) : null;
+};
+
 /** Saca «14 de 18» del parte que imprime el banco. */
 const cuenta = (salida) => {
   const m = /(\d+) de (\d+) comprobaciones/.exec(salida);
@@ -197,6 +213,7 @@ for (const [escenario, tramo, avion] of LISTA) {
     c,
     minutos,
     fin: comoAcabo(salida),
+    arranque: arranque(salida),
     rodaje: rodando(salida),
     salida,
   });
@@ -247,6 +264,33 @@ for (const p of partes) {
  * un problema y no dice cuál, y entonces hay que volver a correr el banco a
  * mano para verlo: o sea, el barrido no ha ahorrado nada.
  */
+/*
+ * **Y lo que tardó cada uno en arrancar.**
+ *
+ * Con el máximo y la mediana al pie: si el más lento está cerca del tope de
+ * dos minutos, el tope es el problema; si está en veinticinco segundos y aun
+ * así hubo un caído, lo que falla es otra cosa y hay que ir a buscarla.
+ */
+const tiempos = partes.map((p) => p.arranque).filter((x) => x !== null);
+if (tiempos.length) {
+  console.log("\n  y cuánto tardó cada uno en arrancar:\n");
+  for (const p of partes) {
+    console.log(
+      `  · ${p.escenario.padEnd(ancho)}  ${
+        p.arranque === null
+          ? "no arrancó"
+          : `${p.arranque.toFixed(1).padStart(5)} s`
+      }`,
+    );
+  }
+  const ordenados = [...tiempos].sort((a, b) => a - b);
+  const mediana = ordenados[Math.floor(ordenados.length / 2)];
+  console.log(
+    `\n  mediana ${mediana.toFixed(1)} s · el más lento ${Math.max(...tiempos).toFixed(1)} s` +
+      `  (el tope del banco son 120 s)`,
+  );
+}
+
 console.log("\n  y cuánto de cada vuelo se pasa rodando:\n");
 for (const p of partes) {
   const r = p.rodaje;

@@ -165,6 +165,21 @@ await page.goto(
  * verdad — y entonces lo que hace falta es el error de la consola, que es lo
  * único que dice por qué.
  */
+/*
+ * **Y cuánto tardó, siempre, no solo cuando falla.**
+ *
+ * Con el tope en dos minutos y un arranque normal de veinte segundos, un
+ * barrido de diecisiete escenarios sacaba **un falso rojo por tirada** —y
+ * siempre en otro escenario, que corrido solo pasa entero—. Con un número
+ * binario «arrancó / no arrancó» eso es una moneda al aire: no se sabe si el
+ * caído tardó veintidós segundos o ciento diecinueve.
+ *
+ * La tentación era subir el tope a cuatro minutos y llamarlo arreglado. Eso
+ * es tapar el instrumento, no medirlo. Lo que hace falta es **el reparto**:
+ * con el tiempo de arranque de los diecisiete en la tabla, un atípico se ve
+ * como lo que es y el tope se decide con datos en vez de a ojo.
+ */
+const arrancoA = Date.now();
 try {
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 120000,
@@ -182,6 +197,9 @@ try {
   await server.close();
   process.exit(1);
 }
+/** Cuánto tardó el juego en estar listo, s. Ver por qué, más arriba. */
+const tardoEnArrancar = (Date.now() - arrancoA) / 1000;
+
 // Y un respiro para que el mundo termine de posarse: el relieve y las
 // ortofotos llegan con la primera tanda, pero las mallas se montan después.
 await page.waitForTimeout(4000);
@@ -2996,6 +3014,7 @@ const queTiempoHizo = vuelo.meteo
   : "";
 console.log(
   `\n  vuelo entero · ${ESCENARIO} · ${TRAMO} · reloj ×${vuelo.veces}` +
+    ` · arrancó en ${tardoEnArrancar.toFixed(1)} s` +
     ` · ${vuelo.vueltas} muestras en ${vuelo.segundos.toFixed(0)} s de vuelo` +
     queTiempoHizo +
     "\n",
