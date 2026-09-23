@@ -1579,6 +1579,22 @@ button.motor__tecla::after {
   color: #7ec86a;
 }
 
+/* Apuntando al aeropuerto al que se va: azul de carta náutica y aeronáutica,
+   que es el color con el que se pinta una ruta en cualquier mapa de vuelo. No
+   puede ser el verde del objetivo ni el ocre de la pista de casa: son tres
+   cosas distintas y el color es el canal que las separa para quien no lee. */
+.casa--destino .casa__aguja {
+  color: #6fb3e0;
+}
+
+/* Y el nombre del destino no cabe siempre en el ancho de «Pista»: un rótulo
+   que se sale de su tarjeta tapa el instrumento de al lado. Se ajusta. */
+.casa--destino .medidor__glosa {
+  max-width: 116px;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+}
+
 /* Avisos */
 /* Terracota oscurecida y texto beige. El blanco sobre #BE5D38 da 4,3:1 y se
    queda por debajo del 4,5:1 que exige AA — y precisamente en el texto más

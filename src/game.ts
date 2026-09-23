@@ -893,17 +893,96 @@ export class Game {
    * cuanto se pone rumbo al otro.
    */
   private elOtroCampo(): { x: number; z: number } | null {
+    return this.elDestino();
+  }
+
+  /**
+   * **A qué aeropuerto se va, con su nombre.**
+   *
+   * Existe porque faltaba lo más básico del juego y nadie lo había echado en
+   * falta desde dentro: «yo no sé la de veces que he querido despegar de una
+   * pista y llegar a otra y todavía en Paraguay no he encontrado el modo, y
+   * desde Gran Canaria no localizo Fuerteventura».
+   *
+   * Y tenía toda la razón. Fuerteventura **estaba cargada** —su relieve, su
+   * aeropuerto, su pista donde se puede aterrizar— y en la pantalla no había
+   * absolutamente nada que dijera que existe: ni su nombre, ni hacia dónde
+   * cae, ni a qué distancia. El mundo tenía el destino y el juego no lo
+   * enseñaba. Un aeropuerto al que no se puede apuntar no está en el juego,
+   * está en el disco.
+   *
+   * Saliendo de casa se va al destino elegido —y si no se ha elegido, al más
+   * cercano, que es lo que se está usando en cuanto se pone rumbo a él—; ya
+   * en un destino, la vuelta a casa. Ver `siguienteDestino`.
+   */
+  private elDestino(): { x: number; z: number; nameKey: string } | null {
     if (this.vecinos.length === 0) return null;
     const aqui = this.elVecinoDeAhora();
-    if (aqui) return { x: this.scenario.runway.x, z: this.scenario.runway.z };
+    if (aqui)
+      return {
+        x: this.scenario.runway.x,
+        z: this.scenario.runway.z,
+        nameKey: this.scenario.nameKey,
+      };
+    const aMano =
+      this.destinoAMano === null ? null : this.vecinos[this.destinoAMano];
+    if (aMano)
+      return {
+        x: aMano.pista.x,
+        z: aMano.pista.z,
+        nameKey: aMano.escenario.nameKey,
+      };
     const s = this.flight.state.position;
-    let mejor: { x: number; z: number } | null = null;
+    let mejor: { x: number; z: number; nameKey: string } | null = null;
     let corto = Infinity;
     for (const v of this.vecinos) {
       const d = Math.hypot(v.pista.x - s.x, v.pista.z - s.z);
       if (d < corto) {
         corto = d;
-        mejor = { x: v.pista.x, z: v.pista.z };
+        mejor = { x: v.pista.x, z: v.pista.z, nameKey: v.escenario.nameKey };
+      }
+    }
+    return mejor;
+  }
+
+  /**
+   * Cuál de los destinos se ha elegido a mano, o `null` para el más cercano.
+   *
+   * Empieza en `null` a propósito: **no hay que elegir nada para volar a otro
+   * sitio.** Quien tiene cuatro años despega, mira la flecha y va; elegir es
+   * para cuando hay tres destinos y se quiere otro. Ver la regla de la casa:
+   * una pantalla que obliga a decidir para avanzar está mal.
+   */
+  private destinoAMano: number | null = null;
+
+  /**
+   * Pasa al siguiente destino de la lista.
+   *
+   * Con un solo destino no hace nada, y eso también está bien: la tecla y el
+   * toque existen igual en todos los campos, y donde no hay a dónde cambiar
+   * no cambian. Un mando que a veces está y a veces no es peor que uno que a
+   * veces no hace nada.
+   */
+  siguienteDestino(): void {
+    if (this.vecinos.length < 2) return;
+    const ahora =
+      this.destinoAMano === null
+        ? this.vecinos.findIndex((v) => v.pista === this.pistaMasCercanaDeIda())
+        : this.destinoAMano;
+    this.destinoAMano = (ahora + 1) % this.vecinos.length;
+    this.avisar("success");
+  }
+
+  /** El vecino más cercano ahora mismo, que es el destino por omisión. */
+  private pistaMasCercanaDeIda(): Pista | null {
+    const s = this.flight.state.position;
+    let mejor: Pista | null = null;
+    let corto = Infinity;
+    for (const v of this.vecinos) {
+      const d = Math.hypot(v.pista.x - s.x, v.pista.z - s.z);
+      if (d < corto) {
+        corto = d;
+        mejor = v.pista;
       }
     }
     return mejor;
@@ -2162,6 +2241,7 @@ export class Game {
       toggleCredits: () => this.credits.toggle(),
       cycleAircraft: () => this.cycleAircraft(),
       cycleMission: () => this.cycleMission(),
+      cycleDestino: () => this.siguienteDestino(),
       cycleLanguage: () => this.changeLanguage(),
       toggleSound: () => this.toggleSound(),
       firstGesture: () => {
@@ -2404,6 +2484,7 @@ export class Game {
       this.tier.model === "simple" ? MOTOR_QUE_SOSTIENE : null,
     );
     this.hud.onPilotoAutomatico(() => this.ponerPilotoAutomatico());
+    this.hud.onDestino(() => this.siguienteDestino());
     /*
      * Y el cielo. Empieza despejado porque es el que deja ver el mundo, que es
      * de lo que va esto; las nubes se eligen cuando se quieren, y entonces se
@@ -7896,10 +7977,33 @@ export class Game {
             this.plan.laRaya,
           )
         : null;
+    /*
+     * **Y volando, la aguja señala el aeropuerto al que se va.**
+     *
+     * Es la pieza que faltaba para que este juego cumpla lo que promete:
+     * despegar de una pista y llegar a otra. El destino estaba cargado en el
+     * mundo y no se enseñaba en ninguna parte, así que desde la cabina no
+     * existía. Ahora es la misma aguja de siempre —no hay dos cosas que
+     * aprender— y la tarjeta dice **cuál** es, que es la diferencia entre
+     * «hacia allá» y «a Fuerteventura».
+     *
+     * **En el suelo no**, y esto no es un detalle: rodando, lo que hay que
+     * encontrar es la cabecera de esta pista, y una flecha que apunte a otra
+     * isla mientras se busca la calle de salida es exactamente el consejo
+     * correcto que no se puede obedecer. En tierra manda la pista de casa;
+     * en cuanto se despega, manda el destino.
+     */
+    const destino =
+      !this.flight.state.onGround && !target && !aLaRaya
+        ? this.elDestino()
+        : null;
+
     const dx =
-      (aLaRaya?.[0] ?? target?.x ?? thresholdX) - this.flight.state.position.x;
+      (aLaRaya?.[0] ?? target?.x ?? destino?.x ?? thresholdX) -
+      this.flight.state.position.x;
     const dz =
-      (aLaRaya?.[1] ?? target?.z ?? thresholdZ) - this.flight.state.position.z;
+      (aLaRaya?.[1] ?? target?.z ?? destino?.z ?? thresholdZ) -
+      this.flight.state.position.z;
     const bearing = Math.atan2(dx, -dz);
 
     let relative = bearing - this.flight.state.heading;
@@ -7909,7 +8013,12 @@ export class Game {
     this.hud.setHome(
       relative,
       Math.hypot(dx, dz),
-      target !== null || aLaRaya !== null,
+      target !== null || aLaRaya !== null
+        ? "objetivo"
+        : destino
+          ? "destino"
+          : "pista",
+      destino ? t(destino.nameKey as TranslationKey) : undefined,
     );
   }
 

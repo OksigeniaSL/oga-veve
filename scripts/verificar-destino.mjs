@@ -116,6 +116,56 @@ const lejos = ruta.length
 
 console.log(`campo de ahora: ${campo}`);
 console.log(`puntos de la raya: ${ruta.length} · el más lejano de la pista del destino: ${Math.round(lejos)} m`);
+/*
+ * **Y desde el aire, que se diga a dónde se va.**
+ *
+ * Esta es la comprobación que faltaba y que costó más cara de todas: el
+ * destino estaba cargado —relieve, aeropuerto, pista donde aterrizar— y en la
+ * pantalla no había **nada** que dijera que existe. Contado jugando: «yo no sé
+ * la de veces que he querido despegar de una pista y llegar a otra, y desde
+ * Gran Canaria no localizo Fuerteventura».
+ *
+ * Un aeropuerto al que no se puede apuntar no está en el juego, está en el
+ * disco. Así que lo que se mide es lo único que lo mete en el juego: que la
+ * tarjeta de la aguja diga su **nombre** y su distancia.
+ */
+const enElAire = await page.evaluate(() => {
+  const e = globalThis.__oga.estado();
+  globalThis.__oga.colocar(e.position.x, 1600, e.position.z, 80, 0);
+  return true;
+});
+await page.waitForTimeout(1500);
+const rotulo = await page.evaluate(() => ({
+  nombre: document.querySelector('[data-hud="home-gloss"]')?.textContent ?? '',
+  distancia: document.querySelector('[data-hud="home-distance"]')?.textContent ?? '',
+  esDestino: !!document.querySelector('[data-hud="home"]')?.classList.contains('casa--destino'),
+  hayGlosa: !!document.querySelector('[data-hud="home-gloss"]'),
+}));
+console.log(`la aguja: destino=${rotulo.esDestino} · «${rotulo.nombre}» a ${rotulo.distancia}`);
+/*
+ * La aguja y su color valen en los cuatro peldaños: es el canal que funciona
+ * sin leer. El **nombre** solo existe donde hay palabras —Guyrami no lleva
+ * glosa ni cifras, a propósito—, así que se comprueba si la glosa está.
+ * Comprobar un rótulo que el peldaño no pinta sería medir otra cosa.
+ */
+if (!enElAire || !rotulo.esDestino) {
+  console.log('✖ Volando hacia otro campo y la aguja no señala un destino.');
+  await navegador.close();
+  await server.close();
+  process.exit(1);
+}
+if (rotulo.hayGlosa && (!rotulo.nombre || rotulo.nombre === 'Pista')) {
+  console.log(`✖ La tarjeta no dice a qué aeropuerto se va: «${rotulo.nombre}».`);
+  await navegador.close();
+  await server.close();
+  process.exit(1);
+}
+console.log(
+  rotulo.hayGlosa
+    ? '✓ Desde el aire se ve a qué aeropuerto se va, con su nombre.'
+    : '✓ Desde el aire la aguja señala el destino (peldaño sin palabras).',
+);
+
 for (const e of errores) console.log('ERROR:', e);
 
 await navegador.close();
@@ -143,4 +193,5 @@ if (lejos > 5000) {
   console.log('✖ La raya no es de este campo: se va al otro aeropuerto.');
   process.exit(1);
 }
+
 console.log('✓ El plan se muda con el avión.');

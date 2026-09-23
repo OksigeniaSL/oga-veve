@@ -71,6 +71,8 @@ export interface InputActions {
   toggleCredits: () => void;
   cycleAircraft: () => void;
   cycleMission: () => void;
+  /** Pasar al siguiente aeropuerto de destino. Ver `siguienteDestino`. */
+  cycleDestino: () => void;
   cycleLanguage: () => void;
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
@@ -474,6 +476,9 @@ export class InputManager {
         break;
       case "mission":
         this.actions.cycleMission();
+        break;
+      case "destino":
+        this.actions.cycleDestino();
         break;
       case "credits":
         event.preventDefault();

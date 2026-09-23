@@ -45,6 +45,7 @@ export type Accion =
   | "reset"
   | "aircraft"
   | "mission"
+  | "destino"
   | "sound"
   | "language"
   | "credits"
@@ -159,6 +160,15 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
   reset: { label: "tecla.reset", defecto: ["KeyR"], held: false },
   aircraft: { label: "tecla.aircraft", defecto: ["KeyP"], held: false },
   mission: { label: "tecla.mission", defecto: ["KeyN"], held: false },
+  /*
+   * **Cambiar de aeropuerto de destino.**
+   *
+   * Existe porque Gran Canaria tiene tres y sin esto solo se podía ir al más
+   * cercano. En los campos con un solo destino no hace nada, y eso es a
+   * propósito: un mando que a veces está y a veces no es peor que uno que a
+   * veces no hace nada. Ver `siguienteDestino`.
+   */
+  destino: { label: "tecla.destino", defecto: ["KeyJ"], held: false },
   sound: { label: "tecla.sound", defecto: ["KeyV"], held: false },
   language: { label: "tecla.language", defecto: ["KeyL"], held: false },
   credits: { label: "tecla.credits", defecto: ["F1"], held: false },

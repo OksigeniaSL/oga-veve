@@ -269,6 +269,7 @@ export const GUG: Dictionary = {
   "tecla.reset": "Eñepyrũ jey",
   "tecla.aircraft": "Emoambue avión",
   "tecla.mission": "Emoambue misión",
+  "tecla.destino": "Emoambue jeho hagua",
   "tecla.sound": "Tyapu",
   "tecla.language": "Ñe'ẽ",
   "tecla.credits": "Aguyje",

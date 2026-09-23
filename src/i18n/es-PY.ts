@@ -188,6 +188,7 @@ export const ES_PY = {
   "tecla.reset": "Volver a empezar",
   "tecla.aircraft": "Cambiar de avión",
   "tecla.mission": "Cambiar de misión",
+  "tecla.destino": "Cambiar de destino",
   "tecla.sound": "Sonido",
   "tecla.language": "Idioma",
   "tecla.credits": "Créditos",

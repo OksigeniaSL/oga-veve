@@ -917,11 +917,20 @@ export class Hud {
         </div>`
             : ""
         }
-        <div class="tarjeta casa" data-hud="home">
+        <!--
+          **Y la tarjeta se toca para cambiar de destino.**
+
+          Es un botón y no un adorno porque en una tablet no hay tecla J, y
+          porque el sitio donde se pregunta «¿a dónde voy?» es el mismo donde
+          se contesta «a otro». Donde hay un solo destino no hace nada, que es
+          mejor que desaparecer: un mando que va y viene no se aprende.
+        -->
+        <button class="tarjeta casa" type="button" data-hud="home"
+                aria-label="${t("tecla.destino")}">
           <div class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</div>
           ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ""}
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
-        </div>
+        </button>
       </div>
       <!--
         **La esquina de lo que el juego te enseña.**
@@ -1155,6 +1164,7 @@ export class Hud {
     this.root
       .querySelector('[data-hud="piloto-auto"]')
       ?.addEventListener("click", () => this.pilotoAutoHandler?.());
+    this.home.addEventListener("click", () => this.destinoHandler?.());
     this.mision = pick(this.root, "mision-boton");
     this.mision.addEventListener("click", () => this.misionHandler?.());
     pick(this.root, "pausa").addEventListener("click", () =>
@@ -1370,9 +1380,17 @@ export class Hud {
    * hacia allá. El número está para quien ya lee.
    *
    * @param relativeBearing rad, 0 al frente, positivo a la derecha
-   * @param toObjective si señala un objetivo de misión en vez de la pista
+   * @param modo a qué apunta: la pista de casa, un objetivo de misión, o el
+   *   aeropuerto al que se va
+   * @param nombre cómo se llama el destino, cuando lo hay
    */
-  setHome(relativeBearing: number, metres: number, toObjective = false): void {
+  setHome(
+    relativeBearing: number,
+    metres: number,
+    modo: "pista" | "objetivo" | "destino" = "pista",
+    nombre?: string,
+  ): void {
+    const toObjective = modo === "objetivo";
     // El glifo apunta a la derecha en reposo, de ahí los noventa grados. La
     // rotación entera se calcula aquí y no repartida entre CSS y JS: dos
     // sitios distintos girando el mismo elemento es como nacen los errores
@@ -1389,10 +1407,21 @@ export class Hud {
     this.home.classList.toggle("casa--cerca", metres < 900);
     // Y dice a qué apunta: con misión en curso no es la pista.
     this.home.classList.toggle("casa--objetivo", toObjective);
+    /*
+     * **Y yendo a otro aeropuerto, su nombre.**
+     *
+     * «Pista» vale mientras solo hay una. En cuanto se vuela a otra isla, esa
+     * palabra es justo la que no se necesita: lo que hace falta saber es **a
+     * cuál** se va, que es la diferencia entre una flecha y un viaje. Y es el
+     * único sitio del juego donde aparece el nombre del sitio al que se va,
+     * así que se aprende sin estudiarlo — igual que la matrícula por la radio.
+     */
+    this.home.classList.toggle("casa--destino", modo === "destino");
     if (this.homeGloss) {
-      this.homeGloss.textContent = t(
-        toObjective ? "hud.objective" : "hud.home",
-      );
+      this.homeGloss.textContent =
+        modo === "destino" && nombre
+          ? nombre
+          : t(toObjective ? "hud.objective" : "hud.home");
     }
   }
 
@@ -2561,6 +2590,13 @@ export class Hud {
   }
 
   /** Quién se entera de que han tocado el botón del piloto automático. */
+  private destinoHandler: (() => void) | null = null;
+
+  /** Quién se entera de que se ha tocado la tarjeta del destino. */
+  onDestino(fn: () => void): void {
+    this.destinoHandler = fn;
+  }
+
   private pilotoAutoHandler: (() => void) | null = null;
 
   onPilotoAutomatico(fn: () => void): void {
