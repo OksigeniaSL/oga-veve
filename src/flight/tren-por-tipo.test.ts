@@ -83,3 +83,83 @@ describe("el tren, por tipo", () => {
     }
   });
 });
+
+/**
+ * Cuánto puede bajar el morro con las ruedas en el suelo.
+ *
+ * Es la misma avería que la del tren, un piso más abajo: el tope de morro
+ * arriba salía de la ficha de cada avión y el de **abajo** era un número
+ * suelto en el modelo de vuelo, `-0.035`, igual para los seis.
+ *
+ * Dos grados en una avioneta de ocho metros son diez centímetros de pata; en
+ * un reactor de treinta y uno, **treinta y siete** — la rueda de morro dentro
+ * del asfalto. Medido con el avión parado en Tenerife Sur, antes de
+ * arreglarlo: JAZ 90 hundido 0,37 m con 1,84° de morro abajo, y JAZ 120,
+ * 0,20 m con 0,39°. La aritmética cuadraba al centímetro con la distancia de
+ * la rueda de morro al centro, que es lo que lo delató.
+ */
+describe("el morro, con las ruedas en el suelo", () => {
+  it("todos los aviones dicen cuánto pueden bajarlo", () => {
+    for (const a of AIRCRAFT) {
+      expect(a.minGroundPitch, a.id).toBeLessThan(0);
+      expect(a.minGroundPitch, a.id).toBeGreaterThan(-0.05);
+    }
+  });
+
+  /**
+   * El largo de cada uno, de su guion de modelo.
+   *
+   * No está en la ficha —ahí solo hay envergadura— y hace falta aquí porque lo
+   * que manda es **lo adelantada que va la rueda de morro**, que va con el
+   * largo y no con el ala. Sale de `modelos/jaz-*.py`, que es su fuente, y
+   * `npm run modelos` comprueba que el `.glb` mide eso.
+   */
+  const LARGO: Record<string, number> = {
+    "jaz-20": 8.28,
+    "jaz-25": 8.2,
+    "jaz-40": 9.0,
+    "jaz-60": 15.0,
+    "jaz-90": 31.5,
+    "jaz-120": 68.0,
+  };
+
+  it("y cuanto más largo el avión, menos grados", () => {
+    /*
+     * No es una manía de orden: es la misma cuenta. Lo que se le admite a la
+     * pata de morro es un recorrido —un palmo— y el ángulo que sale de ese
+     * palmo es menor cuanto más adelantada está la rueda, o sea cuanto más
+     * largo es el avión. Tratarlos a todos igual es lo que metía el morro del
+     * reactor en el suelo.
+     */
+    /*
+     * **Menos el Mainumby**, y no es una excepción de conveniencia: es un
+     * patín de cola y no tiene rueda de morro. Su límite sale de otra cosa —
+     * bajar el morro le clava la hélice en la pista— así que la regla de
+     * «recorrido de pata partido por lo adelantada que va la rueda» no habla
+     * de él. Meterlo aquí sería hacer que la prueba pase mintiendo sobre qué
+     * mide.
+     */
+    const triciclo = AIRCRAFT.filter((a) => a.id !== "jaz-25");
+    const porLargo = [...triciclo].sort(
+      (a, b) => LARGO[a.id]! - LARGO[b.id]!,
+    );
+    const angulos = porLargo.map((a) => Math.abs(a.minGroundPitch));
+    expect([...angulos].sort((x, y) => y - x)).toEqual(angulos);
+  });
+
+  it("y ninguno baja el morro más de un palmo de pata", () => {
+    /*
+     * **La comprobación que de verdad importa**, y la que habría cazado esto
+     * sin abrir el juego: el ángulo, por lo adelantada que va la rueda de
+     * morro, tiene que dar un recorrido de pata y no un agujero en la pista.
+     *
+     * La rueda de morro va en torno al 36 % del largo por delante del centro
+     * en todos los guiones de la flota. Ver `modelos/`.
+     */
+    for (const a of AIRCRAFT) {
+      const morroAdelantado = LARGO[a.id]! * 0.365;
+      const cuantoBaja = Math.abs(a.minGroundPitch) * morroAdelantado;
+      expect(cuantoBaja, `${a.id}: ${(cuantoBaja * 100).toFixed(0)} cm`).toBeLessThan(0.2);
+    }
+  });
+});

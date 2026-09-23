@@ -409,6 +409,28 @@ export interface AircraftConfig {
    * ponerse de pie en la pista y se queda en pérdida sin llegar a despegar.
    */
   maxGroundPitch: number;
+  /**
+   * Y cuánto puede bajar el morro con las ruedas en el suelo, rad. Negativo.
+   *
+   * **También por avión, que era un número para todos.** Había un `-0.035`
+   * suelto en el modelo de vuelo —dos grados— mientras el tope de morro arriba
+   * sí salía de la ficha. Dos grados en una avioneta de ocho metros son diez
+   * centímetros de pata; en un reactor de treinta y uno, **treinta y siete**, y
+   * eso no es una pata comprimiéndose: es la rueda de morro dentro del
+   * asfalto. Medido con el avión parado en Tenerife Sur: el JAZ 90 hundido
+   * 0,37 m y el JAZ 120, 0,20.
+   *
+   * Con las tres ruedas apoyadas, la actitud de un avión de tren triciclo la
+   * fija su geometría y no se puede elegir. Lo único que da algo de juego es
+   * **la pata de morro comprimiéndose al frenar**, y eso es un palmo largo de
+   * recorrido, no dos grados.
+   *
+   * Así que el número sale de una cuenta y no de un gusto: el recorrido que se
+   * le admite a la pata, partido por lo que la rueda de morro está adelantada
+   * respecto al centro. Cuanto más largo el avión, menos grados — que es justo
+   * lo contrario de tratarlos a todos igual.
+   */
+  minGroundPitch: number;
   /** Sustentación y resistencia extra con flaps a tope. */
   flapsLift: number;
   flapsDrag: number;
@@ -478,6 +500,8 @@ export const PYKASU: AircraftConfig = {
   // Tren fijo: un entrenador de escuela lleva las patas al aire a propósito.
   meteElTrenA: null,
   maxGroundPitch: 0.21, // 12°
+  // 3,3 m de morro y diez centímetros de pata: 1,7°.
+  minGroundPitch: -0.030,
   flapsLift: 0.55,
   flapsDrag: 0.06,
   appearance: {
@@ -556,6 +580,9 @@ export const MAINUMBY: AircraftConfig = {
   // Tren fijo: un fumigador trabaja bajo y no le compensa el peso ni la avería.
   meteElTrenA: null,
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
+  // Patín de cola: se apoya de morro arriba, y bajarlo
+  // clava la hélice. Poco juego a propósito.
+  minGroundPitch: -0.020,
   flapsLift: 0.35,
   flapsDrag: 0.05,
   appearance: {
@@ -669,6 +696,8 @@ export const PANAMBI: AircraftConfig = {
   // regla de escuela. Sale de una pista corta, así que tarda en quedarse sin.
   meteElTrenA: 60,
   maxGroundPitch: 0.19, // 11°
+  // 3,6 m de morro y diez centímetros: 1,6°.
+  minGroundPitch: -0.028,
   flapsLift: 0.5,
   flapsDrag: 0.07,
   appearance: {
@@ -766,6 +795,8 @@ export const ARASUNU: AircraftConfig = {
   // a los pocos segundos de despegar, no a trescientos metros.
   meteElTrenA: 25,
   maxGroundPitch: 0.17, // 10°: la cola en T no perdona rotar de más.
+  // 5,5 m de morro y doce centímetros: 1,3°.
+  minGroundPitch: -0.022,
   // Flaps grandes: es lo que le permite entrar en pistas cortas, que es para
   // lo que existe un turbohélice regional.
   flapsLift: 0.65,
@@ -899,6 +930,8 @@ export const ARAI: AircraftConfig = {
   // fuera a más de doscientos cinco nudos se pasaría de su propio límite.
   meteElTrenA: 20,
   maxGroundPitch: 0.16, // 9°: con un fuselaje largo, la cola llega antes.
+  // 11,5 m de morro y quince centímetros: 0,75°.
+  minGroundPitch: -0.013,
   /*
    * **Y los flaps de un reactor, que no son los de una avioneta.**
    *
@@ -1061,6 +1094,8 @@ export const YVAGA: AircraftConfig = {
   // tren fuera más que los segundos de después del despegue.
   meteElTrenA: 20,
   maxGroundPitch: 0.15, // 8,6°: un fuselaje de setenta metros toca antes.
+  // 25 m de morro y quince centímetros: 0,34°.
+  minGroundPitch: -0.006,
   // Triple ranura y Krueger: un ala de línea saca mucho más CL que una
   // avioneta, y es lo que le permite entrar a 98 y no a 140.
   // Lo mismo que el Arai, y por lo mismo. Ver su ficha.

@@ -1023,7 +1023,18 @@ export class CoefficientFlightModel implements FlightModel {
     this.updateBodyAxes();
     const pitch = Math.asin(clamp(this.forward.y, -1, 1));
     const max = this.aircraft.maxGroundPitch;
-    const min = -0.035;
+    /*
+     * **Y el de abajo también sale de la ficha, que era un número para todos.**
+     *
+     * Estaba escrito aquí, `-0.035`, o sea dos grados para los seis. Dos
+     * grados en una avioneta de ocho metros son diez centímetros de pata; en
+     * un reactor de treinta y uno, treinta y siete — y eso no es una pata
+     * comprimiéndose, es la rueda de morro dentro del asfalto. Medido con el
+     * avión parado: el JAZ 90 hundido 0,37 m y el JAZ 120, 0,20.
+     *
+     * Ver `minGroundPitch`, donde está la cuenta de la que sale cada uno.
+     */
+    const min = this.aircraft.minGroundPitch;
 
     if (pitch > max) {
       this.rotateAboutRight(max - pitch);
