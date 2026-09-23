@@ -55,6 +55,20 @@ const TOLERANCIA = 0.5;
 const COSAS =
   "^(runway|taxiway|taxilane|apron|terminal|helipad|windsock|gate|parking_position|holding_position|navigationaid)$";
 
+/**
+ * Y lo que un aeropuerto tiene y no lleva `aeroway` ni `building`.
+ *
+ * Preguntado jugando, y con razón: «todavía no sé dónde están los radares,
+ * dónde está el depósito de combustible». No estaban porque no se pedían: un
+ * radar se mapea como `man_made=tower` con `tower:type=radar`, y un parque de
+ * combustible como `man_made=storage_tank` — ninguno de los dos es un
+ * `building`, así que la consulta pasaba por encima de ellos.
+ *
+ * Son las dos cosas que más delatan a un aeropuerto desde el aire después de
+ * la pista, y las dos son reales: no hay que inventarlas, hay que pedirlas.
+ */
+const APARATOS = "^(storage_tank|tank|tower|water_tower|mast|radar)$";
+
 // ── Geometría ────────────────────────────────────────────────────────────
 
 /**
@@ -162,7 +176,9 @@ const consultaArea = (icao) => `[out:json][timeout:180];
 nwr["aeroway"="aerodrome"]["icao"="${icao}"];
 map_to_area->.a;
 (nwr(area.a)["aeroway"~"${COSAS}"];
- nwr(area.a)["building"];);
+ nwr(area.a)["building"];
+ nwr(area.a)["man_made"~"${APARATOS}"];
+ nwr(area.a)["amenity"="fuel"];);
 out tags geom;`;
 
 /**
@@ -173,7 +189,9 @@ out tags geom;`;
 const consultaCerca = (icao) => `[out:json][timeout:120];
 nwr["aeroway"="aerodrome"]["icao"="${icao}"];
 (nwr["aeroway"~"${COSAS}"](around:2500);
- nwr["building"](around:1200););
+ nwr["building"](around:1200);
+ nwr["man_made"~"${APARATOS}"](around:1800);
+ nwr["amenity"="fuel"](around:1200););
 out tags geom;`;
 
 /** Una línea de CSV, respetando las comillas. */
@@ -541,9 +559,29 @@ async function construir(icao, pistas, aeropuertos) {
       ...elementos.filter(
         (e) => e.tags?.building && e.tags?.aeroway !== "terminal",
       ),
+      /*
+       * Y los aparatos que no son edificios: depósitos de combustible,
+       * radares, torres. Ver `APARATOS`. Se meten en la misma lista porque
+       * para el mundo son lo mismo —un volumen con planta y altura— y lo que
+       * los separa es la clase, que es justo lo que se guarda.
+       */
+      ...elementos.filter(
+        (e) => e.tags?.man_made && !e.tags?.building && !e.tags?.aeroway,
+      ),
     ]
       .map((w) => ({
-        kind: w.tags.aeroway ?? w.tags.building ?? "yes",
+        /*
+         * La clase, por orden de lo más concreto a lo más vago. Un radar dice
+         * `tower:type=radar` sobre un `man_made=tower`: si se mira primero el
+         * `man_made` se pierde que es un radar y se queda en «una torre».
+         */
+        kind:
+          w.tags["tower:type"] === "radar"
+            ? "radar"
+            : (w.tags.aeroway ??
+              w.tags.man_made ??
+              w.tags.building ??
+              "yes"),
         heightM: w.tags.height
           ? Number(w.tags.height)
           : w.tags["building:levels"]

@@ -780,12 +780,82 @@ export function paraUnAvion(e: { readonly kind?: string | null }): boolean {
 export function alturaDeEdificio(e: {
   readonly heightM: number | null;
   readonly polygon: readonly Punto[];
+  readonly kind?: string | null;
 }): number {
   if (e.heightM && e.heightM > 2) return e.heightM;
+  /*
+   * **Y una torre de control es alta, aunque OSM no diga cuánto.**
+   *
+   * Es lo que la define: desde ella se ve la pista entera y los dos
+   * circuitos, y por eso se construye por encima de todo lo demás. Una torre
+   * de planta pequeña caía en el último renglón de aquí abajo y se levantaba
+   * cinco metros — o sea, una caseta. Treinta es la altura de una torre de
+   * campo medio: Los Rodeos tiene treinta y tres, Lanzarote treinta y uno.
+   */
+  if (esTorreDeControl(e)) return 30;
+  /*
+   * Y un depósito es tan alto como ancho, más o menos: un cilindro de
+   * combustible de aeropuerto ronda los doce o catorce metros de diámetro y
+   * otros tantos de alto. Con la regla general de abajo, su planta pequeña lo
+   * dejaba en cinco metros — una tapa de alcantarilla.
+   */
+  if (esDeposito(e)) {
+    const r = Math.sqrt(Math.abs(areaDe(e.polygon)) / Math.PI);
+    return Math.max(6, Math.min(18, r * 1.8));
+  }
   const area = Math.abs(areaDe(e.polygon));
   if (area > 3000) return 12; // Hangar o terminal.
   if (area > 600) return 8; // Nave de servicio, taller.
   return 5; // Caseta, subestación, cuartelillo.
+}
+
+/**
+ * Si este edificio es la torre de control.
+ *
+ * OSM la etiqueta de varias formas según quién la mapeara —`aeroway=tower`,
+ * `building=tower`, `man_made=tower`— y las tres llegan aquí por el mismo
+ * campo. Se aceptan todas: lo que importa es qué es, no quién la escribió.
+ */
+export function esTorreDeControl(e: {
+  readonly kind?: string | null;
+}): boolean {
+  return e.kind === "tower" || e.kind === "control_tower";
+}
+
+/**
+ * Si esto es un depósito: el parque de combustible del aeropuerto.
+ *
+ * Preguntado jugando —«no sé dónde está el depósito de combustible»— y la
+ * respuesta era que en ninguna parte: los depósitos estaban en OSM y no se
+ * pedían, y los que llegaban por la puerta de `building` se levantaban como
+ * cajas grises indistinguibles de un hangar.
+ *
+ * Un depósito es un **cilindro**, y eso es lo que lo delata desde el aire: la
+ * única planta redonda de todo el recinto. Ahí se reposta, y en un juego que
+ * ya lleva la aguja del combustible y la raya de la reserva, saber dónde está
+ * el sitio del que sale es la otra mitad de esa lección.
+ */
+export function esDeposito(e: { readonly kind?: string | null }): boolean {
+  return (
+    e.kind === "storage_tank" || e.kind === "tank" || e.kind === "water_tower"
+  );
+}
+
+/**
+ * El centro de una planta: la media de sus vértices.
+ *
+ * No es el centroide de área, y da igual: esto solo sirve para escalar la
+ * cabina de la torre alrededor de su propio edificio, y una planta de torre
+ * es casi siempre un cuadrado o un círculo de ocho lados.
+ */
+function centroDe(poli: readonly Punto[]): Punto {
+  let x = 0;
+  let y = 0;
+  for (const p of poli) {
+    x += p[0];
+    y += p[1];
+  }
+  return [x / poli.length, y / poli.length];
 }
 
 /** El área con signo de un polígono, por la fórmula del cordón de zapato. */
@@ -823,6 +893,15 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
 
   const paredes: BufferGeometry[] = [];
   const cubiertas: BufferGeometry[] = [];
+  /*
+   * **Y el cristal de la torre, aparte.**
+   *
+   * Es la única banda de este aeródromo que no es hormigón, y por eso va en
+   * su propia lista: un solo material para todo obligaría a pintar el cristal
+   * del color de la pared, que es justo lo que hacía que la torre pareciera
+   * una caseta alta. Ver `esTorreDeControl`.
+   */
+  const cristales: BufferGeometry[] = [];
   for (const e of aero.buildings) {
     if (e.polygon.length < 3) continue;
     const alto = alturaDeEdificio(e);
@@ -853,6 +932,56 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
     tapa.rotateX(-Math.PI / 2);
     tapa.translate(0, base + alto + 0.05, 0);
     cubiertas.push(tapa);
+
+    /*
+     * **Y si es la torre, la cabina de arriba y su cristal.**
+     *
+     * Una torre de control se reconoce a un kilómetro por dos cosas: es lo
+     * más alto del campo y **vuela por arriba** —la cabina es más ancha que
+     * el fuste, con la cristalera inclinada hacia fuera para que no reflejen
+     * las luces de la pista de noche—. Sin eso es una chimenea.
+     *
+     * Y aquí no es adorno: este juego enseña a mirar la lámpara de la torre y
+     * a esperar el verde, y hasta hoy esa voz salía de una caja gris igual
+     * que las otras treinta. Que se vea **de dónde** sale es parte de la
+     * lección, igual que la manga o las letras del asfalto.
+     *
+     * Se hace escalando la misma planta que ya trae OSM: la cabina es esa
+     * planta un tercio más ancha. Así no hay nada inventado en la forma —es
+     * la torre que hay, más alta y con su remate.
+     */
+    if (esTorreDeControl(e)) {
+      const centro = centroDe(e.polygon);
+      const ancha = new Shape(
+        e.polygon.map(
+          (p) =>
+            new Vector2(
+              centro[0] + (p[0] - centro[0]) * 1.35,
+              centro[1] + (p[1] - centro[1]) * 1.35,
+            ),
+        ),
+      );
+      // El cristal: la banda de abajo de la cabina, que es lo que se ve.
+      const vidrio = new ExtrudeGeometry(ancha, {
+        depth: 3.2,
+        bevelEnabled: false,
+      });
+      vidrio.rotateX(-Math.PI / 2);
+      vidrio.translate(0, base + alto, 0);
+      cristales.push(vidrio);
+      // Y el techo de la cabina, que sobresale y da la sombra que la delata.
+      const techo = new ExtrudeGeometry(ancha, {
+        depth: 1.1,
+        bevelEnabled: false,
+      });
+      techo.rotateX(-Math.PI / 2);
+      techo.translate(0, base + alto + 3.2, 0);
+      paredes.push(techo);
+      const tapaAlta = new ShapeGeometry(ancha);
+      tapaAlta.rotateX(-Math.PI / 2);
+      tapaAlta.translate(0, base + alto + 4.35, 0);
+      cubiertas.push(tapaAlta);
+    }
   }
 
   const pared = mergeGeometries(paredes, false);
@@ -861,6 +990,23 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
     malla.name = "edificios:paredes";
     malla.castShadow = true;
     malla.receiveShadow = true;
+    grupo.add(malla);
+  }
+  /*
+   * El cristal: verde azulado y oscuro, que es el color de un vidrio de
+   * control tower con la lámina antirreflejo puesta. No es negro: un cristal
+   * negro a mediodía se lee como un hueco en el edificio.
+   */
+  // Con la lista vacía `mergeGeometries` no devuelve nulo: revienta leyendo
+  // el primero. Y vacía está en todo campo que no tenga torre mapeada.
+  const vidrio = cristales.length ? mergeGeometries(cristales, false) : null;
+  if (vidrio) {
+    const malla = new Mesh(
+      vidrio,
+      new MeshLambertMaterial({ color: 0x3a4f57 }),
+    );
+    malla.name = "edificios:cristal-torre";
+    malla.castShadow = true;
     grupo.add(malla);
   }
   const cubierta = mergeGeometries(cubiertas, false);

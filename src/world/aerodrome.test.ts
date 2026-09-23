@@ -17,6 +17,10 @@ import {
   aLaPolilinea,
   puntoMasCercanoDe,
   type Punto,
+  alturaDeEdificio,
+  esTorreDeControl,
+  esDeposito,
+  paraUnAvion,
 } from "./aerodrome";
 
 const AERODROMOS = [sgas as unknown as Aerodrome, gcxo as unknown as Aerodrome];
@@ -144,5 +148,70 @@ describe("el punto más cercano de la raya", () => {
   it("sin raya no hay punto", () => {
     expect(puntoMasCercanoDe([0, 0], [])).toBe(null);
     expect(puntoMasCercanoDe([0, 0], [[5, 5]])).toBe(null);
+  });
+});
+
+/**
+ * **La torre de control y el parque de combustible.**
+ *
+ * Preguntado jugando, después de muchas horas de vuelo: «todavía no sé dónde
+ * están los radares, dónde está el depósito de combustible». Y la respuesta
+ * era que en ninguna parte: los dos existen en OpenStreetMap y ninguno de los
+ * dos se pedía, y los pocos que llegaban por la puerta de `building` se
+ * levantaban como cajas grises de cinco metros — indistinguibles de una
+ * caseta de mangueras.
+ *
+ * Son los dos volúmenes que más delatan a un aeropuerto desde el aire después
+ * de la pista, y en este juego además cierran lecciones que ya se enseñan: la
+ * voz que te da el verde sale de esa torre, y el combustible que marca la
+ * aguja sale de esos cilindros.
+ */
+describe("la torre de control y los depósitos", () => {
+  /** Una planta cuadrada de `lado` metros, centrada en el origen. */
+  const cuadrada = (lado: number): Punto[] => [
+    [-lado / 2, -lado / 2],
+    [lado / 2, -lado / 2],
+    [lado / 2, lado / 2],
+    [-lado / 2, lado / 2],
+  ];
+
+  it("una torre es alta aunque su planta sea pequeña", () => {
+    /*
+     * Es lo que la define: desde ella se ve la pista entera y los dos
+     * circuitos. Con la regla general —que mira el área— una torre de doce
+     * metros de lado caía en el último renglón y se levantaba cinco: una
+     * caseta. Los Rodeos tiene treinta y tres metros; Lanzarote, treinta y uno.
+     */
+    const torre = { heightM: null, polygon: cuadrada(12), kind: "tower" };
+    const caseta = { heightM: null, polygon: cuadrada(12), kind: "yes" };
+    expect(alturaDeEdificio(torre)).toBeGreaterThan(25);
+    expect(alturaDeEdificio(caseta)).toBeLessThan(10);
+  });
+
+  it("y si OSM dice cuánto mide, manda OSM", () => {
+    // Lo medido gana siempre a lo supuesto: es la regla de la casa.
+    const torre = { heightM: 33, polygon: cuadrada(12), kind: "tower" };
+    expect(alturaDeEdificio(torre)).toBe(33);
+  });
+
+  it("un depósito es tan alto como ancho, que es lo que es un cilindro", () => {
+    /*
+     * Un depósito de combustible de aeropuerto ronda los doce o catorce
+     * metros de diámetro y otros tantos de alto. Con la regla general su
+     * planta pequeña lo dejaba en cinco metros: una tapa de alcantarilla.
+     */
+    const dep = { heightM: null, polygon: cuadrada(13), kind: "storage_tank" };
+    expect(alturaDeEdificio(dep)).toBeGreaterThan(10);
+    expect(alturaDeEdificio(dep)).toBeLessThan(18);
+  });
+
+  it("y ninguno de los dos se confunde con el otro ni con un tejado", () => {
+    expect(esTorreDeControl({ kind: "tower" })).toBe(true);
+    expect(esTorreDeControl({ kind: "storage_tank" })).toBe(false);
+    expect(esDeposito({ kind: "storage_tank" })).toBe(true);
+    expect(esDeposito({ kind: "tower" })).toBe(false);
+    // Y el tejado sobre pilares sigue sin parar a un avión. Ver `paraUnAvion`.
+    expect(paraUnAvion({ kind: "roof" })).toBe(false);
+    expect(paraUnAvion({ kind: "tower" })).toBe(true);
   });
 });
