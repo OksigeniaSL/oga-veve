@@ -621,6 +621,39 @@ export const PETTIROSSI: Scenario = {
   // Deducida de los propios datos: el umbral 02 apunta a 10° verdaderos.
   magneticVariation: 10,
   aerodrome: SGAS as unknown as Aerodrome,
+  /**
+   * **Y de Asunción se sale a algún sitio, que es lo que faltaba.**
+   *
+   * Este juego es paraguayo y hasta hoy **volar de una pista a otra solo se
+   * podía en Canarias**: las ocho islas tenían su red y los siete campos
+   * paraguayos, ninguno. Contado jugando: «yo no sé la de veces que he
+   * querido despegar de una pista y llegar a otra y todavía en Paraguay no he
+   * encontrado el modo». Y no lo encontraba porque no existía.
+   *
+   * De los veintiún pares posibles entre campos paraguayos, solo dos caben en
+   * un mundo razonable. Medido con la misma cuenta que usa `destinos.test.ts`
+   * —el eje más largo, más los nueve kilómetros de sitio para aproximar—:
+   *
+   *     a Yvytu Rape     146 km  ·  eje 138  ·  veces ≥ 13,4
+   *     a Encarnación    277 km  ·  eje 221  ·  veces ≥ 20,9
+   *     a Pedro Juan     336 km  ·  eje 289  ·  veces ≥ 27,1
+   *     a Estigarribia   475 km  ·  eje 355  ·  veces ≥ 33,1
+   *     a Guaraní        270 km  ·  eje 269  ·  veces ≥ 25,3
+   *
+   * Con catorce el mundo mide trescientos ocho kilómetros, que es el mismo
+   * que ya vuela Gran Canaria. De ahí para arriba se entra en mundos de
+   * cuatrocientos y pico con la foto del horizonte cayendo otro nivel, y eso
+   * es otra decisión.
+   *
+   * **Y que sea Yvytu Rape no es solo porque quepa.** Es la pista de la
+   * granja: de la terminal internacional a casa. Un chico de Asunción que
+   * despega de donde ve despegar los aviones de verdad y aterriza en una
+   * pista de hierba con una manga y una vaca al lado aprende, en un vuelo, lo
+   * que separa un aeropuerto de un aeródromo — que es una de las cosas que
+   * este juego quiere enseñar.
+   */
+  destino: "yvytu-rape",
+  vecesLejos: 14,
 };
 
 /**
@@ -883,6 +916,32 @@ export const YVYTU_RAPE: Scenario = {
    */
   magneticVariation: 13,
   aerodrome: YVYTU as unknown as Aerodrome,
+  /**
+   * **Y la granja es el centro de la red paraguaya, no un rincón.**
+   *
+   * Los dos únicos pares de campos paraguayos que caben en un mundo razonable
+   * pasan los dos por aquí —a Asunción, 146 km; a Ciudad del Este, 149—, así
+   * que esta pista de hierba resulta ser el sitio mejor comunicado del país
+   * dentro del juego. No estaba buscado: sale de la geometría, porque Yvytu
+   * Rape cae entre los dos.
+   *
+   * Y se aguanta solo como lección: **las dos son la misma distancia y no son
+   * el mismo vuelo**. A Asunción se llega a una pista de asfalto con torre,
+   * luces, señalero y tráfico; a Ciudad del Este, a otra igual. Pero se sale
+   * de una de hierba con una manga y nada más, y volver a ella es lo que
+   * enseña a buscar un campo pequeño desde el aire, que es de las cosas más
+   * difíciles que hay y no se aprende en ningún aeropuerto grande.
+   *
+   * Veinticinco veces porque el lado de este escenario es de doce kilómetros
+   * —es un aeródromo chico y su mundo cercano no necesita más—, así que hace
+   * falta un número más alto para llegar al mismo mundo de trescientos que
+   * los otros dos. Lo que manda es el mundo, no el múltiplo:
+   *
+   *     a Pettirossi   eje 138 km  ·  veces ≥ 24,5
+   *     a Guaraní      eje 132 km  ·  veces ≥ 23,4
+   */
+  destino: ["pettirossi", "guarani"],
+  vecesLejos: 25,
 };
 
 /**
@@ -1566,6 +1625,23 @@ export const GUARANI: Scenario = {
    */
   magneticVariation: 9,
   aerodrome: SGES as unknown as Aerodrome,
+  /**
+   * **Y de Ciudad del Este también se vuela a la granja.**
+   *
+   * Es el otro de los dos pares paraguayos que caben: 149 km, eje 132, o sea
+   * veces ≥ 14,1. Con quince el mundo mide trescientos kilómetros, el mismo
+   * que ya vuela Gran Canaria.
+   *
+   * A Asunción no se puede ir directo, y la cuenta lo dice sin discusión: 270
+   * km de distancia pero **269 de eje**, porque los dos campos están casi en
+   * el mismo paralelo. El mundo es un cuadrado, así que lo que manda es el
+   * eje más largo y no la línea recta — pediría veces ≥ 25,3, un mundo de más
+   * de quinientos kilómetros. La ruta existe de verdad y es la más transitada
+   * del país; aquí se hace en dos tramos, que además es lo que hace de Yvytu
+   * Rape una escala y no un destino suelto.
+   */
+  destino: "yvytu-rape",
+  vecesLejos: 15,
 };
 
 /**

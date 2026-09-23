@@ -3,7 +3,7 @@
   "name": "Fuerteventura Airport",
   "source": {
     "osm": "overpass",
-    "extracted": "2026-09-14",
+    "extracted": "2026-09-23",
     "ourairports": "3077",
     "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README. Los cuatro puestos de estacionamiento están puestos a mano sobre la plataforma grande, en las cabeceras de las calles L1, L3 y L4: OpenStreetMap no trae ninguno para este aeropuerto —cero `parking_position`— y sin puestos no hay de dónde salir ni a dónde volver, así que el juego no encontraba ninguna ruta de rodaje y el campo no se podía jugar. Van marcados «manual» para que la próxima extracción no se los lleve por delante."
   },
@@ -2715,7 +2715,7 @@
       ]
     },
     {
-      "kind": "yes",
+      "kind": "storage_tank",
       "heightM": null,
       "polygon": [
         [
@@ -2801,7 +2801,7 @@
       ]
     },
     {
-      "kind": "yes",
+      "kind": "storage_tank",
       "heightM": null,
       "polygon": [
         [
@@ -2883,7 +2883,7 @@
       ]
     },
     {
-      "kind": "yes",
+      "kind": "storage_tank",
       "heightM": null,
       "polygon": [
         [
@@ -2969,7 +2969,7 @@
       ]
     },
     {
-      "kind": "yes",
+      "kind": "storage_tank",
       "heightM": null,
       "polygon": [
         [
@@ -4065,6 +4065,60 @@
         [
           -542,
           -532
+        ]
+      ]
+    },
+    {
+      "kind": "tower",
+      "heightM": null,
+      "polygon": [
+        [
+          -477.1,
+          -1837.8
+        ],
+        [
+          -474.7,
+          -1835
+        ],
+        [
+          -474.3,
+          -1833.2
+        ],
+        [
+          -475.4,
+          -1829.7
+        ],
+        [
+          -478.5,
+          -1827.7
+        ],
+        [
+          -481.9,
+          -1828
+        ],
+        [
+          -484.5,
+          -1830.3
+        ],
+        [
+          -485.2,
+          -1833.6
+        ],
+        [
+          -484.7,
+          -1835.3
+        ],
+        [
+          -482.4,
+          -1837.8
+        ],
+        [
+          -480.7,
+          -1838.4
+        ],
+        [
+          -477.1,
+          -1837.8
         ]
       ]
     }
