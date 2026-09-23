@@ -46,22 +46,28 @@ describe("los cantos de cabina", () => {
     expect(claveDeCabina("too low, climb")).toBe("cabina.tooLowClimb");
   });
 
-  it("lo que no está grabado se queda sin clave", () => {
+  it("lo que el juego no dice se queda sin clave", () => {
     /*
-     * El ejemplo era «minimums», y dejó de valer el día que se grabó: el juego
-     * lo decía desde hacía tiempo por la voz del navegador, y en cuanto tuvo
-     * toma pasó a tener clave. La prueba falló, y eso está bien — un ejemplo
-     * que caduca avisa de que caducó.
+     * **Y el ejemplo dejó de moverse, que costó cuatro vueltas.**
      *
-     * Y volvió a pasar con «sink rate» al día siguiente, que era uno de los
-     * dos ejemplos nuevos. Van tres: el ejemplo caduca cada vez que alguien
-     * hace su trabajo, y esta prueba es la que lo cuenta.
+     * Esta prueba usaba como ejemplo frases «todavía sin grabar», y fallaba
+     * cada vez que alguien hacía su trabajo: cayó con «minimums», con «sink
+     * rate» y con «positive rate». Falló bien —avisaba de que el ejemplo
+     * caducaba— pero un ejemplo que caduca cada semana es un ejemplo mal
+     * elegido.
      *
-     * Quedan sin toma y sin que el juego los pida: «positive rate» —la llamada
-     * de después del despegue— y «retard», que es de reactor con
-     * autoempuje. Del guion de #65.
+     * Ahora son dos que **no van a estar**, y por decisión y no por pereza:
+     *
+     * - «retard» es la llamada del autoempuje de un Airbus, y este juego no
+     *   modela autoempuje. La regla de la casa es que un aviso sonoro solo se
+     *   pone en un avión que lo llevaría; sin autoempuje sería decoración.
+     * - «cleared to land» es de la torre, no de la cabina: tiene su propia
+     *   voz, su propia tabla y su propio pack.
+     *
+     * Lo que se comprueba, entonces, es lo de siempre y mejor dicho: esta
+     * tabla es para lo que **esta** cabina canta, y no un cajón donde meter
+     * frases de aviación.
      */
-    expect(claveDeCabina("positive rate")).toBe(null);
     expect(claveDeCabina("retard")).toBe(null);
     expect(claveDeCabina("cleared to land")).toBe(null);
   });

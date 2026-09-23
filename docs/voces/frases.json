@@ -140,6 +140,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.bajasRapido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Bajás muy rápido",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.muyInclinado",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Estás muy inclinado",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.pilotoSuelto",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1594,6 +1608,27 @@
     "idioma": "en",
     "texto": "two hundred",
     "para": "cuenta de altura en la toma"
+  },
+  {
+    "id": "cabina.positiveRate",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "positive rate",
+    "para": "el avión sube de verdad: tren adentro"
+  },
+  {
+    "id": "cabina.gearUp",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "gear up",
+    "para": "meté el tren"
+  },
+  {
+    "id": "cabina.gearDown",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "gear down",
+    "para": "sacá el tren"
   },
   {
     "id": "cabina.sinkRate",

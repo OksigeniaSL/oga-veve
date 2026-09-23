@@ -377,6 +377,33 @@ export interface AircraftConfig {
    */
   trenRetractil: boolean;
   /**
+   * A cuánto sobre el suelo se mete el tren, m. `null` si no se mete.
+   *
+   * **Y esto es por tipo, no un número para todos**, que es como estaba: una
+   * constante de trescientos metros en `game.ts` con la explicación de que es
+   * «la altura a la que un despegue deja de poder volver a la pista». El
+   * razonamiento es bonito y mezcla dos cosas distintas — la altura del viraje
+   * imposible y el momento de meter el tren— y no es lo que se hace en ningún
+   * avión.
+   *
+   * Lo que se hace, y es lo que hay que poder reconocer el día que se vea de
+   * verdad:
+   *
+   * - **Transporte** —turbohélice y reactores—: «positive rate, gear up». El
+   *   tren entra a los pocos segundos de despegar, en cuanto el variómetro
+   *   dice que se sube. Un avión de línea no vuela trescientos metros con las
+   *   patas fuera: sobrepasaría su propia velocidad de tren.
+   * - **Avioneta retráctil**: cuando ya no queda pista donde posarse delante.
+   *   Es la regla que se enseña en escuela, y son decenas de metros, no
+   *   cientos: mientras haya asfalto por delante el tren es un seguro, y en
+   *   cuanto no lo hay pasa a ser un lastre.
+   *
+   * Y por eso no es el mismo número: un JAZ 40 sale de una pista corta y
+   * pasa un buen rato con pista debajo; un reactor se va de la suya en
+   * segundos.
+   */
+  meteElTrenA: number | null;
+  /**
    * Cabeceo máximo con las ruedas en el suelo, rad. Lo impone la geometría
    * del tren: más allá, la cola toca. Sin este límite el avión rota hasta
    * ponerse de pie en la pista y se queda en pérdida sin llegar a despegar.
@@ -448,6 +475,8 @@ export const PYKASU: AircraftConfig = {
   batalla: 1.65,
   gearHeight: 1.4,
   trenRetractil: false,
+  // Tren fijo: un entrenador de escuela lleva las patas al aire a propósito.
+  meteElTrenA: null,
   maxGroundPitch: 0.21, // 12°
   flapsLift: 0.55,
   flapsDrag: 0.06,
@@ -524,6 +553,8 @@ export const MAINUMBY: AircraftConfig = {
   batalla: 5.4,
   gearHeight: 1.8,
   trenRetractil: false,
+  // Tren fijo: un fumigador trabaja bajo y no le compensa el peso ni la avería.
+  meteElTrenA: null,
   maxGroundPitch: 0.26, // 15°: es un patín de cola, se apoya de morro arriba
   flapsLift: 0.35,
   flapsDrag: 0.05,
@@ -634,6 +665,9 @@ export const PANAMBI: AircraftConfig = {
   batalla: 2.8,
   gearHeight: 1.6,
   trenRetractil: true,
+  // Sesenta metros: cuando ya no queda pista donde posarse delante, que es la
+  // regla de escuela. Sale de una pista corta, así que tarda en quedarse sin.
+  meteElTrenA: 60,
   maxGroundPitch: 0.19, // 11°
   flapsLift: 0.5,
   flapsDrag: 0.07,
@@ -728,6 +762,9 @@ export const ARASUNU: AircraftConfig = {
   batalla: 7.21,
   gearHeight: 2.2,
   trenRetractil: true,
+  // Veinticinco: «positive rate, gear up». Un turbohélice regional mete el tren
+  // a los pocos segundos de despegar, no a trescientos metros.
+  meteElTrenA: 25,
   maxGroundPitch: 0.17, // 10°: la cola en T no perdona rotar de más.
   // Flaps grandes: es lo que le permite entrar en pistas cortas, que es para
   // lo que existe un turbohélice regional.
@@ -858,6 +895,9 @@ export const ARAI: AircraftConfig = {
   batalla: 11.5,
   gearHeight: 2.8,
   trenRetractil: true,
+  // Veinte: el tren entra en cuanto el variómetro dice que sube. Con las patas
+  // fuera a más de doscientos cinco nudos se pasaría de su propio límite.
+  meteElTrenA: 20,
   maxGroundPitch: 0.16, // 9°: con un fuselaje largo, la cola llega antes.
   /*
    * **Y los flaps de un reactor, que no son los de una avioneta.**
@@ -1017,6 +1057,9 @@ export const YVAGA: AircraftConfig = {
   batalla: 25.6,
   gearHeight: 5.2,
   trenRetractil: true,
+  // Veinte: igual que el de pasillo único. Un avión de línea no vuela con el
+  // tren fuera más que los segundos de después del despegue.
+  meteElTrenA: 20,
   maxGroundPitch: 0.15, // 8,6°: un fuselaje de setenta metros toca antes.
   // Triple ranura y Krueger: un ala de línea saca mucho más CL que una
   // avioneta, y es lo que le permite entrar a 98 y no a 140.

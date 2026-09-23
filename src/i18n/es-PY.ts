@@ -520,6 +520,7 @@ export const ES_PY = {
   "vuelo.terrenoBajo": "Vas muy bajo",
   "vuelo.terrenoSube": "Terreno. Subí",
   "vuelo.perdida": "Pérdida. Bajá el morro",
+  "vuelo.sube": "Ya subís: metélo",
   "vuelo.bajasRapido": "Bajás muy rápido",
   "vuelo.muyInclinado": "Estás muy inclinado",
   "vuelo.pilotoSuelto": "Se soltó el piloto automático",

@@ -64,6 +64,31 @@ const PUERTO = 5289;
  * que pudo poner.
  */
 const VECES = Number(process.argv[4] ?? 12);
+/*
+ * **Y si no es un número, se dice y se para aquí.**
+ *
+ * El orden es `escenario tramo veces avion`, y el avión va **detrás** del
+ * reloj. Equivocarse es facilísimo —`… tenerife-norte guyrami jaz-60`— y lo
+ * que pasaba entonces no se parecía a un error:
+ *
+ *   `Number("jaz-60")` es `NaN`, así que la espera de cada vuelta es
+ *   `setTimeout(NaN)`, que dispara al instante: bucle cerrado. Y el tope de
+ *   pared tampoco salva, porque `Math.max(180, NaN)` **es NaN** y toda
+ *   comparación con NaN es falsa. Resultado: quince minutos sin una sola
+ *   línea, exactamente la misma cara que un cuelgue del juego.
+ *
+ * Costó una investigación entera y, peor, **contaminó otra**: un cuelgue que
+ * se achacó al juego era esto. Un banco que se traga un argumento imposible y
+ * se cuelga en silencio no es una regla de medir, es una trampa.
+ */
+if (!Number.isFinite(VECES) || VECES <= 0) {
+  console.log(
+    `\n  ✗ «${process.argv[4]}» no es un reloj.\n` +
+      "    El orden es: escenario tramo veces avion\n" +
+      "    Por ejemplo:  node scripts/verificar-vuelo-entero.mjs tenerife-norte guyrami 12 jaz-60\n",
+  );
+  process.exit(2);
+}
 /**
  * Con qué avión se vuela.
  *
@@ -79,6 +104,15 @@ const VECES = Number(process.argv[4] ?? 12);
  * una avioneta, y lo que este banco mide es precisamente eso.
  */
 const AVION = process.argv[5] ?? "jaz-20";
+// Y el avión, que tiene que existir: un identificador mal escrito volaba el
+// de siempre y el parte decía el nombre equivocado. Ver `AIRCRAFT`.
+if (!/^jaz-\d+$/.test(AVION)) {
+  console.log(
+    `\n  ✗ «${AVION}» no es un avión de la flota.\n` +
+      "    El orden es: escenario tramo veces avion\n",
+  );
+  process.exit(2);
+}
 
 const server = await createServer({
   root: process.cwd(),

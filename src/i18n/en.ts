@@ -280,6 +280,7 @@ export const EN: Dictionary = {
   "vuelo.terrenoBajo": "You are very low",
   "vuelo.terrenoSube": "Terrain. Pull up",
   "vuelo.perdida": "Stall. Lower the nose",
+  "vuelo.sube": "Positive rate: gear up",
   "vuelo.bajasRapido": "Sink rate. Ease off",
   "vuelo.muyInclinado": "Bank angle. Level off",
   "vuelo.pilotoSuelto": "Autopilot disconnected",

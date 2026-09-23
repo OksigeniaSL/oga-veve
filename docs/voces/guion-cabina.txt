@@ -8,6 +8,9 @@ airspeed
 four hundred
 three hundred
 two hundred
+positive rate
+gear up
+gear down
 sink rate
 bank angle
 stall, stall

@@ -720,6 +720,14 @@ const SE_REARMA = 3;
  * pista de la que salió, o sea el momento exacto en el que el tren pasa de ser
  * un seguro a ser un lastre. Ver `atenderAlTren`.
  */
+/**
+ * El respaldo, por si una ficha no dice a qué altura mete el tren, m.
+ *
+ * No debería usarlo nadie: los seis aviones lo declaran. Está para que un
+ * avión nuevo sin ese campo no se quede sin aviso — y `aircraft.test.ts`
+ * comprueba que todos los retráctiles lo traigan, así que si esto llega a
+ * usarse es que alguien se saltó la prueba.
+ */
 const METE_EL_TREN = 300;
 
 const EN_DESPEGUE: ReadonlySet<Fase> = new Set<Fase>([
@@ -8669,20 +8677,28 @@ export class Game {
     const hay =
       s.stalled && !s.onGround && s.heightAboveGround > Game.ALTO_PARA_LA_PERDIDA;
     /*
-     * **Y se rearma con holgura, no en cuanto deja de estar en pérdida.**
+     * **Y el rearme es el del modelo, no uno mío encima.**
      *
-     * El ala entra y sale del ángulo crítico varias veces por segundo cuando
-     * se vuela justo en el filo, y con el rearme pegado al umbral eso son diez
-     * «stall, stall» en cinco segundos — que es un aviso que enseña a no hacer
-     * caso, y que además haría saltar la comprobación del banco que cuenta
-     * cuántas veces se dice cada frase.
+     * Aquí había una holgura propia sobre el ángulo de ataque, puesta para que
+     * el ala entrando y saliendo del filo no soltara diez cantos en cinco
+     * segundos. Estaba de más, y lo estaba por no haber leído el modelo
+     * primero: `stalled` **ya lleva su propia histéresis**, y mejor razonada
+     * —entra si el ángulo se mantiene un tercio de segundo por encima, y no
+     * sale hasta bajar tres grados y medio por debajo, «porque recuperar
+     * cuesta más que entrar»—. Ver `STALL_DELAY` y `STALL_RECOVERY` en
+     * `fdm.ts`.
      *
-     * La holgura va en el **ángulo de ataque** y no en un reloj, que es la
-     * regla de esta casa: un aviso vuelve cuando cambia algo que pasa, no
-     * cuando pasa un rato. Hasta que el ala no está claramente volando otra
-     * vez —un diez por ciento por debajo del crítico— no se vuelve a cantar.
+     * Dos umbrales distintos para la misma cosa es como se acaba teniendo dos
+     * definiciones de «pérdida» que un día dicen cosas contrarias. Manda el
+     * del modelo.
+     *
+     * Y probado: con una holgura del diez por ciento salían cuarenta y cinco
+     * cantos en un vuelo, y con una del treinta, cincuenta. Que el número no
+     * bajara al triplicar la holgura era el aviso de que el problema no estaba
+     * aquí — **el avión entra y sale de pérdida de verdad cincuenta veces**,
+     * porque ese vuelo está roto. Ver el JAZ 90 en Taguató, que acaba fuera de
+     * pista. Tapar el canto habría escondido eso.
      */
-    const volandoDeVerdad = s.alpha < this.aircraft.aero.alphaStall * 0.9;
     if (hay && !this.perdidaDicha) {
       this.perdidaDicha = true;
       this.avisar("attention");
@@ -8696,7 +8712,7 @@ export class Game {
        * conseguía tirar autorizaciones de la torre. Ver `Urgencia`.
        */
       this.cantar("stall, stall", t("vuelo.perdida"), "vuelo.perdida", "mando");
-    } else if (!hay && (volandoDeVerdad || s.onGround)) {
+    } else if (!hay) {
       this.perdidaDicha = false;
     }
   }
@@ -8798,13 +8814,29 @@ export class Game {
     }
 
     /*
-     * Y metélo, cuando ya no hace falta: en el aire, subiendo y con pista de
-     * sobra debajo. Los trescientos metros no son un capricho — es la altura a
-     * la que un despegue deja de poder volver a la pista de la que salió, o
-     * sea el momento en que el tren pasa de ser un seguro a ser un lastre.
+     * Y metélo, cuando ya no hace falta: en el aire, subiendo y por encima de
+     * la altura que diga **su ficha**.
+     *
+     * **Y por tipo, que antes no lo era.** Había una constante de trescientos
+     * metros para los cuatro, con la explicación de que es la altura a la que
+     * un despegue deja de poder volver a la pista de la que salió. El
+     * razonamiento es bonito y mezcla dos cosas que no son la misma —el viraje
+     * imposible y el momento de meter el tren— y no describe lo que hace
+     * ningún avión:
+     *
+     * - Un avión de línea mete el tren **a los pocos segundos de despegar**,
+     *   con «positive rate, gear up». Volar trescientos metros con las patas
+     *   fuera es pasarse de su propia velocidad de tren.
+     * - Una avioneta retráctil lo mete **cuando ya no queda pista donde
+     *   posarse delante**, que son decenas de metros.
+     *
+     * Un niño que aprendiera aquí «el tren entra a trescientos metros» tendría
+     * que desaprenderlo, y esa es justo la línea que este proyecto no cruza.
+     * Ver `meteElTrenA` en la ficha de cada avión.
      */
+    const meteA = this.aircraft.meteElTrenA ?? METE_EL_TREN;
     const yaNoHaceFalta =
-      !s.onGround && s.verticalSpeed > 1 && sobreElSuelo > METE_EL_TREN;
+      !s.onGround && s.verticalSpeed > 1 && sobreElSuelo > meteA;
     if (yaNoHaceFalta && donde > 0.99 && pedido) {
       if (!seVuelveADecir(this.dichoDelTren, "mete", pedido)) return;
       this.dichoDelTren = { que: "mete", pedido };
@@ -8818,6 +8850,18 @@ export class Game {
           tecla: nombreDeTecla(this.input.preferredKey("tren")),
         },
       );
+      /*
+       * **Y «positive rate» delante, que es lo que ata la pareja.**
+       *
+       * En un avión de verdad se cantan juntas: uno ve la subida asentada y
+       * lo dice, y el otro contesta metiendo el tren. Sin la primera, «gear
+       * up» llega suelta y no se aprende de dónde sale.
+       *
+       * Van seguidas y no a la vez: la boca hace cola y las dice una tras
+       * otra con su silencio en medio, igual que la pareja de la torre en
+       * castellano y en inglés. Ver `audio/boca.ts`.
+       */
+      this.cantar("positive rate", t("vuelo.sube"), "vuelo.sube");
       this.cantar("gear up", t("vuelo.meteElTren"), "vuelo.meteElTren");
     }
   }

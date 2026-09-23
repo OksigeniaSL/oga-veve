@@ -147,6 +147,21 @@ const CABINA = [
    * angle», ir demasiado inclinado. Los dos los calcula el avión desde
    * siempre y ninguno se decía. Ver `flight/avisos-de-actitud.ts`.
    */
+  /*
+   * **El tren, que el juego ya pedía en voz alta sin tener la toma.**
+   *
+   * `game.ts` canta «gear up» y «gear down» desde hace tiempo —ver
+   * `avisaDelTren`— y como no estaban aquí, salían por el sintetizador del
+   * navegador en mitad de una cabina que suena grabada. Es la misma avería que
+   * ya tuvo `minimums`, por tercera vez.
+   *
+   * Y «positive rate» delante, que es la que las ata: en un avión de verdad se
+   * canta al ver la subida asentada, y la respuesta es meter el tren. Sin
+   * ella, «gear up» llega suelta.
+   */
+  ["cabina.positiveRate", "positive rate", "el avión sube de verdad: tren adentro"],
+  ["cabina.gearUp", "gear up", "meté el tren"],
+  ["cabina.gearDown", "gear down", "sacá el tren"],
   ["cabina.sinkRate", "sink rate", "bajás muy rápido para lo bajo que estás"],
   ["cabina.bankAngle", "bank angle", "el avión va demasiado inclinado"],
   ["cabina.stall", "stall, stall", "el ala dejó de sustentar"],

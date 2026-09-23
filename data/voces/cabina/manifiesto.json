@@ -27,6 +27,12 @@
     "cabina.fourHundred": {
       "ms": 776
     },
+    "cabina.gearDown": {
+      "ms": 698
+    },
+    "cabina.gearUp": {
+      "ms": 468
+    },
     "cabina.goAround": {
       "ms": 1515
     },
@@ -41,6 +47,9 @@
     },
     "cabina.oneHundred": {
       "ms": 624
+    },
+    "cabina.positiveRate": {
+      "ms": 955
     },
     "cabina.sinkRate": {
       "ms": 742
@@ -116,6 +125,12 @@
     "cabina.fourHundred": [
       "cabina.fourHundred"
     ],
+    "cabina.gearDown": [
+      "cabina.gearDown"
+    ],
+    "cabina.gearUp": [
+      "cabina.gearUp"
+    ],
     "cabina.goAround": [
       "cabina.goAround"
     ],
@@ -130,6 +145,9 @@
     ],
     "cabina.oneHundred": [
       "cabina.oneHundred"
+    ],
+    "cabina.positiveRate": [
+      "cabina.positiveRate"
     ],
     "cabina.sinkRate": [
       "cabina.sinkRate"

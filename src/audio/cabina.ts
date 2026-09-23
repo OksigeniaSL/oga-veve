@@ -77,6 +77,14 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
    *
    * Y no está `overspeed`: de eso el juego dice «too fast», que ya estaba.
    */
+  /*
+   * El tren, que el juego pedía en voz alta desde hace tiempo **sin tener la
+   * toma**: salían por el sintetizador del navegador en mitad de una cabina
+   * que suena grabada. Tercera vez que pasa lo mismo; ver `minimums`.
+   */
+  "positive rate": "cabina.positiveRate",
+  "gear up": "cabina.gearUp",
+  "gear down": "cabina.gearDown",
   "sink rate": "cabina.sinkRate",
   "bank angle": "cabina.bankAngle",
   "stall, stall": "cabina.stall",

@@ -19,6 +19,8 @@ instructor	instructor/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ah
 instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.terrenoSube.ogg	es-PY	Terreno. Subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.perdida.ogg	es-PY	Pérdida. Bajá el morro	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.bajasRapido.ogg	es-PY	Bajás muy rápido	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoSuelto.ogg	es-PY	Se soltó el piloto automático	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	Pista ocupada. Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
@@ -227,6 +229,9 @@ cabina	cabina/cabina.airspeed.ogg	en	airspeed	vas rápido en el aire
 cabina	cabina/cabina.fourHundred.ogg	en	four hundred	cuenta de altura en la toma
 cabina	cabina/cabina.threeHundred.ogg	en	three hundred	cuenta de altura en la toma
 cabina	cabina/cabina.twoHundred.ogg	en	two hundred	cuenta de altura en la toma
+cabina	cabina/cabina.positiveRate.ogg	en	positive rate	el avión sube de verdad: tren adentro
+cabina	cabina/cabina.gearUp.ogg	en	gear up	meté el tren
+cabina	cabina/cabina.gearDown.ogg	en	gear down	sacá el tren
 cabina	cabina/cabina.sinkRate.ogg	en	sink rate	bajás muy rápido para lo bajo que estás
 cabina	cabina/cabina.bankAngle.ogg	en	bank angle	el avión va demasiado inclinado
 cabina	cabina/cabina.stall.ogg	en	stall, stall	el ala dejó de sustentar
