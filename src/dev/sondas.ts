@@ -64,6 +64,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Los mandos, para poder mirarlos desde una comprobación. */
     controles: () => juego.input.controls,
     /**
+     * **Y la palanca del tren**, que no es un mando como los otros.
+     *
+     * El tren no se pone: **se pide**, y tarda diez segundos en llegar. Por eso
+     * no vale escribir `controls.tren` —eso es la posición, no la orden— y
+     * hacía falta una sonda aparte. Sin ella el banco no podía meter ni sacar
+     * el tren, y el reactor volaba entero con las patas fuera y aterrizaba sin
+     * haberlas pedido nunca. Ver `alternarTren` en `flight/input.ts`.
+     */
+    pedirTren: (fuera: boolean) => {
+      if (juego.input.trenQueSePide !== fuera) juego.input.alternarTren();
+    },
+    /**
      * Cuántos hitos del paisaje lleva señalados el vuelo.
      *
      * Es lo único que se puede mirar desde fuera de una cosa que es voz y
@@ -285,6 +297,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * terreno es estar en el suelo para uno y estar en el aire para otro.
        */
       tren: juego.aircraft.gearHeight,
+      /*
+       * **Y sus límites de configuración**, que el piloto del banco necesita
+       * para aterrizar un reactor.
+       *
+       * Un reactor es limpio: al ralentí en descenso mantiene la velocidad, y
+       * sin flaps ni tren no hay forma de frenarlo. El banco no los tocaba
+       * nunca —ponía `flaps: 0` al empezar y ya— y el JAZ 90 llegaba a la pista
+       * a 108 m/s con una aproximación de 68. Para sacarlos hay que saber
+       * **a qué velocidad se puede**, que es lo que dicen estos dos.
+       */
+      trenRetractil: juego.aircraft.trenRetractil,
+      vleKt: juego.aircraft.vleKt,
+      vfeKt: juego.aircraft.vfeKt,
       /**
        * Y **lo que el propio juego calcula que le cuesta despegar**, m.
        *

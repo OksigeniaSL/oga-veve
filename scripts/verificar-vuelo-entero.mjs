@@ -494,7 +494,70 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * rápido que el barrido ya volaba limpio— no cambia nada. Solo se recorta por
    * encima, que es donde vuelan los reactores.
    */
+  /**
+   * **Configurar el avión según el tramo del circuito**, como se hace.
+   *
+   * El banco no tocaba nunca ni los flaps ni el tren: ponía `flaps: 0` al
+   * empezar y ya. Con la avioneta da igual —tren fijo, lenta, y en Guyrami el
+   * juego ayuda con todo—, pero un reactor es **limpio**: al ralentí en
+   * descenso no frena, y sin tren ni flaps no hay manera de bajarle la
+   * velocidad. El JAZ 90 llegaba a la pista de Asunción a **108 m/s** con una
+   * aproximación de 68, y se salía.
+   *
+   * Así que el piloto hace lo que hace cualquiera en un circuito:
+   *
+   * - **Subiendo**: tren dentro en cuanto sube de verdad.
+   * - **Viento en cola** (esquina 2 en adelante): frena, y el tren sale en
+   *   cuanto la velocidad baja de su `vleKt`.
+   * - **Base** (esquina 3 en adelante): flaps, en cuanto baja de su `vfeKt`.
+   * - **Final**: ya configurado. Se frena **antes** de bajar, no bajando.
+   *
+   * Los límites salen de la ficha de cada avión, así que el mismo piloto vale
+   * para los seis. Sacar el tren por encima de su velocidad es romperlo, y
+   * eso es justo lo que el juego castiga.
+   */
+  const configurar = (s, c, tramo) => {
+    if (s.onGround || !NECESITA_TECNICA) return;
+    const kt = s.airspeed * 1.94384;
+    if (suyas.trenRetractil) {
+      if (tramo >= 2 && kt < (suyas.vleKt ?? 999)) o.pedirTren?.(true);
+      else if (tramo < 2 && s.verticalSpeed > 1 && s.heightAboveGround > 30)
+        o.pedirTren?.(false);
+    }
+    c.flaps = tramo >= 3 && kt < (suyas.vfeKt ?? 999) ? 1 : 0;
+  };
+
+  /**
+   * La velocidad a la que toca ir en cada tramo del circuito, m/s.
+   *
+   * Hasta la esquina de allá, la de crucero —con su tope de baja cota—; desde
+   * ahí, **la de aproximación con un margen**, que es frenar en el viento en
+   * cola para poder sacar el tren y los flaps. Un reactor no se puede frenar
+   * bajando: hay que llegar a final ya lento.
+   */
+  const velocidadDelTramo = (tramo) =>
+    NECESITA_TECNICA && tramo >= 2
+      ? Math.min(VELOCIDAD_DE_CRUCERO, (suyas.aproximacion ?? 40) * 1.3)
+      : VELOCIDAD_DE_CRUCERO;
+
   const AJUSTADO_HASTA = 90;
+  /**
+   * **Si este avión necesita la técnica de los rápidos.**
+   *
+   * Frenar en el circuito, sacar tren y flaps, no meter gas con velocidad de
+   * sobra: todo eso es lo que hace falta para aterrizar un reactor, y lo que
+   * **rompía a la avioneta y al turbohélice** cuando se lo apliqué a todos. Se
+   * midió: con la configuración para toda la flota, el JAZ 20 y el JAZ 60 —que
+   * pasaban 26 de 26— se quedaban flotando en final hasta agotar el tiempo.
+   * Todo su piloto está afinado para aterrizar sin flaps, y con ellos
+   * sustentaban de más y no tocaban nunca.
+   *
+   * Así que la raya es la misma que la de la ganancia: el banco se afinó con
+   * aviones hasta 90 m/s de crucero, y la técnica extra es para los de
+   * encima. Enseñársela también a la avioneta sería otro cambio, con su propia
+   * medida delante — no uno que se cuela con este.
+   */
+  const NECESITA_TECNICA = (suyas.crucero ?? 0) > AJUSTADO_HASTA;
   const ganancia = (s) =>
     Math.min(1, (AJUSTADO_HASTA / Math.max(1, s.airspeed)) ** 2);
 
@@ -1365,7 +1428,17 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     t = ahora - empezo;
     const s = o.estado();
     const fase = o.fase();
-    if (subida.length < 45 && !s.onGround && i % 10 === 0) {
+    /*
+     * La traza se toma en dos ventanas: la subida —los primeros cuarenta y
+     * cinco— y la aproximación, que es donde falla ahora el reactor. Con una
+     * sola ventana al principio, lo que pasa en final no se veía nunca.
+     */
+    const enFinal = /final|aterriz|frustr/.test(fase) || etapa === "final";
+    if (
+      !s.onGround &&
+      i % 10 === 0 &&
+      ((subida.length < 45 && !enFinal) || (enFinal && subida.length < 110))
+    ) {
       const cc = o.controles();
       subida.push(
         `${t.toFixed(0)}s ${etapa}/${fase} alto ${s.heightAboveGround.toFixed(0)}m` +
@@ -1916,12 +1989,16 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
       const altoQueToca = meta ? meta.y - cotaDePista : CRUCERO;
       ultimoAltoQueToca = altoQueToca;
       const subiendo = alto(s) < altoQueToca - 15;
+      const quiereIr = velocidadDelTramo(aDonde);
       c.throttle = subiendo
         ? 1
         : Math.max(
-            0.3,
-            Math.min(1, 0.55 + (VELOCIDAD_DE_CRUCERO - s.airspeed) * 0.04),
+            // Frenando, el gas puede ir al ralentí: un reactor con un tercio
+            // de gas a nivel no frena nunca.
+            quiereIr < VELOCIDAD_DE_CRUCERO ? 0 : 0.3,
+            Math.min(1, 0.55 + (quiereIr - s.airspeed) * 0.04),
           );
+      configurar(s, c, aDonde);
       /*
        * Y aquí igual: subiendo se pide subir. Sostener la velocidad de subida
        * no es subir — es quedarse a esa velocidad, y nivelado también se está
@@ -2094,10 +2171,28 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
             : bajoLaSenda < -2
               ? -0.04
               : -0.05;
-      c.throttle = Math.max(
-        0,
-        Math.min(1, c.throttle + Math.max(porVelocidad, porSenda)),
-      );
+      /*
+       * **Con velocidad de sobra no se mete gas, vaya donde vaya la senda.**
+       *
+       * Esto sumaba `Math.max(porVelocidad, porSenda)`: cuando el avión iba
+       * rápido pero un poco bajo, ganaba el de la senda y **se le metía gas**
+       * — cada fotograma, a un avión que ya iba sobrado. A la avioneta no le
+       * pasaba nada, porque tiene poco empuje y mucha resistencia. Al reactor
+       * lo disparaba: medido en Asunción, entraba en final a 116 m/s y subía a
+       * **160**, y a noventa metros del suelo aún iba a 138 — el doble de su
+       * velocidad de aproximación, y por encima de la de sacar tren y flaps.
+       *
+       * Es la regla que no se rompe en ningún avión: el gas lleva la
+       * velocidad y la palanca la senda. Si se va rápido y bajo, se levanta el
+       * morro y el gas se queda quieto; si se va rápido y alto, se reduce. Lo
+       * que no se hace nunca es arreglar una senda baja con gas cuando sobra
+       * velocidad.
+       */
+      const cambio =
+        NECESITA_TECNICA && porVelocidad < 0
+          ? porVelocidad
+          : Math.max(porVelocidad, porSenda);
+      c.throttle = Math.max(0, Math.min(1, c.throttle + cambio));
       /*
        * Con la misma ley de altura que arriba: bajada limitada y amortiguada.
        * Ver `aLaAltura`, que cuenta el porqué con lo medido.
@@ -2116,6 +2211,9 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * perdonan llegar bajo, y el avión acababa dentro igual.
        */
       c.elevator = aLaAltura(s, objetivo, quiere);
+      // Y en final, ya configurado del todo: tren fuera y flaps. Ver
+      // `configurar`, que en el tramo 4 pide las dos cosas.
+      configurar(s, c, 4);
       /*
        * Y el eje, apuntando a un punto trescientos metros por delante de donde
        * se está: eso corrige el desvío en vez de solo mantener el rumbo.
