@@ -222,7 +222,18 @@ import { mundoElegido } from "./ui/mundo";
  * arranca en cualquier máquina. Eso no es un modo degradado: es el suelo sobre
  * el que se construye todo lo demás.
  */
-const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES ?? null;
+/*
+ * **Y una cadena vacía es no tener clave**, no una clave vacía.
+ *
+ * Con `??` una variable puesta en blanco —`VITE_GOOGLE_TILES=`, que es como se
+ * construye la web— pasaba como clave y el juego seguía pidiendo teselas y
+ * cambiando el plano lejano de la cámara a 120 km. Y en granjaoga.com las
+ * teselas de Google **no pueden llegar nunca**: las bloquea la política de
+ * seguridad del sitio —medido, cuatro peticiones rechazadas por partida— y
+ * aparte Google no las sirve a cuentas europeas. Así que la web se construye
+ * sin clave y el mundo de la foto se pinta con la ortofoto, que es lo que hay.
+ */
+const CLAVE_TESELAS: string | null = import.meta.env.VITE_GOOGLE_TILES || null;
 import { laConchaLaLleva } from "./ui/panel";
 import { Hud, UNIT_SYSTEMS } from "./ui/hud";
 import { CreditsScreen } from "./ui/credits";
