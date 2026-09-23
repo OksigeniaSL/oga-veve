@@ -25,6 +25,7 @@ import {
   MeshLambertMaterial,
   PlaneGeometry,
 } from "three";
+import { ponerGrano, texturaDeGrano } from "./grano";
 import { ValueNoise2D } from "./noise";
 import { createRunwayMarkings } from "./runway-markings";
 import {
@@ -761,6 +762,17 @@ export class Terrain {
     const mat = malla.material as MeshLambertMaterial;
     mat.map = orto.textura;
     mat.vertexColors = false;
+    /*
+     * **Y el grano del suelo, aquí, que es el terreno que tienen todos.**
+     *
+     * El primer intento se lo puso solo a la manta fina, y eso dejó fuera a
+     * Paraguay entero: sus cuatro campos **no tienen capa fina** —Sentinel-2
+     * llega a ocho metros y medio por píxel y ahí se acaba lo publicado—, que
+     * es justamente donde más falta hacía. Es el mismo error de siempre en
+     * esta casa: arreglar en la superficie que se estaba mirando. Ver
+     * `world/grano.ts`.
+     */
+    ponerGrano(mat, this.grano());
     mat.needsUpdate = true;
   }
 
@@ -916,12 +928,10 @@ export class Terrain {
     geo.setIndex(new BufferAttribute(indices, 1));
     geo.computeVertexNormals();
 
-    const malla = new Mesh(
-      geo,
-      new MeshLambertMaterial({
-        map: orto.textura,
-        vertexColors: true,
-        transparent: true,
+    const material = new MeshLambertMaterial({
+      map: orto.textura,
+      vertexColors: true,
+      transparent: true,
         // No escribe profundidad: es una calcomanía sobre el relieve, no un
         // suelo. Si escribiera, se taparía a sí misma con su propio borde
         // desvanecido.
@@ -941,15 +951,34 @@ export class Terrain {
          * pavimento, repetido desde arriba. Con solo unidades, el empate exacto
          * contra el relieve se resuelve igual y no crece con el ángulo.
          */
-        polygonOffset: true,
-        polygonOffsetFactor: 0,
-        polygonOffsetUnits: -4,
-      }),
-    );
+      polygonOffset: true,
+      polygonOffsetFactor: 0,
+      polygonOffsetUnits: -4,
+    });
+    /*
+     * **Y el grano del suelo, encima de la foto.**
+     *
+     * La foto da el color y no puede dar más: dos metros por píxel en
+     * Canarias y ocho y medio en Paraguay, que es el tope de lo que hay
+     * publicado. A trescientos metros de altura eso es una mancha, y se dijo
+     * así: «quiero paisajes realistas». Ver `world/grano.ts`, que cuenta por
+     * qué esto no es falsear el terreno sino devolverle la aspereza que la
+     * foto perdió al promediar.
+     */
+    ponerGrano(material, this.grano());
+    const malla = new Mesh(geo, material);
     malla.name = "manta-fina";
     malla.castShadow = false;
     malla.receiveShadow = false;
     this.group.add(malla);
+  }
+
+  /** La trama del grano: una sola, compartida por todas las mantas. */
+  private granoCache: Texture | null = null;
+
+  private grano(): Texture {
+    this.granoCache ??= texturaDeGrano(() => document.createElement("canvas"));
+    return this.granoCache;
   }
 
   dispose(): void {
