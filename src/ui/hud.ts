@@ -1524,6 +1524,11 @@ export class Hud {
         readonly reserva: number;
         readonly estado: "bien" | "reserva" | "poco";
       } | null;
+      /** La ventanilla del altímetro. Ver `flight/altimetro.ts`. */
+      readonly presion: {
+        readonly puesta: number;
+        readonly delSitio: number;
+      } | null;
     },
   ): void {
     // Velocidad indicada, no verdadera: es la que importa para no caerse, y
@@ -1871,6 +1876,7 @@ export class Hud {
            */
           mapa: mandos?.mapa ?? null,
           combustible: mandos?.combustible ?? null,
+          presion: mandos?.presion ?? null,
         },
         dt,
       );

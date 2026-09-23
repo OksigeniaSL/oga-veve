@@ -2627,6 +2627,40 @@ button.motor__tecla::after {
   font-variant-numeric: tabular-nums;
 }
 
+/* La ventanilla de presión. Cian como el resto de lo auxiliar cuando está
+   puesta en la del sitio; ámbar cuando no, que es el color con el que una
+   cabina dice «mirá esto» sin decir «se rompió». Ver `flight/altimetro.ts`. */
+.cr__qnh {
+  fill: var(--cabina-auxiliar);
+  font-family: var(--cabina-fuente);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cr__qnh--mal {
+  fill: var(--cabina-precaucion);
+}
+
+/* La ventanilla de Kollsman de la esfera: un hueco oscuro en la cara del
+   altímetro, como el del instrumento de verdad. */
+.esfera__ventana {
+  fill: #0b0d10;
+  stroke: #45484d;
+  stroke-width: 0.6;
+}
+
+.esfera__qnh {
+  fill: var(--cabina-valor);
+  font-size: 8px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.esfera__qnh--mal {
+  fill: var(--cabina-precaucion);
+}
+
 .cr__caja {
   fill: #05070a;
   stroke: var(--cabina-valor);

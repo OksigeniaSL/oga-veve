@@ -39,6 +39,7 @@ import {
 } from "three";
 import { PALETA } from "../ui/paleta";
 import { anillosDe, type Eco } from "../flight/tormentas";
+import { bienPuesta } from "../flight/altimetro";
 import { temperaturaExterior } from "../flight/atmosphere";
 
 /**
@@ -110,6 +111,10 @@ const FONDO = PALETA.pantalla;
 const TENUE = PALETA.apagado;
 /** El avioncito símbolo, que tiene que leerse sobre el cielo y sobre la tierra. */
 const SIMBOLO = PALETA.simbolo;
+/** Dato auxiliar: viento, velocidad respecto al suelo, reglaje del altímetro. */
+const AUXILIAR = PALETA.auxiliar;
+/** Lo que hay que mirar sin que nada se haya roto. */
+const PRECAUCION = PALETA.precaucion;
 
 export interface DatosDeCabina {
   /** Velocidad indicada, m/s. */
@@ -230,6 +235,17 @@ export interface DatosDeCabina {
     readonly cabe: number;
     readonly reserva: number;
     readonly estado: "bien" | "reserva" | "poco";
+  } | null;
+  /**
+   * La ventanilla de presión del altímetro, hPa.
+   *
+   * Y va en las dos superficies por lo mismo que el depósito: un instrumento
+   * que existe en el cuadro plano y no dentro de la cabina es el fallo que
+   * esta casa lleva cometido media docena de veces. Ver `flight/altimetro.ts`.
+   */
+  readonly presion: {
+    readonly puesta: number;
+    readonly delSitio: number;
   } | null;
   /**
    * **El mundo, para poder dibujarlo.**
@@ -1052,6 +1068,24 @@ function cintaDeAltitud(
   }
   g.restore();
   escribir(g, "ALT", x + w / 2, y + 12, "500 11px " + FUENTE, TENUE);
+  /*
+   * **Y debajo, la ventanilla de presión.**
+   *
+   * Es donde va en toda pantalla de vuelo del mundo, y es la información que
+   * a esta cabina le faltaba. En ámbar cuando no es la del sitio, y sin
+   * ningún otro aviso: un altímetro mal puesto no se queja, sigue
+   * funcionando y mintiendo. Ver `flight/altimetro.ts`.
+   */
+  if (d.presion) {
+    escribir(
+      g,
+      `QNH ${Math.round(d.presion.puesta)}`,
+      x + w / 2,
+      y + h - 6,
+      "600 12px " + FUENTE,
+      bienPuesta(d.presion.puesta, d.presion.delSitio) ? AUXILIAR : PRECAUCION,
+    );
+  }
 }
 
 /** El variómetro: una franja al borde de la cinta de altitud. */

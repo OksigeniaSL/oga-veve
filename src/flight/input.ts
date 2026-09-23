@@ -73,6 +73,8 @@ export interface InputActions {
   cycleMission: () => void;
   /** Pasar al siguiente aeropuerto de destino. Ver `siguienteDestino`. */
   cycleDestino: () => void;
+  /** Girar la rueda del altímetro un hectopascal. Ver `flight/altimetro.ts`. */
+  girarAltimetro: (pasos: number) => void;
   cycleLanguage: () => void;
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
@@ -479,6 +481,12 @@ export class InputManager {
         break;
       case "destino":
         this.actions.cycleDestino();
+        break;
+      case "qnhUp":
+        this.actions.girarAltimetro(1);
+        break;
+      case "qnhDown":
+        this.actions.girarAltimetro(-1);
         break;
       case "credits":
         event.preventDefault();

@@ -57,6 +57,7 @@ import {
   tamborDeAltitud,
 } from "./cristal";
 import { luzDeTren } from "../flight/tren";
+import { bienPuesta } from "../flight/altimetro";
 import { anillosDe } from "../flight/tormentas";
 import { t, type TranslationKey } from "../i18n";
 import {
@@ -110,6 +111,15 @@ export interface DatosDelTablero {
   } | null;
   /** De dónde sopla y cuánto. */
   readonly viento: { readonly desde: number; readonly nudos: number } | null;
+  /**
+   * El reglaje del altímetro y el del sitio, hPa.
+   *
+   * Dos números y no uno, porque lo que hay que poder ver es **si coinciden**.
+   * Con uno solo la ventanilla sería un adorno: enseñaría lo que se ha puesto
+   * sin decir nunca que está mal puesto, que es justo la mitad que enseña
+   * algo. Ver `flight/altimetro.ts`.
+   */
+  readonly presion: { readonly puesta: number; readonly delSitio: number } | null;
   readonly perdida: boolean;
   /**
    * El depósito: lo que queda, lo que cabe y dónde empieza la reserva.
@@ -557,6 +567,7 @@ export class Tablero {
         d.fpm,
         d.alabeo,
         d.cabeceo,
+        d.presion,
       );
     } else {
       this.cintas(raiz, d, dt);
@@ -566,6 +577,7 @@ export class Tablero {
     // Los avisos, en las tres familias: la avioneta también se cae.
     this.avisos(raiz, d, dt);
     this.texto(raiz, "gs", `GS ${Math.round(d.sobreElSuelo)}`);
+    this.presion(raiz, d.presion);
     this.cantar(d, dt);
   }
 
@@ -764,6 +776,28 @@ export class Tablero {
       const valor = centro - k * 20;
       t.textContent = String(((valor % 100) + 100) % 100).padStart(2, "0");
     }
+  }
+
+  /**
+   * La ventanilla de presión del altímetro.
+   *
+   * Ámbar cuando no es la del sitio, y nada más: no hay aviso, ni sonido, ni
+   * pantalla roja. Un altímetro mal puesto no se queja — sigue funcionando y
+   * mintiendo, y eso es exactamente lo que hay que aprender. En este juego
+   * las normas se muestran, no se imponen. Ver `flight/altimetro.ts`.
+   */
+  private presion(
+    raiz: SVGElement,
+    p: DatosDelTablero["presion"],
+  ): void {
+    const t = raiz.querySelector<SVGTextElement>('[data-cristal="qnh"]');
+    if (!t) return;
+    if (!p) {
+      t.textContent = "";
+      return;
+    }
+    t.textContent = `QNH ${Math.round(p.puesta)}`;
+    t.classList.toggle("cr__qnh--mal", !bienPuesta(p.puesta, p.delSitio));
   }
 
   private vsi(raiz: SVGElement, fpm: number): void {

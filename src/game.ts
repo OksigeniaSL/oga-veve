@@ -197,6 +197,11 @@ import {
 } from "./world/luces-de-ciudad";
 import { Obstaculos } from "./world/obstaculos";
 import { MissionMarker } from "./world/mission-marker";
+import {
+  alturaIndicada,
+  girarRueda,
+  QNH_ESTANDAR,
+} from "./flight/altimetro";
 import { MissionRunner } from "./missions/runner";
 import { objectiveTarget, type Mission } from "./missions/types";
 import { missionsFor } from "./content/missions";
@@ -2242,6 +2247,7 @@ export class Game {
       cycleAircraft: () => this.cycleAircraft(),
       cycleMission: () => this.cycleMission(),
       cycleDestino: () => this.siguienteDestino(),
+      girarAltimetro: (pasos: number) => this.girarAltimetro(pasos),
       cycleLanguage: () => this.changeLanguage(),
       toggleSound: () => this.toggleSound(),
       firstGesture: () => {
@@ -5156,8 +5162,44 @@ export class Game {
    * despegue— así que se rehacen solo las tres cosas que sí: la geometría del
    * aeródromo con su manga, el plan de vuelo y el vuelo en sí.
    */
+  /**
+   * La presión de hoy aquí, hPa, y la que lleva puesta el altímetro.
+   *
+   * La primera la trae el METAR y hasta ahora no la usaba nadie. La segunda
+   * empieza igual que ella —como si se hubiera puesto en la revisión antes de
+   * arrancar, que es cuando se pone— y desde ahí la mueve quien vuela. Ver
+   * `flight/altimetro.ts`.
+   */
+  private qnhDelSitio = QNH_ESTANDAR;
+  private qnhPuesta = QNH_ESTANDAR;
+
+  /** Lo que enseña el altímetro, m: la altitud corregida por el reglaje. */
+  altitudIndicada(): number {
+    return alturaIndicada(
+      this.flight.state.position.y,
+      this.qnhPuesta,
+      this.qnhDelSitio,
+    );
+  }
+
+  /** Gira la rueda del altímetro un hectopascal. */
+  girarAltimetro(pasos: number): void {
+    this.qnhPuesta = girarRueda(this.qnhPuesta, pasos);
+    this.avisar("attention");
+  }
+
   ponerTiempo(meteo: Meteo): void {
     this.scenario = conViento(this.scenario, meteo);
+    /*
+     * **Y el altímetro se entera del día que hace.**
+     *
+     * Se pone en la del sitio al recibir el parte, que es lo que hace quien
+     * vuela antes de arrancar: se pide el reglaje y se gira la rueda. A
+     * partir de ahí es suya, y si la mueve, el instrumento miente sin
+     * quejarse — que es lo que hace uno de verdad.
+     */
+    this.qnhDelSitio = meteo.qnh;
+    this.qnhPuesta = meteo.qnh;
     /*
      * **Y el avión se entera, que era lo que faltaba.**
      *
@@ -6557,6 +6599,9 @@ export class Game {
         viento: this.vientoDeHoy,
         // Y el depósito, el mismo que ve el cuadro plano. Ver `elDeposito`.
         combustible: this.elDeposito(),
+        // Y la misma ventanilla que el cuadro plano, del mismo par de
+        // números: una cuenta, dos dibujos. Ver `flight/altimetro.ts`.
+        presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
         /*
          * **Y el mundo, para que la pantalla de navegación lo dibuje.**
          *
@@ -6675,6 +6720,13 @@ export class Game {
         // cuenta, dos dibujos. Ver `elMapa`.
         mapa: this.elMapa(),
         combustible: this.elDeposito(),
+        /*
+         * Y la ventanilla del altímetro. La presión del sitio la leía el
+         * METAR desde el principio y **no la usaba nadie**: el altímetro
+         * enseñaba la altitud verdadera, que es la única que un altímetro de
+         * verdad no sabe. Ver `flight/altimetro.ts`.
+         */
+        presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
       },
     );
     const toma = this.checkLanding(dt);

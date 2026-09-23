@@ -189,6 +189,8 @@ export const ES_PY = {
   "tecla.aircraft": "Cambiar de avión",
   "tecla.mission": "Cambiar de misión",
   "tecla.destino": "Cambiar de destino",
+  "tecla.qnhUp": "Subir el reglaje del altímetro",
+  "tecla.qnhDown": "Bajar el reglaje del altímetro",
   "tecla.sound": "Sonido",
   "tecla.language": "Idioma",
   "tecla.credits": "Créditos",

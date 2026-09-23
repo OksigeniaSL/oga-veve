@@ -186,6 +186,8 @@ export const EN: Dictionary = {
   "tecla.aircraft": "Change aircraft",
   "tecla.mission": "Change mission",
   "tecla.destino": "Change destination",
+  "tecla.qnhUp": "Altimeter setting up",
+  "tecla.qnhDown": "Altimeter setting down",
   "tecla.sound": "Sound",
   "tecla.language": "Language",
   "tecla.credits": "Credits",

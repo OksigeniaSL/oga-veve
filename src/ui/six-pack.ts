@@ -36,6 +36,7 @@ import type { FlightState } from "../flight/model";
 import { cuadroDe, type Cuadro } from "./cuadro";
 import { BANDA, cajaDe, marca, MARCA_CIFRA, MARCA_ROTULO } from "./familia";
 import { PYKASU } from "../flight/aircraft";
+import { bienPuesta } from "../flight/altimetro";
 
 /** Lo que se dejan entre sí dos esferas vecinas, en píxeles del cuadro. */
 const SEPARA = 16;
@@ -149,6 +150,8 @@ export class SixPack {
     fpm: number,
     bank: number,
     pitch: number,
+    /** Lo puesto en la rueda y lo que hay de verdad. Ver `altimetro.ts`. */
+    presion: { readonly puesta: number; readonly delSitio: number } | null,
   ): void {
     if (!this.root) return;
 
@@ -161,6 +164,7 @@ export class SixPack {
     // cada mil pies y la corta marca los miles.
     this.rotate("alt-hundreds", ((feet % 1000) / 1000) * 360);
     this.rotate("alt-thousands", ((feet % 10000) / 10000) * 360);
+    this.ventanaDePresion(presion);
 
     // Variómetro: cero a las nueve en punto, subida arriba, bajada abajo.
     this.rotate("vsi", (clamp(fpm / this.cuadro.vsiMax, -1, 1) * SWEEP) / 2);
@@ -190,6 +194,29 @@ export class SixPack {
     const ball = this.root.querySelector<SVGElement>("[data-tc-ball]");
     if (ball)
       ball.setAttribute("cx", String(50 + clamp(state.beta * 9, -1, 1) * 11));
+  }
+
+  /**
+   * La ventanilla de presión de la esfera del altímetro.
+   *
+   * Ámbar cuando no es la del sitio, y nada más: sin aviso, sin sonido y sin
+   * pantalla roja. Un altímetro mal puesto no se queja — sigue funcionando y
+   * mintiendo, y eso es exactamente lo que hay que aprender a mirar.
+   */
+  private ventanaDePresion(
+    presion: { readonly puesta: number; readonly delSitio: number } | null,
+  ): void {
+    const t = this.root?.querySelector<SVGTextElement>("[data-qnh]");
+    if (!t) return;
+    if (!presion) {
+      t.textContent = "";
+      return;
+    }
+    t.textContent = String(Math.round(presion.puesta));
+    t.classList.toggle(
+      "esfera__qnh--mal",
+      !bienPuesta(presion.puesta, presion.delSitio),
+    );
   }
 
   private rotate(name: string, degrees: number): void {
@@ -309,7 +336,23 @@ function asiFace(c: Cuadro): string {
 }
 
 function altFace(): string {
-  return ticks(10, 1, 10);
+  /*
+   * **Y la ventanilla de Kollsman, a las tres en punto.**
+   *
+   * Es donde está en todo altímetro de aguja del mundo, desde los años
+   * treinta: una ventanita a la derecha de la esfera con la presión que se le
+   * ha puesto. El instrumento no mide altura, mide presión, y esa ventanilla
+   * dice **suponiendo qué día**. Sin ella la esfera está incompleta, y lo
+   * estaba: el juego leía la presión del METAR y no la enseñaba en ninguna
+   * parte.
+   *
+   * Ver `flight/altimetro.ts` para la cuenta y el porqué.
+   */
+  return (
+    ticks(10, 1, 10) +
+    `<rect x="62" y="44.5" width="26" height="11" rx="1.5" class="esfera__ventana" />` +
+    `<text data-qnh x="75" y="52.6" class="esfera__qnh" text-anchor="middle"></text>`
+  );
 }
 
 function vsiFace(): string {

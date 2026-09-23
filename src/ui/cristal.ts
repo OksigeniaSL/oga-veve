@@ -405,6 +405,20 @@ function cintaDeAltitud(
       <text data-cristal="alt" x="${w - 36}" y="${h / 2 + 9}" ${MARCA_CIFRA} class="cr__valor" text-anchor="end"></text>
       <g clip-path="url(#${yo}-tambor)"><g data-tambor="alt" data-paso="26">${tambor}</g></g>
       ${rotuloDeCinta(w, h, "ALT", "FT")}
+      <!--
+        **La ventanilla de presión, debajo de la cinta.**
+
+        Es donde va en cualquier pantalla de vuelo del mundo, y es la
+        información que a esta cabina le faltaba: un altímetro no mide altura,
+        mide presión, y traduce suponiendo un día concreto. Cuál es ese día lo
+        dice este número.
+
+        En ámbar cuando no es el del sitio, y **no se castiga**: el
+        instrumento sigue funcionando y mintiendo, que es exactamente lo que
+        hace uno de verdad. Ver flight/altimetro.ts.
+      -->
+      <text data-cristal="qnh" x="${w / 2}" y="${h - 6}" ${MARCA_CIFRA}
+            class="cr__qnh" text-anchor="middle"></text>
     </g>
   `;
 }

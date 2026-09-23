@@ -46,6 +46,8 @@ export type Accion =
   | "aircraft"
   | "mission"
   | "destino"
+  | "qnhUp"
+  | "qnhDown"
   | "sound"
   | "language"
   | "credits"
@@ -169,6 +171,16 @@ export const ACCIONES: Readonly<Record<Accion, Definicion>> = {
    * veces no hace nada. Ver `siguienteDestino`.
    */
   destino: { label: "tecla.destino", defecto: ["KeyJ"], held: false },
+  /*
+   * **La rueda del altímetro.**
+   *
+   * Dos teclas y no una, porque una rueda que solo gira hacia un lado no es
+   * una rueda. Van juntas en el teclado —O y U— por lo mismo que el gas está
+   * en X y Z: lo que se usa a pares se pulsa a pares. Ver
+   * `flight/altimetro.ts`.
+   */
+  qnhUp: { label: "tecla.qnhUp", defecto: ["KeyO"], held: false },
+  qnhDown: { label: "tecla.qnhDown", defecto: ["KeyU"], held: false },
   sound: { label: "tecla.sound", defecto: ["KeyV"], held: false },
   language: { label: "tecla.language", defecto: ["KeyL"], held: false },
   credits: { label: "tecla.credits", defecto: ["F1"], held: false },

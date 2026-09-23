@@ -433,6 +433,16 @@ const game = new Game({
   fotosVecinas,
   ortofotoHorizonte,
 });
+/*
+ * **Y el parte se le da al juego, no solo al escenario.**
+ *
+ * `conViento` mete el viento en el escenario, y con eso el motor de vuelo se
+ * entera. Pero el parte trae más cosas —la presión, la temperatura— y ésas se
+ * quedaban en esta línea sin llegar a ninguna parte: el altímetro arrancaba
+ * siempre en 1013 aunque el METAR del día dijera 1003. Ver
+ * `flight/altimetro.ts`.
+ */
+game.ponerTiempo(meteo);
 game.start();
 
 /*
