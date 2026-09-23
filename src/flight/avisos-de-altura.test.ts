@@ -22,7 +22,7 @@ import {
  * dejar de aproximar. Ver `SE_FUE_DE_VERDAD`.
  */
 function seVaAlAire(a: AvisosDeAltura): void {
-  for (let i = 0; i < 200; i++) a.paso(400, true, false, true);
+  for (let i = 0; i < 200; i++) a.paso(120, true, false, true);
 }
 
 /**
@@ -31,8 +31,14 @@ function seVaAlAire(a: AvisosDeAltura): void {
  * Hace falta porque **para cantar un escalón hay que haber estado por encima
  * de ese escalón**, y una prueba que empieza a cuarenta y cinco metros no ha
  * estado por encima de cincuenta. Ver `masAltoVisto`.
+ *
+ * Ciento veinte, y no cuatrocientos como estaba: desde que la cuenta lleva sus
+ * cuatro cientos, cuatrocientos ya **es** un escalón y arrancar ahí armaba
+ * cuatro más. Estas pruebas son de la parte fina de la cuenta —la recogida—
+ * así que se viene de por encima de cien y de nada más. Las de los cientos
+ * están aparte.
  */
-function vieneDeArriba(a: AvisosDeAltura, alto = 400): void {
+function vieneDeArriba(a: AvisosDeAltura, alto = 120): void {
   a.paso(alto, true, true, true);
 }
 
@@ -298,16 +304,27 @@ describe("y la carrera de despegue no es una toma", () => {
   });
 
   it("y despegar y volver a aterrizar canta la cuenta entera", () => {
-    // El vuelo de verdad, de punta a punta: carrera, subida, vuelta y toma.
+    /*
+     * El vuelo de verdad, de punta a punta: carrera, subida, vuelta y toma.
+     *
+     * **Y ahora la cuenta entera son diez números, no siete.** Se sube a 450 y
+     * no a 400 a propósito: para cantar un escalón hay que haber estado por
+     * **encima** de él, y quedándose justo en cuatrocientos ese no se cruza.
+     * Con cuatrocientos cincuenta se cruzan los cuatro cientos y la cuenta va
+     * completa, que es lo que esta prueba dice en su nombre.
+     */
     const a = new AvisosDeAltura();
     carrera(a, false);
-    for (let alto = 2; alto <= 400; alto += 2) a.paso(alto, true, false, false);
+    for (let alto = 2; alto <= 450; alto += 2) a.paso(alto, true, false, false);
     const dichos: string[] = [];
-    for (let alto = 400; alto >= 1; alto -= 1) {
+    for (let alto = 450; alto >= 1; alto -= 1) {
       const av = a.paso(alto, true, true, true);
       if (av) dichos.push(av.encasa);
     }
     expect(dichos).toEqual([
+      "cuatrocientos",
+      "trescientos",
+      "doscientos",
       "cien",
       "cincuenta",
       "cuarenta",
@@ -349,10 +366,43 @@ describe("la cuenta no depende de cuál sea el escalón más alto", () => {
     expect(dichos).toContain("twenty");
   });
 
-  it("y la cuenta de pies lleva los cientos que hay grabados", () => {
+  it("y la cuenta de pies lleva los cinco cientos, sin saltarse ninguno", () => {
+    /*
+     * Esta prueba decía `["five hundred", "one hundred"]` y llevaba al lado la
+     * nota de que faltaban los tres de en medio porque no estaban grabados. Ya
+     * lo están, así que la cuenta va entera — y eso era justo lo que se pidió
+     * jugando: «five hundred, four hundred… fifty, forty».
+     *
+     * Lo que se comprueba no es la lista de memoria: es que **no falte un
+     * escalón en medio**, que es lo que suena mal. Una cuenta que salta del
+     * quinientos al cien no es una cuenta, es dos números sueltos.
+     */
     const cientos = ESCALONES_EN_PIES.filter((e) => e.dice.includes("hundred"));
-    // Faltan cuatrocientos, trescientos y doscientos: no están grabados. Ver
-    // la nota de `ESCALONES`.
-    expect(cientos.map((e) => e.dice)).toEqual(["five hundred", "one hundred"]);
+    expect(cientos.map((e) => e.dice)).toEqual([
+      "five hundred",
+      "four hundred",
+      "three hundred",
+      "two hundred",
+      "one hundred",
+    ]);
+  });
+
+  it("y los metros también, que son la misma cuenta en otra unidad", () => {
+    const cientos = ESCALONES.filter((e) => e.dice.includes("hundred"));
+    expect(cientos.map((e) => e.dice)).toEqual([
+      "four hundred",
+      "three hundred",
+      "two hundred",
+      "one hundred",
+    ]);
+  });
+
+  it("y las dos listas bajan siempre, que es lo que hace la cuenta", () => {
+    // Un escalón fuera de orden cantaría al revés en mitad de la toma. Es la
+    // clase de error que no se ve leyendo y se oye a la primera.
+    for (const lista of [ESCALONES, ESCALONES_EN_PIES]) {
+      const alturas = lista.map((e) => e.metros);
+      expect([...alturas].sort((a, b) => b - a)).toEqual(alturas);
+    }
   });
 });

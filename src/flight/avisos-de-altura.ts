@@ -39,18 +39,21 @@
  * justo donde la cuenta se aprieta y dice «ya». Estaba en la lista de pies y
  * no en ésta.
  *
- * ## Lo que se pidió y todavía no está
+ * ## Y los tres cientos de en medio, que ya están
  *
- * «Se echa de menos un indicador de voz indicando la aproximación y la
- * distancia a tierra: five hundred, four hundred… fifty, forty.» Los tres
- * cientos de en medio —cuatrocientos, trescientos, doscientos— **no están
- * grabados**, y esta lista no puede pedir lo que no se grabó: una cuenta en
- * la que tres números los dice otra voz suena peor que una cuenta corta. Las
- * tres frases están apuntadas para la próxima tanda de estudio; el día que
- * existan, entran aquí y en `audio/cabina.ts`, que es donde una prueba
- * comprueba que la tabla no apunta a grabaciones que no hay.
+ * Se pidió jugando: «se echa de menos un indicador de voz indicando la
+ * aproximación y la distancia a tierra: five hundred, four hundred… fifty,
+ * forty». Faltaban cuatrocientos, trescientos y doscientos, y esta lista no
+ * podía pedirlos porque no estaban grabados — una cuenta en la que tres
+ * números los dice otra voz suena peor que una cuenta corta.
+ *
+ * Ya están tomados, así que entran aquí y en `audio/cabina.ts`, que es donde
+ * una prueba comprueba que la tabla no apunta a grabaciones que no hay.
  */
 export const ESCALONES: readonly Escalon[] = [
+  { metros: 400, dice: "four hundred", encasa: "cuatrocientos" },
+  { metros: 300, dice: "three hundred", encasa: "trescientos" },
+  { metros: 200, dice: "two hundred", encasa: "doscientos" },
   { metros: 100, dice: "one hundred", encasa: "cien" },
   { metros: 50, dice: "fifty", encasa: "cincuenta" },
   { metros: 40, dice: "forty", encasa: "cuarenta" },
@@ -75,11 +78,10 @@ export const ESCALONES: readonly Escalon[] = [
  */
 export const ESCALONES_EN_PIES: readonly Escalon[] = [
   { metros: 152, dice: "five hundred", encasa: "quinientos" },
-  /*
-   * Y aquí faltan los tres de en medio —cuatrocientos, trescientos,
-   * doscientos—, que un radioaltímetro sí canta. No están grabados; ver la
-   * nota de `ESCALONES`.
-   */
+  // Y los tres de en medio, que un radioaltímetro sí canta. Ver `ESCALONES`.
+  { metros: 122, dice: "four hundred", encasa: "cuatrocientos" },
+  { metros: 91.4, dice: "three hundred", encasa: "trescientos" },
+  { metros: 61, dice: "two hundred", encasa: "doscientos" },
   { metros: 30.5, dice: "one hundred", encasa: "cien" },
   { metros: 15.2, dice: "fifty", encasa: "cincuenta" },
   { metros: 12.2, dice: "forty", encasa: "cuarenta" },

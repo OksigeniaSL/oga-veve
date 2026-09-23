@@ -128,6 +128,18 @@ const CABINA = [
    * Hasta entonces el juego las dice con la voz del navegador, que es lo que
    * hay, y con su luz y su texto al lado.
    */
+  /*
+   * **Los tres cientos de en medio de la cuenta de altura.**
+   *
+   * Pedidos jugando: «se echa de menos un indicador de voz indicando la
+   * aproximación y la distancia a tierra: five hundred, four hundred… fifty,
+   * forty». Faltaban los tres de en medio, y `avisos-de-altura.ts` no podía
+   * pedirlos: una cuenta en la que tres números los dice otra voz suena peor
+   * que una cuenta corta.
+   */
+  ["cabina.fourHundred", "four hundred", "cuenta de altura en la toma"],
+  ["cabina.threeHundred", "three hundred", "cuenta de altura en la toma"],
+  ["cabina.twoHundred", "two hundred", "cuenta de altura en la toma"],
   ["cabina.stall", "stall, stall", "el ala dejó de sustentar"],
   [
     "cabina.autopilotDisconnect",

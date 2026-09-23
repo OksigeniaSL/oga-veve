@@ -5,6 +5,9 @@ too low
 too fast
 off the runway
 airspeed
+four hundred
+three hundred
+two hundred
 stall, stall
 autopilot disconnect
 minimums

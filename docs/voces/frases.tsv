@@ -224,6 +224,9 @@ cabina	cabina/cabina.tooLow.ogg	en	too low	vas bajo sobre el terreno
 cabina	cabina/cabina.tooFast.ogg	en	too fast	veredicto de toma rápida
 cabina	cabina/cabina.offTheRunway.ogg	en	off the runway	tomaste fuera de la pista
 cabina	cabina/cabina.airspeed.ogg	en	airspeed	vas rápido en el aire
+cabina	cabina/cabina.fourHundred.ogg	en	four hundred	cuenta de altura en la toma
+cabina	cabina/cabina.threeHundred.ogg	en	three hundred	cuenta de altura en la toma
+cabina	cabina/cabina.twoHundred.ogg	en	two hundred	cuenta de altura en la toma
 cabina	cabina/cabina.stall.ogg	en	stall, stall	el ala dejó de sustentar
 cabina	cabina/cabina.autopilotDisconnect.ogg	en	autopilot disconnect	el piloto automático se soltó y los mandos son tuyos otra vez
 cabina	cabina/cabina.minimums.ogg	en	minimums	la altura de decisión: o la ves, o te vas

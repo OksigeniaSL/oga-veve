@@ -1575,6 +1575,27 @@
     "para": "vas rápido en el aire"
   },
   {
+    "id": "cabina.fourHundred",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "four hundred",
+    "para": "cuenta de altura en la toma"
+  },
+  {
+    "id": "cabina.threeHundred",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "three hundred",
+    "para": "cuenta de altura en la toma"
+  },
+  {
+    "id": "cabina.twoHundred",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "two hundred",
+    "para": "cuenta de altura en la toma"
+  },
+  {
     "id": "cabina.stall",
     "voz": "cabina",
     "idioma": "en",

@@ -21,6 +21,9 @@
     "cabina.forty": {
       "ms": 462
     },
+    "cabina.fourHundred": {
+      "ms": 776
+    },
     "cabina.goAround": {
       "ms": 1515
     },
@@ -51,6 +54,9 @@
     "cabina.thirty": {
       "ms": 556
     },
+    "cabina.threeHundred": {
+      "ms": 810
+    },
     "cabina.tooFast": {
       "ms": 789
     },
@@ -65,6 +71,9 @@
     },
     "cabina.twenty": {
       "ms": 478
+    },
+    "cabina.twoHundred": {
+      "ms": 932
     },
     "cabina.v1": {
       "ms": 1030
@@ -94,6 +103,9 @@
     ],
     "cabina.forty": [
       "cabina.forty"
+    ],
+    "cabina.fourHundred": [
+      "cabina.fourHundred"
     ],
     "cabina.goAround": [
       "cabina.goAround"
@@ -125,6 +137,9 @@
     "cabina.thirty": [
       "cabina.thirty"
     ],
+    "cabina.threeHundred": [
+      "cabina.threeHundred"
+    ],
     "cabina.tooFast": [
       "cabina.tooFast"
     ],
@@ -139,6 +154,9 @@
     ],
     "cabina.twenty": [
       "cabina.twenty"
+    ],
+    "cabina.twoHundred": [
+      "cabina.twoHundred"
     ],
     "cabina.v1": [
       "cabina.v1"

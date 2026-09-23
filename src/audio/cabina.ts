@@ -29,6 +29,11 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   rotate: "cabina.vr",
   // La aproximación, en pies, que es como los canta un radioaltímetro.
   "five hundred": "cabina.fiveHundred",
+  // Los tres de en medio, que faltaban: una cuenta a la que le saltan tres
+  // números no es una cuenta. Ver `ESCALONES` en `flight/avisos-de-altura.ts`.
+  "four hundred": "cabina.fourHundred",
+  "three hundred": "cabina.threeHundred",
+  "two hundred": "cabina.twoHundred",
   "one hundred": "cabina.oneHundred",
   fifty: "cabina.fifty",
   forty: "cabina.forty",
