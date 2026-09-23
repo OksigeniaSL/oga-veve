@@ -37,6 +37,11 @@ import {
   Texture,
   TextureLoader,
 } from "three";
+import {
+  conPlazo,
+  PLAZO_DE_DATO,
+  PLAZO_DE_IMAGEN,
+} from "../datos/con-plazo";
 
 /** Lo que el extractor deja escrito al lado de cada imagen. */
 export interface FichaDeOrtofoto {
@@ -182,11 +187,35 @@ export async function cargarOrtofoto(
   if (!urlImagen || !urlFicha) return undefined;
 
   try {
-    const res = await fetch(urlFicha);
-    if (!res.ok) return undefined;
+    /*
+     * **Con plazo, los dos.**
+     *
+     * `loadAsync` envuelve un `new Image()` con `onload` y `onerror`, y no
+     * tiene plazo: una petición que se queda a medias sin llegar a fallar no
+     * dispara ninguno de los dos, la promesa no se resuelve **jamás**, y el
+     * arranque entero se para detrás de ella porque esto va en el
+     * `Promise.all` de `main.ts`.
+     *
+     * Ése era el cuelgue que sacaba un falso rojo por tirada en el barrido:
+     * arranque normal de 1,6 s, cuelgue de más de 120, y la consola callada —
+     * porque una promesa pendiente es silenciosa. Ver `datos/con-plazo.ts`.
+     */
+    const res = await conPlazo(
+      fetch(urlFicha),
+      PLAZO_DE_DATO,
+      `la ficha de ${nombre}`,
+    );
+    if (!res?.ok) return undefined;
     const ficha = (await res.json()) as FichaDeOrtofoto;
 
-    const textura = await new TextureLoader().loadAsync(urlImagen);
+    const textura = await conPlazo(
+      new TextureLoader().loadAsync(urlImagen),
+      PLAZO_DE_IMAGEN,
+      `la ortofoto de ${nombre}`,
+    );
+    // Sin foto se vuela igual, sobre el relieve dibujado, que es lo que hacen
+    // los escenarios que no la tienen. Sin plazo no se vuela en absoluto.
+    if (!textura) return undefined;
     textura.colorSpace = SRGBColorSpace;
     // Sin repetición: fuera del encuadre se estira el borde, que es mejor que
     // ver el mosaico repetido hasta el horizonte.

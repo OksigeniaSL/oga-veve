@@ -19,6 +19,7 @@
  */
 
 import type { Scenario } from "./scenarios";
+import { conPlazo, PLAZO_DE_DATO } from "../datos/con-plazo";
 
 /**
  * Con `import.meta.glob` y no con una URL construida a mano.
@@ -50,8 +51,10 @@ export async function cargarRelieve(id: string): Promise<Scenario["relieve"]> {
   )?.[1];
   if (!ruta) return undefined;
   try {
-    const res = await fetch(ruta);
-    if (!res.ok) return undefined;
+    // Con plazo: sin él, una petición que se queda a medias para el arranque
+    // entero y en silencio. Ver `datos/con-plazo.ts`.
+    const res = await conPlazo(fetch(ruta), PLAZO_DE_DATO, `el relieve de ${id}`);
+    if (!res?.ok) return undefined;
     const datos = new Int16Array(await res.arrayBuffer());
     const resolucion = Math.round(Math.sqrt(datos.length));
     return resolucion * resolucion === datos.length

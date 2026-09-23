@@ -7,6 +7,7 @@
  */
 
 import type { Ciudad } from "./ciudad";
+import { conPlazo, PLAZO_DE_DATO } from "../datos/con-plazo";
 
 const CIUDADES = import.meta.glob("../../data/cities/*.city.json", {
   query: "?url",
@@ -34,8 +35,11 @@ export async function cargarCiudad(id: string): Promise<Ciudad | undefined> {
   )?.[1];
   if (!ruta) return undefined;
   try {
-    const res = await fetch(ruta);
-    if (!res.ok) return undefined;
+    // Con plazo, como todo lo que se espera para arrancar. Ver
+    // `datos/con-plazo.ts`: sin él, una petición a medias para el juego entero
+    // y sin decir nada.
+    const res = await conPlazo(fetch(ruta), PLAZO_DE_DATO, `la ciudad ${id}`);
+    if (!res?.ok) return undefined;
     const j = await res.json();
     return {
       id: j.id,

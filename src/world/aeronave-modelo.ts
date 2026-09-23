@@ -44,6 +44,7 @@ import { encenderPantallas } from "./pantallas-cabina";
 import { prepararPatas } from "./patas";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
+import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
 
 /** Dónde se dejan los modelos. Uno por aeronave, con su identificador. */
 const CARPETA = "assets/aeronaves";
@@ -423,7 +424,18 @@ export async function cargarModelo(
 
   let raiz: Object3D;
   try {
-    const gltf = await new GLTFLoader().loadAsync(url);
+    /*
+     * Con plazo, y aquí importa doble: este fichero ya tiene decidido que
+     * **si falta el modelo se vuela con las cajas de respaldo**, y una carga
+     * sin plazo convierte esa decisión en lo contrario — no se vuela nada.
+     * Ver `datos/con-plazo.ts`.
+     */
+    const gltf = await conPlazo(
+      new GLTFLoader().loadAsync(url),
+      PLAZO_DE_IMAGEN,
+      `el modelo ${url.split("/").pop()}`,
+    );
+    if (!gltf) return null;
     raiz = gltf.scene;
   } catch {
     // Un modelo roto no puede dejar a nadie sin volar.
