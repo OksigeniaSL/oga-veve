@@ -652,8 +652,13 @@ export const PETTIROSSI: Scenario = {
    * que separa un aeropuerto de un aeródromo — que es una de las cosas que
    * este juego quiere enseñar.
    */
-  destino: "yvytu-rape",
-  vecesLejos: 14,
+  /*
+   * Y Encarnación, desde que dejó de ser un campo suelto: 277 km, la ruta que
+   * el país tiene de verdad hacia el sur. Pide un mundo mayor que el de la
+   * granja —eje 221 km—, y eso es lo que sube el múltiplo.
+   */
+  destino: ["yvytu-rape", "encarnacion"],
+  vecesLejos: 21,
 };
 
 /**
@@ -1654,8 +1659,12 @@ export const GUARANI: Scenario = {
    * del país; aquí se hace en dos tramos, que además es lo que hace de Yvytu
    * Rape una escala y no un destino suelto.
    */
-  destino: "yvytu-rape",
-  vecesLejos: 15,
+  /*
+   * Y Encarnación: 221 km río abajo, cruzando la cuenca del Paraná. Con ella
+   * Ciudad del Este deja de ser una punta y pasa a ser un cruce.
+   */
+  destino: ["yvytu-rape", "encarnacion"],
+  vecesLejos: 21,
 };
 
 /**
@@ -1882,6 +1891,23 @@ export const ENCARNACION: Scenario = {
   // verdaderos y la cabecera pone 02.
   magneticVariation: 8,
   aerodrome: SGEN as unknown as Aerodrome,
+  /**
+   * **Y Encarnación deja de ser un campo suelto.**
+   *
+   * Era el único de los cuatro del sur y el centro que no llevaba a ninguna
+   * parte. Ahora sale a Asunción —la ruta que el país tiene de verdad entre
+   * sus dos ciudades más grandes del sur y la capital— y a Ciudad del Este,
+   * cruzando la cuenca del Paraná de punta a punta.
+   *
+   *     a Pettirossi   277 km  ·  eje 221 km
+   *     a Guaraní      221 km  ·  eje 197 km
+   *
+   * El eje manda y no la distancia: el mundo es un cuadrado. Con los dos, el
+   * mundo pasa del de un campo suelto al más grande de Paraguay, y eso se
+   * midió antes de dejarlo — ver el commit que lo metió.
+   */
+  destino: ["pettirossi", "guarani"],
+  vecesLejos: 23,
 };
 
 export const SCENARIOS: readonly Scenario[] = [

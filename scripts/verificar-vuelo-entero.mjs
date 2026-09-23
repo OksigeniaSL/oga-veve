@@ -214,6 +214,19 @@ await page.goto(
  * como lo que es y el tope se decide con datos en vez de a ojo.
  */
 const arrancoA = Date.now();
+/*
+ * **Y qué se quedó esperando, si no arranca.**
+ *
+ * Guaraní no arrancó en ciento veinte segundos otra vez, con los argumentos
+ * buenos, y corrido dos veces seguidas después arrancó en 1,5 y 1,9. No se
+ * reproduce a demanda, así que razonar la causa es adivinar. Lo que hace
+ * falta es que la próxima vez **diga qué petición no terminó**: una promesa
+ * colgada es silenciosa, pero la petición de red que la cuelga no lo es.
+ */
+const pendientes = new Map();
+page.on("request", (r) => pendientes.set(r, Date.now()));
+page.on("requestfinished", (r) => pendientes.delete(r));
+page.on("requestfailed", (r) => pendientes.delete(r));
 try {
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 120000,
@@ -226,6 +239,14 @@ try {
     errores.length
       ? `    la consola dijo: ${errores.slice(0, 3).join(" | ")}`
       : "    y la consola no dijo nada: o tardó de más, o se quedó esperando un dato",
+  );
+  const colgadas = [...pendientes.entries()]
+    .map(([r, desde]) => `${((Date.now() - desde) / 1000).toFixed(0)} s  ${r.url().replace(/^https?:\/\/[^/]+/, "")}`)
+    .slice(0, 8);
+  console.log(
+    colgadas.length
+      ? `    peticiones sin terminar:\n      ${colgadas.join("\n      ")}`
+      : "    y ninguna petición quedó abierta: lo que espera no es la red",
   );
   await navegador.close();
   await server.close();
