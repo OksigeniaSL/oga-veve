@@ -40,6 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
     ala, cabina, cilindro, exportar, helice, limpiar, montante, perfil,
     pintar, suavizar,
+    franja,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -53,6 +54,31 @@ CUERDA = 1.7
 LARGO = 8.2
 ALTO_FUSELAJE = 1.30
 ANCHO_FUSELAJE = 1.15
+
+# **Los ocho aros del fuselaje**, a nivel de módulo porque la línea de cintura
+# se apoya en ellos para pegarse al casco de verdad. Ver `aro`.
+#
+# Morro afilado, hombros anchos donde van las dos carlingas, y afinando hasta
+# la cola. Con subdivisión esto es una superficie, no un tubo.
+AROS = [
+    (-LARGO * 0.50, ANCHO_FUSELAJE * 0.42, ALTO_FUSELAJE * 0.46, 0.02),
+    (-LARGO * 0.42, ANCHO_FUSELAJE * 0.86, ALTO_FUSELAJE * 0.90, 0.00),
+    (-LARGO * 0.26, ANCHO_FUSELAJE * 1.00, ALTO_FUSELAJE * 1.00, 0.00),
+    (-LARGO * 0.06, ANCHO_FUSELAJE * 0.96, ALTO_FUSELAJE * 0.98, -0.01),
+    (LARGO * 0.12, ANCHO_FUSELAJE * 0.80, ALTO_FUSELAJE * 0.82, -0.02),
+    (LARGO * 0.30, ANCHO_FUSELAJE * 0.52, ALTO_FUSELAJE * 0.58, -0.02),
+    (LARGO * 0.44, ANCHO_FUSELAJE * 0.26, ALTO_FUSELAJE * 0.34, 0.00),
+    (LARGO * 0.50, ANCHO_FUSELAJE * 0.14, ALTO_FUSELAJE * 0.22, 0.02),
+]
+
+
+def aro(z):
+    """Cuánto mide el fuselaje a esa altura del morro. Interpolando los aros."""
+    for (z0, a0, h0, y0), (z1, a1, h1, y1) in zip(AROS, AROS[1:]):
+        if z <= z1 or (z1, a1, h1, y1) == AROS[-1]:
+            t = max(0.0, min(1.0, (z - z0) / (z1 - z0)))
+            return (a0 + (a1 - a0) * t, h0 + (h1 - h0) * t, y0 + (y1 - y0) * t)
+    raise AssertionError
 # El hueco entre alas de un biplano: lo que lo hace biplano.
 HUECO = 1.55
 # Dónde va cada plano, medido desde el eje del fuselaje.
@@ -90,19 +116,23 @@ def construir():
 
     # ── Fuselaje ──────────────────────────────────────────────────────────
     #
-    # Ocho aros: morro afilado, hombros anchos donde va la cabina, y afinando
-    # hasta la cola. Con subdivisión esto es una superficie, no un tubo.
-    cuerpo = perfil("fuselaje", [
-        (-LARGO * 0.50, ANCHO_FUSELAJE * 0.42, ALTO_FUSELAJE * 0.46, 0.02),
-        (-LARGO * 0.42, ANCHO_FUSELAJE * 0.86, ALTO_FUSELAJE * 0.90, 0.00),
-        (-LARGO * 0.26, ANCHO_FUSELAJE * 1.00, ALTO_FUSELAJE * 1.00, 0.00),
-        (-LARGO * 0.06, ANCHO_FUSELAJE * 0.96, ALTO_FUSELAJE * 0.98, -0.01),
-        (LARGO * 0.12, ANCHO_FUSELAJE * 0.80, ALTO_FUSELAJE * 0.82, -0.02),
-        (LARGO * 0.30, ANCHO_FUSELAJE * 0.52, ALTO_FUSELAJE * 0.58, -0.02),
-        (LARGO * 0.44, ANCHO_FUSELAJE * 0.26, ALTO_FUSELAJE * 0.34, 0.00),
-        (LARGO * 0.50, ANCHO_FUSELAJE * 0.14, ALTO_FUSELAJE * 0.22, 0.02),
-    ])
+    cuerpo = perfil("fuselaje", AROS)
     piezas.append(suavizar(cuerpo, subdividir=2, biselar=0))
+
+    # ── La línea de cintura, y **ninguna puerta** ─────────────────────────
+    #
+    # La franja sí: un tubo liso y de un solo color se lee como una cápsula, y
+    # un biplano de escuela lleva su raya de toda la vida a lo largo del
+    # costado.
+    #
+    # La puerta no, y es a propósito. Un biplano de instrucción tiene **dos
+    # carlingas abiertas** y se entra pisando el ala y metiendo la pierna: no
+    # hay puerta de pasaje que dibujar. Ponerle una porque la llevan los otros
+    # cinco sería justo lo que esta casa no hace — falsear para que quede
+    # bonito. Lo que se enseña aquí tiene que reconocerse el día que se vea de
+    # verdad.
+    piezas.append(franja("cintura", aro, -LARGO * 0.30, LARGO * 0.42,
+                         -ALTO_FUSELAJE * 0.10, 0.12, grosor=0.022, paso=0.35))
 
     # ── Capó del radial ───────────────────────────────────────────────────
     #

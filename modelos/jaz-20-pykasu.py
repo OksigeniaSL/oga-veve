@@ -29,6 +29,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import (  # noqa: E402
     ala, cabina, cilindro, exportar, helice, limpiar, perfil, puntal,
     suavizar, ventanillas,
+    franja,
+    puerta,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -42,6 +44,34 @@ CUERDA = 1.5
 LARGO = 8.28
 ALTO_FUSELAJE = 1.24
 ANCHO_FUSELAJE = 1.02
+
+# **Los nueve aros del fuselaje**, a nivel de módulo porque ya no los usa solo
+# quien lo construye: la puerta y la línea de cintura se apoyan en ellos para
+# pegarse al casco de verdad en vez de a un cilindro supuesto. Es lo mismo que
+# ya hacían los tres grandes. Ver `aro`.
+#
+# Morro corto y romo —detrás va un motor de cuatro cilindros opuestos, que es
+# ancho y plano—, cabina alta, y una cola larga y fina.
+AROS = [
+    (-LARGO * 0.50, ANCHO_FUSELAJE * 0.46, ALTO_FUSELAJE * 0.40, 0.06),
+    (-LARGO * 0.44, ANCHO_FUSELAJE * 0.82, ALTO_FUSELAJE * 0.70, 0.03),
+    (-LARGO * 0.34, ANCHO_FUSELAJE * 0.98, ALTO_FUSELAJE * 0.86, 0.00),
+    (-LARGO * 0.16, ANCHO_FUSELAJE * 1.00, ALTO_FUSELAJE * 0.94, -0.01),
+    (LARGO * 0.02, ANCHO_FUSELAJE * 0.96, ALTO_FUSELAJE * 0.90, -0.02),
+    (LARGO * 0.18, ANCHO_FUSELAJE * 0.74, ALTO_FUSELAJE * 0.72, -0.02),
+    (LARGO * 0.32, ANCHO_FUSELAJE * 0.48, ALTO_FUSELAJE * 0.52, 0.00),
+    (LARGO * 0.44, ANCHO_FUSELAJE * 0.28, ALTO_FUSELAJE * 0.36, 0.04),
+    (LARGO * 0.50, ANCHO_FUSELAJE * 0.16, ALTO_FUSELAJE * 0.26, 0.08),
+]
+
+
+def aro(z):
+    """Cuánto mide el fuselaje a esa altura del morro. Interpolando los aros."""
+    for (z0, a0, h0, y0), (z1, a1, h1, y1) in zip(AROS, AROS[1:]):
+        if z <= z1 or (z1, a1, h1, y1) == AROS[-1]:
+            t = max(0.0, min(1.0, (z - z0) / (z1 - z0)))
+            return (a0 + (a1 - a0) * t, h0 + (h1 - h0) * t, y0 + (y1 - y0) * t)
+    raise AssertionError
 
 # **El ala va encima de la cabina, que es lo que hace a este avión lo que es.**
 #
@@ -90,20 +120,24 @@ def construir():
 
     # ── Fuselaje ──────────────────────────────────────────────────────────
     #
-    # Nueve aros: morro corto y romo —detrás va un motor de cuatro cilindros
-    # opuestos, que es ancho y plano—, cabina alta, y una cola larga y fina.
-    cuerpo = perfil("fuselaje", [
-        (-LARGO * 0.50, ANCHO_FUSELAJE * 0.46, ALTO_FUSELAJE * 0.40, 0.06),
-        (-LARGO * 0.44, ANCHO_FUSELAJE * 0.82, ALTO_FUSELAJE * 0.70, 0.03),
-        (-LARGO * 0.34, ANCHO_FUSELAJE * 0.98, ALTO_FUSELAJE * 0.86, 0.00),
-        (-LARGO * 0.16, ANCHO_FUSELAJE * 1.00, ALTO_FUSELAJE * 0.94, -0.01),
-        (LARGO * 0.02, ANCHO_FUSELAJE * 0.96, ALTO_FUSELAJE * 0.90, -0.02),
-        (LARGO * 0.18, ANCHO_FUSELAJE * 0.74, ALTO_FUSELAJE * 0.72, -0.02),
-        (LARGO * 0.32, ANCHO_FUSELAJE * 0.48, ALTO_FUSELAJE * 0.52, 0.00),
-        (LARGO * 0.44, ANCHO_FUSELAJE * 0.28, ALTO_FUSELAJE * 0.36, 0.04),
-        (LARGO * 0.50, ANCHO_FUSELAJE * 0.16, ALTO_FUSELAJE * 0.26, 0.08),
-    ])
+    cuerpo = perfil("fuselaje", AROS)
     piezas.append(suavizar(cuerpo, subdividir=2, biselar=0))
+
+    # ── Lo que hace que no parezca una cápsula ────────────────────────────
+    #
+    # La puerta y la franja, como en los tres grandes. En una avioneta importa
+    # todavía más: es el avión que vuela quien tiene cuatro años, y un tubo
+    # liso no dice ni de qué tamaño es ni para dónde va.
+    #
+    # **Y la puerta es la de una avioneta de verdad**: una sola por costado,
+    # justo detrás del montante del ala, de un metro escaso de alto. Por ahí
+    # se entra al asiento de la izquierda y por ahí se sale. Ver `puerta` en
+    # `comun.py`.
+    piezas += puerta("puerta", aro, -LARGO * 0.11, 0.02, 0.92, 0.82,
+                     grosor=0.022)
+    # Y la línea de cintura, baja y fina: la raya de una escuela de vuelo.
+    piezas.append(franja("cintura", aro, -LARGO * 0.34, LARGO * 0.44,
+                         -ALTO_FUSELAJE * 0.24, 0.10, grosor=0.022, paso=0.35))
 
     # ── Capó ──────────────────────────────────────────────────────────────
     #
