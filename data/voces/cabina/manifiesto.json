@@ -6,6 +6,9 @@
     "cabina.airspeed": {
       "ms": 750
     },
+    "cabina.autopilotDisconnect": {
+      "ms": 1091
+    },
     "cabina.fifty": {
       "ms": 657
     },
@@ -21,6 +24,9 @@
     "cabina.goAround": {
       "ms": 1515
     },
+    "cabina.minimums": {
+      "ms": 742
+    },
     "cabina.obstacleAhead": {
       "ms": 949
     },
@@ -32,6 +38,9 @@
     },
     "cabina.slowDown": {
       "ms": 1105
+    },
+    "cabina.stall": {
+      "ms": 751
     },
     "cabina.ten": {
       "ms": 1464
@@ -71,6 +80,9 @@
     "cabina.airspeed": [
       "cabina.airspeed"
     ],
+    "cabina.autopilotDisconnect": [
+      "cabina.autopilotDisconnect"
+    ],
     "cabina.fifty": [
       "cabina.fifty"
     ],
@@ -86,6 +98,9 @@
     "cabina.goAround": [
       "cabina.goAround"
     ],
+    "cabina.minimums": [
+      "cabina.minimums"
+    ],
     "cabina.obstacleAhead": [
       "cabina.obstacleAhead"
     ],
@@ -97,6 +112,9 @@
     ],
     "cabina.slowDown": [
       "cabina.slowDown"
+    ],
+    "cabina.stall": [
+      "cabina.stall"
     ],
     "cabina.ten": [
       "cabina.ten"

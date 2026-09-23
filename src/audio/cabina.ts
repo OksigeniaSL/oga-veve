@@ -51,21 +51,30 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   "go around": "cabina.goAround",
   "off the runway": "cabina.offTheRunway",
   /*
-   * **Y lo que el juego dice y todavía no está grabado, no entra aquí.**
+   * **Y los tres que el avión ya sabía y no decía.**
    *
-   * La tabla y el manifiesto cuadran en las dos direcciones, y las dos pruebas
-   * de `cabina.test.ts` lo exigen: una grabación sin clave es una frase que se
-   * baja a cada tablet para no sonar nunca, y una clave sin grabación apunta a
-   * un audio que no existe.
+   * Los estados están calculados desde hace tiempo y tienen su luz en el panel
+   * —ver `flight/avisos-de-cabina.ts`—, y el canto de cabina no existía: quien
+   * miraba la pantalla se enteraba y quien depende del sonido, no. Un canal
+   * menos, y en los avisos que más importan.
    *
-   * Así que una frase nueva entra aquí **con su toma**, no antes. Hasta
-   * entonces la dice la voz del navegador, que es lo que hay — y el juego sí
-   * la dice, que es lo que importa.
+   * Fraseología real y sin traducir jamás, como IAS o HDG: el día que alguien
+   * oiga «stall, stall» en una cabina de verdad tiene que reconocerlo.
    *
-   * Pendientes de tomar, con el juego pidiéndolas ya: «stall, stall»,
-   * «autopilot disconnect» y «minimums». Las tres cuelgan de estados que el
-   * avión calcula desde hace tiempo y que hasta ahora solo tenían luz.
+   * Entran aquí **con su toma**, no antes: esta tabla y el manifiesto cuadran
+   * en las dos direcciones y lo exigen dos pruebas de `cabina.test.ts`. Una
+   * clave sin grabación apunta a un audio que no existe; una grabación sin
+   * clave se baja a cada tablet para no sonar nunca.
+   *
+   * `minimums` es el caso curioso: el juego lo decía desde hace tiempo y no
+   * estaba en esta tabla, así que salía por la voz del navegador teniendo
+   * grabación posible. Ahora suena como las demás.
+   *
+   * Y no está `overspeed`: de eso el juego dice «too fast», que ya estaba.
    */
+  "stall, stall": "cabina.stall",
+  "autopilot disconnect": "cabina.autopilotDisconnect",
+  minimums: "cabina.minimums",
 };
 
 /**

@@ -47,7 +47,19 @@ describe("los cantos de cabina", () => {
   });
 
   it("lo que no está grabado se queda sin clave", () => {
-    expect(claveDeCabina("minimums")).toBe(null);
+    /*
+     * El ejemplo era «minimums», y dejó de valer el día que se grabó: el juego
+     * lo decía desde hacía tiempo por la voz del navegador, y en cuanto tuvo
+     * toma pasó a tener clave. La prueba falló, y eso está bien — un ejemplo
+     * que caduca avisa de que caducó.
+     *
+     * Ahora son dos que siguen sin grabación y que el juego tampoco pide:
+     * «sink rate» y «positive rate», del guion de #65. Cuando se graben, esta
+     * prueba volverá a fallar y habrá que buscar otras — que es exactamente
+     * lo que tiene que pasar.
+     */
+    expect(claveDeCabina("sink rate")).toBe(null);
+    expect(claveDeCabina("positive rate")).toBe(null);
     expect(claveDeCabina("cleared to land")).toBe(null);
   });
 });
