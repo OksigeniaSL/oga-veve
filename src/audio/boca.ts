@@ -369,17 +369,10 @@ export class Boca {
      * decirla ni aunque haya silencio. Ver la cabecera.
      */
     if (clave && !urgente) {
-      const dicha = this.dichas.get(clave);
-      if (dicha !== undefined && ahora - dicha < NO_REPETIR) {
-        this.apuntarDescarte(clave, "repetida");
+      const porQueNo = this.noTocaDecirla(clave, ahora);
+      if (porQueNo) {
+        this.apuntarDescarte(clave, porQueNo);
         return;
-      }
-      for (const otra of riñenCon(clave)) {
-        const cuando = this.dichas.get(otra);
-        if (cuando !== undefined && ahora - cuando < RIÑEN) {
-          this.apuntarDescarte(clave, `riñe con ${otra}`);
-          return;
-        }
       }
     }
 
@@ -595,6 +588,52 @@ export class Boca {
     this.hablandoAhora = null;
     this.cual++;
     this.reloj.cancelar();
+  }
+
+  /**
+   * Por qué una frase **no toca** decirse ahora, o `null` si toca.
+   *
+   * Es la regla de no repetirse y no contradecirse, en un solo sitio. Estaba
+   * escrita dentro de `pedir` y hacía falta también fuera: ver `anotarSinVoz`.
+   * Dos copias de la misma regla es como un día una dice una cosa y la otra
+   * otra.
+   */
+  private noTocaDecirla(clave: string, ahora: number): string | null {
+    const dicha = this.dichas.get(clave);
+    if (dicha !== undefined && ahora - dicha < NO_REPETIR) return "repetida";
+    for (const otra of riñenCon(clave)) {
+      const cuando = this.dichas.get(otra);
+      if (cuando !== undefined && ahora - cuando < RIÑEN) return `riñe con ${otra}`;
+    }
+    return null;
+  }
+
+  /**
+   * **Apunta una frase que no va a sonar, con las mismas reglas que si sonara.**
+   *
+   * Cuando no hay voz —ni grabada ni del navegador— la boca no pide la palabra,
+   * y eso está bien: pedirla para no decir nada bloquearía lo que viene detrás.
+   * Pero el historial sí la apuntaba como dicha, **y sin pasar por la regla de
+   * no repetirse**. Así el banco —que corre sin voces— contaba «despacio» nueve
+   * veces donde con voz habrían sonado una o dos, y daba un rojo que no era
+   * del juego. Medido en Tenerife Sur, en tiradas seguidas: un rojo distinto
+   * cada vez, y uno de ellos era este.
+   *
+   * Devuelve si toca decirla. Si toca, la da por dicha —igual que `arrancar`—
+   * para que la siguiente repetición se caiga igual que se caería con voz.
+   */
+  anotarSinVoz(urgencia: Urgencia, clave?: string): boolean {
+    if (!clave) return true;
+    const ahora = this.reloj.ahora();
+    if (urgencia !== "urgente") {
+      const porQueNo = this.noTocaDecirla(clave, ahora);
+      if (porQueNo) {
+        this.apuntarDescarte(clave, porQueNo);
+        return false;
+      }
+    }
+    this.dichas.set(clave, ahora);
+    return true;
   }
 
   /** Vuelo nuevo: se olvida hasta lo que ya había dicho. */

@@ -422,6 +422,12 @@ export class InstructorGrabado implements Instructor {
      * lección. Lo que suena, suena; lo que no, no estorba.
      */
     if (!this.suplente.disponible) {
+      /*
+       * Y se apunta con las mismas reglas que si sonara: sin esto, el
+       * historial contaba repeticiones que con voz nunca habrían pasado. Ver
+       * `anotarSinVoz` en `audio/boca.ts`.
+       */
+      if (!this.boca.anotarSinVoz(urgencia ?? "normal", clave)) return;
       this.ultima = clave ?? texto;
       this.apuntar();
       return;

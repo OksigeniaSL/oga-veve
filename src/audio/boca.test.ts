@@ -659,3 +659,57 @@ describe("lo que manda la torre", () => {
     expect(dicho).toEqual(["autorizado", "terreno"]);
   });
 });
+
+/**
+ * **Lo que no suena se apunta con las mismas reglas que lo que suena.**
+ *
+ * Sin voz —ni grabada ni del navegador— la boca no pide la palabra, y eso está
+ * bien. Pero el historial apuntaba la frase como dicha **sin la regla de no
+ * repetirse**, así que el banco —que corre sin voces— contaba «despacio» nueve
+ * veces en Tenerife Sur donde con voz habrían sonado una o dos, y daba un rojo
+ * que no era del juego.
+ */
+describe("anotar sin voz", () => {
+  it("la primera vez, toca", () => {
+    const b = boca();
+    expect(b.anotarSinVoz("normal", "vuelo.despacio")).toBe(true);
+  });
+
+  it("y repetida antes de tiempo, no — igual que si sonara", () => {
+    const b = boca();
+    b.anotarSinVoz("normal", "vuelo.despacio");
+    reloj += NO_REPETIR - 1;
+    expect(b.anotarSinVoz("normal", "vuelo.despacio")).toBe(false);
+  });
+
+  it("y pasado su tiempo, vuelve a tocar", () => {
+    const b = boca();
+    b.anotarSinVoz("normal", "vuelo.despacio");
+    reloj += NO_REPETIR + 1;
+    expect(b.anotarSinVoz("normal", "vuelo.despacio")).toBe(true);
+  });
+
+  it("y lo urgente no se calla nunca, que para eso es urgente", () => {
+    const b = boca();
+    b.anotarSinVoz("urgente", "vuelo.terrenoSube");
+    reloj += 100;
+    expect(b.anotarSinVoz("urgente", "vuelo.terrenoSube")).toBe(true);
+  });
+
+  it("y la misma regla que pedir la palabra: lo que se calla con voz se calla sin ella", () => {
+    /*
+     * La prueba que de verdad importa. Las dos ramas tienen que decir lo mismo
+     * sobre la misma frase, porque la regla está en un solo sitio —
+     * `noTocaDecirla`— y no en dos copias que un día digan cosas distintas.
+     */
+    const conVoz = boca();
+    const sinVoz = new Boca({ ahora: () => reloj, cancelar: () => {} });
+    let sonadas = 0;
+    conVoz.pedir("normal", (listo) => { sonadas++; listo(); }, "vuelo.despacio");
+    sinVoz.anotarSinVoz("normal", "vuelo.despacio");
+    reloj += 1000;
+    conVoz.pedir("normal", (listo) => { sonadas++; listo(); }, "vuelo.despacio");
+    expect(sonadas).toBe(1);
+    expect(sinVoz.anotarSinVoz("normal", "vuelo.despacio")).toBe(false);
+  });
+});
