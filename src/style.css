@@ -2274,6 +2274,22 @@ button.motor__tecla::after {
   }
 }
 
+/*
+ * **Y en un teléfono apaisado, el tutor a la izquierda.** Entre la barra de
+ * arriba y el cuadro no queda sitio —en la lección de aterrizar el cuadro va
+ * alto—, y «Bajá el motor» se montaba sobre la segunda fila de botones en los
+ * quince campos. A la izquierda, entre la pausa y la palanca, hay un hueco
+ * libre: ahí.
+ */
+@media (pointer: coarse) and (max-height: 460px) {
+  .hud .tutor {
+    left: calc(16px / var(--escala));
+    transform: none;
+    top: auto;
+    bottom: calc((20px + 150px + 10px) / var(--escala));
+  }
+}
+
 /* Y en un teléfono apaisado, un poco más pequeño: subido por encima de los
    pedales y a tamaño de tablet, se metía en la tarjeta de la llave. */
 @media (pointer: coarse) and (max-height: 460px) {

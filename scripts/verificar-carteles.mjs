@@ -353,6 +353,21 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       tutor.getBoundingClientRect(),
       cuadro.getBoundingClientRect(),
     );
+    /*
+     * Y el tutor fuera de los botones de arriba. No se cazaba con «todos los
+     * botones reciben el toque» porque el tutor deja pasar los toques: el
+     * botón de debajo seguía funcionando, pero no se veía.
+     */
+    const tutorSobreBotones = [
+      ...document.querySelectorAll(".hud__arriba button, .hud__vistas button"),
+    ]
+      .filter(
+        (b) =>
+          !b.closest("[hidden]") &&
+          b.getBoundingClientRect().width > 2 &&
+          pisa(tutor.getBoundingClientRect(), b.getBoundingClientRect()),
+      )
+      .map((b) => b.dataset.hud ?? String(b.className).slice(0, 20));
     hud.classList.add("hud--avisando");
     aviso.classList.add("aviso-hud--visible");
     texto.textContent = "¡El suelo! Subí";
@@ -391,6 +406,7 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       aviso: alFrente(aviso),
       mensaje: alFrente(hint),
       tutorPisa,
+      tutorSobreBotones,
       timonPisa,
       rinconPisa,
       mandosPisan,
@@ -485,6 +501,12 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         abajo.timonPisa ? "encima de las esferas" : "libre",
         "un mando encima de la brújula la tapa justo a quien la usa para saber adónde va",
       );
+    comprobar(
+      `${donde}: el tutor no tapa los botones de arriba`,
+      abajo.tutorSobreBotones.length === 0,
+      abajo.tutorSobreBotones.join(", ") || "libre",
+      "",
+    );
     comprobar(
       `${donde}: el tutor no tapa las esferas`,
       !abajo.tutorPisa,
