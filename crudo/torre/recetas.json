@@ -312,5 +312,16 @@
     "{c4}",
     "{c5}",
     "torre.solo.roja"
+  ],
+  "torre.solo.aterrizar": [
+    "torre.solo.aterrizar"
+  ],
+  "torre.aterrizar": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.aterrizar"
   ]
 }

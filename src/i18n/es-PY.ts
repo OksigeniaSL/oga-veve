@@ -242,6 +242,9 @@ export const ES_PY = {
   // información**: quien no distinga el rojo del verde tiene que poder saberlo.
   "torre.verde": "{indicativo}, podés entrar",
   "torre.roja": "{indicativo}, esperá acá",
+  /* Y la verde a un avión **en el aire**, que en las señales de luz de verdad
+     quiere decir otra cosa: autorizado a aterrizar. Ver `luzDeTorre`. */
+  "torre.aterrizar": "{indicativo}, podés aterrizar",
   /*
    * ── Y la misma torre, en Canarias ──────────────────────────────────────
    *
@@ -260,6 +263,7 @@ export const ES_PY = {
    */
   "torre.canario.verde": "{indicativo}, puedes entrar",
   "torre.canario.roja": "{indicativo}, espera ahí",
+  "torre.canario.aterrizar": "{indicativo}, puedes aterrizar",
 
   /*
    * ── La megafonía de cabina: la comandante Jazlyn ────────────────────────

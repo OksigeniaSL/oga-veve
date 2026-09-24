@@ -3893,7 +3893,14 @@ export class Game {
       this.avisar("success");
       // «cleared to land» no tiene variantes y no las va a tener: es
       // fraseología fija. Ver `audio/variantes.ts`.
-      this.cantar("cleared to land", libre.texto, libre.id);
+      //
+      // Y en los peldaños con cifras ya lo dice la torre por radio, detrás de
+      // la lámpara —ver `luzDeTorre`—: dicho también aquí sonaba dos veces.
+      if (
+        this.tier.instruments !== "numeric" &&
+        this.tier.instruments !== "full"
+      )
+        this.cantar("cleared to land", libre.texto, libre.id);
       this.agenda.luego(SE_QUEDA_EL_ARO, () => {
         if (this.laAproximacion.mandanFrustrar) return;
         this.luzDeTorre(null);
@@ -3991,8 +3998,16 @@ export class Game {
     luz: "verde" | "roja" | null,
     rojaDice: "esperar" | "alAire" = "esperar",
   ): void {
-    this.hud.setLuzDeTorre(luz, rojaDice, this.miIndicativo.dicho);
-    const cual = luz === null ? null : `${luz}:${rojaDice}`;
+    /*
+     * **Y la verde no dice lo mismo en el aire que en tierra.** En las señales
+     * de luz de verdad, la verde fija a un avión en tierra es «puede
+     * despegar» y a uno en vuelo, «puede aterrizar». Aquí la verde en el aire
+     * —la que se enciende al levantar una orden de frustrar— decía «podés
+     * entrar» y, por radio, **«cleared for take-off»** con el avión en final.
+     */
+    const enElAire = !this.flight.state.onGround;
+    this.hud.setLuzDeTorre(luz, rojaDice, this.miIndicativo.dicho, enElAire);
+    const cual = luz === null ? null : `${luz}:${rojaDice}:${enElAire}`;
     if (cual === this.ultimaLuzDeTorre) return;
     this.ultimaLuzDeTorre = cual;
     if (!luz) return;
@@ -4004,7 +4019,9 @@ export class Game {
      */
     const base =
       luz === "verde"
-        ? "torre.verde"
+        ? enElAire
+          ? "torre.aterrizar"
+          : "torre.verde"
         : rojaDice === "alAire"
           ? "palabra.alAire"
           : "torre.roja";
@@ -4070,7 +4087,9 @@ export class Game {
      */
     const enRadio =
       luz === "verde"
-        ? "cleared for take-off"
+        ? enElAire
+          ? "cleared to land"
+          : "cleared for take-off"
         : rojaDice === "alAire"
           ? "go around, runway occupied"
           : "hold short of the runway";

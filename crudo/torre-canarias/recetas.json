@@ -312,5 +312,16 @@
     "{c4}",
     "{c5}",
     "torre.canario.solo.roja"
+  ],
+  "torre.canario.solo.aterrizar": [
+    "torre.canario.solo.aterrizar"
+  ],
+  "torre.canario.aterrizar": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.aterrizar"
   ]
 }

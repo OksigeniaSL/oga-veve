@@ -140,6 +140,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.sube",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya subís: metélo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.bajasRapido",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -2294,6 +2301,20 @@
     "idioma": "en",
     "texto": "line up and wait",
     "para": "entrá y esperá en el eje"
+  },
+  {
+    "id": "torre.solo.aterrizar",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "podés aterrizar",
+    "para": "la lámpara verde con el avión en el aire: autorizado a aterrizar"
+  },
+  {
+    "id": "torre.canario.solo.aterrizar",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "puedes aterrizar",
+    "para": "la lámpara verde con el avión en el aire: autorizado a aterrizar"
   },
   {
     "id": "fonetico.alfa",

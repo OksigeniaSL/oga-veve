@@ -481,6 +481,27 @@ for (const [id, texto, para] of TORRE_SOLO) {
   total += texto.length;
 }
 /*
+ * **Y la lámpara verde a un avión en el aire**, que no dice «podés entrar»:
+ * en las señales de luz de verdad, la verde fija a un avión en vuelo es
+ * «autorizado a aterrizar». Va troceada como las demás de la lámpara —la
+ * matrícula delante la pone la receta—, en las dos voces de torre.
+ */
+const LAMPARA_SOLO = [
+  ["torre", "torre.solo.aterrizar", "podés aterrizar"],
+  ["torre-canarias", "torre.canario.solo.aterrizar", "puedes aterrizar"],
+];
+for (const [voz, id, texto] of LAMPARA_SOLO) {
+  filas.push({
+    id,
+    voz,
+    idioma: "es",
+    texto,
+    para: "la lámpara verde con el avión en el aire: autorizado a aterrizar",
+  });
+  total += texto.length;
+}
+
+/*
  * **Y la torre de Canarias dice lo mismo, con su voz.**
  *
  * Aquí había un agujero que se oía y nadie había medido: en Tenerife la

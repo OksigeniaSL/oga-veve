@@ -120,6 +120,9 @@
     "lado.right": {
       "ms": 404
     },
+    "torre.canario.solo.aterrizar": {
+      "ms": 1063
+    },
     "torre.canario.solo.clearedLand": {
       "ms": 899
     },
@@ -459,6 +462,17 @@
       "{c4}",
       "{c5}",
       "torre.canario.solo.roja"
+    ],
+    "torre.canario.solo.aterrizar": [
+      "torre.canario.solo.aterrizar"
+    ],
+    "torre.canario.aterrizar": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.aterrizar"
     ]
   }
 }

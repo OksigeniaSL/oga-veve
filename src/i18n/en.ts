@@ -224,6 +224,8 @@ export const EN: Dictionary = {
   // el castellano y la voz. Ver `i18n/habla.ts`.
   "torre.canario.verde": "{indicativo}, cleared to enter",
   "torre.canario.roja": "{indicativo}, hold here",
+  "torre.aterrizar": "{indicativo}, cleared to land",
+  "torre.canario.aterrizar": "{indicativo}, cleared to land",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
   // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
   "ala.titulo": "How a wing flies",

@@ -120,6 +120,9 @@
     "lado.right": {
       "ms": 540
     },
+    "torre.solo.aterrizar": {
+      "ms": 1084
+    },
     "torre.solo.clearedLand": {
       "ms": 1015
     },
@@ -459,6 +462,17 @@
       "{c4}",
       "{c5}",
       "torre.solo.roja"
+    ],
+    "torre.solo.aterrizar": [
+      "torre.solo.aterrizar"
+    ],
+    "torre.aterrizar": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.aterrizar"
     ]
   }
 }

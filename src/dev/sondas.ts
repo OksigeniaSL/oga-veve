@@ -1230,6 +1230,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     mandarFrustrar: (como: "auto" | "siempre" | "nunca" = "siempre") => {
       juego.laAproximacion.ordenes = como;
     },
+    /**
+     * Y levantarla, como cuando la vaca se va de la pista: la torre da verde
+     * con el avión en el aire. Para mirar qué dice la lámpara ahí, que es
+     * «podés aterrizar» y no «podés entrar». Ver `luzDeTorre`.
+     */
+    levantarLaOrden: () => juego.laAproximacion.levantarLaOrden(),
     /** El percance que ha parado el vuelo, si lo hay. Congela el avión. */
     /**
      * Qué bulto hay más cerca de un punto, y de qué tamaño.

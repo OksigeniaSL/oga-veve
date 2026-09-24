@@ -19,6 +19,7 @@ instructor	instructor/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ah
 instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.terrenoSube.ogg	es-PY	Terreno. Subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.perdida.ogg	es-PY	Pérdida. Bajá el morro	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.sube.ogg	es-PY	Ya subís: metélo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.bajasRapido.ogg	es-PY	Bajás muy rápido	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoSuelto.ogg	es-PY	Se soltó el piloto automático	lo que toca hacer ahora, en vuelo y en tierra
@@ -327,6 +328,8 @@ torre	torre/torre.solo.clearedLand.ogg	en	cleared to land	el de llegada
 torre	torre/torre.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada
 torre	torre/torre.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
+torre	torre/torre.solo.aterrizar.ogg	es	podés aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
+torre-canarias	torre-canarias/torre.canario.solo.aterrizar.ogg	es	puedes aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre-canarias	torre-canarias/fonetico.alfa.ogg	en	Alfa	una letra de la matrícula, dicha en Canarias
 torre-canarias	torre-canarias/fonetico.bravo.ogg	en	Bravo	una letra de la matrícula, dicha en Canarias
 torre-canarias	torre-canarias/fonetico.charlie.ogg	en	Charlie	una letra de la matrícula, dicha en Canarias

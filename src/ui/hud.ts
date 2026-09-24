@@ -2458,6 +2458,8 @@ export class Hud {
      * salía tal cual en la tarjeta: se vio en la web, en Pettirossi.
      */
     indicativo = "",
+    /** Si el avión está en el aire: ahí la verde es «podés aterrizar». */
+    enElAire = false,
   ): void {
     const caja = this.torre;
     if (!caja) return;
@@ -2478,9 +2480,13 @@ export class Hud {
     if (texto)
       texto.textContent =
         luz === "verde"
-          ? t(comoSeDiceAqui("torre.verde", this.habla) as TranslationKey, {
-              indicativo,
-            })
+          ? t(
+              comoSeDiceAqui(
+                enElAire ? "torre.aterrizar" : "torre.verde",
+                this.habla,
+              ) as TranslationKey,
+              { indicativo },
+            )
           : luz
             ? t(
                 comoSeDiceAqui(

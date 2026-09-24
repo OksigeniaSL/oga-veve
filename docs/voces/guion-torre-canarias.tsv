@@ -1,45 +1,46 @@
-001	fonetico.alfa	Alfa
-002	fonetico.bravo	Bravo
-003	fonetico.charlie	Charlie
-004	fonetico.delta	Delta
-005	fonetico.echo	Echo
-006	fonetico.foxtrot	Foxtrot
-007	fonetico.golf	Golf
-008	fonetico.hotel	Hotel
-009	fonetico.india	India
-010	fonetico.juliett	Juliett
-011	fonetico.kilo	Kilo
-012	fonetico.lima	Lima
-013	fonetico.mike	Mike
-014	fonetico.november	November
-015	fonetico.oscar	Oscar
-016	fonetico.papa	Papa
-017	fonetico.quebec	Quebec
-018	fonetico.romeo	Romeo
-019	fonetico.sierra	Sierra
-020	fonetico.tango	Tango
-021	fonetico.uniform	Uniform
-022	fonetico.victor	Victor
-023	fonetico.whiskey	Whiskey
-024	fonetico.xray	X-ray
-025	fonetico.yankee	Yankee
-026	fonetico.zulu	Zulu
-027	cifra.0	zero
-028	cifra.1	one
-029	cifra.2	two
-030	cifra.3	three
-031	cifra.4	four
-032	cifra.5	five
-033	cifra.6	six
-034	cifra.7	seven
-035	cifra.8	eight
-036	cifra.9	niner
-037	torre.canario.solo.runway	runway
-038	lado.left	left
-039	lado.right	right
-040	lado.center	center
-041	torre.canario.solo.clearedTakeoff	cleared for take-off
-042	torre.canario.solo.clearedLand	cleared to land
-043	torre.canario.solo.goAround	go around, runway occupied
-044	torre.canario.solo.holdShort	hold short of the runway
-045	torre.canario.solo.lineUpWait	line up and wait
+001	torre.canario.solo.aterrizar	puedes aterrizar
+002	fonetico.alfa	Alfa
+003	fonetico.bravo	Bravo
+004	fonetico.charlie	Charlie
+005	fonetico.delta	Delta
+006	fonetico.echo	Echo
+007	fonetico.foxtrot	Foxtrot
+008	fonetico.golf	Golf
+009	fonetico.hotel	Hotel
+010	fonetico.india	India
+011	fonetico.juliett	Juliett
+012	fonetico.kilo	Kilo
+013	fonetico.lima	Lima
+014	fonetico.mike	Mike
+015	fonetico.november	November
+016	fonetico.oscar	Oscar
+017	fonetico.papa	Papa
+018	fonetico.quebec	Quebec
+019	fonetico.romeo	Romeo
+020	fonetico.sierra	Sierra
+021	fonetico.tango	Tango
+022	fonetico.uniform	Uniform
+023	fonetico.victor	Victor
+024	fonetico.whiskey	Whiskey
+025	fonetico.xray	X-ray
+026	fonetico.yankee	Yankee
+027	fonetico.zulu	Zulu
+028	cifra.0	zero
+029	cifra.1	one
+030	cifra.2	two
+031	cifra.3	three
+032	cifra.4	four
+033	cifra.5	five
+034	cifra.6	six
+035	cifra.7	seven
+036	cifra.8	eight
+037	cifra.9	niner
+038	torre.canario.solo.runway	runway
+039	lado.left	left
+040	lado.right	right
+041	lado.center	center
+042	torre.canario.solo.clearedTakeoff	cleared for take-off
+043	torre.canario.solo.clearedLand	cleared to land
+044	torre.canario.solo.goAround	go around, runway occupied
+045	torre.canario.solo.holdShort	hold short of the runway
+046	torre.canario.solo.lineUpWait	line up and wait

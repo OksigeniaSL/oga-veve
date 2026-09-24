@@ -50,7 +50,12 @@ describe("la clave de cada frase", () => {
   });
 
   it("y esa clave existe de verdad en el diccionario", () => {
-    for (const base of ["torre.verde", "torre.roja", "palabra.alAire"]) {
+    for (const base of [
+      "torre.verde",
+      "torre.aterrizar",
+      "torre.roja",
+      "palabra.alAire",
+    ]) {
       const clave = comoSeDiceAqui(base, "canario");
       expect(Object.keys(ES_PY)).toContain(clave);
     }
@@ -110,7 +115,12 @@ describe("lo que se lee en la tarjeta de la torre", () => {
     for (const idioma of LOCALES) {
       setLocale(idioma);
       for (const habla of ["paraguayo", "canario"] as const)
-        for (const base of ["torre.verde", "torre.roja", "palabra.alAire"]) {
+        for (const base of [
+          "torre.verde",
+          "torre.aterrizar",
+          "torre.roja",
+          "palabra.alAire",
+        ]) {
           const clave = comoSeDiceAqui(base, habla) as TranslationKey;
           const dicho = t(clave, { indicativo: "Zulu Papa Alfa" });
           expect(dicho, `${idioma} ${clave}`).not.toMatch(/\{\w+\}/);
