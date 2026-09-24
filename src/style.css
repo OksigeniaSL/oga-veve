@@ -1995,6 +1995,77 @@ button.motor__tecla::after {
   }
 }
 
+/*
+ * **Y en un teléfono apaisado, el HUD entero a escala.**
+ *
+ * Todo lo de arriba está pensado para una tablet, con seiscientos píxeles de
+ * alto o más. Un teléfono en horizontal tiene cuatrocientos, y ahí no cabía:
+ * la franja de doscientos para los pulgares se comía media pantalla, la
+ * columna de la derecha —gas, freno, flaps y la tarjeta del destino— caía
+ * **entera por debajo del borde**, y en el peldaño de los pequeños la tarjeta
+ * de la llave se cortaba y se metía bajo el mando del motor. O sea que desde
+ * un móvil no se podía ni arrancar. Visto emulando uno de 915 × 412. Y la
+ * tablet de aula de 1024 × 600, para la que está escrito lo de arriba, dejaba
+ * igualmente los flaps y el destino fuera de la pantalla.
+ *
+ * Apretar cada pieza por separado no llegaba: dos columnas ensanchaban la
+ * rejilla y aplastaban la barra de arriba. Lo que funciona es dibujar el mismo
+ * reparto de la tablet **más pequeño**, y así no hay un segundo diseño que
+ * mantener. Los mandos de pulgar no escalan —son para el dedo, y el dedo no
+ * encoge—, así que las reservas que les dejan sitio se dividen por la escala
+ * para seguir midiendo lo mismo en pantalla.
+ *
+ * Las medidas que el HUD toma de sí mismo vienen en píxeles de pantalla y se
+ * convierten en `ui/escala.ts`; sin eso, cada hueco medido se quedaba
+ * reducido dos veces.
+ */
+@media (pointer: coarse) and (max-height: 640px) {
+  .hud {
+    --escala: 0.86;
+  }
+}
+@media (pointer: coarse) and (max-height: 560px) {
+  .hud {
+    --escala: 0.78;
+  }
+}
+@media (pointer: coarse) and (max-height: 460px) {
+  .hud {
+    --escala: 0.7;
+  }
+}
+@media (pointer: coarse) and (max-height: 400px) {
+  .hud {
+    --escala: 0.6;
+  }
+}
+@media (pointer: coarse) and (max-height: 640px) {
+  .hud {
+    zoom: var(--escala);
+    padding-bottom: calc(200px / var(--escala));
+    padding-left: calc(max(190px, env(safe-area-inset-left)) / var(--escala));
+    padding-right: calc(max(112px, env(safe-area-inset-right)) / var(--escala));
+  }
+
+  /*
+   * El rincón de avisos se pone **al lado** de la columna de mandos y no
+   * encima: apilados no caben en cuatrocientos de alto, y la columna, que es
+   * lo que se toca, sube hasta arriba. Y se aparta del mando del motor, que en
+   * la tablet le queda muy por debajo y aquí le quedaba al lado.
+   */
+  .hud .hud__derecha {
+    margin-top: 0;
+  }
+
+  /* Con `.hud` delante porque `.rincon` se define más abajo en esta hoja, y
+     a igual especificidad gana la última. */
+  .hud .rincon {
+    right: calc(
+      max(112px, env(safe-area-inset-right)) / var(--escala) + 116px + 12px
+    );
+  }
+}
+
 /* ── Créditos ─────────────────────────────────────────────────────────── */
 
 .creditos {

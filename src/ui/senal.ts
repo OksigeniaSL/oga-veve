@@ -14,6 +14,8 @@
  * lección. Aquí solo se pintan.
  */
 
+import { aPxDelHud } from "./escala";
+
 /** Un icono de veinticuatro por veinticuatro, como todos los del juego. */
 const icono = (cuerpo: string): string =>
   `<svg viewBox="0 0 24 24" aria-hidden="true">${cuerpo}</svg>`;
@@ -917,7 +919,7 @@ export class Senal {
     if (rincon)
       this.raiz.style.setProperty(
         "--rincon-alto",
-        `${Math.round(rincon.height)}px`,
+        `${Math.round(aPxDelHud(this.raiz, rincon.height))}px`,
       );
   }
 

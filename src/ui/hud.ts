@@ -50,6 +50,7 @@ import { canalesDe, type Peldano } from "../flight/escalera";
 import type { Galon } from "../flight/galones";
 import { manga as dibujarManga, MANGA_ALTO } from "./manga";
 import { reconocer } from "../flight/reconocimiento";
+import { aPxDelHud } from "./escala";
 
 /**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
@@ -1316,7 +1317,10 @@ export class Hud {
       if (caja.height > caja.width) continue;
       abajo = Math.max(abajo, caja.bottom);
     }
-    this.root.style.setProperty("--arriba-alto", `${Math.round(abajo)}px`);
+    this.root.style.setProperty(
+      "--arriba-alto",
+      `${Math.round(aPxDelHud(this.root, abajo))}px`,
+    );
     /*
      * Y lo que ocupa el rincón de la derecha —pictogramas y tarjeta—, para que
      * la columna de mandos no se le meta debajo.
@@ -1329,7 +1333,7 @@ export class Hud {
     const rincon = this.root.querySelector(".rincon")?.getBoundingClientRect();
     this.root.style.setProperty(
       "--rincon-alto",
-      `${rincon ? Math.round(rincon.height) : 0}px`,
+      `${rincon ? Math.round(aPxDelHud(this.root, rincon.height)) : 0}px`,
     );
   }
 
@@ -1368,7 +1372,9 @@ export class Hud {
      * fallara por ningún sitio.
      */
     const panel = this.root.querySelector('[data-hud="tablero"]');
-    const alto = panel ? panel.getBoundingClientRect().height : 0;
+    const alto = panel
+      ? aPxDelHud(this.root, panel.getBoundingClientRect().height)
+      : 0;
     this.root.style.setProperty("--panel-alto", `${alto ? alto + 10 : 0}px`);
   }
 
@@ -2171,7 +2177,9 @@ export class Hud {
     const barra = this.root.querySelector<HTMLElement>(".hud__arriba");
     if (!barra) return;
     const escribir = (): void => {
-      const alto = Math.round(barra.getBoundingClientRect().height);
+      const alto = Math.round(
+        aPxDelHud(this.root, barra.getBoundingClientRect().height),
+      );
       if (alto > 0) {
         this.root.style.setProperty("--alto-de-la-barra", `${alto}px`);
       }
