@@ -143,3 +143,21 @@ describe("la lluvia del METAR", () => {
     expect(m?.lluvia).toBe("nada");
   });
 });
+
+describe("lo que tapan las nubes y lo que se ve", () => {
+  it("la tapadura sale del parte, no de la altura", () => {
+    // BKN a mil pies salía como capa rala porque estaba por encima de 300 m.
+    expect(leerMetar("GCXO 241200Z 30012KT 4000 RA BKN010 OVC030 18/16 Q1012")?.tapadura).toBe(0.75);
+    expect(leerMetar("GCXO 241200Z 30012KT 9999 OVC008 18/16 Q1012")?.tapadura).toBe(1);
+  });
+
+  it("y la capa que manda es la más baja de las que tapan", () => {
+    const m = leerMetar("GCXO 241200Z 30012KT 9999 OVC030 BKN012 18/16 Q1012");
+    expect(m?.techoM).toBe(Math.round(1200 * 0.3048));
+    expect(m?.tapadura).toBe(0.75);
+  });
+
+  it("y sin techo no hay tapadura", () => {
+    expect(leerMetar("GCXO 241200Z 30012KT 9999 FEW020 18/16 Q1012")?.tapadura).toBeUndefined();
+  });
+});

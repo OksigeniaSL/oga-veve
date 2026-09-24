@@ -47,6 +47,13 @@ export interface Meteo {
   /** Visibilidad, m. Diez mil quiere decir «diez o más». */
   readonly visibilidadM: number;
   /**
+   * Cuánto cielo tapa la capa que hace techo, de 0 a 1, **como lo dice el
+   * parte**: BKN es casi todo y OVC todo. Sin él, lo decidía la altura de la
+   * capa —por debajo de trescientos metros 0,9, por encima 0,45—, y un cielo
+   * cubierto a mil pies salía como una capa rala. `undefined` si no lo sabe.
+   */
+  readonly tapadura?: number;
+  /**
    * Si llueve, y de qué manera.
    *
    * Pedido con el resto del tiempo: «falta paisaje… climatología, atravesar
@@ -153,6 +160,7 @@ export function leerMetar(crudo: string): Meteo | null {
   let qnh = TIEMPO_DE_CASA.qnh;
   let temp = TIEMPO_DE_CASA.temp;
   let techoM: number | null = null;
+  let tapadura: number | undefined;
   let visibilidadM = TIEMPO_DE_CASA.visibilidadM;
   let lluvia: Lluvia = "nada";
   let fuerzaDeLluvia = 0;
@@ -217,6 +225,9 @@ export function leerMetar(crudo: string): Meteo | null {
       if (n[1] === "BKN" || n[1] === "OVC") {
         const pies = Number(n[2]) * 100;
         const m = Math.round(pies * 0.3048);
+        // Y la tapadura, de la capa que hace techo: la más baja de las que
+        // tapan. BKN son de cinco a siete octavos; OVC, ocho.
+        if (techoM === null || m < techoM) tapadura = n[1] === "OVC" ? 1 : 0.75;
         techoM = techoM === null ? m : Math.min(techoM, m);
       }
       continue;
@@ -247,6 +258,7 @@ export function leerMetar(crudo: string): Meteo | null {
         temp,
         techoM,
         visibilidadM,
+        ...(tapadura !== undefined ? { tapadura } : {}),
         lluvia,
         fuerzaDeLluvia,
         fuente: "metar",

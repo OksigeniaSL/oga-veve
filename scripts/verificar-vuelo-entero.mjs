@@ -183,9 +183,18 @@ await page.addInitScript(() => {
  * veneno en un banco, donde dos tiradas del mismo código tienen que dar lo
  * mismo. Las cuatro de la tarde, que es la hora con la que se diseñó todo.
  */
+/*
+ * Y la hora y el tiempo, si se piden: `OGA_HORA=21` vuela de noche y
+ * `OGA_METAR="…"` con el parte que se le dé —lluvia, niebla, viento—. Por
+ * defecto, las cuatro y el tiempo de casa, que es lo que mide igual cada vez.
+ */
+const HORA = process.env.OGA_HORA ?? "16";
+const METAR = process.env.OGA_METAR
+  ? `&metar=${encodeURIComponent(process.env.OGA_METAR)}`
+  : "";
 await page.goto(
-  `${BASE}/?escenario=${ESCENARIO}&hora=16&leccion=despegue` +
-    `&tramo=${TRAMO}&avion=${AVION}`,
+  `${BASE}/?escenario=${ESCENARIO}&hora=${HORA}&leccion=despegue` +
+    `&tramo=${TRAMO}&avion=${AVION}${METAR}`,
 );
 /*
  * **Y se espera a que el juego esté, no a que pasen dieciséis segundos.**

@@ -2551,10 +2551,7 @@ export class Game {
         this.ponerTecho(techoM, tapadura);
       },
     );
-    this.ponerTecho(
-      deCasa.techoM,
-      deCasa.techoM === null ? 0 : deCasa.techoM < 300 ? 0.9 : 0.45,
-    );
+    this.ponerTecho(deCasa.techoM, tapaduraDe(deCasa));
     this.hud.ponerTiempo(
       this.scenario.meteo ?? TIEMPO_DE_CASA,
       (m) => this.ponerTiempo(m),
@@ -5274,16 +5271,14 @@ export class Game {
      * cerrado en Tenerife y volar con el cielo azul. Ahora el parte pone su
      * nube, y con ella su altura de decisión.
      */
-    this.ponerTecho(
-      meteo.techoM,
-      meteo.techoM === null ? 0 : meteo.techoM < 300 ? 0.9 : 0.45,
-    );
+    this.ponerTecho(meteo.techoM, tapaduraDe(meteo));
     /*
      * **Y el agua del parte.** `Meteo.lluvia` sale del grupo de tiempo presente
      * del METAR —`RA`, `+TSRA`, `DZ`— y hasta hoy no la miraba nadie: se podía
      * pedir el tiempo de verdad de un día de tormenta en Tenerife y volar con
      * el cielo despejado y seco. Ver `world/lluvia.ts`.
      */
+    this.visibilidadDelParte = meteo.visibilidadM;
     this.ponerLluvia(meteo.lluvia, meteo.fuerzaDeLluvia);
     this.terrain.rehacerAerodromo(this.scenario);
     // Y las luces de aproximación, que van en la cabecera por la que se entra:
@@ -5342,8 +5337,25 @@ export class Game {
       clase === "nada"
         ? 0
         : (clase === "llovizna" ? 0.4 : 1) * (0.3 + 0.7 * fuerza);
-    this.sky.fog.density = this.nieblaDeCasa * (1 + espesa * 5);
+    /*
+     * **Y la visibilidad del parte pone el mínimo.** Se leía del METAR y no la
+     * miraba nadie: con «4000 RA BKN010» se veía el Teide a veinte kilómetros.
+     * Con esta niebla —exponencial al cuadrado— lo que está a la distancia del
+     * parte se funde con el horizonte al noventa y cinco por ciento, que es lo
+     * que quiere decir «visibilidad cuatro kilómetros». Solo por debajo de
+     * diez: «9999» es «diez o más», y ahí manda el horizonte de siempre. La
+     * lluvia puede cerrarlo más, nunca abrirlo.
+     */
+    const porElParte =
+      this.visibilidadDelParte < 10000 ? 1.73 / this.visibilidadDelParte : 0;
+    this.sky.fog.density = Math.max(
+      this.nieblaDeCasa * (1 + espesa * 5),
+      porElParte,
+    );
   }
+
+  /** La visibilidad del último parte, m. Ver `ponerLluvia`. */
+  private visibilidadDelParte = 10000;
 
   /**
    * Un fotograma de lluvia: mueve las gotas y alumbra si hay rayo.
@@ -9593,3 +9605,13 @@ function radialFade(): CanvasTexture {
 }
 
 export type { FlightModel };
+
+/**
+ * Cuánto tapa el techo de un parte: lo que dice el parte si lo dice —BKN casi
+ * todo, OVC todo—, y si no, lo que se suponía por la altura de la capa.
+ */
+function tapaduraDe(m: Meteo): number {
+  if (m.techoM === null) return 0;
+  if (m.tapadura !== undefined) return m.tapadura;
+  return m.techoM < 300 ? 0.9 : 0.45;
+}
