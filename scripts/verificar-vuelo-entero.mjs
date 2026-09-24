@@ -259,11 +259,26 @@ page.on("console", (m) => {
 page.on("request", (r) => pendientes.set(r, Date.now()));
 page.on("requestfinished", (r) => pendientes.delete(r));
 page.on("requestfailed", (r) => pendientes.delete(r));
-try {
-  await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
-    timeout: 120000,
-  });
-} catch {
+/*
+ * Hasta dos veces: si un módulo no baja, el vigilante de `index.html` recarga
+ * la página —lo que hace en la web— y esa recarga rompe la espera. Ver
+ * `verificar-carteles.mjs`.
+ */
+let arrancoYa = false;
+for (let intento = 0; intento < 2 && !arrancoYa; intento++) {
+  arrancoYa = await page
+    .waitForFunction(() => !!globalThis.__oga?.estado, null, {
+      timeout: 120000,
+    })
+    .then(() => true)
+    .catch(() => false);
+  if (!arrancoYa && intento === 0) {
+    await page.waitForLoadState("load").catch(() => {});
+    if (carga.length)
+      console.log(`  (la primera carga falló —${carga[0]}—; se espera la recarga)`);
+  }
+}
+if (!arrancoYa) {
   console.log(
     `\n  ✗ el juego no arrancó en 120 s · ${ESCENARIO} · ${TRAMO} · ${AVION}`,
   );

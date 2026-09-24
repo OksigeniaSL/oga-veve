@@ -1,6 +1,79 @@
 <!doctype html>
 <html lang="es-PY">
   <head>
+    <!--
+      **El vigilante del arranque.** Si el juego no llega a empezar, la página
+      se quedaba quieta para siempre y sin decir nada. Se vio en los bancos:
+      Chrome corta las peticiones en curso cuando cambia la red del equipo
+      —«net::ERR_NETWORK_CHANGED»—, y si en ese momento se estaba bajando un
+      módulo, la importación entera falla y el juego no arranca. En un móvil
+      que pasa de wifi a datos mientras carga, eso le pasa a un niño de verdad.
+
+      Va aquí y no en el juego porque es justo lo que no llega a cargarse. La
+      primera vez recarga solo —casi siempre basta— y, si vuelve a fallar,
+      enseña un botón grande con la flecha de volver a cargar, que se entiende
+      sin leer. No cuenta nada a nadie: no hay a quién.
+    -->
+    <script>
+      (function () {
+        var CLAVE = "oga-veve:reintento";
+        var puesto = false;
+        function boton() {
+          if (puesto || window.__ogaVivo || !document.body) return;
+          puesto = true;
+          var en = (navigator.language || "").indexOf("en") === 0;
+          var caja = document.createElement("div");
+          caja.setAttribute("role", "alert");
+          caja.style.cssText =
+            "position:fixed;inset:0;display:grid;place-content:center;" +
+            "justify-items:center;gap:14px;background:#12201a;color:#e4e2da;" +
+            "font:600 20px system-ui,sans-serif;z-index:99";
+          caja.innerHTML =
+            '<button type="button" aria-label="' +
+            (en ? "Load again" : "Volver a cargar") +
+            '" style="width:112px;height:112px;border-radius:50%;border:0;' +
+            'background:#c96a3c;cursor:pointer;display:grid;place-items:center">' +
+            '<svg viewBox="0 0 24 24" width="64" height="64" aria-hidden="true">' +
+            '<path fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" ' +
+            'd="M19 12a7 7 0 1 1-2.05-4.95"/><path fill="#fff" d="M20 3v6h-6z"/></svg>' +
+            "</button><span>" +
+            (en ? "Load again" : "Volver a cargar") +
+            "</span>";
+          caja.querySelector("button").onclick = function () {
+            location.reload();
+          };
+          document.body.appendChild(caja);
+        }
+        window.__ogaFallo = function () {
+          var ya = null;
+          try {
+            ya = sessionStorage.getItem(CLAVE);
+          } catch (e) {}
+          if (!ya) {
+            try {
+              sessionStorage.setItem(CLAVE, "1");
+            } catch (e) {}
+            location.reload();
+          } else boton();
+        };
+        /*
+         * El error del script del juego, cogido en `window` y en captura: el
+         * `onerror` en la etiqueta lo quita Vite al construir. Un módulo que
+         * no baja —él o cualquiera de los que importa— da error en su
+         * etiqueta, y los errores de etiqueta no suben: por eso en captura.
+         */
+        window.addEventListener(
+          "error",
+          function (e) {
+            var t = e.target;
+            if (t && t.tagName === "SCRIPT" && t.type === "module")
+              window.__ogaFallo();
+          },
+          true,
+        );
+        setTimeout(boton, 90000);
+      })();
+    </script>
     <meta charset="utf-8" />
     <!--
       Sin `user-scalable=no`: bloquear el zoom incumple el criterio 1.4.4 de

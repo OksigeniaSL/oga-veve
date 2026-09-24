@@ -81,6 +81,18 @@ import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 
+/*
+ * **Y el juego avisa de que ha empezado**, para el vigilante de `index.html`:
+ * si esto no llega a ejecutarse —un módulo que no bajó—, él recarga o enseña
+ * el botón de volver a cargar. Y el reintento se olvida, que ya salió bien.
+ */
+(globalThis as { __ogaVivo?: boolean }).__ogaVivo = true;
+try {
+  sessionStorage.removeItem("oga-veve:reintento");
+} catch {
+  // Sin almacenamiento se juega igual.
+}
+
 setLocale(detectLocale());
 
 /**

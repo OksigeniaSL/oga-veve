@@ -1214,7 +1214,9 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
  * y es el botón para volver a jugar. El plano a un lado y lo demás al otro.
  */
 @media (max-height: 640px) {
-  .fin__panel {
+  /* Con `.fin` delante: `.fin__panel` se define más abajo, con su `flex`, y a
+     igual especificidad ganaba — la regla estaba y no hacía nada. */
+  .fin .fin__panel {
     display: grid;
     grid-template-columns: auto auto;
     column-gap: 28px;
@@ -1224,13 +1226,22 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
     padding: 20px 28px;
   }
 
-  .fin__panel > .fin__plano {
+  .fin .fin__panel > .fin__plano {
     grid-column: 1;
     grid-row: 1 / span 5;
     width: min(300px, 38vw);
   }
 
-  .fin__panel > :not(.fin__plano) {
+  /*
+   * Y el plano con tope de alto: su altura sale de la forma del recorrido, y
+   * un circuito entero sale casi cuadrado —o más alto que ancho—. Sin tope,
+   * el panel volvía a salirse por abajo aunque fuera en dos columnas.
+   */
+  .fin .fin__plano svg {
+    max-height: 56vh;
+  }
+
+  .fin .fin__panel > :not(.fin__plano) {
     grid-column: 2;
   }
 }
@@ -1269,6 +1280,14 @@ body:has([data-hud="fin"]:not([hidden])) .pad {
   display: block;
   width: 100%;
   height: auto;
+  /*
+   * Con tope de alto: la altura sale de la forma del recorrido, y un circuito
+   * más alto que ancho echaba los botones del panel fuera de la pantalla
+   * hasta en una tablet de 1280 × 800. En columna comparte el alto con todo lo
+   * demás, así que el tope es bajo; en dos columnas, más alto. Ver abajo.
+   */
+  max-height: 34vh;
+  margin: 0 auto;
 }
 
 /*

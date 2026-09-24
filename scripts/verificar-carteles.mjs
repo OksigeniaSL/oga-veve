@@ -138,12 +138,26 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
    * arranque lento salía después como «no se encontraron las tarjetas»: un
    * fallo del HUD que no era del HUD.
    */
-  const arranco = await page
-    .waitForFunction(() => globalThis.__oga?.estado?.(), null, {
-      timeout: 60000,
-    })
-    .then(() => true)
-    .catch(() => false);
+  /*
+   * **Y hasta dos veces.** Si un módulo no baja —se ha visto con
+   * «net::ERR_NETWORK_CHANGED», cuando cambia la red del equipo—, el vigilante
+   * de `index.html` recarga la página él solo, que es lo que hace en la web.
+   * Esa recarga rompe la espera; se espera otra vez y se dice.
+   */
+  let arranco = false;
+  for (let intento = 0; intento < 2 && !arranco; intento++) {
+    arranco = await page
+      .waitForFunction(() => globalThis.__oga?.estado?.(), null, {
+        timeout: 60000,
+      })
+      .then(() => true)
+      .catch(() => false);
+    if (!arranco && intento === 0) {
+      await page.waitForLoadState("load").catch(() => {});
+      if (carga.length)
+        console.log(`  (${ancho}×${alto}: la primera carga falló —${carga[0]}—; se espera la recarga)`);
+    }
+  }
   if (!arranco) {
     // Y hasta dónde llegó: ver las migas de `main.ts`.
     const migas = await page
@@ -568,6 +582,21 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       globalThis.__oga.acabar();
       return new Promise((listo) =>
         setTimeout(() => {
+          /*
+           * **Con todo lo que el panel puede llevar**, que es el peor caso: un
+           * vuelo de cinco segundos deja un panel corto —sin reloj ni todas
+           * sus frases— y la regla de dos columnas pudo estar sin efecto sin
+           * que esto se enterara. Se destapan sus partes antes de medir.
+           */
+          for (const e of document.querySelectorAll(".fin__panel > *"))
+            e.hidden = false;
+          /*
+           * Y el plano, alto: su altura sale de la forma del recorrido, y el
+           * de cinco segundos es una rayita. Uno más alto que ancho es lo
+           * peor que puede traer un vuelo de verdad.
+           */
+          const plano = document.querySelector(".fin__plano svg");
+          if (plano) plano.setAttribute("viewBox", "0 0 100 140");
           const malos = [];
           for (const q of ["fin-otra", "fin-hangar"]) {
             const b = document.querySelector(`[data-hud="${q}"]`);
