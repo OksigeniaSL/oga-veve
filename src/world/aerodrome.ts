@@ -794,6 +794,13 @@ export function alturaDeEdificio(e: {
    */
   if (esTorreDeControl(e)) return 30;
   /*
+   * Un radar de aproximación va subido a una torre para ver por encima de
+   * hangares y árboles: quince a veinticinco metros. Y una antena de
+   * telecomunicaciones, treinta, que es lo corriente en una de telefonía.
+   */
+  if (esRadar(e)) return 18;
+  if (esAntena(e)) return 30;
+  /*
    * Y un depósito es tan alto como ancho, más o menos: un cilindro de
    * combustible de aeropuerto ronda los doce o catorce metros de diámetro y
    * otros tantos de alto. Con la regla general de abajo, su planta pequeña lo
@@ -840,6 +847,39 @@ export function esDeposito(e: { readonly kind?: string | null }): boolean {
     e.kind === "storage_tank" || e.kind === "tank" || e.kind === "water_tower"
   );
 }
+
+/**
+ * Si esto es un radar: la antena que gira y ve a los aviones.
+ *
+ * Preguntado jugando, junto con el depósito: «todavía no sé dónde están los
+ * radares». En OSM se mapea como `tower:type=radar`, y el extractor lo guarda
+ * con esta clase. Lo que lo delata desde el aire no es la torre, que es una
+ * torre más: es **la antena de arriba dando vueltas**.
+ */
+export function esRadar(e: { readonly kind?: string | null }): boolean {
+  return e.kind === "radar";
+}
+
+/**
+ * Si esto es una antena o cualquier torre que no es la de control.
+ *
+ * `man_made=tower` es cualquier torre —de telefonía, de iluminación, un
+ * mirador—, y el extractor guarda el tipo en la clase: `tower:communication`,
+ * `tower:lighting`... Antes todas se levantaban como torre de control, con su
+ * cabina y su cristalera, y una antena de telefonía con cristalera enseña una
+ * cosa que no existe. Ver `claseDeEdificio` en `scripts/osm-a-aerodromo.mjs`.
+ */
+export function esAntena(e: { readonly kind?: string | null }): boolean {
+  return (
+    !!e.kind &&
+    (e.kind.startsWith("tower:") ||
+      e.kind === "mast" ||
+      e.kind === "communications_tower")
+  );
+}
+
+/** Cuánto tarda en dar una vuelta la antena de un radar de aproximación, s. */
+export const VUELTA_DEL_RADAR = 5;
 
 /**
  * El centro de una planta: la media de sus vértices.
@@ -902,6 +942,8 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
    * una caseta alta. Ver `esTorreDeControl`.
    */
   const cristales: BufferGeometry[] = [];
+  /** Dónde va la antena de cada radar: encima de su torre. */
+  const radares: { x: number; z: number; arriba: number }[] = [];
   for (const e of aero.buildings) {
     if (e.polygon.length < 3) continue;
     const alto = alturaDeEdificio(e);
@@ -913,7 +955,13 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
     let base = Infinity;
     for (const p of e.polygon) base = Math.min(base, altura(p));
 
-    const forma = new Shape(e.polygon.map((p) => new Vector2(p[0], p[1])));
+    /*
+     * Una antena es un **mástil**: la planta que trae OSM es la de su base,
+     * o la que se le da a un punto, y levantada entera sería una chimenea de
+     * seis metros de ancho. Se encoge a metro y medio alrededor del centro.
+     */
+    const planta = esAntena(e) ? encoger(e.polygon, 1.5) : e.polygon;
+    const forma = new Shape(planta.map((p) => new Vector2(p[0], p[1])));
     /*
      * Se extruye en el plano XY y se tumba: el `-90°` lleva la Y del fichero
      * —que apunta al norte— a la Z del mundo, que apunta al sur. Es la misma
@@ -950,6 +998,10 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
      * planta un tercio más ancha. Así no hay nada inventado en la forma —es
      * la torre que hay, más alta y con su remate.
      */
+    if (esRadar(e)) {
+      const [x, y] = centroDe(e.polygon);
+      radares.push({ x, z: -y, arriba: base + alto });
+    }
     if (esTorreDeControl(e)) {
       const centro = centroDe(e.polygon);
       const ancha = new Shape(
@@ -1019,7 +1071,54 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
     malla.receiveShadow = true;
     grupo.add(malla);
   }
+  for (const r of radares) grupo.add(antenaDeRadar(r.x, r.arriba, r.z));
   return grupo;
+}
+
+/**
+ * La antena de un radar, **dando vueltas**.
+ *
+ * Un radar de aproximación es una antena alargada, más ancha que alta, que
+ * gira sin parar sobre un pedestal: doce vueltas por minuto, una cada cinco
+ * segundos. Es lo único del aeropuerto que se mueve solo, y por eso es lo que
+ * lo delata desde el aire — y lo que responde a «¿dónde está el radar?».
+ *
+ * Gira con `onBeforeRender`, que solo corre cuando se dibuja: fuera de la
+ * vista no cuesta nada, y es una llamada de dibujo por radar.
+ */
+function antenaDeRadar(x: number, y: number, z: number): Group {
+  const radar = new Group();
+  radar.name = "radar";
+  radar.position.set(x, y, z);
+  const blanco = new MeshLambertMaterial({ color: 0xe8e6df });
+  const pedestal = new Mesh(new CylinderGeometry(0.7, 0.9, 1.6, 10), blanco);
+  pedestal.position.y = 0.8;
+  radar.add(pedestal);
+  const giro = new Group();
+  giro.position.y = 1.6;
+  radar.add(giro);
+  // El reflector: siete metros de ancho, dos de alto, un palmo de grueso, y
+  // un poco inclinado hacia arriba, que es como mira un radar de verdad.
+  const reflector = new Mesh(new BoxGeometry(7, 2, 0.35), blanco);
+  reflector.position.set(0, 1, 0.5);
+  reflector.rotation.x = -0.18;
+  reflector.castShadow = true;
+  reflector.onBeforeRender = () => {
+    giro.rotation.y =
+      ((performance.now() / 1000) * Math.PI * 2) / VUELTA_DEL_RADAR;
+  };
+  giro.add(reflector);
+  return radar;
+}
+
+/** Una planta encogida a un radio dado alrededor de su centro. */
+function encoger(poli: readonly Punto[], radio: number): Punto[] {
+  const c = centroDe(poli);
+  let lejos = 0;
+  for (const p of poli) lejos = Math.max(lejos, Math.hypot(p[0] - c[0], p[1] - c[1]));
+  if (lejos <= radio) return [...poli];
+  const k = radio / lejos;
+  return poli.map((p) => [c[0] + (p[0] - c[0]) * k, c[1] + (p[1] - c[1]) * k]);
 }
 
 /**

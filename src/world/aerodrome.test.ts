@@ -7,7 +7,7 @@
  * nadie se entere.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import sgas from "../../data/aerodromes/sgas.aero.json";
 import gcxo from "../../data/aerodromes/gcxo.aero.json";
 import {
@@ -20,8 +20,11 @@ import {
   alturaDeEdificio,
   esTorreDeControl,
   esDeposito,
+  esRadar,
+  esAntena,
   paraUnAvion,
 } from "./aerodrome";
+import gcts from "../../data/aerodromes/gcts.aero.json";
 
 const AERODROMOS = [sgas as unknown as Aerodrome, gcxo as unknown as Aerodrome];
 
@@ -213,5 +216,61 @@ describe("la torre de control y los depósitos", () => {
     // Y el tejado sobre pilares sigue sin parar a un avión. Ver `paraUnAvion`.
     expect(paraUnAvion({ kind: "roof" })).toBe(false);
     expect(paraUnAvion({ kind: "tower" })).toBe(true);
+  });
+});
+
+describe("el radar y las antenas", () => {
+  const cuadrada = (lado: number): Punto[] => [
+    [-lado / 2, -lado / 2],
+    [lado / 2, -lado / 2],
+    [lado / 2, lado / 2],
+    [-lado / 2, lado / 2],
+  ];
+
+  it("una antena de telefonía no es la torre de control", () => {
+    /*
+     * `man_made=tower` es cualquier torre. Con cabina y cristalera, una
+     * antena enseña una cosa que no existe.
+     */
+    expect(esTorreDeControl({ kind: "tower:communication" })).toBe(false);
+    expect(esAntena({ kind: "tower:communication" })).toBe(true);
+    expect(esAntena({ kind: "mast" })).toBe(true);
+    expect(esAntena({ kind: "tower" })).toBe(false);
+    expect(esTorreDeControl({ kind: "control_tower" })).toBe(true);
+  });
+
+  it("un radar va subido a su torre", () => {
+    const radar = { heightM: null, polygon: cuadrada(10), kind: "radar" };
+    expect(esRadar(radar)).toBe(true);
+    expect(esTorreDeControl(radar)).toBe(false);
+    expect(alturaDeEdificio(radar)).toBeGreaterThan(12);
+  });
+
+  it("y en Tenerife Sur, que tiene el suyo mapeado, lleva la antena encima", () => {
+    const grupo = createAerodrome(gcts as unknown as Aerodrome);
+    const radares: string[] = [];
+    grupo.traverse((o) => {
+      if (o.name === "radar") radares.push(o.name);
+    });
+    expect(radares.length).toBe(1);
+  });
+
+  it("y la antena da una vuelta cada cinco segundos", () => {
+    const grupo = createAerodrome(gcts as unknown as Aerodrome);
+    let antena: { onBeforeRender: () => void; parent: { rotation: { y: number } } } | null = null;
+    grupo.traverse((o) => {
+      if (o.parent?.parent?.name === "radar" && "geometry" in o)
+        antena = o as unknown as typeof antena;
+    });
+    expect(antena).not.toBeNull();
+    const reloj = vi.spyOn(performance, "now");
+    const angulo = (ms: number) => {
+      reloj.mockReturnValue(ms);
+      antena!.onBeforeRender();
+      return antena!.parent.rotation.y;
+    };
+    // Un cuarto de vuelta en un cuarto del periodo.
+    expect(angulo(1250) - angulo(0)).toBeCloseTo(Math.PI / 2);
+    reloj.mockRestore();
   });
 });

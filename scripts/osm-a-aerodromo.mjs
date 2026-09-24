@@ -36,12 +36,16 @@ import { join } from "node:path";
 const OVERPASS =
   process.env.OVERPASS ?? "https://overpass-api.de/api/interpreter";
 
-/** Dónde preguntar, por orden. El principal se satura a diario. */
-const ESPEJOS = [
-  OVERPASS,
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.osm.ch/api/interpreter",
-];
+/**
+ * Dónde preguntar, por orden. El principal se satura a diario.
+ *
+ * **Y solo espejos del mundo entero.** Aquí estaba `overpass.osm.ch`, que
+ * sirve **Suiza** y nada más: preguntado por el radar de Tenerife Sur devuelve
+ * cero elementos y un 200. La consulta del perímetro fallaría a la vista, pero
+ * la de los aparatos —torres, depósitos, radares— es otra consulta, y el día
+ * que le tocara ese espejo el campo se quedaba sin ellos sin que nada avisara.
+ */
+const ESPEJOS = [OVERPASS, "https://overpass.kumi.systems/api/interpreter"];
 const OURAIRPORTS = "https://davidmegginson.github.io/ourairports-data";
 const SALIDA = "data/aerodromes";
 
@@ -152,7 +156,29 @@ async function overpass(query) {
         ultimo = err;
         continue;
       }
-      if (res.ok) return res.json();
+      if (res.ok) {
+        /*
+         * **Un 200 no es una respuesta buena.** Saturado, Overpass contesta a
+         * veces con un 200 y una página HTML que dice «runtime error… too
+         * busy», o con un JSON que trae los datos a medias y lo confiesa en
+         * `remark`. Lo primero reventaba el `JSON.parse`; lo segundo pasaba
+         * por un aeródromo completo. Las dos cosas son «ahora no».
+         */
+        const texto = await res.text();
+        let datos = null;
+        try {
+          datos = JSON.parse(texto);
+        } catch {
+          // HTML de error: se trata como un 504.
+        }
+        if (datos && !/runtime error/i.test(datos.remark ?? "")) return datos;
+        ultimo = new Error(
+          `Overpass (${servidor}) respondió 200 pero sin datos completos: ` +
+            (datos?.remark ?? texto.replace(/<[^>]*>/g, " ").trim()).slice(0, 120),
+        );
+        console.warn(`  ⚠ ${ultimo.message}, reintentando…`);
+        continue;
+      }
       ultimo = new Error(`Overpass (${servidor}) respondió ${res.status}`);
       // Un 400 es culpa de la consulta: reintentar no la va a arreglar.
       if (res.status === 400) throw ultimo;
@@ -241,6 +267,51 @@ function centro(elemento) {
 
 const camino = (elemento, proj) =>
   simplificar((elemento.geometry ?? []).map((p) => proj(p.lat, p.lon)));
+
+/**
+ * La clase de un edificio o aparato, por orden de lo más concreto a lo más
+ * vago.
+ *
+ * Un radar dice `tower:type=radar` sobre un `man_made=tower`: si se mira
+ * primero el `man_made` se pierde que es un radar y se queda en «una torre».
+ *
+ * **Y una torre no es siempre la de control.** `man_made=tower` es cualquier
+ * torre —una antena de telefonía, una de iluminación, un mirador—, y el mundo
+ * levanta la clase `tower` con cabina y cristalera. Una antena dibujada como
+ * torre de control es contenido falso, así que el tipo viaja en la clase:
+ * `tower` a secas solo cuando OSM no dice más, o cuando dice que es la de
+ * control (`service=aircraft_control`, o un mirador con nombre de torre).
+ */
+function claseDeEdificio(tags) {
+  const tipo = tags["tower:type"];
+  if (tipo === "radar" || tags.man_made === "radar") return "radar";
+  if (tags.aeroway) return tags.aeroway;
+  if (tags.man_made === "tower" && tipo) {
+    const deControl =
+      tags.service === "aircraft_control" ||
+      (tipo === "observation" && /control|torre|twr/i.test(tags.name ?? ""));
+    return deControl ? "control_tower" : `tower:${tipo}`;
+  }
+  return tags.man_made ?? tags.building ?? "yes";
+}
+
+/**
+ * La planta que se le da a un aparato mapeado como punto: un octógono del
+ * tamaño de lo que es. Un depósito ronda los catorce metros de diámetro; un
+ * radar o una antena, la base de su torre.
+ */
+function huellaDePunto(nodo, proj, clase) {
+  if (nodo.lat === undefined) return [];
+  const [x, y] = proj(nodo.lat, nodo.lon);
+  const r = /tank/.test(clase) ? 7 : 3;
+  const puntos = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    puntos.push([x + Math.cos(a) * r, y + Math.sin(a) * r]);
+  }
+  puntos.push(puntos[0]);
+  return puntos;
+}
 
 /**
  * Las pistas, **cosidas**: en OpenStreetMap una pista puede venir a trozos.
@@ -588,24 +659,22 @@ async function construir(icao, pistas, aeropuertos) {
       ),
     ]
       .map((w) => ({
-        /*
-         * La clase, por orden de lo más concreto a lo más vago. Un radar dice
-         * `tower:type=radar` sobre un `man_made=tower`: si se mira primero el
-         * `man_made` se pierde que es un radar y se queda en «una torre».
-         */
-        kind:
-          w.tags["tower:type"] === "radar"
-            ? "radar"
-            : (w.tags.aeroway ??
-              w.tags.man_made ??
-              w.tags.building ??
-              "yes"),
+        kind: claseDeEdificio(w.tags),
         heightM: w.tags.height
           ? Number(w.tags.height)
           : w.tags["building:levels"]
             ? Number(w.tags["building:levels"]) * 3.2 + 1.5
             : null,
-        polygon: camino(w, proj),
+        /*
+         * **Y un aparato mapeado como punto también cuenta.** Un radar o una
+         * antena se mapean casi siempre como un nodo, sin planta, y el filtro
+         * de abajo —cuatro vértices o nada— los tiraba todos: se pedían y no
+         * llegaba ninguno. Se les da la planta de lo que son, que es pequeña.
+         */
+        polygon:
+          w.type === "node"
+            ? huellaDePunto(w, proj, claseDeEdificio(w.tags))
+            : camino(w, proj),
       }))
       .filter((e) => e.polygon.length >= 4),
     helipads: de("helipad")
