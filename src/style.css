@@ -4235,6 +4235,12 @@ button.motor__tecla::after {
    * suelo, para que en una pantalla muy baja la lista no se quede en nada.
    */
   --hangar-lista: max(220px, calc(100dvh - 300px));
+  /*
+   * Y sitio abajo para la barra fija, que si no tapa el pie: los enlaces de
+   * Granja Óga, de Oksigenia y del código fuente quedaban debajo de ella en
+   * todas las pantallas, ni bajando hasta el final se podían tocar.
+   */
+  padding-bottom: calc(150px + env(safe-area-inset-bottom));
 }
 
 .hangar[hidden] {
@@ -5170,6 +5176,42 @@ button.motor__tecla::after {
   text-align: center;
   font-size: 12.5px;
   color: rgb(228 226 218 / 0.55);
+}
+
+/*
+ * **Y el hangar en un teléfono apaisado.** La tarjeta de cada campo medía 240
+ * píxeles y la barra de abajo 135 —«Ajustes» caía a una segunda fila—, así que
+ * en 412 de alto la barra tapaba el número de pista y el nombre del sitio, y en
+ * 800 × 360 hasta el centro de dos tarjetas, que no se podían tocar. En
+ * pantalla baja: la barra en una fila, la foto de la tarjeta más apaisada y el
+ * título más pequeño —el sello sigue arriba a la izquierda—.
+ */
+@media (max-height: 460px) {
+  .hangar {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+
+  .hangar .hangar__marca {
+    font-size: 22px;
+  }
+
+  .hangar .hangar__pasos {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .hangar .ficha__lienzo {
+    aspect-ratio: 5 / 2;
+    padding: 4px;
+  }
+}
+
+/* Y en la más baja, cada paso con su dibujo y su valor: la pregunta en
+   mayúsculas ocupaba tres renglones y dejaba el valor en «Vall…». El dibujo
+   ya dice de qué va cada paso. */
+@media (max-height: 400px) {
+  .hangar .paso__que {
+    display: none;
+  }
 }
 
 .hangar__ajustes {
