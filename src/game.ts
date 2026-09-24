@@ -5987,6 +5987,9 @@ export class Game {
         this.flight.state.verticalSpeed > MARGENES.cayendo,
     };
     const terreno = avisoDeTerreno(cerca);
+    // El HUD enseña el mismo aviso que dice la voz, no uno suyo. Ver
+    // `Hud.ponerTerreno`.
+    this.hud.ponerTerreno(terreno);
     /*
      * **Y el panel de avisos, que cuenta estados y no sucesos.**
      *
@@ -8099,8 +8102,17 @@ export class Game {
      * correcto que no se puede obedecer. En tierra manda la pista de casa;
      * en cuanto se despega, manda el destino.
      */
+    /*
+     * **Y en final tampoco**: ahí la pista que importa es la que tienes
+     * delante. Aterrizando en Gran Canaria la tarjeta seguía diciendo «112 km
+     * Tenerife North», a la espalda, justo cuando hay que mirar el eje. Es lo
+     * mismo que ya se hizo con la lección de aterrizar; ver `elDestino`.
+     */
     const destino =
-      !this.flight.state.onGround && !target && !aLaRaya
+      !this.flight.state.onGround &&
+      !target &&
+      !aLaRaya &&
+      this.faseDeAhora !== "final"
         ? this.elDestino()
         : null;
 

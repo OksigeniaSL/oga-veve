@@ -200,6 +200,22 @@ export class Hud {
    */
   private comprometido = false;
 
+  /**
+   * El aviso de terreno que decide el juego, el mismo que dice la voz.
+   *
+   * El HUD tenía el suyo: «menos de seis segundos para tocar el suelo». Y en
+   * cualquier aterrizaje faltan menos de seis segundos para tocar el suelo,
+   * que es de lo que se trata: en Gran Canaria salía «Ground. Pull up» en rojo
+   * y parpadeando justo al posarse. El del juego ya sabe que sobre la pista y
+   * puesto para aterrizar no se avisa —ver `flight/aviso-de-terreno.ts`—, así
+   * que es ése, y hay uno solo.
+   */
+  private terreno: "sube" | "bajo" | null = null;
+
+  ponerTerreno(terreno: "sube" | "bajo" | null): void {
+    this.terreno = terreno;
+  }
+
   /** Lo que ve el detector de V1, para los bancos. Ver `sondas.ts`. */
   get sondaDeV1(): Record<string, number | boolean> {
     return {
@@ -2853,7 +2869,7 @@ export class Hud {
       corta = "palabra.baja";
       arrow = "↓";
       blink = true;
-    } else if (closingWithGround(state)) {
+    } else if (this.terreno !== null && !state.onGround) {
       text = t("hud.pullUp");
       corta = "palabra.subi";
       arrow = "↑";
@@ -3004,7 +3020,3 @@ const FRENADA = 2.5;
 /** Y cuánto antes se avisa de lo justo. */
 const MARGEN_PISTA = 1.35;
 
-function closingWithGround(state: FlightState): boolean {
-  if (state.onGround || state.crashed) return false;
-  return state.secondsToImpact < 6;
-}
