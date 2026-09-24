@@ -2124,18 +2124,31 @@ button.motor__tecla::after {
   /* Con `.hud` delante porque `.rincon` se define más abajo en esta hoja, y
      a igual especificidad gana la última. */
   .hud .rincon {
-    right: calc(var(--reserva-derecha, 16px) / var(--escala) + 116px + 12px);
+    right: calc(
+      var(--reserva-derecha, 16px) / var(--escala) +
+        var(--columna-ancho, 132px) + 12px
+    );
+    /*
+     * Y en fila, no en columna: en el peldaño de los pequeños el rincón lleva
+     * los cuatro dibujos **y** la tarjeta, y apilados bajaban hasta meterse
+     * en la esquina del cuadro —la llave de arrancar encima de las esferas,
+     * en la tablet de 1024 × 600—. Lado a lado ocupan la mitad de alto.
+     */
+    flex-direction: row-reverse;
+    align-items: flex-start;
   }
 
   /*
    * Y el tutor, un poco a la izquierda del centro. A la derecha van el rincón
    * y la columna de mandos, y en esta altura la tarjeta de aviso ancha le
    * llega hasta la mitad de la pantalla: medido en 915 × 412, cuarenta
-   * píxeles de solape; al 42 % aún se metía trece en la tablet de 1024 × 600.
+   * píxeles de solape; al 42 % aún se metía trece en la tablet de 1024 × 600,
+   * y al 40 % volvió a tocarla cuando el cuadro subió por encima de los
+   * pedales y el tutor con él. Lo vigila `verificar-carteles`.
    * A la izquierda solo está la palanca, y está abajo.
    */
   .tutor {
-    left: 40%;
+    left: 38%;
   }
 
   /* Y su frase, en dos líneas si hace falta: en una sola, «Empujá el motor a
@@ -2154,6 +2167,37 @@ button.motor__tecla::after {
 @media (pointer: coarse) {
   .hud {
     --reserva-derecha: max(112px, env(safe-area-inset-right));
+  }
+}
+
+/*
+ * **Con el dedo, el cuadro sube por encima de los pedales.**
+ *
+ * La barra del timón vive abajo en el centro, que es donde llega el pulgar,
+ * y el cuadro también: la barra le caía **encima de la brújula**, que es la
+ * rosa con su flecha con la que los pequeños saben hacia dónde van. Un mando
+ * tapando un instrumento. Así que el cuadro se despega lo que ocupa la barra,
+ * y los pedales quedan debajo del panel, que es donde están en una cabina.
+ *
+ * Se divide por la escala porque el cuadro se dibuja dentro de la capa
+ * reducida y la barra no. Lo que se apoya en el cuadro sube solo: ver
+ * `reserveForPanel`, que suma este despegue a `--panel-alto`.
+ */
+@media (pointer: coarse) {
+  /* Con `.hud` delante: `.cuadro` se define más abajo y ganaría. */
+  .hud .cuadro {
+    bottom: calc(
+      (max(20px, env(safe-area-inset-bottom)) + 56px + 8px) /
+        var(--escala, 1)
+    );
+  }
+}
+
+/* Y en un teléfono apaisado, un poco más pequeño: subido por encima de los
+   pedales y a tamaño de tablet, se metía en la tarjeta de la llave. */
+@media (pointer: coarse) and (max-height: 460px) {
+  .hud .cuadro {
+    width: min(calc(100vw - 16px), calc(34vh * var(--cuadro-proporcion)));
   }
 }
 

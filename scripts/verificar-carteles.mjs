@@ -79,6 +79,18 @@ const PANTALLAS = [
   [800, 360, "dedo"],
 ];
 
+/*
+ * **Y dos juegos, no uno.** El reactor de La Palma lleva la columna de mandos
+ * más larga —tren, reversa, freno—; el peldaño de los pequeños lleva el
+ * rincón más alto —los cuatro dibujos y la tarjeta—. Mirando solo el reactor
+ * no se vio que en Guyrami la llave de arrancar caía encima del cuadro.
+ */
+const JUEGOS = [
+  { escenario: "la-palma", tramo: "taguato", avion: "jaz-90" },
+  { escenario: "pettirossi", tramo: "guyrami", avion: "jaz-20" },
+];
+
+for (const juego of JUEGOS)
 for (const [ancho, alto, dedo] of PANTALLAS) {
   const page = await navegador.newPage({
     viewport: { width: ancho, height: alto },
@@ -91,7 +103,8 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
   await page.goto(
-    `${BASE}/?escenario=la-palma&hora=16&leccion=despegue&tramo=taguato&avion=jaz-90`,
+    `${BASE}/?escenario=${juego.escenario}&hora=16&leccion=despegue` +
+      `&tramo=${juego.tramo}&avion=${juego.avion}`,
   );
   /*
    * **Y si no arranca, se dice.** Aquí había un `.catch(() => {})`, y un
@@ -291,10 +304,39 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     aviso.classList.add("aviso-hud--visible");
     texto.textContent = "¡El suelo! Subí";
     hint.textContent = "Un mensaje de prueba";
+    /*
+     * Y con el dedo, la barra del timón fuera del cuadro: vive abajo en el
+     * centro, como el cuadro, y le caía encima de la brújula.
+     */
+    const timon = document.querySelector(".pad--rudder");
+    const timonPisa =
+      !!timon &&
+      getComputedStyle(timon).display !== "none" &&
+      pisa(timon.getBoundingClientRect(), cuadro.getBoundingClientRect());
+    /*
+     * Y el rincón —los dibujos y la tarjeta de la orden— fuera del cuadro y de
+     * la columna de mandos: en Guyrami la llave caía encima de las esferas.
+     */
+    const rincon = [
+      document.querySelector('[data-hud="pictos"]'),
+      document.querySelector('[data-hud="senal"]'),
+    ].filter((e) => e && !e.closest("[hidden]"));
+    const mandos = [...document.querySelectorAll(".hud__derecha > *")].filter(
+      (e) => !e.closest("[hidden]") && e.getBoundingClientRect().height > 2,
+    );
+    const rinconPisa = rincon
+      .flatMap((r) =>
+        [cuadro, ...mandos]
+          .filter((o) => pisa(r.getBoundingClientRect(), o.getBoundingClientRect()))
+          .map((o) => `${r.dataset.hud} sobre ${o.dataset.hud ?? String(o.className).slice(0, 24)}`),
+      )
+      .slice(0, 3);
     const salida = {
       aviso: alFrente(aviso),
       mensaje: alFrente(hint),
       tutorPisa,
+      timonPisa,
+      rinconPisa,
     };
     hud.classList.remove("hud--avisando");
     aviso.classList.remove("aviso-hud--visible");
@@ -303,7 +345,7 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     return salida;
   });
 
-  const donde = `${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+  const donde = `${juego.tramo} ${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
   comprobar(
     `${donde}: los mandos y los avisos caben en la pantalla`,
     fuera.length === 0,
@@ -323,6 +365,19 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       abajo.mensaje ? `tapado por ${abajo.mensaje}` : "libre",
       "",
     );
+    comprobar(
+      `${donde}: los avisos del rincón no pisan el cuadro ni los mandos`,
+      abajo.rinconPisa.length === 0,
+      abajo.rinconPisa.join(" · ") || "libre",
+      "",
+    );
+    if (dedo)
+      comprobar(
+        `${donde}: la barra del timón no tapa el cuadro`,
+        !abajo.timonPisa,
+        abajo.timonPisa ? "encima de las esferas" : "libre",
+        "un mando encima de la brújula la tapa justo a quien la usa para saber adónde va",
+      );
     comprobar(
       `${donde}: el tutor no tapa las esferas`,
       !abajo.tutorPisa,

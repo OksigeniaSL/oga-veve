@@ -1370,7 +1370,12 @@ export class Hud {
     const panel = this.root.querySelector('[data-hud="tablero"]');
     if (!panel) return 0;
     const caja = panel.getBoundingClientRect();
-    return caja.height > 0 ? caja.height : 0;
+    /*
+     * Desde el borde de abajo y no la altura del dibujo: con el dedo el cuadro
+     * vive despegado, encima de los pedales, y lo que tapa es todo lo que hay
+     * de su borde de arriba para abajo. Y bajado, lo que asome.
+     */
+    return caja.height > 0 ? Math.max(0, window.innerHeight - caja.top) : 0;
   }
 
   /**
@@ -1398,7 +1403,21 @@ export class Hud {
     const alto = panel
       ? aPxDelHud(this.root, panel.getBoundingClientRect().height)
       : 0;
-    this.root.style.setProperty("--panel-alto", `${alto ? alto + 10 : 0}px`);
+    /*
+     * **Y lo que el cuadro está despegado del borde**, que con el dedo no es
+     * poco: sube por encima de la barra del timón. Se suma lo que dice la
+     * hoja y no lo que se mide, porque bajado el cuadro se sale por abajo y
+     * la caja medida no dice dónde vive. `bottom` ya viene en los píxeles del
+     * propio cuadro.
+     */
+    const cuadro = this.root.querySelector('[data-hud="cuadro"]');
+    const despegado = cuadro
+      ? Number.parseFloat(getComputedStyle(cuadro).bottom) || 0
+      : 0;
+    this.root.style.setProperty(
+      "--panel-alto",
+      `${alto ? alto + despegado + 10 : 0}px`,
+    );
   }
 
   /**
@@ -2211,11 +2230,32 @@ export class Hud {
         this.root.style.setProperty("--alto-de-la-barra", `${alto}px`);
       }
     };
+    /*
+     * **Y lo ancha que es la columna de mandos**, para que el rincón de avisos
+     * se ponga a su lado en las pantallas bajas. Se había escrito a mano —los
+     * 116 de la tarjeta del destino— y la del motor mide 132 en un peldaño y
+     * otra cosa en otro: el rincón quedaba encima del gas en ocho pantallas
+     * de ocho. Cambia con lo que lleve puesto —el freno sale al tocar suelo—,
+     * así que se observa.
+     */
+    const columna = this.root.querySelector<HTMLElement>(".hud__derecha");
+    const escribirColumna = (): void => {
+      if (!columna) return;
+      const ancho = Math.round(
+        aPxDelHud(this.root, columna.getBoundingClientRect().width),
+      );
+      this.root.style.setProperty("--columna-ancho", `${ancho}px`);
+    };
     escribir();
+    escribirColumna();
     this.barraObservada?.disconnect();
     if (typeof ResizeObserver === "undefined") return;
-    this.barraObservada = new ResizeObserver(escribir);
+    this.barraObservada = new ResizeObserver(() => {
+      escribir();
+      escribirColumna();
+    });
     this.barraObservada.observe(barra);
+    if (columna) this.barraObservada.observe(columna);
   }
 
   /**
