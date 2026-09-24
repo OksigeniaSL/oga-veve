@@ -2604,6 +2604,23 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
 }, VECES);
 fotografiando = false;
 await fotos;
+/*
+ * **Y lo que se dijo, en orden y con su hora, si se pide.** `OGA_VOCES=fichero`
+ * vuelca las frases que sonaron y las que se cayeron: para saber qué ocupaba
+ * la boca cuando una orden de la torre caducó esperando, el recuento no
+ * basta; hace falta la línea de tiempo.
+ */
+if (process.env.OGA_VOCES) {
+  const { writeFile } = await import("node:fs/promises");
+  await writeFile(
+    process.env.OGA_VOCES,
+    JSON.stringify(
+      { habladas: vuelo.habladas, descartes: vuelo.descartes, todo: vuelo.todoLoDicho },
+      null,
+      1,
+    ),
+  );
+}
 
 /**
  * Si el vuelo se quedó sin presupuesto de tiempo.

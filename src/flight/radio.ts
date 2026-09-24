@@ -179,6 +179,17 @@ export interface Transmision {
  * justo en la mitad ruidosa.
  */
 const CALLADAS = new Set([
+  /*
+   * **Y en el punto de espera, que es cuando la torre habla contigo.** Ahí
+   * se dicen cuatro cosas en diez segundos —la lámpara roja y su «hold
+   * short», la verde y su autorización—, y si el otro avión llamaba en ese
+   * momento la cola se llenaba y lo que se caía era **tu autorización de
+   * despegue**: medido en La Palma jugando a velocidad normal, «cleared for
+   * take-off» caducó esperando detrás de la charla. La frecuencia puede
+   * esperar diez segundos; tu permiso no.
+   */
+  "esperando",
+  "autorizado",
   "alineando",
   "despegando",
   "comprometido",
