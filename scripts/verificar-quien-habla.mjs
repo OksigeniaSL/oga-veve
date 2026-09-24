@@ -204,31 +204,30 @@ const donde = await page.evaluate(() => {
 });
 console.log(`\n  dónde acabó: ${JSON.stringify(donde)}`);
 
-const dichas = await page.evaluate(() => globalThis.__dichas ?? []);
-
 /*
- * Quién dijo cada frase. Los tres timbres están escritos en
- * `audio/instructor.ts` y son distintos a propósito: el instructor va más
- * despacio y más agudo, la torre deprisa y plana, el otro avión deprisa y
- * grave. Se reparte por el `rate`, que es lo que los separa sin ambigüedad.
+ * **Y se mide lo que dijo cada boca, no lo que pasó por el sintetizador.**
+ *
+ * Este banco escuchaba `speechSynthesis.speak`, y desde que la torre, el
+ * instructor y el otro avión hablan con grabaciones, por ahí no pasa casi
+ * nada: medía cero frases y fallaba siempre, que es otra forma de no tener
+ * banco. Ahora se pregunta al juego qué dijo cada boca (`dichoTodo`) y con
+ * qué voces grabadas lo dijo (`vocesDeCadaBoca`). Las voces de mentira de
+ * arriba se quedan: cubren las frases que no están grabadas.
  */
-const quien = (d) =>
-  d.rate <= 1 ? "instructor" : d.rate >= 1.12 ? "torre" : "otro avión";
-
-const cuenta = {};
-const voces = {};
-for (const d of dichas) {
-  const q = quien(d);
-  cuenta[q] = (cuenta[q] ?? 0) + 1;
-  (voces[q] ??= new Set()).add(d.voz);
-}
-const total = dichas.length;
+const { dicho, voces } = await page.evaluate(() => ({
+  dicho: globalThis.__oga.dichoTodo(),
+  voces: globalThis.__oga.vocesDeCadaBoca(),
+}));
+const cuenta = Object.fromEntries(
+  Object.entries(dicho).map(([q, l]) => [q, l.length]),
+);
+const total = Object.values(cuenta).reduce((a, n) => a + n, 0);
 
 comprobar(
   "alguien habla",
   total > 0,
   `${total} frases`,
-  "sin voces del sistema no habla nadie y este banco no mediría nada: se le ponen cinco de mentira",
+  "si no habla nadie, este banco no mide nada",
 );
 
 comprobar(
@@ -238,11 +237,6 @@ comprobar(
   "la torre era una lámpara con una palabra escrita, y quien juega no lee",
 );
 
-/*
- * **Y no lo dice todo el instructor.** Este es el listón que traduce la queja
- * a un número: si nueve de cada diez frases son suyas, el vuelo suena a una
- * sola persona por mucho que las otras existan.
- */
 const suyas = cuenta["instructor"] ?? 0;
 comprobar(
   "no habla solo el instructor",
@@ -251,20 +245,13 @@ comprobar(
   "«la única voz es prácticamente toda de la instructora»",
 );
 
-/*
- * Y que el instructor tenga voz para él solo. Con dos voces castellanas y tres
- * bocas alguien repite, y quien no puede repetir es el que se oye todo el rato:
- * es la voz que hay que reconocer. Ver `docs/voces/LEEME.md`.
- */
-const suya = [...(voces["instructor"] ?? [])][0] ?? null;
-const otras = new Set([
-  ...(voces["torre"] ?? []),
-  ...(voces["otro avión"] ?? []),
-]);
+const delInstructor = new Set(voces["instructor"] ?? []);
+const deLaRadio = new Set([...(voces["torre"] ?? []), ...(voces["otro"] ?? [])]);
+const compartidas = [...delInstructor].filter((v) => deLaRadio.has(v));
 comprobar(
-  "el instructor no comparte voz con nadie",
-  suya !== null && !otras.has(suya),
-  `instructor «${suya}» · los demás ${[...otras].map((v) => `«${v}»`).join(" ") || "—"}`,
+  "el instructor no comparte voz con la radio",
+  delInstructor.size > 0 && deLaRadio.size > 0 && compartidas.length === 0,
+  `instructor ${[...delInstructor].join(", ") || "—"} · radio ${[...deLaRadio].join(", ") || "—"}`,
   "una radio en la que contesta tu propio instructor no es una radio, es un eco",
 );
 
@@ -272,14 +259,7 @@ comprobar("sin errores", !errores.length, errores[0] ?? "limpio", "");
 
 console.log("\n  quién habla:\n");
 for (const [q, n] of Object.entries(cuenta).sort((a, b) => b[1] - a[1]))
-  console.log(
-    `  · ${q.padEnd(11)} ${String(n).padStart(3)} frases  ·  ${[...voces[q]].join(", ")}`,
-  );
-console.log("\n  lo que se dijo:\n");
-for (const d of dichas.slice(0, 24))
-  console.log(`  · [${quien(d).padEnd(11)}] ${d.texto.slice(0, 70)}`);
-if (dichas.length > 24) console.log(`  · … y ${dichas.length - 24} más`);
-
+  console.log(`  · ${q.padEnd(11)} ${String(n).padStart(3)} frases  ·  ${(voces[q] ?? []).join(", ") || "—"}`);
 console.log("");
 for (const r of resultados) {
   console.log(`  ${r.ok ? "✓" : "✗"} ${r.nombre}  —  ${r.detalle}`);

@@ -236,6 +236,15 @@ export class InstructorGrabado implements Instructor {
     return this.quienLaDice(clave, relleno)?.voz ?? null;
   }
 
+  /**
+   * Las voces con las que ha hablado esta boca: la carpeta de la grabación
+   * —«instructor», «torre», «otro»…— o «navegador» si la dijo el sintetizador. Las cuatro bocas comparten una bolsa de
+   * grabaciones y la voz la pone la frase, así que es lo único que dice desde
+   * fuera si una radio suena a otra persona o a tu propio instructor. Lo mira
+   * `verificar-quien-habla`.
+   */
+  readonly vocesUsadas = new Set<string>();
+
   decir(
     texto: string,
     clave?: string,
@@ -291,6 +300,7 @@ export class InstructorGrabado implements Instructor {
       (listo) => {
         this.suplente.callar();
         this.callarLoGrabado();
+        this.vocesUsadas.add(suena.voz);
         this.ultima = clave ?? texto;
         this.apuntar();
         this.sonando = true;
@@ -355,6 +365,7 @@ export class InstructorGrabado implements Instructor {
           return;
         }
         this.sonando = true;
+        this.vocesUsadas.add("navegador");
         this.suplente.decir(texto, clave, urgencia);
         // La misma espera en dos tiempos que el resto. Ver `porElSuplente`.
         this.esperarAlSuplente(listo);
@@ -450,6 +461,7 @@ export class InstructorGrabado implements Instructor {
         this.ultima = clave ?? texto;
         this.apuntar();
         this.sonando = true;
+        this.vocesUsadas.add("navegador");
         this.suplente.decir(texto, clave, urgencia);
         this.esperarAlSuplente(listo);
         return () => {

@@ -474,6 +474,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         (h) => `${((h.t - cero) / 1000).toFixed(1)}s ${h.clave}`,
       );
     },
+    /** Las voces grabadas con las que ha hablado cada boca. */
+    vocesDeCadaBoca: () =>
+      Object.fromEntries(
+        Object.entries(juego.bocas).map(([q, b]) => [
+          q,
+          b instanceof InstructorGrabado ? [...b.vocesUsadas] : [],
+        ]),
+      ),
     dichoTodo: () => {
       const salida: Record<string, string[]> = {};
       for (const [quien, boca] of Object.entries(juego.bocas)) {
