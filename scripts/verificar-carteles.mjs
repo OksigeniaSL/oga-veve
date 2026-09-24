@@ -104,6 +104,28 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
   });
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
+  /*
+   * Y todo lo que pase en la carga, para imprimirlo si no arranca: se ha
+   * visto «main.ts no llegó a ejecutarse» sin ninguna petición abierta, y
+   * eso deja fuera solo lo pendiente. Lo que falla o responde con error
+   * también cuenta.
+   */
+  const carga = [];
+  page.on("console", (m) => {
+    if (m.type() === "error" || m.type() === "warning")
+      carga.push(`consola ${m.type()}: ${m.text().slice(0, 160)}`);
+  });
+  page.on("requestfailed", (r) =>
+    carga.push(`falló ${r.url().replace(/^https?:\/\/[^/]+/, "")} ${r.failure()?.errorText ?? ""}`),
+  );
+  page.on("response", (r) => {
+    if (r.status() >= 400)
+      carga.push(`${r.status()} ${r.url().replace(/^https?:\/\/[^/]+/, "")}`);
+  });
+  const pendientes = new Set();
+  page.on("request", (r) => pendientes.add(r.url().replace(/^https?:\/\/[^/]+/, "")));
+  page.on("requestfinished", (r) => pendientes.delete(r.url().replace(/^https?:\/\/[^/]+/, "")));
+  page.on("requestfailed", (r) => pendientes.delete(r.url().replace(/^https?:\/\/[^/]+/, "")));
   await page.addInitScript(() => {
     localStorage.setItem("oga-veve:teclas-vistas", "1");
   });
@@ -123,10 +145,19 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     .then(() => true)
     .catch(() => false);
   if (!arranco) {
+    // Y hasta dónde llegó: ver las migas de `main.ts`.
+    const migas = await page
+      .evaluate(() => globalThis.__arranque ?? null)
+      .catch(() => null);
     comprobar(
       `${ancho}×${alto}${dedo ? " con el dedo" : ""}: el juego arrancó`,
       false,
-      "no arrancó en 60 s",
+      `no arrancó en 60 s · ${migas ? `llegó a: ${migas.join(" · ")}` : "sin migas: main.ts no llegó a ejecutarse"}` +
+        (pendientes.size
+          ? ` · peticiones abiertas: ${[...pendientes].slice(0, 5).join(" ")}`
+          : " · ninguna petición abierta") +
+        ` · errores: ${errores.slice(0, 3).join(" | ") || "ninguno"}` +
+        ` · en la carga: ${carga.slice(0, 8).join(" | ") || "nada raro"}`,
       "no es un fallo de los carteles: es que no hubo juego que medir",
     );
     await page.close();
@@ -495,6 +526,50 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
         t.tapa.length ? `encima de ${t.tapa.join(" y ")}` : "libre",
         "la lámpara y la orden se leen juntas: «esperá a la luz» y la luz",
       );
+  }
+
+  /*
+   * **Y el panel del final, con un vuelo detrás.** Sin vuelo no hay plano del
+   * recorrido y el panel cabe siempre; con él, en un teléfono apaisado «Otro
+   * vuelo» quedaba por debajo del borde y la barra del timón encima. Se
+   * vuela unos segundos, se termina y se pregunta por los dos botones.
+   */
+  if (!(dedo && alto > ancho)) {
+    await page.evaluate(() => {
+      const s = globalThis.__oga.estado();
+      globalThis.__oga.colocar(s.position.x, s.position.y + 300, s.position.z, 40);
+      globalThis.__oga.acelerar?.(8);
+    });
+    await page.waitForTimeout(5000);
+    const fin = await page.evaluate(() => {
+      globalThis.__oga.acelerar?.(1);
+      globalThis.__oga.acabar();
+      return new Promise((listo) =>
+        setTimeout(() => {
+          const malos = [];
+          for (const q of ["fin-otra", "fin-hangar"]) {
+            const b = document.querySelector(`[data-hud="${q}"]`);
+            if (!b) continue;
+            const c = b.getBoundingClientRect();
+            const fuera = c.top < 0 || c.bottom > innerHeight || c.left < 0 || c.right > innerWidth;
+            const p = document.elementFromPoint(
+              Math.min(innerWidth - 1, c.left + c.width / 2),
+              Math.min(innerHeight - 1, c.top + c.height / 2),
+            );
+            if (fuera) malos.push(`${q} fuera`);
+            else if (!p || !(b === p || b.contains(p)))
+              malos.push(`${q} tapado por ${p?.className ?? "nada"}`);
+          }
+          listo(malos);
+        }, 1200),
+      );
+    });
+    comprobar(
+      `${donde}: el panel del final cabe y sus botones se tocan`,
+      fin.length === 0,
+      fin.join(" · ") || "los dos",
+      "«Otro vuelo» es el botón para volver a jugar",
+    );
   }
 
   comprobar(

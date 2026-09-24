@@ -153,10 +153,21 @@ const navegador = await chromium.launch({
     ? ["--headless=new", "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=gl"]
     : ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
 });
+/*
+ * **Y la pantalla y el idioma, si se piden.** `OGA_VISTA=915x412` vuela en
+ * un teléfono apaisado y `OGA_IDIOMA=es-PY` en el idioma de quien juega: el
+ * banco volaba siempre en una tablet y en inglés —lo que dice el navegador
+ * sin cabeza—, que es justo lo que menos se parece a un niño en Paraguay con
+ * el móvil de su madre.
+ */
+const [anchoVista, altoVista] = (process.env.OGA_VISTA ?? "1000x620")
+  .split("x")
+  .map(Number);
 const page = await navegador.newPage({
-  viewport: { width: 1000, height: 620 },
+  viewport: { width: anchoVista || 1000, height: altoVista || 620 },
   hasTouch: true,
   isMobile: true,
+  ...(process.env.OGA_IDIOMA ? { locale: process.env.OGA_IDIOMA } : {}),
 });
 const errores = [];
 page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
@@ -232,6 +243,19 @@ const arrancoA = Date.now();
  * colgada es silenciosa, pero la petición de red que la cuelga no lo es.
  */
 const pendientes = new Map();
+/** Lo que falla o responde con error en la carga. Ver `verificar-carteles`. */
+const carga = [];
+page.on("requestfailed", (r) =>
+  carga.push(`falló ${r.url().replace(/^https?:\/\/[^/]+/, "")} ${r.failure()?.errorText ?? ""}`),
+);
+page.on("response", (r) => {
+  if (r.status() >= 400)
+    carga.push(`${r.status()} ${r.url().replace(/^https?:\/\/[^/]+/, "")}`);
+});
+page.on("console", (m) => {
+  if (m.type() === "error" || m.type() === "warning")
+    carga.push(`consola ${m.type()}: ${m.text().slice(0, 160)}`);
+});
 page.on("request", (r) => pendientes.set(r, Date.now()));
 page.on("requestfinished", (r) => pendientes.delete(r));
 page.on("requestfailed", (r) => pendientes.delete(r));
@@ -260,6 +284,11 @@ try {
     migas
       ? `    el arranque llegó a: ${migas.join(" · ")}`
       : "    y no dejó ni una miga: no llegó a ejecutarse `main.ts`",
+  );
+  console.log(
+    carga.length
+      ? `    en la carga:\n      ${carga.slice(0, 12).join("\n      ")}`
+      : "    y en la carga no falló nada ni respondió con error",
   );
   const colgadas = [...pendientes.entries()]
     .map(([r, desde]) => `${((Date.now() - desde) / 1000).toFixed(0)} s  ${r.url().replace(/^https?:\/\/[^/]+/, "")}`)
@@ -293,7 +322,22 @@ await page.waitForTimeout(4000);
  * Con el clic, un vuelo entero de este banco ejercita las grabaciones, que es
  * lo que oye quien juega.
  */
-await page.mouse.click(450, 300);
+/*
+ * **En un sitio donde solo haya paisaje.** Iba a (450, 300) fijo, y con el
+ * cuadro subido por encima de los pedales ese punto caía en su tirador: el
+ * banco bajaba el cuadro sin querer y las fotos salían con media fila de
+ * esferas. Se busca en una rejilla el primer punto que sea el lienzo.
+ */
+const libre = await page.evaluate(() => {
+  for (let fy = 0.3; fy < 0.9; fy += 0.05)
+    for (let fx = 0.3; fx < 0.8; fx += 0.05) {
+      const x = Math.round(innerWidth * fx);
+      const y = Math.round(innerHeight * fy);
+      if (document.elementFromPoint(x, y)?.id === "lienzo") return [x, y];
+    }
+  return [Math.round(innerWidth / 2), Math.round(innerHeight / 3)];
+});
+await page.mouse.click(libre[0], libre[1]);
 await page
   .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, {
     timeout: 60000,

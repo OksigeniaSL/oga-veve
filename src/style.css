@@ -1198,6 +1198,43 @@ body {
   display: none;
 }
 
+/*
+ * **Y con el panel del final puesto, los mandos de pulgar se esconden.**
+ * Viven en otra capa, por encima del HUD, y la barra del timón quedaba
+ * dibujada encima de «Otro vuelo».
+ */
+body:has([data-hud="fin"]:not([hidden])) .pad {
+  visibility: hidden;
+}
+
+/*
+ * **Y en una pantalla baja, en dos columnas.** Uno debajo de otro —el plano
+ * del vuelo, la manga, la frase, el reloj y los botones— no cabía en un
+ * teléfono apaisado: en 915 × 412 «Otro vuelo» quedaba por debajo del borde,
+ * y es el botón para volver a jugar. El plano a un lado y lo demás al otro.
+ */
+@media (max-height: 640px) {
+  .fin__panel {
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 28px;
+    row-gap: 12px;
+    align-items: center;
+    justify-items: center;
+    padding: 20px 28px;
+  }
+
+  .fin__panel > .fin__plano {
+    grid-column: 1;
+    grid-row: 1 / span 5;
+    width: min(300px, 38vw);
+  }
+
+  .fin__panel > :not(.fin__plano) {
+    grid-column: 2;
+  }
+}
+
 .fin__panel {
   display: flex;
   flex-direction: column;
