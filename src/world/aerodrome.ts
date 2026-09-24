@@ -800,7 +800,7 @@ export function alturaDeEdificio(e: {
    */
   if (esRadar(e)) return 18;
   if (esAntena(e)) return 30;
-  if (e.kind === TORRE_SIN_TIPO) return 15;
+  if (esTorreLisa(e)) return 15;
   /*
    * Y un depósito es tan alto como ancho, más o menos: un cilindro de
    * combustible de aeropuerto ronda los doce o catorce metros de diámetro y
@@ -873,7 +873,7 @@ export function esRadar(e: { readonly kind?: string | null }): boolean {
 export function esAntena(e: { readonly kind?: string | null }): boolean {
   return (
     !!e.kind &&
-    ((e.kind.startsWith("tower:") && e.kind !== TORRE_SIN_TIPO) ||
+    ((e.kind.startsWith("tower:") && !esTorreLisa(e)) ||
       e.kind === "mast" ||
       e.kind === "communications_tower")
   );
@@ -886,6 +886,16 @@ export function esAntena(e: { readonly kind?: string | null }): boolean {
  * ser falso.
  */
 export const TORRE_SIN_TIPO = "tower:unknown";
+
+/**
+ * Las torres que se levantan lisas: la que no dice qué es y la de
+ * observación. Esta última porque en Asunción hay una, sin nombre, junto al
+ * campo: puede ser la de control mal etiquetada o un mirador, y dibujarla
+ * como antena sería suponer tanto como dibujarla con cristalera.
+ */
+export function esTorreLisa(e: { readonly kind?: string | null }): boolean {
+  return e.kind === TORRE_SIN_TIPO || e.kind === "tower:observation";
+}
 
 /** Cuánto tarda en dar una vuelta la antena de un radar de aproximación, s. */
 export const VUELTA_DEL_RADAR = 5;

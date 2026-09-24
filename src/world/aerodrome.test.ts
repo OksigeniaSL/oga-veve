@@ -245,6 +245,9 @@ describe("el radar y las antenas", () => {
     expect(esTorreDeControl(torre)).toBe(false);
     expect(esAntena(torre)).toBe(false);
     expect(alturaDeEdificio(torre)).toBe(15);
+    // Y la de observación, igual: la de Asunción no dice si es la de control.
+    expect(esAntena({ kind: "tower:observation" })).toBe(false);
+    expect(esTorreDeControl({ kind: "tower:observation" })).toBe(false);
   });
 
   it("un radar va subido a su torre", () => {

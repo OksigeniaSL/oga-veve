@@ -83,6 +83,31 @@ import { elegirPiloto } from "./ui/pantalla-pilotos";
 
 setLocale(detectLocale());
 
+/**
+ * **Las migas del arranque**, solo en desarrollo.
+ *
+ * El juego se quedó sin arrancar en el banco una vez de cada veinte y pico
+ * —Guaraní primero, luego La Palma—, con la consola callada y **ninguna
+ * petición de red abierta**: lo que esperaba no era la red. Razonándolo no se
+ * encontró, así que cada etapa del arranque deja aquí su nombre y su hora, y
+ * el banco, si no arranca, dice hasta dónde llegó.
+ */
+const migas: string[] = [];
+if (import.meta.env.DEV)
+  (globalThis as { __arranque?: string[] }).__arranque = migas;
+function miga(que: string): void {
+  if (import.meta.env.DEV)
+    migas.push(`${que} ${(performance.now() / 1000).toFixed(1)} s`);
+}
+/** Una carga del arranque, que apunta su miga al terminar. */
+function conMiga<T>(que: string, promesa: Promise<T>): Promise<T> {
+  return promesa.then((v) => {
+    miga(que);
+    return v;
+  });
+}
+miga("inicio");
+
 const canvas = document.querySelector<HTMLCanvasElement>("#lienzo");
 const hudRoot = document.querySelector<HTMLElement>("#hud");
 const creditsRoot = document.querySelector<HTMLElement>("#creditos");
@@ -304,9 +329,9 @@ const [
   fotosVecinas,
   ortofotoHorizonte,
 ] = await Promise.all([
-  conRelieve(escenario),
-  cargarCiudad(escenario.id),
-  tiempoPedido(escenario),
+  conMiga("relieve", conRelieve(escenario)),
+  conMiga("ciudad", cargarCiudad(escenario.id)),
+  conMiga("tiempo", tiempoPedido(escenario)),
   /*
    * La ortofoto, si el escenario la tiene y se juega el mundo de la foto.
    *
@@ -314,17 +339,23 @@ const [
    * relieve y la ciudad: un fichero que hay que tener antes de construir el
    * mundo, y encadenarlo triplicaría la espera del arranque.
    */
-  mundoElegido() === "foto"
-    ? cargarOrtofoto(escenario.id, "lejos")
-    : Promise.resolve(undefined),
+  conMiga(
+    "foto lejos",
+    mundoElegido() === "foto"
+      ? cargarOrtofoto(escenario.id, "lejos")
+      : Promise.resolve(undefined),
+  ),
   /*
    * Y la fina del aeródromo, que puede no existir: hay proveedores que no
    * tienen más detalle que dar —Sentinel-2 se acaba a ocho metros por píxel—
    * y entonces solo hay una capa y no pasa nada.
    */
-  mundoElegido() === "foto"
-    ? cargarOrtofoto(escenario.id, "cerca")
-    : Promise.resolve(undefined),
+  conMiga(
+    "foto cerca",
+    mundoElegido() === "foto"
+      ? cargarOrtofoto(escenario.id, "cerca")
+      : Promise.resolve(undefined),
+  ),
   /*
    * **Y la de en medio: la franja por la que de verdad se vuela.**
    *
@@ -334,9 +365,12 @@ const [
    * el aire estaba en la capa basta. Ver `ENCUADRES.medio` en
    * `scripts/ortofoto-publica.mjs`.
    */
-  mundoElegido() === "foto"
-    ? cargarOrtofoto(escenario.id, "medio")
-    : Promise.resolve(undefined),
+  conMiga(
+    "foto medio",
+    mundoElegido() === "foto"
+      ? cargarOrtofoto(escenario.id, "medio")
+      : Promise.resolve(undefined),
+  ),
   /*
    * Y el aeropuerto de destino, si esta ruta lleva a otro.
    *
@@ -345,7 +379,7 @@ const [
    * detrás sumaría su espera a la del arranque, y son otros trescientos
    * kilobytes.
    */
-  Promise.all(destinosDeHoy.map((d) => conRelieve(d))),
+  conMiga("relieve vecinos", Promise.all(destinosDeHoy.map((d) => conRelieve(d)))),
   /*
    * Y su fotografía, para que la isla de enfrente no salga de polígonos.
    *
@@ -354,11 +388,14 @@ const [
    * su pista. Cuando el aterrizaje allí sea un aterrizaje de verdad, la fina
    * también.
    */
-  Promise.all(
-    destinosDeHoy.map((d) =>
-      mundoElegido() === "foto"
-        ? cargarOrtofoto(d.id, "lejos")
-        : Promise.resolve(undefined),
+  conMiga(
+    "foto vecinos",
+    Promise.all(
+      destinosDeHoy.map((d) =>
+        mundoElegido() === "foto"
+          ? cargarOrtofoto(d.id, "lejos")
+          : Promise.resolve(undefined),
+      ),
     ),
   ),
   /*
@@ -367,10 +404,14 @@ const [
    * Es la que quita la llanura de color plano que empezaba donde acababa la
    * foto de dieciocho kilómetros. Ciento cincuenta kilobytes por isla.
    */
-  mundoElegido() === "foto"
-    ? cargarOrtofoto(escenario.id, "horizonte")
-    : Promise.resolve(undefined),
+  conMiga(
+    "foto horizonte",
+    mundoElegido() === "foto"
+      ? cargarOrtofoto(escenario.id, "horizonte")
+      : Promise.resolve(undefined),
+  ),
 ]);
+miga("cargas");
 /**
  * **Y donde la foto ya enseña la ciudad, la ciudad es la foto.**
  *
@@ -411,6 +452,7 @@ try {
   // Sin almacenamiento se juega igual, solo que no se recuerda.
 }
 
+miga("antes del juego");
 // Y la ortofoto al terreno, si la hay. Ver `Terrain.ponerOrtofoto`.
 const game = new Game({
   canvas,
@@ -433,6 +475,7 @@ const game = new Game({
   fotosVecinas,
   ortofotoHorizonte,
 });
+miga("juego creado");
 /*
  * **Y el parte se le da al juego, no solo al escenario.**
  *

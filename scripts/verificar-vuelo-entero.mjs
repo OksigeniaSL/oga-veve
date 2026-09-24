@@ -240,6 +240,19 @@ try {
       ? `    la consola dijo: ${errores.slice(0, 3).join(" | ")}`
       : "    y la consola no dijo nada: o tardó de más, o se quedó esperando un dato",
   );
+  /*
+   * **Y hasta dónde llegó el arranque.** La última vez no quedó ninguna
+   * petición abierta: lo que esperaba no era la red. `main.ts` deja una miga
+   * por etapa; la que falte es la que se quedó esperando.
+   */
+  const migas = await page
+    .evaluate(() => globalThis.__arranque ?? null)
+    .catch(() => null);
+  console.log(
+    migas
+      ? `    el arranque llegó a: ${migas.join(" · ")}`
+      : "    y no dejó ni una miga: no llegó a ejecutarse `main.ts`",
+  );
   const colgadas = [...pendientes.entries()]
     .map(([r, desde]) => `${((Date.now() - desde) / 1000).toFixed(0)} s  ${r.url().replace(/^https?:\/\/[^/]+/, "")}`)
     .slice(0, 8);

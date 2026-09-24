@@ -984,8 +984,21 @@ for (const icao of icaos) {
    * `osm-a-hitos.mjs`, y en los tres sitios la respuesta es la misma: si lo
    * nuevo trae menos que lo que había, no se escribe. Repetir es gratis.
    */
+  /*
+   * **Y una pista es una pista, no un trozo.** La guardada de La Palma y la
+   * de Lanzarote traían, además de la suya, un pedazo de ochenta metros que
+   * la costura de `pistasCosidas` ya descarta. Contándolos, lo nuevo —que
+   * está mejor— salía como «trae menos» y no se escribía. Por debajo de
+   * trescientos metros no hay avión de la flota que despegue.
+   */
+  const largo = (r) =>
+    (r.centerline ?? []).reduce(
+      (acc, p, i, v) =>
+        i ? acc + Math.hypot(p[0] - v[i - 1][0], p[1] - v[i - 1][1]) : 0,
+      0,
+    );
   const cuentas = (a) => ({
-    pistas: a?.runways?.length ?? 0,
+    pistas: (a?.runways ?? []).filter((r) => largo(r) >= 300).length,
     rodaduras: a?.taxiways?.length ?? 0,
     plataformas: a?.aprons?.length ?? 0,
     puestos: a?.parkingPositions?.length ?? 0,
