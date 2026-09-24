@@ -1836,7 +1836,8 @@ button.motor__tecla::after {
   z-index: 5;
 }
 
-.tutor[hidden] {
+.tutor[hidden],
+.tutor.tutor--repetido {
   display: none;
 }
 
@@ -2219,6 +2220,18 @@ button.motor__tecla::after {
 @media (pointer: coarse) {
   .hud {
     --reserva-derecha: max(112px, env(safe-area-inset-right));
+  }
+}
+
+/*
+ * **Y con el dedo, la tarjeta no enseña teclas.** «Frená · B» en un teléfono
+ * es enseñar la tecla de un teclado que no hay, igual que la tarjeta del freno
+ * que ya se quitó de la columna. Las letras de las calles —Z1, S1— van en su
+ * propio recuadro y se quedan: esas están pintadas en el suelo.
+ */
+@media (pointer: coarse) {
+  .hud .senal__tecla {
+    display: none;
   }
 }
 

@@ -216,6 +216,29 @@ export class Hud {
     this.terreno = terreno;
   }
 
+  /**
+   * **Y el tutor calla lo que ya dice la orden.**
+   *
+   * Los dos se deciden por separado —la señal es la orden y el tutor su
+   * explicación—, y a veces la explicación es la misma frase: en la carrera
+   * de despegue salían dos tarjetas lado a lado diciendo «Tirá para arriba».
+   * Dos veces lo mismo no es más claro, es más ruido. Cuando las dos frases
+   * coinciden, se queda la orden.
+   */
+  noRepetirElTutor(): void {
+    const tutor = this.root.querySelector<HTMLElement>('[data-hud="tutor"]');
+    const suyo = tutor?.querySelector('[data-hud="tutor-text"]')?.textContent;
+    const senal = this.root.querySelector<HTMLElement>('[data-hud="senal"]');
+    const orden = senal?.querySelector('[data-hud="senal-texto"]')?.textContent;
+    const repite =
+      !!suyo &&
+      !!orden &&
+      !!senal &&
+      !senal.hidden &&
+      suyo.trim().toLowerCase() === orden.trim().toLowerCase();
+    tutor?.classList.toggle("tutor--repetido", repite);
+  }
+
   /** Lo que ve el detector de V1, para los bancos. Ver `sondas.ts`. */
   get sondaDeV1(): Record<string, number | boolean> {
     return {

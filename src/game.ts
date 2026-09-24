@@ -5868,7 +5868,15 @@ export class Game {
           );
           this.cantar("flaps", t("vuelo.pediFlaps"), "vuelo.pediFlaps");
         } else if (
-          queSeDice(banda, this.flight.state.onGround) === "vuelo.lentoYBajo"
+          queSeDice(banda, this.flight.state.onGround) === "vuelo.lentoYBajo" &&
+          /*
+           * **Y no a un palmo del suelo.** En la recogida se va despacio a
+           * propósito —se está posando—, y con un rebote las ruedas quedan un
+           * instante en el aire: en Pedro Juan salía «Venís lento: metéle
+           * gas» ya rodando por la pista. Por debajo de quince metros no se
+           * pide gas, que es la misma altura a la que calla el PAPI.
+           */
+          this.flight.state.heightAboveGround > 15
         ) {
           /*
            * **Venís lento: metéle gas.** Y esta rama faltaba entera.
@@ -6819,6 +6827,7 @@ export class Game {
     this.atenderAlSenalero(dt);
     this.contarGalones(dt, banda, aro, toma, renuncio);
     this.hud.senal.update(dt);
+    this.hud.noRepetirElTutor();
   };
 
   /**
@@ -9184,6 +9193,17 @@ export class Game {
       // Toque de ruedas. Una toma dura suena distinto de una suave, que es lo
       // que enseña a aterrizar sin necesidad de puntuación ninguna.
       this.avisar(state.touchdownSinkRate > 2.5 ? "error" : "touchdown");
+      /*
+       * **Y lo que decía la senda se retira al tocar.** En la recogida todo
+       * avión va por debajo del PAPI —se está posando—, y la tarjeta que salía
+       * a quince metros duraba unos segundos: en Pedro Juan, ya rodando por
+       * la pista, seguía puesto «Venís lento: metéle gas», que es lo contrario
+       * de lo que toca. Se hace aquí, en el toque, y no con las ruedas en el
+       * suelo sin más: el dibujo del motor es también el de «motor a fondo»
+       * en la carrera de despegue, y ésa sí vale en tierra.
+       */
+      for (const d of ["motor", "papi0", "papi1", "papi2", "papi3", "papi4"])
+        this.hud.senal.caducar(d);
     }
     /*
      * **Y el logro de despegar suena una vez por vuelo, no en cada bote.**
