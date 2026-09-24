@@ -1618,6 +1618,14 @@ button.motor__tecla::after {
   justify-items: center;
   gap: 2px;
   min-width: 116px;
+  /*
+   * **Y se puede tocar.** Es un botón —tocarla cambia de destino, que es la
+   * tecla J para quien no tiene teclado—, pero vive dentro del HUD, que deja
+   * pasar los toques al mundo, y nunca se los devolvió: el toque le llegaba
+   * al lienzo. Nunca funcionó con el dedo. Lo vigila `verificar-carteles`.
+   */
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .casa__aguja {
@@ -1886,8 +1894,15 @@ button.motor__tecla::after {
   pointer-events: none;
 }
 
-/* Con ratón no estorban. Con dedo, aparecen. */
-@media (pointer: fine) {
+/*
+ * Con ratón no estorban. Con dedo, aparecen.
+ *
+ * **Y solo con dedo**, no «con todo menos ratón»: un aparato que no dice ni
+ * una cosa ni otra —`pointer: none`, una tele o un equipo con solo teclado—
+ * los enseñaba sin la reserva de sitio que sí va con el dedo, y la palanca
+ * del motor se quedaba encima de la tarjeta del destino.
+ */
+@media not all and (pointer: coarse) {
   .tactil {
     display: none;
   }
@@ -2477,7 +2492,13 @@ button.motor__tecla::after {
    * donde se vuelve a subir: un cuadro que desaparece del todo no se puede
    * recuperar sin saber leer un menú.
    */
-  transition: transform 260ms ease;
+  transition:
+    transform 260ms ease,
+    clip-path 260ms ease;
+  /* El recorte de partida, sin recortar nada: sin él no hay de dónde animar
+     el de `.cuadro--bajado`. Con sesenta píxeles de margen por arriba, que
+     es por donde asoma el asa: fuera de la caja, y recortada no se toca. */
+  clip-path: inset(-60px 0 0 0);
 }
 
 /*
@@ -2497,6 +2518,13 @@ button.motor__tecla::after {
 .cuadro--bajado {
   z-index: 5;
   transform: translate(-50%, calc(100% - var(--tirador-asoma, 34px)));
+  /*
+   * **Y bajado, solo el asa.** Con el dedo el cuadro vive despegado del borde,
+   * encima de los pedales, y al bajarlo lo de debajo del asa no salía de la
+   * pantalla: quedaba media fila de esferas cortadas debajo de la barra del
+   * timón. Se recorta todo lo que no es el asa.
+   */
+  clip-path: inset(-60px 0 calc(100% - var(--tirador-asoma, 34px)) 0);
 }
 
 .sin-movimiento .cuadro {

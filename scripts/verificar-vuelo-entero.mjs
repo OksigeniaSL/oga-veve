@@ -141,9 +141,17 @@ if (!BASE) throw new Error("el servidor de pruebas no dijo por dónde escucha");
 if (!BASE.endsWith(`:${PUERTO}`))
   console.log(`  (el ${PUERTO} estaba ocupado: se usa ${BASE})`);
 
+/*
+ * **Y con la tarjeta de verdad, si se pide.** `OGA_GPU=1` lanza Chrome con la
+ * GPU del equipo en vez de SwiftShader: para medir el vuelo da igual, pero
+ * para mirar las fotos de `OGA_FOTOS` no — SwiftShader no juzga una imagen.
+ */
+const CON_GPU = process.env.OGA_GPU === "1";
 const navegador = await chromium.launch({
   executablePath: "/usr/bin/google-chrome",
-  args: ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
+  args: CON_GPU
+    ? ["--headless=new", "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=gl"]
+    : ["--use-gl=angle", "--use-angle=gl", "--enable-unsafe-swiftshader"],
 });
 const page = await navegador.newPage({
   viewport: { width: 1000, height: 620 },
@@ -332,6 +340,46 @@ const comprobarSiVolo = (nombre, ok, detalle, porque) => {
 };
 
 // ── El vuelo ──────────────────────────────────────────────────────────────
+
+/*
+ * **Las fotos del vuelo, si se piden.** `OGA_FOTOS=carpeta` saca una captura
+ * cada vez que cambia la fase —en el puesto, rodando, en la carrera, subiendo,
+ * en final, en la toma— y una cada treinta segundos de juego entre medias. Es
+ * jugar el vuelo entero y mirarlo, que es como se encuentra lo que ninguna
+ * comprobación sabe preguntar. Va en paralelo al piloto, que vuela dentro de
+ * la página: Playwright deja hacer capturas mientras `evaluate` corre.
+ */
+const FOTOS = process.env.OGA_FOTOS ?? null;
+let fotografiando = !!FOTOS;
+const fotos = (async () => {
+  if (!FOTOS) return;
+  const { mkdir } = await import("node:fs/promises");
+  await mkdir(FOTOS, { recursive: true });
+  let ultima = "";
+  let ultimaT = -Infinity;
+  let n = 0;
+  while (fotografiando) {
+    await new Promise((r) => setTimeout(r, 700));
+    const dato = await page
+      .evaluate(() => {
+        const o = globalThis.__oga;
+        const s = o.estado();
+        return {
+          fase: o.fase() || "—",
+          t: o.reloj(),
+          alto: Math.round(s.heightAboveGround),
+          vel: Math.round(s.airspeed * 1.944),
+        };
+      })
+      .catch(() => null);
+    if (!dato) continue;
+    if (dato.fase === ultima && dato.t - ultimaT < 30) continue;
+    ultima = dato.fase;
+    ultimaT = dato.t;
+    const nombre = `${String(n++).padStart(2, "0")}-${dato.t.toFixed(0)}s-${dato.fase.replace(/[^\w.-]+/g, "_")}.png`;
+    await page.screenshot({ path: `${FOTOS}/${nombre}` }).catch(() => {});
+  }
+})();
 
 const vuelo = await page.evaluate(async (vecesPedidas) => {
   const o = globalThis.__oga;
@@ -2554,6 +2602,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     flota: alPrincipioFlotaba,
   };
 }, VECES);
+fotografiando = false;
+await fotos;
 
 /**
  * Si el vuelo se quedó sin presupuesto de tiempo.

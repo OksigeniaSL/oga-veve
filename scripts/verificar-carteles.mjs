@@ -345,7 +345,51 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     return salida;
   });
 
+  /*
+   * **Y todo lo que es un botón, se puede tocar.** Se pregunta en el centro de
+   * cada botón visible del HUD quién recibe el toque. La tarjeta del destino
+   * se toca para cambiar de destino, y el toque le llegaba al lienzo: vivía
+   * dentro del HUD, que deja pasar los toques al mundo, y nunca se los
+   * devolvió. Nadie lo preguntó hasta que se preguntó así.
+   */
+  const sordos = await page.evaluate(() => {
+    const hud = document.querySelector(".hud");
+    if (!hud) return [];
+    return [...hud.querySelectorAll("button")]
+      .filter((b) => {
+        if (b.closest("[hidden]") || b.disabled) return false;
+        const cs = getComputedStyle(b);
+        if (cs.visibility === "hidden" || cs.display === "none") return false;
+        if (Number(cs.opacity) === 0) return false;
+        const c = b.getBoundingClientRect();
+        return (
+          c.width > 8 &&
+          c.height > 8 &&
+          c.right > 0 &&
+          c.bottom > 0 &&
+          c.left < innerWidth &&
+          c.top < innerHeight
+        );
+      })
+      .map((b) => {
+        const c = b.getBoundingClientRect();
+        const x = Math.min(innerWidth - 1, Math.max(0, c.left + c.width / 2));
+        const y = Math.min(innerHeight - 1, Math.max(0, c.top + c.height / 2));
+        const p = document.elementFromPoint(x, y);
+        if (!p || b === p || b.contains(p)) return null;
+        const quien = p.dataset?.hud || p.id || String(p.className);
+        return `${b.dataset.hud ?? b.className} → ${quien}`.slice(0, 70);
+      })
+      .filter(Boolean);
+  });
+
   const donde = `${juego.tramo} ${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+  comprobar(
+    `${donde}: todos los botones reciben el toque`,
+    sordos.length === 0,
+    sordos.length ? sordos.slice(0, 4).join(" · ") : "todos",
+    "un botón que no recibe el toque es un dibujo de botón",
+  );
   comprobar(
     `${donde}: los mandos y los avisos caben en la pantalla`,
     fuera.length === 0,
