@@ -286,11 +286,20 @@ function claseDeEdificio(tags) {
   const tipo = tags["tower:type"];
   if (tipo === "radar" || tags.man_made === "radar") return "radar";
   if (tags.aeroway) return tags.aeroway;
-  if (tags.man_made === "tower" && tipo) {
+  if (tags.man_made === "tower") {
+    /*
+     * La de control se reconoce por lo que dice de sí misma: el tipo
+     * `aircraft_control` —así está mapeada la de Tenerife Sur—, el servicio,
+     * o un mirador que se llama torre de control. **Sin tipo no se supone**:
+     * en Fuerteventura hay una `man_made=tower` a secas a kilómetro y medio
+     * de la de verdad, y salía como una segunda torre de control.
+     */
     const deControl =
+      tipo === "aircraft_control" ||
       tags.service === "aircraft_control" ||
       (tipo === "observation" && /control|torre|twr/i.test(tags.name ?? ""));
-    return deControl ? "control_tower" : `tower:${tipo}`;
+    if (deControl) return "control_tower";
+    return `tower:${tipo ?? "unknown"}`;
   }
   return tags.man_made ?? tags.building ?? "yes";
 }

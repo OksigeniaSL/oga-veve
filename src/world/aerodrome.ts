@@ -800,6 +800,7 @@ export function alturaDeEdificio(e: {
    */
   if (esRadar(e)) return 18;
   if (esAntena(e)) return 30;
+  if (e.kind === TORRE_SIN_TIPO) return 15;
   /*
    * Y un depósito es tan alto como ancho, más o menos: un cilindro de
    * combustible de aeropuerto ronda los doce o catorce metros de diámetro y
@@ -872,11 +873,19 @@ export function esRadar(e: { readonly kind?: string | null }): boolean {
 export function esAntena(e: { readonly kind?: string | null }): boolean {
   return (
     !!e.kind &&
-    (e.kind.startsWith("tower:") ||
+    ((e.kind.startsWith("tower:") && e.kind !== TORRE_SIN_TIPO) ||
       e.kind === "mast" ||
       e.kind === "communications_tower")
   );
 }
+
+/**
+ * Una `man_made=tower` que no dice qué es. No se sabe si es de control, de
+ * agua o un mirador, así que no se le pone ni cabina ni mástil: se levanta
+ * como torre lisa, de su planta, y ya está. Suponer es enseñar algo que puede
+ * ser falso.
+ */
+export const TORRE_SIN_TIPO = "tower:unknown";
 
 /** Cuánto tarda en dar una vuelta la antena de un radar de aproximación, s. */
 export const VUELTA_DEL_RADAR = 5;

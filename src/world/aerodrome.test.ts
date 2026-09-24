@@ -239,6 +239,14 @@ describe("el radar y las antenas", () => {
     expect(esTorreDeControl({ kind: "control_tower" })).toBe(true);
   });
 
+  it("y una torre que no dice qué es, ni torre de control ni antena", () => {
+    // La de Fuerteventura a kilómetro y medio de la de verdad.
+    const torre = { heightM: null, polygon: cuadrada(9), kind: "tower:unknown" };
+    expect(esTorreDeControl(torre)).toBe(false);
+    expect(esAntena(torre)).toBe(false);
+    expect(alturaDeEdificio(torre)).toBe(15);
+  });
+
   it("un radar va subido a su torre", () => {
     const radar = { heightM: null, polygon: cuadrada(10), kind: "radar" };
     expect(esRadar(radar)).toBe(true);
