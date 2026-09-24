@@ -2424,7 +2424,13 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * línea. El suelo son ciento veinte metros: por debajo, el punto de mira
        * se mete dentro de la pista y el avión empieza a serpentear.
        */
-      const mirada = Math.max(120, Math.min(300, falta * 0.4));
+      /*
+       * Y un avión rápido mira más lejos: la mirada está pensada para los 33
+       * m/s de la avioneta, y a 65 son la mitad de segundos para corregir.
+       */
+      const mirada =
+        Math.max(120, Math.min(300, falta * 0.4)) *
+        (NECESITA_TECNICA ? Math.max(1, s.airspeed / 33) : 1);
       const tx = r.x + fx * (along + mirada);
       const tz = r.z + fz * (along + mirada);
       c.aileron = alPuntoPorElSuelo(s, tx, tz);
