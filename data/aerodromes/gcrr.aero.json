@@ -3,7 +3,7 @@
   "name": "César Manrique-Lanzarote Airport",
   "source": {
     "osm": "overpass",
-    "extracted": "2026-09-14",
+    "extracted": "2026-09-24",
     "ourairports": "3082",
     "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README."
   },
@@ -24,50 +24,8 @@
           1069.2
         ],
         [
-          -505.7,
-          -997.8
-        ]
-      ],
-      "thresholds": {
-        "21": {
-          "xy": [
-            544.9,
-            1067.5
-          ],
-          "elevM": 14.3,
-          "headingTrue": 207,
-          "displacedM": 0,
-          "papi": null,
-          "approachLights": null
-        },
-        "03": {
-          "xy": [
-            -544.9,
-            -1078.4
-          ],
-          "elevM": 5.5,
-          "headingTrue": 27,
-          "displacedM": 86.9,
-          "papi": null,
-          "approachLights": null
-        }
-      },
-      "markings": null,
-      "magneticVariation": 3
-    },
-    {
-      "ref": "03/21",
-      "widthM": 45,
-      "surface": "asphalt",
-      "lit": true,
-      "centerline": [
-        [
           -546.2,
           -1077.8
-        ],
-        [
-          -505.7,
-          -997.8
         ]
       ],
       "thresholds": {
