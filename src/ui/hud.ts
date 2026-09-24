@@ -50,7 +50,7 @@ import { canalesDe, type Peldano } from "../flight/escalera";
 import type { Galon } from "../flight/galones";
 import { manga as dibujarManga, MANGA_ALTO } from "./manga";
 import { reconocer } from "../flight/reconocimiento";
-import { aPxDelHud } from "./escala";
+import { aPxDelHud, escribirRincon } from "./escala";
 import { avisaLaPerdida } from "../flight/avisos-de-actitud";
 
 /**
@@ -193,6 +193,12 @@ export class Hud {
    * los dos avisos solo miran la velocidad.
    */
   private enLaCarrera = false;
+  /**
+   * En la carrera de despegue y pasado V1: ya no se frena, se vuela. Lo usa
+   * el aviso de fin de pista, que no puede pedir frenar justo cuando el juego
+   * enseña que ya no se frena. Ver `setWarning`.
+   */
+  private comprometido = false;
 
   /** Lo que ve el detector de V1, para los bancos. Ver `sondas.ts`. */
   get sondaDeV1(): Record<string, number | boolean> {
@@ -1353,11 +1359,7 @@ export class Hud {
      * la barra de arriba, que es un fallo que ya costó una medida —ver
      * `.hud__vistas`—. Así que se mide y la columna de mandos se aparta.
      */
-    const rincon = this.root.querySelector(".rincon")?.getBoundingClientRect();
-    this.root.style.setProperty(
-      "--rincon-alto",
-      `${rincon ? Math.round(aPxDelHud(this.root, rincon.height)) : 0}px`,
-    );
+    escribirRincon(this.root);
   }
 
   /**
@@ -1725,6 +1727,7 @@ export class Hud {
     if (!enDespegue || (enSuelo && state.airspeed < 5))
       this.enLaCarrera = false;
     const despegando = this.enLaCarrera && state.airspeed > decisionSpeed;
+    this.comprometido = despegando;
     // La tecla del freno, la que se enseña para la mano elegida.
     const tecla = this.teclaDe?.("brakes") ?? "";
     if (tecla && this.brakeKey.textContent !== tecla)
@@ -2250,12 +2253,15 @@ export class Hud {
     escribirColumna();
     this.barraObservada?.disconnect();
     if (typeof ResizeObserver === "undefined") return;
+    const rincon = this.root.querySelector(".rincon");
     this.barraObservada = new ResizeObserver(() => {
       escribir();
       escribirColumna();
+      escribirRincon(this.root);
     });
     this.barraObservada.observe(barra);
     if (columna) this.barraObservada.observe(columna);
+    if (rincon) this.barraObservada.observe(rincon);
   }
 
   /**
@@ -2852,7 +2858,15 @@ export class Hud {
       corta = "palabra.subi";
       arrow = "↑";
       blink = true;
-    } else if (runningOutOfRunway(state, runwayLeft)) {
+    } else if (!this.comprometido && runningOutOfRunway(state, runwayLeft)) {
+      /*
+       * **Y pasado V1, no.** Salía en la carrera de despegue de cualquier pista
+       * corta —rápido, en el suelo y con poca pista delante es lo que es un
+       * despegue—: en Yvytu Rape la mano con la flecha de frenar aparecía a la
+       * vez que el destello de V1, y en el reactor «Runway ending» a la vez
+       * que «ya volamos, seguí». Pasado V1 se vuela pase lo que pase; el aviso
+       * es para la carrera de aterrizaje y para quien aborta antes de V1.
+       */
       // Se puede rodar por el campo hasta el fin del mundo sin que pase nada,
       // que en el peldaño de los pequeños está bien. Pero que no avise es
       // otra cosa: en un avión de verdad, quedarse sin pista es **la**

@@ -2205,6 +2205,22 @@ button.motor__tecla::after {
       (max(20px, env(safe-area-inset-bottom)) + 56px + 8px) /
         var(--escala, 1)
     );
+    /*
+     * Y subido, deja sitio a la columna de mandos: en una tablet de 1280 ×
+     * 800 su esquina alcanzaba el motor y la tarjeta del destino, que antes le
+     * quedaban por encima. A cada lado, lo que ocupan la reserva del pulgar,
+     * la columna —medida— y un respiro.
+     */
+    width: min(
+      calc(100vw - 16px),
+      1400px,
+      calc(44vh * var(--cuadro-proporcion)),
+      calc(
+        100vw - 2 *
+          (var(--reserva-derecha, 16px) / var(--escala, 1) +
+            var(--columna-ancho, 132px) + 12px)
+      )
+    );
   }
 }
 
@@ -2213,6 +2229,35 @@ button.motor__tecla::after {
 @media (pointer: coarse) and (max-height: 460px) {
   .hud .cuadro {
     width: min(calc(100vw - 16px), calc(34vh * var(--cuadro-proporcion)));
+  }
+}
+
+/*
+ * **Y en un teléfono apaisado, los botones redondos de la columna en fila.**
+ *
+ * Con el reactor la columna lleva el motor, el freno, dos botones y el
+ * destino, uno encima de otro, y en cuatrocientos de alto no cabe: el destino
+ * se salía por abajo en Tenerife Norte, donde además el mensaje de la
+ * tripulación estira la barra de arriba y empuja la columna. Las tarjetas —el
+ * motor y el destino— siguen ocupando su ancho; los botones van lado a lado.
+ * Solo aquí: en la tablet cabe en columna, y en fila se metía detrás del
+ * cuadro ancho del reactor.
+ */
+@media (max-height: 460px) {
+  .hud .hud__derecha {
+    grid-template-columns: repeat(3, auto);
+    justify-content: end;
+    align-items: center;
+  }
+
+  .hud .hud__derecha > .tarjeta {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .hud .hud__derecha > .freno--boton,
+  .hud .hud__derecha > .mando {
+    margin-top: 0;
   }
 }
 
@@ -5188,6 +5233,15 @@ button.motor__tecla::after {
    * torre. Ver `.senal`.
    */
   transform: translateX(-50%);
+  /*
+   * **Y centrada en el hueco que deja el rincón**, no en la pantalla entera.
+   * En una tablet de 1024 o en un teléfono el rincón de avisos llega hasta el
+   * centro, y la lámpara tapaba la tarjeta de la orden: «hold here» encima de
+   * «esperá a la luz». Sin rincón, `--rincon-izquierda` no existe y queda en
+   * el centro de siempre. Lo mide el HUD; ver `escribirRincon`.
+   */
+  left: calc(var(--rincon-izquierda, 100%) / 2);
+  max-width: calc(var(--rincon-izquierda, 100%) - 32px);
   z-index: 8;
   display: flex;
   align-items: center;

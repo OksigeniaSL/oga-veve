@@ -86,7 +86,12 @@ const PANTALLAS = [
  * no se vio que en Guyrami la llave de arrancar caía encima del cuadro.
  */
 const JUEGOS = [
-  { escenario: "la-palma", tramo: "taguato", avion: "jaz-90" },
+  /*
+   * Tenerife Norte y no La Palma: el mismo reactor, y además el mensaje de la
+   * tripulación al arrancar, que ocupa dos líneas en la barra de arriba y
+   * empuja la columna hacia abajo. En La Palma no sale y el destino cabía.
+   */
+  { escenario: "tenerife-norte", tramo: "taguato", avion: "jaz-90" },
   { escenario: "pettirossi", tramo: "guyrami", avion: "jaz-20" },
 ];
 
@@ -190,6 +195,22 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       el.style.pointerEvents = antes;
       const encima =
         punto && !el.contains(punto) && punto !== el ? [punto] : [];
+      /*
+       * Y la lámpara, además de verse, **no tapa**: la tarjeta de la orden y
+       * los dibujos del rincón quedaban debajo de ella en la tablet de 1024.
+       */
+      const tapa =
+        que !== "torre"
+          ? []
+          : ["senal", "pictos"].filter((q) => {
+              const o = document.querySelector(`[data-hud="${q}"]`);
+              if (!o || o.closest("[hidden]")) return false;
+              const b = o.getBoundingClientRect();
+              return (
+                Math.min(c.right, b.right) - Math.max(c.left, b.left) > 1 &&
+                Math.min(c.bottom, b.bottom) - Math.max(c.top, b.top) > 1
+              );
+            });
       el.hidden = true;
       salida.push({
         que,
@@ -202,6 +223,7 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
           0,
           4,
         ),
+        tapa,
       });
     }
     return salida;
@@ -324,6 +346,9 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     const mandos = [...document.querySelectorAll(".hud__derecha > *")].filter(
       (e) => !e.closest("[hidden]") && e.getBoundingClientRect().height > 2,
     );
+    const mandosPisan = mandos
+      .filter((m) => pisa(m.getBoundingClientRect(), cuadro.getBoundingClientRect()))
+      .map((m) => m.dataset.hud ?? String(m.className).slice(0, 24));
     const rinconPisa = rincon
       .flatMap((r) =>
         [cuadro, ...mandos]
@@ -337,6 +362,7 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       tutorPisa,
       timonPisa,
       rinconPisa,
+      mandosPisan,
     };
     hud.classList.remove("hud--avisando");
     aviso.classList.remove("aviso-hud--visible");
@@ -410,6 +436,12 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       "",
     );
     comprobar(
+      `${donde}: los mandos de la columna no pisan el cuadro`,
+      abajo.mandosPisan.length === 0,
+      abajo.mandosPisan.join(" · ") || "libre",
+      "un freno detrás de las esferas no se encuentra cuando hace falta",
+    );
+    comprobar(
       `${donde}: los avisos del rincón no pisan el cuadro ni los mandos`,
       abajo.rinconPisa.length === 0,
       abajo.rinconPisa.join(" · ") || "libre",
@@ -456,6 +488,13 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       t.encima.length ? `tapado por ${t.encima.join(" · ")}` : "libre",
       "un cartel que suena y no se ve es peor que no tener cartel",
     );
+    if (t.que === "torre")
+      comprobar(
+        `${donde}: la lámpara de la torre no tapa el rincón`,
+        t.tapa.length === 0,
+        t.tapa.length ? `encima de ${t.tapa.join(" y ")}` : "libre",
+        "la lámpara y la orden se leen juntas: «esperá a la luz» y la luz",
+      );
   }
 
   comprobar(

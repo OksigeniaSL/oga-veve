@@ -14,7 +14,7 @@
  * lección. Aquí solo se pintan.
  */
 
-import { aPxDelHud } from "./escala";
+import { escribirRincon } from "./escala";
 
 /** Un icono de veinticuatro por veinticuatro, como todos los del juego. */
 const icono = (cuerpo: string): string =>
@@ -915,12 +915,7 @@ export class Senal {
      * donde estaban y la tarjeta les caía encima. Esto ya se llama en las dos
      * transiciones, así que es el sitio. Ver `--rincon-alto` en `hud.ts`.
      */
-    const rincon = this.raiz.querySelector(".rincon")?.getBoundingClientRect();
-    if (rincon)
-      this.raiz.style.setProperty(
-        "--rincon-alto",
-        `${Math.round(aPxDelHud(this.raiz, rincon.height))}px`,
-      );
+    escribirRincon(this.raiz);
   }
 
   /**

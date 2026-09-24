@@ -21,3 +21,28 @@ export function escalaDe(raiz: Element): number {
   const z = Number.parseFloat(getComputedStyle(raiz).zoom);
   return Number.isFinite(z) && z > 0 ? z : 1;
 }
+
+/**
+ * Dónde empieza el rincón de avisos por la izquierda, en píxeles del HUD, o
+ * nada si está vacío.
+ *
+ * Lo usa la lámpara de la torre para centrarse **en el hueco que queda a la
+ * izquierda del rincón** y no en la pantalla entera: en una tablet de 1024 o
+ * en un teléfono el rincón llega hasta el centro, y la lámpara tapaba la
+ * tarjeta de la orden —«hold here» encima de «esperá a la luz»—.
+ */
+export function escribirRincon(raiz: HTMLElement): void {
+  const rincon = raiz.querySelector(".rincon");
+  if (!rincon) return;
+  const c = rincon.getBoundingClientRect();
+  raiz.style.setProperty(
+    "--rincon-alto",
+    `${Math.round(aPxDelHud(raiz, c.height))}px`,
+  );
+  if (c.width > 2)
+    raiz.style.setProperty(
+      "--rincon-izquierda",
+      `${Math.round(aPxDelHud(raiz, c.left))}px`,
+    );
+  else raiz.style.removeProperty("--rincon-izquierda");
+}
