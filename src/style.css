@@ -1699,6 +1699,62 @@ button.motor__tecla::after {
   border: 1px solid rgba(228, 226, 218, 0.2);
 }
 
+/*
+ * **El aviso y el mensaje, encima del cuadro y no detrás.**
+ *
+ * Vivían en el flujo de la franja de abajo, y eso los ponía encima del cuadro
+ * mientras el cuadro también estaba en el flujo. Cuando se clavó al borde
+ * —ver `.cuadro`— dejó de ocupar sitio y los dos se quedaron **detrás** de él:
+ * medido en una tablet de 1280 × 800, el aviso en el píxel 602 y el cuadro de
+ * 442 a 794. El aviso es el de «pérdida» y el del suelo, `role="alert"`, y lo
+ * que dice la nota de la franja de abajo es exactamente lo que había dejado de
+ * cumplirse: un panel bonito que esconde un «terrain, pull up».
+ *
+ * Se apoyan en `--panel-alto`, que es la medida que ya usa el tutor. Y con el
+ * dedo, nunca por debajo de la barra del timón, que está en el centro de
+ * abajo y se queda cuando el cuadro se baja.
+ */
+.hud__abajo > .aviso-hud,
+.hud__abajo > [data-hud="hint"] {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  --apoyo: max(var(--panel-alto, 0px), var(--pulgares, 0px));
+}
+
+/*
+ * El tirador del cuadro asoma por encima de lo que mide `--panel-alto` —mide
+ * el dibujo, no el asa—, así que se cuenta aparte: sin él, el mensaje quedaba
+ * medio metido debajo del asa.
+ */
+.hud__abajo > [data-hud="hint"] {
+  bottom: calc(
+    var(--apoyo) + var(--tirador-asoma, 34px) + 6px +
+      env(safe-area-inset-bottom)
+  );
+}
+
+/* Con un aviso en pantalla el tutor se esconde —ver `.hud--avisando`—, así
+   que el aviso puede ocupar su sitio sin taparlo. */
+.hud__abajo > .aviso-hud {
+  bottom: calc(
+    var(--apoyo) + var(--tirador-asoma, 34px) + 46px +
+      env(safe-area-inset-bottom)
+  );
+  z-index: 6;
+}
+
+.hud__abajo > [data-hud="hint"]:empty {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .hud {
+    --pulgares: 84px;
+  }
+}
+
 /* ── Tutor de despegue ────────────────────────────────────────────────── */
 
 /* Grande, centrado y con el glifo de la tecla como protagonista. Quien no
@@ -1717,7 +1773,11 @@ button.motor__tecla::after {
    * no tapa nada: solo levanta el tutor contra el avión, que es el sitio que
    * se acaba de despejar.
    */
-  bottom: calc(8% + var(--panel-alto, 0px));
+  /* Y nunca menos de lo que ocupan el asa del cuadro y el mensaje efímero,
+     que viven justo debajo. Ver `.hud__abajo > [data-hud="hint"]`. */
+  bottom: calc(
+    max(8%, 80px) + max(var(--panel-alto, 0px), var(--pulgares, 0px))
+  );
   transform: translateX(-50%);
   display: grid;
   justify-items: center;
@@ -1982,11 +2042,12 @@ button.motor__tecla::after {
     height: 104px;
   }
 
-  /* El tutor sube por encima de la barra del timón. */
-  .tutor {
-    bottom: auto;
-    top: 44%;
-  }
+  /*
+   * Aquí el tutor se subía al 44 % del alto, de cuando el cuadro iba en el
+   * flujo y no había medida en la que apoyarse. Con el cuadro clavado abajo,
+   * ese 44 % caía **encima de las esferas** en una tablet de 1280 × 800. Ahora
+   * lo coloca la regla general, que ya cuenta el cuadro y los pulgares.
+   */
 
   /* Frenos, a la izquierda de la palanca de motor y sin solaparla. */
   .boton-tactil {
@@ -2059,6 +2120,22 @@ button.motor__tecla::after {
 
   /* Con `.hud` delante porque `.rincon` se define más abajo en esta hoja, y
      a igual especificidad gana la última. */
+  /*
+   * Y el tutor, un poco a la izquierda del centro. A la derecha van el rincón
+   * y la columna de mandos, y en esta altura la tarjeta de aviso ancha le
+   * llega hasta la mitad de la pantalla: medido en 915 × 412, cuarenta
+   * píxeles de solape. A la izquierda solo está la palanca, y está abajo.
+   */
+  .tutor {
+    left: 42%;
+  }
+
+  /* Y la tarjeta de aviso, más estrecha: parte el texto en dos líneas y no
+     llega al centro. */
+  .hud .rincon .senal {
+    max-width: 300px;
+  }
+
   .hud .rincon {
     right: calc(
       max(112px, env(safe-area-inset-right)) / var(--escala) + 116px + 12px
