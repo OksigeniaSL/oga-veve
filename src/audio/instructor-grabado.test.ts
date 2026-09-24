@@ -19,7 +19,7 @@ import { Boca } from "./boca";
  */
 const bocaDePrueba = (): Boca =>
   new Boca({ ahora: () => Date.now(), cancelar: () => {} });
-import { InstructorGrabado, type Altavoz } from "./instructor-grabado";
+import { InstructorGrabado, turnoDe, type Altavoz } from "./instructor-grabado";
 import type { Instructor } from "./instructor";
 import type { Manifiesto } from "./banco-de-voz";
 
@@ -470,5 +470,28 @@ describe("y quien habla por radio suena a radio", () => {
     const { instructor, altavoz } = await conPack(true);
     instructor.decir("Seguí la raya verde", "vuelo.rodando");
     expect(altavoz.porRadio).toEqual([true]);
+  });
+});
+
+describe("los turnos de la torre", () => {
+  it("la misma orden a dos aviones son dos frases", () => {
+    /*
+     * La torre autoriza al otro avión y a los pocos segundos a vos, con la
+     * misma clave: tu autorización se descartaba por «repetida».
+     */
+    const otro = turnoDe("torre.clearedTakeoff", { a: "echo", b: "charlie" });
+    const yo = turnoDe("torre.clearedTakeoff", { a: "zulu", b: "papa" });
+    expect(otro).not.toBe(yo);
+  });
+
+  it("y la misma orden al mismo avión, sí se repite", () => {
+    const una = turnoDe("torre.clearedTakeoff", { a: "zulu", b: "papa" });
+    const otra = turnoDe("torre.clearedTakeoff", { a: "zulu", b: "papa" });
+    expect(una).toBe(otra);
+  });
+
+  it("y sin matrícula, la frase a secas, como siempre", () => {
+    expect(turnoDe("vuelo.despacio")).toBe("vuelo.despacio");
+    expect(turnoDe(undefined)).toBeUndefined();
   });
 });

@@ -5396,12 +5396,24 @@ export class Game {
     const { runway } = this.scenario;
     this.plan?.reiniciar();
     this.colocarSenalero();
+    /*
+     * **Y un avión de los grandes empieza la final como la empieza de verdad:
+     * configurado.** Tren fuera, flaps de aterrizaje y su velocidad de
+     * aproximación. Arrancaba limpio y a vez y media de ella —que en la
+     * avioneta es lento y en un reactor es disparatado—: medido en Tenerife
+     * Norte, el JAZ 90 empezaba a 199 nudos con flaps arriba, bajaba a 39 m/s y
+     * a los diez segundos estaba en el suelo a 225. La lección de aterrizar no
+     * se podía jugar con él. Los de tren fijo siguen como estaban: su final
+     * está afinada así.
+     */
+    const configurado = this.aircraft.trenRetractil;
+    const entrada = configurado
+      ? this.aircraft.approachSpeed * 1.1
+      : this.flight.velocidadDeEntradaEnFinal(this.aircraft.approachSpeed);
     this.flight.reset({
       position: this.startPosition(),
       heading: MathUtils.degToRad(runway.heading),
-      airspeed: this.flight.velocidadDeEntradaEnFinal(
-        this.aircraft.approachSpeed,
-      ),
+      airspeed: entrada,
     });
     /*
      * **Soltar los mandos primero, y después poner el gas.**
@@ -5425,9 +5437,12 @@ export class Game {
      *
      * Ahora se pide la velocidad y que cada modelo diga qué gas hace falta.
      */
-    this.input.controls.throttle = this.flight.gasPara(
-      this.flight.velocidadDeEntradaEnFinal(this.aircraft.approachSpeed),
-    );
+    if (configurado) {
+      if (!this.input.trenQueSePide) this.input.alternarTren();
+      this.input.controls.tren = 1;
+      this.input.controls.flaps = 1;
+    }
+    this.input.controls.throttle = this.flight.gasPara(entrada);
     this.faseAnunciada = "";
     // Con la posición: se empieza en final y hay aros que ya quedan detrás.
     this.runwayGuide.reset(this.flight.state.position);

@@ -242,6 +242,15 @@ export class InstructorGrabado implements Instructor {
     urgencia?: Urgencia,
     relleno?: Readonly<Record<string, string>>,
   ): void {
+    /*
+     * **Y para los turnos, la frase y a quién va.** La torre habla con los
+     * dos aviones de la frecuencia con las mismas frases, y la regla de no
+     * repetirse miraba solo la frase: autorizado el otro, **tu** «cleared for
+     * take-off» se descartaba por «repetida» aunque llevara otra matrícula.
+     * Medido en La Palma con el historial de voces. Para buscar el audio y
+     * para el historial la frase sigue siendo la misma; ver `turnoDe`.
+     */
+    const turno = turnoDe(clave, relleno);
     const suena = this.quienLaDice(clave ?? null, relleno);
     if (!suena) {
       /*
@@ -250,7 +259,7 @@ export class InstructorGrabado implements Instructor {
        * Ver `porElSuplente`, que cuenta por qué este camino no puede saltarse
        * el turno.
        */
-      this.porElSuplente(texto, clave, urgencia);
+      this.porElSuplente(texto, clave, urgencia, turno);
       return;
     }
     const cadena: AudioBuffer[] = [];
@@ -262,7 +271,7 @@ export class InstructorGrabado implements Instructor {
        * **y también pidiendo la palabra**. Ver `porElSuplente`.
        */
       if (!buffer) {
-        this.porElSuplente(texto, clave, urgencia);
+        this.porElSuplente(texto, clave, urgencia, turno);
         return;
       }
       cadena.push(buffer);
@@ -356,7 +365,7 @@ export class InstructorGrabado implements Instructor {
           this.suplente.callar();
         };
       },
-      clave,
+      turno,
     );
   }
 
@@ -401,6 +410,8 @@ export class InstructorGrabado implements Instructor {
     texto: string,
     clave: string | undefined,
     urgencia: Urgencia | undefined,
+    /** Con qué se piden los turnos: la frase y a quién va. Ver `turnoDe`. */
+    turno: string | undefined = clave,
   ): void {
     /*
      * **Y un suplente que no puede hablar no pide turno.**
@@ -427,7 +438,7 @@ export class InstructorGrabado implements Instructor {
        * historial contaba repeticiones que con voz nunca habrían pasado. Ver
        * `anotarSinVoz` en `audio/boca.ts`.
        */
-      if (!this.boca.anotarSinVoz(urgencia ?? "normal", clave)) return;
+      if (!this.boca.anotarSinVoz(urgencia ?? "normal", turno)) return;
       this.ultima = clave ?? texto;
       this.apuntar();
       return;
@@ -447,7 +458,7 @@ export class InstructorGrabado implements Instructor {
           this.suplente.callar();
         };
       },
-      clave,
+      turno,
     );
   }
 
@@ -680,4 +691,21 @@ async function traer(
   } catch {
     return null;
   }
+}
+
+/**
+ * Con qué pide turno una frase: la frase y, si lleva matrícula, a quién va.
+ *
+ * La boca no deja repetir la misma frase en veinticinco segundos, y eso está
+ * bien para «más despacio»; para la torre no, porque le dice lo mismo a cada
+ * avión de la frecuencia y cada vez es otra orden. Con la matrícula en la
+ * cuenta, «cleared for take-off» al otro avión y a vos son dos frases.
+ */
+export function turnoDe(
+  clave: string | undefined,
+  relleno?: Readonly<Record<string, string>>,
+): string | undefined {
+  if (!clave || !relleno) return clave;
+  const quien = Object.values(relleno).join("-");
+  return quien ? `${clave}@${quien}` : clave;
 }

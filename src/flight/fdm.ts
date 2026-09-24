@@ -754,8 +754,22 @@ export class CoefficientFlightModel implements FlightModel {
         // velocidad** —morro abajo proporcional a lo que falte— y se mezcla
         // suavemente con el control de ascenso. Las dos leyes son estables,
         // y su mezcla también.
-        const floor = ac.cruiseSpeed * 0.42;
-        const safe = ac.cruiseSpeed * 0.58;
+        /*
+         * **Y «lento» es lento para este avión, no para el crucero.** Los dos
+         * umbrales iban en proporción al crucero, y eso vale para los de
+         * hélice —su aproximación es un sesenta por ciento del crucero— pero
+         * no para un reactor, cuya aproximación es un tercio: con el JAZ 90,
+         * «lento» empezaba en 92 m/s y «seguro» en 128, así que a su
+         * velocidad de aproximación —75— esta ayuda creía que se iba a
+         * entrar en pérdida y **le bajaba el morro a fondo**. Medido en la
+         * lección de aterrizar: 42 m/s de bajada y al suelo en ocho segundos.
+         *
+         * Cada umbral es el menor entre el de siempre y uno atado a la
+         * aproximación. En los cuatro de hélice sale casi el mismo número —lo
+         * afinado no se mueve—; en los reactores baja a donde tiene que estar.
+         */
+        const floor = Math.min(ac.cruiseSpeed * 0.42, ac.approachSpeed * 0.8);
+        const safe = Math.min(ac.cruiseSpeed * 0.58, ac.approachSpeed * 1.05);
         const shortfall = safe - speed;
         const blend = clamp(shortfall / (safe - floor), 0, 1);
 
