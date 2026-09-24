@@ -11,6 +11,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ALABEO_QUE_SOBRA,
+  avisaLaPerdida,
   avisoDeActitud,
   DEMASIADO_ALTO,
   RECOGIDA,
@@ -146,5 +147,17 @@ describe("y en el suelo", () => {
         alabeo: grados(70),
       }),
     ).toBe(null);
+  });
+});
+
+describe("el aviso de pérdida y el peso en ruedas", () => {
+  it("aparcado con el viento de cola no avisa", () => {
+    // Lo que daba el modelo en La Palma, en el puesto y con el motor parado.
+    expect(avisaLaPerdida({ stalled: true, onGround: true })).toBe(false);
+  });
+
+  it("en el aire, sí", () => {
+    expect(avisaLaPerdida({ stalled: true, onGround: false })).toBe(true);
+    expect(avisaLaPerdida({ stalled: false, onGround: false })).toBe(false);
   });
 });

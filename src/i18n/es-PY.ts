@@ -567,6 +567,9 @@ export const ES_PY = {
   "hud.gafas": "Gafas de sol",
   /* El tirador del cuadro de mandos. Lo pidió quien juega: «un botón para
      bajarlo o volver a mostrarlo». */
+  /* El cartel de la pantalla de pie: el dibujo lo dice todo, esto acompaña.
+     Ver `.gira` en style.css. */
+  "hud.gira": "Girá la pantalla",
   "hud.bajarCuadro": "Bajar el tablero",
   "hud.pilotoAutomatico": "Piloto automático",
   /*

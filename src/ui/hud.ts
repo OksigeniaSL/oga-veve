@@ -51,6 +51,7 @@ import type { Galon } from "../flight/galones";
 import { manga as dibujarManga, MANGA_ALTO } from "./manga";
 import { reconocer } from "../flight/reconocimiento";
 import { aPxDelHud } from "./escala";
+import { avisaLaPerdida } from "../flight/avisos-de-actitud";
 
 /**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
@@ -960,6 +961,28 @@ export class Hud {
       ${Mapa.markup()}
       ${PanelDelTiempo.markup()}
       <div class="vineta" data-hud="vignette"></div>
+      <!--
+        **Y de pie, que se gire.**
+
+        Con el dedo y la pantalla de pie no cabe un avión: la palanca, el
+        motor, el timón, el cuadro y la columna de mandos piden una pantalla
+        apaisada, y en cuatrocientos píxeles de ancho la barra de botones se
+        parte en cuatro filas y los mandos caen fuera. Así que se pide girarla,
+        como lo pide cualquier juego de esto: con el dibujo de un teléfono
+        dando el cuarto de vuelta, que se entiende sin leer. La palabra
+        acompaña. Solo sale con el dedo y de pie; ver la regla .gira de la hoja.
+      -->
+      <div class="gira" data-hud="gira" role="status">
+        <svg class="gira__dibujo" viewBox="0 0 64 64" aria-hidden="true">
+          <g class="gira__telefono">
+            <rect x="22" y="10" width="20" height="36" rx="3.5" />
+            <circle cx="32" cy="41" r="1.8" />
+          </g>
+          <path class="gira__flecha" d="M14 30 A18 18 0 0 1 30 12" />
+          <path class="gira__punta" d="M26 8 L31 12 L26 16" />
+        </svg>
+        <span class="gira__texto">${t("hud.gira")}</span>
+      </div>
       ${Tutor.markup()}
       <div class="hud__abajo">
         <!--
@@ -1639,7 +1662,11 @@ export class Hud {
     const enSuelo = state.onGround;
     const sinLetras =
       this.instruments === "none" || this.instruments === "pictorial";
-    this.brakes.hidden = !enSuelo || sinLetras;
+    // Y con el dedo, tampoco la tarjeta: enseña la tecla B de un teclado que
+    // en una tablet no existe, y salía **además** del botón. En un teléfono
+    // apaisado eran ciento veinte píxeles que echaban el destino fuera de la
+    // pantalla. Ver `verificar-carteles.mjs`.
+    this.brakes.hidden = !enSuelo || sinLetras || ESTO_ES_TACTIL;
     // El freno se retira en V1, no al despegar.
     //
     // V1 es la velocidad de decisión: el último instante en que queda pista
@@ -2775,7 +2802,7 @@ export class Hud {
       text = t("hud.crashed");
       corta = "palabra.roto";
       arrow = "↺";
-    } else if (state.stalled) {
+    } else if (avisaLaPerdida(state)) {
       text = t("hud.stall");
       corta = "palabra.baja";
       arrow = "↓";

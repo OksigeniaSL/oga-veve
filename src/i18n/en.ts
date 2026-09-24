@@ -307,6 +307,7 @@ export const EN: Dictionary = {
   "hud.pausa": "Pause the game",
   "hud.camara": "Change view",
   "hud.gafas": "Sunglasses",
+  "hud.gira": "Turn your screen sideways",
   "hud.bajarCuadro": "Lower the panel",
   "hud.pilotoAutomatico": "Autopilot",
   "hud.trimArriba": "Trim, nose up",

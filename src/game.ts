@@ -405,6 +405,7 @@ import { Agenda } from "./flight/agenda";
 import { MAX_PASO } from "./flight/fdm";
 import { bankAngleOf, pitchAngleOf } from "./ui/actitud";
 import {
+  avisaLaPerdida,
   avisoDeActitud,
   type AvisoDeActitud,
 } from "./flight/avisos-de-actitud";
@@ -6018,7 +6019,7 @@ export class Game {
 
     this.hud.ponerLucesDeAviso({
       terreno: terreno !== null,
-      perdida: this.flight.state.stalled,
+      perdida: avisaLaPerdida(this.flight.state),
       rapido: this.sobrandoVelocidad > 0,
       trenMal: this.trenFueraDeSitio(),
       frustrada: this.laAproximacion.mandanFrustrar,
@@ -8696,7 +8697,7 @@ export class Game {
   private cantarLaPerdida(): void {
     const s = this.flight.state;
     const hay =
-      s.stalled && !s.onGround && s.heightAboveGround > Game.ALTO_PARA_LA_PERDIDA;
+      avisaLaPerdida(s) && s.heightAboveGround > Game.ALTO_PARA_LA_PERDIDA;
     /*
      * **Y el rearme es el del modelo, no uno mío encima.**
      *
@@ -9189,11 +9190,11 @@ export class Game {
       this.yaDespego = true;
       this.avisar("achieved");
     }
-    if (state.stalled && !this.wasStalled) this.avisar("perdida");
+    if (avisaLaPerdida(state) && !this.wasStalled) this.avisar("perdida");
     if (state.crashed && !this.wasCrashed) this.avisar("error");
 
     this.wasOnGround = state.onGround;
-    this.wasStalled = state.stalled;
+    this.wasStalled = avisaLaPerdida(state);
     this.wasCrashed = state.crashed;
   }
 

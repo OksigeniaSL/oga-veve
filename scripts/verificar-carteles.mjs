@@ -61,15 +61,29 @@ const comprobar = (nombre, ok, detalle, porque) =>
  * de pie, una apaisada, un móvil estrecho y un portátil.
  */
 const PANTALLAS = [
-  [565, 641],
+  [565, 641, "dedo"],
   [900, 600],
-  [400, 780],
+  [400, 780, "dedo"],
   [1280, 800],
+  /*
+   * **Y con el dedo**, que es otro reparto: `pointer: coarse` reserva la
+   * franja de los pulgares y, en pantallas bajas, dibuja el HUD a escala. Sin
+   * estas, nadie vio que en un teléfono apaisado la columna de mandos caía
+   * entera por debajo del borde y la llave de arrancar se cortaba — desde un
+   * móvil no se podía ni arrancar. Ver la regla de pantallas bajas en
+   * `style.css`.
+   */
+  [1280, 800, "dedo"],
+  [1024, 600, "dedo"],
+  [915, 412, "dedo"],
+  [800, 360, "dedo"],
 ];
 
-for (const [ancho, alto] of PANTALLAS) {
+for (const [ancho, alto, dedo] of PANTALLAS) {
   const page = await navegador.newPage({
     viewport: { width: ancho, height: alto },
+    hasTouch: !!dedo,
+    isMobile: !!dedo,
   });
   const errores = [];
   page.on("pageerror", (e) => errores.push(e.message.slice(0, 160)));
@@ -79,11 +93,27 @@ for (const [ancho, alto] of PANTALLAS) {
   await page.goto(
     `${BASE}/?escenario=la-palma&hora=16&leccion=despegue&tramo=taguato&avion=jaz-90`,
   );
-  await page
+  /*
+   * **Y si no arranca, se dice.** Aquí había un `.catch(() => {})`, y un
+   * arranque lento salía después como «no se encontraron las tarjetas»: un
+   * fallo del HUD que no era del HUD.
+   */
+  const arranco = await page
     .waitForFunction(() => globalThis.__oga?.estado?.(), null, {
       timeout: 60000,
     })
-    .catch(() => {});
+    .then(() => true)
+    .catch(() => false);
+  if (!arranco) {
+    comprobar(
+      `${ancho}×${alto}${dedo ? " con el dedo" : ""}: el juego arrancó`,
+      false,
+      "no arrancó en 60 s",
+      "no es un fallo de los carteles: es que no hubo juego que medir",
+    );
+    await page.close();
+    continue;
+  }
   await page.waitForTimeout(1200);
 
   const visto = await page.evaluate(() => {
@@ -164,7 +194,142 @@ for (const [ancho, alto] of PANTALLAS) {
     return salida;
   });
 
-  const donde = `${ancho}×${alto}`;
+  /*
+   * **De pie y con el dedo, lo único que tiene que haber es el cartel de
+   * girar**, tapándolo todo: ahí no cabe un avión y no se mide lo que no se
+   * puede pilotar. Ver `.gira` en `style.css`.
+   */
+  if (dedo && alto > ancho) {
+    const gira = await page.evaluate(() => {
+      const el = document.querySelector('[data-hud="gira"]');
+      if (!el) return null;
+      const c = el.getBoundingClientRect();
+      const p = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+      return {
+        tapa: c.width >= innerWidth - 1 && c.height >= innerHeight - 1,
+        delante: !!p && el.contains(p),
+      };
+    });
+    comprobar(
+      `${ancho}×${alto} de pie: sale el cartel de girar la pantalla`,
+      gira?.tapa && gira?.delante,
+      gira ? `tapa ${gira.tapa ? "todo" : "a medias"}, ${gira.delante ? "por delante" : "por detrás"}` : "no está",
+      "de pie no cabe la palanca, el motor y el cuadro: se pide girarla con un dibujo",
+    );
+    await page.close();
+    continue;
+  }
+
+  /*
+   * **Lo que se toca, dentro de la pantalla.** La columna de la derecha —gas,
+   * freno, tren, flaps y la tarjeta del destino— y el rincón de los avisos.
+   * Se cuenta lo que está puesto: lo escondido no tiene que caber.
+   */
+  const fuera = await page.evaluate(() => {
+    const que = [
+      "throttle-up",
+      "throttle-down",
+      "brakes-touch",
+      "tren-touch",
+      "flaps-touch",
+      "home",
+      "senal",
+      "pictos",
+    ];
+    return que.filter((q) => {
+      const el = document.querySelector(`[data-hud="${q}"]`);
+      if (!el || el.closest("[hidden]")) return false;
+      const c = el.getBoundingClientRect();
+      if (c.width < 2 || c.height < 2) return false;
+      return (
+        c.left < -1 ||
+        c.top < -1 ||
+        c.right > innerWidth + 1 ||
+        c.bottom > innerHeight + 1
+      );
+    });
+  });
+
+  /*
+   * **Y el aviso y el mensaje, por delante del cuadro.** Vivían en el flujo
+   * de la franja de abajo y, desde que el cuadro se clavó al borde, quedaban
+   * detrás de él: el aviso de pérdida y el del suelo, tapados por las
+   * esferas. Se encienden los dos como los enciende el juego —con
+   * `hud--avisando`, que esconde el tutor— y se pregunta quién está pintado
+   * delante en su centro. Y el tutor, fuera de las esferas: en pantallas
+   * táctiles se colocaba al 44 % del alto y caía encima del cuadro.
+   */
+  const abajo = await page.evaluate(() => {
+    const hud = document.querySelector(".hud");
+    const aviso = document.querySelector('[data-hud="warning"]');
+    const texto = document.querySelector('[data-hud="warning-text"]');
+    const hint = document.querySelector('[data-hud="hint"]');
+    const tutor = document.querySelector('[data-hud="tutor"]');
+    const cuadro = document.querySelector('[data-hud="tablero"]');
+    if (!hud || !aviso || !texto || !hint || !tutor || !cuadro) return null;
+    const alFrente = (el) => {
+      const c = el.getBoundingClientRect();
+      const antes = el.style.pointerEvents;
+      el.style.pointerEvents = "auto";
+      const p = document.elementFromPoint(
+        c.left + c.width / 2,
+        c.top + c.height / 2,
+      );
+      el.style.pointerEvents = antes;
+      return !p || el.contains(p) ? "" : String(p.className).slice(0, 40);
+    };
+    const pisa = (a, b) =>
+      Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+    // El tutor, primero, que es el que está puesto mientras no hay aviso.
+    tutor.hidden = false;
+    const tutorPisa = pisa(
+      tutor.getBoundingClientRect(),
+      cuadro.getBoundingClientRect(),
+    );
+    hud.classList.add("hud--avisando");
+    aviso.classList.add("aviso-hud--visible");
+    texto.textContent = "¡El suelo! Subí";
+    hint.textContent = "Un mensaje de prueba";
+    const salida = {
+      aviso: alFrente(aviso),
+      mensaje: alFrente(hint),
+      tutorPisa,
+    };
+    hud.classList.remove("hud--avisando");
+    aviso.classList.remove("aviso-hud--visible");
+    texto.textContent = "";
+    hint.textContent = "";
+    return salida;
+  });
+
+  const donde = `${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+  comprobar(
+    `${donde}: los mandos y los avisos caben en la pantalla`,
+    fuera.length === 0,
+    fuera.length ? `fuera: ${fuera.join(", ")}` : "todo dentro",
+    "un mando fuera de la pantalla no existe, y en un móvil eran todos los de la derecha",
+  );
+  if (abajo) {
+    comprobar(
+      `${donde}: el aviso se ve por delante`,
+      !abajo.aviso,
+      abajo.aviso ? `tapado por ${abajo.aviso}` : "libre",
+      "un panel bonito que esconde un «terrain, pull up» es peor que no tener panel",
+    );
+    comprobar(
+      `${donde}: el mensaje se ve por delante`,
+      !abajo.mensaje,
+      abajo.mensaje ? `tapado por ${abajo.mensaje}` : "libre",
+      "",
+    );
+    comprobar(
+      `${donde}: el tutor no tapa las esferas`,
+      !abajo.tutorPisa,
+      abajo.tutorPisa ? "encima del cuadro" : "libre",
+      "",
+    );
+  }
   if (!visto) {
     comprobar(`${donde}: están las dos tarjetas`, false, "no se encontraron");
     await page.close();

@@ -107,3 +107,25 @@ export function avisoDeActitud(e: {
   if (Math.abs(e.alabeo) > ALABEO_QUE_SOBRA) return "bank angle";
   return null;
 }
+
+/**
+ * Si hay que avisar de pérdida: **en pérdida y en el aire**.
+ *
+ * El modelo marca `stalled` mirando el ángulo de ataque, y con el avión
+ * aparcado y el viento entrando por la cola ese ángulo ronda los ciento
+ * setenta grados: pérdida, para la cuenta. Así que en La Palma, con el motor
+ * apagado en el puesto, parpadeaba «¡Pérdida! Bajá el morro», sonaba el aviso
+ * y se encendía la luz del panel. Estuvo meses tapado por el cuadro de mandos,
+ * y salió en cuanto el aviso se puso por delante.
+ *
+ * En un avión de verdad el avisador de pérdida **no suena en tierra**: lo
+ * inhibe el contacto del tren, el «peso en ruedas». Es lo que se hace aquí, y
+ * en un solo sitio porque eran tres —el cartel, el sonido y la luz— y solo la
+ * voz lo filtraba.
+ */
+export function avisaLaPerdida(e: {
+  readonly stalled: boolean;
+  readonly onGround: boolean;
+}): boolean {
+  return e.stalled && !e.onGround;
+}
