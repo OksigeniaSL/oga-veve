@@ -56,7 +56,7 @@ import {
  * píxeles.
  */
 let redonda: CanvasTexture | null | undefined;
-function laRedonda(): CanvasTexture | null {
+export function laRedonda(): CanvasTexture | null {
   if (redonda !== undefined) return redonda;
   if (typeof document === "undefined") {
     redonda = null;

@@ -50,6 +50,7 @@ import { RESALTE } from "./terrain";
 import { sinTemblor } from "./sin-temblor";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { letreroAtlasTexture, numberTexture } from "./runway-markings";
+import { laRedonda } from "./luces-de-posicion";
 
 /**
  * Lo más corto que puede medir algo para que cuente como pista, m.
@@ -1773,8 +1774,16 @@ function luces(
 
   const m = new Matrix4();
   const tono = new Color();
+  /*
+   * **Veinte centímetros de radio, no cincuenta y ocho.** Una baliza de borde
+   * de pista es un casquete de veinte o treinta centímetros; una bola de más
+   * de un metro, vista rodando a cinco metros de ella, era un disco naranja
+   * del tamaño de un neumático —se vio con fotos en Encarnación—. De lejos no
+   * cambia nada: ahí manda el punto de ocho píxeles de abajo, y la esfera solo
+   * le gana a menos de unos veinticinco metros, que es cuando se ve la baliza.
+   */
   const malla = new InstancedMesh(
-    new SphereGeometry(0.58, 6, 4),
+    new SphereGeometry(0.2, 6, 4),
     new MeshBasicMaterial(),
     todas.length,
   );
@@ -1789,8 +1798,8 @@ function luces(
   /*
    * **Y las mismas luces otra vez, como puntos que no encogen.**
    *
-   * Las de arriba son esferas de cincuenta y ocho centímetros, y a dos
-   * kilómetros cincuenta y ocho centímetros no llegan a un píxel: desde el
+   * Las de arriba son esferas de veinte centímetros, y a dos kilómetros
+   * veinte centímetros no llegan a un píxel: desde el
    * aire la pista se quedaba sin sus luces justo cuando hacen falta. Se vio en
    * cuanto la pista pasó a ser la de la fotografía y dejamos de pintar encima
    * nuestro asfalto negro: «uf, difícil ver la pista ahora».
@@ -1837,6 +1846,15 @@ function luces(
       // Ni tapan ni son tapadas por el aire: son luces.
       depthWrite: false,
       toneMapped: false,
+      /*
+       * Y redondas. Un punto sin textura es un cuadrado, y hasta que la esfera
+       * de cerca era de más de un metro no se notaba porque lo tapaba; con la
+       * baliza a su tamaño de verdad, las luces cercanas salían cuadradas. La
+       * misma textura que las luces de posición del avión.
+       */
+      map: laRedonda(),
+      transparent: true,
+      alphaTest: 0.05,
     }),
   );
   puntos.name = "luces-pista-lejos";
