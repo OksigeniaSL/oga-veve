@@ -9067,6 +9067,14 @@ export class Game {
     const ahora = this.cinturon.comoEsta === "puesto" ? "auto" : "puesto";
     this.cinturon.ponerMando(ahora);
     this.hud.ponerMandoDeCinturon(ahora === "puesto");
+    /*
+     * **Y se nota siempre.** Si el cartel ya estaba encendido —en tierra lo
+     * está siempre—, el mando no cambiaba nada que se viera ni se oyera. Así
+     * que parpadea, y suena su *ding* si el cartel no va a cambiar solo: si
+     * cambia, el *ding* lo pone `atenderAlCinturon` y sonarían dos.
+     */
+    this.hud.destellarCinturon();
+    if (this.cinturonPuesto && ahora === "puesto") this.avisar("cinturon");
   }
 
   private cotaDeLaPistaAqui(): number {

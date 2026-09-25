@@ -442,6 +442,25 @@ body {
   height: 62%;
 }
 
+/* Tocado el interruptor: el cartel parpadea dos veces. Ver
+   `destellarCinturon`. Y se deja ver aunque estuviera apagado. */
+.cinturon.cinturon--destello {
+  animation: cinturon-destella 0.5s ease-in-out 2;
+}
+
+@keyframes cinturon-destella {
+  50% {
+    filter: brightness(1.8);
+    transform: scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinturon.cinturon--destello {
+    animation: none;
+  }
+}
+
 /*
  * La pieza de barro. Todo lo que flota sobre el mundo sale de aquí, y por eso
  * los cuatro peldaños se ven de la misma familia aunque enseñen cosas

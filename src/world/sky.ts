@@ -121,6 +121,13 @@ const FRAGMENT_SHADER = /* glsl */ `
     float toSun = max(dot(dir, normalize(sunDirection)), 0.0);
     float halo = pow(toSun, mix(60.0, 5.0, haloFuerza)) * (0.35 + haloFuerza * 0.85);
     float disc = smoothstep(0.9986, 0.9994, toSun);
+    // **Y por debajo del horizonte, nada de sol: ahí está la Tierra.** La
+    // cúpula sigue por debajo, y donde el terreno se acaba a lo lejos se veía
+    // el halo del ocaso a través del suelo, como un sol al trasluz del
+    // planeta. Se apaga en un par de grados, que es lo que mide el disco.
+    float tapado = smoothstep(-0.02, 0.01, dir.y);
+    halo *= tapado;
+    disc *= tapado;
     sky += sunColour * halo;
     /*
      * **Y el disco suma, no sustituye.**

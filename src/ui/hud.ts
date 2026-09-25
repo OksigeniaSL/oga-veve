@@ -115,6 +115,22 @@ const AERONAUTICAL: UnitSystem = {
   vspeedDecimals: 0,
 };
 
+
+/**
+ * El cartel del cinturón: una persona sentada con el cinturón abrochado.
+ *
+ * Es el dibujo de los carteles de cabina de todo el mundo. El de antes era una
+ * U con un rectángulo debajo, que quería ser la hebilla y se leía como un
+ * tenedor: «esto no cambia nada o al menos no parece que ocurra algo».
+ */
+const CINTURON = `
+  <circle cx="9.6" cy="4.3" r="2.4" fill="currentColor"/>
+  <path d="M7.4 8h3.6l1.3 5.6h5.3a1.4 1.4 0 0 1 1.4 1.4V21h-2.6v-4.8h-5.7a1.8 1.8 0 0 1-1.8-1.4Z"
+        fill="currentColor"/>
+  <path d="M4.6 12.6h9.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  <rect x="6.6" y="10.9" width="3.8" height="3.4" rx="0.8" fill="none"
+        stroke="currentColor" stroke-width="1.4"/>
+`;
 export const UNIT_SYSTEMS = {
   metric: METRIC,
   aeronautical: AERONAUTICAL,
@@ -664,10 +680,7 @@ export class Hud {
           es el pictograma, es **cuándo** se enciende.
         -->
         <div class="cinturon" data-hud="cinturon" hidden role="status">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 4v6a5 5 0 0 0 10 0V4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <rect x="9" y="13" width="6" height="7" rx="1.5" fill="currentColor"/>
-          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">${CINTURON}</svg>
         </div>
       </div>
       <div class="hud__arriba">
@@ -770,10 +783,7 @@ export class Hud {
         <button class="sonido cinturon-mando" type="button"
                 data-hud="cinturon-mando" aria-pressed="false" hidden
                 aria-label="${t("hud.mandarCinturon")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 4v6a5 5 0 0 0 10 0V4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <rect x="9" y="13" width="6" height="7" rx="1.5" fill="currentColor"/>
-          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">${CINTURON}</svg>
         </button>
         <!--
           La radio: lo que se acaba de oír decir a otro avión.
@@ -2787,6 +2797,22 @@ export class Hud {
    * que se enciende cuando se mueve — que es exactamente lo que aprende quien
    * vuela por primera vez.
    */
+  /**
+   * Y un destello del cartel, para que tocar el interruptor **se note**.
+   *
+   * En tierra el cartel ya está encendido siempre, así que ponerlo a mano no
+   * cambiaba nada más que el color del botón. El interruptor tiene que
+   * responder aunque el cartel ya estuviera como se pide: parpadea, que es lo
+   * que hace un cartel de verdad cuando alguien lo toca.
+   */
+  destellarCinturon(): void {
+    const caja = this.root.querySelector<HTMLElement>('[data-hud="cinturon"]');
+    if (!caja) return;
+    caja.classList.remove("cinturon--destello");
+    void caja.offsetWidth;
+    caja.classList.add("cinturon--destello");
+  }
+
   ponerCinturon(encendido: boolean): void {
     const caja = this.root.querySelector<HTMLElement>('[data-hud="cinturon"]');
     if (caja) caja.hidden = !encendido;
