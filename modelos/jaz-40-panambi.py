@@ -231,7 +231,7 @@ def construir():
     piezas.append(superficie("deriva", [
         de_deriva(0.0, 0.30, 2.95, 2.10, 0.05),
         de_deriva(0.0, 0.46, 3.72, 1.34, 0.10),
-        de_deriva(0.0, 1.72, 4.55, 0.78, 0.09),
+        de_deriva(0.0, 1.72, 4.40, 0.78, 0.09),
     ], material_="capo", simetria=False, zonas=[
         ("oscuro", 0.2, 1.3, 0.62, 0.635),
     ]))

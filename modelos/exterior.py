@@ -807,6 +807,12 @@ def cono_de_helice(nombre, en, radio, largo=None, material_="capo"):
 
     Mira al frente —z negativa— con la punta estrecha delante, que es lo que
     comprueba `exportar`. Detrás lleva el plato, un pelo más ancho.
+
+    **Y abierto por detrás.** Con el plato cerrado, desde el asiento se veía
+    un disco del color del capó flotando sobre el panel: la cara de atrás del
+    cono mira al piloto, y el capó que la tapa de verdad no se dibuja desde
+    dentro —toda la chapa lleva la cara de atrás quitada—. Abierto, lo que
+    mira al piloto es el interior del cono, que tampoco se dibuja.
     """
     largo = radio * 2.3 if largo is None else largo
     perfil_ = [(-largo, 0.0)]
@@ -814,8 +820,7 @@ def cono_de_helice(nombre, en, radio, largo=None, material_="capo"):
         a = i / 8
         r = radio * math.sqrt(1 - (1 - a) ** 2)
         perfil_.append((-largo + largo * a, r))
-    perfil_ += [(0.0, radio), (0.0, radio * 1.02), (largo * 0.08, radio * 1.02),
-                (largo * 0.08, 0.0)]
+    perfil_ += [(0.0, radio), (0.0, radio * 1.02), (largo * 0.08, radio * 1.02)]
     return torno(nombre, perfil_, en=en, lados=24, material_=material_)
 
 

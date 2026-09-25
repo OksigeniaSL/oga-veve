@@ -269,17 +269,19 @@ def construir():
 
     # ── Cola ──────────────────────────────────────────────────────────────
     piezas.append(superficie("deriva", [
-        de_deriva(0.0, 2.95, 19.2, 16.0, 0.05),
-        de_deriva(0.0, 4.20, 22.9, 12.0, 0.10),
-        de_deriva(0.0, 13.9, 30.3, 4.6, 0.10),
+        de_deriva(0.0, 2.95, 19.2, 14.0, 0.05),
+        de_deriva(0.0, 4.20, 22.9, 10.6, 0.10),
+        de_deriva(0.0, 13.9, 29.3, 4.6, 0.10),
     ], material_="capo", simetria=False, zonas=[
         ("oscuro", 2.0, 11.0, 0.68, 0.688),
     ]))
+    # Con las puntas acabando antes que la cola: la luz blanca de atrás va
+    # en el cono, que es lo último del avión, y no en la punta de un plano.
     y_est = 1.60
     piezas.append(superficie("estabilizador", [
-        de_ala(0.0, y_est, 25.2, 7.4, 0.10, 7),
+        de_ala(0.0, y_est, 24.2, 7.4, 0.10, 7),
         de_ala(10.9, y_est + 10.9 * math.tan(math.radians(7)),
-               25.2 + 10.9 * math.tan(math.radians(34)), 2.5, 0.09, 7),
+               24.2 + 10.9 * math.tan(math.radians(34)), 2.3, 0.09, 7),
     ], material_="gris", zonas=[
         ("aluminio", 1.8, 10.6, 0.0, 0.06),
         ("oscuro", 1.8, 10.6, 0.70, 0.707),

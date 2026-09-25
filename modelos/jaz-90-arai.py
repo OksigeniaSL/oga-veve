@@ -292,14 +292,14 @@ def construir():
     piezas.append(superficie("deriva", [
         de_deriva(0.0, 1.40, 7.30, 7.60, 0.05),
         de_deriva(0.0, 2.10, 9.70, 5.20, 0.10),
-        de_deriva(0.0, 7.20, 13.55, 2.25, 0.10),
+        de_deriva(0.0, 7.20, 13.40, 2.25, 0.10),
     ], material_="capo", simetria=False, zonas=[
         ("oscuro", 0.8, 5.9, 0.68, 0.692),
     ]))
     y_est = 0.78
     piezas.append(superficie("estabilizador", [
-        de_ala(0.0, y_est, 12.20, 3.30, 0.10, 6),
-        de_ala(5.15, y_est + 5.15 * math.tan(math.radians(6)), 15.15, 1.20,
+        de_ala(0.0, y_est, 11.50, 3.30, 0.10, 6),
+        de_ala(5.15, y_est + 5.15 * math.tan(math.radians(6)), 14.45, 1.20,
                0.09, 6),
     ], material_="gris", zonas=[
         ("aluminio", 0.9, 5.0, 0.0, 0.07),
