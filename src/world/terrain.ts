@@ -35,6 +35,7 @@ import {
   type Aerodrome,
   type Punto,
 } from "./aerodrome";
+import { discoDeAgua, LADO_SIN_CURVA } from "./curvatura";
 import { delante } from "./rumbo";
 import { vecesLejosDe, type Scenario } from "./scenarios";
 
@@ -1396,8 +1397,13 @@ export class Terrain {
     const lado =
       this.scenario.size *
       (this.scenario.relieveLejano ? vecesLejosDe(this.scenario) * 1.05 : 1.4);
-    const geometry = new PlaneGeometry(lado, lado);
-    geometry.rotateX(-Math.PI / 2);
+    /*
+     * **Un disco, y no un cuadrado**, por la curva de la Tierra: ver
+     * `discoDeAgua`. Con un radio algo mayor que la media diagonal del
+     * cuadrado de antes, que lo cubre entero; pegado al ojo cubre además lo
+     * que haga falta hasta el horizonte, y más allá sigue la cúpula.
+     */
+    const geometry = discoDeAgua(lado * 0.75);
     const mesh = new Mesh(
       geometry,
       new MeshLambertMaterial({
@@ -1409,8 +1415,38 @@ export class Terrain {
     mesh.position.y = this.scenario.waterLevel;
     mesh.name = "agua";
     mesh.matrixAutoUpdate = false;
+    /*
+     * **Y en su turno de lo transparente**, que no puede depender de dónde
+     * esté. three ordena lo transparente por la distancia al sitio de cada
+     * objeto, y el cuadrado estaba en el origen del escenario —lejos—, así
+     * que se pintaba después de las nubes (que van con `renderOrder` −1) y
+     * antes que casi todo lo demás. Pegado al ojo pasaría a ser lo más
+     * cercano y a pintarse **encima** de las luces de la costa, que no
+     * escriben profundidad. Entre las nubes y el resto, como estaba.
+     */
+    mesh.renderOrder = -0.5;
     mesh.updateMatrix();
+    this.agua = mesh;
     return mesh;
+  }
+
+  /** El disco de agua, a mano: se mueve cada fotograma. */
+  private agua: Mesh | null = null;
+
+  /**
+   * Lleva el disco de agua a donde está el ojo, cada fotograma.
+   *
+   * El disco tiene los anillos apretados en el centro, que es donde el error
+   * de repartir la curva en recta es menor —ver `discoDeAgua`—, así que su
+   * centro tiene que ser el ojo. En el plano no cambia nada: el agua es la
+   * misma lámina a la misma cota, solo que teselada de otra manera.
+   */
+  llevarElAguaA(x: number, z: number): void {
+    const agua = this.agua;
+    if (!agua) return;
+    agua.position.x = x;
+    agua.position.z = z;
+    agua.updateMatrix();
   }
 
   private buildRunway(): Group {
@@ -1418,7 +1454,18 @@ export class Terrain {
     const group = new Group();
     group.name = "pista";
 
-    const surface = new PlaneGeometry(runway.width, runway.length);
+    /*
+     * En tramos de un cuarto de kilómetro y no en una pieza: con la curva de
+     * la Tierra, una pista de tres kilómetros de dos triángulos se hundía
+     * casi veinte centímetros por el medio y dejaba las marcas, a cinco,
+     * flotando. Ver `LADO_SIN_CURVA`.
+     */
+    const surface = new PlaneGeometry(
+      runway.width,
+      runway.length,
+      1,
+      Math.max(1, Math.ceil(runway.length / LADO_SIN_CURVA)),
+    );
     surface.rotateX(-Math.PI / 2);
     // Lambert y no Basic: con material sin iluminar la pista no compartía la
     // luz del paisaje y se leía como una mancha de barro plana pegada encima.

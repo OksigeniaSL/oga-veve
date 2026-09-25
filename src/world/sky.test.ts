@@ -128,9 +128,13 @@ describe("por debajo del horizonte", () => {
      * cúpula que queda entre medias se veía: «el sol apareciendo por debajo
      * del horizonte». Ahí va el mar, con su niebla, y el disco solo se
      * dibuja en la rama del cielo.
+     *
+     * Y el horizonte es el de la Tierra redonda, por debajo de la
+     * horizontal: con él en cero, el sol se cortaba en una raya recta por
+     * encima del horizonte que se veía. Ver `curvatura.test.ts`.
      */
     const f = GLSL_DEL_CIELO.fragmento;
-    expect(f).toContain("if (dir.y < 0.0)");
+    expect(f).toContain("if (baja > pendienteDelHorizonte)");
     expect(f).toContain("marEn(dir)");
     expect(f.indexOf("sky += sunColour * disc;")).toBeGreaterThan(
       f.indexOf("} else {"),

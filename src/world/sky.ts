@@ -59,6 +59,7 @@ import {
   UniformsUtils,
   Vector3,
 } from "three";
+import { factorDeCurvatura } from "./curvatura";
 import { mulberry32 } from "./noise";
 import type { Scenario } from "./scenarios";
 
@@ -137,6 +138,30 @@ const GLSL_COMUN = /* glsl */ `
   uniform vec3 colorDelAgua;
   uniform float luzDelSol;
   uniform vec3 luzDeRelleno;
+  // 1/2R, o cero con la Tierra plana. Ver \`world/curvatura.ts\`.
+  uniform float curvatura;
+  uniform float nivelDelMar;
+  /*
+   * **Dónde está el horizonte del mar visto desde aquí**: su pendiente hacia
+   * abajo, √(2h/R), y el seno del ángulo. A ras de agua es cero, a ocho mil
+   * pies son 1,6°. Es la misma parábola con la que el vértice baja lo
+   * lejano, así que el mar de la cúpula y el del plano de agua acaban en la
+   * misma línea. Se calculan una vez por fotograma —ver \`updateSky\`— y no
+   * en cada píxel de una cúpula que ocupa la pantalla entera.
+   */
+  uniform float pendienteDelHorizonte;
+  uniform float senoDelHorizonte;
+
+  /*
+   * La altura de una dirección **contada desde el horizonte que se ve**, no
+   * desde la horizontal. El degradado, el calor del ocaso y el cinturón de
+   * Venus van pegados al horizonte porque son aire rasante; desde arriba el
+   * horizonte baja, y el cielo tiene que empezar donde acaba el mar y no un
+   * grado y medio más arriba, dejando una franja lisa entre los dos.
+   */
+  float sobreElHorizonte(vec3 dir) {
+    return (dir.y + senoDelHorizonte) / (1.0 + senoDelHorizonte);
+  }
 
   /*
    * El cielo en una dirección, sin el disco: el degradado y el halo. **En
@@ -145,9 +170,10 @@ const GLSL_COMUN = /* glsl */ `
    * lineal. El paso a sRGB lo hace quien pinta —ver \`cieloParaPantalla\`—.
    */
   vec3 cieloEn(vec3 dir) {
+    float alto = sobreElHorizonte(dir);
     // La potencia comprime el degradado hacia el horizonte, que es donde el
     // ojo espera ver la transición. Un lerp lineal se ve plano.
-    float t = pow(max(dir.y, 0.0), 0.62);
+    float t = pow(max(alto, 0.0), 0.62);
     vec3 c = mix(horizonColour, zenithColour, t);
     /*
      * **El horizonte no es del mismo color en todas partes.** Al ponerse el
@@ -164,7 +190,7 @@ const GLSL_COMUN = /* glsl */ `
     vec2 dh = dir.xz;
     float ld = length(dh);
     float haciaElSol = (ls > 1e-4 && ld > 1e-4) ? dot(dh / ld, sh / ls) * 0.5 + 0.5 : 0.5;
-    float calor = pow(haciaElSol, 2.5) * exp(-max(dir.y, 0.0) * 6.0);
+    float calor = pow(haciaElSol, 2.5) * exp(-max(alto, 0.0) * 6.0);
     c = mix(c, horizonSolColour, calor);
     /*
      * **Y enfrente, el cinturón de Venus**: la franja rosa que se ve en el
@@ -175,7 +201,7 @@ const GLSL_COMUN = /* glsl */ `
      * él el cielo de enfrente era un malva plano.
      */
     float enfrente = pow(1.0 - haciaElSol, 2.0);
-    float franja = smoothstep(0.03, 0.12, dir.y) * (1.0 - smoothstep(0.2, 0.45, dir.y));
+    float franja = smoothstep(0.03, 0.12, alto) * (1.0 - smoothstep(0.2, 0.45, alto));
     c = mix(c, vec3(0.60, 0.34, 0.40), enfrente * franja * cinturon * 0.55);
     // Sol y halo son dos potencias del mismo coseno: una muy cerrada para el
     // disco —ver el cielo— y otra muy abierta para el resplandor. **El halo
@@ -203,14 +229,27 @@ const GLSL_COMUN = /* glsl */ `
     return sRGBTransferOETF(vec4(cieloEn(dir), 1.0)).rgb;
   }
 
-  // El color de la bruma mirando hacia ahí, ya en sRGB: el del horizonte en
-  // esa dirección, con su resplandor. Es el cielo justo encima del agua, y
-  // por eso el mar lejano se funde con él sin costura. En sRGB porque se
-  // mezcla después del paso a pantalla, como la niebla de three.js.
+  /*
+   * El color de la bruma mirando hacia ahí, ya en sRGB: el del horizonte en
+   * esa dirección, con su resplandor. Es el cielo justo encima del agua —en
+   * el horizonte que se ve, que desde arriba está por debajo de la
+   * horizontal—. En sRGB porque se mezcla después del paso a pantalla, como
+   * la niebla de three.js.
+   *
+   * El mar lejano se va hacia este color, pero **no llega**: a la distancia
+   * del horizonte la niebla se queda en dos tercios desde ocho mil pies y en
+   * nada desde la playa, y lo que queda de mar es lo que dibuja la línea.
+   * Con la Tierra plana el mar se iba al infinito, la niebla llegaba al
+   * cien por cien y mar y cielo eran el mismo color: no había horizonte que
+   * ver, había una franja.
+   */
   vec3 nieblaEn(vec3 dir) {
     vec2 h = dir.xz;
     float l = length(h);
-    return cieloParaPantalla(l > 1e-5 ? vec3(h / l, 0.0).xzy : vec3(1.0, 0.0, 0.0));
+    vec2 lado = l > 1e-5 ? h / l : vec2(1.0, 0.0);
+    float s = senoDelHorizonte;
+    float c = sqrt(1.0 - s * s);
+    return cieloParaPantalla(vec3(lado.x * c, -s, lado.y * c));
   }
 
   /*
@@ -239,10 +278,24 @@ const GLSL_COMUN = /* glsl */ `
   }
 `;
 
+/*
+ * **El sol, del tamaño que se ve.** El de verdad mide medio grado; este,
+ * uno y medio, que en un teléfono son unos diez píxeles y se sigue
+ * reconociendo como un disco. Era de cinco —`smoothstep(0.9986, 0.9994)`
+ * sobre el coseno—, diez veces el real, y un sol de ese tamaño no se pone:
+ * tarda veinte minutos en hundirse detrás del mar.
+ *
+ * Se mide con la cuerda —`length(dir - sol)`— y no con el coseno: a estos
+ * ángulos la cuerda **es** el ángulo en radianes, y el coseno se aprieta
+ * tanto contra el uno que en coma flotante de 32 bits el borde saldría a
+ * escalones.
+ */
+const RADIO_DEL_SOL = ((0.75 * Math.PI) / 180).toFixed(6);
+const BORDE_DEL_SOL = ((0.08 * Math.PI) / 180).toFixed(6);
+
 const FRAGMENT_SHADER = /* glsl */ `
   #include <common>
   uniform float fogDensity;
-  uniform float nivelDelMar;
   varying vec3 vDireccion;
   varying vec3 vVista;
   ${GLSL_COMUN}
@@ -250,23 +303,37 @@ const FRAGMENT_SHADER = /* glsl */ `
   void main() {
     vec3 dir = normalize(vDireccion);
     vec3 sky;
+    /*
+     * **El mar empieza en el horizonte que se ve**, no en la horizontal.
+     * \`baja\` es la pendiente de esta dirección hacia abajo; por debajo de
+     * la del horizonte, el rayo toca el agua.
+     */
+    float llano = max(length(dir.xz), 1e-6);
+    float baja = -dir.y / llano;
 
-    if (dir.y < 0.0) {
+    if (baja > pendienteDelHorizonte) {
       /*
        * **Por debajo del horizonte, mar.** A la distancia a la que el rayo
-       * toca el agua y con la niebla que le toca, contada como la cuenta
-       * three.js en el plano de agua: por la profundidad en la vista.
+       * toca el agua —la curva, la misma parábola que baja los vértices:
+       * \`curvatura·d² − baja·d + alto = 0\`, la raíz cercana escrita de
+       * forma que con curvatura cero quede \`alto / baja\`, la del mar
+       * plano— y con la niebla que le toca, contada como la cuenta three.js
+       * en el plano de agua: por la profundidad en la vista.
        */
       float alto = max(cameraPosition.y - nivelDelMar, 1.0);
-      float lejos = alto / max(-dir.y, 1e-5);
+      float d = 2.0 * alto / (baja + sqrt(max(baja * baja - 4.0 * curvatura * alto, 0.0)));
+      float lejos = d / llano;
       float prof = lejos * (-vVista.z / length(vVista));
       float velo = 1.0 - exp(-fogDensity * fogDensity * prof * prof);
       vec3 mar = sRGBTransferOETF(vec4(marEn(dir), 1.0)).rgb;
       sky = mix(mar, nieblaEn(dir), velo);
     } else {
       sky = cieloEn(dir);
-      float toSun = max(dot(dir, normalize(sunDirection)), 0.0);
-      float disc = smoothstep(0.9986, 0.9994, toSun);
+      float disc = 1.0 - smoothstep(
+        ${RADIO_DEL_SOL} - ${BORDE_DEL_SOL},
+        ${RADIO_DEL_SOL} + ${BORDE_DEL_SOL},
+        length(dir - normalize(sunDirection))
+      );
       /*
        * **Y el disco suma, no sustituye.**
        *
@@ -280,9 +347,28 @@ const FRAGMENT_SHADER = /* glsl */ `
        *
        * El sol es la fuente: tiene que ser lo más claro del cielo, nunca un
        * hueco. Sumando, lo es siempre. Y por debajo del horizonte no se
-       * dibuja, porque ahí ya no hay cielo sino mar.
+       * dibuja, porque ahí ya no hay cielo sino mar: el disco se hunde
+       * detrás de la línea del agua.
        */
       sky += sunColour * disc;
+      /*
+       * **Salvo pegado al horizonte, donde se enrojece y se apaga.** La luz
+       * del sol que llega rasante ha cruzado cuarenta veces más aire que la
+       * de mediodía, y el aire se queda con el azul, con casi todo el verde
+       * y con buena parte del rojo: lo que queda es la bola naranja que se
+       * mira sin guiños. Sumando no se puede pintar —el resplandor del ocaso
+       * ya tiene el rojo al tope, y sumar solo lo aclara hacia el amarillo—,
+       * así que en los últimos tres grados el disco se va hacia ese naranja
+       * velado. No es el agujero de antes: aquel salía a cualquier altura y
+       * era pardo; esto es un disco más rojo que lo que tiene alrededor y
+       * solo cuando se está poniendo.
+       *
+       * Se mide sobre el horizonte que se ve y trozo a trozo del disco: el
+       * borde de abajo se enrojece antes que el de arriba, como en cualquier
+       * puesta de sol sobre el mar.
+       */
+      float rasante = 1.0 - smoothstep(0.0, 0.05, sobreElHorizonte(dir));
+      sky = mix(sky, vec3(1.0, 0.24, 0.05), disc * rasante);
       // Y a pantalla en sRGB, como el mar de arriba y como todo lo demás.
       sky = sRGBTransferOETF(vec4(sky, 1.0)).rgb;
     }
@@ -303,14 +389,25 @@ const FRAGMENT_SHADER = /* glsl */ `
  * misma bruma con resplandor que la cúpula: con la gris de serie, el agua
  * lejana y el mar pintado debajo del horizonte no casaban.
  */
+/*
+ * **Y curvada como todo lo demás.** Con el mismo trozo que el resto del
+ * mundo —ver `world/curvatura.ts`—, y pasando al fragmento el rayo **ya
+ * curvado**, del ojo al agua en los ejes del mundo: con él se miden la
+ * mirada rasante, el reflejo y la distancia igual que los mide la cúpula
+ * para su mar, y en el borde del disco las dos cuentas son la misma.
+ *
+ * La posición se pasa a la vista con `modelViewMatrix`, que llega calculada
+ * en doble precisión, y no por el mundo: el disco va pegado a la cámara a
+ * decenas de kilómetros del origen, y en 32 bits eso es un temblor.
+ */
 const VERTICE_DEL_AGUA = /* glsl */ `
   #include <common>
   #include <fog_pars_vertex>
-  varying vec3 vMundo;
+  varying vec3 vRayo;
   void main() {
-    vec4 mundo = modelMatrix * vec4(position, 1.0);
-    vMundo = mundo.xyz;
-    vec4 mvPosition = viewMatrix * mundo;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    #include <curvatura_vertex>
+    vRayo = mvPosition.xyz * mat3(viewMatrix);
     gl_Position = projectionMatrix * mvPosition;
     #include <fog_vertex>
   }
@@ -320,11 +417,11 @@ const FRAGMENTO_DEL_AGUA = /* glsl */ `
   #include <common>
   #include <fog_pars_fragment>
   uniform float opacidad;
-  varying vec3 vMundo;
+  varying vec3 vRayo;
   ${GLSL_COMUN}
 
   void main() {
-    vec3 v = normalize(vMundo - cameraPosition);
+    vec3 v = normalize(vRayo);
     /*
      * La transparencia solo cerca. Lejos, a través del agua se veía el
      * fondo del mapa fino —oscuro— hasta donde llega, y a partir de ahí la
@@ -332,7 +429,7 @@ const FRAGMENTO_DEL_AGUA = /* glsl */ `
      * ya en su color se notaba. A esa distancia no se ve el fondo de
      * ningún mar de verdad.
      */
-    float alOjo = length(vMundo - cameraPosition);
+    float alOjo = length(vRayo);
     gl_FragColor = vec4(marEn(v), mix(opacidad, 1.0, smoothstep(1500.0, 6000.0, alOjo)));
     #include <colorspace_fragment>
     #ifdef USE_FOG
@@ -359,6 +456,7 @@ export const GLSL_DEL_CIELO = {
   vertice: VERTEX_SHADER,
   fragmento: FRAGMENT_SHADER,
   agua: FRAGMENTO_DEL_AGUA,
+  verticeDelAgua: VERTICE_DEL_AGUA,
 } as const;
 
 /**
@@ -552,6 +650,22 @@ export function brumaALaAltura(alturaM: number): number {
   return 1 - 0.7 * t * t * (3 - 2 * t);
 }
 
+/**
+ * El horizonte del mar desde `alto` metros sobre él, para la cúpula y el
+ * agua: la pendiente hacia abajo con la que se ve, √(4·k·h) —con `k` el
+ * `1/2R` de la curva, o cero con la Tierra plana—, y el seno de ese ángulo.
+ *
+ * Por debajo de un metro se cuenta un metro: con el ojo en el agua la
+ * pendiente sería cero y la cuenta del mar de la cúpula dividiría por nada.
+ */
+export function horizonteDesde(
+  alto: number,
+  k: number,
+): { pendiente: number; seno: number } {
+  const pendiente = Math.sqrt(4 * k * Math.max(alto, 1));
+  return { pendiente, seno: pendiente / Math.sqrt(1 + pendiente * pendiente) };
+}
+
 /** Interpola entre dos momentos y devuelve el resultado ya mezclado. */
 function entre(a: Momento, b: Momento, t: number): Momento {
   const mezcla = (x: number, y: number): number =>
@@ -644,18 +758,25 @@ function estrellas(): Points {
 
   const geo = new BufferGeometry();
   geo.setAttribute("position", new Float32BufferAttribute(posiciones, 3));
-  const puntos = new Points(
-    geo,
-    new PointsMaterial({
-      color: 0xdce6f2,
-      size: 0.0022,
-      sizeAttenuation: true,
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      blending: AdditiveBlending,
-    }),
-  );
+  const material = new PointsMaterial({
+    color: 0xdce6f2,
+    size: 0.0022,
+    sizeAttenuation: true,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: AdditiveBlending,
+  });
+  /*
+   * Sin la curva de la Tierra: las estrellas están en el infinito, y su
+   * esfera va pegada al ojo. Ver `world/curvatura.ts`. three lee `defines`
+   * de cualquier material aunque sus tipos solo la declaren en los de
+   * shader propio.
+   */
+  (material as unknown as { defines: Record<string, string> }).defines = {
+    SIN_CURVATURA: "",
+  };
+  const puntos = new Points(geo, material);
   puntos.name = "estrellas";
   puntos.renderOrder = -1;
   return puntos;
@@ -759,8 +880,19 @@ function nubes(escenario: Scenario): Group {
    * veces.
    */
   const repite = 12;
+  /*
+   * **Y en baldosas, no en una sola lámina**, por la curva de la Tierra: el
+   * vértice baja lo lejano y por dentro del triángulo la tarjeta reparte en
+   * recta, así que una lámina de dos triángulos bajaba entera lo que bajan
+   * sus esquinas —doscientos cincuenta metros a cuarenta kilómetros— y el
+   * banco de nubes se metía por debajo del avión. Con veinticuatro por lado
+   * cada baldosa mide unos tres kilómetros y el error se queda por debajo
+   * del medio metro, con las capas a setenta una de otra. Ver
+   * `world/curvatura.ts`.
+   */
+  const baldosas = 24;
   for (let i = 0; i < capas; i++) {
-    const geo = new PlaneGeometry(lado, lado);
+    const geo = new PlaneGeometry(lado, lado, baldosas, baldosas);
     geo.rotateX(-Math.PI / 2);
     const textura = texturaDeNube(0xc10d + i * 977);
     textura.repeat.set(repite, repite);
@@ -851,6 +983,16 @@ export function createSky(scenario: Scenario): SkyRig {
     colorDelAgua: { value: new Color(scenario.water) },
     luzDelSol: { value: 0 },
     luzDeRelleno: { value: new Color() },
+    /*
+     * La curva de la Tierra y el nivel del mar, que es desde donde se mide
+     * la altura del ojo para saber dónde cae el horizonte. Se lee una vez:
+     * la curva se pone o se quita antes de construir nada. Ver
+     * `world/curvatura.ts`.
+     */
+    curvatura: { value: factorDeCurvatura() },
+    nivelDelMar: { value: scenario.waterLevel },
+    pendienteDelHorizonte: { value: 0 },
+    senoDelHorizonte: { value: 0 },
   };
   const material = new ShaderMaterial({
     uniforms: {
@@ -858,7 +1000,6 @@ export function createSky(scenario: Scenario): SkyRig {
       // Los de la niebla los pone three.js cada fotograma con `fog: true`;
       // la cúpula no se empaña, pero el mar que pinta debajo sí.
       ...UniformsUtils.clone(UniformsLib.fog),
-      nivelDelMar: { value: scenario.waterLevel },
     },
     vertexShader: VERTEX_SHADER,
     fragmentShader: FRAGMENT_SHADER,
@@ -1028,6 +1169,13 @@ export function createSky(scenario: Scenario): SkyRig {
       niebla.bruma * brumaALaAltura(ojo.y),
       niebla.minimo,
     );
+    // El horizonte del mar desde esta altura. Ver `horizonteDesde`.
+    const { pendiente, seno } = horizonteDesde(
+      ojo.y - scenario.waterLevel,
+      compartidos.curvatura.value,
+    );
+    compartidos.pendienteDelHorizonte.value = pendiente;
+    compartidos.senoDelHorizonte.value = seno;
   };
   return rig;
 }

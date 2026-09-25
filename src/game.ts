@@ -65,6 +65,7 @@ import { cabeEn, campoDe } from "./flight/cabe";
 import { crearTrafico, type Trafico } from "./world/trafico";
 import type { Mapa } from "./ui/carta";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
+import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
 import type { Lluvia } from "./world/meteo";
 import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
@@ -606,6 +607,12 @@ export interface GameOptions {
 
   /** La del horizonte: el anillo lejano. Ver `Terrain.ponerOrtofotoLejana`. */
   ortofotoHorizonte?: Ortofoto;
+
+  /**
+   * Si el dibujo lleva la curva de la Tierra. Sin decir nada, sí: ver
+   * `CURVAR_EL_DIBUJO`. Se pasa `false` para comparar con el mundo plano.
+   */
+  curvatura?: boolean;
 
   /**
    * Y la de en medio: la franja por la que de verdad se vuela.
@@ -1834,6 +1841,12 @@ export class Game {
   /** Segundos que lleva el avión roto. Ver `frame`. */
 
   constructor(options: GameOptions) {
+    /*
+     * **La curva de la Tierra, antes de que se compile nada**: se cuelga del
+     * trozo de three que proyecta los vértices, y un programa ya compilado
+     * no se entera de que el trozo cambió. Ver `world/curvatura.ts`.
+     */
+    instalarCurvatura(options.curvatura ?? CURVAR_EL_DIBUJO);
     this.scenario = options.scenario ?? VALLE_CORDILLERA;
     this.sigueme = new Sigueme(this.scenario.aerodrome?.privado === true);
     this.pavimento = this.scenario.aerodrome
@@ -6066,6 +6079,7 @@ export class Game {
       this.syncAircraftMesh(dt);
       this.updateCamera(dt);
       updateSky(this.sky, this.camera.position);
+      this.terrain.llevarElAguaA(this.camera.position.x, this.camera.position.z);
       this.hud.senal.update(dt);
       /*
        * **Y el motor se calla.**
@@ -6845,6 +6859,8 @@ export class Game {
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
+    // El mar, con el ojo en el centro de sus anillos. Ver `discoDeAgua`.
+    this.terrain.llevarElAguaA(this.camera.position.x, this.camera.position.z);
     for (const v of this.vecinos)
       v.mundo.alPaso(this.camera.position.x, this.camera.position.z);
     this.pasoDeLluvia(dt);

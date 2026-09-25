@@ -33,6 +33,7 @@ import {
   PlaneGeometry,
   SRGBColorSpace,
 } from "three";
+import { LADO_SIN_CURVA } from "./curvatura";
 import type { Scenario } from "./scenarios";
 
 const PAINT = 0xe8e2d4;
@@ -190,7 +191,13 @@ function slab(
   x: number,
   z: number,
 ): Mesh {
-  const geometry = new PlaneGeometry(width, length);
+  // En tramos, por la curva de la Tierra: ver `LADO_SIN_CURVA`.
+  const geometry = new PlaneGeometry(
+    width,
+    length,
+    1,
+    Math.max(1, Math.ceil(length / LADO_SIN_CURVA)),
+  );
   geometry.rotateX(-Math.PI / 2);
   const mesh = new Mesh(geometry, material);
   mesh.position.set(x, 0.05, z);
