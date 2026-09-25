@@ -2281,6 +2281,8 @@ export class Game {
       this.scene.add(this.lucesDeCiudad.grupo);
       this.lucesDeCiudad.ponerSol(this.sky.sunDirection.y);
     }
+    // Y las de los vecinos, que se montaron antes de que hubiera cielo.
+    for (const v of this.vecinos) v.mundo.ponerSol(this.sky.sunDirection.y);
     /*
      * **Y los edificios del aeródromo también paran a un avión.**
      *
@@ -5434,6 +5436,7 @@ export class Game {
     // el seno de la altura del sol, que el cielo acaba de recalcular.
     this.rodadura?.ponerSol(this.sky.sunDirection.y);
     this.lucesDeCiudad?.ponerSol(this.sky.sunDirection.y);
+    for (const v of this.vecinos) v.mundo.ponerSol(this.sky.sunDirection.y);
   }
 
   /**
@@ -5620,11 +5623,20 @@ export class Game {
         (anillos.medio.ficha.tamanoM ?? 0) / 2,
       );
     }
-    if (this.anilloHorizonte)
+    if (this.anilloHorizonte) {
       this.terrain.ponerOrtofotoLejana(
         this.anilloHorizonte,
         exposicionDe(this.anilloHorizonte.ficha),
       );
+      // Y el borde de la foto de cada vecino, fundido con esta. Ver
+      // `MundoVecino.fundirConElHorizonte`.
+      for (const v of this.vecinos)
+        v.mundo.fundirConElHorizonte({
+          textura: this.anilloHorizonte.textura,
+          uv: this.anilloHorizonte.uv,
+          exposicion: exposicionDe(this.anilloHorizonte.ficha),
+        });
+    }
     if (this.anilloPartido && this.anilloMedio)
       this.terrain.ponerOrtofotoLejana(
         this.anilloMedio,
@@ -5640,6 +5652,20 @@ export class Game {
   /** La foto del vecino `i`, cuando llegue. Ver `ponerAnillos`. */
   ponerFotoDelVecino(i: number, foto: Ortofoto): void {
     this.vecinos[i]?.mundo.ponerFoto(foto);
+  }
+
+  /**
+   * La rejilla de ciudad del vecino `i`, cuando llegue: sus luces de noche.
+   * Ver `MundoVecino.ponerLuces`.
+   */
+  ponerCiudadDelVecino(i: number, ciudad: Ciudad): void {
+    const v = this.vecinos[i];
+    if (!v) return;
+    v.mundo.ponerLuces(
+      ciudad,
+      zonaDeAeropuerto(v.escenario, 60),
+      v.escenario.waterLevel,
+    );
   }
 
   /** La visibilidad del último parte, m. Ver `ponerLluvia`. */

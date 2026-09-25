@@ -54,7 +54,11 @@ export const GLSL_DE_LUCES = {
     float lejosDelOjo = max(-mvPosition.z, 1.0);
     float cercania = clamp(lucesCerca / lejosDelOjo, 0.0, 1.0);
     gl_PointSize = size * max(sqrt(cercania), lucesMenor);
-    vBrillo = max(pow(cercania, 1.5), lucesSuelo);
+    // El mínimo también baja, más despacio, desde cinco veces \`cerca\`: de
+    // muy lejos caen muchas luces en cada píxel y se suman, y con el mínimo
+    // fijo una ciudad a noventa kilómetros brillaba más que a sesenta.
+    float lejania = clamp(lucesCerca * 5.0 / lejosDelOjo, 0.3, 1.0);
+    vBrillo = max(pow(cercania, 1.5), lucesSuelo * lejania);
   `,
   cabecera: /* glsl */ `
     varying float vBrillo;
@@ -125,4 +129,37 @@ export function materialDeLuces(
    */
   material.customProgramCacheKey = () => "luces-lejanas";
   return material;
+}
+
+/**
+ * Lo mismo para un `PointsMaterial` que ya existe, sin tocarle nada más: el
+ * punto conserva su tamaño hasta `cerca` metros y a partir de ahí encoge
+ * hasta `menor` de lo que era.
+ *
+ * Es para el balizamiento de la pista, que va a ocho píxeles fijos para que
+ * la fila de luces dibuje el rectángulo desde unos kilómetros. Desde
+ * veinticinco, ocho píxeles por luz son una pista entera metida en una
+ * barra: verde, blanca y roja, una sola mancha de colores. De cerca queda
+ * exactamente como estaba.
+ */
+export function encogerConLaDistancia(
+  material: PointsMaterial,
+  cerca: number,
+  menor: number,
+): void {
+  material.onBeforeCompile = (shader) => {
+    material.userData.encoge = true;
+    shader.uniforms.lucesCerca = { value: cerca };
+    shader.uniforms.lucesMenor = { value: menor };
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "void main() {",
+        "uniform float lucesCerca;\nuniform float lucesMenor;\nvoid main() {",
+      )
+      .replace(
+        "gl_PointSize = size;",
+        "gl_PointSize = size * clamp(lucesCerca / max(-mvPosition.z, 1.0), lucesMenor, 1.0);",
+      );
+  };
+  material.customProgramCacheKey = () => "luces-que-encogen";
 }

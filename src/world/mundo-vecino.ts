@@ -30,11 +30,55 @@
  * si la pregunta no cae en su mapa, lo que hubiera antes.
  */
 
-import { Group, type Texture } from "three";
+import {
+  Group,
+  Vector3,
+  type Mesh,
+  type MeshLambertMaterial,
+  type Texture,
+} from "three";
 import { Terrain } from "./terrain";
 import type { Scenario } from "./scenarios";
 import { dondeCae } from "./entre-aerodromos";
 import { exposicionDelVecino } from "./ortofoto";
+import type { Ciudad } from "./ciudad";
+import { crearLucesDeCiudad, type LucesDeCiudad } from "./luces-de-ciudad";
+import { crearAerodromoLejano, type AerodromoLejano } from "./aerodromo-lejano";
+import { encendidoSegunElSol } from "./luces-de-rodadura";
+import { esTorreDeControl } from "./aerodrome";
+
+/** Cuántos metros de borde se funden con la foto del horizonte. */
+const FUNDIDO = 3500;
+
+/**
+ * El trozo de programa del fundido: la lectura de la foto con la del
+ * horizonte mezclada hacia el borde. Aparte para poder mirarlo en una prueba.
+ */
+export const GLSL_DEL_FUNDIDO = {
+  cabecera: /* glsl */ `
+    uniform sampler2D fotoHorizonte;
+    uniform vec3 afinU;
+    uniform vec3 afinV;
+    uniform float ajusteHorizonte;
+    uniform float medioLadoFino;
+    uniform float fundidoFino;
+    varying vec2 vDelVecino;
+  `,
+  mapa: /* glsl */ `
+    #ifdef USE_MAP
+      vec4 sampledDiffuseColor = texture2D(map, vMapUv);
+      float alBorde = medioLadoFino - max(abs(vDelVecino.x), abs(vDelVecino.y));
+      float gruesa = 1.0 - smoothstep(0.0, fundidoFino, alBorde);
+      if (gruesa > 0.0) {
+        vec3 p = vec3(vDelVecino, 1.0);
+        vec4 deCasa = texture2D(fotoHorizonte, vec2(dot(afinU, p), dot(afinV, p)));
+        deCasa.rgb *= ajusteHorizonte;
+        sampledDiffuseColor = mix(sampledDiffuseColor, deCasa, gruesa);
+      }
+      diffuseColor *= sampledDiffuseColor;
+    #endif
+  `,
+} as const;
 
 /** Lo que devuelve la proyección de una ortofoto para un punto del mundo. */
 interface Punto2 {
@@ -105,6 +149,72 @@ export class MundoVecino {
     if (agua && vecino.waterLevel === salida.waterLevel) agua.visible = false;
     this.grupo.add(this.terreno.group);
     this.grupo.position.set(this.desplazamiento.x, 0, this.desplazamiento.z);
+
+    /*
+     * **Y su aeropuerto de lejos, de noche**: el faro y unas pocas luces
+     * blancas, en lugar del balizamiento entero. Ver `aerodromo-lejano.ts`.
+     * Se ve solo mientras el de verdad está quitado.
+     */
+    const torre = vecino.aerodrome?.buildings.find(esTorreDeControl);
+    let centro: [number, number] | null = null;
+    if (torre && torre.polygon.length > 0) {
+      let x = 0;
+      let y = 0;
+      for (const p of torre.polygon) {
+        x += p[0];
+        y += p[1];
+      }
+      // La Y del fichero apunta al norte; la Z del mundo, al sur.
+      centro = [x / torre.polygon.length, -y / torre.polygon.length];
+    }
+    this.aerodromoLejano = crearAerodromoLejano(
+      vecino.runway,
+      (x, z) => this.terreno.sampleHeight(x, z),
+      encendidoSegunElSol,
+      centro,
+    );
+    this.deLejosVisible.add(this.aerodromoLejano.grupo);
+    this.deLejosVisible.visible = false;
+    this.grupo.add(this.deLejosVisible);
+  }
+
+  private readonly aerodromoLejano: AerodromoLejano;
+  /** Lo que solo se enseña con la isla lejos. */
+  private readonly deLejosVisible = new Group();
+  private lucesDeCiudad: LucesDeCiudad | null = null;
+  private seno = -1;
+
+  /**
+   * **Las luces de su ciudad**, cuando llegue su rejilla.
+   *
+   * Sin ellas, de noche la isla de enfrente era una silueta negra y nada
+   * más, y lo primero que se ve de Tenerife desde Gran Canaria de noche es
+   * justo eso: el resplandor de Santa Cruz y La Laguna en la costa. Son las
+   * mismas luces que las de casa —la misma rejilla de OpenStreetMap, el
+   * mismo material—, colgadas del vecino. Se piden después de arrancar,
+   * como su fotografía. Ver la carga en `main.ts`.
+   */
+  ponerLuces(
+    ciudad: Ciudad,
+    enElAeropuerto: (x: number, z: number) => boolean,
+    nivelDelAgua: number,
+  ): void {
+    if (this.lucesDeCiudad) return;
+    this.lucesDeCiudad = crearLucesDeCiudad(
+      ciudad,
+      (x, z) => this.terreno.sampleHeight(x, z),
+      enElAeropuerto,
+      nivelDelAgua,
+    );
+    this.lucesDeCiudad.ponerSol(this.seno);
+    this.grupo.add(this.lucesDeCiudad.grupo);
+  }
+
+  /** Enciende o apaga sus luces. `seno` es `sunDirection.y`. */
+  ponerSol(seno: number): void {
+    this.seno = seno;
+    this.lucesDeCiudad?.ponerSol(seno);
+    this.aerodromoLejano.ponerSol(seno);
   }
 
   /**
@@ -114,6 +224,92 @@ export class MundoVecino {
    */
   ponerFoto(foto: { textura: Texture; uv(x: number, z: number): Punto2 }): void {
     this.terreno.ponerOrtofoto(foto, this.exposicion);
+    this.tieneFoto = true;
+    // Poner la foto rehace el material, y con él se va el fundido: se
+    // vuelve a poner si ya estaba la del horizonte.
+    this.fundir();
+  }
+
+  private tieneFoto = false;
+  private envoltorio: MeshLambertMaterial["onBeforeCompile"] | undefined;
+  private debajo: MeshLambertMaterial["onBeforeCompile"] | undefined;
+  private horizonte:
+    | { textura: Texture; uv(x: number, z: number): Punto2; exposicion: number }
+    | undefined;
+
+  /**
+   * **El borde de su foto, fundido con la del horizonte de casa.**
+   *
+   * La isla de enfrente lleva su propia foto, fina —ocho metros por píxel—,
+   * que solo cubre su mapa; alrededor, el resto de la isla sale de la foto
+   * del horizonte de casa, a ciento treinta y cinco. El paso de una a otra
+   * era una raya recta: volando de noche hacia Tenerife, «la ortofoto parece
+   * que es de calidad en la zona urbana, pero no es tan buena en el resto»,
+   * con un recuadro nítido de canto duro alrededor de La Laguna. No era la
+   * zona urbana: era el borde del mapa fino.
+   *
+   * Así que en los últimos kilómetros de su mapa la foto fina se va
+   * cambiando por la gruesa, **la misma que hay al otro lado del borde** y
+   * con su misma exposición: al llegar al canto ya son iguales y no queda
+   * nada que se vea. Es una lectura más de textura en esa franja y ninguna
+   * en el resto.
+   */
+  fundirConElHorizonte(foto: {
+    textura: Texture;
+    uv(x: number, z: number): Punto2;
+    exposicion: number;
+  }): void {
+    this.horizonte = foto;
+    this.fundir();
+  }
+
+  private fundir(): void {
+    const h = this.horizonte;
+    if (!h || !this.tieneFoto) return;
+    const malla = this.terreno.group.getObjectByName("terreno") as Mesh | undefined;
+    if (!malla) return;
+    const mat = malla.material as MeshLambertMaterial;
+    /*
+     * La foto del horizonte se lee con coordenadas de **casa**; el vecino
+     * está corrido. En dieciocho kilómetros la proyección es una recta a
+     * todos los efectos, así que basta con tres puntos para escribirla como
+     * una cuenta afín de las coordenadas del vecino.
+     */
+    const { x: dx, z: dz } = this.desplazamiento;
+    const o = h.uv(dx, dz);
+    const ex = h.uv(dx + 1000, dz);
+    const ez = h.uv(dx, dz + 1000);
+    const afinU = new Vector3((ex.u - o.u) / 1000, (ez.u - o.u) / 1000, o.u);
+    const afinV = new Vector3((ex.v - o.v) / 1000, (ez.v - o.v) / 1000, o.v);
+    const ajuste = h.exposicion / this.exposicion;
+    const medioLado = this.medioLado;
+    // Lo que ya tuviera el material —el grano—, y no el fundido de una vez
+    // anterior: envolverlo dos veces declara los uniformes dos veces.
+    const previo =
+      mat.onBeforeCompile === this.envoltorio ? this.debajo! : mat.onBeforeCompile;
+    this.debajo = previo;
+    this.envoltorio = (shader, pintor) => {
+      previo.call(mat, shader, pintor);
+      mat.userData.fundido = true;
+      shader.uniforms.fotoHorizonte = { value: h.textura };
+      shader.uniforms.afinU = { value: afinU };
+      shader.uniforms.afinV = { value: afinV };
+      shader.uniforms.ajusteHorizonte = { value: ajuste };
+      shader.uniforms.medioLadoFino = { value: medioLado };
+      shader.uniforms.fundidoFino = { value: FUNDIDO };
+      shader.vertexShader = shader.vertexShader
+        .replace("void main() {", "varying vec2 vDelVecino;\nvoid main() {")
+        .replace(
+          "#include <begin_vertex>",
+          "#include <begin_vertex>\nvDelVecino = position.xz;",
+        );
+      shader.fragmentShader = shader.fragmentShader
+        .replace("void main() {", GLSL_DEL_FUNDIDO.cabecera + "\nvoid main() {")
+        .replace("#include <map_fragment>", GLSL_DEL_FUNDIDO.mapa);
+    };
+    mat.onBeforeCompile = this.envoltorio;
+    mat.customProgramCacheKey = () => "grano-del-suelo+fundido";
+    mat.needsUpdate = true;
   }
 
   /**
@@ -139,6 +335,7 @@ export class MundoVecino {
     ) - this.medioLado;
     if (d > 35000 && !this.deLejos) this.ponerLejos(true);
     else if (d < 30000 && this.deLejos) this.ponerLejos(false);
+    if (this.deLejos) this.aerodromoLejano.alPaso(performance.now() / 1000);
   }
 
   private ponerLejos(lejos: boolean): void {
@@ -146,6 +343,7 @@ export class MundoVecino {
     this.terreno.ponerDetalle(lejos ? 4 : 1);
     for (const o of this.terreno.group.children)
       if (o.name.startsWith("aerodromo:")) o.visible = !lejos;
+    this.deLejosVisible.visible = lejos;
   }
 
   private deLejos = false;

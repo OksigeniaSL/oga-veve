@@ -22,6 +22,7 @@
  * dos umbrales en vez de tumbarlo todo a una cota.
  */
 
+import { encogerConLaDistancia } from "./material-de-luces";
 import {
   BufferAttribute,
   BufferGeometry,
@@ -1859,6 +1860,13 @@ function luces(
     }),
   );
   puntos.name = "luces-pista-lejos";
+  /*
+   * Y a partir de diez kilómetros, encogiendo: los ocho píxeles son para
+   * dibujar la pista desde el circuito y desde la final, no desde la isla de
+   * enfrente, donde la pista entera cabía en una barra de colores. Ver
+   * `encogerConLaDistancia`.
+   */
+  encogerConLaDistancia(puntos.material as PointsMaterial, 10000, 0.3);
   grupo.add(puntos);
 
   /*
