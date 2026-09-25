@@ -33,6 +33,7 @@
 import { describe, expect, it } from "vitest";
 import { Group, Object3D, Vector3 } from "three";
 import {
+  brumaALaAltura,
   GAJOS_DEL_CIELO,
   GLSL_DEL_CIELO,
   updateSky,
@@ -117,5 +118,51 @@ describe("el sol", () => {
     // La pareja de potencias del mismo coseno: cerrada para el disco, abierta
     // para el resplandor. Si alguna vez se quedan iguales, no hay atardecer.
     expect(GLSL_DEL_CIELO.fragmento).toContain("mix(60.0, 5.0, haloFuerza)");
+  });
+});
+
+describe("por debajo del horizonte", () => {
+  it("la cúpula pinta mar, y el sol no asoma", () => {
+    /*
+     * Desde altura el agua se acaba antes del horizonte, y la franja de
+     * cúpula que queda entre medias se veía: «el sol apareciendo por debajo
+     * del horizonte». Ahí va el mar, con su niebla, y el disco solo se
+     * dibuja en la rama del cielo.
+     */
+    const f = GLSL_DEL_CIELO.fragmento;
+    expect(f).toContain("if (dir.y < 0.0)");
+    expect(f).toContain("marEn(dir)");
+    expect(f.indexOf("sky += sunColour * disc;")).toBeGreaterThan(
+      f.indexOf("} else {"),
+    );
+  });
+
+  it("y el agua usa la misma cuenta y la misma bruma, para no dejar costura", () => {
+    expect(GLSL_DEL_CIELO.agua).toContain("marEn(v)");
+    expect(GLSL_DEL_CIELO.agua).toContain("nieblaEn(v)");
+    expect(GLSL_DEL_CIELO.fragmento).toContain("nieblaEn(dir)");
+  });
+});
+
+describe("la bruma se queda abajo", () => {
+  it("en el suelo, entera", () => {
+    expect(brumaALaAltura(0)).toBe(1);
+    expect(brumaALaAltura(300)).toBe(1);
+  });
+
+  it("a ocho mil pies queda poco más de un tercio, y por encima no baja más", () => {
+    expect(brumaALaAltura(2440)).toBeGreaterThan(0.33);
+    expect(brumaALaAltura(2440)).toBeLessThan(0.42);
+    expect(brumaALaAltura(3000)).toBeCloseTo(0.3);
+    expect(brumaALaAltura(11000)).toBeCloseTo(0.3);
+  });
+
+  it("y nunca sube al subir", () => {
+    let antes = 2;
+    for (let h = 0; h <= 5000; h += 100) {
+      const b = brumaALaAltura(h);
+      expect(b).toBeLessThanOrEqual(antes);
+      antes = b;
+    }
   });
 });

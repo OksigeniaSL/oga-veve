@@ -55,6 +55,8 @@ import {
   PointsMaterial,
   ShaderMaterial,
   SphereGeometry,
+  UniformsLib,
+  UniformsUtils,
   Vector3,
 } from "three";
 import { mulberry32 } from "./noise";
@@ -89,62 +91,197 @@ import type { Scenario } from "./scenarios";
  */
 const VERTEX_SHADER = /* glsl */ `
   varying vec3 vDireccion;
+  varying vec3 vVista;
   void main() {
     vDireccion = position;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    // Lo mismo, visto desde la cámara: hace falta para medir la niebla del
+    // mar que se pinta por debajo del horizonte igual que la mide three.js
+    // en el agua de verdad, que es por la profundidad y no por la distancia.
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    vVista = mvPosition.xyz;
+    gl_Position = projectionMatrix * mvPosition;
   }
 `;
 
-const FRAGMENT_SHADER = /* glsl */ `
+/*
+ * **El cielo, el mar y la bruma, en una sola cuenta que comparten.**
+ *
+ * La cúpula por debajo del horizonte era cielo: el mismo color del horizonte
+ * y, hasta hace nada, el halo del sol. Desde el suelo no se ve, porque el mar
+ * la tapa. Desde ocho mil pies sí: el agua se acaba a doscientos kilómetros,
+ * y entre ese borde y el horizonte queda una franja de cúpula que no es mar
+ * —«el sol apareciendo por debajo del horizonte»—. Apagar el halo ahí abajo
+ * lo dejó en una franja lisa de otro color, que sigue siendo una costura.
+ *
+ * Así que por debajo del horizonte **la cúpula pinta mar**: el mismo que el
+ * plano de agua, con la misma cuenta de color y la misma niebla, prolongado
+ * hasta el infinito. Y la niebla no es un gris plano: es el horizonte con el
+ * resplandor del sol, que es lo que tiene la bruma de verdad cuando se mira
+ * hacia donde se pone. Como la niebla del mar se evalúa en la horizontal y
+ * el cielo justo encima del horizonte es exactamente eso, mar y cielo se
+ * tocan sin costura: la línea del horizonte la dibuja el agua que se acerca,
+ * no un cambio de color.
+ *
+ * El plano de agua usa estas mismas funciones —ver `materialDelAgua`—, y eso
+ * es lo que hace que su borde no se vea: a partir de él la cúpula sigue
+ * pintando lo mismo.
+ */
+const GLSL_COMUN = /* glsl */ `
   uniform vec3 horizonColour;
   uniform vec3 zenithColour;
   uniform vec3 sunColour;
   uniform vec3 sunDirection;
   uniform float haloFuerza;
-  varying vec3 vDireccion;
+  uniform vec3 colorDelAgua;
+  uniform float luzDelSol;
+  uniform vec3 luzDeRelleno;
 
-  void main() {
-    vec3 dir = normalize(vDireccion);
-
+  // El cielo en una dirección, sin el disco: el degradado y el halo.
+  vec3 cieloEn(vec3 dir) {
     // La potencia comprime el degradado hacia el horizonte, que es donde el
     // ojo espera ver la transición. Un lerp lineal se ve plano.
     float t = pow(max(dir.y, 0.0), 0.62);
-    vec3 sky = mix(horizonColour, zenithColour, t);
-
-    // Sol y halo. Son dos potencias del mismo coseno: una muy cerrada para el
-    // disco y otra muy abierta para el resplandor que lo rodea. Diez líneas
-    // que cambian por completo la sensación de que hay una hora del día.
-    //
-    // **El halo se abre y se enciende al atardecer.** Con la fuerza fija, el
-    // sol de las ocho de la tarde se veía igual de blanco y pequeño que el de
+    vec3 c = mix(horizonColour, zenithColour, t);
+    // Sol y halo son dos potencias del mismo coseno: una muy cerrada para el
+    // disco —ver el cielo— y otra muy abierta para el resplandor. **El halo
+    // se abre y se enciende al atardecer**: con la fuerza fija, el sol de
+    // las ocho de la tarde se veía igual de blanco y pequeño que el de
     // mediodía, y no hay nada que delate más un cielo falso.
     float toSun = max(dot(dir, normalize(sunDirection)), 0.0);
-    float halo = pow(toSun, mix(60.0, 5.0, haloFuerza)) * (0.35 + haloFuerza * 0.85);
-    float disc = smoothstep(0.9986, 0.9994, toSun);
-    // **Y por debajo del horizonte, nada de sol: ahí está la Tierra.** La
-    // cúpula sigue por debajo, y donde el terreno se acaba a lo lejos se veía
-    // el halo del ocaso a través del suelo, como un sol al trasluz del
-    // planeta. Se apaga en un par de grados, que es lo que mide el disco.
-    float tapado = smoothstep(-0.02, 0.01, dir.y);
-    halo *= tapado;
-    disc *= tapado;
-    sky += sunColour * halo;
-    /*
-     * **Y el disco suma, no sustituye.**
-     *
-     * Esto era una mezcla hacia el color del sol con el disco de factor: en
-     * el sitio exacto donde está el sol se tiraba todo lo anterior y se
-     * ponía el color del sol a secas. Pero justo ahí el halo ya había sumado casi el doble de ese
-     * mismo color, así que el disco salía **más oscuro que el resplandor que
-     * lo rodea**: un agujero en su propio brillo. Al atardecer, con el halo
-     * abierto del todo, eso es una mancha parda en mitad del cielo naranja.
-     *
-     * El sol es la fuente: tiene que ser lo más claro del cielo, nunca un
-     * hueco. Sumando, lo es siempre.
-     */
-    sky += sunColour * disc;
+    c += sunColour * pow(toSun, mix(60.0, 5.0, haloFuerza)) * (0.35 + haloFuerza * 0.85);
+    return c;
+  }
+
+  // El color de la bruma mirando hacia ahí: el del horizonte en esa
+  // dirección, con su resplandor. Es el cielo justo encima del agua, y por
+  // eso el mar lejano se funde con él sin costura.
+  vec3 nieblaEn(vec3 dir) {
+    vec2 h = dir.xz;
+    float l = length(h);
+    return cieloEn(l > 1e-5 ? vec3(h / l, 0.0).xzy : vec3(1.0, 0.0, 0.0));
+  }
+
+  /*
+   * El mar visto en la dirección v (hacia abajo), en color lineal.
+   *
+   * Tres cosas y ninguna más: el agua alumbrada por el sol y por el cielo,
+   * como la alumbraba la luz de Lambert que tenía; el cielo reflejado, que
+   * pesa más cuanto más rasante se mira —Fresnel, con el 2 % del agua de
+   * frente—; y el camino del sol sobre el agua. Sin el reflejo el mar de un
+   * atardecer salía negro: la luz del sol le llega rasante, o sea casi nada,
+   * y lo que de verdad lo pinta a esa hora es el cielo naranja que refleja.
+   */
+  vec3 marEn(vec3 v) {
+    float mira = clamp(-v.y, 0.0, 1.0);
+    float fresnel = 0.02 + 0.98 * pow(1.0 - mira, 5.0);
+    vec3 r = vec3(v.x, abs(v.y), v.z);
+    // El cielo sale a pantalla sin pasar a sRGB —es el color tal cual—, y
+    // aquí se trabaja en lineal: se deshace para que el reflejo se vea del
+    // mismo color que el cielo que refleja.
+    vec3 reflejo = sRGBTransferEOTF(vec4(cieloEn(r), 1.0)).rgb;
+    vec3 s = normalize(sunDirection);
+    vec3 difusa = colorDelAgua * (sunColour * luzDelSol * max(s.y, 0.0) + luzDeRelleno) * RECIPROCAL_PI;
+    // El camino del sol: el vector medio contra la normal del agua, que al
+    // mirar rasante se estira hacia el horizonte como la estela de verdad.
+    float camino = pow(max(normalize(s - v).y, 0.0), 700.0) * smoothstep(-0.01, 0.03, s.y);
+    return mix(difusa, reflejo, fresnel * 0.85) + sunColour * luzDelSol * camino * 0.6;
+  }
+`;
+
+const FRAGMENT_SHADER = /* glsl */ `
+  #include <common>
+  uniform float fogDensity;
+  uniform float nivelDelMar;
+  varying vec3 vDireccion;
+  varying vec3 vVista;
+  ${GLSL_COMUN}
+
+  void main() {
+    vec3 dir = normalize(vDireccion);
+    vec3 sky;
+
+    if (dir.y < 0.0) {
+      /*
+       * **Por debajo del horizonte, mar.** A la distancia a la que el rayo
+       * toca el agua y con la niebla que le toca, contada como la cuenta
+       * three.js en el plano de agua: por la profundidad en la vista.
+       */
+      float alto = max(cameraPosition.y - nivelDelMar, 1.0);
+      float lejos = alto / max(-dir.y, 1e-5);
+      float prof = lejos * (-vVista.z / length(vVista));
+      float velo = 1.0 - exp(-fogDensity * fogDensity * prof * prof);
+      vec3 mar = sRGBTransferOETF(vec4(marEn(dir), 1.0)).rgb;
+      sky = mix(mar, nieblaEn(dir), velo);
+    } else {
+      sky = cieloEn(dir);
+      float toSun = max(dot(dir, normalize(sunDirection)), 0.0);
+      float disc = smoothstep(0.9986, 0.9994, toSun);
+      /*
+       * **Y el disco suma, no sustituye.**
+       *
+       * Esto era una mezcla hacia el color del sol con el disco de factor: en
+       * el sitio exacto donde está el sol se tiraba todo lo anterior y se
+       * ponía el color del sol a secas. Pero justo ahí el halo ya había sumado
+       * casi el doble de ese mismo color, así que el disco salía **más oscuro
+       * que el resplandor que lo rodea**: un agujero en su propio brillo. Al
+       * atardecer, con el halo abierto del todo, eso es una mancha parda en
+       * mitad del cielo naranja.
+       *
+       * El sol es la fuente: tiene que ser lo más claro del cielo, nunca un
+       * hueco. Sumando, lo es siempre. Y por debajo del horizonte no se
+       * dibuja, porque ahí ya no hay cielo sino mar.
+       */
+      sky += sunColour * disc;
+    }
 
     gl_FragColor = vec4(sky, 1.0);
+  }
+`;
+
+/*
+ * **El agua, con la misma cuenta que el mar de la cúpula.**
+ *
+ * Era una lámina de Lambert: el color del agua por la luz que le llegara. De
+ * día valía; al atardecer, con el sol rasante, al agua no le llega casi nada
+ * y salía negra — «el mar negro, no sé yo». Lo que pinta el mar a esa hora
+ * es el cielo que refleja, y eso Lambert no lo sabe hacer.
+ *
+ * Y la niebla va escrita aquí y no con el trozo de three.js porque es la
+ * misma bruma con resplandor que la cúpula: con la gris de serie, el agua
+ * lejana y el mar pintado debajo del horizonte no casaban.
+ */
+const VERTICE_DEL_AGUA = /* glsl */ `
+  #include <common>
+  #include <fog_pars_vertex>
+  varying vec3 vMundo;
+  void main() {
+    vec4 mundo = modelMatrix * vec4(position, 1.0);
+    vMundo = mundo.xyz;
+    vec4 mvPosition = viewMatrix * mundo;
+    gl_Position = projectionMatrix * mvPosition;
+    #include <fog_vertex>
+  }
+`;
+
+const FRAGMENTO_DEL_AGUA = /* glsl */ `
+  #include <common>
+  #include <fog_pars_fragment>
+  uniform float opacidad;
+  varying vec3 vMundo;
+  ${GLSL_COMUN}
+
+  void main() {
+    vec3 v = normalize(vMundo - cameraPosition);
+    gl_FragColor = vec4(marEn(v), opacidad);
+    #include <colorspace_fragment>
+    #ifdef USE_FOG
+      #ifdef FOG_EXP2
+        float velo = 1.0 - exp(-fogDensity * fogDensity * vFogDepth * vFogDepth);
+      #else
+        float velo = smoothstep(fogNear, fogFar, vFogDepth);
+      #endif
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, nieblaEn(v), velo);
+    #endif
   }
 `;
 
@@ -160,6 +297,7 @@ const FRAGMENT_SHADER = /* glsl */ `
 export const GLSL_DEL_CIELO = {
   vertice: VERTEX_SHADER,
   fragmento: FRAGMENT_SHADER,
+  agua: FRAGMENTO_DEL_AGUA,
 } as const;
 
 /**
@@ -192,6 +330,16 @@ interface Momento {
   readonly relleno: number;
   /** Cuánto se ven las estrellas, de 0 a 1. */
   readonly estrellas: number;
+  /**
+   * El color del relleno, la luz que viene del cielo entero.
+   *
+   * Era siempre el mismo azul pálido, y al atardecer eso es lo único que
+   * alumbra el suelo: con el sol por debajo del horizonte la luz directa no
+   * llega a nada, y el relleno azul y flojo dejaba Gran Canaria negra bajo un
+   * cielo naranja. El cielo de esa hora es malva y rosa, y es lo que le da
+   * al suelo.
+   */
+  readonly ambiente: number;
 }
 
 const MOMENTOS: readonly Momento[] = [
@@ -202,8 +350,9 @@ const MOMENTOS: readonly Momento[] = [
     cenit: 0x04060e,
     sol: 0x2a3a55,
     fuerza: 0.05,
-    relleno: 0.12,
+    relleno: 0.3,
     estrellas: 1,
+    ambiente: 0x7d8cb8,
   },
   // Crepúsculo: el sol ya no se ve pero el horizonte todavía arde.
   {
@@ -212,8 +361,9 @@ const MOMENTOS: readonly Momento[] = [
     cenit: 0x101a35,
     sol: 0x8c5a6a,
     fuerza: 0.18,
-    relleno: 0.3,
+    relleno: 0.85,
     estrellas: 0.55,
+    ambiente: 0xb49ab8,
   },
   // Amanecer y ocaso, con el sol en el horizonte. La hora buena.
   {
@@ -222,8 +372,9 @@ const MOMENTOS: readonly Momento[] = [
     cenit: 0x3a5a8e,
     sol: 0xff8c3a,
     fuerza: 0.9,
-    relleno: 0.5,
+    relleno: 1.0,
     estrellas: 0.12,
+    ambiente: 0xf0c0a8,
   },
   // Sol bajo: sombras largas, luz cálida. Las cinco y media de la tarde.
   {
@@ -234,6 +385,7 @@ const MOMENTOS: readonly Momento[] = [
     fuerza: 2.4,
     relleno: 0.42,
     estrellas: 0,
+    ambiente: 0xc2dcf0,
   },
   // Mediodía.
   {
@@ -244,6 +396,7 @@ const MOMENTOS: readonly Momento[] = [
     fuerza: 3.1,
     relleno: 0.5,
     estrellas: 0,
+    ambiente: 0xc2dcf0,
   },
 ];
 
@@ -264,8 +417,42 @@ export interface SkyRig {
    * pone muchas veces; esto, casi nunca.
    */
   ponerDeslumbre(cuanto: number): void;
+  /**
+   * La niebla, en dos partes: la bruma del aire, que se queda abajo, y un
+   * mínimo que no depende de la altura —lo que diga el parte o la lluvia—.
+   * Ver `brumaALaAltura` y `updateSky`, que es quien las junta.
+   */
+  ponerNiebla(bruma: number, minimo: number): void;
+  /**
+   * El material del plano de agua: el mismo mar que la cúpula pinta por
+   * debajo del horizonte, para que el borde del plano no se vea. Ver
+   * `GLSL_COMUN`.
+   */
+  readonly materialDelAgua: ShaderMaterial;
   /** Qué hora es ahora mismo. */
   readonly hora: number;
+}
+
+/**
+ * Cuánta de la bruma del suelo queda a una altura dada, de cero a uno.
+ *
+ * **La bruma vive abajo.** Es la capa de mezcla, el aire que se calienta
+ * contra el suelo y el mar y carga con la sal y el polvo; en Canarias la
+ * cierra además la inversión del alisio, entre mil y mil quinientos metros,
+ * y por encima el aire es de una limpieza que es la razón de que haya
+ * telescopios en el Teide. Se ve desde cualquier avión: al despegar el
+ * horizonte está lechoso, y al salir de la capa aparecen las islas de
+ * enfrente con su silueta entera.
+ *
+ * Con la niebla igual a cualquier altura, desde ocho mil pies rumbo a
+ * Tenerife no se veía nada enfrente: el Teide está a ciento veintiocho
+ * kilómetros de Gando y la bruma del suelo se lo comía al 98 %. Con esto,
+ * a esa altura queda una tercera parte y el Teide se recorta en el
+ * horizonte —medio velado, que es como se ve—, y en el suelo nada cambia.
+ */
+export function brumaALaAltura(alturaM: number): number {
+  const t = Math.max(0, Math.min(1, (alturaM - 300) / 2700));
+  return 1 - 0.7 * t * t * (3 - 2 * t);
 }
 
 /** Interpola entre dos momentos y devuelve el resultado ya mezclado. */
@@ -280,6 +467,7 @@ function entre(a: Momento, b: Momento, t: number): Momento {
     fuerza: a.fuerza + (b.fuerza - a.fuerza) * t,
     relleno: a.relleno + (b.relleno - a.relleno) * t,
     estrellas: a.estrellas + (b.estrellas - a.estrellas) * t,
+    ambiente: mezcla(a.ambiente, b.ambiente),
   };
 }
 
@@ -479,17 +667,37 @@ function nubes(escenario: Scenario): Group {
     const textura = texturaDeNube(0xc10d + i * 977);
     textura.repeat.set(repite, repite);
     textura.offset.set(i * 0.17, i * 0.31);
-    const malla = new Mesh(
-      geo,
-      new MeshBasicMaterial({
-        map: textura,
-        transparent: true,
-        opacity: 0.5,
-        depthWrite: false,
-        side: DoubleSide,
-        fog: false,
-      }),
-    );
+    const material = new MeshBasicMaterial({
+      map: textura,
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false,
+      side: DoubleSide,
+      /*
+       * **Con niebla, y desvaneciéndose antes del borde.**
+       *
+       * Iban sin niebla y hasta el borde del plano, y desde arriba eso se
+       * ve: el banco acaba a veintitantos kilómetros en una raya recta, y
+       * lo que queda más allá sale blanco puro contra un horizonte ya
+       * velado —una franja lechosa sobre la costa de Tenerife, vista desde
+       * Gran Canaria—. Una nube lejana se funde con la bruma como todo lo
+       * demás, y el borde del banco no puede existir: la opacidad baja con
+       * la distancia al ojo desde la mitad del radio y llega a cero antes
+       * del final.
+       */
+      fog: true,
+    });
+    const radio = (lado / 2) * 0.92;
+    material.onBeforeCompile = (programa) => {
+      programa.fragmentShader = programa.fragmentShader.replace(
+        "#include <fog_fragment>",
+        `#include <fog_fragment>
+        #ifdef USE_FOG
+          gl_FragColor.a *= 1.0 - smoothstep(${(radio * 0.45).toFixed(1)}, ${radio.toFixed(1)}, vFogDepth);
+        #endif`,
+      );
+    };
+    const malla = new Mesh(geo, material);
     malla.position.y = i * 70;
     malla.renderOrder = -1;
     grupo.add(malla);
@@ -529,19 +737,47 @@ export function createSky(scenario: Scenario): SkyRig {
     GAJOS_DEL_CIELO.ancho,
     GAJOS_DEL_CIELO.alto,
   );
+  /*
+   * Los uniformes que comparten la cúpula y el agua: **los mismos objetos**,
+   * no copias. Así una hora nueva se pone una vez y el mar del plano y el
+   * de debajo del horizonte no pueden quedarse con horas distintas.
+   */
+  const compartidos = {
+    horizonColour: { value: new Color(scenario.sky.horizon) },
+    zenithColour: { value: new Color(scenario.sky.zenith) },
+    sunColour: { value: new Color(0xfff4e2) },
+    sunDirection: { value: new Vector3(0, 1, 0) },
+    haloFuerza: { value: 0 },
+    colorDelAgua: { value: new Color(scenario.water) },
+    luzDelSol: { value: 0 },
+    luzDeRelleno: { value: new Color() },
+  };
   const material = new ShaderMaterial({
     uniforms: {
-      horizonColour: { value: new Color(scenario.sky.horizon) },
-      zenithColour: { value: new Color(scenario.sky.zenith) },
-      sunColour: { value: new Color(0xfff4e2) },
-      sunDirection: { value: new Vector3(0, 1, 0) },
-      haloFuerza: { value: 0 },
+      ...compartidos,
+      // Los de la niebla los pone three.js cada fotograma con `fog: true`;
+      // la cúpula no se empaña, pero el mar que pinta debajo sí.
+      ...UniformsUtils.clone(UniformsLib.fog),
+      nivelDelMar: { value: scenario.waterLevel },
     },
     vertexShader: VERTEX_SHADER,
     fragmentShader: FRAGMENT_SHADER,
     side: BackSide,
     depthWrite: false,
-    fog: false,
+    fog: true,
+  });
+
+  const materialDelAgua = new ShaderMaterial({
+    uniforms: {
+      ...compartidos,
+      ...UniformsUtils.clone(UniformsLib.fog),
+      // La transparencia de siempre: deja ver el fondo junto a la costa.
+      opacidad: { value: 0.86 },
+    },
+    vertexShader: VERTICE_DEL_AGUA,
+    fragmentShader: FRAGMENTO_DEL_AGUA,
+    transparent: true,
+    fog: true,
   });
 
   const dome = new Mesh(geometry, material);
@@ -579,12 +815,15 @@ export function createSky(scenario: Scenario): SkyRig {
   const sunDirection = new Vector3(0, 1, 0);
   /** Lo que multiplica al halo. Ver `ponerDeslumbre`. */
   let deslumbre = 1;
+  const niebla = { bruma: scenario.fog.density, minimo: 0 };
+  const relleno = new Color();
 
   const rig: SkyRig = {
     group,
     sun,
     fog,
     sunDirection,
+    materialDelAgua,
     hora: 12,
     ponerHora(hora: number) {
       const h = ((hora % 24) + 24) % 24;
@@ -616,6 +855,21 @@ export function createSky(scenario: Scenario): SkyRig {
       sun.color.setHex(m.sol);
       sun.intensity = m.fuerza;
       ambient.intensity = m.relleno;
+      ambient.color.setHex(m.ambiente);
+
+      /*
+       * **Y las nubes con la luz de la hora.** Eran blancas siempre, y una
+       * nube blanca de mediodía bajo un cielo de ocaso —o de noche— es una
+       * pegatina. Se alumbran como se alumbra el suelo: el cielo entero más
+       * un poco de sol.
+       */
+      const luz = new Color(m.ambiente).multiplyScalar(m.relleno * 0.6);
+      luz.add(new Color(m.sol).multiplyScalar(m.fuerza * 0.25));
+      luz.r = Math.min(1, luz.r);
+      luz.g = Math.min(1, luz.g);
+      luz.b = Math.min(1, luz.b);
+      for (const capa of bancoDeNubes.children)
+        ((capa as Mesh).material as MeshBasicMaterial).color.copy(luz);
 
       const cielo = group.getObjectByName("estrellas") as Points | undefined;
       if (cielo) (cielo.material as PointsMaterial).opacity = m.estrellas;
@@ -629,6 +883,10 @@ export function createSky(scenario: Scenario): SkyRig {
        */
       fog.color.setHex(m.horizonte);
     },
+    ponerNiebla(bruma: number, minimo: number) {
+      niebla.bruma = bruma;
+      niebla.minimo = minimo;
+    },
     ponerDeslumbre(cuanto: number) {
       deslumbre = Math.max(0, Math.min(1, cuanto));
       // Se vuelve a poner la hora que ya había: es lo que recalcula el halo, y
@@ -638,6 +896,21 @@ export function createSky(scenario: Scenario): SkyRig {
   };
 
   rig.ponerHora(12);
+  /*
+   * Lo que el agua necesita saber cada fotograma: la luz que hay ahora —el
+   * rayo de una tormenta la cambia sin pasar por `ponerHora`— y la niebla a
+   * la altura del ojo. Ver `updateSky`.
+   */
+  group.userData.alPaso = (ojo: Vector3): void => {
+    compartidos.luzDelSol.value = sun.intensity;
+    compartidos.luzDeRelleno.value
+      .copy(relleno.copy(ambient.color))
+      .multiplyScalar(ambient.intensity);
+    fog.density = Math.max(
+      niebla.bruma * brumaALaAltura(ojo.y),
+      niebla.minimo,
+    );
+  };
   return rig;
 }
 
@@ -690,6 +963,9 @@ export function dondeVaElBanco(donde: number, paso: number): number {
 
 /** El domo sigue a la cámara para que el horizonte no se acerque nunca. */
 export function updateSky(rig: SkyRig, cameraPosition: Vector3): void {
+  (rig.group.userData.alPaso as ((ojo: Vector3) => void) | undefined)?.(
+    cameraPosition,
+  );
   const dome = rig.group.getObjectByName("cielo");
   if (dome) dome.position.copy(cameraPosition);
   const estrellado = rig.group.getObjectByName("estrellas");
