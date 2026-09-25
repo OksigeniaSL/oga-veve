@@ -4367,6 +4367,16 @@ button.motor__tecla::after {
   margin-top: auto;
   padding: 12px 4px;
   border-top: 1px solid rgb(228 226 218 / 0.16);
+  /*
+   * **Y sobre tierra firme.** El paisaje del fondo es un dibujo fijo y el pie
+   * cae donde caiga: en una tablet, el molino se metía detrás de «Granja
+   * Óga» y el sol partía la raya del pie por la mitad. Con el color de la
+   * tierra, de lado a lado y hasta abajo, lo que asoma se hunde en el suelo
+   * en vez de cruzar el texto.
+   */
+  background: var(--barro);
+  box-shadow: 0 0 0 100vmax var(--barro);
+  clip-path: inset(0 -100vmax -100vmax);
   font-size: 13px;
   line-height: 1.4;
   color: rgb(228 226 218 / 0.85);
@@ -4420,8 +4430,12 @@ button.motor__tecla::after {
    * seis por fila y cada país ocupa una.
    */
   width: min(1280px, 100%);
-  /* Hueco para la barra de abajo, que es fija y taparía la última fila. */
-  padding-bottom: 96px;
+  /*
+   * Sin hueco propio para la barra de abajo: ya lo reserva `.hangar` con su
+   * relleno, y entre las fichas y la barra va el pie. Con los dos, en una
+   * tablet quedaba un vacío de ciento cincuenta píxeles debajo de las fichas.
+   */
+  padding-bottom: 12px;
 }
 
 /*
@@ -5186,12 +5200,57 @@ button.motor__tecla::after {
   }
 }
 
-/* Y en la más baja, cada paso con su dibujo y su valor: la pregunta en
-   mayúsculas ocupaba tres renglones y dejaba el valor en «Vall…». El dibujo
-   ya dice de qué va cada paso. */
-@media (max-height: 400px) {
+/*
+ * Y en un teléfono apaisado, cada paso con su dibujo y su valor: la pregunta
+ * en mayúsculas ocupaba tres renglones y dejaba el valor en «Vall…». El
+ * dibujo ya dice de qué va cada paso. Estaba solo por debajo de 400 de alto,
+ * y en el teléfono de 915 × 412 seguía saliendo «¿QUÉ / PILOTO / SOS?» y
+ * «Despe…»: a cada paso le quedaban setenta píxeles de texto.
+ *
+ * Así que en toda la pantalla baja: sin la pregunta, el valor en dos líneas
+ * si hace falta, menos relleno, y el botón de despegar más estrecho.
+ */
+@media (max-height: 460px) {
   .hangar .paso__que {
     display: none;
+  }
+
+  .hangar .paso {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .hangar .paso__valor {
+    font-size: 12.5px;
+    line-height: 1.15;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .hangar .hangar__despegar {
+    gap: 10px;
+    padding: 0 22px;
+  }
+
+  .hangar .hangar__despegar svg {
+    width: 36px;
+    height: 24px;
+  }
+}
+
+/* Y en el teléfono más estrecho, el botón de despegar sin su dibujo: la
+   palabra y el naranja ya lo dicen, y a los cinco pasos les faltaba ese
+   ancho para no quedarse en «Despe…». */
+@media (max-height: 460px) and (max-width: 860px) {
+  .hangar .hangar__despegar svg {
+    display: none;
+  }
+
+  .hangar .hangar__despegar {
+    padding: 0 18px;
   }
 }
 
