@@ -1693,15 +1693,21 @@ function reglaDeCombustible(
   g.lineTo(raya, y + h + 3);
   g.stroke();
 
-  escribir(
-    g,
-    `${Math.round(deposito.kilos)} KG`,
-    x + w + 12,
-    y + h / 2,
-    "600 13px " + FUENTE,
-    TINTA,
-    "left",
-  );
+  /*
+   * **La cifra y la unidad, por separado.** Escritas juntas —«19364 KG»— el
+   * texto llevaba letras y `escribir` lo trataba como rótulo: en Guyrami no
+   * salían ni los kilos, mientras el cuadro plano del mismo peldaño sí los
+   * enseñaba. Una cifra se ve desde el primer peldaño; la unidad, con las
+   * letras. Ver `desdePara` en `ui/familia.ts`.
+   */
+  const kilos = `${Math.round(deposito.kilos)}`;
+  const fuente = "600 13px " + FUENTE;
+  escribir(g, kilos, x + w + 12, y + h / 2, fuente, TINTA, "left");
+  g.save();
+  g.font = fuente;
+  const ancho = g.measureText(kilos).width;
+  g.restore();
+  escribir(g, "KG", x + w + 16 + ancho, y + h / 2, fuente, TENUE, "left");
 }
 
 function reglaDeFlaps(
