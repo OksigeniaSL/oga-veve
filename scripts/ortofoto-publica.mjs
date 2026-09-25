@@ -97,28 +97,23 @@ const PROVEEDORES = {
   sentinel: {
     fuente: 'Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA',
     /*
-     * **SIN RESOLVER, y aquí es donde tiene que estar escrito.**
+     * **CC BY-NC-SA 4.0: la de uso no comercial, que es el caso.**
      *
-     * Esto declaraba `CC BY 4.0`, y EOX no da esa licencia: da CC BY-NC-SA 4.0
-     * para uso no comercial, y para uso comercial una propia que **exige un
-     * acuerdo explícito** con EOX IT Services GmbH. Este proyecto declara uso
-     * comercial —el juego es también un gancho de la Granja Óga, y eso cuenta
-     * por mucho que se regale—, así que la declaración era falsa. Ver #155.
+     * Estuvo declarada `CC BY 4.0`, que EOX no da, y después «sin resolver»
+     * porque el proyecto se describía como comercial. No lo es: el juego es
+     * gratuito, el código abierto, y no hay empresa detrás que cobre nada. EOX
+     * da sus mosaicos para eso con dos condiciones —citarles y no venderlos—,
+     * y las dos se cumplen: la atribución sale en pantalla. Ver #155.
      *
-     * **Y ya se corrigió una vez, en las fichas, y no duró**: la siguiente
-     * tirada del extractor volvió a escribir la cadena equivocada, porque la
-     * cadena vivía aquí. Una corrección puesta en el dato y no en quien lo
-     * genera dura hasta la próxima regeneración. Por eso va aquí.
+     * Si algún día el juego se cobrara o llevara publicidad, esta capa habría
+     * que cambiarla: Copernicus da Sentinel-2 sin procesar también para uso
+     * comercial.
      *
-     * Resolverlo son tres salidas y las tres son de Oksigenia: pedirle la
-     * licencia a EOX, cambiar a un mosaico que sí sea CC BY, o quitar la foto
-     * y volar sobre el relieve dibujado. Mientras tanto, `npm run licencias`
-     * impide que se publique por accidente.
+     * Y la cadena vive aquí y no en las fichas: una corrección puesta en el
+     * dato dura hasta la próxima tirada del extractor. Ya pasó una vez.
      */
     licencia:
-      'SIN RESOLVER · EOX s2cloudless: CC BY-NC-SA 4.0 para uso no comercial;' +
-      ' para uso comercial hace falta acuerdo con EOX IT Services GmbH.' +
-      ' Consultado 2026-09-12 en cloudless.eox.at/documentation/license',
+      'CC BY-NC-SA 4.0 · EOX s2cloudless, uso no comercial —juego gratuito, de código abierto y sin fines de lucro—. Consultado 2026-09-12 en cloudless.eox.at/documentation/license',
     servicio: 'https://tiles.maps.eox.at/wmts',
     /*
      * **La tanda de 2025, no la de 2020.**

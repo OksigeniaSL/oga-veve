@@ -51,7 +51,7 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [OurAirports](https://github.com/davidmegginson/ourairports-data)                                                                                                            | Coordenadas, pistas y elevación de aeropuertos                                                                                         | **Unlicense** (dominio público)                                         |
 | [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en cuatro encuadres                                                                         | **CC BY 4.0** · scne.es                                                 |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
-| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los seis escenarios paraguayos, en cuatro encuadres                                                                         | **Sin resolver.** Ver abajo                                             |
+| [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los seis escenarios paraguayos, en cuatro encuadres                                                                         | **CC BY-NC-SA 4.0**, uso no comercial. Ver abajo                        |
 
 **Cuatro encuadres de la misma fuente**, y cada uno existe por un motivo
 distinto: `cerca` cubre seis kilómetros a dos metros por píxel, que es donde se
@@ -77,30 +77,25 @@ doscientos veinticinco —El Hierro, que es casi todo mar— a dos megas y pico
 —Cuatro Vientos, que es Madrid entero—. Solo se baja la del escenario que se
 abre, y se guarda.
 
-### Sentinel-2 cloudless: la licencia declarada no es la que dice EOX
+### Sentinel-2 cloudless: CC BY-NC-SA 4.0, uso no comercial
 
-**Esto está sin resolver y bloquea la publicación de Silvio Pettirossi con su
-ortofoto.** Aquí se declaraba CC BY 4.0, y lo mismo en
-`data/ortho/pettirossi-lejos.json`. La documentación de licencia de EOX
+Las ortofotos de los seis campos paraguayos salen de la capa Sentinel-2
+cloudless de EOX IT Services. Su documentación de licencia
 —`cloudless.eox.at/documentation/license`, consultada el 12 de septiembre de
-2026— dice otra cosa: **Creative Commons Attribution-NonCommercial-ShareAlike
-4.0** para uso no comercial, y para uso comercial la «EOX Commercial
-Attribution-RestrictedUse 1.2 License», que además **exige un acuerdo explícito
-con EOX IT Services GmbH**.
+2026— la da bajo **Creative Commons Attribution-NonCommercial-ShareAlike 4.0**
+para uso no comercial, y este juego lo es: gratuito, de código abierto y sin
+fines de lucro. Las dos condiciones se cumplen: la atribución que EOX pide sale
+en pantalla, en los créditos y en los tres idiomas, y las imágenes no se venden.
+Las imágenes conservan su licencia; la del código del juego (Apache-2.0) no les
+alcanza.
 
-Y este proyecto declara uso comercial unas líneas más abajo, y con razón: el
-juego es un gancho de la Granja Óga, y eso cuenta por mucho que se regale.
+Estuvo declarada primero como CC BY 4.0, que EOX no da, y después «sin
+resolver» porque el proyecto se describía a sí mismo como comercial. No lo es.
+Ver #155.
 
-La capa que se usa es `s2cloudless-2020_3857`. Hay tres salidas y son de
-Oksigenia, no de un refactor:
-
-1. Escribir a EOX y pedir la licencia comercial.
-2. Cambiar a un mosaico cuyo año sí esté bajo CC BY 4.0, si se confirma cuál.
-3. Quitar la ortofoto de Pettirossi y volar sobre el relieve dibujado, que es
-   lo que hace todo lo demás.
-
-Mientras tanto la atribución que EOX pide sí se muestra en pantalla, que es lo
-único que se podía arreglar tecleando.
+**Si algún día el juego se cobrara o llevara publicidad**, esta capa habría que
+cambiarla: Copernicus da las imágenes de Sentinel-2 sin procesar también para
+uso comercial, solo con atribución.
 
 La ortofoto del PNOA entró el día que las teselas fotorrealistas de Google
 dejaron de servirse — «no disponibles para tu cuenta y tu región»— y el juego
@@ -278,9 +273,9 @@ condiciones, comprobadas en el sitio el 13 de septiembre de 2026:
 - **No piden atribución.** Ni los términos ni la tabla de planes exigen
   acreditar a ElevenLabs en el producto.
 
-Eso importaba aquí más de lo que parece: el juego se regala, pero es también un
-gancho de la Granja Óga, y eso cuenta como uso comercial por mucho que no se
-cobre — el mismo razonamiento que se hizo con el modelo de la avioneta.
+El juego es de uso no comercial —gratuito, de código abierto y sin fines de
+lucro—, así que esto no hacía falta; pero el plan de pago cubre también el uso
+comercial, y con él las voces no dependen de cómo se describa el proyecto.
 
 Que no pidan atribución no cambia lo que hacemos con ella: **la procedencia se
 escribe igual**, que es la regla de esta casa y el motivo de que exista este

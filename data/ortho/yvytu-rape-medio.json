@@ -2,7 +2,7 @@
   "id": "yvytu-rape",
   "encuadre": "medio",
   "fuente": "Sentinel-2 cloudless · EOX IT Services, sobre datos Copernicus/ESA",
-  "licencia": "SIN RESOLVER · EOX s2cloudless: CC BY-NC-SA 4.0 para uso no comercial; para uso comercial hace falta acuerdo con EOX IT Services GmbH. Consultado 2026-09-12 en cloudless.eox.at/documentation/license",
+  "licencia": "CC BY-NC-SA 4.0 · EOX s2cloudless, uso no comercial —juego gratuito, de código abierto y sin fines de lucro—. Consultado 2026-09-12 en cloudless.eox.at/documentation/license",
   "servicio": "https://tiles.maps.eox.at/wmts",
   "capa": "s2cloudless-2025_3857",
   "esquina": {

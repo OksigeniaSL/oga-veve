@@ -4,17 +4,14 @@
  * ## Por qué existe
  *
  * La ortofoto de los escenarios paraguayos sale de la capa `s2cloudless` de
- * EOX, y el proyecto la declaraba **CC BY 4.0**. La documentación de licencia
- * de EOX dice otra cosa: CC BY-NC-SA 4.0 para uso no comercial, y para uso
- * comercial una licencia propia que **exige un acuerdo explícito** con EOX IT
- * Services GmbH. Este proyecto declara uso comercial —el juego es también un
- * gancho de la Granja Óga, y eso cuenta por mucho que se regale—, así que la
- * declaración era falsa. Ver el issue #155.
+ * EOX, y el proyecto la declaraba **CC BY 4.0**, que EOX no da: da CC BY-NC-SA
+ * 4.0 para uso no comercial —que es el caso de este juego, gratuito, de código
+ * abierto y sin fines de lucro— y una licencia aparte, con acuerdo, para el
+ * comercial. Ver el issue #155.
  *
- * Lo que este guion añade no es la decisión —esa es de Oksigenia, y son tres
- * salidas: pedirle la licencia a EOX, cambiar a un mosaico que sí sea CC BY, o
- * quitar la foto y volar sobre el relieve dibujado—. Lo que añade es que
- * **mientras no se decida, no se publique por accidente**.
+ * Lo que añade este guion es que **ninguna imagen se publique con una licencia
+ * que nadie haya leído en la documentación de su proveedor**. Cada licencia
+ * buena está en `VERIFICADAS`, con quién y cuándo la comprobó.
  *
  * Y hacía falta, porque el accidente ya ocurrió dos veces por el mismo sitio:
  * la corrección se escribió una vez en las fichas y la siguiente regeneración
@@ -54,6 +51,15 @@ const VERIFICADAS = [
   {
     empieza: "CC BY 4.0 · scne.es",
     quien: "PNOA, Instituto Geográfico Nacional de España",
+    comprobada: "2026-09-12",
+  },
+  /*
+   * EOX da sus mosaicos bajo CC BY-NC-SA 4.0 para uso no comercial, y este
+   * juego lo es: gratuito, de código abierto y sin fines de lucro. Ver #155.
+   */
+  {
+    empieza: "CC BY-NC-SA 4.0 · EOX s2cloudless, uso no comercial",
+    quien: "EOX IT Services, Sentinel-2 cloudless",
     comprobada: "2026-09-12",
   },
 ];
