@@ -18,14 +18,18 @@
 
 import {
   BufferGeometry,
+  Color,
   Float32BufferAttribute,
   Group,
   Mesh,
   MeshBasicMaterial,
-  MeshLambertMaterial,
+  Points,
+  PointsMaterial,
   RingGeometry,
+  SRGBColorSpace,
 } from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { laRedonda } from "./luces-de-posicion";
+import { jalonar } from "./luces-de-rodadura";
 import type { Aerodrome, Punto } from "./aerodrome";
 import { aLaPolilinea } from "./aerodrome";
 import { sinTemblor } from "./sin-temblor";
@@ -58,13 +62,52 @@ import type { FlightState } from "../flight/model";
 /**
  * Ancho de la raya que marca la ruta, m.
  *
- * Uno y medio. Con cuatro parecía un río verde de orilla a orilla de la calle;
- * con dos **tapaba las letras pintadas en el asfalto**, que son justo lo que
- * hay que aprender a leer ahí: «la línea a seguir es gruesa y tapa las marcas
- * de la pista (las letras) y creo que eso es un elemento que el jugador debe
- * ver». Tiene razón: la ayuda no puede esconder la lección.
+ * **Medio metro.** Con cuatro parecía un río verde de orilla a orilla de la
+ * calle; con dos **tapaba las letras pintadas en el asfalto**, que son justo
+ * lo que hay que aprender a leer ahí: «la línea a seguir es gruesa y tapa las
+ * marcas de la pista (las letras) y creo que eso es un elemento que el
+ * jugador debe ver». Con uno y medio seguía siendo lo que más se veía del
+ * suelo: «siempre me ha parecido muy invasiva, podría ser algo más estrecha y
+ * bonita».
+ *
+ * Lo que la hace legible de lejos ya no es el ancho: son **las luces** que
+ * lleva encima. Ver `SEPARACION_DE_LUCES`.
  */
-const ANCHO = 1.5;
+const ANCHO = 0.5;
+
+/**
+ * Cada cuántos metros va una luz sobre la raya, m.
+ *
+ * **Es el «follow the greens» de los aeropuertos grandes**: luces verdes
+ * empotradas en el eje de la calle de rodaje que la torre enciende solo por
+ * delante del avión al que guía, tramo a tramo, y apaga por detrás. Quien
+ * aprenda aquí a seguir la raya se encontrará lo mismo el día que ruede por
+ * Heathrow o por Dubái, que es la regla de la casa: lo que se enseña es real.
+ *
+ * Siete y medio es la separación de las luces de eje en curva y en las zonas
+ * de baja visibilidad; en recta de verdad van a quince, pero a quince, desde la
+ * cabina de un teléfono, la fila se lee como puntos sueltos y no como camino.
+ */
+const SEPARACION_DE_LUCES = 7.5;
+
+/** El radio de cada luz en el suelo, m: una bombilla de medio metro por lado. */
+const RADIO_DE_LUZ = 0.5;
+
+/**
+ * Cuánta raya se enciende por delante del avión, m.
+ *
+ * Trescientos: lo que se rueda en medio minuto, y lo que cabe en pantalla desde
+ * la cámara de persecución. Más allá quedan tenues —la ruta entera se sigue
+ * viendo, para saber a dónde se va— y por detrás se apagan, que es lo que
+ * hacen las de verdad: las que ya se pisaron no guían a nadie.
+ */
+const ENCENDIDO_POR_DELANTE = 300;
+
+/** Lo que brillan las del fondo, de uno. Se ven, pero no llaman. */
+const TENUES = 0.3;
+
+/** Lo que mide cada luz en pantalla, en píxeles: su brillo, visto de lejos. */
+const LUZ_EN_PANTALLA = 7;
 
 /**
  * Cuánto se levanta la raya sobre el **terreno**, m.
@@ -82,6 +125,19 @@ const ANCHO = 1.5;
  */
 const ALTURA = 0.45;
 
+/** Las luces de la raya, para encenderlas según avanza el avión. */
+interface LucesDeLaRaya {
+  /** Dónde cae cada una, en metros de ruta desde el principio. */
+  readonly s: Float32Array;
+  /** La bombilla en el suelo: nueve vértices por luz, con su transparencia. */
+  readonly bombillas: Float32BufferAttribute;
+  /** Y su brillo en pantalla, uno por luz. */
+  readonly brillos: Float32BufferAttribute;
+  /** Cada cuántos índices empieza un tramo de la raya. Ver `apagarDetras`. */
+  readonly acumulado: Float32Array;
+  readonly raya: BufferGeometry;
+}
+
 /**
  * Los tres colores de la raya: **la línea de conducción**.
  *
@@ -98,9 +154,21 @@ const ALTURA = 0.45;
  * No es el amarillo de rodadura: aquello es el aeropuerto y esto es tu ruta de
  * hoy. Confundirlos sería enseñar mal.
  */
-const VERDE: readonly [number, number, number] = [0.325, 0.776, 0.42];
-const AMBAR: readonly [number, number, number] = [0.91, 0.694, 0.23];
-const ROJO: readonly [number, number, number] = [0.79, 0.29, 0.24];
+/*
+ * **Y en lineal, que es como los lee la tarjeta.** Los tres están escritos en
+ * sRGB, que es como se eligen a ojo; un color de vértice se toma tal cual como
+ * lineal, y sin sombreado encima salían lavados —el verde, casi menta, y las
+ * luces casi blancas—. Con luz de escena no se notaba porque el sombreado los
+ * oscurecía. El verde es el de las luces de eje de rodadura del propio
+ * aeropuerto (`luces-de-rodadura.ts`): son lo mismo, y se ven igual.
+ */
+const enLineal = (hex: number): readonly [number, number, number] => {
+  const c = new Color().setHex(hex, SRGBColorSpace);
+  return [c.r, c.g, c.b];
+};
+const VERDE = enLineal(0x2fd36b);
+const AMBAR = enLineal(0xe8b13a);
+const ROJO = enLineal(0xc94a3d);
 
 /**
  * Velocidad de rodaje cómoda en recta, m/s. Unos cuarenta y siete por hora.
@@ -1994,6 +2062,7 @@ export class PlanDeVuelo {
       this.acabaDeMudarse = false;
       this.alCambiarDeFase(p.fase);
     } else this.rehacerSiHaceFalta(p.fase, dt);
+    this.encender();
 
     return {
       fase: p.fase,
@@ -3102,6 +3171,167 @@ export class PlanDeVuelo {
     this.pintar();
   }
 
+  /** Las luces de la raya de ahora, o `null` si no hay raya. */
+  private luces: LucesDeLaRaya | null = null;
+
+  /** Con qué avance se encendieron por última vez. Ver `encender`. */
+  private encendidasHasta = NaN;
+
+  /**
+   * Las luces de la raya: una bombilla en el suelo cada siete metros y medio,
+   * y su brillo en pantalla encima.
+   *
+   * **Van dos cosas por luz, y hacen falta las dos.** La bombilla es un disco
+   * de un metro pegado al asfalto: de cerca es lo que se ve, con su centro
+   * más blanco que el borde como cualquier luz encendida. Pero un disco en el
+   * suelo visto de lejos y rasante es una raya de un píxel, y desde la cabina
+   * de un teléfono la ruta se perdía a los cien metros. El brillo es un punto
+   * de tamaño fijo en pantalla —como las luces de rodadura del aeropuerto—
+   * y es lo que hace que la fila se lea entera hasta la curva.
+   *
+   * Todo va en dos llamadas de dibujo, con el color en los vértices: encender
+   * y apagar es cambiar un número por vértice, no rehacer nada.
+   */
+  private ponerLuces(
+    colorDe: (v: number) => readonly [number, number, number],
+    raya: BufferGeometry,
+  ): LucesDeLaRaya | null {
+    const ruta = this.rutaMundo;
+    const acumulado = new Float32Array(ruta.length);
+    for (let i = 1; i < ruta.length; i++) {
+      acumulado[i] =
+        acumulado[i - 1]! +
+        Math.hypot(
+          ruta[i]![0] - ruta[i - 1]![0],
+          ruta[i]![1] - ruta[i - 1]![1],
+        );
+    }
+    // `jalonar` reparte por longitud recorrida, así que la luz k cae a k·paso
+    // metros del principio: no hace falta medirlo otra vez.
+    const sitios = jalonar(ruta, SEPARACION_DE_LUCES);
+    if (!sitios.length) return null;
+    const n = sitios.length;
+    const s = new Float32Array(n);
+    const LADOS = 8;
+    const porLuz = LADOS + 1;
+    const pos = new Float32Array(n * porLuz * 3);
+    const col = new Float32Array(n * porLuz * 4);
+    const brillo = new Float32Array(n * 3);
+    const brilloCol = new Float32Array(n * 4);
+    const indices: number[] = [];
+    let tramo = 0;
+    sitios.forEach((p, k) => {
+      s[k] = k * SEPARACION_DE_LUCES;
+      while (tramo < ruta.length - 2 && acumulado[tramo + 1]! < s[k]!) tramo++;
+      const c = colorDe(this.velocidades[tramo] ?? CRUCERO);
+      const y = this.cota(p.x, p.y) + ALTURA + 0.02;
+      const base = k * porLuz;
+      // El centro, casi blanco: es lo que dice «esto está encendido».
+      pos.set([p.x, y, p.y], base * 3);
+      col.set(
+        [
+          c[0] + (1 - c[0]) * 0.35,
+          c[1] + (1 - c[1]) * 0.35,
+          c[2] + (1 - c[2]) * 0.35,
+          1,
+        ],
+        base * 4,
+      );
+      for (let j = 0; j < LADOS; j++) {
+        const a = (j / LADOS) * Math.PI * 2;
+        const v = base + 1 + j;
+        pos.set(
+          [p.x + Math.cos(a) * RADIO_DE_LUZ, y, p.y + Math.sin(a) * RADIO_DE_LUZ],
+          v * 3,
+        );
+        col.set([c[0], c[1], c[2], 1], v * 4);
+        indices.push(base, base + 1 + ((j + 1) % LADOS), v);
+      }
+      brillo.set([p.x, y + 0.2, p.y], k * 3);
+      brilloCol.set([c[0], c[1], c[2], 1], k * 4);
+    });
+
+    const geo = new BufferGeometry();
+    geo.setAttribute("position", new Float32BufferAttribute(pos, 3));
+    const bombillas = new Float32BufferAttribute(col, 4);
+    geo.setAttribute("color", bombillas);
+    geo.setIndex(indices);
+    const discos = new Mesh(
+      geo,
+      new MeshBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -5,
+        polygonOffsetUnits: -5,
+      }),
+    );
+    discos.name = "ruta-luces";
+    this.grupo.add(discos);
+
+    const geoBrillo = new BufferGeometry();
+    geoBrillo.setAttribute("position", new Float32BufferAttribute(brillo, 3));
+    const brillos = new Float32BufferAttribute(brilloCol, 4);
+    geoBrillo.setAttribute("color", brillos);
+    const puntos = new Points(
+      geoBrillo,
+      new PointsMaterial({
+        size: LUZ_EN_PANTALLA,
+        sizeAttenuation: false,
+        vertexColors: true,
+        transparent: true,
+        depthWrite: false,
+        // Redondos y con halo, como las de rodadura: un punto sin dibujo es
+        // un cuadrado.
+        map: laRedonda(),
+      }),
+    );
+    puntos.name = "ruta-brillos";
+    this.grupo.add(puntos);
+
+    return { s, bombillas, brillos, acumulado, raya };
+  }
+
+  /**
+   * **Se encienden por delante y se apagan por detrás**, como las de verdad.
+   *
+   * Y la raya se recorta igual: el trozo que ya se pisó no guía a nadie y es
+   * lo único que queda entre la cámara de persecución y el avión, tapando el
+   * asfalto justo donde se mira.
+   *
+   * Solo trabaja cuando el avión se ha movido medio metro: parado no cambia
+   * nada, y son unos cientos de números por vez.
+   */
+  private encender(): void {
+    const luces = this.luces;
+    if (!luces) return;
+    const avance = this.avance;
+    if (Math.abs(avance - this.encendidasHasta) < 0.5) return;
+    this.encendidasHasta = avance;
+    const { s, bombillas, brillos } = luces;
+    const porLuz = bombillas.count / s.length;
+    for (let k = 0; k < s.length; k++) {
+      const d = s[k]! - avance;
+      const alfa =
+        d < -3
+          ? 0
+          : d <= ENCENDIDO_POR_DELANTE
+            ? 1
+            : Math.max(TENUES, 1 - ((d - ENCENDIDO_POR_DELANTE) / 150) * (1 - TENUES));
+      for (let j = 0; j < porLuz; j++) bombillas.setW(k * porLuz + j, alfa);
+      brillos.setW(k, alfa);
+    }
+    bombillas.needsUpdate = true;
+    brillos.needsUpdate = true;
+
+    // La raya, desde el tramo en el que se está: seis índices por tramo.
+    let i = 0;
+    const { acumulado, raya } = luces;
+    while (i < acumulado.length - 2 && acumulado[i + 1]! < avance - 3) i++;
+    raya.setDrawRange(i * 6, Infinity);
+  }
+
   /** Dibuja la ruta en el suelo, y una diana donde termina. */
   private pintar(): void {
     for (const hijo of [...this.grupo.children]) {
@@ -3110,6 +3340,7 @@ export class PlanDeVuelo {
       m.geometry?.dispose();
       (m.material as { dispose?: () => void })?.dispose?.();
     }
+    this.luces = null;
     if (this.rutaMundo.length < 2) return;
 
     /** De la velocidad que toca al color que se pinta. */
@@ -3203,26 +3434,35 @@ export class PlanDeVuelo {
     geo.setAttribute("position", new Float32BufferAttribute(pos, 3));
     geo.setAttribute("color", new Float32BufferAttribute(col, 3));
     geo.setIndex(indices);
-    geo.computeVertexNormals();
-    const piezas: BufferGeometry[] = [geo];
+    /*
+     * **Sin sombrear**, como una luz: la raya se ve igual con el sol de cara
+     * que de noche, y un material que se oscurece al atardecer justo cuando
+     * se encienden las luces del aeropuerto es una guía que se apaga cuando
+     * más falta hace.
+     */
+    const malla = new Mesh(
+      geo,
+      new MeshBasicMaterial({
+        vertexColors: true,
+        // Y un poco translúcida: la raya va encima del eje amarillo pintado
+        // de la calle, y ése también se tiene que ver debajo.
+        transparent: true,
+        opacity: 0.8,
+        depthWrite: false,
+        // Gana siempre contra el asfalto, esté a la distancia que esté. Y con
+        // menos prioridad que las letras del suelo: la ayuda va debajo de la
+        // lección, no encima.
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
+      }),
+    );
+    malla.name = "ruta";
+    this.grupo.add(malla);
 
-    const fusionada = piezas.length ? mergeGeometries(piezas, false) : null;
-    if (fusionada) {
-      const malla = new Mesh(
-        fusionada,
-        new MeshLambertMaterial({
-          vertexColors: true,
-          // Gana siempre contra el asfalto, esté a la distancia que esté. Y con
-          // menos prioridad que las letras del suelo: la ayuda va debajo de la
-          // lección, no encima.
-          polygonOffset: true,
-          polygonOffsetFactor: -4,
-          polygonOffsetUnits: -4,
-        }),
-      );
-      malla.name = "ruta";
-      this.grupo.add(malla);
-    }
+    this.luces = this.ponerLuces(colorDe, geo);
+    this.encendidasHasta = NaN;
+    this.encender();
 
     /*
      * La diana del final: un aro, que se ve de lejos y no tapa nada.
