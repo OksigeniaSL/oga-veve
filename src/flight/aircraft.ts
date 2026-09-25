@@ -924,7 +924,11 @@ export const ARAI: AircraftConfig = {
   decisionSpeed: 72,
   rotationSpeed: 78,
   batalla: 11.5,
-  gearHeight: 2.8,
+  // 3,35: la panza a metro setenta del asfalto y las góndolas a medio metro,
+  // que es como va un reactor de esta clase. Con 2,8 la panza quedaba a metro
+  // escaso y el tren apenas asomaba bajo el motor: «ruedas enterradas». Tiene
+  // que decir lo mismo que `TREN` en `modelos/jaz-90-arai.py`.
+  gearHeight: 3.35,
   trenRetractil: true,
   // Veinte: el tren entra en cuanto el variómetro dice que sube. Con las patas
   // fuera a más de doscientos cinco nudos se pasaría de su propio límite.

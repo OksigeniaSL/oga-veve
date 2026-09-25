@@ -13,11 +13,17 @@ arriostrada, tren triciclo fijo y cuatro plazas. Esa es la forma de la mitad de
 las avionetas del mundo desde los años cincuenta, y es la que hay que reconocer
 al mirarla.
 
+**Y con las proporciones de la clase**, que es lo que le faltaba para no
+parecer de juguete: el morro corto —el motor va justo delante del panel—, la
+cabina alta y cuadrada debajo del ala, el parabrisas tumbado, la cola larga que
+se estrecha y sube, y el tren de ballesta con sus carenados.
+
 Se ejecuta sin ventana y escribe el glTF donde el juego lo busca:
 
     blender --background --python modelos/jaz-20-pykasu.py
 
-Los ayudantes están en `comun.py`. Aquí queda solo lo que es este avión.
+Los ayudantes están en `comun.py` y en `exterior.py`. Aquí queda solo lo que
+es este avión.
 """
 
 import bpy  # noqa: F401
@@ -26,11 +32,11 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from comun import (  # noqa: E402
-    ala, cabina, cilindro, exportar, helice, limpiar, perfil, puntal,
-    suavizar, ventanillas,
-    franja,
-    puerta,
+from comun import cabina, exportar, limpiar  # noqa: E402
+from exterior import (  # noqa: E402
+    Piel, banda, centro_de_gravedad, contorno, de_deriva, de_ala, dentro_de,
+    espejo, estacion, helice, llantas, neumaticos, paneles, paneles_zy,
+    simetricos, superficie, varillas, zy,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -42,45 +48,25 @@ from mathutils import Vector  # noqa: E402
 ENVERGADURA = 11.0
 CUERDA = 1.5
 LARGO = 8.28
-ALTO_FUSELAJE = 1.24
-ANCHO_FUSELAJE = 1.02
 
-# **Los nueve aros del fuselaje**, a nivel de módulo porque ya no los usa solo
-# quien lo construye: la puerta y la línea de cintura se apoyan en ellos para
-# pegarse al casco de verdad en vez de a un cilindro supuesto. Es lo mismo que
-# ya hacían los tres grandes. Ver `aro`.
+# **Dónde está cada cosa a lo largo**, que es lo que hace la silueta.
 #
-# Morro corto y romo —detrás va un motor de cuatro cilindros opuestos, que es
-# ancho y plano—, cabina alta, y una cola larga y fina.
-AROS = [
-    (-LARGO * 0.50, ANCHO_FUSELAJE * 0.46, ALTO_FUSELAJE * 0.40, 0.06),
-    (-LARGO * 0.44, ANCHO_FUSELAJE * 0.82, ALTO_FUSELAJE * 0.70, 0.03),
-    (-LARGO * 0.34, ANCHO_FUSELAJE * 0.98, ALTO_FUSELAJE * 0.86, 0.00),
-    (-LARGO * 0.16, ANCHO_FUSELAJE * 1.00, ALTO_FUSELAJE * 0.94, -0.01),
-    (LARGO * 0.02, ANCHO_FUSELAJE * 0.96, ALTO_FUSELAJE * 0.90, -0.02),
-    (LARGO * 0.18, ANCHO_FUSELAJE * 0.74, ALTO_FUSELAJE * 0.72, -0.02),
-    (LARGO * 0.32, ANCHO_FUSELAJE * 0.48, ALTO_FUSELAJE * 0.52, 0.00),
-    (LARGO * 0.44, ANCHO_FUSELAJE * 0.28, ALTO_FUSELAJE * 0.36, 0.04),
-    (LARGO * 0.50, ANCHO_FUSELAJE * 0.16, ALTO_FUSELAJE * 0.26, 0.08),
-]
-
-
-def aro(z):
-    """Cuánto mide el fuselaje a esa altura del morro. Interpolando los aros."""
-    for (z0, a0, h0, y0), (z1, a1, h1, y1) in zip(AROS, AROS[1:]):
-        if z <= z1 or (z1, a1, h1, y1) == AROS[-1]:
-            t = max(0.0, min(1.0, (z - z0) / (z1 - z0)))
-            return (a0 + (a1 - a0) * t, h0 + (h1 - h0) * t, y0 + (y1 - y0) * t)
-    raise AssertionError
+# El motor va justo delante del panel —la cortafuegos es la pared de delante
+# de los pies—, así que el morro mide un metro escaso. Lo largo es la cola:
+# cinco metros desde el borde de salida del ala hasta el timón. Antes era al
+# revés —cuatro metros de morro y la cola corta—, y un avión así no se ha
+# construido nunca: se leía como un juguete sin que nadie supiera decir por
+# qué.
+CORTAFUEGOS = -1.70
+BORDE_DE_ATAQUE = -0.92
+COLA = 5.53
 
 # **El ala va encima de la cabina, que es lo que hace a este avión lo que es.**
-#
-# Y tiene que pasar por encima del cristal de verdad, no por dentro: el techo
-# de la carlinga llega a 1,08, así que el plano se pone a 1,16 y el intradós
-# queda justo encima. Desde el asiento se ve el suelo por debajo del ala, que
-# es exactamente la ventaja de un ala alta y la razón de que se enseñe a volar
-# en aviones así.
-ALA_ALTA = 1.16
+# El techo de la cabina llega a 1,08 y el ala se apoya en él. Desde el asiento
+# se ve el suelo por debajo del ala, que es exactamente la ventaja de un ala
+# alta y la razón de que se enseñe a volar en aviones así.
+ALA_ALTA = 1.13
+TECHO = 1.08
 
 # **El tren: 1,40, que es el `gearHeight` de su ficha.**
 #
@@ -89,107 +75,103 @@ ALA_ALTA = 1.16
 # ahí, el avión aparece flotando o enterrado — y hay un banco que lo mide
 # («el avión parado tiene las ruedas en el suelo»).
 TREN = 1.40
-# **Y la rueda mide lo que mide una rueda**, que son veintiocho centímetros de
-# radio en un avión así.
-#
-# Aquí decía 0,22 y lo que salía era una rueda de diez centímetros, porque el
-# número que se le pasa a `perfil` no es el radio: es el aro **antes** de
-# subdividir, y la subdivisión encoge algo menos de la mitad. Con el tren
-# entero de metro y pico encima, lo que se veía eran tres patas y nada abajo:
-# «con esas patas, como mesa para la barbacoa quedaría curioso; ahora bien, si
-# le ponemos ruedas, ya sería otra cosa».
 RUEDA = 0.28
-# Lo que hay que pedirle a `perfil` para que salga ese radio. Ver `suavizar`.
-ARO = RUEDA / 0.45
+RUEDA_MORRO = 0.23
 # La batalla de la ficha: 1,65 m de la rueda de morro a las principales. De
 # aquí sale el radio de giro con el que el juego decide si este avión puede
 # darse la vuelta en una pista. Ver `flight/cabe.ts`.
 BATALLA = 1.65
-MAINS_Z = LARGO * 0.06
+MAINS_Z = -0.12
 MORRO_Z = MAINS_Z - BATALLA
+# La vía: de rueda a rueda, dos metros y medio.
+VIA = 1.27
 
 SALIDA = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "public", "assets", "aeronaves", "jaz-20.glb",
 )
 
+# ── El fuselaje ───────────────────────────────────────────────────────────
+#
+# Estaciones `(z, medio ancho, techo, panza, altura de lo más ancho, n)`. La
+# `n` alta es lo que hace el costado recto de una avioneta de chapa: una
+# cabina de cuatro plazas es una caja con las esquinas redondas, no un tubo.
+PIEL = Piel([
+    (-2.40, 0.17, 0.24, -0.12, 0.06, 2.0),   # el plato del cono
+    (-2.35, 0.32, 0.33, -0.24, 0.04, 2.3),
+    (-2.22, 0.42, 0.40, -0.36, 0.02, 2.5),
+    (-1.98, 0.48, 0.46, -0.46, 0.00, 2.7),
+    (CORTAFUEGOS, 0.52, 0.50, -0.52, 0.00, 2.9),
+    (-1.30, 0.555, 0.82, -0.55, 0.08, 3.0),  # el parabrisas, tumbado
+    (-0.95, 0.57, TECHO, -0.56, 0.14, 3.1),
+    (0.62, 0.565, TECHO, -0.53, 0.14, 3.1),
+    (1.35, 0.50, 0.92, -0.44, 0.17, 2.9),    # la ventanilla de atrás
+    (2.40, 0.37, 0.66, -0.27, 0.19, 2.6),
+    (3.60, 0.23, 0.51, -0.07, 0.22, 2.4),
+    (4.70, 0.13, 0.45, 0.09, 0.26, 2.2),
+    (5.40, 0.07, 0.43, 0.20, 0.30, 2.2),
+    (COLA, 0.0, 0.36, 0.36, 0.36),
+])
+
 
 def construir():
     limpiar()
     piezas = []
 
-    # ── Fuselaje ──────────────────────────────────────────────────────────
+    # ── Fuselaje, con el capó en la misma piel ────────────────────────────
     #
-    cuerpo = perfil("fuselaje", AROS)
-    piezas.append(suavizar(cuerpo, subdividir=2, biselar=0))
+    # El capó no es una pieza aparte encajada delante: es la misma chapa con
+    # otro color a partir de la cortafuegos. Así no hay escalón entre los dos,
+    # que es lo que delataba la maqueta.
+    piezas.append(PIEL.malla("fuselaje", zonas=[
+        ("capo", -9, CORTAFUEGOS, 0, 180),
+    ], extra=[CORTAFUEGOS], paso=0.10))
 
-    # ── Lo que hace que no parezca una cápsula ────────────────────────────
-    #
-    # La puerta y la franja, como en los tres grandes. En una avioneta importa
-    # todavía más: es el avión que vuela quien tiene cuatro años, y un tubo
-    # liso no dice ni de qué tamaño es ni para dónde va.
-    #
-    # **Y la puerta es la de una avioneta de verdad**: una sola por costado,
-    # justo detrás del montante del ala, de un metro escaso de alto. Por ahí
-    # se entra al asiento de la izquierda y por ahí se sale. Ver `puerta` en
-    # `comun.py`.
-    piezas += puerta("puerta", aro, -LARGO * 0.11, 0.02, 0.92, 0.82,
-                     grosor=0.022)
-    # Y la línea de cintura, baja y fina: la raya de una escuela de vuelo.
-    piezas.append(franja("cintura", aro, -LARGO * 0.34, LARGO * 0.44,
-                         -ALTO_FUSELAJE * 0.24, 0.10, grosor=0.022, paso=0.35))
+    # Las dos tomas de aire del motor, a cada lado del cono: lo que dice que
+    # delante hay un motor de cilindros y no una nariz.
+    piezas.append(paneles("tomas", PIEL, simetricos([
+        [(-2.385, 52), (-2.385, 96), (-2.33, 100), (-2.33, 48)],
+    ]), material_="oscuro", fuera=0.006, div=3))
 
-    # ── Capó ──────────────────────────────────────────────────────────────
+    # ── Cristales ─────────────────────────────────────────────────────────
     #
-    # Corto y con la cara plana: un cuatro cilindros opuesto va tumbado y no
-    # necesita más morro que el suyo. Es la mitad de la silueta de un avión de
-    # escuela — lo otro es el ala alta.
-    capo = perfil("capo", [
-        (-LARGO * 0.56, ANCHO_FUSELAJE * 0.34, ANCHO_FUSELAJE * 0.30, 0.08),
-        (-LARGO * 0.52, ANCHO_FUSELAJE * 0.74, ANCHO_FUSELAJE * 0.60, 0.07),
-        (-LARGO * 0.44, ANCHO_FUSELAJE * 0.92, ANCHO_FUSELAJE * 0.68, 0.04),
-        (-LARGO * 0.34, ANCHO_FUSELAJE * 0.98, ANCHO_FUSELAJE * 0.72, 0.01),
-    ], "capo")
-    piezas.append(suavizar(capo, subdividir=2, biselar=0))
+    # El parabrisas de una pieza, tumbado del capó al ala, y las dos
+    # ventanillas de cada costado: la de la puerta y la de atrás. Entre ellas
+    # queda la chapa —los montantes—, que es lo que las hace ventanas.
+    piezas.append(paneles("parabrisas", PIEL, [[
+        zy(PIEL, -1.64, 0.40, -1), zy(PIEL, -1.64, 0.40, 1),
+        zy(PIEL, -0.99, 1.00, 1), zy(PIEL, -0.99, 1.00, -1),
+    ]], fuera=0.008, div=8))
+    piezas.append(paneles_zy("ventanillas", PIEL, [
+        [(-1.24, 0.60), (-0.30, 0.52), (-0.30, 1.00), (-0.93, 1.00)],
+        [(-0.16, 0.52), (0.78, 0.55), (1.20, 0.86), (-0.16, 1.00)],
+    ], fuera=0.008, div=6))
 
-    # ── Carlinga ──────────────────────────────────────────────────────────
+    # ── La librea ─────────────────────────────────────────────────────────
     #
-    # Acristalada por delante y por los lados, que en un ala alta es de donde
-    # viene la vista. El cristal es un material, no un agujero.
-    #
-    # **Apoyada en la chapa, no encima de ella.** Con los aros más altos salía
-    # una burbuja oscura levantada un palmo sobre el lomo del fuselaje, más de
-    # caza que de avioneta. Aquí el cristal arranca al ras del costado y sube
-    # hasta debajo del ala, que es donde está el techo de una cabina de verdad.
-    carlinga = perfil("cabina", [
-        (-LARGO * 0.30, ANCHO_FUSELAJE * 0.56, ALTO_FUSELAJE * 0.44, 0.26),
-        (-LARGO * 0.18, ANCHO_FUSELAJE * 0.96, ALTO_FUSELAJE * 0.72, 0.28),
-        (-LARGO * 0.02, ANCHO_FUSELAJE * 1.00, ALTO_FUSELAJE * 0.74, 0.28),
-        (LARGO * 0.14, ANCHO_FUSELAJE * 0.76, ALTO_FUSELAJE * 0.52, 0.26),
-    ], "cristal")
-    piezas.append(suavizar(carlinga, subdividir=2, biselar=0))
+    # Una franja que nace en el capó, baja por el costado por debajo de las
+    # ventanillas y sube hacia la cola, y una raya fina debajo en el otro
+    # color. Es como se pinta un avión de escuela, y da referencia de actitud
+    # desde fuera: se ve si el avión va con el morro arriba.
+    def sube(base):
+        return lambda z: base + max(0.0, z - 0.8) * 0.055
 
-    # Las ventanillas de atrás, que es lo que dice «van cuatro dentro».
-    #
-    # **Y `piel_x` se mide sobre la chapa que sale, no sobre el aro que se
-    # pide.** La subdivisión encoge el perfil algo menos de la mitad, así que el
-    # costado real cae en 0,48 y no en 1,02: puestas en el número del aro, las
-    # ventanillas quedaban flotando medio metro por fuera del avión.
-    piezas += ventanillas(
-        0.47, LARGO * 0.03, LARGO * 0.17, LARGO * 0.07, 0.30, alto=0.22,
-        largo=0.30,
-    )
+    piezas.append(banda("cintura", PIEL, CORTAFUEGOS - 0.02, 5.0,
+                        sube(0.02), sube(0.17), fuera=0.007, paso=0.15))
+    piezas.append(banda("cintura-fina", PIEL, CORTAFUEGOS + 0.15, 4.9,
+                        sube(-0.05), sube(-0.015), material_="detalle",
+                        fuera=0.007, paso=0.15, filas=1))
+
+    # La puerta: una junta en la chapa, con la ventanilla dentro. Por ahí se
+    # entra al asiento de la izquierda y por ahí se sale.
+    piezas.append(contorno("puerta", PIEL, -0.77, 0.30, 1.42, 1.02,
+                           radio=0.10, grueso=0.018, fuera=0.009))
 
     # Y lo de dentro: dos plazas delante, que son las que se pilotan.
     #
     # Sin palancas de pedestal —en una avioneta el gas es un pomo en el
     # tablero— y con los seis relojes del panel, que aquí son *los* seis.
-    #
-    # Las medidas de aquí son las de dentro del fuselaje **ya encogido**: el
-    # costado está en 0,48 y el suelo de la chapa en −0,50, así que un tablero
-    # de 0,88 de medio ancho —el que salía de multiplicar el aro— se salía por
-    # fuera del avión y se veía desde abajo como una bandeja.
-    piezas += cabina(
+    cab = cabina(
         ojos_z=-LARGO * 0.10,
         ancho=0.42,
         alto_panel=0.46,
@@ -199,105 +181,151 @@ def construir():
         pantallas_en=0.20,
         relojes=6,
     )
+    piezas += cab
+    dentro_de(PIEL, cab)
 
     # ── Ala alta, arriostrada ─────────────────────────────────────────────
-    plano = ala("ala", ENVERGADURA / 2, CUERDA, CUERDA * 0.82, CUERDA * 0.13,
-                en=(0, ALA_ALTA, -LARGO * 0.02), diedro=math.radians(1.7))
-    piezas.append(suavizar(plano, subdividir=1))
+    #
+    # Recta y de cuerda constante hasta media envergadura, y afinándose hacia
+    # la punta, con un par de grados de alabeo —la punta menos calada que la
+    # raíz, para que entre en pérdida la última y el alerón siga mandando—.
+    # Perfil de dos por ciento de curvatura y doce de espesor, el de toda la
+    # vida en esta clase.
+    def y_ala(x):
+        return ALA_ALTA + x * math.tan(math.radians(1.7))
+
+    raiz = CUERDA * 1.04
+    punta = CUERDA * 0.74
+    estaciones = [
+        de_ala(0.0, y_ala(0.0), BORDE_DE_ATAQUE, raiz, 0.12, 1.7, 1.5),
+        de_ala(2.55, y_ala(2.55), BORDE_DE_ATAQUE, raiz, 0.12, 1.7, 1.5),
+        de_ala(ENVERGADURA / 2 - 0.06, y_ala(ENVERGADURA / 2),
+               BORDE_DE_ATAQUE + 0.11, punta, 0.11, 1.7, -1.0),
+    ]
+    # Flaps por dentro y alerones por fuera, dibujados como lo que se ve: la
+    # junta de la bisagra y el corte entre los dos.
+    junta = "oscuro"
+    piezas.append(superficie("ala", estaciones, curvatura=0.02, zonas=[
+        (junta, 0.55, 5.02, 0.705, 0.72),
+        (junta, 0.55, 0.60, 0.72, 1.0),
+        (junta, 2.72, 2.80, 0.72, 1.0),
+        (junta, 4.97, 5.02, 0.72, 1.0),
+    ]))
 
     # **Y su montante, que es media silueta de este avión.** Va del costado
     # bajo del fuselaje al ala, a media envergadura: es lo que permite que un
     # ala alta sea ligera, y lo que se ve desde la ventanilla toda la vida.
-    #
-    # **En diagonal y desde la chapa**, que es lo que es. Modelado con montantes
-    # verticales —que es lo único que sabe hacer `montante`— quedaban dos postes
-    # colgando en el aire a tres metros del fuselaje, y el avión encima: «con
-    # esas patas, como mesa para la barbacoa quedaría curioso».
-    for lado in (-1, 1):
-        piezas.append(
-            puntal(
-                (lado * 0.44, -ALTO_FUSELAJE * 0.22, -LARGO * 0.02),
-                (lado * ENVERGADURA * 0.26, ALA_ALTA - CUERDA * 0.06,
-                 -LARGO * 0.02),
-                grosor=0.05,
-            )
-        )
+    # Perfilado, como es: un tubo redondo en el viento frena el doble.
+    abajo = Vector((0.50, -0.32, -0.36))
+    arriba = Vector((2.60, y_ala(2.60) - 0.06, -0.52))
+    d = (arriba - abajo).normalized()
+    g = d.cross(Vector((0, 0, 1))).normalized()
+    piezas.append(superficie("puntal-del-ala", [
+        estacion(abajo, 0.13, 0.30, (0, 0, 1), g),
+        estacion(arriba, 0.13, 0.30, (0, 0, 1), g),
+    ], material_="casco", punta=False))
 
     # ── Cola ──────────────────────────────────────────────────────────────
-    estabilizador = ala("estabilizador", ENVERGADURA * 0.30, CUERDA * 0.72,
-                        CUERDA * 0.48, CUERDA * 0.09,
-                        en=(0, ALTO_FUSELAJE * 0.24, LARGO * 0.42))
-    piezas.append(suavizar(estabilizador, subdividir=1))
-
-    deriva = ala("deriva", ALTO_FUSELAJE * 0.98, CUERDA * 0.92, CUERDA * 0.46,
-                 CUERDA * 0.08, en=(0, ALTO_FUSELAJE * 0.26, LARGO * 0.38),
-                 flecha=CUERDA * 0.42, material_="capo")
-    deriva.rotation_euler = (0, 0, math.radians(90))
-    deriva.modifiers.remove(deriva.modifiers["simetria"])
-    piezas.append(suavizar(deriva, subdividir=1))
+    #
+    # La deriva en flecha con su aleta dorsal delante —la que la une al lomo
+    # en curva—, y el timón marcado por su junta. El estabilizador, recto y
+    # de punta cuadrada, con su timón de profundidad.
+    piezas.append(superficie("deriva", [
+        de_deriva(0.0, 0.40, 3.20, 2.30, 0.05),
+        de_deriva(0.0, 0.62, 4.28, 1.30, 0.09),
+        de_deriva(0.0, 1.76, 5.06, 0.64, 0.09),
+    ], material_="capo", simetria=False, zonas=[
+        ("oscuro", 0.25, 1.40, 0.60, 0.615),
+    ]))
+    y_cola = 0.34
+    piezas.append(superficie("estabilizador", [
+        de_ala(0.0, y_cola, 4.55, 0.98, 0.09),
+        de_ala(1.00, y_cola, 4.58, 0.95, 0.09),
+        de_ala(1.72, y_cola, 4.72, 0.66, 0.08),
+    ], zonas=[
+        ("oscuro", 0.18, 1.62, 0.56, 0.575),
+    ]))
 
     # ── Tren triciclo fijo ────────────────────────────────────────────────
     #
     # Con rueda de morro, que es lo que hace que se aprenda a rodar mirando
-    # por dónde se va en vez de en zigzag. Las principales cuelgan de dos
-    # patas de ballesta —aquí, dos cilindros inclinados no: rectos, que a esta
-    # escala se ve igual y la comprobación de orientación de `exportar` mide
-    # que lo que se llama «pata» esté de pie.
+    # por dónde se va en vez de en zigzag.
     #
-    # **Las patas salen de la panza y se abren, que es como es un tren de
-    # ballesta.** Verticales, como estaban, arrancaban a metro y pico del
-    # costado del fuselaje y colgaban del aire: las ruedas debajo del ala y nada
-    # que las sujetara.
-    for lado in (-1, 1):
-        piezas.append(
-            puntal(
-                (lado * 0.30, -ALTO_FUSELAJE * 0.36, MAINS_Z),
-                (lado * ENVERGADURA * 0.15, -(TREN - RUEDA), MAINS_Z),
-                grosor=0.045,
-            )
-        )
-        rueda = perfil(f"rueda-{lado}", [
-            (-0.16, ARO, ARO, 0),
-            (0.16, ARO, ARO, 0),
-        ], "goma")
-        rueda.rotation_euler = (0, math.radians(90), 0)
-        rueda.location = Vector(
-            (lado * ENVERGADURA * 0.15, -(TREN - RUEDA), MAINS_Z)
-        )
-        piezas.append(suavizar(rueda, subdividir=2, biselar=0))
+    # **Las principales cuelgan de dos ballestas**: una pletina de acero que
+    # sale de la panza y se abre hacia fuera, plana y ancha, y que hace de
+    # muelle. Y las tres ruedas llevan su carenado, la «polaina» de toda
+    # avioneta de escuela: una gota que tapa la rueda y deja asomar el
+    # neumático por abajo.
+    eje_y = -(TREN - RUEDA)
+    arriba_p = Vector((0.40, -0.50, MAINS_Z))
+    abajo_p = Vector((VIA - 0.10, eje_y + 0.02, MAINS_Z))
+    d = (abajo_p - arriba_p).normalized()
+    g = d.cross(Vector((0, 0, 1))).normalized()
+    piezas.append(superficie("pata-principal", [
+        estacion(arriba_p - Vector((0, 0, 0.09)), 0.18, 0.22, (0, 0, 1), g),
+        estacion(abajo_p - Vector((0, 0, 0.05)), 0.10, 0.22, (0, 0, 1), g),
+    ], material_="casco", punta=False))
+    piezas.append(neumaticos("rueda-principal", [(VIA, eje_y, MAINS_Z)],
+                             RUEDA, 0.16, simetria=True))
+    piezas.append(llantas("rueda-principal-llanta", [(VIA, eje_y, MAINS_Z)],
+                          RUEDA, 0.16, simetria=True))
+    piezas.append(polaina("rueda-polaina", VIA, eje_y, MAINS_Z, RUEDA, 0.105,
+                          simetria=True))
 
-    #
-    # Y la de morro **arranca en la panza, no dentro de la cabina**. Iba desde
-    # la rueda hasta la altura del eje del fuselaje, o sea medio metro por
-    # dentro: desde el asiento se veía un poste verde subiendo por el medio del
-    # tablero.
-    ARRANQUE = -ALTO_FUSELAJE * 0.42
-    piezas.append(
-        cilindro(
-            "pata-de-morro",
-            0.045,
-            ARRANQUE + (TREN - RUEDA * 0.88),
-            (0, (ARRANQUE - (TREN - RUEDA * 0.88)) * 0.5, MORRO_Z),
-        )
-    )
-    morro = perfil("rueda-de-morro", [
-        (-0.13, ARO * 0.88, ARO * 0.88, 0),
-        (0.13, ARO * 0.88, ARO * 0.88, 0),
-    ], "goma")
-    morro.rotation_euler = (0, math.radians(90), 0)
-    morro.location = Vector((0, -(TREN - RUEDA * 0.88), MORRO_Z))
-    piezas.append(suavizar(morro, subdividir=2, biselar=0))
+    # La de morro, con su amortiguador: la caña, el vástago que brilla, la
+    # horquilla y su polaina.
+    eje_m = -(TREN - RUEDA_MORRO)
+    piezas.append(varillas("pata-de-morro", [
+        ((0, -0.44, MORRO_Z - 0.06), (0, -0.86, MORRO_Z - 0.06), 0.045),
+        ((0, -0.86, MORRO_Z - 0.06), (0, -1.00, MORRO_Z - 0.04), 0.030),
+        ((-0.07, -0.98, MORRO_Z - 0.04), (-0.07, eje_m, MORRO_Z), 0.018),
+        ((0.07, -0.98, MORRO_Z - 0.04), (0.07, eje_m, MORRO_Z), 0.018),
+        ((-0.08, -0.98, MORRO_Z - 0.04), (0.08, -0.98, MORRO_Z - 0.04), 0.022),
+    ], material_="gris"))
+    piezas.append(neumaticos("rueda-de-morro", [(0, eje_m, MORRO_Z)],
+                             RUEDA_MORRO, 0.13))
+    piezas.append(llantas("rueda-de-morro-llanta", [(0, eje_m, MORRO_Z)],
+                          RUEDA_MORRO, 0.13))
+    piezas.append(polaina("rueda-de-morro-polaina", 0.0, eje_m, MORRO_Z,
+                          RUEDA_MORRO, 0.095))
 
     # ── Hélice ────────────────────────────────────────────────────────────
     #
     # Dos palas y un metro noventa de diámetro, que es lo que mueve un motor
     # de esta potencia. Con el eje a 0,06 sobre la línea del fuselaje, la punta
-    # de pala pasa a un palmo largo del suelo, como en el avión de verdad.
-    piezas += helice(
-        "helice", (0, 0.06, -LARGO * 0.575), radio=0.95, palas=2, buje=0.17
-    )
+    # de pala pasa a medio metro del suelo, como en el avión de verdad.
+    piezas += helice("helice", (0, 0.06, -2.42), radio=0.95, cuantas=2,
+                     buje=0.17, cuerda=0.13, largo_cono=0.40)
 
+    # El centro de gravedad, a un cuarto de la cuerda: por ahí gira el avión.
+    piezas.append(centro_de_gravedad(BORDE_DE_ATAQUE + raiz * 0.28))
     return piezas
+
+
+def polaina(nombre, x, y, z, radio, medio_ancho, simetria=False):
+    """
+    El carenado de una rueda: una gota que la tapa y deja asomar la goma.
+
+    Es la pieza que más dice «avioneta de escuela» después del ala alta, y la
+    que antes faltaba: tres ruedas desnudas colgando de tres palos.
+    """
+    p = Piel([
+        (z - radio * 1.55, 0.0, y + radio * 0.10, y + radio * 0.10),
+        (z - radio * 1.25, medio_ancho * 0.72, y + radio * 0.78,
+         y - radio * 0.50, y + radio * 0.08, 2.2),
+        (z - radio * 0.45, medio_ancho, y + radio * 1.22,
+         y - radio * 0.78, y + radio * 0.10, 2.7),
+        (z + radio * 0.45, medio_ancho, y + radio * 1.20,
+         y - radio * 0.78, y + radio * 0.10, 2.7),
+        (z + radio * 1.45, medio_ancho * 0.50, y + radio * 0.66,
+         y - radio * 0.34, y + radio * 0.12, 2.2),
+        (z + radio * 2.05, 0.0, y + radio * 0.22, y + radio * 0.22),
+    ], x=x)
+    o = p.malla(nombre, "casco", lados=20, paso=0.08)
+    o.data.name = f"m-{nombre}"
+    if simetria:
+        espejo(o)
+    return o
 
 
 exportar(construir(), SALIDA, ENVERGADURA)
