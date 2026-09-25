@@ -15,6 +15,7 @@
  */
 
 import { escribirRincon } from "./escala";
+import { fan } from "./pictogramas";
 
 /** Un icono de veinticuatro por veinticuatro, como todos los del juego. */
 const icono = (cuerpo: string): string =>
@@ -36,6 +37,19 @@ const HELICE = icono(`
   <ellipse cx="18.6" cy="12" rx="5.4" ry="1.9" />
   <circle class="senal__hueco" cx="12" cy="12" r="2.1" />
 `);
+
+/**
+ * **El reactor**, para los aviones que no llevan hélice.
+ *
+ * La tarjeta de «el motor arranca» enseñaba la hélice girando también en el
+ * JAZ 90 y en el JAZ 120, que no tienen. Aquí va lo que se ve por la
+ * ventanilla de un reactor: la góndola y el fan dentro. El mismo dibujo que el
+ * pictograma del motor y los botones del gas; ver `fan` en pictogramas.ts.
+ */
+const REACTOR = (() => {
+  const { aro, palas } = fan(12, 12, 11);
+  return icono(`${aro}${palas}`);
+})();
 
 /** La raya que hay que seguir, curvándose hacia delante. */
 const RAYA = icono(`
@@ -689,6 +703,7 @@ const COMBUSTIBLE = icono(`
 export const DIBUJOS = {
   llave: LLAVE,
   helice: HELICE,
+  reactor: REACTOR,
   amarillo: RAYA,
   mano: MANO,
   nopara: NO_PARAR,
@@ -806,6 +821,12 @@ export function comoDibujo(nombre: string): DibujoDeSenal {
  * siempre, en todos.
  */
 export class Senal {
+  /**
+   * Si el avión de hoy es de reactor. La fase de arrancar pide `"helice"` en
+   * el guion, que es de todos los aviones; el dibujo que sale es el del motor
+   * que lleva este. Lo pone el HUD. Ver `REACTOR`.
+   */
+  chorro = false;
   private raiz: HTMLElement | null = null;
   private caja: HTMLElement | null = null;
   private dibujo: HTMLElement | null = null;
@@ -986,7 +1007,8 @@ export class Senal {
     this.actual = dibujo;
     this.queda = opciones.segundos ?? 6;
     this.caja.hidden = false;
-    this.dibujo.innerHTML = DIBUJOS[dibujo] ?? "";
+    this.dibujo.innerHTML =
+      DIBUJOS[this.chorro && dibujo === "helice" ? "reactor" : dibujo] ?? "";
 
     if (this.texto) {
       this.texto.textContent = texto;

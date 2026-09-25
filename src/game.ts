@@ -34,7 +34,13 @@ import {
   rememberedTier,
   type Tier,
 } from "./flight/tiers";
-import { AIRCRAFT, PYKASU, type AircraftConfig } from "./flight/aircraft";
+import {
+  AIRCRAFT,
+  PYKASU,
+  esDeChorro,
+  type AircraftConfig,
+} from "./flight/aircraft";
+import { dibujoDelGasTactil } from "./ui/pictogramas";
 import { InputManager } from "./flight/input";
 import { claveDeTorre, DICE_LA_TORRE, NOMBRA_LA_PISTA } from "./audio/torre";
 import { anticipacionDeRodaje } from "./flight/gobernador";
@@ -2543,7 +2549,7 @@ export class Game {
     this.audio.prepare();
     this.audio.setEngine(this.aircraft.sound);
     this.hud.setSoundLevel(
-      this.audio.level.glyph,
+      this.audio.level.id,
       t(`sound.${this.audio.level.id}` as never),
     );
     /*
@@ -2559,6 +2565,7 @@ export class Game {
     const teclasRoot = document.getElementById("teclas");
     if (teclasRoot)
       this.keyScreen = new KeyScreen(teclasRoot, this.input.keymap);
+    this.ponerElDibujoDelMotor();
     // Sin letras, teclado dibujado. Con letras, la tabla.
     this.keyScreen?.setSimple(
       this.tier.instruments === "none" || this.tier.instruments === "pictorial",
@@ -5389,7 +5396,7 @@ export class Game {
      * esquina diciendo la verdad, que si no se contradicen a la vista.
      */
     const nivel = this.audio.ponerNivel(ajustes.volumen);
-    this.hud.setSoundLevel(nivel.glyph, t(`sound.${nivel.id}` as never));
+    this.hud.setSoundLevel(nivel.id, t(`sound.${nivel.id}` as never));
   }
 
   /**
@@ -9733,7 +9740,7 @@ export class Game {
     if (level.id === "mudo") this.audio.callarLasVoces();
     // Y al instructor se le calla ahora mismo, no en la frase siguiente.
     if (level.id === "mudo") this.instructor.callar();
-    this.hud.setSoundLevel(level.glyph, t(`sound.${level.id}` as never));
+    this.hud.setSoundLevel(level.id, t(`sound.${level.id}` as never));
     this.hud.flash(t(`sound.${level.id}` as never));
   }
 
@@ -9792,6 +9799,23 @@ export class Game {
      * idioma del juego: en Canarias no se vosea. Ver `i18n/habla.ts`.
      */
     this.hud.setHabla(hablaDe(this.scenario.aerodrome?.id));
+    this.ponerElDibujoDelMotor();
+  }
+
+  /**
+   * Hélice o reactor en los mandos que viven fuera del HUD: la tecla dibujada
+   * del gas y la palanca táctil. El HUD lo decide solo con la ficha.
+   *
+   * Un reactor con una hélice dibujada en la palanca de gases enseña algo que
+   * luego hay que desaprender. Ver `fan` en ui/pictogramas.ts.
+   */
+  private ponerElDibujoDelMotor(): void {
+    const chorro = esDeChorro(this.aircraft);
+    this.keyScreen?.setChorro(chorro);
+    const gas = document.querySelector<SVGElement>(
+      '[data-touch="throttle"] .pad__dibujo',
+    );
+    if (gas) gas.innerHTML = dibujoDelGasTactil(chorro);
   }
 
   private onResize = (): void => {

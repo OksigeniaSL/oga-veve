@@ -13,7 +13,8 @@
  *   moviéndose entre los dos. Cerca de la tortuga es despacio.
  * - **Altura**: un cerro abajo y el avión subiendo por la tarjeta. Su
  *   posición *es* la altura, sin traducir nada.
- * - **Motor**: una hélice que gira, y gira más deprisa cuanto más gas hay.
+ * - **Motor**: una hélice que gira, y gira más deprisa cuanto más gas hay. En
+ *   los reactores, el fan dentro de su góndola, que gira igual.
  *
  * Ninguna necesita número, ni palabra, ni saber qué significa una aguja. Y
  * las tres se entienden igual en Coronel Oviedo que en Canarias.
@@ -23,7 +24,8 @@
  */
 
 /**
- * La hélice del gas, con su flecha: más motor y menos motor.
+ * El motor del gas, con su flecha: más motor y menos motor. Hélice en los
+ * aviones de hélice y reactor en los de reactor: ver `fan`.
  *
  * **El gas no es la velocidad**, y confundirlos fue un error de bulto: los
  * botones del motor llevaron un día la tortuga y el pájaro, que son los
@@ -47,21 +49,96 @@
  * único sitio donde el motor se entendía. Ahora es la misma pareja en los dos
  * sitios: un dibujo, un significado.
  */
-const conFlecha = (flecha: string): string =>
+const conFlecha = (motor: string, flecha: string): string =>
   `<svg viewBox="0 0 24 24" aria-hidden="true">
-     <g class="cap__helice">
-       <ellipse cx="9" cy="5" rx="1.7" ry="5" />
-       <ellipse cx="9" cy="19" rx="1.7" ry="5" />
-       <ellipse cx="4" cy="12" rx="5" ry="1.7" />
-       <ellipse cx="14" cy="12" rx="5" ry="1.7" />
-     </g>
+     <g class="cap__helice">${motor}</g>
      <path class="cap__flecha" d="${flecha}" />
    </svg>`;
 
-/** Más motor: la hélice con la flecha hacia arriba. */
-export const HELICE_MAS = conFlecha("M20 1.5 L24 10 H16 Z");
-/** Menos motor: la misma hélice con la flecha hacia abajo. */
-export const HELICE_MENOS = conFlecha("M20 22.5 L16 14 H24 Z");
+/** La hélice de cuatro palas vista de frente, centrada en (cx, cy). */
+const palasDeHelice = (cx: number, cy: number, r: number): string => {
+  const a = r * 0.17; // el grueso de la pala
+  const m = r / 2;
+  return `
+    <ellipse cx="${cx}" cy="${cy - m}" rx="${a}" ry="${m}" />
+    <ellipse cx="${cx}" cy="${cy + m}" rx="${a}" ry="${m}" />
+    <ellipse cx="${cx - m}" cy="${cy}" rx="${m}" ry="${a}" />
+    <ellipse cx="${cx + m}" cy="${cy}" rx="${m}" ry="${a}" />`;
+};
+
+/**
+ * **El reactor visto de frente: el aro de la góndola y el fan dentro.**
+ *
+ * Los dos reactores de la flota —el JAZ 90 y el JAZ 120— llevaban en el
+ * pictograma del motor, en los botones del gas, en la tecla dibujada y en la
+ * palanca táctil una hélice que no tienen. «¿Para qué el icono de la hélice?»,
+ * mirando la cabina de un cuatrirreactor. Y es la regla 4 del AGENTS.md: quien
+ * vea aquí una hélice en un 747 tiene que desaprenderlo el día que se asome a
+ * la ventanilla y vea el motor de verdad, que es exactamente esto — un aro
+ * gordo y, dentro, un disco de palas curvas alrededor del cono.
+ *
+ * Ocho palas y no las veintitantas de un fan real: es lo que cabe a quince
+ * píxeles sin volverse un borrón. Van curvadas, que es lo que distingue un fan
+ * de una hélice de un vistazo, y el aro no gira porque la góndola no gira.
+ *
+ * Devuelve dos piezas porque el pictograma hace girar las palas y deja quieto
+ * el aro; los botones las pintan juntas.
+ */
+export function fan(
+  cx: number,
+  cy: number,
+  r: number,
+): { aro: string; palas: string } {
+  const dentro = r * 0.8;
+  const aro = `<path fill-rule="evenodd" d="M${cx - r} ${cy} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0 Z
+      M${cx - dentro} ${cy} a${dentro} ${dentro} 0 1 0 ${2 * dentro} 0 a${dentro} ${dentro} 0 1 0 ${-2 * dentro} 0 Z" />`;
+  // Una pala apuntando arriba, en un radio de 1, y se reparte girándola.
+  const q = r * 0.74;
+  const f = (n: number): string => (n * q).toFixed(2);
+  const pala = `M${f(-0.14)} ${f(-0.3)} L${f(0.16)} ${f(-0.3)} Q${f(0.38)} ${f(-0.62)} ${f(0.44)} ${f(-0.97)}
+    L${f(0.1)} ${f(-1)} Q${f(0.02)} ${f(-0.62)} ${f(-0.14)} ${f(-0.3)} Z`;
+  const palas =
+    Array.from(
+      { length: 8 },
+      (_, i) =>
+        `<path d="${pala}" transform="translate(${cx} ${cy}) rotate(${i * 45})" />`,
+    ).join("") + `<circle cx="${cx}" cy="${cy}" r="${(q * 0.36).toFixed(2)}" />`;
+  return { aro, palas };
+}
+
+/** El motor de este avión, entero, centrado en (cx, cy) y de radio r. */
+export function dibujoDelMotor(
+  chorro: boolean,
+  cx: number,
+  cy: number,
+  r: number,
+): string {
+  if (!chorro) return palasDeHelice(cx, cy, r);
+  const { aro, palas } = fan(cx, cy, r);
+  return aro + palas;
+}
+
+const FLECHA_MAS = "M20 1.5 L24 10 H16 Z";
+const FLECHA_MENOS = "M20 22.5 L16 14 H24 Z";
+
+/** Más motor: el motor de este avión con la flecha hacia arriba. */
+export const motorMas = (chorro: boolean): string =>
+  conFlecha(dibujoDelMotor(chorro, 9, 12, chorro ? 8.4 : 10), FLECHA_MAS);
+/** Menos motor: el mismo motor con la flecha hacia abajo. */
+export const motorMenos = (chorro: boolean): string =>
+  conFlecha(dibujoDelMotor(chorro, 9, 12, chorro ? 8.4 : 10), FLECHA_MENOS);
+
+/** Los de hélice, que son los de siempre y los que salen si no se sabe el avión. */
+export const HELICE_MAS = motorMas(false);
+export const HELICE_MENOS = motorMenos(false);
+
+/**
+ * Los dos dibujos de la palanca táctil del gas: el motor grande arriba —más— y
+ * pequeño abajo —menos—, en su lienzo alto de 24 por 60.
+ */
+export const dibujoDelGasTactil = (chorro: boolean): string =>
+  dibujoDelMotor(chorro, 12, 13, chorro ? 10.4 : 13) +
+  dibujoDelMotor(chorro, 12, 48.5, chorro ? 5.4 : 7);
 
 /** Silueta de tortuga: caparazón, cabeza y patas. Despacio. */
 const TORTUGA = `
@@ -136,7 +213,8 @@ export class Pictogramas {
   /** Giro acumulado de la hélice, en grados. */
   private spin = 0;
 
-  static markup(): string {
+  /** @param chorro si el avión de hoy es de reactor. Ver `fan`. */
+  static markup(chorro = false): string {
     return `
       <div class="pictos" data-hud="pictos">
         <!--
@@ -213,13 +291,13 @@ export class Pictogramas {
         -->
         <div class="picto">
           <svg viewBox="0 0 34 34" aria-hidden="true">
-            <g class="picto__helice" data-picto="prop">
-              <ellipse cx="17" cy="7.5" rx="2.6" ry="7.5" />
-              <ellipse cx="17" cy="26.5" rx="2.6" ry="7.5" />
-              <ellipse cx="7.5" cy="17" rx="7.5" ry="2.6" />
-              <ellipse cx="26.5" cy="17" rx="7.5" ry="2.6" />
-            </g>
-            <circle class="picto__buje" cx="17" cy="17" r="3.2" />
+            ${
+              chorro
+                ? `${fan(17, 17, 16).aro.replace("<path ", '<path class="picto__helice" ')}
+                   <g class="picto__helice" data-picto="prop">${fan(17, 17, 16).palas}</g>`
+                : `<g class="picto__helice" data-picto="prop">${palasDeHelice(17, 17, 15)}</g>
+                   <circle class="picto__buje" cx="17" cy="17" r="3.2" />`
+            }
           </svg>
         </div>
       </div>

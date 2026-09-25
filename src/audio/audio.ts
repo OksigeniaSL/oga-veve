@@ -289,14 +289,16 @@ export const MOTIVOS: Record<Cue, Motivo> = {
 export interface AudioLevel {
   id: "normal" | "bajo" | "mudo";
   gain: number;
-  /** Glifo para el botón: se lee sin saber leer. */
-  glyph: string;
 }
 
+/*
+ * El dibujo de cada nivel lo pone el HUD —ver `ALTAVOZ` en ui/hud.ts—: eran
+ * emoji, y un emoji lo pinta cada sistema a su manera.
+ */
 const LEVELS: readonly AudioLevel[] = [
-  { id: "normal", gain: 0.85, glyph: "🔊" },
-  { id: "bajo", gain: 0.3, glyph: "🔉" },
-  { id: "mudo", gain: 0, glyph: "🔇" },
+  { id: "normal", gain: 0.85 },
+  { id: "bajo", gain: 0.3 },
+  { id: "mudo", gain: 0 },
 ];
 
 function clamp(value: number, min: number, max: number): number {
