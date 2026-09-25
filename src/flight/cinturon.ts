@@ -89,6 +89,14 @@ const SIEMPRE_ENCENDIDO: readonly Fase[] = [
   "apagado",
 ];
 
+/** Las fases en las que un cartel apagado a mano se vuelve a encender. */
+const VUELVE_A_ENCENDERSE: readonly Fase[] = [
+  "alineando",
+  "despegando",
+  "comprometido",
+  "final",
+];
+
 export class Cinturon {
   /**
    * Si la comandante ya dijo que se pueden soltar.
@@ -127,6 +135,15 @@ export class Cinturon {
    */
   paso(m: Momento): boolean {
     if (!m.conPasaje) return false;
+    /*
+     * **Y apagado a mano, hasta la próxima vez que toca de verdad.** Al
+     * alinearse para despegar y al entrar en final la tripulación lo enciende
+     * siempre, así que un «quitado» se olvida ahí y vuelve el automático: el
+     * interruptor puede apagar el cartel en tierra o en crucero, pero nunca
+     * deja aterrizar con él apagado, que es lo que no se puede enseñar.
+     */
+    if (this.mando === "quitado" && VUELVE_A_ENCENDERSE.includes(m.fase))
+      this.mando = "auto";
     // Lo que diga la comandante se apunta siempre, aunque ahora mande otra
     // cosa: el anuncio pasa una vez y no vuelve.
     if (m.loDijoLaComandante) this.soltado = true;

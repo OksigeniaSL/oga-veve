@@ -107,12 +107,21 @@ describe("el cartel del cinturón", () => {
     expect(c.paso(momento("en-vuelo"))).toBe(false);
     c.ponerMando("puesto");
     expect(c.paso(momento("en-vuelo"))).toBe(true);
-    // Y quitado manda igual, incluso en aproximación.
+    // Y quitado manda en crucero; al entrar en final se vuelve a encender.
     c.ponerMando("quitado");
-    expect(c.paso(momento("final"))).toBe(false);
+    expect(c.paso(momento("en-vuelo"))).toBe(false);
+    expect(c.paso(momento("final"))).toBe(true);
     // Al soltar el mando, vuelve a mandar el vuelo.
     c.ponerMando("auto");
     expect(c.paso(momento("final"))).toBe(true);
+  });
+
+  it("apagado a mano, se vuelve a encender al alinearse y al entrar en final", () => {
+    const c = new Cinturon();
+    c.ponerMando("quitado");
+    expect(c.paso(momento("rodando"))).toBe(false);
+    expect(c.paso(momento("alineando"))).toBe(true);
+    expect(c.comoEsta).toBe("auto");
   });
 
   it("y en una avioneta sin pasaje no hay cartel", () => {

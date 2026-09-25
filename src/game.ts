@@ -9317,6 +9317,8 @@ export class Game {
     });
     if (toca === this.cinturonPuesto) return;
     this.cinturonPuesto = toca;
+    // El botón dice si el cartel está encendido, que es lo que se pregunta.
+    this.hud.ponerMandoDeCinturon(toca);
     this.avisar("cinturon");
     this.hud.ponerCinturon(toca);
   }
@@ -9325,23 +9327,19 @@ export class Game {
    * El interruptor del cinturón, el de la cabina.
    *
    * Pedido tal cual: «es una decisión del piloto mandar a ponerlo
-   * (turbulencia, inicio de aproximación, etc.)». Va y viene entre automático
-   * y puesto a mano, que son los dos que hacen falta: quitarlo a mano en plena
-   * aproximación no lo pide nadie y enseñaría lo contrario de lo que hay que
-   * enseñar.
+   * (turbulencia, inicio de aproximación, etc.)».
+   *
+   * **Enciende y apaga el cartel, que es lo que hace un interruptor.** Iba y
+   * venía entre «automático» y «puesto a mano», y en tierra, en el despegue y
+   * en la aproximación el cartel ya está puesto siempre: pulsarlo no cambiaba
+   * nada que se viera. «Sigue sin pasar nada, que yo sepa, al pulsar esto.»
+   * Ahora cambia el cartel al momento, y el botón dice si está encendido.
+   * Apagado a mano, se vuelve a encender solo al alinearse y al entrar en
+   * final: ver `Cinturon.paso`.
    */
   mandarElCinturon(): void {
-    const ahora = this.cinturon.comoEsta === "puesto" ? "auto" : "puesto";
-    this.cinturon.ponerMando(ahora);
-    this.hud.ponerMandoDeCinturon(ahora === "puesto");
-    /*
-     * **Y se nota siempre.** Si el cartel ya estaba encendido —en tierra lo
-     * está siempre—, el mando no cambiaba nada que se viera ni se oyera. Así
-     * que parpadea, y suena su *ding* si el cartel no va a cambiar solo: si
-     * cambia, el *ding* lo pone `atenderAlCinturon` y sonarían dos.
-     */
+    this.cinturon.ponerMando(this.cinturonPuesto ? "quitado" : "puesto");
     this.hud.destellarCinturon();
-    if (this.cinturonPuesto && ahora === "puesto") this.avisar("cinturon");
   }
 
   private cotaDeLaPistaAqui(): number {

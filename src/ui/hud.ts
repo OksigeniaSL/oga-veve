@@ -1385,6 +1385,7 @@ export class Hud {
      */
     this.ponerHayPilotoAutomatico(this.hayPilotoAuto);
     this.ponerHayCinturon(this.hayCinturon);
+    this.ponerMandoDeCinturon(this.cinturonEncendido);
     this.ponerGasDeNivel(this.gasDeNivel);
   }
 
@@ -2877,18 +2878,18 @@ export class Hud {
   }
 
   /**
-   * Y si el interruptor del cinturón está puesto a mano.
+   * Y si el cartel del cinturón está encendido, en su interruptor.
    *
-   * Se enseña en el propio botón, que es donde se mira: puesto a mano se queda
-   * encendido, y en automático se apaga. Un mando que no dice en qué posición
-   * está no es un mando.
+   * Se enseña en el propio botón, que es donde se mira. Un mando que no dice
+   * en qué posición está no es un mando. Ver `mandarElCinturon`.
    */
-  ponerMandoDeCinturon(aMano: boolean): void {
+  ponerMandoDeCinturon(encendido: boolean): void {
+    this.cinturonEncendido = encendido;
     const b = this.root.querySelector<HTMLElement>(
       '[data-hud="cinturon-mando"]',
     );
-    b?.setAttribute("aria-pressed", String(aMano));
-    b?.classList.toggle("boton--puesto", aMano);
+    b?.setAttribute("aria-pressed", String(encendido));
+    b?.classList.toggle("boton--puesto", encendido);
   }
 
   /**
@@ -2938,6 +2939,9 @@ export class Hud {
     if (raiz) this.tablero.ponerLucesDeAviso(raiz, estado);
   }
 
+
+  /** Si el cartel está encendido. Se recuerda: `render()` rehace el botón. */
+  private cinturonEncendido = false;
 
   /** Si este avión lleva pasaje. Se recuerda, por lo mismo. */
   private hayCinturon = false;
