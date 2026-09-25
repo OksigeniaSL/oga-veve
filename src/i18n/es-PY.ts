@@ -721,6 +721,7 @@ export const ES_PY = {
   "vuelo.sinCombustible": "Se acabó el combustible: planeá hasta la pista",
   "palabra.sinCombustible": "Sin combustible",
   "vuelo.sacaElTren": "Sacá el tren",
+  "vuelo.trenEnElSuelo": "Con el avión en el suelo, el tren no se mete",
   "palabra.tren": "Tren",
   "vuelo.despacio": "Más despacio",
   // El «alto» del señalero: dice dónde se para, y la tarjeta lleva al lado la

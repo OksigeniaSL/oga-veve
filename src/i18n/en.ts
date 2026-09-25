@@ -354,6 +354,7 @@ export const EN: Dictionary = {
   "vuelo.sinCombustible": "Out of fuel: glide to the runway",
   "palabra.sinCombustible": "No fuel",
   "vuelo.sacaElTren": "Gear down",
+  "vuelo.trenEnElSuelo": "On the ground, the gear stays down",
   "palabra.tren": "Gear",
   "vuelo.despacio": "Slow down",
   "vuelo.alto": "Stop here",

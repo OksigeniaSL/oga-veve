@@ -10,7 +10,7 @@
  */
 
 import { neutralControls, type ControlInputs } from "./model";
-import { mueveElTren } from "./tren";
+import { mueveElTren, sePuedeMeter } from "./tren";
 import { Keymap, type Accion } from "./keymap";
 
 /** Velocidad a la que un eje de teclado alcanza el tope, por segundo. */
@@ -79,6 +79,11 @@ export interface InputActions {
   toggleSound: () => void;
   /** Se llama en el primer gesto: los navegadores no dejan sonar antes. */
   firstGesture: () => void;
+  /**
+   * Se pidió meter el tren con el avión apoyado, y no se meterá. Para que se
+   * note que el mando **está trabado** y no roto. Ver `alternarTren`.
+   */
+  trenTrabado?: () => void;
 }
 
 /**
@@ -174,10 +179,35 @@ export class InputManager {
    * **Se guarda la orden, no la posición**: entre pedirlo y tenerlo pasan diez
    * segundos, y ese rato es medio mando. Quien lo pide tarde aterriza sin él.
    * Ver `flight/tren.ts`.
+   *
+   * **Y con el peso encima no se mete.** Parado en la pista con el JAZ 120 se
+   * podía recoger el tren: «¿cómo es posible que pueda quitar el tren si
+   * estoy en la pista?». En un avión de verdad no se puede: un interruptor
+   * en la pata —el de tierra/aire— bloquea la palanca mientras el avión está
+   * apoyado, porque la alternativa es sentarse sobre la panza. La orden ni
+   * se guarda: no se queda esperando a despegar para meterlo sola, que sería
+   * otra sorpresa. Sacarlo, en cambio, se puede siempre.
+   *
+   * Todos los caminos pasan por aquí —la tecla, el botón del HUD, el de la
+   * cabina—, y por eso el cerrojo está aquí y no en cada botón. Devuelve si
+   * la orden se aceptó.
    */
-  alternarTren(): void {
+  alternarTren(): boolean {
+    if (this.trenPedido && !sePuedeMeter(this.pesoEnLasRuedas)) {
+      this.actions.trenTrabado?.();
+      return false;
+    }
     this.trenPedido = !this.trenPedido;
+    return true;
   }
+
+  /**
+   * Si el avión está apoyado en el suelo: el interruptor de tierra/aire.
+   *
+   * Lo pone el juego en cada fotograma con lo que dice el modelo de vuelo; el
+   * mando no sabe de física y no debe saber. Ver `alternarTren`.
+   */
+  pesoEnLasRuedas = false;
 
   /** Si se ha pedido el tren fuera. Empieza fuera, como está en su puesto. */
   private trenPedido = true;

@@ -7642,8 +7642,32 @@ button.motor__tecla::after {
   transform: scale(0.93);
 }
 
+/*
+ * Y trabado: se pidió meter el tren con el avión en el suelo. Un meneo corto
+ * de lado a lado, la cabeza que dice «no», con el borde en ámbar mientras
+ * dura. Ni rojo ni parpadeo: no es una alarma, es un cerrojo. Ver
+ * `trenTrabado` en ui/hud.ts.
+ */
+.mando--trabado {
+  border-color: var(--ocre);
+  animation: mando-no 480ms ease-in-out;
+}
+
+@keyframes mando-no {
+  20% {
+    transform: translateX(-5px);
+  }
+  45% {
+    transform: translateX(4px);
+  }
+  70% {
+    transform: translateX(-2px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .mando--moviendose {
+  .mando--moviendose,
+  .mando--trabado {
     animation: none;
   }
 }

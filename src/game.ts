@@ -2504,6 +2504,7 @@ export class Game {
       cycleMission: () => this.cycleMission(),
       cycleDestino: () => this.siguienteDestino(),
       girarAltimetro: (pasos: number) => this.girarAltimetro(pasos),
+      trenTrabado: () => this.trenTrabado(),
       cycleLanguage: () => this.changeLanguage(),
       toggleSound: () => this.toggleSound(),
       firstGesture: () => {
@@ -6072,6 +6073,9 @@ export class Game {
     );
     this.flight.ponerSuperficie(this.superficie);
 
+    // El interruptor de tierra/aire del tren: con el peso encima, la palanca
+    // no lo mete. Ver `alternarTren` en `flight/input.ts`.
+    this.input.pesoEnLasRuedas = this.flight.state.onGround;
     this.input.update(dt);
     // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
     // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
@@ -8766,6 +8770,23 @@ export class Game {
    * apuntar con el ratón, y porque lo que hace un mando no debería depender de
    * dónde esté dibujado. Ver `sondas.ts`.
    */
+  /**
+   * Se pidió meter el tren en el suelo y el cerrojo lo impidió.
+   *
+   * **Que se note, sin dramatizar.** El botón no cambia —el tren sigue
+   * fuera y en verde—, suenan las dos notas que bajan, que en este juego
+   * quieren decir «así no», el botón da un respingo y sale un momento la
+   * tarjeta de la rueda apoyada en el suelo. No es un error del jugador ni
+   * una emergencia: es un mando que tiene un porqué, y se enseña mostrándolo.
+   */
+  private trenTrabado(): void {
+    this.audio.cue("error");
+    this.hud.trenTrabado();
+    this.hud.senal.mostrar("tren-en-el-suelo", t("vuelo.trenEnElSuelo"), null, {
+      segundos: 3,
+    });
+  }
+
   pulsarMandoDeCabina(cual: MandoDeCabina): void {
     if (cual === "motor") this.toggleEngine();
     else if (cual === "flaps") this.input.alternarFlaps();
