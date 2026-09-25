@@ -178,6 +178,7 @@ export class CamaraDeFuera implements CameraRig {
         .normalize()
         .multiplyScalar(lejos)
         .add(state.position);
+      this.sinPerderElAvion(camera, state, ctx.caidaMaxima);
     } else if (this.sitio === "morro") {
       /*
        * **De frente se mira al avión, y a nada más.**
@@ -194,6 +195,35 @@ export class CamaraDeFuera implements CameraRig {
       this.mirando.copy(state.position).addScaledVector(state.velocity, 0.35);
     }
     camera.lookAt(this.mirando);
+  }
+
+  /**
+   * Baja el punto de mira lo justo para que el avión no caiga más de
+   * `caida` radianes por debajo del centro de la imagen.
+   *
+   * Mirar lejos levanta la vista y baja el avión; con el HUD comiéndose la
+   * mitad de abajo de una tablet, el avión acababa detrás del cuadro. Se sigue
+   * mirando tan lejos como se pueda, pero no más. Solo se toca el ángulo de
+   * arriba abajo: el rumbo de la mirada es el de siempre.
+   */
+  private sinPerderElAvion(
+    camera: PerspectiveCamera,
+    state: FlightState,
+    caida: number | undefined,
+  ): void {
+    if (caida === undefined || !Number.isFinite(caida)) return;
+    const o = camera.position;
+    const alAvion = Math.atan2(
+      state.position.y - o.y,
+      Math.hypot(state.position.x - o.x, state.position.z - o.z),
+    );
+    const dx = this.mirando.x - o.x;
+    const dz = this.mirando.z - o.z;
+    const llano = Math.hypot(dx, dz);
+    if (llano < 1e-3) return;
+    const alMirar = Math.atan2(this.mirando.y - o.y, llano);
+    if (alMirar - alAvion <= caida) return;
+    this.mirando.y = o.y + Math.tan(alAvion + caida) * llano;
   }
 
   fovDeseado(state: FlightState, ctx: Contexto): number {

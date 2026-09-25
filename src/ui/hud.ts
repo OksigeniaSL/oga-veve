@@ -1420,16 +1420,22 @@ export class Hud {
   }
 
   /**
-   * Cuánto le come el HUD por arriba, en píxeles.
+   * Cuánto le come el HUD por arriba **encima del avión**, en píxeles de
+   * pantalla: hasta dónde baja la barra de botones.
    *
-   * La fila de botones y la de pictogramas. Lo mide `reservarArriba` para el
-   * tutor, y lo lee la cámara por lo mismo que lee el cuadro: **la franja útil
-   * de la pantalla es la que queda entre los dos**, y es en ésa donde hay que
+   * Lo lee la cámara por lo mismo que lee el cuadro: **la franja útil de la
+   * pantalla es la que queda entre los dos**, y es en ésa donde hay que
    * encuadrar. Ver `encuadrarSobreElCuadro`.
+   *
+   * Solo la barra, y no `--arriba-alto`, que cuenta también los pictogramas:
+   * ésos viven en la esquina de la derecha, al lado del avión y no encima, y
+   * en Guyrami bajan hasta media franja — contados, el avión no subía nada.
    */
   get altoDeArriba(): number {
-    const v = this.root.style.getPropertyValue("--arriba-alto");
-    return Number.parseFloat(v) || 0;
+    const barra = this.root.querySelector(".hud__arriba");
+    if (!barra) return 0;
+    const caja = barra.getBoundingClientRect();
+    return caja.height > 0 && caja.height < caja.width ? caja.bottom : 0;
   }
 
   private reserveForPanel(): void {
@@ -2296,7 +2302,14 @@ export class Hud {
     this.barraObservada = new ResizeObserver(() => {
       escribir();
       escribirColumna();
-      escribirRincon(this.root);
+      /*
+       * Y lo que ocupa todo lo de arriba, que también cambia: se medía una
+       * sola vez al pintar, y los botones que se encienden después —el
+       * piloto automático, el cinturón— parten la barra en dos filas. En un
+       * teléfono, `--arriba-alto` se quedaba en la primera y los subtítulos
+       * caían encima de la segunda. Mide también el rincón.
+       */
+      this.reservarArriba();
     });
     this.barraObservada.observe(barra);
     if (columna) this.barraObservada.observe(columna);

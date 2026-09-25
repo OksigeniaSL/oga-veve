@@ -1623,6 +1623,7 @@ export class Game {
     suelo: (x: number, z: number): number => this.terrain.sampleSurface(x, z),
     movimientoReducido: false,
     traqueteo: 1,
+    caidaMaxima: Number.POSITIVE_INFINITY,
   };
   private readonly blobShadow: Mesh;
   /**
@@ -8328,6 +8329,17 @@ export class Game {
     ctx.traqueteo = TRAQUETEO[this.superficie];
 
     rig.update(this.camera, state, dt, ctx);
+    /*
+     * Y el encuadre sobre el HUD, repasado dos veces por segundo: la barra de
+     * arriba y el cuadro cambian de alto sin que cambie la ventana —se baja el
+     * cuadro, se parte la barra, sale el freno—, y medirlos en cada fotograma
+     * costaría un recálculo de estilos por imagen.
+     */
+    this.relojDelEncuadre += dt;
+    if (this.relojDelEncuadre > 0.5) {
+      this.relojDelEncuadre = 0;
+      this.encuadrarSobreElCuadro(false);
+    }
     this.ajustarElAngulo(rig.fovDeseado(state, ctx), dt);
   }
 
@@ -9580,7 +9592,17 @@ export class Game {
     };
   }
 
-  private encuadrarSobreElCuadro(): void {
+  /** Ver `updateCamera`. */
+  private relojDelEncuadre = 0;
+  /** El último corrimiento puesto, para no rehacer la lente si no cambia. */
+  private corrimientoPuesto = Number.NaN;
+
+  /**
+   * `forzar`: rehacer la lente aunque el corrimiento no haya cambiado. Lo
+   * piden el cambio de ventana y el de vista, que cambian la lente por su
+   * cuenta; el repaso periódico no.
+   */
+  private encuadrarSobreElCuadro(forzar = true): void {
     const ancho = window.innerWidth;
     const alto = window.innerHeight;
     /*
@@ -9594,16 +9616,61 @@ export class Game {
      * otro tanto lo mete debajo de la fila de pictogramas. O sea que el
      * desplazamiento que le quita un estorbo abajo le pone otro arriba. Se ve
      * en cuanto se mira: el JAZ 90 de lado queda con medio fuselaje detrás de
-     * las tarjetas.
+     * las tarjetas. Y desde la cabina tampoco: ahí encuadra la propia cabina,
+     * con su visera. Ver `encuadreDeCabina`.
      */
-    const deLado =
-      this.cameraMode === "wing" || this.cameraMode === "izquierda";
-    const cuadro = deLado ? 0 : this.hud.altoDelCuadro;
-    if (cuadro <= 0) this.camera.clearViewOffset();
-    else
-      this.camera.setViewOffset(ancho, alto + cuadro, 0, cuadro, ancho, alto);
+    const propio =
+      this.cameraMode === "wing" ||
+      this.cameraMode === "izquierda" ||
+      this.cameraMode === "cockpit";
+    /*
+     * **Y centrado en la franja libre, no en lo que queda debajo del borde.**
+     *
+     * Se contaba solo el cuadro, como si encima del avión estuviera el borde
+     * de la pantalla. Encima están la barra de botones y los pictogramas —en
+     * un teléfono, dos filas y la cuarta parte de la pantalla—, así que el
+     * avión subía hasta meterse debajo de ellos: en Pettirossi, parado en el
+     * puesto, se le veían las alas asomando entre los botones y la llave
+     * encima del fuselaje. El centro que vale es el de la franja que queda
+     * entre lo de arriba y lo de abajo.
+     */
+    const arriba = this.hud.altoDeArriba;
+    const abajo = alto - this.hud.altoDelCuadro;
+    const corrimiento = propio ? 0 : (arriba - (alto - abajo)) / 2;
+    /*
+     * **Y el avión, dentro de la franja.** La cámara de cola mira lejos para
+     * que se vea hacia dónde se va, y eso baja el avión unos diecisiete grados
+     * por debajo del centro: en una tablet, con el cuadro ocupando media
+     * pantalla, el avión quedaba **siempre** detrás de él. Se le dice a la
+     * cámara cuánto puede bajar: hasta el 62 % de la franja libre, contado
+     * con la lente que se va a poner.
+     */
+    const franja = Math.max(0, abajo - arriba);
+    const altoDeImagen = alto + Math.abs(corrimiento) * 2;
+    const focal =
+      altoDeImagen / 2 / Math.tan(((this.camera.fov / 2) * Math.PI) / 180);
+    this.contextoDeCamara.caidaMaxima = propio
+      ? Number.POSITIVE_INFINITY
+      : Math.atan((franja * 0.12) / focal);
+    if (!forzar && Math.abs(corrimiento - this.corrimientoPuesto) < 1) return;
+    this.corrimientoPuesto = corrimiento;
+    if (Math.abs(corrimiento) < 1) this.camera.clearViewOffset();
+    else {
+      const extra = Math.abs(corrimiento) * 2;
+      // Una imagen más alta de la que se recorta la ventana: recortando por
+      // abajo el centro sube, y por arriba baja.
+      this.camera.setViewOffset(
+        ancho,
+        alto + extra,
+        0,
+        corrimiento < 0 ? extra : 0,
+        ancho,
+        alto,
+      );
+    }
     this.camera.updateProjectionMatrix();
   }
+
 }
 
 /**

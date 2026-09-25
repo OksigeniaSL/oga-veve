@@ -7456,6 +7456,48 @@ button.motor__tecla::after {
 }
 
 /*
+ * ── **Fuera, el centro es del avión** ──
+ *
+ * La cámara de persecución encuadra el avión en la franja que dejan libres la
+ * barra de arriba y el cuadro —ver `encuadrarSobreElCuadro`—, y justo ahí,
+ * centrados encima del cuadro, vivían el tutor y los subtítulos. Medido en
+ * una tablet en la lección de aterrizar: la tarjeta «Bajá el motor» tapaba
+ * el avión entero, que es lo único que no se puede tapar en esta vista.
+ *
+ * El tutor, a la izquierda, a la altura del borde de arriba del cuadro y
+ * nunca por debajo de lo que ocupa la palanca de pulgar: es el sitio que ya
+ * tenía en el teléfono, ahora en todas las pantallas. Los subtítulos, debajo
+ * de la barra de arriba, que es donde se leen sin mirar al avión.
+ *
+ * Con `.hud` delante y al final de la hoja para ganarle a las reglas de
+ * teléfono y de pantalla baja de más arriba; las de cabina, que son más
+ * concretas, siguen mandando dentro de la cabina.
+ */
+.hud .tutor {
+  left: calc(max(16px, env(safe-area-inset-left)) + var(--tacto) * 1.4);
+  transform: none;
+  top: auto;
+  bottom: max(
+    calc(var(--panel-alto, 0px) + 12px),
+    calc(var(--pulgares, 0px) * 2.1)
+  );
+}
+
+.hud .hud__abajo > [data-hud="hint"] {
+  top: calc(var(--arriba-alto, 80px) + 8px);
+  bottom: auto;
+  /* En el hueco que deja el rincón a su izquierda, como la lámpara de la
+     torre: centrados en la pantalla, se metían debajo de su tarjeta. */
+  left: calc(var(--rincon-izquierda, 100%) / 2);
+  max-width: calc(var(--rincon-izquierda, 100%) - 32px);
+}
+
+/* Y si hay subtítulo, la lámpara baja una línea en vez de montarse. */
+.hud:has(.hud__abajo > [data-hud="hint"]:not(:empty)) .torre {
+  top: calc(var(--arriba-alto, 14%) + 14px + 36px);
+}
+
+/*
  * ── **En cabina, el parabrisas es de quien vuela** ──
  *
  * La cámara de cabina deja la visera en el 42 % de la pantalla —ver
@@ -7512,6 +7554,8 @@ button.motor__tecla::after {
 .hud.hud--cabina .hud__abajo > [data-hud="hint"] {
   top: 32%;
   bottom: auto;
+  left: 50%;
+  max-width: calc(100% - 32px);
 }
 
 .hud.hud--cabina .hud__abajo > .aviso-hud {

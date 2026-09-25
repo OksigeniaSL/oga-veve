@@ -57,6 +57,14 @@ export interface Contexto {
   readonly movimientoReducido: boolean;
   /** Cuánto traquetea el suelo de debajo: asfalto 1, hierba 1,8, campo 3. */
   readonly traqueteo: number;
+  /**
+   * Cuánto puede quedar el avión por debajo del centro de la imagen, rad.
+   *
+   * Lo calcula el juego con lo que le deja libre el HUD —ver
+   * `encuadrarSobreElCuadro`— y lo respeta la cámara de cola al mirar lejos.
+   * Sin límite, `Infinity`.
+   */
+  readonly caidaMaxima?: number;
 }
 
 export interface CameraRig {
