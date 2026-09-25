@@ -79,6 +79,11 @@ export interface AircraftMesh {
   /** Y los mandos que se pueden pulsar. Ver `botones-cabina.ts`. */
   botones?: import("./botones-cabina").BotonesDeCabina | null;
   /**
+   * Y la luz de dentro: la que rebota de día y la roja del panel de noche.
+   * Ver `luz-de-cabina.ts`.
+   */
+  luzDeCabina?: import("./luz-de-cabina").LuzDeCabina | null;
+  /**
    * Y las patas, en el avión que las mete.
    *
    * `null` en el respaldo de cajas y en los modelos que no traen tren con

@@ -6808,6 +6808,10 @@ export class Game {
         this.input.controls.tren > 0.5,
       ),
     );
+    // La luz de dentro sigue al sol: de día la que rebota, de noche la roja
+    // del panel. Cada fotograma porque el avión puede cambiar en cualquiera;
+    // si el sol no se ha movido no toca nada. Ver `luz-de-cabina.ts`.
+    this.aircraftMesh.luzDeCabina?.ponerSol(this.sky.sunDirection.y);
     this.aircraftMesh.relojes?.actualizar(
       {
         motores: Array.from({ length: this.aircraft.motores }, () =>

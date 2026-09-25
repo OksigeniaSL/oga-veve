@@ -55,6 +55,7 @@ import { encenderPantallas } from "./pantallas-cabina";
 import { prepararPatas } from "./patas";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
+import { luzDeCabina } from "./luz-de-cabina";
 import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
 
 /** Dónde se dejan los modelos. Uno por aeronave, con su identificador. */
@@ -760,6 +761,12 @@ export async function cargarModelo(
     ),
     // Y las patas, que en el avión que las mete se meten. Ver `patas.ts`.
     patas: prepararPatas(raiz),
+    /*
+     * Y la luz de dentro, **la última**: lo de arriba cambia los materiales
+     * de los relojes y de los mandos, y la luz tiene que ver los que quedan.
+     * Ver `luz-de-cabina.ts`.
+     */
+    luzDeCabina: luzDeCabina(raiz),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,
   };
