@@ -30,18 +30,36 @@
 
 import { TIERS, type Tier } from "../flight/tiers";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
-import { cabeEn, campoDe, elQueQuepa, type Veredicto } from "../flight/cabe";
+import {
+  cabeEn,
+  campoDe,
+  destinosParaEsteAvion,
+  elQueQuepa,
+  type Veredicto,
+} from "../flight/cabe";
+import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
+import { cargaParaElPlan, loQueCabe } from "../flight/combustible";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
 import { retratosDeLaFlota } from "./siluetas";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
 import { missionsFor } from "../content/missions";
 import { objectiveTarget, type Mission } from "../missions/types";
-import { SCENARIOS, type Scenario } from "../world/scenarios";
+import {
+  SCENARIOS,
+  destinosDe,
+  oaciDe,
+  type Scenario,
+} from "../world/scenarios";
 import { PROXIMAMENTE } from "../world/proximamente";
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import { elegirMundo, mundoElegido } from "./mundo";
-import { leerProgreso, ponerProgreso } from "../datos/guardado";
+import {
+  leerProgreso,
+  leerTexto,
+  ponerProgreso,
+  ponerTexto,
+} from "../datos/guardado";
 
 /** Lo que el hangar devuelve cuando alguien le da al botón de despegar. */
 export interface Eleccion {
@@ -60,6 +78,11 @@ export interface Eleccion {
    * lección no implica ninguna misión.
    */
   readonly mision: Mission | null;
+  /**
+   * A dónde se va: el identificador de uno de los destinos del sitio, o el
+   * del propio sitio para una vuelta al campo. Ver `destinosPosibles`.
+   */
+  readonly destino: string;
 }
 
 // ── Qué cambia en cada tramo ─────────────────────────────────────────────
@@ -403,7 +426,7 @@ export function designador(escenario: Scenario): string {
  * mismos que se van a ver al volar. Por eso el Chaco sale pálido, el valle
  * verde y Tenerife azul y roca, y por eso quien no lee los distingue.
  */
-function pieles(escenario: Scenario): { cielo: string; suelo: string } {
+export function pieles(escenario: Scenario): { cielo: string; suelo: string } {
   const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
   const bandas = escenario.bands;
   return {
@@ -468,6 +491,161 @@ function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
           <span class="ficha__dato">${km} km</span>
         </span>
         <span class="ficha__nombre">${t(escenario.nameKey as never)}</span>
+      </span>
+    </button>`;
+}
+
+// ── A dónde se va ────────────────────────────────────────────────────────
+//
+// Preguntado por el dueño del juego: «¿cómo sabe el jugador qué aeropuerto
+// es?, ¿cómo cambia el combustible o la hoja de ruta en función del destino
+// elegido?». No lo sabía y no cambiaba: el destino se elegía en el aire
+// tocando una tarjeta, el hangar no preguntaba a dónde se iba, y la carga era
+// la misma fuera a donde fuera.
+//
+// Un vuelo de verdad empieza por ahí: a dónde, por dónde, con cuánto y a qué
+// sitio se va si allí no se puede. Aquí se elige el destino con su dibujo —el
+// plano de su aeródromo, como las fichas de sitio—, y cada ficha enseña lo
+// que ese destino cuesta: la barra del depósito con lo que se va a cargar, y
+// el alternativo con su indicativo.
+
+/** Los destinos a los que este avión puede ir desde este sitio. */
+export function destinosPosibles(
+  sitio: Scenario,
+  avion: AircraftConfig,
+): readonly Scenario[] {
+  const todos = destinosDe(sitio)
+    .map((id) => SCENARIOS.find((e) => e.id === id))
+    .filter((e): e is Scenario => e !== undefined);
+  return destinosParaEsteAvion(avion, todos);
+}
+
+/**
+ * El destino que se propone si no se ha elegido ninguno.
+ *
+ * Para dar una vuelta, el vecino más cercano, que es lo que hacía el juego
+ * antes de que se pudiera elegir: **no hay que elegir nada para volar a otro
+ * sitio**. Para las lecciones y las misiones, la vuelta al campo, que es lo
+ * que se practica en ellas.
+ */
+export function destinoPorDefecto(
+  sitio: Scenario,
+  avion: AircraftConfig,
+  leccion: Leccion,
+  mision: Mission | null,
+): string {
+  if (mision || leccion.id !== VUELTA.id) return sitio.id;
+  const campos = camposDeLaRuta(sitio, destinosPosibles(sitio, avion));
+  const casa = campos[0]!;
+  let mejor = sitio.id;
+  let corto = Infinity;
+  for (const c of campos.slice(1)) {
+    const d = Math.hypot(c.x - casa.x, c.z - casa.z);
+    if (d < corto) {
+      corto = d;
+      mejor = c.id;
+    }
+  }
+  return mejor;
+}
+
+/** La clave con la que se recuerda el destino de cada sitio. */
+export const recuerdoDelDestino = (sitio: Scenario): string =>
+  `destino.${sitio.id}`;
+
+/** Los kilos, como se leen: en kilos hasta diez mil, luego en toneladas. */
+function kilos(kg: number): string {
+  if (kg < 10000) return `${Math.round(kg).toLocaleString(idioma())} kg`;
+  return `${(kg / 1000).toLocaleString(idioma(), { maximumFractionDigits: 1 })} t`;
+}
+
+/**
+ * El depósito que se va a llevar, dibujado.
+ *
+ * Una barra que se llena en proporción a lo que cabe en ese avión, con el
+ * surtidor delante: **se ve sin leer que ir más lejos pide más**, que es la
+ * lección entera. El número va al lado para quien lee, en kilos, que es como
+ * se escribe en un plan de vuelo.
+ */
+function deposito(avion: AircraftConfig, carga: number): string {
+  const lleno = Math.max(0.04, Math.min(1, carga / loQueCabe(avion)));
+  return `
+    <span class="ficha__deposito" aria-label="${t("hangar.combustible")}: ${kilos(carga)}">
+      <svg class="deposito__surtidor" viewBox="0 0 24 24" aria-hidden="true"
+           fill="none" stroke="currentColor" stroke-width="1.9"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16" />
+        <path d="M4 21h12M8 8h4" />
+        <path d="M15 11h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V9l-3-3" />
+      </svg>
+      <span class="deposito__barra" aria-hidden="true"><i style="width: ${(lleno * 100).toFixed(0)}%"></i></span>
+      <span class="ficha__dato">${kilos(carga)}</span>
+    </span>`;
+}
+
+/**
+ * El circuito alrededor del campo: la vuelta al campo, dibujada.
+ *
+ * Es el rectángulo de esquinas redondas que vuela cualquier escuela —salir,
+ * dar la vuelta y volver a la misma pista— puesto encima del plano del
+ * aeródromo. Sin palabras: la raya sale de la pista y vuelve a ella.
+ */
+const CIRCUITO = `
+  <svg class="ficha__circuito" viewBox="0 0 100 60" aria-hidden="true">
+    <rect x="14" y="9" width="72" height="42" rx="18" />
+    <path d="M50 5.5 l6 3.5 l-6 3.5 z" />
+  </svg>`;
+
+/**
+ * La ficha de un destino: su plano, su distancia, su alternativo y su carga.
+ *
+ * `destino` nulo es la vuelta al campo: el plano de casa con el circuito
+ * encima.
+ */
+function fichaDeDestino(
+  sitio: Scenario,
+  destino: Scenario | null,
+  avion: AircraftConfig,
+  elegido: boolean,
+): string {
+  const campos = camposDeLaRuta(sitio, destinosPosibles(sitio, avion));
+  const casa = campos[0]!;
+  const donde = destino ?? sitio;
+  const aqui = campos.find((c) => c.id === donde.id) ?? casa;
+  const tramos = tramosDelPlan(casa, aqui, campos);
+  const carga = cargaParaElPlan(avion, tramos);
+  const { cielo, suelo } = pieles(donde);
+  const oaci = oaciDe(donde);
+  const km = Math.round(tramos.alDestino / 1000);
+  const alterno = tramos.alterno ? oaciDe(tramos.alterno.escenario) : null;
+  return `
+    <button class="ficha ficha--sitio ficha--destino" type="button" role="radio"
+            aria-checked="${elegido}" tabindex="${elegido ? 0 : -1}"
+            data-destino="${donde.id}"
+            style="--cielo: ${cielo}; --suelo: ${suelo}">
+      <span class="ficha__lienzo">${
+        oaci ? `<span class="plano__ficha"><b>${oaci}</b></span>` : ""
+      }${plano(donde, destino ? ESCALA : caja(sitio).lado * 2.2)}${
+        destino ? "" : CIRCUITO
+      }</span>
+      <span class="ficha__pie">
+        <span class="ficha__renglon">
+          ${
+            destino
+              ? `<span class="ficha__numero">${km.toLocaleString(idioma())} km</span>`
+              : `<span class="ficha__numero">${designador(sitio)}</span>`
+          }
+          ${
+            // ALTN es la abreviatura de un plan de vuelo, y como los rótulos
+            // de los instrumentos no se traduce: es la que se va a encontrar
+            // quien vuele de verdad.
+            alterno ? `<span class="ficha__dato">ALTN ${alterno}</span>` : ""
+          }
+        </span>
+        <span class="ficha__nombre">${
+          destino ? t(destino.nameKey as never) : t("hangar.vuelta")
+        }</span>
+        ${deposito(avion, carga)}
       </span>
     </button>`;
 }
@@ -904,6 +1082,14 @@ function grupoDeSitios(pais: (typeof PAISES)[number], elegido: string): string {
 const PASO_DONDE = trazo(
   '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" /><circle cx="12" cy="10" r="2.6" />',
 );
+/*
+ * A dónde se va: una ruta de puntos que sale de un sitio y llega a una
+ * bandera. La bandera es la meta, y es lo que la distingue del dibujo de las
+ * misiones, que son paradas.
+ */
+const PASO_ADONDE = trazo(
+  '<circle cx="5" cy="18.5" r="2.2" /><path d="M7 17q5.5-1 7.5-6.5" stroke-dasharray="2.4 2.6" /><path d="M15 12.5V3.2" /><path d="M15 3.6h5.6l-1.7 2.3 1.7 2.3H15" />',
+);
 const PASO_QUE = trazo(
   '<path d="M3 17h18" /><path d="M5 13.5 12.5 6l2.6 2.6-4.2 4.9Z" /><path d="M15 6.4 17.3 4l2.7 2.7-2.4 2.3Z" />',
 );
@@ -996,7 +1182,14 @@ function apuntarReciente(id: string): void {
 const REPOSO_MS = 120000;
 
 /** Las pantallas del hangar. Una cada vez, y la de inicio no crece nunca. */
-type Pantalla = "inicio" | "donde" | "que" | "quien" | "conque" | "ajustes";
+type Pantalla =
+  | "inicio"
+  | "donde"
+  | "adonde"
+  | "que"
+  | "quien"
+  | "conque"
+  | "ajustes";
 
 export function abrirHangar(
   root: HTMLElement,
@@ -1027,6 +1220,28 @@ export function abrirHangar(
   avion = elQueQuepa(avion, campoDe(sitio), AIRCRAFT);
   let leccion = inicial.leccion;
   let mision: Mission | null = null;
+  /*
+   * **El destino, recordado por sitio.** Cada aeropuerto tiene los suyos, así
+   * que lo que se eligió en Gran Canaria no vale en Asunción. `null` es que no
+   * se eligió nada, y entonces se propone uno: ver `destinoPorDefecto`.
+   */
+  const recordarDestino = (s: Scenario): string | null => {
+    try {
+      return leerTexto(recuerdoDelDestino(s));
+    } catch {
+      return null;
+    }
+  };
+  let destinoElegido: string | null = recordarDestino(sitio);
+  /** El destino de ahora: el elegido si vale para este avión, o el propuesto. */
+  const destinoDeAhora = (): string => {
+    if (
+      destinoElegido === sitio.id ||
+      destinosPosibles(sitio, avion).some((d) => d.id === destinoElegido)
+    )
+      return destinoElegido!;
+    return destinoPorDefecto(sitio, avion, leccion, mision);
+  };
   let pantalla: Pantalla = "inicio";
   let reposo: ReturnType<typeof setTimeout> | null = null;
 
@@ -1108,6 +1323,30 @@ export function abrirHangar(
           <h2 class="hangar__pregunta" id="hangar-sitio">${t("hangar.donde")}</h2>
           <div class="hangar__grupos" role="radiogroup" aria-labelledby="hangar-sitio">
             ${PAISES.map((p) => grupoDeSitios(p, sitio.id)).join("")}
+          </div>
+        </section>`
+            : ""
+        }
+
+        ${
+          pantalla === "adonde"
+            ? `
+        <!--
+          **A dónde se va, con lo que cuesta ir.**
+
+          Cada ficha es un destino con su plano, su distancia, su alternativo
+          y la barra del depósito que se va a llevar. Y la primera es quedarse:
+          la vuelta al campo, que es lo que hacen las lecciones.
+        -->
+        <section class="hangar__bloque" aria-labelledby="hangar-destino">
+          <h2 class="hangar__pregunta" id="hangar-destino">${t("hangar.adonde")}</h2>
+          <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-destino">
+            ${fichaDeDestino(sitio, null, avion, destinoDeAhora() === sitio.id)}
+            ${destinosPosibles(sitio, avion)
+              .map((d) =>
+                fichaDeDestino(sitio, d, avion, destinoDeAhora() === d.id),
+              )
+              .join("")}
           </div>
         </section>`
             : ""
@@ -1248,9 +1487,31 @@ export function abrirHangar(
         ${
           pantalla === "inicio"
             ? `
-        <div class="hangar__pasos">
+        <div class="hangar__pasos" style="--pasos: ${
+          destinosPosibles(sitio, avion).length > 0 ? 6 : 5
+        }">
           ${[
             ["donde", t("hangar.donde"), t(sitio.nameKey as never), PASO_DONDE],
+            /*
+             * El destino, solo donde hay a dónde ir: en un campo sin vecinos
+             * la única respuesta es la vuelta al campo, y un paso que no se
+             * puede cambiar es un paso que sobra.
+             */
+            ...(destinosPosibles(sitio, avion).length > 0
+              ? [
+                  [
+                    "adonde",
+                    t("hangar.adonde"),
+                    destinoDeAhora() === sitio.id
+                      ? t("hangar.vuelta")
+                      : t(
+                          (SCENARIOS.find((e) => e.id === destinoDeAhora())
+                            ?.nameKey ?? "hangar.vuelta") as never,
+                        ),
+                    PASO_ADONDE,
+                  ],
+                ]
+              : []),
             [
               "que",
               t("hangar.aque"),
@@ -1311,6 +1572,8 @@ export function abrirHangar(
     ): void => {
       if (atributo === "data-sitio") {
         sitio = SCENARIOS.find((e) => e.id === id) ?? sitio;
+        // Los destinos son de cada sitio: se trae el que se eligió aquí.
+        destinoElegido = recordarDestino(sitio);
         // Una misión es de un sitio. Al cambiar de aeropuerto deja de valer, y
         // dejarla puesta sería mandar a alguien a un cerro que no está ahí.
         mision = null;
@@ -1393,6 +1656,20 @@ export function abrirHangar(
         return;
       }
 
+      const idDestino = boton.getAttribute("data-destino");
+      if (idDestino) {
+        destinoElegido = idDestino;
+        // Por sitio y por perfil, como el resto: ver `recuerdoDelDestino`.
+        try {
+          ponerTexto(recuerdoDelDestino(sitio), idDestino);
+        } catch {
+          // Sin almacenamiento se juega igual, solo que no se recuerda.
+        }
+        pantalla = "inicio";
+        pintar();
+        return;
+      }
+
       const idAvion = boton.getAttribute("data-avion");
       if (idAvion) {
         const pedido = AIRCRAFT.find((a) => a.id === idAvion);
@@ -1448,6 +1725,7 @@ export function abrirHangar(
           leccion,
           mision,
           aircraft: avion,
+          destino: destinoDeAhora(),
         });
       }
     });
@@ -1477,6 +1755,18 @@ export function abrirHangar(
       // Da la vuelta al llegar al final, que es lo que hace un grupo de radio.
       const siguiente =
         tarjetas[(i + paso + tarjetas.length) % tarjetas.length];
+      const aDestino = siguiente?.getAttribute("data-destino");
+      if (aDestino) {
+        destinoElegido = aDestino;
+        try {
+          ponerTexto(recuerdoDelDestino(sitio), aDestino);
+        } catch {
+          // Sin almacenamiento se juega igual.
+        }
+        pintar();
+        root.querySelector<HTMLElement>(`[data-destino="${aDestino}"]`)?.focus();
+        return;
+      }
       const atributo = siguiente?.hasAttribute("data-sitio")
         ? "data-sitio"
         : siguiente?.hasAttribute("data-leccion")

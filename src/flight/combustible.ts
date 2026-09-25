@@ -166,6 +166,40 @@ export function cargaParaLaRuta(
 }
 
 /**
+ * Cuánto se carga para ir a un sitio concreto, en kilos.
+ *
+ * **Las cuatro partidas de un despacho de verdad**, y en su orden: el tramo
+ * hasta el destino, el tramo del destino a su **alternativo** —el aeródromo al
+ * que se va si al llegar el destino no se puede usar—, la maniobra de rodar,
+ * subir y aproximar, y los cuarenta y cinco minutos de reserva. Con el tope de
+ * lo que cabe, como siempre.
+ *
+ * Existe porque la carga no dependía del destino: se cargaba ida y vuelta al
+ * vecino **más lejano**, fuera cual fuera el elegido. Eso es cómodo y enseña
+ * lo que no es: que el combustible se pide a ojo, «por si acaso». Un piloto no
+ * carga para lo peor que se le ocurra; carga para lo que ha planeado **más un
+ * plan B con nombre**, y el plan B es el alternativo. Que se note al elegir:
+ * ir a Lanzarote pesa más que ir a Tenerife Norte, y el número lo dice.
+ *
+ * Sin destino —un circuito, una vuelta al campo— los dos tramos valen cero y
+ * sale lo mismo que `cargaParaLaRuta` con un vuelo local.
+ */
+export function cargaParaElPlan(
+  avion: AircraftConfig,
+  tramos: {
+    /** Del campo de salida al de destino, en metros. */
+    readonly alDestino: number;
+    /** Del destino a su alternativo, en metros. Cero si no lo hay. */
+    readonly alAlterno: number;
+  },
+): number {
+  return cargaParaLaRuta(
+    avion,
+    Math.max(0, tramos.alDestino) + Math.max(0, tramos.alAlterno),
+  );
+}
+
+/**
  * Cuánto vuelo queda con lo que hay, en segundos.
  *
  * Al consumo de **ahora**, que es lo honesto: con el gas a fondo queda menos

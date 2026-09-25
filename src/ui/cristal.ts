@@ -549,11 +549,34 @@ function carta(cx: number, cy: number, r: number): string {
         pega al borde con una punta de flecha: el sitio no se ve, pero se sabe
         por dónde cae. Ver Dibujo.destino en ui/carta.ts.
       -->
+      <!--
+        **El alternativo, debajo del destino y en cian.**
+
+        El mismo símbolo de aeródromo —es un aeródromo— en el color de lo
+        que está preparado y no activo, y con su indicativo al lado. Va antes
+        que el destino para que, si los dos caen juntos en el borde, el que se
+        vea entero sea el destino.
+      -->
+      <g data-carta="alterno" class="cr__alterno" visibility="hidden">
+        <circle cx="0" cy="0" r="6" />
+        <line x1="-3.8" y1="0" x2="3.8" y2="0" />
+        <!-- A la izquierda del símbolo, y el del destino a la derecha: los
+             dos suelen caer juntos en el borde, y con los dos rótulos del
+             mismo lado se montaban uno encima del otro. -->
+        <text data-carta="alterno-oaci" x="-9" y="4" ${MARCA_ROTULO}
+              class="cr__oaci cr__oaci--alterno" text-anchor="end"></text>
+      </g>
+      <!--
+        Y el destino lleva al lado su indicativo, que es como se rotula un
+        aeródromo en una carta de verdad: con sus cuatro letras.
+      -->
       <g data-carta="destino" class="cr__destino" visibility="hidden">
         <circle cx="0" cy="0" r="7" />
         <line x1="-4.5" y1="0" x2="4.5" y2="0" />
         <path data-carta="destino-punta" d="M0 -13 L5 -7 L-5 -7 Z"
               visibility="hidden" />
+        <text data-carta="destino-oaci" x="10" y="4" ${MARCA_ROTULO}
+              class="cr__oaci"></text>
       </g>
     </g>
     <!--
