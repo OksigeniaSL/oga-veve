@@ -25,6 +25,7 @@
  */
 
 import type { FlightState } from "../flight/model";
+import type { AudioLevel } from "../audio/audio";
 import { indicatedAirspeed, velocidadDelSonido } from "../flight/atmosphere";
 import { t, type TranslationKey } from "../i18n";
 import { leerTexto, ponerTexto } from "../datos/guardado";
@@ -39,11 +40,11 @@ import type { Estado as EstadoDeAvisos } from "../flight/avisos-de-cabina";
 import { regimen } from "./cuadro";
 import { comoSeDiceAqui, type Habla } from "../i18n/habla";
 import { PYKASU, esDeChorro, type AircraftConfig } from "../flight/aircraft";
-import { Pictogramas, HELICE_MAS, HELICE_MENOS } from "./pictogramas";
+import { Pictogramas, motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS, Senal } from "./senal";
+import { OJO } from "./teclas";
 import { luzDeTren } from "../flight/tren";
 import { Mapa } from "./mapa";
-import { caja, pieles, plano } from "./hangar";
 import type { Scenario } from "../world/scenarios";
 import { botonesDeLosPaneles } from "./paneles";
 import { PanelDelTiempo } from "./tiempo";
@@ -119,25 +120,78 @@ const AERONAUTICAL: UnitSystem = {
 
 
 /**
- * El cartel del cinturón: una persona sentada con el cinturón abrochado.
+ * El cartel del cinturón: **una persona sentada de frente, con el cinturón
+ * cruzándole la cintura y la hebilla en medio.**
  *
- * Es el dibujo de los carteles de cabina de todo el mundo. El de antes era una
- * U con un rectángulo debajo, que quería ser la hebilla y se leía como un
- * tenedor: «esto no cambia nada o al menos no parece que ocurra algo».
+ * Es el dibujo del cartel de cabina de verdad. El primero era una U con un
+ * rectángulo debajo que quería ser la hebilla y se leía como un tenedor. El
+ * segundo, una persona sentada de perfil con una raya en el regazo: a
+ * veinticuatro píxeles el perfil se perdía y quedaba un grifo con su chorro.
+ *
+ * De frente se lee sin querer: cabeza, hombros, piernas, y una banda que va de
+ * lado a lado y **sobresale** del cuerpo —eso es lo que la hace cinturón y no
+ * una prenda—, separada del tronco y de las piernas por un hueco para que no
+ * se funda con ellos. La hebilla es un marco con su agujero, que es lo que es.
  */
 const CINTURON = `
-  <circle cx="9.6" cy="4.3" r="2.4" fill="currentColor"/>
-  <path d="M7.4 8h3.6l1.3 5.6h5.3a1.4 1.4 0 0 1 1.4 1.4V21h-2.6v-4.8h-5.7a1.8 1.8 0 0 1-1.8-1.4Z"
+  <circle cx="12" cy="4" r="2.7" fill="currentColor"/>
+  <path d="M6.6 12 V10 a2.8 2.8 0 0 1 2.8-2.8 h5.2 a2.8 2.8 0 0 1 2.8 2.8 V12 Z"
         fill="currentColor"/>
-  <path d="M4.6 12.6h9.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-  <rect x="6.6" y="10.9" width="3.8" height="3.4" rx="0.8" fill="none"
-        stroke="currentColor" stroke-width="1.4"/>
+  <path d="M7 16.6 h4 v5.2 H8.2 a1.2 1.2 0 0 1-1.2-1.2 Z M13 16.6 h4 v4
+           a1.2 1.2 0 0 1-1.2 1.2 H13 Z" fill="currentColor"/>
+  <path d="M2.6 14.3 H8.6 M15.4 14.3 H21.4" stroke="currentColor" stroke-width="2.4"
+        stroke-linecap="round"/>
+  <path fill-rule="evenodd" fill="currentColor"
+        d="M9.2 12.3 h5.6 a0.8 0.8 0 0 1 .8.8 v2.4 a0.8 0.8 0 0 1-.8.8 H9.2
+           a0.8 0.8 0 0 1-.8-.8 v-2.4 a0.8 0.8 0 0 1 .8-.8 Z
+           M10.6 13.6 v1.4 h2.8 v-1.4 Z"/>
 `;
 export const UNIT_SYSTEMS = {
   metric: METRIC,
   aeronautical: AERONAUTICAL,
 } as const;
 export type UnitSystemName = keyof typeof UNIT_SYSTEMS;
+
+/**
+ * **El altavoz del sonido, con sus ondas.** Dos ondas es fuerte, una es bajo y
+ * un aspa es callado: se lee contando, sin saber leer.
+ *
+ * Eran los emoji 🔊 🔉 🔇, y un emoji no es un dibujo del juego: lo pinta cada
+ * sistema a su manera —en color, con su propio sombreado, en alguna tableta
+ * como un recuadro vacío— y en la fila de botones era el único con otro
+ * estilo. Aquí va del mismo trazo y el mismo color que sus vecinos.
+ */
+const altavoz = (resto: string): string => `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 9.2 h3.6 L12 4.6 v14.8 L6.6 14.8 H3 Z" />
+    <g fill="none" stroke="currentColor" stroke-width="2.2"
+       stroke-linecap="round">${resto}</g>
+  </svg>`;
+const ALTAVOZ: Record<AudioLevel["id"], string> = {
+  normal: altavoz(
+    '<path d="M15.2 9 a4.2 4.2 0 0 1 0 6" /><path d="M18 6.2 a8.2 8.2 0 0 1 0 11.6" />',
+  ),
+  bajo: altavoz('<path d="M15.2 9 a4.2 4.2 0 0 1 0 6" />'),
+  mudo: altavoz('<path d="M15.4 9.4 l5.2 5.2 M20.6 9.4 l-5.2 5.2" />'),
+};
+
+/**
+ * **El hangar: la nave de techo curvo con su portón abierto.**
+ *
+ * La misma puerta tenía dos dibujos: en la barra de arriba un arco de trazo
+ * fino, y en la pantalla del final una casita. Una casa es «volver a casa», que
+ * aquí no es lo que pasa: se vuelve al hangar, que es como se llama la
+ * pantalla. Ahora es uno, relleno y con el portón grande, que es lo que hace
+ * que un hangar no sea una casa.
+ */
+const HANGAR = `
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+    <path fill-rule="evenodd"
+          d="M1.8 21 V12.6 A10.2 8.6 0 0 1 22.2 12.6 V21 Z
+             M6.2 21 V13.4 h11.6 V21 Z" />
+    <path d="M6.2 16.6 h11.6" stroke="currentColor" stroke-width="1.2"
+          opacity="0.5" />
+  </svg>`;
 
 /** La mano abierta de parar. La misma que el botón de freno, a propósito. */
 const MANO_PARAR = `
@@ -380,7 +434,6 @@ export class Hud {
   private homeDistance: HTMLElement | null = null;
   private homeGloss: HTMLElement | null = null;
   private homeOaci: HTMLElement | null = null;
-  private homePlano: HTMLElement | null = null;
   /**
    * El destino que está puesto en la tarjeta, para notar cuándo cambia. Ver
    * `setHome`.
@@ -422,7 +475,10 @@ export class Hud {
   private vmax = Infinity;
   private galonesState: readonly Galon[] = [];
   private progressState: { done: number; total: number } | null = null;
-  private soundState = { glyph: "🔊", label: "" };
+  private soundState: { nivel: AudioLevel["id"]; label: string } = {
+    nivel: "normal",
+    label: "",
+  };
   private soundHandler: (() => void) | null = null;
   private keysHandler: (() => void) | null = null;
   private camaraHandler: (() => void) | null = null;
@@ -578,6 +634,10 @@ export class Hud {
   render(): void {
     const gauges = this.instruments !== "none";
     const pictorial = this.instruments === "pictorial";
+    // Reactor o hélice: decide el dibujo del motor en todo el HUD. Ver `fan`.
+    const chorro = esDeChorro(this.ficha);
+    this.tutor.setChorro(chorro);
+    this.senal.chorro = chorro;
     /*
      * **El cuadro de mandos sale en los cuatro peldaños.**
      *
@@ -638,17 +698,15 @@ export class Hud {
           dos de ala y la de pájaro. Un botón redondo aquí arriba, fuera de la
           franja de los pulgares, y ya se recorren igual que con la tecla.
         -->
+        <!--
+          **Con el ojo, no con una cámara de fotos.** Una cámara de fotos
+          dice «sacá una foto», que es lo que hace ese dibujo en cualquier
+          teléfono; y la misma acción, en el teclado dibujado, ya llevaba el
+          ojo: desde dónde se mira. Un dibujo por significado. Ver OJO en
+          teclas.ts.
+        -->
         <button class="sonido" type="button" data-hud="camara"
-                aria-label="${t("hud.camara")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 8h3.2l1.4-2h6.8l1.4 2H20a1.6 1.6 0 0 1 1.6 1.6v7.8
-                     A1.6 1.6 0 0 1 20 19H4a1.6 1.6 0 0 1-1.6-1.6V9.6
-                     A1.6 1.6 0 0 1 4 8Z" fill="none" stroke="currentColor"
-                  stroke-width="1.8" stroke-linejoin="round" />
-            <circle cx="12" cy="13.4" r="3.4" fill="none"
-                    stroke="currentColor" stroke-width="1.8" />
-          </svg>
-        </button>
+                aria-label="${t("hud.camara")}">${OJO}</button>
         <!--
           **Las gafas de sol**, y solo desde el día que se ganan.
 
@@ -659,14 +717,8 @@ export class Hud {
         <button class="sonido gafas-boton" type="button" data-hud="gafas"
                 aria-pressed="false" hidden
                 aria-label="${t("hud.gafas")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M2.6 8.4h18.8M8.6 8.4h6.8" fill="none"
-                  stroke="currentColor" stroke-width="1.6"
-                  stroke-linecap="round" />
-            <path d="M2.6 8.4h6v3.2a3.2 3.2 0 0 1-6 .9Z" fill="currentColor" />
-            <path d="M21.4 8.4h-6v3.2a3.2 3.2 0 0 0 6 .9Z"
-                  fill="currentColor" />
-          </svg>
+          <!-- Las mismas gafas que la tarjeta que las da: un dibujo, un premio. -->
+          ${DIBUJOS.gafas}
         </button>
         <!--
           Y la pausa, que no existía en ninguna plataforma. Es lo primero que
@@ -824,14 +876,8 @@ export class Hud {
           arrancar es un hangar con la puerta tapiada: quien quiera cambiar de
           aeropuerto tendría que saber recargar la página.
         -->
-        <button class="sonido teclas-boton" type="button" data-hud="hangar"
-                aria-label="${t("hangar.volver")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M2.6 12.4 A11 11 0 0 1 21.4 12.4" />
-            <path d="M4.4 20.4 v-7.6 M19.6 20.4 v-7.6 M3 20.6 h18" />
-            <path d="M9.6 20.4 v-4.4 h4.8 v4.4" />
-          </svg>
-        </button>
+        <button class="sonido" type="button" data-hud="hangar"
+                aria-label="${t("hangar.volver")}">${HANGAR}</button>
       </div>
       <div class="hud__izquierda">
         ${numbers ? gauge("speed", INSTRUMENTS.speed, t("hud.speed"), this.units.speedLabel()) : ""}
@@ -855,8 +901,10 @@ export class Hud {
             Sirven igual con el dedo en una tablet.
           -->
           <!--
-            En los peldaños con dibujos, los botones llevan **la hélice con
-            su flecha**: arriba para más motor, abajo para menos.
+            En los peldaños con dibujos, los botones llevan **el motor con
+            su flecha**: arriba para más motor, abajo para menos. El motor
+            es el de este avión —hélice o reactor—; ver fan en
+            pictogramas.ts.
 
             Llevaron la misma hélice en dos tamaños, y no valía: una hélice de
             cuatro palas de frente es una cruz, y en pantalla los dos botones
@@ -874,14 +922,14 @@ export class Hud {
           <div class="motor__fila">
             <button class="motor__tecla" type="button" data-hud="throttle-down"
                     data-objetivo="extendido"
-                    aria-label="${t("hud.throttleDown")}">${pictos ? HELICE_MENOS : "−"}</button>
+                    aria-label="${t("hud.throttleDown")}">${pictos ? motorMenos(chorro) : "−"}</button>
             <!--
               Y la marca del gas que **sostiene el nivel**, en el peldaño donde
               eso existe. Ver ponerGasDeNivel.
             -->
             <div class="motor__pista"><div class="motor__relleno" data-hud="throttle"></div><span class="motor__nivel" data-hud="gas-nivel" hidden></span></div>
             <button class="motor__tecla" type="button" data-hud="throttle-up" data-objetivo="extendido"
-                    aria-label="${t("hud.throttleUp")}">${pictos ? HELICE_MAS : "+"}</button>
+                    aria-label="${t("hud.throttleUp")}">${pictos ? motorMas(chorro) : "+"}</button>
           </div>
           ${gauges ? `<span class="medidor__glosa">${t("hud.throttle")}</span>` : ""}
           <!--
@@ -997,19 +1045,24 @@ export class Hud {
             **Y a cuál se va, también para quien no lee.**
 
             En Guyrami la tarjeta era una flecha y nada más: apuntaba a un
-            sitio sin decir cuál. Al lado va ahora **la misma ficha que se
-            eligió en el hangar** —el plano del aeródromo, con sus colores—,
-            que es lo que un niño de cuatro años reconoce: no el nombre, sino
-            el dibujo que tocó para elegirlo. Donde se lee, el nombre y su
-            indicativo OACI, que es cómo se llama ese sitio en cualquier carta.
+            sitio sin decir cuál. Después llevó el plano del aeródromo en
+            miniatura, y a ese tamaño una pista es una raya blanca y todas
+            las rayas son iguales: «¿y esto ayuda a entender a qué aeropuerto
+            voy?». No ayudaba.
+
+            Lo que va es **su indicativo OACI en una placa**, la misma que
+            lleva la ficha del destino en el hangar. Cuatro letras son una
+            forma que se reconoce antes de saber leerla —SGAS no se parece a
+            GCXO—, se aprende sin estudiarla, y es exactamente lo que pone en
+            la carta y en el aeropuerto de verdad. Donde se lee, además, el
+            nombre debajo.
           -->
           <span class="casa__fila">
             <span class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</span>
-            ${gauges ? "" : '<span class="casa__plano" data-hud="home-plano" aria-hidden="true" hidden></span>'}
             <!-- El indicativo, al lado de la flecha y no en una línea más: con
                  un nombre largo, esa línea echaba la tarjeta fuera de la
                  pantalla en una tablet táctil. Lo midió verificar-carteles. -->
-            ${gauges ? '<span class="casa__oaci" data-hud="home-oaci" hidden></span>' : ""}
+            <span class="casa__oaci${gauges ? "" : " casa__oaci--placa"}" data-hud="home-oaci" hidden></span>
           </span>
           ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ""}
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
@@ -1030,7 +1083,7 @@ export class Hud {
         al despegar. Ver .rincon y .pictos en style.css.
       -->
       <div class="rincon">
-      ${pictos ? Pictogramas.markup() : ""}
+      ${pictos ? Pictogramas.markup(chorro) : ""}
       <!--
         La señal del vuelo: qué toca hacer ahora, dibujado. Va en **todos** los
         peldaños y no solo en los que llevan texto — hay quien juega en
@@ -1176,15 +1229,8 @@ export class Hud {
             justo ahí es volver a volar; pero si lo que quiere es cambiar de
             sitio, hasta hoy había que recargar la página.
           -->
-          <button type="button" class="fin__hangar" data-hud="fin-hangar">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 12 L12 5 L21 12 v8 H3 Z" fill="none"
-                    stroke="currentColor" stroke-width="2.2"
-                    stroke-linejoin="round" />
-              <path d="M9 20 v-5 h6 v5" fill="none" stroke="currentColor"
-                    stroke-width="2.2" stroke-linejoin="round" />
-            </svg>
-          </button>
+          <button type="button" class="fin__hangar" data-hud="fin-hangar"
+                  aria-label="${t("hangar.volver")}">${HANGAR}</button>
           </div>
         </div>
       </div>
@@ -1250,7 +1296,6 @@ export class Hud {
     this.homeDistance = optional(this.root, "home-distance");
     this.homeGloss = optional(this.root, "home-gloss");
     this.homeOaci = optional(this.root, "home-oaci");
-    this.homePlano = optional(this.root, "home-plano");
     // La tarjeta es nueva, así que lo puesto en ella también.
     this.destinoPuesto = null;
     this.warning = pick(this.root, "warning");
@@ -1599,21 +1644,6 @@ export class Hud {
     if (this.homeOaci) {
       this.homeOaci.hidden = !destino?.oaci;
       this.homeOaci.textContent = destino?.oaci ?? "";
-    }
-    if (this.homePlano) {
-      this.homePlano.hidden = !destino;
-      if (destino) {
-        const { cielo, suelo } = pieles(destino.escenario);
-        this.homePlano.style.setProperty("--cielo", cielo);
-        this.homePlano.style.setProperty("--suelo", suelo);
-        // A su propia escala: aquí no se compara con nada, se reconoce.
-        this.homePlano.innerHTML = plano(
-          destino.escenario,
-          caja(destino.escenario).lado,
-        );
-      } else {
-        this.homePlano.innerHTML = "";
-      }
     }
     if (!destino) return;
     /*
@@ -2332,9 +2362,9 @@ export class Hud {
     return !!this.fin && !this.fin.hidden;
   }
 
-  /** Estado del sonido: glifo y etiqueta accesible. */
-  setSoundLevel(glyph: string, label: string): void {
-    this.soundState = { glyph, label };
+  /** Estado del sonido: el nivel y su etiqueta accesible. */
+  setSoundLevel(nivel: AudioLevel["id"], label: string): void {
+    this.soundState = { nivel, label };
     this.paintSound();
   }
 
@@ -2789,11 +2819,11 @@ export class Hud {
 
   private paintSound(): void {
     if (!this.sound) return;
-    this.sound.textContent = this.soundState.glyph;
+    this.sound.innerHTML = ALTAVOZ[this.soundState.nivel];
     this.sound.setAttribute("aria-label", this.soundState.label);
     this.sound.setAttribute(
       "aria-pressed",
-      String(this.soundState.glyph === "🔇"),
+      String(this.soundState.nivel === "mudo"),
     );
   }
 

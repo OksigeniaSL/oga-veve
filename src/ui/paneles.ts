@@ -134,15 +134,26 @@ export const PANELES_DEL_VUELO: readonly PanelDelVuelo[] = [
      * —«¿y por qué se cae si tiro mucho?»— llega justo después de una pérdida,
      * o sea volando y no en el hangar. El icono es el perfil en corte con la
      * corriente pasándole por encima, que es literalmente lo que hay dentro.
+     *
+     * **Y la flecha que sube.** Eran el perfil y dos rayas curvas, y en la
+     * barra —con el perfil pintado en negro por falta de color, además— se
+     * leían como tres latigazos. El perfil entero, gordo delante y afilado
+     * detrás, una sola línea de corriente y la flecha de la sustentación: es
+     * de lo que va la pantalla, y la flecha sale del ala sin decir por qué,
+     * que es lo que se explica dentro.
      */
     id: "ala",
     caja: "#ala",
     titulo: "ala.titulo",
     icono: `
-      <path d="M3 15 C8 15 13 13.4 21 9 C15 15.6 9 18 3 18 Z" />
-      <path d="M2.4 6.6 C7 6.6 12 5.4 20 2.6 M2.4 10.2 C6 10.2 9.4 9.6 13 8.4"
-            fill="none" stroke="currentColor" stroke-width="1.5"
-            stroke-linecap="round" />`,
+      <path d="M2 17.4 C2 15 5 13.4 9 13.4 C14 13.4 18.6 15 22 17.6
+               C17.6 18.6 13 19.2 9 19.2 C5 19.2 2 18.8 2 17.4 Z" />
+      <path d="M1.6 12 C5 9.6 10 9.4 14 10.2" fill="none"
+            stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+            opacity="0.7" />
+      <path d="M17 12 V4.6" fill="none" stroke="currentColor"
+            stroke-width="2.2" stroke-linecap="round" />
+      <path d="M13.8 6.4 L17 2.4 L20.2 6.4 Z" />`,
   },
   {
     /*
@@ -178,19 +189,21 @@ export const PANELES_DEL_VUELO: readonly PanelDelVuelo[] = [
     /*
      * El cuaderno de vuelo: las horas, lo hecho y el grado.
      *
-     * La hombrera con sus galones es el icono, y no hace falta más: es lo que
-     * hay dentro, y quien ha visto una vez sus galones al terminar un vuelo
-     * sabe qué es esto sin que nadie se lo diga.
+     * **Un cuaderno con un avión en la tapa.** Era la hombrera con sus
+     * galones —un rectángulo con dos rayas y una banda debajo—, y a tamaño
+     * de botón eso es un bocadillo de chat o una pantalla: se tomaba por «los
+     * mensajes». La hombrera está dentro, en grande; por fuera lo que se
+     * reconoce a los cuatro años es un libro, y el avión dice de qué.
      */
     id: "cuaderno",
     caja: "#cuaderno",
     titulo: "cuaderno.title",
     icono: `
-      <rect x="4" y="4" width="16" height="13" rx="3" fill="none"
-            stroke="currentColor" stroke-width="1.8" />
-      <rect x="4" y="15.5" width="16" height="3.5" rx="1.75" />
-      <path d="M7.5 8.4 h9 M7.5 11.6 h9" stroke="currentColor"
-            stroke-width="1.8" stroke-linecap="round" fill="none" />`,
+      <rect x="4.4" y="2.6" width="15.2" height="18.8" rx="2" fill="none"
+            stroke="currentColor" stroke-width="2" />
+      <path d="M8 2.8 V21.2" stroke="currentColor" stroke-width="2" fill="none" />
+      <path d="M14 6.4 l.8 3.4 3.4 1.3 v1.2 l-3.4-.7 -.3 2.6 1.3 1 v.9
+               l-1.8-.5 -1.8.5 v-.9 l1.3-1 -.3-2.6 -3.4.7 v-1.2 l3.4-1.3 Z" />`,
   },
 ];
 

@@ -37,6 +37,29 @@
 import type { FlightState } from "../flight/model";
 import { nombreDeTecla, type Accion } from "../flight/keymap";
 import { t, type TranslationKey } from "../i18n";
+import { DIBUJOS } from "./senal";
+import { motorMas, motorMenos } from "./pictogramas";
+
+/*
+ * **Los dibujos del tutor son los del resto del juego, no caracteres.**
+ *
+ * Eran glifos de texto —⏱, ✋, ✦, ⤳, ⇡—, y dos de ellos son emoji: cada
+ * sistema los pinta a su manera, en color o no, y en algunas tabletas no los
+ * pinta. Pero lo peor era que **no eran los dibujos del juego**: el freno se
+ * pedía con una mano cuando el botón de frenar lleva el avión y la barra, y el
+ * gas con una flecha suelta cuando sus botones llevan el motor con su flecha.
+ * Un dibujo por significado: el que se ve aquí es el que se busca en pantalla.
+ */
+const DIBUJO_DEL_TUTOR = {
+  masMotor: (chorro: boolean) => motorMas(chorro),
+  menosMotor: (chorro: boolean) => motorMenos(chorro),
+  acelerar: () => DIBUJOS.motor,
+  tirar: () => DIBUJOS.tirar,
+  volando: () => DIBUJOS.ala,
+  frenar: () => DIBUJOS.freno,
+  salir: () => DIBUJOS.salida,
+} as const;
+type DibujoDelTutor = keyof typeof DIBUJO_DEL_TUTOR;
 
 /** Velocidad indicada a partir de la cual conviene rotar, en m/s. */
 const ROTATION_SPEED = 30;
@@ -96,11 +119,11 @@ interface StepView {
   cue:
     | { kind: "action"; accion: Accion }
     | { kind: "key"; label: string; wide?: boolean }
-    | { kind: "symbol"; glyph: string };
+    | { kind: "dibujo"; dibujo: DibujoDelTutor };
   /** Lo mismo, para quien juega con el dedo. */
   touchCue:
     | { kind: "key"; label: string; wide?: boolean }
-    | { kind: "symbol"; glyph: string };
+    | { kind: "dibujo"; dibujo: DibujoDelTutor };
   key: TranslationKey;
   /**
    * Lo que marca la barra, de 0 a 1, o `null` si este paso no lleva barra.
@@ -122,25 +145,25 @@ interface StepView {
 const STEPS: Record<Exclude<Step, "done">, StepView> = {
   throttle: {
     cue: { kind: "action", accion: "throttleUp" },
-    touchCue: { kind: "symbol", glyph: "⇡" },
+    touchCue: { kind: "dibujo", dibujo: "masMotor" },
     key: "tutor.throttle",
     progress: (_state, throttle) => throttle,
   },
   speed: {
-    cue: { kind: "symbol", glyph: "⏱" },
-    touchCue: { kind: "symbol", glyph: "⏱" },
+    cue: { kind: "dibujo", dibujo: "acelerar" },
+    touchCue: { kind: "dibujo", dibujo: "acelerar" },
     key: "tutor.speed",
     progress: (state) => Math.min(1, state.airspeed / ROTATION_SPEED),
   },
   pull: {
     cue: { kind: "action", accion: "pitchUp" },
-    touchCue: { kind: "symbol", glyph: "⇡" },
+    touchCue: { kind: "dibujo", dibujo: "tirar" },
     key: "tutor.pull",
     progress: () => null,
   },
   flying: {
-    cue: { kind: "symbol", glyph: "✦" },
-    touchCue: { kind: "symbol", glyph: "✦" },
+    cue: { kind: "dibujo", dibujo: "volando" },
+    touchCue: { kind: "dibujo", dibujo: "volando" },
     key: "tutor.flying",
     progress: () => null,
   },
@@ -149,7 +172,7 @@ const STEPS: Record<Exclude<Step, "done">, StepView> = {
   // forma de perder velocidad para posarse, y eso no lo adivina nadie.
   slow: {
     cue: { kind: "action", accion: "throttleDown" },
-    touchCue: { kind: "symbol", glyph: "⇣" },
+    touchCue: { kind: "dibujo", dibujo: "menosMotor" },
     key: "tutor.slow",
     progress: (_state, throttle) => throttle,
     objetivo: () => APPROACH_THROTTLE,
@@ -170,7 +193,7 @@ const STEPS: Record<Exclude<Step, "done">, StepView> = {
    */
   frenar: {
     cue: { kind: "action", accion: "brakes" },
-    touchCue: { kind: "symbol", glyph: "✋" },
+    touchCue: { kind: "dibujo", dibujo: "frenar" },
     key: "tutor.frenar",
     // La barra baja según se frena: de la velocidad de toma a la de rodaje.
     progress: (state) => Math.max(0, Math.min(1, state.airspeed / 45)),
@@ -178,8 +201,8 @@ const STEPS: Record<Exclude<Step, "done">, StepView> = {
   salir: {
     // La raya verde ya está en el suelo y ya lleva a la salida: lo único que
     // falta es decir que se siga, y eso es un dibujo, no una tecla.
-    cue: { kind: "symbol", glyph: "⤳" },
-    touchCue: { kind: "symbol", glyph: "⤳" },
+    cue: { kind: "dibujo", dibujo: "salir" },
+    touchCue: { kind: "dibujo", dibujo: "salir" },
     key: "tutor.salir",
     progress: () => null,
   },
@@ -192,6 +215,15 @@ export class Tutor {
 
   /** De dónde sale la tecla que se dibuja. Ver `renderCue`. */
   private teclaDe: ((accion: Accion) => string) | null = null;
+
+  /** Si el avión de hoy es de reactor: decide el dibujo del motor. */
+  private chorro = false;
+  setChorro(chorro: boolean): void {
+    this.chorro = chorro;
+  }
+
+  /** Lo último que se pintó en la tarjeta, para no rehacerla en cada fotograma. */
+  private cuePintado = "";
 
   /** Se le da al montar el juego. */
   setKeySource(teclaDe: (accion: Accion) => string): void {
@@ -224,6 +256,7 @@ export class Tutor {
   bind(root: HTMLElement): void {
     this.root = root.querySelector('[data-hud="tutor"]');
     this.cue = root.querySelector('[data-hud="tutor-cue"]');
+    this.cuePintado = "";
     this.label = root.querySelector('[data-hud="tutor-text"]');
     this.bar = root.querySelector('[data-hud="tutor-bar"]');
     this.fill = root.querySelector('[data-hud="tutor-fill"]');
@@ -292,11 +325,19 @@ export class Tutor {
     const view = STEPS[this.step];
     this.root.hidden = false;
 
-    if (this.cue)
-      this.cue.innerHTML = renderCue(
+    if (this.cue) {
+      const cue = renderCue(
         isTouch() ? view.touchCue : view.cue,
         this.teclaDe,
+        this.chorro,
       );
+      // Solo si cambia: con un SVG dentro, rehacerlo sesenta veces por
+      // segundo es tirar el DOM y la animación de respirar con él.
+      if (cue !== this.cuePintado) {
+        this.cue.innerHTML = cue;
+        this.cuePintado = cue;
+      }
+    }
     if (this.label) this.label.textContent = t(view.key);
 
     const progress = view.progress(state, throttle);
@@ -343,9 +384,10 @@ export class Tutor {
 function renderCue(
   cue: StepView["cue"],
   teclaDe: ((accion: Accion) => string) | null,
+  chorro = false,
 ): string {
-  if (cue.kind === "symbol")
-    return `<span class="tutor__glifo">${cue.glyph}</span>`;
+  if (cue.kind === "dibujo")
+    return `<span class="tutor__glifo">${DIBUJO_DEL_TUTOR[cue.dibujo](chorro)}</span>`;
 
   if (cue.kind === "action") {
     // **Una sola tecla, y la que usa quien está jugando.** Se probó a

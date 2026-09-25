@@ -25,7 +25,8 @@ import {
 import { t } from "../i18n";
 import { Panel } from "./panel";
 import { armarPanel } from "./concha";
-import { HELICE_MAS, HELICE_MENOS } from "./pictogramas";
+import { motorMas, motorMenos } from "./pictogramas";
+import { DIBUJOS } from "./senal";
 
 /*
  * Los dibujos de las teclas. En SVG y no emoji: un emoji se ve distinto en
@@ -41,20 +42,20 @@ const FLECHA_IZQ = flecha("M3 12 L13 4 V9 H21 V15 H13 V20 Z");
 const FLECHA_DER = flecha("M21 12 L11 20 V15 H3 V9 H11 V4 Z");
 
 /*
- * La hélice con su flecha vive en `pictogramas.ts`, que es de donde la sacan
- * también los botones del motor del HUD. Estaban dibujadas dos veces y solo
- * una de las dos llevaba flecha: la del HUD eran dos hélices del mismo dibujo
- * en dos tamaños, y no se distinguían.
+ * El motor con su flecha vive en `pictogramas.ts`, que es de donde lo sacan
+ * también los botones del motor del HUD. Estaban dibujados dos veces y solo
+ * uno de los dos llevaba flecha: la del HUD eran dos hélices del mismo dibujo
+ * en dos tamaños, y no se distinguían. Y es hélice o reactor según el avión:
+ * ver `setChorro`.
  */
 
-/** La mano de parar, la misma que el botón de freno. */
-const MANO = `
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M8 20 v-6 l-2.4-2.4 a1.4 1.4 0 0 1 2-2 L9.4 11.2 V4.6
-             a1.3 1.3 0 0 1 2.6 0 v5 v-5.6 a1.3 1.3 0 0 1 2.6 0 V10
-             v-4.4 a1.3 1.3 0 0 1 2.6 0 V14 a6 6 0 0 1-6 6 Z" />
-  </svg>
-`;
+/*
+ * **El freno es el avión y la barra, no la mano.** La mano es «alto» —la dice
+ * el señalero y la dice la tarjeta de esperar—, y el botón de frenar del HUD
+ * ya se había cambiado a este dibujo por eso mismo. Aquí seguía la mano: la
+ * misma acción con dos dibujos según dónde se mirara.
+ */
+const FRENO = DIBUJOS.freno;
 
 /** La llave de contacto, la misma que la tarjeta de «arrancá el motor». */
 const LLAVE = `
@@ -74,7 +75,7 @@ const LLAVE = `
  * tecla — persecución, cabina, ala. Y quien juega no lee, así que el dibujo es
  * la explicación entera.
  */
-const OJO = `
+export const OJO = `
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 5.4c-4.6 0-8.2 3.3-9.6 6.6 1.4 3.3 5 6.6 9.6 6.6s8.2-3.3
              9.6-6.6C20.2 8.7 16.6 5.4 12 5.4Z" />
@@ -97,9 +98,7 @@ const GLIFOS: Partial<Record<Accion, string>> = {
   pitchDown: FLECHA_ABA,
   rollLeft: FLECHA_IZQ,
   rollRight: FLECHA_DER,
-  throttleUp: HELICE_MAS,
-  throttleDown: HELICE_MENOS,
-  brakes: MANO,
+  brakes: FRENO,
   /*
    * **Y el punto de vista, que faltaba.** La tecla existe desde hace tiempo y
    * cicla tres cámaras —persecución, cabina, ala—, pero en el teclado dibujado
@@ -180,6 +179,14 @@ const FILAS: ReadonlyArray<{ sangria: number; teclas: readonly string[] }> = [
 export class KeyScreen {
   /** Sin letras: teclado dibujado. Con letras: la tabla de siempre. */
   private simple = false;
+
+  /** Si el avión de hoy es de reactor: el gas lleva su fan y no una hélice. */
+  private chorro = false;
+  setChorro(chorro: boolean): void {
+    if (chorro === this.chorro) return;
+    this.chorro = chorro;
+    if (!this.root.hidden) this.render();
+  }
 
   /** Teclas pulsadas ahora mismo, para encender su dibujo. */
   private readonly pulsadas = new Set<string>();
@@ -337,7 +344,14 @@ export class KeyScreen {
     const accion = this.keymap.isAnnounced(code)
       ? this.keymap.actionFor(code)
       : null;
-    const glifo = accion ? GLIFOS[accion] : undefined;
+    const glifo =
+      accion === "throttleUp"
+        ? motorMas(this.chorro)
+        : accion === "throttleDown"
+          ? motorMenos(this.chorro)
+          : accion
+            ? GLIFOS[accion]
+            : undefined;
     const clases = ["tecla", extra, glifo ? "tecla--activa" : ""]
       .filter(Boolean)
       .join(" ");

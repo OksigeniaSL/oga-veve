@@ -824,6 +824,21 @@ body {
 .sonido:hover {
   border-color: var(--ocre);
 }
+
+/*
+ * **Y el dibujo, del color de la tinta.**
+ *
+ * No había regla: el botón ponía `color` y el SVG lo ignoraba, así que todo lo
+ * que iba relleno salía con el negro por defecto de SVG sobre el botón oscuro.
+ * La pausa eran dos barras negras sobre un círculo casi negro, el ala del
+ * esquema una mancha negra con dos rayas blancas y el cuaderno un bocadillo de
+ * chat. Solo se veían bien los de trazo, que ya pedían `currentColor`.
+ */
+.sonido svg {
+  width: 24px;
+  height: 24px;
+  fill: currentcolor;
+}
 .sonido:active {
   transform: scale(0.93);
 }
@@ -1692,42 +1707,6 @@ button.motor__tecla::after {
   gap: 8px;
 }
 
-/*
- * El plano del destino, con los colores de su ficha del hangar: el mismo
- * dibujo que se tocó para elegirlo, en pequeño. Los trazos del plano van en
- * píxeles —ver .plano__pista—, así que a este tamaño se afinan aquí para que
- * la pista no sea una mancha.
- */
-.casa__plano {
-  display: block;
-  width: 60px;
-  height: 36px;
-  padding: 3px;
-  border-radius: 7px;
-  overflow: hidden;
-  background: linear-gradient(
-    var(--cielo, #33413a) 0%,
-    var(--suelo, #24312b) 100%
-  );
-  box-shadow: 0 0 0 1.5px rgba(111, 179, 224, 0.85);
-}
-
-.casa__plano[hidden] {
-  display: none;
-}
-
-.casa__plano .plano__pista {
-  stroke-width: 3.2;
-}
-
-.casa__plano .plano__rodadura {
-  stroke-width: 1.2;
-}
-
-.casa__plano .plano__umbral {
-  stroke-width: 1.6;
-}
-
 /* El indicativo OACI, en la letra de las cartas: ancho fijo y espaciado. */
 .casa__oaci {
   font-family:
@@ -1740,6 +1719,21 @@ button.motor__tecla::after {
 
 .casa__oaci[hidden] {
   display: none;
+}
+
+/*
+ * **En Guyrami, en su placa.** Es lo único que dice a qué sitio se va, así que
+ * va grande y como se ve en la ficha del hangar —letras claras sobre placa
+ * oscura, ver .plano__ficha—: la placa que se tocó al elegir es la que se ve
+ * volando. Sustituye al plano en miniatura, que a este tamaño era una raya.
+ */
+.casa__oaci--placa {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(16, 22, 19, 0.72);
+  font-size: 20px;
+  line-height: 1.3;
+  color: var(--tinta);
 }
 
 /*
@@ -1968,6 +1962,14 @@ button.motor__tecla::after {
   line-height: 1;
   color: var(--ocre);
   animation: respirar 1.6s ease-in-out infinite;
+}
+
+/* El dibujo dentro: del tamaño del glifo que era, y del color de la tarjeta. */
+.tutor__glifo svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+  fill: currentcolor;
 }
 
 /* Tecla dibujada: se compara con el teclado de verdad y se encuentra. La
@@ -4207,7 +4209,7 @@ button.motor__tecla::after {
   opacity: 0.85;
 }
 
-.tecla--activa .cap__helice ellipse {
+.tecla--activa .cap__helice > * {
   fill: #1a1206;
 }
 
@@ -4231,7 +4233,7 @@ button.motor__tecla::after {
   fill: #fff;
 }
 
-.tecla--pulsada .cap__helice ellipse {
+.tecla--pulsada .cap__helice > * {
   fill: #fff;
 }
 
@@ -5043,6 +5045,12 @@ button.motor__tecla::after {
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--tinta);
+}
+
+/* En la ficha del destino es la misma placa que lleva la tarjeta del vuelo, y
+   tiene que leerse igual de bien. Ver .casa__oaci--placa. */
+.ficha--destino .plano__ficha b {
+  font-size: 16px;
 }
 
 .plano__ficha i {

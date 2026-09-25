@@ -182,8 +182,8 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
    * **Y la tarjeta del destino, en lo más grande que puede ponerse.**
    *
    * En tierra la tarjeta dice «Pista» y nada más; volando a otro campo lleva
-   * el nombre del sitio y su indicativo —y en Guyrami, el plano del
-   * aeródromo al lado de la flecha—, y eso es lo que tiene que caber. El
+   * el nombre del sitio y su indicativo —en Guyrami, en su placa grande al
+   * lado de la flecha—, y eso es lo que tiene que caber. El
    * banco mide en tierra, así que se pone a mano con el nombre más largo de
    * los destinos y se vuelve a poner en cada medida: el juego la repinta en
    * cada fotograma.
@@ -201,13 +201,6 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       if (oaci) {
         oaci.hidden = false;
         oaci.textContent = "SGES";
-      }
-      const plano = casa.querySelector('[data-hud="home-plano"]');
-      if (plano) {
-        plano.hidden = false;
-        if (!plano.firstChild)
-          plano.innerHTML =
-            '<svg class="ficha__plano" viewBox="0 0 10 6"><line class="plano__pista" x1="1" y1="5" x2="9" y2="1" /></svg>';
       }
     };
   });
