@@ -35,7 +35,18 @@
  *    Pykasu y 1,80 el Mainumby, medidos con el avión parado en la pista.
  */
 
-import { Box3, Group, Vector3, type Color, type Object3D } from "three";
+import {
+  Box3,
+  CircleGeometry,
+  DoubleSide,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  Vector3,
+  type Color,
+  type Material,
+  type Object3D,
+} from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { AircraftConfig } from "../flight/aircraft";
 import type { AircraftMesh } from "./aircraft-mesh";
@@ -470,6 +481,75 @@ function conSuEncuadre(
   return { ...ojo, encuadre: { visera, lados, abajo } };
 }
 
+/**
+ * **Y la hélice, borrosa cuando gira deprisa.**
+ *
+ * A tope da dieciséis vueltas por segundo, y a sesenta imágenes por segundo
+ * una hélice de cuatro palas avanza casi un cuarto de vuelta entre imagen e
+ * imagen: la cámara la pillaba siempre en la misma postura y se veía **quieta
+ * y en cruz**, con el motor a fondo. Es el mismo efecto que hace que las
+ * ruedas de los coches parezcan ir hacia atrás en las películas, y lo que ve
+ * el ojo —y cualquier foto— es un disco translúcido. Así que al subir de
+ * vueltas las palas se desvanecen y aparece el disco.
+ *
+ * Cada eje lleva su disco, del radio de sus palas y en el plano en el que
+ * giran; las palas se quedan con una copia de su material para poder
+ * desvanecerse sin desvanecer el tren, que lleva el mismo.
+ */
+function discoDeHelice(ejes: readonly Object3D[]): ((cuanto: number) => void) | undefined {
+  const partes: { palas: Material[]; disco: MeshBasicMaterial }[] = [];
+  const v = new Vector3();
+  for (const eje of ejes) {
+    eje.updateWorldMatrix(true, true);
+    const palas: Material[] = [];
+    let radio = 0;
+    eje.traverse((o) => {
+      const m = o as Mesh;
+      if (!m.isMesh || !/pala|blade/i.test(m.name)) return;
+      const suyo = Array.isArray(m.material) ? m.material[0] : m.material;
+      if (!suyo) return;
+      const copia = suyo.clone();
+      copia.transparent = true;
+      m.material = copia;
+      palas.push(copia);
+      const pos = m.geometry.getAttribute("position");
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        m.localToWorld(v);
+        eje.worldToLocal(v);
+        radio = Math.max(radio, Math.hypot(v.x, v.y));
+      }
+    });
+    if (!palas.length || radio <= 0) continue;
+    // Gris oscuro y no el color de la pala: una hélice girando se ve como
+    // un velo sombrío, y en el color de la librea parecía un halo naranja.
+    const disco = new MeshBasicMaterial({
+      color: 0x2c2e31,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: DoubleSide,
+    });
+    const malla = new Mesh(new CircleGeometry(radio, 40), disco);
+    malla.name = "disco-de-helice";
+    malla.visible = false;
+    eje.add(malla);
+    partes.push({ palas, disco });
+  }
+  if (!partes.length) return undefined;
+  return (cuanto) => {
+    const k = Math.max(0, Math.min(1, cuanto));
+    for (const p of partes) {
+      for (const m of p.palas) m.opacity = 1 - k * 0.92;
+      p.disco.opacity = k * 0.32;
+      (p.disco as { visible?: boolean }).visible = k > 0.01;
+    }
+    for (const eje of ejes)
+      for (const h of eje.children)
+        if (h.name === "disco-de-helice") h.visible = k > 0.01;
+  };
+}
+
 function esAncestro(posible: Object3D, hijo: Object3D): boolean {
   for (let o: Object3D | null = hijo.parent; o; o = o.parent)
     if (o === posible) return true;
@@ -658,6 +738,7 @@ export async function cargarModelo(
     // que un bimotor gire las dos. Ver `AircraftMesh.helices`.
     propeller: helices[0] ?? new Group(),
     helices,
+    borrarHelices: discoDeHelice(helices),
     ojo,
     // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
     pantallas: encenderPantallas(raiz, group),

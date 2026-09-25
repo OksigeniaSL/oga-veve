@@ -1597,6 +1597,8 @@ export class Game {
 
   cameraMode: CameraMode = vistaRecordada();
   private propellerAngle = 0;
+  /** A qué ritmo gira ahora la hélice, rad/s. Ver `syncAircraftMesh`. */
+  private giroDeHelice = 0;
   /** Estado del avión en el fotograma anterior, para detectar los cambios. */
   private wasOnGround = true;
   /** Si ya se despegó en este vuelo. Ver `announce`. */
@@ -8260,7 +8262,22 @@ export class Game {
 
     // La hélice gira con el motor. No se intenta reproducir las rpm reales:
     // se busca que se vea girar y que el ritmo suba al acelerar.
-    this.propellerAngle += dt * (6 + this.input.controls.throttle * 96);
+    /*
+     * **Y solo con el motor en marcha, y con su inercia.** Giraba siempre,
+     * también con el motor apagado y el avión aparcado; y pasaba de nada a
+     * todo en un fotograma. Una hélice de verdad arranca despacio, se para
+     * despacio y, apagada, está quieta.
+     */
+    const quiere = this.input.controls.engineOn
+      ? 6 + this.input.controls.throttle * 96
+      : 0;
+    const prisa = quiere > this.giroDeHelice ? 1.4 : 0.6;
+    this.giroDeHelice +=
+      (quiere - this.giroDeHelice) * (1 - Math.exp(-dt * prisa));
+    this.propellerAngle += dt * this.giroDeHelice;
+    // Y deprisa, disco: ver `discoDeHelice`. Desde veinte radianes por
+    // segundo empieza a verse borrosa y a cuarenta y cinco ya es un disco.
+    this.aircraftMesh.borrarHelices?.((this.giroDeHelice - 20) / 25);
     // Todas las que haya, cada una sobre su eje. Ver `AircraftMesh.helices`.
     for (const h of this.aircraftMesh.helices ?? [
       this.aircraftMesh.propeller,

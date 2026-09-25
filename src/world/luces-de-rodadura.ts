@@ -51,6 +51,7 @@ import {
   SphereGeometry,
 } from "three";
 import { sobreLaPista, type Aerodrome, type Punto } from "./aerodrome";
+import { laRedonda } from "./luces-de-posicion";
 
 /** Cada cuántos metros va una luz de borde. Es la separación de verdad. */
 export const SEPARACION_BORDE = 30;
@@ -230,9 +231,15 @@ function montarLasLuces(
    * cerca y tiene volumen, y una capa de puntos sin atenuación mantiene unos
    * píxeles pase lo que pase. Una luz de verdad no encoge con la distancia,
    * porque lo que llega de ella es su brillo y no su tamaño.
+   *
+   * **Del tamaño de una luz, y redonda.** Era una esfera de cuarenta y dos
+   * centímetros de radio con cinco caras, y de cerca, parado en la calle, lo
+   * que se veía eran hexágonos azules del tamaño de un balón flotando junto
+   * al avión —en foto, en Gran Canaria—. Una baliza de borde de calle mide un
+   * palmo. Lo mismo que se hizo con las de pista: ver `aerodrome.ts`.
    */
   const malla = new InstancedMesh(
-    new SphereGeometry(0.42, 5, 3),
+    new SphereGeometry(0.2, 8, 6),
     new MeshBasicMaterial({ transparent: true }),
     puestas.length,
   );
@@ -265,6 +272,8 @@ function montarLasLuces(
       vertexColors: true,
       transparent: true,
       depthWrite: false,
+      // Redondos, como los de pista: un punto sin dibujo es un cuadrado.
+      map: laRedonda(),
     }),
   );
   puntos.name = "rodadura-puntos";

@@ -1441,8 +1441,13 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # esa tarjeta sube a la franja de arriba en la vista de cabina, el
         # centro está libre — y el centro es donde va la mano. Amontonados a un
         # costado se veían torcidos en el biplano y en el bimotor.
+        #
+        # Salvo con bastón, que sale del suelo entre las rodillas y desde el
+        # asiento cae justo delante del centro de la fila: en el fumigador
+        # tapaba los tres botones. Ahí la fila se aparta a su derecha.
+        deseado = plazas[0] + (medio_fila + 0.04 if mando == "palanca" else 0)
         centro_fila = max(
-            -ancho + medio_fila, min(ancho - medio_fila, plazas[0])
+            -ancho + medio_fila, min(ancho - medio_fila, deseado)
         )
         for i, que in enumerate(mandos):
             piezas += boton(
@@ -1452,15 +1457,25 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
                  panel_z + 0.008),
             )
     _ = relojes
-    # El pedestal central con sus palancas de gas, una por motor.
+    # El pedestal con sus palancas de gas, una por motor.
+    #
+    # **Entre los dos asientos, no delante del piloto.** Iba en el eje del
+    # avión, que es el sitio del pedestal mientras el piloto se sentaba a la
+    # izquierda; desde que el piloto se sienta en el eje —ver arriba— el
+    # pedestal le quedaba entre las rodillas y tapaba los mandos del centro
+    # del panel: en el bimotor y en el turbohélice, dos de cuatro botones.
+    # Con una sola plaza, a su derecha, que es donde va la mano del gas.
+    ped_x = (
+        (plazas[0] + plazas[1]) / 2 if len(plazas) > 1 else plazas[0] + 0.30
+    )
     if palancas and not grande:
         piezas.append(
-            caja("pedestal", -0.10, 0.10, y_suelo + 0.02, y_suelo + 0.16,
-                 panel_z, panel_z + 0.46)
+            caja("pedestal", ped_x - 0.10, ped_x + 0.10, y_suelo + 0.02,
+                 y_suelo + 0.16, panel_z, panel_z + 0.46)
         )
         for i in range(palancas):
             paso = 0.16 / max(1, palancas)
-            x = -paso * (palancas - 1) / 2 + paso * i
+            x = ped_x - paso * (palancas - 1) / 2 + paso * i
             piezas.append(
                 cilindro(
                     f"palanca-de-gas-{i}",

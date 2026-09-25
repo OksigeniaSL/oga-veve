@@ -180,6 +180,20 @@ function puntasDe(cuerpo: Object3D): Puntas | null {
   const lomo = new Vector3(0, -Infinity, 0);
   const foco = new Vector3(0, 0, Infinity);
   const v = new Vector3();
+  /*
+   * **Y el foco, buscado en el ala y no en lo que haya delante.**
+   *
+   * Se buscaba el punto más adelantado de la franja junto al fuselaje, y en
+   * un bimotor o un cuatrimotor lo más adelantado de esa franja **es el
+   * motor**: los focos salían en el buje de las hélices del JAZ 60 y en la
+   * toma de aire de los reactores, como los faros de un coche. En un avión de
+   * verdad van en el borde de ataque del ala, junto a la raíz. Si el modelo
+   * trae su ala con nombre, se busca solo ahí.
+   */
+  let hayAla = false;
+  cuerpo.traverse((o) => {
+    if (o.name.startsWith("ala") && (o as Mesh).geometry) hayAla = true;
+  });
 
   cuerpo.traverse((o) => {
     const geo = (o as Mesh).geometry;
@@ -204,7 +218,12 @@ function puntasDe(cuerpo: Object3D): Puntas | null {
       )
         lomo.copy(v);
       // Y el foco, en la raíz del ala y lo más adelante que llegue.
-      if (fuera > medido.x * 0.07 && fuera < medido.x * 0.18 && v.z < foco.z)
+      if (
+        (!hayAla || o.name.startsWith("ala")) &&
+        fuera > medido.x * 0.07 &&
+        fuera < medido.x * 0.18 &&
+        v.z < foco.z
+      )
         foco.copy(v);
     }
   });
