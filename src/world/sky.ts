@@ -27,9 +27,9 @@
  *
  * ## Y el color no se calcula, se elige
  *
- * Cinco paletas puestas a mano en cinco alturas del sol, y se interpola entre
+ * Seis paletas puestas a mano en seis alturas del sol, y se interpola entre
  * ellas. Un cielo con dispersión de Rayleigh de verdad se ve mejor en una
- * captura fija y cuesta caro en una tablet; cinco paletas **elegidas** dan una
+ * captura fija y cuesta caro en una tablet; seis paletas **elegidas** dan una
  * hora del día que se reconoce, que es de lo que se trata. La diferencia entre
  * esto y lo de antes no es la física: es que antes no había ninguna decisión
  * tomada.
@@ -128,20 +128,55 @@ const VERTEX_SHADER = /* glsl */ `
  */
 const GLSL_COMUN = /* glsl */ `
   uniform vec3 horizonColour;
+  uniform vec3 horizonSolColour;
   uniform vec3 zenithColour;
   uniform vec3 sunColour;
   uniform vec3 sunDirection;
   uniform float haloFuerza;
+  uniform float cinturon;
   uniform vec3 colorDelAgua;
   uniform float luzDelSol;
   uniform vec3 luzDeRelleno;
 
-  // El cielo en una dirección, sin el disco: el degradado y el halo.
+  /*
+   * El cielo en una dirección, sin el disco: el degradado y el halo. **En
+   * lineal**, como la luz: los colores llegan de \`Color\`, que ya los guarda
+   * así, y el halo se suma, que es una cuenta de luz y solo sale bien en
+   * lineal. El paso a sRGB lo hace quien pinta —ver \`cieloParaPantalla\`—.
+   */
   vec3 cieloEn(vec3 dir) {
     // La potencia comprime el degradado hacia el horizonte, que es donde el
     // ojo espera ver la transición. Un lerp lineal se ve plano.
     float t = pow(max(dir.y, 0.0), 0.62);
     vec3 c = mix(horizonColour, zenithColour, t);
+    /*
+     * **El horizonte no es del mismo color en todas partes.** Al ponerse el
+     * sol, el trozo de horizonte que tiene debajo arde en naranja y dorado y
+     * el de enfrente se queda malva y apagado; entre los dos, rosa. Con un
+     * solo color de horizonte y el halo redondo encima salía un círculo
+     * rojo en mitad del cielo y el resto del mismo tono. El calor va pegado
+     * al horizonte —se apaga en pocos grados de altura— porque es luz que
+     * atraviesa mucho aire rasante, no un resplandor alrededor del sol.
+     * A mediodía los dos colores son el mismo y esto no hace nada.
+     */
+    vec2 sh = sunDirection.xz;
+    float ls = length(sh);
+    vec2 dh = dir.xz;
+    float ld = length(dh);
+    float haciaElSol = (ls > 1e-4 && ld > 1e-4) ? dot(dh / ld, sh / ls) * 0.5 + 0.5 : 0.5;
+    float calor = pow(haciaElSol, 2.5) * exp(-max(dir.y, 0.0) * 6.0);
+    c = mix(c, horizonSolColour, calor);
+    /*
+     * **Y enfrente, el cinturón de Venus**: la franja rosa que se ve en el
+     * lado contrario al sol justo antes de ponerse y justo después, unos
+     * grados por encima del horizonte, con la sombra de la Tierra azulada
+     * debajo. Es aire alto que todavía recibe el sol rojo cuando el de abajo
+     * ya no. Se ve desde cualquier playa mirando al este al atardecer, y sin
+     * él el cielo de enfrente era un malva plano.
+     */
+    float enfrente = pow(1.0 - haciaElSol, 2.0);
+    float franja = smoothstep(0.03, 0.12, dir.y) * (1.0 - smoothstep(0.2, 0.45, dir.y));
+    c = mix(c, vec3(0.60, 0.34, 0.40), enfrente * franja * cinturon * 0.55);
     // Sol y halo son dos potencias del mismo coseno: una muy cerrada para el
     // disco —ver el cielo— y otra muy abierta para el resplandor. **El halo
     // se abre y se enciende al atardecer**: con la fuerza fija, el sol de
@@ -152,13 +187,30 @@ const GLSL_COMUN = /* glsl */ `
     return c;
   }
 
-  // El color de la bruma mirando hacia ahí: el del horizonte en esa
-  // dirección, con su resplandor. Es el cielo justo encima del agua, y por
-  // eso el mar lejano se funde con él sin costura.
+  /*
+   * El cielo como sale a pantalla, en sRGB, igual que el resto del render.
+   *
+   * La cúpula sacaba el color de \`cieloEn\` tal cual, sin este paso: un
+   * color lineal pintado como si fuera sRGB, que es más oscuro y más
+   * saturado de lo que se escribió. A mediodía se notaba poco; al ocaso el
+   * naranja salía **granate** y el cielo entero de un rojo casi negro. Y
+   * las paletas se habían ajustado a ojo sobre ese error, así que se
+   * cambiaron a la vez —ver \`MOMENTOS\`—. Con esto, además, el color del
+   * horizonte es el mismo que el de la niebla, que three.js sí pasa a
+   * sRGB, y el suelo lejano se funde con el cielo que tiene detrás.
+   */
+  vec3 cieloParaPantalla(vec3 dir) {
+    return sRGBTransferOETF(vec4(cieloEn(dir), 1.0)).rgb;
+  }
+
+  // El color de la bruma mirando hacia ahí, ya en sRGB: el del horizonte en
+  // esa dirección, con su resplandor. Es el cielo justo encima del agua, y
+  // por eso el mar lejano se funde con él sin costura. En sRGB porque se
+  // mezcla después del paso a pantalla, como la niebla de three.js.
   vec3 nieblaEn(vec3 dir) {
     vec2 h = dir.xz;
     float l = length(h);
-    return cieloEn(l > 1e-5 ? vec3(h / l, 0.0).xzy : vec3(1.0, 0.0, 0.0));
+    return cieloParaPantalla(l > 1e-5 ? vec3(h / l, 0.0).xzy : vec3(1.0, 0.0, 0.0));
   }
 
   /*
@@ -175,10 +227,9 @@ const GLSL_COMUN = /* glsl */ `
     float mira = clamp(-v.y, 0.0, 1.0);
     float fresnel = 0.02 + 0.98 * pow(1.0 - mira, 5.0);
     vec3 r = vec3(v.x, abs(v.y), v.z);
-    // El cielo sale a pantalla sin pasar a sRGB —es el color tal cual—, y
-    // aquí se trabaja en lineal: se deshace para que el reflejo se vea del
-    // mismo color que el cielo que refleja.
-    vec3 reflejo = sRGBTransferEOTF(vec4(cieloEn(r), 1.0)).rgb;
+    // El cielo ya se cuenta en lineal, que es como se trabaja aquí: el
+    // reflejo es el mismo color que el cielo que refleja, sin pasos.
+    vec3 reflejo = cieloEn(r);
     vec3 s = normalize(sunDirection);
     vec3 difusa = colorDelAgua * (sunColour * luzDelSol * max(s.y, 0.0) + luzDeRelleno) * RECIPROCAL_PI;
     // El camino del sol: el vector medio contra la normal del agua, que al
@@ -232,6 +283,8 @@ const FRAGMENT_SHADER = /* glsl */ `
        * dibuja, porque ahí ya no hay cielo sino mar.
        */
       sky += sunColour * disc;
+      // Y a pantalla en sRGB, como el mar de arriba y como todo lo demás.
+      sky = sRGBTransferOETF(vec4(sky, 1.0)).rgb;
     }
 
     gl_FragColor = vec4(sky, 1.0);
@@ -272,7 +325,15 @@ const FRAGMENTO_DEL_AGUA = /* glsl */ `
 
   void main() {
     vec3 v = normalize(vMundo - cameraPosition);
-    gl_FragColor = vec4(marEn(v), opacidad);
+    /*
+     * La transparencia solo cerca. Lejos, a través del agua se veía el
+     * fondo del mapa fino —oscuro— hasta donde llega, y a partir de ahí la
+     * cúpula: una raya recta en mitad del mar, que con el cielo del ocaso
+     * ya en su color se notaba. A esa distancia no se ve el fondo de
+     * ningún mar de verdad.
+     */
+    float alOjo = length(vMundo - cameraPosition);
+    gl_FragColor = vec4(marEn(v), mix(opacidad, 1.0, smoothstep(1500.0, 6000.0, alOjo)));
     #include <colorspace_fragment>
     #ifdef USE_FOG
       #ifdef FOG_EXP2
@@ -310,17 +371,30 @@ export const GAJOS_DEL_CIELO = { ancho: 64, alto: 48 } as const;
 
 
 /**
- * Las cinco horas del cielo, por altura del sol en grados.
+ * Las seis horas del cielo, por altura del sol en grados.
  *
  * No son colores sacados de una fórmula: están puestos a mano mirando fotos, y
  * el orden importa más que los valores. De noche el horizonte es **más claro**
  * que el cenit —la luz de las ciudades y lo que queda del día—, y al amanecer
  * el horizonte se enciende mucho antes que el resto del cielo.
+ *
+ * **Y son los colores que se ven**, en sRGB, como cualquier color escrito en
+ * hexadecimal en el resto del juego. Hasta que la cúpula no pasó su cuenta a
+ * sRGB —ver `cieloParaPantalla`— salían más oscuros de lo escrito, y estas
+ * paletas estaban retocadas a ojo contra ese oscurecimiento: el ocaso, un
+ * granate. Se rehicieron con el paso ya puesto; el mediodía, buscando que se
+ * viera como se veía.
  */
 interface Momento {
   /** Altura del sol, en grados. */
   readonly altura: number;
+  /** El horizonte lejos del sol, y el de enfrente. */
   readonly horizonte: number;
+  /**
+   * El horizonte debajo del sol. Al ocaso es el único trozo naranja del
+   * cielo; a mediodía, el mismo color que el resto. Ver `cieloEn`.
+   */
+  readonly horizonteSol: number;
   readonly cenit: number;
   /** El color del propio sol y de la luz que manda. */
   readonly sol: number;
@@ -346,30 +420,51 @@ const MOMENTOS: readonly Momento[] = [
   // Noche cerrada.
   {
     altura: -18,
-    horizonte: 0x0d1626,
-    cenit: 0x04060e,
+    horizonte: 0x0b1322,
+    horizonteSol: 0x0e1526,
+    cenit: 0x03050c,
     sol: 0x2a3a55,
     fuerza: 0.05,
     relleno: 0.3,
     estrellas: 1,
     ambiente: 0x7d8cb8,
   },
-  // Crepúsculo: el sol ya no se ve pero el horizonte todavía arde.
+  /*
+   * Crepúsculo náutico: ya es de noche para el suelo, pero por donde se fue
+   * el sol queda un rescoldo. Sin este paso, las nueve de la noche salían a
+   * medio camino entre la noche cerrada y un horizonte todavía en llamas.
+   */
+  {
+    altura: -12,
+    horizonte: 0x1a2240,
+    horizonteSol: 0x5a3a3a,
+    cenit: 0x080e20,
+    sol: 0x4a4058,
+    fuerza: 0.1,
+    relleno: 0.5,
+    estrellas: 0.85,
+    ambiente: 0x8a90b8,
+  },
+  // Crepúsculo: el sol ya no se ve pero el horizonte todavía arde, y solo
+  // por su lado; enfrente ya es de noche y arriba, azul oscuro.
   {
     altura: -6,
-    horizonte: 0x5a4364,
-    cenit: 0x101a35,
-    sol: 0x8c5a6a,
+    horizonte: 0x485486,
+    horizonteSol: 0xd8703f,
+    cenit: 0x1a3068,
+    sol: 0xa86a52,
     fuerza: 0.18,
     relleno: 0.85,
     estrellas: 0.55,
     ambiente: 0xb49ab8,
   },
-  // Amanecer y ocaso, con el sol en el horizonte. La hora buena.
+  // Amanecer y ocaso, con el sol en el horizonte. La hora buena: dorado
+  // debajo del sol, rosa y malva en el resto del horizonte y azul arriba.
   {
     altura: 0,
-    horizonte: 0xf0803c,
-    cenit: 0x3a5a8e,
+    horizonte: 0x9a92b8,
+    horizonteSol: 0xffa94c,
+    cenit: 0x3c68a8,
     sol: 0xff8c3a,
     fuerza: 0.9,
     relleno: 1.0,
@@ -379,8 +474,9 @@ const MOMENTOS: readonly Momento[] = [
   // Sol bajo: sombras largas, luz cálida. Las cinco y media de la tarde.
   {
     altura: 12,
-    horizonte: 0xf3cfa4,
-    cenit: 0x4f86c6,
+    horizonte: 0xcfd9e2,
+    horizonteSol: 0xf2d2a6,
+    cenit: 0x2f68b6,
     sol: 0xffd9a0,
     fuerza: 2.4,
     relleno: 0.42,
@@ -390,8 +486,9 @@ const MOMENTOS: readonly Momento[] = [
   // Mediodía.
   {
     altura: 60,
-    horizonte: 0xdfe7ea,
-    cenit: 0x4a86c8,
+    horizonte: 0xcdd9df,
+    horizonteSol: 0xcdd9df,
+    cenit: 0x2a5eb0,
     sol: 0xfff4e2,
     fuerza: 3.1,
     relleno: 0.5,
@@ -462,6 +559,7 @@ function entre(a: Momento, b: Momento, t: number): Momento {
   return {
     altura: a.altura + (b.altura - a.altura) * t,
     horizonte: mezcla(a.horizonte, b.horizonte),
+    horizonteSol: mezcla(a.horizonteSol, b.horizonteSol),
     cenit: mezcla(a.cenit, b.cenit),
     sol: mezcla(a.sol, b.sol),
     fuerza: a.fuerza + (b.fuerza - a.fuerza) * t,
@@ -744,10 +842,12 @@ export function createSky(scenario: Scenario): SkyRig {
    */
   const compartidos = {
     horizonColour: { value: new Color(scenario.sky.horizon) },
+    horizonSolColour: { value: new Color(scenario.sky.horizon) },
     zenithColour: { value: new Color(scenario.sky.zenith) },
     sunColour: { value: new Color(0xfff4e2) },
     sunDirection: { value: new Vector3(0, 1, 0) },
     haloFuerza: { value: 0 },
+    cinturon: { value: 0 },
     colorDelAgua: { value: new Color(scenario.water) },
     luzDelSol: { value: 0 },
     luzDeRelleno: { value: new Color() },
@@ -817,6 +917,7 @@ export function createSky(scenario: Scenario): SkyRig {
   let deslumbre = 1;
   const niebla = { bruma: scenario.fog.density, minimo: 0 };
   const relleno = new Color();
+  const nieblaDelSol = new Color();
 
   const rig: SkyRig = {
     group,
@@ -844,12 +945,24 @@ export function createSky(scenario: Scenario): SkyRig {
 
       material.uniforms.sunDirection!.value = sunDirection;
       (material.uniforms.horizonColour!.value as Color).setHex(m.horizonte);
+      (material.uniforms.horizonSolColour!.value as Color).setHex(m.horizonteSol);
       (material.uniforms.zenithColour!.value as Color).setHex(m.cenit);
       (material.uniforms.sunColour!.value as Color).setHex(m.sol);
+      // El cinturón, con el sol entre ocho grados por debajo y seis por
+      // encima del horizonte, y en su punto un poco antes de tocarlo.
+      material.uniforms.cinturon!.value = Math.max(
+        0,
+        1 - Math.abs(altura + 1) / 7,
+      );
       // El halo se abre cuanto más bajo está el sol. A cero de altura, del todo.
       // Y por el deslumbre, que es lo que quitan las gafas.
+      //
+      // Y por debajo del horizonte se apaga antes que por encima: con el sol
+      // ya puesto, el halo abierto del todo teñía de rosa medio cielo hacia
+      // arriba, y lo que queda de verdad es la franja encendida del
+      // horizonte, que ya la pinta `horizonteSol`.
       material.uniforms.haloFuerza!.value =
-        Math.max(0, 1 - Math.abs(altura) / 22) * deslumbre;
+        Math.max(0, 1 - Math.abs(altura) / (altura < 0 ? 12 : 22)) * deslumbre;
 
       sun.position.copy(sunDirection).multiplyScalar(scenario.size * 0.4);
       sun.color.setHex(m.sol);
@@ -881,7 +994,12 @@ export function createSky(scenario: Scenario): SkyRig {
        * delata que el atardecer está pintado encima en vez de ser la luz que
        * hay. Es una línea y es de las cosas que más se notan.
        */
-      fog.color.setHex(m.horizonte);
+      /*
+       * Y un poco del lado del sol: la niebla es una sola para todas las
+       * direcciones, y con el malva de enfrente a secas el monte recortado
+       * contra el ocaso se apagaba hacia un color que no tiene detrás.
+       */
+      fog.color.setHex(m.horizonte).lerp(nieblaDelSol.setHex(m.horizonteSol), 0.3);
     },
     ponerNiebla(bruma: number, minimo: number) {
       niebla.bruma = bruma;

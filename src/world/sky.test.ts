@@ -142,6 +142,19 @@ describe("por debajo del horizonte", () => {
     expect(GLSL_DEL_CIELO.agua).toContain("nieblaEn(v)");
     expect(GLSL_DEL_CIELO.fragmento).toContain("nieblaEn(dir)");
   });
+
+  it("el cielo sale a pantalla en sRGB, como todo lo demás", () => {
+    /*
+     * La cúpula pintaba el color lineal como si fuera sRGB: más oscuro y
+     * más saturado de lo escrito, y al ocaso un granate en todo el cielo.
+     * El paso tiene que estar en la rama del cielo —la del mar ya lo tenía—
+     * y el reflejo del cielo en el agua no puede deshacerlo otra vez.
+     */
+    const f = GLSL_DEL_CIELO.fragmento;
+    const cielo = f.slice(f.indexOf("} else {"));
+    expect(cielo).toContain("sRGBTransferOETF(vec4(sky, 1.0))");
+    expect(f).not.toContain("sRGBTransferEOTF(vec4(cieloEn");
+  });
 });
 
 describe("la bruma se queda abajo", () => {
