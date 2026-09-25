@@ -9,6 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import type { Mesh } from "three";
 import { Terrain } from "./terrain";
 import { CHACO, SCENARIOS, VALLE_CORDILLERA } from "./scenarios";
 
@@ -204,5 +205,77 @@ describe("el suelo fuera del mapa fino", () => {
       t.sampleHeight(borde, 0),
       1,
     );
+  });
+});
+
+describe("el mar abierto del mapa fino", () => {
+  /*
+   * El fondo del mar a dos metros bajo el agua no se distingue de ella en el
+   * fondo de profundidad a ochenta kilómetros: el mar de la isla de enfrente
+   * salía rayado y su costa, con un zócalo que parecía flotar. Lo que queda
+   * entero bajo el agua no se malla. El cauce del río del valle es ese caso:
+   * baja hasta treinta y dos metros bajo el nivel.
+   */
+  const nivel = VALLE_CORDILLERA.waterLevel;
+  const bajoElAgua = (t: Terrain): { triangulos: number; nudos: number } => {
+    const malla = t.group.getObjectByName("terreno") as Mesh;
+    const pos = malla.geometry.getAttribute("position");
+    const indice = malla.geometry.getIndex()!;
+    let triangulos = 0;
+    for (let i = 0; i < indice.count; i += 3) {
+      const tres = [indice.getX(i), indice.getX(i + 1), indice.getX(i + 2)];
+      if (tres.every((v) => pos.getY(v) <= nivel)) triangulos++;
+    }
+    let nudos = 0;
+    for (let v = 0; v < pos.count; v++) if (pos.getY(v) <= nivel) nudos++;
+    return { triangulos, nudos };
+  };
+
+  it("no dibuja un solo cuadro que quede entero bajo el agua", () => {
+    const t = new Terrain(VALLE_CORDILLERA);
+    const { triangulos, nudos } = bajoElAgua(t);
+    // Que la prueba no pase en vacío: tiene que haber fondo que quitar.
+    expect(nudos).toBeGreaterThan(0);
+    // Un triángulo de un cuadro de costa puede tener sus tres esquinas bajo
+    // el agua si la cuarta está en tierra; un cuadro entero, no. Se mira que
+    // ninguno de los que quedan tenga las cuatro: cada par de triángulos
+    // comparte cuadro.
+    const malla = t.group.getObjectByName("terreno") as Mesh;
+    const pos = malla.geometry.getAttribute("position");
+    const indice = malla.geometry.getIndex()!;
+    let enteros = 0;
+    for (let i = 0; i < indice.count; i += 6) {
+      const cuatro = new Set<number>();
+      for (let k = 0; k < 6; k++) cuatro.add(indice.getX(i + k));
+      if ([...cuatro].every((v) => pos.getY(v) <= nivel)) enteros++;
+    }
+    expect(enteros).toBe(0);
+    expect(triangulos).toBeLessThan(indice.count / 3);
+  });
+
+  it("y con menos detalle, tampoco", () => {
+    const t = new Terrain(VALLE_CORDILLERA);
+    t.ponerDetalle(4);
+    const malla = t.group.getObjectByName("terreno") as Mesh;
+    const pos = malla.geometry.getAttribute("position");
+    const indice = malla.geometry.getIndex()!;
+    let enteros = 0;
+    for (let i = 0; i < indice.count; i += 6) {
+      const cuatro = new Set<number>();
+      for (let k = 0; k < 6; k++) cuatro.add(indice.getX(i + k));
+      if ([...cuatro].every((v) => pos.getY(v) <= nivel)) enteros++;
+    }
+    expect(enteros).toBe(0);
+  });
+
+  it("pero la cota del suelo sigue siendo la del mapa, agua incluida", () => {
+    const t = new Terrain(VALLE_CORDILLERA);
+    const lado = VALLE_CORDILLERA.size;
+    let bajo = false;
+    for (let i = 0; i < 400 && !bajo; i++)
+      for (let j = 0; j < 400 && !bajo; j++)
+        if (t.sampleHeight((i / 400 - 0.5) * lado, (j / 400 - 0.5) * lado) < nivel)
+          bajo = true;
+    expect(bajo).toBe(true);
   });
 });

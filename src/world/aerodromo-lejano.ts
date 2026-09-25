@@ -25,7 +25,7 @@
  */
 
 import { BufferAttribute, BufferGeometry, Color, Group, Points } from "three";
-import { materialDeLuces } from "./material-de-luces";
+import { materialDeLuces, ponerOscuridad } from "./material-de-luces";
 
 interface PistaLocal {
   readonly x: number;
@@ -157,6 +157,8 @@ export function crearAerodromoLejano(
       grupo.visible = luce > 0.01;
       material.opacity = luce;
       materialFaro.opacity = luce;
+      ponerOscuridad(material, seno);
+      ponerOscuridad(materialFaro, seno);
     },
     alPaso(segundos) {
       const ahora = destelloDelFaro(segundos);
