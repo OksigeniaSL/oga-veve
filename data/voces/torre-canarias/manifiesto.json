@@ -33,6 +33,30 @@
     "cifra.9": {
       "ms": 599
     },
+    "destino.el-hierro": {
+      "ms": 747
+    },
+    "destino.fuerteventura": {
+      "ms": 799
+    },
+    "destino.gran-canaria": {
+      "ms": 988
+    },
+    "destino.la-gomera": {
+      "ms": 867
+    },
+    "destino.la-palma": {
+      "ms": 679
+    },
+    "destino.lanzarote": {
+      "ms": 666
+    },
+    "destino.tenerife-norte": {
+      "ms": 970
+    },
+    "destino.tenerife-sur": {
+      "ms": 1075
+    },
     "fonetico.alfa": {
       "ms": 528
     },
@@ -128,6 +152,12 @@
     },
     "torre.canario.solo.clearedTakeoff": {
       "ms": 1037
+    },
+    "torre.canario.solo.clearedTo": {
+      "ms": 930
+    },
+    "torre.canario.solo.destino": {
+      "ms": 1033
     },
     "torre.canario.solo.goAround": {
       "ms": 1421
@@ -473,6 +503,48 @@
       "{c4}",
       "{c5}",
       "torre.canario.solo.aterrizar"
+    ],
+    "torre.canario.destino": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.destino",
+      "{destino}"
+    ],
+    "torre.canario.clearedTo": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.clearedTo",
+      "{destino}"
+    ],
+    "destino.el-hierro": [
+      "destino.el-hierro"
+    ],
+    "destino.fuerteventura": [
+      "destino.fuerteventura"
+    ],
+    "destino.gran-canaria": [
+      "destino.gran-canaria"
+    ],
+    "destino.la-gomera": [
+      "destino.la-gomera"
+    ],
+    "destino.la-palma": [
+      "destino.la-palma"
+    ],
+    "destino.lanzarote": [
+      "destino.lanzarote"
+    ],
+    "destino.tenerife-norte": [
+      "destino.tenerife-norte"
+    ],
+    "destino.tenerife-sur": [
+      "destino.tenerife-sur"
     ]
   }
 }

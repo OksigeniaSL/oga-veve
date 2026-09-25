@@ -323,5 +323,47 @@
     "{c4}",
     "{c5}",
     "torre.canario.solo.aterrizar"
+  ],
+  "torre.canario.destino": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.destino",
+    "{destino}"
+  ],
+  "torre.canario.clearedTo": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.clearedTo",
+    "{destino}"
+  ],
+  "destino.el-hierro": [
+    "destino.el-hierro"
+  ],
+  "destino.fuerteventura": [
+    "destino.fuerteventura"
+  ],
+  "destino.gran-canaria": [
+    "destino.gran-canaria"
+  ],
+  "destino.la-gomera": [
+    "destino.la-gomera"
+  ],
+  "destino.la-palma": [
+    "destino.la-palma"
+  ],
+  "destino.lanzarote": [
+    "destino.lanzarote"
+  ],
+  "destino.tenerife-norte": [
+    "destino.tenerife-norte"
+  ],
+  "destino.tenerife-sur": [
+    "destino.tenerife-sur"
   ]
 }

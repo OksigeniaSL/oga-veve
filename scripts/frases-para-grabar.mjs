@@ -308,6 +308,11 @@ const TORRE_SOLO = [
   ],
   ["torre.solo.holdShort", "hold short of the runway", "pará en la doble raya"],
   ["torre.solo.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
+  /*
+   * El principio de la autorización; el límite —el campo— va en un hueco,
+   * porque cambia con cada ruta. Ver `DESTINOS_EN_RADIO` más abajo.
+   */
+  ["torre.solo.clearedTo", "cleared to", "la autorización, antes del destino"],
 ];
 
 /** Y la pieza de cada letra, que es como se llama su fichero. */
@@ -486,19 +491,56 @@ for (const [id, texto, para] of TORRE_SOLO) {
  * «autorizado a aterrizar». Va troceada como las demás de la lámpara —la
  * matrícula delante la pone la receta—, en las dos voces de torre.
  */
+const EN_EL_AIRE =
+  "la lámpara verde con el avión en el aire: autorizado a aterrizar";
+/*
+ * Y la de a dónde se va, antes de rodar: la autorización dicha en palabras
+ * de casa, con el campo en un hueco. Ver `autorizarLaRuta` en `src/game.ts`.
+ */
+const A_DONDE = "a dónde se va, antes de rodar; el campo va detrás";
 const LAMPARA_SOLO = [
-  ["torre", "torre.solo.aterrizar", "podés aterrizar"],
-  ["torre-canarias", "torre.canario.solo.aterrizar", "puedes aterrizar"],
+  ["torre", "torre.solo.aterrizar", "podés aterrizar", EN_EL_AIRE],
+  ["torre-canarias", "torre.canario.solo.aterrizar", "puedes aterrizar", EN_EL_AIRE],
+  ["torre", "torre.solo.destino", "podés volar a", A_DONDE],
+  ["torre-canarias", "torre.canario.solo.destino", "puedes volar a", A_DONDE],
 ];
-for (const [voz, id, texto] of LAMPARA_SOLO) {
-  filas.push({
-    id,
-    voz,
-    idioma: "es",
-    texto,
-    para: "la lámpara verde con el avión en el aire: autorizado a aterrizar",
-  });
+for (const [voz, id, texto, para] of LAMPARA_SOLO) {
+  filas.push({ id, voz, idioma: "es", texto, para });
   total += texto.length;
+}
+
+/*
+ * **Y el nombre de cada destino, dicho por la torre que lo nombra.**
+ *
+ * Salen de las claves `lugar.*` del diccionario, que es donde se escriben,
+ * y los graba solo la torre desde la que se puede ir allí: a Lanzarote se
+ * va desde Canarias y a Encarnación desde Paraguay, así que grabar los doce
+ * con las dos voces sería pagar por nombres que nadie va a pedir. La regla
+ * es la de `hablaDe`: los campos canarios son los que tienen un indicativo
+ * `GC`, y aquí se escriben por su `id` porque este guion no lee los
+ * aeródromos.
+ */
+const CANARIOS = new Set([
+  "tenerife-norte",
+  "tenerife-sur",
+  "gran-canaria",
+  "lanzarote",
+  "fuerteventura",
+  "la-palma",
+  "el-hierro",
+  "la-gomera",
+]);
+for (const [k, v] of es) {
+  if (!k.startsWith("lugar.")) continue;
+  const id = k.slice("lugar.".length);
+  filas.push({
+    id: `destino.${id}`,
+    voz: CANARIOS.has(id) ? "torre-canarias" : "torre",
+    idioma: "es",
+    texto: v,
+    para: "el destino, en la autorización de la torre",
+  });
+  total += v.length;
 }
 
 /*

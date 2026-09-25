@@ -22,7 +22,13 @@ describe("lo que dice la torre", () => {
    * tabla: las pide `luzDeTorre` por su clave del diccionario, porque son
    * castellano del sitio y no fraseología. Ver `i18n/habla.ts`.
    */
-  const DE_LA_LAMPARA = new Set(["torre.verde", "torre.roja", "torre.aterrizar"]);
+  const DE_LA_LAMPARA = new Set([
+    "torre.verde",
+    "torre.roja",
+    "torre.aterrizar",
+    // Y a dónde se va, en palabras de casa. Ver `autorizarLaRuta`.
+    "torre.destino",
+  ]);
 
   /*
    * Y **las piezas sueltas no son frases**: el alfabeto, las cifras, los lados

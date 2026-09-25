@@ -952,6 +952,97 @@
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
+    "id": "comandante.bienvenida.local",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.pettirossi",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.guarani",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.encarnacion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Encarnación.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.yvytu-rape",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.tenerife-norte",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Norte.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.tenerife-sur",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Sur.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.gran-canaria",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Gran Canaria.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.lanzarote",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Lanzarote.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.fuerteventura",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Fuerteventura.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.la-palma",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Palma.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.el-hierro",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a El Hierro.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.la-gomera",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Gomera.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
     "id": "comandante.llegada.pettirossi",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -2303,6 +2394,13 @@
     "para": "entrá y esperá en el eje"
   },
   {
+    "id": "torre.solo.clearedTo",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "cleared to",
+    "para": "la autorización, antes del destino"
+  },
+  {
     "id": "torre.solo.aterrizar",
     "voz": "torre",
     "idioma": "es",
@@ -2315,6 +2413,104 @@
     "idioma": "es",
     "texto": "puedes aterrizar",
     "para": "la lámpara verde con el avión en el aire: autorizado a aterrizar"
+  },
+  {
+    "id": "torre.solo.destino",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "podés volar a",
+    "para": "a dónde se va, antes de rodar; el campo va detrás"
+  },
+  {
+    "id": "torre.canario.solo.destino",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "puedes volar a",
+    "para": "a dónde se va, antes de rodar; el campo va detrás"
+  },
+  {
+    "id": "destino.pettirossi",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Asunción",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.guarani",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Guaraní",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.encarnacion",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Encarnación",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.yvytu-rape",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Yvytu Rape",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.tenerife-norte",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "Tenerife Norte",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.tenerife-sur",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "Tenerife Sur",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.gran-canaria",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "Gran Canaria",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.lanzarote",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "Lanzarote",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.fuerteventura",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "Fuerteventura",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.la-palma",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "La Palma",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.el-hierro",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "El Hierro",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.la-gomera",
+    "voz": "torre-canarias",
+    "idioma": "es",
+    "texto": "La Gomera",
+    "para": "el destino, en la autorización de la torre"
   },
   {
     "id": "fonetico.alfa",
@@ -2630,5 +2826,12 @@
     "idioma": "en",
     "texto": "line up and wait",
     "para": "entrá y esperá en el eje, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.clearedTo",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "cleared to",
+    "para": "la autorización, antes del destino, en Canarias"
   }
 ]
