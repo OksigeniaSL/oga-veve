@@ -391,7 +391,16 @@ function ojoDePiloto(
      * grados por debajo de la horizontal, así que el panel se queda en el tercio de abajo, el capó
      * debajo del horizonte y el mundo por encima: lo que se ve desde un 172.
      */
-    y: asiento.alto - 0.02,
+    /*
+     * **Y un palmo por encima del respaldo, no a su altura.** Con los ojos en
+     * el borde del respaldo, la visera quedaba casi a su misma altura y por el
+     * parabrisas se veía cielo y nada más —en crucero, con el morro un poco
+     * arriba, ni el horizonte—: «ir volando y no ver nada enfrente, es raro».
+     * Sentado, la cabeza sobresale del respaldo; y con los ojos ahí, por
+     * encima del morro se ven los diez grados hacia abajo que se ven en un
+     * avión de verdad. Ver `baja_minima` en `modelos/comun.py`.
+     */
+    y: asiento.alto + 0.1,
     /*
      * Y un palmo adelante del respaldo, que es donde va la cabeza.
      *

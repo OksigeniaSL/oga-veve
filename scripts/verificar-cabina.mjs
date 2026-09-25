@@ -311,8 +311,11 @@ for (const id of [
 
   comprobar(
     etiqueta("los ojos están a la altura de la cabeza, no del cojín"),
+    // Un palmo por encima del respaldo: sentado, la cabeza sobresale de él.
+    // Ver `ojoDePiloto`.
     visto.asiento !== null &&
-      Math.abs(visto.ojo.y - visto.asiento.arriba) < 0.1,
+      visto.ojo.y - visto.asiento.arriba > 0.05 &&
+      visto.ojo.y - visto.asiento.arriba < 0.2,
     `ojos ${visto.ojo.y.toFixed(2)} · alto del asiento ${visto.asiento?.arriba.toFixed(2)}`,
     "con el cojín y el respaldo sueltos ganaba el cojín y el piloto iba sentado en el suelo",
   );

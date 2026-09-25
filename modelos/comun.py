@@ -1174,8 +1174,21 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     # el suelo delante y que el sol no dé en las esferas—, así que eso es lo que
     # se exige aquí. Lo que cada avión pida dentro de esa banda, se respeta.
     #
+    #
+    # **Y lo bastante por debajo como para ver el mundo por encima del morro.**
+    #
+    # Con ocho centímetros bajo el respaldo, el borde de la visera quedaba a
+    # la altura de los ojos: 1,3° por debajo en las avionetas y **0,9° por
+    # encima** en los reactores, cuya visera es más gruesa. Volando en
+    # crucero, con el morro un poco arriba, por el parabrisas solo se veía
+    # cielo: «ir volando y no ver nada enfrente, es raro». Un avión se diseña
+    # al revés, desde el ojo: por encima del morro se ven unos diez grados
+    # hacia abajo en una avioneta y unos doce en uno de línea, que es lo que
+    # deja ver la pista en final y el mar en crucero. Medido con la sonda del
+    # encuadre, esto los deja en esa banda.
+    baja_minima = 0.17 if clase == "reactor" else 0.12
     alto_panel = max(
-        min(alto_panel, y_respaldo - 0.08), y_respaldo - 0.22
+        min(alto_panel, y_respaldo - baja_minima), y_respaldo - 0.26
     )
     # El suelo, que si no se ve el interior del fuselaje por debajo de la silla.
     piezas.append(
