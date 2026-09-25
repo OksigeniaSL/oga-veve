@@ -5354,6 +5354,49 @@ export class Game {
     );
   }
 
+  /**
+   * **Las fotos que llegan con el juego ya en marcha**: los anillos de en
+   * medio y del horizonte, y las de los campos vecinos.
+   *
+   * No hacen falta para despegar —pintan mallas que ya existen—, y en un
+   * teléfono de gama baja con 3G eran cinco de los diez megas que había que
+   * bajar antes de ver nada: cincuenta y cuatro segundos hasta poder jugar en
+   * Pettirossi. La foto base se queda en el arranque, porque decide dónde se
+   * plantan árboles y si se dibujan casas. Ver la carga en `main.ts`.
+   *
+   * Partir el anillo rehace sus mallas sin textura, así que después de partir
+   * se vuelve a pintar lo que hubiera.
+   */
+  ponerAnillos(anillos: { horizonte?: Ortofoto; medio?: Ortofoto }): void {
+    if (anillos.horizonte) this.anilloHorizonte = anillos.horizonte;
+    if (anillos.medio && !this.anilloMedio) {
+      this.anilloMedio = anillos.medio;
+      this.anilloPartido = this.terrain.partirElHorizonte(
+        (anillos.medio.ficha.tamanoM ?? 0) / 2,
+      );
+    }
+    if (this.anilloHorizonte)
+      this.terrain.ponerOrtofotoLejana(
+        this.anilloHorizonte,
+        exposicionDe(this.anilloHorizonte.ficha),
+      );
+    if (this.anilloPartido && this.anilloMedio)
+      this.terrain.ponerOrtofotoLejana(
+        this.anilloMedio,
+        exposicionDe(this.anilloMedio.ficha),
+        "horizonte-medio",
+      );
+  }
+
+  private anilloHorizonte: Ortofoto | undefined;
+  private anilloMedio: Ortofoto | undefined;
+  private anilloPartido = false;
+
+  /** La foto del vecino `i`, cuando llegue. Ver `ponerAnillos`. */
+  ponerFotoDelVecino(i: number, foto: Ortofoto): void {
+    this.vecinos[i]?.mundo.ponerFoto(foto);
+  }
+
   /** La visibilidad del último parte, m. Ver `ponerLluvia`. */
   private visibilidadDelParte = 10000;
 

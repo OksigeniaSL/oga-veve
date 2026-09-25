@@ -97,6 +97,15 @@ export class MundoVecino {
   }
 
   /**
+   * Su fotografía, cuando llegue. Se pide **después** de arrancar: no hace
+   * falta para despegar, y en un teléfono con 3G eran dos megas más de espera
+   * antes de poder jugar. Ver la carga en `main.ts`.
+   */
+  ponerFoto(foto: { textura: Texture; uv(x: number, z: number): Punto2 }): void {
+    this.terreno.ponerOrtofoto(foto);
+  }
+
+  /**
    * La cota del vecino en coordenadas del **mundo de salida**, o `null` si la
    * pregunta no cae en su mapa.
    *

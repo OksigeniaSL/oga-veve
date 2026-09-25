@@ -330,17 +330,18 @@ for (const fuera of todosLosDestinos.filter((e) => !destinosDeHoy.includes(e)))
     `Óga Veve · ${avion.name} no cabe en ${fuera.id}: hoy no es un destino.`,
   );
 
-const [
-  conMapa,
-  ciudad,
-  meteo,
-  ortofoto,
-  ortofotoFina,
-  ortofotoMedia,
-  vecinos,
-  fotosVecinas,
-  ortofotoHorizonte,
-] = await Promise.all([
+/*
+ * **Lo que hace falta para despegar, y nada más.**
+ *
+ * Medido con un teléfono de gama baja emulado y 3G: diez megas y cincuenta y
+ * cuatro segundos en Pettirossi antes de poder jugar, y cinco de esos megas
+ * eran fotos que no hacen falta para arrancar —los anillos de en medio y del
+ * horizonte, y las fotos de los campos vecinos—. Esas se piden después, con
+ * el juego ya en pantalla: ver `pedirLoQueFalta` más abajo. La foto base sí
+ * va aquí, porque decide dónde se plantan árboles y si se dibujan casas.
+ */
+const [conMapa, ciudad, meteo, ortofoto, ortofotoFina, vecinos] =
+  await Promise.all([
   conMiga("relieve", conRelieve(escenario)),
   conMiga("ciudad", cargarCiudad(escenario.id)),
   conMiga("tiempo", tiempoPedido(escenario)),
@@ -369,21 +370,6 @@ const [
       : Promise.resolve(undefined),
   ),
   /*
-   * **Y la de en medio: la franja por la que de verdad se vuela.**
-   *
-   * Entre el borde del mapa fino —nueve kilómetros— y el del mundo, el
-   * detalle caía de ocho metros por píxel a ciento treinta y cuatro de
-   * golpe. Tenerife mide ochenta kilómetros: casi todo lo que se mira desde
-   * el aire estaba en la capa basta. Ver `ENCUADRES.medio` en
-   * `scripts/ortofoto-publica.mjs`.
-   */
-  conMiga(
-    "foto medio",
-    mundoElegido() === "foto"
-      ? cargarOrtofoto(escenario.id, "medio")
-      : Promise.resolve(undefined),
-  ),
-  /*
    * Y el aeropuerto de destino, si esta ruta lleva a otro.
    *
    * Con su relieve, porque allí se va a aterrizar y el suelo que se pisa sale
@@ -392,36 +378,6 @@ const [
    * kilobytes.
    */
   conMiga("relieve vecinos", Promise.all(destinosDeHoy.map((d) => conRelieve(d)))),
-  /*
-   * Y su fotografía, para que la isla de enfrente no salga de polígonos.
-   *
-   * La de lejos y no la fina: el vecino se mira desde el aire y de lejos
-   * durante casi todo el vuelo, y la fina cubre seis kilómetros alrededor de
-   * su pista. Cuando el aterrizaje allí sea un aterrizaje de verdad, la fina
-   * también.
-   */
-  conMiga(
-    "foto vecinos",
-    Promise.all(
-      destinosDeHoy.map((d) =>
-        mundoElegido() === "foto"
-          ? cargarOrtofoto(d.id, "lejos")
-          : Promise.resolve(undefined),
-      ),
-    ),
-  ),
-  /*
-   * Y la del horizonte: el anillo lejano entero, a setenta metros por píxel.
-   *
-   * Es la que quita la llanura de color plano que empezaba donde acababa la
-   * foto de dieciocho kilómetros. Ciento cincuenta kilobytes por isla.
-   */
-  conMiga(
-    "foto horizonte",
-    mundoElegido() === "foto"
-      ? cargarOrtofoto(escenario.id, "horizonte")
-      : Promise.resolve(undefined),
-  ),
 ]);
 miga("cargas");
 /**
@@ -477,17 +433,34 @@ const game = new Game({
   aircraft: avion,
   ortofoto,
   ortofotoFina,
-  ortofotoMedia,
   /*
    * Y la rejilla de ciudad **siempre**, aunque la foto ya la enseñe: de día
    * sobra y de noche es lo único que hay. Ver `luzDeCiudad` en `game.ts`.
    */
   luzDeCiudad: ciudad,
   vecinos,
-  fotosVecinas,
-  ortofotoHorizonte,
 });
 miga("juego creado");
+
+/*
+ * **Y lo que falta, con el juego ya en marcha**: los dos anillos y las fotos
+ * de los vecinos. Se piden ahora y no a la vez que lo de arriba, para no
+ * quitarle ancho de banda al arranque en una conexión lenta. Cada una se pone
+ * en cuanto llega; hasta entonces esas zonas se ven con el suelo dibujado.
+ */
+if (mundoElegido() === "foto") {
+  void cargarOrtofoto(escenario.id, "medio").then(
+    (medio) => medio && game.ponerAnillos({ medio }),
+  );
+  void cargarOrtofoto(escenario.id, "horizonte").then(
+    (horizonte) => horizonte && game.ponerAnillos({ horizonte }),
+  );
+  destinosDeHoy.forEach((d, i) => {
+    void cargarOrtofoto(d.id, "lejos").then(
+      (foto) => foto && game.ponerFotoDelVecino(i, foto),
+    );
+  });
+}
 /*
  * **Y el parte se le da al juego, no solo al escenario.**
  *
