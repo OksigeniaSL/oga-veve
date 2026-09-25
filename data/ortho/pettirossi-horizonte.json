@@ -6,20 +6,20 @@
   "servicio": "https://tiles.maps.eox.at/wmts",
   "capa": "s2cloudless-2025_3857",
   "esquina": {
-    "col": 693,
-    "fila": 1168
+    "col": 170,
+    "fila": 289
   },
   "origen": {
     "lat": -25.240156,
     "lon": -57.519227
   },
-  "tamanoM": 132000,
-  "zoom": 11,
-  "metrosPorPixel": 69.139,
+  "tamanoM": 462000,
+  "zoom": 9,
+  "metrosPorPixel": 276.558,
   "pixeles": {
     "ancho": 2048,
-    "alto": 2304
+    "alto": 2048
   },
   "huecos": 0,
-  "exposicion": 0.981
+  "exposicion": 1
 }

@@ -46,7 +46,7 @@ const de = (fichas: Record<string, Ficha>, sufijo: string, id: string) =>
  * prueba vigile a todos los demás desde hoy, y **esta lista solo puede
  * menguar**.
  */
-const PENDIENTES = new Set(["pettirossi", "guarani", "encarnacion", "yvytu-rape"]);
+const PENDIENTES = new Set<string>();
 
 describe("el mapa lejano mide lo que se dibuja", () => {
   for (const esc of SCENARIOS) {
