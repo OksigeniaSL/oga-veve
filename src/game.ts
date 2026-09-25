@@ -21,6 +21,7 @@ import {
   Object3D,
   PerspectiveCamera,
   Scene,
+  SRGBColorSpace,
   Vector3,
   WebGLRenderer,
 } from "three";
@@ -9606,23 +9607,19 @@ export class Game {
     const ancho = window.innerWidth;
     const alto = window.innerHeight;
     /*
-     * **Y solo donde el cuadro tapa de verdad.**
+     * **En todas las vistas de fuera, y en la cabina no.**
      *
      * Esto sube la imagen lo que ocupa el cuadro de mandos para que no esconda
-     * el avión, y en la vista de persecución es exactamente lo que hace falta:
-     * el avión está en el medio y el cuadro se le come los pies.
+     * el avión: el avión está en el medio y el cuadro se le come los pies.
      *
-     * De costado no: ahí el avión ya queda en la mitad de arriba, y subirlo
-     * otro tanto lo mete debajo de la fila de pictogramas. O sea que el
-     * desplazamiento que le quita un estorbo abajo le pone otro arriba. Se ve
-     * en cuanto se mira: el JAZ 90 de lado queda con medio fuselaje detrás de
-     * las tarjetas. Y desde la cabina tampoco: ahí encuadra la propia cabina,
+     * Las de costado estuvieron fuera, porque subirlas metía el JAZ 90 debajo
+     * de la fila de pictogramas. Eso era contando los pictogramas como parte
+     * de «arriba»; contando solo la barra —ver `altoDeArriba`— el avión queda
+     * en la franja libre, y fuera de ella el cuadro le tapaba medio fuselaje,
+     * parado en el puesto. Desde la cabina no: ahí encuadra la propia cabina,
      * con su visera. Ver `encuadreDeCabina`.
      */
-    const propio =
-      this.cameraMode === "wing" ||
-      this.cameraMode === "izquierda" ||
-      this.cameraMode === "cockpit";
+    const propio = this.cameraMode === "cockpit";
     /*
      * **Y centrado en la franja libre, no en lo que queda debajo del borde.**
      *
@@ -9724,7 +9721,11 @@ function radialFade(): CanvasTexture {
   gradient.addColorStop(1, "rgba(20,32,26,0)");
   context.fillStyle = gradient;
   context.fillRect(0, 0, size, size);
-  return new CanvasTexture(canvas);
+  // En sRGB, que es en lo que pinta un lienzo: tomado por lineal, el verde
+  // casi negro de la sombra salía gris. Ver `relojes-cabina.ts`.
+  const textura = new CanvasTexture(canvas);
+  textura.colorSpace = SRGBColorSpace;
+  return textura;
 }
 
 export type { FlightModel };

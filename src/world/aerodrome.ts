@@ -43,6 +43,7 @@ import {
   PointsMaterial,
   Shape,
   ShapeGeometry,
+  SRGBColorSpace,
   Vector2,
   type ColorRepresentation,
 } from "three";
@@ -1958,6 +1959,8 @@ function helipuertoTextura(): CanvasTexture | null {
   c.textBaseline = "middle";
   c.fillText("H", lado / 2, lado / 2 + lado * 0.02);
   dibujoDelHelipuerto = new CanvasTexture(lienzo);
+  // En sRGB, que es en lo que pinta un lienzo. Ver `relojes-cabina.ts`.
+  dibujoDelHelipuerto.colorSpace = SRGBColorSpace;
   return dibujoDelHelipuerto;
 }
 

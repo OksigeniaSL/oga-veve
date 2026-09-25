@@ -31,6 +31,7 @@ import {
   Mesh,
   MeshLambertMaterial,
   PlaneGeometry,
+  SRGBColorSpace,
 } from "three";
 import type { Scenario } from "./scenarios";
 
@@ -218,7 +219,10 @@ export function numberTexture(label: string): CanvasTexture | null {
   context.textBaseline = "middle";
   context.setTransform(0.72, 0, 0, 1, size / 2, size / 2);
   context.fillText(label, 0, 0);
-  return new CanvasTexture(canvas);
+  const textura = new CanvasTexture(canvas);
+  // En sRGB, que es en lo que pinta un lienzo. Ver `relojes-cabina.ts`.
+  textura.colorSpace = SRGBColorSpace;
+  return textura;
 }
 
 /**
@@ -267,5 +271,12 @@ export function letreroAtlasTexture(
     context.textBaseline = "middle";
     context.fillText(label, x + celda / 2, y + celda / 2 + celda * 0.02);
   });
-  return new CanvasTexture(canvas);
+  /*
+   * En sRGB, que es en lo que pinta un lienzo: tomado por lineal, el negro
+   * del cartel salía gris y el amarillo, lavado. Un cartel de calle de rodaje
+   * es negro y amarillo en todos los aeropuertos del mundo.
+   */
+  const textura = new CanvasTexture(canvas);
+  textura.colorSpace = SRGBColorSpace;
+  return textura;
 }
