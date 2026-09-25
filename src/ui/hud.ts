@@ -43,6 +43,8 @@ import { Pictogramas, HELICE_MAS, HELICE_MENOS } from "./pictogramas";
 import { DIBUJOS, Senal } from "./senal";
 import { luzDeTren } from "../flight/tren";
 import { Mapa } from "./mapa";
+import { caja, pieles, plano } from "./hangar";
+import type { Scenario } from "../world/scenarios";
 import { botonesDeLosPaneles } from "./paneles";
 import { PanelDelTiempo } from "./tiempo";
 import type { Tier } from "../flight/tiers";
@@ -377,6 +379,13 @@ export class Hud {
   private homeArrow!: HTMLElement;
   private homeDistance: HTMLElement | null = null;
   private homeGloss: HTMLElement | null = null;
+  private homeOaci: HTMLElement | null = null;
+  private homePlano: HTMLElement | null = null;
+  /**
+   * El destino que está puesto en la tarjeta, para notar cuándo cambia. Ver
+   * `setHome`.
+   */
+  private destinoPuesto: string | null = null;
   private home!: HTMLElement;
   private warning!: HTMLElement;
   private warningText!: HTMLElement;
@@ -984,7 +993,24 @@ export class Hud {
         -->
         <button class="tarjeta casa" type="button" data-hud="home"
                 aria-label="${t("tecla.destino")}">
-          <div class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</div>
+          <!--
+            **Y a cuál se va, también para quien no lee.**
+
+            En Guyrami la tarjeta era una flecha y nada más: apuntaba a un
+            sitio sin decir cuál. Al lado va ahora **la misma ficha que se
+            eligió en el hangar** —el plano del aeródromo, con sus colores—,
+            que es lo que un niño de cuatro años reconoce: no el nombre, sino
+            el dibujo que tocó para elegirlo. Donde se lee, el nombre y su
+            indicativo OACI, que es cómo se llama ese sitio en cualquier carta.
+          -->
+          <span class="casa__fila">
+            <span class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</span>
+            ${gauges ? "" : '<span class="casa__plano" data-hud="home-plano" aria-hidden="true" hidden></span>'}
+            <!-- El indicativo, al lado de la flecha y no en una línea más: con
+                 un nombre largo, esa línea echaba la tarjeta fuera de la
+                 pantalla en una tablet táctil. Lo midió verificar-carteles. -->
+            ${gauges ? '<span class="casa__oaci" data-hud="home-oaci" hidden></span>' : ""}
+          </span>
           ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ""}
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
         </button>
@@ -1223,6 +1249,10 @@ export class Hud {
     this.homeArrow = pick(this.root, "home-arrow");
     this.homeDistance = optional(this.root, "home-distance");
     this.homeGloss = optional(this.root, "home-gloss");
+    this.homeOaci = optional(this.root, "home-oaci");
+    this.homePlano = optional(this.root, "home-plano");
+    // La tarjeta es nueva, así que lo puesto en ella también.
+    this.destinoPuesto = null;
     this.warning = pick(this.root, "warning");
     this.warningText = pick(this.root, "warning-text");
     this.warningArrow = pick(this.root, "warning-arrow");
@@ -1487,14 +1517,20 @@ export class Hud {
    * @param relativeBearing rad, 0 al frente, positivo a la derecha
    * @param modo a qué apunta: la pista de casa, un objetivo de misión, o el
    *   aeropuerto al que se va
-   * @param nombre cómo se llama el destino, cuando lo hay
+   * @param destino a cuál se va, cuando se va a otro campo: su nombre, su
+   *   indicativo y su escenario, que es de donde sale su dibujo
    */
   setHome(
     relativeBearing: number,
     metres: number,
     modo: "pista" | "objetivo" | "destino" = "pista",
-    nombre?: string,
+    destino?: {
+      readonly nombre: string;
+      readonly oaci: string | null;
+      readonly escenario: Scenario;
+    },
   ): void {
+    const nombre = destino?.nombre;
     const toObjective = modo === "objetivo";
     // El glifo apunta a la derecha en reposo, de ahí los noventa grados. La
     // rotación entera se calcula aquí y no repartida entre CSS y JS: dos
@@ -1523,11 +1559,77 @@ export class Hud {
      */
     this.home.classList.toggle("casa--destino", modo === "destino");
     if (this.homeGloss) {
+      /*
+       * El nombre corto: lo de antes del punto medio. «Guaraní · Ciudad del
+       * Este» ocupaba dos líneas y echaba la tarjeta por debajo de la pantalla
+       * en una tablet táctil; el aeropuerto se llama Guaraní, y la ciudad ya
+       * la dice el aviso al cambiar de destino.
+       */
       this.homeGloss.textContent =
         modo === "destino" && nombre
-          ? nombre
+          ? (nombre.split(" · ")[0] ?? nombre)
           : t(toObjective ? "hud.objective" : "hud.home");
     }
+    this.ponerDestino(modo === "destino" ? (destino ?? null) : null);
+  }
+
+  /**
+   * **Cambiar de destino se tiene que notar.**
+   *
+   * Tocar la tarjeta cambiaba el nombre de debajo de la flecha y nada más:
+   * quien no lee no se enteraba de que había cambiado nada, y quien lee lo
+   * descubría al rato. Ahora la tarjeta destella, se pone el dibujo del sitio
+   * nuevo y su nombre sale en la línea de avisos. Lo mismo cuando cambia solo
+   * —al despegar, al llegar, al entrar en la reserva—, que es cuando más hace
+   * falta enterarse.
+   *
+   * Se llama cada fotograma y solo hace algo cuando el destino cambia.
+   */
+  private ponerDestino(
+    destino: {
+      readonly nombre: string;
+      readonly oaci: string | null;
+      readonly escenario: Scenario;
+    } | null,
+  ): void {
+    const id = destino?.escenario.id ?? null;
+    if (id === this.destinoPuesto) return;
+    this.destinoPuesto = id;
+    if (this.homeOaci) {
+      this.homeOaci.hidden = !destino?.oaci;
+      this.homeOaci.textContent = destino?.oaci ?? "";
+    }
+    if (this.homePlano) {
+      this.homePlano.hidden = !destino;
+      if (destino) {
+        const { cielo, suelo } = pieles(destino.escenario);
+        this.homePlano.style.setProperty("--cielo", cielo);
+        this.homePlano.style.setProperty("--suelo", suelo);
+        // A su propia escala: aquí no se compara con nada, se reconoce.
+        this.homePlano.innerHTML = plano(
+          destino.escenario,
+          caja(destino.escenario).lado,
+        );
+      } else {
+        this.homePlano.innerHTML = "";
+      }
+    }
+    if (!destino) return;
+    /*
+     * El destello: la animación se quita y se vuelve a poner, y la lectura
+     * del ancho de por medio es lo que obliga al navegador a empezarla otra
+     * vez. Sin ella, dos cambios seguidos solo destellan una vez.
+     */
+    this.home.classList.remove("casa--destello");
+    void this.home.offsetWidth;
+    this.home.classList.add("casa--destello");
+    // Y el nombre, donde se escriben los avisos cortos. Sin letras no se
+    // escribe nada: ahí habla el dibujo de la tarjeta.
+    if (this.instruments !== "none")
+      this.flash(
+        destino.oaci ? `${destino.nombre} · ${destino.oaci}` : destino.nombre,
+        4,
+      );
   }
 
   /**

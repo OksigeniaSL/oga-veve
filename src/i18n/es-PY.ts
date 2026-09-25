@@ -639,7 +639,12 @@ export const ES_PY = {
    * no se escribe como tal: entrar en la reserva es el momento de decidir, y
    * decidir bien pide calma. El segundo ya no pide decidir: pide planear.
    */
-  "vuelo.reserva": "Entraste en la reserva: buscá dónde aterrizar",
+  /*
+   * Y la reserva ya no manda a buscar: el alternativo se eligió en tierra y
+   * la flecha se va sola al campo más cercano. Lo que queda es ir, con calma.
+   */
+  "vuelo.reserva":
+    "Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha",
   "palabra.reserva": "Combustible",
   "vuelo.sinCombustible": "Se acabó el combustible: planeá hasta la pista",
   "palabra.sinCombustible": "Sin combustible",
@@ -680,7 +685,15 @@ export const ES_PY = {
   "hangar.pais.inventado": "Inventados",
   "hangar.tramos": "Aprender a volar",
   "hangar.misiones": "Ir a algún lado",
-  "hangar.donde": "¿A dónde volamos?",
+  /*
+   * **De dónde se sale y a dónde se va, que son dos preguntas.** La primera
+   * era «¿A dónde volamos?» y contestaba el sitio de salida; cuando entró la
+   * de destino, las dos decían lo mismo con otras palabras.
+   */
+  "hangar.donde": "¿Desde dónde salís?",
+  "hangar.adonde": "¿A dónde vas?",
+  "hangar.vuelta": "Vuelta al campo",
+  "hangar.combustible": "Combustible",
   // No «¿Con quién?»: eso hacía que los cuatro tramos se leyeran como cuatro
   // modelos de avión, que es exactamente la confusión de la que avisa
   // `tiers.ts`. Un tramo no es una aeronave, son tus galones.

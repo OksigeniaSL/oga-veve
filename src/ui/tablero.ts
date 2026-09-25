@@ -1130,12 +1130,32 @@ export class Tablero {
             "transform",
             `rotate(${(Math.atan2(d2.dx, -d2.dy) * 180) / Math.PI})`,
           );
+        const oaci = destino.querySelector('[data-carta="destino-oaci"]');
+        if (oaci && oaci.textContent !== (d2.oaci ?? ""))
+          oaci.textContent = d2.oaci ?? "";
+      }
+    }
+    // Y el alternativo, igual pero sin punta: pegado al borde, el símbolo
+    // ya dice por dónde cae, y una segunda flecha competiría con la del
+    // destino, que es la que se sigue.
+    const alterno = grupo.querySelector('[data-carta="alterno"]');
+    if (alterno) {
+      const a2 = dibujo.alterno;
+      alterno.setAttribute("visibility", a2 ? "visible" : "hidden");
+      if (a2) {
+        alterno.setAttribute("transform", `translate(${a2.dx} ${a2.dy})`);
+        const oaci = alterno.querySelector('[data-carta="alterno-oaci"]');
+        if (oaci && oaci.textContent !== (a2.oaci ?? ""))
+          oaci.textContent = a2.oaci ?? "";
       }
     }
     this.texto(
       raiz,
       "millas-destino",
-      dibujo.destino ? `${dibujo.destino.millas.toFixed(1)} NM` : "",
+      // Con el indicativo delante: a qué sitio son esas millas.
+      dibujo.destino
+        ? `${dibujo.destino.oaci ? `${dibujo.destino.oaci} ` : ""}${dibujo.destino.millas.toFixed(1)} NM`
+        : "",
     );
     this.texto(raiz, "rango", `${dibujo.rango} NM`);
   }

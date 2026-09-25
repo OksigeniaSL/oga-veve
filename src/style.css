@@ -1684,6 +1684,99 @@ button.motor__tecla::after {
   cursor: pointer;
 }
 
+/* La flecha y, en Guyrami, el dibujo del destino a su lado. */
+.casa__fila {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/*
+ * El plano del destino, con los colores de su ficha del hangar: el mismo
+ * dibujo que se tocó para elegirlo, en pequeño. Los trazos del plano van en
+ * píxeles —ver .plano__pista—, así que a este tamaño se afinan aquí para que
+ * la pista no sea una mancha.
+ */
+.casa__plano {
+  display: block;
+  width: 60px;
+  height: 36px;
+  padding: 3px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: linear-gradient(
+    var(--cielo, #33413a) 0%,
+    var(--suelo, #24312b) 100%
+  );
+  box-shadow: 0 0 0 1.5px rgba(111, 179, 224, 0.85);
+}
+
+.casa__plano[hidden] {
+  display: none;
+}
+
+.casa__plano .plano__pista {
+  stroke-width: 3.2;
+}
+
+.casa__plano .plano__rodadura {
+  stroke-width: 1.2;
+}
+
+.casa__plano .plano__umbral {
+  stroke-width: 1.6;
+}
+
+/* El indicativo OACI, en la letra de las cartas: ancho fijo y espaciado. */
+.casa__oaci {
+  font-family:
+    ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #6fb3e0;
+}
+
+.casa__oaci[hidden] {
+  display: none;
+}
+
+/*
+ * El destello al cambiar de destino: un aro azul de ruta que se abre y se
+ * apaga. Uno y corto — es un «mirá, cambió», no una alarma.
+ */
+.casa--destello {
+  animation: destello-de-destino 1.1s ease-out 2;
+}
+
+@keyframes destello-de-destino {
+  0% {
+    box-shadow:
+      var(--filo),
+      var(--poso),
+      0 0 0 0 rgba(111, 179, 224, 0.9);
+  }
+  100% {
+    box-shadow:
+      var(--filo),
+      var(--poso),
+      0 0 0 14px rgba(111, 179, 224, 0);
+  }
+}
+
+/* Sin movimiento, sin destello: el dibujo y el nombre nuevos ya lo dicen.
+   Por partida doble, como todas; ver «Movimiento reducido». */
+@media (prefers-reduced-motion: reduce) {
+  .casa--destello {
+    animation: none;
+  }
+}
+
+.sin-movimiento .casa--destello {
+  animation: none;
+}
+
 .casa__aguja {
   font-size: 30px;
   line-height: 1;
@@ -1719,9 +1812,18 @@ button.motor__tecla::after {
 /* Y el nombre del destino no cabe siempre en el ancho de «Pista»: un rótulo
    que se sale de su tarjeta tapa el instrumento de al lado. Se ajusta. */
 .casa--destino .medidor__glosa {
-  max-width: 116px;
-  overflow-wrap: anywhere;
+  /* Ciento diez y no ciento dieciséis: con el ancho entero, la tarjeta
+     rozaba el cuadro en una tablet táctil por dos píxeles. */
+  max-width: 110px;
   line-height: 1.15;
+  /*
+   * Y en una línea: con dos, la tarjeta crecía hacia abajo y se salía de la
+   * pantalla en una tablet táctil. Lo que no quepa se corta con puntos; el
+   * nombre entero sale en el aviso al cambiar de destino.
+   */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Avisos */
@@ -3598,6 +3700,26 @@ button.motor__tecla::after {
   stroke: none;
 }
 
+.cr__alterno circle,
+.cr__alterno line {
+  fill: none;
+  stroke: var(--cabina-auxiliar);
+  stroke-width: 1.6;
+}
+
+/* Los indicativos, con la letra de la cabina y en el color de su símbolo. */
+.cr__oaci {
+  fill: var(--cabina-objetivo);
+  font-family: var(--cabina-fuente);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.cr__oaci--alterno {
+  fill: var(--cabina-auxiliar);
+}
+
 .cr__puntero {
   fill: var(--cabina-valor);
 }
@@ -4752,6 +4874,62 @@ button.motor__tecla::after {
   object-fit: cover;
 }
 
+/*
+ * La carga de cada destino: el surtidor, la barra y los kilos. La barra se
+ * llena en proporción a lo que cabe en ese avión, así que se compara de un
+ * vistazo entre fichas: ir más lejos, más barra.
+ */
+.ficha__deposito {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.deposito__surtidor {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--ocre);
+}
+
+.deposito__barra {
+  flex: 1;
+  min-width: 24px;
+  height: 7px;
+  border-radius: 4px;
+  background: rgb(228 226 218 / 0.16);
+  overflow: hidden;
+}
+
+.deposito__barra i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--ocre);
+}
+
+/* El circuito de la vuelta al campo, encima del plano de casa. */
+.ficha__circuito {
+  position: absolute;
+  inset: 8px;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+  pointer-events: none;
+}
+
+.ficha__circuito rect {
+  fill: none;
+  stroke: #6fb3e0;
+  stroke-width: 2.4;
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.ficha__circuito path {
+  fill: #6fb3e0;
+}
+
 .ficha__dato {
   font-size: 13px;
   color: var(--tinta-suave);
@@ -5014,7 +5192,11 @@ button.motor__tecla::after {
 
 .hangar__pasos {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /*
+   * Tantas columnas como pasos, que son cinco o seis según haya destinos: con
+   * cuatro fijas, el sexto caía solo a una segunda fila y la barra crecía.
+   */
+  grid-template-columns: repeat(var(--pasos, 5), minmax(0, 1fr));
   gap: 8px;
   flex: 1;
   min-width: 0;
@@ -5210,7 +5392,7 @@ button.motor__tecla::after {
   }
 
   .hangar .hangar__pasos {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--pasos, 5), minmax(0, 1fr));
   }
 
   .hangar .ficha__lienzo {

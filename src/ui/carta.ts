@@ -162,7 +162,26 @@ export interface Mapa {
    * navegador de verdad, y es la primera lección de navegación que este juego
    * puede dar: **poner rumbo a algo que todavía no se ve**.
    */
-  readonly destino?: { readonly x: number; readonly z: number } | null;
+  readonly destino?: {
+    readonly x: number;
+    readonly z: number;
+    /** Su indicativo, para rotularlo. Ver `oaciDe`. */
+    readonly oaci?: string | null;
+  } | null;
+
+  /**
+   * Y el alternativo: a dónde se iría si al destino no se pudiera llegar.
+   *
+   * Se dibuja con el mismo símbolo de aeródromo pero en otro color y rotulado
+   * con su indicativo, que es como va en una carta de verdad: el plan B
+   * también es un sitio, y se sabe dónde está antes de necesitarlo. Ver
+   * `flight/alterno.ts`.
+   */
+  readonly alterno?: {
+    readonly x: number;
+    readonly z: number;
+    readonly oaci?: string | null;
+  } | null;
 
   /**
    * Las células de tormenta, si el tiempo las trae. Ver `flight/tormentas.ts`.
@@ -211,12 +230,10 @@ export interface Dibujo {
    * enseña es una flecha en el borde, que es lo que hace un navegador de
    * verdad: el sitio no se ve todavía, pero se sabe por dónde cae.
    */
-  readonly destino: {
-    dx: number;
-    dy: number;
-    millas: number;
-    dentro: boolean;
-  } | null;
+  readonly destino: EnLaCarta | null;
+
+  /** El alternativo, resuelto igual que el destino. */
+  readonly alterno: EnLaCarta | null;
 
   /**
    * Las células, ya en píxeles desde el centro de la rosa y con su radio.
@@ -231,6 +248,16 @@ export interface Dibujo {
     radio: number;
     fuerza: number;
   }[];
+}
+
+/** Un aeródromo puesto en la carta: dentro del disco o pegado a su borde. */
+export interface EnLaCarta {
+  dx: number;
+  dy: number;
+  millas: number;
+  dentro: boolean;
+  /** Su indicativo OACI, para el rótulo; `null` si no tiene. */
+  oaci: string | null;
 }
 
 /** Cuántas millas de final prolongado se dibujan. */
@@ -258,6 +285,7 @@ export function dibujarLaCarta(
       eje: null,
       otros: [],
       destino: null,
+      alterno: null,
       celdas: [],
     };
   const aqui = (p: Punto) => enLaCarta(p, m, rumbo, por);
@@ -296,21 +324,34 @@ export function dibujarLaCarta(
    * cuántas millas faltan. Así se aprende lo que hay que aprender: que el
    * sitio está por ahí y todavía no se ve.
    */
-  let destino: Dibujo["destino"] = null;
-  if (m.destino) {
-    const p = aqui(m.destino);
+  const alBorde = (
+    sitio: { x: number; z: number; oaci?: string | null } | null | undefined,
+  ): EnLaCarta | null => {
+    if (!sitio) return null;
+    const p = aqui(sitio);
     const d = Math.hypot(p.dx, p.dy);
     const dentro = d <= r;
-    destino = {
+    return {
       dx: dentro ? p.dx : (p.dx / (d || 1)) * r,
       dy: dentro ? p.dy : (p.dy / (d || 1)) * r,
-      millas: millasHasta(m.destino, m),
+      millas: millasHasta(sitio, m),
       dentro,
+      oaci: sitio.oaci ?? null,
     };
-  }
+  };
+  const destino = alBorde(m.destino);
+  const alterno = alBorde(m.alterno);
   const celdas = (m.celdas ?? []).map((c) => {
     const p = aqui(c);
     return { dx: p.dx, dy: p.dy, radio: c.radio * por, fuerza: c.fuerza };
   });
-  return { rango, pista, eje, otros: m.otros.map(aqui), destino, celdas };
+  return {
+    rango,
+    pista,
+    eje,
+    otros: m.otros.map(aqui),
+    destino,
+    alterno,
+    celdas,
+  };
 }

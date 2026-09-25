@@ -117,6 +117,40 @@ export class Mapa {
     }
   }
 
+  /**
+   * Los aeródromos del vuelo con su nombre, para rotularlos.
+   *
+   * El plano pintaba las pistas y ninguna decía de quién era: desde Gran
+   * Canaria había cinco barras blancas sobre cinco islas y ni una palabra. Un
+   * mapa de vuelo rotula sus aeródromos, con el indicativo delante porque es
+   * lo que va en las cartas; y el nombre detrás, que es lo que se reconoce.
+   */
+  private campos: readonly {
+    x: number;
+    z: number;
+    oaci: string | null;
+    nombre: string;
+  }[] = [];
+
+  ponerCampos(
+    campos: readonly {
+      x: number;
+      z: number;
+      oaci: string | null;
+      nombre: string;
+    }[],
+  ): void {
+    this.campos = campos;
+    this.pintado = false;
+    if (this.abierto) {
+      this.pintarFondo();
+      this.pintado = true;
+    }
+  }
+
+  /** El alternativo de ahora, para marcarlo. Ver `update`. */
+  private alterno: { x: number; z: number } | null = null;
+
   /** Los hitos del paisaje, y quién sabe cuáles se han nombrado ya. */
   private hitos: readonly Hito[] = [];
   private dichos: () => ReadonlySet<string> = () => new Set();
@@ -351,8 +385,10 @@ export class Mapa {
     z: number,
     rumboRad: number,
     destino: { x: number; z: number } | null = null,
+    alterno: { x: number; z: number } | null = null,
   ): void {
     this.destino = destino;
+    this.alterno = alterno;
     /*
      * **Al acercarse, el mapa sigue al avión; de lejos, no.**
      *
@@ -456,6 +492,25 @@ export class Mapa {
      * flecha se siga viendo entera: lo que se mira es dónde estoy, y la raya
      * es el extra.
      */
+    /*
+     * El alternativo, con un aro a rayas y sin raya hasta él: está ahí por
+     * si hace falta, no es a donde se va. Si se va a él —la reserva desvía el
+     * vuelo—, ya es el destino y lleva su raya.
+     */
+    if (this.alterno) {
+      const ax = LADO / 2 + (this.alterno.x - puesto.cx) * escala;
+      const az = LADO / 2 + (this.alterno.z - puesto.cz) * escala;
+      if (ax > 0 && ax < LADO && az > 0 && az < LADO) {
+        g.save();
+        g.strokeStyle = "#8fd3e8";
+        g.lineWidth = 2.2;
+        g.setLineDash([3, 3]);
+        g.beginPath();
+        g.arc(ax, az, 9, 0, Math.PI * 2);
+        g.stroke();
+        g.restore();
+      }
+    }
     if (this.destino) {
       const dx = LADO / 2 + (this.destino.x - puesto.cx) * escala;
       const dz = LADO / 2 + (this.destino.z - puesto.cz) * escala;
@@ -776,6 +831,28 @@ export class Mapa {
      * porque es lo mismo: una pista.
      */
     for (const p of this.otrasPistas) pintarPista(p);
+
+    // Y cada aeródromo con su rótulo, con reborde claro como los de los
+    // hitos: sobre relieve un texto oscuro a secas no se lee.
+    g.textBaseline = "middle";
+    for (const c of this.campos) {
+      const px = LADO / 2 + (c.x - cx) * escala;
+      const py = LADO / 2 + (c.z - cz) * escala;
+      if (px < -40 || px > LADO + 40 || py < -20 || py > LADO + 20) continue;
+      const texto = c.oaci ? `${c.oaci} ${c.nombre}` : c.nombre;
+      g.font = "700 12px system-ui, sans-serif";
+      const ancho = g.measureText(texto).width;
+      // Al lado que quepa, igual que los hitos.
+      const aLaIzquierda = px + 12 + ancho > LADO - 2;
+      g.textAlign = aLaIzquierda ? "right" : "left";
+      const tx = aLaIzquierda ? px - 12 : px + 12;
+      const ty = Math.max(10, Math.min(LADO - 10, py - 12));
+      g.lineWidth = 3.2;
+      g.strokeStyle = "#f4efe6";
+      g.fillStyle = "#1d1b19";
+      g.strokeText(texto, tx, ty);
+      g.fillText(texto, tx, ty);
+    }
   }
 
   /** Cumbres y pueblos: el dibujo siempre, el nombre si ya se oyó. */

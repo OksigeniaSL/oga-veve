@@ -1271,6 +1271,15 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       ),
     /** En qué campo está el avión ahora: el de salida o el de destino. */
     campoDeAhora: () => juego.campoDeAhoraParaBanco,
+    /**
+     * La ruta de este tramo: de dónde sale, a dónde va, el desvío de la
+     * reserva si lo hay, el alternativo y a qué campo apunta la flecha.
+     */
+    rutaDelVuelo: () => juego.rutaParaBanco,
+    /** Cambia el destino como si se tocara la tarjeta hasta llegar a él. */
+    ponerDestino: (id: string) => juego.ponerDestinoParaBanco(id),
+    /** Deja el depósito con estos kilos, para llegar a la reserva sin esperar. */
+    ponerCombustible: (kilos: number) => juego.ponerCombustibleParaBanco(kilos),
     /** Las células de tormenta de hoy. */
     celdasDeHoy: () => juego.celdasParaBanco,
     /** Los otros aviones de la ruta, con su nivel. */

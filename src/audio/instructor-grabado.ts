@@ -622,8 +622,20 @@ export class InstructorGrabado implements Instructor {
     const falta = loQueHaceFalta(manifiesto);
     await Promise.all(
       falta.map(async (pieza) => {
+        /*
+         * **Con lo que dura en la dirección**, que hace de huella.
+         *
+         * Los ficheros del pack no llevan huella en el nombre, y la caché los
+         * sirve por nombre: una frase regrabada con el mismo nombre —pasó con
+         * la de la reserva, que dejó de decir «buscá» y pasó a decir «seguí la
+         * flecha»— se seguía oyendo vieja para siempre en toda tablet que ya
+         * la tuviera, con el manifiesto nuevo al lado. Una toma nueva casi
+         * nunca dura lo mismo que la vieja, y la duración viene en el
+         * manifiesto, que se pide siempre de la red.
+         */
+        const ms = manifiesto.piezas[pieza]?.ms ?? 0;
         const bytes = await traer(
-          ficheroDe(pieza, formato, manifiesto.voz, base),
+          `${ficheroDe(pieza, formato, manifiesto.voz, base)}?ms=${ms}`,
         );
         if (!bytes) return;
         const buffer = await this.altavoz.decodificar(bytes);

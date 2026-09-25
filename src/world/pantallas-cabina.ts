@@ -1949,8 +1949,38 @@ function pintarLaCarta(
    * exactamente la clase de cosa que acaba dibujándose distinta en cada
    * superficie si cada una se la resuelve.
    */
+  /*
+   * El alternativo, primero y en cian: el mismo símbolo, más pequeño y sin
+   * punta, con su indicativo. Debajo del destino, para que si caen juntos se
+   * vea entero el que se sigue. Lo mismo que el cuadro plano; ver `cristal.ts`.
+   */
+  if (dibujo.alterno) {
+    const { dx, dy, oaci } = dibujo.alterno;
+    g.strokeStyle = AUXILIAR;
+    g.lineWidth = 1.6;
+    g.beginPath();
+    g.arc(cx + dx, cy + dy, 6, 0, Math.PI * 2);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(cx + dx - 3.8, cy + dy);
+    g.lineTo(cx + dx + 3.8, cy + dy);
+    g.stroke();
+    if (oaci)
+      // A la izquierda: el del destino va a la derecha. Ver `cristal.ts`.
+      escribir(g, oaci, cx + dx - 9, cy + dy, "600 11px " + FUENTE, AUXILIAR, "right");
+  }
   if (dibujo.destino) {
     const { dx, dy, dentro } = dibujo.destino;
+    if (dibujo.destino.oaci)
+      escribir(
+        g,
+        dibujo.destino.oaci,
+        cx + dx + 10,
+        cy + dy,
+        "600 11px " + FUENTE,
+        PALETA.objetivo,
+        "left",
+      );
     g.strokeStyle = PALETA.objetivo;
     g.lineWidth = 2;
     g.beginPath();
@@ -1985,7 +2015,9 @@ function pintarLaCarta(
   if (dibujo.destino) {
     escribir(
       g,
-      `${dibujo.destino.millas.toFixed(1)} NM`,
+      // Con el indicativo delante, que es como lo dice una pantalla de
+      // navegación: a qué sitio son esas millas.
+      `${dibujo.destino.oaci ? `${dibujo.destino.oaci} ` : ""}${dibujo.destino.millas.toFixed(1)} NM`,
       14,
       ALTO - 14,
       "500 12px " + FUENTE,

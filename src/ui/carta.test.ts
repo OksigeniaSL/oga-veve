@@ -211,3 +211,50 @@ describe("el aeropuerto de destino en la carta", () => {
     expect(d.dy).toBeGreaterThan(0);
   });
 });
+
+describe("el alternativo en la carta", () => {
+  /*
+   * El plan B también es un sitio, y en una carta de verdad va con su
+   * indicativo: se sabe dónde está antes de necesitarlo. Ver
+   * `flight/alterno.ts`.
+   */
+  const RADIO = 100;
+  const base = {
+    x: 0,
+    z: 0,
+    pista: { x: 0, z: 8 * MILLA, heading: 0, length: 2000 },
+    otros: [],
+  };
+
+  it("se resuelve igual que el destino, y los dos llevan su indicativo", () => {
+    const d = dibujarLaCarta(
+      {
+        ...base,
+        destino: { x: 0, z: -3 * MILLA, oaci: "GCFV" },
+        alterno: { x: 3 * MILLA, z: -3 * MILLA, oaci: "GCRR" },
+      },
+      0,
+      RADIO,
+    );
+    expect(d.destino?.oaci).toBe("GCFV");
+    expect(d.alterno?.oaci).toBe("GCRR");
+    // Al nordeste: arriba y a la derecha.
+    expect(d.alterno!.dx).toBeGreaterThan(0);
+    expect(d.alterno!.dy).toBeLessThan(0);
+  });
+
+  it("y lejos se pega al borde, como el destino", () => {
+    const d = dibujarLaCarta(
+      { ...base, alterno: { x: 0, z: -200 * MILLA } },
+      0,
+      RADIO,
+    );
+    expect(d.alterno!.dentro).toBe(false);
+    expect(Math.hypot(d.alterno!.dx, d.alterno!.dy)).toBeCloseTo(RADIO, 6);
+    expect(d.alterno!.oaci).toBeNull();
+  });
+
+  it("y sin alternativo no hay nada", () => {
+    expect(dibujarLaCarta(base, 0, RADIO).alterno).toBeNull();
+  });
+});

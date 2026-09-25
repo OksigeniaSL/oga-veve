@@ -79,6 +79,18 @@ export function destinosDe(esc: Pick<Scenario, "destino">): readonly string[] {
   return typeof d === "string" ? [d] : d;
 }
 
+/**
+ * El indicativo OACI del campo, si es un aeródromo con uno.
+ *
+ * Es el `id` del fichero del aeródromo —así se llama el fichero y así lo pide
+ * el METAR—, de modo que no hay una segunda lista que mantener. Los escenarios
+ * inventados sin aeródromo no llevan ninguno, porque inventarse un indicativo
+ * es inventarse el de alguien.
+ */
+export function oaciDe(esc: Pick<Scenario, "aerodrome">): string | null {
+  return esc.aerodrome?.id ?? null;
+}
+
 export interface Scenario {
   id: string;
   nameKey: string;

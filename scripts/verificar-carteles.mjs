@@ -178,6 +178,39 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     continue;
   }
   await page.waitForTimeout(1200);
+  /*
+   * **Y la tarjeta del destino, en lo más grande que puede ponerse.**
+   *
+   * En tierra la tarjeta dice «Pista» y nada más; volando a otro campo lleva
+   * el nombre del sitio y su indicativo —y en Guyrami, el plano del
+   * aeródromo al lado de la flecha—, y eso es lo que tiene que caber. El
+   * banco mide en tierra, así que se pone a mano con el nombre más largo de
+   * los destinos y se vuelve a poner en cada medida: el juego la repinta en
+   * cada fotograma.
+   */
+  await page.evaluate(() => {
+    globalThis.__forzarDestino = () => {
+      const casa = document.querySelector('[data-hud="home"]');
+      if (!casa) return;
+      casa.classList.add("casa--destino");
+      const glosa = casa.querySelector('[data-hud="home-gloss"]');
+      // El nombre corto más largo de los destinos: la tarjeta corta lo de
+      // detrás del punto medio. Ver `setHome`.
+      if (glosa) glosa.textContent = "Silvio Pettirossi";
+      const oaci = casa.querySelector('[data-hud="home-oaci"]');
+      if (oaci) {
+        oaci.hidden = false;
+        oaci.textContent = "SGES";
+      }
+      const plano = casa.querySelector('[data-hud="home-plano"]');
+      if (plano) {
+        plano.hidden = false;
+        if (!plano.firstChild)
+          plano.innerHTML =
+            '<svg class="ficha__plano" viewBox="0 0 10 6"><line class="plano__pista" x1="1" y1="5" x2="9" y2="1" /></svg>';
+      }
+    };
+  });
 
   const visto = await page.evaluate(() => {
     const senal = document.querySelector('[data-hud="senal"]');
@@ -306,6 +339,7 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
    * Se cuenta lo que está puesto: lo escondido no tiene que caber.
    */
   const fuera = await page.evaluate(() => {
+    globalThis.__forzarDestino?.();
     const que = [
       "throttle-up",
       "throttle-down",
@@ -340,6 +374,7 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
    * táctiles se colocaba al 44 % del alto y caía encima del cuadro.
    */
   const abajo = await page.evaluate(() => {
+    globalThis.__forzarDestino?.();
     const hud = document.querySelector(".hud");
     const aviso = document.querySelector('[data-hud="warning"]');
     const texto = document.querySelector('[data-hud="warning-text"]');
@@ -406,6 +441,16 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     const mandos = [...document.querySelectorAll(".hud__derecha > *")].filter(
       (e) => !e.closest("[hidden]") && e.getBoundingClientRect().height > 2,
     );
+    /*
+     * Y la tarjeta del destino, con su nombre y su indicativo, sin pisar a
+     * sus vecinas de columna: al crecer una línea empujaba hacia abajo.
+     */
+    const casa = document.querySelector('[data-hud="home"]');
+    const casaPisa = casa
+      ? mandos
+          .filter((m) => m !== casa && pisa(m.getBoundingClientRect(), casa.getBoundingClientRect()))
+          .map((m) => m.dataset.hud ?? String(m.className).slice(0, 24))
+      : [];
     const mandosPisan = mandos
       .filter((m) => pisa(m.getBoundingClientRect(), cuadro.getBoundingClientRect()))
       .map((m) => m.dataset.hud ?? String(m.className).slice(0, 24));
@@ -424,6 +469,7 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       timonPisa,
       rinconPisa,
       mandosPisan,
+      casaPisa,
     };
     hud.classList.remove("hud--avisando");
     aviso.classList.remove("aviso-hud--visible");
@@ -501,6 +547,12 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       abajo.mandosPisan.length === 0,
       abajo.mandosPisan.join(" · ") || "libre",
       "un freno detrás de las esferas no se encuentra cuando hace falta",
+    );
+    comprobar(
+      `${donde}: la tarjeta del destino, con nombre e indicativo, no pisa a sus vecinas`,
+      abajo.casaPisa.length === 0,
+      abajo.casaPisa.join(" · ") || "libre",
+      "a dónde se va es lo que se mira todo el vuelo, y no puede taparlo un botón",
     );
     comprobar(
       `${donde}: los avisos del rincón no pisan el cuadro ni los mandos`,

@@ -182,6 +182,13 @@ if (misionPedida) {
  */
 let avion: AircraftConfig =
   AIRCRAFT.find((a) => a.id === params.get("avion")) ?? AIRCRAFT[0]!;
+/*
+ * **A dónde se va**, elegido en el hangar. `?destino=tenerife-sur` lo fija
+ * desde la dirección, como el resto: sin eso ningún banco podría volar una
+ * ruta concreta sin dar clics. Sin nada, el juego propone el vecino más
+ * cercano. Ver `Game.destinoDeSalida`.
+ */
+let destino: string | undefined = params.get("destino") ?? undefined;
 
 /*
  * **Primero quién vuela, y después dónde.**
@@ -239,6 +246,9 @@ if (!escenario) {
   leccion = elegido.leccion;
   mision = elegido.mision;
   avion = elegido.aircraft;
+  // Y se recuerda en el propio hangar, al tocarlo: guardar aquí también lo
+  // propuesto lo congelaría como si alguien lo hubiera elegido.
+  destino = elegido.destino;
   rememberTier(tramo);
   ponerTexto("aeronave", avion.id);
   recordarLeccion(leccion);
@@ -439,6 +449,7 @@ const game = new Game({
    */
   luzDeCiudad: ciudad,
   vecinos,
+  destino,
 });
 miga("juego creado");
 

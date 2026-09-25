@@ -208,6 +208,7 @@ import { objectiveTarget, type Mission } from "./missions/types";
 import { missionsFor } from "./content/missions";
 import {
   conViento,
+  oaciDe,
   VALLE_CORDILLERA,
   VECES_LEJOS,
   type Scenario,
@@ -334,7 +335,7 @@ import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import { patasDe, peldanoDe } from "./ui/familia";
 import { avisaDelTren, seVuelveADecir } from "./flight/tren";
 import {
-  cargaParaLaRuta,
+  cargaParaElPlan,
   comoVaElDeposito,
   loQueCabe,
   quemaPorSegundo,
@@ -417,6 +418,12 @@ import { LaAproximacion } from "./flight/la-aproximacion";
 import { asentarAerodromoSobreLaFoto } from "./world/asentar-aerodromo";
 import { limitarElRodaje } from "./flight/tope-de-rodaje";
 import { leerTexto, ponerTexto } from "./datos/guardado";
+import {
+  aDondeConLaReserva,
+  elAlterno,
+  tramosDelPlan,
+  type CampoDelVuelo,
+} from "./flight/alterno";
 import { dibujarReloj, relojDe } from "./ui/reloj";
 
 /** Lo más deprisa que se le deja ir al reloj del juego. Ver `Game.acelerar`. */
@@ -517,6 +524,11 @@ const CADA_CUANTO_SE_APUNTA = 30;
  */
 const CADA_CUANTO_SE_CATA = 2;
 
+/** Un campo del vuelo con su escenario, que es de donde sale su nombre. */
+interface CampoConNombre extends CampoDelVuelo {
+  readonly escenario: Scenario;
+}
+
 export interface GameOptions {
   canvas: HTMLCanvasElement;
   hudRoot: HTMLElement;
@@ -557,6 +569,16 @@ export interface GameOptions {
    * `Scenario.destino` y `MundoVecino`.
    */
   vecinos?: readonly Scenario[];
+
+  /**
+   * **A dónde se va**, elegido en el hangar: el identificador de uno de los
+   * `vecinos`, o el del propio escenario para una vuelta al campo.
+   *
+   * Sin él —se entró con la dirección puesta, o el elegido no vale para este
+   * avión— se va al vecino más cercano, que es lo que hacía el juego antes de
+   * que se pudiera elegir. Ver `destinoDeSalida`.
+   */
+  destino?: string;
 
   /**
    * Y sus fotografías, una por vecino y en el mismo orden, para que las islas
@@ -840,7 +862,7 @@ export class Game {
    * Lo que queda en los depósitos, en kilos.
    *
    * Se carga al empezar el vuelo con lo de la ruta más la reserva —ver
-   * `cargaParaLaRuta`— y baja con el empuje que está dando el avión. Es la
+   * `cargaParaElPlan`— y baja con el empuje que está dando el avión. Es la
    * única cuenta atrás de verdad que hay aquí.
    */
   private combustible = 0;
@@ -912,18 +934,48 @@ export class Game {
   }
 
   /**
-   * El campo al que se va, en coordenadas del mundo.
-   *
-   * Saliendo de casa, **el destino más cercano**; ya en un destino, la vuelta
-   * a casa. Devuelve `null` si esta ruta no lleva a ningún sitio.
-   *
-   * Con varios destinos «el otro» dejó de ser uno: desde El Hierro se puede
-   * ir a La Gomera o a La Palma. Se enseña el más cercano, que es el que se
-   * está usando en cuanto se pone rumbo a él — y el que deja de serlo en
-   * cuanto se pone rumbo al otro.
+   * El campo al que se va, en coordenadas del mundo, o `null` si el vuelo es
+   * una vuelta al campo. Ver `elDestino`.
    */
-  private elOtroCampo(): { x: number; z: number } | null {
-    return this.elDestino();
+  private elOtroCampo(): { x: number; z: number; oaci: string | null } | null {
+    const d = this.elDestino();
+    return d ? { x: d.x, z: d.z, oaci: d.oaci } : null;
+  }
+
+  /**
+   * Los campos de este vuelo: el de salida y los vecinos cargados, cada uno
+   * con su pista en coordenadas de este mundo.
+   *
+   * Una sola lista para las cuatro preguntas que se hacen sobre ellos —a dónde
+   * se va, cuál es el alternativo, a cuál se desvía con la reserva y cuál es
+   * el siguiente al tocar la tarjeta—, para que no haya forma de que una diga
+   * una cosa y otra otra. Se hace una vez: los vecinos se cargan al construir
+   * el juego y no cambian.
+   */
+  private camposDelVuelo(): readonly CampoConNombre[] {
+    if (this.camposHechos?.length === this.vecinos.length + 1)
+      return this.camposHechos;
+    this.camposHechos = [
+      {
+        id: this.scenario.id,
+        x: this.scenario.runway.x,
+        z: this.scenario.runway.z,
+        escenario: this.scenario,
+      },
+      ...this.vecinos.map((v) => ({
+        id: v.escenario.id,
+        x: v.pista.x,
+        z: v.pista.z,
+        escenario: v.escenario,
+      })),
+    ];
+    return this.camposHechos;
+  }
+
+  private camposHechos: readonly CampoConNombre[] | null = null;
+
+  private campoPorId(id: string): CampoConNombre | null {
+    return this.camposDelVuelo().find((c) => c.id === id) ?? null;
   }
 
   /**
@@ -941,91 +993,222 @@ export class Game {
    * enseñaba. Un aeropuerto al que no se puede apuntar no está en el juego,
    * está en el disco.
    *
-   * Saliendo de casa se va al destino elegido —y si no se ha elegido, al más
-   * cercano, que es lo que se está usando en cuanto se pone rumbo a él—; ya
-   * en un destino, la vuelta a casa. Ver `siguienteDestino`.
+   * **Es el que se eligió en el hangar**, y ya no el más cercano a donde esté
+   * el avión. Se cargó combustible para él y para su alternativo, así que el
+   * destino es una decisión tomada en tierra y no una sugerencia que cambia
+   * según hacia dónde se mire. Se cambia a mano —la tarjeta, la J— o lo cambia
+   * la reserva, que es para lo que está. Ver `desviarConLaReserva`.
+   *
+   * Devuelve `null` en una vuelta al campo: ahí la flecha señala la pista de
+   * siempre, que es lo que hacen las lecciones y los circuitos.
+   *
+   * **Y la vuelta a casa no empieza a mitad de camino.** Antes, «ya en un
+   * destino» se decidía por la pista más cercana al avión, y a mitad de ruta
+   * la más cercana pasa a ser la del destino: la flecha daba media vuelta y
+   * señalaba casa con la isla de llegada delante. Ahora un tramo empieza
+   * donde se estuvo en tierra por última vez. Ver `mirarSiSeLlego`.
    */
-  private elDestino(): { x: number; z: number; nameKey: string } | null {
+  private elDestino(): {
+    x: number;
+    z: number;
+    nameKey: string;
+    id: string;
+    oaci: string | null;
+    escenario: Scenario;
+  } | null {
     if (this.vecinos.length === 0) return null;
-    const aqui = this.elVecinoDeAhora();
-    if (aqui)
-      return {
-        x: this.scenario.runway.x,
-        z: this.scenario.runway.z,
-        nameKey: this.scenario.nameKey,
-      };
-    const aMano =
-      this.destinoAMano === null ? null : this.vecinos[this.destinoAMano];
-    /*
-     * **En la lección de aterrizar, la pista es la de delante.**
-     *
-     * Se empieza en final, con los aros encendidos, y la tarjeta señalaba el
-     * campo vecino más cercano: en El Hierro, «69,9 km La Gomera» con la pista
-     * a tres kilómetros por el parabrisas. Dos flechas diciendo cosas
-     * distintas, y la que sobra es la que más se mira. Quien quiera irse a
-     * otro sitio lo elige a mano, y entonces sí.
-     */
-    if (!aMano && this.leccion.arranque === "aire") return null;
-    if (aMano)
-      return {
-        x: aMano.pista.x,
-        z: aMano.pista.z,
-        nameKey: aMano.escenario.nameKey,
-      };
-    const s = this.flight.state.position;
-    let mejor: { x: number; z: number; nameKey: string } | null = null;
+    const meta = this.desvioId ?? this.destinoId;
+    // Una vuelta al campo no lleva a ningún otro sitio. Con desvío sí se
+    // nombra, aunque sea el de salida: volver es una decisión, y tiene nombre.
+    if (!this.desvioId && meta === this.salidaId) return null;
+    const c = this.campoPorId(meta);
+    if (!c) return null;
+    return {
+      x: c.x,
+      z: c.z,
+      nameKey: c.escenario.nameKey,
+      id: c.id,
+      oaci: oaciDe(c.escenario),
+      escenario: c.escenario,
+    };
+  }
+
+  /**
+   * El alternativo del destino de ahora, si lo hay.
+   *
+   * En una vuelta al campo, el campo más cercano al de salida: también un
+   * circuito tiene a dónde ir si la pista se cierra, y en Canarias casi
+   * siempre hay otra isla con pista a la vista.
+   */
+  private elAlternoDeAhora(): CampoConNombre | null {
+    if (this.vecinos.length === 0) return null;
+    const campos = this.camposDelVuelo();
+    const meta = this.campoPorId(this.desvioId ?? this.destinoId);
+    return meta ? elAlterno(meta, campos) : null;
+  }
+
+  /**
+   * A dónde se va en este tramo: el identificador de un campo del vuelo.
+   *
+   * Igual al de salida cuando es una vuelta al campo.
+   */
+  private destinoId = "";
+
+  /** De dónde salió este tramo: el último campo donde se estuvo en tierra. */
+  private salidaId = "";
+
+  /**
+   * A dónde se desvió el vuelo con la reserva, si se desvió.
+   *
+   * Aparte del destino porque son dos cosas distintas: el destino es lo que se
+   * planeó y el desvío es lo que se decidió en el aire. Tocar la tarjeta lo
+   * borra, que es volver a decidir a mano.
+   */
+  private desvioId: string | null = null;
+
+  /** En qué campo se cargó combustible por última vez. Ver `repostar`. */
+  private campoDelRepostaje = "";
+
+  /** Lo que llegó del hangar, para poder volver a ello en cada vuelo. */
+  private readonly destinoPedido: string | undefined;
+
+  /**
+   * El destino con el que empieza cada vuelo.
+   *
+   * El elegido en el hangar si vale; si no, el vecino más cercano al campo de
+   * salida, que es lo que hacía el juego antes de que se pudiera elegir y lo
+   * que sigue haciendo un enlace directo. Y en la lección de aterrizar, la
+   * pista de delante: se empieza en final con los aros encendidos, y una
+   * flecha señalando otra isla a setenta kilómetros es la que sobra.
+   */
+  private destinoDeSalida(): string {
+    const casa = this.scenario.id;
+    const pedido = this.destinoPedido;
+    if (pedido && this.campoPorId(pedido)) return pedido;
+    if (this.leccion.arranque === "aire") return casa;
+    const campos = this.camposDelVuelo();
+    const yo = campos[0]!;
+    let mejor = casa;
     let corto = Infinity;
-    for (const v of this.vecinos) {
-      const d = Math.hypot(v.pista.x - s.x, v.pista.z - s.z);
+    for (const c of campos.slice(1)) {
+      const d = Math.hypot(c.x - yo.x, c.z - yo.z);
       if (d < corto) {
         corto = d;
-        mejor = { x: v.pista.x, z: v.pista.z, nameKey: v.escenario.nameKey };
+        mejor = c.id;
       }
     }
     return mejor;
   }
 
   /**
-   * Cuál de los destinos se ha elegido a mano, o `null` para el más cercano.
+   * Pasa al siguiente destino de la lista, contando la vuelta al campo.
    *
-   * Empieza en `null` a propósito: **no hay que elegir nada para volar a otro
-   * sitio.** Quien tiene cuatro años despega, mira la flecha y va; elegir es
-   * para cuando hay tres destinos y se quiere otro. Ver la regla de la casa:
-   * una pantalla que obliga a decidir para avanzar está mal.
-   */
-  private destinoAMano: number | null = null;
-
-  /**
-   * Pasa al siguiente destino de la lista.
-   *
-   * Con un solo destino no hace nada, y eso también está bien: la tecla y el
-   * toque existen igual en todos los campos, y donde no hay a dónde cambiar
-   * no cambian. Un mando que a veces está y a veces no es peor que uno que a
-   * veces no hace nada.
+   * La vuelta al campo entra en la ronda porque es una de las respuestas a
+   * «¿a dónde vas?» —la que dan las lecciones y los peldaños de abajo— y así
+   * con un solo vecino la tarjeta también hace algo: va y vuelve. Donde no hay
+   * ningún otro campo no hace nada, que es mejor que desaparecer: un mando
+   * que va y viene no se aprende.
    */
   siguienteDestino(): void {
-    if (this.vecinos.length < 2) return;
-    const ahora =
-      this.destinoAMano === null
-        ? this.vecinos.findIndex((v) => v.pista === this.pistaMasCercanaDeIda())
-        : this.destinoAMano;
-    this.destinoAMano = (ahora + 1) % this.vecinos.length;
+    if (this.vecinos.length === 0) return;
+    const campos = this.camposDelVuelo();
+    const ahora = campos.findIndex(
+      (c) => c.id === (this.desvioId ?? this.destinoId),
+    );
+    this.destinoId = campos[(ahora + 1) % campos.length]!.id;
+    this.desvioId = null;
     this.avisar("success");
   }
 
-  /** El vecino más cercano ahora mismo, que es el destino por omisión. */
-  private pistaMasCercanaDeIda(): Pista | null {
-    const s = this.flight.state.position;
-    let mejor: Pista | null = null;
-    let corto = Infinity;
-    for (const v of this.vecinos) {
-      const d = Math.hypot(v.pista.x - s.x, v.pista.z - s.z);
-      if (d < corto) {
-        corto = d;
-        mejor = v.pista;
-      }
-    }
-    return mejor;
+  /**
+   * Si el avión acaba de tocar tierra en otro campo, empieza el tramo nuevo.
+   *
+   * En cuanto se está en el suelo de un campo que no es el de salida, ése
+   * pasa a ser la salida y el destino pasa a ser casa: es lo que hace la
+   * flecha de volver, y ya no depende de por dónde vaya el avión en el aire.
+   * Cinco kilómetros de radio, para que una toma fuera de campo en mitad del
+   * mar no cuente como llegada a ninguna parte.
+   */
+  private mirarSiSeLlego(): void {
+    const s = this.flight.state;
+    if (!s.onGround || this.vecinos.length === 0) return;
+    const aqui = this.elCampoDeAhora();
+    if (aqui.id === this.salidaId) return;
+    const c = this.campoPorId(aqui.id);
+    if (!c || Math.hypot(c.x - s.position.x, c.z - s.position.z) > 5000)
+      return;
+    this.salidaId = aqui.id;
+    this.destinoId = this.scenario.id;
+    this.desvioId = null;
+  }
+
+  /**
+   * **Con la reserva empezada, la flecha se va sola a donde hay que ir.**
+   *
+   * Al alternativo, o al campo más cercano si hay uno más cerca —el propio
+   * destino si ya se está llegando—. Ver `aDondeConLaReserva`.
+   *
+   * La voz decía «buscá dónde aterrizar» y no señalaba ninguno: dejaba la
+   * decisión entera para el momento en que menos margen hay, a quien tiene
+   * cuatro años. Ahora la decisión ya está tomada —es el alternativo, y se
+   * escribió en tierra— y lo que hay que hacer es seguir la flecha. Eso es lo
+   * que enseña un plan de vuelo: con calma, porque ya se pensó antes.
+   */
+  private desviarConLaReserva(): void {
+    if (this.vecinos.length === 0) return;
+    const p = this.flight.state.position;
+    const a = aDondeConLaReserva(
+      p.x,
+      p.z,
+      this.elAlternoDeAhora(),
+      this.camposDelVuelo(),
+    );
+    if (a && a.id !== this.destinoId) this.desvioId = a.id;
+  }
+
+  /** El alternativo, como lo quieren la carta y el mapa. */
+  private alternoParaLaCarta(): {
+    x: number;
+    z: number;
+    oaci: string | null;
+  } | null {
+    const a = this.elAlternoDeAhora();
+    return a ? { x: a.x, z: a.z, oaci: oaciDe(a.escenario) } : null;
+  }
+
+  /** A dónde se va y cuál es el alternativo, para los bancos. */
+  get rutaParaBanco(): {
+    salida: string;
+    destino: string;
+    desvio: string | null;
+    alterno: string | null;
+    flecha: string | null;
+  } {
+    return {
+      salida: this.salidaId,
+      destino: this.destinoId,
+      desvio: this.desvioId,
+      alterno: this.elAlternoDeAhora()?.id ?? null,
+      flecha: this.elDestino()?.id ?? null,
+    };
+  }
+
+  /**
+   * Deja el depósito con estos kilos, para los bancos: la reserva llega a la
+   * hora y media de vuelo, y el banco no puede esperarla.
+   */
+  ponerCombustibleParaBanco(kilos: number): void {
+    this.combustible = Math.max(0, kilos);
+  }
+
+  /**
+   * Pone el destino desde fuera, para los bancos: lo mismo que tocar la
+   * tarjeta hasta llegar a él.
+   */
+  ponerDestinoParaBanco(id: string): void {
+    if (!this.campoPorId(id)) return;
+    this.destinoId = id;
+    this.desvioId = null;
   }
 
   /** En qué campo está el avión ahora, para los bancos. */
@@ -1668,6 +1851,7 @@ export class Game {
       this.tier.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
     );
     this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
+    this.destinoPedido = options.destino;
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? PYKASU;
 
@@ -2246,8 +2430,18 @@ export class Game {
      * vuela sobre el mar entre dos islas no tiene forma de saber en cuál de
      * las dos puede bajar. Ver `Mapa.ponerOtraPista`.
      */
-    if (this.vecinos.length > 0)
+    if (this.vecinos.length > 0) {
       this.hud.mapa.ponerOtrasPistas(this.vecinos.map((v) => v.pista));
+      // Y cada campo con su nombre. Ver `Mapa.ponerCampos`.
+      this.hud.mapa.ponerCampos(
+        this.camposDelVuelo().map((c) => ({
+          x: c.x,
+          z: c.z,
+          oaci: oaciDe(c.escenario),
+          nombre: t(c.escenario.nameKey as TranslationKey),
+        })),
+      );
+    }
     this.medidor = new Medidor(document.body, this.renderer);
     this.hud.setEscalera(this.tier.avisos);
     this.hud.setInstruments(this.tier.instruments);
@@ -4294,6 +4488,18 @@ export class Game {
     }
     c.engineOn = !c.engineOn;
     this.hud.flash(t(c.engineOn ? "hud.engineOn" : "hud.engineOff"));
+    /*
+     * **Y con el motor parado en otro campo, se reposta para volver.**
+     *
+     * Se sale con lo del tramo de ida más el alternativo, no con la vuelta: en
+     * el campo de llegada hay combustible, como en cualquier aeropuerto. Pero
+     * el camión no se acerca a un avión con el motor en marcha, así que llega
+     * cuando se apaga, que es cuando llega de verdad.
+     */
+    if (!c.engineOn && this.elCampoDeAhora().id !== this.campoDelRepostaje) {
+      this.mirarSiSeLlego();
+      if (this.salidaId !== this.campoDelRepostaje) this.repostar();
+    }
   }
 
   resetFlight(): void {
@@ -4350,6 +4556,13 @@ export class Game {
     this.dichoDeBanda = null;
     this.terrenoDicho = null;
     this.avisandoDelBulto = 0;
+    /*
+     * Y la ruta de este vuelo, **antes** del depósito: lo que se carga sale de
+     * a dónde se va. Cada vuelo empieza en casa y con el destino del hangar.
+     */
+    this.salidaId = this.scenario.id;
+    this.destinoId = this.destinoDeSalida();
+    this.desvioId = null;
     // Y el depósito, lleno para lo que se va a volar hoy. Ver `repostar`.
     this.repostar();
     /*
@@ -6843,14 +7056,19 @@ export class Game {
       dt,
     );
 
-    // Y a dónde se va, si se va a algún sitio: el objetivo de la misión, que
-    // es lo único del mundo que es «otro lugar concreto».
+    /*
+     * Y a dónde se va, si se va a algún sitio: el objetivo de la misión, y si
+     * no hay misión, el aeropuerto de destino con su alternativo. Eran solo
+     * las misiones, y el plano no decía a cuál de las cinco pistas pintadas
+     * se iba.
+     */
     const objetivo = this.missions.current;
     this.hud.mapa.update(
       this.flight.state.position.x,
       this.flight.state.position.z,
       this.flight.state.heading,
-      objetivo ? objectiveTarget(objetivo) : null,
+      objetivo ? objectiveTarget(objetivo) : this.elOtroCampo(),
+      objetivo ? null : this.alternoParaLaCarta(),
     );
     /*
      * Y dónde está el compensador, que es un mando que **se queda puesto** y
@@ -7135,6 +7353,9 @@ export class Game {
    * aquí.
    */
   private quemarCombustible(dt: number): void {
+    // Antes que nada, dónde empieza el tramo: el desvío de la reserva se
+    // calcula contra él. Ver `mirarSiSeLlego`.
+    this.mirarSiSeLlego();
     const antes = this.combustible;
     this.quemaDeAhora = this.input.controls.engineOn
       ? quemaPorSegundo(this.aircraft, this.flight.empujeAhora())
@@ -7150,6 +7371,13 @@ export class Game {
     const como = comoVaElDeposito(this.aircraft, this.combustible);
     if (como !== "bien" && !this.avisadoDeLaReserva && antes > 0) {
       this.avisadoDeLaReserva = true;
+      /*
+       * Y la flecha, al sitio donde se va a aterrizar: el aviso ya no dice
+       * «buscá», dice «seguí». La tarjeta del destino destella con el nombre
+       * nuevo, que es lo que ve quien no lee. En tierra no hay a dónde
+       * desviarse: se está donde se está.
+       */
+      if (!this.flight.state.onGround) this.desviarConLaReserva();
       const dicho = this.avisoCon("vuelo.reserva", "palabra.reserva");
       this.hud.senal.mostrar("combustible", dicho.rotulo, null, { segundos: 6 });
       this.instructor.decir(dicho.texto, dicho.id);
@@ -7194,25 +7422,30 @@ export class Game {
   }
 
   /**
-   * Llenar para este vuelo: lo de la ruta más la reserva.
+   * Llenar para este vuelo: el tramo al destino, el del destino a su
+   * alternativo, la maniobra y la reserva. Ver `cargaParaElPlan`.
    *
-   * Lo de la ruta sale del destino **más lejano** que tenga hoy este
-   * escenario, no del que se acabe de elegir: desde El Hierro se puede salir
-   * hacia La Gomera y cambiar de idea en el aire, y un avión que sale con lo
-   * justo para lo que creía que iba a hacer es un avión que aprendió mal.
-   * Cargar para la peor de las salidas posibles es lo que hace de verdad un
-   * despacho de vuelo.
+   * Cargaba ida y vuelta al destino **más lejano** de los posibles, fuera cual
+   * fuera el elegido, con el argumento de que se puede cambiar de idea en el
+   * aire. Es un argumento cómodo y es lo contrario de lo que se hace: un avión
+   * sale con lo de **su** plan más un plan B con nombre —el alternativo—, y si
+   * en el aire cambia de idea, es esa cuenta la que dice si puede. Y con el
+   * destino elegido en el hangar, el número por fin depende de algo que se
+   * decide: ir a Lanzarote pesa más que ir a Tenerife Norte.
    *
-   * Y de ida y vuelta, que es la otra mitad: aquí no hay camión de combustible
-   * en el otro campo. Quien sale de Tenerife Norte a La Palma tiene que poder
-   * volver, y cargar solo la ida sería enseñar a quedarse tirado.
+   * La vuelta ya no se carga desde casa porque ya no hace falta: al apagar el
+   * motor en el campo de llegada se vuelve a llenar para el tramo de vuelta,
+   * que es lo que pasa en cualquier aeropuerto. Ver `toggleEngine`.
    */
   private repostar(): void {
-    const casa = this.scenario.runway;
-    let lejos = 0;
-    for (const v of this.vecinos)
-      lejos = Math.max(lejos, Math.hypot(v.pista.x - casa.x, v.pista.z - casa.z));
-    this.combustible = cargaParaLaRuta(this.aircraft, lejos * 2);
+    const campos = this.camposDelVuelo();
+    const salida = this.campoPorId(this.salidaId) ?? campos[0]!;
+    const destino = this.campoPorId(this.destinoId) ?? salida;
+    this.combustible = cargaParaElPlan(
+      this.aircraft,
+      tramosDelPlan(salida, destino, campos),
+    );
+    this.campoDelRepostaje = salida.id;
     this.quemaDeAhora = 0;
     this.avisadoDeLaReserva = false;
   }
@@ -8255,7 +8488,13 @@ export class Game {
         : destino
           ? "destino"
           : "pista",
-      destino ? t(destino.nameKey as TranslationKey) : undefined,
+      destino
+        ? {
+            nombre: t(destino.nameKey as TranslationKey),
+            oaci: destino.oaci,
+            escenario: destino.escenario,
+          }
+        : undefined,
     );
   }
 
@@ -9619,6 +9858,11 @@ export class Game {
        * queda por llegar a donde ya se está.
        */
       destino: this.elOtroCampo(),
+      /*
+       * Y el alternativo, rotulado: el plan B se sabe dónde está antes de
+       * necesitarlo. Ver `flight/alterno.ts`.
+       */
+      alterno: this.alternoParaLaCarta(),
     };
   }
 
