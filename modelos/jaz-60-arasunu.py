@@ -33,8 +33,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    espejo, helice, llantas, neumaticos, paneles, paneles_zy, simetricos,
-    superficie, varillas, ventanas, zy,
+    bisagra, espejo, helice, llantas, neumaticos, paneles, paneles_zy,
+    recogido, simetricos, superficie, varillas, ventanas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -265,34 +265,49 @@ def construir():
     # ── Tren triciclo ─────────────────────────────────────────────────────
     #
     # El principal sale de las góndolas, con dos ruedas por pata —reparten la
-    # carga y dejan aterrizar en pista sin asfaltar—; el de morro, bajo la
-    # cabina.
+    # carga y dejan aterrizar en pista sin asfaltar—, y se mete **hacia
+    # delante**, dentro de la góndola, detrás del motor: si falla la
+    # hidráulica, el viento lo empuja fuera y lo traba. El de morro sale bajo
+    # la cabina y se mete **hacia atrás**, porque por delante el morro se
+    # afila y no cabe.
+    #
+    # El tornapuntas de cada pata nace a los lados del muñón, en el eje de la
+    # bisagra, para girar con ella sin atravesar nada.
     eje = -(TREN - RUEDA)
-    piezas.append(varillas("pata-principal", [
-        ((MOTOR, EJE_HELICE - 0.40, PRINCIPAL_Z), (MOTOR, eje + 0.45,
-                                                    PRINCIPAL_Z), 0.085),
+    arriba = EJE_HELICE - 0.05
+    principal = [varillas("pata-principal", [
+        ((MOTOR, arriba, PRINCIPAL_Z), (MOTOR, eje + 0.45, PRINCIPAL_Z), 0.085),
         ((MOTOR, eje + 0.50, PRINCIPAL_Z), (MOTOR, eje, PRINCIPAL_Z), 0.055),
         ((MOTOR - 0.32, eje, PRINCIPAL_Z), (MOTOR + 0.32, eje, PRINCIPAL_Z),
          0.045),
-        ((MOTOR, EJE_HELICE - 0.45, PRINCIPAL_Z - 0.85),
-         (MOTOR, eje + 0.55, PRINCIPAL_Z - 0.04), 0.04),
-    ], material_="gris", simetria=True))
+        ((MOTOR - 0.22, arriba, PRINCIPAL_Z),
+         (MOTOR, eje + 0.60, PRINCIPAL_Z - 0.02), 0.035),
+        ((MOTOR + 0.22, arriba, PRINCIPAL_Z),
+         (MOTOR, eje + 0.60, PRINCIPAL_Z - 0.02), 0.035),
+    ], material_="gris")]
     ruedas = [(MOTOR - 0.24, eje, PRINCIPAL_Z), (MOTOR + 0.24, eje,
                                                   PRINCIPAL_Z)]
-    piezas.append(neumaticos("rueda-principal", ruedas, RUEDA, 0.22,
-                             simetria=True))
-    piezas.append(llantas("rueda-principal-llanta", ruedas, RUEDA, 0.22,
-                          simetria=True))
+    principal.append(neumaticos("rueda-principal", ruedas, RUEDA, 0.22))
+    principal.append(llantas("rueda-principal-llanta", ruedas, RUEDA, 0.22))
+    # Hacia delante: la rueda va al morro girando sobre el eje x.
+    patas = bisagra("principal", (MOTOR, arriba, PRINCIPAL_Z), (1, 0, 0), 90,
+                    principal, simetria=True)
 
     eje_m = -(TREN - RUEDA_MORRO)
-    piezas.append(varillas("pata-morro", [
-        ((0, -0.72, MORRO_Z), (0, eje_m + 0.40, MORRO_Z), 0.065),
+    arriba_m = -0.55
+    morro = [varillas("pata-morro", [
+        ((0, arriba_m, MORRO_Z), (0, eje_m + 0.40, MORRO_Z), 0.065),
         ((0, eje_m + 0.45, MORRO_Z), (0, eje_m, MORRO_Z + 0.05), 0.042),
         ((-0.18, eje_m, MORRO_Z + 0.05), (0.18, eje_m, MORRO_Z + 0.05), 0.035),
-    ], material_="gris"))
+    ], material_="gris")]
     ruedas_m = [(-0.13, eje_m, MORRO_Z + 0.05), (0.13, eje_m, MORRO_Z + 0.05)]
-    piezas.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.16))
-    piezas.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.16))
+    morro.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.16))
+    morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.16))
+    # Hacia atrás: el mismo eje x, girando al revés.
+    patas += bisagra("morro", (0, arriba_m, MORRO_Z), (-1, 0, 0), 90, morro)
+    recogido(patas, [p for p in piezas
+                     if p.name in ("fuselaje", "carenado", "gondola", "ala")])
+    piezas += patas
 
     piezas.append(centro_de_gravedad(ALA_Z + 0.08 + 2.2 * 0.27))
     return piezas

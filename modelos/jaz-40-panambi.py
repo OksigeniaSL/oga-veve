@@ -34,8 +34,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import caja, cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    espejo, helice, llantas, neumaticos, paneles, paneles_zy, simetricos,
-    superficie, varillas, zy,
+    bisagra, espejo, helice, llantas, neumaticos, paneles, paneles_zy,
+    recogido, simetricos, superficie, varillas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -250,35 +250,49 @@ def construir():
     # rueda atrás y por eso rueda con el morro apuntando al cielo.
     #
     # Los principales, **dentro de las góndolas**, que es de donde salen en un
-    # bimotor de ala baja: por eso las góndolas son tan largas por detrás del
-    # ala.
+    # bimotor de ala baja.
+    #
+    # Y se meten girando sobre su muñón: el principal **hacia delante**,
+    # dentro de la góndola y detrás del motor —si falla la hidráulica, el
+    # viento lo empuja fuera y lo traba—, y el de morro **hacia atrás**, a la
+    # bodega, porque por delante el morro se afila y no cabe. El tornapuntas
+    # nace a los lados del muñón, en el eje de la bisagra, para girar con la
+    # pata sin atravesar nada.
     eje = -(TREN - RUEDA)
-    piezas.append(varillas("pata-principal", [
-        ((MOTOR, EJE - 0.30, PRINCIPAL_Z), (MOTOR, eje + 0.30, PRINCIPAL_Z),
+    arriba = EJE - 0.10
+    principal = [varillas("pata-principal", [
+        ((MOTOR, arriba, PRINCIPAL_Z), (MOTOR, eje + 0.30, PRINCIPAL_Z),
          0.055),
         ((MOTOR, eje + 0.34, PRINCIPAL_Z), (MOTOR + 0.10, eje, PRINCIPAL_Z),
          0.036),
-        ((MOTOR, EJE - 0.34, PRINCIPAL_Z - 0.55),
-         (MOTOR, eje + 0.40, PRINCIPAL_Z - 0.03), 0.025),
-    ], material_="gris", simetria=True))
+        ((MOTOR - 0.16, arriba, PRINCIPAL_Z),
+         (MOTOR, eje + 0.40, PRINCIPAL_Z - 0.02), 0.025),
+        ((MOTOR + 0.16, arriba, PRINCIPAL_Z),
+         (MOTOR, eje + 0.40, PRINCIPAL_Z - 0.02), 0.025),
+    ], material_="gris")]
     ruedas = [(MOTOR + 0.14, eje, PRINCIPAL_Z)]
-    piezas.append(neumaticos("rueda-principal", ruedas, RUEDA, 0.17,
-                             simetria=True))
-    piezas.append(llantas("rueda-principal-llanta", ruedas, RUEDA, 0.17,
-                          simetria=True))
+    principal.append(neumaticos("rueda-principal", ruedas, RUEDA, 0.17))
+    principal.append(llantas("rueda-principal-llanta", ruedas, RUEDA, 0.17))
+    patas = bisagra("principal", (MOTOR, arriba, PRINCIPAL_Z), (1, 0, 0), 90,
+                    principal, simetria=True)
 
     eje_m = -(TREN - RUEDA_MORRO)
-    piezas.append(varillas("pata-morro", [
-        ((0, -0.58, MORRO_Z), (0, eje_m + 0.30, MORRO_Z), 0.045),
+    arriba_m = -0.45
+    morro = [varillas("pata-morro", [
+        ((0, arriba_m, MORRO_Z), (0, eje_m + 0.30, MORRO_Z), 0.045),
         ((0, eje_m + 0.34, MORRO_Z), (0, eje_m + 0.10, MORRO_Z), 0.030),
         ((-0.07, eje_m + 0.12, MORRO_Z), (-0.07, eje_m, MORRO_Z + 0.04), 0.018),
         ((0.07, eje_m + 0.12, MORRO_Z), (0.07, eje_m, MORRO_Z + 0.04), 0.018),
         ((-0.08, eje_m + 0.12, MORRO_Z), (0.08, eje_m + 0.12, MORRO_Z), 0.02),
-    ], material_="gris"))
-    piezas.append(neumaticos("rueda-morro", [(0, eje_m, MORRO_Z + 0.04)],
-                             RUEDA_MORRO, 0.13))
-    piezas.append(llantas("rueda-morro-llanta", [(0, eje_m, MORRO_Z + 0.04)],
-                          RUEDA_MORRO, 0.13))
+    ], material_="gris")]
+    morro.append(neumaticos("rueda-morro", [(0, eje_m, MORRO_Z + 0.04)],
+                            RUEDA_MORRO, 0.13))
+    morro.append(llantas("rueda-morro-llanta", [(0, eje_m, MORRO_Z + 0.04)],
+                         RUEDA_MORRO, 0.13))
+    patas += bisagra("morro", (0, arriba_m, MORRO_Z), (-1, 0, 0), 90, morro)
+    recogido(patas, [p for p in piezas
+                     if p.name in ("fuselaje", "gondola", "ala")])
+    piezas += patas
 
     piezas.append(centro_de_gravedad(ALA_Z + 0.55))
     return piezas

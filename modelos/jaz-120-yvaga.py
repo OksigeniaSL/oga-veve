@@ -39,8 +39,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    espejo, llantas, neumaticos, paneles, paneles_zy, simetricos,
-    superficie, turbofan, varillas, ventanas, zy,
+    bisagra, espejo, llantas, neumaticos, paneles, paneles_zy, recogido,
+    simetricos, superficie, turbofan, varillas, ventanas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -292,12 +292,29 @@ def construir():
     # Cuatro patas principales —dos en el ala, dos en la panza—, cada una con
     # un bogie de cuatro ruedas: dieciséis, que es como reparte el peso un
     # avión de doscientas cincuenta toneladas. Y la de morro, con dos.
+    #
+    # Y cada una se mete a su manera, que es como lo hace un cuatrimotor de
+    # fuselaje ancho: las del ala se tumban **hacia dentro**, hasta la panza;
+    # las de la panza, que ya están debajo del pozo, **hacia delante**; y la
+    # de morro, **hacia delante** también, para que si falla la hidráulica el
+    # viento la empuje fuera y la trabe.
+    #
+    # El tornapuntas de cada pata nace en el eje de su bisagra, para girar con
+    # ella: en las del ala, un poco por delante del muñón; en las de la panza
+    # y la de morro, a los lados.
     eje = -(TREN - RUEDA)
-    for nombre, (x, z), arriba_y in (
-        ("pata-ala", PATAS_ALA, y_ala(PATAS_ALA[0]) - 0.30),
-        ("pata-panza", PATAS_PANZA, -3.10),
+    patas = []
+    for nombre, (x, z), arriba_y, eje_giro, grados in (
+        ("ala", PATAS_ALA, y_ala(PATAS_ALA[0]) - 0.30, (0, 0, -1), 90),
+        ("panza", PATAS_PANZA, -1.60, (1, 0, 0), 90),
     ):
-        piezas.append(varillas(nombre, [
+        if nombre == "ala":
+            tornapuntas = [((x, arriba_y, z - 1.4), (x, eje + 1.9, z - 0.05),
+                            0.10)]
+        else:
+            tornapuntas = [((x + dx, arriba_y, z), (x, eje + 1.9, z), 0.10)
+                           for dx in (-0.6, 0.6)]
+        pata = [varillas(f"pata-{nombre}", [
             ((x, arriba_y, z), (x, eje + 1.35, z), 0.24),
             ((x, eje + 1.40, z), (x, eje + 0.30, z), 0.16),
             ((x, eje + 0.30, z - 0.95), (x, eje + 0.30, z + 0.95), 0.12),
@@ -305,27 +322,30 @@ def construir():
             ((x, eje + 0.30, z + 0.72), (x, eje, z + 0.72), 0.09),
             ((x - 0.62, eje, z - 0.72), (x + 0.62, eje, z - 0.72), 0.10),
             ((x - 0.62, eje, z + 0.72), (x + 0.62, eje, z + 0.72), 0.10),
-            ((x, arriba_y - 0.4, z - 0.02), (x * 0.45, arriba_y - 0.2, z - 0.02),
-             0.10),
-        ], material_="gris", simetria=True))
+        ] + tornapuntas, material_="gris")]
         ruedas = [(x + dx, eje, z + dz) for dx in (-0.62, 0.62)
                   for dz in (-0.72, 0.72)]
-        suf = nombre.split("-")[1]
-        piezas.append(neumaticos(f"rueda-{suf}", ruedas, RUEDA, 0.44,
-                                 simetria=True))
-        piezas.append(llantas(f"rueda-{suf}-llanta", ruedas, RUEDA, 0.44,
-                              simetria=True))
+        pata.append(neumaticos(f"rueda-{nombre}", ruedas, RUEDA, 0.44))
+        pata.append(llantas(f"rueda-{nombre}-llanta", ruedas, RUEDA, 0.44))
+        patas += bisagra(nombre, (x, arriba_y, z), eje_giro, grados, pata,
+                         simetria=True)
 
     eje_m = -(TREN - RUEDA_MORRO)
-    piezas.append(varillas("pata-morro", [
-        ((0, -3.10, MORRO_Z), (0, eje_m + 1.00, MORRO_Z), 0.18),
+    arriba_m = -2.20
+    morro = [varillas("pata-morro", [
+        ((0, arriba_m, MORRO_Z), (0, eje_m + 1.00, MORRO_Z), 0.18),
         ((0, eje_m + 1.05, MORRO_Z), (0, eje_m, MORRO_Z + 0.12), 0.12),
         ((-0.45, eje_m, MORRO_Z + 0.12), (0.45, eje_m, MORRO_Z + 0.12), 0.08),
-        ((0, -3.15, MORRO_Z - 1.8), (0, eje_m + 1.6, MORRO_Z - 0.08), 0.08),
-    ], material_="gris"))
+        ((-0.55, arriba_m, MORRO_Z), (0, eje_m + 1.6, MORRO_Z + 0.02), 0.08),
+        ((0.55, arriba_m, MORRO_Z), (0, eje_m + 1.6, MORRO_Z + 0.02), 0.08),
+    ], material_="gris")]
     ruedas_m = [(-0.33, eje_m, MORRO_Z + 0.12), (0.33, eje_m, MORRO_Z + 0.12)]
-    piezas.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.38))
-    piezas.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.38))
+    morro.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.38))
+    morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.38))
+    patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
+    recogido(patas, [p for p in piezas
+                     if p.name in ("fuselaje", "carenado", "ala")])
+    piezas += patas
 
     piezas.append(centro_de_gravedad(z_ala(12.0) + CUERDA * 0.25))
     return piezas

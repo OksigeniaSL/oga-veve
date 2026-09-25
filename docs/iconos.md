@@ -47,6 +47,7 @@ fallos eran la misma acción dibujada de dos maneras según dónde se mirara.
 | Avión + barra | frenar | botón rojo, tarjeta | pasa | — |
 | Mano | frenar | teclado dibujado, tutor táctil | la mano es «alto» y el botón de frenar ya se había cambiado por eso | el teclado y el tutor usan `DIBUJOS.freno` |
 | Rueda con su pata | tren | botón, tarjeta, cabina | pasa | — |
+| Rueda con su pata sobre la raya del suelo | el tren no se mete con el avión apoyado | tarjeta (`tren-en-el-suelo`) | nuevo: el mismo dibujo del tren, con el porqué debajo | el botón del HUD da un meneo en ámbar y suenan las dos notas que bajan |
 | Perfil con flap caído | flaps | botón, tarjeta, cabina | pasa | — |
 
 ## Tutor (tarjeta de «qué hacer ahora» del despegue y la toma)

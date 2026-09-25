@@ -40,7 +40,7 @@ positiva), y arriba, z a lo largo con el morro en la z negativa.
 import bpy
 import bmesh
 import math
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 from comun import COLORES, material
 
@@ -1021,6 +1021,129 @@ def _juntar(nombre, objs, simetria=False):
 def juntar(nombre, objs):
     """Varias piezas del mismo material en una sola malla, con ese nombre."""
     return _juntar(nombre, objs)
+
+
+def bisagra(nombre, en, eje, grados, piezas, simetria=False):
+    """
+    La pata que se mete: sus piezas colgadas de un vacío puesto en la bisagra.
+
+    **Un tren se recoge girando, no subiendo.** Cada pata cuelga de un eje
+    —el muñón, arriba, clavado en el ala, la góndola o la panza— y da un
+    cuarto de vuelta hasta su pozo con las ruedas pegadas a ella, como un
+    sólido. Antes se deslizaba hacia arriba, y como la pieza vive dentro del
+    nodo `avion`, que va girado para pasar de los ejes de aquí a los de
+    Blender, su «arriba» era en realidad «hacia atrás»: se la veía irse de
+    espaldas, desplegada, y desaparecer. «Un intento de recogerlo que salió
+    mal», y lo era.
+
+    El vacío se llama `bisagra-…` y lleva en sus propiedades **el eje y el
+    ángulo**, en los ejes del avión (x a la derecha, y arriba, z a la cola):
+    girando `grados` alrededor de `eje` por la regla de la mano derecha, la
+    pata queda dentro. El juego no sabe nada de cada avión; lee eso y gira.
+    Ver `world/patas.ts`.
+
+    Con `simetria`, la otra pata sale **como objeto aparte** y reflejada, con
+    su bisagra reflejada: el espejo de siempre no vale, porque dejaría las
+    dos patas en una malla y una misma rotación mete la derecha hacia dentro
+    y la izquierda hacia fuera. Un eje, bajo el reflejo en x, cambia de signo
+    en y y en z —es un vector axial—, y eso es lo que hace que las dos se
+    metan hacia el mismo sitio.
+
+    Devuelve los vacíos y las piezas, para sumarlos a las del avión.
+    """
+    lados = [("derecha", 1)] + ([("izquierda", -1)] if simetria else [])
+    salida = []
+    for lado, s in lados:
+        suf = f"-{lado}" if simetria else ""
+        bpy.ops.object.empty_add(location=(en[0] * s, en[1], en[2]))
+        b = bpy.context.object
+        b.name = f"bisagra-{nombre}{suf}"
+        b["eje"] = [float(eje[0]), float(eje[1]) * s, float(eje[2]) * s]
+        b["grados"] = float(grados)
+        bpy.context.view_layer.update()
+        salida.append(b)
+        for p in piezas:
+            h = p if s > 0 else _reflejo(p)
+            h.name = f"{p.name.removesuffix('-derecha')}{suf}"
+            h.data.name = f"m-{h.name}"
+            h.parent = b
+            h.matrix_parent_inverse = b.matrix_world.inverted()
+            salida.append(h)
+    return salida
+
+
+def _reflejo(obj):
+    """Una copia de la pieza, reflejada en x y con la malla ya horneada."""
+    malla = obj.data.copy()
+    malla.transform(Matrix.Scale(-1, 4, (1, 0, 0)) @ obj.matrix_world)
+    # Un reflejo vuelve del revés las caras: sin esto la pata de la izquierda
+    # se vería por dentro.
+    malla.flip_normals()
+    copia = obj.copy()
+    copia.data = malla
+    copia.matrix_world = Matrix.Identity(4)
+    bpy.context.collection.objects.link(copia)
+    return copia
+
+
+def _asoma(tapa, p):
+    """
+    Cuánto se sale el punto `p` (en el mundo) de la malla `tapa`; cero dentro.
+
+    Dentro es detrás de la superficie más cercana, mirando su normal: vale
+    para cualquier malla cerrada —fuselaje, carenado, góndola, ala— sin
+    tener que saber cómo se dibujó.
+    """
+    local = tapa.matrix_world.inverted() @ p
+    hay, sitio, normal, _ = tapa.closest_point_on_mesh(local)
+    if not hay:
+        return math.inf
+    if (sitio - local).dot(normal) > 0:
+        return 0.0
+    return (tapa.matrix_world @ sitio - p).length
+
+
+def recogido(bisagras, tapas, tolerancia=0.03):
+    """
+    Que la pata metida quede **dentro**, dicho al exportar.
+
+    Se gira cada pata a su posición de guardada y se mira vértice a vértice
+    si cae dentro de alguna de las piezas que la tapan —fuselaje, carenado,
+    góndola, ala—. Es la prueba de que el tren no se apaga al final del
+    recorrido porque haya que esconderlo, sino porque ya no se ve: si asoma,
+    lo que se enseña es un avión con la rueda colgando de la panza.
+
+    Las tapas se miran también reflejadas, porque las que van de dos en dos
+    —la góndola, el ala— se modelan a la derecha y el espejo pone la otra.
+    """
+    bpy.context.view_layer.update()
+    malos = []
+    for b in bisagras:
+        if not b.name.startswith("bisagra-"):
+            continue
+        giro = (Matrix.Translation(b.location)
+                @ Matrix.Rotation(math.radians(b["grados"]), 4,
+                                  Vector(b["eje"]))
+                @ Matrix.Translation(-b.location))
+        peor, donde = 0.0, ""
+        for h in b.children:
+            if h.type != "MESH":
+                continue
+            for v in h.data.vertices:
+                p = giro @ (h.matrix_world @ v.co)
+                q = Vector((-p.x, p.y, p.z))
+                a = min(min(_asoma(t, p), _asoma(t, q)) for t in tapas)
+                if a > peor:
+                    peor = a
+                    donde = f" ({h.name} en {p.x:.2f} {p.y:.2f} {p.z:.2f})"
+        print(f"RECOGIDO: {b.name} asoma {peor:.2f}{donde}")
+        if peor > tolerancia:
+            malos.append(f"{b.name} +{peor:.2f}")
+    if malos:
+        raise SystemExit(
+            "Tren que no entra: " + " · ".join(malos)
+            + ". Metido, tiene que quedar dentro de la piel. Ver `bisagra`."
+        )
 
 
 def dentro_de(piel, objetos, margen=0.0):

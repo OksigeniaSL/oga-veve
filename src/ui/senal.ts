@@ -626,6 +626,25 @@ const TREN = icono(`
 `);
 
 /**
+ * **El tren apoyado**: la misma rueda con su pata, sentada sobre el suelo.
+ *
+ * Sale cuando se pide meter el tren con el avión en tierra, y el cerrojo lo
+ * impide. Es el dibujo del tren —un significado, un dibujo: lo que se
+ * recoge es eso— con la raya del suelo debajo, que es el porqué: **el peso
+ * está encima**. Ver `alternarTren` en `flight/input.ts`.
+ */
+const TREN_EN_EL_SUELO = icono(`
+  <path d="M12 2.6 v5.6" fill="none" stroke="currentColor"
+        stroke-width="2.4" stroke-linecap="round" />
+  <path d="M8.4 8.2 h7.2" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" />
+  <circle cx="12" cy="14" r="5" />
+  <circle class="senal__hueco" cx="12" cy="14" r="1.9" />
+  <path d="M2.6 20.6 h18.8" fill="none" stroke="currentColor"
+        stroke-width="2.2" stroke-linecap="round" />
+`);
+
+/**
  * **Sobrevelocidad**: la aguja pasada de la raya roja.
  *
  * El otro dibujo que faltaba, y lo encontró el compilador en cuanto los
@@ -717,6 +736,7 @@ export const DIBUJOS = {
   gafas: GAFAS,
   flaps: FLAPS,
   tren: TREN,
+  "tren-en-el-suelo": TREN_EN_EL_SUELO,
   tormenta: TORMENTA,
   sobrevelocidad: SOBREVELOCIDAD,
   freno: FRENO,

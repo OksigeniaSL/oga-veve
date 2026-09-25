@@ -38,8 +38,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    espejo, llantas, neumaticos, paneles, paneles_zy, simetricos,
-    superficie, turbofan, varillas, ventanas, zy,
+    bisagra, espejo, llantas, neumaticos, paneles, paneles_zy, recogido,
+    simetricos, superficie, turbofan, varillas, ventanas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -128,12 +128,13 @@ def construir():
 
     # El carenado del ala: el bulto de la panza donde el ala entra en el
     # fuselaje. Tapa la unión —un ala no se clava en un tubo— y es donde va
-    # el tren metido. Es de las primeras cosas que dicen «avión de línea».
+    # el tren metido: por eso sube hasta el ala y abulta lo que abulta. Es de
+    # las primeras cosas que dicen «avión de línea».
     carenado = Piel([
         (-5.0, 0.0, -1.10, -1.10),
         (-4.2, 0.98, -0.82, -1.62),
-        (-2.4, 1.40, -0.72, -1.84),
-        (2.2, 1.44, -0.72, -1.86),
+        (-2.4, 1.46, -0.55, -1.84),
+        (2.2, 1.52, -0.55, -1.86),
         (4.2, 1.12, -0.82, -1.74),
         (5.6, 0.0, -1.25, -1.25),
     ], n=2.3)
@@ -309,39 +310,61 @@ def construir():
     # ── Tren ──────────────────────────────────────────────────────────────
     #
     # Dos ruedas por pata, que es lo que lleva un avión de treinta toneladas:
-    # el principal cuelga del ala junto al quiebro y se mete hacia el centro,
-    # en el carenado; el de morro, en la panza bajo la cabina. Cada pata con
-    # su amortiguador —la caña gruesa y el vástago que brilla—, su compás y
-    # su tornapuntas.
+    # el principal cuelga del ala junto al quiebro y se mete **hacia dentro**,
+    # hacia la panza, girando sobre su muñón: la caña queda tumbada bajo el
+    # ala y las ruedas, de canto, en el carenado. Así se mete el tren de
+    # cualquier bimotor de pasillo único. El de morro se mete **hacia
+    # delante**, a la panza bajo la cabina: si falla la hidráulica, el viento
+    # lo empuja fuera y lo traba, que es la razón de que se haga así.
+    #
+    # Cada pata con su amortiguador —la caña gruesa y el vástago que brilla—,
+    # su compás y su tornapuntas. El tornapuntas **nace en el eje de la
+    # bisagra**, a un lado de la caña: así gira con la pata sin atravesar
+    # nada, que es lo que hace el muñón de dos apoyos de uno de verdad.
     eje = -(TREN - RUEDA)
-    arriba = y_ala(VIA) - 0.15
-    piezas.append(varillas("pata-principal", [
-        ((VIA, arriba, PRINCIPAL_Z), (VIA, eje + 0.75, PRINCIPAL_Z), 0.13),
-        ((VIA, eje + 0.80, PRINCIPAL_Z), (VIA, eje, PRINCIPAL_Z), 0.085),
-        ((VIA, arriba - 0.25, PRINCIPAL_Z + 0.02),
-         (1.15, -1.55, PRINCIPAL_Z + 0.02), 0.06),
-        ((VIA - 0.36, eje, PRINCIPAL_Z), (VIA + 0.36, eje, PRINCIPAL_Z), 0.07),
-        ((VIA, eje + 0.72, PRINCIPAL_Z - 0.14),
-         (VIA, eje + 0.35, PRINCIPAL_Z - 0.24), 0.035),
-        ((VIA, eje + 0.35, PRINCIPAL_Z - 0.24),
-         (VIA, eje + 0.08, PRINCIPAL_Z - 0.12), 0.035),
-    ], material_="gris", simetria=True))
+    arriba = y_ala(VIA) - 0.04
+    principal = [
+        varillas("pata-principal", [
+            ((VIA, arriba, PRINCIPAL_Z), (VIA, eje + 0.75, PRINCIPAL_Z), 0.13),
+            ((VIA, eje + 0.80, PRINCIPAL_Z), (VIA, eje, PRINCIPAL_Z), 0.085),
+            ((VIA, arriba, PRINCIPAL_Z - 0.85),
+             (VIA, eje + 1.20, PRINCIPAL_Z - 0.04), 0.06),
+            ((VIA - 0.36, eje, PRINCIPAL_Z), (VIA + 0.36, eje, PRINCIPAL_Z),
+             0.07),
+            ((VIA, eje + 0.72, PRINCIPAL_Z - 0.14),
+             (VIA, eje + 0.35, PRINCIPAL_Z - 0.24), 0.035),
+            ((VIA, eje + 0.35, PRINCIPAL_Z - 0.24),
+             (VIA, eje + 0.08, PRINCIPAL_Z - 0.12), 0.035),
+        ], material_="gris"),
+    ]
     ruedas = [(VIA - 0.30, eje, PRINCIPAL_Z), (VIA + 0.30, eje, PRINCIPAL_Z)]
-    piezas.append(neumaticos("rueda-principal", ruedas, RUEDA, 0.32,
-                             simetria=True))
-    piezas.append(llantas("rueda-principal-llanta", ruedas, RUEDA, 0.32,
-                          simetria=True))
+    principal.append(neumaticos("rueda-principal", ruedas, RUEDA, 0.32))
+    principal.append(llantas("rueda-principal-llanta", ruedas, RUEDA, 0.32))
+    # La de la derecha gira hacia la izquierda: eje hacia el morro. Y algo
+    # menos de un cuarto de vuelta, con la caña un poco caída hacia la panza:
+    # tumbada del todo, la punta asomaba por encima del carenado, detrás del
+    # borde de salida, donde el ala ya es fina. Lo mide `recogido`.
+    patas = bisagra("principal", (VIA, arriba, PRINCIPAL_Z), (0, 0, -1), 84,
+                    principal, simetria=True)
 
     eje_m = -(TREN - RUEDA_MORRO)
-    piezas.append(varillas("pata-morro", [
-        ((0, -1.55, MORRO_Z), (0, eje_m + 0.60, MORRO_Z), 0.10),
+    arriba_m = -1.15
+    morro = [varillas("pata-morro", [
+        ((0, arriba_m, MORRO_Z), (0, eje_m + 0.60, MORRO_Z), 0.10),
         ((0, eje_m + 0.65, MORRO_Z), (0, eje_m, MORRO_Z + 0.08), 0.065),
         ((-0.26, eje_m, MORRO_Z + 0.08), (0.26, eje_m, MORRO_Z + 0.08), 0.05),
-        ((0, -1.62, MORRO_Z - 1.10), (0, eje_m + 1.0, MORRO_Z - 0.05), 0.045),
-    ], material_="gris"))
+        ((-0.30, arriba_m, MORRO_Z), (0, eje_m + 1.0, MORRO_Z + 0.02),
+         0.045),
+        ((0.30, arriba_m, MORRO_Z), (0, eje_m + 1.0, MORRO_Z + 0.02), 0.045),
+    ], material_="gris")]
     ruedas_m = [(-0.20, eje_m, MORRO_Z + 0.08), (0.20, eje_m, MORRO_Z + 0.08)]
-    piezas.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.22))
-    piezas.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.22))
+    morro.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.22))
+    morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.22))
+    # Hacia delante: la rueda va al morro girando sobre el eje x.
+    patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
+    recogido(patas, [p for p in piezas
+                     if p.name in ("fuselaje", "carenado", "ala")])
+    piezas += patas
 
     # El centro de gravedad, a un cuarto de la cuerda media del ala.
     piezas.append(centro_de_gravedad(z_ala(5.2) + 0.80))

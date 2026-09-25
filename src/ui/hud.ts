@@ -2799,6 +2799,24 @@ export class Hud {
    * dos sitios que bajaran flaps con dos cuentas distintas sería la vía rápida
    * a que un día dijeran cosas distintas. Ver `pulsarMandoDeCabina`.
    */
+  /**
+   * El botón del tren da un respingo: se pidió meterlo con el avión apoyado.
+   *
+   * Un botón que no hace nada al tocarlo parece roto; uno que se niega
+   * parece trabado, que es lo que está. El color no cambia —el tren sigue
+   * fuera, en verde—: solo un meneo corto, como la cabeza que dice «no».
+   * Ver `trenTrabado` en `game.ts`.
+   */
+  trenTrabado(): void {
+    const b = this.trenTouch;
+    b.classList.remove("mando--trabado");
+    // Leer el tamaño obliga al navegador a soltar la animación anterior, y
+    // así un segundo toque seguido vuelve a menearlo.
+    void b.offsetWidth;
+    b.classList.add("mando--trabado");
+    window.setTimeout(() => b.classList.remove("mando--trabado"), 600);
+  }
+
   onMandoDeCabina(handler: (cual: "tren" | "flaps") => void): void {
     this.alTocarMando = handler;
   }

@@ -2384,6 +2384,9 @@ def exportar(piezas, salida, envergadura):
         filepath=salida,
         export_format="GLB",
         export_apply=True,
+        # Las bisagras del tren llevan su eje y su ángulo como propiedades, y
+        # sin esto no salen. Ver `bisagra` en `exterior.py`.
+        export_extras=True,
         export_yup=True,
     )
     print(f"ESCRITO: {salida}")

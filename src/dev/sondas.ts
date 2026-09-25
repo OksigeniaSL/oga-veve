@@ -704,7 +704,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       });
       return salida;
     },
-    /** Cuántas piezas de tren se mueven en el modelo. Ver `world/patas.ts`. */
+    /** Cuántas patas se meten en el modelo, una por bisagra. Ver `world/patas.ts`. */
     patas: () => juego.aircraftMesh.patas?.cuantas ?? 0,
     /** Mover el tren a mano, para ver si el que no se mueve es el mando. */
     patasPoner: (donde: number) => juego.aircraftMesh.patas?.poner(donde),
