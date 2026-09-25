@@ -33,7 +33,7 @@ import bpy
 import bmesh
 import math
 import os
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 # ── Colores ───────────────────────────────────────────────────────────────
 #
@@ -61,7 +61,7 @@ COLORES = {
     # Los de dentro. El salpicadero es gris oscuro mate y la tapicería un
     # cuero gastado: los dos tienen que quedarse **por debajo** del mundo que
     # se ve por el parabrisas, que es lo que se está mirando.
-    "tablero": (0.19, 0.195, 0.205, 1.0),
+    "tablero": (0.15, 0.155, 0.17, 1.0),
     # **Y la visera, aparte y más oscura.** Iban las dos en `tablero`, y desde
     # el asiento el panel y su visera eran la misma losa gris sin canto: no se
     # leía dónde acaba lo de mirar fuera y empieza lo de mirar dentro. En un
@@ -99,6 +99,63 @@ COLORES = {
     # se llame `boton-<qué>` lo enciende `world/botones-cabina.ts` y responde al
     # dedo, al ratón y a su tecla. Ver `boton`.
     "boton": (0.72, 0.36, 0.22, 1.0),
+    # ── Lo que hace que la cabina sea un objeto y no una caja con relojes ──
+    #
+    # El bisel de cada instrumento: casi negro y satinado, que es lo que da el
+    # canto de luz arriba y la sombra abajo que se ve en cualquier panel de
+    # verdad. Es el «anillo mecanizado» del documento de cuadros de mando.
+    "bisel": (0.07, 0.075, 0.082, 1.0),
+    # La chapa sobre la que va el grupo de vuelo, un punto más clara que el
+    # tablero: en una avioneta de verdad los seis relojes van en una placa
+    # atornillada aparte, y esa placa es la que separa «lo que se lee» del resto.
+    "subpanel": (0.25, 0.26, 0.28, 1.0),
+    # Los tornillos, de acero: puntos de luz pequeños que dicen «esto está
+    # montado», que es lo que distingue una pieza de un dibujo.
+    "tornillo": (0.62, 0.63, 0.66, 1.0),
+    # Los forros de los costados: plástico gris claro mate, como el de
+    # cualquier avioneta. Más claros que el panel para que la cabina tenga
+    # fondo, y más oscuros que el mundo para no competir con él.
+    "forro": (0.40, 0.40, 0.39, 1.0),
+    # Los pomos: negros y brillantes, que es como son en un avión de verdad
+    # (el gas es negro; el rojo es de la mezcla, que aquí no se toca).
+    "pomo": (0.05, 0.05, 0.055, 1.0),
+    # El gris de Boeing: el de los paneles de techo, del pedestal y del panel
+    # de modos de la visera en un avión de línea. En los reactores de verdad
+    # el panel es gris claro, no negro.
+    "gris_linea": (0.36, 0.39, 0.42, 1.0),
+    # Las rotulaciones iluminadas por detrás: los rectángulos de los
+    # interruptores del techo y de los mandos del pedestal. Blanco cálido y
+    # tenue, porque en una cabina de verdad la retroiluminación es blanca y
+    # los colores (verde, ámbar, rojo) se reservan para lo que avisa.
+    "retro": (0.93, 0.88, 0.76, 1.0),
+}
+
+# El acabado de cada material del interior: rugosidad y metal. Todo lo que no
+# está aquí sale con el acabado de siempre. Un interior todo del mismo mate es
+# lo que lo hace parecer de plastilina: la visera es un mate profundo (para que
+# no rebote el sol en el parabrisas, que es para lo que existe), los biseles y
+# los pomos brillan un poco y los tornillos son de metal.
+ACABADOS = {
+    "visera": (0.95, 0.0),
+    "tablero": (0.75, 0.0),
+    "chapa": (0.7, 0.0),
+    "subpanel": (0.6, 0.05),
+    "bisel": (0.32, 0.25),
+    "tornillo": (0.3, 0.9),
+    "metal": (0.3, 0.85),
+    "pomo": (0.22, 0.0),
+    "forro": (0.85, 0.0),
+    "tapiceria": (0.8, 0.0),
+    "gris_linea": (0.65, 0.05),
+    "boton": (0.4, 0.0),
+}
+
+# Lo que emite luz propia, y cuánta. **Es luz de verdad, no un truco**: una
+# rotulación retroiluminada se ve igual de día que de noche, solo que de día el
+# sol la tapa. Por eso va en el fichero y no en el juego, y por eso es tenue:
+# de noche es lo único que se ve en el techo, como en un avión de verdad.
+EMISION = {
+    "retro": 0.35,
 }
 
 
@@ -123,8 +180,12 @@ def material(nombre):
     m.use_nodes = True
     bsdf = m.node_tree.nodes["Principled BSDF"]
     bsdf.inputs["Base Color"].default_value = srgb(COLORES[nombre])
-    bsdf.inputs["Roughness"].default_value = 0.55
-    bsdf.inputs["Metallic"].default_value = 0.0
+    rugoso, metalico = ACABADOS.get(nombre, (0.55, 0.0))
+    bsdf.inputs["Roughness"].default_value = rugoso
+    bsdf.inputs["Metallic"].default_value = metalico
+    if nombre in EMISION:
+        bsdf.inputs["Emission Color"].default_value = srgb(COLORES[nombre])
+        bsdf.inputs["Emission Strength"].default_value = EMISION[nombre]
     # **Y con la cara de atrás quitada**, que es lo que hace que se pueda ir
     # dentro del avión.
     #
@@ -706,6 +767,274 @@ def puntal(desde, hasta, grosor=0.05, material_="detalle"):
     return o
 
 
+# ── Las piezas con forma del interior ─────────────────────────────────────
+#
+# La cabina estaba hecha solo de `caja` y `cilindro`, y desde el asiento eso
+# se veía exactamente así: «una cabina de mandos de juguete». Lo que separa un
+# panel de verdad de una caja con relojes no es la cantidad de cosas, es que
+# **nada tiene el canto vivo**: la visera tiene el borde redondo, los relojes
+# van hundidos en un bisel atornillado, las pantallas tienen marco. Estas
+# cuatro funciones son lo que hace falta para eso y nada más.
+#
+# Todas modelan en los ejes del juego —x a lo ancho, y arriba, z hacia la
+# cola—, como `caja`. `aBlender` gira el conjunto al final.
+
+
+def solido(nombre, verts, caras, material_, suave=None):
+    """
+    Una malla cerrada hecha a mano, con las normales hacia fuera.
+
+    **Hacia fuera de verdad**, porque todo material va sin cara de atrás —ver
+    `material`— y una cara vuelta del revés no se ve: se ve el hueco. Se
+    recalculan con `bmesh` en vez de cuidar el orden de cada cara a mano, que
+    es lo que se equivoca.
+
+    `suave`: el ángulo, en grados, por debajo del cual la arista se sombrea
+    suave. Para lo que tiene curvas (la visera, los biseles): así el canto
+    redondo se ve redondo y las esquinas de verdad siguen siendo esquinas.
+    """
+    malla = bpy.data.meshes.new(nombre)
+    malla.from_pydata(verts, [], caras)
+    malla.update()
+    bm = bmesh.new()
+    bm.from_mesh(malla)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(malla)
+    bm.free()
+    if suave:
+        for p in malla.polygons:
+            p.use_smooth = True
+        if hasattr(malla, "set_sharp_from_angle"):
+            malla.set_sharp_from_angle(angle=math.radians(suave))
+    obj = bpy.data.objects.new(nombre, malla)
+    bpy.context.collection.objects.link(obj)
+    return pintar(obj, material_)
+
+
+def barrido(nombre, perfil_, xs, material_, curvar=None, suave=35,
+            a_lo_largo=False):
+    """
+    Un perfil cerrado arrastrado a lo ancho: una visera, un reborde, un alféizar.
+
+    `perfil_` son puntos `(y, z)` de la sección, en orden alrededor de ella;
+    `xs`, dónde se corta a lo ancho. `curvar(x, y, z) -> (y, z)` deforma cada
+    sección según su x, que es lo que da a la visera su borde en arco.
+
+    Con `a_lo_largo` se arrastra a lo largo del avión: el perfil es `(x, y)` y
+    `xs` son posiciones en z. Es lo que hace falta para el alféizar de una
+    ventanilla, que corre hacia la cola.
+    """
+    n = len(perfil_)
+    verts = []
+    for x in xs:
+        for y, z in perfil_:
+            if curvar:
+                y, z = curvar(x, y, z)
+            verts.append((y, z, x) if a_lo_largo else (x, y, z))
+    caras = []
+    for i in range(len(xs) - 1):
+        for k in range(n):
+            caras.append((
+                i * n + k, i * n + (k + 1) % n,
+                (i + 1) * n + (k + 1) % n, (i + 1) * n + k,
+            ))
+    caras.append(tuple(range(n)))
+    caras.append(tuple((len(xs) - 1) * n + k for k in range(n)))
+    return solido(nombre, verts, caras, material_, suave)
+
+
+def aro(nombre, centro, r_in, r_out, perfil_, material_, lados=24,
+        cuadrado=True):
+    """
+    Un bisel: redondo por dentro y, por fuera, un cuadrado de esquinas romas.
+
+    Es la forma de la caja de un instrumento de avión, que es cuadrada con el
+    cristal redondo: se atornilla al panel por las cuatro esquinas. Y sirve
+    además para algo que no es de estética: **tapa las esquinas de la esfera**,
+    que es un cuadrado pintado. Sin él, cada reloj era un cuadrado oscuro con un
+    círculo dentro, y se veían los cuadrados.
+
+    `perfil_` son puntos `(t, dz)` de la sección: `t` va de 0 en el borde de
+    dentro a 1 en el de fuera, y `dz` es hacia el piloto desde `centro`. Se
+    cierra solo: el último punto se cose con el primero.
+    """
+    cx, cy, cz = centro
+    n = len(perfil_)
+    verts = []
+    for j in range(lados):
+        a = 2 * math.pi * j / lados
+        c, s = math.cos(a), math.sin(a)
+        # Un superelipse de grado cuatro: un cuadrado con las esquinas romas.
+        r = r_out / ((abs(c) ** 4 + abs(s) ** 4) ** 0.25) if cuadrado else r_out
+        for t, dz in perfil_:
+            rr = r_in + (r - r_in) * t
+            verts.append((cx + rr * c, cy + rr * s, cz + dz))
+    caras = []
+    for j in range(lados):
+        for k in range(n):
+            caras.append((
+                j * n + k, j * n + (k + 1) % n,
+                ((j + 1) % lados) * n + (k + 1) % n, ((j + 1) % lados) * n + k,
+            ))
+    return solido(nombre, verts, caras, material_, suave=50)
+
+
+def marco(nombre, centro, ancho, alto, borde, fondo, material_):
+    """
+    El marco de una pantalla: un rectángulo con un hueco del tamaño del cristal.
+
+    Una pantalla pegada al tablero sin marco es una pegatina, y así se veían
+    las del G1000 y las de los reactores. El hueco es **exactamente** el
+    cristal: lo que pinta el juego llega hasta el borde (las cintas de
+    velocidad y altura van pegadas a los lados), y un marco que montara encima
+    se comería los números.
+    """
+    cx, cy, cz = centro
+    a, b = ancho / 2, alto / 2
+    A, B = a + borde, b + borde
+    anillo = []
+    for (x, y, X, Y) in ((-a, -b, -A, -B), (a, -b, A, -B), (a, b, A, B),
+                         (-a, b, -A, B)):
+        anillo.append(((x, y), (X, Y)))
+    verts = []
+    # Cuatro vueltas: dentro-detrás, dentro-delante, fuera-delante,
+    # fuera-detrás. Dentro-delante va un milímetro hacia fuera: el chaflán que
+    # coge la luz.
+    for (x, y), (X, Y) in anillo:
+        verts += [
+            (cx + x, cy + y, cz - fondo),
+            (cx + x * 1.0, cy + y * 1.0, cz + fondo * 0.6),
+            (cx + (x + (X - x) * 0.35), cy + (y + (Y - y) * 0.35), cz + fondo),
+            (cx + X, cy + Y, cz + fondo * 0.4),
+            (cx + X, cy + Y, cz - fondo),
+        ]
+    n = 5
+    caras = []
+    for j in range(4):
+        for k in range(n):
+            caras.append((
+                j * n + k, j * n + (k + 1) % n,
+                ((j + 1) % 4) * n + (k + 1) % n, ((j + 1) % 4) * n + k,
+            ))
+    return solido(nombre, verts, caras, material_)
+
+
+def tornillos(nombre, puntos, radio=0.0032, material_="tornillo"):
+    """
+    Cabezas de tornillo, todas en una sola malla mirando al piloto.
+
+    **En una sola**, por rendimiento: son cuatro por instrumento y veintitantos
+    por avión, y cada malla suelta es una llamada de dibujo más en la tablet del
+    colegio. Juntas cuestan lo que una.
+    """
+    bm = bmesh.new()
+    for x, y, z in puntos:
+        bmesh.ops.create_cone(
+            bm, cap_ends=True, cap_tris=False, segments=6, radius1=radio,
+            radius2=radio * 0.75, depth=radio * 0.9,
+            matrix=Matrix.Translation((x, y, z + radio * 0.45)),
+        )
+    malla = bpy.data.meshes.new(nombre)
+    bm.to_mesh(malla)
+    bm.free()
+    obj = bpy.data.objects.new(nombre, malla)
+    bpy.context.collection.objects.link(obj)
+    return pintar(obj, material_)
+
+
+def redondear(obj, radio=0.008, segmentos=2):
+    """
+    El canto roto de una caja, sin subdividirla.
+
+    `suavizar` también bisela, pero subdivide y suaviza la malla entera, que es
+    lo que se quiere en un fuselaje y no en un tablero: el tablero tiene que
+    seguir siendo plano, solo sin el canto de cuchillo.
+    """
+    b = obj.modifiers.new("canto", "BEVEL")
+    b.width = radio
+    b.segments = segmentos
+    b.limit_method = "ANGLE"
+    b.angle_limit = math.radians(40)
+    return obj
+
+
+def _visera(medio_ancho, arriba, grosor, z_delante, z_labio, arco):
+    """
+    La visera: una ceja con el borde redondo y en arco.
+
+    Era una losa: un rectángulo negro con el canto vivo, que desde el asiento
+    se leía como una tapa puesta encima de una caja. En un avión de verdad la
+    visera tiene el labio redondeado —es lo que se agarra al entrar y lo que
+    no corta— y en planta es un arco que abraza al piloto, que es por lo que
+    se reconoce en una foto antes que ninguna otra cosa del panel.
+
+    **El arco se abre hacia delante en los extremos, no hacia el piloto en el
+    centro.** El labio está a sesenta y cinco centímetros de los ojos, y el
+    plano cercano de la cámara a sesenta: una visera que se acercara en el
+    centro se recortaría justo delante de la cara.
+
+    Y la raya de arriba sigue donde estaba —`arriba` y `z_delante` son los de
+    la caja de antes—, que es la que mide `encuadreDeCabina` para decidir
+    cuánto se ve por el parabrisas.
+    """
+    g = grosor
+    yc, zc = arriba - g / 2, z_labio - g / 2
+    perfil_ = [(arriba - g * 0.45, z_delante), (arriba, z_delante + 0.015)]
+    for grados in (0, 30, 60, 90, 120, 150, 180):
+        a = math.radians(grados)
+        perfil_.append((yc + g / 2 * math.cos(a), zc + g / 2 * math.sin(a)))
+    perfil_.append((arriba - g, z_delante + 0.03))
+    pasos = 16
+    xs = [-medio_ancho + 2 * medio_ancho * i / pasos for i in range(pasos + 1)]
+
+    def curvar(x, y, z):
+        if z <= z_delante + 0.02:
+            return y, z
+        f = (x / medio_ancho) ** 2
+        return y, z - arco * f
+
+    return barrido("visera", perfil_, xs, "visera", curvar, suave=40)
+
+
+def _costados(ancho, y_suelo, alto, panel_z, ojos_z, atras=0.40):
+    """
+    Los dos costados de la cabina: su forro y el alféizar de la ventanilla.
+
+    Sin ellos, desde el asiento el panel flotaba: a los lados se veía el
+    fuselaje por dentro —o el mundo, que con la cara de atrás quitada es lo
+    mismo— y la cabina era un mueble suelto en el aire. En un avión de verdad
+    el panel **se apoya** en los costados, y el alféizar sigue la línea de la
+    visera hacia atrás: es la raya que dice dónde acaba el avión y empieza la
+    ventanilla.
+
+    `alto` es la altura del alféizar: la del borde del panel, que es donde
+    está en cualquier avioneta —por debajo, la puerta; por encima, cristal—.
+    """
+    piezas = []
+    z0, z1 = panel_z - 0.10, ojos_z + atras
+    for lado in (-1, 1):
+        x_dentro = lado * (ancho - 0.004)
+        x_fuera = lado * (ancho + 0.02)
+        piezas.append(
+            caja(f"forro-{lado}", min(x_dentro, x_fuera), max(x_dentro, x_fuera),
+                 y_suelo + 0.02, alto - 0.03, z0, z1, "forro")
+        )
+        # El alféizar: un canto redondo encima del forro, que es lo que coge
+        # la luz y dibuja la raya.
+        r = 0.024
+        xc = lado * (ancho - 0.004 + 0.006)
+        perfil_ = [
+            (xc + r * math.cos(math.radians(g)),
+             alto - 0.03 + r * 0.6 * math.sin(math.radians(g)))
+            for g in range(0, 360, 30)
+        ]
+        piezas.append(
+            barrido(f"alfeizar-{lado}", perfil_, [z0, z1], "tablero",
+                    a_lo_largo=True)
+        )
+    return piezas
+
+
 def asiento_de_una_pieza(nombre, z_atras, medio_ancho=0.24, largo=0.40,
                          y_cojin=0.34, alto_cojin=0.08, y_respaldo=0.88,
                          material_="tapiceria"):
@@ -756,19 +1085,25 @@ def boton(que, ancho, alto, en, fondo=True):
     x, y, z = en
     piezas = []
     if fondo:
+        # El marco, como el de un interruptor de verdad: un rebaje con canto
+        # que dice «esto se aprieta», en vez de una tecla pegada a la chapa.
         piezas.append(
-            caja(f"boton-{que}-hueco", x - ancho * 0.62, x + ancho * 0.62,
-                 y - alto * 0.62, y + alto * 0.62, z - 0.012, z - 0.004,
-                 "tablero")
+            marco(f"boton-{que}-hueco", (x, y, z - 0.002), ancho * 1.06,
+                  alto * 1.06, min(ancho, alto) * 0.14, 0.006, "bisel")
         )
+    # Y la tecla con los cantos rotos. El dibujo lo pone el juego en la cara
+    # que mira al piloto, midiendo la caja: el bisel no la cambia.
     piezas.append(
-        caja(f"boton-{que}", x - ancho / 2, x + ancho / 2, y - alto / 2,
-             y + alto / 2, z - 0.004, z + 0.012, "boton")
+        redondear(
+            caja(f"boton-{que}", x - ancho / 2, x + ancho / 2, y - alto / 2,
+                 y + alto / 2, z - 0.004, z + 0.012, "boton"),
+            radio=min(ancho, alto) * 0.1,
+        )
     )
     return piezas
 
 
-def reloj(nombre, que, radio, en):
+def reloj(nombre, que, radio, en, puntos=None):
     """
     Un instrumento redondo del panel: su caja y su esfera.
 
@@ -784,63 +1119,147 @@ def reloj(nombre, que, radio, en):
     una pegatina.
     """
     x, y, z = en
-    return [
-        # **La caja va detrás de la esfera, no delante.** Puesta delante —que es
-        # lo que sale de sumar en la z sin pensar hacia dónde mira el panel— lo
-        # que se veía era el octógono gris tapando el instrumento, o sea
-        # exactamente lo que esto venía a quitar. El piloto está en la z mayor.
-        # Un cilindro se coloca por su **centro**, así que hay que retirarlo su
-        # medio grosor y un poco más: puesto a ocho milímetros con dos
-        # centímetros de canto, su tapa quedaba dos milímetros por delante de la
-        # esfera y lo que se veía era el octógono gris tapando el instrumento —
-        # o sea, otra vez lo que esto venía a quitar.
-        cilindro(f"{nombre}-caja", radio * 1.12, 0.02, (x, y, z - 0.022),
-                 "tablero", giro=None),
+    # **La esfera, hundida en su bisel.**
+    #
+    # Aquí había un cilindro gris detrás de la esfera, y cada reloj se veía
+    # como lo que era: un cuadrado oscuro pegado a un disco. Un instrumento de
+    # avión es una caja cuadrada atornillada al panel por las cuatro esquinas
+    # con el cristal redondo hundido dentro, y eso es lo que se hace ahora.
+    #
+    # **El borde de dentro cae justo sobre el canto de la esfera** —el 99 % de
+    # su radio— y no más adentro: lo que pinta el juego llega hasta ahí (los
+    # arcos de colores van en el anillo de fuera) y un bisel más cerrado se
+    # comería justo lo que dice si el motor va bien. Y va **cinco milímetros**
+    # por delante de ella, no más: se mira desde arriba, y un bisel hondo tapa
+    # con su canto de arriba la parte alta de la escala.
+    #
+    # Y sigue llamándose `<nombre>-caja`, que es como se llamaba: el encuadre de
+    # la cabina mide todo lo que empieza por `reloj-`, así que el bisel cuenta
+    # para que el reloj quepa entero en la pantalla, con su marco.
+    fuera = radio * 1.2
+    piezas = [
+        aro(
+            f"{nombre}-caja", (x, y, z), radio * 0.99, fuera,
+            [(0.0, -0.004), (0.0, 0.003), (0.06, 0.005), (0.9, 0.0055),
+             (1.0, 0.003), (1.0, -0.004)],
+            "bisel",
+        ),
         cuadro(f"{nombre}", radio * 2, radio * 2, (x, y, z), f"reloj_{que}"),
     ]
+    if puntos is not None:
+        # Las cuatro esquinas, donde van los tornillos de una caja de verdad.
+        d = fuera * 0.74
+        puntos += [(x + sx * d, y + sy * d, z + 0.0055)
+                   for sx in (-1, 1) for sy in (-1, 1)]
+    return piezas
 
 
-def _cuerno(x, y_suelo, panel_z, grande):
+def tubo(nombre, camino, radio, material_, lados=10, radios=None):
+    """
+    Un tubo que sigue un camino: el cuerno de un volante, un asa, una barandilla.
+
+    El camino va en un plano de z constante —el de un volante, que mira al
+    piloto—, así que cada sección se orienta con la tangente y el eje z, y no
+    hace falta nada más fino que eso.
+    """
+    verts = []
+    n = len(camino)
+    for i, p in enumerate(camino):
+        a = Vector(camino[max(0, i - 1)])
+        b = Vector(camino[min(n - 1, i + 1)])
+        t = (b - a).normalized()
+        u = t.cross(Vector((0, 0, 1))).normalized()
+        w = t.cross(u).normalized()
+        for k in range(lados):
+            ang = 2 * math.pi * k / lados
+            rr = radios[i] if radios else radio
+            q = Vector(p) + (u * math.cos(ang) + w * math.sin(ang)) * rr
+            verts.append(tuple(q))
+    caras = []
+    for i in range(n - 1):
+        for k in range(lados):
+            caras.append((
+                i * lados + k, i * lados + (k + 1) % lados,
+                (i + 1) * lados + (k + 1) % lados, (i + 1) * lados + k,
+            ))
+    caras.append(tuple(range(lados)))
+    caras.append(tuple((n - 1) * lados + k for k in range(lados)))
+    return solido(nombre, verts, caras, material_, suave=60)
+
+
+def _cuerno(x, y_suelo, panel_z, grande, y_centro=None, z_centro=None):
     """
     El volante de un piloto: la columna y el cuerno.
 
-    Lo que se agarra en un avión de transporte y en casi cualquier avioneta. Va
-    delante de cada plaza, sale del suelo —de la base del panel, en realidad— y
-    termina en una barra con dos empuñaduras.
+    Lo que se agarra en un avión de transporte y en casi cualquier avioneta.
+    **En U, con los dos cuernos hacia arriba**, que es la forma que tiene y la
+    que se reconoce: aquí había una tabla con dos tacos, y eso desde el asiento
+    no se leía como un volante sino como un palo con una tabla.
+
+    Y sale de donde sale en cada avión. En una avioneta el eje **atraviesa el
+    panel** —se empuja y se tira de él—; en un avión de línea es una **columna
+    que sube del suelo**. Las dos cosas se ven desde el asiento y las dos
+    enseñan algo: que el morro se baja empujando.
+
+    **Pegado al panel, no en el regazo.** Estaba a treinta centímetros del
+    tablero, y eso lo metía dentro del plano cercano de la cámara —sesenta
+    centímetros desde los ojos—: se recortaba entero y no se veía nunca. Un
+    volante de verdad va a un palmo del panel, que es también donde se ve.
     """
-    alto = 0.42 if grande else 0.30
-    ancho_cuerno = 0.22 if grande else 0.16
-    base = y_suelo + 0.02
-    z = panel_z + (0.34 if grande else 0.26)
-    piezas = [
-        cilindro(
-            f"palanca-columna-{x:.2f}", 0.028 if grande else 0.022, alto,
-            (x, base + alto / 2, z), "tablero",
-        ),
-        caja(
-            f"cuerno-{x:.2f}", x - ancho_cuerno / 2, x + ancho_cuerno / 2,
-            base + alto - 0.02, base + alto + 0.03, z - 0.03, z + 0.03,
-            "metal",
-        ),
+    ancho = 0.34 if grande else 0.30
+    w = ancho / 2
+    z = z_centro if z_centro is not None else panel_z + (0.16 if grande else 0.13)
+    yc = y_centro if y_centro is not None else y_suelo + (0.46 if grande else 0.34)
+    r = 0.016 if grande else 0.013
+    # La U: de la punta del cuerno izquierdo, abajo al centro y arriba al otro.
+    camino = [
+        (x - w, yc + 0.11, z), (x - w, yc + 0.06, z), (x - w * 0.97, yc + 0.02, z),
+        (x - w * 0.86, yc - 0.012, z), (x - w * 0.6, yc - 0.03, z),
+        (x - w * 0.25, yc - 0.035, z), (x + w * 0.25, yc - 0.035, z),
+        (x + w * 0.6, yc - 0.03, z), (x + w * 0.86, yc - 0.012, z),
+        (x + w * 0.97, yc + 0.02, z), (x + w, yc + 0.06, z), (x + w, yc + 0.11, z),
     ]
-    # Las dos empuñaduras, que es lo que hace que se lea como un volante y no
-    # como un palo con una tabla.
+    piezas = [tubo(f"cuerno-{x:.2f}", camino, r, "metal")]
+    # Las dos empuñaduras, negras y más gordas: es lo que se agarra.
     for lado in (-1, 1):
+        # Redondeadas arriba, como un puño de verdad, y no cortadas a sierra.
+        xg = x + lado * w
         piezas.append(
-            caja(
-                f"cuerno-puno-{x:.2f}-{lado}",
-                x + lado * ancho_cuerno / 2 - 0.025,
-                x + lado * ancho_cuerno / 2 + 0.025,
-                base + alto - 0.02, base + alto + 0.10,
-                z - 0.025, z + 0.025, "tablero",
-            )
+            tubo(f"cuerno-puno-{x:.2f}-{lado}",
+                 [(xg, yc + 0.03, z), (xg, yc + 0.035, z), (xg, yc + 0.10, z),
+                  (xg, yc + 0.115, z), (xg, yc + 0.124, z), (xg, yc + 0.128, z)],
+                 r, "pomo",
+                 radios=[r * 1.25, r * 1.5, r * 1.5, r * 1.3, r * 0.9, r * 0.3])
+        )
+    # El centro, donde el eje se une a la U.
+    piezas.append(
+        redondear(
+            caja(f"cuerno-centro-{x:.2f}", x - 0.045, x + 0.045, yc - 0.055,
+                 yc - 0.005, z - 0.02, z + 0.02, "tablero"),
+            radio=0.008,
+        )
+    )
+    if grande:
+        # La columna, del suelo al centro del cuerno.
+        alto = yc - 0.03 - y_suelo
+        piezas.append(
+            cilindro(f"palanca-columna-{x:.2f}", 0.035, alto,
+                     (x, y_suelo + alto / 2, z - 0.01), "tablero", lados=12)
+        )
+    else:
+        # El eje, que sale del panel.
+        largo = z - panel_z
+        piezas.append(
+            cilindro(f"cuerno-eje-{x:.2f}", 0.014, largo,
+                     (x, yc - 0.03, panel_z + largo / 2), "metal", lados=12,
+                     giro=None)
         )
     return piezas
 
 
 def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
                        motores, relojes, pantallas, pantallas_en, mide="n1",
-                       mandos=("motor", "flaps", "freno")):
+                       mandos=("motor", "flaps", "freno"), ojo_y=None):
     """
     La cabina de un avión de línea, que no es la de una avioneta estirada.
 
@@ -862,22 +1281,37 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     """
     piezas = []
     ojos_y = y_suelo + 1.00
+    # Los ojos de verdad, que no son los de arriba: aquéllos son la altura del
+    # techo y éstos, la de la cara. Ver `ojoDePiloto`.
+    ojo_y = ojo_y if ojo_y is not None else ojos_y
+    ojo_z = ojos_z + 0.145
     borde = ancho + 0.02
 
     # 1. El panel y su visera.
+    #
+    # **El panel, gris; la visera, negra.** Un avión de línea de verdad no
+    # tiene el panel negro: lo tiene gris azulado —el «gris Boeing»—, y sobre
+    # él las pantallas negras se recortan solas. Negro sobre negro era la
+    # «caja con relojes» de la que venía la queja.
+    puntos = []
     piezas.append(
-        caja("panel", -borde, borde, y_suelo + 0.30, alto_panel,
-             panel_z - 0.14, panel_z, "chapa")
+        redondear(
+            caja("panel", -borde, borde, y_suelo + 0.30, alto_panel,
+                 panel_z - 0.14, panel_z, "gris_linea"),
+            radio=0.012,
+        )
     )
     piezas.append(
-        caja("visera", -borde - 0.04, borde + 0.04, alto_panel,
-             alto_panel + 0.07, panel_z - 0.26, panel_z + 0.12, "visera")
+        _visera(borde + 0.04, alto_panel + 0.07, 0.07, panel_z - 0.26,
+                panel_z + 0.12, arco=0.10)
     )
     # El faldón de debajo del panel, para que no se vea el hueco hasta el suelo.
     piezas.append(
         caja("faldon", -borde, borde, y_suelo + 0.02, y_suelo + 0.30,
              panel_z - 0.10, panel_z - 0.04)
     )
+    piezas += _costados(borde, y_suelo, alto_panel, panel_z, ojos_z, atras=0.6)
+    piezas += _mcp(alto_panel, panel_z + 0.12, puntos)
 
     # 3. La columna de motores: **un reloj de régimen por motor**, encendido.
     #
@@ -968,14 +1402,33 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     alto_p = ancho_p * 0.86
     y_p = alto_panel - 0.035 - alto_p / 2
     for k, nombre in enumerate(("horizonte", "rumbo", "motores")):
+        centro = (borde + ancho_p / 2 + k * (ancho_p + hueco_p), y_p,
+                  panel_z + 0.006)
         piezas.append(
             cuadro(
-                f"pantalla-{nombre}", ancho_p, alto_p,
-                (borde + ancho_p / 2 + k * (ancho_p + hueco_p),
-                 y_p, panel_z + 0.006),
+                f"pantalla-{nombre}", ancho_p, alto_p, centro,
                 "g1000_display" if pantallas else "cristal",
             )
         )
+        # Cada pantalla en su caja, que es lo que es: una unidad que se
+        # desmonta del panel, con su marco y sus cuatro tornillos.
+        piezas.append(
+            marco(f"pantalla-{nombre}-marco", centro, ancho_p, alto_p,
+                  hueco_p * 0.45, 0.006, "bisel")
+        )
+    # Y el conjunto, en su bastidor: un marco ancho alrededor de las tres, que
+    # es lo que las hace un puesto y no tres cuadros sueltos.
+    ancho_g = ancho_p * 3 + hueco_p * 2
+    piezas.append(
+        marco("bastidor-de-pantallas", (borde + ancho_g / 2, y_p, panel_z + 0.004),
+              ancho_g + hueco_p * 0.9, alto_p + hueco_p * 0.9, 0.018, 0.005,
+              "bisel")
+    )
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            puntos.append((borde + ancho_g / 2 + sx * (ancho_g / 2 + 0.017),
+                           y_p + sy * (alto_p / 2 + 0.017),
+                           panel_z + 0.009))
     ancho_eicas = ancho_p
     _ = mide
     _ = relojes
@@ -1010,65 +1463,172 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
              y_p - alto_p / 2 - lado_boton, panel_z + 0.008),
         )
 
+    # La raya de lo que se lee: por debajo de ella, lo que va delante del
+    # panel no tapa nada. Ver «Lo que va delante del panel» en `cabina`.
+    y_linea = y_p - alto_p / 2 - lado_boton - lado_boton * 0.75 / 2 - 0.012
+    baja = (ojo_y - y_linea) / (ojo_z - panel_z)
+
+    def techo_en(z):
+        return ojo_y - baja * (ojo_z - z)
+
     # 4. El pedestal, entre los dos asientos, con las palancas de gas.
     if motores:
-        alto_pedestal = y_suelo + 0.26
         # **Entre los dos asientos**, que ya no es el eje del avión: con el
         # comandante puesto en el eje, el pedestal centrado ahí le quedaba
         # entre las piernas. Va donde va: en el hueco que dejan los dos.
         entre = (plazas[0] + plazas[-1]) / 2
+        # Su tapa, **por debajo de la raya en su canto de delante**, que es
+        # el que se ve más alto: por encima taparía la pantalla de motores.
+        alto_pedestal = min(y_suelo + 0.30, techo_en(panel_z + 0.02) - 0.005)
         piezas.append(
-            caja("pedestal", entre - 0.14, entre + 0.14, y_suelo + 0.02,
-                 alto_pedestal, panel_z + 0.02, ojos_z + 0.10)
+            redondear(
+                caja("pedestal", entre - 0.14, entre + 0.14, y_suelo + 0.02,
+                     alto_pedestal, panel_z + 0.02, ojos_z + 0.10,
+                     "gris_linea"),
+                radio=0.025,
+            )
         )
-        hueco = min(0.06, 0.22 / max(1, motores))
-        for i in range(motores):
-            x = entre - hueco * (motores - 1) / 2 + hueco * i
+        # Las de gas, con sus pomos, justo detrás del canto de delante: es
+        # lo que asoma por abajo cuando se mira el panel con la pantalla
+        # ancha de un teléfono.
+        z_l = panel_z + 0.14
+        piezas += _palancas_de_gas(
+            motores, entre, 0.24, alto_pedestal,
+            max(alto_pedestal + 0.08, techo_en(z_l - 0.022)), z_l,
+        )
+        # Y las dos de siempre detrás: flaps y aerofrenos.
+        for j, dz in enumerate((0.40, 0.50)):
+            x = entre + (0.10 if j else -0.10)
             piezas.append(
                 cilindro(
-                    f"palanca-de-gas-{i}", 0.016, 0.20,
-                    (x, alto_pedestal + 0.09, panel_z + 0.30), "metal",
+                    f"palanca-{'flaps' if j == 0 else 'frenos'}", 0.008, 0.12,
+                    (x, alto_pedestal + 0.06, panel_z + dz), "metal", lados=8,
                 )
             )
-        # Y las dos de siempre detrás: flaps y aerofrenos.
-        for j, dz in enumerate((0.52, 0.66)):
             piezas.append(
-                cilindro(
-                    f"palanca-{'flaps' if j == 0 else 'frenos'}", 0.014, 0.16,
-                    (entre + (0.06 if j else -0.06),
-                     alto_pedestal + 0.07, panel_z + dz),
-                    "tablero",
+                redondear(
+                    caja(f"pomo-{'flaps' if j == 0 else 'frenos'}",
+                         x - 0.025, x + 0.025, alto_pedestal + 0.11,
+                         alto_pedestal + 0.14, panel_z + dz - 0.015,
+                         panel_z + dz + 0.015, "pomo"),
+                    radio=0.008,
                 )
             )
 
     # 5. El panel de techo. Es media cabina de un avión de línea, y es lo que
     #    un niño señala primero: filas y filas de interruptores.
+    #
+    #    **Y con sus rótulos encendidos**, que es como se ven de verdad: cada
+    #    interruptor lleva debajo una placa iluminada por detrás. De noche es
+    #    lo único que se ve del techo, y es de las imágenes más bonitas de una
+    #    cabina. Todo en dos mallas —placas y palancas—, que son veintisiete
+    #    de cada y sueltas serían cincuenta y cuatro llamadas de dibujo.
     techo = ojos_y + 0.34
     piezas.append(
-        caja("panel-de-techo", -0.50, 0.50, techo, techo + 0.07,
-             ojos_z - 0.62, ojos_z + 0.12)
+        redondear(
+            caja("panel-de-techo", -0.50, 0.50, techo, techo + 0.07,
+                 ojos_z - 0.62, ojos_z + 0.12, "gris_linea"),
+            radio=0.02,
+        )
     )
+    placas = bmesh.new()
+    palancas_ = bmesh.new()
     for fila in range(3):
         for k in range(9):
             x = -0.40 + k * 0.10
-            piezas.append(
-                caja(
-                    f"interruptor-{fila}-{k}", x - 0.032, x + 0.032,
-                    techo - 0.018, techo,
-                    ojos_z - 0.52 + fila * 0.20, ojos_z - 0.52 + fila * 0.20 + 0.12,
-                    "chapa",
-                )
+            z = ojos_z - 0.52 + fila * 0.20
+            bmesh.ops.create_cube(
+                placas, size=1.0,
+                matrix=Matrix.Translation((x, techo - 0.002, z + 0.075))
+                @ Matrix.Diagonal((0.05, 0.004, 0.022, 1.0)),
             )
+            bmesh.ops.create_cone(
+                palancas_, cap_ends=True, segments=4, radius1=0.006,
+                radius2=0.004, depth=0.03,
+                matrix=Matrix.Translation((x, techo - 0.015, z + 0.03))
+                @ Matrix.Rotation(math.radians(90), 4, "X"),
+            )
+    for bm_, nombre, mat in ((placas, "rotulos-de-techo", "retro"),
+                             (palancas_, "interruptores-de-techo", "metal")):
+        malla = bpy.data.meshes.new(nombre)
+        bm_.to_mesh(malla)
+        bm_.free()
+        obj = bpy.data.objects.new(nombre, malla)
+        bpy.context.collection.objects.link(obj)
+        piezas.append(pintar(obj, mat))
 
     # 6. Los montantes del parabrisas, que enmarcan el mundo.
+    #
+    # **Con forma y con travesaño.** Eran dos vigas negras de sección
+    # cuadrada, y desde el asiento se leían como dos palos puestos delante de
+    # la cámara. Un montante de verdad es una pieza forrada, estrecha por
+    # delante —para tapar poco— y unida arriba al marco del techo: con el
+    # travesaño se lee como un parabrisas enmarcado y no como dos postes.
     for lado in (-1, 1):
         piezas.append(
-            caja(
-                f"montante-parabrisas-{lado}", lado * 0.42 - 0.035,
-                lado * 0.42 + 0.035, alto_panel + 0.06, techo,
-                panel_z - 0.34, panel_z - 0.26, "chapa",
+            redondear(
+                caja(
+                    f"montante-parabrisas-{lado}", lado * 0.42 - 0.03,
+                    lado * 0.42 + 0.03, alto_panel + 0.06, techo,
+                    panel_z - 0.34, panel_z - 0.26, "forro",
+                ),
+                radio=0.022,
             )
         )
+    piezas.append(
+        redondear(
+            caja("marco-de-techo", -0.46, 0.46, techo - 0.05, techo,
+                 panel_z - 0.36, panel_z - 0.22, "forro"),
+            radio=0.02,
+        )
+    )
+    if puntos:
+        piezas.append(tornillos("tornillos", puntos))
+    # Y la raya, que la necesita el volante. Ver `cabina`.
+    return piezas, y_linea
+
+
+def _mcp(alto_panel, z_labio, puntos):
+    """
+    El panel de modos de la visera: donde un Boeing guarda lo que se quiere.
+
+    Es la firma de una cabina de línea —la franja gris con ruedas en mitad de
+    la visera negra— y es la misma que dibuja el cuadro plano con sus tres
+    ventanillas. Aquí van **las ruedas y los rótulos, no las cifras**: unas
+    ventanillas negras sin número serían instrumentos que no marcan, y eso en
+    este juego no se pone. Las cifras están en el cuadro, que sí las lleva.
+
+    Va en el labio de la visera, un centímetro por delante de él: más cerca
+    de los ojos entraría en el plano cercano de la cámara.
+
+    **Y en la mitad de arriba del labio, no colgando de él.** Está más cerca
+    de los ojos que las pantallas, así que se ve más bajo de lo que está: con
+    el canto de abajo a ras del panel tapaba el borde de arriba del PFD, las
+    cifras de la cinta de velocidad incluidas.
+    """
+    piezas = []
+    y0, y1 = alto_panel + 0.032, alto_panel + 0.066
+    z0, z1 = z_labio - 0.03, z_labio + 0.01
+    piezas.append(
+        redondear(caja("mcp", -0.22, 0.22, y0, y1, z0, z1, "gris_linea"),
+                  radio=0.005)
+    )
+    # Las tres ruedas —velocidad, rumbo, altura—, en el orden de siempre.
+    for k, x in enumerate((-0.14, 0.0, 0.14)):
+        piezas.append(
+            redondear(
+                cilindro(f"mcp-rueda-{k}", 0.01, 0.012,
+                         (x, y0 + 0.013, z1 + 0.006), "pomo", lados=14,
+                         giro=None),
+                radio=0.003,
+            )
+        )
+        # Y encima de cada rueda, su rótulo iluminado.
+        piezas.append(
+            caja(f"mcp-rotulo-{k}", x - 0.026, x + 0.026, y1 - 0.009,
+                 y1 - 0.005, z1, z1 + 0.001, "retro")
+        )
+    puntos += [(sx * 0.21, (y0 + y1) / 2, z1) for sx in (-1, 1)]
     return piezas
 
 
@@ -1128,6 +1688,9 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     nombre, y **`g1000_display`**, que es lo que busca `pantallas-cabina.ts`.
     """
     piezas = []
+    # Dónde van los tornillos de todo el panel: se juntan en una sola malla al
+    # final. Ver `tornillos`.
+    puntos = []
     panel_z = ojos_z - 0.58
     grande = clase == "reactor"
     #
@@ -1196,22 +1759,28 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
              panel_z - 0.22, ojos_z + suelo_atras)
     )
     if grande:
-        piezas += _cabina_de_reactor(
+        de_linea, y_linea = _cabina_de_reactor(
             ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas, palancas,
             relojes, pantallas, pantallas_en, mide, mandos,
+            ojo_y=y_respaldo + 0.10,
         )
+        piezas += de_linea
     # El panel, vertical y mirando al piloto, con la visera por encima: esa
     # visera es lo que en un avión de verdad hace que las pantallas se lean con
     # sol, y aquí además es lo que separa el panel del parabrisas.
     if not grande:
         piezas.append(
-            caja("panel", -ancho - 0.02, ancho + 0.02, y_suelo + 0.08,
-                 alto_panel, panel_z - 0.12, panel_z)
+            redondear(
+                caja("panel", -ancho - 0.02, ancho + 0.02, y_suelo + 0.08,
+                     alto_panel, panel_z - 0.12, panel_z),
+                radio=0.012,
+            )
         )
         piezas.append(
-            caja("visera", -ancho - 0.04, ancho + 0.04, alto_panel,
-                 alto_panel + 0.04, panel_z - 0.18, panel_z + 0.08, "visera")
+            _visera(ancho + 0.04, alto_panel + 0.04, 0.05, panel_z - 0.18,
+                    panel_z + 0.08, arco=0.06)
         )
+        piezas += _costados(ancho, y_suelo, alto_panel, panel_z, ojos_z)
     # ── **Un avión de pistón lleva relojes, no cristal** ──
     #
     # La familia la manda el motor y no el peldaño: los de pistón llevan seis
@@ -1289,7 +1858,25 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
                     # delante, por esto mismo.
                     panel_z + 0.008,
                 ),
+                puntos,
             )
+        # **La placa del grupo de vuelo.** En una avioneta de verdad los seis
+        # van en una chapa aparte atornillada al panel, y es lo que hace que se
+        # lean como un grupo: lo que hay que mirar, junto, y el resto alrededor.
+        m = radio_s * 1.2 + 0.016
+        x0 = borde_s + radio_s - m
+        x1 = borde_s + radio_s + 2 * paso_s + m
+        y1 = min(arriba_s + m, alto_panel - 0.012)
+        y0 = arriba_s - paso_s - m
+        piezas.append(
+            redondear(
+                caja("subpanel", x0, x1, y0, y1, panel_z - 0.004,
+                     panel_z + 0.004, "subpanel"),
+                radio=0.003, segmentos=1,
+            )
+        )
+        puntos += [(x, y, panel_z + 0.004) for x in (x0 + 0.009, x1 - 0.009)
+                   for y in (y0 + 0.009, y1 - 0.009)]
 
     if pantallas and not grande and not seispack:
         # **El grupo entero centrado en el ojo del piloto.**
@@ -1330,13 +1917,17 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         # todo el rato va lo más cerca posible de lo que se mira todo el rato.
         y_p = alto_panel - 0.04 - alto_p / 2
         for k, nombre in enumerate(("horizonte", "rumbo")):
+            centro = (borde + ancho_p / 2 + k * (ancho_p + hueco_p),
+                      y_p, panel_z + 0.005)
             piezas.append(
-                cuadro(
-                    f"pantalla-{nombre}", ancho_p, alto_p,
-                    (borde + ancho_p / 2 + k * (ancho_p + hueco_p),
-                     y_p, panel_z + 0.005),
-                    "g1000_display",
-                )
+                cuadro(f"pantalla-{nombre}", ancho_p, alto_p, centro,
+                       "g1000_display")
+            )
+            # Y su marco, que es media pantalla de un G1000: el cristal va
+            # dentro de una caja con canto, no pegado a la chapa.
+            piezas.append(
+                marco(f"pantalla-{nombre}-marco", centro, ancho_p, alto_p,
+                      hueco_p * 0.45, 0.005, "bisel")
             )
 
     # Los relojes del panel: discos finos pegados al tablero, en fila.
@@ -1409,12 +2000,12 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
             if m < cuantos - 1:
                 piezas += reloj(
                     f"reloj-motor-{m}", mide, radioReloj,
-                    (x, y, panel_z + 0.008),
+                    (x, y, panel_z + 0.008), puntos,
                 )
             else:
                 piezas += reloj(
                     "reloj-flaps", "flaps", radioReloj,
-                    (x, y, panel_z + 0.008),
+                    (x, y, panel_z + 0.008), puntos,
                 )
         # Y los tres mandos que se pulsan, **debajo de la columna de relojes**.
         #
@@ -1481,23 +2072,70 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     ped_x = (
         (plazas[0] + plazas[1]) / 2 if len(plazas) > 1 else plazas[0] + 0.30
     )
+    # ── **Lo que va delante del panel no tapa el panel** ──
+    #
+    # El pedestal, las palancas, el volante y el bastón están más cerca de
+    # los ojos que el tablero, así que una misma altura se ve **más abajo**
+    # cuanto más cerca está. Aquí había un pedestal que tapaba media esfera de
+    # flaps en el turbohélice: medido en metros quedaba bajo el panel, y
+    # desde el asiento se comía el reloj.
+    #
+    # Así que la altura de todo eso sale de un ángulo y no de un número: la
+    # raya que va de los ojos a lo más bajo que hay que leer —la fila de
+    # botones—. Por debajo de esa raya no tapa nada. **Y se mide en el canto
+    # más lejano** de cada pieza, que es el que se ve más alto: el primer
+    # intento la midió en el de atrás y el pedestal seguía tapando el freno.
+    ojo_y = y_respaldo + 0.10
+    ojo_z = ojos_z + 0.145
+    if not grande:
+        y_linea = y_boton - alto_boton * 0.5 - 0.012
+    baja = (ojo_y - y_linea) / (ojo_z - panel_z)
+
+    def techo_en(z):
+        return ojo_y - baja * (ojo_z - z)
+
     if palancas and not grande:
+        # **Pegado al panel**, con las palancas saliendo de él hacia el
+        # piloto, que es como es el cuadrante de gases de un bimotor. Iba
+        # medio metro hacia atrás y las palancas quedaban dentro del plano
+        # cercano de la cámara: desde el asiento no se veía ni una.
+        fondo = 0.30
+        arriba_p = min(y_suelo + 0.22, techo_en(panel_z) - 0.005)
         piezas.append(
-            caja("pedestal", ped_x - 0.10, ped_x + 0.10, y_suelo + 0.02,
-                 y_suelo + 0.16, panel_z, panel_z + 0.46)
-        )
-        for i in range(palancas):
-            paso = 0.16 / max(1, palancas)
-            x = ped_x - paso * (palancas - 1) / 2 + paso * i
-            piezas.append(
-                cilindro(
-                    f"palanca-de-gas-{i}",
-                    0.014,
-                    0.20,
-                    (x, y_suelo + 0.24, panel_z + 0.22),
-                    "tablero",
-                )
+            redondear(
+                caja("pedestal", ped_x - 0.10, ped_x + 0.10, y_suelo + 0.02,
+                     arriba_p, panel_z, panel_z + fondo),
+                radio=0.02,
             )
+        )
+        z_l = panel_z + 0.10
+        piezas += _palancas_de_gas(
+            palancas, ped_x, 0.15, arriba_p,
+            max(arriba_p + 0.08, techo_en(z_l - 0.022)), z_l,
+        )
+    elif not grande:
+        # **Y donde no hay pedestal, el pomo del gas en el tablero**, que es lo
+        # que decía el guion del entrenador y no estaba: «en una avioneta el
+        # gas es un pomo en el tablero». Negro, redondo y abajo en el centro,
+        # como en un 172. Se empuja para acelerar, que es lo que se aprende.
+        # Justo bajo la raya de lo que se lee, y entre el eje del volante y su
+        # cuerno derecho: ahí es donde cae la mano derecha. El pomo y **su
+        # eje**, que entra en el panel y es lo más lejano: es el que se ve
+        # más alto, y a ras de la raya se metía en el botón del freno.
+        yp = max(y_suelo + 0.12,
+                 min(techo_en(panel_z + 0.054) - 0.02, y_linea - 0.01))
+        xp = plazas[0] + 0.075
+        piezas.append(
+            cilindro("pomo-de-gas-eje", 0.006, 0.06, (xp, yp, panel_z + 0.03),
+                     "metal", lados=8, giro=None)
+        )
+        piezas.append(
+            redondear(
+                cilindro("pomo-de-gas", 0.02, 0.022, (xp, yp, panel_z + 0.065),
+                         "pomo", lados=16, giro=None),
+                radio=0.006,
+            )
+        )
 
     for i, x in enumerate(plazas):
         silla = asiento_de_una_pieza(
@@ -1506,6 +2144,10 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         )
         silla.location.x += x
         piezas.append(silla)
+
+    if puntos:
+        piezas.append(tornillos("tornillos", puntos))
+
     # El mando. No se toca, pero un avión sin nada que agarrar no es un avión.
     #
     # **Y lo que se agarra no es lo mismo en todos.** Aquí había una palanca de
@@ -1513,9 +2155,18 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     # lleva un volante —un «cuerno»— delante de cada piloto, y una avioneta de
     # escuela también. El bastón es de los que se pilotan con una mano y llevan
     # el brazo entre las rodillas, que en esta flota es el fumigador.
+    #
+    # **A la altura a la que se ve.** Lo que asoma desde el asiento son las
+    # puntas de los cuernos, a los lados de la fila de botones y no encima de
+    # ella: un mando que tapa los mandos no ayuda. Como el volante está más
+    # cerca de los ojos que el panel, la misma altura se ve más abajo; por eso
+    # la cuenta va en ángulo y no en metros.
     if mando == "cuerno":
         for i, x in enumerate(plazas):
-            piezas += _cuerno(x, y_suelo, panel_z, grande)
+            z_c = panel_z + (0.16 if grande else 0.13)
+            punta = techo_en(z_c) + 0.012
+            piezas += _cuerno(x, y_suelo, panel_z, grande,
+                              y_centro=punta - 0.12, z_centro=z_c)
         return piezas
     #
     # **Y sale del suelo de la cabina, no de una altura fija.** Estaba clavada
@@ -1524,15 +2175,56 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     # cincuenta centímetros **por encima de la cabeza del piloto**. No se veía
     # desde el asiento porque cae dentro del plano cercano de la cámara, que es
     # justo lo que hace que un fallo así dure.
+    #
+    # **Y con su empuñadura**, que es lo que la hace un bastón y no un palo: un
+    # puño negro, algo inclinado hacia el piloto, con el pulsador arriba.
+    z_b = panel_z + 0.20
+    alto_b = techo_en(z_b) - 0.11 - y_suelo
     piezas.append(
-        cilindro(
-            "palanca",
-            0.026,
-            0.32,
-            (plazas[0], y_suelo + 0.22, panel_z + 0.32),
-            "tablero",
-        )
+        cilindro("palanca", 0.016, alto_b,
+                 (plazas[0], y_suelo + alto_b / 2, z_b), "metal", lados=10)
     )
+    y_b = y_suelo + alto_b
+    piezas.append(
+        tubo("palanca-puno",
+             [(plazas[0], y_b - 0.02, z_b), (plazas[0], y_b, z_b),
+              (plazas[0], y_b + 0.04, z_b), (plazas[0], y_b + 0.09, z_b),
+              (plazas[0], y_b + 0.105, z_b), (plazas[0], y_b + 0.112, z_b)],
+             0.016, "pomo", lados=12,
+             radios=[0.012, 0.016, 0.019, 0.018, 0.013, 0.004])
+    )
+    # Y la bota de cuero de la base, que tapa el agujero del suelo.
+    piezas.append(
+        cilindro("bota-de-palanca", 0.05, 0.06,
+                 (plazas[0], y_suelo + 0.05, z_b), "tapiceria", lados=12)
+    )
+    return piezas
+
+
+def _palancas_de_gas(cuantas, x_centro, ancho, y_base, y_pomo, z):
+    """
+    Las palancas de gas: una por motor, juntas, cada una con su pomo.
+
+    Una palanca de gas de verdad no es un palo: es un brazo que sale de una
+    ranura del pedestal y termina en un pomo que llena la mano. Juntas, para
+    poder llevarlas todas con una mano, que es lo que se hace.
+    """
+    piezas = []
+    paso = min(0.06, ancho / max(1, cuantas))
+    largo = y_pomo - 0.03 - y_base
+    for i in range(cuantas):
+        x = x_centro - paso * (cuantas - 1) / 2 + paso * i
+        piezas.append(
+            cilindro(f"palanca-de-gas-{i}", 0.008, largo + 0.01,
+                     (x, y_base + largo / 2, z), "metal", lados=8)
+        )
+        piezas.append(
+            redondear(
+                caja(f"pomo-de-gas-{i}", x - paso * 0.42, x + paso * 0.42,
+                     y_pomo - 0.04, y_pomo, z - 0.022, z + 0.022, "pomo"),
+                radio=0.01,
+            )
+        )
     return piezas
 
 
