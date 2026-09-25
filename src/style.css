@@ -7857,3 +7857,10 @@ button.motor__tecla::after {
   left: 50%;
   max-width: calc(100% - 32px);
 }
+
+/* Y los pictogramas, arrimados a su borde: en cabina el rincón vive a la
+   izquierda, y alineados a la derecha —como en su esquina de siempre— salían
+   escalonados, con la hélice y la caja del horizonte corridas hacia dentro. */
+.hud.hud--cabina .pictos {
+  justify-items: start;
+}
