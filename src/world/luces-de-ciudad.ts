@@ -34,27 +34,42 @@
  * ## El color
  *
  * Ámbar. El alumbrado de sodio de toda la vida es naranja, y aunque medio
- * mundo esté cambiando a led blanco, lo que se ve desde un avión de noche
- * sobre un pueblo sigue siendo un manchón cálido. Un punto de luz frío cada
- * tantos, que es lo que hacen los polígonos y las gasolineras.
+ * mundo esté cambiando a led, lo que se ve desde un avión de noche sobre un
+ * pueblo canario o paraguayo sigue siendo sobre todo cálido: sodio ámbar,
+ * led cálido amarillento y, cada tanto, un blanco frío de polígono o de
+ * gasolinera.
+ *
+ * ## Y de lejos, puntos y no manchones
+ *
+ * Eran tres píxeles fijos a cualquier distancia, sumándose. De cerca, bien;
+ * desde el mar a quince kilómetros, cada calle eran cien farolas en el mismo
+ * puñado de píxeles, la suma se salía de la escala y el pueblo entero era
+ * **una mancha blanca**. Lo que se ve de verdad es otra cosa: puntos
+ * pequeños y cálidos, más apagados cuanto más lejos y cuanta más bruma hay
+ * delante. Ver `materialDeLuces`.
  */
 
 import {
-  AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
   Color,
   Group,
   Points,
-  PointsMaterial,
 } from "three";
+import { materialDeLuces } from "./material-de-luces";
 import type { Ciudad } from "./ciudad";
 import { encendidoSegunElSol } from "./luces-de-rodadura";
 
-/** El ámbar del alumbrado y el blanco frío de los polígonos. */
-const SODIO = 0xffb457;
-const FRIA = 0xd8e8ff;
-
+/*
+ * El ámbar del sodio, el amarillo de un led cálido y el blanco frío de los
+ * polígonos. **Y no a tope**: las luces se suman —ver `materialDeLuces`— y
+ * con el color entero dos farolas juntas ya daban blanco. A media fuerza,
+ * una calle se queda ámbar aunque sus farolas se toquen en pantalla.
+ */
+const SODIO = 0xff9a36;
+const CALIDA = 0xffd08a;
+const FRIA = 0xe4eeff;
+const FUERZA = 0.62;
 /**
  * Cada cuántos metros hay una farola en una calle.
  *
@@ -75,12 +90,9 @@ const CADA_FAROLA = 30;
 const POR_CELDA = 6;
 
 /**
- * Lo que mide una luz en pantalla, en píxeles.
- *
- * Tres. No se atenúan con la distancia —igual que las del aeropuerto— porque
- * lo que llega de una luz lejana es su brillo y no su tamaño, y porque es lo
- * que hace que un pueblo a treinta kilómetros siga siendo un puñado de
- * puntos en vez de desaparecer.
+ * Lo que mide una luz en pantalla de cerca, en píxeles. De lejos baja —ver
+ * `materialDeLuces`—, porque lo que llega de una luz lejana es su brillo y
+ * no su tamaño.
  */
 const TAMANO = 3;
 
@@ -127,14 +139,17 @@ export function crearLucesDeCiudad(
   const colores: number[] = [];
   const tinte = new Color();
 
-  const poner = (x: number, z: number, frio: boolean, brillo: number): void => {
+  /** De qué color es una luz: sobre todo sodio, algo de led cálido y poco frío. */
+  const colorDe = (suerte: number): number =>
+    suerte < 0.06 ? FRIA : suerte < 0.24 ? CALIDA : SODIO;
+  const poner = (x: number, z: number, suerte: number, brillo: number): void => {
     if (enElAeropuerto(x, z)) return;
     const y = cota(x, z);
     if (y <= nivelDelAgua) return;
     // Cinco metros: la altura de una farola, y lo justo para que la luz no se
     // hunda en el pliegue del terreno cuando el relieve es grueso.
     sitios.push(x, y + 5, -0 + z);
-    tinte.set(frio ? FRIA : SODIO).multiplyScalar(brillo);
+    tinte.set(colorDe(suerte)).multiplyScalar(brillo * FUERZA);
     colores.push(tinte.r, tinte.g, tinte.b);
   };
 
@@ -154,7 +169,7 @@ export function crearLucesDeCiudad(
         poner(
           ax + (bx - ax) * t,
           az + (bz - az) * t,
-          azar() < 0.08,
+          azar(),
           0.7 + azar() * 0.3,
         );
       }
@@ -176,7 +191,7 @@ export function crearLucesDeCiudad(
         const x = -mitad + (col + azar()) * paso;
         // Del fichero al mundo: la fila crece al norte y la Z al sur.
         const z = mitad - (fila + azar()) * paso;
-        poner(x, z, azar() < 0.05, 0.55 + d * 0.45);
+        poner(x, z, azar(), 0.55 + d * 0.45);
       }
     }
   }
@@ -184,16 +199,7 @@ export function crearLucesDeCiudad(
   const geo = new BufferGeometry();
   geo.setAttribute("position", new BufferAttribute(new Float32Array(sitios), 3));
   geo.setAttribute("color", new BufferAttribute(new Float32Array(colores), 3));
-  const material = new PointsMaterial({
-    size: TAMANO,
-    sizeAttenuation: false,
-    vertexColors: true,
-    transparent: true,
-    depthWrite: false,
-    // Sumando: dos farolas cerca dan más luz que una, que es lo que hace que
-    // el centro del pueblo se vea como un manchón y las afueras como puntos.
-    blending: AdditiveBlending,
-  });
+  const material = materialDeLuces(TAMANO);
   const puntos = new Points(geo, material);
   puntos.name = "luces-de-ciudad-puntos";
   grupo.add(puntos);

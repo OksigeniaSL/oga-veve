@@ -473,6 +473,17 @@ if (mundoElegido() === "foto") {
   });
 }
 /*
+ * **Y las ciudades de los vecinos, para sus luces de noche.** Van en
+ * cualquier mundo, con foto o sin ella: de noche la foto no enseña nada y lo
+ * que se ve de la isla de enfrente son sus luces. Ver
+ * `MundoVecino.ponerLuces`.
+ */
+destinosDeHoy.forEach((d, i) => {
+  void cargarCiudad(d.id).then(
+    (suya) => suya && game.ponerCiudadDelVecino(i, suya),
+  );
+});
+/*
  * **Y el parte se le da al juego, no solo al escenario.**
  *
  * `conViento` mete el viento en el escenario, y con eso el motor de vuelo se
