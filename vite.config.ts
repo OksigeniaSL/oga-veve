@@ -36,6 +36,33 @@ function elPackDeVoz(): Plugin {
 }
 
 /**
+ * **Y los relieves, comprimidos.**
+ *
+ * Son enteros de 16 bits en crudo y el servidor los manda tal cual: no sabe
+ * qué es un `.bin` y no lo comprime, ni nginx ni Cloudflare. En Tenerife Norte
+ * eso eran seis megas antes de despegar, y en un móvil con 3G, casi un minuto
+ * de espera. Comprimidos, el lejano pasa de 2,1 MB a 84 kB, porque casi todo
+ * él es mar a cota cero.
+ *
+ * Se comprimen al empaquetar y no en `data/terrain`, porque allí los leen
+ * también las pruebas y las herramientas tal cual. `cargarRelieve` reconoce
+ * la cabecera gzip y descomprime; en desarrollo le llega en crudo y lo usa.
+ */
+function relievesComprimidos(): Plugin {
+  return {
+    name: "relieves-comprimidos",
+    apply: "build",
+    async generateBundle(_opciones, paquete) {
+      const { gzipSync } = await import("node:zlib");
+      for (const f of Object.values(paquete)) {
+        if (f.type !== "asset" || !f.fileName.endsWith(".bin")) continue;
+        f.source = gzipSync(f.source as Uint8Array, { level: 9 });
+      }
+    },
+  };
+}
+
+/**
  * **Y el trabajador de servicio, escrito por la propia compilación.**
  *
  * Estaba en el `build` del `package.json` —`vite build && node
@@ -82,7 +109,7 @@ function elTrabajadorDeServicio(): Plugin {
 
 export default defineConfig({
   base: "./",
-  plugins: [elPackDeVoz(), elTrabajadorDeServicio()],
+  plugins: [elPackDeVoz(), relievesComprimidos(), elTrabajadorDeServicio()],
   /*
    * **Las pruebas tienen que ver la hoja de estilos de verdad.**
    *

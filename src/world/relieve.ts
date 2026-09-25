@@ -55,7 +55,7 @@ export async function cargarRelieve(id: string): Promise<Scenario["relieve"]> {
     // entero y en silencio. Ver `datos/con-plazo.ts`.
     const res = await conPlazo(fetch(ruta), PLAZO_DE_DATO, `el relieve de ${id}`);
     if (!res?.ok) return undefined;
-    const datos = new Int16Array(await res.arrayBuffer());
+    const datos = new Int16Array(await descomprimir(await res.arrayBuffer()));
     const resolucion = Math.round(Math.sqrt(datos.length));
     return resolucion * resolucion === datos.length
       ? { datos, resolucion }
@@ -63,6 +63,25 @@ export async function cargarRelieve(id: string): Promise<Scenario["relieve"]> {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Los bytes del relieve, descomprimidos si vienen en gzip.
+ *
+ * Al empaquetar se comprimen —ver `relievesComprimidos` en `vite.config.ts`—
+ * y en desarrollo llegan en crudo, así que se mira la cabecera. No se puede
+ * confundir: `1f 8b` leído como el primer entero sería una cota de -29 921 m.
+ *
+ * Sin `DecompressionStream` (Safari antes de la 16.4) se lanza, y quien llama
+ * se queda con el relieve generado, que es lo que había antes.
+ */
+export async function descomprimir(bytes: ArrayBuffer): Promise<ArrayBuffer> {
+  const v = new Uint8Array(bytes, 0, Math.min(2, bytes.byteLength));
+  if (v[0] !== 0x1f || v[1] !== 0x8b) return bytes;
+  const flujo = new Blob([bytes])
+    .stream()
+    .pipeThrough(new DecompressionStream("gzip"));
+  return new Response(flujo).arrayBuffer();
 }
 
 /**
