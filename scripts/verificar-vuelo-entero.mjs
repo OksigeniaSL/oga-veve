@@ -48,7 +48,9 @@
  * que se mueve de escala: la toma que pasa de 150 a 320 metros, el rodaje de
  * vuelta que se dobla, el percance que sale siempre.
  *
- * Uso: `node scripts/verificar-vuelo-entero.mjs [escenario] [tramo]`
+ * Uso: `node scripts/verificar-vuelo-entero.mjs [escenario] [tramo] [veces]
+ * [avion] [destino]`. Con destino, se despega en casa y se aterriza, se rueda
+ * y se aparca en ese otro campo. Ver `DESTINO`.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -111,6 +113,26 @@ if (!/^jaz-\d+$/.test(AVION)) {
     `\n  ✗ «${AVION}» no es un avión de la flota.\n` +
       "    El orden es: escenario tramo veces avion\n",
   );
+  process.exit(2);
+}
+/**
+ * **Y a dónde se va, si se va a otro sitio.** Quinto argumento: el
+ * identificador de un campo vecino —`tenerife-norte`, por ejemplo—.
+ *
+ * Existe porque todo lo que este banco mide lo medía **en casa**, y el día que
+ * se aterrizó en el aeropuerto de enfrente no había nadie: ni coche, ni raya,
+ * ni señalero. «En el de salida sí.» El banco estaba en verde porque nunca
+ * había salido del campo de salida.
+ *
+ * El trayecto entre islas no se vuela: son cuarenta minutos de recta que no
+ * miden nada de lo que aquí importa. Se despega de verdad, se sube hasta que
+ * el vuelo cuenta como vuelo, y ahí el avión se pone en final del otro campo,
+ * a cuatro kilómetros y en su senda. Desde ahí es el mismo piloto que en casa:
+ * aterriza, sale de la pista, sigue la raya hasta el puesto y apaga — **allí**.
+ */
+const DESTINO = process.argv[6] ?? null;
+if (DESTINO !== null && !/^[a-z-]+$/.test(DESTINO)) {
+  console.log(`\n  ✗ «${DESTINO}» no es un campo.\n`);
   process.exit(2);
 }
 
@@ -200,7 +222,8 @@ const METAR = process.env.OGA_METAR
 const LECCION = process.env.OGA_LECCION ?? "despegue";
 await page.goto(
   `${BASE}/?escenario=${ESCENARIO}&hora=${HORA}&leccion=${LECCION}` +
-    `&tramo=${TRAMO}&avion=${AVION}${METAR}`,
+    `&tramo=${TRAMO}&avion=${AVION}${METAR}` +
+    (DESTINO ? `&destino=${DESTINO}` : ""),
 );
 /*
  * **Y se espera a que el juego esté, no a que pasen dieciséis segundos.**
@@ -461,7 +484,7 @@ const fotos = (async () => {
   }
 })();
 
-const vuelo = await page.evaluate(async (vecesPedidas) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -508,8 +531,14 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     engineOn: false,
   };
   o.pilotar((mandos) => Object.assign(mandos, c));
-  const pista = o.pista();
-  const rumboPista = (pista.heading * Math.PI) / 180;
+  /*
+   * **La pista es la del campo en el que se está**, no siempre la de casa.
+   * En casa es la misma; en el destino, la suya. Ver el argumento `destino`.
+   */
+  const pistaAhora = () => o.pistaDeAhora?.() ?? o.pista();
+  const finalAhora = (d) => o.puntoDeFinalDe?.(d) ?? o.puntoDeFinal(d);
+  let pista = pistaAhora();
+  let rumboPista = (pista.heading * Math.PI) / 180;
 
   /**
    * A qué altura se puede empezar a girar, m.
@@ -923,7 +952,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * nominal es el de **una** de las dos cabeceras, y saliendo por la otra eso
    * es media vuelta pedida a treinta metros de altura.
    */
-  const porDelante = () => o.puntoDeFinal(-(pista.length + 2000));
+  const porDelante = () => finalAhora(-(pista.length + 2000));
 
   /**
    * El rumbo con el que se sale, que **no es el rumbo nominal de la pista**.
@@ -1035,7 +1064,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
 
   /** Cuánto se está del eje de la pista, en metros. Para la traza. */
   const desvio = (s) => {
-    const r = o.pista();
+    const r = pistaAhora();
     const hp = (r.heading * Math.PI) / 180;
     return (
       (s.position.x - r.x) * Math.cos(hp) + (s.position.z - r.z) * Math.sin(hp)
@@ -1055,7 +1084,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * que se queda corto y otro que se pasa de largo salían idénticos.
    */
   const alUmbral = (s) => {
-    const r = o.pista();
+    const r = pistaAhora();
     const hp = (r.heading * Math.PI) / 180;
     const along =
       (s.position.x - r.x) * Math.sin(hp) +
@@ -1145,8 +1174,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
     return Math.hypot(f[0] - s.position.x, f[1] - s.position.z);
   };
 
-  const umbral = o.puntoDeFinal(0);
-  const cotaDePista = umbral ? o.suelo(umbral.x, umbral.z) : 0;
+  let umbral = finalAhora(0);
+  let cotaDePista = umbral ? o.suelo(umbral.x, umbral.z) : 0;
   /**
    * Altura sobre la pista, que es la que importa para volar un circuito.
    *
@@ -1159,7 +1188,9 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
    * cantaba, con razón, como aterrizaje fuera de pista.
    */
   const alto = (s) =>
-    s.position.y - (o.cotaDePista?.(s.position.x, s.position.z) ?? cotaDePista);
+    s.position.y -
+    ((o.cotaDePistaDeAhora ?? o.cotaDePista)?.(s.position.x, s.position.z) ??
+      cotaDePista);
 
   // Doscientos metros y la entrada en final a dos kilómetros y medio: es un
   // circuito de verdad y es lo más corto que se puede volar sin que parezca
@@ -1197,6 +1228,8 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
   const carrera = [];
   let faseAnterior = "";
   let etapa = "arrancar";
+  /** En qué campo se puso el avión al cruzar, si se cruzó. Ver `destino`. */
+  let enElDestino = null;
   let mudo = 0;
   let mudoMaximo = 0;
   let mudoDonde = "";
@@ -1829,7 +1862,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * subir— y para arreglarlo solo hace falta saber cuál no se cumple nunca.
      */
     if (!s.onGround) {
-      const r = o.pista();
+      const r = pistaAhora();
       const hp = (r.heading * Math.PI) / 180;
       const dx = s.position.x - r.x;
       const dz = s.position.z - r.z;
@@ -1875,6 +1908,18 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      * miraba `cocheApartado`. Faltaba aquí.
      */
     const guiandoAhora = coche?.visible && !o.cocheApartado?.();
+    /*
+     * **Y la lejanía, solo fuera de la pista.** El juego tiene al coche
+     * esperando en la boca de la salida **mientras el avión pise pista**, no
+     * mientras la fase diga «aterrizado» —ver `enLaPistaAun` en `Game`—, y
+     * esto miraba la fase. En casa no se notaba porque el piloto del banco
+     * se para cerca de su salida; aterrizando en Los Rodeos, con tres mil
+     * cuatrocientos metros de pista, la avioneta rodaba un kilómetro por el
+     * asfalto hasta la suya con el coche esperándola allí, y eso se contaba
+     * como «se escapa». Lo cerca, en cambio, cuenta también en pista: que no
+     * se le lleve por delante vale en todas partes.
+     */
+    const cuentaLejos = !s.onRunway;
     if (
       guiandoAhora &&
       s.onGround &&
@@ -1885,7 +1930,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         coche.position.x - s.position.x,
         coche.position.z - s.position.z,
       );
-      if (alCoche > lejosDelCoche) {
+      if (cuentaLejos && alCoche > lejosDelCoche) {
         lejosDelCoche = alCoche;
         lejosDondeCoche = `en «${fase}» a los ${Math.round(t)} s, a ${Math.round(s.airspeed)} m/s`;
       }
@@ -2112,6 +2157,33 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
         despego = t;
         etapa = "subir";
       }
+    } else if (
+      etapa === "subir" &&
+      destino &&
+      !enElDestino &&
+      alto(s) > 150 &&
+      t - despego > 25
+    ) {
+      /*
+       * **Y aquí se cruza el canal.** El vuelo ya cuenta como vuelo —subió
+       * más de ciento veinte metros y lleva en el aire más de quince
+       * segundos, ver `haVolado`— y el avión se pone a cuatro kilómetros del
+       * umbral del otro campo, en su eje y en su senda de tres grados. A
+       * partir de aquí la pista, el umbral y la cota son los de allí.
+       */
+      const f = o.puntoDeFinalDe(4000, destino);
+      const u = o.puntoDeFinalDe(0, destino);
+      if (!f || !u) return { etapa: "sin destino", destino };
+      const alli = u.suelo;
+      const aproximacion = o.avion().aproximacion;
+      o.colocar(f.x, alli + (4000 + 250) * SENDA, f.z, aproximacion + 3, f.h);
+      await new Promise((r) => setTimeout(r, 500));
+      enElDestino = o.campoDeAhora();
+      pista = pistaAhora();
+      rumboPista = (pista.heading * Math.PI) / 180;
+      umbral = finalAhora(0);
+      cotaDePista = umbral ? o.suelo(umbral.x, umbral.z) : 0;
+      etapa = "final";
     } else if (etapa === "subir") {
       /*
        * **El circuito, tramo a tramo, que es como se vuela una vuelta.**
@@ -2211,7 +2283,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        */
       if (!v) {
         const falta = alUmbral(s);
-        const p = alto(s) > SEGURO_PARA_GIRAR ? o.puntoDeFinal(3000) : null;
+        const p = alto(s) > SEGURO_PARA_GIRAR ? finalAhora(3000) : null;
         if (p) c.aileron = alPunto(s, p.x, p.z);
         if (falta > 800 && falta < 4000) etapa = "final";
       }
@@ -2232,7 +2304,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
        * que queda hasta el umbral, y el punto al que apuntar está en el eje,
        * trescientos metros por delante.
        */
-      const r = o.pista();
+      const r = pistaAhora();
       const hp = (r.heading * Math.PI) / 180;
       const fx = Math.sin(hp);
       const fz = -Math.cos(hp);
@@ -2547,6 +2619,10 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
 
   return {
     etapa,
+    // Dónde se cruzó y dónde se acabó, si el vuelo iba a otro campo.
+    destino: destino
+      ? { pedido: destino, llego: enElDestino, acabo: o.campoDeAhora?.() ?? null }
+      : null,
     /*
      * **Y si el vuelo se paró por un percance, cuál.**
      *
@@ -2687,7 +2763,7 @@ const vuelo = await page.evaluate(async (vecesPedidas) => {
      */
     flota: alPrincipioFlotaba,
   };
-}, VECES);
+}, [VECES, DESTINO]);
 fotografiando = false;
 await fotos;
 /*
@@ -3437,6 +3513,21 @@ comprobarSiVolo(
   );
 }
 
+/*
+ * **Y si se iba a otro campo, que se llegó a él y se acabó en él.** Todo lo de
+ * arriba —la raya, el coche, el señalero, el rodaje— vale solo si se midió
+ * allí; un vuelo que se queda en casa lo pasaría en verde sin haber cruzado.
+ */
+if (DESTINO) {
+  const d = vuelo.destino ?? {};
+  comprobar(
+    "se aterriza y se aparca en el otro campo",
+    d.llego === DESTINO && d.acabo === DESTINO,
+    `pedido ${DESTINO} · se cruzó a ${d.llego ?? "ninguno"} · se acabó en ${d.acabo ?? "?"}`,
+    "«aterricé en Tenerife Norte y no había nadie esperando, ni coche ni señor con señales ni línea verde»",
+  );
+}
+
 // ── El informe ────────────────────────────────────────────────────────────
 
 /*
@@ -3457,7 +3548,7 @@ if (vuelo.subida?.length)
   console.log("\n  la subida:\n" + vuelo.subida.map((l) => "    " + l).join("\n"));
 
 console.log(
-  `\n  vuelo entero · ${ESCENARIO} · ${TRAMO} · reloj ×${vuelo.veces}` +
+  `\n  vuelo entero · ${ESCENARIO}${DESTINO ? ` → ${DESTINO}` : ""} · ${TRAMO} · reloj ×${vuelo.veces}` +
     ` · arrancó en ${tardoEnArrancar.toFixed(1)} s` +
     ` · ${vuelo.vueltas} muestras en ${vuelo.segundos.toFixed(0)} s de vuelo` +
     queTiempoHizo +
