@@ -717,7 +717,25 @@ export async function cargarModelo(
   const yaEscalada = new Box3().setFromObject(raiz);
   raiz.position.y -= yaEscalada.min.y + aircraft.gearHeight;
   raiz.position.x -= (yaEscalada.min.x + yaEscalada.max.x) / 2;
-  raiz.position.z -= (yaEscalada.min.z + yaEscalada.max.z) / 2;
+  /*
+   * **Y a lo largo, por su centro de gravedad si lo trae.**
+   *
+   * El origen del grupo es el punto sobre el que el modelo de vuelo hace
+   * girar el avión, y se ponía en el centro de la caja. En un avión de línea
+   * da casi igual —el ala está a media eslora—, pero en una avioneta de
+   * proporciones de verdad el morro es corto y la cola larga, y el centro de
+   * la caja cae metro y pico por detrás del ala: al rotar, las ruedas
+   * principales se levantaban del suelo antes que el morro. Los modelos de
+   * `modelos/` llevan un nodo `centro-de-gravedad` a un cuarto de la cuerda
+   * del ala, que es donde lo tiene un avión de verdad.
+   */
+  const cdg = raiz.getObjectByName("centro-de-gravedad");
+  if (cdg) {
+    raiz.updateWorldMatrix(true, true);
+    raiz.position.z -= cdg.getWorldPosition(new Vector3()).z;
+  } else {
+    raiz.position.z -= (yaEscalada.min.z + yaEscalada.max.z) / 2;
+  }
 
   group.add(raiz);
 

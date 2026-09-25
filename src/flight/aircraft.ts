@@ -924,7 +924,11 @@ export const ARAI: AircraftConfig = {
   decisionSpeed: 72,
   rotationSpeed: 78,
   batalla: 11.5,
-  gearHeight: 2.8,
+  // 3,35: la panza a metro setenta del asfalto y las góndolas a medio metro,
+  // que es como va un reactor de esta clase. Con 2,8 la panza quedaba a metro
+  // escaso y el tren apenas asomaba bajo el motor: «ruedas enterradas». Tiene
+  // que decir lo mismo que `TREN` en `modelos/jaz-90-arai.py`.
+  gearHeight: 3.35,
   trenRetractil: true,
   // Veinte: el tren entra en cuanto el variómetro dice que sube. Con las patas
   // fuera a más de doscientos cinco nudos se pasaría de su propio límite.
@@ -1088,7 +1092,11 @@ export const YVAGA: AircraftConfig = {
   decisionSpeed: 80,
   rotationSpeed: 86,
   batalla: 25.6,
-  gearHeight: 5.2,
+  // 5,9: la panza a dos metros y medio largos y los motores de dentro a casi
+  // un metro del suelo, como en un avión de esta clase. Con 5,2 las ruedas
+  // quedaban tapadas por los motores y se leía «ruedas enterradas». Tiene que
+  // decir lo mismo que `TREN` en `modelos/jaz-120-yvaga.py`.
+  gearHeight: 5.9,
   trenRetractil: true,
   // Veinte: igual que el de pasillo único. Un avión de línea no vuela con el
   // tren fuera más que los segundos de después del despegue.

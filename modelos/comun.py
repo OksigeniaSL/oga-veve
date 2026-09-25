@@ -1717,6 +1717,17 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     if plazas:
         corrimiento = plazas[0]
         plazas = tuple(x - corrimiento for x in plazas)
+        # **Y la de al lado, solo si cabe dentro.** Con el piloto en el eje, la
+        # segunda plaza se corre hacia el costado lo mismo que se movió la
+        # primera, y en las cabinas estrechas se salía: al rehacer los
+        # fuselajes con su forma de verdad, el asiento y el cuerno de la
+        # derecha asomaban por fuera de la piel entre cinco y veintiséis
+        # centímetros en el entrenador, el bimotor y el turbohélice. Desde el
+        # asiento del piloto esa plaza no se ve; desde fuera, atravesando el
+        # avión, sí. La primera se queda siempre.
+        plazas = plazas[:1] + tuple(
+            x for x in plazas[1:] if abs(x) + 0.30 <= ancho
+        )
 
     # Los mandos que se pulsan. **El del tren solo donde hay tren**: en un
     # entrenador de escuela esa palanca no existe, y un botón que se pulsa y no
