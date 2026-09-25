@@ -192,8 +192,14 @@ const HORA = process.env.OGA_HORA ?? "16";
 const METAR = process.env.OGA_METAR
   ? `&metar=${encodeURIComponent(process.env.OGA_METAR)}`
   : "";
+/*
+ * **Y la lección, si se pide otra.** `OGA_LECCION=rodaje` para mirar con
+ * `OGA_FOTOS` la lección que acaba en el punto de espera. Las comprobaciones
+ * de vuelo fallarán, porque no se vuela: sirve para las fotos, no para contar.
+ */
+const LECCION = process.env.OGA_LECCION ?? "despegue";
 await page.goto(
-  `${BASE}/?escenario=${ESCENARIO}&hora=${HORA}&leccion=despegue` +
+  `${BASE}/?escenario=${ESCENARIO}&hora=${HORA}&leccion=${LECCION}` +
     `&tramo=${TRAMO}&avion=${AVION}${METAR}`,
 );
 /*
@@ -362,6 +368,12 @@ const libre = await page.evaluate(() => {
   return [Math.round(innerWidth / 2), Math.round(innerHeight / 3)];
 });
 await page.mouse.click(libre[0], libre[1]);
+/*
+ * **Y la vista, si se pide.** `OGA_CAMARA=cockpit` vuela entero desde dentro,
+ * que es lo que hace quien juega con la cabina puesta y el banco no miraba.
+ */
+if (process.env.OGA_CAMARA)
+  await page.evaluate((v) => globalThis.__oga?.ponerVista?.(v), process.env.OGA_CAMARA);
 await page
   .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, {
     timeout: 60000,

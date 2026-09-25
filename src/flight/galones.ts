@@ -69,6 +69,8 @@ export interface Fotograma {
   readonly toma: Aterrizaje;
   /** Si **en este fotograma** se ha reconocido una frustrada. Llega una vez. */
   readonly frustrada: boolean;
+  /** La lección de rodar, terminada en la doble raya. Ver `Vista`. */
+  readonly leccionHecha?: boolean;
 }
 
 /*
@@ -271,9 +273,12 @@ export class Galones {
        * vuelo de verdad. No basta con aterrizar: hay que dejar el avión donde
        * va, que es la mitad del vuelo que casi ningún juego cuenta.
        */
+      //
+      // Salvo en la lección de rodar, que acaba en la doble raya: ahí el
+      // rodaje es la lección entera, y llegar parado es terminarla.
       case "rodaje":
         return (
-          f.fase === "en-puesto" &&
+          (f.fase === "en-puesto" || f.leccionHecha === true) &&
           this.rodando >= RODAJE_MINIMO &&
           this.fueraDeRaya <= RODAJE_FUERA
         );

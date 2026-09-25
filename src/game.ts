@@ -3515,7 +3515,13 @@ export class Game {
           ? ""
           : t(`fin.${final.nivel}` as never),
         // Y el plano con la raya de por dónde se fue. Ver `bitacora.ts`.
-        plano(this.scenario, this.scenario.size, this.traza),
+        //
+        // **Encuadrado en lo volado, sin suelo de escala.** Se le pasaba el
+        // tamaño del escenario, y con eso la ventana medía doce kilómetros
+        // en Asunción: el aeródromo salía como un punto y la lección de rodar,
+        // que se queda en un kilómetro, como nada. El suelo de escala es para
+        // comparar fichas en el hangar; aquí solo hay un vuelo.
+        plano(this.scenario, 0, this.traza),
         // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
         this.relojDeHoras(),
       );
@@ -6915,6 +6921,12 @@ export class Game {
     this.avanzarPlan(dt);
     this.atenderAlSenalero(dt);
     this.contarGalones(dt, banda, aro, toma, renuncio);
+    /*
+     * **Y la lección de rodar se termina en la doble raya.** Va detrás de los
+     * galones para que el de rodaje, que se gana en este mismo fotograma,
+     * entre en la bitácora y en el panel. Ver `acabaEnLaEspera`.
+     */
+    if (this.vistaActual?.leccionHecha) this.terminarElVuelo();
     this.hud.senal.update(dt);
     this.hud.noRepetirElTutor();
   };
@@ -7526,6 +7538,7 @@ export class Game {
         aro,
         toma,
         frustrada,
+        leccionHecha: this.vistaActual?.leccionHecha ?? false,
       },
       dt,
     );

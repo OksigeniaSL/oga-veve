@@ -140,6 +140,12 @@ export interface Paso {
    * cuando lo que hay que enseñar es que no se hace.
    */
   readonly saltoLaLuz: boolean;
+  /**
+   * La lección de rodar está hecha: se ha parado sobre la doble raya.
+   *
+   * Solo en esa lección. Ver `acabaEnLaEspera`.
+   */
+  readonly leccionHecha: boolean;
 }
 
 /*
@@ -337,9 +343,13 @@ export class Vuelo {
    */
   acabaEnLaEspera = false;
 
+  /** Si ya se paró en la doble raya con la lección de rodar. Ver `Paso`. */
+  private rodajeHecho = false;
+
   /** Empieza un vuelo. `desdePista` arranca ya alineado, para el modo de siempre. */
   reiniciar(desdePista = false): void {
     this.fase = desdePista ? "despegando" : "estacionado";
+    this.rodajeHecho = false;
     this.candidato = this.fase;
     this.desde = 0;
     this.candidatoDesde = 0;
@@ -440,6 +450,7 @@ export class Vuelo {
       cambio: this.fase !== antes,
       luzVerde: this.verde,
       saltoLaLuz,
+      leccionHecha: this.rodajeHecho,
     };
   }
 
@@ -699,7 +710,12 @@ export class Vuelo {
     // final: del puesto a la doble raya, parar encima, y ya está. Sin esto,
     // aprender a rodar no se acaba nunca — o se acaba despegando, que es otra
     // lección.
-    if (this.acabaEnLaEspera) return;
+    //
+    // **Y ese final tiene que llegar a verse.** La torre callaba y ahí se
+    // acababa todo: el avión parado en la raya con la mano roja para siempre,
+    // sin panel ni galón, y quien lo hizo bien sin enterarse de que lo había
+    // hecho bien. Parar encima el mismo rato que la torre pide para mirarte
+    // es terminar la lección.
     if (this.haVolado || this.verde) return;
     const enLaRaya =
       s.restante < LLEGADA && !s.enPista && s.sobreElSuelo <= EN_EL_AIRE;
@@ -709,6 +725,10 @@ export class Vuelo {
       return;
     }
     this.quieto = s.estado.groundSpeed < PARADO ? this.quieto + dt : 0;
+    if (this.acabaEnLaEspera) {
+      if (this.quieto > ESPERA_MINIMA) this.rodajeHecho = true;
+      return;
+    }
     if (this.quieto > ESPERA_MINIMA) this.mirando += dt;
     if (this.mirando > TORRE_TARDA) this.verde = true;
   }

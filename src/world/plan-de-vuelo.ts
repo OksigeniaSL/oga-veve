@@ -465,6 +465,8 @@ export interface Vista {
   readonly cambio: boolean;
   /** Se acaba de entrar en la pista sin permiso. */
   readonly saltoLaLuz: boolean;
+  /** La lección de rodar, terminada: parado en la doble raya. */
+  readonly leccionHecha: boolean;
 }
 
 /**
@@ -2059,6 +2061,7 @@ export class PlanDeVuelo {
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
       saltoLaLuz: p.saltoLaLuz,
+      leccionHecha: p.leccionHecha,
       fuera:
         (p.fase === "rodando" || p.fase === "a-plataforma") &&
         this.rutaMundo.length > 1 &&

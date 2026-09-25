@@ -109,7 +109,17 @@ export function elegirPiloto(root: HTMLElement): Promise<void> {
         idiomas() +
         (vista === "lista" ? rejilla(lista, activo) : creador(propuesta)) +
         pie();
-      root.querySelector<HTMLElement>("button")?.focus();
+      /*
+       * **Y el foco va a los aviones, no al primer botón que haya.**
+       *
+       * Desde que el idioma subió a esta pantalla, el primer botón es
+       * «Español», y Chrome pinta el anillo de foco en lo que se enfoca por
+       * código antes de que nadie toque nada. Abriendo en inglés o en guaraní
+       * se veía «Español» con el aro naranja, que es como se ve lo elegido.
+       */
+      root
+        .querySelector<HTMLElement>(".piloto__boton, .pilotos__panel button")
+        ?.focus();
     };
 
     /*

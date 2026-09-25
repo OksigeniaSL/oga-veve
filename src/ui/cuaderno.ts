@@ -87,7 +87,7 @@ function tarjetaDeVuelo(v: Vuelo): string {
   const cuando = new Date(v.fecha);
   return `
     <li class="bitacora__vuelo" title="${cuando.toLocaleDateString()}">
-      <div class="bitacora__plano">${plano(esc, esc.size, v.traza)}</div>
+      <div class="bitacora__plano">${plano(esc, 0, v.traza)}</div>
       <div class="bitacora__pie">
         <span class="bitacora__duracion">${duracionDe(v.segundos)}</span>
         ${

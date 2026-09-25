@@ -191,6 +191,30 @@ describe("un vuelo entero", () => {
 });
 
 describe("las trampas", () => {
+  /*
+   * **La lección de rodar acaba en la raya, y se tiene que saber.** Antes la
+   * torre callaba y ya: el avión se quedaba con la mano roja para siempre.
+   */
+  it("la lección de rodar se da por hecha al parar en la doble raya", () => {
+    const v = new Vuelo();
+    v.reiniciar();
+    v.acabaEnLaEspera = true;
+    const rodando = con({
+      motor: true,
+      estado: { airspeed: 6, groundSpeed: 6 } as never,
+    });
+    durante(v, con({ motor: true }), 1);
+    durante(v, rodando, 1);
+    // Pasando por encima sin parar no cuenta.
+    durante(v, { ...rodando, restante: 10 }, 3);
+    expect(v.paso({ ...rodando, restante: 10 }, 0.05).leccionHecha).toBe(false);
+    durante(v, con({ motor: true, restante: 10 }), 3);
+    const p = v.paso(con({ motor: true, restante: 10 }), 0.05);
+    expect(p.leccionHecha).toBe(true);
+    // Y la torre sigue sin autorizar: es la lección de rodar, no la de volar.
+    expect(p.luzVerde).toBe(false);
+  });
+
   it("no autoriza a quien no para en la doble raya", () => {
     // Es la lección entera: si se autoriza por llegar y no por parar, cruzar
     // la raya a toda velocidad sale gratis y no se aprende nada.

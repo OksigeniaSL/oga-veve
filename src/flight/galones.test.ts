@@ -120,6 +120,15 @@ describe("los galones", () => {
     expect(g.lista).toContain("rodaje");
   });
 
+  it("y en la lección de rodar, al parar en la doble raya", () => {
+    const g = new Galones();
+    rato(g, volando({ fase: "rodando" }), 20);
+    g.paso(volando({ fase: "esperando" }), 0.1);
+    expect(g.lista).not.toContain("rodaje");
+    g.paso(volando({ fase: "esperando", leccionHecha: true }), 0.1);
+    expect(g.lista).toContain("rodaje");
+  });
+
   it("llegar al puesto sin haber rodado no cuenta como rodaje", () => {
     const g = new Galones();
     g.paso(volando({ fase: "en-puesto" }), 0.1);
