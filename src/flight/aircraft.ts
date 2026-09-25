@@ -1092,7 +1092,11 @@ export const YVAGA: AircraftConfig = {
   decisionSpeed: 80,
   rotationSpeed: 86,
   batalla: 25.6,
-  gearHeight: 5.2,
+  // 5,9: la panza a dos metros y medio largos y los motores de dentro a casi
+  // un metro del suelo, como en un avión de esta clase. Con 5,2 las ruedas
+  // quedaban tapadas por los motores y se leía «ruedas enterradas». Tiene que
+  // decir lo mismo que `TREN` en `modelos/jaz-120-yvaga.py`.
+  gearHeight: 5.9,
   trenRetractil: true,
   // Veinte: igual que el de pasillo único. Un avión de línea no vuela con el
   // tren fuera más que los segundos de después del despegue.

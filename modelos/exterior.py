@@ -321,10 +321,12 @@ class Piel:
                 else:
                     f = bm.faces.new((a[j], a[k], b[k], b[j]))
                 f.material_index = zona(zc, tc)
-        # Las tapas, si la punta no se cierra sola.
-        for anillo in (anillos[0], anillos[-1]):
+        # Las tapas, si la punta no se cierra sola, del color de su zona: la
+        # cara de delante del capó de un radial es la del motor, no chapa.
+        for anillo, z in ((anillos[0], anillos_z[0]),
+                          (anillos[-1], anillos_z[-1])):
             if len(anillo) > 1:
-                bm.faces.new(anillo)
+                bm.faces.new(anillo).material_index = zona(z, 0.0)
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         return liso(_malla_en_escena(nombre, bm, mats), angulo=70)
 
