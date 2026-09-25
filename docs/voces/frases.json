@@ -458,7 +458,7 @@
     "id": "vuelo.reserva",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Entraste en la reserva: buscá dónde aterrizar",
+    "texto": "Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
