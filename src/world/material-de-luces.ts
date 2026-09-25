@@ -48,6 +48,7 @@ export const GLSL_DE_LUCES = {
     uniform float lucesCerca;
     uniform float lucesSuelo;
     uniform float lucesMenor;
+    uniform float lucesNoche;
     varying float vBrillo;
   `,
   tamano: /* glsl */ `
@@ -58,7 +59,8 @@ export const GLSL_DE_LUCES = {
     // muy lejos caen muchas luces en cada píxel y se suman, y con el mínimo
     // fijo una ciudad a noventa kilómetros brillaba más que a sesenta.
     float lejania = clamp(lucesCerca * 5.0 / lejosDelOjo, 0.3, 1.0);
-    vBrillo = max(pow(cercania, 1.5), lucesSuelo * lejania);
+    // Y ese mínimo solo con el cielo ya oscuro: ver \`oscuridadParaVerDeLejos\`.
+    vBrillo = max(pow(cercania, 1.5), lucesSuelo * lejania * lucesNoche);
   `,
   cabecera: /* glsl */ `
     varying float vBrillo;
@@ -105,6 +107,8 @@ export function materialDeLuces(
     depthWrite: false,
     blending: AdditiveBlending,
   });
+  const noche = { value: 1 };
+  material.userData.noche = noche;
   const cerca = opciones.cerca ?? 4000;
   const suelo = opciones.suelo ?? 0.14;
   const menor = opciones.menor ?? 0.5;
@@ -113,6 +117,9 @@ export function materialDeLuces(
     shader.uniforms.lucesCerca = { value: cerca };
     shader.uniforms.lucesSuelo = { value: suelo };
     shader.uniforms.lucesMenor = { value: menor };
+    // El mismo objeto, no una copia: así `ponerOscuridad` llega al programa
+    // ya compilado sin recompilar nada.
+    shader.uniforms.lucesNoche = noche;
     shader.vertexShader = shader.vertexShader
       .replace("void main() {", GLSL_DE_LUCES.cabeceraDelVertice + "\nvoid main() {")
       .replace("gl_PointSize = size;", GLSL_DE_LUCES.tamano);
@@ -129,6 +136,36 @@ export function materialDeLuces(
    */
   material.customProgramCacheKey = () => "luces-lejanas";
   return material;
+}
+
+/**
+ * Cuánto deja el cielo ver una luz lejana, de cero a uno, según la altura del
+ * sol. `seno` es `sunDirection.y`.
+ *
+ * **Una luz de lejos solo se ve sobre un fondo oscuro.** Las farolas se
+ * encienden con la puesta —ver `encendidoSegunElSol`—, y de cerca se ven ya;
+ * pero lo que queda de una farola a noventa kilómetros es un punto
+ * tenuísimo, y con el sol todavía en el horizonte lo que tiene delante es
+ * bruma iluminada, mucho más clara que él. Con el mínimo de brillo puesto a
+ * cualquier hora, al ponerse el sol detrás de Tenerife la costa de la isla
+ * salía encendida de amarillo justo debajo del disco: medido ocultando
+ * mallas, ese resplandor pintado encima del relieve eran estas luces, y se
+ * leía como el sol visto a través del terreno.
+ *
+ * Así que el mínimo que deja ver las luces de lejos llega con el
+ * crepúsculo: nada con el sol en el horizonte, entero a seis grados por
+ * debajo, que es cuando acaba el civil y se hace de noche para el ojo. Las
+ * de cerca no dependen de esto: su brillo es el de la distancia.
+ */
+export function oscuridadParaVerDeLejos(seno: number): number {
+  const NOCHE = Math.sin((6 * Math.PI) / 180);
+  return Math.max(0, Math.min(1, -seno / NOCHE));
+}
+
+/** Le pone a un material de `materialDeLuces` la oscuridad de esta hora. */
+export function ponerOscuridad(material: PointsMaterial, seno: number): void {
+  const noche = material.userData.noche as { value: number } | undefined;
+  if (noche) noche.value = oscuridadParaVerDeLejos(seno);
 }
 
 /**

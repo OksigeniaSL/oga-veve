@@ -56,7 +56,7 @@ import {
   Group,
   Points,
 } from "three";
-import { materialDeLuces } from "./material-de-luces";
+import { materialDeLuces, ponerOscuridad } from "./material-de-luces";
 import type { Ciudad } from "./ciudad";
 import { encendidoSegunElSol } from "./luces-de-rodadura";
 
@@ -208,6 +208,7 @@ export function crearLucesDeCiudad(
     const luce = encendidoSegunElSol(seno);
     grupo.visible = luce > 0.01;
     material.opacity = luce;
+    ponerOscuridad(material, seno);
   };
   ponerSol(-1);
 
