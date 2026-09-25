@@ -6,8 +6,8 @@
     "lat": 27.9319,
     "lon": -15.3866
   },
-  "tamanoM": 320000,
-  "resolucion": 417,
-  "minM": 0,
-  "maxM": 3552
+  "tamanoM": 380000,
+  "resolucion": 1025,
+  "minM": -6,
+  "maxM": 3628
 }

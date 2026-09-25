@@ -210,7 +210,7 @@ import {
   conViento,
   oaciDe,
   VALLE_CORDILLERA,
-  VECES_LEJOS,
+  vecesLejosDe,
   type Scenario,
 } from "./world/scenarios";
 import { crearTeselas, type Teselas } from "./world/teselas";
@@ -1902,10 +1902,24 @@ export class Game {
        * Alejarlo casi no cuesta precisión de profundidad —la que importa la fija
        * el plano cercano, que no se toca— y es lo que deja ver una isla entera.
        */
+      /*
+       * **Y sin teselas, hasta donde llegue el mundo de este escenario**, que
+       * es `vecesLejos` y no el seis de siempre. Con el seis fijo, Gran
+       * Canaria —diecinueve veces— cortaba a noventa y seis kilómetros en un
+       * mundo que llega a ciento noventa: Tenerife, a cien, y el Teide, a
+       * ciento veintiocho, quedaban detrás del plano y rumbo oeste no había
+       * «nada enfrente». La niebla escondía el corte, y la niebla se come
+       * también la isla que tenía que verse.
+       *
+       * Más allá del plano no queda nada que dibujar: el mar sigue en la
+       * cúpula, que va pegada a la cámara. Ver `world/sky.ts`.
+       */
       this.claveDeTeselas()
         ? 120000
         : this.scenario.size *
-            (this.scenario.relieveLejano ? VECES_LEJOS * 0.8 : 1.6),
+            (this.scenario.relieveLejano
+              ? vecesLejosDe(this.scenario) * 0.8
+              : 1.6),
     );
 
     this.terrain = new Terrain(this.scenario);
@@ -2153,6 +2167,9 @@ export class Game {
     this.sky.ponerHora(this.horaPedida());
     this.scene.add(this.sky.group);
     this.scene.fog = this.sky.fog;
+    // El agua con el mar del cielo: refleja el atardecer y casa con el que
+    // la cúpula pinta más allá de su borde. Ver `materialDelAgua`.
+    this.terrain.ponerMaterialDelAgua(this.sky.materialDelAgua);
 
     // La ciudad antes que la vegetación: la vegetación pregunta por ella para
     // no plantar un bosque donde hay un barrio.
@@ -5571,9 +5588,14 @@ export class Game {
      */
     const porElParte =
       this.visibilidadDelParte < 10000 ? 1.73 / this.visibilidadDelParte : 0;
-    this.sky.fog.density = Math.max(
-      this.nieblaDeCasa * (1 + espesa * 5),
-      porElParte,
+    /*
+     * La bruma de siempre se queda abajo —ver `brumaALaAltura`— y lo que
+     * pone la lluvia o el parte no: por encima de un aguacero no se sale
+     * subiendo quinientos metros, y la visibilidad del parte es el mínimo.
+     */
+    this.sky.ponerNiebla(
+      this.nieblaDeCasa,
+      Math.max(espesa > 0 ? this.nieblaDeCasa * (1 + espesa * 5) : 0, porElParte),
     );
   }
 
@@ -6711,6 +6733,8 @@ export class Game {
     this.syncAircraftMesh(dt);
     this.updateCamera(dt);
     updateSky(this.sky, this.camera.position);
+    for (const v of this.vecinos)
+      v.mundo.alPaso(this.camera.position.x, this.camera.position.z);
     this.pasoDeLluvia(dt);
 
     /*

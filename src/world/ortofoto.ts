@@ -132,6 +132,48 @@ export function exposicionDe(ficha: Pick<FichaDeOrtofoto, "exposicion">): number
 }
 
 /*
+ * Solo el número de la exposición de cada horizonte, ya dentro del paquete:
+ * son unos bytes, y hacen falta para casar la isla del vecino sin bajarse su
+ * foto del horizonte, que no se usa. Ver `exposicionDelVecino`.
+ */
+const EXPOSICION_DEL_HORIZONTE = import.meta.glob(
+  "../../data/ortho/*-horizonte.json",
+  { eager: true, import: "exposicion" },
+) as Record<string, number | undefined>;
+
+function exposicionDelHorizonte(id: string): number {
+  const ruta = Object.keys(EXPOSICION_DEL_HORIZONTE).find((k) =>
+    k.endsWith(`/${id}-horizonte.json`),
+  );
+  return exposicionDe({
+    exposicion: ruta ? EXPOSICION_DEL_HORIZONTE[ruta] : undefined,
+  });
+}
+
+/**
+ * Cuánto se multiplica la foto del vecino para que case con el horizonte de
+ * casa.
+ *
+ * El vecino se viste con su foto fina, a su luz de siempre; alrededor, la
+ * misma isla sale en el anillo del horizonte de casa, que va oscurecido para
+ * casar con el mapa fino **de casa**. Y cada isla se voló otro día: Gran
+ * Canaria pide 0,69 y Los Rodeos 0,95. Visto desde Gando, Tenerife llevaba
+ * dos cuadros de dieciocho kilómetros un 36 % más claros que el resto de la
+ * isla — «esos cortes de tono en la isla».
+ *
+ * Los horizontes de los dos salen del mismo mosaico, así que sobre la isla
+ * del vecino son la misma foto: basta con llevar la del vecino a la escala
+ * de casa, que es el cociente de las dos correcciones. Aquí sí se aclara si
+ * hace falta —de Los Rodeos a Gran Canaria sale 1,36—: el color de un
+ * material pasa de uno sin problema, y lo que manda aquí es el anillo de
+ * casa, que es lo que rodea a la isla.
+ */
+export function exposicionDelVecino(casa: string, vecino: string): number {
+  const f = exposicionDelHorizonte(casa) / exposicionDelHorizonte(vecino);
+  return Math.min(1.5, Math.max(0.5, f));
+}
+
+/*
  * **Los ficheros, con `import.meta.glob`.**
  *
  * Igual que el relieve y las ciudades: así Vite los emite al empaquetar y les

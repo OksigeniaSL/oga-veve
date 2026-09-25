@@ -1221,8 +1221,24 @@ export const GRAN_CANARIA: Scenario = {
    * uno más, que lo vigila `destinos.test.ts` — cada vez de mundo de sobra es
    * foto del horizonte que baja de nivel y memoria que se gasta en mar.
    * Medido en esta máquina, antes y después: ver el commit que lo metió.
+   *
+   * **Y el mapa lejano se volvió a extraer a esa medida**, que es lo que no
+   * se hizo al subir de dieciséis a diecinueve. El fichero seguía midiendo
+   * los trescientos veinte kilómetros de antes y el terreno lo estiraba a
+   * trescientos ochenta: todo lo que no es Gran Canaria salía un 19 % más
+   * lejos de donde está. El Teide, a ciento veintiocho kilómetros, se
+   * dibujaba a ciento cincuenta y dos —y fuera del plano lejano—, y su
+   * relieve no caía debajo de su foto ni de la isla del vecino. Lo vigila
+   * ahora `relieve-lejano.test.ts`.
    */
   vecesLejos: 19,
+  /*
+   * Con sus propias muestras, como Los Rodeos: con las 416 del fino, 380 km
+   * dan 913 metros por muestra y el Teide visto desde aquí es una loma. Con
+   * 1.024 se quedan en 371, y el mar abierto no se malla —ver
+   * `buildFarMesh`—, así que lo que se paga en triángulos es solo tierra.
+   */
+  segmentosLejos: 1024,
 };
 
 /**

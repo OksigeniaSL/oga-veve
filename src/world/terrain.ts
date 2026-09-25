@@ -13,6 +13,7 @@
  */
 
 import {
+  type Material,
   type Texture,
   BufferAttribute,
   BufferGeometry,
@@ -745,10 +746,18 @@ export class Terrain {
    * Si no hay ortofoto no se llama a esto y el terreno sigue con sus bandas,
    * que es lo que había antes y sigue funcionando.
    */
-  ponerOrtofoto(orto: {
-    textura: Texture;
-    uv(x: number, z: number): { u: number; v: number };
-  }): void {
+  ponerOrtofoto(
+    orto: {
+      textura: Texture;
+      uv(x: number, z: number): { u: number; v: number };
+    },
+    /**
+     * Cuánto se multiplica la foto. Uno en casa; otro número en la isla del
+     * vecino, para que case con el horizonte que la rodea. Ver
+     * `exposicionDelVecino`.
+     */
+    exposicion = 1,
+  ): void {
     const malla = this.group.getObjectByName("terreno") as Mesh | undefined;
     if (!malla) return;
     const pos = malla.geometry.getAttribute("position");
@@ -762,6 +771,7 @@ export class Terrain {
     const mat = malla.material as MeshLambertMaterial;
     mat.map = orto.textura;
     mat.vertexColors = false;
+    mat.color.setScalar(exposicion);
     /*
      * **Y el grano del suelo, aquí, que es el terreno que tienen todos.**
      *
@@ -774,6 +784,65 @@ export class Terrain {
      */
     ponerGrano(mat, this.grano());
     mat.needsUpdate = true;
+  }
+
+  /**
+   * Cuánto detalle lleva la malla del relieve: un nudo de cada `salto`.
+   *
+   * Lo usa la isla del vecino. Desde que el plano lejano llega hasta donde
+   * llega el mundo, las islas vecinas se dibujan aunque estén a ciento y pico
+   * kilómetros, y cada una son trescientos cuarenta mil triángulos de mapa
+   * fino — a esa distancia, un píxel por cada muchos. Con un salto de cuatro
+   * son veintidós mil, con las mismas normales, que son las que dan el
+   * sombreado, así que de lejos se ve igual. Ver `MundoVecino.alPaso`.
+   */
+  ponerDetalle(salto: number): void {
+    const malla = this.group.getObjectByName("terreno") as Mesh | undefined;
+    if (!malla) return;
+    const geo = malla.geometry;
+    const guardados = (geo.userData.indices ??= {}) as Record<
+      number,
+      BufferAttribute
+    >;
+    guardados[1] ??= geo.getIndex()!;
+    if (!guardados[salto]) {
+      const n = this.resolution;
+      const nudos: number[] = [];
+      for (let i = 0; i < n - 1; i += salto) nudos.push(i);
+      nudos.push(n - 1);
+      const indices = new Uint32Array((nudos.length - 1) ** 2 * 6);
+      let k = 0;
+      for (let f = 0; f < nudos.length - 1; f++)
+        for (let c = 0; c < nudos.length - 1; c++) {
+          const a = nudos[f]! * n + nudos[c]!;
+          const b = nudos[f]! * n + nudos[c + 1]!;
+          const cc = nudos[f + 1]! * n + nudos[c]!;
+          const d = nudos[f + 1]! * n + nudos[c + 1]!;
+          indices[k++] = a;
+          indices[k++] = cc;
+          indices[k++] = b;
+          indices[k++] = b;
+          indices[k++] = cc;
+          indices[k++] = d;
+        }
+      guardados[salto] = new BufferAttribute(indices, 1);
+    }
+    if (geo.getIndex() !== guardados[salto]) geo.setIndex(guardados[salto]!);
+  }
+
+  /**
+   * El material del agua, que lo pone el cielo.
+   *
+   * La lámina se construye aquí con uno de Lambert porque el terreno no sabe
+   * de cielos; el juego le pasa el del cielo en cuanto lo tiene, que es el
+   * que refleja el atardecer y casa con el mar de la cúpula. Ver
+   * `SkyRig.materialDelAgua`.
+   */
+  ponerMaterialDelAgua(material: Material): void {
+    const agua = this.group.getObjectByName("agua") as Mesh | undefined;
+    if (!agua) return;
+    (agua.material as Material).dispose();
+    agua.material = material;
   }
 
   /**

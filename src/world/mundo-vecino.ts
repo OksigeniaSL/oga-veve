@@ -34,6 +34,7 @@ import { Group, type Texture } from "three";
 import { Terrain } from "./terrain";
 import type { Scenario } from "./scenarios";
 import { dondeCae } from "./entre-aerodromos";
+import { exposicionDelVecino } from "./ortofoto";
 
 /** Lo que devuelve la proyección de una ortofoto para un punto del mundo. */
 interface Punto2 {
@@ -91,7 +92,17 @@ export class MundoVecino {
     this.desplazamiento = dondeCae(aquí, allí);
     this.medioLado = vecino.size / 2;
     this.terreno = new Terrain(sinHorizonte(vecino));
-    if (foto) this.terreno.ponerOrtofoto(foto);
+    this.exposicion = exposicionDelVecino(salida.id, vecino.id);
+    if (foto) this.ponerFoto(foto);
+    /*
+     * **Y sin su propia lámina de agua, si cae a la misma cota que la de
+     * casa.** El agua de casa ya cubre el mundo entero; la del vecino era un
+     * cuadrado de veintitantos kilómetros encima, en el mismo plano, y dos
+     * láminas translúcidas una sobre otra son un mar **más oscuro** alrededor
+     * de cada isla vecina, con el borde recto. Otro de los «cortes de tono».
+     */
+    const agua = this.terreno.group.getObjectByName("agua");
+    if (agua && vecino.waterLevel === salida.waterLevel) agua.visible = false;
     this.grupo.add(this.terreno.group);
     this.grupo.position.set(this.desplazamiento.x, 0, this.desplazamiento.z);
   }
@@ -102,8 +113,45 @@ export class MundoVecino {
    * antes de poder jugar. Ver la carga en `main.ts`.
    */
   ponerFoto(foto: { textura: Texture; uv(x: number, z: number): Punto2 }): void {
-    this.terreno.ponerOrtofoto(foto);
+    this.terreno.ponerOrtofoto(foto, this.exposicion);
   }
+
+  /**
+   * Un paso de cámara: de lejos, la isla con menos detalle.
+   *
+   * Con el mundo entero dentro del plano lejano, las cuatro islas vecinas de
+   * Gran Canaria se dibujaban siempre, cada una con su mapa fino entero: 1,3
+   * millones de triángulos en vez de 0,8 para ver unas siluetas a cien
+   * kilómetros. A partir de treinta kilómetros del borde de su mapa se
+   * dibuja un nudo de cada cuatro; con cinco de holgura para volver, que así
+   * no parpadea quien vuele justo por la raya.
+   *
+   * **Y el aeródromo se apaga**: a cuarenta y tantos kilómetros una pista es
+   * menos de un píxel, pero sus luces no, porque se dibujan a tamaño fijo en
+   * pantalla, y Tenerife Sur salía desde Gran Canaria como una mancha verde,
+   * blanca y roja pegada a la costa. Ninguna luz de pista se ve a cien
+   * kilómetros; a treinta y tantos, las de aproximación sí, y ahí ya vuelve.
+   */
+  alPaso(ojoX: number, ojoZ: number): void {
+    const d = Math.max(
+      Math.abs(ojoX - this.desplazamiento.x),
+      Math.abs(ojoZ - this.desplazamiento.z),
+    ) - this.medioLado;
+    if (d > 35000 && !this.deLejos) this.ponerLejos(true);
+    else if (d < 30000 && this.deLejos) this.ponerLejos(false);
+  }
+
+  private ponerLejos(lejos: boolean): void {
+    this.deLejos = lejos;
+    this.terreno.ponerDetalle(lejos ? 4 : 1);
+    for (const o of this.terreno.group.children)
+      if (o.name.startsWith("aerodromo:")) o.visible = !lejos;
+  }
+
+  private deLejos = false;
+
+  /** Cuánto se multiplica su foto para casar con el horizonte de casa. */
+  private readonly exposicion: number;
 
   /**
    * La cota del vecino en coordenadas del **mundo de salida**, o `null` si la
