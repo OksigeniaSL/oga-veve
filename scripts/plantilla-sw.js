@@ -61,6 +61,17 @@ self.addEventListener("activate", (evento) => {
           )
           .map((n) => caches.delete(n)),
       );
+      /*
+       * Y de la caché del uso, lo que no lleva huella en el nombre: con una
+       * versión nueva puede haber cambiado sin cambiar de nombre —los modelos
+       * de los aviones—, y así el primer vuelo después de publicar ya lo trae
+       * nuevo. Lo que lleva huella se queda: si está, es el bueno.
+       */
+      const uso = await caches.open(CACHE_USO);
+      for (const peticion of await uso.keys()) {
+        if (!/-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/.test(new URL(peticion.url).pathname))
+          await uso.delete(peticion);
+      }
       await self.clients.claim();
     })(),
   );
@@ -167,24 +178,37 @@ self.addEventListener("fetch", (evento) => {
    * que no esté se pide, se sirve y **se guarda para la próxima**, que es lo
    * que hace que el escenario en el que se voló ayer esté disponible hoy sin
    * red sin habérselo descargado todo el primer día.
+   *
+   * **Salvo lo que no lleva huella en el nombre**, que se sirve de la caché y
+   * además se vuelve a pedir por detrás, para la próxima vez. Los modelos de
+   * los aviones —`assets/aeronaves/jaz-20.glb`— se llaman siempre igual, y
+   * servidos solo de la caché **no se renovaban nunca**: quien había volado
+   * un avión una vez se quedaba con ese modelo para siempre, aunque se
+   * rehiciera la cabina entera. Así siguen funcionando sin red y se ponen al
+   * día solos, un vuelo después.
    */
+  const conHuella = /-[A-Za-z0-9_-]{8}\.[a-z0-9]+$/.test(
+    new URL(peticion.url).pathname,
+  );
+  const renovar = () =>
+    fetch(peticion).then((res) => {
+      // Solo lo que salió bien. Un 404 guardado es un 404 para siempre.
+      if (res.ok && res.status === 200) {
+        const copia = res.clone();
+        caches.open(CACHE_USO).then((c) => c.put(peticion, copia));
+      }
+      return res;
+    });
   evento.respondWith(
     (async () => {
       const guardado = await caches.match(peticion);
-      if (guardado) return guardado;
-      try {
-        const res = await fetch(peticion);
-        // Solo lo que salió bien. Un 404 guardado es un 404 para siempre.
-        if (res.ok && res.status === 200) {
-          const copia = res.clone();
-          caches.open(CACHE_USO).then((c) => c.put(peticion, copia));
-        }
-        return res;
-      } catch (fallo) {
-        // Sin red y sin copia. Quien lo pidió ya sabe qué hacer con esto: el
-        // relieve cae al mundo dibujado, la ortofoto al terreno de colores.
-        throw fallo;
+      if (guardado) {
+        if (!conHuella) evento.waitUntil(renovar().catch(() => {}));
+        return guardado;
       }
+      // Sin red y sin copia, esto falla, y quien lo pidió ya sabe qué hacer:
+      // el relieve cae al mundo dibujado, la ortofoto al terreno de colores.
+      return renovar();
     })(),
   );
 });
