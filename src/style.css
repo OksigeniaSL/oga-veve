@@ -663,25 +663,6 @@ body {
   display: none;
 }
 
-/*
- * **La señal, que caía en mitad de la pantalla de navegación.**
- *
- * Va centrada a media altura porque en la vista de persecución ahí está el
- * cielo. En la de cabina, media altura es el salpicadero: medida en una
- * ventana de 1336×1030 caía en 566,408 y la pantalla de navegación empieza en
- * 585,470. Es un botón grande y opaco encima de la brújula, en los seis
- * aviones de la flota.
- *
- * Sube a la franja de arriba, debajo de los pictogramas, que es la única que
- * está despejada en las tres familias de cabina. Y sigue siendo lo más grande
- * que hay en pantalla, que es lo que tiene que ser: es lo que hay que pulsar.
- */
-.hud--cabina .senal {
-  top: calc(max(16px, env(safe-area-inset-top)) + var(--tacto) * 3.4);
-  bottom: auto;
-  transform: translateX(-50%);
-}
-
 .hud__arriba {
   grid-column: 2;
   grid-row: 1;
@@ -7472,4 +7453,103 @@ button.motor__tecla::after {
     right: 50%;
     transform: translateX(50%);
   }
+}
+
+/*
+ * ── **En cabina, el parabrisas es de quien vuela** ──
+ *
+ * La cámara de cabina deja la visera en el 42 % de la pantalla —ver
+ * `encuadreDeCabina`—, así que por debajo de esa raya está el panel del avión
+ * y por encima, el mundo. Y el HUD caía encima de los dos: el tutor, en una
+ * tablet, en mitad del six-pack; en un teléfono, la columna de mandos sobre
+ * los relojes de motor del reactor; y los mensajes, sobre la fila de abajo.
+ *
+ * La regla es una: **lo que no es un mando de pulgar va por encima de la
+ * visera, y a los lados**. El centro del parabrisas se queda libre porque ahí,
+ * justo encima de la visera, está la pista cuando se vuela en final.
+ *
+ * Con `.hud.hud--cabina` delante, que es más que las reglas de teléfono de
+ * más arriba (`.hud .tutor`, `.hud .hud__derecha`): si no, ganarían ellas.
+ */
+.hud.hud--cabina .rincon {
+  left: calc(max(16px, env(safe-area-inset-left)) + var(--tacto) * 1.4);
+  right: auto;
+  align-items: flex-start;
+}
+
+/* El tutor, debajo del rincón y al mismo lado: `--rincon-alto` lo mide el HUD
+   y es cero cuando el rincón está vacío. */
+.hud.hud--cabina .tutor {
+  left: calc(max(16px, env(safe-area-inset-left)) + var(--tacto) * 1.4);
+  transform: none;
+  top: calc(
+    var(--alto-de-la-barra, 58px) + 16px + var(--rincon-alto, 0px) + 10px
+  );
+  bottom: auto;
+  padding: 10px 18px;
+}
+
+/* Y la columna de mandos, arriba del todo: el rincón ya no está encima. */
+.hud.hud--cabina .hud__derecha {
+  margin-top: 12px;
+}
+
+/*
+ * En un teléfono no caben los dos a la izquierda: debajo del rincón el tutor
+ * ya cae sobre el panel —en los reactores, encima de la pantalla de vuelo—.
+ * Mientras hay tarjeta en el rincón, que es lo más urgente, el tutor espera.
+ */
+@media (max-height: 460px) {
+  .hud.hud--cabina:has(.rincon .senal:not([hidden])) .tutor {
+    display: none;
+  }
+}
+
+.hud.hud--cabina .tutor__glifo {
+  font-size: 40px;
+}
+
+.hud.hud--cabina .hud__abajo > [data-hud="hint"] {
+  top: 32%;
+  bottom: auto;
+}
+
+.hud.hud--cabina .hud__abajo > .aviso-hud {
+  top: 22%;
+  bottom: auto;
+}
+
+/*
+ * Y la columna de mandos, en dos de fondo en vez de una: apilada bajaba hasta
+ * media pantalla, que en cabina es el panel — en los reactores, la pista y el
+ * tren caían sobre los relojes de motor. En dos columnas mide la mitad de
+ * alto y apenas más de ancho, y no le quita sitio a la barra de arriba.
+ */
+.hud.hud--cabina .hud__derecha {
+  grid-template-columns: repeat(2, auto);
+  align-items: start;
+}
+
+.hud.hud--cabina .hud__derecha > .tarjeta {
+  grid-column: auto;
+}
+
+/* Arriba las dos tarjetas —el gas y a dónde se va— y debajo los botones
+   redondos, juntos: en el orden de la columna quedaban cruzados, un botón a
+   cada lado de la tarjeta del destino. */
+.hud.hud--cabina .hud__derecha > * {
+  order: 2;
+}
+
+.hud.hud--cabina .hud__derecha > .motor,
+.hud.hud--cabina .hud__derecha > .casa {
+  order: 1;
+}
+
+/* La lámpara de la torre se centraba en el hueco a la izquierda del rincón;
+   con el rincón a la izquierda, ese hueco es la esquina de la cámara. En
+   cabina va centrada, en la franja de arriba. */
+.hud.hud--cabina .torre {
+  left: 50%;
+  max-width: calc(100% - 32px);
 }

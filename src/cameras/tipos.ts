@@ -44,6 +44,12 @@ export interface Contexto {
     readonly x: number;
     readonly y: number;
     readonly z: number;
+    /** Dónde caen la visera y los instrumentos. Ver `EncuadreDeCabina`. */
+    readonly encuadre?: {
+      readonly visera: number;
+      readonly lados: number;
+      readonly abajo: number;
+    };
   } | null;
   /** La cota del terreno, para que la cámara no se meta debajo. */
   readonly suelo: (x: number, z: number) => number;

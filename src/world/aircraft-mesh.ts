@@ -91,7 +91,16 @@ export interface AircraftMesh {
    * y no lo notó ningún banco. Ver `flota.ts` y `__oga.avion`.
    */
   deVerdad?: boolean;
-  ojo?: { x: number; y: number; z: number };
+  /**
+   * `encuadre`: dónde caen la visera y los instrumentos vistos desde ahí, si el
+   * modelo los trae. Ver `EncuadreDeCabina`.
+   */
+  ojo?: {
+    x: number;
+    y: number;
+    z: number;
+    encuadre?: import("./aeronave-modelo").EncuadreDeCabina;
+  };
 }
 
 /**

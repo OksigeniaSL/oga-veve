@@ -14,6 +14,7 @@ import { PerspectiveCamera, Quaternion, Vector3 } from "three";
 
 import { construirCamaras, type Contexto } from "./index";
 import { BASE_FOV, FOV_DE_CABINA } from "./tipos";
+import { encuadreDeCabina } from "./dentro";
 import type { FlightState } from "../flight/model";
 
 /** Un avión volando hacia el norte, o parado si se le quita la velocidad. */
@@ -295,5 +296,31 @@ describe("la vista de frente", () => {
     }
     const separacion = Math.hypot(camara.position.x, camara.position.z);
     expect(separacion).toBeGreaterThan(20);
+  });
+});
+
+describe("el encuadre de la cabina", () => {
+  const grados = (r: number) => (r * 180) / Math.PI;
+  const avioneta = { visera: 0.02, lados: 0.4, abajo: 0.55 };
+  it("deja la visera en el mismo sitio de la pantalla en cualquier avión", () => {
+    const a = encuadreDeCabina(avioneta, 1.6);
+    const b = encuadreDeCabina({ ...avioneta, visera: 0.02 + (15 * Math.PI) / 180, abajo: 0.8 }, 1.6);
+    expect(grados(b.inclinacion - a.inclinacion)).toBeCloseTo(15);
+    expect(a.fov).toBe(FOV_DE_CABINA);
+  });
+  it("si los instrumentos no caben a lo ancho, abre el ángulo en vez de cortarlos", () => {
+    const reactor = { visera: 0.05, lados: 1.0, abajo: 0.6 };
+    const tablet = encuadreDeCabina(reactor, 1.6);
+    const telefono = encuadreDeCabina(reactor, 915 / 412);
+    expect(tablet.fov).toBeGreaterThan(FOV_DE_CABINA);
+    const t = Math.tan(((tablet.fov / 2) * Math.PI) / 180);
+    expect(reactor.lados).toBeLessThanOrEqual(1.6 * t);
+    // En el teléfono, más apaisado, ya caben con el de siempre.
+    expect(telefono.fov).toBe(FOV_DE_CABINA);
+  });
+  it("sin cabina que medir, lo de siempre", () => {
+    const r = encuadreDeCabina(undefined, 1.6);
+    expect(grados(r.inclinacion)).toBeCloseTo(12);
+    expect(r.fov).toBe(FOV_DE_CABINA);
   });
 });

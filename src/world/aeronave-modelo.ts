@@ -395,6 +395,81 @@ function ojoDePiloto(
   };
 }
 
+/**
+ * Cuánto cae la visera por debajo de la línea de los ojos, en radianes.
+ *
+ * Es lo que necesita la cámara de cabina para encuadrar: el borde de la visera
+ * es la raya que separa el mundo del panel, y **dónde cae esa raya en la
+ * pantalla** decide cuánto se ve por el parabrisas. Se mide sobre el borde de
+ * arriba y de atrás —el que da al piloto—, que es el que se ve desde el
+ * asiento. Ver `encuadreDeCabina` en `cameras/dentro.ts`.
+ *
+ * `undefined` si el modelo no trae visera: entonces manda la inclinación fija.
+ */
+/**
+ * Lo que la cámara de cabina necesita saber para encuadrar, medido desde los
+ * ojos. Ver `encuadreDeCabina` en `cameras/dentro.ts`.
+ *
+ * - `visera`: cuánto cae su borde por debajo de la línea de los ojos, rad. Es
+ *   la raya que separa el mundo del panel, y dónde cae en la pantalla decide
+ *   cuánto se ve por el parabrisas. Se mide el borde de arriba y de atrás, el
+ *   que da al piloto.
+ * - `lados`: hasta dónde llegan a los lados los instrumentos y los mandos, como
+ *   tangente del ángulo desde el frente. Lo más abierto de los dos lados.
+ * - `abajo`: cuánto cae lo más bajo de ellos, rad.
+ *
+ * Los instrumentos son lo que se lee y se toca —relojes, pantallas y botones—,
+ * encontrados por nombre, que es el contrato de los guiones de `modelos/`.
+ */
+export interface EncuadreDeCabina {
+  readonly visera: number;
+  readonly lados: number;
+  readonly abajo: number;
+}
+
+const INSTRUMENTO = /^(reloj-|pantalla-|boton-)/;
+
+function conSuEncuadre(
+  ojo: { x: number; y: number; z: number } | undefined,
+  raiz: Object3D,
+  grupo: Object3D,
+): { x: number; y: number; z: number; encuadre?: EncuadreDeCabina } | undefined {
+  if (!ojo) return undefined;
+  grupo.updateWorldMatrix(true, true);
+  const v = new Vector3();
+  let visera: number | undefined;
+  let lados = 0;
+  let abajo = -Infinity;
+  raiz.traverse((o) => {
+    const esVisera = o.name === "visera";
+    const esInstrumento =
+      INSTRUMENTO.test(o.name) ||
+      (o as { material?: { name?: string } }).material?.name === "g1000_display";
+    if (!esVisera && !esInstrumento) return;
+    const pos = (o as { geometry?: { attributes?: { position?: {
+      count: number; getX(i: number): number; getY(i: number): number; getZ(i: number): number;
+    } } } }).geometry?.attributes?.position;
+    if (!pos) return;
+    for (let i = 0; i < pos.count; i++) {
+      v.set(pos.getX(i), pos.getY(i), pos.getZ(i));
+      o.localToWorld(v);
+      grupo.worldToLocal(v);
+      const delante = ojo.z - v.z;
+      if (delante <= 0.05) continue;
+      const caida = Math.atan2(ojo.y - v.y, delante);
+      if (esVisera) {
+        // La visera tapa por su punto más alto en pantalla.
+        if (visera === undefined || caida < visera) visera = caida;
+      } else {
+        lados = Math.max(lados, Math.abs(v.x - ojo.x) / delante);
+        abajo = Math.max(abajo, caida);
+      }
+    }
+  });
+  if (visera === undefined || !Number.isFinite(abajo)) return ojo;
+  return { ...ojo, encuadre: { visera, lados, abajo } };
+}
+
 function esAncestro(posible: Object3D, hijo: Object3D): boolean {
   for (let o: Object3D | null = hijo.parent; o; o = o.parent)
     if (o === posible) return true;
@@ -582,7 +657,7 @@ export async function cargarModelo(
     // que un bimotor gire las dos. Ver `AircraftMesh.helices`.
     propeller: helices[0] ?? new Group(),
     helices,
-    ojo: ojoDePiloto(raiz, group),
+    ojo: conSuEncuadre(ojoDePiloto(raiz, group), raiz, group),
     // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
     pantallas: encenderPantallas(raiz, group),
     // Y los relojes, que hasta hoy eran discos grises. Ver `relojes-cabina.ts`.

@@ -34,6 +34,7 @@ import {
   CanvasTexture,
   LinearFilter,
   MeshBasicMaterial,
+  SRGBColorSpace,
   Vector3,
   type Mesh,
 } from "three";
@@ -354,6 +355,8 @@ function nuevaPantalla(): Pantalla | null {
   textura.minFilter = LinearFilter;
   textura.magFilter = LinearFilter;
   textura.flipY = false;
+  // Y en sRGB, que es en lo que pinta un lienzo: ver `relojes-cabina.ts`.
+  textura.colorSpace = SRGBColorSpace;
   // Básico y no físico: una pantalla **emite** luz, no la recibe. Con un
   // material de superficie se apagaba con el sol, que es justo al revés de lo
   // que hace un panel encendido al anochecer.

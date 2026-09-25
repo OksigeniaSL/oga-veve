@@ -17,17 +17,84 @@ import {
 } from "./tipos";
 
 /**
- * Cuánto se inclina la vista de cabina hacia el panel, en radianes.
- *
- * Doce grados. Ver `update`.
+ * Cuánto se inclina la vista de cabina hacia el panel cuando no se sabe dónde
+ * está la visera, en radianes: las cajas de respaldo. Ver `encuadreDeCabina`.
  */
 const MIRANDO_AL_PANEL = (12 * Math.PI) / 180;
+
+/**
+ * A qué altura de la pantalla cae el borde de la visera, desde arriba.
+ *
+ * **El cuarenta y dos por ciento, en todos los aviones y en todas las
+ * pantallas.** Estaba en el treinta y tres, y no por decisión: salía de doce
+ * grados puestos a mano, iguales para los seis aviones, que con la visera a
+ * la altura de los ojos la subían a un tercio de la pantalla. En una tablet,
+ * encima de ese tercio van dos filas de botones; en un teléfono, la quinta
+ * parte de la pantalla. Lo que quedaba de parabrisas era una rendija, que es
+ * la queja que ya se había arreglado una vez moviendo el asiento y volvió:
+ * «cuando estás dentro de la cabina solo se ven los mandos, no veo por dónde
+ * estoy volando».
+ *
+ * Con la raya en el 42 % el parabrisas casi dobla en el teléfono, y los
+ * relojes —que empiezan justo debajo de la visera— siguen entrando enteros,
+ * medido con `enPantalla` en los seis.
+ */
+const VISERA_EN_PANTALLA = 0.42;
+
+/** Hasta dónde se abre el ángulo para que quepan los instrumentos, grados. */
+const FOV_MAXIMO = 78;
+
+/**
+ * Qué parte de la pantalla puede ocupar el grupo de instrumentos: lo que
+ * queda al quitar un margen del tres por ciento a cada lado y abajo, para que
+ * nada se lea cortado contra el borde.
+ */
+const HASTA_EL_BORDE = 0.97;
+
+/**
+ * El encuadre de la cabina: cuánto bajar la vista y con qué ángulo mirar.
+ *
+ * **Es la regla del anclaje del cuadro, traída a la cabina de tres
+ * dimensiones**: el grupo de lo que se lee y se toca se ve entero, y si no
+ * cabe **se encoge**, nunca se corta ni se descentra. Aquí encoger es abrir
+ * el ángulo de visión. Antes era un ángulo fijo de cincuenta y ocho grados
+ * para todos, y en una tablet los dos reactores dejaban media pantalla de
+ * cada piloto fuera por los lados; y el turbohélice, su columna de motor y
+ * sus botones fuera por abajo.
+ *
+ * La inclinación es geometría: la visera está `visera` radianes por debajo de
+ * los ojos, y un punto que se ve a una fracción `s` de la pantalla desde
+ * arriba está `atan((1 − 2s)·tan(fov/2))` por encima del centro. Mirando hacia
+ * abajo la suma de los dos, la visera cae donde se quiere en cualquier avión.
+ *
+ * Sin encuadre —las cajas de respaldo, que no tienen cabina— lo de siempre.
+ */
+export function encuadreDeCabina(
+  e: { visera: number; lados: number; abajo: number } | undefined,
+  aspecto: number,
+): { inclinacion: number; fov: number } {
+  if (!e) return { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
+  let salida = { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
+  for (let fov = FOV_DE_CABINA; fov <= FOV_MAXIMO; fov += 0.5) {
+    const t = Math.tan(((fov / 2) * Math.PI) / 180);
+    const inclinacion =
+      e.visera + Math.atan((1 - 2 * VISERA_EN_PANTALLA) * t);
+    salida = { inclinacion, fov };
+    const abajo = 0.5 + Math.tan(e.abajo - inclinacion) / (2 * t);
+    const cabeAbajo = abajo <= HASTA_EL_BORDE;
+    const cabeALosLados = e.lados <= HASTA_EL_BORDE * aspecto * t;
+    if (cabeAbajo && cabeALosLados) break;
+  }
+  return salida;
+}
 
 export class CamaraDeDentro implements CameraRig {
   readonly muestraElAvion: boolean;
   private readonly offset = new Vector3();
   /** Si esta vista cierra el ángulo como una cabina o lo abre con la velocidad. */
   private readonly comoCabina: boolean;
+  /** El último encuadre, para que el ángulo pedido sea el mismo que se usó. */
+  private encuadre = { inclinacion: MIRANDO_AL_PANEL, fov: FOV_DE_CABINA };
 
   constructor(muestraElAvion: boolean, comoCabina: boolean) {
     this.muestraElAvion = muestraElAvion;
@@ -62,11 +129,12 @@ export class CamaraDeDentro implements CameraRig {
      * el turbohélice no se veía un solo reloj, y en el entrenador solo la mitad
      * de una pantalla. Se vio en las seis capturas de cabina, una por avión.
      *
-     * Doce grados es lo que hace falta para que en todos entre la visera y la
-     * primera fila, sin comerse el mundo por delante — que es lo que se está
-     * mirando de verdad.
+     * Cuánto, lo dice la visera de cada avión: ver `encuadreDeCabina`.
      */
-    if (this.comoCabina) camera.rotateX(-MIRANDO_AL_PANEL);
+    if (this.comoCabina) {
+      this.encuadre = encuadreDeCabina(ojo?.encuadre, camera.aspect);
+      camera.rotateX(-this.encuadre.inclinacion);
+    }
   }
 
   /**
@@ -77,6 +145,6 @@ export class CamaraDeDentro implements CameraRig {
    * ángulo que estira con la velocidad sigue diciendo lo que tiene que decir.
    */
   fovDeseado(state: FlightState, ctx: Contexto): number {
-    return this.comoCabina ? FOV_DE_CABINA : fovConVelocidad(state, ctx);
+    return this.comoCabina ? this.encuadre.fov : fovConVelocidad(state, ctx);
   }
 }

@@ -40,6 +40,7 @@ import {
   Vector3,
   LinearFilter,
   MeshBasicMaterial,
+  SRGBColorSpace,
   type Mesh,
   type Object3D,
 } from "three";
@@ -160,6 +161,13 @@ function nuevaEsfera(que: QueMide, motor: number): Esfera | null {
   textura.minFilter = LinearFilter;
   textura.magFilter = LinearFilter;
   textura.flipY = false;
+  /*
+   * **Y en sRGB, que es en lo que pinta un lienzo.** Sin decirlo, three.js la
+   * toma por lineal y la aclara al sacarla a pantalla: el fondo casi negro de
+   * la esfera salía gris azulado, y cada reloj parecía montado en una
+   * baldosa cuadrada encima del tablero.
+   */
+  textura.colorSpace = SRGBColorSpace;
   // Básico, como las pantallas: un instrumento iluminado no se apaga con el
   // sol. Ver `pantallas-cabina.ts`.
   /*
