@@ -61,7 +61,14 @@ COLORES = {
     # Los de dentro. El salpicadero es gris oscuro mate y la tapicería un
     # cuero gastado: los dos tienen que quedarse **por debajo** del mundo que
     # se ve por el parabrisas, que es lo que se está mirando.
-    "tablero": (0.13, 0.14, 0.15, 1.0),
+    "tablero": (0.19, 0.195, 0.205, 1.0),
+    # **Y la visera, aparte y más oscura.** Iban las dos en `tablero`, y desde
+    # el asiento el panel y su visera eran la misma losa gris sin canto: no se
+    # leía dónde acaba lo de mirar fuera y empieza lo de mirar dentro. En un
+    # avión de verdad la visera es negra y mate —para que el sol no rebote en
+    # el parabrisas— y el panel, un gris algo más claro donde se recortan las
+    # esferas.
+    "visera": (0.05, 0.052, 0.058, 1.0),
     "tapiceria": (0.29, 0.23, 0.17, 1.0),
     # Y las dos pantallas del panel. El nombre no es libre: `pantallas-cabina.ts`
     # busca exactamente `g1000_display` para encenderlas.
@@ -864,7 +871,7 @@ def _cabina_de_reactor(ojos_z, panel_z, ancho, alto_panel, y_suelo, plazas,
     )
     piezas.append(
         caja("visera", -borde - 0.04, borde + 0.04, alto_panel,
-             alto_panel + 0.07, panel_z - 0.26, panel_z + 0.12)
+             alto_panel + 0.07, panel_z - 0.26, panel_z + 0.12, "visera")
     )
     # El faldón de debajo del panel, para que no se vea el hueco hasta el suelo.
     piezas.append(
@@ -1190,7 +1197,7 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
         )
         piezas.append(
             caja("visera", -ancho - 0.04, ancho + 0.04, alto_panel,
-                 alto_panel + 0.04, panel_z - 0.18, panel_z + 0.08)
+                 alto_panel + 0.04, panel_z - 0.18, panel_z + 0.08, "visera")
         )
     # ── **Un avión de pistón lleva relojes, no cristal** ──
     #

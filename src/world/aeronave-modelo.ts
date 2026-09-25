@@ -650,6 +650,7 @@ export async function cargarModelo(
   const luces = crearLucesDePosicion(aircraft, raiz);
   group.add(luces.grupo);
 
+  const ojo = conSuEncuadre(ojoDePiloto(raiz, group), raiz, group);
   return {
     group,
     luces,
@@ -657,13 +658,16 @@ export async function cargarModelo(
     // que un bimotor gire las dos. Ver `AircraftMesh.helices`.
     propeller: helices[0] ?? new Group(),
     helices,
-    ojo: conSuEncuadre(ojoDePiloto(raiz, group), raiz, group),
+    ojo,
     // Las pantallas del salpicadero, encendidas. Ver `pantallas-cabina.ts`.
     pantallas: encenderPantallas(raiz, group),
     // Y los relojes, que hasta hoy eran discos grises. Ver `relojes-cabina.ts`.
     relojes: encenderRelojes(raiz),
     // Y los mandos que se pulsan con el dedo. Ver `botones-cabina.ts`.
-    botones: encenderBotones(raiz),
+    botones: encenderBotones(
+      raiz,
+      ojo ? group.localToWorld(new Vector3(ojo.x, ojo.y, ojo.z)) : null,
+    ),
     // Y las patas, que en el avión que las mete se meten. Ver `patas.ts`.
     patas: prepararPatas(raiz),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
