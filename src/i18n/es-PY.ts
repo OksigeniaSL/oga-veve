@@ -246,6 +246,15 @@ export const ES_PY = {
      quiere decir otra cosa: autorizado a aterrizar. Ver `luzDeTorre`. */
   "torre.aterrizar": "{indicativo}, podés aterrizar",
   /*
+   * Y a dónde se va, **antes de rodar**. En un vuelo a otro aeródromo lo
+   * primero que da el control es la autorización con su límite —«cleared to
+   * Tenerife Norte»—, y es lo que dice que ese vuelo va a alguna parte. La
+   * lámpara lo dice en palabras de casa; en los peldaños de arriba va detrás
+   * en fraseología. `{destino}` es el nombre en radio del campo: ver
+   * `lugar.*` más abajo y `audio/destino-dicho.ts`.
+   */
+  "torre.destino": "{indicativo}, podés volar a {destino}",
+  /*
    * ── Y la misma torre, en Canarias ──────────────────────────────────────
    *
    * **No es el acento: son las palabras.** El castellano del juego es
@@ -264,6 +273,28 @@ export const ES_PY = {
   "torre.canario.verde": "{indicativo}, puedes entrar",
   "torre.canario.roja": "{indicativo}, espera ahí",
   "torre.canario.aterrizar": "{indicativo}, puedes aterrizar",
+  "torre.canario.destino": "{indicativo}, puedes volar a {destino}",
+
+  /*
+   * ── **Cómo se nombra cada campo por radio** ─────────────────────────────
+   *
+   * El nombre del sitio, no el del aeropuerto entero con su ciudad: es lo que
+   * dice un controlador en el límite de una autorización. Solo los que son
+   * destino de alguna ruta, que son los únicos que la torre puede nombrar.
+   * Cada uno se graba como pieza suelta con la voz de la torre que lo dice.
+   */
+  "lugar.pettirossi": "Asunción",
+  "lugar.guarani": "Guaraní",
+  "lugar.encarnacion": "Encarnación",
+  "lugar.yvytu-rape": "Yvytu Rape",
+  "lugar.tenerife-norte": "Tenerife Norte",
+  "lugar.tenerife-sur": "Tenerife Sur",
+  "lugar.gran-canaria": "Gran Canaria",
+  "lugar.lanzarote": "Lanzarote",
+  "lugar.fuerteventura": "Fuerteventura",
+  "lugar.la-palma": "La Palma",
+  "lugar.el-hierro": "El Hierro",
+  "lugar.la-gomera": "La Gomera",
 
   /*
    * ── La megafonía de cabina: la comandante Jazlyn ────────────────────────
@@ -287,6 +318,47 @@ export const ES_PY = {
     "Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.",
   "comandante.descenso":
     "Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.",
+
+  /*
+   * ── **Y la bienvenida dice a dónde se va** ──────────────────────────────
+   *
+   * Lo primero que cuenta una comandante de verdad, después de presentarse,
+   * es el destino: es la frase que confirma a cada pasajero que se subió al
+   * avión que era. La de arriba no lo decía, y el destino se elegía en el
+   * hangar para que después nadie lo nombrara hasta aterrizar.
+   *
+   * Una grabación entera por destino, como las llegadas: el nombre del sitio
+   * pegado con piezas en mitad de una frase de megafonía se nota. La de
+   * arriba se queda de reserva para un destino nuevo que todavía no tenga la
+   * suya. Y la vuelta al campo también se dice, porque volver al mismo sitio
+   * es un plan y no la falta de uno. Ver `bienvenidaPara`.
+   */
+  "comandante.bienvenida.local":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.",
+  "comandante.bienvenida.pettirossi":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.",
+  "comandante.bienvenida.guarani":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.",
+  "comandante.bienvenida.encarnacion":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Encarnación.",
+  "comandante.bienvenida.yvytu-rape":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.",
+  "comandante.bienvenida.tenerife-norte":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Norte.",
+  "comandante.bienvenida.tenerife-sur":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Sur.",
+  "comandante.bienvenida.gran-canaria":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Gran Canaria.",
+  "comandante.bienvenida.lanzarote":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Lanzarote.",
+  "comandante.bienvenida.fuerteventura":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Fuerteventura.",
+  "comandante.bienvenida.la-palma":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Palma.",
+  "comandante.bienvenida.el-hierro":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a El Hierro.",
+  "comandante.bienvenida.la-gomera":
+    "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Gomera.",
 
   /*
    * ── **Lo que se ve por la ventanilla** ──────────────────────────────────

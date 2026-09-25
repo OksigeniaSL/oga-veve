@@ -226,6 +226,9 @@ export const EN: Dictionary = {
   "torre.canario.roja": "{indicativo}, hold here",
   "torre.aterrizar": "{indicativo}, cleared to land",
   "torre.canario.aterrizar": "{indicativo}, cleared to land",
+  // El límite de la autorización: a dónde va el vuelo. Ver `torre.destino`.
+  "torre.destino": "{indicativo}, cleared to {destino}",
+  "torre.canario.destino": "{indicativo}, cleared to {destino}",
   // Las palabras del segundo peldaño. Ver `flight/escalera.ts`.
   // Cómo vuela un ala. Ver `ui/pantalla-ala.ts`.
   "ala.titulo": "How a wing flies",

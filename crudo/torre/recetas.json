@@ -323,5 +323,35 @@
     "{c4}",
     "{c5}",
     "torre.solo.aterrizar"
+  ],
+  "torre.destino": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.destino",
+    "{destino}"
+  ],
+  "torre.clearedTo": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.clearedTo",
+    "{destino}"
+  ],
+  "destino.encarnacion": [
+    "destino.encarnacion"
+  ],
+  "destino.guarani": [
+    "destino.guarani"
+  ],
+  "destino.pettirossi": [
+    "destino.pettirossi"
+  ],
+  "destino.yvytu-rape": [
+    "destino.yvytu-rape"
   ]
 }

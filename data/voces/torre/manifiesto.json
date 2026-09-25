@@ -33,6 +33,18 @@
     "cifra.9": {
       "ms": 649
     },
+    "destino.encarnacion": {
+      "ms": 844
+    },
+    "destino.guarani": {
+      "ms": 741
+    },
+    "destino.pettirossi": {
+      "ms": 922
+    },
+    "destino.yvytu-rape": {
+      "ms": 987
+    },
     "fonetico.alfa": {
       "ms": 599
     },
@@ -128,6 +140,12 @@
     },
     "torre.solo.clearedTakeoff": {
       "ms": 1095
+    },
+    "torre.solo.clearedTo": {
+      "ms": 851
+    },
+    "torre.solo.destino": {
+      "ms": 872
     },
     "torre.solo.goAround": {
       "ms": 1787
@@ -473,6 +491,36 @@
       "{c4}",
       "{c5}",
       "torre.solo.aterrizar"
+    ],
+    "torre.destino": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.destino",
+      "{destino}"
+    ],
+    "torre.clearedTo": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.clearedTo",
+      "{destino}"
+    ],
+    "destino.encarnacion": [
+      "destino.encarnacion"
+    ],
+    "destino.guarani": [
+      "destino.guarani"
+    ],
+    "destino.pettirossi": [
+      "destino.pettirossi"
+    ],
+    "destino.yvytu-rape": [
+      "destino.yvytu-rape"
     ]
   }
 }

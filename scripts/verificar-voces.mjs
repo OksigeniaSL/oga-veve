@@ -59,6 +59,9 @@ const REPARTO = [
   ["torre", "torre.canario.goAround", "torre-canarias"],
   ["comandante", "comandante.bienvenida", "comandante"],
   ["comandante", "comandante.crucero", "comandante"],
+  // Y la bienvenida con el destino, que es una grabación por sitio.
+  ["comandante", "comandante.bienvenida.local", "comandante"],
+  ["comandante", "comandante.bienvenida.tenerife-sur", "comandante"],
   /*
    * Y la orden de irse al aire **con su motivo**, que es la receta que junta
    * las dos piezas. Sin ella la voz decía qué hacer y no por qué, que a los

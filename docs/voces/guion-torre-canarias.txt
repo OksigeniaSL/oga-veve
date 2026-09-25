@@ -1,4 +1,13 @@
 puedes aterrizar
+puedes volar a
+Tenerife Norte
+Tenerife Sur
+Gran Canaria
+Lanzarote
+Fuerteventura
+La Palma
+El Hierro
+La Gomera
 Alfa
 Bravo
 Charlie
@@ -44,3 +53,4 @@ cleared to land
 go around, runway occupied
 hold short of the runway
 line up and wait
+cleared to

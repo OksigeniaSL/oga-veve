@@ -3,8 +3,47 @@
   "voz": "comandante",
   "idioma": "es-PY",
   "piezas": {
+    "comandante.bienvenida.el-hierro": {
+      "ms": 6607
+    },
+    "comandante.bienvenida.encarnacion": {
+      "ms": 6407
+    },
+    "comandante.bienvenida.fuerteventura": {
+      "ms": 5507
+    },
+    "comandante.bienvenida.gran-canaria": {
+      "ms": 5607
+    },
+    "comandante.bienvenida.guarani": {
+      "ms": 6107
+    },
+    "comandante.bienvenida.la-gomera": {
+      "ms": 5507
+    },
+    "comandante.bienvenida.la-palma": {
+      "ms": 5107
+    },
+    "comandante.bienvenida.lanzarote": {
+      "ms": 5507
+    },
+    "comandante.bienvenida.local": {
+      "ms": 7407
+    },
     "comandante.bienvenida": {
       "ms": 4107
+    },
+    "comandante.bienvenida.pettirossi": {
+      "ms": 6407
+    },
+    "comandante.bienvenida.tenerife-norte": {
+      "ms": 6307
+    },
+    "comandante.bienvenida.tenerife-sur": {
+      "ms": 6207
+    },
+    "comandante.bienvenida.yvytu-rape": {
+      "ms": 7307
     },
     "comandante.crosscheck": {
       "ms": 3207
@@ -275,8 +314,47 @@
     }
   },
   "recetas": {
+    "comandante.bienvenida.el-hierro": [
+      "comandante.bienvenida.el-hierro"
+    ],
+    "comandante.bienvenida.encarnacion": [
+      "comandante.bienvenida.encarnacion"
+    ],
+    "comandante.bienvenida.fuerteventura": [
+      "comandante.bienvenida.fuerteventura"
+    ],
+    "comandante.bienvenida.gran-canaria": [
+      "comandante.bienvenida.gran-canaria"
+    ],
+    "comandante.bienvenida.guarani": [
+      "comandante.bienvenida.guarani"
+    ],
+    "comandante.bienvenida.la-gomera": [
+      "comandante.bienvenida.la-gomera"
+    ],
+    "comandante.bienvenida.la-palma": [
+      "comandante.bienvenida.la-palma"
+    ],
+    "comandante.bienvenida.lanzarote": [
+      "comandante.bienvenida.lanzarote"
+    ],
+    "comandante.bienvenida.local": [
+      "comandante.bienvenida.local"
+    ],
     "comandante.bienvenida": [
       "comandante.bienvenida"
+    ],
+    "comandante.bienvenida.pettirossi": [
+      "comandante.bienvenida.pettirossi"
+    ],
+    "comandante.bienvenida.tenerife-norte": [
+      "comandante.bienvenida.tenerife-norte"
+    ],
+    "comandante.bienvenida.tenerife-sur": [
+      "comandante.bienvenida.tenerife-sur"
+    ],
+    "comandante.bienvenida.yvytu-rape": [
+      "comandante.bienvenida.yvytu-rape"
     ],
     "comandante.crosscheck": [
       "comandante.crosscheck"

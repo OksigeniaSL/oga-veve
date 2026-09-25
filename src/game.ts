@@ -344,6 +344,7 @@ import {
 import type { LoDichoDelTren } from "./flight/tren";
 import type { MandoDeCabina } from "./world/botones-cabina";
 import { Megafonia, conPasaje } from "./audio/megafonia";
+import { bienvenidaPara, destinoEnRadio, type DestinoEnRadio } from "./audio/destino-dicho";
 import { altitudDeCabina } from "./flight/cabina-presurizada";
 import { LoQueSeVe } from "./flight/lo-que-se-ve";
 import { hitosDe, sinRepetidos, type Hito } from "./world/hitos";
@@ -4154,12 +4155,18 @@ export class Game {
    * comentarios por segundo. Lo que la torre le dice a **otro** avión no pasa
    * por aquí — eso es charla de la frecuencia y va en `baja`.
    */
-  private porRadio(dice: string, urgencia: Urgencia = "mando"): void {
+  private porRadio(
+    dice: string,
+    urgencia: Urgencia = "mando",
+    destino?: DestinoEnRadio,
+  ): void {
     const base = claveDeTorre(dice);
     if (!base) return;
-    const montada = this.deTorre(base, this.miIndicativo);
+    const montada = this.deTorre(base, this.miIndicativo, destino);
     if (montada) {
       this.torre.decir(montada.texto, montada.clave, urgencia, montada.relleno);
+      if (destino && this.tier.instruments !== "none")
+        this.hud.radio(montada.texto);
     }
   }
 
@@ -4175,10 +4182,14 @@ export class Game {
   private deTorre(
     base: string,
     quien: Indicativo,
+    destino?: DestinoEnRadio,
   ): { clave: string; relleno: Record<string, string>; texto: string } | null {
-    const dice = DICE_LA_TORRE[base];
-    if (!dice) return null;
+    const orden = DICE_LA_TORRE[base];
+    if (!orden) return null;
+    // El límite de la autorización va detrás de la orden, como se dice.
+    const dice = destino ? `${orden} ${destino.dicho}` : orden;
     const relleno: Record<string, string> = rellenoDe(quien);
+    if (destino) relleno.destino = destino.pieza;
     // Y con la voz de este campo, que es lo que hacía que una torre sonara a
     // dos personas. Ver `comoSeDiceAqui` en `i18n/habla.ts`.
     let clave = comoSeDiceAqui(base, hablaDe(this.scenario.aerodrome?.id));
@@ -4200,6 +4211,57 @@ export class Game {
       : `${quien.dicho}, ${dice}`;
     return { clave, relleno, texto };
   }
+
+  /**
+   * **La torre dice a dónde se va**, una vez por tramo y antes de rodar.
+   *
+   * En un vuelo a otro aeródromo lo primero que da el control es la
+   * autorización, y su primer elemento es el límite: «cleared to Tenerife
+   * Norte». La torre del juego no lo decía nunca; se elegía el destino en el
+   * hangar y nadie lo nombraba hasta que la comandante daba la bienvenida al
+   * llegar.
+   *
+   * Se dice al arrancar o al empezar a rodar, lo que llegue antes: es cuando
+   * se recibe de verdad, con el avión todavía en su puesto y antes de pedir
+   * rodaje. Y como la lámpara, en dos capas:
+   *
+   * - **En castellano del sitio, en los cuatro peldaños**: «podés volar a
+   *   Encarnación». Es lo que entiende quien tiene cuatro años.
+   * - **Y detrás, en fraseología, de Taguató para arriba** y solo en los
+   *   aviones de línea. «Cleared to» es la autorización de un plan
+   *   instrumental, y una avioneta que va de isla en isla con la vista no la
+   *   recibe así: ponérsela sería enseñar un procedimiento que no le toca.
+   *
+   * En una vuelta al campo no se dice nada, que es lo que hace una torre con
+   * un vuelo local: no hay límite que nombrar. Ni en un campo sin torre.
+   */
+  private autorizarLaRuta(): void {
+    const ruta = `${this.salidaId}>${this.destinoId}`;
+    if (ruta === this.rutaAutorizada) return;
+    this.rutaAutorizada = ruta;
+    if (this.vecinos.length === 0 || this.destinoId === this.salidaId) return;
+    if (this.campoPorId(this.salidaId)?.escenario.aerodrome?.privado) return;
+    const destino = destinoEnRadio(this.destinoId);
+    if (!destino) return;
+    const yo = this.miIndicativo;
+    const clave = comoSeDiceAqui(
+      "torre.destino",
+      hablaDe(this.scenario.aerodrome?.id),
+    ) as TranslationKey;
+    const texto = t(clave, { indicativo: yo.dicho, destino: destino.dicho });
+    this.torre.decir(texto, clave, "mando", {
+      ...rellenoDe(yo),
+      destino: destino.pieza,
+    });
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras && conPasaje(this.aircraft.mass))
+      this.porRadio("cleared to", "mando", destino);
+    else if (this.tier.instruments !== "none") this.hud.radio(texto);
+  }
+
+  /** Qué tramo ya tiene su autorización dicha. Ver `autorizarLaRuta`. */
+  private rutaAutorizada = "";
 
   /**
    * La luz de la torre, **y su voz**.
@@ -4580,6 +4642,7 @@ export class Game {
     this.salidaId = this.scenario.id;
     this.destinoId = this.destinoDeSalida();
     this.desvioId = null;
+    this.rutaAutorizada = "";
     // Y el depósito, lleno para lo que se va a volar hoy. Ver `repostar`.
     this.repostar();
     /*
@@ -4896,8 +4959,20 @@ export class Game {
        */
       const donde = this.elCampoDeAhora();
       const suya = `${anuncio}.${donde.id}` as TranslationKey;
+      /*
+       * **Y la bienvenida dice a dónde se va**, o que se vuelve aquí. Con el
+       * destino de este tramo, que es el que se eligió en el hangar o el que
+       * toca al volver a casa. Ver `audio/destino-dicho.ts`.
+       */
       const cual =
-        anuncio === "comandante.llegada" && hayTexto(suya) ? suya : anuncio;
+        anuncio === "comandante.bienvenida"
+          ? bienvenidaPara(
+              this.salidaId,
+              this.vecinos.length > 0 ? this.destinoId : null,
+            )
+          : anuncio === "comandante.llegada" && hayTexto(suya)
+            ? suya
+            : anuncio;
       const forma = unaForma(cual, Math.random, {
         /*
          * Y el nombre **dicho**, no escrito. Cinco campos llevan un punto
@@ -8195,6 +8270,8 @@ export class Game {
          * ya viene rodando desde la calle. Medido en Pettirossi.
          */
         if (vista.fase === "final") this.porRadio("cleared to land");
+        if (vista.fase === "arrancando" || vista.fase === "rodando")
+          this.autorizarLaRuta();
       }
       /*
        * **Dejar la pista libre es una victoria, y hay que decirlo.**

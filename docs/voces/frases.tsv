@@ -135,6 +135,19 @@ comandante	comandante/comandante.crosscheck.ogg	es-PY	Tripulación, armar toboga
 comandante	comandante/comandante.despegue.ogg	es-PY	Tripulación, sentados para el despegue.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.crucero.ogg	es-PY	Ya estamos arriba. Pueden soltarse el cinturón, pero si están sentados, déjenselo puestito.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.descenso.ogg	es-PY	Empezamos a bajar. Tripulación, preparar cabina para el aterrizaje.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.local.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo. Hoy damos una vuelta por los alrededores y volvemos acá mismo.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.pettirossi.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Asunción.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.guarani.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Ciudad del Este.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.encarnacion.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Encarnación.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.yvytu-rape.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Yvytu Rape, la pista de la Granja Óga.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.tenerife-norte.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Norte.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.tenerife-sur.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Tenerife Sur.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.gran-canaria.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Gran Canaria.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.lanzarote.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Lanzarote.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.fuerteventura.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Fuerteventura.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.la-palma.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Palma.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.el-hierro.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a El Hierro.	la megafonía de cabina, para el pasaje
+comandante	comandante/comandante.bienvenida.la-gomera.ogg	es-PY	Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a La Gomera.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.llegada.pettirossi.ogg	es-PY	Señores pasajeros, bienvenidos a Asunción. Este aeropuerto lleva el nombre de Silvio Pettirossi, que fue el primer paraguayo en volar — así que están en buen sitio para aterrizar. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje
 comandante	comandante/comandante.llegada.pettirossi~2.ogg	es-PY	Bienvenidos a Asunción. Este campo está en Luque, así que técnicamente todavía no llegaron a la capital: les falta un puente. Gracias por volar con nosotros.	la megafonía de cabina, para el pasaje · otra forma de decirlo
 comandante	comandante/comandante.llegada.pettirossi~3.ogg	es-PY	Señores pasajeros, estamos en Asunción. Si van para el centro, el río Paraguay les va a quedar a la derecha todo el camino. Gracias por acompañarnos.	la megafonía de cabina, para el pasaje · otra forma de decirlo
@@ -328,8 +341,23 @@ torre	torre/torre.solo.clearedLand.ogg	en	cleared to land	el de llegada
 torre	torre/torre.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada
 torre	torre/torre.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
+torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
 torre	torre/torre.solo.aterrizar.ogg	es	podés aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre-canarias	torre-canarias/torre.canario.solo.aterrizar.ogg	es	puedes aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
+torre	torre/torre.solo.destino.ogg	es	podés volar a	a dónde se va, antes de rodar; el campo va detrás
+torre-canarias	torre-canarias/torre.canario.solo.destino.ogg	es	puedes volar a	a dónde se va, antes de rodar; el campo va detrás
+torre	torre/destino.pettirossi.ogg	es	Asunción	el destino, en la autorización de la torre
+torre	torre/destino.guarani.ogg	es	Guaraní	el destino, en la autorización de la torre
+torre	torre/destino.encarnacion.ogg	es	Encarnación	el destino, en la autorización de la torre
+torre	torre/destino.yvytu-rape.ogg	es	Yvytu Rape	el destino, en la autorización de la torre
+torre-canarias	torre-canarias/destino.tenerife-norte.ogg	es	Tenerife Norte	el destino, en la autorización de la torre
+torre-canarias	torre-canarias/destino.tenerife-sur.ogg	es	Tenerife Sur	el destino, en la autorización de la torre
+torre-canarias	torre-canarias/destino.gran-canaria.ogg	es	Gran Canaria	el destino, en la autorización de la torre
+torre-canarias	torre-canarias/destino.lanzarote.ogg	es	Lanzarote	el destino, en la autorización de la torre
+torre-canarias	torre-canarias/destino.fuerteventura.ogg	es	Fuerteventura	el destino, en la autorización de la torre
+torre-canarias	torre-canarias/destino.la-palma.ogg	es	La Palma	el destino, en la autorización de la torre
+torre-canarias	torre-canarias/destino.el-hierro.ogg	es	El Hierro	el destino, en la autorización de la torre
+torre-canarias	torre-canarias/destino.la-gomera.ogg	es	La Gomera	el destino, en la autorización de la torre
 torre-canarias	torre-canarias/fonetico.alfa.ogg	en	Alfa	una letra de la matrícula, dicha en Canarias
 torre-canarias	torre-canarias/fonetico.bravo.ogg	en	Bravo	una letra de la matrícula, dicha en Canarias
 torre-canarias	torre-canarias/fonetico.charlie.ogg	en	Charlie	una letra de la matrícula, dicha en Canarias
@@ -375,3 +403,4 @@ torre-canarias	torre-canarias/torre.canario.solo.clearedLand.ogg	en	cleared to l
 torre-canarias	torre-canarias/torre.canario.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias

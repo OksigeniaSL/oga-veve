@@ -28,6 +28,13 @@
 
 /** De lo que dice la torre a la clave con la que está grabado. */
 export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
+  /*
+   * La autorización, antes de rodar: «cleared to» y el límite, que en un
+   * vuelo a otro aeródromo es ese aeródromo. Es la única de la tabla con el
+   * sitio en un hueco —`{destino}`—, y solo se da a los aviones de línea, que
+   * son los que vuelan con plan instrumental. Ver `autorizarLaRuta`.
+   */
+  "cleared to": "torre.clearedTo",
   // La secuencia de salida, en el orden en que se oye.
   "hold short of the runway": "torre.holdShort",
   /*
