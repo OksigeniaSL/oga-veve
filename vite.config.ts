@@ -122,7 +122,15 @@ export default defineConfig({
    * Una prueba que no puede fallar es peor que no tenerla, porque además da
    * tranquilidad.
    */
-  test: { css: true },
+  test: {
+    css: true,
+    /*
+     * Sin las copias de trabajo de `.claude/worktrees`: son otros árboles del
+     * mismo repositorio, y con ellos dentro vitest corría cinco veces las
+     * pruebas —la mitad de otra versión del código— y contaba 764 ficheros.
+     */
+    exclude: ["**/node_modules/**", "**/dist/**", ".claude/**"],
+  },
   build: {
     target: "es2022",
     /**
