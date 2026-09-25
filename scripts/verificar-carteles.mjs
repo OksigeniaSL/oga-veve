@@ -194,7 +194,9 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
       if (!casa) return;
       casa.classList.add("casa--destino");
       const glosa = casa.querySelector('[data-hud="home-gloss"]');
-      if (glosa) glosa.textContent = "Guaraní · Ciudad del Este";
+      // El nombre corto más largo de los destinos: la tarjeta corta lo de
+      // detrás del punto medio. Ver `setHome`.
+      if (glosa) glosa.textContent = "Silvio Pettirossi";
       const oaci = casa.querySelector('[data-hud="home-oaci"]');
       if (oaci) {
         oaci.hidden = false;

@@ -1006,10 +1006,13 @@ export class Hud {
           <span class="casa__fila">
             <span class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</span>
             ${gauges ? "" : '<span class="casa__plano" data-hud="home-plano" aria-hidden="true" hidden></span>'}
+            <!-- El indicativo, al lado de la flecha y no en una línea más: con
+                 un nombre largo, esa línea echaba la tarjeta fuera de la
+                 pantalla en una tablet táctil. Lo midió verificar-carteles. -->
+            ${gauges ? '<span class="casa__oaci" data-hud="home-oaci" hidden></span>' : ""}
           </span>
           ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ""}
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
-          ${gauges ? '<span class="casa__oaci" data-hud="home-oaci" hidden></span>' : ""}
         </button>
       </div>
       <!--
@@ -1556,9 +1559,15 @@ export class Hud {
      */
     this.home.classList.toggle("casa--destino", modo === "destino");
     if (this.homeGloss) {
+      /*
+       * El nombre corto: lo de antes del punto medio. «Guaraní · Ciudad del
+       * Este» ocupaba dos líneas y echaba la tarjeta por debajo de la pantalla
+       * en una tablet táctil; el aeropuerto se llama Guaraní, y la ciudad ya
+       * la dice el aviso al cambiar de destino.
+       */
       this.homeGloss.textContent =
         modo === "destino" && nombre
-          ? nombre
+          ? (nombre.split(" · ")[0] ?? nombre)
           : t(toObjective ? "hud.objective" : "hud.home");
     }
     this.ponerDestino(modo === "destino" ? (destino ?? null) : null);

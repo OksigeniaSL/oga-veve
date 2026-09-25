@@ -1812,9 +1812,18 @@ button.motor__tecla::after {
 /* Y el nombre del destino no cabe siempre en el ancho de «Pista»: un rótulo
    que se sale de su tarjeta tapa el instrumento de al lado. Se ajusta. */
 .casa--destino .medidor__glosa {
-  max-width: 116px;
-  overflow-wrap: anywhere;
+  /* Ciento diez y no ciento dieciséis: con el ancho entero, la tarjeta
+     rozaba el cuadro en una tablet táctil por dos píxeles. */
+  max-width: 110px;
   line-height: 1.15;
+  /*
+   * Y en una línea: con dos, la tarjeta crecía hacia abajo y se salía de la
+   * pantalla en una tablet táctil. Lo que no quepa se corta con puntos; el
+   * nombre entero sale en el aviso al cambiar de destino.
+   */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Avisos */
