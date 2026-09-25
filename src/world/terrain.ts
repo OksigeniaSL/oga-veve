@@ -818,6 +818,9 @@ export class Terrain {
           const b = nudos[f]! * n + nudos[c + 1]!;
           const cc = nudos[f + 1]! * n + nudos[c]!;
           const d = nudos[f + 1]! * n + nudos[c + 1]!;
+          // Con menos detalle, el mismo mar abierto fuera: es de lejos
+          // cuando más falta hace. Ver `cuadroBajoElAgua`.
+          if (this.cuadroBajoElAgua(a, b, cc, d)) continue;
           indices[k++] = a;
           indices[k++] = cc;
           indices[k++] = b;
@@ -825,7 +828,7 @@ export class Terrain {
           indices[k++] = cc;
           indices[k++] = d;
         }
-      guardados[salto] = new BufferAttribute(indices, 1);
+      guardados[salto] = new BufferAttribute(indices.slice(0, k), 1);
     }
     if (geo.getIndex() !== guardados[salto]) geo.setIndex(guardados[salto]!);
   }
@@ -951,6 +954,7 @@ export class Terrain {
     // desvanecido del borde. Es la manera de tener transparencia por vértice
     // sin material propio.
     const col = new Float32Array(n * n * 4);
+    const secos = new Uint8Array(n * n);
 
     for (let fz = 0; fz < n; fz++) {
       const tz = fz / (n - 1);
@@ -969,7 +973,18 @@ export class Terrain {
         col[i * 4 + 1] = 1;
         col[i * 4 + 2] = 1;
         const alBorde = Math.min(tx, 1 - tx, tz, 1 - tz);
-        col[i * 4 + 3] = Math.min(1, alBorde / DESVANECIDO_MANTA);
+        /*
+         * **Y sobre el mar, nada.** La foto del mar es casi negra, y la manta
+         * no escribe profundidad y va empujada hacia la cámara —ver
+         * `polygonOffsetUnits`—: cinco centímetros sobre el fondo, que está
+         * dos metros bajo el agua, y a dos o tres kilómetros el empujón ya
+         * gana a esos dos metros. Volando a dos mil quinientos sobre Gando
+         * salía un cuadrado oscuro pintado encima del agua, del tamaño del
+         * recorte. El agua ya dice cómo es el mar; la foto sobra ahí.
+         */
+        const seca = this.sampleHeight(x, z) > this.scenario.waterLevel;
+        secos[i] = seca ? 1 : 0;
+        col[i * 4 + 3] = seca ? Math.min(1, alBorde / DESVANECIDO_MANTA) : 0;
       }
     }
 
@@ -981,6 +996,9 @@ export class Terrain {
         const b = a + 1;
         const c = a + n;
         const d = c + 1;
+        // Un cuadro sin ninguna esquina en tierra es transparente entero:
+        // no se paga.
+        if (!secos[a] && !secos[b] && !secos[c] && !secos[d]) continue;
         indices[k++] = a;
         indices[k++] = c;
         indices[k++] = b;
@@ -994,7 +1012,7 @@ export class Terrain {
     geo.setAttribute("position", new BufferAttribute(pos, 3));
     geo.setAttribute("uv", new BufferAttribute(uvs, 2));
     geo.setAttribute("color", new BufferAttribute(col, 4));
-    geo.setIndex(new BufferAttribute(indices, 1));
+    geo.setIndex(new BufferAttribute(indices.slice(0, k), 1));
     geo.computeVertexNormals();
 
     const material = new MeshLambertMaterial({
@@ -1063,6 +1081,45 @@ export class Terrain {
 
   // ── Construcción de mallas ────────────────────────────────────────────
 
+  /** Si un nudo del mapa fino queda bajo la lámina de agua. */
+  private nudoBajoElAgua(i: number): boolean {
+    return (this.heights[i] ?? 0) <= this.scenario.waterLevel;
+  }
+
+  /**
+   * Si un cuadro del mapa fino es mar abierto: sus **cuatro** esquinas bajo el
+   * agua. Con una sola en tierra se malla, y así la costa sale entera.
+   *
+   * El mapa lejano ya lo hacía —ver `buildFarMesh`— y el fino no, y el fino
+   * también se ve de lejos: el de cada isla vecina está a ochenta o cien
+   * kilómetros, y ahí el fondo de profundidad de veinticuatro bits, con el
+   * plano cercano a sesenta centímetros, **no distingue setecientos metros**.
+   * El fondo del mapa fino —el cero de Copernicus en el mar— y la lámina de
+   * agua, dos metros más arriba, se turnaban fila a fila: el mar alrededor de
+   * Tenerife salía rayado, con la costa sobre un zócalo claro, como flotando,
+   * y el agua, que lleva pintado el resplandor del sol, se colaba a franjas
+   * por el pie de la isla. Medido ocultando mallas: las franjas eran
+   * `terreno` de los vecinos. Y de cerca, lo mismo a menor escala: a dos mil
+   * quinientos metros sobre Gando el mar salía cruzado de rayas.
+   *
+   * Lo que está bajo el agua no se ve, y lo que no se dibuja no puede
+   * pelearse con el agua a ninguna distancia. **No se hunde**, como hace el
+   * lejano: aquí un cuadro mide cuarenta metros y hundir sus esquinas de mar
+   * movería la raya de la costa veinte metros tierra adentro, sobre la foto.
+   * La franja de un cuadro que queda en la costa es menos de un píxel a la
+   * distancia a la que empieza a pelearse.
+   *
+   * Solo cambia lo que se pinta: `sampleHeight` sigue leyendo el mapa.
+   */
+  private cuadroBajoElAgua(a: number, b: number, c: number, d: number): boolean {
+    return (
+      this.nudoBajoElAgua(a) &&
+      this.nudoBajoElAgua(b) &&
+      this.nudoBajoElAgua(c) &&
+      this.nudoBajoElAgua(d)
+    );
+  }
+
   private buildTerrainMesh(): Mesh {
     const { resolution, step, half, heights } = this;
     const vertexCount = resolution * resolution;
@@ -1115,6 +1172,9 @@ export class Terrain {
         const b = a + 1;
         const c = a + resolution;
         const d = c + 1;
+        // El mar abierto no se malla: ya lo pinta el agua. Ver
+        // `cuadroBajoElAgua`.
+        if (this.cuadroBajoElAgua(a, b, c, d)) continue;
         // Orden antihorario visto desde arriba: normales hacia +Y.
         indices[cursor++] = a;
         indices[cursor++] = c;
@@ -1128,7 +1188,7 @@ export class Terrain {
     const geometry = new BufferGeometry();
     geometry.setAttribute("position", new BufferAttribute(positions, 3));
     geometry.setAttribute("color", new BufferAttribute(colours, 3));
-    geometry.setIndex(new BufferAttribute(indices, 1));
+    geometry.setIndex(new BufferAttribute(indices.slice(0, cursor), 1));
     geometry.computeVertexNormals();
     geometry.computeBoundingSphere();
 
