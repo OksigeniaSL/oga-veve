@@ -10,6 +10,8 @@
 import { describe, expect, it } from "vitest";
 import { ROZAMIENTO, superficieEn, TRAQUETEO } from "./superficie";
 import { scenarioById } from "./scenarios";
+import { desplazarAerodromo } from "./aerodromo-desplazado";
+import { mapaDePavimento } from "./vegetation";
 
 describe("la superficie de debajo", () => {
   it("en Yvytu Rape la pista es de hierba, porque lo es", () => {
@@ -34,6 +36,36 @@ describe("la superficie de debajo", () => {
     const { x, z } = e.runway;
     expect(superficieEn(e, null, x, z)).toBe("asfalto");
     expect(superficieEn(e, null, x + 4000, z + 4000)).toBe("campo");
+  });
+
+  /*
+   * **Y en el aeropuerto de llegada, su asfalto es asfalto.**
+   *
+   * El juego preguntaba siempre con el escenario de salida, y el aeródromo
+   * de destino —el mismo escenario, corrido hasta donde cae visto desde
+   * casa— no estaba en esa pregunta: su pista y sus calles eran «campo». Se
+   * pregunta con el campo corrido, que es lo que hace ahora `Game`.
+   */
+  it("en el campo de llegada, su pista y sus calles son asfalto, no campo", () => {
+    const casa = scenarioById("gran-canaria");
+    const alli = scenarioById("tenerife-norte");
+    const DX = -93_000;
+    const DZ = -61_000;
+    const aero = desplazarAerodromo(alli.aerodrome!, DX, DZ);
+    const campo = {
+      ...alli,
+      aerodrome: aero,
+      runway: { ...alli.runway, x: alli.runway.x + DX, z: alli.runway.z + DZ },
+    };
+    const pav = mapaDePavimento(aero);
+    const pista = [campo.runway.x, campo.runway.z] as const;
+    const calle = aero.taxiways.find((t) => t.path.length >= 2)!;
+    const [cx, cy] = calle.path[Math.floor(calle.path.length / 2)]!;
+    // Lo que contestaba antes, preguntando a casa.
+    expect(superficieEn(casa, null, ...pista)).toBe("campo");
+    // Y lo que contesta el campo de allí.
+    expect(superficieEn(campo, pav, ...pista)).toBe("asfalto");
+    expect(superficieEn(campo, pav, cx, -cy)).toBe("asfalto");
   });
 
   /*

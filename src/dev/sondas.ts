@@ -53,6 +53,38 @@ import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA } from "../audio/boca";
 
+
+/**
+ * Un punto en final de un campo cualquiera, a `d` metros de su umbral en uso y
+ * sobre su eje. Con `d` negativo, hacia dentro de la pista.
+ */
+function puntoDeFinalEn(
+  campo: ReturnType<Game["campoParaBanco"]>,
+  d: number,
+  suelo: (x: number, z: number) => number,
+): { x: number; z: number; h: number; suelo: number; cabecera: string | null } | null {
+  const pista = campo?.aerodromo?.runways[0];
+  if (!campo || !pista) return null;
+  const nombre = cabeceraEnUso(campo.escenario);
+  const con = Object.entries(pista.thresholds).filter((e) => e[1]?.xy);
+  if (con.length < 2) return null;
+  const i = nombre ? con.findIndex(([n]) => n === nombre) : 0;
+  const entrada = con[i >= 0 ? i : 0]![1]!.xy!;
+  const salida = con[(i >= 0 ? i : 0) === 0 ? 1 : 0]![1]!.xy!;
+  const l = Math.hypot(salida[0] - entrada[0], salida[1] - entrada[1]) || 1;
+  const ux = (salida[0] - entrada[0]) / l;
+  const uy = (salida[1] - entrada[1]) / l;
+  const x = entrada[0] - ux * d;
+  const y = entrada[1] - uy * d;
+  return {
+    x,
+    z: -y,
+    h: (Math.atan2(ux, uy) + 2 * Math.PI) % (2 * Math.PI),
+    suelo: suelo(x, -y),
+    cabecera: nombre,
+  };
+}
+
 export function abrirLaVentanaDePruebas(juego: Game): void {
   if (!import.meta.env.DEV) return;
   (globalThis as { __oga?: unknown }).__oga = {
@@ -978,28 +1010,24 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       };
     },
     /** Un punto en final, a `d` metros del umbral en uso y sobre el eje. */
-    puntoDeFinal: (d: number) => {
-      const pista = juego.scenario.aerodrome?.runways[0];
-      if (!pista) return null;
-      const nombre = cabeceraEnUso(juego.scenario);
-      const con = Object.entries(pista.thresholds).filter((e) => e[1]?.xy);
-      if (con.length < 2) return null;
-      const i = nombre ? con.findIndex(([n]) => n === nombre) : 0;
-      const entrada = con[i >= 0 ? i : 0]![1]!.xy!;
-      const salida = con[(i >= 0 ? i : 0) === 0 ? 1 : 0]![1]!.xy!;
-      const l = Math.hypot(salida[0] - entrada[0], salida[1] - entrada[1]) || 1;
-      const ux = (salida[0] - entrada[0]) / l;
-      const uy = (salida[1] - entrada[1]) / l;
-      const x = entrada[0] - ux * d;
-      const y = entrada[1] - uy * d;
-      return {
-        x,
-        z: -y,
-        h: (Math.atan2(ux, uy) + 2 * Math.PI) % (2 * Math.PI),
-        suelo: juego.terrain.sampleHeight(x, -y),
-        cabecera: nombre,
-      };
-    },
+    puntoDeFinal: (d: number) => puntoDeFinalEn(juego.campoParaBanco(juego.scenario.id), d, (x, z) =>
+        juego.terrain.sampleHeight(x, z),
+      ),
+    /**
+     * Lo mismo en el campo que se tiene debajo, o en el de `id`.
+     *
+     * Es lo que deja al banco del vuelo entero aterrizar **fuera** con el mismo
+     * piloto que aterriza en casa. Ver `Game.campoParaBanco`.
+     */
+    puntoDeFinalDe: (d: number, id?: string) =>
+      puntoDeFinalEn(juego.campoParaBanco(id), d, (x, z) =>
+        juego.terrain.sampleHeight(x, z),
+      ),
+    /** La pista del campo que se tiene debajo. En casa, la de siempre. */
+    pistaDeAhora: () => juego.campoParaBanco()?.pista ?? juego.scenario.runway,
+    /** Y la cota de su asfalto. Ver `cotaDePista`. */
+    cotaDePistaDeAhora: (x: number, z: number) =>
+      juego.campoParaBanco()?.cotaDePista(x, z) ?? juego.terrain.cotaDeLaPista(x, z),
     /** El estado del mundo de verdad, para las comprobaciones. */
     mundoReal: () => {
       if (!juego.teselas) return null;

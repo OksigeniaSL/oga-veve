@@ -2262,9 +2262,24 @@ export class PlanDeVuelo {
       : true;
     if (!fuera) return;
 
+    /*
+     * **Y volviendo, a la puerta que se asignó, no al puesto de salida.**
+     *
+     * Esto rehacía la ruta hacia `puestoDeSalida` también de vuelta, así que
+     * bastaba con salirse de la raya un momento para que la llegada cambiara
+     * de puerta: la raya saltaba a otro puesto, el señalero detrás, y quedaba
+     * dicho y sin cumplir lo de «una llegada, una puerta». Medido aterrizando
+     * en Tenerife Norte: el final de la raya pasó de (-93878, -61624) a
+     * (-94252, -61751) a los tres segundos de haber dejado la pista.
+     */
+    const volviendo =
+      fase === "aterrizado" || fase === "abandonando" || fase === "a-plataforma";
     const meta =
       this.destino === "puesto"
-        ? this.puestoDeSalida()?.xy
+        ? (volviendo
+            ? this.puestoDeLlegada(this.ultimaPos, fase !== "aterrizado")
+            : this.puestoDeSalida()
+          )?.xy
         : this.esperaDeSalida();
     if (!meta) return;
     const ruta = rodajeEntre(this.grafo, this.ultimaPos, meta, 600);

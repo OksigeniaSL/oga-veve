@@ -847,6 +847,14 @@ export class Game {
     readonly escenario: Scenario;
     readonly pista: Pista;
     readonly aerodromo: Aerodrome | null;
+    /**
+     * Y su suelo: qué es asfalto allí y qué no. Ver `superficieDeAhora`.
+     *
+     * El escenario va con el aeródromo y la pista ya corridos a este mundo,
+     * que es la única forma en que `superficieEn` sabe preguntarlos.
+     */
+    readonly comoCampo: Scenario;
+    readonly pavimento: Pavimento | null;
   }[] = [];
 
   /** El primero, para lo que todavía habla de «el vecino» en singular. */
@@ -1221,6 +1229,41 @@ export class Game {
   /** En qué campo está el avión ahora, para los bancos. */
   get campoDeAhoraParaBanco(): string {
     return this.elCampoDeAhora().id;
+  }
+
+  /**
+   * Un campo del vuelo entero, para los bancos: su escenario, su aeródromo ya
+   * corrido a este mundo, su pista y la cota de esa pista.
+   *
+   * El de `id`, o el de ahora si no se dice. Existe para que el banco del vuelo
+   * entero pueda **aterrizar fuera** con el mismo piloto que aterriza en casa:
+   * ese piloto pregunta por la pista, por el punto de final y por la cota del
+   * asfalto, y las tres preguntas tenían una sola respuesta — la de casa.
+   */
+  campoParaBanco(id?: string): {
+    escenario: Scenario;
+    aerodromo: Aerodrome | null;
+    pista: Pista;
+    cotaDePista: (x: number, z: number) => number;
+  } | null {
+    const v = id
+      ? this.vecinos.find((w) => w.escenario.id === id)
+      : this.elVecinoDeAhora();
+    if (id && !v && id !== this.scenario.id) return null;
+    if (!v)
+      return {
+        escenario: this.scenario,
+        aerodromo: this.scenario.aerodrome ?? null,
+        pista: this.scenario.runway,
+        cotaDePista: (x, z) => this.terrain.cotaDeLaPista(x, z),
+      };
+    const { x: dx, z: dz } = v.mundo.desplazamiento;
+    return {
+      escenario: v.escenario,
+      aerodromo: v.aerodromo,
+      pista: v.pista,
+      cotaDePista: (x, z) => v.mundo.terreno.cotaDeLaPista(x - dx, z - dz),
+    };
   }
 
   /** Las pistas de todos los destinos, para los bancos. */
@@ -1962,27 +2005,35 @@ export class Game {
       );
       // La pista del vecino, ya trasladada: a partir de aquí es una pista de
       // este mundo como cualquier otra.
+      const pista = {
+        ...quien.runway,
+        x: mundo.desplazamiento.x + quien.runway.x,
+        z: mundo.desplazamiento.z + quien.runway.z,
+      };
+      /*
+       * Y su aeródromo corrido igual, que es lo que le hace falta al plan
+       * de tierra para trazar la raya de vuelta al hangar **allí**. Se
+       * calcula una vez: son unos miles de puntos. Ver
+       * `aerodromo-desplazado.ts`.
+       */
+      const aerodromo = quien.aerodrome
+        ? desplazarAerodromo(
+            quien.aerodrome,
+            mundo.desplazamiento.x,
+            mundo.desplazamiento.z,
+          )
+        : null;
       this.vecinos.push({
         mundo,
         escenario: quien,
-        pista: {
-          ...quien.runway,
-          x: mundo.desplazamiento.x + quien.runway.x,
-          z: mundo.desplazamiento.z + quien.runway.z,
+        pista,
+        aerodromo,
+        comoCampo: {
+          ...quien,
+          runway: pista,
+          ...(aerodromo ? { aerodrome: aerodromo } : {}),
         },
-        /*
-         * Y su aeródromo corrido igual, que es lo que le hace falta al plan
-         * de tierra para trazar la raya de vuelta al hangar **allí**. Se
-         * calcula una vez: son unos miles de puntos. Ver
-         * `aerodromo-desplazado.ts`.
-         */
-        aerodromo: quien.aerodrome
-          ? desplazarAerodromo(
-              quien.aerodrome,
-              mundo.desplazamiento.x,
-              mundo.desplazamiento.z,
-            )
-          : null,
+        pavimento: aerodromo ? mapaDePavimento(aerodromo) : null,
       });
       this.scene.add(mundo.grupo);
     }
@@ -6064,9 +6115,18 @@ export class Game {
      * sabe de aeródromos. Va antes de pilotar porque lo usa el paso de este
      * fotograma. Ver `world/superficie.ts`.
      */
+    /*
+     * **Y el del campo en el que se está, no siempre el de casa.** Esto
+     * preguntaba por el aeródromo de salida, y en el de llegada no hay nada
+     * suyo a ciento y pico kilómetros: la pista, las calles y la plataforma
+     * del destino eran todas «campo». Se aterrizaba y se rodaba por el
+     * asfalto de Los Rodeos con el rozamiento de un prado. Ver
+     * `superficie.test.ts`.
+     */
+    const aqui = this.elVecinoDeAhora();
     this.superficie = superficieEn(
-      this.scenario,
-      this.pavimento,
+      aqui?.comoCampo ?? this.scenario,
+      aqui ? aqui.pavimento : this.pavimento,
       this.flight.state.position.x,
       this.flight.state.position.z,
     );
@@ -6124,7 +6184,7 @@ export class Game {
      */
     this.esUnaToma =
       enElEmbudoDeFinal(
-        this.scenario.runway,
+        this.laPistaDeAhora(),
         this.flight.state.position.x,
         this.flight.state.position.z,
       ) !== null || this.sobreLaPista();
@@ -7238,7 +7298,7 @@ export class Game {
        * dando una vuelta por el valle, a veinte metros de una ladera.
        */
       enElEmbudoDeFinal(
-        this.scenario.runway,
+        this.laPistaDeAhora(),
         this.flight.state.position.x,
         this.flight.state.position.z,
       ) !== null,
@@ -7358,7 +7418,20 @@ export class Game {
 
   /** Si ese punto del mundo es uno de los puestos de este aeródromo. */
   private esUnPuesto(donde: readonly [number, number]): boolean {
-    const puestos = this.scenario.aerodrome?.parkingPositions;
+    /*
+     * **Del aeródromo del plan, que es el del campo en el que se está.**
+     *
+     * Miraba los del escenario, o sea los de casa. En el aeropuerto de
+     * llegada ningún final de raya casaba con un puesto de Gando, así que el
+     * señalero no se movía nunca de donde lo dejó la mudanza —el puesto de
+     * **salida** de allí— y la raya acababa en otro. Medido aterrizando en
+     * Tenerife Norte con el JAZ 90: la raya en (-93878, -61624) y el
+     * señalero esperando a cuatrocientos metros. Y como solo se le ve a
+     * doscientos veinte de su sitio, no aparecía. Contado jugando: «no había
+     * nadie esperando, ni coche ni señor con señales».
+     */
+    const puestos = (this.plan?.aerodromoActual ?? this.scenario.aerodrome)
+      ?.parkingPositions;
     if (!puestos?.length) return false;
     // Los puestos vienen en coordenadas del aeródromo, con la Y al revés que
     // la Z del mundo. Diez metros de holgura: la ruta acaba en el nudo del
@@ -9427,10 +9500,18 @@ export class Game {
   }
 
   private cotaDeLaPistaAqui(): number {
-    return this.terrain.cotaDeLaPista(
-      this.flight.state.position.x,
-      this.flight.state.position.z,
-    );
+    const { x, z } = this.flight.state.position;
+    /*
+     * **La del campo que se tiene debajo.** El terreno de casa no sabe de
+     * otras pistas: fuera de la suya contesta con la cota de su umbral, y
+     * Los Rodeos está seiscientos metros por encima de Gando. Aterrizando
+     * allí desde Gran Canaria se estaba siempre «a seiscientos metros de la
+     * pista», y la tarjeta de «ya podés tocar» no salía nunca.
+     */
+    const v = this.elVecinoDeAhora();
+    if (!v) return this.terrain.cotaDeLaPista(x, z);
+    const d = v.mundo.desplazamiento;
+    return v.mundo.terreno.cotaDeLaPista(x - d.x, z - d.z);
   }
 
   /** La misma vuelta de cámara, para que el banco pueda pedir una vista. */
