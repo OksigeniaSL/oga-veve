@@ -224,6 +224,12 @@ export class LaAproximacion {
   /** A qué altura sobre la pista se dio la orden. Ver `levantarLaOrden`. */
   altoAlMandar = 0;
 
+  /**
+   * Si la orden la dio un avión que ocupa la pista, cómo saber si sigue en
+   * ella. Ver `mandarIrsePorLaPistaOcupada`.
+   */
+  private laPistaSigueOcupada: (() => boolean) | null = null;
+
   /** El último motivo por el que se mandó frustrar, con sus números. */
   porQueSeMando: Record<string, unknown> | null = null;
 
@@ -291,6 +297,7 @@ export class LaAproximacion {
 
   /** Se empieza de nuevo: ni orden puesta, ni PAPI dicho, ni tramo. */
   reiniciar(): void {
+    this.laPistaSigueOcupada = null;
     this.mandanFrustrar = false;
     this.porqueMandaron = null;
     this.yaLoMandaron = false;
@@ -398,6 +405,13 @@ export class LaAproximacion {
         this.levantarLaOrden();
         return;
       }
+      /*
+       * **Y si la mandó un avión de verdad, hasta que la deje.** Subir o
+       * alejarse levanta una orden sin motivo a la vista; con el de delante
+       * todavía en la pista, levantarla era decirte «cleared to land» con él
+       * encima. Se levanta cuando se va, igual que la vaca.
+       */
+      if (this.laPistaSigueOcupada?.()) return;
       const alto = s.position.y - this.campo.cota;
       const subio = alto > this.altoAlMandar + SUBIR_PARA_IRSE;
       const alejandose = !acercandose && this.campo.alUmbral > MANDAN_DESDE;
@@ -460,6 +474,27 @@ export class LaAproximacion {
   }
 
   /**
+   * **La torre te manda al aire porque la pista está ocupada de verdad**: el
+   * que iba delante en final no la ha dejado libre y llegaste a la altura de
+   * decisión sin tu «cleared to land». Ver `autorizarCuandoToque` en
+   * `game.ts`.
+   *
+   * Es la misma orden que la del sorteo —la lámpara, «go around, runway
+   * occupied», el circuito para volver— y por eso se da por la misma puerta.
+   * Lo que no mira es el sorteo ni `ordenes`: aquello decide si **se inventa**
+   * un motivo, y aquí el motivo está en la pista, se ve y se oyó.
+   */
+  mandarIrsePorLaPistaOcupada(alto: number, sigueOcupada: () => boolean): void {
+    if (this.mandanFrustrar) return;
+    this.laPistaSigueOcupada = sigueOcupada;
+    this.yaLoMandaron = true;
+    this.mandanFrustrar = true;
+    this.porqueMandaron = "pistaOcupada";
+    this.altoAlMandar = alto;
+    this.mundo.hechos.emit("mandaronIrseAlAire", { porque: "pistaOcupada" });
+  }
+
+  /**
    * Se acabó la orden: la vaca se va, la torre da verde y se dice.
    *
    * **Y se dice**, que es lo que faltaba. Sin esto, quien obedecía se quedaba
@@ -468,6 +503,7 @@ export class LaAproximacion {
    * para despegar, y quiere decir lo mismo: adelante.
    */
   levantarLaOrden(): void {
+    this.laPistaSigueOcupada = null;
     this.mandanFrustrar = false;
     this.porqueMandaron = null;
     this.mundo.vaca.quitar();

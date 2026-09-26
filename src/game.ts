@@ -309,7 +309,13 @@ import {
   elegirTorre,
   type Instructor,
 } from "./audio/instructor";
-import { Frecuencia, laQueSeDice, PISTA_TUYA } from "./flight/radio";
+import {
+  Frecuencia,
+  laQueSeDice,
+  PISTA_TUYA,
+  type Momento,
+  type Transmision,
+} from "./flight/radio";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
 import { indicatedAirspeed } from "./flight/atmosphere";
@@ -383,6 +389,7 @@ import { cuantoSeMueve, rachaEn } from "./flight/turbulencia";
 import {
   InstructorGrabado,
   nuevoBancoDeVoces,
+  turnoDe,
   type BancoDeVoces,
 } from "./audio/instructor-grabado";
 import { apuntarVuelo, type Paso } from "./flight/bitacora";
@@ -433,7 +440,7 @@ import {
   mandosPara,
   type Objetivos,
 } from "./flight/piloto-automatico";
-import { MARGENES } from "./flight/minimos";
+import { ALTURA_DE_DECISION, MARGENES } from "./flight/minimos";
 import {
   bandaDeAhora,
   queSeDice,
@@ -2453,6 +2460,12 @@ export class Game {
       vaca: this.vaca,
       campoDeAhora: () => this.campoParaLaAproximacion(),
     });
+    /*
+     * **Y la frecuencia le pregunta al dibujo si el que va a decir «pista
+     * libre» ya ha salido de ella.** Ver `sigueEnLaPista` en
+     * `flight/radio.ts`.
+     */
+    this.radio.sigueEnLaPista = (m) => this.trafico?.sigueEnLaPista(m) ?? false;
 
     /*
      * El plan de vuelo, si este aeródromo da para uno.
@@ -4623,36 +4636,149 @@ export class Game {
    *   —`CADUCA_LA_ORDEN`— y tu autorización, en `mando`, se le colaba
    *   delante: en Pettirossi se oyó tu «cleared to land» y seis segundos y
    *   medio después un «line up and wait» a otro. Ver `daLaPistaAOtro`.
-   * - Y al que la tenía —alineado en el eje, o autorizado a aterrizar— la
-   *   torre le dice que despegue o que se vaya al aire, **antes** de dártela a
-   *   vos. Es lo que hace una torre de verdad, y es la lección del guion de
-   *   la frustrada contada con tu vuelo delante: al otro también lo mandan al
-   *   aire, y no pasa nada. Ver `despejarLaPista` en `flight/radio.ts`.
+   * - Y al que la ocupaba —alineado en el eje, autorizado a aterrizar, o
+   *   cantando final sin permiso— la torre le dice que despegue o que se vaya
+   *   al aire, **antes** de dártela a vos. Ver `despejarLaPista` en
+   *   `flight/radio.ts`.
    *
-   * Se dibuja todo y **se dice una, y solo con la boca libre**. Lo que se
-   * enseña aquí es tu autorización, y esa caduca a los doce segundos: con la
-   * boca ocupada y dos órdenes a otros delante, tu «cleared to land» caducó
-   * sin sonar. Con la boca libre la de ellos suena ya y la tuya detrás, a unos
-   * seis segundos; ocupada, lo de ellos pasa callado, como pasa en final todo
-   * lo de la frecuencia, y el avión se va igual a la vista. Ver `laQueSeDice`.
+   * **Menos al que va delante en final con su permiso**, llegando vos a
+   * aterrizar: ése aterriza primero, y vos quedás de número dos hasta que la
+   * deja libre. Mandarlo al aire en final corta para dártela a vos no lo hace
+   * ninguna torre. Ver `numeroDos` y `autorizarCuandoToque`.
    *
-   * La que se dice va en `mando` y no en `baja` como el resto de la frecuencia
-   * porque no es charla: es la mitad de tu autorización, y en `baja` tu
-   * «cleared to land» se le ponía delante. Entre iguales la boca dice primero
-   * lo primero que llegó, y esto llega antes.
+   * Saliendo, esto no manda a nadie al aire: la lámpara no se pone verde
+   * mientras alguien ocupa la pista —ver `pistaDeOtros` en `flight/vuelo.ts`—,
+   * así que al llegar aquí ya está libre. Solo queda para quien entra sin
+   * pasar por la lámpara.
+   *
+   * Se dibuja todo y **se dice una**: la que anula un permiso que se oyó, si
+   * la hay. Ver `laQueSeDice`. Y se dice **siempre**, también con la boca
+   * ocupada: callarla dejaba oír el «cleared to land» del otro y enseguida el
+   * tuyo por la misma pista, sin nada entre medias. Lo que no puede pasar es
+   * que tu autorización caduque detrás de ella, y por eso la tuya no se pide
+   * hasta que ésta empieza a sonar: ver `despejeSinDecir`.
+   *
+   * Va en `mando` y no en `baja` como el resto de la frecuencia porque no es
+   * charla: es la mitad de tu autorización. Entre iguales la boca dice
+   * primero lo primero que llegó, y esto llega antes.
    */
-  private quitarleLaPistaALosDemas(): void {
+  private quitarleLaPistaALosDemas(fase: string): void {
     BOCA.retirar(daLaPistaAOtro);
     // En un campo sin torre no hay frecuencia a la que quitarle nada.
     if (this.elCampoMontado().escenario.aerodrome?.privado) return;
-    const dichas = this.radio.despejarLaPista();
-    for (const dice of dichas) this.trafico?.anuncia(dice.de.matricula, dice.clave);
-    const libre = !BOCA.ocupada && BOCA.cuantasEsperan === 0;
-    const dice = libre ? laQueSeDice(dichas) : null;
+    this.numeroDos =
+      fase === "final" && this.leccion.torre ? this.radio.vaDelante : null;
+    const dichas = this.radio.despejarLaPista(this.numeroDos);
+    for (const dice of dichas)
+      this.trafico?.anuncia(
+        dice.de.matricula,
+        dice.clave,
+        this.radio.puedeAterrizar(dice.de.matricula),
+      );
+    const dice = laQueSeDice(dichas);
     const montada = dice && this.deTorre(dice.clave, dice.de);
     if (!montada) return;
     this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+    this.despejeSinDecir = turnoDe(montada.clave, montada.relleno) ?? null;
     if (this.tier.instruments !== "none") this.hud.radio(montada.texto);
+  }
+
+  /**
+   * La orden que le quita la pista a otro, **mientras espera turno en la
+   * boca**: su clave con la matrícula, como la ve la boca. Ver `turnoDe`.
+   *
+   * Tu «cleared to land» no se pide hasta que ésta ha empezado a sonar. Pedidas
+   * a la vez, con la boca ocupada, la tuya esperaba lo que quedara de la frase
+   * de antes más la de ellos entera, y a los doce segundos caducaba sin
+   * sonar. Pedida al empezar la de ellos, espera solo esa.
+   */
+  private despejeSinDecir: string | null = null;
+
+  /**
+   * **El que va delante en final con su permiso**, mientras vos venís detrás
+   * sin el tuyo: sos el número dos. `null` si no hay nadie delante. Ver
+   * `quitarleLaPistaALosDemas`.
+   *
+   * La torre no te autoriza hasta que él deja la pista —su «pista libre»— y,
+   * si llegás a la altura de decisión antes, te manda al aire, que es lo que
+   * se hace de verdad con la pista ocupada. Ver `autorizarCuandoToque`.
+   */
+  private numeroDos: string | null = null;
+
+  /** Tu «cleared to land», esperando su momento. Ver `autorizarCuandoToque`. */
+  private aterrizajeSinAutorizar = false;
+
+  /**
+   * **Tu autorización para aterrizar, cuando toca y no antes.**
+   *
+   * Se pide al entrar en final y se dice en cuanto se pueda, que es casi
+   * siempre enseguida. Espera a dos cosas:
+   *
+   * - A que suene lo que le quita la pista a otro, si se le quitó. Ver
+   *   `despejeSinDecir`.
+   * - A que el que va delante la deje libre, si sos el número dos. Si en vez
+   *   de eso llegás a la altura de decisión, la torre te manda al aire: con la
+   *   pista ocupada no se aterriza. Renunciar es ganar, y la frustrada se
+   *   felicita igual.
+   *
+   * Y deja de esperar si dejás la final —te fuiste al aire, o tocaste—: una
+   * autorización para una final que ya no existe no se dice.
+   */
+  private autorizarCuandoToque(fase: string): void {
+    if (fase !== "final") {
+      this.aterrizajeSinAutorizar = false;
+      this.numeroDos = null;
+      return;
+    }
+    if (!this.aterrizajeSinAutorizar) return;
+    if (this.numeroDos && this.radio.laTiene(this.numeroDos)) {
+      const alto =
+        this.flight.state.position.y - this.cotaDelCampo(this.elCampo());
+      if (alto < ALTURA_DE_DECISION) {
+        const delante = this.numeroDos;
+        this.aterrizajeSinAutorizar = false;
+        this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, () =>
+          this.radio.laTiene(delante),
+        );
+      }
+      return;
+    }
+    if (this.numeroDos) {
+      /*
+       * **Y se fue: ahora sí es tuya.** Lo de antes de dártela se hace ahora,
+       * que es cuando te la dan: si mientras tanto alguien la ocupó, se le
+       * quita, y se dice antes que lo tuyo.
+       */
+      this.numeroDos = null;
+      this.quitarleLaPistaALosDemas("");
+    }
+    if (this.despejeSinDecir && BOCA.espera(this.despejeSinDecir)) return;
+    this.despejeSinDecir = null;
+    this.aterrizajeSinAutorizar = false;
+    this.porRadio("cleared to land");
+  }
+
+  /**
+   * Si estás **esperando a que te den la pista**: en el punto de espera con
+   * la lámpara de la torre, o de número dos en final. Ver
+   * `Momento.esperandoLaPista`.
+   */
+  private get esperandoLaPista(): boolean {
+    const fase = this.faseDeAhora;
+    return (
+      (fase === "esperando" && this.leccion.torre) ||
+      (fase === "final" && this.numeroDos !== null)
+    );
+  }
+
+  /** Si la pista es tuya ahora mismo: su fase, y que no seas el número dos. */
+  get laPistaEsTuyaParaBanco(): boolean {
+    return PISTA_TUYA.has(this.faseDeAhora) && this.numeroDos === null;
+  }
+
+  /** Quién ocupa la pista, para el banco. Ver `ocupanLaPista`. */
+  get ocupanLaPistaParaBanco(): readonly { matricula: string; orden: string }[] {
+    return this.radio.ocupanLaPista;
   }
 
   /**
@@ -5668,12 +5794,22 @@ export class Game {
     // La frecuencia es la del campo en el que se está, no la de casa. Ver
     // `montarElCampo`.
     if (this.elCampoMontado().escenario.aerodrome?.privado) return;
-    this.trafico?.paso(dt);
-    const dice = this.radio.update(dt, {
+    const momento: Momento = {
       fase: this.faseDeAhora,
       deDia: this.sky.sunDirection.y > 0,
       instructorHablando: this.instructor.hablando,
-    });
+      esperandoLaPista: this.esperandoLaPista,
+    };
+    /*
+     * **Los que llegaron a la decisión sin permiso se fueron al aire**, y la
+     * frecuencia lo apunta antes de hablar: si no, en ese mismo fotograma
+     * podía autorizarle a aterrizar a uno que ya se estaba yendo. Ver
+     * `seFueAlAire` en `flight/radio.ts`.
+     */
+    let alAire: Transmision | null = null;
+    for (const m of this.trafico?.paso(dt) ?? [])
+      alAire = this.radio.seFueAlAire(m, momento) ?? alAire;
+    const dice = this.radio.update(dt, momento) ?? alAire;
     if (!dice) return;
 
     /*
@@ -5687,7 +5823,11 @@ export class Game {
      * También con las de la torre: «line up and wait» y «cleared for takeoff»
      * mueven a alguien, y el que las recibe es `dice.de`. Ver `caminosDe`.
      */
-    this.trafico?.anuncia(dice.de.matricula, dice.clave);
+    this.trafico?.anuncia(
+      dice.de.matricula,
+      dice.clave,
+      this.radio.puedeAterrizar(dice.de.matricula),
+    );
 
     /*
      * **Cuando la que habla es la torre, se le habla a otro.**
@@ -9200,6 +9340,16 @@ export class Game {
         this.flight.state.position.x,
         this.flight.state.position.z,
       );
+    /*
+     * **Y la lámpara del punto de espera mira la frecuencia.** Con alguien
+     * ocupando la pista —alineado, autorizado a aterrizar o en final—, la
+     * torre te deja en la roja y aterriza el que viene. Se pregunta justo
+     * antes del paso, con la frecuencia como está ahora. Ver `pistaDeOtros`.
+     */
+    this.plan.pistaDeOtros =
+      this.leccion.torre &&
+      !this.elCampoMontado().escenario.aerodrome?.privado &&
+      this.radio.pistaOcupada;
     const vista = this.plan.paso(
       this.flight.state,
       suelo,
@@ -9214,7 +9364,7 @@ export class Game {
      * `quitarleLaPistaALosDemas`.
      */
     if (PISTA_TUYA.has(vista.fase) && !PISTA_TUYA.has(faseDeAntes))
-      this.quitarleLaPistaALosDemas();
+      this.quitarleLaPistaALosDemas(vista.fase);
 
     /*
      * **Una orden que espera a que hagas algo no puede perderse por el camino.**
@@ -9375,7 +9525,7 @@ export class Game {
           vista.fase === "final" &&
           !this.elCampo().escenario.aerodrome?.privado
         )
-          this.porRadio("cleared to land");
+          this.aterrizajeSinAutorizar = true;
         if (vista.fase === "arrancando" || vista.fase === "rodando")
           this.autorizarLaRuta();
       }
@@ -9603,6 +9753,9 @@ export class Game {
         this.soloLaTarjeta = true;
       }
     }
+
+    // Tu «cleared to land», cuando toca. Ver `autorizarCuandoToque`.
+    this.autorizarCuandoToque(vista.fase);
 
     /*
      * **Entrar en pista sin la luz verde para el vuelo.**

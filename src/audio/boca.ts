@@ -354,6 +354,15 @@ export class Boca {
   }
 
   /**
+   * Si esta frase **sigue esperando turno**: pedida, sin empezar a sonar y
+   * sin tirar todavía. Lo pregunta quien necesita que una frase suene antes
+   * que otra sin pedirlas a la vez: ver `despejeSinDecir` en `game.ts`.
+   */
+  espera(clave: string): boolean {
+    return this.cola.some((c) => c.clave === clave);
+  }
+
+  /**
    * Pide la palabra. `hacer` es lo que habla, y se llama cuando le toque.
    *
    * Puede no llamarse nunca: si llega otra cosa mientras espera, o si pasa
@@ -550,6 +559,16 @@ export class Boca {
    */
   readonly habladas: { t: number; clave: string }[] = [];
 
+  /**
+   * Cuántas se han dicho en total, también las que ya se cayeron de
+   * `habladas` por arriba.
+   *
+   * La lista tiene tope, y en un vuelo largo se llena: a partir de ahí su
+   * largo no cambia, y quien miraba «lo nuevo» por el largo ya no veía nada
+   * nuevo. Con el total se sabe cuántas de las últimas son nuevas.
+   */
+  cuantasHabladas = 0;
+
   private apuntarDescarte(clave: string | undefined, porque: string): void {
     /*
      * **Con la hora**, que es lo que faltaba para poder leerlo.
@@ -676,6 +695,7 @@ export class Boca {
     const cuando = this.reloj.ahora();
     if (clave) this.dichas.set(clave, cuando);
     this.habladas.push({ t: cuando, clave: clave ?? "sin clave" });
+    this.cuantasHabladas++;
     if (this.habladas.length > 300) this.habladas.shift();
     const mia = ++this.cual;
     this.callaAhora =

@@ -18,7 +18,9 @@ import {
   crearTrafico,
   largoDelCamino,
   porElCamino,
+  trazar,
 } from "./trafico";
+import { ALTURA_DE_DECISION } from "../flight/minimos";
 import { verticesDelCircuito, type Pista } from "./circuito";
 
 const PISTA: Pista = { x: 0, z: 0, heading: 90, length: 1800 };
@@ -110,13 +112,17 @@ describe("dónde está el que acaba de hablar", () => {
     expect(donde.y).toBeLessThan(COTA + 200);
   });
 
-  it("y el que deja la pista lo hace por un costado, no por el eje", () => {
-    const m = marcas["otro.pistaLibre"]!;
-    const toma = porElCamino(m.camino, m.metros)!.sitio;
-    expect(entre(toma, v[0]!)).toBeLessThan(5);
-    const fuera = porElCamino(m.camino, m.metros + m.velocidad * ENTRE_MARCAS)!;
-    expect(Math.abs(fuera.sitio.z - PISTA.z)).toBeGreaterThan(30);
-    expect(Math.abs(fuera.sitio.y - COTA)).toBeLessThan(3);
+  it("y el que dice «pista libre» está fuera de ella, por un costado", () => {
+    /*
+     * Se ponía en la toma y desde ahí rodaba minuto y medio por el asfalto que
+     * acababa de dejar libre. Con la torre esperando esa frase para darle la
+     * pista a otro, se la daba con éste encima.
+     */
+    const donde = alDecir(marcas, "otro.pistaLibre").sitio;
+    expect(Math.abs(donde.z - PISTA.z)).toBeGreaterThan(30);
+    expect(Math.abs(donde.y - COTA)).toBeLessThan(3);
+    // Y más allá del umbral: ha aterrizado y ha salido, no se ha ido al campo.
+    expect(entre(donde, v[0]!)).toBeGreaterThan(PISTA.length * 0.25);
   });
 
   it("y entre una llamada y la siguiente no se salta ningún trozo", () => {
@@ -125,10 +131,7 @@ describe("dónde está el que acaba de hablar", () => {
      * anterior tras un hueco de radio. Con las marcas puestas a ojo, el avión
      * daría un salto de un kilómetro a la vista de quien lo esté siguiendo.
      */
-    for (const [antes, luego] of [
-      ["otro.enCola", "otro.final"],
-      ["otro.final", "otro.pistaLibre"],
-    ] as const) {
+    for (const [antes, luego] of [["otro.enCola", "otro.final"]] as const) {
       const a = marcas[antes]!;
       const donde = porElCamino(
         a.camino,
@@ -137,6 +140,15 @@ describe("dónde está el que acaba de hablar", () => {
       const salto = entre(donde.sitio, alDecir(marcas, luego).sitio);
       expect(salto, `${antes} → ${luego}`).toBeLessThan(200);
     }
+    /*
+     * Y de «en final» a «pista libre» no hay marca que acertar: la frase
+     * espera a que el avión haya salido de la pista —ver `sigueEnLaPista`—,
+     * y sale al final del mismo camino por el que venía.
+     */
+    const f = marcas["otro.final"]!;
+    const libre = marcas["otro.pistaLibre"]!;
+    expect(libre.camino).toBe(f.camino);
+    expect(libre.metros).toBeCloseTo(largoDelCamino(f.camino), 3);
   });
 
   it("el circuito por la derecha lleva el tráfico al otro lado", () => {
@@ -271,6 +283,102 @@ describe("al que mandan al aire, desde donde está", () => {
     expect(entre(antes, despues)).toBeLessThan(1);
     // Mientras que el de siempre habría aparecido en el umbral.
     expect(entre(antes, v[0]!)).toBeGreaterThan(1000);
+    t.dispose();
+  });
+});
+
+describe("sin permiso no se toca la pista", () => {
+  /*
+   * El avión dibujado volaba el circuito entero y se posaba, autorizado o no.
+   * Con la pista tuya la frecuencia no autoriza a nadie, así que el que había
+   * cantado viento en cola se quedaba esperando su «cleared to land» y su
+   * avión bajaba igual: medido en Gando, a quinientos ochenta metros del
+   * umbral y veintitrés de altura, detrás de ti.
+   */
+  const v = verticesDelCircuito(PISTA, COTA);
+  const caminos = trazar(PISTA, COTA)!;
+  /** Lo más bajo que pasa sobre el umbral o la pista, m sobre ella. */
+  const loMasBajo = (t: ReturnType<typeof crearTrafico>, segundos: number) => {
+    let bajo = Infinity;
+    const fuera: string[] = [];
+    for (let s = 0; s < segundos; s += 0.25) {
+      fuera.push(...t.paso(0.25));
+      const a = t.quienes()[0];
+      if (!a) continue;
+      // Solo cerca de la pista: del umbral en adelante, en el eje.
+      const along = a.x - v[0]!.x;
+      if (along > -200 && along < PISTA.length && Math.abs(a.z - PISTA.z) < 30)
+        bajo = Math.min(bajo, a.y - COTA);
+    }
+    return { bajo, fuera };
+  };
+
+  it("la altura de decisión cae en la final, a la de los mínimos", () => {
+    const d = porElCamino(caminos.llegada, caminos.decide)!.sitio;
+    expect(d.y - COTA).toBeCloseTo(ALTURA_DE_DECISION, 0);
+    // Y hasta ahí los dos caminos son el mismo.
+    for (const m of [0, caminos.decide / 2, caminos.decide - 1]) {
+      const a = porElCamino(caminos.llegada, m)!.sitio;
+      const b = porElCamino(caminos.sinPermiso, m)!.sitio;
+      expect(entre(a, b), `${m} m`).toBeLessThan(0.01);
+      expect(Math.abs(a.y - b.y)).toBeLessThan(0.01);
+    }
+  });
+
+  it("sin permiso vuela su circuito, y en la decisión se va al aire", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.enCola", false);
+    const { bajo, fuera } = loMasBajo(t, 400);
+    expect(bajo).toBeGreaterThan(ALTURA_DE_DECISION - 1);
+    // Y lo avisa una vez, al irse: es lo que la frecuencia tiene que saber.
+    expect(fuera).toEqual(["EC-ABC"]);
+    t.dispose();
+  });
+
+  it("con permiso aterriza, y no avisa de nada", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.enCola", false);
+    t.paso(3);
+    t.anuncia("EC-ABC", "torre.clearedLand", true);
+    const { bajo, fuera } = loMasBajo(t, 400);
+    expect(bajo).toBeLessThan(3);
+    expect(fuera).toEqual([]);
+    t.dispose();
+  });
+
+  it("y el permiso le llega sin tirones, esté donde esté antes de decidir", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.final", false);
+    t.paso(10);
+    const antes = t.quienes()[0]!;
+    t.anuncia("EC-ABC", "torre.clearedLand", true);
+    expect(entre(antes, t.quienes()[0]!)).toBeLessThan(0.01);
+    t.paso(0.5);
+    const luego = t.quienes()[0]!;
+    // Sigue hacia la pista, no se ha ido a otro sitio.
+    expect(entre(antes, luego)).toBeLessThan(VUELA_A);
+    expect(luego.conPermiso).toBe(true);
+    t.dispose();
+  });
+
+  it("y quien aterriza sigue en la pista hasta que sale por el costado", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.final", true);
+    let fuera = -1;
+    for (let s = 0; s < 400 && fuera < 0; s += 0.5) {
+      t.paso(0.5);
+      if (!t.sigueEnLaPista("EC-ABC")) fuera = s;
+    }
+    // Ni se esfuma a medio camino ni sale antes de posarse.
+    expect(t.quienes()).toHaveLength(1);
+    expect(fuera).toBeGreaterThan(ENTRE_MARCAS);
+    const a = t.quienes()[0]!;
+    expect(Math.abs(a.z - PISTA.z)).toBeGreaterThan(30);
+    expect(Math.abs(a.y - COTA)).toBeLessThan(3);
+    // Y al decir «pista libre» ya está donde lo dice: no se le devuelve al asfalto.
+    t.anuncia("EC-ABC", "otro.pistaLibre", false);
+    expect(entre(a, t.quienes()[0]!)).toBeLessThan(0.01);
+    expect(t.sigueEnLaPista("EC-ABC")).toBe(false);
     t.dispose();
   });
 });

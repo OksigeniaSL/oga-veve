@@ -240,6 +240,32 @@ describe("las trampas", () => {
     expect(v.autorizado).toBe(false);
   });
 
+  it("con la pista ocupada por otro, la torre te deja en la roja hasta que la deja", () => {
+    /*
+     * La verde no miraba la frecuencia: con otro autorizado a aterrizar, la
+     * torre lo mandaba al aire para dártela a vos. Ahora te deja esperando el
+     * rato que haga falta, y en cuanto la pista queda libre te mira el mismo
+     * rato de siempre antes de darte paso: no en el mismo instante en que el
+     * otro la deja.
+     */
+    const v = new Vuelo();
+    v.reiniciar();
+    durante(v, con({ motor: true }), 1);
+    durante(
+      v,
+      con({ motor: true, estado: { airspeed: 6, groundSpeed: 6 } as never }),
+      1,
+    );
+    v.pistaDeOtros = true;
+    const enLaRaya = con({ motor: true, restante: 10 });
+    expect(durante(v, enLaRaya, 120)).toBe("esperando");
+    expect(v.autorizado).toBe(false);
+    v.pistaDeOtros = false;
+    // Recién libre, todavía no: la torre te mira antes de dártela.
+    expect(durante(v, enLaRaya, 1)).toBe("esperando");
+    expect(durante(v, enLaRaya, 5)).toBe("autorizado");
+  });
+
   it("el permiso se gasta al entrar en pista", () => {
     const v = new Vuelo();
     v.reiniciar();

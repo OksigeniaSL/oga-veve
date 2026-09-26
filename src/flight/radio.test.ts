@@ -27,11 +27,13 @@ import {
   Frecuencia,
   GUIONES,
   HUECO_DEL_CANAL,
+  laPistaQueOcupa,
   laPistaQueTiene,
   laQueSeDice,
   PARA_QUITARSELA,
   PISTA_TUYA,
   RESPUESTA_MAXIMA,
+  vaDelanteEnFinal,
   type Momento,
   type Transmision,
 } from "./radio";
@@ -387,11 +389,11 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
    * durante tu toma. Ninguno se fue al aire.
    */
   const PISTA_DE_NADIE: Momento = TRANQUILO;
-  /** Habla hasta que alguien tenga la pista, o `null` si no pasa. */
+  /** Habla hasta que alguien ocupe la pista, o `null` si no pasa. */
   function hastaQueAlguienLaTenga(radio: Frecuencia): boolean {
     for (let t = 0; t < 2000; t += 0.5) {
       radio.update(0.5, PISTA_DE_NADIE);
-      if (radio.conLaPista.length) return true;
+      if (radio.ocupanLaPista.length) return true;
     }
     return false;
   }
@@ -432,10 +434,11 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
   it("al alineado le da la salida y al que viene lo manda al aire, y la pista queda libre", () => {
     let alineados = 0;
     let alAire = 0;
+    let enFinalSinPermiso = 0;
     for (let semilla = 1; semilla <= 400; semilla++) {
       const radio = new Frecuencia(dados(semilla), "GCXO");
       if (!hastaQueAlguienLaTenga(radio)) continue;
-      const tenian = [...radio.conLaPista];
+      const tenian = [...radio.ocupanLaPista];
       const dichas = radio.despejarLaPista();
       // A cada uno lo suyo, y a nadie más.
       expect(
@@ -445,14 +448,57 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
         tenian.map((t) => `${t.matricula} ${PARA_QUITARSELA[t.orden]}`).sort(),
       );
       expect(dichas.every((d) => d.voz === "torre")).toBe(true);
-      expect(radio.conLaPista, `semilla ${semilla}`).toEqual([]);
+      // Y anula un permiso solo a quien lo tenía.
+      for (const d of dichas)
+        expect(d.quitaPermiso, `semilla ${semilla}`).toBe(
+          tenian.find((t) => t.matricula === d.de.matricula)?.orden !==
+            "otro.final",
+        );
+      expect(radio.ocupanLaPista, `semilla ${semilla}`).toEqual([]);
       for (const t of tenian)
         if (t.orden === "torre.lineUpWait") alineados++;
+        else if (t.orden === "otro.final") enFinalSinPermiso++;
         else alAire++;
     }
-    // Las dos cosas pasan de verdad con estos guiones, no solo en teoría.
+    // Las tres cosas pasan de verdad con estos guiones, no solo en teoría.
     expect(alineados).toBeGreaterThan(50);
     expect(alAire).toBeGreaterThan(50);
+    expect(enFinalSinPermiso).toBeGreaterThan(5);
+  });
+
+  it("y el que canta final sin permiso también la ocupa: va hacia ella", () => {
+    // El de la frustrada canta «en final» y espera su «go around».
+    expect(laPistaQueTiene("frustrada", 2)).toBeNull();
+    expect(laPistaQueOcupa("frustrada", 2)).toBe("otro.final");
+    expect(PARA_QUITARSELA["otro.final"]).toBe("torre.goAround");
+    // Con permiso, lo que cuenta es el permiso.
+    expect(laPistaQueOcupa("llega", 3)).toBe("torre.clearedLand");
+    // Y en el viento en cola, esperando el suyo, todavía no.
+    expect(laPistaQueOcupa("llega", 1)).toBeNull();
+    expect(laPistaQueOcupa("frustrada", 4)).toBeNull();
+    // Irse al aire la suelta.
+    expect(laPistaQueOcupa("frustrada", 3)).toBeNull();
+  });
+
+  it("al que va delante en final con su permiso no se le quita: aterriza él primero", () => {
+    expect(vaDelanteEnFinal("llega", 3)).toBe(true);
+    // Autorizado pero todavía en el viento en cola: no va delante.
+    expect(vaDelanteEnFinal("llega", 2)).toBe(false);
+    expect(vaDelanteEnFinal("frustrada", 5)).toBe(false);
+    expect(vaDelanteEnFinal("frustrada", 2)).toBe(false);
+    let vistos = 0;
+    for (let semilla = 1; semilla <= 400; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      for (let t = 0; t < 2000 && !radio.vaDelante; t += 0.5)
+        radio.update(0.5, PISTA_DE_NADIE);
+      const delante = radio.vaDelante;
+      if (!delante) continue;
+      vistos++;
+      const dichas = radio.despejarLaPista(delante);
+      expect(dichas.map((d) => d.de.matricula)).not.toContain(delante);
+      expect(radio.laTiene(delante)).toBe(true);
+    }
+    expect(vistos).toBeGreaterThan(100);
   });
 
   it("y mientras es tuya nadie la vuelve a tener, ni canta su final", () => {
@@ -517,6 +563,20 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
     expect(laQueSeDice([alAire, sale])).toBe(sale);
     expect(laQueSeDice([alAire])).toBe(alAire);
     expect(laQueSeDice([])).toBeNull();
+  });
+
+  it("pero antes que nada, la que anula un permiso que se oyó", () => {
+    /*
+     * El «cleared to land» del otro sonó; si lo que suena es el «go around» al
+     * que cantaba final sin permiso, el primero queda sin anular y detrás
+     * viene el tuyo por la misma pista.
+     */
+    const de = new Frecuencia(dados(5), "GCXO").quienes[0]!;
+    const sinPermiso = { voz: "torre" as const, clave: "torre.goAround", de, respuesta: false };
+    const conPermiso = { ...sinPermiso, quitaPermiso: true };
+    const sale = { ...sinPermiso, clave: "torre.clearedTakeoff" };
+    expect(laQueSeDice([sinPermiso, conPermiso])).toBe(conPermiso);
+    expect(laQueSeDice([sale, conPermiso])).toBe(conPermiso);
   });
 
   it("y con la pista de nadie, no se dice nada", () => {

@@ -53,6 +53,7 @@ import { delante, enEjesDePista, puntoDePista, traves } from "./rumbo";
 import { hastaElUmbralDeToma } from "./umbral-desplazado";
 import {
   GUION,
+  PARADO,
   Vuelo,
   type Fase,
   type Paso,
@@ -616,6 +617,32 @@ const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
   "a-plataforma",
 ]);
 
+/**
+ * Si se rueda **más deprisa de lo que toca**: más que la velocidad de aquí con
+ * su margen, o más de lo que se puede frenar en lo que queda de ruta con su
+ * colchón. Ver el porqué de cada cosa donde se usa, en `paso`.
+ *
+ * **Y parado no se va rápido.** A menos de `HOLGURA` de la doble raya lo que
+ * queda menos el colchón es negativo, así que la cuenta de frenada daba
+ * «rápido» también a cero por hora: con el avión quieto en el punto de
+ * espera, «más despacio» cada seis segundos. No se oía porque ahí se esperaba
+ * tres segundos y medio; desde que la lámpara espera a que aterrice el que
+ * viene —ver `pistaDeOtros` en `flight/vuelo.ts`— se esperan minutos, y el
+ * banco lo oyó seis veces en un vuelo de Gando a Los Rodeos.
+ */
+export function vaRapido(
+  fase: Fase,
+  porElSuelo: number,
+  sugerida: number,
+  restante: number,
+): boolean {
+  if (!RODANDO_DE_VERDAD.has(fase) || porElSuelo < PARADO) return false;
+  return (
+    porElSuelo > sugerida * MARGEN + 2 ||
+    (porElSuelo * porElSuelo) / (2 * FRENADA) > restante - HOLGURA
+  );
+}
+
 /** A cuántos metros de la raya verde se considera que uno se ha salido. */
 const FUERA_DE_RUTA = 30;
 
@@ -967,6 +994,14 @@ export class PlanDeVuelo {
   /** Que la torre no autorice nunca: es la lección de rodar. */
   set soloRodaje(si: boolean) {
     this.vuelo.acabaEnLaEspera = si;
+  }
+
+  /**
+   * Si alguien de la frecuencia ocupa la pista: la torre no te pone la
+   * lámpara en verde hasta que la deja. Ver `Vuelo.pistaDeOtros`.
+   */
+  set pistaDeOtros(si: boolean) {
+    this.vuelo.pistaDeOtros = si;
   }
 
   /**
@@ -2224,12 +2259,9 @@ export class PlanDeVuelo {
          * pregunta que ya contestaba el tope de rodaje con `onRunway`.
          */
         !estado.onRunway &&
-        RODANDO_DE_VERDAD.has(p.fase) &&
         sobreElSuelo < 3 &&
         this.rutaMundo.length > 1 &&
-        (estado.groundSpeed > sugerida * MARGEN + 2 ||
-          (estado.groundSpeed * estado.groundSpeed) / (2 * FRENADA) >
-            s.restante - HOLGURA),
+        vaRapido(p.fase, estado.groundSpeed, sugerida, s.restante),
       restante: s.restante,
       // Solo se avisa **mientras se rueda**. Antes de arrancar nadie se ha
       // salido de nada, y decírselo a quien todavía no se ha movido es ruido.
