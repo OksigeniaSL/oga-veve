@@ -130,6 +130,15 @@ export default defineConfig({
      * pruebas —la mitad de otra versión del código— y contaba 764 ficheros.
      */
     exclude: ["**/node_modules/**", "**/dist/**", ".claude/**"],
+    /*
+     * **Seis hilos y no uno por núcleo.** De fábrica son diecinueve en este
+     * portátil, y con seis tarda lo mismo —12,8 s frente a 12,9, medido— pero
+     * ocupa 1,4 GB en vez de 2,1. Con varias copias del repositorio probando a
+     * la vez eso es lo que agotó la memoria: el sistema se quedó sin ella tres
+     * veces en una noche y se llevó por delante el editor.
+     */
+    maxWorkers: 6,
+    minWorkers: 1,
   },
   build: {
     target: "es2022",
