@@ -338,6 +338,34 @@ export interface AircraftConfig {
    */
   approachSpeed: number;
   /**
+   * **A qué se vuela el circuito de tráfico**, m/s.
+   *
+   * No es la de crucero ni la de aproximación: es la de ir despacio y
+   * configurado alrededor de una pista, con los flaps del viento en cola
+   * fuera. Faltaba, y sin ella nadie decía a qué se vuela la vuelta: el
+   * piloto del banco subía con el gas a tope y hacía el viento en cola de
+   * Los Rodeos con el JAZ 90 a doscientos treinta nudos, que viran con tres
+   * kilómetros de radio, y se metía en las estribaciones de Anaga. Ningún
+   * circuito dibujado aguanta eso, y ningún piloto de verdad lo vuela así.
+   *
+   * Las dos cotas son de verdad:
+   *
+   * - **Por arriba, el tope de su categoría** en PANS-OPS (OACI, Doc 8168):
+   *   la categoría sale de la velocidad a la que se cruza el umbral —A por
+   *   debajo de 91 nudos, B hasta 120, C hasta 140, D hasta 165— y el
+   *   circuito visual no pasa de 100, 135, 180 y 205 nudos respectivamente.
+   *   Y nunca por encima de `vfeKt`, que el circuito se vuela con flaps.
+   * - **En la práctica, bastante menos**: el viento en cola de un avión de
+   *   línea se vuela a la de maniobra de sus flaps intermedios, que en los
+   *   manuales de los fabricantes queda treinta o cuarenta nudos por encima
+   *   de Vref; el de una avioneta de escuela, a los ochenta y pico nudos de
+   *   siempre.
+   *
+   * Un número por avión, como la Vref, y con el mismo motivo: el de verdad
+   * depende del peso de ese día. Lo sujeta `velocidad-de-circuito.test.ts`.
+   */
+  velocidadDeCircuito: number;
+  /**
    * Velocidad de decisión, m/s. **V1.**
    *
    * El último instante de la carrera en que todavía queda pista para
@@ -553,6 +581,9 @@ export const PYKASU: AircraftConfig = {
   mmo: 0.3,
   // 33 m/s son 119 km/h, que es la corta final de un 172 de verdad.
   approachSpeed: 33,
+  // 80 nudos: el viento en cola de un 172 de escuela, justo por debajo de su
+  // tope de flaps.
+  velocidadDeCircuito: 80 * 0.514444,
   decisionSpeed: 26,
   // 28 m/s son 55 nudos: la velocidad de rotación de un 172 de verdad.
   rotationSpeed: 28,
@@ -640,6 +671,9 @@ export const MAINUMBY: AircraftConfig = {
   vfeKt: 80,
   mmo: 0.28,
   approachSpeed: 29,
+  // 70 nudos: un cuarto por encima de su Vref, como la avioneta de escuela.
+  // No lleva flaps, así que el único tope es el de su categoría.
+  velocidadDeCircuito: 70 * 0.514444,
   decisionSpeed: 24,
   rotationSpeed: 26,
   batalla: 5.4,
@@ -770,6 +804,9 @@ export const PANAMBI: AircraftConfig = {
   mmo: 0.48,
   // 44 m/s son 1,3 veces la pérdida, que es como se cruza el umbral.
   approachSpeed: 44,
+  // 100 nudos: cruza el umbral a 86, así que es categoría A, y cien es su
+  // tope de circuito.
+  velocidadDeCircuito: 100 * 0.514444,
   decisionSpeed: 34,
   rotationSpeed: 37,
   batalla: 2.8,
@@ -876,6 +913,9 @@ export const ARASUNU: AircraftConfig = {
   vfeKt: 157,
   mmo: 0.55,
   approachSpeed: 48,
+  // 120 nudos: Vref más veintisiete, con los flaps de aproximación; su
+  // categoría, la B, deja hasta 135.
+  velocidadDeCircuito: 120 * 0.514444,
   decisionSpeed: 38,
   rotationSpeed: 41,
   batalla: 7.21,
@@ -1017,6 +1057,15 @@ export const ARAI: AircraftConfig = {
    * m/s. Un E-170 entra a 125-130 nudos.
    */
   approachSpeed: 68,
+  /*
+   * **Ciento setenta nudos**: Vref más treinta y ocho, la de maniobra con los
+   * flaps del viento en cola, y por debajo de su tope de flaps. Cruza el
+   * umbral a 132, así que es categoría C, que deja hasta 180.
+   *
+   * Vira con kilómetro y medio de radio, que es lo que mide el pasillo de su
+   * circuito contra el terreno. Ver `pasilloDelCircuito`.
+   */
+  velocidadDeCircuito: 170 * 0.514444,
   decisionSpeed: 72,
   rotationSpeed: 78,
   batalla: 11.5,
@@ -1194,6 +1243,13 @@ export const YVAGA: AircraftConfig = {
   // dice el manual de vuelo de un 747 a este peso —145 a 150—. Estaba en 98
   // m/s, 191 nudos, que es 1,3 veces la pérdida **limpia**. Ver el Arai.
   approachSpeed: 75,
+  /*
+   * **Ciento ochenta nudos**: el viento en cola de un 747 se vuela con los
+   * flaps a diez y a su velocidad de maniobra, Vref más veinte a cuarenta.
+   * Cruza el umbral a 146 —categoría D, hasta 205— y su `vfeKt` es el tope
+   * de esos mismos flaps a diez.
+   */
+  velocidadDeCircuito: 180 * 0.514444,
   decisionSpeed: 80,
   rotationSpeed: 86,
   batalla: 25.6,

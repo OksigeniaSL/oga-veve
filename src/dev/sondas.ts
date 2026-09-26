@@ -368,6 +368,9 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       rotacion: juego.aircraft.rotationSpeed,
       aproximacion: juego.aircraft.approachSpeed,
       crucero: juego.aircraft.cruiseSpeed,
+      // Y a qué vuela el circuito, que es lo que el banco tiene que volar
+      // en él. Ver `velocidadDeCircuito` en `aircraft.ts`.
+      circuito: juego.aircraft.velocidadDeCircuito,
       /*
        * Y su envergadura, que es con lo que se escala el modelo y por tanto lo
        * único con lo que se puede comprobar que **entró derecho**. Ver
@@ -1578,6 +1581,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         (x, z) => juego.terrain.sampleHeight(x, z),
         escala,
         manoPublicada(juego.scenario, cabeceraEnUso(juego.scenario), escala),
+        juego.aircraft.velocidadDeCircuito,
       );
       return verticesDelCircuito(
         juego.scenario.runway,

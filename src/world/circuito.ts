@@ -235,16 +235,43 @@ export const SOBRE_EL_TERRENO = 150;
  *
  * El dibujo es una línea y quien lo vuela no va por ella: en cada viraje se
  * aparta lo que da su radio de giro. Así que se mira un pasillo de un radio de
- * viraje a cada lado —a la velocidad de aproximación del avión y con
- * veinticinco grados de alabeo, que es como se vira en un circuito— y nunca
- * menos de seiscientos metros, que es el radio en el que SERA manda mirar los
- * obstáculos. Con la avioneta mandan los seiscientos; con el JAZ 90, que vira
- * con un kilómetro de radio, manda el viraje.
+ * viraje a cada lado —con veinticinco grados de alabeo, que es como se vira
+ * en un circuito— y nunca menos de seiscientos metros, que es el radio en el
+ * que SERA manda mirar los obstáculos. Con la avioneta mandan los
+ * seiscientos; con el JAZ 90, que vira con kilómetro y medio, manda el viraje.
+ *
+ * ## A la velocidad a la que se vuela el circuito, no a la de aproximación
+ *
+ * Se medía con la de aproximación, que es a la que se cruza el umbral y no a
+ * la que se vira en el viento en cola: con el JAZ 90, sesenta y ocho metros
+ * por segundo y un kilómetro de radio, cuando su circuito se vuela a ochenta
+ * y siete y vira con kilómetro y medio. El pasillo protegía un avión más
+ * lento que el que pasa por él. Ahora va la de la ficha —`velocidadDeCircuito`—
+ * y, sin avión, la de aproximación del entrenador estirada, que es lo que
+ * había.
  */
-export function pasilloDelCircuito(escala = 1): number {
-  const v = APROXIMACION_DEL_ENTRENADOR * escala;
-  const giro = (v * v) / (9.81 * Math.tan((25 * Math.PI) / 180));
-  return Math.max(600, giro);
+export function pasilloDelCircuito(
+  escala = 1,
+  velocidad = APROXIMACION_DEL_ENTRENADOR * escala,
+): number {
+  return Math.max(600, radioDeViraje(velocidad));
+}
+
+/** Alabeo de los virajes de un circuito, rad: veinticinco grados. */
+export const ALABEO_DE_CIRCUITO = (25 * Math.PI) / 180;
+
+/**
+ * Radio de un viraje coordinado a esta velocidad, m: `v² / (g · tan φ)`.
+ *
+ * Es la cuenta que dice por qué un circuito se vuela despacio: el radio va
+ * con el **cuadrado** de la velocidad, así que ir un treinta por ciento más
+ * rápido pide casi el doble de sitio.
+ */
+export function radioDeViraje(
+  velocidad: number,
+  alabeo = ALABEO_DE_CIRCUITO,
+): number {
+  return (velocidad * velocidad) / (9.81 * Math.tan(alabeo));
 }
 
 /** Cada cuánto se cata el terreno del pasillo, m: la rejilla del relieve es de cuarenta y tres. */
@@ -265,9 +292,11 @@ export function techoDelPasillo(
   suelo: (x: number, z: number) => number,
   mano: Mano,
   escala = 1,
+  /** A qué se vuela el circuito, m/s. Ver `pasilloDelCircuito`. */
+  velocidad?: number,
 ): number {
   const v = verticesDelCircuito(runway, cotaDePista, mano, escala);
-  const w = pasilloDelCircuito(escala);
+  const w = pasilloDelCircuito(escala, velocidad);
   let techo = -Infinity;
   for (const [i, desde] of [
     [1, 0],
@@ -300,10 +329,11 @@ export function holguraDelCircuito(
   suelo: (x: number, z: number) => number,
   mano: Mano,
   escala = 1,
+  velocidad?: number,
 ): number {
   return (
     alturaDelCircuito(escala) -
-    techoDelPasillo(runway, cotaDePista, suelo, mano, escala)
+    techoDelPasillo(runway, cotaDePista, suelo, mano, escala, velocidad)
   );
 }
 
@@ -357,6 +387,11 @@ export function formaDelCircuito(
    * terreno solo pone la altura. Ver `manoPublicada`.
    */
   publicada?: Mano,
+  /**
+   * A qué vuela el circuito **este** avión, m/s: su `velocidadDeCircuito`.
+   * Es lo que ancha el pasillo que se mira. Ver `pasilloDelCircuito`.
+   */
+  velocidad?: number,
 ): FormaDelCircuito {
   const costumbre = alturaDelCircuito(escala);
   if (!suelo) return { mano: publicada ?? "izquierda", altura: costumbre };
@@ -364,7 +399,7 @@ export function formaDelCircuito(
     Math.max(
       costumbre,
       Math.ceil(
-        techoDelPasillo(runway, cotaDePista, suelo, mano, escala) +
+        techoDelPasillo(runway, cotaDePista, suelo, mano, escala, velocidad) +
           SOBRE_EL_TERRENO,
       ),
     );
@@ -521,8 +556,17 @@ export function crearCircuito(
   escala = 1,
   /** El lado que publica el AIP, si lo publica. Ver `manoPublicada`. */
   publicada?: Mano,
+  /** A qué vuela el circuito este avión, m/s. Ver `formaDelCircuito`. */
+  velocidad?: number,
 ): Circuito {
-  const forma = formaDelCircuito(runway, cotaDePista, suelo, escala, publicada);
+  const forma = formaDelCircuito(
+    runway,
+    cotaDePista,
+    suelo,
+    escala,
+    publicada,
+    velocidad,
+  );
   const vertices = verticesDelCircuito(
     runway,
     cotaDePista,

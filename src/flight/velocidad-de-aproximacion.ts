@@ -85,6 +85,59 @@ export function bandaDeVelocidad(
 }
 
 /*
+ * ## Y la del circuito
+ *
+ * Entre despegar y volver a bajar hay una vuelta entera, y ahí sí hay una
+ * velocidad correcta: la de circuito del avión, que es la de ir despacio y
+ * configurado alrededor de la pista. Ver `velocidadDeCircuito` en
+ * `aircraft.ts`. Nadie la pedía, y lo que se ve cuando nadie la pide es un
+ * reactor haciendo el viento en cola a doscientos treinta nudos, con tres
+ * kilómetros de radio de viraje, y metiéndose en el monte al girar.
+ *
+ * **Y la dice la instructora, no el avión.** Ningún avión lleva un aviso para
+ * «vas rápido para el circuito»; lo que lleva es el tope de sus flaps y de su
+ * tren, y de eso ya se ocupa `atenderALaSobrevelocidad`. Esta banda solo
+ * existe donde el circuito va dibujado —ver `Tier.circuito`—, que son los
+ * peldaños en los que el canto de cabina todavía no suena y quien habla es
+ * ella. Ver `Game.cantar`.
+ */
+
+/**
+ * Cuánto se puede pasar de la de circuito antes de avisar.
+ *
+ * **Lo que se recupera virando un poco más cerrado.** El pasillo del circuito
+ * contra el terreno se mide con el radio de viraje a la de circuito y a
+ * veinticinco grados —ver `pasilloDelCircuito`—, y treinta grados es lo más
+ * que se inclina un avión en un circuito sin que deje de ser un viraje
+ * normal. El radio va con el cuadrado de la velocidad y con la inversa de la
+ * tangente del alabeo, así que lo que cabe en el mismo radio virando a
+ * treinta es `√(tan 30° / tan 25°)`: un once por ciento más. Por encima de
+ * eso, el avión ya no cabe en el pasillo que el juego le ha mirado.
+ */
+export const MARGEN_DE_CIRCUITO =
+  Math.sqrt(Math.tan((30 * Math.PI) / 180) / Math.tan((25 * Math.PI) / 180)) -
+  1;
+
+/**
+ * En qué banda va la velocidad **volando el circuito**, o `null` si no hay
+ * nada que juzgar.
+ *
+ * Solo el lado rápido. Por abajo manda lo de siempre: la banda de
+ * aproximación en cuanto se baja hacia la pista, y el avisador de pérdida en
+ * cualquier sitio. Ir a Vref en el viento en cola no es ir mal; ir por debajo
+ * sí, y por eso ahí esta banda se calla y no pinta nada de verde.
+ */
+export function bandaDeCircuito(
+  s: Aproximando,
+  vref: number,
+  circuito: number,
+): BandaDeVelocidad {
+  if (s.enElSuelo) return null;
+  if (s.velocidad > circuito * (1 + MARGEN_DE_CIRCUITO)) return "rapido";
+  return s.velocidad >= vref ? "bien" : null;
+}
+
+/*
  * ## Y la de rodaje
  *
  * El mismo problema en el otro extremo del vuelo: los mandos están —gas y
@@ -191,11 +244,18 @@ export function bandaDeAhora(
   s: Aproximando & { readonly enLaPista: boolean },
   vref: number,
   corriendo: boolean,
+  /**
+   * La de circuito de este avión si se está volando el circuito, o `null`.
+   * Va la última: bajando hacia la pista manda la de aproximación, que es
+   * más estrecha y es la que decide la toma. Ver `bandaDeCircuito`.
+   */
+  circuito: number | null = null,
 ): BandaDeVelocidad {
   if (s.enElSuelo && s.enLaPista) return null;
   return (
     bandaDeRodaje(s.velocidad, s.enElSuelo, corriendo) ??
-    bandaDeVelocidad(s, vref)
+    bandaDeVelocidad(s, vref) ??
+    (circuito === null ? null : bandaDeCircuito(s, vref, circuito))
   );
 }
 
