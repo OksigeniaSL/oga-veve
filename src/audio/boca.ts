@@ -131,7 +131,24 @@ export const CADUCA_LA_ORDEN = 12000;
  * puede aplicar igual en los tres sitios que hablan.
  */
 export function cuantoAguanta(clave: string | undefined): number {
-  return clave?.startsWith("torre.") ? CADUCA_LA_ORDEN : CADUCA;
+  return clave?.startsWith("torre.") || explicaLaEspera(clave)
+    ? CADUCA_LA_ORDEN
+    : CADUCA;
+}
+
+/**
+ * **La instructora contando por qué se espera en la roja**, que aguanta lo
+ * que la orden a la que acompaña.
+ *
+ * No describe un instante, describe la roja: sigue siendo verdad mientras la
+ * luz no cambie, y al cambiar se retira —ver `alCambiarLaLuz` en
+ * `flight/turno-de-pista.ts`—. Con el reloj de los avisos no se oía nunca: se
+ * pide al encenderse la roja, justo detrás de la propia orden de la torre, y
+ * en Pettirossi caducaba mientras sonaban la orden y el «final» del que
+ * venía. La espera de tres minutos volvía a quedarse sin explicar.
+ */
+export function explicaLaEspera(clave: string | undefined): boolean {
+  return !!clave && /^vuelo\.esperaQue(?:Aterrice|Despegue)(?:~\d+)?$/.test(clave);
 }
 
 /**

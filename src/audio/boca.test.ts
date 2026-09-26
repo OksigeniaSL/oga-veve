@@ -754,6 +754,17 @@ describe("lo que deja de ser verdad se retira de la cola", () => {
     acabar["verde"]!();
     expect(dicho).toContain("cleared");
   });
+
+  it("y el porqué de la espera aguanta lo que la roja, no lo que un aviso", () => {
+    // La roja y el «final» del que viene suenan antes: más de CADUCA.
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("roja"), "torre.roja@yo");
+    b.pedir("normal", frase("por qué"), "vuelo.esperaQueAterrice");
+    reloj += CADUCA + 2000;
+    acabar["roja"]!();
+    expect(dicho).toEqual(["roja", "por qué"]);
+  });
 });
 
 describe("lo que espera turno, y lo que ya se dijo", () => {

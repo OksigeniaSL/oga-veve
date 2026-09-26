@@ -255,3 +255,36 @@ describe("al levantarte la orden de irte al aire", () => {
     expect(alLevantarLaOrden("noEstabilizada", "aterrizado", true)).toBe("nada");
   });
 });
+
+describe("tu permiso para aterrizar, solo mientras hay final", () => {
+  /*
+   * Con la boca ocupada el permiso espera turno hasta doce segundos, y en una
+   * final corta se tocaba antes: en Tenerife Norte sonó «cleared to land» con
+   * el avión ya rodando.
+   */
+  function conElPermisoEnCola() {
+    const dicho: string[] = [];
+    const m = montar(new Frecuencia(dados(1), "GCXO"), {
+      autorizarte: () =>
+        m.boca.pedir("mando", () => void dicho.push("cleared to land"), "torre.canario.clearedLand@yo"),
+    });
+    // Alguien tiene la palabra: el permiso se queda esperando turno.
+    m.boca.pedir("mando", () => void dicho.push("otra"), "torre.canario.roja@otro");
+    m.turno.pedirAterrizaje();
+    m.turno.paso("final");
+    return { ...m, dicho };
+  }
+
+  it("si se toca con el permiso en cola, ya no se dice", () => {
+    const { turno, boca } = conElPermisoEnCola();
+    expect(boca.espera("torre.canario.clearedLand@yo")).toBe(true);
+    turno.paso("aterrizado");
+    expect(boca.espera("torre.canario.clearedLand@yo")).toBe(false);
+  });
+
+  it("y en final sigue esperando su turno", () => {
+    const { turno, boca } = conElPermisoEnCola();
+    turno.paso("final");
+    expect(boca.espera("torre.canario.clearedLand@yo")).toBe(true);
+  });
+});

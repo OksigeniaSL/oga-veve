@@ -14,8 +14,13 @@
  * lo que hay que decir por las funciones de `AlrededorDelTurno`.
  */
 
-import type { Urgencia } from "../audio/boca";
-import { daLaPistaAOtro, esDeLaFrecuencia, esDeLaLampara } from "../audio/torre";
+import { explicaLaEspera, type Urgencia } from "../audio/boca";
+import {
+  daLaPistaAOtro,
+  esDeLaFrecuencia,
+  esDeLaLampara,
+  esTuPermisoDeAterrizar,
+} from "../audio/torre";
 import { ALTURA_DE_DECISION } from "./minimos";
 import {
   laQueSeDice,
@@ -92,11 +97,6 @@ export const EXPLICA_LA_ESPERA = {
   despega: "vuelo.esperaQueDespegue",
 } as const satisfies Record<PorQueEsperas, string>;
 
-/** Si esta frase, en la boca, es la instructora explicando la espera. */
-function explicaLaEspera(clave: string | undefined): boolean {
-  return !!clave && /^vuelo\.esperaQue(?:Aterrice|Despegue)(?:~\d+)?$/.test(clave);
-}
-
 /**
  * Lo que la torre te dice al levantarte la orden de irte al aire.
  *
@@ -138,6 +138,9 @@ export class TurnoDePista {
 
   /** Tu «cleared to land», esperando su momento. Ver `paso`. */
   private aterrizajeSinAutorizar = false;
+
+  /** Si en el paso anterior se estaba en final. Ver `paso`. */
+  private enFinal = false;
 
   /**
    * La orden que le quita la pista a otro, **mientras espera turno en la
@@ -347,10 +350,20 @@ export class TurnoDePista {
    */
   paso(fase: string): void {
     if (fase !== "final") {
+      /*
+       * **Y si ya se pidió y todavía espera turno en la boca, tampoco.** Con
+       * la boca ocupada el permiso aguanta doce segundos en la cola —ver
+       * `CADUCA_LA_ORDEN`—, y en una final corta eso es más que lo que queda
+       * hasta tocar: en Tenerife Norte sonó «cleared to land» con el avión ya
+       * rodando por la pista.
+       */
+      if (this.enFinal) this.de.boca.retirar(esTuPermisoDeAterrizar);
+      this.enFinal = false;
       this.aterrizajeSinAutorizar = false;
       this.numeroDos = null;
       return;
     }
+    this.enFinal = true;
     if (!this.aterrizajeSinAutorizar) return;
     if (this.numeroDos && this.de.radio.laTiene(this.numeroDos)) {
       const alto = this.de.alto();

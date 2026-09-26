@@ -171,6 +171,23 @@ export function daLaPistaAOtro(
   return !!clave && urgencia === "baja" && DA_LA_PISTA.test(clave);
 }
 
+/**
+ * Si esta frase es **tu permiso para aterrizar**: el «cleared to land» o la
+ * verde en vuelo. Lo tuyo va en `mando`; lo de los demás, en `baja`.
+ *
+ * Es lo que se retira al dejar la final. Ver `paso` en
+ * `flight/turno-de-pista.ts`.
+ */
+export function esTuPermisoDeAterrizar(
+  clave: string | undefined,
+  urgencia: string,
+): boolean {
+  return !!clave && urgencia !== "baja" && PERMISO_DE_ATERRIZAR.test(clave);
+}
+
+const PERMISO_DE_ATERRIZAR =
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:clearedLand|aterrizar)(?:\.[LCR])?(?:@|$)/;
+
 const DA_LA_PISTA =
   /^torre\.(?:[a-z]+\.)?(?:lineUpWait|clearedTakeoff|clearedLand)(?:\.[LCR])?(?:@|$)/;
 
