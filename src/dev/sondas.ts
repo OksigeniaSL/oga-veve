@@ -1319,6 +1319,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ponerDestino: (id: string) => juego.ponerDestinoParaBanco(id),
     /** Deja el depósito con estos kilos, para llegar a la reserva sin esperar. */
     ponerCombustible: (kilos: number) => juego.ponerCombustibleParaBanco(kilos),
+    /** Lo que se carga para el tramo de ahora. Ver `cargaDelTramoParaBanco`. */
+    cargaDelTramo: () => juego.cargaDelTramoParaBanco,
     /** Las células de tormenta de hoy. */
     celdasDeHoy: () => juego.celdasParaBanco,
     /** Los otros aviones de la ruta, con su nivel. */

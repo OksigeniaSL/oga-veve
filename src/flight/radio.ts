@@ -198,6 +198,34 @@ const CALLADAS = new Set([
   "percance",
 ]);
 
+/**
+ * Las fases en las que la pista es **tuya**: te la han dado o la estás usando.
+ *
+ * Desde que te autorizan a entrar hasta que despegas, y desde que te
+ * autorizan a aterrizar hasta que la dejas libre. Mientras tanto la torre no
+ * se la da a nadie más, que es lo único que una torre no hace nunca: en una
+ * final corta a Los Rodeos, con tu «cleared to land» ya dicho, autorizaba a
+ * otro a despegar; y con tu avión rodando por la pista, a otro a entrar en
+ * ella. La radio es ambiente, pero **lo que cuenta tiene que poder pasar**.
+ */
+export const PISTA_TUYA: ReadonlySet<string> = new Set([
+  "autorizado",
+  "alineando",
+  "back-taxi",
+  "despegando",
+  "comprometido",
+  "final",
+  "aterrizado",
+  "abandonando",
+]);
+
+/** Las órdenes de la torre que le dan la pista a alguien. */
+const DAN_LA_PISTA: ReadonlySet<string> = new Set([
+  "torre.lineUpWait",
+  "torre.clearedTakeoff",
+  "torre.clearedLand",
+]);
+
 /** Cuántos comparten la frecuencia. */
 export const CUANTOS = 2;
 
@@ -303,9 +331,17 @@ export class Frecuencia {
      * segundo, el avión de arriba se come el canal siempre que los dos estén
      * listos y el de abajo no llega a decir nunca la suya.
      */
+    /*
+     * **Y la pista que es tuya no se le da a nadie.** Quien espera una de esas
+     * órdenes sigue esperando —no pierde el turno, igual que arriba— y
+     * mientras tanto puede hablar el otro. Ver `PISTA_TUYA`.
+     */
+    const pistaTuya = PISTA_TUYA.has(m.fase);
     let quien: EnLaFrecuencia | null = null;
     for (const a of this.aviones) {
       if (a.falta > 0) continue;
+      if (pistaTuya && DAN_LA_PISTA.has(GUIONES[a.guion][a.paso]!.clave))
+        continue;
       if (!quien || a.falta < quien.falta) quien = a;
     }
     if (!quien) return null;

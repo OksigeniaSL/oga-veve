@@ -1052,10 +1052,31 @@ export class PlanDeVuelo {
     if (!ruta) return false;
     this.puestoElegido = puesto;
     this.vuelo.reiniciar(false);
+    this.trazadaAlTocar = false;
     this.destino = "espera";
     this.ultimaPos = puesto;
     this.ponerRuta(ruta);
     return true;
+  }
+
+  /**
+   * **Un tramo nuevo desde donde está el avión, pase lo que pase.**
+   *
+   * Es `reiniciarDesde` con una salida para cuando no puede: el avión se
+   * apagó lejos de toda calle —más de lo que el buscador engancha— o el campo
+   * no tiene dónde esperar. `empezarOtroTramo` no miraba lo que devolvía, y
+   * con `false` **la máquina de fases no se reiniciaba**: seguía siendo el
+   * vuelo de antes, ya volado, y la carrera de despegue siguiente se deducía
+   * como un aterrizaje. Sin raya desde aquí se puede vivir —la recoge
+   * `rehacerSiHaceFalta` en cuanto el avión se mueve—; con el vuelo viejo
+   * abierto, no.
+   *
+   * Devuelve si la raya sale de donde está el avión.
+   */
+  otroTramoDesde(donde: Punto, desdeLaPista = false): boolean {
+    if (this.reiniciarDesde(donde)) return true;
+    this.reiniciar(desdeLaPista);
+    return false;
   }
 
   private puestoDeSalida(): { ref: string | null; xy: Punto } | null {
@@ -1740,11 +1761,13 @@ export class PlanDeVuelo {
     const espera = this.esperaDeSalida();
     if (!puesto || !espera) {
       this.vuelo.reiniciar(true);
+      this.trazadaAlTocar = false;
       this.destino = null;
       this.ponerRuta(null);
       return false;
     }
     this.vuelo.reiniciar(false);
+    this.trazadaAlTocar = false;
     this.destino = "espera";
     this.ultimaPos = puesto.xy;
     this.ponerRuta(rodajeEntre(this.grafo, puesto.xy, espera));
@@ -2298,7 +2321,29 @@ export class PlanDeVuelo {
      * que es cuando la pregunta «¿por dónde vuelvo?» tiene una respuesta
      * buena.
      */
-    if (fase === "abandonando" && antes !== "abandonando") this.destino = null;
+    /*
+     * **Y una vez por aterrizaje, no una vez por frenada.**
+     *
+     * Esto rehacía la ruta cada vez que la fase **entraba** en «abandonando»,
+     * y se entra más de una vez: quien frena, rueda por la pista hacia su
+     * salida y se pasa de rápido vuelve a la carrera, y al frenar para girar
+     * vuelve a «abandonando». Ahí, a veinte metros de la boca, la salida que
+     * tenía delante ya no cuenta como «por delante con sitio para girar», así
+     * que ganaba la siguiente. En Fuerteventura, aterrizando por la 01, la
+     * raya saltó así de salida en salida hasta el final de la pista: 4,9 km
+     * rodados sobre 2,8 trazados. Frenar para tomar una salida la cambiaba por
+     * otra.
+     *
+     * Lo que había que rehacer era la ruta trazada en el aire, y esa se rehace
+     * una vez. Si después el avión se sale de ella, la recoge
+     * `rehacerSiHaceFalta`, que traza desde donde esté.
+     */
+    if (fase === "aterrizado" && (antes === "final" || antes === "en-vuelo"))
+      this.trazadaAlTocar = true;
+    if (fase === "abandonando" && this.trazadaAlTocar) {
+      this.trazadaAlTocar = false;
+      this.destino = null;
+    }
 
     if (quiere === this.destino) return;
     this.destino = quiere;
@@ -2958,6 +3003,12 @@ export class PlanDeVuelo {
    * los cientos de fotogramas que dura abandonar la pista, no una vez.
    */
   private faseAnterior: Fase | null = null;
+  /**
+   * Si la ruta de vuelta todavía es la que se trazó al tocar, con el avión
+   * en el aire. Es la única que se rehace al dejar la pista; ver
+   * `alCambiarDeFase`.
+   */
+  private trazadaAlTocar = false;
   /** Segundos desde el último trazado. Ver `rehacerSiHaceFalta`. */
   private desdeElUltimoTrazado = 0;
 

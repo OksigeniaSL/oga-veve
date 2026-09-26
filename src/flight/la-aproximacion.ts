@@ -737,8 +737,16 @@ export class LaAproximacion {
      * **Y no se canta el tramo si ya estás en final.** La lección de ahí en
      * adelante son los aros y el hilo de la senda, y una tarjeta diciendo
      * «girá a la izquierda» encima de eso sería mandar dos cosas a la vez.
+     *
+     * **Con la misma cuenta que apaga el dibujo**, y no solo con la fase. Aquí
+     * se miraba la fase a secas, y el dibujo ya había aprendido que «venir a
+     * aterrizar» es también venir por el embudo: con el circuito apagado, se
+     * cantaba su tramo. En una final recta a Los Rodeos salió «girá otra vez y
+     * empezá a bajar» con el avión alineado. Si el dibujo no está, su tramo no
+     * se canta; y si la torre manda irse al aire, se canta, que es cuando el
+     * circuito enseña el camino de vuelta.
      */
-    if (fase === "final" || fase === "aterrizado") return;
+    if (enLlegada) return;
     /*
      * **Ni con el aviso de terreno puesto.**
      *

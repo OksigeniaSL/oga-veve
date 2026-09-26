@@ -713,3 +713,45 @@ describe("anotar sin voz", () => {
     expect(sinVoz.anotarSinVoz("normal", "vuelo.despacio")).toBe(false);
   });
 });
+
+describe("lo que deja de ser verdad se retira de la cola", () => {
+  /*
+   * En el punto de espera la lámpara se pone roja y enseguida verde. El «hold
+   * short» de la roja seguía esperando turno con la luz ya verde, y detrás de
+   * él el «cleared for take-off» caducaba: la autorización propia no se oía.
+   */
+  it("se retira lo que se pide, y lo que suena sigue sonando", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("roja"), "torre.canario.roja@yo");
+    b.pedir("mando", frase("hold short"), "torre.canario.holdShort@yo");
+    b.pedir("baja", frase("otro"), "otro.enCola@el");
+    b.retirar((c) => c === "torre.canario.holdShort@yo");
+    b.pedir("mando", frase("verde"), "torre.canario.verde@yo");
+    b.pedir("mando", frase("cleared"), "torre.canario.clearedTakeoff.L@yo");
+    acabar["roja"]!();
+    acabar["verde"]!();
+    acabar["cleared"]!();
+    expect(dicho).toEqual(["roja", "verde", "cleared", "otro"]);
+    expect(b.descartadas.some((d) => d.includes("holdShort@yo: ya no es verdad"))).toBe(
+      true,
+    );
+  });
+
+  it("y la autorización llega antes de caducar", () => {
+    // Cuatro frases de cinco segundos: sin retirar la de la roja, la
+    // autorización espera quince y se cae; retirándola, espera diez.
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("mando", frase("roja"), "torre.canario.roja@yo");
+    b.pedir("mando", frase("hold short"), "torre.canario.holdShort@yo");
+    b.retirar((c) => c === "torre.canario.holdShort@yo");
+    b.pedir("mando", frase("verde"), "torre.canario.verde@yo");
+    b.pedir("mando", frase("cleared"), "torre.canario.clearedTakeoff.L@yo");
+    reloj += 5000;
+    acabar["roja"]!();
+    reloj += 5000;
+    acabar["verde"]!();
+    expect(dicho).toContain("cleared");
+  });
+});

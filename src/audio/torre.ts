@@ -108,3 +108,24 @@ export const DICE_LA_TORRE: Readonly<Record<string, string>> =
   Object.fromEntries(
     Object.entries(CLAVE_DE_TORRE).map(([dice, clave]) => [clave, dice]),
   );
+
+/**
+ * Si esta frase, pedida a la boca, es **la lámpara hablándote a vos**: la luz
+ * en castellano o la orden de pista en fraseología, con tu matrícula.
+ *
+ * Es lo que se retira de la cola cuando la lámpara cambia de color, porque lo
+ * que decía la de antes ya no es verdad. Se reconoce por la clave —con el
+ * habla y el lado que lleve— y por el peso: lo que la torre dice a los demás
+ * aviones va en `baja`, y lo tuyo nunca. Así vale también sin pack de voz,
+ * donde la clave no lleva la matrícula detrás. Ver `luzDeTorre` en `game.ts`.
+ */
+export function esDeLaLampara(
+  clave: string | undefined,
+  urgencia: string,
+): boolean {
+  if (!clave || urgencia === "baja") return false;
+  return DE_LA_LAMPARA.test(clave);
+}
+
+const DE_LA_LAMPARA =
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort|lineUpWait|clearedTakeoff|clearedLand|goAround)(?:\.[LCR])?(?:@|$)/;

@@ -26,6 +26,7 @@ import {
   Frecuencia,
   GUIONES,
   HUECO_DEL_CANAL,
+  PISTA_TUYA,
   RESPUESTA_MAXIMA,
   type Momento,
   type Transmision,
@@ -292,5 +293,48 @@ describe("todo lo que se pide está grabado", () => {
     }
     expect(ESPERA_ENTRE_VUELOS).toBeGreaterThan(ESPERA_MAXIMA);
     expect(ESPERA_MINIMA).toBeLessThan(ESPERA_MAXIMA);
+  });
+});
+
+describe("la pista que es tuya no se le da a nadie", () => {
+  /*
+   * Aterrizando en Los Rodeos, con el «cleared to land» propio ya dicho, la
+   * torre autorizó a otro a despegar; y con el avión rodando por la pista
+   * para dejarla, a otro a entrar en ella. Una torre de verdad no da la misma
+   * pista a dos a la vez.
+   */
+  const DAN_LA_PISTA = /^torre\.(lineUpWait|clearedTakeoff|clearedLand)$/;
+
+  it("mientras la usas, la torre no autoriza a nadie a usarla", () => {
+    for (const fase of PISTA_TUYA) {
+      for (let semilla = 1; semilla <= 20; semilla++) {
+        const radio = new Frecuencia(dados(semilla), "GCXO");
+        const oido = escuchar(radio, 600, { ...TRANQUILO, fase });
+        const dadas = oido.filter((d) => DAN_LA_PISTA.test(d.clave));
+        expect(dadas, `${fase}, semilla ${semilla}`).toEqual([]);
+      }
+    }
+  });
+
+  it("y en cuanto la dejas libre, se la da: nadie pierde su turno", () => {
+    let alguna = 0;
+    for (let semilla = 1; semilla <= 20; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      escuchar(radio, 300, { ...TRANQUILO, fase: "abandonando" });
+      const luego = escuchar(radio, 300, { ...TRANQUILO, fase: "a-plataforma" });
+      alguna += luego.filter((d) => DAN_LA_PISTA.test(d.clave)).length;
+    }
+    expect(alguna).toBeGreaterThan(0);
+  });
+
+  it("y con la pista libre, se dan como siempre", () => {
+    let alguna = 0;
+    for (let semilla = 1; semilla <= 20; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      alguna += escuchar(radio, 600).filter((d) =>
+        DAN_LA_PISTA.test(d.clave),
+      ).length;
+    }
+    expect(alguna).toBeGreaterThan(0);
   });
 });

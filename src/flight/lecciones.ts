@@ -103,6 +103,29 @@ export const LECCIONES: readonly Leccion[] = [
 /** La de siempre, para quien llega sin elegir. */
 export const LECCION_POR_DEFECTO = DESPEGUE;
 
+/**
+ * Si arrancar el motor abre un tramo nuevo desde donde está el avión.
+ *
+ * Después de apagar, sí: se vuelve a volar desde allí, que es lo que es. Y
+ * después de un vuelo que ya se dio por terminado, también —se cerró el panel
+ * del final y se sigue—.
+ *
+ * **Menos en la lección de rodar**, que se termina parada en la doble raya
+ * con el motor en marcha. Ahí apagar y volver a arrancar reabría la lección
+ * en el sitio, con el avión ya encima de la raya, y la volvía a dar por
+ * hecha sin moverse: un vuelo más en el cuaderno y una línea más en la
+ * bitácora por cada vez que se tocaba la llave. Esa lección empieza en el
+ * puesto; repetirla es «otro vuelo», que lleva el avión allí.
+ */
+export function arrancarAbreOtroTramo(
+  leccion: Leccion,
+  fase: string,
+  vueloTerminado: boolean,
+): boolean {
+  if (fase === "apagado") return true;
+  return vueloTerminado && !leccion.acabaEnLaEspera;
+}
+
 export function leccionPorId(id: string | null): Leccion {
   return LECCIONES.find((l) => l.id === id) ?? LECCION_POR_DEFECTO;
 }

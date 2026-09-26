@@ -42,7 +42,12 @@ import {
 } from "./flight/aircraft";
 import { dibujoDelGasTactil } from "./ui/pictogramas";
 import { InputManager } from "./flight/input";
-import { claveDeTorre, DICE_LA_TORRE, NOMBRA_LA_PISTA } from "./audio/torre";
+import {
+  claveDeTorre,
+  DICE_LA_TORRE,
+  esDeLaLampara,
+  NOMBRA_LA_PISTA,
+} from "./audio/torre";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   matriculaDe,
@@ -71,6 +76,7 @@ import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   enElEmbudoDeFinal,
+  vieneEnFinal,
   ENTRADA_EN_FINAL,
   GLIDE_SLOPE,
   SENDA_DESDE,
@@ -78,7 +84,11 @@ import {
   type PasoDeAro,
 } from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
-import { LECCION_POR_DEFECTO, type Leccion } from "./flight/lecciones";
+import {
+  arrancarAbreOtroTramo,
+  LECCION_POR_DEFECTO,
+  type Leccion,
+} from "./flight/lecciones";
 import {
   pedirMetar,
   TIEMPO_DE_CASA,
@@ -1170,6 +1180,18 @@ export class Game {
   /** En qué campo se cargó combustible por última vez. Ver `repostar`. */
   private campoDelRepostaje = "";
 
+  /**
+   * Y **para qué tramo**: de dónde a dónde. Ver `empezarOtroTramo`.
+   *
+   * Con el campo solo no basta. Volviendo a casa de Los Rodeos, al apagar se
+   * cargaba para lo que decía la ruta en ese momento —una vuelta al campo,
+   * porque al tocar tierra en casa el destino pasa a ser casa—, y al arrancar
+   * el tramo nuevo iba otra vez a Los Rodeos con el depósito de un circuito:
+   * treinta y dos kilos donde hacían falta cincuenta y dos. El campo era el
+   * mismo; el tramo, no.
+   */
+  private tramoDelRepostaje = "";
+
   /** Lo que llegó del hangar, para poder volver a ello en cada vuelo. */
   private readonly destinoPedido: string | undefined;
 
@@ -1251,11 +1273,19 @@ export class Game {
    */
   private empezarLaRutaEn(salida: string): void {
     this.salidaId = salida;
-    this.destinoId =
-      salida === this.scenario.id ? this.destinoDeSalida() : this.scenario.id;
+    this.destinoId = this.destinoDelTramoDesde(salida);
     this.desvioId = null;
     this.rutaAutorizada = "";
     this.despegoDe = "";
+  }
+
+  /**
+   * A dónde va un tramo que sale de `salida`: desde fuera, a casa; desde
+   * casa, al destino del hangar. Una sola cuenta para la ruta y para el
+   * depósito, que la necesitan los dos. Ver `tramoDelRepostaje`.
+   */
+  private destinoDelTramoDesde(salida: string): string {
+    return salida === this.scenario.id ? this.destinoDeSalida() : this.scenario.id;
   }
 
   /** Muda el plan de tierra a un campo, si no estaba ya en él. */
@@ -1287,7 +1317,13 @@ export class Game {
     this.mirarSiSeLlego();
     const aqui = this.elCampo();
     this.empezarLaRutaEn(aqui.id);
-    if (this.campoDelRepostaje !== this.salidaId) this.repostar();
+    // Si el depósito no se llenó para este tramo, se llena. Ver
+    // `tramoDelRepostaje`.
+    if (
+      this.tramoDelRepostaje !==
+      this.tramoParaCargar(this.salidaId, this.destinoId).clave
+    )
+      this.repostar();
     this.percance = null;
     this.laAproximacion.reiniciar();
     this.avisadoDeLaSenda = false;
@@ -1314,10 +1350,21 @@ export class Game {
     this.ventanilla.reiniciar();
     this.loMasAltoDelVuelo = 0;
     this.radio.reiniciar(aqui.escenario.aerodrome?.id);
-    // Y la raya, de aquí al punto de espera de este campo.
+    // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
+    // sale —apagado lejos de toda calle—, el vuelo de antes se cierra igual:
+    // ver `otroTramoDesde`.
     this.mudarElPlanA(aqui);
     const p = this.flight.state.position;
-    this.plan?.reiniciarDesde([p.x, -p.z]);
+    this.plan?.otroTramoDesde([p.x, -p.z], this.leccion.arranque === "pista");
+    /*
+     * **Y quien te guía en tierra, otra vez desde el principio.** El
+     * señalero y el coche del sígame eran los del final del tramo anterior:
+     * el coche seguía «apartado» —ya había cedido el paso al llegar al
+     * puesto— y la salida del tramo de vuelta empezaba con él parado a once
+     * metros de la raya en vez de delante del avión. Es lo mismo que hace
+     * `resetFlight`, con el avión donde está.
+     */
+    this.colocarSenalero();
     if (aqui.id !== this.campoMontado) this.montarElCampo(aqui);
     this.updateBadge();
   }
@@ -1379,6 +1426,21 @@ export class Game {
    */
   ponerCombustibleParaBanco(kilos: number): void {
     this.combustible = Math.max(0, kilos);
+  }
+
+  /**
+   * Lo que se carga para el tramo de ahora, para los bancos: con eso se mide
+   * si el depósito salió lleno para lo que se va a volar. Ver `repostar`.
+   */
+  get cargaDelTramoParaBanco(): number {
+    const { salida, destino } = this.tramoParaCargar(
+      this.salidaId,
+      this.destinoId,
+    );
+    return cargaParaElPlan(
+      this.aircraft,
+      tramosDelPlan(salida, destino, this.camposDelVuelo()),
+    );
   }
 
   /**
@@ -4632,6 +4694,22 @@ export class Game {
     this.ultimaLuzDeTorre = cual;
     if (!luz) return;
     /*
+     * **Y lo que decía la luz de antes, si todavía espera turno, se retira.**
+     *
+     * Al llegar al punto de espera la lámpara se pone roja y un momento
+     * después verde, y cada cambio son dos frases —la de la lámpara y su
+     * fraseología—. El «hold short» de la roja seguía en la cola cuando la luz
+     * ya estaba verde: se decía tarde y al revés de lo que pasaba, y empujaba
+     * detrás el «cleared for take-off», que caducaba esperando. En Gran
+     * Canaria, con Taguató, la autorización propia se caía en cada vuelo y la
+     * comprobación de la fraseología pasaba solo si la torre autorizaba a
+     * algún avión del ambiente.
+     *
+     * Apagarse no retira nada: la luz se apaga al usar el permiso, y el
+     * permiso sigue siendo verdad. Ver `Boca.retirar`.
+     */
+    BOCA.retirar(esDeLaLampara);
+    /*
      * **Y la dice como se dice aquí.** La torre no habla el castellano del
      * juego: habla el de su campo, y en Canarias eso quiere decir sin vosear y
      * con otra voz. La clave cambia con el habla porque el pack de voz busca
@@ -4910,7 +4988,10 @@ export class Game {
     this.hud.flash(t(c.engineOn ? "hud.engineOn" : "hud.engineOff"));
     // Arrancar después de haber volado y apagado es otro vuelo, y también
     // después de un vuelo que ya se dio por terminado. Ver `empezarOtroTramo`.
-    if (c.engineOn && (this.faseDeAhora === "apagado" || this.vueloTerminado))
+    if (
+      c.engineOn &&
+      arrancarAbreOtroTramo(this.leccion, this.faseDeAhora, this.vueloTerminado)
+    )
       this.empezarOtroTramo();
     /*
      * **Y con el motor parado en otro campo, se reposta para volver.**
@@ -4920,9 +5001,19 @@ export class Game {
      * el camión no se acerca a un avión con el motor en marcha, así que llega
      * cuando se apaga, que es cuando llega de verdad.
      */
+    /*
+     * Para el tramo que sale de aquí, que no es siempre el que dice la ruta
+     * al apagar: al volver a casa la ruta dice «vuelta al campo» hasta que se
+     * arranca, y el tramo siguiente va al destino del hangar. Ver
+     * `tramoDelRepostaje`.
+     */
     if (!c.engineOn && this.elCampoDeAhora().id !== this.campoDelRepostaje) {
       this.mirarSiSeLlego();
-      if (this.salidaId !== this.campoDelRepostaje) this.repostar();
+      if (this.salidaId !== this.campoDelRepostaje)
+        this.repostarPara(
+          this.salidaId,
+          this.destinoDelTramoDesde(this.salidaId),
+        );
     }
   }
 
@@ -6889,20 +6980,26 @@ export class Game {
        * final a propósito. Ver `fueraDeLaSenda`.
        *
        * **Y «final» es venir por el embudo, no solo lo que diga la fase.** La
-       * fase pide ir bajando, así que en cuanto el variómetro pasa por cero
-       * sale de «final» y tarda en volver: con la distancia ya medida contra
-       * la pista de allí, una final a Los Rodeos soltaba «too low» cinco
-       * veces en diez segundos, una por cada vez que el avión se nivelaba un
-       * instante. Es la misma lección que ya está escrita para el circuito:
-       * venir a aterrizar es venir por el embudo. Por debajo de la mitad de
-       * la senda sigue sin haber excusa.
+       * fase entra en «final» bajando, así que quien viene alineado y
+       * nivelado todavía no está en ella —y hasta que dejó de salirse al
+       * nivelarse, ver `SUBIDA_QUE_SACA_DE_FINAL` en `vuelo.ts`, una final a
+       * Los Rodeos soltaba «too low» cinco veces en diez segundos—. Es la
+       * misma lección que ya está escrita para el circuito: venir a aterrizar
+       * es venir por el embudo. Por debajo de la mitad de la senda sigue sin
+       * haber excusa.
+       *
+       * **Y por el embudo quiere decir hacia la pista**, alineado. El embudo
+       * solo mira la posición: cruzarlo de través por encima de media senda
+       * callaba el aviso de terreno entero y armaba el detector de
+       * frustradas. Ver `vieneEnFinal`.
        */
       enFinal:
         (this.faseDeAhora === "final" ||
-          enElEmbudoDeFinal(
+          vieneEnFinal(
             this.laPistaDeAhora(),
             this.flight.state.position.x,
             this.flight.state.position.z,
+            this.flight.state.heading,
           ) !== null) &&
         !fueraDeLaSenda(
           this.distanceToRunway(),
@@ -8177,16 +8274,33 @@ export class Game {
    * que es lo que pasa en cualquier aeropuerto. Ver `toggleEngine`.
    */
   private repostar(): void {
-    const campos = this.camposDelVuelo();
-    const salida = this.campoPorId(this.salidaId) ?? campos[0]!;
-    const destino = this.campoPorId(this.destinoId) ?? salida;
+    this.repostarPara(this.salidaId, this.destinoId);
+  }
+
+  /** Llenar para el tramo de `salidaId` a `destinoId`. Ver `repostar`. */
+  private repostarPara(salidaId: string, destinoId: string): void {
+    const { salida, destino, clave } = this.tramoParaCargar(
+      salidaId,
+      destinoId,
+    );
     this.combustible = cargaParaElPlan(
       this.aircraft,
-      tramosDelPlan(salida, destino, campos),
+      tramosDelPlan(salida, destino, this.camposDelVuelo()),
     );
     this.campoDelRepostaje = salida.id;
+    this.tramoDelRepostaje = clave;
     this.quemaDeAhora = 0;
     this.avisadoDeLaReserva = false;
+  }
+
+  /** Los dos campos de un tramo, como los carga el depósito, y su nombre. */
+  private tramoParaCargar(
+    salidaId: string,
+    destinoId: string,
+  ): { salida: CampoConNombre; destino: CampoConNombre; clave: string } {
+    const salida = this.campoPorId(salidaId) ?? this.camposDelVuelo()[0]!;
+    const destino = this.campoPorId(destinoId) ?? salida;
+    return { salida, destino, clave: `${salida.id}>${destino.id}` };
   }
 
   private avisarDeLaTormenta(): void {
@@ -9249,7 +9363,6 @@ export class Game {
      * que encontrar es la pista de delante o la calle de salida.
      */
     const campo = this.elCampo();
-    const [thresholdX, thresholdZ] = umbralEnUso(campo);
 
     /*
      * Con misión en curso, la aguja señala el objetivo; sin ella, la pista.
@@ -9307,6 +9420,29 @@ export class Game {
      * aviso del destino salía otra vez: cuatro veces en tres segundos.
      */
     const aDonde = this.elDestino();
+    /*
+     * **Y volando sin otro destino, la pista del tramo, no la más cercana.**
+     *
+     * Sin destino es una vuelta al campo: el de salida. Y decidir volverse a
+     * medio camino es eso —la tarjeta pasa por la vuelta al campo—, pero la
+     * aguja señalaba el umbral del campo **más cercano**, y pasada la mitad
+     * del camino el más cercano es la otra isla: de Gran Canaria hacia Los
+     * Rodeos, volviéndose al sesenta por ciento, señalaba Los Rodeos a
+     * cuarenta y cinco kilómetros en vez de Gando a sesenta y ocho. En casa
+     * no se notaba, porque ahí el más cercano es casa. Volverse tiene que
+     * ser lo más fácil del juego —renunciar es ganar—, y una aguja que señala
+     * al sitio del que te estás volviendo lo hace lo más difícil.
+     *
+     * En tierra y en final sigue mandando la pista que se tiene debajo o
+     * delante, que es la que hay que encontrar.
+     */
+    const volandoAlCampo =
+      aDonde === null &&
+      !this.flight.state.onGround &&
+      this.faseDeAhora !== "final";
+    const [thresholdX, thresholdZ] = umbralEnUso(
+      volandoAlCampo ? this.elCampo(this.destinoId) : campo,
+    );
     const llegandoAlDestino = aDonde !== null && aDonde.id === campo.id;
     const destino =
       !this.flight.state.onGround &&

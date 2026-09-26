@@ -12,7 +12,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { enElEmbudoDeFinal, ENTRADA_EN_FINAL } from "./runway-guide";
+import {
+  enElEmbudoDeFinal,
+  ENTRADA_EN_FINAL,
+  vieneEnFinal,
+} from "./runway-guide";
 import { verticesDelCircuito } from "./circuito";
 import { ESTIGARRIBIA } from "./scenarios";
 
@@ -107,5 +111,33 @@ describe("el embudo de final", () => {
     // Doscientos metros de desvío: a tres kilómetros se perdona, en corta no.
     expect(conDesvio(3000, 200)).not.toBeNull();
     expect(conDesvio(200, 200)).toBeNull();
+  });
+});
+
+describe("venir en final es venir hacia la pista", () => {
+  /*
+   * El embudo solo mira la posición. Para callar el aviso de terreno y armar
+   * el detector de frustradas eso no basta: cruzarlo de través, a tres
+   * kilómetros y por encima de media senda, callaba el aviso entero.
+   */
+  const h = (pista.heading * Math.PI) / 180;
+  const d = pista.length / 2 + 3000;
+  const x = pista.x - Math.sin(h) * d;
+  const z = pista.z + Math.cos(h) * d;
+
+  it("alineado y hacia el umbral, sí", () => {
+    expect(enElEmbudoDeFinal(pista, x, z)).toBeCloseTo(3000, 0);
+    expect(vieneEnFinal(pista, x, z, h)).toBeCloseTo(3000, 0);
+    // Corrigiendo un poco el viento sigue siendo final.
+    expect(vieneEnFinal(pista, x, z, h + 0.3)).not.toBeNull();
+  });
+
+  it("cruzándolo de través, no", () => {
+    expect(vieneEnFinal(pista, x, z, h + Math.PI / 2)).toBeNull();
+    expect(vieneEnFinal(pista, x, z, h - Math.PI / 2)).toBeNull();
+  });
+
+  it("ni alejándose de la pista por el mismo eje", () => {
+    expect(vieneEnFinal(pista, x, z, h + Math.PI)).toBeNull();
   });
 });

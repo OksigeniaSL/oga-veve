@@ -250,6 +250,40 @@ export function enElEmbudoDeFinal(
 }
 
 /**
+ * Lo más torcido que se puede venir respecto a la pista y seguir en final,
+ * grados. Treinta, los mismos que pide la fase «final» del plan de vuelo.
+ */
+export const TORCIDO_EN_FINAL = 30;
+
+/**
+ * ¿Viene en final **de verdad**: por el embudo y hacia la pista?
+ *
+ * El embudo solo mira dónde está el avión, y eso basta para lo que pregunta
+ * «¿esto es una toma?» con el avión ya bajando hacia el umbral. No basta para
+ * callar un aviso: cruzar el embudo de través, o volando al revés, a tres
+ * kilómetros del umbral y por encima de media senda, callaba el aviso de
+ * terreno entero —también el «sube» por bajar demasiado deprisa— y armaba el
+ * detector de frustradas, que después celebraba una subida cualquiera como
+ * si fuera renunciar a una toma. Una final se vuela alineado con la pista y
+ * hacia ella.
+ *
+ * `rumbo` en radianes, como el del estado del vuelo. Devuelve lo mismo que
+ * `enElEmbudoDeFinal`: los metros al umbral, o `null`.
+ */
+export function vieneEnFinal(
+  runway: { x: number; z: number; heading: number; length: number },
+  x: number,
+  z: number,
+  rumbo: number,
+): number | null {
+  const d = enElEmbudoDeFinal(runway, x, z);
+  if (d === null) return null;
+  let torcido = (((rumbo * 180) / Math.PI - runway.heading) % 360 + 540) % 360;
+  torcido -= 180;
+  return Math.abs(torcido) < TORCIDO_EN_FINAL ? d : null;
+}
+
+/**
  * Guía de aterrizaje viva.
  *
  * Los aros dejaron de ser decorado: saben cuál es el siguiente, se encienden

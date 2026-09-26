@@ -1324,16 +1324,27 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
    * el de casa: «terrain, pull up» a ciento veinte metros en una final bien
    * volada a Los Rodeos.
    *
-   * Se cuenta **cuándo salta**, no cuánto dura. Este piloto deja el
-   * variómetro en cero a ratos, y con eso la fase sale de «final» un segundo
-   * —pide ir bajando— y el aviso puede saltar en ese segundo, que es lo que
-   * pasa también en casa. Lo que no puede pasar es que salte con la fase en
-   * «final»: eso es no reconocer la final.
+   * Se cuenta **cuándo salta**, no cuánto dura. Lo que no puede pasar es que
+   * salte con la fase en «final»: eso es no reconocer la final. (Este piloto
+   * deja el variómetro en cero a ratos, y hasta que la fase dejó de salirse
+   * al nivelarse —ver `SUBIDA_QUE_SACA_DE_FINAL` en `vuelo.ts`— eso la
+   * sacaba de «final» un segundo cada vez.)
    */
   let terrenoEnFinalAlli = 0;
   let terrenoAntes = null;
   /** Cuánto se había hablado al cruzar, para mirar solo lo dicho allí. */
   let habladasAlCruzar = -1;
+  /**
+   * El tráfico que se vio allí, muestreado mientras se estuvo allí.
+   *
+   * Se miraba una sola vez, al final, y con nadie en el circuito en ese
+   * instante la comprobación pasaba sola: «lo más lejos» de una lista vacía
+   * era cero. Ver «y el tráfico que se oye vuela allí».
+   */
+  let traficoVistoAlli = 0;
+  let traficoMasLejosAlli = 0;
+  /** Segundos esperando a poder apagar con la llave. Ver la etapa «apagar». */
+  let esperandoParaApagar = 0;
   let dijoToca = false;
   let pidioFreno = false;
   let tiempoDeRodajeIda = 0;
@@ -1396,6 +1407,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
    */
   let acaboEnLaPista = false;
   const fases = new Set();
+  /*
+   * **Y cuándo se pasó de una a otra, desde que se toca tierra.**
+   *
+   * El conjunto de arriba dice por qué fases se pasó, no cuántas veces ni en
+   * qué orden, y lo que se rompió en Fuerteventura era justo eso: la fase iba
+   * y venía entre «aterrizado» y «abandonando» rodando por la pista, y cada
+   * vuelta rehacía la raya. Desde fuera, el parte decía lo mismo que un
+   * aterrizaje limpio. Con la velocidad por el suelo y por el aire y lo que
+   * queda al umbral, el vaivén se ve y se ve por qué.
+   */
+  const cambiosDeFase = [];
+  let faseDelCambio = null;
   /*
    * **Y todo lo que llegó a decir la torre.**
    *
@@ -1662,6 +1685,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     const ruta = o.ruta();
     const tarjeta = o.tarjeta();
     fases.add(fase);
+    // Sin la fase vacía, que no es una fase: es la tarjeta reponiéndose.
+    if (fase && fase !== faseDelCambio) {
+      if (toco > 0 && cambiosDeFase.length < 40)
+        cambiosDeFase.push(
+          `${t.toFixed(0)}s ${fase} · suelo ${s.groundSpeed.toFixed(0)} aire ${s.airspeed.toFixed(0)} m/s · umbral ${alUmbral(s).toFixed(0)} m`,
+        );
+      faseDelCambio = fase;
+    }
     /*
      * **La puerta se mira desde el fotograma en que se toca, y esto ya falló.**
      *
@@ -2049,6 +2080,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       linea.push(
         `${t.toFixed(0)}s ${etapa}/${fase} ${s.airspeed.toFixed(0)}m/s gas ${c.throttle.toFixed(1)} ${alto(s).toFixed(0)}m ${s.onGround ? "tierra" : "aire"} ${s.onRunway ? "enPista" : "fuera"} ${desvio(s).toFixed(0)}m umbral ${alUmbral(s).toFixed(0)}m coche ${alCocheAhora < 0 ? "—" : `${alCocheAhora.toFixed(0)}/${ladoDelCoche.toFixed(0)}`} v${aDonde} suelo ${s.heightAboveGround.toFixed(0)}m en ${s.position.x.toFixed(0)},${s.position.z.toFixed(0)} ${tarjeta.dibujo || "—"}`,
       );
+    }
+
+    if (enElDestino && i % 20 === 0) {
+      const p = pistaAhora();
+      for (const a of o.trafico?.() ?? []) {
+        traficoVistoAlli++;
+        traficoMasLejosAlli = Math.max(
+          traficoMasLejosAlli,
+          Math.round(Math.hypot(a.x - p.x, a.z - p.z)),
+        );
+      }
     }
 
     // ── El piloto ────────────────────────────────────────────────────────
@@ -2635,7 +2677,26 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     } else if (etapa === "apagar") {
       c.throttle = 0;
       c.brakes = 1;
-      c.engineOn = false;
+      /*
+       * **Con la llave, que es como se apaga.** Esto escribía `engineOn` en
+       * los mandos y el juego no se enteraba de que se había apagado: no
+       * pasaba por `toggleEngine`, que es donde llega el camión del
+       * combustible en el campo de llegada. Así que el banco no veía nunca el
+       * depósito con el que se sale de vuelta. Con el avión quieto y el gas
+       * ya cerrado se gira la llave; si en cinco segundos no se ha podido,
+       * se apaga a mano, que es lo que hacía antes.
+       */
+      esperandoParaApagar += paso;
+      if (
+        c.engineOn &&
+        porElSuelo(s) < 1 &&
+        (o.controles().throttle ?? 0) <= 0.05 &&
+        o.tocarMando
+      ) {
+        o.tocarMando("motor");
+        if (!o.controles().engineOn) c.engineOn = false;
+      }
+      if (esperandoParaApagar > 5) c.engineOn = false;
       /*
        * Y se le dan tres segundos al juego para contar el vuelo. La pantalla
        * de fin no sale en el mismo fotograma en que se para la hélice —tiene
@@ -2672,12 +2733,16 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       oaci: o.aerodromoDeAhora?.() ?? null,
       aguja: o.aguja?.() ?? null,
       traficoLejos: lejosDeAlli.length ? Math.max(...lejosDeAlli) : 0,
+      traficoVisto: traficoVistoAlli,
+      traficoMasLejos: traficoMasLejosAlli,
     };
   })();
 
-  return {
+
+  const resultado = {
     etapa,
     alli,
+    deVuelta: null,
     terrenoEnFinalAlli,
     // Dónde se cruzó y dónde se acabó, si el vuelo iba a otro campo.
     destino: destino
@@ -2705,6 +2770,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     seQuedoSinPared,
     vueltas: i,
     fases: [...fases].join(" "),
+    cambiosDeFase,
     torreDijo: [...(o.dichoTodo?.().torre ?? deLaTorre)],
     // Del historial de la boca, no del muestreo: ver `dichoTodo`.
     cabinaDijo: o.dichoTodo?.().instructor ?? [...deLaCabina],
@@ -2726,6 +2792,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
      * `audio/boca.ts`.
      */
     habladas: o.habladas?.() ?? [],
+    // Con qué letras te nombra la torre, para distinguir lo tuyo de lo de
+    // los demás en `habladas`.
+    misLetras: Object.entries(o.indicativo?.()?.deTorre ?? {})
+      .filter(([k]) => /^c\d/.test(k))
+      .map(([, v]) => v)
+      .join("-"),
     // Todo lo que dijo cada boca, para poder contarlo al final del parte.
     todoLoDicho: o.dichoTodo?.() ?? {},
     masRapidoEnPista: Math.round(masRapidoEnPista),
@@ -2823,6 +2895,58 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
      */
     flota: alPrincipioFlotaba,
   };
+  /*
+   * **Y el tramo de vuelta, que no lo arrancaba nadie.**
+   *
+   * El banco acababa en «apagado» en el campo de llegada, así que nada miraba
+   * lo que pasa al volver a arrancar allí: con qué depósito se sale, a dónde
+   * dice la ruta que se va y si el coche del sígame vuelve a guiar o se queda
+   * apartado donde lo dejó la llegada. Y la aguja al decidir volverse a medio
+   * camino, que señalaba al campo más cercano en vez de al de salida.
+   *
+   * Va lo último, con todo lo del vuelo ya leído: arrancar abre un tramo nuevo
+   * —cierra el panel del final, pone los galones a cero— y el avión acaba
+   * volando hacia casa.
+   *
+   * Se arranca con la llave, se deja un momento al juego y se mira. Después
+   * se pone el avión volando al sesenta por ciento del camino a casa, se
+   * decide volver —la vuelta al campo de salida del tramo— y se lee la aguja.
+   */
+  resultado.deVuelta = await (async () => {
+    if (!destino || o.fase() !== "apagado") return null;
+    const kilosAlApagar = o.combustible?.()?.kilos ?? null;
+    c.throttle = 0;
+    c.brakes = 1;
+    o.tocarMando?.("motor");
+    c.engineOn = true;
+    await new Promise((r) => setTimeout(r, 2500));
+    const ruta = o.rutaDelVuelo?.() ?? null;
+    const lectura = {
+      kilosAlApagar,
+      kilos: o.combustible?.()?.kilos ?? null,
+      carga: o.cargaDelTramo?.() ?? null,
+      ruta,
+      fase: o.fase(),
+      raya: (o.ruta?.() ?? []).length,
+      apartado: o.cocheApartado?.() ?? null,
+      aguja: null,
+      alUmbral: null,
+    };
+    const u = o.puntoDeFinalDe?.(0, destino);
+    const casa = ruta?.destino ? o.puntoDeFinalDe?.(0, ruta.destino) : null;
+    if (!u || !casa) return lectura;
+    const x = u.x + (casa.x - u.x) * 0.6;
+    const z = u.z + (casa.z - u.z) * 0.6;
+    const rumbo = (Math.atan2(casa.x - u.x, -(casa.z - u.z)) + 2 * Math.PI) % (2 * Math.PI);
+    o.ponerDestino?.(destino);
+    o.colocar(x, 1500, z, o.avion().aproximacion + 20, rumbo);
+    await new Promise((r) => setTimeout(r, 800));
+    lectura.aguja = o.aguja?.() ?? null;
+    const ahora = o.estado().position;
+    lectura.alUmbral = Math.round(Math.hypot(u.x - ahora.x, u.z - ahora.z));
+    return lectura;
+  })();
+  return resultado;
 }, [VECES, DESTINO]);
 fotografiando = false;
 await fotos;
@@ -3066,6 +3190,22 @@ const DE_UN_VUELO = [
  * inglés. Ver `luzDeTorre` en `game.ts`.
  */
 const conFraseologia = TRAMO === "taguato" || TRAMO === "taguato-ruvicha";
+/*
+ * **Y la autorización de despegue, la tuya.** Con que la oyera cualquiera
+ * bastaba, y la propia se caía en cada vuelo en Gran Canaria —«caducó
+ * esperando» detrás del «hold short» de la luz roja, que seguía en la cola con
+ * la luz ya verde—: la comprobación pasaba solo si la torre autorizaba a algún
+ * avión del ambiente. Sin voz no hay cola que mirar, y entonces vale lo de
+ * antes. Ver `luzDeTorre` en `game.ts`.
+ */
+const laPropia =
+  !(vuelo.habladas ?? []).length ||
+  (!!vuelo.misLetras &&
+    (vuelo.habladas ?? []).some(
+      (h) =>
+        /torre\.(?:[a-z]+\.)?clearedTakeoff/.test(h) &&
+        h.includes(`@${vuelo.misLetras}`),
+    ));
 comprobar(
   conFraseologia
     ? "la torre dice la fraseología del vuelo"
@@ -3081,9 +3221,12 @@ comprobar(
         (vuelo.torreDijo ?? []).some(
           (d) => d.replace(/\.[LCR]$/, "").replace(".canario.", ".") === c,
         ),
-      )
+      ) && laPropia
     : (vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
-  `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}` +
+  (conFraseologia && !laPropia
+    ? "tu «cleared for take-off» no llegó a oírse · "
+    : "") +
+    `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}` +
     /*
      * **Y lo que se cayó de la torre, todo, no los últimos seis.**
      *
@@ -3635,13 +3778,59 @@ if (DESTINO) {
     `cuaderno: ${JSON.stringify(a.aerodromos ?? [])} · allí: ${a.oaci}`,
     "aterrizar en Los Rodeos apuntaba Gran Canaria en «aeródromos visitados»",
   );
+  /*
+   * **Y visto de verdad.** Mirado una vez al final, sin nadie en el circuito
+   * en ese instante, esto pasaba solo. Ahora se muestrea mientras se está
+   * allí, y sin ninguna muestra no dice que sí: dice que no lo pudo ver.
+   */
   comprobar(
     "y el tráfico que se oye vuela allí",
-    (a.traficoLejos ?? 0) < 20000,
-    a.traficoLejos
-      ? `el más lejos, a ${a.traficoLejos} m de la pista de allí`
-      : "sin nadie en el circuito",
+    (a.traficoVisto ?? 0) > 0 && (a.traficoMasLejos ?? Infinity) < 20000,
+    (a.traficoVisto ?? 0) > 0
+      ? `${a.traficoVisto} muestras; el más lejos, a ${a.traficoMasLejos} m de la pista de allí`
+      : "no se vio a nadie allí: esto no se ha podido comprobar",
     "en Los Rodeos se oía el circuito de Gando, con los aviones a ciento trece kilómetros",
+  );
+
+  /*
+   * **Y al volver a arrancar allí, el tramo de vuelta.** Ver `deVuelta`.
+   */
+  const v = vuelo.deVuelta ?? {};
+  comprobar(
+    "y al volver a arrancar allí, la ruta es la de vuelta",
+    v.ruta?.salida === DESTINO && v.ruta?.destino === ESCENARIO && (v.raya ?? 0) > 1,
+    v.ruta
+      ? `${v.ruta.salida} → ${v.ruta.destino} · raya de ${v.raya} puntos · fase ${v.fase}`
+      : "no se llegó a arrancar",
+    "arrancar en Los Rodeos después de apagar dejaba el juego en «en el puesto», sin raya ni autorización",
+  );
+  comprobar(
+    "y sale con el depósito lleno para volver",
+    Number.isFinite(v.kilos) &&
+      Number.isFinite(v.carga) &&
+      Math.abs(v.kilos - v.carga) < 0.5,
+    Number.isFinite(v.kilos)
+      ? `${v.kilos?.toFixed(1)} kg · el tramo pide ${v.carga?.toFixed(1)} kg · al apagar había ${v.kilosAlApagar?.toFixed(1)} kg`
+      : "no se leyó el depósito",
+    "de vuelta en casa se arrancaba hacia Los Rodeos con el depósito de un circuito",
+  );
+  comprobar(
+    "y el coche del sígame vuelve a guiar",
+    v.apartado === false,
+    v.apartado === false ? "en marcha, delante" : `apartado: ${v.apartado}`,
+    "el coche seguía apartado a once metros de la raya, donde lo dejó la llegada",
+  );
+  const alDeSalida = v.alUmbral ?? NaN;
+  const agujaA = v.aguja?.metros ?? NaN;
+  comprobar(
+    "y volviéndose a medio camino, la aguja señala el campo de salida",
+    Number.isFinite(agujaA) &&
+      Number.isFinite(alDeSalida) &&
+      Math.abs(agujaA - alDeSalida) < 1500,
+    Number.isFinite(agujaA)
+      ? `señala a ${(agujaA / 1000).toFixed(1)} km · el umbral de ${DESTINO} está a ${(alDeSalida / 1000).toFixed(1)} km`
+      : "la aguja no dijo nada",
+    "decidiendo volver al sesenta por ciento, la aguja señalaba la otra isla, a la espalda",
   );
 }
 
@@ -3724,6 +3913,12 @@ if (fallos) {
         console.log(`      ${String(n).padStart(3)} ×  ${c}`);
     }
   }
+}
+
+// Y las fases de la llegada, en orden. Ver `cambiosDeFase`.
+if ((vuelo.cambiosDeFase ?? []).length) {
+  console.log("\n  las fases desde que se tocó tierra:\n");
+  for (const c of vuelo.cambiosDeFase) console.log(`      ${c}`);
 }
 
 const sinMedir = resultados.filter((r) => r.sinMedir).length;

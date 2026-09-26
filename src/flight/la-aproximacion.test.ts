@@ -18,6 +18,7 @@ import type { FlightState } from "./model";
 import { PYKASU } from "./aircraft";
 import { Reparto } from "../hechos";
 import type { Vaca } from "../world/vaca";
+import { crearCircuito } from "../world/circuito";
 import { GRAN_CANARIA, TENERIFE_NORTE } from "../world/scenarios";
 import { dondeCae } from "../world/entre-aerodromos";
 import { desplazarAerodromo } from "../world/aerodromo-desplazado";
@@ -167,5 +168,60 @@ describe("la aproximación en el campo de llegada", () => {
     s = enFinal(LOS_RODEOS, 1100, 59);
     paso(aproximacion, s);
     expect(dicho).toContain("minimos");
+  });
+});
+
+describe("el circuito no se canta en la final recta de allí", () => {
+  /*
+   * Llegando de Gran Canaria a Los Rodeos se viene recto a la 12 desde lejos.
+   * Con la fase parpadeando entre «final» y «en vuelo» se cantó «girá otra
+   * vez y empezá a bajar» con el avión alineado, porque el tramo se decidía
+   * mirando solo la fase. El dibujo del circuito ya estaba apagado: venir por
+   * el embudo es venir a aterrizar.
+   */
+  const circuito = crearCircuito(LOS_RODEOS.pista, COTA);
+
+  function tramos(fase: string, mandan: boolean): string[] {
+    const s = enFinal(LOS_RODEOS, 3000, 160, 0);
+    const hechos = new Reparto();
+    const dicho: string[] = [];
+    hechos.on("tramoDeCircuito", (d) => dicho.push(d.tramo));
+    const a = new LaAproximacion({
+      avion: () => PYKASU,
+      hechos,
+      vaca: { quitar: () => {} } as unknown as Vaca,
+      campoDeAhora: () => visto(LOS_RODEOS, s),
+    });
+    a.ordenes = "nunca";
+    if (mandan) {
+      // La torre la mandó aquí mismo, con la pista ocupada.
+      a.mandanFrustrar = true;
+      a.porqueMandaron = "pistaOcupada";
+      a.altoAlMandar = 160;
+    }
+    a.paso({
+      estado: s,
+      acercandose: true,
+      circuito,
+      faseDeAhora: fase,
+      techoDeNubes: null,
+      terrenoDicho: null,
+      vueloTerminado: false,
+    });
+    return dicho;
+  }
+
+  it("el sitio es de un tramo: si no, esto no probaría nada", () => {
+    const s = enFinal(LOS_RODEOS, 3000, 160, 0);
+    expect(circuito.tramoEn(s.position.x, s.position.z)).not.toBeNull();
+  });
+
+  it("alineado y por el embudo no se canta, diga lo que diga la fase", () => {
+    expect(tramos("en-vuelo", false)).toEqual([]);
+    expect(tramos("final", false)).toEqual([]);
+  });
+
+  it("pero con la orden de irse al aire, sí: es el camino de vuelta", () => {
+    expect(tramos("en-vuelo", true).length).toBe(1);
   });
 });
