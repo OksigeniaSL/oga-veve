@@ -21,6 +21,10 @@ Bajá suavecito
 Vas muy bajo
 Terreno. Subí
 Pérdida. Bajá el morro
+Mirá adelante: hay otro avión cerca
+Mirá a tu izquierda: hay otro avión cerca
+Mirá a tu derecha: hay otro avión cerca
+Hay otro avión cerca, detrás de vos
 Ya subís: metélo
 Bajás muy rápido
 Estás muy inclinado

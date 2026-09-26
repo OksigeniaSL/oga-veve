@@ -9,6 +9,8 @@ import { describe, expect, it } from "vitest";
 import {
   MILLA,
   dibujarLaCarta,
+  etiquetaDeAltura,
+  type Otro,
   RANGOS,
   enLaCarta,
   extremosDePista,
@@ -313,5 +315,126 @@ describe("el alternativo en la carta", () => {
 
   it("y sin alternativo no hay nada", () => {
     expect(dibujarLaCarta(base, 0, RADIO).alterno).toBeNull();
+  });
+});
+
+describe("el tráfico del TCAS en la carta", () => {
+  /*
+   * Lo que se pidió parado en Pettirossi: el que viene a aterrizar «incluso
+   * en el radar» tendría que verse. Y lo que se pidió despegando: un avión de
+   * frente y ni aviso ni radar ni nada.
+   */
+  const RADIO = 100;
+  const PISTA = { x: 0, z: 0, heading: 0, length: 3000 };
+  const otro = (
+    x: number,
+    z: number,
+    clase: "otro" | "cerca" | "aviso",
+    extra: Partial<Otro> = {},
+  ): Otro => ({ x, z, clase, relativa: 150, tendencia: 0, ...extra });
+
+  it("la altura, en centenas de pies y con su signo", () => {
+    expect(etiquetaDeAltura(152.4)).toBe("+05");
+    expect(etiquetaDeAltura(-365.8)).toBe("-12");
+    expect(etiquetaDeAltura(10)).toBe("00");
+    expect(etiquetaDeAltura(5000)).toBe("+99");
+  });
+
+  it("primero lo que avisa, luego lo cercano y luego el resto", () => {
+    const d = dibujarLaCarta(
+      {
+        x: 0,
+        z: 0,
+        pista: { ...PISTA, z: -1 * MILLA },
+        otros: [
+          otro(0, -0.5 * MILLA, "otro"),
+          otro(0, -0.8 * MILLA, "aviso"),
+          otro(0, -0.6 * MILLA, "cerca"),
+        ],
+      },
+      0,
+      RADIO,
+    );
+    expect(d.otros.map((o) => o.clase)).toEqual(["aviso", "cerca", "otro"]);
+  });
+
+  it("la etiqueta va encima si está más alto y debajo si está más bajo", () => {
+    const d = dibujarLaCarta(
+      {
+        x: 0,
+        z: 0,
+        pista: PISTA,
+        otros: [
+          otro(0, -500, "otro", { relativa: 300 }),
+          otro(0, 500, "otro", { relativa: -300 }),
+        ],
+      },
+      0,
+      RADIO,
+    );
+    expect(d.otros.find((o) => o.dy < 0)?.encima).toBe(true);
+    expect(d.otros.find((o) => o.dy > 0)?.encima).toBe(false);
+  });
+
+  it("el que avisa fuera del rango se pega al borde, sin etiqueta", () => {
+    const d = dibujarLaCarta(
+      {
+        x: 0,
+        z: 0,
+        pista: PISTA,
+        // Sin abrir el rango, para ver el medio símbolo del borde.
+        otros: [otro(3 * MILLA, 0, "aviso", { abreElRango: false })],
+      },
+      0,
+      RADIO,
+    );
+    const [o] = d.otros;
+    expect(o?.alBorde).toBe(true);
+    expect(o?.etiqueta).toBeNull();
+    expect(Math.hypot(o!.dx, o!.dy)).toBeCloseTo(RADIO, 6);
+    // Y en su marcación: al este, a la derecha.
+    expect(o!.dx).toBeGreaterThan(0);
+  });
+
+  it("y el que no avisa, fuera del rango, no se pinta", () => {
+    const d = dibujarLaCarta(
+      { x: 0, z: 0, pista: PISTA, otros: [otro(3 * MILLA, 0, "otro")] },
+      0,
+      RADIO,
+    );
+    expect(d.otros).toHaveLength(0);
+  });
+
+  it("en el punto de espera, el que viene a aterrizar abre el rango", () => {
+    /*
+     * Con la pista debajo la carta se queda en dos millas y el que viene por
+     * la final a cinco no cabe. Abriendo el rango, cabe.
+     */
+    const cerrada = dibujarLaCarta(
+      { x: 0, z: 0, pista: PISTA, otros: [otro(0, 5 * MILLA, "otro")] },
+      0,
+      RADIO,
+    );
+    expect(cerrada.rango).toBe(2);
+    expect(cerrada.otros).toHaveLength(0);
+    const abierta = dibujarLaCarta(
+      {
+        x: 0,
+        z: 0,
+        pista: PISTA,
+        otros: [otro(0, 5 * MILLA, "otro", { abreElRango: true })],
+      },
+      0,
+      RADIO,
+    );
+    expect(abierta.rango).toBe(10);
+    expect(abierta.otros).toHaveLength(1);
+    expect(abierta.otros[0]!.etiqueta).toBe("+05");
+  });
+
+  it("y TA ONLY solo si el TCAS lo está", () => {
+    const base = { x: 0, z: 0, pista: PISTA, otros: [] };
+    expect(dibujarLaCarta(base, 0, RADIO).soloTa).toBe(false);
+    expect(dibujarLaCarta({ ...base, soloTa: true }, 0, RADIO).soloTa).toBe(true);
   });
 });

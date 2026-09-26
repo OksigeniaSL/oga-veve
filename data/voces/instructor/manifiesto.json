@@ -402,6 +402,18 @@
     "vuelo.tormenta": {
       "ms": 2343
     },
+    "vuelo.trafico.delante": {
+      "ms": 2157
+    },
+    "vuelo.trafico.derecha": {
+      "ms": 1913
+    },
+    "vuelo.trafico.detras": {
+      "ms": 2022
+    },
+    "vuelo.trafico.izquierda": {
+      "ms": 2041
+    },
     "vuelo.trenEnElSuelo": {
       "ms": 2564
     },
@@ -883,6 +895,18 @@
     ],
     "vuelo.tormenta": [
       "vuelo.tormenta"
+    ],
+    "vuelo.trafico.delante": [
+      "vuelo.trafico.delante"
+    ],
+    "vuelo.trafico.derecha": [
+      "vuelo.trafico.derecha"
+    ],
+    "vuelo.trafico.detras": [
+      "vuelo.trafico.detras"
+    ],
+    "vuelo.trafico.izquierda": [
+      "vuelo.trafico.izquierda"
     ],
     "vuelo.trenEnElSuelo": [
       "vuelo.trenEnElSuelo"

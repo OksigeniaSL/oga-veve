@@ -3715,10 +3715,55 @@ button.motor__tecla::after {
   fill: var(--cabina-objetivo);
 }
 
-.cr__otro {
+/*
+ * ── Los tráficos del TCAS ──
+ *
+ * Las formas y los colores de cualquier cabina, que no se inventan: rombo
+ * hueco en cian para el que anda por ahí, rombo lleno para el que está a
+ * menos de seis millas y mil doscientos pies, y círculo ámbar para el que da
+ * aviso. La etiqueta y la flecha van del color de su símbolo. Cian y no
+ * blanco porque el símbolo propio de esta carta es amarillo y la pista blanca:
+ * el tráfico tiene que ser de otro color que las dos. Ver `flight/tcas.ts`.
+ */
+.cr__rombo {
   fill: none;
   stroke: var(--cabina-auxiliar);
   stroke-width: 2;
+}
+
+.cr__trafico--cerca .cr__rombo {
+  fill: var(--cabina-auxiliar);
+}
+
+.cr__ta {
+  fill: var(--cabina-precaucion);
+}
+
+.cr__tcas-altura {
+  fill: var(--cabina-auxiliar);
+  font-family: var(--cabina-fuente);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cr__tcas-flecha {
+  fill: none;
+  stroke: var(--cabina-auxiliar);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cr__trafico--aviso .cr__tcas-altura {
+  fill: var(--cabina-precaucion);
+}
+
+.cr__trafico--aviso .cr__tcas-flecha {
+  stroke: var(--cabina-precaucion);
+}
+
+.cr__solo-ta {
+  fill: var(--cabina-auxiliar);
 }
 
 /*
@@ -5954,6 +5999,18 @@ button.motor__tecla::after {
   fill: #5c1712;
   stroke: var(--tinta);
   stroke-width: 0.7;
+}
+
+/*
+ * El círculo del tráfico que avisa, **del mismo ámbar que en la carta**: la
+ * tarjeta y la pantalla de navegación enseñan la misma cosa y se tienen que
+ * reconocer como la misma. Con filo claro, por lo mismo que la luz del PAPI:
+ * que se distinga por la forma y el contraste además de por el color.
+ */
+.senal__ambar {
+  fill: var(--cabina-precaucion);
+  stroke: var(--tinta);
+  stroke-width: 0.6;
 }
 
 /*

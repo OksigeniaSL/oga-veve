@@ -88,6 +88,8 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   "sink rate": "cabina.sinkRate",
   "bank angle": "cabina.bankAngle",
   "stall, stall": "cabina.stall",
+  // El aviso de tráfico del TCAS, que entra con su toma. Ver `flight/tcas.ts`.
+  "traffic, traffic": "cabina.traffic",
   "autopilot disconnect": "cabina.autopilotDisconnect",
   minimums: "cabina.minimums",
 };

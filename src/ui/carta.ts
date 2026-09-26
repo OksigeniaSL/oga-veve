@@ -30,6 +30,7 @@
  */
 
 import { hastaElUmbralDeToma } from "../world/umbral-desplazado";
+import type { Clase } from "../flight/tcas";
 
 /** Una milla náutica, en metros. La unidad de distancia del aire. */
 export const MILLA = 1852;
@@ -158,8 +159,21 @@ export interface Mapa {
     /** Asfalto antes del umbral de aterrizaje en uso, m. */
     readonly desplazado?: number;
   } | null;
-  /** Y los otros aviones, los que se oyen por la radio. Ver `trafico.ts`. */
-  readonly otros: readonly { readonly x: number; readonly z: number }[];
+  /**
+   * Y los otros aviones, **los que ve el TCAS**. Ver `flight/tcas.ts`.
+   *
+   * Antes salían todos los que andaban por el mundo, a cualquier altura y
+   * todos con el mismo rombo. Una pantalla de navegación de verdad no sabe de
+   * nadie por su cuenta: el tráfico que pinta es el que le pasa el TCAS, con
+   * el símbolo de lo que es cada uno. En un avión sin TCAS esto va vacío.
+   */
+  readonly otros: readonly Otro[];
+
+  /**
+   * Si el TCAS trabaja sin maniobras, que la pantalla lo dice: **TA ONLY**.
+   * Ver `soloAvisa` en `flight/tcas.ts`.
+   */
+  readonly soloTa?: boolean;
 
   /**
    * El aeropuerto al que se va, si esta ruta lleva a otro.
@@ -207,6 +221,73 @@ export interface Mapa {
   }[];
 }
 
+/** Un tráfico, con lo que el TCAS dice de él. */
+export interface Otro {
+  readonly x: number;
+  readonly z: number;
+  /** Otro, cerca o con aviso. Ver `Clase` en `flight/tcas.ts`. */
+  readonly clase: Clase;
+  /** Su altura menos la mía, m. */
+  readonly relativa: number;
+  /** Sube (1), baja (−1) o ninguna de las dos a más de 500 ft/min. */
+  readonly tendencia: -1 | 0 | 1;
+  /**
+   * **Si la carta tiene que abrirse hasta que quepa.**
+   *
+   * El rango se elige solo —es la mano del piloto en el mando del rango— y
+   * hasta hoy solo miraba la pista. Parado en el punto de espera la pista
+   * cabe en dos millas, y el que viene a aterrizar a cinco millas quedaba
+   * fuera: «incluso en el radar» tendría que verse, y no se veía. Un piloto
+   * ahí abre el rango para mirar la aproximación, y un tráfico con aviso se
+   * mira siempre. Lo decide quien sabe la fase; ver `Game.elMapa`.
+   */
+  readonly abreElRango?: boolean;
+}
+
+/** Un tráfico puesto en la carta. */
+export interface OtroEnLaCarta {
+  readonly dx: number;
+  readonly dy: number;
+  readonly clase: Clase;
+  /**
+   * La altura relativa como la escribe un TCAS: centenas de pies con su
+   * signo, «+05», «-12». `null` cuando no se escribe, que es cuando va pegado
+   * al borde.
+   */
+  readonly etiqueta: string | null;
+  /** Si la etiqueta va encima del símbolo (está más alto) o debajo. */
+  readonly encima: boolean;
+  readonly tendencia: -1 | 0 | 1;
+  /**
+   * Si está fuera del rango y va pegado al borde.
+   *
+   * Solo pasa con los que tienen aviso, que son los que no pueden dejar de
+   * verse: el TCAS pinta **medio símbolo** en el canto de la pantalla, en su
+   * marcación, hasta que el piloto abre el rango o el tráfico entra. El medio
+   * sale solo, porque la carta se recorta al círculo y el símbolo va
+   * centrado justo en el canto.
+   */
+  readonly alBorde: boolean;
+}
+
+/**
+ * La altura relativa en centenas de pies, con su signo.
+ *
+ * Dos cifras siempre, que es lo que cabe en la etiqueta de un TCAS: +05 son
+ * quinientos pies por encima, -12 mil doscientos por debajo. El menos es el
+ * guion de siempre y no el signo tipográfico, porque así cuenta como cifra y
+ * sale desde el primer peldaño como las demás de la carta. Ver `esCifra` en
+ * `familia.ts`.
+ */
+export function etiquetaDeAltura(relativaMetros: number): string {
+  const cientos = Math.min(99, Math.round(Math.abs(relativaMetros) / 0.3048 / 100));
+  if (cientos === 0) return "00";
+  return `${relativaMetros > 0 ? "+" : "-"}${String(cientos).padStart(2, "0")}`;
+}
+
+/** Qué se pinta antes cuando no caben todos: primero lo que avisa. */
+const ORDEN: Record<Clase, number> = { aviso: 0, cerca: 1, otro: 2 };
+
 /**
  * Lo que hay que dibujar en la carta, ya resuelto en píxeles.
  *
@@ -224,7 +305,17 @@ export interface Dibujo {
     desde: { dx: number; dy: number };
     hasta: { dx: number; dy: number };
   } | null;
-  readonly otros: readonly { dx: number; dy: number }[];
+  /**
+   * Los tráficos que se pintan, **ya ordenados**: primero los que avisan,
+   * luego los cercanos y luego el resto, cada grupo del más cercano al más
+   * lejano. Así, si una superficie tiene sitio para menos de los que hay, se
+   * queda sin los que menos importan. Y solo los que caen dentro del disco,
+   * más los que avisan, que se pegan al borde.
+   */
+  readonly otros: readonly OtroEnLaCarta[];
+
+  /** Si se escribe «TA ONLY». Ver `Mapa.soloTa`. */
+  readonly soloTa: boolean;
 
   /**
    * El aeropuerto de destino, con las millas que faltan.
@@ -283,7 +374,10 @@ export function dibujarLaCarta(
   rumbo: number,
   r: number,
 ): Dibujo {
-  const lejos = m?.pista ? millasHasta(m.pista, m) : RANGOS[1]!;
+  let lejos = m?.pista ? millasHasta(m.pista, m) : RANGOS[1]!;
+  // Y lo que el piloto abriría el rango para ver. Ver `Otro.abreElRango`.
+  for (const o of m?.otros ?? [])
+    if (o.abreElRango) lejos = Math.max(lejos, millasHasta(o, m!));
   const rango = rangoPara(lejos);
   const por = pixelesPorMetro(rango, r);
   if (!m)
@@ -292,6 +386,7 @@ export function dibujarLaCarta(
       pista: null,
       eje: null,
       otros: [],
+      soloTa: false,
       destino: null,
       alterno: null,
       celdas: [],
@@ -369,9 +464,47 @@ export function dibujarLaCarta(
     rango,
     pista,
     eje,
-    otros: m.otros.map(aqui),
+    otros: traficoEnLaCarta(m, aqui, r),
+    soloTa: m.soloTa ?? false,
     destino,
     alterno,
     celdas,
   };
+}
+
+/**
+ * Los tráficos del TCAS, en píxeles y en el orden en que importan.
+ *
+ * Los que caen fuera del disco no se pintan —no se verían, y ocuparían el
+ * sitio de uno que sí—, salvo los que tienen aviso, que se pegan al canto en
+ * su marcación: medio círculo ámbar asomando es lo que enseña un TCAS de
+ * verdad cuando el que avisa está más lejos que el rango. Ver
+ * `OtroEnLaCarta.alBorde`.
+ */
+function traficoEnLaCarta(
+  m: Mapa,
+  aqui: (p: Punto) => { dx: number; dy: number },
+  r: number,
+): OtroEnLaCarta[] {
+  const puestos: { d: number; o: OtroEnLaCarta }[] = [];
+  for (const o of m.otros) {
+    const p = aqui(o);
+    const d = Math.hypot(p.dx, p.dy);
+    const dentro = d <= r;
+    if (!dentro && o.clase !== "aviso") continue;
+    puestos.push({
+      d,
+      o: {
+        dx: dentro ? p.dx : (p.dx / (d || 1)) * r,
+        dy: dentro ? p.dy : (p.dy / (d || 1)) * r,
+        clase: o.clase,
+        etiqueta: dentro ? etiquetaDeAltura(o.relativa) : null,
+        encima: o.relativa >= 0,
+        tendencia: o.tendencia,
+        alBorde: !dentro,
+      },
+    });
+  }
+  puestos.sort((a, b) => ORDEN[a.o.clase] - ORDEN[b.o.clase] || a.d - b.d);
+  return puestos.map((p) => p.o);
 }

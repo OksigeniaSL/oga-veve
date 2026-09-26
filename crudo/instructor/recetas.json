@@ -470,6 +470,18 @@
   "vuelo.tormenta": [
     "vuelo.tormenta"
   ],
+  "vuelo.trafico.delante": [
+    "vuelo.trafico.delante"
+  ],
+  "vuelo.trafico.derecha": [
+    "vuelo.trafico.derecha"
+  ],
+  "vuelo.trafico.detras": [
+    "vuelo.trafico.detras"
+  ],
+  "vuelo.trafico.izquierda": [
+    "vuelo.trafico.izquierda"
+  ],
   "vuelo.trenEnElSuelo": [
     "vuelo.trenEnElSuelo"
   ],

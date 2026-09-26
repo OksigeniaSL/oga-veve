@@ -571,6 +571,49 @@ const hito = (clase: string, lado: string): string =>
   icono(`${HACIA[lado] ?? ""}<g transform="translate(0 2) scale(1 0.86)">${FIGURA[clase] ?? ""}</g>`);
 
 /**
+ * El aviso de tráfico del TCAS: **tu avión, y dónde está el otro**.
+ *
+ * Tu avión en el centro, con el morro arriba, y el otro como lo pinta la
+ * pantalla de navegación en ese momento: el círculo ámbar en su sitio del
+ * reloj —las doce delante, las tres a la derecha— y, si va más alto o más
+ * bajo, un triángulo encima o debajo, que es donde el TCAS escribe su altura.
+ * Es la misma pantalla en pequeño, para que la tarjeta y la carta se lean
+ * igual; y a los cuatro años es «el otro está ahí», que es todo lo que hace
+ * falta para girar la cabeza. Ver `flight/tcas.ts`.
+ *
+ * Doce horas por tres alturas: treinta y seis tarjetas que son un dibujo.
+ */
+export type HoraDelReloj = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type AlturaDelTrafico = "arriba" | "nivel" | "abajo";
+const HORAS: readonly HoraDelReloj[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const ALTURAS: readonly AlturaDelTrafico[] = ["arriba", "nivel", "abajo"];
+
+const trafico = (hora: number, altura: AlturaDelTrafico): string => {
+  const a = (hora * 30 * Math.PI) / 180;
+  const x = +(12 + 7.4 * Math.sin(a)).toFixed(2);
+  const y = +(12 - 7.4 * Math.cos(a)).toFixed(2);
+  const s = altura === "arriba" ? -1 : 1;
+  const triangulo =
+    altura === "nivel"
+      ? ""
+      : `<path d="M${x} ${+(y + s * 4.6).toFixed(2)} L${x - 1.7} ${+(y + s * 2.7).toFixed(2)} L${x + 1.7} ${+(y + s * 2.7).toFixed(2)} Z" />`;
+  return icono(`
+    <circle cx="12" cy="12" r="7.4" fill="none" stroke="currentColor"
+            stroke-width="0.9" stroke-dasharray="1.4 1.6" opacity="0.4" />
+    <path transform="translate(12 12) scale(0.36) translate(-12 -12.5)"
+          d="M12 5 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" />
+    <circle class="senal__ambar" cx="${x}" cy="${y}" r="2.2" />
+    ${triangulo}
+  `);
+};
+
+const TRAFICO = Object.fromEntries(
+  HORAS.flatMap((h) =>
+    ALTURAS.map((a) => [`trafico-${h}-${a}`, trafico(h, a)] as const),
+  ),
+) as Record<`trafico-${HoraDelReloj}-${AlturaDelTrafico}`, string>;
+
+/**
  * Tirar: levantá el morro.
  *
  * Es la señal de Vr, y por eso es una acción y no un estado: la avioneta de
@@ -825,6 +868,7 @@ export const DIBUJOS = {
   "hito-barco-derecha": hito("barco", "derecha"),
   "hito-avion-izquierda": hito("avion", "izquierda"),
   "hito-avion-derecha": hito("avion", "derecha"),
+  ...TRAFICO,
 } as const;
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */
