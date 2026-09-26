@@ -22,8 +22,15 @@
  * sin volar.
  */
 
-/** Las tres clases que se reconocen desde el aire. Cada una tiene su dibujo. */
-export type ClaseDeHito = "montana" | "isla" | "ciudad";
+/**
+ * Las clases que se reconocen desde el aire. Cada una tiene su dibujo.
+ *
+ * Las tres primeras son sitios y salen de OpenStreetMap. Las dos últimas **se
+ * mueven** —un barco entre islas, otro avión— y no vienen de ningún fichero:
+ * las pone el juego mientras están a la vista. Ver `barcos.ts` y
+ * `trafico-de-las-islas.ts`.
+ */
+export type ClaseDeHito = "montana" | "isla" | "ciudad" | "barco" | "avion";
 
 export interface Hito {
   readonly nombre: string;
@@ -33,6 +40,14 @@ export interface Hito {
   readonly z: number;
   /** Su cota, si OpenStreetMap la trae. Las ciudades casi nunca. */
   readonly ele: number | null;
+  /**
+   * Hasta dónde se señala, si no es el alcance de siempre, m.
+   *
+   * Un volcán se ve a treinta kilómetros; un barco, a una docena, y otro
+   * avión a unos pocos. Señalar lo que no se distingue es mandar a mirar a la
+   * nada.
+   */
+  readonly alcance?: number;
 }
 
 /** Lo que el extractor deja escrito al lado de cada lista. */
@@ -94,7 +109,7 @@ export function queSeVe(
     const dx = hito.x - desde.x;
     const dz = hito.z - desde.z;
     const distancia = Math.hypot(dx, dz);
-    if (distancia > alcance || distancia < 1) continue;
+    if (distancia > (hito.alcance ?? alcance) || distancia < 1) continue;
     const relativo = anguloRelativo(desde.rumbo, rumboHacia(dx, dz));
     if (Math.abs(relativo) > HASTA_DONDE_SE_MIRA) continue;
     if (mejor && distancia >= mejor.distancia) continue;

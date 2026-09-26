@@ -109,4 +109,47 @@ describe("cuándo se señala lo que se ve", () => {
     const m = new LoQueSeVe([]);
     expect(correr(m, 30 * CADA)).toEqual([]);
   });
+
+  describe("y lo que se mueve", () => {
+    /** Lo mismo que `correr`, con barcos pasando. */
+    function conBarcos(m: LoQueSeVe, segundos: number, barcos: () => Hito[]) {
+      const dichos: string[] = [];
+      for (let t = 0; t < segundos; t += 0.5) {
+        const v = m.paso(0.5, CRUCERO, barcos);
+        if (v) dichos.push(`${v.lado}: ${v.hito.nombre}`);
+      }
+      return dichos;
+    }
+    const barco = (x: number, z: number): Hito => ({
+      nombre: "un barco",
+      clase: "barco",
+      x,
+      z,
+      ele: null,
+      alcance: 12_000,
+    });
+
+    it("un barco a la vista se señala, con las mismas reglas", () => {
+      const m = new LoQueSeVe([]);
+      expect(conBarcos(m, LO_PRIMERO - 5, () => [barco(3000, -8000)])).toEqual([]);
+      expect(conBarcos(m, 10, () => [barco(3000, -8000)])).toEqual([
+        "derecha: un barco",
+      ]);
+    });
+
+    it("pero no más allá de su alcance, que un barco a veinte kilómetros no se ve", () => {
+      const m = new LoQueSeVe([]);
+      expect(conBarcos(m, 30 * CADA, () => [barco(0, -20_000)])).toEqual([]);
+    });
+
+    it("y una vez por vuelo, aunque pasen tres", () => {
+      const m = new LoQueSeVe([]);
+      const dichos = conBarcos(m, 30 * CADA, () => [
+        barco(3000, -8000),
+        barco(-3000, -6000),
+        barco(1000, -4000),
+      ]);
+      expect(dichos).toHaveLength(1);
+    });
+  });
 });

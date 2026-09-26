@@ -32,6 +32,7 @@
     "librea": "node scripts/verificar-librea.mjs",
     "cabina": "node scripts/verificar-cabina.mjs",
     "carteles": "node scripts/verificar-carteles.mjs",
+    "mar": "node scripts/ver-mar-y-cielo.mjs",
     "quien-habla": "node scripts/verificar-quien-habla.mjs",
     "modelos": "node scripts/hacer-modelos.mjs",
     "cambio-de-avion": "node scripts/verificar-cambio-de-avion.mjs",

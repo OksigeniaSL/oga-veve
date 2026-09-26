@@ -231,6 +231,7 @@ import { missionsFor } from "./content/missions";
 import {
   conViento,
   oaciDe,
+  SCENARIOS,
   VALLE_CORDILLERA,
   vecesLejosDe,
   type Scenario,
@@ -420,6 +421,17 @@ import {
   sobreDondeSeToca,
 } from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
+import { enCanarias } from "./world/canarias";
+import { dondeCae } from "./world/entre-aerodromos";
+import { crearBarcos, luzDeLaEstela, type Barcos } from "./world/barcos";
+import {
+  TraficoDeLasIslas,
+  type Aeropuerto,
+} from "./flight/trafico-de-las-islas";
+import {
+  crearAvionesDeLasIslas,
+  type AvionesDeLasIslas,
+} from "./world/aviones-de-las-islas";
 import {
   celdasDe,
   cuantoSacude,
@@ -983,6 +995,71 @@ export class Game {
   private relojDeRuta = 0;
 
   /**
+   * **Y los barcos entre islas**, solo en Canarias. Ver `world/barcos.ts`.
+   *
+   * Se mueven con el mismo reloj que los de la ruta, más un adelanto que solo
+   * toca el banco: para fotografiar un barco en medio del canal no se puede
+   * esperar la hora y pico que tarda en salir.
+   */
+  private barcos: Barcos | null = null;
+  private adelantoDeLosBarcos = 0;
+
+  /**
+   * **Y los turbohélices de las islas**, cruzándose con quien vuela, solo en
+   * Canarias. Ver `flight/trafico-de-las-islas.ts`.
+   */
+  private islenos: TraficoDeLasIslas | null = null;
+  private avionesDeLasIslas: AvionesDeLasIslas | null = null;
+
+  /** Los barcos, para los bancos. */
+  get barcosParaBanco(): Barcos | null {
+    return this.barcos;
+  }
+
+  /** Los turbohélices de las islas, para los bancos. */
+  get islenosParaBanco(): TraficoDeLasIslas | null {
+    return this.islenos;
+  }
+
+  /** Para el banco: adelanta el reloj de los barcos, s. */
+  adelantarLosBarcos(segundos: number): void {
+    this.adelantoDeLosBarcos += segundos;
+  }
+
+  /**
+   * Para el banco: esconde o enseña los barcos y los aviones de las islas,
+   * para medir lo que cuestan con el resto del mundo igual.
+   */
+  mostrarLaVidaDelMar(si: boolean): void {
+    if (this.barcos) this.barcos.grupo.visible = si;
+    if (this.avionesDeLasIslas) this.avionesDeLasIslas.grupo.visible = si;
+  }
+
+  /** Para el banco: lanza ya un turbohélice que se cruce, si cabe alguno. */
+  lanzarUnIslenoParaBanco(): boolean {
+    if (!this.islenos) return false;
+    return this.islenos.lanzar(this.yoParaLasIslas());
+  }
+
+  /** Lo que el tráfico de las islas necesita saber de quien vuela. */
+  private yoParaLasIslas() {
+    const s = this.flight.state;
+    return {
+      x: s.position.x,
+      y: s.position.y,
+      z: s.position.z,
+      vx: s.velocity.x,
+      vz: s.velocity.z,
+      /*
+       * En crucero y con altura: seiscientos metros sobre el mar. Más abajo
+       * se está subiendo o bajando cerca de un campo, y lo que cruzaría ahí
+       * es el tráfico del circuito, que es de otro.
+       */
+      enCrucero: this.faseDeAhora === "en-vuelo" && s.position.y > 600,
+    };
+  }
+
+  /**
    * Lo que queda en los depósitos, en kilos.
    *
    * Se carga al empezar el vuelo con lo de la ruta más la reserva —ver
@@ -1397,6 +1474,8 @@ export class Game {
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
     this.ventanilla.reiniciar();
+    // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
+    this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
     this.radio.reiniciar(aqui.escenario.aerodrome?.id);
     // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
@@ -2426,6 +2505,43 @@ export class Game {
           medio: v.base.size / 2,
         })),
       );
+    }
+
+    /*
+     * **Y el mar y el cielo de Canarias, con vida de vez en cuando.**
+     *
+     * Pedido volando entre islas con el canal vacío: «que de vez en cuando se
+     * vea un ferri por ahí, le daría un punto. En Canarias y muy de vez en
+     * cuando», y «algún avión de los de aquí cruzando delante». Solo en
+     * Canarias, que es donde están, y sin depender de que el vuelo tenga
+     * destino: saliendo a dar una vuelta desde Los Rodeos también se ven los
+     * barcos de Santa Cruz.
+     *
+     * Los aeropuertos que el tráfico de las islas necesita son los de los
+     * escenarios, puestos con la misma proyección que coloca las islas
+     * vecinas: así «lejos de los campos» es lejos de los que se ven.
+     */
+    const aqui = this.scenario.aerodrome?.origin;
+    if (aqui && enCanarias(aqui)) {
+      this.barcos = crearBarcos(aqui, this.scenario.waterLevel);
+      this.scene.add(this.barcos.grupo);
+      const aeropuertos: Aeropuerto[] = [];
+      for (const s of SCENARIOS) {
+        const alli = s.aerodrome?.origin;
+        if (!alli || !enCanarias(alli)) continue;
+        const d = dondeCae(aqui, alli);
+        aeropuertos.push({
+          id: s.id,
+          x: d.x,
+          z: d.z,
+          cota: s.aerodrome?.elevationM ?? 0,
+        });
+      }
+      this.islenos = new TraficoDeLasIslas(aeropuertos, (x, z) =>
+        this.terrain.sampleHeight(x, z),
+      );
+      this.avionesDeLasIslas = crearAvionesDeLasIslas();
+      this.scene.add(this.avionesDeLasIslas.grupo);
     }
 
     /*
@@ -5356,6 +5472,8 @@ export class Game {
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
     this.ventanilla.reiniciar();
+    // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
+    this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
     this.updateBadge();
@@ -5720,6 +5838,19 @@ export class Game {
     this.pilotoSeSolto = Math.max(0, this.pilotoSeSolto - dt);
     this.ponerElCorredor();
     this.avionesDeRuta?.paso(this.relojDeRuta, this.flight.state.position);
+    /*
+     * Y los barcos y los turbohélices de las islas, también antes de la
+     * puerta del campo privado: el mar no depende de que haya torre.
+     */
+    this.barcos?.paso(
+      this.relojDeRuta + this.adelantoDeLosBarcos,
+      this.flight.state.position,
+      luzDeLaEstela(this.sky.sunDirection.y),
+    );
+    if (this.islenos) {
+      this.islenos.paso(dt, this.yoParaLasIslas());
+      this.avionesDeLasIslas?.poner(this.islenos.quienes());
+    }
     // La frecuencia es la del campo en el que se está, no la de casa. Ver
     // `montarElCampo`.
     if (this.elCampoMontado().escenario.aerodrome?.privado) return;
@@ -6647,6 +6778,8 @@ export class Game {
     BOCA.empezarDeCero();
     this.megafonia.reiniciar();
     this.ventanilla.reiniciar();
+    // Vuelo nuevo: el primer turbohélice vuelve a esperar su rato.
+    this.islenos?.reiniciar();
     this.loMasAltoDelVuelo = 0;
     this.instructor.callar();
     this.updateBadge();
@@ -9169,6 +9302,41 @@ export class Game {
    *
    * Cuándo se puede hablar lo decide `LoQueSeVe`; aquí solo se dice.
    */
+  /**
+   * Lo que se mueve y se puede señalar: los barcos que navegan y, desde una
+   * avioneta, el turbohélice que se cruza.
+   *
+   * Con el alcance de cada cosa: un barco con su estela se distingue a una
+   * docena de kilómetros; otro avión, a unos pocos. Y **el avión solo lo
+   * señala la instructora**: en un avión de pasaje nadie anuncia por la
+   * megafonía que pasa otro, que solo serviría para asustar al de atrás.
+   */
+  private loQueSeMueve(): Hito[] {
+    const lista: Hito[] = [];
+    for (const b of this.barcos?.quienes() ?? []) {
+      if (b.nudos < 5) continue;
+      lista.push({
+        nombre: t("hito.unBarco"),
+        clase: "barco",
+        x: b.x,
+        z: b.z,
+        ele: null,
+        alcance: 12_000,
+      });
+    }
+    if (!conPasaje(this.aircraft.mass))
+      for (const a of this.islenos?.quienes() ?? [])
+        lista.push({
+          nombre: t("hito.otroAvion"),
+          clase: "avion",
+          x: a.x,
+          z: a.z,
+          ele: null,
+          alcance: 6_000,
+        });
+    return lista;
+  }
+
   private mirarPorLaVentanilla(dt: number): void {
     const s = this.flight.state;
     const mirada = this.ventanilla.paso(dt, {
@@ -9188,7 +9356,7 @@ export class Game {
         this.comandante.hablando ||
         this.torre.hablando ||
         this.otroAvion.hablando,
-    });
+    }, () => this.loQueSeMueve());
     if (!mirada) return;
 
     /*
@@ -9201,7 +9369,13 @@ export class Game {
      */
     const conGente = conPasaje(this.aircraft.mass);
     const lado = t(`hito.${mirada.lado}` as TranslationKey);
-    const clave = `hito.${mirada.hito.clase}${conGente ? "" : ".vos"}`;
+    /*
+     * El barco se dice con la frase de los pueblos —«ahí abajo, a la
+     * derecha, un barco»— y no lleva una propia. Ver `hito.unBarco`.
+     */
+    const plantilla =
+      mirada.hito.clase === "barco" ? "ciudad" : mirada.hito.clase;
+    const clave = `hito.${plantilla}${conGente ? "" : ".vos"}`;
     const texto = t(clave as TranslationKey, {
       lado,
       nombre: mirada.hito.nombre,
@@ -11247,6 +11421,9 @@ export class Game {
       otros: [
         ...(this.trafico?.quienes() ?? []),
         ...(this.avionesDeRuta?.quienes() ?? []),
+        // Y el turbohélice de las islas que se cruza, que en la carta es un
+        // tráfico más: verlo ahí antes que por la ventana es mirar afuera.
+        ...(this.islenos?.quienes() ?? []),
       ],
       /*
        * **Y el aeropuerto de destino, si esta ruta lleva a otro.**

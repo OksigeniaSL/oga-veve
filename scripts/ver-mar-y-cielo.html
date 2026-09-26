@@ -1,0 +1,113 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>El mar y el cielo de Canarias</title>
+<style>
+  body { margin: 0; background: #d9e2e6; font: 13px system-ui, sans-serif; }
+  .fila { display: flex; align-items: center; }
+  .nombre { width: 170px; padding-left: 14px; color: #26302a; }
+  .nombre b { display: block; font-size: 14px; }
+  canvas { display: block; }
+</style>
+<div id="todo"></div>
+<script type="module">
+  /*
+   * Los turbohélices de las islas con sus tres libreas y los barcos de las
+   * cuatro líneas, de cerca y en tres vistas: lo que en el juego se ve a
+   * kilómetros, aquí a metros, para juzgar la forma. Ver `ver-mar-y-cielo.mjs`.
+   */
+  import {
+    AmbientLight,
+    Box3,
+    DirectionalLight,
+    Group,
+    Mesh,
+    MeshBasicMaterial,
+    MeshLambertMaterial,
+    PerspectiveCamera,
+    Scene,
+    Vector3,
+    WebGLRenderer,
+  } from "three";
+  import {
+    LIBREAS_DE_LAS_ISLAS,
+    fabricarTurbohelice,
+  } from "/src/world/aviones-de-las-islas.ts";
+  import { fabricarBarco, fabricarEstela } from "/src/world/barcos.ts";
+  import { LINEAS } from "/src/world/rutas-de-barcos.ts";
+
+  const VISTAS = [
+    { d: [1, 0.05, 0], nombre: "perfil" },
+    { d: [0, 1, 0.001], nombre: "planta" },
+    { d: [0.7, 0.45, -0.75], nombre: "tres cuartos" },
+  ];
+  const ANCHO = 320;
+  const ALTO = 160;
+  /*
+   * Un solo pintor para todas las vistas, copiado a un lienzo plano cada
+   * vez: veinticuatro contextos de WebGL son más de los que da el navegador,
+   * y los primeros se pierden en blanco.
+   */
+  const pintor = new WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  pintor.setSize(ANCHO, ALTO);
+
+  const pintar = (rotulo, detalle, fabricar, conMar) => {
+    const todo = document.getElementById("todo");
+    const fila = document.createElement("div");
+    fila.className = "fila";
+    const r = document.createElement("div");
+    r.className = "nombre";
+    r.innerHTML = `<b>${rotulo}</b>${detalle}`;
+    fila.appendChild(r);
+    for (const vista of VISTAS) {
+      const escena = new Scene();
+      escena.add(new AmbientLight(0xffffff, 0.75));
+      const sol = new DirectionalLight(0xffffff, 1.1);
+      sol.position.set(4, 9, -6);
+      escena.add(sol);
+      const cosa = fabricar(conMar);
+      escena.add(cosa.objeto);
+      const caja = new Box3().setFromObject(cosa.medida ?? cosa.objeto);
+      const tam = caja.getSize(new Vector3()).length();
+      const centro = caja.getCenter(new Vector3());
+      const camara = new PerspectiveCamera(30, ANCHO / ALTO, 0.5, 20000);
+      const d = new Vector3(...vista.d).normalize().multiplyScalar(tam * 1.9);
+      camara.position.copy(centro).add(d);
+      camara.lookAt(centro);
+      pintor.setClearColor(conMar ? 0x3d6475 : 0xd9e2e6);
+      pintor.render(escena, camara);
+      const lienzo = document.createElement("canvas");
+      lienzo.width = ANCHO;
+      lienzo.height = ALTO;
+      lienzo.getContext("2d").drawImage(pintor.domElement, 0, 0);
+      fila.appendChild(lienzo);
+    }
+    todo.appendChild(fila);
+  };
+
+  LIBREAS_DE_LAS_ISLAS.forEach((l, i) =>
+    pintar(`Turbohélice ${i}`, "ala alta y cola en T", () => ({
+      objeto: new Mesh(
+        fabricarTurbohelice(l),
+        new MeshLambertMaterial({ vertexColors: true }),
+      ),
+    }), false),
+  );
+  for (const linea of LINEAS) {
+    pintar(linea.id, `${linea.clase} · ${linea.eslora} m · ${linea.nudos} kt`, () => {
+      const g = new Group();
+      const casco = new Mesh(
+        fabricarBarco(linea),
+        new MeshLambertMaterial({ vertexColors: true }),
+      );
+      g.add(casco);
+      const estela = new Mesh(
+        fabricarEstela(linea.clase, linea.eslora, linea.manga, linea.nudos),
+        new MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false }),
+      );
+      estela.position.set(0, 0.25, linea.eslora / 2);
+      g.add(estela);
+      return { objeto: g, medida: casco };
+    }, true);
+  }
+  document.body.dataset.listo = "1";
+</script>

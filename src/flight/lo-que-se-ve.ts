@@ -109,7 +109,19 @@ export class LoQueSeVe {
    * un vuelo que pasa media hora en el suelo llegaría arriba con el hueco ya
    * gastado y soltaría la primera frase de golpe.
    */
-  paso(dt: number, momento: MomentoDeMirar): Mirada | null {
+  /**
+   * `deAhora` son los que **se mueven** —un barco, otro avión—, que no están
+   * en la lista del escenario porque no se quedan quietos. Se pide solo
+   * cuando toca mirar, y no en cada fotograma, que es cuando hace falta
+   * saber dónde están. Siguen las mismas cuatro reglas: en crucero, de uno en
+   * uno, sin pisar a nadie y **una vez por vuelo** cada nombre — un barco se
+   * señala una vez, no cada barco que pase.
+   */
+  paso(
+    dt: number,
+    momento: MomentoDeMirar,
+    deAhora?: () => readonly Hito[],
+  ): Mirada | null {
     if (!DE_CRUCERO.has(momento.fase) || momento.sobreElCampo < DESDE_ARRIBA) {
       this.reloj = 0;
       return null;
@@ -120,8 +132,9 @@ export class LoQueSeVe {
     // Y si hay alguien hablando, se espera: el reloj ya está cumplido, así que
     // sale en cuanto se calle. Esto es lo que menos urge de todo lo que suena.
     if (momento.alguienHabla) return null;
+    const moviles = deAhora?.() ?? [];
     const mirada = queSeVe(
-      this.hitos,
+      moviles.length ? [...this.hitos, ...moviles] : this.hitos,
       { x: momento.x, z: momento.z, rumbo: momento.rumbo },
       this.dichos,
     );

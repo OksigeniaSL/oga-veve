@@ -1418,6 +1418,34 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         x: Math.round(a.x),
         z: Math.round(a.z),
       })),
+    /**
+     * Los barcos entre islas: dónde está cada uno, a cuánto va y cuántos se
+     * dibujan. Vacío fuera de Canarias. Ver `world/barcos.ts`.
+     */
+    barcos: () => ({
+      hay: juego.barcosParaBanco !== null,
+      aLaVista: juego.barcosParaBanco?.aLaVista ?? 0,
+      lista: (juego.barcosParaBanco?.quienes() ?? []).map((b) => ({
+        id: b.id,
+        clase: b.clase,
+        x: Math.round(b.x),
+        z: Math.round(b.z),
+        rumbo: Math.round(b.rumbo),
+        nudos: Math.round(b.nudos * 10) / 10,
+      })),
+    }),
+    /** Adelanta el reloj de los barcos, para no esperar a que salgan. */
+    adelantarBarcos: (segundos: number) => juego.adelantarLosBarcos(segundos),
+    /** Los turbohélices de las islas que se cruzan ahora. */
+    islenos: () => ({
+      hay: juego.islenosParaBanco !== null,
+      cruzados: juego.islenosParaBanco?.cruzados ?? 0,
+      lista: juego.islenosParaBanco?.quienes() ?? [],
+    }),
+    /** Lanza ya uno que se cruce, si cabe. Devuelve si lo hubo. */
+    lanzarIsleno: () => juego.lanzarUnIslenoParaBanco(),
+    /** Esconde o enseña barcos y turbohélices, para medir lo que cuestan. */
+    vidaDelMar: (si: boolean) => juego.mostrarLaVidaDelMar(si),
     /** El piloto automático: ponerlo, quitarlo y ver si está puesto. */
     /** El alabeo de ahora, en radianes, para ver qué hace el piloto. */
     alabeo: () => bankAngleOf(juego.flight.state.orientation),
