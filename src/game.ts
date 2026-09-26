@@ -9727,6 +9727,21 @@ export class Game {
     while (relative < -Math.PI) relative += Math.PI * 2;
     this.agujaParaBanco = { metros: Math.hypot(dx, dz), relativo: relative };
 
+    /*
+     * Y en la vuelta al campo, el propio campo: GCLP, SGAS. Sin esto, al pasar
+     * por «vuelta al campo» la tarjeta se quedaba vacía y parecía rota.
+     */
+    const vuelta = aDonde === null ? this.campoPorId(this.destinoId) : null;
+    const delVuelo =
+      destino ??
+      aDonde ??
+      (vuelta
+        ? {
+            nameKey: vuelta.escenario.nameKey,
+            oaci: oaciDe(vuelta.escenario),
+            escenario: vuelta.escenario,
+          }
+        : null);
     this.hud.setHome(
       relative,
       Math.hypot(dx, dz),
@@ -9735,11 +9750,13 @@ export class Game {
         : destino
           ? "destino"
           : "pista",
-      destino
+      // El destino del vuelo va siempre, aunque la flecha señale otra cosa:
+      // ver `setHome`.
+      delVuelo
         ? {
-            nombre: t(destino.nameKey as TranslationKey),
-            oaci: destino.oaci,
-            escenario: destino.escenario,
+            nombre: t(delVuelo.nameKey as TranslationKey),
+            oaci: delVuelo.oaci,
+            escenario: delVuelo.escenario,
           }
         : undefined,
     );

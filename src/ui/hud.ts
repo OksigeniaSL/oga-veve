@@ -1625,7 +1625,14 @@ export class Hud {
           ? (nombre.split(" · ")[0] ?? nombre)
           : t(toObjective ? "hud.objective" : "hud.home");
     }
-    this.ponerDestino(modo === "destino" ? (destino ?? null) : null);
+    /*
+     * **Y el código del destino se ve siempre, no solo volando.** La flecha
+     * dice hacia dónde ir *ahora* —en tierra, la raya o la pista— y el código
+     * dice *a dónde* se va el vuelo. Solo salía en el aire, así que en el
+     * puesto tocar la tarjeta cambiaba el destino sin que se viera nada:
+     * «esto no funciona ahora».
+     */
+    this.ponerDestino(destino ?? null);
   }
 
   /**
