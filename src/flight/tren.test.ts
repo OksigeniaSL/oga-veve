@@ -9,6 +9,7 @@ import {
   TARDA_EL_TREN,
   avisaDelTren,
   luzDeTren,
+  luzRojaDelTren,
   mueveElTren,
   loQueCambiaElTren,
   sePuedeMeter,
@@ -86,6 +87,34 @@ describe("las luces no mienten", () => {
   it("y apagado cuando está dentro del todo", () => {
     expect(luzDeTren(0)).toBe("dentro");
     expect(luzDeTren(0.01)).toBe("moviendose");
+  });
+});
+
+describe("la luz roja del tren", () => {
+  it("apagada con el tren donde dice la palanca: abajo, o arriba", () => {
+    expect(luzRojaDelTren(1, true)).toBe(false);
+    expect(luzRojaDelTren(0, false)).toBe(false);
+  });
+
+  it("encendida mientras viaja, en los dos sentidos", () => {
+    // Saliendo: palanca abajo y el tren todavía a medio camino.
+    expect(luzRojaDelTren(0, true)).toBe(true);
+    expect(luzRojaDelTren(0.6, true)).toBe(true);
+    expect(luzRojaDelTren(0.99, true)).toBe(true);
+    // Y metiéndose, desde el primer centímetro: antes no se encendía hasta
+    // pasar de la mitad.
+    expect(luzRojaDelTren(0.99, false)).toBe(true);
+    expect(luzRojaDelTren(0.01, false)).toBe(true);
+  });
+
+  it("y subiendo con el tren metido no hay nada que decir", () => {
+    // Era el fallo: «dentro, bajo y lento» es toda la subida inicial de quien
+    // hace lo correcto. La altura y la velocidad no pintan nada aquí.
+    expect(luzRojaDelTren(0, false, false)).toBe(false);
+  });
+
+  it("pero viniendo a aterrizar sin él, sí, como la de un reactor", () => {
+    expect(luzRojaDelTren(0, false, true)).toBe(true);
   });
 });
 

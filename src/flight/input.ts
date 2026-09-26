@@ -215,8 +215,14 @@ export class InputManager {
    * Todos los caminos pasan por aquí —la tecla, el botón del HUD, el de la
    * cabina—, y por eso el cerrojo está aquí y no en cada botón. Devuelve si
    * la orden se aceptó.
+   *
+   * **Y en el avión de tren fijo no hay palanca que mover.** La tecla le daba
+   * la vuelta igual a la orden, y las patas seguían fuera: el mando decía
+   * «dentro» y el tren «fuera», que es exactamente el desacuerdo que enciende
+   * la luz roja en un avión que ni siquiera la lleva. Ver `luzRojaDelTren`.
    */
   alternarTren(): boolean {
+    if (!this.trenQueSeMete) return false;
     if (this.trenPedido && !sePuedeMeter(this.pesoEnLasRuedas)) {
       this.actions.trenTrabado?.();
       return false;
@@ -260,10 +266,7 @@ export class InputManager {
       this.controls.flaps = 0;
     }
     this.trenQueSeMete = trenRetractil;
-    if (!trenRetractil) {
-      this.trenPedido = true;
-      this.controls.tren = 1;
-    }
+    if (!trenRetractil) this.ponerElTrenFuera();
   }
 
   /** Si este avión tiene palanca de tren. Lo miran el HUD y la cabina. */
@@ -274,6 +277,20 @@ export class InputManager {
   /** Lo que se le ha pedido al tren, para el cuadro. */
   get trenQueSePide(): boolean {
     return this.trenPedido;
+  }
+
+  /**
+   * El tren fuera y la palanca abajo, de golpe: **un vuelo nuevo**.
+   *
+   * Es lo único que puede teletransportar el tren, porque no es un mando: es
+   * el avión en su puesto, que está con las patas fuera. Sin esto, meter el
+   * tren volando y reiniciar dejaba el avión apoyado en la pista con el tren
+   * dentro, la palanca arriba y las luces del cuadro apagadas — y el cerrojo
+   * de tierra no lo podía impedir, porque la orden se había dado en el aire.
+   */
+  ponerElTrenFuera(): void {
+    this.trenPedido = true;
+    this.controls.tren = 1;
   }
 
   /**

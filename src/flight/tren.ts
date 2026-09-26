@@ -118,6 +118,44 @@ export function luzDeTren(donde: number): LuzDeTren {
 }
 
 /**
+ * Si la luz roja del tren —la GEAR del panel de avisos— está encendida.
+ *
+ * ## Qué dice la de verdad
+ *
+ * Tres verdes es abajo y blocado; nada encendido es arriba y blocado; y el
+ * rojo sale cuando **el tren no está donde dice la palanca**: mientras viaja
+ * de un sitio a otro, o si se ha quedado a medias. En cuanto llega, se apaga.
+ * Y se enciende también con la otra condición que la enciende en cualquier
+ * reactor —la del manual del 737 lo dice así: tren no abajo y blocado, gases
+ * atrás y cerca del suelo—, que aquí es el mismo aviso de «sacá el tren» que
+ * ya dicen la voz y la tarjeta viniendo en final. Ver `avisaDelTren`.
+ *
+ * ## Lo que decía antes, y por qué estaba mal
+ *
+ * Miraba «tren dentro, por debajo de trescientos metros y más lento que vez y
+ * media la de aproximación». Eso es **toda la subida inicial** de quien hace
+ * lo correcto: se despega, se mete el tren y el avión trepa despacio durante
+ * minutos por debajo de esa altura. Contado jugando, con el JAZ 60 subiendo
+ * por mil cuatrocientos pies a ciento veinte nudos y la luz roja encendida:
+ * «¿qué tiene de malo mi tren de aterrizaje?». Nada: la luz castigaba haber
+ * metido el tren, que es justo lo que había que hacer. Y al revés, con el
+ * tren saliendo seguía apagada la primera mitad del camino, que es cuando el
+ * rojo de verdad está encendido.
+ *
+ * `pedido` es la palanca —ver `trenQueSePide` en `flight/input.ts`—, y en el
+ * suelo nunca queda en desacuerdo con el tren por culpa de la tecla: con el
+ * peso encima la palanca no se mueve. Ver `sePuedeMeter`.
+ */
+export function luzRojaDelTren(
+  donde: number,
+  pedido: boolean,
+  aterrizandoSinTren = false,
+): boolean {
+  const llego = pedido ? donde >= 1 : donde <= 0;
+  return !llego || aterrizandoSinTren;
+}
+
+/**
  * Si hace falta avisar de que se va a aterrizar sin tren.
  *
  * Bajo, bajando y con el tren que no está fuera. Es el aviso que lleva toda
