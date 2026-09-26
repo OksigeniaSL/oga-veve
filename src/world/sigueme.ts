@@ -13,11 +13,13 @@
  *
  * ## Va por la ruta, no persiguiendo al avión
  *
- * El coche no tiene volante ni piensa: se coloca **cuarenta y cinco metros por
- * delante de donde va el avión, medidos sobre la misma raya verde** que ya
- * calcula el plan de vuelo. Eso lo hace bien por construcción — nunca se sale
- * de la calle, nunca corta por la hierba, nunca se pierde— y deja el problema
- * interesante en un solo sitio: el plan.
+ * El coche no tiene volante ni piensa: se coloca **por delante de donde va el
+ * avión, medido sobre la misma raya verde** que ya calcula el plan de vuelo.
+ * Eso lo hace bien por construcción — nunca se sale de la calle, nunca corta
+ * por la hierba, nunca se pierde— y deja el problema interesante en un solo
+ * sitio: el plan.
+ *
+ * Cuánto por delante lo dice el avión, no un número: ver `adelantoDelSigueme`.
  *
  * Y no retrocede nunca. Un sígame que da marcha atrás porque el avión se ha
  * parado deja de ser un guía y pasa a ser un coche raro; si el avión se para,
@@ -40,6 +42,7 @@ import {
   SphereGeometry,
 } from "three";
 import { CRUCERO } from "./plan-de-vuelo";
+import { distanciaALaVista, type VistaAlFrente } from "./vista-al-frente";
 
 /** El amarillo de los vehículos de plataforma. */
 const CARROCERIA = 0xf0c53a;
@@ -51,15 +54,83 @@ const OSCURO = 0x23262c;
 const AMBAR = 0xff9c2a;
 
 /**
- * Cuánto va por delante del avión, medido sobre la ruta, m.
+ * Lo menos que va por delante del avión, medido sobre la ruta, m.
  *
  * Eran cuarenta y cinco, y con la cámara de persecución dieciséis metros por
  * detrás eso deja el coche a sesenta: un vehículo de metro y medio de alto a
  * esa distancia son veinticinco píxeles de amarillo sobre gris. Se le puede
  * seguir, pero hay que buscarlo. A treinta se ve sin buscarlo, y sigue estando
  * lo bastante lejos como para que uno vaya **detrás** y no encima.
+ *
+ * **Y es lo menos, no lo que va.** Treinta eran para una avioneta, y se
+ * quedaron para toda la flota: al JAZ 120 el morro le mide treinta y uno por
+ * delante del origen, así que el coche iba **pegado al radomo**, tapado por el
+ * avión desde detrás y dentro del ángulo muerto desde la cabina. «Hay aviones
+ * que tapan el coche.» Lo que va de verdad lo dice `adelantoDelSigueme`.
  */
 const ADELANTO = 30;
+
+/** El medio largo del coche, m: su caja de 4,3 m, a la escala a la que va. */
+const MEDIO_COCHE = (4.3 * 1.4) / 2;
+
+/**
+ * El aire que se deja entre el coche y lo que lo tapaba, rad.
+ *
+ * Un grado. Pegado a la raya de la visera, con las ruedas en el borde, el
+ * coche se ve pero parece que se lo va a comer el panel; un grado lo levanta
+ * una docena de píxeles en una tablet, que es lo que hace falta para leerlo
+ * **encima** del morro y no **en** el morro. Y cubre lo que el cálculo no ve:
+ * la cámara de detrás va suavizada y el avión, en el suelo, no va del todo
+ * horizontal.
+ */
+const MARGEN = Math.PI / 180;
+
+/**
+ * Lo más lejos que va, m.
+ *
+ * Ochenta metros son siete segundos de coche a velocidad de rodaje. Más allá,
+ * cuando el coche gira en un cruce el avión tarda tanto en llegar que ya no se
+ * sabe a qué giro se refería, y en una curva cerrada se va de la vista por el
+ * costado: deja de guiar. El que más pide de la flota, el JAZ 120, pide
+ * setenta; esto no lo toca, y está para que un modelo nuevo con un morro raro
+ * —o las cajas de respaldo, cuya deriva de cuatrimotor es un tabique de
+ * veintitrés metros— no se lleve el coche al horizonte.
+ */
+const LO_MAS_LEJOS = 80;
+
+/**
+ * Cuánto por delante del avión va el coche, medido sobre la ruta, m.
+ *
+ * **Donde el piloto de ese avión lo ve por encima del morro**, que es lo que
+ * hace el conductor de un sígame de verdad: con una avioneta va cerca, y con
+ * un avión de fuselaje ancho, cuyo piloto va sentado a seis metros del suelo y
+ * no lo ve hasta pasados treinta y tantos de sus ojos, va lejos. Y además donde se le ve desde la cámara de
+ * detrás, por encima del lomo del avión, que es desde donde se juega.
+ *
+ * Todo sale de la malla que se dibuja: los ojos, la visera, el morro y el lomo.
+ * Ver `vista-al-frente.ts`. Con los números de hoy, treinta metros para las
+ * avionetas y el turbohélice, unos cuarenta para el JAZ 90 y setenta para el
+ * JAZ 120.
+ *
+ * **Y no más lejos de lo que hace falta**: ni un metro más que lo que pide el
+ * que más pide de los dos. Más lejos, el coche dobla la esquina antes de que
+ * se sepa hacia dónde, y deja de guiar.
+ *
+ * La usa también la cámara de detrás, para saber hasta dónde mirar rodando.
+ * Un coche puesto donde se ve y una cámara que mira a otro sitio es un coche
+ * que no se ve.
+ */
+export function adelantoDelSigueme(avion: {
+  readonly ojo: { readonly y: number; readonly z: number } | null | undefined;
+  readonly vista: VistaAlFrente | null | undefined;
+  /** A cuánto del suelo va el origen del avión. */
+  readonly tren: number;
+  /** Dónde va la cámara de detrás. Ver `sitioDeLaCola`. */
+  readonly cola: { readonly y: number; readonly z: number };
+}): number {
+  const d = distanciaALaVista(avion, MEDIO_COCHE, MARGEN);
+  return Math.min(LO_MAS_LEJOS, Math.max(ADELANTO, d.cabina, d.cola));
+}
 
 /**
  * Lo más rápido que se mueve, m/s.
@@ -120,15 +191,6 @@ const TARDA_EN_APARTARSE = 2.5;
  */
 export const SITIO_PARA_LA_BICI = 8 + CRUCERO * TARDA_EN_APARTARSE;
 
-/**
- * A cuánto del final de la ruta se aparta solo, m.
- *
- * Porque el final de la ruta es donde para el avión —la doble raya, el
- * puesto—, y el coche está treinta metros antes: sin esto, quien lo sigue
- * llega hasta él y se le mete dentro. Un sígame de verdad tampoco se queda en
- * medio: te deja en el sitio y se va.
- */
-const CEDE_AL_FINAL = 60;
 
 /** Destellos por segundo de la baliza. */
 const DESTELLOS = 1.6;
@@ -397,10 +459,13 @@ export class Sigueme {
    * `esperaEn` es hasta dónde puede llegar, si hay un tope. Se usa en la
    * carrera de aterrizaje: **un sígame no se mete en una pista activa**, te
    * espera en la salida. Ver `paso` en `game.ts`.
+   *
+   * `avion.adelanto` es a cuánto tiene que ir por delante de ese avión. Ver
+   * `adelantoDelSigueme`; sin él, lo menos.
    */
   paso(
     dt: number,
-    avion: { x: number; z: number },
+    avion: { x: number; z: number; adelanto?: number },
     activo: boolean,
     cediendo: boolean,
     cota: (x: number, z: number) => number,
@@ -424,6 +489,7 @@ export class Sigueme {
     this.grupo.visible = true;
     this.t += dt;
 
+    const adelanto = Math.max(ADELANTO, avion.adelanto ?? 0);
     const alLlegar = avanceDelAvion ?? this.enLaRuta(avion);
     /*
      * **El tope, cuando lo hay: la boca de la calle de salida.**
@@ -441,8 +507,18 @@ export class Sigueme {
         // del morro. Puesto por delante sin más, el coche baja la pista
         // corriendo delante de un avión que aterriza, que es peor que no
         // estar: por una pista en uso no circula nadie.
-        Math.min(this.enLaRuta(esperaEn), hastaDondeLlega)
-      : Math.min(alLlegar + ADELANTO, hastaDondeLlega);
+        /*
+         * **Y metido en la calle lo que este avión pida de más.**
+         *
+         * La boca de la salida se eligió para el coche de treinta metros: está
+         * cuarenta más allá del borde de la pista, así que cuando el avión la
+         * deja el coche ya le va por delante lo de siempre. Al JAZ 120 eso le
+         * deja el coche a nueve metros del radomo, debajo del morro justo al
+         * girar hacia él. Lo que ese avión necesita por encima del coche de
+         * siempre, lo necesita también aquí.
+         */
+        Math.min(this.enLaRuta(esperaEn) + adelanto - ADELANTO, hastaDondeLlega)
+      : Math.min(alLlegar + adelanto, hastaDondeLlega);
     // Primer fotograma con esta ruta: se planta donde toca en vez de correr
     // hasta allí desde el kilómetro cero.
     if (this.s < 0) this.s = objetivo;
@@ -488,7 +564,21 @@ export class Sigueme {
        * asfalto.
        */
       (esperaEn !== null && this.enBici) ||
-      (!esperaEn && this.largo - alLlegar < CEDE_AL_FINAL);
+      /*
+       * **Y al final de la ruta se aparta solo.**
+       *
+       * Porque el final de la ruta es donde para el avión —la doble raya, el
+       * puesto—, y el coche se queda `NO_LLEGA` antes: sin esto, quien lo
+       * sigue llega hasta él y se le mete dentro. Un sígame de verdad tampoco
+       * se queda en medio: te deja en el sitio y se va.
+       *
+       * Y se aparta **en cuanto deja de poder ir por delante**, que es lo que
+       * eran los sesenta metros que había aquí: los treinta del final más los
+       * treinta del adelanto. Con un adelanto que ya no es siempre treinta,
+       * sesenta fijos dejaban al coche del JAZ 120 esperando quieto en medio
+       * de la calle hasta que el morro se le echaba encima.
+       */
+      (!esperaEn && this.largo - alLlegar < NO_LLEGA + adelanto);
     this.aparte = deja
       ? Math.min(1, this.aparte + dt / TARDA_EN_APARTARSE)
       : this.aparte;
