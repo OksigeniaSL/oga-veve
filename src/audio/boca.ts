@@ -137,6 +137,42 @@ export function cuantoAguanta(clave: string | undefined): number {
 }
 
 /**
+ * **Lo que le suelta la pista a otro**, dicho en la frecuencia: su «pista
+ * libre», su «cleared for take-off», su «go around». Va en `baja`, que es
+ * como va todo lo de los demás.
+ *
+ * ## Y esto no se tira nunca
+ *
+ * La frecuencia da por hecho lo que pide decir en cuanto lo pide: al pedir
+ * «pista libre», la pista queda libre para ella, y la torre ya te la puede
+ * dar. Y esta boca tira frases —caducan a los cuatro segundos, se caen de la
+ * cola, las barre un aviso urgente—, así que lo que se oía podía ser esto,
+ * medido en Pettirossi con el volcado de voces:
+ *
+ *     171,6 s  torre.clearedLand  a ZP-CHH
+ *     248,0 s  otro.pistaLibre    de ZP-CHH: caducó esperando
+ *     254,2 s  torre.clearedLand  a ti
+ *
+ * O sea, la torre dándole la misma pista a dos, de viva voz: «cleared to
+ * land» a otro, nunca anulado, y después el tuyo. Lo que pasó y lo que se oyó
+ * dejaron de ser lo mismo por una frase que se cayó.
+ *
+ * Una frase que suelta la pista **sigue siendo verdad** hasta que suena —la
+ * pista sigue libre, el otro sigue despegando—, así que no caduca, no se cae
+ * de la cola y no la barre nada. Y lo tuyo espera a que suene: ver
+ * `esperaAlguna` y `paso` en `flight/turno-de-pista.ts`.
+ */
+export function sueltaLaPista(
+  clave: string | undefined,
+  urgencia: string,
+): boolean {
+  return !!clave && urgencia === "baja" && SUELTA_LA_PISTA.test(clave);
+}
+
+const SUELTA_LA_PISTA =
+  /^(?:otro\.(?:[a-z]+\.)?pistaLibre|torre\.(?:[a-z]+\.)?(?:clearedTakeoff|goAround)(?:\.[LCR])?)(?:@|$)/;
+
+/**
  * **La instructora contando por qué se espera en la roja**, que aguanta lo
  * que la orden a la que acompaña.
  *
@@ -379,6 +415,13 @@ export class Boca {
     return this.cola.some((c) => c.clave === clave);
   }
 
+  /** Si alguna de las que esperan turno es de esta clase. Ver `sueltaLaPista`. */
+  esperaAlguna(
+    de: (clave: string | undefined, urgencia: Urgencia) => boolean,
+  ): boolean {
+    return this.cola.some((c) => de(c.clave, c.urgencia));
+  }
+
   /**
    * Pide la palabra. `hacer` es lo que habla, y se llama cuando le toque.
    *
@@ -449,8 +492,14 @@ export class Boca {
        * importante que esto, y repetirlo después sería contar el pasado.
        */
       // Lo urgente corta y **vacía la cola**: lo que esperaba era menos
-      // importante que esto y ya no describe lo que está pasando.
-      this.cola.length = 0;
+      // importante que esto y ya no describe lo que está pasando. Menos lo
+      // que suelta la pista, que sigue siendo verdad. Ver `sueltaLaPista`.
+      for (let i = this.cola.length - 1; i >= 0; i--) {
+        const c = this.cola[i]!;
+        if (sueltaLaPista(c.clave, c.urgencia)) continue;
+        this.apuntarDescarte(c.clave, "la barrió un urgente");
+        this.cola.splice(i, 1);
+      }
       this.reloj.cancelar();
       this.arrancar(urgencia, hacer, clave);
       return;
@@ -509,9 +558,18 @@ export class Boca {
     }
     this.cola.push(esta);
     if (this.cola.length <= PLAZAS_DE_ESPERA) return;
-    let peor = 0;
-    for (let i = 1; i < this.cola.length; i++) {
+    /*
+     * Y lo que suelta la pista no se echa: si no queda otra, la cola crece
+     * una plaza. Ver `sueltaLaPista`.
+     */
+    let peor = -1;
+    for (let i = 0; i < this.cola.length; i++) {
       const a = this.cola[i]!;
+      if (sueltaLaPista(a.clave, a.urgencia)) continue;
+      if (peor < 0) {
+        peor = i;
+        continue;
+      }
       const b = this.cola[peor]!;
       if (
         PESO[a.urgencia] < PESO[b.urgencia] ||
@@ -525,6 +583,7 @@ export class Boca {
       )
         peor = i;
     }
+    if (peor < 0) return;
     this.apuntarDescarte(this.cola[peor]!.clave, "no cabía en la cola");
     this.cola.splice(peor, 1);
   }
@@ -534,7 +593,9 @@ export class Boca {
     const ahora = this.reloj.ahora();
     // Lo caducado no se dice: contar el pasado es peor que callarse.
     for (let i = this.cola.length - 1; i >= 0; i--) {
-      if (ahora - this.cola[i]!.desde > cuantoAguanta(this.cola[i]!.clave)) {
+      const c = this.cola[i]!;
+      if (sueltaLaPista(c.clave, c.urgencia)) continue;
+      if (ahora - c.desde > cuantoAguanta(c.clave)) {
         this.apuntarDescarte(this.cola[i]!.clave, "caducó esperando");
         this.cola.splice(i, 1);
       }

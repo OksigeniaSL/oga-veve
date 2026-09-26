@@ -50,7 +50,17 @@ import {
 } from "three";
 import type { Silueta } from "../flight/flota";
 import { fabricarAeronave } from "./fabrica-de-aeronaves";
-import { verticesDelCircuito, type Mano, type Pista } from "./circuito";
+import {
+  fabricarTurbohelice,
+  LIBREAS_DE_LAS_ISLAS,
+} from "./aviones-de-las-islas";
+import type { EnElPlano, SueloDelTrafico } from "./suelo-del-trafico";
+import {
+  escalaDeCircuito,
+  verticesDelCircuito,
+  type Mano,
+  type Pista,
+} from "./circuito";
 import { desplazadoDe } from "./umbral-desplazado";
 import {
   ESPERA_ENTRE_VUELOS,
@@ -184,8 +194,172 @@ export interface Caminos {
   readonly entra: number;
   /** Metros de `llegada` hasta tocar la pista. */
   readonly toca: number;
-  /** Lo largo de `llegada`: al acabarlo, ya está fuera de la pista. */
+  /**
+   * Metros de `llegada` hasta dejar la pista libre. Sin calles es el final
+   * del camino, en el costado; con calles, el punto de la calle de salida en
+   * que el avión ya está fuera del asfalto de la pista, y el camino sigue
+   * rodando hasta su puesto. Ver `suelo-del-trafico.ts`.
+   */
   readonly fuera: number;
+  /** El que sale: del puesto a la espera, al eje, y arriba. */
+  readonly salida: Sitio[];
+  /**
+   * Con calles, los tramos de velocidad de verdad: dónde deja de frenar el
+   * que aterriza —la boca de la salida— y dónde se va al aire el que sale.
+   * Sin calles, `null`, y se hace lo de antes.
+   */
+  readonly enTierra: {
+    readonly boca: number;
+    readonly eje: number;
+    readonly despega: number;
+    readonly tipo: TipoDeTrafico;
+  } | null;
+}
+
+/**
+ * **Qué avión es el tráfico**, con los números de su tipo.
+ *
+ * «Y la avioneta ya podría ir por la pista. Por otro lado, uno más grande
+ * también molaría.» En Pettirossi o en Gando lo que se cruza uno de verdad
+ * son reactores de pasaje y turbohélices regionales, además de avionetas; en
+ * un campo de hierba, solo avionetas. Y cada uno **aterriza como su tipo**:
+ * la velocidad de final da el tamaño de su circuito —la misma cuenta que el
+ * tuyo, ver `escalaDeCircuito`—, y lo que corre en la pista sale de sus
+ * distancias de verdad, redondeadas.
+ */
+export interface TipoDeTrafico {
+  readonly id: "avioneta" | "bimotor" | "turbohelice" | "reactor";
+  readonly silueta: Silueta;
+  readonly envergadura: number;
+  /** Velocidad de aproximación, m/s. */
+  readonly aproximacion: number;
+  /** Dónde toca, contado desde el umbral de aterrizar, m. */
+  readonly toca: number;
+  /** Lo que tarda en frenar hasta velocidad de rodaje, m. */
+  readonly frena: number;
+  /** Carrera de despegue, m. */
+  readonly carrera: number;
+  /** La pista más corta en la que opera, m. */
+  readonly pistaMinima: number;
+}
+
+/*
+ * Los números, de fichas públicas de tipos de verdad y redondeados, que es lo
+ * que distingue uno de otro a la vista:
+ *
+ * - avioneta de ala alta (la clase del Cessna 172): 65 kt en final, toca a
+ *   ciento cincuenta metros y frena en otros doscientos; despega en trescientos.
+ * - bimotor ligero (la clase del Baron): 90 kt, ochocientos metros de pista.
+ * - turbohélice regional de ala alta (la clase del ATR 72, el que une las
+ *   islas): 110 kt, toca a trescientos y frena en seiscientos; despega en mil
+ *   cien y opera en pistas de mil doscientos, como El Hierro y La Gomera.
+ * - reactor de pasaje (la clase del A320): 135 kt, toca a cuatrocientos y
+ *   frena en mil; despega en mil ochocientos.
+ */
+export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
+  avioneta: {
+    id: "avioneta",
+    silueta: "ala-alta",
+    envergadura: 11,
+    aproximacion: 33,
+    toca: 150,
+    frena: 200,
+    carrera: 300,
+    pistaMinima: 0,
+  },
+  bimotor: {
+    id: "bimotor",
+    silueta: "bimotor-ala-baja",
+    envergadura: 11.5,
+    aproximacion: 46,
+    toca: 250,
+    frena: 350,
+    carrera: 550,
+    pistaMinima: 800,
+  },
+  turbohelice: {
+    id: "turbohelice",
+    silueta: "cola-en-t",
+    envergadura: 27,
+    aproximacion: 57,
+    toca: 300,
+    frena: 600,
+    carrera: 1100,
+    pistaMinima: 1200,
+  },
+  reactor: {
+    id: "reactor",
+    silueta: "reactor",
+    envergadura: 34,
+    aproximacion: 69,
+    toca: 400,
+    frena: 1000,
+    carrera: 1800,
+    pistaMinima: 1800,
+  },
+};
+
+/**
+ * **Qué tráfico opera en este campo**, por su código OACI, y en qué
+ * proporción. Lo que no está en la lista va por lo que da su pista.
+ *
+ * Mirado campo a campo: en Asunción salen reactores de pasaje a diario y hay
+ * aeroclub; en Ciudad del Este, reactores y aviación general; en Encarnación,
+ * Mariscal Estigarribia y Pedro Juan Caballero casi solo aviación general. En
+ * Canarias el regional de ala alta une todas las islas, y en las pistas
+ * largas entran además los reactores; El Hierro y La Gomera, con mil
+ * doscientos y mil quinientos metros, son solo del turbohélice. Cuatro
+ * Vientos es un aeródromo de escuelas.
+ */
+const OPERAN: Readonly<Record<string, readonly TipoDeTrafico["id"][]>> = {
+  SGAS: ["reactor", "reactor", "avioneta", "bimotor"],
+  SGES: ["reactor", "avioneta", "bimotor"],
+  SGEN: ["avioneta", "bimotor"],
+  SGME: ["avioneta"],
+  SGPJ: ["avioneta"],
+  GCLP: ["reactor", "turbohelice", "turbohelice", "avioneta"],
+  GCXO: ["turbohelice", "turbohelice", "reactor", "avioneta"],
+  GCTS: ["reactor", "reactor", "turbohelice"],
+  GCRR: ["reactor", "turbohelice", "turbohelice"],
+  GCFV: ["reactor", "turbohelice", "turbohelice"],
+  GCLA: ["turbohelice", "turbohelice", "reactor"],
+  GCHI: ["turbohelice"],
+  GCGM: ["turbohelice"],
+  LECU: ["avioneta", "avioneta", "bimotor"],
+};
+
+/** Los tipos que operan en un campo, ya filtrados por lo que da su pista. */
+export function tiposDelCampo(
+  oaci: string | null | undefined,
+  largoDePista: number,
+  privado = false,
+): readonly TipoDeTrafico[] {
+  if (privado) return [TIPOS.avioneta];
+  const lista = (oaci && OPERAN[oaci]) || [
+    "reactor",
+    "turbohelice",
+    "avioneta",
+  ];
+  const caben = lista
+    .map((id) => TIPOS[id])
+    .filter((t) => t.pistaMinima <= largoDePista);
+  return caben.length ? caben : [TIPOS.avioneta];
+}
+
+/**
+ * **Por dónde rueda un tipo en este aeródromo**, si tiene calles. Ver
+ * `suelo-del-trafico.ts`.
+ */
+export interface TierraDelTrafico {
+  readonly suelo: SueloDelTrafico;
+  /** La altura del suelo en un punto del mundo, m. */
+  readonly alto: (x: number, z: number) => number;
+  /**
+   * Los sitios de quien juega —dónde está y a qué doble raya va—, para no
+   * aparcarle encima ni esperar en su misma raya.
+   */
+  readonly evitar?: readonly EnElPlano[];
+  readonly tipo: TipoDeTrafico;
 }
 
 /** Lo que devuelve `paso` cuando nadie se ha ido al aire, que es casi siempre. */
@@ -212,6 +386,12 @@ export function trazar(
    * circuito que se dibuja, también cuando sube por una ladera.
    */
   altura?: number,
+  /**
+   * Las calles del aeródromo y el tipo que las rueda. Sin ellas —un campo
+   * inventado—, el que aterriza sale por el costado y el que despega espera
+   * a un lado de la cabecera, que es lo único que se puede hacer sin calles.
+   */
+  tierra?: TierraDelTrafico | null,
 ): Caminos | null {
   const v = verticesDelCircuito(runway, cota, mano, escala, altura);
   const [umbral, arriba, lejos, esquina, entrada] = v;
@@ -252,7 +432,7 @@ export function trazar(
    * **El que llega**: el tramo largo, la base, el final, la toma y la salida.
    * Es el circuito del juego con la carrera de frenado pegada al final.
    */
-  const llegada = [lejos, esquina, entrada, aterriza, toma, salida];
+  let llegada = [lejos, esquina, entrada, aterriza, toma, salida];
   /*
    * **Y la altura de decisión, en su senda.** Es la de verdad, la de los
    * mínimos —ver `ALTURA_DE_DECISION`—, y cae en el tramo recto de la entrada
@@ -270,7 +450,7 @@ export function trazar(
   const sinPermiso = [lejos, esquina, entrada, decision, arriba, lejos, esquina];
   const decide = largoDelCamino([lejos, esquina, entrada, decision]);
   /** **El que sale**: del aparcamiento a la espera, al eje, y arriba. */
-  const salidaDelCampo = [lejosDelCampo, espera, enElEje, arriba];
+  let salidaDelCampo = [lejosDelCampo, espera, enElEje, arriba];
   /** **Y el que se va al aire**: pasa sobre la pista y vuelve al circuito. */
   const alAire = [umbral, arriba, lejos];
 
@@ -284,7 +464,94 @@ export function trazar(
   const vuela = VUELA_A * escala;
   // La toma, de donde se cuenta hacia atrás: es el único punto del circuito
   // que está donde está y no admite discusión.
-  const enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza]);
+  let enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza]);
+  let fuera = largoDelCamino(llegada);
+  let hastaLaEspera = largoDelCamino([lejosDelCampo, espera]);
+  let hastaElEje = largoDelCamino([lejosDelCampo, espera, enElEje]);
+  let enTierra: Caminos["enTierra"] = null;
+
+  /*
+   * **Y con calles, por las calles.** Ver `suelo-del-trafico.ts`: el que
+   * aterriza toca donde toca su tipo, frena por el eje hasta la primera
+   * salida que le queda por delante y rueda por ella hasta un puesto; el que
+   * sale rueda de un puesto a una doble raya pintada, se alinea y corre lo que
+   * corre su tipo antes de irse al aire.
+   */
+  if (tierra) {
+    const t = tierra.tipo;
+    const sobre = (p: EnElPlano): Sitio => ({
+      x: p.x,
+      y: tierra.alto(p.x, p.z) + EN_TIERRA,
+      z: p.z,
+    });
+    const llega = tierra.suelo.llegada(t.toca + t.frena, tierra.evitar);
+    if (llega && llega.camino.length > 1) {
+      const tomaDeVerdad = sobre(en(desplazado + t.toca, 0, 0));
+      const rodando = llega.camino.map(sobre);
+      /*
+       * Si la única salida queda **por detrás** de donde ya rueda despacio
+       * —una pista con la calle en la cabecera de aterrizar—, se hace lo que
+       * se hace de verdad: seguir hasta cerca del final, dar la vuelta y
+       * volver por la pista hasta la calle.
+       */
+      const hastaFrenar = desplazado + t.toca + t.frena;
+      const vuelta =
+        llega.boca + desplazado < hastaFrenar
+          ? [sobre(en(Math.min(runway.length - 60, hastaFrenar), 0, 0))]
+          : [];
+      const hastaLaBoca = [
+        lejos,
+        esquina,
+        entrada,
+        aterriza,
+        tomaDeVerdad,
+        ...vuelta,
+      ];
+      llegada = [...hastaLaBoca, ...rodando];
+      enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza, tomaDeVerdad]);
+      const boca = largoDelCamino([...hastaLaBoca, rodando[0]!]);
+      fuera = boca + llega.pista;
+      enTierra = { boca, eje: 0, despega: 0, tipo: t };
+    }
+    const sale = tierra.suelo.salida(tierra.evitar);
+    if (sale && sale.camino.length > 1) {
+      const rodando = sale.camino.map(sobre);
+      const alineado = sale.camino[sale.camino.length - 1]!;
+      const adelante = unitario(umbral, arriba);
+      const despegue = sobre({
+        x: alineado.x + adelante.x * t.carrera,
+        z: alineado.z + adelante.z * t.carrera,
+      });
+      /*
+       * Y se va: no se queda colgado en la esquina del circuito esperando a
+       * que alguien lo vuelva a nombrar. Sigue subiendo en el rumbo de la
+       * pista hasta perderse, y ahí se retira.
+       */
+      const lejisimos: Sitio = {
+        x: arriba.x + adelante.x * 6000,
+        y: arriba.y + 500,
+        z: arriba.z + adelante.z * 6000,
+      };
+      const pasaArriba =
+        (arriba.x - despegue.x) * adelante.x +
+          (arriba.z - despegue.z) * adelante.z >
+        300;
+      salidaDelCampo = [
+        ...rodando,
+        despegue,
+        ...(pasaArriba ? [arriba] : []),
+        lejisimos,
+      ];
+      hastaLaEspera = sale.espera;
+      hastaElEje = sale.eje;
+      enTierra = {
+        boca: enTierra?.boca ?? 0,
+        eje: sale.eje,
+        despega: sale.eje + t.carrera,
+        tipo: t,
+      };
+    }
+  }
   /*
    * **Y la entrada en final, que es donde se canta «en final».**
    *
@@ -321,8 +588,6 @@ export function trazar(
     velocidad: RUEDA_A,
     tope,
   });
-  const hastaLaEspera = largoDelCamino([lejosDelCampo, espera]);
-  const hastaElEje = largoDelCamino([lejosDelCampo, espera, enElEje]);
 
   const marcas: Record<string, Marca> = {
     // Rodando a la cabecera: llega al punto de espera justo al hablar.
@@ -355,7 +620,7 @@ export function trazar(
      */
     "otro.pistaLibre": {
       camino: llegada,
-      metros: largoDelCamino(llegada),
+      metros: fuera,
       velocidad: RUEDA_A,
     },
     /*
@@ -377,7 +642,9 @@ export function trazar(
     decide,
     entra: enFinal,
     toca: enLaToma,
-    fuera: largoDelCamino(llegada),
+    fuera,
+    salida: salidaDelCampo,
+    enTierra,
   };
 }
 
@@ -427,8 +694,36 @@ function unitario(a: Sitio, b: Sitio): { x: number; z: number } {
  */
 export const SE_VA_A_LOS = (ESPERA_MAXIMA + ESPERA_ENTRE_VUELOS) / 2;
 
+/**
+ * **Lo que aguanta quieto sobre la pista un avión que viene a aterrizar**, s.
+ *
+ * Es la red de «la roja eterna». La frase de «pista libre» espera a que el
+ * avión dibujado haya salido de la pista —ver `todaviaNo`—, así que si ese
+ * avión dejara de avanzar por lo que fuera, la pista quedaría ocupada para
+ * siempre y quien espera en la roja no saldría nunca: «me tiene esperando por
+ * ese avión un buen rato, ¿me dejará salir?». Una torre de verdad no deja a
+ * nadie esperando indefinidamente: si el que ocupa la pista deja de moverse,
+ * lo saca de ahí. Aquí se retira el dibujo, y con él la espera.
+ *
+ * Quince segundos: más que cualquier parada legítima —ninguna, en la carrera
+ * y la salida— y mucho menos de lo que tarda un niño en pensar que el juego se
+ * ha colgado.
+ */
+const QUIETO = 15;
+
+/**
+ * Cómo se olvida a quien espera parado en una marca con tope —en el punto de
+ * espera o alineado—: mucho más despacio que a los demás, porque está
+ * esperando una orden que llegará. Pero se olvida: sin esto, uno cuyo vuelo se
+ * acabara en la frecuencia sin la orden se quedaría en la calle para siempre.
+ */
+const OLVIDO_ESPERANDO = 0.25;
+
 interface Volando {
   readonly grupo: Group;
+  /** Qué avión es, y los caminos de su tipo en este aeródromo. */
+  readonly tipo: TipoDeTrafico;
+  readonly caminos: Caminos | null;
   marca: Marca;
   recorrido: number;
   /** Cuánto lleva sin que nadie lo nombre. */
@@ -438,6 +733,8 @@ interface Volando {
    * quien se lo dice: ver `puedeAterrizar` en `flight/radio.ts`.
    */
   conPermiso: boolean;
+  /** Segundos que lleva sin avanzar mientras ocupa la pista. Ver `QUIETO`. */
+  quieto: number;
 }
 
 export interface Trafico {
@@ -480,7 +777,7 @@ export interface Trafico {
    * `flight/turno-de-pista.ts`.
    */
   enFinal(matricula: string): number | null;
-  /** Cuántos se ven, y dónde. Para el banco. */
+  /** Cuántos se ven, y dónde. Para el banco y para la carta. */
   quienes(): {
     matricula: string;
     x: number;
@@ -490,15 +787,42 @@ export interface Trafico {
     conPermiso: boolean;
     /** Si va por el camino de llegada, con permiso o sin él. */
     llegando: boolean;
+    /** Qué tipo de avión es. Ver `TIPOS`. */
+    tipo: TipoDeTrafico["id"];
   }[];
+  /**
+   * **Todos fuera.** Lo pide volver a empezar: la frecuencia empieza de cero
+   * con otras matrículas, y un dibujo de la partida anterior —la avioneta
+   * parada en la hierba junto al punto de espera, con la roja encendida— no
+   * puede sobrevivirla.
+   */
+  vaciar(): void;
   dispose(): void;
+}
+
+/** Lo que el juego le da al tráfico de este aeródromo, aparte de la pista. */
+export interface OpcionesDelTrafico {
+  /**
+   * Los tipos que operan aquí —ver `tiposDelCampo`—. Sin ellos, todos son la
+   * avioneta de `silueta` y vuelan el circuito de la escala que se diga, que
+   * es lo que hacía esto antes y lo que siguen usando las pruebas.
+   */
+  readonly tipos?: readonly TipoDeTrafico[];
+  /**
+   * Las calles del aeródromo, pedidas **al necesitarlas**: el primero de cada
+   * tipo que habla, que es cuando el juego ya sabe dónde está quien juega.
+   */
+  readonly tierra?: () => Omit<TierraDelTrafico, "tipo"> | null;
+  /** La mano y la altura del circuito de una escala. Ver `formaDelCircuito`. */
+  readonly forma?: (escala: number) => { mano: Mano; altura?: number };
 }
 
 /**
  * El tráfico de este aeródromo.
  *
- * `silueta` decide qué pinta tienen, y **no es la del avión que se vuela**:
- * eso sería un espejo. Es otro de la flota, para que se note que es otro.
+ * `silueta` decide qué pinta tiene la avioneta, y **no es la del avión que se
+ * vuela**: eso sería un espejo. Es otro de la flota, para que se note que es
+ * otro.
  */
 export function crearTrafico(
   runway: Pista,
@@ -507,54 +831,121 @@ export function crearTrafico(
   mano: Mano = "izquierda",
   escala = 1,
   altura?: number,
+  opciones: OpcionesDelTrafico = {},
 ): Trafico {
   const grupo = new Group();
   grupo.name = "trafico";
-  const caminos = trazar(runway, cota, mano, escala, altura);
-  const marcas = caminos?.marcas ?? {};
   const aviones = new Map<string, Volando>();
-  let geometria: BufferGeometry | null = null;
+  const geometrias = new Map<string, BufferGeometry>();
+  const conTipos = !!opciones.tipos?.length;
+  const tipos: readonly TipoDeTrafico[] = conTipos
+    ? opciones.tipos!
+    : [{ ...TIPOS.avioneta, silueta }];
+  const caminosPorTipo = new Map<string, Caminos | null>();
 
-  const cuerpo = (): Object3D => {
+  /**
+   * Los caminos de un tipo, hechos la primera vez que hacen falta. Cada tipo
+   * vuela **su** circuito —el de un reactor es el doble que el de una
+   * avioneta, como el tuyo—, por el mismo lado y con la misma regla de
+   * altura que el que se te dibuja a ti.
+   */
+  const caminosDe = (tipo: TipoDeTrafico): Caminos | null => {
+    if (caminosPorTipo.has(tipo.id)) return caminosPorTipo.get(tipo.id)!;
+    const esc = conTipos ? escalaDeCircuito(tipo.aproximacion) : escala;
+    const forma = opciones.forma?.(esc) ?? { mano, altura };
+    const suelo = opciones.tierra?.() ?? null;
+    const c = trazar(
+      runway,
+      cota,
+      forma.mano,
+      esc,
+      forma.altura,
+      suelo ? { ...suelo, tipo } : null,
+    );
+    caminosPorTipo.set(tipo.id, c);
+    return c;
+  };
+
+  /** Qué tipo es cada matrícula: siempre el mismo para la misma. */
+  const tipoDe = (matricula: string): TipoDeTrafico => {
+    let h = 0;
+    for (let i = 0; i < matricula.length; i++)
+      h = (h * 31 + matricula.charCodeAt(i)) >>> 0;
+    return tipos[h % tipos.length]!;
+  };
+
+  const cuerpo = (tipo: TipoDeTrafico, matricula: string): Object3D => {
     /*
-     * Una geometría para todos: son dos como mucho —ver `CUANTOS`— y aun así
-     * fabricar un avión entero por cada llamada sería pagar un tirón de
-     * fotogramas por algo que está a dos kilómetros.
+     * Una geometría por tipo —y por librea, el turbohélice—, no una por
+     * avión: fabricar un avión entero por cada llamada sería pagar un tirón
+     * de fotogramas por algo que está a dos kilómetros.
      */
-    geometria ??= fabricarAeronave(
-      silueta,
-      { envergadura: 11, cuerda: 1.5, tren: 0.9 },
-      { body: 0xe7e3d8, accent: 0x8f99a2, trim: 0x39403a },
-    ).geometria;
-    return new Mesh(geometria, new MeshLambertMaterial({ vertexColors: true }));
+    const librea =
+      tipo.id === "turbohelice"
+        ? matricula.charCodeAt(matricula.length - 1) %
+          LIBREAS_DE_LAS_ISLAS.length
+        : 0;
+    const clave = `${tipo.id}:${librea}`;
+    let g = geometrias.get(clave);
+    if (!g) {
+      g =
+        tipo.id === "turbohelice"
+          ? fabricarTurbohelice(LIBREAS_DE_LAS_ISLAS[librea]!)
+          : fabricarAeronave(
+              tipo.silueta,
+              {
+                envergadura: tipo.envergadura,
+                cuerda: tipo.envergadura > 20 ? 3.2 : 1.5,
+                tren: tipo.envergadura > 20 ? 1.6 : 0.9,
+              },
+              { body: 0xe7e3d8, accent: 0x8f99a2, trim: 0x39403a },
+            ).geometria;
+      geometrias.set(clave, g);
+    }
+    return new Mesh(g, new MeshLambertMaterial({ vertexColors: true }));
+  };
+
+  /** Lo largo de cada camino, una vez: se pregunta en cada fotograma. */
+  const largos = new WeakMap<Sitio[], number>();
+  const largoDe = (camino: Sitio[]): number => {
+    let l = largos.get(camino);
+    if (l === undefined) {
+      l = largoDelCamino(camino);
+      largos.set(camino, l);
+    }
+    return l;
   };
 
   /** Si va por el camino de quien aterriza y todavía no ha salido de la pista. */
   const aterrizando = (quien: Volando): boolean =>
-    !!caminos &&
-    quien.marca.camino === caminos.llegada &&
-    quien.recorrido < caminos.fuera - 0.5;
+    !!quien.caminos &&
+    quien.marca.camino === quien.caminos.llegada &&
+    quien.recorrido < quien.caminos.fuera - 0.5;
 
   /** Si viene a aterrizar, con permiso o sin él. */
   const llegando = (quien: Volando): boolean =>
-    !!caminos &&
-    (quien.marca.camino === caminos.llegada ||
-      quien.marca.camino === caminos.sinPermiso);
+    !!quien.caminos &&
+    (quien.marca.camino === quien.caminos.llegada ||
+      quien.marca.camino === quien.caminos.sinPermiso);
 
   /** Si viene a aterrizar y todavía no ha girado a final. */
   const enLaBase = (quien: Volando): boolean =>
-    !!caminos && llegando(quien) && quien.recorrido < caminos.entra;
+    !!quien.caminos && llegando(quien) && quien.recorrido < quien.caminos.entra;
 
   /**
    * Si ya vuela la final —girado de la base y antes de la decisión o la
    * toma—, o está en la pista. Por el camino de la llegada, con permiso o sin
    * él; pasada la decisión sin permiso ya se está yendo al aire.
    */
-  const yaEnFinal = (quien: Volando): boolean =>
-    !!caminos &&
-    llegando(quien) &&
-    quien.recorrido >= caminos.entra &&
-    (quien.marca.camino === caminos.llegada || quien.recorrido < caminos.decide);
+  const yaEnFinal = (quien: Volando): boolean => {
+    const c = quien.caminos;
+    return (
+      !!c &&
+      llegando(quien) &&
+      quien.recorrido >= c.entra &&
+      (quien.marca.camino === c.llegada || quien.recorrido < c.decide)
+    );
+  };
 
   /*
    * **Sin permiso, por el camino que no toca la pista.** Hasta la altura de
@@ -562,20 +953,75 @@ export function crearTrafico(
    * de llegar a ella no mueve el avión: el permiso puede llegar en cualquier
    * momento del circuito, y llega sin tirones.
    */
-  const porSuCamino = (marca: Marca, conPermiso: boolean): Marca => {
-    if (!caminos || marca.metros >= caminos.decide) return marca;
-    if (!conPermiso && marca.camino === caminos.llegada)
-      return { ...marca, camino: caminos.sinPermiso };
-    if (conPermiso && marca.camino === caminos.sinPermiso)
-      return { ...marca, camino: caminos.llegada };
+  const porSuCamino = (
+    c: Caminos | null,
+    marca: Marca,
+    conPermiso: boolean,
+  ): Marca => {
+    if (!c || marca.metros >= c.decide) return marca;
+    if (!conPermiso && marca.camino === c.llegada)
+      return { ...marca, camino: c.sinPermiso };
+    if (conPermiso && marca.camino === c.sinPermiso)
+      return { ...marca, camino: c.llegada };
     return marca;
+  };
+
+  /**
+   * **A cuánto va ahora**, según por dónde vaya.
+   *
+   * Con calles, lo que hace un avión de verdad: el que aterriza toca a su
+   * velocidad de final y frena por el eje hasta rodar a paso de calle en la
+   * boca de la salida; el que sale rueda hasta la pista, se alinea y acelera
+   * en su carrera hasta irse al aire. Sin calles, lo de antes: la carrera a la
+   * mitad de lo que se volaba. Ver `FRENANDO`.
+   */
+  const velocidadDe = (quien: Volando): number => {
+    const c = quien.caminos;
+    const m = quien.marca;
+    const r = quien.recorrido;
+    const t = c?.enTierra;
+    if (c && m.camino === c.llegada && r >= c.toca) {
+      if (!t || t.boca <= 0) return m.velocidad * FRENANDO;
+      // Pasada la boca, lo que quede de pista se rueda a paso vivo: es
+      // pista ocupada, y el que la ocupa la deja cuanto antes.
+      if (r >= t.boca) return r < c.fuera ? RUEDA_A * 2 : RUEDA_A;
+      const f = (r - c.toca) / Math.max(1, t.boca - c.toca);
+      const alTocar = t.tipo.aproximacion * 0.85;
+      return alTocar + (RUEDA_A * 1.5 - alTocar) * f;
+    }
+    if (c && t && t.despega > 0 && m.camino === c.salida) {
+      if (r < t.eje) return RUEDA_A;
+      if (r < t.despega) {
+        const f = (r - t.eje) / Math.max(1, t.despega - t.eje);
+        return 4 + (t.tipo.aproximacion * 1.1 - 4) * f;
+      }
+    }
+    return m.velocidad;
+  };
+
+  /** Si en este punto de su camino va por el suelo. */
+  const porTierra = (quien: Volando): boolean => {
+    const c = quien.caminos;
+    const t = c?.enTierra;
+    if (!c || !t) return false;
+    if (quien.marca.camino === c.llegada) return quien.recorrido >= c.toca;
+    if (quien.marca.camino === c.salida)
+      return t.despega > 0 && quien.recorrido < t.despega;
+    return false;
+  };
+
+  const quitar = (matricula: string, quien: Volando): void => {
+    grupo.remove(quien.grupo);
+    aviones.delete(matricula);
   };
 
   return {
     grupo,
     anuncia(matricula, clave, puedeAterrizar = false) {
-      const marca = marcas[clave];
       let quien = aviones.get(matricula);
+      const tipo = quien?.tipo ?? tipoDe(matricula);
+      const c = quien ? quien.caminos : caminosDe(tipo);
+      const marca = c?.marcas[clave];
       if (quien) quien.conPermiso = puedeAterrizar;
       if (!marca) {
         /*
@@ -587,8 +1033,8 @@ export function crearTrafico(
          */
         if (quien) {
           quien.olvidado = 0;
-          if (quien.recorrido < (caminos?.decide ?? 0))
-            quien.marca = porSuCamino(quien.marca, quien.conPermiso);
+          if (quien.recorrido < (quien.caminos?.decide ?? 0))
+            quien.marca = porSuCamino(quien.caminos, quien.marca, quien.conPermiso);
         }
         return;
       }
@@ -612,21 +1058,24 @@ export function crearTrafico(
        */
       if (quien && clave === "otro.final" && yaEnFinal(quien)) {
         quien.olvidado = 0;
-        if (quien.recorrido < (caminos?.decide ?? 0))
-          quien.marca = porSuCamino(quien.marca, quien.conPermiso);
+        if (quien.recorrido < (quien.caminos?.decide ?? 0))
+          quien.marca = porSuCamino(quien.caminos, quien.marca, quien.conPermiso);
         return;
       }
       if (!quien) {
         const g = new Group();
         g.name = "trafico-avion";
-        g.add(cuerpo());
+        g.add(cuerpo(tipo, matricula));
         grupo.add(g);
         quien = {
           grupo: g,
+          tipo,
+          caminos: c,
           marca,
           recorrido: marca.metros,
           olvidado: 0,
           conPermiso: puedeAterrizar,
+          quieto: 0,
         };
         aviones.set(matricula, quien);
       }
@@ -634,42 +1083,58 @@ export function crearTrafico(
       const esta =
         clave === "torre.goAround" && yaSeVeia
           ? alAireDesde(marca, { x: p.x, y: p.y, z: p.z })
-          : porSuCamino(marca, quien.conPermiso);
+          : porSuCamino(quien.caminos, marca, quien.conPermiso);
       quien.marca = esta;
       quien.recorrido = esta.metros;
       quien.olvidado = 0;
+      quien.quieto = 0;
       colocar(quien);
     },
     paso(dt) {
       let seFueron: string[] | null = null;
       for (const [matricula, quien] of aviones) {
+        const c = quien.caminos;
+        const antes = quien.recorrido;
+        const tope = quien.marca.tope ?? Infinity;
+        quien.recorrido = Math.min(antes + velocidadDe(quien) * dt, tope);
+        const largo = largoDe(quien.marca.camino);
+        const alFinal = quien.recorrido >= largo - 0.5;
+        const esperando = quien.recorrido >= tope - 0.5;
         /*
-         * **Y el que está aterrizando no se olvida.** Entre su «en final» y
-         * su «pista libre» pasa lo que tarda en posarse y salir de la pista,
-         * que es más que el plazo de olvido: se esfumaba rodando por el
-         * asfalto y reaparecía en el costado al decir que la dejaba libre.
+         * **Y el que está aterrizando o rodando a su sitio no se olvida.**
+         * Entre su «en final» y su «pista libre» pasa lo que tarda en posarse
+         * y salir de la pista, que es más que el plazo de olvido: se esfumaba
+         * rodando por el asfalto. Y después de decir «pista libre» sigue
+         * rodando hasta su puesto: se olvida allí, aparcado, no a media calle.
          */
-        quien.olvidado = aterrizando(quien) ? 0 : quien.olvidado + dt;
-        if (quien.olvidado > SE_VA_A_LOS) {
-          grupo.remove(quien.grupo);
-          aviones.delete(matricula);
+        if (aterrizando(quien) || (porTierra(quien) && !alFinal))
+          quien.olvidado = 0;
+        else if (esperando && !alFinal)
+          quien.olvidado += dt * OLVIDO_ESPERANDO;
+        else quien.olvidado += dt;
+        /*
+         * **Y el que se fue al aire y acabó su camino, se retira ya.** Un
+         * avión colgado en el cielo en la esquina del circuito esperando a que
+         * lo nombren no es un avión: es un adorno roto.
+         */
+        const enElAire = !!c && quien.grupo.position.y > cota + 60;
+        if (alFinal && enElAire && !porTierra(quien)) quien.olvidado = Infinity;
+        /*
+         * **La red de la roja eterna**: uno que ocupa la pista y ha dejado de
+         * avanzar se retira, y con él lo que bloqueaba. Ver `QUIETO`.
+         */
+        if (aterrizando(quien) && dt > 0 && quien.recorrido - antes < 1e-4)
+          quien.quieto += dt;
+        else quien.quieto = 0;
+        if (quien.olvidado > SE_VA_A_LOS || quien.quieto > QUIETO) {
+          quitar(matricula, quien);
           continue;
         }
-        // Posado, frena: la carrera se hace a la mitad de lo que volaba.
-        const frena =
-          !!caminos &&
-          quien.marca.camino === caminos.llegada &&
-          quien.recorrido >= caminos.toca;
-        const antes = quien.recorrido;
-        quien.recorrido = Math.min(
-          antes + quien.marca.velocidad * (frena ? FRENANDO : 1) * dt,
-          quien.marca.tope ?? Infinity,
-        );
         if (
-          caminos &&
-          quien.marca.camino === caminos.sinPermiso &&
-          antes < caminos.decide &&
-          quien.recorrido >= caminos.decide
+          c &&
+          quien.marca.camino === c.sinPermiso &&
+          antes < c.decide &&
+          quien.recorrido >= c.decide
         )
           (seFueron ??= []).push(matricula);
         colocar(quien);
@@ -690,9 +1155,10 @@ export function crearTrafico(
     },
     enFinal(matricula) {
       const quien = aviones.get(matricula);
-      if (!quien || !caminos || !aterrizando(quien)) return null;
-      if (quien.recorrido < caminos.entra) return null;
-      return Math.max(0, caminos.toca - quien.recorrido);
+      const c = quien?.caminos;
+      if (!quien || !c || !aterrizando(quien)) return null;
+      if (quien.recorrido < c.entra) return null;
+      return Math.max(0, c.toca - quien.recorrido);
     },
     quienes() {
       return [...aviones].map(([matricula, quien]) => ({
@@ -702,13 +1168,17 @@ export function crearTrafico(
         z: quien.grupo.position.z,
         conPermiso: quien.conPermiso,
         llegando: llegando(quien),
+        tipo: quien.tipo.id,
       }));
+    },
+    vaciar() {
+      for (const [matricula, quien] of aviones) quitar(matricula, quien);
     },
     dispose() {
       for (const quien of aviones.values()) grupo.remove(quien.grupo);
       aviones.clear();
-      geometria?.dispose();
-      geometria = null;
+      for (const g of geometrias.values()) g.dispose();
+      geometrias.clear();
     },
   };
 }

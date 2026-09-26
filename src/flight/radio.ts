@@ -91,11 +91,26 @@ export const GUIONES = {
     { voz: "torre", clave: "torre.lineUpWait" },
     { voz: "torre", clave: "torre.clearedTakeoff" },
   ],
-  /** Uno que llega: viento en cola, autorizado, final, y deja la pista. */
+  /**
+   * Uno que llega: viento en cola, final, autorizado, y deja la pista.
+   *
+   * **El permiso llega en final, no en el viento en cola.** Estaba al revés
+   * —«cleared to land» nada más cantar el viento en cola— y eso ataba la pista
+   * desde tres o cuatro kilómetros antes de la base: quien esperaba en la roja
+   * se comía el viento en cola entero, la base, la final, la carrera y la
+   * salida del otro, hasta tres minutos y medio medidos con cuatrocientas
+   * frecuencias sorteadas, y en seis de cada diez llegadas al punto de espera.
+   * «Me tiene esperando por ese avión un buen rato. ¿Me dejará salir?»
+   *
+   * Una torre de verdad autoriza a aterrizar en final —en la base como muy
+   * pronto— y con alguien en el viento en cola te deja salir antes. Así la
+   * roja dura lo que tarda en bajar el que ya está en final y en dejar la
+   * pista, que es lo que se ve desde el punto de espera.
+   */
   llega: [
     { voz: "otro", clave: "otro.enCola" },
-    { voz: "torre", clave: "torre.clearedLand", seguido: true },
     { voz: "otro", clave: "otro.final" },
+    { voz: "torre", clave: "torre.clearedLand", seguido: true },
     { voz: "otro", clave: "otro.pistaLibre" },
   ],
   /**
@@ -110,6 +125,8 @@ export const GUIONES = {
     { voz: "otro", clave: "otro.final" },
     { voz: "torre", clave: "torre.goAround", seguido: true },
     { voz: "otro", clave: "otro.enCola" },
+    // Y la segunda vez, igual que la primera: el permiso, en final.
+    { voz: "otro", clave: "otro.final" },
     { voz: "torre", clave: "torre.clearedLand", seguido: true },
     { voz: "otro", clave: "otro.pistaLibre" },
   ],
@@ -322,12 +339,19 @@ export function laPistaQueOcupa(guion: Guion, paso: number): string | null {
  * libre. Ver `quitarleLaPistaALosDemas` en `game.ts`.
  */
 export function vaDelanteEnFinal(guion: Guion, paso: number): boolean {
+  /*
+   * Con el permiso dado en final —ver `GUIONES.llega`— tenerlo ya dice que
+   * cantó final antes. Se mira igual que se cantó, por si un guion lo diera
+   * alguna vez en otro orden.
+   */
   if (laPistaQueTiene(guion, paso) !== "torre.clearedLand") return false;
   const pasos = GUIONES[guion];
+  let conPermiso = false;
   for (let i = Math.min(paso, pasos.length) - 1; i >= 0; i--) {
     const clave = pasos[i]!.clave;
-    if (clave === "otro.final") return true;
-    if (clave === "torre.clearedLand") return false;
+    if (clave === "torre.clearedLand") conPermiso = true;
+    if (clave === "otro.final" && conPermiso) return true;
+    if (LA_SUELTAN.has(clave)) return false;
   }
   return false;
 }
@@ -706,8 +730,21 @@ export class Frecuencia {
     let quien: EnLaFrecuencia | null = null;
     for (const a of this.aviones) {
       if (a.falta > 0) continue;
-      if (soloLosDeLaPista && !laPistaQueOcupa(a.guion, a.paso)) continue;
       const toca = GUIONES[a.guion][a.paso]!.clave;
+      /*
+       * **Y en el punto de espera, también el que va a cantar final.** Con el
+       * permiso dado en final —ver `GUIONES.llega`— la pista la ocupa quien
+       * canta final, y si en la roja solo hablaban los que ya la ocupaban,
+       * el que venía por la base no la cantaba nunca: seguía sin permiso, se
+       * iba al aire en la altura de decisión y quien esperaba no le veía
+       * aterrizar. Lo que se espera en la roja es justo eso.
+       */
+      const cantaFinal =
+        m.fase === "esperando" &&
+        toca === "otro.final" &&
+        vieneAAterrizar(a.guion, a.paso);
+      if (soloLosDeLaPista && !laPistaQueOcupa(a.guion, a.paso) && !cantaFinal)
+        continue;
       // «Pista libre» fuera de la pista, y «en final» en final. Ver `todaviaNo`.
       if (this.todaviaNo(a.indicativo.matricula, toca)) continue;
       if (
@@ -716,6 +753,30 @@ export class Frecuencia {
           this.aviones.some(
             (b) => b !== a && laPistaQueTiene(b.guion, b.paso) !== null,
           ))
+      )
+        continue;
+      /*
+       * **Ni se canta final a una pista que es tuya.** Con el permiso dado
+       * en final, cantarla es ya ocuparla —ver `laPistaQueOcupa`—, y eso es lo
+       * que la torre no deja mientras la tienes: rodando por ella o dejándola
+       * libre. El que viene sigue su circuito, y si llega a la decisión sin
+       * permiso se va al aire, que es lo que se hace con la pista ocupada.
+       */
+      if (toca === "otro.final" && pistaTuya) continue;
+      /*
+       * **Y con alguien esperando en la roja, uno aterriza y sale él.** Dos
+       * que cantan final uno detrás de otro con la pista ocupada dejaban la
+       * roja encendida el aterrizaje de los dos: cerca de tres minutos
+       * medidos en Tenerife Sur. Una torre con alguien en el punto de espera
+       * mete la salida entre las dos llegadas; el segundo sigue su circuito
+       * y, si llega a la decisión sin permiso, se va al aire.
+       */
+      if (
+        toca === "otro.final" &&
+        m.esperandoLaPista &&
+        this.aviones.some(
+          (b) => b !== a && laPistaQueOcupa(b.guion, b.paso) !== null,
+        )
       )
         continue;
       if (!quien || a.falta < quien.falta) quien = a;

@@ -111,7 +111,7 @@ function aeropuerto(semilla: number) {
 
   const turno = new TurnoDePista({
     radio,
-    boca: { retirar: () => {}, espera: () => false },
+    boca: { retirar: () => {}, espera: () => false, esperaAlguna: () => false },
     trafico: () => dibujo,
     torre: () => true,
     privado: () => false,
@@ -184,9 +184,15 @@ describe("saliendo: la torre te deja en la roja y aterriza el que viene", () => 
     let mirando = 0;
     const desde = a.t;
     const oidoAlLlegar = a.oido.length;
+    /*
+     * En el orden del juego: primero habla la frecuencia y después mira la
+     * torre. Mirando antes, el «en final» que se cantaba en ese mismo paso
+     * llegaba con la verde ya dada. Ver `unPaso` en `game.ts`: `oirLaRadio`
+     * va antes que `avanzarPlan`.
+     */
     while (mirando <= TORRE_TARDA && a.t - desde < 1200) {
-      mirando = a.turno.pistaDeOtros ? 0 : mirando + PASO;
       a.paso("esperando");
+      mirando = a.turno.pistaDeOtros ? 0 : mirando + PASO;
     }
     const hablaronEsperando = a.oido.slice(oidoAlLlegar);
     const antes = a.oido.length;

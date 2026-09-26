@@ -402,14 +402,16 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
     expect(laPistaQueTiene("espera", 2)).toBeNull();
     expect(laPistaQueTiene("espera", 3)).toBe("torre.lineUpWait");
     expect(laPistaQueTiene("sale", 2)).toBeNull();
+    // El permiso llega en final, no en el viento en cola: ver `GUIONES.llega`.
     expect(laPistaQueTiene("llega", 1)).toBeNull();
-    expect(laPistaQueTiene("llega", 2)).toBe("torre.clearedLand");
+    expect(laPistaQueTiene("llega", 2)).toBeNull();
     expect(laPistaQueTiene("llega", 3)).toBe("torre.clearedLand");
     // El de la frustrada la suelta al irse al aire y la vuelve a tener al
-    // volver a pedirla.
+    // volver a pedirla, otra vez en final.
     expect(laPistaQueTiene("frustrada", 3)).toBeNull();
     expect(laPistaQueTiene("frustrada", 4)).toBeNull();
-    expect(laPistaQueTiene("frustrada", 5)).toBe("torre.clearedLand");
+    expect(laPistaQueTiene("frustrada", 5)).toBeNull();
+    expect(laPistaQueTiene("frustrada", 6)).toBe("torre.clearedLand");
   });
 
   it("y lo que se le dice a cada uno para quitársela está en su guion", () => {
@@ -435,9 +437,17 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
     let alineados = 0;
     let alAire = 0;
     let enFinalSinPermiso = 0;
-    for (let semilla = 1; semilla <= 400; semilla++) {
+    for (let semilla = 1; semilla <= 800; semilla++) {
       const radio = new Frecuencia(dados(semilla), "GCXO");
       if (!hastaQueAlguienLaTenga(radio)) continue;
+      /*
+       * La mitad de las veces se deja correr un poco más: con el permiso dado
+       * en final, el primero que ocupa la pista la ocupa cantando final, y el
+       * autorizado llega unos segundos después.
+       */
+      if (semilla % 2 === 0)
+        for (let t = 0; t < 6; t += 0.5) radio.update(0.5, PISTA_DE_NADIE);
+      if (!radio.ocupanLaPista.length) continue;
       const tenian = [...radio.ocupanLaPista];
       const dichas = radio.despejarLaPista();
       // A cada uno lo suyo, y a nadie más.
@@ -462,8 +472,8 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
     }
     // Las tres cosas pasan de verdad con estos guiones, no solo en teoría.
     expect(alineados).toBeGreaterThan(50);
-    expect(alAire).toBeGreaterThan(50);
-    expect(enFinalSinPermiso).toBeGreaterThan(5);
+    expect(alAire).toBeGreaterThan(20);
+    expect(enFinalSinPermiso).toBeGreaterThan(20);
   });
 
   it("y el que canta final sin permiso también la ocupa: va hacia ella", () => {
@@ -473,7 +483,9 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
     expect(PARA_QUITARSELA["otro.final"]).toBe("torre.goAround");
     // Con permiso, lo que cuenta es el permiso.
     expect(laPistaQueOcupa("llega", 3)).toBe("torre.clearedLand");
-    // Y en el viento en cola, esperando el suyo, todavía no.
+    // Cantada la final y esperando el permiso, ya va hacia ella.
+    expect(laPistaQueOcupa("llega", 2)).toBe("otro.final");
+    // Y en el viento en cola, todavía no.
     expect(laPistaQueOcupa("llega", 1)).toBeNull();
     expect(laPistaQueOcupa("frustrada", 4)).toBeNull();
     // Irse al aire la suelta.
@@ -482,9 +494,10 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
 
   it("al que va delante en final con su permiso no se le quita: aterriza él primero", () => {
     expect(vaDelanteEnFinal("llega", 3)).toBe(true);
-    // Autorizado pero todavía en el viento en cola: no va delante.
+    // En final pero todavía sin permiso: no va delante, va a esperar.
     expect(vaDelanteEnFinal("llega", 2)).toBe(false);
     expect(vaDelanteEnFinal("frustrada", 5)).toBe(false);
+    expect(vaDelanteEnFinal("frustrada", 6)).toBe(true);
     expect(vaDelanteEnFinal("frustrada", 2)).toBe(false);
     let vistos = 0;
     for (let semilla = 1; semilla <= 400; semilla++) {
