@@ -464,7 +464,10 @@ import {
   type CampoDeLaAproximacion,
 } from "./flight/la-aproximacion";
 import { asentarAerodromoSobreLaFoto } from "./world/asentar-aerodromo";
-import { limitarElRodaje } from "./flight/tope-de-rodaje";
+import {
+  laVelocidadEsDelJuego,
+  limitarElRodaje,
+} from "./flight/tope-de-rodaje";
 import { leerTexto, ponerTexto } from "./datos/guardado";
 import {
   aDondeConLaReserva,
@@ -4372,7 +4375,18 @@ export class Game {
      * doble raya la reconoce aquí.
      */
     this.hechos.on("gestoDelSenalero", ({ gesto }) => {
-      const parando = gesto === "alto" || gesto === "despacio";
+      /*
+       * **El «despacio» del señalero se ve siempre y se dice solo a quien
+       * lleva el gas.** Donde el juego lleva la velocidad, pedirle a quien
+       * juega que frene es reñirle por lo que hace el juego: el gesto sigue en
+       * el mundo y en la tarjeta, que es lo que hace el señalero de verdad,
+       * pero sin la voz ni la tecla del freno. El «alto» sí: dice dónde se
+       * para, y eso se aprende igual lleve quien lleve el gas. Ver
+       * `laVelocidadEsDelJuego`.
+       */
+      const parando =
+        gesto === "alto" ||
+        (gesto === "despacio" && !this.laVelocidadEsDelJuego());
       this.hud.senal.mostrar(comoDibujo(`senalero-${gesto}`), "", null, {
         segundos: Infinity,
         tecla: parando
@@ -7164,7 +7178,10 @@ export class Game {
           // Y el resto, también de `queSeDice`: la decisión vive en un solo
           // sitio y tiene prueba. Ver `flight/velocidad-de-aproximacion.ts`.
           const suave = queSeDice(banda, this.flight.state.onGround);
-          if (suave)
+          // Y rodando donde el juego lleva el gas, la banda se ve pero no
+          // riñe: esa velocidad no es de quien juega. Ver
+          // `laVelocidadEsDelJuego`.
+          if (suave && !this.laVelocidadEsDelJuego())
             this.cantar(
               this.flight.state.onGround ? "slow down" : "airspeed",
               t(suave),
@@ -8644,7 +8661,18 @@ export class Game {
      * volver a acercarse.
      */
     const pasado = this.senalero.pasado;
-    if (volviendo && pasado > SE_PASO_DEL_PUESTO && s.airspeed > 2) {
+    /*
+     * **Y solo si quien se pasó fue quien juega.** Donde el juego lleva la
+     * velocidad —Guyrami y Tukã—, es él quien frena el avión en el puesto; si
+     * se pasa, se ha pasado el juego, y «frená y volvé» sería reñir a quien no
+     * tenía el freno. Ver `laVelocidadEsDelJuego`.
+     */
+    if (
+      volviendo &&
+      pasado > SE_PASO_DEL_PUESTO &&
+      s.airspeed > 2 &&
+      !this.laVelocidadEsDelJuego()
+    ) {
       if (!this.avisadoDeLaPasada) {
         this.avisadoDeLaPasada = true;
         this.hechos.emit("teLoPasaste", {});
@@ -9135,6 +9163,23 @@ export class Game {
     );
   }
 
+  /**
+   * **Si la velocidad por el suelo la lleva ahora el juego**, y entonces no
+   * se le riñe a quien juega por ella.
+   *
+   * La pregunta es la del tope, hecha por la misma función: los cuatro
+   * avisos que juzgan la velocidad en tierra —el «más despacio» de la raya, el
+   * de la banda, el del señalero y el «te pasaste, frená y volvé»— la hacen
+   * antes de hablar. Ver `laVelocidadEsDelJuego` en `flight/tope-de-rodaje.ts`.
+   */
+  private laVelocidadEsDelJuego(): boolean {
+    return laVelocidadEsDelJuego(
+      this.flight.state,
+      this.tier,
+      this.vistaActual,
+    );
+  }
+
   private asistirRodaje(dt: number): void {
     void dt;
     const fuerza = this.tier.assists.taxiAssist;
@@ -9593,7 +9638,13 @@ export class Game {
       // Y apagar el motor en el suelo **termina el vuelo**: es el momento de
       // decir qué te llevás. Ver `terminarElVuelo`.
       if (vista.fase === "apagado") this.terminarElVuelo();
-    } else if (vista.rapido && this.plan.avisarDeSalida(dt)) {
+    } else if (
+      vista.rapido &&
+      // Si la velocidad la lleva el juego, ir rápido no es cosa de nadie a
+      // quien decírselo. Ver `laVelocidadEsDelJuego`.
+      !this.laVelocidadEsDelJuego() &&
+      this.plan.avisarDeSalida(dt)
+    ) {
       // **«¿Quién me indica si voy muy rápido o lento en rodadura?»** Nadie, y
       // esa era la respuesta honesta: el indicador de tortuga y pájaro está
       // calibrado para velocidad de vuelo, así que rodando se queda clavado en
