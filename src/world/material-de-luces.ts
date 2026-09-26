@@ -24,7 +24,7 @@
  * Y cada punto, redondo y con el borde suave: de cerca se veían cuadraditos.
  */
 
-import { AdditiveBlending, PointsMaterial } from "three";
+import { AdditiveBlending, type Material, PointsMaterial } from "three";
 
 export interface OpcionesDeLuces {
   /**
@@ -199,4 +199,84 @@ export function encogerConLaDistancia(
       );
   };
   material.customProgramCacheKey = () => "luces-que-encogen";
+}
+
+/**
+ * Lo que se inyecta para que una luz tenga **un color por cada lado**. Aparte,
+ * como `GLSL_DE_LUCES`, para poder mirar el texto en una prueba.
+ *
+ * Cada luz trae tres atributos: `luzEje`, hacia dónde queda un extremo de su
+ * pista en el plano del mundo, y `luzFin` y `luzPrincipio`, el color que ve
+ * quien está de ese lado y del otro —el cuarto número dice si desde ahí se ve
+ * algo—. El lado se decide en el vértice con la posición del ojo, que three.js
+ * ya le pasa a todo programa (`cameraPosition`). Ver `lucesDePista` en
+ * `aerodrome.ts`, que hace la misma cuenta en TypeScript.
+ */
+export const GLSL_DE_DOS_CARAS = {
+  cabeceraDelVertice: /* glsl */ `
+    attribute vec2 luzEje;
+    attribute vec4 luzFin;
+    attribute vec4 luzPrincipio;
+    varying vec4 vColorDeLuz;
+  `,
+  vertice: /* glsl */ `
+    {
+      #ifdef USE_INSTANCING
+        vec4 centroDeLuz = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+      #else
+        vec4 centroDeLuz = modelMatrix * vec4(position, 1.0);
+      #endif
+      vec3 ejeDeLuz = (modelMatrix * vec4(luzEje.x, 0.0, luzEje.y, 0.0)).xyz;
+      vec3 haciaElOjo = cameraPosition - centroDeLuz.xyz;
+      vColorDeLuz = dot(haciaElOjo.xz, ejeDeLuz.xz) >= 0.0 ? luzFin : luzPrincipio;
+    }
+  `,
+  cabecera: /* glsl */ `
+    varying vec4 vColorDeLuz;
+  `,
+  // Lo que no se ve desde este lado no se pinta: ni esfera ni punto.
+  cuerpo: /* glsl */ `
+    if (vColorDeLuz.a < 0.5) discard;
+    diffuseColor.rgb *= vColorDeLuz.rgb;
+  `,
+} as const;
+
+/**
+ * **Un color por cada lado, decidido en la tarjeta.**
+ *
+ * El balizamiento de una pista es direccional: la misma fila de cabecera es
+ * verde para quien llega y roja para quien rueda hacia ella, y la misma luz de
+ * borde es blanca o ámbar según hacia dónde se vaya. Con el color por
+ * instancia de three.js eso eran dos mallas por color y lado, o sea cuatro
+ * veces las llamadas de dibujo; así es la misma malla y el mismo programa, y
+ * el lado se mira en el vértice.
+ *
+ * Se envuelve lo que el material ya tuviera —el encoger con la distancia de
+ * los puntos—, no se sustituye.
+ */
+export function lucesDeDosCaras(material: Material): void {
+  const previo = material.onBeforeCompile;
+  const llave = material.customProgramCacheKey.bind(material);
+  material.onBeforeCompile = (shader, pintor) => {
+    previo.call(material, shader, pintor);
+    material.userData.dosCaras = true;
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "void main() {",
+        GLSL_DE_DOS_CARAS.cabeceraDelVertice + "\nvoid main() {",
+      )
+      .replace(
+        "#include <begin_vertex>",
+        "#include <begin_vertex>" + GLSL_DE_DOS_CARAS.vertice,
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace("void main() {", GLSL_DE_DOS_CARAS.cabecera + "\nvoid main() {")
+      .replace(
+        "#include <color_fragment>",
+        "#include <color_fragment>" + GLSL_DE_DOS_CARAS.cuerpo,
+      );
+  };
+  // La llave de la caché, por lo de siempre: sin ella otro material igual que
+  // compilara antes se quedaría con el programa sin la inyección.
+  material.customProgramCacheKey = () => `${llave()}+dos-caras`;
 }

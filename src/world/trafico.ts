@@ -156,8 +156,9 @@ export function caminosDe(
   cota: number,
   mano: Mano = "izquierda",
   escala = 1,
+  altura?: number,
 ): Record<string, Marca> {
-  return trazar(runway, cota, mano, escala)?.marcas ?? {};
+  return trazar(runway, cota, mano, escala, altura)?.marcas ?? {};
 }
 
 /**
@@ -205,8 +206,14 @@ export function trazar(
   cota: number,
   mano: Mano = "izquierda",
   escala = 1,
+  /**
+   * La altura del circuito, la que pide el terreno. Sin ella, la de
+   * costumbre: ver `formaDelCircuito`. Los de la radio vuelan el mismo
+   * circuito que se dibuja, también cuando sube por una ladera.
+   */
+  altura?: number,
 ): Caminos | null {
-  const v = verticesDelCircuito(runway, cota, mano, escala);
+  const v = verticesDelCircuito(runway, cota, mano, escala, altura);
   const [umbral, arriba, lejos, esquina, entrada] = v;
   if (!umbral || !arriba || !lejos || !esquina || !entrada) return null;
 
@@ -499,10 +506,11 @@ export function crearTrafico(
   silueta: Silueta,
   mano: Mano = "izquierda",
   escala = 1,
+  altura?: number,
 ): Trafico {
   const grupo = new Group();
   grupo.name = "trafico";
-  const caminos = trazar(runway, cota, mano, escala);
+  const caminos = trazar(runway, cota, mano, escala, altura);
   const marcas = caminos?.marcas ?? {};
   const aviones = new Map<string, Volando>();
   let geometria: BufferGeometry | null = null;

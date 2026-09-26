@@ -29,6 +29,7 @@ import SGME from "../../data/aerodromes/sgme.aero.json";
 import SGPJ from "../../data/aerodromes/sgpj.aero.json";
 import SGEN from "../../data/aerodromes/sgen.aero.json";
 import type { Ciudad } from "./ciudad";
+import type { Mano } from "./circuito";
 import { deFrente, type Meteo } from "./meteo";
 
 export interface TerrainBand {
@@ -294,7 +295,26 @@ export interface Scenario {
    * procedimental hasta que entre el mapa de alturas real.
    */
   aerodrome?: Aerodrome;
+  /**
+   * **El circuito de tránsito que publica el AIP**, por cabecera: de qué lado
+   * de la pista se vuela despegando y aterrizando por ella.
+   *
+   * Donde el AIP lo publica no hay nada que deducir: los aeropuertos de
+   * Canarias lo dibujan del lado del mar, y quien lo aprenda aquí tiene que
+   * encontrárselo igual en la carta. Donde publica los dos lados —Los Rodeos,
+   * norte y sur— o donde no lo sabemos, no se pone y lo decide el terreno.
+   * La altura la pone siempre el terreno. Ver `formaDelCircuito`.
+   *
+   * Con `ligero` y `resto` cuando el AIP separa el tráfico ligero —categorías
+   * A y B— del resto: Lanzarote tiene su circuito de avionetas al otro lado.
+   */
+  circuitoPublicado?: Readonly<Record<string, CircuitoPublicado>>;
 }
+
+/** Un lado publicado, para todos o separando las avionetas del resto. */
+export type CircuitoPublicado =
+  | Mano
+  | { readonly ligero: Mano; readonly resto: Mano };
 
 /**
  * Valle de la Cordillera — escenario de partida.
@@ -846,6 +866,12 @@ export const TENERIFE_NORTE: Scenario = {
    */
   magneticVariation: 9,
   aerodrome: GCXO as unknown as Aerodrome,
+  /*
+   * Sin circuito publicado a propósito: Los Rodeos publica **dos**, el norte y
+   * el sur (AIP España, AD 2-GCXO, 22.4), así que el lado lo decide el terreno
+   * de cada avión. Del norte dice «maintain minimum 1000 ft AGL». Ver
+   * `formaDelCircuito`.
+   */
 };
 
 /**
@@ -1041,6 +1067,8 @@ export const LA_PALMA: Scenario = {
    */
   magneticVariation: 1,
   aerodrome: GCLA as unknown as Aerodrome,
+  // Por el este, sobre el mar (AIP España, AD 2-GCLA, 22.4).
+  circuitoPublicado: { "36": "derecha", "18": "izquierda" },
   /*
    * **Y desde aquí también se vuelve.**
    *
@@ -1132,6 +1160,8 @@ export const TENERIFE_SUR: Scenario = {
   // El asfalto corre a 68,6° verdaderos y la cabecera pone 07.
   magneticVariation: 1.4,
   aerodrome: GCTS as unknown as Aerodrome,
+  // Por el sur, sobre el mar (AIP España, AD 2-GCTS, 22.6).
+  circuitoPublicado: { "07": "derecha", "25": "izquierda" },
 };
 
 /**
@@ -1190,6 +1220,8 @@ export const GRAN_CANARIA: Scenario = {
   // El asfalto corre a 22° verdaderos y la cabecera pone 03.
   magneticVariation: 8,
   aerodrome: GCLP as unknown as Aerodrome,
+  // Por el este, sobre el mar (AIP España, AD 2-GCLP, 22.7).
+  circuitoPublicado: { "03L": "derecha", "21R": "izquierda" },
   /*
    * **Y desde aquí se sale, que para eso es el centro de la red.**
    *
@@ -1322,6 +1354,15 @@ export const LANZAROTE: Scenario = {
   // El asfalto corre a 27° verdaderos y la cabecera pone 03.
   magneticVariation: 3,
   aerodrome: GCRR as unknown as Aerodrome,
+  /*
+   * Dos circuitos (AIP España, AD 2-GCRR, 22.7): el del tránsito regular por
+   * el este, sobre el mar, y otro por el oeste de uso exclusivo del tráfico
+   * ligero visual —categorías A y B—. Las avionetas del juego vuelan el suyo.
+   */
+  circuitoPublicado: {
+    "03": { ligero: "izquierda", resto: "derecha" },
+    "21": { ligero: "derecha", resto: "izquierda" },
+  },
 };
 
 export const FUERTEVENTURA: Scenario = {
@@ -1404,6 +1445,9 @@ export const FUERTEVENTURA: Scenario = {
   // declinación al oeste, que es la de Canarias.
   magneticVariation: 6,
   aerodrome: GCFV as unknown as Aerodrome,
+  // Por el este, sobre el mar, por las dos cabeceras (AIP España, AD
+  // 2-GCFV, 22.6).
+  circuitoPublicado: { "01": "derecha", "19": "izquierda" },
 };
 
 /**
@@ -1475,6 +1519,8 @@ export const EL_HIERRO: Scenario = {
   // El asfalto corre a 332,6° verdaderos y la cabecera pone 34.
   magneticVariation: 7.4,
   aerodrome: GCHI as unknown as Aerodrome,
+  // Por el este, sobre el mar (AIP España, AD 2-GCHI, 22.4).
+  circuitoPublicado: { "34": "derecha", "16": "izquierda" },
 };
 
 /**
@@ -1542,6 +1588,8 @@ export const LA_GOMERA: Scenario = {
   runway: pistaDe(GCGM as unknown as Aerodrome, "09"),
   magneticVariation: 8.8,
   aerodrome: GCGM as unknown as Aerodrome,
+  // Por el sur, sobre el mar (AIP España, AD 2-GCGM, 22.2).
+  circuitoPublicado: { "09": "derecha", "27": "izquierda" },
 };
 
 /**

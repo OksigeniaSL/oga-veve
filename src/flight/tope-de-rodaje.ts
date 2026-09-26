@@ -74,6 +74,39 @@ const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
   "en-puesto",
 ]);
 
+/**
+ * **Si ahora mismo la velocidad por el suelo la lleva el juego.**
+ *
+ * Es la regla de abajo contestada como pregunta, y existe porque había dos
+ * sitios que tenían que saberlo y solo uno lo preguntaba. El tope cerraba el
+ * gas y frenaba —en Guyrami el avión rueda solo, a la velocidad que dice el
+ * plan— y mientras tanto la instructora juzgaba esa misma velocidad como si
+ * fuera de quien juega: «más despacio» a un avión que el juego estaba
+ * frenando, «te pasaste, frená y volvé» a uno que el juego había dejado
+ * pasarse del puesto. Contado jugando en Fuerteventura: «que si más despacio,
+ * que si te pasaste, que si frená y volvé, y el avión se mueve solo y coge
+ * curvas solo».
+ *
+ * No se riñe a nadie por lo que hace otro. Así que los avisos de velocidad en
+ * tierra preguntan aquí antes de hablar, y aquí contesta **la misma cuenta
+ * que decide el tope**: no pueden llevarse la contraria porque son la misma.
+ *
+ * Solo rodando por calles, que es donde el tope frena. En la carrera de
+ * aterrizaje el tope es un trinquete que no toca el freno —frenar ahí es la
+ * lección—, así que esa velocidad sigue siendo de quien pilota. Y la luz
+ * verde también devuelve el gas: autorizado, mandás vos.
+ */
+export function laVelocidadEsDelJuego(
+  estado: FlightState,
+  tier: Tier,
+  vista: Vista | null,
+): boolean {
+  if (tier.assists.taxiAssist < CONDUCE_EL_JUEGO) return false;
+  if (!estado.onGround || estado.onRunway) return false;
+  if (!vista || vista.luzVerde) return false;
+  return RODANDO_DE_VERDAD.has(vista.fase);
+}
+
 export function limitarElRodaje(
   estado: FlightState,
   controles: ControlInputs,
@@ -182,7 +215,11 @@ export function limitarElRodaje(
    */
 
   if (!vista || vista.luzVerde) return techo;
-  if (!enLaCarrera && !RODANDO_DE_VERDAD.has(vista.fase)) return techo;
+  /*
+   * Rodando, la pregunta es la de `laVelocidadEsDelJuego`, y se le hace a
+   * ella y no se copia: es la misma que se hacen los avisos antes de reñir.
+   */
+  if (!enLaCarrera && !laVelocidadEsDelJuego(s, tier, vista)) return techo;
 
   /*
    * **Y el trinquete no lleva holgura.**

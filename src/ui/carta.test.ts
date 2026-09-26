@@ -143,6 +143,63 @@ describe("la pista se dibuja con su forma", () => {
   });
 });
 
+describe("el eje de entrada sale de la cabecera en uso", () => {
+  /*
+   * Fuerteventura como se vio jugando: pista norte-sur de 3406 metros, en uso
+   * la 01 —rumbo 002, la del viento de hoy— con su umbral mil metros pista
+   * adentro. Llegando desde Lanzarote, o sea desde el norte, la raya magenta
+   * metía por la 19 porque era la punta más cercana; al pasar por encima
+   * saltaba a la 01. La pista en uso no depende de por dónde se llegue.
+   */
+  const PISTA = { x: 0, z: 0, heading: 2, length: 3406, desplazado: 1000 };
+  const alMundo = (p: { x: number; z: number }) => (dx: number, dy: number) =>
+    // Con el morro al norte la carta es un plano: dy hacia abajo es el sur.
+    ({ x: p.x + dx, z: p.z + dy });
+  const ejeDesde = (yo: { x: number; z: number }) => {
+    const d = dibujarLaCarta(
+      { x: yo.x, z: yo.z, pista: PISTA, otros: [] },
+      0,
+      100,
+    );
+    const por = pixelesPorMetro(d.rango, 100);
+    const enElMundo = alMundo(yo);
+    return {
+      desde: enElMundo(d.eje!.desde.dx / por, d.eje!.desde.dy / por),
+      hasta: enElMundo(d.eje!.hasta.dx / por, d.eje!.hasta.dy / por),
+    };
+  };
+
+  it("llegando desde el norte, entra por la 01 igual: desde el sur", () => {
+    const e = ejeDesde(norte(15000));
+    // El umbral de la 01 está al sur del centro, a 1703 − 1000 metros.
+    expect(e.desde.z).toBeCloseTo(703 * Math.cos((2 * Math.PI) / 180), 0);
+    // Y la raya se aleja hacia el sur, que es por donde se entra.
+    expect(e.hasta.z).toBeGreaterThan(e.desde.z + 14000);
+  });
+
+  it("y pasar por encima o por el otro lado no la cambia de punta", () => {
+    const encima = ejeDesde({ x: 0, z: 0 });
+    const alSur = ejeDesde({ x: 0, z: 8000 });
+    const alNorte = ejeDesde(norte(8000));
+    for (const e of [encima, alSur]) {
+      expect(e.desde.x).toBeCloseTo(alNorte.desde.x, 0);
+      expect(e.desde.z).toBeCloseTo(alNorte.desde.z, 0);
+      expect(e.hasta.z).toBeCloseTo(alNorte.hasta.z, 0);
+    }
+  });
+
+  it("y sin umbral desplazado, desde la punta del asfalto", () => {
+    const d = dibujarLaCarta(
+      { x: 0, z: 0, pista: { ...PISTA, heading: 0, desplazado: 0 }, otros: [] },
+      0,
+      100,
+    );
+    const por = pixelesPorMetro(d.rango, 100);
+    expect(d.eje!.desde.dy / por).toBeCloseTo(1703, 0);
+    expect(d.eje!.desde.dx / por).toBeCloseTo(0, 0);
+  });
+});
+
 describe("el aeropuerto de destino en la carta", () => {
   /*
    * Pedido jugando: «si salgo de un aeropuerto y me estoy acercando a otro,
