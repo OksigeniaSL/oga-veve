@@ -178,7 +178,7 @@ export interface Transmision {
  * carrera. Que una estuviera y la otra no era lo que dejaba entrar la charla
  * justo en la mitad ruidosa.
  */
-const CALLADAS = new Set([
+export const CALLADAS: ReadonlySet<string> = new Set([
   /*
    * **Y en el punto de espera, que es cuando la torre habla contigo.** Ahí
    * se dicen cuatro cosas en diez segundos —la lámpara roja y su «hold
@@ -207,6 +207,13 @@ const CALLADAS = new Set([
  * final corta a Los Rodeos, con tu «cleared to land» ya dicho, autorizaba a
  * otro a despegar; y con tu avión rodando por la pista, a otro a entrar en
  * ella. La radio es ambiente, pero **lo que cuenta tiene que poder pasar**.
+ *
+ * Y no dársela a nadie es la mitad. La otra es **quitársela antes a quien la
+ * tuviera**, que es lo que hace una torre antes de dártela: ver
+ * `despejarLaPista`. Seis de estas ocho fases ya callaban la frecuencia
+ * entera —ver `CALLADAS`—, así que callar no bastaba: el que estaba alineado
+ * seguía en el eje durante toda tu toma, porque la orden que lo sacaba de ahí
+ * era justo una de las que no se podían decir.
  */
 export const PISTA_TUYA: ReadonlySet<string> = new Set([
   "autorizado",
@@ -220,11 +227,73 @@ export const PISTA_TUYA: ReadonlySet<string> = new Set([
 ]);
 
 /** Las órdenes de la torre que le dan la pista a alguien. */
-const DAN_LA_PISTA: ReadonlySet<string> = new Set([
+export const DAN_LA_PISTA: ReadonlySet<string> = new Set([
   "torre.lineUpWait",
   "torre.clearedTakeoff",
   "torre.clearedLand",
 ]);
+
+/**
+ * Las que además la **sujetan**: dicha una, ese avión tiene la pista hasta
+ * que la suelta. El que entra en el eje la tiene hasta que despega; el que
+ * está autorizado a aterrizar, hasta que la deja libre.
+ *
+ * «Cleared for take-off» da la pista y no la sujeta: el que la recibe sale
+ * del eje a velocidad de vuelo —ver `caminosDe` en `world/trafico.ts`— y en
+ * unos segundos ya no está en ella.
+ */
+const LA_SUJETAN: ReadonlySet<string> = new Set([
+  "torre.lineUpWait",
+  "torre.clearedLand",
+]);
+
+/** Y lo que la suelta: despegar, irse al aire o salir de ella. */
+const LA_SUELTAN: ReadonlySet<string> = new Set([
+  "torre.clearedTakeoff",
+  "torre.goAround",
+  "otro.pistaLibre",
+]);
+
+/**
+ * Con qué orden tiene la pista un avión que va por `paso` de su `guion`, o
+ * `null` si no la tiene: la última que la sujetó sin nada detrás que la
+ * soltara.
+ */
+export function laPistaQueTiene(guion: Guion, paso: number): string | null {
+  const pasos = GUIONES[guion];
+  for (let i = Math.min(paso, pasos.length) - 1; i >= 0; i--) {
+    const clave = pasos[i]!.clave;
+    if (LA_SUELTAN.has(clave)) return null;
+    if (LA_SUJETAN.has(clave)) return clave;
+  }
+  return null;
+}
+
+/**
+ * Lo que la torre le dice a quien tiene la pista para quitársela: al que
+ * espera en el eje, que despegue; al que viene a aterrizar, que se vaya al
+ * aire. Son las dos cosas que hace una torre de verdad, y las dos están
+ * grabadas.
+ */
+export const PARA_QUITARSELA: Readonly<Record<string, string>> = {
+  "torre.lineUpWait": "torre.clearedTakeoff",
+  "torre.clearedLand": "torre.goAround",
+};
+
+/**
+ * De lo que se le dice a los que tenían la pista, **cuál se dice en voz alta**.
+ *
+ * Una, y la del que está en el eje si lo hay: es el que está plantado en tu
+ * pista. Las demás pasan igual —el avión se va al aire y se ve— pero calladas,
+ * como pasa todo lo de la frecuencia en final. Con dos dichas delante, tu
+ * «cleared to land» esperaba dieciséis segundos y caducaba sin sonar: medido
+ * entrando en final en Gando con uno alineado y otro autorizado a la vez.
+ */
+export function laQueSeDice(dichas: readonly Transmision[]): Transmision | null {
+  return (
+    dichas.find((d) => d.clave === "torre.clearedTakeoff") ?? dichas[0] ?? null
+  );
+}
 
 /** Cuántos comparten la frecuencia. */
 export const CUANTOS = 2;
@@ -288,6 +357,68 @@ export class Frecuencia {
     return this.aviones.map((a) => a.indicativo.matricula);
   }
 
+  /** Quién tiene la pista ahora mismo, y con qué orden. Ver `laPistaQueTiene`. */
+  get conLaPista(): readonly { matricula: string; orden: string }[] {
+    return this.aviones.flatMap((a) => {
+      const orden = laPistaQueTiene(a.guion, a.paso);
+      return orden ? [{ matricula: a.indicativo.matricula, orden }] : [];
+    });
+  }
+
+  /**
+   * **Te van a dar la pista: antes se le quita a quien la tenga.**
+   *
+   * Lo llama el juego en cuanto la pista pasa a ser tuya, y **antes** de que
+   * la torre te la dé a vos, que es el orden en que lo haría una torre de
+   * verdad: «Echo Charlie Kilo, cleared for take-off» y después tu «cleared
+   * to land». Al revés sería autorizarte a aterrizar con otro plantado en el
+   * eje, que es de lo poco que en una torre no se hace nunca.
+   *
+   * Hacía falta porque `PISTA_TUYA` solo impedía **darla**: el que ya la
+   * tenía se quedaba con ella. Con 400 frecuencias sorteadas y un aterrizaje
+   * encima, en 132 había un avión alineado en el eje durante toda la toma y
+   * en 268 uno autorizado a aterrizar seguía cantando su final; al que venía
+   * detrás no lo mandaba al aire nadie.
+   *
+   * Devuelve lo que la torre les dice, en orden; quien pregunta lo dibuja
+   * todo y dice como mucho una. Ver `laQueSeDice`.
+   */
+  despejarLaPista(): Transmision[] {
+    const dichas: Transmision[] = [];
+    for (const a of this.aviones) {
+      const tiene = laPistaQueTiene(a.guion, a.paso);
+      const clave = tiene ? PARA_QUITARSELA[tiene] : undefined;
+      if (!clave) continue;
+      dichas.push({ voz: "torre", clave, de: a.indicativo, respuesta: false });
+      a.estrena = false;
+      if (clave === "torre.clearedTakeoff") {
+        /*
+         * Lo que le tocaba después del eje era justo esto, así que se da por
+         * dicho y sigue su guion: despega, y en su sitio llega otro.
+         */
+        const i = GUIONES[a.guion].findIndex(
+          (p, j) => j >= a.paso && p.clave === clave,
+        );
+        if (i >= 0) a.paso = i;
+      } else {
+        /*
+         * Y al que se va al aire le queda lo mismo que al del guion de la
+         * frustrada a partir de ahí: vuelve al viento en cola, pide otra vez,
+         * y aterriza cuando la pista ya no es tuya.
+         */
+        a.guion = "frustrada";
+        a.paso = GUIONES.frustrada.findIndex((p) => p.clave === clave);
+      }
+      this.avanzar(a);
+    }
+    const ultima = dichas[dichas.length - 1];
+    if (ultima) {
+      this.canal = HUECO_DEL_CANAL;
+      this.dicho = ultima;
+    }
+    return dichas;
+  }
+
   /**
    * Vuelve a empezar, con el prefijo de matrícula del aeródromo de hoy.
    *
@@ -335,12 +466,29 @@ export class Frecuencia {
      * **Y la pista que es tuya no se le da a nadie.** Quien espera una de esas
      * órdenes sigue esperando —no pierde el turno, igual que arriba— y
      * mientras tanto puede hablar el otro. Ver `PISTA_TUYA`.
+     *
+     * Esto solo se nota en las dos fases de la pista que no están calladas:
+     * el back-taxi y el rato de dejarla libre. En las otras seis ya no habla
+     * nadie.
+     *
+     * **Y la que tiene otro de la frecuencia, tampoco.** Es la misma regla
+     * entre ellos: con dos aviones sorteados, en 338 de 400 frecuencias de
+     * veinte minutos había un rato con dos a la vez en la pista —los dos
+     * alineados en el mismo eje, o uno en el eje y otro autorizado a
+     * aterrizar encima—. El que la tiene sigue su guion y la suelta; el otro
+     * espera, que es la lección del guion de la espera.
      */
     const pistaTuya = PISTA_TUYA.has(m.fase);
     let quien: EnLaFrecuencia | null = null;
     for (const a of this.aviones) {
       if (a.falta > 0) continue;
-      if (pistaTuya && DAN_LA_PISTA.has(GUIONES[a.guion][a.paso]!.clave))
+      if (
+        DAN_LA_PISTA.has(GUIONES[a.guion][a.paso]!.clave) &&
+        (pistaTuya ||
+          this.aviones.some(
+            (b) => b !== a && laPistaQueTiene(b.guion, b.paso) !== null,
+          ))
+      )
         continue;
       if (!quien || a.falta < quien.falta) quien = a;
     }

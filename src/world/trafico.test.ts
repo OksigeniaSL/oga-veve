@@ -13,7 +13,9 @@ import {
   SE_VA_A_LOS,
   RUEDA_A,
   VUELA_A,
+  alAireDesde,
   caminosDe,
+  crearTrafico,
   largoDelCamino,
   porElCamino,
 } from "./trafico";
@@ -238,4 +240,37 @@ describe("y el avión mira hacia donde va", () => {
       expect(mz).toBeCloseTo(dz / n, 5);
     });
   }
+});
+
+describe("al que mandan al aire, desde donde está", () => {
+  /*
+   * La torre manda al aire al que venía a aterrizar en cuanto la pista pasa a
+   * ser tuya, y eso le puede pillar en cualquier punto del circuito. Con el
+   * camino de siempre, que sale del umbral, un avión que estaba en el viento
+   * en cola aparecía de golpe sobre la cabecera de tu pista, delante de ti.
+   */
+  const marcas = caminosDe(PISTA, COTA);
+  const v = verticesDelCircuito(PISTA, COTA);
+
+  it("sale de donde está y sube hacia arriba del circuito", () => {
+    const aqui = alDecir(marcas, "otro.enCola").sitio;
+    const m = alAireDesde(marcas["torre.goAround"]!, aqui);
+    expect(entre(porElCamino(m.camino, m.metros)!.sitio, aqui)).toBeLessThan(1);
+    // Y va a donde iba el de siempre: el final de la subida y la esquina.
+    expect(m.camino.slice(1)).toEqual(marcas["torre.goAround"]!.camino.slice(1));
+    expect(entre(m.camino[1]!, v[1]!)).toBeLessThan(1);
+  });
+
+  it("y dibujado no da el salto: sigue donde estaba al oír la orden", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.enCola");
+    t.paso(20);
+    const antes = t.quienes()[0]!;
+    t.anuncia("EC-ABC", "torre.goAround");
+    const despues = t.quienes()[0]!;
+    expect(entre(antes, despues)).toBeLessThan(1);
+    // Mientras que el de siempre habría aparecido en el umbral.
+    expect(entre(antes, v[0]!)).toBeGreaterThan(1000);
+    t.dispose();
+  });
 });

@@ -44,7 +44,9 @@ import { dibujoDelGasTactil } from "./ui/pictogramas";
 import { InputManager } from "./flight/input";
 import {
   claveDeTorre,
+  daLaPistaAOtro,
   DICE_LA_TORRE,
+  esDeLaFrecuencia,
   esDeLaLampara,
   NOMBRA_LA_PISTA,
 } from "./audio/torre";
@@ -306,7 +308,7 @@ import {
   elegirTorre,
   type Instructor,
 } from "./audio/instructor";
-import { Frecuencia } from "./flight/radio";
+import { Frecuencia, laQueSeDice, PISTA_TUYA } from "./flight/radio";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
 import { indicatedAirspeed } from "./flight/atmosphere";
@@ -363,6 +365,7 @@ import { avisaDelTren, seVuelveADecir } from "./flight/tren";
 import {
   cargaParaElPlan,
   comoVaElDeposito,
+  hayQueLlenar,
   loQueCabe,
   quemaPorSegundo,
   reservaEnKilos,
@@ -705,6 +708,14 @@ const FINAL_DE_PISTA = 40;
  */
 const ALTURA_DE_TOMA = 18;
 
+/**
+ * Cuánto antes de la pista se deja de avisar del terreno, m.
+ *
+ * Trescientos: el umbral se cruza a quince metros, y un avión que viene bien a
+ * esa altura está, visto por el aviso de terreno, bajísimo. Esto es **solo**
+ * para callar ese aviso; dónde se dice «ya podés tocar» no lleva margen. Ver
+ * `sobreDondeSeToca`.
+ */
 const ANTES_DEL_UMBRAL = 300;
 
 /**
@@ -1182,18 +1193,19 @@ export class Game {
    */
   private desvioId: string | null = null;
 
-  /** En qué campo se cargó combustible por última vez. Ver `repostar`. */
-  private campoDelRepostaje = "";
-
   /**
-   * Y **para qué tramo**: de dónde a dónde. Ver `empezarOtroTramo`.
+   * **Para qué tramo** se llenó el depósito por última vez: de dónde a dónde.
+   * Ver `hayQueLlenar`.
    *
-   * Con el campo solo no basta. Volviendo a casa de Los Rodeos, al apagar se
-   * cargaba para lo que decía la ruta en ese momento —una vuelta al campo,
-   * porque al tocar tierra en casa el destino pasa a ser casa—, y al arrancar
-   * el tramo nuevo iba otra vez a Los Rodeos con el depósito de un circuito:
-   * treinta y dos kilos donde hacían falta cincuenta y dos. El campo era el
-   * mismo; el tramo, no.
+   * Se miraba el campo del último repostaje, y con el campo solo no basta.
+   * Volviendo a casa de Los Rodeos, al apagar se cargaba para lo que decía la
+   * ruta en ese momento —una vuelta al campo, porque al tocar tierra en casa
+   * el destino pasa a ser casa—, y al arrancar el tramo nuevo iba otra vez a
+   * Los Rodeos con el depósito de un circuito: treinta y dos kilos donde
+   * hacían falta cincuenta y dos. El campo era el mismo; el tramo, no.
+   *
+   * Y con el tramo solo tampoco: dice para qué se llenó, no si sigue lleno.
+   * Por eso `hayQueLlenar` mira además los kilos.
    */
   private tramoDelRepostaje = "";
 
@@ -1258,17 +1270,30 @@ export class Game {
    * mar no cuente como llegada a ninguna parte.
    */
   private mirarSiSeLlego(): void {
-    const s = this.flight.state;
-    // Un avión roto no ha llegado a ninguna parte.
-    if (!s.onGround || this.vecinos.length === 0 || this.percance) return;
-    const aqui = this.elCampoDeAhora();
-    if (aqui.id === this.salidaId) return;
-    const c = this.campoPorId(aqui.id);
-    if (!c || Math.hypot(c.x - s.position.x, c.z - s.position.z) > 5000)
-      return;
+    if (this.vecinos.length === 0) return;
+    const aqui = this.campoEnCuyoSueloEsta();
+    if (!aqui || aqui.id === this.salidaId) return;
     this.salidaId = aqui.id;
     this.destinoId = this.scenario.id;
     this.desvioId = null;
+  }
+
+  /**
+   * El campo en cuyo suelo está el avión, o `null` si no está en el suelo de
+   * ninguno. Cinco kilómetros de radio, para que una toma fuera de campo en
+   * mitad del mar no cuente como llegada a ninguna parte; y un avión roto no
+   * ha llegado a ninguna parte.
+   *
+   * Lo preguntan dos: quien decide si se llegó a otro campo y quien decide si
+   * el camión del combustible puede acercarse.
+   */
+  private campoEnCuyoSueloEsta(): CampoConNombre | null {
+    const s = this.flight.state;
+    if (!s.onGround || this.percance) return null;
+    const c = this.campoPorId(this.elCampoDeAhora().id);
+    if (!c || Math.hypot(c.x - s.position.x, c.z - s.position.z) > 5000)
+      return null;
+    return c;
   }
 
   /**
@@ -1322,13 +1347,15 @@ export class Game {
     this.mirarSiSeLlego();
     const aqui = this.elCampo();
     this.empezarLaRutaEn(aqui.id);
-    // Si el depósito no se llenó para este tramo, se llena. Ver
-    // `tramoDelRepostaje`.
-    if (
-      this.tramoDelRepostaje !==
-      this.tramoParaCargar(this.salidaId, this.destinoId).clave
-    )
-      this.repostar();
+    /*
+     * Si el depósito no está lleno para este tramo, se llena: se viene de
+     * apagar, y con el motor parado en un campo el camión llega. Casi siempre
+     * ya vino al apagar —ver `toggleEngine`—; esto es para cuando no se pasó
+     * por la llave, como un motor que se paró solo, y para quien cambió de
+     * destino con el avión parado. Ver `hayQueLlenar`.
+     */
+    if (this.campoEnCuyoSueloEsta())
+      this.llenarSiHaceFalta(this.salidaId, this.destinoId);
     this.percance = null;
     this.laAproximacion.reiniciar();
     this.avisadoDeLaSenda = false;
@@ -1438,14 +1465,7 @@ export class Game {
    * si el depósito salió lleno para lo que se va a volar. Ver `repostar`.
    */
   get cargaDelTramoParaBanco(): number {
-    const { salida, destino } = this.tramoParaCargar(
-      this.salidaId,
-      this.destinoId,
-    );
-    return cargaParaElPlan(
-      this.aircraft,
-      tramosDelPlan(salida, destino, this.camposDelVuelo()),
-    );
+    return this.cargaDelTramo(this.salidaId, this.destinoId);
   }
 
   /**
@@ -2064,6 +2084,19 @@ export class Game {
   /** Todas las de la frecuencia, para el banco. */
   get matriculasDeLaRadio(): readonly string[] {
     return this.radio.matriculas;
+  }
+
+  /** Quién de la frecuencia tiene la pista ahora, para el banco. */
+  get pistaDeLosDemasParaBanco(): readonly { matricula: string; orden: string }[] {
+    return this.radio.conLaPista;
+  }
+
+  /**
+   * Tu matrícula tal como va en las claves de la boca, detrás de la arroba:
+   * las letras en el alfabeto, unidas. Ver `turnoDe` y `esDeLaLampara`.
+   */
+  private get misLetrasEnLaBoca(): string {
+    return Object.values(rellenoDe(this.miIndicativo)).join("-");
   }
 
   /** La matrícula de tu avión, para el banco. Ver `miIndicativo`. */
@@ -4557,6 +4590,49 @@ export class Game {
   }
 
   /**
+   * **La pista pasa a ser tuya: se le quita a quien la tuviera.**
+   *
+   * Dos cosas, y en este orden:
+   *
+   * - Lo que la torre les dio a los demás y todavía espera turno en la boca
+   *   **ya no se dice**. La frecuencia dejaba de dar la pista en cuanto era
+   *   tuya, pero una orden dada un segundo antes podía esperar hasta doce
+   *   —`CADUCA_LA_ORDEN`— y tu autorización, en `mando`, se le colaba
+   *   delante: en Pettirossi se oyó tu «cleared to land» y seis segundos y
+   *   medio después un «line up and wait» a otro. Ver `daLaPistaAOtro`.
+   * - Y al que la tenía —alineado en el eje, o autorizado a aterrizar— la
+   *   torre le dice que despegue o que se vaya al aire, **antes** de dártela a
+   *   vos. Es lo que hace una torre de verdad, y es la lección del guion de
+   *   la frustrada contada con tu vuelo delante: al otro también lo mandan al
+   *   aire, y no pasa nada. Ver `despejarLaPista` en `flight/radio.ts`.
+   *
+   * Se dibuja todo y **se dice una, y solo con la boca libre**. Lo que se
+   * enseña aquí es tu autorización, y esa caduca a los doce segundos: con la
+   * boca ocupada y dos órdenes a otros delante, tu «cleared to land» caducó
+   * sin sonar. Con la boca libre la de ellos suena ya y la tuya detrás, a unos
+   * seis segundos; ocupada, lo de ellos pasa callado, como pasa en final todo
+   * lo de la frecuencia, y el avión se va igual a la vista. Ver `laQueSeDice`.
+   *
+   * La que se dice va en `mando` y no en `baja` como el resto de la frecuencia
+   * porque no es charla: es la mitad de tu autorización, y en `baja` tu
+   * «cleared to land» se le ponía delante. Entre iguales la boca dice primero
+   * lo primero que llegó, y esto llega antes.
+   */
+  private quitarleLaPistaALosDemas(): void {
+    BOCA.retirar(daLaPistaAOtro);
+    // En un campo sin torre no hay frecuencia a la que quitarle nada.
+    if (this.elCampoMontado().escenario.aerodrome?.privado) return;
+    const dichas = this.radio.despejarLaPista();
+    for (const dice of dichas) this.trafico?.anuncia(dice.de.matricula, dice.clave);
+    const libre = !BOCA.ocupada && BOCA.cuantasEsperan === 0;
+    const dice = libre ? laQueSeDice(dichas) : null;
+    const montada = dice && this.deTorre(dice.clave, dice.de);
+    if (!montada) return;
+    this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+    if (this.tier.instruments !== "none") this.hud.radio(montada.texto);
+  }
+
+  /**
    * Una llamada de la torre montada entera: a quién, con qué pista y cómo
    * suena.
    *
@@ -4740,8 +4816,13 @@ export class Game {
      *
      * Apagarse no retira nada: la luz se apaga al usar el permiso, y el
      * permiso sigue siendo verdad. Ver `Boca.retirar`.
+     *
+     * Y solo lo que va a tu matrícula: en el mismo fotograma en que la luz se
+     * pone verde, la torre le acaba de quitar la pista a quien la tuviera, y
+     * eso no es de tu lámpara. Ver `quitarleLaPistaALosDemas`.
      */
-    BOCA.retirar(esDeLaLampara);
+    const mia = this.misLetrasEnLaBoca;
+    BOCA.retirar((clave, urgencia) => esDeLaLampara(clave, urgencia, mia));
     /*
      * **Y la dice como se dice aquí.** La torre no habla el castellano del
      * juego: habla el de su campo, y en Canarias eso quiere decir sin vosear y
@@ -5032,26 +5113,30 @@ export class Game {
     )
       this.empezarOtroTramo();
     /*
-     * **Y con el motor parado en otro campo, se reposta para volver.**
+     * **Y con el motor parado en un campo, se reposta para lo que sigue.**
      *
      * Se sale con lo del tramo de ida más el alternativo, no con la vuelta: en
      * el campo de llegada hay combustible, como en cualquier aeropuerto. Pero
      * el camión no se acerca a un avión con el motor en marcha, así que llega
      * cuando se apaga, que es cuando llega de verdad.
-     */
-    /*
+     *
+     * **En cualquier campo, también en el de salida.** Esto pedía un campo
+     * distinto del último repostaje, y en casa el camión no venía nunca: quien
+     * se volvía a medio camino y apagaba salía otra vez hacia Los Rodeos con
+     * lo que le quedaba, y los circuitos seguidos iban vaciando el depósito.
+     * Ver `hayQueLlenar`.
+     *
      * Para el tramo que sale de aquí, que no es siempre el que dice la ruta
      * al apagar: al volver a casa la ruta dice «vuelta al campo» hasta que se
      * arranca, y el tramo siguiente va al destino del hangar. Ver
      * `tramoDelRepostaje`.
      */
-    if (!c.engineOn && this.elCampoDeAhora().id !== this.campoDelRepostaje) {
+    if (!c.engineOn && this.campoEnCuyoSueloEsta()) {
       this.mirarSiSeLlego();
-      if (this.salidaId !== this.campoDelRepostaje)
-        this.repostarPara(
-          this.salidaId,
-          this.destinoDelTramoDesde(this.salidaId),
-        );
+      this.llenarSiHaceFalta(
+        this.salidaId,
+        this.destinoDelTramoDesde(this.salidaId),
+      );
     }
   }
 
@@ -8152,7 +8237,14 @@ export class Game {
     this.campoMontado = campo.id;
     this.ponerCircuito();
     this.ponerTrafico();
-    // Otra frecuencia, otra gente: con las matrículas de allí.
+    /*
+     * Otra frecuencia, otra gente: con las matrículas de allí. **Y lo que la
+     * de aquí dejó esperando turno en la boca se va con ella**: se oía ya en
+     * el campo nuevo, con la pista del viejo —llegando a Gando, un «cleared to
+     * land» a un avión de Los Rodeos por la 12—, porque la frase se monta con
+     * su pista al decirse la llamada y no al sonar. Ver `esDeLaFrecuencia`.
+     */
+    BOCA.retirar(esDeLaFrecuencia);
     this.radio.reiniciar(campo.escenario.aerodrome?.id);
     this.cambiarDeSigueme(campo);
     this.hud.setMagneticVariation(campo.escenario.magneticVariation);
@@ -8318,18 +8410,33 @@ export class Game {
 
   /** Llenar para el tramo de `salidaId` a `destinoId`. Ver `repostar`. */
   private repostarPara(salidaId: string, destinoId: string): void {
-    const { salida, destino, clave } = this.tramoParaCargar(
-      salidaId,
-      destinoId,
-    );
-    this.combustible = cargaParaElPlan(
+    this.combustible = this.cargaDelTramo(salidaId, destinoId);
+    this.tramoDelRepostaje = this.tramoParaCargar(salidaId, destinoId).clave;
+    this.quemaDeAhora = 0;
+    this.avisadoDeLaReserva = false;
+  }
+
+  /**
+   * Llenar para ese tramo **si no está ya lleno para él**. Ver `hayQueLlenar`.
+   */
+  private llenarSiHaceFalta(salidaId: string, destinoId: string): void {
+    if (
+      hayQueLlenar(
+        { tramo: this.tramoDelRepostaje, kilos: this.combustible },
+        this.tramoParaCargar(salidaId, destinoId).clave,
+        this.cargaDelTramo(salidaId, destinoId),
+      )
+    )
+      this.repostarPara(salidaId, destinoId);
+  }
+
+  /** Lo que se carga para un tramo: ida, alternativo, maniobra y reserva. */
+  private cargaDelTramo(salidaId: string, destinoId: string): number {
+    const { salida, destino } = this.tramoParaCargar(salidaId, destinoId);
+    return cargaParaElPlan(
       this.aircraft,
       tramosDelPlan(salida, destino, this.camposDelVuelo()),
     );
-    this.campoDelRepostaje = salida.id;
-    this.tramoDelRepostaje = clave;
-    this.quemaDeAhora = 0;
-    this.avisadoDeLaReserva = false;
   }
 
   /** Los dos campos de un tramo, como los carga el depósito, y su nombre. */
@@ -8740,14 +8847,15 @@ export class Game {
   }
 
   /**
-   * Lo mismo, pero **donde se puede tocar**: con el margen contado desde el
-   * umbral de aterrizaje y no desde la punta del asfalto.
+   * Lo mismo, pero **donde se puede tocar**: del umbral de aterrizaje en
+   * adelante, sin margen por delante.
    *
-   * Sin umbral desplazado es exactamente `sobreLaPista`. Con él no: en la 01
-   * de Fuerteventura hay mil metros de pista antes de la barra blanca, y
-   * volando bajo sobre ellos el «ya podés tocar» salía encima de las flechas
-   * —el único sitio de la pista donde no se puede—. El aviso de terreno sigue
-   * mirando la pista entera, que sobre asfalto no hay terreno que avisar.
+   * Contaba desde la barra pero con los trescientos metros de margen de
+   * `sobreLaPista`, así que en la 01 de Fuerteventura el «ya podés tocar»
+   * seguía saliendo sobre los últimos trescientos metros de flechas —el único
+   * sitio de la pista donde no se puede—. Ver `sobreDondeSeToca`. El aviso de
+   * terreno sigue mirando la pista entera con su margen, que sobre asfalto no
+   * hay terreno que avisar.
    */
   private sobreLaZonaDeToma(): boolean {
     const r = this.laPistaDeAhora();
@@ -8760,12 +8868,7 @@ export class Game {
     );
     return (
       Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
-      sobreDondeSeToca(
-        r,
-        along,
-        (this.flight.state.heading * 180) / Math.PI,
-        ANTES_DEL_UMBRAL,
-      )
+      sobreDondeSeToca(r, along, (this.flight.state.heading * 180) / Math.PI)
     );
   }
 
@@ -9033,6 +9136,7 @@ export class Game {
   private avanzarPlan(dt: number): void {
     if (!this.plan) return;
     this.mudarElPlanSiCambiaDeCampo();
+    const faseDeAntes = this.vistaActual?.fase ?? "";
     const suelo =
       this.flight.state.position.y -
       this.terrain.sampleHeight(
@@ -9046,6 +9150,14 @@ export class Game {
       dt,
     );
     this.vistaActual = vista;
+    /*
+     * **La pista acaba de pasar a ser tuya**: antes de que la torre te la dé
+     * —la lámpara verde y el «cleared to land» se dicen más abajo, en este
+     * mismo paso— se le quita a quien la tuviera. Ver
+     * `quitarleLaPistaALosDemas`.
+     */
+    if (PISTA_TUYA.has(vista.fase) && !PISTA_TUYA.has(faseDeAntes))
+      this.quitarleLaPistaALosDemas();
 
     /*
      * **Una orden que espera a que hagas algo no puede perderse por el camino.**

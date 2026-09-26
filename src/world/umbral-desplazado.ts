@@ -111,22 +111,30 @@ export function antesDelUmbralDeToma(
 }
 
 /**
- * ¿Está sobre la pista **donde se puede tocar**, con `margen` metros por
- * delante de su umbral de aterrizaje y por detrás de la otra punta?
+ * ¿Está sobre la pista **donde se puede tocar**: de su umbral de aterrizaje a
+ * la otra punta? Es donde se dice «ya podés tocar».
  *
- * Sin umbral desplazado es lo de siempre, el rectángulo de la pista con su
- * margen. Con él, el margen se cuenta desde la barra blanca y no desde la
- * punta del asfalto.
+ * **Sin margen por delante del umbral**, y eso es todo el arreglo. Llevaba
+ * trescientos metros, los mismos con los que el aviso de terreno se calla
+ * llegando a la pista —ver `ANTES_DEL_UMBRAL` en `game.ts`—, y son dos
+ * preguntas distintas: callar el aviso antes del umbral es no asustar a quien
+ * cruza la valla a quince metros; decir «tocá» antes del umbral es mandar
+ * tocar donde no se puede. Con el desplazado se veía: en la 01 de
+ * Fuerteventura, con una final baja, el aviso salía sobre las flechas a 249
+ * metros de la barra, el avión tocaba 108 metros antes de ella y la
+ * instructora le decía «corto». Dos instrucciones contradictorias, y justo en
+ * el caso para el que existe el umbral desplazado. Sin desplazado era lo
+ * mismo sobre el campo, que es peor.
+ *
+ * Y no se pierde el aviso de quien viene bien: la senda cruza el umbral a
+ * quince metros, por debajo de los dieciocho de `ALTURA_DE_TOMA`, así que lo
+ * oye al pasar la barra. Quien viene bajo lo oye también ahí, y no antes.
  */
 export function sobreDondeSeToca(
   pista: PistaConSusUmbrales,
   along: number,
   rumbo: number,
-  margen: number,
 ): boolean {
   const v = vistaPorQuienLlega(pista, along, rumbo);
-  return (
-    v.along > -hastaElUmbralDeToma(v.pista) - margen &&
-    v.along < pista.length / 2 + margen
-  );
+  return v.along >= -hastaElUmbralDeToma(v.pista) && v.along <= pista.length / 2;
 }

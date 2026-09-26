@@ -549,6 +549,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `flight/radio.ts`.
      */
     enLaFrecuencia: () => [...juego.matriculasDeLaRadio],
+    /**
+     * Quién de la frecuencia tiene la pista ahora —alineado o autorizado a
+     * aterrizar— y con qué orden. Mientras es tuya no tiene que haber nadie.
+     * Ver `despejarLaPista` en `flight/radio.ts`.
+     */
+    pistaDeLosDemas: () => [...juego.pistaDeLosDemasParaBanco],
     indicativo: () => {
       const otro = juego.indicativoDeLaRadio;
       const yo = juego.miMatricula;

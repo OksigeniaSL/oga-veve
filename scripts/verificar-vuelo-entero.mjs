@@ -1350,6 +1350,35 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
    */
   let traficoVistoAlli = 0;
   let traficoMasLejosAlli = 0;
+  /**
+   * **La pista que es tuya, de nadie más**, mientras lo es.
+   *
+   * Dos cosas: que ningún avión de la frecuencia la **tenga** —alineado o
+   * autorizado a aterrizar— y que no se **oiga** a la torre dándosela a otro
+   * después de habértela dado a vos. Lo segundo se oía en Pettirossi y en
+   * Gando: tu «cleared to land» y seis segundos después un «line up and wait»
+   * a otro, que esperaba turno en la boca desde antes. Ver
+   * `quitarleLaPistaALosDemas` en `game.ts`.
+   */
+  const PISTA_TUYA = new Set([
+    "autorizado",
+    "alineando",
+    "back-taxi",
+    "despegando",
+    "comprometido",
+    "final",
+    "aterrizado",
+    "abandonando",
+  ]);
+  let pistaDeOtros = 0;
+  let pistaDeOtrosDonde = null;
+  const dadaAOtroTrasLaTuya = [];
+  let habladasMiradas = 0;
+  let yaTeLaDieron = false;
+  const misLetrasEnLaTorre = Object.entries(o.indicativo?.()?.deTorre ?? {})
+    .filter(([k]) => /^c\d/.test(k))
+    .map(([, v]) => v)
+    .join("-");
   /** Segundos esperando a poder apagar con la llave. Ver la etapa «apagar». */
   let esperandoParaApagar = 0;
   let dijoToca = false;
@@ -1678,6 +1707,35 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
      * sola ventana al principio, lo que pasa en final no se veía nunca.
      */
     const enFinal = /final|aterriz|frustr/.test(fase) || etapa === "final";
+    {
+      const tuya = PISTA_TUYA.has(fase);
+      if (!tuya) yaTeLaDieron = false;
+      const otros = tuya ? (o.pistaDeLosDemas?.() ?? []) : [];
+      if (otros.length) {
+        pistaDeOtros++;
+        pistaDeOtrosDonde ??= `${t.toFixed(0)} s en «${fase}»: ${otros
+          .map((x) => `${x.matricula} ${x.orden}`)
+          .join(", ")}`;
+      }
+      const h = o.habladas?.() ?? [];
+      // La lista tiene tope y se corre por arriba: si encoge, se vuelve a
+      // mirar desde donde esté.
+      if (h.length < habladasMiradas) habladasMiradas = 0;
+      for (const x of h.slice(habladasMiradas)) {
+        const m = /^[\d.]+s torre\.(?:[a-z]+\.)?([A-Za-z]+)(?:\.[LCR])?@(.*)$/.exec(x);
+        if (!m || !tuya) continue;
+        const mia = !!misLetrasEnLaTorre && m[2].startsWith(misLetrasEnLaTorre);
+        if (mia && /^(verde|aterrizar|clearedTakeoff|clearedLand)$/.test(m[1]))
+          yaTeLaDieron = true;
+        else if (
+          !mia &&
+          yaTeLaDieron &&
+          /^(lineUpWait|clearedTakeoff|clearedLand)$/.test(m[1])
+        )
+          dadaAOtroTrasLaTuya.push(`${t.toFixed(0)} s en «${fase}»: ${x}`);
+      }
+      habladasMiradas = h.length;
+    }
     if (
       !s.onGround &&
       i % 10 === 0 &&
@@ -2811,6 +2869,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       .join("-"),
     // Todo lo que dijo cada boca, para poder contarlo al final del parte.
     todoLoDicho: o.dichoTodo?.() ?? {},
+    pistaDeOtros,
+    pistaDeOtrosDonde,
+    dadaAOtroTrasLaTuya,
     masRapidoEnPista: Math.round(masRapidoEnPista),
     seSalioEnPista: Math.round(seSalioEnPista),
     gasEnLaCarrera: +gasEnLaCarrera.toFixed(2),
@@ -3255,6 +3316,26 @@ comprobar(
       ? ` · se cayeron: ${vuelo.descartes.slice(-6).join(" | ")}`
       : ""),
   "cinco frases grabadas y horneadas que no las pedía nadie",
+);
+
+/*
+ * **Y la pista que es tuya no la tiene nadie más.** Ni alineado en el eje
+ * durante tu toma, ni autorizado a aterrizar a la vez que vos, ni oído
+ * recibiéndola después de tu autorización. Antes de dártela, la torre se la
+ * quita a quien la tenga. Ver `despejarLaPista` en `flight/radio.ts`.
+ */
+comprobar(
+  "la pista que es tuya no la tiene nadie más",
+  (vuelo.pistaDeOtros ?? 0) === 0 && !(vuelo.dadaAOtroTrasLaTuya ?? []).length,
+  [
+    vuelo.pistaDeOtros
+      ? `otro la tuvo ${vuelo.pistaDeOtros} muestras, la primera a los ${vuelo.pistaDeOtrosDonde}`
+      : "nadie la tuvo mientras era tuya",
+    (vuelo.dadaAOtroTrasLaTuya ?? []).length
+      ? `y se oyó dársela a otro: ${vuelo.dadaAOtroTrasLaTuya.slice(0, 3).join(" · ")}`
+      : "ni se oyó dársela a otro después de la tuya",
+  ].join(" · "),
+  "«cleared to land» a vos y seis segundos después «line up and wait» a otro, en Pettirossi",
 );
 
 /*

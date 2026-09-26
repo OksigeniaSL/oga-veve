@@ -200,6 +200,29 @@ export function cargaParaElPlan(
 }
 
 /**
+ * Si hay que llenar el depósito para salir a `tramo`, que pide `carga` kilos.
+ *
+ * Hay que llenarlo si se llenó para otro tramo **o si lo que hay no llega**.
+ * Lo segundo es lo que faltaba: la clave del tramo —de dónde a dónde— dice
+ * para qué se llenó el depósito, no si ese combustible sigue dentro. Quien
+ * iba a Los Rodeos y se volvía a medio camino —renunciar es ganar—, tocaba
+ * en casa, apagaba y arrancaba para intentarlo otra vez salía con lo que le
+ * quedaba: 185 kilos de los 411 del tramo, con la reserva lista para saltar a
+ * mitad de ruta. Y con circuitos seguidos en casa, apagando entre medias, el
+ * depósito solo bajaba. El tramo era el mismo; el depósito, no.
+ *
+ * Lo que sobra no se tira: con más de lo que pide el mismo tramo se sale
+ * como está.
+ */
+export function hayQueLlenar(
+  deposito: { readonly tramo: string; readonly kilos: number },
+  tramo: string,
+  carga: number,
+): boolean {
+  return deposito.tramo !== tramo || deposito.kilos < carga;
+}
+
+/**
  * Cuánto vuelo queda con lo que hay, en segundos.
  *
  * Al consumo de **ahora**, que es lo honesto: con el gas a fondo queda menos

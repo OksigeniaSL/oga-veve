@@ -266,8 +266,31 @@ export function caminosDe(
      * segundos nadie da media vuelta a un circuito. El avión sube, y a la
      * llamada siguiente reaparece en el viento en cola. Es el único sitio
      * donde se ve un tirón, y se prefiere a que la radio mienta.
+     *
+     * Este camino es el de quien **no estaba dibujado**. Al que ya se ve se
+     * le manda al aire desde donde esté: ver `alAireDesde`.
      */
     "torre.goAround": { camino: alAire, metros: 0, velocidad: vuela },
+  };
+}
+
+/**
+ * La orden de irse al aire, **desde donde está quien la recibe**.
+ *
+ * El camino de `torre.goAround` sale del umbral, y con el guion de la
+ * frustrada eso era un tirón aceptado: la orden llega pocos segundos después
+ * de cantar final, así que el avión ya estaba cerca. Desde que la torre manda
+ * al aire al que tenía la pista en cuanto pasa a ser tuya —ver
+ * `despejarLaPista` en `flight/radio.ts`—, la orden le puede llegar en
+ * cualquier punto del circuito, y salía del umbral de tu pista, delante de ti,
+ * un avión que un instante antes estaba en el viento en cola. Ahora sube de
+ * donde está y sigue por el mismo camino hacia arriba.
+ */
+export function alAireDesde(marca: Marca, sitio: Sitio): Marca {
+  return {
+    camino: [sitio, ...marca.camino.slice(1)],
+    metros: 0,
+    velocidad: marca.velocidad,
   };
 }
 
@@ -361,6 +384,7 @@ export function crearTrafico(
         if (quien) quien.olvidado = 0;
         return;
       }
+      const yaSeVeia = !!quien;
       if (!quien) {
         const g = new Group();
         g.name = "trafico-avion";
@@ -369,8 +393,13 @@ export function crearTrafico(
         quien = { grupo: g, marca, recorrido: marca.metros, olvidado: 0 };
         aviones.set(matricula, quien);
       }
-      quien.marca = marca;
-      quien.recorrido = marca.metros;
+      const p = quien.grupo.position;
+      const esta =
+        clave === "torre.goAround" && yaSeVeia
+          ? alAireDesde(marca, { x: p.x, y: p.y, z: p.z })
+          : marca;
+      quien.marca = esta;
+      quien.recorrido = esta.metros;
       quien.olvidado = 0;
       colocar(quien);
     },

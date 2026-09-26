@@ -97,13 +97,37 @@ describe("tocar: antes o después de la barra", () => {
     expect(antesDelUmbralDeToma(r, punta + 150, vuelta)).toBe(false);
   });
 
-  it("«ya podés tocar» se cuenta desde la barra, con el margen de siempre", () => {
-    expect(sobreDondeSeToca(r, punta + 150, r.heading, 300)).toBe(false);
-    expect(sobreDondeSeToca(r, punta + 800, r.heading, 300)).toBe(true);
-    // Sin desplazado, el rectángulo de la pista con su margen, como siempre.
+  it("«ya podés tocar» sale de la barra en adelante, no sobre las flechas", () => {
+    /*
+     * La final baja de la revisión: a 250 m de la barra y a diez metros, el
+     * aviso salía ahí mismo, el avión tocaba antes de la barra y le decían
+     * «corto». Con margen, cualquier punto de las flechas puede ser «tocá».
+     */
+    const barra = punta + desplazadoDe(r);
+    for (const antes of [1, 12, 72, 248, 278, 700])
+      expect(sobreDondeSeToca(r, barra - antes, r.heading), `${antes} m`).toBe(
+        false,
+      );
+    expect(sobreDondeSeToca(r, barra, r.heading)).toBe(true);
+    expect(sobreDondeSeToca(r, barra + 150, r.heading)).toBe(true);
+    // Y hasta la otra punta, no más allá.
+    expect(sobreDondeSeToca(r, -punta - 1, r.heading)).toBe(true);
+    expect(sobreDondeSeToca(r, -punta + 50, r.heading)).toBe(false);
+  });
+
+  it("y sin desplazado, del umbral en adelante: antes está el campo", () => {
     const gc = GRAN_CANARIA.runway;
-    expect(sobreDondeSeToca(gc, -gc.length / 2 - 250, gc.heading, 300)).toBe(true);
-    expect(sobreDondeSeToca(gc, -gc.length / 2 - 350, gc.heading, 300)).toBe(false);
+    const umbral = -gc.length / 2;
+    expect(sobreDondeSeToca(gc, umbral - 250, gc.heading)).toBe(false);
+    expect(sobreDondeSeToca(gc, umbral - 1, gc.heading)).toBe(false);
+    expect(sobreDondeSeToca(gc, umbral + 1, gc.heading)).toBe(true);
+  });
+
+  it("y quien entra por la 19 cuenta desde la barra de la 19", () => {
+    const vuelta = r.heading + 180;
+    // La 19 tiene 460 m desplazados en la otra punta.
+    expect(sobreDondeSeToca(r, -punta - 300, vuelta)).toBe(false);
+    expect(sobreDondeSeToca(r, -punta - 500, vuelta)).toBe(true);
   });
 });
 
