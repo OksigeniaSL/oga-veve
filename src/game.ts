@@ -314,6 +314,7 @@ import {
   EXPLICA_LA_ESPERA,
   HOLD_SHORT_POR,
   TurnoDePista,
+  type PorQueEsperas,
 } from "./flight/turno-de-pista";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
@@ -2152,6 +2153,11 @@ export class Game {
 
   /** Lo último que dijo la lámpara, para que la torre no se repita. */
   private ultimaLuzDeTorre: string | null = null;
+  /**
+   * Por quién se dijo que se esperaba en esta roja. Ver
+   * `explicarSiCambiaElPorque`.
+   */
+  private porQueExplicado: PorQueEsperas | null = null;
   private readonly radio = new Frecuencia();
   /**
    * **Y el turno de pista**: la frecuencia, el tráfico dibujado, la boca y tu
@@ -4997,7 +5003,11 @@ export class Game {
     const enElAire = !this.flight.state.onGround;
     this.hud.setLuzDeTorre(luz, rojaDice, this.miIndicativo.dicho, enElAire);
     const cual = luz === null ? null : `${luz}:${rojaDice}:${enElAire}`;
-    if (cual === this.ultimaLuzDeTorre) return;
+    if (cual === this.ultimaLuzDeTorre) {
+      if (luz === "roja" && rojaDice === "esperar")
+        this.explicarSiCambiaElPorque();
+      return;
+    }
     this.ultimaLuzDeTorre = cual;
     if (!luz) return;
     /*
@@ -5081,6 +5091,7 @@ export class Game {
      */
     const porQue =
       luz === "roja" && rojaDice === "esperar" ? this.turno.porQueEsperas : null;
+    this.porQueExplicado = porQue;
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     /*
@@ -5138,6 +5149,34 @@ export class Game {
      * diez. La escalera de peldaños es exactamente para esto.
      */
     if (conCifras) this.porRadio(enRadio, urgencia);
+  }
+
+  /**
+   * **Y si el porqué llega con la roja ya encendida, se dice entonces.**
+   *
+   * La roja se enciende siempre al llegar a la doble raya —la torre te
+   * mira antes de dejarte entrar— y el porqué se miraba solo en ese momento,
+   * con esta cuenta: «mientras está roja nadie más puede quedarse la pista».
+   * Dejó de ser verdad cuando el permiso de aterrizar pasó a darse en final:
+   * esperando en la roja, el que viene por la base canta su final y la ocupa.
+   * Medido en Pettirossi con el JAZ 90: roja al llegar con la pista libre, el
+   * otro canta final unos segundos después, y cuarenta y dos segundos de roja
+   * sin que nadie dijera por quién.
+   *
+   * Se dice una vez por porqué, y solo cuando cambia: es un suceso, no un
+   * reloj.
+   */
+  private explicarSiCambiaElPorque(): void {
+    const porQue = this.turno.porQueEsperas;
+    if (!porQue || porQue === this.porQueExplicado) return;
+    this.porQueExplicado = porQue;
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras) this.porRadio(HOLD_SHORT_POR[porQue]);
+    else {
+      const explica = EXPLICA_LA_ESPERA[porQue];
+      this.instructor.decir(t(explica), explica);
+    }
   }
 
   /**

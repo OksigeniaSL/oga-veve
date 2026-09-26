@@ -1472,6 +1472,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
    */
   let esperandoPorAlguien = null;
   let porQueSeDijo = null;
+  /**
+   * **Y lo que dura la roja**, en segundos de juego: la más larga del vuelo.
+   *
+   * «Me tiene esperando por ese avión un buen rato. ¿Me dejará salir?» La
+   * roja duraba hasta tres minutos y medio, y tras volver a empezar no se
+   * apagaba nunca. Aquí se mide lo que se está en «esperando» de un tirón.
+   */
+  let rojaDesde = null;
+  let rojaMasLarga = 0;
+  let rojaMasLargaDonde = "";
+  /**
+   * **Y el tráfico que viene de frente.** «Un avión de frente y ni aviso ni
+   * radar ni nada. ¿Cómo le han permitido a ese piloto kamikaze aterrizar?»
+   * Por cada avión dibujado, su último sitio, para sacar hacia dónde va.
+   */
+  const traficoAntes = new Map();
+  let deFrente = 0;
+  let deFrenteDonde = null;
   /** Lo que la frecuencia dijo allí: el tráfico y la torre hablándole. */
   const frecuenciaOidaAlli = [];
   /** Los «cleared to land» oídos allí, a quien fueran. */
@@ -1857,6 +1875,56 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       if (total < habladasVistas) habladasVistas = 0;
       const nuevas = h.slice(Math.max(0, h.length - (total - habladasVistas)));
       habladasVistas = total;
+      if (fase === "esperando") {
+        rojaDesde ??= t;
+        if (t - rojaDesde > rojaMasLarga) {
+          rojaMasLarga = t - rojaDesde;
+          rojaMasLargaDonde = `a los ${Math.round(rojaDesde)} s: ${(o.ocupanLaPista?.() ?? []).map((x) => `${x.matricula} ${x.orden}`).join(", ") || "nadie en la pista"}`;
+        }
+      } else rojaDesde = null;
+      /*
+       * De frente es acercándose con rumbos casi opuestos **y por la misma
+       * línea**: que, siguiendo los dos como van, se crucen a menos de
+       * trescientos metros en el próximo minuto, con menos de ciento
+       * cincuenta de altura entre los dos. En la salida y en la final, que es
+       * donde se pidió. Uno en su viento en cola, a un kilómetro de lado y en
+       * sentido contrario, no es de frente: es un circuito.
+       */
+      if (!s.onGround && /despegando|comprometido|en-vuelo|final/.test(fase)) {
+        for (const a of o.trafico?.() ?? []) {
+          const antes = traficoAntes.get(a.matricula);
+          traficoAntes.set(a.matricula, { x: a.x, z: a.z, t });
+          if (!antes || t - antes.t <= 0) continue;
+          const vx = (a.x - antes.x) / (t - antes.t);
+          const vz = (a.z - antes.z) / (t - antes.t);
+          const v = Math.hypot(vx, vz);
+          if (v < 20) continue;
+          const mx = Math.sin(s.heading);
+          const mz = -Math.cos(s.heading);
+          const opuesto = (vx * mx + vz * mz) / v < -0.87;
+          const dx = a.x - s.position.x;
+          const dz = a.z - s.position.z;
+          const d = Math.hypot(dx, dz);
+          // El punto de máximo acercamiento, con los dos en línea recta.
+          const vs = Math.max(1, s.groundSpeed ?? s.airspeed);
+          const rvx = vx - mx * vs;
+          const rvz = vz - mz * vs;
+          const rv2 = rvx * rvx + rvz * rvz || 1;
+          const tc = -(dx * rvx + dz * rvz) / rv2;
+          const cerca = Math.hypot(dx + rvx * tc, dz + rvz * tc);
+          if (
+            opuesto &&
+            tc > 0 &&
+            tc < 60 &&
+            cerca < 300 &&
+            d < 5000 &&
+            Math.abs(a.y - s.position.y) < 150
+          ) {
+            deFrente++;
+            deFrenteDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.matricula} a ${Math.round(d)} m y ${Math.round(a.y - s.position.y)} m de altura`;
+          }
+        }
+      } else traficoAntes.clear();
       if (fase === "esperando" && !esperandoPorAlguien) {
         const ocupan = o.ocupanLaPista?.() ?? [];
         if (ocupan.length)
@@ -3052,6 +3120,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     terrenoEnFinalAlli,
     tusAutorizaciones,
     esperandoPorAlguien,
+    rojaMasLarga,
+    rojaMasLargaDonde,
+    deFrente,
+    deFrenteDonde,
     porQueSeDijo,
     // Si el campo donde se aterriza tiene torre: el de llegada, o el de ahora.
     aterrizaConTorre: o.conFrecuencia?.(destino ?? undefined) ?? true,
@@ -3631,6 +3703,34 @@ comprobar(
       "«podés aterrizar» y «cleared to land» subiendo en la frustrada, en cuanto el de delante dejó la pista",
     );
 }
+
+/*
+ * **Y ninguna roja dura más de lo que dura de verdad.** Una torre retiene a
+ * quien espera mientras el otro está en final corta y hasta que deja la
+ * pista: uno o dos minutos. Ver `roja-de-verdad.test.ts`, que lo mide con
+ * cuatrocientas frecuencias; esto lo mide en un vuelo de verdad.
+ */
+comprobar(
+  "y ninguna roja dura más de lo que dura de verdad",
+  (vuelo.rojaMasLarga ?? 0) < 170,
+  vuelo.rojaMasLarga
+    ? `la más larga, ${Math.round(vuelo.rojaMasLarga)} s ${vuelo.rojaMasLargaDonde}`
+    : "no hubo roja",
+  "«me tiene esperando por ese avión un buen rato, ¿me dejará salir?»: la roja no se apagaba nunca",
+);
+
+/*
+ * **Y nadie viene de frente**, ni en la salida ni en la final: una pista en
+ * uso para todos, y el tráfico vuela el mismo circuito que tú.
+ */
+comprobar(
+  "y ningún tráfico viene de frente en la salida ni en la final",
+  (vuelo.deFrente ?? 0) === 0,
+  vuelo.deFrente
+    ? `${vuelo.deFrente} muestras, la primera a los ${vuelo.deFrenteDonde}`
+    : "nadie de frente",
+  "«un avión de frente y ni aviso ni radar ni nada», despegando de Pettirossi",
+);
 
 /*
  * **Y si se espera en la roja por alguien, se dice por quién.** La torre en
