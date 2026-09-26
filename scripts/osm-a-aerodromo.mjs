@@ -30,7 +30,7 @@
  */
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const OVERPASS =
@@ -92,6 +92,95 @@ function proyector(lat0, lon0) {
 }
 
 const redondear = (n) => Math.round(n * 10) / 10;
+
+/**
+ * **Las cotas oficiales**, en pies como las publica el AIP, con su fuente.
+ *
+ * Mandan sobre OurAirports siempre. Existen porque OurAirports es de dominio
+ * público y casi siempre acierta, pero no tiene a nadie detrás que responda de
+ * cada cifra: en Encarnación trae los dos umbrales a 279 pies y el campo a
+ * 659, y ninguna de las dos es la publicada. Cada entrada va con su fuente y
+ * con lo que se comprobó contra el relieve medido, porque una cota apuntada a
+ * mano sin fuente es la misma clase de dato que se viene a arreglar.
+ *
+ * Y se corrige **aquí** y no en el `.aero.json`: la cota ya se corrigió una
+ * vez a mano en el fichero, con una nota que decía «si se vuelve a extraer,
+ * hay que volver a corregirla», y la extracción siguiente la devolvió a
+ * ochenta y cinco sin que nadie leyera la nota.
+ */
+const COTAS_OFICIALES = {
+  SGEN: {
+    campoFt: 653,
+    umbralesFt: { "02": 616, "20": 653 },
+    fuente:
+      "SGEN, 653 ft en el punto de referencia, 616 ft en el umbral 02 y 653 ft en el 20 " +
+      "(ficha de SkyVector; Wikipedia da los mismos 199 m). Casan al metro con " +
+      "Copernicus GLO-30 bajo el eje: 187 m en la punta sur y 198 en la norte.",
+  },
+};
+
+/**
+ * El relieve medido del escenario que tiene este aeródromo en el centro, si lo
+ * hay: el mismo `.bin` de `data/terrain` que carga el juego. Se reconoce por
+ * su origen, que `copernicus-a-relieve.mjs` copia del aeródromo.
+ *
+ * Devuelve la cota en coordenadas del fichero —x al este, y al norte—, con
+ * interpolación bilineal.
+ */
+function relieveMedido(lat0, lon0) {
+  const dir = "data/terrain";
+  if (!existsSync(dir)) return null;
+  for (const nombre of readdirSync(dir)) {
+    if (!nombre.endsWith(".json") || nombre.includes("-lejos")) continue;
+    const meta = JSON.parse(readFileSync(join(dir, nombre), "utf8"));
+    const o = meta.origen;
+    if (!o || Math.abs(o.lat - lat0) > 0.001 || Math.abs(o.lon - lon0) > 0.001)
+      continue;
+    const bin = join(dir, nombre.replace(/\.json$/, ".bin"));
+    if (!existsSync(bin)) continue;
+    const b = readFileSync(bin);
+    const d = new Int16Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
+    const res = Math.round(Math.sqrt(d.length));
+    const paso = meta.tamanoM / (res - 1);
+    const mitad = meta.tamanoM / 2;
+    const en = (f, c) =>
+      d[Math.min(res - 1, Math.max(0, f)) * res + Math.min(res - 1, Math.max(0, c))];
+    return {
+      cota(x, y) {
+        // El fichero tiene la fila 0 al norte: la z del mundo es −y.
+        const fc = (x + mitad) / paso;
+        const ff = (-y + mitad) / paso;
+        const c0 = Math.floor(fc);
+        const f0 = Math.floor(ff);
+        const tc = fc - c0;
+        const tf = ff - f0;
+        return (
+          (en(f0, c0) * (1 - tc) + en(f0, c0 + 1) * tc) * (1 - tf) +
+          (en(f0 + 1, c0) * (1 - tc) + en(f0 + 1, c0 + 1) * tc) * tf
+        );
+      },
+    };
+  }
+  return null;
+}
+
+/** La mediana del relieve bajo los ejes de las pistas, cada cincuenta metros. */
+function sueloBajoLasPistas(relieve, runways) {
+  const catas = [];
+  for (const r of runways) {
+    const eje = r.centerline ?? [];
+    for (let i = 1; i < eje.length; i++) {
+      const [ax, ay] = eje[i - 1];
+      const [bx, by] = eje[i];
+      const l = Math.hypot(bx - ax, by - ay);
+      for (let s = 0; s <= l; s += 50)
+        catas.push(relieve.cota(ax + ((bx - ax) * s) / l, ay + ((by - ay) * s) / l));
+    }
+  }
+  if (!catas.length) return null;
+  catas.sort((a, b) => a - b);
+  return catas[Math.floor(catas.length / 2)];
+}
 
 /** Distancia de un punto al segmento a-b. */
 function aLaRecta([px, py], [ax, ay], [bx, by]) {
@@ -576,20 +665,29 @@ async function construir(icao, pistas, aeropuertos) {
    * mide en el punto de referencia y los umbrales en los extremos.
    *
    * Pero en Encarnación la ficha dice seiscientos cincuenta y nueve pies y los
-   * dos umbrales dicen doscientos setenta y nueve: ciento dieciséis metros de
-   * diferencia. Uno de los dos está mal, y se puede saber cuál sin salir de
-   * aquí — Encarnación está a orillas del Paraná, y el relieve medido de
-   * Copernicus en veinte kilómetros a la redonda va de ochenta a doscientos
-   * ochenta y ocho metros. Doscientos uno pondría el aeropuerto casi en lo más
-   * alto de su propia comarca; ochenta y cinco lo pone junto al río, que es
-   * donde está.
+   * dos umbrales doscientos setenta y nueve: ciento dieciséis metros de
+   * diferencia. Aquí había una regla —«manda el umbral»— que decidía cuál de
+   * las dos estaba mal **razonando**: Encarnación está a orillas del Paraná,
+   * así que ochenta y cinco metros la ponían junto al río. Y el razonamiento
+   * era falso: la ciudad está en la orilla, **el aeropuerto no**, está catorce
+   * kilómetros al norte, en Capitán Miranda, sobre la loma. Con ochenta y cinco
+   * la pista quedó metida en un hoyo de cien metros del relieve medido, y la
+   * senda de tres grados atravesaba el suelo en las dos aproximaciones.
    *
-   * Así que cuando las dos cifras se separan de verdad **manda el umbral**,
-   * que es lo que toca el avión, y se dice en voz alta. Un aeródromo colocado
-   * ciento dieciséis metros por encima de su terreno no se estrella: flota, y
-   * eso se ve al primer vuelo.
+   * Así que ya no se adivina. Por orden:
+   *
+   * 1. **La cota oficial, si está escrita** en `COTAS_OFICIALES`, con su
+   *    fuente. Manda sobre OurAirports siempre, se contradiga o no.
+   * 2. Si OurAirports se contradice y **hay relieve medido** del escenario
+   *    —Copernicus, en `data/terrain`—, gana la cifra que casa con el suelo
+   *    que hay bajo la pista, y los umbrales que no casan se leen del relieve.
+   * 3. Si no hay con qué medir, **se avisa y se queda la ficha**, y los
+   *    umbrales que la contradicen se dejan en `null`, que el juego ya sabe
+   *    tratar: sin cota de umbral, la pista va a la del campo. Un dato que no
+   *    se sabe es mejor que uno equivocado con cara de medido.
    */
   const CUANTO_SE_PERDONA = 60;
+  const aMetros = (pies) => (pies === null ? null : redondear(pies * 0.3048));
   const umbrales = pistas
     .filter((p) => p.airport_ident === icao)
     .flatMap((p) => [num(p.le_elevation_ft), num(p.he_elevation_ft)])
@@ -599,16 +697,50 @@ async function construir(icao, pistas, aeropuertos) {
     ? umbrales.reduce((a, b) => a + b, 0) / umbrales.length
     : null;
   let elev = deLaFicha;
-  if (
+  const oficial = COTAS_OFICIALES[icao];
+  if (oficial) {
+    elev = oficial.campoFt;
+    for (const r of runways)
+      for (const [d, u] of Object.entries(r.thresholds ?? {})) {
+        const pies = oficial.umbralesFt[d];
+        if (u && pies !== undefined) u.elevM = aMetros(pies);
+      }
+    process.stdout.write(`  cota oficial: ${oficial.fuente}\n`);
+  } else if (
     deLaFicha !== null &&
     deLosUmbrales !== null &&
     Math.abs(deLaFicha - deLosUmbrales) * 0.3048 > CUANTO_SE_PERDONA
   ) {
-    process.stdout.write(
+    const relieve = relieveMedido(lat0, lon0);
+    const suelo = relieve ? sueloBajoLasPistas(relieve, runways) : null;
+    const dice =
       `  ⚠ OurAirports se contradice: la ficha dice ${Math.round(deLaFicha * 0.3048)} m ` +
-        `y los umbrales ${Math.round(deLosUmbrales * 0.3048)} m. Manda el umbral.\n`,
-    );
-    elev = deLosUmbrales;
+      `y los umbrales ${Math.round(deLosUmbrales * 0.3048)} m.`;
+    if (suelo !== null) {
+      const fichaCasa =
+        Math.abs(deLaFicha * 0.3048 - suelo) <=
+        Math.abs(deLosUmbrales * 0.3048 - suelo);
+      if (!fichaCasa) elev = deLosUmbrales;
+      process.stdout.write(
+        `${dice} El relieve medido bajo la pista da ${Math.round(suelo)} m: ` +
+          `manda ${fichaCasa ? "la ficha" : "el umbral"}.\n`,
+      );
+    } else {
+      process.stdout.write(
+        `${dice} Sin relieve medido con que decidir: se queda la ficha y los ` +
+          "umbrales que no casan se dejan sin cota. Búsquese la oficial y " +
+          "apúntese en COTAS_OFICIALES.\n",
+      );
+    }
+    // Y cada umbral que no casa con la cota elegida, fuera: del relieve si lo
+    // hay, y si no, sin cota.
+    for (const r of runways)
+      for (const u of Object.values(r.thresholds ?? {})) {
+        if (!u || u.elevM === null) continue;
+        if (Math.abs(u.elevM - elev * 0.3048) <= CUANTO_SE_PERDONA) continue;
+        const medido = relieve && u.xy ? relieve.cota(u.xy[0], u.xy[1]) : null;
+        u.elevM = medido === null ? null : redondear(medido);
+      }
   }
   const salida = {
     id: icao,

@@ -14,7 +14,7 @@
  * lo que hay que decir por las funciones de `AlrededorDelTurno`.
  */
 
-import { explicaLaEspera, type Urgencia } from "../audio/boca";
+import { explicaLaEspera, sueltaLaPista, type Urgencia } from "../audio/boca";
 import {
   daLaPistaAOtro,
   esDeLaFrecuencia,
@@ -36,6 +36,8 @@ export interface BocaDelTurno {
   retirar(sobra: (clave: string | undefined, urgencia: Urgencia) => boolean): void;
   /** Si esa frase sigue esperando turno. */
   espera(clave: string): boolean;
+  /** Si alguna de esa clase sigue esperando turno. Ver `sueltaLaPista`. */
+  esperaAlguna(de: (clave: string | undefined, urgencia: Urgencia) => boolean): boolean;
 }
 
 /** Lo que se le pide al tráfico dibujado. Ver `world/trafico.ts`. */
@@ -175,7 +177,16 @@ export class TurnoDePista {
    * `flight/vuelo.ts`.
    */
   get pistaDeOtros(): boolean {
-    return this.conTorre && this.de.radio.pistaOcupada;
+    /*
+     * **Y mientras no se haya oído que la dejan libre, tampoco es tuya.** La
+     * frecuencia la suelta al pedir la frase, y la frase espera su turno en la
+     * boca: la verde saliendo antes que el «pista libre» del otro es la torre
+     * dándosela a dos. Ver `sueltaLaPista`.
+     */
+    return (
+      this.conTorre &&
+      (this.de.radio.pistaOcupada || this.de.boca.esperaAlguna(sueltaLaPista))
+    );
   }
 
   /**
@@ -385,6 +396,13 @@ export class TurnoDePista {
     }
     if (this.despejeSinDecir && this.de.boca.espera(this.despejeSinDecir))
       return;
+    /*
+     * **Y lo que la suelta, que se oiga antes que lo tuyo.** El «pista libre»
+     * del que aterrizó antes va en voz baja y tu permiso en `mando`: pedidos
+     * en ese orden, sonaba primero el tuyo —o solo el tuyo, si el otro se
+     * caía de la cola—. Ver `sueltaLaPista`.
+     */
+    if (this.de.boca.esperaAlguna(sueltaLaPista)) return;
     this.despejeSinDecir = null;
     this.aterrizajeSinAutorizar = false;
     this.de.autorizarte();
@@ -416,9 +434,24 @@ export class TurnoDePista {
    * Y el número dos de allí no es nadie aquí.
    */
   cambiarDeCampo(aerodromo: string | null | undefined): void {
+    this.reiniciar(aerodromo);
+  }
+
+  /**
+   * **Volver a empezar es empezar de cero**, también en la frecuencia.
+   *
+   * El vuelo nuevo reiniciaba la frecuencia —otras matrículas— y dejaba aquí
+   * lo del anterior: el número dos, tu permiso pedido, lo que la torre tenía
+   * a medio decir. Con eso y el dibujo de antes todavía en pantalla, tras un
+   * percance en Pettirossi la avioneta seguía parada junto al punto de espera
+   * y la roja encendida. Lo que no es de este vuelo no se queda.
+   */
+  reiniciar(aerodromo: string | null | undefined): void {
     this.de.boca.retirar(esDeLaFrecuencia);
     this.de.radio.reiniciar(aerodromo);
     this.numeroDos = null;
     this.despejeSinDecir = null;
+    this.aterrizajeSinAutorizar = false;
+    this.enFinal = false;
   }
 }

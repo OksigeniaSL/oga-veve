@@ -64,7 +64,11 @@ import {
 } from "./world/circuito";
 import { FLOTA, modeloPorId } from "./flight/flota";
 import { cabeEn, campoDe } from "./flight/cabe";
-import { crearTrafico, type Trafico } from "./world/trafico";
+import { crearTrafico, tiposDelCampo, type Trafico } from "./world/trafico";
+import {
+  sueloDelTrafico,
+  type SueloDelTrafico,
+} from "./world/suelo-del-trafico";
 import { MILLA, type Mapa } from "./ui/carta";
 import {
   Tcas,
@@ -344,6 +348,7 @@ import {
   EXPLICA_LA_ESPERA,
   HOLD_SHORT_POR,
   TurnoDePista,
+  type PorQueEsperas,
 } from "./flight/turno-de-pista";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
@@ -2392,6 +2397,11 @@ export class Game {
 
   /** Lo último que dijo la lámpara, para que la torre no se repita. */
   private ultimaLuzDeTorre: string | null = null;
+  /**
+   * Por quién se dijo que se esperaba en esta roja. Ver
+   * `explicarSiCambiaElPorque`.
+   */
+  private porQueExplicado: PorQueEsperas | null = null;
   private readonly radio = new Frecuencia();
   /**
    * **Y el turno de pista**: la frecuencia, el tráfico dibujado, la boca y tu
@@ -5262,7 +5272,11 @@ export class Game {
     const enElAire = !this.flight.state.onGround;
     this.hud.setLuzDeTorre(luz, rojaDice, this.miIndicativo.dicho, enElAire);
     const cual = luz === null ? null : `${luz}:${rojaDice}:${enElAire}`;
-    if (cual === this.ultimaLuzDeTorre) return;
+    if (cual === this.ultimaLuzDeTorre) {
+      if (luz === "roja" && rojaDice === "esperar")
+        this.explicarSiCambiaElPorque();
+      return;
+    }
     this.ultimaLuzDeTorre = cual;
     if (!luz) return;
     /*
@@ -5346,6 +5360,7 @@ export class Game {
      */
     const porQue =
       luz === "roja" && rojaDice === "esperar" ? this.turno.porQueEsperas : null;
+    this.porQueExplicado = porQue;
     const conCifras =
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     /*
@@ -5403,6 +5418,34 @@ export class Game {
      * diez. La escalera de peldaños es exactamente para esto.
      */
     if (conCifras) this.porRadio(enRadio, urgencia);
+  }
+
+  /**
+   * **Y si el porqué llega con la roja ya encendida, se dice entonces.**
+   *
+   * La roja se enciende siempre al llegar a la doble raya —la torre te
+   * mira antes de dejarte entrar— y el porqué se miraba solo en ese momento,
+   * con esta cuenta: «mientras está roja nadie más puede quedarse la pista».
+   * Dejó de ser verdad cuando el permiso de aterrizar pasó a darse en final:
+   * esperando en la roja, el que viene por la base canta su final y la ocupa.
+   * Medido en Pettirossi con el JAZ 90: roja al llegar con la pista libre, el
+   * otro canta final unos segundos después, y cuarenta y dos segundos de roja
+   * sin que nadie dijera por quién.
+   *
+   * Se dice una vez por porqué, y solo cuando cambia: es un suceso, no un
+   * reloj.
+   */
+  private explicarSiCambiaElPorque(): void {
+    const porQue = this.turno.porQueEsperas;
+    if (!porQue || porQue === this.porQueExplicado) return;
+    this.porQueExplicado = porQue;
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras) this.porRadio(HOLD_SHORT_POR[porQue]);
+    else {
+      const explica = EXPLICA_LA_ESPERA[porQue];
+      this.instructor.decir(t(explica), explica);
+    }
   }
 
   /**
@@ -5661,7 +5704,15 @@ export class Game {
     // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
     // nombre**: es otro avión, no el mismo dando vueltas para siempre. En la
     // frecuencia del campo del que se sale.
-    this.radio.reiniciar(campo.escenario.aerodrome?.id);
+    /*
+     * **Y el dibujo con ella, que se quedaba.** Reiniciar solo la frecuencia
+     * dejaba los aviones dibujados de la partida anterior donde estuvieran,
+     * con matrículas que ya nadie nombraba: el que aterrizaba seguía en la
+     * pista sin que nadie lo olvidara, y la avioneta aparecía otra vez parada
+     * junto al punto de espera con la roja encendida. Ver `Trafico.vaciar`.
+     */
+    this.turno.reiniciar(campo.escenario.aerodrome?.id);
+    this.trafico?.vaciar();
     callar();
     /*
      * **Y todo lo que el paso siguiente va a leer.**
@@ -6275,21 +6326,71 @@ export class Game {
      * al reactor se le dibujaba por el norte. Ver `formaDelCircuito`.
      */
     const escala = escalaDeCircuito(this.aircraft.approachSpeed);
-    const forma = formaDelCircuito(
-      campo.pista,
-      cota,
-      (x: number, z: number) => this.terrain.sampleHeight(x, z),
-      escala,
-      manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), escala),
-      this.aircraft.velocidadDeCircuito,
-    );
+    const suelo = (x: number, z: number): number => {
+      if (campo.esCasa) return this.terrain.sampleHeight(x, z);
+      const v = this.vecinos.find((w) => w.campo.id === campo.id);
+      return v?.mundo.cota(x, z) ?? this.terrain.sampleHeight(x, z);
+    };
+    /*
+     * **Cada tipo, su circuito**, con la misma regla de lado y altura que el
+     * hilo ocre de quien juega a esa escala. Ver `formaDelCircuito`.
+     */
+    const forma = (esc: number, velocidadDeCircuito?: number) =>
+      formaDelCircuito(
+        campo.pista,
+        cota,
+        suelo,
+        esc,
+        manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), esc),
+        velocidadDeCircuito,
+      );
+    const deTu = forma(escala, this.aircraft.velocidadDeCircuito);
+    /*
+     * **Por las calles del aeródromo, y en la pista en uso**, la misma que
+     * todo lo tuyo: el tráfico no tiene pista propia. Se piden al hablar el
+     * primero de cada tipo, que es cuando el plan ya sabe a qué doble raya
+     * vas. Ver `world/suelo-del-trafico.ts`.
+     */
+    const aerodromo = campo.aerodromo;
+    const pista = campo.pista;
+    const ancho =
+      aerodromo?.runways
+        .map((r) => {
+          const a = r.centerline[0] ?? [0, 0];
+          const b = r.centerline[r.centerline.length - 1] ?? a;
+          const cx = (a[0] + b[0]) / 2;
+          const cz = -(a[1] + b[1]) / 2;
+          return { r, d: Math.hypot(cx - pista.x, cz - pista.z) };
+        })
+        .sort((p, q) => p.d - q.d)[0]?.r.widthM ?? 45;
+    let sueloDelCampo: SueloDelTrafico | null | undefined;
     this.trafico = crearTrafico(
-      campo.pista,
+      pista,
       cota,
       otra,
-      forma.mano,
+      deTu.mano,
       escala,
-      forma.altura,
+      deTu.altura,
+      {
+        tipos: tiposDelCampo(aero.id, pista.length, !!aero.privado),
+        forma,
+        tierra: () => {
+          if (!aerodromo) return null;
+          if (sueloDelCampo === undefined)
+            sueloDelCampo = sueloDelTrafico(aerodromo, pista, ancho);
+          if (!sueloDelCampo) return null;
+          const yo = this.flight.state.position;
+          const raya = this.plan?.rutaVisible().at(-1);
+          return {
+            suelo: sueloDelCampo,
+            alto: suelo,
+            evitar: [
+              { x: yo.x, z: yo.z },
+              ...(raya ? [{ x: raya[0], z: raya[1] }] : []),
+            ],
+          };
+        },
+      },
     );
     this.scene.add(this.trafico.grupo);
   }

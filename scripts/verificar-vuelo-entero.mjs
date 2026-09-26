@@ -1183,20 +1183,64 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    * lo que el avión gira y el círculo no se cierra.
    */
   const miraDe = (s, fuera = 0) => Math.max(12, s.airspeed * 1.6, fuera * 1.5);
+  /*
+   * **Y se sigue la raya por donde se va, no por el trozo más cercano.**
+   *
+   * Esto buscaba el punto más cercano de **toda** la ruta, y el back-taxi se
+   * pisa a sí mismo: se va por una raya apartada ocho metros del eje y se
+   * vuelve por el eje. En cuanto el avión se arrimaba al eje a la ida, el
+   * punto más cercano era de la vuelta, el de delante quedaba a la espalda y
+   * el piloto daba media vuelta a trece metros por segundo en mitad de la
+   * pista: medido en Lanzarote con el JAZ 90, fuera del asfalto a 468 m de la
+   * cabecera. Quien sigue una raya pintada la sigue en orden; no salta a la
+   * que va al lado en sentido contrario.
+   *
+   * Así que se busca cerca de donde se iba —un poco hacia atrás y sesenta
+   * metros de raya hacia delante— y solo si de ahí no queda nada a mano, en
+   * toda la ruta, que es lo que pasa con una ruta nueva.
+   */
+  let firmaDelTimon = "";
+  let indiceDelTimon = -1;
   const timon = (s, ruta) => {
     if (ruta.length < 2) return 0;
-    let cerca = 0;
-    let mejor = Infinity;
-    for (let i = 0; i < ruta.length; i++) {
-      const d = Math.hypot(
-        ruta[i][0] - s.position.x,
-        ruta[i][1] - s.position.z,
-      );
-      if (d < mejor) {
-        mejor = d;
-        cerca = i;
-      }
+    const ultimo = ruta[ruta.length - 1];
+    const firma = `${ruta.length}:${ruta[0][0].toFixed(1)},${ruta[0][1].toFixed(1)}:${ultimo[0].toFixed(1)},${ultimo[1].toFixed(1)}`;
+    if (firma !== firmaDelTimon) {
+      firmaDelTimon = firma;
+      indiceDelTimon = -1;
     }
+    const buscar = (desde, hasta) => {
+      let cerca = -1;
+      let mejor = Infinity;
+      for (let i = desde; i <= hasta; i++) {
+        const d = Math.hypot(
+          ruta[i][0] - s.position.x,
+          ruta[i][1] - s.position.z,
+        );
+        if (d < mejor) {
+          mejor = d;
+          cerca = i;
+        }
+      }
+      return { cerca, mejor };
+    };
+    let hallado = { cerca: -1, mejor: Infinity };
+    if (indiceDelTimon >= 0) {
+      let hasta = indiceDelTimon;
+      let andado = 0;
+      while (hasta < ruta.length - 1 && andado < 60) {
+        andado += Math.hypot(
+          ruta[hasta + 1][0] - ruta[hasta][0],
+          ruta[hasta + 1][1] - ruta[hasta][1],
+        );
+        hasta++;
+      }
+      hallado = buscar(Math.max(0, indiceDelTimon - 3), hasta);
+    }
+    if (hallado.mejor > 25) hallado = buscar(0, ruta.length - 1);
+    const cerca = hallado.cerca;
+    const mejor = hallado.mejor;
+    indiceDelTimon = cerca;
     let mira = ruta[ruta.length - 1];
     for (let i = cerca; i < ruta.length; i++) {
       const d = Math.hypot(
@@ -1446,6 +1490,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    */
   let esperandoPorAlguien = null;
   let porQueSeDijo = null;
+  /**
+   * **Y lo que dura la roja**, en segundos de juego: la más larga del vuelo.
+   *
+   * «Me tiene esperando por ese avión un buen rato. ¿Me dejará salir?» La
+   * roja duraba hasta tres minutos y medio, y tras volver a empezar no se
+   * apagaba nunca. Aquí se mide lo que se está en «esperando» de un tirón.
+   */
+  let rojaDesde = null;
+  let rojaMasLarga = 0;
+  let rojaMasLargaDonde = "";
+  /**
+   * **Y el tráfico que viene de frente.** «Un avión de frente y ni aviso ni
+   * radar ni nada. ¿Cómo le han permitido a ese piloto kamikaze aterrizar?»
+   * Por cada avión dibujado, su último sitio, para sacar hacia dónde va.
+   */
+  const traficoAntes = new Map();
+  let deFrente = 0;
+  let deFrenteDonde = null;
   /** Lo que la frecuencia dijo allí: el tráfico y la torre hablándole. */
   const frecuenciaOidaAlli = [];
   /** Los «cleared to land» oídos allí, a quien fueran. */
@@ -1831,6 +1893,56 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
       if (total < habladasVistas) habladasVistas = 0;
       const nuevas = h.slice(Math.max(0, h.length - (total - habladasVistas)));
       habladasVistas = total;
+      if (fase === "esperando") {
+        rojaDesde ??= t;
+        if (t - rojaDesde > rojaMasLarga) {
+          rojaMasLarga = t - rojaDesde;
+          rojaMasLargaDonde = `a los ${Math.round(rojaDesde)} s: ${(o.ocupanLaPista?.() ?? []).map((x) => `${x.matricula} ${x.orden}`).join(", ") || "nadie en la pista"}`;
+        }
+      } else rojaDesde = null;
+      /*
+       * De frente es acercándose con rumbos casi opuestos **y por la misma
+       * línea**: que, siguiendo los dos como van, se crucen a menos de
+       * trescientos metros en el próximo minuto, con menos de ciento
+       * cincuenta de altura entre los dos. En la salida y en la final, que es
+       * donde se pidió. Uno en su viento en cola, a un kilómetro de lado y en
+       * sentido contrario, no es de frente: es un circuito.
+       */
+      if (!s.onGround && /despegando|comprometido|en-vuelo|final/.test(fase)) {
+        for (const a of o.trafico?.() ?? []) {
+          const antes = traficoAntes.get(a.matricula);
+          traficoAntes.set(a.matricula, { x: a.x, z: a.z, t });
+          if (!antes || t - antes.t <= 0) continue;
+          const vx = (a.x - antes.x) / (t - antes.t);
+          const vz = (a.z - antes.z) / (t - antes.t);
+          const v = Math.hypot(vx, vz);
+          if (v < 20) continue;
+          const mx = Math.sin(s.heading);
+          const mz = -Math.cos(s.heading);
+          const opuesto = (vx * mx + vz * mz) / v < -0.87;
+          const dx = a.x - s.position.x;
+          const dz = a.z - s.position.z;
+          const d = Math.hypot(dx, dz);
+          // El punto de máximo acercamiento, con los dos en línea recta.
+          const vs = Math.max(1, s.groundSpeed ?? s.airspeed);
+          const rvx = vx - mx * vs;
+          const rvz = vz - mz * vs;
+          const rv2 = rvx * rvx + rvz * rvz || 1;
+          const tc = -(dx * rvx + dz * rvz) / rv2;
+          const cerca = Math.hypot(dx + rvx * tc, dz + rvz * tc);
+          if (
+            opuesto &&
+            tc > 0 &&
+            tc < 60 &&
+            cerca < 300 &&
+            d < 5000 &&
+            Math.abs(a.y - s.position.y) < 150
+          ) {
+            deFrente++;
+            deFrenteDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.matricula} a ${Math.round(d)} m y ${Math.round(a.y - s.position.y)} m de altura`;
+          }
+        }
+      } else traficoAntes.clear();
       if (fase === "esperando" && !esperandoPorAlguien) {
         const ocupan = o.ocupanLaPista?.() ?? [];
         if (ocupan.length)
@@ -2391,10 +2503,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
        * Mientras el plan diga back-taxi se rueda por la raya, como haría
        * cualquiera siguiendo la línea verde.
        */
-      if (fase === "back-taxi") {
+      /*
+       * **Y la media vuelta se da siguiendo la raya, y a la velocidad que
+       * pide el juego.**
+       *
+       * Fuera del back-taxi esto apuntaba el morro al rumbo de la pista y
+       * rodaba a ocho metros por segundo sin freno. Pisando la pista ya
+       * derecho vale; con el morro al revés —que es como se acaba un
+       * back-taxi— es dar la vuelta a esa velocidad, y con el JAZ 90 eso pide
+       * un radio de once metros donde la raya dibuja uno de cuatro. Mientras
+       * el morro no mire hacia donde se despega, se sigue la raya como
+       * cualquiera, frenando lo que haga falta.
+       */
+      const torcido =
+        ruta.length > 1 && Math.abs(error(rumboPista, s.heading)) > 0.5;
+      if (fase === "back-taxi" || torcido) {
         const quiere = o.rodaje() ?? 9;
         c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
-        c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
+        c.brakes = porElSuelo(s) > quiere + 1 ? 1 : 0;
         c.aileron = timon(s, ruta);
       } else {
         c.throttle = porElSuelo(s) < 8 ? 0.5 : 0;
@@ -3039,6 +3165,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
     terrenoEnFinalAlli,
     tusAutorizaciones,
     esperandoPorAlguien,
+    rojaMasLarga,
+    rojaMasLargaDonde,
+    deFrente,
+    deFrenteDonde,
     porQueSeDijo,
     // Si el campo donde se aterriza tiene torre: el de llegada, o el de ahora.
     aterrizaConTorre: o.conFrecuencia?.(destino ?? undefined) ?? true,
@@ -3618,6 +3748,34 @@ comprobar(
       "«podés aterrizar» y «cleared to land» subiendo en la frustrada, en cuanto el de delante dejó la pista",
     );
 }
+
+/*
+ * **Y ninguna roja dura más de lo que dura de verdad.** Una torre retiene a
+ * quien espera mientras el otro está en final corta y hasta que deja la
+ * pista: uno o dos minutos. Ver `roja-de-verdad.test.ts`, que lo mide con
+ * cuatrocientas frecuencias; esto lo mide en un vuelo de verdad.
+ */
+comprobar(
+  "y ninguna roja dura más de lo que dura de verdad",
+  (vuelo.rojaMasLarga ?? 0) < 170,
+  vuelo.rojaMasLarga
+    ? `la más larga, ${Math.round(vuelo.rojaMasLarga)} s ${vuelo.rojaMasLargaDonde}`
+    : "no hubo roja",
+  "«me tiene esperando por ese avión un buen rato, ¿me dejará salir?»: la roja no se apagaba nunca",
+);
+
+/*
+ * **Y nadie viene de frente**, ni en la salida ni en la final: una pista en
+ * uso para todos, y el tráfico vuela el mismo circuito que tú.
+ */
+comprobar(
+  "y ningún tráfico viene de frente en la salida ni en la final",
+  (vuelo.deFrente ?? 0) === 0,
+  vuelo.deFrente
+    ? `${vuelo.deFrente} muestras, la primera a los ${vuelo.deFrenteDonde}`
+    : "nadie de frente",
+  "«un avión de frente y ni aviso ni radar ni nada», despegando de Pettirossi",
+);
 
 /*
  * **Y si se espera en la roja por alguien, se dice por quién.** La torre en

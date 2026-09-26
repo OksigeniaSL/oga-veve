@@ -364,6 +364,15 @@ export function saleHaciaDelante(
 export const ANCHO_PARA_LA_VUELTA = 36;
 
 /**
+ * A cuántos grados del rumbo de despegue se da por acabada la media vuelta
+ * del back-taxi.
+ *
+ * Treinta: pasado eso ya no se está girando sino corrigiendo, y lo que queda
+ * es ponerse en el eje, que es la fase «alineando». Ver `situacion`.
+ */
+const YA_DIO_LA_VUELTA = 30;
+
+/**
  * Pista que se procura dejar por delante al entrar, m.
  *
  * Cuatrocientos: el Pykasu despega en doscientos sesenta medidos en el banco,
@@ -621,6 +630,13 @@ const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
   "esperando",
   "abandonando",
   "a-plataforma",
+  /*
+   * Y el back-taxi, que se rueda por la pista pero es rodaje: llegar deprisa
+   * a la media vuelta del final es salirse de la pista. Donde el juego lleva
+   * el gas no se riñe —ver `laVelocidadEsDelJuego`—; donde lo llevás vos, se
+   * avisa como en cualquier curva.
+   */
+  "back-taxi",
 ]);
 
 /**
@@ -659,6 +675,33 @@ const FUERA_DE_RUTA = 30;
  * a equivocarse, es el ruido de la cuenta.
  */
 const HOLGURA_DEL_AVANCE = 2;
+
+/**
+ * Cuánto puede adelantarse el avance, además de lo movido, sin salir de su
+ * tramo, m.
+ *
+ * Treinta: más que lo que una curva redondeada alarga la ruta frente a su
+ * cuerda en un fotograma, que es lo que obligó a no frenar el avance hacia
+ * delante, y mucho menos que el salto al tramo de vuelta de un back-taxi, que
+ * son cientos. Ver `avanzarEnRuta`.
+ */
+const ADELANTO_EN_SU_TRAMO = 30;
+
+/**
+ * Hasta qué distancia de su tramo se da por hecho que el avión sigue por él,
+ * m.
+ *
+ * Veinte: más que lo que separa la ida de la vuelta en un back-taxi —ocho
+ * metros con el JAZ 90, quince con el Pykasu— y menos que lo que hace falta
+ * para rehacer la ruta por haberse ido de ella. Ver `LEJOS_DE_LA_RAYA`.
+ */
+const SIGUE_EN_SU_TRAMO = 20;
+
+/**
+ * Cuánta raya se mira a cada lado del avance para corregir la deriva, m. Ver
+ * `asistencia`.
+ */
+const CERCA_DEL_AVANCE = 40;
 
 /** Por dónde va el avión en su ruta. */
 export interface EnLaRuta {
@@ -739,8 +782,29 @@ export function avanzarEnRuta(
    * y por eso la cuenta se iba hacia atrás y nunca hacia adelante.
    */
   const noAntesDe = avanceAnterior - movido - HOLGURA_DEL_AVANCE;
+  /*
+   * **Pero tampoco se salta a un tramo que va por delante y se pisa con el
+   * de ahora.**
+   *
+   * El back-taxi es exactamente eso: se va por una raya apartada del eje y se
+   * vuelve **por el eje**, a ocho metros con el JAZ 90. Rodando por el eje a
+   * la ida —que es lo natural en una pista—, el tramo más cercano era el de
+   * vuelta: la cuenta saltaba cientos de metros hacia delante, la velocidad
+   * sugerida era la del final de la ruta —cero— y el avión se quedaba
+   * clavado a mitad de pista. Medido en el banco en Lanzarote, parado para
+   * siempre justo en el último punto de la ruta.
+   *
+   * Así que, cuando el más cercano queda **más allá** de su tramo —lo que va
+   * desde donde se iba hasta lo movido más una propina larga, que es lo que
+   * deja correr al avance en las curvas—, se mira si el avión sigue cerca de
+   * su tramo: si sigue, es por ahí por donde va. Solo si se ha ido lejos de
+   * todo lo de su tramo —un atajo, un salto— manda el más cercano de los que
+   * no van hacia atrás, como antes.
+   */
+  const hasta = avanceAnterior + movido + ADELANTO_EN_SU_TRAMO;
   let deTodos = { d: Infinity, recorrido: 0 };
   let sinRetroceder = { d: Infinity, recorrido: 0 };
+  let enSuTramo = { d: Infinity, recorrido: 0 };
   let acumulado = 0;
   for (let i = 0; i < ruta.length - 1; i++) {
     const a = ruta[i]!;
@@ -753,19 +817,34 @@ export function avanzarEnRuta(
       Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
     );
     const d = Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
-    const recorrido = acumulado + t * largos[i]!;
+    const largo = largos[i]!;
+    const recorrido = acumulado + t * largo;
     if (d < deTodos.d) deTodos = { d, recorrido };
     if (d < sinRetroceder.d && recorrido >= noAntesDe) {
       sinRetroceder = { d, recorrido };
     }
-    acumulado += largos[i]!;
+    // El punto de este tramo más cercano **sin salirse de la ventana**.
+    if (acumulado + largo >= noAntesDe && acumulado <= hasta) {
+      const desde = largo > 0 ? Math.max(0, (noAntesDe - acumulado) / largo) : 0;
+      const tope = largo > 0 ? Math.min(1, (hasta - acumulado) / largo) : 1;
+      const tv = Math.max(desde, Math.min(tope, t));
+      const dv = Math.hypot(p[0] - (a[0] + tv * dx), p[1] - (a[1] + tv * dy));
+      if (dv < enSuTramo.d) enSuTramo = { d: dv, recorrido: acumulado + tv * largo };
+    }
+    acumulado += largo;
   }
 
   // Y si no queda ninguno, es que el avión no está donde creíamos: se vuelve a
   // empezar por el más cercano en vez de defender una cuenta que ya no
   // describe nada. Pasa siempre en una ruta de un solo tramo, donde tampoco
   // hay ambigüedad de la que protegerse.
-  const elegido = sinRetroceder.d < Infinity ? sinRetroceder : deTodos;
+  const salta = sinRetroceder.d < Infinity && sinRetroceder.recorrido > hasta;
+  const elegido =
+    salta && enSuTramo.d <= SIGUE_EN_SU_TRAMO
+      ? enSuTramo
+      : sinRetroceder.d < Infinity
+        ? sinRetroceder
+        : deTodos;
   return {
     recorrido: elegido.recorrido,
     restante: Math.max(0, total - elegido.recorrido),
@@ -843,10 +922,86 @@ function redondear(
 
   puntos.push([...pts[pts.length - 1]!] as Punto);
   radios.push(Infinity);
+  return trocear(puntos, radios);
+}
 
-  // Y se trocean las rectas largas. Los puntos que se meten van con radio
-  // infinito porque están sobre una recta: solo sirven para que el color
-  // cambie donde toca en vez de degradarse durante un kilómetro.
+/**
+ * El radio de la circunferencia que pasa por tres puntos, m, o `Infinity` si
+ * están alineados.
+ *
+ * Es lo que se le pregunta a la geometría exacta —la media vuelta del
+ * back-taxi—, que no pasa por `redondear` y por tanto no trae el radio
+ * apuntado: se mide.
+ */
+export function radioPorTres(a: Punto, b: Punto, c: Punto): number {
+  const ab = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const bc = Math.hypot(c[0] - b[0], c[1] - b[1]);
+  const ca = Math.hypot(a[0] - c[0], a[1] - c[1]);
+  const doble =
+    (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  if (Math.abs(doble) < 1e-6) return Infinity;
+  return (ab * bc * ca) / (2 * Math.abs(doble));
+}
+
+/**
+ * La ruta tal como se pinta y se rueda: sin temblor, con los codos
+ * redondeados y el radio de cada punto — **menos lo que ya viene exacto**.
+ *
+ * `exactaDesde` es el índice desde el que la geometría no se toca: la media
+ * vuelta del back-taxi, que ya es un arco con el radio de giro de ese avión y
+ * que el quitatemblores y el redondeo convertían en un codo más cerrado de lo
+ * que el avión puede girar. De ahí en adelante los puntos se dejan como están
+ * y el radio se mide con `radioPorTres`.
+ *
+ * `exactos` dice qué puntos son de esa parte, que es lo que necesita el perfil
+ * de velocidad: una media vuelta no se toma como una curva. Ver
+ * `calcularVelocidades`.
+ */
+export function alisarRuta(
+  crudos: readonly Punto[],
+  exactaDesde?: number,
+): { puntos: Punto[]; radios: number[]; exactos: boolean[] } {
+  if (
+    exactaDesde === undefined ||
+    exactaDesde <= 0 ||
+    exactaDesde >= crudos.length - 1
+  ) {
+    const r = redondear(sinTemblor(crudos), RADIO_CURVA);
+    return { ...r, exactos: r.puntos.map(() => false) };
+  }
+  // Lo de antes, alisado como siempre, y acabando justo donde empieza el arco:
+  // los extremos no los mueve ni el quitatemblores ni el redondeo.
+  const antes = redondear(
+    sinTemblor(crudos.slice(0, exactaDesde + 1)),
+    RADIO_CURVA,
+  );
+  const cola = crudos.slice(exactaDesde);
+  const radiosCola = cola.map((p, i) => {
+    const a = cola[i - 1];
+    const c = cola[i + 1];
+    return a && c ? radioPorTres(a, p, c) : Infinity;
+  });
+  const exacta = trocear(cola, radiosCola);
+  const sigue = exacta.puntos.slice(1);
+  return {
+    puntos: [...antes.puntos, ...sigue],
+    radios: [...antes.radios, ...exacta.radios.slice(1)],
+    exactos: [...antes.puntos.map(() => false), ...sigue.map(() => true)],
+  };
+}
+
+/**
+ * Trocea las rectas largas de una polilínea con sus radios.
+ *
+ * Los puntos que se meten van con radio infinito porque están sobre una
+ * recta: solo sirven para que el color cambie donde toca en vez de degradarse
+ * durante un kilómetro.
+ */
+function trocear(
+  puntos: readonly Punto[],
+  radios: readonly number[],
+): { puntos: Punto[]; radios: number[] } {
+  if (!puntos.length) return { puntos: [], radios: [] };
   const densos: Punto[] = [puntos[0]!];
   const densosRadios: number[] = [radios[0]!];
   for (let i = 1; i < puntos.length; i++) {
@@ -907,6 +1062,11 @@ export class PlanDeVuelo {
   private dondeEstaba: Punto | null = null;
   /** El radio de giro en cada punto de la ruta. `Infinity` donde va recta. */
   private radios: number[] = [];
+  /**
+   * Qué puntos de la ruta son geometría exacta —la media vuelta del
+   * back-taxi— y no curvas de calle. Ver `alisarRuta`.
+   */
+  private exactos: boolean[] = [];
 
   constructor(
     private aero: Aerodrome,
@@ -1865,30 +2025,18 @@ export class PlanDeVuelo {
    */
   private puntoDeLaRutaTrasMi(p: Punto, adelanto: number): Punto | null {
     if (this.rutaMundo.length < 2) return null;
-    // Dónde estoy sobre la ruta, en metros recorridos.
-    let mejor = Infinity;
-    let recorrido = 0;
-    let acumulado = 0;
-    for (let i = 0; i < this.rutaMundo.length - 1; i++) {
-      const a = this.rutaMundo[i]!;
-      const b = this.rutaMundo[i + 1]!;
-      const dx = b[0] - a[0];
-      const dy = b[1] - a[1];
-      const l2 = dx * dx + dy * dy;
-      const largo = Math.sqrt(l2);
-      if (l2 > 1) {
-        const t = Math.max(
-          0,
-          Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2),
-        );
-        const d = Math.hypot(a[0] + dx * t - p[0], a[1] + dy * t - p[1]);
-        if (d < mejor) {
-          mejor = d;
-          recorrido = acumulado + largo * t;
-        }
-      }
-      acumulado += largo;
-    }
+    /*
+     * Dónde estoy sobre la ruta, en metros recorridos: **lo que lleva la
+     * cuenta del avance**, no el tramo más cercano de todos.
+     *
+     * Era el más cercano, y en el back-taxi el más cercano puede ser el de
+     * vuelta —la ida va a ocho metros del eje y la vuelta por él—: rodando por
+     * el eje, el punto de delante caía en la vuelta, detrás del avión, y la
+     * ayuda de rodaje se callaba por creer que se le pedía media vuelta. El
+     * avance ya sabe por qué tramo se va. Ver `avanzarEnRuta`.
+     */
+    this.restanteHasta(p);
+    const recorrido = this.avance;
 
     // Y el punto que queda a `adelanto` metros más allá.
     const meta = recorrido + adelanto;
@@ -2029,7 +2177,24 @@ export class PlanDeVuelo {
     let mejor = Infinity;
     let desvio = 0;
     let rumboDeLaRaya = 0;
+    /*
+     * **Y el tramo de la raya es el que se está rodando, no el más cercano.**
+     *
+     * En el back-taxi la vuelta va por el eje y la ida a ocho metros: rodando
+     * por el eje a la ida, el tramo más cercano era el de vuelta, que va en
+     * sentido contrario, y la corrección empujaba hacia él. Se mira solo lo
+     * que queda cerca del avance —ver `avanzarEnRuta`—, y si ahí no hay nada,
+     * todo, como antes.
+     */
+    const cerca = (i: number): boolean =>
+      this.recorridos.length !== this.rutaMundo.length ||
+      ((this.recorridos[i + 1] ?? Infinity) >= this.avance - CERCA_DEL_AVANCE &&
+        (this.recorridos[i] ?? 0) <= this.avance + CERCA_DEL_AVANCE);
+    const hayCerca = this.rutaMundo.some(
+      (_, i) => i < this.rutaMundo.length - 1 && cerca(i),
+    );
     for (let i = 0; i < this.rutaMundo.length - 1; i++) {
+      if (hayCerca && !cerca(i)) continue;
       const a = this.rutaMundo[i]!;
       const b = this.rutaMundo[i + 1]!;
       const dx = b[0] - a[0];
@@ -2552,7 +2717,9 @@ export class PlanDeVuelo {
    * rodando por un lado del eje a la ida y por el otro a la vuelta, que es
    * exactamente como se hace.
    */
-  private backTaxiDesde(along: number): Punto[] | null {
+  private backTaxiDesde(
+    along: number,
+  ): { puntos: Punto[]; arco: number } | null {
     this.giroDelBackTaxi = null;
     const mitad = this.largoDePista / 2;
     // Si desde aquí ya queda pista de sobra, esto no es un back-taxi: es
@@ -2640,9 +2807,28 @@ export class PlanDeVuelo {
     ];
     /*
      * Media circunferencia con el centro a medio camino del eje, un punto cada
-     * treinta grados: se entra por la raya de ida y se sale sobre el eje.
+     * quince grados: se entra por la raya de ida y se sale sobre el eje.
+     *
+     * **Y llega entera al suelo, que no llegaba.** La ruta pasa por el
+     * quitatemblores y por el redondeo de codos, que están para las calles
+     * dibujadas a mano en OpenStreetMap; a este arco le hacían lo contrario
+     * de lo que prometen. Con el JAZ 90 en Lanzarote —radio de giro de 4,19
+     * m— el quitatemblores lo dejaba en tres codos y el redondeo, con los
+     * tramos tan cortos, les ponía 6,4 · 2,66 · 6,4 m de radio: **un giro más
+     * cerrado de lo que ese avión puede dar**, pedido además a seis metros por
+     * segundo, cuando con la rueda de morro a tope solo cierra ese radio a
+     * menos de cinco. Así que el arco va marcado como geometría exacta —ver
+     * `Ruta.exactaDesde`— y su radio sale de él. Ver `alisarRuta`.
+     *
+     * Es la maniobra de verdad: en Lanzarote la 03 se toma desde el punto de
+     * espera de la E4 y sin despegues desde intersección —AIP España, AD
+     * 2-GCRR, normas locales del aeródromo—, o sea rodando por la pista hasta
+     * la cabecera y dando la vuelta allí. El apartadero de viraje de esa cabecera no viene en los
+     * datos de OpenStreetMap, así que la vuelta se da dentro de los cuarenta y
+     * cinco metros de la pista, que para este avión dan de sobra: ver `cabeEn`.
      */
-    for (let g = 90; g <= 270; g += 30) {
+    const arco = puntos.length;
+    for (let g = 90; g <= 270; g += 15) {
       const rad = (g * Math.PI) / 180;
       puntos.push(
         enLaPista(giro + radio * Math.cos(rad), radio + radio * Math.sin(rad)),
@@ -2650,7 +2836,7 @@ export class PlanDeVuelo {
     }
     // Y eje abajo, que es lo que dice hacia dónde se despega.
     puntos.push(enLaPista(Math.min(mitad - 60, giro + 620), 0));
-    return puntos;
+    return { puntos, arco };
   }
 
   /**
@@ -2764,7 +2950,7 @@ export class PlanDeVuelo {
         ? [...porLaCalle.puntos]
         : [this.ultimaPos, enElEje];
     const puntos: Punto[] = vuelta
-      ? [...hastaElEje, ...vuelta]
+      ? [...hastaElEje, ...vuelta.puntos]
       : [...hastaElEje, ejeAbajo];
     let largo = 0;
     for (let i = 1; i < puntos.length; i++) {
@@ -2784,6 +2970,8 @@ export class PlanDeVuelo {
       letras: [],
       // Trazada a mano sobre la pista: no hay puntas que enganchar al grafo.
       enganche: 0,
+      // Y la media vuelta, tal cual: ver `backTaxiDesde`.
+      ...(vuelta ? { exactaDesde: hastaElEje.length + vuelta.arco } : {}),
     };
   }
 
@@ -3126,18 +3314,31 @@ export class PlanDeVuelo {
      * cosas que marcan ese medio minuto. Se ve en el banco tal cual.
      *
      * Así que la bandera es de ida y no de vuelta: se levanta al trazar la
-     * ruta y se baja al llegar al giro. Ver `backTaxiDesde`.
+     * ruta y se baja al acabar la media vuelta. Ver `backTaxiDesde`.
+     *
+     * **Al acabarla, no al empezarla.** Se bajaba veinticinco metros antes del
+     * sitio de girar, así que la media vuelta entera se daba en «alineando»:
+     * una fase de pista en la que el tope de rodaje no actúa —ver
+     * `tope-de-rodaje.ts`— y en la que el banco dejaba la raya y apuntaba al
+     * rumbo de despegue sin frenar. Con el JAZ 90 en Lanzarote eso era dar la
+     * vuelta a diez metros por segundo, con un radio de más de dieciséis, en
+     * una pista de cuarenta y cinco: no cabía. La vuelta es parte del
+     * back-taxi —«andá hasta el fondo y dá la vuelta»— y se acaba cuando el
+     * morro ya mira hacia donde se despega. Y si el avión se sale por la
+     * punta, también se acaba: ahí ya no hay back-taxi que seguir.
      */
-    if (
-      this.giroDelBackTaxi !== null &&
-      along <= this.giroDelBackTaxi + HUECO_PARA_GIRAR
-    )
-      this.giroDelBackTaxi = null;
-
     const rumbo = ((estado.heading * 180) / Math.PI + 360) % 360;
     let desalineado = rumbo - this.pista.heading;
     while (desalineado > 180) desalineado -= 360;
     while (desalineado < -180) desalineado += 360;
+
+    if (
+      this.giroDelBackTaxi !== null &&
+      ((along <= this.giroDelBackTaxi + HUECO_PARA_GIRAR &&
+        Math.abs(desalineado) < YA_DIO_LA_VUELTA) ||
+        along < -this.largoDePista / 2 - 3)
+    )
+      this.giroDelBackTaxi = null;
 
     return {
       estado,
@@ -3215,10 +3416,20 @@ export class PlanDeVuelo {
     for (let i = 0; i < n; i++) {
       const r = this.radios[i] ?? Infinity;
       if (!Number.isFinite(r)) continue;
-      this.velocidades[i] = Math.max(
-        MINIMO_EN_CURVA,
-        Math.min(CRUCERO, Math.sqrt(LATERAL * r)),
-      );
+      /*
+       * **Y una media vuelta no es una curva.** El suelo de seis metros por
+       * segundo está para que un codo de calle no parezca una parada, y en la
+       * media vuelta del back-taxi pedía justo lo que el avión no puede: con
+       * la rueda de morro a tope, el JAZ 90 cierra su radio de 4,19 m a
+       * menos de cinco metros por segundo —ver `DE_LADO_RODANDO` en `fdm.ts`—
+       * y a seis se abre y se sale de la raya. Una media vuelta en pista se da
+       * a paso de persona, que es lo que sale de la cuenta sin el suelo: tres
+       * metros por segundo largos con ese radio.
+       */
+      const enCurva = Math.min(CRUCERO, Math.sqrt(LATERAL * r));
+      this.velocidades[i] = this.exactos[i]
+        ? enCurva
+        : Math.max(MINIMO_EN_CURVA, enCurva);
     }
 
     /*
@@ -3390,9 +3601,10 @@ export class PlanDeVuelo {
     this.avance = 0;
     this.dondeEstaba = null;
     const crudos = ruta ? ruta.puntos.map((p) => [p[0], -p[1]] as Punto) : [];
-    const { puntos, radios } = redondear(sinTemblor(crudos), RADIO_CURVA);
+    const { puntos, radios, exactos } = alisarRuta(crudos, ruta?.exactaDesde);
     this.rutaMundo = puntos;
     this.radios = radios;
+    this.exactos = exactos;
     this.calcularVelocidades();
     this.pintar();
   }
