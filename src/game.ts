@@ -11702,7 +11702,11 @@ export class Game {
        * de lo que es cada uno. Ver `flight/tcas.ts`.
        */
       otros: this.aircraft.tcas ? this.traficoParaLaCarta() : [],
-      soloTa: !!this.aircraft.tcas && soloAvisa(this.aircraft.tcas),
+      // Y el modo, solo con el TCAS trabajando: en espera no hay modo que decir.
+      soloTa:
+        !!this.aircraft.tcas &&
+        soloAvisa(this.aircraft.tcas) &&
+        this.tcas.enMarcha,
       /*
        * **Y el aeropuerto de destino, si esta ruta lleva a otro.**
        *

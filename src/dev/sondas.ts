@@ -1346,6 +1346,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     tcas: () => juego.tcasParaBanco,
     /**
+     * Pone a uno del circuito donde dice una llamada —«otro.enCola»,
+     * «otro.final»—, para mirar el TCAS sin esperar a que le toque hablar.
+     * Solo mueve el dibujo: la frecuencia no se entera. Ver `Trafico.anuncia`.
+     */
+    anunciarTrafico: (matricula: string, clave: string, aterriza = true) =>
+      juego.trafico?.anuncia(matricula, clave, aterriza),
+    /**
      * De qué familia es el cuadro de este avión, que lo manda el motor.
      *
      * Hace falta fuera porque el banco de cabina exigía dos cristales a los

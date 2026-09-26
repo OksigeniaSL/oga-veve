@@ -259,6 +259,26 @@ describe("lo que pinta", () => {
     expect(pinta([{ id: "a", x: 5 * MILLA, y: 11000 * PIE, z: 0 }])).toHaveLength(0);
   });
 
+  it("a quien está posado no se le pinta", () => {
+    /*
+     * Visto en el banco con la GPU: en el punto de espera, los que esperaban
+     * al lado salían encima del propio avión, tres rombos con «00».
+     */
+    expect(
+      pinta([{ id: "a", x: 60, y: 8000 * PIE, z: 0, enElSuelo: true }]),
+    ).toHaveLength(0);
+  });
+
+  it("y en espera no está en marcha, que es cuando no se dice TA ONLY", () => {
+    const tcas = new Tcas();
+    tcas.paso(1, "TCAS II", yo(0, 0, { pantalla: false }), []);
+    expect(tcas.enMarcha).toBe(false);
+    tcas.paso(1, "TCAS II", yo(0, 0, { pantalla: true }), []);
+    expect(tcas.enMarcha).toBe(true);
+    tcas.paso(1, null, yo(0, 0, { pantalla: true }), []);
+    expect(tcas.enMarcha).toBe(false);
+  });
+
   it("con la pantalla en espera, nada", () => {
     expect(
       pinta([{ id: "a", x: 5 * MILLA, y: 8900 * PIE, z: 0 }], yo(0, 8000, { pantalla: false })),

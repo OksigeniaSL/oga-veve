@@ -51,6 +51,13 @@
  *   tráfico en cualquier cabina, porque el suelo no se aparta.
  * - **Contra quien está posado** no se avisa nunca: un transpondedor en tierra
  *   lo dice, y el TCAS no avisa de un avión que rueda.
+ *
+ * Y a quien está posado **tampoco se le pinta**, que eso sí es una decisión de
+ * presentación y se firma como tal. En el punto de espera los que ruedan
+ * detrás o esperan al lado caían justo encima del propio avión, tres rombos
+ * con «00» tapando el símbolo, y no enseñaban nada que no se vea mejor
+ * mirando por la ventana. El TCAS es para el tráfico que vuela; lo que rueda
+ * se mira afuera y lo cuenta la torre.
  */
 
 /** Los dos TCAS que existen en la flota. Ver `tcas` en `aircraft.ts`. */
@@ -274,12 +281,22 @@ export class Tcas {
   private hastaElCiclo = 0;
   private readonly seguidos = new Map<string, Seguido>();
   private ahora: readonly Blanco[] = [];
+  private encendido = false;
   /** Cuántos avisos ha dado este vuelo. Para el banco. */
   avisosDados = 0;
 
   /** Lo que enseña la pantalla. Vacío si no hay TCAS o está en espera. */
   get enPantalla(): readonly Blanco[] {
     return this.ahora;
+  }
+
+  /**
+   * Si está trabajando y no en espera. Rodando por la plataforma está en
+   * espera, y entonces la pantalla no dice **TA ONLY**: diría un modo que no
+   * está puesto.
+   */
+  get enMarcha(): boolean {
+    return this.encendido;
   }
 
   /** Vuelo nuevo, o avión nuevo: se empieza a seguir de cero. */
@@ -304,6 +321,7 @@ export class Tcas {
     yo: Propio,
     intrusos: readonly Intruso[],
   ): AvisoDeTrafico[] {
+    this.encendido = !!equipo && yo.pantalla;
     if (!equipo) {
       if (this.seguidos.size || this.ahora.length) this.reiniciar();
       return [];
@@ -416,7 +434,8 @@ export class Tcas {
     const lista: Blanco[] = [];
     for (const i of intrusos) {
       const seguido = this.seguidos.get(i.id);
-      if (!seguido) continue;
+      // Posado, no se pinta. Ver la cabecera.
+      if (!seguido || i.enElSuelo) continue;
       const dy = i.y - yo.y;
       const a = dy / PIE;
       const r = Math.hypot(i.x - yo.x, dy, i.z - yo.z) / MILLA;
