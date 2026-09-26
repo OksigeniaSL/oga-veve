@@ -1341,6 +1341,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** El otro avión de la frecuencia: dónde está cada uno. Ver `trafico.ts`. */
     trafico: () => juego.trafico?.quienes() ?? [],
     /**
+     * Lo que ve el TCAS: qué equipo lleva el avión, qué pinta la carta y
+     * cuántos avisos lleva dados. Ver `flight/tcas.ts`.
+     */
+    tcas: () => juego.tcasParaBanco,
+    /**
      * De qué familia es el cuadro de este avión, que lo manda el motor.
      *
      * Hace falta fuera porque el banco de cabina exigía dos cristales a los

@@ -1,4 +1,5 @@
 import { FLOTA, nombreEntero } from "./flota";
+import type { EquipoTcas } from "./tcas";
 
 /**
  * Fichas técnicas de las aeronaves.
@@ -283,6 +284,32 @@ export interface AircraftConfig {
    */
   presurizada: boolean;
   /**
+   * **Qué TCAS lleva, si lleva alguno.** `null` si ninguno.
+   *
+   * El TCAS es el aparato que escucha los transpondedores de los aviones de
+   * alrededor, los pinta en la pantalla de navegación y avisa —*traffic,
+   * traffic*— cuando uno se acerca de verdad. Y no lo lleva todo el mundo: lo
+   * lleva quien la norma obliga a llevarlo, que es justo lo que hay que poder
+   * reconocer el día que se suba uno a una cabina.
+   *
+   * - **TCAS II** en los dos reactores. La OACI obliga a llevar ACAS II a todo
+   *   avión de turbina de más de 5 700 kg o con más de diecinueve pasajeros
+   *   (Anexo 6, parte I; en Europa, Reglamento 1332/2011). Da el aviso de
+   *   tráfico y además la maniobra para apartarse, el RA.
+   * - **TCAS I** en el turbohélice de diecinueve plazas. Con 5 600 kg y
+   *   diecinueve asientos se queda justo debajo de la raya de la OACI, y lo
+   *   que lleva un avión así es lo que exige la norma de EE. UU. para los de
+   *   turbina de pasaje de diez a treinta plazas (14 CFR 135.180): el TCAS I,
+   *   que **solo avisa** —el tráfico, dónde y a qué altura— y no da maniobra.
+   * - **Ninguno** en la avioneta de escuela, el fumigador y el bimotor de
+   *   pistón. Ninguna norma se lo pide y ninguno lo lleva de serie: en ellos
+   *   el tráfico se busca por la ventanilla y se oye por la radio.
+   *
+   * Fuente de los dos primeros: *Introduction to TCAS II Version 7.1*, FAA,
+   * 2011, y la guía ACAS II de EUROCONTROL. Ver `flight/tcas.ts`.
+   */
+  tcas: EquipoTcas | null;
+  /**
    * **Vmo**: velocidad indicada máxima, en nudos.
    *
    * Es un límite de **estructura**: lo que aguanta un fuselaje es presión
@@ -546,6 +573,7 @@ export const PYKASU: AircraftConfig = {
    */
   alturaDeCrucero: 3000,
   presurizada: false,
+  tcas: null,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
   vmoKt: 163,
   vleKt: 85,
@@ -634,6 +662,7 @@ export const MAINUMBY: AircraftConfig = {
   // lo que sube es para ir de un campo a otro.
   alturaDeCrucero: 2500,
   presurizada: false,
+  tcas: null,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
   vmoKt: 130,
   vleKt: 80,
@@ -763,6 +792,7 @@ export const PANAMBI: AircraftConfig = {
   // ahí arriba, con oxígeno a bordo.
   alturaDeCrucero: 5500,
   presurizada: false,
+  tcas: null,
   // Y los límites, tomados de un bimotor ligero de esta clase.
   vmoKt: 230,
   vleKt: 152,
@@ -870,6 +900,8 @@ export const ARASUNU: AircraftConfig = {
   // un turbohélice regional presurizado.
   alturaDeCrucero: 7600,
   presurizada: true,
+  // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
+  tcas: "TCAS I",
   // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
   vmoKt: 250,
   vleKt: 184,
@@ -991,6 +1023,7 @@ export const ARAI: AircraftConfig = {
   // Once mil: treinta y seis mil pies, donde cruza un reactor regional.
   alturaDeCrucero: 11000,
   presurizada: true,
+  tcas: "TCAS II",
   // Reactor regional.
   vmoKt: 320,
   /*
@@ -1180,6 +1213,7 @@ export const YVAGA: AircraftConfig = {
    */
   alturaDeCrucero: 10700,
   presurizada: true,
+  tcas: "TCAS II",
   /*
    * Los del de fuselaje ancho, que son los del avión del que sale: 365 nudos y
    * Mach 0,92. Y es el único de la flota donde el cruce cae a una altura a la

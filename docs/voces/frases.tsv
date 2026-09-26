@@ -22,6 +22,10 @@ instructor	instructor/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ah
 instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.terrenoSube.ogg	es-PY	Terreno. Subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.perdida.ogg	es-PY	Pérdida. Bajá el morro	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.trafico.delante.ogg	es-PY	Mirá adelante: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.trafico.izquierda.ogg	es-PY	Mirá a tu izquierda: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.trafico.derecha.ogg	es-PY	Mirá a tu derecha: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.trafico.detras.ogg	es-PY	Hay otro avión cerca, detrás de vos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sube.ogg	es-PY	Ya subís: metélo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.bajasRapido.ogg	es-PY	Bajás muy rápido	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado	lo que toca hacer ahora, en vuelo y en tierra
@@ -253,6 +257,7 @@ cabina	cabina/cabina.gearDown.ogg	en	gear down	sacá el tren
 cabina	cabina/cabina.sinkRate.ogg	en	sink rate	bajás muy rápido para lo bajo que estás
 cabina	cabina/cabina.bankAngle.ogg	en	bank angle	el avión va demasiado inclinado
 cabina	cabina/cabina.stall.ogg	en	stall, stall	el ala dejó de sustentar
+cabina	cabina/cabina.traffic.ogg	en	traffic, traffic	otro avión cerca: mirá dónde dice la pantalla
 cabina	cabina/cabina.autopilotDisconnect.ogg	en	autopilot disconnect	el piloto automático se soltó y los mandos son tuyos otra vez
 cabina	cabina/cabina.minimums.ogg	en	minimums	la altura de decisión: o la ves, o te vas
 cabina	cabina/cabina.slowDown.ogg	en	slow down	vas rápido en el suelo

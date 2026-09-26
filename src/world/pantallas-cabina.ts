@@ -66,7 +66,7 @@ import {
   tendencia,
 } from "../ui/cinta";
 import { NUDOS, PIES, PIES_POR_MINUTO, type Cuadro } from "../ui/cuadro";
-import { dibujarLaCarta, millasHasta } from "../ui/carta";
+import { dibujarLaCarta, millasHasta, type Mapa } from "../ui/carta";
 import {
   CIFRAS_DESDE,
   apunta,
@@ -254,27 +254,12 @@ export interface DatosDeCabina {
    * Sin esto la pantalla de navegación era una brújula sobre un fondo vacío:
    * giraba, y ya. Con dónde estoy, dónde está la pista y quién más anda por
    * aquí, pasa a ser lo que dice su nombre — una carta. Ver `ui/carta.ts`.
+   *
+   * Y es **el mismo tipo** que recibe el cuadro plano. Aquí había una copia
+   * recortada, y el día que los tráficos pasaron a llevar lo que dice el TCAS
+   * la copia se habría quedado con los rombos de antes.
    */
-  readonly mapa: {
-    /** Dónde estoy, en metros del mundo. */
-    readonly x: number;
-    readonly z: number;
-    /** La pista de casa, con su sitio, su rumbo y su largo. */
-    readonly pista: {
-      readonly x: number;
-      readonly z: number;
-      readonly heading: number;
-      readonly length: number;
-    } | null;
-    /**
-     * Y los otros aviones, los que se oyen por la radio.
-     *
-     * Aparecen en la carta por el mismo motivo por el que se dibujan en el
-     * cielo: se les oye decir dónde están, y una pantalla que no los enseña
-     * enseña que la radio es un adorno. Ver `world/trafico.ts`.
-     */
-    readonly otros: readonly { readonly x: number; readonly z: number }[];
-  } | null;
+  readonly mapa: Mapa | null;
 }
 
 /**
@@ -1927,23 +1912,68 @@ function pintarLaCarta(
   }
 
   /*
-   * **Y los otros, con la forma con la que se dibuja un tráfico.**
+   * **Y los otros, con los símbolos del TCAS.**
    *
-   * Un rombo hueco, que es el símbolo de toda la vida. No llevan cifra ni al
-   * peldaño de arriba: lo que hay que aprender de ellos es que están, y que
-   * son los mismos que se acaban de oír por la radio.
+   * Rombo hueco en cian para el que anda por ahí; lleno, para el que está a
+   * menos de seis millas y mil doscientos pies; círculo ámbar para el que da
+   * aviso. Encima o debajo, su altura en centenas de pies —«+05», «-12»— y a
+   * la derecha una flecha si sube o baja a más de quinientos pies por minuto.
+   *
+   * Eran rombos huecos y nada más, con el argumento de que «lo que hay que
+   * aprender de ellos es que están». Pero un avión de línea no los pinta así:
+   * los pinta como el TCAS dice que son, y lo que se aprende mirándolos es
+   * cuál importa. Lo mismo que el cuadro plano; ver `Tablero.laCarta`.
    */
   for (const p of dibujo.otros) {
-    const lado = 6;
-    g.strokeStyle = PALETA.auxiliar;
-    g.lineWidth = 2;
-    g.beginPath();
-    g.moveTo(cx + p.dx, cy + p.dy - lado);
-    g.lineTo(cx + p.dx + lado, cy + p.dy);
-    g.lineTo(cx + p.dx, cy + p.dy + lado);
-    g.lineTo(cx + p.dx - lado, cy + p.dy);
-    g.closePath();
-    g.stroke();
+    const x = cx + p.dx;
+    const y = cy + p.dy;
+    const aviso = p.clase === "aviso";
+    const color = aviso ? PRECAUCION : AUXILIAR;
+    if (aviso) {
+      g.fillStyle = PRECAUCION;
+      g.beginPath();
+      g.arc(x, y, 5.5, 0, Math.PI * 2);
+      g.fill();
+    } else {
+      const lado = 6;
+      g.beginPath();
+      g.moveTo(x, y - lado);
+      g.lineTo(x + lado, y);
+      g.lineTo(x, y + lado);
+      g.lineTo(x - lado, y);
+      g.closePath();
+      if (p.clase === "cerca") {
+        g.fillStyle = AUXILIAR;
+        g.fill();
+      }
+      g.strokeStyle = AUXILIAR;
+      g.lineWidth = 2;
+      g.stroke();
+    }
+    if (p.etiqueta)
+      escribir(
+        g,
+        p.etiqueta,
+        x,
+        p.encima ? y - 14 : y + 14,
+        "600 11px " + FUENTE,
+        color,
+      );
+    if (p.tendencia !== 0 && !p.alBorde) {
+      // La flecha, de pie a la derecha del símbolo: arriba si sube.
+      const s = p.tendencia;
+      g.strokeStyle = color;
+      g.lineWidth = 1.8;
+      g.lineCap = "round";
+      g.beginPath();
+      g.moveTo(x + 10, y + 5 * s);
+      g.lineTo(x + 10, y - 4 * s);
+      g.moveTo(x + 7, y - 1 * s);
+      g.lineTo(x + 10, y - 5 * s);
+      g.lineTo(x + 13, y - 1 * s);
+      g.stroke();
+      g.lineCap = "butt";
+    }
   }
 
   /*
@@ -2018,6 +2048,14 @@ function pintarLaCarta(
   }
 
   g.restore();
+
+  /*
+   * **TA ONLY**, encima de las millas y en cian: es lo que escribe la pantalla
+   * de un avión de línea cuando el TCAS avisa y no da maniobras, que es lo
+   * que hace el de este juego. Ver `soloAvisa` en `flight/tcas.ts`.
+   */
+  if (dibujo.soloTa)
+    escribir(g, "TA ONLY", 14, ALTO - 32, "500 12px " + FUENTE, AUXILIAR, "left");
 
   /*
    * Las millas que faltan, en la esquina de enfrente del rango. Fuera del

@@ -84,6 +84,9 @@
     "cabina.tooLowClimb": {
       "ms": 930
     },
+    "cabina.traffic": {
+      "ms": 1009
+    },
     "cabina.twenty": {
       "ms": 478
     },
@@ -181,6 +184,9 @@
     ],
     "cabina.tooLowClimb": [
       "cabina.tooLowClimb"
+    ],
+    "cabina.traffic": [
+      "cabina.traffic"
     ],
     "cabina.twenty": [
       "cabina.twenty"

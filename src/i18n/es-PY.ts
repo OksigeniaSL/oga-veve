@@ -572,6 +572,18 @@ export const ES_PY = {
   "palabra.canario.alAire": "¡Al aire!",
   "palabra.laPista": "¿La pista?",
   "palabra.cuidado": "¡Cuidado!",
+  "palabra.mira": "¡Mirá!",
+  /*
+   * **Y la tarjeta del aviso de tráfico cuando entran los números**: la hora
+   * del reloj y la altura, que es como da el tráfico una torre de verdad —«a
+   * las dos, trescientos pies por encima»—. No se graba: lleva huecos, y lo
+   * que se oye es la frase de arriba o la cabina. Ver `Game.avisarDelTrafico`.
+   */
+  "tcas.hora": "a las {hora}",
+  "tcas.hora.1": "a la una",
+  "tcas.arriba": "Tráfico {donde}, {cuanto} por encima",
+  "tcas.abajo": "Tráfico {donde}, {cuanto} por debajo",
+  "tcas.nivel": "Tráfico {donde}, a tu misma altura",
   "palabra.rapido": "Muy rápido",
   "palabra.fuera": "Fuera",
   "palabra.corto": "Corto",
@@ -624,6 +636,17 @@ export const ES_PY = {
   "vuelo.terrenoBajo": "Vas muy bajo",
   "vuelo.terrenoSube": "Terreno. Subí",
   "vuelo.perdida": "Pérdida. Bajá el morro",
+  /*
+   * **El aviso de tráfico del TCAS, dicho en casa.** Es lo que en el peldaño
+   * de arriba dice la cabina —«traffic, traffic»— y aquí lo dice la
+   * instructora, que sabe por qué lado mirar. Tranquilo y sin «¡cuidado!»: un
+   * aviso de tráfico no es una emergencia, es «mirá», y lo que se aprende
+   * aquí es a mirar con calma. Ver `flight/tcas.ts`.
+   */
+  "vuelo.trafico.delante": "Mirá adelante: hay otro avión cerca",
+  "vuelo.trafico.izquierda": "Mirá a tu izquierda: hay otro avión cerca",
+  "vuelo.trafico.derecha": "Mirá a tu derecha: hay otro avión cerca",
+  "vuelo.trafico.detras": "Hay otro avión cerca, detrás de vos",
   "vuelo.sube": "Ya subís: metélo",
   "vuelo.bajasRapido": "Bajás muy rápido",
   "vuelo.muyInclinado": "Estás muy inclinado",

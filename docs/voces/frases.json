@@ -161,6 +161,34 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.trafico.delante",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá adelante: hay otro avión cerca",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.trafico.izquierda",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá a tu izquierda: hay otro avión cerca",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.trafico.derecha",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mirá a tu derecha: hay otro avión cerca",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.trafico.detras",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hay otro avión cerca, detrás de vos",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.sube",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1776,6 +1804,13 @@
     "idioma": "en",
     "texto": "stall, stall",
     "para": "el ala dejó de sustentar"
+  },
+  {
+    "id": "cabina.traffic",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "traffic, traffic",
+    "para": "otro avión cerca: mirá dónde dice la pantalla"
   },
   {
     "id": "cabina.autopilotDisconnect",

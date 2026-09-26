@@ -14,6 +14,7 @@ gear down
 sink rate
 bank angle
 stall, stall
+traffic, traffic
 autopilot disconnect
 minimums
 slow down

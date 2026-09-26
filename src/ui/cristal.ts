@@ -509,10 +509,27 @@ function carta(cx: number, cy: number, r: number): string {
   const recorte = nuevoNombre();
   // Un recorte al círculo de la rosa: una pista que asome por fuera deja de
   // ser una carta y pasa a ser una mancha.
+  /*
+   * **Cada tráfico, con las cuatro piezas de un símbolo de TCAS**: el rombo
+   * —hueco o lleno—, el círculo del aviso, la altura relativa y la flecha de
+   * si sube o baja. Todas quietas; `Tablero.laCarta` enciende las que tocan.
+   * Son las formas de la figura 2 del folleto de la FAA, que son las de
+   * cualquier cabina: quien las aprenda aquí las va a reconocer allí.
+   *
+   * La altura lleva la marca de cifra, como el resto de números de la carta:
+   * «+05» se lee como un número antes de saber leer. Ver `esCifra`.
+   */
   const rombos = Array.from(
     { length: CUANTOS_OTROS },
-    (_, i) =>
-      `<path data-carta="otro-${i}" class="cr__otro" visibility="hidden" d="M0 -6 L6 0 L0 6 L-6 0 Z" />`,
+    (_, i) => `
+      <g data-carta="otro-${i}" class="cr__trafico" visibility="hidden">
+        <path data-tcas="rombo" class="cr__rombo" d="M0 -6 L6 0 L0 6 L-6 0 Z" />
+        <circle data-tcas="circulo" class="cr__ta" r="5.5" visibility="hidden" />
+        <text data-tcas="altura" x="0" y="-10" ${MARCA_CIFRA}
+              class="cr__tcas-altura" text-anchor="middle"></text>
+        <path data-tcas="flecha" class="cr__tcas-flecha" visibility="hidden"
+              d="M10 5 L10 -4 M7 -1 L10 -5 L13 -1" />
+      </g>`,
   ).join("");
   return `
     <!--
@@ -594,11 +611,26 @@ function carta(cx: number, cy: number, r: number): string {
       palabra, no la cifra.
     -->
     <text data-cristal="millas-destino" x="${cx - r + 4}" y="${cy + r + 14}"
-          ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo"></text>`;
+          ${MARCA_ROTULO} class="cr__rotulo cr__rotulo--menudo"></text>
+    <!--
+      **TA ONLY**, en la esquina de abajo a la izquierda y en cian, que es
+      donde y como lo escribe la pantalla de navegación de un avión de línea
+      cuando el TCAS está en ese modo. Dice la verdad de este juego: el TCAS II
+      avisa y no da maniobras. Ver flight/tcas.ts.
+    -->
+    <text data-carta="solo-ta" x="${cx - r + 4}" y="${cy + r}" ${MARCA_ROTULO}
+          class="cr__rotulo cr__rotulo--menudo cr__solo-ta" visibility="hidden">TA ONLY</text>`;
 }
 
-/** Cuántos tráficos caben en la carta. Ver `CUANTOS` en `flight/radio.ts`. */
-export const CUANTOS_OTROS = 4;
+/**
+ * Cuántos tráficos caben en la carta.
+ *
+ * Ocho, y no los cuatro de la radio: la carta ya no enseña a los que hablan
+ * por la frecuencia, sino a los que ve el TCAS —los del circuito, los de la
+ * ruta y el turbohélice que se cruza—. Y van ordenados por lo que importan,
+ * así que si sobran se quedan fuera los que menos. Ver `Dibujo.otros`.
+ */
+export const CUANTOS_OTROS = 8;
 
 /**
  * La rosa de rumbo. Gira la carta, no el avión: lo que se mueve es el mundo.

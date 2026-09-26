@@ -165,6 +165,13 @@ const CABINA = [
   ["cabina.sinkRate", "sink rate", "bajás muy rápido para lo bajo que estás"],
   ["cabina.bankAngle", "bank angle", "el avión va demasiado inclinado"],
   ["cabina.stall", "stall, stall", "el ala dejó de sustentar"],
+  /*
+   * **El aviso de tráfico del TCAS**, tal cual lo dice cualquier cabina con
+   * TCAS I o II: dos veces la palabra y nada más. Es precaución y no alarma,
+   * así que va con la misma voz plana que el resto y sin prisa. Ver
+   * `src/flight/tcas.ts`.
+   */
+  ["cabina.traffic", "traffic, traffic", "otro avión cerca: mirá dónde dice la pantalla"],
   [
     "cabina.autopilotDisconnect",
     "autopilot disconnect",

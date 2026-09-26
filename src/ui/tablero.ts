@@ -1092,17 +1092,55 @@ export class Tablero {
       dibujo.pista?.[0] ?? null,
       dibujo.pista?.[1] ?? null,
     );
+    /*
+     * **Los tráficos, con el símbolo del TCAS.** Rombo hueco para el que anda
+     * por ahí, lleno para el que está cerca y círculo ámbar para el que
+     * avisa; encima o debajo, su altura en centenas de pies, y a la derecha la
+     * flecha si sube o baja deprisa. Las piezas están puestas —ver `carta` en
+     * `cristal.ts`— y aquí solo se encienden. Lo que es cada uno lo decide
+     * `flight/tcas.ts`, y dónde va, `ui/carta.ts`.
+     */
     for (let i = 0; i < CUANTOS_OTROS; i++) {
-      const rombo = grupo.querySelector(`[data-carta="otro-${i}"]`);
-      if (!rombo) continue;
-      const donde = dibujo.otros[i];
-      if (!donde) {
-        rombo.setAttribute("visibility", "hidden");
+      const pieza = grupo.querySelector(`[data-carta="otro-${i}"]`);
+      if (!pieza) continue;
+      const o = dibujo.otros[i];
+      if (!o) {
+        pieza.setAttribute("visibility", "hidden");
         continue;
       }
-      rombo.setAttribute("visibility", "visible");
-      rombo.setAttribute("transform", `translate(${donde.dx} ${donde.dy})`);
+      pieza.setAttribute("visibility", "visible");
+      pieza.setAttribute("transform", `translate(${o.dx} ${o.dy})`);
+      pieza.setAttribute("class", `cr__trafico cr__trafico--${o.clase}`);
+      const aviso = o.clase === "aviso";
+      pieza
+        .querySelector('[data-tcas="rombo"]')
+        ?.setAttribute("visibility", aviso ? "hidden" : "inherit");
+      pieza
+        .querySelector('[data-tcas="circulo"]')
+        ?.setAttribute("visibility", aviso ? "inherit" : "hidden");
+      const altura = pieza.querySelector('[data-tcas="altura"]');
+      if (altura) {
+        if (altura.textContent !== (o.etiqueta ?? ""))
+          altura.textContent = o.etiqueta ?? "";
+        // Encima si está más alto, debajo si está más bajo: la etiqueta dice
+        // por dónde anda antes de leer el número.
+        altura.setAttribute("y", o.encima ? "-10" : "18");
+      }
+      const flecha = pieza.querySelector('[data-tcas="flecha"]');
+      if (flecha) {
+        const hay = o.tendencia !== 0 && !o.alBorde;
+        flecha.setAttribute("visibility", hay ? "inherit" : "hidden");
+        if (hay)
+          flecha.setAttribute(
+            "transform",
+            o.tendencia > 0 ? "" : "rotate(180 10 0)",
+          );
+      }
     }
+    // Fuera del grupo recortado: es un rótulo de la pantalla, como el rango.
+    raiz
+      .querySelector('[data-carta="solo-ta"]')
+      ?.setAttribute("visibility", dibujo.soloTa ? "visible" : "hidden");
     /*
      * **Y el radar meteorológico.**
      *

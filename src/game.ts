@@ -64,7 +64,13 @@ import {
 import { FLOTA, modeloPorId } from "./flight/flota";
 import { cabeEn, campoDe } from "./flight/cabe";
 import { crearTrafico, type Trafico } from "./world/trafico";
-import type { Mapa } from "./ui/carta";
+import { MILLA, type Mapa } from "./ui/carta";
+import {
+  Tcas,
+  soloAvisa,
+  type AvisoDeTrafico,
+  type Intruso,
+} from "./flight/tcas";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
 import { crearLluvia, type LluviaEnElMundo } from "./world/lluvia";
@@ -186,6 +192,32 @@ const SE_QUEDA_EL_VEREDICTO = 5;
 
 const IMPORTANTE = 1;
 const URGENTE = 2;
+
+/**
+ * Las fases de tierra en las que el TCAS ya está encendido: del punto de
+ * espera hasta salir de la pista. Ver `Game.vigilarElTrafico`.
+ */
+const TCAS_EN_TIERRA = new Set<Fase>([
+  "esperando",
+  "autorizado",
+  "back-taxi",
+  "alineando",
+  "despegando",
+  "comprometido",
+  "aterrizado",
+]);
+
+/** Por debajo de esto, m, el tráfico va «a tu misma altura». Trescientos pies. */
+const A_LA_MISMA_ALTURA = 91;
+
+/**
+ * Cuánto se queda la tarjeta del aviso de tráfico, s.
+ *
+ * Ocho: lo que se tarda en mirar a donde dice y encontrarlo. El aviso de
+ * verdad dura más —hasta que el otro se aleja—, y eso lo sigue enseñando el
+ * círculo ámbar de la carta, que es el que cuenta el estado.
+ */
+const SE_QUEDA_EL_TRAFICO = 8;
 
 /**
  * Cuántos segundos de vuelo se sondean por delante para avisar.
@@ -1045,6 +1077,162 @@ export class Game {
     return this.islenos.lanzar(this.yoParaLasIslas());
   }
 
+  /**
+   * **El TCAS, una vez por fotograma**: le pasa quién contesta y dónde, y
+   * dice los avisos que empiecen.
+   *
+   * Los tres tráficos del juego —el del circuito, el de la ruta y el
+   * turbohélice de las islas— en una lista, porque para un TCAS un
+   * transpondedor es un transpondedor. Cada uno con un nombre que no se pueda
+   * repetir entre las tres fuentes: el TCAS sigue a cada uno por el suyo.
+   */
+  private vigilarElTrafico(dt: number): void {
+    const s = this.flight.state;
+    const intrusos: Intruso[] = [];
+    const llegando = new Set<string>();
+    for (const q of this.trafico?.quienes() ?? []) {
+      const id = `circuito:${q.matricula}`;
+      if (q.llegando) llegando.add(id);
+      intrusos.push({
+        id,
+        x: q.x,
+        y: q.y,
+        z: q.z,
+        // Lo que diría su transpondedor: posado, si va pegado al suelo.
+        enElSuelo: q.y - this.terrain.sampleHeight(q.x, q.z) < 5,
+      });
+    }
+    for (const q of this.avionesDeRuta?.quienes() ?? [])
+      intrusos.push({ id: `ruta:${q.id}`, x: q.x, y: q.y, z: q.z });
+    for (const q of this.islenos?.quienes() ?? [])
+      intrusos.push({ id: `islas:${q.id}`, x: q.x, y: q.y, z: q.z });
+    this.llegandoAhora = llegando;
+
+    const avisos = this.tcas.paso(
+      dt,
+      this.aircraft.tcas,
+      {
+        x: s.position.x,
+        y: s.position.y,
+        z: s.position.z,
+        sobreElSuelo: s.heightAboveGround,
+        rumbo: MathUtils.radToDeg(s.heading),
+        /*
+         * **En el aire, siempre; en tierra, desde el punto de espera.**
+         *
+         * Es cuando se pasa el selector del TCAS de espera a TA/RA: al
+         * acercarse al punto de espera de la pista de salida, y no antes, que
+         * rodando por la plataforma solo serviría para molestar a los demás.
+         * Y es cuando más falta hace mirar la pantalla: el plan europeo contra
+         * incursiones en pista —EAPPRI v3.0, EUROCONTROL 2017, apéndice D,
+         * buenas prácticas de tripulación— lo dice con estas palabras: «the
+         * flight deck traffic display (TCAS) could also be a good tool to
+         * detect traffic approaching and departing a runway», al lado de
+         * «scan the entire runway and approach in both directions before
+         * entering a runway». Que es lo que se pidió parado en Pettirossi: ver
+         * en la pantalla al que viene a aterrizar antes de entrar.
+         *
+         * Y se apaga al salir de la pista después de aterrizar, que es cuando
+         * se vuelve a poner en espera.
+         */
+        pantalla: !s.onGround || TCAS_EN_TIERRA.has(this.faseDeAhora as Fase),
+        terrenoAvisando: this.terrenoAhora !== null,
+      },
+      intrusos,
+    );
+    for (const a of avisos) this.avisarDelTrafico(a);
+  }
+
+  /**
+   * **Traffic, traffic**: un aviso del TCAS, dicho como toca en este peldaño.
+   *
+   * Tres canales y ninguno solo, como pide la escalera:
+   *
+   * - **El dibujo**, en los cuatro peldaños: el círculo se pone ámbar en la
+   *   carta y sale la tarjeta con tu avión y dónde está el otro.
+   * - **La palabra**: «¡Mirá!» en el segundo; en el tercero, la frase con la
+   *   hora del reloj y la altura, que es como da el tráfico una torre de
+   *   verdad; y en el cuarto lo mismo en pies.
+   * - **La voz**: la instructora en casa —«mirá a tu izquierda: hay otro avión
+   *   cerca»— y en el peldaño de arriba la de cabina, *traffic, traffic*, que
+   *   es exactamente lo que se oye en una.
+   *
+   * **Y sin tono de alarma.** Un TA es un aviso de precaución, ámbar: no pide
+   * maniobrar, pide mirar. En una cabina de verdad no lo acompaña ninguna
+   * sirena, solo las dos palabras, y aquí tampoco. Quien lo oiga por primera
+   * vez aquí tiene que aprender que eso se oye con calma.
+   */
+  private avisarDelTrafico(a: AvisoDeTrafico): void {
+    const lado =
+      a.hora >= 11 || a.hora <= 1
+        ? "delante"
+        : a.hora <= 4
+          ? "derecha"
+          : a.hora <= 7
+            ? "detras"
+            : "izquierda";
+    const clave = `vuelo.trafico.${lado}` as TranslationKey;
+    this.cantar("traffic, traffic", t(clave), clave);
+    /*
+     * A la misma altura por debajo de trescientos pies: más cerca que eso la
+     * cifra de la carta dice +02 o -01 y lo que hay que mirar es al frente,
+     * no arriba ni abajo.
+     */
+    const altura =
+      Math.abs(a.relativa) < A_LA_MISMA_ALTURA
+        ? "nivel"
+        : a.relativa > 0
+          ? "arriba"
+          : "abajo";
+    const canales = canalesDe(this.tier.avisos);
+    const rotulo = !canales.texto
+      ? ""
+      : canales.corto
+        ? t("palabra.mira")
+        : canales.cifra
+          ? this.elTraficoEnNumeros(a, altura)
+          : t(clave);
+    this.hud.senal.mostrar(
+      comoDibujo(`trafico-${a.hora}-${altura}`),
+      rotulo,
+      null,
+      { segundos: SE_QUEDA_EL_TRAFICO, prioridad: IMPORTANTE },
+    );
+  }
+
+  /**
+   * «Tráfico a las dos, 150 m por encima.» En pies donde la cabina va en
+   * pies, como todo lo demás: la cifra que se escribe es la que marca el
+   * instrumento.
+   */
+  private elTraficoEnNumeros(
+    a: AvisoDeTrafico,
+    altura: "arriba" | "nivel" | "abajo",
+  ): string {
+    const donde =
+      a.hora === 1 ? t("tcas.hora.1") : t("tcas.hora", { hora: a.hora });
+    const enPies = this.tier.units === "aeronautical";
+    const cuanto = enPies
+      ? `${Math.round(Math.abs(a.relativa) / 0.3048 / 100) * 100} ft`
+      : `${Math.round(Math.abs(a.relativa) / 10) * 10} m`;
+    const clave: TranslationKey =
+      altura === "nivel"
+        ? "tcas.nivel"
+        : altura === "arriba"
+          ? "tcas.arriba"
+          : "tcas.abajo";
+    return t(clave, { donde, cuanto });
+  }
+
+  /** Lo que ve el TCAS, para el banco. */
+  get tcasParaBanco() {
+    return {
+      equipo: this.aircraft.tcas,
+      enPantalla: this.tcas.enPantalla,
+      avisos: this.tcas.avisosDados,
+    };
+  }
+
   /** Lo que el tráfico de las islas necesita saber de quien vuela. */
   private yoParaLasIslas() {
     const s = this.flight.state;
@@ -1468,6 +1656,7 @@ export class Game {
     this.alturaEnGrande.reiniciar();
     this.antesAlUmbral = Infinity;
     this.terrenoDicho = null;
+    this.tcas.reiniciar();
     this.faseAnunciada = "";
     this.runwayGuide.reset();
     this.landing.reset();
@@ -1709,6 +1898,24 @@ export class Game {
   private bandaDeAhora: BandaDeVelocidad = null;
   /** El último aviso de terreno dicho, para no repetirlo cada fotograma. */
   terrenoDicho: "bajo" | "sube" | null = null;
+  /**
+   * Y el que hay **ahora**, se diga o no. Lo mira el TCAS, que se calla
+   * mientras suene el del suelo: en cualquier cabina el aviso de terreno
+   * manda sobre el de tráfico. Ver `flight/tcas.ts`.
+   */
+  private terrenoAhora: "bajo" | "sube" | null = null;
+  /**
+   * **El TCAS del avión de hoy**, si lo lleva: quién anda cerca y cuándo
+   * mirarlo. Vive siempre y trabaja solo si la ficha dice que hay uno. Ver
+   * `tcas` en `flight/aircraft.ts`.
+   */
+  private readonly tcas = new Tcas();
+  /**
+   * Los del circuito que vienen a aterrizar, por su nombre en el TCAS. Los
+   * mira la carta para abrir el rango desde el punto de espera. Ver
+   * `Otro.abreElRango` en `ui/carta.ts`.
+   */
+  private llegandoAhora = new Set<string>();
   /**
    * Cuánto lleva el terreno sin avisar de nada, en segundos.
    *
@@ -5422,6 +5629,7 @@ export class Game {
     this.fueraDeBanda = 0;
     this.dichoDeBanda = null;
     this.terrenoDicho = null;
+    this.tcas.reiniciar();
     this.avisandoDelBulto = 0;
     /*
      * Y la ruta de este vuelo, **antes** del depósito: lo que se carga sale de
@@ -5866,6 +6074,9 @@ export class Game {
       this.islenos.paso(dt, this.yoParaLasIslas());
       this.avionesDeLasIslas?.poner(this.islenos.quienes());
     }
+    // Y el TCAS, con todos ya en su sitio y también antes de la puerta: un
+    // transpondedor no deja de contestar porque el campo no tenga torre.
+    this.vigilarElTrafico(dt);
     // La frecuencia es la del campo en el que se está, no la de casa. Ver
     // `montarElCampo`.
     if (this.elCampoMontado().escenario.aerodrome?.privado) return;
@@ -7417,6 +7628,7 @@ export class Game {
         this.flight.state.verticalSpeed > MARGENES.cayendo,
     };
     const terreno = avisoDeTerreno(cerca);
+    this.terrenoAhora = terreno;
     // El HUD enseña el mismo aviso que dice la voz, no uno suyo. Ver
     // `Hud.ponerTerreno`.
     this.hud.ponerTerreno(terreno);
@@ -11480,20 +11692,17 @@ export class Game {
             this.flight.state.position.z,
           ) ?? this.scenario.runway)
         : null,
-      // Los mismos que se oyen por la radio y se ven por la ventana: uno
-      // solo, para que no puedan contarse tres versiones de lo mismo.
       /*
-       * Los del circuito y los de la ruta, en la misma lista: para la carta un
-       * tráfico es un tráfico, y separarlos aquí sería enseñar una diferencia
-       * que no existe mirando por la ventana.
+       * **Los que ve el TCAS, y solo si el avión lo lleva.**
+       *
+       * Estaban todos los del mundo, a cualquier altura y con el mismo rombo,
+       * también en los aviones que no llevan con qué verlos. Ahora la carta
+       * pinta lo que le pasa el TCAS, como la de un avión de verdad: el del
+       * circuito, el de la ruta y el turbohélice de las islas, con el símbolo
+       * de lo que es cada uno. Ver `flight/tcas.ts`.
        */
-      otros: [
-        ...(this.trafico?.quienes() ?? []),
-        ...(this.avionesDeRuta?.quienes() ?? []),
-        // Y el turbohélice de las islas que se cruza, que en la carta es un
-        // tráfico más: verlo ahí antes que por la ventana es mirar afuera.
-        ...(this.islenos?.quienes() ?? []),
-      ],
+      otros: this.aircraft.tcas ? this.traficoParaLaCarta() : [],
+      soloTa: !!this.aircraft.tcas && soloAvisa(this.aircraft.tcas),
       /*
        * **Y el aeropuerto de destino, si esta ruta lleva a otro.**
        *
@@ -11519,6 +11728,30 @@ export class Game {
        */
       alterno: this.alternoParaLaCarta(),
     };
+  }
+
+  /**
+   * Los tráficos del TCAS, con lo que la carta necesita para abrir el rango.
+   *
+   * Uno con aviso se mira siempre; y en tierra, esperando para entrar en la
+   * pista, el que viene a aterrizar a menos de ocho millas, que es lo que cabe
+   * holgado en la carta de diez. Ver `Otro.abreElRango` en `ui/carta.ts`.
+   */
+  private traficoParaLaCarta(): Mapa["otros"] {
+    const s = this.flight.state;
+    const ocho = 8 * MILLA;
+    return this.tcas.enPantalla.map((b) => ({
+      x: b.x,
+      z: b.z,
+      clase: b.clase,
+      relativa: b.relativa,
+      tendencia: b.tendencia,
+      abreElRango:
+        b.clase === "aviso" ||
+        (s.onGround &&
+          this.llegandoAhora.has(b.id) &&
+          Math.hypot(b.x - s.position.x, b.z - s.position.z) <= ocho),
+    }));
   }
 
   /** Ver `updateCamera`. */
