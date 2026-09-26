@@ -130,11 +130,15 @@ export interface Scenario {
    * los escenarios.
    *
    * Se declara aquí, y solo aquí, cuando un campo de verdad está a la orilla:
-   * Encarnación tiene la pista a ochenta y cinco metros y el Paraná embalsado
-   * a ochenta y tres, y eso son dos metros y medio. Bajar la lámina para que
-   * pasara la prueba sería quitarle el río al único escenario que lo tiene
-   * delante; aflojar la prueba para todos sería perder el guardarraíl. Se
-   * declara la excepción, con su motivo, y el guardarraíl sigue en pie.
+   * en Lanzarote la pista corre a cien metros del mar con su cota a nueve y
+   * medio. Bajar la lámina para que pasara la prueba sería quitarle el mar;
+   * aflojar la prueba para todos sería perder el guardarraíl. Se declara la
+   * excepción, con su motivo, y el guardarraíl sigue en pie.
+   *
+   * Encarnación la tuvo declarada en dos metros, y no era una orilla: era la
+   * cota del aeródromo mal puesta, cien metros por debajo de la de verdad.
+   * Una excepción que tapa un dato malo es la más cara de todas, porque la
+   * prueba que lo habría cazado se apartó para dejarlo pasar.
    */
   orilla?: number;
   /** Ancho del cauce principal, en metros. 0 para no excavar río. */
@@ -1919,13 +1923,15 @@ export const PEDRO_JUAN: Scenario = {
  * **Encarnación: el río que es frontera, y una pista con dos países a la vista.**
  *
  * El Paraná aquí mide más de un kilómetro de ancho y del otro lado está
- * Posadas, en Argentina. Es el único escenario del juego donde el agua no es
- * un adorno del horizonte: es lo primero que se ve al levantar el morro, y en
- * final a la 20 se viene por encima de ella.
+ * Posadas, en Argentina. La pista no está en la orilla: está en la loma,
+ * catorce kilómetros al norte de la ciudad, en Capitán Miranda. Pero en cuanto
+ * se levanta el morro el río se ve entero al sur, con la ciudad y el puente,
+ * que es lo que hace de éste el escenario del agua.
  *
- * Y ochenta y cinco metros de cota, que al lado de Pedro Juan Caballero es la
- * otra mitad de la lección del altímetro: el mismo avión, el mismo
- * instrumento, y quinientos metros de diferencia con el avión parado.
+ * Y ciento noventa y nueve metros de cota —la oficial, 653 pies—, que al lado
+ * de Pedro Juan Caballero es la otra mitad de la lección del altímetro: el
+ * mismo avión, el mismo instrumento, y trescientos setenta metros de
+ * diferencia con el avión parado.
  */
 export const ENCARNACION: Scenario = {
   id: "encarnacion",
@@ -1940,24 +1946,25 @@ export const ENCARNACION: Scenario = {
   reliefScale: 5.2,
   ridgeMix: 0.1,
   /*
-   * **Ochenta y dos metros: el Paraná embalsado, y una cota medida.**
+   * **Ochenta y dos metros: el Paraná embalsado.**
    *
    * El relieve de los veinte kilómetros de alrededor baja hasta ochenta
-   * justos, y ese ochenta es el río: Yacyretá mantiene el embalse a
-   * ochenta y tres metros y el aeropuerto está a ochenta y cinco. Es la lámina
-   * más pegada al campo de todo el juego —dos metros— y por eso aquí el agua
-   * no es un adorno del horizonte: se ve desde la pista.
+   * justos, y ese ochenta es el río y los arroyos que el embalse de Yacyretá
+   * —a ochenta y tres metros— ha inundado tierra adentro. La pista queda
+   * ciento diecisiete metros más arriba, en la loma.
    *
-   * Y por eso también la cota del aeródromo importó tanto. OurAirports da dos
-   * cifras que no pueden ser las dos: doscientos uno en la ficha del
-   * aeropuerto y ochenta y cinco en los dos umbrales. Con doscientos uno el
-   * aeropuerto quedaba casi en lo más alto de su propia comarca —el máximo
-   * medido son 288— y flotando sobre su terreno. Manda el umbral; ver el aviso
-   * que lo dice en `scripts/osm-a-aerodromo.mjs`.
+   * **Y esa cota costó dos vueltas.** OurAirports da dos cifras que no pueden
+   * ser las dos: 659 pies en la ficha y 279 en los dos umbrales. Se eligió la
+   * de los umbrales razonando que Encarnación está a orillas del Paraná, y el
+   * razonamiento era falso: la ciudad lo está, el aeropuerto no. Con ochenta y
+   * cinco la pista quedaba en un hoyo cien metros por debajo del relieve
+   * medido, con la senda de tres grados atravesando el suelo en las dos
+   * finales, y esta lámina a dos metros de ella. La cota buena es la oficial,
+   * que casa al metro con el relieve: ver `COTAS_OFICIALES` en
+   * `scripts/osm-a-aerodromo.mjs` y `cota-de-pista.test.ts`, que lo vigila en
+   * todos los campos.
    */
   waterLevel: 82,
-  // Dos metros y medio de orilla, que es lo que hay. Ver `orilla`.
-  orilla: 2,
   riverWidth: 0,
   /*
    * Los colores sobre lo medido: de 80 a 288 metros. Del agua a la loma de

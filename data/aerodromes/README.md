@@ -64,6 +64,14 @@ pero **no tienen licencia abierta**. Se usan solo para **comprobar que
 nuestros datos dicen la verdad** —un umbral desplazado es un hecho, no una
 obra— y nunca para redistribuir nada suyo.
 
+Una cota publicada es un hecho de ese tipo, y cuando OurAirports se equivoca
+se corrige con ella en el extractor —`COTAS_OFICIALES` en
+`scripts/osm-a-aerodromo.mjs`, con su fuente al lado— y no a mano en el
+fichero, que la siguiente extracción deshace. Pasó con Encarnación: OurAirports
+trae los umbrales a 279 pies y la cota de verdad son 653, cien metros más
+arriba. `src/world/cota-de-pista.test.ts` compara la cota de cada pista con el
+relieve medido de Copernicus, así que un error así ya no pasa callado.
+
 ## Lo que hay ahora
 
 | | Pista | Ancho | Pendiente | Elevación |
