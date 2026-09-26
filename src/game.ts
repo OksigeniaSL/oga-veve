@@ -355,6 +355,7 @@ import { KeyScreen } from "./ui/teclas";
 import {
   LOCALE_NAMES,
   cycleLocale,
+  getLocale,
   hayTexto,
   t,
   type TranslationKey,
@@ -632,6 +633,14 @@ export interface GameOptions {
    * `Scenario.destino` y `MundoVecino`.
    */
   vecinos?: readonly Scenario[];
+
+  /**
+   * Los destinos de la ruta que **este avión no puede hacer**: no son vecinos
+   * —no se cargan ni se pintan en la carta—, pero se nombran al tocar la
+   * tarjeta del destino, para que «no pasa nada» se entienda. Ver
+   * `siguienteDestino`.
+   */
+  noCaben?: readonly Scenario[];
 
   /**
    * **A dónde se va**, elegido en el hangar: el identificador de uno de los
@@ -1309,6 +1318,8 @@ export class Game {
 
   /** Lo que llegó del hangar, para poder volver a ello en cada vuelo. */
   private readonly destinoPedido: string | undefined;
+  /** Los destinos de la ruta que este avión no puede hacer. Ver `noCaben`. */
+  private readonly noCaben: readonly Scenario[];
 
   /**
    * El destino con el que empieza cada vuelo.
@@ -1348,7 +1359,27 @@ export class Game {
    * que va y viene no se aprende.
    */
   siguienteDestino(): void {
-    if (this.vecinos.length === 0) return;
+    /*
+     * **Y sin otro sitio, se dice.** Aquí no pasaba nada, y con el JAZ 120 en
+     * Pettirossi —sus dos destinos le quedan cortos— tocar la tarjeta parecía
+     * un botón roto. Ahora la tarjeta enseña la vuelta al campo, y a quien lee
+     * le dice por qué y qué hacer: elegir un avión más chico en el hangar.
+     */
+    if (this.vecinos.length === 0) {
+      const sitios = this.noCaben.map(
+        (e) => t(e.nameKey as never).split(" · ")[0] ?? e.id,
+      );
+      this.hud.soloVueltaAlCampo(
+        sitios.length
+          ? t("vuelo.solo-vuelta.no-cabe", {
+              sitios: new Intl.ListFormat(getLocale() === "gug" ? "es-PY" : getLocale(), {
+                type: "disjunction",
+              }).format(sitios),
+            })
+          : t("vuelo.solo-vuelta"),
+      );
+      return;
+    }
     const campos = this.camposDelVuelo();
     const ahora = campos.findIndex(
       (c) => c.id === (this.desvioId ?? this.destinoId),
@@ -2309,6 +2340,7 @@ export class Game {
     );
     this.leccion = options.leccion ?? LECCION_POR_DEFECTO;
     this.destinoPedido = options.destino;
+    this.noCaben = options.noCaben ?? [];
     this.misionInicial = options.mision ?? null;
     this.aircraft = options.aircraft ?? PYKASU;
 

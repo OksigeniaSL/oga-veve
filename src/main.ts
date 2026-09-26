@@ -333,7 +333,8 @@ const todosLosDestinos = aDondeSeVa
   .map((id) => SCENARIOS.find((e) => e.id === id))
   .filter((e): e is Scenario => e !== undefined);
 const destinosDeHoy = destinosParaEsteAvion(avion, todosLosDestinos);
-for (const fuera of todosLosDestinos.filter((e) => !destinosDeHoy.includes(e)))
+const noCabenHoy = todosLosDestinos.filter((e) => !destinosDeHoy.includes(e));
+for (const fuera of noCabenHoy)
   // Se dice, que cambiarle los destinos a alguien sin avisar es lo mismo que
   // cambiarle el avión sin avisar. Ver `elQueQuepa` arriba.
   console.info(
@@ -449,6 +450,8 @@ const game = new Game({
    */
   luzDeCiudad: ciudad,
   vecinos,
+  // Y los que se quedaron fuera por el avión, para poder decirlo en vuelo.
+  noCaben: noCabenHoy,
   destino,
   /*
    * `?curvatura=0` dibuja el mundo plano, para comparar: sin curva, el sol

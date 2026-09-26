@@ -36,6 +36,7 @@ import {
   campoDe,
   destinosParaEsteAvion,
   elQueQuepa,
+  type PorQueNo,
   type Veredicto,
 } from "../flight/cabe";
 import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
@@ -524,15 +525,65 @@ function fichaDeSitio(escenario: Scenario, elegido: boolean): string {
 // que ese destino cuesta: la barra del depósito con lo que se va a cargar, y
 // el alternativo con su indicativo.
 
+/** Los destinos de la ruta de este sitio, quepa o no el avión. */
+function destinosDeLaRuta(sitio: Scenario): readonly Scenario[] {
+  return destinosDe(sitio)
+    .map((id) => SCENARIOS.find((e) => e.id === id))
+    .filter((e): e is Scenario => e !== undefined);
+}
+
 /** Los destinos a los que este avión puede ir desde este sitio. */
 export function destinosPosibles(
   sitio: Scenario,
   avion: AircraftConfig,
 ): readonly Scenario[] {
-  const todos = destinosDe(sitio)
-    .map((id) => SCENARIOS.find((e) => e.id === id))
-    .filter((e): e is Scenario => e !== undefined);
-  return destinosParaEsteAvion(avion, todos);
+  return destinosParaEsteAvion(avion, destinosDeLaRuta(sitio));
+}
+
+/** Un destino de la ruta al que este avión no llega, y con qué sí. */
+export interface DestinoQueNoCabe {
+  readonly destino: Scenario;
+  /** Por qué no, con lo que pide y lo que hay. Ver `cabeEn`. */
+  readonly veredicto: Veredicto;
+  /**
+   * **El mayor avión de la flota que sí cabe** en los dos campos, el de
+   * salida y ese, o `null` si no hay ninguno.
+   */
+  readonly propuesto: AircraftConfig | null;
+}
+
+/**
+ * **Los destinos a los que este avión no llega, y por qué.**
+ *
+ * El hangar los escondía: con el JAZ 120 en Pettirossi, Yvytu Rape —900
+ * metros de hierba— y Encarnación —1.990 de los 2.562 que pide— no salían,
+ * el paso de «¿A dónde vas?» desaparecía entero y el vuelo se quedaba en la
+ * vuelta al campo sin que nadie supiera por qué. «Hace rato podía ir desde
+ * Pettirossi hasta otro punto, ahora nada.»
+ *
+ * Que ese avión no vaya allí es verdad y se queda. Lo que estaba mal era
+ * esconderlo: las normas se muestran, no se imponen. Así que se enseñan
+ * apagados, con el porqué dibujado, y con el avión que sí iría.
+ */
+export function destinosQueNoCaben(
+  sitio: Scenario,
+  avion: AircraftConfig,
+): readonly DestinoQueNoCabe[] {
+  const aqui = campoDe(sitio);
+  const salen = AIRCRAFT.filter((a) => cabeEn(a, aqui).cabe);
+  return destinosDeLaRuta(sitio).flatMap((destino) => {
+    const alli = campoDe(destino);
+    const veredicto = cabeEn(avion, alli);
+    if (veredicto.cabe) return [];
+    const mayor = elQueQuepa(avion, alli, salen);
+    return [
+      {
+        destino,
+        veredicto,
+        propuesto: mayor !== avion && cabeEn(mayor, alli).cabe ? mayor : null,
+      },
+    ];
+  });
 }
 
 /**
@@ -666,6 +717,69 @@ function fichaDeDestino(
 }
 
 /**
+ * La ficha de un destino al que **este avión no llega**: apagada, con el
+ * porqué dibujado encima y el avión que sí iría.
+ *
+ * Tres canales, como todo lo que importa aquí. El dibujo de `dibujoDeNoCabe`
+ * para quien no lee; la cuenta —lo que pide y lo que hay— para quien sí; y el
+ * retrato del avión que cabe, encendido en una ficha apagada, que es la
+ * propuesta. Tocarla la acepta: se cambia a ese avión y se va allí. No es un
+ * castigo ni un callejón: es la misma pregunta de «¿a dónde vas?» contestada
+ * con la verdad de ese avión.
+ */
+function fichaDeDestinoQueNoCabe(
+  sitio: Scenario,
+  { destino, veredicto, propuesto }: DestinoQueNoCabe,
+): string {
+  const campos = camposDeLaRuta(sitio, [destino]);
+  const casa = campos[0]!;
+  const aqui = campos.find((c) => c.id === destino.id) ?? casa;
+  const km = Math.round(tramosDelPlan(casa, aqui, campos).alDestino / 1000);
+  const { cielo, suelo } = pieles(destino);
+  const oaci = oaciDe(destino);
+  const nombre = t(destino.nameKey as never);
+  const m = (n: number): string => Math.round(n).toLocaleString(idioma());
+  const cuenta = t(
+    veredicto.porQueNo === "corta" ? "hangar.nocabe.largo" : "hangar.nocabe.ancho",
+    { pide: m(veredicto.necesita), hay: m(veredicto.hay) },
+  );
+  const modelo = propuesto ? modeloPorId(propuesto.id) : undefined;
+  const conQuien = propuesto
+    ? `${FABRICANTE} ${modelo?.numero ?? ""} ${modelo?.nombre ?? propuesto.name}`
+    : "";
+  const porque = veredicto.porQueNo ? t(PORQUE[veredicto.porQueNo]) : "";
+  return `
+    <button class="ficha ficha--sitio ficha--destino ficha--lejos" type="button"
+            role="radio" aria-checked="false" tabindex="-1"
+            ${propuesto ? `data-destino-lejos="${destino.id}" data-con="${propuesto.id}"` : "disabled"}
+            aria-label="${nombre} — ${porque} (${cuenta}).${
+              propuesto ? ` ${t("hangar.nocabe.con", { avion: conQuien })}` : ""
+            }"
+            style="--cielo: ${cielo}; --suelo: ${suelo}">
+      <span class="ficha__lienzo">${
+        oaci ? `<span class="plano__ficha"><b>${oaci}</b></span>` : ""
+      }${plano(destino, ESCALA)}${dibujoDeNoCabe(veredicto.porQueNo)}</span>
+      <span class="ficha__pie">
+        <span class="ficha__renglon">
+          <span class="ficha__numero">${km.toLocaleString(idioma())} km</span>
+        </span>
+        <span class="ficha__nombre">${nombre}</span>
+        <span class="ficha__cuenta">${cuenta}</span>
+        ${
+          propuesto
+            ? `<span class="ficha__propuesta" aria-hidden="true">
+          <img src="${retratoDe(propuesto.id)}" alt=""
+               width="${TAMANO_DE_RETRATO.ancho}" height="${TAMANO_DE_RETRATO.alto}"
+               decoding="async" />
+          <span>${conQuien}</span>
+        </span>`
+            : ""
+        }
+      </span>
+    </button>`;
+}
+
+/**
  * Los galones. Uno por peldaño, como en la manga de un uniforme.
  *
  * Es la única forma que se nos ocurrió de decir «este es el siguiente» sin
@@ -695,14 +809,6 @@ const galones = (n: number): string =>
  * cambian. Un escenario sin aeródromo real tiene su pista inventada, y ésas son
  * de asfalto — lo dice `superficieEn`.
  */
-/**
- * El dibujo de «aquí no cabe»: un avión sobre una pista que se le queda corta.
- *
- * **Sin una palabra**, que es la regla de esta casa: esto lo mira quien tiene
- * cuatro años y no lee, y un mensaje de error sería exactamente el canal que no
- * tiene. Lo que se ve es la silueta del avión sobresaliendo por los dos
- * extremos de la franja de la pista, que es literalmente lo que pasaría.
- */
 /** El rótulo de cada motivo, para el lector de pantalla. */
 const PORQUE = {
   corta: "hangar.nocabe.corta",
@@ -710,29 +816,62 @@ const PORQUE = {
   "no-da-la-vuelta": "hangar.nocabe.no-da-la-vuelta",
 } as const;
 
-const NO_CABE = `
+/**
+ * El dibujo de «aquí no cabe», **uno por motivo**.
+ *
+ * **Sin una palabra**, que es la regla de esta casa: esto lo mira quien tiene
+ * cuatro años y no lee, y un mensaje de error sería exactamente el canal que no
+ * tiene. Había uno solo —el avión sobresaliendo de una pista corta— y valía
+ * para los tres motivos de `cabeEn`, que son tres cosas distintas que se ven
+ * distintas:
+ *
+ * - **corta**: el avión en la cabecera y la carrera que necesita, que sigue
+ *   de largo por donde la pista ya se acabó;
+ * - **estrecha**: el avión encima de la pista, con las alas asomando por los
+ *   dos bordes;
+ * - **no da la vuelta**: la media vuelta del final de la pista, que se sale
+ *   por el borde antes de volver.
+ *
+ * Es literalmente lo que pasaría, visto desde arriba.
+ */
+function dibujoDeNoCabe(porque: PorQueNo | null): string {
+  const pista = (y: number, alto: number, x0: number, x1: number): string => `
+    <rect x="${x0}" y="${y}" width="${x1 - x0}" height="${alto}" rx="1.5"
+          fill="#d8d5c8" opacity="0.85" />
+    <path d="M${x0 + 2.5} ${y + 1.5}v${alto - 3}M${x1 - 2.5} ${y + 1.5}v${alto - 3}"
+          stroke="#12190f" stroke-width="1.2" stroke-linecap="round" />`;
+  /** Un avión visto desde arriba con el morro a la derecha, en `x, y`. */
+  const avion = (x: number, y: number, k: number): string => `
+    <path d="M${x - 5 * k} ${y}h${10 * k}M${x + 1 * k} ${y - 6 * k}v${12 * k}M${
+      x - 4.2 * k
+    } ${y - 2.4 * k}v${4.8 * k}" />`;
+  const dibujo =
+    porque === "estrecha"
+      ? `${pista(19.5, 5, 4, 60)}
+    <g fill="none" stroke="#dd923f" stroke-width="2.4" stroke-linecap="round">
+      ${avion(31, 22, 2)}
+    </g>`
+      : porque === "no-da-la-vuelta"
+        ? `${pista(7, 11, 4, 60)}
+    <g fill="none" stroke="#dd923f" stroke-width="2.2" stroke-linecap="round"
+       stroke-linejoin="round">
+      ${avion(13, 12.5, 0.75)}
+      <path d="M20 12.5H45a9 9 0 0 1 0 18H37" />
+      <path d="M40 27.3l-3.4 3.2 3.4 3.2" />
+    </g>`
+        : `${pista(17, 10, 5, 38)}
+    <g fill="none" stroke="#dd923f" stroke-width="2.2" stroke-linecap="round"
+       stroke-linejoin="round">
+      ${avion(14, 22, 0.6)}
+      <path d="M20.5 22H54" stroke-dasharray="3.2 3" />
+      <path d="M53 18.5l4.5 3.5-4.5 3.5" />
+    </g>`;
+  return `
   <svg class="ficha__nocabe" viewBox="0 0 64 34" aria-hidden="true">
     <rect x="0" y="0" width="64" height="34" rx="7" fill="#12190f"
-          opacity="0.82" />
-    <!--
-      La pista: una franja corta y centrada, con sus dos umbrales marcados.
-      Lo que cuenta la historia es que **empieza y acaba dentro del avión**.
-    -->
-    <rect x="18" y="21" width="28" height="6" rx="1.5" fill="#d8d5c8"
-          opacity="0.85" />
-    <path d="M20 22.5v3M44 22.5v3" stroke="#12190f" stroke-width="1.2"
-          stroke-linecap="round" />
-    <!--
-      Y el avión encima, más largo que ella por los dos lados: un ala de punta
-      a punta y el fuselaje sobresaliendo. No hace falta saber leer.
-    -->
-    <g fill="none" stroke="#dd923f" stroke-width="2.4"
-       stroke-linecap="round" stroke-linejoin="round">
-      <path d="M6 14h52" />
-      <path d="M32 6v16" />
-      <path d="M24 6h16" />
-    </g>
+          opacity="0.82" />${dibujo}
   </svg>`;
+}
 
 function fichaDeAvion(
   avion: AircraftConfig,
@@ -765,7 +904,7 @@ function fichaDeAvion(
                   width="${TAMANO_DE_RETRATO.ancho}" height="${TAMANO_DE_RETRATO.alto}"
                   decoding="async" />`
           : ""
-      }${no ? NO_CABE : ""}</span>
+      }${no ? dibujoDeNoCabe(veredicto.porQueNo) : ""}</span>
       <span class="ficha__pie">
         <span class="ficha__dato">${FABRICANTE} ${modelo?.numero ?? ""}</span>
         <span class="ficha__nombre">${modelo?.nombre ?? avion.name}</span>
@@ -1264,6 +1403,12 @@ export function abrirHangar(
   };
   let pantalla: Pantalla = "inicio";
   let reposo: ReturnType<typeof setTimeout> | null = null;
+  /**
+   * Si el avión acaba de cambiar por aceptar la propuesta de un destino: el
+   * paso del avión destella una vez al volver al inicio. Ver
+   * `fichaDeDestinoQueNoCabe`.
+   */
+  let avionCambiado = false;
 
   /*
    * Los dos mundos, dibujados. El de la foto es una loma con su textura y sus
@@ -1366,6 +1511,9 @@ export function abrirHangar(
               .map((d) =>
                 fichaDeDestino(sitio, d, avion, destinoDeAhora() === d.id),
               )
+              .join("")}
+            ${destinosQueNoCaben(sitio, avion)
+              .map((d) => fichaDeDestinoQueNoCabe(sitio, d))
               .join("")}
           </div>
         </section>`
@@ -1508,7 +1656,7 @@ export function abrirHangar(
           pantalla === "inicio"
             ? `
         <div class="hangar__pasos" style="--pasos: ${
-          destinosPosibles(sitio, avion).length > 0 ? 6 : 5
+          destinosDeLaRuta(sitio).length > 0 ? 6 : 5
         }">
           ${[
             ["donde", t("hangar.donde"), t(sitio.nameKey as never), PASO_DONDE],
@@ -1516,8 +1664,14 @@ export function abrirHangar(
              * El destino, solo donde hay a dónde ir: en un campo sin vecinos
              * la única respuesta es la vuelta al campo, y un paso que no se
              * puede cambiar es un paso que sobra.
+             *
+             * **Y donde hay a dónde ir aunque este avión no llegue.** Se
+             * miraba si había destinos *para este avión*, y con el JAZ 120 en
+             * Pettirossi no había ninguno: el paso desaparecía entero, y con
+             * él la única pista de que ahí había a dónde ir. Ahora se ve, y
+             * dentro se ve por qué no.
              */
-            ...(destinosPosibles(sitio, avion).length > 0
+            ...(destinosDeLaRuta(sitio).length > 0
               ? [
                   [
                     "adonde",
@@ -1554,7 +1708,9 @@ export function abrirHangar(
           ]
             .map(
               ([id, que, valor, icono]) => `
-          <button class="paso" type="button" data-pantalla="${id}">
+          <button class="paso${
+            id === "conque" && avionCambiado ? " paso--cambio" : ""
+          }" type="button" data-pantalla="${id}">
             ${icono}
             <span class="paso__texto">
               <span class="paso__que">${que}</span>
@@ -1585,8 +1741,12 @@ export function abrirHangar(
      * pone su icono de imagen rota, que a quien no lee le dice «esto está
      * roto» y no «este es el Pykasu».
      */
-    for (const img of root.querySelectorAll<HTMLImageElement>(".ficha__retrato"))
+    for (const img of root.querySelectorAll<HTMLImageElement>(
+      ".ficha__retrato, .ficha__propuesta img",
+    ))
       img.addEventListener("error", () => img.remove(), { once: true });
+    // El destello del cambio de avión es de una sola vez.
+    avionCambiado = false;
   };
 
   pintar();
@@ -1698,6 +1858,36 @@ export function abrirHangar(
         return;
       }
 
+      /*
+       * **Un destino al que este avión no llega: se acepta la propuesta.**
+       * Se cambia al avión que la ficha enseña —el mayor que cabe en los dos
+       * campos— y se va allí. Y el paso del avión destella al volver, que
+       * cambiarle el avión a alguien sin que se note es lo que no se hace.
+       */
+      const lejos = boton.getAttribute("data-destino-lejos");
+      if (lejos) {
+        const con = AIRCRAFT.find((a) => a.id === boton.getAttribute("data-con"));
+        const alli = SCENARIOS.find((e) => e.id === lejos);
+        if (
+          !con ||
+          !alli ||
+          !cabeEn(con, campoDe(sitio)).cabe ||
+          !cabeEn(con, campoDe(alli)).cabe
+        )
+          return;
+        avion = con;
+        avionCambiado = true;
+        destinoElegido = lejos;
+        try {
+          ponerTexto(recuerdoDelDestino(sitio), lejos);
+        } catch {
+          // Sin almacenamiento se juega igual.
+        }
+        pantalla = "inicio";
+        pintar();
+        return;
+      }
+
       const idAvion = boton.getAttribute("data-avion");
       if (idAvion) {
         const pedido = AIRCRAFT.find((a) => a.id === idAvion);
@@ -1783,6 +1973,12 @@ export function abrirHangar(
       // Da la vuelta al llegar al final, que es lo que hace un grupo de radio.
       const siguiente =
         tarjetas[(i + paso + tarjetas.length) % tarjetas.length];
+      // Una ficha de destino apagada se recorre pero no se elige al pasar:
+      // elegirla cambia de avión, y eso se hace tocándola, no de camino.
+      if (siguiente?.hasAttribute("data-destino-lejos")) {
+        siguiente.focus();
+        return;
+      }
       const aDestino = siguiente?.getAttribute("data-destino");
       if (aDestino) {
         destinoElegido = aDestino;

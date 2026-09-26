@@ -1779,6 +1779,42 @@ button.motor__tecla::after {
   margin-bottom: 2px;
 }
 
+/*
+ * La vuelta al campo, en lugar de la flecha, al tocar la tarjeta sin otro
+ * destino. El ocre de la pista de casa, como la flecha cuando apunta a ella,
+ * y la pista en el mismo claro que en las fichas del hangar.
+ */
+.casa__circuito {
+  display: none;
+  width: 42px;
+  height: 26px;
+  margin-bottom: 2px;
+}
+
+.casa--solo-aqui .casa__circuito {
+  display: block;
+}
+
+.casa--solo-aqui .casa__aguja {
+  display: none;
+}
+
+.casa__circuito rect {
+  fill: none;
+  stroke: var(--ocre);
+  stroke-width: 7;
+}
+
+.casa__circuito .circuito__flecha {
+  fill: var(--ocre);
+}
+
+.casa__circuito .circuito__pista {
+  stroke: #d8d5c8;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
 .casa__distancia {
   font-size: 19px;
   font-variant-numeric: tabular-nums;
@@ -7581,6 +7617,90 @@ button.motor__tecla::after {
   z-index: 1;
   /* Y con su propia sombra, para que despegue del dibujo de debajo. */
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+}
+
+/*
+ * **Un destino al que este avión no llega.** Como la ficha de un avión que no
+ * cabe —el sitio se apaga y el dibujo del porqué no—, con una diferencia: esta
+ * se puede tocar, porque trae la propuesta del avión que sí iría, y esa va
+ * encendida. Es lo único de la ficha que invita.
+ */
+.ficha--lejos .ficha__lienzo > :not(.ficha__nocabe),
+.ficha--lejos .ficha__renglon,
+.ficha--lejos .ficha__nombre {
+  opacity: 0.42;
+  filter: saturate(0.35);
+}
+
+.ficha--lejos:disabled {
+  cursor: not-allowed;
+}
+
+/*
+ * El dibujo, por su alto y no por su ancho, y un poco más abajo: en la tarjeta
+ * baja de un teléfono tumbado, al 72 % del ancho tapaba el indicativo del
+ * aeródromo, que es justo lo que dice a qué sitio no se llega.
+ */
+.ficha--lejos .ficha__nocabe {
+  top: 58%;
+  width: auto;
+  height: 64%;
+}
+
+/* Lo que pide y lo que hay: para quien lee, debajo del nombre. */
+.ficha__cuenta {
+  font-size: 13px;
+  color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+/* Y el avión que sí iría: su retrato y su nombre, en el ocre de lo que se toca. */
+.ficha__propuesta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ocre-tinta);
+  text-align: left;
+}
+
+.ficha__propuesta img {
+  flex: none;
+  width: 64px;
+  height: 38px;
+  object-fit: contain;
+}
+
+/*
+ * El paso del avión, cuando acaba de cambiar por aceptar un destino: un aro
+ * ocre que se abre dos veces. Es un «mirá, tu avión es otro», no una alarma.
+ */
+.paso--cambio {
+  animation: paso-cambiado 1.1s ease-out 2;
+  border-color: var(--ocre);
+  color: var(--tinta);
+}
+
+@keyframes paso-cambiado {
+  0% {
+    box-shadow: 0 0 0 0 rgb(221 146 63 / 0.85);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgb(221 146 63 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paso--cambio {
+    animation: none;
+  }
+}
+
+.sin-movimiento .paso--cambio {
+  animation: none;
 }
 
 /*

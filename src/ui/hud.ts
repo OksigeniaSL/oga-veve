@@ -1068,6 +1068,17 @@ export class Hud {
           -->
           <span class="casa__fila">
             <span class="casa__aguja" data-hud="home-arrow" aria-hidden="true">➤</span>
+            <!--
+              **Y la vuelta al campo, cuando no hay otro sitio.** Se enseña en
+              lugar de la flecha al tocar la tarjeta sin otro destino: el
+              circuito alrededor de la pista, el mismo dibujo de la ficha de
+              «Vuelta al campo» del hangar. Ver \`soloVueltaAlCampo\`.
+            -->
+            <svg class="casa__circuito" viewBox="0 0 100 60" aria-hidden="true">
+              <path class="circuito__pista" d="M34 51H66" />
+              <rect x="14" y="9" width="72" height="42" rx="18" />
+              <path class="circuito__flecha" d="M50 3 l8 6 l-8 6 z" />
+            </svg>
             <!-- El indicativo, al lado de la flecha y no en una línea más: con
                  un nombre largo, esa línea echaba la tarjeta fuera de la
                  pantalla en una tablet táctil. Lo midió verificar-carteles. -->
@@ -2927,6 +2938,35 @@ export class Hud {
 
   /** Si este peldaño lo trae. Se recuerda: `render()` rehace el marcado. */
   private hayPilotoAuto = false;
+
+  /** El reloj que devuelve la flecha después de enseñar la vuelta al campo. */
+  private soloAqui: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * **Tocar la tarjeta sin otro sitio adonde ir.**
+   *
+   * No hacía nada, y un botón que no hace nada parece roto: «hace rato podía
+   * ir desde Pettirossi hasta otro punto, ahora nada». Con el JAZ 120 allí no
+   * hay destino —las dos pistas de la ruta le quedan cortas— y está bien que
+   * no lo haya; lo que no estaba bien es no decirlo.
+   *
+   * Así que la tarjeta contesta: destella, y durante unos segundos la flecha
+   * deja sitio al circuito alrededor de la pista —«de aquí se sale y aquí se
+   * vuelve»—, que se entiende sin leer. Y a quien lee, en la línea de avisos,
+   * el porqué y qué hacer. No es un cambio de rumbo: por eso no se queda.
+   */
+  soloVueltaAlCampo(texto: string): void {
+    this.home.classList.add("casa--solo-aqui");
+    this.home.classList.remove("casa--destello");
+    void this.home.offsetWidth;
+    this.home.classList.add("casa--destello");
+    if (this.soloAqui !== null) clearTimeout(this.soloAqui);
+    this.soloAqui = setTimeout(() => {
+      this.home.classList.remove("casa--solo-aqui");
+      this.soloAqui = null;
+    }, 3200);
+    if (this.instruments !== "none") this.flash(texto, 6);
+  }
 
   /** Y si este avión lo lleva, para enseñar el botón. */
   ponerHayPilotoAutomatico(hay: boolean): void {

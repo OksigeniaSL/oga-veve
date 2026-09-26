@@ -8,7 +8,15 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { caja, designador, recientes } from "./hangar";
+import {
+  caja,
+  designador,
+  destinosPosibles,
+  destinosQueNoCaben,
+  recientes,
+} from "./hangar";
+import { AIRCRAFT } from "../flight/aircraft";
+import { cabeEn, campoDe } from "../flight/cabe";
 import {
   PETTIROSSI,
   SCENARIOS,
@@ -99,5 +107,49 @@ describe("las tres fichas de la portada", () => {
       expect(ids).toHaveLength(3);
       expect(new Set(ids).size).toBe(3);
     }
+  });
+});
+
+/*
+ * **Los destinos a los que el avión no llega se ven, no se esconden.**
+ *
+ * Con el JAZ 120 en Pettirossi el hangar no enseñaba ningún destino: los dos
+ * de la ruta le quedan cortos, el paso desaparecía y nadie sabía por qué. Que
+ * no vaya es verdad; lo que se prueba aquí es que se dice y que se propone el
+ * avión que sí iría.
+ */
+describe("los destinos que no caben", () => {
+  const jaz = (id: string) => AIRCRAFT.find((a) => a.id === id)!;
+
+  it("con el JAZ 120 en Pettirossi salen los dos, con su porqué", () => {
+    const grande = jaz("jaz-120");
+    expect(destinosPosibles(PETTIROSSI, grande)).toHaveLength(0);
+    const fuera = destinosQueNoCaben(PETTIROSSI, grande);
+    expect(fuera.map((f) => f.destino.id).sort()).toEqual(["encarnacion", "yvytu-rape"]);
+    for (const f of fuera) {
+      expect(f.veredicto.cabe).toBe(false);
+      expect(f.veredicto.porQueNo).not.toBeNull();
+      expect(f.veredicto.necesita).toBeGreaterThan(f.veredicto.hay);
+    }
+  });
+
+  it("y propone el mayor que cabe en los dos campos", () => {
+    for (const f of destinosQueNoCaben(PETTIROSSI, jaz("jaz-120"))) {
+      const con = f.propuesto!;
+      expect(con, f.destino.id).not.toBeNull();
+      expect(cabeEn(con, campoDe(PETTIROSSI)).cabe).toBe(true);
+      expect(cabeEn(con, campoDe(f.destino)).cabe).toBe(true);
+      // Y ninguno mayor cabría: es el que más se parece al que se pidió.
+      const mayores = AIRCRAFT.slice(AIRCRAFT.indexOf(con) + 1);
+      for (const m of mayores)
+        expect(
+          cabeEn(m, campoDe(PETTIROSSI)).cabe && cabeEn(m, campoDe(f.destino)).cabe,
+          `${m.id} también cabe en ${f.destino.id}`,
+        ).toBe(false);
+    }
+  });
+
+  it("el que cabe en todo no tiene ninguno fuera", () => {
+    expect(destinosQueNoCaben(PETTIROSSI, jaz("jaz-20"))).toHaveLength(0);
   });
 });

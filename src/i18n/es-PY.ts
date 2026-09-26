@@ -191,6 +191,13 @@ export const ES_PY = {
   "tecla.aircraft": "Cambiar de avión",
   "tecla.mission": "Cambiar de misión",
   "tecla.destino": "Cambiar de destino",
+  /*
+   * Al tocar la tarjeta del destino cuando no hay otro sitio adonde ir: con
+   * este avión, o desde este campo. Que no parezca que el botón no anda.
+   */
+  "vuelo.solo-vuelta": "Desde acá, vuelta al campo",
+  "vuelo.solo-vuelta.no-cabe":
+    "Con este avión, vuelta al campo. Para ir a {sitios}, elegí uno más chico en el hangar",
   "tecla.qnhUp": "Subir el reglaje del altímetro",
   "tecla.qnhDown": "Bajar el reglaje del altímetro",
   "tecla.sound": "Sonido",
@@ -808,6 +815,15 @@ export const ES_PY = {
   "hangar.nocabe.corta": "la pista es muy corta para este avión",
   "hangar.nocabe.estrecha": "la pista es muy angosta para sus alas",
   "hangar.nocabe.no-da-la-vuelta": "no puede dar la vuelta en esta pista",
+  /*
+   * **Y la cuenta, que esta sí sale**: en la ficha de un destino al que el
+   * avión no llega, debajo del dibujo, para quien lee. Lo que pide el avión y
+   * lo que tiene la pista, en metros, que es como lo pone un manual de vuelo.
+   */
+  "hangar.nocabe.largo": "pide {pide} m · hay {hay} m",
+  "hangar.nocabe.ancho": "pide {pide} m de ancho · hay {hay} m",
+  // Para el lector de pantalla: tocar la ficha cambia de avión y va allí.
+  "hangar.nocabe.con": "Tocá para ir con el {avion}",
   "hangar.conque": "¿Con qué volás?",
   "hangar.como": "¿Qué piloto sos?",
   "hangar.despegar": "¡Despegar!",
