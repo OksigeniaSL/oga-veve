@@ -1317,6 +1317,23 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
   let alCocheAhora = -1;
   let ladoDelCoche = -1;
   let terrenoEnPista = 0;
+  /*
+   * **Y en la final del otro campo**, cuántas veces salta el aviso de terreno
+   * estando en final. En casa la final ya es excusa para que se calle; en el
+   * campo de llegada no lo era, porque la distancia al umbral se medía hasta
+   * el de casa: «terrain, pull up» a ciento veinte metros en una final bien
+   * volada a Los Rodeos.
+   *
+   * Se cuenta **cuándo salta**, no cuánto dura. Este piloto deja el
+   * variómetro en cero a ratos, y con eso la fase sale de «final» un segundo
+   * —pide ir bajando— y el aviso puede saltar en ese segundo, que es lo que
+   * pasa también en casa. Lo que no puede pasar es que salte con la fase en
+   * «final»: eso es no reconocer la final.
+   */
+  let terrenoEnFinalAlli = 0;
+  let terrenoAntes = null;
+  /** Cuánto se había hablado al cruzar, para mirar solo lo dicho allí. */
+  let habladasAlCruzar = -1;
   let dijoToca = false;
   let pidioFreno = false;
   let tiempoDeRodajeIda = 0;
@@ -1840,6 +1857,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       mudo = 0;
     }
     if (o.avisoDeTerreno() && s.onRunway) terrenoEnPista += paso;
+    {
+      const terreno = o.avisoDeTerreno();
+      if (terreno && !terrenoAntes && enElDestino && fase === "final")
+        terrenoEnFinalAlli++;
+      terrenoAntes = terreno;
+    }
     if (tarjeta.dibujo) vistas.add(tarjeta.dibujo);
     // Y **cuándo** lo decidió, que es lo que separa «se lo tapan» de «lo
     // decide en el despegue y no se rearma».
@@ -1909,17 +1932,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
      */
     const guiandoAhora = coche?.visible && !o.cocheApartado?.();
     /*
-     * **Y la lejanía, solo fuera de la pista.** El juego tiene al coche
-     * esperando en la boca de la salida **mientras el avión pise pista**, no
-     * mientras la fase diga «aterrizado» —ver `enLaPistaAun` en `Game`—, y
-     * esto miraba la fase. En casa no se notaba porque el piloto del banco
-     * se para cerca de su salida; aterrizando en Los Rodeos, con tres mil
-     * cuatrocientos metros de pista, la avioneta rodaba un kilómetro por el
-     * asfalto hasta la suya con el coche esperándola allí, y eso se contaba
-     * como «se escapa». Lo cerca, en cambio, cuenta también en pista: que no
-     * se le lleve por delante vale en todas partes.
+     * **Y en la pista, la lejanía cuenta si el avión se aleja del coche.**
+     *
+     * El juego tiene al coche esperando en la boca de la salida **mientras el
+     * avión pise pista** —ver `enLaPistaAun` en `Game`—, así que rodar por el
+     * asfalto hacia él con el coche lejos es lo correcto: se va a su
+     * encuentro. Aquí ponía que en pista no contaba nunca, y eso tapaba justo
+     * lo contrario: aterrizando por la 12 de Los Rodeos la raya salía por la
+     * E2, que da media vuelta, y el avión rodaba pista adelante **alejándose**
+     * del coche, que lo esperaba detrás, hasta doscientos doce metros. Lo que
+     * se mide en pista es eso: si se va hacia el coche o se le deja atrás.
+     * Lo cerca cuenta en todas partes: que no se le lleve por delante.
      */
-    const cuentaLejos = !s.onRunway;
+    const haciaElCoche =
+      coche &&
+      Math.sin(s.heading) * (coche.position.x - s.position.x) -
+        Math.cos(s.heading) * (coche.position.z - s.position.z) >
+        0;
+    const cuentaLejos = !s.onRunway || !haciaElCoche;
     if (
       guiandoAhora &&
       s.onGround &&
@@ -2179,6 +2209,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       o.colocar(f.x, alli + (4000 + 250) * SENDA, f.z, aproximacion + 3, f.h);
       await new Promise((r) => setTimeout(r, 500));
       enElDestino = o.campoDeAhora();
+      habladasAlCruzar = (o.habladas?.() ?? []).length;
       pista = pistaAhora();
       rumboPista = (pista.heading * Math.PI) / 180;
       umbral = finalAhora(0);
@@ -2617,8 +2648,37 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     }
   }
 
+  /*
+   * **Y lo que el juego enseña en el campo de llegada, que es de allí.** La
+   * torre, la aguja, el cuaderno y el tráfico miraban el campo de casa, así
+   * que se toma aquí, con el avión ya apagado en su puesto de allí.
+   */
+  const alli = (() => {
+    if (!destino) return null;
+    const cabecera = o.puntoDeFinalDe?.(0, destino)?.cabecera ?? null;
+    const dicho = (o.habladas?.() ?? [])
+      .slice(Math.max(0, habladasAlCruzar))
+      .filter((h) => /torre\..*clearedLand/.test(h))
+      .map((h) => h.replace(/^[\d.]+s /, ""));
+    const aerodromos = [...(o.aerodromosVisitados?.() ?? [])];
+    const pista = o.pistaDeAhora?.();
+    const lejosDeAlli = (o.trafico?.() ?? []).map((a) =>
+      pista ? Math.round(Math.hypot(a.x - pista.x, a.z - pista.z)) : -1,
+    );
+    return {
+      cabecera,
+      clearedLand: dicho,
+      aerodromos,
+      oaci: o.aerodromoDeAhora?.() ?? null,
+      aguja: o.aguja?.() ?? null,
+      traficoLejos: lejosDeAlli.length ? Math.max(...lejosDeAlli) : 0,
+    };
+  })();
+
   return {
     etapa,
+    alli,
+    terrenoEnFinalAlli,
     // Dónde se cruzó y dónde se acabó, si el vuelo iba a otro campo.
     destino: destino
       ? { pedido: destino, llego: enElDestino, acabo: o.campoDeAhora?.() ?? null }
@@ -3525,6 +3585,63 @@ if (DESTINO) {
     d.llego === DESTINO && d.acabo === DESTINO,
     `pedido ${DESTINO} · se cruzó a ${d.llego ?? "ninguno"} · se acabó en ${d.acabo ?? "?"}`,
     "«aterricé en Tenerife Norte y no había nadie esperando, ni coche ni señor con señales ni línea verde»",
+  );
+
+  /*
+   * **Y allí todo es de allí.** Lo de arriba mide que se llegó y se aparcó;
+   * esto, que lo que el juego enseña al llegar —el aviso de terreno, la
+   * torre, la aguja, el cuaderno y el tráfico— habla del campo en el que se
+   * está y no del de casa. Cada una de estas cosas miraba el de casa.
+   */
+  const a = vuelo.alli ?? {};
+  comprobar(
+    "y en la final de allí no salta el aviso de terreno",
+    vuelo.terrenoEnFinalAlli === 0,
+    vuelo.terrenoEnFinalAlli
+      ? `saltó ${vuelo.terrenoEnFinalAlli} veces con la fase en final`
+      : "no saltó ninguna vez con la fase en final",
+    "«terrain, pull up» a ciento veinte metros en una final bien volada a Los Rodeos",
+  );
+  const cifras = String(a.cabecera ?? "")
+    .replace(/[^0-9]/g, "")
+    .split("")
+    .map((c) => `cifra.${c}`)
+    .join("-");
+  const conOtraPista = (a.clearedLand ?? []).filter(
+    (h) => !cifras || !h.endsWith(cifras),
+  );
+  comprobar(
+    "y la torre de allí nombra su pista",
+    !!cifras && conOtraPista.length === 0,
+    !cifras
+      ? "no se supo la cabecera de allí"
+      : conOtraPista.length
+        ? `pista ${a.cabecera}, y dijo: ${conOtraPista.slice(0, 3).join(" · ")}`
+        : `pista ${a.cabecera} · ${(a.clearedLand ?? []).length} autorizaciones, todas con ella`,
+    "«runway zero three left, cleared to land» llegando por la 12 de Los Rodeos",
+  );
+  const metros = a.aguja?.metros ?? NaN;
+  comprobar(
+    "y en tierra allí la aguja señala su pista",
+    Number.isFinite(metros) && metros < 10000,
+    Number.isFinite(metros)
+      ? `señala a ${(metros / 1000).toFixed(1)} km`
+      : "la aguja no dijo nada",
+    "rodando en Los Rodeos, la aguja apuntaba a la pista de Gando, a ciento trece kilómetros",
+  );
+  comprobar(
+    "y el aeródromo de allí se apunta como visitado",
+    !!a.oaci && (a.aerodromos ?? []).includes(a.oaci),
+    `cuaderno: ${JSON.stringify(a.aerodromos ?? [])} · allí: ${a.oaci}`,
+    "aterrizar en Los Rodeos apuntaba Gran Canaria en «aeródromos visitados»",
+  );
+  comprobar(
+    "y el tráfico que se oye vuela allí",
+    (a.traficoLejos ?? 0) < 20000,
+    a.traficoLejos
+      ? `el más lejos, a ${a.traficoLejos} m de la pista de allí`
+      : "sin nadie en el circuito",
+    "en Los Rodeos se oía el circuito de Gando, con los aviones a ciento trece kilómetros",
   );
 }
 

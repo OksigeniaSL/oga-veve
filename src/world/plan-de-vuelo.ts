@@ -280,6 +280,69 @@ const TRAS_TOMAR_TIERRA = 1000;
 const HUECO_PARA_GIRAR = 25;
 
 /**
+ * Lo más que puede volverse una salida contra el sentido del aterrizaje, en
+ * grados.
+ *
+ * Cien: una salida en ángulo recto vale —hay calles que salen a noventa y dos
+ * o noventa y tres grados según cómo esté dibujado el eje—, y una que obliga a
+ * dar media vuelta no. En Los Rodeos, aterrizando por la 12, la E2 sale a
+ * ciento setenta grados: se cogía porque ahorraba metros de calle, y el avión
+ * rodaba doscientos cuarenta metros pista adelante, daba media vuelta sobre el
+ * asfalto y deshacía doscientos hacia atrás, alejándose del coche que lo
+ * esperaba. Una salida rápida se toma hacia donde se va.
+ */
+const GIRO_MAXIMO_DE_UNA_SALIDA = 100;
+
+/** Cuánto de la calle se mira para saber hacia dónde sale, m. */
+const PRIMER_TRAMO_DE_CALLE = 40;
+
+/**
+ * Hacia dónde sale una calle de un nudo: el vector unitario desde el nudo
+ * hasta el punto de la calle a `PRIMER_TRAMO_DE_CALLE` metros, en coordenadas
+ * del fichero (la Y al norte).
+ */
+export function haciaDondeSale(
+  tramo: { readonly puntos: readonly Punto[] },
+  nudo: Punto,
+): readonly [number, number] | null {
+  const pts = tramo.puntos;
+  if (pts.length < 2) return null;
+  const alPrincipio =
+    Math.hypot(pts[0]![0] - nudo[0], pts[0]![1] - nudo[1]) <=
+    Math.hypot(
+      pts[pts.length - 1]![0] - nudo[0],
+      pts[pts.length - 1]![1] - nudo[1],
+    );
+  const orden = alPrincipio ? pts : [...pts].reverse();
+  let lejos = orden[orden.length - 1]!;
+  for (const q of orden) {
+    if (Math.hypot(q[0] - nudo[0], q[1] - nudo[1]) >= PRIMER_TRAMO_DE_CALLE) {
+      lejos = q;
+      break;
+    }
+  }
+  const dx = lejos[0] - nudo[0];
+  const dy = lejos[1] - nudo[1];
+  const l = Math.hypot(dx, dy);
+  return l < 1 ? null : [dx / l, dy / l];
+}
+
+/**
+ * Si una calle sale de la pista hacia donde se va rodando, o casi: no más de
+ * `GIRO_MAXIMO_DE_UNA_SALIDA` grados contra el rumbo de la carrera. El rumbo
+ * es verdadero, en grados; la dirección, en coordenadas del fichero.
+ */
+export function saleHaciaDelante(
+  direccion: readonly [number, number],
+  rumbo: number,
+): boolean {
+  const h = (rumbo * Math.PI) / 180;
+  // Hacia delante en el fichero es (sen h, cos h): la Y apunta al norte.
+  const coseno = direccion[0] * Math.sin(h) + direccion[1] * Math.cos(h);
+  return coseno >= Math.cos((GIRO_MAXIMO_DE_UNA_SALIDA * Math.PI) / 180);
+}
+
+/**
  * Lo estrecha que puede ser una pista y aun así admitir un back-taxi, m.
  *
  * Treinta y seis. La maniobra se rueda por una raya apartada del eje y se
@@ -966,7 +1029,13 @@ export class PlanDeVuelo {
     );
   }
 
-  /** Empieza el vuelo desde un puesto concreto, no del que toca por cercanía. */
+  /**
+   * Empieza el vuelo desde un puesto concreto, no del que toca por cercanía.
+   *
+   * Es también como empieza el tramo de vuelta: desde donde se apagó el
+   * motor en el campo de llegada, sin mover el avión. Ver `empezarOtroTramo`
+   * en `game.ts`.
+   */
   reiniciarDesde(puesto: Punto): boolean {
     const espera = this.esperaDeSalida();
     if (!espera) return false;
@@ -1661,6 +1730,12 @@ export class PlanDeVuelo {
      * quien dice de dónde se sale, que es de quien tenía que depender.
      */
     this.desdeLaPista = desdeLaPista;
+    /*
+     * Y el puesto elegido a mano se olvida: un vuelo nuevo sale del que toca.
+     * Si se quedara, `arranque` pondría el avión en el sitio de la vez
+     * anterior y la raya saldría del puesto de siempre. Ver `reiniciarDesde`.
+     */
+    this.puestoElegido = null;
     const puesto = desdeLaPista ? null : this.puestoDeSalida();
     const espera = this.esperaDeSalida();
     if (!puesto || !espera) {
@@ -2638,6 +2713,15 @@ export class PlanDeVuelo {
    * lo que hacía antes.
    */
   private salidaPorDelante(): Punto | null {
+    /*
+     * Primero, solo entre las que salen hacia delante. Si no queda ninguna
+     * —un campo pequeño con una única salida hacia atrás—, entre todas: es
+     * mejor dar la vuelta que quedarse sin raya.
+     */
+    return this.salidaPorDelanteQue(true) ?? this.salidaPorDelanteQue(false);
+  }
+
+  private salidaPorDelanteQue(soloHaciaDelante: boolean): Punto | null {
     const x = this.ultimaPos[0];
     const z = -this.ultimaPos[1];
     const aqui = enEjesDePista(
@@ -2678,10 +2762,22 @@ export class PlanDeVuelo {
        * por delante» podía ser un trozo de la propia pista.
        */
       const i = this.grafo.nudos.indexOf(nudo);
-      const tieneCalle = (this.grafo.desde[i] ?? []).some(
-        (t) => !this.grafo.tramos[t]!.pista,
-      );
-      if (!tieneCalle) continue;
+      const calles = (this.grafo.desde[i] ?? [])
+        .map((t) => this.grafo.tramos[t]!)
+        .filter((t) => !t.pista);
+      if (!calles.length) continue;
+      /*
+       * **Y que salga hacia donde se va**, no hacia atrás. Ver
+       * `GIRO_MAXIMO_DE_UNA_SALIDA`.
+       */
+      if (
+        soloHaciaDelante &&
+        !calles.some((t) => {
+          const d = haciaDondeSale(t, nudo);
+          return d !== null && saleHaciaDelante(d, this.pista.heading);
+        })
+      )
+        continue;
       const adelante = along - aqui.along;
       /*
        * **Y por delante de verdad, con sitio para girar.**

@@ -438,7 +438,17 @@ export class Senalero {
      */
     const lateral = vx * this.hacia.z - vz * this.hacia.x;
     this.restante = restante;
-    if (volviendo && restante < ALCANCE) this.llegoAsuAlcance = true;
+    /*
+     * **Y a su alcance es cerca de verdad, no solo a su altura.** `restante`
+     * se mide a lo largo de la raya de entrada, así que un avión que pasaba
+     * por la pista a doscientos y pico metros del puesto —en Los Rodeos, de
+     * camino a la salida que queda por delante, para volver luego por la
+     * paralela— contaba como llegado y en cuanto lo dejaba atrás salía «te
+     * pasaste, frená y volvé». No había pasado por ningún sitio: iba por
+     * donde tenía que ir.
+     */
+    if (volviendo && restante < ALCANCE && Math.abs(lateral) < ALCANCE)
+      this.llegoAsuAlcance = true;
 
     this.gesto = gestoDeSenalero(
       {

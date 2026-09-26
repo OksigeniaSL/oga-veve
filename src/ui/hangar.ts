@@ -29,6 +29,7 @@
  */
 
 import { TIERS, type Tier } from "../flight/tiers";
+import type { Aerodrome } from "../world/aerodrome";
 import { AIRCRAFT, type AircraftConfig } from "../flight/aircraft";
 import {
   cabeEn,
@@ -258,11 +259,17 @@ export function caja(escenario: Scenario): Caja {
  *
  * `traza`, si viene, son puntos en coordenadas del fichero (x al este, y al
  * norte) y se dibuja como una polilínea encima de todo.
+ *
+ * `otros` son los aeródromos de los otros campos del vuelo, **ya corridos** a
+ * esas mismas coordenadas. Sin ellos, el plano de un vuelo de Gran Canaria a
+ * Los Rodeos enseñaba Gando como un punto y una raya que se acababa en
+ * blanco, donde tenía que estar el aeropuerto al que se llegó.
  */
 export function plano(
   escenario: Scenario,
   escala: number,
   traza?: readonly (readonly [number, number])[],
+  otros: readonly Aerodrome[] = [],
 ): string {
   const encaje = caja(escenario);
   /*
@@ -331,7 +338,13 @@ export function plano(
       </svg>`;
   }
 
-  const rodaduras = aero.taxiways
+  // Los tres dibujos de un aeródromo, en capas: primero todas las
+  // plataformas, luego las calles y encima las pistas, sean del campo que
+  // sean. Con dos aeródromos pintados uno detrás de otro, las plataformas del
+  // segundo taparían las pistas del primero allí donde se toquen.
+  const todos = [aero, ...otros];
+  const rodaduras = todos
+    .flatMap((a) => a.taxiways)
     .filter((c) => c.path.length > 1)
     .map(
       (c) =>
@@ -339,7 +352,8 @@ export function plano(
     )
     .join("");
 
-  const plataformas = aero.aprons
+  const plataformas = todos
+    .flatMap((a) => a.aprons)
     .filter((p) => p.polygon.length > 2)
     .map(
       (p) =>
@@ -347,7 +361,8 @@ export function plano(
     )
     .join("");
 
-  const pistas = aero.runways
+  const pistas = todos
+    .flatMap((a) => a.runways)
     .filter((p) => p.centerline.length > 1)
     .map((p) => {
       const eje = p.centerline;

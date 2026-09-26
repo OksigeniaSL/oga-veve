@@ -109,6 +109,15 @@ export interface DatosDelTablero {
     readonly rumbo: number;
     readonly distancia: number;
   } | null;
+  /**
+   * La declinación del campo en el que se está, en grados: lo que hay que
+   * sumar al rumbo verdadero para leerlo en la brújula.
+   *
+   * La caja del rumbo enseñaba el verdadero —111 en la 12 de Los Rodeos—, y
+   * con él se pierde la lección de alinearse y reconocer en el rumbo el número
+   * pintado en el suelo. El HUD plano ya lo sumaba; este tablero no.
+   */
+  readonly declinacion?: number;
   /** De dónde sopla y cuánto. */
   readonly viento: { readonly desde: number; readonly nudos: number } | null;
   /**
@@ -584,7 +593,10 @@ export class Tablero {
   // ── Lo que se mueve ─────────────────────────────────────────────────
 
   private cintas(raiz: SVGElement, d: DatosDelTablero, dt: number): void {
-    const rumbo = (((d.estado.heading * GRADOS) % 360) + 360) % 360;
+    // En magnéticos, que es lo que marca una brújula y lo que va pintado en
+    // la cabecera. Ver `declinacion`.
+    const decl = d.declinacion ?? 0;
+    const rumbo = (((d.estado.heading * GRADOS + decl) % 360) + 360) % 360;
 
     this.tira(raiz, "ias", d.nudos);
     this.tira(raiz, "alt", d.pies);
@@ -683,7 +695,10 @@ export class Tablero {
     if (ruta) {
       if (!d.objetivo) ruta.setAttribute("d", "M0 0");
       else {
-        const rel = ((d.objetivo.rumbo * GRADOS - rumbo) * Math.PI) / 180;
+        // El objetivo viene en verdaderos: se pasa a magnéticos para
+        // restarlo del rumbo, que ya lo está.
+        const rel =
+          ((d.objetivo.rumbo * GRADOS + decl - rumbo) * Math.PI) / 180;
         ruta.setAttribute(
           "d",
           `M0 0 L${Math.sin(rel) * 160} ${-Math.cos(rel) * 160}`,
@@ -857,7 +872,8 @@ export class Tablero {
     ponV("vref", d.vref);
 
     const quiero = d.objetivo
-      ? (((d.objetivo.rumbo * GRADOS) % 360) + 360) % 360
+      ? (((d.objetivo.rumbo * GRADOS + (d.declinacion ?? 0)) % 360) + 360) %
+        360
       : rumbo;
     const corto = ((quiero - this.bugDeRumbo + 540) % 360) - 180;
     this.bugDeRumbo = deslizaBug(this.bugDeRumbo, this.bugDeRumbo + corto, dt);
@@ -1198,7 +1214,12 @@ export class Tablero {
     this.desdeLaLectura += dt;
     if (this.desdeLaLectura < ENTRE_LECTURAS) return;
     this.desdeLaLectura = 0;
-    const rumbo = pad3(Math.round((d.estado.heading * GRADOS) % 360));
+    const rumbo = pad3(
+      Math.round(
+        (((d.estado.heading * GRADOS + (d.declinacion ?? 0)) % 360) + 360) %
+          360,
+      ) % 360,
+    );
     this.lectura.textContent =
       `${Math.round(d.nudos)} nudos, ` +
       `${Math.round(d.pies / 10) * 10} pies, ` +

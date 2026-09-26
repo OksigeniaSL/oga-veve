@@ -45,6 +45,16 @@ export interface AvionesDeRuta {
   paso(ahora: number, yo: Punto): void;
   /** Dónde están todos, para la carta. Ver `ui/carta.ts`. */
   quienes(): readonly EnRuta[];
+  /**
+   * Cambia el corredor: de qué campo a qué campo va la ruta de hoy.
+   *
+   * Se fijaba una vez al cargar, entre casa y el **primer** destino de la
+   * lista, así que volando de Gran Canaria a Lanzarote todo el tráfico iba
+   * por el corredor de Los Rodeos, a decenas de kilómetros, y no se cruzaba
+   * a nadie: se perdía la lección de la regla semicircular justo en la ruta
+   * elegida. Ahora lo pone quien sabe de dónde se sale y a dónde se va.
+   */
+  ponerCorredor(desde: Punto, hasta: Punto): void;
   dispose(): void;
 }
 
@@ -96,10 +106,19 @@ export function crearAvionesDeRuta(
     return new Mesh(geo, new MeshLambertMaterial({ vertexColors: true }));
   };
 
+  let de = desde;
+  let hacia = hasta;
   return {
     grupo,
     paso(ahora, yo) {
-      ultimos = traficoEnRuta(desde, hasta, ahora, semilla);
+      ultimos = traficoEnRuta(de, hacia, ahora, semilla);
+      /*
+       * Los que ya no están en la lista —el corredor cambió— se apagan: sus
+       * mallas se quedan para quien vuelva a salir, pero no se dejan flotando
+       * donde estaban.
+       */
+      const siguen = new Set(ultimos.map((u) => u.id));
+      for (const [id, m] of cuerpos) if (!siguen.has(id)) m.visible = false;
       for (const a of ultimos) {
         let malla = cuerpos.get(a.id);
         if (!malla) {
@@ -117,6 +136,10 @@ export function crearAvionesDeRuta(
       }
     },
     quienes: () => ultimos,
+    ponerCorredor(otroDesde, otroHasta) {
+      de = otroDesde;
+      hacia = otroHasta;
+    },
     dispose() {
       for (const g of geometrias.values()) g.dispose();
       geometrias.clear();

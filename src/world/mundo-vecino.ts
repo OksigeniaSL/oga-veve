@@ -35,6 +35,7 @@ import {
   Vector3,
   type Mesh,
   type MeshLambertMaterial,
+  type Object3D,
   type Texture,
 } from "three";
 import { Terrain } from "./terrain";
@@ -176,11 +177,55 @@ export class MundoVecino {
     this.deLejosVisible.add(this.aerodromoLejano.grupo);
     this.deLejosVisible.visible = false;
     this.grupo.add(this.deLejosVisible);
+    this.grupo.add(this.deCercaVisible);
   }
 
   private readonly aerodromoLejano: AerodromoLejano;
   /** Lo que solo se enseña con la isla lejos. */
   private readonly deLejosVisible = new Group();
+  /**
+   * Y lo que solo se enseña con la isla cerca y no es del terreno: las luces
+   * de aproximación, el PAPI y las azules de las calles, que monta el juego.
+   * Van aquí para apagarse con el aeródromo, por lo mismo que él: se dibujan a
+   * tamaño fijo en pantalla, y a cien kilómetros serían una mancha de colores
+   * pegada a la costa.
+   */
+  private readonly deCercaVisible = new Group();
+
+  /**
+   * Cuelga algo del aeródromo del vecino, **en sus coordenadas**: las de su
+   * propio mapa, sin correr. Se apaga y se enciende con él.
+   */
+  colgarDeCerca(objeto: Object3D): void {
+    this.deCercaVisible.add(objeto);
+  }
+
+  /** Y lo descuelga, para rehacerlo. */
+  descolgar(objeto: Object3D): void {
+    this.deCercaVisible.remove(objeto);
+  }
+
+  /** Si la isla está lo bastante cerca como para dibujarle el aeródromo. */
+  get cerca(): boolean {
+    return !this.deLejos;
+  }
+
+  /**
+   * **El tiempo de hoy, también aquí.** Rehace el aeródromo con su viento y su
+   * cabecera en uso: la manga, y de qué color es cada extremo de la pista.
+   *
+   * Se construía una vez y en calma, y ningún cambio de tiempo llegaba al
+   * vecino: en Los Rodeos la manga colgaba a plomo mientras el avión recibía
+   * veinte nudos, y con el viento girado la pista seguía pintada para la
+   * cabecera de antes. El viento del mundo es uno; la manga de cada campo
+   * tiene que decir lo mismo.
+   */
+  ponerTiempo(vecino: Scenario): void {
+    this.terreno.rehacerAerodromo(sinHorizonte(vecino));
+    // El rehecho sale encendido: si la isla está lejos, se apaga como el resto.
+    for (const o of this.terreno.group.children)
+      if (o.name.startsWith("aerodromo:")) o.visible = !this.deLejos;
+  }
   private lucesDeCiudad: LucesDeCiudad | null = null;
   private seno = -1;
 
@@ -344,6 +389,7 @@ export class MundoVecino {
     for (const o of this.terreno.group.children)
       if (o.name.startsWith("aerodromo:")) o.visible = !lejos;
     this.deLejosVisible.visible = lejos;
+    this.deCercaVisible.visible = !lejos;
   }
 
   private deLejos = false;

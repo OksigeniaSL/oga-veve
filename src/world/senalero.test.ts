@@ -170,3 +170,26 @@ describe("y por dónde llega el avión", () => {
     expect(donde(porElOeste).x).toBeGreaterThan(10);
   });
 });
+
+describe("pasarse del puesto", () => {
+  it("pasar por delante de verdad se cuenta", () => {
+    // El puesto en el origen, la llegada por el este: quien pasa del origen
+    // hacia el oeste, por la raya, se ha pasado.
+    const s = puesto();
+    rato(s, { x: 50, z: 0, velocidad: 5 }, 0.5);
+    rato(s, { x: -40, z: 0, velocidad: 5 }, 0.5);
+    expect(s.pasado).toBeGreaterThan(10);
+  });
+
+  it("y pasar a lo lejos, por la pista, no", () => {
+    /*
+     * En Los Rodeos, aterrizando por la 12, la salida buena queda por delante
+     * del puesto: el avión pasa por la pista a doscientos y pico metros de él
+     * y vuelve después por la paralela. Eso no es pasarse de nada.
+     */
+    const s = puesto();
+    rato(s, { x: 150, z: 235, velocidad: 12 }, 0.5);
+    rato(s, { x: -300, z: 235, velocidad: 12 }, 0.5);
+    expect(s.pasado).toBe(0);
+  });
+});

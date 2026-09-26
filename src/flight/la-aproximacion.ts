@@ -8,8 +8,8 @@
  * pantalla, al sonido, al cuaderno y al instructor.
  *
  * Lo segundo se quitó primero —ver `src/hechos.ts`— y por eso esta mudanza es
- * barata: lo que hay aquí dentro solo mira el vuelo, el terreno y el
- * escenario, y lo único que hace cuando decide algo es **contarlo**.
+ * barata: lo que hay aquí dentro solo mira el vuelo y el campo al que se
+ * viene, y lo único que hace cuando decide algo es **contarlo**.
  *
  * ## Lo que no está aquí
  *
@@ -32,8 +32,6 @@ import type { AircraftConfig } from "./aircraft";
 import type { FlightState } from "./model";
 import { Minimos, porQueNoSeSigue, seLevantaLaOrden } from "./minimos";
 import type { Reparto } from "../hechos";
-import type { Scenario } from "../world/scenarios";
-import type { Terrain } from "../world/terrain";
 import type { Circuito, TramoDeCircuito } from "../world/circuito";
 import { ALTURA_DE_CIRCUITO } from "../world/circuito";
 import { blancasDePapi } from "../world/aproximacion";
@@ -83,26 +81,52 @@ const ALTO_PARA_EL_CIRCUITO = 60;
  */
 const TECHO_DEL_CIRCUITO = ALTURA_DE_CIRCUITO * 2;
 
+/**
+ * El campo al que se viene, tal y como lo necesita la aproximación.
+ *
+ * **Se pregunta en cada paso y no se guarda**, que era el fallo. Esta pieza
+ * se construía con el escenario y el terreno de casa y los copiaba: el embudo
+ * de final, la altura sobre la pista, el eje, el umbral y el PAPI eran los de
+ * Gando aunque se estuviera llegando a Los Rodeos. A ciento trece kilómetros
+ * de la pista de casa ninguna de las cuentas llegaba a hacerse, así que en el
+ * campo de llegada no había mínimos, ni orden de irse al aire, ni PAPI, ni
+ * circuito: **el momento de decidir desaparecía justo en el campo que no se
+ * conoce**. Ver `world/campo-del-vuelo.ts`.
+ */
+export interface CampoDeLaAproximacion {
+  /** Su pista en coordenadas de este mundo, con la cabecera en uso. */
+  readonly pista: {
+    readonly x: number;
+    readonly z: number;
+    readonly heading: number;
+    readonly length: number;
+    readonly width: number;
+  };
+  /** La cota de su asfalto debajo del avión, m. */
+  readonly cota: number;
+  /** Cuánto queda hasta su umbral en uso, m. */
+  readonly alUmbral: number;
+  /**
+   * Dónde arranca la senda de su PAPI, en coordenadas del mundo, o `null` si
+   * ese campo no tiene PAPI.
+   *
+   * Es **desde donde se cuenta la senda**: la tarjeta del PAPI medía el
+   * ángulo desde el umbral y decía «dos y dos, vas bien» justo cuando las
+   * cuatro luces del mundo estaban rojas. Ver `SENDA_DESDE` en
+   * `world/runway-guide.ts`. Y `null` en un campo de hierba, que no tiene: ahí
+   * enseñar un PAPI sería enseñar un instrumento que no está.
+   */
+  readonly senda: readonly [number, number] | null;
+}
+
 /** Lo que no cambia en todo un vuelo. */
 export interface MundoDeLaAproximacion {
-  readonly aircraft: AircraftConfig;
-  readonly scenario: Scenario;
-  readonly terrain: Terrain;
+  /** El avión que se vuela, que se puede cambiar en pleno vuelo. */
+  readonly avion: () => AircraftConfig;
   readonly hechos: Reparto;
   readonly vaca: Vaca;
-  /** Un punto del eje de la pista, a tantos metros de su centro. */
-  readonly enLaPista: (metros: number) => readonly [number, number];
-  /** Cuánto queda hasta el umbral en uso, m. */
-  readonly distanceToRunway: () => number;
-  /**
-   * A cuánto del umbral están las luces del PAPI, pista adentro.
-   *
-   * Es **desde donde se cuenta la senda**, y por eso hace falta aquí: la
-   * tarjeta del PAPI medía el ángulo desde el umbral y decía «dos y dos, vas
-   * bien» justo cuando las cuatro luces del mundo estaban rojas. Ver
-   * `SENDA_DESDE` en `world/runway-guide.ts`.
-   */
-  readonly sendaDesde: () => number;
+  /** El campo que se tiene debajo. Ver `CampoDeLaAproximacion`. */
+  readonly campoDeAhora: () => CampoDeLaAproximacion;
 }
 
 /** Y lo que cambia en cada fotograma. */
@@ -114,7 +138,10 @@ export interface AhoraMismo {
   readonly circuito: Circuito | null;
   /** La fase del plan de vuelo, tal y como se anuncia. */
   readonly faseDeAhora: string;
-  /** El techo de nubes de hoy, m, o `null` si no hay. */
+  /**
+   * El techo de nubes **sobre el campo de ahora**, m, o `null` si no hay o si
+   * la capa queda por debajo de su pista.
+   */
   readonly techoDeNubes: number | null;
   /** Si hay un aviso de terreno puesto, que manda sobre todo lo demás. */
   readonly terrenoDicho: "bajo" | "sube" | null;
@@ -141,9 +168,6 @@ export class LaAproximacion {
    * nuevo que hacer. Ver `explicarElPapi`.
    */
   papiEnPantalla: number | null = null;
-
-  /** Si la pista de hoy tiene PAPI. Un campo de hierba no tiene. */
-  hayPapi = false;
 
   /** Si la torre —o la vaca— ha mandado irse al aire y todavía manda. */
   mandanFrustrar = false;
@@ -196,6 +220,12 @@ export class LaAproximacion {
   /** Lo que pasa ahora mismo. Se pone al empezar cada paso. */
   private ahora!: AhoraMismo;
 
+  /**
+   * Y el campo al que se viene, preguntado una vez por paso: las cuatro
+   * decisiones de un paso tienen que mirar la misma pista.
+   */
+  private campo!: CampoDeLaAproximacion;
+
   constructor(private readonly mundo: MundoDeLaAproximacion) {}
 
   /**
@@ -208,6 +238,7 @@ export class LaAproximacion {
    */
   paso(ahora: AhoraMismo): void {
     this.ahora = ahora;
+    this.campo = this.mundo.campoDeAhora();
     this.explicarElPapi(ahora.acercandose);
     this.mirarLosMinimos(ahora.acercandose);
     this.mirarSiMandanFrustrar(ahora.acercandose);
@@ -224,22 +255,21 @@ export class LaAproximacion {
    */
   private yaEstabilizada(): boolean {
     const s = this.ahora.estado;
+    const pista = this.campo.pista;
     const { across } = enEjesDePista(
       s.position.x,
       s.position.z,
-      this.mundo.scenario.runway.x,
-      this.mundo.scenario.runway.z,
-      this.mundo.scenario.runway.heading,
+      pista.x,
+      pista.z,
+      pista.heading,
     );
-    let torcido =
-      ((s.heading * 180) / Math.PI - this.mundo.scenario.runway.heading + 540) %
-      360;
+    let torcido = ((s.heading * 180) / Math.PI - pista.heading + 540) % 360;
     torcido -= 180;
     return (
       porQueNoSeSigue(
         {
           velocidad: s.airspeed,
-          referencia: this.mundo.aircraft.approachSpeed,
+          referencia: this.mundo.avion().approachSpeed,
           vertical: s.verticalSpeed,
           delEje: across,
           torcido,
@@ -260,6 +290,15 @@ export class LaAproximacion {
     this.papiEnPantalla = null;
     this.tramoDelCircuito = null;
     this.minimos.reiniciar();
+  }
+
+  /**
+   * Se ha cambiado de campo: lo dicho del PAPI y del circuito era de la otra
+   * pista. La orden y los mínimos se quedan como estén, que son del vuelo.
+   */
+  otroCampo(): void {
+    this.papiEnPantalla = null;
+    this.tramoDelCircuito = null;
   }
 
   /**
@@ -349,20 +388,19 @@ export class LaAproximacion {
         this.levantarLaOrden();
         return;
       }
-      const alto = s.position.y - this.mundo.terrain.runwayElevation;
+      const alto = s.position.y - this.campo.cota;
       const subio = alto > this.altoAlMandar + SUBIR_PARA_IRSE;
-      const alejandose =
-        !acercandose && this.mundo.distanceToRunway() > MANDAN_DESDE;
+      const alejandose = !acercandose && this.campo.alUmbral > MANDAN_DESDE;
       if (subio || alejandose) this.levantarLaOrden();
       return;
     }
     if (this.yaLoMandaron || this.ahora.vueloTerminado || !acercandose) return;
     const s = this.ahora.estado;
     if (s.onGround) return;
-    const alto = s.position.y - this.mundo.terrain.runwayElevation;
+    const alto = s.position.y - this.campo.cota;
     if (alto < ALTO_MINIMO_PARA_MANDAR || alto > ALTO_MAXIMO_PARA_MANDAR)
       return;
-    if (this.mundo.distanceToRunway() > MANDAN_DESDE) return;
+    if (this.campo.alUmbral > MANDAN_DESDE) return;
     /*
      * **Y viniendo de verdad en final, no solo cerca.**
      *
@@ -376,13 +414,7 @@ export class LaAproximacion {
      * escrita en `mirarLosMinimos`: «cerca del umbral y acercándose» no
      * distingue una aproximación de un tramo del circuito. Faltaba aquí.
      */
-    if (
-      enElEmbudoDeFinal(
-        this.mundo.scenario.runway,
-        s.position.x,
-        s.position.z,
-      ) === null
-    )
+    if (enElEmbudoDeFinal(this.campo.pista, s.position.x, s.position.z) === null)
       return;
     /*
      * **Una de cada cuatro, y sorteada UNA VEZ POR APROXIMACIÓN.**
@@ -472,33 +504,25 @@ export class LaAproximacion {
      *
      * Ver `enElEmbudoDeFinal`.
      */
-    if (
-      enElEmbudoDeFinal(
-        this.mundo.scenario.runway,
-        s.position.x,
-        s.position.z,
-      ) === null
-    )
+    if (enElEmbudoDeFinal(this.campo.pista, s.position.x, s.position.z) === null)
       return;
-    const alto = s.position.y - this.mundo.terrain.runwayElevation;
+    const alto = s.position.y - this.campo.cota;
     if (!this.minimos.paso(alto, acercandose)) return;
 
-    const { across, along } = enEjesDePista(
+    const pista = this.campo.pista;
+    const { across } = enEjesDePista(
       s.position.x,
       s.position.z,
-      this.mundo.scenario.runway.x,
-      this.mundo.scenario.runway.z,
-      this.mundo.scenario.runway.heading,
+      pista.x,
+      pista.z,
+      pista.heading,
     );
-    void along;
-    let torcido =
-      ((s.heading * 180) / Math.PI - this.mundo.scenario.runway.heading + 540) %
-      360;
+    let torcido = ((s.heading * 180) / Math.PI - pista.heading + 540) % 360;
     torcido -= 180;
     const motivo = porQueNoSeSigue(
       {
         velocidad: s.airspeed,
-        referencia: this.mundo.aircraft.approachSpeed,
+        referencia: this.mundo.avion().approachSpeed,
         vertical: s.verticalSpeed,
         delEje: across,
         torcido,
@@ -532,7 +556,7 @@ export class LaAproximacion {
     this.porQueSeMando = {
       motivo,
       velocidad: +s.airspeed.toFixed(1),
-      referencia: this.mundo.aircraft.approachSpeed,
+      referencia: this.mundo.avion().approachSpeed,
       vertical: +s.verticalSpeed.toFixed(1),
       delEje: +across.toFixed(1),
       torcido: +torcido.toFixed(1),
@@ -563,10 +587,11 @@ export class LaAproximacion {
    */
 
   explicarElPapi(acercandose: boolean): void {
-    if (!this.hayPapi || !acercandose) return;
+    const senda = this.campo.senda;
+    if (!senda || !acercandose) return;
     const s = this.ahora.estado;
     if (s.onGround) return;
-    const alto = s.position.y - this.mundo.terrain.runwayElevation;
+    const alto = s.position.y - this.campo.cota;
     // De quince metros para abajo ya no se corrige nada: se toca. Y por encima
     // de trescientos todavía no se está en final, se está llegando.
     if (alto < 15 || alto > 300) return;
@@ -580,9 +605,7 @@ export class LaAproximacion {
      * rojas. Dos instrumentos contando cosas distintas sobre lo mismo, y uno
      * de los dos era el que el juego pinta en el suelo.
      */
-    const [ux, uz] = this.mundo.enLaPista(
-      this.mundo.scenario.runway.length * 0.5 - this.mundo.sendaDesde(),
-    );
+    const [ux, uz] = senda;
     const suelo = Math.hypot(s.position.x - ux, s.position.z - uz);
     // Muy cerca del umbral el ángulo se dispara y el PAPI de verdad tampoco
     // sirve: se mira hasta la valla y a partir de ahí se mira la pista.
@@ -617,7 +640,7 @@ export class LaAproximacion {
     const enElAire = !s.onGround;
     const preparando =
       s.onGround && (fase === "alineando" || fase === "despegando");
-    const alto = s.position.y - this.mundo.terrain.runwayElevation;
+    const alto = s.position.y - this.campo.cota;
     /*
      * **Y en final el circuito no se dibuja.**
      *
@@ -680,11 +703,8 @@ export class LaAproximacion {
       (fase === "final" ||
         fase === "aterrizado" ||
         (acercandose &&
-          enElEmbudoDeFinal(
-            this.mundo.scenario.runway,
-            s.position.x,
-            s.position.z,
-          ) !== null));
+          enElEmbudoDeFinal(this.campo.pista, s.position.x, s.position.z) !==
+            null));
     c.grupo.visible =
       preparando ||
       (enElAire &&

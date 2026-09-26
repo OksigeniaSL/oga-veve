@@ -8,8 +8,10 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { Group } from "three";
 import { MundoVecino, sinHorizonte } from "./mundo-vecino";
-import { destinosDe, SCENARIOS, type Scenario } from "./scenarios";
+import { conViento, destinosDe, SCENARIOS, type Scenario } from "./scenarios";
+import { TIEMPO_DE_CASA } from "./meteo";
 import { distanciaEntre } from "./entre-aerodromos";
 
 const por = (id: string): Scenario => SCENARIOS.find((e) => e.id === id)!;
@@ -106,5 +108,47 @@ describe("el mundo de al lado", () => {
     expect(
       distanciaEntre(norte.aerodrome!.origin, sur.aerodrome!.origin) / 1000,
     ).toBeCloseTo(53.8, 0);
+  });
+});
+
+describe("el tiempo de hoy, también en el campo de al lado", () => {
+  /** El grupo de su aeródromo, por su nombre. */
+  const aeropuerto = (v: MundoVecino) =>
+    v.terreno.group.children.find((o) => o.name.startsWith("aerodromo:"));
+
+  it("se rehace el aeródromo con el viento, que es de donde sale la manga", () => {
+    /*
+     * El vecino se construía una vez y en calma, y ningún cambio de tiempo le
+     * llegaba: la manga de Tenerife Sur colgaba a plomo con veinte nudos.
+     */
+    const v = new MundoVecino(norte, sur);
+    const antes = aeropuerto(v);
+    v.ponerTiempo(conViento(sur, { ...TIEMPO_DE_CASA, vientoDe: 60, vientoKt: 20 }));
+    const despues = aeropuerto(v);
+    expect(despues).toBeDefined();
+    expect(despues).not.toBe(antes);
+    // Y uno solo: el de antes se va, no se queda debajo.
+    expect(
+      v.terreno.group.children.filter((o) => o.name.startsWith("aerodromo:")),
+    ).toHaveLength(1);
+  });
+
+  it("y rehecho de lejos, sale apagado como el resto de la isla", () => {
+    const v = new MundoVecino(norte, sur);
+    // Con el ojo a trescientos kilómetros: la isla pasa a «de lejos».
+    v.alPaso(v.desplazamiento.x + 300_000, v.desplazamiento.z);
+    expect(v.cerca).toBe(false);
+    v.ponerTiempo(conViento(sur, { ...TIEMPO_DE_CASA, vientoDe: 240, vientoKt: 20 }));
+    expect(aeropuerto(v)?.visible).toBe(false);
+  });
+
+  it("y lo colgado de su aeródromo se apaga y se enciende con él", () => {
+    const v = new MundoVecino(norte, sur);
+    const luces = new Group();
+    v.colgarDeCerca(luces);
+    v.alPaso(v.desplazamiento.x + 300_000, v.desplazamiento.z);
+    expect(luces.parent?.visible).toBe(false);
+    v.alPaso(v.desplazamiento.x, v.desplazamiento.z);
+    expect(luces.parent?.visible).toBe(true);
   });
 });

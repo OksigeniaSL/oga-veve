@@ -2108,6 +2108,7 @@ export class Hud {
           vr: this.vr * 1.94384,
           vref: this.vref * 1.94384,
           objetivo: mandos?.objetivo ?? null,
+          declinacion: this.magneticVariation,
           viento: mandos?.viento ?? null,
           // La pérdida: marco rojo alrededor del horizonte, que es donde mira
           // quien ya está en apuros. Ver `cinta.ts` para el parpadeo.
