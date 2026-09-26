@@ -19,12 +19,19 @@ import {
   BufferGeometry,
   Color,
   CylinderGeometry,
+  DataTexture,
+  DataUtils,
   Group,
+  HalfFloatType,
   InstancedMesh,
+  LinearFilter,
   Matrix4,
   Mesh,
   MeshLambertMaterial,
   PlaneGeometry,
+  RedFormat,
+  ShaderMaterial,
+  Vector4,
 } from "three";
 import { ponerGrano, texturaDeGrano } from "./grano";
 import { ValueNoise2D } from "./noise";
@@ -99,6 +106,87 @@ export function cabeceraEnUso(escenario: Scenario): string | null {
     if (diferencia < 90) return nombre;
   }
   return null;
+}
+
+/** Cuánto se hunde el mar del mapa lejano bajo el agua, m. Ver `buildFarMesh`. */
+const HUNDIDO_LEJOS = 30;
+
+/**
+ * Un mapa de orillas: la cota de cada nudo sobre el agua, en una textura, y
+ * dónde cae en el mundo —la esquina del primer nudo y el paso entre nudos—.
+ * Ver `Terrain.vestirElAgua`.
+ */
+export interface MapaDeOrillas {
+  readonly textura: DataTexture;
+  readonly x0: number;
+  readonly z0: number;
+  readonly paso: number;
+  /** Nudos por lado. */
+  readonly lado: number;
+}
+
+/** La cota sobre el agua del nudo `i` de un mapa de orillas, como la guarda. */
+export function nudoDeOrillas(mapa: MapaDeOrillas, i: number): number {
+  return DataUtils.fromHalfFloat((mapa.textura.image.data as Uint16Array)[i]!);
+}
+
+/**
+ * Lo que se escribe en un mapa de orillas donde no hay que mirar: sobre el
+ * mapa fino de una isla vecina, que tiene su propia malla. Mucha agua, así
+ * que el agua se pinta como si no hubiera mapa. Ver `Terrain.vestirElAgua`.
+ */
+export const SIN_ORILLA = -1000;
+
+/**
+ * Hace un mapa de orillas de un mapa de alturas cuadrado de `lado` nudos.
+ * `sobre` dice la cota sobre el agua de cada nudo, por su columna y su fila.
+ */
+export function mapaDeOrillas(
+  lado: number,
+  esquina: number,
+  paso: number,
+  sobre: (col: number, fila: number) => number,
+): MapaDeOrillas {
+  const medias = new Uint16Array(lado * lado);
+  for (let fila = 0; fila < lado; fila++)
+    for (let col = 0; col < lado; col++) {
+      // Mil metros bastan: lo que importa es el signo y el cero, y así no se
+      // sale del medio flotante, que cerca del cero afina al milímetro.
+      const h = Math.max(SIN_ORILLA, Math.min(1000, sobre(col, fila)));
+      medias[fila * lado + col] = DataUtils.toHalfFloat(h);
+    }
+  const textura = new DataTexture(medias, lado, lado, RedFormat, HalfFloatType);
+  // Un nudo por texel y el reparto entre nudos lo hace la tarjeta.
+  textura.minFilter = LinearFilter;
+  textura.magFilter = LinearFilter;
+  textura.generateMipmaps = false;
+  textura.needsUpdate = true;
+  return { textura, x0: esquina, z0: esquina, paso, lado };
+}
+
+/**
+ * La cota sobre el agua que da un mapa de orillas en un punto, repartida
+ * entre los cuatro nudos del cuadro como la reparte el filtro de la tarjeta.
+ * Es la cuenta de `orillaEn` en el agua —ver `world/sky.ts`—, aquí para poder
+ * comprobarla. `null` fuera del mapa.
+ */
+export function sobreElAguaEn(
+  mapa: MapaDeOrillas,
+  x: number,
+  z: number,
+): number | null {
+  const gx = (x - mapa.x0) / mapa.paso;
+  const gz = (z - mapa.z0) / mapa.paso;
+  if (gx < 0 || gz < 0 || gx > mapa.lado - 1 || gz > mapa.lado - 1) return null;
+  const c = Math.min(Math.floor(gx), mapa.lado - 2);
+  const f = Math.min(Math.floor(gz), mapa.lado - 2);
+  const u = gx - c;
+  const v = gz - f;
+  const h = (cc: number, ff: number): number =>
+    nudoDeOrillas(mapa, ff * mapa.lado + cc);
+  const arriba = h(c, f) + (h(c + 1, f) - h(c, f)) * u;
+  const abajo = h(c, f + 1) + (h(c + 1, f + 1) - h(c, f + 1)) * u;
+  return arriba + (abajo - arriba) * v;
 }
 
 export class Terrain {
@@ -626,6 +714,8 @@ export class Terrain {
       // Detrás de todo: el mapa fino lo tapa por delante.
       if (nuevo) this.group.add(nuevo);
     }
+    // Y el agua deja de mirar el mapa sobre las islas vecinas.
+    this.vestirElAgua();
   }
 
   /**
@@ -847,6 +937,106 @@ export class Terrain {
     if (!agua) return;
     (agua.material as Material).dispose();
     agua.material = material;
+    this.vestirElAgua();
+  }
+
+  /**
+   * **Dónde hay tierra, para que el agua no se pinte encima.**
+   *
+   * El agua es una lámina a una cota, y la tierra que queda a pocos metros
+   * por encima de ella se separa del agua solo por el fondo de profundidad.
+   * De cerca basta; de lejos no: con el plano cercano a sesenta centímetros
+   * y veinticuatro bits, a veinte kilómetros el fondo no distingue cuarenta
+   * metros a lo largo del rayo, y desde ocho mil pies eso son cinco de
+   * altura. En Asunción media llanura del Chaco está entre uno y diez metros
+   * sobre la lámina del río: se turnaba con el agua fila a fila, y al avanzar
+   * veinte metros las rayas de agua naranja parpadeaban por todo el llano. Y
+   * antes del disco de agua, con el cuadrado, el mismo empate lo ganaba el
+   * agua entera: el Chaco salía inundado.
+   *
+   * Así que el agua pregunta al mapa, y no al fondo de profundidad, si
+   * donde cae hay tierra, y si la hay no se pinta: las mismas cotas de las
+   * que están hechas las mallas, así que la orilla que dice es la raya en la
+   * que la malla cruza el agua —con la salvedad de cómo se reparte por dentro
+   * de cada cuadro, ver `GLSL_DE_LAS_ORILLAS` en `world/sky.ts`—. Lo que
+   * queda por encima es tierra a cualquier distancia, y el río sigue siendo
+   * río.
+   *
+   * Dos mapas: el fino y el lejano —con su mar hundido treinta metros, como
+   * su malla, ver `buildFarMesh`—. Sobre el mapa fino de una isla vecina, que
+   * tiene sus propias alturas y su propia malla, no se mira: ahí el agua
+   * sigue como estaba. Fuera del mundo, agua.
+   *
+   * Se rehace cada vez que se viste: con el material nuevo y cuando se
+   * recorta el horizonte, que es cuando se sabe dónde caen los vecinos.
+   */
+  private vestirElAgua(): void {
+    const material = (this.group.getObjectByName("agua") as Mesh | undefined)
+      ?.material;
+    if (!(material instanceof ShaderMaterial)) return;
+    const u = material.uniforms;
+    if (!u.orillaFina) return;
+    for (const m of [this.orillas?.fina, this.orillas?.lejana])
+      m?.textura.dispose();
+    this.orillas = this.mapasDeOrillas();
+    const { fina, lejana } = this.orillas;
+    const sitio = (m: MapaDeOrillas, v: Vector4): Vector4 =>
+      v.set(m.x0, m.z0, 1 / m.paso, m.lado);
+    u.orillaFina.value = fina.textura;
+    sitio(fina, u.orillaFinaSitio!.value as Vector4);
+    u.hayOrillaLejana!.value = lejana ? 1 : 0;
+    if (lejana) {
+      u.orillaLejana!.value = lejana.textura;
+      sitio(lejana, u.orillaLejanaSitio!.value as Vector4);
+    }
+    u.conOrillas!.value = 1;
+  }
+
+  /** Los mapas de orillas que lleva el agua. Ver `vestirElAgua`. */
+  private orillas: {
+    fina: MapaDeOrillas;
+    lejana: MapaDeOrillas | null;
+  } | null = null;
+
+  /**
+   * Los mapas de orillas, en texturas: la cota de cada nudo **sobre el
+   * agua**. Uno por malla de relieve.
+   *
+   * Se leen **de las mallas**, no del mapa de alturas: la orilla que importa
+   * es la que se dibuja. El mapa se puede tocar después de mallar —se moldea
+   * contra la fotogrametría— y el lejano lleva el mar hundido, que el mapa no
+   * lleva. Y sobre el mapa fino de cada isla vecina, `SIN_ORILLA`.
+   */
+  mapasDeOrillas(): { fina: MapaDeOrillas; lejana: MapaDeOrillas | null } {
+    const nivel = this.scenario.waterLevel;
+    const alturasDe = (nombre: string): ((i: number) => number) | null => {
+      const malla = this.group.getObjectByName(nombre) as Mesh | undefined;
+      const pos = malla?.geometry.getAttribute("position");
+      return pos ? (i) => pos.getY(i) : null;
+    };
+    const fino = alturasDe("terreno") ?? ((i) => this.heights[i] ?? 0);
+    const n = this.resolution;
+    const fina = mapaDeOrillas(
+      n,
+      -this.half,
+      this.step,
+      (col, fila) => fino(fila * n + col) - nivel,
+    );
+    const lejos = this.scenario.relieveLejano;
+    const lejano = lejos ? alturasDe("horizonte") : null;
+    if (!lejos || !lejano) return { fina, lejana: null };
+    const tamano = this.scenario.size * vecesLejosDe(this.scenario);
+    const paso = tamano / (lejos.resolucion - 1);
+    const m = lejos.resolucion;
+    const lejana = mapaDeOrillas(m, -tamano / 2, paso, (col, fila) => {
+      const x = -tamano / 2 + col * paso;
+      const z = -tamano / 2 + fila * paso;
+      for (const h of this.huecosDelHorizonte)
+        if (Math.abs(x - h.x) < h.medio && Math.abs(z - h.z) < h.medio)
+          return SIN_ORILLA;
+      return lejano(fila * m + col) - nivel;
+    });
+    return { fina, lejana };
   }
 
   /**
@@ -1281,7 +1471,7 @@ export class Terrain {
      * profundidad y el mar entero centellea. Hundir lo que ya está bajo el agua
      * no se ve —está debajo— y quita el problema de raíz.
      */
-    const hundido = this.scenario.waterLevel - 30;
+    const hundido = this.scenario.waterLevel - HUNDIDO_LEJOS;
     const ancho = lejos.resolucion;
     const cota = (fila: number, col: number): number => {
       const f = clampInt(fila, 0, res - 1) * SALTO;

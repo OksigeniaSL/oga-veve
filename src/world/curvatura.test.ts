@@ -25,6 +25,7 @@ import {
   bajadaDelHorizonte,
   CAIDA_POR_METRO_CUADRADO,
   caida,
+  CRECE_CERCA,
   curvaturaEncendida,
   discoDeAgua,
   distanciaAlHorizonte,
@@ -32,7 +33,9 @@ import {
   instalarCurvatura,
   LADO_SIN_CURVA,
   partirLoLargo,
+  pasoDeAnillo,
   RADIO_DE_LA_TIERRA,
+  TOLERANCIA_DE_LA_CURVA,
   TROZO_DE_CURVATURA,
 } from "./curvatura";
 import { GLSL_DEL_CIELO, horizonteDesde } from "./sky";
@@ -246,24 +249,47 @@ describe("el disco de agua", () => {
     expect(lejos).toBeCloseTo(radio, 0);
   });
 
-  it("la curva no se nota entre sus vértices: un milímetro cerca, medio por ciento lejos", () => {
+  it("la curva no se nota entre sus vértices: centímetros cerca, una quinta de píxel lejos", () => {
     /*
      * Entre vértices la tarjeta reparte en recta, y el error de repartir la
      * parábola en un triángulo de lado `s` es `s²/8R`. Cerca del ojo —el
-     * disco va pegado a él— eso tiene que ser nada, o la orilla de al lado
-     * respira al volar; lejos basta con que sea poco al lado de la caída.
+     * disco va pegado a él— manda la orilla de al lado, que respira al volar
+     * si ese error se mueve: centímetros. Lejos manda cómo se ve: el error
+     * partido por la distancia, que el paso entre anillos deja en una
+     * diezmilésima de radián —una décima de píxel en una pantalla de
+     * novecientos puntos—, y la diagonal de cada cuadro, que suma la cuerda
+     * entre dos gajos, en menos del doble: una quinta de píxel.
      */
     for (const t of tris) {
       const s = ladoMasLargo(t);
       const error = (s * s) / (8 * RADIO_DE_LA_TIERRA);
       const cerca = Math.min(...t.map((v) => Math.hypot(v.x, v.z)));
-      if (cerca < 1000) expect(error).toBeLessThan(0.001);
-      else expect(error / caida(cerca)).toBeLessThan(0.005);
+      if (cerca < 1000) expect(error).toBeLessThan(0.002);
+      else if (cerca < 5000) expect(error).toBeLessThan(0.05);
+      if (cerca >= 1000)
+        expect(error / cerca).toBeLessThan(2 * TOLERANCIA_DE_LA_CURVA);
     }
   });
 
-  it("y no pesa: menos de doce mil vértices", () => {
-    expect(disco.getAttribute("position").count).toBeLessThan(12_000);
+  it("y no pesa: menos de cinco mil triángulos", () => {
+    /*
+     * Eran diecinueve mil quinientos, con anillos cada diez por ciento y
+     * noventa y seis gajos, y los de lejos se apretaban junto al horizonte
+     * en astillas de menos de un píxel que repetían el sombreado del agua.
+     */
+    expect(disco.getIndex()!.count / 3).toBeLessThan(5000);
+  });
+
+  it("y los anillos crecen lo que deja la tolerancia", () => {
+    // Cerca, un cuarto del radio; lejos, lo que deja la décima de píxel.
+    expect(pasoDeAnillo(1000)).toBeCloseTo(1000 * CRECE_CERCA, 6);
+    const lejos = 200_000;
+    const paso = pasoDeAnillo(lejos);
+    expect(paso).toBeLessThan(lejos * CRECE_CERCA);
+    expect((paso * paso) / (8 * RADIO_DE_LA_TIERRA) / lejos).toBeCloseTo(
+      TOLERANCIA_DE_LA_CURVA,
+      9,
+    );
   });
 });
 

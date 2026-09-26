@@ -43,16 +43,34 @@ ventanilla, y la regla 4 no deja enseñarla mal.
 - **La cúpula parte cielo y mar en −δ**, con la misma parábola, y el mar que
   pinta por debajo es la continuación exacta del agua curvada. El sol se
   recorta ahí, mide un grado y medio —el de verdad mide medio; este se ve en un
-  teléfono— y en los últimos grados sobre el horizonte se enrojece.
+  teléfono— y en los últimos grados sobre el horizonte se enrojece y se apaga.
+  **Pero nunca por debajo del cielo que tiene detrás**: su luz se suma, y si
+  al atardecer lo que se suma no se ve —el resplandor ya tiene el rojo al
+  tope—, se aclara hasta salir al menos un veinte por ciento más claro que su
+  cielo. Un disco que tiraba hacia un naranja fijo salía con entre la mitad y
+  tres cuartos de la luminancia del cielo de al lado: el mismo hueco por el
+  que ya hubo queja. Ver `conElSol` en `sky.ts`.
 - **El agua es un disco de anillos pegado al ojo**, y no un cuadrado de dos
   triángulos: la curva se calcula en los vértices y la tarjeta la reparte en
   recta por dentro de cada triángulo, y un triángulo de cuatrocientos
-  kilómetros bajaba entero lo que bajan sus esquinas.
+  kilómetros bajaba entero lo que bajan sus esquinas. Los anillos crecen lo
+  justo para que el error no llegue a una quinta de píxel visto desde el ojo
+  ni a unos centímetros en la orilla de al lado: unos cuatro mil triángulos.
 - **Nada con triángulos de más de 250 m donde se apoye algo**: el error de
   repartir la curva en recta es `s²/8R`, que con 250 m es un milímetro y con
   los dos kilómetros de una pista de OpenStreetMap eran ocho centímetros bajo
   las ruedas. `partirLoLargo` parte el pavimento y la pintura de los
-  aeródromos; la pista de juguete y las nubes van en tramos.
+  aeródromos, y la pista de juguete va en tramos. Las nubes, en cinco por
+  cinco cuadros, finos debajo del ojo y anchos lejos: menos de dos metros de
+  error donde se atraviesan y menos de un píxel donde se desvanecen.
+- **El agua no se pinta donde el mapa dice tierra.** El fondo de profundidad
+  —veinticuatro bits con el plano cercano a sesenta centímetros— no separa de
+  lejos la lámina de un llano que le queda a pocos metros por encima, y el
+  disco nuevo lo destapó: el Chaco, visto desde Asunción, salía cruzado de
+  rayas de agua que parpadeaban al avanzar. Con el cuadrado de antes el mismo
+  empate lo ganaba el agua entera y el llano salía inundado. Ahora el agua
+  lee de un mapa hecho con las cotas de las propias mallas si donde cae hay
+  tierra, y ahí sale transparente. Ver `Terrain.vestirElAgua`.
 
 Lo que **no** cambia: el modelo de vuelo, las colisiones, `sampleHeight`, los
 rayos de los botones de cabina y todo lo que se calcula en la CPU. Cerca del
@@ -65,12 +83,24 @@ del dibujo son el mismo donde se toca el suelo.
 - **Se puede apagar para comparar**: `?curvatura=0` en la dirección, o
   `CURVAR_EL_DIBUJO` en el código. Con ella apagada la cúpula y el agua
   vuelven exactamente a las cuentas planas.
-- **Cuesta poco y se ha medido**: media docena de operaciones por vértice, un
-  disco de agua de diez mil vértices sin textura ni luz y las nubes en
-  baldosas.
+- **Cuesta poco y se ha medido**, en la GPU del portátil, con la vista de
+  Gran Canaria a Tenerife a ocho mil pies. La cuenta del vértice, un tres por
+  ciento; el disco de agua frente a un cuadrado, otro tres; las nubes en
+  cinco por cinco cuadros frente a una lámina, otro tanto; y mirar el mapa
+  de orillas, menos. Lo que costaba de verdad era la geometría fina de la
+  primera versión: diecinueve mil quinientos triángulos de agua y nubes de
+  veinticuatro por veinticuatro. Y lo que habría costado es tirar el
+  fragmento del agua con `discard` para no pintarla sobre tierra: le quita a
+  la tarjeta el descarte por profundidad y le hace pintar el agua que tapa la
+  isla, casi dos milisegundos medidos. Por eso sale transparente.
 - **Quien añada geometría grande tiene que partirla**: un plano de dos
   triángulos a ras de suelo se hunde por el medio. La regla y la herramienta
   están en `curvatura.ts`, y las pruebas de `curvatura.test.ts` dicen cuánto.
+- **El agua mira las mallas del relieve.** El mapa de orillas se hace con las
+  cotas de la malla fina y la del horizonte; sobre el mapa fino de una isla
+  vecina no se mira, y ahí manda el fondo de profundidad como antes. Quien
+  añada otra malla de suelo que llegue a la cota del agua tiene que meterla
+  en ese mapa o aceptar que de lejos se pelee con ella.
 - **Las cuentas de la CPU siguen en plano.** Proyectar a pantalla un punto a
   cien kilómetros con `Vector3.project` da un sitio unos cinco píxeles más alto
   que donde se dibuja. Hoy nada del juego lo hace —solo alguna sonda de
@@ -95,3 +125,10 @@ del dibujo son el mismo donde se toca el suelo.
 - **Mover la niebla para esconder la franja.** Es lo que se venía haciendo, y
   una niebla que se come la isla de enfrente para tapar un error es otra
   mentira.
+- **Más precisión de profundidad en vez del mapa de orillas**, con el fondo
+  logarítmico de three.js. Resolvería el empate del agua con el llano a
+  cualquier distancia, pero escribe la profundidad desde el fragmento en
+  **todos** los materiales, y eso apaga en el cuadro entero el mismo descarte
+  temprano cuya pérdida en el agua sola ya costaba casi dos milisegundos.
+  Obliga además a tocar cada programa propio. No se ha medido entero: con
+  eso delante no hacía falta.

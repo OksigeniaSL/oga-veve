@@ -31,14 +31,19 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { Group, Object3D, Vector3 } from "three";
+import { Color, Group, Object3D, Vector3 } from "three";
 import {
   brumaALaAltura,
+  conElSol,
+  cortesDeLasNubes,
   GAJOS_DEL_CIELO,
   GLSL_DEL_CIELO,
+  laminaDeNubes,
+  SOL_RASANTE,
   updateSky,
   type SkyRig,
 } from "./sky";
+import { caida } from "./curvatura";
 
 /**
  * Un aparejo de mentira con lo justo que mira `updateSky`.
@@ -108,10 +113,85 @@ describe("el sol", () => {
      * pardo en mitad del cielo naranja. El sol es la fuente: es lo más claro
      * del cielo, o no es el sol.
      */
-    expect(GLSL_DEL_CIELO.fragmento).toContain("sky += sunColour * disc;");
-    expect(GLSL_DEL_CIELO.fragmento).not.toContain(
-      "mix(sky, sunColour, disc)",
-    );
+    const f = GLSL_DEL_CIELO.fragmento;
+    expect(f).toContain("vec3 sol = min(cielo + luz, vec3(1.0));");
+    expect(f).toContain("sky = conElSol(sky, disc, rasante);");
+    expect(f).not.toContain("mix(sky, sunColour, disc)");
+    /*
+     * Y tampoco hacia un color fijo. Fue la segunda vez: para enrojecerlo
+     * pegado al horizonte, el disco tiraba hacia un naranja escrito a mano
+     * con el disco de factor, y como el resplandor de alrededor ya tenía el
+     * rojo a tope, salía con entre la mitad y tres cuartos de la luminancia
+     * del cielo de al lado. El mismo hueco, por otra puerta.
+     */
+    expect(f).not.toMatch(/sky = mix\(sky, vec3\(/);
+  });
+
+  /** La luminancia de un color lineal ya recortado a lo que da la pantalla. */
+  const luma = (c: readonly number[]): number =>
+    Math.min(c[0]!, 1) * 0.2126 +
+    Math.min(c[1]!, 1) * 0.7152 +
+    Math.min(c[2]!, 1) * 0.0722;
+  const lineal = (hex: number): [number, number, number] => {
+    const c = new Color(hex);
+    return [c.r, c.g, c.b];
+  };
+
+  it("y pegado al horizonte sigue siendo lo más claro del cielo", () => {
+    /*
+     * La regla, comprobada en números y no en el texto: con cualquier cielo
+     * detrás —el azul del mediodía, el dorado del ocaso con el rojo pasado
+     * de lo que da la pantalla, el malva del crepúsculo— y con el sol de
+     * cualquier hora, el disco no baja de su cielo en ningún canal y sale al
+     * menos `masClaro` veces más claro, hasta donde la pantalla deja.
+     *
+     * Se comprueba la gemela en TypeScript de la cuenta del fragmento; que
+     * las dos llevan los mismos números lo mira la prueba siguiente.
+     */
+    const cielos: [number, number, number][] = [
+      [0.25, 0.45, 0.9], // mediodía
+      [1.25, 0.67, 0.19], // el resplandor del ocaso, con el rojo pasado
+      [1.0, 0.45, 0.12],
+      [0.62, 0.36, 0.42], // malva
+      [0.2, 0.1, 0.05], // crepúsculo
+      [0.9, 0.9, 0.92], // bruma casi blanca
+    ];
+    const soles = [0xfff4e2, 0xffd9a0, 0xff8c3a, 0xa86a52].map(lineal);
+    for (const cielo of cielos)
+      for (const sol of soles)
+        for (let r = 0; r <= 1.0001; r += 0.125) {
+          const con = conElSol(cielo, sol, 1, r);
+          for (let i = 0; i < 3; i++)
+            expect(Math.min(con[i]!, 1)).toBeGreaterThanOrEqual(
+              Math.min(cielo[i]!, 1) - 1e-9,
+            );
+          const quiere = Math.min(luma(cielo) * SOL_RASANTE.masClaro, 0.98);
+          expect(luma(con)).toBeGreaterThanOrEqual(quiere - 1e-6);
+        }
+  });
+
+  it("y se enrojece al ponerse, donde el cielo deja verlo", () => {
+    // Con un cielo oscuro detrás no hace falta el suelo, y lo que queda es
+    // la luz que pasa el aire: más roja cuanto más rasante.
+    const cielo: [number, number, number] = [0.02, 0.02, 0.04];
+    const sol = lineal(0xfff4e2);
+    const alto = conElSol(cielo, sol, 1, 0);
+    const rasante = conElSol(cielo, sol, 1, 1);
+    expect(rasante[1]! / rasante[0]!).toBeLessThan(alto[1]! / alto[0]!);
+    expect(rasante[2]! / rasante[0]!).toBeLessThan(alto[2]! / alto[0]!);
+    expect(luma(rasante)).toBeLessThan(luma(alto));
+  });
+
+  it("y el fragmento y su gemela llevan los mismos números", () => {
+    const f = GLSL_DEL_CIELO.fragmento;
+    const v3 = (c: readonly number[]): string =>
+      `vec3(${c.map((x) => x.toFixed(4)).join(", ")})`;
+    expect(f).toContain(v3(SOL_RASANTE.paso));
+    expect(f).toContain(v3(SOL_RASANTE.quemadoAlto));
+    expect(f).toContain(v3(SOL_RASANTE.quemadoRasante));
+    expect(f).toContain(v3(SOL_RASANTE.blanco));
+    expect(f).toContain(SOL_RASANTE.velo.toFixed(4));
+    expect(f).toContain(SOL_RASANTE.masClaro.toFixed(4));
   });
 
   it("y el halo se abre cuanto más bajo está, que es lo que da la hora", () => {
@@ -136,7 +216,7 @@ describe("por debajo del horizonte", () => {
     const f = GLSL_DEL_CIELO.fragmento;
     expect(f).toContain("if (baja > pendienteDelHorizonte)");
     expect(f).toContain("marEn(dir)");
-    expect(f.indexOf("sky += sunColour * disc;")).toBeGreaterThan(
+    expect(f.indexOf("sky = conElSol(sky, disc, rasante);")).toBeGreaterThan(
       f.indexOf("} else {"),
     );
   });
@@ -180,6 +260,100 @@ describe("la bruma se queda abajo", () => {
       const b = brumaALaAltura(h);
       expect(b).toBeLessThanOrEqual(antes);
       antes = b;
+    }
+  });
+});
+
+describe("el agua sobre la tierra", () => {
+  it("no se pinta, y sin tirar el fragmento", () => {
+    /*
+     * Donde el mapa dice tierra el agua no pinta nada: si no, de lejos se
+     * turnaba con el llano que le queda a pocos metros por encima y lo
+     * cruzaba de rayas. Y lo hace saliendo transparente, no con `discard`:
+     * con él la tarjeta deja de descartar por profundidad antes de pintar y
+     * el agua tapada por la isla se pinta entera. Medido, casi dos
+     * milisegundos por cuadro sobre el mar de Gran Canaria.
+     */
+    const a = GLSL_DEL_CIELO.agua;
+    expect(a).toContain("if (hayTierra(cameraPosition.xz + vRayo.xz, length(vRayo)))");
+    expect(a).not.toMatch(/\bdiscard\s*;/);
+    // Una lectura por fragmento, filtrada por la tarjeta, y sin bucles.
+    expect(a.match(/textureLod\(/g)?.length).toBe(1);
+    expect(a).not.toContain("texelFetch");
+    expect(a).not.toMatch(/\bfor \(/);
+  });
+});
+
+describe("la capa de nubes", () => {
+  /*
+   * Cinco capas de ochenta kilómetros, transparentes y una encima de otra.
+   * Con la curva de la Tierra no pueden ir de dos triángulos —bajaban
+   * enteras lo que bajan las esquinas—, y en una rejilla fina las aristas
+   * encarecían el cuadro un milisegundo. Ver `cortesDeLasNubes`.
+   */
+  const lado = 80_000;
+  const repite = 12;
+  const geo = laminaDeNubes(lado, repite);
+  const pos = geo.getAttribute("position");
+  const idx = geo.getIndex()!;
+
+  /** Lo que baja de más la capa en un punto, con el ojo en `ojo`. */
+  function errores(ojo: [number, number]): { cerca: number; angulo: number } {
+    let cerca = 0;
+    let angulo = 0;
+    const cae = (x: number, z: number): number =>
+      caida(Math.hypot(x - ojo[0], z - ojo[1]));
+    for (let t = 0; t < idx.count; t += 3) {
+      const v = [0, 1, 2].map((k) => idx.getX(t + k));
+      const xs = v.map((i) => pos.getX(i));
+      const zs = v.map((i) => pos.getZ(i));
+      const cs = v.map((_, k) => cae(xs[k]!, zs[k]!));
+      for (let a = 0; a <= 12; a++)
+        for (let b = 0; a + b <= 12; b++) {
+          const w = [a / 12, b / 12, 1 - (a + b) / 12];
+          const x = w[0]! * xs[0]! + w[1]! * xs[1]! + w[2]! * xs[2]!;
+          const z = w[0]! * zs[0]! + w[1]! * zs[1]! + w[2]! * zs[2]!;
+          const repartida = w[0]! * cs[0]! + w[1]! * cs[1]! + w[2]! * cs[2]!;
+          const error = repartida - cae(x, z);
+          const d = Math.hypot(x - ojo[0], z - ojo[1]);
+          if (d < 2000) cerca = Math.max(cerca, error);
+          else if (d < (lado / 2) * 0.92) angulo = Math.max(angulo, error / d);
+        }
+    }
+    return { cerca, angulo: (angulo * 180) / Math.PI };
+  }
+
+  it("va en cinco por cinco cuadros, no en una rejilla fina", () => {
+    expect(idx.count / 3).toBe(50);
+    expect(cortesDeLasNubes(lado, repite)[0]).toBeCloseTo(lado / repite / 2, 6);
+  });
+
+  it("y con el ojo donde pueda estar, no se hunde ni un píxel", () => {
+    /*
+     * El banco sigue a la cámara a saltos de un paso del dibujo, así que el
+     * ojo está siempre a menos de medio paso de su centro. Debajo, menos de
+     * dos metros y medio con las capas a setenta; de lejos, menos de una
+     * décima de grado, que es menos de un píxel.
+     */
+    const medio = lado / repite / 2;
+    for (const ojo of [
+      [0, 0],
+      [medio, 0],
+      [medio, medio],
+      [-medio * 0.6, medio * 0.9],
+    ] as [number, number][]) {
+      const { cerca, angulo } = errores(ojo);
+      expect(cerca).toBeLessThan(2.5);
+      expect(angulo).toBeLessThan(0.1);
+    }
+  });
+
+  it("y el dibujo no se entera de dónde van las rayas", () => {
+    const uv = geo.getAttribute("uv");
+    for (let i = 0; i < pos.count; i++) {
+      expect(uv.getX(i)).toBeCloseTo(pos.getX(i) / lado + 0.5, 6);
+      // Tumbado: la v del plano de serie va hacia el norte, que es −z.
+      expect(uv.getY(i)).toBeCloseTo(0.5 - pos.getZ(i) / lado, 6);
     }
   });
 });

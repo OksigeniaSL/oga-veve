@@ -340,6 +340,45 @@ export function partirLoLargo(
 }
 
 /**
+ * Cuánto se puede equivocar la curva **vista de lejos**, en radianes: lo que
+ * baja de más el centro de un triángulo del disco de agua, dividido por lo
+ * lejos que está. Una diezmilésima es una décima de píxel en una pantalla de
+ * novecientos puntos de alto y sesenta y dos grados de campo.
+ */
+export const TOLERANCIA_DE_LA_CURVA = 1e-4;
+
+/**
+ * Cuánto crece cada anillo del disco de agua cerca del ojo: un cuarto de su
+ * radio. Ver `pasoDeAnillo`.
+ */
+export const CRECE_CERCA = 0.25;
+
+/** El primer anillo, m. Dentro, un abanico de triángulos alrededor del ojo. */
+export const PRIMER_ANILLO = 50;
+
+/**
+ * Cuánto más lejos va el anillo siguiente al que está a `r` metros del ojo.
+ *
+ * El error de repartir la parábola en recta por un triángulo de lado `s` es
+ * `s²/8R`, y visto desde el ojo pesa lo que ese error dividido por la
+ * distancia. Así que lejos el anillo puede crecer mucho sin que se note: con
+ * `s = √(8R·τ·r)` el error se queda exactamente en la tolerancia `τ`.
+ *
+ * Cerca eso no basta, porque cerca no se mira el ángulo sino la orilla: el
+ * disco va pegado al ojo y su error se mueve con él, y diez centímetros a un
+ * kilómetro son cinco metros de raya del agua respirando sobre una playa
+ * llana. Así que manda el más corto de los dos pasos, y hasta los ochenta
+ * kilómetros eso es crecer un cuarto del radio: a un kilómetro el error es
+ * de un milímetro, a cinco de tres centímetros.
+ */
+export function pasoDeAnillo(r: number): number {
+  return Math.min(
+    r * CRECE_CERCA,
+    Math.sqrt(8 * RADIO_DE_LA_TIERRA * TOLERANCIA_DE_LA_CURVA * r),
+  );
+}
+
+/**
  * El mar: un disco de anillos que se aprietan hacia el centro.
  *
  * Era un cuadrado de dos triángulos de cuatrocientos kilómetros, y con la
@@ -351,23 +390,24 @@ export function partirLoLargo(
  * lado `s`, esté donde esté: una rejilla fija que no se notara en ninguna
  * playa tendría que ser de cuadros de medio kilómetro sobre cuatrocientos,
  * más de un millón de triángulos. Así que el disco va **pegado al ojo** —ver
- * `Terrain.llevarElAguaA`— y sus anillos crecen un diez por ciento cada uno:
- * cerca del ojo, donde se miran las playas, el triángulo es de metros y el
- * error no llega al milímetro; a cien kilómetros el triángulo es de doce y
- * el error, de unos tres metros sobre setecientos ochenta y cinco de caída,
- * que a esa distancia es una milésima de grado. Que ese error lejano se
- * mueva un poco al moverse el disco con el avión no lo ve nadie.
+ * `Terrain.llevarElAguaA`— y sus anillos crecen con la distancia, cada uno lo
+ * que diga `pasoDeAnillo`.
  *
- * Son unos diez mil vértices sin textura ni luz. No se notan.
+ * **Y con los triángulos justos, que el agua no es barata.** La primera
+ * versión crecía un diez por ciento por anillo con noventa y seis gajos:
+ * diecinueve mil quinientos triángulos, y de lejos los anillos se apretaban
+ * junto al horizonte en astillas de menos de un píxel, cada una repitiendo el
+ * sombreado del agua —el reflejo del cielo entero— en los mismos píxeles.
+ * Con cuarenta y ocho gajos y anillos que crecen lo que la tolerancia deja
+ * son unos cuatro mil, y el error visto desde el ojo, contando la cuerda
+ * entre dos gajos, se queda por debajo de dos diezmilésimas: una quinta de
+ * píxel. Medido en la GPU con la vista de Gran Canaria a Tenerife, el disco
+ * nuevo cuesta un tres por ciento del cuadro más que un cuadrado de dos
+ * triángulos, y el de diecinueve mil, cerca del doble de eso.
  */
-export function discoDeAgua(
-  radio: number,
-  primero = 20,
-  razon = 1.1,
-  gajos = 96,
-): BufferGeometry {
+export function discoDeAgua(radio: number, gajos = 48): BufferGeometry {
   const radios: number[] = [];
-  for (let r = primero; r < radio; r *= razon) radios.push(r);
+  for (let r = PRIMER_ANILLO; r < radio; r += pasoDeAnillo(r)) radios.push(r);
   radios.push(radio);
 
   const posiciones: number[] = [0, 0, 0];

@@ -55,9 +55,11 @@ import {
   PointsMaterial,
   ShaderMaterial,
   SphereGeometry,
+  type Texture,
   UniformsLib,
   UniformsUtils,
   Vector3,
+  Vector4,
 } from "three";
 import { factorDeCurvatura } from "./curvatura";
 import { mulberry32 } from "./noise";
@@ -293,12 +295,140 @@ const GLSL_COMUN = /* glsl */ `
 const RADIO_DEL_SOL = ((0.75 * Math.PI) / 180).toFixed(6);
 const BORDE_DEL_SOL = ((0.08 * Math.PI) / 180).toFixed(6);
 
+/**
+ * **El sol pegado al horizonte**: lo que el aire deja pasar de su luz, cuánto
+ * la apaga, y lo más claro que tiene que salir el disco frente al cielo que
+ * lo rodea. Son los números de `conElSol` —el trozo del fragmento que pinta
+ * el disco— y de su gemela en TypeScript, que existe para poder comprobar la
+ * regla sin tarjeta gráfica. Ver `sky.test.ts`.
+ */
+export const SOL_RASANTE = {
+  /**
+   * Lo que pasa de cada canal con el sol en el horizonte: el aire rasante se
+   * queda antes con el azul que con el verde, y con el verde antes que con el
+   * rojo. Es lo que enrojece al sol que se pone.
+   */
+  paso: [1.0, 0.55, 0.25] as const,
+  /** Cuánto se apaga su luz ahí, de cero a uno: la bruma. */
+  velo: 0.4,
+  /**
+   * **El suelo**: el disco sale siempre al menos esto de veces más claro que
+   * el cielo de detrás, en luminancia y después de que la pantalla recorte.
+   */
+  masClaro: 1.2,
+  /**
+   * Hacia dónde se aclara el disco cuando no llega al suelo: un amarillo
+   * quemado, lo que sale en cualquier foto de un sol poniéndose, del crema
+   * del sol alto al dorado del que toca el mar.
+   */
+  quemadoAlto: [1.0, 0.96, 0.82] as const,
+  quemadoRasante: [1.0, 0.88, 0.3] as const,
+  /**
+   * Y si ni así llega —un cielo casi blanco alrededor—, el último paso: un
+   * blanco con algo de amarillo, que el sol no se vuelve azul por aclararse.
+   */
+  blanco: [1.0, 1.0, 0.8] as const,
+} as const;
+
+/** La luminancia de un color lineal, con los pesos de sRGB. */
+const LUMINANCIA = [0.2126, 0.7152, 0.0722] as const;
+
+const v3 = (c: readonly number[]): string =>
+  `vec3(${c.map((x) => x.toFixed(4)).join(", ")})`;
+
+/*
+ * **El disco, sumado al cielo y nunca por debajo de él.** Recibe el cielo de
+ * detrás en lineal y devuelve el cielo con el sol encima.
+ *
+ * El sol es la fuente: tiene que ser lo más claro del cielo, nunca un hueco.
+ * Por eso su luz **se suma** al cielo que tiene detrás, y al ponerse lo que
+ * cambia es **qué** se suma: la luz que queda después de cruzar el aire
+ * rasante, más roja y más floja.
+ *
+ * Y con eso no basta, y está medido. Al atardecer el resplandor que rodea al
+ * sol ya tiene el rojo en lo más alto que da la pantalla, y la luz de un sol
+ * enrojecido es casi solo rojo: sumada, no se ve. Un disco que tiraba hacia un
+ * naranja fijo —la primera versión de esto— salía con entre la mitad y tres
+ * cuartos de la luminancia del cielo de al lado, que es el mismo hueco pardo
+ * por el que ya hubo queja: «un disco más apagado que su resplandor». Así
+ * que hay un **suelo**: lo que le falte al disco para ser `masClaro` veces
+ * más claro que su cielo se pone aclarándolo hacia un amarillo quemado, y si
+ * ni así llega, hacia un blanco cálido. Es lo que hace una cámara, y lo que
+ * ve un ojo: el sol que se pone es una bola más clara que el cielo naranja
+ * que lo rodea, no un agujero en él.
+ *
+ * Canal a canal el resultado nunca baja del cielo de detrás —se suma, se
+ * recorta a uno y solo se aclara—, así que no hay forma de que el disco salga
+ * más oscuro que lo que lo rodea.
+ */
+const GLSL_DEL_SOL = /* glsl */ `
+  vec3 conElSol(vec3 cielo, float disc, float rasante) {
+    const vec3 LUMA = ${v3(LUMINANCIA)};
+    vec3 paso = mix(vec3(1.0), ${v3(SOL_RASANTE.paso)}, rasante);
+    vec3 luz = sunColour * paso * (1.0 - ${SOL_RASANTE.velo.toFixed(4)} * rasante);
+    vec3 sol = min(cielo + luz, vec3(1.0));
+    float quiere = min(dot(min(cielo, vec3(1.0)), LUMA) * ${SOL_RASANTE.masClaro.toFixed(4)}, 1.0);
+    vec3 quemado = max(sol, mix(${v3(SOL_RASANTE.quemadoAlto)}, ${v3(SOL_RASANTE.quemadoRasante)}, rasante));
+    float falta = quiere - dot(sol, LUMA);
+    sol = mix(sol, quemado, clamp(falta / max(dot(quemado - sol, LUMA), 1e-4), 0.0, 1.0));
+    falta = quiere - dot(sol, LUMA);
+    vec3 blanco = max(sol, ${v3(SOL_RASANTE.blanco)});
+    sol = mix(sol, blanco, clamp(falta / max(dot(blanco - sol, LUMA), 1e-4), 0.0, 1.0));
+    return mix(cielo, sol, disc);
+  }
+`;
+
+/**
+ * La misma cuenta que `conElSol`, en TypeScript y paso a paso, para poder
+ * comprobar en una prueba que el disco no sale nunca más oscuro que el cielo.
+ * Si se toca una, se toca la otra: la prueba compara las dos con el texto.
+ */
+export function conElSol(
+  cielo: readonly [number, number, number],
+  sol: readonly [number, number, number],
+  disc: number,
+  rasante: number,
+): [number, number, number] {
+  const mezcla = (a: number, b: number, t: number): number => a + (b - a) * t;
+  const luma = (c: readonly number[]): number =>
+    c[0]! * LUMINANCIA[0] + c[1]! * LUMINANCIA[1] + c[2]! * LUMINANCIA[2];
+  const limpio = (x: number): number => Math.min(Math.max(x, 0), 1);
+  const paso = [0, 1, 2].map((i) => mezcla(1, SOL_RASANTE.paso[i]!, rasante));
+  const fuerza = 1 - SOL_RASANTE.velo * rasante;
+  let s = [0, 1, 2].map((i) =>
+    Math.min(cielo[i]! + sol[i]! * paso[i]! * fuerza, 1),
+  );
+  const quiere = Math.min(
+    luma(cielo.map((c) => Math.min(c, 1))) * SOL_RASANTE.masClaro,
+    1,
+  );
+  const quemado = [0, 1, 2].map((i) =>
+    Math.max(
+      s[i]!,
+      mezcla(SOL_RASANTE.quemadoAlto[i]!, SOL_RASANTE.quemadoRasante[i]!, rasante),
+    ),
+  );
+  let falta = quiere - luma(s);
+  let t = limpio(falta / Math.max(luma(quemado.map((q, i) => q - s[i]!)), 1e-4));
+  s = s.map((x, i) => mezcla(x, quemado[i]!, t));
+  falta = quiere - luma(s);
+  const blanco = s.map((x, i) => Math.max(x, SOL_RASANTE.blanco[i]!));
+  t = limpio(falta / Math.max(luma(blanco.map((b, i) => b - s[i]!)), 1e-4));
+  s = s.map((x, i) => mezcla(x, blanco[i]!, t));
+  return [0, 1, 2].map((i) => mezcla(cielo[i]!, s[i]!, disc)) as [
+    number,
+    number,
+    number,
+  ];
+}
+
 const FRAGMENT_SHADER = /* glsl */ `
   #include <common>
   uniform float fogDensity;
   varying vec3 vDireccion;
   varying vec3 vVista;
   ${GLSL_COMUN}
+  ${GLSL_DEL_SOL}
 
   void main() {
     vec3 dir = normalize(vDireccion);
@@ -343,32 +473,24 @@ const FRAGMENT_SHADER = /* glsl */ `
        * casi el doble de ese mismo color, así que el disco salía **más oscuro
        * que el resplandor que lo rodea**: un agujero en su propio brillo. Al
        * atardecer, con el halo abierto del todo, eso es una mancha parda en
-       * mitad del cielo naranja.
+       * mitad del cielo naranja. Ver \`conElSol\`, que es quien lo suma.
        *
-       * El sol es la fuente: tiene que ser lo más claro del cielo, nunca un
-       * hueco. Sumando, lo es siempre. Y por debajo del horizonte no se
-       * dibuja, porque ahí ya no hay cielo sino mar: el disco se hunde
-       * detrás de la línea del agua.
-       */
-      sky += sunColour * disc;
-      /*
-       * **Salvo pegado al horizonte, donde se enrojece y se apaga.** La luz
-       * del sol que llega rasante ha cruzado cuarenta veces más aire que la
-       * de mediodía, y el aire se queda con el azul, con casi todo el verde
-       * y con buena parte del rojo: lo que queda es la bola naranja que se
-       * mira sin guiños. Sumando no se puede pintar —el resplandor del ocaso
-       * ya tiene el rojo al tope, y sumar solo lo aclara hacia el amarillo—,
-       * así que en los últimos tres grados el disco se va hacia ese naranja
-       * velado. No es el agujero de antes: aquel salía a cualquier altura y
-       * era pardo; esto es un disco más rojo que lo que tiene alrededor y
-       * solo cuando se está poniendo.
+       * Y por debajo del horizonte no se dibuja, porque ahí ya no hay cielo
+       * sino mar: el disco se hunde detrás de la línea del agua.
        *
-       * Se mide sobre el horizonte que se ve y trozo a trozo del disco: el
-       * borde de abajo se enrojece antes que el de arriba, como en cualquier
-       * puesta de sol sobre el mar.
+       * **Pegado al horizonte, se enrojece y se apaga.** La luz del sol que
+       * llega rasante ha cruzado cuarenta veces más aire que la de mediodía,
+       * y el aire se queda con el azul, con casi todo el verde y con buena
+       * parte del rojo. Se mide sobre el horizonte que se ve y trozo a trozo
+       * del disco —los últimos tres grados—: la luz que se suma es más roja y
+       * más floja cuanto más abajo. Y cuando el cielo de alrededor ya está
+       * tan encendido que no deja verla, manda el suelo de \`conElSol\`: el
+       * disco se queda en un dorado más claro que su cielo.
        */
-      float rasante = 1.0 - smoothstep(0.0, 0.05, sobreElHorizonte(dir));
-      sky = mix(sky, vec3(1.0, 0.24, 0.05), disc * rasante);
+      if (disc > 0.0) {
+        float rasante = 1.0 - smoothstep(0.0, 0.05, sobreElHorizonte(dir));
+        sky = conElSol(sky, disc, rasante);
+      }
       // Y a pantalla en sRGB, como el mar de arriba y como todo lo demás.
       sky = sRGBTransferOETF(vec4(sky, 1.0)).rgb;
     }
@@ -413,14 +535,98 @@ const VERTICE_DEL_AGUA = /* glsl */ `
   }
 `;
 
+/*
+ * **Y no se pinta donde hay tierra**, lo diga o no el fondo de profundidad.
+ *
+ * La tierra que queda a pocos metros sobre el agua solo se separaba de ella
+ * por el fondo de profundidad, y de lejos el fondo no llega: el llano del
+ * Chaco, entre uno y diez metros sobre el río, salía cruzado de rayas de
+ * agua que parpadeaban al avanzar. Así que el agua pregunta al mapa de
+ * alturas —el mismo del que salen las mallas— si donde cae hay tierra, y si
+ * la hay no pinta nada. Los mapas los pone el terreno: ver
+ * `Terrain.vestirElAgua`. El punto del mapa se saca del ojo más el rayo, que
+ * ya viene en los ejes del mundo y cuya curva solo le cambia la altura.
+ *
+ * **Y sin `discard`, que está medido.** Con él la tarjeta deja de descartar
+ * por profundidad antes de pintar, y el agua que tapa la isla se pinta
+ * entera para nada: sobre el mar de Gran Canaria, junto con leer los cuatro
+ * nudos de cada cuadro y recorrer las islas vecinas en un bucle, casi dos
+ * milisegundos por cuadro. Así que donde hay tierra el agua sale
+ * **transparente** en vez de tirarse, el mapa se lee una sola vez con el
+ * filtro de la tarjeta y las islas vecinas van escritas en el propio mapa:
+ * un par de décimas de milisegundo.
+ *
+ * El filtro reparte el cuadro a cuatro esquinas y la malla a dos
+ * triángulos, así que por dentro de un cuadro las dos orillas no coinciden
+ * del todo. De lejos da igual —es donde hacía falta— y de cerca manda el
+ * fondo de profundidad, que ahí sí distingue: a menos de un kilómetro solo
+ * se aparta el agua de la tierra que le saca dos metros, y a tres
+ * kilómetros ya de toda.
+ */
+const GLSL_DE_LAS_ORILLAS = /* glsl */ `
+  uniform float conOrillas;
+  uniform sampler2D orillaFina;
+  // La esquina del mapa, en x y z; uno partido por el paso entre nudos; y
+  // cuántos nudos tiene de lado.
+  uniform vec4 orillaFinaSitio;
+  uniform float hayOrillaLejana;
+  uniform sampler2D orillaLejana;
+  uniform vec4 orillaLejanaSitio;
+
+  float orillaEn(sampler2D mapa, vec4 sitio, vec2 p, inout bool dentro) {
+    vec2 g = (p - sitio.xy) * sitio.z;
+    if (any(lessThan(g, vec2(0.0))) || any(greaterThan(g, vec2(sitio.w - 1.0))))
+      return 0.0;
+    dentro = true;
+    return textureLod(mapa, (g + 0.5) / sitio.w, 0.0).r;
+  }
+
+  bool hayTierra(vec2 p, float lejos) {
+    if (conOrillas < 0.5) return false;
+    bool dentro = false;
+    float sobre = orillaEn(orillaFina, orillaFinaSitio, p, dentro);
+    if (!dentro && hayOrillaLejana > 0.5)
+      sobre = orillaEn(orillaLejana, orillaLejanaSitio, p, dentro);
+    return dentro && sobre > 2.0 * (1.0 - smoothstep(1000.0, 3000.0, lejos));
+  }
+`;
+
+/**
+ * Los uniformes de `GLSL_DE_LAS_ORILLAS`, apagados: los llena el terreno
+ * cuando recibe el material. Ver `Terrain.vestirElAgua`.
+ */
+export function uniformesDeOrillas(): {
+  conOrillas: { value: number };
+  orillaFina: { value: Texture | null };
+  orillaFinaSitio: { value: Vector4 };
+  hayOrillaLejana: { value: number };
+  orillaLejana: { value: Texture | null };
+  orillaLejanaSitio: { value: Vector4 };
+} {
+  return {
+    conOrillas: { value: 0 },
+    orillaFina: { value: null },
+    orillaFinaSitio: { value: new Vector4(0, 0, 1, 1) },
+    hayOrillaLejana: { value: 0 },
+    orillaLejana: { value: null },
+    orillaLejanaSitio: { value: new Vector4(0, 0, 1, 1) },
+  };
+}
+
 const FRAGMENTO_DEL_AGUA = /* glsl */ `
   #include <common>
   #include <fog_pars_fragment>
   uniform float opacidad;
   varying vec3 vRayo;
   ${GLSL_COMUN}
+  ${GLSL_DE_LAS_ORILLAS}
 
   void main() {
+    // Donde hay tierra, nada. Ver \`GLSL_DE_LAS_ORILLAS\`: sin \`discard\`.
+    if (hayTierra(cameraPosition.xz + vRayo.xz, length(vRayo))) {
+      gl_FragColor = vec4(0.0);
+      return;
+    }
     vec3 v = normalize(vRayo);
     /*
      * La transparencia solo cerca. Lejos, a través del agua se veía el
@@ -853,6 +1059,63 @@ function texturaDeNube(semilla: number): CanvasTexture {
 }
 
 /**
+ * **Dónde se parte una capa de nubes**, contado desde su centro: las rayas de
+ * la rejilla en cada eje, de la mitad de un paso del dibujo hasta el borde.
+ *
+ * Por la curva de la Tierra la capa no puede ir en una sola lámina: el
+ * vértice baja lo lejano y por dentro del triángulo la tarjeta reparte en
+ * recta, así que una lámina de dos triángulos bajaba entera lo que bajan sus
+ * esquinas —doscientos cincuenta metros a cuarenta kilómetros— y el banco se
+ * metía por debajo del avión. Ver `world/curvatura.ts`.
+ *
+ * Y tampoco en una rejilla fina, que es lo que se probó primero: veinticuatro
+ * por veinticuatro baldosas en cinco capas encarecían entre un catorce y un
+ * veinticuatro por ciento el cuadro entero —según quién lo midiera—, volando
+ * alto sobre el mar con las capas debajo. No por los vértices, que son tres
+ * mil, sino por las aristas: la tarjeta pinta de cuatro en cuatro píxeles, y
+ * cada arista que cruza la pantalla hace pintar dos veces los que caen a
+ * caballo, en cinco capas transparentes una encima de otra.
+ *
+ * Así que la rejilla se parte **donde hace falta y no más**. El banco sigue a
+ * la cámara a saltos de un paso del dibujo —ver `dondeVaElBanco`—, así que el
+ * ojo está siempre a menos de medio paso del centro: el cuadro del medio, de
+ * un paso de lado, es el que tiene debajo, y ahí el error no llega a dos
+ * metros con las capas a setenta. Alrededor, un anillo de cuadros hasta casi
+ * un tercio del radio y otro hasta el borde; de lejos el error crece, pero
+ * visto desde el ojo no llega a la décima de grado —menos de un píxel—, y es
+ * donde la capa ya se está desvaneciendo. Son cinco por cinco cuadros, y
+ * medidos en la misma página cuestan un cuatro por ciento del cuadro más que
+ * la lámina de dos triángulos; la rejilla fina, un catorce más que ellos.
+ */
+export function cortesDeLasNubes(lado: number, repite: number): number[] {
+  const medio = lado / 2;
+  return [lado / repite / 2, medio * 0.3, medio];
+}
+
+/**
+ * Una capa de nubes: un cuadrado de `lado`, tumbado, partido según
+ * `cortesDeLasNubes`. Las coordenadas de textura van con la posición, como en
+ * un plano de serie, así que el dibujo no se entera de dónde están las rayas.
+ */
+export function laminaDeNubes(lado: number, repite: number): PlaneGeometry {
+  const cortes = cortesDeLasNubes(lado, repite);
+  const rayas = [...cortes.map((c) => -c).reverse(), ...cortes];
+  const n = rayas.length - 1;
+  const geo = new PlaneGeometry(lado, lado, n, n);
+  const pos = geo.getAttribute("position");
+  const uv = geo.getAttribute("uv");
+  for (let i = 0; i < pos.count; i++) {
+    const x = rayas[Math.round((pos.getX(i) / lado + 0.5) * n)]!;
+    const y = rayas[Math.round((pos.getY(i) / lado + 0.5) * n)]!;
+    pos.setXY(i, x, y);
+    uv.setXY(i, x / lado + 0.5, y / lado + 0.5);
+  }
+  geo.rotateX(-Math.PI / 2);
+  geo.computeBoundingSphere();
+  return geo;
+}
+
+/**
  * Las nubes: cinco láminas apiladas, no una.
  *
  * Con una sola lámina, atravesarla es cruzar una hoja de papel infinitamente
@@ -880,20 +1143,8 @@ function nubes(escenario: Scenario): Group {
    * veces.
    */
   const repite = 12;
-  /*
-   * **Y en baldosas, no en una sola lámina**, por la curva de la Tierra: el
-   * vértice baja lo lejano y por dentro del triángulo la tarjeta reparte en
-   * recta, así que una lámina de dos triángulos bajaba entera lo que bajan
-   * sus esquinas —doscientos cincuenta metros a cuarenta kilómetros— y el
-   * banco de nubes se metía por debajo del avión. Con veinticuatro por lado
-   * cada baldosa mide unos tres kilómetros y el error se queda por debajo
-   * del medio metro, con las capas a setenta una de otra. Ver
-   * `world/curvatura.ts`.
-   */
-  const baldosas = 24;
   for (let i = 0; i < capas; i++) {
-    const geo = new PlaneGeometry(lado, lado, baldosas, baldosas);
-    geo.rotateX(-Math.PI / 2);
+    const geo = laminaDeNubes(lado, repite);
     const textura = texturaDeNube(0xc10d + i * 977);
     textura.repeat.set(repite, repite);
     textura.offset.set(i * 0.17, i * 0.31);
@@ -1014,6 +1265,7 @@ export function createSky(scenario: Scenario): SkyRig {
       ...UniformsUtils.clone(UniformsLib.fog),
       // La transparencia de siempre: deja ver el fondo junto a la costa.
       opacidad: { value: 0.86 },
+      ...uniformesDeOrillas(),
     },
     vertexShader: VERTICE_DEL_AGUA,
     fragmentShader: FRAGMENTO_DEL_AGUA,

@@ -9,9 +9,16 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { Mesh } from "three";
-import { Terrain } from "./terrain";
-import { CHACO, SCENARIOS, VALLE_CORDILLERA } from "./scenarios";
+import { ShaderMaterial, Vector4, type Mesh } from "three";
+import { nudoDeOrillas, SIN_ORILLA, sobreElAguaEn, Terrain } from "./terrain";
+import {
+  CHACO,
+  SCENARIOS,
+  VALLE_CORDILLERA,
+  vecesLejosDe,
+  type Scenario,
+} from "./scenarios";
+import { uniformesDeOrillas } from "./sky";
 
 describe("terreno del Valle de la Cordillera", () => {
   const terrain = new Terrain(VALLE_CORDILLERA);
@@ -277,5 +284,102 @@ describe("el mar abierto del mapa fino", () => {
         if (t.sampleHeight((i / 400 - 0.5) * lado, (j / 400 - 0.5) * lado) < nivel)
           bajo = true;
     expect(bajo).toBe(true);
+  });
+});
+
+describe("las orillas que mira el agua", () => {
+  /*
+   * El agua pregunta al mapa si donde cae hay tierra, porque de lejos el
+   * fondo de profundidad no separa la lámina de un llano que le queda a
+   * pocos metros por encima: en Asunción, el Chaco salía cruzado de rayas de
+   * agua que parpadeaban. Ver `Terrain.vestirElAgua`.
+   */
+  const nivel = VALLE_CORDILLERA.waterLevel;
+
+  it("dice la misma cota sobre el agua que el suelo, en cualquier punto", () => {
+    const t = new Terrain(VALLE_CORDILLERA);
+    const { fina } = t.mapasDeOrillas();
+    const lado = VALLE_CORDILLERA.size;
+    let tierra = 0;
+    let agua = 0;
+    for (let i = 0; i < 40; i++)
+      for (let j = 0; j < 40; j++) {
+        const x = ((i + 0.37) / 40 - 0.5) * lado * 0.98;
+        const z = ((j + 0.61) / 40 - 0.5) * lado * 0.98;
+        const sobre = sobreElAguaEn(fina, x, z)!;
+        const suelo = t.sampleHeight(x, z) - nivel;
+        // En medio flotante: al milímetro cerca del cero, que es donde se
+        // decide la orilla, y a una parte en mil lejos de él.
+        expect(Math.abs(sobre - suelo)).toBeLessThan(
+          0.002 + Math.abs(suelo) * 0.001,
+        );
+        if (Math.abs(suelo) > 0.01) expect(Math.sign(sobre)).toBe(Math.sign(suelo));
+        if (sobre > 0) tierra++;
+        else agua++;
+      }
+    // Que la prueba no pase en vacío: el valle tiene río.
+    expect(tierra).toBeGreaterThan(0);
+    expect(agua).toBeGreaterThan(0);
+  });
+
+  it("y lo lee de lo que se dibuja, no del mapa", () => {
+    // Moldear el mapa después de mallar no mueve la orilla que se ve.
+    const t = new Terrain(VALLE_CORDILLERA);
+    const datos = (): number[] =>
+      Array.from(t.mapasDeOrillas().fina.textura.image.data as Uint16Array);
+    const antes = datos();
+    t.subirTodo(5);
+    expect(datos()).toEqual(antes);
+  });
+
+  /** Un escenario con horizonte: una rampa que cruza el agua de oeste a este. */
+  function conHorizonte(): Scenario {
+    const resolucion = 65;
+    const datos = new Int16Array(resolucion * resolucion);
+    for (let f = 0; f < resolucion; f++)
+      for (let c = 0; c < resolucion; c++)
+        datos[f * resolucion + c] = nivel - 40 + c * 2;
+    return { ...VALLE_CORDILLERA, relieveLejano: { datos, resolucion } };
+  }
+
+  it("con el mar del horizonte hundido, como su malla", () => {
+    const esc = conHorizonte();
+    const t = new Terrain(esc);
+    const { lejana } = t.mapasDeOrillas();
+    expect(lejana).not.toBeNull();
+    const lejos = esc.relieveLejano!;
+    for (let c = 0; c < lejos.resolucion; c++) {
+      const h = lejos.datos[c]!;
+      expect(nudoDeOrillas(lejana!, c)).toBe(h <= nivel ? -30 : h - nivel);
+    }
+  });
+
+  it("y sin mirar sobre el mapa fino de una isla vecina", () => {
+    const esc = conHorizonte();
+    const t = new Terrain(esc);
+    const tamano = esc.size * vecesLejosDe(esc);
+    // Un vecino en la parte alta de la rampa, donde todo es tierra.
+    const vecino = { x: tamano * 0.35, z: 0, medio: tamano * 0.08 };
+    t.recortarElHorizonte([vecino]);
+    const { lejana } = t.mapasDeOrillas();
+    expect(sobreElAguaEn(lejana!, vecino.x, vecino.z)).toBe(SIN_ORILLA);
+    // Y fuera de él, lo de siempre.
+    expect(sobreElAguaEn(lejana!, vecino.x, tamano * 0.3)!).toBeGreaterThan(0);
+  });
+
+  it("y se los pone al agua en cuanto recibe su material", () => {
+    const t = new Terrain(VALLE_CORDILLERA);
+    const u = uniformesDeOrillas();
+    t.ponerMaterialDelAgua(new ShaderMaterial({ uniforms: u }));
+    expect(u.conOrillas.value).toBe(1);
+    expect(u.orillaFina.value).not.toBeNull();
+    const n = VALLE_CORDILLERA.segments + 1;
+    const paso = VALLE_CORDILLERA.size / VALLE_CORDILLERA.segments;
+    const s = u.orillaFinaSitio.value as Vector4;
+    expect(s.x).toBeCloseTo(-VALLE_CORDILLERA.size / 2, 6);
+    expect(s.z).toBeCloseTo(1 / paso, 9);
+    expect(s.w).toBe(n);
+    // Sin horizonte, no hay mapa lejano que mirar.
+    expect(u.hayOrillaLejana.value).toBe(0);
   });
 });
