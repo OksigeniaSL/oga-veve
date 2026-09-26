@@ -341,20 +341,30 @@ export function partirLoLargo(
 
 /**
  * Cuánto se puede equivocar la curva **vista de lejos**, en radianes: lo que
- * baja de más el centro de un triángulo del disco de agua, dividido por lo
+ * baja de más un punto del disco de agua entre vértices, dividido por lo
  * lejos que está. Una diezmilésima es una décima de píxel en una pantalla de
  * novecientos puntos de alto y sesenta y dos grados de campo.
  */
 export const TOLERANCIA_DE_LA_CURVA = 1e-4;
 
 /**
- * Cuánto crece cada anillo del disco de agua cerca del ojo: un cuarto de su
+ * Cuánto crece cada anillo del disco de agua cerca del ojo: dos quintos de su
  * radio. Ver `pasoDeAnillo`.
  */
-export const CRECE_CERCA = 0.25;
+export const CRECE_CERCA = 0.4;
 
 /** El primer anillo, m. Dentro, un abanico de triángulos alrededor del ojo. */
 export const PRIMER_ANILLO = 50;
+
+/**
+ * **Cuántos gajos lleva el disco según lo lejos**: `[hasta, gajos]`, del ojo
+ * hacia fuera. Ver `discoDeAgua`.
+ */
+export const GAJOS_DEL_AGUA: readonly (readonly [number, number])[] = [
+  [10_000, 16],
+  [80_000, 32],
+  [Number.POSITIVE_INFINITY, 64],
+];
 
 /**
  * Cuánto más lejos va el anillo siguiente al que está a `r` metros del ojo.
@@ -365,17 +375,25 @@ export const PRIMER_ANILLO = 50;
  * `s = √(8R·τ·r)` el error se queda exactamente en la tolerancia `τ`.
  *
  * Cerca eso no basta, porque cerca no se mira el ángulo sino la orilla: el
- * disco va pegado al ojo y su error se mueve con él, y diez centímetros a un
- * kilómetro son cinco metros de raya del agua respirando sobre una playa
- * llana. Así que manda el más corto de los dos pasos, y hasta los ochenta
- * kilómetros eso es crecer un cuarto del radio: a un kilómetro el error es
- * de un milímetro, a cinco de tres centímetros.
+ * disco va pegado al ojo y su error se mueve con él, y la raya del agua
+ * respira sobre una playa llana lo que ese error partido por la pendiente de
+ * la playa. Así que manda el más corto de los dos pasos, y hasta los veinte
+ * kilómetros eso es crecer dos quintos del radio: a un kilómetro el error es
+ * de cuatro milímetros, a cinco de una decena de centímetros, y la orilla de
+ * una playa del dos por ciento vista desde trescientos metros se mueve menos
+ * de una décima de píxel. Ver la prueba en `curvatura.test.ts`.
  */
 export function pasoDeAnillo(r: number): number {
   return Math.min(
     r * CRECE_CERCA,
     Math.sqrt(8 * RADIO_DE_LA_TIERRA * TOLERANCIA_DE_LA_CURVA * r),
   );
+}
+
+/** Los gajos del anillo que está a `r` metros del ojo. */
+function gajosA(r: number): number {
+  for (const [hasta, gajos] of GAJOS_DEL_AGUA) if (r <= hasta) return gajos;
+  return GAJOS_DEL_AGUA[GAJOS_DEL_AGUA.length - 1]![1];
 }
 
 /**
@@ -393,25 +411,35 @@ export function pasoDeAnillo(r: number): number {
  * `Terrain.llevarElAguaA`— y sus anillos crecen con la distancia, cada uno lo
  * que diga `pasoDeAnillo`.
  *
- * **Y con los triángulos justos, que el agua no es barata.** La primera
- * versión crecía un diez por ciento por anillo con noventa y seis gajos:
- * diecinueve mil quinientos triángulos, y de lejos los anillos se apretaban
- * junto al horizonte en astillas de menos de un píxel, cada una repitiendo el
- * sombreado del agua —el reflejo del cielo entero— en los mismos píxeles.
- * Con cuarenta y ocho gajos y anillos que crecen lo que la tolerancia deja
- * son unos cuatro mil, y el error visto desde el ojo, contando la cuerda
- * entre dos gajos, se queda por debajo de dos diezmilésimas: una quinta de
- * píxel. Medido en la GPU con la vista de Gran Canaria a Tenerife, el disco
- * nuevo cuesta un tres por ciento del cuadro más que un cuadrado de dos
- * triángulos, y el de diecinueve mil, cerca del doble de eso.
+ * **Y con los triángulos justos, que el agua no es barata.** Cada arista que
+ * cruza la pantalla hace a la tarjeta pintar dos veces los píxeles que caen a
+ * caballo —pinta de cuatro en cuatro—, y el agua es de lo más caro que se
+ * pinta: medido en la GPU del portátil, un disco de cuatro mil triángulos,
+ * con cuarenta y ocho gajos de punta a punta, costaba un cuatro por ciento
+ * del cuadro más que un cuadrado de dos. Pero la cuerda entre dos gajos, que
+ * es lo que obliga a tener muchos, se equivoca con el cuadrado de la
+ * distancia: cerca sobran, y lejos hacen falta. Así que los gajos se doblan
+ * hacia fuera —ver `GAJOS_DEL_AGUA`—, cada anillo que dobla se cose al de
+ * dentro sin dejar vértices en mitad de un lado, y el disco se queda en unos
+ * dos mil triángulos con el error de lejos por debajo del de antes: menos de
+ * una quinta de píxel visto desde el ojo, y menos de veinticinco metros hasta
+ * los ciento ochenta kilómetros, que es lo que hace falta para que el fondo
+ * del mapa lejano, hundido treinta bajo el agua, no asome. Aun así cuesta un
+ * tres y medio por ciento más que el cuadrado: es lo que vale el agua curva,
+ * y está pagado con lo que dejó de gastar la cúpula —ver el ADR 0009—.
  */
-export function discoDeAgua(radio: number, gajos = 48): BufferGeometry {
+export function discoDeAgua(radio: number): BufferGeometry {
   const radios: number[] = [];
   for (let r = PRIMER_ANILLO; r < radio; r += pasoDeAnillo(r)) radios.push(r);
   radios.push(radio);
 
   const posiciones: number[] = [0, 0, 0];
+  const primero: number[] = [];
+  const cuantos: number[] = [];
   for (const r of radios) {
+    const gajos = gajosA(r);
+    primero.push(posiciones.length / 3);
+    cuantos.push(gajos);
     for (let g = 0; g < gajos; g++) {
       const a = (g / gajos) * Math.PI * 2;
       // x = r·cos, z = −r·sin: visto desde arriba, con el norte (−z) hacia
@@ -421,17 +449,30 @@ export function discoDeAgua(radio: number, gajos = 48): BufferGeometry {
     }
   }
   const indices: number[] = [];
-  for (let g = 0; g < gajos; g++) indices.push(0, 1 + g, 1 + ((g + 1) % gajos));
+  const g0 = cuantos[0]!;
+  for (let g = 0; g < g0; g++)
+    indices.push(0, primero[0]! + g, primero[0]! + ((g + 1) % g0));
   for (let anillo = 0; anillo + 1 < radios.length; anillo++) {
-    const dentro = 1 + anillo * gajos;
-    const fuera = dentro + gajos;
-    for (let g = 0; g < gajos; g++) {
-      const g2 = (g + 1) % gajos;
+    const dentro = primero[anillo]!;
+    const fuera = primero[anillo + 1]!;
+    const gd = cuantos[anillo]!;
+    const gf = cuantos[anillo + 1]!;
+    for (let g = 0; g < gd; g++) {
       const a = dentro + g;
-      const b = dentro + g2;
-      const c = fuera + g;
-      const d = fuera + g2;
-      indices.push(a, c, d, a, d, b);
+      const b = dentro + ((g + 1) % gd);
+      if (gf === gd) {
+        const c = fuera + g;
+        const d = fuera + ((g + 1) % gf);
+        indices.push(a, c, d, a, d, b);
+      } else {
+        // El de fuera tiene el doble: cada lado de dentro se cose a dos de
+        // fuera con tres triángulos, y el vértice nuevo cae en el anillo de
+        // fuera, no en un lado de dentro, así que no queda grieta.
+        const c = fuera + 2 * g;
+        const m = fuera + 2 * g + 1;
+        const e = fuera + ((2 * g + 2) % gf);
+        indices.push(a, c, m, a, m, b, b, m, e);
+      }
     }
   }
   const geo = new BufferGeometry();

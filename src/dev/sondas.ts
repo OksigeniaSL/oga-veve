@@ -836,6 +836,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Qué está cayendo, y cuánta niebla hay. Para mirar la lluvia. */
     lloviendo: () => juego.lloviendo,
     nieblaAhora: () => juego.sky.fog.density,
+    /**
+     * Pone una hora sin recargar, como el panel del tiempo. Para mirar un
+     * ocaso minuto a minuto desde el mismo sitio: recargando, cada hora es
+     * otra página con otro arranque, y lo que se compara ya no es solo el sol.
+     */
+    ponerHora: (hora: number) => juego.ponerHora(hora),
     ponerLluvia: (clase: string, fuerza = 0.7) =>
       juego.ponerLluvia(clase as Lluvia, fuerza),
     /**

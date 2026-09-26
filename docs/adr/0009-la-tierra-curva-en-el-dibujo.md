@@ -43,26 +43,50 @@ ventanilla, y la regla 4 no deja enseñarla mal.
 - **La cúpula parte cielo y mar en −δ**, con la misma parábola, y el mar que
   pinta por debajo es la continuación exacta del agua curvada. El sol se
   recorta ahí, mide un grado y medio —el de verdad mide medio; este se ve en un
-  teléfono— y en los últimos grados sobre el horizonte se enrojece y se apaga.
+  teléfono— y en los últimos tres grados sobre el horizonte **cruza el aire
+  rasante**: se enrojece y se apaga, el borde de abajo más que el de arriba.
   **Pero nunca por debajo del cielo que tiene detrás**: su luz se suma, y si
-  al atardecer lo que se suma no se ve —el resplandor ya tiene el rojo al
-  tope—, se aclara hasta salir al menos un veinte por ciento más claro que su
-  cielo. Un disco que tiraba hacia un naranja fijo salía con entre la mitad y
-  tres cuartos de la luminancia del cielo de al lado: el mismo hueco por el
-  que ya hubo queja. Ver `conElSol` en `sky.ts`.
+  lo que se suma no se ve, se aclara hasta salir al menos un veinte por ciento
+  más claro que su cielo. Un disco que tiraba hacia un naranja fijo salía con
+  entre la mitad y tres cuartos de la luminancia del cielo de al lado: el
+  mismo hueco por el que ya hubo queja. Ver `conElSol` en `sky.ts`.
+- **Y el halo cruza el mismo aire que el disco.** Es la misma luz del sol,
+  desviada un poco por el camino. Con el halo sin enrojecer, pegado al mar el
+  cielo de alrededor del sol era un amarillo pálido con el rojo al tope, y
+  para salir más claro que él el disco no tenía más remedio que amarillear:
+  del tono del cielo, y con el borde de abajo más blanco que el de arriba, al
+  revés que el sol de verdad. Con el halo enrojecido el sol se hunde en un
+  horizonte naranja, y el disco pasa del crema al naranja al acercarse a él.
+  Ver `aireRasante`.
+- **El mar refleja con la normal de la Tierra redonda.** El agua que está a
+  `d` metros mira a su cenit, inclinado `d/R` respecto al del ojo. Con la
+  normal plana un sol por debajo de la horizontal no se reflejaba en ningún
+  sitio y el camino del sol se apagaba a la hora del mundo plano, con el disco
+  entero todavía sobre el mar; con la curva lo refleja el agua de junto al
+  horizonte hasta que se hunde el último trozo de disco. Y la estela lleva el
+  color con que se ve el sol pegado al horizonte, no su luz enrojecida a
+  secas, que sobre un mar de atardecer con el rojo al tope no se veía.
 - **El agua es un disco de anillos pegado al ojo**, y no un cuadrado de dos
   triángulos: la curva se calcula en los vértices y la tarjeta la reparte en
   recta por dentro de cada triángulo, y un triángulo de cuatrocientos
   kilómetros bajaba entero lo que bajan sus esquinas. Los anillos crecen lo
-  justo para que el error no llegue a una quinta de píxel visto desde el ojo
-  ni a unos centímetros en la orilla de al lado: unos cuatro mil triángulos.
+  justo para que el error no llegue a una quinta de píxel visto desde el ojo,
+  la orilla de una playa no respire ni una décima de píxel y, hasta los ciento
+  ochenta kilómetros, el disco no baje los treinta metros a los que está
+  hundido el fondo del mapa lejano. Y los gajos se doblan hacia fuera —la
+  cuerda entre dos gajos se equivoca con el cuadrado de la distancia: cerca
+  sobran—: unos dos mil triángulos.
 - **Nada con triángulos de más de 250 m donde se apoye algo**: el error de
   repartir la curva en recta es `s²/8R`, que con 250 m es un milímetro y con
   los dos kilómetros de una pista de OpenStreetMap eran ocho centímetros bajo
   las ruedas. `partirLoLargo` parte el pavimento y la pintura de los
-  aeródromos, y la pista de juguete va en tramos. Las nubes, en cinco por
-  cinco cuadros, finos debajo del ojo y anchos lejos: menos de dos metros de
-  error donde se atraviesan y menos de un píxel donde se desvanecen.
+  aeródromos, y la pista de juguete va en tramos.
+- **Las nubes no se curvan**, y son lo único. Una capa de dos triángulos
+  curvada bajaba entera, y partida en cuadros costaba un dos y medio por
+  ciento del cuadro —cinco capas transparentes, y cada arista hace pintar dos
+  veces los píxeles que caen a caballo—. Donde se atraviesan la curva no
+  existe, y donde se notaría la capa ya se está desvaneciendo: a mitad del
+  desvanecido, poco más de una décima de grado. Ver `materialDeNube`.
 - **El agua no se pinta donde el mapa dice tierra.** El fondo de profundidad
   —veinticuatro bits con el plano cercano a sesenta centímetros— no separa de
   lejos la lámina de un llano que le queda a pocos metros por encima, y el
@@ -83,16 +107,33 @@ del dibujo son el mismo donde se toca el suelo.
 - **Se puede apagar para comparar**: `?curvatura=0` en la dirección, o
   `CURVAR_EL_DIBUJO` en el código. Con ella apagada la cúpula y el agua
   vuelven exactamente a las cuentas planas.
-- **Cuesta poco y se ha medido**, en la GPU del portátil, con la vista de
-  Gran Canaria a Tenerife a ocho mil pies. La cuenta del vértice, un tres por
-  ciento; el disco de agua frente a un cuadrado, otro tres; las nubes en
-  cinco por cinco cuadros frente a una lámina, otro tanto; y mirar el mapa
-  de orillas, menos. Lo que costaba de verdad era la geometría fina de la
-  primera versión: diecinueve mil quinientos triángulos de agua y nubes de
-  veinticuatro por veinticuatro. Y lo que habría costado es tirar el
-  fragmento del agua con `discard` para no pintarla sobre tierra: le quita a
-  la tarjeta el descarte por profundidad y le hace pintar el agua que tapa la
-  isla, casi dos milisegundos medidos. Por eso sale transparente.
+- **Cuesta lo que se ha medido, y se ha pagado con otra cosa.** Medido en la
+  GPU del portátil (Iris Xe, ANGLE sobre GL) con consultas de tiempo de la
+  tarjeta, a 1600×900, en la escena de la queja —sobre el mar de Gran Canaria
+  a ocho mil pies, mirando a Tenerife— y **dentro de una misma página**,
+  conmutando cada pieza tanda a tanda en orden al azar: entre dos páginas
+  iguales hay un cinco o un diez por ciento de diferencia que no es de nadie.
+  - Lo de la curva cuesta **entre un cuatro y un cinco por ciento** del cuadro
+    frente al mundo plano con su agua de dos triángulos. Lo pagan el disco de
+    agua —cada arista hace pintar dos veces los píxeles de agua que caen a
+    caballo, y el agua es de lo más caro que se pinta— y el mapa de orillas,
+    unos tres puntos cada uno por separado, que no se suman. La cuenta del
+    vértice no se mide.
+  - La versión anterior costaba entre un once y un trece por ciento más que
+    `main`, casi todo en el agua y las nubes: cuatro mil triángulos de agua y
+    las capas de nubes en cuadros.
+  - **Y el cielo pagaba de más desde antes de esto.** La cúpula se pintaba la
+    primera y entera, con su mar de debajo del horizonte —reflejo del cielo y
+    bruma, dos veces el cielo por píxel— calculado también donde después lo
+    tapaba el agua opaca: un siete por ciento del cuadro que no se veía. Y
+    ella y el agua mezclaban la bruma también donde no movía el color: entre
+    un dos y un cinco más. Y se calculaba debajo de la cabina, del avión y de
+    las islas. Ahora se pinta la última de lo opaco y en el fondo, no calcula
+    el mar que el agua tapa, y la bruma solo se mezcla donde se nota.
+  - En total, frente a `main` reproducido en la misma página —sus programas,
+    su agua de dos triángulos, su cúpula la primera—: **un uno por ciento más
+    barato** en la escena de la queja, **un dieciséis** en la cabina, que tapa
+    media pantalla, y **un seis** en Asunción, a ocho mil pies y en el suelo.
 - **Quien añada geometría grande tiene que partirla**: un plano de dos
   triángulos a ras de suelo se hunde por el medio. La regla y la herramienta
   están en `curvatura.ts`, y las pruebas de `curvatura.test.ts` dicen cuánto.
@@ -125,6 +166,12 @@ del dibujo son el mismo donde se toca el suelo.
 - **Mover la niebla para esconder la franja.** Es lo que se venía haciendo, y
   una niebla que se come la isla de enfrente para tapar un error es otra
   mentira.
+- **Una pasada de profundidad del agua antes de la cúpula**, para que la
+  tarjeta descartara el mar de la cúpula tapado por ella. Lo descarta, pero
+  pintar el disco solo en profundidad cuesta casi lo mismo que una pasada
+  entera por la pantalla: medido, un diez por ciento, para ahorrar catorce.
+  Decidirlo en la propia cúpula, que ya sabe a qué distancia toca el agua cada
+  rayo, no cuesta nada.
 - **Más precisión de profundidad en vez del mapa de orillas**, con el fondo
   logarítmico de three.js. Resolvería el empate del agua con el llano a
   cualquier distancia, pero escribe la profundidad desde el fragmento en

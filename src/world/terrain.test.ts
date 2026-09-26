@@ -382,4 +382,26 @@ describe("las orillas que mira el agua", () => {
     // Sin horizonte, no hay mapa lejano que mirar.
     expect(u.hayOrillaLejana.value).toBe(0);
   });
+
+  it("y le dice a la cúpula hasta dónde tapa, sin pasar del plano lejano", () => {
+    /*
+     * La cúpula no calcula el mar que el agua tapa del todo. Para eso tiene
+     * que saber hasta dónde llega el disco, y no más allá de lo que se
+     * dibuja: el agua que queda detrás del plano lejano no se pinta, y ahí
+     * el mar tiene que seguir poniéndolo la cúpula.
+     */
+    const t = new Terrain(VALLE_CORDILLERA);
+    const u = { ...uniformesDeOrillas(), radioDelAgua: { value: 0 } };
+    t.ponerMaterialDelAgua(new ShaderMaterial({ uniforms: u }));
+    const disco = (t.group.getObjectByName("agua") as Mesh).geometry
+      .boundingSphere!.radius;
+    expect(disco).toBeGreaterThan(VALLE_CORDILLERA.size / 2);
+    expect(u.radioDelAgua.value).toBeCloseTo(disco, 3);
+    t.ponerMaterialDelAgua(new ShaderMaterial({ uniforms: u }), 1000);
+    expect(u.radioDelAgua.value).toBe(1000);
+    // Y con el agua apagada —el mundo de fotografías—, no tapa nada.
+    (t.group.getObjectByName("agua") as Mesh).visible = false;
+    t.llevarElAguaA(0, 0);
+    expect(u.radioDelAgua.value).toBe(0);
+  });
 });

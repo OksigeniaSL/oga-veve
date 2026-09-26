@@ -931,14 +931,28 @@ export class Terrain {
    * de cielos; el juego le pasa el del cielo en cuanto lo tiene, que es el
    * que refleja el atardecer y casa con el mar de la cúpula. Ver
    * `SkyRig.materialDelAgua`.
+   *
+   * `alcance` es hasta dónde se dibuja —el plano lejano de la cámara—: el
+   * agua que queda más allá no se pinta, y ahí la cúpula tiene que seguir
+   * pintando mar. Ver `radioDelAgua` en `world/sky.ts`.
    */
-  ponerMaterialDelAgua(material: Material): void {
+  ponerMaterialDelAgua(
+    material: Material,
+    alcance: number = Number.POSITIVE_INFINITY,
+  ): void {
     const agua = this.group.getObjectByName("agua") as Mesh | undefined;
     if (!agua) return;
     (agua.material as Material).dispose();
     agua.material = material;
+    this.alcanceDelAgua = alcance;
     this.vestirElAgua();
   }
+
+  /** Hasta dónde se dibuja el agua. Ver `ponerMaterialDelAgua`. */
+  private alcanceDelAgua = Number.POSITIVE_INFINITY;
+
+  /** Hasta dónde tapa el agua a la cúpula, m. Ver `vestirElAgua`. */
+  private radioQueTapa = 0;
 
   /**
    * **Dónde hay tierra, para que el agua no se pinte encima.**
@@ -975,6 +989,15 @@ export class Terrain {
       ?.material;
     if (!(material instanceof ShaderMaterial)) return;
     const u = material.uniforms;
+    /*
+     * Y hasta dónde tapa el agua, que la cúpula no calcula el mar que queda
+     * detrás de ella. Lo que llega el disco, y no más allá del plano lejano:
+     * lo que queda fuera no se pinta.
+     */
+    const disco = this.agua?.geometry.boundingSphere?.radius ?? 0;
+    this.radioQueTapa = Math.min(disco, this.alcanceDelAgua);
+    if (u.radioDelAgua)
+      u.radioDelAgua.value = this.agua?.visible === false ? 0 : this.radioQueTapa;
     if (!u.orillaFina) return;
     for (const m of [this.orillas?.fina, this.orillas?.lejana])
       m?.textura.dispose();
@@ -1637,6 +1660,13 @@ export class Terrain {
     agua.position.x = x;
     agua.position.z = z;
     agua.updateMatrix();
+    /*
+     * Y si el agua no se ve —con el mundo de fotografías se apaga—, no tapa
+     * nada: la cúpula vuelve a pintar su mar entero. Se mira cada fotograma
+     * porque quien la apaga no pasa por aquí.
+     */
+    const u = (agua.material as Partial<ShaderMaterial>).uniforms?.radioDelAgua;
+    if (u) u.value = agua.visible ? this.radioQueTapa : 0;
   }
 
   private buildRunway(): Group {

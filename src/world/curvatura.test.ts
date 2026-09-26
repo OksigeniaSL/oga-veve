@@ -29,6 +29,7 @@ import {
   curvaturaEncendida,
   discoDeAgua,
   distanciaAlHorizonte,
+  GAJOS_DEL_AGUA,
   factorDeCurvatura,
   instalarCurvatura,
   LADO_SIN_CURVA,
@@ -240,6 +241,27 @@ describe("el disco de agua", () => {
   const disco = discoDeAgua(radio);
   const tris = triangulos(disco);
 
+  /**
+   * Lo que baja de más el disco en cada punto de sus triángulos: la tarjeta
+   * reparte en recta la caída calculada en los vértices, y una parábola
+   * partida en rectas se queda por debajo de sí misma. Se muestrea cada
+   * triángulo por dentro, como lo pinta la tarjeta.
+   */
+  function* errores(): Generator<{ d: number; error: number }> {
+    for (const t of tris) {
+      const cs = t.map((v) => caida(Math.hypot(v.x, v.z)));
+      for (let a = 0; a <= 8; a++)
+        for (let b = 0; a + b <= 8; b++) {
+          const w = [a / 8, b / 8, 1 - (a + b) / 8];
+          const x = w[0]! * t[0]!.x + w[1]! * t[1]!.x + w[2]! * t[2]!.x;
+          const z = w[0]! * t[0]!.z + w[1]! * t[1]!.z + w[2]! * t[2]!.z;
+          const d = Math.hypot(x, z);
+          const repartida = w[0]! * cs[0]! + w[1]! * cs[1]! + w[2]! * cs[2]!;
+          yield { d, error: repartida - caida(d) };
+        }
+    }
+  }
+
   it("llega al radio pedido y todas sus caras miran al cielo", () => {
     let lejos = 0;
     for (const t of tris) {
@@ -249,39 +271,95 @@ describe("el disco de agua", () => {
     expect(lejos).toBeCloseTo(radio, 0);
   });
 
-  it("la curva no se nota entre sus vértices: centímetros cerca, una quinta de píxel lejos", () => {
+  it("sin grietas donde los gajos se doblan: cada lado de dentro lo comparten dos", () => {
     /*
-     * Entre vértices la tarjeta reparte en recta, y el error de repartir la
-     * parábola en un triángulo de lado `s` es `s²/8R`. Cerca del ojo —el
-     * disco va pegado a él— manda la orilla de al lado, que respira al volar
-     * si ese error se mueve: centímetros. Lejos manda cómo se ve: el error
-     * partido por la distancia, que el paso entre anillos deja en una
-     * diezmilésima de radián —una décima de píxel en una pantalla de
-     * novecientos puntos—, y la diagonal de cada cuadro, que suma la cuerda
-     * entre dos gajos, en menos del doble: una quinta de píxel.
+     * Hacia fuera cada anillo puede llevar el doble de gajos que el de
+     * dentro. Si el vértice nuevo cayera en mitad de un lado ajeno quedaría
+     * una rendija por la que asoma la cúpula; cosido con tres triángulos por
+     * lado, todos los lados de dentro los comparten dos triángulos.
      */
-    for (const t of tris) {
-      const s = ladoMasLargo(t);
-      const error = (s * s) / (8 * RADIO_DE_LA_TIERRA);
-      const cerca = Math.min(...t.map((v) => Math.hypot(v.x, v.z)));
-      if (cerca < 1000) expect(error).toBeLessThan(0.002);
-      else if (cerca < 5000) expect(error).toBeLessThan(0.05);
-      if (cerca >= 1000)
-        expect(error / cerca).toBeLessThan(2 * TOLERANCIA_DE_LA_CURVA);
+    const clave = (a: Vector3, b: Vector3): string =>
+      [a, b]
+        .map((v) => `${v.x.toFixed(3)},${v.z.toFixed(3)}`)
+        .sort()
+        .join("|");
+    const cuenta = new Map<string, number>();
+    for (const t of tris)
+      for (let k = 0; k < 3; k++) {
+        const c = clave(t[k]!, t[(k + 1) % 3]!);
+        cuenta.set(c, (cuenta.get(c) ?? 0) + 1);
+      }
+    for (const [c, n] of cuenta) {
+      const [a, b] = c.split("|").map((p) => p.split(",").map(Number)) as [
+        number[],
+        number[],
+      ];
+      const enElBorde =
+        Math.abs(Math.hypot(a[0]!, a[1]!) - radio) < 1 &&
+        Math.abs(Math.hypot(b[0]!, b[1]!) - radio) < 1;
+      expect(n, c).toBe(enElBorde ? 1 : 2);
     }
+    // Y dobla de verdad: más gajos lejos que cerca.
+    expect(GAJOS_DEL_AGUA[0]![1]).toBeLessThan(
+      GAJOS_DEL_AGUA[GAJOS_DEL_AGUA.length - 1]![1],
+    );
   });
 
-  it("y no pesa: menos de cinco mil triángulos", () => {
+  it("la orilla cercana no respira: menos de una décima de píxel", () => {
+    /*
+     * El disco va pegado al ojo, y su error se mueve con él: la raya del
+     * agua sobre una playa llana se corre lo que ese error partido por la
+     * pendiente de la playa. Una playa del dos por ciento vista desde
+     * trescientos metros es el peor caso de una aproximación, y ahí la
+     * orilla se mueve menos de una décima de píxel —una diezmilésima de
+     * radián en una pantalla de novecientos puntos—.
+     */
+    const ojo = 300;
+    const pendiente = 0.02;
+    let peor = 0;
+    for (const { d, error } of errores()) {
+      if (d > 6000) continue;
+      const orilla = error / pendiente;
+      peor = Math.max(peor, (ojo * orilla) / (d * d + ojo * ojo));
+    }
+    expect(peor).toBeLessThan(1e-4);
+  });
+
+  it("y lejos no se nota: una quinta de píxel, y menos de lo que está hundido el fondo", () => {
+    /*
+     * Lejos manda cómo se ve: el error partido por la distancia, que el paso
+     * entre anillos deja en una diezmilésima de radián —una décima de
+     * píxel—, y con la cuerda entre dos gajos, en menos del doble.
+     *
+     * Y hay otra cuenta: el mar del mapa lejano está hundido treinta metros
+     * bajo el agua —ver `HUNDIDO_LEJOS` en `terrain.ts`—, así que el disco no
+     * puede bajar tanto donde ese fondo se ve, o asoma. Hasta los ciento
+     * ochenta kilómetros —el horizonte desde ocho mil pies— se queda en
+     * menos de veinticinco.
+     */
+    let angulo = 0;
+    let hondo = 0;
+    for (const { d, error } of errores()) {
+      if (d > 1000) angulo = Math.max(angulo, error / d);
+      if (d < 180_000) hondo = Math.max(hondo, error);
+    }
+    expect(angulo).toBeLessThan(2 * TOLERANCIA_DE_LA_CURVA);
+    expect(hondo).toBeLessThan(25);
+  });
+
+  it("y no pesa: unos dos mil triángulos", () => {
     /*
      * Eran diecinueve mil quinientos, con anillos cada diez por ciento y
-     * noventa y seis gajos, y los de lejos se apretaban junto al horizonte
-     * en astillas de menos de un píxel que repetían el sombreado del agua.
+     * noventa y seis gajos, y después cuatro mil, con cuarenta y ocho de
+     * punta a punta: cada arista que cruza la pantalla hace pintar dos veces
+     * los píxeles que caen a caballo, y el agua es de lo más caro que se
+     * pinta.
      */
-    expect(disco.getIndex()!.count / 3).toBeLessThan(5000);
+    expect(disco.getIndex()!.count / 3).toBeLessThan(2500);
   });
 
   it("y los anillos crecen lo que deja la tolerancia", () => {
-    // Cerca, un cuarto del radio; lejos, lo que deja la décima de píxel.
+    // Cerca, dos quintos del radio; lejos, lo que deja la décima de píxel.
     expect(pasoDeAnillo(1000)).toBeCloseTo(1000 * CRECE_CERCA, 6);
     const lejos = 200_000;
     const paso = pasoDeAnillo(lejos);

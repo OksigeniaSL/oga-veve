@@ -33,17 +33,31 @@
 import { describe, expect, it } from "vitest";
 import { Color, Group, Object3D, Vector3 } from "three";
 import {
+  AGUA_OPACA_DESDE,
+  aireRasante,
   brumaALaAltura,
+  cieloJuntoAlSol,
   conElSol,
-  cortesDeLasNubes,
+  DESVANECE_DESDE,
+  FRANJA_DEL_HORIZONTE,
   GAJOS_DEL_CIELO,
   GLSL_DEL_CIELO,
-  laminaDeNubes,
+  haloALaAltura,
+  materialDeNube,
+  momentoDe,
+  radioDeLasNubes,
+  rasanteEn,
   SOL_RASANTE,
   updateSky,
   type SkyRig,
 } from "./sky";
-import { caida } from "./curvatura";
+import {
+  bajadaDelHorizonte,
+  caida,
+  CAIDA_POR_METRO_CUADRADO,
+  distanciaAlHorizonte,
+  TOLERANCIA_DE_LA_CURVA,
+} from "./curvatura";
 
 /**
  * Un aparejo de mentira con lo justo que mira `updateSky`.
@@ -89,6 +103,18 @@ describe("la cúpula del cielo", () => {
      */
     expect(GLSL_DEL_CIELO.fragmento).toContain("normalize(vDireccion)");
     expect(GLSL_DEL_CIELO.fragmento).not.toContain("offset");
+  });
+
+  it("y se pinta la última de lo opaco, en el fondo de la profundidad", () => {
+    /*
+     * Pintada la primera y sin mirar la profundidad, el cielo entero —con su
+     * mar de debajo del horizonte— se calculaba también debajo de la cabina,
+     * del avión y de las islas, que después lo tapaban. Al final de lo opaco
+     * y a la profundidad del plano lejano, la tarjeta la descarta ahí sin
+     * calcularla, y como está en el fondo no tapa el relieve que queda más
+     * allá de su radio.
+     */
+    expect(GLSL_DEL_CIELO.vertice).toContain("gl_Position.z = gl_Position.w;");
   });
 
   it("y tiene gajos de sobra para que no se vea el aspa", () => {
@@ -170,6 +196,65 @@ describe("el sol", () => {
         }
   });
 
+  it("y con el cielo de verdad del ocaso se enrojece, el borde de abajo más", () => {
+    /*
+     * La prueba de encima usa un cielo casi negro, donde enrojecer es fácil.
+     * El caso que importa es el de verdad: el sol a grado y medio sobre el
+     * mar, que es como se ve a las seis desde ocho mil pies, con el cielo del
+     * ocaso y su halo abierto del todo alrededor. Ahí el suelo manda —el
+     * disco tiene que salir más claro que un cielo que ya tiene el rojo al
+     * tope— y el disco salía del tono del cielo, con el borde de abajo más
+     * blanco que el de arriba, al revés que el sol de verdad.
+     */
+    const altura = -0.1; // las seis y un minuto
+    const m = momentoDe(altura);
+    const colores = {
+      horizonte: lineal(m.horizonte),
+      horizonteSol: lineal(m.horizonteSol),
+      cenit: lineal(m.cenit),
+      sol: lineal(m.sol),
+    };
+    const halo = haloALaAltura(altura);
+    const grado = Math.PI / 180;
+    /** El disco en un trozo que está `alto` sobre el horizonte que se ve. */
+    const disco = (alto: number): [number, number, number] => {
+      const cielo = cieloJuntoAlSol(colores, halo, alto, 1);
+      const con = conElSol(cielo, colores.sol, 1, rasanteEn(alto));
+      // Nunca un hueco: más claro que su cielo, lo que pida el suelo.
+      expect(luma(con)).toBeGreaterThanOrEqual(
+        Math.min(luma(cielo) * SOL_RASANTE.masClaro, 0.98) - 1e-6,
+      );
+      return con;
+    };
+    const centro = 1.5 * grado;
+    const radio = 0.75 * grado * 0.65;
+    const abajo = disco(centro - radio);
+    const arriba = disco(centro + radio);
+    // El borde de abajo cruza más aire: menos verde y menos azul por rojo.
+    expect(abajo[1] / abajo[0]).toBeLessThan(arriba[1] / arriba[0]);
+    expect(abajo[2] / abajo[0]).toBeLessThan(arriba[2] / arriba[0]);
+    // Y el disco que se pone es bastante más rojo que el mismo sol lejos
+    // del horizonte, con el mismo cielo de la misma hora.
+    const alto = disco(6 * grado);
+    const medio = disco(centro);
+    expect(medio[1] / medio[0]).toBeLessThan(0.85 * (alto[1] / alto[0]));
+    // Que es lo que hace el aire con el halo: pegado al mar, el cielo de
+    // alrededor del sol es más naranja que el de unos grados más arriba.
+    const pegado = cieloJuntoAlSol(colores, halo, 0, 1);
+    const encima = cieloJuntoAlSol(colores, halo, 4 * grado, 1);
+    expect(Math.min(pegado[1], 1) / Math.min(pegado[0], 1)).toBeLessThan(
+      Math.min(encima[1], 1) / Math.min(encima[0], 1),
+    );
+  });
+
+  it("y el aire rasante enrojece y apaga, y lejos del horizonte no toca nada", () => {
+    expect(aireRasante(rasanteEn(0.2))).toEqual([1, 1, 1]);
+    const pegado = aireRasante(rasanteEn(0));
+    expect(pegado[0]).toBeGreaterThan(pegado[1]);
+    expect(pegado[1]).toBeGreaterThan(pegado[2]);
+    expect(pegado[0]).toBeLessThan(1);
+  });
+
   it("y se enrojece al ponerse, donde el cielo deja verlo", () => {
     // Con un cielo oscuro detrás no hace falta el suelo, y lo que queda es
     // la luz que pasa el aire: más roja cuanto más rasante.
@@ -192,6 +277,9 @@ describe("el sol", () => {
     expect(f).toContain(v3(SOL_RASANTE.blanco));
     expect(f).toContain(SOL_RASANTE.velo.toFixed(4));
     expect(f).toContain(SOL_RASANTE.masClaro.toFixed(4));
+    expect(f).toContain(`smoothstep(0.0, ${SOL_RASANTE.ancho.toFixed(4)}, alto)`);
+    // Y el halo cruza el mismo aire que el disco.
+    expect(f).toContain("c += sunColour * aireRasante(rasanteEn(alto)) * pow(toSun,");
   });
 
   it("y el halo se abre cuanto más bajo está, que es lo que da la hora", () => {
@@ -215,16 +303,99 @@ describe("por debajo del horizonte", () => {
      */
     const f = GLSL_DEL_CIELO.fragmento;
     expect(f).toContain("if (baja > pendienteDelHorizonte)");
-    expect(f).toContain("marEn(dir)");
+    expect(f).toContain("marEn(dir, dir.xz / llano * d)");
     expect(f.indexOf("sky = conElSol(sky, disc, rasante);")).toBeGreaterThan(
       f.indexOf("} else {"),
     );
   });
 
   it("y el agua usa la misma cuenta y la misma bruma, para no dejar costura", () => {
-    expect(GLSL_DEL_CIELO.agua).toContain("marEn(v)");
+    expect(GLSL_DEL_CIELO.agua).toContain("marEn(v, vRayo.xz)");
     expect(GLSL_DEL_CIELO.agua).toContain("nieblaEn(v)");
     expect(GLSL_DEL_CIELO.fragmento).toContain("nieblaEn(dir)");
+  });
+
+  it("y el mar refleja con la normal de la Tierra redonda: el sol puesto en plano sigue en el agua", () => {
+    /*
+     * A las seis y un minuto el sol está una décima de grado por debajo de
+     * la horizontal y, desde ocho mil pies, grado y medio por encima del mar.
+     * Con la normal plana el agua solo refleja lo que está por encima de la
+     * horizontal, y el camino del sol se apagaba con el disco entero a la
+     * vista. Con la del agua de verdad —inclinada d/R, la pendiente de la
+     * misma parábola que baja los vértices— hay un trecho de mar, antes del
+     * horizonte, que lo refleja.
+     */
+    const f = GLSL_DEL_CIELO.fragmento;
+    expect(f).toContain(
+      "vec3 n = normalize(vec3(2.0 * curvatura * lejos.x, 1.0, 2.0 * curvatura * lejos.y));",
+    );
+    expect(f).toContain("cieloEn(reflect(v, n))");
+    expect(f).not.toContain("smoothstep(-0.01, 0.03, s.y)");
+    expect(f).toContain("float solSobreElMar = sobreElHorizonte(s);");
+
+    const h = 2440;
+    const sol = -0.1 * (Math.PI / 180);
+    /** Hacia dónde sale lo que refleja el agua a `d` m, en radianes. */
+    const reflejoA = (d: number, k: number): number => {
+      const v = [d, -(h + d * d * k), 0];
+      const lv = Math.hypot(v[0]!, v[1]!);
+      const vn = [v[0]! / lv, v[1]! / lv];
+      const n = [2 * k * d, 1];
+      const ln = Math.hypot(n[0]!, n[1]!);
+      const nn = [n[0]! / ln, n[1]! / ln];
+      const vd = vn[0]! * nn[0]! + vn[1]! * nn[1]!;
+      const r = [vn[0]! - 2 * vd * nn[0]!, vn[1]! - 2 * vd * nn[1]!];
+      return Math.atan2(r[1]!, r[0]!);
+    };
+    const hasta = distanciaAlHorizonte(h);
+    let curva = -Infinity;
+    let plana = Infinity;
+    for (let d = 1000; d < hasta; d += 500) {
+      curva = Math.max(curva, -Math.abs(reflejoA(d, CAIDA_POR_METRO_CUADRADO) - sol));
+      plana = Math.min(plana, reflejoA(d, 0));
+    }
+    // Con la curva, algún trozo de mar lo refleja a menos de una décima de
+    // grado; en plano, todo lo que refleja el agua mira por encima de la
+    // horizontal, y el sol está por debajo.
+    expect(-curva).toBeLessThan(0.1 * (Math.PI / 180));
+    expect(plana).toBeGreaterThan(0);
+    // Y lo más bajo que refleja el agua es el propio horizonte: −δ.
+    expect(reflejoA(hasta, CAIDA_POR_METRO_CUADRADO)).toBeCloseTo(
+      -bajadaDelHorizonte(h),
+      4,
+    );
+  });
+
+  it("y el mar que el agua tapa del todo no se calcula, salvo junto al horizonte", () => {
+    /*
+     * El mar de la cúpula solo se ve más allá del disco de agua y a través
+     * de la poca transparencia que el agua tiene de cerca. Donde el agua es
+     * opaca del todo, calcularlo —con su reflejo y su bruma— costaba un
+     * siete por ciento del cuadro para no verse.
+     */
+    const f = GLSL_DEL_CIELO.fragmento;
+    expect(f).toContain(`lejos > ${AGUA_OPACA_DESDE.toFixed(1)}`);
+    expect(f).toContain("d < 0.97 * radioDelAgua");
+    expect(f).toContain(`d < ${FRANJA_DEL_HORIZONTE.toFixed(2)} * horizonte`);
+    // Y la misma distancia a la que el agua deja de ser transparente.
+    expect(GLSL_DEL_CIELO.agua).toContain(
+      `smoothstep(1500.0, ${AGUA_OPACA_DESDE.toFixed(1)}, alOjo)`,
+    );
+    /*
+     * Junto al horizonte lo calcula entero: el disco reparte la curva en
+     * recta y su horizonte queda hasta dos diezmilésimas de radián por
+     * debajo del de verdad —ver `curvatura.test.ts`—. La franja que se
+     * calcula entera tiene que ser más ancha que eso a cualquier altura a la
+     * que haya algo que no calcular.
+     */
+    for (const alto of [10, 30, 300, 2440, 11_000]) {
+      const hasta = FRANJA_DEL_HORIZONTE * distanciaAlHorizonte(alto);
+      if (hasta <= AGUA_OPACA_DESDE) continue;
+      const bajaAhi = Math.atan((alto + caida(hasta)) / hasta);
+      expect(bajaAhi - bajadaDelHorizonte(alto), `a ${alto} m`).toBeGreaterThan(
+        2 * TOLERANCIA_DE_LA_CURVA,
+      );
+    }
   });
 
   it("el cielo sale a pantalla en sRGB, como todo lo demás", () => {
@@ -285,75 +456,28 @@ describe("el agua sobre la tierra", () => {
 });
 
 describe("la capa de nubes", () => {
-  /*
-   * Cinco capas de ochenta kilómetros, transparentes y una encima de otra.
-   * Con la curva de la Tierra no pueden ir de dos triángulos —bajaban
-   * enteras lo que bajan las esquinas—, y en una rejilla fina las aristas
-   * encarecían el cuadro un milisegundo. Ver `cortesDeLasNubes`.
-   */
-  const lado = 80_000;
-  const repite = 12;
-  const geo = laminaDeNubes(lado, repite);
-  const pos = geo.getAttribute("position");
-  const idx = geo.getIndex()!;
-
-  /** Lo que baja de más la capa en un punto, con el ojo en `ojo`. */
-  function errores(ojo: [number, number]): { cerca: number; angulo: number } {
-    let cerca = 0;
-    let angulo = 0;
-    const cae = (x: number, z: number): number =>
-      caida(Math.hypot(x - ojo[0], z - ojo[1]));
-    for (let t = 0; t < idx.count; t += 3) {
-      const v = [0, 1, 2].map((k) => idx.getX(t + k));
-      const xs = v.map((i) => pos.getX(i));
-      const zs = v.map((i) => pos.getZ(i));
-      const cs = v.map((_, k) => cae(xs[k]!, zs[k]!));
-      for (let a = 0; a <= 12; a++)
-        for (let b = 0; a + b <= 12; b++) {
-          const w = [a / 12, b / 12, 1 - (a + b) / 12];
-          const x = w[0]! * xs[0]! + w[1]! * xs[1]! + w[2]! * xs[2]!;
-          const z = w[0]! * zs[0]! + w[1]! * zs[1]! + w[2]! * zs[2]!;
-          const repartida = w[0]! * cs[0]! + w[1]! * cs[1]! + w[2]! * cs[2]!;
-          const error = repartida - cae(x, z);
-          const d = Math.hypot(x - ojo[0], z - ojo[1]);
-          if (d < 2000) cerca = Math.max(cerca, error);
-          else if (d < (lado / 2) * 0.92) angulo = Math.max(angulo, error / d);
-        }
-    }
-    return { cerca, angulo: (angulo * 180) / Math.PI };
-  }
-
-  it("va en cinco por cinco cuadros, no en una rejilla fina", () => {
-    expect(idx.count / 3).toBe(50);
-    expect(cortesDeLasNubes(lado, repite)[0]).toBeCloseTo(lado / repite / 2, 6);
-  });
-
-  it("y con el ojo donde pueda estar, no se hunde ni un píxel", () => {
+  it("va plana, sin la curva de la Tierra", () => {
     /*
-     * El banco sigue a la cámara a saltos de un paso del dibujo, así que el
-     * ojo está siempre a menos de medio paso de su centro. Debajo, menos de
-     * dos metros y medio con las capas a setenta; de lejos, menos de una
-     * décima de grado, que es menos de un píxel.
+     * Con la curva no podía ir en dos triángulos —bajaba entera lo que bajan
+     * las esquinas—, y partida en cuadros las aristas encarecían el cuadro.
+     * Ver `materialDeNube`.
      */
-    const medio = lado / repite / 2;
-    for (const ojo of [
-      [0, 0],
-      [medio, 0],
-      [medio, medio],
-      [-medio * 0.6, medio * 0.9],
-    ] as [number, number][]) {
-      const { cerca, angulo } = errores(ojo);
-      expect(cerca).toBeLessThan(2.5);
-      expect(angulo).toBeLessThan(0.1);
-    }
+    const m = materialDeNube(null, 30_000) as unknown as {
+      defines?: Record<string, string>;
+    };
+    expect(m.defines).toHaveProperty("SIN_CURVATURA");
   });
 
-  it("y el dibujo no se entera de dónde van las rayas", () => {
-    const uv = geo.getAttribute("uv");
-    for (let i = 0; i < pos.count; i++) {
-      expect(uv.getX(i)).toBeCloseTo(pos.getX(i) / lado + 0.5, 6);
-      // Tumbado: la v del plano de serie va hacia el norte, que es −z.
-      expect(uv.getY(i)).toBeCloseTo(0.5 - pos.getZ(i) / lado, 6);
+  it("y donde la curva se notaría, ya casi no se ve", () => {
+    for (const lado of [48_000, 80_000, 88_000]) {
+      const radio = radioDeLasNubes(lado);
+      // A mitad del desvanecido, lo que deja de caer se ve a menos de
+      // 0,15°: menos de dos píxeles de una nube sin borde.
+      const aMedias = (radio * (DESVANECE_DESDE + 1)) / 2;
+      const grados = (Math.atan(caida(aMedias) / aMedias) * 180) / Math.PI;
+      expect(grados, `banco de ${lado / 1000} km`).toBeLessThan(0.15);
     }
+    // Y donde se atraviesa, nada: a dos kilómetros, treinta centímetros.
+    expect(caida(2000)).toBeLessThan(0.35);
   });
 });

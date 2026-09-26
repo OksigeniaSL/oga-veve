@@ -2189,7 +2189,7 @@ export class Game {
     this.scene.fog = this.sky.fog;
     // El agua con el mar del cielo: refleja el atardecer y casa con el que
     // la cúpula pinta más allá de su borde. Ver `materialDelAgua`.
-    this.terrain.ponerMaterialDelAgua(this.sky.materialDelAgua);
+    this.terrain.ponerMaterialDelAgua(this.sky.materialDelAgua, this.camera.far);
 
     // La ciudad antes que la vegetación: la vegetación pregunta por ella para
     // no plantar un bosque donde hay un barrio.
