@@ -28,6 +28,8 @@
  *    ya se ganó el suyo, y se lo lleva.
  */
 
+import type { Superficie } from "../world/superficie";
+
 /** Qué salió mal. Cada uno tiene su dibujo y su frase. */
 export type Percance =
   /** Se le pasó por encima al coche del «sígame». */
@@ -98,3 +100,53 @@ export const ROCE = 5;
  * un aterrizaje».
  */
 export const GOLPE = 4;
+
+/**
+ * **Tocar el suelo viniendo del aire, fuera de la pista y de lo preparado.**
+ *
+ * Un contacto así con velocidad de vuelo o dando un golpe no es un aterrizaje:
+ * es tocar el monte. Y se decide **en el instante del contacto**, que es lo
+ * que no se hacía. El veredicto de la toma espera dos segundos con las ruedas
+ * apoyadas —ver `DESDE_EL_CONTACTO` en `aterrizaje.ts`—, y un avión que roza
+ * una ladera a ciento dieciséis metros por segundo no se queda dos segundos
+ * apoyado: rebota y sigue. Medido en el banco con el JAZ 90 en Los Rodeos:
+ * tocó las estribaciones de Anaga en pleno viento en cola, el plan de vuelo
+ * lo dio por aterrizado y rodando a su puesto, volvió a «en vuelo» y no hubo
+ * percance ninguno.
+ *
+ * Las tres fronteras son de verdad y ninguna es un número puesto para el
+ * banco:
+ *
+ * - **La superficie.** Solo cuenta `campo`, lo que no está ni segado ni
+ *   allanado. En una pista, en su franja, en el asfalto de una calle o en la
+ *   hierba de un campo que es de hierba no hay monte que tocar: ahí juzgan
+ *   el veredicto de la toma y el golpe de siempre. Así un campo de hierba de
+ *   Paraguay y la zona desplazada de un umbral quedan como estaban.
+ * - **La velocidad.** Por encima de la de pérdida el ala todavía lleva el
+ *   avión, así que no estaba rodando por ahí: estaba volando contra el suelo.
+ *   Ver `velocidadDePerdida` en `aircraft.ts`.
+ * - **La caída.** Por encima de lo que aguanta el tren de este modelo, un
+ *   golpe, venga a la velocidad que venga. Es el mismo número que decide el
+ *   golpe en la pista: ver `FlightModel.limiteDeCaida`.
+ *
+ * Por debajo de las dos, tocar el campo despacio y suave sigue siendo lo que
+ * era: el veredicto «fuera» de la toma, a los dos segundos.
+ */
+export function percanceAlTocar(c: {
+  /** Si las ruedas están sobre alguna pista del vuelo, franja incluida. */
+  readonly enLaPista: boolean;
+  readonly superficie: Superficie;
+  /** A qué velocidad se tocó, m/s. */
+  readonly velocidad: number;
+  /** A qué caída se tocó, m/s, positiva hacia abajo. */
+  readonly caida: number;
+  /** La de pérdida de este avión, m/s. */
+  readonly perdida: number;
+  /** La caída que rompe el tren en este modelo, m/s. */
+  readonly rompe: number;
+}): Percance | null {
+  if (c.enLaPista || c.superficie !== "campo") return null;
+  if (c.caida > c.rompe) return "golpe";
+  if (c.velocidad >= c.perdida) return "fuera";
+  return null;
+}

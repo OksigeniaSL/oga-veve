@@ -124,6 +124,14 @@ export interface Situacion {
   readonly motor: boolean;
   /** Diferencia entre el rumbo del avión y el de la pista, grados, −180..180. */
   readonly desalineado: number;
+  /**
+   * La velocidad de pérdida de este avión, m/s: por encima, vuela. Ver
+   * `velocidadDePerdida` en `aircraft.ts`.
+   *
+   * Opcional para las pruebas que no van de esto; sin ella, la regla que la
+   * usa no se aplica. Ver «Rozar el monte no es llegar» en `deducir`.
+   */
+  readonly perdida?: number;
 }
 
 export interface Paso {
@@ -599,6 +607,32 @@ export class Vuelo {
       const velocidad = vieneVolando
         ? s.estado.airspeed
         : s.estado.groundSpeed;
+      /*
+       * **Rozar el monte no es llegar.**
+       *
+       * «En tierra» aquí es estar a menos de doce metros del suelo, que al
+       * volver a la pista es justo lo que hace falta. Pero fuera de ella, un
+       * avión que viene volando y pasa a tres metros de una ladera —o la toca
+       * y rebota— con la velocidad de vuelo entera no está rodando hacia
+       * ninguna plataforma: está volando, y muy mal. Medido en el banco con el
+       * JAZ 90 en Los Rodeos: a ciento dieciséis metros por segundo sobre las
+       * estribaciones de Anaga el plan pasó a «a-plataforma», con su
+       * megafonía de llegada, y luego volvió a «en vuelo».
+       *
+       * Así que fuera de la pista, mientras se venga del aire y por encima de
+       * la de pérdida, se sigue en la fase de vuelo. Si fue un contacto, el
+       * percance lo pone el juego en ese mismo instante —ver
+       * `percanceAlTocar`—; si solo fue pasar bajo, se sigue volando, que es
+       * lo que se estaba haciendo. Por debajo de la de pérdida el ala ya no
+       * lleva el avión y lo de abajo vale como siempre.
+       */
+      if (
+        vieneVolando &&
+        !s.enPista &&
+        s.perdida !== undefined &&
+        s.estado.airspeed >= s.perdida
+      )
+        return this.fase;
       /*
        * **Y aterrizando se está en la pista. Fuera de ella, ya se rueda.**
        *

@@ -98,6 +98,20 @@ export class LandingWatcher {
   private trenPuestoAlTocar = true;
   /** Si se tocó antes del umbral de aterrizaje. Ver `Aterrizaje`. */
   private antesDelUmbralAlTocar = false;
+  /**
+   * **Si las ruedas acaban de tocar viniendo del aire, en este paso.**
+   *
+   * El veredicto llega dos segundos después, y hay contactos que no pueden
+   * esperar a él: el que roza el monte a velocidad de vuelo rebota y sigue
+   * volando, y dos segundos con las ruedas apoyadas no llegan nunca. Quien
+   * tenga que juzgar el instante del contacto lo mira aquí. Ver
+   * `percanceAlTocar` en `percance.ts`.
+   */
+  private tocoAhora = false;
+
+  get acabaDeTocar(): boolean {
+    return this.tocoAhora;
+  }
 
   /**
    * @param onGround si las ruedas tocan
@@ -142,6 +156,7 @@ export class LandingWatcher {
      */
     antesDelUmbral = false,
   ): Aterrizaje {
+    this.tocoAhora = false;
     if (!onGround) {
       this.enElAire += dt;
       if (this.enElAire >= ALGO_MAS_QUE_UN_BOTE) this.volando = true;
@@ -152,6 +167,7 @@ export class LandingWatcher {
     if (this.volando) {
       // Acaba de tocar: se guarda cómo, porque al frenar ya no se sabrá.
       this.volando = false;
+      this.tocoAhora = true;
       this.pendiente = true;
       this.descenso = sinkRate;
       this.velocidadAlTocar = airspeed;
@@ -219,6 +235,7 @@ export class LandingWatcher {
   }
 
   reset(): void {
+    this.tocoAhora = false;
     this.trenPuestoAlTocar = true;
     this.antesDelUmbralAlTocar = false;
     this.volando = false;

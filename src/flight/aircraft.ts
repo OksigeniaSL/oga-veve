@@ -228,6 +228,21 @@ export function tieneReversa(a: AircraftConfig): boolean {
   return a.sound.engine === "turbofan" || a.sound.engine === "turboprop";
 }
 
+/**
+ * **La velocidad de pérdida con todo fuera**, m/s: por encima, el ala lleva
+ * el avión; por debajo, lo llevan las ruedas.
+ *
+ * No hace falta otro número en la ficha: la Vref **es** 1,3 veces esta —es
+ * la definición, y es como están puestas las de la flota—, así que sale de
+ * ella. Sirve para saber si un avión que toca el suelo estaba rodando o
+ * volando: ver `percanceAlTocar` en `percance.ts`.
+ */
+export function velocidadDePerdida(a: {
+  readonly approachSpeed: number;
+}): number {
+  return a.approachSpeed / 1.3;
+}
+
 export interface AircraftConfig {
   id: string;
   /** Nombre visible. No se traduce: es un nombre propio. */

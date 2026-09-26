@@ -38,6 +38,7 @@ import {
   AIRCRAFT,
   PYKASU,
   esDeChorro,
+  velocidadDePerdida,
   type AircraftConfig,
 } from "./flight/aircraft";
 import { dibujoDelGasTactil } from "./ui/pictogramas";
@@ -330,7 +331,7 @@ import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
-import { ROCE, type Percance } from "./flight/percance";
+import { ROCE, percanceAlTocar, type Percance } from "./flight/percance";
 import {
   barrasDe,
   grado,
@@ -3575,6 +3576,29 @@ export class Game {
       // Y si fue antes del umbral de aterrizaje. Ver `enLaZonaDeLasFlechas`.
       this.enLaZonaDeLasFlechas(),
     );
+    /*
+     * **Y tocar el monte volando se juzga al tocar, no dos segundos después.**
+     *
+     * El veredicto de abajo espera a que el avión se asiente, y rozando una
+     * ladera a velocidad de vuelo no se asienta nunca: rebota y sigue. Así el
+     * reactor del banco tocó las estribaciones de Anaga a ciento dieciséis
+     * metros por segundo, siguió volando y el vuelo no se enteró. Ver
+     * `percanceAlTocar`.
+     */
+    if (this.landing.acabaDeTocar) {
+      const percance = percanceAlTocar({
+        enLaPista: this.tocoEnElCampoDeVuelo(),
+        superficie: this.superficie,
+        velocidad: s.airspeed,
+        caida: s.touchdownSinkRate,
+        perdida: velocidadDePerdida(this.aircraft),
+        rompe: this.flight.limiteDeCaida(),
+      });
+      if (percance) {
+        this.sufrirPercance(percance);
+        return null;
+      }
+    }
     if (!veredicto) return null;
     this.hud.flash(
       t(
