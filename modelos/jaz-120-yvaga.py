@@ -39,7 +39,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, espejo, llantas, neumaticos, paneles, paneles_zy, recogido,
+    bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
+    fowler, llantas, neumaticos, paneles, paneles_zy, recogido,
     simetricos, superficie, turbofan, varillas, ventanas, zy,
 )
 
@@ -122,6 +123,12 @@ def y_ala(x):
 
 def z_ala(x):
     return ALA_Z + x * math.tan(FLECHA)
+
+
+# Los metros a lo largo del ala por cada metro de envergadura: las zonas y los
+# flaps de `superficie` se miden sobre el ala, que va en flecha y con diedro,
+# y el fuselaje y el carenado están donde están a lo ancho.
+E_POR_X = math.sqrt(1 + math.tan(DIEDRO) ** 2 + math.tan(FLECHA) ** 2)
 
 
 def construir():
@@ -220,8 +227,21 @@ def construir():
                80, 0.0),
     ]
     j = "oscuro"
-    piezas.append(superficie("ala", estaciones, material_="gris",
-                             curvatura=0.015, zonas=[
+    # **El de dentro empieza a 6,0 m del eje, pasada la pata del ala.** Esa
+    # pata cuelga a 5,6 m y se mete tumbándose hacia la panza por dentro del
+    # ala, a lo largo de toda la raíz, justo por delante de la junta: la nariz
+    # guardada de un flap que empezara antes caía encima de ella, y al salir
+    # la atravesaba. Lo mide `flaps_libres`. En uno de verdad la pata va por
+    # delante del larguero de atrás y el flap por detrás; aquí moverla sería
+    # cambiar el avión, así que el trozo de franja de encima se queda quieto,
+    # como en el Arai. Recogido no se ve el corte, porque no hay raya pintada
+    # que mover y las normales son las de siempre. Antes empezaba a 3,05,
+    # fuera del carenado de la panza, que abulta tres metros a cada lado a la
+    # altura por la que baja el flap. Ver `jaz-90-arai.py`.
+    flaps = [flap("dentro", E_POR_X * 6.0, 11.5, 0.73),
+             flap("fuera", 11.65, 21.6, 0.73)]
+    ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
+                     flaps=flaps, zonas=[
         ("aluminio", 3.2, 28.2, 0.0, 0.06),
         (j, 2.6, 21.6, 0.72, 0.73),
         (j, 2.6, 2.75, 0.73, 1.0),
@@ -230,13 +250,25 @@ def construir():
         (j, 21.8, 27.9, 0.76, 0.77),
         (j, 27.8, 27.95, 0.77, 1.0),
         (j, 3.5, 20.5, 0.60, 0.607, "arriba"),
-    ]))
+    ])
+    piezas.append(ala)
+    # **Fowler**, con los topes de un cuatrirreactor de fuselaje ancho —cinco,
+    # veinte y treinta— y el carril más largo de la flota: cuatro quintos de
+    # su cuerda, casi todo en la primera muesca, y el borde de salida hacia
+    # atrás hasta la última. La cuerda crece más de un diez por ciento. Ver
+    # `fowler`.
+    los_flaps = flaps_moviles(ala, flaps, fowler(
+        muescas=(0, 5, 20, 30), recorrido=(0, 0.45, 0.60, 0.80)))
+    piezas += los_flaps
 
     def cuerda_en(x):
         if x < QUIEBRO:
             return raiz - (raiz - quiebro) * x / QUIEBRO
         return quiebro - (quiebro - punta) * (x - QUIEBRO) / (x_aleta - QUIEBRO)
 
+    # Y la cola de las que caen bajo un flap baja con él. Ver
+    # `canoas_con_flap`.
+    canoas = []
     for n, x in enumerate((6.5, 13.0, 17.5, 23.5)):
         z0 = z_ala(x) + cuerda_en(x) * 0.48
         largo = cuerda_en(x) * 0.72
@@ -249,7 +281,9 @@ def construir():
         ], x=x)
         o = canoa.malla(f"canoa-{n}", "gris", lados=12, paso=0.6)
         espejo(o)
-        piezas.append(o)
+        canoas.append(o)
+    piezas += canoas
+    piezas += canoas_con_flap(canoas, los_flaps)
 
     # ── Los cuatro motores ────────────────────────────────────────────────
     #
@@ -343,9 +377,19 @@ def construir():
     morro.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.38))
     morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.38))
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
-    recogido(patas, [p for p in piezas
-                     if p.name in ("fuselaje", "carenado", "ala")])
+    # Y los flaps también tapan: son el trozo de ala de detrás del pozo; y
+    # la franja que no baja, lo que queda de él donde acaba cada flap.
+    recogido(patas, [p for p in piezas if p.type == "MESH" and (
+        p.name in ("fuselaje", "carenado", "ala")
+        or p.name.startswith(("flap-", "franja-")))])
     piezas += patas
+    # Y ningún flap atraviesa nada al bajar: ni el tren, fuera o metido, ni
+    # lo que cuelga cerca de él. Ver `flaps_libres`.
+    flaps_libres(piezas, [p for p in piezas if p.type == "MESH" and (
+        (p.parent and p.parent.name.startswith("bisagra-"))
+        or p.name in ("fuselaje", "carenado")
+        or p.name.startswith(("pilon-", "motor-"))
+        or (p.name.startswith("canoa-") and "-cola" not in p.name))])
 
     piezas.append(centro_de_gravedad(z_ala(12.0) + CUERDA * 0.25))
     return piezas

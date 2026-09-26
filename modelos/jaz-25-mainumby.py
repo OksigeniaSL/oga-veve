@@ -151,9 +151,12 @@ def construir():
     # Y lo de dentro. Una sola plaza: un fumigador lleva al piloto y nada más.
     # Las cifras son las del entrenador, que tiene el fuselaje casi igual de
     # hondo. Ver `cabina` en `comun.py`.
+    # Sin flaps, que es lo que lleva un biplano fumigador de esta clase: ni
+    # botón ni reloj de flaps en el tablero. Ver `llevaFlaps` en
+    # `src/flight/aircraft.ts`.
     cab = cabina(
         ojos_z=-0.90, palancas=1, relojes=6, mando="palanca",
-        alto_panel=0.42, y_suelo=-0.28, y_respaldo=0.32,
+        alto_panel=0.42, y_suelo=-0.28, y_respaldo=0.32, flaps=False,
     )
     piezas += cab
     dentro_de(PIEL, cab)

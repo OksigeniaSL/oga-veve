@@ -1517,7 +1517,8 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   );
 
   reglaDeCombustible(g, 48, ALTO - 100, ANCHO - 160, 14, d.combustible);
-  reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps);
+  if (d.cuadro.flaps.length > 1)
+    reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps, d.cuadro.flaps);
   lucesDeTren(g, 16, ALTO - 30, d.patas, d.tren);
   g.restore();
 }
@@ -1717,18 +1718,22 @@ function reglaDeFlaps(
   w: number,
   h: number,
   flaps: number,
+  grados: readonly number[],
 ): void {
   escribir(g, "FLAP", x - 8, y + h / 2, "500 12px " + FUENTE, TENUE, "right");
   ventana(g, x, y, w, h);
-  for (let k = 0; k <= 3; k++) {
-    const xx = x + (k / 3) * w;
+  // Con los grados de este avión: los de un reactor no son los de una
+  // avioneta. Ver `Cuadro.flaps`.
+  const ultima = Math.max(1, grados.length - 1);
+  for (let k = 0; k <= ultima; k++) {
+    const xx = x + (k / ultima) * w;
     g.strokeStyle = TINTA;
     g.lineWidth = 1.5;
     g.beginPath();
     g.moveTo(xx, y);
     g.lineTo(xx, y + h);
     g.stroke();
-    escribir(g, String(k * 10), xx, y + h + 12, "500 11px " + FUENTE, TENUE);
+    escribir(g, String(grados[k] ?? k * 10), xx, y + h + 12, "500 11px " + FUENTE, TENUE);
   }
   const px = x + clamp01(flaps) * w;
   g.fillStyle = TINTA;

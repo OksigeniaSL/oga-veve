@@ -6100,8 +6100,13 @@ export class Game {
       this.reducedMotion,
     );
     this.input.ponerSignoDeCabeceo(signoDeCabeceo(ajustes));
-    // Y si el avión de hoy mete las patas, que decide si hay palanca de tren.
-    this.input.ponerAeronave(this.aircraft.trenRetractil);
+    // Y si el avión de hoy mete las patas, que decide si hay palanca de tren,
+    // y lo que tardan sus flaps. Ver `flight/flaps.ts`.
+    this.input.ponerAeronave(
+      this.aircraft.trenRetractil,
+      this.aircraft.tardanLosFlaps,
+      this.aircraft.llevaFlaps,
+    );
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
     // Y el tamaño, que es una escala sobre el tacto y la letra del HUD.
@@ -6564,7 +6569,12 @@ export class Game {
     if (configurado) {
       if (!this.input.trenQueSePide) this.input.alternarTren();
       this.input.controls.tren = 1;
-      this.input.controls.flaps = 1;
+      // La palanca abajo **y** los flaps ya abajo: la final empieza
+      // configurada, no configurándose. Ver `flight/flaps.ts`.
+      if (this.aircraft.llevaFlaps) {
+        this.input.ponerPalancaDeFlaps(1);
+        this.input.controls.flaps = 1;
+      }
     }
     this.input.controls.throttle = this.flight.gasPara(entrada);
     this.faseAnunciada = "";
@@ -7007,10 +7017,15 @@ export class Game {
          * el consejo es el consejo y no ruido.
          */
         const sinGasQueQuitar =
+          // En el avión que no los lleva, el consejo sería tocar un mando
+          // que no tiene: ahí se dice la velocidad a secas, abajo.
+          this.aircraft.llevaFlaps &&
           !this.flight.state.onGround &&
           banda === "rapido" &&
           this.input.controls.throttle < 0.25 &&
-          this.input.controls.flaps < 0.5;
+          // Lo pedido y no dónde están: si ya bajaste la palanca, los flaps
+          // están saliendo y pedírtelos otra vez sería avisar de lo hecho.
+          this.input.palancaDeFlaps < 0.5;
         if (sinGasQueQuitar) {
           this.hud.senal.mostrar(
             "flaps",
@@ -7167,7 +7182,15 @@ export class Game {
        */
       puestoParaAterrizar:
         this.input.controls.tren > 0.9 &&
-        this.input.controls.flaps > 0.3 &&
+        /*
+         * Los flaps fuera son el «vas lento» de los tres. En el avión que no
+         * los lleva lo dice la velocidad, que es lo que ellos decían: la de
+         * aproximación y poco más. Sin esto, en el fumigador no había forma
+         * de estar puesto para aterrizar.
+         */
+        (this.aircraft.llevaFlaps
+          ? this.input.controls.flaps > 0.3
+          : this.flight.state.airspeed < this.aircraft.approachSpeed * 1.2) &&
         this.flight.state.verticalSpeed > MARGENES.cayendo,
     };
     const terreno = avisoDeTerreno(cerca);
@@ -7892,6 +7915,12 @@ export class Game {
      */
     this.aircraftMesh.patas?.poner(this.input.controls.tren);
     /*
+     * Y los flaps, donde **están**, no donde está la palanca: la misma cifra
+     * que sustenta en el modelo de vuelo y que marca la aguja. Ver
+     * `flight/flaps.ts` y `world/flaps.ts`.
+     */
+    this.aircraftMesh.flaps?.poner(this.input.controls.flaps);
+    /*
      * Y las luces de posición: la de choque parpadea con el motor en marcha,
      * que es su regla de verdad —se enciende **antes** de arrancar y dice
      * «esto está vivo, no te acerques»—. Ver `world/luces-de-posicion.ts`.
@@ -7988,6 +8017,7 @@ export class Game {
        */
       {
         flaps: this.input.controls.flaps,
+        palancaDeFlaps: this.input.palancaDeFlaps,
         tren: this.input.controls.tren,
         objetivo: this.aDondeVoy,
         viento: this.vientoDeHoy,
@@ -10171,8 +10201,16 @@ export class Game {
    */
   /** Cuánto lleva por encima del tope, para no cantarlo por un bache. */
   private sobrandoVelocidad = 0;
-  /** Y si ya se dijo, para no repetirlo mientras siga pasando. */
-  private dichoDeSobrevelocidad = false;
+  /**
+   * Y **qué** se dijo, para no repetirlo mientras siga pasando lo mismo.
+   *
+   * Qué y no si: era un sí o un no, y con eso el primer aviso gastaba el
+   * único. En una frustrada con el JAZ 90 salía «muy rápido con los flaps»,
+   * los flaps acababan de subir, el que quedaba pasado de su tope era el
+   * tren, y del tren ya no se decía nada: de 205 nudos a 293 con las patas
+   * fuera y callado. Un aviso vuelve cuando cambia lo que pasa.
+   */
+  private dichoDeSobrevelocidad: string | null = null;
 
   /**
    * **El tope de velocidad del avión, que hasta hoy no existía.**
@@ -10194,7 +10232,7 @@ export class Game {
     const s = this.flight.state;
     if (s.onGround) {
       this.sobrandoVelocidad = 0;
-      this.dichoDeSobrevelocidad = false;
+      this.dichoDeSobrevelocidad = null;
       return;
     }
     /*
@@ -10222,19 +10260,37 @@ export class Game {
     if (!pasado) {
       // Se rearma al volver a estar dentro con holgura: si no, volvería a
       // cantar en cuanto la aguja rozara el tope otra vez.
-      if (s.airspeed < tope * 0.94) this.dichoDeSobrevelocidad = false;
+      if (s.airspeed < tope * 0.94) this.dichoDeSobrevelocidad = null;
       return;
     }
-    if (this.sobrandoVelocidad < 2 || this.dichoDeSobrevelocidad) return;
-    this.dichoDeSobrevelocidad = true;
+    /*
+     * **Y lo que se dice es lo que se puede hacer.** Con la palanca de flaps
+     * ya arriba, los flaps están subiendo —tardan, ver `flight/flaps.ts`— y
+     * «recogélos» pedía lo que ya está hecho: quien obedece pulsa la F y los
+     * vuelve a bajar, porque la palanca va en ciclo. Así que se pregunta
+     * otra vez sin ellos: si el tren también se pasa, es el tren; si no, la
+     * velocidad a secas, que es lo que queda por hacer. El tope sigue siendo
+     * el de los flaps mientras estén fuera, que se están forzando igual.
+     */
+    const queSeDice =
+      forzando === "flaps" && this.input.palancaDeFlaps <= 0
+        ? loQueSePasa(kt, this.aircraft, {
+            tren: this.input.controls.tren,
+            flaps: 0,
+          })
+        : forzando;
     const clave =
-      forzando === "flaps"
+      queSeDice === "flaps"
         ? "vuelo.flapsPasados"
-        : forzando === "tren"
+        : queSeDice === "tren"
           ? "vuelo.trenPasado"
-          : this.flight.quienLimita() === "aire"
+          : // Con los flaps subiendo, el tope es el suyo y no el del aire.
+            !forzando && this.flight.quienLimita() === "aire"
             ? "vuelo.sobrevelocidadAire"
             : "vuelo.sobrevelocidad";
+    if (this.sobrandoVelocidad < 2 || this.dichoDeSobrevelocidad === clave)
+      return;
+    this.dichoDeSobrevelocidad = clave;
     this.hud.senal.mostrar(
       "sobrevelocidad",
       this.rotulo(clave as TranslationKey, "palabra.rapido"),
@@ -10698,8 +10754,13 @@ export class Game {
 
     this.aircraft = next;
     this.audio.setEngine(next.sound);
-    // Y si este avión mete las patas o no, que es lo que decide si hay palanca.
-    this.input.ponerAeronave(next.trenRetractil);
+    // Y si este avión mete las patas o no, que es lo que decide si hay palanca,
+    // y lo que tardan sus flaps.
+    this.input.ponerAeronave(
+      next.trenRetractil,
+      next.tardanLosFlaps,
+      next.llevaFlaps,
+    );
 
     this.scene.remove(this.aircraftMesh.group);
     this.aircraftMesh = createAircraftMesh(next);

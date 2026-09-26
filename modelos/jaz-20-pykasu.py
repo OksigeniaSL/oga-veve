@@ -35,8 +35,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_deriva, de_ala, dentro_de,
-    espejo, estacion, helice, llantas, neumaticos, paneles, paneles_zy,
-    simetricos, superficie, varillas, zy,
+    espejo, estacion, flap, flaps_libres, flaps_moviles, helice, llantas,
+    neumaticos, paneles, paneles_zy, ranurado, simetricos, superficie,
+    varillas, zy,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -205,12 +206,21 @@ def construir():
     # Flaps por dentro y alerones por fuera, dibujados como lo que se ve: la
     # junta de la bisagra y el corte entre los dos.
     junta = "oscuro"
-    piezas.append(superficie("ala", estaciones, curvatura=0.02, zonas=[
+    flaps = [flap("dentro", 0.60, 2.72, 0.72)]
+    ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps, zonas=[
         (junta, 0.55, 5.02, 0.705, 0.72),
         (junta, 0.55, 0.60, 0.72, 1.0),
         (junta, 2.72, 2.80, 0.72, 1.0),
         (junta, 4.97, 5.02, 0.72, 1.0),
-    ]))
+    ])
+    piezas.append(ala)
+    # **Ranurado**: diez, veinte y treinta grados, los tres topes de una
+    # avioneta de escuela de ala alta. Sale un cuarto de su cuerda por sus
+    # carriles —la mitad y pico en el primer tope, que es el de despegar— y
+    # acaba con la nariz justo debajo del labio, abriendo una ranura estrecha.
+    # Ver `ranurado`.
+    piezas += flaps_moviles(ala, flaps, ranurado(
+        muescas=(0, 10, 20, 30), recorrido=(0, 0.15, 0.21, 0.25)))
 
     # **Y su montante, que es media silueta de este avión.** Va del costado
     # bajo del fuselaje al ala, a media envergadura: es lo que permite que un
@@ -296,6 +306,11 @@ def construir():
     # de pala pasa a medio metro del suelo, como en el avión de verdad.
     piezas += helice("helice", (0, 0.06, -2.42), radio=0.95, cuantas=2,
                      buje=0.17, cuerda=0.13, largo_cono=0.40)
+
+    # Los flaps no atraviesan nada al bajar: ni el fuselaje ni el puntal, que
+    # se clava en el ala justo por delante de ellos. Ver `flaps_libres`.
+    flaps_libres(piezas, [p for p in piezas if p.type == "MESH"
+                          and p.name in ("fuselaje", "puntal-del-ala")])
 
     # El centro de gravedad, a un cuarto de la cuerda: por ahí gira el avión.
     piezas.append(centro_de_gravedad(BORDE_DE_ATAQUE + raiz * 0.28))

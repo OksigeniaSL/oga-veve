@@ -92,6 +92,14 @@ export interface AircraftMesh {
    */
   patas?: import("./patas").Patas | null;
   /**
+   * Y los flaps, en el avión cuyo modelo los trae sueltos.
+   *
+   * `null` en el respaldo de cajas y en el biplano, que no los tiene: la
+   * palanca sigue mandando en el modelo de vuelo y en el reloj, pero en el
+   * ala no hay nada que mover. Ver `world/flaps.ts`.
+   */
+  flaps?: import("./flaps").Flaps | null;
+  /**
    * Si esto es el modelo de verdad y no las cajas de respaldo.
    *
    * Existe para poder **mirarlo desde fuera**, y hace falta porque el respaldo

@@ -527,7 +527,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     aileron: 0,
     elevator: 0,
     rudder: 0,
-    flaps: 0,
     engineOn: false,
   };
   o.pilotar((mandos) => Object.assign(mandos, c));
@@ -715,7 +714,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       else if (tramo < 2 && s.verticalSpeed > 1 && s.heightAboveGround > 30)
         o.pedirTren?.(false);
     }
-    c.flaps = tramo >= 3 && kt < (suyas.vfeKt ?? 999) ? 1 : 0;
+    /*
+     * **Los flaps, con la palanca y no escribiendo dónde están.** Escritos en
+     * `controles()` a cada vuelta, el banco los teletransportaba: bajaban
+     * del todo en un fotograma, cuando en el juego tardan lo que tardan en
+     * su avión. Pidiéndolos por la palanca, este banco vuela el avión que
+     * vuela quien juega. Ver `flight/flaps.ts`.
+     */
+    o.pedirFlaps?.(tramo >= 3 && kt < (suyas.vfeKt ?? 999) ? 1 : 0);
   };
 
   /**

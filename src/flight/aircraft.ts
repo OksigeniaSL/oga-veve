@@ -431,9 +431,50 @@ export interface AircraftConfig {
    * lo contrario de tratarlos a todos igual.
    */
   minGroundPitch: number;
-  /** Sustentación y resistencia extra con flaps a tope. */
+  /**
+   * **Si lleva flaps.**
+   *
+   * Casi todos, y no todos: un biplano fumigador de esta clase lleva alerones
+   * en sus dos alas y nada más. Donde no los hay no hay palanca, ni botón, ni
+   * reloj, ni regla en el cuadro, ni el tutor los pide —igual que el tren
+   * fijo no lleva palanca de tren, ver `trenRetractil`—: un mando que se
+   * pulsa y no mueve nada en el ala enseña que los mandos son decoración, y
+   * un reloj que marca diez grados con el ala quieta enseña que los relojes
+   * mienten.
+   */
+  llevaFlaps: boolean;
+  /**
+   * Sustentación y resistencia extra con flaps a tope. Cero en el que no los
+   * lleva: no hay nada que las dé.
+   */
   flapsLift: number;
   flapsDrag: number;
+  /**
+   * **Los grados de los flaps en cada muesca de la palanca**, empezando por el
+   * cero de recogidos. Una cifra por muesca —ver `DETENTES`—, o ninguna en el
+   * que no los lleva.
+   *
+   * No son los mismos en toda la flota, y por eso están aquí: el primer tope
+   * de un reactor son cinco grados casi sin ángulo —el flap sale hacia atrás
+   * por sus carriles— y el de una avioneta son diez. La regla de flaps del
+   * cuadro los rotulaba 0, 10, 20 y 30 para los seis, y eso en un avión de
+   * línea era enseñar un tope que no tiene.
+   *
+   * Tienen que decir lo mismo que las `muescas` del modelo —ver
+   * `flaps_moviles` en `modelos/exterior.py`—, y lo comprueba
+   * `world/flaps-del-modelo.test.ts` leyendo el `.glb`.
+   */
+  muescasDeFlaps: readonly number[];
+  /**
+   * **Lo que tardan los flaps de arriba abajo**, en segundos.
+   *
+   * La palanca va de un golpe; los flaps, no. Los de una avioneta los mueve un
+   * motor eléctrico pequeño y tardan unos segundos por muesca; los de un avión
+   * de línea son hidráulicos, más grandes y con carriles más largos, y tardan
+   * bastante más. Es la lección del tren otra vez: **se piden antes de
+   * necesitarlos**. Ver `flight/flaps.ts`.
+   */
+  tardanLosFlaps: number;
 
   appearance: AircraftAppearance;
   sound: AircraftSound;
@@ -502,8 +543,14 @@ export const PYKASU: AircraftConfig = {
   maxGroundPitch: 0.21, // 12°
   // 3,3 m de morro y diez centímetros de pata: 1,7°.
   minGroundPitch: -0.030,
+  llevaFlaps: true,
   flapsLift: 0.55,
   flapsDrag: 0.06,
+  // Diez, veinte y treinta: los tres topes del flap ranurado de una avioneta
+  // de escuela de ala alta. Los mueve un motor eléctrico, tres segundos por
+  // muesca.
+  muescasDeFlaps: [0, 10, 20, 30],
+  tardanLosFlaps: 9,
   appearance: {
     body: 0xe4e2da,
     accent: 0xbe5d38,
@@ -583,8 +630,23 @@ export const MAINUMBY: AircraftConfig = {
   // Patín de cola: se apoya de morro arriba, y bajarlo
   // clava la hélice. Poco juego a propósito.
   minGroundPitch: -0.020,
-  flapsLift: 0.35,
-  flapsDrag: 0.05,
+  /*
+   * **No lleva flaps**: las dos alas tienen alerones y nada más, que es lo que
+   * tiene un biplano fumigador de esta clase —y su modelo, que no los tiene—.
+   * Tenía palanca, botón, reloj y un cuarto de sustentación de más, y con los
+   * flaps de los otros cinco bajando en el ala, en éste se veía la aguja en
+   * diez grados con el ala quieta.
+   *
+   * Quitárselos al modelo de vuelo no le cambia la toma: su `approachSpeed`
+   * ya era 1,3 veces la pérdida **limpia** —29 contra 22,2 m/s—, que es la
+   * regla con la que cruza el umbral un avión sin flaps. Lo comprueba
+   * `prestaciones.test.ts`.
+   */
+  llevaFlaps: false,
+  flapsLift: 0,
+  flapsDrag: 0,
+  muescasDeFlaps: [],
+  tardanLosFlaps: 0,
   appearance: {
     // Biplano de trabajo: dos alas, ocre y verde, hélice de tres palas.
     body: 0xdd923f,
@@ -698,8 +760,13 @@ export const PANAMBI: AircraftConfig = {
   maxGroundPitch: 0.19, // 11°
   // 3,6 m de morro y diez centímetros: 1,6°.
   minGroundPitch: -0.028,
+  llevaFlaps: true,
   flapsLift: 0.5,
   flapsDrag: 0.07,
+  // Diez, veinticinco y cuarenta: los de un bimotor de pistón de seis plazas,
+  // con su flap ranurado. Eléctricos, como los de la avioneta.
+  muescasDeFlaps: [0, 10, 25, 40],
+  tardanLosFlaps: 9,
   appearance: {
     // Blanco de compañía con la franja de la casa: es un avión de trabajo que
     // lleva gente, y se pinta como se pintan ésos.
@@ -799,8 +866,13 @@ export const ARASUNU: AircraftConfig = {
   minGroundPitch: -0.022,
   // Flaps grandes: es lo que le permite entrar en pistas cortas, que es para
   // lo que existe un turbohélice regional.
+  llevaFlaps: true,
   flapsLift: 0.65,
   flapsDrag: 0.09,
+  // Diez, veinte y treinta y cinco: los de un turbohélice de diecinueve
+  // plazas. Hidráulicos y más grandes: cuatro segundos por muesca.
+  muescasDeFlaps: [0, 10, 20, 35],
+  tardanLosFlaps: 12,
   appearance: {
     body: 0xecece6,
     accent: 0x1f4f76,
@@ -950,8 +1022,16 @@ export const ARAI: AircraftConfig = {
    * centésimas de resistencia y llega a un CL máximo cerca de 2,5. Esos son
    * los números.
    */
+  llevaFlaps: true,
   flapsLift: 1.05,
   flapsDrag: 0.055,
+  /*
+   * Cinco, quince y treinta: los topes de un bimotor de pasillo único. El
+   * primero es casi todo carril —el Fowler sale hacia atrás y apenas baja—,
+   * para despegar sin frenar; los otros dos, ángulo. Seis segundos por muesca.
+   */
+  muescasDeFlaps: [0, 5, 15, 30],
+  tardanLosFlaps: 18,
   appearance: {
     body: 0xf2f1ec,
     accent: 0xbe5d38,
@@ -1107,8 +1187,13 @@ export const YVAGA: AircraftConfig = {
   // Triple ranura y Krueger: un ala de línea saca mucho más CL que una
   // avioneta, y es lo que le permite entrar a 98 y no a 140.
   // Lo mismo que el Arai, y por lo mismo. Ver su ficha.
+  llevaFlaps: true,
   flapsLift: 1.0,
   flapsDrag: 0.065,
+  // Cinco, veinte y treinta: los de un cuatrirreactor de fuselaje ancho, con
+  // el recorrido más largo de la flota. Ocho segundos por muesca.
+  muescasDeFlaps: [0, 5, 20, 30],
+  tardanLosFlaps: 24,
   appearance: {
     body: 0xf2f1ec,
     accent: 0x1f4f76,

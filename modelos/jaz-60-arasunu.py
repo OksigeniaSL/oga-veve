@@ -33,8 +33,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, espejo, helice, llantas, neumaticos, paneles, paneles_zy,
-    recogido, simetricos, superficie, varillas, ventanas, zy,
+    bisagra, espejo, flap, flaps_libres, flaps_moviles, helice, llantas,
+    neumaticos, paneles, paneles_zy, ranurado, recogido, simetricos,
+    superficie, varillas, ventanas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -185,14 +186,24 @@ def construir():
         de_ala(semi - 0.07, y_ala(semi), ALA_Z + 0.45, 1.15, 0.12, 6.5, -1.0),
     ]
     j = "oscuro"
-    piezas.append(superficie("ala", estaciones, curvatura=0.02, zonas=[
+    # El de dentro acaba **antes de la góndola**, no en la junta pintada de
+    # detrás de ella: un flap no baja a través de un motor. El trozo de
+    # encima de la góndola se queda quieto, como el carenado de detrás del
+    # motor de un turbohélice de verdad. Ver `jaz-40-panambi.py`.
+    flaps = [flap("dentro", 1.02, 2.64, 0.73), flap("fuera", 3.70, 6.3, 0.73)]
+    ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps, zonas=[
         (j, 0.95, 6.3, 0.715, 0.73),
         (j, 0.95, 1.02, 0.73, 1.0),
         (j, 3.62, 3.70, 0.73, 1.0),
         (j, 6.3, 6.38, 0.73, 1.0),
         (j, 6.45, 9.4, 0.74, 0.755),
         (j, 9.35, 9.42, 0.755, 1.0),
-    ]))
+    ])
+    piezas.append(ala)
+    # Ranurados, con los topes de un turbohélice de diecinueve plazas: diez,
+    # veinte y treinta y cinco. Ver `ranurado`.
+    piezas += flaps_moviles(ala, flaps, ranurado(
+        muescas=(0, 10, 20, 35), recorrido=(0, 0.15, 0.21, 0.25)))
 
     # ── Góndolas y hélices ────────────────────────────────────────────────
     #
@@ -305,9 +316,17 @@ def construir():
     morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.16))
     # Hacia atrás: el mismo eje x, girando al revés.
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (-1, 0, 0), 90, morro)
-    recogido(patas, [p for p in piezas
-                     if p.name in ("fuselaje", "carenado", "gondola", "ala")])
+    # Y los flaps también tapan: son el trozo de ala de detrás del pozo; y
+    # la franja que no baja, lo que queda de él donde acaba cada flap.
+    recogido(patas, [p for p in piezas if p.type == "MESH" and (
+        p.name in ("fuselaje", "carenado", "gondola", "ala")
+        or p.name.startswith(("flap-", "franja-")))])
     piezas += patas
+    # Y ningún flap atraviesa nada al bajar: ni el tren, fuera o metido, ni
+    # la góndola que lo parte en dos. Ver `flaps_libres`.
+    flaps_libres(piezas, [p for p in piezas if p.type == "MESH" and (
+        (p.parent and p.parent.name.startswith("bisagra-"))
+        or p.name in ("fuselaje", "carenado", "gondola"))])
 
     piezas.append(centro_de_gravedad(ALA_Z + 0.08 + 2.2 * 0.27))
     return piezas

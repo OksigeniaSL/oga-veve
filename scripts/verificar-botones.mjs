@@ -34,6 +34,13 @@ const AVIONES = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
  * cazar.
  */
 const MANDOS = ["motor", "flaps", "freno"];
+/**
+ * Y el de los flaps, igual que el del tren: **solo donde hay flaps**. El
+ * fumigador no los lleva, y su botón encendía una palanca que no mueve nada.
+ * Ver `llevaFlaps` en `flight/aircraft.ts`.
+ */
+const mandosDe = (llevaFlaps) =>
+  MANDOS.filter((m) => m !== "flaps" || llevaFlaps);
 
 const server = await createServer({
   root: process.cwd(),
@@ -127,9 +134,11 @@ for (const avion of AVIONES) {
         : "todos dentro",
     "un mando que flota fuera del tablero no es un mando, es un error de dibujo",
   );
+  const llevaFlaps = await page.evaluate(() => globalThis.__oga.avion().llevaFlaps);
   comprobar(
     `${avion}: la cabina trae sus mandos`,
-    MANDOS.every((m) => hay.includes(m)),
+    mandosDe(llevaFlaps).every((m) => hay.includes(m)) &&
+      hay.includes("flaps") === llevaFlaps,
     hay.join(" · ") || "ninguno",
     "un panel donde no se puede tocar nada enseña que los mandos son adorno",
   );
