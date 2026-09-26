@@ -40,7 +40,8 @@ from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
     bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
-    fowler, llantas, neumaticos, paneles, paneles_zy, recogido,
+    en_punta, fowler, llantas, marca, neumaticos, paneles, paneles_zy,
+    recogido,
     simetricos, superficie, turbofan, varillas, ventanas, zy,
 )
 
@@ -186,11 +187,24 @@ def construir():
     def arriba(z):
         return abajo(z) + 0.50 * max(0.0, min(1.0, (z + 31.0) / 2.2))
 
-    piezas.append(banda("cintura", PIEL, -31.0, 25.5, abajo, arriba,
+    # Y acaba en punta de hoja al pie de la deriva, con la raya fina
+    # cerrándose en la misma punta. Ver `en_punta`.
+    abajo_punta = en_punta(abajo, arriba, 21.5, 26.5)
+    piezas.append(banda("cintura", PIEL, -31.0, 26.48, abajo_punta, arriba,
                         fuera=0.018, paso=0.5))
-    piezas.append(banda("cintura-fina", PIEL, -29.8, 25.2, sube(-0.20),
-                        sube(-0.07), material_="detalle", fuera=0.018,
+
+    def fina_arriba(z):
+        return abajo_punta(z) - 0.12 * (1 - max(0.0, min(1.0, (z - 21.5) / 5.0)))
+
+    piezas.append(banda("cintura-fina", PIEL, -29.8, 26.48,
+                        en_punta(lambda z: fina_arriba(z) - 0.13, fina_arriba,
+                                 21.5, 26.5),
+                        fina_arriba, material_="detalle", fuera=0.018,
                         paso=0.5, filas=1))
+
+    # La marca detrás de la puerta de delante, sobre las ventanillas: la
+    # misma firma que en el JAZ 90, a la escala de este avión. Ver `marca`.
+    piezas.append(marca(PIEL, -21.55, -18.35, 1.55, 2.33, fuera=0.022))
 
     cab = cabina(
         # Este avión mete las patas, así que lleva su palanca.
@@ -306,7 +320,7 @@ def construir():
         de_deriva(0.0, 2.95, 19.2, 14.0, 0.05),
         de_deriva(0.0, 4.20, 22.9, 10.6, 0.10),
         de_deriva(0.0, 13.9, 29.3, 4.6, 0.10),
-    ], material_="capo", simetria=False, zonas=[
+    ], material_="cola", simetria=False, zonas=[
         ("oscuro", 2.0, 11.0, 0.68, 0.688),
     ]))
     # Con las puntas acabando antes que la cola: la luz blanca de atrás va

@@ -116,7 +116,28 @@ export interface AircraftAppearance {
   trim: number;
   /** Cuántas palas lleva la hélice. */
   blades: number;
+  /**
+   * **El motivo de la casa en la cola**, en los que lo llevan. Ver
+   * `world/librea.ts`.
+   *
+   * No lo lleva toda la flota, y no por pereza: los que llevan pasaje van
+   * vestidos de compañía —el sol entre las hojas en la deriva y la firma
+   * junto a la puerta—, y una avioneta de escuela o un fumigador no se
+   * visten así en ningún sitio del mundo. El `.glb` dice en qué superficie
+   * va (su material `cola`); esto dice qué lleva.
+   */
+  motivo?: MotivoDeCola;
 }
+
+/**
+ * Qué lleva la deriva.
+ *
+ * - `sol-y-hojas`: el sol del logotipo entre sus dos hojas, sobre la cola del
+ *   color del avión. El de los aviones de línea.
+ * - `sol`: el sol solo, naciendo en la raíz. Para una cola que ya es verde,
+ *   donde las hojas no se verían: la deriva misma hace de hoja.
+ */
+export type MotivoDeCola = "sol-y-hojas" | "sol";
 
 /**
  * Cómo suena una aeronave.
@@ -774,6 +795,8 @@ export const PANAMBI: AircraftConfig = {
     accent: 0x2f5243,
     trim: 0xbe5d38,
     blades: 3,
+    // La cola ya es verde: lleva el sol solo, naciendo en la raíz.
+    motivo: "sol",
   },
   sound: {
     // Dos cuatro cilindros. Suena a avioneta pero doble, que es exactamente
@@ -878,6 +901,7 @@ export const ARASUNU: AircraftConfig = {
     accent: 0x1f4f76,
     trim: 0xdd923f,
     blades: 4,
+    motivo: "sol-y-hojas",
   },
   sound: {
     engine: "turboprop",
@@ -1037,6 +1061,7 @@ export const ARAI: AircraftConfig = {
     accent: 0xbe5d38,
     trim: 0x2f5243,
     blades: 0,
+    motivo: "sol-y-hojas",
   },
   sound: {
     engine: "turbofan",
@@ -1199,6 +1224,7 @@ export const YVAGA: AircraftConfig = {
     accent: 0x1f4f76,
     trim: 0xbe5d38,
     blades: 0,
+    motivo: "sol-y-hojas",
   },
   sound: {
     engine: "turbofan",

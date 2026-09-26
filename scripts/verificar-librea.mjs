@@ -48,6 +48,14 @@ const comprobar = (nombre, ok, detalle, porque) =>
  */
 const NUESTROS = ["jaz-20", "jaz-25", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
 
+/**
+ * Los que firman con el logotipo de Granja Óga: todos menos el fumigador, que
+ * es un avión de trabajo y va vestido de ocre de la casa sin más. El motivo
+ * de la cola no se apunta aquí: lo dice la ficha de cada uno. Ver
+ * `src/world/librea.ts`.
+ */
+const CON_FIRMA = ["jaz-20", "jaz-40", "jaz-60", "jaz-90", "jaz-120"];
+
 for (const id of NUESTROS) {
   const page = await navegador.newPage({
     viewport: { width: 900, height: 560 },
@@ -91,7 +99,54 @@ for (const id of NUESTROS) {
       for (const m of ms)
         if (m.color && m.name) colores[m.name] = "#" + m.color.getHexString();
     });
-    return { colores, avion: o.avion(), deVerdad: !!o.aeronave().deVerdad };
+    /*
+     * Y la librea de la casa: la cola con su dibujo y la firma. De la firma
+     * se mide **hacia dónde crece la `u`** en cada costado, que es lo que
+     * decide si el logotipo se lee o sale en espejo: hacia la cola en el
+     * izquierdo, hacia el morro en el derecho.
+     */
+    const grupo = o.aeronave().grupo;
+    grupo.updateWorldMatrix(true, true);
+    const aGrupo = grupo.matrixWorld.clone().invert();
+    const v = grupo.position.clone();
+    const librea = { cola: [], marca: [] };
+    grupo.traverse((n) => {
+      const m = n.material;
+      if (!m || Array.isArray(m) || (m.name !== "cola" && m.name !== "marca"))
+        return;
+      const dato = {
+        mapa: !!m.map,
+        srgb: m.map?.colorSpace === "srgb",
+        blanco: m.color.getHex() === 0xffffff,
+        transparente: !!m.transparent,
+      };
+      if (m.name === "marca") {
+        const pos = n.geometry.getAttribute("position");
+        const uv = n.geometry.getAttribute("uv");
+        const lados = { izq: [], der: [] };
+        for (let i = 0; uv && i < pos.count; i++) {
+          v.fromBufferAttribute(pos, i)
+            .applyMatrix4(n.matrixWorld)
+            .applyMatrix4(aGrupo);
+          (v.x < 0 ? lados.izq : lados.der).push([v.z, uv.getX(i)]);
+        }
+        const pendiente = (ps) => {
+          if (!ps.length) return 0;
+          const mz = ps.reduce((a, p) => a + p[0], 0) / ps.length;
+          const mu = ps.reduce((a, p) => a + p[1], 0) / ps.length;
+          return ps.reduce((a, p) => a + (p[0] - mz) * (p[1] - mu), 0);
+        };
+        dato.izq = pendiente(lados.izq);
+        dato.der = pendiente(lados.der);
+      }
+      librea[m.name].push(dato);
+    });
+    return {
+      colores,
+      librea,
+      avion: o.avion(),
+      deVerdad: !!o.aeronave().deVerdad,
+    };
   });
 
   comprobar(
@@ -120,6 +175,32 @@ for (const id of NUESTROS) {
     `${visto.colores.goma} · luz ${luminancia(visto.colores.goma ?? "#ffffff").toFixed(3)}`,
     "en lineal el negro se levantaba hasta gris medio",
   );
+  const motivo = visto.avion.librea.motivo;
+  if (motivo) {
+    const cola = visto.librea.cola;
+    comprobar(
+      `${id}: la cola lleva el motivo de la casa (${motivo})`,
+      cola.length && cola.every((c) => c.mapa && c.srgb && c.blanco),
+      cola.length
+        ? cola.map((c) => `mapa ${c.mapa} · sRGB ${c.srgb} · blanco ${c.blanco}`).join("; ")
+        : "sin material `cola` en el .glb",
+      "el .glb no marca la deriva, o el lienzo salió sin sRGB y pálido",
+    );
+  }
+  if (CON_FIRMA.includes(id)) {
+    const marca = visto.librea.marca;
+    comprobar(
+      `${id}: lleva la firma, y se lee del derecho por los dos costados`,
+      marca.length &&
+        marca.every((f) => f.mapa && f.srgb && f.transparente && f.izq > 0 && f.der < 0),
+      marca.length
+        ? marca
+            .map((f) => `u hacia la cola ${f.izq.toFixed(2)} a la izquierda, ${f.der.toFixed(2)} a la derecha`)
+            .join("; ")
+        : "sin material `marca` en el .glb",
+      "un logotipo en espejo no es el logotipo",
+    );
+  }
   comprobar(
     `${id}: ningún material quedó sin repintar`,
     !errores.length,

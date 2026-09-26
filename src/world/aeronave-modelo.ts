@@ -57,6 +57,7 @@ import { prepararFlaps } from "./flaps";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
 import { luzDeCabina } from "./luz-de-cabina";
+import { vestirLaLibrea } from "./librea";
 import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
 
 /** Dónde se dejan los modelos. Uno por aeronave, con su identificador. */
@@ -258,6 +259,10 @@ const RANURAS = {
   casco: "body",
   capo: "accent",
   detalle: "trim",
+  // La deriva que lleva el motivo de la casa: del color del capó, que es el
+  // fondo del motivo, hasta que `vestirLaLibrea` le pone el dibujo encima. Si
+  // no se lo puede poner, la cola se queda como estaba.
+  cola: "accent",
 } as const;
 
 /**
@@ -714,6 +719,9 @@ export async function cargarModelo(
    * que el avión de la fábrica se posara y el de verdad no.
    */
   pintarDeLaFlota(raiz, aircraft);
+  // Y la librea de la casa encima: el motivo de la cola y la firma. Ver
+  // `librea.ts`.
+  vestirLaLibrea(raiz, aircraft);
 
   const yaEscalada = new Box3().setFromObject(raiz);
   raiz.position.y -= yaEscalada.min.y + aircraft.gearHeight;

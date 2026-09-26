@@ -35,7 +35,7 @@ from comun import caja, cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
     bisagra, espejo, flap, flaps_libres, flaps_moviles, helice, llantas,
-    neumaticos, paneles, paneles_zy, ranurado, recogido, simetricos,
+    marca, neumaticos, paneles, paneles_zy, ranurado, recogido, simetricos,
     superficie, varillas, zy,
 )
 
@@ -151,6 +151,11 @@ def construir():
                         sube(-0.17), material_="detalle", fuera=0.007,
                         paso=0.12, filas=1))
 
+    # El logotipo, solo y pequeño, detrás de las ventanillas: es un avión de
+    # la casa que lleva gente, no una compañía, y firma como firma un taxi
+    # aéreo. La cola lleva el sol. Ver `marca`.
+    piezas.append(marca(PIEL, 1.24, 1.58, 0.17, 0.51, fuera=0.009, div=6))
+
     # Lo de dentro: dos plazas de frente, suelo bajo en la panza y el panel a
     # setenta centímetros de la cara. Ver `cabina` en `comun.py`.
     cab = cabina(
@@ -247,7 +252,7 @@ def construir():
         de_deriva(0.0, 0.30, 2.95, 2.10, 0.05),
         de_deriva(0.0, 0.46, 3.72, 1.34, 0.10),
         de_deriva(0.0, 1.72, 4.40, 0.78, 0.09),
-    ], material_="capo", simetria=False, zonas=[
+    ], material_="cola", simetria=False, zonas=[
         ("oscuro", 0.2, 1.3, 0.62, 0.635),
     ]))
     piezas.append(superficie("estabilizador", [
