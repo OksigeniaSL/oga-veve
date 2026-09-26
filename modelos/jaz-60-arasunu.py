@@ -33,8 +33,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, espejo, flap, flaps_libres, flaps_moviles, helice, llantas,
-    neumaticos, paneles, paneles_zy, ranurado, recogido, simetricos,
+    bisagra, en_punta, espejo, flap, flaps_libres, flaps_moviles, helice,
+    llantas, marca, neumaticos, paneles, paneles_zy, ranurado, recogido,
+    simetricos,
     superficie, varillas, ventanas, zy,
 )
 
@@ -147,11 +148,29 @@ def construir():
     def abajo(z):
         return arriba(z) - 0.28 * max(0.0, min(1.0, (z + 6.6) / 1.2))
 
-    piezas.append(banda("cintura", PIEL, -6.6, 7.3, abajo, arriba,
+    # Y acaba en punta de hoja al pie de la deriva, con la raya fina
+    # cerrándose en la misma punta. Ver `en_punta`.
+    abajo_punta = en_punta(abajo, arriba, 5.0, 7.4)
+    piezas.append(banda("cintura", PIEL, -6.6, 7.39, abajo_punta, arriba,
                         fuera=0.008, paso=0.15))
-    piezas.append(banda("cintura-fina", PIEL, -6.2, 7.2, sube(-0.36),
-                        sube(-0.32), material_="detalle", fuera=0.008,
+
+    # La raya va pegada al borde de abajo de la franja **sin** el afilado del
+    # morro, que es donde estaba: solo la cola cambia.
+    abajo_sin_morro = en_punta(sube(-0.28), arriba, 5.0, 7.4)
+
+    def fina_arriba(z):
+        return abajo_sin_morro(z) - 0.04 * (
+            1 - max(0.0, min(1.0, (z - 5.0) / 2.4)))
+
+    piezas.append(banda("cintura-fina", PIEL, -6.2, 7.39,
+                        en_punta(lambda z: fina_arriba(z) - 0.04, fina_arriba,
+                                 5.0, 7.4),
+                        fina_arriba, material_="detalle", fuera=0.008,
                         paso=0.15, filas=1))
+
+    # La marca detrás de la puerta, sobre las ventanillas: la misma firma que
+    # en los reactores, a la escala de un turbohélice. Ver `marca`.
+    piezas.append(marca(PIEL, -3.62, -2.22, 0.50, 0.84, fuera=0.010))
 
     # Lo de dentro: dos plazas de frente, el panel a setenta centímetros de la
     # cara y el suelo en la panza. Ver `cabina` en `comun.py`.
@@ -255,7 +274,7 @@ def construir():
         de_deriva(0.0, 0.72, 3.80, 4.60, 0.05),
         de_deriva(0.0, 1.10, 5.40, 2.95, 0.12),
         de_deriva(0.0, alto, punta_z, punta_c, 0.12),
-    ], material_="capo", simetria=False, zonas=[
+    ], material_="cola", simetria=False, zonas=[
         ("oscuro", 0.55, 2.4, 0.66, 0.675),
     ], punta=False))
     piezas.append(superficie("estabilizador", [

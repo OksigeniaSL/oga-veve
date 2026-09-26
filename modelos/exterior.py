@@ -65,6 +65,22 @@ COLORES.update({
     # Y el amarillo de las puntas de pala, que no es librea: es seguridad. Es
     # lo que hace visible un disco que gira, en todos los aviones del mundo.
     "punta-de-pala": (0.93, 0.74, 0.12, 1.0),
+    # **La librea de la casa**, que no se pinta aquí sino en el juego. Ver
+    # `src/world/librea.ts`.
+    #
+    # - `cola` es la deriva que lleva el motivo de Granja Óga —el sol entre
+    #   las hojas—. Aquí sale del color del capó, que es el fondo sobre el que
+    #   va el motivo, para que en un visor cualquiera la cola siga siendo la
+    #   de siempre.
+    # - `marca` es el trozo de piel donde va el logotipo junto a la puerta.
+    #   Blanco, porque el juego le pone encima el logotipo con sus colores y
+    #   deja ver el casco alrededor.
+    #
+    # Van por nombre, como los relojes y los botones: el guion dice **dónde**
+    # va cada cosa, que es lo que sabe, y el juego la dibuja con los colores de
+    # la ficha, que son los que mandan.
+    "cola": (0.75, 0.36, 0.22, 1.0),
+    "marca": (1.0, 1.0, 1.0, 1.0),
 })
 
 
@@ -465,6 +481,30 @@ def banda(nombre, piel, z0, z1, abajo, arriba, fuera=0.012, paso=0.2,
     return liso(_malla_en_escena(nombre, bm, [material_]), angulo=80)
 
 
+def en_punta(abajo, arriba, desde, hasta, curva=1.8):
+    """
+    El borde de abajo de una franja que **acaba en punta de hoja**.
+
+    Es la mitad de la librea que habla con la cola. La deriva lleva el sol
+    entre las hojas de Granja Óga —ver `src/world/librea.ts`—, y la franja de
+    cintura, que antes se acababa de golpe bajo la cola, ahora se afila
+    subiendo hasta cerrarse en punta al pie de la deriva: una hoja larga que
+    nace fina en el morro y acaba fina en la cola. Así el trazo del costado
+    lleva el ojo hasta la cola en vez de cortarse antes.
+
+    Devuelve la altura del borde de abajo: la de siempre hasta `desde`, y de
+    ahí sube, cada vez más deprisa, hasta juntarse con el de arriba en
+    `hasta`. Los dos bordes pueden ser números o funciones de `z`.
+    """
+    fa = abajo if callable(abajo) else (lambda z, v=abajo: v)
+    fb = arriba if callable(arriba) else (lambda z, v=arriba: v)
+
+    def f(z):
+        t = max(0.0, min(1.0, (z - desde) / (hasta - desde)))
+        return fa(z) + (fb(z) - fa(z)) * t ** curva
+    return f
+
+
 def paneles(nombre, piel, cuadros, fuera=0.012, material_="cristal", div=5):
     """
     Paneles pegados a la piel, dados por sus cuatro esquinas en `(z, t)`.
@@ -532,6 +572,24 @@ def paneles_zy(nombre, piel, cuadros, fuera=0.012, material_="cristal",
 def simetricos(cuadros):
     """Los mismos paneles, y su reflejo en el otro costado."""
     return list(cuadros) + [[(z, -t) for z, t in c] for c in cuadros]
+
+
+def marca(piel, z0, z1, y0, y1, fuera=0.014, div=8):
+    """
+    El sitio de la marca: un trozo de piel, a los dos costados, para el logo.
+
+    Es donde lo lleva una compañía de verdad —junto a la puerta, sobre las
+    ventanillas—, y **no es una pegatina**: es la misma piel un dedo por
+    fuera, como la franja o el contorno de la puerta, así que sigue la curva
+    del costado. El dibujo lo pone el juego —ver `src/world/librea.ts`—, que
+    es quien sabe leer: le da la vuelta en el costado derecho para que el
+    logotipo no salga del revés, que es lo único que un logotipo no perdona.
+
+    Se da en metros de perfil, de `z0` a `z1` y de `y0` a `y1`. Más ancho que
+    alto es el logotipo con su nombre al lado; cuadrado, el logotipo solo.
+    """
+    return paneles_zy("marca", piel, [[(z0, y0), (z1, y0), (z1, y1), (z0, y1)]],
+                      fuera=fuera, material_="marca", div=div)
 
 
 # ── Alas, derivas, pilones y palas ────────────────────────────────────────

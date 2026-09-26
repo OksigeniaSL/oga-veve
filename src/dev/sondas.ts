@@ -405,6 +405,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         casco: juego.aircraft.appearance.body,
         capo: juego.aircraft.appearance.accent,
         detalle: juego.aircraft.appearance.trim,
+        // Y el motivo de la cola, si lo lleva. Ver `world/librea.ts`.
+        motivo: juego.aircraft.appearance.motivo ?? null,
       },
     }),
     /**

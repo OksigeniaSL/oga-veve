@@ -36,7 +36,7 @@ from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_deriva, de_ala, dentro_de,
     espejo, estacion, flap, flaps_libres, flaps_moviles, helice, llantas,
-    neumaticos, paneles, paneles_zy, ranurado, simetricos, superficie,
+    marca, neumaticos, paneles, paneles_zy, ranurado, simetricos, superficie,
     varillas, zy,
 )
 from mathutils import Vector  # noqa: E402
@@ -162,6 +162,12 @@ def construir():
     piezas.append(banda("cintura-fina", PIEL, CORTAFUEGOS + 0.15, 4.9,
                         sube(-0.05), sube(-0.015), material_="detalle",
                         fuera=0.007, paso=0.15, filas=1))
+
+    # El logotipo de la escuela, solo y pequeño, detrás de la ventanilla de
+    # atrás: donde lo lleva la avioneta de cualquier aeroclub. Una avioneta de
+    # escuela no se viste de compañía aérea, así que la cola se queda como
+    # estaba. Ver `marca`.
+    piezas.append(marca(PIEL, 1.56, 1.88, 0.36, 0.68, fuera=0.009, div=6))
 
     # La puerta: una junta en la chapa, con la ventanilla dentro. Por ahí se
     # entra al asiento de la izquierda y por ahí se sale.

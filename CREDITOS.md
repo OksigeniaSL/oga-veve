@@ -176,6 +176,29 @@ El fichero SVG es el mismo que se usa para BIMI en el correo de la granja, que
 es la versión pensada para verse pequeña y cuadrada. El PNG queda de respaldo
 para donde haga falta un mapa de bits.
 
+#### Y en los aviones
+
+Desde septiembre de 2026 la marca va también **en los aviones**, con el mismo
+criterio de arriba:
+
+- **La firma** —el logotipo entero, y «Granja Óga» al lado en la letra del
+  juego— va pequeña detrás de la puerta de delante de los tres aviones de
+  pasaje, el JAZ 60, el 90 y el 120; y el logotipo solo, detrás de las
+  ventanillas del JAZ 20 y del JAZ 40. Se pinta desde este mismo SVG, trazo a
+  trazo y con sus colores, no desde un dibujo parecido; y del derecho por los
+  dos costados, que es lo único que un logotipo puede hacer mal en un avión.
+- **La cola no lleva el logotipo**, y es a propósito: lleva un **motivo que
+  sale de él**, el sol entre sus dos hojas, grande y cortado por los bordes
+  de la deriva, que es como se diseña la cola de una compañía. Un logotipo
+  no se recorta; un motivo de la marca, sí. El sol es el ocre de la marca, las
+  hojas su verde bosque —o el verde claro de la web de la granja, `#6E9484`,
+  sobre una cola azul, donde el bosque no se lee— y los filetes que los
+  separan, el color del casco.
+
+El motivo es de Oksigenia SL, como la marca de la que sale, y va con ella:
+contenido propietario, ver `LICENSE-CONTENIDO.md`. El código que lo pinta,
+`src/world/librea.ts`, es Apache-2.0 como el resto.
+
 ### La aeronave que vino de fuera, y ya no
 
 Hasta septiembre de 2026 el **JAZ 20 _Pykasu_** era un modelo descargado —una
@@ -208,14 +231,19 @@ desvíen, y lo que este juego enseña es reconocer un avión por su forma. Si el
 tratamiento cambia de un avión al siguiente, el álbum de postales deja de tener
 nada que enseñar.
 
-No llevan texturas, como el resto del juego: un material por pieza y el color se
-lo pone la ficha del avión al cargarlo, no el fichero. Ver
-`pintarDeLaFlota` en `src/world/aeronave-modelo.ts`.
+No llevan texturas en el fichero, como el resto del juego: un material por
+pieza y el color se lo pone la ficha del avión al cargarlo, no el fichero. Ver
+`pintarDeLaFlota` en `src/world/aeronave-modelo.ts`. Las dos únicas imágenes
+que llevan —el motivo de la cola y la firma de Granja Óga— tampoco vienen en
+el `.glb`: las pinta el juego en un lienzo al cargar el avión, con los colores
+de la ficha. Ver `src/world/librea.ts` y el apartado del logotipo.
 
 Son obra de Oksigenia SL y van bajo la licencia del proyecto, Apache-2.0. Los
-únicos nombres que no son libres dentro de los guiones son dos, y son del juego:
+únicos nombres que no son libres dentro de los guiones son del juego:
 `asiento`, del que sale el sitio de los ojos, y `g1000_display`, que es el
-material con el que el juego encuentra las pantallas del panel.
+material con el que el juego encuentra las pantallas del panel. Y los dos
+materiales de la librea, `cola` y `marca`, que le dicen al juego dónde pintar
+el motivo y la firma de Granja Óga.
 
 ### Si se incorpora más arte
 

@@ -39,7 +39,7 @@ from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
     bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
-    fowler, llantas, neumaticos,
+    en_punta, fowler, llantas, marca, neumaticos,
     paneles, paneles_zy, recogido, simetricos, superficie, turbofan, varillas,
     ventanas, zy,
 )
@@ -193,13 +193,33 @@ def construir():
         return lambda z: arriba(z) - (arriba(z) - abajo(z)) * max(
             0.0, min(1.0, (z + 14.4) / 1.6))
 
+    # Y acaba en punta de hoja al pie de la deriva, con la raya fina
+    # cerrándose en la misma punta: la franja es una hoja larga que va del
+    # morro a la cola, donde están las del motivo. Ver `en_punta`.
     arriba = sube(0.20)
-    piezas.append(banda("cintura", PIEL, -14.4, 12.6,
-                        morro_fino(sube(-0.08), arriba), arriba,
+    abajo = en_punta(morro_fino(sube(-0.08), arriba), arriba, 9.6, 13.2)
+    piezas.append(banda("cintura", PIEL, -14.4, 13.18, abajo, arriba,
                         fuera=0.010, paso=0.25))
-    piezas.append(banda("cintura-fina", PIEL, -13.6, 12.4, sube(-0.24),
-                        sube(-0.16), material_="detalle", fuera=0.010,
+
+    # La raya va pegada al borde de abajo de la franja **sin** el afilado del
+    # morro, que es donde estaba: solo la cola cambia.
+    abajo_sin_morro = en_punta(sube(-0.08), arriba, 9.6, 13.2)
+
+    def fina_arriba(z):
+        return abajo_sin_morro(z) - 0.08 * (
+            1 - max(0.0, min(1.0, (z - 9.6) / 3.6)))
+
+    piezas.append(banda("cintura-fina", PIEL, -13.6, 13.18,
+                        en_punta(lambda z: fina_arriba(z) - 0.08, fina_arriba,
+                                 9.6, 13.2),
+                        fina_arriba, material_="detalle", fuera=0.010,
                         paso=0.3, filas=1))
+
+    # La marca, donde la lleva una compañía: detrás de la puerta de delante y
+    # encima de las ventanillas, que es lo primero que se ve al subir. Pequeña
+    # a propósito —medio metro de logotipo en treinta y uno de avión—: la
+    # cola ya dice de quién es el avión, y esto lo firma. Ver `marca`.
+    piezas.append(marca(PIEL, -10.40, -8.45, 0.82, 1.30))
 
     cab = cabina(
         # Este avión mete las patas, así que lleva su palanca.
@@ -347,7 +367,7 @@ def construir():
         de_deriva(0.0, 1.40, 7.30, 7.60, 0.05),
         de_deriva(0.0, 2.10, 9.70, 5.20, 0.10),
         de_deriva(0.0, 7.20, 13.40, 2.25, 0.10),
-    ], material_="capo", simetria=False, zonas=[
+    ], material_="cola", simetria=False, zonas=[
         ("oscuro", 0.8, 5.9, 0.68, 0.692),
     ]))
     y_est = 0.78

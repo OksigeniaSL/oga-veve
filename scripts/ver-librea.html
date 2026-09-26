@@ -1,0 +1,95 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>La librea</title>
+<style>
+  body { margin: 0; background: #b9cfe0; }
+  canvas { display: block; }
+</style>
+<script type="module">
+  /*
+   * Un avión de verdad —el `.glb` con su librea puesta por el juego— en una
+   * sola vista, para mirarlo de cerca. `ver-librea.mjs` va pidiendo vistas.
+   *
+   * La luz es la del juego a media tarde: el sol cálido de `sky.ts` y su
+   * relleno hemisférico. Con otra luz se juzgaría otro avión.
+   */
+  import {
+    Box3,
+    Color,
+    DirectionalLight,
+    HemisphereLight,
+    PerspectiveCamera,
+    Scene,
+    Vector3,
+    WebGLRenderer,
+  } from "three";
+  import { AIRCRAFT } from "/src/flight/aircraft.ts";
+  import { cargarModelo } from "/src/world/aeronave-modelo.ts";
+
+  const q = new URLSearchParams(location.search);
+  const id = q.get("avion") ?? "jaz-90";
+  const ancho = Number(q.get("ancho") ?? 1200);
+  const alto = Number(q.get("alto") ?? 700);
+  const aircraft = AIRCRAFT.find((a) => a.id === id);
+
+  const pintor = new WebGLRenderer({ antialias: true });
+  pintor.setPixelRatio(1);
+  pintor.setSize(ancho, alto);
+  document.body.appendChild(pintor.domElement);
+
+  const escena = new Scene();
+  escena.background = new Color(0xb9cfe0);
+  const sol = new DirectionalLight(0xfff1da, 2.9);
+  escena.add(sol, sol.target);
+  escena.add(new HemisphereLight(0xc2dcf0, 0x6f7a5a, 0.5));
+
+  const malla = await cargarModelo(aircraft, "/");
+  escena.add(malla.group);
+  malla.patas?.poner?.(1);
+  const caja = new Box3().setFromObject(malla.group);
+  const centro = caja.getCenter(new Vector3());
+  const tam = caja.getSize(new Vector3());
+  const largo = Math.max(tam.x, tam.z);
+
+  const camara = new PerspectiveCamera(28, ancho / alto, 0.1, 2000);
+
+  /**
+   * Pone la cámara. `dir` es de dónde se mira, en los ejes del avión (x a la
+   * derecha, y arriba, z hacia la cola); `mira` es a qué fracción de la caja
+   * se apunta, y `lejos` cuántos largos del avión hay hasta él.
+   */
+  globalThis.__vista = ({ dir, mira = [0.5, 0.5, 0.5], lejos = 1.25, sol: s = [-0.5, 0.8, -0.35] }) => {
+    const objetivo = new Vector3(
+      caja.min.x + tam.x * mira[0],
+      caja.min.y + tam.y * mira[1],
+      caja.min.z + tam.z * mira[2],
+    );
+    // `mira: "marca"` apunta a la firma del costado que se mira.
+    if (mira === "marca") {
+      const firma = new Box3();
+      malla.group.traverse((o) => {
+        if (o.material?.name === "marca") firma.expandByObject(o);
+      });
+      if (firma.isEmpty()) return false;
+      firma.getCenter(objetivo);
+      objetivo.x = dir[0] < 0 ? firma.min.x : firma.max.x;
+    }
+    const d = new Vector3(...dir).normalize();
+    camara.position.copy(objetivo).addScaledVector(d, largo * lejos);
+    camara.lookAt(objetivo);
+    sol.position.copy(objetivo).add(new Vector3(...s).multiplyScalar(100));
+    sol.target.position.copy(objetivo);
+    pintor.render(escena, camara);
+    return true;
+  };
+  /** Los lienzos de la librea, tal cual, para mirar el dibujo sin la luz. */
+  globalThis.__lienzos = () => {
+    const fuera = [];
+    malla.group.traverse((o) => {
+      const imagen = o.material?.map?.image;
+      if (imagen?.toDataURL) fuera.push({ nombre: o.material.name, url: imagen.toDataURL() });
+    });
+    return fuera;
+  };
+  globalThis.__listo = true;
+</script>
