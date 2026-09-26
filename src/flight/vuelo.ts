@@ -187,7 +187,7 @@ function yaNoSePuedeParar(s: Situacion): boolean {
 }
 
 /** Quieto de verdad, m/s. Por debajo de esto un avión está parado. */
-const PARADO = 0.6;
+export const PARADO = 0.6;
 
 /** Velocidad a la que se considera que ya rueda y no está parado, m/s. */
 const RODANDO_YA = 2;
