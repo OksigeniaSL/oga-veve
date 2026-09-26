@@ -296,6 +296,7 @@ import {
   type CameraRig,
   type Contexto,
 } from "./cameras";
+import { sitioDeLaCola } from "./cameras/fuera";
 import { nombreDeTecla } from "./flight/keymap";
 import {
   elegirInstructor,
@@ -324,7 +325,11 @@ import { PlanDeVuelo, type Vista } from "./world/plan-de-vuelo";
 import { comoDibujo } from "./ui/senal";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
-import { SITIO_PARA_LA_BICI, Sigueme } from "./world/sigueme";
+import {
+  SITIO_PARA_LA_BICI,
+  Sigueme,
+  adelantoDelSigueme,
+} from "./world/sigueme";
 import { Vaca } from "./world/vaca";
 import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
@@ -2288,6 +2293,7 @@ export class Game {
   private readonly contextoDeCamara = {
     aircraft: { wingSpan: 0, chord: 0, largo: 0 },
     ojo: null as Contexto["ojo"],
+    aLaVista: 0,
     suelo: (x: number, z: number): number => this.terrain.sampleSurface(x, z),
     movimientoReducido: false,
     traqueteo: 1,
@@ -6244,6 +6250,31 @@ export class Game {
   private largoMedido = 0;
 
   /**
+   * A cuánto va el coche del sígame por delante de este avión, m, y de qué
+   * malla se sacó. Ver `adelantoDelSigueme`.
+   *
+   * Guardado **con la malla y no con el avión**: al cambiar de aeronave se
+   * montan primero las cajas y el modelo llega después, y cada una tapa lo
+   * suyo. Una medida guardada por avión se quedaría con la de las cajas.
+   */
+  private adelantoMedido: { de: AircraftMesh; metros: number } | null = null;
+
+  get adelantoDelSigueme(): number {
+    const malla = this.aircraftMesh;
+    if (this.adelantoMedido?.de !== malla)
+      this.adelantoMedido = {
+        de: malla,
+        metros: adelantoDelSigueme({
+          ojo: malla.ojo,
+          vista: malla.vista,
+          tren: this.aircraft.gearHeight,
+          cola: sitioDeLaCola(this.aircraft.wingSpan),
+        }),
+      };
+    return this.adelantoMedido.metros;
+  }
+
+  /**
    * Lo largo que es el avión **que se está dibujando**, m.
    *
    * De morro a cola, sacado de la caja que ocupa la malla, y no de la ficha:
@@ -9004,7 +9035,7 @@ export class Game {
       const cede = gesto !== null || (enBici && aQue < SITIO_PARA_LA_BICI);
       this.sigueme.paso(
         dt,
-        { x: s.position.x, z: s.position.z },
+        { x: s.position.x, z: s.position.z, adelanto: this.adelantoDelSigueme },
         // Y si está en la pista y no hay salida que esperar, no sale: lo
         // contrario es ponerlo a correr por una pista en uso. Ver `espera`.
         rodando &&
@@ -10197,6 +10228,7 @@ export class Game {
     ctx.aircraft.chord = this.aircraft.chord;
     ctx.aircraft.largo = this.largoDelAvion;
     ctx.ojo = this.aircraftMesh.ojo ?? null;
+    ctx.aLaVista = this.adelantoDelSigueme;
     ctx.movimientoReducido = this.reducedMotion;
     ctx.traqueteo = TRAQUETEO[this.superficie];
 

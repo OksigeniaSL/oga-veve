@@ -59,6 +59,7 @@ import { encenderBotones } from "./botones-cabina";
 import { luzDeCabina } from "./luz-de-cabina";
 import { vestirLaLibrea } from "./librea";
 import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
+import { medirVistaAlFrente } from "./vista-al-frente";
 
 /** Dónde se dejan los modelos. Uno por aeronave, con su identificador. */
 const CARPETA = "assets/aeronaves";
@@ -578,46 +579,26 @@ function esAncestro(posible: Object3D, hijo: Object3D): boolean {
 }
 
 /**
- * Carga el modelo de una aeronave, o `null` si no lo hay.
- *
- * Devuelve lo mismo que `createAircraftMesh` para que quien lo use no tenga que
- * saber de dónde salió el avión.
+ * Dónde tiene los ojos el piloto de un modelo ya colocado, y qué ve desde ahí.
+ * Ver `ojoDePiloto` y `conSuEncuadre`.
  */
-export async function cargarModelo(
-  aircraft: AircraftConfig,
-  base = import.meta.env.BASE_URL ?? "/",
-): Promise<AircraftMesh | null> {
-  const url = `${base}${base.endsWith("/") ? "" : "/"}${CARPETA}/${aircraft.id}.glb`;
+export function ojoDelModelo(
+  raiz: Object3D,
+  grupo: Object3D,
+): { x: number; y: number; z: number; encuadre?: EncuadreDeCabina } | undefined {
+  return conSuEncuadre(ojoDePiloto(raiz, grupo), raiz, grupo);
+}
 
-  try {
-    // Se pregunta antes de cargar: `GLTFLoader` con un 404 escupe un error de
-    // análisis que parece un fichero corrupto, y no lo es — es que no está.
-    const hay = await fetch(url, { method: "HEAD" });
-    if (!hay.ok) return null;
-  } catch {
-    return null;
-  }
-
-  let raiz: Object3D;
-  try {
-    /*
-     * Con plazo, y aquí importa doble: este fichero ya tiene decidido que
-     * **si falta el modelo se vuela con las cajas de respaldo**, y una carga
-     * sin plazo convierte esa decisión en lo contrario — no se vuela nada.
-     * Ver `datos/con-plazo.ts`.
-     */
-    const gltf = await conPlazo(
-      new GLTFLoader().loadAsync(url),
-      PLAZO_DE_IMAGEN,
-      `el modelo ${url.split("/").pop()}`,
-    );
-    if (!gltf) return null;
-    raiz = gltf.scene;
-  } catch {
-    // Un modelo roto no puede dejar a nadie sin volar.
-    return null;
-  }
-
+/**
+ * Pone un modelo recién leído en las convenciones del juego y lo mete en su
+ * grupo: la escala, el morro, las ruedas en el suelo y el origen en su centro
+ * de gravedad. Ver la cabecera.
+ *
+ * Aparte de `cargarModelo` para poder medir un modelo sin navegador: lo que
+ * se mide de un avión —dónde tiene los ojos, qué tapa su morro— tiene que
+ * medirse **colocado**, igual que en el juego, o se mide otro avión.
+ */
+export function colocarModelo(raiz: Object3D, aircraft: AircraftConfig): Group {
   const group = new Group();
   group.name = `aeronave:${aircraft.id}`;
 
@@ -752,7 +733,51 @@ export async function cargarModelo(
   }
 
   group.add(raiz);
+  return group;
+}
 
+/**
+ * Carga el modelo de una aeronave, o `null` si no lo hay.
+ *
+ * Devuelve lo mismo que `createAircraftMesh` para que quien lo use no tenga que
+ * saber de dónde salió el avión.
+ */
+export async function cargarModelo(
+  aircraft: AircraftConfig,
+  base = import.meta.env.BASE_URL ?? "/",
+): Promise<AircraftMesh | null> {
+  const url = `${base}${base.endsWith("/") ? "" : "/"}${CARPETA}/${aircraft.id}.glb`;
+
+  try {
+    // Se pregunta antes de cargar: `GLTFLoader` con un 404 escupe un error de
+    // análisis que parece un fichero corrupto, y no lo es — es que no está.
+    const hay = await fetch(url, { method: "HEAD" });
+    if (!hay.ok) return null;
+  } catch {
+    return null;
+  }
+
+  let raiz: Object3D;
+  try {
+    /*
+     * Con plazo, y aquí importa doble: este fichero ya tiene decidido que
+     * **si falta el modelo se vuela con las cajas de respaldo**, y una carga
+     * sin plazo convierte esa decisión en lo contrario — no se vuela nada.
+     * Ver `datos/con-plazo.ts`.
+     */
+    const gltf = await conPlazo(
+      new GLTFLoader().loadAsync(url),
+      PLAZO_DE_IMAGEN,
+      `el modelo ${url.split("/").pop()}`,
+    );
+    if (!gltf) return null;
+    raiz = gltf.scene;
+  } catch {
+    // Un modelo roto no puede dejar a nadie sin volar.
+    return null;
+  }
+
+  const group = colocarModelo(raiz, aircraft);
   const helices = ejesDeHelice(raiz);
 
   /*
@@ -772,9 +797,16 @@ export async function cargarModelo(
   const luces = crearLucesDePosicion(aircraft, raiz);
   group.add(luces.grupo);
 
-  const ojo = conSuEncuadre(ojoDePiloto(raiz, group), raiz, group);
+  const ojo = ojoDelModelo(raiz, group);
+  /*
+   * Y lo que se ve desde ahí por encima del morro, **con el avión recién
+   * montado**: sin discos de hélice ni pantallas encendidas, que no cambian
+   * nada de lo que tapa. Ver `vista-al-frente.ts`.
+   */
+  const vista = ojo ? medirVistaAlFrente(group, ojo) : null;
   return {
     group,
+    vista,
     luces,
     // La primera, para que lo que ya existía siga funcionando; y todas, para
     // que un bimotor gire las dos. Ver `AircraftMesh.helices`.

@@ -43,6 +43,21 @@ const SHAKE_FADE = 0.2;
 const MIRA_LEJOS = 2.4;
 const MIRA_LO_MINIMO = 32;
 
+/**
+ * Dónde va la cámara de detrás, en coordenadas del avión.
+ *
+ * Más alta y algo más atrás que en la primera versión: estaba a la altura del
+ * avión y el fuselaje tapaba justo el centro de la pantalla, que es donde uno
+ * quiere mirar para saber adónde va.
+ *
+ * Aparte porque **también lo pregunta el coche del sígame**: lo que el lomo
+ * del avión tapa desde aquí es lo que decide a cuánto se tiene que poner para
+ * que quien juega lo vea. Ver `distanciaALaVista`.
+ */
+export function sitioDeLaCola(envergadura: number): { y: number; z: number } {
+  return { y: envergadura * 0.6, z: envergadura * 1.6 };
+}
+
 /** Desde dónde mira cada una de las tres. */
 export type Sitio = "cola" | "derecha" | "izquierda" | "morro";
 
@@ -101,14 +116,8 @@ export class CamaraDeFuera implements CameraRig {
       const lejos = Math.max(ctx.aircraft.largo * 1.6, 26);
       this.offset.set(0, ctx.aircraft.chord * 1.4, -lejos);
     } else if (this.sitio === "cola") {
-      // Más alta y algo más atrás que en la primera versión: estaba a la
-      // altura del avión y el fuselaje tapaba justo el centro de la pantalla,
-      // que es donde uno quiere mirar para saber adónde va.
-      this.offset.set(
-        0,
-        ctx.aircraft.wingSpan * 0.6,
-        ctx.aircraft.wingSpan * 1.6,
-      );
+      const cola = sitioDeLaCola(ctx.aircraft.wingSpan);
+      this.offset.set(0, cola.y, cola.z);
     } else {
       /*
        * El mismo sitio a un lado y al otro: lo único que cambia es de qué
@@ -171,7 +180,21 @@ export class CamaraDeFuera implements CameraRig {
     // `1 - exp`, la cámara iría distinta a 30 y a 120 fps.
     camera.position.lerp(this.deseada, 1 - Math.exp(-dt * 7));
 
-    const lejos = Math.max(MIRA_LO_MINIMO, state.airspeed * MIRA_LEJOS);
+    /*
+     * **Y nunca más cerca de donde va el coche del sígame.**
+     *
+     * Los treinta y dos de suelo eran, a propósito o no, justo donde iba el
+     * coche: rodando, la cámara miraba al coche. Con el coche puesto donde
+     * cada avión lo ve —setenta metros en el JAZ 120— la cámara seguía
+     * mirando a treinta y dos, que en ese avión es su propio morro. Es la
+     * misma regla y el mismo número que el coche, no otro parecido. Volando no
+     * cambia nada: ahí la velocidad ya mira más lejos que cualquier coche.
+     */
+    const lejos = Math.max(
+      MIRA_LO_MINIMO,
+      ctx.aLaVista ?? 0,
+      state.airspeed * MIRA_LEJOS,
+    );
     if (this.sitio === "cola" && state.velocity.lengthSq() > 1) {
       this.mirando
         .copy(state.velocity)

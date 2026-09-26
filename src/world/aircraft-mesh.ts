@@ -36,6 +36,7 @@ import {
   type LucesDePosicion,
 } from "./luces-de-posicion";
 import { fabricarAeronave, RADIO_DE_HELICE } from "./fabrica-de-aeronaves";
+import { medirVistaAlFrente } from "./vista-al-frente";
 
 export interface AircraftMesh {
   group: Group;
@@ -121,6 +122,12 @@ export interface AircraftMesh {
     z: number;
     encuadre?: import("./aeronave-modelo").EncuadreDeCabina;
   };
+  /**
+   * Lo que se ve del suelo por delante: el ángulo por encima del morro desde
+   * esos ojos y el lomo del avión visto desde detrás. De aquí sale a cuánto
+   * va el coche del sígame. Ver `vista-al-frente.ts`.
+   */
+  vista?: import("./vista-al-frente").VistaAlFrente | null;
 }
 
 /**
@@ -219,6 +226,11 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
   const luces = crearLucesDePosicion(aircraft, casco);
   group.add(luces.grupo);
 
+  const ojo = {
+    x: hecho.ojo.x,
+    y: hecho.ojo.y - aircraft.gearHeight,
+    z: hecho.ojo.z,
+  };
   return {
     group,
     luces,
@@ -230,10 +242,10 @@ export function createAircraftMesh(aircraft: AircraftConfig): AircraftMesh {
      * va pintado— pero sí un sitio del que se ve lo que se tiene que ver:
      * encima del fuselaje y delante del ala. Ver `fabricarAeronave`.
      */
-    ojo: {
-      x: hecho.ojo.x,
-      y: hecho.ojo.y - aircraft.gearHeight,
-      z: hecho.ojo.z,
-    },
+    ojo,
+    // Y lo que se ve por delante, medido igual que en un modelo de verdad: con
+    // el ojo delante del morro, desde la cabina no tapa nada, pero desde
+    // detrás el lomo sí. Ver `vista-al-frente.ts`.
+    vista: medirVistaAlFrente(group, ojo),
   };
 }

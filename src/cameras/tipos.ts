@@ -51,6 +51,13 @@ export interface Contexto {
       readonly abajo: number;
     };
   } | null;
+  /**
+   * Hasta dónde hay que mirar rodando para ver lo que va delante, m: a cuánto
+   * va el coche del sígame por delante de este avión. Ver `adelantoDelSigueme`.
+   *
+   * Cero, o sin poner, es que no hace falta mirar más lejos que de costumbre.
+   */
+  readonly aLaVista?: number;
   /** La cota del terreno, para que la cámara no se meta debajo. */
   readonly suelo: (x: number, z: number) => number;
   /** Si el sistema pide movimiento reducido. Apaga traqueteo y zoom. */

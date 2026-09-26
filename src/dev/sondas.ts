@@ -288,6 +288,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     cocheApartado: () => juego.sigueme.yaSeAparto,
     /**
+     * A cuánto va el coche por delante de este avión, m. Para el banco: es lo
+     * que dice si un «a treinta metros» es cerca o es debajo del morro. Ver
+     * `adelantoDelSigueme`.
+     */
+    adelantoDelCoche: () => juego.adelantoDelSigueme,
+    /**
      * Si quien sale a buscarte va en bici. Para el banco.
      *
      * Cambia la regla entera: al coche no se le adelanta y atropellarlo es un
