@@ -90,6 +90,24 @@ describe("de quién es la velocidad por el suelo", () => {
     );
   });
 
+  /*
+   * **Menos el back-taxi**, que se rueda por la pista y con la verde dada y es
+   * rodaje: en Guyrami, quien tiene cuatro años llegaba a la media vuelta de
+   * Lanzarote a lo que diera el gas, y con el JAZ 90 eso es salirse de la
+   * pista. Donde el juego conduce, conduce también ahí.
+   */
+  it("en el back-taxi, por la pista y con la verde, es del juego donde conduce", () => {
+    for (const tier of [GUYRAMI, TUKA]) {
+      const e = estado(13, { enPista: true });
+      const v = vista("back-taxi", true);
+      expect(laVelocidadEsDelJuego(e, tier, v), tier.id).toBe(true);
+      expect(elTopeTocaAlgo(tier, e, v), tier.id).toBe(true);
+    }
+    const e = estado(13, { enPista: true });
+    expect(laVelocidadEsDelJuego(e, TAGUATO, vista("back-taxi", true))).toBe(false);
+    expect(elTopeTocaAlgo(TAGUATO, e, vista("back-taxi", true))).toBe(false);
+  });
+
   it("y en la carrera de aterrizaje también: frenar ahí es la lección", () => {
     expect(
       laVelocidadEsDelJuego(estado(30, { enPista: true }), GUYRAMI, vista("aterrizado")),
@@ -109,6 +127,7 @@ describe("de quién es la velocidad por el suelo", () => {
       "rodando",
       "esperando",
       "autorizado",
+      "back-taxi",
       "abandonando",
       "a-plataforma",
       "en-puesto",

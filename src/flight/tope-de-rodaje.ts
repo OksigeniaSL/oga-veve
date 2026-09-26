@@ -102,9 +102,30 @@ export function laVelocidadEsDelJuego(
   vista: Vista | null,
 ): boolean {
   if (tier.assists.taxiAssist < CONDUCE_EL_JUEGO) return false;
-  if (!estado.onGround || estado.onRunway) return false;
+  if (!estado.onGround) return false;
+  if (vista?.fase === "back-taxi") return true;
+  if (estado.onRunway) return false;
   if (!vista || vista.luzVerde) return false;
   return RODANDO_DE_VERDAD.has(vista.fase);
+}
+
+/**
+ * **El back-taxi es rodaje, aunque se ruede por la pista y con la luz verde.**
+ *
+ * El tope se apagaba en la pista y con la verde —«ahí se corre»— y el
+ * back-taxi pasa entero en la pista y después de la verde: en Guyrami, que es
+ * donde el juego conduce, quien tiene cuatro años hacía los mil doscientos
+ * metros de Lanzarote y la media vuelta del final a lo que diera el gas. Con
+ * el JAZ 90 eso es llegar a la vuelta a trece metros por segundo, cuando con
+ * la rueda de morro a tope solo cabe a menos de cinco: se salía de la pista.
+ *
+ * Aquí la fase no es mal portero, que es por lo que las otras dos reglas
+ * miran la pista y la luz: «back-taxi» solo la da la máquina de fases
+ * mientras no se esté despegando de verdad —ver `despegandoYa` en
+ * `flight/vuelo.ts`—, así que no puede frenar una carrera de despegue.
+ */
+function esBackTaxi(vista: Vista | null): boolean {
+  return vista?.fase === "back-taxi";
 }
 
 export function limitarElRodaje(
@@ -166,7 +187,7 @@ export function limitarElRodaje(
    * de echar más leña.
    */
   const enLaCarrera = vista?.fase === "aterrizado";
-  if (s.onRunway && !enLaCarrera) return techo;
+  if (s.onRunway && !enLaCarrera && !esBackTaxi(vista)) return techo;
 
   /*
    * **En la carrera de aterrizaje el tope es un trinquete, no un tijeretazo.**
@@ -214,7 +235,7 @@ export function limitarElRodaje(
    * está el coche del sígame al que se le podía pasar por encima.
    */
 
-  if (!vista || vista.luzVerde) return techo;
+  if (!vista || (vista.luzVerde && !esBackTaxi(vista))) return techo;
   /*
    * Rodando, la pregunta es la de `laVelocidadEsDelJuego`, y se le hace a
    * ella y no se copia: es la misma que se hacen los avisos antes de reñir.
