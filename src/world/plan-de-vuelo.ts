@@ -2822,6 +2822,33 @@ export class PlanDeVuelo {
     // Fuera de la pista no hay «por delante» que valga.
     if (Math.abs(aqui.across) > this.pista.width) return null;
 
+    /*
+     * **Y «por delante» es hacia donde mira el morro, no hacia donde mira la
+     * pista en uso.**
+     *
+     * `this.pista` es la del viento, la que dice la torre, y para salir y
+     * para entrar en final es la buena. Pero después de tocar tierra la
+     * pregunta es otra —¿qué salida me queda delante?— y la contesta el
+     * avión, no el parte. Se medía todo con el rumbo de la pista en uso, así
+     * que quien aterrizaba por la otra punta —se puede: con el viento en
+     * calma, o con permiso de la torre— tenía la salida elegida **a la
+     * espalda**. En Fuerteventura, con la 01 en uso y la toma por la 19, la
+     * raya nacía detrás del avión y se iba hacia la punta norte; el coche del
+     * sígame esperaba en una boca que ya se había dejado atrás, y el
+     * señalero en el puesto al que llevaba esa raya. Contado jugando: «no veo
+     * ni coche ni línea ni señor esperando». Ver `aterrizar-por-la-otra.test.ts`.
+     *
+     * El sentido de la carrera sale del rumbo del avión respecto al eje, que
+     * al tocar es la trayectoria y parado es el morro: las dos cosas que
+     * decide quien pilota.
+     */
+    const sentido =
+      Math.cos(this.ultimoRumbo - (this.pista.heading * Math.PI) / 180) >= 0
+        ? 1
+        : -1;
+    const rumboDeLaCarrera =
+      sentido > 0 ? this.pista.heading : (this.pista.heading + 180) % 360;
+
     let mejor: Punto | null = null;
     let cerca = Infinity;
     for (const nudo of this.grafo.nudos) {
@@ -2862,11 +2889,11 @@ export class PlanDeVuelo {
         soloHaciaDelante &&
         !calles.some((t) => {
           const d = haciaDondeSale(t, nudo);
-          return d !== null && saleHaciaDelante(d, this.pista.heading);
+          return d !== null && saleHaciaDelante(d, rumboDeLaCarrera);
         })
       )
         continue;
-      const adelante = along - aqui.along;
+      const adelante = (along - aqui.along) * sentido;
       /*
        * **Y por delante de verdad, con sitio para girar.**
        *
@@ -3056,6 +3083,11 @@ export class PlanDeVuelo {
   private desdeElUltimoTrazado = 0;
 
   private ultimaPos: Punto = [0, 0];
+  /**
+   * Hacia dónde miraba el avión en el último paso, en radianes. Es lo que
+   * dice qué queda «por delante» al salir de la pista. Ver `salidaPorDelanteQue`.
+   */
+  private ultimoRumbo = 0;
 
   private situacion(
     estado: FlightState,
@@ -3065,6 +3097,7 @@ export class PlanDeVuelo {
     const x = estado.position.x;
     const z = estado.position.z;
     this.ultimaPos = [x, -z];
+    this.ultimoRumbo = estado.heading;
 
     const { along, across } = enEjesDePista(
       x,
