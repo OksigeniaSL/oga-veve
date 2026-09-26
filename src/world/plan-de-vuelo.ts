@@ -477,13 +477,19 @@ const PASO_MAXIMO = 25;
 const MARGEN = 1.6;
 
 /**
- * El colchón de la cuenta de frenada, m.
+ * El colchón de la cuenta de frenada, **en segundos**.
  *
  * Sin él, el aviso salta exactamente cuando ya no queda margen, que es tarde:
- * hay que enterarse, decidir y mover la mano. Quince metros a velocidad de
- * rodaje son un segundo y medio.
+ * hay que enterarse, decidir y mover la mano, y eso es un segundo y medio.
+ *
+ * Eran quince metros fijos —ese segundo y medio a velocidad de rodaje—, y un
+ * colchón en metros no se encoge con la velocidad: a menos de quince metros
+ * de la doble raya no cabía nada, y cualquiera que se moviera iba «rápido»,
+ * también quien se arrimaba a paso de persona, que es justo como se llega a
+ * una doble raya. Lo que se tarda en reaccionar es tiempo; en metros es lo
+ * que se recorre mientras tanto, y a paso de persona es poco.
  */
-const HOLGURA = 15;
+const REACCION = 1.5;
 
 /**
  * A cuántos metros del final la ayuda de dirección suelta el mando, m.
@@ -619,16 +625,16 @@ const RODANDO_DE_VERDAD: ReadonlySet<Fase> = new Set<Fase>([
 
 /**
  * Si se rueda **más deprisa de lo que toca**: más que la velocidad de aquí con
- * su margen, o más de lo que se puede frenar en lo que queda de ruta con su
- * colchón. Ver el porqué de cada cosa donde se usa, en `paso`.
+ * su margen, o más de lo que se puede parar en lo que queda de ruta: lo que se
+ * recorre reaccionando y lo que se recorre frenando. Ver el porqué de cada
+ * cosa donde se usa, en `paso`, y el colchón en `REACCION`.
  *
- * **Y parado no se va rápido.** A menos de `HOLGURA` de la doble raya lo que
- * queda menos el colchón es negativo, así que la cuenta de frenada daba
- * «rápido» también a cero por hora: con el avión quieto en el punto de
- * espera, «más despacio» cada seis segundos. No se oía porque ahí se esperaba
- * tres segundos y medio; desde que la lámpara espera a que aterrice el que
- * viene —ver `pistaDeOtros` en `flight/vuelo.ts`— se esperan minutos, y el
- * banco lo oyó seis veces en un vuelo de Gando a Los Rodeos.
+ * **Y parado no se va rápido.** Con el colchón en metros fijos, a menos de
+ * quince de la doble raya la cuenta de frenada daba «rápido» también a cero
+ * por hora: con el avión quieto en el punto de espera, «más despacio» cada
+ * seis segundos. Se tapó con lo de parado, y seguía igual para quien se
+ * arrimaba despacio, que es lo que se pide ahí. Con el colchón en tiempo,
+ * parado no hay nada que recorrer, y despacio casi nada.
  */
 export function vaRapido(
   fase: Fase,
@@ -637,10 +643,9 @@ export function vaRapido(
   restante: number,
 ): boolean {
   if (!RODANDO_DE_VERDAD.has(fase) || porElSuelo < PARADO) return false;
-  return (
-    porElSuelo > sugerida * MARGEN + 2 ||
-    (porElSuelo * porElSuelo) / (2 * FRENADA) > restante - HOLGURA
-  );
+  const paraParar =
+    porElSuelo * REACCION + (porElSuelo * porElSuelo) / (2 * FRENADA);
+  return porElSuelo > sugerida * MARGEN + 2 || paraParar > restante;
 }
 
 /** A cuántos metros de la raya verde se considera que uno se ha salido. */
