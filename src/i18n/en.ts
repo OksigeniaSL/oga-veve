@@ -82,6 +82,8 @@ export const EN: Dictionary = {
   "hud.landedFast": "Too fast! Ease off the power before touching down",
   "hud.landedFirm": "Firm landing. You are down",
   "hud.landedOffRunway": "You landed off the runway, but you landed",
+  "hud.landedShort":
+    "You touched down before the white bar: the arrows are for taxi and take-off",
   "hud.brakes": "Brakes",
   "hud.crashed": "Something broke. Back to the runway…",
   "hud.home": "Runway",
@@ -260,6 +262,7 @@ export const EN: Dictionary = {
   "palabra.cuidado": "Careful!",
   "palabra.rapido": "Too fast",
   "palabra.fuera": "Off",
+  "palabra.corto": "Short",
   "palabra.roto": "Broken",
   "vuelo.estacionado": "Start the engine",
   "vuelo.arrancando": "Release the brakes and roll slowly",

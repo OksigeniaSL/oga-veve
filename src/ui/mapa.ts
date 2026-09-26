@@ -33,6 +33,8 @@ const LUPA_MENOS = `<circle cx="10.5" cy="10.5" r="6.6" />
 const LUPA_MAS = `<circle cx="10.5" cy="10.5" r="6.6" />
   <path d="M15.4 15.4 L21 21 M7 10.5 h7 M10.5 7 v7" />`;
 import { vecesLejosDe, type Scenario } from "../world/scenarios";
+import type { Aerodrome } from "../world/aerodrome";
+import type { Ciudad } from "../world/ciudad";
 import { puntoDePista } from "../world/rumbo";
 import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
@@ -141,6 +143,41 @@ export class Mapa {
     }[],
   ): void {
     this.campos = campos;
+    this.pintado = false;
+    if (this.abierto) {
+      this.pintarFondo();
+      this.pintado = true;
+    }
+  }
+
+  /**
+   * Los aeródromos de los otros campos, **ya corridos** a este mundo, y sus
+   * ciudades con dónde caen.
+   *
+   * De los vecinos solo llegaba la barra de la pista, así que en el
+   * aeropuerto de llegada, al acercar el plano para ver por dónde se rueda,
+   * salía una raya blanca suelta: ni plataforma, ni calles, ni la ciudad de
+   * al lado. Justo en el campo que no se conoce.
+   */
+  private otrosAerodromos: readonly Aerodrome[] = [];
+  private otrasCiudades: readonly {
+    ciudad: Ciudad;
+    x: number;
+    z: number;
+  }[] = [];
+
+  ponerOtrosAerodromos(aerodromos: readonly Aerodrome[]): void {
+    this.otrosAerodromos = aerodromos;
+    this.repintar();
+  }
+
+  /** Una ciudad de otro campo, con el centro de su mapa en este mundo. */
+  ponerOtraCiudad(ciudad: Ciudad, x: number, z: number): void {
+    this.otrasCiudades = [...this.otrasCiudades, { ciudad, x, z }];
+    this.repintar();
+  }
+
+  private repintar(): void {
     this.pintado = false;
     if (this.abierto) {
       this.pintarFondo();
@@ -691,8 +728,10 @@ export class Mapa {
     }
 
     // ── La ciudad ───────────────────────────────────────────────────────
-    const ciudad = esc.ciudad;
-    if (ciudad) {
+    //
+    // La de casa en el centro de su mapa, y las de los otros campos donde
+    // caen: la rejilla de cada una va en las coordenadas de su escenario.
+    const pintarCiudad = (ciudad: Ciudad, ox: number, oz: number): void => {
       const celdas = ciudad.rejilla.lado;
       // La celda mide lo mismo en metros pase lo que pase; lo que cambia es
       // cuántos píxeles ocupa.
@@ -704,8 +743,8 @@ export class Mapa {
           if (!c) continue;
           const d = ciudad.rejilla.densidad[fila * celdas + col]! / 255;
           // Del fichero al mundo: la fila crece al norte y la Z al sur.
-          const mx = -ciudad.tamanoM / 2 + col * metrosPorCelda;
-          const mz = ciudad.tamanoM / 2 - (fila + 1) * metrosPorCelda;
+          const mx = ox - ciudad.tamanoM / 2 + col * metrosPorCelda;
+          const mz = oz + ciudad.tamanoM / 2 - (fila + 1) * metrosPorCelda;
           const qx = LADO / 2 + (mx - cx) * escala;
           const qy = LADO / 2 + (mz - cz) * escala;
           if (qx < -cp || qy < -cp || qx > LADO || qy > LADO) continue;
@@ -723,14 +762,16 @@ export class Mapa {
         g.lineWidth = via.nivel <= 1 ? 1.8 : via.nivel === 2 ? 1.3 : 0.8;
         g.beginPath();
         via.puntos.forEach((p, i) => {
-          const qx = LADO / 2 + (p[0]! - cx) * escala;
-          const qy = LADO / 2 + (-p[1]! - cz) * escala;
+          const qx = LADO / 2 + (ox + p[0]! - cx) * escala;
+          const qy = LADO / 2 + (oz - p[1]! - cz) * escala;
           if (i) g.lineTo(qx, qy);
           else g.moveTo(qx, qy);
         });
         g.stroke();
       }
-    }
+    };
+    if (esc.ciudad) pintarCiudad(esc.ciudad, 0, 0);
+    for (const o of this.otrasCiudades) pintarCiudad(o.ciudad, o.x, o.z);
 
     /*
      * ── El aeropuerto, solo de cerca ────────────────────────────────────
@@ -740,8 +781,12 @@ export class Mapa {
      * aportarían es suciedad; de cerca son justo lo que se mira, porque son por
      * donde se va.
      */
-    const aero = esc.aerodrome;
-    if (aero && this.alcance >= 2) {
+    const aeros = [
+      ...(esc.aerodrome ? [esc.aerodrome] : []),
+      ...this.otrosAerodromos,
+    ];
+    for (const aero of aeros) {
+      if (this.alcance < 2) break;
       const aMapa = (px: number, py: number): readonly [number, number] => [
         LADO / 2 + (px - cx) * escala,
         // El fichero tiene la Y al norte; el mundo, el norte en la Z negativa.

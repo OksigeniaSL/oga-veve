@@ -42,7 +42,14 @@ import {
 } from "./flight/aircraft";
 import { dibujoDelGasTactil } from "./ui/pictogramas";
 import { InputManager } from "./flight/input";
-import { claveDeTorre, DICE_LA_TORRE, NOMBRA_LA_PISTA } from "./audio/torre";
+import {
+  claveDeTorre,
+  daLaPistaAOtro,
+  DICE_LA_TORRE,
+  esDeLaFrecuencia,
+  esDeLaLampara,
+  NOMBRA_LA_PISTA,
+} from "./audio/torre";
 import { anticipacionDeRodaje } from "./flight/gobernador";
 import {
   matriculaDe,
@@ -72,6 +79,7 @@ import { createAircraftMesh, type AircraftMesh } from "./world/aircraft-mesh";
 import { cargarModelo } from "./world/aeronave-modelo";
 import {
   enElEmbudoDeFinal,
+  vieneEnFinal,
   ENTRADA_EN_FINAL,
   GLIDE_SLOPE,
   SENDA_DESDE,
@@ -79,7 +87,11 @@ import {
   type PasoDeAro,
 } from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
-import { LECCION_POR_DEFECTO, type Leccion } from "./flight/lecciones";
+import {
+  arrancarAbreOtroTramo,
+  LECCION_POR_DEFECTO,
+  type Leccion,
+} from "./flight/lecciones";
 import {
   pedirMetar,
   TIEMPO_DE_CASA,
@@ -144,6 +156,16 @@ const SE_QUEDA_LA_FRUSTRADA = 4.5;
  * por segundo y el sonido con él.
  */
 const SE_QUEDA_EL_BULTO = 3;
+
+/**
+ * Cuánto más cerca tiene que estar la pista de otro campo para que se monte
+ * lo suyo, m. Ver `mirarSiCambiaDeCampo`.
+ *
+ * Un kilómetro: nada comparado con los cincuenta que hay hasta la raya de en
+ * medio en un vuelo entre islas, y de sobra para que volar por encima de esa
+ * raya no rehaga el circuito, el tráfico y la frecuencia en cada fotograma.
+ */
+const HOLGURA_PARA_CAMBIAR_DE_CAMPO = 1000;
 
 /**
  * Cuánto se queda en pantalla la corrección de un aro perdido, s.
@@ -287,7 +309,7 @@ import {
   elegirTorre,
   type Instructor,
 } from "./audio/instructor";
-import { Frecuencia } from "./flight/radio";
+import { Frecuencia, laQueSeDice, PISTA_TUYA } from "./flight/radio";
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
 import { indicatedAirspeed } from "./flight/atmosphere";
@@ -344,6 +366,7 @@ import { avisaDelTren, seVuelveADecir } from "./flight/tren";
 import {
   cargaParaElPlan,
   comoVaElDeposito,
+  hayQueLlenar,
   loQueCabe,
   quemaPorSegundo,
   reservaEnKilos,
@@ -383,6 +406,19 @@ import { puntoMasCercanoDe, type Aerodrome } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { desplazarAerodromo } from "./world/aerodromo-desplazado";
 import { laMasCerca, sobreAlguna, type Pista } from "./world/pistas-del-vuelo";
+import {
+  campoDeCasa,
+  campoVecino,
+  distanciaAlUmbral,
+  enLaPistaDe,
+  umbralEnUso,
+  type CampoEnElMundo,
+} from "./world/campo-del-vuelo";
+import {
+  antesDelUmbralDeToma,
+  hastaElUmbralDeToma,
+  sobreDondeSeToca,
+} from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import {
   celdasDe,
@@ -422,7 +458,10 @@ import {
 import { abrirLaVentanaDePruebas } from "./dev/sondas";
 import { Reparto } from "./hechos";
 import { unaForma } from "./audio/variantes";
-import { LaAproximacion } from "./flight/la-aproximacion";
+import {
+  LaAproximacion,
+  type CampoDeLaAproximacion,
+} from "./flight/la-aproximacion";
 import { asentarAerodromoSobreLaFoto } from "./world/asentar-aerodromo";
 import { limitarElRodaje } from "./flight/tope-de-rodaje";
 import { leerTexto, ponerTexto } from "./datos/guardado";
@@ -676,6 +715,14 @@ const FINAL_DE_PISTA = 40;
  */
 const ALTURA_DE_TOMA = 18;
 
+/**
+ * Cuánto antes de la pista se deja de avisar del terreno, m.
+ *
+ * Trescientos: el umbral se cruza a quince metros, y un avión que viene bien a
+ * esa altura está, visto por el aviso de terreno, bajísimo. Esto es **solo**
+ * para callar ese aviso; dónde se dice «ya podés tocar» no lleva margen. Ver
+ * `sobreDondeSeToca`.
+ */
 const ANTES_DEL_UMBRAL = 300;
 
 /**
@@ -851,18 +898,73 @@ export class Game {
    */
   private readonly vecinos: {
     readonly mundo: MundoVecino;
-    readonly escenario: Scenario;
-    readonly pista: Pista;
+    /** Su escenario tal y como llegó, sin el viento de hoy. */
+    readonly base: Scenario;
+    /** Su aeródromo corrido a este mundo. No depende del viento. */
     readonly aerodromo: Aerodrome | null;
     /**
      * Y su suelo: qué es asfalto allí y qué no. Ver `superficieDeAhora`.
-     *
-     * El escenario va con el aeródromo y la pista ya corridos a este mundo,
-     * que es la única forma en que `superficieEn` sabe preguntarlos.
      */
-    readonly comoCampo: Scenario;
     readonly pavimento: Pavimento | null;
+    /**
+     * **El campo, con el viento de hoy**: su escenario, su pista corrida con
+     * la cabecera en uso y el escenario corrido entero, que es la única forma
+     * en que `superficieEn` sabe preguntarlo. No es `readonly` porque el
+     * viento cambia la cabecera. Ver `ponerTiempo` y `world/campo-del-vuelo.ts`.
+     */
+    campo: CampoEnElMundo;
+    /**
+     * Sus luces de aproximación y su PAPI, y las azules de sus calles.
+     *
+     * Solo se montaban para casa, así que llegando de noche a Los Rodeos
+     * desde Gran Canaria no había PAPI ni luces de aproximación, cuando las
+     * tiene de verdad —y las tenía el mismo Los Rodeos jugado como casa—. Un
+     * instrumento que existe según de dónde se venga no es de verdad.
+     */
+    aproximacion: Aproximacion | null;
+    rodadura: LucesDeRodadura | null;
+    /** Si ya se montaron, aunque no haya ninguna. Ver `ponerLucesDelVecino`. */
+    lucesPuestas: boolean;
   }[] = [];
+
+  /**
+   * El campo de casa, hecho una vez por escenario: `ponerTiempo` cambia el
+   * escenario y con él la cabecera. Ver `laCasa`.
+   */
+  private casaHecha: CampoEnElMundo | null = null;
+
+  /** El campo de casa con el escenario de ahora. */
+  private get laCasa(): CampoEnElMundo {
+    if (this.casaHecha?.escenario !== this.scenario)
+      this.casaHecha = campoDeCasa(this.scenario);
+    return this.casaHecha;
+  }
+
+  /**
+   * **Un campo del vuelo: el que se tiene debajo, o el de `id`.**
+   *
+   * La única fuente para todo lo que pregunta por «el campo»: su pista, su
+   * umbral en uso, su aeródromo, su cota, su nombre. Medio juego preguntaba
+   * por `this.scenario` —el de casa—, y en el aeropuerto de llegada eso
+   * contestaba con la pista de Gando a ciento trece kilómetros: la final se
+   * medía contra ella, la torre la nombraba y la aguja la señalaba. Ver
+   * `world/campo-del-vuelo.ts`.
+   */
+  private elCampo(id?: string): CampoEnElMundo {
+    if (id === undefined) return this.elVecinoDeAhora()?.campo ?? this.laCasa;
+    if (id === this.scenario.id) return this.laCasa;
+    return this.vecinos.find((v) => v.campo.id === id)?.campo ?? this.laCasa;
+  }
+
+  /** La cota del asfalto de un campo en un punto del mundo, m. */
+  private cotaDePistaEn(campo: CampoEnElMundo, x: number, z: number): number {
+    const v = campo.esCasa
+      ? null
+      : this.vecinos.find((w) => w.campo.id === campo.id);
+    if (!v) return this.terrain.cotaDeLaPista(x, z);
+    const d = v.mundo.desplazamiento;
+    return v.mundo.terreno.cotaDeLaPista(x - d.x, z - d.z);
+  }
 
   /** El primero, para lo que todavía habla de «el vecino» en singular. */
   get vecino(): MundoVecino | null {
@@ -938,7 +1040,7 @@ export class Game {
    * y esto es por dónde se empieza.
    */
   private elCampoDeAhora(): Scenario {
-    return this.elVecinoDeAhora()?.escenario ?? this.scenario;
+    return this.elCampo().escenario;
   }
 
   /**
@@ -952,7 +1054,7 @@ export class Game {
     if (this.vecinos.length === 0) return null;
     const s = this.flight.state.position;
     const cerca = laMasCerca(this.pistasDelVuelo(), s.x, s.z);
-    return this.vecinos.find((v) => v.pista === cerca) ?? null;
+    return this.vecinos.find((v) => v.campo.pista === cerca) ?? null;
   }
 
   /**
@@ -972,7 +1074,8 @@ export class Game {
    * se va, cuál es el alternativo, a cuál se desvía con la reserva y cuál es
    * el siguiente al tocar la tarjeta—, para que no haya forma de que una diga
    * una cosa y otra otra. Se hace una vez: los vecinos se cargan al construir
-   * el juego y no cambian.
+   * el juego y no cambian. Lo que sí cambia es su viento, y `ponerTiempo` la
+   * tira para que el escenario de cada uno lleve su cabecera de hoy.
    */
   private camposDelVuelo(): readonly CampoConNombre[] {
     if (this.camposHechos?.length === this.vecinos.length + 1)
@@ -985,10 +1088,10 @@ export class Game {
         escenario: this.scenario,
       },
       ...this.vecinos.map((v) => ({
-        id: v.escenario.id,
-        x: v.pista.x,
-        z: v.pista.z,
-        escenario: v.escenario,
+        id: v.campo.id,
+        x: v.campo.pista.x,
+        z: v.campo.pista.z,
+        escenario: v.campo.escenario,
       })),
     ];
     return this.camposHechos;
@@ -1080,6 +1183,15 @@ export class Game {
   private salidaId = "";
 
   /**
+   * Y de qué campo se despegó de verdad en este vuelo, para la bitácora.
+   *
+   * No es `salidaId`: esa pasa a ser el campo de llegada en cuanto se toca
+   * tierra allí —es la salida del tramo siguiente—, y al apagar el motor, que
+   * es cuando se apunta el vuelo, ya no dice de dónde se vino.
+   */
+  private despegoDe = "";
+
+  /**
    * A dónde se desvió el vuelo con la reserva, si se desvió.
    *
    * Aparte del destino porque son dos cosas distintas: el destino es lo que se
@@ -1088,8 +1200,21 @@ export class Game {
    */
   private desvioId: string | null = null;
 
-  /** En qué campo se cargó combustible por última vez. Ver `repostar`. */
-  private campoDelRepostaje = "";
+  /**
+   * **Para qué tramo** se llenó el depósito por última vez: de dónde a dónde.
+   * Ver `hayQueLlenar`.
+   *
+   * Se miraba el campo del último repostaje, y con el campo solo no basta.
+   * Volviendo a casa de Los Rodeos, al apagar se cargaba para lo que decía la
+   * ruta en ese momento —una vuelta al campo, porque al tocar tierra en casa
+   * el destino pasa a ser casa—, y al arrancar el tramo nuevo iba otra vez a
+   * Los Rodeos con el depósito de un circuito: treinta y dos kilos donde
+   * hacían falta cincuenta y dos. El campo era el mismo; el tramo, no.
+   *
+   * Y con el tramo solo tampoco: dice para qué se llenó, no si sigue lleno.
+   * Por eso `hayQueLlenar` mira además los kilos.
+   */
+  private tramoDelRepostaje = "";
 
   /** Lo que llegó del hangar, para poder volver a ello en cada vuelo. */
   private readonly destinoPedido: string | undefined;
@@ -1152,16 +1277,135 @@ export class Game {
    * mar no cuente como llegada a ninguna parte.
    */
   private mirarSiSeLlego(): void {
-    const s = this.flight.state;
-    if (!s.onGround || this.vecinos.length === 0) return;
-    const aqui = this.elCampoDeAhora();
-    if (aqui.id === this.salidaId) return;
-    const c = this.campoPorId(aqui.id);
-    if (!c || Math.hypot(c.x - s.position.x, c.z - s.position.z) > 5000)
-      return;
+    if (this.vecinos.length === 0) return;
+    const aqui = this.campoEnCuyoSueloEsta();
+    if (!aqui || aqui.id === this.salidaId) return;
     this.salidaId = aqui.id;
     this.destinoId = this.scenario.id;
     this.desvioId = null;
+  }
+
+  /**
+   * El campo en cuyo suelo está el avión, o `null` si no está en el suelo de
+   * ninguno. Cinco kilómetros de radio, para que una toma fuera de campo en
+   * mitad del mar no cuente como llegada a ninguna parte; y un avión roto no
+   * ha llegado a ninguna parte.
+   *
+   * Lo preguntan dos: quien decide si se llegó a otro campo y quien decide si
+   * el camión del combustible puede acercarse.
+   */
+  private campoEnCuyoSueloEsta(): CampoConNombre | null {
+    const s = this.flight.state;
+    if (!s.onGround || this.percance) return null;
+    const c = this.campoPorId(this.elCampoDeAhora().id);
+    if (!c || Math.hypot(c.x - s.position.x, c.z - s.position.z) > 5000)
+      return null;
+    return c;
+  }
+
+  /**
+   * La ruta de un tramo que empieza en `salida`: a casa si se sale de fuera,
+   * y si se sale de casa, al destino del hangar. Es lo que hace
+   * `mirarSiSeLlego` al tocar tierra fuera, dicho para cuando se empieza.
+   */
+  private empezarLaRutaEn(salida: string): void {
+    this.salidaId = salida;
+    this.destinoId = this.destinoDelTramoDesde(salida);
+    this.desvioId = null;
+    this.rutaAutorizada = "";
+    this.despegoDe = "";
+  }
+
+  /**
+   * A dónde va un tramo que sale de `salida`: desde fuera, a casa; desde
+   * casa, al destino del hangar. Una sola cuenta para la ruta y para el
+   * depósito, que la necesitan los dos. Ver `tramoDelRepostaje`.
+   */
+  private destinoDelTramoDesde(salida: string): string {
+    return salida === this.scenario.id ? this.destinoDeSalida() : this.scenario.id;
+  }
+
+  /** Muda el plan de tierra a un campo, si no estaba ya en él. */
+  private mudarElPlanA(campo: CampoEnElMundo): void {
+    if (!this.plan || !campo.aerodromo) return;
+    if (campo.aerodromo === this.plan.aerodromoActual) return;
+    this.plan.mudarseA(campo.aerodromo, campo.pista);
+  }
+
+  /**
+   * **Otro tramo, desde donde está el avión.**
+   *
+   * Aterrizar en Los Rodeos, rodar al puesto, apagar y volver a arrancar
+   * dejaba el juego parado en «en el puesto»: sin raya, sin lámpara, sin
+   * «cleared to Gran Canaria», y la carrera de despegue que venía después se
+   * tomaba por un aterrizaje, porque para la máquina de fases el vuelo de
+   * antes seguía abierto. La vuelta solo funcionaba de rebote, tras un
+   * reinicio. Y en casa pasaba lo mismo con el vuelo terminado: al cerrar el
+   * panel del final y volver a volar, estrellarse no hacía nada y apagar otra
+   * vez no apuntaba ningún vuelo.
+   *
+   * Arrancar el motor después de haber apagado es empezar a volar otra vez,
+   * que es lo que es: se abre un tramo nuevo sin mover el avión, con la ruta
+   * de aquí a donde toque, el depósito lleno para ella y la raya desde donde
+   * se está hasta el punto de espera. Lo del vuelo anterior ya se apuntó al
+   * apagar.
+   */
+  private empezarOtroTramo(): void {
+    this.mirarSiSeLlego();
+    const aqui = this.elCampo();
+    this.empezarLaRutaEn(aqui.id);
+    /*
+     * Si el depósito no está lleno para este tramo, se llena: se viene de
+     * apagar, y con el motor parado en un campo el camión llega. Casi siempre
+     * ya vino al apagar —ver `toggleEngine`—; esto es para cuando no se pasó
+     * por la llave, como un motor que se paró solo, y para quien cambió de
+     * destino con el avión parado. Ver `hayQueLlenar`.
+     */
+    if (this.campoEnCuyoSueloEsta())
+      this.llenarSiHaceFalta(this.salidaId, this.destinoId);
+    this.percance = null;
+    this.laAproximacion.reiniciar();
+    this.avisadoDeLaSenda = false;
+    this.laTorreMandaEnLaLuz = false;
+    this.vaca.quitar();
+    this.traza = [];
+    this.sinCatar = 0;
+    this.duracion = 0;
+    this.dichoDeLaToma = false;
+    this.avisadoDeLaPasada = false;
+    this.avisosDeAltura.reiniciar();
+    this.alturaEnGrande.reiniciar();
+    this.antesAlUmbral = Infinity;
+    this.terrenoDicho = null;
+    this.faseAnunciada = "";
+    this.runwayGuide.reset();
+    this.landing.reset();
+    this.frustrada.reiniciar();
+    // Esto también baja `vueloTerminado` y cierra el panel del final.
+    this.reiniciarGalones();
+    this.yaDespego = false;
+    BOCA.empezarDeCero();
+    this.megafonia.reiniciar();
+    this.ventanilla.reiniciar();
+    this.loMasAltoDelVuelo = 0;
+    this.radio.reiniciar(aqui.escenario.aerodrome?.id);
+    // Y la raya, de aquí al punto de espera de este campo. Si de aquí no
+    // sale —apagado lejos de toda calle—, el vuelo de antes se cierra igual:
+    // ver `otroTramoDesde`.
+    this.mudarElPlanA(aqui);
+    const p = this.flight.state.position;
+    this.plan?.otroTramoDesde([p.x, -p.z], this.leccion.arranque === "pista");
+    /*
+     * **Y quien te guía en tierra, otra vez desde el principio.** El
+     * señalero y el coche del sígame eran los del final del tramo anterior:
+     * el coche seguía «apartado» —ya había cedido el paso al llegar al
+     * puesto— y la salida del tramo de vuelta empezaba con él parado a once
+     * metros de la raya en vez de delante del avión. Es lo mismo que hace
+     * `resetFlight`, con el avión donde está.
+     */
+    this.colocarSenalero();
+    if (aqui.id !== this.campoMontado) this.montarElCampo(aqui);
+    this.updateBadge();
   }
 
   /**
@@ -1224,6 +1468,14 @@ export class Game {
   }
 
   /**
+   * Lo que se carga para el tramo de ahora, para los bancos: con eso se mide
+   * si el depósito salió lleno para lo que se va a volar. Ver `repostar`.
+   */
+  get cargaDelTramoParaBanco(): number {
+    return this.cargaDelTramo(this.salidaId, this.destinoId);
+  }
+
+  /**
    * Pone el destino desde fuera, para los bancos: lo mismo que tocar la
    * tarjeta hasta llegar a él.
    */
@@ -1253,40 +1505,44 @@ export class Game {
     pista: Pista;
     cotaDePista: (x: number, z: number) => number;
   } | null {
-    const v = id
-      ? this.vecinos.find((w) => w.escenario.id === id)
-      : this.elVecinoDeAhora();
-    if (id && !v && id !== this.scenario.id) return null;
-    if (!v)
-      return {
-        escenario: this.scenario,
-        aerodromo: this.scenario.aerodrome ?? null,
-        pista: this.scenario.runway,
-        cotaDePista: (x, z) => this.terrain.cotaDeLaPista(x, z),
-      };
-    const { x: dx, z: dz } = v.mundo.desplazamiento;
+    if (id && id !== this.scenario.id && !this.vecinos.some((w) => w.campo.id === id))
+      return null;
+    // La misma fuente que usa el juego: ver `elCampo`.
+    const campo = this.elCampo(id);
     return {
-      escenario: v.escenario,
-      aerodromo: v.aerodromo,
-      pista: v.pista,
-      cotaDePista: (x, z) => v.mundo.terreno.cotaDeLaPista(x - dx, z - dz),
+      escenario: campo.escenario,
+      aerodromo: campo.aerodromo,
+      pista: campo.pista,
+      cotaDePista: (x, z) => this.cotaDePistaEn(campo, x, z),
     };
   }
 
   /** Las pistas de todos los destinos, para los bancos. */
   get pistasDeLosVecinos(): readonly Pista[] {
-    return this.vecinos.map((v) => v.pista);
+    return this.vecinos.map((v) => v.campo.pista);
   }
 
   /** La pista del primer vecino, para los bancos. */
   get pistaDelVecino(): Pista | null {
-    return this.vecinos[0]?.pista ?? null;
+    return this.vecinos[0]?.campo.pista ?? null;
   }
 
   private pistasDelVuelo(): readonly Pista[] {
+    /*
+     * Se pregunta muchas veces por fotograma —es la base de `elCampo`—, así
+     * que se guarda hasta que cambie algo: el escenario de casa o el campo de
+     * algún vecino, que cambian los dos con el viento. Ver `ponerTiempo`.
+     */
+    if (this.pistasHechas && this.pistasDeEscenario === this.scenario)
+      return this.pistasHechas;
     const casa = this.scenario.aerodrome ? [this.scenario.runway] : [];
-    return [...casa, ...this.vecinos.map((v) => v.pista)];
+    this.pistasDeEscenario = this.scenario;
+    this.pistasHechas = [...casa, ...this.vecinos.map((v) => v.campo.pista)];
+    return this.pistasHechas;
   }
+
+  private pistasHechas: readonly Pista[] | null = null;
+  private pistasDeEscenario: Scenario | null = null;
 
   /**
    * **La pista que se tiene debajo ahora mismo.**
@@ -1312,8 +1568,8 @@ export class Game {
    * mira.
    */
   private laPistaDeAhora(): Pista {
-    const s = this.flight.state.position;
-    return laMasCerca(this.pistasDelVuelo(), s.x, s.z) ?? this.scenario.runway;
+    // La del campo de ahora, que sale de la misma cuenta. Ver `elCampo`.
+    return this.elCampo().pista;
   }
   readonly sky: SkyRig;
   aircraftMesh: AircraftMesh;
@@ -1519,6 +1775,11 @@ export class Game {
    * apuntarse. Ver `flight/cuaderno.ts`.
    */
   private cuaderno: Cuaderno = leerCuaderno();
+
+  /** Los aeródromos apuntados como visitados, para los bancos. */
+  get aerodromosVisitadosParaBanco(): readonly string[] {
+    return this.cuaderno.aerodromos;
+  }
   /** La página donde se ve. Solo existe si el HTML trae su hueco. */
   private cuadernoUI: CuadernoScreen | null = null;
   /** El grado que se tenía al empezar, para saber si se ha subido. */
@@ -1620,10 +1881,12 @@ export class Game {
    *
    * En un aeropuerto es el coche amarillo del «sígame». En un campo particular
    * no hay coche —«en un aeródromo particular es raro; como mucho que salta
-   * Jazlyn en bicicleta a buscarme»—, así que sale ella en bici. Se decide una
-   * vez, en el constructor, porque el aeródromo no cambia dentro de un vuelo.
+   * Jazlyn en bicicleta a buscarme»—, así que sale ella en bici. Se decidía
+   * una vez, en el constructor, porque se creía que el aeródromo no cambia
+   * dentro de un vuelo; desde que se aterriza en otro sí cambia, y con él
+   * quien sale. Ver `cambiarDeSigueme`.
    */
-  readonly sigueme: Sigueme;
+  sigueme: Sigueme;
   /**
    * La vaca que se cruza en la pista, en los campos de hierba.
    *
@@ -1830,6 +2093,19 @@ export class Game {
     return this.radio.matriculas;
   }
 
+  /** Quién de la frecuencia tiene la pista ahora, para el banco. */
+  get pistaDeLosDemasParaBanco(): readonly { matricula: string; orden: string }[] {
+    return this.radio.conLaPista;
+  }
+
+  /**
+   * Tu matrícula tal como va en las claves de la boca, detrás de la arroba:
+   * las letras en el alfabeto, unidas. Ver `turnoDe` y `esDeLaLampara`.
+   */
+  private get misLetrasEnLaBoca(): string {
+    return Object.values(rellenoDe(this.miIndicativo)).join("-");
+  }
+
   /** La matrícula de tu avión, para el banco. Ver `miIndicativo`. */
   get miMatricula(): Indicativo {
     return this.miIndicativo;
@@ -2011,18 +2287,19 @@ export class Game {
      * de detalle, y si la pregunta no cae ahí, lo que hubiera antes.
      */
     for (const [i, quien] of (options.vecinos ?? []).entries()) {
+      /*
+       * **Con el viento de hoy, que es el mismo en todo el mundo.** El
+       * aeródromo se construye con él —la manga tiesa o colgando, el color de
+       * cada extremo de la pista— y de él sale por qué cabecera se opera. Se
+       * montaba en calma: en Los Rodeos la manga colgaba a plomo mientras el
+       * avión recibía veinte nudos de Gando. Ver `ponerTiempo`.
+       */
+      const meteo = this.scenario.meteo ?? null;
       const mundo = new MundoVecino(
         this.scenario,
-        quien,
+        meteo ? conViento(quien, meteo) : quien,
         options.fotosVecinas?.[i],
       );
-      // La pista del vecino, ya trasladada: a partir de aquí es una pista de
-      // este mundo como cualquier otra.
-      const pista = {
-        ...quien.runway,
-        x: mundo.desplazamiento.x + quien.runway.x,
-        z: mundo.desplazamiento.z + quien.runway.z,
-      };
       /*
        * Y su aeródromo corrido igual, que es lo que le hace falta al plan
        * de tierra para trazar la raya de vuelta al hangar **allí**. Se
@@ -2038,15 +2315,15 @@ export class Game {
         : null;
       this.vecinos.push({
         mundo,
-        escenario: quien,
-        pista,
+        base: quien,
         aerodromo,
-        comoCampo: {
-          ...quien,
-          runway: pista,
-          ...(aerodromo ? { aerodrome: aerodromo } : {}),
-        },
         pavimento: aerodromo ? mapaDePavimento(aerodromo) : null,
+        // La pista del vecino, ya trasladada: a partir de aquí es una pista
+        // de este mundo como cualquier otra.
+        campo: campoVecino(quien, mundo.desplazamiento, aerodromo, meteo),
+        aproximacion: null,
+        rodadura: null,
+        lucesPuestas: false,
       });
       this.scene.add(mundo.grupo);
     }
@@ -2074,9 +2351,9 @@ export class Game {
        */
       this.avionesDeRuta = crearAvionesDeRuta(
         { x: this.scenario.runway.x, z: this.scenario.runway.z },
-        // El corredor es el del primer destino: es el que más se vuela, y dos
-        // corredores cruzados serían más tráfico del que hay.
-        { x: this.vecinos[0]!.pista.x, z: this.vecinos[0]!.pista.z },
+        // Un corredor para empezar: el de verdad lo pone `ponerElCorredor`
+        // en cuanto se sabe de dónde sale este tramo y a dónde va.
+        { x: this.vecinos[0]!.campo.pista.x, z: this.vecinos[0]!.campo.pista.z },
       );
       this.scene.add(this.avionesDeRuta.grupo);
       /*
@@ -2111,7 +2388,7 @@ export class Game {
         this.vecinos.map((v) => ({
           x: v.mundo.desplazamiento.x,
           z: v.mundo.desplazamiento.z,
-          medio: v.escenario.size / 2,
+          medio: v.base.size / 2,
         })),
       );
     }
@@ -2135,7 +2412,7 @@ export class Game {
     const hitosDelVuelo = sinRepetidos([
       ...hitosDe(this.scenario.id),
       ...this.vecinos.flatMap((v) =>
-        hitosDe(v.escenario.id).map((h) => ({
+        hitosDe(v.base.id).map((h) => ({
           ...h,
           x: h.x + v.mundo.desplazamiento.x,
           z: h.z + v.mundo.desplazamiento.z,
@@ -2150,24 +2427,21 @@ export class Game {
     /*
      * **La aproximación, con lo que no cambia en todo el vuelo.**
      *
-     * Va aquí, justo detrás del terreno, porque necesita el terreno y el
-     * escenario ya montados —son lo que mira para decidir— y porque el montaje
-     * de los aros y el PAPI, que viene después en este mismo constructor, ya
-     * le escribe encima. Lo que cambia —dónde está el avión, en qué fase va,
-     * si hay aviso de terreno— se le da en cada paso. Ver
-     * `flight/la-aproximacion.ts`.
+     * Lo que cambia —dónde está el avión, en qué fase va, si hay aviso de
+     * terreno— se le da en cada paso. Y **el campo al que se viene también se
+     * le pregunta en cada paso**: se le daban el escenario y el terreno de
+     * casa, copiados al construirla, y en el aeropuerto de llegada todo lo que
+     * decide —el embudo, los mínimos, la orden de irse al aire, el PAPI— se
+     * medía contra la pista de Gando a ciento trece kilómetros. Ver
+     * `campoParaLaAproximacion` y `flight/la-aproximacion.ts`.
      */
     this.laAproximacion = new LaAproximacion({
-      aircraft: this.aircraft,
-      scenario: this.scenario,
-      terrain: this.terrain,
+      // El avión se pregunta también: se puede cambiar en pleno vuelo, y la
+      // velocidad de referencia de los mínimos es la del que se vuela.
+      avion: () => this.aircraft,
       hechos: this.hechos,
       vaca: this.vaca,
-      enLaPista: (metros) => this.enLaPista(metros),
-      distanceToRunway: () => this.distanceToRunway(),
-      // Se pregunta cada vez y no se copia: al cambiar el viento cambia la
-      // cabecera, y con ella dónde está el PAPI. Ver `SENDA_DESDE`.
-      sendaDesde: () => this.runwayGuide.sendaDesde,
+      campoDeAhora: () => this.campoParaLaAproximacion(),
     });
 
     /*
@@ -2366,65 +2640,15 @@ export class Game {
      * Se apunta la caja de cada uno, que para un prisma recto es exacta.
      */
     const aero = this.scenario.aerodrome;
-    if (aero) {
-      for (const e of aero.buildings) {
-        if (e.polygon.length < 3) continue;
-        /*
-         * **Y una marquesina no es una pared.**
-         *
-         * `building=roof` en OpenStreetMap es un tejado sobre pilares y nada
-         * debajo: las marquesinas de la plataforma, el techo del surtidor, el
-         * pasillo cubierto hasta la terminal. No son pocos —Tenerife Sur tiene
-         * treinta y nueve y Tenerife Norte siete— y están **justo donde hay
-         * que rodar**, porque para eso se ponen: para cubrir donde se aparca.
-         *
-         * Convertirlas en prismas macizos de cinco metros pone paredes
-         * invisibles en la plataforma, y eso se cobró un vuelo de cada cinco
-         * en Tenerife Norte: el avión volvía a casa y se estrellaba contra la
-         * número 27, un tejado de dieciséis por veintiséis a doscientos ochenta
-         * y ocho metros del eje de pista. En la traza salía «percance:
-         * edificio» a un metro y medio del suelo, rodando — y buscarlo costó
-         * creer que un avión chocaba con algo en pleno final.
-         *
-         * Se sigue dibujando, que está ahí de verdad; lo que no hace es parar
-         * a un avión.
-         */
-        if (!paraUnAvion(e)) continue;
-        let minX = Infinity;
-        let maxX = -Infinity;
-        let minZ = Infinity;
-        let maxZ = -Infinity;
-        for (const [px, py] of e.polygon) {
-          // Del fichero al mundo: la Y del norte es la Z negativa.
-          minX = Math.min(minX, px);
-          maxX = Math.max(maxX, px);
-          minZ = Math.min(minZ, -py);
-          maxZ = Math.max(maxZ, -py);
-        }
-        const suelo = this.terrain.sampleHeight(
-          (minX + maxX) / 2,
-          (minZ + maxZ) / 2,
-        );
-        this.bultos.anadir(
-          (minX + maxX) / 2,
-          (minZ + maxZ) / 2,
-          (maxX - minX) / 2,
-          (maxZ - minZ) / 2,
-          suelo,
-          suelo + alturaDeEdificio(e),
-          /*
-           * **Y con su planta, no solo con su caja.**
-           *
-           * Aquí ponía que la caja «para un prisma recto es exacta», y lo es —
-           * si el prisma tiene los lados paralelos a los ejes—. Ninguno de un
-           * aeropuerto los tiene: la terminal de Tenerife Norte son veintidós
-           * vértices en diagonal y su caja mide **2,2 veces su planta**. Más
-           * de la mitad de esa caja es plataforma vacía, y por ahí se rueda.
-           */
-          e.polygon.map(([px, py]) => [px, -py] as const),
-        );
-      }
-    }
+    if (aero) this.apuntarLosEdificios(aero);
+    /*
+     * **Y los del aeropuerto de llegada, que también están.** La terminal, la
+     * torre y los hangares de Los Rodeos se dibujaban y se atravesaban: el
+     * índice solo sabía de los de casa. Con su aeródromo ya corrido, son
+     * bultos de este mundo como cualquier otro.
+     */
+    for (const v of this.vecinos)
+      if (v.aerodromo) this.apuntarLosEdificios(v.aerodromo);
 
     this.vegetacion = createVegetation(
       this.scenario,
@@ -2521,7 +2745,12 @@ export class Game {
      * las dos puede bajar. Ver `Mapa.ponerOtraPista`.
      */
     if (this.vecinos.length > 0) {
-      this.hud.mapa.ponerOtrasPistas(this.vecinos.map((v) => v.pista));
+      this.hud.mapa.ponerOtrasPistas(this.vecinos.map((v) => v.campo.pista));
+      // Y sus plataformas y calles, que de cerca son lo que se mira para
+      // rodar. Ver `Mapa.ponerOtrosAerodromos`.
+      this.hud.mapa.ponerOtrosAerodromos(
+        this.vecinos.flatMap((v) => (v.aerodromo ? [v.aerodromo] : [])),
+      );
       // Y cada campo con su nombre. Ver `Mapa.ponerCampos`.
       this.hud.mapa.ponerCampos(
         this.camposDelVuelo().map((c) => ({
@@ -3188,6 +3417,8 @@ export class Game {
       this.flight.velocidadMaxima(),
       // Y con qué tren tocó. Ver `trenAlTocar`.
       !this.aircraft.trenRetractil || this.input.controls.tren > 0.5,
+      // Y si fue antes del umbral de aterrizaje. Ver `enLaZonaDeLasFlechas`.
+      this.enLaZonaDeLasFlechas(),
     );
     if (!veredicto) return null;
     this.hud.flash(
@@ -3198,7 +3429,9 @@ export class Game {
             ? "hud.landedFirm"
             : veredicto === "rapido"
               ? "hud.landedFast"
-              : "hud.landedOffRunway",
+              : veredicto === "corto"
+                ? "hud.landedShort"
+                : "hud.landedOffRunway",
       ),
       3.6,
     );
@@ -3213,6 +3446,25 @@ export class Game {
      */
     if (veredicto === "suave" || veredicto === "firme") {
       this.avisar("success");
+    } else if (veredicto === "corto") {
+      /*
+       * **Tocar antes del umbral desplazado: dicho, dibujado y nada más.**
+       *
+       * No es un percance —el avión está en una pista, entero— ni lo canta la
+       * cabina, que ningún avión lleva un aviso para esto. Lo dice la
+       * instructora y lo enseña el dibujo: la barra blanca, las flechas
+       * apuntando a ella y el avión posado sobre las flechas. Es lo que se ve
+       * por la ventanilla el día que se aterriza en un umbral así, y la
+       * próxima vez se toca pasada la barra. Ver `umbral-desplazado.ts`.
+       */
+      this.avisar("attention");
+      this.instructor.decir(t("hud.landedShort"), "hud.landedShort");
+      this.hud.senal.mostrar(
+        "corto",
+        this.rotulo("hud.landedShort", "palabra.corto"),
+        null,
+        { segundos: SE_QUEDA_EL_VEREDICTO, prioridad: URGENTE },
+      );
     } else {
       this.avisar("attention");
       const dicho =
@@ -3706,7 +3958,7 @@ export class Game {
           tipo,
           // La pista la ocupa una vaca donde hay vacas, y otro avión donde hay
           // torre: el dibujo tiene que contar lo que pasó de verdad.
-          tipo === "ocupada" && !this.scenario.aerodrome?.privado
+          tipo === "ocupada" && !this.elCampo().escenario.aerodrome?.privado
             ? "-avion"
             : "",
         ),
@@ -3746,9 +3998,17 @@ export class Game {
     this.cuadernoUI?.ponerCuaderno(this.cuaderno);
   }
 
-  /** Y el aeródromo de hoy, que cuenta como sitio visitado. */
+  /**
+   * Y el aeródromo de hoy, que cuenta como sitio visitado.
+   *
+   * **El del campo donde se toca o de donde se despega**, que se llama al
+   * aterrizar y al despegar. Apuntaba siempre el de casa: aterrizar en Los
+   * Rodeos viniendo de Gran Canaria no contaba como sitio nuevo, y el grado
+   * que pide haber visitado dos aeródromos no se podía ganar volando a otro.
+   */
   private apuntarElSitio(): void {
-    const id = this.scenario.aerodrome?.id ?? this.scenario.id;
+    const campo = this.elCampo().escenario;
+    const id = campo.aerodrome?.id ?? campo.id;
     if (this.cuaderno.aerodromos.includes(id)) return;
     this.apuntar({ aerodromos: [...this.cuaderno.aerodromos, id] });
   }
@@ -3764,9 +4024,17 @@ export class Game {
      * total no es un recuerdo: dice que hubo veinte aterrizajes y no dice cuál
      * fue el tuyo. Esto es la línea de este vuelo. Ver `flight/bitacora.ts`.
      */
+    /*
+     * Con de dónde salió y dónde acabó, si no es casa: el mundo de la traza
+     * sigue siendo el de casa, pero el vuelo es de allí a allá.
+     */
+    const llegada = this.elCampo().id;
+    const salida = this.despegoDe || this.salidaId;
     apuntarVuelo({
       fecha: new Date().toISOString(),
       escenario: this.scenario.id,
+      ...(salida && salida !== this.scenario.id ? { salida } : {}),
+      ...(llegada !== this.scenario.id ? { llegada } : {}),
       leccion: this.leccion.id,
       tramo: this.tier.id,
       segundos: Math.round(this.duracion),
@@ -3811,12 +4079,89 @@ export class Game {
         // en Asunción: el aeródromo salía como un punto y la lección de rodar,
         // que se queda en un kilómetro, como nada. El suelo de escala es para
         // comparar fichas en el hangar; aquí solo hay un vuelo.
-        plano(this.scenario, 0, this.traza),
+        plano(this.scenario, 0, this.traza, this.aerodromosDelTramo()),
         // Y lo que se lleva volado en total, en avioncitos. Ver `ui/reloj.ts`.
         this.relojDeHoras(),
       );
       this.avisar("achieved");
     });
+  }
+
+  /**
+   * Apunta en el índice de bultos los edificios de un aeródromo, en
+   * coordenadas de este mundo. Ver dónde se llama, en el constructor.
+   */
+  private apuntarLosEdificios(aero: Aerodrome): void {
+    for (const e of aero.buildings) {
+      if (e.polygon.length < 3) continue;
+      /*
+       * **Y una marquesina no es una pared.**
+       *
+       * `building=roof` en OpenStreetMap es un tejado sobre pilares y nada
+       * debajo: las marquesinas de la plataforma, el techo del surtidor, el
+       * pasillo cubierto hasta la terminal. No son pocos —Tenerife Sur tiene
+       * treinta y nueve y Tenerife Norte siete— y están **justo donde hay
+       * que rodar**, porque para eso se ponen: para cubrir donde se aparca.
+       *
+       * Convertirlas en prismas macizos de cinco metros pone paredes
+       * invisibles en la plataforma, y eso se cobró un vuelo de cada cinco
+       * en Tenerife Norte: el avión volvía a casa y se estrellaba contra la
+       * número 27, un tejado de dieciséis por veintiséis a doscientos ochenta
+       * y ocho metros del eje de pista. En la traza salía «percance:
+       * edificio» a un metro y medio del suelo, rodando — y buscarlo costó
+       * creer que un avión chocaba con algo en pleno final.
+       *
+       * Se sigue dibujando, que está ahí de verdad; lo que no hace es parar
+       * a un avión.
+       */
+      if (!paraUnAvion(e)) continue;
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let minZ = Infinity;
+      let maxZ = -Infinity;
+      for (const [px, py] of e.polygon) {
+        // Del fichero al mundo: la Y del norte es la Z negativa.
+        minX = Math.min(minX, px);
+        maxX = Math.max(maxX, px);
+        minZ = Math.min(minZ, -py);
+        maxZ = Math.max(maxZ, -py);
+      }
+      const suelo = this.terrain.sampleHeight(
+        (minX + maxX) / 2,
+        (minZ + maxZ) / 2,
+      );
+      this.bultos.anadir(
+        (minX + maxX) / 2,
+        (minZ + maxZ) / 2,
+        (maxX - minX) / 2,
+        (maxZ - minZ) / 2,
+        suelo,
+        suelo + alturaDeEdificio(e),
+        /*
+         * **Y con su planta, no solo con su caja.**
+         *
+         * Aquí ponía que la caja «para un prisma recto es exacta», y lo es —
+         * si el prisma tiene los lados paralelos a los ejes—. Ninguno de un
+         * aeropuerto los tiene: la terminal de Tenerife Norte son veintidós
+         * vértices en diagonal y su caja mide **2,2 veces su planta**. Más
+         * de la mitad de esa caja es plataforma vacía, y por ahí se rueda.
+         */
+        e.polygon.map(([px, py]) => [px, -py] as const),
+      );
+    }
+  }
+
+  /**
+   * Los aeródromos de los otros campos por los que pasó este tramo, ya
+   * corridos, para el plano del final: el de salida si no es casa y el de
+   * llegada. La traza está en coordenadas del mundo de casa, y ellos también.
+   */
+  private aerodromosDelTramo(): Aerodrome[] {
+    const ids = new Set([this.despegoDe || this.salidaId, this.elCampo().id]);
+    ids.delete(this.scenario.id);
+    return this.vecinos
+      .filter((v) => ids.has(v.campo.id) && v.aerodromo)
+      .map((v) => v.aerodromo!);
   }
 
   /**
@@ -4098,13 +4443,26 @@ export class Game {
      */
     this.hechos.on("mandaronIrseAlAire", ({ porque, motivo }) => {
       if (porque === "pistaOcupada") {
-        if (this.scenario.aerodrome?.privado) {
-          const [x, z] = this.enLaPista(this.scenario.runway.length / 2 - 150);
+        /*
+         * Vaca o lámpara según el campo **al que se viene**, y la vaca en su
+         * pista. Las dos cosas miraban el de casa: llegando a la granja desde
+         * Asunción se encendía la lámpara de una torre que no existe, y
+         * saliendo de la granja la vaca aparecía en la pista de allí, a ciento
+         * cuarenta kilómetros.
+         */
+        const campo = this.elCampo();
+        if (campo.escenario.aerodrome?.privado) {
+          // En la zona de toma: pasado el umbral de aterrizar, que es donde
+          // estorba. Ver `umbral-desplazado.ts`.
+          const [x, z] = this.enLaPista(
+            hastaElUmbralDeToma(campo.pista) - 150,
+            campo,
+          );
           this.vaca.poner(
             x,
             this.terrain.sampleHeight(x, z),
             z,
-            (this.scenario.runway.heading * Math.PI) / 180,
+            (campo.pista.heading * Math.PI) / 180,
           );
         } else {
           // Roja, pero la del aire: «¡al aire!», no «esperá acá». Ver
@@ -4245,6 +4603,49 @@ export class Game {
   }
 
   /**
+   * **La pista pasa a ser tuya: se le quita a quien la tuviera.**
+   *
+   * Dos cosas, y en este orden:
+   *
+   * - Lo que la torre les dio a los demás y todavía espera turno en la boca
+   *   **ya no se dice**. La frecuencia dejaba de dar la pista en cuanto era
+   *   tuya, pero una orden dada un segundo antes podía esperar hasta doce
+   *   —`CADUCA_LA_ORDEN`— y tu autorización, en `mando`, se le colaba
+   *   delante: en Pettirossi se oyó tu «cleared to land» y seis segundos y
+   *   medio después un «line up and wait» a otro. Ver `daLaPistaAOtro`.
+   * - Y al que la tenía —alineado en el eje, o autorizado a aterrizar— la
+   *   torre le dice que despegue o que se vaya al aire, **antes** de dártela a
+   *   vos. Es lo que hace una torre de verdad, y es la lección del guion de
+   *   la frustrada contada con tu vuelo delante: al otro también lo mandan al
+   *   aire, y no pasa nada. Ver `despejarLaPista` en `flight/radio.ts`.
+   *
+   * Se dibuja todo y **se dice una, y solo con la boca libre**. Lo que se
+   * enseña aquí es tu autorización, y esa caduca a los doce segundos: con la
+   * boca ocupada y dos órdenes a otros delante, tu «cleared to land» caducó
+   * sin sonar. Con la boca libre la de ellos suena ya y la tuya detrás, a unos
+   * seis segundos; ocupada, lo de ellos pasa callado, como pasa en final todo
+   * lo de la frecuencia, y el avión se va igual a la vista. Ver `laQueSeDice`.
+   *
+   * La que se dice va en `mando` y no en `baja` como el resto de la frecuencia
+   * porque no es charla: es la mitad de tu autorización, y en `baja` tu
+   * «cleared to land» se le ponía delante. Entre iguales la boca dice primero
+   * lo primero que llegó, y esto llega antes.
+   */
+  private quitarleLaPistaALosDemas(): void {
+    BOCA.retirar(daLaPistaAOtro);
+    // En un campo sin torre no hay frecuencia a la que quitarle nada.
+    if (this.elCampoMontado().escenario.aerodrome?.privado) return;
+    const dichas = this.radio.despejarLaPista();
+    for (const dice of dichas) this.trafico?.anuncia(dice.de.matricula, dice.clave);
+    const libre = !BOCA.ocupada && BOCA.cuantasEsperan === 0;
+    const dice = libre ? laQueSeDice(dichas) : null;
+    const montada = dice && this.deTorre(dice.clave, dice.de);
+    if (!montada) return;
+    this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
+    if (this.tier.instruments !== "none") this.hud.radio(montada.texto);
+  }
+
+  /**
    * Una llamada de la torre montada entera: a quién, con qué pista y cómo
    * suena.
    *
@@ -4266,9 +4667,18 @@ export class Game {
     if (destino) relleno.destino = destino.pieza;
     // Y con la voz de este campo, que es lo que hacía que una torre sonara a
     // dos personas. Ver `comoSeDiceAqui` en `i18n/habla.ts`.
-    let clave = comoSeDiceAqui(base, hablaDe(this.scenario.aerodrome?.id));
+    /*
+     * **Y el campo es el de ahora, no el de casa.** La pista y la voz salían
+     * del escenario de salida, así que llegando a Los Rodeos por la 12 la
+     * torre decía «runway zero three left, cleared to land» —la 03L de Gando,
+     * con un «left» en un campo de una sola pista—, y llegando a Yvytu Rape
+     * nombraba la 02 de Asunción. El número de pista es lo único escrito en
+     * el suelo de un aeropuerto: tiene que ser el que se tiene delante.
+     */
+    const campo = this.elCampo();
+    let clave = comoSeDiceAqui(base, hablaDe(campo.escenario.aerodrome?.id));
     const pista = NOMBRA_LA_PISTA.has(base)
-      ? pistaEnPiezas(cabeceraEnUso(this.scenario))
+      ? pistaEnPiezas(cabeceraEnUso(campo.escenario))
       : null;
     if (pista) {
       Object.assign(relleno, pista.relleno);
@@ -4318,9 +4728,10 @@ export class Game {
     const destino = destinoEnRadio(this.destinoId);
     if (!destino) return;
     const yo = this.miIndicativo;
+    // La torre que autoriza es la del campo del que se sale.
     const clave = comoSeDiceAqui(
       "torre.destino",
-      hablaDe(this.scenario.aerodrome?.id),
+      hablaDe(this.campoPorId(this.salidaId)?.escenario.aerodrome?.id),
     ) as TranslationKey;
     const texto = t(clave, { indicativo: yo.dicho, destino: destino.dicho });
     this.torre.decir(texto, clave, "mando", {
@@ -4336,6 +4747,45 @@ export class Game {
 
   /** Qué tramo ya tiene su autorización dicha. Ver `autorizarLaRuta`. */
   private rutaAutorizada = "";
+
+  /**
+   * **El corredor de los aviones de ruta, el de este tramo.**
+   *
+   * Se fijaba al cargar entre casa y el primer destino de la lista, así que
+   * volando de Gran Canaria a Lanzarote todo el tráfico iba por el corredor
+   * de Los Rodeos y no se cruzaba a nadie: se perdía la regla semicircular
+   * justo en la ruta elegida. Ahora va del campo de salida del tramo al de
+   * destino —o al del desvío—, y cambia cuando cambian ellos.
+   *
+   * En una vuelta al campo no hay ruta propia: se ve el corredor hacia el
+   * campo más cercano, que es el que más se vuela desde ahí.
+   */
+  private ponerElCorredor(): void {
+    if (!this.avionesDeRuta) return;
+    const meta = this.desvioId ?? this.destinoId;
+    const clave = `${this.salidaId}>${meta}`;
+    if (clave === this.corredorPuesto) return;
+    this.corredorPuesto = clave;
+    const campos = this.camposDelVuelo();
+    const de = this.campoPorId(this.salidaId) ?? campos[0]!;
+    let a = this.campoPorId(meta);
+    if (!a || a.id === de.id) {
+      let corto = Infinity;
+      for (const c of campos) {
+        if (c.id === de.id) continue;
+        const d = Math.hypot(c.x - de.x, c.z - de.z);
+        if (d < corto) {
+          corto = d;
+          a = c;
+        }
+      }
+    }
+    if (!a || a.id === de.id) return;
+    this.avionesDeRuta.ponerCorredor({ x: de.x, z: de.z }, { x: a.x, z: a.z });
+  }
+
+  /** Qué tramo lleva puesto el corredor. Ver `ponerElCorredor`. */
+  private corredorPuesto = "";
 
   /**
    * La luz de la torre, **y su voz**.
@@ -4366,6 +4816,27 @@ export class Game {
     this.ultimaLuzDeTorre = cual;
     if (!luz) return;
     /*
+     * **Y lo que decía la luz de antes, si todavía espera turno, se retira.**
+     *
+     * Al llegar al punto de espera la lámpara se pone roja y un momento
+     * después verde, y cada cambio son dos frases —la de la lámpara y su
+     * fraseología—. El «hold short» de la roja seguía en la cola cuando la luz
+     * ya estaba verde: se decía tarde y al revés de lo que pasaba, y empujaba
+     * detrás el «cleared for take-off», que caducaba esperando. En Gran
+     * Canaria, con Taguató, la autorización propia se caía en cada vuelo y la
+     * comprobación de la fraseología pasaba solo si la torre autorizaba a
+     * algún avión del ambiente.
+     *
+     * Apagarse no retira nada: la luz se apaga al usar el permiso, y el
+     * permiso sigue siendo verdad. Ver `Boca.retirar`.
+     *
+     * Y solo lo que va a tu matrícula: en el mismo fotograma en que la luz se
+     * pone verde, la torre le acaba de quitar la pista a quien la tuviera, y
+     * eso no es de tu lámpara. Ver `quitarleLaPistaALosDemas`.
+     */
+    const mia = this.misLetrasEnLaBoca;
+    BOCA.retirar((clave, urgencia) => esDeLaLampara(clave, urgencia, mia));
+    /*
      * **Y la dice como se dice aquí.** La torre no habla el castellano del
      * juego: habla el de su campo, y en Canarias eso quiere decir sin vosear y
      * con otra voz. La clave cambia con el habla porque el pack de voz busca
@@ -4381,7 +4852,7 @@ export class Game {
           : "torre.roja";
     const clave = comoSeDiceAqui(
       base,
-      hablaDe(this.scenario.aerodrome?.id),
+      hablaDe(this.elCampo().escenario.aerodrome?.id),
     ) as TranslationKey;
     /*
      * La orden de irse al aire **corta lo que haya**: es la única de las tres
@@ -4481,9 +4952,12 @@ export class Game {
    * Y la cota se **mide del terreno** en ese punto concreto, no se da por
    * supuesta: una pista con pendiente no está a la misma altura en los dos
    * extremos, que es precisamente la gracia.
+   *
+   * En el campo del que sale el vuelo, que no tiene por qué ser el de casa:
+   * ver `resetFlight`. La lección de aterrizar es siempre en casa.
    */
-  private startPosition(): Vector3 {
-    const { runway, aerodrome } = this.scenario;
+  private startPosition(campo: CampoEnElMundo = this.laCasa): Vector3 {
+    const { runway } = this.scenario;
 
     /*
      * **La lección de aterrizar empieza en el aire, en final.**
@@ -4499,7 +4973,12 @@ export class Game {
      * falta.
      */
     if (this.leccion.arranque === "aire") {
-      const [x, z] = puntoDePista(runway, runway.length / 2 + APROXIMACION);
+      // Desde el umbral de aterrizar: con el umbral desplazado, la final
+      // acaba pista adentro. Ver `umbral-desplazado.ts`.
+      const [x, z] = puntoDePista(
+        runway,
+        hastaElUmbralDeToma(runway) + APROXIMACION,
+      );
       /*
        * **La altura se mide desde la pista, no desde el suelo de debajo.**
        *
@@ -4533,9 +5012,9 @@ export class Game {
     }
     // El arranque de un aeródromo real sale de su umbral medido, sesenta
     // metros pista adentro. Lo de abajo es para las pistas inventadas.
-    const pista = aerodrome?.runways[0];
-    const p = pista ? arranqueEnPista(pista, runway.heading) : null;
-    const [x, z] = p ?? this.enLaPista(runway.length * 0.42);
+    const pista = campo.aerodromo?.runways[0];
+    const p = pista ? arranqueEnPista(pista, campo.pista.heading) : null;
+    const [x, z] = p ?? this.enLaPista(campo.pista.length * 0.42, campo);
     return new Vector3(
       x,
       this.terrain.sampleHeight(x, z) + this.aircraft.gearHeight,
@@ -4557,19 +5036,17 @@ export class Game {
    *
    * Cuando el aeródromo es real manda su fichero: el umbral medido, no una
    * cuenta desde el centro.
+   *
+   * **Y en el campo que se tiene debajo**, si no se dice otro. Era siempre el
+   * de casa, y de aquí sacaban el umbral la distancia de la final, la aguja y
+   * la vaca: en el aeropuerto de llegada los tres miraban a Gando. La cuenta
+   * vive en `enLaPistaDe`.
    */
-  private enLaPista(atras: number): readonly [number, number] {
-    const { runway, aerodrome } = this.scenario;
-    const pista = aerodrome?.runways[0];
-    if (pista) {
-      const p = arranqueEnPista(
-        pista,
-        runway.heading,
-        runway.length * 0.5 - atras,
-      );
-      if (p) return p;
-    }
-    return puntoDePista(runway, atras);
+  private enLaPista(
+    atras: number,
+    campo: CampoEnElMundo = this.elCampo(),
+  ): readonly [number, number] {
+    return enLaPistaDe(campo, atras);
   }
 
   /**
@@ -4641,21 +5118,61 @@ export class Game {
     }
     c.engineOn = !c.engineOn;
     this.hud.flash(t(c.engineOn ? "hud.engineOn" : "hud.engineOff"));
+    // Arrancar después de haber volado y apagado es otro vuelo, y también
+    // después de un vuelo que ya se dio por terminado. Ver `empezarOtroTramo`.
+    if (
+      c.engineOn &&
+      arrancarAbreOtroTramo(this.leccion, this.faseDeAhora, this.vueloTerminado)
+    )
+      this.empezarOtroTramo();
     /*
-     * **Y con el motor parado en otro campo, se reposta para volver.**
+     * **Y con el motor parado en un campo, se reposta para lo que sigue.**
      *
      * Se sale con lo del tramo de ida más el alternativo, no con la vuelta: en
      * el campo de llegada hay combustible, como en cualquier aeropuerto. Pero
      * el camión no se acerca a un avión con el motor en marcha, así que llega
      * cuando se apaga, que es cuando llega de verdad.
+     *
+     * **En cualquier campo, también en el de salida.** Esto pedía un campo
+     * distinto del último repostaje, y en casa el camión no venía nunca: quien
+     * se volvía a medio camino y apagaba salía otra vez hacia Los Rodeos con
+     * lo que le quedaba, y los circuitos seguidos iban vaciando el depósito.
+     * Ver `hayQueLlenar`.
+     *
+     * Para el tramo que sale de aquí, que no es siempre el que dice la ruta
+     * al apagar: al volver a casa la ruta dice «vuelta al campo» hasta que se
+     * arranca, y el tramo siguiente va al destino del hangar. Ver
+     * `tramoDelRepostaje`.
      */
-    if (!c.engineOn && this.elCampoDeAhora().id !== this.campoDelRepostaje) {
+    if (!c.engineOn && this.campoEnCuyoSueloEsta()) {
       this.mirarSiSeLlego();
-      if (this.salidaId !== this.campoDelRepostaje) this.repostar();
+      this.llenarSiHaceFalta(
+        this.salidaId,
+        this.destinoDelTramoDesde(this.salidaId),
+      );
     }
   }
 
   resetFlight(): void {
+    /*
+     * **Dónde empieza el vuelo nuevo, lo primero.**
+     *
+     * Se empieza donde se estuvo en tierra por última vez, que es `salidaId`:
+     * el vuelo que se repite es el tramo que empezó ahí. Tras apagar en Los
+     * Rodeos, «otro vuelo» sale de Los Rodeos hacia casa; tras un percance en
+     * el aire camino de allí, se vuelve a salir de Gran Canaria.
+     *
+     * Antes aquí ponía que cada vuelo empieza en casa, y no era verdad: el
+     * plan se había mudado al campo de llegada y el avión aparecía allí, pero
+     * con la ruta, el depósito, la tarjeta y la insignia del tramo de ida. Era
+     * medio reinicio en cada sitio. La lección que empieza en final es de
+     * casa: aterrizar se practica en la pista de siempre.
+     */
+    const salida =
+      this.leccion.arranque !== "aire" && this.campoPorId(this.salidaId)
+        ? this.salidaId
+        : this.scenario.id;
+    const campo = this.elCampo(salida);
     this.percance = null;
     // Todo lo de venir a aterrizar se reinicia de una vez, que es lo que gana
     // tenerlo junto: antes eran cinco líneas repartidas por este método.
@@ -4677,8 +5194,9 @@ export class Game {
     this.avisosDeAltura.reiniciar();
     this.alturaEnGrande.reiniciar();
     // Y el otro avión vuelve a empezar su vuelo con nosotros, y **con otro
-    // nombre**: es otro avión, no el mismo dando vueltas para siempre.
-    this.radio.reiniciar(this.scenario.aerodrome?.id);
+    // nombre**: es otro avión, no el mismo dando vueltas para siempre. En la
+    // frecuencia del campo del que se sale.
+    this.radio.reiniciar(campo.escenario.aerodrome?.id);
     callar();
     /*
      * **Y todo lo que el paso siguiente va a leer.**
@@ -4711,12 +5229,9 @@ export class Game {
     this.avisandoDelBulto = 0;
     /*
      * Y la ruta de este vuelo, **antes** del depósito: lo que se carga sale de
-     * a dónde se va. Cada vuelo empieza en casa y con el destino del hangar.
+     * a dónde se va. Desde casa, al destino del hangar; desde fuera, a casa.
      */
-    this.salidaId = this.scenario.id;
-    this.destinoId = this.destinoDeSalida();
-    this.desvioId = null;
-    this.rutaAutorizada = "";
+    this.empezarLaRutaEn(salida);
     // Y el depósito, lleno para lo que se va a volar hoy. Ver `repostar`.
     this.repostar();
     /*
@@ -4726,20 +5241,23 @@ export class Game {
      * uno se fue copiando a mano hasta divergir. Todo lo que sea «estado de
      * este vuelo» tiene que quedar limpio por los dos.
      */
-    const { runway } = this.scenario;
     if (this.leccion.arranque === "aire") return this.reiniciarEnFinal();
     // El plan se reinicia **antes** de colocar el avión: es él quien decide si
     // hoy se sale del puesto o de la cabecera, y de eso depende dónde y hacia
-    // dónde aparece.
+    // dónde aparece. Y en el campo de salida, que puede no ser el de casa.
+    this.mudarElPlanA(campo);
     const rodando =
       this.plan?.reiniciar(this.leccion.arranque === "pista") ?? false;
     this.colocarSenalero();
-    const start = this.startPosition();
+    const start = this.startPosition(campo);
     const heading = rodando
-      ? this.rumboDeSalida(start)
-      : MathUtils.degToRad(runway.heading);
+      ? this.rumboDeSalida(start, campo)
+      : MathUtils.degToRad(campo.pista.heading);
 
     this.flight.reset({ position: start, heading, airspeed: 0 });
+    // Y lo que va con el campo —circuito, tráfico, frecuencia, insignia—,
+    // montado en el de salida, que puede no ser el que estaba montado.
+    if (campo.id !== this.campoMontado) this.montarElCampo(campo);
     // Y con el motor parado, que es como está un avión en su puesto. Arrancarlo
     // es el primer paso del vuelo y hasta ahora no existía como paso.
     this.input.controls.engineOn = !rodando;
@@ -4898,7 +5416,13 @@ export class Game {
       // verdad y no donde lo pondríamos nosotros. Ver `sitiarPapi`.
       this.scenario.aerodrome?.visualAids ?? [],
     );
-    if (this.aproximacion) this.scene.add(this.aproximacion.grupo);
+    if (this.aproximacion) {
+      this.scene.add(this.aproximacion.grupo);
+      this.tienePapi.set(
+        this.aproximacion,
+        !!this.aproximacion.grupo.getObjectByName("papi"),
+      );
+    }
 
     /*
      * Y las azules de las calles de rodaje, que son las que dibujan el
@@ -4919,13 +5443,59 @@ export class Game {
         this.rodadura.ponerSol(this.sky.sunDirection.y);
       }
     }
-    /*
-     * Y si esta pista tiene PAPI, la pantalla puede explicarlo. Se pregunta
-     * aquí y no cada fotograma porque la respuesta no cambia en todo el vuelo.
-     */
-    this.laAproximacion.hayPapi =
-      !!this.aproximacion?.grupo.getObjectByName("papi");
+    // Lo que la pantalla dijo del PAPI era de las luces de antes.
     this.laAproximacion.papiEnPantalla = null;
+  }
+
+  /**
+   * **Y las mismas luces en el aeropuerto de llegada.**
+   *
+   * Luces de aproximación, PAPI y azules de rodaje, con la misma regla que en
+   * casa —solo donde la pista tiene luces— y en su cabecera en uso. Se cuelgan
+   * del mundo del vecino, en sus coordenadas, para que se apaguen con su
+   * aeródromo cuando la isla queda lejos. Ver `MundoVecino.colgarDeCerca`.
+   *
+   * Se montan la primera vez que la isla se acerca, no al cargar: desde Gran
+   * Canaria son cinco aeropuertos y a casi todos no se va a ir hoy.
+   */
+  private ponerLucesDelVecino(v: (typeof this.vecinos)[number]): void {
+    v.lucesPuestas = true;
+    if (v.aproximacion) {
+      v.mundo.descolgar(v.aproximacion.grupo);
+      v.aproximacion.dispose();
+      v.aproximacion = null;
+    }
+    if (v.rodadura) {
+      v.mundo.descolgar(v.rodadura.grupo);
+      v.rodadura.dispose();
+      v.rodadura = null;
+    }
+    // El aeródromo sin correr, que es el que casa con su propio mapa.
+    const aero = v.campo.escenario.aerodrome;
+    const pista = aero?.runways[0];
+    if (!aero || !pista?.lit) return;
+    const suelo = (p: readonly [number, number]): number =>
+      v.mundo.terreno.sampleHeight(p[0], -p[1]);
+    v.aproximacion = crearAproximacion(
+      pista,
+      cabeceraEnUso(v.campo.escenario),
+      suelo,
+      aero.visualAids ?? [],
+    );
+    if (v.aproximacion) {
+      v.mundo.colgarDeCerca(v.aproximacion.grupo);
+      this.tienePapi.set(
+        v.aproximacion,
+        !!v.aproximacion.grupo.getObjectByName("papi"),
+      );
+    }
+    v.rodadura = crearLucesDeRodadura(aero, suelo);
+    if (v.rodadura) {
+      v.mundo.colgarDeCerca(v.rodadura.grupo);
+      v.rodadura.ponerSol(this.sky.sunDirection.y);
+    }
+    if (this.elCampo().id === v.campo.id)
+      this.laAproximacion.papiEnPantalla = null;
   }
 
   /**
@@ -4977,7 +5547,7 @@ export class Game {
        * Palma con el aeródromo a treinta y tres metros no es lo mismo que en
        * un aeropuerto al nivel del mar. Ver `ARRIBA_DEL_TODO`.
        */
-      sobreElCampo: this.flight.state.position.y - this.terrain.runwayElevation,
+      sobreElCampo: this.flight.state.position.y - this.cotaDeLaPistaAqui(),
       vertical: this.flight.state.verticalSpeed,
       /*
        * Y cuánto se ha bajado ya desde lo más alto del vuelo, que es lo único
@@ -5073,15 +5643,22 @@ export class Game {
      * de tener reloj porque el campo no tenga torre.
      */
     this.relojDeRuta += dt;
-    if (this.scenario.aerodrome?.privado) return;
-    this.trafico?.paso(dt);
     /*
      * Y los de la ruta, que no llevan reloj propio: se les da el del vuelo y
      * de ahí sale dónde están. Sin estado y repetible — ver
      * `flight/trafico-en-ruta.ts`.
+     *
+     * **Antes de la puerta del campo privado**, que estaba delante: saliendo
+     * de la granja el corredor iba vacío, y el corredor no depende de que el
+     * campo tenga torre.
      */
     this.pilotoSeSolto = Math.max(0, this.pilotoSeSolto - dt);
+    this.ponerElCorredor();
     this.avionesDeRuta?.paso(this.relojDeRuta, this.flight.state.position);
+    // La frecuencia es la del campo en el que se está, no la de casa. Ver
+    // `montarElCampo`.
+    if (this.elCampoMontado().escenario.aerodrome?.privado) return;
+    this.trafico?.paso(dt);
     const dice = this.radio.update(dt, {
       fase: this.faseDeAhora,
       deDia: this.sky.sunDirection.y > 0,
@@ -5150,6 +5727,11 @@ export class Game {
    * Se monta con la aproximación porque depende de lo mismo —qué cabecera se
    * está usando— y se rehace cuando cambia el viento: un circuito dibujado
    * para la otra punta de la pista es un circuito que lleva al revés.
+   *
+   * **Y en el campo en el que se está.** Había uno, montado en casa, y en el
+   * aeropuerto de llegada no había hilo ocre ni tramos cantados — tampoco
+   * después de una orden de irse al aire, que es justo cuando el circuito
+   * enseña el camino de vuelta. Ver `montarElCampo`.
    */
   private ponerCircuito(): void {
     if (this.circuito) {
@@ -5159,9 +5741,10 @@ export class Game {
     }
     this.laAproximacion.tramoDelCircuito = null;
     if (!this.tier.circuito) return;
+    const campo = this.elCampoMontado();
     this.circuito = crearCircuito(
-      this.scenario.runway,
-      this.terrain.runwayElevation,
+      campo.pista,
+      this.cotaDelCampo(campo),
       (x, z) => this.terrain.sampleHeight(x, z),
       // El circuito de **este** avión: el del de fuselaje ancho es tres veces
       // el de la avioneta. Ver `escalaDeCircuito`.
@@ -5189,7 +5772,11 @@ export class Game {
       this.trafico.dispose();
       this.trafico = null;
     }
-    if (!this.scenario.aerodrome || this.scenario.aerodrome.privado) return;
+    // El del campo en el que se está, y solo si allí hay con quién compartir
+    // la frecuencia. Ver `montarElCampo`.
+    const campo = this.elCampoMontado();
+    const aero = campo.escenario.aerodrome;
+    if (!aero || aero.privado) return;
     /*
      * **Y no tiene tu silueta.** Ver tu propio avión pasando por el viento en
      * cola es un espejo, no un vecino: lo primero que se aprende mirando al
@@ -5199,14 +5786,13 @@ export class Game {
     const mia = modeloPorId(this.aircraft.id)?.silueta;
     const otra = FLOTA.find((m) => m.silueta !== mia)?.silueta;
     if (!otra) return;
+    const cota = this.cotaDelCampo(campo);
     this.trafico = crearTrafico(
-      this.scenario.runway,
-      this.terrain.runwayElevation,
+      campo.pista,
+      cota,
       otra,
-      manoDelCircuito(
-        this.scenario.runway,
-        this.terrain.runwayElevation,
-        (x: number, z: number) => this.terrain.sampleHeight(x, z),
+      manoDelCircuito(campo.pista, cota, (x: number, z: number) =>
+        this.terrain.sampleHeight(x, z),
       ),
       escalaDeCircuito(this.aircraft.approachSpeed),
     );
@@ -5467,7 +6053,7 @@ export class Game {
       (v) => v.aerodromo === this.plan!.aerodromoActual,
     );
     const aero = suyo?.aerodromo ?? this.scenario.aerodrome;
-    const pista = suyo?.pista ?? this.scenario.runway;
+    const pista = suyo?.campo.pista ?? this.scenario.runway;
     this.scene.remove(this.plan.grupo);
     this.plan = new PlanDeVuelo(
       aero,
@@ -5583,7 +6169,10 @@ export class Game {
     // el seno de la altura del sol, que el cielo acaba de recalcular.
     this.rodadura?.ponerSol(this.sky.sunDirection.y);
     this.lucesDeCiudad?.ponerSol(this.sky.sunDirection.y);
-    for (const v of this.vecinos) v.mundo.ponerSol(this.sky.sunDirection.y);
+    for (const v of this.vecinos) {
+      v.mundo.ponerSol(this.sky.sunDirection.y);
+      v.rodadura?.ponerSol(this.sky.sunDirection.y);
+    }
   }
 
   /**
@@ -5671,6 +6260,39 @@ export class Game {
     this.visibilidadDelParte = meteo.visibilidadM;
     this.ponerLluvia(meteo.lluvia, meteo.fuerzaDeLluvia);
     this.terrain.rehacerAerodromo(this.scenario);
+    /*
+     * **Y los otros campos, con el mismo viento.**
+     *
+     * El viento del modelo de vuelo es uno para todo el mundo, y la cabecera
+     * en uso solo la elegía en casa: con 300/15, Los Rodeos como casa operaba
+     * por la 30 y como destino se aterrizaba por la 12 con quince nudos de
+     * cola —la raya, el embudo y la aproximación mandando aterrizar con el
+     * viento a favor—, que es lo contrario de lo que enseña la manga. Ahora
+     * cada vecino elige su cabecera con el viento de hoy y rehace lo que
+     * depende de ella: su aeródromo con su manga, sus luces y, si el plan está
+     * allí, su raya.
+     */
+    this.camposHechos = null;
+    this.pistasHechas = null;
+    for (const v of this.vecinos) {
+      const antes = v.campo;
+      v.campo = campoVecino(v.base, v.mundo.desplazamiento, v.aerodromo, meteo);
+      const mismo =
+        antes.escenario.meteo?.vientoDe === meteo.vientoDe &&
+        antes.escenario.meteo?.vientoKt === meteo.vientoKt &&
+        antes.pista.heading === v.campo.pista.heading;
+      // Con el mismo viento no hay nada que rehacer: es lo que pasa al
+      // arrancar, que el vecino ya se montó con el parte de hoy.
+      if (mismo) continue;
+      v.mundo.ponerTiempo(v.campo.escenario);
+      if (v.lucesPuestas) this.ponerLucesDelVecino(v);
+    }
+    // Y otra vez al acabar: lo de dentro del bucle puede haber preguntado
+    // dónde se está con la mitad de los vecinos ya cambiados.
+    this.pistasHechas = null;
+    this.camposHechos = null;
+    if (this.vecinos.length > 0)
+      this.hud.mapa.ponerOtrasPistas(this.vecinos.map((v) => v.campo.pista));
     // Y las luces de aproximación, que van en la cabecera por la que se entra:
     // si el viento gira, se mudan al otro extremo con todo lo demás.
     this.ponerAproximacion();
@@ -5810,8 +6432,14 @@ export class Game {
     if (!v) return;
     v.mundo.ponerLuces(
       ciudad,
-      zonaDeAeropuerto(v.escenario, 60),
-      v.escenario.waterLevel,
+      zonaDeAeropuerto(v.campo.escenario, 60),
+      v.campo.escenario.waterLevel,
+    );
+    // Y en el plano, que la ciudad de llegada también se busca en él.
+    this.hud.mapa.ponerOtraCiudad(
+      ciudad,
+      v.mundo.desplazamiento.x,
+      v.mundo.desplazamiento.z,
     );
   }
 
@@ -5886,6 +6514,9 @@ export class Game {
    */
   private reiniciarEnFinal(): void {
     const { runway } = this.scenario;
+    // En casa, que es donde se practica: el plan vuelve a ella si se había
+    // mudado a otro campo.
+    this.mudarElPlanA(this.laCasa);
     this.plan?.reiniciar();
     this.colocarSenalero();
     /*
@@ -5907,6 +6538,7 @@ export class Game {
       heading: MathUtils.degToRad(runway.heading),
       airspeed: entrada,
     });
+    if (this.campoMontado !== this.scenario.id) this.montarElCampo(this.laCasa);
     /*
      * **Soltar los mandos primero, y después poner el gas.**
      *
@@ -5962,9 +6594,12 @@ export class Game {
    * de espaldas a por donde tiene que irse obliga a maniobrar antes de
    * entender nada, y lo primero que se hace en un juego es lo que más marca.
    */
-  private rumboDeSalida(desde: Vector3): number {
+  private rumboDeSalida(
+    desde: Vector3,
+    campo: CampoEnElMundo = this.laCasa,
+  ): number {
     const hacia = this.plan?.primerPaso();
-    if (!hacia) return MathUtils.degToRad(this.scenario.runway.heading);
+    if (!hacia) return MathUtils.degToRad(campo.pista.heading);
     return Math.atan2(hacia[0] - desde.x, -(hacia[1] - desde.z));
   }
 
@@ -6166,7 +6801,7 @@ export class Game {
      */
     const aqui = this.elVecinoDeAhora();
     this.superficie = superficieEn(
-      aqui?.comoCampo ?? this.scenario,
+      aqui?.campo.comoCampo ?? this.scenario,
       aqui ? aqui.pavimento : this.pavimento,
       this.flight.state.position.x,
       this.flight.state.position.z,
@@ -6209,6 +6844,7 @@ export class Game {
       this.mirarSiChocaConAlgo();
     }
     this.quemarCombustible(dt);
+    this.mirarSiCambiaDeCampo();
     this.avisarDeLosBultos(dt);
 
     /*
@@ -6479,9 +7115,29 @@ export class Game {
        * la ciudad, el avión bajando entre los edificios y la pantalla muda
        * hasta posarse en un descampado, porque el aviso de terreno se calla en
        * final a propósito. Ver `fueraDeLaSenda`.
+       *
+       * **Y «final» es venir por el embudo, no solo lo que diga la fase.** La
+       * fase entra en «final» bajando, así que quien viene alineado y
+       * nivelado todavía no está en ella —y hasta que dejó de salirse al
+       * nivelarse, ver `SUBIDA_QUE_SACA_DE_FINAL` en `vuelo.ts`, una final a
+       * Los Rodeos soltaba «too low» cinco veces en diez segundos—. Es la
+       * misma lección que ya está escrita para el circuito: venir a aterrizar
+       * es venir por el embudo. Por debajo de la mitad de la senda sigue sin
+       * haber excusa.
+       *
+       * **Y por el embudo quiere decir hacia la pista**, alineado. El embudo
+       * solo mira la posición: cruzarlo de través por encima de media senda
+       * callaba el aviso de terreno entero y armaba el detector de
+       * frustradas. Ver `vieneEnFinal`.
        */
       enFinal:
-        this.faseDeAhora === "final" &&
+        (this.faseDeAhora === "final" ||
+          vieneEnFinal(
+            this.laPistaDeAhora(),
+            this.flight.state.position.x,
+            this.flight.state.position.z,
+            this.flight.state.heading,
+          ) !== null) &&
         !fueraDeLaSenda(
           this.distanceToRunway(),
           this.flight.state.position.y - this.cotaDeLaPistaAqui(),
@@ -6586,7 +7242,8 @@ export class Game {
        * es justo lo contrario de tocar.
        */
       !EN_DESPEGUE.has(this.faseDeAhora as Fase) &&
-      cerca.sobreLaPista &&
+      // Donde se puede tocar, que no es toda la pista. Ver `sobreLaZonaDeToma`.
+      this.sobreLaZonaDeToma() &&
       /*
        * **La altura sobre la pista, no sobre el terreno.** Antes del umbral el
        * suelo puede estar mucho más abajo —en Tenerife Norte cae setenta
@@ -6790,8 +7447,16 @@ export class Game {
     const alUmbral = this.distanceToRunway();
     const acercandose = alUmbral < this.antesAlUmbral - 0.05;
     this.antesAlUmbral = alUmbral;
+    /*
+     * **Y los aros son de la pista de casa**, que es donde se montan. En el
+     * campo de llegada se les preguntaba igual con el avión a ciento trece
+     * kilómetros, y los daban todos por perdidos de golpe: seis «aro
+     * fallado» en menos de un segundo al entrar en final, sin un aro en
+     * pantalla.
+     */
+    const enCasa = this.elCampo().esCasa;
     const aro =
-      this.flight.state.onGround || !acercandose
+      this.flight.state.onGround || !acercandose || !enCasa
         ? null
         : this.runwayGuide.check(this.flight.state.position);
     if (aro === "cruzado") this.avisar("aro");
@@ -6868,7 +7533,8 @@ export class Game {
       acercandose,
       circuito: this.circuito,
       faseDeAhora: this.faseDeAhora,
-      techoDeNubes: this.techoDeNubes,
+      // Sobre el campo al que se viene: ver `techoSobre`.
+      techoDeNubes: this.techoSobre(this.elCampo()),
       terrenoDicho: this.terrenoDicho,
       vueloTerminado: this.vueloTerminado,
     });
@@ -6921,8 +7587,10 @@ export class Game {
     updateSky(this.sky, this.camera.position);
     // El mar, con el ojo en el centro de sus anillos. Ver `discoDeAgua`.
     this.terrain.llevarElAguaA(this.camera.position.x, this.camera.position.z);
-    for (const v of this.vecinos)
+    for (const v of this.vecinos) {
       v.mundo.alPaso(this.camera.position.x, this.camera.position.z);
+      if (!v.lucesPuestas && v.mundo.cerca) this.ponerLucesDelVecino(v);
+    }
     this.pasoDeLluvia(dt);
 
     /*
@@ -7104,6 +7772,13 @@ export class Game {
       this.flight.state.position.y,
       this.flight.state.position.z,
     );
+    // Y el del campo de llegada, que vive en las coordenadas de su mapa.
+    const alli = this.elVecinoDeAhora();
+    alli?.aproximacion?.mirarDesde(
+      this.flight.state.position.x - alli.mundo.desplazamiento.x,
+      this.flight.state.position.y,
+      this.flight.state.position.z - alli.mundo.desplazamiento.z,
+    );
     // Las pantallas de la cabina, si el avión las trae. Van aquí y no en el
     // HUD porque son parte del avión: se ven desde dentro y desde fuera, y se
     // apagan solas cuando se cambia a un modelo que no las tiene.
@@ -7135,7 +7810,9 @@ export class Game {
         altura: this.flight.state.position.y,
         vertical: this.flight.state.verticalSpeed,
         rumbo: this.flight.state.heading,
-        declinacion: this.scenario.magneticVariation ?? 0,
+        // La del campo en el que se está: sus pistas van numeradas con la
+        // suya, y el rumbo tiene que casar con el número pintado.
+        declinacion: this.elCampoMontado().escenario.magneticVariation ?? 0,
         cabeceo: pitchAngleOf(this.flight.state.orientation),
         alabeo: bankAngleOf(this.flight.state.orientation),
         /*
@@ -7229,7 +7906,7 @@ export class Game {
        * `focoEncendido`.
        */
       focoEncendido(
-        this.flight.state.position.y - this.terrain.runwayElevation,
+        this.flight.state.position.y - this.cotaDeLaPistaAqui(),
         this.input.controls.tren > 0.5,
       ),
     );
@@ -7527,13 +8204,94 @@ export class Game {
    */
   private mudarElPlanSiCambiaDeCampo(): void {
     if (!this.plan || this.vecinos.length === 0) return;
-    const aqui = this.elVecinoDeAhora();
-    const toca = aqui
-      ? { aero: aqui.aerodromo, pista: aqui.pista }
-      : { aero: this.scenario.aerodrome, pista: this.scenario.runway };
-    if (!toca.aero || toca.aero === this.plan.aerodromoActual) return;
-    this.plan.mudarseA(toca.aero, toca.pista);
+    const campo = this.elCampo();
+    if (!campo.aerodromo || campo.aerodromo === this.plan.aerodromoActual)
+      return;
+    this.plan.mudarseA(campo.aerodromo, campo.pista);
     if (this.leccion.guiaEnTierra) this.colocarSenalero();
+  }
+
+  /** El campo para el que está montado lo que va con él. Ver `montarElCampo`. */
+  private campoMontado: string | null = null;
+
+  /**
+   * Si el campo de ahora ya es otro, se monta lo que va con él.
+   *
+   * Con un kilómetro de holgura en el aire: el campo de ahora cambia a mitad
+   * de camino, y quien vuele justo por esa raya no puede hacer que se rehagan
+   * el circuito, el tráfico y la frecuencia sesenta veces por segundo.
+   */
+  private mirarSiCambiaDeCampo(): void {
+    if (this.vecinos.length === 0) return;
+    const ahora = this.elCampo();
+    if (ahora.id === this.campoMontado) return;
+    if (this.campoMontado !== null && !this.flight.state.onGround) {
+      const antes = this.elCampo(this.campoMontado);
+      const p = this.flight.state.position;
+      const aAhora = Math.hypot(ahora.pista.x - p.x, ahora.pista.z - p.z);
+      const aAntes = Math.hypot(antes.pista.x - p.x, antes.pista.z - p.z);
+      if (aAhora > aAntes - HOLGURA_PARA_CAMBIAR_DE_CAMPO) return;
+    }
+    this.montarElCampo(ahora);
+  }
+
+  /**
+   * **Lo que va con el campo, montado en el campo de ahora.**
+   *
+   * El circuito dibujado, el tráfico que lo vuela, la frecuencia que se oye,
+   * quien sale a buscarte, la declinación con la que se lee el rumbo y el
+   * nombre de la insignia. Todo eso se montaba una vez, en casa, y en el
+   * aeropuerto de llegada seguía siendo de casa: en Los Rodeos se oía el
+   * circuito de Gando con los aviones a ciento trece kilómetros, en la pista
+   * de hierba de la granja hablaba una torre que no existe, y en Pettirossi,
+   * saliendo de la granja, la frecuencia estaba muda.
+   *
+   * Un aeropuerto de verdad es su pista, su gente y su radio; cambiar de campo
+   * es cambiar de las tres cosas.
+   */
+  private montarElCampo(campo: CampoEnElMundo): void {
+    this.campoMontado = campo.id;
+    this.ponerCircuito();
+    this.ponerTrafico();
+    /*
+     * Otra frecuencia, otra gente: con las matrículas de allí. **Y lo que la
+     * de aquí dejó esperando turno en la boca se va con ella**: se oía ya en
+     * el campo nuevo, con la pista del viejo —llegando a Gando, un «cleared to
+     * land» a un avión de Los Rodeos por la 12—, porque la frase se monta con
+     * su pista al decirse la llamada y no al sonar. Ver `esDeLaFrecuencia`.
+     */
+    BOCA.retirar(esDeLaFrecuencia);
+    this.radio.reiniciar(campo.escenario.aerodrome?.id);
+    this.cambiarDeSigueme(campo);
+    this.hud.setMagneticVariation(campo.escenario.magneticVariation);
+    this.updateBadge();
+    this.laAproximacion.otroCampo();
+    // La distancia al umbral acaba de saltar de una pista a otra: el
+    // fotograma que viene no puede leer eso como «alejándose».
+    this.antesAlUmbral = Infinity;
+    // Y de vuelta en casa, los aros empiezan por el que queda delante.
+    if (campo.esCasa) this.runwayGuide.reset(this.flight.state.position);
+  }
+
+  /** El campo montado, que es el de casa hasta que se sale de él. */
+  private elCampoMontado(): CampoEnElMundo {
+    return this.elCampo(this.campoMontado ?? this.scenario.id);
+  }
+
+  /**
+   * Coche o bici, según el campo.
+   *
+   * Se decidía una vez con el campo de salida, así que en la granja te
+   * recogía el coche con su baliza y en el aeropuerto una bicicleta. Quien
+   * sale a buscarte es de allí.
+   */
+  private cambiarDeSigueme(campo: CampoEnElMundo): void {
+    const enBici = campo.escenario.aerodrome?.privado === true;
+    if (this.sigueme.enBici === enBici) return;
+    const donde = this.sigueme.grupo.parent;
+    donde?.remove(this.sigueme.grupo);
+    this.sigueme = new Sigueme(enBici);
+    donde?.add(this.sigueme.grupo);
   }
 
   /**
@@ -7663,16 +8421,48 @@ export class Game {
    * que es lo que pasa en cualquier aeropuerto. Ver `toggleEngine`.
    */
   private repostar(): void {
-    const campos = this.camposDelVuelo();
-    const salida = this.campoPorId(this.salidaId) ?? campos[0]!;
-    const destino = this.campoPorId(this.destinoId) ?? salida;
-    this.combustible = cargaParaElPlan(
-      this.aircraft,
-      tramosDelPlan(salida, destino, campos),
-    );
-    this.campoDelRepostaje = salida.id;
+    this.repostarPara(this.salidaId, this.destinoId);
+  }
+
+  /** Llenar para el tramo de `salidaId` a `destinoId`. Ver `repostar`. */
+  private repostarPara(salidaId: string, destinoId: string): void {
+    this.combustible = this.cargaDelTramo(salidaId, destinoId);
+    this.tramoDelRepostaje = this.tramoParaCargar(salidaId, destinoId).clave;
     this.quemaDeAhora = 0;
     this.avisadoDeLaReserva = false;
+  }
+
+  /**
+   * Llenar para ese tramo **si no está ya lleno para él**. Ver `hayQueLlenar`.
+   */
+  private llenarSiHaceFalta(salidaId: string, destinoId: string): void {
+    if (
+      hayQueLlenar(
+        { tramo: this.tramoDelRepostaje, kilos: this.combustible },
+        this.tramoParaCargar(salidaId, destinoId).clave,
+        this.cargaDelTramo(salidaId, destinoId),
+      )
+    )
+      this.repostarPara(salidaId, destinoId);
+  }
+
+  /** Lo que se carga para un tramo: ida, alternativo, maniobra y reserva. */
+  private cargaDelTramo(salidaId: string, destinoId: string): number {
+    const { salida, destino } = this.tramoParaCargar(salidaId, destinoId);
+    return cargaParaElPlan(
+      this.aircraft,
+      tramosDelPlan(salida, destino, this.camposDelVuelo()),
+    );
+  }
+
+  /** Los dos campos de un tramo, como los carga el depósito, y su nombre. */
+  private tramoParaCargar(
+    salidaId: string,
+    destinoId: string,
+  ): { salida: CampoConNombre; destino: CampoConNombre; clave: string } {
+    const salida = this.campoPorId(salidaId) ?? this.camposDelVuelo()[0]!;
+    const destino = this.campoPorId(destinoId) ?? salida;
+    return { salida, destino, clave: `${salida.id}>${destino.id}` };
   }
 
   private avisarDeLaTormenta(): void {
@@ -8072,13 +8862,139 @@ export class Game {
     );
   }
 
-  private distanceToRunway(): number {
-    const [tx, tz] = this.enLaPista(this.scenario.runway.length * 0.5);
-    return Math.hypot(
-      tx - this.flight.state.position.x,
-      tz - this.flight.state.position.z,
+  /**
+   * Lo mismo, pero **donde se puede tocar**: del umbral de aterrizaje en
+   * adelante, sin margen por delante.
+   *
+   * Contaba desde la barra pero con los trescientos metros de margen de
+   * `sobreLaPista`, así que en la 01 de Fuerteventura el «ya podés tocar»
+   * seguía saliendo sobre los últimos trescientos metros de flechas —el único
+   * sitio de la pista donde no se puede—. Ver `sobreDondeSeToca`. El aviso de
+   * terreno sigue mirando la pista entera con su margen, que sobre asfalto no
+   * hay terreno que avisar.
+   */
+  private sobreLaZonaDeToma(): boolean {
+    const r = this.laPistaDeAhora();
+    const { along, across } = enEjesDePista(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+      r.x,
+      r.z,
+      r.heading,
+    );
+    return (
+      Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
+      sobreDondeSeToca(r, along, (this.flight.state.heading * 180) / Math.PI)
     );
   }
+
+  /**
+   * Si las ruedas están en la pista **antes de su umbral de aterrizaje**, en
+   * la zona de las flechas. Es lo que convierte una toma en «corta». Ver
+   * `Aterrizaje`.
+   */
+  private enLaZonaDeLasFlechas(): boolean {
+    const r = this.laPistaDeAhora();
+    const { along, across } = enEjesDePista(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+      r.x,
+      r.z,
+      r.heading,
+    );
+    return (
+      Math.abs(across) < r.width &&
+      antesDelUmbralDeToma(
+        r,
+        along,
+        (this.flight.state.heading * 180) / Math.PI,
+      )
+    );
+  }
+
+  /**
+   * Cuánto queda hasta el umbral en uso **del campo de ahora**, m.
+   *
+   * Medía hasta el de casa. Volando de Gran Canaria a Los Rodeos eso son
+   * ciento trece kilómetros en plena final, y con ellos el aviso de terreno
+   * creía que se iba muy por debajo de la senda —la mitad de tres grados a
+   * esa distancia son casi tres mil metros— y sonaba «terrain, pull up» en
+   * una final perfecta. Y el detector de frustradas, que solo se arma en
+   * final, no se armaba nunca: renunciar allí no se reconocía.
+   */
+  private distanceToRunway(): number {
+    const p = this.flight.state.position;
+    return distanciaAlUmbral(this.elCampo(), p.x, p.z);
+  }
+
+  /** La cota del centro de la pista de un campo, m. */
+  private cotaDelCampo(campo: CampoEnElMundo): number {
+    if (campo.esCasa) return this.terrain.runwayElevation;
+    const v = this.vecinos.find((w) => w.campo.id === campo.id);
+    return v ? v.mundo.terreno.runwayElevation : this.terrain.runwayElevation;
+  }
+
+  /**
+   * El techo de nubes sobre un campo, m, o `null` si no hay o si la capa
+   * queda por debajo de su pista.
+   *
+   * La capa es una sola y está a una altura del mundo: la del parte, medida
+   * sobre el aeródromo que lo dio, que es el de casa. Sobre otro campo el
+   * techo es lo que quede entre esa capa y su pista, y si la pista está por
+   * encima —Los Rodeos a seiscientos metros con la capa de Gando a
+   * trescientos— se llega por encima de las nubes y la pista se ve.
+   */
+  private techoSobre(campo: CampoEnElMundo): number | null {
+    if (this.techoDeNubes === null) return null;
+    if (campo.esCasa) return this.techoDeNubes;
+    const sobre =
+      this.terrain.runwayElevation + this.techoDeNubes - this.cotaDelCampo(campo);
+    return sobre > 0 ? sobre : null;
+  }
+
+  /**
+   * Las luces de aproximación de un campo, si las tiene. Las de casa son
+   * `aproximacion`; las de cada vecino van con él.
+   */
+  private lucesDe(campo: CampoEnElMundo): Aproximacion | null {
+    if (campo.esCasa) return this.aproximacion;
+    return this.vecinos.find((v) => v.campo.id === campo.id)?.aproximacion ?? null;
+  }
+
+  /** Las luces de aproximación del campo de ahora, para los bancos. */
+  get papiDeAhora(): Aproximacion | null {
+    return this.lucesDe(this.elCampo());
+  }
+
+  /**
+   * El campo de ahora, tal y como lo mira la aproximación. Ver
+   * `CampoDeLaAproximacion`.
+   */
+  private campoParaLaAproximacion(): CampoDeLaAproximacion {
+    const campo = this.elCampo();
+    const p = this.flight.state.position;
+    const luces = this.lucesDe(campo);
+    return {
+      pista: campo.pista,
+      cota: this.cotaDePistaEn(campo, p.x, p.z),
+      alUmbral: distanciaAlUmbral(campo, p.x, p.z),
+      // Las luces se cuentan desde el umbral de aterrizar, que con el umbral
+      // desplazado no es la punta. Ver `crearAproximacion`.
+      senda:
+        luces && this.tienePapi.get(luces)
+          ? enLaPistaDe(
+              campo,
+              hastaElUmbralDeToma(campo.pista) - luces.papiAdentro,
+            )
+          : null,
+    };
+  }
+
+  /**
+   * Si unas luces de aproximación llevan PAPI. Se mira una vez al montarlas:
+   * buscarlo por nombre en cada fotograma es recorrer el grupo entero.
+   */
+  private readonly tienePapi = new WeakMap<Aproximacion, boolean>();
 
   /**
    * La asistencia de dirección en tierra.
@@ -8175,7 +9091,9 @@ export class Game {
       x: s.position.x,
       z: s.position.z,
       rumbo: MathUtils.radToDeg(s.heading),
-      sobreElCampo: s.position.y - this.terrain.runwayElevation,
+      // Sobre el campo que se tiene debajo: Los Rodeos está seiscientos
+      // metros por encima de Gando. Ver `cotaDeLaPistaAqui`.
+      sobreElCampo: s.position.y - this.cotaDeLaPistaAqui(),
       /*
        * Cualquiera de las cuatro bocas. Esto es lo que menos urge de todo lo
        * que suena: una autorización no puede esperar y el paisaje sí.
@@ -8234,6 +9152,7 @@ export class Game {
   private avanzarPlan(dt: number): void {
     if (!this.plan) return;
     this.mudarElPlanSiCambiaDeCampo();
+    const faseDeAntes = this.vistaActual?.fase ?? "";
     const suelo =
       this.flight.state.position.y -
       this.terrain.sampleHeight(
@@ -8247,6 +9166,14 @@ export class Game {
       dt,
     );
     this.vistaActual = vista;
+    /*
+     * **La pista acaba de pasar a ser tuya**: antes de que la torre te la dé
+     * —la lámpara verde y el «cleared to land» se dicen más abajo, en este
+     * mismo paso— se le quita a quien la tuviera. Ver
+     * `quitarleLaPistaALosDemas`.
+     */
+    if (PISTA_TUYA.has(vista.fase) && !PISTA_TUYA.has(faseDeAntes))
+      this.quitarleLaPistaALosDemas();
 
     /*
      * **Una orden que espera a que hagas algo no puede perderse por el camino.**
@@ -8270,8 +9197,12 @@ export class Game {
     // La lámpara de la torre solo tiene sentido en tierra y antes de despegar:
     // es lo que se mira desde el punto de espera. En el aire no hay lámpara que
     // mirar, y dejarla encendida decía algo que ya no era verdad.
+    // Y en tierra de verdad: una avioneta ligera se despega del suelo todavía
+    // «alineando», y la verde en el aire es la de «podés aterrizar» — la
+    // torre la decía nada más rotar.
     const enTierraEsperando =
       this.leccion.torre &&
+      this.flight.state.onGround &&
       (vista.fase === "esperando" ||
         vista.fase === "autorizado" ||
         vista.fase === "alineando");
@@ -8355,7 +9286,9 @@ export class Game {
         vista.fase === "alineando" &&
         this.flight.state.airspeed < ALINEANDO_DE_VERDAD
       ) {
-        const cabecera = cabeceraEnUso(this.scenario);
+        // La de la pista en la que se está alineando, no la de casa: saliendo
+        // de vuelta desde Los Rodeos destellaba «03L».
+        const cabecera = cabeceraEnUso(this.elCampo().escenario);
         if (cabecera) this.hud.destellar(cabecera);
       }
 
@@ -8395,7 +9328,13 @@ export class Game {
          * número de pista, y no sonó nunca: al entrar en «alineando» el avión
          * ya viene rodando desde la calle. Medido en Pettirossi.
          */
-        if (vista.fase === "final") this.porRadio("cleared to land");
+        // Y en un campo sin torre no autoriza nadie: en la pista de hierba
+        // de la granja no hay a quién oír.
+        if (
+          vista.fase === "final" &&
+          !this.elCampo().escenario.aerodrome?.privado
+        )
+          this.porRadio("cleared to land");
         if (vista.fase === "arrancando" || vista.fase === "rodando")
           this.autorizarLaRuta();
       }
@@ -8423,6 +9362,7 @@ export class Game {
       ) {
         this.apuntar({ despegues: this.cuaderno.despegues + 1 });
         this.apuntarElSitio();
+        this.despegoDe = this.elCampo().id;
       }
       if (
         antes === "abandonando" &&
@@ -8634,10 +9574,21 @@ export class Game {
     if (vista.saltoLaLuz) this.sufrirPercance("sinpermiso");
   }
 
+  /**
+   * A cuánto y hacia dónde señala la aguja, para los bancos: en los peldaños
+   * de abajo la tarjeta no escribe la distancia, y lo que se quiere medir es
+   * a qué apunta.
+   */
+  agujaParaBanco: { metros: number; relativo: number } | null = null;
+
   private updateHomeIndicator(): void {
-    const [thresholdX, thresholdZ] = this.enLaPista(
-      this.scenario.runway.length * 0.5,
-    );
+    /*
+     * **El umbral de la pista que se tiene debajo**, no el de casa. En la
+     * final a Los Rodeos, y rodando después, la aguja señalaba la pista de
+     * Gando a ciento trece kilómetros —hacia atrás— justo cuando lo que hay
+     * que encontrar es la pista de delante o la calle de salida.
+     */
+    const campo = this.elCampo();
 
     /*
      * Con misión en curso, la aguja señala el objetivo; sin ella, la pista.
@@ -8687,25 +9638,64 @@ export class Game {
      * Tenerife North», a la espalda, justo cuando hay que mirar el eje. Es lo
      * mismo que ya se hizo con la lección de aterrizar; ver `elDestino`.
      */
+    /*
+     * **Y en la final del propio destino, el destino sigue siendo él.** Ahí
+     * la pista de delante *es* el destino: se señala su umbral, pero la
+     * tarjeta no deja de decir a dónde se va. Sin esto, cada vez que la fase
+     * bailaba entre «en vuelo» y «final» la tarjeta cambiaba de nombre y el
+     * aviso del destino salía otra vez: cuatro veces en tres segundos.
+     */
+    const aDonde = this.elDestino();
+    /*
+     * **Y volando sin otro destino, la pista del tramo, no la más cercana.**
+     *
+     * Sin destino es una vuelta al campo: el de salida. Y decidir volverse a
+     * medio camino es eso —la tarjeta pasa por la vuelta al campo—, pero la
+     * aguja señalaba el umbral del campo **más cercano**, y pasada la mitad
+     * del camino el más cercano es la otra isla: de Gran Canaria hacia Los
+     * Rodeos, volviéndose al sesenta por ciento, señalaba Los Rodeos a
+     * cuarenta y cinco kilómetros en vez de Gando a sesenta y ocho. En casa
+     * no se notaba, porque ahí el más cercano es casa. Volverse tiene que
+     * ser lo más fácil del juego —renunciar es ganar—, y una aguja que señala
+     * al sitio del que te estás volviendo lo hace lo más difícil.
+     *
+     * En tierra y en final sigue mandando la pista que se tiene debajo o
+     * delante, que es la que hay que encontrar.
+     */
+    const volandoAlCampo =
+      aDonde === null &&
+      !this.flight.state.onGround &&
+      this.faseDeAhora !== "final";
+    const [thresholdX, thresholdZ] = umbralEnUso(
+      volandoAlCampo ? this.elCampo(this.destinoId) : campo,
+    );
+    const llegandoAlDestino = aDonde !== null && aDonde.id === campo.id;
     const destino =
       !this.flight.state.onGround &&
       !target &&
       !aLaRaya &&
-      this.faseDeAhora !== "final"
-        ? this.elDestino()
+      (this.faseDeAhora !== "final" || llegandoAlDestino)
+        ? aDonde
         : null;
+    // Y del destino que es el campo de ahora se señala el umbral en uso, que
+    // es por donde se entra: seguir la aguja deja alineado.
+    const alDestino =
+      destino && destino.id !== campo.id
+        ? destino
+        : { x: thresholdX, z: thresholdZ };
 
     const dx =
-      (aLaRaya?.[0] ?? target?.x ?? destino?.x ?? thresholdX) -
+      (aLaRaya?.[0] ?? target?.x ?? alDestino.x) -
       this.flight.state.position.x;
     const dz =
-      (aLaRaya?.[1] ?? target?.z ?? destino?.z ?? thresholdZ) -
+      (aLaRaya?.[1] ?? target?.z ?? alDestino.z) -
       this.flight.state.position.z;
     const bearing = Math.atan2(dx, -dz);
 
     let relative = bearing - this.flight.state.heading;
     while (relative > Math.PI) relative -= Math.PI * 2;
     while (relative < -Math.PI) relative += Math.PI * 2;
+    this.agujaParaBanco = { metros: Math.hypot(dx, dz), relativo: relative };
 
     this.hud.setHome(
       relative,
@@ -9571,10 +10561,7 @@ export class Game {
      * allí desde Gran Canaria se estaba siempre «a seiscientos metros de la
      * pista», y la tarjeta de «ya podés tocar» no salía nunca.
      */
-    const v = this.elVecinoDeAhora();
-    if (!v) return this.terrain.cotaDeLaPista(x, z);
-    const d = v.mundo.desplazamiento;
-    return v.mundo.terreno.cotaDeLaPista(x - d.x, z - d.z);
+    return this.cotaDePistaEn(this.elCampo(), x, z);
   }
 
   /** La misma vuelta de cámara, para que el banco pueda pedir una vista. */
@@ -9665,7 +10652,9 @@ export class Game {
      * lección de siempre en este proyecto: se arregla donde se mira y no donde
      * también se mira.
      */
-    const campo = campoDe(this.scenario);
+    // La pista que se tiene debajo, no la de casa: en El Hierro, llegando de
+    // La Palma, se podía pasar al JAZ 90, que ahí no cabe.
+    const campo = campoDe(this.elCampo().escenario);
     const quepan = AIRCRAFT.filter(
       (a) => a === this.aircraft || cabeEn(a, campo).cabe,
     );
@@ -9997,8 +10986,11 @@ export class Game {
   }
 
   private updateBadge(): void {
+    // El campo donde se está, que en el aeropuerto de llegada no es el de
+    // salida: con el de salida la insignia decía un sitio que no era.
+    const campo = this.elCampoMontado().escenario;
     this.hud.setBadge(
-      `${this.aircraft.name} · ${t(this.scenario.nameKey as never)} · ${this.tier.name}`,
+      `${this.aircraft.name} · ${t(campo.nameKey as never)} · ${this.tier.name}`,
     );
     // Y con la insignia va la escala del pictograma de velocidad, que es de
     // la aeronave y cambia con ella. Ver `Hud.setAeronave`.
@@ -10017,7 +11009,7 @@ export class Game {
      * Y cómo habla la torre de este campo, que es cosa del sitio y no del
      * idioma del juego: en Canarias no se vosea. Ver `i18n/habla.ts`.
      */
-    this.hud.setHabla(hablaDe(this.scenario.aerodrome?.id));
+    this.hud.setHabla(hablaDe(campo.aerodrome?.id));
     this.ponerElDibujoDelMotor();
   }
 

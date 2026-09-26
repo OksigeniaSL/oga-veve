@@ -45,6 +45,9 @@ import { manga as dibujarManga } from "./manga";
 import { leerBitacora, type Vuelo } from "../flight/bitacora";
 import { plano } from "./hangar";
 import { SCENARIOS } from "../world/scenarios";
+import type { Aerodrome } from "../world/aerodrome";
+import { desplazarAerodromo } from "../world/aerodromo-desplazado";
+import { dondeCae } from "../world/entre-aerodromos";
 
 /**
  * Alto del lienzo de la manga en el cuaderno.
@@ -87,7 +90,7 @@ function tarjetaDeVuelo(v: Vuelo): string {
   const cuando = new Date(v.fecha);
   return `
     <li class="bitacora__vuelo" title="${cuando.toLocaleDateString()}">
-      <div class="bitacora__plano">${plano(esc, 0, v.traza)}</div>
+      <div class="bitacora__plano">${plano(esc, 0, v.traza, losOtrosCampos(v))}</div>
       <div class="bitacora__pie">
         <span class="bitacora__duracion">${duracionDe(v.segundos)}</span>
         ${
@@ -99,6 +102,29 @@ function tarjetaDeVuelo(v: Vuelo): string {
         }
       </div>
     </li>`;
+}
+
+/**
+ * Los aeródromos de los otros campos del vuelo, corridos hasta donde caen
+ * vistos desde el de casa: la misma cuenta que usa el juego para ponerlos en
+ * el mundo. Ver `MundoVecino`.
+ */
+export function losOtrosCampos(v: Vuelo): Aerodrome[] {
+  const casa = SCENARIOS.find((e) => e.id === v.escenario)?.aerodrome;
+  if (!casa) return [];
+  const ids = new Set(
+    [v.salida, v.llegada].filter(
+      (id): id is string => !!id && id !== v.escenario,
+    ),
+  );
+  const otros: Aerodrome[] = [];
+  for (const id of ids) {
+    const suyo = SCENARIOS.find((e) => e.id === id)?.aerodrome;
+    if (!suyo) continue;
+    const d = dondeCae(casa.origin, suyo.origin);
+    otros.push(desplazarAerodromo(suyo, d.x, d.z));
+  }
+  return otros;
 }
 
 export class CuadernoScreen {

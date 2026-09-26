@@ -1754,10 +1754,23 @@ function luces(
    * que ve un piloto desde su puesto: verde por delante quiere decir pista, rojo
    * quiere decir que ahí se acaba.
    */
+  /*
+   * **Y las verdes, donde se aterriza.** Con el umbral desplazado, la fila
+   * verde va en la barra blanca y no en la punta del asfalto: es la que dice
+   * desde el aire «aquí empieza la pista para tocar». Las rojas siguen en la
+   * punta de enfrente, que es donde se acaba el asfalto. Ver
+   * `umbral-desplazado.ts`.
+   */
+  const haciaB = Math.sign(dCabeceraB - dCabeceraA) || 1;
+  const desplazadoDe = (u: Umbral): number =>
+    Math.max(0, Math.min(u.displacedM ?? 0, largo / 2));
+  const verdeEn = seSalePorA
+    ? dCabeceraA + haciaB * desplazadoDe(a)
+    : dCabeceraB - haciaB * desplazadoDe(b);
   const verdes: [number, number, number][] = [];
   const rojas: [number, number, number][] = [];
   for (const [extremo, destino] of [
-    [seSalePorA ? dCabeceraA : dCabeceraB, verdes],
+    [verdeEn, verdes],
     [finRojo, rojas],
   ] as const) {
     const p = sobreElEje(pista.centerline, extremo);
@@ -2356,6 +2369,57 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     if (geo) piezas.push(geo);
   };
 
+  /**
+   * Una figura de pintura —una flecha, una punta de flecha— puesta a `d`
+   * metros del umbral A y `lado` del eje, **apuntando hacia B** con `signo`
+   * uno y hacia A con menos uno. `puntos` va en metros de la figura: el
+   * primero a lo largo de hacia donde apunta, el segundo de lado.
+   */
+  const figura = (
+    d: number,
+    lado: number,
+    puntos: readonly Punto[],
+    signo: number,
+  ) => {
+    const p = sobreElEje(
+      pista.centerline,
+      alRevés ? desdeElUmbral - d : desdeElUmbral + d,
+    );
+    if (!p) return;
+    const [ejeX, ejeY, dirX, dirY] = p;
+    const sentido = alRevés ? -1 : 1;
+    const ux = dirX * sentido;
+    const uy = dirY * sentido;
+    const px = -uy;
+    const py = ux;
+    const cx = ejeX + px * lado;
+    const cy = ejeY + py * lado;
+    const contorno: Punto[] = puntos.map(([s, t]) => [
+      cx + ux * s * signo + px * t,
+      cy + uy * s * signo + py * t,
+    ]);
+    const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
+    if (geo) piezas.push(geo);
+  };
+
+  /*
+   * **Dónde empieza la pista para aterrizar en cada punta.**
+   *
+   * Hay cabeceras con el umbral desplazado: el asfalto de antes es pista para
+   * rodar y despegar, pero no para tocar. En la 01 de Fuerteventura son mil
+   * metros; en la 19, cuatrocientos sesenta. Lo de «aterrizar» —las teclas de
+   * piano, el número, el punto de toma y la zona de toma— se cuenta desde el
+   * umbral de aterrizaje, y el trozo de antes se pinta como se pinta de
+   * verdad: flechas por el eje hacia el umbral y una barra blanca de lado a
+   * lado donde empieza. Sin dato, cero, y todo como siempre. Ver
+   * `umbral-desplazado.ts`.
+   */
+  const dA = Math.max(0, Math.min(a.displacedM ?? 0, largo / 2));
+  const dB = Math.max(0, Math.min(b.displacedM ?? 0, largo / 2));
+  /** Dónde se aterriza por A y por B, en metros desde el umbral A. */
+  const tomaA = dA;
+  const tomaB = largo - dB;
+
   // ── Las marcas de una pista, que no son las de una carretera ──────────
   //
   // Con solo el eje discontinuo esto parecía una comarcal. Lo que hace que se
@@ -2396,8 +2460,47 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   }
 
   // Eje discontinuo: trazo de 30 m y hueco de 20, que es la proporción real.
-  // Con hueco de 30 parecía la línea de una carretera.
-  for (let d = 190; d < largo - 190; d += 50) raya(d, 0, 30, 0.9);
+  // Con hueco de 30 parecía la línea de una carretera. Entre los umbrales de
+  // aterrizaje: antes de un umbral desplazado, el eje lo llevan las flechas.
+  for (let d = tomaA + 190; d < tomaB - 190; d += 50) raya(d, 0, 30, 0.9);
+
+  /*
+   * **La zona desplazada: flechas y barra.**
+   *
+   * Flechas blancas por el eje, cada sesenta metros y apuntando al umbral;
+   * una fila de puntas de flecha de lado a lado justo antes; y la barra
+   * blanca que cruza la pista donde empieza la parte en la que se toca. Es lo
+   * que se ve desde la ventanilla en una cabecera así, y lo que dice sin una
+   * palabra «por aquí se rueda, se toca pasada la barra».
+   */
+  const FLECHA: Punto[] = [
+    [-15, -0.45],
+    [5, -0.45],
+    [5, -2.25],
+    [15, 0],
+    [5, 2.25],
+    [5, 0.45],
+    [-15, 0.45],
+  ];
+  const PUNTA: Punto[] = [
+    [-4, -3.5],
+    [4, 0],
+    [-4, 3.5],
+    [-1.6, 0],
+  ];
+  for (const [desplazado, desde, signo] of [
+    [dA, 0, 1],
+    [dB, largo, -1],
+  ] as const) {
+    if (desplazado <= 0) continue;
+    const umbralDeToma = desde + signo * desplazado;
+    for (let c = 40; c <= desplazado - 40; c += 60)
+      figura(desde + signo * c, 0, FLECHA, signo);
+    if (desplazado > 30)
+      for (const lado of [-0.36, -0.12, 0.12, 0.36])
+        figura(umbralDeToma - signo * 15, lado * ancho, PUNTA, signo);
+    raya(umbralDeToma, 0, 3, ancho - 3);
+  }
 
   // Teclas de piano, y **el número de barras no es decorativo**: dice el
   // ancho de la pista de un vistazo. Son pares, con anchura y separación
@@ -2411,7 +2514,11 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   // 30. Es lo que sale de repartir con paso fijo, y por eso contarlas dice el
   // ancho.
   const barras = Math.max(4, 2 * Math.round(ancho / (2 * PASO * 1.04)));
-  for (const d of [BARRA * 9, largo - BARRA * 9]) {
+  // En el umbral de aterrizaje, y pasada la barra si lo hay desplazado.
+  for (const d of [
+    tomaA + BARRA * 9 + (dA > 0 ? 4 : 0),
+    tomaB - BARRA * 9 - (dB > 0 ? 4 : 0),
+  ]) {
     for (let k = 0; k < barras / 2; k++) {
       const lado = HUECO_CENTRAL / 2 + BARRA / 2 + k * PASO;
       raya(d, -lado, 30, BARRA);
@@ -2422,8 +2529,10 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   // Punto de toma: los dos rectángulos gordos a cuatrocientos metros del
   // umbral. Son la referencia visual de dónde apuntar en la aproximación, y
   // en un aeropuerto grande se ven desde muy lejos.
-  for (const desde of [0, largo]) {
-    const sentido = desde === 0 ? 1 : -1;
+  for (const [desde, sentido] of [
+    [tomaA, 1],
+    [tomaB, -1],
+  ] as const) {
     for (const lado of [-1, 1]) {
       raya(desde + sentido * 400, lado * (ancho * 0.24), 50, 7);
     }
@@ -2431,8 +2540,10 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
 
   // Zona de toma: parejas de barras cada ciento cincuenta metros a partir de
   // los ciento cincuenta. Dicen cuánta pista queda gastada mientras se rueda.
-  for (const desde of [0, largo]) {
-    const sentido = desde === 0 ? 1 : -1;
+  for (const [desde, sentido] of [
+    [tomaA, 1],
+    [tomaB, -1],
+  ] as const) {
     for (const d of [150, 550, 700]) {
       for (const lado of [-1, 1]) {
         raya(desde + sentido * d, lado * (ancho * 0.24), 22.5, 3);
@@ -2461,9 +2572,9 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   //
   // La orientación va **horneada en la geometría** y no en la malla, por lo
   // mismo que las rayas: aquí se trabaja en coordenadas del mundo.
-  for (const [nombre, d] of [
-    [nombreA, 100],
-    [nombreB, largo - 100],
+  for (const [nombre, d, giro] of [
+    [nombreA, tomaA + 100, 0],
+    [nombreB, tomaB - 100, Math.PI],
   ] as const) {
     const textura = numberTexture(nombre);
     const geo = new PlaneGeometry(ancho * 0.5, ancho * 0.62);
@@ -2495,7 +2606,7 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     const sentido = alRevés ? -1 : 1;
     const dirX = p[2] * sentido;
     const dirY = p[3] * sentido;
-    geo.rotateY(Math.atan2(-dirX, dirY) + (d > largo / 2 ? Math.PI : 0));
+    geo.rotateY(Math.atan2(-dirX, dirY) + giro);
     const cx = p[0];
     const cy = p[1];
     geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);

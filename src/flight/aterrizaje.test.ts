@@ -249,3 +249,49 @@ describe("y con qué tren se tocó", () => {
     expect(w.trenAlTocar).toBe(true);
   });
 });
+
+describe("tocar antes del umbral desplazado", () => {
+  /*
+   * En la 01 de Fuerteventura el umbral de aterrizaje está mil metros pista
+   * adentro. El trozo de antes es pista —se rueda y se despega por él— pero no
+   * se toca en él, y tocar ahí se daba por un aterrizaje bueno.
+   */
+  function tocar(antesDelUmbral: boolean, alTocar = VREF): string[] {
+    const w = new LandingWatcher();
+    const dichos: string[] = [];
+    const paso = 0.5;
+    for (let i = 0; i < 40; i++)
+      w.update(false, VREF, 0, false, false, VREF, paso);
+    const v = w.update(
+      true,
+      alTocar,
+      0.4,
+      false,
+      true,
+      VREF,
+      paso,
+      Infinity,
+      true,
+      antesDelUmbral,
+    );
+    if (v) dichos.push(v);
+    // Y rodando ya ha salido de la zona de las flechas: no cambia nada.
+    for (let i = 0; i < 6; i++) {
+      const r = w.update(true, 30 - i * 4, 0, false, true, VREF, paso);
+      if (r) dichos.push(r);
+    }
+    return dichos;
+  }
+
+  it("en la zona de las flechas se dice que fue corto", () => {
+    expect(tocar(true)).toEqual(["corto"]);
+  });
+
+  it("y pasada la barra, lo de siempre", () => {
+    expect(tocar(false)).toEqual(["suave"]);
+  });
+
+  it("y el sitio va antes que la velocidad, como con «fuera»", () => {
+    expect(tocar(true, VREF * 1.6)).toEqual(["corto"]);
+  });
+});

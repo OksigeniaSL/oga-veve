@@ -111,6 +111,33 @@ describe("la bitácora", () => {
     expect(leerBitacora()).toEqual([]);
   });
 
+  it("guarda de dónde se salió y dónde se acabó, si no es casa", () => {
+    /*
+     * Volar de Gran Canaria a Los Rodeos se apuntaba como un vuelo de Gran
+     * Canaria y nada más, y su plano acababa en el mar: el mundo de la traza
+     * es el de casa, pero el vuelo es de allí a allá.
+     */
+    apuntarVuelo({
+      ...vuelo(1),
+      escenario: "gran-canaria",
+      llegada: "tenerife-norte",
+    });
+    const v = leerBitacora()[0]!;
+    expect(v.escenario).toBe("gran-canaria");
+    expect(v.llegada).toBe("tenerife-norte");
+    expect(v.salida).toBeUndefined();
+  });
+
+  it("y los vuelos de antes, sin esos datos, siguen valiendo", () => {
+    apuntarVuelo(vuelo(1));
+    expect(leerBitacora()).toHaveLength(1);
+  });
+
+  it("pero una llegada que no es un nombre es basura", () => {
+    apuntarVuelo({ ...vuelo(1), llegada: 7 as unknown as string });
+    expect(leerBitacora()).toEqual([]);
+  });
+
   it("suma las horas de todo lo guardado", () => {
     apuntarVuelo(vuelo(1));
     apuntarVuelo(vuelo(2));

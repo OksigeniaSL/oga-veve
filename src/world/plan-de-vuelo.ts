@@ -50,6 +50,7 @@ import {
   type Tramo,
 } from "./rodaje";
 import { delante, enEjesDePista, puntoDePista, traves } from "./rumbo";
+import { hastaElUmbralDeToma } from "./umbral-desplazado";
 import {
   GUION,
   Vuelo,
@@ -270,7 +271,8 @@ const MAXIMO_ENGANCHE = 110;
 /**
  * Dónde se da por hecho que el avión ha dejado de correr al aterrizar, m.
  *
- * Mil metros pasado el umbral. El Pykasu para en bastante menos, pero lo que
+ * Mil metros pasado el umbral —el de aterrizar, que con el umbral desplazado
+ * no es la punta—. El Pykasu para en bastante menos, pero lo que
  * se busca con este número no es una toma concreta: es el sitio desde el que
  * se mide **cuánto se rueda hasta casa** al elegir el puesto.
  */
@@ -278,6 +280,69 @@ const TRAS_TOMAR_TIERRA = 1000;
 
 /** Metros que tiene que quedar por delante para poder tomar una salida. */
 const HUECO_PARA_GIRAR = 25;
+
+/**
+ * Lo más que puede volverse una salida contra el sentido del aterrizaje, en
+ * grados.
+ *
+ * Cien: una salida en ángulo recto vale —hay calles que salen a noventa y dos
+ * o noventa y tres grados según cómo esté dibujado el eje—, y una que obliga a
+ * dar media vuelta no. En Los Rodeos, aterrizando por la 12, la E2 sale a
+ * ciento setenta grados: se cogía porque ahorraba metros de calle, y el avión
+ * rodaba doscientos cuarenta metros pista adelante, daba media vuelta sobre el
+ * asfalto y deshacía doscientos hacia atrás, alejándose del coche que lo
+ * esperaba. Una salida rápida se toma hacia donde se va.
+ */
+const GIRO_MAXIMO_DE_UNA_SALIDA = 100;
+
+/** Cuánto de la calle se mira para saber hacia dónde sale, m. */
+const PRIMER_TRAMO_DE_CALLE = 40;
+
+/**
+ * Hacia dónde sale una calle de un nudo: el vector unitario desde el nudo
+ * hasta el punto de la calle a `PRIMER_TRAMO_DE_CALLE` metros, en coordenadas
+ * del fichero (la Y al norte).
+ */
+export function haciaDondeSale(
+  tramo: { readonly puntos: readonly Punto[] },
+  nudo: Punto,
+): readonly [number, number] | null {
+  const pts = tramo.puntos;
+  if (pts.length < 2) return null;
+  const alPrincipio =
+    Math.hypot(pts[0]![0] - nudo[0], pts[0]![1] - nudo[1]) <=
+    Math.hypot(
+      pts[pts.length - 1]![0] - nudo[0],
+      pts[pts.length - 1]![1] - nudo[1],
+    );
+  const orden = alPrincipio ? pts : [...pts].reverse();
+  let lejos = orden[orden.length - 1]!;
+  for (const q of orden) {
+    if (Math.hypot(q[0] - nudo[0], q[1] - nudo[1]) >= PRIMER_TRAMO_DE_CALLE) {
+      lejos = q;
+      break;
+    }
+  }
+  const dx = lejos[0] - nudo[0];
+  const dy = lejos[1] - nudo[1];
+  const l = Math.hypot(dx, dy);
+  return l < 1 ? null : [dx / l, dy / l];
+}
+
+/**
+ * Si una calle sale de la pista hacia donde se va rodando, o casi: no más de
+ * `GIRO_MAXIMO_DE_UNA_SALIDA` grados contra el rumbo de la carrera. El rumbo
+ * es verdadero, en grados; la dirección, en coordenadas del fichero.
+ */
+export function saleHaciaDelante(
+  direccion: readonly [number, number],
+  rumbo: number,
+): boolean {
+  const h = (rumbo * Math.PI) / 180;
+  // Hacia delante en el fichero es (sen h, cos h): la Y apunta al norte.
+  const coseno = direccion[0] * Math.sin(h) + direccion[1] * Math.cos(h);
+  return coseno >= Math.cos((GIRO_MAXIMO_DE_UNA_SALIDA * Math.PI) / 180);
+}
 
 /**
  * Lo estrecha que puede ser una pista y aun así admitir un back-taxi, m.
@@ -819,6 +884,7 @@ export class PlanDeVuelo {
       heading: number;
       width: number;
       length: number;
+      desplazado?: number;
     },
     private readonly cota: (x: number, z: number) => number,
     /*
@@ -859,6 +925,7 @@ export class PlanDeVuelo {
       heading: number;
       width: number;
       length: number;
+      desplazado?: number;
     },
   ): void {
     if (aero === this.aero) return;
@@ -966,7 +1033,13 @@ export class PlanDeVuelo {
     );
   }
 
-  /** Empieza el vuelo desde un puesto concreto, no del que toca por cercanía. */
+  /**
+   * Empieza el vuelo desde un puesto concreto, no del que toca por cercanía.
+   *
+   * Es también como empieza el tramo de vuelta: desde donde se apagó el
+   * motor en el campo de llegada, sin mover el avión. Ver `empezarOtroTramo`
+   * en `game.ts`.
+   */
   reiniciarDesde(puesto: Punto): boolean {
     const espera = this.esperaDeSalida();
     if (!espera) return false;
@@ -983,10 +1056,31 @@ export class PlanDeVuelo {
     if (!ruta) return false;
     this.puestoElegido = puesto;
     this.vuelo.reiniciar(false);
+    this.trazadaAlTocar = false;
     this.destino = "espera";
     this.ultimaPos = puesto;
     this.ponerRuta(ruta);
     return true;
+  }
+
+  /**
+   * **Un tramo nuevo desde donde está el avión, pase lo que pase.**
+   *
+   * Es `reiniciarDesde` con una salida para cuando no puede: el avión se
+   * apagó lejos de toda calle —más de lo que el buscador engancha— o el campo
+   * no tiene dónde esperar. `empezarOtroTramo` no miraba lo que devolvía, y
+   * con `false` **la máquina de fases no se reiniciaba**: seguía siendo el
+   * vuelo de antes, ya volado, y la carrera de despegue siguiente se deducía
+   * como un aterrizaje. Sin raya desde aquí se puede vivir —la recoge
+   * `rehacerSiHaceFalta` en cuanto el avión se mueve—; con el vuelo viejo
+   * abierto, no.
+   *
+   * Devuelve si la raya sale de donde está el avión.
+   */
+  otroTramoDesde(donde: Punto, desdeLaPista = false): boolean {
+    if (this.reiniciarDesde(donde)) return true;
+    this.reiniciar(desdeLaPista);
+    return false;
   }
 
   private puestoDeSalida(): { ref: string | null; xy: Punto } | null {
@@ -1174,9 +1268,11 @@ export class PlanDeVuelo {
      * metros pasado el umbral— hasta el puesto. No hace falta más precisión:
      * lo que se está comparando son puestos entre sí.
      */
+    // Contado desde el umbral de aterrizar, que con el umbral desplazado está
+    // pista adentro: se deja de correr mil metros después de donde se toca.
     const dondeSePara = puntoDePista(
       this.pista,
-      this.pista.length / 2 - TRAS_TOMAR_TIERRA,
+      hastaElUmbralDeToma(this.pista) - TRAS_TOMAR_TIERRA,
     );
     const traeDeVuelta: Punto = [dondeSePara[0], -dondeSePara[1]];
 
@@ -1661,15 +1757,23 @@ export class PlanDeVuelo {
      * quien dice de dónde se sale, que es de quien tenía que depender.
      */
     this.desdeLaPista = desdeLaPista;
+    /*
+     * Y el puesto elegido a mano se olvida: un vuelo nuevo sale del que toca.
+     * Si se quedara, `arranque` pondría el avión en el sitio de la vez
+     * anterior y la raya saldría del puesto de siempre. Ver `reiniciarDesde`.
+     */
+    this.puestoElegido = null;
     const puesto = desdeLaPista ? null : this.puestoDeSalida();
     const espera = this.esperaDeSalida();
     if (!puesto || !espera) {
       this.vuelo.reiniciar(true);
+      this.trazadaAlTocar = false;
       this.destino = null;
       this.ponerRuta(null);
       return false;
     }
     this.vuelo.reiniciar(false);
+    this.trazadaAlTocar = false;
     this.destino = "espera";
     this.ultimaPos = puesto.xy;
     this.ponerRuta(rodajeEntre(this.grafo, puesto.xy, espera));
@@ -2223,7 +2327,29 @@ export class PlanDeVuelo {
      * que es cuando la pregunta «¿por dónde vuelvo?» tiene una respuesta
      * buena.
      */
-    if (fase === "abandonando" && antes !== "abandonando") this.destino = null;
+    /*
+     * **Y una vez por aterrizaje, no una vez por frenada.**
+     *
+     * Esto rehacía la ruta cada vez que la fase **entraba** en «abandonando»,
+     * y se entra más de una vez: quien frena, rueda por la pista hacia su
+     * salida y se pasa de rápido vuelve a la carrera, y al frenar para girar
+     * vuelve a «abandonando». Ahí, a veinte metros de la boca, la salida que
+     * tenía delante ya no cuenta como «por delante con sitio para girar», así
+     * que ganaba la siguiente. En Fuerteventura, aterrizando por la 01, la
+     * raya saltó así de salida en salida hasta el final de la pista: 4,9 km
+     * rodados sobre 2,8 trazados. Frenar para tomar una salida la cambiaba por
+     * otra.
+     *
+     * Lo que había que rehacer era la ruta trazada en el aire, y esa se rehace
+     * una vez. Si después el avión se sale de ella, la recoge
+     * `rehacerSiHaceFalta`, que traza desde donde esté.
+     */
+    if (fase === "aterrizado" && (antes === "final" || antes === "en-vuelo"))
+      this.trazadaAlTocar = true;
+    if (fase === "abandonando" && this.trazadaAlTocar) {
+      this.trazadaAlTocar = false;
+      this.destino = null;
+    }
 
     if (quiere === this.destino) return;
     this.destino = quiere;
@@ -2638,6 +2764,15 @@ export class PlanDeVuelo {
    * lo que hacía antes.
    */
   private salidaPorDelante(): Punto | null {
+    /*
+     * Primero, solo entre las que salen hacia delante. Si no queda ninguna
+     * —un campo pequeño con una única salida hacia atrás—, entre todas: es
+     * mejor dar la vuelta que quedarse sin raya.
+     */
+    return this.salidaPorDelanteQue(true) ?? this.salidaPorDelanteQue(false);
+  }
+
+  private salidaPorDelanteQue(soloHaciaDelante: boolean): Punto | null {
     const x = this.ultimaPos[0];
     const z = -this.ultimaPos[1];
     const aqui = enEjesDePista(
@@ -2678,10 +2813,22 @@ export class PlanDeVuelo {
        * por delante» podía ser un trozo de la propia pista.
        */
       const i = this.grafo.nudos.indexOf(nudo);
-      const tieneCalle = (this.grafo.desde[i] ?? []).some(
-        (t) => !this.grafo.tramos[t]!.pista,
-      );
-      if (!tieneCalle) continue;
+      const calles = (this.grafo.desde[i] ?? [])
+        .map((t) => this.grafo.tramos[t]!)
+        .filter((t) => !t.pista);
+      if (!calles.length) continue;
+      /*
+       * **Y que salga hacia donde se va**, no hacia atrás. Ver
+       * `GIRO_MAXIMO_DE_UNA_SALIDA`.
+       */
+      if (
+        soloHaciaDelante &&
+        !calles.some((t) => {
+          const d = haciaDondeSale(t, nudo);
+          return d !== null && saleHaciaDelante(d, this.pista.heading);
+        })
+      )
+        continue;
       const adelante = along - aqui.along;
       /*
        * **Y por delante de verdad, con sitio para girar.**
@@ -2862,6 +3009,12 @@ export class PlanDeVuelo {
    * los cientos de fotogramas que dura abandonar la pista, no una vez.
    */
   private faseAnterior: Fase | null = null;
+  /**
+   * Si la ruta de vuelta todavía es la que se trazó al tocar, con el avión
+   * en el aire. Es la única que se rehace al dejar la pista; ver
+   * `alCambiarDeFase`.
+   */
+  private trazadaAlTocar = false;
   /** Segundos desde el último trazado. Ver `rehacerSiHaceFalta`. */
   private desdeElUltimoTrazado = 0;
 

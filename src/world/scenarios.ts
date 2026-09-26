@@ -156,6 +156,13 @@ export interface Scenario {
     heading: number;
     length: number;
     width: number;
+    /**
+     * Metros de asfalto antes del umbral de aterrizaje de la cabecera en uso,
+     * si lo tiene desplazado. Ver `world/umbral-desplazado.ts`.
+     */
+    desplazado?: number;
+    /** Y los de la cabecera de la otra punta, que solo hacen falta para pintarla. */
+    desplazadoEnfrente?: number;
   };
   /**
    * Declinación magnética del escenario: grados que hay que **sumar al rumbo
@@ -554,6 +561,14 @@ function pistaDe(aero: Aerodrome, despegaPor?: string): Scenario["runway"] {
       360,
     length: Math.round(Math.hypot(bx - ax, bz - az)),
     width: pista.widthM ?? 45,
+    /*
+     * **Y dónde empieza la pista para aterrizar**, que en algunas cabeceras
+     * no es la punta. Se entra por la de salida —es la misma punta por la que
+     * se aterriza con este rumbo— y la otra se guarda para pintarla. Sin el
+     * dato, cero: todo como siempre. Ver `umbral-desplazado.ts`.
+     */
+    desplazado: salida[1].displacedM ?? 0,
+    desplazadoEnfrente: llegada[1].displacedM ?? 0,
   };
 }
 

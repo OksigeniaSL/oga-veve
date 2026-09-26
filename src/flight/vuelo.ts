@@ -279,6 +279,29 @@ export const AÚN_ATERRIZANDO = 20;
 export const YA_ES_RODAJE = 16;
 
 /**
+ * Cuánto hay que subir en final para dejar de estar en final, m.
+ *
+ * «Final» pedía ir bajando, y con eso la fase se iba a «en vuelo» cada vez que
+ * el variómetro pasaba por cero: quien corrige la senda baja, se nivela, sube
+ * un pelo y vuelve a bajar, y cada nivelada era salir de final y volver. En
+ * una final recta a Los Rodeos, treinta y cinco segundos alternando —«estás
+ * en final», «estás volando»—, la autorización de aterrizar pedida en cada
+ * vuelta y un tramo de circuito cantado a cuatro kilómetros del umbral con el
+ * avión alineado. Y cada pieza que se tapaba por su lado —el aviso de
+ * terreno, el circuito— volvía a salir por otro, porque todas colgaban del
+ * mismo parpadeo.
+ *
+ * Para **entrar** en final hace falta ir bajando, como siempre. Para **salir**
+ * por arriba hace falta subir de verdad: veinte metros por encima de lo más
+ * bajo que se estuvo en esta final. Una corrección de senda —«subí suave»—
+ * son unos pocos metros, y el vaivén del variómetro de quien está cogiendo la
+ * senda, dos o tres; una frustrada pasa los veinte en cuatro o cinco
+ * segundos. Salir por los lados —desalinearse, pasar del centro de la pista,
+ * subir por encima de los trescientos— sigue siendo inmediato.
+ */
+const SUBIDA_QUE_SACA_DE_FINAL = 20;
+
+/**
  * Cuánto tiene que sostenerse una fase nueva para sustituir a la vieja, s.
  *
  * Es lo que permite deducir la fase cada fotograma sin que parpadee. Sin esto,
@@ -328,6 +351,13 @@ export class Vuelo {
   private despego = false;
   /** Lo más alto que se ha estado, m sobre el suelo. */
   private techo = 0;
+  /**
+   * Cuánto se ha subido en esta final sobre lo más bajo que se estuvo, m.
+   * Sale del variómetro y no de la altura sobre el suelo, que en una final
+   * sobre lomas sube y baja sin que el avión haga nada. Ver
+   * `SUBIDA_QUE_SACA_DE_FINAL`.
+   */
+  private subidoEnFinal = 0;
   /** Segundos en el aire desde el despegue. */
   private enElAire = 0;
   /** Ya se ha avisado de que se saltó la luz. Se avisa una vez por vuelo. */
@@ -358,6 +388,7 @@ export class Vuelo {
     this.verde = desdePista;
     this.despego = false;
     this.techo = 0;
+    this.subidoEnFinal = 0;
     this.enElAire = 0;
     this.avisadoDeLaLuz = false;
     // Y a «todavía no se ha mirado», que es lo que hace que empezar dentro de
@@ -408,6 +439,12 @@ export class Vuelo {
       this.enElAire += dt;
     }
     this.techo = Math.max(this.techo, s.sobreElSuelo);
+    // Lo subido en esta final, que nunca baja de cero: bajar deja el suelo
+    // de la cuenta donde se esté. Ver `SUBIDA_QUE_SACA_DE_FINAL`.
+    this.subidoEnFinal =
+      this.fase === "final"
+        ? Math.max(0, this.subidoEnFinal + s.estado.verticalSpeed * dt)
+        : 0;
 
     this.atenderALaTorre(s, dt);
     const saltoLaLuz = this.vigilarLaLuz(s);
@@ -474,7 +511,10 @@ export class Vuelo {
         // entrando, está yéndose.
         s.alLargoDePista < 0 &&
         s.sobreElSuelo < 300 &&
-        s.estado.verticalSpeed < 0 &&
+        // Se entra bajando y se sale subiendo de verdad, no al nivelarse.
+        (this.fase === "final"
+          ? this.subidoEnFinal < SUBIDA_QUE_SACA_DE_FINAL
+          : s.estado.verticalSpeed < 0) &&
         Math.abs(s.desalineado) < 30 &&
         s.alEjeDePista < 400;
       return enFinal ? "final" : "en-vuelo";
@@ -514,6 +554,38 @@ export class Vuelo {
       const liston =
         this.fase === "aterrizado" ? YA_ES_RODAJE : AÚN_ATERRIZANDO;
       /*
+       * **Y una vez rodando, se vuelve a la carrera por el suelo, no por el
+       * aire.**
+       *
+       * Los dos listones se escribieron cuando el modelo no conocía el viento
+       * y las dos velocidades eran la misma. Con viento de cara no lo son: con
+       * veinte nudos, rodar por la pista a los trece que pide el juego marca
+       * veintitrés en el anemómetro, por encima de `AÚN_ATERRIZANDO`. Medido
+       * en Fuerteventura: el avión volvía a «aterrizado» cada vez que
+       * aceleraba hacia su salida y a «abandonando» cada vez que frenaba para
+       * tomarla —«frená», «salí», «frená»—, y cada vuelta a «abandonando»
+       * rehacía la raya hacia la salida siguiente, hasta el final de la pista.
+       *
+       * La toma se sigue mirando por el aire, porque viene volando; lo que ya
+       * rueda, por el suelo, que es lo que mide el tope de rodaje y lo que
+       * dice si se puede girar hacia una calle. Acelerar por la pista como en
+       * una carrera sigue siendo volver a ella, que es lo que impide llevarse
+       * una velocidad de pista a la salida.
+       *
+       * **Y la carrera también se deja por el suelo**, con el mismo número en
+       * los dos sentidos. Si se saliera de «aterrizado» mirando el aire y se
+       * volviera mirando el suelo, con viento de cola el vaivén volvería por el
+       * otro lado: con ocho metros por segundo de cola, bajar de dieciséis en
+       * el anemómetro es ir a veinticuatro por el suelo, por encima de
+       * `AÚN_ATERRIZANDO`, y al fotograma siguiente otra vez a la carrera. Una
+       * histéresis solo es una banda muerta si los dos bordes miden lo mismo.
+       * Lo único que mira el aire es la toma: la que llega volando.
+       */
+      const vieneVolando = this.fase === "final" || this.fase === "en-vuelo";
+      const velocidad = vieneVolando
+        ? s.estado.airspeed
+        : s.estado.groundSpeed;
+      /*
        * **Y aterrizando se está en la pista. Fuera de ella, ya se rueda.**
        *
        * Esto solo miraba la velocidad, así que un avión que salía del asfalto
@@ -539,7 +611,7 @@ export class Vuelo {
        * velocidad de pista. Una regla protege lo que necesitás; la otra te
        * quita lo que ya no te toca.
        */
-      if (s.enPista && s.estado.airspeed >= liston) return "aterrizado";
+      if (s.enPista && velocidad >= liston) return "aterrizado";
       /*
        * **Y haber llegado gana a estar saliendo.**
        *

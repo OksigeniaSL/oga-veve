@@ -51,6 +51,7 @@ import {
 import type { Silueta } from "../flight/flota";
 import { fabricarAeronave } from "./fabrica-de-aeronaves";
 import { verticesDelCircuito, type Mano, type Pista } from "./circuito";
+import { desplazadoDe } from "./umbral-desplazado";
 import { ESPERA_ENTRE_VUELOS, ESPERA_MAXIMA } from "../flight/radio";
 
 /** Un sitio del mundo, con su altura. */
@@ -180,14 +181,28 @@ export function caminosDe(
   const lejosDelCampo = en(-ANTES_DEL_UMBRAL, FUERA_DEL_ASFALTO * 8, EN_TIERRA);
   const espera = en(-ANTES_DEL_UMBRAL, FUERA_DEL_ASFALTO, EN_TIERRA);
   const enElEje = en(0, 0, EN_TIERRA);
-  const toma = en(runway.length * 0.25, 0, EN_TIERRA);
-  const salida = en(runway.length * 0.6, FUERA_DEL_ASFALTO, EN_TIERRA);
+  /*
+   * **Y quien llega se posa pasado el umbral de aterrizaje**, no en la punta.
+   * Con el umbral desplazado, el asfalto de antes es para rodar y despegar:
+   * el que sale se alinea en la punta y usa la pista entera, y el que llega
+   * cruza las flechas por el aire. Sin desplazado es la punta, como siempre.
+   * Ver `umbral-desplazado.ts`.
+   */
+  const desplazado = desplazadoDe(runway);
+  const aterriza = en(desplazado, 0, 0);
+  const paraTocar = runway.length - desplazado;
+  const toma = en(desplazado + paraTocar * 0.25, 0, EN_TIERRA);
+  const salida = en(
+    desplazado + paraTocar * 0.6,
+    FUERA_DEL_ASFALTO,
+    EN_TIERRA,
+  );
 
   /*
    * **El que llega**: el tramo largo, la base, el final, la toma y la salida.
    * Es el circuito del juego con la carrera de frenado pegada al final.
    */
-  const llegada = [lejos, esquina, entrada, umbral, toma, salida];
+  const llegada = [lejos, esquina, entrada, aterriza, toma, salida];
   /** **El que sale**: del aparcamiento a la espera, al eje, y arriba. */
   const salidaDelCampo = [lejosDelCampo, espera, enElEje, arriba];
   /** **Y el que se va al aire**: pasa sobre la pista y vuelve al circuito. */
@@ -204,7 +219,7 @@ export function caminosDe(
   const hueco = vuela * ENTRE_MARCAS;
   // La toma, de donde se cuenta hacia atrás: es el único punto del circuito
   // que está donde está y no admite discusión.
-  const enLaToma = largoDelCamino([lejos, esquina, entrada, umbral]);
+  const enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza]);
   const volando = (metros: number): Marca => ({
     camino: llegada,
     metros: Math.max(0, metros),
@@ -251,8 +266,31 @@ export function caminosDe(
      * segundos nadie da media vuelta a un circuito. El avión sube, y a la
      * llamada siguiente reaparece en el viento en cola. Es el único sitio
      * donde se ve un tirón, y se prefiere a que la radio mienta.
+     *
+     * Este camino es el de quien **no estaba dibujado**. Al que ya se ve se
+     * le manda al aire desde donde esté: ver `alAireDesde`.
      */
     "torre.goAround": { camino: alAire, metros: 0, velocidad: vuela },
+  };
+}
+
+/**
+ * La orden de irse al aire, **desde donde está quien la recibe**.
+ *
+ * El camino de `torre.goAround` sale del umbral, y con el guion de la
+ * frustrada eso era un tirón aceptado: la orden llega pocos segundos después
+ * de cantar final, así que el avión ya estaba cerca. Desde que la torre manda
+ * al aire al que tenía la pista en cuanto pasa a ser tuya —ver
+ * `despejarLaPista` en `flight/radio.ts`—, la orden le puede llegar en
+ * cualquier punto del circuito, y salía del umbral de tu pista, delante de ti,
+ * un avión que un instante antes estaba en el viento en cola. Ahora sube de
+ * donde está y sigue por el mismo camino hacia arriba.
+ */
+export function alAireDesde(marca: Marca, sitio: Sitio): Marca {
+  return {
+    camino: [sitio, ...marca.camino.slice(1)],
+    metros: 0,
+    velocidad: marca.velocidad,
   };
 }
 
@@ -346,6 +384,7 @@ export function crearTrafico(
         if (quien) quien.olvidado = 0;
         return;
       }
+      const yaSeVeia = !!quien;
       if (!quien) {
         const g = new Group();
         g.name = "trafico-avion";
@@ -354,8 +393,13 @@ export function crearTrafico(
         quien = { grupo: g, marca, recorrido: marca.metros, olvidado: 0 };
         aviones.set(matricula, quien);
       }
-      quien.marca = marca;
-      quien.recorrido = marca.metros;
+      const p = quien.grupo.position;
+      const esta =
+        clave === "torre.goAround" && yaSeVeia
+          ? alAireDesde(marca, { x: p.x, y: p.y, z: p.z })
+          : marca;
+      quien.marca = esta;
+      quien.recorrido = esta.metros;
       quien.olvidado = 0;
       colocar(quien);
     },

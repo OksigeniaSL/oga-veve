@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import {
   cargaParaLaRuta,
   comoVaElDeposito,
+  hayQueLlenar,
   loQueCabe,
   loQueQueda,
   quemaPorSegundo,
@@ -154,5 +155,30 @@ describe("la franja de la reserva", () => {
   it("y sale de la carga: lo que se lleva de más es la ruta", () => {
     for (const a of AIRCRAFT)
       expect(cargaParaLaRuta(a, 0)).toBeGreaterThan(reservaEnKilos(a));
+  });
+});
+
+describe("cuándo se llena el depósito", () => {
+  const ida = "gran-canaria>tenerife-norte";
+
+  it("para otro tramo, siempre", () => {
+    expect(hayQueLlenar({ tramo: "", kilos: 0 }, ida, 411)).toBe(true);
+    expect(
+      hayQueLlenar({ tramo: "gran-canaria>gran-canaria", kilos: 500 }, ida, 411),
+    ).toBe(true);
+  });
+
+  it("y para el mismo, si lo que hay ya no llega", () => {
+    /*
+     * Volverse a medio camino, tocar en casa, apagar y salir otra vez hacia
+     * Los Rodeos: el tramo es el mismo y en el depósito quedan 185 de 411.
+     */
+    expect(hayQueLlenar({ tramo: ida, kilos: 185 }, ida, 411)).toBe(true);
+    expect(hayQueLlenar({ tramo: ida, kilos: 410.9 }, ida, 411)).toBe(true);
+  });
+
+  it("pero lleno para ese tramo no se toca", () => {
+    expect(hayQueLlenar({ tramo: ida, kilos: 411 }, ida, 411)).toBe(false);
+    expect(hayQueLlenar({ tramo: ida, kilos: 450 }, ida, 411)).toBe(false);
   });
 });

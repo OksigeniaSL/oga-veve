@@ -44,8 +44,21 @@ export type Paso = readonly [number, number];
 export interface Vuelo {
   /** Cuándo, en ISO. Se guarda entero y se enseña como se quiera. */
   readonly fecha: string;
-  /** El escenario, por su `id`. */
+  /**
+   * El escenario, por su `id`: el mundo en el que se voló, que es el de casa.
+   * La traza va en las coordenadas de su aeródromo.
+   */
   readonly escenario: string;
+  /**
+   * De qué campo salió el tramo y en cuál acabó, por el `id` de su escenario,
+   * si no es el de casa. Sin ellos, volar de Gran Canaria a Los Rodeos se
+   * guardaba como un vuelo de Gran Canaria y su plano acababa en el mar.
+   *
+   * Opcionales, porque los vuelos guardados antes no los llevan y no por eso
+   * se tiran.
+   */
+  readonly salida?: string;
+  readonly llegada?: string;
   /** La lección que se estaba haciendo. */
   readonly leccion: string;
   /** Y el peldaño, que cambia lo que significa todo lo demás. */
@@ -126,6 +139,8 @@ function esVuelo(x: unknown): x is Vuelo {
   return (
     typeof v.fecha === "string" &&
     typeof v.escenario === "string" &&
+    (v.salida === undefined || typeof v.salida === "string") &&
+    (v.llegada === undefined || typeof v.llegada === "string") &&
     typeof v.segundos === "number" &&
     Array.isArray(v.galones) &&
     Array.isArray(v.traza)

@@ -11,8 +11,20 @@
  * a mano veinte veces.
  */
 
-/** Qué clase de aterrizaje fue, o `null` si todavía no hay veredicto. */
-export type Aterrizaje = "suave" | "firme" | "rapido" | "fuera" | null;
+/**
+ * Qué clase de aterrizaje fue, o `null` si todavía no hay veredicto.
+ *
+ * `corto` es tocar **en la pista pero antes de su umbral de aterrizaje**: en
+ * la zona de las flechas de un umbral desplazado, que es asfalto para rodar y
+ * despegar y no para posarse. Ver `world/umbral-desplazado.ts`.
+ */
+export type Aterrizaje =
+  | "suave"
+  | "firme"
+  | "rapido"
+  | "corto"
+  | "fuera"
+  | null;
 
 /** Por debajo de este régimen de descenso al tocar, se considera suave (m/s). */
 const SUAVE = 1.2;
@@ -84,6 +96,8 @@ export class LandingWatcher {
   /** A qué velocidad se tocó. Al frenar ya no se sabría. */
   private velocidadAlTocar = 0;
   private trenPuestoAlTocar = true;
+  /** Si se tocó antes del umbral de aterrizaje. Ver `Aterrizaje`. */
+  private antesDelUmbralAlTocar = false;
 
   /**
    * @param onGround si las ruedas tocan
@@ -121,6 +135,12 @@ export class LandingWatcher {
      * vez que va rodando sobre la panza.
      */
     trenFuera = true,
+    /**
+     * Si el contacto fue en la pista pero **antes de su umbral de
+     * aterrizaje**, en la zona desplazada. Se guarda al tocar, como todo lo
+     * demás: rodando ya se ha salido de ella.
+     */
+    antesDelUmbral = false,
   ): Aterrizaje {
     if (!onGround) {
       this.enElAire += dt;
@@ -136,6 +156,7 @@ export class LandingWatcher {
       this.descenso = sinkRate;
       this.velocidadAlTocar = airspeed;
       this.trenPuestoAlTocar = trenFuera;
+      this.antesDelUmbralAlTocar = antesDelUmbral;
       this.enPista = onRunway;
       this.desdeQueToco = 0;
       return null;
@@ -146,6 +167,19 @@ export class LandingWatcher {
       return null;
     this.pendiente = false;
     if (!this.enPista) return "fuera";
+    /*
+     * **Y en la pista, pero donde no se toca.**
+     *
+     * Con el umbral desplazado, el asfalto de antes de la barra blanca es
+     * pista —se rueda y se despega por él— y no es sitio para posarse: en la
+     * 01 de Fuerteventura son mil metros. El avión del banco tocaba a ciento
+     * cincuenta de la punta y el juego lo daba por un aterrizaje bueno, que
+     * es enseñar a hacer justo lo que ese trozo de pista existe para impedir.
+     * Va antes que la velocidad porque es lo mismo que «fuera»: **dónde** se
+     * tocó. No se rompe nada ni se termina el vuelo; se dice, se ve, y la
+     * próxima vez se toca pasada la barra.
+     */
+    if (this.antesDelUmbralAlTocar) return "corto";
     /*
      * **La velocidad manda sobre la suavidad.**
      *
@@ -186,6 +220,7 @@ export class LandingWatcher {
 
   reset(): void {
     this.trenPuestoAlTocar = true;
+    this.antesDelUmbralAlTocar = false;
     this.volando = false;
     this.pendiente = false;
     this.desdeQueToco = 0;

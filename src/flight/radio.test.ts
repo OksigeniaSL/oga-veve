@@ -16,6 +16,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CALLADAS,
   CON_SALUDO,
   CUALES,
   CUANTOS,
@@ -26,6 +27,10 @@ import {
   Frecuencia,
   GUIONES,
   HUECO_DEL_CANAL,
+  laPistaQueTiene,
+  laQueSeDice,
+  PARA_QUITARSELA,
+  PISTA_TUYA,
   RESPUESTA_MAXIMA,
   type Momento,
   type Transmision,
@@ -292,5 +297,231 @@ describe("todo lo que se pide está grabado", () => {
     }
     expect(ESPERA_ENTRE_VUELOS).toBeGreaterThan(ESPERA_MAXIMA);
     expect(ESPERA_MINIMA).toBeLessThan(ESPERA_MAXIMA);
+  });
+});
+
+describe("la pista que es tuya no se le da a nadie", () => {
+  /*
+   * Aterrizando en Los Rodeos, con el «cleared to land» propio ya dicho, la
+   * torre autorizó a otro a despegar; y con el avión rodando por la pista
+   * para dejarla, a otro a entrar en ella. Una torre de verdad no da la misma
+   * pista a dos a la vez.
+   */
+  const DAN_LA_PISTA = /^torre\.(lineUpWait|clearedTakeoff|clearedLand)$/;
+
+  it("mientras la usas, la torre no autoriza a nadie a usarla", () => {
+    for (const fase of PISTA_TUYA) {
+      let hablo = 0;
+      for (let semilla = 1; semilla <= 20; semilla++) {
+        const radio = new Frecuencia(dados(semilla), "GCXO");
+        const oido = escuchar(radio, 600, { ...TRANQUILO, fase });
+        hablo += oido.length;
+        const dadas = oido.filter((d) => DAN_LA_PISTA.test(d.clave));
+        expect(dadas, `${fase}, semilla ${semilla}`).toEqual([]);
+      }
+      /*
+       * **Y donde la frecuencia habla, que es donde esto prueba algo.** En las
+       * fases calladas no dar la pista a nadie sale solo, con filtro o sin
+       * él; en las otras dos se habla, y lo que no se dice es la pista.
+       */
+      if (!CALLADAS.has(fase)) expect(hablo, fase).toBeGreaterThan(0);
+    }
+  });
+
+  it("y las fases en que eso se nota son las dos de la pista que no callan", () => {
+    expect([...PISTA_TUYA].filter((f) => !CALLADAS.has(f)).sort()).toEqual([
+      "abandonando",
+      "back-taxi",
+    ]);
+  });
+
+  it("y en cuanto la dejas libre, se la da: nadie pierde su turno", () => {
+    let alguna = 0;
+    for (let semilla = 1; semilla <= 20; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      escuchar(radio, 300, { ...TRANQUILO, fase: "abandonando" });
+      const luego = escuchar(radio, 300, { ...TRANQUILO, fase: "a-plataforma" });
+      alguna += luego.filter((d) => DAN_LA_PISTA.test(d.clave)).length;
+    }
+    expect(alguna).toBeGreaterThan(0);
+  });
+
+  it("y la que tiene otro de la frecuencia no se le da a un tercero", () => {
+    /*
+     * La misma regla entre ellos. Sin ella, en 338 de 400 frecuencias de
+     * veinte minutos había un rato con dos en la pista a la vez: los dos
+     * alineados en el mismo eje, o uno en el eje y otro autorizado a aterrizar.
+     */
+    const mal: string[] = [];
+    for (let semilla = 1; semilla <= 400; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      for (let t = 0; t < 1200; t += 0.5) {
+        radio.update(0.5, TRANQUILO);
+        if (radio.conLaPista.length > 1)
+          mal.push(
+            `semilla ${semilla}, ${t} s: ${radio.conLaPista.map((c) => c.orden).join(" + ")}`,
+          );
+      }
+    }
+    expect(mal.slice(0, 3)).toEqual([]);
+  });
+
+  it("y con la pista libre, se dan como siempre", () => {
+    let alguna = 0;
+    for (let semilla = 1; semilla <= 20; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      alguna += escuchar(radio, 600).filter((d) =>
+        DAN_LA_PISTA.test(d.clave),
+      ).length;
+    }
+    expect(alguna).toBeGreaterThan(0);
+  });
+});
+
+describe("y antes de dártela, se la quita a quien la tenga", () => {
+  /*
+   * Lo que faltaba de la mitad de arriba. La torre no daba la pista a nadie
+   * mientras era tuya, pero al que ya la tenía no le decía nada: en 132 de
+   * 400 frecuencias sorteadas había un avión alineado en el eje cuando
+   * aterrizabas, y en 268 uno autorizado a aterrizar seguía cantando su final
+   * durante tu toma. Ninguno se fue al aire.
+   */
+  const PISTA_DE_NADIE: Momento = TRANQUILO;
+  /** Habla hasta que alguien tenga la pista, o `null` si no pasa. */
+  function hastaQueAlguienLaTenga(radio: Frecuencia): boolean {
+    for (let t = 0; t < 2000; t += 0.5) {
+      radio.update(0.5, PISTA_DE_NADIE);
+      if (radio.conLaPista.length) return true;
+    }
+    return false;
+  }
+
+  it("quién la tiene: el alineado hasta despegar, el autorizado hasta dejarla", () => {
+    expect(laPistaQueTiene("espera", 2)).toBeNull();
+    expect(laPistaQueTiene("espera", 3)).toBe("torre.lineUpWait");
+    expect(laPistaQueTiene("sale", 2)).toBeNull();
+    expect(laPistaQueTiene("llega", 1)).toBeNull();
+    expect(laPistaQueTiene("llega", 2)).toBe("torre.clearedLand");
+    expect(laPistaQueTiene("llega", 3)).toBe("torre.clearedLand");
+    // El de la frustrada la suelta al irse al aire y la vuelve a tener al
+    // volver a pedirla.
+    expect(laPistaQueTiene("frustrada", 3)).toBeNull();
+    expect(laPistaQueTiene("frustrada", 4)).toBeNull();
+    expect(laPistaQueTiene("frustrada", 5)).toBe("torre.clearedLand");
+  });
+
+  it("y lo que se le dice a cada uno para quitársela está en su guion", () => {
+    /*
+     * Al alineado se le da la salida que ya le tocaba; al que se va al aire
+     * le queda la vuelta de la frustrada. Si un guion nuevo no las tuviera,
+     * `despejarLaPista` no sabría por dónde seguirlo.
+     */
+    for (const guion of CUALES) {
+      const pasos = GUIONES[guion];
+      pasos.forEach((p, i) => {
+        if (p.clave !== "torre.lineUpWait") return;
+        expect(
+          pasos.slice(i + 1).some((q) => q.clave === PARA_QUITARSELA[p.clave]),
+          guion,
+        ).toBe(true);
+      });
+    }
+    expect(GUIONES.frustrada.some((p) => p.clave === "torre.goAround")).toBe(true);
+  });
+
+  it("al alineado le da la salida y al que viene lo manda al aire, y la pista queda libre", () => {
+    let alineados = 0;
+    let alAire = 0;
+    for (let semilla = 1; semilla <= 400; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      if (!hastaQueAlguienLaTenga(radio)) continue;
+      const tenian = [...radio.conLaPista];
+      const dichas = radio.despejarLaPista();
+      // A cada uno lo suyo, y a nadie más.
+      expect(
+        dichas.map((d) => `${d.de.matricula} ${d.clave}`).sort(),
+        `semilla ${semilla}`,
+      ).toEqual(
+        tenian.map((t) => `${t.matricula} ${PARA_QUITARSELA[t.orden]}`).sort(),
+      );
+      expect(dichas.every((d) => d.voz === "torre")).toBe(true);
+      expect(radio.conLaPista, `semilla ${semilla}`).toEqual([]);
+      for (const t of tenian)
+        if (t.orden === "torre.lineUpWait") alineados++;
+        else alAire++;
+    }
+    // Las dos cosas pasan de verdad con estos guiones, no solo en teoría.
+    expect(alineados).toBeGreaterThan(50);
+    expect(alAire).toBeGreaterThan(50);
+  });
+
+  it("y mientras es tuya nadie la vuelve a tener, ni canta su final", () => {
+    const mal: string[] = [];
+    for (let semilla = 1; semilla <= 400; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      if (!hastaQueAlguienLaTenga(radio)) continue;
+      const alAire = radio
+        .despejarLaPista()
+        .filter((d) => d.clave === "torre.goAround")
+        .map((d) => d.de.matricula);
+      for (const [fase, segundos] of [
+        ["final", 60],
+        ["aterrizado", 30],
+        ["abandonando", 120],
+      ] as const) {
+        for (let t = 0; t < segundos; t += 0.5) {
+          const dice = radio.update(0.5, { ...TRANQUILO, fase });
+          for (const c of radio.conLaPista)
+            mal.push(`semilla ${semilla}, ${fase}: ${c.matricula} ${c.orden}`);
+          if (
+            dice &&
+            alAire.includes(dice.de.matricula) &&
+            /otro\.(final|pistaLibre)/.test(dice.clave)
+          )
+            mal.push(`semilla ${semilla}, ${fase}: ${dice.clave}`);
+        }
+      }
+    }
+    expect(mal).toEqual([]);
+  });
+
+  it("y cuando la dejas, el que se fue al aire vuelve y aterriza", () => {
+    let volvieron = 0;
+    let seFueron = 0;
+    for (let semilla = 1; semilla <= 100; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      if (!hastaQueAlguienLaTenga(radio)) continue;
+      const alAire = radio
+        .despejarLaPista()
+        .filter((d) => d.clave === "torre.goAround")
+        .map((d) => d.de.matricula);
+      if (!alAire.length) continue;
+      seFueron++;
+      escuchar(radio, 60, { ...TRANQUILO, fase: "final" });
+      const luego = escuchar(radio, 400, { ...TRANQUILO, fase: "a-plataforma" });
+      if (
+        luego.some(
+          (d) => d.clave === "torre.clearedLand" && alAire.includes(d.de.matricula),
+        )
+      )
+        volvieron++;
+    }
+    expect(seFueron).toBeGreaterThan(10);
+    expect(volvieron).toBe(seFueron);
+  });
+
+  it("y de lo que se les dice, en voz alta una: la del que está en el eje", () => {
+    const de = new Frecuencia(dados(5), "GCXO").quienes[0]!;
+    const alAire = { voz: "torre" as const, clave: "torre.goAround", de, respuesta: false };
+    const sale = { ...alAire, clave: "torre.clearedTakeoff" };
+    expect(laQueSeDice([alAire, sale])).toBe(sale);
+    expect(laQueSeDice([alAire])).toBe(alAire);
+    expect(laQueSeDice([])).toBeNull();
+  });
+
+  it("y con la pista de nadie, no se dice nada", () => {
+    const radio = new Frecuencia(dados(3), "GCXO");
+    expect(radio.conLaPista).toEqual([]);
+    expect(radio.despejarLaPista()).toEqual([]);
   });
 });

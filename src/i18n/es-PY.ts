@@ -75,6 +75,8 @@ export const ES_PY = {
   "hud.landedFast": "¡Muy rápido! Bajá el motor antes de tocar",
   "hud.landedFirm": "Aterrizaje firme. Ya estás abajo",
   "hud.landedOffRunway": "Bajaste fuera de la pista, pero bajaste",
+  "hud.landedShort":
+    "Bajaste antes de la barra blanca: las flechas son para rodar y despegar",
   "hud.brakes": "Frenos",
   "hud.crashed": "Se rompió algo. Volvemos a la pista…",
   "hud.home": "Pista",
@@ -558,6 +560,7 @@ export const ES_PY = {
   "palabra.cuidado": "¡Cuidado!",
   "palabra.rapido": "Muy rápido",
   "palabra.fuera": "Fuera",
+  "palabra.corto": "Corto",
   "palabra.roto": "Se rompió",
   "vuelo.estacionado": "Arrancá el motor",
   "vuelo.arrancando": "Soltá el freno y andá despacito",

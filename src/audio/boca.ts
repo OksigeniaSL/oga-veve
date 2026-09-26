@@ -636,6 +636,27 @@ export class Boca {
     return true;
   }
 
+  /**
+   * **Quita de la cola lo que ya no es verdad**, sin tocar lo que suena.
+   *
+   * `CADUCA` tira lo que esperó demasiado, y eso mide el reloj; esto tira lo
+   * que dejó de ser verdad aunque acabe de llegar, que es otra cosa y la sabe
+   * quien pide. Lo pide la lámpara de la torre: un «hold short» que todavía
+   * espera turno cuando la luz ya se ha puesto verde no es tarde, es lo
+   * contrario de lo que pasa. Y mientras esperaba, empujaba hacia atrás la
+   * autorización nueva hasta que caducaba. Ver `luzDeTorre` en `game.ts`.
+   */
+  retirar(
+    sobra: (clave: string | undefined, urgencia: Urgencia) => boolean,
+  ): void {
+    for (let i = this.cola.length - 1; i >= 0; i--) {
+      const esta = this.cola[i]!;
+      if (!sobra(esta.clave, esta.urgencia)) continue;
+      this.apuntarDescarte(esta.clave, "ya no es verdad");
+      this.cola.splice(i, 1);
+    }
+  }
+
   /** Vuelo nuevo: se olvida hasta lo que ya había dicho. */
   empezarDeCero(): void {
     this.callar();

@@ -108,3 +108,75 @@ export const DICE_LA_TORRE: Readonly<Record<string, string>> =
   Object.fromEntries(
     Object.entries(CLAVE_DE_TORRE).map(([dice, clave]) => [clave, dice]),
   );
+
+/**
+ * Si esta frase, pedida a la boca, es **la lámpara hablándote a vos**: la luz
+ * en castellano o la orden de pista en fraseología, con tu matrícula.
+ *
+ * Es lo que se retira de la cola cuando la lámpara cambia de color, porque lo
+ * que decía la de antes ya no es verdad. Se reconoce por la clave —con el
+ * habla y el lado que lleve— y por el peso: lo que la torre dice a los demás
+ * aviones va en `baja`, y lo tuyo nunca. Así vale también sin pack de voz,
+ * donde la clave no lleva la matrícula detrás. Ver `luzDeTorre` en `game.ts`.
+ *
+ * **Y por a quién va, cuando se sabe.** Hay dos órdenes a los demás que no van
+ * en `baja`: las que les quitan la pista justo antes de dártela a vos —ver
+ * `despejarLaPista` en `flight/radio.ts`—, que son la mitad de tu autorización
+ * y no se pueden quedar detrás de ella. Llegan en el mismo fotograma en que la
+ * luz se pone verde, y sin esto la lámpara las retiraba de la cola como si
+ * fueran suyas. `mia` es tu matrícula tal como va en la clave, detrás de la
+ * arroba: lo que va a otra matrícula no es de tu lámpara.
+ */
+export function esDeLaLampara(
+  clave: string | undefined,
+  urgencia: string,
+  mia?: string,
+): boolean {
+  if (!clave || urgencia === "baja") return false;
+  const a = clave.indexOf("@");
+  if (mia && a >= 0 && !clave.startsWith(mia, a + 1)) return false;
+  return DE_LA_LAMPARA.test(clave);
+}
+
+const DE_LA_LAMPARA =
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort|lineUpWait|clearedTakeoff|clearedLand|goAround)(?:\.[LCR])?(?:@|$)/;
+
+/**
+ * Si esta frase es **la torre dándole la pista a otro avión**, todavía en la
+ * cola: «line up and wait», «cleared for take-off» o «cleared to land» a una
+ * matrícula de la frecuencia.
+ *
+ * Es lo que se retira de la cola en cuanto la pista pasa a ser tuya. La
+ * frecuencia ya no da la pista a nadie mientras es tuya —ver `PISTA_TUYA`—,
+ * pero lo que dio un momento antes podía estar esperando turno en la boca
+ * hasta doce segundos —`CADUCA_LA_ORDEN`—, y tu autorización, que va en
+ * `mando`, se le colaba delante: se oía tu «cleared to land» y detrás un «line
+ * up and wait» a otro. Medido en Pettirossi y en Gran Canaria. Lo de los
+ * demás va en `baja`; lo que no va en `baja` es tuyo o les quita la pista, y
+ * eso se queda.
+ */
+export function daLaPistaAOtro(
+  clave: string | undefined,
+  urgencia: string,
+): boolean {
+  return !!clave && urgencia === "baja" && DA_LA_PISTA.test(clave);
+}
+
+const DA_LA_PISTA =
+  /^torre\.(?:[a-z]+\.)?(?:lineUpWait|clearedTakeoff|clearedLand)(?:\.[LCR])?(?:@|$)/;
+
+/**
+ * Si esta frase es **la frecuencia de un campo**: la torre hablándoles a los
+ * demás, o los demás hablando. Todo eso va en `baja`.
+ *
+ * Es lo que se retira de la cola al cambiar de campo, porque es la gente de
+ * allí: la frecuencia se vuelve a empezar con la de aquí, y lo que la de allí
+ * dejó esperando turno se oía ya en el campo nuevo —en Gando, un «cleared to
+ * land» a un avión de Los Rodeos, con la 12 de Los Rodeos—.
+ */
+export function esDeLaFrecuencia(
+  clave: string | undefined,
+  urgencia: string,
+): boolean {
+  return !!clave && urgencia === "baja" && /^(?:torre|otro)\./.test(clave);
+}

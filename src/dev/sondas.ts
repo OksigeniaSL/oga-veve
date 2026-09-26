@@ -57,31 +57,47 @@ import { BOCA } from "../audio/boca";
 /**
  * Un punto en final de un campo cualquiera, a `d` metros de su umbral en uso y
  * sobre su eje. Con `d` negativo, hacia dentro de la pista.
+ *
+ * **Del umbral de aterrizar**, que con el umbral desplazado está pista
+ * adentro: es desde donde se vuela la final y adonde apunta la senda. Lo que
+ * mide un banco en final —cuánto queda, a qué altura se cruza, dónde se tocó—
+ * se mide contra él. `desplazado` dice cuánto asfalto queda por detrás, hasta
+ * la punta. Ver `umbral-desplazado.ts`.
  */
 function puntoDeFinalEn(
   campo: ReturnType<Game["campoParaBanco"]>,
   d: number,
   suelo: (x: number, z: number) => number,
-): { x: number; z: number; h: number; suelo: number; cabecera: string | null } | null {
+): {
+  x: number;
+  z: number;
+  h: number;
+  suelo: number;
+  cabecera: string | null;
+  desplazado: number;
+} | null {
   const pista = campo?.aerodromo?.runways[0];
   if (!campo || !pista) return null;
   const nombre = cabeceraEnUso(campo.escenario);
   const con = Object.entries(pista.thresholds).filter((e) => e[1]?.xy);
   if (con.length < 2) return null;
   const i = nombre ? con.findIndex(([n]) => n === nombre) : 0;
-  const entrada = con[i >= 0 ? i : 0]![1]!.xy!;
+  const umbral = con[i >= 0 ? i : 0]![1]!;
+  const entrada = umbral.xy!;
   const salida = con[(i >= 0 ? i : 0) === 0 ? 1 : 0]![1]!.xy!;
   const l = Math.hypot(salida[0] - entrada[0], salida[1] - entrada[1]) || 1;
   const ux = (salida[0] - entrada[0]) / l;
   const uy = (salida[1] - entrada[1]) / l;
-  const x = entrada[0] - ux * d;
-  const y = entrada[1] - uy * d;
+  const desplazado = Math.max(0, Math.min(umbral.displacedM ?? 0, l / 2));
+  const x = entrada[0] + ux * (desplazado - d);
+  const y = entrada[1] + uy * (desplazado - d);
   return {
     x,
     z: -y,
     h: (Math.atan2(ux, uy) + 2 * Math.PI) % (2 * Math.PI),
     suelo: suelo(x, -y),
     cabecera: nombre,
+    desplazado,
   };
 }
 
@@ -120,7 +136,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       juego.teselas?.medidaDirecta(x, z) ?? null,
     /** De qué color se ven las cuatro del PAPI ahora mismo. */
     papi: () => {
-      const m = juego.aproximacion?.grupo.getObjectByName("papi") as
+      // El del campo que se tiene debajo: en el de llegada, el suyo.
+      const m = juego.papiDeAhora?.grupo.getObjectByName("papi") as
         { instanceColor?: { array: ArrayLike<number> } } | undefined;
       const a = m?.instanceColor?.array;
       if (!a) return null;
@@ -532,10 +549,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * `flight/radio.ts`.
      */
     enLaFrecuencia: () => [...juego.matriculasDeLaRadio],
+    /**
+     * Quién de la frecuencia tiene la pista ahora —alineado o autorizado a
+     * aterrizar— y con qué orden. Mientras es tuya no tiene que haber nadie.
+     * Ver `despejarLaPista` en `flight/radio.ts`.
+     */
+    pistaDeLosDemas: () => [...juego.pistaDeLosDemasParaBanco],
     indicativo: () => {
       const otro = juego.indicativoDeLaRadio;
       const yo = juego.miMatricula;
-      const pista = pistaEnPiezas(cabeceraEnUso(juego.scenario));
+      // La del campo de ahora, que es la que nombra la torre.
+      const pista = pistaEnPiezas(
+        cabeceraEnUso(juego.campoParaBanco()?.escenario ?? juego.scenario),
+      );
       return {
         // El otro avión de la frecuencia, que se sortea por vuelo.
         dicho: otro.dicho,
@@ -1245,7 +1271,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      */
     cotaDePista: (x: number, z: number) => juego.terrain.cotaDeLaPista(x, z),
     /** Por qué cabecera se opera hoy y con qué tiempo. Ver `conViento`. */
-    cabecera: () => cabeceraEnUso(juego.scenario),
+    cabecera: () =>
+      cabeceraEnUso(juego.campoParaBanco()?.escenario ?? juego.scenario),
     meteo: () => juego.scenario.meteo ?? null,
     /** Qué relojes del panel están encendidos y qué mide cada uno. */
     relojes: () => juego.aircraftMesh.relojes?.hay ?? [],
@@ -1305,6 +1332,12 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       ),
     /** En qué campo está el avión ahora: el de salida o el de destino. */
     campoDeAhora: () => juego.campoDeAhoraParaBanco,
+    /** El OACI del aeródromo que se tiene debajo. */
+    aerodromoDeAhora: () => juego.campoParaBanco()?.aerodromo?.id ?? null,
+    /** Los aeródromos que el cuaderno da por visitados. */
+    aerodromosVisitados: () => juego.aerodromosVisitadosParaBanco,
+    /** A cuánto y hacia dónde señala la aguja. Ver `Game.agujaParaBanco`. */
+    aguja: () => juego.agujaParaBanco,
     /**
      * La ruta de este tramo: de dónde sale, a dónde va, el desvío de la
      * reserva si lo hay, el alternativo y a qué campo apunta la flecha.
@@ -1314,6 +1347,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ponerDestino: (id: string) => juego.ponerDestinoParaBanco(id),
     /** Deja el depósito con estos kilos, para llegar a la reserva sin esperar. */
     ponerCombustible: (kilos: number) => juego.ponerCombustibleParaBanco(kilos),
+    /** Lo que se carga para el tramo de ahora. Ver `cargaDelTramoParaBanco`. */
+    cargaDelTramo: () => juego.cargaDelTramoParaBanco,
     /** Las células de tormenta de hoy. */
     celdasDeHoy: () => juego.celdasParaBanco,
     /** Los otros aviones de la ruta, con su nivel. */
