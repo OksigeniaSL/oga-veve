@@ -348,7 +348,6 @@ export class Terrain {
             de: scenario.meteo?.vientoDe ?? null,
             kt: scenario.meteo?.vientoKt ?? 0,
           },
-          cabeceraEnUso(scenario),
         ),
       );
     } else {
@@ -590,7 +589,6 @@ export class Terrain {
           de: escenario.meteo?.vientoDe ?? null,
           kt: escenario.meteo?.vientoKt ?? 0,
         },
-        cabeceraEnUso(escenario),
         // Lo que haya subido el mundo al llegar la fotografía. Sin esto, el
         // aeródromo se reconstruye en el datum viejo y queda enterrado.
         this.runwayElevationMovida,

@@ -10,9 +10,15 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { InstancedMesh, Mesh, Color } from "three";
+import { InstancedMesh, Mesh } from "three";
 import gcfv from "../../data/aerodromes/gcfv.aero.json";
-import { createAerodrome, type Aerodrome } from "./aerodrome";
+import {
+  COLOR_DE_PISTA,
+  colorVisto,
+  createAerodrome,
+  type Aerodrome,
+  type LuzDePista,
+} from "./aerodrome";
 import { crearAproximacion } from "./aproximacion";
 import { campoDeCasa, umbralEnUso } from "./campo-del-vuelo";
 import { BASE_A_FINAL, verticesDelCircuito } from "./circuito";
@@ -227,10 +233,10 @@ describe("la pintura: flechas, barra, y lo de aterrizar pasada la barra", () => 
     const dy = -z - u01[1];
     return { along: dx * ux + dy * uy, across: -dx * uy + dy * ux };
   };
-  const grupo = createAerodrome(AERO, 0, { de: 25, kt: 20 }, "01");
+  const grupo = createAerodrome(AERO, 0, { de: 25, kt: 20 });
   const pintura: { along: number; across: number }[] = [];
   const numeros: { along: number }[] = [];
-  const verdes: { along: number }[] = [];
+  let luces: readonly LuzDePista[] = [];
   grupo.traverse((o) => {
     if (o instanceof Mesh && o.name === "pintura") {
       const pos = o.geometry.getAttribute("position");
@@ -242,19 +248,20 @@ describe("la pintura: flechas, barra, y lo de aterrizar pasada la barra", () => 
       const c = o.geometry.boundingBox!.getCenter(new Mesh().position);
       numeros.push(ejes(c.x, c.z));
     }
-    if (o instanceof InstancedMesh && o.name === "luces-pista") {
-      const m = new Mesh().matrix;
-      const color = new Color();
-      for (let i = 0; i < o.count; i++) {
-        o.getColorAt(i, color);
-        // El verde de cabecera, en lineal: mucho verde y casi nada de rojo.
-        if (color.g > 0.5 && color.r < 0.2) {
-          o.getMatrixAt(i, m);
-          verdes.push(ejes(m.elements[12]!, m.elements[14]!));
-        }
-      }
-    }
+    if (o instanceof InstancedMesh && o.name === "luces-pista")
+      luces = o.userData.luces as readonly LuzDePista[];
   });
+  /** Un ojo a `m` metros por fuera de una punta, en su eje. */
+  const fueraDe = (u: readonly [number, number], hacia: -1 | 1, m: number) => ({
+    x: u[0] + ux * hacia * m,
+    z: -(u[1] + uy * hacia * m),
+  });
+  /** Lo que se ve desde ahí, con su sitio a lo largo de la pista. */
+  const vistoDesde = (ojo: { x: number; z: number }) =>
+    luces
+      .map((l) => ({ ...ejes(l.p[0], l.p[2]), color: colorVisto(l, ojo) }))
+      .filter((l) => l.color !== null);
+  const { verde, roja, ambar } = COLOR_DE_PISTA;
 
   it("la barra blanca cruza la pista donde empieza la parte en la que se toca", () => {
     const enLaBarra = pintura.filter(
@@ -295,8 +302,56 @@ describe("la pintura: flechas, barra, y lo de aterrizar pasada la barra", () => 
     expect(cerca19).toBeCloseTo(largo - 460 - 100, -1);
   });
 
-  it("y la fila verde de la cabecera en uso, en la barra", () => {
+  /*
+   * **Y las luces, leídas desde cada punta como en el AIP.** Fuerteventura
+   * publica el balizamiento de borde de la 01 como «1000 m red + 1806 m white
+   * + 600 m yellow» y el de la 19 como «466 m red + 2340 m white + 600 m
+   * yellow»: la misma fila, vista desde cada aproximación. Se pintaban con un
+   * color fijo según la cabecera en uso, y llegando por la otra se veía el
+   * rojo de «aquí se acaba» delante del morro.
+   */
+  it("desde la final de la 01: verde en su barra, rojo antes y ámbar al fondo", () => {
+    const visto = vistoDesde(fueraDe(u01, -1, 5000));
+    const verdes = visto.filter((l) => l.color === verde);
     expect(verdes.length).toBeGreaterThan(0);
     for (const v of verdes) expect(v.along).toBeCloseTo(1001, -1);
+    // Las de borde de la zona desplazada, rojas vistas desde la aproximación.
+    const bordes = visto.filter((l) => Math.abs(l.across) > ancho / 2);
+    for (const b of bordes.filter((l) => l.along < 990))
+      expect(b.color, `borde a ${Math.round(b.along)} m`).toBe(roja);
+    for (const b of bordes.filter((l) => l.along > largo - 590))
+      expect(b.color, `borde a ${Math.round(b.along)} m`).toBe(ambar);
+    // Y la fila de la punta de enfrente, roja: ahí se acaba el asfalto.
+    const alFondo = visto.filter((l) => l.along > largo - 5 && Math.abs(l.across) < ancho / 2);
+    expect(alFondo.length).toBeGreaterThan(0);
+    for (const l of alFondo) expect(l.color).toBe(roja);
+    // Y ni una roja en la punta de la 01: esa fila mira hacia dentro.
+    expect(visto.filter((l) => l.along < 5 && Math.abs(l.across) < ancho / 2)).toEqual([]);
+  });
+
+  it("y desde la final de la 19, lo mismo desde su punta: sin contradicción", () => {
+    const visto = vistoDesde(fueraDe(u19, 1, 5000));
+    const verdes = visto.filter((l) => l.color === verde);
+    expect(verdes.length).toBeGreaterThan(0);
+    for (const v of verdes) expect(v.along).toBeCloseTo(largo - 460, -1);
+    const bordes = visto.filter((l) => Math.abs(l.across) > ancho / 2);
+    for (const b of bordes.filter((l) => l.along > largo - 450))
+      expect(b.color, `borde a ${Math.round(b.along)} m`).toBe(roja);
+    for (const b of bordes.filter((l) => l.along < 590))
+      expect(b.color, `borde a ${Math.round(b.along)} m`).toBe(ambar);
+    // Ni el verde de la 01, que mira al sur, ni ámbar a la entrada.
+    expect(verdes.some((v) => v.along < largo / 2)).toBe(false);
+    expect(bordes.some((b) => b.color === ambar && b.along > largo / 2)).toBe(false);
+  });
+
+  it("y rodando hacia una punta, su fila se ve roja: ahí se acaba", () => {
+    // En la pista, a mitad, mirando hacia la 19: la fila del fondo es roja.
+    const enMedio = { x: (u01[0] + u19[0]) / 2, z: -(u01[1] + u19[1]) / 2 };
+    const visto = vistoDesde(enMedio);
+    const filaNorte = visto.filter((l) => l.along > largo - 5 && Math.abs(l.across) < ancho / 2);
+    const filaSur = visto.filter((l) => l.along < 5 && Math.abs(l.across) < ancho / 2);
+    expect(filaNorte.length).toBeGreaterThan(0);
+    expect(filaSur.length).toBeGreaterThan(0);
+    for (const l of [...filaNorte, ...filaSur]) expect(l.color).toBe(roja);
   });
 });

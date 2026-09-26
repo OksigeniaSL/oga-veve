@@ -22,13 +22,14 @@
  * dos umbrales en vez de tumbarlo todo a una cota.
  */
 
-import { encogerConLaDistancia } from "./material-de-luces";
+import { encogerConLaDistancia, lucesDeDosCaras } from "./material-de-luces";
 import {
   BufferAttribute,
   BufferGeometry,
   Color,
   BoxGeometry,
   CylinderGeometry,
+  InstancedBufferAttribute,
   InstancedMesh,
   Matrix4,
   CanvasTexture,
@@ -538,8 +539,6 @@ export function createAerodrome(
     de: null,
     kt: 0,
   },
-  /** Por qué cabecera se opera hoy. De ahí sale de qué color es cada extremo. */
-  cabeceraEnUso: string | null = null,
   /**
    * Cuánto hay que subir el aeródromo entero, en metros.
    *
@@ -738,7 +737,7 @@ export function createAerodrome(
     grupo.add(marcas(pista, cota));
   }
   if (principal) {
-    grupo.add(luces(principal, cota, cabeceraEnUso));
+    grupo.add(luces(principal, cota));
   }
   grupo.add(rodadura(aero, cota));
   grupo.add(mangas(aero, cota, viento));
@@ -1654,151 +1653,214 @@ function direccionCercana(
 }
 
 /**
- * Luces de borde de pista y PAPI.
+ * Una luz del balizamiento de la pista, y de qué color se ve **según desde
+ * dónde se mire**.
  *
- * Todas las luces de borde en **una sola instancia**: son doscientas y pico y
- * sueltas serían doscientas llamadas de dibujo.
+ * Porque así son las de verdad (OACI, Anexo 14): cada luz lleva filtros y
+ * ópticas que mandan un color hacia un lado de la pista y otro hacia el otro,
+ * o nada. Las de umbral son verdes **hacia fuera**, para quien llega; las de
+ * final de pista, rojas **hacia dentro**, para quien rueda hacia esa punta; y
+ * las de borde, blancas, salvo los últimos seiscientos metros **según hacia
+ * dónde se vaya**. Con umbral desplazado, las de borde de la zona de antes de
+ * la barra se ven rojas desde la aproximación. Es exactamente lo que publica
+ * el AIP de Fuerteventura para la 01: «3406 m: 1000 m red + 1806 m white +
+ * 600 m yellow», y para la 19 «466 m red + 2340 m white + 600 m yellow» — la
+ * misma fila de luces, leída desde cada punta.
  *
- * El PAPI son cuatro luces al costado del umbral que dicen si se viene alto o
- * bajo en la senda: blancas si vas alto, rojas si vas bajo, y la mezcla que
- * buscas es dos y dos. Aquí van de momento como cuatro puntos fijos —el
- * color por ángulo llega con el bloque de aproximación—, pero puestas donde
- * están y en el lado que les toca.
+ * `principio` y `fin` son los dos extremos del eje de la pista tal y como lo
+ * trae el fichero; `eje` apunta del uno al otro, en el plano del mundo
+ * (x, z). Quien está del lado del fin respecto de la luz —`(ojo − luz) · eje ≥
+ * 0`— ve `desdeElFin`; quien está del otro, `desdeElPrincipio`. `null` es que
+ * desde ese lado no se ve nada.
  */
-function luces(
+export interface LuzDePista {
+  /** Dónde está, en coordenadas de la escena (x, y, z). */
+  readonly p: readonly [number, number, number];
+  /** Hacia dónde queda el fin del eje, en el plano (x, z) del mundo. */
+  readonly eje: readonly [number, number];
+  readonly desdeElFin: number | null;
+  readonly desdeElPrincipio: number | null;
+}
+
+/** Los colores del balizamiento, en sRGB. */
+export const COLOR_DE_PISTA = {
+  blanca: 0xfff0cc,
+  ambar: 0xffb03a,
+  verde: 0x4ade6a,
+  roja: 0xe8402c,
+} as const;
+
+/**
+ * De qué color ve una luz quien tiene el ojo en `ojo` (x, z del mundo), o
+ * `null` si desde ahí no se ve. Es la misma cuenta que hace el sombreador —
+ * ver `lucesDeDosCaras` en `material-de-luces.ts`—, escrita aquí para que se
+ * pueda comprobar sin tarjeta gráfica.
+ */
+export function colorVisto(
+  luz: LuzDePista,
+  ojo: { readonly x: number; readonly z: number },
+): number | null {
+  const lado =
+    (ojo.x - luz.p[0]) * luz.eje[0] + (ojo.z - luz.p[2]) * luz.eje[1];
+  return lado >= 0 ? luz.desdeElFin : luz.desdeElPrincipio;
+}
+
+/**
+ * Dónde va cada luz de la pista y qué color enseña a cada lado.
+ *
+ * **No depende de por qué cabecera se opera**, y ese es el arreglo. Se
+ * pintaban con un color fijo cada una —verde en la punta por la que se sale,
+ * roja en la contraria, ámbar en los últimos seiscientos metros de la pista en
+ * uso—, así que llegando por la otra punta se veía todo del revés: el rojo de
+ * «aquí se acaba» delante del morro en la aproximación y el verde al fondo.
+ * Contado en Fuerteventura: «¿a quién le hago caso?». En un aeropuerto de
+ * verdad no hay a quién hacerle caso porque no hay contradicción: la misma
+ * fila se ve verde desde fuera y roja desde dentro.
+ */
+export function lucesDePista(
   pista: Pista,
   altura: (p: Punto) => number,
-  salida?: string | null,
-): Group {
-  const grupo = new Group();
-  grupo.name = "luces";
-  if (!pista.lit) return grupo;
-
-  const conNombre = Object.entries(pista.thresholds).filter(
-    (e): e is [string, Umbral] => e[1] !== null && e[1].xy !== null,
+): LuzDePista[] {
+  if (!pista.lit) return [];
+  const umbrales = Object.values(pista.thresholds).filter(
+    (u): u is Umbral => u !== null && u.xy !== null,
   );
-  const umbrales = conNombre.map((e) => e[1]);
-  if (umbrales.length < 2) return grupo;
-
-  const ancho = pista.widthM ?? 45;
-  const nombreA = conNombre[0]![0];
+  if (umbrales.length < 2) return [];
   const [a, b] = umbrales as [Umbral, Umbral];
-  const ax = a.xy![0];
-  const ay = a.xy![1];
-  const largo = Math.hypot(b.xy![0] - ax, b.xy![1] - ay);
-
-  // ── Los colores de las luces, que no son todos iguales ────────────────
-  //
-  // Las de borde son blancas, **salvo los últimos seiscientos metros**, que
-  // van en ámbar: es el aviso de que la pista se acaba, y se ve desde la
-  // cabina mientras se rueda. Y las cabeceras llevan las suyas — verdes
-  // vistas desde la aproximación, rojas vistas desde dentro de la pista.
-  //
-  // Nada de esto es adorno: un piloto lee el estado de una pista por el color
-  // de sus luces antes de leer ningún instrumento.
-  const separacion = 60;
+  const ancho = pista.widthM ?? 45;
 
   /*
-   * **El ámbar va donde se acaba la pista para quien la usa, no al final de la
-   * polilínea de OpenStreetMap.**
-   *
-   * `d` se cuenta desde el principio del eje que trae OSM, y el ámbar se ponía
-   * en sus últimos seiscientos metros sin mirar por qué cabecera se opera. En
-   * Tenerife Norte se despega por la 30, que es el otro extremo: el aviso de
-   * «se acaba» quedaba **a la espalda** desde el primer metro, y donde de
-   * verdad se acababa la pista las luces eran blancas.
-   *
-   * Ahora se mide contra el extremo rojo, que es el que se tiene por delante.
-   * Y son seiscientos metros o un tercio de la pista, lo que sea menos: es lo
-   * que dice OACI, y un tercio de una pista de mil cien metros ya es bastante
-   * aviso.
+   * Sobre el eje del pavimento, no sobre la recta de los umbrales: son dos
+   * rectas parecidas y distintas, y con las luces a metro y medio del filo la
+   * diferencia las mandaba a la hierba. Y de umbral a umbral: el eje de
+   * OpenStreetMap es más largo que la pista —en Tenerife, 3390 metros contra
+   * 3168 entre umbrales— y contado desde su punta, la fila roja caía ochenta y
+   * ocho metros pista adentro.
    */
-  const dCabeceraA = alLargoDelEje(pista.centerline, a.xy!);
-  const dCabeceraB = alLargoDelEje(pista.centerline, b.xy!);
-  const seSalePorA = salida ? nombreA === salida : dCabeceraA < dCabeceraB;
-  const finRojo = seSalePorA ? dCabeceraB : dCabeceraA;
-  const AMBAR_DESDE = Math.min(600, largo / 3);
+  const dA = alLargoDelEje(pista.centerline, a.xy!);
+  const dB = alLargoDelEje(pista.centerline, b.xy!);
+  const [alPrincipio, alFin] = dA <= dB ? [a, b] : [b, a];
+  const desde = Math.min(dA, dB);
+  const largo = Math.abs(dB - dA);
+  if (largo < 1) return [];
+  const desplazado = (u: Umbral): number =>
+    Math.max(0, Math.min(u.displacedM ?? 0, largo / 2));
+  const dPrincipio = desplazado(alPrincipio);
+  const dFin = desplazado(alFin);
+  // Seiscientos metros o un tercio de la pista, lo que sea menos: OACI.
+  const AMBAR = Math.min(600, largo / 3);
 
-  const blancas: [number, number, number][] = [];
-  const ambares: [number, number, number][] = [];
+  const luces: LuzDePista[] = [];
+  const poner = (
+    s: number,
+    lado: number,
+    desdeElFin: number | null,
+    desdeElPrincipio: number | null,
+  ): void => {
+    const e = sobreElEje(pista.centerline, desde + s);
+    if (!e) return;
+    const [px, py, ex, ey] = e;
+    const cx = px - ey * lado;
+    const cy = py + ex * lado;
+    luces.push({
+      p: [cx, altura([cx, cy]) + 0.5, -cy],
+      // Del plano del fichero al del mundo: la y del fichero es −z.
+      eje: [ex, -ey],
+      desdeElFin,
+      desdeElPrincipio,
+    });
+  };
 
-  // **Sobre el eje del pavimento, no sobre la recta de los umbrales.**
-  //
-  // Mismo desajuste que ya se llevó por delante las líneas de borde: son dos
-  // rectas parecidas y distintas, y con las luces a metro y medio del filo la
-  // diferencia las mandaba a la hierba. Las de verdad van pegadas al borde
-  // —a tres metros como mucho—, no en el campo de al lado.
-  for (let d = separacion / 2; d < largo; d += separacion) {
-    const p = sobreElEje(pista.centerline, d);
-    if (!p) continue;
-    const [px, py, ex, ey] = p;
-    for (const lado of [-1, 1]) {
-      const cx = px - ey * lado * (ancho / 2 + 1.5);
-      const cy = py + ex * lado * (ancho / 2 + 1.5);
-      const punto: [number, number, number] = [cx, altura([cx, cy]) + 0.5, -cy];
-      (Math.abs(d - finRojo) < AMBAR_DESDE ? ambares : blancas).push(punto);
-    }
+  // ── Las de borde, cada sesenta metros por los dos lados ──────────────────
+  const { blanca, ambar, verde, roja } = COLOR_DE_PISTA;
+  const SEPARACION = 60;
+  for (let s = SEPARACION / 2; s < largo; s += SEPARACION) {
+    // Quien va hacia el fin: rojas en la zona desplazada de su umbral, ámbar
+    // en los últimos seiscientos metros por delante, blancas en medio.
+    const haciaElFin =
+      s < dPrincipio ? roja : largo - s < AMBAR ? ambar : blanca;
+    // Y quien va hacia el principio, lo mismo desde la otra punta.
+    const haciaElPrincipio =
+      largo - s < dFin ? roja : s < AMBAR ? ambar : blanca;
+    for (const lado of [-1, 1])
+      poner(s, lado * (ancho / 2 + 1.5), haciaElPrincipio, haciaElFin);
   }
 
+  // ── Las filas de cabecera ────────────────────────────────────────────────
   /*
-   * Cabeceras: una fila cruzando cada umbral, **en el umbral de verdad**.
-   *
-   * Iban a dos metros de cada punta del eje de OpenStreetMap, y ese eje es más
-   * largo que la pista: en Tenerife, 3.390 metros contra 3.168 entre umbrales.
-   * Resultado, la fila roja caía ochenta y ocho metros **dentro** de la pista,
-   * así que alineado para despegar por la 30 se veía una barrera de luces rojas
-   * doscientos metros por delante. Mismo fallo que el eje discontinuo y por el
-   * mismo motivo: dos ejes parecidos que no coinciden.
-   *
-   * Verdes en la cabecera por la que se sale y rojas en la contraria, que es lo
-   * que ve un piloto desde su puesto: verde por delante quiere decir pista, rojo
-   * quiere decir que ahí se acaba.
-   */
-  /*
-   * **Y las verdes, donde se aterriza.** Con el umbral desplazado, la fila
-   * verde va en la barra blanca y no en la punta del asfalto: es la que dice
-   * desde el aire «aquí empieza la pista para tocar». Las rojas siguen en la
-   * punta de enfrente, que es donde se acaba el asfalto. Ver
+   * Una fila cruzando cada punta. Sin desplazado, umbral y final de pista son
+   * la misma fila: verde hacia fuera, roja hacia dentro. Con desplazado son
+   * dos: la roja en la punta del asfalto, que es donde se acaba para quien
+   * rueda hacia ella, y la verde en la barra, que es donde empieza la pista
+   * para tocar. Es la barra blanca pintada, vista de noche. Ver
    * `umbral-desplazado.ts`.
    */
-  const haciaB = Math.sign(dCabeceraB - dCabeceraA) || 1;
-  const desplazadoDe = (u: Umbral): number =>
-    Math.max(0, Math.min(u.displacedM ?? 0, largo / 2));
-  const verdeEn = seSalePorA
-    ? dCabeceraA + haciaB * desplazadoDe(a)
-    : dCabeceraB - haciaB * desplazadoDe(b);
-  const verdes: [number, number, number][] = [];
-  const rojas: [number, number, number][] = [];
-  for (const [extremo, destino] of [
-    [verdeEn, verdes],
-    [finRojo, rojas],
-  ] as const) {
-    const p = sobreElEje(pista.centerline, extremo);
-    if (!p) continue;
-    const [px, py, ex, ey] = p;
-    for (let k = -5; k <= 5; k++) {
-      const lado = k * (ancho / 11);
-      const cx = px - ey * lado;
-      const cy = py + ex * lado;
-      destino.push([cx, altura([cx, cy]) + 0.5, -cy]);
-    }
+  const fila = (
+    s: number,
+    desdeElFin: number | null,
+    desdeElPrincipio: number | null,
+  ): void => {
+    for (let k = -5; k <= 5; k++)
+      poner(s, k * (ancho / 11), desdeElFin, desdeElPrincipio);
+  };
+  // En la punta del principio, quien está fuera está del lado del principio.
+  if (dPrincipio > 0) {
+    fila(0, roja, null);
+    fila(dPrincipio, null, verde);
+  } else {
+    fila(0, roja, verde);
   }
+  if (dFin > 0) {
+    fila(largo, null, roja);
+    fila(largo - dFin, verde, null);
+  } else {
+    fila(largo, verde, roja);
+  }
+  return luces;
+}
 
-  // **Todas las luces en una sola instancia, con su color por luz.**
-  //
-  // Una malla por color serían cuatro llamadas de dibujo solo en luces, y el
-  // aeródromo entero tiene un presupuesto de doce. `InstancedMesh` admite un
-  // color por instancia, así que el color —que es justo la información que
-  // hay que transmitir— sale gratis.
-  const todas: [[number, number, number], number][] = [
-    ...blancas.map((p) => [p, 0xfff0cc] as [[number, number, number], number]),
-    ...ambares.map((p) => [p, 0xffb03a] as [[number, number, number], number]),
-    ...verdes.map((p) => [p, 0x4ade6a] as [[number, number, number], number]),
-    ...rojas.map((p) => [p, 0xe8402c] as [[number, number, number], number]),
-  ];
+/**
+ * Luces de borde de pista y de cabecera.
+ *
+ * Todas en **una sola instancia**: son doscientas y pico y sueltas serían
+ * doscientas llamadas de dibujo. Y el color de cada una lo decide el
+ * sombreador según el lado desde el que se mira, así que ser direccionales no
+ * cuesta ni una malla ni una llamada más. Ver `lucesDePista`.
+ *
+ * El PAPI y las luces de aproximación van aparte, en la cabecera en uso: ver
+ * `world/aproximacion.ts`.
+ */
+function luces(pista: Pista, altura: (p: Punto) => number): Group {
+  const grupo = new Group();
+  grupo.name = "luces";
+  const todas = lucesDePista(pista, altura);
+  if (todas.length === 0) return grupo;
 
-  const m = new Matrix4();
+  /*
+   * Lo que cada luz enseña a cada lado, en lineal —`setHex` pasa el sRGB a
+   * lineal, que es en lo que trabaja el sombreador— y con el cuarto número
+   * diciendo si desde ese lado se ve.
+   */
   const tono = new Color();
+  const aColor = (hex: number | null, destino: Float32Array, k: number) => {
+    if (hex === null) {
+      destino.set([0, 0, 0, 0], k * 4);
+      return;
+    }
+    tono.setHex(hex);
+    destino.set([tono.r, tono.g, tono.b, 1], k * 4);
+  };
+  const ejes = new Float32Array(todas.length * 2);
+  const alFin = new Float32Array(todas.length * 4);
+  const alPrincipio = new Float32Array(todas.length * 4);
+  const sitios = new Float32Array(todas.length * 3);
+  todas.forEach((luz, k) => {
+    ejes.set(luz.eje, k * 2);
+    aColor(luz.desdeElFin, alFin, k);
+    aColor(luz.desdeElPrincipio, alPrincipio, k);
+    sitios.set(luz.p, k * 3);
+  });
+
   /*
    * **Veinte centímetros de radio, no cincuenta y ocho.** Una baliza de borde
    * de pista es un casquete de veinte o treinta centímetros; una bola de más
@@ -1807,17 +1869,27 @@ function luces(
    * cambia nada: ahí manda el punto de ocho píxeles de abajo, y la esfera solo
    * le gana a menos de unos veinticinco metros, que es cuando se ve la baliza.
    */
-  const malla = new InstancedMesh(
-    new SphereGeometry(0.2, 6, 4),
-    new MeshBasicMaterial(),
-    todas.length,
+  const esfera = new SphereGeometry(0.2, 6, 4);
+  esfera.setAttribute("luzEje", new InstancedBufferAttribute(ejes, 2));
+  esfera.setAttribute("luzFin", new InstancedBufferAttribute(alFin, 4));
+  esfera.setAttribute(
+    "luzPrincipio",
+    new InstancedBufferAttribute(alPrincipio, 4),
   );
+  const deCerca = new MeshBasicMaterial();
+  lucesDeDosCaras(deCerca);
+  const malla = new InstancedMesh(esfera, deCerca, todas.length);
   malla.name = "luces-pista";
-  todas.forEach(([p, color], k) => {
-    m.makeTranslation(p[0], p[1], p[2]);
+  const m = new Matrix4();
+  todas.forEach((luz, k) => {
+    m.makeTranslation(luz.p[0], luz.p[1], luz.p[2]);
     malla.setMatrixAt(k, m);
-    malla.setColorAt(k, tono.setHex(color));
   });
+  /*
+   * Y la lista entera, para quien quiera preguntar qué se ve desde dónde —las
+   * pruebas—: los atributos del sombreador no se leen bien de vuelta.
+   */
+  malla.userData.luces = todas;
   grupo.add(malla);
 
   /*
@@ -1838,21 +1910,14 @@ function luces(
    * una capa de puntos sin atenuación por distancia, que mantiene cuatro
    * píxeles pase lo que pase. De cerca la esfera es mayor y se come al punto;
    * de lejos solo queda el punto, que es justo lo que se ve en la realidad.
+   * Con el mismo color por lado que la esfera, que si no de cerca se vería
+   * una cosa y de lejos otra.
    */
-  const sitios = new Float32Array(todas.length * 3);
-  const colores = new Float32Array(todas.length * 3);
-  todas.forEach(([p, color], k) => {
-    sitios[k * 3] = p[0];
-    sitios[k * 3 + 1] = p[1];
-    sitios[k * 3 + 2] = p[2];
-    tono.setHex(color);
-    colores[k * 3] = tono.r;
-    colores[k * 3 + 1] = tono.g;
-    colores[k * 3 + 2] = tono.b;
-  });
   const geoPuntos = new BufferGeometry();
   geoPuntos.setAttribute("position", new BufferAttribute(sitios, 3));
-  geoPuntos.setAttribute("color", new BufferAttribute(colores, 3));
+  geoPuntos.setAttribute("luzEje", new BufferAttribute(ejes, 2));
+  geoPuntos.setAttribute("luzFin", new BufferAttribute(alFin, 4));
+  geoPuntos.setAttribute("luzPrincipio", new BufferAttribute(alPrincipio, 4));
   const puntos = new Points(
     geoPuntos,
     new PointsMaterial({
@@ -1867,7 +1932,6 @@ function luces(
       // Lo importante de todo esto: sin atenuación, el tamaño es en píxeles de
       // pantalla y no en metros de mundo.
       sizeAttenuation: false,
-      vertexColors: true,
       // Ni tapan ni son tapadas por el aire: son luces.
       depthWrite: false,
       toneMapped: false,
@@ -1890,6 +1954,7 @@ function luces(
    * `encogerConLaDistancia`.
    */
   encogerConLaDistancia(puntos.material as PointsMaterial, 10000, 0.3);
+  lucesDeDosCaras(puntos.material as PointsMaterial);
   grupo.add(puntos);
 
   /*

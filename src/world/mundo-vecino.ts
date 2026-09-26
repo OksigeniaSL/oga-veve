@@ -211,8 +211,9 @@ export class MundoVecino {
   }
 
   /**
-   * **El tiempo de hoy, también aquí.** Rehace el aeródromo con su viento y su
-   * cabecera en uso: la manga, y de qué color es cada extremo de la pista.
+   * **El tiempo de hoy, también aquí.** Rehace el aeródromo con su viento: la
+   * manga. El color de cada extremo de la pista ya no depende de él —las luces
+   * son direccionales, como las de verdad; ver `lucesDePista`—.
    *
    * Se construía una vez y en calma, y ningún cambio de tiempo llegaba al
    * vecino: en Los Rodeos la manga colgaba a plomo mientras el avión recibía

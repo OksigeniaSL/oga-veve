@@ -2324,10 +2324,10 @@ export class Game {
     for (const [i, quien] of (options.vecinos ?? []).entries()) {
       /*
        * **Con el viento de hoy, que es el mismo en todo el mundo.** El
-       * aeródromo se construye con él —la manga tiesa o colgando, el color de
-       * cada extremo de la pista— y de él sale por qué cabecera se opera. Se
-       * montaba en calma: en Los Rodeos la manga colgaba a plomo mientras el
-       * avión recibía veinte nudos de Gando. Ver `ponerTiempo`.
+       * aeródromo se construye con él —la manga tiesa o colgando— y de él sale
+       * por qué cabecera se opera. Se montaba en calma: en Los Rodeos la manga
+       * colgaba a plomo mientras el avión recibía veinte nudos de Gando. Ver
+       * `ponerTiempo`.
        */
       const meteo = this.scenario.meteo ?? null;
       const mundo = new MundoVecino(
