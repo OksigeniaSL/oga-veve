@@ -10,7 +10,14 @@
 
 import { describe, expect, it } from "vitest";
 import { ShaderMaterial, Vector4, type Mesh } from "three";
-import { nudoDeOrillas, SIN_ORILLA, sobreElAguaEn, Terrain } from "./terrain";
+import {
+  buildHeightfield,
+  nudoDeOrillas,
+  SIN_ORILLA,
+  sobreElAguaEn,
+  Terrain,
+} from "./terrain";
+import { enElPavimento } from "./aerodrome";
 import {
   CHACO,
   SCENARIOS,
@@ -146,6 +153,74 @@ describe("emplazamiento de las pistas", () => {
       expect(peor).toBeGreaterThan(scenario.waterLevel);
     },
   );
+});
+
+/*
+ * El fichero de relieve, leído con el `fs` de Node pedido en marcha: ver
+ * `flaps-del-modelo.test.ts`, que explica por qué no se importa por su nombre.
+ */
+const fs = (
+  globalThis as unknown as {
+    process: { getBuiltinModule(nombre: string): unknown };
+  }
+).process.getBuiltinModule("node:fs") as {
+  existsSync(ruta: string): boolean;
+  readFileSync(ruta: string): Uint8Array;
+};
+
+/** El escenario con su relieve medido puesto, o `null` si no lo tiene. */
+function conSuRelieve(escenario: Scenario): Scenario | null {
+  const ruta = `data/terrain/${escenario.id}.bin`;
+  if (!fs.existsSync(ruta)) return null;
+  const bytes = fs.readFileSync(ruta);
+  // Copiado, que un `Int16Array` pide el comienzo alineado a dos bytes.
+  const datos = new Int16Array(Uint8Array.from(bytes).buffer);
+  const resolucion = Math.round(Math.sqrt(datos.length));
+  return { ...escenario, relieve: { datos, resolucion } };
+}
+
+describe("el aeródromo se asienta en tierra", () => {
+  /*
+   * **Y no saca tierra del mar.** El aplanado del recinto es una banda a los
+   * dos lados de la pista, tan ancha como lo más apartado que haya que
+   * sostener —la terminal de Fuerteventura, en el lado de tierra—, más su
+   * rampa. En el lado del mar esa banda subía el fondo a la cota del
+   * aeródromo: una meseta de diecisiete metros metida en el agua, con la
+   * fotografía del mar estirada encima. Y el mar del PNOA junto a la costa
+   * viene a cuadros de colores, así que lo que se veía llegando a Fuerteventura
+   * era «una tira de cuadrados marrones, granates y negros sobre el mar».
+   *
+   * Lo que el mapa medido pone bajo el agua se queda bajo el agua, salvo lo que
+   * lleve pavimento encima o al lado —dos nudos—, que eso sí hay que
+   * sostenerlo.
+   */
+  for (const base of SCENARIOS) {
+    const escenario = conSuRelieve(base);
+    const aero = escenario?.aerodrome;
+    if (!escenario || !aero) continue;
+    it(`${escenario.id}: ningún nudo de mar sale del agua sin pavimento`, () => {
+      const antes = buildHeightfield(escenario);
+      const t = new Terrain(escenario);
+      const malla = t.group.getObjectByName("terreno") as Mesh;
+      const pos = malla.geometry.getAttribute("position");
+      const nivel = escenario.waterLevel;
+      const paso = escenario.size / escenario.segments;
+      let deMar = 0;
+      let sacados = 0;
+      for (let i = 0; i < pos.count; i++) {
+        if (antes[i]! > nivel) continue;
+        deMar++;
+        if (pos.getY(i) <= nivel) continue;
+        // En los ejes del fichero del aeródromo: la Y apunta al norte.
+        const enSuSitio = enElPavimento(aero, [pos.getX(i), -pos.getZ(i)], 2 * paso);
+        if (!enSuSitio) sacados++;
+      }
+      // Que no pase en vacío en las islas, que tienen mar que mirar. Las
+      // lecciones de Paraguay pueden no tener un solo nudo bajo su río.
+      if (escenario.waterLevel <= 2) expect(deMar).toBeGreaterThan(0);
+      expect(sacados).toBe(0);
+    });
+  }
 });
 
 describe("el suelo fuera del mapa fino", () => {

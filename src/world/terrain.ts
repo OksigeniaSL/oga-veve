@@ -39,6 +39,7 @@ import { createRunwayMarkings } from "./runway-markings";
 import {
   aLaPolilinea,
   createAerodrome,
+  enElPavimento,
   type Aerodrome,
   type Punto,
 } from "./aerodrome";
@@ -2094,6 +2095,29 @@ function flattenAerodrome(
   );
   const alcance = nucleo + Math.max(400, Math.min(desnivel * 8, 1800));
 
+  /*
+   * **Y el mar se queda en el mar.** La banda va a los dos lados de la pista
+   * con el ancho de lo más apartado que haya que sostener, y ese algo casi
+   * siempre está en el lado de tierra: la plataforma de Fuerteventura, a
+   * medio kilómetro al oeste del eje. En el lado del mar la banda y su rampa
+   * subían el fondo a la cota del aeródromo, y quedaba una meseta de
+   * diecisiete metros metida en el agua con la fotografía del mar estirada
+   * encima —que junto a la costa el PNOA trae a cuadros de colores—: «una
+   * tira de cuadrados marrones, granates y negros sobre el mar», llegando a
+   * Fuerteventura. Pasaba en los siete aeropuertos de Canarias con la costa
+   * junto a la pista, de cuarenta y ocho nudos en Tenerife Sur a más de tres
+   * mil en Lanzarote.
+   *
+   * Así que un nudo que el mapa medido pone bajo el agua solo se sube si
+   * tiene pavimento encima o a dos nudos, que eso sí hay que sostenerlo: una
+   * pista ganada al mar que el mapa no llegara a ver no puede quedarse
+   * colgando. Todo lo demás es mar, y lo pinta el agua. La caja es solo para
+   * no preguntar al pavimento por cada nudo del mar abierto.
+   */
+  const nivel = scenario.waterLevel;
+  const sostener = step * 2;
+  const caja = cajaDelPavimento(aero, sostener);
+
   for (let row = 0; row < resolution; row++) {
     const mundoZ = -half + row * step;
     for (let col = 0; col < resolution; col++) {
@@ -2107,6 +2131,17 @@ function flattenAerodrome(
       if (d >= alcance) continue;
       const peso = smoothFalloff(d, nucleo, alcance);
       const i = row * resolution + col;
+      if (
+        heights[i]! <= nivel &&
+        !(
+          x >= caja.x0 &&
+          x <= caja.x1 &&
+          z >= caja.y0 &&
+          z <= caja.y1 &&
+          enElPavimento(aero, [x, z], sostener)
+        )
+      )
+        continue;
       // El terreno se aplana un pelín **por debajo** del pavimento. A la
       // misma cota exacta, el asfalto queda enterrado por el redondeo de la
       // malla y no se ve nada. Un firme real también sobresale de su
@@ -2143,6 +2178,42 @@ function bandaDelAerodromo(
   for (const b of aero.buildings) mirar(b.polygon);
   mirar(aero.windsocks);
   return { eje, nucleo: (eje.length ? lateral : 0) + step * 2 + 60 };
+}
+
+/**
+ * Lo que abarca el pavimento de un aeródromo, en los ejes de su fichero,
+ * ensanchado `margen` metros y medio ancho de lo más ancho que tenga. Ver «el
+ * mar se queda en el mar» en `flattenAerodrome`.
+ */
+function cajaDelPavimento(
+  aero: Aerodrome,
+  margen: number,
+): { x0: number; x1: number; y0: number; y1: number } {
+  let x0 = Infinity;
+  let x1 = -Infinity;
+  let y0 = Infinity;
+  let y1 = -Infinity;
+  const mirar = (pts: readonly Punto[]): void => {
+    for (const [x, y] of pts) {
+      x0 = Math.min(x0, x);
+      x1 = Math.max(x1, x);
+      y0 = Math.min(y0, y);
+      y1 = Math.max(y1, y);
+    }
+  };
+  // Con los anchos que da por buenos `enElPavimento` cuando faltan.
+  let ancho = 45;
+  for (const p of aero.runways) {
+    mirar(p.centerline);
+    ancho = Math.max(ancho, p.widthM ?? 0);
+  }
+  for (const t of aero.taxiways) {
+    mirar(t.path);
+    ancho = Math.max(ancho, t.widthM ?? 0);
+  }
+  for (const a of aero.aprons) mirar(a.polygon);
+  const mas = ancho / 2 + margen;
+  return { x0: x0 - mas, x1: x1 + mas, y0: y0 - mas, y1: y1 + mas };
 }
 
 /** Cota de la malla en un punto del mundo, por vecino más cercano. */
