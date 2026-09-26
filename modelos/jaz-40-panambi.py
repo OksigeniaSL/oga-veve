@@ -34,8 +34,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import caja, cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, espejo, helice, llantas, neumaticos, paneles, paneles_zy,
-    recogido, simetricos, superficie, varillas, zy,
+    bisagra, espejo, flap, flaps_moviles, helice, llantas, neumaticos,
+    paneles, paneles_zy, ranurado, recogido, simetricos, superficie,
+    varillas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -183,18 +184,32 @@ def construir():
     # no tiene prisa. Flaps hasta la góndola y más allá, y alerones fuera.
     semi = ENVERGADURA / 2
     j = "oscuro"
-    piezas.append(superficie("ala", [
+    # **Y se mueven a los dos lados de la góndola, no a través de ella.** La
+    # franja pintada pasa por encima del motor, pero un flap no baja dentro de
+    # una góndola: en un bimotor de esta clase el flap va partido, uno entre
+    # el fuselaje y el motor y otro entre el motor y el alerón. El trozo de
+    # encima de la góndola se queda quieto, que es el carenado de detrás del
+    # motor. Recogido no se nota el corte: las normales son las de siempre y
+    # no hay raya pintada que mover.
+    flaps = [flap("dentro", 0.70, 2.14, 0.735),
+             flap("fuera", 2.79, 3.55, 0.735)]
+    ala = superficie("ala", [
         de_ala(0.0, y_ala(0.0), ALA_Z, 2.10, 0.15, 6, 2.0),
         de_ala(MOTOR, y_ala(MOTOR), ALA_Z + 0.06, 1.80, 0.14, 6, 1.5),
         # Menos la punta redonda, que sobresale medio espesor.
         de_ala(semi - 0.06, y_ala(semi), ALA_Z + 0.22, 1.05, 0.11, 6, -1.0),
-    ], curvatura=0.02, zonas=[
+    ], curvatura=0.02, flaps=flaps, zonas=[
         (j, 0.65, 3.55, 0.72, 0.735),
         (j, 0.65, 0.70, 0.735, 1.0),
         (j, 3.55, 3.60, 0.735, 1.0),
         (j, 3.70, 5.65, 0.74, 0.755),
         (j, 5.60, 5.65, 0.755, 1.0),
-    ]))
+    ])
+    piezas.append(ala)
+    # Ranurados, de bisagra, con los topes de un bimotor de pistón de seis
+    # plazas: diez, veinticinco y cuarenta. Ver `ranurado`.
+    piezas += flaps_moviles(ala, flaps, ranurado(muescas=(0, 10, 25, 40),
+                                                 caida=0.25))
 
     # ── Góndolas y hélices ────────────────────────────────────────────────
     #
@@ -290,8 +305,9 @@ def construir():
     morro.append(llantas("rueda-morro-llanta", [(0, eje_m, MORRO_Z + 0.04)],
                          RUEDA_MORRO, 0.13))
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (-1, 0, 0), 90, morro)
-    recogido(patas, [p for p in piezas
-                     if p.name in ("fuselaje", "gondola", "ala")])
+    # Y los flaps también tapan: son el trozo de ala de detrás del pozo.
+    recogido(patas, [p for p in piezas if p.type == "MESH" and (
+        p.name in ("fuselaje", "gondola", "ala") or p.name.startswith("flap-"))])
     piezas += patas
 
     piezas.append(centro_de_gravedad(ALA_Z + 0.55))

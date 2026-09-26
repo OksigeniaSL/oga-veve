@@ -76,6 +76,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       if (juego.input.trenQueSePide !== fuera) juego.input.alternarTren();
     },
     /**
+     * **Y la palanca de flaps**, por lo mismo que la del tren: los flaps
+     * tardan en llegar, así que `controls.flaps` es dónde están y no lo que
+     * se ha pedido. Escribirlo desde fuera los teletransporta, que es
+     * justo lo que un piloto no puede hacer. Ver `flight/flaps.ts`.
+     */
+    pedirFlaps: (donde: number) => juego.input.ponerPalancaDeFlaps(donde),
+    palancaDeFlaps: () => juego.input.palancaDeFlaps,
+    /**
      * Cuántos hitos del paisaje lleva señalados el vuelo.
      *
      * Es lo único que se puede mirar desde fuera de una cosa que es voz y
@@ -708,6 +716,29 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     patas: () => juego.aircraftMesh.patas?.cuantas ?? 0,
     /** Mover el tren a mano, para ver si el que no se mueve es el mando. */
     patasPoner: (donde: number) => juego.aircraftMesh.patas?.poner(donde),
+    /** Cuántos flaps se mueven en el modelo. Ver `world/flaps.ts`. */
+    flaps: () => juego.aircraftMesh.flaps?.cuantos ?? 0,
+    /** Mover los flaps a mano, para mirarlos sin esperar a que lleguen. */
+    flapsPoner: (donde: number) => juego.aircraftMesh.flaps?.poner(donde),
+    /**
+     * **Cómo están los flaps en el modelo**, sin redondear: la matriz de cada
+     * vacío y cuántas tapas y huecos se están dibujando.
+     *
+     * Es lo que permite comprobar desde fuera que recogidos vuelven
+     * **exactamente** a su sitio —la misma matriz, no una parecida— y que
+     * con ellos recogidos no se dibuja nada que no estuviera antes. Ver
+     * `world/flaps.ts`.
+     */
+    piezasDeFlaps: () => {
+      const matrices: number[][] = [];
+      let cierresVisibles = 0;
+      juego.aircraftMesh.group.traverse((o) => {
+        if (/^flap-[^-]+-(derecha|izquierda)$/.test(o.name))
+          matrices.push([...o.matrix.elements]);
+        if (/-tapas$|^hueco-flap-/.test(o.name) && o.visible) cierresVisibles++;
+      });
+      return { matrices, cierresVisibles };
+    },
     /** Con qué vista se está mirando: `chase`, `cockpit`, `wing`… */
     vista: () => juego.cameraMode,
     /** Y ponerse en una, sin ir pulsando la tecla a ciegas. Para el banco. */

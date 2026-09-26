@@ -791,7 +791,7 @@ export function pantallaDeMotores(
     ${diales}
     ${mandoDeMotor(12, cy + r + 46, hueco, n)}
     ${reglaDeCombustible(40, alto - 156, ancho - 80, 16)}
-    ${reglaDeFlaps(40, alto - 96, ancho - 80, 26)}
+    ${reglaDeFlaps(40, alto - 96, ancho - 80, 26, c.flaps)}
     ${lucesDeTren(14, yTren, patas)}
     <text data-cristal="reversa" x="${ancho - 14}" y="${yTren + 13}"
           ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
@@ -873,23 +873,30 @@ function dialDeMotor(cx: number, cy: number, r: number, i: number): string {
  * la misma regla: cuatro muescas y un puntero que se para en ellas, igual que
  * la palanca de verdad — que no es un mando continuo, es una palanca con
  * topes, y eso se aprende viéndolo.
+ *
+ * Rotulada con los grados de **este** avión —ver `Cuadro.flaps`—, y con el
+ * puntero donde están los flaps y no donde está la palanca: se le ve ir de
+ * una muesca a la siguiente mientras salen. Ver `flight/flaps.ts`.
  */
 export function reglaDeFlaps(
   x: number,
   y: number,
   w: number,
   h: number,
+  grados: readonly number[] = [0, 10, 20, 30],
 ): string {
   const tumbada = w > h;
   const largo = tumbada ? w : h;
+  const ultima = Math.max(1, grados.length - 1);
   let detentes = "";
-  for (let k = 0; k <= 3; k++) {
-    const d = (k / 3) * largo;
+  for (let k = 0; k <= ultima; k++) {
+    const d = (k / ultima) * largo;
+    const cifra = grados[k] ?? k * 10;
     detentes += tumbada
       ? `<line x1="${d}" y1="0" x2="${d}" y2="${h}" class="cr__marca" />` +
-        `<text x="${d}" y="${h + 15}" ${MARCA_CIFRA} class="cr__rotulo" text-anchor="middle">${k * 10}</text>`
+        `<text x="${d}" y="${h + 15}" ${MARCA_CIFRA} class="cr__rotulo" text-anchor="middle">${cifra}</text>`
       : `<line x1="0" y1="${d}" x2="${w}" y2="${d}" class="cr__marca" />` +
-        `<text x="${w + 5}" y="${d + 4}" ${MARCA_CIFRA} class="cr__rotulo">${k * 10}</text>`;
+        `<text x="${w + 5}" y="${d + 4}" ${MARCA_CIFRA} class="cr__rotulo">${cifra}</text>`;
   }
   return `
     <g transform="translate(${x} ${y})">
@@ -969,7 +976,7 @@ export function columnaDeMotor(ancho: number, alto: number, c: Cuadro): string {
     ${diales}
     ${mandoDeMotor(16, cy + r + 46, ancho - 32, n)}
     ${reglaDeCombustible(34, alto - 118, ancho - 68, 16)}
-    ${reglaDeFlaps(34, alto - 74, ancho - 68, 26)}
+    ${reglaDeFlaps(34, alto - 74, ancho - 68, 26, c.flaps)}
     <text data-cristal="reversa" x="${ancho - 12}" y="${alto - 14}"
           ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
   `;
@@ -1010,7 +1017,7 @@ export function franjaDeMotor(
     <rect data-fondo="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
     <text x="${ancho / 2}" y="16" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${barras}
-    ${reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34)}
+    ${reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34, c.flaps)}
     ${reglaDeCombustible(78, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 56)}
     ${lucesDeTren(12, alto - 24, patasDe(a))}
     <text data-cristal="reversa" x="${ancho / 2}" y="${alto - 8}"

@@ -35,8 +35,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_deriva, de_ala, dentro_de,
-    espejo, estacion, helice, llantas, neumaticos, paneles, paneles_zy,
-    simetricos, superficie, varillas, zy,
+    espejo, estacion, flap, flaps_moviles, helice, llantas, neumaticos,
+    paneles, paneles_zy, ranurado, simetricos, superficie, varillas, zy,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -205,12 +205,20 @@ def construir():
     # Flaps por dentro y alerones por fuera, dibujados como lo que se ve: la
     # junta de la bisagra y el corte entre los dos.
     junta = "oscuro"
-    piezas.append(superficie("ala", estaciones, curvatura=0.02, zonas=[
+    flaps = [flap("dentro", 0.60, 2.72, 0.72)]
+    ala = superficie("ala", estaciones, curvatura=0.02, flaps=flaps, zonas=[
         (junta, 0.55, 5.02, 0.705, 0.72),
         (junta, 0.55, 0.60, 0.72, 1.0),
         (junta, 2.72, 2.80, 0.72, 1.0),
         (junta, 4.97, 5.02, 0.72, 1.0),
-    ]))
+    ])
+    piezas.append(ala)
+    # **Ranurado, de bisagra**: diez, veinte y treinta grados, los tres topes
+    # de una avioneta de escuela de ala alta. La bisagra cuelga un cuarto de
+    # la cuerda del flap por debajo del ala, y por eso al bajar se abre la
+    # ranura por arriba. Ver `ranurado`.
+    piezas += flaps_moviles(ala, flaps, ranurado(muescas=(0, 10, 20, 30),
+                                                 caida=0.25))
 
     # **Y su montante, que es media silueta de este avión.** Va del costado
     # bajo del fuselaje al ala, a media envergadura: es lo que permite que un

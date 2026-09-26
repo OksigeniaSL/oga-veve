@@ -42,6 +42,7 @@
     "panel": "node scripts/verificar-panel.mjs",
     "frecuencia": "node scripts/verificar-frecuencia.mjs",
     "tren": "node scripts/verificar-tren.mjs",
+    "flaps": "node scripts/verificar-flaps.mjs",
     "licencias": "node scripts/verificar-licencias.mjs"
   },
   "dependencies": {

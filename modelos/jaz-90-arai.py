@@ -38,8 +38,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, espejo, llantas, neumaticos, paneles, paneles_zy, recogido,
-    simetricos, superficie, turbofan, varillas, ventanas, zy,
+    bisagra, canoas_con_flap, espejo, flap, flaps_moviles, fowler, llantas,
+    neumaticos,
+    paneles, paneles_zy, recogido, simetricos, superficie, turbofan, varillas,
+    ventanas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -235,8 +237,14 @@ def construir():
                82, 0.0),
     ]
     j = "oscuro"
-    piezas.append(superficie("ala", estaciones, material_="gris",
-                             curvatura=0.015, zonas=[
+    # Los flaps que se mueven son la franja de dentro de las juntas: de la
+    # panza al motor y del motor al alerón. Ver `flaps_moviles`. El de dentro
+    # empieza donde el ala sale del carenado —el anillo de 1,4, que ya estaba—
+    # y no en la junta pintada, que queda tapada por él: moviéndose, el trozo
+    # de flap de dentro del carenado asomaba por debajo como una cuchilla.
+    flaps = [flap("dentro", 1.4, 4.40, 0.73), flap("fuera", 4.48, 9.2, 0.73)]
+    ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
+                     flaps=flaps, zonas=[
         ("aluminio", 1.4, 12.2, 0.0, 0.07),
         # Los flaps, por dentro y por fuera del motor, y el alerón.
         (j, 1.0, 9.2, 0.715, 0.73),
@@ -247,10 +255,22 @@ def construir():
         (j, 12.05, 12.12, 0.78, 1.0),
         # Y los spoilers, por arriba.
         (j, 1.6, 8.8, 0.60, 0.61, "arriba"),
-    ]))
+    ])
+    piezas.append(ala)
+    # **Fowler**, como todo reactor de línea: la primera muesca es casi todo
+    # carril —sale hacia atrás y apenas baja, que es como se despega sin
+    # frenar—, y las dos últimas son ángulo. Cinco, quince y treinta grados,
+    # los topes de un bimotor de pasillo único; y un tercio de su cuerda de
+    # carril al final, con los raíles mirando un poco hacia abajo porque
+    # son curvos.
+    los_flaps = flaps_moviles(ala, flaps, fowler(
+        muescas=(0, 5, 15, 30), recorrido=(0, 0.20, 0.30, 0.34), bajada=8))
+    piezas += los_flaps
 
     # Los carenados de los raíles de los flaps: las «canoas» que asoman por
-    # detrás del borde de salida. Tres por ala.
+    # detrás del borde de salida. Tres por ala, y la cola de las que caen bajo
+    # un flap baja con él. Ver `canoas_con_flap`.
+    canoas = []
     for n, x in enumerate((3.2, 6.1, 8.6)):
         z0 = z_ala(x) + (raiz - (raiz - quiebro) * min(x, QUIEBRO) / QUIEBRO
                          if x < QUIEBRO else
@@ -266,7 +286,9 @@ def construir():
         ], x=x)
         o = canoa.malla(f"canoa-{n}", "gris", lados=12, paso=0.3)
         espejo(o)
-        piezas.append(o)
+        canoas.append(o)
+    piezas += canoas
+    piezas += canoas_con_flap(canoas, los_flaps)
 
     # ── Los dos turbofanes ────────────────────────────────────────────────
     #
@@ -362,8 +384,9 @@ def construir():
     morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.22))
     # Hacia delante: la rueda va al morro girando sobre el eje x.
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
-    recogido(patas, [p for p in piezas
-                     if p.name in ("fuselaje", "carenado", "ala")])
+    # Y los flaps también tapan: son el trozo de ala de detrás del pozo.
+    recogido(patas, [p for p in piezas if p.type == "MESH" and (
+        p.name in ("fuselaje", "carenado", "ala") or p.name.startswith("flap-"))])
     piezas += patas
 
     # El centro de gravedad, a un cuarto de la cuerda media del ala.

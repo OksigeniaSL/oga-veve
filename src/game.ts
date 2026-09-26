@@ -5450,8 +5450,12 @@ export class Game {
       this.reducedMotion,
     );
     this.input.ponerSignoDeCabeceo(signoDeCabeceo(ajustes));
-    // Y si el avión de hoy mete las patas, que decide si hay palanca de tren.
-    this.input.ponerAeronave(this.aircraft.trenRetractil);
+    // Y si el avión de hoy mete las patas, que decide si hay palanca de tren,
+    // y lo que tardan sus flaps. Ver `flight/flaps.ts`.
+    this.input.ponerAeronave(
+      this.aircraft.trenRetractil,
+      this.aircraft.tardanLosFlaps,
+    );
     // Las unidades: manda el peldaño salvo que alguien haya dicho otra cosa.
     this.hud.setUnits(unidadesElegidas(ajustes) ?? this.tier.units);
     // Y el tamaño, que es una escala sobre el tacto y la letra del HUD.
@@ -5868,6 +5872,9 @@ export class Game {
     if (configurado) {
       if (!this.input.trenQueSePide) this.input.alternarTren();
       this.input.controls.tren = 1;
+      // La palanca abajo **y** los flaps ya abajo: la final empieza
+      // configurada, no configurándose. Ver `flight/flaps.ts`.
+      this.input.ponerPalancaDeFlaps(1);
       this.input.controls.flaps = 1;
     }
     this.input.controls.throttle = this.flight.gasPara(entrada);
@@ -6300,7 +6307,9 @@ export class Game {
           !this.flight.state.onGround &&
           banda === "rapido" &&
           this.input.controls.throttle < 0.25 &&
-          this.input.controls.flaps < 0.5;
+          // Lo pedido y no dónde están: si ya bajaste la palanca, los flaps
+          // están saliendo y pedírtelos otra vez sería avisar de lo hecho.
+          this.input.palancaDeFlaps < 0.5;
         if (sinGasQueQuitar) {
           this.hud.senal.mostrar(
             "flaps",
@@ -7138,6 +7147,12 @@ export class Game {
      * no cambia nada en la pantalla no parece un mando. Ver `world/patas.ts`.
      */
     this.aircraftMesh.patas?.poner(this.input.controls.tren);
+    /*
+     * Y los flaps, donde **están**, no donde está la palanca: la misma cifra
+     * que sustenta en el modelo de vuelo y que marca la aguja. Ver
+     * `flight/flaps.ts` y `world/flaps.ts`.
+     */
+    this.aircraftMesh.flaps?.poner(this.input.controls.flaps);
     /*
      * Y las luces de posición: la de choque parpadea con el motor en marcha,
      * que es su regla de verdad —se enciende **antes** de arrancar y dice
@@ -9612,8 +9627,9 @@ export class Game {
 
     this.aircraft = next;
     this.audio.setEngine(next.sound);
-    // Y si este avión mete las patas o no, que es lo que decide si hay palanca.
-    this.input.ponerAeronave(next.trenRetractil);
+    // Y si este avión mete las patas o no, que es lo que decide si hay palanca,
+    // y lo que tardan sus flaps.
+    this.input.ponerAeronave(next.trenRetractil, next.tardanLosFlaps);
 
     this.scene.remove(this.aircraftMesh.group);
     this.aircraftMesh = createAircraftMesh(next);

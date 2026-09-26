@@ -64,7 +64,15 @@ export interface ControlInputs {
    * final de un vuelo, que es el de los motores apagándose.
    */
   engineOn: boolean;
-  /** Flaps, 0 a 1. */
+  /**
+   * Dónde están los flaps: 0 recogidos, 1 abajo del todo.
+   *
+   * Es **la posición y no la palanca**, como el tren: la palanca va de un
+   * golpe a su muesca y los flaps tardan unos segundos en llegar. Lo mueve
+   * `Input.update` y lo miran el modelo de vuelo —sustenta y frena según
+   * esto—, los relojes, el cuadro y el ala del modelo. La palanca es
+   * `palancaDeFlaps` en `flight/input.ts`. Ver `flight/flaps.ts`.
+   */
   flaps: number;
   /**
    * Dónde está el tren: 0 dentro, 1 fuera y trabado.

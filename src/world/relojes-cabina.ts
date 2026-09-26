@@ -46,6 +46,7 @@ import {
 } from "three";
 import { LETRAS_DESDE, apunta, desdePara, type Peldano } from "../ui/familia";
 import type { Cuadro } from "../ui/cuadro";
+import { enLaMuesca } from "../flight/flaps";
 
 /** Lado del lienzo de cada reloj, en píxeles. */
 const LADO = 256;
@@ -374,7 +375,10 @@ function pintarEsfera(
 ): void {
   const { c, r } = aro(g);
 
-  const cuantas = que === "flaps" ? 4 : 10;
+  // Los flaps, una marca por muesca de la palanca: eran cinco, en cuartos, y
+  // la aguja se paraba en tercios, entre dos marcas. Ver `DETENTES`.
+  const cuantas =
+    que === "flaps" ? Math.max(1, datos.cuadro.flaps.length - 1) : 10;
 
   /*
    * El arco de régimen normal y el de despegue, como los de un instrumento de
@@ -429,9 +433,15 @@ function pintarEsfera(
    * vueltas por minuto —el número que canta un piloto— y en una turbina el tanto
    * por ciento, que es como se dice N1 en todo el mundo.
    */
+  /*
+   * Los flaps, en grados: es lo que pone en el indicador de flaps de una
+   * avioneta —0, 10, 20, 30— y no un tanto por ciento, que no lo pone en
+   * ningún avión. Los de este avión, y donde están de verdad: se ve contar
+   * mientras salen. Ver `Cuadro.flaps` y `flight/flaps.ts`.
+   */
   const cifra =
     que === "flaps"
-      ? `${Math.round(valor * 100)}%`
+      ? `${Math.round(enLaMuesca(datos.cuadro.flaps, valor))}°`
       : que === "rpm"
         ? String(Math.round((valor * datos.rpmMaximas) / 10) * 10)
         : `${Math.round(valor * 100)}%`;

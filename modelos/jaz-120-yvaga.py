@@ -39,7 +39,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, espejo, llantas, neumaticos, paneles, paneles_zy, recogido,
+    bisagra, canoas_con_flap, espejo, flap, flaps_moviles, fowler, llantas,
+    neumaticos, paneles, paneles_zy, recogido,
     simetricos, superficie, turbofan, varillas, ventanas, zy,
 )
 
@@ -220,8 +221,12 @@ def construir():
                80, 0.0),
     ]
     j = "oscuro"
-    piezas.append(superficie("ala", estaciones, material_="gris",
-                             curvatura=0.015, zonas=[
+    # El de dentro empieza donde el ala sale del fuselaje —el anillo de 3,5,
+    # que ya estaba— y no en la junta pintada, que queda dentro de él. Ver
+    # `jaz-90-arai.py`.
+    flaps = [flap("dentro", 3.5, 11.5, 0.73), flap("fuera", 11.65, 21.6, 0.73)]
+    ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
+                     flaps=flaps, zonas=[
         ("aluminio", 3.2, 28.2, 0.0, 0.06),
         (j, 2.6, 21.6, 0.72, 0.73),
         (j, 2.6, 2.75, 0.73, 1.0),
@@ -230,13 +235,22 @@ def construir():
         (j, 21.8, 27.9, 0.76, 0.77),
         (j, 27.8, 27.95, 0.77, 1.0),
         (j, 3.5, 20.5, 0.60, 0.607, "arriba"),
-    ]))
+    ])
+    piezas.append(ala)
+    # **Fowler**, con los topes de un cuatrirreactor de fuselaje ancho —cinco,
+    # veinte y treinta— y el carril más largo de la flota. Ver `fowler`.
+    los_flaps = flaps_moviles(ala, flaps, fowler(
+        muescas=(0, 5, 20, 30), recorrido=(0, 0.20, 0.32, 0.38), bajada=8))
+    piezas += los_flaps
 
     def cuerda_en(x):
         if x < QUIEBRO:
             return raiz - (raiz - quiebro) * x / QUIEBRO
         return quiebro - (quiebro - punta) * (x - QUIEBRO) / (x_aleta - QUIEBRO)
 
+    # Y la cola de las que caen bajo un flap baja con él. Ver
+    # `canoas_con_flap`.
+    canoas = []
     for n, x in enumerate((6.5, 13.0, 17.5, 23.5)):
         z0 = z_ala(x) + cuerda_en(x) * 0.48
         largo = cuerda_en(x) * 0.72
@@ -249,7 +263,9 @@ def construir():
         ], x=x)
         o = canoa.malla(f"canoa-{n}", "gris", lados=12, paso=0.6)
         espejo(o)
-        piezas.append(o)
+        canoas.append(o)
+    piezas += canoas
+    piezas += canoas_con_flap(canoas, los_flaps)
 
     # ── Los cuatro motores ────────────────────────────────────────────────
     #
@@ -343,8 +359,9 @@ def construir():
     morro.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.38))
     morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.38))
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
-    recogido(patas, [p for p in piezas
-                     if p.name in ("fuselaje", "carenado", "ala")])
+    # Y los flaps también tapan: son el trozo de ala de detrás del pozo.
+    recogido(patas, [p for p in piezas if p.type == "MESH" and (
+        p.name in ("fuselaje", "carenado", "ala") or p.name.startswith("flap-"))])
     piezas += patas
 
     piezas.append(centro_de_gravedad(z_ala(12.0) + CUERDA * 0.25))

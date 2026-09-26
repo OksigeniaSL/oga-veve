@@ -434,6 +434,31 @@ export interface AircraftConfig {
   /** Sustentación y resistencia extra con flaps a tope. */
   flapsLift: number;
   flapsDrag: number;
+  /**
+   * **Los grados de los flaps en cada muesca de la palanca**, empezando por el
+   * cero de recogidos. Una cifra por muesca —ver `DETENTES`—.
+   *
+   * No son los mismos en toda la flota, y por eso están aquí: el primer tope
+   * de un reactor son cinco grados casi sin ángulo —el flap sale hacia atrás
+   * por sus carriles— y el de una avioneta son diez. La regla de flaps del
+   * cuadro los rotulaba 0, 10, 20 y 30 para los seis, y eso en un avión de
+   * línea era enseñar un tope que no tiene.
+   *
+   * Tienen que decir lo mismo que las `muescas` del modelo —ver
+   * `flaps_moviles` en `modelos/exterior.py`—, y lo comprueba
+   * `world/flaps-del-modelo.test.ts` leyendo el `.glb`.
+   */
+  muescasDeFlaps: readonly number[];
+  /**
+   * **Lo que tardan los flaps de arriba abajo**, en segundos.
+   *
+   * La palanca va de un golpe; los flaps, no. Los de una avioneta los mueve un
+   * motor eléctrico pequeño y tardan unos segundos por muesca; los de un avión
+   * de línea son hidráulicos, más grandes y con carriles más largos, y tardan
+   * bastante más. Es la lección del tren otra vez: **se piden antes de
+   * necesitarlos**. Ver `flight/flaps.ts`.
+   */
+  tardanLosFlaps: number;
 
   appearance: AircraftAppearance;
   sound: AircraftSound;
@@ -504,6 +529,11 @@ export const PYKASU: AircraftConfig = {
   minGroundPitch: -0.030,
   flapsLift: 0.55,
   flapsDrag: 0.06,
+  // Diez, veinte y treinta: los tres topes del flap ranurado de una avioneta
+  // de escuela de ala alta. Los mueve un motor eléctrico, tres segundos por
+  // muesca.
+  muescasDeFlaps: [0, 10, 20, 30],
+  tardanLosFlaps: 9,
   appearance: {
     body: 0xe4e2da,
     accent: 0xbe5d38,
@@ -585,6 +615,14 @@ export const MAINUMBY: AircraftConfig = {
   minGroundPitch: -0.020,
   flapsLift: 0.35,
   flapsDrag: 0.05,
+  /*
+   * **Su modelo no los lleva**: las dos alas tienen alerones y nada más, que es
+   * lo que tiene un biplano fumigador de esta clase. La palanca y estas cifras
+   * siguen porque el modelo de vuelo le da flaps —`flapsLift`—, y quitárselos
+   * es otra decisión, con su propia medida delante.
+   */
+  muescasDeFlaps: [0, 10, 20, 30],
+  tardanLosFlaps: 9,
   appearance: {
     // Biplano de trabajo: dos alas, ocre y verde, hélice de tres palas.
     body: 0xdd923f,
@@ -700,6 +738,10 @@ export const PANAMBI: AircraftConfig = {
   minGroundPitch: -0.028,
   flapsLift: 0.5,
   flapsDrag: 0.07,
+  // Diez, veinticinco y cuarenta: los de un bimotor de pistón de seis plazas,
+  // con su flap ranurado. Eléctricos, como los de la avioneta.
+  muescasDeFlaps: [0, 10, 25, 40],
+  tardanLosFlaps: 9,
   appearance: {
     // Blanco de compañía con la franja de la casa: es un avión de trabajo que
     // lleva gente, y se pinta como se pintan ésos.
@@ -801,6 +843,10 @@ export const ARASUNU: AircraftConfig = {
   // lo que existe un turbohélice regional.
   flapsLift: 0.65,
   flapsDrag: 0.09,
+  // Diez, veinte y treinta y cinco: los de un turbohélice de diecinueve
+  // plazas. Hidráulicos y más grandes: cuatro segundos por muesca.
+  muescasDeFlaps: [0, 10, 20, 35],
+  tardanLosFlaps: 12,
   appearance: {
     body: 0xecece6,
     accent: 0x1f4f76,
@@ -952,6 +998,13 @@ export const ARAI: AircraftConfig = {
    */
   flapsLift: 1.05,
   flapsDrag: 0.055,
+  /*
+   * Cinco, quince y treinta: los topes de un bimotor de pasillo único. El
+   * primero es casi todo carril —el Fowler sale hacia atrás y apenas baja—,
+   * para despegar sin frenar; los otros dos, ángulo. Seis segundos por muesca.
+   */
+  muescasDeFlaps: [0, 5, 15, 30],
+  tardanLosFlaps: 18,
   appearance: {
     body: 0xf2f1ec,
     accent: 0xbe5d38,
@@ -1109,6 +1162,10 @@ export const YVAGA: AircraftConfig = {
   // Lo mismo que el Arai, y por lo mismo. Ver su ficha.
   flapsLift: 1.0,
   flapsDrag: 0.065,
+  // Cinco, veinte y treinta: los de un cuatrirreactor de fuselaje ancho, con
+  // el recorrido más largo de la flota. Ocho segundos por muesca.
+  muescasDeFlaps: [0, 5, 20, 30],
+  tardanLosFlaps: 24,
   appearance: {
     body: 0xf2f1ec,
     accent: 0x1f4f76,

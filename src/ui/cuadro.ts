@@ -71,6 +71,14 @@ export interface Cuadro {
   readonly queMarca: Motor;
   /** El rótulo de esas agujas: `N1`, `RPM` o `TRQ`. */
   readonly rotulo: string;
+  /**
+   * **Los grados de cada muesca de flaps**, para rotular su regla.
+   *
+   * Eran 0, 10, 20 y 30 en los seis, y en un reactor eso es enseñar un tope
+   * que no tiene: el suyo primero son cinco. Salen de la ficha, como todo lo
+   * de aquí. Ver `muescasDeFlaps` en `aircraft.ts`.
+   */
+  readonly flaps: readonly number[];
 }
 
 /** Redondea hacia arriba a algo que se pueda rotular. */
@@ -133,6 +141,7 @@ function calcularCuadro(a: AircraftConfig): Cuadro {
     motores: a.motores,
     queMarca,
     rotulo: queMarca === "n1" ? "N1" : queMarca === "par" ? "TRQ" : "RPM",
+    flaps: a.muescasDeFlaps,
   };
 }
 

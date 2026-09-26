@@ -53,6 +53,7 @@ import type { AircraftMesh } from "./aircraft-mesh";
 import { crearLucesDePosicion } from "./luces-de-posicion";
 import { encenderPantallas } from "./pantallas-cabina";
 import { prepararPatas } from "./patas";
+import { prepararFlaps } from "./flaps";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
 import { luzDeCabina } from "./luz-de-cabina";
@@ -779,6 +780,8 @@ export async function cargarModelo(
     ),
     // Y las patas, que en el avión que las mete se meten. Ver `patas.ts`.
     patas: prepararPatas(raiz),
+    // Y los flaps, que en el avión que los trae sueltos bajan. Ver `flaps.ts`.
+    flaps: prepararFlaps(raiz),
     /*
      * Y la luz de dentro, **la última**: lo de arriba cambia los materiales
      * de los relojes y de los mandos, y la luz tiene que ver los que quedan.

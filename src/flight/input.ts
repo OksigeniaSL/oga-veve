@@ -11,6 +11,13 @@
 
 import { neutralControls, type ControlInputs } from "./model";
 import { mueveElTren, sePuedeMeter } from "./tren";
+import {
+  DETENTES,
+  TARDAN_LOS_FLAPS,
+  muescaMasCercana,
+  mueveLosFlaps,
+  siguienteDetente,
+} from "./flaps";
 import { Keymap, type Accion } from "./keymap";
 
 /** Velocidad a la que un eje de teclado alcanza el tope, por segundo. */
@@ -86,37 +93,12 @@ export interface InputActions {
   trenTrabado?: () => void;
 }
 
-/**
- * Las cuatro muescas de la palanca de flaps, en fracción del recorrido.
- *
- * Cero, un tercio, dos tercios y todo: las mismas que rotula el cuadro de
- * mandos como 0, 10, 20 y 30 grados, que son los detentes de casi cualquier
- * avión de línea. La palanca de un avión no es un mando continuo: tiene topes,
- * y se baja de uno en uno.
+/*
+ * Las muescas de la palanca viven con los flaps, en `flight/flaps.ts`, que es
+ * donde está también lo que tardan en llegar a ellas. Se reexportan aquí
+ * porque la palanca es de este fichero y quien la busca, la busca aquí.
  */
-export const DETENTES = [0, 1 / 3, 2 / 3, 1] as const;
-
-/**
- * En qué muesca está ahora y cuál viene después, dando la vuelta al llegar
- * abajo del todo.
- *
- * Se busca la más cercana en vez de suponer que el valor es exactamente uno de
- * los cuatro: el mando puede venir de un guion, de un banco o de una partida
- * guardada con otro reparto de muescas, y un `indexOf` sobre coma flotante
- * devuelve −1 el día menos pensado.
- */
-export function siguienteDetente(flaps: number): number {
-  let cual = 0;
-  let cerca = Infinity;
-  DETENTES.forEach((d, i) => {
-    const lejos = Math.abs(d - flaps);
-    if (lejos < cerca) {
-      cerca = lejos;
-      cual = i;
-    }
-  });
-  return (cual + 1) % DETENTES.length;
-}
+export { DETENTES, siguienteDetente } from "./flaps";
 
 export class InputManager {
   readonly controls: ControlInputs = { ...neutralControls(), throttle: 0 };
@@ -168,10 +150,41 @@ export class InputManager {
    * es para despegar y el último para aterrizar. Es la diferencia entre un
    * mando y un botón, y la regla del cuadro de mandos ya dibujaba las cuatro
    * muescas desde el primer día. Ver `reglaDeFlaps`.
+   *
+   * **Y mueve la palanca, no los flaps.** Los flaps van detrás, a su paso, y
+   * los lleva `update`. Ver `flight/flaps.ts`.
    */
   alternarFlaps(): void {
-    this.controls.flaps = DETENTES[siguienteDetente(this.controls.flaps)]!;
+    this.flapsPedidos = DETENTES[siguienteDetente(this.flapsPedidos)]!;
   }
+
+  /**
+   * Dónde está la palanca de flaps: lo pedido, en una de sus cuatro muescas.
+   *
+   * No es dónde están los flaps —eso es `controls.flaps`, que tarda en
+   * llegar—, y por eso lo miran los que hablan de lo que se ha hecho y no de
+   * lo que ha pasado: el tutor que pide flaps no los vuelve a pedir mientras
+   * están saliendo. Es la misma regla que el aviso del tren.
+   */
+  get palancaDeFlaps(): number {
+    return this.flapsPedidos;
+  }
+
+  /**
+   * Poner la palanca en la muesca más cercana a este valor.
+   *
+   * Para quien configura el avión sin pasar por el dedo: la final que empieza
+   * ya configurada, y el banco que vuela como un piloto. La palanca solo sabe
+   * estar en sus muescas, así que un valor suelto cae en la más cercana.
+   */
+  ponerPalancaDeFlaps(donde: number): void {
+    this.flapsPedidos = DETENTES[muescaMasCercana(donde)]!;
+  }
+
+  /** La palanca de flaps. Empieza arriba, como está un avión en su puesto. */
+  private flapsPedidos = 0;
+  /** Y lo que tardan de arriba abajo en este avión. Ver `ponerAeronave`. */
+  private tardanLosFlaps = TARDAN_LOS_FLAPS;
 
   /**
    * Y el tren, que es lo otro que se pide y tarda.
@@ -221,7 +234,11 @@ export class InputManager {
    * existe, y fingir que sí —que el mando se pulse y no pase nada— sería
    * enseñar un avión que no es. Ver `trenRetractil` en `aircraft.ts`.
    */
-  ponerAeronave(trenRetractil: boolean): void {
+  ponerAeronave(
+    trenRetractil: boolean,
+    tardanLosFlaps: number = TARDAN_LOS_FLAPS,
+  ): void {
+    this.tardanLosFlaps = tardanLosFlaps;
     this.trenQueSeMete = trenRetractil;
     if (!trenRetractil) {
       this.trenPedido = true;
@@ -425,8 +442,20 @@ export class InputManager {
       braking ? 1 : 0,
       dt * 2,
     );
-    // Los flaps no se leen aquí: son un conmutador, y lo lleva `onKeyDown`.
-    // Forzarlos también desde el bucle impedía apagarlos sin soltar la tecla.
+    /*
+     * **Los flaps, que también se mueven solos.**
+     *
+     * La tecla no se lee aquí —la palanca es un conmutador y la lleva
+     * `onKeyDown`; forzarla desde el bucle impedía subirla sin soltar la
+     * tecla—, pero los flaps sí: van de donde están a donde está la palanca, a
+     * su paso, cada fotograma. Ver `flight/flaps.ts`.
+     */
+    this.controls.flaps = mueveLosFlaps(
+      this.controls.flaps,
+      this.flapsPedidos,
+      dt,
+      this.tardanLosFlaps,
+    );
 
     /*
      * **El tren sí, porque se mueve solo.**

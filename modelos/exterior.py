@@ -579,7 +579,7 @@ def de_deriva(x, y, z, cuerda, espesor):
 
 def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
                zonas=(), cortes=(), puntos=13, simetria=True, punta=True,
-               angulo=35):
+               angulo=35, flaps=(), marcar=False):
     """
     Una superficie con perfil: ala, estabilizador, deriva, pilón o pala.
 
@@ -593,6 +593,12 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
     en fracción de cuerda. Así salen los **flaps y los alerones** —la franja
     de atrás, de otro gris— y el borde de ataque de metal de un reactor. Los
     cortes de cuerda que hagan falta se añaden solos; `cortes` añade más.
+
+    `flaps` son los que se mueven —ver `flap` y `flaps_moviles`—: aquí solo
+    se asegura que haya anillo donde empieza y acaba cada uno y corte de
+    cuerda donde está su bisagra, y se marca cada vértice con su anillo y su
+    punto del perfil. Con eso `flaps_moviles` sabe, sin adivinar por la
+    geometría, qué caras son de la franja del flap.
     """
     # Las estaciones, con su distancia a la raíz a lo largo de la superficie.
     est = list(estaciones)
@@ -619,12 +625,40 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
         }
         est.insert(i + 1, nueva)
         eta.insert(i + 1, e)
+    # **Y los anillos que solo hacen falta para cortar un flap, encima de las
+    # aristas que ya había.** Donde un flap empieza en una junta pintada, el
+    # anillo ya existe; donde no —al lado de una góndola—, uno nuevo sacado
+    # de las cuatro cifras de la sección bombeaba la chapa medio milímetro y
+    # se notaba en el borde de salida y en el sombreado. Sacado de los
+    # vértices de los dos anillos de al lado, cae justo sobre la arista que
+    # los unía y el ala recogida sigue siendo la misma superficie.
+    for e in sorted(set(x for f in flaps for x in (f["e0"], f["e1"])
+                        if 0 < x < eta[-1])):
+        if any(abs(e - x) < 1e-4 for x in eta):
+            continue
+        viejos = [k for k in range(len(est)) if "entre" not in est[k]]
+        ka = max(k for k in viejos if eta[k] < e)
+        kb = min(k for k in viejos if eta[k] > e)
+        f = (e - eta[ka]) / (eta[kb] - eta[ka])
+        a, b = est[ka], est[kb]
+        nueva = {
+            "pos": a["pos"].lerp(b["pos"], f),
+            "c": a["c"] + (b["c"] - a["c"]) * f,
+            "t": a["t"] + (b["t"] - a["t"]) * f,
+            "cd": a["cd"].lerp(b["cd"], f).normalized(),
+            "gd": a["gd"].lerp(b["gd"], f).normalized(),
+            "entre": (a, b, f),
+        }
+        i = max(k for k in range(len(eta)) if eta[k] < e)
+        est.insert(i + 1, nueva)
+        eta.insert(i + 1, e)
 
     # La cuerda repartida en coseno —más puntos en el borde de ataque, que es
     # donde se curva— y con los cortes de las zonas dentro.
     us = {0.5 * (1 - math.cos(math.pi * i / (puntos - 1))) for i in range(puntos)}
     us |= {u for z in zonas for u in (z[3], z[4]) if 0 < u < 1}
     us |= {u for u in cortes if 0 < u < 1}
+    us |= {f["u0"] for f in flaps if 0 < f["u0"] < 1}
     us = sorted(us)
     # El contorno: del borde de salida por arriba al de ataque, y vuelta por
     # abajo. El de salida es un solo vértice: el perfil cierra en filo.
@@ -633,14 +667,29 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
 
     mats = list(dict.fromkeys([material_] + [z[0] for z in zonas]))
     bm = bmesh.new()
+    # Solo si hay flaps que sacar: el anillo y el punto del perfil de cada
+    # vértice. Las demás superficies salen exactamente como salían.
+    marcar = marcar or bool(flaps)
+    if marcar:
+        capa_anillo = bm.verts.layers.int.new("anillo")
+        capa_punto = bm.verts.layers.int.new("punto")
+    def en_el_perfil(e, u, lado):
+        if "entre" in e:
+            a, b, f = e["entre"]
+            return en_el_perfil(a, u, lado).lerp(en_el_perfil(b, u, lado), f)
+        yt, yc = _naca(u, e["t"], curvatura)
+        v = yc + lado * yt
+        return e["pos"] + e["cd"] * (u * e["c"]) + e["gd"] * (v * e["c"])
+
     anillos = []
-    for e in est:
+    for i, e in enumerate(est):
         anillo = []
-        for u, lado in bucle:
-            yt, yc = _naca(u, e["t"], curvatura)
-            v = yc + lado * yt
-            anillo.append(bm.verts.new(
-                e["pos"] + e["cd"] * (u * e["c"]) + e["gd"] * (v * e["c"])))
+        for j, (u, lado) in enumerate(bucle):
+            vert = bm.verts.new(en_el_perfil(e, u, lado))
+            if marcar:
+                vert[capa_anillo] = i
+                vert[capa_punto] = j
+            anillo.append(vert)
         anillos.append(anillo)
 
     def zona(ea, eb, u, arriba):
@@ -672,15 +721,45 @@ def superficie(nombre, estaciones, material_="casco", curvatura=0.0,
         fuera = (est[-1]["pos"] - est[-2]["pos"]).normalized()
         centro = sum((v.co for v in anillos[-1]), Vector()) / n
         tip = bm.verts.new(centro + fuera * (ult["t"] * ult["c"] * 0.5))
+        if marcar:
+            tip[capa_anillo] = -1
+            tip[capa_punto] = -1
         for j in range(n):
             bm.faces.new((anillos[-1][j], anillos[-1][(j + 1) % n], tip))
     else:
         bm.faces.new(anillos[-1])
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     obj = _malla_en_escena(nombre, bm, mats)
+    if flaps:
+        # Lo que `flaps_moviles` necesita saber de la rejilla. Va aparte y no
+        # en las propiedades del objeto porque éstas se exportan al glTF.
+        rejilla = {"eta": eta, "bucle": bucle}
+        if any("entre" in e for e in est):
+            # **Y el ala sin los anillos de los flaps, para sacarle las
+            # normales.** Un anillo nuevo, aunque caiga encima de las aristas,
+            # cambia un pelo la normal de sus vecinos —medido: dos décimas de
+            # grado— y eso son bandas de un tono en el flap del bimotor. Con
+            # las del ala de siempre, el sombreado es el de siempre.
+            viejo = superficie(
+                f"{nombre}-sin-cortes", estaciones, material_, curvatura,
+                zonas, tuple(cortes) + tuple(f["u0"] for f in flaps), puntos,
+                simetria, punta, angulo, marcar=True)
+            nuevos = [i for i, e in enumerate(est) if "entre" not in e]
+            rejilla["viejo"] = viejo.name
+            rejilla["de_viejo"] = nuevos
+            rejilla["entre"] = {
+                i: (next(k for k, x in enumerate(est) if x is e["entre"][0]),
+                    next(k for k, x in enumerate(est) if x is e["entre"][1]),
+                    e["entre"][2])
+                for i, e in enumerate(est) if "entre" in e
+            }
+        _REJILLAS[obj.name] = rejilla
     if simetria:
         espejo(obj)
     return liso(obj, angulo=angulo)
+
+
+_REJILLAS = {}
 
 
 # ── Cuerpos de revolución ─────────────────────────────────────────────────
@@ -1084,6 +1163,496 @@ def _reflejo(obj):
     copia.matrix_world = Matrix.Identity(4)
     bpy.context.collection.objects.link(copia)
     return copia
+
+
+# ── Los flaps ─────────────────────────────────────────────────────────────
+
+
+def flap(nombre, e0, e1, u0):
+    """
+    Un flap que se mueve: de `e0` a `e1` metros a lo largo del ala y desde
+    `u0` de la cuerda hasta el borde de salida.
+
+    **Es la franja que ya estaba pintada**, con las mismas cifras que la zona
+    que la dibujaba: las juntas oscuras se quedan en el ala y el flap es lo
+    de dentro de ellas. Así el corte cae justo en la raya oscura y, recogido,
+    no hay costura nueva que ver. Ver `flaps_moviles`.
+
+    O un trozo de ella, cuando parte de la franja no puede bajar: la que va
+    metida en el carenado de la panza, o la que pasa por encima de una
+    góndola. Esa se queda quieta, que es lo que hace en un avión de verdad.
+    """
+    return {"nombre": nombre, "e0": e0, "e1": e1, "u0": u0}
+
+
+def ranurado(muescas, caida):
+    """
+    Un flap ranurado de bisagra, el de una avioneta o un turbohélice.
+
+    Gira sobre un eje que va **por debajo del ala**, colgado de sus herrajes:
+    por eso al bajar se va también un poco hacia atrás y abre la ranura por
+    arriba, que es la que deja pasar el aire del intradós al extradós y le
+    pega la corriente al flap. Con la bisagra en el propio borde se tendría
+    un flap sencillo, que es otro flap y otra lección.
+
+    `muescas`: los grados de cada tope de la palanca, empezando por el cero
+    de recogido. `caida`: cuánto por debajo del intradós va la bisagra, en
+    cuerdas del flap.
+    """
+    return {"tipo": "ranurado", "muescas": list(muescas), "caida": caida,
+            "recorrido": [0.0] * len(muescas), "bajada": 0.0}
+
+
+def fowler(muescas, recorrido, bajada=0.0):
+    """
+    Un flap Fowler, el de un avión de línea: **primero sale hacia atrás** por
+    sus carriles y luego baja.
+
+    Es lo que hace que un reactor pueda aterrizar despacio: al salir hacia
+    atrás el ala se hace más grande —más cuerda, más superficie— y al bajar
+    se curva. Las primeras muescas son casi todo carril y poco ángulo, para
+    despegar sin mucha resistencia; las últimas, ángulo, para frenar y bajar.
+
+    `recorrido`: cuánto ha salido en cada muesca, en cuerdas del flap.
+    `bajada`: cuánto miran hacia abajo los carriles respecto de la cuerda, en
+    grados, porque los de verdad son curvos y el flap baja mientras sale.
+    """
+    return {"tipo": "fowler", "muescas": list(muescas),
+            "recorrido": list(recorrido), "bajada": bajada, "caida": 0.0}
+
+
+def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
+    """
+    Saca los flaps del ala como piezas propias, colgadas de su carril.
+
+    **Recogidos, el avión tiene que verse exactamente igual que antes**, y
+    eso manda sobre cómo se hace:
+
+    - **Las mismas caras.** El flap es la franja que el ala ya tenía, con sus
+      vértices tal cual, no un flap nuevo puesto encima. Encima habría dos
+      superficies en el mismo sitio y parpadearían.
+    - **Las mismas normales.** Un ala lisa promedia la normal de cada vértice
+      con las caras de alrededor, y al partirla los vértices del corte se
+      quedarían con la mitad de sus caras: se vería una raya de sombreado
+      donde antes no había nada. Así que antes de partir se leen las normales
+      de cada esquina y después se le ponen tal cual a cada trozo.
+    - **El corte en la junta.** Las caras que tapan el hueco —la pared del
+      ala donde encaja el flap y las tapas del flap— van por dentro y no se
+      ven con el flap en su sitio; y el corte cae donde ya estaba la raya
+      oscura de la junta, así que ni un píxel suelto del borde se nota.
+
+    Con el flap fuera, lo que se ve por la ranura es la pared del hueco,
+    oscura, que es como se ve la de verdad.
+
+    El espejo del ala se aplica aquí: cada flap sale por separado a cada
+    lado, con su propio carril, igual que las patas en `bisagra` y por lo
+    mismo — una sola malla para los dos no puede girar hacia abajo por los
+    dos lados a la vez.
+
+    Cada flap cuelga de un vacío `flap-…` puesto en el origen, con, en los
+    ejes del avión:
+
+    - `bisagra` y `eje`: por dónde pasa la bisagra y hacia dónde va; girando
+      por la regla de la mano derecha, el borde de salida baja.
+    - `muescas`: los grados en cada tope de la palanca. Tienen que ser los de
+      `muescasDeFlaps` en la ficha del avión —ver `aircraft.ts`—, que es lo
+      que rotula la regla del cuadro; lo comprueba
+      `world/flaps-del-modelo.test.ts`.
+    - `carril` y `recorrido`: hacia dónde sale y cuántos metros en cada tope.
+
+    Del vacío cuelgan la piel del flap y sus tapas; el hueco que deja en el
+    ala va aparte, como `hueco-flap-…`. El juego no sabe nada de cada avión:
+    lee eso y mueve. Ver `world/flaps.ts`.
+
+    La bisagra de un flap tiene que caer en un corte de cuerda que ya pinte
+    una zona —la raya de la junta—: un corte nuevo cambiaría el perfil del
+    ala entera. Los extremos, en cambio, pueden caer donde haga falta; ver
+    los anillos «entre» de `superficie`.
+    """
+    rej = _REJILLAS.pop(ala.name)
+    eta, bucle = rej["eta"], rej["bucle"]
+    n = len(bucle)
+
+    for f in flaps:
+        f["i0"] = next(i for i, e in enumerate(eta) if abs(e - f["e0"]) < 1e-4)
+        f["i1"] = next(i for i, e in enumerate(eta) if abs(e - f["e1"]) < 1e-4)
+        f["jt"] = bucle.index((f["u0"], 1))
+        f["jb"] = bucle.index((f["u0"], -1))
+        # Del intradós en la bisagra, hacia atrás hasta el borde de salida y
+        # vuelta por el extradós hasta la bisagra: el perfil del flap.
+        f["cadena"] = list(range(f["jb"], n)) + list(range(0, f["jt"] + 1))
+        f["puntos"] = set(f["cadena"])
+
+    # El espejo, aplicado: las dos alas en una malla, como las escribe el
+    # exportador. Y las normales de cada esquina, leídas ya con él.
+    bpy.ops.object.select_all(action="DESELECT")
+    ala.select_set(True)
+    bpy.context.view_layer.objects.active = ala
+    for m in list(ala.modifiers):
+        bpy.ops.object.modifier_apply(modifier=m.name)
+    me = ala.data
+    antes = [0.0] * (3 * len(me.loops))
+    me.corner_normals.foreach_get("vector", antes)
+    if "viejo" in rej:
+        _normales_sin_cortes(me, antes, rej)
+    me.attributes.new("normal-de-antes", "FLOAT_VECTOR", "CORNER") \
+        .data.foreach_set("vector", antes)
+
+    def de_quien(cara, ca, cp):
+        """De qué flap y de qué lado es esta cara, o `None` si es del ala."""
+        for k, f in enumerate(flaps):
+            if all(f["i0"] <= v[ca] <= f["i1"] and v[cp] in f["puntos"]
+                   for v in cara.verts):
+                return k, (1 if cara.calc_center_median().x > 0 else -1)
+        return None
+
+    def indice(bm):
+        ca = bm.verts.layers.int["anillo"]
+        cp = bm.verts.layers.int["punto"]
+        return ca, cp, {(v[ca], v[cp], 1 if v.co.x > 0 else -1): v
+                        for v in bm.verts if v.link_faces}
+
+    def quitar(bm, caras):
+        """Quita esas caras y lo que se quede suelto."""
+        bmesh.ops.delete(bm, geom=caras, context="FACES")
+        sueltos = [v for v in bm.verts if not v.link_faces]
+        bmesh.ops.delete(bm, geom=sueltos, context="VERTS")
+
+    salida = []
+    lados = ((1, "derecha"), (-1, "izquierda"))
+    # Dónde está cada flap y por dónde se corta, leído del ala entera.
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    ca, cp, entera = indice(bm)
+    entera = {k: v.co.copy() for k, v in entera.items()}
+    centros = {}
+    for cara in bm.faces:
+        quien = de_quien(cara, ca, cp)
+        if quien:
+            centros.setdefault(quien, []).append(cara.calc_center_median())
+    centros = {k: sum(v, Vector()) / len(v) for k, v in centros.items()}
+
+    def en(i, j, s):
+        return entera[(i, j, s)].copy()
+
+    def cortes(f, s):
+        """Las caras que cierran el corte: la de la bisagra y las dos tapas."""
+        jt, jb = f["jt"], f["jb"]
+        caras = [[en(i, jt, s), en(i + 1, jt, s), en(i + 1, jb, s),
+                  en(i, jb, s)] for i in range(f["i0"], f["i1"])]
+        caras += [[en(i, j, s) for j in f["cadena"]]
+                  for i in (f["i0"], f["i1"])]
+        return caras
+
+    bm.free()
+
+    # ── Cada flap, una pieza ──────────────────────────────────────────────
+    for k, f in enumerate(flaps):
+        for s, lado in lados:
+            nombre = f"flap-{f['nombre']}-{lado}"
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            ca, cp, _ = indice(bm)
+            quitar(bm, [c for c in bm.faces if de_quien(c, ca, cp) != (k, s)])
+            malla = bpy.data.meshes.new(f"m-{nombre}-piel")
+            bm.to_mesh(malla)
+            bm.free()
+            for mat in me.materials:
+                malla.materials.append(mat)
+            _normales_de_antes(malla)
+            piel = bpy.data.objects.new(f"{nombre}-piel", malla)
+            bpy.context.collection.objects.link(piel)
+            # Las tapas del flap, del color del flap. Van aparte de la piel
+            # por lo mismo que el hueco del ala: ver `_tapas`.
+            tapas = _tapas(f"{nombre}-tapas", cortes(f, s),
+                           me.materials[0].name, centros[(k, s)], fuera=True)
+
+            # La bisagra, del perfil de sus dos extremos.
+            nariz, borde, cuerdas, bisagras = [], [], [], []
+            for i in (f["i0"], f["i1"]):
+                arriba, abajo = en(i, f["jt"], s), en(i, f["jb"], s)
+                salida_ = en(i, 0, s)
+                m = (arriba + abajo) / 2
+                nariz.append(m)
+                borde.append(salida_)
+                cuerdas.append((salida_ - m).length)
+                if movimiento["tipo"] == "ranurado":
+                    baja = (abajo - arriba).normalized()
+                    bisagras.append(abajo + baja * movimiento["caida"]
+                                    * (salida_ - m).length)
+                else:
+                    bisagras.append(m)
+            centro = (bisagras[0] + bisagras[1]) / 2
+            eje = (bisagras[1] - bisagras[0]).normalized()
+            te = (borde[0] + borde[1]) / 2
+            # Que girar en positivo baje el borde de salida, sea cual sea el
+            # lado: en el izquierdo la bisagra va al revés.
+            if eje.cross(te - centro).y > 0:
+                eje = -eje
+            cuerda = sum(cuerdas) / len(cuerdas)
+            carril = ((borde[0] - nariz[0]).normalized()
+                      + (borde[1] - nariz[1]).normalized()).normalized()
+            carril = Matrix.Rotation(math.radians(movimiento["bajada"]), 3,
+                                     eje) @ carril
+
+            # **El vacío va en el origen, no en la bisagra**, y la bisagra va
+            # escrita en él: así, recogido, el flap cuelga de la misma matriz
+            # que el ala y no de un «ir a la bisagra y volver» en coma
+            # flotante, que no da exactamente cero.
+            bpy.ops.object.empty_add(location=(0.0, 0.0, 0.0))
+            b = bpy.context.object
+            b.name = nombre
+            b["bisagra"] = [float(c) for c in centro]
+            b["eje"] = [float(c) for c in eje]
+            b["muescas"] = [float(g) for g in movimiento["muescas"]]
+            b["carril"] = [float(c) for c in carril.normalized()]
+            b["recorrido"] = [float(r * cuerda) for r in movimiento["recorrido"]]
+            bpy.context.view_layer.update()
+            for h in (piel, tapas):
+                h.parent = b
+                h.matrix_parent_inverse = b.matrix_world.inverted()
+            # Y el hueco que deja en el ala, oscuro, que es lo que se ve por
+            # la ranura con el flap fuera.
+            agujero = _tapas(f"hueco-{nombre}", cortes(f, s), hueco,
+                             centros[(k, s)], fuera=False)
+            salida += [b, piel, tapas, agujero]
+            print(f"FLAP: {nombre} · cuerda {cuerda:.2f} m · "
+                  f"{len(malla.polygons)} caras")
+
+    # ── Y el ala, sin ellos ──────────────────────────────────────────────
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    ca, cp, _ = indice(bm)
+    quitar(bm, [c for c in bm.faces if de_quien(c, ca, cp)])
+    bm.to_mesh(me)
+    bm.free()
+    _normales_de_antes(me)
+    return salida
+
+
+def canoas_con_flap(canoas, piezas_de_flaps):
+    """
+    Los carenados de los carriles, partidos: la cola va con el flap.
+
+    Un carenado de carril —la «canoa» que asoma bajo el borde de salida de un
+    avión de línea— no es de una pieza. La mitad de delante va clavada al ala
+    y tapa el carril; la de atrás va colgada del carro que lleva el flap y
+    **baja con él**. Con los flaps fuera se ve la canoa quebrada, con la cola
+    apuntando hacia abajo, y así se reconoce un reactor aterrizando.
+
+    Entera y fija, la cola atravesaba el flap al bajar: se le veía asomar la
+    punta por encima.
+
+    Se parte por el anillo más cercano a la bisagra de su flap —el que ya
+    tenía, para que recogida sea la misma malla—, con las normales de antes, y
+    las dos caras del corte aparte y apagadas mientras el flap está recogido,
+    como las del flap. Ver `flaps_moviles` y `_tapas`. Una canoa que no cae
+    debajo de ningún flap —la de fuera, bajo el alerón— se queda como está.
+    """
+    salida = []
+    vacios = [p for p in piezas_de_flaps if p.type == "EMPTY"]
+    for canoa in canoas:
+        bpy.ops.object.select_all(action="DESELECT")
+        canoa.select_set(True)
+        bpy.context.view_layer.objects.active = canoa
+        for m in list(canoa.modifiers):
+            bpy.ops.object.modifier_apply(modifier=m.name)
+        me = canoa.data
+        antes = [0.0] * (3 * len(me.loops))
+        me.corner_normals.foreach_get("vector", antes)
+        me.attributes.new("normal-de-antes", "FLOAT_VECTOR", "CORNER") \
+            .data.foreach_set("vector", antes)
+        cortes = {}
+        for s, lado in ((1, "derecha"), (-1, "izquierda")):
+            # El flap de este lado que cae encima de la canoa.
+            suyo = None
+            for b in vacios:
+                if not b.name.endswith(f"-{lado}"):
+                    continue
+                piel = next(h for h in b.children if h.name.endswith("-piel"))
+                xs = [abs(v.co.x) for v in piel.data.vertices]
+                centro = sum(abs(v.co.x) for v in me.vertices
+                             if v.co.x * s > 0) / max(1, sum(
+                                 1 for v in me.vertices if v.co.x * s > 0))
+                if min(xs) < centro < max(xs):
+                    suyo = b
+            if suyo is None:
+                continue
+            z_bisagra = suyo["bisagra"][2]
+            # Un anillo de verdad: ni la punta de delante ni la de atrás, que
+            # son un solo vértice y no se pueden tapar.
+            cuenta = {}
+            for v in me.vertices:
+                if v.co.x * s > 0:
+                    z = round(v.co.z, 5)
+                    cuenta[z] = cuenta.get(z, 0) + 1
+            anillos = [z for z, n in cuenta.items() if n >= 3]
+            if not anillos:
+                continue
+            cortes[s] = (suyo, min(anillos, key=lambda z: abs(z - z_bisagra)))
+        if not cortes:
+            _normales_de_antes(me)
+            continue
+
+        def de_atras(cara, s, z):
+            c = cara.calc_center_median()
+            return c.x * s > 0 and c.z > z
+
+        for s, (suyo, z) in cortes.items():
+            lado = "derecha" if s > 0 else "izquierda"
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            bmesh.ops.delete(bm, geom=[c for c in bm.faces
+                                       if not de_atras(c, s, z)],
+                             context="FACES")
+            bmesh.ops.delete(bm, geom=[v for v in bm.verts
+                                       if not v.link_faces], context="VERTS")
+            anillo = [v.co.copy() for v in bm.verts if abs(v.co.z - z) < 1e-4]
+            malla = bpy.data.meshes.new(f"m-{canoa.name}-{lado}-cola")
+            bm.to_mesh(malla)
+            bm.free()
+            for mat in me.materials:
+                malla.materials.append(mat)
+            _normales_de_antes(malla)
+            cola = bpy.data.objects.new(f"{canoa.name}-{lado}-cola", malla)
+            bpy.context.collection.objects.link(cola)
+            # El anillo del corte, en orden alrededor de su centro.
+            centro = sum(anillo, Vector()) / len(anillo)
+            anillo.sort(key=lambda p: math.atan2(p.y - centro.y,
+                                                 p.x - centro.x))
+            delante = centro - Vector((0, 0, 1))
+            detras = centro + Vector((0, 0, 1))
+            tapa_cola = _tapas(f"{canoa.name}-{lado}-cola-tapas", [anillo],
+                               me.materials[0].name, detras, fuera=True)
+            tapa_canoa = _tapas(f"hueco-{suyo.name}-{canoa.name}", [anillo],
+                                me.materials[0].name, delante, fuera=True)
+            for h in (cola, tapa_cola):
+                h.parent = suyo
+                h.matrix_parent_inverse = suyo.matrix_world.inverted()
+            salida += [cola, tapa_cola, tapa_canoa]
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.delete(bm, geom=[c for c in bm.faces if any(
+            de_atras(c, s, z) for s, (_, z) in cortes.items())],
+            context="FACES")
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces],
+                         context="VERTS")
+        bm.to_mesh(me)
+        bm.free()
+        _normales_de_antes(me)
+        print(f"CANOA: {canoa.name} partida en "
+              + ", ".join(f"{z:.2f}" for _, z in cortes.values()))
+    return salida
+
+
+def _tapas(nombre, caras, material_, hacia, fuera):
+    """
+    Las caras que cierran un corte, en una malla **aparte**.
+
+    Aparte porque recogido no deben existir. Van por dentro y no se ven, pero
+    su borde es el borde del corte, a la misma profundidad que la chapa: con
+    ellas dentro de la misma malla, la junta se llenaba de píxeles sueltos de
+    la pared oscura peleándose con la piel. Aparte, el juego no las dibuja
+    con el flap en su sitio —ver `world/flaps.ts`— y el avión recogido es
+    exactamente las caras que tenía antes.
+
+    Planas, y mirando hacia fuera de su pieza: las del flap, lejos de él; las
+    del hueco del ala, hacia donde estaba el flap.
+    """
+    bm = bmesh.new()
+    for cara in caras:
+        c = bm.faces.new([bm.verts.new(p) for p in cara])
+        c.smooth = False
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+    for c in bm.faces:
+        c.normal_update()
+        sentido = c.calc_center_median() - hacia
+        if (c.normal.dot(sentido) < 0) == fuera:
+            c.normal_flip()
+    return _malla_en_escena(nombre, bm, [material_])
+
+
+def _normales_sin_cortes(me, normales, rej):
+    """
+    Las normales del ala tal como eran antes de ponerle los anillos de los
+    flaps: las de siempre en los vértices de siempre, y en los del anillo
+    nuevo, la mezcla de las de sus dos vecinos — que es exactamente lo que el
+    ala sin ese anillo pintaba en ese punto, a lo largo de la arista.
+
+    Cada esquina se reconoce por su anillo, su punto del perfil, el punto de
+    al lado en su cara y hacia qué anillo va la cara: así una esquina de una
+    cara nueva, que va del vecino al anillo nuevo, encuentra la de la cara
+    vieja, que iba del vecino al otro vecino.
+    """
+    viejo = bpy.data.objects[rej["viejo"]]
+    bpy.ops.object.select_all(action="DESELECT")
+    viejo.select_set(True)
+    bpy.context.view_layer.objects.active = viejo
+    for m in list(viejo.modifiers):
+        bpy.ops.object.modifier_apply(modifier=m.name)
+    mv = viejo.data
+    de_viejo = rej["de_viejo"]
+
+    def claves(malla, a_nuevo):
+        anillo = [a.value for a in malla.attributes["anillo"].data]
+        punto = [a.value for a in malla.attributes["punto"].data]
+        for p in malla.polygons:
+            vs = [malla.loops[li].vertex_index for li in p.loop_indices]
+            rs = {anillo[v] for v in vs}
+            js = {punto[v] for v in vs}
+            if len(rs) != 2 or len(js) != 2 or -1 in rs:
+                continue
+            for li, v in zip(p.loop_indices, vs):
+                r, j = anillo[v], punto[v]
+                otro_r, otro_j = (rs - {r}).pop(), (js - {j}).pop()
+                r, otro_r = a_nuevo(r), a_nuevo(otro_r)
+                lado = 1 if malla.vertices[v].co.x > 0 else -1
+                yield li, (r, j, otro_j, 1 if otro_r > r else -1, lado)
+
+    cn = mv.corner_normals
+    antes = {k: Vector(cn[li].vector) for li, k in claves(mv, lambda r: de_viejo[r])}
+    bpy.data.objects.remove(viejo, do_unlink=True)
+    for li, (r, j, oj, sentido, lado) in claves(me, lambda r: r):
+        if r in rej["entre"]:
+            a, b, f = rej["entre"][r]
+            na = antes.get((a, j, oj, 1, lado))
+            nb = antes.get((b, j, oj, -1, lado))
+            if na is None or nb is None:
+                continue
+            n = na.lerp(nb, f).normalized()
+        else:
+            n = antes.get((r, j, oj, sentido, lado))
+            if n is None:
+                continue
+        normales[3 * li:3 * li + 3] = list(n)
+
+
+def _normales_de_antes(me):
+    """
+    Le devuelve a cada esquina la normal que tenía el ala entera.
+
+    Las caras nuevas —las que cierran el hueco— no la tenían: van planas,
+    con la suya. Y se quitan las marcas que solo servían para partir.
+    """
+    at = me.attributes["normal-de-antes"]
+    vals = [0.0] * (3 * len(me.loops))
+    at.data.foreach_get("vector", vals)
+    lista = [Vector(vals[3 * i:3 * i + 3]) for i in range(len(me.loops))]
+    for p in me.polygons:
+        for li in p.loop_indices:
+            if lista[li].length < 0.5:
+                lista[li] = p.normal.copy()
+    me.normals_split_custom_set([tuple(v) for v in lista])
+    peor = max((Vector(a.vector) - b).length
+               for a, b in zip(me.corner_normals, lista))
+    for nombre in ("normal-de-antes", "anillo", "punto"):
+        if nombre in me.attributes:
+            me.attributes.remove(me.attributes[nombre])
+    if peor > 1e-3:
+        raise SystemExit(
+            f"Las normales de {me.name} no quedaron como estaban ({peor:.4f}): "
+            "se vería una raya donde antes no había. Ver `flaps_moviles`."
+        )
 
 
 def _asoma(tapa, p):
