@@ -517,8 +517,9 @@ const circuito = (tramo: string): string =>
 /**
  * Lo que se ve por la ventanilla: la cosa, y por qué lado mirar.
  *
- * Seis tarjetas que son dos ideas: **qué es** —una montaña, una isla, un
- * pueblo— y **hacia dónde girar la cabeza**. La flecha va al borde que
+ * Diez tarjetas que son dos ideas: **qué es** —una montaña, una isla, un
+ * pueblo, y en Canarias un barco u otro avión— y **hacia dónde girar la
+ * cabeza**. La flecha va al borde que
  * corresponde y el dibujo va corrido al otro lado, como quien se aparta para
  * dejar mirar.
  *
@@ -543,6 +544,17 @@ const FIGURA: Record<string, string> = {
            <rect x="9.5" y="8" width="5" height="13" rx="0.6" />
            <rect x="16" y="11" width="5" height="10" rx="0.6" />
            <rect class="senal__hueco" x="11" y="10.4" width="2" height="2" />`,
+  // El barco: casco, el bloque de pasaje con sus ventanas, la chimenea y el
+  // mar debajo. Es el dibujo de barco de cualquier cuaderno.
+  barco: `<path d="M2.5 15.5 H21.5 L19 20 H5.5 Z" />
+          <rect x="7" y="11" width="10" height="4" rx="0.5" />
+          <rect x="13.5" y="8" width="2.4" height="3" />
+          <path class="senal__hueco" d="M8.6 12.4 h1.6 v1.2 h-1.6 Z M11.2 12.4 h1.6 v1.2 h-1.6 Z M13.8 12.4 h1.6 v1.2 h-1.6 Z" />
+          <path d="M2 22 h6 M11 22 h11" stroke="currentColor" stroke-width="1.4"
+                fill="none" stroke-linecap="round" opacity="0.65" />`,
+  // El otro avión, visto desde abajo: el mismo avión de la señal del piloto
+  // automático, que ya es el avión de este juego.
+  avion: `<path d="M12 5 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" />`,
 };
 
 /** La flecha del lado, pegada al borde: es lo primero que se mira. */
@@ -809,6 +821,10 @@ export const DIBUJOS = {
   "hito-isla-derecha": hito("isla", "derecha"),
   "hito-ciudad-izquierda": hito("ciudad", "izquierda"),
   "hito-ciudad-derecha": hito("ciudad", "derecha"),
+  "hito-barco-izquierda": hito("barco", "izquierda"),
+  "hito-barco-derecha": hito("barco", "derecha"),
+  "hito-avion-izquierda": hito("avion", "izquierda"),
+  "hito-avion-derecha": hito("avion", "derecha"),
 } as const;
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */

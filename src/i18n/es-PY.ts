@@ -402,6 +402,20 @@ export const ES_PY = {
   "hito.isla.vos": "A la {lado} vamos dejando {nombre}.",
   "hito.ciudad.vos": "Ahí abajo, a la {lado}, {nombre}.",
   /*
+   * **Y lo que se mueve: un barco entre islas u otro avión**, solo en
+   * Canarias. El barco no necesita frase propia: «Ahí abajo, a la derecha, un
+   * barco» es la de los pueblos con otra cosa en el hueco, y así se dice con
+   * lo que ya hay.
+   *
+   * El avión sí, y **solo la dice la instructora**. Señalar un avión que
+   * cruza es lo que hace cualquier instructor al lado —mirar afuera es la
+   * primera regla para no chocar con nadie—; una comandante no se lo anuncia
+   * al pasaje, que solo sirve para asustar a quien va sentado atrás.
+   */
+  "hito.unBarco": "un barco",
+  "hito.otroAvion": "otro avión",
+  "hito.avion.vos": "Mirá, a la {lado}: otro avión.",
+  /*
    * **Y la llegada dice dónde has llegado.**
    *
    * Era «bienvenidos, gracias por volar con nosotros» y valía igual para los

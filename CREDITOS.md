@@ -245,6 +245,26 @@ material con el que el juego encuentra las pantallas del panel. Y los dos
 materiales de la librea, `cola` y `marca`, que le dicen al juego dónde pintar
 el motivo y la firma de Granja Óga.
 
+### Los barcos y los turbohélices de las islas
+
+Los cinco barcos que cruzan entre islas —un ferri de carga y pasaje en dos
+tamaños, un catamarán rápido en dos y un trimarán— y el turbohélice regional
+de ala alta y cola en T que se cruza en ruta **se montan por código**, como la
+fábrica de aeronaves: `src/world/barcos.ts` y
+`src/world/aviones-de-las-islas.ts`. No hay fichero de modelo ni textura, así
+que no hay licencia de terceros: son de Oksigenia SL, bajo Apache-2.0.
+
+Son **tipos, no barcos ni aviones concretos**, y por la misma regla de las
+marcas que está más abajo: ni el nombre, ni el logotipo, ni la librea de
+ninguna naviera ni de ninguna compañía aérea. Blancos con una franja o una cola
+de colores de las islas que no son los de nadie.
+
+Lo que sí es de verdad es **dónde van y a cuánto**: las líneas marítimas y las
+rutas aéreas entre islas son las que se anuncian públicamente, y las
+velocidades salen de los tiempos de travesía que publican las navieras. Son
+hechos, no obra de nadie, y el porqué de cada número está escrito junto a él:
+ver `src/world/rutas-de-barcos.ts` y `src/flight/trafico-de-las-islas.ts`.
+
 ### Si se incorpora más arte
 
 Las únicas fuentes aceptadas son de licencia verificable:

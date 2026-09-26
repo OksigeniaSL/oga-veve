@@ -4234,6 +4234,40 @@ if (DESTINO) {
   );
 }
 
+/*
+ * **Y el mar de Canarias, solo en Canarias.**
+ *
+ * Los barcos entre islas y los turbohélices que las unen existen allí y en
+ * ningún otro sitio: un ferri en el Paraná de Asunción enseñaría algo falso.
+ * Aquí se mira que estén donde tocan y que falten donde no, que es lo único
+ * que un vuelo entero puede decir de ellos; cómo se ven lo dice
+ * `ver-mar-y-cielo.mjs`.
+ */
+{
+  const mar = await page
+    .evaluate(() => {
+      const o = globalThis.__oga.escenario().aerodrome?.origin;
+      const canarias =
+        !!o && o.lat > 27.4 && o.lat < 29.6 && o.lon > -18.3 && o.lon < -13.2;
+      const b = globalThis.__oga.barcos();
+      const i = globalThis.__oga.islenos();
+      return { canarias, barcos: b.hay, lista: b.lista.length, islenos: i.hay };
+    })
+    .catch(() => null);
+  comprobar(
+    "y los barcos y los turbohélices de las islas, solo en Canarias",
+    mar !== null &&
+      mar.barcos === mar.canarias &&
+      mar.islenos === mar.canarias,
+    mar === null
+      ? "no se pudo preguntar"
+      : mar.canarias
+        ? `en Canarias: ${mar.lista} barcos en sus líneas y el tráfico de las islas ${mar.islenos ? "puesto" : "sin poner"}`
+        : `fuera de Canarias: ${mar.barcos ? "hay barcos" : "sin barcos"} y ${mar.islenos ? "hay turbohélices" : "sin turbohélices"}`,
+    "un escenario sin mar entre islas dibujaba barcos, o uno de Canarias no los tenía",
+  );
+}
+
 // ── El informe ────────────────────────────────────────────────────────────
 
 /*

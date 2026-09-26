@@ -462,4 +462,7 @@ export const EN: Dictionary = {
   "hito.montana.vos": "Look out of the window, on your {lado}: {nombre}, {altura} metres.",
   "hito.isla.vos": "On your {lado} we are leaving {nombre} behind.",
   "hito.ciudad.vos": "Down there, on your {lado}, {nombre}.",
+  "hito.unBarco": "a ship",
+  "hito.otroAvion": "another aeroplane",
+  "hito.avion.vos": "Look, on your {lado}: another aeroplane.",
 };
