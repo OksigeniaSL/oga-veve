@@ -1399,6 +1399,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
   /** Cuántas veces la torre te mandó al aire por la pista ocupada, y se fue. */
   let frustradasPorLaPista = 0;
   let yaTeLaDieron = false;
+  /**
+   * **Tus autorizaciones para aterrizar, con la fase en que sonaron.** Nada
+   * exigía que sonara la tuya: la comprobación de la pista de allí pasaba con
+   * cero autorizaciones. Y la torre te decía «cleared to land» en pleno
+   * ascenso de una frustrada, al dejar libre la pista el de delante. Tienen
+   * que sonar, y en final.
+   */
+  const tusAutorizaciones = [];
+  /**
+   * **Y las esperas en la roja por alguien**, con lo que se dijo del porqué:
+   * la roja podía durar tres minutos con un «hold short» a secas.
+   */
+  let esperandoPorAlguien = null;
+  let porQueSeDijo = null;
   /** Lo que la frecuencia dijo allí: el tráfico y la torre hablándole. */
   const frecuenciaOidaAlli = [];
   /** Los «cleared to land» oídos allí, a quien fueran. */
@@ -1784,7 +1798,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       if (total < habladasVistas) habladasVistas = 0;
       const nuevas = h.slice(Math.max(0, h.length - (total - habladasVistas)));
       habladasVistas = total;
+      if (fase === "esperando" && !esperandoPorAlguien) {
+        const ocupan = o.ocupanLaPista?.() ?? [];
+        if (ocupan.length)
+          esperandoPorAlguien = `${t.toFixed(0)} s: ${ocupan.map((x) => `${x.matricula} ${x.orden}`).join(", ")}`;
+      }
       for (const x of nuevas) {
+        if (
+          /^[\d.]+s (?:torre\.(?:[a-z]+\.)?holdShort(?:Landing|Departing)@|vuelo\.esperaQue)/.test(x) &&
+          (!/@/.test(x) || (!!misLetrasEnLaTorre && x.includes(`@${misLetrasEnLaTorre}`)))
+        )
+          porQueSeDijo ??= `${t.toFixed(0)} s en «${fase}»: ${x.replace(/^[\d.]+s /, "").replace(/@.*$/, "")}`;
         if (enElDestino) {
           if (/torre\..*clearedLand/.test(x)) clearedLandAlli.push(x.replace(/^[\d.]+s /, ""));
           const f = /^[\d.]+s (otro|torre)\.[^@]*@(.*)$/.exec(x);
@@ -1794,6 +1818,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
         const m = /^[\d.]+s (torre|otro)\.(?:[a-z]+\.)?([A-Za-z]+)(?:\.[LCR])?@(.*)$/.exec(x);
         if (!m) continue;
         const mia = !!misLetrasEnLaTorre && m[3].startsWith(misLetrasEnLaTorre);
+        if (mia && m[1] === "torre" && /^(aterrizar|clearedLand)$/.test(m[2]))
+          tusAutorizaciones.push({ t: Math.round(t), fase, dice: m[2], alli: !!enElDestino });
         // A quién va, por sus letras: las cinco del alfabeto, sin la pista.
         const quien = m[3]
           .split("-")
@@ -2925,6 +2951,11 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     alli,
     deVuelta: null,
     terrenoEnFinalAlli,
+    tusAutorizaciones,
+    esperandoPorAlguien,
+    porQueSeDijo,
+    // Si el campo donde se aterriza tiene torre: el de llegada, o el de ahora.
+    aterrizaConTorre: o.conFrecuencia?.(destino ?? undefined) ?? true,
     // Dónde se cruzó y dónde se acabó, si el vuelo iba a otro campo.
     destino: destino
       ? { pedido: destino, llego: enElDestino, acabo: o.campoDeAhora?.() ?? null }
@@ -3475,6 +3506,56 @@ comprobar(
 );
 
 /*
+ * **Y tu «cleared to land» suena, y en final.** Nada exigía que sonara: lo de
+ * la pista de allí pasaba con cero autorizaciones. Y sonaba donde no es: al
+ * dejar libre la pista el de delante, la torre te autorizaba a aterrizar en
+ * pleno ascenso de la frustrada. Aterrizando en un campo con torre tiene que
+ * haber sonado al menos una, y todas en final. Sin voz no hay cola que
+ * mirar, y eso es un fallo del banco, no un aprobado.
+ */
+{
+  const tuyas = vuelo.tusAutorizaciones ?? [];
+  const fueraDeFinal = tuyas.filter((a) => a.fase !== "final");
+  const conTorre = vuelo.aterrizaConTorre !== false;
+  if (conTorre)
+    comprobar(
+      "y tu «cleared to land» suena, y en final",
+      tuyas.length > 0 && fueraDeFinal.length === 0,
+      !tuyas.length
+        ? (vuelo.toco ?? 0) > 0
+          ? "se aterrizó y no sonó ninguna"
+          : "no sonó ninguna, ni se llegó a tocar tierra"
+        : fueraDeFinal.length
+          ? `sonó fuera de final: ${fueraDeFinal.map((a) => `${a.t} s en «${a.fase}» ${a.dice}`).join(" · ")}`
+          : `${tuyas.length} · ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`,
+      "«podés aterrizar» y «cleared to land» subiendo en la frustrada, en cuanto el de delante dejó la pista",
+    );
+}
+
+/*
+ * **Y si se espera en la roja por alguien, se dice por quién.** La torre en
+ * fraseología —«hold short of the runway, landing traffic»— de Taguató para
+ * arriba; la instructora en castellano, en los de abajo. Si al llegar a la
+ * raya la pista estaba libre, no hay porqué que decir, y no se da por medido.
+ */
+if (vuelo.esperandoPorAlguien)
+  comprobar(
+    "y esperando en la roja por alguien, se dice por quién",
+    !!vuelo.porQueSeDijo,
+    `ocupaban la pista a los ${vuelo.esperandoPorAlguien} · ` +
+      (vuelo.porQueSeDijo ? `se dijo a los ${vuelo.porQueSeDijo}` : "no se dijo por qué"),
+    "la roja duraba tres minutos y solo se oía «esperá acá» y «hold short»",
+  );
+else
+  resultados.push({
+    nombre: "y esperando en la roja por alguien, se dice por quién",
+    ok: true,
+    sinMedir: true,
+    detalle: "al llegar a la raya no había nadie en la pista: no se midió",
+    porque: "la roja duraba tres minutos y solo se oía «esperá acá» y «hold short»",
+  });
+
+/*
  * **Y la cabina canta los dos momentos del despegue.**
  *
  * V1 es la decisión —a partir de ahí se vuela pase lo que pase— y Vr la
@@ -4003,16 +4084,50 @@ if (DESTINO) {
   const conOtraPista = (a.clearedLand ?? []).filter(
     (h) => !cifras || !h.endsWith(cifras),
   );
-  comprobar(
-    "y la torre de allí nombra su pista",
-    !!cifras && conOtraPista.length === 0,
-    !cifras
-      ? "no se supo la cabecera de allí"
-      : conOtraPista.length
-        ? `pista ${a.cabecera}, y dijo: ${conOtraPista.slice(0, 3).join(" · ")}`
-        : `pista ${a.cabecera} · ${(a.clearedLand ?? []).length} autorizaciones, todas con ella`,
-    "«runway zero three left, cleared to land» llegando por la 12 de Los Rodeos",
-  );
+  /*
+   * **Y con alguna autorización que mirar.** Con cero pasaba en verde: ni una
+   * pista mal nombrada entre ninguna. En un campo con torre se aterriza con
+   * la tuya, así que al menos esa tiene que haber sonado; en uno sin torre
+   * no hay nada que nombrar y se dice.
+   */
+  const autorizacionesAlli = (a.clearedLand ?? []).length;
+  if (a.conFrecuencia === false)
+    resultados.push({
+      nombre: "y la torre de allí nombra su pista",
+      ok: autorizacionesAlli === 0,
+      sinMedir: autorizacionesAlli === 0,
+      detalle: autorizacionesAlli
+        ? `campo sin torre, y se oyeron ${autorizacionesAlli} autorizaciones`
+        : "campo sin torre: no hay torre que nombre nada",
+      porque: "«runway zero three left, cleared to land» llegando por la 12 de Los Rodeos",
+    });
+  else
+    comprobar(
+      "y la torre de allí nombra su pista",
+      !!cifras && autorizacionesAlli > 0 && conOtraPista.length === 0,
+      !cifras
+        ? "no se supo la cabecera de allí"
+        : !autorizacionesAlli
+          ? `pista ${a.cabecera} · no se oyó allí ningún «cleared to land», ni el tuyo`
+          : conOtraPista.length
+            ? `pista ${a.cabecera}, y dijo: ${conOtraPista.slice(0, 3).join(" · ")}`
+            : `pista ${a.cabecera} · ${autorizacionesAlli} autorizaciones, todas con ella`,
+      "«runway zero three left, cleared to land» llegando por la 12 de Los Rodeos",
+    );
+  /*
+   * **Y la tuya entre ellas.** Allí se aterriza con permiso de allí.
+   */
+  if (a.conFrecuencia !== false) {
+    const tuyasAlli = (vuelo.tusAutorizaciones ?? []).filter((x) => x.alli);
+    comprobar(
+      "y allí te autoriza a ti a aterrizar",
+      tuyasAlli.length > 0,
+      tuyasAlli.length
+        ? tuyasAlli.map((x) => `${x.t} s en «${x.fase}» ${x.dice}`).join(" · ")
+        : "no sonó tu «cleared to land» en el campo de llegada",
+      "se aterrizaba en el campo de llegada sin que nada comprobara que la torre de allí te autorizaba",
+    );
+  }
   const metros = a.aguja?.metros ?? NaN;
   comprobar(
     "y en tierra allí la aguja señala su pista",
@@ -4054,14 +4169,19 @@ if (DESTINO) {
         : "pista privada: nadie en el circuito y nadie en la radio",
       "llegando a Yvytu Rape se oía y se veía el tráfico de Asunción",
     );
+  /*
+   * **Y en uno con torre, sin nadie oído ni visto, no es «sin medir»: es
+   * fallo.** Allí tiene que haber frecuencia —el tráfico de allí, la torre
+   * hablándole—, y un aeropuerto con torre donde en todo lo que dura llegar,
+   * aterrizar y aparcar no suena nadie es una frecuencia que no se montó.
+   */
   else if ((a.traficoVisto ?? 0) === 0 && (a.frecuenciaOidaCuantas ?? 0) === 0)
-    resultados.push({
-      nombre: "y el tráfico que se oye vuela allí",
-      ok: true,
-      sinMedir: true,
-      detalle: "no se oyó ni se vio a nadie allí: no se midió",
-      porque: "en Los Rodeos se oía el circuito de Gando, con los aviones a ciento trece kilómetros",
-    });
+    comprobar(
+      "y el tráfico que se oye vuela allí",
+      false,
+      "campo con torre, y allí no se oyó ni se vio a nadie",
+      "en Los Rodeos se oía el circuito de Gando, con los aviones a ciento trece kilómetros",
+    );
   else
     comprobar(
       "y el tráfico que se oye vuela allí",
