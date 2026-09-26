@@ -1924,7 +1924,10 @@ function pintarLaCarta(
    * los pinta como el TCAS dice que son, y lo que se aprende mirándolos es
    * cuál importa. Lo mismo que el cuadro plano; ver `Tablero.laCarta`.
    */
-  for (const p of dibujo.otros) {
+  // Del que menos importa al que más, para que el que avisa quede encima.
+  // Ver `Tablero.laCarta`.
+  for (let k = dibujo.otros.length - 1; k >= 0; k--) {
+    const p = dibujo.otros[k]!;
     const x = cx + p.dx;
     const y = cy + p.dy;
     const aviso = p.clase === "aviso";

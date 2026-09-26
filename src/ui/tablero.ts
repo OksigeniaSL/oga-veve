@@ -1100,10 +1100,18 @@ export class Tablero {
      * `cristal.ts`— y aquí solo se encienden. Lo que es cada uno lo decide
      * `flight/tcas.ts`, y dónde va, `ui/carta.ts`.
      */
+    /*
+     * **Y el que más importa, en la última pieza**, que en SVG es la que queda
+     * encima. La lista viene del más importante al menos —así, si no caben
+     * todos, sobran los que menos—, y repartida en ese orden el círculo ámbar
+     * quedaba debajo del rombo de otro que pasaba por el mismo sitio. Visto
+     * con la GPU, en Pettirossi.
+     */
+    const caben = dibujo.otros.slice(0, CUANTOS_OTROS);
     for (let i = 0; i < CUANTOS_OTROS; i++) {
       const pieza = grupo.querySelector(`[data-carta="otro-${i}"]`);
       if (!pieza) continue;
-      const o = dibujo.otros[i];
+      const o = caben[caben.length - 1 - i];
       if (!o) {
         pieza.setAttribute("visibility", "hidden");
         continue;
