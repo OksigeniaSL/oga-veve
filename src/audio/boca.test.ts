@@ -755,3 +755,40 @@ describe("lo que deja de ser verdad se retira de la cola", () => {
     expect(dicho).toContain("cleared");
   });
 });
+
+describe("lo que espera turno, y lo que ya se dijo", () => {
+  /*
+   * Tu «cleared to land» no se pide hasta que suena lo que le quita la pista
+   * a otro: pedidas a la vez con la boca ocupada, la tuya caducaba detrás.
+   * Para eso hay que poder preguntar si una frase sigue esperando.
+   */
+  it("una frase pedida con la boca ocupada espera, y deja de esperar al sonar", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("lo de antes"), "instructor.algo");
+    b.pedir("mando", frase("go around"), "torre.goAround@otro");
+    expect(b.espera("torre.goAround@otro")).toBe(true);
+    acabar["lo de antes"]!();
+    expect(dicho).toEqual(["lo de antes", "go around"]);
+    expect(b.espera("torre.goAround@otro")).toBe(false);
+  });
+
+  it("y la que suena a la primera no espera nunca", () => {
+    const b = boca();
+    const { frase } = coro();
+    b.pedir("mando", frase("go around"), "torre.goAround@otro");
+    expect(b.espera("torre.goAround@otro")).toBe(false);
+  });
+
+  it("y cuenta todo lo dicho, también lo que ya no cabe en la lista", () => {
+    const b = boca();
+    const { acabar, frase } = coro();
+    for (let i = 0; i < 320; i++) {
+      reloj += NO_REPETIR;
+      b.pedir("normal", frase(`f${i}`), `clave.${i}`);
+      acabar[`f${i}`]!();
+    }
+    expect(b.habladas).toHaveLength(300);
+    expect(b.cuantasHabladas).toBe(320);
+  });
+});

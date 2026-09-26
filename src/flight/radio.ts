@@ -140,6 +140,17 @@ export interface Momento {
   readonly deDia: boolean;
   /** Si el instructor está diciendo algo ahora mismo. */
   readonly instructorHablando: boolean;
+  /**
+   * Si estás **esperando a que te den la pista**: parado en el punto de espera
+   * con la lámpara roja, o en final detrás de uno que aterriza antes que vos.
+   *
+   * Entonces hablan los que la ocupan, aunque la fase sea de las que callan.
+   * Lo que se espera es justo lo que ellos van a decir —«pista libre», «go
+   * around»—, y con la frecuencia callada no lo decía nadie: el que tenía la
+   * pista no la soltaba nunca mientras esperabas, y la torre acababa
+   * mandándolo al aire para dártela a vos. Ver `ocupanLaPista`.
+   */
+  readonly esperandoLaPista?: boolean;
 }
 
 /** Lo que se oye: quién, qué, y de quién es la matrícula que se nombra. */
@@ -157,6 +168,15 @@ export interface Transmision {
    * dos monólogos que casualmente se turnan.
    */
   readonly respuesta: boolean;
+  /**
+   * Si esta orden **le quita a alguien una pista que se le dio de viva voz**:
+   * al alineado, la salida; al autorizado a aterrizar, que se vaya al aire.
+   *
+   * Es la que no puede faltar cuando la pista pasa a ser tuya. Un «cleared to
+   * land» a otro, oído y nunca anulado, seguido del tuyo por la misma pista,
+   * es la torre dándosela a dos. Ver `laQueSeDice`.
+   */
+  readonly quitaPermiso?: boolean;
 }
 
 /**
@@ -270,28 +290,98 @@ export function laPistaQueTiene(guion: Guion, paso: number): string | null {
 }
 
 /**
- * Lo que la torre le dice a quien tiene la pista para quitársela: al que
- * espera en el eje, que despegue; al que viene a aterrizar, que se vaya al
- * aire. Son las dos cosas que hace una torre de verdad, y las dos están
- * grabadas.
+ * Con qué **ocupa** la pista un avión: la que tiene —ver `laPistaQueTiene`—
+ * o, si no tiene permiso, `otro.final` si ha cantado final sin él y viene
+ * hacia ella. `null` si ni una cosa ni la otra.
+ *
+ * «Tener la pista» contaba solo autorizaciones, y el que viene en final sin
+ * ninguna también va a usarla: el de la frustrada canta «en final» y espera
+ * su «go around». Con la pista pasando a ser tuya justo entonces, la torre no
+ * le decía nada —la frecuencia calla en final— y seguía bajando delante de ti
+ * hasta once metros sobre tu pista. Medido en Gando con el JAZ 20.
+ */
+export function laPistaQueOcupa(guion: Guion, paso: number): string | null {
+  const tiene = laPistaQueTiene(guion, paso);
+  if (tiene) return tiene;
+  const pasos = GUIONES[guion];
+  for (let i = Math.min(paso, pasos.length) - 1; i >= 0; i--) {
+    const clave = pasos[i]!.clave;
+    if (LA_SUELTAN.has(clave)) return null;
+    if (clave === "otro.final") return clave;
+  }
+  return null;
+}
+
+/**
+ * Si un avión **va delante en final con su permiso**: autorizado a aterrizar
+ * y con su «en final» ya cantado después.
+ *
+ * Es al único al que no se le quita la pista para dártela. Llegando detrás
+ * de él, una torre de verdad no manda al aire al que ya está a punto de
+ * tocar: te deja de número dos, aterriza él, y te autoriza cuando la deja
+ * libre. Ver `quitarleLaPistaALosDemas` en `game.ts`.
+ */
+export function vaDelanteEnFinal(guion: Guion, paso: number): boolean {
+  if (laPistaQueTiene(guion, paso) !== "torre.clearedLand") return false;
+  const pasos = GUIONES[guion];
+  for (let i = Math.min(paso, pasos.length) - 1; i >= 0; i--) {
+    const clave = pasos[i]!.clave;
+    if (clave === "otro.final") return true;
+    if (clave === "torre.clearedLand") return false;
+  }
+  return false;
+}
+
+/**
+ * Si un avión **viene a aterrizar**: ha cantado viento en cola o final y
+ * todavía no ha soltado la pista —ni se fue al aire ni la dejó libre—, con
+ * permiso o sin él. Es el que se ve volando el circuito hacia la pista.
+ */
+function vieneAAterrizar(guion: Guion, paso: number): boolean {
+  const pasos = GUIONES[guion];
+  for (let i = Math.min(paso, pasos.length) - 1; i >= 0; i--) {
+    const clave = pasos[i]!.clave;
+    if (LA_SUELTAN.has(clave)) return false;
+    if (clave === "otro.enCola" || clave === "otro.final") return true;
+  }
+  return false;
+}
+
+/**
+ * Lo que la torre le dice a quien ocupa la pista para quitársela: al que
+ * espera en el eje, que despegue; al que viene a aterrizar, con permiso o
+ * cantando final sin él, que se vaya al aire. Son las dos cosas que hace una
+ * torre de verdad, y las dos están grabadas.
  */
 export const PARA_QUITARSELA: Readonly<Record<string, string>> = {
   "torre.lineUpWait": "torre.clearedTakeoff",
   "torre.clearedLand": "torre.goAround",
+  "otro.final": "torre.goAround",
 };
 
 /**
  * De lo que se le dice a los que tenían la pista, **cuál se dice en voz alta**.
  *
- * Una, y la del que está en el eje si lo hay: es el que está plantado en tu
- * pista. Las demás pasan igual —el avión se va al aire y se ve— pero calladas,
- * como pasa todo lo de la frecuencia en final. Con dos dichas delante, tu
- * «cleared to land» esperaba dieciséis segundos y caducaba sin sonar: medido
- * entrando en final en Gando con uno alineado y otro autorizado a la vez.
+ * Una, y **la que anula un permiso que se oyó**: si la torre le dijo a otro
+ * «cleared to land» o «line up and wait», eso sonó, y tu autorización por la
+ * misma pista no puede sonar sin que antes suene lo que lo anula. Con la boca
+ * ocupada esto no se decía, y se oía «Echo Charlie Golf Papa Golf, cleared to
+ * land» y después el tuyo, sin nada entre medias. Permisos a la vez solo
+ * puede haber uno —la frecuencia no le da la pista a nadie mientras la tiene
+ * otro—, así que la que anula es como mucho una.
+ *
+ * Si no la hay, la del que está en el eje, y si no, la primera. Las demás
+ * pasan igual —el avión se va al aire y se ve— pero calladas, como pasa todo
+ * lo de la frecuencia en final. Con dos dichas delante, tu «cleared to land»
+ * esperaba dieciséis segundos y caducaba sin sonar: medido entrando en final
+ * en Gando con uno alineado y otro autorizado a la vez.
  */
 export function laQueSeDice(dichas: readonly Transmision[]): Transmision | null {
   return (
-    dichas.find((d) => d.clave === "torre.clearedTakeoff") ?? dichas[0] ?? null
+    dichas.find((d) => d.quitaPermiso) ??
+    dichas.find((d) => d.clave === "torre.clearedTakeoff") ??
+    dichas[0] ??
+    null
   );
 }
 
@@ -366,6 +456,67 @@ export class Frecuencia {
   }
 
   /**
+   * Quién **ocupa** la pista: la tiene, o viene en final sin permiso. Ver
+   * `laPistaQueOcupa`.
+   *
+   * Es lo que mira la torre antes de ponerte la lámpara en verde en el punto
+   * de espera. La verde no miraba la frecuencia: con otro autorizado a
+   * aterrizar —a veces ya en final corta—, la torre lo mandaba al aire para
+   * dártela a vos, cuando lo que hace una torre de verdad es dejarte en la
+   * roja y que aterrice el que viene. Es la lección del guion de la espera.
+   */
+  get ocupanLaPista(): readonly { matricula: string; orden: string }[] {
+    return this.aviones.flatMap((a) => {
+      const orden = laPistaQueOcupa(a.guion, a.paso);
+      return orden ? [{ matricula: a.indicativo.matricula, orden }] : [];
+    });
+  }
+
+  /** Si alguien ocupa la pista, sin hacer la lista. Ver `ocupanLaPista`. */
+  get pistaOcupada(): boolean {
+    return this.aviones.some((a) => laPistaQueOcupa(a.guion, a.paso) !== null);
+  }
+
+  /**
+   * La matrícula del que **va delante en final con su permiso**, o `null`.
+   * Ver `vaDelanteEnFinal`.
+   */
+  get vaDelante(): string | null {
+    return (
+      this.aviones.find((a) => vaDelanteEnFinal(a.guion, a.paso))?.indicativo
+        .matricula ?? null
+    );
+  }
+
+  /** Si ese avión tiene todavía la pista. Ver `laPistaQueTiene`. */
+  laTiene(matricula: string): boolean {
+    const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
+    return !!a && laPistaQueTiene(a.guion, a.paso) !== null;
+  }
+
+  /**
+   * Si ese avión **está autorizado a aterrizar**. Es lo que decide si el
+   * dibujado puede tocar la pista o tiene que irse al aire al llegar a la
+   * altura de decisión. Ver `anuncia` en `world/trafico.ts`.
+   */
+  puedeAterrizar(matricula: string): boolean {
+    const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
+    return !!a && laPistaQueTiene(a.guion, a.paso) === "torre.clearedLand";
+  }
+
+  /**
+   * **Si el avión dibujado de esa matrícula sigue en la pista.** Lo pone el
+   * juego, que es quien lo dibuja; sin nadie dibujado, nadie está en ella.
+   *
+   * «Pista libre» se decía a su hora de radio, y el avión dibujado la cantaba
+   * al tocar tierra y se quedaba minuto y medio rodando por el asfalto que
+   * acababa de dejar libre. Con la torre esperando a esa frase para ponerte
+   * en verde, entrabas a una pista con otro avión encima. Ahora quien la
+   * dice espera a haber salido, y no pierde el turno: lo dice en cuanto sale.
+   */
+  sigueEnLaPista: (matricula: string) => boolean = () => false;
+
+  /**
    * **Te van a dar la pista: antes se le quita a quien la tenga.**
    *
    * Lo llama el juego en cuanto la pista pasa a ser tuya, y **antes** de que
@@ -382,14 +533,28 @@ export class Frecuencia {
    *
    * Devuelve lo que la torre les dice, en orden; quien pregunta lo dibuja
    * todo y dice como mucho una. Ver `laQueSeDice`.
+   *
+   * **Y a quien la ocupa, no solo a quien la tiene.** El que canta final sin
+   * permiso también va a tu pista, y se le dice lo que su guion ya esperaba:
+   * que se vaya al aire. Ver `laPistaQueOcupa`.
+   *
+   * `respetar` es la matrícula del que va delante en final con su permiso,
+   * si lo hay: a ése no se le quita, aterriza él primero. Ver `vaDelante`.
    */
-  despejarLaPista(): Transmision[] {
+  despejarLaPista(respetar: string | null = null): Transmision[] {
     const dichas: Transmision[] = [];
     for (const a of this.aviones) {
-      const tiene = laPistaQueTiene(a.guion, a.paso);
-      const clave = tiene ? PARA_QUITARSELA[tiene] : undefined;
+      if (a.indicativo.matricula === respetar) continue;
+      const ocupa = laPistaQueOcupa(a.guion, a.paso);
+      const clave = ocupa ? PARA_QUITARSELA[ocupa] : undefined;
       if (!clave) continue;
-      dichas.push({ voz: "torre", clave, de: a.indicativo, respuesta: false });
+      dichas.push({
+        voz: "torre",
+        clave,
+        de: a.indicativo,
+        respuesta: false,
+        quitaPermiso: ocupa !== "otro.final",
+      });
       a.estrena = false;
       if (clave === "torre.clearedTakeoff") {
         /*
@@ -417,6 +582,44 @@ export class Frecuencia {
       this.dicho = ultima;
     }
     return dichas;
+  }
+
+  /**
+   * **Uno que venía a aterrizar sin permiso llegó a la altura de decisión, y
+   * se fue al aire.** Lo dice el juego, que es quien lo ve: ver `paso` en
+   * `world/trafico.ts`.
+   *
+   * Sin permiso no se toca la pista, y eso es lo único que el avión dibujado
+   * no sabía: volaba el circuito entero y se posaba, autorizado o no. Con la
+   * pista tuya la frecuencia no autoriza a nadie, así que el que había cantado
+   * viento en cola se quedaba esperando su «cleared to land» y su avión bajaba
+   * igual, delante o detrás de ti, hasta veintitrés metros sobre tu pista.
+   *
+   * Aquí se apunta lo que ha pasado: desde ahora va por la frustrada, con la
+   * vuelta al circuito por delante, y **no** se le dice después un «go
+   * around» a destiempo ni un «cleared to land» que ya no vale. Si la
+   * frecuencia puede hablar ahora mismo, la torre se lo dice —es lo que haría
+   * con la pista ocupada, y está grabado—; si no, pasa callado, como todo lo
+   * de la frecuencia en final, y se ve.
+   */
+  seFueAlAire(matricula: string, m: Momento): Transmision | null {
+    const a = this.aviones.find((x) => x.indicativo.matricula === matricula);
+    if (!a || laPistaQueTiene(a.guion, a.paso) || !vieneAAterrizar(a.guion, a.paso))
+      return null;
+    a.guion = "frustrada";
+    a.paso = GUIONES.frustrada.findIndex((p) => p.clave === "torre.goAround");
+    a.estrena = false;
+    this.avanzar(a);
+    if (this.canal > 0 || m.instructorHablando || CALLADAS.has(m.fase)) return null;
+    const dice: Transmision = {
+      voz: "torre",
+      clave: "torre.goAround",
+      de: a.indicativo,
+      respuesta: false,
+    };
+    this.canal = HUECO_DEL_CANAL;
+    this.dicho = dice;
+    return dice;
   }
 
   /**
@@ -455,7 +658,14 @@ export class Frecuencia {
     this.canal -= dt;
     for (const a of this.aviones) a.falta -= dt;
     if (this.canal > 0) return null;
-    if (CALLADAS.has(m.fase) || m.instructorHablando) return null;
+    if (m.instructorHablando) return null;
+    /*
+     * **Y esperando la pista, hablan los que la ocupan.** Solo ellos: lo que
+     * se espera es lo suyo, y el resto de la frecuencia sigue callada, que la
+     * fase lo pide igual. Ver `Momento.esperandoLaPista`.
+     */
+    const soloLosDeLaPista = CALLADAS.has(m.fase);
+    if (soloLosDeLaPista && !m.esperandoLaPista) return null;
 
     /*
      * Habla el que lleva más rato esperando, no el primero de la lista. Con lo
@@ -482,8 +692,13 @@ export class Frecuencia {
     let quien: EnLaFrecuencia | null = null;
     for (const a of this.aviones) {
       if (a.falta > 0) continue;
+      if (soloLosDeLaPista && !laPistaQueOcupa(a.guion, a.paso)) continue;
+      const toca = GUIONES[a.guion][a.paso]!.clave;
+      // «Pista libre», fuera de la pista. Ver `sigueEnLaPista`.
+      if (toca === "otro.pistaLibre" && this.sigueEnLaPista(a.indicativo.matricula))
+        continue;
       if (
-        DAN_LA_PISTA.has(GUIONES[a.guion][a.paso]!.clave) &&
+        DAN_LA_PISTA.has(toca) &&
         (pistaTuya ||
           this.aviones.some(
             (b) => b !== a && laPistaQueTiene(b.guion, b.paso) !== null,

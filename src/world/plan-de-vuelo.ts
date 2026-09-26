@@ -970,6 +970,14 @@ export class PlanDeVuelo {
   }
 
   /**
+   * Si alguien de la frecuencia ocupa la pista: la torre no te pone la
+   * lámpara en verde hasta que la deja. Ver `Vuelo.pistaDeOtros`.
+   */
+  set pistaDeOtros(si: boolean) {
+    this.vuelo.pistaDeOtros = si;
+  }
+
+  /**
    * El puesto que se está usando de verdad, si no es el que tocaba por cercanía.
    *
    * Lo pone `reiniciarDesde` cuando el juego encuentra que el mejor puesto tiene

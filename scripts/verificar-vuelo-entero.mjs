@@ -967,7 +967,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
    * piloto pide media vuelta. Medido: el avión salía derecho noventa segundos
    * y a los 3.600 m se tiraba de lado hasta el suelo.
    */
-  const rumboDeSalida = porDelante()?.h ?? rumboPista;
+  let rumboDeSalida = porDelante()?.h ?? rumboPista;
 
   /**
    * Lo más que se apunta contra el eje al capturarlo, en radianes.
@@ -1339,8 +1339,6 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
    */
   let terrenoEnFinalAlli = 0;
   let terrenoAntes = null;
-  /** Cuánto se había hablado al cruzar, para mirar solo lo dicho allí. */
-  let habladasAlCruzar = -1;
   /**
    * El tráfico que se vio allí, muestreado mientras se estuvo allí.
    *
@@ -1373,8 +1371,40 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
   let pistaDeOtros = 0;
   let pistaDeOtrosDonde = null;
   const dadaAOtroTrasLaTuya = [];
-  let habladasMiradas = 0;
+  /**
+   * **Y lo que se le dio a otro antes, sin anular de viva voz.**
+   *
+   * Lo de arriba solo miraba lo oído después de tu autorización, y el
+   * modelo, que ya estaba limpio. Lo que se oía era esto: «Echo Charlie Golf
+   * Papa Golf, cleared to land», y detrás el tuyo por la misma pista, sin
+   * ningún «go around» entre medias: con la boca ocupada, la orden que lo
+   * mandaba al aire pasaba callada. Se lleva la cuenta de lo oído —a quién
+   * se le dio la pista y a quién se le quitó— y al sonar lo tuyo no puede
+   * quedar nadie con ella.
+   */
+  const conPermisoOido = new Map();
+  const sinAnularAlDartela = [];
+  /**
+   * Cuántas frases se habían dicho en la muestra anterior. La lista de
+   * `habladas` tiene tope y en un vuelo largo se llena: mirando lo nuevo por
+   * su largo, a partir de ahí no se veía nada. Ver `habladasTotal`.
+   */
+  let habladasVistas = 0;
+  /** Cuántas veces la torre te mandó al aire por la pista ocupada, y se fue. */
+  let frustradasPorLaPista = 0;
   let yaTeLaDieron = false;
+  /** Lo que la frecuencia dijo allí: el tráfico y la torre hablándole. */
+  const frecuenciaOidaAlli = [];
+  /** Los «cleared to land» oídos allí, a quien fueran. */
+  const clearedLandAlli = [];
+  /**
+   * **Y nadie baja a tu pista mientras es tuya.** El avión dibujado volaba el
+   * circuito entero y se posaba, con permiso o sin él: el que esperaba su
+   * «cleared to land» en el viento en cola entraba en final detrás de ti y
+   * bajaba a veintitrés metros de tu pista.
+   */
+  let bajandoATuPista = 0;
+  let bajandoATuPistaDonde = null;
   const misLetrasEnLaTorre = Object.entries(o.indicativo?.()?.deTorre ?? {})
     .filter(([k]) => /^c\d/.test(k))
     .map(([, v]) => v)
@@ -1708,7 +1738,12 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
      */
     const enFinal = /final|aterriz|frustr/.test(fase) || etapa === "final";
     {
-      const tuya = PISTA_TUYA.has(fase);
+      /*
+       * Tuya es su fase **y que no seas el número dos**: detrás de uno que
+       * aterriza antes, la final es tuya pero la pista todavía es suya. Ver
+       * `numeroDos` en `game.ts`.
+       */
+      const tuya = o.pistaEsTuya ? o.pistaEsTuya() : PISTA_TUYA.has(fase);
       if (!tuya) yaTeLaDieron = false;
       const otros = tuya ? (o.pistaDeLosDemas?.() ?? []) : [];
       if (otros.length) {
@@ -1717,24 +1752,70 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
           .map((x) => `${x.matricula} ${x.orden}`)
           .join(", ")}`;
       }
+      if (tuya && pistaAhora()) {
+        const p = pistaAhora();
+        const rumbo = (p.heading * Math.PI) / 180;
+        const fx = Math.sin(rumbo);
+        const fz = -Math.cos(rumbo);
+        const cota = o.cotaDePistaDeAhora?.(p.x, p.z) ?? 0;
+        for (const a of o.trafico?.() ?? []) {
+          if (!a.llegando) continue;
+          const along = (a.x - p.x) * fx + (a.z - p.z) * fz;
+          const across = Math.abs(-(a.x - p.x) * fz + (a.z - p.z) * fx);
+          if (
+            across < 30 &&
+            along > -p.length / 2 - 1500 &&
+            along < p.length / 2 &&
+            a.y - cota < 30
+          ) {
+            bajandoATuPista++;
+            bajandoATuPistaDonde ??= `${t.toFixed(0)} s en «${fase}»: ${a.matricula} a ${Math.round(a.y - cota)} m, ${Math.round(along + p.length / 2)} m del umbral${a.conPermiso ? "" : ", sin permiso"}`;
+          }
+        }
+      }
       const h = o.habladas?.() ?? [];
-      // La lista tiene tope y se corre por arriba: si encoge, se vuelve a
-      // mirar desde donde esté.
-      if (h.length < habladasMiradas) habladasMiradas = 0;
-      for (const x of h.slice(habladasMiradas)) {
-        const m = /^[\d.]+s torre\.(?:[a-z]+\.)?([A-Za-z]+)(?:\.[LCR])?@(.*)$/.exec(x);
-        if (!m || !tuya) continue;
-        const mia = !!misLetrasEnLaTorre && m[2].startsWith(misLetrasEnLaTorre);
-        if (mia && /^(verde|aterrizar|clearedTakeoff|clearedLand)$/.test(m[1]))
-          yaTeLaDieron = true;
-        else if (
+      const total = o.habladasTotal?.() ?? h.length;
+      if (total < habladasVistas) habladasVistas = 0;
+      const nuevas = h.slice(Math.max(0, h.length - (total - habladasVistas)));
+      habladasVistas = total;
+      for (const x of nuevas) {
+        if (enElDestino) {
+          if (/torre\..*clearedLand/.test(x)) clearedLandAlli.push(x.replace(/^[\d.]+s /, ""));
+          const f = /^[\d.]+s (otro|torre)\.[^@]*@(.*)$/.exec(x);
+          if (f && !(misLetrasEnLaTorre && f[2].startsWith(misLetrasEnLaTorre)))
+            frecuenciaOidaAlli.push(x);
+        }
+        const m = /^[\d.]+s (torre|otro)\.(?:[a-z]+\.)?([A-Za-z]+)(?:\.[LCR])?@(.*)$/.exec(x);
+        if (!m) continue;
+        const mia = !!misLetrasEnLaTorre && m[3].startsWith(misLetrasEnLaTorre);
+        // A quién va, por sus letras: las cinco del alfabeto, sin la pista.
+        const quien = m[3]
+          .split("-")
+          .filter((l) => l.startsWith("fonetico."))
+          .join("-");
+        if (!mia && m[1] === "torre" && /^(lineUpWait|clearedLand)$/.test(m[2]))
+          conPermisoOido.set(quien, x);
+        if (
           !mia &&
+          ((m[1] === "torre" && /^(clearedTakeoff|goAround)$/.test(m[2])) ||
+            (m[1] === "otro" && m[2] === "pistaLibre"))
+        )
+          conPermisoOido.delete(quien);
+        if (!tuya) continue;
+        if (mia && m[1] === "torre" && /^(verde|aterrizar|clearedTakeoff|clearedLand)$/.test(m[2])) {
+          yaTeLaDieron = true;
+          if (conPermisoOido.size)
+            sinAnularAlDartela.push(
+              `${t.toFixed(0)} s en «${fase}», ${x.replace(/@.*$/, "")}, con: ${[...conPermisoOido.values()].map((v) => v.replace(/@.*$/, "")).join(" · ")}`,
+            );
+        } else if (
+          !mia &&
+          m[1] === "torre" &&
           yaTeLaDieron &&
-          /^(lineUpWait|clearedTakeoff|clearedLand)$/.test(m[1])
+          /^(lineUpWait|clearedTakeoff|clearedLand)$/.test(m[2])
         )
           dadaAOtroTrasLaTuya.push(`${t.toFixed(0)} s en «${fase}»: ${x}`);
       }
-      habladasMiradas = h.length;
     }
     if (
       !s.onGround &&
@@ -2161,6 +2242,28 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     }
 
     // ── El piloto ────────────────────────────────────────────────────────
+    /*
+     * **Y si la torre te manda al aire porque la pista está ocupada, se va.**
+     *
+     * Con `mandarFrustrar("nunca")` no hay órdenes sorteadas, pero sí la de
+     * verdad: detrás de uno que aterriza antes y no ha dejado la pista, al
+     * llegar a la altura de decisión la torre te manda al aire. Bajar igual
+     * es llevarse el avión de delante, y el vuelo se acaba en percance. Así
+     * que se hace lo que se enseña: subir por el eje y dar otra vuelta al
+     * circuito. Ver `autorizarCuandoToque` en `game.ts`.
+     */
+    if (
+      etapa === "final" &&
+      !s.onGround &&
+      o.ordenDeFrustrar?.() &&
+      o.porQueMandaron?.() === "pistaOcupada"
+    ) {
+      frustradasPorLaPista++;
+      // El de la cabecera en uso, no el nominal: ver `rumboDeSalida`.
+      rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
+      aDonde = 1;
+      etapa = "subir";
+    }
     if (etapa === "arrancar") {
       c.engineOn = true;
       c.brakes = 0;
@@ -2318,7 +2421,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       o.colocar(f.x, alli + (4000 + 250) * SENDA, f.z, aproximacion + 3, f.h);
       await new Promise((r) => setTimeout(r, 500));
       enElDestino = o.campoDeAhora();
-      habladasAlCruzar = (o.habladas?.() ?? []).length;
+      // La frecuencia de allí empieza de cero: lo que se dio aquí, aquí se queda.
+      conPermisoOido.clear();
       pista = pistaAhora();
       rumboPista = (pista.heading * Math.PI) / 180;
       umbral = finalAhora(0);
@@ -2786,10 +2890,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
   const alli = (() => {
     if (!destino) return null;
     const cabecera = o.puntoDeFinalDe?.(0, destino)?.cabecera ?? null;
-    const dicho = (o.habladas?.() ?? [])
-      .slice(Math.max(0, habladasAlCruzar))
-      .filter((h) => /torre\..*clearedLand/.test(h))
-      .map((h) => h.replace(/^[\d.]+s /, ""));
+    // Mirado mientras se estaba allí, no cortando la lista al final: tiene
+    // tope, y en un vuelo largo lo de allí ya no está donde se cortaba.
+    const dicho = clearedLandAlli;
     const aerodromos = [...(o.aerodromosVisitados?.() ?? [])];
     const pista = o.pistaDeAhora?.();
     const lejosDeAlli = (o.trafico?.() ?? []).map((a) =>
@@ -2804,6 +2907,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       traficoLejos: lejosDeAlli.length ? Math.max(...lejosDeAlli) : 0,
       traficoVisto: traficoVistoAlli,
       traficoMasLejos: traficoMasLejosAlli,
+      conFrecuencia: o.conFrecuencia?.(destino) ?? true,
+      frecuenciaOida: frecuenciaOidaAlli.slice(0, 6),
+      frecuenciaOidaCuantas: frecuenciaOidaAlli.length,
     };
   })();
 
@@ -2872,6 +2978,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     pistaDeOtros,
     pistaDeOtrosDonde,
     dadaAOtroTrasLaTuya,
+    sinAnularAlDartela,
+    frustradasPorLaPista,
+    bajandoATuPista,
+    bajandoATuPistaDonde,
     masRapidoEnPista: Math.round(masRapidoEnPista),
     seSalioEnPista: Math.round(seSalioEnPista),
     gasEnLaCarrera: +gasEnLaCarrera.toFixed(2),
@@ -3326,7 +3436,9 @@ comprobar(
  */
 comprobar(
   "la pista que es tuya no la tiene nadie más",
-  (vuelo.pistaDeOtros ?? 0) === 0 && !(vuelo.dadaAOtroTrasLaTuya ?? []).length,
+  (vuelo.pistaDeOtros ?? 0) === 0 &&
+    !(vuelo.dadaAOtroTrasLaTuya ?? []).length &&
+    !(vuelo.sinAnularAlDartela ?? []).length,
   [
     vuelo.pistaDeOtros
       ? `otro la tuvo ${vuelo.pistaDeOtros} muestras, la primera a los ${vuelo.pistaDeOtrosDonde}`
@@ -3334,8 +3446,26 @@ comprobar(
     (vuelo.dadaAOtroTrasLaTuya ?? []).length
       ? `y se oyó dársela a otro: ${vuelo.dadaAOtroTrasLaTuya.slice(0, 3).join(" · ")}`
       : "ni se oyó dársela a otro después de la tuya",
+    (vuelo.sinAnularAlDartela ?? []).length
+      ? `y sonó la tuya sin anular la de otro: ${vuelo.sinAnularAlDartela.slice(0, 2).join(" · ")}`
+      : "ni sonó la tuya con la de otro sin anular",
   ].join(" · "),
-  "«cleared to land» a vos y seis segundos después «line up and wait» a otro, en Pettirossi",
+  "«cleared to land» a vos y seis segundos después «line up and wait» a otro, en Pettirossi; y «cleared to land» a otro, oído y nunca anulado, y después el tuyo",
+);
+
+/*
+ * **Y nadie que venga a aterrizar baja a ella.** El avión dibujado se posaba
+ * con permiso o sin él; el que esperaba su «cleared to land» en el viento en
+ * cola bajaba detrás de ti hasta veintitrés metros. Sin permiso, ahora se va
+ * al aire en la altura de decisión. Ver `sinPermiso` en `world/trafico.ts`.
+ */
+comprobar(
+  "y nadie baja a tu pista mientras es tuya",
+  (vuelo.bajandoATuPista ?? 0) === 0,
+  vuelo.bajandoATuPista
+    ? `${vuelo.bajandoATuPista} muestras, la primera a los ${vuelo.bajandoATuPistaDonde}`
+    : "nadie que viniera a aterrizar pasó bajo sobre ella",
+  "uno sin permiso, detrás de ti en final, a quinientos ochenta metros del umbral y veintitrés de altura",
 );
 
 /*
@@ -3896,15 +4026,45 @@ if (DESTINO) {
    * **Y visto de verdad.** Mirado una vez al final, sin nadie en el circuito
    * en ese instante, esto pasaba solo. Ahora se muestrea mientras se está
    * allí, y sin ninguna muestra no dice que sí: dice que no lo pudo ver.
+   *
+   * **Y en un campo sin frecuencia, lo que hay que ver es que no hay nadie.**
+   * Yvytu Rape es una pista privada: allí no se pone tráfico a propósito, así
+   * que «no se vio a nadie» no era no poder comprobarlo —era la respuesta
+   * buena— y se contaba como fallo. El banco de Pettirossi a Yvytu Rape salía
+   * siempre en rojo, y el día que fallara algo de verdad ahí no se habría
+   * visto. Lo que se pide allí es lo que tiene que pasar: ni tráfico dibujado
+   * ni frecuencia oída, ni la de allí —que no hay— ni la del campo de salida.
+   *
+   * Con frecuencia y sin nadie visto, en cambio, no se dice ni que sí ni que
+   * no: se dice que no se midió, que es la verdad. Salvo que se oyera a
+   * alguien allí sin verlo, que es justo lo que esto mira.
    */
-  comprobar(
-    "y el tráfico que se oye vuela allí",
-    (a.traficoVisto ?? 0) > 0 && (a.traficoMasLejos ?? Infinity) < 20000,
-    (a.traficoVisto ?? 0) > 0
-      ? `${a.traficoVisto} muestras; el más lejos, a ${a.traficoMasLejos} m de la pista de allí`
-      : "no se vio a nadie allí: esto no se ha podido comprobar",
-    "en Los Rodeos se oía el circuito de Gando, con los aviones a ciento trece kilómetros",
-  );
+  if (a.conFrecuencia === false)
+    comprobar(
+      "y en un campo sin frecuencia, ni se oye ni se ve a nadie",
+      (a.traficoVisto ?? 0) === 0 && (a.frecuenciaOidaCuantas ?? 0) === 0,
+      (a.traficoVisto ?? 0) || (a.frecuenciaOidaCuantas ?? 0)
+        ? `${a.traficoVisto ?? 0} muestras de tráfico; se oyó: ${(a.frecuenciaOida ?? []).join(" · ") || "nada"}`
+        : "pista privada: nadie en el circuito y nadie en la radio",
+      "llegando a Yvytu Rape se oía y se veía el tráfico de Asunción",
+    );
+  else if ((a.traficoVisto ?? 0) === 0 && (a.frecuenciaOidaCuantas ?? 0) === 0)
+    resultados.push({
+      nombre: "y el tráfico que se oye vuela allí",
+      ok: true,
+      sinMedir: true,
+      detalle: "no se oyó ni se vio a nadie allí: no se midió",
+      porque: "en Los Rodeos se oía el circuito de Gando, con los aviones a ciento trece kilómetros",
+    });
+  else
+    comprobar(
+      "y el tráfico que se oye vuela allí",
+      (a.traficoVisto ?? 0) > 0 && (a.traficoMasLejos ?? Infinity) < 20000,
+      (a.traficoVisto ?? 0) > 0
+        ? `${a.traficoVisto} muestras; el más lejos, a ${a.traficoMasLejos} m de la pista de allí`
+        : `se oyó a ${a.frecuenciaOidaCuantas} y no se vio a nadie: ${(a.frecuenciaOida ?? []).slice(0, 3).join(" · ")}`,
+      "en Los Rodeos se oía el circuito de Gando, con los aviones a ciento trece kilómetros",
+    );
 
   /*
    * **Y al volver a arrancar allí, el tramo de vuelta.** Ver `deVuelta`.

@@ -373,6 +373,20 @@ export class Vuelo {
    */
   acabaEnLaEspera = false;
 
+  /**
+   * **Si la pista la ocupa otro**: alineado en ella, autorizado a aterrizar o
+   * cantando final. Lo pone el juego, que es quien oye la frecuencia.
+   *
+   * Mientras tanto la torre no te mira: te deja en la roja, y empieza a
+   * contar cuando la pista queda libre. La verde no miraba la frecuencia, y
+   * con otro autorizado a aterrizar —a veces ya en final corta— la torre lo
+   * mandaba al aire para dártela a vos: se oía su «cleared to land», tu
+   * «cleared for take-off» por la misma pista, y entre medias nada. Una torre
+   * de verdad te deja esperando y aterriza el que viene, que es la lección
+   * del guion de la espera. Ver `ocupanLaPista` en `flight/radio.ts`.
+   */
+  pistaDeOtros = false;
+
   /** Si ya se paró en la doble raya con la lección de rodar. Ver `Paso`. */
   private rodajeHecho = false;
 
@@ -799,6 +813,10 @@ export class Vuelo {
     this.quieto = s.estado.groundSpeed < PARADO ? this.quieto + dt : 0;
     if (this.acabaEnLaEspera) {
       if (this.quieto > ESPERA_MINIMA) this.rodajeHecho = true;
+      return;
+    }
+    if (this.pistaDeOtros) {
+      this.mirando = 0;
       return;
     }
     if (this.quieto > ESPERA_MINIMA) this.mirando += dt;

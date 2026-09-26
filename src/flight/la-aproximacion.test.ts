@@ -225,3 +225,29 @@ describe("el circuito no se canta en la final recta de allí", () => {
     expect(tramos("en-vuelo", true).length).toBe(1);
   });
 });
+
+describe("la torre te manda al aire porque el de delante no ha dejado la pista", () => {
+  /*
+   * De número dos detrás de uno que aterriza antes, si llegás a la decisión
+   * sin tu permiso la torre te manda al aire. No es un sorteo: pasa también
+   * con las órdenes apagadas, y no se levanta por subir mientras el otro siga
+   * en la pista —levantarla es tu «cleared to land» con él encima—.
+   */
+  it("se da con las órdenes apagadas, y no se levanta hasta que el otro sale", () => {
+    let s = enFinal(GANDO, 1100, 58);
+    const { aproximacion, dicho } = montar(() => visto(GANDO, s));
+    aproximacion.ordenes = "nunca";
+    let ocupada = true;
+    aproximacion.mandarIrsePorLaPistaOcupada(58, () => ocupada);
+    expect(dicho).toContain("frustrar:pistaOcupada");
+    expect(aproximacion.mandanFrustrar).toBe(true);
+    // Sube de sobra: con el otro en la pista, la orden sigue.
+    s = enFinal(GANDO, 600, 200, 5);
+    paso(aproximacion, s);
+    expect(aproximacion.mandanFrustrar).toBe(true);
+    // Sale: ahora sí se levanta.
+    ocupada = false;
+    paso(aproximacion, s);
+    expect(aproximacion.mandanFrustrar).toBe(false);
+  });
+});

@@ -523,6 +523,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         (h) => `${((h.t - cero) / 1000).toFixed(1)}s ${h.clave}`,
       );
     },
+    /**
+     * Cuántas frases se han dicho en total, también las que ya no caben en
+     * `habladas`. Con esto se sabe cuáles de las últimas son nuevas.
+     */
+    habladasTotal: () => BOCA.cuantasHabladas,
     /** Las voces grabadas con las que ha hablado cada boca. */
     vocesDeCadaBoca: () =>
       Object.fromEntries(
@@ -555,6 +560,17 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * Ver `despejarLaPista` en `flight/radio.ts`.
      */
     pistaDeLosDemas: () => [...juego.pistaDeLosDemasParaBanco],
+    /**
+     * Quién **ocupa** la pista: la tiene, o viene en final sin permiso. Es lo
+     * que mira la lámpara del punto de espera. Ver `ocupanLaPista` en
+     * `flight/radio.ts`.
+     */
+    ocupanLaPista: () => [...juego.ocupanLaPistaParaBanco],
+    /**
+     * Si la pista es tuya ahora: su fase, y que no seas el número dos detrás
+     * de uno que aterriza antes. Ver `numeroDos` en `game.ts`.
+     */
+    pistaEsTuya: () => juego.laPistaEsTuyaParaBanco,
     indicativo: () => {
       const otro = juego.indicativoDeLaRadio;
       const yo = juego.miMatricula;
@@ -1328,6 +1344,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     campoDeAhora: () => juego.campoDeAhoraParaBanco,
     /** El OACI del aeródromo que se tiene debajo. */
     aerodromoDeAhora: () => juego.campoParaBanco()?.aerodromo?.id ?? null,
+    /**
+     * Si ese campo tiene frecuencia: uno privado no tiene torre, ni tráfico
+     * que se oiga, ni a nadie volando su circuito. Ver `ponerTrafico`.
+     */
+    conFrecuencia: (id?: string) => {
+      const campo = juego.campoParaBanco(id);
+      return !!campo?.escenario.aerodrome && !campo.escenario.aerodrome.privado;
+    },
     /** Los aeródromos que el cuaderno da por visitados. */
     aerodromosVisitados: () => juego.aerodromosVisitadosParaBanco,
     /** A cuánto y hacia dónde señala la aguja. Ver `Game.agujaParaBanco`. */
@@ -1382,6 +1406,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     /** Si ahora mismo hay orden de irse al aire. */
     ordenDeFrustrar: () => juego.laAproximacion.mandanFrustrar,
     porQueSeMando: () => juego.laAproximacion.porQueSeMando,
+    /** Y cuál de las dos órdenes es: pista ocupada o no estabilizada. */
+    porQueMandaron: () => juego.laAproximacion.porqueMandaron,
     /**
      * Lo que cuesta el cuadro que se acaba de dibujar.
      *
