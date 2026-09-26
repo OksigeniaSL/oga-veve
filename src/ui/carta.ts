@@ -29,6 +29,8 @@
  * mando que tocar porque no se lee.
  */
 
+import { hastaElUmbralDeToma } from "../world/umbral-desplazado";
+
 /** Una milla náutica, en metros. La unidad de distancia del aire. */
 export const MILLA = 1852;
 
@@ -143,12 +145,18 @@ export interface Mapa {
   /** Dónde estoy, en metros del mundo. */
   readonly x: number;
   readonly z: number;
-  /** La pista de casa, con su sitio, su rumbo y su largo. */
+  /**
+   * La pista del campo que se tiene debajo, con su sitio, su largo y **el
+   * rumbo de la cabecera en uso**, que es el que elige el viento. Ver
+   * `world/campo-del-vuelo.ts`.
+   */
   readonly pista: {
     readonly x: number;
     readonly z: number;
     readonly heading: number;
     readonly length: number;
+    /** Asfalto antes del umbral de aterrizaje en uso, m. */
+    readonly desplazado?: number;
   } | null;
   /** Y los otros aviones, los que se oyen por la radio. Ver `trafico.ts`. */
   readonly otros: readonly { readonly x: number; readonly z: number }[];
@@ -297,21 +305,33 @@ export function dibujarLaCarta(
     const pb = aqui(b);
     pista = [pa, pb];
     /*
-     * **Por la cabecera más cercana**, que es la que se cruza primero al
-     * aterrizar; y el eje sale de ella alejándose de la pista, o sea hacia
-     * quien viene. Con la más lejana salían ocho millas de raya al otro lado
-     * de la pista, invitando a seguir de largo.
+     * **Por la cabecera en uso, que es la que dice el viento.**
+     *
+     * Salía de la cabecera **más cercana al avión**, y eso es decidir la
+     * pista en uso por dónde se llega: volando a Fuerteventura desde
+     * Lanzarote, la raya magenta metía por la 19, que es la punta que queda
+     * al norte; al pasar por encima del aeropuerto la más cercana pasaba a
+     * ser la del sur y la raya saltaba a la 01. «Ya sí me rectifica la
+     * línea», y mientras tanto la torre, el PAPI, la aguja y la manga decían
+     * la 01 desde el principio. Un aeropuerto de verdad no cambia de pista
+     * porque se le pase por encima: la fijan el viento y la torre, y es una
+     * para todos.
+     *
+     * Así que el eje sale del umbral de aterrizaje de la cabecera en uso
+     * —con el desplazado, donde está la barra: es donde se toca y donde lleva
+     * la senda— y se aleja por detrás de él, hacia donde hay que venir. Lo
+     * que se dibuja es la misma pista que ya traía la carta, con su rumbo; no
+     * hay una segunda cuenta de cuál es. Ver `world/campo-del-vuelo.ts`.
      */
-    const entraPorA = Math.hypot(pa.dx, pa.dy) < Math.hypot(pb.dx, pb.dy);
-    const umbral = entraPorA ? pa : pb;
-    const otro = entraPorA ? pb : pa;
-    const largo = Math.hypot(otro.dx - umbral.dx, otro.dy - umbral.dy) || 1;
-    const ux = (umbral.dx - otro.dx) / largo;
-    const uy = (umbral.dy - otro.dy) / largo;
-    const ocho = EJE_DE_ENTRADA * MILLA * por;
+    const h = (m.pista.heading * Math.PI) / 180;
+    const fx = Math.sin(h);
+    const fz = -Math.cos(h);
+    const atras = hastaElUmbralDeToma(m.pista);
+    const umbral = { x: m.pista.x - fx * atras, z: m.pista.z - fz * atras };
+    const ocho = EJE_DE_ENTRADA * MILLA;
     eje = {
-      desde: umbral,
-      hasta: { dx: umbral.dx + ux * ocho, dy: umbral.dy + uy * ocho },
+      desde: aqui(umbral),
+      hasta: aqui({ x: umbral.x - fx * ocho, z: umbral.z - fz * ocho }),
     };
   }
   /*
