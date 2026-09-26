@@ -1759,6 +1759,8 @@ function lucesDeTren(
   patas: number,
   donde: number,
 ): void {
+  // El avión de tren fijo no lleva luces de tren. Ver `patasDe`.
+  if (patas <= 0) return;
   const luz = luzDeTren(donde);
   const R = 9;
   const PASO = R * 2 + 6;

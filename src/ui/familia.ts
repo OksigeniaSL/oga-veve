@@ -158,8 +158,14 @@ export function centroDe(caja: Caja): number {
 /**
  * Cuántas luces de tren lleva. Tres en toda la flota y **cinco en el grande**,
  * porque un 747 tiene cinco patas y quien las cuente va a sonreír.
+ *
+ * **Y ninguna en el de tren fijo.** Un entrenador de escuela no lleva luces de
+ * tren, porque no hay nada que pueda estar a medias: las patas están fuera
+ * siempre. Tres ruedas verdes en su cuadro enseñaban un indicador que quien
+ * se suba a un Cessna de verdad no va a encontrar.
  */
 export function patasDe(a: AircraftConfig): number {
+  if (!a.trenRetractil) return 0;
   return a.motores >= 4 && a.sound.engine === "turbofan" ? 5 : 3;
 }
 
