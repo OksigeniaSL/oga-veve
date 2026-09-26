@@ -381,11 +381,18 @@ export class InputManager {
      */
     const pitchTarget =
       this.signoDeCabeceo *
-      (gamepad?.pitch ?? this.touchPitch + this.axis("pitchUp", "pitchDown"));
-    const rollTarget =
-      gamepad?.roll ?? this.touchRoll + this.axis("rollRight", "rollLeft");
-    const rudderTarget =
-      gamepad?.rudder ?? this.touchRudder + this.axis("yawRight", "yawLeft");
+      mandaQuienSeMueve(
+        this.touchPitch + this.axis("pitchUp", "pitchDown"),
+        gamepad?.pitch,
+      );
+    const rollTarget = mandaQuienSeMueve(
+      this.touchRoll + this.axis("rollRight", "rollLeft"),
+      gamepad?.roll,
+    );
+    const rudderTarget = mandaQuienSeMueve(
+      this.touchRudder + this.axis("yawRight", "yawLeft"),
+      gamepad?.rudder,
+    );
 
     this.controls.elevator = approach(
       this.controls.elevator,
@@ -716,6 +723,23 @@ export function leTocaAlDeLaPantalla(quien: EventTarget | null): boolean {
   return !!(quien as Element | null)?.closest?.(
     "input, select, textarea, [contenteditable='true']",
   );
+}
+
+/**
+ * **Manda quien se mueve**: el teclado o el dedo, y si no, el mando de juego.
+ *
+ * Con un mando conectado, sus ejes mandaban siempre —`gamepad?.pitch ?? …`—,
+ * y un mando quieto da cero, no «nada»: el cabeceo, el alabeo y el timón
+ * dejaban de escuchar al teclado y a la pantalla. Basta un mando emparejado
+ * por Bluetooth y olvidado encima de la mesa para que las flechas no hagan
+ * nada. Es la misma regla que ya tiene el motor —ver
+ * `releasesTouchThrottle`—: si alguien toca el teclado o la pantalla, manda.
+ */
+export function mandaQuienSeMueve(
+  tecladoODedo: number,
+  mando: number | undefined,
+): number {
+  return tecladoODedo !== 0 ? tecladoODedo : (mando ?? 0);
 }
 
 /**

@@ -8,7 +8,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { axisFromKeys, releasesTouchThrottle } from "./input";
+import {
+  axisFromKeys,
+  mandaQuienSeMueve,
+  releasesTouchThrottle,
+} from "./input";
 
 const PITCH_UP = ["ArrowUp", "KeyW"];
 const PITCH_DOWN = ["ArrowDown", "KeyS"];
@@ -85,5 +89,18 @@ describe("el motor se maneja en cualquier teclado", () => {
   it("sigue funcionando con la tecla física del teclado americano", () => {
     expect(axisFromKeys(new Set(["Minus"]), SUBE, BAJA)).toBe(-1);
     expect(axisFromKeys(new Set(["Equal"]), SUBE, BAJA)).toBe(1);
+  });
+});
+
+describe("con un mando de juego conectado", () => {
+  it("quieto no le quita las flechas a nadie", () => {
+    // Un mando emparejado y olvidado da cero, no «nada».
+    expect(mandaQuienSeMueve(1, 0)).toBe(1);
+    expect(mandaQuienSeMueve(-0.5, 0)).toBe(-0.5);
+  });
+
+  it("y moviéndose manda él, si nadie toca el teclado", () => {
+    expect(mandaQuienSeMueve(0, 0.7)).toBe(0.7);
+    expect(mandaQuienSeMueve(0, undefined)).toBe(0);
   });
 });
