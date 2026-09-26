@@ -595,6 +595,7 @@ export const ES_PY = {
   "vuelo.despegando": "Motor a fondo",
   "vuelo.enVuelo": "Andá a dar una vuelta",
   "vuelo.enVueloAterrizando": "Andá a la pista",
+  "vuelo.enVueloDestino": "Seguí la flecha: vamos al otro aeropuerto",
   "vuelo.final": "Bajá suavecito",
   "vuelo.terrenoBajo": "Vas muy bajo",
   "vuelo.terrenoSube": "Terreno. Subí",

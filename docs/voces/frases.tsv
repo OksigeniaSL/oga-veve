@@ -15,6 +15,7 @@ instructor	instructor/vuelo.comprometido.ogg	es-PY	Ya despegamos: seguí	lo que 
 instructor	instructor/vuelo.despegando.ogg	es-PY	Motor a fondo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enVuelo.ogg	es-PY	Andá a dar una vuelta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enVueloAterrizando.ogg	es-PY	Andá a la pista	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.enVueloDestino.ogg	es-PY	Seguí la flecha: vamos al otro aeropuerto	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.terrenoSube.ogg	es-PY	Terreno. Subí	lo que toca hacer ahora, en vuelo y en tierra
@@ -67,6 +68,7 @@ instructor	instructor/vuelo.tormenta.ogg	es-PY	Hay lluvia delante: rodeála, no 
 instructor	instructor/vuelo.reserva.ogg	es-PY	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinCombustible.ogg	es-PY	Se acabó el combustible: planeá hasta la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sacaElTren.ogg	es-PY	Sacá el tren	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.trenEnElSuelo.ogg	es-PY	Con el avión en el suelo, el tren no se mete	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.despacio.ogg	es-PY	Más despacio	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alto.ogg	es-PY	Pará acá	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.teLoPasaste.ogg	es-PY	Te pasaste. Frená y volvé	lo que toca hacer ahora, en vuelo y en tierra

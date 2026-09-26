@@ -225,3 +225,55 @@ describe("el circuito no se canta en la final recta de allí", () => {
     expect(tramos("en-vuelo", true).length).toBe(1);
   });
 });
+
+describe("el circuito, solo si se vuelve a este campo", () => {
+  /** Un avión en el tramo de viento en cola de Gando, a la altura del circuito. */
+  function enElCircuito(): { s: FlightState; circuito: ReturnType<typeof crearCircuito> } {
+    const circuito = crearCircuito(GANDO.pista, COTA);
+    const [a, b] = [circuito.vertices[2]!, circuito.vertices[3]!];
+    const s = {
+      position: new Vector3((a.x + b.x) / 2, COTA + 250, (a.z + b.z) / 2),
+      heading: 0,
+      airspeed: PYKASU.cruiseSpeed,
+      verticalSpeed: 0,
+      onGround: false,
+    } as unknown as FlightState;
+    return { s, circuito };
+  }
+
+  function volar(haciaOtroCampo: boolean): { visible: boolean; tramos: string[] } {
+    const { s, circuito } = enElCircuito();
+    const hechos = new Reparto();
+    const tramos: string[] = [];
+    hechos.on("tramoDeCircuito", (d) => tramos.push(d.tramo));
+    const a = new LaAproximacion({
+      avion: () => PYKASU,
+      hechos,
+      vaca: { quitar: () => {} } as unknown as Vaca,
+      campoDeAhora: () => visto(GANDO, s),
+    });
+    a.paso({
+      estado: s,
+      acercandose: false,
+      circuito,
+      faseDeAhora: "en-vuelo",
+      techoDeNubes: null,
+      terrenoDicho: null,
+      vueloTerminado: false,
+      haciaOtroCampo,
+    });
+    return { visible: circuito.grupo.visible, tramos };
+  }
+
+  it("volviendo a casa se dibuja y se canta el tramo", () => {
+    const r = volar(false);
+    expect(r.visible).toBe(true);
+    expect(r.tramos.length).toBe(1);
+  });
+
+  it("y yendo a otra isla, ni se dibuja ni se canta", () => {
+    const r = volar(true);
+    expect(r.visible).toBe(false);
+    expect(r.tramos).toEqual([]);
+  });
+});

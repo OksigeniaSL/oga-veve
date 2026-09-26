@@ -112,6 +112,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.enVueloDestino",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Seguí la flecha: vamos al otro aeropuerto",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.final",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -473,6 +480,13 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Sacá el tren",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.trenEnElSuelo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con el avión en el suelo, el tren no se mete",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {

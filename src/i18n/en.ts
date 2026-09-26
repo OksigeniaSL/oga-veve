@@ -284,6 +284,7 @@ export const EN: Dictionary = {
   "vuelo.despegando": "Full power",
   "vuelo.enVuelo": "Go for a fly",
   "vuelo.enVueloAterrizando": "Head for the runway",
+  "vuelo.enVueloDestino": "Follow the arrow to the next airport",
   "vuelo.final": "Come down gently",
   "vuelo.terrenoBajo": "You are very low",
   "vuelo.terrenoSube": "Terrain. Pull up",

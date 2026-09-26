@@ -231,6 +231,9 @@
     "vuelo.backTaxi": {
       "ms": 1795
     },
+    "vuelo.bajasRapido": {
+      "ms": 1443
+    },
     "vuelo.bulto": {
       "ms": 1792
     },
@@ -263,6 +266,9 @@
     },
     "vuelo.enVueloAterrizando": {
       "ms": 884
+    },
+    "vuelo.enVueloDestino": {
+      "ms": 2561
     },
     "vuelo.esperando": {
       "ms": 1569
@@ -306,6 +312,9 @@
     "vuelo.minimos": {
       "ms": 1243
     },
+    "vuelo.muyInclinado": {
+      "ms": 1302
+    },
     "vuelo.noEstabilizada": {
       "ms": 2930
     },
@@ -326,6 +335,12 @@
     },
     "vuelo.pediFlaps": {
       "ms": 1614
+    },
+    "vuelo.perdida": {
+      "ms": 1432
+    },
+    "vuelo.pilotoSuelto": {
+      "ms": 1639
     },
     "vuelo.pistaLibre": {
       "ms": 1594
@@ -366,6 +381,9 @@
     "vuelo.sobrevelocidadAire": {
       "ms": 1442
     },
+    "vuelo.sube": {
+      "ms": 1070
+    },
     "vuelo.teLoPasaste": {
       "ms": 1464
     },
@@ -377,6 +395,9 @@
     },
     "vuelo.tormenta": {
       "ms": 2343
+    },
+    "vuelo.trenEnElSuelo": {
+      "ms": 2564
     },
     "vuelo.trenPasado": {
       "ms": 2193
@@ -614,6 +635,9 @@
     "vuelo.backTaxi": [
       "vuelo.backTaxi"
     ],
+    "vuelo.bajasRapido": [
+      "vuelo.bajasRapido"
+    ],
     "vuelo.bulto": [
       "vuelo.bulto"
     ],
@@ -646,6 +670,9 @@
     ],
     "vuelo.enVueloAterrizando": [
       "vuelo.enVueloAterrizando"
+    ],
+    "vuelo.enVueloDestino": [
+      "vuelo.enVueloDestino"
     ],
     "vuelo.esperando": [
       "vuelo.esperando"
@@ -688,6 +715,9 @@
     ],
     "vuelo.minimos": [
       "vuelo.minimos"
+    ],
+    "vuelo.muyInclinado": [
+      "vuelo.muyInclinado"
     ],
     "vuelo.noEstabilizada": [
       "vuelo.noEstabilizada"
@@ -782,6 +812,12 @@
     "vuelo.pediFlaps": [
       "vuelo.pediFlaps"
     ],
+    "vuelo.perdida": [
+      "vuelo.perdida"
+    ],
+    "vuelo.pilotoSuelto": [
+      "vuelo.pilotoSuelto"
+    ],
     "vuelo.pistaLibre": [
       "vuelo.pistaLibre"
     ],
@@ -821,6 +857,9 @@
     "vuelo.sobrevelocidadAire": [
       "vuelo.sobrevelocidadAire"
     ],
+    "vuelo.sube": [
+      "vuelo.sube"
+    ],
     "vuelo.teLoPasaste": [
       "vuelo.teLoPasaste"
     ],
@@ -832,6 +871,9 @@
     ],
     "vuelo.tormenta": [
       "vuelo.tormenta"
+    ],
+    "vuelo.trenEnElSuelo": [
+      "vuelo.trenEnElSuelo"
     ],
     "vuelo.trenPasado": [
       "vuelo.trenPasado"

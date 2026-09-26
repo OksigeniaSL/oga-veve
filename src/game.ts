@@ -1099,6 +1099,16 @@ export class Game {
 
   private camposHechos: readonly CampoConNombre[] | null = null;
 
+  /**
+   * Si el vuelo va a otro campo y el que se tiene debajo es el de salida: el
+   * circuito de aquí no sirve y «dar una vuelta» tampoco. Ver
+   * `AhoraMismo.haciaOtroCampo`.
+   */
+  private haciaOtroCampo(): boolean {
+    const destino = this.elDestino();
+    return destino !== null && destino.id !== this.elCampo().id;
+  }
+
   private campoPorId(id: string): CampoConNombre | null {
     return this.camposDelVuelo().find((c) => c.id === id) ?? null;
   }
@@ -7560,6 +7570,7 @@ export class Game {
       techoDeNubes: this.techoSobre(this.elCampo()),
       terrenoDicho: this.terrenoDicho,
       vueloTerminado: this.vueloTerminado,
+      haciaOtroCampo: this.haciaOtroCampo(),
     });
     /*
      * **El aire, que no está quieto.**
@@ -9417,10 +9428,16 @@ export class Game {
        * aprender a aterrizar aparece ya volando y a tres kilómetros de la
        * cabecera: decirle que se dé una vuelta es mandarlo al sitio contrario.
        */
+      /*
+       * **Y yendo a otro aeropuerto, tampoco se da una vuelta**: se sigue la
+       * flecha hasta allí. Ver `haciaOtroCampo`.
+       */
       const clave =
         this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
           ? "vuelo.enVueloAterrizando"
-          : vista.clave;
+          : vista.fase === "en-vuelo" && this.haciaOtroCampo()
+            ? "vuelo.enVueloDestino"
+            : vista.clave;
       const frase = t(clave as never);
 
       // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La

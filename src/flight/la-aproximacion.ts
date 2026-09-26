@@ -147,6 +147,16 @@ export interface AhoraMismo {
   readonly terrenoDicho: "bajo" | "sube" | null;
   /** Si el vuelo ya se dio por terminado. */
   readonly vueloTerminado: boolean;
+  /**
+   * Si el vuelo va a otro campo y el de ahora es del que se sale.
+   *
+   * Entonces el circuito de aquí no se dibuja ni se canta: sirve para volver
+   * a aterrizar en él, y quien va a otra isla no vuelve. «¿Para qué me dice
+   * la instructora que gire a la derecha para dar la vuelta y volver a
+   * aterrizar si voy a otra parte?» Al llegar al destino, el campo de ahora
+   * pasa a ser ése y su circuito vuelve, que ahí sí sirve para entrar.
+   */
+  readonly haciaOtroCampo?: boolean;
 }
 
 export class LaAproximacion {
@@ -635,6 +645,11 @@ export class LaAproximacion {
   seguirElCircuito(acercandose: boolean): void {
     const c = this.ahora.circuito;
     if (!c) return;
+    if (this.ahora.haciaOtroCampo && !this.mandanFrustrar) {
+      c.grupo.visible = false;
+      this.tramoDelCircuito = null;
+      return;
+    }
     const s = this.ahora.estado;
     const fase = this.ahora.faseDeAhora;
     const enElAire = !s.onGround;
