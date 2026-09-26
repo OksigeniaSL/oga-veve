@@ -36,6 +36,9 @@
  *   tiempo: demasiadas cosas o cosas demasiado gordas son arreglos distintos.
  *
  * Uso: `node scripts/verificar-rendimiento.mjs [escenario…]`
+ *
+ * Y con `OGA_AVION=jaz-120` mide con ese avión, que es como se mide lo que
+ * cuesta un avión: la librea de la casa se midió así, con el más grande.
  */
 import { chromium } from "playwright";
 import { createServer } from "vite";
@@ -96,7 +99,8 @@ for (const escenario of ESCENARIOS) {
   });
   const cdp = await page.context().newCDPSession(page);
   await page.goto(
-    `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami`,
+    `${BASE}/?escenario=${escenario}&hora=16&leccion=despegue&tramo=guyrami` +
+      (process.env.OGA_AVION ? `&avion=${process.env.OGA_AVION}` : ""),
   );
   await page.waitForFunction(() => !!globalThis.__oga?.estado, null, {
     timeout: 60000,
