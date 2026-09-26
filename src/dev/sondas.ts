@@ -57,31 +57,47 @@ import { BOCA } from "../audio/boca";
 /**
  * Un punto en final de un campo cualquiera, a `d` metros de su umbral en uso y
  * sobre su eje. Con `d` negativo, hacia dentro de la pista.
+ *
+ * **Del umbral de aterrizar**, que con el umbral desplazado está pista
+ * adentro: es desde donde se vuela la final y adonde apunta la senda. Lo que
+ * mide un banco en final —cuánto queda, a qué altura se cruza, dónde se tocó—
+ * se mide contra él. `desplazado` dice cuánto asfalto queda por detrás, hasta
+ * la punta. Ver `umbral-desplazado.ts`.
  */
 function puntoDeFinalEn(
   campo: ReturnType<Game["campoParaBanco"]>,
   d: number,
   suelo: (x: number, z: number) => number,
-): { x: number; z: number; h: number; suelo: number; cabecera: string | null } | null {
+): {
+  x: number;
+  z: number;
+  h: number;
+  suelo: number;
+  cabecera: string | null;
+  desplazado: number;
+} | null {
   const pista = campo?.aerodromo?.runways[0];
   if (!campo || !pista) return null;
   const nombre = cabeceraEnUso(campo.escenario);
   const con = Object.entries(pista.thresholds).filter((e) => e[1]?.xy);
   if (con.length < 2) return null;
   const i = nombre ? con.findIndex(([n]) => n === nombre) : 0;
-  const entrada = con[i >= 0 ? i : 0]![1]!.xy!;
+  const umbral = con[i >= 0 ? i : 0]![1]!;
+  const entrada = umbral.xy!;
   const salida = con[(i >= 0 ? i : 0) === 0 ? 1 : 0]![1]!.xy!;
   const l = Math.hypot(salida[0] - entrada[0], salida[1] - entrada[1]) || 1;
   const ux = (salida[0] - entrada[0]) / l;
   const uy = (salida[1] - entrada[1]) / l;
-  const x = entrada[0] - ux * d;
-  const y = entrada[1] - uy * d;
+  const desplazado = Math.max(0, Math.min(umbral.displacedM ?? 0, l / 2));
+  const x = entrada[0] + ux * (desplazado - d);
+  const y = entrada[1] + uy * (desplazado - d);
   return {
     x,
     z: -y,
     h: (Math.atan2(ux, uy) + 2 * Math.PI) % (2 * Math.PI),
     suelo: suelo(x, -y),
     cabecera: nombre,
+    desplazado,
   };
 }
 

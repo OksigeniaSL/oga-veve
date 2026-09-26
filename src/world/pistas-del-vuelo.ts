@@ -28,6 +28,10 @@ export interface Pista {
   readonly heading: number;
   readonly length: number;
   readonly width: number;
+  /** Asfalto antes del umbral de aterrizaje en uso, m. Ver `umbral-desplazado.ts`. */
+  readonly desplazado?: number;
+  /** Y el de la otra punta. */
+  readonly desplazadoEnfrente?: number;
 }
 
 /**

@@ -410,6 +410,11 @@ import {
   umbralEnUso,
   type CampoEnElMundo,
 } from "./world/campo-del-vuelo";
+import {
+  antesDelUmbralDeToma,
+  hastaElUmbralDeToma,
+  sobreDondeSeToca,
+} from "./world/umbral-desplazado";
 import { crearAvionesDeRuta, type AvionesDeRuta } from "./world/aviones-de-ruta";
 import {
   celdasDe,
@@ -3366,6 +3371,8 @@ export class Game {
       this.flight.velocidadMaxima(),
       // Y con qué tren tocó. Ver `trenAlTocar`.
       !this.aircraft.trenRetractil || this.input.controls.tren > 0.5,
+      // Y si fue antes del umbral de aterrizaje. Ver `enLaZonaDeLasFlechas`.
+      this.enLaZonaDeLasFlechas(),
     );
     if (!veredicto) return null;
     this.hud.flash(
@@ -3376,7 +3383,9 @@ export class Game {
             ? "hud.landedFirm"
             : veredicto === "rapido"
               ? "hud.landedFast"
-              : "hud.landedOffRunway",
+              : veredicto === "corto"
+                ? "hud.landedShort"
+                : "hud.landedOffRunway",
       ),
       3.6,
     );
@@ -3391,6 +3400,25 @@ export class Game {
      */
     if (veredicto === "suave" || veredicto === "firme") {
       this.avisar("success");
+    } else if (veredicto === "corto") {
+      /*
+       * **Tocar antes del umbral desplazado: dicho, dibujado y nada más.**
+       *
+       * No es un percance —el avión está en una pista, entero— ni lo canta la
+       * cabina, que ningún avión lleva un aviso para esto. Lo dice la
+       * instructora y lo enseña el dibujo: la barra blanca, las flechas
+       * apuntando a ella y el avión posado sobre las flechas. Es lo que se ve
+       * por la ventanilla el día que se aterriza en un umbral así, y la
+       * próxima vez se toca pasada la barra. Ver `umbral-desplazado.ts`.
+       */
+      this.avisar("attention");
+      this.instructor.decir(t("hud.landedShort"), "hud.landedShort");
+      this.hud.senal.mostrar(
+        "corto",
+        this.rotulo("hud.landedShort", "palabra.corto"),
+        null,
+        { segundos: SE_QUEDA_EL_VEREDICTO, prioridad: URGENTE },
+      );
     } else {
       this.avisar("attention");
       const dicho =
@@ -4378,7 +4406,12 @@ export class Game {
          */
         const campo = this.elCampo();
         if (campo.escenario.aerodrome?.privado) {
-          const [x, z] = this.enLaPista(campo.pista.length / 2 - 150, campo);
+          // En la zona de toma: pasado el umbral de aterrizar, que es donde
+          // estorba. Ver `umbral-desplazado.ts`.
+          const [x, z] = this.enLaPista(
+            hastaElUmbralDeToma(campo.pista) - 150,
+            campo,
+          );
           this.vaca.poner(
             x,
             this.terrain.sampleHeight(x, z),
@@ -4846,7 +4879,12 @@ export class Game {
      * falta.
      */
     if (this.leccion.arranque === "aire") {
-      const [x, z] = puntoDePista(runway, runway.length / 2 + APROXIMACION);
+      // Desde el umbral de aterrizar: con el umbral desplazado, la final
+      // acaba pista adentro. Ver `umbral-desplazado.ts`.
+      const [x, z] = puntoDePista(
+        runway,
+        hastaElUmbralDeToma(runway) + APROXIMACION,
+      );
       /*
        * **La altura se mide desde la pista, no desde el suelo de debajo.**
        *
@@ -7105,7 +7143,8 @@ export class Game {
        * es justo lo contrario de tocar.
        */
       !EN_DESPEGUE.has(this.faseDeAhora as Fase) &&
-      cerca.sobreLaPista &&
+      // Donde se puede tocar, que no es toda la pista. Ver `sobreLaZonaDeToma`.
+      this.sobreLaZonaDeToma() &&
       /*
        * **La altura sobre la pista, no sobre el terreno.** Antes del umbral el
        * suelo puede estar mucho más abajo —en Tenerife Norte cae setenta
@@ -8701,6 +8740,60 @@ export class Game {
   }
 
   /**
+   * Lo mismo, pero **donde se puede tocar**: con el margen contado desde el
+   * umbral de aterrizaje y no desde la punta del asfalto.
+   *
+   * Sin umbral desplazado es exactamente `sobreLaPista`. Con él no: en la 01
+   * de Fuerteventura hay mil metros de pista antes de la barra blanca, y
+   * volando bajo sobre ellos el «ya podés tocar» salía encima de las flechas
+   * —el único sitio de la pista donde no se puede—. El aviso de terreno sigue
+   * mirando la pista entera, que sobre asfalto no hay terreno que avisar.
+   */
+  private sobreLaZonaDeToma(): boolean {
+    const r = this.laPistaDeAhora();
+    const { along, across } = enEjesDePista(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+      r.x,
+      r.z,
+      r.heading,
+    );
+    return (
+      Math.abs(across) < r.width / 2 + A_UN_LADO_DEL_EJE &&
+      sobreDondeSeToca(
+        r,
+        along,
+        (this.flight.state.heading * 180) / Math.PI,
+        ANTES_DEL_UMBRAL,
+      )
+    );
+  }
+
+  /**
+   * Si las ruedas están en la pista **antes de su umbral de aterrizaje**, en
+   * la zona de las flechas. Es lo que convierte una toma en «corta». Ver
+   * `Aterrizaje`.
+   */
+  private enLaZonaDeLasFlechas(): boolean {
+    const r = this.laPistaDeAhora();
+    const { along, across } = enEjesDePista(
+      this.flight.state.position.x,
+      this.flight.state.position.z,
+      r.x,
+      r.z,
+      r.heading,
+    );
+    return (
+      Math.abs(across) < r.width &&
+      antesDelUmbralDeToma(
+        r,
+        along,
+        (this.flight.state.heading * 180) / Math.PI,
+      )
+    );
+  }
+
+  /**
    * Cuánto queda hasta el umbral en uso **del campo de ahora**, m.
    *
    * Medía hasta el de casa. Volando de Gran Canaria a Los Rodeos eso son
@@ -8766,9 +8859,14 @@ export class Game {
       pista: campo.pista,
       cota: this.cotaDePistaEn(campo, p.x, p.z),
       alUmbral: distanciaAlUmbral(campo, p.x, p.z),
+      // Las luces se cuentan desde el umbral de aterrizar, que con el umbral
+      // desplazado no es la punta. Ver `crearAproximacion`.
       senda:
         luces && this.tienePapi.get(luces)
-          ? enLaPistaDe(campo, campo.pista.length * 0.5 - luces.papiAdentro)
+          ? enLaPistaDe(
+              campo,
+              hastaElUmbralDeToma(campo.pista) - luces.papiAdentro,
+            )
           : null,
     };
   }

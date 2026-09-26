@@ -192,6 +192,28 @@ const FUERA_DE_PISTA = icono(`
 `);
 
 /**
+ * Tocar antes del umbral desplazado: **la barra blanca, las flechas y el
+ * avión sobre ellas**.
+ *
+ * Es lo que se ve de verdad en una cabecera así —flechas blancas por el eje
+ * apuntando a una barra de lado a lado— y es lo que hay que reconocer el día
+ * que se vea desde una ventanilla: pasada la barra se toca, antes no. La pista
+ * es la misma de «fuera», y el avión es el mismo, pero esta vez está dentro
+ * de ella: no se salió de nada, se posó antes de tiempo. Ver
+ * `world/umbral-desplazado.ts`.
+ */
+const CORTO = icono(`
+  <path d="M4 23 L9.6 2 h4.8 L20 23 Z" opacity="0.3" />
+  <rect x="7.2" y="9.6" width="9.6" height="1.8" />
+  <path d="M10.2 15.2 L12 13 L13.8 15.2" fill="none" stroke="currentColor"
+        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+  <g transform="translate(5.95 10.55) scale(0.5)">
+    <path d="M4.2 16.6 L11.2 15.8 V12 a0.8 0.8 0 0 1 1.6 0 v3.8 l7 0.8 v1.7 l-7 0.8 v2.4
+             l1.9 1.1 v1 L12 20.7 L8.3 21.4 v-1 l1.9-1.1 v-2.4 l-6-0.8 Z" />
+  </g>
+`);
+
+/**
  * Se escapó el aro por arriba: **bajá al aro**.
  *
  * «Supero el aro y nadie me corrige.» El aro perdido sonaba y destellaba en
@@ -749,6 +771,7 @@ export const DIBUJOS = {
   frustrada: FRUSTRADA,
   edificio: EDIFICIO,
   fuera: FUERA_DE_PISTA,
+  corto: CORTO,
   "circuito-subida": circuito("subida"),
   "circuito-cruzado": circuito("cruzado"),
   "circuito-encola": circuito("encola"),

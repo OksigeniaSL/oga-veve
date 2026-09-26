@@ -37,6 +37,7 @@ import {
 } from "three";
 import { delante, enEjesDePista } from "./rumbo";
 import type { Scenario } from "./scenarios";
+import { hastaElUmbralDeToma } from "./umbral-desplazado";
 
 /** Cota del terreno en unas coordenadas de mundo. */
 export type GroundSampler = (x: number, z: number) => number;
@@ -229,7 +230,13 @@ export const ANCHO_EN_EL_UMBRAL = 60;
  * lección de aterrizar—, y los metros que le quedan al umbral cuando sí.
  */
 export function enElEmbudoDeFinal(
-  runway: { x: number; z: number; heading: number; length: number },
+  runway: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+    desplazado?: number;
+  },
   x: number,
   z: number,
 ): number | null {
@@ -240,10 +247,12 @@ export function enElEmbudoDeFinal(
     runway.z,
     runway.heading,
   );
-  // Metros hasta el umbral de salida, positivos por el lado por el que se
-  // entra. Negativos quiere decir que el avión ya está sobre la pista o más
-  // allá, y eso no es venir en final.
-  const alUmbral = -along - runway.length / 2;
+  // Metros hasta el umbral de aterrizaje, positivos por el lado por el que se
+  // entra. Negativos quiere decir que el avión ya está sobre donde se toca o
+  // más allá, y eso no es venir en final. **El de aterrizaje**, que con el
+  // umbral desplazado está pista adentro: el embudo apunta a donde se puede
+  // tocar, no a la punta del asfalto. Ver `umbral-desplazado.ts`.
+  const alUmbral = -along - hastaElUmbralDeToma(runway);
   if (alUmbral < 0 || alUmbral > ENTRADA_EN_FINAL) return null;
   const ancho = ANCHO_EN_EL_UMBRAL + alUmbral * Math.tan(EMBUDO_DE_FINAL);
   return Math.abs(across) <= ancho ? alUmbral : null;
@@ -271,7 +280,13 @@ export const TORCIDO_EN_FINAL = 30;
  * `enElEmbudoDeFinal`: los metros al umbral, o `null`.
  */
 export function vieneEnFinal(
-  runway: { x: number; z: number; heading: number; length: number },
+  runway: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+    desplazado?: number;
+  },
   x: number,
   z: number,
   rumbo: number,
@@ -912,9 +927,13 @@ function buildGuide(
   // en el lado contrario. Ver la nota de ese fichero.
   const [ax, az] = delante(runway.heading);
 
-  // Umbral: media pista por detrás del centro, que es por donde se entra.
-  const thresholdX = runway.x - ax * runway.length * 0.5;
-  const thresholdZ = runway.z - az * runway.length * 0.5;
+  // Umbral: media pista por detrás del centro, que es por donde se entra. El
+  // de aterrizar, que con el umbral desplazado está pista adentro: los aros,
+  // el hilo y los postes enseñan dónde se toca, y tocar en la zona de las
+  // flechas no se puede. Ver `umbral-desplazado.ts`.
+  const atras = hastaElUmbralDeToma(runway);
+  const thresholdX = runway.x - ax * atras;
+  const thresholdZ = runway.z - az * atras;
 
   group.add(beacon(thresholdX, runwayElevation, thresholdZ));
   group.add(

@@ -1083,13 +1083,20 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
    * aproximación: la única columna de sitio era el desvío lateral. Un vuelo
    * que se queda corto y otro que se pasa de largo salían idénticos.
    */
+  /*
+   * **Y el umbral es el de aterrizar**, que con el umbral desplazado está
+   * pista adentro: en la 01 de Fuerteventura, mil metros. Contado desde la
+   * punta, este piloto volaba la senda a la punta y tocaba a ciento cincuenta
+   * metros de ella, en la zona de las flechas, y el parte decía «152 m pasado
+   * el umbral» como si fuera un aterrizaje de libro. Ver `umbral-desplazado.ts`.
+   */
   const alUmbral = (s) => {
     const r = pistaAhora();
     const hp = (r.heading * Math.PI) / 180;
     const along =
       (s.position.x - r.x) * Math.sin(hp) +
       (s.position.z - r.z) * -Math.cos(hp);
-    return -r.length / 2 - along;
+    return -r.length / 2 + (r.desplazado ?? 0) - along;
   };
 
   /**
@@ -1354,6 +1361,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
   /** Dónde y cómo se tocó: del eje, pasado el umbral y a qué velocidad. */
   let tocoDesviado = 0;
   let tocoPasadoElUmbral = 0;
+  /** Cuánta pista había antes del umbral de aterrizaje donde se tocó, m. */
+  let desplazadoAlTocar = 0;
   let tocoA = 0;
   /*
    * **Y cuánta pista se come frenando**, que es lo que faltaba medir.
@@ -2400,7 +2409,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
        * si es corta: en Yvytu Rape, con novecientos metros, son ciento
        * ochenta.
        */
-      const puntoDeToma = Math.min(250, r.length * 0.2);
+      const puntoDeToma = Math.min(250, (r.length - (r.desplazado ?? 0)) * 0.2);
       const objetivo = Math.max(0, (falta + puntoDeToma) * SENDA);
       // Sobre la pista se corta el gas: eso es aterrizar. Y antes, la
       // velocidad de aproximación a mano, que el gas no significa lo mismo en
@@ -2601,7 +2610,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
          * umbral de posarse a mitad de pista.
          */
         tocoDesviado = desvio(s);
-        tocoPasadoElUmbral = falta < 0 ? -falta : 0;
+        // Con signo: negativo es antes del umbral de aterrizaje.
+        tocoPasadoElUmbral = -falta;
+        desplazadoAlTocar = r.desplazado ?? 0;
         tocoA = s.airspeed;
         tocoSuelo = porElSuelo(s);
         etapa = "frenar";
@@ -2873,6 +2884,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     toco: +toco.toFixed(0),
     tocoDesviado: +tocoDesviado.toFixed(1),
     tocoPasadoElUmbral: Math.round(tocoPasadoElUmbral),
+    desplazadoAlTocar: Math.round(desplazadoAlTocar),
     tocoA: +tocoA.toFixed(0),
     rodaduraMedida: Math.round(rodaduraMedida),
     tocoSuelo: +tocoSuelo.toFixed(1),
@@ -3552,6 +3564,27 @@ comprobarSiVolo(
     ? `a ${Math.abs(vuelo.tocoDesviado).toFixed(1)} m del eje, ${vuelo.tocoPasadoElUmbral} m pasado el umbral, a ${vuelo.tocoA} m/s`
     : "no llegó a tocar",
   "en una pista de dieciocho metros, «aterrizó» sin decir a cuánto del eje no significa nada",
+);
+
+/*
+ * **Y pasado el umbral de aterrizaje, que no siempre es la punta.**
+ *
+ * Con el umbral desplazado, el asfalto de antes de la barra blanca es pista y
+ * no es sitio para posarse. En la 01 de Fuerteventura el umbral está a mil
+ * metros de la punta, y este piloto, que volaba la senda hasta la punta, tocaba
+ * a ciento cincuenta: en la zona de las flechas, con el juego aplaudiendo. Ver
+ * `umbral-desplazado.ts`.
+ */
+comprobarSiVolo(
+  "y se toca pasado el umbral de aterrizaje",
+  vuelo.toco > 0 && vuelo.tocoPasadoElUmbral >= 0,
+  vuelo.toco
+    ? `${Math.abs(vuelo.tocoPasadoElUmbral)} m ${vuelo.tocoPasadoElUmbral >= 0 ? "pasado" : "antes de"} el umbral de aterrizaje` +
+        (vuelo.desplazadoAlTocar
+          ? ` · desplazado ${vuelo.desplazadoAlTocar} m de la punta`
+          : " · en la punta")
+    : "no llegó a tocar",
+  "en Fuerteventura se tocaba a ciento cincuenta metros de la punta, mil antes del umbral de la 01",
 );
 
 /*

@@ -66,6 +66,7 @@ import {
   PointsMaterial,
 } from "three";
 import { GLIDE_SLOPE } from "./runway-guide";
+import { hastaElUmbralDeToma } from "./umbral-desplazado";
 
 /** Un punto del circuito, en coordenadas de mundo. */
 export interface PuntoDeCircuito {
@@ -204,6 +205,8 @@ export interface Pista {
   z: number;
   heading: number;
   length: number;
+  /** Asfalto antes del umbral de aterrizaje, m. Ver `umbral-desplazado.ts`. */
+  desplazado?: number;
 }
 
 /**
@@ -228,7 +231,7 @@ export function holguraDelViento(
   const iz = -Math.sin(h) * signo;
   const medio = runway.length / 2;
   const desde = medio + RECTO_TRAS_LA_PISTA;
-  const hasta = -medio - BASE_A_FINAL;
+  const hasta = -hastaElUmbralDeToma(runway) - BASE_A_FINAL;
   let peor = Infinity;
   // Veinte catas a lo largo del tramo: con mil metros de separación y tres
   // kilómetros de largo, es una cada ciento cincuenta metros.
@@ -343,6 +346,14 @@ export function verticesDelCircuito(
     ALTURA_DE_CIRCUITO,
     entrada * Math.tan(SENDA) + 150,
   );
+  /*
+   * **La final se cuenta desde donde se toca**, que con el umbral desplazado
+   * no es la punta del asfalto: la base se gira a la misma distancia del
+   * umbral de aterrizaje y la entrada en final cae en su senda, la de los
+   * aros y el PAPI. El despegue sí sale de la punta, que se despega con la
+   * pista entera. Ver `umbral-desplazado.ts`.
+   */
+  const toma = -hastaElUmbralDeToma(runway);
   return [
     // La cabecera de salida, a ras de pista: el circuito empieza en el suelo.
     en(-medio, 0, 0),
@@ -351,9 +362,9 @@ export function verticesDelCircuito(
     // La esquina de allá: fin del viento cruzado.
     en(medio + recto, separacion, circuito),
     // La esquina de acá: fin del viento en cola, empieza la base.
-    en(-medio - entrada, separacion, circuito),
+    en(toma - entrada, separacion, circuito),
     // Y la entrada en final, sobre el eje y ya en la senda de los aros.
-    en(-medio - entrada, 0, entrada * Math.tan(SENDA)),
+    en(toma - entrada, 0, entrada * Math.tan(SENDA)),
   ];
 }
 

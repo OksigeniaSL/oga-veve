@@ -50,6 +50,7 @@ import {
   type Tramo,
 } from "./rodaje";
 import { delante, enEjesDePista, puntoDePista, traves } from "./rumbo";
+import { hastaElUmbralDeToma } from "./umbral-desplazado";
 import {
   GUION,
   Vuelo,
@@ -270,7 +271,8 @@ const MAXIMO_ENGANCHE = 110;
 /**
  * Dónde se da por hecho que el avión ha dejado de correr al aterrizar, m.
  *
- * Mil metros pasado el umbral. El Pykasu para en bastante menos, pero lo que
+ * Mil metros pasado el umbral —el de aterrizar, que con el umbral desplazado
+ * no es la punta—. El Pykasu para en bastante menos, pero lo que
  * se busca con este número no es una toma concreta: es el sitio desde el que
  * se mide **cuánto se rueda hasta casa** al elegir el puesto.
  */
@@ -882,6 +884,7 @@ export class PlanDeVuelo {
       heading: number;
       width: number;
       length: number;
+      desplazado?: number;
     },
     private readonly cota: (x: number, z: number) => number,
     /*
@@ -922,6 +925,7 @@ export class PlanDeVuelo {
       heading: number;
       width: number;
       length: number;
+      desplazado?: number;
     },
   ): void {
     if (aero === this.aero) return;
@@ -1264,9 +1268,11 @@ export class PlanDeVuelo {
      * metros pasado el umbral— hasta el puesto. No hace falta más precisión:
      * lo que se está comparando son puestos entre sí.
      */
+    // Contado desde el umbral de aterrizar, que con el umbral desplazado está
+    // pista adentro: se deja de correr mil metros después de donde se toca.
     const dondeSePara = puntoDePista(
       this.pista,
-      this.pista.length / 2 - TRAS_TOMAR_TIERRA,
+      hastaElUmbralDeToma(this.pista) - TRAS_TOMAR_TIERRA,
     );
     const traeDeVuelta: Punto = [dondeSePara[0], -dondeSePara[1]];
 

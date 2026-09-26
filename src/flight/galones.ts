@@ -230,8 +230,15 @@ export class Galones {
            * buena y decide no aterrizar ha hecho la aproximación bien —
            * exigirle además una toma sería pedirle que se quede.
            */
+          /*
+           * Y posándose **donde se toca**: una aproximación que acaba antes
+           * del umbral desplazado, sobre las flechas, no llegó a donde iba
+           * aunque la senda de antes fuera buena. Ver `Aterrizaje`.
+           */
           (this.renuncio ||
-            (this.veredicto !== null && this.veredicto !== "fuera")) &&
+            (this.veredicto !== null &&
+              this.veredicto !== "fuera" &&
+              this.veredicto !== "corto")) &&
           this.enFinal >= FINAL_MINIMO &&
           this.enFinalBien >= this.enFinal * FINAL_BIEN
         );
@@ -249,8 +256,8 @@ export class Galones {
 
       /*
        * La toma. Suave y firme valen las dos: firme es como se posa un avión
-       * en una pista corta y no es un defecto. Rápido y fuera de pista no,
-       * que son las dos maneras de que la toma salga mal.
+       * en una pista corta y no es un defecto. Rápido, fuera de pista y antes
+       * del umbral no, que son las maneras de que la toma salga mal.
        */
       case "toma":
         return this.veredicto === "suave" || this.veredicto === "firme";

@@ -26,6 +26,7 @@ import type { Meteo } from "./meteo";
 import type { Pista } from "./pistas-del-vuelo";
 import { puntoDePista } from "./rumbo";
 import { conViento, type Scenario } from "./scenarios";
+import { hastaElUmbralDeToma } from "./umbral-desplazado";
 
 /** Un campo del vuelo, ya puesto en el mundo en el que se vuela. */
 export interface CampoEnElMundo {
@@ -131,11 +132,18 @@ export function enLaPistaDe(
  * Se guarda por campo: se pregunta varias veces por fotograma —la distancia
  * de la final, la aguja, la aproximación— y un campo no cambia; con otro
  * viento es otro campo. Ver `campoVecino`.
+ *
+ * **Y el de aterrizar, que no siempre es la punta.** Con el umbral
+ * desplazado, lo que se mide en final —los mínimos, el aviso de terreno, la
+ * senda— se mide hasta donde se puede tocar: en la 01 de Fuerteventura, mil
+ * metros pista adentro. Medido hasta la punta, una final bien volada a su
+ * umbral de verdad iba cincuenta metros «alta» durante toda la
+ * aproximación. Ver `umbral-desplazado.ts`.
  */
 export function umbralEnUso(campo: CampoEnElMundo): readonly [number, number] {
   let u = umbrales.get(campo);
   if (!u) {
-    u = enLaPistaDe(campo, campo.pista.length * 0.5);
+    u = enLaPistaDe(campo, hastaElUmbralDeToma(campo.pista));
     umbrales.set(campo, u);
   }
   return u;

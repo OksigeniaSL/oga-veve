@@ -205,7 +205,8 @@ export interface Aproximacion {
    */
   mirarDesde(x: number, y: number, z: number): void;
   /**
-   * A cuántos metros del umbral están las luces, pista adentro.
+   * A cuántos metros del umbral están las luces, pista adentro. Del umbral de
+   * aterrizar, que con el umbral desplazado no es la punta.
    *
    * **Es el origen de la senda, y hacía falta sacarlo de aquí.** El PAPI define
    * la senda de tres grados **desde donde están sus luces**, no desde el
@@ -265,7 +266,29 @@ export function crearAproximacion(
   })();
 
   const ancho = pista.widthM ?? 45;
-  const cotaUmbral = altura(entrada.xy);
+  const largo = Math.hypot(
+    salida.xy[0] - entrada.xy[0],
+    salida.xy[1] - entrada.xy[1],
+  );
+  /*
+   * **Y desde el umbral de aterrizar, que no siempre es la punta.**
+   *
+   * Con el umbral desplazado, las luces de aproximación llevan al sitio donde
+   * se puede tocar —las del trozo de pista de antes van empotradas en el
+   * asfalto, a ras— y el PAPI se calibra desde ahí: en la 01 de Fuerteventura,
+   * mil metros pista adentro. Contadas desde la punta, las dos enseñaban a
+   * posarse en la zona de las flechas, que es justo donde no se puede. Ver
+   * `umbral-desplazado.ts`.
+   */
+  const desplazado = Math.max(
+    0,
+    Math.min(entrada.displacedM ?? 0, largo / 2),
+  );
+  const toma: Punto = [
+    entrada.xy[0] + ux * desplazado,
+    entrada.xy[1] + uy * desplazado,
+  ];
+  const cotaUmbral = altura(toma);
   const grupo = new Group();
   grupo.name = "aproximacion";
 
@@ -289,16 +312,16 @@ export function crearAproximacion(
     d += PASO_APROXIMACION
   ) {
     // Hacia fuera del umbral: al contrario del eje, que apunta pista adentro.
-    const cx = entrada.xy[0] - ux * d;
-    const cy = entrada.xy[1] - uy * d;
+    const cx = toma[0] - ux * d;
+    const cy = toma[1] - uy * d;
     // Tres por travesaño, que es lo que hace legible la fila desde lejos.
     for (const lado of [-3, 0, 3]) ponerLuz(cx - uy * lado, cy + ux * lado);
   }
   // La barra cruzada: la referencia de alineación, y la que dice cuánto falta.
   for (let k = -7; k <= 7; k++) {
     if (k === 0) continue;
-    const cx = entrada.xy[0] - ux * BARRA - uy * (k * 2);
-    const cy = entrada.xy[1] - uy * BARRA + ux * (k * 2);
+    const cx = toma[0] - ux * BARRA - uy * (k * 2);
+    const cy = toma[1] - uy * BARRA + ux * (k * 2);
     ponerLuz(cx, cy);
   }
 
@@ -330,13 +353,7 @@ export function crearAproximacion(
    * más bajo. Así, en la senda, las dos de dentro salen blancas y las dos de
    * fuera rojas.
    */
-  const sitio = sitiarPapi(
-    entrada.xy,
-    [ux, uy],
-    ancho,
-    Math.hypot(salida.xy[0] - entrada.xy[0], salida.xy[1] - entrada.xy[1]),
-    ayudas,
-  );
+  const sitio = sitiarPapi(toma, [ux, uy], ancho, largo - desplazado, ayudas);
   const luces: { x: number; y: number; z: number }[] = [];
   sitio.luces.forEach(([cx, cy], k) => {
     const y = Math.max(cotaUmbral, altura([cx, cy])) + 1;
@@ -373,8 +390,8 @@ export function crearAproximacion(
   const papiAdentro =
     sitio.luces.length > 0
       ? Math.abs(
-          (sitio.luces[0]![0] - entrada.xy[0]) * ux +
-            (sitio.luces[0]![1] - entrada.xy[1]) * uy,
+          (sitio.luces[0]![0] - toma[0]) * ux +
+            (sitio.luces[0]![1] - toma[1]) * uy,
         )
       : PAPI_ADENTRO;
 
