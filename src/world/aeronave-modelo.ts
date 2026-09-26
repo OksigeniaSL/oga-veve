@@ -259,9 +259,10 @@ const RANURAS = {
   casco: "body",
   capo: "accent",
   detalle: "trim",
-  // La deriva que lleva el motivo de la casa: del color del capó, que es el
-  // fondo del motivo, hasta que `vestirLaLibrea` le pone el dibujo encima. Si
-  // no se lo puede poner, la cola se queda como estaba.
+  // La deriva que lleva el motivo de la casa: del color de la cola de la
+  // ficha —o del capó, si no tiene uno propio—, que es el fondo del motivo,
+  // hasta que `vestirLaLibrea` le pone el dibujo encima. Si no se lo puede
+  // poner, la cola se queda de ese color.
   cola: "accent",
 } as const;
 
@@ -305,7 +306,11 @@ function pintarDeLaFlota(raiz: Object3D, aircraft: AircraftConfig): void {
     for (const m of materiales as { name?: string; color?: Color }[]) {
       if (!m.color) continue;
       const ranura = RANURAS[m.name as keyof typeof RANURAS];
-      if (ranura) m.color.setHex(aircraft.appearance[ranura]);
+      // La deriva lleva su propio color si la ficha se lo da. Ver
+      // `AircraftAppearance.cola`.
+      if (m.name === "cola" && aircraft.appearance.cola !== undefined)
+        m.color.setHex(aircraft.appearance.cola);
+      else if (ranura) m.color.setHex(aircraft.appearance[ranura]);
       else if (m.name === "cristal") m.color.setHex(CRISTAL);
       else if (m.name === "goma") m.color.setHex(GOMA);
     }

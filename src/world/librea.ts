@@ -55,7 +55,7 @@ import {
   type MeshStandardMaterial,
   type Object3D,
 } from "three";
-import type { AircraftConfig, MotivoDeCola } from "../flight/aircraft";
+import { CASA, type AircraftConfig, type MotivoDeCola } from "../flight/aircraft";
 import logotipo from "../assets/granja-oga.svg?raw";
 
 /**
@@ -63,37 +63,41 @@ import logotipo from "../assets/granja-oga.svg?raw";
  *
  * El fondo de la cola y el filete salen de la ficha de cada avión; el sol y
  * las hojas no, porque **son la marca**: el sol es ocre y las hojas verdes en
- * el logotipo, en la web de la granja y en toda la flota. Son los mismos que
- * `--ocre` y `--verde-bosque` de la hoja de estilos.
+ * el logotipo, en la web de la granja y en toda la flota.
  */
-const OCRE = "#dd923f";
-const VERDE = "#2f5243";
-/**
- * Y el verde claro de la casa, el `--verde-suave` de la web de la granja,
- * para las hojas cuando la cola es oscura. Ver `verdeSobre`.
- */
-const VERDE_SUAVE = "#6e9484";
+const OCRE = hex(CASA.ocre);
+const VERDE = hex(CASA.verde);
 
 /**
- * El verde de las hojas sobre una cola de este color.
- *
- * Las hojas son verdes en toda la flota, y en la del JAZ 90 el verde es el
- * del logotipo: sobre terracota se lee como en el logotipo. En una cola azul
- * marino, no: el verde bosque y el azul tienen la misma luz, y las hojas
- * desaparecían — se veía un sol ocre flotando sobre una mancha oscura. Se
- * probaron tres salidas pintadas en las dos colas azules: las hojas en
- * terracota (se leen, pero el verde se pierde y la cola se come al sol), en
- * el verde medio de la casa (sigue sin leerse) y en el verde claro, que es la
- * que queda. Así que las hojas siguen siendo verdes, y es la marca la que
- * pone el tono: cuando el verde bosque no contrasta con la cola, se usa el
- * claro.
+ * Por debajo de este contraste, dos colores se funden a la distancia a la que
+ * se ve una cola. Es poco a propósito —el filete del color del casco ya
+ * separa las piezas—: lo que se quiere evitar es el mismo color sobre sí
+ * mismo, no pedir el contraste de un texto.
  */
-function verdeSobre(fondo: string): string {
-  return contraste(VERDE, fondo) < 1.5 ? VERDE_SUAVE : VERDE;
+export const CONTRASTE_DE_COLA = 1.5;
+
+/**
+ * El motivo que de verdad se pinta en una cola de este color.
+ *
+ * **Las hojas verdes sobre una cola verde no se ven**, y ya pasó con una
+ * parecida: las colas azul marino tenían la misma luz que el verde bosque y
+ * se veía un sol ocre flotando sobre una mancha oscura. Se arregló entonces
+ * aclarando las hojas a un verde grisáceo, y el arreglo era el error: sacaba
+ * la cola de la marca —«el avión no parece de la granja»—. Ahora el azul ya
+ * no está, y en una cola verde lo que va es el sol solo, naciendo en la raíz,
+ * con la deriva haciendo de hoja: es el motivo del JAZ 40 y del JAZ 120.
+ *
+ * Se decide aquí y no se confía a la ficha: si mañana alguien pone el sol
+ * entre las hojas en una cola verde, la cola sigue leyéndose.
+ */
+export function motivoQueSeLee(motivo: MotivoDeCola, fondo: number): MotivoDeCola {
+  if (motivo === "sol-y-hojas" && contraste(VERDE, hex(fondo)) < CONTRASTE_DE_COLA)
+    return "sol";
+  return motivo;
 }
 
 /** El contraste entre dos colores, como lo mide la WCAG: de 1 a 21. */
-function contraste(a: string, b: string): number {
+export function contraste(a: string, b: string): number {
   const la = luz(a);
   const lb = luz(b);
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
@@ -155,13 +159,14 @@ export function vestirLaLibrea(raiz: Object3D, aircraft: AircraftConfig): void {
 
   raiz.updateWorldMatrix(true, true);
   const aRaiz = new Matrix4().copy(raiz.matrixWorld).invert();
-  const { body, accent } = aircraft.appearance;
-  const motivo = aircraft.appearance.motivo;
+  const { body, accent, cola = accent } = aircraft.appearance;
+  const pedido = aircraft.appearance.motivo;
+  const motivo = pedido && motivoQueSeLee(pedido, cola);
 
   for (const malla of colas) {
     if (!motivo) continue;
     const perfil = perfilDe(malla, aRaiz);
-    const lienzo = lienzoDeCola(perfil, motivo, hex(accent), hex(body));
+    const lienzo = lienzoDeCola(perfil, motivo, hex(cola), hex(body));
     if (!lienzo) continue;
     ponerUV(malla, perfil.uv);
     ponerTextura(malla.material as MeshStandardMaterial, lienzo);
@@ -384,7 +389,7 @@ function lienzoDeCola(
   const radio = Math.min(cuerda(0.58) * 0.33, lienzo.height * 0.21);
   // El filete: lo que separa las piezas, del color del casco.
   const hueco = radio * 0.16;
-  const hojas = verdeSobre(fondo);
+  const hojas = VERDE;
 
   // La hoja grande, la de detrás: la punta delante y abajo, pasa por debajo
   // del sol haciendo el cuenco y sube por detrás hasta que la corta el borde

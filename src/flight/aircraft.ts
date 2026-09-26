@@ -110,10 +110,27 @@ export interface AircraftAppearance {
    * eran dos listas que podían discrepar — un avión que en su ficha era ala
    * alta y en la flota bimotor. Una silueta, un sitio.
    */
-  /** Colores del fuselaje, del capó y de los detalles. */
+  /**
+   * Colores del fuselaje, del capó y de los detalles.
+   *
+   * El capó es más que el capó: es la franja del costado, las góndolas de
+   * los motores y el estabilizador de una cola en T. Y los detalles son la
+   * raya fina que acompaña a la franja. Todos salen de `CASA`: ver allí.
+   */
   body: number;
   accent: number;
   trim: number;
+  /**
+   * **El color de la deriva, si no es el del capó.**
+   *
+   * Hasta ahora la cola iba siempre del color de la franja, y con tres
+   * colores de marca eso deja muy pocas maneras de que dos aviones vecinos de
+   * la fila no sean el mismo avión: en una cola solo se leen el terracota y
+   * el verde —el sol es ocre—, así que franja y cola juntas daban dos
+   * aviones. Con la cola aparte sale la librea de una compañía de verdad
+   * —franja de un color, cola de otro— sin salir de la paleta.
+   */
+  cola?: number;
   /** Cuántas palas lleva la hélice. */
   blades: number;
   /**
@@ -138,6 +155,30 @@ export interface AircraftAppearance {
  *   donde las hojas no se verían: la deriva misma hace de hoja.
  */
 export type MotivoDeCola = "sol-y-hojas" | "sol";
+
+/**
+ * **Los colores de la compañía**, que son los del logotipo de Granja Óga.
+ *
+ * El logotipo tiene tres —el ocre del sol, el terracota del tejado y el verde
+ * bosque de las hojas— y con el crema del casco esa es la paleta entera de la
+ * flota. El JAZ 60 y el JAZ 120 iban de azul marino, de antes de que la flota
+ * llevara la librea de la casa, y se notó en cuanto la llevaron: «Granja Óga
+ * no tiene azul en su logo, el avión no parece de la granja». No lo parecía.
+ *
+ * Así que la variedad no sale de añadir colores sino de **repartir los
+ * mismos**: qué va en la cola, qué en la franja y qué en la raya. Cada avión
+ * es distinto del de al lado en la fila del hangar y todos son de la misma
+ * casa. Una prueba —`librea.test.ts`— comprueba que ningún avión se sale.
+ *
+ * Son los mismos que `--ocre`, `--terracota` y `--verde-bosque` de la hoja de
+ * estilos, y un pelo más cálidos que los del SVG (`#db913f`, `#bd5c37`,
+ * `#2e5141`): la diferencia no se ve y así hay un solo juego de valores.
+ */
+export const CASA = {
+  ocre: 0xdd923f,
+  terracota: 0xbe5d38,
+  verde: 0x2f5243,
+} as const;
 
 /**
  * Cómo suena una aeronave.
@@ -574,8 +615,8 @@ export const PYKASU: AircraftConfig = {
   tardanLosFlaps: 9,
   appearance: {
     body: 0xe4e2da,
-    accent: 0xbe5d38,
-    trim: 0x2f5243,
+    accent: CASA.terracota,
+    trim: CASA.verde,
     blades: 2,
   },
   sound: {
@@ -669,10 +710,13 @@ export const MAINUMBY: AircraftConfig = {
   muescasDeFlaps: [],
   tardanLosFlaps: 0,
   appearance: {
-    // Biplano de trabajo: dos alas, ocre y verde, hélice de tres palas.
-    body: 0xdd923f,
-    accent: 0x2f5243,
-    trim: 0x8a5a34,
+    // Biplano de trabajo: dos alas, ocre y verde, hélice de tres palas. Y la
+    // raya en terracota, que era un marrón de fuera de la paleta: así lleva
+    // los tres colores del logotipo, que para el avión de la granja es lo
+    // suyo.
+    body: CASA.ocre,
+    accent: CASA.verde,
+    trim: CASA.terracota,
     blades: 3,
   },
   sound: {
@@ -792,8 +836,8 @@ export const PANAMBI: AircraftConfig = {
     // Blanco de compañía con la franja de la casa: es un avión de trabajo que
     // lleva gente, y se pinta como se pintan ésos.
     body: 0xecece6,
-    accent: 0x2f5243,
-    trim: 0xbe5d38,
+    accent: CASA.verde,
+    trim: CASA.terracota,
     blades: 3,
     // La cola ya es verde: lleva el sol solo, naciendo en la raíz.
     motivo: "sol",
@@ -898,8 +942,14 @@ export const ARASUNU: AircraftConfig = {
   tardanLosFlaps: 12,
   appearance: {
     body: 0xecece6,
-    accent: 0x1f4f76,
-    trim: 0xdd923f,
+    // La franja, las góndolas y la T de la cola en ocre, y la deriva en
+    // terracota con el sol entre las hojas: entre el verde del JAZ 40 y el
+    // terracota del JAZ 90, que así no se confunde con ninguno de los dos.
+    // Se probó con la franja verde, y la T de la cola desaparecía contra el
+    // fondo oscuro del hangar.
+    accent: CASA.ocre,
+    trim: CASA.verde,
+    cola: CASA.terracota,
     blades: 4,
     motivo: "sol-y-hojas",
   },
@@ -1058,8 +1108,8 @@ export const ARAI: AircraftConfig = {
   tardanLosFlaps: 18,
   appearance: {
     body: 0xf2f1ec,
-    accent: 0xbe5d38,
-    trim: 0x2f5243,
+    accent: CASA.terracota,
+    trim: CASA.verde,
     blades: 0,
     motivo: "sol-y-hojas",
   },
@@ -1221,10 +1271,14 @@ export const YVAGA: AircraftConfig = {
   tardanLosFlaps: 24,
   appearance: {
     body: 0xf2f1ec,
-    accent: 0x1f4f76,
-    trim: 0xbe5d38,
+    // El de la flota que más se ve, en el verde de las hojas: motores,
+    // franja y cola, con la raya ocre. Al lado del JAZ 90, que va de
+    // terracota, no se confunden ni de lejos. Y en la cola verde, el sol solo
+    // naciendo en la raíz: las hojas verdes sobre verde no se verían.
+    accent: CASA.verde,
+    trim: CASA.ocre,
     blades: 0,
-    motivo: "sol-y-hojas",
+    motivo: "sol",
   },
   sound: {
     engine: "turbofan",

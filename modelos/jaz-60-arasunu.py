@@ -139,7 +139,8 @@ def construir():
     piezas.append(contorno("puerta", PIEL, -4.25, -0.12, 1.50, 0.74,
                            radio=0.12, grueso=0.025, fuera=0.012))
 
-    # La franja, azul con su raya ocre, que sube a la deriva por la cola.
+    # La franja con su raya, que sube a la deriva por la cola. Los colores
+    # los pone la ficha del avión: ver `src/flight/aircraft.ts`.
     def sube(base, desde=4.2, cuanto=0.26):
         return lambda z: base + max(0.0, z - desde) * cuanto
 
