@@ -35,8 +35,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_deriva, de_ala, dentro_de,
-    espejo, estacion, flap, flaps_moviles, helice, llantas, neumaticos,
-    paneles, paneles_zy, ranurado, simetricos, superficie, varillas, zy,
+    espejo, estacion, flap, flaps_libres, flaps_moviles, helice, llantas,
+    neumaticos, paneles, paneles_zy, ranurado, simetricos, superficie,
+    varillas, zy,
 )
 from mathutils import Vector  # noqa: E402
 
@@ -305,6 +306,11 @@ def construir():
     # de pala pasa a medio metro del suelo, como en el avión de verdad.
     piezas += helice("helice", (0, 0.06, -2.42), radio=0.95, cuantas=2,
                      buje=0.17, cuerda=0.13, largo_cono=0.40)
+
+    # Los flaps no atraviesan nada al bajar: ni el fuselaje ni el puntal, que
+    # se clava en el ala justo por delante de ellos. Ver `flaps_libres`.
+    flaps_libres(piezas, [p for p in piezas if p.type == "MESH"
+                          and p.name in ("fuselaje", "puntal-del-ala")])
 
     # El centro de gravedad, a un cuarto de la cuerda: por ahí gira el avión.
     piezas.append(centro_de_gravedad(BORDE_DE_ATAQUE + raiz * 0.28))

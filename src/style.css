@@ -7620,7 +7620,9 @@ button.motor__tecla::after {
 /*
  * Y moviéndose: ámbar y parpadeando, que quiere decir «esperá». Esos diez
  * segundos son media lección del mando, y un botón que se enciende del tirón
- * se la come entera. Ver `luzDeTren` en flight/tren.ts.
+ * se la come entera. Ver `luzDeTren` en flight/tren.ts. Los flaps, igual y
+ * más largo —hasta veinticuatro segundos en el de fuselaje ancho—: ver
+ * `luzDeFlaps` en flight/flaps.ts.
  */
 .mando--moviendose {
   border-color: var(--ocre);

@@ -33,9 +33,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, espejo, flap, flaps_moviles, helice, llantas, neumaticos,
-    paneles, paneles_zy, ranurado, recogido, simetricos, superficie,
-    varillas, ventanas, zy,
+    bisagra, espejo, flap, flaps_libres, flaps_moviles, helice, llantas,
+    neumaticos, paneles, paneles_zy, ranurado, recogido, simetricos,
+    superficie, varillas, ventanas, zy,
 )
 
 # ── Las medidas, que son las de su ficha de vuelo ─────────────────────────
@@ -316,11 +316,17 @@ def construir():
     morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.16))
     # Hacia atrás: el mismo eje x, girando al revés.
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (-1, 0, 0), 90, morro)
-    # Y los flaps también tapan: son el trozo de ala de detrás del pozo.
+    # Y los flaps también tapan: son el trozo de ala de detrás del pozo; y
+    # la franja que no baja, lo que queda de él donde acaba cada flap.
     recogido(patas, [p for p in piezas if p.type == "MESH" and (
         p.name in ("fuselaje", "carenado", "gondola", "ala")
-        or p.name.startswith("flap-"))])
+        or p.name.startswith(("flap-", "franja-")))])
     piezas += patas
+    # Y ningún flap atraviesa nada al bajar: ni el tren, fuera o metido, ni
+    # la góndola que lo parte en dos. Ver `flaps_libres`.
+    flaps_libres(piezas, [p for p in piezas if p.type == "MESH" and (
+        (p.parent and p.parent.name.startswith("bisagra-"))
+        or p.name in ("fuselaje", "carenado", "gondola"))])
 
     piezas.append(centro_de_gravedad(ALA_Z + 0.08 + 2.2 * 0.27))
     return piezas

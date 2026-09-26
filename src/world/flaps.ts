@@ -17,7 +17,7 @@
  * - `muescas`: los grados en cada tope de la palanca.
  * - `carril` y `recorrido`: hacia dónde sale y cuántos metros en cada tope.
  *   Un flap ranurado de avioneta sale poco por unos carriles cortos; un
- *   Fowler de avión de línea, un tercio de su cuerda.
+ *   Fowler de avión de línea, cuatro quintos de su cuerda.
  *
  * Aquí no hay nada de cada avión: se pasa todo eso al marco del padre del
  * vacío —que en estos modelos es el nodo `avion`, con su cuarto de vuelta
@@ -49,6 +49,18 @@ import { enLaMuesca } from "../flight/flaps";
  */
 export const FLAP = /^flap-/;
 
+/**
+ * Y las colas de las canoas, que bajan con los flaps pero no son flaps.
+ *
+ * La parte de atrás del carenado de un carril va sujeta al carro del flap:
+ * sale con él por el carril y baja, **en su plano**, que es el de la dirección
+ * del vuelo. Colgada del flap giraba con su bisagra en flecha y se torcía de
+ * lado. Su vacío trae los mismos datos que el de un flap —el carril, el
+ * recorrido y los grados del suyo, y un eje a lo ancho— y se mueve con la
+ * misma cuenta. Ver `canoas_con_flap` en `modelos/exterior.py`.
+ */
+export const COLA_DE_CANOA = /^cola-/;
+
 /** Un flap: su vacío, cómo estaba y cómo se mueve, ya en el marco del padre. */
 interface Flap {
   readonly nodo: Object3D;
@@ -70,6 +82,8 @@ interface Flap {
 export interface Flaps {
   /** Cuántos flaps se mueven: dos por semiala en los que tienen dos. */
   readonly cuantos: number;
+  /** Y cuántas colas de canoa bajan con ellos. */
+  readonly colas: number;
   /** Los pone donde toca. `donde` es 0 recogidos y 1 abajo del todo. */
   poner(donde: number): void;
 }
@@ -97,8 +111,10 @@ function cifras(v: unknown): number[] | null {
 export function prepararFlaps(raiz: Object3D): Flaps | null {
   raiz.updateWorldMatrix(true, true);
   const flaps: Flap[] = [];
+  let colas = 0;
   raiz.traverse((o) => {
-    if (!FLAP.test(o.name) || !o.parent) return;
+    const esCola = COLA_DE_CANOA.test(o.name);
+    if ((!FLAP.test(o.name) && !esCola) || !o.parent) return;
     const d = o.userData;
     const bisagra = vector(d["bisagra"]);
     const eje = vector(d["eje"]);
@@ -119,9 +135,10 @@ export function prepararFlaps(raiz: Object3D): Flaps | null {
     const escala = aPadre.getMaxScaleOnAxis();
     o.updateMatrix();
     /*
-     * Las tapas cuelgan del flap —las suyas y las de la cola de su canoa—, y
-     * los huecos que deja son del ala y de la canoa fija, y se llaman como él:
-     * `hueco-flap-dentro-derecha`, `hueco-flap-dentro-derecha-canoa-0`.
+     * Las tapas cuelgan del vacío —las del flap, o la boca de la cola de una
+     * canoa—, y los huecos que deja son del ala o de la canoa fija, y se
+     * llaman como él: `hueco-flap-dentro-derecha`, o
+     * `hueco-cola-canoa-0-derecha` y su carril.
      */
     const cierres: Object3D[] = [];
     o.traverse((h) => {
@@ -131,6 +148,7 @@ export function prepararFlaps(raiz: Object3D): Flaps | null {
     raiz.traverse((h) => {
       if (h.name === hueco || h.name.startsWith(`${hueco}-`)) cierres.push(h);
     });
+    if (esCola) colas++;
     flaps.push({
       nodo: o,
       posicion: o.position.clone(),
@@ -145,7 +163,7 @@ export function prepararFlaps(raiz: Object3D): Flaps | null {
       cierres,
     });
   });
-  if (!flaps.length) return null;
+  if (flaps.length === colas) return null;
   // Recogidos, que es como llega el modelo: sin tapas ni hueco a la vista.
   for (const f of flaps) for (const c of f.cierres) c.visible = false;
 
@@ -153,7 +171,8 @@ export function prepararFlaps(raiz: Object3D): Flaps | null {
   const mover = new Matrix4();
   const girada = new Vector3();
   return {
-    cuantos: flaps.length,
+    cuantos: flaps.length - colas,
+    colas,
     poner(donde: number) {
       const fuera = Math.max(0, Math.min(1, Number.isFinite(donde) ? donde : 0));
       for (const f of flaps) {

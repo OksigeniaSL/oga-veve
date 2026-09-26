@@ -7264,6 +7264,7 @@ export class Game {
        */
       {
         flaps: this.input.controls.flaps,
+        palancaDeFlaps: this.input.palancaDeFlaps,
         tren: this.input.controls.tren,
         objetivo: this.aDondeVoy,
         viento: this.vientoDeHoy,

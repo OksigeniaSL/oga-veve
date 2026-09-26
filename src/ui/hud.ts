@@ -44,6 +44,7 @@ import { Pictogramas, motorMas, motorMenos } from "./pictogramas";
 import { DIBUJOS, Senal } from "./senal";
 import { OJO } from "./teclas";
 import { luzDeTren } from "../flight/tren";
+import { luzDeFlaps } from "../flight/flaps";
 import { Mapa } from "./mapa";
 import type { Scenario } from "../world/scenarios";
 import { botonesDeLosPaneles } from "./paneles";
@@ -1023,7 +1024,9 @@ export class Hud {
           la pregunta: apagado con el tren dentro, parpadeando mientras se
           mueve —esos diez segundos son media lección del mando— y encendido
           cuando está fuera y trabado. Los mismos tres estados que las luces
-          del cuadro, porque son la misma cosa mirada desde otro sitio.
+          del cuadro, porque son la misma cosa mirada desde otro sitio. Y el
+          de flaps, los mismos: también tardan, y un botón que no cambia al
+          pulsarlo parece que no se ha pulsado.
         -->
         <button class="mando mando--tren" type="button" data-hud="tren-touch" hidden
                 aria-label="${t("tecla.tren")}">${DIBUJOS.tren}</button>
@@ -1750,6 +1753,11 @@ export class Hud {
      */
     mandos?: {
       readonly flaps: number;
+      /**
+       * Y dónde está la palanca, que no es lo mismo: los flaps tardan en
+       * llegar a ella. Ver `luzDeFlaps`.
+       */
+      readonly palancaDeFlaps?: number;
       readonly tren: number;
       readonly objetivo: {
         readonly rumbo: number;
@@ -2068,9 +2076,17 @@ export class Hud {
     const luz = luzDeTren(mandos?.tren ?? 1);
     this.trenTouch.classList.toggle("mando--fuera", luz === "fuera");
     this.trenTouch.classList.toggle("mando--moviendose", luz === "moviendose");
+    /*
+     * Y los mismos tres en el de flaps, porque también tardan: la palanca va
+     * de un golpe y los flaps, a su paso. Encendido solo cuando han llegado a
+     * la muesca pedida. Ver `luzDeFlaps` en `flight/flaps.ts`.
+     */
+    const flaps = mandos?.flaps ?? 0;
+    const luzFlaps = luzDeFlaps(flaps, mandos?.palancaDeFlaps ?? flaps);
+    this.flapsTouch.classList.toggle("mando--fuera", luzFlaps === "fuera");
     this.flapsTouch.classList.toggle(
-      "mando--fuera",
-      (mandos?.flaps ?? 0) > 0.01,
+      "mando--moviendose",
+      luzFlaps === "moviendose",
     );
 
     // Alabeo y cabeceo los quieren dos consumidores —la tarjeta del horizonte

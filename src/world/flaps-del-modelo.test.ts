@@ -9,8 +9,11 @@
  * veinte. Esto lo caza sin abrir el juego.
  */
 import { describe, expect, it } from "vitest";
+import type { Points } from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { AIRCRAFT } from "../flight/aircraft";
 import { DETENTES } from "../flight/flaps";
+import { crearLucesDePosicion } from "./luces-de-posicion";
 
 interface Nodo {
   name?: string;
@@ -128,6 +131,38 @@ describe("los flaps de cada modelo", () => {
       }
     });
 
+    /*
+     * **Y las colas de las canoas, en su plano.** Colgadas del flap giraban
+     * con su bisagra en flecha y se torcían de lado: medio metro hacia fuera
+     * en el Yvága. Ahora cada una trae su vacío, con el eje a lo ancho y el
+     * carril, el recorrido y los grados de su flap. Ver `canoas_con_flap` en
+     * `modelos/exterior.py`.
+     */
+    const colas = nodos.filter(
+      (n) => /^cola-/.test(n.name ?? "") && n.extras?.["muescas"],
+    );
+    if (colas.length) {
+      it(`${a.id}: la cola de cada canoa baja en su plano, con su flap`, () => {
+        for (const c of colas) {
+          const e = c.extras!;
+          const f = flaps.find((x) => x.name === e["flap"]);
+          expect(f, `${c.name} sin su flap`).toBeDefined();
+          expect(numeros(e["eje"])).toEqual([1, 0, 0]);
+          expect(numeros(e["carril"])).toEqual(numeros(f!.extras!["carril"]));
+          expect(numeros(e["recorrido"])).toEqual(
+            numeros(f!.extras!["recorrido"]),
+          );
+          expect(numeros(e["muescas"])).toEqual([...a.muescasDeFlaps]);
+          const hijos = (c.children ?? []).map((i) => nodos[i]!.name ?? "");
+          expect(hijos.some((h) => h.endsWith("-cola"))).toBe(true);
+          expect(hijos.some((h) => h.endsWith("-cola-tapas"))).toBe(true);
+          const nombres = nodos.map((n) => n.name ?? "");
+          expect(nombres).toContain(`hueco-${c.name}`);
+          expect(nombres).toContain(`hueco-${c.name}-carril`);
+        }
+      });
+    }
+
     it(`${a.id}: la bisagra, a lo largo del ala y girando hacia abajo`, () => {
       for (const f of flaps) {
         const e = numeros(f.extras!["eje"]);
@@ -152,8 +187,8 @@ describe("los flaps de cada modelo", () => {
    * Los de las avionetas giraban sobre una bisagra colgada bajo el ala, sin
    * herrajes que la sujetaran y abriendo una ranura del diez por ciento de la
    * cuerda: una placa suelta detrás del ala. Ahora salen un poco por carriles
-   * cortos —ranurados— y los reactores, un tercio de su cuerda —Fowler—. Ver
-   * `ranurado` y `fowler` en `modelos/exterior.py`.
+   * cortos —ranurados— y los reactores, cuatro quintos de su cuerda —Fowler,
+   * que alarga el ala—. Ver `ranurado` y `fowler` en `modelos/exterior.py`.
    */
   it("salen por sus carriles, siempre a más; los Fowler de los reactores, más lejos", () => {
     // Lo que sale al final, en cuerdas medias del ala: un avión grande saca
@@ -184,4 +219,49 @@ describe("los flaps de cada modelo", () => {
           Math.max(...sale(avioneta)),
         );
   });
+});
+
+/*
+ * **Y el ala, la de antes: el foco de aterrizaje donde estaba.**
+ *
+ * Para partir un flap junto a una góndola hace falta un anillo nuevo en el
+ * ala, y el juego pone el foco en el vértice más adelantado del ala entre el
+ * 7 y el 18 % de la envergadura —ver `puntasDe`—. El anillo nuevo del Panambi
+ * y del Arasunu caía en esa franja y su vértice del borde de ataque ganaba:
+ * el del Panambi quedaba metido en la góndola, y en vuelo el avión se quedaba
+ * sin focos a la vista. Ahora el ala conserva los vértices que tenía y lo del
+ * anillo va aparte, en `franja-fija`. Ver `_franja_fija` en
+ * `modelos/exterior.py`.
+ *
+ * Las cifras son las del foco con los modelos de antes de que los flaps se
+ * movieran, medidas con el mismo `crearLucesDePosicion` que usa el juego.
+ */
+describe("el foco de aterrizaje, donde estaba antes de los flaps", () => {
+  const ANTES: Record<string, readonly [number, number, number]> = {
+    "jaz-20": [1.3201, 0.1919, 0.162],
+    "jaz-25": [1.4993, -0.0426, -1.593],
+    "jaz-40": [1.4268, 0.0754, -0.7475],
+    "jaz-60": [3.1, -0.1968, -1.0479],
+    "jaz-90": [3.9753, -0.7022, -1.7613],
+    "jaz-120": [9.3855, -0.9135, -7.1082],
+  };
+  for (const a of AIRCRAFT) {
+    const antes = ANTES[a.id];
+    if (!antes) continue;
+    it(`${a.id}: el foco, en el mismo sitio`, async () => {
+      const b = fs.readFileSync(`public/assets/aeronaves/${a.id}.glb`);
+      const datos = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+      const modelo = await new GLTFLoader().parseAsync(
+        datos as ArrayBuffer,
+        "",
+      );
+      modelo.scene.updateWorldMatrix(true, true);
+      const foco = crearLucesDePosicion(a, modelo.scene).grupo
+        .children[2] as Points;
+      const p = foco.geometry.getAttribute("position");
+      expect(p.getX(0)).toBeCloseTo(antes[0], 3);
+      expect(p.getY(0)).toBeCloseTo(antes[1], 3);
+      expect(p.getZ(0)).toBeCloseTo(antes[2], 3);
+    });
+  }
 });

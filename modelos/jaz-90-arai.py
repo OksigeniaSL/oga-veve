@@ -38,8 +38,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, canoas_con_flap, espejo, flap, flaps_moviles, fowler, llantas,
-    neumaticos,
+    bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
+    fowler, llantas, neumaticos,
     paneles, paneles_zy, recogido, simetricos, superficie, turbofan, varillas,
     ventanas, zy,
 )
@@ -248,10 +248,17 @@ def construir():
     # extremos de dentro, medidos a lo ancho y no a lo largo del ala, que va
     # en flecha:
     #
-    # - **El de dentro empieza a 1,55 m del eje**, fuera del carenado. El
-    #   carenado abulta 1,52 m a cada lado a la altura por la que pasa el flap
-    #   al bajar, más que donde sale el ala; empezando dentro de él, el flap lo
-    #   cruzaba al bajar y su canto asomaba por debajo como una cuchilla.
+    # - **El de dentro empieza a 2,80 m del eje, pasada la pata del tren.** La
+    #   pata principal cuelga a 2,55 m y entra en el ala por detrás de la
+    #   junta, dentro de la franja: con el tren fuera —que es como se
+    #   aterriza— el flap bajaba atravesándola, y metida se tumba hacia la
+    #   panza justo donde va la nariz guardada. En uno de verdad la pata va
+    #   por delante del flap, clavada al larguero de atrás; aquí moverla sería
+    #   cambiar el avión, que ya está bien. Así que el trozo de franja de
+    #   encima de la pata se queda quieto, como el de encima de la góndola en
+    #   los de hélice. Antes empezaba a 1,55, fuera del carenado, que ya le
+    #   pedía no pasar de ahí: abulta 1,52 m a cada lado a la altura por la que
+    #   baja el flap.
     # - **El de fuera empieza pasado el pilón**, a quince centímetros del
     #   quiebro. La junta pintada entre los dos flaps está a 4,40 m **a lo
     #   largo del ala**, que son cuatro metros a lo ancho, y el pilón cuelga a
@@ -262,7 +269,7 @@ def construir():
     #
     # Recogido no se nota ninguno de los dos cortes: no hay raya pintada que
     # mover y las normales son las de siempre.
-    flaps = [flap("dentro", E_POR_X * 1.55, 4.40, 0.73),
+    flaps = [flap("dentro", E_POR_X * 2.80, 4.40, 0.73),
              flap("fuera", E_POR_X * (QUIEBRO + 0.15), 9.2, 0.73)]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
                      flaps=flaps, zonas=[
@@ -281,10 +288,14 @@ def construir():
     # **Fowler**, como todo reactor de línea: la primera muesca es casi todo
     # carril —sale hacia atrás y apenas baja, que es como se despega sin
     # frenar—, y las dos últimas son ángulo. Cinco, quince y treinta grados,
-    # los topes de un bimotor de pasillo único; y un tercio de su cuerda de
-    # carril al final, que recogido va guardado bajo los spoilers.
+    # los topes de un bimotor de pasillo único. Y el carril, largo: al final
+    # ha salido cuatro quintos de su cuerda, casi todo en la primera muesca
+    # —que es como un Fowler alarga el ala para despegar—, y el borde de
+    # salida va hacia atrás hasta la última. La cuerda crece un diez por
+    # ciento; con el tercio de antes crecía un tres y en la última muesca el
+    # giro se comía el carril y el borde volvía hacia delante.
     los_flaps = flaps_moviles(ala, flaps, fowler(
-        muescas=(0, 5, 15, 30), recorrido=(0, 0.20, 0.30, 0.34)))
+        muescas=(0, 5, 15, 30), recorrido=(0, 0.44, 0.54, 0.80)))
     piezas += los_flaps
 
     # Los carenados de los raíles de los flaps: las «canoas» que asoman por
@@ -404,10 +415,18 @@ def construir():
     morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.22))
     # Hacia delante: la rueda va al morro girando sobre el eje x.
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
-    # Y los flaps también tapan: son el trozo de ala de detrás del pozo.
+    # Y los flaps también tapan: son el trozo de ala de detrás del pozo; y
+    # la franja que no baja, lo que queda de él donde acaba cada flap.
     recogido(patas, [p for p in piezas if p.type == "MESH" and (
-        p.name in ("fuselaje", "carenado", "ala") or p.name.startswith("flap-"))])
+        p.name in ("fuselaje", "carenado", "ala")
+        or p.name.startswith(("flap-", "franja-")))])
     piezas += patas
+    # Y ningún flap atraviesa nada al bajar: ni el tren, fuera o metido, ni
+    # lo que cuelga cerca de él. Ver `flaps_libres`.
+    flaps_libres(piezas, [p for p in piezas if p.type == "MESH" and (
+        (p.parent and p.parent.name.startswith("bisagra-principal"))
+        or p.name in ("fuselaje", "carenado", "pilon", "motor")
+        or (p.name.startswith("canoa-") and "-cola" not in p.name))])
 
     # El centro de gravedad, a un cuarto de la cuerda media del ala.
     piezas.append(centro_de_gravedad(z_ala(5.2) + 0.80))

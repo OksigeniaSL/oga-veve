@@ -10,7 +10,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { BoxGeometry, Group, Mesh, Object3D, Vector3 } from "three";
-import { FLAP, prepararFlaps } from "./flaps";
+import { COLA_DE_CANOA, FLAP, prepararFlaps } from "./flaps";
 import { DETENTES } from "../flight/flaps";
 
 const MUESCAS = [0, 5, 15, 30];
@@ -197,6 +197,72 @@ describe("los flaps que se mueven", () => {
       expect(b.y).toBeCloseTo(a.y, 9);
       expect(b.z).toBeCloseTo(a.z, 9);
     }
+  });
+
+  /*
+   * **La cola de una canoa baja en su plano, no torcida.** Iba colgada del
+   * flap y giraba con su bisagra en flecha: además de bajar, se iba de lado
+   * —medio metro en el de fuselaje ancho— y la canoa quedaba quebrada en
+   * planta. Ahora cuelga de su propio vacío, con el eje a lo ancho, y corre
+   * con el carro del flap por el mismo carril.
+   */
+  it("la cola de una canoa baja con el flap, en su plano y por su carril", () => {
+    const { raiz } = avion();
+    const nodo = raiz.children[0]!;
+    const cola = new Object3D();
+    cola.name = "cola-canoa-0-derecha";
+    const carril = new Vector3(0, 0, 1);
+    cola.userData = {
+      bisagra: [2, -1, 1],
+      eje: [1, 0, 0],
+      muescas: MUESCAS,
+      carril: [carril.x, carril.y, carril.z],
+      recorrido: RECORRIDO,
+      flap: "flap-dentro-derecha",
+    };
+    nodo.add(cola);
+    const punta = new Mesh(new BoxGeometry(0.1, 0.1, 0.1));
+    punta.name = "canoa-0-derecha-cola";
+    raiz.updateWorldMatrix(true, true);
+    punta.position.copy(cola.worldToLocal(raiz.localToWorld(new Vector3(2, -1.1, 1.5))));
+    cola.add(punta);
+    const boca = new Object3D();
+    boca.name = "canoa-0-derecha-cola-tapas";
+    cola.add(boca);
+    const hueco = new Object3D();
+    hueco.name = "hueco-cola-canoa-0-derecha";
+    const riel = new Object3D();
+    riel.name = "hueco-cola-canoa-0-derecha-carril";
+    nodo.add(hueco, riel);
+    raiz.updateWorldMatrix(true, true);
+
+    expect(COLA_DE_CANOA.test(cola.name)).toBe(true);
+    expect(FLAP.test(cola.name)).toBe(false);
+    const flaps = prepararFlaps(raiz)!;
+    // Las colas bajan con los flaps, pero no se cuentan como flaps.
+    expect(flaps.cuantos).toBe(2);
+    expect(flaps.colas).toBe(1);
+    const recogida = dondeEsta(punta, raiz);
+    expect(boca.visible || hueco.visible || riel.visible).toBe(false);
+    for (const d of [0.2, 1 / 3, 0.8, 1]) {
+      flaps.poner(d);
+      const ahora = dondeEsta(punta, raiz);
+      // En su plano: ni un milímetro de lado.
+      expect(ahora.x).toBeCloseTo(recogida.x, 9);
+      expect(ahora.y).toBeLessThan(recogida.y);
+      expect(ahora.z).toBeGreaterThan(recogida.z);
+    }
+    // Abajo del todo: los grados del flap sobre su bisagra, y el carril.
+    const esperado = new Vector3(2, -1.1, 1.5)
+      .sub(new Vector3(2, -1, 1))
+      .applyAxisAngle(new Vector3(1, 0, 0), (30 * Math.PI) / 180)
+      .add(new Vector3(2, -1, 1))
+      .addScaledVector(carril, 0.34);
+    expect(dondeEsta(punta, raiz).distanceTo(esperado)).toBeLessThan(1e-9);
+    expect(boca.visible && hueco.visible && riel.visible).toBe(true);
+    flaps.poner(0);
+    expect(dondeEsta(punta, raiz).distanceTo(recogida)).toBeLessThan(1e-12);
+    expect(boca.visible || hueco.visible || riel.visible).toBe(false);
   });
 
   it("las tapas y el hueco solo se dibujan con el flap fuera", () => {

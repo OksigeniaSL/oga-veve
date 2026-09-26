@@ -39,8 +39,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from comun import cabina, exportar, limpiar  # noqa: E402
 from exterior import (  # noqa: E402
     Piel, banda, centro_de_gravedad, contorno, de_ala, de_deriva, dentro_de,
-    bisagra, canoas_con_flap, espejo, flap, flaps_moviles, fowler, llantas,
-    neumaticos, paneles, paneles_zy, recogido,
+    bisagra, canoas_con_flap, espejo, flap, flaps_libres, flaps_moviles,
+    fowler, llantas, neumaticos, paneles, paneles_zy, recogido,
     simetricos, superficie, turbofan, varillas, ventanas, zy,
 )
 
@@ -227,14 +227,18 @@ def construir():
                80, 0.0),
     ]
     j = "oscuro"
-    # **El de dentro empieza a 3,05 m del eje, y no donde el ala sale del
-    # fuselaje.** Al bajar pasa por delante del carenado de la panza, que ahí
-    # abulta tres metros a cada lado, y un flap no baja a través de él: medido
-    # moviéndolo, hasta 3,0 lo rozaba. El trozo de franja entre el fuselaje y
-    # el flap se queda quieto, que es lo que hace en un avión de verdad; y
-    # recogido no se ve el corte, porque no hay raya pintada que mover y las
-    # normales son las de siempre. Ver `jaz-90-arai.py`.
-    flaps = [flap("dentro", E_POR_X * 3.05, 11.5, 0.73),
+    # **El de dentro empieza a 6,0 m del eje, pasada la pata del ala.** Esa
+    # pata cuelga a 5,6 m y se mete tumbándose hacia la panza por dentro del
+    # ala, a lo largo de toda la raíz, justo por delante de la junta: la nariz
+    # guardada de un flap que empezara antes caía encima de ella, y al salir
+    # la atravesaba. Lo mide `flaps_libres`. En uno de verdad la pata va por
+    # delante del larguero de atrás y el flap por detrás; aquí moverla sería
+    # cambiar el avión, así que el trozo de franja de encima se queda quieto,
+    # como en el Arai. Recogido no se ve el corte, porque no hay raya pintada
+    # que mover y las normales son las de siempre. Antes empezaba a 3,05,
+    # fuera del carenado de la panza, que abulta tres metros a cada lado a la
+    # altura por la que baja el flap. Ver `jaz-90-arai.py`.
+    flaps = [flap("dentro", E_POR_X * 6.0, 11.5, 0.73),
              flap("fuera", 11.65, 21.6, 0.73)]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
                      flaps=flaps, zonas=[
@@ -249,9 +253,12 @@ def construir():
     ])
     piezas.append(ala)
     # **Fowler**, con los topes de un cuatrirreactor de fuselaje ancho —cinco,
-    # veinte y treinta— y el carril más largo de la flota. Ver `fowler`.
+    # veinte y treinta— y el carril más largo de la flota: cuatro quintos de
+    # su cuerda, casi todo en la primera muesca, y el borde de salida hacia
+    # atrás hasta la última. La cuerda crece más de un diez por ciento. Ver
+    # `fowler`.
     los_flaps = flaps_moviles(ala, flaps, fowler(
-        muescas=(0, 5, 20, 30), recorrido=(0, 0.20, 0.32, 0.38)))
+        muescas=(0, 5, 20, 30), recorrido=(0, 0.45, 0.60, 0.80)))
     piezas += los_flaps
 
     def cuerda_en(x):
@@ -370,10 +377,19 @@ def construir():
     morro.append(neumaticos("rueda-morro", ruedas_m, RUEDA_MORRO, 0.38))
     morro.append(llantas("rueda-morro-llanta", ruedas_m, RUEDA_MORRO, 0.38))
     patas += bisagra("morro", (0, arriba_m, MORRO_Z), (1, 0, 0), 95, morro)
-    # Y los flaps también tapan: son el trozo de ala de detrás del pozo.
+    # Y los flaps también tapan: son el trozo de ala de detrás del pozo; y
+    # la franja que no baja, lo que queda de él donde acaba cada flap.
     recogido(patas, [p for p in piezas if p.type == "MESH" and (
-        p.name in ("fuselaje", "carenado", "ala") or p.name.startswith("flap-"))])
+        p.name in ("fuselaje", "carenado", "ala")
+        or p.name.startswith(("flap-", "franja-")))])
     piezas += patas
+    # Y ningún flap atraviesa nada al bajar: ni el tren, fuera o metido, ni
+    # lo que cuelga cerca de él. Ver `flaps_libres`.
+    flaps_libres(piezas, [p for p in piezas if p.type == "MESH" and (
+        (p.parent and p.parent.name.startswith("bisagra-"))
+        or p.name in ("fuselaje", "carenado")
+        or p.name.startswith(("pilon-", "motor-"))
+        or (p.name.startswith("canoa-") and "-cola" not in p.name))])
 
     piezas.append(centro_de_gravedad(z_ala(12.0) + CUERDA * 0.25))
     return piezas

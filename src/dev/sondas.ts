@@ -736,7 +736,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       juego.aircraftMesh.group.traverse((o) => {
         if (/^flap-[^-]+-(derecha|izquierda)$/.test(o.name))
           matrices.push([...o.matrix.elements]);
-        if (/-tapas$|^hueco-flap-/.test(o.name) && o.visible) cierresVisibles++;
+        if (/-tapas$|^hueco-(flap|cola)-/.test(o.name) && o.visible)
+          cierresVisibles++;
       });
       return { matrices, cierresVisibles };
     },

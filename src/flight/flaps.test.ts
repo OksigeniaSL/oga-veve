@@ -20,7 +20,12 @@ import {
   siguienteDetente,
   type InputActions,
 } from "./input";
-import { enLaMuesca, muescaMasCercana, mueveLosFlaps } from "./flaps";
+import {
+  enLaMuesca,
+  luzDeFlaps,
+  muescaMasCercana,
+  mueveLosFlaps,
+} from "./flaps";
 import { AIRCRAFT } from "./aircraft";
 
 describe("las muescas de la palanca", () => {
@@ -104,6 +109,47 @@ describe("lo que tardan en llegar", () => {
     expect(mueveLosFlaps(Number.NaN, 1, 0.1, 9)).toBeGreaterThanOrEqual(0);
     expect(mueveLosFlaps(0, 5, 100, 9)).toBe(1);
     expect(mueveLosFlaps(0.5, 1, 0.1, 0)).toBe(1);
+  });
+});
+
+/*
+ * **El botón que se acaba de pulsar tiene que cambiar.** Al subirlos desde
+ * abajo del todo el del HUD seguía encendido igual entre dieciocho y
+ * veinticuatro segundos, y quien lo había pulsado veía que no pasaba nada. Los
+ * mismos tres estados que el del tren.
+ */
+describe("el botón de flaps, mientras van de una muesca a otra", () => {
+  it("arriba y quietos, apagado; en su muesca, encendido", () => {
+    expect(luzDeFlaps(0, 0)).toBe("dentro");
+    for (const d of DETENTES.slice(1)) expect(luzDeFlaps(d, d)).toBe("fuera");
+  });
+
+  /** Cuánto rato está en ámbar hasta que llegan, fotograma a fotograma. */
+  function enAmbar(desde: number, palanca: number, tardan: number): number {
+    let donde = desde;
+    let t = 0;
+    while (luzDeFlaps(donde, palanca) === "moviendose" && t < 60) {
+      donde = mueveLosFlaps(donde, palanca, 1 / 60, tardan);
+      t += 1 / 60;
+    }
+    return t;
+  }
+
+  it("en cuanto se pulsa, en ámbar, y así hasta que llegan", () => {
+    // Se pulsa con los flaps abajo del todo: la palanca va arriba de un golpe
+    // y los flaps tardan todo su recorrido.
+    const palanca = DETENTES[siguienteDetente(1)]!;
+    expect(palanca).toBe(0);
+    expect(luzDeFlaps(1, palanca)).toBe("moviendose");
+    expect(enAmbar(1, palanca, 18)).toBeCloseTo(18, 1);
+    expect(luzDeFlaps(0, palanca)).toBe("dentro");
+  });
+
+  it("y bajando, igual: ámbar hasta la muesca, y entonces encendido", () => {
+    const palanca = DETENTES[1]!;
+    expect(luzDeFlaps(0, palanca)).toBe("moviendose");
+    expect(enAmbar(0, palanca, 9)).toBeCloseTo(3, 1);
+    expect(luzDeFlaps(palanca, palanca)).toBe("fuera");
   });
 });
 

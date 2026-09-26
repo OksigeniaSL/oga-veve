@@ -113,6 +113,29 @@ export function mueveLosFlaps(
   return Math.max(alli, aqui - paso);
 }
 
+/** Los tres estados del botón de flaps, que son los del tren. */
+export type LuzDeFlaps = "fuera" | "moviendose" | "dentro";
+
+/**
+ * En qué estado está el botón de flaps: el que se ha tocado.
+ *
+ * La palanca va a su muesca de un golpe y los flaps tardan —de nueve a
+ * veinticuatro segundos de arriba abajo—, así que mirando solo dónde están, el
+ * botón seguía encendido igual durante toda la subida: quien lo acababa de
+ * pulsar, que en Guyrami tiene cuatro años, veía que no había pasado nada, y
+ * lo volvía a pulsar. Con eso la palanca bajaba otra vez.
+ *
+ * Así que dice lo mismo que el del tren: apagado arriba, ámbar mientras van de
+ * una muesca a otra —«esperá»— y encendido cuando han llegado a la que se
+ * pidió. Ver `luzDeTren` en `flight/tren.ts`.
+ */
+export function luzDeFlaps(donde: number, palanca: number): LuzDeFlaps {
+  // `mueveLosFlaps` llega a la muesca exacta y para, así que al llegar son
+  // iguales; la holgura es solo para el polvo de la coma flotante.
+  if (Math.abs(donde - palanca) > 1e-9) return "moviendose";
+  return donde > 0.01 ? "fuera" : "dentro";
+}
+
 /**
  * Lo que tardan cuando la ficha no lo dice: nueve segundos de arriba abajo, o
  * sea tres por muesca, que es lo que tarda el motor eléctrico de los flaps de
