@@ -1165,20 +1165,64 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
    * lo que el avión gira y el círculo no se cierra.
    */
   const miraDe = (s, fuera = 0) => Math.max(12, s.airspeed * 1.6, fuera * 1.5);
+  /*
+   * **Y se sigue la raya por donde se va, no por el trozo más cercano.**
+   *
+   * Esto buscaba el punto más cercano de **toda** la ruta, y el back-taxi se
+   * pisa a sí mismo: se va por una raya apartada ocho metros del eje y se
+   * vuelve por el eje. En cuanto el avión se arrimaba al eje a la ida, el
+   * punto más cercano era de la vuelta, el de delante quedaba a la espalda y
+   * el piloto daba media vuelta a trece metros por segundo en mitad de la
+   * pista: medido en Lanzarote con el JAZ 90, fuera del asfalto a 468 m de la
+   * cabecera. Quien sigue una raya pintada la sigue en orden; no salta a la
+   * que va al lado en sentido contrario.
+   *
+   * Así que se busca cerca de donde se iba —un poco hacia atrás y sesenta
+   * metros de raya hacia delante— y solo si de ahí no queda nada a mano, en
+   * toda la ruta, que es lo que pasa con una ruta nueva.
+   */
+  let firmaDelTimon = "";
+  let indiceDelTimon = -1;
   const timon = (s, ruta) => {
     if (ruta.length < 2) return 0;
-    let cerca = 0;
-    let mejor = Infinity;
-    for (let i = 0; i < ruta.length; i++) {
-      const d = Math.hypot(
-        ruta[i][0] - s.position.x,
-        ruta[i][1] - s.position.z,
-      );
-      if (d < mejor) {
-        mejor = d;
-        cerca = i;
-      }
+    const ultimo = ruta[ruta.length - 1];
+    const firma = `${ruta.length}:${ruta[0][0].toFixed(1)},${ruta[0][1].toFixed(1)}:${ultimo[0].toFixed(1)},${ultimo[1].toFixed(1)}`;
+    if (firma !== firmaDelTimon) {
+      firmaDelTimon = firma;
+      indiceDelTimon = -1;
     }
+    const buscar = (desde, hasta) => {
+      let cerca = -1;
+      let mejor = Infinity;
+      for (let i = desde; i <= hasta; i++) {
+        const d = Math.hypot(
+          ruta[i][0] - s.position.x,
+          ruta[i][1] - s.position.z,
+        );
+        if (d < mejor) {
+          mejor = d;
+          cerca = i;
+        }
+      }
+      return { cerca, mejor };
+    };
+    let hallado = { cerca: -1, mejor: Infinity };
+    if (indiceDelTimon >= 0) {
+      let hasta = indiceDelTimon;
+      let andado = 0;
+      while (hasta < ruta.length - 1 && andado < 60) {
+        andado += Math.hypot(
+          ruta[hasta + 1][0] - ruta[hasta][0],
+          ruta[hasta + 1][1] - ruta[hasta][1],
+        );
+        hasta++;
+      }
+      hallado = buscar(Math.max(0, indiceDelTimon - 3), hasta);
+    }
+    if (hallado.mejor > 25) hallado = buscar(0, ruta.length - 1);
+    const cerca = hallado.cerca;
+    const mejor = hallado.mejor;
+    indiceDelTimon = cerca;
     let mira = ruta[ruta.length - 1];
     for (let i = cerca; i < ruta.length; i++) {
       const d = Math.hypot(
@@ -2373,10 +2417,24 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
        * Mientras el plan diga back-taxi se rueda por la raya, como haría
        * cualquiera siguiendo la línea verde.
        */
-      if (fase === "back-taxi") {
+      /*
+       * **Y la media vuelta se da siguiendo la raya, y a la velocidad que
+       * pide el juego.**
+       *
+       * Fuera del back-taxi esto apuntaba el morro al rumbo de la pista y
+       * rodaba a ocho metros por segundo sin freno. Pisando la pista ya
+       * derecho vale; con el morro al revés —que es como se acaba un
+       * back-taxi— es dar la vuelta a esa velocidad, y con el JAZ 90 eso pide
+       * un radio de once metros donde la raya dibuja uno de cuatro. Mientras
+       * el morro no mire hacia donde se despega, se sigue la raya como
+       * cualquiera, frenando lo que haga falta.
+       */
+      const torcido =
+        ruta.length > 1 && Math.abs(error(rumboPista, s.heading)) > 0.5;
+      if (fase === "back-taxi" || torcido) {
         const quiere = o.rodaje() ?? 9;
         c.throttle = porElSuelo(s) < quiere ? 0.6 : 0;
-        c.brakes = porElSuelo(s) > quiere + 2 ? 1 : 0;
+        c.brakes = porElSuelo(s) > quiere + 1 ? 1 : 0;
         c.aileron = timon(s, ruta);
       } else {
         c.throttle = porElSuelo(s) < 8 ? 0.5 : 0;

@@ -188,6 +188,38 @@ describe("la memoria no es una cárcel", () => {
     expect(r.restante).toBeCloseTo(10, 6);
   });
 
+  /*
+   * **Pero sin saltar al tramo de vuelta de una ruta que se pisa a sí misma.**
+   *
+   * El back-taxi va por una raya a ocho metros del eje y vuelve por el eje.
+   * Rodando la ida por el eje, el tramo más cercano era el de vuelta: la
+   * cuenta saltaba cientos de metros, quedaba casi nada y la velocidad
+   * sugerida se iba a cero a mitad de pista. Medido en Lanzarote con el JAZ
+   * 90, parado para siempre en el último punto de la ruta.
+   */
+  it("y rodando la ida de un back-taxi por el eje, no salta a la vuelta", () => {
+    // Ida a ocho metros del eje, media vuelta en la punta y vuelta por el eje.
+    const BACK_TAXI: Punto[] = [
+      [0, 8],
+      [-1000, 8],
+      [-1004, 4],
+      [-1000, 0],
+      [-400, 0],
+    ];
+    let avance = 0;
+    let previo: Punto | null = null;
+    for (let x = -10; x > -900; x -= 1) {
+      // Por el eje, que es por donde va la vuelta.
+      const p: Punto = [x, 0];
+      const movido = previo ? Math.hypot(p[0] - previo[0], p[1] - previo[1]) : Infinity;
+      const r = avanzarEnRuta(BACK_TAXI, p, avance, movido);
+      previo = p;
+      // Va por la ida: lo recorrido es lo andado desde el principio.
+      expect(r.recorrido).toBeCloseTo(-x, 0);
+      avance = r.recorrido;
+    }
+  });
+
   it("sin saber cuánto se movió, manda el más cercano", () => {
     expect(avanzarEnRuta(RECTA, [10, 0], 90).recorrido).toBeCloseTo(10, 6);
   });

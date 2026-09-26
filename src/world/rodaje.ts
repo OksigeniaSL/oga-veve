@@ -496,6 +496,17 @@ export interface Ruta {
   readonly enganche: number;
   /** Las letras por las que se pasa, sin repetir seguidas. Es la instrucción. */
   readonly letras: readonly string[];
+  /**
+   * Desde qué punto de `puntos` la geometría es **exacta** y no se alisa, si
+   * lo es.
+   *
+   * Lo usa la media vuelta del back-taxi: es un arco trazado con el radio de
+   * giro de ese avión, y pasado por el quitatemblores y el redondeo de codos
+   * salía convertido en un codo de 2,66 m —más cerrado de lo que el reactor
+   * puede girar— pedido a seis metros por segundo. Ver `backTaxiDesde` en
+   * `plan-de-vuelo.ts`.
+   */
+  readonly exactaDesde?: number;
 }
 
 /**
