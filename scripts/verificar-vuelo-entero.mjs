@@ -1411,6 +1411,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
   let habladasVistas = 0;
   /** Cuántas veces la torre te mandó al aire por la pista ocupada, y se fue. */
   let frustradasPorLaPista = 0;
+  /** Y cuántas se fue porque el juego ya había dado la frustrada. */
+  let frustradasPorElJuego = 0;
   let yaTeLaDieron = false;
   /**
    * **Tus autorizaciones para aterrizar, con la fase en que sonaron.** Nada
@@ -2309,6 +2311,32 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       aDonde = 1;
       etapa = "subir";
     }
+    /*
+     * **Y si el juego ya te ha mandado al aire, o la pista se acabó, también.**
+     *
+     * Solo se obedecía la orden por pista ocupada. La otra —la de la
+     * instructora cuando se llega mal a la altura de decisión— se dejaba
+     * pasar, y con la avioneta salía bien: se enderezaba y tocaba. Con el JAZ
+     * 90 en Los Rodeos, no: cruzó el umbral a sesenta metros, el juego dio la
+     * frustrada, y el piloto siguió pidiendo «cero metros sobre la pista» más
+     * allá del final del asfalto, o sea sobre el terreno que viene detrás.
+     * Tocó monte a 120 m/s y cinco kilómetros y medio pasado el umbral: era
+     * el «percance: fuera» del banco, y no el circuito.
+     *
+     * Renunciar es ganar: si el juego ya ha pasado a «en vuelo» con el umbral
+     * a la espalda, o si el avión vuela por delante del final de la pista, se
+     * sube por el eje y se da otra vuelta, que es lo que se enseña.
+     */
+    if (etapa === "final" && !s.onGround && alto(s) > 30) {
+      const r = pistaAhora();
+      const pasado = alUmbral(s) < -(r.length - (r.desplazado ?? 0));
+      if (pasado || (fase === "en-vuelo" && alUmbral(s) < 0)) {
+        frustradasPorElJuego++;
+        rumboDeSalida = porDelante()?.h ?? rumboDeSalida;
+        aDonde = 1;
+        etapa = "subir";
+      }
+    }
     if (etapa === "arrancar") {
       c.engineOn = true;
       c.brakes = 0;
@@ -3030,6 +3058,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     dadaAOtroTrasLaTuya,
     sinAnularAlDartela,
     frustradasPorLaPista,
+    frustradasPorElJuego,
     bajandoATuPista,
     bajandoATuPistaDonde,
     masRapidoEnPista: Math.round(masRapidoEnPista),
