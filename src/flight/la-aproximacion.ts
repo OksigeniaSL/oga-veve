@@ -164,6 +164,17 @@ export class LaAproximacion {
   tramoDelCircuito: TramoDeCircuito | null = null;
 
   /**
+   * **Si ahora mismo se está volando el circuito**: en el aire, a su altura,
+   * cerca de uno de sus tramos y sin estar ya en la llegada.
+   *
+   * No es `tramoDelCircuito !== null`, que es el último tramo **dicho** y se
+   * queda puesto aunque uno se vaya a dar una vuelta por el valle. Es lo que
+   * decide si hay una velocidad de circuito que pedir: fuera de él, la
+   * velocidad no tiene un valor bueno. Ver `bandaDeCircuito`.
+   */
+  enElCircuito = false;
+
+  /**
    * La altura de decisión: el momento en que hay que mirar y decidir.
    *
    * «Lo importante es la decisión, no la maniobra.» Ver `flight/minimos.ts`.
@@ -306,6 +317,7 @@ export class LaAproximacion {
     this.porQueSeMando = null;
     this.papiEnPantalla = null;
     this.tramoDelCircuito = null;
+    this.enElCircuito = false;
     this.minimos.reiniciar();
   }
 
@@ -316,6 +328,7 @@ export class LaAproximacion {
   otroCampo(): void {
     this.papiEnPantalla = null;
     this.tramoDelCircuito = null;
+    this.enElCircuito = false;
   }
 
   /**
@@ -680,6 +693,8 @@ export class LaAproximacion {
    * a entrar en el mismo tramo no necesita que se lo repitan.
    */
   seguirElCircuito(acercandose: boolean): void {
+    // Se vuelve a mirar cada fotograma, y por defecto no: ver `enElCircuito`.
+    this.enElCircuito = false;
     const c = this.ahora.circuito;
     if (!c) return;
     if (this.ahora.haciaOtroCampo && !this.mandanFrustrar) {
@@ -784,6 +799,9 @@ export class LaAproximacion {
     // `TECHO_DEL_CIRCUITO`.
     if (alto > TECHO_DEL_CIRCUITO) return;
     const tramo = c.tramoEn(s.position.x, s.position.z);
+    // Volando el circuito es exactamente esto: a su altura, cerca de un tramo
+    // y sin estar ya en la llegada. Ver `enElCircuito`.
+    this.enElCircuito = tramo !== null && !enLlegada;
     if (!tramo || tramo === this.tramoDelCircuito) return;
     /*
      * **Y no se canta el tramo si ya estás en final.** La lección de ahí en

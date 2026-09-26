@@ -497,7 +497,7 @@ const fotos = (async () => {
   }
 })();
 
-const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
+const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
   const o = globalThis.__oga;
   /*
    * **Sin órdenes de irse al aire.**
@@ -738,16 +738,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
   };
 
   /**
-   * La velocidad a la que toca ir en cada tramo del circuito, m/s.
+   * La velocidad a la que toca ir en el circuito, m/s.
    *
-   * Hasta la esquina de allá, la de crucero —con su tope de baja cota—; desde
-   * ahí, **la de aproximación con un margen**, que es frenar en el viento en
-   * cola para poder sacar el tren y los flaps. Un reactor no se puede frenar
-   * bajando: hay que llegar a final ya lento.
+   * **La de circuito, de la primera esquina a la última.** Un reactor no se
+   * puede frenar bajando: hay que llegar a final ya lento, y para eso no hay
+   * que haberse acelerado antes.
+   *
+   * Hasta la esquina de allá se iba a la de crucero con el tope de los 250
+   * nudos —y desde ahí a la de aproximación con un margen—, y un reactor a
+   * 250 nudos no vuela un circuito: vira con tres
+   * kilómetros de radio. Medido en Los Rodeos con el JAZ 90 —el banco que
+   * pedía este cambio—: subía con el gas a fondo, llegaba al viento en cola a
+   * ciento veintidós metros por segundo, ya con el gas cortado y sin poder
+   * frenar —un reactor limpio no frena, y por encima de su `vfeKt` no hay
+   * flaps que sacar—, se abría en el viraje por encima de las estribaciones
+   * de Anaga y tocaba terreno a ciento dieciséis.
+   *
+   * Lo que hace un piloto de verdad es no acelerar de más: de la subida al
+   * circuito, a la de circuito de su ficha, que es la de maniobra con los
+   * flaps del viento en cola. Ver `velocidadDeCircuito` en `aircraft.ts`.
+   *
+   * Solo en los de la técnica de los rápidos, como el resto de ella: las
+   * avionetas vuelan su vuelta por debajo de cualquier radio que importe, y
+   * su piloto está afinado así. Ver `NECESITA_TECNICA`.
    */
-  const velocidadDelTramo = (tramo) =>
-    NECESITA_TECNICA && tramo >= 2
-      ? Math.min(VELOCIDAD_DE_CRUCERO, (suyas.aproximacion ?? 40) * 1.3)
+  const DE_CIRCUITO = suyas.circuito ?? (suyas.aproximacion ?? 40) * 1.3;
+  const velocidadDelTramo = () =>
+    NECESITA_TECNICA
+      ? Math.min(VELOCIDAD_DE_CRUCERO, DE_CIRCUITO)
       : VELOCIDAD_DE_CRUCERO;
 
   const AJUSTADO_HASTA = 90;
@@ -2541,8 +2559,35 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
       ultimoAltoQueToca = altoQueToca;
       const subiendo = alto(s) < altoQueToca - 15;
       const quiereIr = velocidadDelTramo(aDonde);
+      /*
+       * **Y subiendo, el gas a tope solo mientras haga falta.**
+       *
+       * Con el gas a fondo y el morro a doce grados, un reactor ligero acelera
+       * sin parar: medido en Los Rodeos, el JAZ 90 pasaba de 102 a 123 metros
+       * por segundo entre los treinta y los ciento veinte metros de altura, y
+       * al dejar de volar por actitud —ver `ASENTAR_LA_SUBIDA`— la palanca
+       * encontraba treinta metros por segundo de sobra y se los comía en un
+       * zoom hasta los ochocientos, muy por encima del circuito. De ahí bajaba
+       * al viento en cola al ralentí y a ciento veinte, sin manera de frenar.
+       *
+       * Un piloto de verdad no despega un reactor ligero con todo el empuje y
+       * lo deja acelerar: sube con el empuje que da la velocidad que toca, y
+       * esa es la de subida o la de circuito, la que sea más alta. La palanca
+       * sigue llevando lo suyo y el gas solo recorta lo que sobra.
+       *
+       * **Menos en Guyrami**, cuyo modelo es el sencillo: ahí el gas **es** la
+       * velocidad y sin gas de sobra no se sube. Recortado, el JAZ 120 se
+       * quedaba subiendo al uno por ciento a ras de suelo. Allí se sube con
+       * todo y la de circuito se coge al nivelar, que ese modelo frena en
+       * cuanto se le quita el gas.
+       */
+      const topeSubiendo = Math.max(VELOCIDAD_DE_SUBIDA, DE_CIRCUITO);
+      const gasSubiendo =
+        NECESITA_TECNICA && peldano !== "guyrami"
+          ? Math.max(0, Math.min(1, 0.55 + (topeSubiendo - s.airspeed) * 0.04))
+          : 1;
       c.throttle = subiendo
-        ? 1
+        ? gasSubiendo
         : Math.max(
             // Frenando, el gas puede ir al ralentí: un reactor con un tercio
             // de gas a nivel no frena nunca.
@@ -3209,7 +3254,7 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino]) => {
     return lectura;
   })();
   return resultado;
-}, [VECES, DESTINO]);
+}, [VECES, DESTINO, TRAMO]);
 fotografiando = false;
 await fotos;
 /*

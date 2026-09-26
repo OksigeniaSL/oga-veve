@@ -33,7 +33,7 @@ import { jalonar } from "./luces-de-rodadura";
 import type { Aerodrome, Punto } from "./aerodrome";
 import { aLaPolilinea } from "./aerodrome";
 import { sinTemblor } from "./sin-temblor";
-import type { AircraftConfig } from "../flight/aircraft";
+import { velocidadDePerdida, type AircraftConfig } from "../flight/aircraft";
 import {
   paraEntrarYDespegar,
   pistaQueHaceFalta,
@@ -3166,6 +3166,9 @@ export class PlanDeVuelo {
       backTaxi: this.giroDelBackTaxi !== null,
       pistaRestante: Math.max(0, this.pista.length / 2 - along),
       pistaQueNecesita: pistaQueNecesita(this.avion),
+      // Por encima de esto el avión vuela, esté a la altura que esté. Ver
+      // «Rozar el monte no es llegar» en `vuelo.ts`.
+      perdida: velocidadDePerdida(this.avion),
       sobreElSuelo,
       motor,
       desalineado,

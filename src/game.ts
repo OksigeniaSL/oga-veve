@@ -38,6 +38,7 @@ import {
   AIRCRAFT,
   PYKASU,
   esDeChorro,
+  velocidadDePerdida,
   type AircraftConfig,
 } from "./flight/aircraft";
 import { dibujoDelGasTactil } from "./ui/pictogramas";
@@ -335,7 +336,7 @@ import { techoDeLoQueSeConstruye } from "./world/superficie-de-aproximacion";
 import { LandingWatcher, type Aterrizaje } from "./flight/aterrizaje";
 import { Galones } from "./flight/galones";
 import { Frustrada } from "./flight/frustrada";
-import { ROCE, type Percance } from "./flight/percance";
+import { ROCE, percanceAlTocar, type Percance } from "./flight/percance";
 import {
   barrasDe,
   grado,
@@ -3613,6 +3614,29 @@ export class Game {
       // Y si fue antes del umbral de aterrizaje. Ver `enLaZonaDeLasFlechas`.
       this.enLaZonaDeLasFlechas(),
     );
+    /*
+     * **Y tocar el monte volando se juzga al tocar, no dos segundos después.**
+     *
+     * El veredicto de abajo espera a que el avión se asiente, y rozando una
+     * ladera a velocidad de vuelo no se asienta nunca: rebota y sigue. Así el
+     * reactor del banco tocó las estribaciones de Anaga a ciento dieciséis
+     * metros por segundo, siguió volando y el vuelo no se enteró. Ver
+     * `percanceAlTocar`.
+     */
+    if (this.landing.acabaDeTocar) {
+      const percance = percanceAlTocar({
+        enLaPista: this.tocoEnElCampoDeVuelo(),
+        superficie: this.superficie,
+        velocidad: s.airspeed,
+        caida: s.touchdownSinkRate,
+        perdida: velocidadDePerdida(this.aircraft),
+        rompe: this.flight.limiteDeCaida(),
+      });
+      if (percance) {
+        this.sufrirPercance(percance);
+        return null;
+      }
+    }
     if (!veredicto) return null;
     this.hud.flash(
       t(
@@ -5992,6 +6016,9 @@ export class Game {
       // Y por el lado que publica el campo, si lo publica: la cabecera es la
       // del viento, la misma que la de todo lo demás. Ver `manoPublicada`.
       manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), escala),
+      // Y el pasillo contra el terreno, a la velocidad a la que **este**
+      // avión vuela el circuito. Ver `pasilloDelCircuito`.
+      this.aircraft.velocidadDeCircuito,
     );
     this.circuito.grupo.visible = false;
     this.scene.add(this.circuito.grupo);
@@ -6043,6 +6070,7 @@ export class Game {
       (x: number, z: number) => this.terrain.sampleHeight(x, z),
       escala,
       manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), escala),
+      this.aircraft.velocidadDeCircuito,
     );
     this.trafico = crearTrafico(
       campo.pista,
@@ -7243,6 +7271,17 @@ export class Game {
       this.aircraft.approachSpeed,
       // Correr es despegar o aterrizar. Lo demás, en el suelo, es rodar.
       CORRIENDO.has(this.faseDeAhora),
+      /*
+       * **Y volando el circuito, la de circuito de este avión.** Nadie la
+       * pedía, y el circuito se volaba a lo que diera el gas: con un reactor,
+       * a doscientos treinta nudos y tres kilómetros de radio de viraje. Por
+       * el mismo camino que la de aproximación —el color de la tortuga, la
+       * instructora y, sin gas que quitar, los flaps—, y solo donde el
+       * circuito va dibujado. Ver `bandaDeCircuito`.
+       */
+      this.laAproximacion.enElCircuito
+        ? this.aircraft.velocidadDeCircuito
+        : null,
     );
     this.bandaDeAhora = banda;
     this.hud.setBandaDeVelocidad(banda);
@@ -7308,7 +7347,16 @@ export class Game {
           this.input.controls.throttle < 0.25 &&
           // Lo pedido y no dónde están: si ya bajaste la palanca, los flaps
           // están saliendo y pedírtelos otra vez sería avisar de lo hecho.
-          this.input.palancaDeFlaps < 0.5;
+          this.input.palancaDeFlaps < 0.5 &&
+          /*
+           * **Y por debajo de su tope.** Pedir flaps pasado de `vfeKt` es
+           * pedir que se rompan, y el juego avisa justo de eso en cuanto
+           * salen. Con la banda solo en final no llegaba a pasar —una Vref y
+           * cuarto cae por debajo del tope en toda la flota—; en el circuito
+           * sí, que ahí «rápido» empieza bastante más arriba. Por encima, lo
+           * que se dice es la velocidad a secas: primero gas y paciencia.
+           */
+          this.flight.state.airspeed * NUDOS < this.aircraft.vfeKt;
         if (sinGasQueQuitar) {
           this.hud.senal.mostrar(
             "flaps",

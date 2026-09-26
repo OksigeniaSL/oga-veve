@@ -57,10 +57,19 @@ const CON_RELIEVE = SCENARIOS.filter(
   (e) => e.aerodrome && fs.existsSync(ruta(e.id)),
 );
 
-/** Un circuito por cada tamaño de circuito que hay en la flota. */
-const ESCALAS = [
-  ...new Set(AIRCRAFT.map((a) => escalaDeCircuito(a.approachSpeed))),
-].sort((a, b) => a - b);
+/**
+ * Un circuito por cada avión de la flota: su tamaño y **a qué lo vuela**.
+ *
+ * Eran solo los tamaños, y el pasillo se medía con la velocidad de
+ * aproximación: un avión más lento que el que pasa por él. Ahora va cada uno
+ * con su `velocidadDeCircuito`, que es la que ancha el pasillo. Ver
+ * `pasilloDelCircuito`.
+ */
+const MEDIDAS = AIRCRAFT.map((a) => ({
+  id: a.id,
+  escala: escalaDeCircuito(a.approachSpeed),
+  velocidad: a.velocidadDeCircuito,
+}));
 
 /**
  * Lo que se le perdona a la cata de la prueba frente a la del juego, m: las
@@ -131,6 +140,7 @@ function elCircuito(
   cabecera: string | null,
   campo: ReturnType<typeof elCampo>,
   escala: number,
+  velocidad?: number,
 ) {
   return crearCircuito(
     runway,
@@ -138,13 +148,14 @@ function elCircuito(
     campo.suelo,
     escala,
     manoPublicada(esc, cabecera, escala),
+    velocidad,
   );
 }
 
 describe("ningún circuito se mete en el monte", () => {
   it("hay campos con relieve medido y aviones de varios tamaños, que si no esto no mide nada", () => {
     expect(CON_RELIEVE.length).toBeGreaterThan(10);
-    expect(ESCALAS.length).toBeGreaterThan(1);
+    expect(new Set(MEDIDAS.map((m) => m.escala)).size).toBeGreaterThan(1);
   });
 
   it.each(CON_RELIEVE.map((e) => [e.id, e] as const))(
@@ -153,14 +164,18 @@ describe("ningún circuito se mete en el monte", () => {
       const campo = elCampo(esc);
       const malos: string[] = [];
       for (const { runway, cabecera } of porLasDos(esc)) {
-        for (const escala of ESCALAS) {
-          const c = elCircuito(esc, runway, cabecera, campo, escala);
+        for (const { id, escala, velocidad } of MEDIDAS) {
+          const c = elCircuito(esc, runway, cabecera, campo, escala, velocidad);
           const altura = c.vertices[2]!.y;
-          const peor = peorDelPasillo(c.vertices, campo.suelo, pasilloDelCircuito(escala));
+          const peor = peorDelPasillo(
+            c.vertices,
+            campo.suelo,
+            pasilloDelCircuito(escala, velocidad),
+          );
           const sobra = altura - peor.alto;
           if (sobra < SOBRE_EL_TERRENO - CATA_DISTINTA)
             malos.push(
-              `${cabecera} · escala ${escala.toFixed(2)} · ` +
+              `${cabecera} · ${id} · ` +
                 `${c.forma.mano} a ${Math.round(altura - campo.cota)} m: ` +
                 `el terreno a ${Math.round(sobra)} m por debajo en ` +
                 `${Math.round(peor.x)},${Math.round(peor.z)}`,
@@ -188,11 +203,11 @@ describe("ningún circuito se mete en el monte", () => {
     for (const { runway, cabecera } of porLasDos(esc)) {
       expect(cabecera, "una cabecera sin nombre no se puede buscar en el AIP").not.toBeNull();
       expect(esc.circuitoPublicado?.[cabecera!], `${cabecera} sin circuito publicado`).toBeDefined();
-      for (const escala of ESCALAS) {
-        const c = elCircuito(esc, runway, cabecera, campo, escala);
+      for (const { id, escala, velocidad } of MEDIDAS) {
+        const c = elCircuito(esc, runway, cabecera, campo, escala, velocidad);
         const toca = manoPublicada(esc, cabecera, escala);
         if (c.forma.mano !== toca)
-          distintos.push(`${cabecera} · escala ${escala.toFixed(2)}: ${c.forma.mano}, publica ${toca}`);
+          distintos.push(`${cabecera} · ${id}: ${c.forma.mano}, publica ${toca}`);
         c.dispose();
       }
     }
@@ -230,6 +245,7 @@ describe("ningún circuito se mete en el monte", () => {
       "30",
       campo,
       escalaDeCircuito(jaz120.approachSpeed),
+      jaz120.velocidadDeCircuito,
     );
     expect(reactor.forma.mano).toBe("derecha");
     const avioneta = elCircuito(esc!, por30.runway, "30", campo, 1);
