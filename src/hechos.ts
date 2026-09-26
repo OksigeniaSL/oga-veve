@@ -128,8 +128,14 @@ export interface Hechos {
   /**
    * La torre ha levantado la orden de irse al aire: la pista vuelve a ser
    * tuya.
+   *
+   * `porque` es el de la orden que se levanta, que decide qué se dice: la de
+   * la pista ocupada se levanta yéndose al aire, y ahí no se autoriza a
+   * aterrizar. Ver `alLevantarLaOrden` en `flight/turno-de-pista.ts`.
    */
-  pistaLibreOtraVez: Record<string, never>;
+  pistaLibreOtraVez: {
+    readonly porque: "pistaOcupada" | "noEstabilizada" | null;
+  };
 }
 
 /** Quien escucha un hecho. No devuelve nada: enterarse no contesta. */

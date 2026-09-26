@@ -3,6 +3,8 @@ instructor	instructor/vuelo.estacionado.ogg	es-PY	Arrancá el motor	lo que toca 
 instructor	instructor/vuelo.arrancando.ogg	es-PY	Soltá el freno y andá despacito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.rodando.ogg	es-PY	Seguí la raya verde	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.esperando.ogg	es-PY	Pará del todo y esperá la luz	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.esperaQueAterrice.ogg	es-PY	Esperamos: viene un avión a aterrizar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.esperaQueDespegue.ogg	es-PY	Esperamos: primero sale el avión que está en la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.autorizado.ogg	es-PY	¡Luz verde! Entrá a la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.backTaxi.ogg	es-PY	Andá hasta el fondo y dá la vuelta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alineando.ogg	es-PY	Ponete derechito en el eje	lo que toca hacer ahora, en vuelo y en tierra
@@ -342,6 +344,8 @@ torre	torre/torre.solo.clearedTakeoff.ogg	en	cleared for take-off	el permiso
 torre	torre/torre.solo.clearedLand.ogg	en	cleared to land	el de llegada
 torre	torre/torre.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada
 torre	torre/torre.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya
+torre	torre/torre.solo.landingTraffic.ogg	en	landing traffic	se espera: uno viene a aterrizar
+torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
 torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
 torre	torre/torre.solo.aterrizar.ogg	es	podés aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
@@ -404,5 +408,7 @@ torre-canarias	torre-canarias/torre.canario.solo.clearedTakeoff.ogg	en	cleared f
 torre-canarias	torre-canarias/torre.canario.solo.clearedLand.ogg	en	cleared to land	el de llegada, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.landingTraffic.ogg	en	landing traffic	se espera: uno viene a aterrizar, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias

@@ -270,6 +270,12 @@
     "vuelo.enVueloDestino": {
       "ms": 2561
     },
+    "vuelo.esperaQueAterrice": {
+      "ms": 2266
+    },
+    "vuelo.esperaQueDespegue": {
+      "ms": 2555
+    },
     "vuelo.esperando": {
       "ms": 1569
     },
@@ -676,6 +682,12 @@
     ],
     "vuelo.esperando": [
       "vuelo.esperando"
+    ],
+    "vuelo.esperaQueAterrice": [
+      "vuelo.esperaQueAterrice"
+    ],
+    "vuelo.esperaQueDespegue": [
+      "vuelo.esperaQueDespegue"
     ],
     "vuelo.estacionado": [
       "vuelo.estacionado"

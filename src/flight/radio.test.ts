@@ -489,9 +489,9 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
     let vistos = 0;
     for (let semilla = 1; semilla <= 400; semilla++) {
       const radio = new Frecuencia(dados(semilla), "GCXO");
-      for (let t = 0; t < 2000 && !radio.vaDelante; t += 0.5)
+      for (let t = 0; t < 2000 && !radio.vaDelante(); t += 0.5)
         radio.update(0.5, PISTA_DE_NADIE);
-      const delante = radio.vaDelante;
+      const delante = radio.vaDelante();
       if (!delante) continue;
       vistos++;
       const dichas = radio.despejarLaPista(delante);
@@ -499,6 +499,32 @@ describe("y antes de dártela, se la quita a quien la tenga", () => {
       expect(radio.laTiene(delante)).toBe(true);
     }
     expect(vistos).toBeGreaterThan(100);
+  });
+
+  /*
+   * **Y dónde está lo dice el dibujo, no el guion.** El permiso lo dio la
+   * frecuencia; si va delante de ti, lo dice dónde se ve el avión. Sin esto
+   * la torre dejaba de número dos a quien entraba en final con el otro
+   * todavía en la base, a su lado.
+   */
+  it("con dibujo, va delante quien el dibujo ve delante, y solo si tiene permiso", () => {
+    let conPermiso = 0;
+    for (let semilla = 1; semilla <= 200; semilla++) {
+      const radio = new Frecuencia(dados(semilla), "GCXO");
+      for (let t = 0; t < 2000 && !radio.vaDelante(); t += 0.5)
+        radio.update(0.5, PISTA_DE_NADIE);
+      const delante = radio.vaDelante();
+      if (!delante) continue;
+      conPermiso++;
+      // El dibujo lo ve detrás: no va delante, diga lo que diga el guion.
+      expect(radio.vaDelante(() => false)).toBeNull();
+      // Y lo ve delante: va delante.
+      expect(radio.vaDelante((m) => m === delante)).toBe(delante);
+    }
+    expect(conPermiso).toBeGreaterThan(50);
+    // Y sin permiso no va delante nadie, lo vea el dibujo donde lo vea.
+    const radio = new Frecuencia(dados(7), "GCXO");
+    expect(radio.vaDelante(() => true)).toBeNull();
   });
 
   it("y mientras es tuya nadie la vuelve a tener, ni canta su final", () => {

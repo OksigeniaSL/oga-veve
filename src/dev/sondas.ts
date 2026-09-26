@@ -577,7 +577,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ocupanLaPista: () => [...juego.ocupanLaPistaParaBanco],
     /**
      * Si la pista es tuya ahora: su fase, y que no seas el número dos detrás
-     * de uno que aterriza antes. Ver `numeroDos` en `game.ts`.
+     * de uno que aterriza antes. Ver `laPistaEsTuya` en
+     * `flight/turno-de-pista.ts`.
      */
     pistaEsTuya: () => juego.laPistaEsTuyaParaBanco,
     indicativo: () => {

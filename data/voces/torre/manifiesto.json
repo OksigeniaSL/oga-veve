@@ -144,6 +144,9 @@
     "torre.solo.clearedTo": {
       "ms": 851
     },
+    "torre.solo.departingTraffic": {
+      "ms": 1184
+    },
     "torre.solo.destino": {
       "ms": 872
     },
@@ -152,6 +155,9 @@
     },
     "torre.solo.holdShort": {
       "ms": 1366
+    },
+    "torre.solo.landingTraffic": {
+      "ms": 1013
     },
     "torre.solo.lineUpWait": {
       "ms": 1195
@@ -298,6 +304,12 @@
     ],
     "torre.solo.holdShort": [
       "torre.solo.holdShort"
+    ],
+    "torre.solo.landingTraffic": [
+      "torre.solo.landingTraffic"
+    ],
+    "torre.solo.departingTraffic": [
+      "torre.solo.departingTraffic"
     ],
     "torre.solo.lineUpWait": [
       "torre.solo.lineUpWait"
@@ -450,6 +462,24 @@
       "{c4}",
       "{c5}",
       "torre.solo.holdShort"
+    ],
+    "torre.holdShortLanding": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.holdShort",
+      "torre.solo.landingTraffic"
+    ],
+    "torre.holdShortDeparting": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.holdShort",
+      "torre.solo.departingTraffic"
     ],
     "torre.goAround": [
       "{c1}",

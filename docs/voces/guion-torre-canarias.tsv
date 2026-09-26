@@ -52,5 +52,7 @@
 052	torre.canario.solo.clearedLand	cleared to land
 053	torre.canario.solo.goAround	go around, runway occupied
 054	torre.canario.solo.holdShort	hold short of the runway
-055	torre.canario.solo.lineUpWait	line up and wait
-056	torre.canario.solo.clearedTo	cleared to
+055	torre.canario.solo.landingTraffic	landing traffic
+056	torre.canario.solo.departingTraffic	departing traffic
+057	torre.canario.solo.lineUpWait	line up and wait
+058	torre.canario.solo.clearedTo	cleared to

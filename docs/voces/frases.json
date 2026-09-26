@@ -28,6 +28,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.esperaQueAterrice",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esperamos: viene un avión a aterrizar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.esperaQueDespegue",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esperamos: primero sale el avión que está en la pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.autorizado",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -2401,6 +2415,20 @@
     "para": "pará en la doble raya"
   },
   {
+    "id": "torre.solo.landingTraffic",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "landing traffic",
+    "para": "se espera: uno viene a aterrizar"
+  },
+  {
+    "id": "torre.solo.departingTraffic",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "departing traffic",
+    "para": "se espera: uno sale antes"
+  },
+  {
     "id": "torre.solo.lineUpWait",
     "voz": "torre",
     "idioma": "en",
@@ -2833,6 +2861,20 @@
     "idioma": "en",
     "texto": "hold short of the runway",
     "para": "pará en la doble raya, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.landingTraffic",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "landing traffic",
+    "para": "se espera: uno viene a aterrizar, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.departingTraffic",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "departing traffic",
+    "para": "se espera: uno sale antes, en Canarias"
   },
   {
     "id": "torre.canario.solo.lineUpWait",

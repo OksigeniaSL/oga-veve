@@ -6,30 +6,31 @@
  * `world/trafico.test.ts` el dibujo solo. Lo que se rompía estaba entre los
  * dos, y entre ellos y tu vuelo: la torre mandaba al aire al que tenía el
  * «cleared to land» para dártela a vos en el punto de espera; el que venía
- * sin permiso bajaba igual a tu pista porque el dibujo no sabía de permisos; y
- * «pista libre» se decía con el avión todavía rodando por ella.
+ * sin permiso bajaba igual a tu pista porque el dibujo no sabía de permisos;
+ * «pista libre» se decía con el avión todavía rodando por ella; y «en final»
+ * con el avión en la base, donde gira a final quien vuela el circuito del
+ * juego, que quedaba de número dos detrás de un avión que se veía a su lado.
  *
- * Así que aquí se montan las tres cosas como las monta `game.ts` —la
- * frecuencia habla, el dibujo se mueve, los que llegan a la decisión sin
- * permiso se van al aire y la frecuencia lo apunta— y se vuela el ciclo de
- * quien juega por encima, con cuatrocientas frecuencias sorteadas.
+ * Aquí se montan las tres cosas con **el mismo turno de pista que usa el
+ * juego** —ver `flight/turno-de-pista.ts`—, y no con una copia del cableado:
+ * con una copia, si el juego dejaba de hacer algo, la prueba seguía en verde.
+ * Y se vuela por encima el ciclo de quien juega, con cuatrocientas frecuencias
+ * sorteadas.
  */
 import { describe, expect, it } from "vitest";
-import {
-  Frecuencia,
-  laQueSeDice,
-  PISTA_TUYA,
-  type Momento,
-  type Transmision,
-} from "./radio";
+import { Frecuencia, type Transmision } from "./radio";
+import { TurnoDePista, type DibujoDelTurno } from "./turno-de-pista";
 import { crearTrafico } from "../world/trafico";
-import type { Pista } from "../world/circuito";
+import { BASE_A_FINAL, type Pista } from "../world/circuito";
+import { GLIDE_SLOPE } from "../world/runway-guide";
 
 const PISTA: Pista = { x: 0, z: 0, heading: 90, length: 2400 };
 const COTA = 100;
 const PASO = 0.5;
 /** Lo que tarda la torre en mirarte en la raya. Ver `TORRE_TARDA` en `vuelo.ts`. */
 const TORRE_TARDA = 2.2;
+/** A cuánto se acerca al umbral una avioneta en final, m/s. */
+const APROXIMACION = 33;
 
 function dados(semilla: number): () => number {
   let x = semilla >>> 0;
@@ -39,13 +40,6 @@ function dados(semilla: number): () => number {
   };
 }
 
-const momento = (fase: string, esperandoLaPista = false): Momento => ({
-  fase,
-  deDia: true,
-  instructorHablando: false,
-  esperandoLaPista,
-});
-
 /** Lo que se oye, con su instante y la matrícula a la que va. */
 interface Oido {
   readonly t: number;
@@ -53,71 +47,104 @@ interface Oido {
   readonly de: string;
 }
 
-/**
- * La frecuencia y su dibujo, cableados como en `game.ts`: ver el bloque de la
- * radio en `actualizarAmbiente` y `quitarleLaPistaALosDemas`.
- */
+/** La frecuencia, su dibujo y tu turno, como los monta `game.ts`. */
 function aeropuerto(semilla: number) {
   const radio = new Frecuencia(dados(semilla), "GCXO");
   const trafico = crearTrafico(PISTA, COTA, "ala-alta");
-  radio.sigueEnLaPista = (m) => trafico.sigueEnLaPista(m);
   const oido: Oido[] = [];
-  /** «Pista libre» dichas con el avión todavía en la pista. */
-  const libreEnLaPista: string[] = [];
+  /** Llamadas dichas con el avión todavía lejos de donde dicen. */
+  const dichasAntes: string[] = [];
   /** Los que llegaron a la decisión sin permiso y se fueron al aire. */
   const seFueron: string[] = [];
+  /** Tu avión: cuánto le queda al umbral de aterrizar y a qué altura va. */
+  const yo = { alUmbral: Infinity, alto: 1000 };
+  /** Tus «cleared to land», con lo que había sin anular al sonar. */
+  const autorizaciones: { t: number; sinAnular: string[] }[] = [];
+  /** Cuándo te mandó la torre al aire por la pista ocupada. */
+  const alAire: number[] = [];
   let t = 0;
-  const anunciar = (d: Transmision) =>
-    trafico.anuncia(d.de.matricula, d.clave, radio.puedeAterrizar(d.de.matricula));
+
+  /**
+   * Los permisos a otros **que se oyeron y no se han anulado de viva voz**.
+   * Es lo que no puede quedar cuando suena tu autorización.
+   */
+  const permisosSinAnular = (): string[] => {
+    const abiertos = new Map<string, string>();
+    for (const o of oido) {
+      if (o.clave === "torre.lineUpWait" || o.clave === "torre.clearedLand")
+        abiertos.set(o.de, o.clave);
+      if (
+        o.clave === "torre.clearedTakeoff" ||
+        o.clave === "torre.goAround" ||
+        o.clave === "otro.pistaLibre"
+      )
+        abiertos.delete(o.de);
+    }
+    return [...abiertos].map(([de, clave]) => `${de} ${clave}`);
+  };
+
+  /**
+   * El dibujo, mirando si quien habla está ya donde dice, **con su propia
+   * cuenta**: la del turno es la que se prueba. «Pista libre», fuera de la
+   * pista; «en final», en la prolongación del eje y no en la base, que corre
+   * a mil metros de él.
+   */
+  const dibujo: DibujoDelTurno = {
+    anuncia(m, clave, puede) {
+      const visto = trafico.quienes().find((a) => a.matricula === m);
+      const fueraDelEje = !!visto && Math.abs(visto.z - PISTA.z) > 30;
+      if (
+        (clave === "otro.pistaLibre" && trafico.sigueEnLaPista(m)) ||
+        (clave === "otro.final" && fueraDelEje)
+      )
+        dichasAntes.push(`${t} s ${m} ${clave}`);
+      trafico.anuncia(m, clave, puede);
+    },
+    paso(dt) {
+      const idos = trafico.paso(dt);
+      seFueron.push(...idos);
+      return idos;
+    },
+    todaviaNo: (m, clave) => trafico.todaviaNo(m, clave),
+    enFinal: (m) => trafico.enFinal(m),
+  };
+
+  const turno = new TurnoDePista({
+    radio,
+    boca: { retirar: () => {}, espera: () => false },
+    trafico: () => dibujo,
+    torre: () => true,
+    privado: () => false,
+    alUmbral: () => yo.alUmbral,
+    alto: () => yo.alto,
+    decirAOtro(d) {
+      oido.push({ t, clave: d.clave, de: d.de.matricula });
+      return null;
+    },
+    autorizarte: () => autorizaciones.push({ t, sinAnular: permisosSinAnular() }),
+    mandarteAlAire: () => alAire.push(t),
+  });
+
   return {
     radio,
     trafico,
+    turno,
     oido,
-    libreEnLaPista,
+    dichasAntes,
     seFueron,
+    yo,
+    autorizaciones,
+    alAire,
+    permisosSinAnular,
     get t() {
       return t;
     },
-    paso(m: Momento): Transmision | null {
-      let alAire: Transmision | null = null;
-      for (const x of trafico.paso(PASO)) {
-        seFueron.push(x);
-        alAire = radio.seFueAlAire(x, m) ?? alAire;
-      }
-      const dice = radio.update(PASO, m) ?? alAire;
+    /** Pasa el tiempo en la frecuencia, como en `actualizarAmbiente`. */
+    paso(fase: string): Transmision | null {
+      const dice = turno.oir(PASO, { fase, deDia: true, instructorHablando: false });
       t += PASO;
-      if (!dice) return null;
-      if (dice.clave === "otro.pistaLibre" && trafico.sigueEnLaPista(dice.de.matricula))
-        libreEnLaPista.push(`${t} s ${dice.de.matricula}`);
-      anunciar(dice);
-      oido.push({ t, clave: dice.clave, de: dice.de.matricula });
+      if (dice) oido.push({ t, clave: dice.clave, de: dice.de.matricula });
       return dice;
-    },
-    /** La pista pasa a ser tuya. Se dice una; el resto pasa callado. */
-    tuya(respetar: string | null = null): Transmision[] {
-      const dichas = radio.despejarLaPista(respetar);
-      for (const d of dichas) anunciar(d);
-      const dicha = laQueSeDice(dichas);
-      if (dicha) oido.push({ t, clave: dicha.clave, de: dicha.de.matricula });
-      return dichas;
-    },
-    /**
-     * Los permisos a otros **que se oyeron y no se han anulado de viva voz**.
-     * Es lo que no puede quedar cuando suena tu autorización.
-     */
-    permisosSinAnular(): string[] {
-      const abiertos = new Map<string, string>();
-      for (const o of oido) {
-        if (o.clave === "torre.lineUpWait" || o.clave === "torre.clearedLand")
-          abiertos.set(o.de, o.clave);
-        if (
-          o.clave === "torre.clearedTakeoff" ||
-          o.clave === "torre.goAround" ||
-          o.clave === "otro.pistaLibre"
-        )
-          abiertos.delete(o.de);
-      }
-      return [...abiertos].map(([de, clave]) => `${de} ${clave}`);
     },
     /**
      * Los que vienen a aterrizar y están sobre tu pista, o bajando a ella, por
@@ -150,23 +177,26 @@ describe("saliendo: la torre te deja en la roja y aterriza el que viene", () => 
     const a = aeropuerto(semilla);
     const azar = dados(semilla * 7919);
     const rodar = 20 + azar() * 900;
-    while (a.t < rodar) a.paso(momento("rodando"));
+    while (a.t < rodar) a.paso("rodando");
     const alLlegar = a.radio.ocupanLaPista.length;
+    const porQue = a.turno.porQueEsperas;
     // En la raya: la torre te mira solo con la pista libre. Ver `Vuelo`.
     let mirando = 0;
     const desde = a.t;
     const oidoAlLlegar = a.oido.length;
     while (mirando <= TORRE_TARDA && a.t - desde < 1200) {
-      mirando = a.radio.ocupanLaPista.length ? 0 : mirando + PASO;
-      a.paso(momento("esperando", true));
+      mirando = a.turno.pistaDeOtros ? 0 : mirando + PASO;
+      a.paso("esperando");
     }
     const hablaronEsperando = a.oido.slice(oidoAlLlegar);
-    const alVerde = a.tuya();
+    const antes = a.oido.length;
+    a.turno.alSerTuya("autorizado");
     return {
       a,
       alLlegar,
+      porQue,
       espera: a.t - desde,
-      alVerde,
+      alVerde: a.oido.slice(antes),
       hablaronEsperando,
       sinAnular: a.permisosSinAnular(),
     };
@@ -182,7 +212,7 @@ describe("saliendo: la torre te deja en la roja y aterriza el que viene", () => 
       esperas.push(r.espera);
       if (r.alVerde.length)
         mal.push(
-          `semilla ${semilla}: ${r.alVerde.map((d) => `${d.de.matricula} ${d.clave}`).join(", ")}`,
+          `semilla ${semilla}: ${r.alVerde.map((d) => `${d.de} ${d.clave}`).join(", ")}`,
         );
       if (r.sinAnular.length) mal.push(`semilla ${semilla}: ${r.sinAnular.join(", ")}`);
       r.a.trafico.dispose();
@@ -195,7 +225,7 @@ describe("saliendo: la torre te deja en la roja y aterriza el que viene", () => 
     expect(esperas[esperas.length - 1]).toBeLessThan(400);
   });
 
-  it("mientras esperás, habla quien ocupa la pista, y solo él", () => {
+  it("mientras esperas, habla quien ocupa la pista, y solo él", () => {
     let hablaron = 0;
     for (let semilla = 1; semilla <= 400; semilla++) {
       const r = salir(semilla);
@@ -205,16 +235,56 @@ describe("saliendo: la torre te deja en la roja y aterriza el que viene", () => 
     expect(hablaron).toBeGreaterThan(50);
   });
 
+  /*
+   * La roja podía durar tres minutos con un «hold short» a secas. Cuando se
+   * espera por alguien, hay un porqué que decir; cuando no, no se inventa.
+   */
+  it("y si esperas por alguien, la torre sabe por quién", () => {
+    let aterrizando = 0;
+    const mal: string[] = [];
+    for (let semilla = 1; semilla <= 400; semilla++) {
+      const r = salir(semilla);
+      if (!!r.alLlegar !== (r.porQue !== null))
+        mal.push(`semilla ${semilla}: ${r.alLlegar} ocupan y el porqué es ${r.porQue}`);
+      if (r.porQue === "aterriza") aterrizando++;
+      r.a.trafico.dispose();
+    }
+    expect(mal.slice(0, 5)).toEqual([]);
+    expect(aterrizando).toBeGreaterThan(20);
+  });
+
   it("y «pista libre» se dice fuera de la pista", () => {
     const mal: string[] = [];
     for (let semilla = 1; semilla <= 200; semilla++) {
       const r = salir(semilla);
       // Un rato más de frecuencia normal, para ver más llegadas.
-      for (let i = 0; i < 1200; i++) r.a.paso(momento("en-vuelo"));
-      mal.push(...r.a.libreEnLaPista.map((x) => `semilla ${semilla}: ${x}`));
+      for (let i = 0; i < 1200; i++) r.a.paso("en-vuelo");
+      mal.push(
+        ...r.a.dichasAntes
+          .filter((x) => x.endsWith("otro.pistaLibre"))
+          .map((x) => `semilla ${semilla}: ${x}`),
+      );
       r.a.trafico.dispose();
     }
     expect(mal.slice(0, 5)).toEqual([]);
+  });
+
+  it("y «en final» se dice en final, no en la base", () => {
+    const mal: string[] = [];
+    let finales = 0;
+    for (let semilla = 1; semilla <= 200; semilla++) {
+      const r = salir(semilla);
+      for (let i = 0; i < 1200; i++) r.a.paso("en-vuelo");
+      finales += r.a.oido.filter((o) => o.clave === "otro.final").length;
+      mal.push(
+        ...r.a.dichasAntes
+          .filter((x) => x.endsWith("otro.final"))
+          .map((x) => `semilla ${semilla}: ${x}`),
+      );
+      r.a.trafico.dispose();
+    }
+    expect(mal.slice(0, 5)).toEqual([]);
+    expect(finales).toBeGreaterThan(50);
   });
 });
 
@@ -224,40 +294,50 @@ describe("llegando: nadie baja a tu pista, y lo que se oyó se anula antes que l
    * once metros; el que esperaba su «cleared to land» en el viento en cola
    * entraba en final detrás de ti y bajaba hasta veintitrés. Y el que iba
    * delante en final con su permiso se iba al aire para dártela.
+   *
+   * Tu avión entra en final donde la entra el circuito del juego —ver
+   * `BASE_A_FINAL`— y baja por la senda a velocidad de avioneta: si el que
+   * va delante no deja la pista antes de tu altura de decisión, la torre te
+   * manda al aire, y eso también vale.
    */
   function aterrizar(semilla: number) {
     const a = aeropuerto(semilla);
     const azar = dados(semilla * 104729);
     const volar = 20 + azar() * 900;
-    while (a.t < volar) a.paso(momento("en-vuelo"));
-    const delante = a.radio.vaDelante;
-    a.tuya(delante);
+    while (a.t < volar) a.paso("en-vuelo");
+    a.yo.alUmbral = BASE_A_FINAL;
+    a.yo.alto = BASE_A_FINAL * Math.tan(GLIDE_SLOPE);
+    // Quién se ve con permiso en final delante de ti, al entrar.
+    const vistosDelante = a.radio.conLaPista
+      .filter((c) => c.orden === "torre.clearedLand")
+      .map((c) => c.matricula)
+      .filter((m) => (a.trafico.enFinal(m) ?? Infinity) < BASE_A_FINAL);
+    const entra = a.t;
+    a.turno.alSerTuya("final");
+    a.turno.pedirAterrizaje();
+    const delante = a.turno.vaDelante;
+    const delanteAlEntrar = delante ? a.trafico.enFinal(delante) : null;
     const mal: string[] = [];
-    let autorizado = delante === null;
-    let sinAnularAlAutorizar: string[] = autorizado ? a.permisosSinAnular() : [];
-    let numeroDos = delante;
-    // Noventa segundos de final, veinte de carrera y cuarenta para salir.
-    for (const [fase, segundos] of [
-      ["final", 90],
-      ["aterrizado", 20],
-      ["abandonando", 40],
-    ] as const) {
-      for (let s = 0; s < segundos; s += PASO) {
-        if (numeroDos && !a.radio.laTiene(numeroDos)) {
-          // Se fue: ahora sí es tuya. Ver `autorizarCuandoToque`.
-          numeroDos = null;
-          a.tuya();
-          if (fase === "final") {
-            autorizado = true;
-            sinAnularAlAutorizar = a.permisosSinAnular();
-          }
+    let fase = "final";
+    let tocado = 0;
+    while (a.t < volar + 200) {
+      a.paso(fase);
+      a.turno.paso(fase);
+      if (a.turno.laPistaEsTuya(fase))
+        mal.push(...a.bajandoATuPista().map((x) => `${fase} ${a.t} s: ${x}`));
+      if (fase === "final") {
+        // Te mandaron al aire: subes, dejas la final, y aquí se acaba.
+        if (a.alAire.length) break;
+        a.yo.alUmbral -= APROXIMACION * PASO;
+        a.yo.alto = Math.max(0, a.yo.alUmbral * Math.tan(GLIDE_SLOPE));
+        if (a.yo.alUmbral <= 0) {
+          fase = "aterrizado";
+          tocado = a.t;
         }
-        a.paso(momento(fase, fase === "final" && numeroDos !== null));
-        if (!numeroDos && PISTA_TUYA.has(fase))
-          mal.push(...a.bajandoATuPista().map((x) => `${fase} ${s} s: ${x}`));
-      }
+      } else if (fase === "aterrizado" && a.t - tocado > 20) fase = "abandonando";
+      else if (fase === "abandonando" && a.t - tocado > 60) break;
     }
-    return { a, delante, autorizado, sinAnularAlAutorizar, mal };
+    return { a, entra, delante, delanteAlEntrar, vistosDelante, mal };
   }
 
   it("mientras es tuya, nadie que venga a aterrizar baja a ella", () => {
@@ -276,13 +356,28 @@ describe("llegando: nadie baja a tu pista, y lo que se oyó se anula antes que l
     for (let semilla = 1; semilla <= 400; semilla++) {
       const r = aterrizar(semilla);
       if (r.delante) conDelante++;
-      if (r.sinAnularAlAutorizar.length)
-        mal.push(`semilla ${semilla}: ${r.sinAnularAlAutorizar.join(", ")}`);
+      for (const x of r.a.autorizaciones)
+        if (x.sinAnular.length)
+          mal.push(`semilla ${semilla}, ${x.t} s: ${x.sinAnular.join(", ")}`);
       r.a.trafico.dispose();
     }
     expect(mal.slice(0, 5)).toEqual([]);
     // Y el caso del que va delante pasa, no solo en teoría.
     expect(conDelante).toBeGreaterThan(5);
+  });
+
+  it("y tu «cleared to land» suena una vez, o la torre te manda al aire", () => {
+    const mal: string[] = [];
+    for (let semilla = 1; semilla <= 400; semilla++) {
+      const r = aterrizar(semilla);
+      const veces = r.a.autorizaciones.length + r.a.alAire.length;
+      if (veces !== 1)
+        mal.push(
+          `semilla ${semilla}: ${r.a.autorizaciones.length} autorizaciones y ${r.a.alAire.length} al aire`,
+        );
+      r.a.trafico.dispose();
+    }
+    expect(mal.slice(0, 5)).toEqual([]);
   });
 
   it("al que va delante en final con su permiso no se le manda al aire", () => {
@@ -291,13 +386,39 @@ describe("llegando: nadie baja a tu pista, y lo que se oyó se anula antes que l
       const r = aterrizar(semilla);
       if (r.delante) {
         vistos++;
+        // Desde que entras en final: antes pudo irse al aire por su cuenta.
         const alAire = r.a.oido.filter(
-          (o) => o.de === r.delante && o.clave === "torre.goAround",
+          (o) => o.t >= r.entra && o.de === r.delante && o.clave === "torre.goAround",
         );
         expect(alAire, `semilla ${semilla}`).toEqual([]);
       }
       r.a.trafico.dispose();
     }
+    expect(vistos).toBeGreaterThan(5);
+  });
+
+  /*
+   * **Y va delante el que se ve delante.** Se decidía por el guion, y el que
+   * cantaba final estaba en la base, donde gira a final quien vuela el
+   * circuito del juego: la torre te dejaba de número dos detrás de un avión
+   * que se veía a tu lado, y a veces te mandaba al aire para dejarle a él.
+   */
+  it("y el que va delante se ve en final, delante de ti", () => {
+    const mal: string[] = [];
+    let vistos = 0;
+    for (let semilla = 1; semilla <= 400; semilla++) {
+      const r = aterrizar(semilla);
+      if (r.delante) {
+        vistos++;
+        if (r.delanteAlEntrar === null || r.delanteAlEntrar >= BASE_A_FINAL)
+          mal.push(`semilla ${semilla}: ${r.delante} a ${r.delanteAlEntrar} m del umbral`);
+      }
+      // Y si se veía a alguien con permiso delante, no se le quitó la pista.
+      if (r.vistosDelante.length && !r.vistosDelante.includes(r.delante ?? ""))
+        mal.push(`semilla ${semilla}: se veía delante a ${r.vistosDelante.join(", ")}`);
+      r.a.trafico.dispose();
+    }
+    expect(mal.slice(0, 5)).toEqual([]);
     expect(vistos).toBeGreaterThan(5);
   });
 });
@@ -316,11 +437,12 @@ describe("el que llega sin permiso y no lo recibe, se va al aire y la frecuencia
       const a = aeropuerto(semilla);
       const azar = dados(semilla * 31);
       const volar = 20 + azar() * 600;
-      while (a.t < volar) a.paso(momento("en-vuelo"));
-      // Tu final larga: la pista es tuya y nadie recibe permiso.
-      a.tuya();
+      while (a.t < volar) a.paso("en-vuelo");
+      // Tu final larga: la pista es tuya, sin nadie delante, y nadie recibe
+      // permiso.
+      a.turno.alSerTuya("");
       const antes = a.oido.length;
-      for (let s = 0; s < 150; s += PASO) a.paso(momento("final"));
+      for (let s = 0; s < 150; s += PASO) a.paso("final");
       for (const o of a.oido.slice(antes))
         mal.push(`semilla ${semilla}: ${o.de} ${o.clave} en final`);
       const idos = new Set(a.seFueron);
@@ -332,7 +454,7 @@ describe("el que llega sin permiso y no lo recibe, se va al aire y la frecuencia
       // Lo primero que se les oye después es su vuelta al circuito.
       const primera = new Map<string, string>();
       for (let s = 0; s < 400; s += PASO) {
-        const d = a.paso(momento("a-plataforma"));
+        const d = a.paso("a-plataforma");
         if (d && idos.has(d.de.matricula) && !primera.has(d.de.matricula))
           primera.set(d.de.matricula, d.clave);
       }

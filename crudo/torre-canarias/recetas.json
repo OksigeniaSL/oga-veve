@@ -131,6 +131,12 @@
   "torre.canario.solo.holdShort": [
     "torre.canario.solo.holdShort"
   ],
+  "torre.canario.solo.landingTraffic": [
+    "torre.canario.solo.landingTraffic"
+  ],
+  "torre.canario.solo.departingTraffic": [
+    "torre.canario.solo.departingTraffic"
+  ],
   "torre.canario.solo.lineUpWait": [
     "torre.canario.solo.lineUpWait"
   ],
@@ -282,6 +288,24 @@
     "{c4}",
     "{c5}",
     "torre.canario.solo.holdShort"
+  ],
+  "torre.canario.holdShortLanding": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.holdShort",
+    "torre.canario.solo.landingTraffic"
+  ],
+  "torre.canario.holdShortDeparting": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.holdShort",
+    "torre.canario.solo.departingTraffic"
   ],
   "torre.canario.goAround": [
     "{c1}",

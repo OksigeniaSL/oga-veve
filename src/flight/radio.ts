@@ -479,13 +479,25 @@ export class Frecuencia {
 
   /**
    * La matrícula del que **va delante en final con su permiso**, o `null`.
-   * Ver `vaDelanteEnFinal`.
+   *
+   * El permiso lo sabe la frecuencia, que es quien lo dio; **dónde está lo
+   * sabe el dibujo**, y es `delante`: si el avión dibujado de esa matrícula
+   * vuela la final por delante de ti. Esto se decidía solo por el guion —con
+   * su «en final» cantado—, y la marca de esa frase caía en la base, justo
+   * donde gira a final quien vuela el circuito del juego: la torre te dejaba
+   * de número dos detrás de un avión que se veía a tu lado o detrás, y te
+   * mandaba al aire en la decisión para dejarle aterrizar a él.
+   *
+   * Sin dibujo que mirar, lo dice el guion: ver `vaDelanteEnFinal`.
    */
-  get vaDelante(): string | null {
-    return (
-      this.aviones.find((a) => vaDelanteEnFinal(a.guion, a.paso))?.indicativo
-        .matricula ?? null
-    );
+  vaDelante(delante?: (matricula: string) => boolean): string | null {
+    for (const a of this.aviones) {
+      if (laPistaQueTiene(a.guion, a.paso) !== "torre.clearedLand") continue;
+      const matricula = a.indicativo.matricula;
+      if (delante ? delante(matricula) : vaDelanteEnFinal(a.guion, a.paso))
+        return matricula;
+    }
+    return null;
   }
 
   /** Si ese avión tiene todavía la pista. Ver `laPistaQueTiene`. */
@@ -505,16 +517,18 @@ export class Frecuencia {
   }
 
   /**
-   * **Si el avión dibujado de esa matrícula sigue en la pista.** Lo pone el
-   * juego, que es quien lo dibuja; sin nadie dibujado, nadie está en ella.
+   * **Si el avión dibujado de esa matrícula todavía no está donde dice esa
+   * llamada.** Lo pone el juego, que es quien lo dibuja; sin nadie dibujado,
+   * cada uno está donde diga. Ver `todaviaNo` en `world/trafico.ts`.
    *
    * «Pista libre» se decía a su hora de radio, y el avión dibujado la cantaba
    * al tocar tierra y se quedaba minuto y medio rodando por el asfalto que
    * acababa de dejar libre. Con la torre esperando a esa frase para ponerte
-   * en verde, entrabas a una pista con otro avión encima. Ahora quien la
-   * dice espera a haber salido, y no pierde el turno: lo dice en cuanto sale.
+   * en verde, entrabas a una pista con otro avión encima. Y «en final» se
+   * decía con el avión todavía en la base. Ahora quien las dice espera a
+   * estar donde dicen, y no pierde el turno: habla en cuanto llega.
    */
-  sigueEnLaPista: (matricula: string) => boolean = () => false;
+  todaviaNo: (matricula: string, clave: string) => boolean = () => false;
 
   /**
    * **Te van a dar la pista: antes se le quita a quien la tenga.**
@@ -694,9 +708,8 @@ export class Frecuencia {
       if (a.falta > 0) continue;
       if (soloLosDeLaPista && !laPistaQueOcupa(a.guion, a.paso)) continue;
       const toca = GUIONES[a.guion][a.paso]!.clave;
-      // «Pista libre», fuera de la pista. Ver `sigueEnLaPista`.
-      if (toca === "otro.pistaLibre" && this.sigueEnLaPista(a.indicativo.matricula))
-        continue;
+      // «Pista libre» fuera de la pista, y «en final» en final. Ver `todaviaNo`.
+      if (this.todaviaNo(a.indicativo.matricula, toca)) continue;
       if (
         DAN_LA_PISTA.has(toca) &&
         (pistaTuya ||

@@ -307,6 +307,13 @@ const TORRE_SOLO = [
     "la pista está ocupada",
   ],
   ["torre.solo.holdShort", "hold short of the runway", "pará en la doble raya"],
+  /*
+   * **Y el porqué de la espera**, detrás de la orden: la información de
+   * tráfico que da una torre de verdad a quien deja en el punto de espera.
+   * Ver `porQueEsperas` en `src/flight/turno-de-pista.ts`.
+   */
+  ["torre.solo.landingTraffic", "landing traffic", "se espera: uno viene a aterrizar"],
+  ["torre.solo.departingTraffic", "departing traffic", "se espera: uno sale antes"],
   ["torre.solo.lineUpWait", "line up and wait", "entrá y esperá en el eje"],
   /*
    * El principio de la autorización; el límite —el campo— va en un hueco,

@@ -503,11 +503,12 @@ export class LaAproximacion {
    * para despegar, y quiere decir lo mismo: adelante.
    */
   levantarLaOrden(): void {
+    const porque = this.porqueMandaron;
     this.laPistaSigueOcupada = null;
     this.mandanFrustrar = false;
     this.porqueMandaron = null;
     this.mundo.vaca.quitar();
-    this.mundo.hechos.emit("pistaLibreOtraVez", {});
+    this.mundo.hechos.emit("pistaLibreOtraVez", { porque });
   }
 
   /**

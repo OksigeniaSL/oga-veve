@@ -7,9 +7,13 @@
  */
 import { describe, expect, it } from "vitest";
 import { giroDelModelo } from "./rumbo";
-import { ESPERA_ENTRE_VUELOS, ESPERA_MAXIMA } from "../flight/radio";
 import {
-  ENTRE_MARCAS,
+  ESPERA_ENTRE_VUELOS,
+  ESPERA_MAXIMA,
+  ESPERA_MINIMA,
+  RESPUESTA_MAXIMA,
+} from "../flight/radio";
+import {
   SE_VA_A_LOS,
   RUEDA_A,
   VUELA_A,
@@ -21,9 +25,11 @@ import {
   trazar,
 } from "./trafico";
 import { ALTURA_DE_DECISION } from "../flight/minimos";
-import { verticesDelCircuito, type Pista } from "./circuito";
+import { BASE_A_FINAL, verticesDelCircuito, type Pista } from "./circuito";
 
 const PISTA: Pista = { x: 0, z: 0, heading: 90, length: 1800 };
+/** Lo que tarda de media la llamada siguiente de la frecuencia, s. */
+const UNA_LLAMADA = (ESPERA_MINIMA + ESPERA_MAXIMA) / 2;
 const COTA = 100;
 const entre = (a: { x: number; z: number }, b: { x: number; z: number }) =>
   Math.hypot(b.x - a.x, b.z - a.z);
@@ -70,7 +76,7 @@ describe("dónde está el que acaba de hablar", () => {
     // el tope le impide seguir tirando del camino y despegar solo.
     const luego = porElCamino(
       m.camino,
-      Math.min(m.metros + m.velocidad * ENTRE_MARCAS, m.tope ?? Infinity),
+      Math.min(m.metros + m.velocidad * UNA_LLAMADA, m.tope ?? Infinity),
     )!;
     expect(entre(luego.sitio, v[0]!)).toBeLessThan(5);
     expect(Math.abs(luego.sitio.y - COTA)).toBeLessThan(3);
@@ -83,7 +89,7 @@ describe("dónde está el que acaba de hablar", () => {
     expect(entre(porElCamino(m.camino, m.metros)!.sitio, v[0]!)).toBeLessThan(
       5,
     );
-    const luego = porElCamino(m.camino, m.metros + m.velocidad * ENTRE_MARCAS)!;
+    const luego = porElCamino(m.camino, m.metros + m.velocidad * UNA_LLAMADA)!;
     expect(luego.sitio.y).toBeGreaterThan(COTA + 100);
   });
 
@@ -106,8 +112,12 @@ describe("dónde está el que acaba de hablar", () => {
 
   it("y el que anuncia final está en final, en la senda y no en el suelo", () => {
     const donde = alDecir(marcas, "otro.final").sitio;
-    // A un pelo de la entrada en final: la marca cae ahí sin habérselo pedido.
-    expect(entre(donde, v[4]!)).toBeLessThan(400);
+    /*
+     * En la entrada en final, y no antes. Caía un hueco de radio antes de la
+     * toma, doscientos metros antes de girar: en la base, donde gira a final
+     * quien vuela el circuito del juego, y la radio lo daba por delante.
+     */
+    expect(entre(donde, v[4]!)).toBeLessThan(1);
     expect(donde.y).toBeGreaterThan(COTA + 40);
     expect(donde.y).toBeLessThan(COTA + 200);
   });
@@ -127,19 +137,23 @@ describe("dónde está el que acaba de hablar", () => {
 
   it("y entre una llamada y la siguiente no se salta ningún trozo", () => {
     /*
-     * La propiedad que sostiene el módulo: cada marca cae donde deja la
-     * anterior tras un hueco de radio. Con las marcas puestas a ojo, el avión
-     * daría un salto de un kilómetro a la vista de quien lo esté siguiendo.
+     * La propiedad que sostiene el módulo: donde se canta una cosa, está el
+     * avión. «En final» espera a que haya girado —ver `todaviaNo`—, así que
+     * lo que queda por mirar es que no llegue tarde: del viento en cola a la
+     * final se tarda lo que tarda como mucho la radio en la llamada
+     * siguiente, con la respuesta de la torre entre medias. Así la frase
+     * siempre espera al avión y nunca lo pilla por media senda.
      */
-    for (const [antes, luego] of [["otro.enCola", "otro.final"]] as const) {
-      const a = marcas[antes]!;
-      const donde = porElCamino(
-        a.camino,
-        a.metros + a.velocidad * ENTRE_MARCAS,
-      )!;
-      const salto = entre(donde.sitio, alDecir(marcas, luego).sitio);
-      expect(salto, `${antes} → ${luego}`).toBeLessThan(200);
-    }
+    const cola = marcas["otro.enCola"]!;
+    const final = marcas["otro.final"]!;
+    expect(final.camino).toBe(cola.camino);
+    expect((final.metros - cola.metros) / cola.velocidad).toBeGreaterThanOrEqual(
+      ESPERA_MAXIMA + RESPUESTA_MAXIMA - 0.01,
+    );
+    // Y el viento en cola se canta a la altura de la pista, como de verdad.
+    expect(Math.abs(alDecir(marcas, "otro.enCola").sitio.x - PISTA.x)).toBeLessThan(
+      PISTA.length / 2,
+    );
     /*
      * Y de «en final» a «pista libre» no hay marca que acertar: la frase
      * espera a que el avión haya salido de la pista —ver `sigueEnLaPista`—,
@@ -371,7 +385,7 @@ describe("sin permiso no se toca la pista", () => {
     }
     // Ni se esfuma a medio camino ni sale antes de posarse.
     expect(t.quienes()).toHaveLength(1);
-    expect(fuera).toBeGreaterThan(ENTRE_MARCAS);
+    expect(fuera).toBeGreaterThan(BASE_A_FINAL / VUELA_A);
     const a = t.quienes()[0]!;
     expect(Math.abs(a.z - PISTA.z)).toBeGreaterThan(30);
     expect(Math.abs(a.y - COTA)).toBeLessThan(3);
@@ -379,6 +393,60 @@ describe("sin permiso no se toca la pista", () => {
     t.anuncia("EC-ABC", "otro.pistaLibre", false);
     expect(entre(a, t.quienes()[0]!)).toBeLessThan(0.01);
     expect(t.sigueEnLaPista("EC-ABC")).toBe(false);
+    t.dispose();
+  });
+});
+
+describe("«en final» se dice en final, y va delante quien se ve delante", () => {
+  const caminos = trazar(PISTA, COTA)!;
+  /** Lo que tarda en volar de la marca del viento en cola a la final, s. */
+  const deColaAFinal =
+    (caminos.entra - caminos.marcas["otro.enCola"]!.metros) / VUELA_A;
+
+  it("la frase espera a que el avión haya girado a final", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.enCola", true);
+    expect(t.todaviaNo("EC-ABC", "otro.final")).toBe(true);
+    t.paso(deColaAFinal - 2);
+    expect(t.todaviaNo("EC-ABC", "otro.final")).toBe(true);
+    t.paso(3);
+    expect(t.todaviaNo("EC-ABC", "otro.final")).toBe(false);
+    // Y a quien no se ve no se le espera: está donde diga.
+    expect(t.todaviaNo("EC-XYZ", "otro.final")).toBe(false);
+    t.dispose();
+  });
+
+  it("y a quien ya vuela la final, decirlo tarde no lo devuelve atrás", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.enCola", true);
+    t.paso(deColaAFinal + 15);
+    const antes = t.quienes()[0]!;
+    t.anuncia("EC-ABC", "otro.final", true);
+    expect(entre(antes, t.quienes()[0]!)).toBeLessThan(0.01);
+    t.dispose();
+  });
+
+  it("cuánto le queda al umbral, solo volando la final o en la pista", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.enCola", true);
+    // En el viento en cola y en la base, nada: no está en final.
+    expect(t.enFinal("EC-ABC")).toBeNull();
+    t.paso(deColaAFinal + 1);
+    const alEntrar = t.enFinal("EC-ABC")!;
+    expect(alEntrar).toBeGreaterThan(1500);
+    expect(alEntrar).toBeLessThan(1850);
+    t.paso(10);
+    expect(t.enFinal("EC-ABC")!).toBeLessThan(alEntrar - VUELA_A * 9);
+    // Posado y rodando, cero: está en la pista.
+    t.paso(60);
+    expect(t.sigueEnLaPista("EC-ABC")).toBe(true);
+    expect(t.enFinal("EC-ABC")).toBe(0);
+    // Y sin permiso no aterriza: no va delante de nadie.
+    const sin = crearTrafico(PISTA, COTA, "ala-alta");
+    sin.anuncia("EC-ABC", "otro.enCola", false);
+    sin.paso(deColaAFinal + 5);
+    expect(sin.enFinal("EC-ABC")).toBeNull();
+    sin.dispose();
     t.dispose();
   });
 });

@@ -52,7 +52,11 @@ import type { Silueta } from "../flight/flota";
 import { fabricarAeronave } from "./fabrica-de-aeronaves";
 import { verticesDelCircuito, type Mano, type Pista } from "./circuito";
 import { desplazadoDe } from "./umbral-desplazado";
-import { ESPERA_ENTRE_VUELOS, ESPERA_MAXIMA } from "../flight/radio";
+import {
+  ESPERA_ENTRE_VUELOS,
+  ESPERA_MAXIMA,
+  RESPUESTA_MAXIMA,
+} from "../flight/radio";
 import { ALTURA_DE_DECISION } from "../flight/minimos";
 
 /** Un sitio del mundo, con su altura. */
@@ -87,17 +91,6 @@ export const VUELA_A = 40;
 
 /** Y a cuánto rueda por el suelo, m/s. Unos veinticinco por hora. */
 export const RUEDA_A = 7;
-
-/**
- * Cuánto se deja entre dos marcas, s.
- *
- * El hueco medio entre dos llamadas —`ESPERA_MINIMA` y `ESPERA_MAXIMA` de la
- * frecuencia— menos un respiro. Si se quedara corto, el avión llegaría a la
- * marca siguiente antes de anunciarla y tendría que esperar ahí quieto en el
- * aire; pasarse es peor, porque entonces la llamada lo empuja hacia adelante y
- * se ve el tirón.
- */
-export const ENTRE_MARCAS = 50;
 
 /** A cuánto del suelo va un avión con las ruedas en el asfalto, m. */
 const EN_TIERRA = 1.5;
@@ -182,6 +175,12 @@ export interface Caminos {
   readonly sinPermiso: Sitio[];
   /** Metros de los dos caminos hasta la altura de decisión, que comparten. */
   readonly decide: number;
+  /**
+   * Metros de los dos caminos hasta la **entrada en final**: el vértice en el
+   * que la base se vuelve final, que es donde gira quien vuela el circuito que
+   * enseña el juego. Ver `BASE_A_FINAL` en `circuito.ts`.
+   */
+  readonly entra: number;
   /** Metros de `llegada` hasta tocar la pista. */
   readonly toca: number;
   /** Lo largo de `llegada`: al acabarlo, ya está fuera de la pista. */
@@ -276,10 +275,34 @@ export function trazar(
    * distancia en cualquier avión.
    */
   const vuela = VUELA_A * escala;
-  const hueco = vuela * ENTRE_MARCAS;
   // La toma, de donde se cuenta hacia atrás: es el único punto del circuito
   // que está donde está y no admite discusión.
   const enLaToma = largoDelCamino([lejos, esquina, entrada, aterriza]);
+  /*
+   * **Y la entrada en final, que es donde se canta «en final».**
+   *
+   * La marca se contaba un hueco de radio —cincuenta segundos de vuelo—
+   * hacia atrás desde la toma, y eso son dos mil metros por escala donde la
+   * final del circuito mide mil ochocientos: el que decía «en final» estaba
+   * todavía en la base, doscientos metros antes de girar — justo donde gira
+   * a final quien vuela el circuito del juego. La radio lo daba por delante
+   * de ti en final con el avión dibujado a tu lado o detrás. Ahora «en
+   * final» se dice en final.
+   */
+  const enFinal = largoDelCamino([lejos, esquina, entrada]);
+  /*
+   * **Y el viento en cola, lo bastante antes para que «en final» no llegue
+   * tarde nunca.** La frase de final espera a que el avión haya girado —ver
+   * `todaviaNo`—, así que adelantarse no puede; lo que puede es llegar tarde,
+   * con el avión ya por media senda, y si llega pasada la altura de decisión
+   * no llega: el que va sin permiso se va al aire sin haberla dicho. Con el
+   * viento en cola a lo más que tarda la radio en la llamada siguiente —la
+   * espera más larga, y la respuesta de la torre si le autoriza entre
+   * medias—, la frase siempre espera al avión y suena al girar.
+   *
+   * Y cae donde la dice un piloto de verdad: a la altura de la cabecera.
+   */
+  const deColaAFinal = vuela * (ESPERA_MAXIMA + RESPUESTA_MAXIMA);
   const volando = (metros: number): Marca => ({
     camino: llegada,
     metros: Math.max(0, metros),
@@ -306,9 +329,10 @@ export function trazar(
       metros: hastaElEje,
       velocidad: vuela,
     },
-    // Las tres de quien llega, contadas hacia atrás desde la toma.
-    "otro.enCola": volando(enLaToma - 2 * hueco),
-    "otro.final": volando(enLaToma - hueco),
+    // Las de quien llega: «en final» al entrar en ella, y el viento en cola
+    // con tiempo para que esa frase no llegue tarde. Ver `deColaAFinal`.
+    "otro.enCola": volando(enFinal - deColaAFinal),
+    "otro.final": volando(enFinal),
     /*
      * Y «pista libre» se dice **fuera de la pista**, que es lo que quiere
      * decir. Se ponía en la toma y desde ahí rodaba minuto y medio por el
@@ -344,6 +368,7 @@ export function trazar(
     llegada,
     sinPermiso,
     decide,
+    entra: enFinal,
     toca: enLaToma,
     fuera: largoDelCamino(llegada),
   };
@@ -429,6 +454,25 @@ export interface Trafico {
    * pista. Hasta entonces no puede decir «pista libre».
    */
   sigueEnLaPista(matricula: string): boolean;
+  /**
+   * Si el avión dibujado de esa matrícula **todavía no está donde esa llamada
+   * dice que está**: «en final» sin haber girado a final, «pista libre» sin
+   * haber salido de la pista. Quien no se ve, está donde diga.
+   *
+   * Es lo que espera la frecuencia antes de dejarle hablar —ver `todaviaNo`
+   * en `flight/radio.ts`—: lo dicho y lo dibujado son el mismo vuelo, y la
+   * frase no se adelanta al avión.
+   */
+  todaviaNo(matricula: string, clave: string): boolean;
+  /**
+   * **Cuánto le queda para el umbral de aterrizar** al de esa matrícula, m, si
+   * se le ve volando la final —ya girado de la base— o posado en la pista sin
+   * haberla dejado todavía, que es cero. `null` si no se le ve ahí.
+   *
+   * Es lo que decide si va **delante de ti** en final: ver `numeroDos` en
+   * `flight/turno-de-pista.ts`.
+   */
+  enFinal(matricula: string): number | null;
   /** Cuántos se ven, y dónde. Para el banco. */
   quienes(): {
     matricula: string;
@@ -483,6 +527,27 @@ export function crearTrafico(
     quien.marca.camino === caminos.llegada &&
     quien.recorrido < caminos.fuera - 0.5;
 
+  /** Si viene a aterrizar, con permiso o sin él. */
+  const llegando = (quien: Volando): boolean =>
+    !!caminos &&
+    (quien.marca.camino === caminos.llegada ||
+      quien.marca.camino === caminos.sinPermiso);
+
+  /** Si viene a aterrizar y todavía no ha girado a final. */
+  const enLaBase = (quien: Volando): boolean =>
+    !!caminos && llegando(quien) && quien.recorrido < caminos.entra;
+
+  /**
+   * Si ya vuela la final —girado de la base y antes de la decisión o la
+   * toma—, o está en la pista. Por el camino de la llegada, con permiso o sin
+   * él; pasada la decisión sin permiso ya se está yendo al aire.
+   */
+  const yaEnFinal = (quien: Volando): boolean =>
+    !!caminos &&
+    llegando(quien) &&
+    quien.recorrido >= caminos.entra &&
+    (quien.marca.camino === caminos.llegada || quien.recorrido < caminos.decide);
+
   /*
    * **Sin permiso, por el camino que no toca la pista.** Hasta la altura de
    * decisión los dos caminos son el mismo, así que cambiar de uno a otro antes
@@ -527,6 +592,20 @@ export function crearTrafico(
        */
       if (quien && clave === "otro.pistaLibre") {
         quien.olvidado = 0;
+        return;
+      }
+      /*
+       * **Y «en final» a quien ya se ve en final, tampoco.** La frase espera a
+       * que haya girado —ver `todaviaNo`—, pero la frecuencia puede tenerla
+       * callada más rato, contigo en final, y para entonces el avión va por
+       * media senda: ponerlo en la marca lo devolvía a la entrada en final, a
+       * veces por detrás de ti. Se le cambia de camino si cambió su permiso,
+       * que antes de la decisión no lo mueve, y se queda donde está.
+       */
+      if (quien && clave === "otro.final" && yaEnFinal(quien)) {
+        quien.olvidado = 0;
+        if (quien.recorrido < (caminos?.decide ?? 0))
+          quien.marca = porSuCamino(quien.marca, quien.conPermiso);
         return;
       }
       if (!quien) {
@@ -594,6 +673,19 @@ export function crearTrafico(
       const quien = aviones.get(matricula);
       return !!quien && aterrizando(quien);
     },
+    todaviaNo(matricula, clave) {
+      const quien = aviones.get(matricula);
+      if (!quien) return false;
+      if (clave === "otro.pistaLibre") return aterrizando(quien);
+      if (clave === "otro.final") return enLaBase(quien);
+      return false;
+    },
+    enFinal(matricula) {
+      const quien = aviones.get(matricula);
+      if (!quien || !caminos || !aterrizando(quien)) return null;
+      if (quien.recorrido < caminos.entra) return null;
+      return Math.max(0, caminos.toca - quien.recorrido);
+    },
     quienes() {
       return [...aviones].map(([matricula, quien]) => ({
         matricula,
@@ -601,10 +693,7 @@ export function crearTrafico(
         y: quien.grupo.position.y,
         z: quien.grupo.position.z,
         conPermiso: quien.conPermiso,
-        llegando:
-          !!caminos &&
-          (quien.marca.camino === caminos.llegada ||
-            quien.marca.camino === caminos.sinPermiso),
+        llegando: llegando(quien),
       }));
     },
     dispose() {

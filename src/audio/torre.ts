@@ -38,6 +38,15 @@ export const CLAVE_DE_TORRE: Readonly<Record<string, string>> = {
   // La secuencia de salida, en el orden en que se oye.
   "hold short of the runway": "torre.holdShort",
   /*
+   * **Y con el porqué, cuando se espera por alguien.** Es la información de
+   * tráfico que da una torre de verdad a quien deja en el punto de espera:
+   * uno que viene a aterrizar, o uno alineado que sale antes. Sin ella, la
+   * roja podía durar tres minutos con un «hold short» a secas. Ver
+   * `porQueEsperas` en `flight/turno-de-pista.ts`.
+   */
+  "hold short of the runway, landing traffic": "torre.holdShortLanding",
+  "hold short of the runway, departing traffic": "torre.holdShortDeparting",
+  /*
    * **Y ésta todavía no la dice nadie, y se dice aquí para que se vea.**
    *
    * «Line up and wait» es entrar en pista y esperar ahí al permiso de
@@ -139,7 +148,7 @@ export function esDeLaLampara(
 }
 
 const DE_LA_LAMPARA =
-  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort|lineUpWait|clearedTakeoff|clearedLand|goAround)(?:\.[LCR])?(?:@|$)/;
+  /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround)(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la torre dándole la pista a otro avión**, todavía en la

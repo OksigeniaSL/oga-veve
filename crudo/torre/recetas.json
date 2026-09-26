@@ -131,6 +131,12 @@
   "torre.solo.holdShort": [
     "torre.solo.holdShort"
   ],
+  "torre.solo.landingTraffic": [
+    "torre.solo.landingTraffic"
+  ],
+  "torre.solo.departingTraffic": [
+    "torre.solo.departingTraffic"
+  ],
   "torre.solo.lineUpWait": [
     "torre.solo.lineUpWait"
   ],
@@ -282,6 +288,24 @@
     "{c4}",
     "{c5}",
     "torre.solo.holdShort"
+  ],
+  "torre.holdShortLanding": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.holdShort",
+    "torre.solo.landingTraffic"
+  ],
+  "torre.holdShortDeparting": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.solo.holdShort",
+    "torre.solo.departingTraffic"
   ],
   "torre.goAround": [
     "{c1}",

@@ -52,5 +52,7 @@ cleared for take-off
 cleared to land
 go around, runway occupied
 hold short of the runway
+landing traffic
+departing traffic
 line up and wait
 cleared to

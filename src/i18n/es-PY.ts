@@ -566,6 +566,16 @@ export const ES_PY = {
   "vuelo.arrancando": "Soltá el freno y andá despacito",
   "vuelo.rodando": "Seguí la raya verde",
   "vuelo.esperando": "Pará del todo y esperá la luz",
+  /*
+   * **Y por qué se espera, cuando es por alguien.** Con otro avión usando la
+   * pista la luz roja puede durar tres minutos, y sin decir por qué eso es un
+   * juego que se ha colgado. La torre lo dice en fraseología en los peldaños
+   * de arriba —«hold short, landing traffic»—; en los de abajo lo cuenta la
+   * instructora, con calma y en una línea. Ver `porQueEsperas` en
+   * `flight/turno-de-pista.ts`.
+   */
+  "vuelo.esperaQueAterrice": "Esperamos: viene un avión a aterrizar",
+  "vuelo.esperaQueDespegue": "Esperamos: primero sale el avión que está en la pista",
   "vuelo.autorizado": "¡Luz verde! Entrá a la pista",
   "vuelo.backTaxi": "Andá hasta el fondo y dá la vuelta",
   "vuelo.alineando": "Ponete derechito en el eje",

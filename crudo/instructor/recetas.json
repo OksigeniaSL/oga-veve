@@ -269,6 +269,12 @@
   "vuelo.esperando": [
     "vuelo.esperando"
   ],
+  "vuelo.esperaQueAterrice": [
+    "vuelo.esperaQueAterrice"
+  ],
+  "vuelo.esperaQueDespegue": [
+    "vuelo.esperaQueDespegue"
+  ],
   "vuelo.estacionado": [
     "vuelo.estacionado"
   ],
