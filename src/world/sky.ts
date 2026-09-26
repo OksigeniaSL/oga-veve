@@ -311,7 +311,17 @@ const GLSL_COMUN = /* glsl */ `
     float ls = length(sh);
     vec2 dh = dir.xz;
     float ld = length(dh);
-    float haciaElSol = (ls > 1e-4 && ld > 1e-4) ? dot(dh / ld, sh / ls) * 0.5 + 0.5 : 0.5;
+    /*
+     * **Recortado a [0, 1], que el coseno de dos vectores unidad se pasa.**
+     * Normalizados en la tarjeta salen un pelín largos, y justo enfrente del
+     * sol el producto baja de −1 en la última cifra: \`haciaElSol\` queda en
+     * menos una cienmillonésima y \`pow\` de un negativo no está definido. En
+     * la NVIDIA sale NaN, y un NaN en pantalla es negro: una raya punteada de
+     * un píxel, de arriba abajo, en el acimut contrario al sol —«un plano
+     * vertical a rumbo fijo»—, que cruzaba también el mar porque el agua
+     * refleja este mismo cielo. SwiftShader no lo enseña.
+     */
+    float haciaElSol = (ls > 1e-4 && ld > 1e-4) ? clamp(dot(dh / ld, sh / ls) * 0.5 + 0.5, 0.0, 1.0) : 0.5;
     float calor = pow(haciaElSol, 2.5) * exp(-max(alto, 0.0) * 6.0);
     c = mix(c, horizonSolColour, calor);
     /*

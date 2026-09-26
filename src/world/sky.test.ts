@@ -289,6 +289,67 @@ describe("el sol", () => {
   });
 });
 
+describe("ningún píxel del cielo sale NaN", () => {
+  /*
+   * `pow` de un negativo no está definido, y en la NVIDIA del portátil sale
+   * NaN, que en pantalla es negro. Pasó con `haciaElSol`: el coseno entre dos
+   * vectores normalizados en la tarjeta baja de −1 en la última cifra justo
+   * enfrente del sol, y quedaba una raya punteada de un píxel cruzando cielo
+   * y mar de arriba abajo, en el acimut contrario al sol. SwiftShader no la
+   * enseña, así que la prueba mira el texto: la base de cada `pow` tiene que
+   * estar acotada a la vista —un `max` o un `clamp`, o una variable que
+   * salga de uno— y si es `1.0 - x`, la `x` tiene que venir de un `clamp`,
+   * que un `max(…, 0.0)` no impide pasarse de uno.
+   */
+  const texto = Object.values(GLSL_DEL_CIELO).join("\n");
+  const declaradaCon = (nombre: string): string =>
+    texto.match(new RegExp(`float ${nombre} = ([^;]*);`))?.[1] ?? "";
+  // El cielo y el agua llevan la misma cuenta común: cada base, una vez.
+  const todas = [...texto.matchAll(/pow\(/g)].map((m) => {
+    // Hasta la primera coma que no vaya dentro de otro paréntesis.
+    let hondo = 0;
+    let i = m.index! + 4;
+    const desde = i;
+    for (; i < texto.length; i++) {
+      const c = texto[i]!;
+      if (c === "(") hondo++;
+      else if (c === ")") hondo--;
+      else if (c === "," && hondo === 0) break;
+    }
+    return texto.slice(desde, i).trim();
+  });
+  const bases = [...new Set(todas)];
+
+  it("hay potencias que mirar", () => {
+    expect(bases.length).toBeGreaterThanOrEqual(6);
+  });
+
+  for (const base of bases) {
+    it(`pow(${base}, …) no recibe un negativo`, () => {
+      if (/^(max|clamp)\(/.test(base)) return;
+      const complemento = base.match(/^1\.0 - (\w+)$/);
+      if (complemento) {
+        // Que la `x` de `1.0 - x` no pase de uno: solo un `clamp` lo asegura.
+        expect(declaradaCon(complemento[1]!)).toMatch(/clamp\(/);
+        expect(declaradaCon(complemento[1]!)).not.toMatch(/max\(/);
+        return;
+      }
+      expect(base).toMatch(/^\w+$/);
+      // Y todas las ramas de su declaración, acotadas o constantes.
+      const decl = declaradaCon(base);
+      const ramas = decl.includes("?") ? decl.split("?")[1]!.split(" : ") : [decl];
+      for (const rama of ramas)
+        expect(rama.trim()).toMatch(/^(max\(|clamp\(|\d)/);
+    });
+  }
+
+  it("y justo enfrente del sol, el coseno se recorta", () => {
+    expect(GLSL_DEL_CIELO.fragmento).toContain(
+      "clamp(dot(dh / ld, sh / ls) * 0.5 + 0.5, 0.0, 1.0)",
+    );
+  });
+});
+
 describe("por debajo del horizonte", () => {
   it("la cúpula pinta mar, y el sol no asoma", () => {
     /*
