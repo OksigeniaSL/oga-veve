@@ -155,6 +155,9 @@ export class InputManager {
    * los lleva `update`. Ver `flight/flaps.ts`.
    */
   alternarFlaps(): void {
+    // En el avión que no los lleva no hay palanca que mover. Ver
+    // `ponerAeronave`.
+    if (!this.flapsQueSeMueven) return;
     this.flapsPedidos = DETENTES[siguienteDetente(this.flapsPedidos)]!;
   }
 
@@ -178,11 +181,19 @@ export class InputManager {
    * estar en sus muescas, así que un valor suelto cae en la más cercana.
    */
   ponerPalancaDeFlaps(donde: number): void {
+    if (!this.flapsQueSeMueven) return;
     this.flapsPedidos = DETENTES[muescaMasCercana(donde)]!;
+  }
+
+  /** Si este avión tiene palanca de flaps. Ver `ponerAeronave`. */
+  get hayPalancaDeFlaps(): boolean {
+    return this.flapsQueSeMueven;
   }
 
   /** La palanca de flaps. Empieza arriba, como está un avión en su puesto. */
   private flapsPedidos = 0;
+  /** Y si este avión los lleva siquiera. Ver `ponerAeronave`. */
+  private flapsQueSeMueven = true;
   /** Y lo que tardan de arriba abajo en este avión. Ver `ponerAeronave`. */
   private tardanLosFlaps = TARDAN_LOS_FLAPS;
 
@@ -233,12 +244,21 @@ export class InputManager {
    * El del tren es el primero: en un entrenador de escuela la palanca no
    * existe, y fingir que sí —que el mando se pulse y no pase nada— sería
    * enseñar un avión que no es. Ver `trenRetractil` en `aircraft.ts`.
+   *
+   * Y el de los flaps, por lo mismo: el fumigador no los lleva, y ahí la
+   * palanca se queda arriba diga lo que diga la tecla. Ver `llevaFlaps`.
    */
   ponerAeronave(
     trenRetractil: boolean,
     tardanLosFlaps: number = TARDAN_LOS_FLAPS,
+    llevaFlaps = true,
   ): void {
     this.tardanLosFlaps = tardanLosFlaps;
+    this.flapsQueSeMueven = llevaFlaps;
+    if (!llevaFlaps) {
+      this.flapsPedidos = 0;
+      this.controls.flaps = 0;
+    }
     this.trenQueSeMete = trenRetractil;
     if (!trenRetractil) {
       this.trenPedido = true;

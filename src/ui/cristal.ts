@@ -791,7 +791,7 @@ export function pantallaDeMotores(
     ${diales}
     ${mandoDeMotor(12, cy + r + 46, hueco, n)}
     ${reglaDeCombustible(40, alto - 156, ancho - 80, 16)}
-    ${reglaDeFlaps(40, alto - 96, ancho - 80, 26, c.flaps)}
+    ${c.flaps.length > 1 ? reglaDeFlaps(40, alto - 96, ancho - 80, 26, c.flaps) : ""}
     ${lucesDeTren(14, yTren, patas)}
     <text data-cristal="reversa" x="${ancho - 14}" y="${yTren + 13}"
           ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
@@ -976,7 +976,7 @@ export function columnaDeMotor(ancho: number, alto: number, c: Cuadro): string {
     ${diales}
     ${mandoDeMotor(16, cy + r + 46, ancho - 32, n)}
     ${reglaDeCombustible(34, alto - 118, ancho - 68, 16)}
-    ${reglaDeFlaps(34, alto - 74, ancho - 68, 26, c.flaps)}
+    ${c.flaps.length > 1 ? reglaDeFlaps(34, alto - 74, ancho - 68, 26, c.flaps) : ""}
     <text data-cristal="reversa" x="${ancho - 12}" y="${alto - 14}"
           ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
   `;
@@ -1017,7 +1017,7 @@ export function franjaDeMotor(
     <rect data-fondo="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
     <text x="${ancho / 2}" y="16" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${barras}
-    ${reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34, c.flaps)}
+    ${c.flaps.length > 1 ? reglaDeFlaps(16, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 34, c.flaps) : ""}
     ${reglaDeCombustible(78, 24 + altoBarra + 46, 22, alto - (24 + altoBarra + 46) - 56)}
     ${lucesDeTren(12, alto - 24, patasDe(a))}
     <text data-cristal="reversa" x="${ancho / 2}" y="${alto - 8}"

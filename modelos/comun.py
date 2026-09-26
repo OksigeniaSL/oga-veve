@@ -1635,7 +1635,7 @@ def _mcp(alto_panel, z_labio, puntos):
 def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
            suelo_atras=0.80, y_suelo=0.32, y_respaldo=0.88, pantallas_en=0.155,
            palancas=0, relojes=0, clase="avioneta", mando="cuerno",
-           mide="rpm", tren=False):
+           mide="rpm", tren=False, flaps=True):
     """
     Lo que se ve desde el asiento: suelo, panel, visera, pantallas y silla.
 
@@ -1683,6 +1683,10 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     —cuya hélice gira a vueltas constantes, así que lo que cambia es la fuerza—
     y `n1` en un turbofán, que es el número con el que se vuela un avión de
     línea. Ver `reloj`.
+
+    `tren` y `flaps` dicen si el avión los lleva: donde no, ni su mando ni su
+    reloj, por lo mismo que el tren fijo no lleva palanca — un mando que se
+    pulsa y no mueve nada enseña que los mandos son decoración.
 
     Dos nombres no son libres: **`asiento`**, porque `ojoDePiloto` lo busca por
     nombre, y **`g1000_display`**, que es lo que busca `pantallas-cabina.ts`.
@@ -1732,7 +1736,12 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
     # Los mandos que se pulsan. **El del tren solo donde hay tren**: en un
     # entrenador de escuela esa palanca no existe, y un botón que se pulsa y no
     # hace nada enseña que los mandos son decoración. Ver `botones-cabina.ts`.
-    mandos = ("motor", "flaps", "freno") + (("tren",) if tren else ())
+    #
+    # **Y el de los flaps, solo donde hay flaps**, por lo mismo: el fumigador
+    # no los lleva, y ahí el botón encendía una aguja de «10°» con el ala
+    # quieta. Su reloj tampoco: ver la columna de motor, abajo.
+    mandos = (("motor",) + (("flaps",) if flaps else ()) + ("freno",)
+              + (("tren",) if tren else ()))
     #
     # **La visera cae un palmo por debajo de los ojos. En todos.**
     #
@@ -2013,11 +2022,15 @@ def cabina(ojos_z, ancho=0.36, alto_panel=0.80, pantallas=True, plazas=(0.0,),
                     f"reloj-motor-{m}", mide, radioReloj,
                     (x, y, panel_z + 0.008), puntos,
                 )
-            else:
+            elif flaps:
                 piezas += reloj(
                     "reloj-flaps", "flaps", radioReloj,
                     (x, y, panel_z + 0.008), puntos,
                 )
+            # Sin flaps, su hueco se queda sin reloj: el de motor no se mueve
+            # ni cambia de tamaño —el tablero es el de siempre— y un reloj de
+            # otra cosa sería inventarle un instrumento. Ver
+            # `world/relojes-cabina.ts`, que solo enciende lo que el juego sabe.
         # Y los tres mandos que se pulsan, **debajo de la columna de relojes**.
         #
         # Estuvieron centrados debajo de las pantallas, y ahí los tapaba la

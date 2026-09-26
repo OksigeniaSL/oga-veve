@@ -125,6 +125,12 @@ def z_ala(x):
     return ALA_Z + x * math.tan(FLECHA)
 
 
+# Los metros a lo largo del ala por cada metro de envergadura: las zonas y los
+# flaps de `superficie` se miden sobre el ala, que va en flecha y con diedro,
+# y el fuselaje y el carenado están donde están a lo ancho.
+E_POR_X = math.sqrt(1 + math.tan(DIEDRO) ** 2 + math.tan(FLECHA) ** 2)
+
+
 def construir():
     limpiar()
     piezas = []
@@ -221,10 +227,15 @@ def construir():
                80, 0.0),
     ]
     j = "oscuro"
-    # El de dentro empieza donde el ala sale del fuselaje —el anillo de 3,5,
-    # que ya estaba— y no en la junta pintada, que queda dentro de él. Ver
-    # `jaz-90-arai.py`.
-    flaps = [flap("dentro", 3.5, 11.5, 0.73), flap("fuera", 11.65, 21.6, 0.73)]
+    # **El de dentro empieza a 3,05 m del eje, y no donde el ala sale del
+    # fuselaje.** Al bajar pasa por delante del carenado de la panza, que ahí
+    # abulta tres metros a cada lado, y un flap no baja a través de él: medido
+    # moviéndolo, hasta 3,0 lo rozaba. El trozo de franja entre el fuselaje y
+    # el flap se queda quieto, que es lo que hace en un avión de verdad; y
+    # recogido no se ve el corte, porque no hay raya pintada que mover y las
+    # normales son las de siempre. Ver `jaz-90-arai.py`.
+    flaps = [flap("dentro", E_POR_X * 3.05, 11.5, 0.73),
+             flap("fuera", 11.65, 21.6, 0.73)]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
                      flaps=flaps, zonas=[
         ("aluminio", 3.2, 28.2, 0.0, 0.06),
@@ -240,7 +251,7 @@ def construir():
     # **Fowler**, con los topes de un cuatrirreactor de fuselaje ancho —cinco,
     # veinte y treinta— y el carril más largo de la flota. Ver `fowler`.
     los_flaps = flaps_moviles(ala, flaps, fowler(
-        muescas=(0, 5, 20, 30), recorrido=(0, 0.20, 0.32, 0.38), bajada=8))
+        muescas=(0, 5, 20, 30), recorrido=(0, 0.20, 0.32, 0.38)))
     piezas += los_flaps
 
     def cuerda_en(x):

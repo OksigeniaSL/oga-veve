@@ -270,6 +270,7 @@ for (const id of [
       deLinea: o.deLinea(),
       familia: o.familia(),
       motores: o.avion().motores,
+      llevaFlaps: o.avion().llevaFlaps,
     };
   });
 
@@ -362,11 +363,20 @@ for (const id of [
       "un panel con discos grises sin cara no es un panel",
     );
 
+    /*
+     * Y el de flaps **donde hay flaps**: en el fumigador marcaba diez grados
+     * con el ala quieta. Donde no los hay, no hay reloj.
+     */
+    const conReloj = (visto.relojes ?? []).some((r) => r.que === "flaps");
     comprobar(
-      etiqueta("y el de flaps, que es lo otro que se mueve"),
-      (visto.relojes ?? []).some((r) => r.que === "flaps"),
+      etiqueta(
+        visto.llevaFlaps
+          ? "y el de flaps, que es lo otro que se mueve"
+          : "y sin reloj de flaps, que no los lleva",
+      ),
+      conReloj === visto.llevaFlaps,
       `${(visto.relojes ?? []).length} relojes`,
-      "",
+      "un reloj que marca un mando que el avión no tiene enseña que los relojes mienten",
     );
   }
 

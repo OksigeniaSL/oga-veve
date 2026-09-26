@@ -431,12 +431,28 @@ export interface AircraftConfig {
    * lo contrario de tratarlos a todos igual.
    */
   minGroundPitch: number;
-  /** Sustentación y resistencia extra con flaps a tope. */
+  /**
+   * **Si lleva flaps.**
+   *
+   * Casi todos, y no todos: un biplano fumigador de esta clase lleva alerones
+   * en sus dos alas y nada más. Donde no los hay no hay palanca, ni botón, ni
+   * reloj, ni regla en el cuadro, ni el tutor los pide —igual que el tren
+   * fijo no lleva palanca de tren, ver `trenRetractil`—: un mando que se
+   * pulsa y no mueve nada en el ala enseña que los mandos son decoración, y
+   * un reloj que marca diez grados con el ala quieta enseña que los relojes
+   * mienten.
+   */
+  llevaFlaps: boolean;
+  /**
+   * Sustentación y resistencia extra con flaps a tope. Cero en el que no los
+   * lleva: no hay nada que las dé.
+   */
   flapsLift: number;
   flapsDrag: number;
   /**
    * **Los grados de los flaps en cada muesca de la palanca**, empezando por el
-   * cero de recogidos. Una cifra por muesca —ver `DETENTES`—.
+   * cero de recogidos. Una cifra por muesca —ver `DETENTES`—, o ninguna en el
+   * que no los lleva.
    *
    * No son los mismos en toda la flota, y por eso están aquí: el primer tope
    * de un reactor son cinco grados casi sin ángulo —el flap sale hacia atrás
@@ -527,6 +543,7 @@ export const PYKASU: AircraftConfig = {
   maxGroundPitch: 0.21, // 12°
   // 3,3 m de morro y diez centímetros de pata: 1,7°.
   minGroundPitch: -0.030,
+  llevaFlaps: true,
   flapsLift: 0.55,
   flapsDrag: 0.06,
   // Diez, veinte y treinta: los tres topes del flap ranurado de una avioneta
@@ -613,16 +630,23 @@ export const MAINUMBY: AircraftConfig = {
   // Patín de cola: se apoya de morro arriba, y bajarlo
   // clava la hélice. Poco juego a propósito.
   minGroundPitch: -0.020,
-  flapsLift: 0.35,
-  flapsDrag: 0.05,
   /*
-   * **Su modelo no los lleva**: las dos alas tienen alerones y nada más, que es
-   * lo que tiene un biplano fumigador de esta clase. La palanca y estas cifras
-   * siguen porque el modelo de vuelo le da flaps —`flapsLift`—, y quitárselos
-   * es otra decisión, con su propia medida delante.
+   * **No lleva flaps**: las dos alas tienen alerones y nada más, que es lo que
+   * tiene un biplano fumigador de esta clase —y su modelo, que no los tiene—.
+   * Tenía palanca, botón, reloj y un cuarto de sustentación de más, y con los
+   * flaps de los otros cinco bajando en el ala, en éste se veía la aguja en
+   * diez grados con el ala quieta.
+   *
+   * Quitárselos al modelo de vuelo no le cambia la toma: su `approachSpeed`
+   * ya era 1,3 veces la pérdida **limpia** —29 contra 22,2 m/s—, que es la
+   * regla con la que cruza el umbral un avión sin flaps. Lo comprueba
+   * `prestaciones.test.ts`.
    */
-  muescasDeFlaps: [0, 10, 20, 30],
-  tardanLosFlaps: 9,
+  llevaFlaps: false,
+  flapsLift: 0,
+  flapsDrag: 0,
+  muescasDeFlaps: [],
+  tardanLosFlaps: 0,
   appearance: {
     // Biplano de trabajo: dos alas, ocre y verde, hélice de tres palas.
     body: 0xdd923f,
@@ -736,6 +760,7 @@ export const PANAMBI: AircraftConfig = {
   maxGroundPitch: 0.19, // 11°
   // 3,6 m de morro y diez centímetros: 1,6°.
   minGroundPitch: -0.028,
+  llevaFlaps: true,
   flapsLift: 0.5,
   flapsDrag: 0.07,
   // Diez, veinticinco y cuarenta: los de un bimotor de pistón de seis plazas,
@@ -841,6 +866,7 @@ export const ARASUNU: AircraftConfig = {
   minGroundPitch: -0.022,
   // Flaps grandes: es lo que le permite entrar en pistas cortas, que es para
   // lo que existe un turbohélice regional.
+  llevaFlaps: true,
   flapsLift: 0.65,
   flapsDrag: 0.09,
   // Diez, veinte y treinta y cinco: los de un turbohélice de diecinueve
@@ -996,6 +1022,7 @@ export const ARAI: AircraftConfig = {
    * centésimas de resistencia y llega a un CL máximo cerca de 2,5. Esos son
    * los números.
    */
+  llevaFlaps: true,
   flapsLift: 1.05,
   flapsDrag: 0.055,
   /*
@@ -1160,6 +1187,7 @@ export const YVAGA: AircraftConfig = {
   // Triple ranura y Krueger: un ala de línea saca mucho más CL que una
   // avioneta, y es lo que le permite entrar a 98 y no a 140.
   // Lo mismo que el Arai, y por lo mismo. Ver su ficha.
+  llevaFlaps: true,
   flapsLift: 1.0,
   flapsDrag: 0.065,
   // Cinco, veinte y treinta: los de un cuatrirreactor de fuselaje ancho, con

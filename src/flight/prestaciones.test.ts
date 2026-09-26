@@ -324,9 +324,13 @@ describe.each(TODOS.map((a) => [a.id, a] as const))(
       expect(medida).toBeLessThan(vs * 1.15);
     });
 
-    it("y con flaps entra más despacio, que es para lo que están", () => {
-      expect(medirPerdida(a, 1)).toBeLessThan(medirPerdida(a));
-    });
+    // Y en el que no los lleva no hay flaps que medir. Ver `llevaFlaps`.
+    it.skipIf(!a.llevaFlaps)(
+      "y con flaps entra más despacio, que es para lo que están",
+      () => {
+        expect(medirPerdida(a, 1)).toBeLessThan(medirPerdida(a));
+      },
+    );
 
     /*
      * **Vref = 1,3 · Vs**, que es la regla con la que se cruza el umbral en la

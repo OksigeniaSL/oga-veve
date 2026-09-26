@@ -1185,25 +1185,35 @@ def flap(nombre, e0, e1, u0):
     return {"nombre": nombre, "e0": e0, "e1": e1, "u0": u0}
 
 
-def ranurado(muescas, caida):
+def ranurado(muescas, recorrido, ranura=0.015, solape=0.005):
     """
-    Un flap ranurado de bisagra, el de una avioneta o un turbohélice.
+    Un flap ranurado, el de una avioneta o un turbohélice.
 
-    Gira sobre un eje que va **por debajo del ala**, colgado de sus herrajes:
-    por eso al bajar se va también un poco hacia atrás y abre la ranura por
-    arriba, que es la que deja pasar el aire del intradós al extradós y le
-    pega la corriente al flap. Con la bisagra en el propio borde se tendría
-    un flap sencillo, que es otro flap y otra lección.
+    Sale un poco hacia atrás por unos carriles cortos que van por dentro del
+    ala, y baja a la vez. Recogido, **su nariz va metida bajo el labio del
+    extradós**; fuera, queda justo debajo de él, y entre los dos se abre la
+    ranura: un canal estrecho por el que el aire del intradós pasa al
+    extradós y le pega la corriente al flap. Es estrecha —un par de
+    centésimas de la cuerda— y por eso funciona: una ranura ancha no es una
+    ranura, es un agujero, y el flap de detrás se queda sin aire.
 
     `muescas`: los grados de cada tope de la palanca, empezando por el cero
-    de recogido. `caida`: cuánto por debajo del intradós va la bisagra, en
-    cuerdas del flap.
+    de recogido. `recorrido`: cuánto ha salido hacia atrás en cada tope, en
+    cuerdas del flap; en uno ranurado, poco y parejo con el ángulo.
+    `ranura` y `solape`: dónde queda la nariz respecto del labio en el último
+    tope, en cuerdas del ala. Ver `_disenar_flap`.
+
+    Y **sus carriles se ven** con el flap fuera: dos por flap, por dentro de
+    la cala, llegando hasta la nariz. En un avión de línea van dentro de las
+    canoas; en una avioneta no hay canoas, y un flap que baja sin nada que
+    lo sujete no es un flap. Ver `_carriles`.
     """
-    return {"tipo": "ranurado", "muescas": list(muescas), "caida": caida,
-            "recorrido": [0.0] * len(muescas), "bajada": 0.0}
+    return {"tipo": "ranurado", "muescas": list(muescas),
+            "recorrido": list(recorrido), "ranura": ranura, "solape": solape,
+            "carriles": (0.2, 0.8)}
 
 
-def fowler(muescas, recorrido, bajada=0.0):
+def fowler(muescas, recorrido, ranura=0.015, solape=0.005):
     """
     Un flap Fowler, el de un avión de línea: **primero sale hacia atrás** por
     sus carriles y luego baja.
@@ -1213,12 +1223,15 @@ def fowler(muescas, recorrido, bajada=0.0):
     se curva. Las primeras muescas son casi todo carril y poco ángulo, para
     despegar sin mucha resistencia; las últimas, ángulo, para frenar y bajar.
 
+    Por eso recogido lleva **una buena parte metida bajo los spoilers**: lo
+    que luego sale es lo que estaba guardado ahí. Y al final se queda como el
+    ranurado, con la nariz justo bajo el labio y la ranura estrecha.
+
     `recorrido`: cuánto ha salido en cada muesca, en cuerdas del flap.
-    `bajada`: cuánto miran hacia abajo los carriles respecto de la cuerda, en
-    grados, porque los de verdad son curvos y el flap baja mientras sale.
+    `ranura` y `solape`, como en `ranurado`.
     """
     return {"tipo": "fowler", "muescas": list(muescas),
-            "recorrido": list(recorrido), "bajada": bajada, "caida": 0.0}
+            "recorrido": list(recorrido), "ranura": ranura, "solape": solape}
 
 
 def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
@@ -1236,13 +1249,17 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
       quedarían con la mitad de sus caras: se vería una raya de sombreado
       donde antes no había nada. Así que antes de partir se leen las normales
       de cada esquina y después se le ponen tal cual a cada trozo.
-    - **El corte en la junta.** Las caras que tapan el hueco —la pared del
-      ala donde encaja el flap y las tapas del flap— van por dentro y no se
-      ven con el flap en su sitio; y el corte cae donde ya estaba la raya
-      oscura de la junta, así que ni un píxel suelto del borde se nota.
+    - **Lo nuevo, solo por dentro.** La nariz del flap, el labio, la cala en
+      la que se guarda y las paredes de los lados van en mallas aparte —las
+      tapas y el hueco— que caen enteras dentro del ala y que el juego no
+      dibuja con el flap recogido. Recogido, el avión es exactamente las
+      caras que tenía antes. Ver `_nariz_y_cala`.
 
-    Con el flap fuera, lo que se ve por la ranura es la pared del hueco,
-    oscura, que es como se ve la de verdad.
+    **Y fuera, lo que se ve es lo de un ala de verdad.** El flap no es el
+    trozo de atrás del ala cortado a hachazo: tiene nariz redonda, y recogido
+    la lleva guardada en una cala, bajo el labio del extradós. Al salir no
+    deja una pared roma del grueso del ala, sino una ranura estrecha entre el
+    labio y la nariz, con la cala oscura detrás. Ver `_disenar_flap`.
 
     El espejo del ala se aplica aquí: cada flap sale por separado a cada
     lado, con su propio carril, igual que las patas en `bisagra` y por lo
@@ -1252,8 +1269,9 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
     Cada flap cuelga de un vacío `flap-…` puesto en el origen, con, en los
     ejes del avión:
 
-    - `bisagra` y `eje`: por dónde pasa la bisagra y hacia dónde va; girando
-      por la regla de la mano derecha, el borde de salida baja.
+    - `bisagra` y `eje`: por dónde pasa el eje sobre el que gira —el de las
+      ruedas de su carro, dentro de la nariz— y hacia dónde va; girando por
+      la regla de la mano derecha, el borde de salida baja.
     - `muescas`: los grados en cada tope de la palanca. Tienen que ser los de
       `muescasDeFlaps` en la ficha del avión —ver `aircraft.ts`—, que es lo
       que rotula la regla del cuadro; lo comprueba
@@ -1264,14 +1282,15 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
     ala va aparte, como `hueco-flap-…`. El juego no sabe nada de cada avión:
     lee eso y mueve. Ver `world/flaps.ts`.
 
-    La bisagra de un flap tiene que caer en un corte de cuerda que ya pinte
-    una zona —la raya de la junta—: un corte nuevo cambiaría el perfil del
-    ala entera. Los extremos, en cambio, pueden caer donde haga falta; ver
-    los anillos «entre» de `superficie`.
+    El corte de cuerda de un flap tiene que caer en uno que ya pinte una
+    zona —la raya de la junta—: un corte nuevo cambiaría el perfil del ala
+    entera. Los extremos, en cambio, pueden caer donde haga falta; ver los
+    anillos «entre» de `superficie`.
     """
     rej = _REJILLAS.pop(ala.name)
     eta, bucle = rej["eta"], rej["bucle"]
     n = len(bucle)
+    j_ba = bucle.index((0.0, 0))
 
     for f in flaps:
         f["i0"] = next(i for i, e in enumerate(eta) if abs(e - f["e0"]) < 1e-4)
@@ -1331,20 +1350,10 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
         if quien:
             centros.setdefault(quien, []).append(cara.calc_center_median())
     centros = {k: sum(v, Vector()) / len(v) for k, v in centros.items()}
+    bm.free()
 
     def en(i, j, s):
         return entera[(i, j, s)].copy()
-
-    def cortes(f, s):
-        """Las caras que cierran el corte: la de la bisagra y las dos tapas."""
-        jt, jb = f["jt"], f["jb"]
-        caras = [[en(i, jt, s), en(i + 1, jt, s), en(i + 1, jb, s),
-                  en(i, jb, s)] for i in range(f["i0"], f["i1"])]
-        caras += [[en(i, j, s) for j in f["cadena"]]
-                  for i in (f["i0"], f["i1"])]
-        return caras
-
-    bm.free()
 
     # ── Cada flap, una pieza ──────────────────────────────────────────────
     for k, f in enumerate(flaps):
@@ -1362,38 +1371,22 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
             _normales_de_antes(malla)
             piel = bpy.data.objects.new(f"{nombre}-piel", malla)
             bpy.context.collection.objects.link(piel)
-            # Las tapas del flap, del color del flap. Van aparte de la piel
-            # por lo mismo que el hueco del ala: ver `_tapas`.
-            tapas = _tapas(f"{nombre}-tapas", cortes(f, s),
-                           me.materials[0].name, centros[(k, s)], fuera=True)
 
-            # La bisagra, del perfil de sus dos extremos.
-            nariz, borde, cuerdas, bisagras = [], [], [], []
-            for i in (f["i0"], f["i1"]):
-                arriba, abajo = en(i, f["jt"], s), en(i, f["jb"], s)
-                salida_ = en(i, 0, s)
-                m = (arriba + abajo) / 2
-                nariz.append(m)
-                borde.append(salida_)
-                cuerdas.append((salida_ - m).length)
-                if movimiento["tipo"] == "ranurado":
-                    baja = (abajo - arriba).normalized()
-                    bisagras.append(abajo + baja * movimiento["caida"]
-                                    * (salida_ - m).length)
-                else:
-                    bisagras.append(m)
-            centro = (bisagras[0] + bisagras[1]) / 2
-            eje = (bisagras[1] - bisagras[0]).normalized()
-            te = (borde[0] + borde[1]) / 2
-            # Que girar en positivo baje el borde de salida, sea cual sea el
-            # lado: en el izquierdo la bisagra va al revés.
-            if eje.cross(te - centro).y > 0:
-                eje = -eje
-            cuerda = sum(cuerdas) / len(cuerdas)
-            carril = ((borde[0] - nariz[0]).normalized()
-                      + (borde[1] - nariz[1]).normalized()).normalized()
-            carril = Matrix.Rotation(math.radians(movimiento["bajada"]), 3,
-                                     eje) @ carril
+            anillos = range(f["i0"], f["i1"] + 1)
+            secciones = [_seccion(en, i, s, f["jt"], f["jb"], j_ba)
+                         for i in anillos]
+            cuerda = sum((en(i, 0, s) - (en(i, f["jt"], s)
+                                         + en(i, f["jb"], s)) / 2).length
+                         for i in (f["i0"], f["i1"])) / 2
+            d = _disenar_flap(secciones, movimiento, cuerda)
+            cadenas = [[en(i, j, s) for j in f["cadena"]]
+                       for i in (f["i0"], f["i1"])]
+            tapas, agujero = _nariz_y_cala(
+                nombre, secciones, d, cadenas, me.materials[0].name, hueco,
+                centros[(k, s)])
+            if movimiento.get("carriles"):
+                salida.append(_carriles(f"hueco-{nombre}-carriles",
+                                        secciones, d, movimiento["carriles"]))
 
             # **El vacío va en el origen, no en la bisagra**, y la bisagra va
             # escrita en él: así, recogido, el flap cuelga de la misma matriz
@@ -1402,22 +1395,25 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
             bpy.ops.object.empty_add(location=(0.0, 0.0, 0.0))
             b = bpy.context.object
             b.name = nombre
-            b["bisagra"] = [float(c) for c in centro]
-            b["eje"] = [float(c) for c in eje]
+            b["bisagra"] = [float(c) for c in d["bisagra"]]
+            b["eje"] = [float(c) for c in d["eje"]]
             b["muescas"] = [float(g) for g in movimiento["muescas"]]
-            b["carril"] = [float(c) for c in carril.normalized()]
-            b["recorrido"] = [float(r * cuerda) for r in movimiento["recorrido"]]
+            b["carril"] = [float(c) for c in d["carril"]]
+            b["recorrido"] = [float(r) for r in d["recorrido"]]
             bpy.context.view_layer.update()
             for h in (piel, tapas):
                 h.parent = b
                 h.matrix_parent_inverse = b.matrix_world.inverted()
-            # Y el hueco que deja en el ala, oscuro, que es lo que se ve por
-            # la ranura con el flap fuera.
-            agujero = _tapas(f"hueco-{nombre}", cortes(f, s), hueco,
-                             centros[(k, s)], fuera=False)
+            # Por dónde pasa el flap en cada anillo, para que las canoas se
+            # partan en su sitio: el eje de giro y dónde acaba la punta de la
+            # nariz en el último tope. Ver `canoas_con_flap`.
+            _JUNTAS[nombre] = [
+                (abs(fo["centro"].x), fo["centro"].z,
+                 (sec["P"] - sec["cd"] * movimiento["solape"] * sec["c"]).z)
+                for sec, fo in zip(secciones, d["formas"])]
             salida += [b, piel, tapas, agujero]
             print(f"FLAP: {nombre} · cuerda {cuerda:.2f} m · "
-                  f"{len(malla.polygons)} caras")
+                  f"{len(malla.polygons)} caras · " + d["resumen"])
 
     # ── Y el ala, sin ellos ──────────────────────────────────────────────
     bm = bmesh.new()
@@ -1428,6 +1424,431 @@ def flaps_moviles(ala, flaps, movimiento, hueco="oscuro"):
     bm.free()
     _normales_de_antes(me)
     return salida
+
+
+_JUNTAS = {}
+
+
+def _seccion(en, i, s, jt, jb, j_ba):
+    """
+    Un anillo del ala en el tramo de un flap, en el plano de su perfil.
+
+    `ξ` va a lo largo de la cuerda, del borde de ataque hacia atrás; `η`,
+    hacia el extradós; `w`, lo poco que el anillo se sale de ese plano —un
+    anillo «entre» es la mezcla de dos que no son del todo paralelos—, para
+    que lo nuevo caiga sobre la chapa que ya había y no a un milímetro.
+    """
+    ba, bs = en(i, j_ba, s), en(i, 0, s)
+    cd = (bs - ba).normalized()
+    arriba, abajo = en(i, jt, s), en(i, jb, s)
+    v = arriba - abajo
+    gd = (v - cd * v.dot(cd)).normalized()
+    nr = cd.cross(gd)
+
+    def plano(p):
+        d = p - ba
+        return (d.dot(cd), d.dot(gd), d.dot(nr))
+
+    return {
+        "ba": ba, "cd": cd, "gd": gd, "nr": nr, "c": (bs - ba).length,
+        "P": arriba, "L": abajo,
+        # Las dos caras, del corte hacia el borde de ataque.
+        "arriba": [plano(en(i, j, s)) for j in range(jt, j_ba + 1)],
+        "abajo": [plano(en(i, j, s)) for j in range(jb, j_ba - 1, -1)],
+    }
+
+
+def _en_curva(curva, xi):
+    """La altura `η` —y el `w`— de una cara del perfil en `ξ`, en línea recta
+    entre sus vértices, que es como la dibuja la malla."""
+    for (x0, y0, w0), (x1, y1, w1) in zip(curva, curva[1:]):
+        if x1 <= xi <= x0:
+            f = (x0 - xi) / (x0 - x1) if x0 > x1 else 0.0
+            return y0 + (y1 - y0) * f, w0 + (w1 - w0) * f
+    x0, y0, w0 = curva[0] if xi > curva[0][0] else curva[-1]
+    return y0, w0
+
+
+def _punto(sec, xi, eta, curva="arriba"):
+    """Del plano del perfil al espacio."""
+    w = _en_curva(sec[curva], xi)[1]
+    return sec["ba"] + sec["cd"] * xi + sec["gd"] * eta + sec["nr"] * w
+
+
+# Cuánto más adelgaza la nariz que el labio hacia la junta: la holgura entre
+# la nariz guardada y el labio es `_HOLGURA - 1` veces el grosor del labio.
+_HOLGURA = 1.5
+# Cuánto queda la cala por delante de la nariz guardada, en cuerdas del ala.
+_FONDO = 0.012
+# El radio de la nariz, en fracción del medio grueso del ala en la junta.
+_REDONDO = 0.65
+
+
+def _disenar_flap(secciones, mov, cuerda_flap):
+    """
+    La nariz, la cala y el carril de un flap, sacados de dónde tiene que
+    quedar al final.
+
+    **Se diseña hacia atrás, desde el último tope**, que es lo que se mide en
+    un flap de verdad: la ranura —del labio a la nariz— y el solape —cuánto
+    queda la nariz por delante del labio—. De ahí sale todo lo demás:
+
+    - **La nariz** es tan larga como lo que el flap sale por su carril: lo
+      que sale es lo que estaba guardado. Es redonda, con el centro sobre el
+      eje de giro, que es el de las ruedas de su carro: girar no la mueve de
+      su sitio, así que el carril la lleva recta a donde se diseñó. Por
+      arriba sigue al labio y por abajo sube desde la junta hasta la curva,
+      como el vientre de un flap de verdad.
+    - **La cala** es el hueco en el que se guarda, con un labio arriba y otro
+      abajo que acaban en filo justo en la junta pintada. En filo porque ahí
+      la chapa del ala y la del flap están a ras, y un labio con grosor en
+      ese punto sería una raya nueva con el flap recogido.
+    - **El labio adelgaza hacia atrás más deprisa que el perfil**, y la nariz
+      con él. Si no, al salir hacia atrás la parte gorda de la nariz llegaría
+      a donde el ala es más fina y asomaría por encima del labio: el perfil
+      de un ala cae unas diez centésimas por cada unidad de cuerda en esa
+      zona, y la nariz tiene que caer más.
+    - **El carril**, uno para todo el flap, porque el flap es rígido: la media
+      de lo que piden sus dos extremos para llevar su nariz a su sitio. En
+      medio, el flap rígido deja la ranura que deja; se mide y se dice.
+
+    Y luego **se comprueba moviéndolo**, tope a tope y entre topes, anillo a
+    anillo: que la nariz no pise el labio ni se salga por la chapa mientras
+    sale. Es lo que mide `holguras` en el resumen; una negativa no sale del
+    guion. Ver `_holguras`.
+
+    Todo en metros y en el plano de cada anillo; la cuerda cambia a lo largo
+    del ala y la nariz no, así que en la punta la nariz es más larga en
+    proporción.
+    """
+    c_media = sum(s["c"] for s in secciones) / len(secciones)
+    recorrido = mov["recorrido"]
+    nariz = recorrido[-1] * cuerda_flap + mov["solape"] * c_media
+
+    # Primero, dónde iría el centro de la nariz de cada anillo por sí solo.
+    # Los de los extremos fijan el eje de giro.
+    naturales = []
+    for sec in secciones:
+        xi0, eta0, _ = sec["arriba"][0]
+        cala = _cala(sec, xi0 - nariz - _FONDO * sec["c"])
+        r = _REDONDO * (eta0 - sec["abajo"][0][1]) / 2
+        xi_b = xi0 - nariz + r
+        naturales.append(_punto(sec, xi_b, cala["nariz_arriba"](xi_b) - r))
+    a, b = naturales[0], naturales[-1]
+    eje = (b - a).normalized()
+    bisagra = (a + b) / 2
+    te = sum((s["ba"] + s["cd"] * s["c"] for s in secciones), Vector()) \
+        / len(secciones)
+    # Que girar en positivo baje el borde de salida, sea cual sea el lado:
+    # en el izquierdo el eje va al revés.
+    if eje.cross(te - bisagra).y > 0:
+        eje = -eje
+
+    # **Y luego cada nariz con su centro sobre el eje**, que es donde van las
+    # ruedas del carro. En un flap recto es donde ya estaba; en uno que pasa
+    # por el quiebro del ala, la junta hace codo y el eje no: con la nariz del
+    # codo fuera del eje, al girar subía y pisaba el labio. Sobre el eje sale
+    # más corta o más larga, y la ranura del codo, un poco más ancha.
+    formas = []
+    for sec in secciones:
+        c = sec["c"]
+        xi0, eta0, _ = sec["arriba"][0]
+        eta_l0 = sec["abajo"][0][1]
+        t = (sec["ba"] - bisagra).dot(sec["nr"]) / eje.dot(sec["nr"])
+        v = bisagra + eje * t - sec["ba"]
+        xi_b, m = v.dot(sec["cd"]), v.dot(sec["gd"])
+        xi_c = xi0 - nariz - _FONDO * c
+        for _ in range(3):
+            cala = _cala(sec, xi_c)
+            r = cala["nariz_arriba"](xi_b) - m
+            xi_c = min(xi0 - nariz, xi_b - r) - _FONDO * c
+        cala = _cala(sec, xi_c)
+        r = cala["nariz_arriba"](xi_b) - m
+        # Que quepa: la curva de la nariz por encima del labio de abajo.
+        holgura_abajo = (m - r) - (cala["abajo"](xi_b) + cala["grueso"](xi_b))
+        if holgura_abajo < 0.002 * c or r < 0.004 * c:
+            raise SystemExit(
+                f"La nariz del flap no cabe en su cala (radio {r:.3f} m, "
+                f"holgura {holgura_abajo:.3f} m): el ala es demasiado fina "
+                "para tanto recorrido. Ver `_disenar_flap`.")
+        # El perfil de la nariz, de la junta de abajo a la de arriba. Por
+        # abajo sube deprisa al salir de la junta y llega a la curva sin
+        # codo: al girar, lo de detrás del eje baja, y el vientre de la nariz
+        # tiene que ir por encima del labio de abajo desde el primer palmo.
+        CUERPO, CURVA = 6, 8
+        nar = [(xi0, eta_l0, "abajo")]
+        for q in range(1, CUERPO):
+            f = q / (CUERPO - 1)
+            x = xi0 + (xi_b - xi0) * f
+            nar.append((x, eta_l0 + (m - r - eta_l0) * (1 - (1 - f) ** 2),
+                        "abajo"))
+        for q in range(1, CURVA):
+            ang = math.radians(270 - 180 * q / CURVA)
+            nar.append((xi_b + r * math.cos(ang), m + r * math.sin(ang),
+                        "arriba"))
+        for q in range(CUERPO - 1, 0, -1):
+            x = xi0 + (xi_b - xi0) * q / (CUERPO - 1)
+            nar.append((x, cala["nariz_arriba"](x), "arriba"))
+        nar.append((xi0, eta0, "arriba"))
+        # Y la cala: el labio de abajo hacia delante, el fondo, y el de
+        # arriba de vuelta al filo.
+        LABIO = 6
+        cal = [(xi0, eta_l0, "abajo")]
+        for q in range(1, LABIO):
+            x = xi0 + (xi_c - xi0) * q / (LABIO - 1)
+            cal.append((x, cala["abajo"](x) + cala["grueso"](x), "abajo"))
+        bajo = cala["abajo"](xi_c) + cala["labio"]
+        alto = cala["arriba"](xi_c) - cala["labio"]
+        for q in range(1, 3):
+            cal.append((xi_c, bajo + (alto - bajo) * q / 3, "arriba"))
+        for q in range(LABIO - 1, 0, -1):
+            x = xi0 + (xi_c - xi0) * q / (LABIO - 1)
+            cal.append((x, cala["arriba"](x) - cala["grueso"](x), "arriba"))
+        cal.append((xi0, eta0, "arriba"))
+
+        centro = _punto(sec, xi_b, m)
+        # Y dónde tendría que acabar ese centro: la nariz a `ranura` del
+        # filo del labio y su punta `solape` por delante de él.
+        g = mov["ranura"] * c
+        o = mov["solape"] * c
+        dx = r - o
+        dy = math.sqrt(max((r + g) ** 2 - dx * dx, 0.0))
+        final = _punto(sec, xi0 + dx, eta0 - dy)
+        formas.append({**cala, "xi0": xi0, "r": r, "nariz": nar, "cala": cal,
+                       "centro": centro, "final": final})
+
+    # El carril, uno para todo el flap: la media de lo que piden los dos
+    # extremos, que son los que tienen la nariz donde se diseñó.
+    viaje = ((formas[0]["final"] - formas[0]["centro"])
+             + (formas[-1]["final"] - formas[-1]["centro"])) / 2
+    largo = viaje.length
+    ultimo = recorrido[-1] or 1.0
+    d = {
+        "formas": formas, "bisagra": bisagra, "eje": eje,
+        "carril": viaje.normalized(),
+        "recorrido": [largo * r / ultimo for r in recorrido],
+        "muescas": list(mov["muescas"]),
+    }
+    h = _holguras(secciones, d)
+    if min(h["labio"], h["abajo"], h["chapa"]) < 0:
+        raise SystemExit(
+            f"El flap pisa su cala al salir (labio {h['labio'] * 100:.2f} %, "
+            f"abajo {h['abajo'] * 100:.2f} %, chapa {h['chapa'] * 100:.2f} % "
+            "de la cuerda): se vería asomar por fuera del ala o meterse en "
+            "el labio. Ver `_disenar_flap`.")
+    d["holguras"] = h
+    d["resumen"] = (
+        f"nariz {nariz:.2f} m · carril {largo:.2f} m · "
+        f"ranura {h['ranura'][0] * 100:.1f}–{h['ranura'][1] * 100:.1f} % · "
+        f"solape {h['solape'][0] * 100:.1f}–{h['solape'][1] * 100:.1f} % · "
+        f"labio {max(fo['labio'] / s['c'] for fo, s in zip(formas, secciones)) * 100:.1f} % · "
+        f"holguras al salir: labio {h['labio'] * 100:.2f} %, "
+        f"abajo {h['abajo'] * 100:.2f} %, chapa {h['chapa'] * 100:.2f} %")
+    return d
+
+
+def _cala(sec, xi_c):
+    """
+    La cala de un anillo si empieza en `xi_c`: dónde están sus labios y por
+    dónde va la nariz guardada en ella.
+
+    El labio acaba en filo en la junta y engorda hacia el fondo. Lo que
+    engorda sale de lo que cae el extradós en ese tramo, más un margen: la
+    nariz, que va `_HOLGURA` veces más separada, cae entonces más deprisa que
+    el perfil, y al salir hacia atrás no asoma por encima del labio.
+    """
+    c = sec["c"]
+    xi0 = sec["arriba"][0][0]
+    largo = xi0 - xi_c
+
+    def arriba(x):
+        return _en_curva(sec["arriba"], x)[0]
+
+    def abajo(x):
+        return _en_curva(sec["abajo"], x)[0]
+
+    xs = [xi_c + largo * q / 24 for q in range(25)]
+    paso = largo / 24
+    cae = max(0.0, max((arriba(a) - arriba(b)) / paso
+                       for a, b in zip(xs, xs[1:])))
+    labio = max(0.006 * c, (cae + 0.06) * largo / _HOLGURA)
+
+    def grueso(x):
+        return labio * max(0.0, min(1.0, (xi0 - x) / largo))
+
+    def nariz_arriba(x):
+        return arriba(x) - _HOLGURA * grueso(x)
+
+    return {"xi_c": xi_c, "labio": labio, "arriba": arriba, "abajo": abajo,
+            "grueso": grueso, "nariz_arriba": nariz_arriba}
+
+
+def _mover_flap(d, p, donde):
+    """Dónde está el punto `p` del flap con los flaps en `donde` (0 a 1), como
+    lo mueve `world/flaps.ts`: por su carril y girando sobre su eje."""
+    def en_la_muesca(tabla):
+        k = min(2, int(donde * 3))
+        f = donde * 3 - k
+        return tabla[k] + (tabla[k + 1] - tabla[k]) * f
+    giro = Matrix.Rotation(math.radians(en_la_muesca(d["muescas"])), 3,
+                           d["eje"])
+    return (giro @ (p - d["bisagra"]) + d["bisagra"]
+            + d["carril"] * en_la_muesca(d["recorrido"]))
+
+
+def _holguras(secciones, d):
+    """
+    **El flap, movido de verdad y medido anillo a anillo**, en fracciones de
+    la cuerda de cada uno.
+
+    - `labio`: lo más que se acerca la nariz al labio de arriba mientras
+      sale; negativo, lo pisa.
+    - `abajo`: lo mismo con el labio de abajo.
+    - `chapa`: lo que queda entre la nariz y la chapa de fuera, arriba y
+      abajo, delante de la junta; negativo, asoma por fuera del ala.
+    - `ranura` y `solape`: los del último tope, lo más y lo menos a lo largo
+      del flap —el flap es rígido y un anillo no queda como otro—.
+    """
+    peor = {"labio": math.inf, "abajo": math.inf, "chapa": math.inf}
+    ranuras, solapes = [], []
+    for sec, fo in zip(secciones, d["formas"]):
+        c = sec["c"]
+        base = [_punto(sec, x, e, cur) for x, e, cur in fo["nariz"][1:-1]]
+        for q in range(1, 61):
+            donde = q / 60
+            for p in base:
+                v = _mover_flap(d, p, donde) - sec["ba"]
+                x, e = v.dot(sec["cd"]), v.dot(sec["gd"])
+                if not (fo["xi_c"] < x < fo["xi0"] - 1e-4):
+                    continue
+                arriba, abajo = fo["arriba"](x), fo["abajo"](x)
+                peor["chapa"] = min(peor["chapa"], (arriba - e) / c,
+                                    (e - abajo) / c)
+                peor["labio"] = min(peor["labio"],
+                                    (arriba - fo["grueso"](x) - e) / c)
+                peor["abajo"] = min(peor["abajo"],
+                                    (e - abajo - fo["grueso"](x)) / c)
+        fin = [_mover_flap(d, p, 1.0) for p in base]
+        ranuras.append(min((p - sec["P"]).length for p in fin) / c)
+        solapes.append(max((sec["P"] - p).dot(sec["cd"]) for p in fin) / c)
+    return {**peor, "ranura": (min(ranuras), max(ranuras)),
+            "solape": (min(solapes), max(solapes))}
+
+
+def _nariz_y_cala(nombre, secciones, d, cadenas, material_flap, hueco,
+                  centro_flap):
+    """
+    Lo que solo se ve con el flap fuera, en dos mallas que el juego apaga
+    con el flap recogido.
+
+    - **Las tapas**, del color del flap y colgadas de él: la nariz redonda
+      que recogido va guardada en la cala, y los dos costados del flap.
+    - **El hueco**, oscuro y fijo al ala: la cala —el labio de arriba por
+      debajo, el fondo y el labio de abajo por encima— y las paredes de los
+      lados, donde el ala sigue.
+
+    Van enteras por dentro del ala, y por eso recogidas no se verían aunque
+    estuvieran encendidas; pero su borde es el borde de la junta, a la misma
+    profundidad que la chapa, y eso sí asomaría como píxeles sueltos. Ver
+    `_tapas` y `world/flaps.ts`.
+
+    Cada anillo con los mismos puntos, para tender la malla de uno a otro; y
+    los de la junta, los mismos vértices del ala, para que no quede rendija.
+    """
+    def al_espacio(sec, perfil):
+        pts = [_punto(sec, x, e, cur) for x, e, cur in perfil]
+        pts[0], pts[-1] = sec["L"].copy(), sec["P"].copy()
+        return pts
+
+    narices = [al_espacio(sec, fo["nariz"])
+               for sec, fo in zip(secciones, d["formas"])]
+    calas = [al_espacio(sec, fo["cala"])
+             for sec, fo in zip(secciones, d["formas"])]
+    ejes_de_giro = [fo["centro"] for fo in d["formas"]]
+
+    def tender(nombre_, filas, caps, material_, hacia_fuera):
+        """Las filas tendidas de anillo a anillo y las dos tapas de los
+        lados, mirando fuera de la nariz o hacia ella."""
+        bm = bmesh.new()
+        vs = [[bm.verts.new(p) for p in fila] for fila in filas]
+        caras = []
+        for a, (fa, fb) in enumerate(zip(vs, vs[1:])):
+            for j in range(len(fa) - 1):
+                cara = bm.faces.new((fa[j], fa[j + 1], fb[j + 1], fb[j]))
+                caras.append((cara, (ejes_de_giro[a] + ejes_de_giro[a + 1]) / 2))
+        bm.normal_update()
+        cuenta = sum((c.calc_center_median() - ref).dot(c.normal)
+                     for c, ref in caras)
+        if (cuenta > 0) != hacia_fuera:
+            for c, _ in caras:
+                c.normal_flip()
+        for cap in caps:
+            c = bm.faces.new([bm.verts.new(p) for p in cap])
+            c.normal_update()
+            # Las del flap, lejos de él; las del ala, hacia donde estaba.
+            if ((c.calc_center_median() - centro_flap).dot(c.normal) > 0) \
+                    != hacia_fuera:
+                c.normal_flip()
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+        return liso(_malla_en_escena(nombre_, bm, [material_]), angulo=40)
+
+    caps_flap = [cad + list(reversed(nar))[1:-1]
+                 for cad, nar in zip(cadenas, (narices[0], narices[-1]))]
+    caps_ala = [cad + list(reversed(cal))[1:-1]
+                for cad, cal in zip(cadenas, (calas[0], calas[-1]))]
+    tapas = tender(f"{nombre}-tapas", narices, caps_flap, material_flap, True)
+    agujero = tender(f"hueco-{nombre}", calas, caps_ala, hueco, False)
+    return tapas, agujero
+
+
+def _carriles(nombre, secciones, d, donde, material_="metal"):
+    """
+    Los carriles de un flap sin canoas: una pletina por cada uno, fija al
+    fondo de la cala, que va por donde va el centro de la nariz.
+
+    Recogido van enteros dentro del ala y del flap, y además apagados, como
+    el hueco del que forman parte —se llaman `hueco-flap-…-carriles`, y el
+    juego los enciende y apaga con él—. Con el flap fuera se ven cruzar la
+    ranura y meterse en la nariz, que es por donde entra de verdad el carril
+    en el carro. **La nariz no se sale nunca de ellos**: su centro va sobre
+    el eje de giro, y el eje sobre el carril, así que el carril la lleva
+    metida en todo el recorrido. Ver `_disenar_flap`.
+
+    `donde`: a qué fracción del flap va cada uno, de dentro afuera.
+    """
+    bm = bmesh.new()
+    a, b = d["formas"][0], d["formas"][-1]
+    sa, sb = secciones[0], secciones[-1]
+    viaje = d["carril"] * d["recorrido"][-1]
+    for f in donde:
+        c = sa["c"] + (sb["c"] - sa["c"]) * f
+        centro = a["centro"].lerp(b["centro"], f)
+        r = a["r"] + (b["r"] - a["r"]) * f
+        # El fondo de la cala a la altura del centro, en esa estación, y un
+        # poco metido en él: clavado, no apoyado.
+        fondo = _punto(sa, a["xi_c"] - 0.003 * sa["c"],
+                       (a["centro"] - sa["ba"]).dot(sa["gd"])).lerp(
+            _punto(sb, b["xi_c"] - 0.003 * sb["c"],
+                   (b["centro"] - sb["ba"]).dot(sb["gd"])), f)
+        arriba = sa["gd"].lerp(sb["gd"], f).normalized()
+        lado = sa["nr"].lerp(sb["nr"], f).normalized()
+        alto, ancho = 0.35 * r, max(0.006 * c, 0.012)
+        linea = [fondo, centro, centro + viaje]
+        anillos = []
+        for p in linea:
+            anillos.append([bm.verts.new(p + arriba * (sy * alto)
+                                         + lado * (sx * ancho / 2))
+                            for sy, sx in ((1, 1), (1, -1), (-1, -1), (-1, 1))])
+        for u, w in zip(anillos, anillos[1:]):
+            for j in range(4):
+                bm.faces.new((u[j], u[(j + 1) % 4], w[(j + 1) % 4], w[j]))
+        bm.faces.new(list(reversed(anillos[0])))
+        bm.faces.new(anillos[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    o = _malla_en_escena(nombre, bm, [material_])
+    for p in o.data.polygons:
+        p.use_smooth = False
+    return o
 
 
 def canoas_con_flap(canoas, piezas_de_flaps):
@@ -1443,11 +1864,25 @@ def canoas_con_flap(canoas, piezas_de_flaps):
     Entera y fija, la cola atravesaba el flap al bajar: se le veía asomar la
     punta por encima.
 
-    Se parte por el anillo más cercano a la bisagra de su flap —el que ya
-    tenía, para que recogida sea la misma malla—, con las normales de antes, y
-    las dos caras del corte aparte y apagadas mientras el flap está recogido,
-    como las del flap. Ver `flaps_moviles` y `_tapas`. Una canoa que no cae
-    debajo de ningún flap —la de fuera, bajo el alerón— se queda como está.
+    **Se parte en el primer anillo que ya tenía por detrás del eje de giro
+    del flap, medido en la estación de la canoa**, y nunca más atrás de donde
+    acaba su nariz en el último tope. Por delante del eje, la cola sube al
+    girar y se clava en el ala; por detrás de donde acaba la nariz, la parte
+    fija se queda debajo de ella y con los flaps abajo la nariz acaba metida
+    en la canoa. Y lo más adelante que se pueda, porque la canoa asoma por
+    dentro de la cala: lo que de ella va bajo la cala, mejor que baje con el
+    flap que no que la nariz lo atraviese al salir.
+
+    En la estación de la canoa, no en la mitad del flap: en un ala en flecha
+    el flap va cada vez más atrás hacia la punta, y una canoa lejos de la
+    mitad se partía más de un metro por delante de él. Esa cola subía al
+    girar y atravesaba el ala, y la punta de delante se quedaba suelta en el
+    aire.
+
+    Con las normales de antes, y las dos caras del corte aparte y apagadas
+    mientras el flap está recogido, como las del flap. Ver `flaps_moviles` y
+    `_tapas`. Una canoa que no cae debajo de ningún flap —la de fuera, bajo
+    el alerón— se queda como está.
     """
     salida = []
     vacios = [p for p in piezas_de_flaps if p.type == "EMPTY"]
@@ -1464,32 +1899,41 @@ def canoas_con_flap(canoas, piezas_de_flaps):
             .data.foreach_set("vector", antes)
         cortes = {}
         for s, lado in ((1, "derecha"), (-1, "izquierda")):
-            # El flap de este lado que cae encima de la canoa.
-            suyo = None
+            suyos = [v for v in me.vertices if v.co.x * s > 0]
+            if not suyos:
+                continue
+            x = sum(abs(v.co.x) for v in suyos) / len(suyos)
+            # El flap de este lado que cae encima de la canoa, y en esta
+            # estación su eje de giro y dónde acaba su nariz, entre los dos
+            # anillos del flap que la rodean.
+            suyo, eje, nariz = None, None, None
             for b in vacios:
                 if not b.name.endswith(f"-{lado}"):
                     continue
-                piel = next(h for h in b.children if h.name.endswith("-piel"))
-                xs = [abs(v.co.x) for v in piel.data.vertices]
-                centro = sum(abs(v.co.x) for v in me.vertices
-                             if v.co.x * s > 0) / max(1, sum(
-                                 1 for v in me.vertices if v.co.x * s > 0))
-                if min(xs) < centro < max(xs):
+                linea = sorted(_JUNTAS[b.name])
+                if linea[0][0] < x < linea[-1][0]:
                     suyo = b
+                    for p, q in zip(linea, linea[1:]):
+                        if p[0] <= x <= q[0]:
+                            f = (x - p[0]) / max(1e-9, q[0] - p[0])
+                            eje = p[1] + (q[1] - p[1]) * f
+                            nariz = p[2] + (q[2] - p[2]) * f
             if suyo is None:
                 continue
-            z_bisagra = suyo["bisagra"][2]
             # Un anillo de verdad: ni la punta de delante ni la de atrás, que
             # son un solo vértice y no se pueden tapar.
             cuenta = {}
-            for v in me.vertices:
-                if v.co.x * s > 0:
-                    z = round(v.co.z, 5)
-                    cuenta[z] = cuenta.get(z, 0) + 1
-            anillos = [z for z, n in cuenta.items() if n >= 3]
-            if not anillos:
-                continue
-            cortes[s] = (suyo, min(anillos, key=lambda z: abs(z - z_bisagra)))
+            for v in suyos:
+                z = round(v.co.z, 5)
+                cuenta[z] = cuenta.get(z, 0) + 1
+            anillos = sorted(z for z, n in cuenta.items() if n >= 3)
+            entre = [z for z in anillos if eje <= z <= nariz - 0.02]
+            if not entre:
+                raise SystemExit(
+                    f"La canoa {canoa.name} no tiene ningún anillo entre el "
+                    f"eje del flap ({eje:.2f}) y su nariz ({nariz:.2f}): no "
+                    "hay dónde partirla. Ver `canoas_con_flap`.")
+            cortes[s] = (suyo, entre[0])
         if not cortes:
             _normales_de_antes(me)
             continue

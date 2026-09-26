@@ -135,12 +135,27 @@ describe("los grados entre muesca y muesca", () => {
 
 describe("los flaps de cada avión, en su ficha", () => {
   it("una cifra por muesca, de cero hacia abajo y sin repetirse", () => {
-    for (const a of AIRCRAFT) {
+    for (const a of AIRCRAFT.filter((x) => x.llevaFlaps)) {
       expect(a.muescasDeFlaps).toHaveLength(DETENTES.length);
       expect(a.muescasDeFlaps[0]).toBe(0);
       for (let i = 1; i < a.muescasDeFlaps.length; i++)
         expect(a.muescasDeFlaps[i]!).toBeGreaterThan(a.muescasDeFlaps[i - 1]!);
       expect(a.tardanLosFlaps).toBeGreaterThan(0);
+    }
+  });
+
+  /*
+   * **Y el que no los lleva, sin nada que los haga flaps.** El fumigador tenía
+   * palanca, reloj y un cuarto de sustentación de más con un ala que no
+   * bajaba nada. Ver `llevaFlaps` en `aircraft.ts`.
+   */
+  it("el que no los lleva no tiene muescas ni le sustentan", () => {
+    const sin = AIRCRAFT.filter((x) => !x.llevaFlaps);
+    expect(sin.map((a) => a.id)).toEqual(["jaz-25"]);
+    for (const a of sin) {
+      expect(a.muescasDeFlaps).toHaveLength(0);
+      expect(a.flapsLift).toBe(0);
+      expect(a.flapsDrag).toBe(0);
     }
   });
 
@@ -218,6 +233,27 @@ describe("la palanca y los flaps, en el mando", () => {
     m.alternarFlaps();
     // Aunque los flaps apenas hayan salido, la palanca ya va por la segunda.
     expect(m.palancaDeFlaps).toBe(DETENTES[2]);
+  });
+
+  it("en el avión que no los lleva, la palanca no se mueve", () => {
+    const m = mando();
+    m.ponerAeronave(false, 0, false);
+    expect(m.hayPalancaDeFlaps).toBe(false);
+    m.alternarFlaps();
+    m.ponerPalancaDeFlaps(1);
+    m.update(1);
+    expect(m.palancaDeFlaps).toBe(0);
+    expect(m.controls.flaps).toBe(0);
+  });
+
+  it("y al pasar a uno que no los lleva con los flaps fuera, se recogen", () => {
+    const m = mando();
+    m.ponerPalancaDeFlaps(1);
+    for (let i = 0; i < 200; i++) m.update(0.1);
+    expect(m.controls.flaps).toBe(1);
+    m.ponerAeronave(false, 0, false);
+    expect(m.palancaDeFlaps).toBe(0);
+    expect(m.controls.flaps).toBe(0);
   });
 
   it("puesta desde fuera, cae en su muesca", () => {

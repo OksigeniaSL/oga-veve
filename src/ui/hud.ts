@@ -422,6 +422,12 @@ export class Hud {
   private get hayTren(): boolean {
     return this.ficha.trenRetractil;
   }
+
+  /** Y si lleva flaps, por lo mismo. Ver `llevaFlaps` en `aircraft.ts`. */
+  private get hayFlaps(): boolean {
+    return this.ficha.llevaFlaps;
+  }
+
   private brakeHandler: ((pressed: boolean) => void) | null = null;
   private throttleDown!: HTMLElement;
   private throttleUp!: HTMLElement;
@@ -2047,10 +2053,11 @@ export class Hud {
      * Y el del tren **solo donde hay tren que meter**: un entrenador de
      * escuela lleva las patas al aire, y un botón que no hace nada enseña que
      * los mandos son adorno. Lo dice el avión, no una lista. Ver
-     * `hayPalancaDeTren` en `flight/input.ts`.
+     * `hayPalancaDeTren` en `flight/input.ts`. El de flaps, igual: el
+     * fumigador no los lleva.
      */
     this.trenTouch.hidden = !this.hayTren;
-    this.flapsTouch.hidden = false;
+    this.flapsTouch.hidden = !this.hayFlaps;
     /*
      * Y los tres estados del tren, que son la pregunta que se hizo jugando:
      * «¿en qué parte del panel veo que se está poniendo o quitando?». Dentro,

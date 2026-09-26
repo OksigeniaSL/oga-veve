@@ -202,8 +202,8 @@ def construir():
     piezas.append(ala)
     # Ranurados, con los topes de un turbohélice de diecinueve plazas: diez,
     # veinte y treinta y cinco. Ver `ranurado`.
-    piezas += flaps_moviles(ala, flaps, ranurado(muescas=(0, 10, 20, 35),
-                                                 caida=0.25))
+    piezas += flaps_moviles(ala, flaps, ranurado(
+        muescas=(0, 10, 20, 35), recorrido=(0, 0.15, 0.21, 0.25)))
 
     # ── Góndolas y hélices ────────────────────────────────────────────────
     #

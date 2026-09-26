@@ -316,6 +316,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * **a qué velocidad se puede**, que es lo que dicen estos dos.
        */
       trenRetractil: juego.aircraft.trenRetractil,
+      llevaFlaps: juego.aircraft.llevaFlaps,
       vleKt: juego.aircraft.vleKt,
       vfeKt: juego.aircraft.vfeKt,
       /**

@@ -213,12 +213,13 @@ def construir():
         (junta, 4.97, 5.02, 0.72, 1.0),
     ])
     piezas.append(ala)
-    # **Ranurado, de bisagra**: diez, veinte y treinta grados, los tres topes
-    # de una avioneta de escuela de ala alta. La bisagra cuelga un cuarto de
-    # la cuerda del flap por debajo del ala, y por eso al bajar se abre la
-    # ranura por arriba. Ver `ranurado`.
-    piezas += flaps_moviles(ala, flaps, ranurado(muescas=(0, 10, 20, 30),
-                                                 caida=0.25))
+    # **Ranurado**: diez, veinte y treinta grados, los tres topes de una
+    # avioneta de escuela de ala alta. Sale un cuarto de su cuerda por sus
+    # carriles —la mitad y pico en el primer tope, que es el de despegar— y
+    # acaba con la nariz justo debajo del labio, abriendo una ranura estrecha.
+    # Ver `ranurado`.
+    piezas += flaps_moviles(ala, flaps, ranurado(
+        muescas=(0, 10, 20, 30), recorrido=(0, 0.15, 0.21, 0.25)))
 
     # **Y su montante, que es media silueta de este avión.** Va del costado
     # bajo del fuselaje al ala, a media envergadura: es lo que permite que un

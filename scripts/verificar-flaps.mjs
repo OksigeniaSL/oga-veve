@@ -8,7 +8,8 @@
  * ser el que era, matriz por matriz. Lo que comprueba, por avión:
  *
  * 1. Que **los tenga quien los tiene**: los cinco que los llevan, con sus
- *    piezas en el modelo; el biplano fumigador, ninguna.
+ *    piezas en el modelo; el biplano fumigador, ninguna, y tampoco palanca
+ *    ni botón que los pida.
  * 2. Que **la palanca vaya de un golpe y los flaps tarden**: entre pedirlos y
  *    tenerlos hay un rato, y ese rato es medio mando. Ver `flight/flaps.ts`.
  * 3. Que **se vean bajar**: el borde de salida, más bajo con ellos fuera.
@@ -59,9 +60,23 @@ for (const id of [...CON_FLAPS, ...SIN_FLAPS]) {
     )
     .catch(() => {});
 
-  const visto = await page.evaluate(async () => {
+  const visto = await page.evaluate(async (losLleva) => {
     const o = globalThis.__oga;
     const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+    if (!losLleva) {
+      // El que no los lleva: ni la palanca ni el ala se mueven, se pidan por
+      // donde se pidan, y no hay botón que los pida.
+      o.tocarMando("flaps");
+      o.pedirFlaps(1);
+      await espera(1500);
+      const boton = document.querySelector('[data-hud="flaps-touch"]');
+      return {
+        piezas: o.flaps(),
+        palanca: o.palancaDeFlaps(),
+        flaps: o.controles().flaps,
+        botonOculto: !boton || boton.hidden,
+      };
+    }
     // El borde de salida de los flaps: lo más bajo de su piel, en el avión.
     const bajo = () => {
       const cajas = o.enElAvion("^flap-[^-]+-(derecha|izquierda)-piel$");
@@ -110,7 +125,7 @@ for (const id of [...CON_FLAPS, ...SIN_FLAPS]) {
       vuelta,
       alFinal: o.controles().flaps,
     };
-  });
+  }, losLleva);
 
   const etiqueta = (que) => `${id}: ${que}`;
   if (losLleva) {
@@ -160,6 +175,17 @@ for (const id of [...CON_FLAPS, ...SIN_FLAPS]) {
       visto.piezas === 0,
       `${visto.piezas} flaps en el modelo`,
       "un biplano fumigador de esta clase vuela con alerones y nada más",
+    );
+    /*
+     * **Y el mando tampoco.** Tenía palanca, botón y reloj, y la palanca
+     * bajaba unos flaps que el ala no enseñaba: la aguja en diez grados con
+     * el ala quieta. Es lo mismo que el tren fijo, que no lleva palanca.
+     */
+    comprobar(
+      etiqueta("ni palanca que los pida ni botón que la mueva"),
+      visto.palanca === 0 && visto.flaps === 0 && visto.botonOculto,
+      `palanca ${visto.palanca} · flaps ${visto.flaps} · botón ${visto.botonOculto ? "oculto" : "a la vista"}`,
+      "un mando que se pulsa y no mueve nada enseña que los mandos son decoración",
     );
   }
   comprobar(etiqueta("sin errores"), !errores.length, errores[0] ?? "limpio", "");

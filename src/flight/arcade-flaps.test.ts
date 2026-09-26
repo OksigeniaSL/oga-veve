@@ -58,13 +58,16 @@ describe("los flaps del modelo sencillo", () => {
 
   /*
    * Y en los seis aviones, que es donde estaba el fallo hermano: un efecto
-   * calibrado en el Pykasu es parroquial en cuanto la flota tiene seis.
+   * calibrado en el Pykasu es parroquial en cuanto la flota tiene seis. En
+   * los que los llevan, frenan; en el fumigador, que no los lleva, un `flaps`
+   * que llegara al modelo por error no hace nada. Ver `llevaFlaps`.
    */
   it("y en los seis aviones de la flota", () => {
     for (const a of AIRCRAFT) {
       const sin = seEstabilizaEn(0, 0, a);
       const con = seEstabilizaEn(1, 0, a);
-      expect(con, a.id).toBeLessThan(sin);
+      if (a.llevaFlaps) expect(con, a.id).toBeLessThan(sin);
+      else expect(con, a.id).toBe(sin);
     }
   });
 

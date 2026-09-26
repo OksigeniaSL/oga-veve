@@ -115,6 +115,12 @@ def z_ala(x):
     return ALA_Z + x * math.tan(FLECHA)
 
 
+# Los metros a lo largo del ala por cada metro de envergadura: las zonas y los
+# flaps de `superficie` se miden sobre el ala, que va en flecha y con diedro,
+# y el carenado y el pilón están donde están a lo ancho.
+E_POR_X = math.sqrt(1 + math.tan(DIEDRO) ** 2 + math.tan(FLECHA) ** 2)
+
+
 def construir():
     limpiar()
     piezas = []
@@ -238,11 +244,26 @@ def construir():
     ]
     j = "oscuro"
     # Los flaps que se mueven son la franja de dentro de las juntas: de la
-    # panza al motor y del motor al alerón. Ver `flaps_moviles`. El de dentro
-    # empieza donde el ala sale del carenado —el anillo de 1,4, que ya estaba—
-    # y no en la junta pintada, que queda tapada por él: moviéndose, el trozo
-    # de flap de dentro del carenado asomaba por debajo como una cuchilla.
-    flaps = [flap("dentro", 1.4, 4.40, 0.73), flap("fuera", 4.48, 9.2, 0.73)]
+    # panza al motor y del motor al alerón. Ver `flaps_moviles`. Y sus dos
+    # extremos de dentro, medidos a lo ancho y no a lo largo del ala, que va
+    # en flecha:
+    #
+    # - **El de dentro empieza a 1,55 m del eje**, fuera del carenado. El
+    #   carenado abulta 1,52 m a cada lado a la altura por la que pasa el flap
+    #   al bajar, más que donde sale el ala; empezando dentro de él, el flap lo
+    #   cruzaba al bajar y su canto asomaba por debajo como una cuchilla.
+    # - **El de fuera empieza pasado el pilón**, a quince centímetros del
+    #   quiebro. La junta pintada entre los dos flaps está a 4,40 m **a lo
+    #   largo del ala**, que son cuatro metros a lo ancho, y el pilón cuelga a
+    #   4,40 a lo ancho: el primer palmo del flap de fuera caía encima de la
+    #   cola del pilón y al bajar se la comía. En un bimotor de esta clase los
+    #   flaps se parten en el pilón, y el trozo de franja de encima se queda
+    #   quieto.
+    #
+    # Recogido no se nota ninguno de los dos cortes: no hay raya pintada que
+    # mover y las normales son las de siempre.
+    flaps = [flap("dentro", E_POR_X * 1.55, 4.40, 0.73),
+             flap("fuera", E_POR_X * (QUIEBRO + 0.15), 9.2, 0.73)]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
                      flaps=flaps, zonas=[
         ("aluminio", 1.4, 12.2, 0.0, 0.07),
@@ -261,10 +282,9 @@ def construir():
     # carril —sale hacia atrás y apenas baja, que es como se despega sin
     # frenar—, y las dos últimas son ángulo. Cinco, quince y treinta grados,
     # los topes de un bimotor de pasillo único; y un tercio de su cuerda de
-    # carril al final, con los raíles mirando un poco hacia abajo porque
-    # son curvos.
+    # carril al final, que recogido va guardado bajo los spoilers.
     los_flaps = flaps_moviles(ala, flaps, fowler(
-        muescas=(0, 5, 15, 30), recorrido=(0, 0.20, 0.30, 0.34), bajada=8))
+        muescas=(0, 5, 15, 30), recorrido=(0, 0.20, 0.30, 0.34)))
     piezas += los_flaps
 
     # Los carenados de los raíles de los flaps: las «canoas» que asoman por

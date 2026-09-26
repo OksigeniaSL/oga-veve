@@ -60,9 +60,18 @@ describe("los flaps de cada modelo", () => {
       (n) => /^flap-/.test(n.name ?? "") && n.extras?.["muescas"],
     );
 
-    if (a.id === "jaz-25") {
-      it(`${a.id}: el biplano no los tiene, y su modelo no trae ninguno`, () => {
+    if (!a.llevaFlaps) {
+      it(`${a.id}: no los lleva, y su modelo no trae ninguno`, () => {
         expect(flaps).toHaveLength(0);
+      });
+      /*
+       * Ni el reloj ni el botón de la cabina: los dos encendían una palanca
+       * que el ala no tiene. Ver `cabina` en `modelos/comun.py`.
+       */
+      it(`${a.id}: ni reloj ni botón de flaps en la cabina`, () => {
+        const nombres = nodos.map((n) => n.name ?? "");
+        expect(nombres).not.toContain("reloj-flaps");
+        expect(nombres).not.toContain("boton-flaps");
       });
       continue;
     }
@@ -137,20 +146,42 @@ describe("los flaps de cada modelo", () => {
     });
   }
 
-  it("los reactores llevan Fowler: salen por sus carriles; los demás, de bisagra", () => {
+  /*
+   * **Todos salen por sus carriles, y los de los reactores mucho más.**
+   *
+   * Los de las avionetas giraban sobre una bisagra colgada bajo el ala, sin
+   * herrajes que la sujetaran y abriendo una ranura del diez por ciento de la
+   * cuerda: una placa suelta detrás del ala. Ahora salen un poco por carriles
+   * cortos —ranurados— y los reactores, un tercio de su cuerda —Fowler—. Ver
+   * `ranurado` y `fowler` en `modelos/exterior.py`.
+   */
+  it("salen por sus carriles, siempre a más; los Fowler de los reactores, más lejos", () => {
+    // Lo que sale al final, en cuerdas medias del ala: un avión grande saca
+    // más metros por ser grande, y eso no es lo que se mide aquí.
+    const sale = (id: string) => {
+      const a = AIRCRAFT.find((x) => x.id === id)!;
+      return nodosDe(id)
+        .filter((n) => /^flap-/.test(n.name ?? "") && n.extras?.["muescas"])
+        .map((f) => {
+          const r = numeros(f.extras!["recorrido"]);
+          return r[r.length - 1]! / (a.wingArea / a.wingSpan);
+        });
+    };
     for (const a of AIRCRAFT) {
-      if (a.id === "jaz-25") continue;
+      if (!a.llevaFlaps) continue;
       const flaps = nodosDe(a.id).filter(
         (n) => /^flap-/.test(n.name ?? "") && n.extras?.["muescas"],
       );
       for (const f of flaps) {
         const r = numeros(f.extras!["recorrido"]);
-        if (a.id === "jaz-90" || a.id === "jaz-120") {
-          for (let i = 1; i < r.length; i++) expect(r[i]!).toBeGreaterThan(r[i - 1]!);
-        } else {
-          expect(r.every((x) => x === 0)).toBe(true);
-        }
+        expect(r[0]).toBe(0);
+        for (let i = 1; i < r.length; i++) expect(r[i]!).toBeGreaterThan(r[i - 1]!);
       }
     }
+    for (const reactor of ["jaz-90", "jaz-120"])
+      for (const avioneta of ["jaz-20", "jaz-40", "jaz-60"])
+        expect(Math.min(...sale(reactor))).toBeGreaterThan(
+          Math.max(...sale(avioneta)),
+        );
   });
 });

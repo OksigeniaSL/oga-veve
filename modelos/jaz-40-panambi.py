@@ -206,10 +206,10 @@ def construir():
         (j, 5.60, 5.65, 0.755, 1.0),
     ])
     piezas.append(ala)
-    # Ranurados, de bisagra, con los topes de un bimotor de pistón de seis
-    # plazas: diez, veinticinco y cuarenta. Ver `ranurado`.
-    piezas += flaps_moviles(ala, flaps, ranurado(muescas=(0, 10, 25, 40),
-                                                 caida=0.25))
+    # Ranurados, con los topes de un bimotor de pistón de seis plazas: diez,
+    # veinticinco y cuarenta. Ver `ranurado`.
+    piezas += flaps_moviles(ala, flaps, ranurado(
+        muescas=(0, 10, 25, 40), recorrido=(0, 0.15, 0.21, 0.25)))
 
     # ── Góndolas y hélices ────────────────────────────────────────────────
     #

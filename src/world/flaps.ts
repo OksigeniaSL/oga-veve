@@ -12,11 +12,12 @@
  * Cada flap cuelga en el modelo de un vacío `flap-…` con, en los ejes del
  * avión —x a la derecha, y arriba, z a la cola—:
  *
- * - `bisagra` y `eje`: por dónde gira; en positivo, el borde de salida baja.
+ * - `bisagra` y `eje`: por dónde gira —el eje de las ruedas de su carro, que
+ *   va dentro de la nariz—; en positivo, el borde de salida baja.
  * - `muescas`: los grados en cada tope de la palanca.
  * - `carril` y `recorrido`: hacia dónde sale y cuántos metros en cada tope.
- *   Un flap ranurado de avioneta no sale —gira sobre una bisagra colgada por
- *   debajo del ala—; un Fowler de avión de línea sí, y mucho.
+ *   Un flap ranurado de avioneta sale poco por unos carriles cortos; un
+ *   Fowler de avión de línea, un tercio de su cuerda.
  *
  * Aquí no hay nada de cada avión: se pasa todo eso al marco del padre del
  * vacío —que en estos modelos es el nodo `avion`, con su cuarto de vuelta

@@ -1517,7 +1517,8 @@ function pintarMotores(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   );
 
   reglaDeCombustible(g, 48, ALTO - 100, ANCHO - 160, 14, d.combustible);
-  reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps, d.cuadro.flaps);
+  if (d.cuadro.flaps.length > 1)
+    reglaDeFlaps(g, 48, ALTO - 74, ANCHO - 96, 18, d.flaps, d.cuadro.flaps);
   lucesDeTren(g, 16, ALTO - 30, d.patas, d.tren);
   g.restore();
 }
