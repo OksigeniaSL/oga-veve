@@ -397,6 +397,19 @@ await page.mouse.click(libre[0], libre[1]);
  */
 if (process.env.OGA_CAMARA)
   await page.evaluate((v) => globalThis.__oga?.ponerVista?.(v), process.env.OGA_CAMARA);
+/*
+ * **Y la llegada por la otra punta, si se pide.** `OGA_OTRA_PUNTA=1` con un
+ * destino aterriza allí por la cabecera contraria a la del viento, que es como
+ * llegó Enrique a Fuerteventura —la 01 en uso, la toma por la 19— y como se
+ * quedó sin raya, sin coche y sin señalero. La torre no te autoriza esa final
+ * —no es la pista en uso—, así que lo que se mide de ella no cuenta; lo que
+ * se mira es el rodaje de después. Ver `porLaOtraPunta` en `sondas.ts`.
+ */
+if (process.env.OGA_OTRA_PUNTA === "1" && DESTINO)
+  await page.evaluate(
+    (d) => globalThis.__oga?.aterrizarPorLaOtraPunta?.(d),
+    DESTINO,
+  );
 await page
   .waitForFunction(() => (globalThis.__oga?.voz?.().piezas ?? 0) > 0, null, {
     timeout: 60000,

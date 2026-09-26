@@ -54,6 +54,31 @@ import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA } from "../audio/boca";
 
+/**
+ * **El campo en el que el banco aterriza por la otra punta**, o `null`.
+ *
+ * La pista en uso la fija el viento y el piloto del banco vuela siempre a ella.
+ * Pero se aterriza también por la contraria —con el viento en calma, o con
+ * permiso—, y así llegó Enrique a Fuerteventura: la 01 en uso y la toma por la
+ * 19. Lo que se rompió después —la raya a la espalda, sin coche ni señalero—
+ * no lo veía ningún banco, porque ningún banco llegaba por ahí. Con esto, las
+ * sondas de final y de pista de ese campo contestan con la otra cabecera y el
+ * mismo piloto aterriza al revés. Lo pone `OGA_OTRA_PUNTA=1` en
+ * `verificar-vuelo-entero.mjs`; el juego no se entera de nada.
+ */
+let porLaOtraPunta: string | null = null;
+
+/** La misma pista, vista por quien entra por la otra cabecera. */
+function alReves<
+  T extends { heading: number; desplazado?: number; desplazadoEnfrente?: number },
+>(p: T): T {
+  return {
+    ...p,
+    heading: (p.heading + 180) % 360,
+    desplazado: p.desplazadoEnfrente ?? 0,
+    desplazadoEnfrente: p.desplazado ?? 0,
+  };
+}
 
 /**
  * Un punto en final de un campo cualquiera, a `d` metros de su umbral en uso y
@@ -82,7 +107,10 @@ function puntoDeFinalEn(
   const nombre = cabeceraEnUso(campo.escenario);
   const con = Object.entries(pista.thresholds).filter((e) => e[1]?.xy);
   if (con.length < 2) return null;
-  const i = nombre ? con.findIndex(([n]) => n === nombre) : 0;
+  const enUso = nombre ? con.findIndex(([n]) => n === nombre) : 0;
+  // Y la otra cabecera, si este es el campo en el que se entra al revés.
+  const i =
+    campo.escenario.id === porLaOtraPunta ? (enUso === 0 ? 1 : 0) : enUso;
   const umbral = con[i >= 0 ? i : 0]![1]!;
   const entrada = umbral.xy!;
   const salida = con[(i >= 0 ? i : 0) === 0 ? 1 : 0]![1]!.xy!;
@@ -1106,8 +1134,24 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       puntoDeFinalEn(juego.campoParaBanco(id), d, (x, z) =>
         juego.terrain.sampleHeight(x, z),
       ),
-    /** La pista del campo que se tiene debajo. En casa, la de siempre. */
-    pistaDeAhora: () => juego.campoParaBanco()?.pista ?? juego.scenario.runway,
+    /**
+     * La pista del campo que se tiene debajo. En casa, la de siempre.
+     *
+     * Y al revés en el campo en el que se entra por la otra punta, que es lo
+     * que hace que el piloto del banco —que lo mide todo contra esta— vuele la
+     * final y la carrera hacia la otra cabecera. Ver `porLaOtraPunta`.
+     */
+    pistaDeAhora: () => {
+      const campo = juego.campoParaBanco();
+      const pista = campo?.pista ?? juego.scenario.runway;
+      return campo && campo.escenario.id === porLaOtraPunta
+        ? alReves(pista)
+        : pista;
+    },
+    /** Aterrizar en el campo `id` por la otra punta. Ver `porLaOtraPunta`. */
+    aterrizarPorLaOtraPunta: (id: string | null) => {
+      porLaOtraPunta = id;
+    },
     /** Y la cota de su asfalto. Ver `cotaDePista`. */
     cotaDePistaDeAhora: (x: number, z: number) =>
       juego.campoParaBanco()?.cotaDePista(x, z) ?? juego.terrain.cotaDeLaPista(x, z),
