@@ -87,4 +87,9 @@ for (const p of partes) {
 console.log(
   `\n  ${partes.length - mal} de ${partes.length} aviones se rehacen\n`,
 );
+// Y los retratos del hangar son fotos de estos modelos: si un `.glb` cambió,
+// su retrato ya es de otro avión. `src/ui/retratos.test.ts` lo caza, pero
+// mejor enterarse aquí.
+if (!mal)
+  console.log("  Y ahora los retratos del hangar: `npm run retratos`.\n");
 process.exit(mal === 0 ? 0 : 1);

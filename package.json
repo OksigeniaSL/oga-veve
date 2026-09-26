@@ -35,6 +35,7 @@
     "mar": "node scripts/ver-mar-y-cielo.mjs",
     "quien-habla": "node scripts/verificar-quien-habla.mjs",
     "modelos": "node scripts/hacer-modelos.mjs",
+    "retratos": "node scripts/hacer-retratos.mjs",
     "cambio-de-avion": "node scripts/verificar-cambio-de-avion.mjs",
     "circuito": "node scripts/verificar-circuito.mjs",
     "voces": "node scripts/verificar-voces.mjs",

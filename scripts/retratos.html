@@ -1,0 +1,321 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Retratos de la flota</title>
+<style>
+  body { margin: 0; background: #1d2721; }
+</style>
+<script type="module">
+  /*
+   * El retrato de un avión de la flota, para el hangar. Lo pide
+   * `hacer-retratos.mjs`, que es quien lo guarda.
+   *
+   * **El avión es el que se vuela**: el `.glb` cargado por `cargarModelo`,
+   * repintado con los colores de su ficha y vestido con la librea de la casa
+   * —el sol entre las hojas en la cola, la firma junto a la puerta— por el
+   * mismo código que lo viste en la pista. Nada de aquí dibuja el avión: aquí
+   * solo se pone la luz, la cámara y la sombra.
+   *
+   * Sale con el fondo transparente, para que el hangar ponga el suyo: la misma
+   * imagen vale en la tarjeta apaisada de una tablet y en la más baja de un
+   * teléfono tumbado, y si un día cambia el color del hangar no hay que
+   * rehacer nada.
+   */
+  import {
+    Box3,
+    CanvasTexture,
+    DirectionalLight,
+    HemisphereLight,
+    Mesh,
+    MeshBasicMaterial,
+    OrthographicCamera,
+    PerspectiveCamera,
+    PlaneGeometry,
+    Scene,
+    SRGBColorSpace,
+    Vector3,
+  } from "three";
+  import { WebGLRenderer } from "three";
+  import { AIRCRAFT } from "/src/flight/aircraft.ts";
+  import { cargarModelo } from "/src/world/aeronave-modelo.ts";
+
+  const q = new URLSearchParams(location.search);
+  /** El tamaño de la imagen que se guarda. */
+  const ANCHO = Number(q.get("ancho") ?? 600);
+  const ALTO = Number(q.get("alto") ?? 360);
+  /**
+   * Se pinta al doble y se reduce: las riostras de un ala alta y el borde de
+   * una deriva son rayas de un píxel, y el suavizado de la tarjeta gráfica
+   * solo no las deja limpias.
+   */
+  const SUPER = 2;
+
+  /**
+   * De dónde se mira: de tres cuartos, por delante y algo por encima, con el
+   * morro hacia la derecha. Es la vista de la que se reconoce un avión —de
+   * perfil no se ve la flecha del ala, en planta no se ve la cola en T— y la
+   * de las fotos de un catálogo de aviones. El morro a la derecha, que es
+   * hacia donde se lee: el avión va hacia delante en la fila.
+   *
+   * `rumbo` son los grados desde el morro hacia la derecha del avión, y
+   * `altura` los grados por encima del horizonte.
+   */
+  const RUMBO = Number(q.get("rumbo") ?? 42);
+  const ALTURA = Number(q.get("altura") ?? 14);
+  /** Casi un teleobjetivo: la perspectiva justa para que no parezca un plano. */
+  const CAMPO = Number(q.get("campo") ?? 22);
+
+  const pintor = new WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    preserveDrawingBuffer: true,
+  });
+  pintor.setPixelRatio(1);
+  pintor.setClearColor(0x000000, 0);
+  document.body.appendChild(pintor.domElement);
+
+  /** Todos los vértices del avión, en el mundo, para encuadrarlo. */
+  function puntosDe(raiz) {
+    const trozos = [];
+    let total = 0;
+    raiz.updateWorldMatrix(true, true);
+    raiz.traverse((o) => {
+      if (!o.isMesh || !o.visible || !o.geometry) return;
+      let visible = true;
+      for (let p = o; p; p = p.parent) if (!p.visible) visible = false;
+      if (!visible) return;
+      const pos = o.geometry.getAttribute("position");
+      if (!pos) return;
+      trozos.push({ o, pos });
+      total += pos.count;
+    });
+    // Con cien mil puntos se encuadra igual que con todos, y más deprisa.
+    const paso = Math.max(1, Math.ceil(total / 100000));
+    const fuera = [];
+    const v = new Vector3();
+    for (const { o, pos } of trozos)
+      for (let i = 0; i < pos.count; i += paso) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        fuera.push(v.x, v.y, v.z);
+      }
+    return new Float32Array(fuera);
+  }
+
+  /**
+   * La cámara que deja el avión entero y del mismo tamaño en todas las
+   * tarjetas: se prueba, se mide dónde cae el avión en la imagen y se corrige,
+   * tres veces. Lo que se compara en el hangar es la **forma**; el tamaño de
+   * verdad lo dice el número del modelo.
+   */
+  function encuadrar(camara, puntos, caja) {
+    const rumbo = (RUMBO * Math.PI) / 180;
+    const altura = (ALTURA * Math.PI) / 180;
+    // El morro está en la Z negativa y la derecha del avión en la X positiva.
+    const dir = new Vector3(
+      Math.sin(rumbo) * Math.cos(altura),
+      Math.sin(altura),
+      -Math.cos(rumbo) * Math.cos(altura),
+    );
+    const objetivo = caja.getCenter(new Vector3());
+    let lejos = caja.getSize(new Vector3()).length() * 2;
+    const v = new Vector3();
+    const derecha = new Vector3();
+    const arriba = new Vector3();
+    // Cuánto de la imagen ocupa el avión, a lo ancho y a lo alto, y dónde va
+    // su centro: un pelo por encima del medio, que debajo va la sombra.
+    const LLENO_X = 0.86;
+    const LLENO_Y = 0.74;
+    const CENTRO_Y = 0.05;
+    for (let vuelta = 0; vuelta < 6; vuelta++) {
+      camara.position.copy(objetivo).addScaledVector(dir, lejos);
+      camara.lookAt(objetivo);
+      camara.updateMatrixWorld();
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (let i = 0; i < puntos.length; i += 3) {
+        v.set(puntos[i], puntos[i + 1], puntos[i + 2]).project(camara);
+        if (v.x < x0) x0 = v.x;
+        if (v.x > x1) x1 = v.x;
+        if (v.y < y0) y0 = v.y;
+        if (v.y > y1) y1 = v.y;
+      }
+      const alto = lejos * Math.tan((camara.fov * Math.PI) / 360);
+      const ancho = alto * camara.aspect;
+      derecha.setFromMatrixColumn(camara.matrixWorld, 0);
+      arriba.setFromMatrixColumn(camara.matrixWorld, 1);
+      objetivo
+        .addScaledVector(derecha, ((x0 + x1) / 2) * ancho)
+        .addScaledVector(arriba, ((y0 + y1) / 2 - CENTRO_Y) * alto);
+      lejos *= Math.max((x1 - x0) / (2 * LLENO_X), (y1 - y0) / (2 * LLENO_Y));
+    }
+  }
+
+  /**
+   * La sombra: el avión visto desde arriba, en negro y difuminado, puesto en
+   * el suelo debajo de él. Es la sombra de un sol de mediodía, que es la que
+   * asienta un objeto sin dibujar una mancha larga hacia ningún lado.
+   *
+   * Dos capas: una corta y oscura donde el avión toca el suelo y otra ancha y
+   * clara, que es la luz que rebota del hangar. Una sola, o se veía recortada
+   * o se veía sucia.
+   */
+  function sombra(escena, caja, suelo) {
+    const tam = caja.getSize(new Vector3());
+    const centro = caja.getCenter(new Vector3());
+    const margen = Math.max(tam.x, tam.z) * 0.18;
+    const w = tam.x + margen * 2;
+    const d = tam.z + margen * 2;
+    const lado = 512;
+    const pw = Math.round(w >= d ? lado : (lado * w) / d);
+    const pd = Math.round(d >= w ? lado : (lado * d) / w);
+    const desdeArriba = new OrthographicCamera(-w / 2, w / 2, d / 2, -d / 2, 0.1, tam.y * 4 + 10);
+    desdeArriba.position.set(centro.x, caja.max.y + 5, centro.z);
+    desdeArriba.up.set(0, 0, -1);
+    desdeArriba.lookAt(centro.x, suelo, centro.z);
+    pintor.setSize(pw, pd, false);
+    escena.overrideMaterial = new MeshBasicMaterial({ color: 0x000000 });
+    pintor.render(escena, desdeArriba);
+    escena.overrideMaterial = null;
+    const silueta = document.createElement("canvas");
+    silueta.width = pw;
+    silueta.height = pd;
+    silueta.getContext("2d").drawImage(pintor.domElement, 0, 0);
+
+    const lienzo = document.createElement("canvas");
+    lienzo.width = pw;
+    lienzo.height = pd;
+    const ctx = lienzo.getContext("2d");
+    const px = pw / w;
+    ctx.filter = `blur(${(tam.x * 0.03 * px).toFixed(1)}px)`;
+    ctx.globalAlpha = 0.26;
+    ctx.drawImage(silueta, 0, 0);
+    ctx.filter = `blur(${(tam.x * 0.007 * px).toFixed(1)}px)`;
+    ctx.globalAlpha = 0.4;
+    ctx.drawImage(silueta, 0, 0);
+
+    const textura = new CanvasTexture(lienzo);
+    textura.colorSpace = SRGBColorSpace;
+    const plano = new Mesh(
+      new PlaneGeometry(w, d),
+      new MeshBasicMaterial({ map: textura, transparent: true, depthWrite: false }),
+    );
+    plano.rotation.x = -Math.PI / 2;
+    plano.position.set(centro.x, suelo + 0.002, centro.z);
+    plano.renderOrder = -1;
+    return plano;
+  }
+
+  /**
+   * Y un charco de luz en el suelo del hangar, debajo del avión: sin él la
+   * sombra flota en la nada. Muy tenue: lo que tiene que verse es el avión.
+   */
+  function charco(caja, suelo) {
+    const tam = caja.getSize(new Vector3());
+    const centro = caja.getCenter(new Vector3());
+    const r = Math.max(tam.x, tam.z) * 0.78;
+    const lienzo = document.createElement("canvas");
+    lienzo.width = lienzo.height = 256;
+    const ctx = lienzo.getContext("2d");
+    const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    g.addColorStop(0, "rgba(232, 226, 208, 0.13)");
+    g.addColorStop(0.55, "rgba(232, 226, 208, 0.06)");
+    g.addColorStop(1, "rgba(232, 226, 208, 0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 256, 256);
+    const textura = new CanvasTexture(lienzo);
+    textura.colorSpace = SRGBColorSpace;
+    const plano = new Mesh(
+      new PlaneGeometry(r * 2, r * 2),
+      new MeshBasicMaterial({ map: textura, transparent: true, depthWrite: false }),
+    );
+    plano.rotation.x = -Math.PI / 2;
+    plano.position.set(centro.x, suelo, centro.z);
+    plano.renderOrder = -2;
+    return plano;
+  }
+
+  /** El retrato de un avión, como `data:` en el formato pedido. */
+  globalThis.__retrato = async (id, formato = "image/webp", calidad = 0.8) => {
+    const aircraft = AIRCRAFT.find((a) => a.id === id);
+    if (!aircraft) throw new Error(`no hay ficha para ${id}`);
+    const malla = await cargarModelo(aircraft, "/");
+    if (!malla) throw new Error(`no hay modelo para ${id}`);
+    // Con el tren abajo, que es como se ve un avión en el hangar, y sin las
+    // luces de posición: un avión aparcado las lleva apagadas.
+    malla.patas?.poner?.(1);
+    malla.borrarHelices?.(0);
+    if (malla.luces) malla.luces.grupo.visible = false;
+
+    const escena = new Scene();
+    escena.add(malla.group);
+    malla.group.updateWorldMatrix(true, true);
+    const puntos = puntosDe(malla.group);
+    const caja = new Box3();
+    for (let i = 0; i < puntos.length; i += 3)
+      caja.expandByPoint(new Vector3(puntos[i], puntos[i + 1], puntos[i + 2]));
+    const suelo = caja.min.y;
+
+    const elSuelo = [sombra(escena, caja, suelo), charco(caja, suelo)];
+    escena.add(...elSuelo);
+
+    /*
+     * La luz: la del juego a media tarde —el sol cálido de `sky.ts` y su
+     * relleno de cielo—, con el sol del lado que se mira, y una luz de
+     * contra desde atrás que dibuja el borde de arriba del fuselaje y de la
+     * deriva contra el fondo oscuro del hangar. Sin ella, la cola verde de
+     * un avión se perdía en el verde de la tarjeta.
+     */
+    const sol = new DirectionalLight(0xfff1da, 2.7);
+    sol.position.set(0.55, 1, -0.35).multiplyScalar(100);
+    const contra = new DirectionalLight(0xe8eef5, 1.3);
+    contra.position.set(-0.7, 0.8, 0.9).multiplyScalar(100);
+    escena.add(sol, contra, new HemisphereLight(0xc2dcf0, 0x55604f, 0.75));
+
+    const camara = new PerspectiveCamera(CAMPO, ANCHO / ALTO, 0.1, 5000);
+    encuadrar(camara, puntos, caja);
+    camara.near = Math.max(0.05, camara.position.distanceTo(caja.getCenter(new Vector3())) / 50);
+    camara.far = camara.near * 400;
+    camara.updateProjectionMatrix();
+
+    /*
+     * **En dos pasadas: el suelo y luego el avión.** El charco de luz y la
+     * sombra se salen del cuadro, y cortados por el borde de la imagen
+     * dibujaban un rectángulo más claro dentro de la tarjeta. Así que el
+     * suelo se desvanece hacia los bordes y el avión va encima, entero: el
+     * suelo está siempre detrás del avión visto desde arriba, y nada de lo
+     * que tapa se pierde.
+     */
+    pintor.setSize(ANCHO * SUPER, ALTO * SUPER, false);
+    const salida = document.createElement("canvas");
+    salida.width = ANCHO;
+    salida.height = ALTO;
+    const ctx = salida.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    malla.group.visible = false;
+    pintor.render(escena, camara);
+    ctx.drawImage(pintor.domElement, 0, 0, ANCHO, ALTO);
+    const borde = Math.round(ALTO * 0.12);
+    const mascara = document.createElement("canvas");
+    mascara.width = ANCHO;
+    mascara.height = ALTO;
+    const m = mascara.getContext("2d");
+    m.filter = `blur(${borde / 2}px)`;
+    m.fillStyle = "#fff";
+    m.fillRect(borde, borde, ANCHO - borde * 2, ALTO - borde * 2);
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.drawImage(mascara, 0, 0);
+    ctx.globalCompositeOperation = "source-over";
+
+    malla.group.visible = true;
+    for (const s of elSuelo) s.visible = false;
+    pintor.render(escena, camara);
+    ctx.drawImage(pintor.domElement, 0, 0, ANCHO, ALTO);
+    return {
+      url: salida.toDataURL(formato, calidad),
+      // La ficha tal como la lee el juego, para la huella. Ver
+      // `hacer-retratos.mjs`.
+      ficha: aircraft.appearance,
+    };
+  };
+  globalThis.__listo = true;
+</script>

@@ -63,6 +63,13 @@ const DEL_ARMAZON = /\.(html|js|css|webmanifest|woff2?)$/i;
  */
 const ICONOS = /^(favicon\.svg|icono-[\w-]+\.png)$/i;
 
+/**
+ * Y los retratos de la flota, por lo mismo que los iconos: seis imágenes de unos
+ * cuarenta kilobytes que el hangar enseña antes de volar. Sin ellos, abierto sin
+ * red, «¿Con qué volás?» sería una fila de nombres. Ver `ui/retratos.ts`.
+ */
+const RETRATOS = /^assets\/aeronaves\/retratos\/[\w-]+\.webp$/i;
+
 /** Un tope de seguridad, no una regla: nada de esto debería acercarse. */
 const DEMASIADO_GRANDE = 4 * 1024 * 1024;
 
@@ -78,7 +85,8 @@ const ficheros = [];
 let bytes = 0;
 for (const camino of todos(RAIZ)) {
   const nombre = relative(RAIZ, camino).split("\\").join("/");
-  if (!DEL_ARMAZON.test(nombre) && !ICONOS.test(nombre)) continue;
+  if (!DEL_ARMAZON.test(nombre) && !ICONOS.test(nombre) && !RETRATOS.test(nombre))
+    continue;
   // El propio service worker no se precarga a sí mismo.
   if (nombre === "sw.js") continue;
   const tam = statSync(camino).size;

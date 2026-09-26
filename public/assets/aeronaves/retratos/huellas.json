@@ -1,0 +1,67 @@
+{
+  "jaz-20": {
+    "glb": "12e1cfdda1666776179a7d85885dd0b766ac106c7674b389882722fc3664af9d",
+    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "ficha": {
+      "body": 15000282,
+      "accent": 12475704,
+      "trim": 3101251,
+      "blades": 2
+    }
+  },
+  "jaz-25": {
+    "glb": "952dccf165bb302537781609497196c2c6b7cfc4163db127ff2d05caa7f3f269",
+    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "ficha": {
+      "body": 14520895,
+      "accent": 3101251,
+      "trim": 12475704,
+      "blades": 3
+    }
+  },
+  "jaz-40": {
+    "glb": "03f649e64c79a8414e224d9a84766ba481b1485354ef98c13bd572ff2c904642",
+    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "ficha": {
+      "body": 15527142,
+      "accent": 3101251,
+      "trim": 12475704,
+      "blades": 3,
+      "motivo": "sol"
+    }
+  },
+  "jaz-60": {
+    "glb": "ef1626f9bb5e0200c3e138f8ba87e855603e86996da2084243dc33441b77c1a0",
+    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "ficha": {
+      "body": 15527142,
+      "accent": 14520895,
+      "trim": 3101251,
+      "cola": 12475704,
+      "blades": 4,
+      "motivo": "sol-y-hojas"
+    }
+  },
+  "jaz-90": {
+    "glb": "82259cc3cd0149afe185eb4a13a42ad3cfdaad1cc5788722ce92297be90f93a8",
+    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "ficha": {
+      "body": 15921644,
+      "accent": 12475704,
+      "trim": 3101251,
+      "blades": 0,
+      "motivo": "sol-y-hojas"
+    }
+  },
+  "jaz-120": {
+    "glb": "0020bc86ae7a6259d73adfad4271044ad3900f7ba4047698663dacb083163a27",
+    "librea": "6a8b053e8704050326e9c8656897389e3646c0b0886ad74ed90227de9cc395f9",
+    "ficha": {
+      "body": 15921644,
+      "accent": 3101251,
+      "trim": 14520895,
+      "blades": 0,
+      "motivo": "sol"
+    }
+  }
+}

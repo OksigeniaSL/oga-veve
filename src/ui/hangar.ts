@@ -41,7 +41,7 @@ import {
 import { camposDeLaRuta, tramosDelPlan } from "../flight/alterno";
 import { cargaParaElPlan, loQueCabe } from "../flight/combustible";
 import { FABRICANTE, modeloPorId } from "../flight/flota";
-import { retratosDeLaFlota } from "./siluetas";
+import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { LECCIONES, VUELTA, type Leccion } from "../flight/lecciones";
 import { missionsFor } from "../content/missions";
 import { objectiveTarget, type Mission } from "../missions/types";
@@ -678,9 +678,10 @@ const galones = (n: number): string =>
 /**
  * La ficha de una aeronave: su retrato y su nombre entero.
  *
- * El retrato sale de la misma fábrica que la vuela —ver `ui/siluetas.ts`—
- * porque un dibujo aparte y una geometría generada empiezan iguales y acaban
- * distintas, y entonces el hangar promete un avión que luego no es.
+ * El retrato es el avión que se vuela —el mismo modelo con la misma librea,
+ * fotografiado de antemano: ver `ui/retratos.ts`—, porque un dibujo aparte y
+ * el avión de verdad empiezan iguales y acaban distintos, y entonces el
+ * hangar promete un avión que luego no es.
  *
  * Y el nombre va entero, «JAZ 20 Pykasu», aunque en pantalla se recuerde el
  * pájaro: la estructura de fabricante y modelo es en sí misma algo que se
@@ -759,7 +760,11 @@ function fichaDeAvion(
             }${no && veredicto.porQueNo ? ` — ${t(PORQUE[veredicto.porQueNo])}` : ""}"
             data-avion="${avion.id}">
       <span class="ficha__lienzo ficha__lienzo--avion">${
-        retrato ? `<img class="ficha__retrato" src="${retrato}" alt="" />` : ""
+        retrato
+          ? `<img class="ficha__retrato" src="${retrato}" alt=""
+                  width="${TAMANO_DE_RETRATO.ancho}" height="${TAMANO_DE_RETRATO.alto}"
+                  decoding="async" />`
+          : ""
       }${no ? NO_CABE : ""}</span>
       <span class="ficha__pie">
         <span class="ficha__dato">${FABRICANTE} ${modelo?.numero ?? ""}</span>
@@ -1430,7 +1435,7 @@ export function abrirHangar(
             ${AIRCRAFT.map((a) =>
               fichaDeAvion(
                 a,
-                retratosDeLaFlota().get(a.id),
+                retratoDe(a.id),
                 a.id === avion.id,
                 cabeEn(a, campoDe(sitio)),
               ),
@@ -1574,6 +1579,14 @@ export function abrirHangar(
       </div>
       ${pie()}
     `;
+    /*
+     * Un retrato que no llega —sin red la primera vez, un fichero que
+     * falta— se quita, y queda la ficha con su nombre. Sin esto el navegador
+     * pone su icono de imagen rota, que a quien no lee le dice «esto está
+     * roto» y no «este es el Pykasu».
+     */
+    for (const img of root.querySelectorAll<HTMLImageElement>(".ficha__retrato"))
+      img.addEventListener("error", () => img.remove(), { once: true });
   };
 
   pintar();

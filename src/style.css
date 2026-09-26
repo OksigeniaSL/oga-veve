@@ -4852,9 +4852,9 @@ button.motor__tecla::after {
 /*
  * El lienzo de la ficha de avión: el retrato ocupa todo el hueco.
  *
- * Es una imagen y no un dibujo en línea porque sale de la misma geometría que
- * vuela —ver `ui/siluetas.ts`—, y ese es el punto: un retrato dibujado aparte
- * y un avión generado empiezan iguales y acaban distintos.
+ * Es una imagen y no un dibujo en línea porque es una foto del avión que se
+ * vuela —ver `ui/retratos.ts`—, y ese es el punto: un retrato dibujado aparte
+ * y el avión de verdad empiezan iguales y acaban distintos.
  */
 /*
  * El lienzo de la ficha de avión.
@@ -4871,9 +4871,24 @@ button.motor__tecla::after {
 
 .ficha__retrato {
   display: block;
+  /*
+   * Puesto encima del lienzo y no dentro de su rejilla: dentro, la altura de
+   * la imagen hacía crecer la fila y el `overflow` del lienzo la cortaba, así
+   * que en la tarjeta baja de un teléfono tumbado salía recortada aunque aquí
+   * dijera `contain`. Con el mismo margen que el lienzo.
+   */
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  padding: inherit;
+  /*
+   * Entero, no recortado. La tarjeta es 5/3 en una tablet y 5/2 en un teléfono
+   * tumbado, y con `cover` el teléfono se comía el tren y la sombra: el avión
+   * salía cortado por abajo. El retrato tiene el fondo transparente, así que
+   * lo que sobra a los lados es el fondo de la tarjeta y no se nota.
+   */
+  object-fit: contain;
 }
 
 /*

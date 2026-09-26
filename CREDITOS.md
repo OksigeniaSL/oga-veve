@@ -249,6 +249,21 @@ material con el que el juego encuentra las pantallas del panel. Y los dos
 materiales de la librea, `cola` y `marca`, que le dicen al juego dónde pintar
 el motivo y la firma de Granja Óga.
 
+### Los retratos de la flota
+
+`public/assets/aeronaves/retratos/*.webp` son las seis fotos de «¿Con qué
+volás?» en el hangar. No son dibujos aparte: son **los mismos seis modelos de
+arriba**, cargados y vestidos por el juego —los colores de su ficha, el motivo
+de la cola y la firma de Granja Óga— y fotografiados con `npm run retratos`
+(`scripts/hacer-retratos.mjs` y `scripts/retratos.html`), que pone la luz, la
+cámara y la sombra. Son de Oksigenia SL como los modelos, bajo Apache-2.0, y
+llevan dentro la librea de la casa, que es contenido propietario: ver el
+apartado del logotipo.
+
+Al lado va `huellas.json`, que dice de qué modelo, de qué ficha y de qué
+librea salió cada foto; `src/ui/retratos.test.ts` avisa si alguno de los tres
+cambió y los retratos no se rehicieron.
+
 ### Los barcos y los turbohélices de las islas
 
 Los cinco barcos que cruzan entre islas —un ferri de carga y pasaje en dos
