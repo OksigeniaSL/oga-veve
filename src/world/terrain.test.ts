@@ -107,9 +107,8 @@ describe("emplazamiento de las pistas", () => {
   // Un escenario nuevo mal colocado tiene que fallar aquí, no en la pantalla.
   //
   // La holgura es de veinte metros salvo que el escenario declare otra cosa,
-  // que es lo que hace Encarnación: su pista está a ochenta y cinco y el
-  // Paraná embalsado a ochenta y tres, y eso son de verdad dos metros y medio.
-  // Ver `orilla` en `scenarios.ts`.
+  // que es lo que hacen los campos pegados al mar: Lanzarote tiene la pista a
+  // nueve metros y medio y el agua en dos. Ver `orilla` en `scenarios.ts`.
   it.each(SCENARIOS.map((s) => [s.id, s] as const))(
     "%s: la pista está en seco y por encima del agua",
     (_id, scenario) => {
@@ -125,9 +124,9 @@ describe("emplazamiento de las pistas", () => {
    *
    * Es la pregunta que la de arriba no llega a hacer: una pista con la
    * cabecera metida en el agua y el otro extremo en tierra sale bien colocada
-   * mirando un solo punto. Con la orilla declarada de Encarnación en dos
-   * metros, esto es lo que queda de guardarraíl allí, así que tiene que ser
-   * el de verdad — cada metro de asfalto por encima de la lámina.
+   * mirando un solo punto. En los campos con la orilla declarada, esto es lo
+   * que queda de guardarraíl, así que tiene que ser el de verdad — cada metro
+   * de asfalto por encima de la lámina.
    */
   it.each(SCENARIOS.map((s) => [s.id, s] as const))(
     "%s: y no solo su punto medio: la pista entera está fuera del agua",
