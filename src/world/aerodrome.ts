@@ -51,6 +51,7 @@ import {
 import { RESALTE } from "./terrain";
 import { sinTemblor } from "./sin-temblor";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { partirLoLargo } from "./curvatura";
 import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 import { laRedonda } from "./luces-de-posicion";
 
@@ -669,9 +670,16 @@ export function createAerodrome(
   }
 
   for (const [superficie, geos] of porSuperficie) {
-    const fusionada =
-      geos.length === 1 ? geos[0]! : mergeGeometries(geos, false);
-    if (!fusionada) continue;
+    const junta = geos.length === 1 ? geos[0]! : mergeGeometries(geos, false);
+    if (!junta) continue;
+    /*
+     * **Y sin triángulos de kilómetros**, por la curva de la Tierra: una
+     * pista de OpenStreetMap llega en triángulos de dos kilómetros de largo,
+     * y el dibujo curvo los hundía por el medio ocho centímetros —justo bajo
+     * las ruedas— mientras el suelo de al lado, en cuadros de metros, se
+     * quedaba en su sitio. Ver `partirLoLargo`.
+     */
+    const fusionada = partirLoLargo(junta);
     const malla = new Mesh(
       fusionada,
       /*
@@ -1248,8 +1256,10 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
   }
 
   if (piezas.length) {
-    const fusionadas = mergeGeometries(piezas, false);
-    if (fusionadas) {
+    const juntas = mergeGeometries(piezas, false);
+    if (juntas) {
+      // Partida como el pavimento que tiene debajo. Ver `partirLoLargo`.
+      const fusionadas = partirLoLargo(juntas);
       const malla = new Mesh(
         fusionadas,
         new MeshLambertMaterial({ color: AMARILLO, ...ENCIMA_PINTURA }),
@@ -2431,8 +2441,11 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
   }
 
   if (piezas.length) {
-    const fusionadas = mergeGeometries(piezas, false);
-    if (fusionadas) {
+    const juntas = mergeGeometries(piezas, false);
+    if (juntas) {
+      // Las rayas de borde miden la pista entera: partidas como el asfalto
+      // que tienen debajo. Ver `partirLoLargo`.
+      const fusionadas = partirLoLargo(juntas);
       const malla = new Mesh(
         fusionadas,
         new MeshLambertMaterial({ color: PINTURA, ...ENCIMA_PINTURA }),

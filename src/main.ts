@@ -450,6 +450,12 @@ const game = new Game({
   luzDeCiudad: ciudad,
   vecinos,
   destino,
+  /*
+   * `?curvatura=0` dibuja el mundo plano, para comparar: sin curva, el sol
+   * se corta en la horizontal y la costa de la isla de enfrente se ve
+   * entera. Ver `world/curvatura.ts`.
+   */
+  ...(params.get("curvatura") === "0" ? { curvatura: false } : {}),
 });
 miga("juego creado");
 
