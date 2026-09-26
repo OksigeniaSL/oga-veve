@@ -16,11 +16,19 @@
  *
  * Un banco que mide un mundo que no es el del juego no mide nada, así que aquí
  * el mundo se pone a mano y se sabe lo que hay. Lo medido sobre el relieve de
- * verdad, que es lo que motivó todo esto, está en `manoDelCircuito`.
+ * verdad, que es lo que motivó todo esto, está en `formaDelCircuito` y en
+ * `circuito-terreno.test.ts`.
  */
 
 import { describe, expect, it } from "vitest";
-import { holguraDelViento, manoDelCircuito } from "./circuito";
+import {
+  alturaDelCircuito,
+  formaDelCircuito,
+  holguraDelCircuito,
+  manoDelCircuito,
+  pasilloDelCircuito,
+  SOBRE_EL_TERRENO,
+} from "./circuito";
 
 /** Una pista mirando al norte, centrada en el origen, a veinticinco metros. */
 const PISTA = { x: 0, z: 0, heading: 0, length: 2000 };
@@ -77,8 +85,8 @@ describe("la mano del circuito", () => {
    */
   it("y la holgura lo dice con números", () => {
     const suelo = (x: number) => costa(1)(x);
-    const mar = holguraDelViento(PISTA, COTA, suelo, "izquierda");
-    const monte = holguraDelViento(PISTA, COTA, suelo, "derecha");
+    const mar = holguraDelCircuito(PISTA, COTA, suelo, "izquierda");
+    const monte = holguraDelCircuito(PISTA, COTA, suelo, "derecha");
     expect(mar).toBeGreaterThan(200);
     expect(monte).toBeLessThan(0);
   });
@@ -94,5 +102,49 @@ describe("la mano del circuito", () => {
     expect(manoDelCircuito({ ...PISTA, heading: 180 }, COTA, suelo)).toBe(
       "izquierda",
     );
+  });
+});
+
+describe("la altura del circuito", () => {
+  it("donde el terreno no pide más, la de costumbre", () => {
+    expect(formaDelCircuito(PISTA, COTA, () => 0)).toEqual({
+      mano: "izquierda",
+      altura: alturaDelCircuito(1),
+    });
+    expect(formaDelCircuito(PISTA, COTA).altura).toBe(alturaDelCircuito(1));
+  });
+
+  /*
+   * **Y si ningún lado basta, sube.** Un llano entre dos montes, como Los
+   * Rodeos para la avioneta: los dos lados piden lo mismo, así que no hay
+   * motivo para romper la norma de la izquierda, pero a doscientos cincuenta
+   * metros el viento en cola iría a cien del suelo.
+   */
+  it("con una loma a los dos lados, se queda a la izquierda y sube", () => {
+    const llanoAlto = () => COTA + 200;
+    const forma = formaDelCircuito(PISTA, COTA, llanoAlto);
+    expect(forma.mano).toBe("izquierda");
+    expect(forma.altura).toBe(200 + SOBRE_EL_TERRENO);
+  });
+
+  /*
+   * **Y el pasillo es el de quien lo vuela.** Una colina a novecientos metros
+   * por fuera del viento en cola no le importa a la avioneta, que vira en
+   * doscientos, y sí al reactor, que se abre un kilómetro en cada esquina.
+   */
+  it("mira más ancho con el avión que vira más ancho", () => {
+    expect(pasilloDelCircuito(1)).toBe(600);
+    const escala = 68 / 33;
+    expect(pasilloDelCircuito(escala)).toBeGreaterThan(1000);
+    // Una colina de trescientos metros, novecientos por fuera del viento en
+    // cola del reactor —el de la izquierda, al oeste de una pista al norte—.
+    const lejos = 1000 * escala + 900;
+    const colina = (x: number) => (x < -lejos + 100 && x > -lejos - 100 ? 300 + COTA : 0);
+    expect(formaDelCircuito(PISTA, COTA, colina, 1).altura).toBe(alturaDelCircuito(1));
+    const reactor = formaDelCircuito(PISTA, COTA, colina, escala);
+    // O se va al otro lado, o pasa por encima con su margen: nunca por dentro.
+    if (reactor.mano === "izquierda")
+      expect(reactor.altura).toBeGreaterThanOrEqual(300 + SOBRE_EL_TERRENO);
+    else expect(reactor.altura).toBe(alturaDelCircuito(escala));
   });
 });

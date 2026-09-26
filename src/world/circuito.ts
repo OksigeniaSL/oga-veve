@@ -43,10 +43,19 @@
  *
  * Así que la mano **se decide mirando el terreno**, que es exactamente el
  * motivo por el que un campo de verdad publica el circuito al revés. Ver
- * `manoDelCircuito`: se mide cuánto se separa del suelo el tramo de viento en
- * cola por cada lado y se vuela por donde hay sitio. Y con empate gana la
- * izquierda, porque la izquierda es la norma y una regla no se rompe por diez
- * metros.
+ * `formaDelCircuito`: se mira cuánto sube el terreno por debajo y alrededor
+ * de los tramos que se vuelan a nivel, por cada lado, y se vuela por donde
+ * hay sitio. Y con empate gana la izquierda, porque la izquierda es la norma
+ * y una regla no se rompe por diez metros.
+ *
+ * ## Y a la altura que pida el terreno, no solo la de la costumbre
+ *
+ * Donde ningún lado basta, el circuito **sube**: es lo que hacen los campos
+ * con relieve alrededor, que publican su altura de circuito por encima de la
+ * de costumbre. Los Rodeos publica dos, el norte y el sur, y del norte dice
+ * «maintain minimum 1000 ft AGL» en el viento en cola (AIP España, AD
+ * 2-GCXO, 22.4). Un circuito dibujado que pasa a tres metros de una ladera no
+ * enseña a volar un circuito: enseña a chocar siguiendo las instrucciones.
  *
  * No hace falta ninguna carta ni ningún dato nuevo: el juego ya tiene el
  * relieve de verdad de cada aeródromo.
@@ -66,6 +75,7 @@ import {
   PointsMaterial,
 } from "three";
 import { GLIDE_SLOPE } from "./runway-guide";
+import type { Scenario } from "./scenarios";
 import { hastaElUmbralDeToma } from "./umbral-desplazado";
 
 /** Un punto del circuito, en coordenadas de mundo. */
@@ -210,102 +220,230 @@ export interface Pista {
 }
 
 /**
- * Cuánto separa del suelo el viento en cola volado por un lado, en metros.
+ * Cuánto se pasa por encima del terreno como poco en los tramos a nivel, m.
  *
- * Es la cuenta que decide la mano, y es la de un piloto: el tramo largo del
- * circuito se vuela a `ALTURA_DE_CIRCUITO` sobre la pista, así que lo que
- * importa es **cuánto sube el terreno por debajo de él**. Se devuelve lo peor
- * de todo el tramo, que es lo único que cuenta cuando se habla de despejado.
+ * Ciento cincuenta: los quinientos pies de la altura mínima de un vuelo
+ * visual fuera de poblado (SERA.5005). Es la regla que un piloto de verdad
+ * lleva en la cabeza para el viento en cola; sobre un pueblo son el doble,
+ * que es lo que Los Rodeos le pide a su circuito norte.
  */
-export function holguraDelViento(
+export const SOBRE_EL_TERRENO = 150;
+
+/**
+ * Cuánto a cada lado del dibujo se mira el terreno, m, en un circuito de esta
+ * escala.
+ *
+ * El dibujo es una línea y quien lo vuela no va por ella: en cada viraje se
+ * aparta lo que da su radio de giro. Así que se mira un pasillo de un radio de
+ * viraje a cada lado —a la velocidad de aproximación del avión y con
+ * veinticinco grados de alabeo, que es como se vira en un circuito— y nunca
+ * menos de seiscientos metros, que es el radio en el que SERA manda mirar los
+ * obstáculos. Con la avioneta mandan los seiscientos; con el JAZ 90, que vira
+ * con un kilómetro de radio, manda el viraje.
+ */
+export function pasilloDelCircuito(escala = 1): number {
+  const v = APROXIMACION_DEL_ENTRENADOR * escala;
+  const giro = (v * v) / (9.81 * Math.tan((25 * Math.PI) / 180));
+  return Math.max(600, giro);
+}
+
+/** Cada cuánto se cata el terreno del pasillo, m: la rejilla del relieve es de cuarenta y tres. */
+const CATA = 50;
+
+/**
+ * Lo más alto que hay en el pasillo de los tramos que se vuelan a nivel —el
+ * viento cruzado y el viento en cola—, en metros **sobre la pista**.
+ *
+ * Con lo que queda por delante del final de la subida y pasadas las dos
+ * esquinas, que es por donde se abre quien vira tarde; y sin lo del otro lado
+ * del eje al empezar el viento cruzado, que queda a la espalda del viraje. La
+ * base no entra: es bajada, y lo que la protege es la senda, como a la final.
+ */
+export function techoDelPasillo(
   runway: Pista,
   cotaDePista: number,
   suelo: (x: number, z: number) => number,
   mano: Mano,
+  escala = 1,
 ): number {
-  const h = (runway.heading * Math.PI) / 180;
-  const fx = Math.sin(h);
-  const fz = -Math.cos(h);
-  const signo = mano === "izquierda" ? 1 : -1;
-  const ix = -Math.cos(h) * signo;
-  const iz = -Math.sin(h) * signo;
-  const medio = runway.length / 2;
-  const desde = medio + RECTO_TRAS_LA_PISTA;
-  const hasta = -hastaElUmbralDeToma(runway) - BASE_A_FINAL;
-  let peor = Infinity;
-  // Veinte catas a lo largo del tramo: con mil metros de separación y tres
-  // kilómetros de largo, es una cada ciento cincuenta metros.
-  for (let k = 0; k <= 20; k++) {
-    const a = desde + ((hasta - desde) * k) / 20;
-    const x = runway.x + fx * a + ix * SEPARACION;
-    const z = runway.z + fz * a + iz * SEPARACION;
-    peor = Math.min(peor, cotaDePista + ALTURA_DE_CIRCUITO - suelo(x, z));
+  const v = verticesDelCircuito(runway, cotaDePista, mano, escala);
+  const w = pasilloDelCircuito(escala);
+  let techo = -Infinity;
+  for (const [i, desde] of [
+    [1, 0],
+    [2, -w],
+  ] as const) {
+    const a = v[i]!;
+    const b = v[i + 1]!;
+    const largo = Math.hypot(b.x - a.x, b.z - a.z) || 1;
+    const ux = (b.x - a.x) / largo;
+    const uz = (b.z - a.z) / largo;
+    for (let s = desde; s <= largo + w; s += CATA) {
+      for (let o = -w; o <= w; o += CATA) {
+        const x = a.x + ux * s - uz * o;
+        const z = a.z + uz * s + ux * o;
+        techo = Math.max(techo, suelo(x, z) - cotaDePista);
+      }
+    }
   }
-  return peor;
+  return techo;
 }
 
 /**
- * Por qué lado se vuela el circuito de esta pista.
- *
- * Izquierda, que es la norma, **salvo que por la derecha haya bastante más
- * sitio**. Bastante es `VENTAJA`: mover un circuito de lado es cambiar una
- * regla que todo el mundo conoce, y eso no se hace por unos metros.
- *
- * Sin terreno que mirar —una prueba, un escenario sin relieve— izquierda.
- *
- * ## Lo medido, sobre el relieve de verdad de los nueve campos
- *
- * Holgura del viento en cola por cada lado, por las dos cabeceras:
- *
- *     yvytu-rape      140°  izq 232  der 207      320°  izq 217  der 219
- *     pettirossi      192°  izq 229  der 238       12°  izq 237  der 229
- *     guarani          41°  izq 239  der 236      221°  izq 239  der 239
- *     encarnacion      12°  izq 142  der 163      192°  izq 154  der 140
- *     estigarribia    178°  izq 247  der 244      358°  izq 245  der 247
- *     pedro-juan       14°  izq 256  der 255      194°  izq 255  der 257
- *     tenerife-norte  291°  izq 160  der 169      111°  izq 173  der 162
- *     la-palma        179°  izq 275  der  32      359°  izq  27  der 275
- *     cuatro-vientos  274°  izq 239  der 243       94°  izq 237  der 239
- *
- * **Ocho de los nueve no se enteran de esto**: son llanos, las dos holguras se
- * parecen en menos de treinta metros y se quedan por la izquierda de siempre.
- *
- * Y **La Palma cambia de mano con la cabecera**, que es el campo que hizo
- * falta. La pista corre pegada a la costa con la isla subiendo por un lado y
- * el Atlántico por el otro, así que el lado bueno no es el mismo despegando
- * al norte que al sur: con la izquierda de siempre, salir hacia el norte te
- * mandaba a volar el viento en cola con **veintisiete metros** por encima de
- * la isla. Eso no es holgura, es la ladera. Los doscientos setenta y cinco del
- * otro lado son el mar.
- *
- * Lo dijo quien lo juega volando allí: «¿de verdad siempre es con la pista en
- * paralelo a la izquierda? ¿No es más seguro sobrevolar el mar, porque hay
- * menos obstáculos?».
+ * Cuánto separa del terreno el circuito de costumbre volado por un lado, m:
+ * su altura menos lo más alto de su pasillo. Negativo es volar dentro del
+ * monte.
  */
+export function holguraDelCircuito(
+  runway: Pista,
+  cotaDePista: number,
+  suelo: (x: number, z: number) => number,
+  mano: Mano,
+  escala = 1,
+): number {
+  return (
+    alturaDelCircuito(escala) -
+    techoDelPasillo(runway, cotaDePista, suelo, mano, escala)
+  );
+}
+
+/** Por qué lado y a qué altura se vuela un circuito. */
+export interface FormaDelCircuito {
+  readonly mano: Mano;
+  /** Altura de los tramos a nivel sobre la pista, m. */
+  readonly altura: number;
+}
+
+/**
+ * **Por qué lado se vuela el circuito de esta pista, y a qué altura.**
+ *
+ * Izquierda y a la altura de costumbre, que es la norma, **salvo que el
+ * terreno no lo deje**. Por cada lado se mira qué altura hace falta para
+ * pasar `SOBRE_EL_TERRENO` por encima de todo lo que hay en el pasillo, y:
+ *
+ * - si a la izquierda basta la de costumbre, izquierda;
+ * - si la derecha pide `VENTAJA` menos, derecha: mover un circuito de lado es
+ *   cambiar una regla que todo el mundo conoce, y eso no se hace por unos
+ *   metros;
+ * - y en el lado que quede, la altura que pida, que nunca es menos que la de
+ *   costumbre.
+ *
+ * Sin terreno que mirar —una prueba, un escenario sin relieve—, izquierda y
+ * de costumbre.
+ *
+ * ## Lo que se miraba antes, y por qué no bastaba
+ *
+ * Solo la línea del viento en cola **de la avioneta**, a doscientos
+ * cincuenta metros, y para todos los aviones igual. El del reactor es el doble
+ * de grande, va más alto y vira con un kilómetro de radio, así que se decidía
+ * su lado mirando un terreno por el que no pasa. Medido en Los Rodeos con el
+ * JAZ 90 saliendo por la 30: por el sur, la ladera de La Esperanza queda
+ * setenta metros por encima de su altura dentro del radio de viraje; por el
+ * norte le sobran cincuenta. Se va al norte, que es uno de los dos circuitos
+ * que publica el AIP. Y en La Palma, El Hierro y La Gomera la mano sigue
+ * siendo la del mar, con los dos aviones, como estaba.
+ *
+ * Donde los dos lados piden lo mismo y es más que la costumbre —la avioneta
+ * en Los Rodeos, en su llano entre dos montes—, el circuito sube lo que haga
+ * falta y se queda a la izquierda.
+ */
+export function formaDelCircuito(
+  runway: Pista,
+  cotaDePista: number,
+  suelo?: (x: number, z: number) => number,
+  escala = 1,
+  /**
+   * El lado que publica el AIP, si lo publica: entonces no se elige, y el
+   * terreno solo pone la altura. Ver `manoPublicada`.
+   */
+  publicada?: Mano,
+): FormaDelCircuito {
+  const costumbre = alturaDelCircuito(escala);
+  if (!suelo) return { mano: publicada ?? "izquierda", altura: costumbre };
+  const pide = (mano: Mano): number =>
+    Math.max(
+      costumbre,
+      Math.ceil(
+        techoDelPasillo(runway, cotaDePista, suelo, mano, escala) +
+          SOBRE_EL_TERRENO,
+      ),
+    );
+  if (publicada) return { mano: publicada, altura: pide(publicada) };
+  const izquierda = pide("izquierda");
+  const derecha = pide("derecha");
+  return derecha + VENTAJA < izquierda
+    ? { mano: "derecha", altura: derecha }
+    : { mano: "izquierda", altura: izquierda };
+}
+
+/**
+ * El lado que publica el AIP para esta cabecera y este avión, o nada si no lo
+ * publica.
+ *
+ * Con las avionetas aparte donde el AIP las separa: «tráfico ligero»,
+ * categorías A y B, que son las que cruzan el umbral a menos de 121 nudos.
+ * Ver `circuitoPublicado` en `scenarios.ts`.
+ */
+export function manoPublicada(
+  escenario: Pick<Scenario, "circuitoPublicado">,
+  cabecera: string | null,
+  escala = 1,
+): Mano | undefined {
+  const p = cabecera ? escenario.circuitoPublicado?.[cabecera] : undefined;
+  if (p === undefined || typeof p === "string") return p;
+  return APROXIMACION_DEL_ENTRENADOR * escala < LIGERO_HASTA ? p.ligero : p.resto;
+}
+
+/** Hasta qué velocidad de aproximación se es tráfico ligero, m/s: 121 nudos. */
+const LIGERO_HASTA = 121 * 0.514444;
+
+/** El lado, para quien solo necesita el lado. Ver `formaDelCircuito`. */
 export function manoDelCircuito(
   runway: Pista,
   cotaDePista: number,
   suelo?: (x: number, z: number) => number,
+  escala = 1,
 ): Mano {
-  if (!suelo) return "izquierda";
-  const izq = holguraDelViento(runway, cotaDePista, suelo, "izquierda");
-  const der = holguraDelViento(runway, cotaDePista, suelo, "derecha");
-  return der > izq + VENTAJA ? "derecha" : "izquierda";
+  return formaDelCircuito(runway, cotaDePista, suelo, escala).mano;
 }
 
 /**
- * Cuánta holgura de más tiene que dar la derecha para ganarse el circuito, m.
+ * Cuánta altura de menos tiene que pedir la derecha para ganarse el
+ * circuito, m.
  *
  * Cien metros. Es un tercio de la altura del circuito: por debajo de eso, los
  * dos lados son el mismo lado y manda la norma.
  */
 const VENTAJA = 100;
 
+/**
+ * La altura de costumbre de los tramos a nivel, sobre la pista, m.
+ *
+ * **Y sale de la senda, no de otro factor.** Estirar la figura sin subirla
+ * dejaría la base cayendo casi nada: el avión llegaría al punto de entrada en
+ * final **por debajo** de la senda de tres grados, que a cinco kilómetros y
+ * medio del umbral pasa por trescientos metros. Así que el circuito va a lo
+ * que pide la senda ahí, más ciento cincuenta metros de base para bajarlos —
+ * y nunca por debajo de los doscientos cincuenta de siempre.
+ *
+ * Con el entrenador la cuenta da doscientos cuarenta y cuatro y manda el
+ * suelo, así que **el circuito de la avioneta no se mueve ni un metro** donde
+ * el terreno no pide más. Con el JAZ 120 da trescientos sesenta y cuatro.
+ */
+export function alturaDelCircuito(escala = 1): number {
+  return Math.max(
+    ALTURA_DE_CIRCUITO,
+    BASE_A_FINAL * escala * Math.tan(SENDA) + 150,
+  );
+}
+
 export function verticesDelCircuito(
   runway: Pista,
   cotaDePista: number,
   mano: Mano = "izquierda",
   escala = 1,
+  /** Altura de los tramos a nivel, m. La pide el terreno: ver `formaDelCircuito`. */
+  altura = alturaDelCircuito(escala),
 ): PuntoDeCircuito[] {
   const h = (runway.heading * Math.PI) / 180;
   // Hacia dónde se despega, y qué es la izquierda desde ahí. Con el circuito
@@ -327,25 +465,7 @@ export function verticesDelCircuito(
   const recto = RECTO_TRAS_LA_PISTA * escala;
   const separacion = SEPARACION * escala;
   const entrada = BASE_A_FINAL * escala;
-  /*
-   * **Y la altura sale de la senda, no de otro factor.**
-   *
-   * Estirar la figura sin subirla dejaría la base cayendo casi nada: el avión
-   * llegaría al punto de entrada en final **por debajo** de la senda de tres
-   * grados, que a cinco kilómetros y medio del umbral pasa por trescientos
-   * metros. Así que el circuito va a lo que pide la senda ahí, más ciento
-   * cincuenta metros de base para bajarlos — y nunca por debajo de los
-   * doscientos cincuenta de siempre.
-   *
-   * Con el entrenador la cuenta da doscientos cuarenta y cuatro y manda el
-   * suelo, así que **el circuito de la avioneta no se mueve ni un metro**. Con
-   * el JAZ 120 da cuatrocientos sesenta: mil quinientos pies, que es
-   * exactamente la altura de circuito de un avión de línea.
-   */
-  const circuito = Math.max(
-    ALTURA_DE_CIRCUITO,
-    entrada * Math.tan(SENDA) + 150,
-  );
+  const circuito = altura;
   /*
    * **La final se cuenta desde donde se toca**, que con el umbral desplazado
    * no es la punta del asfalto: la base se gira a la misma distancia del
@@ -372,6 +492,8 @@ export interface Circuito {
   readonly grupo: Group;
   /** Los cinco vértices, por si alguien —el banco— quiere medirlos. */
   readonly vertices: readonly PuntoDeCircuito[];
+  /** Por qué lado y a qué altura, para que el tráfico vuele el mismo. */
+  readonly forma: FormaDelCircuito;
   /**
    * En qué tramo está el avión, o `null` si anda lejos del circuito.
    *
@@ -397,12 +519,16 @@ export function crearCircuito(
   cotaDePista: number,
   suelo?: (x: number, z: number) => number,
   escala = 1,
+  /** El lado que publica el AIP, si lo publica. Ver `manoPublicada`. */
+  publicada?: Mano,
 ): Circuito {
+  const forma = formaDelCircuito(runway, cotaDePista, suelo, escala, publicada);
   const vertices = verticesDelCircuito(
     runway,
     cotaDePista,
-    manoDelCircuito(runway, cotaDePista, suelo),
+    forma.mano,
     escala,
+    forma.altura,
   );
   const grupo = new Group();
   grupo.name = "circuito";
@@ -466,6 +592,7 @@ export function crearCircuito(
   return {
     grupo,
     vertices,
+    forma,
     tramoEn(x, z) {
       let mejor: TramoDeCircuito | null = null;
       // Y el ancho con el que se cuenta «estoy en el circuito» crece con la

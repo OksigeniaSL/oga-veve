@@ -38,7 +38,8 @@ import type { Lluvia } from "../world/meteo";
 import { alturaDeEdificio, enElPavimento } from "../world/aerodrome";
 import {
   escalaDeCircuito,
-  manoDelCircuito,
+  formaDelCircuito,
+  manoPublicada,
   verticesDelCircuito,
 } from "../world/circuito";
 import { guardarAjuste, leerAjustes, type Ajustes } from "../ui/ajustes";
@@ -1492,18 +1493,26 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * al monte. Dos fuentes de verdad para la misma figura, que es justo lo que
      * este fichero promete no hacer.
      */
-    circuito: () =>
-      juego.circuito?.vertices ??
-      verticesDelCircuito(
+    circuito: () => {
+      if (juego.circuito) return juego.circuito.vertices;
+      // Y la altura también, que ahora la pide el terreno: la misma cuenta
+      // que `crearCircuito`, o el banco volaría otro circuito.
+      const escala = escalaDeCircuito(juego.aircraft.approachSpeed);
+      const forma = formaDelCircuito(
         juego.scenario.runway,
         juego.terrain.runwayElevation,
-        manoDelCircuito(
-          juego.scenario.runway,
-          juego.terrain.runwayElevation,
-          (x, z) => juego.terrain.sampleHeight(x, z),
-        ),
-        escalaDeCircuito(juego.aircraft.approachSpeed),
-      ),
+        (x, z) => juego.terrain.sampleHeight(x, z),
+        escala,
+        manoPublicada(juego.scenario, cabeceraEnUso(juego.scenario), escala),
+      );
+      return verticesDelCircuito(
+        juego.scenario.runway,
+        juego.terrain.runwayElevation,
+        forma.mano,
+        escala,
+        forma.altura,
+      );
+    },
     /** A qué caída se tocó, m/s. Para el banco y para las sondas. */
     caida: () => juego.landing.caidaAlTocar,
     /** Los pares puesto + espera que se consideraron, con sus metros. */

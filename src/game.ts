@@ -57,7 +57,8 @@ import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
   crearCircuito,
   escalaDeCircuito,
-  manoDelCircuito,
+  formaDelCircuito,
+  manoPublicada,
   type Circuito,
 } from "./world/circuito";
 import { FLOTA, modeloPorId } from "./flight/flota";
@@ -5797,13 +5798,17 @@ export class Game {
     this.laAproximacion.tramoDelCircuito = null;
     if (!this.tier.circuito) return;
     const campo = this.elCampoMontado();
+    // El circuito de **este** avión: el del de fuselaje ancho es tres veces
+    // el de la avioneta. Ver `escalaDeCircuito`.
+    const escala = escalaDeCircuito(this.aircraft.approachSpeed);
     this.circuito = crearCircuito(
       campo.pista,
       this.cotaDelCampo(campo),
       (x, z) => this.terrain.sampleHeight(x, z),
-      // El circuito de **este** avión: el del de fuselaje ancho es tres veces
-      // el de la avioneta. Ver `escalaDeCircuito`.
-      escalaDeCircuito(this.aircraft.approachSpeed),
+      escala,
+      // Y por el lado que publica el campo, si lo publica: la cabecera es la
+      // del viento, la misma que la de todo lo demás. Ver `manoPublicada`.
+      manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), escala),
     );
     this.circuito.grupo.visible = false;
     this.scene.add(this.circuito.grupo);
@@ -5842,14 +5847,27 @@ export class Game {
     const otra = FLOTA.find((m) => m.silueta !== mia)?.silueta;
     if (!otra) return;
     const cota = this.cotaDelCampo(campo);
+    /*
+     * El mismo lado **y la misma altura** que el hilo ocre, sacados de la
+     * misma cuenta: con la mano de la avioneta y la altura de costumbre, en
+     * Los Rodeos el otro avión volaba su viento en cola por el sur mientras
+     * al reactor se le dibujaba por el norte. Ver `formaDelCircuito`.
+     */
+    const escala = escalaDeCircuito(this.aircraft.approachSpeed);
+    const forma = formaDelCircuito(
+      campo.pista,
+      cota,
+      (x: number, z: number) => this.terrain.sampleHeight(x, z),
+      escala,
+      manoPublicada(campo.escenario, cabeceraEnUso(campo.escenario), escala),
+    );
     this.trafico = crearTrafico(
       campo.pista,
       cota,
       otra,
-      manoDelCircuito(campo.pista, cota, (x: number, z: number) =>
-        this.terrain.sampleHeight(x, z),
-      ),
-      escalaDeCircuito(this.aircraft.approachSpeed),
+      forma.mano,
+      escala,
+      forma.altura,
     );
     this.scene.add(this.trafico.grupo);
   }
