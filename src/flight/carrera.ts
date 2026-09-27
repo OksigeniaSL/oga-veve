@@ -27,6 +27,7 @@
  */
 
 import { esDeChorro, type AircraftConfig } from "./aircraft";
+import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 
 /** Densidad del aire al nivel del mar, kg/m³. */
@@ -52,7 +53,12 @@ export function carreraHastaVr(
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
   const peso = a.mass * G;
   const cl = a.aero.cl0;
-  const cd = a.aero.cd0 + (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
+  // Rodando, el tren va fuera: el `cd0` de la ficha es el del avión limpio.
+  // Ver `resistenciaDelTren`.
+  const cd =
+    a.aero.cd0 +
+    resistenciaDelTren(a, 1) +
+    (cl * cl) / (Math.PI * alargamiento * a.aero.oswald);
   const mu = ROZAMIENTO[superficie];
   const pasos = 400;
   const dv = a.rotationSpeed / pasos;
@@ -144,10 +150,12 @@ export function enPlaneoDesdeElUmbral(a: AircraftConfig): number {
 function finezaDeAterrizaje(a: AircraftConfig): number {
   const alargamiento = (a.wingSpan * a.wingSpan) / a.wingArea;
   const cl = a.aero.cl0 + a.flapsLift;
+  // Y con el tren fuera, que se aterriza con él. Ver `resistenciaDelTren`.
   const cd =
     a.aero.cd0 +
     (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
-    a.flapsDrag;
+    a.flapsDrag +
+    resistenciaDelTren(a, 1, 1);
   return cl / cd;
 }
 
@@ -178,7 +186,8 @@ export function rodaduraDeFrenada(
   const cd =
     a.aero.cd0 +
     (cl * cl) / (Math.PI * alargamiento * a.aero.oswald) +
-    a.flapsDrag;
+    a.flapsDrag +
+    resistenciaDelTren(a, 1, 1);
   const mu = ROZAMIENTO[superficie] + 0.28;
   const toma = velocidadDeToma(a);
   const pasos = 400;

@@ -105,12 +105,26 @@ import {
  */
 const TODOS = [...AIRCRAFT, ...RESERVADOS];
 import { neutralControls } from "./model";
+import { resistenciaDelTren } from "./tren";
 import { ROZAMIENTO, type Superficie } from "../world/superficie";
 import {
   derivadasDeLaFicha,
   modosDe,
   polinomioCaracteristico,
 } from "./referencia";
+
+/**
+ * Los mandos de volar: los de siempre **con el tren dentro**.
+ *
+ * El `cd0` de la ficha es el del avión limpio, y el tren fuera se suma (#170).
+ * Lo que se mide en el aire —pérdida, crucero, planeo, ascenso— se mide como
+ * se vuela, con las patas guardadas; en los de tren fijo no cambia nada,
+ * porque sus patas ya van dentro de su `cd0`. La carrera de despegue, en
+ * cambio, se corre con el tren fuera: ver `carreraDeDespegue`.
+ */
+function volando(): ReturnType<typeof neutralControls> {
+  return { ...neutralControls(), tren: 0 };
+}
 
 /** Densidad del aire a nivel del mar, kg/m³. */
 const RHO = 1.225;
@@ -228,7 +242,7 @@ function nivelado(
       Math.min(1, (-vs * 0.12 - integral) * k1 - m.state.pitchRate * 1.2),
     );
     m.step(DT, {
-      ...neutralControls(),
+      ...volando(),
       engineOn: true,
       throttle,
       elevator,
@@ -271,7 +285,7 @@ function medirPerdida(a: AircraftConfig, flaps = 0): number {
     const vs = m.state.verticalSpeed;
     integral = Math.max(-0.6, Math.min(0.6, integral + vs * DT * 0.05 * k1));
     m.step(DT, {
-      ...neutralControls(),
+      ...volando(),
       engineOn: true,
       throttle: 0,
       flaps,
@@ -562,7 +576,7 @@ function planeoConActitud(
       Math.min(0.6, (objetivo - actitud) * 4 - m.state.pitchRate * 2.5),
     );
     m.step(DT, {
-      ...neutralControls(),
+      ...volando(),
       engineOn: false,
       throttle: 0,
       elevator: e,
@@ -608,7 +622,7 @@ function mejorAscenso(a: AircraftConfig): { subida: number; a: number } {
     const paso = () => {
       const e = Math.max(-0.5, Math.min(0.5, (m.state.airspeed - v) * 0.06));
       m.step(DT, {
-        ...neutralControls(),
+        ...volando(),
         engineOn: true,
         throttle: 1,
         elevator: e,
@@ -684,7 +698,11 @@ function carreraTeorica(a: AircraftConfig, superficie: Superficie): number {
   const AR = (a.wingSpan * a.wingSpan) / a.wingArea;
   const peso = a.mass * G;
   const cl = a.aero.cl0;
-  const cd = a.aero.cd0 + (cl * cl) / (Math.PI * AR * a.aero.oswald);
+  // Con el tren fuera, que es como se rueda. Ver `resistenciaDelTren`.
+  const cd =
+    a.aero.cd0 +
+    resistenciaDelTren(a, 1) +
+    (cl * cl) / (Math.PI * AR * a.aero.oswald);
   const mu = ROZAMIENTO[superficie];
   const pasos = 4000;
   const dv = a.rotationSpeed / pasos;

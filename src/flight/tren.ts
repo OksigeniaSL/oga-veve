@@ -37,15 +37,83 @@
 export const TARDA_EL_TREN = 10;
 
 /**
- * Lo que cuesta llevarlo fuera, en coeficiente de resistencia.
+ * El `K_uc` de la correlación de Mair y Birdsall, con los flaps recogidos y con
+ * los flaps a tope. Ver `resistenciaDelTren`.
  *
- * Veinte milésimas: es lo que miden las tablas para un tren de avioneta
- * retráctil, y del mismo orden que el `cd0` limpio de casi toda la flota — o
- * sea que **el tren pesa casi tanto como el avión entero**, que es exactamente
- * la sensación que hay que transmitir. En un reactor pesa relativamente menos
- * porque su avión ya es mucho más limpio, y eso también sale solo de la cuenta.
+ * Son dos porque **los flaps le quitan resistencia al tren**: bajados, frenan
+ * el aire que pasa por debajo del ala, y las patas, que cuelgan justo ahí,
+ * reciben menos corriente. Por eso el tren fuera cuesta casi el doble
+ * despegando limpio que aterrizando con todo abajo.
  */
-export const CUESTA_EL_TREN = 0.02;
+const K_UC_LIMPIO = 5.81e-5;
+const K_UC_CON_FLAPS = 3.16e-5;
+
+/**
+ * Lo que cuesta llevar el tren fuera, en coeficiente de resistencia referido a
+ * la superficie alar. **Cero o positivo, nunca negativo.**
+ *
+ * ## Lo que había, y por qué salía un avión sin rozamiento
+ *
+ * Aquí había una constante de veinte milésimas que **se restaba** al meter el
+ * tren, con la idea de que las fichas estaban medidas «con las patas fuera».
+ * No lo estaban: el `cd0` de los retráctiles es el del avión limpio —lo dice
+ * la ficha del bimotor, y es lo que publica la polar de cualquier reactor—, así
+ * que meter el tren dejaba el JAZ 90 con un `cd0` de **cero** y el JAZ 120 en
+ * **−0,003**, un avión al que el aire empuja. Planeaban de más justo donde el
+ * planeo es la lección (#170).
+ *
+ * Ahora es como es: el `cd0` de la ficha es el limpio y **el tren fuera se
+ * suma**. Los de tren fijo lo llevan ya dentro de su `cd0` —son las patas con
+ * las que vuelan siempre— y aquí dan cero, para no contarlas dos veces.
+ *
+ * ## De dónde sale el número de cada uno
+ *
+ * De la correlación de **Mair y Birdsall**, *Aircraft Performance* (Cambridge
+ * University Press, 1992), ecuación 6.1, ajustada a los datos de tren de la
+ * ESDU:
+ *
+ *     ΔCD0 = (W/S) · K_uc · m^−0,215      W/S en N/m², m en kg
+ *
+ * con `K_uc` de 5,81·10⁻⁵ con los flaps recogidos a 3,16·10⁻⁵ con los flaps a
+ * tope. Con la masa y el ala de cada ficha salen, recogidos y a tope:
+ *
+ *     JAZ 40   0,012 → 0,006        JAZ 90    0,026 → 0,014
+ *     JAZ 60   0,013 → 0,007        JAZ 120   0,020 → 0,011
+ *
+ * Y cuadran con la tabla de primeras estimaciones de **Roskam**, *Airplane
+ * Design, Part I*, tabla 3.6: tren fuera, de 0,015 a 0,025. El reactor
+ * regional sale arriba —patas largas para un ala pequeña— y los dos de hélice,
+ * con sus ruedas pequeñas bajo un ala baja, por debajo, que es el lado que
+ * Roskam da a los de ala baja.
+ *
+ * **Por qué una cuenta y no un número en cada ficha**: el tren crece con el
+ * peso que tiene que aguantar y el ala con el que tiene que sostener, y de la
+ * proporción entre los dos sale lo que pesa uno contra la otra. Escribir la
+ * cifra a mano en seis fichas es la manera de que un día no cuadre con su masa.
+ *
+ * `flapsFuera` es la fracción de la deflexión máxima, de 0 a 1: la de
+ * `fraccionDeLosFlaps` en `flaps.ts`, no la de la palanca.
+ */
+export function resistenciaDelTren(
+  a: {
+    readonly mass: number;
+    readonly wingArea: number;
+    readonly trenRetractil: boolean;
+  },
+  donde: number,
+  flapsFuera = 0,
+): number {
+  if (!a.trenRetractil) return 0;
+  const fuera = Math.max(0, Math.min(1, Number.isFinite(donde) ? donde : 1));
+  if (fuera === 0) return 0;
+  const conFlaps = Math.max(0, Math.min(1, flapsFuera || 0));
+  const k = K_UC_LIMPIO + (K_UC_CON_FLAPS - K_UC_LIMPIO) * conFlaps;
+  const cargaAlar = (a.mass * GRAVEDAD) / a.wingArea;
+  return fuera * cargaAlar * k * Math.pow(a.mass, -0.215);
+}
+
+/** La de la atmósfera estándar; se repite para no atar este fichero a ella. */
+const GRAVEDAD = 9.80665;
 
 /** Dónde está el tren y qué se le ha pedido. */
 export interface Tren {
@@ -77,29 +145,6 @@ export function mueveElTren(t: Tren, dt: number): number {
  */
 export function sePuedeMeter(enElSuelo: boolean): boolean {
   return !enElSuelo;
-}
-
-/**
- * Lo que **cambia** la resistencia del avión al mover el tren. Cero o negativo.
- *
- * Y el signo es lo importante. Con el tren fuera devuelve cero: las fichas de
- * este juego están medidas con el avión como vuela hoy —con las patas fuera,
- * que es como ha volado siempre— y sumarle resistencia encima cambiaría todas
- * las carreras de despegue, todas las distancias de aterrizaje y la cuenta de
- * cuánta pista hace falta. Nada de eso está mal; lo que faltaba era el
- * **premio de meterlo**.
- *
- * Así que meter el tren *quita* dos centésimas, que en una avioneta retráctil
- * es casi tanto como el avión entero limpio. La lección es la misma y llega por
- * donde tiene que llegar: por lo que hace quien juega. Metés el tren y el avión
- * corre más.
- */
-export function loQueCambiaElTren(donde: number): number {
-  const fuera = Math.max(0, Math.min(1, donde));
-  // El `|| 0` no es cosmético: `-0.02 * 0` da **menos cero**, y menos cero se
-  // arrastra por toda la suma de coeficientes hasta salir en un banco como una
-  // diferencia que no existe.
-  return -(CUESTA_EL_TREN * (1 - fuera)) || 0;
 }
 
 /** Los tres estados que enseña el cuadro. */

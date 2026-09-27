@@ -93,6 +93,61 @@ export function enLaMuesca(tabla: readonly number[], donde: number): number {
 }
 
 /**
+ * Qué parte de su deflexión máxima llevan los flaps, **en grados**, de 0 a 1.
+ *
+ * No es lo mismo que la palanca: las muescas van a tercios del recorrido y los
+ * grados no —el JAZ 90 pasa de 0 a 5, a 15 y a 30—, así que la primera muesca
+ * es un tercio de palanca y un sexto de ángulo. Sin tabla de grados, la
+ * palanca, que es lo único que se sabe.
+ */
+export function fraccionDeLosFlaps(
+  a: { readonly muescasDeFlaps: readonly number[] },
+  flaps: number,
+): number {
+  const tope = a.muescasDeFlaps[a.muescasDeFlaps.length - 1] ?? 0;
+  const f = Math.max(0, Math.min(1, Number.isFinite(flaps) ? flaps : 0));
+  if (!(tope > 0)) return f;
+  return Math.max(0, Math.min(1, enLaMuesca(a.muescasDeFlaps, f) / tope));
+}
+
+/**
+ * La resistencia que añaden los flaps **en esta posición**.
+ *
+ * La ficha da la de los flaps a tope —`flapsDrag`—, y entre medias crecía en
+ * línea recta con la palanca: la primera muesca del JAZ 90, cinco grados que
+ * casi solo sacan el flap hacia atrás por sus carriles, frenaba un tercio de lo
+ * que frenan los treinta de aterrizaje. Ese flap existe precisamente para
+ * despegar **sin frenar**.
+ *
+ * La resistencia de perfil de un flap crece con el **cuadrado del seno** de su
+ * ángulo: McCormick, *Aerodynamics, Aeronautics, and Flight Mechanics* (Wiley,
+ * 2.ª ed., 1995), ecuaciones 3.45 y 3.46. Así los primeros grados apenas
+ * cuestan y los últimos son los que frenan — que es lo que se nota al bajarlos
+ * y por lo que los de aterrizaje se dejan para el final. Con esto, la primera
+ * muesca del JAZ 90 frena un 3 % de lo que frenan los de aterrizaje, y la
+ * segunda un 27 %.
+ *
+ * La sustentación sigue yendo con la palanca: el flap de un avión así sale
+ * primero hacia atrás —más ala— y luego gira, así que gana casi toda la
+ * sustentación en las primeras muescas, y las muescas ya están repartidas así.
+ */
+export function resistenciaDeLosFlaps(
+  a: {
+    readonly flapsDrag: number;
+    readonly muescasDeFlaps: readonly number[];
+  },
+  flaps: number,
+): number {
+  if (!(a.flapsDrag > 0)) return 0;
+  const tope = a.muescasDeFlaps[a.muescasDeFlaps.length - 1] ?? 0;
+  if (!(tope > 0)) return a.flapsDrag * fraccionDeLosFlaps(a, flaps);
+  const grados = fraccionDeLosFlaps(a, flaps) * tope;
+  const s = Math.sin((grados * Math.PI) / 180);
+  const sTope = Math.sin((tope * Math.PI) / 180);
+  return a.flapsDrag * ((s * s) / (sTope * sTope));
+}
+
+/**
  * Adónde llegan los flaps en este paso de tiempo.
  *
  * A paso fijo, que es como los mueve un husillo: `tardan` es lo que se tarda

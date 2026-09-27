@@ -28,7 +28,8 @@
  */
 
 import { Quaternion, Vector3 } from "three";
-import { loQueCambiaElTren } from "./tren";
+import { resistenciaDelTren } from "./tren";
+import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { anguloDeAviso, SE_CALLA_EL_AVISADOR } from "./avisos-de-actitud";
 import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
 import {
@@ -144,6 +145,22 @@ const PASO_QUE_SE_PIDE = 0.06;
 const PEGADO_AL_SUELO = 0.2;
 
 const STATIC_GRIP = 1.2;
+
+/**
+ * Qué parte del peso carga la rueda de morro. Ver `momentoDelTren`.
+ *
+ * Una décima: Raymer pide entre el 8 y el 15 % para un tren triciclo.
+ */
+const CARGA_EN_EL_MORRO = 0.1;
+
+/**
+ * El amortiguamiento de la pata de morro, como fracción del crítico.
+ *
+ * Siete décimas: la pata se asienta sin rebotar, que es para lo que lleva
+ * aceite. Con menos, el morro cabeceaba solo al frenar; con el crítico
+ * entero, se quedaba clavado en vez de comprimirse.
+ */
+const AMORTIGUA_LA_PATA = 0.7;
 
 /** Cuánto tiene que aguantar el ángulo pasado para que sea pérdida, s. */
 const STALL_DELAY = 0.35;
@@ -393,12 +410,20 @@ export class CoefficientFlightModel implements FlightModel {
   private readonly racha = { x: 0, y: 0, z: 0 };
   private readonly vientoDelParte = { x: 0, z: 0 };
 
-  ponerRacha(x: number, y: number, z: number): void {
+  ponerRacha(x: number, y: number, z: number, alabeo = 0): void {
     this.racha.x = x;
     this.racha.y = y;
     this.racha.z = z;
+    this.rachaDeAlabeo = alabeo;
     this.viento.set(this.vientoDelParte.x + x, y, this.vientoDelParte.z + z);
   }
+
+  /**
+   * La ráfaga de alabeo, rad/s: el aire que sube por un ala y baja por la
+   * otra. Entra en el amortiguamiento de alabeo como si el avión rodara al
+   * revés, que es lo que ve el ala. Ver `rachaEn` en `turbulencia.ts`.
+   */
+  private rachaDeAlabeo = 0;
 
   romper(): void {
     this.state.crashed = true;
@@ -556,7 +581,7 @@ export class CoefficientFlightModel implements FlightModel {
     const density = airDensity(s.position.y);
 
     if (speed > MIN_AIRSPEED) {
-      s.alpha = Math.atan2(w, u);
+      s.alpha = anguloDeAtaque(u, w);
       s.beta = Math.asin(Math.max(-1, Math.min(1, v / speed)));
     } else {
       s.alpha = 0;
@@ -568,6 +593,21 @@ export class CoefficientFlightModel implements FlightModel {
 
     const qDyn = 0.5 * density * speed * speed;
     const qS = qDyn * ac.wingArea;
+    /*
+     * **Y lo que sustenta, frena y cabecea es el aire que pasa por el plano de
+     * simetría**, no todo el que llega.
+     *
+     * Con el avión volando esto es lo mismo —derrapes de unos grados, coseno
+     * al cuadrado de casi uno—, y por eso la cuenta de siempre valía. Parado
+     * con viento no: con veinte nudos de costado, `u` y `w` son casi cero y el
+     * ángulo de ataque salía de dividir dos ráfagas —más o menos noventa
+     * grados, según soplara—, multiplicado por la presión del viento **entera**.
+     * Un avión en el puesto cabeceaba con el viento de lado como si volara de
+     * canto. Lo lateral —la fuerza de costado, el alabeo, la guiñada— sigue
+     * con la presión entera, que es la que le corresponde.
+     */
+    const qSSimetria =
+      0.5 * density * (u * u + w * w) * ac.wingArea;
     const aspectRatio = (ac.wingSpan * ac.wingSpan) / ac.wingArea;
 
     // Alarga la pérdida en modo arcade en vez de eliminarla: el avión sigue
@@ -579,23 +619,27 @@ export class CoefficientFlightModel implements FlightModel {
       a.cd0 +
       (cl * cl) / (Math.PI * aspectRatio * a.oswald) +
       postStallDrag(s.alpha, stallAngle) +
-      ac.flapsDrag * assisted.flaps +
+      // Los flaps, por el ángulo al que están y no por la palanca. Ver
+      // `resistenciaDeLosFlaps`.
+      resistenciaDeLosFlaps(ac, assisted.flaps) +
       /*
        * **Y el tren, que fuera frena.**
        *
        * Es la lección que hay detrás de medio oficio: una cosa que te hace
-       * falta para aterrizar te estorba para volar. Veinte milésimas, que en
-       * una avioneta es casi tanto como el avión entero limpio — así que el
-       * mando se **nota**, que es justamente lo que tiene que pasar para que
-       * quien juega aprenda a meterlo pronto y a sacarlo tarde.
+       * falta para aterrizar te estorba para volar. **Se suma** con el tren
+       * fuera sobre el `cd0` limpio de la ficha, y con él dentro no quita
+       * nada: restarlo dejaba a los reactores sin resistencia parásita —el
+       * JAZ 90 en cero, el JAZ 120 en negativo— y planeando de más (#170).
        *
-       * **Solo en los que lo meten.** El `cd0` de una ficha es el del avión de
-       * verdad con lo que lleve puesto: el del entrenador ya incluye sus patas
-       * porque las lleva siempre, y sumárselas otra vez sería contarlas dos
-       * veces. El del bimotor es el limpio —lo dice su ficha— y a ése sí.
-       * Ver `flight/tren.ts`.
+       * **Solo en los que lo meten.** El `cd0` del entrenador ya incluye sus
+       * patas porque las lleva siempre, y sumárselas otra vez sería contarlas
+       * dos veces. Ver `resistenciaDelTren` en `flight/tren.ts`.
        */
-      (ac.trenRetractil ? loQueCambiaElTren(assisted.tren) : 0) +
+      resistenciaDelTren(
+        ac,
+        assisted.tren,
+        fraccionDeLosFlaps(ac, assisted.flaps),
+      ) +
       /*
        * **Y la onda, que es lo que impide cruzar la barrera del sonido.**
        *
@@ -647,8 +691,8 @@ export class CoefficientFlightModel implements FlightModel {
     else if (s.stallWarning && s.alpha < umbral - SE_CALLA_EL_AVISADOR)
       s.stallWarning = false;
 
-    const lift = qS * cl;
-    const drag = qS * cd;
+    const lift = qSSimetria * cl;
+    const drag = qSSimetria * cd;
     const side = qS * cy;
 
     /*
@@ -694,7 +738,7 @@ export class CoefficientFlightModel implements FlightModel {
     // semi-envergadura y la cuerda partido por la velocidad; a velocidad
     // baja eso se dispara, así que el divisor tiene suelo.
     const vRef = Math.max(speed, ac.cruiseSpeed * 0.35);
-    const pHat = (s.rollRate * ac.wingSpan) / (2 * vRef);
+    const pHat = ((s.rollRate - this.rachaDeAlabeo) * ac.wingSpan) / (2 * vRef);
     const qHat = (s.pitchRate * ac.chord) / (2 * vRef);
     const rHat = (s.yawRate * ac.wingSpan) / (2 * vRef);
 
@@ -713,7 +757,10 @@ export class CoefficientFlightModel implements FlightModel {
      */
     const timon = clamp(assisted.elevator + controls.trim, -1, 1);
     const cmMoment =
-      a.cm0 + a.cmAlpha * s.alpha + a.cmQ * qHat + a.cmElevator * timon;
+      a.cm0 +
+      a.cmAlpha * anguloQueEstabiliza(s.alpha, a.alphaStall) +
+      a.cmQ * qHat +
+      a.cmElevator * timon;
     const cnMoment =
       a.cnBeta * s.beta +
       a.cnR * rHat +
@@ -721,14 +768,21 @@ export class CoefficientFlightModel implements FlightModel {
       a.cnAileron * assisted.aileron;
 
     let rollMoment = qS * ac.wingSpan * clMoment;
-    let pitchMoment = qS * ac.chord * cmMoment;
+    let pitchMoment = qSSimetria * ac.chord * cmMoment;
     let yawMoment = qS * ac.wingSpan * cnMoment;
+
+    // Con las ruedas en el suelo, lo que manda en el cabeceo es el tren. Ver
+    // `momentoDelTren`.
+    if (s.onGround) pitchMoment += this.momentoDelTren(-forceZ);
 
     // Ayudas que actúan como momentos y no como mandos: amortiguamiento
     // extra y un empujón para nivelar las alas cuando nadie toca nada.
     if (this.layers.extraDamping > 0) {
       const k = this.layers.extraDamping * qS;
-      rollMoment -= k * 0.5 * pHat * ac.wingSpan;
+      // El alabeo del avión, no el del aire: la ayuda frena lo que el avión
+      // gira, y la ráfaga no es suya.
+      rollMoment -=
+        ((k * 0.5 * s.rollRate * ac.wingSpan) / (2 * vRef)) * ac.wingSpan;
       pitchMoment -= k * 0.6 * qHat * ac.chord;
       yawMoment -= k * 0.9 * rHat * ac.wingSpan;
     }
@@ -1142,6 +1196,71 @@ export class CoefficientFlightModel implements FlightModel {
   }
 
   /**
+   * **El par que hace el tren sobre el cabeceo**, con las ruedas en el suelo,
+   * en N·m. Positivo: morro arriba.
+   *
+   * ## Lo que faltaba
+   *
+   * En el suelo, el cabeceo lo movían solo los momentos del aire, y lo único
+   * que los paraba eran los dos topes de `constrainGroundPitch`. O sea que un
+   * avión parado era una veleta en cabeceo: cualquier par de morro arriba, por
+   * pequeño que fuera, lo llevaba hasta el tope de cola. Medido con el JAZ 90
+   * en el puesto de Gando y veinte nudos de viento: **9,2° de morro arriba**,
+   * la rueda de morro a metro y medio del suelo y las principales hundidas
+   * dieciocho centímetros. Y con viento de cara, cinco grados — porque el
+   * `cm0` de cualquier ficha es positivo.
+   *
+   * Un avión parado no se levanta con el viento por lo que se levanta un avión
+   * que rota: **el peso**. El centro de gravedad va por delante de las ruedas
+   * principales, así que el peso es un par de morro abajo alrededor de ellas,
+   * y la pata de morro lo sostiene. Para levantar el morro, el aire tiene que
+   * vencer ese par, y eso es exactamente lo que se hace al rotar: tirar a la
+   * velocidad a la que el timón puede con él.
+   *
+   * ## Las dos piezas
+   *
+   * - **El peso** que todavía cargan las ruedas —el del avión menos lo que ya
+   *   sostiene el ala— por el brazo que va del centro de gravedad a las
+   *   principales. Morro abajo, siempre que haya ruedas en el suelo.
+   * - **La pata de morro**, que empuja cuando toca y no tira nunca: cargada de
+   *   serie con ese mismo par —de modo que en reposo el avión queda a nivel,
+   *   que es la actitud en la que están dibujadas sus tres ruedas—, con muelle
+   *   para comprimirse y amortiguador para no rebotar. El muelle se elige para
+   *   que el doble de la carga de serie la lleve justo hasta el tope de
+   *   `minGroundPitch`, que es lo que se le admite a la pata.
+   *
+   * El brazo sale de cuánto peso carga la rueda de morro: **un diez por
+   * ciento**. Raymer, *Aircraft Design: A Conceptual Approach*, capítulo 11,
+   * pide entre el 8 y el 15 % —menos, y no se gobierna; más, y el timón no
+   * levanta el morro— y el diez es el que lleva un avión de esta clase. Por la
+   * palanca, el brazo es esa fracción de la batalla.
+   *
+   * El biplano, que es de rueda de cola, se queda con la misma cuenta: su
+   * actitud en reposo también es la de su dibujo, y su batalla va de las
+   * principales a la de cola. No es su física exacta, pero no se levanta con
+   * el viento, que es lo que había que arreglar.
+   */
+  private momentoDelTren(sustentacion: number): number {
+    const s = this.state;
+    const ac = this.aircraft;
+    const cabeceo = Math.asin(clamp(this.forward.y, -1, 1));
+    const peso = ac.mass * GRAVITY;
+    const apoyado = Math.max(0, peso - sustentacion);
+    const brazo = ac.batalla * CARGA_EN_EL_MORRO;
+    let par = -apoyado * brazo;
+    if (cabeceo <= 0) {
+      const muelle = (peso * brazo) / Math.max(0.002, -ac.minGroundPitch);
+      const amortiguador =
+        2 * AMORTIGUA_LA_PATA * Math.sqrt(muelle * ac.inertia.yy);
+      par += Math.max(
+        0,
+        apoyado * brazo - muelle * cabeceo - amortiguador * s.pitchRate,
+      );
+    }
+    return par;
+  }
+
+  /**
    * Mantiene el cabeceo dentro de lo que permite el tren de aterrizaje.
    *
    * Con las ruedas en el suelo el avión no puede apuntar donde quiera: por
@@ -1363,7 +1482,7 @@ export class CoefficientFlightModel implements FlightModel {
     // Y la del suelo, que es otra cosa desde que hay viento. Ver `groundSpeed`.
     s.groundSpeed = Math.hypot(s.velocity.x, s.velocity.z);
     if (s.airspeed > MIN_AIRSPEED) {
-      s.alpha = Math.atan2(w, u);
+      s.alpha = anguloDeAtaque(u, w);
       s.beta = Math.asin(clamp(v / s.airspeed, -1, 1));
     } else {
       s.alpha = 0;
@@ -1432,6 +1551,40 @@ export function postStallDrag(alpha: number, stallAngle: number): number {
 function levelling(bank: number): number {
   const s = Math.sin(bank);
   return WING_LEVELLER * s * (0.3 + 0.7 * Math.abs(s));
+}
+
+/**
+ * **El ángulo con el que la estabilidad devuelve el morro**, rad.
+ *
+ * Hasta la pérdida es el ángulo tal cual: `cmα·α`, la recta de los libros, y
+ * ahí no cambia nada de cómo vuela nadie. Pero la recta no se acababa nunca, y
+ * con el viento por detrás el ángulo de ataque es de ±180°: `cmα·π`, un par de
+ * morro enorme **que cambia de signo** según la ráfaga venga un pelo por
+ * encima o por debajo. El avión parado con viento de cola se sentaba sobre la
+ * cola o clavaba el morro a cara o cruz.
+ *
+ * Pasada la pérdida sigue la forma del seno —la de una placa plana, como la
+ * sustentación de `liftCoefficient`—, empalmada para que en la pérdida valga
+ * lo mismo: crece un poco hasta los noventa grados y vuelve a cero con el aire
+ * de cola, que es lo que hace el aire de cola.
+ */
+export function anguloQueEstabiliza(alpha: number, alphaStall: number): number {
+  const m = Math.abs(alpha);
+  if (m <= alphaStall) return alpha;
+  return (
+    Math.sign(alpha) * alphaStall * (Math.sin(m) / Math.sin(alphaStall))
+  );
+}
+
+/**
+ * El ángulo de ataque del aire que pasa por el plano de simetría.
+ *
+ * Sin aire en ese plano no hay ángulo que valga: con el viento de costado y
+ * el avión parado, `u` y `w` son lo que traiga la ráfaga, y su arcotangente
+ * saltaba de −90° a +90° de un fotograma a otro. Ver `qSSimetria`.
+ */
+function anguloDeAtaque(u: number, w: number): number {
+  return Math.hypot(u, w) > MIN_AIRSPEED ? Math.atan2(w, u) : 0;
 }
 
 function clamp(value: number, min: number, max: number): number {

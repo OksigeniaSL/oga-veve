@@ -5,16 +5,17 @@
 import { describe, expect, it } from "vitest";
 import {
   AVISA_DESDE,
-  CUESTA_EL_TREN,
   TARDA_EL_TREN,
   avisaDelTren,
   luzDeTren,
   luzRojaDelTren,
   mueveElTren,
-  loQueCambiaElTren,
+  resistenciaDelTren,
   sePuedeMeter,
   seVuelveADecir,
 } from "./tren";
+import { AIRCRAFT, aircraftById } from "./aircraft";
+import { DETENTES, resistenciaDeLosFlaps } from "./flaps";
 
 describe("el tren se mueve, no salta", () => {
   it("tarda lo suyo en salir", () => {
@@ -52,29 +53,80 @@ describe("con el peso encima no se mete", () => {
   });
 });
 
-describe("lo que cambia mover el tren", () => {
+describe("lo que cuesta llevar el tren fuera", () => {
   /*
-   * El signo es lo importante. Las fichas están medidas con el avión como
-   * vuela hoy —patas fuera— así que con el tren fuera no cambia nada, y el
-   * premio se lo lleva quien lo mete. La lección es la misma y llega por donde
-   * tiene que llegar: por lo que hace quien juega.
+   * **Fuera se suma; dentro no se resta.** Meterlo restaba veinte milésimas a
+   * un `cd0` que ya era el del avión limpio, y dejaba el JAZ 90 en cero y el
+   * JAZ 120 en −0,003: un avión que el aire empuja. Es el #170.
    */
-  it("con el tren fuera no cambia nada", () => {
-    expect(loQueCambiaElTren(1)).toBe(0);
+  const jaz90 = aircraftById("jaz-90");
+
+  it("con el tren dentro no cambia nada", () => {
+    expect(resistenciaDelTren(jaz90, 0)).toBe(0);
   });
 
-  it("meterlo quita resistencia, no la suma", () => {
-    expect(loQueCambiaElTren(0)).toBe(-CUESTA_EL_TREN);
+  it("y fuera suma, nunca resta", () => {
+    expect(resistenciaDelTren(jaz90, 1)).toBeGreaterThan(0);
   });
 
   it("y a medio camino, la mitad", () => {
-    expect(loQueCambiaElTren(0.5)).toBeCloseTo(-CUESTA_EL_TREN / 2, 6);
+    expect(resistenciaDelTren(jaz90, 0.5)).toBeCloseTo(
+      resistenciaDelTren(jaz90, 1) / 2,
+      6,
+    );
   });
 
-  it("y pesa casi tanto como el avión entero limpio", () => {
-    // El `cd0` del bimotor son veintiséis milésimas: el tren es casi tanto, y
-    // esa es la sensación que hay que dar al meterlo.
-    expect(CUESTA_EL_TREN / 0.026).toBeGreaterThan(0.7);
+  it("en los de tren fijo va ya dentro de su cd0, y no se cuenta dos veces", () => {
+    for (const a of AIRCRAFT.filter((x) => !x.trenRetractil))
+      expect(resistenciaDelTren(a, 1), a.id).toBe(0);
+  });
+
+  /*
+   * La correlación de Mair y Birdsall (ecuación 6.1) con la masa y el ala de
+   * cada ficha, contra la tabla 3.6 de Roskam, parte I: de 0,015 a 0,025 con
+   * el tren fuera. Los dos de hélice, de ruedas pequeñas bajo un ala baja,
+   * quedan algo por debajo, que es el lado que Roskam da a los de ala baja.
+   */
+  it("cuesta lo que dicen los libros para un avión de su clase", () => {
+    const limpio = (id: string) => resistenciaDelTren(aircraftById(id), 1, 0);
+    expect(limpio("jaz-90")).toBeCloseTo(0.0259, 3);
+    expect(limpio("jaz-120")).toBeCloseTo(0.0196, 3);
+    expect(limpio("jaz-60")).toBeCloseTo(0.0128, 3);
+    expect(limpio("jaz-40")).toBeCloseTo(0.0117, 3);
+    for (const a of AIRCRAFT.filter((x) => x.trenRetractil)) {
+      expect(resistenciaDelTren(a, 1, 0), a.id).toBeGreaterThan(0.01);
+      expect(resistenciaDelTren(a, 1, 0), a.id).toBeLessThan(0.03);
+    }
+  });
+
+  it("y con los flaps abajo cuesta menos: le quitan corriente a las patas", () => {
+    expect(resistenciaDelTren(jaz90, 1, 1)).toBeLessThan(
+      resistenciaDelTren(jaz90, 1, 0),
+    );
+    // De 5,81 a 3,16: el 54 %.
+    expect(
+      resistenciaDelTren(jaz90, 1, 1) / resistenciaDelTren(jaz90, 1, 0),
+    ).toBeCloseTo(3.16 / 5.81, 3);
+  });
+
+  /*
+   * **La prueba que pedía el #170**: ningún avión de la flota se queda sin
+   * resistencia parásita, con ninguna combinación de tren y flaps. Y ninguna
+   * combinación le quita al avión nada de lo que tiene limpio.
+   */
+  it("ningún avión se queda con resistencia parásita cero o negativa", () => {
+    for (const a of AIRCRAFT)
+      for (const tren of [0, 0.25, 0.5, 1])
+        for (const flaps of [...DETENTES, 0.5]) {
+          const parasita =
+            a.aero.cd0 +
+            resistenciaDeLosFlaps(a, flaps) +
+            resistenciaDelTren(a, tren, flaps);
+          expect(parasita, `${a.id} tren ${tren} flaps ${flaps}`).toBeGreaterThan(
+            0.01,
+          );
+          expect(parasita, a.id).toBeGreaterThanOrEqual(a.aero.cd0);
+        }
   });
 });
 

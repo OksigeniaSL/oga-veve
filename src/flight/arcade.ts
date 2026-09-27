@@ -30,7 +30,8 @@
 
 import { Euler, Quaternion, Vector3 } from "three";
 import { airDensity } from "./atmosphere";
-import { loQueCambiaElTren } from "./tren";
+import { resistenciaDelTren } from "./tren";
+import { fraccionDeLosFlaps, resistenciaDeLosFlaps } from "./flaps";
 import { MAX_PASO } from "./fdm";
 import type {
   ControlInputs,
@@ -81,9 +82,9 @@ const FRENAN_LOS_FLAPS = 4;
  * Y cuánto frena el tren, con la misma regla de tres que los flaps.
  *
  * El coeficiente de `tren.ts` es de resistencia y aquí se usa contra una
- * velocidad: con las dos centésimas del tren fuera sale un ocho por ciento
- * menos de velocidad a igualdad de gas. Se nota al soltar el gas, que es donde
- * tiene que notarse.
+ * velocidad: con las dos centésimas del tren del JAZ 120 fuera sale un ocho por
+ * ciento menos de velocidad a igualdad de gas. Se nota al soltar el gas, que es
+ * donde tiene que notarse.
  */
 const FRENAN_EL_TREN = 4;
 
@@ -629,16 +630,28 @@ export class ArcadeFlightModel implements FlightModel {
     /*
      * Y el tren fuera frena también, por lo mismo que los flaps: aquí la
      * resistencia no se nota en el tope sino en que con el gas bajo se pierde
-     * velocidad antes. En este peldaño no se puede meter —no hay palanca a los
-     * cuatro años— pero el avión que empieza con él fuera lo lleva contado, y
-     * los peldaños de arriba lo notan de verdad. Ver `flight/tren.ts`.
+     * velocidad antes. Ver `flight/tren.ts`.
+     *
+     * **Fuera frena; dentro no regala nada.** Esto restaba al meterlo —el avión
+     * limpio iba un ocho por ciento más deprisa que el de su ficha—, que es el
+     * mismo error que dejaba a los reactores sin resistencia en el otro modelo
+     * (#170). Ahora la ficha es el avión limpio y el tren fuera cuesta.
+     *
+     * **Y solo volando**: rodando, lo que cuesta el tren ya está dentro de la
+     * carrera —`carreraHastaVr` lo cuenta, y de ahí sale el ritmo de este
+     * modelo en el suelo—, y contarlo aquí otra vez alargaría la carrera dos
+     * veces por lo mismo.
      */
     const masResistencia =
       1 -
-      this.aircraft.flapsDrag * flaps * FRENAN_LOS_FLAPS -
-      (this.aircraft.trenRetractil
-        ? loQueCambiaElTren(controls.tren) * FRENAN_EL_TREN
-        : 0);
+      resistenciaDeLosFlaps(this.aircraft, flaps) * FRENAN_LOS_FLAPS -
+      (this.state.onGround
+        ? 0
+        : resistenciaDelTren(
+            this.aircraft,
+            controls.tren,
+            fraccionDeLosFlaps(this.aircraft, flaps),
+          ) * FRENAN_EL_TREN);
     const floor = this.state.onGround
       ? 0
       : this.aircraft.approachSpeed * MINIMA_DE_VUELO * masSustentacion;
@@ -921,9 +934,23 @@ export class ArcadeFlightModel implements FlightModel {
      * el tutor pide rotar. Rodar, coger velocidad y **tirar**, que es lo que
      * hay que llevarse al peldaño siguiente.
      */
+    /*
+     * **Y el listón es la Vr de su ficha, no una fracción de la de toma.**
+     *
+     * Era el ochenta y cinco por ciento de la velocidad de aproximación, que en
+     * los cuatro de hélice cae justo en su Vr —de ahí que nadie lo viera— y en
+     * los reactores no: el JAZ 120 se iba del suelo a 124 nudos, cuarenta por
+     * debajo de su Vr de 167 y antes incluso de su V1. Así la carrera no pasaba
+     * nunca por «comprometido» y no sonaban ni «V one» ni «rotate»: medido en
+     * Pettirossi, «despegando» y de ahí a «en vuelo». Lo vio quien jugaba en
+     * Lanzarote antes que el banco.
+     *
+     * Con la Vr de la ficha, el avión se va a la velocidad de su tipo, y la
+     * carrera tiene sus dos momentos: la decisión y la rotación.
+     */
     const canClimb =
       !this.state.onGround ||
-      (this.speed >= this.aircraft.approachSpeed * 0.85 &&
+      (this.speed >= this.aircraft.rotationSpeed &&
         this.state.onRunway &&
         !this.haTocado);
 

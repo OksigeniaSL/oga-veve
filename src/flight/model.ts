@@ -293,7 +293,7 @@ export interface FlightModel {
    * el dato del día y se mide en el aeropuerto; la ráfaga cambia cada segundo y
    * es lo que hace que volar se sienta. Ver `flight/turbulencia.ts`.
    */
-  ponerRacha?(x: number, y: number, z: number): void;
+  ponerRacha?(x: number, y: number, z: number, alabeo?: number): void;
   /** Nombre legible de la implementación, para la pantalla de créditos. */
   readonly implementationName: string;
   reset(initial: InitialConditions): void;
