@@ -1338,6 +1338,10 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    * comprobación quería vigilar.
    */
   let largoDeLaRuta = 0;
+  /** Y lo mismo a la ida: lo rodado y lo trazado. Ver «el rodaje de ida». */
+  let idaMetros = 0;
+  let largoDeLaIda = 0;
+  let antesIda = null;
   /**
    * Las puertas distintas que se asignaron durante una misma llegada.
    *
@@ -1400,6 +1404,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    * los dos estaban en pista**, que es la situación imposible de esquivar.
    */
   let cocheEnPista = Infinity;
+  let cocheEnPistaDonde = "";
+  /** Y lo cerca que estuvo con solo el avión en pista, para el parte. */
+  let cocheCercaEnPista = Infinity;
+  /*
+   * **Y a qué altura va el coche**, sobre lo que pisa. Llegando a Asunción
+   * desde Concepción y desde Encarnación se le vio a unos treinta y cinco
+   * metros sobre la pista: un coche en el aire guía igual de bien según el
+   * banco —que solo miraba distancias en el plano— y no guía nada según quien
+   * juega.
+   */
+  let cocheEnElAire = 0;
+  let cocheEnElAireDonde = "";
   let ladoAlEstarCerca = Infinity;
   let cercaCuando = "";
   let alCocheAhora = -1;
@@ -1779,24 +1795,66 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    * rueda, cuánto tiempo estuvo muda la pantalla, cuánto sin raya—, así que
    * medirlas con un reloj que miente es no medirlas.
    */
-  /** Cuánto flotaba el avión sobre el suelo antes de moverse, m. */
-  const alPrincipioFlotaba = (() => {
+  /**
+   * Cuánto flotaba el avión sobre el suelo antes de moverse, m.
+   *
+   * **Contra el suelo que se ve**, no contra `o.suelo`. Se medía contra el
+   * mapa de alturas, que en un aeródromo está treinta y cinco centímetros por
+   * debajo del asfalto dibujado —ver `mapa-del-pavimento.ts`—, y como el
+   * modelo de vuelo apoyaba las ruedas justo ahí, esto daba cero mientras la
+   * flota entera rodaba con el tren metido en la pista. Medía una superficie
+   * contra sí misma. Ahora es el punto más bajo del avión contra lo que haya
+   * dibujado debajo de él, como en `verificar-ruedas.mjs`.
+   */
+  const alPrincipioFlotaba = await (async () => {
     const g = o.aeronave?.().grupo;
     if (!g) return null;
+    const { Raycaster, Vector3 } = await import(
+      "/node_modules/three/build/three.module.js"
+    );
     g.updateWorldMatrix(true, true);
-    let bajo = Infinity;
+    const visible = (n) => {
+      for (let p = n; p; p = p.parent) if (!p.visible) return false;
+      return true;
+    };
+    let bajo = null;
+    const v = new Vector3();
     g.traverse((n) => {
       const pos = n.geometry?.attributes?.position;
-      if (!pos) return;
+      if (!n.isMesh || !pos || !visible(n)) return;
       for (let i = 0; i < pos.count; i++) {
-        const v = n.localToWorld(
-          new n.position.constructor(pos.getX(i), pos.getY(i), pos.getZ(i)),
-        );
-        if (v.y < bajo) bajo = v.y;
+        v.fromBufferAttribute(pos, i).applyMatrix4(n.matrixWorld);
+        if (!bajo || v.y < bajo.y) bajo = v.clone();
       }
     });
-    const p = o.estado().position;
-    return bajo === Infinity ? null : +(bajo - o.suelo(p.x, p.z)).toFixed(2);
+    if (!bajo) return null;
+    const rayo = new Raycaster(
+      new Vector3(bajo.x, bajo.y + 30, bajo.z),
+      new Vector3(0, -1, 0),
+    );
+    /*
+     * Lo que no es suelo: lo que se pinta encima sin serlo —la raya verde,
+     * la sombra, las luces, los aros—, lo que anda por ahí, y **la pintura**,
+     * que va a propósito veinte centímetros sobre el asfalto para no pelearse
+     * con él de lejos (`PINTURA_ALTURA`) y no se pisa. Y el agua de casa, que
+     * sobre el campo de llegada no se dibuja —su orilla lo tapa— y el rayo
+     * sí la encuentra.
+     */
+    const NO_ES_SUELO =
+      /plan-de-vuelo|ruta|sombra|luces|balizas|aros|senda|cielo|nubes|lluvia|sigueme|senalero|trafico|amarillo|pintura|designador|letreros|marcas|puntos-de-mira|cabeceras|helipuertos|agua/;
+    for (const h of rayo.intersectObjects(o.escena().children, true)) {
+      if (!h.object.isMesh || h.object.isInstancedMesh || !visible(h.object))
+        continue;
+      let nombres = "";
+      let deAvion = false;
+      for (let p = h.object; p; p = p.parent) {
+        if (p === g) deAvion = true;
+        nombres += `${p.name}<`;
+      }
+      if (deAvion || NO_ES_SUELO.test(nombres)) continue;
+      return +(bajo.y - h.point.y).toFixed(2);
+    }
+    return null;
   })();
 
   /*
@@ -2287,6 +2345,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
      * miraba `cocheApartado`. Faltaba aquí.
      */
     const guiandoAhora = coche?.visible && !o.cocheApartado?.();
+    if (coche?.visible) {
+      const sobre =
+        coche.position.y - o.sueloDeVuelo(coche.position.x, coche.position.z);
+      if (Math.abs(sobre) > Math.abs(cocheEnElAire)) {
+        cocheEnElAire = sobre;
+        cocheEnElAireDonde = `en «${fase}» a los ${Math.round(t)} s, en ${Math.round(coche.position.x)},${Math.round(coche.position.z)} (${o.aerodromoDeAhora?.() ?? "?"})`;
+      }
+    }
     /*
      * **Y en la pista, la lejanía cuenta si el avión se aleja del coche.**
      *
@@ -2329,7 +2395,36 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
        * pasa **en todos**. Ver #154.
        */
       alCocheAhora = alCoche;
-      if (s.onRunway) cocheEnPista = Math.min(cocheEnPista, alCoche);
+      /*
+       * **Con los dos en pista, y no solo el avión.** El comentario de arriba
+       * lo decía y la cuenta no: bastaba con que pisara pista el avión, así
+       * que el coche esperando donde tiene que esperar —cuarenta metros
+       * dentro de la calle de salida, ver `BIEN_FUERA_DE_LA_PISTA`— contaba
+       * como coche en la pista en cuanto el avión se le acercaba para salir
+       * por ella. Asunción daba treinta y cinco metros así, con el coche en su
+       * sitio. Se mira también dónde está el coche: a menos de media pista y
+       * un margen del eje, y dentro de su largo.
+       */
+      const rp = pistaAhora();
+      const hp = (rp.heading * Math.PI) / 180;
+      const cocheAlEje = Math.abs(
+        (coche.position.x - rp.x) * Math.cos(hp) +
+          (coche.position.z - rp.z) * Math.sin(hp),
+      );
+      const cocheALoLargo = Math.abs(
+        (coche.position.x - rp.x) * Math.sin(hp) -
+          (coche.position.z - rp.z) * Math.cos(hp),
+      );
+      const cocheSobreLaPista =
+        cocheAlEje < (rp.width ?? 45) / 2 + 5 &&
+        cocheALoLargo < rp.length / 2 + 5;
+      if (s.onRunway) {
+        cocheCercaEnPista = Math.min(cocheCercaEnPista, alCoche);
+        if (cocheSobreLaPista && alCoche < cocheEnPista) {
+          cocheEnPista = alCoche;
+          cocheEnPistaDonde = `a los ${t.toFixed(0)} s, en «${fase}», con el coche a ${cocheAlEje.toFixed(0)} m del eje`;
+        }
+      }
       // Y apartado ya no cuenta: ahí es un coche aparcado al lado del puesto,
       // no alguien a quien se adelanta. Ver `yaSeAparto`.
       const guiando = !o.cocheApartado?.();
@@ -2473,6 +2568,19 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
       if (fase === "rodando" || fase === "arrancando") etapa = "rodar";
     } else if (etapa === "rodar") {
       tiempoDeRodajeIda += paso;
+      if (antesIda)
+        idaMetros += Math.hypot(
+          s.position.x - antesIda.x,
+          s.position.z - antesIda.z,
+        );
+      antesIda = { x: s.position.x, z: s.position.z };
+      {
+        const r = o.ruta();
+        let suma = 0;
+        for (let i = 0; i < r.length - 1; i++)
+          suma += Math.hypot(r[i + 1][0] - r[i][0], r[i + 1][1] - r[i][1]);
+        largoDeLaIda = Math.max(largoDeLaIda, suma);
+      }
       // La velocidad la pide el juego, y al final de la ruta pide cero: el
       // avión se para solo encima de la raya. Ver `calcularVelocidades`.
       const quiere = o.rodaje() ?? 9;
@@ -3288,8 +3396,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
     // El tiempo que hizo: lo único que cambia entre pasadas. Ver el informe.
     meteo: o.meteo?.() ?? null,
     lejosDelCoche: Math.round(lejosDelCoche),
+    cocheEnElAire: +cocheEnElAire.toFixed(2),
+    cocheEnElAireDonde,
     cocheEnPista: Number.isFinite(cocheEnPista)
       ? Math.round(cocheEnPista)
+      : null,
+    cocheEnPistaDonde,
+    cocheCercaEnPista: Number.isFinite(cocheCercaEnPista)
+      ? Math.round(cocheCercaEnPista)
       : null,
     lejosDondeCoche,
     enBici: o.enBici?.() ?? false,
@@ -3304,6 +3418,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
     dijoToca,
     pidioFreno,
     ida: +tiempoDeRodajeIda.toFixed(0),
+    idaMetros: Math.round(idaMetros),
+    largoDeLaIda: Math.round(largoDeLaIda),
     vuelta: +tiempoDeRodajeVuelta.toFixed(0),
     despego: +despego.toFixed(0),
     toco: +toco.toFixed(0),
@@ -3515,7 +3631,9 @@ comprobar(
 
 comprobar(
   "el avión parado tiene las ruedas en el suelo",
-  vuelo.flota !== null && Math.abs(vuelo.flota) < 0.25,
+  // «Unos centímetros»: con un cuarto de metro cabía el tren metido en el
+  // asfalto treinta y cinco, que era justo lo que había que ver.
+  vuelo.flota !== null && Math.abs(vuelo.flota) < 0.05,
   vuelo.flota === null
     ? "no se pudo medir"
     : `${vuelo.flota > 0 ? "flota" : "hundido"} ${Math.abs(vuelo.flota).toFixed(2)} m`,
@@ -3643,6 +3761,25 @@ const laPropia =
         /torre\.(?:[a-z]+\.)?clearedTakeoff/.test(h) &&
         h.includes(`@${vuelo.misLetras}`),
     ));
+/*
+ * **Y un «hold short» retirado con razón no es una torre muda.**
+ *
+ * Si la luz se pone verde mientras tu «hold short» espera turno en la cola,
+ * la torre lo retira: ya no es verdad, y decirlo sería mandarte parar cuando
+ * te acaban de autorizar. Es lo que tiene que hacer —ver `retirar` en
+ * `audio/boca.ts`—, y esto lo contaba como que la torre no lo había dicho
+ * nunca. Vale solo **el tuyo** y solo con ese porqué —«ya no es verdad», no
+ * «caducó esperando», que eso sí es callarse—; y lo demás se sigue pidiendo
+ * igual, empezando por tu autorización de despegue, que es lo que hace
+ * verdad que la luz se pusiera verde.
+ */
+const holdShortRetirado = (vuelo.descartes ?? []).some((d) => {
+  const m =
+    /\btorre\.(?:[a-z]+\.)?holdShort(?:Landing|Departing)?(?:\.[LCR])?@([^:]+): ya no es verdad$/.exec(
+      d,
+    );
+  return !!m && (m[1] === "yo" || (!!vuelo.misLetras && m[1] === vuelo.misLetras));
+});
 comprobar(
   conFraseologia
     ? "la torre dice la fraseología del vuelo"
@@ -3654,15 +3791,20 @@ comprobar(
        * de allí y su clave lleva `canario` en medio, que es lo que arregló que
        * una torre sonara a dos personas. Ver `comoSeDiceAqui`.
        */
-      DE_UN_VUELO.every((c) =>
-        (vuelo.torreDijo ?? []).some(
-          (d) => d.replace(/\.[LCR]$/, "").replace(".canario.", ".") === c,
-        ),
+      DE_UN_VUELO.every(
+        (c) =>
+          (vuelo.torreDijo ?? []).some(
+            (d) => d.replace(/\.[LCR]$/, "").replace(".canario.", ".") === c,
+          ) ||
+          (c === "torre.holdShort" && holdShortRetirado),
       ) && laPropia
     : (vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
   (conFraseologia && !laPropia
     ? "tu «cleared for take-off» no llegó a oírse · "
     : "") +
+    (conFraseologia && holdShortRetirado
+      ? "tu «hold short» se retiró porque la luz ya estaba verde · "
+      : "") +
     `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}` +
     /*
      * **Y lo que se cayó de la torre, todo, no los últimos seis.**
@@ -3889,10 +4031,31 @@ comprobar(
   "«nadie me esperaba en Gran Canaria», y no había prueba que lo mirara",
 );
 
+/*
+ * **El tope de la ida sale de la calle, no de un número redondo.**
+ *
+ * Eran noventa segundos para todos, y con el JAZ 90 en Asunción salían
+ * noventa y siete: ¿rodaje lento, o calle larga? Era calle larga. Del puesto
+ * al punto de espera en uso hay 623 metros trazados, y se rodaron a 6,2 m/s
+ * de media, lo mismo que la avioneta en Guaraní (5,7) o en Gran Canaria
+ * (5,8). A lo que se rueda de verdad —nueve metros por segundo en recta, que
+ * son diecisiete nudos, el número del juego y el de cualquier manual— y
+ * frenando en las curvas, esa calle no cabe en noventa.
+ *
+ * Así que el tope es lo que tarda esa ruta **a velocidad de rodaje**, con un
+ * tercio más por las curvas —que se toman a la mitad— y veinte segundos de
+ * arrancar y de pararse en la doble raya. Y nunca menos de los noventa de
+ * antes: en una calle corta sigue mandando lo que aguanta un niño.
+ */
+const RODAJE_EN_RECTA = 9;
+const topeDeIda = Math.round(
+  Math.max(90, (vuelo.largoDeLaIda / RODAJE_EN_RECTA) * (4 / 3) + 20),
+);
 comprobar(
   "el rodaje de ida no aburre",
-  vuelo.ida > 0 && vuelo.ida <= 90,
-  `${vuelo.ida} s del puesto al punto de espera`,
+  vuelo.ida > 0 && vuelo.ida <= topeDeIda,
+  `${vuelo.ida} s del puesto al punto de espera · ${vuelo.largoDeLaIda} m trazados, ` +
+    `${vuelo.idaMetros} m rodados, a ${(vuelo.idaMetros / Math.max(1, vuelo.ida)).toFixed(1)} m/s de media · tope ${topeDeIda} s`,
   "«es aburrido pasarse cuatro minutos en una pista, eso un niño no lo aguanta»",
 );
 
@@ -4027,10 +4190,19 @@ if (TRAMO === "guyrami" || TRAMO === "tuka") {
   comprobar(
     "y el sígame no baja a la pista contigo encima",
     vuelo.cocheEnPista === null || vuelo.cocheEnPista > 50,
-    vuelo.cocheEnPista === null
+    (vuelo.cocheEnPista === null
       ? "nunca coincidieron en pista"
-      : `lo más cerca, ${vuelo.cocheEnPista} m con los dos en pista`,
+      : `lo más cerca, ${vuelo.cocheEnPista} m con los dos en pista, ${vuelo.cocheEnPistaDonde}`) +
+      (vuelo.cocheCercaEnPista !== null
+        ? ` · con solo el avión en pista, ${vuelo.cocheCercaEnPista} m`
+        : ""),
     "«acelero porque las salidas están lejos, y se rompió, volvemos a empezar»",
+  );
+  comprobar(
+    "el coche del sígame rueda por el suelo, no por encima",
+    Math.abs(vuelo.cocheEnElAire) < 0.5,
+    `lo más separado del suelo: ${vuelo.cocheEnElAire} m${vuelo.cocheEnElAireDonde ? ` · ${vuelo.cocheEnElAireDonde}` : ""}`,
+    "llegando a Asunción se le vio a treinta y cinco metros sobre la pista",
   );
   comprobar(
     "al coche del sígame se le puede seguir",
