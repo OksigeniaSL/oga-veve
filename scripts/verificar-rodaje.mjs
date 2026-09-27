@@ -142,7 +142,7 @@ for (const [esc, tramo] of [
       await espera(16);
       const s = o.estado();
       if (!s.onGround) aire++;
-      const sobre = s.position.y - (o.suelo(s.position.x, s.position.z) + 1.2);
+      const sobre = s.position.y - (o.sueloDeVuelo(s.position.x, s.position.z) + 1.2);
       if (sobre > masAlto) masAlto = sobre;
     }
     const s = o.estado();

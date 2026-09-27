@@ -197,7 +197,7 @@ export interface Aerodrome {
 }
 
 /** Anchura por defecto de una calle de rodaje, m. OSM casi nunca la trae. */
-const ANCHO_RODADURA = 23;
+export const ANCHO_RODADURA = 23;
 
 /**
  * ¿Pisa asfalto el avión, o está en la hierba?

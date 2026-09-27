@@ -349,5 +349,8 @@ export function asentarAerodromoSobreLaFoto(
   terrain.group.getObjectByName(`aerodromo:${aero.id}`)?.traverse((o) => {
     if (DE_LA_FOTO.has(o.name)) o.visible = false;
   });
+  // Y con el asfalto apagado, lo que se pisa es la fotografía: el mapa de
+  // alturas recién asentado, sin el resalte de un pavimento que no se ve.
+  terrain.pavimentoDeLaFoto();
   return alzado - (perfilDeLaFoto ? 0 : datum);
 }

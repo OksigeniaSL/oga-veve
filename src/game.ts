@@ -394,6 +394,7 @@ import {
   alturaDeEdificio,
   arranqueEnPista,
   paraUnAvion,
+  type Punto,
 } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import {
@@ -2763,6 +2764,23 @@ export class Game {
         }
         return null;
       });
+      // Y lo que se pisa y su pavimento, preguntados por el mismo orden para
+      // que conteste el mismo vecino que dio la cota. Ver `sampleSurface` y
+      // `resalteEn` en `Terrain`.
+      this.terrain.ponerSuperficieLejana((x, z) => {
+        for (const v of this.vecinos) {
+          const y = v.mundo.superficie(x, z);
+          if (y !== null) return y;
+        }
+        return null;
+      });
+      this.terrain.ponerResalteLejano((x, z) => {
+        for (const v of this.vecinos) {
+          const r = v.mundo.resalte(x, z);
+          if (r !== null) return r;
+        }
+        return null;
+      });
       /*
        * **Y el horizonte se aparta donde manda el mapa fino del vecino.**
        *
@@ -2784,6 +2802,9 @@ export class Game {
           x: v.mundo.desplazamiento.x,
           z: v.mundo.desplazamiento.z,
           medio: v.base.size / 2,
+          // Y su agua, que tierra adentro no es la de casa. Ver
+          // `mapasDeOrillas`.
+          nivel: v.base.waterLevel,
         })),
       );
     }
@@ -2906,6 +2927,7 @@ export class Game {
         this.aircraft,
       );
       this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
+      this.plan.ocupados = () => this.paradosEnLasCalles();
     }
     if (this.plan && this.leccion.guiaEnTierra) {
       this.scene.add(this.plan.grupo);
@@ -5551,7 +5573,8 @@ export class Game {
     if (puesto) {
       return new Vector3(
         puesto[0],
-        this.terrain.sampleHeight(puesto[0], puesto[1]) +
+        // Sobre el asfalto del puesto, no sobre el terreno de debajo.
+        this.terrain.sampleSurface(puesto[0], puesto[1]) +
           this.aircraft.gearHeight,
         puesto[1],
       );
@@ -5563,7 +5586,7 @@ export class Game {
     const [x, z] = p ?? this.enLaPista(campo.pista.length * 0.42, campo);
     return new Vector3(
       x,
-      this.terrain.sampleHeight(x, z) + this.aircraft.gearHeight,
+      this.terrain.sampleSurface(x, z) + this.aircraft.gearHeight,
       z,
     );
   }
@@ -6420,25 +6443,53 @@ export class Game {
       {
         tipos: tiposDelCampo(aero.id, pista.length, !!aero.privado),
         forma,
+        cuerposDeVerdad: true,
         tierra: () => {
           if (!aerodromo) return null;
           if (sueloDelCampo === undefined)
             sueloDelCampo = sueloDelTrafico(aerodromo, pista, ancho);
           if (!sueloDelCampo) return null;
           const yo = this.flight.state.position;
-          const raya = this.plan?.rutaVisible().at(-1);
+          const ruta = this.plan?.rutaVisible() ?? [];
+          const raya = ruta.at(-1);
           return {
             suelo: sueloDelCampo,
-            alto: suelo,
+            /*
+             * Sobre el asfalto, como el avión de quien juega: el terreno está
+             * treinta y cinco centímetros por debajo. Ver `sampleSurface`.
+             */
+            alto: (x, z) => {
+              if (campo.esCasa) return this.terrain.sampleSurface(x, z);
+              const v = this.vecinos.find((w) => w.campo.id === campo.id);
+              return v?.mundo.superficie(x, z) ?? this.terrain.sampleSurface(x, z);
+            },
             evitar: [
               { x: yo.x, z: yo.z },
               ...(raya ? [{ x: raya[0], z: raya[1] }] : []),
             ],
+            /*
+             * **Y tu raya entera, no solo su final.** Se apartaba de tu
+             * puesto y de tu doble raya, y nada más: su espera podía caer en
+             * mitad de la calle por la que el juego te manda a ti, con el
+             * avión plantado encima de tu raya verde. Ver `Ocupados` en
+             * `rodaje.ts` para la otra mitad: tu raya también lo rodea a él.
+             */
+            porDondeVas: cadaTanto(ruta, 10),
           };
         },
       },
     );
     this.scene.add(this.trafico.grupo);
+  }
+
+  /**
+   * Dónde hay aviones del tráfico parados, o a punto de parar, en las calles
+   * del campo en el que se está, en los ejes del fichero. Ver `dondeParan`.
+   */
+  private paradosEnLasCalles(): Punto[] {
+    return (this.trafico?.dondeParan() ?? []).map(
+      (p) => [p.x, -p.z] as Punto,
+    );
   }
 
   /**
@@ -6546,7 +6597,7 @@ export class Game {
       return;
     }
     if (!s.onGround) return;
-    const suelo = this.terrain.sampleHeight(s.position.x, s.position.z);
+    const suelo = this.terrain.sampleSurface(s.position.x, s.position.z);
     this.flight.reset({
       position: new Vector3(
         s.position.x,
@@ -6729,6 +6780,7 @@ export class Game {
       this.aircraft,
     );
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
+    this.plan.ocupados = () => this.paradosEnLasCalles();
     // Y se vuelve a enseñar solo si esta lección lo enseñaba. Ver dónde se monta.
     if (this.leccion.guiaEnTierra) {
       this.scene.add(this.plan.grupo);
@@ -8376,10 +8428,13 @@ export class Game {
          * Y no cuesta ni un rayo: es una pasada por el mapa de alturas.
          */
         this.terrain.subirTodo(this.teselas.desfase ?? 0);
-        // Y a partir de aquí, fuera del escenario manda la fotografía.
+        // Y a partir de aquí, fuera del escenario manda la fotografía, y lo
+        // que se pisa allí es ella: sin el agua ni el pavimento del vecino.
         this.terrain.ponerSueloLejano(
           (x, z) => this.teselas?.cotaLejana(x, z) ?? null,
         );
+        this.terrain.ponerSuperficieLejana(null);
+        this.terrain.ponerResalteLejano(null);
         /*
          * **Y se descarta lo que no cuadre con el desfase que ya se midió.**
          *
@@ -8811,8 +8866,9 @@ export class Game {
     this.sigueme.reiniciar();
     const puesto = this.plan?.arranque();
     if (!puesto) return;
+    // Sobre el asfalto, no sobre el terreno de debajo. Ver `resalteEn`.
     this.senalero.colocar(puesto, this.plan?.primerPaso() ?? null, (x, z) =>
-      this.terrain.sampleHeight(x, z),
+      this.terrain.sampleSurface(x, z),
     );
   }
 
@@ -8869,7 +8925,7 @@ export class Game {
       Math.hypot(donde.x - puesto[0], donde.z - puesto[1]) < 1;
     if (enSuSitio && !this.deEspaldas(puesto, porDonde)) return;
     this.senalero.colocar(puesto, porDonde, (x, z) =>
-      this.terrain.sampleHeight(x, z),
+      this.terrain.sampleSurface(x, z),
     );
   }
 
@@ -9459,7 +9515,8 @@ export class Game {
           s.onGround &&
           !((fase === "aterrizado" || enLaPistaAun) && !espera),
         cede,
-        (x, z) => this.terrain.sampleHeight(x, z),
+        // Por el asfalto, como el avión: ver `Terrain.resalteEn`.
+        (x, z) => this.terrain.sampleSurface(x, z),
         espera,
         this.plan?.avanceEnLaRuta,
       );
@@ -10612,9 +10669,13 @@ export class Game {
     this.blobShadow.visible = fade > 0.02;
     if (!this.blobShadow.visible) return;
 
+    // A la altura de siempre sobre el terreno, que en el asfalto son cinco
+    // centímetros sobre él: `ground` ya lleva el pavimento dentro.
     this.blobShadow.position.set(
       state.position.x,
-      ground + 0.4,
+      ground +
+        0.4 -
+        this.terrain.resalteEn(state.position.x, state.position.z),
       state.position.z,
     );
     this.blobShadow.rotation.y = -state.heading;
@@ -12083,6 +12144,30 @@ export class Game {
  * Círculo oscuro y translúcido que hace de sombra. Se orienta con el avión y
  * es un óvalo, no un disco: así insinúa la silueta sin modelar nada.
  */
+/**
+ * Puntos de una polilínea del mundo cada `paso` metros, con sus puntas. Es lo
+ * que se le da al tráfico para que no espere encima de tu raya: ver `evitar`
+ * en `ponerTrafico`.
+ */
+function cadaTanto(
+  linea: readonly (readonly [number, number])[],
+  paso: number,
+): { x: number; z: number }[] {
+  const puntos: { x: number; z: number }[] = [];
+  for (let i = 0; i < linea.length - 1; i++) {
+    const [ax, az] = linea[i]!;
+    const [bx, bz] = linea[i + 1]!;
+    const largo = Math.hypot(bx - ax, bz - az);
+    for (let d = 0; d < largo; d += paso) {
+      const t = d / largo;
+      puntos.push({ x: ax + (bx - ax) * t, z: az + (bz - az) * t });
+    }
+  }
+  const fin = linea[linea.length - 1];
+  if (fin) puntos.push({ x: fin[0], z: fin[1] });
+  return puntos;
+}
+
 function createBlobShadow(wingSpan: number): Mesh {
   const geometry = new CircleGeometry(wingSpan * 0.62, 20);
   geometry.rotateX(-Math.PI / 2);

@@ -441,6 +441,36 @@ describe("las orillas que mira el agua", () => {
     expect(sobreElAguaEn(lejana!, vecino.x, tamano * 0.3)!).toBeGreaterThan(0);
   });
 
+  /*
+   * Tierra adentro cada campo tiene su agua: el Paraná en Ciudad del Este a
+   * ciento cinco metros, Asunción a ochenta y nueve. Donde manda un campo con
+   * otro nivel, el agua de casa no se pinta, que tapaba Asunción entera.
+   */
+  it("y donde manda un campo con otra agua, la de casa no se pinta", () => {
+    const esc = conHorizonte();
+    const t = new Terrain(esc);
+    const tamano = esc.size * vecesLejosDe(esc);
+    // En la parte baja de la rampa, donde el agua de casa lo cubriría todo.
+    const vecino = {
+      x: -tamano * 0.45,
+      z: 0,
+      medio: tamano * 0.04,
+      nivel: nivel - 30,
+    };
+    t.recortarElHorizonte([vecino]);
+    const { lejana } = t.mapasDeOrillas();
+    // Sobre su mapa y alrededor, tierra para el agua de casa.
+    expect(sobreElAguaEn(lejana!, vecino.x, vecino.z)).toBe(-SIN_ORILLA);
+    expect(sobreElAguaEn(lejana!, -tamano * 0.4, tamano * 0.2)).toBe(-SIN_ORILLA);
+    // Y más cerca de casa que de él, lo de siempre: agua bajo el nivel.
+    expect(sobreElAguaEn(lejana!, -tamano * 0.2, 0)!).toBeLessThan(0);
+    // Con la misma agua, como antes: el de casa se pinta encima.
+    t.recortarElHorizonte([{ ...vecino, nivel }]);
+    expect(sobreElAguaEn(t.mapasDeOrillas().lejana!, vecino.x, vecino.z)).toBe(
+      SIN_ORILLA,
+    );
+  });
+
   it("y se los pone al agua en cuanto recibe su material", () => {
     const t = new Terrain(VALLE_CORDILLERA);
     const u = uniformesDeOrillas();

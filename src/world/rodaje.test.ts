@@ -100,6 +100,7 @@ describe("la ruta", () => {
       puntos: [],
       largo: 0,
       coste: 0,
+      ocupada: false,
       letras: [],
       enganche: 0,
     });
