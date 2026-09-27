@@ -23,11 +23,13 @@
 023	cabina.obstacleAhead	obstacle ahead
 024	cabina.goAround	going around. good decision
 025	cabina.weHaveAProblem	we have a problem
-026	cabina.fiveHundred	five hundred
-027	cabina.oneHundred	one hundred
-028	cabina.fifty	fifty
-029	cabina.forty	forty
-030	cabina.thirty	thirty
-031	cabina.twenty	twenty
-032	cabina.ten	ten
-033	cabina.five	five
+026	cabina.goAroundOrder	go around
+027	cabina.airspeedLow	airspeed low
+028	cabina.fiveHundred	five hundred
+029	cabina.oneHundred	one hundred
+030	cabina.fifty	fifty
+031	cabina.forty	forty
+032	cabina.thirty	thirty
+033	cabina.twenty	twenty
+034	cabina.ten	ten
+035	cabina.five	five

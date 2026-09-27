@@ -122,10 +122,65 @@ export function avisoDeActitud(e: {
  * inhibe el contacto del tren, el «peso en ruedas». Es lo que se hace aquí, y
  * en un solo sitio porque eran tres —el cartel, el sonido y la luz— y solo la
  * voz lo filtraba.
+ *
+ * **Y mira el avisador, no la pérdida.** Miraba `stalled`, que es el ala ya
+ * sin sustentar: un aviso que llega cuando ya ha pasado lo que avisa. El de
+ * un avión de verdad suena **antes**, y es otra cosa con otro umbral. Ver
+ * `anguloDeAviso`.
  */
 export function avisaLaPerdida(e: {
-  readonly stalled: boolean;
+  readonly stallWarning: boolean;
   readonly onGround: boolean;
 }): boolean {
-  return e.stalled && !e.onGround;
+  return e.stallWarning && !e.onGround;
 }
+
+/**
+ * Cuánto por encima de su velocidad de pérdida avisa un avión, en veces.
+ *
+ * Un siete por ciento. La norma pide que el aviso empiece con margen
+ * suficiente para evitar la pérdida sin querer —no menos de cinco nudos o un
+ * cinco por ciento por encima de ella, CS 25.207 y 14 CFR 25.207—, y los
+ * vibradores de palanca de los aviones de línea se ajustan hacia un siete.
+ */
+export const MARGEN_DEL_AVISADOR = 1.07;
+
+/**
+ * **El ángulo de ataque al que suena el avisador de pérdida**, rad.
+ *
+ * Un avisador de verdad no mira la velocidad: mira el ángulo con el que el ala
+ * ataca el aire —una veleta en el costado del morro— y lo compara con un
+ * umbral **que depende de los flaps que se lleven**. Por eso avisa a ciento
+ * ochenta nudos si se tira lo bastante, y no avisa a ciento veinte con todo
+ * fuera y el ala tranquila.
+ *
+ * El umbral sale de la definición del margen, no de un número a ojo: el
+ * aviso suena cuando el ala da la sustentación que daría volando recto a un
+ * siete por ciento por encima de la pérdida, o sea `CLmax / 1,07²`. Con los
+ * flaps fuera, `CLmax` crece con lo que ellos suman y el ala limpia tiene que
+ * aportar menos: **el umbral baja con los flaps**, que es lo que hace el de
+ * cualquier avión de línea. Medido con el JAZ 90: 12,7° limpio y 11,1° con
+ * todo fuera, para una pérdida a 14,9°.
+ *
+ * `anguloDePerdida` es el del modelo —con la protección de pérdida del
+ * peldaño ya aplicada—, porque el aviso tiene que ir por delante de la pérdida
+ * que de verdad va a haber, no de otra.
+ */
+export function anguloDeAviso(
+  anguloDePerdida: number,
+  aero: { readonly cl0: number; readonly clAlpha: number },
+  /** Lo que suman los flaps a la sustentación ahora mismo. */
+  conLosFlaps: number,
+): number {
+  const clMax = aero.cl0 + aero.clAlpha * anguloDePerdida + conLosFlaps;
+  const deAviso = clMax / (MARGEN_DEL_AVISADOR * MARGEN_DEL_AVISADOR);
+  return (deAviso - aero.cl0 - conLosFlaps) / aero.clAlpha;
+}
+
+/**
+ * Cuánto hay que bajar del umbral para que el avisador se calle, rad (~2°).
+ *
+ * Sin holgura, un ala que ronda el umbral lo cruzaría arriba y abajo con cada
+ * racha, y cada cruce sería un «stall, stall» nuevo.
+ */
+export const SE_CALLA_EL_AVISADOR = 0.035;

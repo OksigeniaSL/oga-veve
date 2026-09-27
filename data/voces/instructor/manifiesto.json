@@ -27,6 +27,39 @@
     "circuito.subida": {
       "ms": 1269
     },
+    "cuenta.cien": {
+      "ms": 621
+    },
+    "cuenta.cinco": {
+      "ms": 835
+    },
+    "cuenta.cincuenta": {
+      "ms": 632
+    },
+    "cuenta.cuarenta": {
+      "ms": 495
+    },
+    "cuenta.cuatrocientos": {
+      "ms": 967
+    },
+    "cuenta.diez": {
+      "ms": 710
+    },
+    "cuenta.doscientos": {
+      "ms": 748
+    },
+    "cuenta.quinientos": {
+      "ms": 786
+    },
+    "cuenta.treinta": {
+      "ms": 635
+    },
+    "cuenta.trescientos": {
+      "ms": 847
+    },
+    "cuenta.veinte": {
+      "ms": 838
+    },
     "fin.bien": {
       "ms": 925
     },
@@ -345,6 +378,9 @@
     "vuelo.perdida": {
       "ms": 1432
     },
+    "vuelo.pilotoEnTierra": {
+      "ms": 2276
+    },
     "vuelo.pilotoSuelto": {
       "ms": 1639
     },
@@ -387,8 +423,8 @@
     "vuelo.sobrevelocidadAire": {
       "ms": 1442
     },
-    "vuelo.sube": {
-      "ms": 1070
+    "vuelo.solo-vuelta": {
+      "ms": 1573
     },
     "vuelo.teLoPasaste": {
       "ms": 1464
@@ -400,7 +436,7 @@
       "ms": 575
     },
     "vuelo.tormenta": {
-      "ms": 2343
+      "ms": 2612
     },
     "vuelo.trafico.delante": {
       "ms": 2157
@@ -413,6 +449,15 @@
     },
     "vuelo.trafico.izquierda": {
       "ms": 2041
+    },
+    "vuelo.traficoAbajo": {
+      "ms": 4107
+    },
+    "vuelo.traficoArriba": {
+      "ms": 4207
+    },
+    "vuelo.traficoNivel": {
+      "ms": 4807
     },
     "vuelo.trenEnElSuelo": {
       "ms": 2564
@@ -881,9 +926,6 @@
     "vuelo.sobrevelocidadAire": [
       "vuelo.sobrevelocidadAire"
     ],
-    "vuelo.sube": [
-      "vuelo.sube"
-    ],
     "vuelo.teLoPasaste": [
       "vuelo.teLoPasaste"
     ],
@@ -916,6 +958,54 @@
     ],
     "vuelo.yaPodesTocar": [
       "vuelo.yaPodesTocar"
+    ],
+    "vuelo.solo-vuelta": [
+      "vuelo.solo-vuelta"
+    ],
+    "vuelo.traficoArriba": [
+      "vuelo.traficoArriba"
+    ],
+    "vuelo.traficoAbajo": [
+      "vuelo.traficoAbajo"
+    ],
+    "vuelo.traficoNivel": [
+      "vuelo.traficoNivel"
+    ],
+    "vuelo.pilotoEnTierra": [
+      "vuelo.pilotoEnTierra"
+    ],
+    "cuenta.quinientos": [
+      "cuenta.quinientos"
+    ],
+    "cuenta.cuatrocientos": [
+      "cuenta.cuatrocientos"
+    ],
+    "cuenta.trescientos": [
+      "cuenta.trescientos"
+    ],
+    "cuenta.doscientos": [
+      "cuenta.doscientos"
+    ],
+    "cuenta.cien": [
+      "cuenta.cien"
+    ],
+    "cuenta.cincuenta": [
+      "cuenta.cincuenta"
+    ],
+    "cuenta.cuarenta": [
+      "cuenta.cuarenta"
+    ],
+    "cuenta.treinta": [
+      "cuenta.treinta"
+    ],
+    "cuenta.veinte": [
+      "cuenta.veinte"
+    ],
+    "cuenta.diez": [
+      "cuenta.diez"
+    ],
+    "cuenta.cinco": [
+      "cuenta.cinco"
     ]
   }
 }

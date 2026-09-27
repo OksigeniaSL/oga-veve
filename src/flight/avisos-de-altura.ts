@@ -50,17 +50,36 @@
  * Ya están tomados, así que entran aquí y en `audio/cabina.ts`, que es donde
  * una prueba comprueba que la tabla no apunta a grabaciones que no hay.
  */
+/**
+ * Un escalón de la cuenta, **con la grabación de la cifra en casa**.
+ *
+ * La cifra en casa —«cuatrocientos», «cincuenta»— es la que dice la
+ * instructora en los peldaños que todavía no cantan en inglés, y en los
+ * aviones que no llevan radioaltímetro que cante. Se pedía sin clave, así que
+ * el pack de voz no tenía con qué encontrarla y la decía el sintetizador del
+ * navegador: en el registro de cantos del banco, «four hundred→sin clave». En
+ * un navegador sin voces instaladas —Brave en Linux, sin ir más lejos— eso es
+ * **silencio**: la cuenta entera de la toma, muda, con el resto de la
+ * instructora sonando grabado.
+ *
+ * La clave sale de la propia cifra para que no haya dos listas: la de aquí y
+ * la del diccionario, `cuenta.*` en `i18n/es-PY.ts`.
+ */
+function escalon(metros: number, dice: string, encasa: string): Escalon {
+  return { metros, dice, encasa, clave: `cuenta.${encasa}` };
+}
+
 export const ESCALONES: readonly Escalon[] = [
-  { metros: 400, dice: "four hundred", encasa: "cuatrocientos" },
-  { metros: 300, dice: "three hundred", encasa: "trescientos" },
-  { metros: 200, dice: "two hundred", encasa: "doscientos" },
-  { metros: 100, dice: "one hundred", encasa: "cien" },
-  { metros: 50, dice: "fifty", encasa: "cincuenta" },
-  { metros: 40, dice: "forty", encasa: "cuarenta" },
-  { metros: 30, dice: "thirty", encasa: "treinta" },
-  { metros: 20, dice: "twenty", encasa: "veinte" },
-  { metros: 10, dice: "ten", encasa: "diez" },
-  { metros: 5, dice: "five", encasa: "cinco" },
+  escalon(400, "four hundred", "cuatrocientos"),
+  escalon(300, "three hundred", "trescientos"),
+  escalon(200, "two hundred", "doscientos"),
+  escalon(100, "one hundred", "cien"),
+  escalon(50, "fifty", "cincuenta"),
+  escalon(40, "forty", "cuarenta"),
+  escalon(30, "thirty", "treinta"),
+  escalon(20, "twenty", "veinte"),
+  escalon(10, "ten", "diez"),
+  escalon(5, "five", "cinco"),
 ];
 
 /**
@@ -77,17 +96,17 @@ export const ESCALONES: readonly Escalon[] = [
  * mucho más abajo y se aprieta mucho más deprisa.
  */
 export const ESCALONES_EN_PIES: readonly Escalon[] = [
-  { metros: 152, dice: "five hundred", encasa: "quinientos" },
+  escalon(152, "five hundred", "quinientos"),
   // Y los tres de en medio, que un radioaltímetro sí canta. Ver `ESCALONES`.
-  { metros: 122, dice: "four hundred", encasa: "cuatrocientos" },
-  { metros: 91.4, dice: "three hundred", encasa: "trescientos" },
-  { metros: 61, dice: "two hundred", encasa: "doscientos" },
-  { metros: 30.5, dice: "one hundred", encasa: "cien" },
-  { metros: 15.2, dice: "fifty", encasa: "cincuenta" },
-  { metros: 12.2, dice: "forty", encasa: "cuarenta" },
-  { metros: 9.1, dice: "thirty", encasa: "treinta" },
-  { metros: 6.1, dice: "twenty", encasa: "veinte" },
-  { metros: 3, dice: "ten", encasa: "diez" },
+  escalon(122, "four hundred", "cuatrocientos"),
+  escalon(91.4, "three hundred", "trescientos"),
+  escalon(61, "two hundred", "doscientos"),
+  escalon(30.5, "one hundred", "cien"),
+  escalon(15.2, "fifty", "cincuenta"),
+  escalon(12.2, "forty", "cuarenta"),
+  escalon(9.1, "thirty", "treinta"),
+  escalon(6.1, "twenty", "veinte"),
+  escalon(3, "ten", "diez"),
 ];
 
 /*
@@ -124,6 +143,11 @@ export interface Escalon {
   readonly dice: string;
   /** Y la misma cifra en casa, para el peldaño que todavía no habla inglés. */
   readonly encasa: string;
+  /**
+   * Con qué clave está grabada la cifra en casa. Ver `escalon`. Los números
+   * en grande de `flight/escalera.ts` no la llevan: se enseñan, no se dicen.
+   */
+  readonly clave?: string;
 }
 
 export type Aviso = Escalon;

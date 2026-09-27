@@ -11,6 +11,8 @@
 
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT } from "./aircraft";
+import torre from "../../data/voces/torre/manifiesto.json";
+import torreCanarias from "../../data/voces/torre-canarias/manifiesto.json";
 import {
   FONETICO,
   matriculaDe,
@@ -18,6 +20,7 @@ import {
   prefijoDe,
   rellenoDe,
   sortearIndicativo,
+  vientoEnPiezas,
 } from "./matricula";
 
 /** Un azar de mentira, para que lo que monta se pueda comprobar. */
@@ -179,5 +182,65 @@ describe("la pista, dicha por radio", () => {
     expect(pistaEnPiezas(null)).toBe(null);
     expect(pistaEnPiezas("")).toBe(null);
     expect(pistaEnPiezas("ABC")).toBe(null);
+  });
+});
+
+/*
+ * **El viento de la autorización**, como lo da una torre: cifra a cifra, en
+ * magnéticos, a la decena, y «calm» cuando no hay.
+ */
+describe("el viento de la torre", () => {
+  it("en magnéticos y a la decena: 050 verdadero con trece al oeste es 060", () => {
+    const v = vientoEnPiezas(50, 12, 13);
+    expect(v.dicho).toBe("wind zero six zero degrees, one two knots");
+    expect(v.relleno.split(" ")).toEqual([
+      "viento.wind",
+      "cifra.0",
+      "cifra.6",
+      "cifra.0",
+      "viento.degrees",
+      "cifra.1",
+      "cifra.2",
+      "viento.knots",
+    ]);
+  });
+
+  it("el norte es 360, no 000", () => {
+    expect(vientoEnPiezas(358, 8, 0).dicho).toBe(
+      "wind three six zero degrees, eight knots",
+    );
+  });
+
+  it("y el nueve es «niner», como en toda radio", () => {
+    expect(vientoEnPiezas(90, 9, 0).dicho).toBe(
+      "wind zero niner zero degrees, niner knots",
+    );
+  });
+
+  it("sin viento, «wind calm»", () => {
+    const v = vientoEnPiezas(null, 0, 13);
+    expect(v.dicho).toBe("wind calm");
+    expect(v.relleno).toBe("viento.wind viento.calm");
+  });
+
+  it("y sin dirección fija, «variable» y la fuerza", () => {
+    expect(vientoEnPiezas(null, 3, 0).dicho).toBe(
+      "wind variable, three knots",
+    );
+  });
+
+  it("y con las piezas grabadas en las dos torres, que se llaman igual", () => {
+    // Cada pieza del relleno tiene que estar en el pack de las dos torres:
+    // el hueco no sabe qué torre habla.
+    for (const pack of [torre, torreCanarias]) {
+      const hay = new Set(Object.keys(pack.piezas));
+      for (const v of [
+        vientoEnPiezas(40, 15, 4),
+        vientoEnPiezas(null, 0, 0),
+        vientoEnPiezas(null, 3, 0),
+      ])
+        for (const p of v.relleno.split(" "))
+          expect(hay.has(p), `${pack.voz}: ${p}`).toBe(true);
+    }
   });
 });

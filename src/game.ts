@@ -49,6 +49,7 @@ import {
   matriculaDe,
   pistaEnPiezas,
   rellenoDe,
+  vientoEnPiezas,
   sortearIndicativo,
   type Indicativo,
 } from "./flight/matricula";
@@ -387,7 +388,7 @@ import { dibujoDePercance } from "./ui/percances";
 import { CuadernoScreen } from "./ui/cuaderno";
 import { comoSeDiceAqui, hablaDe } from "./i18n/habla";
 import { BOCA, MEGAFONIA } from "./audio/boca";
-import { claveDeCabina } from "./audio/cabina";
+import { claveDeCabina, loDiceElAvion } from "./audio/cabina";
 import { SE_QUEDAN, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import {
@@ -483,6 +484,7 @@ import {
   celdasDe,
   cuantoSacude,
   laQueVieneDelante,
+  seRodea,
   type Celda,
 } from "./flight/tormentas";
 import { horaSolarEn } from "./world/hora";
@@ -1183,6 +1185,64 @@ export class Game {
       intrusos,
     );
     for (const a of avisos) this.avisarDelTrafico(a);
+    this.explicarElTrafico();
+  }
+
+  /** Si ya se contó qué es un rombo. Una vez por partida, no por vuelo. */
+  private traficoExplicado = false;
+
+  /**
+   * **Qué es ese rombo**, contado la primera vez que sale uno.
+   *
+   * Preguntado jugando: uno se le iba a cruzar y no sabía si era peligroso. El
+   * rombo hueco con su «+10» ya lo decía —otro avión, mil pies por encima, sin
+   * aviso—, pero eso es un dibujo y una cifra que hay que saber leer, y en los
+   * peldaños de abajo no se lee: se oye. Así que la instructora lo cuenta una
+   * vez, con calma, cuando el primero aparece en la pantalla.
+   *
+   * **Y no es un aviso**, ni lo imita: un TCAS no dice nada de quien no se
+   * acerca, y aquí tampoco suena nada de cabina ni sale tarjeta. Es la
+   * instructora explicando un dibujo, como explicaría el horizonte. El aviso
+   * de verdad, si llega, es `avisarDelTrafico`, y ese sí va con su «mirá».
+   *
+   * En el peldaño de cabina no: ahí la pantalla se lee.
+   */
+  private explicarElTrafico(): void {
+    if (this.traficoExplicado || canalesDe(this.tier.avisos).cabina) return;
+    const s = this.flight.state;
+    /*
+     * **Con calma quiere decir en vuelo tranquilo**: alto y sin subir ni
+     * bajar deprisa. La primera versión lo contaba en cuanto salía un rombo,
+     * y el primero sale al despegar, con el tráfico del circuito: la
+     * explicación, de cinco segundos, se metía entre «rotate» y el tren, y
+     * «metélo» caducaba esperando.
+     */
+    if (s.onGround || s.heightAboveGround < 300) return;
+    if (Math.abs(s.verticalSpeed) > 3) return;
+    let elMasCerca: { relativa: number; d: number; cerca: boolean } | null =
+      null;
+    for (const b of this.tcas.enPantalla) {
+      // El que ya avisa se cuenta con su aviso. Ver `avisarDelTrafico`.
+      if (b.clase === "aviso") continue;
+      const d = Math.hypot(b.x - s.position.x, b.z - s.position.z);
+      if (!elMasCerca || d < elMasCerca.d)
+        elMasCerca = { relativa: b.relativa, d, cerca: b.clase === "cerca" };
+    }
+    if (!elMasCerca) return;
+    /*
+     * Y uno a nuestra altura y ya cerca —el rombo relleno— no se explica con
+     * un «pero lejos»: eso ya no sería verdad. Se espera a otro.
+     */
+    const aLaMisma = Math.abs(elMasCerca.relativa) < A_LA_MISMA_ALTURA;
+    if (aLaMisma && elMasCerca.cerca) return;
+    this.traficoExplicado = true;
+    const clave: TranslationKey =
+      aLaMisma
+        ? "vuelo.traficoNivel"
+        : elMasCerca.relativa > 0
+          ? "vuelo.traficoArriba"
+          : "vuelo.traficoAbajo";
+    this.instructor.decir(t(clave), clave);
   }
 
   /**
@@ -1720,6 +1780,8 @@ export class Game {
     this.alturaEnGrande.reiniciar();
     this.antesAlUmbral = Infinity;
     this.terrenoDicho = null;
+    this.dichoDelTren = null;
+    this.tormentasDichas.clear();
     this.tcas.reiniciar();
     this.faseAnunciada = "";
     this.runwayGuide.reset();
@@ -4110,7 +4172,21 @@ export class Game {
      */
     urgencia: Urgencia = "normal",
   ): void {
-    if (canalesDe(this.tier.avisos).cabina) {
+    const deCabina = claveDeCabina(ingles);
+    /*
+     * **Y la cabina canta lo que este avión tiene con qué cantar.**
+     *
+     * El peldaño decide si ya se canta en inglés; el avión decide **si hay
+     * quién lo cante**. La cuenta de la toma, el «terrain» o el «stall, stall»
+     * los dice una caja que lleva el avión de transporte y no lleva la
+     * avioneta de escuela: en el JAZ 20 del peldaño de arriba sonaba «five
+     * hundred… fifty… ten» con la voz de un radioaltímetro que ese avión no
+     * tiene. Ahí lo dice la instructora, en casa y grabada, que es quien lo
+     * diría sentada al lado. Ver `DE_LOS_AVISADORES` en `audio/cabina.ts`.
+     */
+    const hayQuienLoCante =
+      !deCabina || loDiceElAvion(deCabina, this.aircraft);
+    if (canalesDe(this.tier.avisos).cabina && hayQuienLoCante) {
       /*
        * **Y con la grabación de cabina si la hay.**
        *
@@ -4125,10 +4201,22 @@ export class Game {
        * es lo que une lo que pide el código con lo que hay grabado, y tiene su
        * prueba para que no vuelva a sobrar ninguna grabación.
        */
-      const deCabina = claveDeCabina(ingles);
       if (deCabina && this.instructor.vozDe(deCabina)) {
         this.apuntarCanto(`${ingles}→${deCabina}`);
         this.instructor.decir(ingles, deCabina, urgencia);
+        return;
+      }
+      /*
+       * **Y lo que la cabina no tiene grabado lo dice la instructora con su
+       * grabación, antes que el robot.** «On the glide path» o «flaps» no son
+       * cantos de ninguna caja —el primero es un elogio y el segundo un
+       * consejo— y no tienen toma de cabina: salían por el sintetizador en
+       * inglés, en mitad de una cabina que suena grabada. La instructora sí
+       * los tiene, en casa.
+       */
+      if (!deCabina && encasa && clave && this.instructor.vozDe(clave)) {
+        this.apuntarCanto(`${ingles}→${clave}`);
+        this.instructor.decir(encasa, clave, urgencia);
         return;
       }
       this.apuntarCanto(`${ingles}→navegador${deCabina ? "(sin voz)" : ""}`);
@@ -4138,7 +4226,10 @@ export class Game {
     // Y con la clave cuando la hay: el instructor grabado busca por clave.
     // Las frases que se componen en caliente no la tienen y las dice la voz
     // del navegador, que es lo que hay hasta que existan las grabaciones.
-    this.apuntarCanto(`${ingles}→${encasa ? (clave ?? "sin clave") : "NADA"}`);
+    this.apuntarCanto(
+      `${ingles}→${encasa ? (clave ?? "sin clave") : "NADA"}` +
+        (hayQuienLoCante ? "" : " (este avión no lo canta)"),
+    );
     if (encasa) this.instructor.decir(encasa, clave, urgencia);
   }
 
@@ -4170,7 +4261,21 @@ export class Game {
     const kt = Math.round(s.airspeed * NUDOS);
     const vref = Math.round(this.aircraft.approachSpeed * NUDOS);
     const alto = Math.round(s.heightAboveGround);
-    this.cantados.push(`${que} [${kt} kt · vref ${vref} · ${alto} m]`);
+    /*
+     * **Y el ángulo de ataque, la carga y los flaps.**
+     *
+     * Un «stall, stall» a ciento ochenta y ocho nudos no se entiende con la
+     * velocidad delante: una pérdida no la decide la velocidad sino el ángulo
+     * con el que el ala ataca el aire, y ese ángulo depende de cuánto se tire
+     * —la carga— y de los flaps que se lleven. Sin esas tres cifras al lado,
+     * cada canto de pérdida raro vuelve a ser una adivinanza.
+     */
+    const alfa = ((s.alpha * 180) / Math.PI).toFixed(1);
+    const n = s.loadFactor.toFixed(2);
+    const flaps = this.input.controls.flaps.toFixed(2);
+    this.cantados.push(
+      `${que} [${kt} kt · vref ${vref} · ${alto} m · α ${alfa}° · n ${n} · flaps ${flaps}]`,
+    );
     if (this.cantados.length > 4000) this.cantados.shift();
   }
 
@@ -5200,6 +5305,34 @@ export class Game {
     const pista = NOMBRA_LA_PISTA.has(base)
       ? pistaEnPiezas(cabeceraEnUso(campo.escenario))
       : null;
+    /*
+     * **Y el viento, al dar la pista para despegar o aterrizar.**
+     *
+     * Es lo último que hace falta saber antes de hacerlo, y toda torre lo da
+     * ahí: «wind zero five zero degrees, one two knots, runway zero five,
+     * cleared to land». Esta no lo daba nunca. El del campo en el que se está,
+     * que es el que empuja al avión, el que señala la manga y el que eligió la
+     * cabecera en uso: los tres salen del mismo parte, y si la torre dijera
+     * otro, una de las cuatro cosas mentiría. En magnéticos, como las pistas.
+     * Ver `vientoEnPiezas`.
+     */
+    /*
+     * **Y a vos, no a los demás de la frecuencia.** Una torre se lo da a
+     * todos, pero aquí los demás son ambiente, y con el viento cada una de sus
+     * autorizaciones duraba cuatro segundos más: la tuya esperaba detrás y
+     * caducaba sin oírse —medido en Los Rodeos, «clearedTakeoff: caducó
+     * esperando»—. Se simplifica lo que se oye de fondo, no lo que te dicen.
+     */
+    const conViento =
+      (base === "torre.clearedTakeoff" || base === "torre.clearedLand") &&
+      quien.matricula === this.miIndicativo.matricula;
+    const viento = conViento ? this.vientoDeLaTorre(campo) : null;
+    /*
+     * Y en el orden en que se dice: indicativo, viento y pista. El turno de
+     * la boca junta el relleno en ese orden —ver `turnoDe`—, y lo que mira
+     * qué pista se nombró lee las dos últimas cifras.
+     */
+    if (viento) relleno.viento = viento.relleno;
     if (pista) {
       Object.assign(relleno, pista.relleno);
       clave = `${clave}${pista.sufijo}`;
@@ -5210,10 +5343,31 @@ export class Game {
      * en una tarjeta. Que el respaldo diga menos que la grabación es de las
      * cosas que hacen que un fallo de audio parezca un fallo del juego.
      */
+    const antes = viento ? `${quien.dicho}, ${viento.dicho}` : quien.dicho;
     const texto = pista
-      ? `${quien.dicho}, runway ${pista.dicho}, ${dice}`
-      : `${quien.dicho}, ${dice}`;
+      ? `${antes}, runway ${pista.dicho}, ${dice}`
+      : `${antes}, ${dice}`;
     return { clave, relleno, texto };
+  }
+
+  /**
+   * El viento que da la torre de ese campo: el suyo, en magnéticos. Ver
+   * `deTorre` y `vientoEnPiezas`.
+   */
+  private vientoDeLaTorre(
+    campo: CampoEnElMundo,
+  ): { relleno: string; dicho: string } {
+    const tiempo = campo.escenario.meteo ?? TIEMPO_DE_CASA;
+    return vientoEnPiezas(
+      tiempo.vientoDe,
+      tiempo.vientoKt,
+      campo.escenario.magneticVariation ?? 0,
+    );
+  }
+
+  /** Lo mismo, para el banco: el viento que diría la torre de aquí. */
+  get vientoDeLaTorreParaBanco(): { relleno: string; dicho: string } {
+    return this.vientoDeLaTorre(this.elCampo());
   }
 
   /**
@@ -5803,6 +5957,8 @@ export class Game {
     this.fueraDeBanda = 0;
     this.dichoDeBanda = null;
     this.terrenoDicho = null;
+    this.dichoDelTren = null;
+    this.tormentasDichas.clear();
     this.tcas.reiniciar();
     this.avisandoDelBulto = 0;
     /*
@@ -7623,7 +7779,14 @@ export class Game {
       this.esUnaToma,
       this.flight.state.verticalSpeed < 0,
     );
-    if (aviso) this.cantar(aviso.dice, aviso.encasa);
+    // Con su clave, que sin ella la cifra en casa no tenía grabación que
+    // buscar. Ver `escalon` en `flight/avisos-de-altura.ts`.
+    if (aviso)
+      this.cantar(
+        aviso.dice,
+        aviso.clave ? t(aviso.clave as TranslationKey) : aviso.encasa,
+        aviso.clave,
+      );
 
     /*
      * **Y el número en grande, que es otro peldaño.**
@@ -9254,17 +9417,35 @@ export class Game {
     return { salida, destino, clave: `${salida.id}>${destino.id}` };
   }
 
+  /**
+   * Las células de las que ya se avisó en este vuelo. Ver `avisarDeLaTormenta`.
+   */
+  private readonly tormentasDichas = new Set<Celda>();
+
   private avisarDeLaTormenta(): void {
     // Rodando no se rodea nada: esto es un aviso de vuelo.
     if (!this.celdas.length || this.flight.state.onGround) return;
     const s = this.flight.state;
+    /*
+     * **Solo las que se rodean de verdad**: las de núcleo rojo. Una célula
+     * verde de lluvia floja se cruza, y pedir rodearla enseña que toda la
+     * lluvia es peligrosa. Ver `seRodea`.
+     */
     const viene = laQueVieneDelante(
-      this.celdas,
+      this.celdas.filter(seRodea),
       s.position.x,
       s.position.z,
       s.heading,
     );
-    if (!viene) return;
+    /*
+     * **Y una vez por célula, no una vez por rato.** Esto se pedía cada
+     * fotograma y lo único que lo frenaba era la regla de no repetirse de la
+     * boca, que es un reloj de veinticinco segundos: con una célula delante
+     * durante dos minutos, cinco avisos iguales y ciento ochenta y ocho
+     * descartes en la cola. Lo que rearma el aviso es que venga **otra**.
+     */
+    if (!viene || this.tormentasDichas.has(viene.celda)) return;
+    this.tormentasDichas.add(viene.celda);
     const dicho = this.avisoCon("vuelo.tormenta", "palabra.tormenta");
     /*
      * El dibujo va en los cuatro peldaños y el rótulo desde el segundo: eso
@@ -11318,6 +11499,14 @@ export class Game {
      * definiciones de «pérdida» que un día dicen cosas contrarias. Manda el
      * del modelo.
      *
+     * **Y ahora es el avisador del modelo, no la pérdida.** Un «stall, stall»
+     * a ciento ochenta y ocho nudos parecía un aviso que miraba la velocidad,
+     * y el registro de cantos con el ángulo al lado dijo otra cosa: α 18,6°
+     * con una pérdida a 14,9°, o sea **pérdida de verdad**, a alta velocidad,
+     * porque el piloto del banco tiraba de la palanca hasta ahí. Lo que sí
+     * faltaba era que avisara antes: miraba `stalled`, el ala ya ida. Ver
+     * `stallWarning` y `anguloDeAviso`, que llevan su propia holgura.
+     *
      * Y probado: con una holgura del diez por ciento salían cuarenta y cinco
      * cantos en un vuelo, y con una del treinta, cincuenta. Que el número no
      * bajara al triplicar la holgura era el aviso de que el problema no estaba
@@ -11394,6 +11583,21 @@ export class Game {
     const donde = this.input.controls.tren;
     const pedido = this.input.trenQueSePide;
     const sobreElSuelo = s.heightAboveGround;
+    /*
+     * **Y cada despegue es un despegue nuevo.**
+     *
+     * Lo dicho del tren solo se olvidaba al mover la palanca, y comparando
+     * con lo que estaba pedido cuando se dijo. Una vuelta entera de palanca
+     * —meterlo al subir, sacarlo para aterrizar— deja la palanca donde
+     * estaba, así que en el tramo siguiente, con el tren fuera otra vez,
+     * «metélo» ya constaba como dicho: aterrizar en Guaraní y salir hacia
+     * Encarnación era subir con las patas fuera sin que nadie lo pidiera.
+     *
+     * Tocar el suelo es el suceso que lo rearma, y no uno que pueda fabricar
+     * el reloj: el aviso vuelve una vez por despegue, que es cuando se canta
+     * en cualquier cabina. Ver `seVuelveADecir` en `flight/tren.ts`.
+     */
+    if (s.onGround) this.dichoDelTren = null;
 
     /*
      * El de sacarlo es un aviso de seguridad y manda: se dice aunque se acabe
@@ -11466,9 +11670,29 @@ export class Game {
        * Van seguidas y no a la vez: la boca hace cola y las dice una tras
        * otra con su silencio en medio, igual que la pareja de la torre en
        * castellano y en inglés. Ver `audio/boca.ts`.
+       *
+       * **Pero la pareja es de la cabina, y en casa es una frase.** La
+       * instructora decía las dos —«Ya subís: metélo» y detrás «Metélo, el
+       * tren te frena»—, que es la misma orden dos veces, y la segunda, que
+       * es la que nombra el tren, esperaba turno detrás de la primera y de la
+       * radio y **caducaba**: en el banco de Pettirossi con el JAZ 60,
+       * «vuelo.meteElTren: caducó esperando». Lo que quedaba era un «metélo»
+       * sin decir qué, y así se contó volando a Encarnación: subiendo por
+       * 1420 ft con las patas fuera y nadie había pedido meterlas. En casa va
+       * sola la que dice qué y por qué.
+       *
+       * **Y en el escalón de V1 y «rotate»**, que es la serie a la que
+       * pertenece: son las llamadas del despegue, una detrás de otra. En
+       * `normal` quedaba detrás de cualquier comentario de esos segundos —la
+       * ruta, la comandante— y caducaba: también en Los Rodeos con el JAZ 90.
        */
-      this.cantar("positive rate", t("vuelo.sube"), "vuelo.sube");
-      this.cantar("gear up", t("vuelo.meteElTren"), "vuelo.meteElTren");
+      this.cantar("positive rate", undefined, undefined, "mando");
+      this.cantar(
+        "gear up",
+        t("vuelo.meteElTren"),
+        "vuelo.meteElTren",
+        "mando",
+      );
     }
   }
 

@@ -163,7 +163,30 @@ export function traficoEnRuta(
      * puede sortear, porque es la regla. Lo que sí se sortea es cuál de los
      * niveles legales le toca, entre el primero y el tercero de su sentido.
      */
-    const pedido = 7000 + Math.floor(sorteo(semilla, i * 7) * 3) * 2000;
+    /*
+     * **Y los dos de cada sentido, en niveles distintos.**
+     *
+     * Se sorteaban por separado, así que uno de cada tres vuelos llevaba a los
+     * dos que van hacia el mismo lado **en el mismo nivel**, y como cada uno
+     * lleva su paso —un turbohélice a 270 nudos, un reactor a 450—, el rápido
+     * alcanzaba al lento y lo pasaba a menos de una milla y a la misma altura.
+     * En la pantalla del TCAS eso son dos rombos juntos con la misma cifra:
+     * «he llegado a ver dos juntos». No era el mismo avión pintado dos veces;
+     * eran dos aviones haciendo lo que ningún control deja hacer, que es
+     * adelantarse en el mismo nivel sin cinco millas de lado. Medido con ocho
+     * semillas y una hora de reloj: juntos en cuatro de las ocho, hasta ocho
+     * minutos seguidos.
+     *
+     * El primero de cada sentido sortea como siempre; el segundo, entre los
+     * otros dos niveles. Entre los dos quedan dos mil pies como poco, que es la
+     * separación de dos niveles del mismo sentido.
+     */
+    const primero = Math.floor(sorteo(semilla, (i % 2) * 7) * 3);
+    const nivel =
+      i < 2
+        ? primero
+        : (primero + 1 + Math.floor(sorteo(semilla, i * 7) * 2)) % 3;
+    const pedido = 7000 + nivel * 2000;
     const pies = nivelPara(rumbo, pedido);
 
     /*

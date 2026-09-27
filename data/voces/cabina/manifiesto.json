@@ -6,6 +6,9 @@
     "cabina.airspeed": {
       "ms": 750
     },
+    "cabina.airspeedLow": {
+      "ms": 891
+    },
     "cabina.autopilotDisconnect": {
       "ms": 1091
     },
@@ -35,6 +38,9 @@
     },
     "cabina.goAround": {
       "ms": 1515
+    },
+    "cabina.goAroundOrder": {
+      "ms": 697
     },
     "cabina.minimums": {
       "ms": 742
@@ -107,6 +113,9 @@
     "cabina.airspeed": [
       "cabina.airspeed"
     ],
+    "cabina.airspeedLow": [
+      "cabina.airspeedLow"
+    ],
     "cabina.autopilotDisconnect": [
       "cabina.autopilotDisconnect"
     ],
@@ -136,6 +145,9 @@
     ],
     "cabina.goAround": [
       "cabina.goAround"
+    ],
+    "cabina.goAroundOrder": [
+      "cabina.goAroundOrder"
     ],
     "cabina.minimums": [
       "cabina.minimums"

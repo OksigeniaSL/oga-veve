@@ -56,3 +56,8 @@
 056	torre.canario.solo.departingTraffic	departing traffic
 057	torre.canario.solo.lineUpWait	line up and wait
 058	torre.canario.solo.clearedTo	cleared to
+059	viento.wind	wind
+060	viento.degrees	degrees
+061	viento.knots	knots
+062	viento.calm	calm
+063	viento.variable	variable

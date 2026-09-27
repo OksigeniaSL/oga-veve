@@ -9,8 +9,14 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { ARAI, AIRCRAFT } from "./aircraft";
+import { TAGUATO } from "./tiers";
+import { CoefficientFlightModel } from "./fdm";
+import { neutralControls } from "./model";
+import { Vector3 } from "three";
 import {
   ALABEO_QUE_SOBRA,
+  anguloDeAviso,
   avisaLaPerdida,
   avisoDeActitud,
   DEMASIADO_ALTO,
@@ -153,11 +159,113 @@ describe("y en el suelo", () => {
 describe("el aviso de pérdida y el peso en ruedas", () => {
   it("aparcado con el viento de cola no avisa", () => {
     // Lo que daba el modelo en La Palma, en el puesto y con el motor parado.
-    expect(avisaLaPerdida({ stalled: true, onGround: true })).toBe(false);
+    expect(avisaLaPerdida({ stallWarning: true, onGround: true })).toBe(false);
   });
 
   it("en el aire, sí", () => {
-    expect(avisaLaPerdida({ stalled: true, onGround: false })).toBe(true);
-    expect(avisaLaPerdida({ stalled: false, onGround: false })).toBe(false);
+    expect(avisaLaPerdida({ stallWarning: true, onGround: false })).toBe(true);
+    expect(avisaLaPerdida({ stallWarning: false, onGround: false })).toBe(false);
+  });
+});
+
+/*
+ * **El avisador mira el ángulo, con los flaps, y va por delante.**
+ *
+ * Salió de un «stall, stall» a ciento ochenta y ocho nudos con el JAZ 90 que
+ * parecía un aviso mirando la velocidad. No lo era: el ala estaba a 18,6° con
+ * la pérdida a 14,9°, porque se tiraba de la palanca hasta ahí. Lo que se fija
+ * aquí es lo que tiene que hacer un avisador de verdad, que es lo que el
+ * juego no hacía: sonar **antes** de la pérdida, a cualquier velocidad, con
+ * un umbral que baja al sacar flaps, y nunca empujando.
+ */
+describe("el avisador de pérdida", () => {
+  it("suena por debajo del ángulo de pérdida, en toda la flota", () => {
+    for (const a of AIRCRAFT) {
+      const limpio = anguloDeAviso(a.aero.alphaStall, a.aero, 0);
+      expect(limpio, a.id).toBeLessThan(a.aero.alphaStall);
+      // Y no tan pronto que avise volando normal: menos de cuatro grados.
+      expect(a.aero.alphaStall - limpio, a.id).toBeLessThan(grados(4));
+    }
+  });
+
+  it("y con flaps suena antes, que es lo que hace el de un avión de línea", () => {
+    const limpio = anguloDeAviso(ARAI.aero.alphaStall, ARAI.aero, 0);
+    const conTodo = anguloDeAviso(ARAI.aero.alphaStall, ARAI.aero, ARAI.flapsLift);
+    expect(conTodo).toBeLessThan(limpio);
+  });
+
+  const volandoA = (nudos: number) => {
+    const m = new CoefficientFlightModel({
+      aircraft: ARAI,
+      ground: () => 0,
+      assist: 0,
+    });
+    m.reset({
+      position: new Vector3(0, 1500, 0),
+      heading: 0,
+      airspeed: nudos * 0.514444,
+    });
+    return m;
+  };
+
+  it("a ciento ochenta y ocho nudos, tirando fuerte, avisa antes de la pérdida", () => {
+    const m = volandoA(188);
+    const mandos = { ...neutralControls(), throttle: 1, elevator: 0.6 };
+    let avisoEn: number | null = null;
+    let perdidaEn: number | null = null;
+    for (let i = 0; i < 240; i++) {
+      m.step(1 / 60, mandos);
+      if (avisoEn === null && m.state.stallWarning) avisoEn = i;
+      if (perdidaEn === null && m.state.stalled) perdidaEn = i;
+    }
+    expect(avisoEn).not.toBeNull();
+    expect(perdidaEn).not.toBeNull();
+    expect(avisoEn!).toBeLessThan(perdidaEn!);
+  });
+
+  it("y volando recto a esa velocidad no dice nada", () => {
+    const m = volandoA(188);
+    const mandos = { ...neutralControls(), throttle: 0.6 };
+    for (let i = 0; i < 240; i++) {
+      m.step(1 / 60, mandos);
+      expect(m.state.stallWarning).toBe(false);
+    }
+  });
+
+  it("y el compensador de Taguató no mete el ala en el avisador al soltar", () => {
+    /*
+     * Lo que pasaba en Los Rodeos con el JAZ 90: bajando a ciento noventa
+     * nudos, se suelta la palanca y el compensador, para sostener la subida,
+     * tiraba hasta el avisador. Treinta «stall, stall» con nadie tirando.
+     */
+    const m = new CoefficientFlightModel({
+      aircraft: ARAI,
+      ground: () => 0,
+      assist: TAGUATO.assists,
+    });
+    m.reset({
+      position: new Vector3(0, 1500, 0),
+      heading: 0,
+      airspeed: 190 * 0.514444,
+    });
+    const bajando = { ...neutralControls(), throttle: 1, elevator: -0.25 };
+    for (let i = 0; i < 180; i++) m.step(1 / 60, bajando);
+    expect(m.state.verticalSpeed).toBeLessThan(-5);
+    const suelto = { ...neutralControls(), throttle: 1 };
+    let avisos = 0;
+    for (let i = 0; i < 60 * 30; i++) {
+      m.step(1 / 60, suelto);
+      if (m.state.stallWarning) avisos++;
+    }
+    expect(avisos).toBe(0);
+  });
+
+  it("empujando no avisa, aunque el ala se vaya por abajo", () => {
+    const m = volandoA(188);
+    const mandos = { ...neutralControls(), throttle: 1, elevator: -1 };
+    for (let i = 0; i < 240; i++) {
+      m.step(1 / 60, mandos);
+      expect(m.state.stallWarning).toBe(false);
+    }
   });
 });

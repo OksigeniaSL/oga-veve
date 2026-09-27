@@ -603,6 +603,24 @@ export const ES_PY = {
   "tcas.arriba": "Tráfico {donde}, {cuanto} por encima",
   "tcas.abajo": "Tráfico {donde}, {cuanto} por debajo",
   "tcas.nivel": "Tráfico {donde}, a tu misma altura",
+  /*
+   * **La cuenta de la toma, dicha en casa.** Es lo que canta el
+   * radioaltímetro en inglés en el peldaño de cabina, y aquí lo dice la
+   * instructora: en los peldaños que todavía no cantan en inglés y en los
+   * aviones que no llevan radioaltímetro que cante. Ver `escalon` en
+   * `flight/avisos-de-altura.ts`.
+   */
+  "cuenta.quinientos": "Quinientos",
+  "cuenta.cuatrocientos": "Cuatrocientos",
+  "cuenta.trescientos": "Trescientos",
+  "cuenta.doscientos": "Doscientos",
+  "cuenta.cien": "Cien",
+  "cuenta.cincuenta": "Cincuenta",
+  "cuenta.cuarenta": "Cuarenta",
+  "cuenta.treinta": "Treinta",
+  "cuenta.veinte": "Veinte",
+  "cuenta.diez": "Diez",
+  "cuenta.cinco": "Cinco",
   "palabra.rapido": "Muy rápido",
   "palabra.fuera": "Fuera",
   "palabra.corto": "Corto",
@@ -666,7 +684,20 @@ export const ES_PY = {
   "vuelo.trafico.izquierda": "Mirá a tu izquierda: hay otro avión cerca",
   "vuelo.trafico.derecha": "Mirá a tu derecha: hay otro avión cerca",
   "vuelo.trafico.detras": "Hay otro avión cerca, detrás de vos",
-  "vuelo.sube": "Ya subís: metélo",
+  /*
+   * **Y qué es un rombo, la primera vez que sale uno.** No es un aviso —un
+   * TCAS no avisa de quien no se acerca— sino la explicación de un dibujo
+   * que aparece en la pantalla sin que nadie lo nombre: se preguntó jugando
+   * si uno que se cruzaba era peligroso o no. El rombo hueco con su «+10» ya
+   * lo decía, pero eso hay que saber leerlo. Ver `explicarElTrafico` en
+   * `game.ts`.
+   */
+  "vuelo.traficoArriba":
+    "Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta",
+  "vuelo.traficoAbajo":
+    "Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta",
+  "vuelo.traficoNivel":
+    "Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
   "vuelo.bajasRapido": "Bajás muy rápido",
   "vuelo.muyInclinado": "Estás muy inclinado",
   "vuelo.pilotoSuelto": "Se soltó el piloto automático",
@@ -785,8 +816,13 @@ export const ES_PY = {
   "vuelo.pediFlaps": "Bajá los flaps para frenar",
   "palabra.flaps": "Flaps",
   "vuelo.meteElTren": "Metélo, el tren te frena",
-  "vuelo.tormenta": "Hay lluvia delante: rodeála, no la cruces",
-  "palabra.tormenta": "Lluvia",
+  /*
+   * **Y es una tormenta, no lluvia.** Solo se avisa de las células de núcleo
+   * rojo —ver `seRodea`—, que son las de tormenta: la lluvia floja se cruza y
+   * no se nombra. Decir «lluvia» aquí enseñaba justo lo que no es.
+   */
+  "vuelo.tormenta": "Hay una tormenta delante: rodeála, no la cruces",
+  "palabra.tormenta": "Tormenta",
   /*
    * El combustible, en sus dos escalones. El primero no es una emergencia y
    * no se escribe como tal: entrar en la reserva es el momento de decidir, y

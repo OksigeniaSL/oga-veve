@@ -156,4 +156,21 @@ describe("y no son todos el mismo avión", () => {
     });
     expect(Math.max(...avances)).toBeGreaterThan(Math.min(...avances) * 1.3);
   });
+
+  it("y los que van hacia el mismo lado nunca comparten nivel", () => {
+    /*
+     * «He llegado a ver dos juntos» en la pantalla del TCAS: dos del mismo
+     * sentido en el mismo nivel, el rápido adelantando al lento a menos de una
+     * milla. Con ocho semillas pasaba en cuatro. Ningún control deja hacer
+     * eso: o cinco millas de lado, o un nivel de diferencia.
+     */
+    for (let semilla = 1; semilla <= 40; semilla++) {
+      const todos = traficoEnRuta(CASA, ALLA, 0, semilla);
+      for (const sentido of [true, false]) {
+        const suyos = todos.filter((a) => haciaElEste(a.rumbo) === sentido);
+        const niveles = new Set(suyos.map((a) => a.pies));
+        expect(niveles.size, `semilla ${semilla}`).toBe(suyos.length);
+      }
+    }
+  });
 });

@@ -16,6 +16,7 @@ import {
   ecoEn,
   type Celda,
   laQueVieneDelante,
+  seRodea,
 } from "./tormentas";
 
 const LADO = 18000;
@@ -236,5 +237,28 @@ describe("la que viene delante", () => {
     expect(laQueVieneDelante(una, 0, 0, 0)).not.toBeNull();
     // Noventa grados a la derecha: la célula se queda a la izquierda.
     expect(laQueVieneDelante(una, 0, 0, Math.PI / 2)).toBeNull();
+  });
+});
+
+/*
+ * ── Y de cuáles se avisa ──────────────────────────────────────────────────
+ *
+ * Con el parte de verdad de Los Rodeos del 27-sep-2026 —`-RA`, lluvia floja—
+ * la instructora pidió rodear la lluvia cinco veces en un vuelo. La lluvia
+ * floja se cruza: lo que no se cruza es el rojo.
+ */
+describe("a cuáles se les da la vuelta", () => {
+  it("a la lluvia floja del parte, no", () => {
+    const hoy = celdasDe("lluvia", 0.35, LADO, 1);
+    expect(hoy.length).toBeGreaterThan(0);
+    expect(hoy.filter(seRodea)).toEqual([]);
+  });
+
+  it("ni a la lluvia más fuerte que da el parte, que se queda en ámbar", () => {
+    expect(celdasDe("lluvia", 1, LADO, 1).filter(seRodea)).toEqual([]);
+  });
+
+  it("a una tormenta, sí", () => {
+    expect(celdasDe("tormenta", 0.7, LADO, 1).filter(seRodea).length).toBe(4);
   });
 });

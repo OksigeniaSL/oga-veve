@@ -196,10 +196,24 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
-    "id": "vuelo.sube",
+    "id": "vuelo.traficoArriba",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Ya subís: metélo",
+    "texto": "Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.traficoAbajo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.traficoNivel",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -221,6 +235,13 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Se soltó el piloto automático",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.pilotoEnTierra",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El piloto automático se conecta en el aire",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -507,7 +528,7 @@
     "id": "vuelo.tormenta",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Hay lluvia delante: rodeála, no la cruces",
+    "texto": "Hay una tormenta delante: rodeála, no la cruces",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -950,6 +971,83 @@
     "idioma": "es-PY",
     "texto": "Vuelo libre",
     "para": "las misiones"
+  },
+  {
+    "id": "cuenta.quinientos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Quinientos",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.cuatrocientos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cuatrocientos",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.trescientos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Trescientos",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.doscientos",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Doscientos",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.cien",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cien",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.cincuenta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cincuenta",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.cuarenta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cuarenta",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.treinta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Treinta",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.veinte",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Veinte",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.diez",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Diez",
+    "para": "la cuenta de la toma, en casa"
+  },
+  {
+    "id": "cuenta.cinco",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Cinco",
+    "para": "la cuenta de la toma, en casa"
   },
   {
     "id": "ala.dice.arriba",
@@ -1932,6 +2030,20 @@
     "para": "se rompió el avión"
   },
   {
+    "id": "cabina.goAroundOrder",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "go around",
+    "para": "la orden de irse al aire"
+  },
+  {
+    "id": "cabina.airspeedLow",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "airspeed low",
+    "para": "vas lento para la configuración"
+  },
+  {
     "id": "cabina.fiveHundred",
     "voz": "cabina",
     "idioma": "en",
@@ -2541,6 +2653,41 @@
     "para": "la autorización, antes del destino"
   },
   {
+    "id": "viento.wind",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "wind",
+    "para": "el viento, antes de la dirección"
+  },
+  {
+    "id": "viento.degrees",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "degrees",
+    "para": "detrás de la dirección del viento"
+  },
+  {
+    "id": "viento.knots",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "knots",
+    "para": "detrás de la fuerza del viento"
+  },
+  {
+    "id": "viento.calm",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "calm",
+    "para": "sin viento: «wind calm»"
+  },
+  {
+    "id": "viento.variable",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "variable",
+    "para": "viento sin dirección fija"
+  },
+  {
     "id": "torre.solo.aterrizar",
     "voz": "torre",
     "idioma": "es",
@@ -3008,5 +3155,40 @@
     "idioma": "en",
     "texto": "cleared to",
     "para": "la autorización, antes del destino, en Canarias"
+  },
+  {
+    "id": "viento.wind",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "wind",
+    "para": "el viento, antes de la dirección, en Canarias"
+  },
+  {
+    "id": "viento.degrees",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "degrees",
+    "para": "detrás de la dirección del viento, en Canarias"
+  },
+  {
+    "id": "viento.knots",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "knots",
+    "para": "detrás de la fuerza del viento, en Canarias"
+  },
+  {
+    "id": "viento.calm",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "calm",
+    "para": "sin viento: «wind calm», en Canarias"
+  },
+  {
+    "id": "viento.variable",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "variable",
+    "para": "viento sin dirección fija, en Canarias"
   }
 ]

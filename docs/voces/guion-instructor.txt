@@ -26,10 +26,13 @@ Mirá adelante: hay otro avión cerca
 Mirá a tu izquierda: hay otro avión cerca
 Mirá a tu derecha: hay otro avión cerca
 Hay otro avión cerca, detrás de vos
-Ya subís: metélo
+Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta
+Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta
+Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando
 Bajás muy rápido
 Estás muy inclinado
 Se soltó el piloto automático
+El piloto automático se conecta en el aire
 Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir
@@ -70,7 +73,7 @@ Muy rápido con el tren fuera: metélo
 Muy rápido con los flaps: recogélos
 Bajá los flaps para frenar
 Metélo, el tren te frena
-Hay lluvia delante: rodeála, no la cruces
+Hay una tormenta delante: rodeála, no la cruces
 Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
 Se acabó el combustible: planeá hasta la pista
 Sacá el tren
@@ -134,6 +137,17 @@ El traslado
 ¡Bien! Seguí
 ¡Misión cumplida!
 Vuelo libre
+Quinientos
+Cuatrocientos
+Trescientos
+Doscientos
+Cien
+Cincuenta
+Cuarenta
+Treinta
+Veinte
+Diez
+Cinco
 Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
 Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
 Cuidado: un poco más de ángulo y el aire se suelta.

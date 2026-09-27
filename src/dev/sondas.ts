@@ -372,6 +372,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * Tenerife Norte sin llegar a despegar.
        */
       rotacion: juego.aircraft.rotationSpeed,
+      /*
+       * Y **cuánto ángulo da cada décima de palanca**, que es lo que el
+       * piloto del banco necesita para no tirar hasta el avisador. En este
+       * modelo la palanca manda ángulo de ataque —`cm0 + cmα·α + cmδ·δ = 0`
+       * en equilibrio—, así que con estos tres números se sabe cuánta es
+       * demasiada sin esperar a verlo. Ver `limitarElAngulo` en
+       * `verificar-vuelo-entero`.
+       */
+      cabeceo: {
+        cm0: juego.aircraft.aero.cm0,
+        cmAlpha: juego.aircraft.aero.cmAlpha,
+        cmElevator: juego.aircraft.aero.cmElevator,
+      },
       aproximacion: juego.aircraft.approachSpeed,
       crucero: juego.aircraft.cruiseSpeed,
       // Y a qué vuela el circuito, que es lo que el banco tiene que volar
@@ -640,7 +653,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         yo: yo.matricula,
         yoDicho: yo.dicho,
         // Con lo que hace falta para montar una llamada de la torre entera.
-        deTorre: { ...rellenoDe(yo), ...(pista?.relleno ?? {}) },
+        // Y el viento, que va en las autorizaciones de despegue y aterrizaje:
+        // sin él, esas dos recetas no se montan. Ver `deTorre` en `game.ts`.
+        deTorre: {
+          ...rellenoDe(yo),
+          viento: juego.vientoDeLaTorreParaBanco.relleno,
+          ...(pista?.relleno ?? {}),
+        },
+        viento: juego.vientoDeLaTorreParaBanco.dicho,
         pista: pista?.dicho ?? null,
         sufijo: pista?.sufijo ?? "",
       };

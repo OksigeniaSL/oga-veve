@@ -179,6 +179,21 @@
     },
     "torre.solo.verde": {
       "ms": 920
+    },
+    "viento.calm": {
+      "ms": 636
+    },
+    "viento.degrees": {
+      "ms": 695
+    },
+    "viento.knots": {
+      "ms": 611
+    },
+    "viento.variable": {
+      "ms": 719
+    },
+    "viento.wind": {
+      "ms": 538
     }
   },
   "recetas": {
@@ -329,6 +344,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.solo.runway",
       "{r1}",
       "{r2}",
@@ -340,6 +356,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.solo.runway",
       "{r1}",
       "{r2}",
@@ -352,6 +369,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.solo.runway",
       "{r1}",
       "{r2}",
@@ -364,6 +382,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.solo.runway",
       "{r1}",
       "{r2}",
@@ -376,6 +395,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.solo.runway",
       "{r1}",
       "{r2}",
@@ -387,6 +407,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.solo.runway",
       "{r1}",
       "{r2}",
@@ -399,6 +420,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.solo.runway",
       "{r1}",
       "{r2}",
@@ -411,6 +433,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.solo.runway",
       "{r1}",
       "{r2}",
@@ -569,6 +592,21 @@
     ],
     "destino.yvytu-rape": [
       "destino.yvytu-rape"
+    ],
+    "viento.wind": [
+      "viento.wind"
+    ],
+    "viento.degrees": [
+      "viento.degrees"
+    ],
+    "viento.knots": [
+      "viento.knots"
+    ],
+    "viento.calm": [
+      "viento.calm"
+    ],
+    "viento.variable": [
+      "viento.variable"
     ]
   }
 }

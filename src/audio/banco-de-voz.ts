@@ -155,8 +155,21 @@ export function recetaDe(
       continue;
     }
     const puesto = relleno[hueco[1]!];
-    if (!puesto || !manifiesto?.piezas[puesto]) return null;
-    salida.push(puesto);
+    if (!puesto) return null;
+    /*
+     * **Y un hueco puede llevar varias piezas**, separadas por espacios.
+     *
+     * Hace falta para el viento de la torre: «wind zero five zero degrees,
+     * one two knots» son ocho piezas, «wind calm» son dos y «wind variable,
+     * three knots» cuatro. Con un hueco por pieza habría que tener una receta
+     * por cada forma de soplar; con esto, el hueco `{viento}` lleva lo que
+     * toque y la receta es una. Y la regla de siempre vale igual: si falta
+     * una sola, la frase entera se cae al navegador.
+     */
+    for (const pieza of puesto.split(" ")) {
+      if (!manifiesto?.piezas[pieza]) return null;
+      salida.push(pieza);
+    }
   }
   return salida;
 }
