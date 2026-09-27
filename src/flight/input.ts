@@ -103,6 +103,16 @@ export { DETENTES, siguienteDetente } from "./flaps";
 export class InputManager {
   readonly controls: ControlInputs = { ...neutralControls(), throttle: 0 };
 
+  /**
+   * Qué ejes está moviendo alguien **en este fotograma**: tecla, dedo o mando.
+   *
+   * No se puede deducir de `controls`, que vuelven al centro poco a poco: un
+   * alerón a 0,2 puede ser alguien virando suave o una tecla soltada hace un
+   * instante. Esto es la petición, que es lo que decide quién manda. Lo mira
+   * el vuelo recto de los instrumentos: ver `flight/vuelo-recto.ts`.
+   */
+  readonly mueve = { cabeceo: false, alabeo: false, timon: false };
+
   private readonly keys = new Set<string>();
   private readonly actions: InputActions;
   /** Ejes del stick táctil, -1 a 1. */
@@ -410,6 +420,9 @@ export class InputManager {
       this.touchRudder + this.axis("yawRight", "yawLeft"),
       gamepad?.rudder,
     );
+    this.mueve.cabeceo = pitchTarget !== 0;
+    this.mueve.alabeo = rollTarget !== 0;
+    this.mueve.timon = rudderTarget !== 0;
 
     this.controls.elevator = approach(
       this.controls.elevator,

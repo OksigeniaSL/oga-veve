@@ -243,6 +243,27 @@ export function mandosPara(
 }
 
 /**
+ * Si el piloto automático se puede conectar ahora.
+ *
+ * **En tierra, no.** Es lo que tiene cualquier piloto automático de verdad: un
+ * enclavamiento con el interruptor de peso en las ruedas, y el botón apretado
+ * en la plataforma no engancha nada. Aquí sí enganchaba: cogía el rumbo y la
+ * altura de la plataforma, y al fotograma siguiente la regla de «en tierra se
+ * suelta» lo soltaba **cantando la desconexión**. Contado jugando, rodando en
+ * Pettirossi con el reactor de cuatro motores: «alarma de piloto automático
+ * desconectado. Pues claro, estoy en tierra».
+ *
+ * Y la alarma de desconexión es la que hay que proteger, no la que hay que
+ * callar: en una cabina de verdad suena solo cuando un piloto automático **que
+ * estaba conectado** se suelta, a mano o por sí mismo. Si sonara también por
+ * apretar el botón en tierra, dejaría de querer decir «te acabás de quedar a
+ * los mandos», que es lo único que dice.
+ */
+export function sePuedeConectar(estado: { readonly enTierra: boolean }): boolean {
+  return !estado.enTierra;
+}
+
+/**
  * Si quien vuela ha tocado los mandos lo bastante como para soltar el piloto.
  *
  * Se mira **el mando que el automático gobierna**, y no todos: con solo el

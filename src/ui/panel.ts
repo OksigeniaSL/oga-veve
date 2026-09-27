@@ -105,13 +105,29 @@ export class Encierro {
    * no se puede tomar desde aquí. El tabulador sí lo lleva el encierro.
    */
   private readonly conEscape: boolean;
+  /**
+   * Si las flechas recorren el panel.
+   *
+   * En las pantallas que se leen, sí —ver abajo—. En un instrumento, no: el
+   * plano y el tiempo se miran **volando**, y ahí las flechas son la palanca.
+   * Con el plano abierto, apretar la izquierda para virar movía el foco de una
+   * lupa a «Cerrar», y el siguiente espacio —que es el freno— cerraba el plano.
+   * El tabulador y Escape siguen igual.
+   */
+  private readonly conFlechas: boolean;
   private previo: HTMLElement | null = null;
   private puesto = false;
 
-  constructor(root: HTMLElement, cerrar: () => void, conEscape = true) {
+  constructor(
+    root: HTMLElement,
+    cerrar: () => void,
+    conEscape = true,
+    conFlechas = true,
+  ) {
     this.root = root;
     this.cerrar = cerrar;
     this.conEscape = conEscape;
+    this.conFlechas = conFlechas;
   }
 
   /** Guarda dónde estaba el foco, lo mete dentro y monta la vigilancia. */
@@ -184,7 +200,7 @@ export class Encierro {
      * robársela para mover el foco sería quitar el único modo de usarlos sin
      * ratón.
      */
-    const flecha = FLECHAS[e.key];
+    const flecha = this.conFlechas ? FLECHAS[e.key] : undefined;
     if (flecha !== undefined && !seQuedaConLasFlechas(document.activeElement)) {
       const alLado = elDeAlLado(
         this.dentro(),
@@ -345,7 +361,9 @@ export class Panel {
      * dentro, y el diálogo es la caja, no el velo. Poner otro fuera anidaría
      * dos diálogos, que es decir dos veces lo mismo y peor.
      */
-    this.encierro = new Encierro(caja, cerrar, conEscape);
+    // Y las flechas, solo si congela: en un instrumento son la palanca. Ver
+    // `Encierro.conFlechas`.
+    this.encierro = new Encierro(caja, cerrar, conEscape, congela);
     todos.add(this);
     /*
      * **Y suena al recorrerlo y al elegir.**
