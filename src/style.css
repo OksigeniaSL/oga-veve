@@ -6215,8 +6215,13 @@ button.motor__tecla::after {
  * botón está a la vista en la barra— y con las lupas y «Cerrar» en columna a
  * su derecha, que es donde queda el pulgar. Lo que se gana es todo alto para
  * el plano.
+ *
+ * Y solo donde el plano va en medio —con el dedo, o en una ventana estrecha—:
+ * en un portátil con la ventana baja el plano ya va en su columna de al lado,
+ * y partirle la concha en dos dejaría el plano en media columna.
  */
-@media (max-height: 520px) and (orientation: landscape) {
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse),
+  (max-height: 520px) and (orientation: landscape) and (max-width: 899px) {
   .mapa .concha--instrumento {
     grid-template-columns: auto auto;
     grid-template-rows: auto;
