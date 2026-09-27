@@ -958,6 +958,8 @@ export function reglaDeFlaps(
  * enseña a mirar, que es lo anterior.
  */
 export function lucesDeTren(x: number, y: number, patas: number): string {
+  // Sin patas que meter no hay luces, ni la palabra GEAR sola. Ver `patasDe`.
+  if (patas <= 0) return "";
   /*
    * **Ruedas, y no cuadraditos.**
    *

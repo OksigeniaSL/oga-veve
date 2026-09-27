@@ -91,10 +91,19 @@ describe("lo que lleva cada familia", () => {
 });
 
 describe("las patas del tren", () => {
-  it("cinco en el grande y tres en el resto", () => {
+  it("cinco en el grande y tres en el resto de los que lo meten", () => {
     expect(dibujo("jaz-120").match(/class="cr__tren"/g)).toHaveLength(5);
     expect(dibujo("jaz-90").match(/class="cr__tren"/g)).toHaveLength(3);
-    expect(dibujo("jaz-20").match(/class="cr__tren"/g)).toHaveLength(3);
+    expect(dibujo("jaz-40").match(/class="cr__tren"/g)).toHaveLength(3);
+  });
+
+  it("y ninguna en los de tren fijo, que no llevan luces de tren", () => {
+    // Tres ruedas verdes en el cuadro de un entrenador de escuela son un
+    // indicador que su avión de verdad no tiene. Ver `patasDe`.
+    for (const id of ["jaz-20", "jaz-25"]) {
+      expect(dibujo(id)).not.toContain('class="cr__tren"');
+      expect(dibujo(id)).not.toContain('data-cristal="tren"');
+    }
   });
 });
 

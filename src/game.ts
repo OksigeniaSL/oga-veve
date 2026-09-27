@@ -407,7 +407,7 @@ import { conectarLaRadio } from "./audio/radio";
 import { Audio, type Cue } from "./audio/audio";
 import { cuadroDe, regimen, NUDOS, PIES, PIES_POR_MINUTO } from "./ui/cuadro";
 import { patasDe, peldanoDe } from "./ui/familia";
-import { avisaDelTren, seVuelveADecir } from "./flight/tren";
+import { avisaDelTren, luzRojaDelTren, seVuelveADecir } from "./flight/tren";
 import {
   cargaParaElPlan,
   comoVaElDeposito,
@@ -5752,6 +5752,14 @@ export class Game {
     // Y el depósito, lleno para lo que se va a volar hoy. Ver `repostar`.
     this.repostar();
     /*
+     * Y el tren fuera, con la palanca abajo: se empiece en el puesto, en la
+     * cabecera o en final, un avión empieza su vuelo con las patas fuera.
+     * Quedaba como lo hubiera dejado el vuelo anterior, así que meterlo
+     * volando y reiniciar sentaba el avión en la pista con el tren dentro.
+     * Ver `ponerElTrenFuera`.
+     */
+    this.input.ponerElTrenFuera();
+    /*
      * Y lo de arriba va **antes** de la bifurcación, que es la otra mitad del
      * mismo problema: hay dos caminos de reinicio —éste y `reiniciarEnFinal`,
      * para las lecciones que empiezan en el aire— y lo que se reinicia en cada
@@ -7188,10 +7196,9 @@ export class Game {
      * Ahora se pide la velocidad y que cada modelo diga qué gas hace falta.
      */
     if (configurado) {
-      if (!this.input.trenQueSePide) this.input.alternarTren();
-      this.input.controls.tren = 1;
-      // La palanca abajo **y** los flaps ya abajo: la final empieza
-      // configurada, no configurándose. Ver `flight/flaps.ts`.
+      // El tren ya viene fuera y con su palanca abajo desde `resetFlight`.
+      // Los flaps, también abajo: la final empieza configurada, no
+      // configurándose. Ver `flight/flaps.ts`.
       if (this.aircraft.llevaFlaps) {
         this.input.ponerPalancaDeFlaps(1);
         this.input.controls.flaps = 1;
@@ -10724,20 +10731,50 @@ export class Game {
   private pilotoSeSolto = 0;
 
   /**
-   * Si el tren no está donde tendría que estar.
+   * Si la luz roja del tren está encendida: el tren no está donde dice la
+   * palanca, o se viene a aterrizar sin él. Ver `luzRojaDelTren` en
+   * `flight/tren.ts`, que cuenta por qué dejó de mirar «bajo y lento».
    *
-   * Fuera con el avión arriba y rápido —que es lastre y rompe compuertas— o
-   * dentro con el avión bajo y lento, que es lo que enciende la luz de verdad
-   * en cualquier cabina. Ver `flight/tren.ts`, que es quien decide cuándo se
-   * pide cada cosa.
+   * Y en el avión de tren fijo no existe: no hay palanca con la que estar en
+   * desacuerdo ni luz que encender. Un Cessna de escuela no la lleva.
    */
   private trenFueraDeSitio(): boolean {
+    if (!this.aircraft.trenRetractil) return false;
+    return luzRojaDelTren(
+      this.input.controls.tren,
+      this.input.trenQueSePide,
+      this.vieneSinTren(),
+    );
+  }
+
+  /**
+   * Si se viene a aterrizar sin el tren: bajo, bajando, en final y sin
+   * haberlo pedido. Ver `avisaDelTren` en `flight/tren.ts`.
+   *
+   * Aparte porque lo miran dos: la voz y la tarjeta de «sacá el tren», y la
+   * luz roja. Dos cuentas de lo mismo acaban diciendo cosas distintas, y una
+   * luz que se enciende sin que nada lo diga —o una voz sin su luz— es un
+   * canal que miente. Ver `atenderAlTren`.
+   */
+  private vieneSinTren(): boolean {
     const s = this.flight.state;
-    if (s.onGround) return false;
-    const fuera = this.input.controls.tren > 0.5;
-    const bajoYLento =
-      s.heightAboveGround < 300 && s.airspeed < this.aircraft.approachSpeed * 1.4;
-    return bajoYLento ? !fuera : false;
+    return avisaDelTren(
+      this.input.controls.tren,
+      s.heightAboveGround,
+      s.verticalSpeed < -0.5,
+      // Y lo que ya se ha pedido: el tren tarda diez segundos en salir, y
+      // avisar de lo que acabás de hacer enseña a no hacer caso.
+      this.input.trenQueSePide,
+      /*
+       * Y **solo viniendo en final**. Sin esto, meter el tren justo después
+       * de despegar disparaba el aviso de sacarlo: el avión se queda limpio,
+       * pega una bajadita de un par de segundos y sigue por debajo de los
+       * doscientos cincuenta metros. Es el mismo embudo que usan los mínimos
+       * y la orden de frustrar. Ver `enElEmbudoDeFinal`.
+       */
+      enElEmbudoDeFinal(this.laPistaDeAhora(), s.position.x, s.position.z) !==
+        null,
+    );
   }
 
   /** Lo más alto que se ha llegado en este vuelo, en metros. */
@@ -11236,30 +11273,10 @@ export class Game {
 
     /*
      * El de sacarlo es un aviso de seguridad y manda: se dice aunque se acabe
-     * de decir lo otro. El de meterlo es un consejo y espera su turno.
+     * de decir lo otro. El de meterlo es un consejo y espera su turno. Y es el
+     * mismo que enciende la luz roja. Ver `vieneSinTren`.
      */
-    if (
-      avisaDelTren(
-        donde,
-        sobreElSuelo,
-        s.verticalSpeed < -0.5,
-        // Y lo que ya se ha pedido: el tren tarda diez segundos en salir, y
-        // avisar de lo que acabás de hacer enseña a no hacer caso.
-        pedido,
-        /*
-         * Y **solo viniendo en final**. Sin esto, meter el tren justo después
-         * de despegar disparaba el aviso de sacarlo: el avión se queda limpio,
-         * pega una bajadita de un par de segundos y sigue por debajo de los
-         * doscientos cincuenta metros. Es el mismo embudo que usan los mínimos
-         * y la orden de frustrar. Ver `enElEmbudoDeFinal`.
-         */
-        enElEmbudoDeFinal(
-          this.laPistaDeAhora(),
-          s.position.x,
-          s.position.z,
-        ) !== null,
-      )
-    ) {
+    if (this.vieneSinTren()) {
       if (!seVuelveADecir(this.dichoDelTren, "saca", pedido)) return;
       this.dichoDelTren = { que: "saca", pedido };
       this.hud.senal.mostrar(

@@ -97,7 +97,10 @@ describe("las patas", () => {
   it("el grande tiene cinco y los demás tres", () => {
     expect(patasDe(YVAGA)).toBe(5);
     expect(patasDe(ARAI)).toBe(3);
-    expect(patasDe(PYKASU)).toBe(3);
+  });
+
+  it("y el de tren fijo, ninguna: no hay nada que pueda estar a medias", () => {
+    expect(patasDe(PYKASU)).toBe(0);
   });
 });
 
