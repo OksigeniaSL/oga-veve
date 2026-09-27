@@ -553,5 +553,23 @@
   ],
   "vuelo.alAireVientoDeCola": [
     "vuelo.alAireVientoDeCola"
+  ],
+  "vuelo.alivioDeFlaps": [
+    "vuelo.alivioDeFlaps"
+  ],
+  "vuelo.flapsTocados": [
+    "vuelo.flapsTocados"
+  ],
+  "vuelo.flapsEnLaCarrera": [
+    "vuelo.flapsEnLaCarrera"
+  ],
+  "vuelo.flapsArribaAlSalir": [
+    "vuelo.flapsArribaAlSalir"
+  ],
+  "vuelo.despuesDelAterrizaje": [
+    "vuelo.despuesDelAterrizaje"
+  ],
+  "vuelo.alPuestoConFlaps": [
+    "vuelo.alPuestoConFlaps"
   ]
 }

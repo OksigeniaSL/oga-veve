@@ -225,8 +225,14 @@
     "vuelo.alAireVientoDeCola": {
       "ms": 4307
     },
+    "vuelo.alPuestoConFlaps": {
+      "ms": 5307
+    },
     "vuelo.alineando": {
       "ms": 1216
+    },
+    "vuelo.alivioDeFlaps": {
+      "ms": 5707
     },
     "vuelo.alto": {
       "ms": 1036
@@ -297,6 +303,9 @@
     "vuelo.despegando": {
       "ms": 932
     },
+    "vuelo.despuesDelAterrizaje": {
+      "ms": 6207
+    },
     "vuelo.enPuesto": {
       "ms": 1643
     },
@@ -324,8 +333,17 @@
     "vuelo.final": {
       "ms": 1213
     },
+    "vuelo.flapsArribaAlSalir": {
+      "ms": 2954
+    },
+    "vuelo.flapsEnLaCarrera": {
+      "ms": 4807
+    },
     "vuelo.flapsPasados": {
       "ms": 2001
+    },
+    "vuelo.flapsTocados": {
+      "ms": 7007
     },
     "vuelo.frustrada": {
       "ms": 2133
@@ -1042,6 +1060,24 @@
     ],
     "vuelo.alAireVientoDeCola": [
       "vuelo.alAireVientoDeCola"
+    ],
+    "vuelo.alivioDeFlaps": [
+      "vuelo.alivioDeFlaps"
+    ],
+    "vuelo.flapsTocados": [
+      "vuelo.flapsTocados"
+    ],
+    "vuelo.flapsEnLaCarrera": [
+      "vuelo.flapsEnLaCarrera"
+    ],
+    "vuelo.flapsArribaAlSalir": [
+      "vuelo.flapsArribaAlSalir"
+    ],
+    "vuelo.despuesDelAterrizaje": [
+      "vuelo.despuesDelAterrizaje"
+    ],
+    "vuelo.alPuestoConFlaps": [
+      "vuelo.alPuestoConFlaps"
     ]
   }
 }
