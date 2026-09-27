@@ -130,7 +130,34 @@ await page
     timeout: 60000,
   })
   .catch(() => {});
-await page.waitForTimeout(1500);
+/*
+ * **Y se espera a que acaben de bajar todas, no un rato fijo.**
+ *
+ * Las seis voces se bajan una detrás de otra —ver `cargar` en
+ * `audio/instructor-grabado.ts`— y la comandante es la última. Aquí se
+ * esperaba segundo y medio desde la primera pieza, y con el pack de la
+ * instructora seis frases más largo la comandante llegaba tarde: cuatro
+ * «grabación tirada» que no eran del juego sino del reloj del banco. Ahora se
+ * espera a que la cuenta de piezas se quede quieta segundo y medio, con un
+ * minuto de tope para que un pack que no llega no deje el banco colgado.
+ */
+await page
+  .waitForFunction(
+    () => {
+      const g = globalThis;
+      const n = g.__oga?.voz?.().piezas ?? 0;
+      const ahora = performance.now();
+      if (g.__piezasVistas !== n) {
+        g.__piezasVistas = n;
+        g.__desdeLasPiezas = ahora;
+        return false;
+      }
+      return ahora - g.__desdeLasPiezas > 1500;
+    },
+    null,
+    { timeout: 60000, polling: 250 },
+  )
+  .catch(() => {});
 
 const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
