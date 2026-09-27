@@ -173,6 +173,73 @@ export function mapaDelPavimento(
   };
 }
 
+/** Lado de la cubeta en la que se reparten los triángulos, m. */
+const CUBETA = 16;
+
+/**
+ * **A qué altura está el asfalto dibujado en un punto**, exacta, o `null` si
+ * ahí no hay asfalto.
+ *
+ * Es lo que necesita la pintura para ir *sobre* el pavimento y no a una cota
+ * deducida. La pintura se levantaba veinte centímetros sobre la cota del
+ * aeródromo para que no quedara enterrada donde el pavimento, con sus
+ * triángulos grandes, se separa de esa cota —diez centímetros en la pista de
+ * Los Rodeos, cuarenta bajo la pintura de una plataforma de Cuatro Vientos—,
+ * y el precio era que una rueda parada encima de una línea se hundía veinte
+ * centímetros en ella. Con la altura del propio dibujo, la pintura va a dos
+ * centímetros y en todas partes.
+ *
+ * Y exacta y no de la rejilla de `mapaDelPavimento`: la rejilla hace una
+ * rampa de dos metros en el filo, justo donde van las bandas laterales de
+ * una pista. Los triángulos se reparten una vez en cubetas de dieciséis
+ * metros y cada consulta mira solo los de la suya.
+ */
+export function alturaDelPavimento(
+  geometrias: readonly BufferGeometry[],
+): (x: number, z: number) => number | null {
+  const tris: number[] = [];
+  for (const geo of geometrias) triangulos(geo, tris);
+  const cubetas = new Map<string, number[]>();
+  for (let t = 0; t < tris.length; t += 9) {
+    const i0 = Math.floor(Math.min(tris[t]!, tris[t + 3]!, tris[t + 6]!) / CUBETA);
+    const i1 = Math.floor(Math.max(tris[t]!, tris[t + 3]!, tris[t + 6]!) / CUBETA);
+    const j0 = Math.floor(Math.min(tris[t + 2]!, tris[t + 5]!, tris[t + 8]!) / CUBETA);
+    const j1 = Math.floor(Math.max(tris[t + 2]!, tris[t + 5]!, tris[t + 8]!) / CUBETA);
+    for (let i = i0; i <= i1; i++)
+      for (let j = j0; j <= j1; j++) {
+        const clave = `${i},${j}`;
+        const lista = cubetas.get(clave);
+        if (lista) lista.push(t);
+        else cubetas.set(clave, [t]);
+      }
+  }
+  return (x, z) => {
+    const lista = cubetas.get(
+      `${Math.floor(x / CUBETA)},${Math.floor(z / CUBETA)}`,
+    );
+    if (!lista) return null;
+    let mejor: number | null = null;
+    for (const t of lista) {
+      const ax = tris[t]!;
+      const az = tris[t + 2]!;
+      const bx = tris[t + 3]!;
+      const bz = tris[t + 5]!;
+      const cx = tris[t + 6]!;
+      const cz = tris[t + 8]!;
+      const det = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+      if (Math.abs(det) < 1e-9) continue;
+      const l1 = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / det;
+      const l2 = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / det;
+      const l3 = 1 - l1 - l2;
+      if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
+      const y = l1 * tris[t + 1]! + l2 * tris[t + 4]! + l3 * tris[t + 7]!;
+      // Donde dos pavimentos se pisan, el que se ve es el de encima.
+      if (mejor === null || y > mejor) mejor = y;
+    }
+    return mejor;
+  };
+}
+
 /** Los triángulos de una geometría, con o sin índice, a la lista. */
 function triangulos(geo: BufferGeometry, tris: number[]): void {
   const pos = geo.getAttribute("position");

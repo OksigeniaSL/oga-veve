@@ -26,6 +26,7 @@ import { encogerConLaDistancia, lucesDeDosCaras } from "./material-de-luces";
 import {
   BufferAttribute,
   BufferGeometry,
+  Float32BufferAttribute,
   Color,
   BoxGeometry,
   CylinderGeometry,
@@ -53,6 +54,7 @@ import { RESALTE } from "./terrain";
 import { sinTemblor } from "./sin-temblor";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { partirLoLargo } from "./curvatura";
+import { alturaDelPavimento } from "./mapa-del-pavimento";
 import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 import { laRedonda } from "./luces-de-posicion";
 
@@ -362,8 +364,118 @@ export const ENCIMA_LETRAS = {
   polygonOffsetUnits: -15,
 };
 
-/** Cuánto se levanta la pintura sobre el asfalto, m. Ver la nota de `losa`. */
-const PINTURA_ALTURA = 0.2;
+/**
+ * Cuánto se levanta la pintura sobre el asfalto dibujado, m.
+ *
+ * **Dos centímetros, y eran veinte.** Los veinte eran para que la pintura no
+ * quedara enterrada donde el pavimento, con sus triángulos grandes, se aparta
+ * de la cota con la que se pintaba: diez centímetros en la pista de Los
+ * Rodeos, cuarenta en una plataforma de Cuatro Vientos. El precio se veía en
+ * cada puesto: la rueda que para encima de una línea se hundía veinte
+ * centímetros en ella. Ahora la pintura se pone sobre el propio asfalto
+ * dibujado —ver `sobreElAsfalto`—, así que no hay nada que salvar con altura;
+ * de lejos no se pelea con él por el desplazamiento de polígono, que es lo
+ * que ya lo resolvía (ver `ENCIMA_PINTURA`).
+ */
+const PINTURA_ALTURA = 0.02;
+
+/**
+ * Y las letras y los números, otro poco por encima: van sobre la pintura, y
+ * de lejos las ordena el desplazamiento de polígono, que es lo que manda ahí.
+ * Ver `ENCIMA_LETRAS`.
+ */
+const ENCIMA_DE_LA_PINTURA = PINTURA_ALTURA + 0.03;
+
+/** Lo más largo que puede ser un trozo de pintura sin apoyarse, m. */
+const LADO_DE_PINTURA = 6;
+
+/**
+ * Una pieza de pintura **sobre el asfalto que hay debajo**, con cada vértice a
+ * la altura del pavimento dibujado en su sitio —`suelo`, ver
+ * `alturaDelPavimento`— más lo que se levanta la pintura.
+ *
+ * Y las piezas de cuatro esquinas —rayas, bandas, barras, teclas de piano, que
+ * son casi toda la pintura— se tienden como una rejilla de `LADO_DE_PINTURA`
+ * metros: una raya de treinta metros hecha de dos triángulos no se apoya en el
+ * asfalto más que por las puntas, y el pavimento de debajo dobla por en
+ * medio. Medido con solo los vértices en su sitio, las bandas laterales de Los
+ * Rodeos —tres kilómetros en dos triángulos— quedaban hasta treinta y siete
+ * centímetros bajo el asfalto. Una rejilla y no una partición de triángulos:
+ * partir en cuatro multiplicaba la pintura de la pista por cuatrocientos, y
+ * partir por el lado más largo, por quince en las tiras largas; la rejilla
+ * cuesta `2·L/6` triángulos por tira.
+ *
+ * Las figuras —flechas, puntas— son pequeñas y van con sus vértices.
+ */
+function pinturaEn(
+  contorno: readonly Punto[],
+  suelo: (p: Punto) => number,
+): BufferGeometry | null {
+  if (contorno.length !== 4) {
+    const geo = desdePoligono(contorno, (q) => suelo(q) + PINTURA_ALTURA);
+    if (!geo) return null;
+    // Como las de la rejilla, para que se puedan fundir con ellas en una sola
+    // malla: sin índice y sin coordenadas de textura, que la pintura no lleva.
+    const suelta = geo.toNonIndexed();
+    suelta.deleteAttribute("uv");
+    return suelta;
+  }
+  const [a, b, c, d] = contorno as [Punto, Punto, Punto, Punto];
+  // Los lados «largos» son a→b y d→c; los cortos, a→d y b→c.
+  const largo = Math.max(Math.hypot(b[0] - a[0], b[1] - a[1]), Math.hypot(c[0] - d[0], c[1] - d[1]));
+  const corto = Math.max(Math.hypot(d[0] - a[0], d[1] - a[1]), Math.hypot(c[0] - b[0], c[1] - b[1]));
+  const n = Math.max(1, Math.ceil(largo / LADO_DE_PINTURA));
+  const m = Math.max(1, Math.ceil(corto / LADO_DE_PINTURA));
+  const en = (i: number, j: number): Punto => {
+    const s = i / n;
+    const t = j / m;
+    const ab: Punto = [a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s];
+    const dc: Punto = [d[0] + (c[0] - d[0]) * s, d[1] + (c[1] - d[1]) * s];
+    return [ab[0] + (dc[0] - ab[0]) * t, ab[1] + (dc[1] - ab[1]) * t];
+  };
+  const pos: number[] = [];
+  const vertice = (q: Punto) => pos.push(q[0], suelo(q) + PINTURA_ALTURA, -q[1]);
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < m; j++) {
+      const p00 = en(i, j);
+      const p10 = en(i + 1, j);
+      const p11 = en(i + 1, j + 1);
+      const p01 = en(i, j + 1);
+      for (const q of [p00, p10, p11, p00, p11, p01]) vertice(q);
+    }
+  // Mirando al cielo, se haya dado el contorno en el sentido que se haya dado.
+  const arriba =
+    (pos[5]! - pos[2]!) * (pos[6]! - pos[0]!) -
+    (pos[3]! - pos[0]!) * (pos[8]! - pos[2]!);
+  if (arriba < 0)
+    for (let t = 0; t < pos.length; t += 9)
+      for (let k = 0; k < 3; k++) {
+        const x = pos[t + 3 + k]!;
+        pos[t + 3 + k] = pos[t + 6 + k]!;
+        pos[t + 6 + k] = x;
+      }
+  const geo = new BufferGeometry();
+  geo.setAttribute("position", new Float32BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/**
+ * Y lo mismo para lo que ya viene hecho —las letras, los números—: cada
+ * vértice sobre el asfalto dibujado. Se les da la rejilla al crearlos.
+ */
+function sobreElAsfalto(
+  geo: BufferGeometry,
+  suelo: (p: Punto) => number,
+  alzado: number,
+): BufferGeometry {
+  const pos = geo.getAttribute("position");
+  for (let i = 0; i < pos.count; i++)
+    pos.setY(i, suelo([pos.getX(i), -pos.getZ(i)]) + alzado);
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+}
 
 /** Blanco de pintura de pista. Gastado, no papel. */
 const PINTURA = 0xd8d6cd;
@@ -668,6 +780,7 @@ export function createAerodrome(
     anotar("concrete", desdePoligono(plataforma.polygon, cota));
   }
 
+  const dibujados: BufferGeometry[] = [];
   for (const [superficie, geos] of porSuperficie) {
     const junta = geos.length === 1 ? geos[0]! : mergeGeometries(geos, false);
     if (!junta) continue;
@@ -708,7 +821,16 @@ export function createAerodrome(
     // que importe: apagarlo es rendimiento gratis.
     malla.castShadow = false;
     grupo.add(malla);
+    dibujados.push(fusionada);
   }
+  /*
+   * **La pintura va sobre el asfalto dibujado, no sobre la cota.** Ver
+   * `alturaDelPavimento` y `PINTURA_ALTURA`. Donde no hay asfalto debajo —un
+   * trozo de pintura que se sale del polígono de OpenStreetMap—, la cota de
+   * siempre.
+   */
+  const delDibujo = alturaDelPavimento(dibujados);
+  const pintada = (p: Punto): number => delDibujo(p[0], -p[1]) ?? cota(p);
 
   /*
    * **Las marcas, en todas las pistas que sean una pista.**
@@ -734,12 +856,12 @@ export function createAerodrome(
     // trozo de noventa metros con los mismos umbrales que la buena, y
     // pintarlo sería pintar dos veces encima.
     if (largoDePista(pista) < PISTA_DE_VERDAD) continue;
-    grupo.add(marcas(pista, cota));
+    grupo.add(marcas(pista, pintada));
   }
   if (principal) {
     grupo.add(luces(principal, cota));
   }
-  grupo.add(rodadura(aero, cota));
+  grupo.add(rodadura(aero, pintada));
   grupo.add(mangas(aero, cota, viento));
   grupo.add(helipuertos(aero, cota));
   grupo.add(edificios(aero, cota));
@@ -1229,7 +1351,7 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
         [bx - px, by - py],
         [ax - px, ay - py],
       ];
-      const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
+      const geo = pinturaEn(contorno, altura);
       if (geo) piezas.push(geo);
     }
   }
@@ -1249,7 +1371,7 @@ function rodadura(aero: Aerodrome, altura: (p: Punto) => number): Group {
         [cx - ux * 0.3 + uy * 11, cy - uy * 0.3 - ux * 11],
         [cx - ux * 0.3 - uy * 11, cy - uy * 0.3 + ux * 11],
       ];
-      const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
+      const geo = pinturaEn(contorno, altura);
       if (geo) piezas.push(geo);
     }
   }
@@ -1392,7 +1514,7 @@ function letreros(
         const dx = p[2] * sentido;
         const dy = p[3] * sentido;
 
-        const geo = new PlaneGeometry(LETRERO_LADO, LETRERO_LADO);
+        const geo = new PlaneGeometry(LETRERO_LADO, LETRERO_LADO, 2, 2);
         const uv = geo.getAttribute("uv");
         for (let i = 0; i < uv.count; i++) {
           uv.setXY(i, u + uv.getX(i) / lado, v + uv.getY(i) / lado);
@@ -1410,8 +1532,8 @@ function letreros(
         const ly = cy + dx * DESVIO_LETRERO;
         geo.rotateX(-Math.PI / 2);
         geo.rotateY(Math.atan2(-dx, dy));
-        geo.translate(lx, altura([lx, ly]) + PINTURA_ALTURA + 0.02, -ly);
-        piezas.push(geo);
+        geo.translate(lx, 0, -ly);
+        piezas.push(sobreElAsfalto(geo, altura, ENCIMA_DE_LA_PINTURA));
       }
     }
   }
@@ -2430,7 +2552,7 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
         cy - (uy * largoM - py * anchoM) / 2,
       ],
     ];
-    const geo = desdePoligono(contorno, (p) => altura(p) + PINTURA_ALTURA);
+    const geo = pinturaEn(contorno, altura);
     if (geo) piezas.push(geo);
   };
 
@@ -2463,7 +2585,7 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
       cx + ux * s * signo + px * t,
       cy + uy * s * signo + py * t,
     ]);
-    const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
+    const geo = pinturaEn(contorno, altura);
     if (geo) piezas.push(geo);
   };
 
@@ -2519,7 +2641,7 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
           cay + ex * off - ey * 0.45 - ex * 0.9,
         ],
       ];
-      const geo = desdePoligono(contorno, (q) => altura(q) + PINTURA_ALTURA);
+      const geo = pinturaEn(contorno, altura);
       if (geo) piezas.push(geo);
     }
   }
@@ -2642,7 +2764,12 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     [nombreB, tomaB - 100, Math.PI],
   ] as const) {
     const textura = numberTexture(nombre);
-    const geo = new PlaneGeometry(ancho * 0.5, ancho * 0.62);
+    const geo = new PlaneGeometry(
+      ancho * 0.5,
+      ancho * 0.62,
+      Math.ceil((ancho * 0.5) / LADO_DE_PINTURA),
+      Math.ceil((ancho * 0.62) / LADO_DE_PINTURA),
+    );
     geo.rotateX(-Math.PI / 2);
     // El giro se calcula **en coordenadas del mundo**, que es donde acaba la
     // geometría: la dirección de la pista allí es `(ux, −uy)`, porque la Y del
@@ -2674,9 +2801,9 @@ function marcas(pista: Pista, altura: (p: Punto) => number): Group {
     geo.rotateY(Math.atan2(-dirX, dirY) + giro);
     const cx = p[0];
     const cy = p[1];
-    geo.translate(cx, altura([cx, cy]) + PINTURA_ALTURA + 0.02, -cy);
+    geo.translate(cx, 0, -cy);
     const numero = new Mesh(
-      geo,
+      sobreElAsfalto(geo, altura, ENCIMA_DE_LA_PINTURA),
       new MeshLambertMaterial({
         map: textura,
         color: textura ? 0xffffff : PINTURA,
