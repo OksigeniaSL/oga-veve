@@ -65,7 +65,14 @@ export interface SueloDelTrafico {
    * pista, y de ahí al eje. `espera` son los metros hasta la doble raya y
    * `eje`, hasta el punto del eje donde se alinea.
    */
-  salida(evitar?: readonly EnElPlano[]): {
+  salida(
+    evitar?: readonly EnElPlano[],
+    /**
+     * Por dónde va a rodar quien juega: la doble raya del que sale no puede
+     * caer encima. Ver `PASA_A_TU_LADO`.
+     */
+    porDondeVas?: readonly EnElPlano[],
+  ): {
     readonly camino: readonly EnElPlano[];
     readonly espera: number;
     readonly eje: number;
@@ -127,6 +134,15 @@ const RODANDO_HASTA_LA_BOCA = 80;
  * en su doble raya, m. Una envergadura larga de las de la flota y su margen.
  */
 const APARTE_DE_TI = 80;
+
+/**
+ * Lo que se aparta la doble raya del tráfico de la raya verde de quien juega,
+ * m: las dos semialas —la del reactor del tráfico y la del JAZ 120— y el
+ * margen de ala de la clave C. Menos que eso, al pasar por su lado las alas
+ * se tocan; es lo que se vio en Los Rodeos, con la raya verde llevando al
+ * avión de quien juega contra uno que esperaba en su doble raya.
+ */
+const PASA_A_TU_LADO = 17 + 18 + 7.5;
 
 /** Los puestos que no caen encima de quien juega; si no queda ninguno, todos. */
 function lejosDe(
@@ -297,7 +313,7 @@ export function sueloDelTrafico(
         : null;
     },
 
-    salida(evitar) {
+    salida(evitar, porDondeVas) {
       /*
        * Por la boca más cerca de la cabecera de salida —la que deja más pista
        * por delante—: del puesto a la boca por las calles, y en el camino, la
@@ -334,7 +350,10 @@ export function sueloDelTrafico(
           eje: espera + largo(hastaElEje) + 30,
         };
         const raya = hecha.hastaLaRaya[hecha.hastaLaRaya.length - 1]!;
-        if (!evitar?.some((e) => dist(raya, e) <= APARTE_DE_TI)) return salida;
+        const encimaDeTi =
+          evitar?.some((e) => dist(raya, e) <= APARTE_DE_TI) ||
+          porDondeVas?.some((e) => dist(raya, e) <= PASA_A_TU_LADO);
+        if (!encimaDeTi) return salida;
         deReserva ??= salida;
       }
       return deReserva;

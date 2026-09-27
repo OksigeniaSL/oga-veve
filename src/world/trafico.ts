@@ -44,6 +44,7 @@ import { giroDelModelo } from "./rumbo";
 import {
   BufferGeometry,
   Group,
+  LOD,
   Mesh,
   MeshLambertMaterial,
   type Object3D,
@@ -55,6 +56,13 @@ import {
   LIBREAS_DE_LAS_ISLAS,
 } from "./aviones-de-las-islas";
 import type { EnElPlano, SueloDelTrafico } from "./suelo-del-trafico";
+import {
+  cuerpoDelTrafico,
+  LIBREAS as LIBREAS_DEL_TRAFICO,
+  MODELO_DEL_TIPO,
+  vestirCuerpo,
+  type CuerpoHorneado,
+} from "./cuerpos-del-trafico";
 import {
   escalaDeCircuito,
   verticesDelCircuito,
@@ -104,6 +112,12 @@ export const RUEDA_A = 7;
 
 /** A cuánto del suelo va un avión con las ruedas en el asfalto, m. */
 const EN_TIERRA = 1.5;
+
+/**
+ * Hasta dónde se dibuja el tráfico con el modelo de la flota, m. Más lejos,
+ * con el de la fábrica. Ver `conDistancia` en `crearTrafico`.
+ */
+const DE_CERCA = 600;
 
 /** Cuánto se aparta del eje quien espera o quien acaba de dejar la pista, m. */
 const FUERA_DEL_ASFALTO = 45;
@@ -203,6 +217,8 @@ export interface Caminos {
   readonly fuera: number;
   /** El que sale: del puesto a la espera, al eje, y arriba. */
   readonly salida: Sitio[];
+  /** Metros de `salida` hasta la doble raya, donde espera a entrar. */
+  readonly espera: number;
   /**
    * Con calles, los tramos de velocidad de verdad: dónde deja de frenar el
    * que aterriza —la boca de la salida— y dónde se va al aire el que sale.
@@ -363,6 +379,11 @@ export interface TierraDelTrafico {
    * aparcarle encima ni esperar en su misma raya.
    */
   readonly evitar?: readonly EnElPlano[];
+  /**
+   * Y la raya verde entera de quien juega, para no esperar encima de ella.
+   * Ver `PASA_A_TU_LADO` en `suelo-del-trafico.ts`.
+   */
+  readonly porDondeVas?: readonly EnElPlano[];
   readonly tipo: TipoDeTrafico;
 }
 
@@ -517,7 +538,7 @@ export function trazar(
       fuera = boca + llega.pista;
       enTierra = { boca, eje: 0, despega: 0, tipo: t };
     }
-    const sale = tierra.suelo.salida(tierra.evitar);
+    const sale = tierra.suelo.salida(tierra.evitar, tierra.porDondeVas);
     if (sale && sale.camino.length > 1) {
       const rodando = sale.camino.map(sobre);
       const alineado = sale.camino[sale.camino.length - 1]!;
@@ -648,6 +669,7 @@ export function trazar(
     toca: enLaToma,
     fuera,
     salida: salidaDelCampo,
+    espera: hastaLaEspera,
     enTierra,
   };
 }
@@ -781,6 +803,14 @@ export interface Trafico {
    * `flight/turno-de-pista.ts`.
    */
   enFinal(matricula: string): number | null;
+  /**
+   * **Dónde hay o va a haber un avión parado en las calles**: la doble raya
+   * en la que espera cada tipo que ya ha salido a rodar, y dónde está cada
+   * uno que rueda ahora. Es lo que rodea la raya verde de quien juega: ver
+   * `Ocupados` en `rodaje.ts`. Solo con calles; sin ellas el tráfico se
+   * aparta por el costado y no estorba a nadie.
+   */
+  dondeParan(): { x: number; z: number }[];
   /** Cuántos se ven, y dónde. Para el banco y para la carta. */
   quienes(): {
     matricula: string;
@@ -819,6 +849,12 @@ export interface OpcionesDelTrafico {
   readonly tierra?: () => Omit<TierraDelTrafico, "tipo"> | null;
   /** La mano y la altura del circuito de una escala. Ver `formaDelCircuito`. */
   readonly forma?: (escala: number) => { mano: Mano; altura?: number };
+  /**
+   * Si se dibujan con los modelos de la flota —ver `cuerpos-del-trafico.ts`—
+   * o con la fábrica. El juego dice que sí; las pruebas, que corren sin red,
+   * se quedan con la fábrica.
+   */
+  readonly cuerposDeVerdad?: boolean;
 }
 
 /**
@@ -878,20 +914,54 @@ export function crearTrafico(
     return tipos[h % tipos.length]!;
   };
 
-  const cuerpo = (tipo: TipoDeTrafico, matricula: string): Object3D => {
-    /*
-     * Una geometría por tipo —y por librea, el turbohélice—, no una por
-     * avión: fabricar un avión entero por cada llamada sería pagar un tirón
-     * de fotogramas por algo que está a dos kilómetros.
-     */
+  /**
+   * **Los cuerpos buenos, por tipo, cuando llegan.** Mientras tanto vuela el
+   * de la fábrica, y al llegar se le cambia el cuerpo a cada uno de ese tipo
+   * que ya se esté viendo. Ver `cuerpos-del-trafico.ts`.
+   */
+  const cuerposListos = new Map<string, CuerpoHorneado>();
+  const cuerposPedidos = new Set<string>();
+  let desmontado = false;
+  const libreaDe = (matricula: string) =>
+    LIBREAS_DEL_TRAFICO[
+      matricula.charCodeAt(matricula.length - 1) % LIBREAS_DEL_TRAFICO.length
+    ]!;
+  const pedirCuerpo = (tipo: TipoDeTrafico, modelo: string): void => {
+    if (cuerposPedidos.has(tipo.id)) return;
+    cuerposPedidos.add(tipo.id);
+    void cuerpoDelTrafico(modelo, tipo.envergadura, EN_TIERRA).then((hecho) => {
+      if (!hecho || desmontado) return;
+      cuerposListos.set(tipo.id, hecho);
+      for (const [matricula, quien] of aviones) {
+        if (quien.tipo.id !== tipo.id) continue;
+        quien.grupo.clear();
+        quien.grupo.add(
+          conDistancia(
+            vestirCuerpo(hecho, libreaDe(matricula)),
+            deFabrica(tipo, matricula),
+          ),
+        );
+      }
+    });
+  };
+
+  /**
+   * El avión de la fábrica: el de antes, que ahora es el de lejos y el de
+   * mientras llega el bueno. Una geometría por tipo y por librea, no una por
+   * avión: fabricar un avión entero por cada llamada sería pagar un tirón de
+   * fotogramas por algo que está a dos kilómetros.
+   */
+  const deFabrica = (tipo: TipoDeTrafico, matricula: string): Mesh => {
+    const cual = matricula.charCodeAt(matricula.length - 1);
     const librea =
       tipo.id === "turbohelice"
-        ? matricula.charCodeAt(matricula.length - 1) %
-          LIBREAS_DE_LAS_ISLAS.length
-        : 0;
+        ? cual % LIBREAS_DE_LAS_ISLAS.length
+        : cual % LIBREAS_DEL_TRAFICO.length;
     const clave = `${tipo.id}:${librea}`;
     let g = geometrias.get(clave);
     if (!g) {
+      // Con los colores de su librea, que de lejos es lo que se distingue.
+      const suya = LIBREAS_DEL_TRAFICO[librea % LIBREAS_DEL_TRAFICO.length]!;
       g =
         tipo.id === "turbohelice"
           ? fabricarTurbohelice(LIBREAS_DE_LAS_ISLAS[librea]!)
@@ -902,11 +972,48 @@ export function crearTrafico(
                 cuerda: tipo.envergadura > 20 ? 3.2 : 1.5,
                 tren: tipo.envergadura > 20 ? 1.6 : 0.9,
               },
-              { body: 0xe7e3d8, accent: 0x8f99a2, trim: 0x39403a },
-            ).geometria;
+              { body: suya.casco, accent: suya.color, trim: suya.color },
+            ).geometria.translate(0, -EN_TIERRA, 0);
+      /*
+       * **Y con las ruedas en el suelo.** La fábrica pone las ruedas en el
+       * origen y el tráfico pone el origen `EN_TIERRA` por encima del suelo,
+       * así que rodaba flotando metro y medio. El turbohélice de las islas
+       * ya trae las ruedas ahí abajo.
+       */
       geometrias.set(clave, g);
     }
-    return new Mesh(g, new MeshLambertMaterial({ vertexColors: true }));
+    return new Mesh(g, materialDeFabrica);
+  };
+  const materialDeFabrica = new MeshLambertMaterial({ vertexColors: true });
+
+  /**
+   * **El bueno de cerca y el de la fábrica de lejos.** El modelo de la flota
+   * son de quince a treinta mil triángulos y el de la fábrica unos cientos;
+   * a partir de `DE_CERCA` un reactor ocupa cincuenta píxeles y no se
+   * distinguen, y el tráfico pasa casi todo el rato en el circuito, lejos.
+   */
+  const conDistancia = (bueno: Object3D, lejos: Object3D): LOD => {
+    const lod = new LOD();
+    lod.name = "trafico-distancia";
+    lod.addLevel(bueno, 0);
+    lod.addLevel(lejos, DE_CERCA);
+    return lod;
+  };
+
+  const cuerpo = (tipo: TipoDeTrafico, matricula: string): Object3D => {
+    const modelo = opciones.cuerposDeVerdad
+      ? MODELO_DEL_TIPO[tipo.id]
+      : undefined;
+    if (modelo) {
+      const hecho = cuerposListos.get(tipo.id);
+      if (hecho)
+        return conDistancia(
+          vestirCuerpo(hecho, libreaDe(matricula)),
+          deFabrica(tipo, matricula),
+        );
+      pedirCuerpo(tipo, modelo);
+    }
+    return deFabrica(tipo, matricula);
   };
 
   /** Lo largo de cada camino, una vez: se pregunta en cada fotograma. */
@@ -1164,6 +1271,25 @@ export function crearTrafico(
       if (quien.recorrido < c.entra) return null;
       return Math.max(0, c.toca - quien.recorrido);
     },
+    dondeParan() {
+      const puntos: { x: number; z: number }[] = [];
+      for (const c of caminosPorTipo.values()) {
+        if (!c?.enTierra) continue;
+        const raya = porElCamino(c.salida, c.espera);
+        if (raya) puntos.push({ x: raya.sitio.x, z: raya.sitio.z });
+      }
+      for (const quien of aviones.values()) {
+        const c = quien.caminos;
+        if (!c?.enTierra) continue;
+        const rueda =
+          (quien.marca.camino === c.salida &&
+            quien.recorrido < c.enTierra.despega) ||
+          (quien.marca.camino === c.llegada && quien.recorrido >= c.toca);
+        if (rueda)
+          puntos.push({ x: quien.grupo.position.x, z: quien.grupo.position.z });
+      }
+      return puntos;
+    },
     quienes() {
       return [...aviones].map(([matricula, quien]) => ({
         matricula,
@@ -1179,10 +1305,14 @@ export function crearTrafico(
       for (const [matricula, quien] of aviones) quitar(matricula, quien);
     },
     dispose() {
+      desmontado = true;
       for (const quien of aviones.values()) grupo.remove(quien.grupo);
       aviones.clear();
+      // Los cuerpos buenos no: son de la página, y el tráfico del campo
+      // siguiente los vuelve a usar. Ver `horneados`.
       for (const g of geometrias.values()) g.dispose();
       geometrias.clear();
+      materialDeFabrica.dispose();
     },
   };
 }

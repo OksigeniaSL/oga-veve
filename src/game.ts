@@ -394,6 +394,7 @@ import {
   alturaDeEdificio,
   arranqueEnPista,
   paraUnAvion,
+  type Punto,
 } from "./world/aerodrome";
 import { KeyScreen } from "./ui/teclas";
 import {
@@ -2923,6 +2924,7 @@ export class Game {
         this.aircraft,
       );
       this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
+      this.plan.ocupados = () => this.paradosEnLasCalles();
     }
     if (this.plan && this.leccion.guiaEnTierra) {
       this.scene.add(this.plan.grupo);
@@ -6438,25 +6440,53 @@ export class Game {
       {
         tipos: tiposDelCampo(aero.id, pista.length, !!aero.privado),
         forma,
+        cuerposDeVerdad: true,
         tierra: () => {
           if (!aerodromo) return null;
           if (sueloDelCampo === undefined)
             sueloDelCampo = sueloDelTrafico(aerodromo, pista, ancho);
           if (!sueloDelCampo) return null;
           const yo = this.flight.state.position;
-          const raya = this.plan?.rutaVisible().at(-1);
+          const ruta = this.plan?.rutaVisible() ?? [];
+          const raya = ruta.at(-1);
           return {
             suelo: sueloDelCampo,
-            alto: suelo,
+            /*
+             * Sobre el asfalto, como el avión de quien juega: el terreno está
+             * treinta y cinco centímetros por debajo. Ver `sampleSurface`.
+             */
+            alto: (x, z) => {
+              if (campo.esCasa) return this.terrain.sampleSurface(x, z);
+              const v = this.vecinos.find((w) => w.campo.id === campo.id);
+              return v?.mundo.superficie(x, z) ?? this.terrain.sampleSurface(x, z);
+            },
             evitar: [
               { x: yo.x, z: yo.z },
               ...(raya ? [{ x: raya[0], z: raya[1] }] : []),
             ],
+            /*
+             * **Y tu raya entera, no solo su final.** Se apartaba de tu
+             * puesto y de tu doble raya, y nada más: su espera podía caer en
+             * mitad de la calle por la que el juego te manda a ti, con el
+             * avión plantado encima de tu raya verde. Ver `Ocupados` en
+             * `rodaje.ts` para la otra mitad: tu raya también lo rodea a él.
+             */
+            porDondeVas: cadaTanto(ruta, 10),
           };
         },
       },
     );
     this.scene.add(this.trafico.grupo);
+  }
+
+  /**
+   * Dónde hay aviones del tráfico parados, o a punto de parar, en las calles
+   * del campo en el que se está, en los ejes del fichero. Ver `dondeParan`.
+   */
+  private paradosEnLasCalles(): Punto[] {
+    return (this.trafico?.dondeParan() ?? []).map(
+      (p) => [p.x, -p.z] as Punto,
+    );
   }
 
   /**
@@ -6747,6 +6777,7 @@ export class Game {
       this.aircraft,
     );
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
+    this.plan.ocupados = () => this.paradosEnLasCalles();
     // Y se vuelve a enseñar solo si esta lección lo enseñaba. Ver dónde se monta.
     if (this.leccion.guiaEnTierra) {
       this.scene.add(this.plan.grupo);
@@ -12110,6 +12141,30 @@ export class Game {
  * Círculo oscuro y translúcido que hace de sombra. Se orienta con el avión y
  * es un óvalo, no un disco: así insinúa la silueta sin modelar nada.
  */
+/**
+ * Puntos de una polilínea del mundo cada `paso` metros, con sus puntas. Es lo
+ * que se le da al tráfico para que no espere encima de tu raya: ver `evitar`
+ * en `ponerTrafico`.
+ */
+function cadaTanto(
+  linea: readonly (readonly [number, number])[],
+  paso: number,
+): { x: number; z: number }[] {
+  const puntos: { x: number; z: number }[] = [];
+  for (let i = 0; i < linea.length - 1; i++) {
+    const [ax, az] = linea[i]!;
+    const [bx, bz] = linea[i + 1]!;
+    const largo = Math.hypot(bx - ax, bz - az);
+    for (let d = 0; d < largo; d += paso) {
+      const t = d / largo;
+      puntos.push({ x: ax + (bx - ax) * t, z: az + (bz - az) * t });
+    }
+  }
+  const fin = linea[linea.length - 1];
+  if (fin) puntos.push({ x: fin[0], z: fin[1] });
+  return puntos;
+}
+
 function createBlobShadow(wingSpan: number): Mesh {
   const geometry = new CircleGeometry(wingSpan * 0.62, 20);
   geometry.rotateX(-Math.PI / 2);

@@ -479,6 +479,11 @@ export interface Ruta {
    */
   readonly coste: number;
   /**
+   * Si pasa por una calle en la que hay un avión parado. Solo pasa cuando no
+   * hay otra: ver `Ocupados`.
+   */
+  readonly ocupada?: boolean;
+  /**
    * Lo que la ruta se aparta del asfalto por sus dos puntas, m.
    *
    * Los tramos de en medio son aristas del grafo, o sea calles de rodaje; los
@@ -515,10 +520,79 @@ export interface Ruta {
  * Dijkstra y no A*: un aeropuerto tiene decenas de nudos, no millones, y aquí
  * la sencillez vale más que los microsegundos que ahorraría la heurística.
  */
+/**
+ * **Dónde hay un avión parado en las calles**, y cuánto ocupa.
+ *
+ * Existe por Los Rodeos: aterrizando, la raya verde y el coche del sígame
+ * llevaron por una calle en la que un avión del tráfico esperaba en su doble
+ * raya para salir. «Eso es un accidente seguro.» Y lo es: una torre de verdad
+ * no te manda rodar por encima de quien está esperando, te da otra calle.
+ *
+ * `radio` es lo que tienen que separarse los dos ejes para que las alas no se
+ * toquen: las dos semialas y el margen de ala. Un tramo que pasa más cerca
+ * de un punto ocupado se encarece —ver `CUESTA_OCUPADO`—, así que se elige
+ * otro camino **si lo hay**.
+ */
+export interface Ocupados {
+  readonly puntos: readonly Punto[];
+  readonly radio: number;
+}
+
+/**
+ * Lo que cuesta de más, en metros, un tramo con un avión parado en medio.
+ *
+ * **Penalización y no prohibición**, como el callejón por el que no cabe el
+ * ala: donde no hay más camino —un campo de una sola calle— se pasa igual, y
+ * entonces lo que tiene que pasar es que el otro no espere ahí; ver
+ * `PASA_A_TU_LADO` en `suelo-del-trafico.ts`.
+ *
+ * **Y sumada, no multiplicada.** Multiplicar por cuarenta, como con el
+ * callejón, deja barato el tramo corto: diez metros de calle con un avión
+ * encima costaban cuatrocientos, y se prefería pasarle por encima antes que
+ * rodar un kilómetro por otra calle. Medido en Asunción y en Guaraní. Un
+ * avión parado corta la calle igual si el tramo es largo que si es corto.
+ *
+ * Veinte kilómetros: más que volver por la pista entera, que se cobra a seis
+ * —ver `PENALIZACION_PISTA`—. Una torre te manda a remontar la pista antes que
+ * a pasarle por encima a nadie, y en Los Rodeos, con tres mil, la raya seguía
+ * eligiendo al que esperaba quince veces de cada dieciséis.
+ */
+const CUESTA_OCUPADO = 20000;
+
+/** Lo que dista un punto de una polilínea, m. */
+function aLaLinea(p: Punto, linea: readonly Punto[]): number {
+  let mejor = Infinity;
+  for (let i = 0; i < linea.length - 1; i++) {
+    const [ax, ay] = linea[i]!;
+    const [bx, by] = linea[i + 1]!;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const l = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / l));
+    mejor = Math.min(mejor, Math.hypot(p[0] - ax - t * dx, p[1] - ay - t * dy));
+  }
+  return mejor;
+}
+
+/** Los tramos por los que pasa cerca algún avión parado. Ver `Ocupados`. */
+function tramosOcupados(grafo: Grafo, ocupados: Ocupados | undefined): Set<number> {
+  const ocupadosAqui = new Set<number>();
+  if (!ocupados?.puntos.length) return ocupadosAqui;
+  grafo.tramos.forEach((t, i) => {
+    for (const p of ocupados.puntos)
+      if (aLaLinea(p, t.puntos) < ocupados.radio) {
+        ocupadosAqui.add(i);
+        return;
+      }
+  });
+  return ocupadosAqui;
+}
+
 export function rutaEntre(
   grafo: Grafo,
   desdeNudo: number,
   hastaNudo: number,
+  ocupados?: Ocupados,
 ): Ruta | null {
   if (desdeNudo === hastaNudo)
     return {
@@ -526,6 +600,7 @@ export function rutaEntre(
       puntos: [],
       largo: 0,
       coste: 0,
+      ocupada: false,
       letras: [],
       enganche: 0,
     };
@@ -533,6 +608,7 @@ export function rutaEntre(
   const coste = new Array<number>(grafo.nudos.length).fill(Infinity);
   const porTramo = new Array<number>(grafo.nudos.length).fill(-1);
   const cerrado = new Array<boolean>(grafo.nudos.length).fill(false);
+  const ocupadosAqui = tramosOcupados(grafo, ocupados);
   coste[desdeNudo] = 0;
 
   for (;;) {
@@ -551,7 +627,10 @@ export function rutaEntre(
     for (const iTramo of grafo.desde[actual]!) {
       const t = grafo.tramos[iTramo]!;
       const otro = t.a === actual ? t.b : t.a;
-      const nuevo = mejor + (t.coste ?? t.largo);
+      const nuevo =
+        mejor +
+        (t.coste ?? t.largo) +
+        (ocupadosAqui.has(iTramo) ? CUESTA_OCUPADO : 0);
       if (nuevo < coste[otro]!) {
         coste[otro] = nuevo;
         porTramo[otro] = iTramo;
@@ -567,10 +646,12 @@ export function rutaEntre(
   const pasos: { ref: string | null; puntos: Punto[] }[] = [];
   // Los metros de verdad, sumando lo que mide cada tramo del camino elegido.
   let metros = 0;
+  let ocupada = false;
   let nodo = hastaNudo;
   while (nodo !== desdeNudo) {
     const iTramo = porTramo[nodo]!;
     if (iTramo < 0) return null;
+    if (ocupadosAqui.has(iTramo)) ocupada = true;
     const t = grafo.tramos[iTramo]!;
     const anterior = t.a === nodo ? t.b : t.a;
     const puntos = t.b === nodo ? [...t.puntos] : [...t.puntos].reverse();
@@ -601,6 +682,7 @@ export function rutaEntre(
     puntos,
     largo: metros,
     coste: coste[hastaNudo]!,
+    ocupada,
     letras,
     enganche: 0,
   };
@@ -761,6 +843,7 @@ function recortada(ruta: Ruta, destino: Punto): Ruta {
     puntos,
     largo: Math.max(0, ruta.largo - quitado),
     coste: Math.max(0, ruta.coste - quitado),
+    ocupada: ruta.ocupada,
     letras,
     enganche: ruta.enganche,
   };
@@ -866,12 +949,14 @@ export function rodajeEntre(
   origen: Punto,
   destino: Punto,
   maxSalto = 220,
+  /** Los aviones parados que hay que rodear si se puede. Ver `Ocupados`. */
+  ocupados?: Ocupados,
 ): Ruta | null {
   const a = nudoCercano(grafo, origen);
   const b = nudoCercano(grafo, destino);
   if (a.nudo < 0 || b.nudo < 0) return null;
   if (a.distancia > maxSalto || b.distancia > maxSalto) return null;
-  const entera = rutaEntre(grafo, a.nudo, b.nudo);
+  const entera = rutaEntre(grafo, a.nudo, b.nudo, ocupados);
   if (!entera) return null;
   const ruta = recortada(entera, destino);
 

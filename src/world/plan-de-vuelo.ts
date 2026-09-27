@@ -46,6 +46,7 @@ import {
   nudoCercano,
   rodajeEntre,
   type Grafo,
+  type Ocupados,
   type Ruta,
   type Tramo,
 } from "./rodaje";
@@ -392,6 +393,26 @@ const LO_MAXIMO_DE_IDA = 700;
 
 /** Cada cuánto se mira si la raya sigue sirviendo, s. */
 const CADA_CUANTO_SE_REHACE = 2;
+
+/**
+ * La semiala del más grande del tráfico dibujado, m: el reactor, de treinta y
+ * cuatro de envergadura. Ver `TIPOS` en `trafico.ts`. Con la del grande vale
+ * para todos: sobra sitio con uno pequeño, y nunca falta.
+ */
+const SEMIALA_DEL_TRAFICO = 17;
+
+/**
+ * Lo que se dejan entre puntas de ala dos aviones que se cruzan en una calle,
+ * m. El de la clave C de la OACI, como `MARGEN_DE_ALA` en `rodaje.ts`.
+ */
+const MARGEN_ENTRE_ALAS = 7.5;
+
+/**
+ * Lo que cuesta de más, en metros, salir de la pista por una calle en la que
+ * hay un avión parado. Un kilómetro: se rueda hasta la siguiente salida antes
+ * que meterse por esa, y solo se coge si no hay otra.
+ */
+const SALIDA_OCUPADA = 1000;
 
 /**
  * A partir de cuántos metros de la raya se considera que ya no vas por ella, m.
@@ -1087,6 +1108,24 @@ export class PlanDeVuelo {
   ) {
     this.grupo.name = "plan-de-vuelo";
     this.grafo = construirGrafo(aero, this.avion.wingSpan / 2);
+  }
+
+  /**
+   * **Dónde hay aviones parados en las calles**, en los ejes del fichero —la
+   * y al norte—. Lo pone quien sabe del tráfico; el plan solo los rodea al
+   * trazar la raya, si hay por dónde. Ver `Ocupados` en `rodaje.ts`.
+   */
+  ocupados: () => readonly Punto[] = () => [];
+
+  /**
+   * Los parados de ahora, con lo que tienen que separarse los ejes: la
+   * semiala de este avión, la del más grande del tráfico y el margen de ala.
+   */
+  private ocupadosAhora(): Ocupados {
+    return {
+      puntos: this.ocupados(),
+      radio: this.avion.wingSpan / 2 + SEMIALA_DEL_TRAFICO + MARGEN_ENTRE_ALAS,
+    };
   }
 
   /** En qué aeródromo está trabajando el plan ahora mismo. */
@@ -1976,7 +2015,9 @@ export class PlanDeVuelo {
     this.trazadaAlTocar = false;
     this.destino = "espera";
     this.ultimaPos = puesto.xy;
-    this.ponerRuta(rodajeEntre(this.grafo, puesto.xy, espera));
+    this.ponerRuta(
+      rodajeEntre(this.grafo, puesto.xy, espera, 220, this.ocupadosAhora()),
+    );
     return this.ruta !== null;
   }
 
@@ -2609,7 +2650,13 @@ export class PlanDeVuelo {
      */
     if (salida) {
       const hastaLaSalida = this.porLaPistaHasta(salida);
-      const desdeLaSalida = rodajeEntre(this.grafo, salida, meta, 600);
+      const desdeLaSalida = rodajeEntre(
+        this.grafo,
+        salida,
+        meta,
+        600,
+        this.ocupadosAhora(),
+      );
       if (hastaLaSalida && desdeLaSalida) {
         this.ponerRuta({
           ...desdeLaSalida,
@@ -2621,7 +2668,9 @@ export class PlanDeVuelo {
       }
     }
 
-    this.ponerRuta(rodajeEntre(this.grafo, this.ultimaPos, meta, 600));
+    this.ponerRuta(
+      rodajeEntre(this.grafo, this.ultimaPos, meta, 600, this.ocupadosAhora()),
+    );
   }
 
   /**
@@ -2679,7 +2728,13 @@ export class PlanDeVuelo {
           )?.xy
         : this.esperaDeSalida();
     if (!meta) return;
-    const ruta = rodajeEntre(this.grafo, this.ultimaPos, meta, 600);
+    const ruta = rodajeEntre(
+      this.grafo,
+      this.ultimaPos,
+      meta,
+      600,
+      this.ocupadosAhora(),
+    );
     // Y si no sale, **se deja la que había**: una raya vieja guía peor que una
     // nueva, pero infinitamente mejor que ninguna.
     if (ruta) this.ponerRuta(ruta);
@@ -3109,8 +3164,18 @@ export class PlanDeVuelo {
        * cualquiera que conozca el campo.
        */
       const casa = this.puestoDeSalida()?.xy;
-      const hasta = casa ? rodajeEntre(this.grafo, nudo, casa, 600) : null;
-      const coste = adelante + (hasta ? hasta.largo : 0);
+      const hasta = casa
+        ? rodajeEntre(this.grafo, nudo, casa, 600, this.ocupadosAhora())
+        : null;
+      /*
+       * Y una salida por la que se va a pasar junto a un avión parado —el
+       * que espera en su doble raya para entrar en la pista, casi siempre en
+       * esa misma calle— cuesta como si fuera larga: se coge otra si la hay.
+       */
+      const coste =
+        adelante +
+        (hasta ? hasta.largo : 0) +
+        (hasta?.ocupada ? SALIDA_OCUPADA : 0);
       if (coste < cerca) {
         cerca = coste;
         mejor = nudo;
