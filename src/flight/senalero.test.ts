@@ -44,6 +44,23 @@ describe("el señalero", () => {
     expect(gestoDeSenalero(llegando({ lateral: -5 }))).toBe("derecha");
   });
 
+  /*
+   * «Sale la tarjeta del señalero dando indicaciones pero el muñeco no
+   * aparece nunca.» Con el avión por otra calle, a su altura y de lado, el
+   * señalero le mandaba girar: `restante` es lo que falta a lo largo de su
+   * raya y a doscientos metros de lado también es poco.
+   */
+  it("a un avión que pasa por otra calle, de lado, no le señala", () => {
+    expect(gestoDeSenalero(llegando({ restante: 40, lateral: 200 }))).toBeNull();
+    expect(gestoDeSenalero(llegando({ restante: 40, lateral: -60 }))).toBeNull();
+  });
+
+  it("pero al que viene de cara y torcido sí le corrige", () => {
+    expect(gestoDeSenalero(llegando({ restante: 40, lateral: 20 }))).toBe(
+      "izquierda",
+    );
+  });
+
   it("un metro de desvío no es un desvío", () => {
     expect(gestoDeSenalero(llegando({ lateral: 1 }))).toBe("adelante");
   });

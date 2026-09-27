@@ -304,6 +304,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * vara falla donde el juego hace lo que tiene que hacer.
      */
     enBici: () => juego.sigueme.enBici,
+    /**
+     * Quien sale a buscarte, entero: su grupo, para mirar si está **en la
+     * escena** y no solo si él cree que se le ve. Ver
+     * `verificar-llegadas.mjs`.
+     */
+    sigueme: () => juego.sigueme,
+    /** Por dónde va el avión en su ruta, m. Ver `avanceEnLaRuta`. */
+    avanceEnLaRuta: () => juego.plan?.avanceEnLaRuta ?? 0,
     /*
      * La lista de paneles que se abren encima del vuelo.
      *

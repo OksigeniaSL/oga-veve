@@ -2193,7 +2193,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
           Math.hypot(s.position.x - donde.x, s.position.z - donde.z),
         );
       }
-      if (sen?.grupo?.visible) {
+      /*
+       * **Y visto es colgado de la escena, no solo de pie.** Con «dar una
+       * vuelta» el señalero trabajaba —`visible`, gestos, tarjeta— fuera de
+       * la escena, y este banco lo daba por visto. Ver `verificar-llegadas`.
+       */
+      let colgado = sen?.grupo ?? null;
+      while (colgado?.parent) colgado = colgado.parent;
+      if (sen?.grupo?.visible && colgado === globalThis.__raiz) {
         senalero.visto = true;
         if (sen.gestoDeAhora) senalero.gestos.add(sen.gestoDeAhora);
       } else if (sen?.comoVa) {

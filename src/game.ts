@@ -3060,12 +3060,6 @@ export class Game {
      * silencios de la radio. Todo eso se quedaba mudo en esa lección sin que
      * nada fallara, y se oyó jugando: «¿por qué no veo V1 cuando despego con el
      * 747?», «¿por qué no oigo a la comandante?». Las dos cosas eran la misma.
-     *
-     * Lo que la lección apaga es **el dibujo**: la raya verde, la diana, la
-     * doble raya y la gente que te espera. Eso sí es un estorbo para quien solo
-     * quiere dar una vuelta: «las señales de aterrizaje en principio no se sabe
-     * para qué está eso ahí». Saber en qué fase del vuelo estás no estorba a
-     * nadie.
      */
     if (this.scenario.aerodrome) {
       this.plan = new PlanDeVuelo(
@@ -3077,16 +3071,28 @@ export class Game {
       this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
       this.plan.ocupados = () => this.paradosEnLasCalles();
     }
-    if (this.plan && this.leccion.guiaEnTierra) {
+    /*
+     * **Y el dibujo va con el plan, no con la lección.**
+     *
+     * «Dar una vuelta» montaba el plan y no su dibujo: la raya verde, el coche
+     * del sígame, el señalero y la vaca se quedaban fuera de la escena. Y el
+     * plan no se callaba por eso: al aterrizar trazaba la ruta al puesto, la
+     * ayuda de rodaje giraba el avión hacia la salida —«se giró él solo, no sé
+     * a dónde va»—, la tarjeta ponía «E3» y el señalero hacía gestos que salían
+     * en la tarjeta, y nada de eso se veía. Esa lección es además la de viajar
+     * —su destino de fábrica es el campo vecino— y la de las misiones, así que
+     * era la llegada de casi todos los vuelos a otro sitio.
+     *
+     * Una ayuda que guía por un camino que no se ve es peor que ninguna. Lo
+     * que no se quiere en una vuelta —una raya desde el puesto— ya no existe
+     * sin dibujarlo: esa lección sale de la pista y el plan no traza nada
+     * hasta tocar tierra. A partir de ahí la raya, el coche y el señalero son
+     * los mismos que en cualquier otra, porque el sitio al que se va es el
+     * mismo. Ver `senaleroALaVista` para la otra mitad: la tarjeta del
+     * señalero no sale sin el señalero.
+     */
+    if (this.plan) {
       this.scene.add(this.plan.grupo);
-      /*
-       * Y con la guía, quien te espera al final de ella.
-       *
-       * Va atado al dibujo y no al aeródromo porque **sin ruta pintada no hay
-       * puesto al que volver**: quien eligió dar una vuelta no tiene a nadie
-       * esperándole, y una persona plantada en la plataforma sin motivo es un
-       * adorno raro.
-       */
       this.scene.add(this.senalero.grupo);
       this.scene.add(this.sigueme.grupo);
       this.scene.add(this.vaca.grupo);
@@ -7102,11 +7108,9 @@ export class Game {
     );
     this.plan.soloRodaje = this.leccion.acabaEnLaEspera;
     this.plan.ocupados = () => this.paradosEnLasCalles();
-    // Y se vuelve a enseñar solo si esta lección lo enseñaba. Ver dónde se monta.
-    if (this.leccion.guiaEnTierra) {
-      this.scene.add(this.plan.grupo);
-      this.colocarSenalero();
-    }
+    // Y el dibujo con él, en todas las lecciones. Ver dónde se monta.
+    this.scene.add(this.plan.grupo);
+    this.colocarSenalero();
   }
 
   /**
@@ -9388,7 +9392,7 @@ export class Game {
     if (!campo.aerodromo || campo.aerodromo === this.plan.aerodromoActual)
       return;
     this.plan.mudarseA(campo.aerodromo, campo.pista);
-    if (this.leccion.guiaEnTierra) this.colocarSenalero();
+    this.colocarSenalero();
   }
 
   /** El campo para el que está montado lo que va con él. Ver `montarElCampo`. */
@@ -9864,6 +9868,39 @@ export class Game {
     this.instructor.decir(dicho.texto, dicho.id);
   }
 
+  /**
+   * **Si al señalero se le ve**: está en la escena, está de pie y cae dentro
+   * de lo que enseña la cámara.
+   *
+   * Es la condición de su tarjeta, y está escrita contra el dibujo y no
+   * contra lo que él cree: su `visible` dice que se ha puesto a trabajar,
+   * no que haya nadie mirándole. Con el grupo fuera de la escena, o detrás de
+   * la cámara, la bandera seguía en verdad.
+   *
+   * Con histéresis en el borde del cuadro, para que la tarjeta no parpadee
+   * cuando el señalero roza el marco de la pantalla al girar.
+   */
+  private senaleroALaVista(): boolean {
+    const g = this.senalero.grupo;
+    if (!g.visible || g.parent !== this.scene) {
+      this.senaleroEnCuadro = false;
+      return false;
+    }
+    // A media altura de la figura, que es lo que se reconoce.
+    const p = this.puntoDelSenalero
+      .copy(g.position)
+      .setY(g.position.y + 1.5)
+      .project(this.camera);
+    const borde = this.senaleroEnCuadro ? 1.15 : 1;
+    this.senaleroEnCuadro =
+      p.z < 1 && Math.abs(p.x) < borde && Math.abs(p.y) < borde;
+    return this.senaleroEnCuadro;
+  }
+
+  /** Si el señalero estaba en el cuadro el fotograma anterior. */
+  private senaleroEnCuadro = false;
+  private readonly puntoDelSenalero = new Vector3();
+
   private atenderAlSenalero(dt: number): void {
     const fase = this.vistaActual?.fase;
     /*
@@ -9966,7 +10003,16 @@ export class Game {
      * El señalero sigue cruzando los bastones en el mundo, que es donde ese
      * gesto significa «ya está». La pantalla pasa a lo siguiente.
      */
-    const enPantalla = gesto === "frenos" ? null : gesto;
+    /*
+     * **Y la tarjeta solo repite lo que se ve.** Es el mismo señalero dibujado
+     * con los brazos donde los tiene él; si él no está en el cuadro, la
+     * tarjeta es un fantasma que da órdenes. Pasó dos veces por dos caminos:
+     * con el señalero fuera de la escena —ver dónde se monta el plan— y con
+     * el avión pasando por otra calle, lejos y de lado. Ver
+     * `senaleroALaVista`.
+     */
+    const enPantalla =
+      gesto === "frenos" || !this.senaleroALaVista() ? null : gesto;
     if (enPantalla !== this.gestoEnPantalla) {
       this.gestoEnPantalla = enPantalla;
       if (enPantalla) {
