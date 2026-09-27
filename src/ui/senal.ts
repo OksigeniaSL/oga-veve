@@ -307,6 +307,23 @@ const SENDA = icono(`
 `);
 
 /**
+ * El punto de descenso: **el crucero que se acaba y la bajada que empieza**.
+ *
+ * Una raya a nivel, un círculo donde se dobla —el mismo del «T/D» de la
+ * carta, que es el que se aprende— y la bajada con su punta, hasta un suelo
+ * con su pista. Se entiende sin leer: aquí se empieza a bajar, poco a poco y
+ * hasta allá. Ver `flight/ruta.ts`.
+ */
+const DESCENSO = icono(`
+  <path d="M2 21.5 h20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.45" />
+  <path d="M15.5 21.5 h6" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" />
+  <path d="M2 6 H8.6 L18.4 16.4" stroke="currentColor" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <circle cx="8.6" cy="6" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6" />
+  <path d="M20.6 18.8 L14.8 17.6 L19.2 13.4 Z" />
+`);
+
+/**
  * Lo corregiste: **la senda, y un visto**.
  *
  * Es la de la senda con la línea entera en vez de a trazos y una marca de
@@ -841,6 +858,7 @@ export const DIBUJOS = {
   motor: MOTOR,
   ala: ALA,
   senda: SENDA,
+  descenso: DESCENSO,
   corregido: CORREGIDO,
   gafas: GAFAS,
   flaps: FLAPS,

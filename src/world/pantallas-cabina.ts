@@ -1483,7 +1483,27 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
    * discrepar: una carta que dice «4,0 NM» con la pista fuera del cristal es
    * peor que una carta sin cifra.
    */
-  if (!d.objetivo && d.mapa?.pista) {
+  /*
+   * **Y con plan de vuelo, el punto al que se va**: su nombre, sus millas y,
+   * en el peldaño de cabina, la hora a la que se llega a él. Es la esquina de
+   * arriba a la derecha de cualquier pantalla de navegación de línea, y lo
+   * primero que se lee en ella. Las mismas cuentas que el cuadro plano; ver
+   * `Dibujo.ruta` en `ui/carta.ts`.
+   */
+  const siguiente = d.mapa?.ruta?.fijos[d.mapa.ruta.activo];
+  if (!d.objetivo && d.mapa && siguiente) {
+    escribir(
+      g,
+      `${siguiente.nombre} ${millasHasta(siguiente, d.mapa).toFixed(1)} NM`,
+      ANCHO - 12,
+      22,
+      "500 15px " + FUENTE,
+      PALETA.objetivo,
+      "right",
+    );
+    if (d.peldano >= 4 && d.mapa.ruta?.hora)
+      escribir(g, d.mapa.ruta.hora, ANCHO - 12, 40, "500 13px " + FUENTE, TINTA, "right");
+  } else if (!d.objetivo && d.mapa?.pista) {
     escribir(
       g,
       `${millasHasta(d.mapa.pista, d.mapa).toFixed(1)} NM`,
@@ -2158,6 +2178,58 @@ function pintarLaCarta(
     g.moveTo(cx + pa.dx, cy + pa.dy);
     g.lineTo(cx + pb.dx, cy + pb.dy);
     g.stroke();
+  }
+
+  /*
+   * **El plan de vuelo**, debajo de los tráficos: la línea magenta de punto
+   * en punto, la estrella de cada punto con su nombre —en magenta el que se
+   * persigue, en blanco los demás— y el círculo verde del punto de descenso.
+   * Lo mismo que el cuadro plano; ver `Tablero.elPlan`.
+   */
+  if (dibujo.ruta) {
+    const plan = dibujo.ruta;
+    g.strokeStyle = PALETA.objetivo;
+    g.lineWidth = 2.2;
+    g.lineJoin = "round";
+    g.beginPath();
+    plan.linea.forEach((p, i) => {
+      if (i) g.lineTo(cx + p.dx, cy + p.dy);
+      else g.moveTo(cx + p.dx, cy + p.dy);
+    });
+    g.stroke();
+    for (const f of plan.fijos) {
+      const x = cx + f.dx;
+      const y = cy + f.dy;
+      if (Math.hypot(f.dx, f.dy) > r + 10) continue;
+      const color = f.activo ? PALETA.objetivo : TINTA;
+      g.strokeStyle = color;
+      g.lineWidth = 1.5;
+      g.beginPath();
+      g.moveTo(x, y - 6);
+      g.lineTo(x + 1.9, y - 1.9);
+      g.lineTo(x + 6, y);
+      g.lineTo(x + 1.9, y + 1.9);
+      g.lineTo(x, y + 6);
+      g.lineTo(x - 1.9, y + 1.9);
+      g.lineTo(x - 6, y);
+      g.lineTo(x - 1.9, y - 1.9);
+      g.closePath();
+      g.stroke();
+      escribir(g, f.nombre, x + 8, y + 12, "600 11px " + FUENTE, color, "left");
+    }
+    if (plan.descenso) {
+      const x = cx + plan.descenso.dx;
+      const y = cy + plan.descenso.dy;
+      g.strokeStyle = PALETA.normal;
+      g.lineWidth = 1.6;
+      g.beginPath();
+      g.arc(x, y, 6, 0, Math.PI * 2);
+      g.moveTo(x - 3.5, y - 2);
+      g.lineTo(x - 0.5, y - 2);
+      g.lineTo(x + 3.5, y + 2);
+      g.stroke();
+      escribir(g, "T/D", x + 9, y - 8, "600 11px " + FUENTE, PALETA.normal, "left");
+    }
   }
 
   /*

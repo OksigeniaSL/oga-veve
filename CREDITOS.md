@@ -52,7 +52,8 @@ ella se lo debe a él. Esa regla gobierna este juego entero.
 | [PNOA](https://www.ign.es/wmts/pnoa-ma) — Instituto Geográfico Nacional de España                                                                                            | Ortofotos de los nueve escenarios españoles, en cuatro encuadres                                                                         | **CC BY 4.0** · scne.es                                                 |
 | [PNOA-LiDAR MDT05](https://www.idee.es/csw-inspire-idee/srv/spa/catalog.search#/metadata/spaignMDT05) — Instituto Geográfico Nacional de España                              | Relieve de Tenerife Norte, La Palma y Cuatro Vientos                                                                                   | **CC BY 4.0**                                                           |
 | [Sentinel-2 cloudless](https://cloudless.eox.at) — EOX IT Services, sobre datos Copernicus/ESA                                                                               | Ortofotos de los siete escenarios paraguayos, en cuatro encuadres                                                                        | **CC BY-NC-SA 4.0**, uso no comercial. Ver abajo                        |
-| [Natural Earth](https://www.naturalearthdata.com) 1:10m, países                                                                                                               | La silueta del Paraguay y de las islas Canarias en el mapa del hangar                                                                  | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
+| [Natural Earth](https://www.naturalearthdata.com) 1:10m, países y ríos                                                                                                        | La silueta del Paraguay y de las islas Canarias en el mapa del hangar; y en el plano del vuelo, la costa y los ríos grandes del Paraguay donde no llega el relieve cargado | **Dominio público** (naturalearthdata.com/about/terms-of-use)           |
+| [AIP España](https://aip.enaire.es/AIP/) — ENAIRE, AIRAC AMDT 08/26 (en vigor desde el 03-SEP-2026)                                                                           | Los puntos del plan de vuelo en Canarias: salidas (SID), aproximaciones RNP y rutas de salida de La Gomera de los ocho aeropuertos de las islas, con sus nombres y coordenadas publicados. Ver abajo | **Hechos de una publicación oficial**: se citan, no se reproduce ninguna carta |
 
 **Cuatro encuadres de la misma fuente**, y cada uno existe por un motivo
 distinto: `cerca` cubre seis kilómetros a dos metros por píxel, que es donde se
@@ -77,6 +78,31 @@ Pesos medidos: el horizonte anda por los cien kilobytes y `medio` va de
 doscientos veinticinco —El Hierro, que es casi todo mar— a dos megas y pico
 —Cuatro Vientos, que es Madrid entero—. Solo se baja la del escenario que se
 abre, y se guarda.
+
+### El plan de vuelo: AIP España
+
+Los puntos por los que va el plan de vuelo entre dos campos de Canarias —las
+salidas, las aproximaciones y sus nombres, CANDE, BUNIX, XO69E— son los que
+publica ENAIRE en el AIP de España: la parte AD 2 de GCXO, GCTS, GCLP, GCFV,
+GCRR, GCLA, GCHI y GCGM (cartas IAC, SID y ARR/DEP, con su tabla codificada y
+su lista de puntos) y las listas ENR 4.1 (radioayudas) y ENR 4.4 (puntos
+significativos), leídas el 27 de septiembre de 2026. Cada procedimiento lleva
+en `src/world/procedimientos-canarias.ts` el nombre de la carta de la que
+sale.
+
+Lo que se toma son **hechos**: dónde está un punto con nombre y por qué puntos
+pasa un procedimiento. Son las normas con las que se vuela en el espacio aéreo
+español, publicadas por el Estado para que se conozcan, y los textos oficiales
+no son objeto de propiedad intelectual (art. 13 de la Ley de Propiedad
+Intelectual). No se copia ni se redibuja ninguna carta. Las coordenadas se
+comprobaron contra las distancias que imprime cada carta, y las erratas
+que salieron van contadas en el mismo fichero.
+
+El Paraguay queda pendiente de las cartas de la DINAC: hasta entonces sus
+campos llevan la aproximación calculada sobre el eje de la pista, con las
+distancias de diseño de la OACI (PANS-OPS, Doc 8168) y los puntos rotulados
+como los rotula un ordenador de vuelo cuando no tienen nombre —CF y FF con el
+número de la pista—.
 
 ### Sentinel-2 cloudless: CC BY-NC-SA 4.0, uso no comercial
 

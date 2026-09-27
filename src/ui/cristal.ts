@@ -552,6 +552,15 @@ function carta(cx: number, cy: number, r: number): string {
               d="M10 5 L10 -4 M7 -1 L10 -5 L13 -1" />
       </g>`,
   ).join("");
+  const fijos = Array.from(
+    { length: CUANTOS_FIJOS },
+    (_, i) => `
+      <g data-carta="fijo-${i}" class="cr__fijo" visibility="hidden">
+        <path d="M0 -6 L1.9 -1.9 L6 0 L1.9 1.9 L0 6 L-1.9 1.9 L-6 0 L-1.9 -1.9 Z" />
+        <text data-carta="fijo-nombre" x="8" y="13" ${MARCA_ROTULO}
+              class="cr__fijo-nombre"></text>
+      </g>`,
+  ).join("");
   return `
     <!--
       **El recorte, en el sitio del grupo y no en el de la pantalla.**
@@ -574,6 +583,20 @@ function carta(cx: number, cy: number, r: number): string {
       <g data-carta="radar"></g>
       <line data-carta="eje" class="cr__eje" visibility="hidden" />
       <line data-carta="pista" class="cr__pista" visibility="hidden" />
+      <!--
+        **El plan de vuelo**: la línea magenta de punto en punto, cada punto
+        con la estrella de cuatro puntas de las cartas y su nombre, y el
+        círculo del punto de descenso con su «T/D». Debajo de los tráficos,
+        que son los que avisan. Las piezas están quietas; las coloca
+        Tablero.laCarta con las cuentas de ui/carta.ts.
+      -->
+      <path data-carta="plan" class="cr__plan" visibility="hidden" d="M0 0" />
+      <g data-carta="td" class="cr__td" visibility="hidden">
+        <circle r="6" />
+        <path d="M-3.5 -2 h3 l4 4" />
+        <text x="9" y="-7" ${MARCA_ROTULO} class="cr__td-rotulo">T/D</text>
+      </g>
+      ${fijos}
       ${rombos}
       <!--
         **El aeropuerto de destino.**
@@ -654,6 +677,15 @@ function carta(cx: number, cy: number, r: number): string {
 export const CUANTOS_OTROS = 8;
 
 /**
+ * Cuántos puntos del plan caben en la carta.
+ *
+ * Diez: una salida de dos, una aproximación de cuatro y el umbral son siete,
+ * y lo que no quepa es lo más lejano, que a esa distancia está fuera del
+ * disco. Ver `Dibujo.ruta`.
+ */
+export const CUANTOS_FIJOS = 10;
+
+/**
  * La rosa de rumbo. Gira la carta, no el avión: lo que se mueve es el mundo.
  *
  * @param conAvion si lleva el avioncito fijo en el centro (la del horizonte) o
@@ -727,6 +759,12 @@ export function pantallaDeNavegacion(ancho: number, alto: number): string {
     <text x="${cx}" y="36" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">HDG</text>
     <text data-cristal="viento" x="12" y="22" ${MARCA_CIFRA} class="cr__aux"></text>
     <text data-cristal="distancia" x="${ancho - 12}" y="22" ${MARCA_ROTULO} class="cr__aux" text-anchor="end"></text>
+    <!--
+      Y debajo, **la hora de llegada al punto**, como la escribe una pantalla
+      de navegación de línea: «1432.5z», en tiempo universal. Solo en el
+      peldaño de cabina, que es donde se vuela con la cabina de verdad.
+    -->
+    <text data-cristal="eta" x="${ancho - 12}" y="38" data-desde="4" class="cr__aux cr__eta" text-anchor="end"></text>
   `;
 }
 

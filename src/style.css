@@ -1967,6 +1967,56 @@ button.motor__tecla::after {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * **El trayecto**: una barra que se llena de la salida al destino, con el
+ * avioncito donde va. Azul de ruta, como la aguja cuando apunta a otro campo y
+ * como la raya del plano: es el mismo viaje en tres sitios. Ver
+ * `Hud.ponerTrayecto`.
+ */
+.casa__trayecto {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.casa__trayecto[hidden] {
+  display: none;
+}
+
+.casa__barra {
+  position: relative;
+  width: 96px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(111, 179, 224, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(111, 179, 224, 0.55);
+}
+
+.casa__lleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: 4px;
+  background: #6fb3e0;
+}
+
+/* El avioncito: un rombo claro con reborde, que se ve sobre lo lleno y sobre
+   lo vacío. Centrado en el punto de la barra al que se ha llegado. */
+.casa__avioncito {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--tinta);
+  box-shadow: 0 0 0 2px #1b4d6e;
+  transform: translate(-50%, -50%);
+}
+
+
 .casa--cerca .casa__aguja {
   color: #8fd07a;
 }
@@ -4089,6 +4139,58 @@ button.motor__tecla::after {
 
 .cr__oaci--alterno {
   fill: var(--cabina-auxiliar);
+}
+
+/*
+ * El plan de vuelo en la carta: magenta, como en cualquier pantalla de
+ * navegación, con el punto al que se va en magenta y los demás en blanco.
+ * Ver `carta` en ui/cristal.ts.
+ */
+.cr__plan {
+  fill: none;
+  stroke: var(--cabina-objetivo);
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+
+.cr__fijo path {
+  fill: none;
+  stroke: var(--cabina-valor);
+  stroke-width: 1.4;
+}
+
+.cr__fijo-nombre {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.cr__fijo--activo path {
+  stroke: var(--cabina-objetivo);
+}
+
+.cr__fijo--activo .cr__fijo-nombre {
+  fill: var(--cabina-objetivo);
+}
+
+.cr__td circle,
+.cr__td path {
+  fill: none;
+  stroke: var(--cabina-normal);
+  stroke-width: 1.6;
+}
+
+.cr__td-rotulo {
+  fill: var(--cabina-normal);
+  font-family: var(--cabina-fuente);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cr__eta {
+  font-size: 12px;
 }
 
 .cr__puntero {
