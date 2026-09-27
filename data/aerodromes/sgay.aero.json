@@ -1,0 +1,159 @@
+{
+  "id": "SGAY",
+  "name": "Aeropuerto Nacional Juan de Ayolas",
+  "source": {
+    "osm": "overpass",
+    "extracted": "2026-09-26",
+    "ourairports": "6089",
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README."
+  },
+  "origin": {
+    "lat": -27.378379,
+    "lon": -56.856791
+  },
+  "elevationM": 68,
+  "runways": [
+    {
+      "ref": "02/20",
+      "widthM": 45.1,
+      "surface": "asphalt",
+      "lit": false,
+      "centerline": [
+        [
+          434.5,
+          1783.9
+        ],
+        [
+          108.2,
+          -41.9
+        ]
+      ],
+      "thresholds": {
+        "20": {
+          "xy": [
+            443.6,
+            1776.8
+          ],
+          "elevM": 68,
+          "headingTrue": 190.2,
+          "displacedM": 0,
+          "papi": null,
+          "approachLights": null
+        },
+        "02": {
+          "xy": [
+            117.8,
+            -58
+          ],
+          "elevM": 68,
+          "headingTrue": 10.2,
+          "displacedM": 0,
+          "papi": null,
+          "approachLights": null
+        }
+      },
+      "markings": null,
+      "magneticVariation": 9.8
+    }
+  ],
+  "taxiways": [
+    {
+      "ref": null,
+      "kind": "taxiway",
+      "widthM": null,
+      "path": [
+        [
+          109.4,
+          -35.3
+        ],
+        [
+          33.4,
+          -21.8
+        ],
+        [
+          -26.4,
+          -10
+        ],
+        [
+          -29.7,
+          -3.5
+        ],
+        [
+          -20,
+          53
+        ],
+        [
+          -11.7,
+          57.6
+        ],
+        [
+          25.2,
+          49.9
+        ],
+        [
+          28.9,
+          43.1
+        ]
+      ]
+    },
+    {
+      "ref": null,
+      "kind": "taxiway",
+      "widthM": null,
+      "path": [
+        [
+          28.9,
+          43.1
+        ],
+        [
+          17.5,
+          -18.7
+        ]
+      ]
+    }
+  ],
+  "aprons": [],
+  "buildings": [
+    {
+      "kind": "terminal",
+      "heightM": null,
+      "polygon": [
+        [
+          -28.6,
+          -23.1
+        ],
+        [
+          -30.4,
+          -39.6
+        ],
+        [
+          -16.3,
+          -41.1
+        ],
+        [
+          -14.5,
+          -24.7
+        ],
+        [
+          -28.6,
+          -23.1
+        ]
+      ]
+    }
+  ],
+  "helipads": [],
+  "parkingPositions": [],
+  "holdingPositions": [
+    {
+      "xy": [
+        20.8,
+        -19.3
+      ],
+      "ref": null,
+      "runway": "02/20",
+      "source": "derivado"
+    }
+  ],
+  "windsocks": [],
+  "visualAids": []
+}

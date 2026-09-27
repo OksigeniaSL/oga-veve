@@ -78,6 +78,7 @@ import { MISSIONS } from "./content/missions";
 import { rememberTier, rememberedTier } from "./flight/tiers";
 import { AIRCRAFT, type AircraftConfig } from "./flight/aircraft";
 import { campoDe, destinosParaEsteAvion, elQueQuepa } from "./flight/cabe";
+import { vecinosQueSeMontan } from "./world/vecinos-del-vuelo";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { leerRearranque } from "./flight/cambio-de-avion";
@@ -357,8 +358,15 @@ const aDondeSeVa = destinosDe(escenario);
 const todosLosDestinos = aDondeSeVa
   .map((id) => SCENARIOS.find((e) => e.id === id))
   .filter((e): e is Scenario => e !== undefined);
-const destinosDeHoy = destinosParaEsteAvion(avion, todosLosDestinos);
-const noCabenHoy = todosLosDestinos.filter((e) => !destinosDeHoy.includes(e));
+const alcanzables = destinosParaEsteAvion(avion, todosLosDestinos);
+const noCabenHoy = todosLosDestinos.filter((e) => !alcanzables.includes(e));
+/*
+ * **Y de los que valen, los que caben a la vez.** Hasta cuatro se montan
+ * todos, como siempre; desde Asunción, que tiene seis rutas, se monta el
+ * destino elegido, su alternativo y los más cercanos. Cada vecino son unos
+ * treinta y seis megas en la tarjeta: ver `vecinosQueSeMontan` y el ADR 0010.
+ */
+const destinosDeHoy = vecinosQueSeMontan(escenario, alcanzables, destino);
 for (const fuera of noCabenHoy)
   // Se dice, que cambiarle los destinos a alguien sin avisar es lo mismo que
   // cambiarle el avión sin avisar. Ver `elQueQuepa` arriba.

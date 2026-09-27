@@ -1,0 +1,219 @@
+{
+  "id": "SGPI",
+  "name": "Aeródromo Don Carlos Miguel Gimenez",
+  "source": {
+    "osm": "overpass",
+    "extracted": "2026-09-26",
+    "ourairports": "6094",
+    "note": "Geometría © colaboradores de OpenStreetMap, ODbL 1.0. Ver README."
+  },
+  "origin": {
+    "lat": -26.881981,
+    "lon": -58.319067
+  },
+  "elevationM": 75.9,
+  "runways": [
+    {
+      "ref": "02/20",
+      "widthM": 18,
+      "surface": "concrete",
+      "lit": false,
+      "centerline": [
+        [
+          161.4,
+          808.3
+        ],
+        [
+          36.4,
+          -683.5
+        ]
+      ],
+      "thresholds": {
+        "20": {
+          "xy": [
+            165.1,
+            809.6
+          ],
+          "elevM": null,
+          "headingTrue": 185,
+          "displacedM": 0,
+          "papi": null,
+          "approachLights": null
+        },
+        "02": {
+          "xy": [
+            36.5,
+            -691.6
+          ],
+          "elevM": null,
+          "headingTrue": 5,
+          "displacedM": 0,
+          "papi": null,
+          "approachLights": null
+        }
+      },
+      "markings": null,
+      "magneticVariation": 15
+    }
+  ],
+  "taxiways": [
+    {
+      "ref": null,
+      "kind": "taxiway",
+      "widthM": null,
+      "path": [
+        [
+          28.5,
+          -4.7
+        ],
+        [
+          82.5,
+          -9.6
+        ]
+      ]
+    },
+    {
+      "ref": null,
+      "kind": "taxiway",
+      "widthM": null,
+      "path": [
+        [
+          92,
+          -20.3
+        ],
+        [
+          90.7,
+          -14.3
+        ],
+        [
+          89.3,
+          -12.4
+        ],
+        [
+          86.7,
+          -10.6
+        ],
+        [
+          82.5,
+          -9.6
+        ],
+        [
+          89.3,
+          -8.5
+        ],
+        [
+          91.1,
+          -7
+        ],
+        [
+          93.6,
+          -1.1
+        ]
+      ]
+    }
+  ],
+  "aprons": [
+    {
+      "surface": null,
+      "polygon": [
+        [
+          28.4,
+          11
+        ],
+        [
+          25.8,
+          -10.3
+        ],
+        [
+          46.4,
+          -12.6
+        ],
+        [
+          49.5,
+          -8.9
+        ],
+        [
+          50.8,
+          3.1
+        ],
+        [
+          48.5,
+          8.8
+        ],
+        [
+          28.4,
+          11
+        ]
+      ]
+    }
+  ],
+  "buildings": [
+    {
+      "kind": "terminal",
+      "heightM": null,
+      "polygon": [
+        [
+          34.5,
+          45.9
+        ],
+        [
+          46.9,
+          44.9
+        ],
+        [
+          45.4,
+          25
+        ],
+        [
+          32.9,
+          25.9
+        ],
+        [
+          34.5,
+          45.9
+        ]
+      ]
+    },
+    {
+      "kind": "hangar",
+      "heightM": null,
+      "polygon": [
+        [
+          28.4,
+          11
+        ],
+        [
+          8.8,
+          13.3
+        ],
+        [
+          6.2,
+          -7.9
+        ],
+        [
+          25.8,
+          -10.3
+        ],
+        [
+          28.4,
+          11
+        ]
+      ]
+    }
+  ],
+  "helipads": [],
+  "parkingPositions": [],
+  "holdingPositions": [
+    {
+      "xy": [
+        28.5,
+        -4.7
+      ],
+      "ref": null,
+      "runway": "02/20",
+      "source": "derivado"
+    }
+  ],
+  "windsocks": [],
+  "visualAids": []
+}

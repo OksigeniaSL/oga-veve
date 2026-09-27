@@ -133,6 +133,7 @@ export const EN: Dictionary = {
   "scenario.estigarribia.name": "Mariscal Estigarribia · the Chaco",
   "scenario.pedroJuan.name": "Pedro Juan Caballero · Amambay",
   "scenario.encarnacion.name": "Encarnación · the Paraná",
+  "scenario.concepcion.name": "Concepción · the north",
   "scenario.valle.name": "Cordillera Valley",
   "scenario.pettirossi.name": "Silvio Pettirossi",
   "scenario.yvytu.name": "Yvytu Rape · Granja Óga",

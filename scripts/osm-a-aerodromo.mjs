@@ -492,6 +492,46 @@ function pistasCosidas(trozos) {
   return juntos;
 }
 
+/**
+ * **El designador de una pista que OpenStreetMap trae sin él**, sacado de
+ * dónde caen sus puntas.
+ *
+ * Se vio en Concepción: el asfalto está mapeado, con su anchura y su
+ * superficie, pero sin `ref`. Sin designador no se reparten los umbrales, y
+ * el aeródromo salía con una pista de 1.843 metros y ningún sitio por donde
+ * entrar en ella — inservible, aunque los dos datos estaban.
+ *
+ * Esto no inventa nada. OurAirports sí sabe el designador y dónde está cada
+ * umbral; lo único que faltaba era saber que **esa** raya de OpenStreetMap es
+ * **esa** pista. Y eso lo dice la geometría: si cada punta del eje cae junto a
+ * un umbral de la misma pista de OurAirports, es ella. Ciento cincuenta
+ * metros, que es de sobra para un umbral desplazado o una punta dibujada a
+ * ojo y demasiado poco para confundir dos pistas distintas. Si no casa
+ * ninguna, sigue sin designador, que es lo honrado.
+ */
+function refPorLasPuntas(eje, suyas, proj) {
+  if (eje.length < 2) return "";
+  const CASA = 150;
+  const puntas = [eje[0], eje[eje.length - 1]];
+  for (const p of suyas) {
+    const umbrales = ["le", "he"].map((lado) => {
+      const lat = num(p[`${lado}_latitude_deg`]);
+      const lon = num(p[`${lado}_longitude_deg`]);
+      return lat === null || lon === null ? null : proj(lat, lon);
+    });
+    if (umbrales.some((u) => u === null) || !p.le_ident || !p.he_ident) continue;
+    const cerca = (u) =>
+      Math.min(...puntas.map((q) => Math.hypot(q[0] - u[0], q[1] - u[1])));
+    if (umbrales.every((u) => cerca(u) < CASA)) {
+      process.stdout.write(
+        `  (la pista no trae ref en OpenStreetMap: sus puntas casan con la ${p.le_ident}/${p.he_ident} de OurAirports)\n`,
+      );
+      return `${p.le_ident}/${p.he_ident}`;
+    }
+  }
+  return "";
+}
+
 /** El aeródromo entero, listo para escribir. */
 async function construir(icao, pistas, aeropuertos) {
   process.stdout.write(`→ ${icao}\n`);
@@ -531,10 +571,10 @@ async function construir(icao, pistas, aeropuertos) {
   const de = (tipo) => elementos.filter((e) => e.tags?.aeroway === tipo);
 
   const runways = pistasCosidas(de("runway")).map((w) => {
-    const ref = w.tags.ref ?? "";
-    const [a, b] = ref.split("/");
     const eje = camino(w, proj);
     const suyas = pistas.filter((p) => p.airport_ident === icao);
+    const ref = w.tags.ref || refPorLasPuntas(eje, suyas, proj);
+    const [a, b] = ref.split("/");
     const suya =
       suyas.find((r) => `${r.le_ident}/${r.he_ident}` === ref) ?? suyas[0];
     const anchoPies = suya ? num(suya.width_ft) : null;

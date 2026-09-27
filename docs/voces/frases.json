@@ -1,5 +1,12 @@
 [
   {
+    "id": "vuelo.solo-vuelta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Desde acá, vuelta al campo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.estacionado",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -1036,6 +1043,27 @@
     "para": "la megafonía de cabina, para el pasaje"
   },
   {
+    "id": "comandante.bienvenida.concepcion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Concepción.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.pedro-juan",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Pedro Juan Caballero.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.bienvenida.estigarribia",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, buenas, les habla la comandante Jazlyn. Bienvenidos a bordo de este vuelo a Mariscal Estigarribia.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
     "id": "comandante.bienvenida.yvytu-rape",
     "voz": "comandante",
     "idioma": "es-PY",
@@ -1271,6 +1299,41 @@
     "voz": "comandante",
     "idioma": "es-PY",
     "texto": "Señores pasajeros, Pedro Juan Caballero. Dos países, una calle y un solo aeropuerto: éste. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.concepcion",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, bienvenidos a Concepción. Del otro lado del río Paraguay empieza el Chaco, y de acá para el norte el río es el camino. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje"
+  },
+  {
+    "id": "comandante.llegada.concepcion~2",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Concepción. Por este río bajaban los barcos a Asunción cuando no había otro camino al norte. Gracias por acompañarnos.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.concepcion~3",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, estamos en Concepción. Enfrente, del otro lado del río Paraguay, ya es el Chaco: más de la mitad del país, y la parte donde vive menos gente. Gracias por venir.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.concepcion~4",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Bienvenidos a Concepción, la perla del norte. Desde acá, río arriba, están Vallemí, Fuerte Olimpo y Bahía Negra. Gracias por volar con nosotros.",
+    "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
+  },
+  {
+    "id": "comandante.llegada.concepcion~5",
+    "voz": "comandante",
+    "idioma": "es-PY",
+    "texto": "Señores pasajeros, Concepción. Doscientos kilómetros de Asunción en línea recta, y por el río bastantes más. Gracias por acompañarnos.",
     "para": "la megafonía de cabina, para el pasaje · otra forma de decirlo"
   },
   {
@@ -2531,6 +2594,27 @@
     "voz": "torre",
     "idioma": "es",
     "texto": "Yvytu Rape",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.concepcion",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Concepción",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.pedro-juan",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Pedro Juan Caballero",
+    "para": "el destino, en la autorización de la torre"
+  },
+  {
+    "id": "destino.estigarribia",
+    "voz": "torre",
+    "idioma": "es",
+    "texto": "Mariscal Estigarribia",
     "para": "el destino, en la autorización de la torre"
   },
   {

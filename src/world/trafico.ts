@@ -305,7 +305,8 @@ export const TIPOS: Readonly<Record<TipoDeTrafico["id"], TipoDeTrafico>> = {
  *
  * Mirado campo a campo: en Asunción salen reactores de pasaje a diario y hay
  * aeroclub; en Ciudad del Este, reactores y aviación general; en Encarnación,
- * Mariscal Estigarribia y Pedro Juan Caballero casi solo aviación general. En
+ * Mariscal Estigarribia y Pedro Juan Caballero casi solo aviación general; en
+ * Concepción, el turbohélice del transporte aéreo militar y avionetas. En
  * Canarias el regional de ala alta une todas las islas, y en las pistas
  * largas entran además los reactores; El Hierro y La Gomera, con mil
  * doscientos y mil quinientos metros, son solo del turbohélice. Cuatro
@@ -317,6 +318,9 @@ const OPERAN: Readonly<Record<string, readonly TipoDeTrafico["id"][]>> = {
   SGEN: ["avioneta", "bimotor"],
   SGME: ["avioneta"],
   SGPJ: ["avioneta"],
+  // El CASA 212 del transporte militar, que es la línea que llega, y el
+  // aeroclub de la ciudad.
+  SGCO: ["turbohelice", "avioneta", "avioneta"],
   GCLP: ["reactor", "turbohelice", "turbohelice", "avioneta"],
   GCXO: ["turbohelice", "turbohelice", "reactor", "avioneta"],
   GCTS: ["reactor", "reactor", "turbohelice"],

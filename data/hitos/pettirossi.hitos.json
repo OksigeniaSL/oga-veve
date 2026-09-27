@@ -8,6 +8,24 @@
   },
   "hitos": [
     {
+      "nombre": "Isla San Martin",
+      "clase": "isla",
+      "lat": -27.56299,
+      "lon": -56.69651,
+      "x": 82748,
+      "z": 258288,
+      "ele": null
+    },
+    {
+      "nombre": "Isla Meza",
+      "clase": "isla",
+      "lat": -27.41466,
+      "lon": -58.76659,
+      "x": -125458,
+      "z": 241794,
+      "ele": null
+    },
+    {
       "nombre": "Isla Ypecuá",
       "clase": "isla",
       "lat": -25.00793,
@@ -17,30 +35,12 @@
       "ele": null
     },
     {
-      "nombre": "Isla Laguna",
+      "nombre": "Isla San Mateo",
       "clase": "isla",
-      "lat": -25.675,
-      "lon": -57.76254,
-      "x": -24472,
-      "z": 48353,
-      "ele": null
-    },
-    {
-      "nombre": "Isla Itá-Pirú",
-      "clase": "isla",
-      "lat": -25.58188,
-      "lon": -57.61583,
-      "x": -9716,
-      "z": 37998,
-      "ele": null
-    },
-    {
-      "nombre": "Riacho Hondo",
-      "clase": "isla",
-      "lat": -24.84635,
-      "lon": -57.28987,
-      "x": 23068,
-      "z": -43790,
+      "lat": -28.48656,
+      "lon": -55.9396,
+      "x": 158877,
+      "z": 360984,
       "ele": null
     },
     {
@@ -62,31 +62,31 @@
       "ele": null
     },
     {
-      "nombre": "Luque",
+      "nombre": "Corrientes",
       "clase": "ciudad",
-      "lat": -25.26654,
-      "lon": -57.49269,
-      "x": 2669,
-      "z": 2934,
+      "lat": -27.4687,
+      "lon": -58.8312,
+      "x": -131957,
+      "z": 247803,
       "ele": null
     },
     {
-      "nombre": "Villa Elisa",
+      "nombre": "Resistencia",
       "clase": "ciudad",
-      "lat": -25.37152,
-      "lon": -57.58983,
-      "x": -7101,
-      "z": 14607,
-      "ele": 116
+      "lat": -27.45111,
+      "lon": -58.98652,
+      "x": -147579,
+      "z": 245847,
+      "ele": null
     },
     {
-      "nombre": "Itauguá",
+      "nombre": "Ciudad del Este",
       "clase": "ciudad",
-      "lat": -25.39473,
-      "lon": -57.35329,
-      "x": 16690,
-      "z": 17188,
-      "ele": 170
+      "lat": -25.5169,
+      "lon": -54.61686,
+      "x": 291917,
+      "z": 30773,
+      "ele": null
     }
   ]
 }

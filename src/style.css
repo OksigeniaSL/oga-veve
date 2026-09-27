@@ -7833,6 +7833,150 @@ button.motor__tecla::after {
   height: 64%;
 }
 
+/*
+ * **El país, como la primera ficha de destino.** Ver `ui/mapa-del-pais.ts`.
+ *
+ * Una ficha más de la rejilla y no una franja encima: puesta encima, en un
+ * teléfono tumbado empujaba las fichas —que son los mandos— por debajo del
+ * borde, y lo que no se ve para quien no lee no existe. Como ficha ocupa un
+ * hueco y las demás siguen a la vista.
+ *
+ * Dentro, el país guarda su proporción: la silueta va en SVG estirado a la
+ * caja —`preserveAspectRatio="none"`—, así que el lienzo tiene que tener
+ * exactamente su forma o el Paraguay saldría apaisado. Se mide contra la
+ * ficha con unidades de contenedor y se centra.
+ */
+.pais {
+  position: relative;
+  container-type: size;
+  min-height: 150px;
+  border-radius: var(--r-l);
+  background: var(--barro-claro);
+  background-image: var(--barniz);
+  box-shadow: var(--filo), var(--poso);
+}
+
+/*
+ * Y un archipiélago tumbado ocupa dos huecos: Canarias mide tres veces más de
+ * ancho que de alto, y en uno solo las islas salían del tamaño de los rótulos.
+ */
+.pais--apaisado {
+  grid-column: span 2;
+}
+
+.pais__lienzo {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(calc(100cqw - 44px), calc((100cqh - 24px) * var(--proporcion, 1)));
+  height: min(calc(100cqh - 24px), calc((100cqw - 44px) / var(--proporcion, 1)));
+}
+
+.pais__dibujo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.pais__tierra {
+  fill: rgb(228 226 218 / 0.1);
+  stroke: var(--tinta-suave);
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.pais__ruta {
+  stroke-width: 3px;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.pais__ruta--cabe {
+  stroke: var(--ocre);
+}
+
+/* La de un avión que no llega: a trazos y apagada, como su ficha. */
+.pais__ruta--no {
+  stroke: var(--tinta-suave);
+  stroke-dasharray: 6px 6px;
+  opacity: 0.45;
+}
+
+.pais__ruta--elegida {
+  stroke: var(--ocre-tinta);
+  stroke-width: 5px;
+}
+
+/*
+ * Los campos. El punto es pequeño para que el mapa se lea, y el sitio donde
+ * se toca no: el `::before` lo agranda hasta el dedo de un niño sin
+ * agrandar el dibujo.
+ */
+.pais__campo {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid var(--tinta);
+  border-radius: 50%;
+  background: var(--verde-bosque);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.pais__campo::before {
+  content: "";
+  position: absolute;
+  inset: -15px;
+  border-radius: 50%;
+}
+
+.pais__campo--cabe {
+  background: var(--ocre);
+}
+
+.pais__campo--salida {
+  width: 18px;
+  height: 18px;
+  background: var(--tinta);
+  border-color: var(--ocre);
+  border-width: 4px;
+}
+
+.pais__campo--elegido {
+  box-shadow: 0 0 0 5px rgb(242 176 92 / 0.45);
+}
+
+.pais__campo--no {
+  opacity: 0.55;
+}
+
+/* Un campo sin ruta desde aquí: se ve que existe, y no se toca. */
+.pais__campo--sin-ruta {
+  width: 9px;
+  height: 9px;
+  border-width: 1.5px;
+  background: transparent;
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pais__oaci {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translate(5px, -50%);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--tinta-suave);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* Lo que pide y lo que hay: para quien lee, debajo del nombre. */
 .ficha__cuenta {
   font-size: 13px;
