@@ -100,6 +100,7 @@ instructor	instructor/vuelo.sinMotor.ogg	es-PY	No tenemos motor: bajamos la nari
 instructor	instructor/vuelo.planeoLento.ogg	es-PY	Vamos lentos: bajá un poco la nariz	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.planeoRapido.ogg	es-PY	Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.laOtraPunta.ogg	es-PY	Esa no es la pista en uso: hoy el viento manda entrar por la otra punta	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.salidaSiguiente.ogg	es-PY	Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alAireOtraPunta.ogg	es-PY	Por esa punta no: andate al aire y volvé por la otra	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.alAireVientoDeCola.ogg	es-PY	Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sacaElTren.ogg	es-PY	Sacá el tren	lo que toca hacer ahora, en vuelo y en tierra
@@ -341,6 +342,34 @@ otro	otro/fonetico.whiskey.ogg	es	Whiskey	una letra del indicativo
 otro	otro/fonetico.xray.ogg	es	X-ray	una letra del indicativo
 otro	otro/fonetico.yankee.ogg	es	Yankee	una letra del indicativo
 otro	otro/fonetico.zulu.ogg	es	Zulu	una letra del indicativo
+instructor	instructor/matricula.nuestroAvion.ogg	es-PY	Nuestro avión es	al empezar, antes de las letras de la matrícula
+instructor	instructor/matricula.asiNosLlama.ogg	es-PY	Así nos llama la torre.	y detrás de las letras
+instructor	instructor/fonetico.alfa.ogg	es-PY	Alfa	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.bravo.ogg	es-PY	Bravo	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.charlie.ogg	es-PY	Charlie	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.delta.ogg	es-PY	Delta	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.echo.ogg	es-PY	Echo	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.foxtrot.ogg	es-PY	Foxtrot	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.golf.ogg	es-PY	Golf	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.hotel.ogg	es-PY	Hotel	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.india.ogg	es-PY	India	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.juliett.ogg	es-PY	Juliett	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.kilo.ogg	es-PY	Kilo	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.lima.ogg	es-PY	Lima	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.mike.ogg	es-PY	Mike	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.november.ogg	es-PY	November	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.oscar.ogg	es-PY	Oscar	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.papa.ogg	es-PY	Papa	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.quebec.ogg	es-PY	Quebec	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.romeo.ogg	es-PY	Romeo	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.sierra.ogg	es-PY	Sierra	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.tango.ogg	es-PY	Tango	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.uniform.ogg	es-PY	Uniform	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.victor.ogg	es-PY	Victor	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.whiskey.ogg	es-PY	Whiskey	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.xray.ogg	es-PY	X-ray	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.yankee.ogg	es-PY	Yankee	una letra de nuestra matrícula, dicha al empezar
+instructor	instructor/fonetico.zulu.ogg	es-PY	Zulu	una letra de nuestra matrícula, dicha al empezar
 otro	otro/otro.solo.buenosDias.ogg	es	Buenos días,	el saludo, antes del indicativo
 otro	otro/otro.solo.rodando.ogg	es	rodando a la cabecera	sale del puesto
 otro	otro/otro.solo.enCola.ogg	es	viento en cola	entra en el circuito
@@ -390,6 +419,7 @@ torre	torre/torre.solo.clearedTakeoff.ogg	en	cleared for take-off	el permiso
 torre	torre/torre.solo.clearedLand.ogg	en	cleared to land	el de llegada
 torre	torre/torre.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada
 torre	torre/torre.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya
+torre	torre/torre.solo.vacateNext.ogg	en	vacate next available	te pasaste la salida: dejá la pista por la próxima
 torre	torre/torre.solo.landingTraffic.ogg	en	landing traffic	se espera: uno viene a aterrizar
 torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
@@ -402,6 +432,38 @@ torre	torre/viento.degrees.ogg	en	degrees	detrás de la dirección del viento
 torre	torre/viento.knots.ogg	en	knots	detrás de la fuerza del viento
 torre	torre/viento.calm.ogg	en	calm	sin viento: «wind calm»
 torre	torre/viento.variable.ogg	en	variable	viento sin dirección fija
+torre	torre/trafico.traffic.ogg	en	traffic	información de tráfico: empieza así
+torre	torre/trafico.hora.1.ogg	en	one o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.2.ogg	en	two o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.3.ogg	en	three o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.4.ogg	en	four o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.5.ogg	en	five o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.6.ogg	en	six o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.7.ogg	en	seven o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.8.ogg	en	eight o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.9.ogg	en	nine o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.10.ogg	en	ten o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.11.ogg	en	eleven o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.hora.12.ogg	en	twelve o'clock	dónde está el otro, en la hora del reloj
+torre	torre/trafico.millas.1.ogg	en	one mile	a qué distancia
+torre	torre/trafico.millas.2.ogg	en	two miles	a qué distancia
+torre	torre/trafico.millas.3.ogg	en	three miles	a qué distancia
+torre	torre/trafico.millas.4.ogg	en	four miles	a qué distancia
+torre	torre/trafico.millas.5.ogg	en	five miles	a qué distancia
+torre	torre/trafico.millas.6.ogg	en	six miles	a qué distancia
+torre	torre/trafico.pies.3.ogg	en	three hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.4.ogg	en	four hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.5.ogg	en	five hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.6.ogg	en	six hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.7.ogg	en	seven hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.8.ogg	en	eight hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.9.ogg	en	niner hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.10.ogg	en	one thousand feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.11.ogg	en	one thousand one hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.pies.12.ogg	en	one thousand two hundred feet	cuánto más alto o más bajo
+torre	torre/trafico.above.ogg	en	above	va por encima
+torre	torre/trafico.below.ogg	en	below	va por debajo
+torre	torre/trafico.sameLevel.ogg	en	same level	va a tu misma altura
 torre	torre/torre.solo.aterrizar.ogg	es	podés aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre-canarias	torre-canarias/torre.canario.solo.aterrizar.ogg	es	puedes aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre	torre/torre.solo.destino.ogg	es	podés volar a	a dónde se va, antes de rodar; el campo va detrás
@@ -465,6 +527,7 @@ torre-canarias	torre-canarias/torre.canario.solo.clearedTakeoff.ogg	en	cleared f
 torre-canarias	torre-canarias/torre.canario.solo.clearedLand.ogg	en	cleared to land	el de llegada, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.goAround.ogg	en	go around, runway occupied	la pista está ocupada, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.holdShort.ogg	en	hold short of the runway	pará en la doble raya, en Canarias
+torre-canarias	torre-canarias/torre.canario.solo.vacateNext.ogg	en	vacate next available	te pasaste la salida: dejá la pista por la próxima, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.landingTraffic.ogg	en	landing traffic	se espera: uno viene a aterrizar, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
@@ -477,3 +540,35 @@ torre-canarias	torre-canarias/viento.degrees.ogg	en	degrees	detrás de la direcc
 torre-canarias	torre-canarias/viento.knots.ogg	en	knots	detrás de la fuerza del viento, en Canarias
 torre-canarias	torre-canarias/viento.calm.ogg	en	calm	sin viento: «wind calm», en Canarias
 torre-canarias	torre-canarias/viento.variable.ogg	en	variable	viento sin dirección fija, en Canarias
+torre-canarias	torre-canarias/trafico.traffic.ogg	en	traffic	información de tráfico: empieza así, en Canarias
+torre-canarias	torre-canarias/trafico.hora.1.ogg	en	one o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.2.ogg	en	two o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.3.ogg	en	three o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.4.ogg	en	four o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.5.ogg	en	five o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.6.ogg	en	six o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.7.ogg	en	seven o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.8.ogg	en	eight o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.9.ogg	en	nine o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.10.ogg	en	ten o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.11.ogg	en	eleven o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.hora.12.ogg	en	twelve o'clock	dónde está el otro, en la hora del reloj, en Canarias
+torre-canarias	torre-canarias/trafico.millas.1.ogg	en	one mile	a qué distancia, en Canarias
+torre-canarias	torre-canarias/trafico.millas.2.ogg	en	two miles	a qué distancia, en Canarias
+torre-canarias	torre-canarias/trafico.millas.3.ogg	en	three miles	a qué distancia, en Canarias
+torre-canarias	torre-canarias/trafico.millas.4.ogg	en	four miles	a qué distancia, en Canarias
+torre-canarias	torre-canarias/trafico.millas.5.ogg	en	five miles	a qué distancia, en Canarias
+torre-canarias	torre-canarias/trafico.millas.6.ogg	en	six miles	a qué distancia, en Canarias
+torre-canarias	torre-canarias/trafico.pies.3.ogg	en	three hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.4.ogg	en	four hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.5.ogg	en	five hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.6.ogg	en	six hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.7.ogg	en	seven hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.8.ogg	en	eight hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.9.ogg	en	niner hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.10.ogg	en	one thousand feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.11.ogg	en	one thousand one hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.pies.12.ogg	en	one thousand two hundred feet	cuánto más alto o más bajo, en Canarias
+torre-canarias	torre-canarias/trafico.above.ogg	en	above	va por encima, en Canarias
+torre-canarias	torre-canarias/trafico.below.ogg	en	below	va por debajo, en Canarias
+torre-canarias	torre-canarias/trafico.sameLevel.ogg	en	same level	va a tu misma altura, en Canarias

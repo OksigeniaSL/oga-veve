@@ -919,6 +919,18 @@ export const ES_PY = {
   "vuelo.laOtraPunta":
     "Esa no es la pista en uso: hoy el viento manda entrar por la otra punta",
   "palabra.otraPunta": "La otra punta",
+  /*
+   * Pasarse la salida y seguir hasta la próxima: lo que dice la torre como
+   * «vacate next available», contado en casa. Ver `decirSalPorLaSiguiente`.
+   */
+  "vuelo.salidaSiguiente":
+    "Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima",
+  "palabra.salidaSiguiente": "La próxima",
+  /*
+   * La matrícula, presentada al empezar: la torre te llama así. Se monta con
+   * las piezas del alfabeto; ver `presentarLaMatricula` en `game.ts`.
+   */
+  "vuelo.nuestroAvion": "Nuestro avión es {indicativo}. Así nos llama la torre",
   "vuelo.alAireOtraPunta": "Por esa punta no: andate al aire y volvé por la otra",
   "vuelo.alAireVientoDeCola":
     "Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta",

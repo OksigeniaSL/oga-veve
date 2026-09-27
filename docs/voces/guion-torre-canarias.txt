@@ -52,6 +52,7 @@ cleared for take-off
 cleared to land
 go around, runway occupied
 hold short of the runway
+vacate next available
 landing traffic
 departing traffic
 line up and wait
@@ -64,3 +65,35 @@ degrees
 knots
 calm
 variable
+traffic
+one o'clock
+two o'clock
+three o'clock
+four o'clock
+five o'clock
+six o'clock
+seven o'clock
+eight o'clock
+nine o'clock
+ten o'clock
+eleven o'clock
+twelve o'clock
+one mile
+two miles
+three miles
+four miles
+five miles
+six miles
+three hundred feet
+four hundred feet
+five hundred feet
+six hundred feet
+seven hundred feet
+eight hundred feet
+niner hundred feet
+one thousand feet
+one thousand one hundred feet
+one thousand two hundred feet
+above
+below
+same level

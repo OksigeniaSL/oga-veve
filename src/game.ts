@@ -92,6 +92,7 @@ import {
 import {
   alturaDelOtro,
   InformacionDeTrafico,
+  informacionEnPiezas,
   informacionEnRadio,
   ladoDeLaHora,
 } from "./flight/informacion-de-trafico";
@@ -119,10 +120,13 @@ import {
   type Leccion,
 } from "./flight/lecciones";
 import {
+  atisEnTexto,
   deFrente,
   pedirMetar,
   TIEMPO_DE_CASA,
+  tiempoEntreCampos,
   vientoComoVector,
+  vientoDeCasa,
   type Meteo,
 } from "./world/meteo";
 
@@ -1321,8 +1325,22 @@ export class Game {
     if (conCifras && this.hayTorreQueHable()) {
       const yo = this.miIndicativo;
       const texto = informacionEnRadio(yo.dicho, a);
-      this.torre.decir(texto, "torre.trafico", "normal", rellenoDe(yo));
-      this.hud.radio(texto);
+      /*
+       * **Y grabada, en la torre de cada sitio.** Iba con el texto montado y
+       * sin receta, así que la decía siempre la voz del navegador —otra
+       * persona, y en Brave para Linux, nadie—. Ahora la hora, las millas y
+       * la altura son piezas, y la clave lleva el habla del campo: en
+       * Canarias la dice su torre. Ver `informacionEnPiezas`.
+       */
+      const clave = comoSeDiceAqui(
+        "torre.trafico",
+        hablaDe(this.elCampo().escenario.aerodrome?.id),
+      );
+      this.torre.decir(texto, clave, "normal", {
+        ...rellenoDe(yo),
+        ...informacionEnPiezas(a),
+      });
+      this.hud.radio(texto, undefined, true);
       return;
     }
     const clave =
@@ -1998,6 +2016,7 @@ export class Game {
     this.tormentasDichas.clear();
     this.tcas.reiniciar();
     this.informacionDeTrafico.reiniciar();
+    this.atisDado = "";
     this.faseAnunciada = "";
     this.runwayGuide.reset();
     this.landing.reset();
@@ -3008,13 +3027,15 @@ export class Game {
      */
     for (const [i, quien] of (options.vecinos ?? []).entries()) {
       /*
-       * **Con el viento de hoy, que es el mismo en todo el mundo.** El
-       * aeródromo se construye con él —la manga tiesa o colgando— y de él sale
-       * por qué cabecera se opera. Se montaba en calma: en Los Rodeos la manga
-       * colgaba a plomo mientras el avión recibía veinte nudos de Gando. Ver
-       * `ponerTiempo`.
+       * **Con su tiempo, no con el de casa.** El aeródromo se construye con
+       * él —la manga tiesa o colgando— y de él sale por qué cabecera se opera.
+       * Se montaba en calma, y después con el parte del campo de salida, que
+       * mandaba también a doscientos kilómetros: llegando a El Hierro desde La
+       * Palma, con el 150/3 de La Palma. Ahora cada campo empieza con su
+       * tiempo típico y su METAR llega después, sin esperar a nadie. Ver
+       * `tiempoDeUnVecino` y `ponerTiempoDe`.
        */
-      const meteo = this.scenario.meteo ?? null;
+      const meteo = this.tiempoDeUnVecino(quien);
       const mundo = new MundoVecino(
         this.scenario,
         meteo ? conViento(quien, meteo) : quien,
@@ -5721,7 +5742,7 @@ export class Game {
     if (montada) {
       this.torre.decir(montada.texto, montada.clave, urgencia, montada.relleno);
       if ((destino || conTira) && this.tier.instruments !== "none")
-        this.hud.radio(montada.texto);
+        this.hud.radio(montada.texto, undefined, true);
     }
   }
 
@@ -5739,7 +5760,7 @@ export class Game {
     const montada = this.deTorre(dice.clave, dice.de);
     if (!montada) return null;
     this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
-    if (this.tier.instruments !== "none") this.hud.radio(montada.texto);
+    if (this.tier.instruments !== "none") this.hud.radio(montada.texto, undefined, false);
     return turnoDe(montada.clave, montada.relleno) ?? null;
   }
 
@@ -5909,7 +5930,7 @@ export class Game {
       this.tier.instruments === "numeric" || this.tier.instruments === "full";
     if (conCifras && conPasaje(this.aircraft.mass))
       this.porRadio("cleared to", "mando", destino);
-    else if (this.tier.instruments !== "none") this.hud.radio(texto);
+    else if (this.tier.instruments !== "none") this.hud.radio(texto, undefined, true);
   }
 
   /** Qué tramo ya tiene su autorización dicha. Ver `autorizarLaRuta`. */
@@ -6466,6 +6487,7 @@ export class Game {
     this.tormentasDichas.clear();
     this.tcas.reiniciar();
     this.informacionDeTrafico.reiniciar();
+    this.atisDado = "";
     this.avisandoDelBulto = 0;
     /*
      * Y la ruta de este vuelo, **antes** del depósito: lo que se carga sale de
@@ -6953,7 +6975,7 @@ export class Game {
       const montada = this.deTorre(dice.clave, dice.de);
       if (!montada) return;
       this.torre.decir(montada.texto, montada.clave, "baja", montada.relleno);
-      if (this.tier.instruments !== "none") this.hud.radio(montada.texto);
+      if (this.tier.instruments !== "none") this.hud.radio(montada.texto, undefined, false);
       return;
     }
 
@@ -6979,7 +7001,7 @@ export class Game {
      * torre. Ver `Urgencia` en `audio/boca.ts`.
      */
     this.otroAvion.decir(texto, dice.clave, "baja", rellenoDe(dice.de));
-    if (this.tier.instruments !== "none") this.hud.radio(texto);
+    if (this.tier.instruments !== "none") this.hud.radio(texto, undefined, false);
   }
 
   /**
@@ -7647,6 +7669,9 @@ export class Game {
      */
     const aire = vientoComoVector(meteo);
     this.flight.ponerViento(aire.x, aire.z);
+    // Y donde haya más de un campo, el de cada uno: ver `seguirElViento`,
+    // que lo rehace en el próximo paso con el avión donde esté.
+    this.desdeElViento = Infinity;
     /*
      * **Y las nubes del parte, que estaban ahí sin usar.**
      *
@@ -7667,32 +7692,20 @@ export class Game {
     this.ponerLluvia(meteo.lluvia, meteo.fuerzaDeLluvia);
     this.terrain.rehacerAerodromo(this.scenario);
     /*
-     * **Y los otros campos, con el mismo viento.**
+     * **Y los otros campos, con el suyo.**
      *
-     * El viento del modelo de vuelo es uno para todo el mundo, y la cabecera
-     * en uso solo la elegía en casa: con 300/15, Los Rodeos como casa operaba
-     * por la 30 y como destino se aterrizaba por la 12 con quince nudos de
-     * cola —la raya, el embudo y la aproximación mandando aterrizar con el
-     * viento a favor—, que es lo contrario de lo que enseña la manga. Ahora
-     * cada vecino elige su cabecera con el viento de hoy y rehace lo que
-     * depende de ella: su aeródromo con su manga, sus luces y, si el plan está
-     * allí, su raya.
+     * Aquí se les ponía a todos el mismo parte, el de casa: con 300/15 en Los
+     * Rodeos, cada vecino elegía cabecera con el viento de Los Rodeos. Era
+     * mejor que lo de antes —el destino con la cabecera de la calma—, pero
+     * seguía siendo el tiempo de otro sitio. Ahora cada campo tiene su parte
+     * —ver `ponerTiempoDe`—, y este solo se reparte a todos **cuando es a
+     * mano**: el panel del tiempo o `?viento=`, que están para ensayar una
+     * situación y la quieren igual en todas partes.
      */
     this.camposHechos = null;
     this.pistasHechas = null;
-    for (const v of this.vecinos) {
-      const antes = v.campo;
-      v.campo = campoVecino(v.base, v.mundo.desplazamiento, v.aerodromo, meteo);
-      const mismo =
-        antes.escenario.meteo?.vientoDe === meteo.vientoDe &&
-        antes.escenario.meteo?.vientoKt === meteo.vientoKt &&
-        antes.pista.heading === v.campo.pista.heading;
-      // Con el mismo viento no hay nada que rehacer: es lo que pasa al
-      // arrancar, que el vecino ya se montó con el parte de hoy.
-      if (mismo) continue;
-      v.mundo.ponerTiempo(v.campo.escenario);
-      if (v.lucesPuestas) this.ponerLucesDelVecino(v);
-    }
+    if (meteo.fuente === "mano")
+      for (const v of this.vecinos) this.tiempoAlVecino(v, meteo);
     // Y otra vez al acabar: lo de dentro del bucle puede haber preguntado
     // dónde se está con la mitad de los vecinos ya cambiados.
     this.pistasHechas = null;
@@ -7730,6 +7743,217 @@ export class Game {
      */
     this.recolocarTrasElMoldeado();
   }
+
+  /**
+   * **El parte de un campo del vuelo que no es el de casa**, cuando llega.
+   *
+   * Lo pide `main.ts` al arrancar, uno por cada campo al que se puede ir, y
+   * lo pone aquí en cuanto contesta el proxy —o no lo pone, si no contesta:
+   * el campo se queda con su tiempo típico—. De él salen su cabecera en uso,
+   * su manga, lo que dice su torre y el viento que empuja al avión cuando se
+   * llega. Con tiempo a mano no se toca: lo que se ensaya manda en todos.
+   */
+  ponerTiempoDe(id: string, meteo: Meteo): void {
+    if (this.scenario.meteo?.fuente === "mano") return;
+    const v = this.vecinos.find((w) => w.base.id === id);
+    if (!v) return;
+    this.camposHechos = null;
+    this.pistasHechas = null;
+    const cambiaLaPista = this.tiempoAlVecino(v, meteo);
+    this.pistasHechas = null;
+    this.camposHechos = null;
+    this.hud.mapa.ponerOtrasPistas(this.vecinos.map((w) => w.campo.pista));
+    // Y si el plan de tierra está allí, su raya va por la cabecera nueva.
+    if (cambiaLaPista && this.plan && v.aerodromo === this.plan.aerodromoActual)
+      this.rehacerPlanDeVuelo();
+    this.desdeElViento = Infinity;
+  }
+
+  /**
+   * Le pone su parte a un vecino y rehace lo que depende de su cabecera: su
+   * aeródromo con su manga y sus luces. Devuelve si la cabecera cambió.
+   *
+   * Con el mismo viento no hay nada que rehacer —es lo que pasa al arrancar,
+   * que el vecino ya se montó con su tiempo—, pero el campo sí se cambia:
+   * trae la presión y las nubes de hoy, que es lo que dice su torre.
+   */
+  private tiempoAlVecino(
+    v: (typeof this.vecinos)[number],
+    meteo: Meteo,
+  ): boolean {
+    const antes = v.campo;
+    v.campo = campoVecino(v.base, v.mundo.desplazamiento, v.aerodromo, meteo);
+    const mismoViento =
+      antes.escenario.meteo?.vientoDe === meteo.vientoDe &&
+      antes.escenario.meteo?.vientoKt === meteo.vientoKt;
+    const mismaPista = antes.pista.heading === v.campo.pista.heading;
+    if (mismoViento && mismaPista) return false;
+    v.mundo.ponerTiempo(v.campo.escenario);
+    if (v.lucesPuestas) this.ponerLucesDelVecino(v);
+    return !mismaPista;
+  }
+
+  /**
+   * El tiempo con el que empieza un vecino: **el suyo**, su viento dominante,
+   * mientras no llegue su METAR. Con el tiempo de casa puesto a mano, ese:
+   * quien pide `?viento=290/14` está ensayando y lo quiere en todas partes.
+   */
+  private tiempoDeUnVecino(quien: Scenario): Meteo {
+    const casa = this.scenario.meteo;
+    return casa?.fuente === "mano" ? casa : vientoDeCasa(quien.vientoDominante);
+  }
+
+  /**
+   * **El viento y la presión donde está el avión**, con el parte de cada
+   * campo. Ver `tiempoEntreCampos`.
+   *
+   * Se recalcula dos veces por segundo, que es de sobra para algo que cambia
+   * a lo largo de cien kilómetros, y de aquí salen el viento del motor de
+   * vuelo, el de la pantalla de navegación y la manga del HUD, y la presión
+   * que de verdad hay para el altímetro. Una cuenta para los tres, para que
+   * no digan cosas distintas.
+   */
+  private seguirElViento(dt: number): void {
+    this.desdeElViento += dt;
+    if (this.desdeElViento < 0.5) return;
+    this.desdeElViento = 0;
+    const campos = [
+      {
+        x: this.scenario.runway.x,
+        z: this.scenario.runway.z,
+        meteo: this.scenario.meteo ?? TIEMPO_DE_CASA,
+      },
+      ...this.vecinos.map((v) => ({
+        x: v.campo.pista.x,
+        z: v.campo.pista.z,
+        meteo: v.campo.escenario.meteo ?? TIEMPO_DE_CASA,
+      })),
+    ];
+    const p = this.flight.state.position;
+    const aqui = tiempoEntreCampos(campos, p.x, p.z);
+    this.vientoAqui = aqui;
+    this.flight.ponerViento(aqui.aire.x, aqui.aire.z);
+    this.qnhDelSitio = aqui.qnh;
+    /*
+     * **Y en los peldaños que no leen cifras, la rueda la gira la
+     * instructora.** La ventanilla de presión es de Taguató para arriba; abajo
+     * no hay a quién pedirle que la ponga, y un altímetro que se desvía ocho
+     * metros por hectopascal al llegar a otro campo enseñaría a desconfiar de
+     * él sin saber por qué.
+     */
+    if (this.tier.instruments === "none" || this.tier.instruments === "pictorial")
+      this.qnhPuesta = Math.round(aqui.qnh);
+    this.darElAtis();
+  }
+
+  /** Lo que se lleva sin recalcular el viento, s. Ver `seguirElViento`. */
+  private desdeElViento = Infinity;
+
+  /** El viento que sopla donde está el avión. Ver `seguirElViento`. */
+  private vientoAqui: ReturnType<typeof tiempoEntreCampos> | null = null;
+
+  /**
+   * **El ATIS del destino, antes de empezar a bajar.**
+   *
+   * Es lo que hace todo piloto antes de la llegada: escuchar el parte del
+   * campo al que va —pista en uso, viento, visibilidad, nubes, temperatura y
+   * QNH— y ponerse el reglaje. Aquí no había nada de eso: el tiempo del
+   * destino era el de la salida y no se decía en ningún sitio.
+   *
+   * De Taguató para arriba, en la tira de la radio y escrito como se imprime
+   * en cabina —ver `atisEnTexto`—, a sesenta kilómetros del destino o al pasar
+   * un poco de la mitad del camino si la ruta es más corta: lo bastante
+   * lejos para ponerse la presión con calma. Abajo no se escribe: ahí el
+   * viento lo dice la manga, dibujado.
+   */
+  private darElAtis(): void {
+    if (this.tier.instruments !== "numeric" && this.tier.instruments !== "full")
+      return;
+    const destino = this.elDestino();
+    const s = this.flight.state;
+    if (!destino || s.onGround) return;
+    const clave = `${this.salidaId}>${destino.id}`;
+    if (clave === this.atisDado) return;
+    const salida = this.campoPorId(this.salidaId);
+    const ruta = salida
+      ? Math.hypot(destino.x - salida.x, destino.z - salida.z)
+      : Infinity;
+    const falta = Math.hypot(destino.x - s.position.x, destino.z - s.position.z);
+    if (falta > Math.min(60000, ruta * 0.6)) return;
+    this.atisDado = clave;
+    const esc = destino.escenario;
+    this.hud.radio(
+      atisEnTexto(
+        destino.oaci ?? esc.aerodrome?.id ?? destino.id,
+        cabeceraEnUso(esc),
+        esc.meteo ?? TIEMPO_DE_CASA,
+        esc.magneticVariation ?? 0,
+      ),
+      14,
+      null,
+    );
+  }
+
+  /** De qué tramo se dio ya el ATIS. Ver `darElAtis`. */
+  private atisDado = "";
+
+  /**
+   * **«Vacate next available»**: te pasaste la salida y la raya ya va por la
+   * siguiente.
+   *
+   * El plan rehacía la raya en silencio —ver `salidasPasadas`—, y quien se
+   * había pasado la salida no sabía si seguir, frenar o dar la vuelta, que
+   * en una pista no se hace. Una torre lo dice con esas palabras: abandone
+   * por la próxima disponible. De Taguató para arriba la dice ella; abajo,
+   * la instructora en casa y con calma, que pasarse una salida es lo más
+   * corriente del mundo. Y la tarjeta con la salida dibujada, en los cuatro.
+   */
+  private decirSalPorLaSiguiente(): void {
+    const dicho = this.avisoCon(
+      "vuelo.salidaSiguiente",
+      "palabra.salidaSiguiente",
+    );
+    this.hud.senal.mostrar("salida", dicho.rotulo, null, { segundos: 4 });
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras && this.hayTorreQueHable())
+      this.porRadio("vacate next available", "mando", undefined, true);
+    else this.instructor.decir(dicho.texto, dicho.id, "normal");
+  }
+
+  /** Con qué plan y cuántas salidas pasadas se llevan dichas. */
+  private salidasDichas: { plan: PlanDeVuelo | null; cuantas: number } = {
+    plan: null,
+    cuantas: 0,
+  };
+
+  /**
+   * **Nuestro avión es Zulu Papa…**: la instructora presenta la matrícula al
+   * empezar, una vez por avión.
+   *
+   * La torre te llama por tu matrícula en el alfabeto, y hasta aquí nadie te
+   * había dicho cuál era: «cuando se dirigen a mí desde la torre "Zulu, Echo,
+   * Juliett, Juliett… permiso para despegar" ¿cómo sé que soy yo?». Se dice
+   * al principio, con las mismas piezas del alfabeto que usa la torre, y la
+   * placa del cuadro se enciende a la vez: lo que se oye y lo que se ve son
+   * lo mismo. Solo donde hay torre que vaya a llamarte.
+   */
+  private presentarLaMatricula(): void {
+    if (!this.leccion.torre) return;
+    const yo = this.miIndicativo;
+    if (this.matriculaPresentada === yo.matricula) return;
+    this.matriculaPresentada = yo.matricula;
+    this.instructor.decir(
+      t("vuelo.nuestroAvion", { indicativo: yo.dicho }),
+      "vuelo.nuestroAvion",
+      "normal",
+      rellenoDe(yo),
+    );
+    this.hud.destacarMatricula();
+  }
+
+  /** De qué matrícula se dijo ya cuál era. Ver `presentarLaMatricula`. */
+  private matriculaPresentada: string | null = null;
 
   /**
    * Pone la nube a una altura **sobre el aeródromo**.
@@ -8270,6 +8494,7 @@ export class Game {
       this.mirarSiChocaConAlgo();
     }
     this.quemarCombustible(dt);
+    this.seguirElViento(dt);
     this.mirarLaCabecera();
     this.mirarSiCambiaDeCampo();
     this.avisarDeLosBultos(dt);
@@ -10091,6 +10316,7 @@ export class Game {
     this.hud.radio(
       `MAYDAY MAYDAY MAYDAY, ${yo.dicho}, fuel exhaustion — ${montada.texto}`,
       9,
+      true,
     );
     this.torre.decir(montada.texto, montada.clave, "mando", montada.relleno);
   }
@@ -11114,6 +11340,18 @@ export class Game {
     );
     this.vistaActual = vista;
     this.flapsTrasLaToma(faseDeAntes, vista.fase);
+    /*
+     * **Y si te pasaste la salida, se dice.** El plan cuenta las veces que
+     * rehace la raya por la siguiente; aquí se dice una vez por cada una.
+     * Ver `decirSalPorLaSiguiente`.
+     */
+    if (this.salidasDichas.plan !== this.plan)
+      this.salidasDichas = { plan: this.plan, cuantas: this.plan.salidasPasadas };
+    else if (this.plan.salidasPasadas > this.salidasDichas.cuantas) {
+      this.salidasDichas.cuantas = this.plan.salidasPasadas;
+      this.decirSalPorLaSiguiente();
+    }
+    this.presentarLaMatricula();
     /*
      * **La pista acaba de pasar a ser tuya**: antes de que la torre te la dé
      * —la lámpara verde y el «cleared to land» se dicen más abajo, en este
@@ -12688,8 +12926,17 @@ export class Game {
     };
   }
 
-  /** Y de dónde sopla hoy, que es dato auxiliar y va en cian. */
+  /**
+   * Y de dónde sopla **aquí**, que es dato auxiliar y va en cian. Era el
+   * del campo de salida en todo el vuelo; ahora es el de donde está el avión,
+   * el mismo que lo empuja. Ver `seguirElViento`.
+   */
   private get vientoDeHoy(): { desde: number; nudos: number } | null {
+    const aqui = this.vientoAqui;
+    if (aqui)
+      return aqui.vientoDe !== null
+        ? { desde: aqui.vientoDe, nudos: aqui.vientoKt }
+        : null;
     const m = this.scenario.meteo;
     return m && m.vientoDe !== null
       ? { desde: m.vientoDe, nudos: m.vientoKt }
@@ -12930,7 +13177,9 @@ export class Game {
      * avión construye uno nuevo y el nuevo nace en calma. Se vería como un
      * viento que desaparece al cambiar de avión en mitad del vuelo.
      */
-    const aire = vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA);
+    const aire =
+      this.vientoAqui?.aire ??
+      vientoComoVector(this.scenario.meteo ?? TIEMPO_DE_CASA);
     modelo.ponerViento(aire.x, aire.z);
     return modelo;
   }

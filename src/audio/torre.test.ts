@@ -13,6 +13,7 @@ import manifiesto from "../../data/voces/torre/manifiesto.json";
 import canarias from "../../data/voces/torre-canarias/manifiesto.json";
 import { recetaDe, type Manifiesto } from "./banco-de-voz";
 import { CLAVE_DE_TORRE, claveDeTorre, PISTA_DETRAS } from "./torre";
+import { informacionEnPiezas } from "../flight/informacion-de-trafico";
 
 describe("lo que dice la torre", () => {
   const grabadas = Object.keys(
@@ -30,6 +31,12 @@ describe("lo que dice la torre", () => {
     "torre.aterrizar",
     // Y a dónde se va, en palabras de casa. Ver `autorizarLaRuta`.
     "torre.destino",
+    /*
+     * Y la información de tráfico, que tampoco es una orden de la tabla: la
+     * pide `informarDelTrafico` por su clave, con la hora, las millas y la
+     * altura en sus huecos. Ver `informacionEnPiezas`.
+     */
+    "torre.trafico",
   ]);
 
   /*
@@ -142,5 +149,54 @@ describe("lo que dice la torre", () => {
             recetaDe(m as Manifiesto, `torre.${habla}${orden}${lado}`, aOtro),
             `${habla}${orden}${lado}`,
           ).not.toBeNull();
+  });
+
+  /*
+   * **La información de tráfico está grabada, en las dos torres**, para
+   * cualquier hora, distancia y altura que pueda salir. Se decía con la voz
+   * del navegador, y en Brave para Linux esa voz es muda: de Taguató para
+   * arriba, el tráfico no se oía.
+   */
+  it("la información de tráfico se monta con cualquier cifra, en las dos voces", () => {
+    const yo = {
+      c1: "fonetico.zulu",
+      c2: "fonetico.papa",
+      c3: "fonetico.alfa",
+      c4: "fonetico.romeo",
+      c5: "fonetico.india",
+    };
+    const PIE = 0.3048;
+    for (const [m, clave] of [
+      [manifiesto, "torre.trafico"],
+      [canarias, "torre.canario.trafico"],
+    ] as const)
+      for (let hora = 1; hora <= 12; hora++)
+        for (const millas of [0.2, 1, 2.6, 4, 5.9, 6.4])
+          for (const pies of [-1250, -900, -310, 0, 120, 305, 640, 1000, 1200]) {
+            const piezas = recetaDe(m as Manifiesto, clave, {
+              ...yo,
+              ...informacionEnPiezas({
+                hora,
+                distancia: millas * 1852,
+                relativa: pies * PIE,
+              }),
+            });
+            expect(piezas, `${clave} ${hora} h ${millas} NM ${pies} ft`).not.toBeNull();
+          }
+  });
+
+  it("y «vacate next available», a quien se pasó la salida, también", () => {
+    expect(claveDeTorre("vacate next available")).toBe("torre.vacateNext");
+    const yo = {
+      c1: "fonetico.echo",
+      c2: "fonetico.charlie",
+      c3: "fonetico.alfa",
+      c4: "fonetico.romeo",
+      c5: "fonetico.sierra",
+    };
+    expect(recetaDe(manifiesto as Manifiesto, "torre.vacateNext", yo)).not.toBeNull();
+    expect(
+      recetaDe(canarias as Manifiesto, "torre.canario.vacateNext", yo),
+    ).not.toBeNull();
   });
 });

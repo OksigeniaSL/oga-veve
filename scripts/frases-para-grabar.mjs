@@ -341,6 +341,16 @@ const TORRE_SOLO = [
   ],
   ["torre.solo.holdShort", "hold short of the runway", "pará en la doble raya"],
   /*
+   * **Y a quien se pasó la salida**: abandone por la próxima disponible. La
+   * raya ya se rehacía sola por la siguiente; faltaba que la torre lo dijera
+   * como se dice. Ver `decirSalPorLaSiguiente` en `src/game.ts`.
+   */
+  [
+    "torre.solo.vacateNext",
+    "vacate next available",
+    "te pasaste la salida: dejá la pista por la próxima",
+  ],
+  /*
    * **Y el porqué de la espera**, detrás de la orden: la información de
    * tráfico que da una torre de verdad a quien deja en el punto de espera.
    * Ver `porQueEsperas` en `src/flight/turno-de-pista.ts`.
@@ -396,6 +406,74 @@ const piezaFonetica = (letra) =>
  * toquen y después el mensaje. Y «buenos días» lleva el indicativo detrás, que
  * es como se saluda por radio.
  */
+/**
+ * **La información de tráfico, en piezas**, para las dos torres.
+ *
+ * «Traffic, two o'clock, three miles, one thousand feet above»: se decía con
+ * el texto montado y sin receta, así que la decía la voz del navegador —y en
+ * Brave para Linux, nadie—. Aquí van las piezas que la montan: la palabra, las
+ * doce horas del reloj, las millas de una a seis —hasta donde mira el TCAS— y
+ * los pies de trescientos a mil doscientos, que es la banda en la que se
+ * avisa. Ver `informacionEnPiezas` en `src/flight/informacion-de-trafico.ts`.
+ *
+ * Sin el habla en el nombre, como el viento: cada torre tiene su pack y las
+ * dos graban `trafico.*` con el mismo nombre. Y las horas enteras, «two
+ * o'clock», y no la cifra suelta: una hora del reloj no se dice cifra a
+ * cifra. Los pies sí van como una altitud, con «niner».
+ */
+const HORAS = [
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+];
+const MILLAS = ["one mile", "two miles", "three miles", "four miles", "five miles", "six miles"];
+const CIENTOS = [
+  [3, "three hundred feet"],
+  [4, "four hundred feet"],
+  [5, "five hundred feet"],
+  [6, "six hundred feet"],
+  [7, "seven hundred feet"],
+  [8, "eight hundred feet"],
+  [9, "niner hundred feet"],
+  [10, "one thousand feet"],
+  [11, "one thousand one hundred feet"],
+  [12, "one thousand two hundred feet"],
+];
+const TRAFICO = [
+  ["trafico.traffic", "traffic", "información de tráfico: empieza así"],
+  ...HORAS.map((h, i) => [
+    `trafico.hora.${i + 1}`,
+    `${h} o'clock`,
+    "dónde está el otro, en la hora del reloj",
+  ]),
+  ...MILLAS.map((m, i) => [`trafico.millas.${i + 1}`, m, "a qué distancia"]),
+  ...CIENTOS.map(([n, pies]) => [`trafico.pies.${n}`, pies, "cuánto más alto o más bajo"]),
+  ["trafico.above", "above", "va por encima"],
+  ["trafico.below", "below", "va por debajo"],
+  ["trafico.sameLevel", "same level", "va a tu misma altura"],
+];
+
+/**
+ * **Y la instructora presenta nuestra matrícula al empezar**: «Nuestro avión
+ * es Zulu Papa Alfa Romeo India. Así nos llama la torre». Se monta con las
+ * letras del alfabeto en su voz —las de la torre están en inglés y por radio,
+ * y esto lo dice ella sentada al lado— y dos trozos alrededor. Ver
+ * `presentarLaMatricula` en `src/game.ts`.
+ */
+const INSTRUCTOR_SOLO = [
+  ["matricula.nuestroAvion", "Nuestro avión es", "al empezar, antes de las letras de la matrícula"],
+  ["matricula.asiNosLlama", "Así nos llama la torre.", "y detrás de las letras"],
+];
+
 const OTRO_SOLO = [
   ["otro.solo.buenosDias", "Buenos días,", "el saludo, antes del indicativo"],
   ["otro.solo.rodando", "rodando a la cabecera", "sale del puesto"],
@@ -520,6 +598,20 @@ for (const letra of FONETICO) {
   });
   total += letra.length;
 }
+for (const [id, texto, para] of INSTRUCTOR_SOLO) {
+  filas.push({ id, voz: "instructor", idioma: "es-PY", texto, para });
+  total += texto.length;
+}
+for (const letra of FONETICO) {
+  filas.push({
+    id: piezaFonetica(letra),
+    voz: "instructor",
+    idioma: "es-PY",
+    texto: letra,
+    para: "una letra de nuestra matrícula, dicha al empezar",
+  });
+  total += letra.length;
+}
 for (const [id, texto, para] of OTRO_SOLO) {
   filas.push({ id, voz: "otro", idioma: "es", texto, para });
   total += texto.length;
@@ -550,7 +642,7 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO]) {
+for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO]) {
   filas.push({ id, voz: "torre", idioma: "en", texto, para });
   total += texto.length;
 }
@@ -646,7 +738,7 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO]) {
+for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO, ...TRAFICO]) {
   filas.push({
     // Las claves llevan el habla en medio para no pisarse con las de casa.
     // Ver `comoSeDiceAqui` en `i18n/habla.ts`.

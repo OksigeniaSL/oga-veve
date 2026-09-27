@@ -418,6 +418,10 @@ export const EN: Dictionary = {
   "vuelo.laOtraPunta":
     "That is not the runway in use: today the wind says land from the other end",
   "palabra.otraPunta": "Other end",
+  "vuelo.salidaSiguiente":
+    "You missed the exit. No problem: keep rolling to the next one",
+  "palabra.salidaSiguiente": "Next one",
+  "vuelo.nuestroAvion": "Our plane is {indicativo}. That is what the tower calls us",
   "vuelo.alAireOtraPunta": "Not from that end: go around and come back to the other one",
   "vuelo.alAireVientoDeCola":
     "With a tailwind you will not stop in time: go around and come back to the other end",

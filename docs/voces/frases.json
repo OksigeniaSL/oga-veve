@@ -739,6 +739,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.salidaSiguiente",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.alAireOtraPunta",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -2442,6 +2449,202 @@
     "para": "una letra del indicativo"
   },
   {
+    "id": "matricula.nuestroAvion",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nuestro avión es",
+    "para": "al empezar, antes de las letras de la matrícula"
+  },
+  {
+    "id": "matricula.asiNosLlama",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Así nos llama la torre.",
+    "para": "y detrás de las letras"
+  },
+  {
+    "id": "fonetico.alfa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Alfa",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.bravo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Bravo",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.charlie",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Charlie",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.delta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Delta",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.echo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Echo",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.foxtrot",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Foxtrot",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.golf",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Golf",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.hotel",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Hotel",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.india",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "India",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.juliett",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Juliett",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.kilo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Kilo",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.lima",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Lima",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.mike",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Mike",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.november",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "November",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.oscar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Oscar",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.papa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Papa",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.quebec",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Quebec",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.romeo",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Romeo",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.sierra",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Sierra",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.tango",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Tango",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.uniform",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Uniform",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.victor",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Victor",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.whiskey",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Whiskey",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.xray",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "X-ray",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.yankee",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Yankee",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
+    "id": "fonetico.zulu",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Zulu",
+    "para": "una letra de nuestra matrícula, dicha al empezar"
+  },
+  {
     "id": "otro.solo.buenosDias",
     "voz": "otro",
     "idioma": "es",
@@ -2785,6 +2988,13 @@
     "para": "pará en la doble raya"
   },
   {
+    "id": "torre.solo.vacateNext",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "vacate next available",
+    "para": "te pasaste la salida: dejá la pista por la próxima"
+  },
+  {
     "id": "torre.solo.landingTraffic",
     "voz": "torre",
     "idioma": "en",
@@ -2867,6 +3077,230 @@
     "idioma": "en",
     "texto": "variable",
     "para": "viento sin dirección fija"
+  },
+  {
+    "id": "trafico.traffic",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "traffic",
+    "para": "información de tráfico: empieza así"
+  },
+  {
+    "id": "trafico.hora.1",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "one o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.2",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "two o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.3",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "three o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.4",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "four o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.5",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "five o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.6",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "six o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.7",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "seven o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.8",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "eight o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.9",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "nine o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.10",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "ten o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.11",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "eleven o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.hora.12",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "twelve o'clock",
+    "para": "dónde está el otro, en la hora del reloj"
+  },
+  {
+    "id": "trafico.millas.1",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "one mile",
+    "para": "a qué distancia"
+  },
+  {
+    "id": "trafico.millas.2",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "two miles",
+    "para": "a qué distancia"
+  },
+  {
+    "id": "trafico.millas.3",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "three miles",
+    "para": "a qué distancia"
+  },
+  {
+    "id": "trafico.millas.4",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "four miles",
+    "para": "a qué distancia"
+  },
+  {
+    "id": "trafico.millas.5",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "five miles",
+    "para": "a qué distancia"
+  },
+  {
+    "id": "trafico.millas.6",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "six miles",
+    "para": "a qué distancia"
+  },
+  {
+    "id": "trafico.pies.3",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "three hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.4",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "four hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.5",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "five hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.6",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "six hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.7",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "seven hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.8",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "eight hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.9",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "niner hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.10",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "one thousand feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.11",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "one thousand one hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.pies.12",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "one thousand two hundred feet",
+    "para": "cuánto más alto o más bajo"
+  },
+  {
+    "id": "trafico.above",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "above",
+    "para": "va por encima"
+  },
+  {
+    "id": "trafico.below",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "below",
+    "para": "va por debajo"
+  },
+  {
+    "id": "trafico.sameLevel",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "same level",
+    "para": "va a tu misma altura"
   },
   {
     "id": "torre.solo.aterrizar",
@@ -3310,6 +3744,13 @@
     "para": "pará en la doble raya, en Canarias"
   },
   {
+    "id": "torre.canario.solo.vacateNext",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "vacate next available",
+    "para": "te pasaste la salida: dejá la pista por la próxima, en Canarias"
+  },
+  {
     "id": "torre.canario.solo.landingTraffic",
     "voz": "torre-canarias",
     "idioma": "en",
@@ -3392,5 +3833,229 @@
     "idioma": "en",
     "texto": "variable",
     "para": "viento sin dirección fija, en Canarias"
+  },
+  {
+    "id": "trafico.traffic",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "traffic",
+    "para": "información de tráfico: empieza así, en Canarias"
+  },
+  {
+    "id": "trafico.hora.1",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "one o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.2",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "two o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.3",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "three o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.4",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "four o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.5",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "five o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.6",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "six o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.7",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "seven o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.8",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "eight o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.9",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "nine o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.10",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "ten o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.11",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "eleven o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.hora.12",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "twelve o'clock",
+    "para": "dónde está el otro, en la hora del reloj, en Canarias"
+  },
+  {
+    "id": "trafico.millas.1",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "one mile",
+    "para": "a qué distancia, en Canarias"
+  },
+  {
+    "id": "trafico.millas.2",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "two miles",
+    "para": "a qué distancia, en Canarias"
+  },
+  {
+    "id": "trafico.millas.3",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "three miles",
+    "para": "a qué distancia, en Canarias"
+  },
+  {
+    "id": "trafico.millas.4",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "four miles",
+    "para": "a qué distancia, en Canarias"
+  },
+  {
+    "id": "trafico.millas.5",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "five miles",
+    "para": "a qué distancia, en Canarias"
+  },
+  {
+    "id": "trafico.millas.6",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "six miles",
+    "para": "a qué distancia, en Canarias"
+  },
+  {
+    "id": "trafico.pies.3",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "three hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.4",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "four hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.5",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "five hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.6",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "six hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.7",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "seven hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.8",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "eight hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.9",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "niner hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.10",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "one thousand feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.11",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "one thousand one hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.pies.12",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "one thousand two hundred feet",
+    "para": "cuánto más alto o más bajo, en Canarias"
+  },
+  {
+    "id": "trafico.above",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "above",
+    "para": "va por encima, en Canarias"
+  },
+  {
+    "id": "trafico.below",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "below",
+    "para": "va por debajo, en Canarias"
+  },
+  {
+    "id": "trafico.sameLevel",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "same level",
+    "para": "va a tu misma altura, en Canarias"
   }
 ]

@@ -70,6 +70,7 @@ import {
 } from "./cristal";
 import { luzDeTren } from "../flight/tren";
 import { bienPuesta } from "../flight/altimetro";
+import { matriculaDe } from "../flight/matricula";
 import { anillosDe } from "../flight/tormentas";
 import { t, type TranslationKey } from "../i18n";
 import {
@@ -219,6 +220,36 @@ const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
   combustible: "combustible",
 };
 
+/**
+ * **La placa de la matrícula**, atornillada al cuadro como en los aviones de
+ * verdad.
+ *
+ * Todo avión lleva su matrícula en una placa del panel, delante de quien
+ * vuela: es lo que se lee para decirla por radio sin tener que acordarse. Y
+ * aquí faltaba justo eso. La matrícula solo iba pintada fuera, en el fuselaje,
+ * y la torre llamaba «Zulu Echo Juliett Juliett» sin que hubiera en la cabina
+ * nada con qué compararlo: «¿cómo sé que soy yo?».
+ *
+ * Abajo a la izquierda, en la franja que queda libre debajo de los
+ * instrumentos en las tres familias, y **en los cuatro peldaños**: no es un
+ * rótulo que se lea, es una forma que se reconoce —la misma que va pintada
+ * en el avión, en la lámpara de la torre y en la tira de la radio—. Chapa
+ * clara y letra negra grabada, distinta de la placa oscura del OACI del
+ * destino. Ver `.placa-matricula` en la hoja.
+ */
+export function placaDeMatricula(matricula: string): string {
+  const ancho = 30 + matricula.length * 14;
+  return `
+      <g class="tablero__matricula" data-hud="placa-matricula"
+         transform="translate(14 ${ALTO_DEL_CUADRO - 32})">
+        <rect width="${ancho}" height="27" rx="3" class="tablero__matricula-chapa" />
+        <circle cx="6" cy="13.5" r="2" class="tablero__matricula-tornillo" />
+        <circle cx="${ancho - 6}" cy="13.5" r="2" class="tablero__matricula-tornillo" />
+        <text x="${ancho / 2}" y="20.5" text-anchor="middle"
+              class="tablero__matricula-letras">${matricula}</text>
+      </g>`;
+}
+
 export class Tablero {
   private raiz: SVGElement | null = null;
   private familia: Familia = "esferas";
@@ -337,6 +368,7 @@ export class Tablero {
       ${this.panelDeAvisos()}
       <text x="${ANCHO_DEL_CUADRO / 2}" y="${ALTO_DEL_CUADRO - 10}"
             ${MARCA_ROTULO} class="tablero__placa" text-anchor="middle">${a.name.toUpperCase()}</text>
+      ${placaDeMatricula(matriculaDe(a.id).matricula)}
     `;
   }
 
