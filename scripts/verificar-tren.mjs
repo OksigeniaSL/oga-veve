@@ -63,15 +63,34 @@ for (const id of [...CON_TREN, ...SIN_TREN]) {
   const visto = await page.evaluate(async (loMete) => {
     const o = globalThis.__oga;
     o.acelerar?.(6);
-    // Se despega y se sube: el tren no se mete con el peso encima.
+    /*
+     * Se despega y se sube: el tren no se mete con el peso encima.
+     *
+     * **Tirando en su Vr, que es cuando se tira.** Se tiraba al pasar de
+     * setenta metros por segundo, el número de un reactor, y los de hélice
+     * despegaban igual porque en tierra el morro se levantaba solo: no había
+     * tren que lo sostuviera. Desde que lo hay —ver `momentoDelTren` en
+     * `fdm.ts`— el bimotor no llega a setenta rodando y se quedaba en la pista.
+     * Ya en el aire, lo de siempre: suelta hasta setenta y tira después, que
+     * tirar desde la Vr de un turbohélice lo mete en un fugoide de cien metros.
+     */
+    const vr = o.avion?.().rotacion ?? 70;
     o.pilotar((c) => {
       c.engineOn = true;
       c.throttle = 1;
       c.brakes = 0;
-      c.elevator = o.estado().airspeed > 70 ? 0.35 : 0;
+      const e = o.estado();
+      c.elevator = e.airspeed > (e.onGround ? vr : 70) ? 0.35 : 0;
     });
     const espera = (ms) => new Promise((r) => setTimeout(r, ms));
-    for (let i = 0; i < 200 && o.estado().heightAboveGround < 500; i++) {
+    /*
+     * **Y con tiempo para llegar arriba.** Veinte segundos de pared bastaban
+     * cuando el tren fuera no costaba nada; ahora cuesta lo suyo y el bimotor
+     * sube a unos cinco metros por segundo con las patas fuera. Quedándose a
+     * ciento cincuenta metros, el nivelado de abajo lo metía en el monte de
+     * detrás de Tenerife Sur antes de pedir el tren.
+     */
+    for (let i = 0; i < 600 && o.estado().heightAboveGround < 500; i++) {
       await espera(100);
     }
     /*
