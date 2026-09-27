@@ -848,6 +848,13 @@ const ALTURA_DE_TOMA = 18;
 const GAS_EN_LA_RECOGIDA = 0.15;
 
 /**
+ * Lo que la instructora dice de la final y de la recogida: al tocar tierra ya
+ * no describe nada. Ver `alTocarTierra`.
+ */
+const DEL_AIRE =
+  /^vuelo\.(?:quitaElGas|yaPodesTocar|lentoYBajo|rapido|pediFlaps|bajasRapido|muyInclinado|minimos|final|aroAlto|aroBajo|papi\w*|terrenoBajo|terrenoSube)(?:[~@].*)?$/;
+
+/**
  * Cuánto antes de la pista se deja de avisar del terreno, m.
  *
  * Trescientos: el umbral se cruza a quince metros, y un avión que viene bien a
@@ -2155,6 +2162,11 @@ export class Game {
   private laRecogida = new AvisosDeAltura([{ metros: 20 * 0.3048, dice: "ahora" }]);
   /** Lo que marcaba el radioaltímetro en el último fotograma, m. */
   private radioAltura: number | null = null;
+  /**
+   * Si en esta toma las ruedas ya han tocado. Empieza en el suelo, que es
+   * donde empieza el vuelo. Ver dónde se apunta.
+   */
+  private yaTocoTierra = true;
   /** La altura sobre la pista en grande: 150, 100 y 50. Ver `escalera.ts`. */
   private alturaEnGrande: AvisosDeAltura;
   /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
@@ -4431,6 +4443,19 @@ export class Game {
       como,
     });
     if (this.cuentaOida.length > 400) this.cuentaOida.shift();
+  }
+
+  /**
+   * **Al tocar tierra, lo que hablaba del aire se retira de la cola.**
+   *
+   * Un «quitá el gas» o un «venís lento» que todavía esperan turno cuando las
+   * ruedas tocan ya no describen nada, y dichos rodando son mentira: es la
+   * misma regla que tira un número de la cuenta que no puede sonar a su
+   * altura. Lo que ya está sonando se deja acabar. Ver `retirar` en
+   * `audio/boca.ts`.
+   */
+  private alTocarTierra(): void {
+    BOCA.retirar((clave) => !!clave && DEL_AIRE.test(clave));
   }
 
   /**
@@ -8120,6 +8145,27 @@ export class Game {
     const aviso = this.avisosDeAltura.paso(lectura);
     if (aviso) this.cantarLaCuenta(aviso);
     this.acompanarLaRecogida(lectura);
+    /*
+     * **Y si en esta toma ya se ha tocado tierra, con las ruedas.**
+     *
+     * La máquina de fases da el avión por «aterrizado» a doce metros del
+     * suelo —es lo que la protege de un bote—, y de ahí colgaban el «frená» y
+     * el «ya podés tocar». Medido con el volcado de voces del JAZ 90 en Los
+     * Rodeos, con el radioaltímetro al lado: «thirty», **«frená»**, «twenty»,
+     * «ten»… y después, ya rodando, «quitá el gas», que había esperado en la
+     * cola detrás del «frená». Pedirle frenar a quien todavía vuela y decirle
+     * lo del aire a quien ya rueda son la misma avería que el «cinco» de la
+     * queja.
+     *
+     * Así que se apunta el contacto de verdad, y se queda apuntado hasta
+     * volver a subir de verdad —treinta metros—, que un bote no es un vuelo.
+     */
+    if (ya.onGround) {
+      if (!this.yaTocoTierra) this.alTocarTierra();
+      this.yaTocoTierra = true;
+    } else if (ya.heightAboveGround - this.aircraft.gearHeight > 30) {
+      this.yaTocoTierra = false;
+    }
 
     /*
      * **Y el número en grande, que es otro peldaño.**
@@ -8593,6 +8639,9 @@ export class Game {
      */
     const puedeTocar =
       !this.flight.state.onGround &&
+      // Y no en el bote de después de tocar: ahí ya se dijo «frená», y «ya
+      // podés tocar» detrás es contar el pasado. Ver `yaTocoTierra`.
+      !this.yaTocoTierra &&
       /*
        * **Y no despegando, que es la tarjeta contraria.**
        *
@@ -11210,6 +11259,9 @@ export class Game {
      * sabe. Es el mismo fallo que ya tuvo el aviso de terreno en la pista.
      */
     const corriendo =
+      // Y con las ruedas en el suelo de verdad, no a doce metros de él. Ver
+      // `yaTocoTierra`.
+      this.yaTocoTierra &&
       (vista.fase === "aterrizado" || vista.fase === "abandonando") &&
       this.flight.state.airspeed > RODAJE_DE_VERDAD;
     if (corriendo !== this.pidiendoFreno) {
@@ -12091,7 +12143,7 @@ export class Game {
       altura: s.heightAboveGround,
       vertical: s.velocity.y,
       alabeo: bankAngleOf(s.orientation),
-    });
+    }, this.actitudDicha);
     if (ahora === this.actitudDicha) return;
     this.actitudDicha = ahora;
     if (!ahora) return;

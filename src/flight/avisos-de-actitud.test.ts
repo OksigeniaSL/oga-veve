@@ -22,6 +22,7 @@ import {
   DEMASIADO_ALTO,
   RECOGIDA,
   ritmoQueSobra,
+  SE_QUITA,
 } from "./avisos-de-actitud";
 
 /** Un avión volando, al que se le cambia lo que haga falta. */
@@ -116,6 +117,37 @@ describe("sink rate", () => {
 
   it("y subiendo, jamás", () => {
     expect(avisoDeActitud(volando({ altura: 60, vertical: 9 }))).toBe(null);
+  });
+});
+
+/*
+ * **Un aviso puesto se quita por dentro, no por su borde.** Con un solo
+ * umbral, bajar rondándolo ponía y quitaba el *sink rate* a cada momento, y
+ * cada vez era un canto nuevo: tres en cinco segundos en Los Rodeos.
+ */
+describe("y los dos avisos no tiemblan en su borde", () => {
+  const umbral = ritmoQueSobra(90);
+  it("el sink rate puesto sigue puesto rondando su umbral", () => {
+    const rozando = volando({ altura: 90, vertical: -(umbral * 0.95) });
+    expect(avisoDeActitud(rozando)).toBe(null);
+    expect(avisoDeActitud(rozando, "sink rate")).toBe("sink rate");
+  });
+
+  it("y se quita al bajar de verdad más despacio", () => {
+    const corregido = volando({
+      altura: 90,
+      vertical: -(umbral * SE_QUITA * 0.95),
+    });
+    expect(avisoDeActitud(corregido, "sink rate")).toBe(null);
+  });
+
+  it("y el alabeo, igual", () => {
+    const casi = volando({ alabeo: ALABEO_QUE_SOBRA * 0.95 });
+    expect(avisoDeActitud(casi)).toBe(null);
+    expect(avisoDeActitud(casi, "bank angle")).toBe("bank angle");
+    expect(
+      avisoDeActitud(volando({ alabeo: ALABEO_QUE_SOBRA * 0.7 }), "bank angle"),
+    ).toBe(null);
   });
 });
 
