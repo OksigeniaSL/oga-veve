@@ -2848,6 +2848,46 @@ button.motor__tecla::after {
   outline-offset: 2px;
 }
 
+/*
+ * **Y en tierra el botón dice que no, con la cabeza.**
+ *
+ * Un piloto automático no engancha con peso en las ruedas —ver
+ * `sePuedeConectar`—, y un botón que no hace nada parece roto. Sacudirse de
+ * lado a lado es el «no» que se entiende a los cuatro años sin leer nada; el
+ * porqué va en la línea de avisos para quien lee. Corto y sin color de
+ * alarma: no ha pasado nada malo, es que todavía no toca.
+ */
+.piloto-auto--no {
+  animation: piloto-dice-que-no 0.42s ease-in-out 1;
+}
+
+@keyframes piloto-dice-que-no {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Sin movimiento, sin sacudida: queda el porqué escrito. Por partida doble,
+   como todas; ver «Movimiento reducido». */
+@media (prefers-reduced-motion: reduce) {
+  .piloto-auto--no {
+    animation: none;
+  }
+}
+
+.sin-movimiento .piloto-auto--no {
+  animation: none;
+}
+
 .cuadro__tirador {
   position: absolute;
   left: 50%;

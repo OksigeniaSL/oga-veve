@@ -2936,6 +2936,24 @@ export class Hud {
     b?.classList.toggle("boton--puesto", puesto);
   }
 
+  /**
+   * El botón del piloto automático, apretado donde no puede engancharse.
+   *
+   * Se sacude —el «no» que se entiende sin leer— y el porqué va en la línea
+   * de avisos. Ver `sePuedeConectar` en `flight/piloto-automatico.ts`.
+   */
+  pilotoAutomaticoNoEngancha(porque: string): void {
+    const b = this.root.querySelector<HTMLElement>('[data-hud="piloto-auto"]');
+    if (b) {
+      b.classList.remove("piloto-auto--no");
+      // Se fuerza el reflujo para que la sacudida vuelva a empezar si se
+      // aprieta dos veces seguidas.
+      void b.offsetWidth;
+      b.classList.add("piloto-auto--no");
+    }
+    if (this.instruments !== "none") this.flash(porque, 3);
+  }
+
   /** Si este peldaño lo trae. Se recuerda: `render()` rehace el marcado. */
   private hayPilotoAuto = false;
 

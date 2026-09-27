@@ -488,6 +488,7 @@ import { Cinturon } from "./flight/cinturon";
 import {
   loSolto,
   mandosPara,
+  sePuedeConectar,
   type Objetivos,
 } from "./flight/piloto-automatico";
 import { MARGENES } from "./flight/minimos";
@@ -10777,6 +10778,20 @@ export class Game {
    * de asustar a quien va dentro.
    */
   ponerPilotoAutomatico(puesto = !this.pilotoPuesto): void {
+    /*
+     * **Y en tierra no engancha**, que es la raíz de la alarma sin motivo.
+     *
+     * Enganchaba, y al fotograma siguiente `conElPilotoAutomatico` lo soltaba
+     * por estar en tierra y cantaba la desconexión: se oía la alarma por
+     * apretar un botón rodando. Ahora el botón contesta que no —se sacude,
+     * que se entiende sin leer, y dice por qué a quien lee— y no pasa nada
+     * más: no hubo nada conectado, así que no hay nada que se suelte. Ver
+     * `sePuedeConectar`.
+     */
+    if (puesto && !sePuedeConectar({ enTierra: this.flight.state.onGround })) {
+      this.hud.pilotoAutomaticoNoEngancha(t("vuelo.pilotoEnTierra"));
+      return;
+    }
     // Al soltarse, la luz de cabina se enciende un rato. Ver `pilotoSeSolto`.
     if (!puesto && this.pilotoPuesto) this.pilotoSeSolto = 10;
     /*

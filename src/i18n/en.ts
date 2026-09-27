@@ -308,6 +308,7 @@ export const EN: Dictionary = {
   "vuelo.bajasRapido": "Sink rate. Ease off",
   "vuelo.muyInclinado": "Bank angle. Level off",
   "vuelo.pilotoSuelto": "Autopilot disconnected",
+  "vuelo.pilotoEnTierra": "The autopilot engages in the air",
   "vuelo.mandanFrustrar": "Runway occupied: go around and rejoin the circuit",
   "percance.ocupada": "The runway was occupied and you were told to go around",
   "vuelo.puedeVolver": "Cleared to try again",

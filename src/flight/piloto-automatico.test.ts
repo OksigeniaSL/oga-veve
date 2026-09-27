@@ -21,6 +21,7 @@ import {
   porElLadoCorto,
   RITMO_MAXIMO,
   CABECEO_MAXIMO,
+  sePuedeConectar,
 } from "./piloto-automatico";
 import { CoefficientFlightModel } from "./fdm";
 import { AIRCRAFT } from "./aircraft";
@@ -147,6 +148,21 @@ describe("y se suelta cuando lo tocan", () => {
     expect(
       loSolto({ rumbo: 0, altitud: null, velocidad: null }, { aileron: 0, elevator: 0.9 }),
     ).toBe(false);
+  });
+});
+
+describe("y en tierra no se conecta", () => {
+  /*
+   * Si se conectara, la regla de «en tierra se suelta» lo soltaría al
+   * fotograma siguiente cantando la desconexión: una alarma por apretar un
+   * botón en la plataforma. Ver `sePuedeConectar`.
+   */
+  it("con peso en las ruedas, el botón no engancha", () => {
+    expect(sePuedeConectar({ enTierra: true })).toBe(false);
+  });
+
+  it("en el aire, sí", () => {
+    expect(sePuedeConectar({ enTierra: false })).toBe(true);
   });
 });
 
