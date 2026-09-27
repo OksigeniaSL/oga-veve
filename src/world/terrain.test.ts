@@ -26,6 +26,7 @@ import {
   type Scenario,
 } from "./scenarios";
 import { uniformesDeOrillas } from "./sky";
+import { esAguaDeCasa } from "./agua-de-casa";
 
 describe("terreno del Valle de la Cordillera", () => {
   const terrain = new Terrain(VALLE_CORDILLERA);
@@ -424,7 +425,14 @@ describe("las orillas que mira el agua", () => {
     const lejos = esc.relieveLejano!;
     for (let c = 0; c < lejos.resolucion; c++) {
       const h = lejos.datos[c]!;
-      expect(nudoDeOrillas(lejana!, c)).toBe(h <= nivel ? -30 : h - nivel);
+      /*
+       * Y tierra adentro, lo que queda muy por debajo de la lámina es tierra
+       * baja y no agua de casa: sale como tierra, con su altura bajo la
+       * lámina en positivo. Ver `esAguaDeCasa`.
+       */
+      expect(nudoDeOrillas(lejana!, c)).toBe(
+        esAguaDeCasa(h, nivel) ? -30 : h <= nivel ? nivel - h : h - nivel,
+      );
     }
   });
 
