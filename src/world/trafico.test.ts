@@ -344,8 +344,61 @@ describe("sin permiso no se toca la pista", () => {
     t.anuncia("EC-ABC", "otro.enCola", false);
     const { bajo, fuera } = loMasBajo(t, 400);
     expect(bajo).toBeGreaterThan(ALTURA_DE_DECISION - 1);
-    // Y lo avisa una vez, al irse: es lo que la frecuencia tiene que saber.
-    expect(fuera).toEqual(["EC-ABC"]);
+    /*
+     * Y lo avisa al irse, una vez por vuelta: es lo que la frecuencia tiene
+     * que saber. Sin permiso no aterriza, así que en cuatrocientos segundos
+     * da dos vueltas y se va al aire en las dos.
+     */
+    expect(fuera).toEqual(["EC-ABC", "EC-ABC"]);
+    t.dispose();
+  });
+
+  /*
+   * **Y después de irse al aire vuelve al circuito, sin desaparecer ni
+   * saltar.** Se retiraba en el aire al acabar su camino, y al cantar otra vez
+   * viento en cola reaparecía en su marca, un par de kilómetros más atrás por
+   * el mismo viento en cola: quien volaba ese tramo lo veía llegar de frente.
+   * Y cada llamada ponía en su marca al que ya se veía: cien metros de salto
+   * del punto de espera al eje con «cleared for take-off», y hasta dos
+   * kilómetros con el viento en cola de la vuelta siguiente.
+   */
+  it("y tras irse al aire da otra vuelta sin saltar, y la cuenta cuando está donde la cuenta", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    const cola = caminos.marcas["otro.enCola"]!;
+    const marcaDeCola = porElCamino(cola.camino, cola.metros)!.sitio;
+    t.anuncia("EC-ABC", "otro.final", false);
+    let antes = t.quienes()[0]!;
+    const saltos: string[] = [];
+    let seFue = -1;
+    let dichoCola = -1;
+    for (let s = 0; s < 600 && dichoCola < 0; s += 0.25) {
+      if (t.paso(0.25).includes("EC-ABC")) seFue = s;
+      const a = t.quienes()[0];
+      expect(a, `${s} s`).toBeDefined();
+      if (entre(antes, a!) > VUELA_A) saltos.push(`${s} s: ${Math.round(entre(antes, a!))} m`);
+      antes = a!;
+      // La frecuencia le hace cantar viento en cola en cuanto el dibujo lo deja.
+      if (seFue >= 0 && !t.todaviaNo("EC-ABC", "otro.enCola")) {
+        dichoCola = s;
+        t.anuncia("EC-ABC", "otro.enCola", false);
+        // Y al decirlo está donde se dice, y no se le mueve.
+        expect(entre(antes, t.quienes()[0]!)).toBeLessThan(0.01);
+        expect(entre(antes, marcaDeCola)).toBeLessThan(VUELA_A);
+      }
+    }
+    expect(seFue).toBeGreaterThan(0);
+    expect(dichoCola).toBeGreaterThan(seFue);
+    expect(saltos).toEqual([]);
+    t.dispose();
+  });
+
+  it("y al que se ve en la espera, «cleared for take-off» no le hace saltar al eje", () => {
+    const t = crearTrafico(PISTA, COTA, "ala-alta");
+    t.anuncia("EC-ABC", "otro.rodando");
+    for (let s = 0; s < 120; s += 0.5) t.paso(0.5);
+    const antes = t.quienes()[0]!;
+    t.anuncia("EC-ABC", "torre.clearedTakeoff");
+    expect(entre(antes, t.quienes()[0]!)).toBeLessThan(0.01);
     t.dispose();
   });
 
