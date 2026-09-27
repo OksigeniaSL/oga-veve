@@ -13,7 +13,7 @@ import { enElPavimento, type Aerodrome } from "./aerodrome";
 import { SCENARIOS } from "./scenarios";
 import { sueloDelTrafico, type EnElPlano } from "./suelo-del-trafico";
 import { enEjesDePista } from "./rumbo";
-import { tiposDelCampo, TIPOS } from "./trafico";
+import { tiposDelCampo } from "./trafico";
 
 /** Cada cuánto se mira el camino, m. */
 const CADA = 4;
@@ -101,8 +101,12 @@ describe("el tráfico rueda por las calles, nunca por la hierba", () => {
 });
 
 describe("y el tipo es el que opera allí", () => {
-  it("en los campos de hierba y las pistas cortas, solo lo que cabe", () => {
-    expect(tiposDelCampo("SGOG", 900, true)).toEqual([TIPOS.avioneta]);
+  it("en una pista particular no vuela nadie más que el de la casa", () => {
+    // La hierba de la granja no es un aeroclub: el avión de la casa es el tuyo.
+    expect(tiposDelCampo("SGOG", 900, true)).toEqual([]);
+  });
+
+  it("en las pistas cortas, solo lo que cabe", () => {
     for (const t of tiposDelCampo("GCHI", 1256)) expect(t.id).toBe("turbohelice");
     for (const t of tiposDelCampo("SGPJ", 867)) expect(t.id).toBe("avioneta");
   });

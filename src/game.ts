@@ -114,6 +114,7 @@ import {
   type PasoDeAro,
 } from "./world/runway-guide";
 import { createVegetation, zonaDeAeropuerto } from "./world/vegetation";
+import { crearGranja, type Granja } from "./world/granja";
 import {
   arrancarAbreOtroTramo,
   LECCION_POR_DEFECTO,
@@ -408,7 +409,6 @@ import { comoDibujo } from "./ui/senal";
 import { Senalero } from "./world/senalero";
 import type { Gesto } from "./flight/senalero";
 import {
-  SITIO_PARA_LA_BICI,
   Sigueme,
   adelantoDelSigueme,
 } from "./world/sigueme";
@@ -432,7 +432,7 @@ import { comoSeDiceAqui, hablaDe, type Habla } from "./i18n/habla";
 import { BOCA, MEGAFONIA } from "./audio/boca";
 import { claveDeCabina, esDeUnaCaja, loDiceElAvion } from "./audio/cabina";
 import { VozDeLaMaquina } from "./audio/maquina";
-import { SE_QUEDAN, type Fase } from "./flight/vuelo";
+import { SE_QUEDAN, guionSinTorre, type Fase } from "./flight/vuelo";
 import { reconocer } from "./flight/reconocimiento";
 import {
   alturaDeEdificio,
@@ -1112,6 +1112,8 @@ export class Game {
     rodadura: LucesDeRodadura | null;
     /** Si ya se montaron, aunque no haya ninguna. Ver `ponerLucesDelVecino`. */
     lucesPuestas: boolean;
+    /** Su granja, si la tiene: la de casa cuando se vuelve a ella. */
+    granja: Granja | null;
   }[] = [];
 
   /**
@@ -2237,6 +2239,12 @@ export class Game {
   readonly audio = new Audio();
   private readonly missions = new MissionRunner();
   vegetacion: Group | null = null;
+  /**
+   * La granja alrededor de la pista de casa, si la tiene: la casa, los
+   * potreros, el ganado. Ver `world/granja.ts`. La de un campo de llegada va
+   * con su vecino.
+   */
+  granja: Granja | null = null;
   private readonly missionMarker = new MissionMarker();
   /**
    * La senda de aros, que **se rehace si el viento cambia la cabecera**.
@@ -3105,7 +3113,23 @@ export class Game {
         aproximacion: null,
         rodadura: null,
         lucesPuestas: false,
+        /*
+         * **Y su granja, si la tiene.** Llegando a casa desde Asunción, la
+         * casa, el galpón y el hangar ya no los dibuja el aeródromo —los
+         * dibuja ella—, así que sin esto se llegaba a una pista sin nada.
+         * Cuelga del vecino, en sus coordenadas, y se apaga con él.
+         */
+        granja: quien.aerodrome
+          ? crearGranja(
+              quien.aerodrome,
+              (x, z) => mundo.terreno.sampleHeight(x, z),
+              new Date(),
+              quien.seed,
+            )
+          : null,
       });
+      const suGranja = this.vecinos[this.vecinos.length - 1]?.granja;
+      if (suGranja) mundo.colgarDeCerca(suGranja.grupo);
       this.scene.add(mundo.grupo);
     }
 
@@ -3495,6 +3519,20 @@ export class Game {
     for (const v of this.vecinos)
       if (v.aerodromo) this.apuntarLosEdificios(v.aerodromo);
 
+    /*
+     * **Y la granja, si el campo la tiene**, antes que el monte: el monte
+     * pregunta dónde está para no plantarle un árbol en el camino.
+     */
+    if (aero) {
+      this.granja = crearGranja(
+        aero,
+        (x, z) => this.terrain.sampleHeight(x, z),
+        new Date(),
+        this.scenario.seed,
+      );
+      if (this.granja) this.scene.add(this.granja.grupo);
+    }
+    const granja = this.granja;
     this.vegetacion = createVegetation(
       this.scenario,
       (x, z) => this.terrain.sampleHeight(x, z),
@@ -3504,6 +3542,7 @@ export class Game {
         ? (x, z) =>
             options.ortofotoFina?.color(x, z) ?? options.ortofoto!.color(x, z)
         : undefined,
+      granja ? (x, z) => granja.ocupa(x, z) : undefined,
     );
     this.scene.add(this.vegetacion);
 
@@ -5688,7 +5727,12 @@ export class Game {
        * cuenta la instructora, en los cuatro peldaños: la voz es el canal, y
        * la frase no es fraseología sino lo que quiere decir.
        */
-      const libre = this.avisoCon("vuelo.puedeVolver", "palabra.volve");
+      const libre = this.avisoCon(
+        this.elCampo().escenario.aerodrome?.privado
+          ? "vuelo.puedeVolverSinTorre"
+          : "vuelo.puedeVolver",
+        "palabra.volve",
+      );
       this.hud.senal.mostrar("verde", libre.rotulo, null, {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
@@ -5721,6 +5765,24 @@ export class Game {
    * por la que se tenga delante. Ver `autorizarSinMotor`.
    */
   private autorizarElAterrizaje(cabecera: string | null = null): void {
+    /*
+     * **Y en una pista sin torre no autoriza nadie**: se ve que está libre, y
+     * lo dice la instructora. Encendía la lámpara de una torre que no existe
+     * y la tarjeta decía «la torre te deja aterrizar» en la pista de casa.
+     */
+    if (this.elCampo().escenario.aerodrome?.privado) {
+      const libre = this.avisoCon(
+        "vuelo.puedeAterrizarSinTorre",
+        "palabra.aterriza",
+      );
+      this.hud.senal.mostrar("verde", libre.rotulo, null, {
+        segundos: SE_QUEDA_EL_PERMISO,
+        prioridad: IMPORTANTE,
+      });
+      this.avisar("success");
+      this.instructor.decir(libre.texto, libre.id);
+      return;
+    }
     this.cabeceraParaLaTorre = cabecera;
     this.laTorreMandaEnLaLuz = true;
     this.luzDeTorre("verde");
@@ -7282,7 +7344,13 @@ export class Game {
     this.calleUnicaDelCampo = () => false;
     const campo = this.elCampoMontado();
     const aero = campo.escenario.aerodrome;
-    if (!aero || aero.privado) return;
+    if (!aero) return;
+    /*
+     * **Y quién vuela aquí lo dice el campo**, no si tiene torre: en una
+     * pista particular, nadie más que vos. Ver `tiposDelCampo`.
+     */
+    const tipos = tiposDelCampo(aero.id, campo.pista.length, !!aero.privado);
+    if (tipos.length === 0) return;
     /*
      * **Y no tiene tu silueta.** Ver tu propio avión pasando por el viento en
      * cola es un espejo, no un vecino: lo primero que se aprende mirando al
@@ -7354,7 +7422,7 @@ export class Game {
       escala,
       deTu.altura,
       {
-        tipos: tiposDelCampo(aero.id, pista.length, !!aero.privado),
+        tipos,
         forma,
         cuerposDeVerdad: true,
         tierra: () => {
@@ -9425,6 +9493,16 @@ export class Game {
       z: this.flight.state.position.z,
     });
     this.runwayGuide.update(dt, this.flight.state.position);
+    // El ganado de la granja pasta a su aire. Ver `world/granja.ts`.
+    {
+      const p = this.flight.state.position;
+      this.granja?.paso(dt, p);
+      for (const v of this.vecinos)
+        v.granja?.paso(dt, {
+          x: p.x - v.mundo.desplazamiento.x,
+          z: p.z - v.mundo.desplazamiento.z,
+        });
+    }
     /*
      * Cruzar un aro se celebra: destello, salto de escala y una nota. Y
      * **fallarlo también dice algo**, que era lo que faltaba: hasta ahora
@@ -11008,21 +11086,21 @@ export class Game {
       const enLaPistaAun = s.onGround && s.onRunway;
       const espera =
         fase === "aterrizado" || enLaPistaAun ? this.bocaDeLaSalida() : null;
-      const donde = this.sigueme.donde;
-      const aQue = donde
-        ? Math.hypot(donde.x - s.position.x, donde.z - s.position.z)
-        : Infinity;
       /*
        * **Y a la bici se le deja sitio siempre.**
        *
        * El coche se deja atropellar porque es un chiste y porque enseña algo:
        * en una plataforma no se adelanta. Una persona en bicicleta, no. Así
-       * que en cuanto la tenés a tiro —lo que tarda en echarse a un lado,
-       * contado en metros: ver `SITIO_PARA_LA_BICI`— se aparta y te deja
-       * pasar, y el percance de más abajo no se le aplica. Lo que aprende quien juega sigue siendo lo mismo: detrás de
-       * quien te guía, no encima.
+       * que en cuanto la tenés encima se aparta y te deja pasar, y el
+       * percance de más abajo no se le aplica. Lo que aprende quien juega
+       * sigue siendo lo mismo: detrás de quien te guía, no encima.
+       *
+       * Cuándo es «encima» lo decide ella, que sabe lo deprisa que se le
+       * acerca el avión: ver `sitioParaLaBici`. Aquí se decía con una
+       * distancia fija, y la distancia fija la dejaba apartada desde el
+       * primer metro. Lo que queda aquí es el señalero, que es de los dos.
        */
-      const cede = gesto !== null || (enBici && aQue < SITIO_PARA_LA_BICI);
+      const cede = gesto !== null;
       this.sigueme.paso(
         dt,
         { x: s.position.x, z: s.position.z, adelanto: this.adelantoDelSigueme },
@@ -11621,8 +11699,10 @@ export class Game {
     // Y en tierra de verdad: una avioneta ligera se despega del suelo todavía
     // «alineando», y la verde en el aire es la de «podés aterrizar» — la
     // torre la decía nada más rotar.
+    // Y donde hay torre: en la pista de casa no hay lámpara, se mira. Ver
+    // `guionSinTorre`.
     const enTierraEsperando =
-      this.leccion.torre &&
+      this.hayTorreQueHable() &&
       this.flight.state.onGround &&
       (vista.fase === "esperando" ||
         vista.fase === "autorizado" ||
@@ -11814,12 +11894,20 @@ export class Game {
        * **Y yendo a otro aeropuerto, tampoco se da una vuelta**: se sigue la
        * flecha hasta allí. Ver `haciaOtroCampo`.
        */
+      /*
+       * **Y en una pista particular, su guion**: sin lámpara que esperar y sin
+       * nadie detrás que meta prisa. Ver `guionSinTorre`. Con la bici, si hoy
+       * sale: es la misma condición que la saca a ella.
+       */
+      const guion = this.elCampo().escenario.aerodrome?.privado
+        ? guionSinTorre(vista.fase, this.tier.sigueme)
+        : vista;
       const clave =
         this.leccion.id === "aterrizaje" && vista.fase === "en-vuelo"
           ? "vuelo.enVueloAterrizando"
           : vista.fase === "en-vuelo" && this.haciaOtroCampo()
             ? "vuelo.enVueloDestino"
-            : vista.clave;
+            : guion.clave;
       const frase = t(clave as never);
 
       // **Tres caminos para lo mismo, y el dibujo es el que nunca falta.** La
@@ -11869,7 +11957,7 @@ export class Game {
        */
       const seQueda = SE_QUEDAN.has(vista.fase);
       this.hud.senal.mostrar(
-        comoDibujo(vista.icono),
+        comoDibujo(guion.icono),
         conLetras ? frase : "",
         letra,
         {

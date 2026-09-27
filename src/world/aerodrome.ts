@@ -57,6 +57,8 @@ import { partirLoLargo } from "./curvatura";
 import { alturaDelPavimento } from "./mapa-del-pavimento";
 import { letreroAtlasTexture, numberTexture } from "./runway-markings";
 import { laRedonda } from "./luces-de-posicion";
+import { laDibujaLaGranja } from "./granja";
+import { esDura } from "./superficie";
 
 /**
  * Lo más corto que puede medir algo para que cuente como pista, m.
@@ -110,6 +112,13 @@ export interface Aerodrome {
    * porque hay cincuenta calles y aviones grandes moviéndose, no porque sí.
    */
   readonly privado?: boolean;
+  /**
+   * Si alrededor de la pista hay una granja: la casa, los potreros, el
+   * ganado. Entonces la casa, el galpón y el hangar del fichero los dibuja
+   * ella, con su tejado y su corredor, y no como prismas de aeropuerto. Ver
+   * `world/granja.ts`.
+   */
+  readonly granja?: boolean;
   readonly origin: { readonly lat: number; readonly lon: number };
   readonly elevationM: number | null;
   readonly runways: readonly Pista[];
@@ -297,6 +306,8 @@ const COLORES: Record<string, ColorRepresentation> = {
   concrete: 0x646669,
   gravel: 0x5a5348,
   grass: 0x4d6136,
+  /** Las calles y la plataforma de un campo de hierba. Ver `createAerodrome`. */
+  "hierba-segada": 0x717c46,
 };
 
 /** ¿Está este punto a menos de `margen` metros del asfalto de una pista? */
@@ -771,13 +782,37 @@ export function createAerodrome(
     return trozos;
   };
 
+  /*
+   * **Y en un campo de hierba, las calles y la plataforma son de hierba.**
+   *
+   * Se pintaban del gris del hormigón en todos los campos, y en la pista de
+   * la granja eso era una calle de aeropuerto cruzando un potrero. El suelo
+   * ya lo sabía —se rueda sobre hierba, con su rozamiento: ver
+   * `superficieEn`—; lo que se veía decía otra cosa. Van de la hierba
+   * segada y gastada de por donde pasan las ruedas, más clara que la pista,
+   * que es lo que las distingue de ella.
+   */
+  const deHierba = !esDura(principal?.surface);
   for (const calle of aero.taxiways) {
     for (const trozo of cortarEnLaPista(calle.path)) {
-      anotar("rodadura", cinta(trozo, calle.widthM ?? ANCHO_RODADURA, cota));
+      anotar(
+        deHierba ? "hierba-segada" : "rodadura",
+        cinta(trozo, calle.widthM ?? ANCHO_RODADURA, cota),
+      );
     }
   }
   for (const plataforma of aero.aprons) {
-    anotar("concrete", desdePoligono(plataforma.polygon, cota));
+    /*
+     * Solo en un campo de hierba. En uno de asfalto, una plataforma que el
+     * fichero dé por hierba —Pettirossi tiene una— se queda como estaba:
+     * pisa a otras de hormigón y, de dos colores, parpadearían una sobre otra.
+     */
+    const blanda =
+      deHierba && (!plataforma.surface || !esDura(plataforma.surface));
+    anotar(
+      blanda ? "hierba-segada" : "concrete",
+      desdePoligono(plataforma.polygon, cota),
+    );
   }
 
   const dibujados: BufferGeometry[] = [];
@@ -1097,6 +1132,8 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
   const radares: { x: number; z: number; arriba: number }[] = [];
   for (const e of aero.buildings) {
     if (e.polygon.length < 3) continue;
+    // Los de la granja los levanta ella, con su forma. Ver `world/granja.ts`.
+    if (aero.granja && laDibujaLaGranja(e)) continue;
     const alto = alturaDeEdificio(e);
     /*
      * La cota, la del punto más bajo de la planta. Un edificio no se dobla
@@ -1187,7 +1224,8 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
     }
   }
 
-  const pared = mergeGeometries(paredes, false);
+  // Puede no quedar ninguno: en la granja los levanta todos ella.
+  const pared = paredes.length ? mergeGeometries(paredes, false) : null;
   if (pared) {
     const malla = new Mesh(pared, new MeshLambertMaterial({ color: 0xc9c6bd }));
     malla.name = "edificios:paredes";
@@ -1212,7 +1250,7 @@ function edificios(aero: Aerodrome, altura: (p: Punto) => number): Group {
     malla.castShadow = true;
     grupo.add(malla);
   }
-  const cubierta = mergeGeometries(cubiertas, false);
+  const cubierta = cubiertas.length ? mergeGeometries(cubiertas, false) : null;
   if (cubierta) {
     const malla = new Mesh(
       cubierta,

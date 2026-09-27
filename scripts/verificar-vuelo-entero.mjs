@@ -539,6 +539,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    * se mide es que un vuelo entero se pueda completar.
    */
   o.mandarFrustrar("nunca");
+  // Si el campo de salida tiene torre: en una pista particular no la hay, y
+  // lo que se comprueba de ella es que calle. Ver la comprobación de la torre.
+  const saleConTorre = o.conFrecuencia?.() ?? true;
   // La raíz de la escena, para poder mirar el coche del sígame.
   let raiz = o.aeronave().grupo;
   while (raiz.parent) raiz = raiz.parent;
@@ -1496,6 +1499,17 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
    */
   let lejosDondeCoche = "";
   let cercaDelCoche = Infinity;
+  /*
+   * **Y cuánto rato guía la bici**, en un campo particular: visible, en la
+   * raya y por delante del avión, con el avión ya fuera de la pista.
+   *
+   * Existe porque dejó de salir y nadie lo vio. Desde #157 esperaba al lado de
+   * la salida, y esperar al lado contaba como haberse apartado para siempre:
+   * iba por la hierba, a once metros de la raya, y todas las comprobaciones
+   * del coche la daban por buena porque ninguna preguntaba si guiaba.
+   */
+  let biciGuiando = 0;
+  let biciVista = 0;
   /*
    * **Y si el coche llegó a pisar la pista con el avión encima de ella.**
    *
@@ -2462,6 +2476,34 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
      * lejos es lo correcto: no se le está siguiendo, se va a su encuentro.
      */
     const coche = globalThis.__raiz?.getObjectByName("sigueme");
+    if (o.enBici?.() && coche?.visible && s.onGround && !s.onRunway) {
+      biciVista += paso;
+      const raya = o.ruta?.() ?? [];
+      let alaRaya = Infinity;
+      for (let k = 1; k < raya.length; k++) {
+        const [ax, az] = raya[k - 1];
+        const [bx, bz] = raya[k];
+        const dx = bx - ax;
+        const dz = bz - az;
+        const l2 = dx * dx + dz * dz || 1;
+        const u = Math.max(
+          0,
+          Math.min(
+            1,
+            ((coche.position.x - ax) * dx + (coche.position.z - az) * dz) / l2,
+          ),
+        );
+        alaRaya = Math.min(
+          alaRaya,
+          Math.hypot(coche.position.x - (ax + dx * u), coche.position.z - (az + dz * u)),
+        );
+      }
+      const delante =
+        Math.sin(s.heading) * (coche.position.x - s.position.x) -
+          Math.cos(s.heading) * (coche.position.z - s.position.z) >
+        0;
+      if (!o.cocheApartado?.() && alaRaya < 3 && delante) biciGuiando += paso;
+    }
     /*
      * **Y solo mientras el coche esté guiando.**
      *
@@ -3602,6 +3644,9 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
       : null,
     lejosDondeCoche,
     enBici: o.enBici?.() ?? false,
+    biciGuiando: +biciGuiando.toFixed(1),
+    biciVista: +biciVista.toFixed(1),
+    saleConTorre,
     ladoAlEstarCerca: Number.isFinite(ladoAlEstarCerca)
       ? Math.round(ladoAlEstarCerca)
       : -1,
@@ -3982,7 +4027,19 @@ const holdShortRetirado = (vuelo.descartes ?? []).some((d) => {
     );
   return !!m && (m[1] === "yo" || (!!vuelo.misLetras && m[1] === vuelo.misLetras));
 });
-comprobar(
+/*
+ * **Y saliendo de una pista particular, la torre calla.** No hay torre: ni
+ * lámpara que se ponga roja o verde ni voz que diga «esperá acá». Allí se
+ * para y se mira. Ver `guionSinTorre`.
+ */
+if (vuelo.saleConTorre === false)
+  comprobar(
+    "y en la pista de casa no enciende la luz ninguna torre",
+    !(vuelo.torreDijo ?? []).some((d) => /(verde|roja)$/.test(d)),
+    `la torre dijo: ${vuelo.torreDijo?.join(" · ") || "nada"}`,
+    "en la pista de hierba de la granja hablaba una torre que no existe",
+  );
+else comprobar(
   conFraseologia
     ? "la torre dice la fraseología del vuelo"
     : "la torre manda, y en este peldaño sin el inglés",
@@ -4480,6 +4537,24 @@ if (TRAMO === "guyrami" || TRAMO === "tuka") {
  * metros del avión y encima de la raya, y tenía que haberse echado once a un
  * lado. Ver #157.
  */
+/*
+ * **Y en un campo particular, sale alguien a buscarte en bici, y te guía.**
+ *
+ * Jazlyn, con su banderín naranja: espera al lado de la salida y, en cuanto
+ * dejás la pista, se pone delante y te lleva a casa. Se mide el rato que va
+ * delante y en la raya, que es lo que es guiar; que esté «visible» no basta,
+ * porque así estuvo semanas, pedaleando por la hierba a once metros de la
+ * raya sin guiar a nadie. Cuatro segundos, que en la granja son la mitad de
+ * lo que hay entre la salida y el puesto.
+ */
+if (vuelo.enBici)
+  comprobar(
+    "y en un campo particular sale alguien en bici a buscarte, y te guía",
+    vuelo.biciGuiando >= 4,
+    `${vuelo.biciGuiando} s delante y en la raya, de ${vuelo.biciVista} s a la vista fuera de la pista`,
+    "«ya no sale ni Jazlyn a buscarme con la bici»",
+  );
+
 comprobar(
   "y no se le atropella",
   vuelo.enBici || vuelo.cercaDelCoche < 0 || vuelo.cercaDelCoche > 8,
