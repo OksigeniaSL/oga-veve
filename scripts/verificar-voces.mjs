@@ -134,7 +134,31 @@ await page
     timeout: 60000,
   })
   .catch(() => {});
-await page.waitForTimeout(1500);
+/*
+ * **Y a los packs de las demás bocas, no solo al de la instructora.** Todas
+ * comparten un banco de piezas y se bajan uno detrás de otro: se esperaba al
+ * de la instructora y se daba un segundo y medio a los demás, y con la máquina
+ * ocupada la torre y el comandante llegaban después — el banco daba por mudas
+ * veinte frases grabadas. Se espera a que cada una sepa decir una suya.
+ */
+await page
+  .waitForFunction(
+    () => {
+      const o = globalThis.__oga;
+      const yo = o?.indicativo?.();
+      if (!yo) return false;
+      return (
+        !!o.quienDice("comandante.crucero").comandante &&
+        !!o.quienDice(`torre.verde${yo.sufijo}`, yo.deTorre).torre &&
+        !!o.quienDice("torre.canario.verde", yo.deTorre).torre &&
+        !!o.quienDice("otro.enCola", yo.relleno).otro
+      );
+    },
+    null,
+    { timeout: 90000 },
+  )
+  .catch(() => {});
+await page.waitForTimeout(500);
 
 const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>
