@@ -112,12 +112,16 @@ const A_VOCES: ReadonlySet<string> = new Set([
    * me tiene desesperado». Un segundo y medio de grito que además viajaba a
    * cada tablet para eso.
    */
-  // «Subí», del aviso de terreno y de la senda.
-  "vuelo.terrenoSube",
+  // «Subí», la palabra sola de la senda.
   "palabra.subi",
-  // Y la de sacar el tren, que se pidió por su nombre: «el tren si hay que
-  // quitarlo, se dice y ya está, no hace falta pegar un grito».
-  "vuelo.sacaElTren",
+  /*
+   * **Y aquí estuvieron el aviso de terreno y el de sacar el tren**, gritados.
+   * Se sacaron al rehacerlos en calma —«el tren si hay que quitarlo, se dice y
+   * ya está, no hace falta pegar un grito»— y no antes: apartadas, caían en la
+   * voz del navegador, que en Brave para Linux es muda, y el aviso de terreno
+   * se quedaba sin voz. Cómo se grabaron está en `EN_CALMA`, en
+   * `scripts/frases-para-grabar.mjs`, para que la próxima toma salga igual.
+   */
 ]);
 
 export class InstructorGrabado implements Instructor {

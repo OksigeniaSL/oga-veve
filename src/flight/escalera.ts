@@ -15,7 +15,28 @@
  *   la pista en grande al cruzar 150, 100 y 50 metros, y la desviación de la
  *   senda como cifra. Se empieza a leer un instrumento en vez de un dibujo.
  * - **Taguato Ruvicha (14+): la voz de cabina.** Los cantos de verdad, en
- *   inglés aeronáutico: *five hundred, one hundred, fifty…* y *V1, rotate*.
+ *   inglés aeronáutico: *V1, rotate*, *minimums*, *terrain, pull up*.
+ *
+ * ## Y una excepción, que es la cuenta de la toma
+ *
+ * *Five hundred, four hundred… fifty, forty, thirty, twenty, ten.* En el avión
+ * que la lleva —los que tienen `avisosHablados` en la ficha: el turbohélice de
+ * diecinueve plazas y los dos reactores— **la dice la máquina en los cuatro
+ * peldaños**, en inglés, en pies y con la voz de cabina. Se decidió oyéndola
+ * jugar —«va marcando la distancia hasta one hundred y luego va de 10 en
+ * 10»—: es parte del vuelo, sí o sí, y no una lección de un peldaño.
+ *
+ * No rompe la regla de la calma, y por eso es la única: la cuenta **no es un
+ * aviso**. Es una voz de máquina neutra que dice un número, siempre igual,
+ * siempre en el mismo sitio de la toma, pase lo que pase. No pide nada, no
+ * dice que algo vaya mal y no se aprende a temer: se aprende su ritmo, que es
+ * lo que enseña a recoger. Y es la que se va a oír tal cual el día que se
+ * suba a uno de verdad — traducida o en metros, habría que desaprenderla.
+ *
+ * Lo que sí es aviso sigue subiendo por la escalera: *terrain*, *sink rate*,
+ * *pull up* son calma y castellano abajo y la voz de verdad arriba. Y en ese
+ * avión la instructora ya no cuenta por encima: un suceso, una voz. Ver
+ * `cantaLaCabina` y `laCuentaDe` en `avisos-de-altura.ts`.
  *
  * ## Dos reglas que no se rompen
  *
@@ -92,6 +113,26 @@ const CANALES: Readonly<Record<Peldano, Canales>> = {
 
 export function canalesDe(peldano: Peldano): Canales {
   return CANALES[peldano];
+}
+
+/**
+ * Qué canta la voz de cabina: un **aviso** o la **cuenta** de la toma.
+ *
+ * Son dos clases de canto y no suben igual. Ver la excepción en la cabecera
+ * de este fichero.
+ */
+export type Canto = "aviso" | "cuenta";
+
+/**
+ * Si la voz de cabina canta esto en este peldaño.
+ *
+ * Los avisos, solo en el de cabina; la cuenta, en los cuatro. **Si el avión
+ * tiene con qué cantarla** es otra pregunta, y no es de este fichero: la
+ * contesta `loDiceElAvion` en `audio/cabina.ts`. En la avioneta, que no lleva
+ * radioaltímetro que cante, la cuenta la sigue diciendo la instructora.
+ */
+export function cantaLaCabina(peldano: Peldano, canto: Canto): boolean {
+  return canto === "cuenta" || CANALES[peldano].cabina;
 }
 
 /**

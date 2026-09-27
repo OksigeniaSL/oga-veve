@@ -136,8 +136,12 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
  *
  * El TCAS va aparte porque tiene su propio equipo —ver `tcas` en la ficha—.
  */
-export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
-  // El radioaltímetro, en la toma.
+/**
+ * **La cuenta del radioaltímetro**, número a número: lo único de la cabina
+ * que es una cuenta y no un suceso. Ver `MISMA_CUENTA` en `audio/boca.ts` y la
+ * excepción de `flight/escalera.ts`.
+ */
+export const DE_LA_CUENTA: ReadonlySet<string> = new Set([
   "cabina.fiveHundred",
   "cabina.fourHundred",
   "cabina.threeHundred",
@@ -149,6 +153,11 @@ export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
   "cabina.twenty",
   "cabina.ten",
   "cabina.five",
+]);
+
+export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
+  // El radioaltímetro, en la toma: su cuenta y la altura de decisión.
+  ...DE_LA_CUENTA,
   "cabina.minimums",
   // El avisador de terreno, con sus cuatro modos que el juego calcula.
   "cabina.terrainPullUp",

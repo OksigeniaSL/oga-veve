@@ -424,7 +424,7 @@
       "ms": 1425
     },
     "vuelo.sacaElTren": {
-      "ms": 1430
+      "ms": 855
     },
     "vuelo.sinCombustible": {
       "ms": 2625
@@ -451,7 +451,7 @@
       "ms": 929
     },
     "vuelo.terrenoSube": {
-      "ms": 575
+      "ms": 832
     },
     "vuelo.tormenta": {
       "ms": 2612
