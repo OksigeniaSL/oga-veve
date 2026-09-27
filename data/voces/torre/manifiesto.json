@@ -549,11 +549,20 @@
       "torre.solo.clearedTo",
       "{destino}"
     ],
+    "destino.concepcion": [
+      "destino.concepcion"
+    ],
     "destino.encarnacion": [
       "destino.encarnacion"
     ],
+    "destino.estigarribia": [
+      "destino.estigarribia"
+    ],
     "destino.guarani": [
       "destino.guarani"
+    ],
+    "destino.pedro-juan": [
+      "destino.pedro-juan"
     ],
     "destino.pettirossi": [
       "destino.pettirossi"

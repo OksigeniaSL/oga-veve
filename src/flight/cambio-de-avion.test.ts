@@ -68,19 +68,25 @@ describe("el recado entre el vuelo que acaba y el que empieza", () => {
 
 describe("y por eso el vuelo nuevo tiene los destinos del avión nuevo", () => {
   /*
-   * El caso contado: Pettirossi con el cuatrimotor no tiene destino; con la
-   * avioneta, sí. El arranque los filtra con `destinosParaEsteAvion`, así que
-   * volver a arrancar es lo que hace que aparezcan.
+   * El caso contado: en Pettirossi, con el cuatrimotor, el juego se quedaba
+   * sin la granja ni Encarnación —ninguna le cabe— y cambiar a la avioneta en
+   * pleno vuelo no los traía. El arranque los filtra con
+   * `destinosParaEsteAvion`, así que volver a arrancar es lo que hace que
+   * aparezcan. Desde que hay Asunción–Ciudad del Este directo el cuatrimotor
+   * tiene uno; lo que se sigue exigiendo es que la avioneta tenga los suyos.
    */
-  it("en Pettirossi, el JAZ 120 no tiene a dónde ir y el JAZ 20 sí", () => {
+  it("en Pettirossi, el JAZ 20 tiene destinos que al JAZ 120 no le caben", () => {
     const casa = SCENARIOS.find((e) => e.id === "pettirossi")!;
     const todos = destinosDe(casa)
       .map((id) => SCENARIOS.find((e) => e.id === id))
       .filter((e) => e !== undefined);
     const grande = AIRCRAFT.find((a) => a.id === "jaz-120")!;
     const avioneta = AIRCRAFT.find((a) => a.id === "jaz-20")!;
-    expect(destinosParaEsteAvion(grande, todos)).toHaveLength(0);
-    expect(destinosParaEsteAvion(avioneta, todos).length).toBeGreaterThan(0);
+    const suyos = destinosParaEsteAvion(grande, todos).map((e) => e.id);
+    const deLaAvioneta = destinosParaEsteAvion(avioneta, todos).map((e) => e.id);
+    expect(suyos).not.toContain("yvytu-rape");
+    expect(deLaAvioneta).toContain("yvytu-rape");
+    expect(deLaAvioneta.length).toBeGreaterThan(suyos.length);
     // Y la avioneta cabe en casa, que es donde empieza el vuelo nuevo.
     expect(cabeEn(avioneta, campoDe(casa)).cabe).toBe(true);
   });
