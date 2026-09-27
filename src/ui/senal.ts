@@ -614,6 +614,38 @@ const TRAFICO = Object.fromEntries(
 ) as Record<`trafico-${HoraDelReloj}-${AlturaDelTrafico}`, string>;
 
 /**
+ * **La información de tráfico**: la misma pantalla en pequeño, pero con el
+ * otro como lo pinta el TCAS cuando está cerca y **no** avisa —el rombo
+ * relleno— y en el color de la tarjeta, no en ámbar. Es «ahí hay otro, miralo»,
+ * no un aviso: ponerle el ámbar del TA sería enseñar que cada avión que pasa
+ * es para preocuparse. Ver `flight/informacion-de-trafico.ts`.
+ */
+const cercano = (hora: number, altura: AlturaDelTrafico): string => {
+  const a = (hora * 30 * Math.PI) / 180;
+  const x = +(12 + 7.4 * Math.sin(a)).toFixed(2);
+  const y = +(12 - 7.4 * Math.cos(a)).toFixed(2);
+  const s = altura === "arriba" ? -1 : 1;
+  const triangulo =
+    altura === "nivel"
+      ? ""
+      : `<path d="M${x} ${+(y + s * 4.6).toFixed(2)} L${x - 1.7} ${+(y + s * 2.7).toFixed(2)} L${x + 1.7} ${+(y + s * 2.7).toFixed(2)} Z" />`;
+  return icono(`
+    <circle cx="12" cy="12" r="7.4" fill="none" stroke="currentColor"
+            stroke-width="0.9" stroke-dasharray="1.4 1.6" opacity="0.4" />
+    <path transform="translate(12 12) scale(0.36) translate(-12 -12.5)"
+          d="M12 5 13.4 11 21 12.6v1.6l-7.6-1.2L12 20l-1.4-6.2L3 14.2v-1.6L10.6 11Z" />
+    <path d="M${x} ${+(y - 2.3).toFixed(2)} L${+(x + 2.3).toFixed(2)} ${y} L${x} ${+(y + 2.3).toFixed(2)} L${+(x - 2.3).toFixed(2)} ${y} Z" />
+    ${triangulo}
+  `);
+};
+
+const CERCANO = Object.fromEntries(
+  HORAS.flatMap((h) =>
+    ALTURAS.map((a) => [`cerca-${h}-${a}`, cercano(h, a)] as const),
+  ),
+) as Record<`cerca-${HoraDelReloj}-${AlturaDelTrafico}`, string>;
+
+/**
  * Tirar: levantá el morro.
  *
  * Es la señal de Vr, y por eso es una acción y no un estado: la avioneta de
@@ -869,6 +901,7 @@ export const DIBUJOS = {
   "hito-avion-izquierda": hito("avion", "izquierda"),
   "hito-avion-derecha": hito("avion", "derecha"),
   ...TRAFICO,
+  ...CERCANO,
 } as const;
 
 /** Los nombres de dibujo que existen. Ver `mostrar`. */

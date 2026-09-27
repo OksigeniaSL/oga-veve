@@ -89,6 +89,12 @@ import {
   type AvisoDeTrafico,
   type Intruso,
 } from "./flight/tcas";
+import {
+  alturaDelOtro,
+  InformacionDeTrafico,
+  informacionEnRadio,
+  ladoDeLaHora,
+} from "./flight/informacion-de-trafico";
 import { ponerLaLuzDelDia } from "./world/luces-del-trafico";
 import { createSky, ponerNubes, updateSky, type SkyRig } from "./world/sky";
 import { CURVAR_EL_DIBUJO, instalarCurvatura } from "./world/curvatura";
@@ -1202,8 +1208,75 @@ export class Game {
       },
       intrusos,
     );
-    for (const a of avisos) this.avisarDelTrafico(a);
+    for (const a of avisos) {
+      // El «traffic, traffic» ya lo cuenta: la radio no lo repite después.
+      this.informacionDeTrafico.darPorContado(a.id);
+      this.avisarDelTrafico(a);
+    }
     this.explicarElTrafico();
+    const info = this.informacionDeTrafico.paso(
+      dt,
+      {
+        x: s.position.x,
+        y: s.position.y,
+        z: s.position.z,
+        rumbo: MathUtils.radToDeg(s.heading),
+        sobreElSuelo: s.heightAboveGround,
+        enElSuelo: s.onGround,
+        callado: this.terrenoAhora !== null,
+      },
+      intrusos,
+    );
+    if (info) this.informarDelTrafico(info);
+  }
+
+  /**
+   * **La información de tráfico**: dónde mirar para encontrar al que se
+   * acerca. Ver `flight/informacion-de-trafico.ts`.
+   *
+   * Por la escalera, como todo lo que se cuenta: la tarjeta con el dibujo en
+   * los cuatro peldaños —tu avión, y el otro en su hora del reloj con el
+   * rombo relleno del TCAS—, «¡Mirá!» en el segundo y la hora con su altura en
+   * cifras desde el tercero. La voz es la de la lámpara: de Taguató para
+   * arriba, la torre en fraseología —«traffic, two o'clock, three miles, one
+   * thousand feet above»—; abajo, la instructora en casa y con una pregunta,
+   * «arriba a la derecha va otro avión, ¿lo ves?», que es lo que enseña a
+   * buscarlo con los ojos. Donde no hay torre que hable, también ella.
+   *
+   * Y con prioridad cero: es información, no un aviso. Cualquier cosa que
+   * importe más la tapa, y el «traffic, traffic» del TCAS el primero.
+   */
+  private informarDelTrafico(a: AvisoDeTrafico): void {
+    const altura = alturaDelOtro(a.relativa);
+    const canales = canalesDe(this.tier.avisos);
+    const rotulo = !canales.texto
+      ? ""
+      : canales.corto
+        ? t("palabra.mira")
+        : this.elTraficoEnNumeros(a, altura);
+    this.hud.senal.mostrar(
+      comoDibujo(`cerca-${a.hora}-${altura}`),
+      rotulo,
+      null,
+      { segundos: SE_QUEDA_EL_TRAFICO, prioridad: 0 },
+    );
+    const conCifras =
+      this.tier.instruments === "numeric" || this.tier.instruments === "full";
+    if (conCifras && this.hayTorreQueHable()) {
+      const yo = this.miIndicativo;
+      const texto = informacionEnRadio(yo.dicho, a);
+      this.torre.decir(texto, "torre.trafico", "normal", rellenoDe(yo));
+      this.hud.radio(texto);
+      return;
+    }
+    const clave =
+      `vuelo.otroAvion.${ladoDeLaHora(a.hora)}.${altura}` as TranslationKey;
+    this.instructor.decir(t(clave), clave);
+  }
+
+  /** Cuántas informaciones de tráfico van dadas y a quién. Para el banco. */
+  get informacionDeTraficoParaBanco(): readonly string[] {
+    return [...this.informacionDeTrafico.yaContados];
   }
 
   /** Si ya se contó qué es un rombo. Una vez por partida, no por vuelo. */
@@ -1283,14 +1356,7 @@ export class Game {
    * vez aquí tiene que aprender que eso se oye con calma.
    */
   private avisarDelTrafico(a: AvisoDeTrafico): void {
-    const lado =
-      a.hora >= 11 || a.hora <= 1
-        ? "delante"
-        : a.hora <= 4
-          ? "derecha"
-          : a.hora <= 7
-            ? "detras"
-            : "izquierda";
+    const lado = ladoDeLaHora(a.hora);
     const clave = `vuelo.trafico.${lado}` as TranslationKey;
     this.cantar("traffic, traffic", t(clave), clave);
     /*
@@ -1873,6 +1939,7 @@ export class Game {
     this.dichoDelTren = null;
     this.tormentasDichas.clear();
     this.tcas.reiniciar();
+    this.informacionDeTrafico.reiniciar();
     this.faseAnunciada = "";
     this.runwayGuide.reset();
     this.landing.reset();
@@ -2126,6 +2193,12 @@ export class Game {
    * `tcas` en `flight/aircraft.ts`.
    */
   private readonly tcas = new Tcas();
+  /**
+   * **Y lo que cuenta la radio del tráfico que se acerca**, lleve el avión
+   * TCAS o no: es un servicio del control, no del equipo. Ver
+   * `flight/informacion-de-trafico.ts`.
+   */
+  private readonly informacionDeTrafico = new InformacionDeTrafico();
   /**
    * Los del circuito que vienen a aterrizar, por su nombre en el TCAS. Los
    * mira la carta para abrir el rango desde el punto de espera. Ver
@@ -6129,6 +6202,7 @@ export class Game {
     this.dichoDelTren = null;
     this.tormentasDichas.clear();
     this.tcas.reiniciar();
+    this.informacionDeTrafico.reiniciar();
     this.avisandoDelBulto = 0;
     /*
      * Y la ruta de este vuelo, **antes** del depósito: lo que se carga sale de
@@ -10519,7 +10593,13 @@ export class Game {
       });
     }
     if (!conPasaje(this.aircraft.mass))
-      for (const a of this.islenos?.quienes() ?? [])
+      for (const a of this.islenos?.quienes() ?? []) {
+        /*
+         * Y el que ya contó la radio —o el TCAS— no se vuelve a señalar: un
+         * suceso, una sola voz. Ver `informarDelTrafico`.
+         */
+        const id = `islas:${a.id}`;
+        if (this.informacionDeTrafico.yaContados.has(id)) continue;
         lista.push({
           nombre: t("hito.otroAvion"),
           clase: "avion",
@@ -10527,7 +10607,9 @@ export class Game {
           z: a.z,
           ele: null,
           alcance: 6_000,
+          id,
         });
+      }
     return lista;
   }
 
@@ -10552,6 +10634,8 @@ export class Game {
         this.otroAvion.hablando,
     }, () => this.loQueSeMueve());
     if (!mirada) return;
+    // Y al revés: el avión que se señaló aquí ya no lo cuenta la radio.
+    if (mirada.hito.id) this.informacionDeTrafico.darPorContado(mirada.hito.id);
 
     /*
      * **Y lo dice quien de verdad lo diría.**
