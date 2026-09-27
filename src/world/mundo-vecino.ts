@@ -415,6 +415,30 @@ export class MundoVecino {
     return this.terreno.sampleHeight(dx, dz);
   }
 
+  /**
+   * Lo que pisa el avión en ese punto —su asfalto, su terreno o su agua—, o
+   * `null` fuera de su mapa. Ver `Terrain.sampleSurface`.
+   */
+  superficie(x: number, z: number): number | null {
+    const dx = x - this.desplazamiento.x;
+    const dz = z - this.desplazamiento.z;
+    if (Math.abs(dx) > this.medioLado || Math.abs(dz) > this.medioLado)
+      return null;
+    return this.terreno.sampleSurface(dx, dz);
+  }
+
+  /**
+   * Lo que sobresale su pavimento en ese punto, o `null` fuera de su mapa,
+   * por lo mismo que `cota`. Ver `Terrain.resalteEn`.
+   */
+  resalte(x: number, z: number): number | null {
+    const dx = x - this.desplazamiento.x;
+    const dz = z - this.desplazamiento.z;
+    if (Math.abs(dx) > this.medioLado || Math.abs(dz) > this.medioLado)
+      return null;
+    return this.terreno.resalteEn(dx, dz);
+  }
+
   /** Si un punto del mundo de salida cae dentro de la isla del vecino. */
   dentro(x: number, z: number): boolean {
     return this.cota(x, z) !== null;

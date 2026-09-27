@@ -44,6 +44,7 @@ import {
   type Punto,
 } from "./aerodrome";
 import { discoDeAgua, LADO_SIN_CURVA } from "./curvatura";
+import { mapaDelPavimento, type MapaDelPavimento } from "./mapa-del-pavimento";
 import { delante } from "./rumbo";
 import { vecesLejosDe, type Scenario } from "./scenarios";
 
@@ -392,6 +393,7 @@ export class Terrain {
     const hasta = (v: number): number =>
       Math.min(resolution - 1, Math.ceil((v + lado / 2 + half) / step));
 
+    this.pavimento = null;
     let escritos = 0;
     for (let fila = desde(centro[1]); fila <= hasta(centro[1]); fila++) {
       for (let col = desde(centro[0]); col <= hasta(centro[0]); col++) {
@@ -417,6 +419,7 @@ export class Terrain {
    * Cuesta una pasada sin un solo rayo, así que sale gratis.
    */
   subirTodo(metros: number): void {
+    this.pavimento = null;
     for (let i = 0; i < this.heights.length; i++) this.heights[i]! += metros;
     this.runwayElevationMovida += metros;
   }
@@ -457,6 +460,7 @@ export class Terrain {
    * lleva por delante justo lo que sobra.
    */
   suavizar(centro: readonly [number, number], lado: number, pasadas = 1): void {
+    this.pavimento = null;
     const { resolution, step, half, heights } = this;
     const desde = (v: number): number =>
       Math.max(1, Math.floor((v - lado / 2 + half) / step));
@@ -489,6 +493,7 @@ export class Terrain {
     lado: number,
     umbral: number,
   ): number {
+    this.pavimento = null;
     const { resolution, step, half, heights } = this;
     const desde = (v: number): number =>
       Math.max(1, Math.floor((v - lado / 2 + half) / step));
@@ -557,6 +562,7 @@ export class Terrain {
     perfil: ((t: number) => number) | null = null,
   ): void {
     if (!escenario.aerodrome) return;
+    this.pavimento = null;
     flattenAerodrome(
       this.heights,
       escenario,
@@ -568,6 +574,7 @@ export class Terrain {
 
   rehacerAerodromo(escenario: Scenario): void {
     if (!escenario.aerodrome) return;
+    this.pavimento = null;
     const viejo = this.group.getObjectByName(
       `aerodromo:${escenario.aerodrome.id}`,
     );
@@ -835,9 +842,127 @@ export class Terrain {
     return this.cotaDelHorizonte(x, z);
   }
 
-  /** Devuelve la cota, pero nunca por debajo del agua: sirve para flotar. */
+  /**
+   * **Lo que pisa el avión**: el asfalto donde hay asfalto, el terreno donde
+   * no, y nunca por debajo del agua, que sirve para flotar.
+   *
+   * El asfalto no es el terreno. El aeródromo se dibuja `RESALTE` por encima
+   * del terreno aplanado —ver `flattenAerodrome`— y el modelo de vuelo
+   * apoyaba las ruedas en el terreno: todos los aviones de la flota, en todos
+   * los campos, rodaban con el tren treinta y cinco centímetros metido en la
+   * pista. Ver `resalteEn`.
+   */
   sampleSurface(x: number, z: number): number {
-    return Math.max(this.sampleHeight(x, z), this.scenario.waterLevel);
+    /*
+     * **Y en el campo de llegada, con su agua y no con la de casa.**
+     *
+     * El nivel del agua es de cada mundo: el Paraná en Ciudad del Este va a
+     * ciento cinco metros, y la pista de Asunción está a ochenta y nueve.
+     * Con el agua de casa en todas partes, el avión que llegaba a Asunción
+     * desde Guaraní se posaba en un agua invisible dieciséis metros por
+     * encima de la pista. Quien sabe la cota del vecino sabe también su
+     * superficie. Ver `ponerSuperficieLejana`.
+     */
+    if (Math.abs(x) > this.half || Math.abs(z) > this.half) {
+      const fuera = this.superficieLejana?.(x, z);
+      if (fuera !== null && fuera !== undefined) return fuera;
+    }
+    return Math.max(
+      this.sampleHeight(x, z) + this.resalteEn(x, z),
+      this.scenario.waterLevel,
+    );
+  }
+
+  /** Quién sabe la superficie fuera del mapa fino. Ver `sampleSurface`. */
+  private superficieLejana: ((x: number, z: number) => number | null) | null =
+    null;
+
+  ponerSuperficieLejana(
+    fuente: ((x: number, z: number) => number | null) | null,
+  ): void {
+    this.superficieLejana = fuente;
+  }
+
+  /**
+   * Cuánto sobresale lo dibujado sobre el mapa de alturas en este punto, m:
+   * lo que esté el pavimento del aeródromo —`RESALTE`, casi siempre—, lo suyo
+   * en la pista de juguete de los escenarios sin aeródromo, y cero en la
+   * hierba.
+   *
+   * Es la mitad que le faltaba a `sampleHeight` para ser el suelo de verdad:
+   * `sampleHeight` dice dónde está el terreno, y el terreno bajo una pista no
+   * se ve — se ve la pista. Ver `mapa-del-pavimento.ts`.
+   *
+   * Fuera del mapa fino contesta quien contesta la cota: el aeródromo del
+   * vecino, con su propio pavimento. Ver `ponerResalteLejano`.
+   */
+  resalteEn(x: number, z: number): number {
+    if (Math.abs(x) > this.half || Math.abs(z) > this.half)
+      return this.resalteLejano?.(x, z) ?? 0;
+    if (!this.pavimentoALaVista) return 0;
+    const aero = this.scenario.aerodrome;
+    if (!aero) return this.resalteDeLaPistaDeJuguete(x, z);
+    if (!this.pavimento) {
+      const mallas: Mesh[] = [];
+      this.group
+        .getObjectByName(`aerodromo:${aero.id}`)
+        ?.traverse((o) => {
+          if (o instanceof Mesh && o.name.startsWith("pavimento:"))
+            mallas.push(o);
+        });
+      this.pavimento = mapaDelPavimento(mallas, (px, pz) =>
+        this.sampleHeight(px, pz),
+      );
+    }
+    return this.pavimento.alzadoEn(x, z);
+  }
+
+  /**
+   * El pavimento dibujado, pasado a rejilla la primera vez que se pisa. Se
+   * tira cada vez que cambia el mapa de alturas o se rehace el aeródromo,
+   * porque guarda la distancia entre los dos.
+   */
+  private pavimento: MapaDelPavimento | null = null;
+
+  /**
+   * Si el pavimento dibujado es el que se pisa. Deja de serlo cuando se apaga
+   * para dejar ver el de la fotografía: ver `pavimentoDeLaFoto`.
+   */
+  private pavimentoALaVista = true;
+
+  /**
+   * El pavimento se apaga y manda el de la fotografía, que es el mapa de
+   * alturas asentado. Ver `asentarAerodromoSobreLaFoto`.
+   */
+  pavimentoDeLaFoto(): void {
+    this.pavimentoALaVista = false;
+  }
+
+  /** Quién sabe el resalte fuera del mapa fino. Ver `ponerSueloLejano`. */
+  private resalteLejano: ((x: number, z: number) => number | null) | null =
+    null;
+
+  ponerResalteLejano(
+    fuente: ((x: number, z: number) => number | null) | null,
+  ): void {
+    this.resalteLejano = fuente;
+  }
+
+  /**
+   * La pista de juguete, un rectángulo de `ALZADO_PISTA_DE_JUGUETE` sobre el
+   * terreno aplanado, con una rampa de un metro en el filo por lo mismo que
+   * el pavimento: ver «Por qué se interpola» en `mapa-del-pavimento.ts`.
+   */
+  private resalteDeLaPistaDeJuguete(x: number, z: number): number {
+    const { runway } = this.scenario;
+    const [sin, cos] = delante(runway.heading);
+    const dx = x - runway.x;
+    const dz = z - runway.z;
+    const fuera = Math.max(
+      Math.abs(dx * sin + dz * cos) - runway.length / 2,
+      Math.abs(dx * cos - dz * sin) - runway.width / 2,
+    );
+    return ALZADO_PISTA_DE_JUGUETE * clamp01(0.5 - fuera);
   }
 
   /**
@@ -1765,7 +1890,11 @@ export class Terrain {
 
     group.add(createRunwayMarkings(this.scenario));
 
-    group.position.set(runway.x, this.runwayElevation + 0.15, runway.z);
+    group.position.set(
+      runway.x,
+      this.runwayElevation + ALZADO_PISTA_DE_JUGUETE,
+      runway.z,
+    );
     group.rotation.y = -(runway.heading * Math.PI) / 180;
     group.updateMatrix();
     group.matrixAutoUpdate = false;
@@ -2032,6 +2161,12 @@ function flattenRunway(
  * de gris según se recorría.
  */
 export const RESALTE = 0.35;
+
+/**
+ * Lo mismo en la pista de juguete de los escenarios sin aeródromo, m. Ver
+ * `resalteEn`.
+ */
+const ALZADO_PISTA_DE_JUGUETE = 0.15;
 
 function flattenAerodrome(
   heights: Float32Array,

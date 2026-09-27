@@ -65,7 +65,8 @@ try {
       const o = globalThis.__oga;
       const s = o.estado();
       const a = o.avion();
-      const sobre = s.position.y - o.suelo(s.position.x, s.position.z);
+      // Sobre lo que pisa, que en el asfalto es el asfalto: ver `sampleSurface`.
+      const sobre = s.position.y - o.sueloDeVuelo(s.position.x, s.position.z);
       const d = o.combustible();
       return {
         avion: a.id,
