@@ -133,6 +133,43 @@ describe("al darte la pista", () => {
     expect(boca.espera(aOtro)).toBe(false);
   });
 
+  /*
+   * **Pero el despegue del que estaba alineado, sí.** Se había oído su «line
+   * up and wait»; su «cleared for take-off» esperaba turno detrás de la
+   * instructora cuando entraste en final, y se retiraba con lo de arriba: no
+   * se oía nunca, y detrás sonaba tu «cleared to land» con él en el eje para
+   * quien escuchaba. Es lo que daba «la pista que es tuya la tiene otro» en el
+   * banco del vuelo entero, en las tiradas con frustrada.
+   */
+  it("y el despegue del que estaba alineado no se retira: suena antes que lo tuyo", () => {
+    const radio = conAlguienEnLaPista("torre.lineUpWait");
+    const quien = radio.ocupanLaPista.find((o) => o.orden === "torre.lineUpWait")!
+      .matricula;
+    const { turno, boca, pasos } = montar(radio);
+    // La instructora habla, y mientras tanto al alineado le toca despegar.
+    let acabar = () => {};
+    boca.pedir("normal", (listo) => (acabar = listo), "vuelo.final");
+    let despegue: string | null = null;
+    for (let t = 0; t < 400 && !despegue; t += 0.5) {
+      const d = radio.update(0.5, NORMAL);
+      if (d?.clave !== "torre.clearedTakeoff" || d.de.matricula !== quien) continue;
+      const clave = `${d.clave}@${quien}`;
+      despegue = clave;
+      // Como la dice el juego: la frecuencia, en baja.
+      boca.pedir("baja", () => void pasos.push(clave), clave);
+    }
+    expect(despegue).not.toBeNull();
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(boca.espera(despegue!)).toBe(true);
+    expect(pasos).toEqual([]);
+    // Calla la instructora: suena su despegue, y después lo tuyo.
+    acabar();
+    turno.paso("final");
+    expect(pasos).toEqual([despegue, "cleared to land"]);
+  });
+
   it("y a quien la ocupaba se le quita de viva voz, antes que tu autorización", () => {
     const radio = conAlguienEnLaPista("torre.clearedLand");
     // Sin dibujo, va delante quien el guion pone delante: aquí, nadie.

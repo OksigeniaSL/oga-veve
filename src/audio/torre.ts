@@ -181,8 +181,8 @@ const DE_LA_LAMPARA =
   /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:roja|verde|aterrizar|alAire|holdShort(?:Landing|Departing)?|lineUpWait|clearedTakeoff|clearedLand|goAround(?:EnUso)?)(?:\.[LCR])?(?:@|$)/;
 
 /**
- * Si esta frase es **la torre dándole la pista a otro avión**, todavía en la
- * cola: «line up and wait», «cleared for take-off» o «cleared to land» a una
+ * Si esta frase es **la torre dándole la pista a otro avión para que se quede
+ * en ella**, todavía en la cola: «line up and wait» o «cleared to land» a una
  * matrícula de la frecuencia.
  *
  * Es lo que se retira de la cola en cuanto la pista pasa a ser tuya. La
@@ -193,6 +193,20 @@ const DE_LA_LAMPARA =
  * up and wait» a otro. Medido en Pettirossi y en Gran Canaria. Lo de los
  * demás va en `baja`; lo que no va en `baja` es tuyo o les quita la pista, y
  * eso se queda.
+ *
+ * **Y «cleared for take-off» no está, aunque también dé la pista.** La da y
+ * la suelta en el mismo instante —ver `LA_SUELTAN` en `flight/radio.ts`—: el
+ * que la recibe ya está corriendo por ella mientras la frase espera turno,
+ * porque el avión dibujado se mueve al pedirla y no al oírla. Retirarla no le
+ * devuelve la pista a nadie; lo único que hace es que no se oiga. Y estaba
+ * aquí, así que al entrar en final se retiraba el despegue de quien llevaba un
+ * rato alineado: se había oído su «line up and wait», no se oía nunca su
+ * «cleared for take-off», y detrás sonaba tu «cleared to land» con él todavía
+ * en el eje para quien escuchaba. Salía en el banco del vuelo entero en las
+ * tiradas con frustrada, y en trescientos vuelos sin navegador con la boca de
+ * verdad las dos veces que pasó fueron esta. Lo que suelta la pista la boca
+ * ya no lo tira nunca, ni por viejo ni por falta de sitio —ver
+ * `sueltaLaPista`—; esto era la única puerta que le quedaba abierta.
  */
 export function daLaPistaAOtro(
   clave: string | undefined,
@@ -219,7 +233,7 @@ const PERMISO_DE_ATERRIZAR =
   /^(?:torre|palabra)\.(?:[a-z]+\.)?(?:clearedLand|aterrizar)(?:\.[LCR])?(?:@|$)/;
 
 const DA_LA_PISTA =
-  /^torre\.(?:[a-z]+\.)?(?:lineUpWait|clearedTakeoff|clearedLand)(?:\.[LCR])?(?:@|$)/;
+  /^torre\.(?:[a-z]+\.)?(?:lineUpWait|clearedLand)(?:\.[LCR])?(?:@|$)/;
 
 /**
  * Si esta frase es **la frecuencia de un campo**: la torre hablándoles a los
