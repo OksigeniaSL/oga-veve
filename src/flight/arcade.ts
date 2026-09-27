@@ -320,6 +320,7 @@ export class ArcadeFlightModel implements FlightModel {
       onGround: true,
       stalled: false,
       stallWarning: false,
+      stallWarningAlpha: Math.PI,
       crashed: false,
       secondsToImpact: Number.POSITIVE_INFINITY,
       touchdownSinkRate: 0,

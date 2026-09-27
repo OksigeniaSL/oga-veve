@@ -1209,19 +1209,34 @@ export class Game {
   private explicarElTrafico(): void {
     if (this.traficoExplicado || canalesDe(this.tier.avisos).cabina) return;
     const s = this.flight.state;
-    if (s.onGround) return;
-    let elMasCerca: { relativa: number; d: number } | null = null;
+    /*
+     * **Con calma quiere decir en vuelo tranquilo**: alto y sin subir ni
+     * bajar deprisa. La primera versión lo contaba en cuanto salía un rombo,
+     * y el primero sale al despegar, con el tráfico del circuito: la
+     * explicación, de cinco segundos, se metía entre «rotate» y el tren, y
+     * «metélo» caducaba esperando.
+     */
+    if (s.onGround || s.heightAboveGround < 300) return;
+    if (Math.abs(s.verticalSpeed) > 3) return;
+    let elMasCerca: { relativa: number; d: number; cerca: boolean } | null =
+      null;
     for (const b of this.tcas.enPantalla) {
       // El que ya avisa se cuenta con su aviso. Ver `avisarDelTrafico`.
       if (b.clase === "aviso") continue;
       const d = Math.hypot(b.x - s.position.x, b.z - s.position.z);
       if (!elMasCerca || d < elMasCerca.d)
-        elMasCerca = { relativa: b.relativa, d };
+        elMasCerca = { relativa: b.relativa, d, cerca: b.clase === "cerca" };
     }
     if (!elMasCerca) return;
+    /*
+     * Y uno a nuestra altura y ya cerca —el rombo relleno— no se explica con
+     * un «pero lejos»: eso ya no sería verdad. Se espera a otro.
+     */
+    const aLaMisma = Math.abs(elMasCerca.relativa) < A_LA_MISMA_ALTURA;
+    if (aLaMisma && elMasCerca.cerca) return;
     this.traficoExplicado = true;
     const clave: TranslationKey =
-      Math.abs(elMasCerca.relativa) < A_LA_MISMA_ALTURA
+      aLaMisma
         ? "vuelo.traficoNivel"
         : elMasCerca.relativa > 0
           ? "vuelo.traficoArriba"
@@ -5268,10 +5283,6 @@ export class Game {
     const pista = NOMBRA_LA_PISTA.has(base)
       ? pistaEnPiezas(cabeceraEnUso(campo.escenario))
       : null;
-    if (pista) {
-      Object.assign(relleno, pista.relleno);
-      clave = `${clave}${pista.sufijo}`;
-    }
     /*
      * **Y el viento, al dar la pista para despegar o aterrizar.**
      *
@@ -5283,10 +5294,27 @@ export class Game {
      * otro, una de las cuatro cosas mentiría. En magnéticos, como las pistas.
      * Ver `vientoEnPiezas`.
      */
+    /*
+     * **Y a vos, no a los demás de la frecuencia.** Una torre se lo da a
+     * todos, pero aquí los demás son ambiente, y con el viento cada una de sus
+     * autorizaciones duraba cuatro segundos más: la tuya esperaba detrás y
+     * caducaba sin oírse —medido en Los Rodeos, «clearedTakeoff: caducó
+     * esperando»—. Se simplifica lo que se oye de fondo, no lo que te dicen.
+     */
     const conViento =
-      base === "torre.clearedTakeoff" || base === "torre.clearedLand";
+      (base === "torre.clearedTakeoff" || base === "torre.clearedLand") &&
+      quien.matricula === this.miIndicativo.matricula;
     const viento = conViento ? this.vientoDeLaTorre(campo) : null;
+    /*
+     * Y en el orden en que se dice: indicativo, viento y pista. El turno de
+     * la boca junta el relleno en ese orden —ver `turnoDe`—, y lo que mira
+     * qué pista se nombró lee las dos últimas cifras.
+     */
     if (viento) relleno.viento = viento.relleno;
+    if (pista) {
+      Object.assign(relleno, pista.relleno);
+      clave = `${clave}${pista.sufijo}`;
+    }
     /*
      * Y el texto va montado también, no solo la receta: es lo que dice la voz
      * del navegador cuando no hay pack, y lo que se lee si algún día esto sale
@@ -11591,9 +11619,19 @@ export class Game {
        * sin decir qué, y así se contó volando a Encarnación: subiendo por
        * 1420 ft con las patas fuera y nadie había pedido meterlas. En casa va
        * sola la que dice qué y por qué.
+       *
+       * **Y en el escalón de V1 y «rotate»**, que es la serie a la que
+       * pertenece: son las llamadas del despegue, una detrás de otra. En
+       * `normal` quedaba detrás de cualquier comentario de esos segundos —la
+       * ruta, la comandante— y caducaba: también en Los Rodeos con el JAZ 90.
        */
-      this.cantar("positive rate");
-      this.cantar("gear up", t("vuelo.meteElTren"), "vuelo.meteElTren");
+      this.cantar("positive rate", undefined, undefined, "mando");
+      this.cantar(
+        "gear up",
+        t("vuelo.meteElTren"),
+        "vuelo.meteElTren",
+        "mando",
+      );
     }
   }
 

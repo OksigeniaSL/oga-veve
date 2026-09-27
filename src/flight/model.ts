@@ -187,6 +187,12 @@ export interface FlightState {
    * Ver `anguloDeAviso` en `flight/avisos-de-actitud.ts`.
    */
   stallWarning: boolean;
+  /**
+   * Y a qué ángulo de ataque suena ahora mismo, rad: baja con los flaps. En
+   * el modelo sencillo, que no entra en pérdida, no suena nunca. Lo mira el
+   * piloto del banco para no tirar hasta ahí.
+   */
+  stallWarningAlpha: number;
   /** Se pone a true cuando el toque ha sido demasiado violento. */
   crashed: boolean;
   /**

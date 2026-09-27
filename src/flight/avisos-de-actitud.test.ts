@@ -10,6 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import { ARAI, AIRCRAFT } from "./aircraft";
+import { TAGUATO } from "./tiers";
 import { CoefficientFlightModel } from "./fdm";
 import { neutralControls } from "./model";
 import { Vector3 } from "three";
@@ -229,6 +230,34 @@ describe("el avisador de pérdida", () => {
       m.step(1 / 60, mandos);
       expect(m.state.stallWarning).toBe(false);
     }
+  });
+
+  it("y el compensador de Taguató no mete el ala en el avisador al soltar", () => {
+    /*
+     * Lo que pasaba en Los Rodeos con el JAZ 90: bajando a ciento noventa
+     * nudos, se suelta la palanca y el compensador, para sostener la subida,
+     * tiraba hasta el avisador. Treinta «stall, stall» con nadie tirando.
+     */
+    const m = new CoefficientFlightModel({
+      aircraft: ARAI,
+      ground: () => 0,
+      assist: TAGUATO.assists,
+    });
+    m.reset({
+      position: new Vector3(0, 1500, 0),
+      heading: 0,
+      airspeed: 190 * 0.514444,
+    });
+    const bajando = { ...neutralControls(), throttle: 1, elevator: -0.25 };
+    for (let i = 0; i < 180; i++) m.step(1 / 60, bajando);
+    expect(m.state.verticalSpeed).toBeLessThan(-5);
+    const suelto = { ...neutralControls(), throttle: 1 };
+    let avisos = 0;
+    for (let i = 0; i < 60 * 30; i++) {
+      m.step(1 / 60, suelto);
+      if (m.state.stallWarning) avisos++;
+    }
+    expect(avisos).toBe(0);
   });
 
   it("empujando no avisa, aunque el ala se vaya por abajo", () => {

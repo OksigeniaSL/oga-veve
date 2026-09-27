@@ -572,22 +572,55 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
    *
    * Un piloto de verdad no vuela así: cede palanca antes de que suene el
    * avisador. Así que el mando se recorta aquí, en el único sitio por el que
-   * pasa todo lo que el piloto pide, por encima del **setenta por ciento del
-   * ángulo de pérdida** —diez grados y medio en el JAZ 90, lejos del aviso— y
-   * del todo si el avisador llegara a sonar. En la avioneta, que ya volaba
-   * lejos de ahí, no cambia nada.
+   * pasa todo lo que el piloto pide, por encima del **sesenta y cinco por
+   * ciento del ángulo de pérdida** —nueve grados y medio en el JAZ 90, lejos
+   * del aviso, que suena a 12,7° limpio y a 11,1° con todo fuera— y del todo
+   * si el avisador llegara a sonar. En la avioneta, que ya volaba lejos de
+   * ahí, no cambia nada.
+   *
+   * **Y el recorte va acumulando, no es un muelle.** El primer intento
+   * restaba palanca en proporción a lo que sobraba, y un recorte proporcional
+   * se planta donde lo que sobra da justo la palanca que falta: el JAZ 90 se
+   * quedó clavado en 12,8°, en el mismo umbral del avisador, y cantó «stall,
+   * stall» treinta veces igual. Así se ceden unas centésimas cada fotograma
+   * mientras sobre ángulo y se devuelven cuando no, que es lo que hace una
+   * mano que nota la palanca: llega al ángulo y se queda en él.
+   *
+   * **Y ceder no es empujar.** La segunda versión dejaba bajar el tope hasta
+   * palanca adelante y restaba en proporción a lo que sobraba: con 18° de
+   * ángulo heredados, el tope se iba a −0,3 en cuatro fotogramas, el JAZ 90
+   * picaba a 235 nudos y se metía en el mar desde seiscientos metros. Una
+   * mano que cede suelta hasta el centro y no más, y a un ritmo que no pasa
+   * de dos centésimas por fotograma.
+   */
+  /*
+   * **Y el tope se mide contra el avisador, no contra la pérdida.** Con un
+   * porcentaje del ángulo de pérdida no había número que valiera: el JAZ 90
+   * limpio vuela el circuito a 8,8° —170 nudos, una g— y el avisador con
+   * flaps suena a 11,1°, así que el setenta por ciento le prohibía virar y el
+   * ochenta dejaba tirar por encima del aviso en final. El juego ya sabe a qué
+   * ángulo suena ahora, con los flaps que lleve: dos grados menos que eso.
+   *
+   * **Y el tope se calcula, no se persigue.** Dos intentos de recortar
+   * mirando el ángulo —en proporción y acumulando— llegaron siempre tarde:
+   * con el reloj del banco acelerado, un ala de reactor a ciento noventa
+   * nudos pasa del tope al aviso en cuatro fotogramas, y el recorte, al
+   * soltar, dejaba al piloto del banco oscilar entre 0,02 y 0,30 de palanca y
+   * cien «stall, stall». En este modelo la palanca manda ángulo de ataque: en
+   * equilibrio `cm0 + cmα·α + cmδ·δ = 0`. Así que la palanca que deja el ala
+   * dos grados por debajo del avisador se sabe de antemano, y de ahí no se
+   * pasa: 0,20 en el JAZ 90 limpio, 0,16 con todo fuera.
    */
   const limitarElAngulo = (mandos) => {
     const s = o.estado();
-    if (s.onGround || mandos.elevator <= 0) return;
-    if (s.stallWarning) {
-      mandos.elevator = 0;
-      return;
-    }
-    // Al avión de ahora, que se puede cambiar a mitad de vuelo.
-    const sobra = s.alpha - (o.avion?.()?.perdida ?? 0.26) * 0.7;
-    if (sobra > 0)
-      mandos.elevator = Math.max(0, mandos.elevator - sobra * 12);
+    const p = o.avion?.()?.cabeceo;
+    if (s.onGround || !p || !(s.stallWarningAlpha < 1)) return;
+    const limite = s.stallWarningAlpha - 0.035;
+    const tope = (-p.cmAlpha * limite - p.cm0) / p.cmElevator;
+    mandos.elevator = Math.min(
+      mandos.elevator,
+      s.stallWarning ? 0 : Math.max(0, tope),
+    );
   };
   o.pilotar((mandos) => {
     Object.assign(mandos, c);

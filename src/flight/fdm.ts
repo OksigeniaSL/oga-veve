@@ -299,6 +299,7 @@ export class CoefficientFlightModel implements FlightModel {
       onGround: true,
       stalled: false,
       stallWarning: false,
+      stallWarningAlpha: Math.PI,
       crashed: false,
       secondsToImpact: Number.POSITIVE_INFINITY,
       touchdownSinkRate: 0,
@@ -620,6 +621,7 @@ export class CoefficientFlightModel implements FlightModel {
       a,
       ac.flapsLift * assisted.flaps,
     );
+    s.stallWarningAlpha = umbral;
     if (speed <= MIN_AIRSPEED) s.stallWarning = false;
     else if (!s.stallWarning && s.alpha > umbral) s.stallWarning = true;
     else if (s.stallWarning && s.alpha < umbral - SE_CALLA_EL_AVISADOR)
@@ -797,7 +799,35 @@ export class CoefficientFlightModel implements FlightModel {
 
         const climbLaw = (this.trimClimb - s.verticalSpeed) * 0.12;
         const speedLaw = -shortfall * 0.1;
-        const law = climbLaw * (1 - blend) + speedLaw * blend;
+        /*
+         * **Y el compensador no tira hasta el avisador.**
+         *
+         * Sostiene la subida tirando del morro, y sin mirar el ala: con el
+         * JAZ 90 a ciento noventa nudos, soltando la palanca mientras el avión
+         * bajaba, tiraba hasta 12,8° y el avisador cantaba «stall, stall» una
+         * treintena de veces en un vuelo —con quien vuela sin tocar nada, que
+         * es justo cuando actúa esta ayuda—. Ningún piloto automático de
+         * verdad hace eso: el que sostiene altura o subida tiene su tope de
+         * ángulo y, si no le da, cede antes que meter el ala en pérdida.
+         *
+         * Así que por encima de tres grados antes del avisador ya no tira, y
+         * pasado ese punto empuja en proporción. Es la regla de las tres eses
+         * aplicada a una ayuda: una red que te mete en pérdida no es una red.
+         *
+         * **Mirando a dónde va el ángulo, no solo dónde está**, y con la
+         * orden acotada. Soltando la palanca bajando a treinta metros por
+         * segundo, la ley pedía casi cuatro veces el mando entero, el morro
+         * subía a cuarenta y cinco grados por segundo y el ala pasaba de −4° a
+         * 21° en ocho décimas: el tope llegaba tarde. Con el ángulo de dentro
+         * de un cuarto de segundo y la orden en ±0,6 —lo que da la palanca de
+         * un piloto automático, que tampoco tira de golpe—, llega y se queda.
+         */
+        const hacia = s.alpha + s.pitchRate * 0.25;
+        const cerca = hacia - (umbral - 0.05);
+        const law = Math.min(
+          clamp(climbLaw * (1 - blend) + speedLaw * blend, -1, 1),
+          cerca > 0 ? -cerca * 2 : Infinity,
+        );
 
         // La ganancia se programa con la velocidad. El momento disponible
         // crece con la presión dinámica —o sea con el cuadrado de la

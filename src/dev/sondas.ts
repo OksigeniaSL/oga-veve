@@ -373,12 +373,18 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        */
       rotacion: juego.aircraft.rotationSpeed,
       /*
-       * Y su ángulo de pérdida, rad, para que el piloto del banco no tire más
-       * allá: con el JAZ 90 tiraba hasta 18,6° a ciento ochenta y ocho nudos,
-       * con la pérdida a 14,9°, y el juego cantaba «stall, stall» con toda la
-       * razón. Ver `limitarElAngulo` en `verificar-vuelo-entero`.
+       * Y **cuánto ángulo da cada décima de palanca**, que es lo que el
+       * piloto del banco necesita para no tirar hasta el avisador. En este
+       * modelo la palanca manda ángulo de ataque —`cm0 + cmα·α + cmδ·δ = 0`
+       * en equilibrio—, así que con estos tres números se sabe cuánta es
+       * demasiada sin esperar a verlo. Ver `limitarElAngulo` en
+       * `verificar-vuelo-entero`.
        */
-      perdida: juego.aircraft.aero.alphaStall,
+      cabeceo: {
+        cm0: juego.aircraft.aero.cm0,
+        cmAlpha: juego.aircraft.aero.cmAlpha,
+        cmElevator: juego.aircraft.aero.cmElevator,
+      },
       aproximacion: juego.aircraft.approachSpeed,
       crucero: juego.aircraft.cruiseSpeed,
       // Y a qué vuela el circuito, que es lo que el banco tiene que volar
@@ -651,8 +657,8 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         // sin él, esas dos recetas no se montan. Ver `deTorre` en `game.ts`.
         deTorre: {
           ...rellenoDe(yo),
-          ...(pista?.relleno ?? {}),
           viento: juego.vientoDeLaTorreParaBanco.relleno,
+          ...(pista?.relleno ?? {}),
         },
         viento: juego.vientoDeLaTorreParaBanco.dicho,
         pista: pista?.dicho ?? null,
