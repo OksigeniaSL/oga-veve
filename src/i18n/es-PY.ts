@@ -586,6 +586,8 @@ export const ES_PY = {
   "palabra.frena": "¡Frená!",
   "palabra.toca": "¡Tocá!",
   "palabra.volve": "¡Volvé!",
+  // La verde en vuelo: tu permiso para aterrizar. Ver `autorizarElAterrizaje`.
+  "palabra.aterriza": "¡Aterrizá!",
   "palabra.alAire": "¡Al aire!",
   // La de la torre canaria: la misma orden, sin vosear. Ver `i18n/habla.ts`.
   "palabra.canario.alAire": "¡Al aire!",
@@ -711,6 +713,12 @@ export const ES_PY = {
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
   "vuelo.puedeVolver": "La torre te deja volver a intentarlo",
+  /*
+   * Y tu permiso para aterrizar, en la tarjeta verde. No lo dice la
+   * instructora: lo dice la torre, «podés aterrizar», y esto es lo que se lee
+   * mientras tanto. Ver `autorizarElAterrizaje` en `game.ts`.
+   */
+  "vuelo.puedeAterrizar": "La torre te deja aterrizar",
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   /*
    * **Y estos tres hablan como habla una persona.**

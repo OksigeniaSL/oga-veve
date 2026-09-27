@@ -670,6 +670,39 @@ if (conHueco.length) {
   );
 }
 
+/*
+ * **Y las que se graban en calma, con cómo se graban.**
+ *
+ * Dos avisos de la instructora salieron gritados —el de terreno y el de sacar
+ * el tren— y estuvieron meses apartados en `A_VOCES`, cayendo en la voz del
+ * navegador, que en Brave para Linux es muda: el aviso de terreno, sin voz. La
+ * toma gritada no es un defecto del texto sino de la lectura: una orden de dos
+ * palabras con punto en medio es justo lo que un sintetizador lee como alarma.
+ *
+ * Así que la receta de la toma se escribe aquí y viaja con la frase, para que
+ * el día que se rehaga salga igual: `dicho` es lo que se le da a leer —las
+ * mismas palabras que la tarjeta, con la puntuación de quien lo dice sin
+ * levantar la voz— y `ajustes` los de la voz, estables y sin exagerar. Firme,
+ * no alarmada: la calma es la forma que tiene la seguridad de funcionar.
+ */
+const AJUSTES_EN_CALMA = {
+  stability: 0.85,
+  similarity_boost: 0.75,
+  style: 0,
+  use_speaker_boost: false,
+  speed: 0.95,
+};
+const EN_CALMA = {
+  "vuelo.terrenoSube": "Terreno, subí.",
+  "vuelo.sacaElTren": "Sacá el tren.",
+};
+for (const f of filas) {
+  const dicho = EN_CALMA[f.id];
+  if (!dicho) continue;
+  f.dicho = dicho;
+  f.ajustes = AJUSTES_EN_CALMA;
+}
+
 const tsv = [
   ["voz", "fichero", "idioma", "texto", "dónde suena"].join("\t"),
   ...filas.map((f) =>

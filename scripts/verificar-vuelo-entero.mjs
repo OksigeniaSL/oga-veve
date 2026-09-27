@@ -3954,23 +3954,41 @@ comprobar(
  * pleno ascenso de la frustrada. Aterrizando en un campo con torre tiene que
  * haber sonado al menos una, y todas en final. Sin voz no hay cola que
  * mirar, y eso es un fallo del banco, no un aprobado.
+ *
+ * **Y la de cada peldaño.** El permiso va por la verde en vuelo, como el de
+ * despegar: «podés aterrizar» —`torre.aterrizar`— en los cuatro, y detrás el
+ * «cleared to land» en fraseología de Taguató para arriba. Así que abajo se
+ * exige el castellano y que no se cuele el inglés, y arriba los dos. Lo que no
+ * se acepta nunca es una torre muda: iba solo por radio y en inglés, y en
+ * Guyrami no sonaba nada. Ver `autorizarElAterrizaje` en `game.ts`.
  */
 {
   const tuyas = vuelo.tusAutorizaciones ?? [];
   const fueraDeFinal = tuyas.filter((a) => a.fase !== "final");
+  const enCasa = tuyas.filter((a) => a.dice === "aterrizar");
+  const enRadio = tuyas.filter((a) => a.dice === "clearedLand");
   const conTorre = vuelo.aterrizaConTorre !== false;
+  const falta = !enCasa.length
+    ? "no sonó «podés aterrizar»"
+    : conFraseologia && !enRadio.length
+      ? "sonó «podés aterrizar» y no el «cleared to land» de detrás"
+      : !conFraseologia && enRadio.length
+        ? "sonó el «cleared to land» en inglés en un peldaño sin fraseología"
+        : null;
   if (conTorre)
     comprobar(
       "y tu «cleared to land» suena, y en final",
-      tuyas.length > 0 && fueraDeFinal.length === 0,
+      tuyas.length > 0 && fueraDeFinal.length === 0 && !falta,
       !tuyas.length
         ? (vuelo.toco ?? 0) > 0
           ? "se aterrizó y no sonó ninguna"
           : "no sonó ninguna, ni se llegó a tocar tierra"
         : fueraDeFinal.length
           ? `sonó fuera de final: ${fueraDeFinal.map((a) => `${a.t} s en «${a.fase}» ${a.dice}`).join(" · ")}`
-          : `${tuyas.length} · ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`,
-      "«podés aterrizar» y «cleared to land» subiendo en la frustrada, en cuanto el de delante dejó la pista",
+          : falta
+            ? `${falta}: ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`
+            : `${tuyas.length} · ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`,
+      "«podés aterrizar» y «cleared to land» subiendo en la frustrada, en cuanto el de delante dejó la pista; y en Guyrami, la torre muda: el permiso iba solo por radio y en inglés",
     );
 }
 
@@ -4591,7 +4609,27 @@ if (DESTINO) {
    * no hay nada que nombrar y se dice.
    */
   const autorizacionesAlli = (a.clearedLand ?? []).length;
-  if (a.conFrecuencia === false)
+  /*
+   * **Y en los peldaños sin fraseología, tu permiso no nombra pista.** Va en
+   * castellano, «podés aterrizar», como la verde del despegue: el «cleared to
+   * land» con su pista es de Taguató para arriba. Así que abajo la tuya no
+   * cuenta aquí, y si nadie más fue autorizado mientras llegabas no hay pista
+   * nombrada que mirar: se dice, sin aprobarlo ni suspenderlo. Que la torre
+   * de allí te autorizó lo mide la comprobación de después.
+   */
+  const soloEnCasa =
+    !conFraseologia &&
+    autorizacionesAlli === 0 &&
+    (vuelo.tusAutorizaciones ?? []).some((x) => x.alli && x.dice === "aterrizar");
+  if (soloEnCasa)
+    resultados.push({
+      nombre: "y la torre de allí nombra su pista",
+      ok: true,
+      sinMedir: true,
+      detalle: `pista ${a.cabecera} · tu permiso fue en castellano, que no nombra pista, y no se oyó autorizar a nadie más allí`,
+      porque: "«runway zero three left, cleared to land» llegando por la 12 de Los Rodeos",
+    });
+  else if (a.conFrecuencia === false)
     resultados.push({
       nombre: "y la torre de allí nombra su pista",
       ok: autorizacionesAlli === 0,

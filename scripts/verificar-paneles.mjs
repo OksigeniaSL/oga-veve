@@ -111,6 +111,26 @@ comprobar(
 
 for (const { id, caja, congela = true } of paneles) {
   const donde_ = id.replace(/-boton$/, "");
+  /*
+   * **Un panel cuyo botón no está no se pulsa: se comprueba que no está.**
+   *
+   * El de la misión nace escondido y solo lo enseña `Game` al empezar una —ver
+   * `ui/paneles.ts`—, y este banco vuela sin misión. Pulsarlo a ciegas dejaba a
+   * Playwright esperando treinta segundos a que apareciera y abortaba el banco
+   * entero en el primer panel de la tabla: no se medía ninguno de los demás.
+   * Lo que sí se puede medir sin misión es justo eso, que el botón no sale.
+   */
+  const aLaVista = await page.locator(`[data-hud="${id}"]`).isVisible();
+  if (!aLaVista) {
+    comprobar(
+      `${donde_}: sin nada que enseñar, su botón no sale`,
+      id === "mision-boton",
+      id === "mision-boton"
+        ? "escondido, que es lo que toca sin misión"
+        : "escondido, y este panel debería tener su botón a la vista",
+    );
+    continue;
+  }
   await page.click(`[data-hud="${id}"]`);
   await page.waitForTimeout(500);
   /*

@@ -43,6 +43,16 @@ En la práctica, tres consecuencias que sí son decisiones concretas:
   escrito en un solo sitio: `src/flight/escalera.ts` — el dibujo en los cuatro
   peldaños, una palabra en el segundo, los números en el tercero y la voz de
   cabina en el cuarto. Y ningún canto es nunca el único canal.
+
+  Hay **una excepción**, escrita en el mismo sitio: la cuenta del
+  radioaltímetro —*five hundred… fifty, forty, thirty, twenty, ten*—. En el
+  avión que la lleva de verdad suena en los cuatro peldaños, en inglés, en pies
+  y con la voz de cabina, porque no es una alarma: es una voz de máquina neutra
+  que dice un número, siempre igual y siempre en el mismo sitio de la toma, y
+  se aprende su ritmo, no a temerla. Los avisos de peligro —*terrain*, *sink
+  rate*, *pull up*— no entran en la excepción y siguen subiendo por la
+  escalera. Y donde canta la máquina, la instructora no cuenta por encima: un
+  suceso, una voz.
 - **Los galones no son mando, son responsabilidad.** Si el juego enseña a
   contar las barras de la manga —y las enseña—, tiene que enseñar también
   qué significan: cuatro barras no quieren decir que mandes, quieren decir

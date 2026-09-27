@@ -32,6 +32,13 @@ const REPARTO = [
   ["torre", "torre.roja", "torre"],
   ["torre", "torre.canario.verde", "torre-canarias"],
   ["torre", "torre.canario.roja", "torre-canarias"],
+  /*
+   * Y la verde en vuelo, que es ahora tu permiso para aterrizar en los cuatro
+   * peldaños: si no sale del pack, en Guyrami no suena nada. Ver
+   * `autorizarElAterrizaje` en `game.ts`.
+   */
+  ["torre", "torre.aterrizar", "torre"],
+  ["torre", "torre.canario.aterrizar", "torre-canarias"],
   ["otro", "otro.enCola", "otro"],
   ["otro", "otro.pistaLibre", "otro"],
   /*
@@ -71,19 +78,16 @@ const REPARTO = [
   // grabada se cae a la voz del navegador y suena a otra persona.
   ["instructor", "vuelo.meteElTren", "instructor"],
   /*
-   * **Y ésta ya no sale del pack, a propósito.**
+   * **Y ésta vuelve a salir del pack**, rehecha en calma.
    *
-   * Se grabó a voces, y el tono vive en el fichero de audio y no en el texto:
-   * cambiar la frase cambia lo que lee la voz del navegador, no lo que se
-   * grabó. Pedido por su nombre: «el tren si hay que quitarlo, se dice y ya
-   * está, no hace falta pegar un grito». Hasta que se vuelva a grabar en tono
-   * de aviso la dice la voz del sistema. Ver `A_VOCES` en
-   * `audio/instructor-grabado.ts`.
-   *
-   * Se deja escrita aquí y no se borra: el día que se rehaga, esta línea
-   * vuelve a `"instructor"` y el banco vuelve a exigir la grabación.
+   * Se grabó a voces y estuvo fuera, diciéndola la voz del sistema: el tono
+   * vive en el fichero de audio y no en el texto. Pedido por su nombre: «el
+   * tren si hay que quitarlo, se dice y ya está, no hace falta pegar un
+   * grito». Ya está rehecha —ver `EN_CALMA` en `frases-para-grabar.mjs`— y el
+   * banco vuelve a exigir la grabación, igual que la de terreno.
    */
-  ["instructor", "vuelo.sacaElTren", null],
+  ["instructor", "vuelo.sacaElTren", "instructor"],
+  ["instructor", "vuelo.terrenoSube", "instructor"],
 
   ["instructor", "vuelo.noEstabilizada+descolocado", "instructor"],
   ["instructor", "cabina.v1", "cabina"],
@@ -130,7 +134,31 @@ await page
     timeout: 60000,
   })
   .catch(() => {});
-await page.waitForTimeout(1500);
+/*
+ * **Y a los packs de las demás bocas, no solo al de la instructora.** Todas
+ * comparten un banco de piezas y se bajan uno detrás de otro: se esperaba al
+ * de la instructora y se daba un segundo y medio a los demás, y con la máquina
+ * ocupada la torre y el comandante llegaban después — el banco daba por mudas
+ * veinte frases grabadas. Se espera a que cada una sepa decir una suya.
+ */
+await page
+  .waitForFunction(
+    () => {
+      const o = globalThis.__oga;
+      const yo = o?.indicativo?.();
+      if (!yo) return false;
+      return (
+        !!o.quienDice("comandante.crucero").comandante &&
+        !!o.quienDice(`torre.verde${yo.sufijo}`, yo.deTorre).torre &&
+        !!o.quienDice("torre.canario.verde", yo.deTorre).torre &&
+        !!o.quienDice("otro.enCola", yo.relleno).otro
+      );
+    },
+    null,
+    { timeout: 90000 },
+  )
+  .catch(() => {});
+await page.waitForTimeout(500);
 
 const resultados = [];
 const comprobar = (nombre, ok, detalle, porque) =>

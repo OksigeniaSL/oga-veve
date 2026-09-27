@@ -18,6 +18,12 @@
  * Las palabras sí son las de verdad, en inglés aeronáutico, igual que IAS y
  * HDG. No se traducen jamás: reconocerlas es parte de lo que se aprende aquí.
  *
+ * **Salvo en el avión que lleva radioaltímetro que canta**, y ésa es la
+ * excepción a la excepción. Ahí la cuenta no la dice nadie sentado al lado:
+ * la dice la máquina, y la máquina cuenta en pies, en inglés y en los cuatro
+ * peldaños. Una cuenta en metros con su voz sería un radioaltímetro que no
+ * existe. Ver `laCuentaDe` y la cabecera de `flight/escalera.ts`.
+ *
  * ## Solo bajando
  *
  * Un aviso se da al **cruzar hacia abajo**, nunca al subir. Sin esto, quien
@@ -108,6 +114,33 @@ export const ESCALONES_EN_PIES: readonly Escalon[] = [
   escalon(6.1, "twenty", "veinte"),
   escalon(3, "ten", "diez"),
 ];
+
+/**
+ * **Qué cuenta se canta en este avión y en este peldaño.**
+ *
+ * - **Con radioaltímetro que canta** —`avisosHablados` en la ficha—, la suya:
+ *   la de pies, en los cuatro peldaños, y la canta la voz de cabina. Es una
+ *   voz de máquina neutra, no un aviso, y por eso no sube por la escalera. Ver
+ *   `cantaLaCabina` en `flight/escalera.ts`; quién la dice lo decide
+ *   `loDiceElAvion` en `audio/cabina.ts`, con la misma ficha.
+ * - **Sin él**, la de la instructora, con el número que marca el instrumento:
+ *   metros donde la cabina va en metros, pies donde va en pies.
+ *
+ * La secuencia es la de un radioaltímetro de verdad con la cuenta entera
+ * —quinientos, los tres cientos de en medio, cien, y de diez en diez hasta
+ * diez—. Los de arriba del todo, *two thousand five hundred* y *one
+ * thousand*, también existen en muchos aviones de línea y no están: no hay
+ * toma de cabina para ellos, y una cuenta en la que dos números los dice otra
+ * voz suena peor que una cuenta más corta. Ver `ESCALONES`.
+ */
+export function laCuentaDe(
+  avion: { readonly avisosHablados: boolean },
+  unidades: "metric" | "aeronautical",
+): readonly Escalon[] {
+  return avion.avisosHablados || unidades === "aeronautical"
+    ? ESCALONES_EN_PIES
+    : ESCALONES;
+}
 
 /*
  * **Ya no hay rearme por altura, y ese era el fallo.**

@@ -107,6 +107,34 @@ describe("la boca", () => {
   });
 
   /*
+   * **Y la cuenta es la cuenta: un aviso de cabina no es un número.** Se
+   * reconocía por empezar por `cabina.`, y así «sink rate» se caía porque
+   * llegaba «one hundred» detrás, y «airspeed low» se llevaba la cuenta.
+   */
+  it("un aviso de cabina no pisa la cuenta, ni la cuenta al aviso", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("final"), "vuelo.final");
+    b.pedir("normal", frase("sink rate"), "cabina.sinkRate");
+    b.pedir("normal", frase("one hundred"), "cabina.oneHundred");
+    b.pedir("normal", frase("airspeed low"), "cabina.airspeedLow");
+    acabar["final"]!();
+    expect(dicho).toEqual(["final", "sink rate"]);
+    acabar["sink rate"]!();
+    expect(dicho).toEqual(["final", "sink rate", "one hundred"]);
+  });
+
+  it("y la cuenta en casa se pisa igual que la de cabina", () => {
+    const b = boca();
+    const { dicho, acabar, frase } = coro();
+    b.pedir("normal", frase("final"), "vuelo.final");
+    b.pedir("normal", frase("cien"), "cuenta.cien");
+    b.pedir("normal", frase("cincuenta"), "cuenta.cincuenta");
+    acabar["final"]!();
+    expect(dicho).toEqual(["final", "cincuenta"]);
+  });
+
+  /*
    * **Pero dos sucesos distintos esperan los dos.**
    *
    * V1 y Vr son los dos momentos del despegue —«ya no puedo parar» y «ahora

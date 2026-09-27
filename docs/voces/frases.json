@@ -158,7 +158,15 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Terreno. Subí",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Terreno, subí.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.perdida",
@@ -592,7 +600,15 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Sacá el tren",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Sacá el tren.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.trenEnElSuelo",

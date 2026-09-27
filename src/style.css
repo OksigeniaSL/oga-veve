@@ -1038,15 +1038,22 @@ body {
  * enseña: «mira, ya soy comandante».
  */
 .cuaderno__panel {
+  width: min(520px, 100%);
+}
+
+/*
+ * **Centrado de verdad.** Aquí había un `flex` centrado en la caja del panel,
+ * y desde que el panel es una concha la caja es una rejilla —la concha se
+ * declara después y gana—: la hombrera y el grado se quedaban a la izquierda
+ * y las cifras, que llevan su propio centrado, en el medio. Tres cosas en dos
+ * ejes distintos. El centrado va en el cuerpo, que es donde está lo de dentro.
+ */
+.cuaderno__panel .concha__cuerpo {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  padding: 28px 36px;
-  border-radius: 22px;
-  background: var(--verde-bosque);
-  border: 1px solid rgba(228, 226, 218, 0.2);
-  max-width: 520px;
+  text-align: center;
 }
 
 .cuaderno__manga svg {
@@ -1065,18 +1072,109 @@ body {
  * Las cuentas, en fila y con la cifra grande encima de su palabra. Sin barras
  * de progreso ni porcentajes: lo que se enseña son **cosas hechas**.
  */
+/*
+ * Y cada cuenta en su baldosa, en una rejilla de cinco. Sueltas y envueltas,
+ * en un teléfono salían tres arriba y dos abajo sin orden ni aire, con la
+ * frase de lo que falta pegada debajo: «las cifras se amontonan». En baldosas
+ * se lee cuál es cada una aunque se partan en dos filas.
+ */
 .cuaderno__datos {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px 22px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
 }
 
 .cuaderno__dato {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 74px;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 4px 9px;
+  border-radius: var(--r-m);
+  background: rgb(255 255 255 / 0.05);
+}
+
+/*
+ * En estrecho, tres y dos, **con las dos de abajo centradas**: seis columnas,
+ * cada baldosa ocupa dos y la cuarta empieza en la segunda. Con tres columnas
+ * sin más, la segunda fila quedaba arrimada a la izquierda con un hueco al
+ * lado, que es otra vez lo descentrado.
+ */
+@media (max-width: 520px) {
+  .cuaderno__datos {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .cuaderno__dato {
+    grid-column: span 2;
+  }
+
+  .cuaderno__dato:nth-child(4) {
+    grid-column: 2 / span 2;
+  }
+}
+
+/*
+ * **Y en un teléfono tumbado, en dos columnas**: la hombrera con su grado a un
+ * lado y las cuentas al otro. Una debajo de otra no cabían en 412 de alto y
+ * «Cerrar» quedaba debajo de la barra de gestos; así cabe la página entera y
+ * los vuelos, si los hay, siguen debajo rodando.
+ */
+@media (max-height: 460px) {
+  .cuaderno__panel {
+    width: min(640px, 100%);
+  }
+
+  .cuaderno__panel .concha__cuerpo {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 22px;
+    row-gap: 10px;
+  }
+
+  .cuaderno__manga {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: center;
+  }
+
+  .cuaderno__manga svg {
+    height: 84px;
+  }
+
+  .cuaderno__grado:not(.cuaderno__grado--vuelos) {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: center;
+    font-size: 24px;
+  }
+
+  .cuaderno__datos {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .cuaderno__dato {
+    grid-column: span 2;
+  }
+
+  .cuaderno__dato:nth-child(4) {
+    grid-column: 2 / span 2;
+  }
+
+  .cuaderno__falta,
+  .cuaderno__grado--vuelos,
+  .bitacora {
+    grid-column: 1 / -1;
+  }
+
+  .cuaderno__grado--vuelos {
+    margin-top: 8px;
+  }
 }
 
 /* ── Los vuelos del cuaderno ───────────────────────────────────────────────
@@ -1099,6 +1197,9 @@ body {
   list-style: none;
   margin: 10px 0 0;
   padding: 0;
+  /* De lado a lado del cuerpo, que centra lo demás. Ver `.cuaderno__panel`. */
+  align-self: stretch;
+  text-align: left;
 }
 
 .bitacora__vuelo {
@@ -1153,6 +1254,10 @@ body {
 
 .cuaderno__glosa {
   font-size: 13px;
+  line-height: 1.2;
+  /* Una palabra larga —en guaraní las hay— se parte antes que salirse. */
+  overflow-wrap: break-word;
+  max-width: 100%;
   /* Al 72 % eran 4,36:1, a catorce centésimas de AA. Al 85 %, 5,37. */
   color: var(--tinta-suave);
 }
@@ -2575,10 +2680,22 @@ button.motor__tecla::after {
   position: fixed;
   inset: 0;
   display: grid;
+  /*
+   * **Una fila del alto de la pantalla, no del contenido.** El panel lleva
+   * `max-height: 100%` para que su cuerpo ruede y la fila de «Cerrar» se quede
+   * a la vista, y ese cien por cien se medía contra una fila `auto` —que mide
+   * lo que el panel—, así que no topaba nunca: en un teléfono tumbado el
+   * cuaderno, los créditos y las teclas se salían por abajo con «Cerrar»
+   * debajo de la barra de gestos. Lo mismo en `.ajustes` y `.ala`.
+   */
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
   background: rgba(10, 16, 13, 0.86);
   z-index: 10;
-  padding: 24px;
+  /* Y fuera de la muesca y de la barra de gestos del teléfono. */
+  padding: max(24px, env(safe-area-inset-top))
+    max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
+    max(24px, env(safe-area-inset-left));
 }
 
 .creditos[hidden] {
@@ -4732,8 +4849,10 @@ button.motor__tecla::after {
 .mundo {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 32px;
+  /* Del tamaño del dedo, como los idiomas de al lado: medían 44 × 32 cuando
+     vivían en una esquina y ahora son un ajuste que se toca. */
+  width: 60px;
+  height: 44px;
   border: 1px solid transparent;
   border-radius: var(--r-s, 8px);
   background: rgba(228, 226, 218, 0.08);
@@ -4752,8 +4871,8 @@ button.motor__tecla::after {
 }
 
 .mundo svg {
-  width: 26px;
-  height: 19px;
+  width: 32px;
+  height: 23px;
 }
 
 .idioma {
@@ -5334,6 +5453,23 @@ button.motor__tecla::after {
   border-top: 1px solid var(--linea);
 }
 
+/*
+ * Y lo que pasa por debajo de la barra se desvanece en vez de cortarse. En un
+ * teléfono tumbado el pie asomaba media línea por encima —«Granja Óga · Hecho
+ * en…» partido por la mitad—, que se lee como un fallo; difuminado se lee
+ * como lo que es, que hay más debajo.
+ */
+.hangar__barra::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 18px;
+  background: linear-gradient(transparent, var(--barro));
+  pointer-events: none;
+}
+
 .hangar__pasos {
   display: grid;
   /*
@@ -5353,6 +5489,8 @@ button.motor__tecla::after {
 }
 
 .paso {
+  /* Ancla de la pregunta cuando se aparta de la vista. Ver `.paso__que`. */
+  position: relative;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -5554,15 +5692,43 @@ button.motor__tecla::after {
  *
  * Así que en toda la pantalla baja: sin la pregunta, el valor en dos líneas
  * si hace falta, menos relleno, y el botón de despegar más estrecho.
+ *
+ * **Y el dibujo encima del valor, en baldosa.** Al lado se comía el ancho: con
+ * seis pasos —en un campo con destinos— salían «Silvio Petti…», «Desp…»,
+ * «Guyr…», «Espa…». Encima, el valor tiene la baldosa entera para sus dos
+ * renglones. Es la misma baldosa que en un teléfono de pie, que es donde se
+ * vio primero: ver «El hangar en un teléfono de pie», más abajo.
  */
-@media (max-height: 460px) {
+@media (max-height: 460px), (max-width: 560px) {
+  /*
+   * La pregunta, fuera de la vista y no fuera de la página: con
+   * `display: none` el botón se quedaba sin la mitad de su nombre, y un
+   * lector de pantalla decía «Pykasu, botón» sin decir de qué es.
+   */
   .hangar .paso__que {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
-  .hangar .paso {
-    gap: 6px;
-    padding: 6px 8px;
+  .hangar .paso:not(.paso--volver) {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 4px;
+    text-align: center;
+  }
+
+  .hangar .paso:not(.paso--volver) .paso__texto {
+    align-items: center;
+  }
+
+  .hangar .paso:not(.paso--volver) .paso__icono {
+    width: 22px;
+    height: 22px;
   }
 
   .hangar .paso__valor {
@@ -5574,7 +5740,9 @@ button.motor__tecla::after {
     -webkit-line-clamp: 2;
     line-clamp: 2;
   }
+}
 
+@media (max-height: 460px) {
   .hangar .hangar__despegar {
     gap: 10px;
     padding: 0 22px;
@@ -5596,6 +5764,204 @@ button.motor__tecla::after {
 
   .hangar .hangar__despegar {
     padding: 0 18px;
+  }
+}
+
+/*
+ * **Y en las listas de un teléfono tumbado, el alto es de las fichas.**
+ *
+ * En 915 × 412 el título, la pregunta, la barra y el pie se comían tanto que
+ * de «¿Con qué volás?» se veía una fila y un tercio de aviones, y el alto de
+ * la lista estaba calculado para una tablet: bajaba por detrás del pie. Aquí
+ * el título se aparta —el sello sigue arriba a la izquierda y la pregunta es
+ * lo que hay que leer—, la lista mide lo que queda entre la pregunta y la
+ * barra, y la ficha del avión dice «JAZ 20 Pykasu» en un renglón: los seis
+ * aviones caben en dos filas, que es verlos todos sin desplazar nada.
+ */
+@media (max-height: 460px) {
+  .hangar:not([data-pantalla="inicio"]) {
+    --hangar-lista: calc(100dvh - 150px);
+  }
+
+  .hangar:not([data-pantalla="inicio"]) .hangar__marca {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* El sello, un poco más arriba: sin título, la lista sube hasta su altura. */
+  .hangar .marca {
+    top: max(8px, env(safe-area-inset-top));
+  }
+
+  /* Cuatro por fila desde 780 de ancho: los cuatro peldaños en una sola. */
+  .hangar .hangar__rejilla {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+
+  .hangar .ficha--avion .ficha__pie {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 7px 12px 8px;
+  }
+}
+
+/*
+ * Y con la barra de direcciones puesta —un teléfono tumbado deja trescientos
+ * y pocos píxeles de alto—, la portada tampoco cabía: la barra tapaba el
+ * nombre de los tres sitios. Sin título y con el dibujo más apaisado, las
+ * tres fichas enteras y el botón debajo.
+ */
+@media (max-height: 400px) {
+  .hangar[data-pantalla="inicio"] .hangar__marca {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .hangar[data-pantalla="inicio"] .ficha__lienzo {
+    aspect-ratio: 3 / 1;
+  }
+}
+
+/*
+ * ── El hangar en un teléfono de pie ──
+ *
+ * La barra de abajo estaba pensada de lado a lado: los pasos en fila y el
+ * botón de despegar a la derecha. En 390 de ancho el botón se quedaba con dos
+ * tercios y los pasos con lo que sobraba —dos columnas de sesenta píxeles—, y
+ * la pregunta en mayúsculas se montaba sobre el dibujo del paso de al lado y
+ * el valor salía en «V…», «D…», «G…». Cinco botones que no dicen nada son
+ * cinco botones que no están.
+ *
+ * De pie, la barra va en dos pisos: los pasos en baldosas de tres —el dibujo
+ * arriba y el valor debajo, que es como se lee un icono en un teléfono— y el
+ * botón de despegar a lo ancho, debajo de todo, que es donde cae el pulgar. La
+ * pregunta se aparta de la vista como en el teléfono tumbado: el dibujo ya dice
+ * de qué va cada paso, y para quien no ve la pantalla sigue siendo su nombre.
+ */
+@media (max-width: 560px) {
+  .hangar {
+    --hangar-lista: max(260px, calc(100dvh - 230px));
+  }
+
+  .hangar[data-pantalla="inicio"] {
+    padding-bottom: calc(240px + env(safe-area-inset-bottom));
+  }
+
+  .hangar[data-pantalla="inicio"] .hangar__barra {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding-top: 10px;
+  }
+
+  /*
+   * Seis columnas y cada baldosa en dos: con cinco pasos —un campo sin
+   * destinos— la quinta no se queda sola a la izquierda, sino que las dos de
+   * abajo van al centro.
+   */
+  .hangar .hangar__pasos {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .hangar .paso:not(.paso--volver) {
+    grid-column: span 2;
+    min-height: 66px;
+    padding: 8px 4px;
+  }
+
+  .hangar .paso:nth-child(4):nth-last-child(2) {
+    grid-column: 2 / span 2;
+  }
+
+  .hangar .paso__valor {
+    font-size: 13px;
+  }
+
+  .hangar[data-pantalla="inicio"] .hangar__despegar {
+    margin-left: 0;
+    justify-content: center;
+    min-height: 58px;
+  }
+
+  /*
+   * Y las tres fichas de «¿Seguimos donde lo dejaste?», acostadas. Tres en
+   * fila dejaban ciento diez píxeles a cada una: «Silvio Pettirossi» se salía
+   * por el borde y el «1,1 km» se quedaba en «1,1 k». Una debajo de otra y con
+   * el plano a la izquierda, el dibujo sale más grande que en la fila y el
+   * nombre cabe entero. De pie sobra alto y falta ancho, y se gasta lo que
+   * sobra.
+   */
+  .hangar__fila--tres {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .hangar__fila--tres .ficha {
+    flex-direction: row;
+  }
+
+  /* El 40 % es lo que deja «Yvytu Rape · Granja Óga» en un renglón en 390. */
+  .hangar__fila--tres .ficha__lienzo {
+    flex: none;
+    width: 40%;
+  }
+
+  .hangar__fila--tres .ficha__pie {
+    flex: 1;
+    min-width: 0;
+    align-content: center;
+    padding-inline: 12px 10px;
+    border-top: 0;
+    border-left: 1px solid var(--linea);
+  }
+
+  /*
+   * Los datos, juntos a la izquierda: repartidos, la longitud caía en la
+   * esquina de arriba a la derecha, que es donde va la marca de elegido. Así
+   * esa esquina queda libre y la marca no tapa nada, ni la cota del plano.
+   */
+  .hangar__fila--tres .ficha__renglon {
+    justify-content: flex-start;
+  }
+
+  /*
+   * Las listas, de dos en dos. De una en una, cada ficha medía el ancho entero
+   * del teléfono y se veía ficha y media: para elegir avión había que rodar
+   * cuatro pantallas, y lo que no se ve, para quien no lee, no existe.
+   */
+  .hangar .hangar__rejilla {
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 10px;
+    padding-right: 6px;
+  }
+
+  /* Y el renglón de datos se parte si no cabe, en vez de salirse. */
+  .hangar .ficha__renglon {
+    flex-wrap: wrap;
+    row-gap: 3px;
+  }
+
+  /*
+   * El país, a lo ancho y más alto. En una columna de ciento setenta píxeles
+   * los indicativos de Asunción y sus vecinos se escribían unos encima de
+   * otros —SGAS, SGES, SGOG en un palmo—, y el mapa es justo para ver dónde
+   * cae cada uno.
+   */
+  /* Con alto fijo y no mínimo: solo con el mínimo, sola en su fila, Chrome
+     daba cero a sus unidades de contenedor y el país no se dibujaba. */
+  .hangar .pais {
+    grid-column: 1 / -1;
+    height: 230px;
   }
 }
 
@@ -6874,6 +7240,8 @@ button.motor__tecla::after {
   inset: 0;
   z-index: 70;
   display: grid;
+  /* Para que el panel tope con la pantalla. Ver `.creditos`. */
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
   padding: 16px;
   overflow: auto;
@@ -7017,7 +7385,12 @@ button.motor__tecla::after {
   padding: 12px 8px;
   border-radius: var(--r-l);
   border: 1px solid var(--linea);
-  background: rgb(255 255 255 / 4%);
+  /*
+   * Opaco, como el resto del barro. Al cuatro por ciento de blanco la ficha
+   * era un vidrio, y en un teléfono tumbado el sol del paisaje caía justo
+   * detrás de «Uno nuevo» y partía la palabra en dos colores.
+   */
+  background: var(--barniz), var(--barro-claro);
   color: var(--tinta);
   font: inherit;
   cursor: pointer;
@@ -7030,7 +7403,9 @@ button.motor__tecla::after {
 /* El tuyo, el que estabas usando: marcado sin palabras. */
 .piloto__boton--tuyo {
   border-color: var(--ocre);
-  background: rgb(221 146 63 / 14%);
+  background:
+    linear-gradient(rgb(221 146 63 / 16%), rgb(221 146 63 / 16%)),
+    var(--barro-claro);
 }
 
 .piloto__avion {
@@ -7152,6 +7527,8 @@ button.motor__tecla::after {
   position: fixed;
   inset: 0;
   display: grid;
+  /* Para que el panel tope con la pantalla. Ver `.creditos`. */
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
   background: rgba(10, 16, 13, 0.86);
   z-index: 10;
@@ -7659,6 +8036,47 @@ button.motor__tecla::after {
   margin-left: auto;
 }
 
+/*
+ * **Y en una pantalla baja, la concha aprieta su marco y no lo de dentro.**
+ *
+ * En un teléfono tumbado con la barra de direcciones puesta quedan trescientos
+ * y pocos píxeles de alto, y el marco —el velo, el relleno, la cabecera con su
+ * raya— se llevaba más de cien. Lo que se estrecha es eso; las letras y los
+ * botones se quedan del tamaño del dedo.
+ */
+@media (max-height: 460px) {
+  .creditos,
+  .ajustes,
+  .ala {
+    padding: max(8px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+  }
+
+  .concha:not(.concha--instrumento) {
+    gap: 8px;
+    padding: 12px 18px 10px;
+  }
+
+  .concha:not(.concha--instrumento) .concha__cabecera {
+    padding-bottom: 8px;
+  }
+
+  .concha:not(.concha--instrumento) .concha__titulo {
+    font-size: 17px;
+  }
+
+  .concha:not(.concha--instrumento) .concha__icono {
+    width: 24px;
+    height: 24px;
+  }
+
+  .concha:not(.concha--instrumento) .concha__acciones {
+    padding-top: 8px;
+  }
+}
+
 .concha__accion--dibujo svg {
   width: 22px;
   height: 22px;
@@ -7791,6 +8209,27 @@ button.motor__tecla::after {
 
 .ficha--nocabe .ficha__lienzo {
   position: relative;
+}
+
+/*
+ * **El avión arriba y el porqué debajo, y los dos a la vista.**
+ *
+ * El dibujo iba en el centro y al 72 % del ancho, y con su fondo oscuro tapaba
+ * el retrato entero: en el teléfono, el JAZ 90 y el JAZ 120 eran dos fichas
+ * negras con una raya naranja, y no se sabía **qué** avión era el que no
+ * cabía, que es la mitad de lo que se enseña. El retrato sube al tercio de
+ * arriba, apagado, y el porqué ocupa el de abajo.
+ */
+.ficha--nocabe .ficha__retrato {
+  height: 68%;
+}
+
+.ficha--avion .ficha__nocabe {
+  top: auto;
+  bottom: 6%;
+  transform: translateX(-50%);
+  width: auto;
+  height: 42%;
 }
 
 .ficha__nocabe {
@@ -8205,12 +8644,73 @@ button.motor__tecla::after {
 }
 
 @media (max-width: 520px) {
-  /* En un teléfono el sello y los idiomas no caben en la misma línea. */
+  /*
+   * En un teléfono el sello y los idiomas no caben en la misma línea, así que
+   * van abajo, **en su sitio de la columna y no flotando**. Iban clavados a
+   * cuarenta y cuatro píxeles del borde, que es lo que mide el pie en una
+   * línea; en un teléfono el pie tiene dos, y los tres botones se montaban
+   * encima de «Granja Óga · Hecho en Capiibary».
+   */
   .pilotos__idiomas {
+    position: relative;
     top: auto;
-    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 44px);
-    right: 50%;
-    transform: translateX(50%);
+    right: auto;
+    order: 1;
+    justify-content: center;
+    margin: auto 0 12px;
+  }
+
+  .pilotos .pie {
+    order: 2;
+    margin-top: 0;
+  }
+}
+
+/*
+ * **Y el avión nuevo, en dos columnas en una pantalla baja.** Uno debajo de
+ * otro —el título, el avión, su nombre, los bichos, los colores y «A volar»—
+ * medían cuatrocientos píxeles, y en un teléfono tumbado el botón para
+ * empezar quedaba por debajo del borde: había que saber que se podía rodar. El
+ * avión a un lado y lo que se elige al otro, con el botón a la vista.
+ */
+@media (max-height: 460px) {
+  .pilotos__panel:has(.pilotos__muestra) {
+    grid-template-columns: auto auto;
+    justify-content: center;
+    align-items: center;
+    column-gap: 40px;
+    row-gap: 10px;
+  }
+
+  .pilotos__panel:has(.pilotos__muestra) > .pilotos__titulo {
+    grid-column: 1 / -1;
+  }
+
+  /* El avión y su nombre, juntos: el dibujo pegado abajo y el nombre arriba. */
+  .pilotos__panel:has(.pilotos__muestra) > .pilotos__muestra {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+    align-self: end;
+  }
+
+  .pilotos__panel:has(.pilotos__muestra) > .pilotos__nombre {
+    grid-column: 1;
+    grid-row: 4;
+    align-self: start;
+  }
+
+  .pilotos__panel:has(.pilotos__muestra) > .pilotos__opciones,
+  .pilotos__panel:has(.pilotos__muestra) > .creditos__cerrar {
+    grid-column: 2;
+  }
+
+  .pilotos__muestra .piloto__avion {
+    width: 96px;
+    height: 96px;
+  }
+
+  .pilotos__titulo {
+    font-size: 22px;
   }
 }
 

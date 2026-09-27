@@ -195,6 +195,16 @@ const HOLGURA_PARA_CAMBIAR_DE_CAMPO = 1000;
 const SE_QUEDA_EL_ARO = 2.5;
 
 /**
+ * Cuánto se queda a la vista tu permiso para aterrizar, s: la lámpara verde
+ * y su tarjeta.
+ *
+ * Seis, lo que una tarjeta de fase. Con los dos segundos y medio del aro la
+ * lámpara se apagaba mientras la torre todavía estaba diciendo tu matrícula,
+ * y el viento y el «cleared to land» sonaban con la pantalla ya vacía.
+ */
+const SE_QUEDA_EL_PERMISO = 6;
+
+/**
  * Los escalones de importancia de la señal. Ver `ui/senal.ts`.
  *
  * Son dos y no diez a propósito: lo que se está ordenando es «esto no puede
@@ -452,16 +462,14 @@ import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
 import { superficieEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { mapaDePavimento, type Pavimento } from "./world/vegetation";
-import {
-  AvisosDeAltura,
-  ESCALONES,
-  ESCALONES_EN_PIES,
-} from "./flight/avisos-de-altura";
+import { AvisosDeAltura, laCuentaDe } from "./flight/avisos-de-altura";
 import {
   canalesDe,
+  cantaLaCabina,
   claveDelAviso,
   EN_GRANDE,
   EN_GRANDE_EN_PIES,
+  type Canto,
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
@@ -2091,12 +2099,16 @@ export class Game {
    *
    * Vive en el juego y no en el HUD porque no es un adorno de pantalla: es lo
    * que enseña el ritmo de la recogida, y se dice **y** se dibuja.
+   *
+   * No es `readonly` porque cambia con el peldaño: sus escalones son los del
+   * instrumento, y subir a Taguato Ruvicha pasa la cabina a pies. Ver
+   * `laCuentaDeHoy`.
    */
-  private readonly avisosDeAltura: AvisosDeAltura;
+  private avisosDeAltura: AvisosDeAltura;
   /** Si el avión viene a posarse: embudo de final o sobre la pista. */
   private esUnaToma = false;
   /** La altura sobre la pista en grande: 150, 100 y 50. Ver `escalera.ts`. */
-  private readonly alturaEnGrande: AvisosDeAltura;
+  private alturaEnGrande: AvisosDeAltura;
   /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
   private fueraDeBanda = 0;
   /** Qué se dijo la última vez, para no repetirlo mientras siga igual. */
@@ -2594,9 +2606,10 @@ export class Game {
     alto: () =>
       this.flight.state.position.y - this.cotaDelCampo(this.elCampo()),
     decirAOtro: (dice) => this.decirleAOtro(dice),
-    autorizarte: () => this.porRadio("cleared to land"),
+    autorizarte: () => this.autorizarElAterrizaje(),
     mandarteAlAire: (alto, sigue) =>
       this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
+    mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
   });
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
@@ -2715,13 +2728,12 @@ export class Game {
       ? mapaDePavimento(this.scenario.aerodrome)
       : null;
     /*
-     * Los escalones que canta el radioaltímetro **son los que marca el
-     * instrumento**: metros donde la cabina va en metros, pies donde va en
-     * pies. Ver `ESCALONES_EN_PIES`.
+     * Los escalones de la cuenta dependen del avión y del peldaño: los del
+     * radioaltímetro en el que lo lleva, los del instrumento en los demás. Y
+     * del avión que viene en las opciones, que `this.aircraft` se pone más
+     * abajo. Ver `laCuentaDeHoy`.
      */
-    this.avisosDeAltura = new AvisosDeAltura(
-      this.tier.units === "aeronautical" ? ESCALONES_EN_PIES : ESCALONES,
-    );
+    this.avisosDeAltura = this.laCuentaDeHoy(options.aircraft ?? PYKASU);
     /*
      * Y el segundo contador: el de la altura **en grande**, que es otro canal
      * y por eso es otro contador. La cuenta atrás de arriba es la voz —cien,
@@ -4257,6 +4269,12 @@ export class Game {
      * elogios: que te digan «bien» no puede pisar a nadie.
      */
     urgencia: Urgencia = "normal",
+    /**
+     * Y si esto es un aviso o **la cuenta de la toma**, que no sube por la
+     * escalera: en el avión que la lleva la canta la máquina en los cuatro
+     * peldaños. Ver `cantaLaCabina` en `flight/escalera.ts`.
+     */
+    canto: Canto = "aviso",
   ): void {
     const deCabina = claveDeCabina(ingles);
     /*
@@ -4272,7 +4290,7 @@ export class Game {
      */
     const hayQuienLoCante =
       !deCabina || loDiceElAvion(deCabina, this.aircraft);
-    if (canalesDe(this.tier.avisos).cabina && hayQuienLoCante) {
+    if (cantaLaCabina(this.tier.avisos, canto) && hayQuienLoCante) {
       /*
        * **Y con la grabación de cabina si la hay.**
        *
@@ -5305,38 +5323,71 @@ export class Game {
         this.luzDeTorre(null);
       }
       if (queDice === "nada") return;
+      /*
+       * **Y sigues en final: es tu permiso para aterrizar, y suena como él.**
+       *
+       * Aquí se daba de otra manera —la tarjeta de «podés volver», el «cleared
+       * to land» solo por radio y, abajo, la instructora diciendo que podías
+       * volver a intentarlo— y el mismo permiso no puede sonar a dos cosas.
+       * Ver `autorizarElAterrizaje`.
+       */
+      if (queDice === "aterrizar") {
+        this.autorizarElAterrizaje();
+        return;
+      }
+      /*
+       * La torre no dice nada —no hay nada que autorizar todavía—, así que lo
+       * cuenta la instructora, en los cuatro peldaños: la voz es el canal, y
+       * la frase no es fraseología sino lo que quiere decir.
+       */
       const libre = this.avisoCon("vuelo.puedeVolver", "palabra.volve");
       this.hud.senal.mostrar("verde", libre.rotulo, null, {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
       });
       this.avisar("success");
-      if (queDice === "volver") {
-        /*
-         * La torre no dice nada —no hay nada que autorizar todavía—, así que
-         * lo cuenta la instructora, en los cuatro peldaños: la voz es el
-         * canal, y la frase no es fraseología sino lo que quiere decir.
-         */
-        this.instructor.decir(libre.texto, libre.id);
-        return;
-      }
-      this.laTorreMandaEnLaLuz = true;
-      this.luzDeTorre("verde");
-      // «cleared to land» no tiene variantes y no las va a tener: es
-      // fraseología fija. Ver `audio/variantes.ts`.
-      //
-      // Y en los peldaños con cifras ya lo dice la torre por radio, detrás de
-      // la lámpara —ver `luzDeTorre`—: dicho también aquí sonaba dos veces.
-      if (
-        this.tier.instruments !== "numeric" &&
-        this.tier.instruments !== "full"
-      )
-        this.cantar("cleared to land", libre.texto, libre.id);
-      this.agenda.luego(SE_QUEDA_EL_ARO, () => {
-        if (this.laAproximacion.mandanFrustrar) return;
-        this.luzDeTorre(null);
-        this.laTorreMandaEnLaLuz = false;
-      });
+      this.instructor.decir(libre.texto, libre.id);
+    });
+  }
+
+  /**
+   * **Tu permiso para aterrizar, por el mismo camino que el de despegar.**
+   *
+   * Iba solo por radio y solo en inglés —«cleared to land»—, sin lámpara, sin
+   * tarjeta y sin una palabra en castellano, y en Guyrami ni eso: la
+   * fraseología es de Taguató para arriba. Se oyó jugando: «no veo que la
+   * torre en ningún momento comunique conmigo para darme permiso para la
+   * toma». A los cuatro años una frase en inglés no es un permiso, y quien
+   * juega en silencio no se enteraba de nada.
+   *
+   * Ahora es **la verde en vuelo**, que en las señales de luz de verdad
+   * quiere decir justo eso: la lámpara, la tarjeta verde, «podés aterrizar»
+   * con tu matrícula en los cuatro peldaños y, de Taguató para arriba, el
+   * «cleared to land» con el viento delante. Lo dice la torre y nadie más:
+   * la instructora no lo repite, que un suceso es una voz. Ver `luzDeTorre`.
+   *
+   * La lámpara se apaga sola cuando pasa, porque en el aire no hay lámpara
+   * que mirar; si mientras tanto llega una orden de irse, la luz es suya.
+   *
+   * `cabecera` es la que se nombra si no es la de uso: sin motor se aterriza
+   * por la que se tenga delante. Ver `autorizarSinMotor`.
+   */
+  private autorizarElAterrizaje(cabecera: string | null = null): void {
+    this.cabeceraParaLaTorre = cabecera;
+    this.laTorreMandaEnLaLuz = true;
+    this.luzDeTorre("verde");
+    this.cabeceraParaLaTorre = null;
+    this.hud.senal.mostrar(
+      "verde",
+      this.rotulo("vuelo.puedeAterrizar", "palabra.aterriza"),
+      null,
+      { segundos: SE_QUEDA_EL_PERMISO, prioridad: IMPORTANTE },
+    );
+    this.avisar("success");
+    this.agenda.luego(SE_QUEDA_EL_PERMISO, () => {
+      if (this.laAproximacion.mandanFrustrar) return;
+      this.luzDeTorre(null);
+      this.laTorreMandaEnLaLuz = false;
     });
   }
 
@@ -7947,11 +7998,19 @@ export class Game {
     );
     // Con su clave, que sin ella la cifra en casa no tenía grabación que
     // buscar. Ver `escalon` en `flight/avisos-de-altura.ts`.
+    /*
+     * **Y es la cuenta, no un aviso.** En el avión que lleva radioaltímetro
+     * que canta la dice la máquina en los cuatro peldaños, en inglés y en
+     * pies, y la instructora no cuenta por encima: un suceso, una voz. En los
+     * demás la sigue diciendo ella, en casa. Ver `cantaLaCabina`.
+     */
     if (aviso)
       this.cantar(
         aviso.dice,
         aviso.clave ? t(aviso.clave as TranslationKey) : aviso.encasa,
         aviso.clave,
+        "normal",
+        "cuenta",
       );
 
     /*
@@ -9732,15 +9791,7 @@ export class Game {
   private autorizarSinMotor(cabecera: string | null): void {
     if (!this.hayTorreQueHable()) return;
     this.turno.alSerTuya("");
-    this.cabeceraParaLaTorre = cabecera;
-    this.laTorreMandaEnLaLuz = true;
-    this.luzDeTorre("verde");
-    this.cabeceraParaLaTorre = null;
-    this.agenda.luego(SE_QUEDA_EL_ARO, () => {
-      if (this.laAproximacion.mandanFrustrar) return;
-      this.luzDeTorre(null);
-      this.laTorreMandaEnLaLuz = false;
-    });
+    this.autorizarElAterrizaje(cabecera);
   }
 
   /**
@@ -10929,8 +10980,18 @@ export class Game {
       );
       // Y con su clave: los ficheros de voz se llaman por clave, no por
       // texto. Ver `audio/banco-de-voz.ts`.
+      /*
+       * **Y el punto de no retorno ya tiene voz: la del V1.** Pasar a
+       * «comprometido» y cantar V1 son el mismo suceso visto por dos
+       * detectores —la pista que queda y la aguja—, y en el peldaño de cabina
+       * sonaba dos veces: «V one» y, detrás, «ya despegamos: seguí». Ahí lo
+       * dice la cabina; en los de abajo el V1 ya se canta con esta misma frase,
+       * y la boca no la repite. Ver `onVelocidades`.
+       */
+      const loDiceElV1 =
+        vista.fase === "comprometido" && canalesDe(this.tier.avisos).cabina;
       if (!repuesta) {
-        this.instructor.decir(frase, clave);
+        if (!loDiceElV1) this.instructor.decir(frase, clave);
         if (conLetras) {
           this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
         }
@@ -12338,6 +12399,19 @@ export class Game {
   }
 
   /**
+   * **La cuenta de la toma de este avión en este peldaño**: la de la máquina
+   * si la lleva, o la de la instructora en las unidades del instrumento. Ver
+   * `laCuentaDe`.
+   *
+   * Y se rehace al cambiar de peldaño, que no se hacía: se fijaba al arrancar,
+   * y quien subía de Taguato a Taguato Ruvicha seguía oyendo la cuenta en
+   * metros con la cabina ya en pies. Lo mismo la altura en grande.
+   */
+  private laCuentaDeHoy(avion: AircraftConfig): AvisosDeAltura {
+    return new AvisosDeAltura(laCuentaDe(avion, this.tier.units));
+  }
+
+  /**
    * Sube o baja un peldaño de la escalera de dificultad.
    *
    * Cambia el motor de vuelo si hace falta, las unidades y los instrumentos.
@@ -12352,6 +12426,10 @@ export class Game {
 
     this.tier = next;
     rememberTier(next);
+    this.avisosDeAltura = this.laCuentaDeHoy(this.aircraft);
+    this.alturaEnGrande = new AvisosDeAltura(
+      next.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
+    );
     this.flight = this.buildFlightModel(next);
     this.flight.reset(carried);
 
