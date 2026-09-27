@@ -409,14 +409,44 @@ export interface AircraftConfig {
    */
   vleKt: number;
   /**
-   * Y lo mismo con los flaps fuera, en nudos indicados.
+   * **La VFE de cada muesca de flaps**, en nudos indicados: lo más rápido que
+   * se puede ir con los flaps en esa posición.
    *
-   * Más bajo todavía que el del tren: un flap es una superficie grande, con
-   * poco brazo y mucha palanca, y es lo primero que se dobla. Por eso en
-   * cualquier cabina la cinta de velocidad lleva su marca y por eso se sacan
-   * **después** de frenar, no antes.
+   * Una cifra por muesca **sacada**, en el orden de `muescasDeFlaps` sin su
+   * cero —recogidos no hay tope de flaps—; vacía en el que no los lleva. La
+   * última es la de aterrizaje y es siempre la más baja.
+   *
+   * **Era un solo número, y un solo número mentía.** Con el JAZ 90 a ciento
+   * setenta y tres nudos y la primera muesca, la instructora pedía
+   * recogerlos: su único tope era el de los flaps de aterrizaje. En un avión
+   * de verdad los topes van en una placa de la cabina, uno por posición, y la
+   * primera de un reactor de ese tamaño aguanta doscientos cincuenta: es un
+   * flap que apenas baja y casi todo sale hacia atrás. Solo la de aterrizaje
+   * obliga a ir despacio.
+   *
+   * Cada ficha lleva la placa del tipo real cuyas muescas copia, y la fuente
+   * al lado. Donde el avión de verdad no tiene una muesca intermedia, la placa
+   * se lee **por grados**, que es como están escritas: «de diez a treinta,
+   * ochenta y cinco» vale para la de veinte. Ver `vfeEn` en `limites.ts`.
    */
-  vfeKt: number;
+  vfePorMuesca: readonly number[];
+  /**
+   * **Si sube los flaps solo cuando se pasa de su tope**: el alivio de carga
+   * de los flaps, *flap load relief*.
+   *
+   * Lo llevan los reactores de línea. En el 737, con los flaps de aterrizaje
+   * y la velocidad un nudo por encima de su placa, los flaps suben a la muesca
+   * anterior **sin que la palanca se mueva**, y vuelven a bajar solos en
+   * cuanto la velocidad cae por debajo; el 747-400 hace lo mismo con sus dos
+   * últimas posiciones. Es el avión protegiéndose de quien se pasa, que es
+   * justo la consecuencia que hay que enseñar: no se rompe nada, pero el
+   * avión deja de hacer lo que se le pidió hasta que se le pide bien.
+   *
+   * Una avioneta no lo lleva: sus flaps los mueve un motor eléctrico y nadie
+   * vigila la velocidad por ella. Ahí la consecuencia es otra —ver
+   * `flight/carga-de-flaps.ts`—.
+   */
+  alivioDeFlaps: boolean;
   /**
    * **Mmo**: el Mach máximo.
    *
@@ -456,7 +486,8 @@ export interface AircraftConfig {
    *   la categoría sale de la velocidad a la que se cruza el umbral —A por
    *   debajo de 91 nudos, B hasta 120, C hasta 140, D hasta 165— y el
    *   circuito visual no pasa de 100, 135, 180 y 205 nudos respectivamente.
-   *   Y nunca por encima de `vfeKt`, que el circuito se vuela con flaps.
+   *   Y nunca por encima de la VFE de los flaps de aterrizaje —la última de
+   *   `vfePorMuesca`—, que el circuito se vuela con flaps.
    * - **En la práctica, bastante menos**: el viento en cola de un avión de
    *   línea se vuela a la de maniobra de sus flaps intermedios, que en los
    *   manuales de los fabricantes queda treinta o cuarenta nudos por encima
@@ -681,7 +712,14 @@ export const PYKASU: AircraftConfig = {
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
   vmoKt: 163,
   vleKt: 85,
-  vfeKt: 85,
+  /*
+   * Diez, veinte y treinta: la placa de un entrenador de ala alta de esta
+   * clase, la del Cessna 172S —manual de vuelo, sección 2, límites de
+   * velocidad—: 110 nudos con diez grados y 85 de diez a treinta. En la
+   * esfera, el arco blanco acaba en 85.
+   */
+  vfePorMuesca: [110, 85, 85],
+  alivioDeFlaps: false,
   mmo: 0.3,
   // 33 m/s son 119 km/h, que es la corta final de un 172 de verdad.
   approachSpeed: 33,
@@ -774,7 +812,9 @@ export const MAINUMBY: AircraftConfig = {
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
   vmoKt: 130,
   vleKt: 80,
-  vfeKt: 80,
+  // Sin flaps no hay placa: ver `llevaFlaps`.
+  vfePorMuesca: [],
+  alivioDeFlaps: false,
   mmo: 0.28,
   approachSpeed: 29,
   // 70 nudos: un cuarto por encima de su Vref, como la avioneta de escuela.
@@ -911,7 +951,12 @@ export const PANAMBI: AircraftConfig = {
   // Y los límites, tomados de un bimotor ligero de esta clase.
   vmoKt: 230,
   vleKt: 152,
-  vfeKt: 122,
+  /*
+   * Diez, veinticinco y cuarenta, con la placa del bimotor de seis plazas
+   * cuyas muescas son: el Piper PA-34 Seneca II, 138, 121 y 107 nudos.
+   */
+  vfePorMuesca: [138, 121, 107],
+  alivioDeFlaps: false,
   mmo: 0.48,
   // 44 m/s son 1,3 veces la pérdida, que es como se cruza el umbral.
   approachSpeed: 44,
@@ -1024,7 +1069,15 @@ export const ARASUNU: AircraftConfig = {
   // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
   vmoKt: 250,
   vleKt: 184,
-  vfeKt: 157,
+  /*
+   * La placa de un turbohélice de diecinueve plazas y cola en T, el Beech
+   * 1900D: 188 nudos con los de aproximación, diecisiete grados, y 154 con
+   * los de aterrizaje, treinta y cinco. Leída por grados, que es como está
+   * escrita: la de diez cae dentro de la de aproximación, y la de veinte ya
+   * pasó de ella.
+   */
+  vfePorMuesca: [188, 154, 154],
+  alivioDeFlaps: false,
   mmo: 0.55,
   approachSpeed: 48,
   // 120 nudos: Vref más veintisiete, con los flaps de aproximación; su
@@ -1156,7 +1209,7 @@ export const ARAI: AircraftConfig = {
   // Reactor regional.
   vmoKt: 320,
   /*
-   * **Y estos dos salen de su propia Vref, no de un avión real que no es.**
+   * **El del tren sale de su propia Vref, no de un avión real que no es.**
    *
    * Los primeros números vinieron del arquetipo —un regional de verdad— y su
    * tope de flaps quedaba en ciento cincuenta contra una Vref de ciento
@@ -1164,11 +1217,23 @@ export const ARAI: AircraftConfig = {
    * corrección en final. O sea que aterrizar de manual rompía los flaps.
    *
    * Lo cazó la prueba que dice que un límite que se pasa volando la
-   * aproximación de manual no es un límite, es una trampa. Ahora van a vez y
-   * pico de su Vref, como el resto de la flota.
+   * aproximación de manual no es un límite, es una trampa. Los flaps ya no
+   * van por ahí: llevan la placa de verdad, abajo.
    */
   vleKt: 205,
-  vfeKt: 180,
+  /*
+   * **Y la placa de flaps, una por muesca.** Cinco, quince y treinta son
+   * muescas del 737, y ésta es la suya —la del 737-800: 250, 200 y 175—.
+   * Un regional de la misma clase dice lo mismo en su orden: el E-170 va de
+   * 230 con la primera a 165 con la de aterrizaje.
+   *
+   * La de aterrizaje queda con el margen que pide la prueba de siempre: se
+   * cruza el umbral a 132, y un límite que se pasa volando la aproximación de
+   * manual no es un límite, es una trampa.
+   */
+  vfePorMuesca: [250, 200, 175],
+  // Como el 737: los de aterrizaje suben solos a la muesca anterior.
+  alivioDeFlaps: true,
   mmo: 0.82,
   /*
    * **Ciento treinta y dos nudos, que es como entra un regional.**
@@ -1360,7 +1425,12 @@ export const YVAGA: AircraftConfig = {
    */
   vmoKt: 365,
   vleKt: 270,
-  vfeKt: 240,
+  /*
+   * La placa del 747-400 en sus muescas: 260 con cinco, 230 con veinte y 180
+   * con treinta. Y su alivio de carga, que sube los de aterrizaje.
+   */
+  vfePorMuesca: [260, 230, 180],
+  alivioDeFlaps: true,
   mmo: 0.92,
   // 1,3 veces la pérdida, como manda: con CLmax 1,4 pierde a 76 m/s.
   // Ciento cuarenta y seis nudos: 1,3 veces su pérdida con flaps, y lo que
@@ -1370,8 +1440,8 @@ export const YVAGA: AircraftConfig = {
   /*
    * **Ciento ochenta nudos**: el viento en cola de un 747 se vuela con los
    * flaps a diez y a su velocidad de maniobra, Vref más veinte a cuarenta.
-   * Cruza el umbral a 146 —categoría D, hasta 205— y su `vfeKt` es el tope
-   * de esos mismos flaps a diez.
+   * Cruza el umbral a 146 —categoría D, hasta 205— y no se pasa de la placa
+   * de sus flaps de aterrizaje, que es la más baja.
    */
   velocidadDeCircuito: 180 * 0.514444,
   decisionSpeed: 80,

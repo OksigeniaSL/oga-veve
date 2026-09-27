@@ -156,9 +156,16 @@ export class Encierro {
     this.previo = null;
   }
 
+  /*
+   * **Sin desplazar el cuerpo del panel.** En un teléfono tumbado el cuerpo
+   * rueda, y enfocar el primer mando lo rodaba hasta él: «Cómo vuela un ala»
+   * se abría con el dibujo del ala fuera, arriba, y lo primero que se veía era
+   * el tirador. El foco se queda donde tiene que estar y el panel se abre por
+   * el principio; al tabular, el navegador ya lo trae a la vista.
+   */
   private enfocarElPrimero(): void {
     const dentro = this.dentro();
-    (dentro[0] ?? this.root).focus?.();
+    (dentro[0] ?? this.root).focus?.({ preventScroll: true });
   }
 
   /** Lo enfocable de dentro, en orden. Lo mira también el mando. */

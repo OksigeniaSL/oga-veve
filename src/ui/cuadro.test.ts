@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, PYKASU, aircraftById } from "../flight/aircraft";
 import { anguloEn, cuadroDe, enLaEscala, regimen } from "./cuadro";
+import { vfeDeAterrizaje } from "../flight/limites";
 
 
 describe("las escalas del cuadro", () => {
@@ -65,7 +66,11 @@ describe("las escalas del cuadro", () => {
       if (a.llevaFlaps) {
         expect(blanco).toBeDefined();
         expect(blanco!.desde).toBeLessThan(verde.desde);
-        expect(blanco!.hasta).toBeCloseTo(a.vfeKt / c.asiMax, 6);
+        // Hasta la VFE de los de aterrizaje: la última de la placa.
+        expect(blanco!.hasta).toBeCloseTo(
+          vfeDeAterrizaje(a.vfePorMuesca) / c.asiMax,
+          6,
+        );
       } else {
         expect(blanco).toBeUndefined();
       }

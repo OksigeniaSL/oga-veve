@@ -224,6 +224,12 @@ export interface DatosDeCabina {
    * de menos dentro.
    */
   readonly mach?: number | null;
+  /**
+   * Lo más rápido que se puede ir con lo que se lleva sacado, en nudos, o
+   * `Infinity` si no se lleva nada: lo que baja la banda roja de la cinta. De
+   * la misma cuenta que el cuadro plano; ver `topeDeLoSacado`.
+   */
+  readonly topeKt?: number;
   /** Si está en pérdida: marco rojo alrededor del horizonte. */
   readonly perdida: boolean;
   /**
@@ -985,6 +991,21 @@ function cintaDeVelocidad(
     g.fillStyle = COLOR_DE_ARCO[b.color];
     if (b.color === "blanco") g.fillRect(x + w - 10, y1, 4, y2 - y1);
     else g.fillRect(x + w - 5, y1, 5, y2 - y1);
+  }
+  /*
+   * **Y la banda roja y negra, que baja con lo que se saca**: desde la placa
+   * de los flaps o del tren hacia arriba, como la del cuadro plano —ver
+   * `data-tope` en `ui/cristal.ts`—. Allí bajaba y aquí no, y el mismo avión
+   * con los flaps de aterrizaje fuera enseñaba el límite en un sitio y la Vmo
+   * en el otro. Con nada fuera se queda en la de siempre.
+   */
+  const tope = Math.min(c.velocidades.vne, d.topeKt ?? Infinity);
+  if (tope < c.velocidades.vne) {
+    const yTope = medio + (kt - tope) * POR_NUDO;
+    g.fillStyle = PALETA.limite;
+    g.fillRect(x + w - 5, y, 5, yTope - y);
+    g.fillStyle = "#000";
+    for (let yy = yTope - 5; yy > y - 5; yy -= 10) g.fillRect(x + w - 5, yy, 5, 5);
   }
 
   for (const m of marcasDeCinta({

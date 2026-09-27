@@ -27,6 +27,7 @@
 import type { FlightState } from "../flight/model";
 import type { AudioLevel } from "../audio/audio";
 import { indicatedAirspeed, velocidadDelSonido } from "../flight/atmosphere";
+import { topeDeLoSacado } from "../flight/limites";
 import { t, type TranslationKey } from "../i18n";
 import { leerTexto, ponerTexto } from "../datos/guardado";
 import { cuantaLuz } from "../world/hora";
@@ -70,6 +71,12 @@ import { avisaLaPerdida } from "../flight/avisos-de-actitud";
  * uno del otro— salgan uno después del otro y no encima.
  */
 const DURA_EL_DESTELLO = 1.6;
+
+/**
+ * Cuánto se estira la vía del compensador: media unidad a cada punta. Ver
+ * `setTrim`.
+ */
+const ESCALA_DEL_TRIM = 2;
 
 /** Lo que dura la salida del botón de freno al pasar V1, en segundos. */
 const BRAKE_EXIT = 0.9;
@@ -814,6 +821,15 @@ export class Hud {
           <span class="trim__via">
             <span class="trim__marca" data-hud="trim-marca"></span>
           </span>
+          <!--
+            Y la flecha del paso: sale un momento con cada toque corto, hacia
+            donde se ha movido. Es lo que dice sin leer que el toque ha hecho
+            algo, porque un paso pequeño en la aguja apenas se ve. Ver
+            pasoDelCompensador.
+          -->
+          <svg class="trim__paso" viewBox="0 0 12 8" aria-hidden="true">
+            <path d="M1 7 L6 1 L11 7" />
+          </svg>
         </div>
         <!--
           Y el interruptor, que es lo que tiene un comandante de verdad.
@@ -2143,6 +2159,12 @@ export class Hud {
             regimen(this.ficha, throttle, engineOn),
           ),
           flaps: mandos?.flaps ?? 0,
+          // Lo más rápido que se puede ir con lo que está fuera: la banda
+          // roja de la cinta baja hasta aquí. Ver `topeDeLoSacado`.
+          topeKt: topeDeLoSacado(this.ficha, {
+            tren: mandos?.tren ?? 1,
+            flaps: mandos?.flaps ?? 0,
+          }),
           tren: mandos?.tren ?? 1,
           reversa,
           v1: decisionSpeed * 1.94384,
@@ -2594,17 +2616,59 @@ export class Hud {
     const caja = this.root.querySelector<HTMLElement>('[data-hud="trim"]');
     const marca = this.root.querySelector<HTMLElement>('[data-hud="trim-marca"]');
     if (!caja || !marca) return;
-    const hay = this.instruments !== "none" && Math.abs(valor) > 0.005;
+    const hay =
+      this.instruments !== "none" &&
+      (Math.abs(valor) > 0.005 || this.trimRecienTocado);
     caja.hidden = !hay;
     if (!hay) return;
     const v = Math.max(-1, Math.min(1, valor));
-    // Arriba en la escala es morro arriba, así que el signo se invierte: en
-    // pantalla la Y crece hacia abajo.
-    marca.style.setProperty("--trim", String(-v));
+    /*
+     * Arriba en la escala es morro arriba, así que el signo se invierte: en
+     * pantalla la Y crece hacia abajo.
+     *
+     * **Y la vía enseña lo que se usa, no el recorrido entero.** Volando se
+     * usan unas décimas —ver `PASO_DE_UN_TOQUE`—, y con la escala de punta a
+     * punta la aguja se quedaba a un par de píxeles del centro todo el vuelo:
+     * un indicador que no se mueve no indica. De la raya del centro a cada
+     * punta va media unidad, y de ahí para fuera la aguja se queda en el tope.
+     */
+    marca.style.setProperty(
+      "--trim",
+      String(Math.max(-1, Math.min(1, -v * ESCALA_DEL_TRIM))),
+    );
     caja.setAttribute(
       "aria-label",
       `${t(v > 0 ? "hud.trimArriba" : "hud.trimAbajo")} ${Math.round(Math.abs(v) * 100)}%`,
     );
+  }
+
+  /** Si acaba de haber un toque del compensador. Ver `pasoDelCompensador`. */
+  private trimRecienTocado = false;
+  private trimPasoReloj: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * **Un toque corto del compensador, que se tiene que ver.**
+   *
+   * El paso es pequeño a propósito —ver `PASO_DE_UN_TOQUE`— y la aguja apenas
+   * se mueve un píxel, así que el indicador enseña además **la flecha del
+   * paso**, hacia donde se ha ido, durante medio segundo. Y sale aunque el
+   * compensador haya vuelto justo al centro: el toque que lo centra también
+   * es un toque.
+   */
+  pasoDelCompensador(sentido: number): void {
+    const caja = this.root.querySelector<HTMLElement>('[data-hud="trim"]');
+    if (!caja || this.instruments === "none") return;
+    this.trimRecienTocado = true;
+    caja.hidden = false;
+    caja.classList.remove("trim--paso-arriba", "trim--paso-abajo");
+    // Se fuerza un repintado para que dos toques seguidos vuelvan a animar.
+    void caja.offsetWidth;
+    caja.classList.add(sentido > 0 ? "trim--paso-arriba" : "trim--paso-abajo");
+    if (this.trimPasoReloj) clearTimeout(this.trimPasoReloj);
+    this.trimPasoReloj = setTimeout(() => {
+      this.trimRecienTocado = false;
+      caja.classList.remove("trim--paso-arriba", "trim--paso-abajo");
+    }, 600);
   }
 
   /**

@@ -161,6 +161,14 @@ export const ES_PY = {
   "teclas.hint":
     "Tocá una tecla para cambiarla. Escape para dejarlo como está.",
   "teclas.pulsa": "Apretá una tecla…",
+  /*
+   * **Lo que hace un toque corto de flecha**, que no se descubre solo. Va
+   * debajo del dibujo que lo enseña, para quien ya lee. Ver
+   * `flight/palanca-de-teclado.ts`. TRIM va en inglés: es lo que pone en la
+   * cabina y en el indicador.
+   */
+  "teclas.toque":
+    "Un toque cortito a la flecha deja el morro un poquito más arriba o más abajo, y se queda: es el compensador, TRIM. Apretada, la flecha es la palanca y vuelve al soltarla. Con mando, la cruceta.",
   "teclas.restore": "Como venía",
   "teclas.close": "Cerrar",
   "tecla.pitchUp": "Subir el morro",
@@ -586,6 +594,8 @@ export const ES_PY = {
   "palabra.frena": "¡Frená!",
   "palabra.toca": "¡Tocá!",
   "palabra.volve": "¡Volvé!",
+  // La verde en vuelo: tu permiso para aterrizar. Ver `autorizarElAterrizaje`.
+  "palabra.aterriza": "¡Aterrizá!",
   "palabra.alAire": "¡Al aire!",
   // La de la torre canaria: la misma orden, sin vosear. Ver `i18n/habla.ts`.
   "palabra.canario.alAire": "¡Al aire!",
@@ -711,6 +721,12 @@ export const ES_PY = {
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",
   "vuelo.puedeVolver": "La torre te deja volver a intentarlo",
+  /*
+   * Y tu permiso para aterrizar, en la tarjeta verde. No lo dice la
+   * instructora: lo dice la torre, «podés aterrizar», y esto es lo que se lee
+   * mientras tanto. Ver `autorizarElAterrizaje` en `game.ts`.
+   */
+  "vuelo.puedeAterrizar": "La torre te deja aterrizar",
   "vuelo.frustrada": "¡Bien hecho! Te fuiste al aire. Probá de nuevo",
   /*
    * **Y estos tres hablan como habla una persona.**
@@ -815,6 +831,29 @@ export const ES_PY = {
   "vuelo.flapsPasados": "Muy rápido con los flaps: recogélos",
   "vuelo.pediFlaps": "Bajá los flaps para frenar",
   "palabra.flaps": "Flaps",
+  /*
+   * **Lo que les pasa a los flaps por pasarse**, que es distinto en cada
+   * avión: el reactor se protege solo y la avioneta se lleva el golpe. Ver
+   * `flight/carga-de-flaps.ts`. Con calma las dos: no es una emergencia, es
+   * una consecuencia.
+   */
+  "vuelo.alivioDeFlaps":
+    "Los flaps subieron un punto solos: el avión los cuida porque vamos rápido. Bajá la velocidad y vuelven.",
+  "vuelo.flapsTocados":
+    "Nos pasamos de velocidad con los flaps y quedaron tocados: ya no bajan más del primer punto. En tierra los revisa el mecánico.",
+  /*
+   * **Y los flaps después de tocar**: arriba al dejar la pista, no en la
+   * carrera. Ver `flight/despues-de-aterrizar.ts`. La lista de después del
+   * aterrizaje es la del peldaño de cabina, y dice qué es de cada uno: los
+   * flaps los sube quien vuela, y lo demás lo hace quien va al lado.
+   */
+  "vuelo.flapsEnLaCarrera":
+    "Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el tren sin querer.",
+  "vuelo.flapsArribaAlSalir": "Ya salimos de la pista: ahora sí, subí los flaps.",
+  "vuelo.despuesDelAterrizaje":
+    "Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.",
+  "vuelo.alPuestoConFlaps":
+    "Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.",
   "vuelo.meteElTren": "Metélo, el tren te frena",
   /*
    * **Y es una tormenta, no lluvia.** Solo se avisa de las células de núcleo

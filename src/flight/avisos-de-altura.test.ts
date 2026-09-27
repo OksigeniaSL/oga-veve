@@ -12,7 +12,14 @@ import {
   AvisosDeAltura,
   ESCALONES,
   ESCALONES_EN_PIES,
+  laCuentaDe,
 } from "./avisos-de-altura";
+import { AIRCRAFT } from "./aircraft";
+import {
+  claveDeCabina,
+  DE_LOS_AVISADORES,
+  loDiceElAvion,
+} from "../audio/cabina";
 
 /**
  * Irse al aire de verdad: unos segundos seguidos sin venir a posarse.
@@ -403,6 +410,84 @@ describe("la cuenta no depende de cuál sea el escalón más alto", () => {
     for (const lista of [ESCALONES, ESCALONES_EN_PIES]) {
       const alturas = lista.map((e) => e.metros);
       expect([...alturas].sort((a, b) => b - a)).toEqual(alturas);
+    }
+  });
+});
+
+/*
+ * **La cuenta de la máquina, en el avión que la lleva.** Es la de verdad —en
+ * pies, en inglés— en los cuatro peldaños; en los demás la dice la
+ * instructora, con el número del instrumento. Ver `laCuentaDe` y la cabecera
+ * de `flight/escalera.ts`.
+ */
+describe("qué cuenta lleva cada avión", () => {
+  const conRadioaltimetro = AIRCRAFT.filter((a) => a.avisosHablados);
+
+  it("la llevan el turbohélice y los dos reactores, y nadie más", () => {
+    expect(conRadioaltimetro.map((a) => a.id).sort()).toEqual([
+      "jaz-120",
+      "jaz-60",
+      "jaz-90",
+    ]);
+  });
+
+  it("en ellos es la de pies, también con la cabina en metros", () => {
+    for (const a of conRadioaltimetro) {
+      expect(laCuentaDe(a, "metric"), a.id).toBe(ESCALONES_EN_PIES);
+      expect(laCuentaDe(a, "aeronautical"), a.id).toBe(ESCALONES_EN_PIES);
+    }
+  });
+
+  it("en los demás, la del instrumento", () => {
+    for (const a of AIRCRAFT.filter((x) => !x.avisosHablados)) {
+      expect(laCuentaDe(a, "metric"), a.id).toBe(ESCALONES);
+      expect(laCuentaDe(a, "aeronautical"), a.id).toBe(ESCALONES_EN_PIES);
+    }
+  });
+
+  /*
+   * La secuencia de un radioaltímetro con la cuenta entera, sin los dos de
+   * arriba del todo, que no tienen toma de cabina. Si algún día se graban,
+   * esta prueba es la que hay que cambiar.
+   */
+  it("y es la secuencia de verdad, de quinientos a diez", () => {
+    expect(ESCALONES_EN_PIES.map((e) => e.dice)).toEqual([
+      "five hundred",
+      "four hundred",
+      "three hundred",
+      "two hundred",
+      "one hundred",
+      "fifty",
+      "forty",
+      "thirty",
+      "twenty",
+      "ten",
+    ]);
+    for (const e of ESCALONES_EN_PIES)
+      expect(e.metros * 3.28084, e.dice).toBeCloseTo(
+        {
+          "five hundred": 500,
+          "four hundred": 400,
+          "three hundred": 300,
+          "two hundred": 200,
+          "one hundred": 100,
+          fifty: 50,
+          forty: 40,
+          thirty: 30,
+          twenty: 20,
+          ten: 10,
+        }[e.dice]!,
+        -1,
+      );
+  });
+
+  it("cada número tiene su toma de cabina, y la dice la máquina", () => {
+    for (const e of ESCALONES_EN_PIES) {
+      const clave = claveDeCabina(e.dice);
+      expect(clave, e.dice).not.toBeNull();
+      expect(DE_LOS_AVISADORES.has(clave!), e.dice).toBe(true);
+      for (const a of conRadioaltimetro)
+        expect(loDiceElAvion(clave!, a), `${a.id} ${e.dice}`).toBe(true);
     }
   });
 });

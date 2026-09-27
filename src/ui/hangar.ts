@@ -455,6 +455,17 @@ export function pieles(escenario: Scenario): { cielo: string; suelo: string } {
 /** El idioma en el formato que entiende `Intl`. */
 const idioma = (): string => (getLocale() === "gug" ? "es-PY" : getLocale());
 
+/**
+ * El nombre de un sitio sin lo de detrás del punto medio, para la barra.
+ *
+ * «Mariscal Estigarribia · el Chaco» no cabe en el paso de un teléfono: en dos
+ * renglones salía «Mariscal Estigarribia · e…», que es peor que no poner la
+ * coletilla. La tarjeta del destino del vuelo ya lo corta igual, y la ficha,
+ * que tiene sitio, lo lleva entero.
+ */
+export const nombreCorto = (nombre: string): string =>
+  nombre.split(" · ")[0] ?? nombre;
+
 // ── La pantalla ──────────────────────────────────────────────────────────
 
 const ESCALA = Math.max(...SCENARIOS.map((e) => caja(e).lado));
@@ -1427,6 +1438,8 @@ export function abrirHangar(
     return destinoPorDefecto(sitio, avion, leccion, mision);
   };
   let pantalla: Pantalla = "inicio";
+  /** La que está pintada, para saber si se cambió de pantalla o se repinta. */
+  let pintada: Pantalla | null = null;
   let reposo: ReturnType<typeof setTimeout> | null = null;
   /**
    * Si el avión acaba de cambiar por aceptar la propuesta de un destino: el
@@ -1690,7 +1703,12 @@ export function abrirHangar(
           destinosDeLaRuta(sitio).length > 0 ? 6 : 5
         }">
           ${[
-            ["donde", t("hangar.donde"), t(sitio.nameKey as never), PASO_DONDE],
+            [
+              "donde",
+              t("hangar.donde"),
+              nombreCorto(t(sitio.nameKey as never)),
+              PASO_DONDE,
+            ],
             /*
              * El destino, solo donde hay a dónde ir: en un campo sin vecinos
              * la única respuesta es la vuelta al campo, y un paso que no se
@@ -1709,9 +1727,11 @@ export function abrirHangar(
                     t("hangar.adonde"),
                     destinoDeAhora() === sitio.id
                       ? t("hangar.vuelta")
-                      : t(
-                          (SCENARIOS.find((e) => e.id === destinoDeAhora())
-                            ?.nameKey ?? "hangar.vuelta") as never,
+                      : nombreCorto(
+                          t(
+                            (SCENARIOS.find((e) => e.id === destinoDeAhora())
+                              ?.nameKey ?? "hangar.vuelta") as never,
+                          ),
                         ),
                     PASO_ADONDE,
                   ],
@@ -1778,6 +1798,21 @@ export function abrirHangar(
       img.addEventListener("error", () => img.remove(), { once: true });
     // El destello del cambio de avión es de una sola vez.
     avionCambiado = false;
+    /*
+     * **Qué pantalla es, para la hoja de estilos.** En un teléfono de pie la
+     * barra de abajo cambia de forma según haya pasos o solo «Volver», y en uno
+     * tumbado el título se aparta en las listas para dejarles el alto.
+     */
+    root.dataset.pantalla = pantalla;
+    /*
+     * **Y una pantalla nueva empieza arriba.** El hangar rueda entero —para
+     * llegar al pie en un teléfono— y el desplazamiento se quedaba puesto al
+     * cambiar de pantalla: quien bajaba hasta el pie en «¿Desde dónde salís?»
+     * entraba luego en «¿A qué jugás?» con la pregunta fuera de la pantalla.
+     * Repintar la misma —al cambiar de idioma, por ejemplo— no lo toca.
+     */
+    if (pintada !== pantalla) root.scrollTop = 0;
+    pintada = pantalla;
   };
 
   pintar();

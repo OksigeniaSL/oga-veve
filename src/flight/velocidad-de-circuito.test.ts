@@ -9,6 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT } from "./aircraft";
+import { vfeDeAterrizaje } from "./limites";
 import {
   MARGEN_DE_CIRCUITO,
   bandaDeAhora,
@@ -52,7 +53,9 @@ describe("cada avión tiene su velocidad de circuito, y es de verdad", () => {
       // Ni por encima de lo que permite su categoría.
       expect(kt).toBeLessThanOrEqual(topeDeSuCategoria(a.approachSpeed / NUDO));
       // Y configurado: si lleva flaps, a esa velocidad se pueden sacar.
-      if (a.llevaFlaps) expect(kt).toBeLessThanOrEqual(a.vfeKt);
+      // Con los de aterrizaje, que es la placa más baja.
+      if (a.llevaFlaps)
+        expect(kt).toBeLessThanOrEqual(vfeDeAterrizaje(a.vfePorMuesca));
     },
   );
 

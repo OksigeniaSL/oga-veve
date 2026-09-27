@@ -191,6 +191,53 @@ describe("al darte la pista", () => {
   });
 });
 
+describe("y con una orden de irse al aire puesta", () => {
+  /*
+   * El permiso pendiente se cae: lo que toca decir al levantar la orden lo
+   * sabe quien la levanta —ver `alLevantarLaOrden`—, y dicho desde aquí era
+   * la verde encima de la roja.
+   */
+  it("tu permiso pendiente no suena, ni cuando la orden se levanta", () => {
+    let orden = true;
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      mandanFrustrar: () => orden,
+    });
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual([]);
+    orden = false;
+    turno.paso("final");
+    expect(pasos).toEqual([]);
+  });
+
+  it("y la final nueva lo vuelve a pedir, y suena", () => {
+    let orden = true;
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      mandanFrustrar: () => orden,
+    });
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    orden = false;
+    turno.paso("en-vuelo");
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+  });
+
+  it("sin orden, suena en cuanto se pide", () => {
+    const { turno, pasos } = montar(new Frecuencia(dados(3), "GCXO"), {
+      mandanFrustrar: () => false,
+    });
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual(["cleared to land"]);
+  });
+});
+
 describe("lo que se retira de la boca", () => {
   it("al cambiar la luz: lo de tu lámpara y la explicación de la espera, no lo de otros", () => {
     const { turno, boca } = montar(new Frecuencia(dados(3), "GCXO"));

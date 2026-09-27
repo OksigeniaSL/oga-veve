@@ -134,14 +134,17 @@ const pedidas = cuales.length
  * nadie. Va de serie y no detrás de una bandera: gastar el saldo de otro sin
  * decir cuánto es lo que no se hace.
  */
-const caracteres = pedidas.reduce((n, f) => n + f.texto.length, 0);
+// Lo que se lee es `dicho` si la frase lo trae —ver `EN_CALMA` en
+// `frases-para-grabar.mjs`—, y eso es lo que se cobra.
+const leido = (f) => f.dicho ?? f.texto;
+const caracteres = pedidas.reduce((n, f) => n + leido(f).length, 0);
 console.log(
   `\n  ${pedidas.length} frases · ${caracteres} caracteres` +
     `${cuales.length ? ` · solo ${cuales.join(", ")}` : ""}`,
 );
 for (const v of [...new Set(pedidas.map((f) => f.voz))]) {
   const suyas = pedidas.filter((f) => f.voz === v);
-  const n = suyas.reduce((a, f) => a + f.texto.length, 0);
+  const n = suyas.reduce((a, f) => a + leido(f).length, 0);
   console.log(
     `    ${v.padEnd(12)} ${String(suyas.length).padStart(3)} frases · ${String(n).padStart(5)} caracteres`,
   );
@@ -188,7 +191,16 @@ for (const f of pedidas) {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: f.texto, model_id: MODELO }),
+        /*
+         * Y con los ajustes de la frase si los trae. Sin ellos manda los de
+         * la voz, que es como se grabaron todas; con ellos, los de una toma
+         * en calma. Ver `EN_CALMA` en `frases-para-grabar.mjs`.
+         */
+        body: JSON.stringify({
+          text: leido(f),
+          model_id: MODELO,
+          ...(f.ajustes ? { voice_settings: f.ajustes } : {}),
+        }),
       },
     );
     await writeFile(destino, Buffer.from(await r.arrayBuffer()));

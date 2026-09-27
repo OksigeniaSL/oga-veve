@@ -48,6 +48,7 @@ import { ascensoMaximo } from "../flight/carrera";
 import { loQueCabe, reservaEnKilos } from "../flight/combustible";
 import { familiaDe, patasDe, type Familia } from "./familia";
 import { PALETA } from "./paleta";
+import { vfeDeAterrizaje } from "../flight/limites";
 
 /**
  * Las tres conversiones del cuadro de mandos, en un solo sitio.
@@ -397,7 +398,9 @@ function velocidadesDe(a: AircraftConfig): Velocidades {
   const vso = a.llevaFlaps ? perdidaCon(a, a.flapsLift) * NUDOS : null;
   return {
     vso: vso === null ? null : Math.round(vso),
-    vfe: a.llevaFlaps ? a.vfeKt : null,
+    // La cabeza del blanco es la VFE de los flaps de aterrizaje, la última de
+    // la placa: la más baja. Ver `vfePorMuesca` en `aircraft.ts`.
+    vfe: a.llevaFlaps ? vfeDeAterrizaje(a.vfePorMuesca) : null,
     vs1: Math.round(vs1),
     vno,
     vne,

@@ -188,6 +188,18 @@ export class KeyScreen {
     if (!this.root.hidden) this.render();
   }
 
+  /**
+   * Si en el peldaño de hoy el toque de flecha mueve el compensador. En el
+   * del dibujo no —ver `compensadorVivo` en `flight/input.ts`—, y enseñar
+   * ahí un mando que no hace nada sería enseñar que los mandos son adorno.
+   */
+  private compensador = true;
+  setCompensador(vivo: boolean): void {
+    if (vivo === this.compensador) return;
+    this.compensador = vivo;
+    if (!this.root.hidden) this.render();
+  }
+
   /** Teclas pulsadas ahora mismo, para encender su dibujo. */
   private readonly pulsadas = new Set<string>();
 
@@ -392,10 +404,44 @@ export class KeyScreen {
       ],
       cuerpo: `
         ${teclado}
+        ${this.compensador ? this.toqueDeFlecha() : ""}
         ${tabla}
       `,
     });
     this.paintPressed();
+  }
+
+  /**
+   * **El toque corto de la flecha**, dibujado: la flecha tocada una vez y la
+   * aguja del TRIM que sube un diente y se queda.
+   *
+   * Es un mando que no se descubre solo —la flecha siempre fue palanca y
+   * nada más—, y un mando que no se anuncia no existe. El dibujo es la
+   * explicación para quien no lee: la tecla, un golpecito, y el mismo
+   * indicador que sale en el vuelo con la aguja movida. La frase va debajo
+   * para quien sí lee. Ver `flight/palanca-de-teclado.ts`.
+   */
+  private toqueDeFlecha(): string {
+    return `
+      <div class="teclas__toque">
+        <svg class="teclas__toque-dibujo" viewBox="0 0 120 44" aria-hidden="true">
+          <rect x="4" y="6" width="32" height="32" rx="6" class="teclas__toque-tecla" />
+          <path d="M20 13 L28 24 H23 V31 H17 V24 H12 Z" class="teclas__toque-flecha" />
+          <circle cx="47" cy="22" r="3" class="teclas__toque-golpe" />
+          <path d="M58 22 H76 M71 17 L76 22 L71 27" class="teclas__toque-lleva" />
+          <line x1="98" y1="6" x2="98" y2="38" class="teclas__toque-via" />
+          <line x1="93" y1="22" x2="103" y2="22" class="teclas__toque-centro" />
+          <rect x="91" y="15" width="14" height="3.5" rx="1.5" class="teclas__toque-aguja" />
+          <path d="M112 16 L116 11 L120 16" class="teclas__toque-paso" />
+        </svg>
+        <span class="teclas__toque-rotulo">TRIM</span>
+        ${
+          this.simple
+            ? ""
+            : `<p class="teclas__pista">${t("teclas.toque")}</p>`
+        }
+      </div>
+    `;
   }
 
   /** La tabla de cambiar teclas. Ajustes, no explicación: va debajo y discreta. */

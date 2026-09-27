@@ -9,6 +9,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canalesDe,
+  cantaLaCabina,
   claveDelAviso,
   EN_GRANDE,
   EN_GRANDE_EN_PIES,
@@ -61,6 +62,23 @@ describe("la escalera de comunicación", () => {
   it("la voz de cabina es del último peldaño y de nadie más", () => {
     const conCabina = PELDANOS.filter((p) => canalesDe(p).cabina);
     expect(conCabina).toEqual(["cabina"]);
+  });
+
+  /*
+   * **La excepción, y es una sola.** La cuenta del radioaltímetro es una voz
+   * de máquina neutra y no un aviso: en el avión que la lleva suena en los
+   * cuatro peldaños. Los avisos siguen subiendo por la escalera.
+   */
+  describe("la cuenta de la toma no sube por la escalera", () => {
+    it("la cuenta la canta la cabina en los cuatro peldaños", () => {
+      for (const p of PELDANOS) expect(cantaLaCabina(p, "cuenta")).toBe(true);
+    });
+
+    it("y los avisos, solo en el de cabina", () => {
+      expect(PELDANOS.filter((p) => cantaLaCabina(p, "aviso"))).toEqual([
+        "cabina",
+      ]);
+    });
   });
 
   describe("qué texto va en la tarjeta", () => {
