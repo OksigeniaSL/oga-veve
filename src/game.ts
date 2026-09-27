@@ -195,6 +195,12 @@ const HOLGURA_PARA_CAMBIAR_DE_CAMPO = 1000;
 const SE_QUEDA_EL_ARO = 2.5;
 
 /**
+ * Por debajo de esto, en m/s sobre el suelo, el avión está parado: es cuando
+ * el mecánico puede mirar unos flaps tocados. Ver `atenderALosFlaps`.
+ */
+const PARADO_DE_VERDAD = 1;
+
+/**
  * Los escalones de importancia de la señal. Ver `ui/senal.ts`.
  *
  * Son dos y no diez a propósito: lo que se está ordenando es «esto no puede
@@ -464,7 +470,19 @@ import {
   EN_GRANDE_EN_PIES,
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
-import { loQueSePasa } from "./flight/limites";
+import { loQueSePasa, vfeDeLaMuesca, vfeEn } from "./flight/limites";
+import {
+  FLAPS_SANOS,
+  cuidarLosFlaps,
+  hastaDondeBajan,
+  type CargaDeFlaps,
+} from "./flight/carga-de-flaps";
+import { siguienteDetente } from "./flight/flaps";
+import {
+  NADA_DICHO,
+  flapsTrasLaToma,
+  type LoDicho,
+} from "./flight/despues-de-aterrizar";
 import { puntoMasCercanoDe, type Aerodrome } from "./world/aerodrome";
 import { MundoVecino } from "./world/mundo-vecino";
 import { desplazarAerodromo } from "./world/aerodromo-desplazado";
@@ -3402,6 +3420,15 @@ export class Game {
       cycleDestino: () => this.siguienteDestino(),
       girarAltimetro: (pasos: number) => this.girarAltimetro(pasos),
       trenTrabado: () => this.trenTrabado(),
+      /*
+       * **Un paso del compensador se oye y se ve.** El clic de la rueda y la
+       * aguja que salta con su flecha: es lo que dice, sin leer, que un toque
+       * corto ha dejado el morro puesto. Ver `flight/palanca-de-teclado.ts`.
+       */
+      pasoDelCompensador: (sentido: number) => {
+        this.avisar("compensador");
+        this.hud.pasoDelCompensador(sentido);
+      },
       cycleLanguage: () => this.changeLanguage(),
       toggleSound: () => this.toggleSound(),
       firstGesture: () => {
@@ -3419,6 +3446,8 @@ export class Game {
         void this.instructor.cargar();
       },
     });
+    // Ver `buildFlightModel`: el primer modelo se construyó antes que esto.
+    this.input.compensadorVivo = this.tier.model !== "simple";
 
     /*
      * El cuaderno de vuelo, si el HTML trae su hueco.
@@ -3469,6 +3498,7 @@ export class Game {
     this.keyScreen?.setSimple(
       this.tier.instruments === "none" || this.tier.instruments === "pictorial",
     );
+    this.keyScreen?.setCompensador(this.tier.model !== "simple");
     const ajustesRoot = document.getElementById("ajustes");
     if (ajustesRoot) {
       this.ajustesUI = new PantallaDeAjustes(ajustesRoot, (a) =>
@@ -6184,6 +6214,10 @@ export class Game {
     this.wasStalled = false;
     this.wasCrashed = false;
     this.input.releaseAll();
+    // Un vuelo nuevo es un avión en su puesto: flaps sanos y sin alivio.
+    this.cargaDeFlaps = FLAPS_SANOS;
+    this.input.topeDeFlaps = 1;
+    this.dichoTrasLaToma = NADA_DICHO;
     this.hud.tutor.reset();
     /*
      * **Vuelo nuevo: la instructora se olvida de lo que ya había dicho.**
@@ -7594,6 +7628,8 @@ export class Game {
      * empieza parado en el aire.»
      */
     this.input.releaseAll();
+    this.cargaDeFlaps = FLAPS_SANOS;
+    this.input.topeDeFlaps = 1;
     this.input.controls.engineOn = true;
     /*
      * **El gas que sostiene la velocidad de aproximación, no un 0,45 mágico.**
@@ -7862,6 +7898,9 @@ export class Game {
     // El interruptor de tierra/aire del tren: con el peso encima, la palanca
     // no lo mete. Ver `alternarTren` en `flight/input.ts`.
     this.input.pesoEnLasRuedas = this.flight.state.onGround;
+    // Y hasta dónde pueden bajar los flaps: el alivio de carga o unos flaps
+    // tocados. Antes de mover los mandos, que es quien los lleva.
+    this.atenderALosFlaps(dt);
     this.input.update(dt);
     // El piloto de pruebas hace de teclado, así que va donde va el teclado: y
     // **la ayuda va después de quien pilota**, no antes. Puestas al revés, el
@@ -8132,14 +8171,22 @@ export class Game {
           // están saliendo y pedírtelos otra vez sería avisar de lo hecho.
           this.input.palancaDeFlaps < 0.5 &&
           /*
-           * **Y por debajo de su tope.** Pedir flaps pasado de `vfeKt` es
+           * **Y por debajo de su tope.** Pedir flaps pasado de su placa es
            * pedir que se rompan, y el juego avisa justo de eso en cuanto
            * salen. Con la banda solo en final no llegaba a pasar —una Vref y
            * cuarto cae por debajo del tope en toda la flota—; en el circuito
            * sí, que ahí «rápido» empieza bastante más arriba. Por encima, lo
            * que se dice es la velocidad a secas: primero gas y paciencia.
+           *
+           * Y el tope es **el de la muesca que se va a pedir**, que es la de
+           * después de la palanca: la primera de un reactor aguanta mucho más
+           * que la de aterrizaje. Ver `vfePorMuesca`.
            */
-          this.flight.state.airspeed * NUDOS < this.aircraft.vfeKt;
+          this.flight.state.airspeed * NUDOS <
+            vfeDeLaMuesca(
+              this.aircraft.vfePorMuesca,
+              siguienteDetente(this.input.palancaDeFlaps),
+            );
         if (sinMotorDice) {
           this.hud.senal.mostrar(
             "senda",
@@ -8370,7 +8417,7 @@ export class Game {
     this.hud.ponerLucesDeAviso({
       terreno: terreno !== null,
       perdida: avisaLaPerdida(this.flight.state),
-      rapido: this.sobrandoVelocidad > 0,
+      rapido: this.sobrandoVelocidad > 0 && !this.rapidoSinLuz,
       trenMal: this.trenFueraDeSitio(),
       frustrada: this.laAproximacion.mandanFrustrar,
       pilotoSuelto: this.pilotoSeSolto > 0,
@@ -10622,6 +10669,7 @@ export class Game {
       dt,
     );
     this.vistaActual = vista;
+    this.flapsTrasLaToma(faseDeAntes, vista.fase);
     /*
      * **La pista acaba de pasar a ser tuya**: antes de que la torre te la dé
      * —la lámpara verde y el «cleared to land» se dicen más abajo, en este
@@ -11720,6 +11768,116 @@ export class Game {
    * fuera y callado. Un aviso vuelve cuando cambia lo que pasa.
    */
   private dichoDeSobrevelocidad: string | null = null;
+  /**
+   * Si lo que se pasa son los flaps de un avión que no tiene luz para eso.
+   * Ver `atenderALaSobrevelocidad`.
+   */
+  private rapidoSinLuz = false;
+  /**
+   * Cómo van los flaps: el alivio de carga y el abuso. Ver
+   * `flight/carga-de-flaps.ts` y `atenderALosFlaps`.
+   */
+  private cargaDeFlaps: CargaDeFlaps = FLAPS_SANOS;
+
+  /** Lo que ya se dijo de los flaps en esta toma. Ver `flapsTrasLaToma`. */
+  private dichoTrasLaToma: LoDicho = NADA_DICHO;
+  /** Dónde estaba la palanca de flaps en el paso anterior. */
+  private palancaDeFlapsVista = 0;
+
+  /**
+   * **Los flaps después de tocar: arriba al dejar la pista, no en la
+   * carrera.** La regla y el porqué están en `flight/despues-de-aterrizar.ts`;
+   * aquí se elige la frase según el peldaño y se dice.
+   *
+   * Con la escalera: abajo, la instructora con la frase corta —«ahora sí,
+   * subí los flaps»—; en el de cabina, **la lista de después del
+   * aterrizaje**, que es como lo hace una tripulación de verdad y como se lo
+   * va a encontrar quien vuele un día. En el dibujo, la tarjeta con los flaps
+   * y su tecla, que es lo que se entiende sin leer.
+   */
+  private flapsTrasLaToma(antes: Fase | "", ahora: Fase): void {
+    const palanca = this.input.palancaDeFlaps;
+    const paso = flapsTrasLaToma(
+      { fase: antes, palanca: this.palancaDeFlapsVista },
+      { fase: ahora, palanca },
+      this.dichoTrasLaToma,
+    );
+    this.palancaDeFlapsVista = palanca;
+    this.dichoTrasLaToma = paso.dicho;
+    if (!paso.toca || !this.aircraft.llevaFlaps) return;
+    const clave: TranslationKey =
+      paso.toca === "enLaCarrera"
+        ? "vuelo.flapsEnLaCarrera"
+        : paso.toca === "alPuesto"
+          ? "vuelo.alPuestoConFlaps"
+          : canalesDe(this.tier.avisos).cabina
+            ? "vuelo.despuesDelAterrizaje"
+            : "vuelo.flapsArribaAlSalir";
+    this.hud.senal.mostrar(
+      "flaps",
+      this.rotulo(clave, "palabra.flaps"),
+      null,
+      {
+        segundos: SE_QUEDA_EL_ARO * 2,
+        prioridad: IMPORTANTE,
+        // La tecla solo cuando lo que toca es subirlos.
+        ...(paso.toca === "alSalir"
+          ? { tecla: nombreDeTecla(this.input.preferredKey("flaps")) }
+          : {}),
+      },
+    );
+    this.instructor.decir(t(clave), clave);
+  }
+
+  /**
+   * **Lo que les pasa a los flaps por pasarse**, y contarlo una vez.
+   *
+   * La cuenta está en `flight/carga-de-flaps.ts`; aquí se le pasa al mando
+   * hasta dónde pueden bajar y se dice lo que cambia, **cuando cambia** —el
+   * alivio que salta, los flaps que quedan tocados—, que es la regla de esta
+   * casa para los avisos: vuelven cuando pasa algo, no cuando pasa un rato.
+   *
+   * Y con la escalera: el alivio de un reactor no lo canta ninguna caja de
+   * verdad —se ve en el indicador de flaps, que sube con la palanca quieta—,
+   * así que en el peldaño de cabina es la tarjeta y nada más. Abajo lo cuenta
+   * la instructora, con calma, porque sin ella nadie sabría por qué los flaps
+   * han subido solos. Lo de los flaps tocados lo dice ella en todos: en una
+   * avioneta no hay más aviso que la persona de al lado.
+   */
+  private atenderALosFlaps(dt: number): void {
+    const s = this.flight.state;
+    const antes = this.cargaDeFlaps;
+    const ahora = cuidarLosFlaps(this.aircraft, antes, {
+      kt: s.airspeed * NUDOS,
+      flaps: this.input.controls.flaps,
+      palanca: this.input.palancaDeFlaps,
+      paradoEnTierra:
+        s.onGround && Math.hypot(s.velocity.x, s.velocity.z) < PARADO_DE_VERDAD,
+      dt,
+    });
+    this.cargaDeFlaps = ahora;
+    this.input.topeDeFlaps = hastaDondeBajan(ahora);
+    const cabina = canalesDe(this.tier.avisos).cabina;
+    if (ahora.aliviados && !antes.aliviados) {
+      this.hud.senal.mostrar(
+        "flaps",
+        this.rotulo("vuelo.alivioDeFlaps", "palabra.flaps"),
+        null,
+        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+      );
+      if (!cabina)
+        this.instructor.decir(t("vuelo.alivioDeFlaps"), "vuelo.alivioDeFlaps");
+    }
+    if (ahora.tocados && !antes.tocados) {
+      this.hud.senal.mostrar(
+        "flaps",
+        this.rotulo("vuelo.flapsTocados", "palabra.flaps"),
+        null,
+        { segundos: SE_QUEDA_EL_ARO, prioridad: IMPORTANTE },
+      );
+      this.instructor.decir(t("vuelo.flapsTocados"), "vuelo.flapsTocados");
+    }
+  }
 
   /**
    * **El tope de velocidad del avión, que hasta hoy no existía.**
@@ -11760,12 +11918,47 @@ export class Game {
      */
     const kt = s.airspeed * NUDOS;
     const forzando = loQueSePasa(kt, this.aircraft, this.input.controls);
+    // El de los flaps es el de **su posición**: ver `vfeEn`.
     const tope = forzando
-      ? (forzando === "flaps" ? this.aircraft.vfeKt : this.aircraft.vleKt) /
-        NUDOS
+      ? (forzando === "flaps"
+          ? vfeEn(this.aircraft.vfePorMuesca, this.input.controls.flaps)
+          : this.aircraft.vleKt) / NUDOS
       : this.flight.limiteDeVelocidad();
     const pasado = s.airspeed > tope;
     this.sobrandoVelocidad = pasado ? this.sobrandoVelocidad + dt : 0;
+    /*
+     * **Y la luz roja, solo en el avión que la lleva.** Una avioneta no tiene
+     * ningún aviso de flaps pasados: tiene el arco blanco del anemómetro y a
+     * la instructora al lado, que es quien lo dice. Encender aquí la luz de
+     * sobrevelocidad de un avión de línea sería enseñar una luz que ese avión
+     * no tiene. Del tope del avión entero sí avisa, como siempre.
+     */
+    this.rapidoSinLuz =
+      forzando === "flaps" &&
+      !this.aircraft.avisosHablados &&
+      s.airspeed <= this.flight.limiteDeVelocidad();
+    /*
+     * **Y con el alivio de carga puesto, el avión ya se está encargando.**
+     * Los flaps de aterrizaje están subiendo solos a la muesca de antes —ver
+     * `flight/carga-de-flaps.ts`—, igual que el tren que ya entra: si con los
+     * flaps donde van no queda nada que se pase, no hay nada que pedir. Lo
+     * que se cuenta es el alivio, una vez, en `atenderALosFlaps`.
+     */
+    if (
+      forzando === "flaps" &&
+      this.cargaDeFlaps.aliviados &&
+      !loQueSePasa(kt, this.aircraft, {
+        tren: this.input.controls.tren,
+        flaps: Math.min(
+          this.input.controls.flaps,
+          hastaDondeBajan(this.cargaDeFlaps),
+        ),
+      }) &&
+      s.airspeed <= this.flight.limiteDeVelocidad()
+    ) {
+      this.sobrandoVelocidad = 0;
+      return;
+    }
     if (!pasado) {
       // Se rearma al volver a estar dentro con holgura: si no, volvería a
       // cantar en cuanto la aguja rozara el tope otra vez.
@@ -12237,6 +12430,18 @@ export class Game {
             assist: tier.assists,
           });
     /*
+     * Y si el toque de flecha tiene compensador que mover: en el modelo
+     * sencillo no lo hay. Ver `compensadorVivo` en `flight/input.ts`.
+     *
+     * La primera vez se construye antes que los mandos, y entonces lo pone
+     * el constructor al crearlos.
+     */
+    const mandos = this.input as InputManager | undefined;
+    if (mandos) {
+      mandos.compensadorVivo = tier.model !== "simple";
+      if (!mandos.compensadorVivo) mandos.controls.trim = 0;
+    }
+    /*
      * **Y el viento que ya sopla, que si no se pierde al cambiar de modelo.**
      *
      * `ponerTiempo` se lo dice al motor de vuelo, pero cambiar de peldaño o de
@@ -12378,6 +12583,7 @@ export class Game {
     this.keyScreen?.setSimple(
       next.instruments === "none" || next.instruments === "pictorial",
     );
+    this.keyScreen?.setCompensador(next.model !== "simple");
     this.updateBadge();
     /*
      * El nombre del peldaño, y **no la edad**.

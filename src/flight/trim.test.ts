@@ -115,3 +115,68 @@ describe("y el modelo sencillo no lo usa", () => {
     expect(con.state.position.y).toBeCloseTo(sin.state.position.y, 3);
   });
 });
+
+describe("y con la ayuda del peldaño, el toque también se queda", () => {
+  /*
+   * En los peldaños con ayuda, el compensador automático sostiene la subida
+   * que había al soltar, y un toque de flecha —dos centésimas de
+   * compensador— se lo comía entero: el avión seguía donde la ayuda quería.
+   * Y la ayuda no sostiene nunca una bajada, así que «si lo pongo a bajar,
+   * que lo deje fijo» era justo lo que no pasaba. Ver
+   * `SUBIDA_POR_COMPENSADOR` en `fdm.ts`.
+   */
+  function conAyuda(): CoefficientFlightModel {
+    const m = new CoefficientFlightModel({
+      aircraft: ARAI,
+      ground: () => 0,
+      assist: 1,
+    });
+    m.reset({ position: new Vector3(0, 3000, 0), heading: 0, airspeed: 100 });
+    return m;
+  }
+
+  /** Vuela con toques de compensador cada medio segundo y mide la bajada. */
+  function conToques(toques: number, paso: number): number {
+    const m = conAyuda();
+    let trim = 0;
+    const mandos = () => ({
+      ...neutralControls(),
+      engineOn: true,
+      throttle: 0.35,
+      trim,
+    });
+    for (let k = 0; k < Math.round(8 / DT); k++) m.step(DT, mandos());
+    for (let i = 0; i < toques; i++) {
+      trim += paso;
+      for (let k = 0; k < Math.round(0.5 / DT); k++) m.step(DT, mandos());
+    }
+    for (let k = 0; k < Math.round(10 / DT); k++) m.step(DT, mandos());
+    let vs = 0;
+    const n = Math.round(10 / DT);
+    for (let k = 0; k < n; k++) {
+      m.step(DT, mandos());
+      vs += m.state.verticalSpeed / n;
+    }
+    return vs;
+  }
+
+  it("cinco toques morro abajo dejan el avión bajando, y bajando se queda", () => {
+    const sinTocar = conToques(0, 0);
+    const bajando = conToques(5, -0.02);
+    // Medio metro por segundo por toque, y la ayuda lo sostiene.
+    expect(bajando).toBeLessThan(-1.5);
+    expect(bajando).toBeLessThan(sinTocar - 1.5);
+  });
+
+  it("y cinco morro arriba, subiendo", () => {
+    expect(conToques(5, 0.02)).toBeGreaterThan(conToques(0, 0) + 1.5);
+  });
+
+  it("un salto grande del compensador no es nadie tocándolo", () => {
+    // El automático, al soltarse, deja su timón en el compensador de golpe:
+    // eso no pide ninguna subida. Un solo salto de 0,1 no mueve lo sostenido.
+    const salto = conToques(1, 0.1);
+    const toques = conToques(5, 0.02);
+    expect(salto).toBeLessThan(toques);
+  });
+});

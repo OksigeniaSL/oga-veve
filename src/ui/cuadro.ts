@@ -28,6 +28,7 @@
 
 import { esDeChorro, type AircraftConfig } from "../flight/aircraft";
 import { ascensoMaximo } from "../flight/carrera";
+import { vfeDeAterrizaje } from "../flight/limites";
 
 /**
  * Las tres conversiones del cuadro de mandos, en un solo sitio.
@@ -64,6 +65,14 @@ export interface Cuadro {
     readonly verde: readonly [number, number];
     readonly ambar: readonly [number, number];
     readonly rojo: readonly [number, number];
+    /**
+     * **Y el blanco, el de los flaps**: de la pérdida con los flaps de
+     * aterrizaje a su VFE. Es el que lleva el anemómetro de cualquier
+     * avioneta, por dentro del verde, y **es el único aviso de flaps que
+     * tiene**: no hay luz ni voz, hay que mirarlo. `null` en el que no lleva
+     * flaps. Ver `vfePorMuesca`.
+     */
+    readonly blanco: readonly [number, number] | null;
   };
   /** Cuántas agujas de motor hay. */
   readonly motores: number;
@@ -90,9 +99,12 @@ function aCifraRedonda(v: number): number {
   return Math.ceil(v / paso) * paso;
 }
 
-/** La velocidad de pérdida limpia que dicen los coeficientes, m/s. */
-function perdida(a: AircraftConfig): number {
-  const clMax = a.aero.cl0 + a.aero.clAlpha * a.aero.alphaStall;
+/**
+ * La velocidad de pérdida que dicen los coeficientes, m/s: limpia, o con lo
+ * que sumen los flaps puestos.
+ */
+function perdida(a: AircraftConfig, masPorFlaps = 0): number {
+  const clMax = a.aero.cl0 + a.aero.clAlpha * a.aero.alphaStall + masPorFlaps;
   return Math.sqrt((2 * a.mass * 9.81) / (1.225 * a.wingArea * clMax));
 }
 
@@ -140,6 +152,12 @@ function calcularCuadro(a: AircraftConfig): Cuadro {
       verde: [(perdida(a) * NUDOS) / asiMax, (a.cruiseSpeed * NUDOS) / asiMax],
       ambar: [(a.cruiseSpeed * NUDOS) / asiMax, vne],
       rojo: [vne, 0.98],
+      blanco: a.llevaFlaps
+        ? [
+            (perdida(a, a.flapsLift) * NUDOS) / asiMax,
+            vfeDeAterrizaje(a.vfePorMuesca) / asiMax,
+          ]
+        : null,
     },
     motores: a.motores,
     queMarca,

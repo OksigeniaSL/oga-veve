@@ -156,7 +156,16 @@ export type Cue =
    */
   | "mover"
   /** Se elige algo. Sube, que en este juego es «hecho». */
-  | "elegir";
+  | "elegir"
+  /**
+   * **Un clic del compensador**, que también acusa recibo.
+   *
+   * Es de la familia de la concha y no de la del vuelo: no cuenta nada que
+   * haya pasado, dice que el toque de flecha se ha oído y ha dejado el morro
+   * puesto. Un clic seco y agudo, como la rueda de una cabina al girarla un
+   * diente. Ver `flight/palanca-de-teclado.ts`.
+   */
+  | "compensador";
 
 /**
  * Un motivo: qué notas, a qué ritmo y con cuánto cuerpo.
@@ -283,6 +292,14 @@ export const MOTIVOS: Record<Cue, Motivo> = {
     paso: 0.045,
     dura: 0.16,
     fuerza: FUERZA_DE_CONCHA,
+  },
+  // Un diente de rueda: más agudo y más corto que `mover`, para no
+  // confundirse con recorrer un panel.
+  compensador: {
+    notas: [1760],
+    paso: 0.03,
+    dura: 0.03,
+    fuerza: FUERZA_DE_CONCHA * 0.8,
   },
 };
 

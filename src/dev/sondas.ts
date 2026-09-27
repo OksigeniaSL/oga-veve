@@ -54,6 +54,7 @@ import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA } from "../audio/boca";
 import { planeoDe } from "../flight/sin-motor";
+import { vfeDeAterrizaje } from "../flight/limites";
 
 /**
  * **El campo en el que el banco aterriza por la otra punta**, o `null`.
@@ -419,7 +420,10 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       trenRetractil: juego.aircraft.trenRetractil,
       llevaFlaps: juego.aircraft.llevaFlaps,
       vleKt: juego.aircraft.vleKt,
-      vfeKt: juego.aircraft.vfeKt,
+      // La de los flaps de aterrizaje, que es la que mira el piloto del banco
+      // para sacarlos del todo. La placa entera, al lado.
+      vfeKt: vfeDeAterrizaje(juego.aircraft.vfePorMuesca),
+      vfePorMuesca: juego.aircraft.vfePorMuesca,
       /**
        * Y **lo que el propio juego calcula que le cuesta despegar**, m.
        *
@@ -1514,7 +1518,10 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     planeo: () => ({
       ...planeoDe(juego.aircraft),
       vref: juego.aircraft.approachSpeed,
-      vfeKt: juego.aircraft.vfeKt,
+      // La de los flaps de aterrizaje, que es la que mira el piloto del banco
+      // para sacarlos del todo. La placa entera, al lado.
+      vfeKt: vfeDeAterrizaje(juego.aircraft.vfePorMuesca),
+      vfePorMuesca: juego.aircraft.vfePorMuesca,
     }),
     /** Las células de tormenta de hoy. */
     celdasDeHoy: () => juego.celdasParaBanco,
