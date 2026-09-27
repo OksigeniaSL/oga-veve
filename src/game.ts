@@ -12138,12 +12138,23 @@ export class Game {
    */
   private cantarLaActitud(): void {
     const s = this.flight.state;
-    const ahora = avisoDeActitud({
-      enSuelo: s.onGround,
-      altura: s.heightAboveGround,
-      vertical: s.velocity.y,
-      alabeo: bankAngleOf(s.orientation),
-    }, this.actitudDicha);
+    const ahora = avisoDeActitud(
+      {
+        enSuelo: s.onGround,
+        /*
+         * **Con lo que marca el radioaltímetro**, las ruedas sobre el suelo:
+         * es lo que mira la caja de verdad, y es lo que hace que la recogida
+         * sea la misma para todos. Con la altura del centro del avión, al de
+         * seis metros de tren le sonaba *sink rate* a treinta pies, en plena
+         * recogida y tapando la cuenta: medido en Los Rodeos con el JAZ 90,
+         * «fifty», *sink rate*, y «forty, thirty, twenty» perdidos detrás.
+         */
+        altura: Math.max(0, s.heightAboveGround - this.aircraft.gearHeight),
+        vertical: s.velocity.y,
+        alabeo: bankAngleOf(s.orientation),
+      },
+      this.actitudDicha,
+    );
     if (ahora === this.actitudDicha) return;
     this.actitudDicha = ahora;
     if (!ahora) return;

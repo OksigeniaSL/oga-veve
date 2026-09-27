@@ -52,10 +52,12 @@ export function ritmoQueSobra(alturaM: number): number {
 /**
  * Por debajo de esto no se avisa: es la recogida, m.
  *
- * Quince metros. Ahí ya se está posando el avión a propósito y el aviso no
- * avisa de nada — solo tapa lo que sí importa. Un GPWS de verdad hace lo mismo
- * por el mismo motivo, y encaja con la regla de la casa: aterrizar no se
- * dramatiza.
+ * Quince metros —cincuenta pies— **de radioaltímetro**: las ruedas sobre el
+ * suelo. Ahí ya se está posando el avión a propósito y el aviso no avisa de
+ * nada — solo tapa lo que sí importa, que en el avión que la lleva es la
+ * cuenta. Un GPWS de verdad hace lo mismo por el mismo motivo, y encaja con
+ * la regla de la casa: aterrizar no se dramatiza. Es también donde se calla
+ * la banda de velocidad: ver `bandaDeVelocidad`.
  */
 export const RECOGIDA = 15;
 
