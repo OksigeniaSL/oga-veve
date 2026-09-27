@@ -32,6 +32,13 @@ const REPARTO = [
   ["torre", "torre.roja", "torre"],
   ["torre", "torre.canario.verde", "torre-canarias"],
   ["torre", "torre.canario.roja", "torre-canarias"],
+  /*
+   * Y la verde en vuelo, que es ahora tu permiso para aterrizar en los cuatro
+   * peldaños: si no sale del pack, en Guyrami no suena nada. Ver
+   * `autorizarElAterrizaje` en `game.ts`.
+   */
+  ["torre", "torre.aterrizar", "torre"],
+  ["torre", "torre.canario.aterrizar", "torre-canarias"],
   ["otro", "otro.enCola", "otro"],
   ["otro", "otro.pistaLibre", "otro"],
   /*
