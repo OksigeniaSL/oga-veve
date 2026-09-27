@@ -22,6 +22,19 @@ patas principales con sus bogies de cuatro ruedas —dos en el ala y dos en la
 panza— y la de morro con dos. Con la panza a dos metros escasos y las ruedas
 tapadas por los motores se leía «ruedas enterradas».
 
+**Y que se lea grande, no estirado.** «El reactor bimotor quedó lindo, el 747
+podría mejorar su aspecto.» Lo que tenía era un morro largo y bajo —el
+parabrisas a cuatro metros y medio de la punta y la frente subiendo cuatro
+metros por detrás de él—, que es la proporción de los cuatrimotores de pasillo
+único de los años sesenta, y a sesenta y ocho metros se leía «estirado». La
+cabina de un avión de fuselaje ancho es del mismo tamaño que la de uno pequeño
+—los pilotos no crecen—, así que en un tubo de seis metros y medio el morro es
+**corto, lleno y romo**, con la cabina en la punta y una frente que alcanza el
+tubo enseguida. Es la proporción que dice «grande» sin necesidad de joroba. Y
+las puntas de ala **en flecha** en vez de las aletas del Arai: dos aviones de
+la misma casa se tienen que poder distinguir por la silueta, y la punta en
+flecha es la de los que cruzan océanos.
+
 Los ayudantes están en `comun.py` y `exterior.py`. Aquí queda solo lo que es
 **este** avión.
 
@@ -89,25 +102,47 @@ SALIDA = os.path.join(
     "public", "assets", "aeronaves", "jaz-120.glb",
 )
 
+# **La cabina, a tres metros de la punta y no a cuatro y medio.** Es lo que
+# más dice «fuselaje ancho»: los pilotos no crecen con el avión, así que su
+# cabina va en la punta del tubo y el morro por delante de ella es un radomo
+# corto. Con el parabrisas a cuatro metros y medio de la punta quedaba un
+# morro largo y bajo por delante, el de un avión de dos pisos sin el segundo
+# piso. Movida entera —un metro y veinte hacia delante—, cristal y
+# muebles, sin cambiar nada de dentro: el piloto se sienta igual, a la misma
+# distancia del panel y a la misma altura, y ve lo mismo. Lo mide
+# `verificar-cabina.mjs`.
+OJOS_Z = -28.60
+
 # ── El fuselaje ───────────────────────────────────────────────────────────
 #
-# Sección constante del parabrisas hasta la cola, a propósito: es un tubo. El
-# morro, el de un fuselaje ancho —el radomo largo que sube despacio y el
-# parabrisas que se levanta de golpe—; la cola sube por abajo hasta la boca
-# del grupo auxiliar.
+# Sección constante de detrás de la cabina hasta la cola, a propósito: es un
+# tubo. La cola sube por abajo hasta la boca del grupo auxiliar.
+#
+# **El morro es el de un fuselaje ancho.** Con la cabina en su sitio —ver
+# `OJOS_Z`—, tres cosas lo hacen:
+#
+# - **El radomo, corto y romo**: tres metros y cuarto de la punta al pie del
+#   parabrisas, medio diámetro, y la punta a media altura baja. Era de cuatro
+#   y medio con la punta más caída, que es un pico.
+# - **Lleno a los lados**: el ancho crece a la vez que el alto, y no después.
+#   Un morro que ensancha tarde se lee como un pico de pato.
+# - **La frente, corta y alta**: el lomo alcanza el tubo a unos ocho metros de
+#   la punta, 1,2 diámetros, y no a diez y medio. Por encima del parabrisas
+#   queda una frente, y no una rampa de cuatro metros.
 PIEL = Piel([
-    (MORRO, 0.0, -0.75, -0.75),
-    (-33.86, 0.62, -0.30, -1.22),
-    (-33.50, 1.12, 0.05, -1.70),
-    (-32.80, 1.68, 0.40, -2.25),
-    (-31.80, 2.15, 0.62, -2.66),
-    (-30.60, 2.52, 0.78, -2.94),
-    (-29.60, 2.76, 0.95, -3.10),
-    (-28.70, 2.93, 1.55, -3.17),
-    (-27.80, 3.05, 2.15, -3.22),
-    (-26.60, 3.16, 2.72, -3.25),
-    (-25.20, 3.22, 3.08, -3.25),
-    (-23.50, RADIO, RADIO, -RADIO, 0.05),
+    (MORRO, 0.0, -0.50, -0.50),
+    (-33.88, 0.74, -0.06, -0.98),
+    (-33.58, 1.28, 0.30, -1.52),
+    (-33.05, 1.86, 0.62, -2.08),
+    (-32.35, 2.36, 0.84, -2.56),
+    (-31.55, 2.70, 0.98, -2.88),
+    (-30.80, 2.90, 1.08, -3.05),
+    (-29.95, 3.04, 1.58, -3.14),
+    (-29.10, 3.13, 2.20, -3.20),
+    (-28.20, 3.19, 2.70, -3.23),
+    (-27.20, 3.23, 3.03, -3.25),
+    (-26.10, 3.245, 3.20, -3.25),
+    (-24.80, RADIO, RADIO, -RADIO, 0.05),
     (14.00, RADIO, RADIO, -RADIO, 0.05),
     (19.00, 3.12, 3.22, -2.62, 0.20),
     (24.00, 2.55, 3.10, -1.55),
@@ -153,20 +188,26 @@ def construir():
     piezas.append(carenado.malla("carenado", "gris", lados=36, paso=0.8))
 
     # ── Parabrisas ────────────────────────────────────────────────────────
+    #
+    # Medido desde los ojos, porque va con ellos: si la cabina se mueve, el
+    # cristal se mueve con ella.
+    o = OJOS_Z
     piezas.append(paneles("parabrisas", PIEL, simetricos([
-        [(-29.55, 3), zy(PIEL, -29.35, 0.72), zy(PIEL, -28.40, 1.50),
-         (-28.30, 3)],
+        [(o - 2.15, 3), zy(PIEL, o - 1.95, 0.72), zy(PIEL, o - 1.00, 1.50),
+         (o - 0.90, 3)],
     ]), fuera=0.02, div=6))
     piezas.append(paneles_zy("parabrisas-lado", PIEL, [
-        [(-29.22, 0.72), (-28.25, 0.72), (-27.90, 1.70), (-28.32, 1.50)],
-        [(-28.10, 0.72), (-27.15, 0.72), (-27.05, 1.50), (-27.75, 1.70)],
+        [(o - 1.82, 0.72), (o - 0.85, 0.72), (o - 0.50, 1.70),
+         (o - 0.92, 1.50)],
+        [(o - 0.70, 0.72), (o + 0.25, 0.72), (o + 0.35, 1.50),
+         (o - 0.35, 1.70)],
     ], fuera=0.02, div=5))
 
     # ── Ventanillas, puertas y librea ─────────────────────────────────────
     #
     # Cinco puertas por costado, que es lo que lleva un avión de cuatrocientas
     # plazas, y cincuenta y tantas ventanillas entre ellas, en una sola malla.
-    puertas = (-22.4, -11.6, -0.6, 10.0, 21.0)
+    puertas = (-23.4, -11.6, -0.6, 10.0, 21.0)
     fila = [-24.2 + i * 1.07 for i in range(48)]
     fila = [z for z in fila if all(abs(z - p) > 0.95 for p in puertas)]
     piezas.append(ventanas("ventanillas", PIEL, fila, 1.05, 0.52, 0.36,
@@ -185,18 +226,18 @@ def construir():
     abajo = sube(0.05)
 
     def arriba(z):
-        return abajo(z) + 0.50 * max(0.0, min(1.0, (z + 31.0) / 2.2))
+        return abajo(z) + 0.50 * max(0.0, min(1.0, (z + 32.2) / 2.2))
 
     # Y acaba en punta de hoja al pie de la deriva, con la raya fina
     # cerrándose en la misma punta. Ver `en_punta`.
     abajo_punta = en_punta(abajo, arriba, 21.5, 26.5)
-    piezas.append(banda("cintura", PIEL, -31.0, 26.48, abajo_punta, arriba,
+    piezas.append(banda("cintura", PIEL, -32.2, 26.48, abajo_punta, arriba,
                         fuera=0.018, paso=0.5))
 
     def fina_arriba(z):
         return abajo_punta(z) - 0.12 * (1 - max(0.0, min(1.0, (z - 21.5) / 5.0)))
 
-    piezas.append(banda("cintura-fina", PIEL, -29.8, 26.48,
+    piezas.append(banda("cintura-fina", PIEL, -31.0, 26.48,
                         en_punta(lambda z: fina_arriba(z) - 0.13, fina_arriba,
                                  21.5, 26.5),
                         fina_arriba, material_="detalle", fuera=0.018,
@@ -204,12 +245,12 @@ def construir():
 
     # La marca detrás de la puerta de delante, sobre las ventanillas: la
     # misma firma que en el JAZ 90, a la escala de este avión. Ver `marca`.
-    piezas.append(marca(PIEL, -21.55, -18.35, 1.55, 2.33, fuera=0.022))
+    piezas.append(marca(PIEL, -22.55, -19.35, 1.55, 2.33, fuera=0.022))
 
     cab = cabina(
         # Este avión mete las patas, así que lleva su palanca.
         tren=True,
-        ojos_z=-27.40,
+        ojos_z=OJOS_Z,
         ancho=0.80,
         alto_panel=0.26,
         y_suelo=-0.66,
@@ -225,20 +266,48 @@ def construir():
     piezas += cab
     dentro_de(PIEL, cab)
 
-    # ── Ala en flecha, con quiebro y aletas ───────────────────────────────
+    # ── Ala en flecha, con quiebro y punta en flecha ──────────────────────
+    #
+    # **La punta, en flecha y no con aleta.** Los últimos cuatro metros vuelven
+    # atrás con más flecha que el ala —cincuenta y tantos grados en el borde de
+    # ataque— y se afilan hasta una cuerda de palmo: es lo que lleva el avión
+    # que cruza océanos, porque a igual envergadura alarga el ala sin el peso
+    # ni el arrastre de una aleta. Y separa las dos siluetas de la casa: el
+    # Arai levanta la punta; el Yvága la estira.
+    #
+    # Hasta el arranque de la flecha el ala es **la misma de antes**, la misma
+    # cuerda, el mismo espesor y el mismo calado por el mismo camino: la
+    # estación nueva cae sobre la recta que ya unía el quiebro con la punta.
+    # Así los flaps, las canoas y el foco de aterrizaje siguen donde estaban.
+    # Ver `flaps-del-modelo.test.ts`.
     semi = ENVERGADURA / 2
     raiz, quiebro, punta = 14.5, 9.0, 3.2
     x_aleta = semi - 1.10
+
+    def sobre_la_recta(x, a, b):
+        return a + (b - a) * (x - QUIEBRO) / (x_aleta - QUIEBRO)
+
+    x_flecha = 26.0
+    c_flecha = sobre_la_recta(x_flecha, quiebro, punta)
+    # El borde de salida sigue la flecha del ala, un poco más atrás; el de
+    # ataque es el que se tumba.
+    sale = z_ala(x_flecha) + c_flecha
+    salida_por_x = math.tan(FLECHA) - (quiebro - punta) / (x_aleta - QUIEBRO)
+
+    def en_flecha(x, cuerda):
+        z_sale = sale + (x - x_flecha) * salida_por_x * 1.12
+        return z_sale - cuerda
+
     estaciones = [
         de_ala(0.0, y_ala(0.0), z_ala(0.0), raiz, 0.14, 6, 2.0),
         de_ala(QUIEBRO, y_ala(QUIEBRO), z_ala(QUIEBRO), quiebro, 0.115, 6, 0.5),
-        de_ala(x_aleta, y_ala(x_aleta), z_ala(x_aleta), punta, 0.10, 6, -2.0),
-        de_ala(semi - 0.35, y_ala(semi - 0.35) + 0.42, z_ala(x_aleta) + 0.95,
-               2.55, 0.09, 40, -1.0),
-        de_ala(semi - 0.06, y_ala(semi) + 1.40, z_ala(x_aleta) + 2.05, 1.95,
-               0.09, 76, 0.0),
-        de_ala(semi, y_ala(semi) + 3.10, z_ala(x_aleta) + 3.60, 1.10, 0.09,
-               80, 0.0),
+        de_ala(x_flecha, y_ala(x_flecha), z_ala(x_flecha), c_flecha,
+               sobre_la_recta(x_flecha, 0.115, 0.10), 6,
+               sobre_la_recta(x_flecha, 0.5, -2.0)),
+        de_ala(28.3, y_ala(28.3) + 0.03, en_flecha(28.3, 2.05), 2.05, 0.095,
+               7, -2.2),
+        de_ala(semi, y_ala(semi) + 0.10, en_flecha(semi, 0.62), 0.62, 0.09,
+               8, -2.5),
     ]
     j = "oscuro"
     # **El de dentro empieza a 6,0 m del eje, pasada la pata del ala.** Esa
@@ -256,7 +325,9 @@ def construir():
              flap("fuera", 11.65, 21.6, 0.73)]
     ala = superficie("ala", estaciones, material_="gris", curvatura=0.015,
                      flaps=flaps, zonas=[
-        ("aluminio", 3.2, 28.2, 0.0, 0.06),
+        # El borde de ataque de metal, hasta donde empieza la punta: es el
+        # tramo que lleva slats, y la punta en flecha no los lleva.
+        ("aluminio", 3.2, x_flecha * E_POR_X, 0.0, 0.06),
         (j, 2.6, 21.6, 0.72, 0.73),
         (j, 2.6, 2.75, 0.73, 1.0),
         (j, 11.5, 11.65, 0.73, 1.0),
@@ -305,9 +376,16 @@ def construir():
     # afuera, más atrás y más arriba está el ala, así que el motor la sigue.
     # El de fuera, además, un poco más adelantado respecto de su ala, que es
     # como cuelgan y lo que hace que se cuenten cuatro y no dos de frente.
+    #
+    # **Y arrimados al ala**, con la cubierta a setenta centímetros del borde
+    # de ataque y no a un metro: colgados más abajo, el pilón se veía entero y
+    # los motores parecían cuatro latas en cuatro palos. Un turbofán de
+    # fuselaje ancho va pegado por delante del ala, que es donde el pilón es
+    # más corto y más fuerte; y así el de dentro gana veinte centímetros de
+    # suelo.
     for n, x in enumerate(MOTORES):
         adelanto = 0.9 if n else 0.0
-        centro = (x, y_ala(x) - 2.60, z_ala(x) - 2.55 - adelanto)
+        centro = (x, y_ala(x) - 2.30, z_ala(x) - 2.55 - adelanto)
         piezas.append(turbofan(f"motor-{n}", centro, largo=6.60,
                                diametro=3.20))
         piezas.append(superficie(f"pilon-{n}", [
@@ -325,11 +403,16 @@ def construir():
     ]))
     # Con las puntas acabando antes que la cola: la luz blanca de atrás va
     # en el cono, que es lo último del avión, y no en la punta de un plano.
+    #
+    # Y con la cuerda de un avión de este peso: un plano de cola que tiene que
+    # levantar el morro de doscientas cincuenta toneladas es ancho de raíz, y
+    # con la de antes, visto desde atrás, parecía prestado del Arai. Crece
+    # por delante, para que la punta siga acabando antes que el cono.
     y_est = 1.60
     piezas.append(superficie("estabilizador", [
-        de_ala(0.0, y_est, 24.2, 7.4, 0.10, 7),
+        de_ala(0.0, y_est, 23.7, 8.2, 0.10, 7),
         de_ala(10.9, y_est + 10.9 * math.tan(math.radians(7)),
-               24.2 + 10.9 * math.tan(math.radians(34)), 2.3, 0.09, 7),
+               23.7 + 10.9 * math.tan(math.radians(34)), 2.45, 0.09, 7),
     ], material_="gris", zonas=[
         ("aluminio", 1.8, 10.6, 0.0, 0.06),
         ("oscuro", 1.8, 10.6, 0.70, 0.707),
@@ -362,14 +445,17 @@ def construir():
         else:
             tornapuntas = [((x + dx, arriba_y, z), (x, eje + 1.9, z), 0.10)
                            for dx in (-0.6, 0.6)]
+        # La caña y la viga del bogie, del grueso de las de un avión de este
+        # peso: con las de antes, al lado de una góndola de tres metros, el
+        # tren se leía de alambre.
         pata = [varillas(f"pata-{nombre}", [
-            ((x, arriba_y, z), (x, eje + 1.35, z), 0.24),
-            ((x, eje + 1.40, z), (x, eje + 0.30, z), 0.16),
-            ((x, eje + 0.30, z - 0.95), (x, eje + 0.30, z + 0.95), 0.12),
-            ((x, eje + 0.30, z - 0.72), (x, eje, z - 0.72), 0.09),
-            ((x, eje + 0.30, z + 0.72), (x, eje, z + 0.72), 0.09),
-            ((x - 0.62, eje, z - 0.72), (x + 0.62, eje, z - 0.72), 0.10),
-            ((x - 0.62, eje, z + 0.72), (x + 0.62, eje, z + 0.72), 0.10),
+            ((x, arriba_y, z), (x, eje + 1.35, z), 0.27),
+            ((x, eje + 1.40, z), (x, eje + 0.30, z), 0.18),
+            ((x, eje + 0.30, z - 0.95), (x, eje + 0.30, z + 0.95), 0.14),
+            ((x, eje + 0.30, z - 0.72), (x, eje, z - 0.72), 0.10),
+            ((x, eje + 0.30, z + 0.72), (x, eje, z + 0.72), 0.10),
+            ((x - 0.62, eje, z - 0.72), (x + 0.62, eje, z - 0.72), 0.11),
+            ((x - 0.62, eje, z + 0.72), (x + 0.62, eje, z + 0.72), 0.11),
         ] + tornapuntas, material_="gris")]
         ruedas = [(x + dx, eje, z + dz) for dx in (-0.62, 0.62)
                   for dz in (-0.72, 0.72)]
