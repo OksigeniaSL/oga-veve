@@ -67,6 +67,23 @@ import {
 } from "./flight/matricula";
 import type { FlightModel, FlightState } from "./flight/model";
 import { Terrain, cabeceraContraria, cabeceraEnUso } from "./world/terrain";
+import {
+  PIE,
+  Seguimiento,
+  cruceroPorLaDistancia,
+  relieveEnCrucero,
+  trazar,
+  type Fijo,
+  type Lectura as LecturaDeRuta,
+  type Ruta,
+} from "./flight/ruta";
+import {
+  aproximacionCalculada,
+  ramasDe,
+  salidasDe,
+  type Publicado,
+} from "./world/procedimientos";
+import { nivelPara } from "./flight/nivel-de-crucero";
 import { crearAproximacion, type Aproximacion } from "./world/aproximacion";
 import {
   crearCircuito,
@@ -720,6 +737,13 @@ const DURA_LA_FLECHA_DE_TIRAR = 2.2;
  * no da tiempo a levantar la vista de la pista.
  */
 const SE_QUEDAN_LOS_MINIMOS = 4;
+
+/**
+ * Lo que dura la tarjeta del punto de descenso, s. Seis: no es urgente, y hay
+ * que tener tiempo de mirarla, mirar la carta y ver el círculo que se acaba
+ * de pasar.
+ */
+const SE_QUEDA_EL_DESCENSO = 6;
 
 /** Cada cuántos segundos de vuelo se apunta la hora en el cuaderno. */
 const CADA_CUANTO_SE_APUNTA = 30;
@@ -5353,6 +5377,47 @@ export class Game {
     );
 
     /*
+     * **El punto de descenso**: el ordenador de a bordo dice que toca bajar.
+     *
+     * Pedido jugando, y con la pega bien vista: «el descenso siempre empieza
+     * clavado, casi de reloj… el ordenador de a bordo debería avisarme». Y lo
+     * hace, en cualquier avión con plan de vuelo: el «T/D» de la carta es un
+     * punto que se ve llegar, y al pasarlo sale el aviso con su dibujo y su
+     * tono.
+     *
+     * **Lo que dice un ordenador de vuelo de verdad se lee, no se oye**: en
+     * una cabina de línea el punto de descenso es un mensaje en la pantalla,
+     * sin voz de ninguna caja. Así que en el peldaño de cabina es eso, un
+     * mensaje en inglés, como el TA ONLY de la carta. En los de abajo la
+     * instructora lo dice con calma, «empezamos a bajar», que es quien lo
+     * diría sentada al lado. Y siempre con el dibujo: ningún canto es el único
+     * canal.
+     */
+    this.hechos.on("puntoDeDescenso", () => {
+      /*
+       * Y la comandante hace su anuncio aquí, en el T/D del plan, que es
+       * cuando lo hace una de verdad. Antes lo deducía viendo bajar al avión.
+       * Ver `empezarElDescenso` en `audio/megafonia.ts`.
+       */
+      this.megafonia.empezarElDescenso();
+      const cabina = !laInstructoraLoExplica(this.tier.avisos);
+      this.hud.senal.mostrar(
+        "descenso",
+        cabina
+          ? "TOP OF DESCENT"
+          : this.rotulo("vuelo.empezamosABajar", "palabra.aBajar"),
+        null,
+        { segundos: SE_QUEDA_EL_DESCENSO, prioridad: IMPORTANTE },
+      );
+      this.avisar("attention");
+      if (!cabina)
+        this.instructor.decir(
+          t("vuelo.empezamosABajar"),
+          "vuelo.empezamosABajar",
+        );
+    });
+
+    /*
      * **Los mínimos.** Se dice aunque no haya nada que corregir: lo que enseña
      * no es la maniobra, es que hay un momento en el que se decide.
      */
@@ -9897,6 +9962,8 @@ export class Game {
       this.flight.state.position.y,
       this.flight.state.position.z - alli.mundo.desplazamiento.z,
     );
+    // El plan de vuelo, antes que todo lo que lo enseña. Ver `seguirLaRuta`.
+    this.seguirLaRuta();
     // Las pantallas de la cabina, si el avión las trae. Van aquí y no en el
     // HUD porque son parte del avión: se ven desde dentro y desde fuera, y se
     // apagan solas cuando se cambia a un modelo que no las tiene.
@@ -12218,8 +12285,17 @@ export class Game {
         : null;
     // Y del destino que es el campo de ahora se señala el umbral en uso, que
     // es por donde se entra: seguir la aguja deja alineado.
-    const alDestino =
-      destino && destino.id !== campo.id
+    /*
+     * **Y con plan de vuelo, al punto siguiente del plan**, no al aeropuerto.
+     * Es la queja que lo trajo: la aguja al campo llevaba al avión en línea
+     * recta hasta encima de la pista, y desde ahí no se entra en final; los
+     * puntos de la aproximación te dejan en el eje a diez millas. La tarjeta
+     * sigue diciendo a qué aeropuerto se va; lo que cambia es por dónde.
+     */
+    const punto = destino ? (this.navegacion.progreso?.siguiente ?? null) : null;
+    const alDestino = punto
+      ? punto
+      : destino && destino.id !== campo.id
         ? destino
         : { x: thresholdX, z: thresholdZ };
 
@@ -12268,7 +12344,267 @@ export class Game {
             escenario: delVuelo.escenario,
           }
         : undefined,
+      target === null && aLaRaya === null ? (punto?.nombre ?? null) : null,
     );
+  }
+
+  /**
+   * **El plan de vuelo de este tramo, y por dónde se va de él.**
+   *
+   * Se rehace cuando cambia algo que lo cambia —el destino, la cabecera en
+   * uso de cualquiera de los dos campos, el tramo al tocar tierra—, no con el
+   * reloj. En tierra sale de la cabecera de despegue con su salida publicada;
+   * en el aire, desde donde está el avión directo a la aproximación, que es
+   * lo que hace un ordenador de vuelo cuando se decide un desvío.
+   *
+   * Sin destino no hay plan: una vuelta al campo se vuela por el circuito, y
+   * una misión por su objetivo. Ver `flight/ruta.ts`.
+   */
+  private seguirLaRuta(): void {
+    const destino = this.elDestino();
+    const s = this.flight.state;
+    const salida = this.elCampo(this.salidaId);
+    const llegada = destino ? this.elCampo(destino.id) : null;
+    const sinPlan =
+      !llegada ||
+      !this.scenario.aerodrome ||
+      this.missions.current !== null ||
+      (s.onGround && llegada.id === salida.id);
+    if (sinPlan) {
+      if (this.claveDeLaRuta) {
+        this.navegacion.poner(null);
+        this.claveDeLaRuta = "";
+      }
+      this.hud.ponerTrayecto(null);
+      this.hud.mapa.ponerRuta(null);
+      return;
+    }
+    const cabSalida = cabeceraEnUso(salida.escenario);
+    const cabLlegada = cabeceraEnUso(llegada.escenario);
+    const clave = `${salida.id}:${cabSalida}>${llegada.id}:${cabLlegada}`;
+    if (clave !== this.claveDeLaRuta) {
+      this.claveDeLaRuta = clave;
+      const ruta = this.trazarLaRuta(salida, cabSalida, llegada, cabLlegada);
+      this.navegacion.poner(ruta, ruta ? this.cruceroDe(ruta, salida) : 0);
+    }
+    const lectura = this.lecturaDeRuta();
+    const paso = this.navegacion.paso(lectura);
+    if (paso.descenso)
+      this.hechos.emit("puntoDeDescenso", {
+        destino: llegada.id,
+        oaci: oaciDe(llegada.escenario),
+        restante: this.navegacion.progreso?.restante ?? 0,
+        desde: s.position.y,
+      });
+    const p = this.navegacion.progreso;
+    const plan = this.navegacion.plan;
+    if (!p || !plan) return;
+    const hora = this.horaDeLlegada(p.segundos);
+    this.hud.ponerTrayecto({
+      restante: p.restante,
+      total: p.total,
+      segundos: p.segundos,
+      hora,
+    });
+    this.hud.mapa.ponerRuta({
+      fijos: plan.fijos,
+      activo: this.navegacion.indice,
+      descenso: p.puntoDeDescenso,
+      conNombres: this.tier.avisos === "cifra" || this.tier.avisos === "cabina",
+    });
+  }
+
+  /** El plan de vuelo de ahora, y la clave con la que se hizo. */
+  private readonly navegacion = new Seguimiento();
+  private claveDeLaRuta = "";
+
+  /**
+   * Lo que el plan necesita saber del avión. La velocidad, la de ahora
+   * volando y la de crucero en tierra: antes de despegar, la hora de llegada
+   * es la del plan, no la de estar parado.
+   */
+  private lecturaDeRuta(): LecturaDeRuta {
+    const s = this.flight.state;
+    const v = this.vientoDeHoy;
+    return {
+      x: s.position.x,
+      z: s.position.z,
+      altitud: s.position.y,
+      vertical: s.velocity.y,
+      aire: s.onGround ? this.aircraft.cruiseSpeed : Math.max(s.airspeed, 1),
+      enTierra: s.onGround,
+      viento: v ? { desde: v.desde, fuerza: v.nudos * (MILLA / 3600) } : null,
+    };
+  }
+
+  /**
+   * **La hora de llegada al punto siguiente, como la escribe una pantalla de
+   * navegación**: horas, minutos y décimas, en tiempo universal —«1432.5z»—.
+   *
+   * Con el reloj de verdad, que es el mismo que pone el sol del escenario: la
+   * hora de este juego es la de fuera. Ver `world/hora.ts`.
+   */
+  private horaDeLlegada(segundos: number): string | null {
+    if (!Number.isFinite(segundos)) return null;
+    const llega = new Date(Date.now() + segundos * 1000);
+    const hh = String(llega.getUTCHours()).padStart(2, "0");
+    const mm = String(llega.getUTCMinutes()).padStart(2, "0");
+    const decima = Math.floor(llega.getUTCSeconds() / 6);
+    return `${hh}${mm}.${decima}z`;
+  }
+
+  /**
+   * El plan, con lo publicado de los dos campos puesto en este mundo.
+   *
+   * Los puntos se colocan con la misma proyección que los aeródromos vecinos
+   * —`dondeCae` desde el origen del mundo—: un BUNIX corrido respecto a la
+   * pista de Los Rodeos dejaría el tramo final torcido. El umbral no es el de
+   * la carta sino el del aeródromo del juego, que es donde se toca.
+   */
+  private trazarLaRuta(
+    salida: CampoEnElMundo,
+    cabSalida: string | null,
+    llegada: CampoEnElMundo,
+    cabLlegada: string | null,
+  ): Ruta | null {
+    const origen = this.scenario.aerodrome?.origin;
+    if (!origen) return null;
+    const s = this.flight.state;
+    const aMundo = (p: Publicado): Fijo => ({
+      ...dondeCae(origen, p),
+      nombre: p.nombre,
+      papel: p.papel,
+      minima: p.minimaPies === null ? null : p.minimaPies * PIE,
+    });
+    const [ux, uz] = umbralEnUso(llegada);
+    const umbral: Fijo = {
+      x: ux,
+      z: uz,
+      nombre: `RW${cabLlegada ?? ""}`,
+      papel: "umbral",
+      minima: null,
+    };
+    const publicadas = ramasDe(oaciDe(llegada.escenario), cabLlegada).map((r) =>
+      r.map(aMundo),
+    );
+    const ramas =
+      publicadas.length > 0
+        ? publicadas
+        : cabLlegada
+          ? [
+              aproximacionCalculada(cabLlegada, umbral, llegada.pista.heading).map(
+                (f): Fijo => ({ ...f, minima: null, calculado: true }),
+              ),
+            ]
+          : [];
+    /*
+     * En tierra y en otro campo, desde la cabecera y por la salida. En el
+     * aire —un desvío, otra pista en uso a mitad de camino—, desde aquí.
+     */
+    const desdeLaCabecera = s.onGround && salida.id !== llegada.id;
+    let desde: Fijo;
+    if (desdeLaCabecera) {
+      const [x, z] = enLaPistaDe(salida, salida.pista.length / 2);
+      desde = { x, z, nombre: `RW${cabSalida ?? ""}`, papel: "despegue", minima: null };
+    } else {
+      desde = {
+        x: s.position.x,
+        z: s.position.z,
+        nombre: "PPOS",
+        papel: "aqui",
+        minima: null,
+      };
+    }
+    const salidas = desdeLaCabecera
+      ? salidasDe(oaciDe(salida.escenario), cabSalida).map((r) => r.map(aMundo))
+      : [];
+    return trazar({
+      desde,
+      salidas,
+      ramas,
+      umbral,
+      cotaDelUmbral: this.cotaDePistaEn(llegada, ux, uz),
+      /*
+       * Con el relieve del mundo entero —el fino, el de los destinos y el del
+       * horizonte—: la ruta más corta de Los Rodeos a La Gomera pasa a una
+       * milla del Teide. Ver `libra` en `flight/ruta.ts`.
+       */
+      terreno: {
+        cota: (x, z) => this.terrain.cotaConocida(x, z),
+        techo: this.aircraft.alturaDeCrucero,
+        cotaDeSalida: desdeLaCabecera
+          ? this.cotaDePistaEn(salida, desde.x, desde.z)
+          : s.position.y,
+      },
+    });
+  }
+
+  /**
+   * El crucero que se planea para esta ruta, m: lo que pide la distancia, en
+   * el nivel que le toca por el rumbo y sin pasar del techo del avión. Ver
+   * `cruceroPorLaDistancia` y `flight/nivel-de-crucero.ts`.
+   */
+  private cruceroDe(ruta: Ruta, salida: CampoEnElMundo): number {
+    const a = ruta.fijos[0]!;
+    const b = ruta.fijos[ruta.fijos.length - 1]!;
+    const verdadero = (Math.atan2(b.x - a.x, -(b.z - a.z)) * 180) / Math.PI;
+    const magnetico = verdadero + (salida.escenario.magneticVariation ?? 0);
+    const techo = this.aircraft.alturaDeCrucero;
+    const cota = this.cotaDePistaEn(salida, a.x, a.z);
+    /*
+     * Y nunca por debajo del relieve de la ruta con mil pies de margen, que
+     * es lo que lleva cualquier altitud mínima en ruta de una carta.
+     */
+    const relieve = relieveEnCrucero(ruta, (x, z) => this.terrain.cotaConocida(x, z));
+    const minimo = relieve === null ? 0 : relieve + 1000 * PIE;
+    const pedido = Math.max(cruceroPorLaDistancia(ruta, techo, cota), minimo);
+    let nivel = nivelPara(magnetico, pedido / PIE);
+    // Y el nivel legal más cercano puede caer por debajo de lo que hace falta
+    // —se sube uno en su sentido— o por encima del techo —se baja uno—.
+    while (nivel * PIE < minimo - 1 && nivel * PIE < techo) nivel += 2000;
+    while (nivel * PIE > Math.max(techo, minimo) + 1 && nivel > 3000) nivel -= 2000;
+    return nivel * PIE;
+  }
+
+  /**
+   * **Avisa cuando se llega al punto de descenso.** Devuelve cómo dejar de
+   * escuchar.
+   *
+   * Existe para quien tenga algo que decir en ese momento sin tener que
+   * saber cómo se calcula: los anuncios de cabina, un logro, una misión. El
+   * aviso de cabina y la instructora ya escuchan aquí mismo.
+   */
+  alEmpezarElDescenso(
+    oyente: (d: {
+      readonly destino: string;
+      readonly oaci: string | null;
+      readonly restante: number;
+      readonly desde: number;
+    }) => void,
+  ): () => void {
+    return this.hechos.on("puntoDeDescenso", oyente);
+  }
+
+  /** A dónde manda ir el piloto automático, para los bancos. */
+  get objetivosParaBanco(): Objetivos {
+    return this.objetivos;
+  }
+
+  /** El plan de vuelo y su progreso, para los bancos. */
+  get planParaBanco(): {
+    fijos: readonly { nombre: string; x: number; z: number; papel: string }[];
+    activo: number;
+    progreso: Seguimiento["progreso"];
+    bajando: boolean;
+  } | null {
+    const plan = this.navegacion.plan;
+    if (!plan) return null;
+    return {
+      fijos: plan.fijos,
+      activo: this.navegacion.indice,
+      progreso: this.navegacion.progreso,
+      bajando: this.navegacion.bajando,
+    };
   }
 
   private syncAircraftMesh(dt: number): void {
@@ -12675,6 +13011,21 @@ export class Game {
     if (s.onGround || loSolto(this.objetivos, c)) {
       this.ponerPilotoAutomatico(false);
       return c;
+    }
+    /*
+     * **Y pasado el punto de descenso, baja por la senda del plan.**
+     *
+     * Un piloto automático de los de mantener altura no baja solo: se le pone
+     * una altitud más baja. Aquí es lo que hace el plan al llegar al «T/D»,
+     * que es lo que hace el ordenador de un avión de línea: la altitud que se
+     * sostiene pasa a ser la de la senda de tres grados, que va bajando, hasta
+     * la del punto de final. Solo hacia abajo: si quien vuela lo puso más
+     * bajo, se respeta. Ver `Seguimiento.alturaParaElAutomatico`.
+     */
+    if (this.objetivos.altitud !== null && this.navegacion.bajando) {
+      const senda = this.navegacion.alturaParaElAutomatico(this.lecturaDeRuta());
+      if (senda !== null && senda < this.objetivos.altitud - 1)
+        this.objetivos = { ...this.objetivos, altitud: senda };
     }
     const m = mandosPara(
       {
@@ -14004,6 +14355,28 @@ export class Game {
        * necesitarlo. Ver `flight/alterno.ts`.
        */
       alterno: this.alternoParaLaCarta(),
+      /*
+       * **Y el plan de vuelo**, la línea magenta de verdad: por sus puntos y
+       * hasta el eje de la pista. La carta abre el rango hasta el punto
+       * siguiente mientras se vuela por la ruta; en tierra y en final manda
+       * la pista, que es lo que se mira ahí. Ver `ui/carta.ts`.
+       */
+      ruta: this.rutaParaLaCarta(),
+    };
+  }
+
+  /** El plan de vuelo como lo quiere la carta. Ver `RutaDeLaCarta`. */
+  private rutaParaLaCarta(): Mapa["ruta"] {
+    const plan = this.navegacion.plan;
+    const p = this.navegacion.progreso;
+    if (!plan || !p || this.missions.current) return null;
+    return {
+      fijos: plan.fijos,
+      activo: this.navegacion.indice,
+      descenso: p.puntoDeDescenso,
+      restante: p.restante,
+      hora: this.horaDeLlegada(p.alSiguiente),
+      abreElRango: !this.flight.state.onGround && this.faseDeAhora !== "final",
     };
   }
 

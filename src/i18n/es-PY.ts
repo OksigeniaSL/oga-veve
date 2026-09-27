@@ -873,6 +873,14 @@ export const ES_PY = {
    * `sePuedeConectar`.
    */
   "vuelo.pilotoEnTierra": "El piloto automático se conecta en el aire",
+  /*
+   * Al pasar por el punto de descenso del plan de vuelo. Con calma: no es un
+   * aviso de que algo va mal, es la parte del viaje que toca ahora. En cabina
+   * lo canta la tripulación en inglés, *top of descent*. Ver
+   * `flight/ruta.ts`.
+   */
+  "vuelo.empezamosABajar": "Empezamos a bajar: despacito, hasta la pista",
+  "palabra.aBajar": "A bajar",
   // Irse al aire no es fallar: es la decisión buena, y así se dice.
   "vuelo.mandanFrustrar": "Pista ocupada. Subí y volvé por el circuito",
   "percance.ocupada": "La pista estaba ocupada y te dijeron que no bajaras",

@@ -101,6 +101,28 @@ const TU_AVION = `<svg class="tu-avion" viewBox="0 0 24 24" aria-hidden="true">
  */
 const DURA_EL_DESTELLO = 1.6;
 
+/** Una milla náutica, m: la del plan de vuelo. Ver `ponerTrayecto`. */
+const MILLA_HUD = 1852;
+
+/**
+ * Lo que queda del plan, en cifras: «64/100 NM · 14 min», o con la hora de
+ * llegada en el peldaño de cabina, «64/100 NM · ETA 2226.6z».
+ */
+function cuentaDe(
+  t: { readonly restante: number; readonly total: number; readonly segundos: number; readonly hora: string | null },
+  peldano: Peldano,
+): string {
+  const millas = (m: number) => Math.round(m / MILLA_HUD);
+  const cuanto = `${millas(t.restante)}/${millas(t.total)} NM`;
+  const cuando =
+    peldano === "cabina" && t.hora
+      ? `ETA ${t.hora}`
+      : Number.isFinite(t.segundos)
+        ? `${Math.max(1, Math.round(t.segundos / 60))} min`
+        : "";
+  return cuando ? `${cuanto} · ${cuando}` : cuanto;
+}
+
 /**
  * Cuánto se estira la vía del compensador: media unidad a cada punta. Ver
  * `setTrim`.
@@ -495,6 +517,14 @@ export class Hud {
   private homeDistance: HTMLElement | null = null;
   private homeGloss: HTMLElement | null = null;
   private homeOaci: HTMLElement | null = null;
+  private trayecto: HTMLElement | null = null;
+  private trayectoLleno: HTMLElement | null = null;
+  private trayectoAvion: HTMLElement | null = null;
+  /**
+   * Lo que queda del plan en cifras, para la línea de debajo del punto. Ver
+   * `ponerTrayecto` y `setHome`.
+   */
+  private cuentaDelTrayecto: string | null = null;
   /**
    * **La matrícula de tu avión**, la que va en la placa del cuadro y en la
    * tira de la radio. Sale de la ficha, como en el juego: ver `miIndicativo`.
@@ -1284,6 +1314,20 @@ export class Hud {
           </span>
           ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ""}
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
+          <!--
+            **El trayecto: cuánto se ha volado y cuánto queda.**
+
+            Pedido jugando: «tampoco veo la distancia del vuelo», «cuando estoy
+            volando no tengo manera de saber el tiempo estimado de llegada».
+            Para quien no lee, una barra que se llena con el avioncito
+            avanzando de la salida al destino, que se entiende a los cuatro
+            años sin una cifra; y desde el peldaño que lee números, lo que
+            falta en millas y en minutos, y arriba la hora de llegada como la
+            da una cabina, en la línea de debajo del punto. Ver ponerTrayecto.
+          -->
+          <span class="casa__trayecto" data-hud="trayecto" hidden aria-hidden="true">
+            <span class="casa__barra"><span class="casa__lleno" data-hud="trayecto-lleno"></span><span class="casa__avioncito" data-hud="trayecto-avion"></span></span>
+          </span>
         </button>
       </div>
       <!--
@@ -1529,6 +1573,9 @@ export class Hud {
     this.homeOaci = optional(this.root, "home-oaci");
     this.mangaCaja = optional(this.root, "viento");
     this.mangaPuesta = "";
+    this.trayecto = optional(this.root, "trayecto");
+    this.trayectoLleno = optional(this.root, "trayecto-lleno");
+    this.trayectoAvion = optional(this.root, "trayecto-avion");
     // La tarjeta es nueva, así que lo puesto en ella también.
     this.destinoPuesto = null;
     this.warning = pick(this.root, "warning");
@@ -1821,6 +1868,11 @@ export class Hud {
       readonly oaci: string | null;
       readonly escenario: Scenario;
     },
+    /**
+     * El punto del plan de vuelo al que señala la aguja, si señala a uno: su
+     * nombre publicado. Ver `flight/ruta.ts`.
+     */
+    punto: string | null = null,
   ): void {
     const nombre = destino?.nombre;
     const toObjective = modo === "objetivo";
@@ -1831,8 +1883,22 @@ export class Hud {
     const degrees = (relativeBearing * 180) / Math.PI - 90;
     this.homeArrow.style.transform = `rotate(${degrees}deg)`;
     if (this.homeDistance) {
-      this.homeDistance.textContent =
-        metres >= 1000
+      /*
+       * **Con plan de vuelo, el punto y sus millas**: la aguja señala el
+       * siguiente punto de la ruta, y lo que se escribe es a cuál y a cuánto,
+       * como en la esquina de una pantalla de navegación. En millas, que es
+       * como se mide una ruta en el aire; y desde el peldaño que lee, que un
+       * nombre de cinco letras es lectura.
+       */
+      const conNombre =
+        modo === "destino" &&
+        punto &&
+        (this.escalera === "cifra" || this.escalera === "cabina")
+          ? punto
+          : null;
+      this.homeDistance.textContent = conNombre
+        ? `${conNombre} ${(metres / MILLA_HUD).toFixed(metres < 10 * MILLA_HUD ? 1 : 0)} NM`
+        : metres >= 1000
           ? `${(metres / 1000).toFixed(1)} km`
           : `${Math.round(metres)} m`;
     }
@@ -1857,10 +1923,19 @@ export class Hud {
        * en una tablet táctil; el aeropuerto se llama Guaraní, y la ciudad ya
        * la dice el aviso al cambiar de destino.
        */
+      /*
+       * **Y con plan de vuelo y cifras, lo que queda**: millas y minutos, o la
+       * hora de llegada en el peldaño de cabina. Va en esta línea y no en una
+       * más porque la tarjeta no puede crecer: en una tablet táctil ya roza
+       * el borde, lo mide `verificar-carteles`. El destino sigue dicho en su
+       * placa, arriba.
+       */
       this.homeGloss.textContent =
-        modo === "destino" && nombre
-          ? (nombre.split(" · ")[0] ?? nombre)
-          : t(toObjective ? "hud.objective" : "hud.home");
+        modo === "destino" && this.cuentaDelTrayecto
+          ? this.cuentaDelTrayecto
+          : modo === "destino" && nombre
+            ? (nombre.split(" · ")[0] ?? nombre)
+            : t(toObjective ? "hud.objective" : "hud.home");
     }
     /*
      * **Y el código del destino se ve siempre, no solo volando.** La flecha
@@ -1870,6 +1945,37 @@ export class Hud {
      * «esto no funciona ahora».
      */
     this.ponerDestino(destino ?? null);
+  }
+
+  /**
+   * **El trayecto del plan de vuelo**, o `null` sin plan.
+   *
+   * La barra va en los cuatro peldaños —es el dibujo, el canal que siempre
+   * está—; las cifras, desde el que lee números: lo que queda de lo que hay,
+   * en millas, y el tiempo. En el de cabina, en vez de los minutos, **la hora
+   * de llegada** en tiempo universal, que es como la da un ordenador de vuelo
+   * y como la dice la radio.
+   */
+  ponerTrayecto(
+    trayecto: {
+      readonly restante: number;
+      readonly total: number;
+      readonly segundos: number;
+      readonly hora: string | null;
+    } | null,
+  ): void {
+    const numeros = this.escalera === "cifra" || this.escalera === "cabina";
+    this.cuentaDelTrayecto = trayecto && numeros ? cuentaDe(trayecto, this.escalera) : null;
+    if (!this.trayecto) return;
+    this.trayecto.hidden = !trayecto;
+    if (!trayecto) return;
+    const hecho =
+      trayecto.total > 0
+        ? Math.max(0, Math.min(1, 1 - trayecto.restante / trayecto.total))
+        : 0;
+    const pc = `${(hecho * 100).toFixed(1)}%`;
+    if (this.trayectoLleno) this.trayectoLleno.style.width = pc;
+    if (this.trayectoAvion) this.trayectoAvion.style.left = pc;
   }
 
   /**

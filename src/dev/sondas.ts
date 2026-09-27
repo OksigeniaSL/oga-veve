@@ -1551,6 +1551,19 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * reserva si lo hay, el alternativo y a qué campo apunta la flecha.
      */
     rutaDelVuelo: () => juego.rutaParaBanco,
+    /**
+     * El plan de vuelo con sus puntos, a cuál se va y lo que falta. Ver
+     * `Game.planParaBanco` y `flight/ruta.ts`.
+     */
+    planDeVuelo: () => juego.planParaBanco,
+    /**
+     * Apuntarse al punto de descenso, como se apuntaría la megafonía. Ver
+     * `Game.alEmpezarElDescenso`.
+     */
+    alEmpezarElDescenso: (oyente: Parameters<Game["alEmpezarElDescenso"]>[0]) =>
+      juego.alEmpezarElDescenso(oyente),
+    /** Lo que persigue el piloto automático: rumbo, altitud y velocidad. */
+    objetivosDelPiloto: () => juego.objetivosParaBanco,
     /** Cambia el destino como si se tocara la tarjeta hasta llegar a él. */
     ponerDestino: (id: string) => juego.ponerDestinoParaBanco(id),
     /** Deja el depósito con estos kilos, para llegar a la reserva sin esperar. */
@@ -1640,6 +1653,7 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
       gestoDelSenalero: juego.hechos.cuantosEscuchan("gestoDelSenalero"),
       mandaronIrseAlAire: juego.hechos.cuantosEscuchan("mandaronIrseAlAire"),
       pistaLibreOtraVez: juego.hechos.cuantosEscuchan("pistaLibreOtraVez"),
+      puntoDeDescenso: juego.hechos.cuantosEscuchan("puntoDeDescenso"),
     }),
     /** Si ahora mismo hay orden de irse al aire. */
     ordenDeFrustrar: () => juego.laAproximacion.mandanFrustrar,

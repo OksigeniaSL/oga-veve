@@ -52,7 +52,7 @@ import {
   MARCA_CON_SU_APARATO,
   MARCA_ROTULO,
 } from "./familia";
-import { CUANTOS_OTROS } from "./cristal";
+import { CUANTOS_FIJOS, CUANTOS_OTROS } from "./cristal";
 import { dibujarLaCarta, type Mapa } from "./carta";
 import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { decima as n1, escribir, poner } from "./si-cambia";
@@ -1475,6 +1475,69 @@ export class Tablero {
         : "",
     );
     this.texto("rango", `${dibujo.rango} NM`);
+    this.elPlan(d, dibujo);
+  }
+
+  /**
+   * **El plan de vuelo en la carta**: la línea magenta por sus puntos, las
+   * estrellas con su nombre, el círculo del descenso y, arriba a la derecha,
+   * el punto al que se va con sus millas y —en el peldaño de cabina— su hora.
+   * Las cuentas son las de `ui/carta.ts`, las mismas que la cabina. Se escribe
+   * solo lo que cambia, como el resto del cuadro: ver `si-cambia.ts`.
+   */
+  private elPlan(
+    d: DatosDelTablero,
+    dibujo: ReturnType<typeof dibujarLaCarta>,
+  ): void {
+    const plan = dibujo.ruta;
+    const linea = this.pieza('[data-carta="plan"]');
+    if (linea) {
+      poner(linea, "visibility", plan ? "visible" : "hidden");
+      if (plan)
+        poner(
+          linea,
+          "d",
+          plan.linea
+            .map((p, i) => `${i ? "L" : "M"}${n1(p.dx)} ${n1(p.dy)}`)
+            .join(" "),
+        );
+    }
+    for (let i = 0; i < CUANTOS_FIJOS; i++) {
+      const pieza = this.pieza(`[data-carta="fijo-${i}"]`);
+      if (!pieza) continue;
+      const f = plan?.fijos[i];
+      if (!f) {
+        poner(pieza, "visibility", "hidden");
+        continue;
+      }
+      poner(pieza, "visibility", "visible");
+      poner(pieza, "transform", `translate(${n1(f.dx)} ${n1(f.dy)})`);
+      pieza.classList.toggle("cr__fijo--activo", f.activo);
+      escribir(pieza.querySelector('[data-carta="fijo-nombre"]'), f.nombre);
+    }
+    const td = this.pieza('[data-carta="td"]');
+    if (td) {
+      poner(td, "visibility", plan?.descenso ? "visible" : "hidden");
+      if (plan?.descenso)
+        poner(
+          td,
+          "transform",
+          `translate(${n1(plan.descenso.dx)} ${n1(plan.descenso.dy)})`,
+        );
+    }
+    /*
+     * Arriba a la derecha, el punto al que se va y a cuántas millas: es lo
+     * primero que se lee en una pantalla de navegación de verdad. Con misión
+     * en curso manda la misión, que es a donde señala la aguja.
+     */
+    if (!d.objetivo)
+      this.texto(
+        "distancia",
+        plan?.siguiente
+          ? `${plan.siguiente.nombre} ${plan.siguiente.millas.toFixed(1)} NM`
+          : "",
+      );
+    this.texto("eta", !d.objetivo && plan?.hora ? plan.hora : "");
   }
 
   /**
