@@ -43,8 +43,13 @@ export interface Leccion {
    *   rodar dos kilómetros antes de cada intento.
    */
   readonly arranque: "puesto" | "pista" | "aire";
-  /** La raya verde, las letras y las señales del rodaje. */
-  readonly guiaEnTierra: boolean;
+  /*
+   * **Y no hay interruptor de la guía en tierra.** Lo hubo —`guiaEnTierra`—
+   * y en «dar una vuelta» apagaba el dibujo de la raya, el coche y el
+   * señalero mientras el plan seguía guiando con ellos invisibles. La guía
+   * sale de la ruta que haya, y una lección que empieza en la pista no tiene
+   * ruta hasta que aterriza. Ver dónde se monta el plan en `game.ts`.
+   */
   /** La lámpara de la torre y el permiso de entrar en pista. */
   readonly torre: boolean;
   /**
@@ -61,7 +66,6 @@ export interface Leccion {
 export const VUELTA: Leccion = {
   id: "vuelta",
   arranque: "pista",
-  guiaEnTierra: false,
   torre: false,
   acabaEnLaEspera: false,
 };
@@ -70,7 +74,6 @@ export const VUELTA: Leccion = {
 export const RODAJE: Leccion = {
   id: "rodaje",
   arranque: "puesto",
-  guiaEnTierra: true,
   torre: true,
   acabaEnLaEspera: true,
 };
@@ -79,7 +82,6 @@ export const RODAJE: Leccion = {
 export const DESPEGUE: Leccion = {
   id: "despegue",
   arranque: "puesto",
-  guiaEnTierra: true,
   torre: true,
   acabaEnLaEspera: false,
 };
@@ -88,7 +90,6 @@ export const DESPEGUE: Leccion = {
 export const ATERRIZAJE: Leccion = {
   id: "aterrizaje",
   arranque: "aire",
-  guiaEnTierra: true,
   torre: false,
   acabaEnLaEspera: false,
 };

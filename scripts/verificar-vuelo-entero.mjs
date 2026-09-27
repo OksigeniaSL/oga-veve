@@ -1918,8 +1918,8 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
     /*
      * Lo que no es suelo: lo que se pinta encima sin serlo —la raya verde,
      * la sombra, las luces, los aros—, lo que anda por ahí, y **la pintura**,
-     * que va a propósito veinte centímetros sobre el asfalto para no pelearse
-     * con él de lejos (`PINTURA_ALTURA`) y no se pisa. Y el agua de casa, que
+     * que va dos centímetros sobre el asfalto (`PINTURA_ALTURA`) y lo que se
+     * mide aquí es el asfalto. Y el agua de casa, que
      * sobre el campo de llegada no se dibuja —su orilla lo tapa— y el rayo
      * sí la encuentra.
      */
@@ -2050,6 +2050,18 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
        * sentido contrario, no es de frente: es un circuito.
        */
       if (!s.onGround && /despegando|comprometido|en-vuelo|final/.test(fase)) {
+        /*
+         * **Y la velocidad se saca de dos muestras seguidas, no de la última
+         * vez que se le vio.** El que se retiraba y volvía a aparecer con la
+         * misma matrícula traía su último sitio de hacía un minuto, y de ahí
+         * salía una velocidad de avión hacia donde reaparecía. Ese salto era
+         * de verdad un fallo del tráfico —ver `otraVuelta` en
+         * `world/trafico.ts`—, pero lo que mide esto es quién vuela de frente,
+         * y un salto no vuela. Los saltos los mide `pista-compartida.test.ts`.
+         */
+        const vistos = new Set((o.trafico?.() ?? []).map((a) => a.matricula));
+        for (const m of [...traficoAntes.keys()])
+          if (!vistos.has(m)) traficoAntes.delete(m);
         for (const a of o.trafico?.() ?? []) {
           const antes = traficoAntes.get(a.matricula);
           traficoAntes.set(a.matricula, { x: a.x, z: a.z, t });
@@ -2193,7 +2205,14 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
           Math.hypot(s.position.x - donde.x, s.position.z - donde.z),
         );
       }
-      if (sen?.grupo?.visible) {
+      /*
+       * **Y visto es colgado de la escena, no solo de pie.** Con «dar una
+       * vuelta» el señalero trabajaba —`visible`, gestos, tarjeta— fuera de
+       * la escena, y este banco lo daba por visto. Ver `verificar-llegadas`.
+       */
+      let colgado = sen?.grupo ?? null;
+      while (colgado?.parent) colgado = colgado.parent;
+      if (sen?.grupo?.visible && colgado === globalThis.__raiz) {
         senalero.visto = true;
         if (sen.gestoDeAhora) senalero.gestos.add(sen.gestoDeAhora);
       } else if (sen?.comoVa) {

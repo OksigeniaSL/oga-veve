@@ -58,6 +58,12 @@ export interface AlrededorDelTurno {
   torre(): boolean;
   /** Si el campo montado es privado: ni torre ni frecuencia. */
   privado(): boolean;
+  /**
+   * Si en el campo de ahora, con la pista en uso, **no hay más que una calle**
+   * entre la plataforma y la pista. Ver `unaSolaCalle` en
+   * `world/suelo-del-trafico.ts`.
+   */
+  calleUnica?(): boolean;
   /** Metros de tu avión al umbral de aterrizar del campo de ahora. */
   alUmbral(): number;
   /** Tu altura sobre la pista, m. */
@@ -80,6 +86,25 @@ export interface AlrededorDelTurno {
    */
   mandanFrustrar?(): boolean;
 }
+
+/**
+ * **Las fases en las que la única calle es tuya, y en qué sentido**: saliendo,
+ * de arrancar en el puesto a esperar en su doble raya; volviendo, de la final
+ * a llegar al puesto. Ver `Momento.calleOcupada`.
+ *
+ * Final está a propósito: el que empieza a rodar con vos en final llega a la
+ * doble raya cuando estás dejando la pista, y en una sola calle esa doble raya
+ * está en tu camino.
+ */
+export const USAN_LA_CALLE: Readonly<Record<string, "saliendo" | "volviendo">> = {
+  arrancando: "saliendo",
+  rodando: "saliendo",
+  esperando: "saliendo",
+  final: "volviendo",
+  aterrizado: "volviendo",
+  abandonando: "volviendo",
+  "a-plataforma": "volviendo",
+};
 
 /**
  * **Por qué se espera en el punto de espera**, si es por alguien: uno que
@@ -187,6 +212,11 @@ export class TurnoDePista {
     return this.de.torre() && !this.de.privado();
   }
 
+  /** Si aquí hay torre y una sola calle que turnar. Ver `USAN_LA_CALLE`. */
+  private get conCalleUnica(): boolean {
+    return this.conTorre && (this.de.calleUnica?.() ?? false);
+  }
+
   /**
    * **Si la pista la ocupa otro**: alineado en ella, autorizado a aterrizar o
    * cantando final. Es lo que mira la lámpara del punto de espera: la torre te
@@ -202,7 +232,14 @@ export class TurnoDePista {
      */
     return (
       this.conTorre &&
-      (this.de.radio.pistaOcupada || this.de.boca.esperaAlguna(sueltaLaPista))
+      (this.de.radio.pistaOcupada ||
+        this.de.boca.esperaAlguna(sueltaLaPista) ||
+        /*
+         * **Y en una sola calle, el que ya está en ella va primero.** Espera
+         * en la misma doble raya que vos, así que hasta que no entra en la
+         * pista y se va no hay sitio para otro. Ver `USAN_LA_CALLE`.
+         */
+        (this.conCalleUnica && this.de.radio.alguienEnLaCalle))
     );
   }
 
@@ -226,6 +263,7 @@ export class TurnoDePista {
     )
       return "aterriza";
     if (ocupan.some((o) => o.orden === "torre.lineUpWait")) return "despega";
+    if (this.conCalleUnica && this.de.radio.alguienEnLaCalle) return "despega";
     return null;
   }
 
@@ -270,6 +308,7 @@ export class TurnoDePista {
     const momento: Momento = {
       ...ahora,
       esperandoLaPista: this.esperandoLaPista(ahora.fase),
+      calleOcupada: this.conCalleUnica ? (USAN_LA_CALLE[ahora.fase] ?? null) : null,
     };
     const trafico = this.de.trafico();
     let alAire: Transmision | null = null;
@@ -340,7 +379,7 @@ export class TurnoDePista {
     if (this.de.privado()) return;
     this.numeroDos =
       fase === "final" && this.de.torre() ? this.quienVaDelante() : null;
-    const dichas = this.de.radio.despejarLaPista(this.numeroDos);
+    const dichas = this.de.radio.despejarLaPista(this.numeroDos, this.conCalleUnica);
     const trafico = this.de.trafico();
     for (const dice of dichas)
       trafico?.anuncia(

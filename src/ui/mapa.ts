@@ -38,6 +38,7 @@ import type { Scenario } from "../world/scenarios";
 import type { Aerodrome } from "../world/aerodrome";
 import type { Ciudad } from "../world/ciudad";
 import { puntoDePista } from "../world/rumbo";
+import { esAguaDeCasa } from "../world/agua-de-casa";
 import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
 import {
@@ -722,7 +723,7 @@ export class Mapa {
             ? (col + fila) % 6 < 2
               ? SIN_DATOS_RAYA
               : SIN_DATOS
-            : h <= esc.waterLevel
+            : esAguaDeCasa(h, esc.waterLevel)
               ? agua
               : rgbDe(colorDeCota(esc, h));
         const i = (fila * MUESTRAS + col) * 4;

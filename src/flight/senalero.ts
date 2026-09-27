@@ -59,6 +59,17 @@ export interface Llegada {
  */
 export const ALCANCE = 90;
 
+/**
+ * Lo más apartado de su raya de entrada que puede venir un avión para que le
+ * señale, m.
+ *
+ * Treinta: más que la envergadura del mayor de la flota y que el ancho de
+ * una calle con su margen —ahí sí hay que decirle hacia dónde corregir—, y
+ * menos que lo que separa dos calles paralelas. Más allá no viene hacia él:
+ * pasa por otra calle.
+ */
+export const DE_LADO = 30;
+
 /** A partir de aquí ya se está parando: el gesto es de parar, m. */
 const PARADA = 2.5;
 
@@ -102,6 +113,18 @@ export function gestoDeSenalero(s: Llegada, antes: Gesto = null): Gesto {
   if (!s.volviendo || !s.enElSuelo) return null;
   // Todavía viene de lejos: el señalero espera con los bastones abajo.
   if (s.restante > ALCANCE) return null;
+  /*
+   * **Y a su alcance es delante de él, no a su altura.**
+   *
+   * `restante` es lo que falta **a lo largo** de la raya de entrada, así que
+   * un avión que rodaba por una calle paralela, a doscientos metros de lado,
+   * contaba como llegando: el señalero mandaba «a la izquierda» y la tarjeta
+   * lo repetía, con el muñeco fuera de la pantalla o a cien píxeles de
+   * tamaño. «Sale la tarjeta del señalero dando indicaciones pero el muñeco
+   * no aparece nunca, y no estaba tapado.» Un señalero de verdad no le hace
+   * señas a un avión que no viene hacia él: empieza cuando lo tiene de cara.
+   */
+  if (Math.abs(s.lateral) > DE_LADO) return null;
 
   /*
    * **Parado en el sitio: frenos.**

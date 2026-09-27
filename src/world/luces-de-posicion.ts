@@ -153,8 +153,12 @@ export function focoEncendido(
  * cargar el avión: lo que cuesta no se nota y lo que da es el sitio exacto
  * donde el fabricante puso la punta del ala, que es donde va la luz en el
  * avión de verdad.
+ *
+ * Y es la misma cuenta para los aviones de los demás: un reactor del tráfico
+ * lleva sus luces donde tiene las puntas, igual que el tuyo. Ver
+ * `luces-del-trafico.ts`.
  */
-interface Puntas {
+export interface Puntas {
   /** Punta de ala derecha, la de la verde. */
   readonly ala: Vector3;
   /** Punta de ala izquierda, la de la roja. */
@@ -167,7 +171,7 @@ interface Puntas {
   readonly foco: Vector3;
 }
 
-function puntasDe(cuerpo: Object3D): Puntas | null {
+export function puntasDe(cuerpo: Object3D): Puntas | null {
   cuerpo.updateWorldMatrix(true, true);
   const caja = new Box3().setFromObject(cuerpo);
   if (caja.isEmpty()) return null;

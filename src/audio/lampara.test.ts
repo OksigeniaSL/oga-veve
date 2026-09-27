@@ -78,11 +78,11 @@ describe("y a quién va, cuando se sabe", () => {
 });
 
 describe("la pista que la torre les dio a los demás", () => {
-  it("son sus tres órdenes de pista, en baja, con el habla y el lado", () => {
+  it("son las dos que se la dan para quedarse en ella, en baja, con el habla y el lado", () => {
     for (const clave of [
       "torre.lineUpWait@fonetico.echo-cifra.0-cifra.2",
-      "torre.canario.clearedTakeoff.L@fonetico.echo-cifra.0-cifra.3",
       "torre.canario.clearedLand@fonetico.echo-cifra.1-cifra.2",
+      "torre.clearedLand.L@fonetico.echo-cifra.0-cifra.3",
       "torre.clearedLand",
     ])
       expect(daLaPistaAOtro(clave, "baja"), clave).toBe(true);
@@ -94,6 +94,11 @@ describe("la pista que la torre les dio a los demás", () => {
     for (const clave of [
       "torre.holdShort@fonetico.echo",
       "torre.canario.goAround@fonetico.echo",
+      /*
+       * Ni el despegue: la da y la suelta a la vez. Retirado, del alineado
+       * se oía el «line up and wait» y nunca el «cleared for take-off».
+       */
+      "torre.canario.clearedTakeoff.L@fonetico.echo-cifra.0-cifra.3",
       "otro.pistaLibre@fonetico.echo",
       "otro.enCola@fonetico.echo",
       undefined,

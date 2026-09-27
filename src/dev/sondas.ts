@@ -305,6 +305,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * vara falla donde el juego hace lo que tiene que hacer.
      */
     enBici: () => juego.sigueme.enBici,
+    /**
+     * Quien sale a buscarte, entero: su grupo, para mirar si está **en la
+     * escena** y no solo si él cree que se le ve. Ver
+     * `verificar-llegadas.mjs`.
+     */
+    sigueme: () => juego.sigueme,
+    /** Por dónde va el avión en su ruta, m. Ver `avanceEnLaRuta`. */
+    avanceEnLaRuta: () => juego.plan?.avanceEnLaRuta ?? 0,
     /*
      * La lista de paneles que se abren encima del vuelo.
      *
@@ -1382,6 +1390,11 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
      * cuántos avisos lleva dados. Ver `flight/tcas.ts`.
      */
     tcas: () => juego.tcasParaBanco,
+    /**
+     * A quién le ha dado ya la radio información de tráfico en esta pasada.
+     * Ver `flight/informacion-de-trafico.ts`.
+     */
+    informacionDeTrafico: () => juego.informacionDeTraficoParaBanco,
     /**
      * Pone a uno del circuito donde dice una llamada —«otro.enCola»,
      * «otro.final»—, para mirar el TCAS sin esperar a que le toque hablar.

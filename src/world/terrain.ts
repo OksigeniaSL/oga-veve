@@ -46,6 +46,7 @@ import {
 import { discoDeAgua, LADO_SIN_CURVA } from "./curvatura";
 import { mapaDelPavimento, type MapaDelPavimento } from "./mapa-del-pavimento";
 import { delante } from "./rumbo";
+import { esAguaDeCasa } from "./agua-de-casa";
 import { vecesLejosDe, type Scenario } from "./scenarios";
 
 /**
@@ -130,6 +131,7 @@ export function cabeceraContraria(escenario: Scenario): string | null {
 
 /** Cuánto se hunde el mar del mapa lejano bajo el agua, m. Ver `buildFarMesh`. */
 const HUNDIDO_LEJOS = 30;
+
 
 /**
  * Un mapa de orillas: la cota de cada nudo sobre el agua, en una textura, y
@@ -887,10 +889,18 @@ export class Terrain {
       const fuera = this.superficieLejana?.(x, z);
       if (fuera !== null && fuera !== undefined) return fuera;
     }
-    return Math.max(
-      this.sampleHeight(x, z) + this.resalteEn(x, z),
-      this.scenario.waterLevel,
-    );
+    const h = this.sampleHeight(x, z);
+    const suelo = h + this.resalteEn(x, z);
+    /*
+     * Y fuera del mapa fino, a flote solo donde el horizonte pinta agua: ver
+     * `esAguaDeCasa`. Dentro, el agua es la de siempre, que ahí el mapa de
+     * casa es el que manda —y el del valle, que no es medido, tiene sus ríos
+     * tallados bien por debajo de su lámina—.
+     */
+    const fuera = Math.abs(x) > this.half || Math.abs(z) > this.half;
+    return !fuera || esAguaDeCasa(h, this.scenario.waterLevel)
+      ? Math.max(suelo, this.scenario.waterLevel)
+      : suelo;
   }
 
   /** Quién sabe la superficie fuera del mapa fino. Ver `sampleSurface`. */
@@ -1245,6 +1255,13 @@ export class Terrain {
       for (const h of this.huecosDelHorizonte)
         if (Math.abs(x - h.x) < h.medio && Math.abs(z - h.z) < h.medio)
           return SIN_ORILLA;
+      /*
+       * Y la tierra baja que no es agua de casa, como tierra: su malla no se
+       * hunde —ver `esAguaDeCasa`— y está por debajo de la lámina, así que la
+       * cuenta de siempre la daría por agua.
+       */
+      const crudo = lejos.datos[fila * m + col] ?? 0;
+      if (crudo < nivel && !esAguaDeCasa(crudo, nivel)) return nivel - crudo;
       return lejano(fila * m + col) - nivel;
     });
     return { fina, lejana };
@@ -1688,7 +1705,7 @@ export class Terrain {
       const f = clampInt(fila, 0, res - 1) * SALTO;
       const c = clampInt(col, 0, res - 1) * SALTO;
       const h = lejos.datos[f * ancho + c] ?? 0;
-      return h <= this.scenario.waterLevel ? hundido : h;
+      return esAguaDeCasa(h, this.scenario.waterLevel) ? hundido : h;
     };
 
     for (let fila = 0; fila < res; fila++) {
@@ -1715,6 +1732,8 @@ export class Terrain {
           manchas.fbm(x * escala, z * escala, 3),
           luz,
           tinte,
+          // La tierra baja del horizonte no es fondo de río. Ver `cota`.
+          h <= hundido,
         );
         colores[i * 3] = tinte.r;
         colores[i * 3 + 1] = tinte.g;
@@ -2458,6 +2477,8 @@ function colourFor(
   variation: number,
   sunlight: number,
   out: Color,
+  /** Si ese nudo queda bajo el agua. Ver `esAguaDeCasa` en el horizonte. */
+  agua = height < scenario.waterLevel,
 ): void {
   const bands = scenario.bands;
   let index = 0;
@@ -2502,7 +2523,7 @@ function colourFor(
 
   // Bajo el agua se apaga: no se ve el fondo pero tampoco se ve un prado
   // verde debajo de un río, que es lo que pasaría sin esto.
-  if (height < scenario.waterLevel) out.lerp(DEEP, 0.6);
+  if (agua) out.lerp(DEEP, 0.6);
 }
 
 const WARM = new Color(0xd9c48a);

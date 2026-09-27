@@ -466,6 +466,16 @@ const FRENADA = 1.6;
 const RADIO_CURVA = 18;
 
 /**
+ * A partir de qué giro un codo de la ruta es una media vuelta, en radianes.
+ *
+ * Ciento cincuenta grados. Por debajo es una esquina cerrada —la salida de
+ * una calle que sale cruzada— y se redondea como todas; por encima, el
+ * filete de un codo deja de tener sentido y se dibuja la vuelta entera. Ver
+ * `redondear`.
+ */
+const MEDIA_VUELTA = (150 * Math.PI) / 180;
+
+/**
  * Aceleración lateral cómoda en tierra, m/s².
  *
  * De aquí sale la velocidad de cada curva: `v = √(a·r)`. Es la misma cuenta que
@@ -891,6 +901,8 @@ export function avanzarEnRuta(
 function redondear(
   pts: readonly Punto[],
   radio: number,
+  /** Con qué radio se dibuja una media vuelta. Ver `MEDIA_VUELTA`. */
+  radioDeVuelta = radio,
 ): { puntos: Punto[]; radios: number[] } {
   if (pts.length < 3)
     return {
@@ -919,6 +931,41 @@ function redondear(
     if (giro < 0.05) {
       puntos.push([...b] as Punto);
       radios.push(Infinity);
+      continue;
+    }
+
+    /*
+     * **Y una media vuelta se dibuja como media vuelta.**
+     *
+     * El filete de abajo retrocede `radio·tan(giro/2)` por cada tramo, y a
+     * ciento ochenta grados la tangente es infinita: el retroceso se iba al
+     * tope del cuarenta y cinco por ciento del tramo y la curva, que es una
+     * Bézier con el vértice de control, **daba la vuelta a mitad de camino**.
+     * En La Gomera, rodando hacia la raqueta del final para volver por la
+     * pista, la raya se daba la vuelta ciento setenta metros antes de llegar,
+     * en mitad de la pista, y la ayuda de rodaje giraba el avión allí.
+     *
+     * Así que la vuelta se dibuja con su forma: se llega al vértice apartado
+     * a un lado del eje y se vuelve por el otro con una semicircunferencia
+     * del radio de giro de este avión, que es como se da en una pista o en
+     * una raqueta.
+     */
+    if (giro > MEDIA_VUELTA) {
+      const r = Math.max(2, Math.min(radioDeVuelta, l1 * 0.45, l2 * 0.45));
+      // Hacia el lado al que se va la vuelta; si es exacta, a la izquierda.
+      const cruz = u1[0] * u2[1] - u1[1] * u2[0];
+      const lado = cruz >= 0 ? 1 : -1;
+      const n: Punto = [-u1[1] * lado, u1[0] * lado];
+      const c: Punto = [b[0] - u1[0] * r, b[1] - u1[1] * r];
+      const PASOS = 12;
+      for (let k = 0; k <= PASOS; k++) {
+        const th = -Math.PI / 2 + (Math.PI * k) / PASOS;
+        puntos.push([
+          c[0] + u1[0] * r * Math.cos(th) + n[0] * r * Math.sin(th),
+          c[1] + u1[1] * r * Math.cos(th) + n[1] * r * Math.sin(th),
+        ] as Punto);
+        radios.push(r);
+      }
       continue;
     }
 
@@ -981,13 +1028,15 @@ export function radioPorTres(a: Punto, b: Punto, c: Punto): number {
 export function alisarRuta(
   crudos: readonly Punto[],
   exactaDesde?: number,
+  /** El radio de giro del avión, para las medias vueltas. Ver `redondear`. */
+  radioDeVuelta = RADIO_CURVA,
 ): { puntos: Punto[]; radios: number[]; exactos: boolean[] } {
   if (
     exactaDesde === undefined ||
     exactaDesde <= 0 ||
     exactaDesde >= crudos.length - 1
   ) {
-    const r = redondear(sinTemblor(crudos), RADIO_CURVA);
+    const r = redondear(sinTemblor(crudos), RADIO_CURVA, radioDeVuelta);
     return { ...r, exactos: r.puntos.map(() => false) };
   }
   // Lo de antes, alisado como siempre, y acabando justo donde empieza el arco:
@@ -995,6 +1044,7 @@ export function alisarRuta(
   const antes = redondear(
     sinTemblor(crudos.slice(0, exactaDesde + 1)),
     RADIO_CURVA,
+    radioDeVuelta,
   );
   const cola = crudos.slice(exactaDesde);
   const radiosCola = cola.map((p, i) => {
@@ -2622,32 +2672,45 @@ export class PlanDeVuelo {
     }
     // Desde donde esté el avión, y con margen ancho: quien vuelve de volar
     // puede haber tomado tierra lejos de cualquier calle.
-    //
-    // **Y si acaba de aterrizar, saliendo por delante.** El camino más corto al
-    // puesto puede empezar dando media vuelta, y eso en una pista no se hace ni
-    // se enseña: se abandona por la primera salida que quede por delante. Con
-    // la ruta más corta, la raya salía hacia atrás —fuera de la pantalla, que
-    // mira adelante— y quien acababa de aterrizar no tenía nada que seguir:
-    // «al aterrizar no tuve línea de regreso al hangar».
-    const salida = quiere === "puesto" ? this.salidaPorDelante() : null;
+    if (quiere === "puesto") {
+      this.ponerLaVuelta(this.rutaDeVuelta(meta, false));
+      return;
+    }
+    this.ponerRuta(
+      rodajeEntre(this.grafo, this.ultimaPos, meta, 600, this.ocupadosAhora()),
+    );
+  }
 
-    /*
-     * **Y hasta esa salida se va rodando, no en línea recta.**
-     *
-     * Aquí se trazaba la ruta *desde la salida* y después se le pegaba delante
-     * la posición del avión. O sea: **una recta desde donde estabas hasta la
-     * boca de la salida**, por encima de lo que hubiera en medio. Eso es lo
-     * que se veía jugando — «salgo por E4 atravesando los jardines», «todavía
-     * voy por los jardines»— y no era la salida la que estaba mal, era el
-     * primer tramo, que no era un camino sino un atajo dibujado.
-     *
-     * Ahora son dos rutas encadenadas y las dos salen del grafo: de las ruedas
-     * a la salida —por la pista, que desde hace poco está en el grafo— y de la
-     * salida al puesto. Sin rectas por el campo en ningún trozo.
-     *
-     * Y si el primer tramo no sale —una toma muy lejos de todo—, se cae a la
-     * ruta directa, que es mejor que quedarse sin raya.
-     */
+  /**
+   * La ruta de vuelta al puesto desde donde está el avión, y la salida de
+   * pista por la que va, si va por una.
+   *
+   * **Si está en la pista, saliendo por delante.** El camino más corto al
+   * puesto puede empezar dando media vuelta, y eso en una pista no se hace ni
+   * se enseña: se abandona por una salida que quede por delante. Con la ruta
+   * más corta, la raya salía hacia atrás —fuera de la pantalla, que mira
+   * adelante— y quien acababa de aterrizar no tenía nada que seguir: «al
+   * aterrizar no tuve línea de regreso al hangar».
+   *
+   * **Y hasta esa salida se va rodando, no en línea recta.** Aquí se trazaba
+   * la ruta *desde la salida* y después se le pegaba delante la posición del
+   * avión: una recta desde donde estabas hasta la boca, por encima de lo que
+   * hubiera en medio —«salgo por E4 atravesando los jardines»—. Son dos rutas
+   * encadenadas: de las ruedas a la salida por la pista, y de la salida al
+   * puesto por el grafo. Y si la segunda no sale —una toma muy lejos de
+   * todo—, la ruta directa, que es mejor que quedarse sin raya.
+   *
+   * `laPrimera` es la diferencia entre elegir y que te elijan. Al tocar tierra
+   * se elige la salida que deja el camino más corto a casa; si esa ya se ha
+   * pasado, lo que dice una torre es «vacate next available» —abandone por la
+   * próxima disponible—, y es la primera que queda por delante con sitio para
+   * girar. Ver `seHaPasadoLaSalida`.
+   */
+  private rutaDeVuelta(
+    meta: Punto,
+    laPrimera: boolean,
+  ): { ruta: Ruta | null; salida: Punto | null } {
+    const salida = this.salidaPorDelante(laPrimera);
     if (salida) {
       const hastaLaSalida = this.porLaPistaHasta(salida);
       const desdeLaSalida = rodajeEntre(
@@ -2657,20 +2720,82 @@ export class PlanDeVuelo {
         600,
         this.ocupadosAhora(),
       );
-      if (hastaLaSalida && desdeLaSalida) {
-        this.ponerRuta({
-          ...desdeLaSalida,
-          puntos: [...hastaLaSalida.puntos, ...desdeLaSalida.puntos],
-          largo: hastaLaSalida.largo + desdeLaSalida.largo,
-          letras: [...hastaLaSalida.letras, ...desdeLaSalida.letras],
-        });
-        return;
-      }
+      if (desdeLaSalida)
+        return {
+          ruta: {
+            ...desdeLaSalida,
+            puntos: [...hastaLaSalida.puntos, ...desdeLaSalida.puntos],
+            largo: hastaLaSalida.largo + desdeLaSalida.largo,
+            letras: [...hastaLaSalida.letras, ...desdeLaSalida.letras],
+          },
+          salida,
+        };
     }
+    return {
+      ruta: rodajeEntre(
+        this.grafo,
+        this.ultimaPos,
+        meta,
+        600,
+        this.ocupadosAhora(),
+      ),
+      salida: null,
+    };
+  }
 
-    this.ponerRuta(
-      rodajeEntre(this.grafo, this.ultimaPos, meta, 600, this.ocupadosAhora()),
-    );
+  /** Pone una ruta de vuelta y se acuerda de su salida de pista. */
+  private ponerLaVuelta(vuelta: {
+    ruta: Ruta | null;
+    salida: Punto | null;
+  }): void {
+    this.ponerRuta(vuelta.ruta);
+    this.salidaDeLaRuta = vuelta.ruta ? vuelta.salida : null;
+  }
+
+  /**
+   * La boca de la salida de pista por la que va la ruta de ahora, en
+   * coordenadas del fichero, o `null` si la ruta no deja la pista por una.
+   */
+  private salidaDeLaRuta: Punto | null = null;
+
+  /**
+   * Cuánto hay que haber dejado atrás la boca de la salida para darla por
+   * pasada, m.
+   *
+   * Treinta: más que lo que se come un avión grande al girar hacia la calle
+   * —la raya dobla con dieciocho metros de radio y el reactor abre algo
+   * más—, así que tomarla no cuenta como pasársela. Y a paso de rodaje son
+   * dos segundos y medio: la raya nueva sale antes de que haga falta.
+   */
+  private static readonly PASADA = 30;
+
+  /**
+   * **Si el avión se ha pasado la salida por la que iba su ruta**: sigue en
+   * la pista, rodando a lo largo de ella, y la boca ha quedado atrás.
+   *
+   * Pasarse la salida es lo más corriente del mundo —se frena tarde y ya no
+   * da para girar— y hasta aquí lo recogía la regla general de «te has ido
+   * de la raya», que traza el camino más corto desde donde estés. Desde la
+   * pista, el camino más corto engancha por el nudo más cercano, que suele
+   * ser el de la salida que se acaba de pasar: la raya nueva volvía **hacia
+   * atrás por la pista** a buscarla, cada dos segundos una vez más, mientras
+   * el avión se alejaba. Medido en Los Rodeos rodando a doce metros por
+   * segundo: la salida seguía siendo la de atrás durante trescientos metros,
+   * y la siguiente, también, hasta pasar la otra.
+   */
+  private seHaPasadoLaSalida(): boolean {
+    const salida = this.salidaDeLaRuta;
+    if (!salida) return false;
+    const { x, z, heading, width } = this.pista;
+    const aqui = enEjesDePista(this.ultimaPos[0], -this.ultimaPos[1], x, z, heading);
+    // Fuera del asfalto ya no se la está pasando: la está tomando, o es otra.
+    if (Math.abs(aqui.across) > width / 2) return false;
+    // Y rodando a lo largo de la pista, no girando hacia la calle.
+    const alEje = Math.cos(this.ultimoRumbo - (heading * Math.PI) / 180);
+    if (Math.abs(alEje) < Math.cos(Math.PI / 6)) return false;
+    const sentido = alEje >= 0 ? 1 : -1;
+    const boca = enEjesDePista(salida[0], -salida[1], x, z, heading);
+    return (aqui.along - boca.along) * sentido > PlanDeVuelo.PASADA;
   }
 
   /**
@@ -2695,18 +2820,25 @@ export class PlanDeVuelo {
     // geometría de la pista y no del grafo: ahí no se recalcula.
     if (fase === "alineando" || fase === "autorizado" || fase === "back-taxi")
       return;
+    /*
+     * **Y pasarse la salida no espera al reloj ni a alejarse de la raya.** Ver
+     * `seHaPasadoLaSalida`: la raya nueva sale de donde se está, por la
+     * próxima salida, en el mismo fotograma en que la de antes queda atrás.
+     */
+    const pasada = this.destino === "puesto" && this.seHaPasadoLaSalida();
     this.desdeElUltimoTrazado += dt;
-    if (this.desdeElUltimoTrazado < CADA_CUANTO_SE_REHACE) return;
-    this.desdeElUltimoTrazado = 0;
-
-    const hayRaya = this.rutaMundo.length > 1;
-    const fuera = hayRaya
-      ? aLaPolilinea(
-          [this.ultimaPos[0], this.ultimaPos[1]],
-          this.rutaMundo.map((q) => [q[0], -q[1]] as Punto),
-        ) > LEJOS_DE_LA_RAYA
-      : true;
-    if (!fuera) return;
+    if (!pasada) {
+      if (this.desdeElUltimoTrazado < CADA_CUANTO_SE_REHACE) return;
+      this.desdeElUltimoTrazado = 0;
+      const hayRaya = this.rutaMundo.length > 1;
+      const fuera = hayRaya
+        ? aLaPolilinea(
+            [this.ultimaPos[0], this.ultimaPos[1]],
+            this.rutaMundo.map((q) => [q[0], -q[1]] as Punto),
+          ) > LEJOS_DE_LA_RAYA
+        : true;
+      if (!fuera) return;
+    } else this.desdeElUltimoTrazado = 0;
 
     /*
      * **Y volviendo, a la puerta que se asignó, no al puesto de salida.**
@@ -2728,16 +2860,25 @@ export class PlanDeVuelo {
           )?.xy
         : this.esperaDeSalida();
     if (!meta) return;
-    const ruta = rodajeEntre(
-      this.grafo,
-      this.ultimaPos,
-      meta,
-      600,
-      this.ocupadosAhora(),
-    );
+    /*
+     * **Y volviendo desde la pista, por una salida que quede delante**, la
+     * primera: es la misma cuenta que al tocar tierra, con lo que dice la
+     * torre a quien se pasó la suya. Desde fuera de la pista no hay «por
+     * delante» —`salidaPorDelante` no da ninguna— y queda lo de siempre, el
+     * camino más corto desde donde se esté.
+     */
+    const vuelta =
+      this.destino === "puesto" && volviendo
+        ? this.rutaDeVuelta(meta, true)
+        : null;
+    const ruta =
+      vuelta?.ruta ??
+      rodajeEntre(this.grafo, this.ultimaPos, meta, 600, this.ocupadosAhora());
     // Y si no sale, **se deja la que había**: una raya vieja guía peor que una
     // nueva, pero infinitamente mejor que ninguna.
-    if (ruta) this.ponerRuta(ruta);
+    if (!ruta) return;
+    if (vuelta?.ruta) this.ponerLaVuelta(vuelta);
+    else this.ponerRuta(ruta);
   }
 
   /**
@@ -3043,16 +3184,23 @@ export class PlanDeVuelo {
    * pista— devuelve `null` y la ruta sale del sitio donde esté el avión, que es
    * lo que hacía antes.
    */
-  private salidaPorDelante(): Punto | null {
+  private salidaPorDelante(laPrimera = false): Punto | null {
     /*
      * Primero, solo entre las que salen hacia delante. Si no queda ninguna
      * —un campo pequeño con una única salida hacia atrás—, entre todas: es
      * mejor dar la vuelta que quedarse sin raya.
      */
-    return this.salidaPorDelanteQue(true) ?? this.salidaPorDelanteQue(false);
+    return (
+      this.salidaPorDelanteQue(true, laPrimera) ??
+      this.salidaPorDelanteQue(false, laPrimera)
+    );
   }
 
-  private salidaPorDelanteQue(soloHaciaDelante: boolean): Punto | null {
+  private salidaPorDelanteQue(
+    soloHaciaDelante: boolean,
+    /** La primera por delante y no la más corta a casa. Ver `rutaDeVuelta`. */
+    laPrimera = false,
+  ): Punto | null {
     const x = this.ultimaPos[0];
     const z = -this.ultimaPos[1];
     const aqui = enEjesDePista(
@@ -3168,13 +3316,34 @@ export class PlanDeVuelo {
         ? rodajeEntre(this.grafo, nudo, casa, 600, this.ocupadosAhora())
         : null;
       /*
+       * **Y una salida que no lleva a ningún puesto no es una salida.** Un
+       * trozo de calle suelto —los hay en los datos, cosidos a la pista y a
+       * nada más— costaba solo lo que queda de pista hasta él, o sea menos
+       * que cualquier salida de verdad, y ganaba. La ruta de vuelta se caía
+       * entonces a la directa desde el avión, que es justo lo que esto evita.
+       */
+      if (casa && !hasta) continue;
+      /*
+       * **Y una raqueta no es una salida hacia delante.** Hay nudos en la pista
+       * con un trozo de calle que sale hacia donde se va —la raqueta del final,
+       * un apartadero— y desde los que el camino a casa **vuelve por la
+       * pista**. Pasaban por salidas hacia delante y ganaban a la de verdad,
+       * que salía algo cruzada: la raya iba hasta el fondo, daba media vuelta
+       * y deshacía cuatrocientos metros de pista hasta la calle que se había
+       * pasado. Medido en La Palma, en Guaraní y en La Gomera. Volver por la
+       * pista se hace —es el «backtrack» de los campos de una sola calle—,
+       * pero solo cuando no hay otra: queda para la pasada de «todas».
+       */
+      if (soloHaciaDelante && hasta && this.vuelvePorLaPista(hasta, along, sentido))
+        continue;
+      /*
        * Y una salida por la que se va a pasar junto a un avión parado —el
        * que espera en su doble raya para entrar en la pista, casi siempre en
        * esa misma calle— cuesta como si fuera larga: se coge otra si la hay.
        */
       const coste =
         adelante +
-        (hasta ? hasta.largo : 0) +
+        (hasta && !laPrimera ? hasta.largo : 0) +
         (hasta?.ocupada ? SALIDA_OCUPADA : 0);
       if (coste < cerca) {
         cerca = coste;
@@ -3182,6 +3351,21 @@ export class PlanDeVuelo {
       }
     }
     return mejor;
+  }
+
+  /**
+   * Si una ruta que sale de la pista en `along` vuelve a rodar por la pista
+   * hacia atrás: algún punto suyo sobre el asfalto, más de un ancho de pista
+   * por detrás de la boca en el sentido de la carrera.
+   */
+  private vuelvePorLaPista(ruta: Ruta, along: number, sentido: number): boolean {
+    const { x, z, heading, width } = this.pista;
+    return ruta.puntos.some((q) => {
+      const e = enEjesDePista(q[0], -q[1], x, z, heading);
+      return (
+        Math.abs(e.across) < width / 2 && (e.along - along) * sentido < -width
+      );
+    });
   }
 
   /**
@@ -3662,11 +3846,19 @@ export class PlanDeVuelo {
   private ponerRuta(ruta: Ruta | null): void {
     this.vecesQueSePusoLaRuta++;
     this.ruta = ruta;
+    // La pone `ponerLaVuelta` después, si esta ruta deja la pista por una.
+    this.salidaDeLaRuta = null;
     // Ruta nueva, cuenta nueva: el avance que se llevaba era de otro camino.
     this.avance = 0;
     this.dondeEstaba = null;
     const crudos = ruta ? ruta.puntos.map((p) => [p[0], -p[1]] as Punto) : [];
-    const { puntos, radios, exactos } = alisarRuta(crudos, ruta?.exactaDesde);
+    const { puntos, radios, exactos } = alisarRuta(
+      crudos,
+      ruta?.exactaDesde,
+      // Nunca más cerrada que la curva de calle: la raya de un avión chico
+      // también tiene que leerse como una vuelta y no como un punto.
+      Math.max(RADIO_CURVA / 2, radioDeGiro(this.avion)),
+    );
     this.rutaMundo = puntos;
     this.radios = radios;
     this.exactos = exactos;

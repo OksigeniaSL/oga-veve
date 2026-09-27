@@ -115,8 +115,8 @@ async function medirAqui(page) {
     /*
      * Lo que no es suelo: lo que se pinta encima sin serlo —la raya verde,
      * la sombra, las luces, los aros—, lo que anda por ahí, y **la pintura**,
-     * que va a propósito veinte centímetros sobre el asfalto para no pelearse
-     * con él de lejos (`PINTURA_ALTURA`) y no se pisa. Y el agua de casa, que
+     * que va dos centímetros sobre el asfalto (`PINTURA_ALTURA`) y lo que se
+     * mide aquí es el asfalto. Y el agua de casa, que
      * sobre el campo de llegada no se dibuja —su orilla lo tapa— y el rayo
      * sí la encuentra.
      */

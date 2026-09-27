@@ -76,6 +76,17 @@ import {
   RESPUESTA_MAXIMA,
 } from "../flight/radio";
 import { ALTURA_DE_DECISION } from "../flight/minimos";
+import {
+  desfaseDe,
+  LucesDeUnAvion,
+  lucesDelTrafico,
+  materialDeLuces,
+  sitiosDeGeometria,
+  sitiosDeLuz,
+  sitiosPorMedidas,
+  type FaseDeLuces,
+  type SitiosDeLuz,
+} from "./luces-del-trafico";
 
 /** Un sitio del mundo, con su altura. */
 export interface Sitio {
@@ -472,11 +483,22 @@ export function trazar(
     y: entrada.y + (aterriza.y - entrada.y) * hastaDecidir,
     z: entrada.z + (aterriza.z - entrada.z) * hastaDecidir,
   };
-  const sinPermiso = [lejos, esquina, entrada, decision, arriba, lejos, esquina];
+  /*
+   * **Y acaba donde empieza la vuelta siguiente**, en `lejos`, que es el
+   * primer punto de `llegada`: ahí se engancha otra vuelta al circuito, con
+   * permiso o sin él. Acababa en la esquina de la base y se retiraba en el
+   * aire; al cantar otra vez viento en cola reaparecía en su marca, y para
+   * quien volaba ese mismo viento en cola eso era un avión viniendo de
+   * frente por su línea. Ver `otraVuelta`.
+   */
+  const sinPermiso = [lejos, esquina, entrada, decision, arriba, lejos];
   const decide = largoDelCamino([lejos, esquina, entrada, decision]);
   /** **El que sale**: del aparcamiento a la espera, al eje, y arriba. */
   let salidaDelCampo = [lejosDelCampo, espera, enElEje, arriba];
-  /** **Y el que se va al aire**: pasa sobre la pista y vuelve al circuito. */
+  /**
+   * **Y el que se va al aire**: pasa sobre la pista y vuelve al circuito. Acaba
+   * en `lejos`, donde empieza la vuelta siguiente: ver `otraVuelta`.
+   */
   const alAire = [umbral, arriba, lejos];
 
   /*
@@ -761,7 +783,17 @@ interface Volando {
   conPermiso: boolean;
   /** Segundos que lleva sin avanzar mientras ocupa la pista. Ver `QUIETO`. */
   quieto: number;
+  /** Si en el último paso avanzó: parado en la doble raya, no. Ver `faseDeLuces`. */
+  avanza: boolean;
+  /** Sus luces, colgadas de su grupo. Ver `luces-del-trafico.ts`. */
+  luces: LucesDeUnAvion;
 }
+
+/**
+ * Los sitios de las luces sacados de cada cuerpo bueno, una vez por página:
+ * son de la geometría, que es la misma en todos los campos. Ver `sitiosDeLuz`.
+ */
+const sitiosDelCuerpo = new WeakMap<CuerpoHorneado, SitiosDeLuz | null>();
 
 export interface Trafico {
   readonly grupo: Group;
@@ -932,6 +964,19 @@ export function crearTrafico(
     void cuerpoDelTrafico(modelo, tipo.envergadura, EN_TIERRA).then((hecho) => {
       if (!hecho || desmontado) return;
       cuerposListos.set(tipo.id, hecho);
+      /*
+       * **Y las luces, a las puntas del cuerpo bueno.** Las de la fábrica
+       * tienen la envergadura de su tipo pero no su ala: el ala alta de la
+       * avioneta o la flecha del reactor dejaban la luz flotando un palmo
+       * fuera de la punta, que de cerca es lo que se ve.
+       */
+      if (!sitiosDelCuerpo.has(hecho))
+        sitiosDelCuerpo.set(
+          hecho,
+          sitiosDeLuz(vestirCuerpo(hecho, libreaDe(tipo.id))),
+        );
+      const sitios = sitiosDelCuerpo.get(hecho);
+      if (sitios) sitiosPorTipo.set(tipo.id, sitios);
       for (const [matricula, quien] of aviones) {
         if (quien.tipo.id !== tipo.id) continue;
         quien.grupo.clear();
@@ -941,6 +986,10 @@ export function crearTrafico(
             deFabrica(tipo, matricula),
           ),
         );
+        quien.luces.dispose();
+        quien.luces = lucesDe(tipo, matricula);
+        quien.grupo.add(quien.luces.puntos);
+        alumbrar(quien);
       }
     });
   };
@@ -985,6 +1034,23 @@ export function crearTrafico(
     return new Mesh(g, materialDeFabrica);
   };
   const materialDeFabrica = new MeshLambertMaterial({ vertexColors: true });
+
+  /** Un material para las luces de todo el tráfico de este campo. */
+  const materialDeLasLuces = materialDeLuces();
+  /** Dónde van las luces de cada tipo: de la fábrica, y del bueno al llegar. */
+  const sitiosPorTipo = new Map<string, SitiosDeLuz>();
+  /** El reloj de los destellos, s. */
+  let reloj = 0;
+  const lucesDe = (tipo: TipoDeTrafico, matricula: string): LucesDeUnAvion => {
+    let sitios = sitiosPorTipo.get(tipo.id);
+    if (!sitios) {
+      sitios =
+        sitiosDeGeometria(deFabrica(tipo, matricula).geometry) ??
+        sitiosPorMedidas(tipo.envergadura);
+      sitiosPorTipo.set(tipo.id, sitios);
+    }
+    return new LucesDeUnAvion(sitios, materialDeLasLuces, desfaseDe(matricula));
+  };
 
   /**
    * **El bueno de cerca y el de la fábrica de lejos.** El modelo de la flota
@@ -1121,8 +1187,115 @@ export function crearTrafico(
     return false;
   };
 
+  /**
+   * **En qué anda, para sus luces.** Sale del camino que recorre y de por
+   * dónde va en él, que es lo mismo que decide su velocidad: con calles, el
+   * que llega toca, corre y rueda a su puesto; el que sale rueda, espera en
+   * la doble raya, entra, se alinea y corre. Ver `lucesDelTrafico`.
+   */
+  const faseDeLuces = (quien: Volando): FaseDeLuces => {
+    const c = quien.caminos;
+    if (!c) return "volando";
+    const r = quien.recorrido;
+    const camino = quien.marca.camino;
+    if (camino === c.llegada) {
+      if (r < c.toca) return "volando";
+      if (r < c.fuera) return "carrera";
+      return r >= largoDe(camino) - 0.5 ? "aparcado" : "rodando";
+    }
+    if (camino === c.salida) {
+      // Sin calles no hay eje apuntado en los tramos de tierra: es el tope de
+      // «line up and wait», y de ahí el camino ya sube.
+      const eje =
+        c.enTierra?.eje || c.marcas["torre.lineUpWait"]?.tope || c.espera;
+      const despega = c.enTierra?.despega || eje;
+      if (r < c.espera - 0.5) return "rodando";
+      if (r < eje - 0.5) return quien.avanza ? "entrando" : "esperando";
+      // En el eje y parado, esperando el permiso: ahí manda el tope.
+      if (!quien.avanza && r < eje + 0.5) return "alineado";
+      if (r < despega) return "carrera";
+    }
+    return "volando";
+  };
+
+  /** Enciende lo que toca en este instante. */
+  const alumbrar = (quien: Volando): void =>
+    quien.luces.paso(
+      reloj,
+      lucesDelTrafico(faseDeLuces(quien), quien.grupo.position.y),
+    );
+
+  /**
+   * Si va **dando la vuelta**: subiendo de una frustrada —la orden de la torre
+   * o la decisión sin permiso— camino de `lejos`, donde empieza la vuelta
+   * siguiente. Ver `otraVuelta`.
+   */
+  const dandoLaVuelta = (quien: Volando): boolean => {
+    const c = quien.caminos;
+    if (!c) return false;
+    const camino = quien.marca.camino;
+    if (camino === c.sinPermiso) return quien.recorrido >= c.decide;
+    return camino !== c.llegada && camino !== c.salida;
+  };
+
+  /**
+   * **Y al acabar la frustrada, otra vuelta al circuito**, desde `lejos`, que
+   * es donde acaban los caminos de irse al aire y donde empieza `llegada`: no
+   * se mueve ni un metro.
+   *
+   * Se le retiraba ahí, en el aire, y la frecuencia —que en el guion de la
+   * frustrada le hace cantar viento en cola otra vez— lo volvía a poner en su
+   * marca, un kilómetro o dos más atrás por el mismo viento en cola. Quien
+   * volaba ese tramo lo veía desaparecer y aparecer de frente: era una de las
+   * dos veces que el banco del vuelo entero daba «un tráfico viene de frente».
+   * Un avión que se va al aire vuelve al circuito y aterriza, que es lo que
+   * cuenta la radio.
+   */
+  const otraVuelta = (quien: Volando): void => {
+    const c = quien.caminos!;
+    quien.marca = {
+      camino: quien.conPermiso ? c.llegada : c.sinPermiso,
+      metros: 0,
+      velocidad: c.marcas["otro.enCola"]?.velocidad ?? quien.marca.velocidad,
+    };
+    quien.recorrido = 0;
+    // Hace lo que le mandaron: no es uno al que se ha dejado de nombrar.
+    quien.olvidado = 0;
+  };
+
+  /**
+   * **Lo que dice quien ya se ve, dicho sin moverle de sitio**, o `null` si
+   * su marca está en otro camino y no hay más remedio.
+   *
+   * Cada llamada ponía al avión en su marca, y eso a quien no se veía le
+   * viene bien —está donde dice— pero a quien ya se ve le hace dar un salto:
+   * cien metros del punto de espera al eje con «cleared for take-off», y hasta
+   * dos kilómetros hacia atrás por el viento en cola al cantarlo después de
+   * una frustrada. Un avión no salta. Si ya va por el camino de la llamada,
+   * sigue donde está; si viene dando la vuelta, termina de darla y la llamada
+   * espera —ver `todaviaNo`—; y en la vuelta, antes de la decisión, el camino
+   * con permiso y el de sin él son el mismo.
+   */
+  const sinSaltar = (quien: Volando, marca: Marca): Marca | null => {
+    const c = quien.caminos;
+    if (dandoLaVuelta(quien)) return { ...quien.marca, metros: quien.recorrido };
+    if (marca.camino === quien.marca.camino)
+      return { ...marca, metros: quien.recorrido };
+    const enVuelta = (camino: Sitio[]): boolean =>
+      !!c && (camino === c.llegada || camino === c.sinPermiso);
+    if (
+      c &&
+      enVuelta(marca.camino) &&
+      enVuelta(quien.marca.camino) &&
+      quien.recorrido < c.decide
+    )
+      return porSuCamino(c, { ...marca, metros: quien.recorrido }, quien.conPermiso);
+    return null;
+  };
+
   const quitar = (matricula: string, quien: Volando): void => {
     grupo.remove(quien.grupo);
+    quien.luces.dispose();
     aviones.delete(matricula);
   };
 
@@ -1173,10 +1346,27 @@ export function crearTrafico(
           quien.marca = porSuCamino(quien.caminos, quien.marca, quien.conPermiso);
         return;
       }
+      /*
+       * **Y a quien ya se ve, ni la orden de irse al aire le mueve si ya se
+       * está yendo**, ni lo demás le hace saltar. Ver `sinSaltar`.
+       */
+      if (quien && (clave !== "torre.goAround" || dandoLaVuelta(quien))) {
+        const suyo = sinSaltar(quien, marca);
+        if (suyo) {
+          quien.marca = suyo;
+          quien.recorrido = suyo.metros;
+          quien.olvidado = 0;
+          quien.quieto = 0;
+          colocar(quien);
+          return;
+        }
+      }
       if (!quien) {
         const g = new Group();
         g.name = "trafico-avion";
         g.add(cuerpo(tipo, matricula));
+        const luces = lucesDe(tipo, matricula);
+        g.add(luces.puntos);
         grupo.add(g);
         quien = {
           grupo: g,
@@ -1187,6 +1377,8 @@ export function crearTrafico(
           olvidado: 0,
           conPermiso: puedeAterrizar,
           quieto: 0,
+          avanza: true,
+          luces,
         };
         aviones.set(matricula, quien);
       }
@@ -1199,10 +1391,14 @@ export function crearTrafico(
       quien.recorrido = esta.metros;
       quien.olvidado = 0;
       quien.quieto = 0;
+      // Puesto en otra marca, se mueve: si le toca esperar, lo dirá el paso.
+      quien.avanza = true;
       colocar(quien);
+      alumbrar(quien);
     },
     paso(dt) {
       let seFueron: string[] | null = null;
+      reloj += dt;
       for (const [matricula, quien] of aviones) {
         const c = quien.caminos;
         const antes = quien.recorrido;
@@ -1220,16 +1416,35 @@ export function crearTrafico(
          */
         if (aterrizando(quien) || (porTierra(quien) && !alFinal))
           quien.olvidado = 0;
-        else if (esperando && !alFinal)
+        /*
+         * Y el que viene volando a aterrizar, o dando la vuelta tras una
+         * frustrada, se olvida despacio, como el que espera una orden: su
+         * vuelo sigue abierto en la frecuencia, y lo que le toca decir espera
+         * a que esté donde lo dice —ver `todaviaNo`— y a que la frecuencia
+         * pueda hablar, que contigo en final no puede. Con el olvido de
+         * siempre se esfumaba en el aire y reaparecía en su marca, un par de
+         * kilómetros más atrás: visto desde su mismo viento en cola, un avión
+         * de frente.
+         */
+        else if (
+          (esperando && !alFinal) ||
+          dandoLaVuelta(quien) ||
+          (llegando(quien) && !!c && quien.recorrido < c.toca)
+        )
           quien.olvidado += dt * OLVIDO_ESPERANDO;
         else quien.olvidado += dt;
         /*
-         * **Y el que se fue al aire y acabó su camino, se retira ya.** Un
-         * avión colgado en el cielo en la esquina del circuito esperando a que
-         * lo nombren no es un avión: es un adorno roto.
+         * **Y el que acabó su camino en el aire, se retira ya** —el que salió,
+         * al perderse de vista—. Un avión colgado en el cielo en la esquina del
+         * circuito esperando a que lo nombren no es un avión: es un adorno
+         * roto. Menos el que se fue al aire, que da otra vuelta: ver
+         * `otraVuelta`.
          */
         const enElAire = !!c && quien.grupo.position.y > cota + 60;
-        if (alFinal && enElAire && !porTierra(quien)) quien.olvidado = Infinity;
+        if (alFinal && enElAire && !porTierra(quien)) {
+          if (dandoLaVuelta(quien)) otraVuelta(quien);
+          else quien.olvidado = Infinity;
+        }
         /*
          * **La red de la roja eterna**: uno que ocupa la pista y ha dejado de
          * avanzar se retira, y con él lo que bloqueaba. Ver `QUIETO`.
@@ -1237,6 +1452,7 @@ export function crearTrafico(
         if (aterrizando(quien) && dt > 0 && quien.recorrido - antes < 1e-4)
           quien.quieto += dt;
         else quien.quieto = 0;
+        if (dt > 0) quien.avanza = quien.recorrido - antes > 1e-4;
         if (quien.olvidado > SE_VA_A_LOS || quien.quieto > QUIETO) {
           quitar(matricula, quien);
           continue;
@@ -1249,6 +1465,7 @@ export function crearTrafico(
         )
           (seFueron ??= []).push(matricula);
         colocar(quien);
+        alumbrar(quien);
       }
       // Casi siempre nadie: sin lista nueva en cada fotograma.
       return seFueron ?? NADIE;
@@ -1260,6 +1477,25 @@ export function crearTrafico(
     todaviaNo(matricula, clave) {
       const quien = aviones.get(matricula);
       if (!quien) return false;
+      // Viento en cola y final, cuando haya vuelto al circuito. Ver `sinSaltar`.
+      if ((clave === "otro.enCola" || clave === "otro.final") && dandoLaVuelta(quien))
+        return true;
+      /*
+       * **Y el viento en cola, a la altura de la cabecera**, que es donde se
+       * canta. Al que vuelve a dar la vuelta tras una frustrada se le oía
+       * nada más empezar el viento en cola, dos kilómetros antes: con eso la
+       * final le llegaba tarde y se esfumaba esperándola. Ver `sinSaltar`.
+       */
+      const c = quien.caminos;
+      const marca = c?.marcas["otro.enCola"];
+      if (
+        clave === "otro.enCola" &&
+        c &&
+        marca &&
+        (quien.marca.camino === c.llegada || quien.marca.camino === c.sinPermiso) &&
+        quien.recorrido < marca.metros
+      )
+        return true;
       if (clave === "otro.pistaLibre") return aterrizando(quien);
       if (clave === "otro.final") return enLaBase(quien);
       return false;
@@ -1306,8 +1542,12 @@ export function crearTrafico(
     },
     dispose() {
       desmontado = true;
-      for (const quien of aviones.values()) grupo.remove(quien.grupo);
+      for (const quien of aviones.values()) {
+        grupo.remove(quien.grupo);
+        quien.luces.dispose();
+      }
       aviones.clear();
+      materialDeLasLuces.dispose();
       // Los cuerpos buenos no: son de la página, y el tráfico del campo
       // siguiente los vuelve a usar. Ver `horneados`.
       for (const g of geometrias.values()) g.dispose();

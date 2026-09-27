@@ -18,9 +18,10 @@
  * sorteadas.
  */
 import { describe, expect, it } from "vitest";
-import { Frecuencia, type Transmision } from "./radio";
+import { Boca } from "../audio/boca";
+import { Frecuencia, PISTA_TUYA, type Transmision } from "./radio";
 import { TurnoDePista, type DibujoDelTurno } from "./turno-de-pista";
-import { crearTrafico } from "../world/trafico";
+import { crearTrafico, VUELA_A } from "../world/trafico";
 import { BASE_A_FINAL, type Pista } from "../world/circuito";
 import { GLIDE_SLOPE } from "../world/runway-guide";
 
@@ -471,5 +472,190 @@ describe("el que llega sin permiso y no lo recibe, se va al aire y la frecuencia
     }
     expect(mal.slice(0, 5)).toEqual([]);
     expect(seFueron).toBeGreaterThan(20);
+  });
+});
+
+describe("con la boca de verdad y vuelos con frustrada: lo que se oye cuadra y nadie salta", () => {
+  /*
+   * **Lo de arriba oye todo al instante**, con una boca que ni guarda cola ni
+   * retira nada, y lo que fallaba estaba justo ahí. El banco del vuelo entero
+   * daba, en las tiradas con frustrada o con circuitos largos, dos fallos que
+   * aquí no salían nunca:
+   *
+   * - «La pista que es tuya la tiene otro»: se oía el «line up and wait» de
+   *   uno, nunca su «cleared for take-off», y detrás tu «cleared to land». Su
+   *   despegue esperaba turno detrás de la instructora al entrar tú en final,
+   *   y se retiraba con lo que le daba la pista a otro. Ver `daLaPistaAOtro`.
+   * - «Un tráfico viene de frente»: el que se iba al aire se retiraba en el
+   *   aire al acabar su camino, y al cantar otra vez viento en cola reaparecía
+   *   en su marca, kilómetros más atrás por el mismo viento en cola. Y cada
+   *   llamada ponía en su marca al que ya se veía. Ver `otraVuelta` y
+   *   `sinSaltar` en `world/trafico.ts`.
+   *
+   * Aquí se oye con la boca del juego —`audio/boca.ts`—: cada frase dura lo
+   * que dura, la instructora habla cuando le toca y la frecuencia espera
+   * turno en `baja`, como en `oirLaRadio`. Y tu vuelo tiene frustradas: uno
+   * de cada tres vuelve a final dos veces antes de tocar.
+   */
+  const FRASE = 3000;
+
+  function volar(semilla: number, frustradas: number) {
+    const azar = dados(semilla * 7);
+    let reloj = 0;
+    const luego: { cuando: number; hacer: () => void }[] = [];
+    const boca = new Boca({
+      ahora: () => reloj,
+      cancelar: () => {},
+      esperar: (ms, hacer) => void luego.push({ cuando: reloj + ms, hacer }),
+    });
+    const hablar = (dura: number) => (listo: () => void) =>
+      void luego.push({ cuando: reloj + dura, hacer: listo });
+    const radio = new Frecuencia(dados(semilla), "GCXO");
+    const trafico = crearTrafico(PISTA, COTA, "ala-alta");
+    const yo = { alUmbral: Infinity, alto: 1000 };
+    let teMandanAlAire = false;
+    const turno = new TurnoDePista({
+      radio,
+      boca,
+      trafico: () => trafico,
+      torre: () => true,
+      privado: () => false,
+      alUmbral: () => yo.alUmbral,
+      alto: () => yo.alto,
+      // Como en `decirleAOtro`: la torre, en mando.
+      decirAOtro(d) {
+        const clave = `${d.clave}@${d.de.matricula}`;
+        boca.pedir("mando", hablar(FRASE), clave);
+        return clave;
+      },
+      autorizarte: () => boca.pedir("mando", hablar(FRASE), "torre.clearedLand@YO"),
+      mandarteAlAire: () => void (teMandanAlAire = true),
+    });
+
+    let t = 0;
+    let fase = "en-vuelo";
+    let antes = "";
+    let quedan = frustradas;
+    let hasta = 60 + azar() * 400;
+    /** Si la pista era tuya en cada paso, para leer lo oído con su momento. */
+    const tuya: boolean[] = [];
+    const saltos: string[] = [];
+    let donde = new Map<string, { x: number; z: number }>();
+
+    const paso = () => {
+      reloj += PASO * 1000;
+      t += PASO;
+      for (let i = luego.length - 1; i >= 0; i--)
+        if (luego[i]!.cuando <= reloj) luego.splice(i, 1)[0]!.hacer();
+      // La instructora, de vez en cuando: es lo que llena la cola.
+      if (azar() < PASO / 9)
+        boca.pedir(
+          "normal",
+          hablar(2500 + azar() * 2500),
+          `vuelo.cosa${Math.floor(azar() * 50)}`,
+        );
+      const dice = turno.oir(PASO, { fase, deDia: true, instructorHablando: false });
+      if (dice) boca.pedir("baja", hablar(FRASE), `${dice.clave}@${dice.de.matricula}`);
+      if (PISTA_TUYA.has(fase) && !PISTA_TUYA.has(antes)) turno.alSerTuya(fase);
+      if (fase === "final" && antes !== "final") turno.pedirAterrizaje();
+      antes = fase;
+      turno.paso(fase);
+      tuya.push(turno.laPistaEsTuya(fase));
+      // Ningún avión dibujado se mueve más de lo que vuela en un paso...
+      const ahora = new Map<string, { x: number; z: number }>();
+      for (const a of trafico.quienes()) {
+        const u = donde.get(a.matricula);
+        const d = u ? Math.hypot(a.x - u.x, a.z - u.z) : 0;
+        if (d > 2 * VUELA_A * PASO) saltos.push(`${t} s ${a.matricula} ${Math.round(d)} m`);
+        ahora.set(a.matricula, { x: a.x, z: a.z });
+      }
+      // ...ni desaparece y vuelve a aparecer en otro sitio, que también es saltar.
+      for (const [m, u] of donde) if (!ahora.has(m)) ahora.set(m, u);
+      donde = ahora;
+    };
+
+    while (t < 1500) {
+      paso();
+      if (fase === "en-vuelo" && t > hasta) {
+        fase = "final";
+        yo.alUmbral = BASE_A_FINAL;
+        yo.alto = BASE_A_FINAL * Math.tan(GLIDE_SLOPE);
+        teMandanAlAire = false;
+      } else if (fase === "final") {
+        yo.alUmbral -= APROXIMACION * PASO;
+        yo.alto = Math.max(0, yo.alUmbral * Math.tan(GLIDE_SLOPE));
+        // Te vas al aire —te mandan, o la frustrada es tuya— y otra vuelta.
+        if (teMandanAlAire || (quedan > 0 && yo.alto < 60)) {
+          if (!teMandanAlAire) quedan--;
+          fase = "en-vuelo";
+          yo.alUmbral = Infinity;
+          yo.alto = 1000;
+          hasta = t + 120 + azar() * 200;
+        } else if (yo.alUmbral <= 0) {
+          fase = "aterrizado";
+          hasta = t + 20;
+        }
+      } else if (fase === "aterrizado" && t > hasta) {
+        fase = "abandonando";
+        hasta = t + 40;
+      } else if (fase === "abandonando" && t > hasta) break;
+    }
+
+    // Lo oído, en orden, con lo que mira de ello el banco del vuelo entero.
+    const abiertos = new Map<string, string>();
+    const sinAnular: string[] = [];
+    const trasLaTuya: string[] = [];
+    let yaTeLaDieron = false;
+    for (const h of boca.habladas) {
+      const m = /^(torre|otro)\.([A-Za-z]+)@(.*)$/.exec(h.clave);
+      if (!m) continue;
+      const voz = m[1]!;
+      const orden = m[2]!;
+      const quien = m[3]!;
+      const eraTuya = tuya[Math.floor(h.t / 1000 / PASO) - 1] ?? false;
+      if (!eraTuya) yaTeLaDieron = false;
+      if (quien === "YO") {
+        yaTeLaDieron = eraTuya;
+        if (abiertos.size)
+          sinAnular.push(
+            `${(h.t / 1000).toFixed(1)} s, con ${[...abiertos].map(([q, o]) => `${q} ${o}`).join(", ")}`,
+          );
+        continue;
+      }
+      if (voz === "torre" && (orden === "lineUpWait" || orden === "clearedLand"))
+        abiertos.set(quien, orden);
+      if (
+        (voz === "torre" && (orden === "clearedTakeoff" || orden === "goAround")) ||
+        orden === "pistaLibre"
+      )
+        abiertos.delete(quien);
+      if (
+        yaTeLaDieron &&
+        voz === "torre" &&
+        /^(lineUpWait|clearedTakeoff|clearedLand)$/.test(orden)
+      )
+        trasLaTuya.push(`${(h.t / 1000).toFixed(1)} s ${orden} a ${quien}`);
+    }
+    trafico.dispose();
+    return { sinAnular, trasLaTuya, saltos };
+  }
+
+  it("tu autorización nunca suena con un permiso a otro sin anular, ni se le da a otro después", () => {
+    const mal: string[] = [];
+    for (let semilla = 1; semilla <= 300; semilla++) {
+      const r = volar(semilla, semilla % 3);
+      mal.push(...r.sinAnular.map((x) => `semilla ${semilla}, sin anular: ${x}`));
+      mal.push(...r.trasLaTuya.map((x) => `semilla ${semilla}, tras la tuya: ${x}`));
+    }
+    expect(mal.slice(0, 5)).toEqual([]);
+  });
+
+  it("y ningún avión dibujado salta de sitio, ni desaparece en el aire para volver en otro", () => {
+    const mal: string[] = [];
+    for (let semilla = 1; semilla <= 300; semilla++) {
+      const r = volar(semilla, semilla % 3);
+      mal.push(...r.saltos.map((x) => `semilla ${semilla}: ${x}`));
+    }
+    expect(mal.slice(0, 5)).toEqual([]);
   });
 });

@@ -120,3 +120,30 @@ describe("y el tipo es el que opera allí", () => {
         );
   });
 });
+
+describe("los campos de una sola calle se reconocen, no se apuntan a mano", () => {
+  /*
+   * Encarnación, La Gomera y Pedro Juan Caballero: todo lo que va de la
+   * plataforma a la pista pasa por la doble raya del que sale. Ahí la raya
+   * verde no puede rodearle y la torre no mueve a dos a la vez por la calle.
+   * Ver `unaSolaCalle` y `USAN_LA_CALLE` en `flight/turno-de-pista.ts`.
+   */
+  const unaSola = (id: string, giro: number): boolean | null => {
+    const esc = SCENARIOS.find((e) => e.id === id)!;
+    const aero = esc.aerodrome as Aerodrome;
+    const runway = { ...esc.runway, heading: (esc.runway.heading + giro) % 360 };
+    return sueloDelTrafico(aero, runway, aero.runways[0]?.widthM ?? 45)?.unaSolaCalle() ?? null;
+  };
+
+  for (const id of ["encarnacion", "la-gomera", "pedro-juan"])
+    it(`${id}: una sola, por las dos cabeceras`, () => {
+      expect(unaSola(id, 0)).toBe(true);
+      expect(unaSola(id, 180)).toBe(true);
+    });
+
+  for (const id of ["pettirossi", "guarani", "tenerife-norte", "gran-canaria", "el-hierro"])
+    it(`${id}: tiene por dónde rodear`, () => {
+      expect(unaSola(id, 0)).toBe(false);
+      expect(unaSola(id, 180)).toBe(false);
+    });
+});

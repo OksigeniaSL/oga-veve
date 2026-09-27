@@ -29,6 +29,15 @@ import {
   type Punto,
 } from "../flight/trafico-en-ruta";
 import { giroDelModelo } from "./rumbo";
+import {
+  desfaseDe,
+  LucesDeUnAvion,
+  lucesDelTrafico,
+  materialDeLuces,
+  sitiosDeGeometria,
+  sitiosPorMedidas,
+  type SitiosDeLuz,
+} from "./luces-del-trafico";
 
 /**
  * Hasta dónde se dibujan, en metros.
@@ -88,6 +97,15 @@ export function crearAvionesDeRuta(
   const geometrias = new Map<Silueta, BufferGeometry>();
   const cuerpos = new Map<string, Mesh>();
   let ultimos: readonly EnRuta[] = [];
+  /*
+   * **Y sus luces**: a treinta kilómetros un avión no se ve, pero su destello
+   * sí. Es lo que hace que la regla semicircular se pueda **mirar** de noche
+   * —las luces que pasan mil pies por encima— y no solo leer en la carta.
+   * Ver `luces-del-trafico.ts`.
+   */
+  const materialDeLasLuces = materialDeLuces();
+  const luces = new Map<string, LucesDeUnAvion>();
+  const sitiosPorSilueta = new Map<Silueta, SitiosDeLuz>();
 
   const cuerpo = (silueta: Silueta): Mesh => {
     let geo = geometrias.get(silueta);
@@ -125,6 +143,20 @@ export function crearAvionesDeRuta(
           malla = cuerpo(a.silueta);
           cuerpos.set(a.id, malla);
           grupo.add(malla);
+          let sitios = sitiosPorSilueta.get(a.silueta);
+          if (!sitios) {
+            sitios =
+              sitiosDeGeometria(malla.geometry) ??
+              sitiosPorMedidas(ENVERGADURA[a.silueta] ?? 28);
+            sitiosPorSilueta.set(a.silueta, sitios);
+          }
+          const suyas = new LucesDeUnAvion(
+            sitios,
+            materialDeLasLuces,
+            desfaseDe(a.id),
+          );
+          malla.add(suyas.puntos);
+          luces.set(a.id, suyas);
         }
         const lejos = Math.hypot(a.x - yo.x, a.z - yo.z) > SE_VEN_HASTA;
         malla.visible = !lejos;
@@ -133,6 +165,7 @@ export function crearAvionesDeRuta(
         // El rumbo de compás al giro de la malla, con la conversión de siempre
         // en un solo sitio. Ver `giroDelModelo`.
         malla.rotation.y = (giroDelModelo(a.rumbo) * Math.PI) / 180;
+        luces.get(a.id)?.paso(ahora, lucesDelTrafico("volando", a.y));
       }
     },
     quienes: () => ultimos,
@@ -149,6 +182,9 @@ export function crearAvionesDeRuta(
         else mat.dispose();
       }
       cuerpos.clear();
+      for (const l of luces.values()) l.dispose();
+      luces.clear();
+      materialDeLasLuces.dispose();
       grupo.clear();
     },
   };
