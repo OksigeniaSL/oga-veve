@@ -67,10 +67,18 @@ export interface AlrededorDelTurno {
    * espera turno en la boca —ver `turnoDe`—, o `null` si no se pudo montar.
    */
   decirAOtro(dice: Transmision): string | null;
-  /** Tu «cleared to land». */
+  /**
+   * Tu permiso para aterrizar: la verde en vuelo, con su tarjeta, su
+   * castellano y su fraseología. Ver `autorizarElAterrizaje` en `game.ts`.
+   */
   autorizarte(): void;
   /** La torre te manda al aire; `sigue` dice si la pista sigue ocupada. */
   mandarteAlAire(alto: number, sigue: () => boolean): void;
+  /**
+   * Si hay puesta una orden de irse al aire, sea de quien sea. Ver `paso`.
+   * Sin esto se da por que no.
+   */
+  mandanFrustrar?(): boolean;
 }
 
 /**
@@ -103,7 +111,10 @@ export const EXPLICA_LA_ESPERA = {
  * Lo que la torre te dice al levantarte la orden de irte al aire.
  *
  * - `aterrizar`: sigues en final. La verde a un avión en vuelo es «puede
- *   aterrizar», y se dice.
+ *   aterrizar», y se dice **por el mismo camino que el permiso de la final**:
+ *   la lámpara, la tarjeta verde, «podés aterrizar» en los cuatro peldaños y
+ *   el «cleared to land» con el viento de Taguató para arriba. Es el mismo
+ *   permiso y no puede sonar a otra cosa. Ver `autorizarte`.
  * - `volver`: **subiendo en la frustrada o ya en el circuito.** Una torre de
  *   verdad no autoriza a aterrizar a quien se está yendo al aire: le deja
  *   volver por el circuito, y la autorización llega en la final nueva, que es
@@ -382,6 +393,21 @@ export class TurnoDePista {
     }
     this.enFinal = true;
     if (!this.aterrizajeSinAutorizar) return;
+    /*
+     * **Y con una orden de irse al aire puesta, el permiso pendiente se cae.**
+     *
+     * Quien levanta la orden sabe lo que toca decir —ver `alLevantarLaOrden`—
+     * y aquí no se sabe. El permiso puede estar esperando turno —el despeje
+     * del otro, el «pista libre» del de delante— cuando llega una orden por
+     * otro motivo, y en cuanto dejaba de esperar sonaba «podés aterrizar» con
+     * la orden de irse puesta: la verde encima de la roja. Si la orden se
+     * levanta en final, el permiso lo da quien la levanta; si no, se pide otra
+     * vez en la final nueva.
+     */
+    if (this.de.mandanFrustrar?.()) {
+      this.aterrizajeSinAutorizar = false;
+      return;
+    }
     if (this.numeroDos && this.de.radio.laTiene(this.numeroDos)) {
       const alto = this.de.alto();
       if (alto < ALTURA_DE_DECISION) {

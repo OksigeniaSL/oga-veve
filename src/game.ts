@@ -195,6 +195,16 @@ const HOLGURA_PARA_CAMBIAR_DE_CAMPO = 1000;
 const SE_QUEDA_EL_ARO = 2.5;
 
 /**
+ * Cuánto se queda a la vista tu permiso para aterrizar, s: la lámpara verde
+ * y su tarjeta.
+ *
+ * Seis, lo que una tarjeta de fase. Con los dos segundos y medio del aro la
+ * lámpara se apagaba mientras la torre todavía estaba diciendo tu matrícula,
+ * y el viento y el «cleared to land» sonaban con la pantalla ya vacía.
+ */
+const SE_QUEDA_EL_PERMISO = 6;
+
+/**
  * Los escalones de importancia de la señal. Ver `ui/senal.ts`.
  *
  * Son dos y no diez a propósito: lo que se está ordenando es «esto no puede
@@ -2594,9 +2604,10 @@ export class Game {
     alto: () =>
       this.flight.state.position.y - this.cotaDelCampo(this.elCampo()),
     decirAOtro: (dice) => this.decirleAOtro(dice),
-    autorizarte: () => this.porRadio("cleared to land"),
+    autorizarte: () => this.autorizarElAterrizaje(),
     mandarteAlAire: (alto, sigue) =>
       this.laAproximacion.mandarIrsePorLaPistaOcupada(alto, sigue),
+    mandanFrustrar: () => this.laAproximacion.mandanFrustrar,
   });
   /**
    * Si los aros de la senda están dibujados en el mundo ahora mismo.
@@ -5305,38 +5316,71 @@ export class Game {
         this.luzDeTorre(null);
       }
       if (queDice === "nada") return;
+      /*
+       * **Y sigues en final: es tu permiso para aterrizar, y suena como él.**
+       *
+       * Aquí se daba de otra manera —la tarjeta de «podés volver», el «cleared
+       * to land» solo por radio y, abajo, la instructora diciendo que podías
+       * volver a intentarlo— y el mismo permiso no puede sonar a dos cosas.
+       * Ver `autorizarElAterrizaje`.
+       */
+      if (queDice === "aterrizar") {
+        this.autorizarElAterrizaje();
+        return;
+      }
+      /*
+       * La torre no dice nada —no hay nada que autorizar todavía—, así que lo
+       * cuenta la instructora, en los cuatro peldaños: la voz es el canal, y
+       * la frase no es fraseología sino lo que quiere decir.
+       */
       const libre = this.avisoCon("vuelo.puedeVolver", "palabra.volve");
       this.hud.senal.mostrar("verde", libre.rotulo, null, {
         segundos: SE_QUEDA_EL_ARO,
         prioridad: IMPORTANTE,
       });
       this.avisar("success");
-      if (queDice === "volver") {
-        /*
-         * La torre no dice nada —no hay nada que autorizar todavía—, así que
-         * lo cuenta la instructora, en los cuatro peldaños: la voz es el
-         * canal, y la frase no es fraseología sino lo que quiere decir.
-         */
-        this.instructor.decir(libre.texto, libre.id);
-        return;
-      }
-      this.laTorreMandaEnLaLuz = true;
-      this.luzDeTorre("verde");
-      // «cleared to land» no tiene variantes y no las va a tener: es
-      // fraseología fija. Ver `audio/variantes.ts`.
-      //
-      // Y en los peldaños con cifras ya lo dice la torre por radio, detrás de
-      // la lámpara —ver `luzDeTorre`—: dicho también aquí sonaba dos veces.
-      if (
-        this.tier.instruments !== "numeric" &&
-        this.tier.instruments !== "full"
-      )
-        this.cantar("cleared to land", libre.texto, libre.id);
-      this.agenda.luego(SE_QUEDA_EL_ARO, () => {
-        if (this.laAproximacion.mandanFrustrar) return;
-        this.luzDeTorre(null);
-        this.laTorreMandaEnLaLuz = false;
-      });
+      this.instructor.decir(libre.texto, libre.id);
+    });
+  }
+
+  /**
+   * **Tu permiso para aterrizar, por el mismo camino que el de despegar.**
+   *
+   * Iba solo por radio y solo en inglés —«cleared to land»—, sin lámpara, sin
+   * tarjeta y sin una palabra en castellano, y en Guyrami ni eso: la
+   * fraseología es de Taguató para arriba. Se oyó jugando: «no veo que la
+   * torre en ningún momento comunique conmigo para darme permiso para la
+   * toma». A los cuatro años una frase en inglés no es un permiso, y quien
+   * juega en silencio no se enteraba de nada.
+   *
+   * Ahora es **la verde en vuelo**, que en las señales de luz de verdad
+   * quiere decir justo eso: la lámpara, la tarjeta verde, «podés aterrizar»
+   * con tu matrícula en los cuatro peldaños y, de Taguató para arriba, el
+   * «cleared to land» con el viento delante. Lo dice la torre y nadie más:
+   * la instructora no lo repite, que un suceso es una voz. Ver `luzDeTorre`.
+   *
+   * La lámpara se apaga sola cuando pasa, porque en el aire no hay lámpara
+   * que mirar; si mientras tanto llega una orden de irse, la luz es suya.
+   *
+   * `cabecera` es la que se nombra si no es la de uso: sin motor se aterriza
+   * por la que se tenga delante. Ver `autorizarSinMotor`.
+   */
+  private autorizarElAterrizaje(cabecera: string | null = null): void {
+    this.cabeceraParaLaTorre = cabecera;
+    this.laTorreMandaEnLaLuz = true;
+    this.luzDeTorre("verde");
+    this.cabeceraParaLaTorre = null;
+    this.hud.senal.mostrar(
+      "verde",
+      this.rotulo("vuelo.puedeAterrizar", "palabra.aterriza"),
+      null,
+      { segundos: SE_QUEDA_EL_PERMISO, prioridad: IMPORTANTE },
+    );
+    this.avisar("success");
+    this.agenda.luego(SE_QUEDA_EL_PERMISO, () => {
+      if (this.laAproximacion.mandanFrustrar) return;
+      this.luzDeTorre(null);
+      this.laTorreMandaEnLaLuz = false;
     });
   }
 
@@ -9732,15 +9776,7 @@ export class Game {
   private autorizarSinMotor(cabecera: string | null): void {
     if (!this.hayTorreQueHable()) return;
     this.turno.alSerTuya("");
-    this.cabeceraParaLaTorre = cabecera;
-    this.laTorreMandaEnLaLuz = true;
-    this.luzDeTorre("verde");
-    this.cabeceraParaLaTorre = null;
-    this.agenda.luego(SE_QUEDA_EL_ARO, () => {
-      if (this.laAproximacion.mandanFrustrar) return;
-      this.luzDeTorre(null);
-      this.laTorreMandaEnLaLuz = false;
-    });
+    this.autorizarElAterrizaje(cabecera);
   }
 
   /**
