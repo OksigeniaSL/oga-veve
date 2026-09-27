@@ -3409,7 +3409,7 @@ export class Game {
     // es donde se quedan las fugas de memoria de los juegos web—.
     this.hud.onHangar(() => location.reload());
     this.hud.ponerMapa(this.scenario, (x, z) =>
-      this.terrain.sampleHeight(x, z),
+      this.terrain.cotaConocida(x, z),
     );
     /*
      * Las luces de aproximación y el PAPI, ya desde el principio.
@@ -8663,6 +8663,8 @@ export class Game {
       this.flight.state.heading,
       objetivo ? objectiveTarget(objetivo) : this.elOtroCampo(),
       objetivo ? null : this.alternoParaLaCarta(),
+      // Y si es una ruta a otro aeropuerto, para pintarla. Ver `Mapa.update`.
+      !objetivo,
     );
     /*
      * Y dónde está el compensador, que es un mando que **se queda puesto** y

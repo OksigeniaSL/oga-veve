@@ -6118,14 +6118,46 @@ button.motor__tecla::after {
    * Lo de los instrumentos se resuelve apartándolos, que es lo que hace
    * `.hud--con-mapa` unos bloques más abajo.
    *
-   * En pantalla estrecha o táctil se queda como estaba: ahí no hay hueco para
-   * dos cosas a la vez y un mapa al lado sería un sello ilegible.
+   * En pantalla estrecha o táctil sigue en medio: ahí no hay hueco para dos
+   * cosas a la vez y un mapa al lado sería un sello ilegible.
+   *
+   * **Pero ya no es un velo.** Era un fondo oscuro a pantalla completa que se
+   * comía los toques, y con eso dos cosas: la barra de arriba quedaba debajo
+   * —el botón del piloto automático se veía y no se podía tocar— y el primer
+   * toque a la palanca cerraba el mapa en vez de virar. El plano es un
+   * instrumento que se mira volando, como una carta: lo de alrededor sigue
+   * siendo el mundo, se ve entero y recibe los dedos. Solo el panel los
+   * recoge. Ver `.mapa .concha` justo debajo.
    */
-  background: rgba(10, 14, 12, 0.55);
+  background: none;
+  pointer-events: none;
+}
+
+/*
+ * **Y los toques vuelven en toda la concha, no solo en el plano.**
+ *
+ * Aquí solo los recuperaba `.mapa__lienzos`, y la fila de botones —las dos
+ * lupas y «Cerrar»— vive en la concha, fuera de los lienzos. O sea que el
+ * clic los atravesaba y se lo comía el lienzo del juego que hay detrás.
+ *
+ * Contado jugando dos veces, con meses de por medio: «el botón naranja cerrar
+ * no cierra, pero sí se oye una notificación, hay que hacer clic por fuera
+ * para salir» y «esto sigue sin cerrar el panel». Medido: `elementFromPoint`
+ * sobre el botón devolvía el lienzo del juego, y el propio botón daba
+ * `pointer-events: none`.
+ *
+ * Lo que sí tiene que seguir atravesándose es **el hueco alrededor**: se
+ * vuela con el plano abierto. Por eso el `none` se queda en `.mapa` y se
+ * levanta en lo que es panel de verdad. Valía solo en escritorio; desde que
+ * con el dedo tampoco hay velo, vale en todas.
+ */
+.mapa .concha {
   pointer-events: auto;
 }
 
 .mapa__lienzos {
+  /* Lo mismo que la concha: ver justo arriba. */
+  pointer-events: auto;
   position: relative;
   width: min(78vmin, 460px);
   height: min(78vmin, 460px);
@@ -6145,6 +6177,85 @@ button.motor__tecla::after {
   border-radius: var(--r-m);
 }
 
+/*
+ * **En medio, pero debajo de la barra y encima de los pulgares.**
+ *
+ * Centrado en la pantalla, el panel tapaba la segunda fila de la barra de
+ * arriba en un teléfono apaisado —el sonido, las teclas y el propio botón del
+ * mapa— y por abajo se metía detrás de la barra del timón. Así que empieza
+ * donde acaba la barra, que la mide el HUD (`--alto-de-la-barra`), y con el
+ * dedo deja libre la franja del timón. Y el plano mide lo que quepa entre
+ * las dos: `cqh` es el alto de `.mapa`, que es lo que queda; se cuentan en
+ * las unidades del propio HUD, que en pantallas bajas va con `zoom`, y así no
+ * hay que convertir nada.
+ *
+ * La cuenta de ciento cincuenta es la concha alrededor del plano: cabecera,
+ * fila de botones, rellenos y huecos, medidos en la tablet y en el teléfono.
+ */
+@media not all and (min-width: 900px) and (pointer: fine) {
+  .mapa {
+    place-items: start center;
+    container-type: size;
+    padding: calc(var(--alto-de-la-barra, 58px) + 20px) 12px 8px;
+  }
+
+  .mapa__lienzos {
+    width: min(78vmin, 460px, calc(100cqh - 150px));
+    height: min(78vmin, 460px, calc(100cqh - 150px));
+  }
+}
+
+/*
+ * **Y en un teléfono apaisado, de lado.**
+ *
+ * Ahí la barra de arriba baja a tres filas y la franja de los pulgares se
+ * lleva otro tanto: entre las dos quedan unos doscientos píxeles, y con la
+ * cabecera encima y los botones debajo el plano se quedaba en un sello de
+ * cien. Así que sin cabecera —el plano se reconoce solo, y el dibujo de su
+ * botón está a la vista en la barra— y con las lupas y «Cerrar» en columna a
+ * su derecha, que es donde queda el pulgar. Lo que se gana es todo alto para
+ * el plano.
+ */
+@media (max-height: 520px) and (orientation: landscape) {
+  .mapa .concha--instrumento {
+    grid-template-columns: auto auto;
+    grid-template-rows: auto;
+    align-items: stretch;
+    padding: 10px 12px;
+  }
+
+  .mapa .concha__cabecera {
+    display: none;
+  }
+
+  .mapa .concha__acciones {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    padding-top: 0;
+    padding-left: 10px;
+    border-top: 0;
+    border-left: 1px solid var(--linea);
+  }
+
+  .mapa__lienzos {
+    width: min(78vmin, 460px, calc(100cqh - 24px));
+    height: min(78vmin, 460px, calc(100cqh - 24px));
+  }
+}
+
+@media (pointer: coarse) {
+  .mapa {
+    /*
+     * La barra del timón: cincuenta y seis de alto a veinte del borde, en
+     * píxeles de pantalla —vive en la capa táctil, que no va con `zoom`—, así
+     * que en los del HUD son esos mismos entre la escala. Ver `.pad--rudder`.
+     */
+    padding-bottom: calc((56px + 20px + 8px) / var(--escala, 1));
+  }
+}
+
+
 @media (min-width: 900px) and (pointer: fine) {
   .mapa {
     /* Pegado al borde izquierdo, y solo el ancho que ocupa. */
@@ -6158,33 +6269,6 @@ button.motor__tecla::after {
      */
     width: calc(min(38vh, 330px) + 34px);
     padding-left: 16px;
-    /* Nada de oscurecer el mundo: el mundo es justo lo que hay que ver. */
-    background: none;
-    /* El hueco de al lado no come el ratón; solo lo comen el mapa y sus lupas. */
-    pointer-events: none;
-  }
-
-  /*
-   * **Y los eventos vuelven en toda la concha, no solo en el plano.**
-   *
-   * Aquí solo los recuperaba `.mapa__lienzos`, y la fila de botones —las dos
-   * lupas y «Cerrar»— vive en la concha, fuera de los lienzos. O sea que el
-   * clic los atravesaba y se lo comía el lienzo del juego que hay detrás.
-   *
-   * Contado jugando dos veces, con meses de por medio: «el botón naranja
-   * cerrar no cierra, pero sí se oye una notificación, hay que hacer clic por
-   * fuera para salir» y «esto sigue sin cerrar el panel». Medido:
-   * `elementFromPoint` sobre el botón devolvía el lienzo del juego, y el
-   * propio botón daba `pointer-events: none`.
-   *
-   * Lo que sí tiene que seguir atravesándose es **el hueco alrededor**: en
-   * escritorio el plano se pega a la izquierda con fondo transparente justo
-   * para poder seguir volando con él abierto. Por eso el `none` se queda en
-   * `.mapa` y se levanta en lo que es panel de verdad.
-   */
-  .mapa .concha,
-  .mapa__lienzos {
-    pointer-events: auto;
   }
 
   /*

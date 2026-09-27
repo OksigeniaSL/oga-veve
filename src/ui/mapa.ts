@@ -14,10 +14,12 @@
  *
  * ## Cómo está hecho
  *
- * Dos lienzos. El de abajo se pinta **una sola vez** —relieve, agua, ciudad,
- * carreteras y pista— porque nada de eso se mueve; el de arriba lleva solo la
- * flecha y se repinta cada fotograma. Repintar el mundo entero sesenta veces
- * por segundo para mover un triángulo costaba más que el juego.
+ * Dos lienzos. El de abajo lleva el mundo —relieve, agua, ciudad, carreteras y
+ * pista— y se pinta **solo cuando el encuadre se ha movido de verdad**; el de
+ * arriba lleva la flecha, la ruta y las rayas, y se repinta cada fotograma.
+ * Repintar el mundo entero sesenta veces por segundo para mover un triángulo
+ * costaba más que el juego. Qué trozo del mundo se enseña y cuándo se repinta
+ * lo decide `encuadre-del-mapa.ts`.
  *
  * El norte va arriba y no gira con el avión. Un mapa que gira es más cómodo de
  * seguir y **mucho peor para aprenderse un sitio**, que es de lo que se trata:
@@ -32,12 +34,20 @@ const LUPA_MENOS = `<circle cx="10.5" cy="10.5" r="6.6" />
   <path d="M15.4 15.4 L21 21 M7 10.5 h7" />`;
 const LUPA_MAS = `<circle cx="10.5" cy="10.5" r="6.6" />
   <path d="M15.4 15.4 L21 21 M7 10.5 h7 M10.5 7 v7" />`;
-import { vecesLejosDe, type Scenario } from "../world/scenarios";
+import type { Scenario } from "../world/scenarios";
 import type { Aerodrome } from "../world/aerodrome";
 import type { Ciudad } from "../world/ciudad";
 import { puntoDePista } from "../world/rumbo";
 import type { Hito } from "../world/hitos";
 import { Panel } from "./panel";
+import {
+  encuadreCon,
+  escalones,
+  hayQueRepintar,
+  ladoDelVuelo,
+  type Encuadre,
+  type Punto,
+} from "./encuadre-del-mapa";
 
 /** Lado del lienzo, en píxeles. */
 const LADO = 460;
@@ -45,20 +55,27 @@ const LADO = 460;
 /** Cuántas muestras de relieve se pintan por lado. */
 const MUESTRAS = 230;
 
-/**
- * Los cuatro alcances del mapa, en metros de mundo que caben de lado a lado.
- *
- * No es un zoom continuo a propósito. Un zoom continuo se maneja con dos dedos
- * o con una rueda, y aquí hay que poder cambiarlo **con un dedo y sin puntería**;
- * cuatro escalones se recorren con dos botones grandes y no hay forma de
- * quedarse en un encuadre raro.
- *
- * El más ancho es el escenario entero, que es lo que había hasta ahora y sirve
- * para saber dónde está uno. Los otros tres son para lo que se pedía y no se
- * podía: mirar el aeropuerto de cerca —«¿este mapa no tiene zoom ni nada?»— y
- * ver por dónde va la rodadura.
+/*
+ * **Las lupas no son un zoom continuo, a propósito.** Un zoom continuo se
+ * maneja con dos dedos o con una rueda, y aquí hay que poder cambiarlo **con
+ * un dedo y sin puntería**: unos pocos escalones se recorren con dos botones
+ * grandes y no hay forma de quedarse en un encuadre raro. La rueda del ratón
+ * recorre los mismos escalones. Cuáles son lo dice `escalones`: del vuelo
+ * entero a un aeropuerto con sus calles —«¿este mapa no tiene zoom ni
+ * nada?»—, de dos en dos y media.
  */
-const ALCANCES = [1, 0.45, 0.18, 0.07] as const;
+
+/**
+ * Hasta qué lado se dibujan las plataformas y las calles de rodaje, en metros.
+ *
+ * Más ancho, el aeropuerto entero mide cuatro píxeles y lo único que aportan
+ * es suciedad; de cerca son justo lo que se mira, porque son por donde se va.
+ */
+const LADO_DE_LAS_CALLES = 5000;
+
+/** El color de «de aquí no hay dibujo», y el de sus rayas. */
+const SIN_DATOS = [138, 134, 122] as const;
+const SIN_DATOS_RAYA = [118, 114, 104] as const;
 
 export class Mapa {
   private caja: HTMLElement | null = null;
@@ -76,11 +93,21 @@ export class Mapa {
    * `Panel`, y #70 para lo que faltaba aquí.
    */
   private panel: Panel | null = null;
-  private pintado = false;
-  /** Qué alcance está puesto, como índice de `ALCANCES`. */
-  private alcance = 0;
+  /**
+   * Qué lupa está puesta: cero es el vuelo entero, y de ahí en adelante el
+   * avión en medio, cada vez más cerca. Ver `escalones`.
+   */
+  private lupa = 0;
   private escenario: Scenario | null = null;
-  private cota: ((x: number, z: number) => number) | null = null;
+  /**
+   * La cota del mundo, o `null` donde no se sabe.
+   *
+   * **`null` y no mar.** Fuera del mundo se pintaba agua, que en Canarias
+   * casi siempre acierta y en Paraguay miente: saliendo de Pettirossi hacia
+   * Encarnación el plano enseñaba un océano al sur de Asunción. Donde no hay
+   * datos se pinta que no hay datos. Ver `Terrain.cotaConocida`.
+   */
+  private cota: ((x: number, z: number) => number | null) | null = null;
   /**
    * La pista del otro aeropuerto de la ruta, si esta ruta lleva a alguno.
    *
@@ -112,11 +139,7 @@ export class Mapa {
     }[],
   ): void {
     this.otrasPistas = pistas;
-    this.pintado = false;
-    if (this.abierto) {
-      this.pintarFondo();
-      this.pintado = true;
-    }
+    this.repintar();
   }
 
   /**
@@ -143,11 +166,7 @@ export class Mapa {
     }[],
   ): void {
     this.campos = campos;
-    this.pintado = false;
-    if (this.abierto) {
-      this.pintarFondo();
-      this.pintado = true;
-    }
+    this.repintar();
   }
 
   /**
@@ -177,12 +196,13 @@ export class Mapa {
     this.repintar();
   }
 
+  /**
+   * Tira el fondo pintado: lo que se pinta ha cambiado. Si está abierto se
+   * pinta ya; si no, al abrirse.
+   */
   private repintar(): void {
-    this.pintado = false;
-    if (this.abierto) {
-      this.pintarFondo();
-      this.pintado = true;
-    }
+    this.encuadrePintado = null;
+    if (this.abierto) this.pintarFondo();
   }
 
   /** El alternativo de ahora, para marcarlo. Ver `update`. */
@@ -208,11 +228,7 @@ export class Mapa {
   ponerHitos(hitos: readonly Hito[], dichos: () => ReadonlySet<string>): void {
     this.hitos = hitos;
     this.dichos = dichos;
-    this.pintado = false;
-    if (this.abierto) {
-      this.pintarFondo();
-      this.pintado = true;
-    }
+    this.repintar();
   }
 
   static markup(): string {
@@ -257,7 +273,7 @@ export class Mapa {
   bind(
     raiz: HTMLElement,
     escenario: Scenario,
-    cota: (x: number, z: number) => number,
+    cota: (x: number, z: number) => number | null,
   ): void {
     this.escenario = escenario;
     this.cota = cota;
@@ -304,19 +320,15 @@ export class Mapa {
       },
       { passive: false },
     );
-    // Tocando el fondo se cierra. Es lo que espera cualquiera que haya abierto
-    // una lámina encima de algo, y para quien no lee es la única salida obvia:
-    // no hay ninguna equis que buscar.
-    this.caja?.addEventListener("pointerdown", (e) => {
-      if (e.target === this.caja) this.cerrar();
-    });
     /*
-     * **Y ahora también hay una equis que buscar**, que es lo que faltaba.
+     * **Y el fondo ya no cierra: el fondo es el mundo, y se vuela.**
      *
-     * Tocar el fondo sigue valiendo y sigue siendo la salida obvia con el
-     * dedo, pero era la **única**: con el teclado o con el mando no hay fondo
-     * que tocar, y quedaba Escape, que hay que saberse. La acción de cerrar es
-     * la misma en los ocho paneles desde que hay concha.
+     * Tocar alrededor del plano lo cerraba, y con el dedo eso quería decir que
+     * el primer toque a la palanca se lo comía el plano: con el mapa abierto no
+     * se podía volar. Ahora el plano es un instrumento de verdad —se vuela
+     * mirándolo, como una carta— y lo de alrededor deja pasar los toques. Se
+     * cierra con su botón, con el del mapa de la barra o con Escape; la acción
+     * de cerrar es la misma en los ocho paneles desde que hay concha.
      */
     this.caja
       ?.querySelector('[data-accion="cerrar"]')
@@ -333,11 +345,7 @@ export class Mapa {
    */
   rehacer(escenario: Scenario): void {
     this.escenario = escenario;
-    this.pintado = false;
-    if (this.abierto) {
-      this.pintarFondo();
-      this.pintado = true;
-    }
+    this.repintar();
   }
 
   /** La raíz del HUD, para marcarla mientras el mapa está abierto. */
@@ -351,7 +359,7 @@ export class Mapa {
   }
 
   /**
-   * Cambia de alcance y **repinta el fondo**, que es lo caro.
+   * Cambia de lupa y **repinta el fondo**, que es lo caro.
    *
    * Se repinta entero porque el relieve se muestrea a la resolución del
    * encuadre: acercarse no es ampliar la imagen, es volver a preguntarle al
@@ -359,12 +367,10 @@ export class Mapa {
    * justo lo que no sirve para mirar una calle de rodaje.
    */
   private acercar(paso: number): void {
-    const antes = this.alcance;
-    this.alcance = Math.max(
-      0,
-      Math.min(ALCANCES.length - 1, this.alcance + paso),
-    );
-    if (this.alcance === antes) return;
+    const antes = this.lupa;
+    const cuantas = escalones(ladoDelVuelo(this.losCampos(), this.minimo())).length;
+    this.lupa = Math.max(0, Math.min(cuantas - 1, this.lupa + paso));
+    if (this.lupa === antes) return;
     this.pintarFondo();
   }
 
@@ -380,10 +386,9 @@ export class Mapa {
     this.avisarAlHud();
     if (!this.panel.abierto) return;
     this.alAbrir?.();
-    if (!this.pintado) {
-      this.pintarFondo();
-      this.pintado = true;
-    }
+    // Con lo que se haya movido mientras estaba cerrado, el fondo de antes ya
+    // no vale: se pinta el de ahora.
+    this.pintarFondo();
   }
 
   /**
@@ -423,37 +428,26 @@ export class Mapa {
     rumboRad: number,
     destino: { x: number; z: number } | null = null,
     alterno: { x: number; z: number } | null = null,
+    /**
+     * Si `destino` es otro aeropuerto al que se vuela, y no el objetivo de una
+     * misión: entonces es una ruta, y se pinta la raya de casa hasta él.
+     */
+    esRuta = false,
   ): void {
     this.destino = destino;
     this.alterno = alterno;
-    /*
-     * **Al acercarse, el mapa sigue al avión; de lejos, no.**
-     *
-     * En el alcance ancho el encuadre es el escenario entero y moverlo no
-     * tendría sentido — se mira para saber dónde estás dentro de todo. En los
-     * acercados el escenario no cabe, así que el centro pasa a ser el avión, y
-     * entonces el fondo hay que repintarlo cuando uno se aleja lo suficiente.
-     */
-    const movido = Math.hypot(x - this.avionX, z - this.avionZ);
-    const anchoAntes = this.metrosPorLado();
     this.avionX = x;
     this.avionZ = z;
-    const anchoAhora = this.metrosPorLado();
-    /*
-     * Se repinta el fondo cuando hace falta, y hacen falta dos cosas distintas.
-     * De cerca, porque el mapa sigue al avión y el encuadre se queda atrás. De
-     * lejos, porque **el mapa se estira si el avión se ha ido fuera** y el
-     * dibujo tiene que estirarse con él: sin esto, quien sale a mar abierto veía
-     * el mismo cuadrado de siempre con la flecha clavada en un borde.
-     */
-    const estirado = Math.abs(anchoAhora - anchoAntes) > anchoAntes * 0.08;
-    if (
-      this.abierto &&
-      (estirado || (this.alcance > 0 && movido > anchoAhora * 0.08))
-    ) {
-      this.pintarFondo();
-    }
     if (!this.abierto || !this.encima || !this.escenario) return;
+    /*
+     * **El fondo se repinta cuando el encuadre se ha ido, y solo entonces.**
+     *
+     * Con lupa el plano sigue al avión, así que se va quedando atrás; en el
+     * vuelo entero el avión entra en la cuenta y el encuadre se corre y crece
+     * con él. Las dos cosas las mide `hayQueRepintar`, que es quien sabe
+     * cuánto puede moverse sin que el avión se salga del papel.
+     */
+    if (hayQueRepintar(this.encuadrePintado, this.encuadre())) this.pintarFondo();
     const g = this.encima.getContext("2d");
     if (!g) return;
     g.clearRect(0, 0, LADO, LADO);
@@ -475,11 +469,33 @@ export class Mapa {
      * moverlo, se repinta el fondo, que es lo que ya decide el trozo de
      * arriba.
      */
-    const puesto = this.encuadrePintado ?? {
-      cx: this.centro()[0],
-      cz: this.centro()[1],
-      escala: LADO / this.metrosPorLado(),
-    };
+    const hecho = this.encuadrePintado ?? this.encuadre();
+    const puesto = { cx: hecho.cx, cz: hecho.cz, escala: LADO / hecho.lado };
+
+    /*
+     * **La ruta, de casa al destino.** Fina y azul, que es el color de ruta de
+     * todo el juego, y debajo de todo lo demás: es el plan, no dónde se está.
+     * Con ella se ve de un vistazo si uno va por donde tocaba o se ha
+     * desviado, que es media lección de navegar.
+     */
+    if (esRuta && this.destino && this.escenario) {
+      const casa = this.escenario.runway;
+      const a = this.enElPapel(casa, puesto);
+      const b = this.enElPapel(this.destino, puesto);
+      if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 12) {
+        g.save();
+        g.strokeStyle = "rgba(111, 179, 224, 0.85)";
+        g.lineWidth = 3;
+        g.setLineDash([2, 6]);
+        g.lineCap = "round";
+        g.beginPath();
+        g.moveTo(a[0], a[1]);
+        g.lineTo(b[0], b[1]);
+        g.stroke();
+        g.restore();
+      }
+    }
+
     const escala = puesto.escala;
     const px = LADO / 2 + (x - puesto.cx) * escala;
     const py = LADO / 2 + (z - puesto.cz) * escala;
@@ -600,68 +616,42 @@ export class Mapa {
   }
 
   /**
-   * Cuántos metros de mundo caben de lado a lado con el alcance de ahora.
+   * Los campos del vuelo: el de casa y los destinos, que son lo que tiene que
+   * caber en el plano ancho.
    *
-   * En el alcance más ancho, **si el avión se ha ido fuera del escenario, el
-   * mapa se estira hasta alcanzarlo**. El mundo del juego mide dieciocho o
-   * veintidós kilómetros y con las teselas se puede volar mucho más lejos: sin
-   * esto, quien sale a mar abierto ve un cuadrado con la flecha pegada a un
-   * borde y no sabe si le queda cerca o lejos.
+   * **Y en el encuadre ancho cabe todo lo que importa: los aeropuertos y
+   * vos.** Era el escenario y el avión, y con rutas eso se quedó corto:
+   * volando de El Hierro a La Gomera —setenta kilómetros— el plano se estiraba
+   * hasta donde estuviera el avión y **el destino se quedaba fuera del
+   * papel**. Contado jugando, con las dos preguntas juntas: «¿y el aeropuerto
+   * de La Palma?, ¿y el mapa?».
    */
-  private metrosPorLado(): number {
-    const base = (this.escenario?.size ?? 1) * ALCANCES[this.alcance]!;
-    if (this.alcance > 0) return base;
-    const [cx, cz] = this.centro();
-    /*
-     * **Y en el encuadre ancho cabe todo lo que importa: los dos aeropuertos
-     * y vos.**
-     *
-     * Era el escenario y el avión, y con rutas eso se quedó corto: volando de
-     * El Hierro a La Gomera —setenta kilómetros— el plano se estiraba hasta
-     * donde estuviera el avión y **el destino se quedaba fuera del papel**.
-     * Un mapa en el que no se ve a dónde vas contesta la mitad de la pregunta
-     * que se hace quien lo abre. Contado jugando, con las dos preguntas
-     * juntas: «¿y el aeropuerto de La Palma?, ¿y el mapa?».
-     */
-    const lejos = [
-      [0, 0] as const,
-      [this.avionX, this.avionZ] as const,
-      ...this.otrasPistas.map((p) => [p.x, p.z] as const),
-    ].reduce(
-      (peor, [x, z]) =>
-        Math.max(peor, Math.abs(x - cx), Math.abs(z - cz)),
-      0,
-    );
-    // Dos y seis y no dos y tres: con el ajustado, la isla de casa se salía
-    // por el borde aunque su pista cupiera. Un mapa que corta la costa por la
-    // mitad se lee peor que uno con mar de sobra.
-    return Math.max(base, lejos * 2.6);
+  private losCampos(): Punto[] {
+    const casa = this.escenario?.runway ?? { x: 0, z: 0 };
+    return [{ x: casa.x, z: casa.z }, ...this.otrasPistas];
   }
 
-  /**
-   * El centro del encuadre: de cerca, el avión; de lejos, el escenario — y con
-   * ruta, **el punto medio entre los dos aeropuertos**, que es lo que deja el
-   * viaje entero dentro del papel. Sin ruta se comporta como siempre.
-   */
-  private centro(): readonly [number, number] {
-    if (this.alcance !== 0) return [this.avionX, this.avionZ];
-    if (this.otrasPistas.length === 0) return [0, 0];
-    /*
-     * El centro de todo lo que hay que ver: casa en el origen y los destinos
-     * donde caigan. Con dos destinos —El Hierro ve La Gomera y La Palma— el
-     * punto medio de uno solo dejaba al otro fuera del papel.
-     */
-    let x0 = 0;
-    let x1 = 0;
-    let z0 = 0;
-    let z1 = 0;
-    for (const p of this.otrasPistas) {
-      x0 = Math.min(x0, p.x);
-      x1 = Math.max(x1, p.x);
-      z0 = Math.min(z0, p.z);
-      z1 = Math.max(z1, p.z);
-    }
-    return [(x0 + x1) / 2, (z0 + z1) / 2];
+  /** Lo menos que enseña el plano ancho: el escenario de casa entero. */
+  private minimo(): number {
+    return this.escenario?.size ?? 1;
+  }
+
+  /** El encuadre que toca ahora, con la lupa puesta. Ver `encuadreCon`. */
+  private encuadre(): Encuadre {
+    return encuadreCon(
+      this.lupa,
+      this.losCampos(),
+      { x: this.avionX, z: this.avionZ },
+      this.minimo(),
+    );
+  }
+
+  /** Dónde cae un punto del mundo en el papel, con un encuadre pintado. */
+  private enElPapel(
+    p: { readonly x: number; readonly z: number },
+    e: { readonly cx: number; readonly cz: number; readonly escala: number },
+  ): readonly [number, number] {
+    return [LADO / 2 + (p.x - e.cx) * e.escala, LADO / 2 + (p.z - e.cz) * e.escala];
   }
 
   /**
@@ -670,11 +660,19 @@ export class Mapa {
    * Lo necesita la flecha: los dos lienzos tienen que estar de acuerdo o el
    * mapa miente. Ver dónde se dibuja la flecha.
    */
-  private encuadrePintado: {
-    cx: number;
-    cz: number;
-    escala: number;
-  } | null = null;
+  private encuadrePintado: Encuadre | null = null;
+
+  /**
+   * El lienzo pequeño del relieve: una muestra, un píxel.
+   *
+   * Se pintaba muestra a muestra con `fillRect`, cambiando de color cada vez:
+   * cincuenta y tres mil rectángulos, y **veinte milisegundos largos** por
+   * repintado, medidos con la tarjeta de verdad. Eso daba igual mientras el
+   * plano se pintaba una vez; siguiendo al avión se repinta cada poco, y veinte
+   * milisegundos son un fotograma perdido cada vez. Escribiendo los píxeles de
+   * una vez y ampliándolos al plano, el relieve baja a unos pocos.
+   */
+  private relieve: HTMLCanvasElement | null = null;
 
   private pintarFondo(): void {
     const esc = this.escenario;
@@ -683,12 +681,11 @@ export class Mapa {
     const g = this.fondo.getContext("2d");
     if (!g) return;
 
-    const lado = this.metrosPorLado();
-    const [cx, cz] = this.centro();
+    const encuadre = this.encuadre();
+    const { cx, cz, lado } = encuadre;
     const escala = LADO / lado;
-    this.encuadrePintado = { cx, cz, escala };
+    this.encuadrePintado = encuadre;
     const paso = lado / MUESTRAS;
-    const px = LADO / MUESTRAS;
 
     // ── El relieve ──────────────────────────────────────────────────────
     //
@@ -696,36 +693,50 @@ export class Mapa {
     // mapa y lo que se ve por la ventanilla sean el mismo sitio. Una paleta
     // de mapa distinta obliga a traducir, y traducir es justo lo que no puede
     // hacer quien no lee.
+    this.relieve ??= Object.assign(document.createElement("canvas"), {
+      width: MUESTRAS,
+      height: MUESTRAS,
+    });
+    const r = this.relieve.getContext("2d");
+    if (!r) return;
+    const img = r.createImageData(MUESTRAS, MUESTRAS);
+    const agua = rgbDe(esc.water);
     for (let fila = 0; fila < MUESTRAS; fila++) {
       for (let col = 0; col < MUESTRAS; col++) {
         const x = cx - lado / 2 + (col + 0.5) * paso;
         const z = cz - lado / 2 + (fila + 0.5) * paso;
         /*
-         * **Fuera del mundo, mar. Y el mundo ya no es el mapa fino.**
+         * **Donde no se sabe, se dice que no se sabe.**
          *
-         * Esto recortaba al tamaño del escenario —dieciocho kilómetros— porque
-         * el mapa de alturas solo cubría eso y fuera devolvía el borde
-         * repetido: al estirar el plano aparecía una franja con el color de la
-         * última fila, como si la isla se prolongara.
-         *
-         * **Dejó de ser verdad** el día que el mapa del horizonte pasó a ser
-         * suelo de verdad y no solo dibujo: ahora `sampleHeight` contesta bien
-         * hasta ciento sesenta kilómetros. El apaño de entonces es el que
-         * estorba ahora — pintaba mar encima de la isla de al lado, y quien
-         * volaba a otro aeropuerto abría el plano y se veía a sí mismo como
-         * una flecha en mitad del océano.
-         *
-         * Se recorta al mundo de verdad, que es el mapa lejano. Más allá sí
-         * que no hay nada, y ahí el mar es lo honesto.
+         * Fuera del mundo se pintaba mar, con el argumento de que «más allá
+         * no hay nada, y ahí el mar es lo honesto». En una isla casi acierta;
+         * tierra adentro miente: volando de Pettirossi a Encarnación, el plano
+         * ancho enseñaba un océano al sur de Asunción. Ahora la cota viene del
+         * mundo entero del vuelo —el mapa fino, los de los destinos y el del
+         * horizonte— y donde ninguno contesta se pinta gris a rayas, que es
+         * como marca una carta de verdad la zona sin levantar.
          */
-        const medioMundo = (esc.size * vecesLejosDe(esc)) / 2;
-        const dentro = Math.abs(x) <= medioMundo && Math.abs(z) <= medioMundo;
-        const h = dentro ? cota(x, z) : esc.waterLevel;
-        g.fillStyle =
-          h <= esc.waterLevel ? colorHex(esc.water) : colorDeCota(esc, h);
-        g.fillRect(col * px, fila * px, px + 1, px + 1);
+        const h = cota(x, z);
+        const c =
+          h === null
+            ? (col + fila) % 6 < 2
+              ? SIN_DATOS_RAYA
+              : SIN_DATOS
+            : h <= esc.waterLevel
+              ? agua
+              : rgbDe(colorDeCota(esc, h));
+        const i = (fila * MUESTRAS + col) * 4;
+        img.data[i] = c[0];
+        img.data[i + 1] = c[1];
+        img.data[i + 2] = c[2];
+        img.data[i + 3] = 255;
       }
     }
+    r.putImageData(img, 0, 0);
+    // A cuadros, como estaba: el relieve es una rejilla de muestras, y
+    // suavizarlo inventaría cotas entre medias.
+    g.imageSmoothingEnabled = false;
+    g.drawImage(this.relieve, 0, 0, LADO, LADO);
 
     // ── La ciudad ───────────────────────────────────────────────────────
     //
@@ -786,7 +797,7 @@ export class Mapa {
       ...this.otrosAerodromos,
     ];
     for (const aero of aeros) {
-      if (this.alcance < 2) break;
+      if (lado > LADO_DE_LAS_CALLES) break;
       const aMapa = (px: number, py: number): readonly [number, number] => [
         LADO / 2 + (px - cx) * escala,
         // El fichero tiene la Y al norte; el mundo, el norte en la Z negativa.
@@ -856,14 +867,14 @@ export class Mapa {
       const a = puntoDePista(pista, media);
       const b = puntoDePista(pista, -media);
       g.strokeStyle = "#1d1b19";
-      g.lineWidth = Math.max(5, 5 * (LADO / this.metrosPorLado()) * 4);
+      g.lineWidth = Math.max(5, 5 * escala * 4);
       g.lineCap = "butt";
       g.beginPath();
       g.moveTo(LADO / 2 + (a[0] - cx) * escala, LADO / 2 + (a[1] - cz) * escala);
       g.lineTo(LADO / 2 + (b[0] - cx) * escala, LADO / 2 + (b[1] - cz) * escala);
       g.stroke();
       g.strokeStyle = "#f4efe6";
-      g.lineWidth = Math.max(2.6, 2.6 * (LADO / this.metrosPorLado()) * 4);
+      g.lineWidth = Math.max(2.6, 2.6 * escala * 4);
       g.stroke();
     };
     pintarPista(esc.runway);
@@ -968,12 +979,16 @@ export class Mapa {
   }
 }
 
-const colorHex = (n: number): string => `#${n.toString(16).padStart(6, "0")}`;
-
+/** Un color de los escenarios, `0xRRGGBB`, en sus tres canales. */
+const rgbDe = (n: number): readonly [number, number, number] => [
+  (n >> 16) & 255,
+  (n >> 8) & 255,
+  n & 255,
+];
 
 /** El color que le toca a una cota, con las mismas bandas que el terreno. */
-function colorDeCota(esc: Scenario, h: number): string {
+function colorDeCota(esc: Scenario, h: number): number {
   let color = esc.fill;
   for (const banda of esc.bands) if (h >= banda.from) color = banda.colour;
-  return colorHex(color);
+  return color;
 }

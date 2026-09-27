@@ -528,7 +528,7 @@ export class Hud {
   } | null = null;
   private mapaAtado: {
     esc: import("../world/scenarios").Scenario;
-    cota: (x: number, z: number) => number;
+    cota: (x: number, z: number) => number | null;
   } | null = null;
   private torre: HTMLElement | null = null;
   /** La firma de quien hizo la fotografía que se está viendo. */
@@ -2715,7 +2715,8 @@ export class Hud {
   /** De dónde saca el mapa el mundo que pinta. */
   ponerMapa(
     esc: import("../world/scenarios").Scenario,
-    cota: (x: number, z: number) => number,
+    /** `null` donde el mundo no sabe qué hay. Ver `Terrain.cotaConocida`. */
+    cota: (x: number, z: number) => number | null,
   ): void {
     this.mapaAtado = { esc, cota };
     this.mapa.bind(this.root, esc, cota);

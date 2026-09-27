@@ -817,6 +817,24 @@ export class Terrain {
     return lerp(lerp(h00, h10, tx), lerp(h01, h11, tx), tz);
   }
 
+  /**
+   * La cota, **o `null` donde nadie la sabe**.
+   *
+   * `sampleHeight` no puede contestar «no sé»: el avión necesita un suelo en
+   * todas partes, y fuera de todo lo que hay devuelve el borde repetido. El
+   * plano sí puede, y tiene que poder: pintaba mar donde no sabía, y tierra
+   * adentro eso es un océano inventado. Pregunta a los mismos por el mismo
+   * orden —el mapa fino, los destinos y el horizonte— y se calla donde los
+   * tres se callan.
+   */
+  cotaConocida(x: number, z: number): number | null {
+    if (Math.abs(x) <= this.half && Math.abs(z) <= this.half)
+      return this.sampleHeight(x, z);
+    const fuera = this.sueloLejano?.(x, z) ?? null;
+    if (fuera !== null) return fuera;
+    return this.cotaDelHorizonte(x, z);
+  }
+
   /** Devuelve la cota, pero nunca por debajo del agua: sirve para flotar. */
   sampleSurface(x: number, z: number): number {
     return Math.max(this.sampleHeight(x, z), this.scenario.waterLevel);
