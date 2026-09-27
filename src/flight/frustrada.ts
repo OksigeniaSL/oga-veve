@@ -84,6 +84,21 @@ export class Frustrada {
   private siguiendo = false;
   /** Lo más bajo que se ha estado en ella, m sobre el suelo. */
   private loMasBajo = Infinity;
+  /**
+   * **Por debajo de qué altura se vuelve a armar**, después de una.
+   *
+   * Se rearmaba con cualquier bajada por debajo de los doscientos metros, y
+   * eso incluye la propia frustrada: se sube cuarenta metros, se reconoce, se
+   * nivela o se cede un poco de morro —dentro de la final todavía— y el
+   * detector se arma otra vez a cien metros. Cuarenta más arriba, la misma
+   * frustrada se celebraba otra vez: «going around. good decision», dos veces
+   * tras irse una. Un suceso, una voz.
+   *
+   * Volver a intentarlo **es volver a bajar**, y bajar de verdad: hasta donde
+   * se reconoció la anterior. Y salir de la final lo olvida, porque ahí
+   * empieza otra aproximación que puede irse al aire a cualquier altura.
+   */
+  private rearmaPorDebajo = Infinity;
 
   paso(s: EnAproximacion): boolean {
     /*
@@ -95,11 +110,17 @@ export class Frustrada {
     if (s.enElSuelo) {
       this.siguiendo = false;
       this.loMasBajo = Infinity;
+      this.rearmaPorDebajo = Infinity;
       return false;
     }
+    if (!s.enFinal) this.rearmaPorDebajo = Infinity;
 
     // Se arma bajando hacia la pista y ya cerca del suelo.
-    if (s.enFinal && s.sobreElSuelo < APROXIMANDO && s.vertical < BAJANDO)
+    if (
+      s.enFinal &&
+      s.sobreElSuelo < Math.min(APROXIMANDO, this.rearmaPorDebajo) &&
+      s.vertical < BAJANDO
+    )
       this.siguiendo = true;
     if (!this.siguiendo) return false;
 
@@ -109,6 +130,7 @@ export class Frustrada {
     if (s.vertical > SUBIENDO && subido > SUBIDA_QUE_CUENTA) {
       // Se cuenta una vez: a partir de aquí ya es un vuelo, no una renuncia.
       this.siguiendo = false;
+      this.rearmaPorDebajo = s.sobreElSuelo;
       this.loMasBajo = Infinity;
       return true;
     }
@@ -119,5 +141,6 @@ export class Frustrada {
   reiniciar(): void {
     this.siguiendo = false;
     this.loMasBajo = Infinity;
+    this.rearmaPorDebajo = Infinity;
   }
 }

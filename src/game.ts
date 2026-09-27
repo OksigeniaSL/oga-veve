@@ -10980,8 +10980,18 @@ export class Game {
       );
       // Y con su clave: los ficheros de voz se llaman por clave, no por
       // texto. Ver `audio/banco-de-voz.ts`.
+      /*
+       * **Y el punto de no retorno ya tiene voz: la del V1.** Pasar a
+       * «comprometido» y cantar V1 son el mismo suceso visto por dos
+       * detectores —la pista que queda y la aguja—, y en el peldaño de cabina
+       * sonaba dos veces: «V one» y, detrás, «ya despegamos: seguí». Ahí lo
+       * dice la cabina; en los de abajo el V1 ya se canta con esta misma frase,
+       * y la boca no la repite. Ver `onVelocidades`.
+       */
+      const loDiceElV1 =
+        vista.fase === "comprometido" && canalesDe(this.tier.avisos).cabina;
       if (!repuesta) {
-        this.instructor.decir(frase, clave);
+        if (!loDiceElV1) this.instructor.decir(frase, clave);
         if (conLetras) {
           this.hud.flash(`${frase}${tecla}${letra ? ` · ${letra}` : ""}`, 5);
         }

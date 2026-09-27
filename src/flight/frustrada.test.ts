@@ -99,6 +99,33 @@ describe("la frustrada", () => {
     expect(subirDesde(f, 20, 200)).not.toBeNull();
   });
 
+  /*
+   * **Y la misma frustrada no se celebra dos veces.** Subiendo, se nivela o
+   * se cede un poco de morro dentro de la final, y eso es bajar por debajo de
+   * los doscientos metros: se rearmaba y, cuarenta metros más arriba, «going
+   * around. good decision» otra vez.
+   */
+  it("un respiro en la subida no es otra frustrada", () => {
+    const f = new Frustrada();
+    bajarHasta(f, 20);
+    const salto = subirDesde(f, 20, 200);
+    expect(salto).not.toBeNull();
+    // Cede el morro a ciento veinte metros, sigue en final, y vuelve a subir.
+    for (let h = 130; h >= 110; h -= 5) f.paso(aire({ sobreElSuelo: h }));
+    expect(subirDesde(f, 110, 250)).toBeNull();
+  });
+
+  it("pero salir de la final y volver sí es otra, aunque se vaya más arriba", () => {
+    const f = new Frustrada();
+    bajarHasta(f, 20);
+    expect(subirDesde(f, 20, 200)).not.toBeNull();
+    // El circuito: fuera de la final.
+    f.paso(aire({ enFinal: false, sobreElSuelo: 250, vertical: 0 }));
+    // Y la final nueva, que se abandona a cien metros por una orden.
+    bajarHasta(f, 100, 190);
+    expect(subirDesde(f, 100, 200)).not.toBeNull();
+  });
+
   it("y reiniciar la deja como nueva, que es otro vuelo", () => {
     const f = new Frustrada();
     bajarHasta(f, 20);
