@@ -53,6 +53,7 @@ import {
   type Scenario,
 } from "../world/scenarios";
 import { PROXIMAMENTE } from "../world/proximamente";
+import { mapaDelPais, type RutaEnElMapa } from "./mapa-del-pais";
 import { LOCALES, LOCALE_NAMES, getLocale, setLocale, t } from "../i18n";
 import { cielo, marca, pie } from "./marca";
 import { elegirMundo, mundoElegido } from "./mundo";
@@ -584,6 +585,30 @@ export function destinosQueNoCaben(
       },
     ];
   });
+}
+
+/**
+ * **Las rutas de este sitio tal como las ve este avión**, para el mapa del
+ * país: las que hace, y las que no con el avión que sí las haría. Es la misma
+ * cuenta que las fichas —`destinosPosibles` y `destinosQueNoCaben`—, así que
+ * el mapa y las fichas no pueden decir cosas distintas.
+ */
+export function rutasDelMapa(
+  sitio: Scenario,
+  avion: AircraftConfig,
+): readonly RutaEnElMapa[] {
+  return [
+    ...destinosPosibles(sitio, avion).map((destino) => ({
+      destino,
+      cabe: true,
+      con: null,
+    })),
+    ...destinosQueNoCaben(sitio, avion).map(({ destino, propuesto }) => ({
+      destino,
+      cabe: false,
+      con: propuesto?.id ?? null,
+    })),
+  ];
 }
 
 /**
@@ -1506,6 +1531,12 @@ export function abrirHangar(
         <section class="hangar__bloque" aria-labelledby="hangar-destino">
           <h2 class="hangar__pregunta" id="hangar-destino">${t("hangar.adonde")}</h2>
           <div class="hangar__rejilla" role="radiogroup" aria-labelledby="hangar-destino">
+            ${mapaDelPais(
+              sitio,
+              SCENARIOS.filter((e) => e.pais === sitio.pais && e.aerodrome),
+              rutasDelMapa(sitio, avion),
+              destinoDeAhora(),
+            )}
             ${fichaDeDestino(sitio, null, avion, destinoDeAhora() === sitio.id)}
             ${destinosPosibles(sitio, avion)
               .map((d) =>
