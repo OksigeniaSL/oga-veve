@@ -783,6 +783,14 @@ export const ES_PY = {
   "avion.cambiarParado": "Para cambiar de avión, pará en tierra",
   "hud.mandarCinturon": "Cartel del cinturón",
   "hud.subirCuadro": "Subir el tablero",
+  /*
+   * El botón de los cuatro puntos que recoge los demás en el teléfono, y el
+   * de la pantalla completa que va dentro. Solo los lee un lector de
+   * pantalla: en la pantalla son dibujos. Ver `ui/pantalla-completa.ts`.
+   */
+  "hud.menu": "Más botones",
+  "hud.pantallaCompleta": "Pantalla completa",
+  "hud.salirPantallaCompleta": "Salir de pantalla completa",
   "gafas.ganadas": "¡Tus gafas de sol!",
   "gafas.puestas": "Gafas puestas",
   "gafas.quitadas": "Gafas quitadas",
