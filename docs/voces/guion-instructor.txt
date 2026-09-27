@@ -30,6 +30,7 @@ Ya subís: metélo
 Bajás muy rápido
 Estás muy inclinado
 Se soltó el piloto automático
+El piloto automático se conecta en el aire
 Pista ocupada. Subí y volvé por el circuito
 ¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje
 No podés bajar: metele gas y volvé a subir
@@ -73,6 +74,12 @@ Metélo, el tren te frena
 Hay lluvia delante: rodeála, no la cruces
 Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha
 Se acabó el combustible: planeá hasta la pista
+No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista
+Vamos lentos: bajá un poco la nariz
+Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
+Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
+Por esa punta no: andate al aire y volvé por la otra
+Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
 Sacá el tren
 Con el avión en el suelo, el tren no se mete
 Más despacio

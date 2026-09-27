@@ -224,6 +224,13 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.pilotoEnTierra",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "El piloto automático se conecta en el aire",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.mandanFrustrar",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -522,6 +529,48 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Se acabó el combustible: planeá hasta la pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.sinMotor",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.planeoLento",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos lentos: bajá un poco la nariz",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.planeoRapido",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.laOtraPunta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Esa no es la pista en uso: hoy el viento manda entrar por la otra punta",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.alAireOtraPunta",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Por esa punta no: andate al aire y volvé por la otra",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.alAireVientoDeCola",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -2541,6 +2590,27 @@
     "para": "la autorización, antes del destino"
   },
   {
+    "id": "torre.solo.runwayInUse",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "runway in use",
+    "para": "la pista en uso, antes de su número"
+  },
+  {
+    "id": "torre.solo.goAroundSolo",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "go around",
+    "para": "al aire, sin más: el porqué va detrás"
+  },
+  {
+    "id": "torre.solo.rogerMayday",
+    "voz": "torre",
+    "idioma": "en",
+    "texto": "roger, Mayday",
+    "para": "la torre oyó la llamada de socorro"
+  },
+  {
     "id": "torre.solo.aterrizar",
     "voz": "torre",
     "idioma": "es",
@@ -3008,5 +3078,26 @@
     "idioma": "en",
     "texto": "cleared to",
     "para": "la autorización, antes del destino, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.runwayInUse",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "runway in use",
+    "para": "la pista en uso, antes de su número, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.goAroundSolo",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "go around",
+    "para": "al aire, sin más: el porqué va detrás, en Canarias"
+  },
+  {
+    "id": "torre.canario.solo.rogerMayday",
+    "voz": "torre-canarias",
+    "idioma": "en",
+    "texto": "roger, Mayday",
+    "para": "la torre oyó la llamada de socorro, en Canarias"
   }
 ]

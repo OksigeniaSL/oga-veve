@@ -375,6 +375,17 @@ export const EN: Dictionary = {
   "palabra.reserva": "Fuel",
   "vuelo.sinCombustible": "Out of fuel: glide to the runway",
   "palabra.sinCombustible": "No fuel",
+  "vuelo.sinMotor":
+    "We have no engine: nose down, hold this speed and head for that runway",
+  "palabra.planea": "Glide",
+  "vuelo.planeoLento": "We are slow: lower the nose a little",
+  "vuelo.planeoRapido": "We are fast: raise the nose a little, it takes us further",
+  "vuelo.laOtraPunta":
+    "That is not the runway in use: today the wind says land from the other end",
+  "palabra.otraPunta": "Other end",
+  "vuelo.alAireOtraPunta": "Not from that end: go around and come back to the other one",
+  "vuelo.alAireVientoDeCola":
+    "With a tailwind you will not stop in time: go around and come back to the other end",
   "vuelo.sacaElTren": "Gear down",
   "vuelo.trenEnElSuelo": "On the ground, the gear stays down",
   "palabra.tren": "Gear",

@@ -30,7 +30,12 @@
 
 import type { AircraftConfig } from "./aircraft";
 import type { FlightState } from "./model";
-import { Minimos, porQueNoSeSigue, seLevantaLaOrden } from "./minimos";
+import {
+  Minimos,
+  porQueNoSeSigue,
+  seLevantaLaOrden,
+  type PorQueMandaron,
+} from "./minimos";
 import type { Reparto } from "../hechos";
 import type { Circuito, TramoDeCircuito } from "../world/circuito";
 import { ALTURA_DE_CIRCUITO } from "../world/circuito";
@@ -157,6 +162,13 @@ export interface AhoraMismo {
    * pasa a ser ése y su circuito vuelve, que ahí sí sirve para entrar.
    */
   readonly haciaOtroCampo?: boolean;
+  /**
+   * **Si se vuela sin motor.** Entonces no hay frustrada: ni el sorteo, ni
+   * los mínimos que mandan irse, ni la pista ocupada. Un avión que no puede
+   * subir no recibe la orden de subir; recibe prioridad. Ver
+   * `flight/sin-motor.ts`.
+   */
+  readonly sinMotor?: boolean;
 }
 
 export class LaAproximacion {
@@ -210,7 +222,7 @@ export class LaAproximacion {
    * dura o descolocada, y para eso ya están los veredictos de siempre —golpe,
    * fuera de pista—. El aviso enseña; la consecuencia la pone la física.
    */
-  porqueMandaron: "pistaOcupada" | "noEstabilizada" | null = null;
+  porqueMandaron: PorQueMandaron = null;
 
   /**
    * Cómo se sortean las órdenes de irse al aire.
@@ -360,6 +372,14 @@ export class LaAproximacion {
    */
   mirarSiMandanFrustrar(acercandose: boolean): void {
     /*
+     * **Sin motor, ninguna orden, y la que hubiera se retira.** Ver
+     * `AhoraMismo.sinMotor`.
+     */
+    if (this.ahora.sinMotor) {
+      if (this.mandanFrustrar) this.levantarLaOrden();
+      return;
+    }
+    /*
      * **Puesta la orden, lo primero es saber cuándo se levanta.**
      *
      * Estaba atada a que el detector de frustradas cantara la maniobra, y ese
@@ -498,13 +518,40 @@ export class LaAproximacion {
    * un motivo, y aquí el motivo está en la pista, se ve y se oyó.
    */
   mandarIrsePorLaPistaOcupada(alto: number, sigueOcupada: () => boolean): void {
-    if (this.mandanFrustrar) return;
+    // Sin motor la pista es de quien no puede irse: se aparta el otro.
+    if (this.mandanFrustrar || this.ahora?.sinMotor) return;
     this.laPistaSigueOcupada = sigueOcupada;
     this.yaLoMandaron = true;
     this.mandanFrustrar = true;
     this.porqueMandaron = "pistaOcupada";
     this.altoAlMandar = alto;
     this.mundo.hechos.emit("mandaronIrseAlAire", { porque: "pistaOcupada" });
+  }
+
+  /**
+   * **Te mandan al aire porque venís por la otra cabecera**, la que no está
+   * en uso. Lo decide `LaOtraCabecera` —cuándo y por qué—; aquí se da por la
+   * misma puerta que las demás órdenes, para que se levante igual —subiendo o
+   * alejándose— y para que irse se celebre igual. Ver
+   * `flight/la-otra-cabecera.ts`.
+   *
+   * Y como la de no estabilizada, aterrizar con ella puesta no rompe nada: la
+   * pista está vacía. Lo que se lleva quien sigue es lo de verdad, la carrera
+   * larga del viento de cola.
+   */
+  mandarIrsePorLaOtraCabecera(
+    alto: number,
+    motivo: "otraPunta" | "vientoDeCola",
+  ): void {
+    if (this.mandanFrustrar || this.ahora?.sinMotor) return;
+    this.yaLoMandaron = true;
+    this.mandanFrustrar = true;
+    this.porqueMandaron = "otraCabecera";
+    this.altoAlMandar = alto;
+    this.mundo.hechos.emit("mandaronIrseAlAire", {
+      porque: "otraCabecera",
+      motivo,
+    });
   }
 
   /**
@@ -547,7 +594,9 @@ export class LaAproximacion {
    *   es lo mismo: hay que irse.
    */
   mirarLosMinimos(acercandose: boolean): void {
-    if (this.mandanFrustrar || this.ahora.vueloTerminado) return;
+    // Sin motor no hay decisión que tomar a sesenta metros: se aterriza.
+    if (this.mandanFrustrar || this.ahora.vueloTerminado || this.ahora.sinMotor)
+      return;
     const s = this.ahora.estado;
     if (s.onGround) return;
     /*

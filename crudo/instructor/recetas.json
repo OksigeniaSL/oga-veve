@@ -490,5 +490,23 @@
   ],
   "vuelo.yaPodesTocar": [
     "vuelo.yaPodesTocar"
+  ],
+  "vuelo.sinMotor": [
+    "vuelo.sinMotor"
+  ],
+  "vuelo.planeoLento": [
+    "vuelo.planeoLento"
+  ],
+  "vuelo.planeoRapido": [
+    "vuelo.planeoRapido"
+  ],
+  "vuelo.laOtraPunta": [
+    "vuelo.laOtraPunta"
+  ],
+  "vuelo.alAireOtraPunta": [
+    "vuelo.alAireOtraPunta"
+  ],
+  "vuelo.alAireVientoDeCola": [
+    "vuelo.alAireVientoDeCola"
   ]
 }

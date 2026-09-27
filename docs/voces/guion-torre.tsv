@@ -46,12 +46,15 @@
 046	torre.solo.departingTraffic	departing traffic
 047	torre.solo.lineUpWait	line up and wait
 048	torre.solo.clearedTo	cleared to
-049	torre.solo.aterrizar	podés aterrizar
-050	torre.solo.destino	podés volar a
-051	destino.pettirossi	Asunción
-052	destino.guarani	Guaraní
-053	destino.encarnacion	Encarnación
-054	destino.yvytu-rape	Yvytu Rape
-055	destino.concepcion	Concepción
-056	destino.pedro-juan	Pedro Juan Caballero
-057	destino.estigarribia	Mariscal Estigarribia
+049	torre.solo.runwayInUse	runway in use
+050	torre.solo.goAroundSolo	go around
+051	torre.solo.rogerMayday	roger, Mayday
+052	torre.solo.aterrizar	podés aterrizar
+053	torre.solo.destino	podés volar a
+054	destino.pettirossi	Asunción
+055	destino.guarani	Guaraní
+056	destino.encarnacion	Encarnación
+057	destino.yvytu-rape	Yvytu Rape
+058	destino.concepcion	Concepción
+059	destino.pedro-juan	Pedro Juan Caballero
+060	destino.estigarribia	Mariscal Estigarribia

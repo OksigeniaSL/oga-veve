@@ -389,5 +389,112 @@
   ],
   "destino.tenerife-sur": [
     "destino.tenerife-sur"
+  ],
+  "torre.canario.solo.runwayInUse": [
+    "torre.canario.solo.runwayInUse"
+  ],
+  "torre.canario.solo.goAroundSolo": [
+    "torre.canario.solo.goAroundSolo"
+  ],
+  "torre.canario.solo.rogerMayday": [
+    "torre.canario.solo.rogerMayday"
+  ],
+  "torre.canario.mayday": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.rogerMayday"
+  ],
+  "torre.canario.pistaEnUso": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runwayInUse",
+    "{r1}",
+    "{r2}"
+  ],
+  "torre.canario.pistaEnUso.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "lado.left"
+  ],
+  "torre.canario.pistaEnUso.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "lado.right"
+  ],
+  "torre.canario.pistaEnUso.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "lado.center"
+  ],
+  "torre.canario.goAroundEnUso": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.goAroundSolo",
+    "torre.canario.solo.runwayInUse",
+    "{r1}",
+    "{r2}"
+  ],
+  "torre.canario.goAroundEnUso.L": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.goAroundSolo",
+    "torre.canario.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "lado.left"
+  ],
+  "torre.canario.goAroundEnUso.R": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.goAroundSolo",
+    "torre.canario.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "lado.right"
+  ],
+  "torre.canario.goAroundEnUso.C": [
+    "{c1}",
+    "{c2}",
+    "{c3}",
+    "{c4}",
+    "{c5}",
+    "torre.canario.solo.goAroundSolo",
+    "torre.canario.solo.runwayInUse",
+    "{r1}",
+    "{r2}",
+    "lado.center"
   ]
 }

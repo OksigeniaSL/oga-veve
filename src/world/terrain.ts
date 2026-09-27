@@ -109,6 +109,24 @@ export function cabeceraEnUso(escenario: Scenario): string | null {
   return null;
 }
 
+/**
+ * Y la otra: la cabecera de la misma pista que **no** está en uso.
+ *
+ * La nombra la torre cuando alguien sin motor se alinea con ella —ver
+ * `flight/la-otra-cabecera.ts`—, porque el número que se dice es el que se
+ * tiene pintado delante. Con dos paralelas, la otra punta de la 03L es la
+ * 21R, no la 21L: sale del mismo par de umbrales.
+ */
+export function cabeceraContraria(escenario: Scenario): string | null {
+  const pista = escenario.aerodrome?.runways[0];
+  const enUso = cabeceraEnUso(escenario);
+  if (!pista || !enUso) return null;
+  return (
+    Object.entries(pista.thresholds).find(([n, u]) => n !== enUso && u?.xy)?.[0] ??
+    null
+  );
+}
+
 /** Cuánto se hunde el mar del mapa lejano bajo el agua, m. Ver `buildFarMesh`. */
 const HUNDIDO_LEJOS = 30;
 

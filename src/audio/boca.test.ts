@@ -11,6 +11,9 @@ import {
   Boca,
   BOCA,
   CADUCA,
+  CADUCA_LA_ORDEN,
+  cuantoAguanta,
+  explicaLaOtraPunta,
   MEGAFONIA,
   NO_REPETIR,
   RIÑEN,
@@ -801,5 +804,25 @@ describe("lo que espera turno, y lo que ya se dijo", () => {
     }
     expect(b.habladas).toHaveLength(300);
     expect(b.cuantasHabladas).toBe(320);
+  });
+});
+
+describe("lo que explica una orden aguanta lo que la orden", () => {
+  /*
+   * El porqué de no entrar por la otra punta se pide detrás de la orden de la
+   * torre, y con los cuatro segundos de un aviso caducaba siempre esperando.
+   * Ver `explicaLaOtraPunta`.
+   */
+  it("el porqué de la otra punta, como una orden", () => {
+    expect(cuantoAguanta("vuelo.alAireOtraPunta")).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("vuelo.alAireVientoDeCola")).toBe(CADUCA_LA_ORDEN);
+    expect(cuantoAguanta("vuelo.laOtraPunta")).toBe(CADUCA_LA_ORDEN);
+    // Y la felicitación de haberla obedecido, que llega detrás.
+    expect(cuantoAguanta("vuelo.frustrada~2")).toBe(CADUCA_LA_ORDEN);
+  });
+
+  it("y un aviso de paso, con su reloj corto", () => {
+    expect(cuantoAguanta("vuelo.rapido")).toBe(CADUCA);
+    expect(explicaLaOtraPunta("vuelo.alAireOtraPuntaX")).toBe(false);
   });
 });

@@ -165,6 +165,9 @@
     "torre.canario.solo.goAround": {
       "ms": 1421
     },
+    "torre.canario.solo.goAroundSolo": {
+      "ms": 807
+    },
     "torre.canario.solo.holdShort": {
       "ms": 1006
     },
@@ -174,11 +177,17 @@
     "torre.canario.solo.lineUpWait": {
       "ms": 951
     },
+    "torre.canario.solo.rogerMayday": {
+      "ms": 949
+    },
     "torre.canario.solo.roja": {
       "ms": 793
     },
     "torre.canario.solo.runway": {
       "ms": 1121
+    },
+    "torre.canario.solo.runwayInUse": {
+      "ms": 956
     },
     "torre.canario.solo.verde": {
       "ms": 746
@@ -575,6 +584,113 @@
     ],
     "destino.tenerife-sur": [
       "destino.tenerife-sur"
+    ],
+    "torre.canario.solo.runwayInUse": [
+      "torre.canario.solo.runwayInUse"
+    ],
+    "torre.canario.solo.goAroundSolo": [
+      "torre.canario.solo.goAroundSolo"
+    ],
+    "torre.canario.solo.rogerMayday": [
+      "torre.canario.solo.rogerMayday"
+    ],
+    "torre.canario.mayday": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.rogerMayday"
+    ],
+    "torre.canario.pistaEnUso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}"
+    ],
+    "torre.canario.pistaEnUso.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.left"
+    ],
+    "torre.canario.pistaEnUso.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.right"
+    ],
+    "torre.canario.pistaEnUso.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.center"
+    ],
+    "torre.canario.goAroundEnUso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.goAroundSolo",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}"
+    ],
+    "torre.canario.goAroundEnUso.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.goAroundSolo",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.left"
+    ],
+    "torre.canario.goAroundEnUso.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.goAroundSolo",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.right"
+    ],
+    "torre.canario.goAroundEnUso.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.goAroundSolo",
+      "torre.canario.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.center"
     ]
   }
 }

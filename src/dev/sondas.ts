@@ -53,6 +53,7 @@ import {
 import { InstructorGrabado } from "../audio/instructor-grabado";
 import { pistaEnPiezas, rellenoDe } from "../flight/matricula";
 import { BOCA } from "../audio/boca";
+import { planeoDe } from "../flight/sin-motor";
 
 /**
  * **El campo en el que el banco aterriza por la otra punta**, o `null`.
@@ -1478,6 +1479,23 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
     ponerCombustible: (kilos: number) => juego.ponerCombustibleParaBanco(kilos),
     /** Lo que se carga para el tramo de ahora. Ver `cargaDelTramoParaBanco`. */
     cargaDelTramo: () => juego.cargaDelTramoParaBanco,
+    /**
+     * La tarjeta del destino, como si se tocara: en tierra carga para el
+     * destino nuevo. Ver `seCargaAlCambiarDeDestino`.
+     */
+    siguienteDestino: () => juego.siguienteDestino(),
+    /** Si se vuela sin motor. Ver `flight/sin-motor.ts`. */
+    sinMotor: () => juego.sinMotorParaBanco,
+    /**
+     * El planeo de este avión —velocidad indicada, m/s, y fineza— con las dos
+     * que el piloto del banco necesita para posarse: la de aproximación y el
+     * tope de los flaps.
+     */
+    planeo: () => ({
+      ...planeoDe(juego.aircraft),
+      vref: juego.aircraft.approachSpeed,
+      vfeKt: juego.aircraft.vfeKt,
+    }),
     /** Las células de tormenta de hoy. */
     celdasDeHoy: () => juego.celdasParaBanco,
     /** Los otros aviones de la ruta, con su nivel. */

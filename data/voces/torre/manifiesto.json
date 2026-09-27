@@ -162,6 +162,9 @@
     "torre.solo.goAround": {
       "ms": 1787
     },
+    "torre.solo.goAroundSolo": {
+      "ms": 799
+    },
     "torre.solo.holdShort": {
       "ms": 1366
     },
@@ -171,11 +174,17 @@
     "torre.solo.lineUpWait": {
       "ms": 1195
     },
+    "torre.solo.rogerMayday": {
+      "ms": 1086
+    },
     "torre.solo.roja": {
       "ms": 812
     },
     "torre.solo.runway": {
       "ms": 556
+    },
+    "torre.solo.runwayInUse": {
+      "ms": 1086
     },
     "torre.solo.verde": {
       "ms": 920
@@ -569,6 +578,113 @@
     ],
     "destino.yvytu-rape": [
       "destino.yvytu-rape"
+    ],
+    "torre.solo.runwayInUse": [
+      "torre.solo.runwayInUse"
+    ],
+    "torre.solo.goAroundSolo": [
+      "torre.solo.goAroundSolo"
+    ],
+    "torre.solo.rogerMayday": [
+      "torre.solo.rogerMayday"
+    ],
+    "torre.mayday": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.rogerMayday"
+    ],
+    "torre.pistaEnUso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runwayInUse",
+      "{r1}",
+      "{r2}"
+    ],
+    "torre.pistaEnUso.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.left"
+    ],
+    "torre.pistaEnUso.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.right"
+    ],
+    "torre.pistaEnUso.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.center"
+    ],
+    "torre.goAroundEnUso": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.goAroundSolo",
+      "torre.solo.runwayInUse",
+      "{r1}",
+      "{r2}"
+    ],
+    "torre.goAroundEnUso.L": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.goAroundSolo",
+      "torre.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.left"
+    ],
+    "torre.goAroundEnUso.R": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.goAroundSolo",
+      "torre.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.right"
+    ],
+    "torre.goAroundEnUso.C": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.solo.goAroundSolo",
+      "torre.solo.runwayInUse",
+      "{r1}",
+      "{r2}",
+      "lado.center"
     ]
   }
 }

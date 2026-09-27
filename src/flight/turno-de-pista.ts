@@ -118,12 +118,18 @@ export const EXPLICA_LA_ESPERA = {
  * frustrada, en cuanto el de delante dejaba la pista.
  */
 export function alLevantarLaOrden(
-  porque: "pistaOcupada" | "noEstabilizada" | null,
+  porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera" | null,
   fase: string,
   enTierra: boolean,
 ): "aterrizar" | "volver" | "nada" {
   if (enTierra) return "nada";
-  if (porque === "pistaOcupada" || fase !== "final") return "volver";
+  /*
+   * La de la otra punta tampoco se levanta en final: se levanta yéndose, y lo
+   * que toca es volver por el circuito a la buena. Ver
+   * `flight/la-otra-cabecera.ts`.
+   */
+  if (porque === "pistaOcupada" || porque === "otraCabecera" || fase !== "final")
+    return "volver";
   return "aterrizar";
 }
 

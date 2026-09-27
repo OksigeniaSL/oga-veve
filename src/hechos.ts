@@ -120,9 +120,12 @@ export interface Hechos {
    *   algo es una vaca en la zona de toma.
    * - `noEstabilizada`: no la torre, la aproximación. `motivo` dice cuál de
    *   los cinco.
+   * - `otraCabecera`: se viene por la punta que no está en uso. `motivo` dice
+   *   si además el viento de cola pasa del límite. Ver
+   *   `flight/la-otra-cabecera.ts`.
    */
   mandaronIrseAlAire: {
-    readonly porque: "pistaOcupada" | "noEstabilizada";
+    readonly porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera";
     readonly motivo?: string;
   };
   /**
@@ -134,7 +137,7 @@ export interface Hechos {
    * aterrizar. Ver `alLevantarLaOrden` en `flight/turno-de-pista.ts`.
    */
   pistaLibreOtraVez: {
-    readonly porque: "pistaOcupada" | "noEstabilizada" | null;
+    readonly porque: "pistaOcupada" | "noEstabilizada" | "otraCabecera" | null;
   };
 }
 
