@@ -654,6 +654,8 @@ export class Terrain {
     readonly x: number;
     readonly z: number;
     readonly medio: number;
+    /** El nivel del agua de ese mundo, m. Ver «el agua de cada campo». */
+    readonly nivel?: number;
   }[] = [];
 
   /**
@@ -693,7 +695,7 @@ export class Terrain {
   private medioDelHorizonte = 0;
 
   recortarElHorizonte(
-    huecos: readonly { x: number; z: number; medio: number }[],
+    huecos: readonly { x: number; z: number; medio: number; nivel?: number }[],
   ): void {
     if (!huecos.length || !this.scenario.relieveLejano) return;
     this.huecosDelHorizonte = huecos;
@@ -1193,9 +1195,35 @@ export class Terrain {
     const tamano = this.scenario.size * vecesLejosDe(this.scenario);
     const paso = tamano / (lejos.resolucion - 1);
     const m = lejos.resolucion;
+    /*
+     * **Y el agua de cada campo es la suya.** En Canarias todos los mundos
+     * tienen el mar a dos metros, y sobre la isla vecina el agua de casa se
+     * pinta como si no hubiera mapa —`SIN_ORILLA`— porque es la misma agua.
+     * Tierra adentro no: el Paraná en Ciudad del Este va a ciento cinco
+     * metros y la pista de Asunción está a ochenta y nueve. Desde Guaraní se
+     * llegaba a Asunción volando sobre un lago a ciento cinco metros que
+     * tapaba la ciudad, y el aeropuerto debajo del agua.
+     *
+     * Así que donde manda un campo con otro nivel —su mapa fino, o el
+     * horizonte más cerca de él que de casa— el agua de casa no se pinta: la
+     * suya la pone él. Con el mismo nivel, lo de siempre.
+     */
+    const otroNivel = (x: number, z: number): boolean => {
+      let cerca = Math.hypot(x, z);
+      let suyo = nivel;
+      for (const h of this.huecosDelHorizonte) {
+        const d = Math.hypot(x - h.x, z - h.z);
+        if (d < cerca) {
+          cerca = d;
+          suyo = h.nivel ?? nivel;
+        }
+      }
+      return Math.abs(suyo - nivel) > 1;
+    };
     const lejana = mapaDeOrillas(m, -tamano / 2, paso, (col, fila) => {
       const x = -tamano / 2 + col * paso;
       const z = -tamano / 2 + fila * paso;
+      if (otroNivel(x, z)) return -SIN_ORILLA;
       for (const h of this.huecosDelHorizonte)
         if (Math.abs(x - h.x) < h.medio && Math.abs(z - h.z) < h.medio)
           return SIN_ORILLA;

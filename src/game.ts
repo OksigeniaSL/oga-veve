@@ -2802,6 +2802,9 @@ export class Game {
           x: v.mundo.desplazamiento.x,
           z: v.mundo.desplazamiento.z,
           medio: v.base.size / 2,
+          // Y su agua, que tierra adentro no es la de casa. Ver
+          // `mapasDeOrillas`.
+          nivel: v.base.waterLevel,
         })),
       );
     }
@@ -10667,7 +10670,7 @@ export class Game {
     if (!this.blobShadow.visible) return;
 
     // A la altura de siempre sobre el terreno, que en el asfalto son cinco
-    // centímetros sobre la pintura: `ground` ya lleva el pavimento dentro.
+    // centímetros sobre él: `ground` ya lleva el pavimento dentro.
     this.blobShadow.position.set(
       state.position.x,
       ground +
