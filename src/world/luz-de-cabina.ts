@@ -48,6 +48,9 @@ const QUE_SE_ALUMBRA: Readonly<Record<string, readonly [number, number]>> = {
   pomo: [0.4, 0.4],
   metal: [0.25, 0.3],
   tornillo: [0.25, 0.3],
+  // La placa de la matrícula, como la chapa en la que va. Ver
+  // `placa-de-cabina.ts`, que le pone el mismo dibujo a la luz propia.
+  placa: [0.85, 1],
 };
 
 /** El rojo del panel de noche, en lineal: tenue, que es lo que se busca. */

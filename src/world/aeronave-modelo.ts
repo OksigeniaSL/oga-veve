@@ -57,6 +57,8 @@ import { prepararFlaps } from "./flaps";
 import { encenderRelojes } from "./relojes-cabina";
 import { encenderBotones } from "./botones-cabina";
 import { luzDeCabina } from "./luz-de-cabina";
+import { atornillarPlaca } from "./placa-de-cabina";
+import { matriculaDe } from "../flight/matricula";
 import { vestirLaLibrea } from "./librea";
 import { conPlazo, PLAZO_DE_IMAGEN } from "../datos/con-plazo";
 import { medirVistaAlFrente } from "./vista-al-frente";
@@ -804,6 +806,19 @@ export async function cargarModelo(
    * nada de lo que tapa. Ver `vista-al-frente.ts`.
    */
   const vista = ojo ? medirVistaAlFrente(group, ojo) : null;
+  /*
+   * **Y la placa con la matrícula, antes de encender nada.** Se busca su sitio
+   * por los materiales de los instrumentos —`reloj_…` y `g1000_display`—, y
+   * encender las pantallas y los relojes les cambia el material: después ya
+   * no hay por dónde encontrarlos. Y antes de la luz, que la tiene que ver
+   * para alumbrarla como la chapa. Ver `placa-de-cabina.ts`.
+   */
+  const placa = atornillarPlaca(
+    raiz,
+    group,
+    ojo,
+    matriculaDe(aircraft.id).matricula,
+  );
   return {
     group,
     vista,
@@ -832,6 +847,8 @@ export async function cargarModelo(
      * de los relojes y de los mandos, y la luz tiene que ver los que quedan.
      * Ver `luz-de-cabina.ts`.
      */
+    // Y la placa con la matrícula, puesta arriba. Ver `placa-de-cabina.ts`.
+    placa,
     luzDeCabina: luzDeCabina(raiz),
     // Y que esto es el modelo, no el respaldo. Ver `AircraftMesh.deVerdad`.
     deVerdad: true,

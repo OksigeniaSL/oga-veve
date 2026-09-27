@@ -27,6 +27,13 @@ import { baseDe } from "./servidor.mjs";
 const PUERTO = 5292;
 
 /** Qué frase le toca a quién, y de qué pack tiene que salir. */
+/** Una información de tráfico cualquiera: a las dos, tres millas, mil pies arriba. */
+const TRAFICO_DE_PRUEBA = {
+  hora: "trafico.hora.2",
+  millas: "trafico.millas.3",
+  altura: "trafico.pies.10 trafico.above",
+};
+
 const REPARTO = [
   ["torre", "torre.verde", "torre"],
   ["torre", "torre.roja", "torre"],
@@ -169,6 +176,19 @@ const REPARTO = [
   ["instructor", "cabina.twentyFiveHundred", "cabina"],
   ["instructor", "cabina.oneThousand", "cabina"],
   ["instructor", "vuelo.quitaElGas", "instructor"],
+  /*
+   * **Y las de esta tanda**: la información de tráfico de las dos torres,
+   * «vacate next available» a quien se pasó la salida, y la instructora
+   * presentando nuestra matrícula al empezar. El cuarto elemento es el
+   * relleno que les falta aparte del indicativo: la hora, las millas y la
+   * altura del tráfico. Ver `informacionEnPiezas`.
+   */
+  ["torre", "torre.trafico", "torre", TRAFICO_DE_PRUEBA],
+  ["torre", "torre.canario.trafico", "torre-canarias", TRAFICO_DE_PRUEBA],
+  ["torre", "torre.vacateNext", "torre"],
+  ["torre", "torre.canario.vacateNext", "torre-canarias"],
+  ["instructor", "vuelo.nuestroAvion", "instructor", {}],
+  ["instructor", "vuelo.salidaSiguiente", "instructor"],
 ];
 
 const server = await createServer({
@@ -352,7 +372,17 @@ comprobar(
   "ZP- es Paraguay, y en Canarias sonaba igual: era siempre el mismo avión",
 );
 
-for (const [quien, clave, pack, suRelleno] of REPARTO) {
+for (const [quien, clave, pack, cuarto] of REPARTO) {
+  /*
+   * El cuarto elemento es de dos clases. En la torre y en «nuestro avión» es
+   * lo que falta **además** del indicativo (la hora, las millas y la altura
+   * del tráfico), y se junta con él; en la comandante y la tripulación es el
+   * relleno entero de su receta.
+   */
+  const conIndicativo =
+    clave.startsWith("torre.") || clave === "vuelo.nuestroAvion";
+  const extra = conIndicativo ? cuarto : undefined;
+  const suRelleno = conIndicativo ? undefined : cuarto;
   if (pack === null) {
     comprobar(
       `«${clave}» la dice la voz del sistema, no el pack`,
@@ -372,11 +402,11 @@ for (const [quien, clave, pack, suRelleno] of REPARTO) {
         ? suRelleno
         : clave.startsWith("otro.")
         ? indicativo.relleno
-        : clave.startsWith("torre.")
+        : clave.startsWith("torre.") || extra
           ? // La lámpara también lleva hueco desde que te llama por tu
             // matrícula, y `deTorre` trae el indicativo y la pista: sobra lo de
-            // la pista y falta nada.
-            indicativo.deTorre
+            // la pista y falta nada. Y lo que traiga de más, detrás.
+            { ...indicativo.deTorre, ...(extra ?? {}) }
           : undefined,
     ],
   );

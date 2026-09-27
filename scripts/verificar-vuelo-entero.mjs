@@ -2141,7 +2141,15 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano, crucer
         if (!m) continue;
         const mia = !!misLetrasEnLaTorre && m[3].startsWith(misLetrasEnLaTorre);
         if (mia && m[1] === "torre" && /^(aterrizar|clearedLand)$/.test(m[2]))
-          tusAutorizaciones.push({ t: Math.round(t), fase, dice: m[2], alli: !!enElDestino });
+          tusAutorizaciones.push({
+            t: Math.round(t),
+            fase,
+            dice: m[2],
+            alli: !!enElDestino,
+            // Y a qué altura sonó: con la pista ocupada hasta la decisión, la
+            // torre manda al aire, no autoriza a once metros del suelo.
+            alto: Math.round(alto(s)),
+          });
         // A quién va, por sus letras: las cinco del alfabeto, sin la pista.
         const quien = m[3]
           .split("-")
@@ -4100,6 +4108,29 @@ comprobar(
             ? `${falta}: ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`
             : `${tuyas.length} · ${tuyas.map((a) => `${a.t} s ${a.dice}`).join(" · ")}`,
       "«podés aterrizar» y «cleared to land» subiendo en la frustrada, en cuanto el de delante dejó la pista; y en Guyrami, la torre muda: el permiso iba solo por radio y en inglés",
+    );
+}
+
+/*
+ * **Y tu permiso llega antes de la altura de decisión.** En Los Rodeos, de
+ * número dos detrás de otro, el de delante soltó la pista por debajo de los
+ * sesenta metros, su «pista libre» esperó turno y tu permiso sonó a once
+ * metros del suelo. Lo de verdad es lo otro: si la pista no es tuya a la
+ * altura de decisión, la torre te manda al aire. Se mide con la voz, que es
+ * cuando se entera quien vuela; la boca puede retrasarla unos segundos detrás
+ * de otra frase, y por eso el margen es de veinte metros y no de cero.
+ */
+{
+  const tuyas = vuelo.tusAutorizaciones ?? [];
+  const bajas = tuyas.filter((a) => typeof a.alto === "number" && a.alto < 40);
+  if (tuyas.length)
+    comprobar(
+      "y tu permiso llega antes de la altura de decisión",
+      bajas.length === 0,
+      bajas.length
+        ? bajas.map((a) => `${a.t} s ${a.dice} a ${a.alto} m`).join(" · ")
+        : tuyas.map((a) => `${a.dice} a ${a.alto ?? "?"} m`).join(" · "),
+      "«cleared to land» a once metros del suelo, de número dos hasta el final, en Los Rodeos",
     );
 }
 

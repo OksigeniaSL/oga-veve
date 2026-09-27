@@ -189,8 +189,107 @@
     "torre.canario.solo.runwayInUse": {
       "ms": 956
     },
+    "torre.canario.solo.vacateNext": {
+      "ms": 1241
+    },
     "torre.canario.solo.verde": {
       "ms": 746
+    },
+    "trafico.above": {
+      "ms": 750
+    },
+    "trafico.below": {
+      "ms": 446
+    },
+    "trafico.hora.1": {
+      "ms": 710
+    },
+    "trafico.hora.10": {
+      "ms": 624
+    },
+    "trafico.hora.11": {
+      "ms": 830
+    },
+    "trafico.hora.12": {
+      "ms": 762
+    },
+    "trafico.hora.2": {
+      "ms": 610
+    },
+    "trafico.hora.3": {
+      "ms": 700
+    },
+    "trafico.hora.4": {
+      "ms": 721
+    },
+    "trafico.hora.5": {
+      "ms": 633
+    },
+    "trafico.hora.6": {
+      "ms": 702
+    },
+    "trafico.hora.7": {
+      "ms": 850
+    },
+    "trafico.hora.8": {
+      "ms": 706
+    },
+    "trafico.hora.9": {
+      "ms": 678
+    },
+    "trafico.millas.1": {
+      "ms": 999
+    },
+    "trafico.millas.2": {
+      "ms": 591
+    },
+    "trafico.millas.3": {
+      "ms": 811
+    },
+    "trafico.millas.4": {
+      "ms": 805
+    },
+    "trafico.millas.5": {
+      "ms": 752
+    },
+    "trafico.millas.6": {
+      "ms": 788
+    },
+    "trafico.pies.10": {
+      "ms": 1312
+    },
+    "trafico.pies.11": {
+      "ms": 1362
+    },
+    "trafico.pies.12": {
+      "ms": 1468
+    },
+    "trafico.pies.3": {
+      "ms": 937
+    },
+    "trafico.pies.4": {
+      "ms": 1090
+    },
+    "trafico.pies.5": {
+      "ms": 952
+    },
+    "trafico.pies.6": {
+      "ms": 1127
+    },
+    "trafico.pies.7": {
+      "ms": 1400
+    },
+    "trafico.pies.8": {
+      "ms": 935
+    },
+    "trafico.pies.9": {
+      "ms": 987
+    },
+    "trafico.sameLevel": {
+      "ms": 982
+    },
+    "trafico.traffic": {
+      "ms": 958
     },
     "viento.calm": {
       "ms": 666
@@ -729,6 +828,121 @@
       "{r1}",
       "{r2}",
       "lado.center"
+    ],
+    "trafico.traffic": [
+      "trafico.traffic"
+    ],
+    "trafico.hora.1": [
+      "trafico.hora.1"
+    ],
+    "trafico.hora.2": [
+      "trafico.hora.2"
+    ],
+    "trafico.hora.3": [
+      "trafico.hora.3"
+    ],
+    "trafico.hora.4": [
+      "trafico.hora.4"
+    ],
+    "trafico.hora.5": [
+      "trafico.hora.5"
+    ],
+    "trafico.hora.6": [
+      "trafico.hora.6"
+    ],
+    "trafico.hora.7": [
+      "trafico.hora.7"
+    ],
+    "trafico.hora.8": [
+      "trafico.hora.8"
+    ],
+    "trafico.hora.9": [
+      "trafico.hora.9"
+    ],
+    "trafico.hora.10": [
+      "trafico.hora.10"
+    ],
+    "trafico.hora.11": [
+      "trafico.hora.11"
+    ],
+    "trafico.hora.12": [
+      "trafico.hora.12"
+    ],
+    "trafico.millas.1": [
+      "trafico.millas.1"
+    ],
+    "trafico.millas.2": [
+      "trafico.millas.2"
+    ],
+    "trafico.millas.3": [
+      "trafico.millas.3"
+    ],
+    "trafico.millas.4": [
+      "trafico.millas.4"
+    ],
+    "trafico.millas.5": [
+      "trafico.millas.5"
+    ],
+    "trafico.millas.6": [
+      "trafico.millas.6"
+    ],
+    "trafico.pies.3": [
+      "trafico.pies.3"
+    ],
+    "trafico.pies.4": [
+      "trafico.pies.4"
+    ],
+    "trafico.pies.5": [
+      "trafico.pies.5"
+    ],
+    "trafico.pies.6": [
+      "trafico.pies.6"
+    ],
+    "trafico.pies.7": [
+      "trafico.pies.7"
+    ],
+    "trafico.pies.8": [
+      "trafico.pies.8"
+    ],
+    "trafico.pies.9": [
+      "trafico.pies.9"
+    ],
+    "trafico.pies.10": [
+      "trafico.pies.10"
+    ],
+    "trafico.pies.11": [
+      "trafico.pies.11"
+    ],
+    "trafico.pies.12": [
+      "trafico.pies.12"
+    ],
+    "trafico.above": [
+      "trafico.above"
+    ],
+    "trafico.below": [
+      "trafico.below"
+    ],
+    "trafico.sameLevel": [
+      "trafico.sameLevel"
+    ],
+    "torre.canario.vacateNext": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "torre.canario.solo.vacateNext"
+    ],
+    "torre.canario.trafico": [
+      "{c1}",
+      "{c2}",
+      "{c3}",
+      "{c4}",
+      "{c5}",
+      "trafico.traffic",
+      "{hora}",
+      "{millas}",
+      "{altura}"
     ]
   }
 }

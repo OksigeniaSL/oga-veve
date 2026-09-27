@@ -181,25 +181,81 @@ export function alturaDelOtro(relativa: number): "arriba" | "nivel" | "abajo" {
 }
 
 /**
+ * Lo que se dice del otro, ya en las unidades de la radio: la hora del reloj,
+ * las millas y los cientos de pies de diferencia —`null` a la misma altura—.
+ *
+ * Una sola cuenta para lo que se lee y lo que se oye. La frase escrita y la
+ * receta grabada se montaban por separado, y el día que una redondeara
+ * distinto que la otra la tira de la radio diría «2 miles» con la voz
+ * diciendo «three miles».
+ *
+ * Las millas van de una a seis, que es hasta donde mira el TCAS —ver
+ * `CERCA_MILLAS`—, y los pies de trescientos a mil doscientos: por debajo de
+ * trescientos es la misma altura y por encima de mil doscientos no se avisa.
+ * Se sujetan a esos topes porque cada cifra es una grabación, y una cifra
+ * sin grabación deja la frase entera en la voz del navegador.
+ */
+export function cifrasDelTrafico(
+  a: Pick<AvisoDeTrafico, "hora" | "relativa" | "distancia">,
+): {
+  readonly hora: number;
+  readonly millas: number;
+  readonly cientos: number | null;
+  readonly arriba: boolean;
+} {
+  const millas = Math.min(6, Math.max(1, Math.round(a.distancia / MILLA)));
+  const cientos =
+    alturaDelOtro(a.relativa) === "nivel"
+      ? null
+      : Math.min(12, Math.max(3, Math.round(Math.abs(a.relativa) / PIE / 100)));
+  return { hora: a.hora, millas, cientos, arriba: a.relativa > 0 };
+}
+
+/**
  * La frase de radio, en inglés aeronáutico: indicativo, «traffic», la hora,
  * la distancia y la altura relativa.
  *
  * Es el orden del Doc 4444 de la OACI para la información de tráfico —«TRAFFIC
  * (number) O'CLOCK (distance) … (level)»— con la altura dicha respecto a quien
  * escucha, que es como la da un controlador cuando conoce las dos: «one
- * thousand feet above». En millas y en pies aunque la cabina vaya en metros:
- * en la radio el tráfico se da así en todo el mundo.
+ * thousand feet above», o «same level» si van a la misma. En millas y en pies
+ * aunque la cabina vaya en metros: en la radio el tráfico se da así en todo
+ * el mundo.
  */
 export function informacionEnRadio(
   indicativo: string,
   a: Pick<AvisoDeTrafico, "hora" | "relativa" | "distancia">,
 ): string {
-  const millas = Math.max(1, Math.round(a.distancia / MILLA));
-  const distancia = `${millas} ${millas === 1 ? "mile" : "miles"}`;
-  const pies = Math.round(Math.abs(a.relativa) / PIE / 100) * 100;
+  const c = cifrasDelTrafico(a);
+  const distancia = `${c.millas} ${c.millas === 1 ? "mile" : "miles"}`;
   const altura =
-    alturaDelOtro(a.relativa) === "nivel"
-      ? "same altitude"
-      : `${pies} feet ${a.relativa > 0 ? "above" : "below"}`;
-  return `${indicativo}, traffic, ${a.hora} o'clock, ${distancia}, ${altura}`;
+    c.cientos === null
+      ? "same level"
+      : `${c.cientos * 100} feet ${c.arriba ? "above" : "below"}`;
+  return `${indicativo}, traffic, ${c.hora} o'clock, ${distancia}, ${altura}`;
+}
+
+/**
+ * **Y la misma frase, en piezas grabadas**: los huecos de la receta
+ * `torre.trafico` —la hora, las millas y la altura— con el nombre de su
+ * grabación. El indicativo lo pone `rellenoDe`, como en todas las de la torre.
+ *
+ * Se decía con la voz del navegador, y en Brave para Linux esa voz es muda:
+ * la información de tráfico, de Taguató para arriba, no sonaba. Las piezas
+ * no llevan el habla en el nombre —`trafico.*` y no `torre.canario.*`—
+ * porque cada torre tiene su pack y las dos las graban con el mismo nombre,
+ * como el viento y las cifras. Ver `frases-para-grabar.mjs`.
+ */
+export function informacionEnPiezas(
+  a: Pick<AvisoDeTrafico, "hora" | "relativa" | "distancia">,
+): Record<"hora" | "millas" | "altura", string> {
+  const c = cifrasDelTrafico(a);
+  return {
+    hora: `trafico.hora.${c.hora}`,
+    millas: `trafico.millas.${c.millas}`,
+    altura:
+      c.cientos === null
+        ? "trafico.sameLevel"
+        : `trafico.pies.${c.cientos} trafico.${c.arriba ? "above" : "below"}`,
+  };
 }

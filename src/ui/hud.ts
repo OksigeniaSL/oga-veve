@@ -54,6 +54,12 @@ import type { Tier } from "../flight/tiers";
 import { canalesDe, type Peldano } from "../flight/escalera";
 import type { Galon } from "../flight/galones";
 import { manga as dibujarManga, MANGA_ALTO } from "./manga";
+import {
+  bandasInfladas,
+  bocaRespectoAlMorro,
+  mangaDeViento,
+} from "./manga-de-viento";
+import { matriculaDe } from "../flight/matricula";
 import { reconocer } from "../flight/reconocimiento";
 import { aPxDelHud, escribirRincon } from "./escala";
 import {
@@ -68,6 +74,18 @@ import {
   seOfrecePantallaCompleta,
 } from "./pantalla-completa";
 import { avisaLaPerdida } from "../flight/avisos-de-actitud";
+
+/**
+ * **Tu avión, dibujado**: la silueta que marca en la tira de la radio y en la
+ * lámpara de la torre lo que te dicen **a vos**. Es la misma silueta que ya
+ * señala otros aviones en la ventanilla —ver `hito-avion` en `ui/senal.ts`—,
+ * pero llena y en el ocre de lo tuyo, con el morro hacia arriba como en el
+ * cuadro. Quien no lee no distingue su matrícula de otra por las letras, pero
+ * sí distingue «esta es la mía» por el dibujo y por la placa de al lado.
+ */
+const TU_AVION = `<svg class="tu-avion" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 2.5 13.5 9.5 22 11.4v2l-8.4-1.2L13 19l2.6 1.6v1.2L12 21l-3.6.8v-1.2L11 19l-.6-6.8L2 13.4v-2l8.5-1.9Z" />
+</svg>`;
 
 /**
  * Rótulos de instrumento. No se traducen a propósito: son los mismos en
@@ -477,6 +495,17 @@ export class Hud {
   private homeDistance: HTMLElement | null = null;
   private homeGloss: HTMLElement | null = null;
   private homeOaci: HTMLElement | null = null;
+  /**
+   * **La matrícula de tu avión**, la que va en la placa del cuadro y en la
+   * tira de la radio. Sale de la ficha, como en el juego: ver `miIndicativo`.
+   */
+  private get miMatricula(): string {
+    return matriculaDe(this.ficha.id).matricula;
+  }
+
+  /** La manga del HUD y lo último que se pintó en ella. Ver `ponerLaManga`. */
+  private mangaCaja: HTMLElement | null = null;
+  private mangaPuesta = "";
   /**
    * El destino que está puesto en la tarjeta, para notar cuándo cambia. Ver
    * `setHome`.
@@ -907,6 +936,15 @@ export class Hud {
         -->
         <div class="torre" data-hud="torre" hidden role="status">
           <span class="torre__luz" data-hud="torre-luz"></span>
+          <!--
+            **Y a quién va la luz: a vos.** La lámpara solo se enciende para
+            tu avión, pero la tarjeta no lo decía y la radio le habla a todos:
+            «¿cómo sé que soy yo?». Tu avión dibujado y tu matrícula en su
+            placa —la misma que va en el cuadro— dicen que esto es tuyo, en
+            los cuatro peldaños: la placa es una forma que se reconoce antes
+            de saber leerla, como el OACI del destino.
+          -->
+          <span class="torre__quien">${TU_AVION}<span class="placa-matricula">${this.miMatricula}</span></span>
           <span class="torre__texto" data-hud="torre-texto"></span>
         </div>
         <!--
@@ -1235,6 +1273,14 @@ export class Hud {
                  un nombre largo, esa línea echaba la tarjeta fuera de la
                  pantalla en una tablet táctil. Lo midió verificar-carteles. -->
             <span class="casa__oaci${gauges ? "" : " casa__oaci--placa"}" data-hud="home-oaci" hidden></span>
+            <!--
+              **Y el viento, dibujado.** La manga vista desde arriba con el
+              morro hacia arriba: la boca mira de donde viene y cuánto se
+              infla dice la fuerza. En los cuatro peldaños, porque es un
+              dibujo; la cifra sigue en la pantalla de navegación. Ver
+              ui/manga-de-viento.ts.
+            -->
+            <span class="casa__viento" data-hud="viento" aria-hidden="true"></span>
           </span>
           ${gauges ? '<span class="casa__distancia" data-hud="home-distance">0</span>' : ""}
           ${gauges ? `<span class="medidor__glosa" data-hud="home-gloss">${t("hud.home")}</span>` : ""}
@@ -1481,6 +1527,8 @@ export class Hud {
     this.homeDistance = optional(this.root, "home-distance");
     this.homeGloss = optional(this.root, "home-gloss");
     this.homeOaci = optional(this.root, "home-oaci");
+    this.mangaCaja = optional(this.root, "viento");
+    this.mangaPuesta = "";
     // La tarjeta es nueva, así que lo puesto en ella también.
     this.destinoPuesto = null;
     this.warning = pick(this.root, "warning");
@@ -1866,6 +1914,49 @@ export class Hud {
         destino.oaci ? `${destino.nombre} · ${destino.oaci}` : destino.nombre,
         4,
       );
+  }
+
+  /**
+   * **La placa de la matrícula se enciende** mientras la instructora la dice
+   * al empezar: lo que se oye y lo que se ve son lo mismo, y a la primera se
+   * sabe dónde mirar la próxima vez que la torre llame. Ver
+   * `presentarLaMatricula` en `game.ts`.
+   */
+  destacarMatricula(segundos = 6): void {
+    const placas = this.root.querySelectorAll('[data-hud="placa-matricula"]');
+    for (const p of placas) p.classList.add("tablero__matricula--destacada");
+    window.clearTimeout(this.matriculaReloj);
+    this.matriculaReloj = window.setTimeout(() => {
+      for (const p of this.root.querySelectorAll('[data-hud="placa-matricula"]'))
+        p.classList.remove("tablero__matricula--destacada");
+    }, segundos * 1000);
+  }
+
+  private matriculaReloj = 0;
+
+  /**
+   * **La manga del HUD**, con el viento que sopla donde está el avión y
+   * respecto a su morro. Ver `ui/manga-de-viento.ts`.
+   *
+   * Se repinta solo cuando cambia lo que se ve —la boca de cinco en cinco
+   * grados y las bandas llenas—: rehacer un SVG sesenta veces por segundo
+   * para dibujar lo mismo no lo hace nadie.
+   */
+  private ponerLaManga(
+    viento: { readonly desde: number; readonly nudos: number } | null,
+    rumbo: number,
+  ): void {
+    const caja = this.mangaCaja;
+    if (!caja) return;
+    const boca =
+      viento && viento.nudos >= 1
+        ? Math.round(bocaRespectoAlMorro(viento.desde, rumbo) / 5) * 5
+        : null;
+    const nudos = viento?.nudos ?? 0;
+    const clave = `${boca ?? "calma"}|${bandasInfladas(nudos)}`;
+    if (clave === this.mangaPuesta) return;
+    this.mangaPuesta = clave;
+    caja.innerHTML = mangaDeViento(boca, nudos);
   }
 
   /**
@@ -2291,6 +2382,7 @@ export class Hud {
     // teniendo dos definiciones del mismo signo.
     const bank = bankAngleOf(state.orientation);
     const pitch = pitchAngleOf(state.orientation);
+    this.ponerLaManga(mandos?.viento ?? null, (state.heading * 180) / Math.PI);
 
     if (this.tablero.presente) {
       /*
@@ -3357,9 +3449,23 @@ export class Hud {
     caja.hidden = texto === "";
   }
 
-  radio(texto: string, segundos = 6): void {
+  radio(
+    texto: string,
+    segundos = 6,
+    /**
+     * **Si es para vos.** La torre le habla a todos por la misma frecuencia,
+     * y la tira enseñaba igual lo tuyo y lo de los demás: se oía «Zulu Echo
+     * Juliett Juliett, cleared for take-off» y no había forma de saber si
+     * era uno mismo. «¿Cómo sé que soy yo?». Lo tuyo lleva tu avión dibujado
+     * y tu matrícula en su placa, la misma que va en el cuadro; lo de otros,
+     * nada de eso y en gris. `null` es de nadie: la megafonía, la bienvenida.
+     */
+    paraTi: boolean | null = null,
+  ): void {
     const caja = this.radioCaja;
     if (!caja) return;
+    caja.classList.toggle("radio--tuya", paraTi === true);
+    caja.classList.toggle("radio--otro", paraTi === false);
     /*
      * **Primero se enseña y después se escribe.**
      *
@@ -3370,7 +3476,17 @@ export class Hud {
      * Quien depende del lector se perdía entera la radio.
      */
     caja.hidden = false;
-    caja.textContent = texto;
+    if (paraTi === true) {
+      caja.replaceChildren();
+      caja.insertAdjacentHTML("beforeend", TU_AVION);
+      const placa = document.createElement("span");
+      placa.className = "placa-matricula radio__placa";
+      placa.textContent = this.miMatricula;
+      const dice = document.createElement("span");
+      dice.className = "radio__texto";
+      dice.textContent = texto;
+      caja.append(placa, dice);
+    } else caja.textContent = texto;
     window.clearTimeout(this.radioReloj);
     this.radioReloj = window.setTimeout(() => {
       caja.hidden = true;

@@ -447,8 +447,8 @@ export class TurnoDePista {
       this.aterrizajeSinAutorizar = false;
       return;
     }
+    const alto = this.de.alto();
     if (this.numeroDos && this.de.radio.laTiene(this.numeroDos)) {
-      const alto = this.de.alto();
       if (alto < ALTURA_DE_DECISION) {
         const delante = this.numeroDos;
         this.aterrizajeSinAutorizar = false;
@@ -465,15 +465,35 @@ export class TurnoDePista {
       this.numeroDos = null;
       this.alSerTuya("");
     }
-    if (this.despejeSinDecir && this.de.boca.espera(this.despejeSinDecir))
-      return;
     /*
      * **Y lo que la suelta, que se oiga antes que lo tuyo.** El «pista libre»
      * del que aterrizó antes va en voz baja y tu permiso en `mando`: pedidos
      * en ese orden, sonaba primero el tuyo —o solo el tuyo, si el otro se
      * caía de la cola—. Ver `sueltaLaPista`.
      */
-    if (this.de.boca.esperaAlguna(sueltaLaPista)) return;
+    const despeje = this.despejeSinDecir;
+    const todaviaNoEsTuya = (): boolean =>
+      (despeje !== null && this.de.boca.espera(despeje)) ||
+      this.de.boca.esperaAlguna(sueltaLaPista);
+    if (todaviaNoEsTuya()) {
+      /*
+       * **Y sin permiso a la altura de decisión, al aire.** Esperar a que se
+       * oiga lo que suelta la pista tenía un fallo: la espera no miraba la
+       * altura. El número dos pasaba la decisión con el de delante todavía
+       * en la pista —aquí arriba sí se mira—, el de delante la dejaba a los
+       * cincuenta metros, su «pista libre» esperaba turno en la boca y tu
+       * permiso llegaba detrás, a once metros del suelo, en Los Rodeos. Una
+       * torre de verdad no autoriza a quien ya está tocando: a la altura de
+       * decisión, o la pista es tuya y lo sabes, o te vas. Y quien se va,
+       * vuelve por el circuito y la tiene en la final siguiente.
+       */
+      if (alto < ALTURA_DE_DECISION) {
+        this.aterrizajeSinAutorizar = false;
+        this.despejeSinDecir = null;
+        this.de.mandarteAlAire(alto, todaviaNoEsTuya);
+      }
+      return;
+    }
     this.despejeSinDecir = null;
     this.aterrizajeSinAutorizar = false;
     this.de.autorizarte();

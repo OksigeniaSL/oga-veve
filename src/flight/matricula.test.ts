@@ -13,6 +13,8 @@ import { describe, expect, it } from "vitest";
 import { AIRCRAFT } from "./aircraft";
 import torre from "../../data/voces/torre/manifiesto.json";
 import torreCanarias from "../../data/voces/torre-canarias/manifiesto.json";
+import instructora from "../../data/voces/instructor/manifiesto.json";
+import { recetaDe, type Manifiesto } from "../audio/banco-de-voz";
 import {
   FONETICO,
   matriculaDe,
@@ -241,6 +243,34 @@ describe("el viento de la torre", () => {
       ])
         for (const p of v.relleno.split(" "))
           expect(hay.has(p), `${pack.voz}: ${p}`).toBe(true);
+    }
+  });
+});
+
+/*
+ * **Y la instructora la presenta al empezar**: «Nuestro avión es Zulu Papa
+ * Alfa Romeo India. Así nos llama la torre». Con las letras en su voz, para
+ * los seis aviones: una matrícula que no se monta la diría la voz del
+ * navegador, que es otra persona. Ver `presentarLaMatricula` en `game.ts`.
+ */
+describe("nuestra matrícula, dicha por la instructora", () => {
+  it("se monta grabada para los seis aviones", () => {
+    for (const a of AIRCRAFT) {
+      const yo = matriculaDe(a.id);
+      expect(
+        recetaDe(instructora as Manifiesto, "vuelo.nuestroAvion", rellenoDe(yo)),
+        `${a.id} ${yo.matricula}`,
+      ).not.toBeNull();
+    }
+  });
+
+  it("y con cualquier matrícula sorteada, también", () => {
+    for (let i = 0; i < 26; i++) {
+      const yo = sortearIndicativo("GCXO", fijo(i / 26, ((i * 7) % 26) / 26));
+      expect(
+        recetaDe(instructora as Manifiesto, "vuelo.nuestroAvion", rellenoDe(yo)),
+        yo.matricula,
+      ).not.toBeNull();
     }
   });
 });

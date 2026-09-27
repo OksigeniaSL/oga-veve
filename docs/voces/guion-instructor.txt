@@ -99,6 +99,7 @@ No tenemos motor: bajamos la nariz, mantenemos esta velocidad y vamos a esa pist
 Vamos lentos: bajá un poco la nariz
 Vamos rápidos: levantá un poco la nariz, que así llegamos más lejos
 Esa no es la pista en uso: hoy el viento manda entrar por la otra punta
+Te pasaste la salida. No pasa nada: seguí por la pista hasta la próxima
 Por esa punta no: andate al aire y volvé por la otra
 Con viento de cola no frenás a tiempo: andate al aire y volvé por la otra punta
 Sacá el tren
@@ -167,3 +168,31 @@ Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá 
 Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
 Cuidado: un poco más de ángulo y el aire se suelta.
 El aire se despegó del ala: mirá los remolinos, y cómo el azul ya solo queda en la puntita de adelante. Eso es la pérdida: bajá el morro y vuelve.
+Nuestro avión es
+Así nos llama la torre.
+Alfa
+Bravo
+Charlie
+Delta
+Echo
+Foxtrot
+Golf
+Hotel
+India
+Juliett
+Kilo
+Lima
+Mike
+November
+Oscar
+Papa
+Quebec
+Romeo
+Sierra
+Tango
+Uniform
+Victor
+Whiskey
+X-ray
+Yankee
+Zulu
