@@ -69,6 +69,8 @@
  * existe `SpeechSynthesisUtterance`.
  */
 
+import { DE_LA_CUENTA } from "./cabina";
+
 /**
  * Cuánto manda lo que se va a decir.
  *
@@ -250,17 +252,25 @@ const PLAZAS_DE_ESPERA = 4;
  * última ganaba siempre— y lo que se perdía era el canto. Con la cola y esta
  * lista se tienen: lo que es una cuenta se pisa, lo que es un suceso espera.
  *
- * Se reconocen por el principio de la clave, que es lo que tienen en común: son
- * la misma cuenta dicha en distintos números.
+ * **Y la cuenta es la cuenta, no todo lo que empieza por `cabina.`**, que era
+ * como se reconocía. Con eso un aviso de cabina y un número de la cuenta se
+ * pisaban entre sí como si fueran el mismo: medido en Gran Canaria con el JAZ
+ * 90 en el peldaño de arriba, «sink rate» se cayó cuatro veces porque llegaba
+ * un número o un «airspeed low» detrás, y de la cuenta, de quinientos a
+ * treinta, no sonó ni un número. Un aviso de peligro tirado por un número es
+ * justo lo contrario de la regla de las tres eses. Ahora la cuenta son sus
+ * números —los del radioaltímetro y los de la instructora en casa, que son la
+ * misma cuenta dicha por otra boca— y lo demás de la cabina son sucesos, que
+ * esperan.
  */
-const MISMA_CUENTA: readonly string[] = ["cabina.", "altura."];
+const MISMA_CUENTA = "cuenta";
 
 /** A qué cuenta pertenece esta clave, si pertenece a alguna. */
 function laCuentaDe(clave: string | undefined): string | null {
   if (!clave) return null;
-  // Los cantos del despegue son sucesos, no cuenta: cada uno se dice una vez.
-  if (clave === "cabina.v1" || clave === "cabina.vr") return null;
-  return MISMA_CUENTA.find((c) => clave.startsWith(c)) ?? null;
+  return DE_LA_CUENTA.has(clave) || clave.startsWith("cuenta.")
+    ? MISMA_CUENTA
+    : null;
 }
 
 /**
