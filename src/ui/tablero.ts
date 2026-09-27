@@ -54,6 +54,7 @@ import {
 } from "./familia";
 import { CUANTOS_OTROS } from "./cristal";
 import { dibujarLaCarta, type Mapa } from "./carta";
+import { retratoDe, TAMANO_DE_RETRATO } from "./retratos";
 import { decima as n1, escribir, poner } from "./si-cambia";
 
 /** Un punto de la carta, en píxeles desde el centro de la rosa. */
@@ -509,19 +510,25 @@ export class Tablero {
       </g>
       <g transform="translate(${placa.x} ${BANDA.y})">
         <!--
-          El hueco de la placa aparece **con lo que lleva dentro**.
+          **La placa lleva el avión en los cuatro peldaños.**
 
           La chapa con el nombre es letra, así que empieza en el tercer
-          peldaño; el recuadro empezaba en el primero. En los dos peldaños de
-          los pequeños quedaba un rectángulo negro con su filete y nada
-          escrito: un tercio del cuadro de mandos pareciendo un instrumento
-          roto, que es peor que un hueco. Visto en el JAZ 20, el 25 y el 40.
+          peldaño, y en los dos de los pequeños el tercio izquierdo del cuadro
+          se quedaba vacío: primero enmarcado y sin nada escrito, que parecía
+          un instrumento roto, y después sin marco, que dejaba las esferas y el
+          motor corridos a la derecha de un cuadro medio negro. Dicho con una
+          captura de Guyrami: «textos descentrados». No eran los textos: era
+          el hueco.
 
-          Que no haya nada ahí abajo es correcto —el cuadro no se recoloca
-          entre peldaños, crece— pero un sitio vacío se deja vacío, no se
-          enmarca.
+          Así que la placa lleva el retrato del avión que se vuela, que es un
+          dibujo y no una letra, en el mismo sitio en los cuatro peldaños y en
+          medio del alto, a la altura de la raya entre las dos filas de
+          esferas. Desde el tercero se le suma encima el nombre —el cuadro no
+          se recoloca entre peldaños: crece— y el marco va siempre, porque ya
+          nunca enmarca un sitio vacío.
         -->
-        <rect data-fondo="placa" ${MARCA_ROTULO} width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
+        <rect data-fondo="placa" width="${placa.ancho}" height="${BANDA.alto}" rx="4" class="tablero__hueco" />
+        ${this.retrato(a, placa.ancho)}
         ${this.chapa(a, placa.ancho)}
         <text data-cristal="gs" x="${placa.ancho / 2}" y="${BANDA.alto - 74}"
               ${MARCA_ROTULO} class="cr__aux" text-anchor="middle"></text>
@@ -551,8 +558,29 @@ export class Tablero {
       <text x="${ancho / 2}" y="46" ${MARCA_ROTULO} class="tablero__chapa" text-anchor="middle">${arriba}</text>
       <text x="${ancho / 2}" y="76" ${MARCA_ROTULO} class="tablero__chapa tablero__chapa--nombre"
             text-anchor="middle">${abajo}</text>
-      <line x1="${ancho * 0.2}" y1="94" x2="${ancho * 0.8}" y2="94" class="tablero__filete" />
+      <line x1="${ancho * 0.2}" y1="94" x2="${ancho * 0.8}" y2="94" ${MARCA_ROTULO} class="tablero__filete" />
     `;
+  }
+
+  /**
+   * El retrato del avión, en la placa: el mismo del hangar.
+   *
+   * Es el avión que se vuela, fotografiado por el propio juego con su pintura
+   * —ver `retratos.ts`—, así que quien lo eligió en el hangar lo reconoce en
+   * el cuadro sin leer su nombre. Va entre el filete de la chapa y la
+   * velocidad sobre el suelo, centrado en el alto de la banda, y no se mueve
+   * nunca: se pinta una vez y no le cuesta nada a ningún fotograma.
+   *
+   * Si la imagen no llega, la placa se queda con su marco, que es lo que
+   * había.
+   */
+  private retrato(a: AircraftConfig, ancho: number): string {
+    const lado = 4;
+    const w = ancho - lado * 2;
+    const h = (w * TAMANO_DE_RETRATO.alto) / TAMANO_DE_RETRATO.ancho;
+    return `<image href="${retratoDe(a.id)}" x="${lado}" y="${BANDA.alto / 2 - h / 2}"
+      width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet"
+      class="tablero__retrato" />`;
   }
 
   /** Familia de cristal: horizonte a la izquierda, mapa con motor a la derecha. */

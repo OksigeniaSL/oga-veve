@@ -187,6 +187,25 @@ describe("el indicador de combustible", () => {
   });
 });
 
+describe("la placa de las avionetas", () => {
+  /*
+   * En los dos peldaños de los pequeños la chapa no lleva letras, y el tercio
+   * izquierdo del cuadro se quedaba vacío: las esferas se veían corridas a la
+   * derecha. Lo que llena el hueco es el retrato del avión, que no es letra y
+   * va en los cuatro peldaños, con su marco.
+   */
+  it("lleva el retrato de su avión, sin esperar a ningún peldaño", () => {
+    for (const a of AIRCRAFT.filter((x) => familiaDe(x) === "esferas")) {
+      const marcado = new Tablero().markup(a, 1);
+      const retrato = marcado.match(/<image [^>]*>/)?.[0] ?? "";
+      expect(retrato).toContain(`${a.id}.webp`);
+      expect(retrato).not.toContain("data-desde");
+      const marco = marcado.match(/<rect data-fondo="placa"[^>]*>/)?.[0] ?? "";
+      expect(marco).not.toContain("data-desde");
+    }
+  });
+});
+
 describe("la cinta de altitud, grabada a trozos", () => {
   /*
    * Se graba el trozo que rodea la altitud y no la cinta entera; lo que no
