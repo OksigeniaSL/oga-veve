@@ -77,6 +77,13 @@ const PANTALLAS = [
   [1024, 600, "dedo"],
   [915, 412, "dedo"],
   [800, 360, "dedo"],
+  /*
+   * **Y el teléfono pequeño de verdad**, que es el que llega a Paraguay: 780
+   * de ancho y 360 de alto con la pantalla completa. Con la barra del
+   * navegador puesta se queda en 330; ése es el peor caso que se ve.
+   */
+  [780, 360, "dedo"],
+  [864, 330, "dedo"],
 ];
 
 /*
@@ -178,6 +185,99 @@ for (const [ancho, alto, dedo] of PANTALLAS) {
     continue;
   }
   await page.waitForTimeout(1200);
+  const donde0 = `${juego.tramo} ${ancho}×${alto}${dedo ? " con el dedo" : ""}`;
+  /*
+   * **En el teléfono apaisado, lo que es solo del teléfono.** Ahí el cuadro
+   * nace recogido, la barra de arriba es una fila y lo que no es volar se
+   * guarda detrás del botón de los cuatro puntos. Se mira:
+   *
+   * - que la barra no se parta en dos pisos, que era lo primero que se veía;
+   * - que el asa del cuadro recogido no pise la palanca ni los pedales, que
+   *   son lo que se toca;
+   * - y que el menú, abierto, quepa entero y cada botón reciba el toque.
+   */
+  const telefono = await page.evaluate(() =>
+    matchMedia(
+      "(pointer: coarse) and (orientation: landscape) and (max-height: 500px)",
+    ).matches,
+  );
+  if (telefono) {
+    const tel = await page.evaluate(async () => {
+      const pisa = (a, b) =>
+        Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+        Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+      const barra = document.querySelector(".hud__arriba");
+      const boton = document.querySelector('[data-hud="menu"]');
+      const alto = barra.getBoundingClientRect().height;
+      const unBoton = boton.getBoundingClientRect().height;
+      const cuadro = document.querySelector('[data-hud="cuadro"]');
+      const recogido = cuadro.classList.contains("cuadro--bajado");
+      const asa = document
+        .querySelector('[data-hud="cuadro-tirador"]')
+        .getBoundingClientRect();
+      const asaPisa = [".pad--stick", ".pad--rudder", ".pad--throttle"]
+        .filter((q) => pisa(asa, document.querySelector(q).getBoundingClientRect()))
+        .map((q) => q.slice(1));
+      const asaFuera =
+        asa.top < 0 || asa.bottom > innerHeight || asa.left < 0 || asa.right > innerWidth;
+      boton.click();
+      await new Promise((r) => setTimeout(r, 200));
+      const caja = document.querySelector('[data-hud="menu-caja"]');
+      const abierto = getComputedStyle(caja).display !== "none";
+      const malos = [...caja.querySelectorAll("button")]
+        .filter((b) => !b.hidden)
+        .map((b) => {
+          const c = b.getBoundingClientRect();
+          if (c.width < 8) return `${b.dataset.hud} sin tamaño`;
+          if (c.left < 0 || c.top < 0 || c.right > innerWidth || c.bottom > innerHeight)
+            return `${b.dataset.hud} fuera`;
+          const p = document.elementFromPoint(c.left + c.width / 2, c.top + c.height / 2);
+          return p && (p === b || b.contains(p)) ? null : `${b.dataset.hud} tapado`;
+        })
+        .filter(Boolean);
+      boton.click();
+      await new Promise((r) => setTimeout(r, 200));
+      const cerrado = getComputedStyle(caja).display === "none";
+      return { alto, unBoton, recogido, asaPisa, asaFuera, abierto, malos, cerrado };
+    });
+    comprobar(
+      `${donde0}: la barra de arriba es una sola fila`,
+      tel.alto <= tel.unBoton * 1.4,
+      `${Math.round(tel.alto)} px de alto, un botón mide ${Math.round(tel.unBoton)}`,
+      "partida en dos pisos se metía encima del mundo: «botones invasivos»",
+    );
+    comprobar(
+      `${donde0}: el cuadro nace recogido y su asa no pisa los mandos`,
+      tel.recogido && !tel.asaFuera && tel.asaPisa.length === 0,
+      !tel.recogido
+        ? "nace abierto"
+        : tel.asaFuera
+          ? "el asa se sale"
+          : tel.asaPisa.join(", ") || "libre",
+      "abierto ocupa media pantalla y el avión no se ve; el asa lo abre de un toque",
+    );
+    comprobar(
+      `${donde0}: el menú de los cuatro puntos se abre, cabe y se cierra`,
+      tel.abierto && tel.malos.length === 0 && tel.cerrado,
+      !tel.abierto
+        ? "no se abre"
+        : tel.malos.join(" · ") || (tel.cerrado ? "todo dentro" : "no se cierra"),
+      "lo que no es volar vive ahí dentro; si no se alcanza, no existe",
+    );
+  }
+  /*
+   * **Y el cuadro, abierto para medir.** Recogido no pisa nada porque no está;
+   * lo que tiene que caber es el cuadro abierto, que es el peor caso: se
+   * abre como lo abre quien juega, tocando el asa.
+   */
+  await page.evaluate(async () => {
+    const cuadro = document.querySelector('[data-hud="cuadro"]');
+    if (!cuadro?.classList.contains("cuadro--bajado")) return;
+    document
+      .querySelector('[data-hud="cuadro-tirador"]')
+      ?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 500));
+  });
   /*
    * **Y la tarjeta del destino, en lo más grande que puede ponerse.**
    *

@@ -8987,3 +8987,452 @@ button.motor__tecla::after {
 .hud.hud--cabina .pictos {
   justify-items: start;
 }
+
+/*
+ * ── **Los pictogramas, solo con el cuadro recogido** ──
+ *
+ * La tortuga y el pájaro, el cerro, el horizonte y la hélice estaban puestos
+ * a la vez que el cuadro de mandos, que desde que sale en los cuatro peldaños
+ * dice lo mismo y mejor: la cinta con su banda, la rosa, la aguja del motor.
+ * Dos instrumentos para lo mismo, uno encima del otro, y el que sobraba era el
+ * grande y naranja de la esquina. Dicho jugando: «¿para qué ponerlos si se
+ * tiene el cuadro de cabina? Yo no lo miro para nada».
+ *
+ * Así que salen **solo con el cuadro recogido**, que es cuando no hay otra
+ * cosa que diga cómo va el avión; y desde la cabina tampoco, que ahí lo dice
+ * el panel del propio avión. El gas no está aquí: el motor con sus dos
+ * flechas es el mando del gas con el dedo, no un indicador, y se queda.
+ */
+.hud:not(.hud--cuadro-bajado) .pictos,
+.hud.hud--cabina .pictos {
+  display: none;
+}
+
+/*
+ * ── El menú del teléfono, fuera del teléfono ──
+ *
+ * La caja no existe —sus botones siguen en la barra como siempre— y el botón
+ * que la abre y el de la pantalla completa no salen. Ver la regla del
+ * teléfono, justo debajo.
+ */
+.hud__menu {
+  display: contents;
+}
+
+.hud .hud__menu-boton,
+.hud .pantalla-completa,
+.hud .cuadro__esfera {
+  display: none;
+}
+
+.pantalla-completa[aria-pressed="true"] .pantalla-completa__entrar,
+.pantalla-completa:not([aria-pressed="true"]) .pantalla-completa__salir {
+  display: none;
+}
+
+/*
+ * ── **El teléfono apaisado, que es la pantalla del juego** ──
+ *
+ * Todo lo de arriba se pensó para la tablet del aula, y el teléfono heredó el
+ * mismo reparto dibujado al sesenta por ciento. Visto en el teléfono de
+ * Enrique, con capturas: la barra de botones en dos pisos, una tarjeta naranja
+ * en mitad de la pantalla tapando el avión —«un botón central que no sé para
+ * qué es»—, los pictogramas, la columna de mandos y un cuadro de doscientos
+ * píxeles que no se leía. «En Paraguay la gente tiene teléfonos más que
+ * dientes»: el teléfono no es el caso raro, es el caso.
+ *
+ * El reparto del teléfono, en dos líneas:
+ *
+ * - **Arriba, una sola fila**: a la izquierda la vista, la orden —pequeña, y
+ *   con su frase donde se lee— y, con el cuadro recogido, los pictogramas; a
+ *   la derecha lo que el vuelo enciende y el botón de los cuatro puntos, que
+ *   guarda el resto.
+ * - **Abajo, los pulgares y el asa del cuadro**: palanca a la izquierda, gas a
+ *   la derecha con sus botones encima, pedales en medio y el cuadro recogido
+ *   encima de ellos, que se abre de un toque y abierto se lee.
+ *
+ * El centro queda para el avión y el mundo.
+ *
+ * La consulta es la misma que `TELEFONO_APAISADO` de `ui/telefono.ts`: si
+ * cambia una, cambia la otra (lo vigila `telefono.test.ts`). Con `.hud`
+ * delante y al final de la hoja, para ganarle a las reglas de pantalla baja y
+ * de dedo de más arriba.
+ */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  /*
+   * **Los bordes, contando la muesca en píxeles de pantalla.** Lo que se
+   * coloca contra un lado dentro del HUD reducido se reduce con él, también
+   * el margen seguro: una cámara que se come cuarenta píxeles dejaba el ojo
+   * a veintiocho del borde, medio metido debajo. Dividido por la escala,
+   * mide en pantalla lo que mide la muesca.
+   */
+  .hud {
+    --borde-izq: max(16px, calc(env(safe-area-inset-left) / var(--escala, 1)));
+    --borde-der: max(
+      16px,
+      calc(env(safe-area-inset-right) / var(--escala, 1))
+    );
+    --borde-arriba: max(
+      16px,
+      calc(env(safe-area-inset-top) / var(--escala, 1))
+    );
+  }
+
+  .hud .hud__vistas {
+    top: var(--borde-arriba);
+    left: var(--borde-izq);
+  }
+
+  /*
+   * **La barra, a la derecha y en una fila.** Sin la insignia —el nombre del
+   * avión y del campo, que es texto largo y quien juega ya sabe dónde está—,
+   * lo que queda es lo que el vuelo enciende: los puntos de la misión, los
+   * galones, el piloto automático y el cinturón. Se estira hasta el botón del
+   * menú, que vive en la esquina.
+   */
+  .hud .hud__arriba {
+    grid-column: 2 / 4;
+    justify-self: end;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    padding-inline: 0;
+    min-height: var(--tacto);
+    margin-right: calc(
+      var(--borde-der) + var(--tacto) + 10px - var(--reserva-derecha, 112px) /
+        var(--escala, 1)
+    );
+  }
+
+  /*
+   * Y la columna de mandos, con los botones redondos lado a lado, como ya
+   * iba por debajo de 460 de alto: hay teléfonos de 480 y en columna el
+   * destino se le iba hacia los pedales.
+   */
+  .hud .hud__derecha {
+    grid-template-columns: repeat(3, auto);
+    justify-content: end;
+    align-items: center;
+  }
+
+  .hud .hud__derecha > .tarjeta {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .hud .hud__derecha > .freno--boton,
+  .hud .hud__derecha > .mando {
+    margin-top: 0;
+  }
+
+  .hud [data-hud="badge"] {
+    display: none;
+  }
+
+  .hud .hud__menu {
+    display: none;
+  }
+
+  .hud .hud__menu-boton {
+    display: grid;
+    position: absolute;
+    top: var(--borde-arriba);
+    right: var(--borde-der);
+  }
+
+  /*
+   * Abierto, los botones en una rejilla encima del vuelo, colgando del botón
+   * que la abre. Más grandes que en la barra: aquí no hay que ahorrar sitio,
+   * y se eligen con el dedo.
+   */
+  .hud.hud--menu .hud__menu {
+    display: grid;
+    position: absolute;
+    top: calc(var(--borde-arriba) + var(--tacto) + 10px);
+    right: var(--borde-der);
+    grid-template-columns: repeat(4, auto);
+    gap: 14px;
+    padding: 16px;
+    border-radius: var(--r-l);
+    background: var(--barniz), var(--barro);
+    border: 1px solid var(--linea);
+    box-shadow: var(--filo), var(--poso);
+    pointer-events: auto;
+    z-index: 30;
+  }
+
+  .hud.hud--menu .hud__menu > .sonido {
+    width: calc(var(--tacto) * 1.25);
+    height: calc(var(--tacto) * 1.25);
+  }
+
+  .hud.hud--menu .hud__menu > .sonido svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .hud.hud--menu .pantalla-completa {
+    display: grid;
+  }
+
+  .hud.hud--menu .hud__menu-boton {
+    border-color: var(--ocre);
+    color: var(--ocre);
+  }
+
+  /*
+   * **La orden, arriba y del tamaño de un botón.**
+   *
+   * Era una tarjeta de cien píxeles con un dibujo de setenta, a media altura
+   * y al lado del avión: se leía como un botón gordo sin saber de qué. Arriba
+   * y pequeña es lo que es —lo que toca hacer ahora— y deja libre el avión.
+   * Con su frase al lado donde se lee, en letra de teléfono: dentro del HUD
+   * reducido, los diecisiete píxeles de la tablet se quedaban en diez.
+   *
+   * **A la izquierda y no en el centro.** En el centro caía encima del avión
+   * en cuanto se abría el cuadro, que sube la cámara hasta la fila de arriba.
+   * Va en el rincón, que en el teléfono se muda a la fila de arriba al lado
+   * de la vista: primero la orden y después los pictogramas, que es el orden
+   * en que se mira.
+   */
+  .hud .rincon .senal {
+    /* En pantalla, no en el HUD reducido: `vw` también se reduce. */
+    max-width: calc(46vw / var(--escala, 1));
+    gap: 10px;
+    padding: 4px;
+    border-radius: var(--r-m);
+  }
+
+  .hud .senal:has(.senal__texto:not(:empty)) {
+    padding-right: 14px;
+  }
+
+  .hud .senal__dibujo {
+    width: calc(40px / var(--escala, 1));
+    height: calc(40px / var(--escala, 1));
+    border-radius: calc(var(--r-m) * 0.8);
+  }
+
+  .hud .senal__letra {
+    min-width: calc(40px / var(--escala, 1));
+    height: calc(40px / var(--escala, 1));
+    font-size: calc(22px / var(--escala, 1));
+  }
+
+  .hud .senal__texto {
+    font-size: calc(14px / var(--escala, 1));
+    line-height: 1.2;
+  }
+
+  /*
+   * **El cuadro, legible cuando se abre.** Medio alto de pantalla, que es lo
+   * que hace falta para leer una esfera en un teléfono, y nunca más ancho que
+   * el hueco entre la palanca y la columna de mandos.
+   *
+   * Dividido por la escala, y esto es lo que lo tenía en doscientos píxeles:
+   * dentro del HUD reducido también se reducen `vw` y `vh`, así que un «34vh»
+   * era un veinte por ciento de pantalla y el hueco entre los pulgares se
+   * contaba un cuarenta por ciento más estrecho de lo que es.
+   */
+  .hud .cuadro {
+    width: min(
+      calc(
+        100vw / var(--escala, 1) - 2 *
+          (var(--reserva-derecha, 112px) / var(--escala, 1) +
+            var(--columna-ancho, 132px) + 12px)
+      ),
+      /*
+       * Y nunca tan alto que su asa llegue a la fila de arriba y a los
+       * subtítulos: con la barra del navegador puesta quedan 330 de alto, y
+       * medio alto de cuadro más los pedales llegaban hasta arriba.
+       */
+      calc(
+        min(50vh, 100vh - 210px) / var(--escala, 1) *
+          var(--cuadro-proporcion)
+      )
+    );
+    --tirador-asoma: 0px;
+  }
+
+  /*
+   * Y su asa, una pestaña encima del cuadro y no una franja de su ancho: el
+   * cuadro nace recogido y lo que queda encima de los pedales tiene que
+   * decir qué hay debajo —la esfera— y hacia dónde se abre —la flecha—.
+   * Grande para el dedo: ciento cincuenta por treinta y dos de pantalla.
+   */
+  .hud .cuadro__tirador {
+    width: calc(150px / var(--escala, 1));
+    height: calc(32px / var(--escala, 1));
+    transform: translate(-50%, -100%);
+    grid-auto-flow: column;
+    gap: calc(8px / var(--escala, 1));
+    justify-content: center;
+    border-radius: calc(16px / var(--escala, 1)) calc(16px / var(--escala, 1))
+      0 0;
+  }
+
+  .hud .cuadro__tirador svg {
+    width: calc(22px / var(--escala, 1));
+    height: calc(22px / var(--escala, 1));
+  }
+
+  /*
+   * Recogida, una píldora con su filo: la sombra de siempre, recortada por el
+   * asa, dibujaba un rectángulo oscuro alrededor.
+   */
+  .hud .cuadro--bajado .cuadro__tirador {
+    border-radius: calc(16px / var(--escala, 1));
+    border: 1px solid var(--linea-fuerte, rgba(228, 226, 218, 0.34));
+    box-shadow: none;
+  }
+
+  /* Y recogido, se ve el asa y nada más: el recorte de siempre dejaba ver
+     la sombra de la visera de lado a lado, una franja oscura sin nada. */
+  .hud .cuadro--bajado {
+    clip-path: inset(
+      calc(-40px / var(--escala, 1)) calc(50% - 80px / var(--escala, 1)) 100%
+    );
+  }
+
+  /*
+   * Y el dibujo, apagado del todo mientras está recogido: la sombra que echa
+   * hacia arriba asomaba alrededor del asa, y lo que no se ve tampoco tiene
+   * que pintarse. Se apaga al acabar de bajar, para que baje entero; al
+   * subir se enciende en el acto. El HUD deja de moverlo: ver `Hud.update`.
+   */
+  .hud .cuadro .tablero {
+    transition: visibility 0s;
+  }
+
+  .hud .cuadro--bajado .tablero {
+    visibility: hidden;
+    transition: visibility 0s linear 260ms;
+  }
+
+  .hud .cuadro--bajado .cuadro__esfera {
+    display: block;
+    transform: none;
+  }
+
+  /*
+   * **Los pictogramas, en una tira y del alto de un botón.** Con el cuadro
+   * recogido son lo único que dice cómo va el avión; pero son un resumen que
+   * se mira de reojo, no cuatro tarjetas naranjas compitiendo con el avión.
+   * En la fila de arriba, detrás de la orden y en el barro oscuro de los
+   * botones: el rincón entero se muda ahí, y a la derecha se quedan solos
+   * los mandos.
+   */
+  .hud .rincon {
+    top: var(--borde-arriba);
+    left: calc(var(--borde-izq) + var(--tacto) + 14px);
+    right: auto;
+  }
+
+  .hud .pictos {
+    grid-template-columns: repeat(4, auto);
+    gap: 6px;
+  }
+
+  .hud .picto {
+    padding: 2px 6px;
+    border-radius: var(--r-m);
+    background: var(--barniz), var(--barro);
+  }
+
+  .hud .picto svg {
+    height: calc(var(--tacto) - 6px);
+  }
+
+  .hud .picto:first-child svg {
+    width: calc(var(--tacto) * 2.6);
+  }
+
+  /*
+   * Y lo que se centraba en el hueco que dejaba el rincón a su izquierda —la
+   * lámpara de la torre y los subtítulos— vuelve al centro: en el teléfono el
+   * rincón está a la izquierda, y ese hueco es la esquina de la cámara.
+   */
+  .hud .torre,
+  .hud .hud__abajo > [data-hud="hint"] {
+    left: 50%;
+    max-width: calc(100% - 32px);
+  }
+
+  /*
+   * **El tutor, encima de la palanca**, que es donde hay hueco y no tapa el
+   * avión ni el cuadro abierto: estrecho, para no llegar a él. Y en letra de
+   * teléfono, por lo mismo que la orden.
+   */
+  .hud .tutor {
+    left: var(--borde-izq);
+    bottom: calc((max(20px, env(safe-area-inset-bottom)) + 150px + 10px) /
+          var(--escala, 1));
+    top: auto;
+    transform: none;
+    max-width: calc(180px / var(--escala, 1));
+    padding: 8px 12px;
+  }
+
+  .hud .tutor__texto {
+    font-size: calc(13px / var(--escala, 1));
+    max-width: none;
+  }
+
+  /*
+   * Y en dos columnas, el dibujo al lado de la frase y la barra debajo de
+   * ella: apilado medía noventa píxeles y, con la barra del navegador
+   * puesta, subía desde la palanca hasta tapar la pausa.
+   */
+  .hud .tutor {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: calc(10px / var(--escala, 1));
+    row-gap: calc(4px / var(--escala, 1));
+    justify-items: start;
+    align-items: center;
+  }
+
+  .hud .tutor__pista {
+    grid-row: span 2;
+  }
+
+  .hud .tutor__barra {
+    width: 100%;
+    height: calc(6px / var(--escala, 1));
+  }
+
+  .hud .tutor__glifo {
+    font-size: calc(30px / var(--escala, 1));
+  }
+
+  /*
+   * Los subtítulos, por delante del asa del cuadro abierto: en 330 de alto
+   * el asa sube hasta su fila, y un mensaje tapado es un mensaje que no
+   * llegó. Dejan pasar el toque, así que el asa se sigue pudiendo tocar.
+   */
+  .hud .hud__abajo > [data-hud="hint"] {
+    z-index: 7;
+  }
+
+  /* Y el resto de lo que se lee, también en letra de teléfono. */
+  .hud .hud__abajo > [data-hud="hint"],
+  .hud .torre__texto,
+  .hud .radio {
+    font-size: calc(13px / var(--escala, 1));
+  }
+
+  /*
+   * La radio, en una línea: vive en la barra de arriba, y partida en dos
+   * estiraba la barra y bajaba con ella la columna de mandos entera. Las
+   * frases de la radio son cortas —«tripulación, sentados para el
+   * despegue»— y caben; la voz dice el resto.
+   */
+  .hud .radio {
+    max-width: calc(36vw / var(--escala, 1));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hud .aviso-hud {
+    font-size: calc(17px / var(--escala, 1));
+  }
+}

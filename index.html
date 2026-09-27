@@ -95,13 +95,29 @@
     <!--
       Y el manifiesto, que es lo que convierte esto en algo instalable.
 
-      `display: standalone` y `orientation: landscape` no son adornos: en la
-      tablet de un aula, el juego abierto desde el escritorio y sin barra de
-      navegador es lo que hace que no se toque nada por error, y volar en
-      vertical no tiene sentido con la pantalla partida en tres columnas.
+      `display: fullscreen` y `orientation: landscape` no son adornos: en un
+      teléfono apaisado la barra del navegador se come un tercio del alto, y
+      el juego abierto desde su icono no lleva ni esa barra ni la de estado.
+      En la tablet del aula, además, sin barra no se toca nada por error. Y
+      volar de pie no tiene sentido con la pantalla partida en tres columnas.
+      Donde no hay pantalla completa, el navegador cae solo a `standalone`.
     -->
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icono-192.png" />
+    <!--
+      **Y el iPhone, que no lee el manifiesto para esto.** Safari no deja que
+      una página pida la pantalla completa —ver `ui/pantalla-completa.ts`—, y
+      lo único que la da es añadirla a la pantalla de inicio. Estas tres son
+      las que hacen que desde ese icono se abra sin barra ninguna, con la
+      barra de estado transparente sobre el juego y con su nombre debajo.
+    -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Óga Veve" />
 
     <!--
       **Cómo se ve este enlace cuando alguien lo comparte.**
