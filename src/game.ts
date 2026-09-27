@@ -462,16 +462,14 @@ import { apuntarVuelo, type Paso } from "./flight/bitacora";
 import { plano } from "./ui/hangar";
 import { superficieEn, TRAQUETEO, type Superficie } from "./world/superficie";
 import { mapaDePavimento, type Pavimento } from "./world/vegetation";
-import {
-  AvisosDeAltura,
-  ESCALONES,
-  ESCALONES_EN_PIES,
-} from "./flight/avisos-de-altura";
+import { AvisosDeAltura, laCuentaDe } from "./flight/avisos-de-altura";
 import {
   canalesDe,
+  cantaLaCabina,
   claveDelAviso,
   EN_GRANDE,
   EN_GRANDE_EN_PIES,
+  type Canto,
 } from "./flight/escalera";
 import { avisoDeTerreno, fueraDeLaSenda } from "./flight/aviso-de-terreno";
 import { loQueSePasa } from "./flight/limites";
@@ -2101,12 +2099,16 @@ export class Game {
    *
    * Vive en el juego y no en el HUD porque no es un adorno de pantalla: es lo
    * que enseña el ritmo de la recogida, y se dice **y** se dibuja.
+   *
+   * No es `readonly` porque cambia con el peldaño: sus escalones son los del
+   * instrumento, y subir a Taguato Ruvicha pasa la cabina a pies. Ver
+   * `laCuentaDeHoy`.
    */
-  private readonly avisosDeAltura: AvisosDeAltura;
+  private avisosDeAltura: AvisosDeAltura;
   /** Si el avión viene a posarse: embudo de final o sobre la pista. */
   private esUnaToma = false;
   /** La altura sobre la pista en grande: 150, 100 y 50. Ver `escalera.ts`. */
-  private readonly alturaEnGrande: AvisosDeAltura;
+  private alturaEnGrande: AvisosDeAltura;
   /** Segundos seguidos fuera de la banda de velocidad. Ver el bucle. */
   private fueraDeBanda = 0;
   /** Qué se dijo la última vez, para no repetirlo mientras siga igual. */
@@ -2726,13 +2728,12 @@ export class Game {
       ? mapaDePavimento(this.scenario.aerodrome)
       : null;
     /*
-     * Los escalones que canta el radioaltímetro **son los que marca el
-     * instrumento**: metros donde la cabina va en metros, pies donde va en
-     * pies. Ver `ESCALONES_EN_PIES`.
+     * Los escalones de la cuenta dependen del avión y del peldaño: los del
+     * radioaltímetro en el que lo lleva, los del instrumento en los demás. Y
+     * del avión que viene en las opciones, que `this.aircraft` se pone más
+     * abajo. Ver `laCuentaDeHoy`.
      */
-    this.avisosDeAltura = new AvisosDeAltura(
-      this.tier.units === "aeronautical" ? ESCALONES_EN_PIES : ESCALONES,
-    );
+    this.avisosDeAltura = this.laCuentaDeHoy(options.aircraft ?? PYKASU);
     /*
      * Y el segundo contador: el de la altura **en grande**, que es otro canal
      * y por eso es otro contador. La cuenta atrás de arriba es la voz —cien,
@@ -4268,6 +4269,12 @@ export class Game {
      * elogios: que te digan «bien» no puede pisar a nadie.
      */
     urgencia: Urgencia = "normal",
+    /**
+     * Y si esto es un aviso o **la cuenta de la toma**, que no sube por la
+     * escalera: en el avión que la lleva la canta la máquina en los cuatro
+     * peldaños. Ver `cantaLaCabina` en `flight/escalera.ts`.
+     */
+    canto: Canto = "aviso",
   ): void {
     const deCabina = claveDeCabina(ingles);
     /*
@@ -4283,7 +4290,7 @@ export class Game {
      */
     const hayQuienLoCante =
       !deCabina || loDiceElAvion(deCabina, this.aircraft);
-    if (canalesDe(this.tier.avisos).cabina && hayQuienLoCante) {
+    if (cantaLaCabina(this.tier.avisos, canto) && hayQuienLoCante) {
       /*
        * **Y con la grabación de cabina si la hay.**
        *
@@ -7991,11 +7998,19 @@ export class Game {
     );
     // Con su clave, que sin ella la cifra en casa no tenía grabación que
     // buscar. Ver `escalon` en `flight/avisos-de-altura.ts`.
+    /*
+     * **Y es la cuenta, no un aviso.** En el avión que lleva radioaltímetro
+     * que canta la dice la máquina en los cuatro peldaños, en inglés y en
+     * pies, y la instructora no cuenta por encima: un suceso, una voz. En los
+     * demás la sigue diciendo ella, en casa. Ver `cantaLaCabina`.
+     */
     if (aviso)
       this.cantar(
         aviso.dice,
         aviso.clave ? t(aviso.clave as TranslationKey) : aviso.encasa,
         aviso.clave,
+        "normal",
+        "cuenta",
       );
 
     /*
@@ -12374,6 +12389,19 @@ export class Game {
   }
 
   /**
+   * **La cuenta de la toma de este avión en este peldaño**: la de la máquina
+   * si la lleva, o la de la instructora en las unidades del instrumento. Ver
+   * `laCuentaDe`.
+   *
+   * Y se rehace al cambiar de peldaño, que no se hacía: se fijaba al arrancar,
+   * y quien subía de Taguato a Taguato Ruvicha seguía oyendo la cuenta en
+   * metros con la cabina ya en pies. Lo mismo la altura en grande.
+   */
+  private laCuentaDeHoy(avion: AircraftConfig): AvisosDeAltura {
+    return new AvisosDeAltura(laCuentaDe(avion, this.tier.units));
+  }
+
+  /**
    * Sube o baja un peldaño de la escalera de dificultad.
    *
    * Cambia el motor de vuelo si hace falta, las unidades y los instrumentos.
@@ -12388,6 +12416,10 @@ export class Game {
 
     this.tier = next;
     rememberTier(next);
+    this.avisosDeAltura = this.laCuentaDeHoy(this.aircraft);
+    this.alturaEnGrande = new AvisosDeAltura(
+      next.units === "aeronautical" ? EN_GRANDE_EN_PIES : EN_GRANDE,
+    );
     this.flight = this.buildFlightModel(next);
     this.flight.reset(carried);
 
