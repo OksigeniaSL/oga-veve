@@ -842,7 +842,7 @@ export function pantallaDeMotores(
     <text x="${ancho / 2}" y="20" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
     ${mandoDeMotor(12, cy + r + 46, hueco, n)}
-    ${aireYCabina(ancho, cy + r + 78)}
+    ${aireYCabina(ancho, cy + r + 68)}
     ${reglaDeCombustible(40, alto - 156, ancho - 80, 16)}
     ${c.flaps.length > 1 ? reglaDeFlaps(40, alto - 96, ancho - 80, 26, c.flaps) : ""}
     ${lucesDeTren(14, yTren, patas)}
