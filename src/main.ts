@@ -82,6 +82,7 @@ import { vecinosQueSeMontan } from "./world/vecinos-del-vuelo";
 import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { leerRearranque } from "./flight/cambio-de-avion";
+import { pedirAlPrimerToque } from "./ui/pantalla-completa";
 
 /** La sesión de la pestaña, si el navegador la da. Ver `leerRearranque`. */
 function sesionDeLaPestana(): Storage | null {
@@ -105,6 +106,14 @@ try {
 }
 
 setLocale(detectLocale());
+
+/*
+ * **Y en el teléfono, la pantalla entera al primer toque.** Aquí y no en el
+ * vuelo porque el primer toque es el de elegir piloto: esperar al vuelo sería
+ * pasar la elección entera con la barra del navegador comiéndose un tercio.
+ * Ver `ui/pantalla-completa.ts`.
+ */
+pedirAlPrimerToque();
 
 /**
  * **Las migas del arranque**, solo en desarrollo.

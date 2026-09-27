@@ -584,10 +584,21 @@ export class Tablero {
     return this.raiz !== null;
   }
 
-  update(d: DatosDelTablero, dt: number): void {
+  update(d: DatosDelTablero, dt: number, dibujar = true): void {
     const raiz = this.raiz;
     const c = this.cuadro;
     if (!raiz || !c) return;
+    /*
+     * **Recogido y fuera de la vista, no se dibuja: solo se canta.** Son
+     * seiscientos elementos de SVG moviéndose cada fotograma detrás de un
+     * recorte, y en el teléfono —donde el cuadro nace recogido— era trabajo
+     * tirado en el aparato que menos tiene. La línea del lector de pantalla
+     * sigue: quien no ve la pantalla no ha recogido nada. Ver `Hud.update`.
+     */
+    if (!dibujar) {
+      this.cantar(d, dt);
+      return;
+    }
 
     if (this.familia === "esferas" && this.seisPack.present) {
       this.seisPack.update(

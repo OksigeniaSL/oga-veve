@@ -56,6 +56,17 @@ import type { Galon } from "../flight/galones";
 import { manga as dibujarManga, MANGA_ALTO } from "./manga";
 import { reconocer } from "../flight/reconocimiento";
 import { aPxDelHud, escribirRincon } from "./escala";
+import {
+  ahoraEsTelefonoApaisado,
+  esTelefono,
+  esTelefonoApaisado,
+} from "./telefono";
+import {
+  alCambiarPantallaCompleta,
+  alternarPantallaCompleta,
+  enPantallaCompleta,
+  seOfrecePantallaCompleta,
+} from "./pantalla-completa";
 import { avisaLaPerdida } from "../flight/avisos-de-actitud";
 
 /**
@@ -199,6 +210,24 @@ const HANGAR = `
              M6.2 21 V13.4 h11.6 V21 Z" />
     <path d="M6.2 16.6 h11.6" stroke="currentColor" stroke-width="1.2"
           opacity="0.5" />
+  </svg>`;
+
+/**
+ * **Las cuatro esquinas de la pantalla completa**, hacia fuera para entrar y
+ * hacia dentro para salir: es el dibujo que lleva ese mando en cualquier
+ * reproductor de vídeo, y es el que ya conoce quien ha visto uno. Van los dos
+ * y la hoja enseña el que toca según `aria-pressed`.
+ */
+const PANTALLA_COMPLETA = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <g class="pantalla-completa__entrar" fill="none" stroke="currentColor"
+       stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />
+    </g>
+    <g class="pantalla-completa__salir" fill="none" stroke="currentColor"
+       stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5" />
+    </g>
   </svg>`;
 
 /** La mano abierta de parar. La misma que el botón de freno, a propósito. */
@@ -599,7 +628,68 @@ export class Hud {
       this.ponerCuadroBajado(!bajadoAhora);
       ponerTexto("cuadro-bajado", this.cuadroBajado ? "1" : "0");
     });
+    /*
+     * **El menú del teléfono**, por delegación como el tirador y por lo
+     * mismo: `render` rehace los botones y la escucha tiene que sobrevivirle.
+     *
+     * Se abre y se cierra con su botón, y se cierra solo en cuanto se usa lo
+     * que hay dentro —el clic del botón ya hizo lo suyo cuando llega aquí,
+     * porque sube desde él— o se toca cualquier otra cosa: un menú que se
+     * queda abierto encima del vuelo es otra cosa que tapa el avión.
+     */
+    this.root.addEventListener("click", (e) => {
+      const donde = e.target as HTMLElement | null;
+      if (donde?.closest('[data-hud="menu"]')) {
+        this.abrirMenu(!this.root.classList.contains("hud--menu"));
+        return;
+      }
+      if (donde?.closest('[data-hud="pantalla-completa"]'))
+        alternarPantallaCompleta();
+      if (donde?.closest('[data-hud="menu-caja"] button')) this.abrirMenu(false);
+    });
+    window.addEventListener(
+      "pointerdown",
+      (e) => {
+        if (!this.root.classList.contains("hud--menu")) return;
+        const donde = e.target as HTMLElement | null;
+        if (donde?.closest('[data-hud="menu-caja"], [data-hud="menu"]')) return;
+        this.abrirMenu(false);
+      },
+      true,
+    );
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.root.classList.contains("hud--menu"))
+        this.abrirMenu(false);
+    });
+    alCambiarPantallaCompleta(() => this.pintarPantallaCompleta());
     this.render();
+  }
+
+  /** Abre o cierra el menú del teléfono. Fuera del teléfono no se ve. */
+  private abrirMenu(abierto: boolean): void {
+    this.root.classList.toggle("hud--menu", abierto);
+    this.root
+      .querySelector('[data-hud="menu"]')
+      ?.setAttribute("aria-expanded", String(abierto));
+  }
+
+  /**
+   * El botón de la pantalla completa dice si está puesta: las esquinas hacia
+   * fuera para entrar y hacia dentro para salir. Y no existe donde el
+   * navegador no deja pedirla —el iPhone— o donde ya se abrió como aplicación.
+   */
+  private pintarPantallaCompleta(): void {
+    const boton = this.root.querySelector<HTMLElement>(
+      '[data-hud="pantalla-completa"]',
+    );
+    if (!boton) return;
+    boton.hidden = !seOfrecePantallaCompleta();
+    const puesta = enPantallaCompleta();
+    boton.setAttribute("aria-pressed", String(puesta));
+    boton.setAttribute(
+      "aria-label",
+      t(puesta ? "hud.salirPantallaCompleta" : "hud.pantallaCompleta"),
+    );
   }
 
   /**
@@ -618,8 +708,18 @@ export class Hud {
     ponerTexto("cuadro-bajado", this.cuadroBajado ? "1" : "0");
   }
 
-  /** Si el cuadro está bajado ahora mismo. Se guarda por perfil. */
-  private cuadroBajado = leerTexto("cuadro-bajado") === "1";
+  /**
+   * Si el cuadro está bajado ahora mismo. Se guarda por perfil.
+   *
+   * **Y en el teléfono nace recogido**, mientras nadie diga otra cosa. En
+   * cuatrocientos píxeles de alto, el cuadro abierto y legible ocupa media
+   * pantalla, y la otra media es la palanca y los pedales: el avión no se
+   * veía. «Aviones que ni se aprecian.» Recogido queda su asa encima de los
+   * pedales, y se abre de un toque cuando se quiera mirar. Lo que se elija a
+   * partir de ahí se guarda y manda.
+   */
+  private cuadroBajado =
+    (leerTexto("cuadro-bajado") ?? (esTelefono() ? "1" : "0")) === "1";
 
   /**
    * Baja o sube el cuadro de mandos.
@@ -632,6 +732,11 @@ export class Hud {
     this.cuadroBajado = bajado;
     const cuadro = this.root.querySelector('[data-hud="cuadro"]');
     cuadro?.classList.toggle("cuadro--bajado", bajado);
+    /*
+     * Y lo sabe la raíz, que es quien decide si hay pictogramas: fuera
+     * mientras el cuadro está a la vista. Ver `.pictos` en la hoja.
+     */
+    this.root.classList.toggle("hud--cuadro-bajado", bajado);
     const tirador = this.root.querySelector('[data-hud="cuadro-tirador"]');
     tirador?.setAttribute("aria-pressed", String(bajado));
     tirador?.setAttribute(
@@ -880,6 +985,24 @@ export class Hud {
         -->
         <div class="radio" data-hud="radio" hidden role="status"></div>
         <!--
+          **Lo que no es volar, en una caja que en el teléfono se recoge.**
+
+          En la tablet y el portátil la caja no existe —\`display: contents\`,
+          sus botones siguen en la barra como siempre—. En un teléfono
+          apaisado eran nueve botones redondos que partían la barra en dos
+          pisos y se metían encima del mundo: «botones invasivos». Ahí se
+          recogen detrás de uno solo, el de los cuatro puntos, y se abren
+          encima del vuelo al tocarlo. Ver la regla del teléfono en la hoja.
+        -->
+        <div class="hud__menu" id="hud-menu" data-hud="menu-caja">
+        <!--
+          La pantalla completa, que solo sale en ese menú y solo donde el
+          navegador la deja pedir. Ver ui/pantalla-completa.ts.
+        -->
+        <button class="sonido pantalla-completa" type="button"
+                data-hud="pantalla-completa" aria-pressed="false" hidden
+                aria-label="${t("hud.pantallaCompleta")}">${PANTALLA_COMPLETA}</button>
+        <!--
           Botón de sonido. Es un botón de verdad y no un adorno: se pulsa con
           el dedo, se enfoca con el tabulador y dice su estado. Existe porque
           la tecla V silenciaba sin dejar rastro en pantalla, y un estado
@@ -901,6 +1024,19 @@ export class Hud {
         -->
         <button class="sonido" type="button" data-hud="hangar"
                 aria-label="${t("hangar.volver")}">${HANGAR}</button>
+        </div>
+        <!--
+          Y el botón que la abre, que solo existe en el teléfono. Cuatro
+          puntos en cuadro: los botones redondos que hay dentro, dibujados.
+        -->
+        <button class="sonido hud__menu-boton" type="button" data-hud="menu"
+                aria-expanded="false" aria-controls="hud-menu"
+                aria-label="${t("hud.menu")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="7.5" cy="7.5" r="2.6" /><circle cx="16.5" cy="7.5" r="2.6" />
+            <circle cx="7.5" cy="16.5" r="2.6" /><circle cx="16.5" cy="16.5" r="2.6" />
+          </svg>
+        </button>
       </div>
       <div class="hud__izquierda">
         ${numbers ? gauge("speed", INSTRUMENTS.speed, t("hud.speed"), this.units.speedLabel()) : ""}
@@ -1201,6 +1337,19 @@ export class Hud {
                  <button class="sonido cuadro__tirador" type="button"
                          data-hud="cuadro-tirador" aria-pressed="false"
                          aria-label="${t("hud.bajarCuadro")}">
+                   <!--
+                     Y en el teléfono, donde nace recogido, una esfera al
+                     lado de la flecha: el asa sola es una raya con un
+                     «^», y lo que hay que saber es que ahí debajo están
+                     los relojes. Fuera del teléfono no se enseña.
+                   -->
+                   <svg class="cuadro__esfera" viewBox="0 0 24 24" aria-hidden="true">
+                     <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor"
+                             stroke-width="2.2" />
+                     <path d="M12 12 16.6 7.4" fill="none" stroke="currentColor"
+                           stroke-width="2.4" stroke-linecap="round" />
+                     <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                   </svg>
                    <svg viewBox="0 0 24 24" aria-hidden="true">
                      <path d="M6 9.5 12 15l6-5.5" fill="none"
                            stroke="currentColor" stroke-width="2.4"
@@ -1448,6 +1597,10 @@ export class Hud {
     // Y el cuadro se queda como lo dejó quien juega: el marcado nuevo nace
     // sin la clase. Ver `ponerCuadroBajado`.
     this.ponerCuadroBajado(this.cuadroBajado);
+    // Y el menú del teléfono nace cerrado, con su botón de pantalla completa
+    // diciendo lo que hay: el marcado es nuevo.
+    this.abrirMenu(false);
+    this.pintarPantallaCompleta();
     /*
      * **Y los mandos que este avión y este peldaño sí tienen, también.**
      *
@@ -1494,7 +1647,16 @@ export class Hud {
    */
   private reservarArriba(): void {
     let abajo = 0;
-    for (const sel of ['[data-hud="pictos"]', ".hud__arriba", ".hud__vistas"]) {
+    /*
+     * Y en el teléfono, la tarjeta de la orden: ahí el rincón sube a la fila
+     * de arriba, y lo que se ponga debajo —la lámpara de la torre, los
+     * subtítulos— tiene que empezar donde acaba ella, que es más alta que los
+     * botones. En la tablet cuelga de la esquina de la derecha y no está
+     * encima de nada que se centre.
+     */
+    const lista = ['[data-hud="pictos"]', ".hud__arriba", ".hud__vistas"];
+    if (esTelefonoApaisado()) lista.push('[data-hud="senal"]');
+    for (const sel of lista) {
       const caja = this.root.querySelector(sel)?.getBoundingClientRect();
       if (!caja) continue;
       /*
@@ -2186,6 +2348,12 @@ export class Hud {
           presion: mandos?.presion ?? null,
         },
         dt,
+        /*
+         * En el teléfono, recogido es recogido del todo —ni la visera
+         * asoma—, así que no se dibuja lo que no se ve. En la tablet asoma la
+         * visera con sus luces de aviso, y ésas sí tienen que seguir vivas.
+         */
+        !(this.cuadroBajado && ahoraEsTelefonoApaisado()),
       );
     }
 
