@@ -83,6 +83,7 @@ import { guardarAlSalir, leerTexto, ponerTexto } from "./datos/guardado";
 import { elegirPiloto } from "./ui/pantalla-pilotos";
 import { leerRearranque } from "./flight/cambio-de-avion";
 import { pedirAlPrimerToque } from "./ui/pantalla-completa";
+import { ensenarAnadirAInicio } from "./ui/anadir-a-inicio";
 
 /** La sesión de la pestaña, si el navegador la da. Ver `leerRearranque`. */
 function sesionDeLaPestana(): Storage | null {
@@ -241,6 +242,13 @@ let destino: string | undefined = rearranque
  * Con la dirección puesta —`?escenario=`— no se pregunta: eso es un banco de
  * pruebas o un enlace directo, y ahí interrumpir sería estorbar.
  */
+/*
+ * **Y en el iPhone, cómo se juega a pantalla completa**, en la primera
+ * pantalla y una sola vez: allí no se puede pedir, se consigue abriendo el
+ * juego desde su ícono. Se queda hasta que se cierra o hasta que se vuela.
+ * Ver `ui/anadir-a-inicio.ts`.
+ */
+const quitarLoDeInicio = escenario ? () => {} : ensenarAnadirAInicio();
 if (!escenario) {
   const pilotosRoot = document.querySelector<HTMLElement>("#pilotos");
   if (pilotosRoot) await elegirPiloto(pilotosRoot);
@@ -480,6 +488,7 @@ try {
 
 miga("antes del juego");
 // Y la ortofoto al terreno, si la hay. Ver `Terrain.ponerOrtofoto`.
+quitarLoDeInicio();
 const game = new Game({
   canvas,
   hudRoot,

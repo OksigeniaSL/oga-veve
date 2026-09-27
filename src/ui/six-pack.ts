@@ -62,6 +62,7 @@ import {
 import { BANDA, cajaDe } from "./familia";
 import { PYKASU } from "../flight/aircraft";
 import { bienPuesta } from "../flight/altimetro";
+import { decima as n1, escribir, poner } from "./si-cambia";
 
 /** Lo que se dejan entre sí dos esferas vecinas, en píxeles del cuadro. */
 const SEPARA = 16;
@@ -69,6 +70,14 @@ const SEPARA = 16;
 export class SixPack {
   private root: HTMLElement | null = null;
   private readonly needles = new Map<string, SVGElement>();
+  /**
+   * Las piezas del horizonte, el viraje y la ventanilla, buscadas al montar y
+   * no en cada imagen. Ver `piezas` en `tablero.ts`.
+   */
+  private disco: SVGElement | null = null;
+  private avioncito: SVGElement | null = null;
+  private bola: SVGElement | null = null;
+  private qnh: SVGTextElement | null = null;
   /**
    * Las escalas del avión que se vuela.
    *
@@ -164,6 +173,11 @@ export class SixPack {
   bind(root: HTMLElement): void {
     this.root = root.querySelector('[data-hud="sixpack"]');
     this.needles.clear();
+    this.disco = this.root?.querySelector<SVGElement>("[data-ai-disc]") ?? null;
+    this.avioncito =
+      this.root?.querySelector<SVGElement>("[data-tc-plane]") ?? null;
+    this.bola = this.root?.querySelector<SVGElement>("[data-tc-ball]") ?? null;
+    this.qnh = this.root?.querySelector<SVGTextElement>("[data-qnh]") ?? null;
     if (!this.root) return;
     for (const element of this.root.querySelectorAll<SVGElement>(
       "[data-needle]",
@@ -219,25 +233,20 @@ export class SixPack {
 
     // Horizonte artificial: el disco gira contra el alabeo y sube o baja con
     // el cabeceo, así que representa el mundo y no la máquina.
-    const horizon = this.root.querySelector<SVGElement>("[data-ai-disc]");
-    if (horizon) {
-      horizon.setAttribute(
-        "transform",
-        `rotate(${(-bank * 180) / Math.PI} 50 50) translate(0 ${((pitch * 180) / Math.PI) * CABECEO_POR_GRADO * CARA})`,
-      );
-    }
+    poner(
+      this.disco,
+      "transform",
+      `rotate(${n1((-bank * 180) / Math.PI)} 50 50) translate(0 ${n1(((pitch * 180) / Math.PI) * CABECEO_POR_GRADO * CARA)})`,
+    );
 
     // Bastón y bola: el avioncito se inclina y la bola se va al exterior del
     // viraje si no está coordinado. Centrar la bola es «dar pie».
-    const plane = this.root.querySelector<SVGElement>("[data-tc-plane]");
-    if (plane)
-      plane.setAttribute(
-        "transform",
-        `rotate(${(bank * 180) / Math.PI} 50 44)`,
-      );
-    const ball = this.root.querySelector<SVGElement>("[data-tc-ball]");
-    if (ball)
-      ball.setAttribute("cx", String(50 + bolaDelViraje(state.beta) * 11));
+    poner(
+      this.avioncito,
+      "transform",
+      `rotate(${n1((bank * 180) / Math.PI)} 50 44)`,
+    );
+    poner(this.bola, "cx", n1(50 + bolaDelViraje(state.beta) * 11));
   }
 
   /**
@@ -250,13 +259,13 @@ export class SixPack {
   private ventanaDePresion(
     presion: { readonly puesta: number; readonly delSitio: number } | null,
   ): void {
-    const t = this.root?.querySelector<SVGTextElement>("[data-qnh]");
+    const t = this.qnh;
     if (!t) return;
     if (!presion) {
-      t.textContent = "";
+      escribir(t, "");
       return;
     }
-    t.textContent = String(Math.round(presion.puesta));
+    escribir(t, String(Math.round(presion.puesta)));
     t.classList.toggle(
       "esfera__qnh--mal",
       !bienPuesta(presion.puesta, presion.delSitio),
@@ -264,9 +273,7 @@ export class SixPack {
   }
 
   private rotate(name: string, degrees: number): void {
-    this.needles
-      .get(name)
-      ?.setAttribute("transform", `rotate(${degrees} 50 50)`);
+    poner(this.needles.get(name), "transform", `rotate(${n1(degrees)} 50 50)`);
   }
 }
 

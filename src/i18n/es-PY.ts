@@ -966,6 +966,17 @@ export const ES_PY = {
   "hud.menu": "Más botones",
   "hud.pantallaCompleta": "Pantalla completa",
   "hud.salirPantallaCompleta": "Salir de pantalla completa",
+  /*
+   * En el iPhone la pantalla completa no se pide: se consigue abriendo el
+   * juego desde su ícono. «Agregar a inicio» es como lo dice el iPhone en
+   * español de Latinoamérica, que es lo que va a leer quien lo busque. Ver
+   * `ui/anadir-a-inicio.ts`.
+   */
+  "inicio.pasos":
+    "Para jugar a pantalla completa: tocá Compartir y después «Agregar a inicio».",
+  "inicio.cerrar": "Cerrar",
+  "ajustes.inicio":
+    "En el iPhone, el juego va a pantalla completa abierto desde su ícono: en Safari tocá Compartir (o «•••» y Compartir), elegí «Agregar a inicio» y abrilo desde ahí.",
   "gafas.ganadas": "¡Tus gafas de sol!",
   "gafas.puestas": "Gafas puestas",
   "gafas.quitadas": "Gafas quitadas",
