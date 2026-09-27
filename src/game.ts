@@ -11781,13 +11781,38 @@ export class Game {
      * velocidad a secas, que es lo que queda por hacer. El tope sigue siendo
      * el de los flaps mientras estén fuera, que se están forzando igual.
      */
+    /*
+     * **Y con el tren, igual: se mira la palanca, no las ruedas.** El tren
+     * tarda en entrar lo que tarda uno de verdad, y mientras entra sigue
+     * «fuera»: la instructora pedía «metelo» con la palanca ya arriba, una y
+     * otra vez. Se oyó así: «Sí, ya, si está entrando. Agobiosa». Con la
+     * palanca arriba, si no queda nada más que se pase, no hay nada que
+     * pedir: se calla.
+     */
+    const trenYaSube = forzando === "tren" && !this.input.trenQueSePide;
+    if (
+      trenYaSube &&
+      !loQueSePasa(kt, this.aircraft, {
+        tren: 0,
+        flaps: this.input.controls.flaps,
+      }) &&
+      s.airspeed <= this.flight.limiteDeVelocidad()
+    ) {
+      this.sobrandoVelocidad = 0;
+      return;
+    }
     const queSeDice =
       forzando === "flaps" && this.input.palancaDeFlaps <= 0
         ? loQueSePasa(kt, this.aircraft, {
-            tren: this.input.controls.tren,
+            tren: this.input.trenQueSePide ? this.input.controls.tren : 0,
             flaps: 0,
           })
-        : forzando;
+        : trenYaSube
+          ? loQueSePasa(kt, this.aircraft, {
+              tren: 0,
+              flaps: this.input.controls.flaps,
+            })
+          : forzando;
     /*
      * **Y sin motor, «bajá el motor» no dice nada.** Pasado del tope del avión
      * sin motor, lo que queda es la nariz: levantarla un poco, que además es
