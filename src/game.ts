@@ -4351,11 +4351,20 @@ export class Game {
      */
     if (deCabina && esDeUnaCaja(deCabina)) {
       if (loDiceElAvion(deCabina, this.aircraft)) {
+        /*
+         * **Y la explicación pesa como una orden**, sin cortar a nadie. Es la
+         * otra mitad del aviso, no un comentario: con el peso normal, un
+         * «girá a la base» o un saludo de la radio la echaban de la cola llena
+         * y el *traffic, traffic* se quedaba sin su «mirá adelante». Medido en
+         * Guyrami con el JAZ 90: «vuelo.trafico.delante: no cabía en la
+         * cola». Lo urgente sigue siendo urgente.
+         */
+        const pesa: Urgencia = urgencia === "urgente" ? "urgente" : "mando";
         const explica =
           laInstructoraLoExplica(this.tier.avisos) && encasa && clave
             ? () => {
                 this.apuntarCanto(`${ingles}: lo explica ${clave}`);
-                this.instructor.decir(encasa, clave, urgencia);
+                this.instructor.decir(encasa, clave, pesa);
               }
             : undefined;
         const como = this.maquina.decir(deCabina, explica);
