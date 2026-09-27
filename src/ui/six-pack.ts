@@ -326,11 +326,21 @@ function asiFace(c: Cuadro): string {
    * al final. Estaban en fracciones fijas de la esfera —0,16 a 0,62 y así—, que
    * es pintar el arco de un avión en la esfera de otro.
    */
-  const { verde, ambar, rojo } = c.arcos;
+  const { verde, ambar, rojo, blanco } = c.arcos;
+  /*
+   * Y el blanco de los flaps, **por dentro del verde**, que es donde va en
+   * cualquier anemómetro de avioneta: de la pérdida con flaps a su tope. En
+   * una avioneta es el único aviso de flaps que hay —ni luz ni voz—, así que
+   * tiene que estar. Ver `arcos.blanco` en `cuadro.ts`.
+   */
+  const arcoBlanco = blanco
+    ? `<path class="esfera__arco esfera__arco--blanco" d="${arcPath(blanco[0], blanco[1], 34.5)}" />`
+    : "";
   return `
     <path class="esfera__arco esfera__arco--verde" d="${arcPath(verde[0], verde[1])}" />
     <path class="esfera__arco esfera__arco--ambar" d="${arcPath(ambar[0], ambar[1])}" />
     <path class="esfera__arco esfera__arco--rojo" d="${arcPath(rojo[0], rojo[1])}" />
+    ${arcoBlanco}
     ${ticks(8, 1, c.asiMax)}
   `;
 }
@@ -436,10 +446,9 @@ function dgAircraft(): string {
 }
 
 /** Trazo de arco entre dos fracciones del recorrido de la esfera. */
-function arcPath(from: number, to: number): string {
+function arcPath(from: number, to: number, r = 39): string {
   const a1 = ((SWEEP_START + from * SWEEP) * Math.PI) / 180;
   const a2 = ((SWEEP_START + to * SWEEP) * Math.PI) / 180;
-  const r = 39;
   const x1 = 50 + Math.sin(a1) * r;
   const y1 = 50 - Math.cos(a1) * r;
   const x2 = 50 + Math.sin(a2) * r;

@@ -11,6 +11,10 @@ import { describe, expect, it } from "vitest";
 import { AIRCRAFT, aircraftById } from "./aircraft";
 import {
   loQueSePasa,
+  topeDeLoSacado,
+  vfeDeAterrizaje,
+  vfeDeLaMuesca,
+  vfeEn,
   resistenciaDeOnda,
   alturaDelCruce,
   machDe,
@@ -158,8 +162,16 @@ describe("y el tope de lo que llevás sacado", () => {
    * no lo que aguanta lo que lleva fuera. Así el juego enseñaba media lección:
    * que el tren frena, y no que el tren se rompe. Ver `loQueSePasa`.
    */
-  const ancho = { vleKt: 270, vfeKt: 240, trenRetractil: true };
-  const fijo = { vleKt: 85, vfeKt: 85, trenRetractil: false };
+  const ancho = {
+    vleKt: 270,
+    vfePorMuesca: [260, 230, 180],
+    trenRetractil: true,
+  };
+  const fijo = {
+    vleKt: 85,
+    vfePorMuesca: [110, 85, 85],
+    trenRetractil: false,
+  };
   const nada = { tren: 0, flaps: 0 };
 
   it("limpio y rápido, no se fuerza nada", () => {
@@ -198,10 +210,23 @@ describe("y el tope de lo que llevás sacado", () => {
 });
 
 describe("y la flota entera tiene sus topes en orden", () => {
-  it("los flaps ceden antes que el tren, y el tren antes que la estructura", () => {
+  it("los flaps de aterrizaje ceden antes que el tren, y el tren antes que la estructura", () => {
+    /*
+     * Los de aterrizaje y no todos: la primera muesca de un reactor aguanta
+     * más que su tren —250 contra 205 en el JAZ 90—, y en el 737 de verdad
+     * también va por encima de la de sacar el tren. Lo que se rompe antes que
+     * nada son los flaps del todo fuera.
+     */
+    for (const a of AIRCRAFT.filter((x) => x.llevaFlaps)) {
+      expect(vfeDeAterrizaje(a.vfePorMuesca), a.id).toBeLessThanOrEqual(
+        a.vleKt,
+      );
+    }
     for (const a of AIRCRAFT) {
-      expect(a.vfeKt).toBeLessThanOrEqual(a.vleKt);
       expect(a.vleKt).toBeLessThanOrEqual(a.vmoKt);
+      // Y ninguna placa de flaps por encima de la del avión entero.
+      for (const kt of a.vfePorMuesca)
+        expect(kt, a.id).toBeLessThanOrEqual(a.vmoKt);
     }
   });
 
@@ -211,9 +236,89 @@ describe("y la flota entera tiene sus topes en orden", () => {
      * límite: es una trampa. Se cruza el umbral a Vref, así que el tope de
      * flaps tiene que quedar por encima con margen para las correcciones.
      */
-    for (const a of AIRCRAFT) {
+    for (const a of AIRCRAFT.filter((x) => x.llevaFlaps)) {
       const vrefKt = a.approachSpeed * 1.94384;
-      expect(a.vfeKt).toBeGreaterThan(vrefKt * 1.15);
+      expect(vfeDeAterrizaje(a.vfePorMuesca), a.id).toBeGreaterThan(
+        vrefKt * 1.15,
+      );
     }
+  });
+
+  it("una placa por muesca sacada, y cada una aguanta menos que la anterior", () => {
+    /*
+     * Tres cifras para tres muescas, y **nunca subiendo**: más flap es más
+     * superficie en la corriente y más palanca sobre sus carriles, así que
+     * cada muesca aguanta lo mismo o menos que la de antes. El que no lleva
+     * flaps no tiene placa.
+     */
+    for (const a of AIRCRAFT) {
+      if (!a.llevaFlaps) {
+        expect(a.vfePorMuesca, a.id).toEqual([]);
+        continue;
+      }
+      expect(a.vfePorMuesca.length, a.id).toBe(a.muescasDeFlaps.length - 1);
+      for (let i = 1; i < a.vfePorMuesca.length; i++)
+        expect(a.vfePorMuesca[i]!, a.id).toBeLessThanOrEqual(
+          a.vfePorMuesca[i - 1]!,
+        );
+    }
+  });
+
+  it("y el alivio de carga, solo en los reactores de línea", () => {
+    // Lo llevan el 737 y el 747 de verdad; una avioneta, un bimotor de pistón
+    // o un turbohélice de diecinueve plazas, no.
+    const conAlivio = AIRCRAFT.filter((a) => a.alivioDeFlaps).map((a) => a.id);
+    expect(conAlivio.sort()).toEqual(["jaz-120", "jaz-90"]);
+  });
+});
+
+describe("la VFE es la de la muesca, no una para todas", () => {
+  /*
+   * Con el JAZ 90 a ciento setenta y tres nudos y la primera muesca, la
+   * instructora pedía recogerlos: el juego tenía un tope de flaps y era el de
+   * los de aterrizaje. La primera muesca de un reactor aguanta doscientos
+   * cincuenta.
+   */
+  const arai = aircraftById("jaz-90")!;
+
+  it("el caso de la captura: 173 nudos con la primera muesca no se pasa", () => {
+    expect(loQueSePasa(173, arai, { tren: 0, flaps: 1 / 3 })).toBe(null);
+  });
+
+  it("pero con los de aterrizaje, sí", () => {
+    expect(loQueSePasa(180, arai, { tren: 0, flaps: 1 })).toBe("flaps");
+  });
+
+  it("recogidos no hay tope, y cada muesca tiene el suyo", () => {
+    expect(vfeEn(arai.vfePorMuesca, 0)).toBe(Infinity);
+    expect(vfeEn(arai.vfePorMuesca, 1 / 3)).toBe(250);
+    expect(vfeEn(arai.vfePorMuesca, 2 / 3)).toBe(200);
+    expect(vfeEn(arai.vfePorMuesca, 1)).toBe(175);
+  });
+
+  it("a medio camino manda la muesca que ya han pasado de largo", () => {
+    // Entre la primera y la segunda, los flaps ya están más fuera que la
+    // primera: manda la placa de la segunda, que es como se leen por grados.
+    expect(vfeEn(arai.vfePorMuesca, 0.5)).toBe(200);
+    // Y apenas asomando, la de la primera.
+    expect(vfeEn(arai.vfePorMuesca, 0.1)).toBe(250);
+  });
+
+  it("la de cada muesca se pide por su número", () => {
+    expect(vfeDeLaMuesca(arai.vfePorMuesca, 0)).toBe(Infinity);
+    expect(vfeDeLaMuesca(arai.vfePorMuesca, 1)).toBe(250);
+    expect(vfeDeLaMuesca(arai.vfePorMuesca, 3)).toBe(175);
+  });
+
+  it("la banda roja baja al tope de lo que esté fuera, y sin nada no hay", () => {
+    expect(topeDeLoSacado(arai, { tren: 0, flaps: 0 })).toBe(Infinity);
+    expect(topeDeLoSacado(arai, { tren: 1, flaps: 0 })).toBe(arai.vleKt);
+    expect(topeDeLoSacado(arai, { tren: 1, flaps: 1 / 3 })).toBe(arai.vleKt);
+    expect(topeDeLoSacado(arai, { tren: 1, flaps: 1 })).toBe(175);
+  });
+
+  it("el que no lleva flaps no tiene nada que forzar", () => {
+    const fumigador = aircraftById("jaz-25")!;
+    expect(vfeEn(fumigador.vfePorMuesca, 1)).toBe(Infinity);
   });
 });

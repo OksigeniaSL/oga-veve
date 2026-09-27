@@ -122,6 +122,20 @@ const WING_LEVELLER = 2.0;
 /** Cuánto tarda el compensador automático en fijar la actitud, en segundos. */
 const TRIM_SETTLE = 1.1;
 
+/**
+ * Cuánto ascenso sostenido pide cada unidad de compensador que se mueve, en
+ * m/s: un toque de flecha —dos centésimas— es medio metro por segundo, cien
+ * pies por minuto. Ver el compensador automático en `step`.
+ */
+export const SUBIDA_POR_COMPENSADOR = 25;
+
+/**
+ * Lo más que se mueve el compensador en un paso para que cuente como alguien
+ * tocándolo. Un toque son dos centésimas; más que el triple de eso de golpe
+ * es otra cosa —el piloto automático soltando, un vuelo nuevo—.
+ */
+const PASO_QUE_SE_PIDE = 0.06;
+
 /** Por debajo de esta velocidad, con el freno pisado, el avión se para. */
 /**
  * Holgura, en metros, antes de considerar que el avión ha dejado el suelo.
@@ -262,6 +276,11 @@ export class CoefficientFlightModel implements FlightModel {
   private trimClimb: number | null = null;
   /** Segundos que le quedan al compensador para fijar el objetivo. */
   private trimSettle = 0;
+  /**
+   * El compensador de quien vuela, tal como se vio en el paso anterior, para
+   * saber cuánto lo ha movido. Ver `SUBIDA_POR_COMPENSADOR`.
+   */
+  private trimVisto: number | null = null;
 
   // Vectores de trabajo reutilizados: este bucle corre 240 veces por
   // segundo y no queremos darle basura al recolector.
@@ -401,6 +420,7 @@ export class CoefficientFlightModel implements FlightModel {
     s.loadFactor = 1;
     this.trimClimb = null;
     this.trimSettle = 0;
+    this.trimVisto = null;
     this.updateDerived();
     /*
      * **Y en el suelo solo si las ruedas tocan.**
@@ -763,6 +783,37 @@ export class CoefficientFlightModel implements FlightModel {
           this.trimSettle -= dt;
           this.trimClimb = clamp(s.verticalSpeed, 0, 5);
         }
+        /*
+         * **Y el compensador de quien vuela mueve lo que se sostiene.**
+         *
+         * Esta ayuda sostiene una subida, y el compensador que se mueve a
+         * toques de flecha pide otra: sin esto se peleaban, y ganaba la ayuda.
+         * Medido con media ayuda: dos centésimas de compensador, un toque,
+         * cambiaban el ritmo de ascenso en veinte o treinta centímetros por
+         * segundo en el JAZ 20, el JAZ 60 y el JAZ 90, que no se ve. O sea que en los peldaños con ayuda el toque
+         * no hacía nada, y justo ahí es donde se pedía: «si lo pongo a bajar,
+         * que lo deje fijo».
+         *
+         * Así que cada toque mueve **el ascenso que se sostiene** —medio metro
+         * por segundo, cien pies por minuto, que es lo que da un clic de la
+         * rueda de velocidad vertical de un piloto automático— y **hacia
+         * abajo también**: la regla de que el objetivo nunca es un descenso
+         * era para no coger por descenso un transitorio al soltar, y un toque
+         * no es un transitorio, es una petición. Con tope en cinco metros por
+         * segundo hacia cada lado.
+         *
+         * Solo los pasos pequeños: un salto grande del compensador no es
+         * nadie tocándolo, es el piloto automático devolviéndolo al soltarse
+         * o un vuelo nuevo, y ahí no se pide ninguna subida.
+         */
+        const movido =
+          this.trimVisto === null ? 0 : controls.trim - this.trimVisto;
+        if (movido !== 0 && Math.abs(movido) <= PASO_QUE_SE_PIDE)
+          this.trimClimb = clamp(
+            this.trimClimb + movido * SUBIDA_POR_COMPENSADOR,
+            -5,
+            5,
+          );
 
         // Dos leyes que se mezclan, no un interruptor.
         //
@@ -845,6 +896,7 @@ export class CoefficientFlightModel implements FlightModel {
         this.trimClimb = null;
         this.trimSettle = 0;
       }
+      this.trimVisto = controls.trim;
 
       // Nivelado automático al soltar los alerones. La ganancia está atada a
       // la autoridad del propio alerón: la versión anterior usaba 0,35 fijo,

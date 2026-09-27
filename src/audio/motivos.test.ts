@@ -17,8 +17,17 @@
 import { describe, expect, it } from "vitest";
 import { FUERZA, FUERZA_DE_CONCHA, MOTIVOS, type Cue } from "./audio";
 
-/** Los cuatro que acusan recibo, frente a los doce que cuentan algo. */
-const DE_LA_CONCHA: readonly Cue[] = ["abrir", "cerrar", "mover", "elegir"];
+/**
+ * Los que acusan recibo, frente a los que cuentan algo. El clic del
+ * compensador es de éstos: dice que el toque se oyó, no que haya pasado nada.
+ */
+const DE_LA_CONCHA: readonly Cue[] = [
+  "abrir",
+  "cerrar",
+  "mover",
+  "elegir",
+  "compensador",
+];
 
 /** Lo que puede tardar un acuse de recibo sin llegar tarde al gesto. */
 const LO_QUE_AGUANTA_UN_ACUSE = 0.25;

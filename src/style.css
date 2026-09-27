@@ -437,6 +437,48 @@ body {
   top: calc(50% + var(--trim, 0) * 48% - 1.5px);
 }
 
+/*
+ * La flecha del paso: escondida, y medio segundo a la vista con cada toque
+ * corto, hacia donde se movió. Arriba es morro arriba, como la aguja. Ver
+ * `pasoDelCompensador`.
+ */
+.trim__paso {
+  width: 12px;
+  height: 8px;
+  fill: none;
+  stroke: var(--precaucion, #ffb454);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.trim--paso-arriba .trim__paso,
+.trim--paso-abajo .trim__paso {
+  animation: trim-paso 0.6s ease-out;
+}
+
+.trim--paso-abajo .trim__paso {
+  transform: rotate(180deg);
+}
+
+@keyframes trim-paso {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Con el movimiento reducido, la flecha se enciende y se apaga sin fundido. */
+.sin-movimiento .trim--paso-arriba .trim__paso,
+.sin-movimiento .trim--paso-abajo .trim__paso {
+  animation: none;
+  opacity: 1;
+}
+
 .cinturon svg {
   width: 62%;
   height: 62%;
@@ -3281,6 +3323,12 @@ button.motor__tecla::after {
   stroke: var(--cabina-limite);
 }
 
+/* El de los flaps: blanco, más fino y por dentro, como en la esfera real. */
+.esfera__arco--blanco {
+  stroke: var(--cabina-valor);
+  stroke-width: 3;
+}
+
 .esfera__aguja {
   fill: var(--cabina-valor);
 }
@@ -3501,6 +3549,24 @@ button.motor__tecla::after {
 
 .cr__banda--roja {
   fill: var(--cabina-limite);
+}
+
+/*
+ * El tope de lo que se lleva sacado: la franja roja y negra que baja con los
+ * flaps y el tren. Dos trazos del mismo sitio, el negro a trozos encima del
+ * rojo, que es como se pinta la de una cinta de verdad.
+ */
+.cr__tope {
+  stroke-width: 5;
+}
+
+.cr__tope--rojo {
+  stroke: var(--cabina-limite);
+}
+
+.cr__tope--negro {
+  stroke: #000;
+  stroke-dasharray: 5 5;
 }
 
 /*
@@ -6951,6 +7017,64 @@ button.motor__tecla::after {
  * Estaba al revés: el dibujo solo para quien no lee y una tabla de dieciséis
  * filas de texto para todos los demás, o sea para casi todo el mundo.
  */
+/*
+ * El toque corto de la flecha, dibujado: la tecla, un golpecito y la aguja
+ * del TRIM que se queda un diente arriba. Los colores son los del indicador
+ * del vuelo, para que se reconozca al verlo volando. Ver `toqueDeFlecha`.
+ */
+.teclas__toque {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.teclas__toque-dibujo {
+  width: 120px;
+  height: 44px;
+}
+
+.teclas__toque-tecla {
+  fill: var(--barro);
+  stroke: var(--linea);
+}
+
+.teclas__toque-flecha,
+.teclas__toque-golpe {
+  fill: var(--tinta, #e8e2d4);
+}
+
+.teclas__toque-lleva,
+.teclas__toque-via,
+.teclas__toque-centro {
+  fill: none;
+  stroke: var(--tinta, #e8e2d4);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+
+.teclas__toque-aguja {
+  fill: var(--precaucion, #ffb454);
+}
+
+.teclas__toque-paso {
+  fill: none;
+  stroke: var(--precaucion, #ffb454);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.teclas__toque-rotulo {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+
 .teclas__cambiar {
   width: 100%;
   margin-top: 4px;

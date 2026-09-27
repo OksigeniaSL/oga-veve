@@ -526,6 +526,48 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.alivioDeFlaps",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los flaps subieron un punto solos: el avión los cuida porque vamos rápido. Bajá la velocidad y vuelven.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.flapsTocados",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Nos pasamos de velocidad con los flaps y quedaron tocados: ya no bajan más del primer punto. En tierra los revisa el mecánico.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.flapsEnLaCarrera",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Los flaps, mejor al salir de la pista: corriendo por la pista se puede tocar el tren sin querer.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.flapsArribaAlSalir",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ya salimos de la pista: ahora sí, subí los flaps.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.despuesDelAterrizaje",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Lista de después del aterrizaje: los flaps arriba son tuyos; las luces y el transpondedor los hago yo.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.alPuestoConFlaps",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Llegamos al puesto con los flaps fuera. No pasa nada: la próxima, subílos al dejar la pista.",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.meteElTren",
     "voz": "instructor",
     "idioma": "es-PY",

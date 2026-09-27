@@ -163,6 +163,51 @@ export function resistenciaDeOnda(
   return cd0 * LO_QUE_CUESTA * Math.min(1, pasado) ** 4;
 }
 
+/**
+ * La VFE de una muesca de la palanca, en nudos indicados: `0` son los
+ * recogidos, que no tienen tope de flaps, y de ahí para abajo la placa de
+ * `vfePorMuesca`.
+ */
+export function vfeDeLaMuesca(
+  placa: readonly number[],
+  muesca: number,
+): number {
+  if (muesca <= 0) return Infinity;
+  return placa[Math.min(muesca, placa.length) - 1] ?? Infinity;
+}
+
+/**
+ * La VFE **de donde están los flaps ahora**, en nudos indicados.
+ *
+ * Los flaps no están siempre en una muesca: tardan en ir de una a otra, y a
+ * medio camino ya han pasado de la anterior. Así que manda la placa de la
+ * primera muesca que no han dejado atrás —con los flaps entre la primera y la
+ * segunda, la de la segunda—, que es como se leen las placas de verdad, por
+ * grados: «de diez a treinta, ochenta y cinco». Ver `vfePorMuesca`.
+ *
+ * Recogidos, o casi, no hay tope: `Infinity`. Y el avión sin flaps tampoco lo
+ * tiene, porque no hay nada que forzar.
+ */
+export function vfeEn(placa: readonly number[], flaps: number): number {
+  if (!placa.length || !(flaps > FLAPS_QUE_CUENTAN)) return Infinity;
+  const n = placa.length;
+  const muesca = Math.min(n, Math.max(1, Math.ceil(flaps * n - 1e-6)));
+  return vfeDeLaMuesca(placa, muesca);
+}
+
+/** La de los flaps de aterrizaje: la última de la placa, y la más baja. */
+export function vfeDeAterrizaje(placa: readonly number[]): number {
+  return placa.length ? placa[placa.length - 1]! : Infinity;
+}
+
+/**
+ * Por debajo de esto los flaps no cuentan como sacados.
+ *
+ * Es la holgura de siempre: unos flaps que acaban de llegar arriba o que
+ * apenas empiezan a moverse no se están forzando contra nada.
+ */
+const FLAPS_QUE_CUENTAN = 0.05;
+
 /** Qué se está forzando, o `null` si nada. */
 export type LoQueSePasa = "tren" | "flaps" | null;
 
@@ -194,20 +239,49 @@ export type LoQueSePasa = "tren" | "flaps" | null;
  * Se mide en **nudos indicados**, que es lo que marca la cinta y lo que dicen
  * los manuales: un límite estructural es de presión dinámica, no de velocidad
  * real, y por eso no cambia con la altura.
+ *
+ * **Y el de los flaps es el de su posición**, no uno para todas: ver
+ * `vfeEn`. Con uno solo, el JAZ 90 a ciento setenta y tres nudos con la
+ * primera muesca se estaba «pasando», y la primera de un reactor aguanta
+ * doscientos cincuenta.
  */
 export function loQueSePasa(
   indicadaKt: number,
   a: {
     readonly vleKt: number;
-    readonly vfeKt: number;
+    readonly vfePorMuesca: readonly number[];
     readonly trenRetractil: boolean;
   },
   sacado: { readonly tren: number; readonly flaps: number },
 ): LoQueSePasa {
-  if (sacado.flaps > 0.05 && indicadaKt > a.vfeKt) return "flaps";
+  if (indicadaKt > vfeEn(a.vfePorMuesca, sacado.flaps)) return "flaps";
   // En los que no lo meten no hay límite que dar: sus patas están calculadas
   // para todo su rango de velocidades. Ver `trenRetractil`.
   if (a.trenRetractil && sacado.tren > 0.05 && indicadaKt > a.vleKt)
     return "tren";
   return null;
+}
+
+/**
+ * **Lo más rápido que se puede ir con lo que se lleva sacado**, en nudos
+ * indicados, o `Infinity` si no se lleva nada.
+ *
+ * Es el número que pinta la banda roja de la cinta de velocidad de un avión
+ * de línea: en una cabina de verdad esa banda no está quieta en la Vmo, sino
+ * que **baja** en cuanto salen el tren o los flaps, hasta el tope de lo que
+ * esté fuera. Mirándola se sabe, sin leer ninguna placa, cuánto se puede
+ * acelerar ahora mismo. Sale de lo mismo que `loQueSePasa`, para que la
+ * banda y el aviso no puedan discrepar.
+ */
+export function topeDeLoSacado(
+  a: {
+    readonly vleKt: number;
+    readonly vfePorMuesca: readonly number[];
+    readonly trenRetractil: boolean;
+  },
+  sacado: { readonly tren: number; readonly flaps: number },
+): number {
+  const tren =
+    a.trenRetractil && sacado.tren > 0.05 ? a.vleKt : Infinity;
+  return Math.min(tren, vfeEn(a.vfePorMuesca, sacado.flaps));
 }

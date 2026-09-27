@@ -263,6 +263,15 @@ function cintaDeVelocidad(
           ${banda(c.arcos.verde[0], c.arcos.verde[1], "cr__banda cr__banda--verde")}
           ${banda(c.arcos.ambar[0], c.arcos.ambar[1], "cr__banda cr__banda--ambar")}
           ${banda(c.arcos.rojo[0], c.arcos.rojo[1], "cr__banda cr__banda--roja")}
+          <!--
+            La banda del tope de lo que se lleva sacado: roja y negra, como la
+            de una cinta de verdad, desde la placa de los flaps o del tren
+            hacia arriba. La coloca el tablero en cada imagen. Ver topeKt.
+          -->
+          <g data-tope="ias" visibility="hidden">
+            <line x1="${w - 2.5}" y1="0" x2="${w - 2.5}" y2="${-tope * POR_NUDO}" class="cr__tope cr__tope--rojo" />
+            <line x1="${w - 2.5}" y1="0" x2="${w - 2.5}" y2="${-tope * POR_NUDO}" class="cr__tope cr__tope--negro" />
+          </g>
           ${tira}
           <g data-bug="v1" data-desde="4">${bug(w)}</g>
           <g data-bug="vr" data-desde="4">${bug(w)}</g>

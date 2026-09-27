@@ -19,6 +19,11 @@ import {
   siguienteDetente,
 } from "./flaps";
 import { Keymap, type Accion } from "./keymap";
+import {
+  CrucetaDelCompensador,
+  ToquesDeCabeceo,
+  palancaEnLaDuda,
+} from "./palanca-de-teclado";
 
 /** Velocidad a la que un eje de teclado alcanza el tope, por segundo. */
 const KEY_RAMP = 2.6;
@@ -56,6 +61,17 @@ const DEADZONE = 0.12;
  */
 export const PASO_DE_TRIM = 0.25;
 
+/**
+ * Lo mínimo que mueve un golpe de cruceta, para distinguirlo de la rueda
+ * mantenida, que mueve mucho menos en cada fotograma. Ver `compensar`.
+ */
+const PASO_MINIMO_QUE_SE_OYE = 0.01;
+
+/** El reloj de los toques, en segundos. Ver `ToquesDeCabeceo`. */
+function ahoraEnSegundos(): number {
+  return performance.now() / 1000;
+}
+
 export function axisFromKeys(
   held: ReadonlySet<string>,
   positive: readonly string[],
@@ -91,6 +107,12 @@ export interface InputActions {
    * note que el mando **está trabado** y no roto. Ver `alternarTren`.
    */
   trenTrabado?: () => void;
+  /**
+   * Un paso del compensador, con su signo: +1 morro arriba. Para que se oiga
+   * el clic de la rueda y se vea saltar la aguja, que es como se aprende sin
+   * leer que el toque ha hecho algo. Ver `flight/palanca-de-teclado.ts`.
+   */
+  pasoDelCompensador?: (sentido: number) => void;
 }
 
 /*
@@ -199,6 +221,32 @@ export class InputManager {
   get hayPalancaDeFlaps(): boolean {
     return this.flapsQueSeMueven;
   }
+
+  /**
+   * **Hasta dónde pueden bajar los flaps ahora**, de 0 a 1, diga lo que diga
+   * la palanca.
+   *
+   * Lo pone el juego en cada fotograma: el alivio de carga de un reactor, o
+   * unos flaps de avioneta que quedaron tocados por pasarse. La palanca no se
+   * mueve —en la cabina tampoco—; los flaps van a lo que pida ella o hasta
+   * aquí, lo que sea menos. Ver `flight/carga-de-flaps.ts`.
+   */
+  topeDeFlaps = 1;
+
+  /**
+   * Si el compensador compensa algo en el modelo de vuelo de hoy.
+   *
+   * En el peldaño del dibujo el cabeceo no es un timón sino cuánto sube el
+   * avión —ver `flight/arcade.ts`—, y ahí un toque que moviera el compensador
+   * lo dejaría puesto sin que se notara, para aparecer de golpe al cambiar de
+   * peldaño. Lo pone el juego al construir el modelo.
+   */
+  compensadorVivo = true;
+
+  /** Los toques de las flechas. Ver `flight/palanca-de-teclado.ts`. */
+  private readonly toques = new ToquesDeCabeceo();
+  /** Y la cruceta del mando, que hace de interruptor del compensador. */
+  private readonly cruceta = new CrucetaDelCompensador();
 
   /** La palanca de flaps. Empieza arriba, como está un avión en su puesto. */
   private flapsPedidos = 0;
@@ -400,6 +448,15 @@ export class InputManager {
     const gamepad = this.readGamepad();
 
     /*
+     * La flecha, **corta mientras todavía puede ser un toque**: ver
+     * `palancaEnLaDuda`. El dedo y el mando no pasan por aquí, que no dan
+     * toques: dan la posición que tienen.
+     */
+    const teclasDeCabeceo = palancaEnLaDuda(
+      this.axis("pitchUp", "pitchDown"),
+      this.toques.enDuda(ahoraEnSegundos()),
+    );
+    /*
      * Y el cabeceo, con su signo.
      *
      * Quien ha volado con un mando o con otro simulador lo tiene al revés en
@@ -408,10 +465,7 @@ export class InputManager {
      */
     const pitchTarget =
       this.signoDeCabeceo *
-      mandaQuienSeMueve(
-        this.touchPitch + this.axis("pitchUp", "pitchDown"),
-        gamepad?.pitch,
-      );
+      mandaQuienSeMueve(this.touchPitch + teclasDeCabeceo, gamepad?.pitch);
     const rollTarget = mandaQuienSeMueve(
       this.touchRoll + this.axis("rollRight", "rollLeft"),
       gamepad?.roll,
@@ -451,6 +505,20 @@ export class InputManager {
         -1,
         1,
       );
+    /*
+     * Y la cruceta del mando, que es su interruptor de compensador: un golpe,
+     * un paso; mantenida, la rueda. Con el signo del cabeceo, como la flecha:
+     * quien vuela invertido lo tiene invertido todo.
+     */
+    if (gamepad) {
+      const pide = this.cruceta.paso(
+        gamepad.trimArriba,
+        gamepad.trimAbajo,
+        dt,
+        PASO_DE_TRIM,
+      );
+      if (pide !== 0) this.compensar(this.signoDeCabeceo * pide, true);
+    }
     this.controls.aileron = approach(
       this.controls.aileron,
       clamp(rollTarget, -1, 1),
@@ -509,7 +577,7 @@ export class InputManager {
      */
     this.controls.flaps = mueveLosFlaps(
       this.controls.flaps,
-      this.flapsPedidos,
+      Math.min(this.flapsPedidos, this.topeDeFlaps),
       dt,
       this.tardanLosFlaps,
     );
@@ -530,6 +598,20 @@ export class InputManager {
   /** Invertir o no el cabeceo. Ver `ui/ajustes.ts`. */
   ponerSignoDeCabeceo(signo: number): void {
     this.signoDeCabeceo = signo < 0 ? -1 : 1;
+  }
+
+  /**
+   * Mover el compensador desde un toque o desde la cruceta.
+   *
+   * Solo si hay compensador que compense —ver `compensadorVivo`—, y avisando
+   * de cada paso suelto, que es lo que se oye y se ve. La rueda mantenida no
+   * avisa en cada fotograma: sonaría como una carraca, no como una rueda.
+   */
+  private compensar(cuanto: number, desdeLaCruceta = false): void {
+    if (!this.compensadorVivo || cuanto === 0) return;
+    this.controls.trim = clamp(this.controls.trim + cuanto, -1, 1);
+    const esUnPaso = !desdeLaCruceta || Math.abs(cuanto) >= PASO_MINIMO_QUE_SE_OYE;
+    if (esUnPaso) this.actions.pasoDelCompensador?.(Math.sign(cuanto));
   }
 
   // ── Teclado ───────────────────────────────────────────────────────────
@@ -632,6 +714,17 @@ export class InputManager {
       case "tren":
         this.alternarTren();
         break;
+      /*
+       * **Y las flechas de cabeceo, que ahora también tienen toque.** Se
+       * apunta cuándo se apretó, y al soltar se sabe si fue palanca o un toque
+       * que mueve el compensador. Ver `flight/palanca-de-teclado.ts`.
+       */
+      case "pitchUp":
+        this.toques.apretar(event.code, 1, ahoraEnSegundos());
+        break;
+      case "pitchDown":
+        this.toques.apretar(event.code, -1, ahoraEnSegundos());
+        break;
       default:
         break;
     }
@@ -652,6 +745,9 @@ export class InputManager {
   }
 
   private onKeyUp = (event: KeyboardEvent): void => {
+    // El toque se cierra al soltar: si duró poco, el compensador da un paso.
+    const toque = this.toques.soltar(event.code, ahoraEnSegundos());
+    if (toque !== 0) this.compensar(this.signoDeCabeceo * toque);
     this.keys.delete(event.code);
     if (event.key.length === 1) this.keys.delete(event.key);
     const anotado = this.chars.get(event.code);
@@ -665,6 +761,7 @@ export class InputManager {
   private onBlur = (): void => {
     this.keys.clear();
     this.chars.clear();
+    this.toques.olvidar();
   };
 
   // ── Mando ─────────────────────────────────────────────────────────────
@@ -675,6 +772,8 @@ export class InputManager {
     rudder: number;
     throttle?: number;
     brakes: boolean;
+    trimArriba: boolean;
+    trimAbajo: boolean;
   } | null {
     const pads = navigator.getGamepads?.() ?? [];
     const pad = Array.from(pads).find(
@@ -694,6 +793,10 @@ export class InputManager {
       rudder: axis(2),
       throttle: rightTrigger > 0.02 ? rightTrigger : undefined,
       brakes: leftTrigger > 0.4 || (pad.buttons[0]?.pressed ?? false),
+      // La cruceta, arriba y abajo: el interruptor del compensador. Son los
+      // botones 12 y 13 del reparto estándar de cualquier mando.
+      trimArriba: pad.buttons[12]?.pressed ?? false,
+      trimAbajo: pad.buttons[13]?.pressed ?? false,
     };
   }
 

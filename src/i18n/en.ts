@@ -165,6 +165,8 @@ export const EN: Dictionary = {
   "teclas.diestra": "Right hand",
   "teclas.hint": "Click a key to change it. Escape leaves it alone.",
   "teclas.pulsa": "Press a key…",
+  "teclas.toque":
+    "A short tap on the arrow leaves the nose a little higher or lower, and it stays: that's the trim, TRIM. Held down, the arrow is the stick and springs back when you let go. On a gamepad, the D-pad.",
   "teclas.restore": "Back to default",
   "teclas.close": "Close",
   "tecla.pitchUp": "Nose up",
@@ -384,6 +386,17 @@ export const EN: Dictionary = {
   "vuelo.trenPasado": "Too fast with the gear down: raise it",
   "vuelo.flapsPasados": "Too fast with flaps out: retract them",
   "vuelo.pediFlaps": "Flaps down to slow",
+  "vuelo.alivioDeFlaps":
+    "The flaps went up one notch on their own: the aircraft protects them because we're fast. Slow down and they come back.",
+  "vuelo.flapsTocados":
+    "We went too fast with the flaps and they're damaged: they won't go past the first notch. The mechanic will check them on the ground.",
+  "vuelo.flapsEnLaCarrera":
+    "Flaps are better once off the runway: during the roll you could hit the gear lever by mistake.",
+  "vuelo.flapsArribaAlSalir": "We're off the runway: now raise the flaps.",
+  "vuelo.despuesDelAterrizaje":
+    "After landing checklist: flaps up is yours; lights and transponder, I've got them.",
+  "vuelo.alPuestoConFlaps":
+    "We reached the stand with the flaps out. No problem: next time, raise them after leaving the runway.",
   "palabra.flaps": "Flaps",
   "vuelo.meteElTren": "Gear up — it is slowing you down",
   "vuelo.tormenta": "Storm ahead: go around it, don't fly through",

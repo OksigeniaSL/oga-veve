@@ -97,6 +97,12 @@ export interface DatosDelTablero {
   /** A cuánto va cada motor, de 0 a 1, en su orden. */
   readonly motores: readonly number[];
   readonly flaps: number;
+  /**
+   * **Lo más rápido que se puede ir con lo que se lleva sacado**, en nudos, o
+   * `Infinity` si no se lleva nada. Es lo que baja la banda roja de la cinta
+   * y enciende la caja de la velocidad. Ver `topeDeLoSacado`.
+   */
+  readonly topeKt?: number;
   /** Dónde está el tren: 0 dentro, 1 fuera y trabado. Ver `flight/tren.ts`. */
   readonly tren: number;
   readonly reversa: boolean;
@@ -742,7 +748,9 @@ export class Tablero {
     const c = this.cuadro;
     const caja = raiz.querySelector<SVGElement>('[data-alerta="ias"]');
     if (!c || !caja) return;
-    const vne = c.arcos.rojo[0] * c.asiMax;
+    // Y el tope de lo que se lleve sacado, si es más bajo: con los flaps de
+    // aterrizaje fuera, la cifra se enciende en su placa y no en la Vne.
+    const vne = Math.min(c.arcos.rojo[0] * c.asiMax, d.topeKt ?? Infinity);
     const pasado = d.nudos >= vne;
     const cerca = d.nudos >= vne - AVISA_CINCO_ANTES;
     caja.classList.toggle("cr__caja--limite", enciende("exceso", pasado));
@@ -870,6 +878,22 @@ export class Tablero {
     ponV("v1", d.v1);
     ponV("vr", d.vr);
     ponV("vref", d.vref);
+
+    /*
+     * **Y la banda roja, que baja con lo que se saca.** En la cinta de un
+     * avión de línea la franja de «más rápido no» no está quieta: con los
+     * flaps o el tren fuera baja hasta su placa, y sube otra vez al
+     * recogerlos. Mirándola se sabe cuánto se puede acelerar ahora mismo sin
+     * haber leído la placa. Con nada fuera, se queda en la de siempre.
+     */
+    const tope = raiz.querySelector<SVGElement>('[data-tope="ias"]');
+    const c = this.cuadro;
+    if (tope && c) {
+      const vne = c.arcos.rojo[0] * c.asiMax;
+      const kt = Math.min(vne, d.topeKt ?? Infinity);
+      tope.setAttribute("transform", `translate(0 ${-kt * POR_NUDO})`);
+      tope.setAttribute("visibility", kt < vne ? "visible" : "hidden");
+    }
 
     const quiero = d.objetivo
       ? (((d.objetivo.rumbo * GRADOS + (d.declinacion ?? 0)) % 360) + 360) %
