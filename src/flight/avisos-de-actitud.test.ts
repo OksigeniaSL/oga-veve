@@ -67,6 +67,23 @@ describe("sink rate", () => {
     expect(avisoDeActitud(volando({ altura: 30, vertical: -3 }))).toBe(null);
   });
 
+  /*
+   * **Y un reactor bien volado, tampoco.** A su velocidad de aproximación un
+   * JAZ 90 baja por una senda de tres grados a unos tres metros y ochenta por
+   * segundo, y la recta de antes, prolongada por debajo de doscientos pies,
+   * pedía menos: la final buena soltaba *sink rate* cerca del suelo, justo
+   * detrás de un «metéle gas». Abajo la caja se queda en mil pies por minuto.
+   */
+  it("ni la de un reactor a su velocidad, cerca del suelo", () => {
+    const senda = 68 * Math.tan((3 * Math.PI) / 180);
+    for (const altura of [20, 30, 45, 60])
+      expect(
+        avisoDeActitud(volando({ altura, vertical: -senda })),
+        `${altura} m`,
+      ).toBe(null);
+    expect(ritmoQueSobra(20)).toBeCloseTo(5.0, 5);
+  });
+
   it("y sí cuando se baja de más para lo bajo que se está", () => {
     expect(avisoDeActitud(volando({ altura: 60, vertical: -8 }))).toBe(
       "sink rate",

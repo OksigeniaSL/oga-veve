@@ -259,6 +259,56 @@ export function enElEmbudoDeFinal(
 }
 
 /**
+ * Hasta dónde llega **la aproximación**, m del umbral: veinte kilómetros.
+ *
+ * Es más que el embudo de final, y a propósito: el embudo es donde se está
+ * *establecido*, y la cuenta del radioaltímetro empieza mucho antes. Su primer
+ * número, dos mil quinientos pies, se cruza a unos catorce kilómetros del
+ * umbral en una senda de tres grados; veinte dan sitio a venir algo alto.
+ */
+export const HASTA_DONDE_SE_APROXIMA = 20000;
+
+/** Y lo abierta que es, a cada lado del eje prolongado, rad. */
+export const ABIERTA_LA_APROXIMACION = (30 * Math.PI) / 180;
+
+/**
+ * ¿Está el avión en la zona de aproximación de esta pista?
+ *
+ * **Es lo que separa una toma de un crucero bajo.** La cuenta de la toma solo
+ * se canta aproximándose: un radioaltímetro que viera subir una sierra bajo el
+ * avión en ruta no está contando ninguna toma. Y no vale el embudo de final,
+ * que empieza a tres kilómetros y medio: a esa distancia ya se va por debajo
+ * de mil pies, y los dos primeros números de la cuenta no se oirían nunca.
+ *
+ * Mira solo dónde está el avión, no hacia dónde va: una base que cruza mil
+ * pies por dentro del cono es una aproximación, y la caja de verdad la canta.
+ */
+export function enLaZonaDeAproximacion(
+  runway: {
+    x: number;
+    z: number;
+    heading: number;
+    length: number;
+    desplazado?: number;
+  },
+  x: number,
+  z: number,
+): boolean {
+  const { along, across } = enEjesDePista(
+    x,
+    z,
+    runway.x,
+    runway.z,
+    runway.heading,
+  );
+  const alUmbral = -along - hastaElUmbralDeToma(runway);
+  if (alUmbral < 0 || alUmbral > HASTA_DONDE_SE_APROXIMA) return false;
+  const ancho =
+    ANCHO_EN_EL_UMBRAL + alUmbral * Math.tan(ABIERTA_LA_APROXIMACION);
+  return Math.abs(across) <= ancho;
+}
+
+/**
  * Lo más torcido que se puede venir respecto a la pista y seguir en final,
  * grados. Treinta, los mismos que pide la fase «final» del plan de vuelo.
  */

@@ -27,39 +27,6 @@
     "circuito.subida": {
       "ms": 1269
     },
-    "cuenta.cien": {
-      "ms": 621
-    },
-    "cuenta.cinco": {
-      "ms": 835
-    },
-    "cuenta.cincuenta": {
-      "ms": 632
-    },
-    "cuenta.cuarenta": {
-      "ms": 495
-    },
-    "cuenta.cuatrocientos": {
-      "ms": 967
-    },
-    "cuenta.diez": {
-      "ms": 710
-    },
-    "cuenta.doscientos": {
-      "ms": 748
-    },
-    "cuenta.quinientos": {
-      "ms": 786
-    },
-    "cuenta.treinta": {
-      "ms": 635
-    },
-    "cuenta.trescientos": {
-      "ms": 847
-    },
-    "cuenta.veinte": {
-      "ms": 838
-    },
     "fin.bien": {
       "ms": 925
     },
@@ -271,7 +238,7 @@
       "ms": 1795
     },
     "vuelo.bajasRapido": {
-      "ms": 1443
+      "ms": 2840
     },
     "vuelo.bulto": {
       "ms": 1792
@@ -361,7 +328,7 @@
       "ms": 1243
     },
     "vuelo.muyInclinado": {
-      "ms": 1302
+      "ms": 2231
     },
     "vuelo.noEstabilizada": {
       "ms": 2930
@@ -408,6 +375,9 @@
     "vuelo.puedeVolver~2": {
       "ms": 2097
     },
+    "vuelo.quitaElGas": {
+      "ms": 779
+    },
     "vuelo.rapido": {
       "ms": 1068
     },
@@ -448,10 +418,10 @@
       "ms": 1464
     },
     "vuelo.terrenoBajo": {
-      "ms": 929
+      "ms": 1398
     },
     "vuelo.terrenoSube": {
-      "ms": 832
+      "ms": 1651
     },
     "vuelo.tormenta": {
       "ms": 2612
@@ -992,39 +962,6 @@
     "vuelo.pilotoEnTierra": [
       "vuelo.pilotoEnTierra"
     ],
-    "cuenta.quinientos": [
-      "cuenta.quinientos"
-    ],
-    "cuenta.cuatrocientos": [
-      "cuenta.cuatrocientos"
-    ],
-    "cuenta.trescientos": [
-      "cuenta.trescientos"
-    ],
-    "cuenta.doscientos": [
-      "cuenta.doscientos"
-    ],
-    "cuenta.cien": [
-      "cuenta.cien"
-    ],
-    "cuenta.cincuenta": [
-      "cuenta.cincuenta"
-    ],
-    "cuenta.cuarenta": [
-      "cuenta.cuarenta"
-    ],
-    "cuenta.treinta": [
-      "cuenta.treinta"
-    ],
-    "cuenta.veinte": [
-      "cuenta.veinte"
-    ],
-    "cuenta.diez": [
-      "cuenta.diez"
-    ],
-    "cuenta.cinco": [
-      "cuenta.cinco"
-    ],
     "vuelo.sinMotor": [
       "vuelo.sinMotor"
     ],
@@ -1042,6 +979,9 @@
     ],
     "vuelo.alAireVientoDeCola": [
       "vuelo.alAireVientoDeCola"
+    ],
+    "vuelo.quitaElGas": [
+      "vuelo.quitaElGas"
     ]
   }
 }

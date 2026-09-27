@@ -503,39 +503,6 @@
   "vuelo.pilotoEnTierra": [
     "vuelo.pilotoEnTierra"
   ],
-  "cuenta.quinientos": [
-    "cuenta.quinientos"
-  ],
-  "cuenta.cuatrocientos": [
-    "cuenta.cuatrocientos"
-  ],
-  "cuenta.trescientos": [
-    "cuenta.trescientos"
-  ],
-  "cuenta.doscientos": [
-    "cuenta.doscientos"
-  ],
-  "cuenta.cien": [
-    "cuenta.cien"
-  ],
-  "cuenta.cincuenta": [
-    "cuenta.cincuenta"
-  ],
-  "cuenta.cuarenta": [
-    "cuenta.cuarenta"
-  ],
-  "cuenta.treinta": [
-    "cuenta.treinta"
-  ],
-  "cuenta.veinte": [
-    "cuenta.veinte"
-  ],
-  "cuenta.diez": [
-    "cuenta.diez"
-  ],
-  "cuenta.cinco": [
-    "cuenta.cinco"
-  ],
   "vuelo.sinMotor": [
     "vuelo.sinMotor"
   ],
@@ -553,5 +520,8 @@
   ],
   "vuelo.alAireVientoDeCola": [
     "vuelo.alAireVientoDeCola"
+  ],
+  "vuelo.quitaElGas": [
+    "vuelo.quitaElGas"
   ]
 }

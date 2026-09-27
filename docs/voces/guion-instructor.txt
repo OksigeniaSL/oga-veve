@@ -19,8 +19,8 @@ Andá a dar una vuelta
 Andá a la pista
 Seguí la flecha: vamos al otro aeropuerto
 Bajá suavecito
-Vas muy bajo
-Terreno. Subí
+Vas muy bajo: subí un poco
+El suelo está cerca: subí
 Pérdida. Bajá el morro
 Mirá adelante: hay otro avión cerca
 Mirá a tu izquierda: hay otro avión cerca
@@ -29,8 +29,8 @@ Hay otro avión cerca, detrás de vos
 Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta
 Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta
 Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando
-Bajás muy rápido
-Estás muy inclinado
+Bajás muy de golpe: levantá un poco la nariz
+Estás muy inclinado: enderezá las alas
 Se soltó el piloto automático
 El piloto automático se conecta en el aire
 Pista ocupada. Subí y volvé por el circuito
@@ -38,6 +38,7 @@ Pista ocupada. Subí y volvé por el circuito
 No podés bajar: metele gas y volvé a subir
 La torre te deja volver a intentarlo
 La pista quedó libre: podés volver a bajar
+La torre te deja aterrizar
 ¡Bien hecho! Te fuiste al aire. Probá de nuevo
 Muy bien: irse al aire también es volar bien
 Eso estuvo bien. Damos otra vuelta y volvemos
@@ -88,6 +89,7 @@ Más despacio
 Pará acá
 Te pasaste. Frená y volvé
 Ya podés tocar
+Quitá el gas
 Entraste sin la luz verde. La próxima, esperala
 Subí derecho por el eje
 Girá a la izquierda: volvemos a la pista
@@ -143,17 +145,6 @@ El traslado
 ¡Bien! Seguí
 ¡Misión cumplida!
 Vuelo libre
-Quinientos
-Cuatrocientos
-Trescientos
-Doscientos
-Cien
-Cincuenta
-Cuarenta
-Treinta
-Veinte
-Diez
-Cinco
 Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.
 Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.
 Cuidado: un poco más de ángulo y el aire se suelta.

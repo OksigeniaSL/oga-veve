@@ -92,47 +92,10 @@ describe("la boca", () => {
   });
 
   /*
-   * **Una cuenta atrás se pisa a sí misma.** Es lo que el comentario de `voz.ts`
-   * pedía desde siempre: si todavía suena «twenty» cuando toca «ten», lo que
-   * hay que oír es «ten» — no los dos. Decirlas seguidas es contar el pasado.
+   * La cuenta de la toma ya no pasa por aquí: es de una caja del avión y no
+   * pide turno. Cómo se pisa un número con el siguiente, y cómo no pisa a un
+   * aviso, está en `maquina.test.ts`.
    */
-  it("de una misma cuenta solo queda la última", () => {
-    const b = boca();
-    const { dicho, acabar, frase } = coro();
-    b.pedir("normal", frase("thirty"), "cabina.thirty");
-    b.pedir("normal", frase("twenty"), "cabina.twenty");
-    b.pedir("normal", frase("ten"), "cabina.ten");
-    acabar["thirty"]!();
-    expect(dicho).toEqual(["thirty", "ten"]);
-  });
-
-  /*
-   * **Y la cuenta es la cuenta: un aviso de cabina no es un número.** Se
-   * reconocía por empezar por `cabina.`, y así «sink rate» se caía porque
-   * llegaba «one hundred» detrás, y «airspeed low» se llevaba la cuenta.
-   */
-  it("un aviso de cabina no pisa la cuenta, ni la cuenta al aviso", () => {
-    const b = boca();
-    const { dicho, acabar, frase } = coro();
-    b.pedir("normal", frase("final"), "vuelo.final");
-    b.pedir("normal", frase("sink rate"), "cabina.sinkRate");
-    b.pedir("normal", frase("one hundred"), "cabina.oneHundred");
-    b.pedir("normal", frase("airspeed low"), "cabina.airspeedLow");
-    acabar["final"]!();
-    expect(dicho).toEqual(["final", "sink rate"]);
-    acabar["sink rate"]!();
-    expect(dicho).toEqual(["final", "sink rate", "one hundred"]);
-  });
-
-  it("y la cuenta en casa se pisa igual que la de cabina", () => {
-    const b = boca();
-    const { dicho, acabar, frase } = coro();
-    b.pedir("normal", frase("final"), "vuelo.final");
-    b.pedir("normal", frase("cien"), "cuenta.cien");
-    b.pedir("normal", frase("cincuenta"), "cuenta.cincuenta");
-    acabar["final"]!();
-    expect(dicho).toEqual(["final", "cincuenta"]);
-  });
 
   /*
    * **Pero dos sucesos distintos esperan los dos.**

@@ -13,10 +13,11 @@ import {
   claveDelAviso,
   EN_GRANDE,
   EN_GRANDE_EN_PIES,
+  laInstructoraLoExplica,
   PELDANOS,
   type Peldano,
 } from "./escalera";
-import { ESCALONES, ESCALONES_EN_PIES } from "./avisos-de-altura";
+import { LA_CUENTA } from "./avisos-de-altura";
 
 describe("la escalera de comunicación", () => {
   it("tiene los cuatro peldaños y ninguno más", () => {
@@ -65,18 +66,27 @@ describe("la escalera de comunicación", () => {
   });
 
   /*
-   * **La excepción, y es una sola.** La cuenta del radioaltímetro es una voz
-   * de máquina neutra y no un aviso: en el avión que la lleva suena en los
-   * cuatro peldaños. Los avisos siguen subiendo por la escalera.
+   * **Lo que dice una caja del avión no sube por la escalera.** El
+   * radioaltímetro, el avisador de terreno, el de pérdida y el TCAS suenan con
+   * su voz de máquina en los cuatro peldaños, en el avión que los lleva; lo
+   * que crece con el peldaño es la explicación de la instructora, detrás.
    */
-  describe("la cuenta de la toma no sube por la escalera", () => {
-    it("la cuenta la canta la cabina en los cuatro peldaños", () => {
-      for (const p of PELDANOS) expect(cantaLaCabina(p, "cuenta")).toBe(true);
+  describe("la voz de la máquina no sube por la escalera", () => {
+    it("lo de una caja suena en los cuatro peldaños", () => {
+      for (const p of PELDANOS) expect(cantaLaCabina(p, "maquina")).toBe(true);
     });
 
-    it("y los avisos, solo en el de cabina", () => {
-      expect(PELDANOS.filter((p) => cantaLaCabina(p, "aviso"))).toEqual([
+    it("y lo de la tripulación, en inglés solo en el de cabina", () => {
+      expect(PELDANOS.filter((p) => cantaLaCabina(p, "tripulacion"))).toEqual([
         "cabina",
+      ]);
+    });
+
+    it("lo que crece es la explicación: la instructora explica abajo, y arriba ya no", () => {
+      expect(PELDANOS.filter((p) => laInstructoraLoExplica(p))).toEqual([
+        "dibujo",
+        "palabra",
+        "cifra",
       ]);
     });
   });
@@ -131,17 +141,15 @@ describe("la escalera de comunicación", () => {
     });
 
     /*
-     * Y no es la cuenta atrás: la cuenta atrás es la voz —cien, cincuenta,
-     * treinta, veinte, diez— y tiene su propio ritmo. Esto son tres números
-     * sueltos. Si algún día coincidieran, sobraría uno de los dos.
+     * Y no es la cuenta atrás: la cuenta atrás es la voz de la máquina y tiene
+     * su propio ritmo. Esto son tres números sueltos. Si algún día
+     * coincidieran, sobraría uno de los dos.
      */
     it("no es la cuenta atrás de la voz", () => {
-      expect(EN_GRANDE.map((e) => e.metros)).not.toEqual(
-        ESCALONES.map((e) => e.metros),
-      );
-      expect(EN_GRANDE_EN_PIES.map((e) => e.metros)).not.toEqual(
-        ESCALONES_EN_PIES.map((e) => e.metros),
-      );
+      for (const tabla of [EN_GRANDE, EN_GRANDE_EN_PIES])
+        expect(tabla.map((e) => e.metros)).not.toEqual(
+          LA_CUENTA.map((e) => e.metros),
+        );
     });
   });
 });

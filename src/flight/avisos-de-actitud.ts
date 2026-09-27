@@ -34,9 +34,19 @@
  *
  * Que da una pendiente de 0,0316 por metro y una ordenada de 3,1. No es una
  * aproximación cómoda: es la de las cartas, pasada a unidades del modelo.
+ *
+ * **Y por debajo de doscientos pies no baja de mil pies por minuto.** La recta
+ * seguía hacia abajo y a cincuenta pies pedía menos de setecientos: menos de
+ * lo que baja un reactor por una senda de tres grados a su velocidad de
+ * aproximación. Así que la final bien volada de un JAZ 90 soltaba *sink rate*
+ * cerca del suelo, justo detrás de un «metéle gas». La caja de verdad no hace
+ * eso: su envolvente se queda en torno a los mil pies por minuto abajo, que es
+ * además el tope de una aproximación estabilizada.
  */
+export const RITMO_MINIMO_QUE_SOBRA = 5.0;
+
 export function ritmoQueSobra(alturaM: number): number {
-  return 3.1 + 0.0316 * alturaM;
+  return Math.max(RITMO_MINIMO_QUE_SOBRA, 3.1 + 0.0316 * alturaM);
 }
 
 /**

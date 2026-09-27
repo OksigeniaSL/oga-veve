@@ -12,10 +12,7 @@ import { describe, expect, it } from "vitest";
 import manifiesto from "../../data/voces/cabina/manifiesto.json";
 import fuenteDelJuego from "../game.ts?raw";
 import { AIRCRAFT, ARAI, ARASUNU, PANAMBI, PYKASU } from "../flight/aircraft";
-import {
-  ESCALONES,
-  ESCALONES_EN_PIES,
-} from "../flight/avisos-de-altura";
+import { LA_CUENTA } from "../flight/avisos-de-altura";
 import {
   CLAVE_DE_CABINA,
   claveDeCabina,
@@ -157,8 +154,7 @@ describe("los cantos de cabina", () => {
     ]);
     const pedidos = [
       ...loQueCantaElJuego(),
-      ...ESCALONES.map((e) => e.dice),
-      ...ESCALONES_EN_PIES.map((e) => e.dice),
+      ...LA_CUENTA.map((e) => e.dice),
     ];
     // Y que el lector vea lo que tiene que ver, ramas de ternario incluidas:
     // una regla de medir que no ve nada da siempre verde.
@@ -179,9 +175,14 @@ describe("los cantos de cabina", () => {
     expect(sinToma).toEqual([]);
   });
 
-  it("y la cuenta de la toma en casa tiene su clave, que sin ella no suena", () => {
-    for (const e of [...ESCALONES, ...ESCALONES_EN_PIES])
-      expect(e.clave, e.dice).toBe(`cuenta.${e.encasa}`);
+  /*
+   * **Y ya no hay cuenta en casa.** La instructora contaba en metros en los
+   * aviones sin radioaltímetro —«cuatrocientos, trescientos, doscientos» todo
+   * seguido, y un «cinco» ya rodando—, que es una cuenta que no existe en
+   * ninguna cabina. Si vuelve a aparecer una clave así, esto lo dice.
+   */
+  it("y la cuenta de la toma no tiene versión en casa", () => {
+    expect(fuenteDelJuego).not.toMatch(/["'`]cuenta\./);
   });
 });
 

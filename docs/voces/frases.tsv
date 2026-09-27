@@ -20,8 +20,8 @@ instructor	instructor/vuelo.enVuelo.ogg	es-PY	Andá a dar una vuelta	lo que toca
 instructor	instructor/vuelo.enVueloAterrizando.ogg	es-PY	Andá a la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.enVueloDestino.ogg	es-PY	Seguí la flecha: vamos al otro aeropuerto	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.final.ogg	es-PY	Bajá suavecito	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.terrenoSube.ogg	es-PY	Terreno. Subí	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.terrenoBajo.ogg	es-PY	Vas muy bajo: subí un poco	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.terrenoSube.ogg	es-PY	El suelo está cerca: subí	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.perdida.ogg	es-PY	Pérdida. Bajá el morro	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trafico.delante.ogg	es-PY	Mirá adelante: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trafico.izquierda.ogg	es-PY	Mirá a tu izquierda: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
@@ -30,8 +30,8 @@ instructor	instructor/vuelo.trafico.detras.ogg	es-PY	Hay otro avión cerca, detr
 instructor	instructor/vuelo.traficoArriba.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.traficoAbajo.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.traficoNivel.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.bajasRapido.ogg	es-PY	Bajás muy rápido	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.bajasRapido.ogg	es-PY	Bajás muy de golpe: levantá un poco la nariz	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado: enderezá las alas	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoSuelto.ogg	es-PY	Se soltó el piloto automático	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoEnTierra.ogg	es-PY	El piloto automático se conecta en el aire	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	Pista ocupada. Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
@@ -39,6 +39,7 @@ instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista
 instructor	instructor/vuelo.mandanFrustrar~3.ogg	es-PY	No podés bajar: metele gas y volvé a subir	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.puedeVolver.ogg	es-PY	La torre te deja volver a intentarlo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.puedeVolver~2.ogg	es-PY	La pista quedó libre: podés volver a bajar	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
+instructor	instructor/vuelo.puedeAterrizar.ogg	es-PY	La torre te deja aterrizar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.frustrada.ogg	es-PY	¡Bien hecho! Te fuiste al aire. Probá de nuevo	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.frustrada~2.ogg	es-PY	Muy bien: irse al aire también es volar bien	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.frustrada~3.ogg	es-PY	Eso estuvo bien. Damos otra vuelta y volvemos	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
@@ -89,6 +90,7 @@ instructor	instructor/vuelo.despacio.ogg	es-PY	Más despacio	lo que toca hacer a
 instructor	instructor/vuelo.alto.ogg	es-PY	Pará acá	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.teLoPasaste.ogg	es-PY	Te pasaste. Frená y volvé	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.yaPodesTocar.ogg	es-PY	Ya podés tocar	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.quitaElGas.ogg	es-PY	Quitá el gas	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinPermiso.ogg	es-PY	Entraste sin la luz verde. La próxima, esperala	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/circuito.subida.ogg	es-PY	Subí derecho por el eje	los cuatro tramos del circuito de tráfico
 instructor	instructor/circuito.cruzado.ogg	es-PY	Girá a la izquierda: volvemos a la pista	los cuatro tramos del circuito de tráfico
@@ -144,17 +146,6 @@ instructor	instructor/mission.transfer.name.ogg	es-PY	El traslado	las misiones
 instructor	instructor/mission.step.ogg	es-PY	¡Bien! Seguí	las misiones
 instructor	instructor/mission.done.ogg	es-PY	¡Misión cumplida!	las misiones
 instructor	instructor/mission.none.ogg	es-PY	Vuelo libre	las misiones
-instructor	instructor/cuenta.quinientos.ogg	es-PY	Quinientos	la cuenta de la toma, en casa
-instructor	instructor/cuenta.cuatrocientos.ogg	es-PY	Cuatrocientos	la cuenta de la toma, en casa
-instructor	instructor/cuenta.trescientos.ogg	es-PY	Trescientos	la cuenta de la toma, en casa
-instructor	instructor/cuenta.doscientos.ogg	es-PY	Doscientos	la cuenta de la toma, en casa
-instructor	instructor/cuenta.cien.ogg	es-PY	Cien	la cuenta de la toma, en casa
-instructor	instructor/cuenta.cincuenta.ogg	es-PY	Cincuenta	la cuenta de la toma, en casa
-instructor	instructor/cuenta.cuarenta.ogg	es-PY	Cuarenta	la cuenta de la toma, en casa
-instructor	instructor/cuenta.treinta.ogg	es-PY	Treinta	la cuenta de la toma, en casa
-instructor	instructor/cuenta.veinte.ogg	es-PY	Veinte	la cuenta de la toma, en casa
-instructor	instructor/cuenta.diez.ogg	es-PY	Diez	la cuenta de la toma, en casa
-instructor	instructor/cuenta.cinco.ogg	es-PY	Cinco	la cuenta de la toma, en casa
 instructor	instructor/ala.dice.arriba.ogg	es-PY	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.	lo que explica el esquema del ala
 instructor	instructor/ala.dice.arrastra.ogg	es-PY	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.	lo que explica el esquema del ala
 instructor	instructor/ala.dice.cerca.ogg	es-PY	Cuidado: un poco más de ángulo y el aire se suelta.	lo que explica el esquema del ala
@@ -297,14 +288,15 @@ cabina	cabina/cabina.goAround.ogg	en	going around. good decision	te fuiste al ai
 cabina	cabina/cabina.weHaveAProblem.ogg	en	we have a problem	se rompió el avión
 cabina	cabina/cabina.goAroundOrder.ogg	en	go around	la orden de irse al aire
 cabina	cabina/cabina.airspeedLow.ogg	en	airspeed low	vas lento para la configuración
-cabina	cabina/cabina.fiveHundred.ogg	en	five hundred	altura de la toma, en pies
-cabina	cabina/cabina.oneHundred.ogg	en	one hundred	altura de la toma
-cabina	cabina/cabina.fifty.ogg	en	fifty	altura de la toma
-cabina	cabina/cabina.forty.ogg	en	forty	altura de la toma, en pies
-cabina	cabina/cabina.thirty.ogg	en	thirty	altura de la toma
-cabina	cabina/cabina.twenty.ogg	en	twenty	altura de la toma
-cabina	cabina/cabina.ten.ogg	en	ten	altura de la toma
-cabina	cabina/cabina.five.ogg	en	five	altura de la toma, en metros
+cabina	cabina/cabina.twentyFiveHundred.ogg	en	twenty five hundred	cuenta de la toma: el radar empieza a ver el suelo
+cabina	cabina/cabina.oneThousand.ogg	en	one thousand	cuenta de la toma, en pies
+cabina	cabina/cabina.fiveHundred.ogg	en	five hundred	cuenta de la toma, en pies
+cabina	cabina/cabina.oneHundred.ogg	en	one hundred	cuenta de la toma, en pies
+cabina	cabina/cabina.fifty.ogg	en	fifty	cuenta de la toma, en pies
+cabina	cabina/cabina.forty.ogg	en	forty	cuenta de la toma, en pies
+cabina	cabina/cabina.thirty.ogg	en	thirty	cuenta de la toma, en pies
+cabina	cabina/cabina.twenty.ogg	en	twenty	cuenta de la toma, en pies
+cabina	cabina/cabina.ten.ogg	en	ten	cuenta de la toma, en pies
 otro	otro/fonetico.alfa.ogg	es	Alfa	una letra del indicativo
 otro	otro/fonetico.bravo.ogg	es	Bravo	una letra del indicativo
 otro	otro/fonetico.charlie.ogg	es	Charlie	una letra del indicativo

@@ -150,16 +150,24 @@
     "id": "vuelo.terrenoBajo",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Vas muy bajo",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "texto": "Vas muy bajo: subí un poco",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Vas muy bajo: subí un poco.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.terrenoSube",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Terreno. Subí",
+    "texto": "El suelo está cerca: subí",
     "para": "lo que toca hacer ahora, en vuelo y en tierra",
-    "dicho": "Terreno, subí.",
+    "dicho": "El suelo está cerca: subí.",
     "ajustes": {
       "stability": 0.85,
       "similarity_boost": 0.75,
@@ -228,15 +236,31 @@
     "id": "vuelo.bajasRapido",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Bajás muy rápido",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "texto": "Bajás muy de golpe: levantá un poco la nariz",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Bajás muy de golpe: levantá un poco la nariz.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.muyInclinado",
     "voz": "instructor",
     "idioma": "es-PY",
-    "texto": "Estás muy inclinado",
-    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+    "texto": "Estás muy inclinado: enderezá las alas",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Estás muy inclinado: enderezá las alas.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.pilotoSuelto",
@@ -286,6 +310,13 @@
     "idioma": "es-PY",
     "texto": "La pista quedó libre: podés volver a bajar",
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
+  },
+  {
+    "id": "vuelo.puedeAterrizar",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La torre te deja aterrizar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
     "id": "vuelo.frustrada",
@@ -644,6 +675,21 @@
     "idioma": "es-PY",
     "texto": "Ya podés tocar",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.quitaElGas",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Quitá el gas",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra",
+    "dicho": "Quitá el gas.",
+    "ajustes": {
+      "stability": 0.85,
+      "similarity_boost": 0.75,
+      "style": 0,
+      "use_speaker_boost": false,
+      "speed": 0.95
+    }
   },
   {
     "id": "vuelo.sinPermiso",
@@ -1029,83 +1075,6 @@
     "idioma": "es-PY",
     "texto": "Vuelo libre",
     "para": "las misiones"
-  },
-  {
-    "id": "cuenta.quinientos",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Quinientos",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.cuatrocientos",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Cuatrocientos",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.trescientos",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Trescientos",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.doscientos",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Doscientos",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.cien",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Cien",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.cincuenta",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Cincuenta",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.cuarenta",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Cuarenta",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.treinta",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Treinta",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.veinte",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Veinte",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.diez",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Diez",
-    "para": "la cuenta de la toma, en casa"
-  },
-  {
-    "id": "cuenta.cinco",
-    "voz": "instructor",
-    "idioma": "es-PY",
-    "texto": "Cinco",
-    "para": "la cuenta de la toma, en casa"
   },
   {
     "id": "ala.dice.arriba",
@@ -2102,60 +2071,67 @@
     "para": "vas lento para la configuración"
   },
   {
+    "id": "cabina.twentyFiveHundred",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "twenty five hundred",
+    "para": "cuenta de la toma: el radar empieza a ver el suelo"
+  },
+  {
+    "id": "cabina.oneThousand",
+    "voz": "cabina",
+    "idioma": "en",
+    "texto": "one thousand",
+    "para": "cuenta de la toma, en pies"
+  },
+  {
     "id": "cabina.fiveHundred",
     "voz": "cabina",
     "idioma": "en",
     "texto": "five hundred",
-    "para": "altura de la toma, en pies"
+    "para": "cuenta de la toma, en pies"
   },
   {
     "id": "cabina.oneHundred",
     "voz": "cabina",
     "idioma": "en",
     "texto": "one hundred",
-    "para": "altura de la toma"
+    "para": "cuenta de la toma, en pies"
   },
   {
     "id": "cabina.fifty",
     "voz": "cabina",
     "idioma": "en",
     "texto": "fifty",
-    "para": "altura de la toma"
+    "para": "cuenta de la toma, en pies"
   },
   {
     "id": "cabina.forty",
     "voz": "cabina",
     "idioma": "en",
     "texto": "forty",
-    "para": "altura de la toma, en pies"
+    "para": "cuenta de la toma, en pies"
   },
   {
     "id": "cabina.thirty",
     "voz": "cabina",
     "idioma": "en",
     "texto": "thirty",
-    "para": "altura de la toma"
+    "para": "cuenta de la toma, en pies"
   },
   {
     "id": "cabina.twenty",
     "voz": "cabina",
     "idioma": "en",
     "texto": "twenty",
-    "para": "altura de la toma"
+    "para": "cuenta de la toma, en pies"
   },
   {
     "id": "cabina.ten",
     "voz": "cabina",
     "idioma": "en",
     "texto": "ten",
-    "para": "altura de la toma"
-  },
-  {
-    "id": "cabina.five",
-    "voz": "cabina",
-    "idioma": "en",
-    "texto": "five",
-    "para": "altura de la toma, en metros"
+    "para": "cuenta de la toma, en pies"
   },
   {
     "id": "fonetico.alfa",

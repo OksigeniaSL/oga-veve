@@ -1,360 +1,286 @@
 /**
- * Los avisos de altura de la toma: *one hundred… fifty, thirty, twenty, ten*.
+ * La cuenta de la toma: *twenty five hundred… one hundred, fifty, forty,
+ * thirty, twenty, ten*.
  *
- * Es lo mejor que tiene la aviación para este juego. **Dicen la altura sin
- * mirar ningún instrumento y sin saber leer**, y enseñan solos el ritmo de la
+ * Es lo mejor que tiene la aviación para este juego. **Dice la altura sin
+ * mirar ningún instrumento y sin saber leer**, y enseña sola el ritmo de la
  * recogida: la cuenta se acelera según te acercas, y cuando los números se
- * pegan unos a otros es que hay que tirar. Un niño de cuatro años los repite a
+ * pegan unos a otros es que hay que tirar. Un niño de cuatro años la repite a
  * la tercera vez.
  *
- * ## En metros, y eso es una decisión
+ * ## Es del radioaltímetro, y de nadie más
  *
- * Los de verdad van en pies, porque el radioaltímetro va en pies. Aquí van en
- * **metros**, porque toda la cabina de este juego va en metros —ALT en metros,
- * IAS en km/h— y mezclar unidades es peor que apartarse de la costumbre: quien
- * oye «fifty» y ve 50 en el altímetro está aprendiendo dos cosas a la vez;
- * quien oye «fifty» y ve 15 no está aprendiendo ninguna.
+ * La cuenta la dice **una caja**: el radioaltímetro, un radar que mira hacia
+ * abajo y mide la distancia a lo que hay justo debajo del avión, y el
+ * avisador que convierte esa medida en voz. No la dice la instructora ni la
+ * torre, y no espera turno detrás de nadie: en una cabina de verdad la caja
+ * canta por encima de la radio.
  *
- * Las palabras sí son las de verdad, en inglés aeronáutico, igual que IAS y
- * HDG. No se traducen jamás: reconocerlas es parte de lo que se aprende aquí.
+ * De ahí salen las cuatro reglas de este fichero, y ninguna es un gusto:
  *
- * **Salvo en el avión que lleva radioaltímetro que canta**, y ésa es la
- * excepción a la excepción. Ahí la cuenta no la dice nadie sentado al lado:
- * la dice la máquina, y la máquina cuenta en pies, en inglés y en los cuatro
- * peldaños. Una cuenta en metros con su voz sería un radioaltímetro que no
- * existe. Ver `laCuentaDe` y la cabecera de `flight/escalera.ts`.
+ * - **Mide lo que mide un radar.** La altura de las ruedas sobre el suelo que
+ *   hay debajo —no sobre la cota de la pista—, y hasta donde llega: unos dos
+ *   mil quinientos pies. Por encima no marca nada. Ver `radioaltimetro`.
+ * - **Canta cada número al cruzarlo hacia abajo, y solo entonces.** Un número
+ *   que no se puede decir en ese instante no se dice: el siguiente lo
+ *   sustituye. Un «one hundred» dicho a sesenta pies es una mentira sobre
+ *   dónde estás. Ver `paso`.
+ * - **Solo en aproximación, y nunca con peso en las ruedas.** Un radioaltímetro
+ *   de verdad no canta la cuenta sobre una sierra en crucero, ni rodando.
+ * - **Solo en el avión que la lleva.** El turbohélice de pasaje y los dos
+ *   reactores; la avioneta de escuela, el fumigador y el bimotor de pistón no
+ *   llevan ninguna caja que cante, y en ellos no hay cuenta. Ver `laCuentaDe`.
  *
- * ## Solo bajando
+ * ## Lo que fallaba, contado por quien lo oyó
  *
- * Un aviso se da al **cruzar hacia abajo**, nunca al subir. Sin esto, quien
- * rebota en la toma o quien hace una pasada baja se lleva la cuenta atrás dos
- * veces y del revés, que es exactamente lo contrario de lo que enseña.
+ * > «El 400-300-200-100 lo dice la instructora de vuelo y me lo tiene que
+ * > decir una voz de robot. Lee 400-300-200 todo seguido cuando estoy lejos.
+ * > Un buen rato después me dice 100 sin que cuadre con lo que realmente estoy
+ * > haciendo, luego cuando estoy llegando a la pista me dice 50, 40. Y cuando
+ * > estoy ya en tierra rodando y frenando me dice 5. ¿Cinco, qué?»
+ *
+ * Tres averías, y las tres eran de este fichero y de cómo se usaba:
+ *
+ * - **«Todo seguido»**: la máquina de antes cantaba cada fotograma el escalón
+ *   más alto *de los que quedaban por debajo* de la altura, no el que se
+ *   acababa de cruzar. Entrar en el embudo de final a doscientos metros
+ *   soltaba cuatrocientos, trescientos y doscientos en tres fotogramas.
+ * - **«Un buen rato después»**: cada número entraba en la cola de la boca de
+ *   la instructora y esperaba detrás de la torre hasta cuatro segundos.
+ * - **«Cinco, qué»**: la cuenta en metros de la avioneta, dicha por la
+ *   instructora, con un «cinco» que la cola soltaba ya rodando.
+ *
+ * ## En pies, siempre
+ *
+ * Las palabras y la unidad son las de verdad, en inglés aeronáutico, igual que
+ * IAS y HDG, y en los cuatro peldaños: el radioaltímetro cuenta en pies en
+ * cualquier avión del mundo, y quien la oiga aquí la tiene que reconocer tal
+ * cual el día que se suba a uno. Traducida o en metros, habría que
+ * desaprenderla. Ver la cabecera de `flight/escalera.ts`.
  */
 
+/** Pies a metros. La cuenta se piensa en pies y el modelo vive en metros. */
+const PIE = 0.3048;
+
 /**
- * Los escalones, de más alto a más bajo.
+ * Hasta dónde llega el radioaltímetro, m: dos mil quinientos pies.
  *
- * Son los de la cadencia real: espaciados arriba y apretados abajo. Esa
- * aceleración **es** la lección — no es una lista de números, es un ritmo que
- * dice «ya, ya, ya».
+ * Es el alcance de los de un avión de línea, y es también de donde sale el
+ * primer número de la cuenta: *twenty five hundred* no es una altura bonita,
+ * es **el radar que empieza a ver el suelo**.
  */
-/*
- * **Y falta cuarenta, que sí es de la cuenta de verdad.**
- *
- * Entre cincuenta y treinta hay un escalón en cualquier radioaltímetro, y es
- * justo donde la cuenta se aprieta y dice «ya». Estaba en la lista de pies y
- * no en ésta.
- *
- * ## Y los tres cientos de en medio, que ya están
- *
- * Se pidió jugando: «se echa de menos un indicador de voz indicando la
- * aproximación y la distancia a tierra: five hundred, four hundred… fifty,
- * forty». Faltaban cuatrocientos, trescientos y doscientos, y esta lista no
- * podía pedirlos porque no estaban grabados — una cuenta en la que tres
- * números los dice otra voz suena peor que una cuenta corta.
- *
- * Ya están tomados, así que entran aquí y en `audio/cabina.ts`, que es donde
- * una prueba comprueba que la tabla no apunta a grabaciones que no hay.
- */
+export const ALCANCE_DEL_RADIOALTIMETRO = 2500 * PIE;
+
 /**
- * Un escalón de la cuenta, **con la grabación de la cifra en casa**.
+ * Lo que marca el radioaltímetro, m, o `null` si el suelo queda fuera de su
+ * alcance.
  *
- * La cifra en casa —«cuatrocientos», «cincuenta»— es la que dice la
- * instructora en los peldaños que todavía no cantan en inglés, y en los
- * aviones que no llevan radioaltímetro que cante. Se pedía sin clave, así que
- * el pack de voz no tenía con qué encontrarla y la decía el sintetizador del
- * navegador: en el registro de cantos del banco, «four hundred→sin clave». En
- * un navegador sin voces instaladas —Brave en Linux, sin ir más lejos— eso es
- * **silencio**: la cuenta entera de la toma, muda, con el resto de la
- * instructora sonando grabado.
- *
- * La clave sale de la propia cifra para que no haya dos listas: la de aquí y
- * la del diccionario, `cuenta.*` en `i18n/es-PY.ts`.
+ * `sobreElSuelo` es la altura del avión sobre el terreno que tiene debajo, que
+ * es lo que da el modelo de vuelo; `tren`, cuánto cuelgan las ruedas por
+ * debajo de ese punto. **El radioaltímetro se calibra para marcar cero con las
+ * ruedas en el suelo**, así que se resta: sin eso, el JAZ 120, con casi seis
+ * metros de tren, habría dicho «twenty» con las ruedas a un palmo del asfalto
+ * y «ten» ya rodando.
  */
-function escalon(metros: number, dice: string, encasa: string): Escalon {
-  return { metros, dice, encasa, clave: `cuenta.${encasa}` };
+export function radioaltimetro(sobreElSuelo: number, tren: number): number | null {
+  const alto = Math.max(0, sobreElSuelo - tren);
+  return alto > ALCANCE_DEL_RADIOALTIMETRO ? null : alto;
 }
-
-export const ESCALONES: readonly Escalon[] = [
-  escalon(400, "four hundred", "cuatrocientos"),
-  escalon(300, "three hundred", "trescientos"),
-  escalon(200, "two hundred", "doscientos"),
-  escalon(100, "one hundred", "cien"),
-  escalon(50, "fifty", "cincuenta"),
-  escalon(40, "forty", "cuarenta"),
-  escalon(30, "thirty", "treinta"),
-  escalon(20, "twenty", "veinte"),
-  escalon(10, "ten", "diez"),
-  escalon(5, "five", "cinco"),
-];
-
-/**
- * Y los mismos, en pies, para el peldaño que vuela en pies.
- *
- * Porque la regla de arriba tiene una segunda mitad: el número que se canta
- * **es el que marca el instrumento**. En los tres peldaños métricos eso son
- * metros; en Taguato Ruvicha, que lleva la cabina en unidades aeronáuticas,
- * son pies — y ahí «fifty» vuelve a querer decir lo que quiere decir en
- * cualquier avión del mundo: cincuenta pies, quince metros.
- *
- * Son los escalones de verdad de un radioaltímetro, y por eso no son los
- * mismos números: cien pies son treinta metros, así que la cuenta empieza
- * mucho más abajo y se aprieta mucho más deprisa.
- */
-export const ESCALONES_EN_PIES: readonly Escalon[] = [
-  escalon(152, "five hundred", "quinientos"),
-  // Y los tres de en medio, que un radioaltímetro sí canta. Ver `ESCALONES`.
-  escalon(122, "four hundred", "cuatrocientos"),
-  escalon(91.4, "three hundred", "trescientos"),
-  escalon(61, "two hundred", "doscientos"),
-  escalon(30.5, "one hundred", "cien"),
-  escalon(15.2, "fifty", "cincuenta"),
-  escalon(12.2, "forty", "cuarenta"),
-  escalon(9.1, "thirty", "treinta"),
-  escalon(6.1, "twenty", "veinte"),
-  escalon(3, "ten", "diez"),
-];
-
-/**
- * **Qué cuenta se canta en este avión y en este peldaño.**
- *
- * - **Con radioaltímetro que canta** —`avisosHablados` en la ficha—, la suya:
- *   la de pies, en los cuatro peldaños, y la canta la voz de cabina. Es una
- *   voz de máquina neutra, no un aviso, y por eso no sube por la escalera. Ver
- *   `cantaLaCabina` en `flight/escalera.ts`; quién la dice lo decide
- *   `loDiceElAvion` en `audio/cabina.ts`, con la misma ficha.
- * - **Sin él**, la de la instructora, con el número que marca el instrumento:
- *   metros donde la cabina va en metros, pies donde va en pies.
- *
- * La secuencia es la de un radioaltímetro de verdad con la cuenta entera
- * —quinientos, los tres cientos de en medio, cien, y de diez en diez hasta
- * diez—. Los de arriba del todo, *two thousand five hundred* y *one
- * thousand*, también existen en muchos aviones de línea y no están: no hay
- * toma de cabina para ellos, y una cuenta en la que dos números los dice otra
- * voz suena peor que una cuenta más corta. Ver `ESCALONES`.
- */
-export function laCuentaDe(
-  avion: { readonly avisosHablados: boolean },
-  unidades: "metric" | "aeronautical",
-): readonly Escalon[] {
-  return avion.avisosHablados || unidades === "aeronautical"
-    ? ESCALONES_EN_PIES
-    : ESCALONES;
-}
-
-/*
- * **Ya no hay rearme por altura, y ese era el fallo.**
- *
- * Había uno: subir ocho metros por encima de un escalón lo volvía a armar. La
- * holgura evitaba que rozarlo lo disparara cada fotograma, pero no evitaba lo
- * que de verdad pasa volando sobre relieve: la altura **sobre el suelo** salta
- * con cada pliegue del terreno, y cada salto rearma y vuelve a cantar. Medido
- * en el barrido, en La Palma —una isla de barrancos con la pista sobre el
- * mar—: «cien» **seiscientas siete veces** en un solo vuelo. Acotarlo a la
- * toma lo dejó en trescientas diecinueve, porque dentro del propio embudo el
- * terreno cae al mar.
- *
- * La regla buena no necesita holgura ninguna: **en una toma la cuenta baja y
- * no vuelve a subir.** Rearmar es cosa de empezar **otra** aproximación, y eso
- * ya lo cubre salir de la toma —ver `aterrizando`—, que es lo que pasa al
- * irse al aire, al tocar o al alejarse de la pista.
- *
- * Y de paso desaparece el número mágico.
- */
-
-/**
- * Cuántos fotogramas seguidos fuera de la toma cuentan como haberse ido.
- *
- * Unos tres segundos a sesenta por segundo. Rozar el borde del embudo dura un
- * puñado de fotogramas; irse al aire dura mucho más. Ver `paso`.
- */
-const SE_FUE_DE_VERDAD = 180;
 
 export interface Escalon {
   readonly metros: number;
-  /** Lo que dice una cabina de verdad. */
+  /** Lo que se dice, o lo que se enseña en grande. */
   readonly dice: string;
-  /** Y la misma cifra en casa, para el peldaño que todavía no habla inglés. */
-  readonly encasa: string;
-  /**
-   * Con qué clave está grabada la cifra en casa. Ver `escalon`. Los números
-   * en grande de `flight/escalera.ts` no la llevan: se enseñan, no se dicen.
-   */
-  readonly clave?: string;
 }
 
 export type Aviso = Escalon;
 
+function enPies(pies: number, dice: string): Escalon {
+  return { metros: pies * PIE, dice };
+}
+
 /**
- * La cuenta atrás de la toma.
+ * **La cuenta del radioaltímetro**, de más alto a más bajo.
  *
- * Se le da la altura sobre el suelo en cada fotograma y devuelve el aviso que
- * toca, o `null`. No sabe hablar ni dibujar: eso es de quien lo use.
+ * Es una de las selecciones de verdad del avisador de proximidad al terreno:
+ * los números que canta un radioaltímetro son un menú que elige quien opera
+ * el avión, y ésta es la cuenta entera —el radar que empieza a ver el suelo,
+ * mil, quinientos, los tres cientos de en medio, cien, y de diez en diez hasta
+ * diez—. Espaciada arriba y apretada abajo: esa aceleración **es** la lección.
+ *
+ * Los tres cientos de en medio se pidieron jugando —«five hundred, four
+ * hundred… fifty, forty»—; *twenty five hundred* y *one thousand* se
+ * grabaron cuando la cuenta pasó a ser de la caja y dejó de tener sentido
+ * recortarla por falta de tomas.
+ */
+export const LA_CUENTA: readonly Escalon[] = [
+  enPies(2500, "twenty five hundred"),
+  enPies(1000, "one thousand"),
+  enPies(500, "five hundred"),
+  enPies(400, "four hundred"),
+  enPies(300, "three hundred"),
+  enPies(200, "two hundred"),
+  enPies(100, "one hundred"),
+  enPies(50, "fifty"),
+  enPies(40, "forty"),
+  enPies(30, "thirty"),
+  enPies(20, "twenty"),
+  enPies(10, "ten"),
+];
+
+/**
+ * **Qué cuenta se canta en este avión.**
+ *
+ * La del radioaltímetro si lo lleva —`avisosHablados` en la ficha— y ninguna
+ * si no. En la avioneta la altura se mira en el altímetro y quien acompaña la
+ * recogida es la instructora, sin números: ver `Game.acompanarLaRecogida`.
+ *
+ * Había una segunda cuenta, en metros y en la voz de la instructora, para los
+ * aviones sin caja. Era la que se oía «todo seguido» y la del «cinco» ya
+ * rodando, y además enseñaba una cosa que no existe: nadie canta la altura en
+ * metros en ninguna cabina.
+ */
+export function laCuentaDe(avion: {
+  readonly avisosHablados: boolean;
+}): readonly Escalon[] {
+  return avion.avisosHablados ? LA_CUENTA : [];
+}
+
+/**
+ * Cuánto se puede apartar de su número la altura a la que se canta, m.
+ *
+ * Un quince por ciento, y nunca menos de diez pies. Es la misma vara con la
+ * que el banco de vuelo entero mide lo que se oye —`verificar-vuelo-entero`—
+ * y está aquí porque **esta máquina se la aplica a sí misma**: si el suelo
+ * sube de golpe bajo el avión —un acantilado, un teletransporte del banco— y
+ * el número ya quedó muy atrás, se da por cruzado sin decirlo.
+ */
+export function holguraDe(metros: number): number {
+  return Math.max(0.15 * metros, 10 * PIE);
+}
+
+/**
+ * Cuánto hay que subir **de verdad** para que la cuenta vuelva a armarse, m.
+ *
+ * Treinta metros de altitud —cien pies—, medidos sobre el mar y no sobre el
+ * suelo. Es la diferencia entre irse al aire y pasar por encima de un barranco:
+ * en el barranco la altura sobre el suelo sube cien metros y la altitud no se
+ * mueve, y así se cantaba «cien» seiscientas siete veces en La Palma. En una
+ * frustrada el avión sube cientos de metros; en un rebote, uno o dos.
+ */
+const SUBIR_DE_VERDAD = 30;
+
+/** Lo que la cuenta necesita saber del avión en cada fotograma. */
+export interface Lectura {
+  /** Lo que marca el radioaltímetro, m, o `null` fuera de alcance. */
+  readonly radioAltura: number | null;
+  /** Peso en las ruedas. */
+  readonly enTierra: boolean;
+  /**
+   * Si esto es una aproximación: se viene a aterrizar a la pista en uso, o se
+   * está ya sobre ella. Ver `enLaZonaDeAproximacion` en `world/runway-guide.ts`.
+   */
+  readonly enAproximacion: boolean;
+  /** Velocidad vertical, m/s. Negativa es bajar. */
+  readonly vertical: number;
+  /** Altitud sobre el mar, m: con ella se sabe si se sube de verdad. */
+  readonly altitud: number;
+}
+
+/**
+ * La cuenta de la toma, número a número.
+ *
+ * Se le da una `Lectura` en cada fotograma y devuelve el número que toca
+ * cantar **en ese instante**, o `null`. No sabe hablar ni dibujar: eso es de
+ * quien lo use.
  */
 export class AvisosDeAltura {
-  /** Escalones ya dados en esta toma. Ver `paso`. */
-  private dados = new Set<number>();
-
   /**
-   * Cuántos fotogramas seguidos lleva sin venir a posarse.
-   *
-   * Se cuenta en fotogramas y no en segundos porque esto no recibe el reloj, y
-   * lo que hace falta es distinguir «rozó el borde del embudo» de «se fue al
-   * aire»: cualquier umbral de unos segundos separa las dos cosas.
+   * Los números que se pueden cantar: se ha estado por encima de ellos desde
+   * la última vez que se cantaron.
    */
-  private fuera = 0;
-
+  private readonly armados = new Set<number>();
+  /** Lo que marcaba el radar el fotograma anterior. `null` al empezar. */
+  private anterior: number | null = null;
   /**
-   * Si se ha estado por encima del escalón más alto desde el último contacto
-   * con el suelo.
-   *
-   * **Es lo que separa una recogida de una carrera de despegue**, y ninguna de
-   * las otras guardas lo conseguía. En la carrera el avión rebota: las ruedas
-   * tocan y dejan de tocar, está «en el aire» a dos metros, está sobre la
-   * pista, y entre bote y bote **baja** — así que «en el aire», «es una toma»
-   * y «va bajando» daban verdad las tres, y la cuenta entera se soltaba desde
-   * arriba una y otra vez.
-   *
-   * Pero para cantar un escalón hay que haber estado por encima de **ese**
-   * escalón. Un despegue empieza en el suelo; una recogida viene de arriba.
-   * Eso no lo puede falsear ni un rebote ni un barranco.
-   *
-   * **Y se guarda la altura, no un sí o un no.** Era una bandera que se
-   * encendía al pasar del escalón más alto de la lista, y eso ataba la cuenta
-   * entera al primer número: el día que la lista empezó en trescientos metros
-   * en vez de en cien, un circuito a doscientos cincuenta se quedó **sin
-   * cantar nada**. Con la altura máxima alcanzada, cada escalón se arma solo
-   * cuando se ha estado por encima de él, que es lo que la regla decía desde
-   * el principio.
+   * La altitud más baja desde el último número cantado o el último contacto
+   * con el suelo. Ver `SUBIR_DE_VERDAD`.
    */
-  private masAltoVisto = 0;
+  private masBaja = Infinity;
 
-  /**
-   * Los escalones de hoy: los métricos o los de pies.
-   *
-   * Los elige el juego según las unidades del peldaño, porque el número que se
-   * canta tiene que ser el que marca el instrumento. Ver `ESCALONES_EN_PIES`.
-   */
-  private readonly escalones: readonly Escalon[];
+  constructor(private readonly escalones: readonly Escalon[] = LA_CUENTA) {}
 
-  constructor(escalones: readonly Escalon[] = ESCALONES) {
-    this.escalones = escalones;
-  }
-
-  /**
-   * Un fotograma.
-   *
-   * `sobreElSuelo` en metros; `enElAire` para no cantar mientras se rueda —al
-   * rodar se está a un metro del suelo todo el rato y no hay toma que anunciar.
-   */
-  paso(
-    sobreElSuelo: number,
-    enElAire: boolean,
-    /**
-     * Si esto es una toma: viniendo en final o ya sobre la pista.
-     *
-     * **Sin esto la cuenta atrás es del terreno, no de la recogida.** El
-     * rearme mira la altura sobre el suelo, y sobrevolando un sitio de
-     * barrancos esa altura salta de treinta a doscientos metros y vuelve con
-     * cada pliegue: cada oscilación rearma un escalón y lo vuelve a cantar.
-     * Medido en el barrido, en La Palma: **«cien» seiscientas siete veces** en
-     * un solo vuelo, «cincuenta» cuatrocientas veintisiete.
-     *
-     * Y estos avisos no son del terreno. Lo dice la cabecera de este fichero:
-     * «enseñan solos el ritmo de la recogida». Fuera de una toma no enseñan
-     * nada — son ruido, y del que se aprende a no oír.
-     */
-    aterrizando: boolean,
-    /**
-     * Y si va **bajando**. La cuenta atrás es de la recogida: subiendo no se
-     * recoge nada.
-     *
-     * **Aquí estaba el fallo de verdad**, y no en el terreno. En la carrera de
-     * despegue el avión va rebotando por la pista: las ruedas tocan y dejan de
-     * tocar, y cada contacto borra la cuenta —«en tierra se olvida todo»—. Al
-     * fotograma siguiente está «en el aire» a dos metros y **sobre la pista**,
-     * o sea que hasta la guarda de «esto es una toma» daba verdad, y la cuenta
-     * entera se soltaba desde arriba. Y otra vez. Y otra.
-     *
-     * Medido en La Palma con el registro de cantos, que lo encontró a la
-     * primera cuando cuatro arreglos a ojo no lo habían conseguido:
-     *
-     *     one hundred [42 kt · 2 m] · fifty [42 kt · 2 m] · thirty [42 kt · 2 m]
-     *     one hundred [42 kt · 2 m] · fifty [42 kt · 2 m] · …
-     *
-     * Cuarenta y dos nudos y dos metros de altura son una carrera de despegue,
-     * no una toma. Y la cabecera de este fichero ya lo decía desde el primer
-     * día —«solo bajando: un aviso se da al cruzar hacia abajo, nunca al
-     * subir»—; lo que no había era quien lo comprobara.
-     */
-    bajando: boolean,
-  ): Aviso | null {
+  paso(l: Lectura): Aviso | null {
     /*
-     * **Y lo que olvida la cuenta no puede depender del terreno.**
-     *
-     * Costó tres intentos y los tres movieron el número sin llevarlo a cero.
-     * Medido en La Palma —isla de barrancos, con la pista sobre el mar— y en
-     * este orden:
-     *
-     *   - de salida, 607 repeticiones de «cien» en un vuelo;
-     *   - acotando los avisos a la toma, 319;
-     *   - quitando además el rearme por altura, 509;
-     *   - borrando la cuenta por encima de doscientos metros, **654**.
-     *
-     * Y el patrón estaba a la vista desde el principio: para cantar «cien»
-     * seiscientas veces hay que **olvidar la cuenta seiscientas veces**. Cada
-     * arreglo cambiaba de camino de olvido sin quitar ninguno, y todos los
-     * caminos colgaban de lo mismo: `sobreElSuelo`, que sobre relieve sube y
-     * baja con cada pliegue aunque el avión vaya clavado.
-     *
-     * Así que la cuenta se olvida por **sucesos**, y ninguno lo puede fabricar
-     * el terreno:
-     *
-     *   - **tocar tierra** — la toma se acabó, la próxima empieza entera;
-     *   - **dejar de venir a posarse durante un rato seguido** — irse al aire
-     *     de verdad. Un rato, y no un fotograma: el embudo de final es una
-     *     figura geométrica y un avión que la roza entra y sale de ella
-     *     muchas veces sin dejar de aproximar.
-     *
-     * Y la altura solo decide **qué** se canta, que es para lo que sirve.
+     * **Con peso en las ruedas, nada.** Y tocar el suelo pone la vara de
+     * subir de verdad en el suelo: el rebote de una toma no rearma nada, y
+     * la subida de un toque y despegue sí.
      */
-    if (!enElAire) {
-      this.dados.clear();
-      this.fuera = 0;
-      // Tocar el suelo cierra la cuenta: para volver a contar hay que volver a
-      // subir. Ver `masAltoVisto`.
-      this.masAltoVisto = 0;
+    if (l.enTierra) {
+      this.anterior = l.radioAltura ?? 0;
+      this.masBaja = l.altitud;
       return null;
     }
-    this.masAltoVisto = Math.max(this.masAltoVisto, sobreElSuelo);
-    if (!aterrizando) {
-      this.fuera++;
-      if (this.fuera > SE_FUE_DE_VERDAD) this.dados.clear();
+    // Fuera de alcance es «por encima de todo»: así se cruza el primero.
+    const ra = l.radioAltura ?? Infinity;
+    const antes = this.anterior;
+    this.anterior = ra;
+    if (antes === null) {
+      /*
+       * **El primer fotograma en el aire arma lo que queda por debajo.**
+       *
+       * Una lección que empieza en final no viene de ningún sitio, y sin esto
+       * no cantaría nada hasta haber subido treinta metros. Lo de por debajo
+       * se armaría igual viniendo de arriba, que es lo que se da por hecho.
+       */
+      this.masBaja = l.altitud;
+      for (const e of this.escalones)
+        if (ra > e.metros + holguraDe(e.metros)) this.armados.add(e.metros);
       return null;
     }
-    this.fuera = 0;
-    // Y subiendo no se canta, aunque no se olvide lo dicho. Ver `bajando`.
-    if (!bajando) return null;
+    this.masBaja = Math.min(this.masBaja, l.altitud);
 
-    // Y el aviso: el más alto de los que se acaban de cruzar hacia abajo. Se
-    // da uno solo por fotograma —caer diez metros de golpe no puede soltar
-    // cuatro palabras a la vez— y se dan por dados los de debajo, que ya no
-    // toca cantarlos.
-    for (const e of this.escalones) {
-      if (this.dados.has(e.metros) || sobreElSuelo > e.metros) continue;
-      // Y sin haber estado por encima de él: eso es una carrera de despegue
-      // rebotando, no una recogida. Ver `masAltoVisto`.
-      if (this.masAltoVisto <= e.metros) continue;
-      this.dados.add(e.metros);
-      return e;
+    /*
+     * **Armar: haber estado por encima, y haber subido de verdad.**
+     *
+     * Lo primero con holgura, para que rondar un número no lo arme y lo
+     * desarme a cada fotograma. Lo segundo es lo que separa una frustrada de
+     * un barranco: ver `SUBIR_DE_VERDAD`. Mirar solo la altura sobre el suelo
+     * era rearmar con un número que tiembla, y sobre relieve tiembla siempre.
+     */
+    if (l.altitud - this.masBaja > SUBIR_DE_VERDAD) {
+      for (const e of this.escalones)
+        if (ra > e.metros + holguraDe(e.metros)) this.armados.add(e.metros);
     }
-    return null;
+
+    /*
+     * **Y cantar: el que se acaba de cruzar hacia abajo, en este fotograma.**
+     *
+     * Cruzar gasta el número aunque no se cante —fuera de la aproximación,
+     * subiendo, o tan pasado que ya sería mentira—, porque cruzar es un
+     * suceso que ya ocurrió. Si en un fotograma se cruzan varios —el suelo
+     * que sube de golpe— se canta el más bajo, que es el único que describe
+     * dónde se está ahora.
+     */
+    let toca: Escalon | null = null;
+    for (const e of this.escalones) {
+      if (!this.armados.has(e.metros)) continue;
+      if (!(antes > e.metros && ra <= e.metros)) continue;
+      this.armados.delete(e.metros);
+      if (!l.enAproximacion || l.vertical >= 0) continue;
+      if (ra < e.metros - holguraDe(e.metros)) continue;
+      toca = e;
+    }
+    // Lo cantado cierra el tramo: para volver a cantarlo hay que subir desde
+    // aquí, no desde lo más bajo de antes.
+    if (toca) this.masBaja = l.altitud;
+    return toca;
   }
 
   /** Vuelta a empezar. La llama el juego al reiniciar el vuelo. */
   reiniciar(): void {
-    this.dados.clear();
-    this.fuera = 0;
-    this.masAltoVisto = 0;
+    this.armados.clear();
+    this.anterior = null;
+    this.masBaja = Infinity;
   }
 }
