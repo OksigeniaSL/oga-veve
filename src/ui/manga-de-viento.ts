@@ -79,12 +79,20 @@ export function mangaDeViento(boca: number | null, nudos: number): string {
       i % 2 ? "blanca" : "naranja"
     }" d="M${-a0} ${y0} L${a0} ${y0} L${a1} ${y1} L${-a1} ${y1} Z" />`;
   }
-  // Lo que no se infla, colgando: de donde acaba la última llena hasta la cola.
+  /*
+   * Lo que no se infla, arrugado detrás de la última llena: la mitad de largo
+   * y fino, que es como se ve desde arriba la tela que cuelga. Entera y recta
+   * parecía un palo, y la manga medía lo mismo con viento que sin él; así,
+   * con más viento se ve **más larga**, que es lo que hace la de verdad.
+   */
   const desde = ARRANQUE + llenas * LARGO;
-  const hasta = ARRANQUE + BANDAS * LARGO;
+  const hasta = desde + (BANDAS - llenas) * LARGO * 0.5;
+  const arranque = llenas ? ancho(llenas) / 2 : BOCA / 2;
   const floja =
     llenas < BANDAS
-      ? `<path class="manga-viento__floja" d="M0 ${desde} L0 ${hasta}" />`
+      ? `<path class="manga-viento__floja" d="M${-arranque * 0.6} ${desde} L${
+          arranque * 0.6
+        } ${desde} L0.6 ${hasta} L-0.6 ${hasta} Z" />`
       : "";
   // El mástil, en la boca: el punto fijo del que cuelga todo.
   const mastil = `<circle class="manga-viento__mastil" cx="0" cy="${ARRANQUE - 1.5}" r="2" />`;

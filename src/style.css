@@ -1922,10 +1922,7 @@ button.motor__tecla::after {
 }
 
 .manga-viento__floja {
-  stroke: #9aa39d;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  fill: none;
+  fill: #9aa39d;
 }
 
 .manga-viento__mastil {

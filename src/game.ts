@@ -7922,10 +7922,12 @@ export class Game {
   }
 
   /** Con qué plan y cuántas salidas pasadas se llevan dichas. */
-  private salidasDichas: { plan: PlanDeVuelo | null; cuantas: number } = {
-    plan: null,
-    cuantas: 0,
-  };
+  private salidasDichas: {
+    plan: PlanDeVuelo | null;
+    cuantas: number;
+    /** Si ya se dijo en esta carrera en tierra. */
+    dicha: boolean;
+  } = { plan: null, cuantas: 0, dicha: false };
 
   /**
    * **Nuestro avión es Zulu Papa…**: la instructora presenta la matrícula al
@@ -9363,7 +9365,8 @@ export class Game {
      */
     const aire = {
       sobreElSuelo: this.flight.state.heightAboveGround,
-      vientoKt: this.scenario.meteo?.vientoKt ?? 0,
+      // El que sopla aquí, no el de casa: ver `seguirElViento`.
+      vientoKt: this.vientoAqui?.vientoKt ?? this.scenario.meteo?.vientoKt ?? 0,
       baseDeNubes:
         this.techoDeNubes === null
           ? null
@@ -11346,11 +11349,24 @@ export class Game {
      * Ver `decirSalPorLaSiguiente`.
      */
     if (this.salidasDichas.plan !== this.plan)
-      this.salidasDichas = { plan: this.plan, cuantas: this.plan.salidasPasadas };
+      this.salidasDichas = {
+        plan: this.plan,
+        cuantas: this.plan.salidasPasadas,
+        dicha: false,
+      };
     else if (this.plan.salidasPasadas > this.salidasDichas.cuantas) {
       this.salidasDichas.cuantas = this.plan.salidasPasadas;
-      this.decirSalPorLaSiguiente();
+      /*
+       * **Una vez por carrera.** Frenando despacio por una pista larga se
+       * pasan dos y tres salidas seguidas, y la raya se rehace en cada una;
+       * decirlo en cada una era repetir lo mismo tres veces en medio minuto.
+       * Una torre lo dice una vez: «next available» ya incluye las demás. Se
+       * rearma al volver a despegar.
+       */
+      if (!this.salidasDichas.dicha) this.decirSalPorLaSiguiente();
+      this.salidasDichas.dicha = true;
     }
+    if (!this.flight.state.onGround) this.salidasDichas.dicha = false;
     this.presentarLaMatricula();
     /*
      * **La pista acaba de pasar a ser tuya**: antes de que la torre te la dé
