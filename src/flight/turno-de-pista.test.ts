@@ -226,6 +226,71 @@ describe("al darte la pista", () => {
     turno.paso("final");
     expect(pasos).toEqual(["go around"]);
   });
+
+  /*
+   * **Y si la deja por debajo de la decisión, tampoco hay permiso.** Pasó en
+   * el banco del vuelo entero, en Los Rodeos: el de delante dejó la pista a
+   * los cincuenta metros, su «pista libre» esperó turno en la boca y tu
+   * permiso sonó a once metros del suelo. A la altura de decisión, o la
+   * pista es tuya, o te vas.
+   */
+  it("y si el de delante la suelta por debajo de la decisión, al aire igual", () => {
+    const radio = conAlguienEnLaPista("torre.clearedLand");
+    const quien = radio.ocupanLaPista.find((o) => o.orden === "torre.clearedLand")!
+      .matricula;
+    let alto = 90;
+    let suPistaLibre = false;
+    const { turno, boca, pasos } = montar(radio, {
+      alto: () => alto,
+      trafico: () => ({
+        anuncia: () => {},
+        paso: () => [],
+        todaviaNo: () => false,
+        enFinal: (m) => (m === quien ? 900 : null),
+      }),
+    });
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    expect(turno.vaDelante).toBe(quien);
+    turno.paso("final");
+    expect(pasos).toEqual([]);
+    // Ya por debajo de la decisión, el de delante suelta la pista: su
+    // «pista libre» espera turno detrás de la instructora.
+    alto = 50;
+    boca.pedir("normal", () => {}, "vuelo.final");
+    boca.pedir("baja", () => void (suPistaLibre = true), `otro.pistaLibre@${quien}`);
+    radio.laTiene = () => false;
+    turno.paso("final");
+    expect(suPistaLibre).toBe(false);
+    expect(pasos).toEqual(["go around"]);
+    // Y bajando más ya no llega ningún permiso para esta final.
+    alto = 11;
+    turno.paso("final");
+    expect(pasos).toEqual(["go around"]);
+  });
+
+  it("y si la suelta por encima de la decisión, el permiso llega", () => {
+    const radio = conAlguienEnLaPista("torre.clearedLand");
+    const quien = radio.ocupanLaPista.find((o) => o.orden === "torre.clearedLand")!
+      .matricula;
+    const { turno, pasos } = montar(radio, {
+      alto: () => 120,
+      trafico: () => ({
+        anuncia: () => {},
+        paso: () => [],
+        todaviaNo: () => false,
+        enFinal: (m) => (m === quien ? 900 : null),
+      }),
+    });
+    turno.alSerTuya("final");
+    turno.pedirAterrizaje();
+    turno.paso("final");
+    expect(pasos).toEqual([]);
+    radio.laTiene = () => false;
+    turno.paso("final");
+    expect(pasos).toContain("cleared to land");
+    expect(pasos).not.toContain("go around");
+  });
 });
 
 describe("y con una orden de irse al aire puesta", () => {
