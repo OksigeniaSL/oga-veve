@@ -133,9 +133,14 @@ try {
           }
           return false;
         },
-        enCuadro(x, y, z) {
+        /*
+         * Con el mismo borde que el juego cuando ya estaba dentro: el juego
+         * deja la tarjeta hasta 1,15 para que no parpadee al rozar el marco.
+         * Ver `senaleroALaVista`.
+         */
+        enCuadro(x, y, z, borde = 1) {
           const p = new V(x, y, z).project(o.camaraViva());
-          return p.z < 1 && Math.abs(p.x) < 1 && Math.abs(p.y) < 1;
+          return p.z < 1 && Math.abs(p.x) < borde && Math.abs(p.y) < borde;
         },
       };
       // Con el motor en marcha y frenado, y sin órdenes de irse al aire.
@@ -164,12 +169,22 @@ try {
             const o = globalThis.__oga;
             const dibujo = o.tarjeta?.()?.dibujo ?? "";
             if (!dibujo.includes("senalero")) return null;
+            /*
+             * Y no justo después de mover el avión a mano: la cámara de
+             * persecución tarda unos fotogramas en llegar, y en esos la
+             * tarjeta es del sitio de antes. Eso es el banco, no el juego.
+             */
+            if (performance.now() - (globalThis.__colocadoEn ?? -Infinity) < 600)
+              return null;
             const s = o.senalero();
             const g = s.grupo;
             const ok =
               globalThis.__mira.enEscena(g) &&
-              globalThis.__mira.enCuadro(g.position.x, g.position.y + 1.5, g.position.z);
-            return ok ? null : `${dibujo} con el señalero ${g.parent ? "fuera del cuadro" : "fuera de la escena"}`;
+              globalThis.__mira.enCuadro(g.position.x, g.position.y + 1.5, g.position.z, 1.15);
+            if (ok) return null;
+            const V = o.camaraViva().position.constructor;
+            const p = new V(g.position.x, g.position.y + 1.5, g.position.z).project(o.camaraViva());
+            return `${dibujo} con el señalero ${g.parent ? `fuera del cuadro (${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(3)}; ${g.visible ? "de pie" : "sin dibujar"}; gesto ${s.gestoDeAhora})` : "fuera de la escena"}`;
           })
           .catch(() => null);
         if (f && fantasmas.length < 3) fantasmas.push(f);
@@ -282,6 +297,7 @@ try {
         const p = aDelFinal(d);
         if (!p) continue;
         o.colocar(p.x, o.sueloDeVuelo(p.x, p.z) + tren + 0.05, p.z, 3, p.rumbo);
+        globalThis.__colocadoEn = performance.now();
         await espera(700);
         const s = o.senalero();
         const g = s.grupo;

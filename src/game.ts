@@ -5084,7 +5084,14 @@ export class Game {
      */
     this.hechos.on("teLoPasaste", () => {
       this.hud.senal.mostrar(
-        "senalero-alto",
+        /*
+         * El señalero cruzando los bastones solo si se le ve: quien se ha
+         * pasado del puesto lo tiene a la espalda casi siempre, y una tarjeta
+         * con su dibujo y sin él en ningún sitio es lo que no puede salir.
+         * Entonces, el freno, que es lo que hay que hacer. Ver
+         * `senaleroALaVista`.
+         */
+        this.senaleroALaVista() ? "senalero-alto" : "freno",
         this.rotulo("vuelo.teLoPasaste", "palabra.frena"),
         null,
         {
