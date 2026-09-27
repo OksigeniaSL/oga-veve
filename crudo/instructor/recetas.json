@@ -670,5 +670,23 @@
     "{c4}",
     "{c5}",
     "matricula.asiNosLlama"
+  ],
+  "vuelo.abandonandoConLaBici": [
+    "vuelo.abandonandoConLaBici"
+  ],
+  "vuelo.abandonandoSinPrisa": [
+    "vuelo.abandonandoSinPrisa"
+  ],
+  "vuelo.autorizadoSinTorre": [
+    "vuelo.autorizadoSinTorre"
+  ],
+  "vuelo.esperandoMirando": [
+    "vuelo.esperandoMirando"
+  ],
+  "vuelo.puedeAterrizarSinTorre": [
+    "vuelo.puedeAterrizarSinTorre"
+  ],
+  "vuelo.puedeVolverSinTorre": [
+    "vuelo.puedeVolverSinTorre"
   ]
 }

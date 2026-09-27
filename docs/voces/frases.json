@@ -56,6 +56,20 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
+    "id": "vuelo.esperandoMirando",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Pará y mirá: la manga, los animales y la pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.autorizadoSinTorre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Todo libre: entrá a la pista",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.backTaxi",
     "voz": "instructor",
     "idioma": "es-PY",
@@ -396,10 +410,24 @@
     "para": "lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo"
   },
   {
+    "id": "vuelo.puedeVolverSinTorre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "La pista ya está libre: volvé a intentarlo",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
     "id": "vuelo.puedeAterrizar",
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "La torre te deja aterrizar",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.puedeAterrizarSinTorre",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Ahora sí: podés aterrizar",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {
@@ -554,6 +582,20 @@
     "voz": "instructor",
     "idioma": "es-PY",
     "texto": "Salí de la pista, que viene otro",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.abandonandoSinPrisa",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Sin apuro: salí de la pista y volvé a casa",
+    "para": "lo que toca hacer ahora, en vuelo y en tierra"
+  },
+  {
+    "id": "vuelo.abandonandoConLaBici",
+    "voz": "instructor",
+    "idioma": "es-PY",
+    "texto": "Sin apuro: salí de la pista y seguí a Jazlyn, que vino a buscarte en bici",
     "para": "lo que toca hacer ahora, en vuelo y en tierra"
   },
   {

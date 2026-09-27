@@ -270,6 +270,12 @@
     "vuelo.abandonando": {
       "ms": 1788
     },
+    "vuelo.abandonandoConLaBici": {
+      "ms": 4507
+    },
+    "vuelo.abandonandoSinPrisa": {
+      "ms": 2530
+    },
     "vuelo.alAireOtraPunta": {
       "ms": 2603
     },
@@ -324,6 +330,9 @@
     "vuelo.autorizado": {
       "ms": 1591
     },
+    "vuelo.autorizadoSinTorre": {
+      "ms": 1785
+    },
     "vuelo.backTaxi": {
       "ms": 1795
     },
@@ -377,6 +386,9 @@
     },
     "vuelo.esperando": {
       "ms": 1569
+    },
+    "vuelo.esperandoMirando": {
+      "ms": 2797
     },
     "vuelo.estacionado": {
       "ms": 991
@@ -510,8 +522,14 @@
     "vuelo.puedeAterrizar": {
       "ms": 1223
     },
+    "vuelo.puedeAterrizarSinTorre": {
+      "ms": 1658
+    },
     "vuelo.puedeVolver": {
       "ms": 1848
+    },
+    "vuelo.puedeVolverSinTorre": {
+      "ms": 2010
     },
     "vuelo.puedeVolver~2": {
       "ms": 2097
@@ -1273,6 +1291,24 @@
       "{c4}",
       "{c5}",
       "matricula.asiNosLlama"
+    ],
+    "vuelo.abandonandoConLaBici": [
+      "vuelo.abandonandoConLaBici"
+    ],
+    "vuelo.abandonandoSinPrisa": [
+      "vuelo.abandonandoSinPrisa"
+    ],
+    "vuelo.autorizadoSinTorre": [
+      "vuelo.autorizadoSinTorre"
+    ],
+    "vuelo.esperandoMirando": [
+      "vuelo.esperandoMirando"
+    ],
+    "vuelo.puedeAterrizarSinTorre": [
+      "vuelo.puedeAterrizarSinTorre"
+    ],
+    "vuelo.puedeVolverSinTorre": [
+      "vuelo.puedeVolverSinTorre"
     ]
   }
 }
