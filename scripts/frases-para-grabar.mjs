@@ -58,6 +58,14 @@ const HABLADOS = [
   ["motivo", "instructor", "por qué no se puede bajar así"],
   ["mission", "instructor", "las misiones"],
   /*
+   * **La cuenta de la toma, en casa.** «Cuatrocientos… cincuenta… diez»: lo
+   * que canta el radioaltímetro en inglés, dicho por la instructora en los
+   * peldaños que todavía no cantan en inglés y en los aviones sin
+   * radioaltímetro que cante. Se pedía sin clave y la decía el sintetizador,
+   * o nadie donde no hay voces instaladas.
+   */
+  ["cuenta", "instructor", "la cuenta de la toma, en casa"],
+  /*
    * **Y lo que explican los paneles.**
    *
    * Estaban fuera con el argumento de que «se leen, no se oyen», y vale para
@@ -192,6 +200,15 @@ const CABINA = [
     "te fuiste al aire: bien hecho",
   ],
   ["cabina.weHaveAProblem", "we have a problem", "se rompió el avión"],
+  /*
+   * **La orden de irse al aire, que no tenía toma.** La de arriba, con el
+   * elogio detrás, es la de **después**; ésta es la de antes, seca, la que
+   * se oye cuando el juego manda frustrar. Estaban las dos pidiendo la misma
+   * grabación. Ver `CLAVE_DE_CABINA` en `src/audio/cabina.ts`.
+   */
+  ["cabina.goAroundOrder", "go around", "la orden de irse al aire"],
+  // Y el aviso de velocidad baja, que el juego pedía sin toma.
+  ["cabina.airspeedLow", "airspeed low", "vas lento para la configuración"],
   ["cabina.fiveHundred", "five hundred", "altura de la toma, en pies"],
   ["cabina.oneHundred", "one hundred", "altura de la toma"],
   ["cabina.fifty", "fifty", "altura de la toma"],
@@ -327,6 +344,24 @@ const TORRE_SOLO = [
    * porque cambia con cada ruta. Ver `DESTINOS_EN_RADIO` más abajo.
    */
   ["torre.solo.clearedTo", "cleared to", "la autorización, antes del destino"],
+];
+
+/**
+ * **Y el viento, que va en toda autorización de pista.**
+ *
+ * Una torre de verdad lo da al autorizar a despegar y a aterrizar —«wind zero
+ * five zero degrees, one two knots, runway zero five, cleared to land»—, y
+ * las cifras ya estaban grabadas: faltaban las palabras de alrededor. Se
+ * llaman igual en las dos torres, como las cifras y el lado, porque van en un
+ * hueco y el hueco no sabe qué torre habla. Ver `vientoEnPiezas` en
+ * `src/flight/matricula.ts`.
+ */
+const VIENTO = [
+  ["viento.wind", "wind", "el viento, antes de la dirección"],
+  ["viento.degrees", "degrees", "detrás de la dirección del viento"],
+  ["viento.knots", "knots", "detrás de la fuerza del viento"],
+  ["viento.calm", "calm", "sin viento: «wind calm»"],
+  ["viento.variable", "variable", "viento sin dirección fija"],
 ];
 
 /** Y la pieza de cada letra, que es como se llama su fichero. */
@@ -495,7 +530,7 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of TORRE_SOLO) {
+for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO]) {
   filas.push({ id, voz: "torre", idioma: "en", texto, para });
   total += texto.length;
 }
@@ -591,7 +626,7 @@ for (const [palabra, cifra] of CIFRAS) {
   });
   total += palabra.length;
 }
-for (const [id, texto, para] of TORRE_SOLO) {
+for (const [id, texto, para] of [...TORRE_SOLO, ...VIENTO]) {
   filas.push({
     // Las claves llevan el habla en medio para no pisarse con las de casa.
     // Ver `comoSeDiceAqui` en `i18n/habla.ts`.

@@ -36,6 +36,7 @@ const avion = (cambios: Partial<FlightState> = {}): FlightState =>
     heading: 0,
     onGround: false,
     stalled: false,
+    stallWarning: false,
     crashed: false,
     secondsToImpact: Infinity,
     ...cambios,

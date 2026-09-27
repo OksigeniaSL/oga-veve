@@ -455,9 +455,6 @@
   "vuelo.sobrevelocidadAire": [
     "vuelo.sobrevelocidadAire"
   ],
-  "vuelo.sube": [
-    "vuelo.sube"
-  ],
   "vuelo.teLoPasaste": [
     "vuelo.teLoPasaste"
   ],
@@ -490,5 +487,53 @@
   ],
   "vuelo.yaPodesTocar": [
     "vuelo.yaPodesTocar"
+  ],
+  "vuelo.solo-vuelta": [
+    "vuelo.solo-vuelta"
+  ],
+  "vuelo.traficoArriba": [
+    "vuelo.traficoArriba"
+  ],
+  "vuelo.traficoAbajo": [
+    "vuelo.traficoAbajo"
+  ],
+  "vuelo.traficoNivel": [
+    "vuelo.traficoNivel"
+  ],
+  "vuelo.pilotoEnTierra": [
+    "vuelo.pilotoEnTierra"
+  ],
+  "cuenta.quinientos": [
+    "cuenta.quinientos"
+  ],
+  "cuenta.cuatrocientos": [
+    "cuenta.cuatrocientos"
+  ],
+  "cuenta.trescientos": [
+    "cuenta.trescientos"
+  ],
+  "cuenta.doscientos": [
+    "cuenta.doscientos"
+  ],
+  "cuenta.cien": [
+    "cuenta.cien"
+  ],
+  "cuenta.cincuenta": [
+    "cuenta.cincuenta"
+  ],
+  "cuenta.cuarenta": [
+    "cuenta.cuarenta"
+  ],
+  "cuenta.treinta": [
+    "cuenta.treinta"
+  ],
+  "cuenta.veinte": [
+    "cuenta.veinte"
+  ],
+  "cuenta.diez": [
+    "cuenta.diez"
+  ],
+  "cuenta.cinco": [
+    "cuenta.cinco"
   ]
 }

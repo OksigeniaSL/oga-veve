@@ -27,10 +27,13 @@ instructor	instructor/vuelo.trafico.delante.ogg	es-PY	Mirá adelante: hay otro a
 instructor	instructor/vuelo.trafico.izquierda.ogg	es-PY	Mirá a tu izquierda: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trafico.derecha.ogg	es-PY	Mirá a tu derecha: hay otro avión cerca	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.trafico.detras.ogg	es-PY	Hay otro avión cerca, detrás de vos	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.sube.ogg	es-PY	Ya subís: metélo	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.traficoArriba.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va más alto que nosotros: no nos molesta	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.traficoAbajo.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va más bajo que nosotros: no nos molesta	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.traficoNivel.ogg	es-PY	Ese rombo de la pantalla es otro avión. Va a nuestra altura, pero lejos: lo vamos mirando	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.bajasRapido.ogg	es-PY	Bajás muy rápido	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.muyInclinado.ogg	es-PY	Estás muy inclinado	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pilotoSuelto.ogg	es-PY	Se soltó el piloto automático	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.pilotoEnTierra.ogg	es-PY	El piloto automático se conecta en el aire	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar.ogg	es-PY	Pista ocupada. Subí y volvé por el circuito	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.mandanFrustrar~2.ogg	es-PY	¡Hay alguien en la pista! Gas, subí y dejá el aterrizaje	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
 instructor	instructor/vuelo.mandanFrustrar~3.ogg	es-PY	No podés bajar: metele gas y volvé a subir	lo que toca hacer ahora, en vuelo y en tierra · otra forma de decirlo
@@ -71,7 +74,7 @@ instructor	instructor/vuelo.trenPasado.ogg	es-PY	Muy rápido con el tren fuera: 
 instructor	instructor/vuelo.flapsPasados.ogg	es-PY	Muy rápido con los flaps: recogélos	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.pediFlaps.ogg	es-PY	Bajá los flaps para frenar	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.meteElTren.ogg	es-PY	Metélo, el tren te frena	lo que toca hacer ahora, en vuelo y en tierra
-instructor	instructor/vuelo.tormenta.ogg	es-PY	Hay lluvia delante: rodeála, no la cruces	lo que toca hacer ahora, en vuelo y en tierra
+instructor	instructor/vuelo.tormenta.ogg	es-PY	Hay una tormenta delante: rodeála, no la cruces	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.reserva.ogg	es-PY	Entraste en la reserva. Con calma: vamos al aeropuerto más cercano, seguí la flecha	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sinCombustible.ogg	es-PY	Se acabó el combustible: planeá hasta la pista	lo que toca hacer ahora, en vuelo y en tierra
 instructor	instructor/vuelo.sacaElTren.ogg	es-PY	Sacá el tren	lo que toca hacer ahora, en vuelo y en tierra
@@ -135,6 +138,17 @@ instructor	instructor/mission.transfer.name.ogg	es-PY	El traslado	las misiones
 instructor	instructor/mission.step.ogg	es-PY	¡Bien! Seguí	las misiones
 instructor	instructor/mission.done.ogg	es-PY	¡Misión cumplida!	las misiones
 instructor	instructor/mission.none.ogg	es-PY	Vuelo libre	las misiones
+instructor	instructor/cuenta.quinientos.ogg	es-PY	Quinientos	la cuenta de la toma, en casa
+instructor	instructor/cuenta.cuatrocientos.ogg	es-PY	Cuatrocientos	la cuenta de la toma, en casa
+instructor	instructor/cuenta.trescientos.ogg	es-PY	Trescientos	la cuenta de la toma, en casa
+instructor	instructor/cuenta.doscientos.ogg	es-PY	Doscientos	la cuenta de la toma, en casa
+instructor	instructor/cuenta.cien.ogg	es-PY	Cien	la cuenta de la toma, en casa
+instructor	instructor/cuenta.cincuenta.ogg	es-PY	Cincuenta	la cuenta de la toma, en casa
+instructor	instructor/cuenta.cuarenta.ogg	es-PY	Cuarenta	la cuenta de la toma, en casa
+instructor	instructor/cuenta.treinta.ogg	es-PY	Treinta	la cuenta de la toma, en casa
+instructor	instructor/cuenta.veinte.ogg	es-PY	Veinte	la cuenta de la toma, en casa
+instructor	instructor/cuenta.diez.ogg	es-PY	Diez	la cuenta de la toma, en casa
+instructor	instructor/cuenta.cinco.ogg	es-PY	Cinco	la cuenta de la toma, en casa
 instructor	instructor/ala.dice.arriba.ogg	es-PY	Mirá el azul: casi toda la fuerza la hace el aire de arriba, chupando. Y mirá cómo el aire sale para abajo detrás del ala.	lo que explica el esquema del ala
 instructor	instructor/ala.dice.arrastra.ogg	es-PY	Con más ángulo sube más… pero también frena mucho más. Por eso no se vuela con el morro arriba del todo.	lo que explica el esquema del ala
 instructor	instructor/ala.dice.cerca.ogg	es-PY	Cuidado: un poco más de ángulo y el aire se suelta.	lo que explica el esquema del ala
@@ -275,6 +289,8 @@ cabina	cabina/cabina.tooLowClimb.ogg	en	too low, climb	te pasaste el aro por aba
 cabina	cabina/cabina.obstacleAhead.ogg	en	obstacle ahead	hay un edificio delante
 cabina	cabina/cabina.goAround.ogg	en	going around. good decision	te fuiste al aire: bien hecho
 cabina	cabina/cabina.weHaveAProblem.ogg	en	we have a problem	se rompió el avión
+cabina	cabina/cabina.goAroundOrder.ogg	en	go around	la orden de irse al aire
+cabina	cabina/cabina.airspeedLow.ogg	en	airspeed low	vas lento para la configuración
 cabina	cabina/cabina.fiveHundred.ogg	en	five hundred	altura de la toma, en pies
 cabina	cabina/cabina.oneHundred.ogg	en	one hundred	altura de la toma
 cabina	cabina/cabina.fifty.ogg	en	fifty	altura de la toma
@@ -362,6 +378,11 @@ torre	torre/torre.solo.landingTraffic.ogg	en	landing traffic	se espera: uno vien
 torre	torre/torre.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes
 torre	torre/torre.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje
 torre	torre/torre.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino
+torre	torre/viento.wind.ogg	en	wind	el viento, antes de la dirección
+torre	torre/viento.degrees.ogg	en	degrees	detrás de la dirección del viento
+torre	torre/viento.knots.ogg	en	knots	detrás de la fuerza del viento
+torre	torre/viento.calm.ogg	en	calm	sin viento: «wind calm»
+torre	torre/viento.variable.ogg	en	variable	viento sin dirección fija
 torre	torre/torre.solo.aterrizar.ogg	es	podés aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre-canarias	torre-canarias/torre.canario.solo.aterrizar.ogg	es	puedes aterrizar	la lámpara verde con el avión en el aire: autorizado a aterrizar
 torre	torre/torre.solo.destino.ogg	es	podés volar a	a dónde se va, antes de rodar; el campo va detrás
@@ -429,3 +450,8 @@ torre-canarias	torre-canarias/torre.canario.solo.landingTraffic.ogg	en	landing t
 torre-canarias	torre-canarias/torre.canario.solo.departingTraffic.ogg	en	departing traffic	se espera: uno sale antes, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.lineUpWait.ogg	en	line up and wait	entrá y esperá en el eje, en Canarias
 torre-canarias	torre-canarias/torre.canario.solo.clearedTo.ogg	en	cleared to	la autorización, antes del destino, en Canarias
+torre-canarias	torre-canarias/viento.wind.ogg	en	wind	el viento, antes de la dirección, en Canarias
+torre-canarias	torre-canarias/viento.degrees.ogg	en	degrees	detrás de la dirección del viento, en Canarias
+torre-canarias	torre-canarias/viento.knots.ogg	en	knots	detrás de la fuerza del viento, en Canarias
+torre-canarias	torre-canarias/viento.calm.ogg	en	calm	sin viento: «wind calm», en Canarias
+torre-canarias	torre-canarias/viento.variable.ogg	en	variable	viento sin dirección fija, en Canarias

@@ -366,6 +366,25 @@ export interface AircraftConfig {
    */
   tcas: EquipoTcas | null;
   /**
+   * **Si lleva avisos que hablan**: el radioaltímetro que canta la altura en
+   * la toma, el avisador de terreno (GPWS o TAWS) y el de pérdida con voz.
+   *
+   * Es lo que decide si en el peldaño de cabina se oye «five hundred… fifty…
+   * ten», «terrain, pull up» o «stall, stall», y la regla es la de la casa:
+   * un aviso sonoro solo se pone en un avión que lo llevaría. Ver
+   * `DE_LOS_AVISADORES` en `audio/cabina.ts`.
+   *
+   * - **Sí**, el turbohélice de diecinueve plazas y los dos reactores. El TAWS
+   *   de clase A es obligatorio en todo avión de turbina con seis asientos de
+   *   pasaje o más (14 CFR 135.154), y el de un avión de línea lleva además
+   *   la cuenta de altura del radioaltímetro.
+   * - **No**, la avioneta de escuela, el fumigador y el bimotor de pistón.
+   *   Ninguna norma se lo pide y no lo llevan: en ellos la altura se mira en
+   *   el altímetro, la pérdida la avisa una bocina y quien canta la toma es
+   *   la persona sentada al lado. En el juego, la instructora.
+   */
+  avisosHablados: boolean;
+  /**
    * **Vmo**: velocidad indicada máxima, en nudos.
    *
    * Es un límite de **estructura**: lo que aguanta un fuselaje es presión
@@ -658,6 +677,7 @@ export const PYKASU: AircraftConfig = {
   alturaDeCrucero: 3000,
   presurizada: false,
   tcas: null,
+  avisosHablados: false,
   // 163 nudos: la Vne de un entrenador ligero. El Mach no lo ve en su vida.
   vmoKt: 163,
   vleKt: 85,
@@ -750,6 +770,7 @@ export const MAINUMBY: AircraftConfig = {
   alturaDeCrucero: 2500,
   presurizada: false,
   tcas: null,
+  avisosHablados: false,
   // Un biplano lento: 130 nudos y se queda muy lejos del Mach.
   vmoKt: 130,
   vleKt: 80,
@@ -886,6 +907,7 @@ export const PANAMBI: AircraftConfig = {
   alturaDeCrucero: 5500,
   presurizada: false,
   tcas: null,
+  avisosHablados: false,
   // Y los límites, tomados de un bimotor ligero de esta clase.
   vmoKt: 230,
   vleKt: 152,
@@ -998,6 +1020,7 @@ export const ARASUNU: AircraftConfig = {
   presurizada: true,
   // Diecinueve plazas y 5 600 kg: debajo de la raya del ACAS II. Ver `tcas`.
   tcas: "TCAS I",
+  avisosHablados: true,
   // Turbohélice de línea corta: rápido abajo y con techo de treinta mil.
   vmoKt: 250,
   vleKt: 184,
@@ -1129,6 +1152,7 @@ export const ARAI: AircraftConfig = {
   alturaDeCrucero: 11000,
   presurizada: true,
   tcas: "TCAS II",
+  avisosHablados: true,
   // Reactor regional.
   vmoKt: 320,
   /*
@@ -1328,6 +1352,7 @@ export const YVAGA: AircraftConfig = {
   alturaDeCrucero: 10700,
   presurizada: true,
   tcas: "TCAS II",
+  avisosHablados: true,
   /*
    * Los del de fuselaje ancho, que son los del avión del que sale: 365 nudos y
    * Mach 0,92. Y es el único de la flota donde el cruce cae a una altura a la

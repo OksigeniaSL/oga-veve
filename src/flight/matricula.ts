@@ -200,6 +200,92 @@ export function matriculaDe(
   return sortearIndicativo(aerodromo, () => 0);
 }
 
+/** Cómo se dice cada cifra por radio: «niner», no «nine». */
+const CIFRA_DICHA: Readonly<Record<string, string>> = {
+  "0": "zero",
+  "1": "one",
+  "2": "two",
+  "3": "three",
+  "4": "four",
+  "5": "five",
+  "6": "six",
+  "7": "seven",
+  "8": "eight",
+  "9": "niner",
+};
+
+/**
+ * **El viento de la autorización**, en piezas y en palabras.
+ *
+ * Una torre de verdad da el viento al autorizar a despegar y a aterrizar,
+ * porque es lo último que hace falta saber antes de hacerlo: «wind zero five
+ * zero degrees, one two knots, runway zero five, cleared to land». Y lo da
+ * como se da todo número por radio, cifra a cifra (OACI, Anexo 10, vol. II,
+ * 5.2.1.4).
+ *
+ * Tres cosas que no son un gusto, y que se aprenden aquí para no tener que
+ * desaprenderlas:
+ *
+ * - **En magnéticos.** El METAR da el viento en grados verdaderos y la torre
+ *   en magnéticos, que es en lo que van las pistas: con el 050 verdadero en
+ *   Asunción, trece grados de declinación oeste, la torre dice 060. Por eso
+ *   un piloto puede comparar el viento con el número de la pista sin cuentas.
+ * - **Redondeado a la decena**, y el norte es 360, no 000.
+ * - **Sin viento no hay dirección**: «wind calm». Y con viento sin dirección
+ *   fija, «wind variable» y la fuerza.
+ *
+ * `declinacion` es la del campo, positiva al oeste —magnético = verdadero +
+ * declinación—, que es como la lleva `Scenario.magneticVariation`. El relleno
+ * va con las piezas separadas por espacios, que es como un hueco lleva varias
+ * —ver `recetaDe`—, y las palabras se llaman igual en las dos torres, como las
+ * cifras: `viento.wind`, `viento.knots`…
+ */
+export function vientoEnPiezas(
+  vientoDe: number | null,
+  nudos: number,
+  declinacion: number,
+): { relleno: string; dicho: string } {
+  const pieza = (p: "wind" | "degrees" | "knots" | "calm" | "variable") =>
+    `viento.${p}`;
+  const fuerza = Math.round(nudos);
+  if (fuerza < 1) {
+    return {
+      relleno: [pieza("wind"), pieza("calm")].join(" "),
+      dicho: "wind calm",
+    };
+  }
+  const deFuerza = String(fuerza).split("");
+  const fuerzaEnPiezas = deFuerza.map((c) => `cifra.${c}`);
+  const fuerzaDicha = deFuerza.map((c) => CIFRA_DICHA[c]!).join(" ");
+  if (vientoDe === null) {
+    return {
+      relleno: [
+        pieza("wind"),
+        pieza("variable"),
+        ...fuerzaEnPiezas,
+        pieza("knots"),
+      ].join(" "),
+      dicho: `wind variable, ${fuerzaDicha} knots`,
+    };
+  }
+  const magnetico = (((vientoDe + declinacion) % 360) + 360) % 360;
+  const decena = Math.round(magnetico / 10) * 10;
+  const rumbo = String(decena === 0 ? 360 : decena).padStart(3, "0");
+  const deRumbo = rumbo.split("");
+  return {
+    relleno: [
+      pieza("wind"),
+      ...deRumbo.map((c) => `cifra.${c}`),
+      pieza("degrees"),
+      ...fuerzaEnPiezas,
+      pieza("knots"),
+    ].join(" "),
+    dicho:
+      `wind ${deRumbo.map((c) => CIFRA_DICHA[c]!).join(" ")} degrees, ` +
+      `${fuerzaDicha} knots`,
+  };
+}
+
 /**
  * El número de pista, en piezas: `{r1}`, `{r2}` y de qué lado.
  *

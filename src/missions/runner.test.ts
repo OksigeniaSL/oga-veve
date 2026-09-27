@@ -33,6 +33,7 @@ function state(partial: Partial<FlightState>): FlightState {
     heading: 0,
     onGround: true,
     stalled: false,
+    stallWarning: false,
     crashed: false,
     secondsToImpact: Number.POSITIVE_INFINITY,
     touchdownSinkRate: 0,

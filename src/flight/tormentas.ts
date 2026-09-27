@@ -197,6 +197,24 @@ export function cuantoSacude(
 }
 
 /**
+ * **Si a esta célula hay que darle la vuelta**: si su núcleo llega al rojo.
+ *
+ * Es la escala de arriba leída como la lee quien vuela: el verde se cruza, el
+ * ámbar se nota, **en el rojo no se entra** y del magenta ni se acerca uno.
+ * Pedir que se rodee una célula verde enseña lo contrario de la escala —que
+ * toda la lluvia es peligrosa— y además no es verdad: se vuela entre
+ * chubascos flojos a diario.
+ *
+ * Se vio con el parte de verdad de Los Rodeos del 27-sep-2026, que traía
+ * `-RA`: lluvia floja, dos células verdes, y la instructora pidiendo rodearlas
+ * cinco veces en un vuelo.
+ */
+export function seRodea(c: Celda): boolean {
+  const eco = colorDelEco(c.fuerza);
+  return eco === "rojo" || eco === "magenta";
+}
+
+/**
  * La célula que se tiene delante, si hay alguna, y a qué distancia.
  *
  * Existe porque **los círculos del radar no los nombraba nadie**. Se preguntó

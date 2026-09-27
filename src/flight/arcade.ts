@@ -319,6 +319,7 @@ export class ArcadeFlightModel implements FlightModel {
       heading: 0,
       onGround: true,
       stalled: false,
+      stallWarning: false,
       crashed: false,
       secondsToImpact: Number.POSITIVE_INFINITY,
       touchdownSinkRate: 0,
@@ -399,6 +400,7 @@ export class ArcadeFlightModel implements FlightModel {
     this.state.position.copy(initial.position);
     this.state.crashed = false;
     this.state.stalled = false;
+    this.state.stallWarning = false;
     this.state.touchdownSinkRate = 0;
     this.apply(0);
   }
@@ -1095,6 +1097,7 @@ export class ArcadeFlightModel implements FlightModel {
     s.loadFactor = 1;
     // Ni pérdida ni choque: en este peldaño no se puede perder.
     s.stalled = false;
+    s.stallWarning = false;
     s.crashed = false;
     s.secondsToImpact = Number.POSITIVE_INFINITY;
   }

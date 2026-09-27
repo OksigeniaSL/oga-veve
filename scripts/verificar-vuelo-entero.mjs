@@ -211,9 +211,24 @@ await page.addInitScript(() => {
  * defecto, las cuatro y el tiempo de casa, que es lo que mide igual cada vez.
  */
 const HORA = process.env.OGA_HORA ?? "16";
+/*
+ * **Y el tiempo de casa es el de casa, no el del día.**
+ *
+ * Sin `OGA_METAR` esto decía volar con el tiempo de casa, y en el árbol
+ * principal no era verdad: allí hay un `.env` con el proxy del METAR, así que
+ * el juego pedía el parte de verdad del aeropuerto y el banco volaba con el
+ * tiempo que hiciera ese día. Se vio con la tormenta: en Los Rodeos, el
+ * 27-sep-2026, el parte traía `-RA` —lluvia floja—, salían células en el
+ * radar y la instructora pedía rodear la lluvia cinco veces en un vuelo que
+ * se suponía de buen tiempo. Y en una copia sin `.env` el mismo banco no lo
+ * reproducía. `&meteo=` vacío le dice al juego que no hay proxy. Para volar
+ * con el parte de verdad, `OGA_METEO_DE_VERDAD=1`.
+ */
 const METAR = process.env.OGA_METAR
   ? `&metar=${encodeURIComponent(process.env.OGA_METAR)}`
-  : "";
+  : process.env.OGA_METEO_DE_VERDAD
+    ? ""
+    : "&meteo=";
 /*
  * **Y la lección, si se pide otra.** `OGA_LECCION=rodaje` para mirar con
  * `OGA_FOTOS` la lección que acaba en el punto de espera. Las comprobaciones
@@ -542,7 +557,42 @@ const vuelo = await page.evaluate(async ([vecesPedidas, destino, peldano]) => {
     rudder: 0,
     engineOn: false,
   };
-  o.pilotar((mandos) => Object.assign(mandos, c));
+  /*
+   * **Y el piloto no tira más allá de lo que aguanta el ala.**
+   *
+   * Con el JAZ 90 en Taguató el juego cantó «stall, stall» una treintena de
+   * veces entre 181 y 190 nudos, y parecía un aviso que miraba la velocidad.
+   * El registro de cantos, con el ángulo de ataque al lado, dijo lo contrario:
+   * α 18,6° con la pérdida a 14,9° y 1,5 g — **pérdida de verdad**, a alta
+   * velocidad, que es la que enseña que un ala entra en pérdida a cualquier
+   * velocidad si se tira lo bastante. Y quien tiraba era este banco: la ley de
+   * subida suma a la palanca de velocidad un empujón cuando no sube, hasta 0,5,
+   * y en este avión cada décima de palanca son unos cuatro grados de ángulo.
+   * Afinada con la avioneta, en un reactor es una orden de entrar en pérdida.
+   *
+   * Un piloto de verdad no vuela así: cede palanca antes de que suene el
+   * avisador. Así que el mando se recorta aquí, en el único sitio por el que
+   * pasa todo lo que el piloto pide, por encima del **setenta por ciento del
+   * ángulo de pérdida** —diez grados y medio en el JAZ 90, lejos del aviso— y
+   * del todo si el avisador llegara a sonar. En la avioneta, que ya volaba
+   * lejos de ahí, no cambia nada.
+   */
+  const limitarElAngulo = (mandos) => {
+    const s = o.estado();
+    if (s.onGround || mandos.elevator <= 0) return;
+    if (s.stallWarning) {
+      mandos.elevator = 0;
+      return;
+    }
+    // Al avión de ahora, que se puede cambiar a mitad de vuelo.
+    const sobra = s.alpha - (o.avion?.()?.perdida ?? 0.26) * 0.7;
+    if (sobra > 0)
+      mandos.elevator = Math.max(0, mandos.elevator - sobra * 12);
+  };
+  o.pilotar((mandos) => {
+    Object.assign(mandos, c);
+    limitarElAngulo(mandos);
+  });
   /*
    * **La pista es la del campo en el que se está**, no siempre la de casa.
    * En casa es la misma; en el destino, la suya. Ver el argumento `destino`.

@@ -29,6 +29,7 @@
 
 import { Quaternion, Vector3 } from "three";
 import { loQueCambiaElTren } from "./tren";
+import { anguloDeAviso, SE_CALLA_EL_AVISADOR } from "./avisos-de-actitud";
 import { GRAVITY, SEA_LEVEL_DENSITY, airDensity } from "./atmosphere";
 import {
   topeDeVelocidad,
@@ -297,6 +298,7 @@ export class CoefficientFlightModel implements FlightModel {
       heading: 0,
       onGround: true,
       stalled: false,
+      stallWarning: false,
       crashed: false,
       secondsToImpact: Number.POSITIVE_INFINITY,
       touchdownSinkRate: 0,
@@ -393,6 +395,7 @@ export class CoefficientFlightModel implements FlightModel {
     s.yawRate = 0;
     s.crashed = false;
     s.stalled = false;
+    s.stallWarning = false;
     this.stallFor = 0;
     s.loadFactor = 1;
     this.trimClimb = null;
@@ -602,6 +605,25 @@ export class CoefficientFlightModel implements FlightModel {
     if (!s.stalled && this.stallFor > STALL_DELAY) s.stalled = true;
     else if (s.stalled && Math.abs(s.alpha) < stallAngle - STALL_RECOVERY)
       s.stalled = false;
+
+    /*
+     * **Y el avisador, que va por delante de la pérdida.**
+     *
+     * Es la veleta del costado del morro: mira el ángulo de ataque —con signo,
+     * que empujando no avisa de nada— contra un umbral que baja con los flaps,
+     * y suena **antes** de que el ala se vaya. Lo de arriba es la pérdida; esto
+     * es lo que la anuncia, y en cualquier cabina son dos cosas distintas. Ver
+     * `anguloDeAviso`. No toca la física: es un instrumento.
+     */
+    const umbral = anguloDeAviso(
+      stallAngle,
+      a,
+      ac.flapsLift * assisted.flaps,
+    );
+    if (speed <= MIN_AIRSPEED) s.stallWarning = false;
+    else if (!s.stallWarning && s.alpha > umbral) s.stallWarning = true;
+    else if (s.stallWarning && s.alpha < umbral - SE_CALLA_EL_AVISADOR)
+      s.stallWarning = false;
 
     const lift = qS * cl;
     const drag = qS * cd;

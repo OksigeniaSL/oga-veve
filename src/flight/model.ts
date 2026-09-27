@@ -181,6 +181,12 @@ export interface FlightState {
   heading: number;
   onGround: boolean;
   stalled: boolean;
+  /**
+   * **Si suena el avisador de pérdida**, que no es lo mismo que estar en
+   * pérdida: suena antes, por ángulo de ataque y con los flaps que se lleven.
+   * Ver `anguloDeAviso` en `flight/avisos-de-actitud.ts`.
+   */
+  stallWarning: boolean;
   /** Se pone a true cuando el toque ha sido demasiado violento. */
   crashed: boolean;
   /**

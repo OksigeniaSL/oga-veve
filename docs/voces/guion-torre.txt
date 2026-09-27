@@ -46,6 +46,11 @@ landing traffic
 departing traffic
 line up and wait
 cleared to
+wind
+degrees
+knots
+calm
+variable
 podés aterrizar
 podés volar a
 Asunción

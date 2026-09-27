@@ -113,6 +113,23 @@ describe("montar la frase, como los GPS", () => {
   });
 
   /*
+   * **Y un hueco puede llevar varias piezas**, que es lo que pide el viento de
+   * la torre: «wind calm» son dos y «wind zero five zero degrees, one two
+   * knots» son ocho. Con la misma regla: si falta una, no se monta nada.
+   */
+  it("un hueco con varias piezas las pone todas, en orden", () => {
+    expect(
+      recetaDe(PACK, "vuelo.calle", { letra: "hueco.a hueco.b" }),
+    ).toEqual(["segui", "la-calle", "hueco.a", "hueco.b"]);
+  });
+
+  it("y si una de ellas falta, se cae entera", () => {
+    expect(
+      recetaDe(PACK, "vuelo.calle", { letra: "hueco.a hueco.z" }),
+    ).toBeNull();
+  });
+
+  /*
    * **Media frase es peor que ninguna.** Una receta que nombra una pieza que
    * el pack no trae diría «seguí…» y se callaría a la mitad, que a los cuatro
    * años es peor que no decir nada: se cae entera al navegador.

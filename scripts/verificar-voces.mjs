@@ -88,6 +88,17 @@ const REPARTO = [
   ["instructor", "vuelo.noEstabilizada+descolocado", "instructor"],
   ["instructor", "cabina.v1", "cabina"],
   ["instructor", "cabina.vr", "cabina"],
+  /*
+   * **Y lo que el juego pedía y no tenía toma**, que se oía por el
+   * sintetizador o no se oía: la cuenta de la toma en casa —«four hundred→sin
+   * clave» en el registro de cantos—, la orden de frustrar y el «airspeed
+   * low» de cabina, y la explicación de qué es un rombo del TCAS.
+   */
+  ["instructor", "cuenta.cincuenta", "instructor"],
+  ["instructor", "cuenta.quinientos", "instructor"],
+  ["instructor", "vuelo.traficoArriba", "instructor"],
+  ["instructor", "cabina.goAroundOrder", "cabina"],
+  ["instructor", "cabina.airspeedLow", "cabina"],
 ];
 
 const server = await createServer({
@@ -221,6 +232,20 @@ comprobar(
   /^ZP-[A-Z]{3}$/.test(indicativo.yo) && !!indicativo.pista,
   `${indicativo.yo} · «${indicativo.yoDicho}, runway ${indicativo.pista}»`,
   "una torre que nunca te llama por tu nombre no es una torre, es un altavoz",
+);
+
+/*
+ * **Y con el viento, al darte la pista.** Es lo último que hace falta saber
+ * antes de despegar o aterrizar, y la torre no lo daba nunca. Las dos
+ * autorizaciones de más abajo solo se montan con él.
+ */
+comprobar(
+  "y al darte la pista te dice el viento",
+  /^wind (calm|variable|(zero|one|two|three) \w+ \w+ degrees)/.test(
+    indicativo.viento ?? "",
+  ),
+  `«${indicativo.yoDicho}, ${indicativo.viento}, runway ${indicativo.pista}, cleared for take-off»`,
+  "una torre de verdad da el viento al autorizar a despegar y a aterrizar",
 );
 
 comprobar(

@@ -182,6 +182,21 @@
     },
     "torre.canario.solo.verde": {
       "ms": 746
+    },
+    "viento.calm": {
+      "ms": 666
+    },
+    "viento.degrees": {
+      "ms": 830
+    },
+    "viento.knots": {
+      "ms": 551
+    },
+    "viento.variable": {
+      "ms": 801
+    },
+    "viento.wind": {
+      "ms": 428
     }
   },
   "recetas": {
@@ -332,6 +347,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.canario.solo.runway",
       "{r1}",
       "{r2}",
@@ -343,6 +359,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.canario.solo.runway",
       "{r1}",
       "{r2}",
@@ -355,6 +372,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.canario.solo.runway",
       "{r1}",
       "{r2}",
@@ -367,6 +385,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.canario.solo.runway",
       "{r1}",
       "{r2}",
@@ -379,6 +398,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.canario.solo.runway",
       "{r1}",
       "{r2}",
@@ -390,6 +410,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.canario.solo.runway",
       "{r1}",
       "{r2}",
@@ -402,6 +423,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.canario.solo.runway",
       "{r1}",
       "{r2}",
@@ -414,6 +436,7 @@
       "{c3}",
       "{c4}",
       "{c5}",
+      "{viento}",
       "torre.canario.solo.runway",
       "{r1}",
       "{r2}",
@@ -575,6 +598,21 @@
     ],
     "destino.tenerife-sur": [
       "destino.tenerife-sur"
+    ],
+    "viento.wind": [
+      "viento.wind"
+    ],
+    "viento.degrees": [
+      "viento.degrees"
+    ],
+    "viento.knots": [
+      "viento.knots"
+    ],
+    "viento.calm": [
+      "viento.calm"
+    ],
+    "viento.variable": [
+      "viento.variable"
     ]
   }
 }

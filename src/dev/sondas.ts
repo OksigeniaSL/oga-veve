@@ -372,6 +372,13 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
        * Tenerife Norte sin llegar a despegar.
        */
       rotacion: juego.aircraft.rotationSpeed,
+      /*
+       * Y su ángulo de pérdida, rad, para que el piloto del banco no tire más
+       * allá: con el JAZ 90 tiraba hasta 18,6° a ciento ochenta y ocho nudos,
+       * con la pérdida a 14,9°, y el juego cantaba «stall, stall» con toda la
+       * razón. Ver `limitarElAngulo` en `verificar-vuelo-entero`.
+       */
+      perdida: juego.aircraft.aero.alphaStall,
       aproximacion: juego.aircraft.approachSpeed,
       crucero: juego.aircraft.cruiseSpeed,
       // Y a qué vuela el circuito, que es lo que el banco tiene que volar
@@ -640,7 +647,14 @@ export function abrirLaVentanaDePruebas(juego: Game): void {
         yo: yo.matricula,
         yoDicho: yo.dicho,
         // Con lo que hace falta para montar una llamada de la torre entera.
-        deTorre: { ...rellenoDe(yo), ...(pista?.relleno ?? {}) },
+        // Y el viento, que va en las autorizaciones de despegue y aterrizaje:
+        // sin él, esas dos recetas no se montan. Ver `deTorre` en `game.ts`.
+        deTorre: {
+          ...rellenoDe(yo),
+          ...(pista?.relleno ?? {}),
+          viento: juego.vientoDeLaTorreParaBanco.relleno,
+        },
+        viento: juego.vientoDeLaTorreParaBanco.dicho,
         pista: pista?.dicho ?? null,
         sufijo: pista?.sufijo ?? "",
       };

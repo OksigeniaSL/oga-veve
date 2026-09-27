@@ -52,9 +52,29 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   airspeed: "cabina.airspeed",
   "slow down": "cabina.slowDown",
   "too fast": "cabina.tooFast",
-  // Y el final que no acaba en toma.
-  "go around": "cabina.goAround",
+  /*
+   * **Y el final que no acaba en toma, con sus dos frases, que no son una.**
+   *
+   * «Go around» es la orden: la que se oye cuando el juego manda irse al
+   * aire. «Going around. Good decision» es lo que se dice **después**, cuando
+   * ya se ha ido, y es un elogio. La tabla tenía la orden apuntando a la toma
+   * del elogio —`cabina.goAround` se grabó con el texto largo—, así que en el
+   * peldaño de cabina, cuando el juego mandaba frustrar, sonaba «going around,
+   * good decision» antes de que nadie hubiera hecho nada; y el elogio de
+   * verdad, que no casaba con ninguna clave, salía por la voz del navegador.
+   *
+   * Ahora cada frase lleva su toma: el elogio la que ya estaba, y la orden
+   * una nueva, dicha seca, como la dice quien vuela a tu lado.
+   */
+  "going around. good decision": "cabina.goAround",
+  "go around": "cabina.goAroundOrder",
   "off the runway": "cabina.offTheRunway",
+  /*
+   * **«Airspeed low»**, que el juego ya pedía y no tenía toma: salía por la
+   * voz del navegador. Es el aviso de velocidad baja de un avión de línea, en
+   * esas dos palabras.
+   */
+  "airspeed low": "cabina.airspeedLow",
   /*
    * **Y los tres que el avión ya sabía y no decía.**
    *
@@ -93,6 +113,71 @@ export const CLAVE_DE_CABINA: Readonly<Record<string, string>> = {
   "autopilot disconnect": "cabina.autopilotDisconnect",
   minimums: "cabina.minimums",
 };
+
+/**
+ * **Los cantos que dice el avión, y no quien va sentado en él.**
+ *
+ * Una cabina oye dos clases de voces y no se parecen. Unas son de la
+ * tripulación —«V one», «rotate», «positive rate», «gear up»—, y las dice
+ * quien vuela a tu lado en cualquier avión que lleve dos. Las otras las dice
+ * **una caja**: el radioaltímetro que canta la altura en la toma, el avisador
+ * de proximidad al terreno (GPWS, TAWS) con su «terrain» y su «sink rate», el
+ * avisador de pérdida con voz, el del piloto automático. Esas no las lleva
+ * cualquiera: las lleva el avión de transporte, porque la norma se lo pide
+ * —el TAWS de clase A es obligatorio en los de turbina con seis asientos de
+ * pasaje o más (14 CFR 135.154; en Europa, CS-25 y la parte CAT)—, y una
+ * avioneta de escuela no lleva ninguna.
+ *
+ * Así que estos cantos, en inglés y con la voz de cabina, solo suenan en el
+ * avión que tiene con qué decirlos. En los demás los dice la instructora, en
+ * casa, que es lo que pasa en una avioneta: quien canta la altura en la toma
+ * es la persona de al lado. Ver `Game.cantar` y `avisosHablados` en
+ * `flight/aircraft.ts`.
+ *
+ * El TCAS va aparte porque tiene su propio equipo —ver `tcas` en la ficha—.
+ */
+export const DE_LOS_AVISADORES: ReadonlySet<string> = new Set([
+  // El radioaltímetro, en la toma.
+  "cabina.fiveHundred",
+  "cabina.fourHundred",
+  "cabina.threeHundred",
+  "cabina.twoHundred",
+  "cabina.oneHundred",
+  "cabina.fifty",
+  "cabina.forty",
+  "cabina.thirty",
+  "cabina.twenty",
+  "cabina.ten",
+  "cabina.five",
+  "cabina.minimums",
+  // El avisador de terreno, con sus cuatro modos que el juego calcula.
+  "cabina.terrainPullUp",
+  "cabina.tooLow",
+  "cabina.sinkRate",
+  "cabina.bankAngle",
+  // Y los tres avisos de a bordo que son de un avión de línea.
+  "cabina.stall",
+  "cabina.airspeedLow",
+  "cabina.autopilotDisconnect",
+]);
+
+/** Lo que hace falta saber de un avión para saber qué cantos lleva. */
+export interface EquipoDeCabina {
+  readonly avisosHablados: boolean;
+  readonly tcas: string | null;
+}
+
+/**
+ * Si **este avión** tiene con qué decir este canto.
+ *
+ * Los de la tripulación, siempre. Los de las cajas, solo si las lleva. Ver
+ * `DE_LOS_AVISADORES`.
+ */
+export function loDiceElAvion(clave: string, avion: EquipoDeCabina): boolean {
+  if (clave === "cabina.traffic") return avion.tcas !== null;
+  if (DE_LOS_AVISADORES.has(clave)) return avion.avisosHablados;
+  return true;
+}
 
 /**
  * La clave de este canto, si está grabado.
