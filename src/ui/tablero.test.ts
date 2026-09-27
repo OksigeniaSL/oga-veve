@@ -63,9 +63,11 @@ describe("el cuadro de cada avión", () => {
 });
 
 describe("lo que lleva cada familia", () => {
-  it("los de pistón, seis esferas y ninguna pantalla de navegación", () => {
+  it("los de pistón, sus esferas y ninguna pantalla de navegación", () => {
+    // Las seis de vuelo, el tacómetro y el depósito: el fumigador no lleva
+    // flaps. Las mismas que su cabina; ver `cuadro-dos-vistas.test.ts`.
     const marcado = dibujo("jaz-25");
-    expect(marcado.match(/data-dial="/g)).toHaveLength(6);
+    expect(marcado.match(/data-dial="/g)).toHaveLength(8);
     expect(marcado).not.toContain('data-fondo="nd"');
   });
 
@@ -159,18 +161,27 @@ describe("el indicador de combustible", () => {
   it("está en el cuadro de los seis aviones", () => {
     for (const a of AIRCRAFT) {
       const marcado = new Tablero().markup(a);
-      expect(marcado).toContain('data-cristal="combustible"');
-      expect(marcado).toContain('data-combustible="barra"');
-      // Y la franja de la reserva, que es la meta hacia la que baja la barra.
-      expect(marcado).toContain('data-combustible="reserva"');
       expect(marcado).toContain(">FUEL<");
+      if (familiaDe(a) === "esferas") {
+        // En los de pistón es una esfera, la misma que la de su cabina: la
+        // aguja y el arco ámbar de la reserva, que es la meta.
+        expect(marcado).toContain("data-fuel-aguja");
+        expect(marcado).toMatch(/data-dial="fuel"[\s\S]*esfera__arco--ambar/);
+      } else {
+        expect(marcado).toContain('data-cristal="combustible"');
+        expect(marcado).toContain('data-combustible="barra"');
+        // Y la franja de la reserva, que es la meta hacia la que baja la barra.
+        expect(marcado).toContain('data-combustible="reserva"');
+      }
     }
   });
 
   it("y uno solo por cuadro: dos depósitos serían dos aviones", () => {
     for (const a of AIRCRAFT) {
       const marcado = new Tablero().markup(a);
-      expect(marcado.match(/data-cristal="combustible"/g)).toHaveLength(1);
+      const reglas = marcado.match(/data-cristal="combustible"/g)?.length ?? 0;
+      const esferas = marcado.match(/data-dial="fuel"/g)?.length ?? 0;
+      expect(reglas + esferas).toBe(1);
     }
   });
 });

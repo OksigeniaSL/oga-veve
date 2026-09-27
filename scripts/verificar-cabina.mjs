@@ -271,6 +271,7 @@ for (const id of [
       familia: o.familia(),
       motores: o.avion().motores,
       llevaFlaps: o.avion().llevaFlaps,
+      trenRetractil: o.avion().trenRetractil,
     };
   });
 
@@ -342,6 +343,20 @@ for (const id of [
       `${(visto.pantallas ?? []).map((p) => p.dibujo).join(" · ")}`,
       "un reactor no lleva relojes de motor: lleva EICAS",
     );
+  } else if (visto.familia === "cristal") {
+    /*
+     * **Y el de cristal, tampoco.** Lleva el par, los flaps, el depósito y el
+     * tren en una franja de su pantalla de mapa, como un cristal de aviación
+     * general y como su cuadro plano. Tenía además dos relojes redondos de
+     * par y uno de flaps, que decían lo mismo que la franja con otra escala.
+     */
+    comprobar(
+      etiqueta("los motores van en la pantalla, no en relojes redondos"),
+      (visto.relojes ?? []).length === 0 &&
+        (visto.pantallas ?? []).some((p) => p.dibujo === "rumbo"),
+      `${(visto.relojes ?? []).map((r) => r.que).join(" · ") || "sin relojes"} · ${(visto.pantallas ?? []).map((p) => p.dibujo).join(" · ")}`,
+      "el mismo instrumento dos veces, y distinto, es un instrumento que miente",
+    );
   } else {
     /*
      * **Los de motor, que ya no son los únicos.**
@@ -354,7 +369,7 @@ for (const id of [
      */
     const DE_VUELO = ["asi", "ai", "alt", "tc", "dg", "vsi"];
     const deMotor = (visto.relojes ?? []).filter(
-      (r) => r.que !== "flaps" && !DE_VUELO.includes(r.que),
+      (r) => !["flaps", "fuel", "tren"].includes(r.que) && !DE_VUELO.includes(r.que),
     );
     comprobar(
       etiqueta("hay un reloj encendido por motor"),
@@ -377,6 +392,28 @@ for (const id of [
       conReloj === visto.llevaFlaps,
       `${(visto.relojes ?? []).length} relojes`,
       "un reloj que marca un mando que el avión no tiene enseña que los relojes mienten",
+    );
+
+    /*
+     * **Y el depósito y el tren, que el cuadro plano llevaba y la cabina no.**
+     * El depósito en todos; las luces del tren solo en el que lo mete.
+     */
+    const hay = (que) => (visto.relojes ?? []).some((r) => r.que === que);
+    comprobar(
+      etiqueta("y el del depósito, como en el cuadro plano"),
+      hay("fuel"),
+      hay("fuel") ? "está" : "no está",
+      "el mismo avión lleva los mismos instrumentos en las dos vistas",
+    );
+    comprobar(
+      etiqueta(
+        visto.trenRetractil
+          ? "y las luces del tren, que lo mete"
+          : "y sin luces de tren, que no lo mete",
+      ),
+      hay("tren") === !!visto.trenRetractil,
+      hay("tren") ? "están" : "no están",
+      "tres ruedas verdes en un avión de tren fijo enseñan un mando que no existe",
     );
   }
 
@@ -518,7 +555,7 @@ for (const id of [
   const enCabina = await page.evaluate(() => {
     const o = globalThis.__oga;
     o.ponerVista("cockpit");
-    return o.enPantalla("^(reloj-(motor|flaps)|boton)");
+    return o.enPantalla("^(reloj-(motor|flaps|combustible|tren)|boton)");
   });
   if (enCabina && enCabina.piezas.length) {
     const fuera = enCabina.piezas.filter(

@@ -9,36 +9,66 @@
  */
 import { describe, expect, it } from "vitest";
 import { AIRCRAFT, PYKASU, aircraftById } from "../flight/aircraft";
-import { cuadroDe, regimen } from "./cuadro";
+import { anguloEn, cuadroDe, enLaEscala, regimen } from "./cuadro";
 
-const NUDOS = 1.94384;
 
 describe("las escalas del cuadro", () => {
-  it("la aguja del anemómetro cabe en la esfera, avión por avión", () => {
+  it("la raya roja cabe en la esfera, avión por avión, con sitio para un picado", () => {
     for (const a of AIRCRAFT) {
       const c = cuadroDe(a);
-      // Su crucero tiene que quedar dentro y sobrar sitio por arriba.
-      expect(a.cruiseSpeed * NUDOS).toBeLessThan(c.asiMax * 0.85);
+      expect(c.velocidades.vne * 1.08).toBeLessThanOrEqual(c.asiMax);
     }
   });
 
-  it("y la del entrenador se queda donde estaba medida", () => {
-    expect(cuadroDe(PYKASU).asiMax).toBe(160);
+  it("y es la de nunca pasar de la ficha, no el crucero más un quince por ciento", () => {
+    // La del entrenador es 163: con el fondo de antes, 160, la raya caía fuera
+    // de la esfera, y con la cuenta de antes caía en 134.
+    const c = cuadroDe(PYKASU);
+    expect(c.velocidades.vne).toBe(PYKASU.vmoKt);
+    expect(c.anemometro.raya).toBeCloseTo(163 / c.asiMax, 5);
+    expect(c.asiMax).toBe(200);
   });
 
   it("el de fuselaje ancho no vuela con el anemómetro clavado", () => {
     const c = cuadroDe(aircraftById("jaz-120"));
-    expect(c.asiMax).toBeGreaterThan(400);
+    expect(c.asiMax).toBeGreaterThan(c.velocidades.vne);
+    expect(c.asiMax).toBeGreaterThanOrEqual(400);
+  });
+
+  it("las cifras son redondas y caben: ni un 53 ni un 88", () => {
+    for (const a of AIRCRAFT) {
+      const cifras = cuadroDe(a)
+        .anemometro.marcas.filter((m) => m.cifra !== null)
+        .map((m) => Number(m.cifra));
+      expect(cifras.length).toBeLessThanOrEqual(7);
+      const paso = cifras[1]! - cifras[0]!;
+      expect([20, 40, 50, 100]).toContain(paso);
+      for (const v of cifras) expect(v % paso).toBe(0);
+    }
   });
 
   it("los arcos de color son las velocidades del avión, en orden", () => {
     for (const a of AIRCRAFT) {
-      const { verde, ambar, rojo } = cuadroDe(a).arcos;
-      expect(verde[0]).toBeGreaterThan(0);
-      expect(verde[1]).toBeGreaterThan(verde[0]);
-      expect(ambar[1]).toBeGreaterThan(ambar[0]);
-      expect(rojo[1]).toBeGreaterThan(rojo[0]);
-      expect(rojo[1]).toBeLessThanOrEqual(1);
+      const c = cuadroDe(a);
+      const arco = (color: string) =>
+        c.anemometro.arcos.find((x) => x.color === color);
+      const verde = arco("verde")!;
+      const ambar = arco("ambar")!;
+      expect(verde.desde).toBeGreaterThan(0);
+      expect(verde.hasta).toBeGreaterThan(verde.desde);
+      expect(ambar.desde).toBeCloseTo(verde.hasta, 6);
+      expect(ambar.hasta).toBeCloseTo(c.anemometro.raya!, 6);
+      expect(c.anemometro.raya!).toBeLessThan(1);
+      // El blanco de los flaps, solo en el que los lleva: de la pérdida con
+      // flaps a la de flaps, empezando por debajo del verde.
+      const blanco = arco("blanco");
+      if (a.llevaFlaps) {
+        expect(blanco).toBeDefined();
+        expect(blanco!.desde).toBeLessThan(verde.desde);
+        expect(blanco!.hasta).toBeCloseTo(a.vfeKt / c.asiMax, 6);
+      } else {
+        expect(blanco).toBeUndefined();
+      }
     }
   });
 
@@ -46,6 +76,23 @@ describe("las escalas del cuadro", () => {
     const avioneta = cuadroDe(PYKASU).vsiMax;
     const grande = cuadroDe(aircraftById("jaz-120")).vsiMax;
     expect(grande).toBeGreaterThan(avioneta);
+  });
+
+  it("el variómetro tiene el cero a las nueve y las cifras sin signo", () => {
+    const e = cuadroDe(PYKASU).variometro;
+    expect(anguloEn(e.barrido, enLaEscala(e, 0))).toBeCloseTo(-90, 6);
+    expect(anguloEn(e.barrido, enLaEscala(e, 1000))).toBeGreaterThan(-90);
+    for (const m of e.marcas) expect(m.cifra ?? "").not.toContain("-");
+  });
+
+  it("el altímetro tiene el cero arriba y del 0 al 9 en la vuelta entera", () => {
+    const e = cuadroDe(PYKASU).altimetro;
+    const cifras = e.marcas.filter((m) => m.cifra !== null);
+    expect(cifras.map((m) => m.cifra)).toEqual(
+      ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+    );
+    expect(anguloEn(e.barrido, cifras[0]!.en)).toBe(0);
+    expect(anguloEn(e.barrido, cifras[5]!.en)).toBeCloseTo(180, 6);
   });
 });
 

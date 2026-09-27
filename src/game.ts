@@ -367,7 +367,7 @@ import {
 import type { ControlInputs } from "./flight/model";
 import { neutralControls } from "./flight/model";
 import { conElVueloRecto } from "./flight/vuelo-recto";
-import { indicatedAirspeed } from "./flight/atmosphere";
+import { indicatedAirspeed, velocidadDelSonido } from "./flight/atmosphere";
 import {
   delante,
   enEjesDePista,
@@ -9032,6 +9032,11 @@ export class Game {
         // Y adónde vas, que es de lo que va una pantalla de navegación:
         // «¿por qué no tengo datos como distancia al aeropuerto?».
         objetivo: this.aDondeVoy,
+        // El Mach, de la misma cuenta que el cuadro plano. Ver `DatosDeCabina`.
+        mach: esDeChorro(this.aircraft)
+          ? this.flight.state.airspeed /
+            velocidadDelSonido(this.flight.state.position.y)
+          : null,
         viento: this.vientoDeHoy,
         // Y el depósito, el mismo que ve el cuadro plano. Ver `elDeposito`.
         combustible: this.elDeposito(),
@@ -9101,21 +9106,33 @@ export class Game {
         ),
         flaps: this.input.controls.flaps,
         peldano: peldanoDe(this.tier.instruments),
-        rpmMaximas: this.aircraft.sound.maxRpm,
         /*
-         * **Y lo que hace falta para que los seis de vuelo marquen.**
+         * **Y lo que hace falta para que los seis de vuelo marquen**, en las
+         * unidades del cuadro plano y de la misma cuenta.
          *
-         * Los relojes del tablero de una avioneta eran dos —motor y flaps— y
-         * el comentario que lo explicaba decía que lo que se lee de verdad
-         * está en el HUD. Desde que en la cabina el cuadro es el del avión,
-         * eso dejó de ser cierto: son estos. Ver `pintarVuelo`.
+         * No lo eran, y cada diferencia se veía poniendo las dos vistas una
+         * al lado de la otra: la velocidad era la verdadera y la del cuadro la
+         * indicada; el rumbo, el verdadero en radianes leído como grados —la
+         * rosa no se movía—; y el cabeceo y el alabeo, radianes leídos como
+         * grados, así que el horizonte de dentro seguía nivelado con el avión
+         * alabeado treinta grados.
          */
-        velocidad: this.flight.state.airspeed * NUDOS,
+        velocidad:
+          indicatedAirspeed(
+            this.flight.state.airspeed,
+            this.flight.state.position.y,
+          ) * NUDOS,
         pies: this.flight.state.position.y * PIES,
         fpm: this.flight.state.verticalSpeed * PIES_POR_MINUTO,
-        rumbo: this.flight.state.heading,
-        cabeceo: pitchAngleOf(this.flight.state.orientation),
-        alabeo: bankAngleOf(this.flight.state.orientation),
+        rumbo:
+          (this.flight.state.heading * 180) / Math.PI +
+          (this.elCampoMontado().escenario.magneticVariation ?? 0),
+        cabeceo: (pitchAngleOf(this.flight.state.orientation) * 180) / Math.PI,
+        alabeo: (bankAngleOf(this.flight.state.orientation) * 180) / Math.PI,
+        derrape: this.flight.state.beta,
+        presion: { puesta: this.qnhPuesta, delSitio: this.qnhDelSitio },
+        combustible: this.elDeposito(),
+        tren: this.input.controls.tren,
         cuadro: cuadroDe(this.aircraft),
       },
       dt,

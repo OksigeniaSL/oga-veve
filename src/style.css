@@ -3174,6 +3174,71 @@ button.motor__tecla::after {
   stroke-width: 0.6;
 }
 
+/*
+ * El arco blanco de los flaps va por dentro del verde, como en un anemómetro
+ * de verdad: los dos se solapan y en el mismo anillo uno tapaba al otro. Y la
+ * raya roja es una raya, no un arco: la de nunca pasar es un número.
+ * Las medidas son las de `MEDIDAS` en `ui/cuadro.ts`, las mismas del lienzo
+ * de la cabina, en el cuadrado de cien con la cara de radio 43.
+ */
+.esfera__arco--blanco {
+  stroke: var(--cabina-valor);
+}
+
+.esfera__raya {
+  stroke: var(--cabina-limite);
+  stroke-width: 2.4;
+  stroke-linecap: butt;
+}
+
+.esfera__unidad {
+  fill: var(--cabina-apagado);
+  font-family: var(--cabina-fuente);
+  font-size: 6.9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-anchor: middle;
+}
+
+/* La cifra de lo que marca un reloj de motor, de depósito o de flaps. */
+.esfera__lectura {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 11.3px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-anchor: middle;
+}
+
+.esfera__lectura.cr--reserva {
+  fill: var(--cabina-precaucion);
+}
+
+.esfera__lectura.cr--poco {
+  fill: var(--cabina-limite);
+}
+
+.ai__raya {
+  stroke: #fff;
+  stroke-width: 0.95;
+}
+
+/* La temperatura de fuera y la altura de la cabina, en el EICAS. */
+.cr__aire {
+  fill: var(--cabina-valor);
+  font-family: var(--cabina-fuente);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cr__banda--blanco {
+  fill: var(--cabina-valor);
+}
+
+.cr__banda--rojo {
+  fill: var(--cabina-limite);
+}
+
 /* El rótulo va serigrafiado fuera del cristal, no encima de las agujas. */
 .esfera__rotulo {
   fill: var(--cabina-apagado);

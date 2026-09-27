@@ -27,7 +27,19 @@
 import type { AircraftConfig } from "../flight/aircraft";
 import type { FlightState } from "../flight/model";
 import { SixPack } from "./six-pack";
-import { cuadroDe, type Cuadro } from "./cuadro";
+import {
+  anguloEn,
+  cifraDeMotor,
+  cuadroDe,
+  enLaEscala,
+  flapsEnLaEscala,
+  PIES,
+  valorDeMotor,
+  type Cuadro,
+} from "./cuadro";
+import { enLaMuesca } from "../flight/flaps";
+import { temperaturaExterior } from "../flight/atmosphere";
+import { altitudDeCabina } from "../flight/cabina-presurizada";
 import {
   ALTO_DEL_CUADRO,
   ANCHO_DEL_CUADRO,
@@ -204,6 +216,8 @@ const DIBUJO_DE_LUZ: Readonly<Record<string, DibujoDeSenal>> = {
 export class Tablero {
   private raiz: SVGElement | null = null;
   private familia: Familia = "esferas";
+  /** El avión que se vuela: la altura de su cabina depende de él. */
+  private avion: AircraftConfig | null = null;
   private cuadro: Cuadro | null = null;
   private readonly seisPack = new SixPack();
 
@@ -552,6 +566,7 @@ export class Tablero {
     this.raiz = raiz.querySelector<SVGElement>('[data-hud="tablero"]');
     this.lectura = raiz.querySelector<HTMLElement>('[data-hud="lectura"]');
     this.familia = familiaDe(a);
+    this.avion = a;
     this.cuadro = cuadroDe(a);
     this.agujas = Array.from({ length: a.motores }, () => 0);
     this.carta = { desviacion: 0, velocidad: 0 };
@@ -577,6 +592,7 @@ export class Tablero {
         d.alabeo,
         d.cabeceo,
         d.presion,
+        d.declinacion ?? 0,
       );
     } else {
       this.cintas(raiz, d, dt);
@@ -586,6 +602,23 @@ export class Tablero {
     // Los avisos, en las tres familias: la avioneta también se cae.
     this.avisos(raiz, d, dt);
     this.texto(raiz, "gs", `GS ${Math.round(d.sobreElSuelo)}`);
+    if (this.familia === "linea" && this.avion) {
+      /*
+       * Las mismas dos cuentas que el EICAS de la cabina, de los mismos sitios:
+       * la temperatura de la atmósfera tipo y la altura de la cabina de
+       * `cabina-presurizada.ts`. Ver `aireYCabina` en `cristal.ts`.
+       */
+      const metros = d.pies / PIES;
+      const oat = Math.round(temperaturaExterior(metros));
+      this.texto(raiz, "oat", `${oat > 0 ? "+" : ""}${oat}°C`);
+      this.texto(
+        raiz,
+        "cabina",
+        String(
+          Math.round(altitudDeCabina(metros, this.avion) / 0.3048 / 50) * 50,
+        ),
+      );
+    }
     this.presion(raiz, d.presion);
     this.cantar(d, dt);
   }
@@ -622,8 +655,16 @@ export class Tablero {
     );
     const cartaDeg = ((this.carta.desviacion % 360) + 360) % 360;
     this.tira(raiz, "hdg", cartaDeg);
-    const rosa = raiz.querySelector<SVGElement>('[data-cristal="rosa"]');
-    rosa?.setAttribute("transform", `rotate(${-cartaDeg})`);
+    /*
+     * **Todas las rosas, no la primera.** El de cristal lleva dos —la de
+     * dentro del horizonte y la del mapa— y girando solo la primera, la del
+     * mapa se quedaba con el norte arriba mientras la de la cabina giraba con
+     * el avión: el mismo instrumento, quieto en una vista y vivo en la otra.
+     */
+    for (const rosa of raiz.querySelectorAll<SVGElement>(
+      '[data-cristal="rosa"]',
+    ))
+      rosa.setAttribute("transform", `rotate(${-cartaDeg})`);
 
     // El horizonte, en cambio, va sin retardo: es el instrumento más directo
     // de la cabina y meterle inercia sería enseñar mal.
@@ -742,7 +783,7 @@ export class Tablero {
     const c = this.cuadro;
     const caja = raiz.querySelector<SVGElement>('[data-alerta="ias"]');
     if (!c || !caja) return;
-    const vne = c.arcos.rojo[0] * c.asiMax;
+    const vne = c.velocidades.vne;
     const pasado = d.nudos >= vne;
     const cerca = d.nudos >= vne - AVISA_CINCO_ANTES;
     caja.classList.toggle("cr__caja--limite", enciende("exceso", pasado));
@@ -880,8 +921,8 @@ export class Tablero {
     const bugDeg = ((this.bugDeRumbo % 360) + 360) % 360;
     const enCinta = raiz.querySelector<SVGElement>('[data-bug="hdg"]');
     enCinta?.setAttribute("transform", `translate(${bugDeg * POR_GRADO} 0)`);
-    const enRosa = raiz.querySelector<SVGElement>('[data-bug="rosa"]');
-    enRosa?.setAttribute("transform", `rotate(${bugDeg})`);
+    for (const enRosa of raiz.querySelectorAll<SVGElement>('[data-bug="rosa"]'))
+      enRosa.setAttribute("transform", `rotate(${bugDeg})`);
     const mcp = raiz.querySelector<SVGTextElement>('[data-mcp="hdg"]');
     if (mcp) mcp.textContent = pad3(Math.round(bugDeg) % 360);
     const mcpSpd = raiz.querySelector<SVGTextElement>('[data-mcp="spd"]');
@@ -914,8 +955,15 @@ export class Tablero {
       const objetivo = d.motores[i] ?? 0;
       this.agujas[i] = conRetardo(this.agujas[i]!, objetivo, dt, tau);
       const f = Math.max(0, Math.min(1, this.agujas[i]!));
+      /*
+       * El ángulo y la cifra, de la escala del avión: vueltas en un pistón,
+       * tanto por ciento en una turbina. Aquí se escribía siempre el tanto por
+       * ciento, y el mismo motor marcaba «100» en el cuadro y «2700» dentro.
+       */
+      const giro = (r: number) =>
+        anguloEn(c.motor.barrido, enLaEscala(c.motor, valorDeMotor(c, r)));
       const aguja = raiz.querySelector<SVGElement>(`[data-motor-aguja="${i}"]`);
-      aguja?.setAttribute("transform", `rotate(${-120 + f * 240})`);
+      aguja?.setAttribute("transform", `rotate(${giro(f)})`);
       const barra = raiz.querySelector<SVGRectElement>(
         `[data-motor-barra="${i}"]`,
       );
@@ -929,7 +977,7 @@ export class Tablero {
       const cifra = raiz.querySelector<SVGTextElement>(
         `[data-motor-cifra="${i}"]`,
       );
-      if (cifra) cifra.textContent = String(Math.round(f * 100));
+      if (cifra) cifra.textContent = cifraDeMotor(c, f);
       /*
        * Y lo que se le ha **pedido**, que no es lo mismo: el bug y la barra van
        * al mando, la aguja y la cifra van a lo que está dando. Verlos separarse
@@ -937,7 +985,7 @@ export class Tablero {
        */
       const pedido = Math.max(0, Math.min(1, objetivo));
       const bug = raiz.querySelector<SVGElement>(`[data-motor-bug="${i}"]`);
-      bug?.setAttribute("transform", `rotate(${-120 + pedido * 240})`);
+      bug?.setAttribute("transform", `rotate(${giro(pedido)})`);
       const mando = raiz.querySelector<SVGRectElement>(
         `[data-mando-motor="${i}"]`,
       );
@@ -953,16 +1001,34 @@ export class Tablero {
   }
 
   private mandos(raiz: SVGElement, d: DatosDelTablero): void {
+    /*
+     * Los flaps, **en grados y donde caen en la escala**: la regla y el reloj
+     * llevan las muescas en proporción a sus grados, y el puntero va a los
+     * grados que tienen los flaps ahora. Ver `escalaDeFlaps`.
+     */
+    const c = this.cuadro;
+    const grados = c ? enLaMuesca(c.flaps, d.flaps) : 0;
+    const enLaRegla = c ? flapsEnLaEscala(c, grados) : 0;
     const flaps = raiz.querySelector<SVGElement>('[data-cristal="flaps"]');
     if (flaps) {
       const largo = Number(flaps.dataset.largo);
-      const cuanto = Math.max(0, Math.min(1, d.flaps)) * largo;
+      const cuanto = enLaRegla * largo;
       flaps.setAttribute(
         "transform",
         flaps.dataset.tumbada === "1"
           ? `translate(${cuanto} 0)`
           : `translate(0 ${cuanto})`,
       );
+    }
+    if (c?.escalaDeFlaps) {
+      raiz
+        .querySelector<SVGElement>("[data-flaps-aguja]")
+        ?.setAttribute(
+          "transform",
+          `rotate(${anguloEn(c.escalaDeFlaps.barrido, enLaRegla)})`,
+        );
+      const cifra = raiz.querySelector("[data-flaps-cifra]");
+      if (cifra) cifra.textContent = `${Math.round(grados)}°`;
     }
     this.deposito(raiz, d);
     const rev = raiz.querySelector<SVGElement>('[data-cristal="reversa"]');
@@ -998,6 +1064,7 @@ export class Tablero {
    * `comoVaElDeposito`.
    */
   private deposito(raiz: SVGElement, d: DatosDelTablero): void {
+    this.relojDeCombustible(raiz, d);
     const g = raiz.querySelector<SVGElement>('[data-cristal="combustible"]');
     if (!g) return;
     if (!d.combustible) {
@@ -1040,7 +1107,29 @@ export class Tablero {
     }
 
     const cifra = g.querySelector('[data-combustible="cifra"]');
-    if (cifra) cifra.textContent = `${Math.round(kilos)} KG`;
+    if (cifra) cifra.textContent = String(Math.round(kilos));
+  }
+
+  /**
+   * El reloj de combustible de los de pistón: el mismo que el de la cabina.
+   *
+   * Sin vuelo del que decirlo no hay señal, y un instrumento sin señal no
+   * marca cero: la aguja descansa en la E y la cifra se queda en blanco.
+   */
+  private relojDeCombustible(raiz: SVGElement, d: DatosDelTablero): void {
+    const c = this.cuadro;
+    const aguja = raiz.querySelector<SVGElement>("[data-fuel-aguja]");
+    if (!c || !aguja) return;
+    const kilos = d.combustible?.kilos ?? 0;
+    aguja.setAttribute(
+      "transform",
+      `rotate(${anguloEn(c.combustible.barrido, enLaEscala(c.combustible, kilos))})`,
+    );
+    const cifra = raiz.querySelector<SVGElement>("[data-fuel-cifra]");
+    if (!cifra) return;
+    cifra.textContent = d.combustible ? String(Math.round(kilos)) : "";
+    cifra.classList.toggle("cr--reserva", d.combustible?.estado === "reserva");
+    cifra.classList.toggle("cr--poco", d.combustible?.estado === "poco");
   }
 
   /**
@@ -1057,8 +1146,9 @@ export class Tablero {
   private laCarta(raiz: SVGElement, d: DatosDelTablero): void {
     const grupo = raiz.querySelector('[data-carta="grupo"]');
     if (!grupo) return;
-    const rosa = raiz.querySelector('[data-cristal="rosa"]');
-    const radio = Number(rosa?.getAttribute("data-radio")) || 120;
+    // El radio de **su** rosa, la del mapa: la primera de la página es la del
+    // horizonte en el de cristal, y con ella la carta salía a otra escala.
+    const radio = Number(grupo.getAttribute("data-radio")) || 120;
     /*
      * Con el rumbo **verdadero**, que es en lo que está el mundo. La rosa va
      * en magnéticos y la diferencia entre las dos es la declinación: una pista

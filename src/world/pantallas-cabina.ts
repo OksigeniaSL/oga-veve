@@ -56,6 +56,7 @@ const COLOR_DEL_ECO: Record<Exclude<Eco, "nada">, string> = {
   magenta: PALETA.objetivo,
 };
 import { luzDeTren } from "../flight/tren";
+import { enLaMuesca } from "../flight/flaps";
 import {
   QUIETA_LA_ALTITUD,
   QUIETA_LA_VELOCIDAD,
@@ -65,7 +66,14 @@ import {
   rodillo,
   tendencia,
 } from "../ui/cinta";
-import { NUDOS, PIES, PIES_POR_MINUTO, type Cuadro } from "../ui/cuadro";
+import {
+  NUDOS,
+  PIES,
+  PIES_POR_MINUTO,
+  bandasDeVelocidad,
+  COLOR_DE_ARCO,
+  type Cuadro,
+} from "../ui/cuadro";
 import { dibujarLaCarta, millasHasta, type Mapa } from "../ui/carta";
 import {
   CIFRAS_DESDE,
@@ -208,6 +216,14 @@ export interface DatosDeCabina {
   readonly sobreElTerreno: number;
   /** Velocidad respecto al suelo, m/s. Dato auxiliar: va en cian. */
   readonly sobreElSuelo: number;
+  /**
+   * El número de Mach, o `null` si este avión no lo enseña.
+   *
+   * Lo enseñaba el cuadro plano de los reactores, debajo de la cinta de
+   * velocidad, y la pantalla de la cabina no: el mismo avión con una lectura
+   * de menos dentro.
+   */
+  readonly mach?: number | null;
   /** Si está en pérdida: marco rojo alrededor del horizonte. */
   readonly perdida: boolean;
   /**
@@ -646,13 +662,114 @@ function pintarHorizonte(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
 
   const x0 = CINTA + 6;
   const anchoAct = ANCHO - CINTA * 2 - VSI - 18;
-  horizonteDe(g, x0, 0, anchoAct, ALTO_CINTAS, d);
-  cintaDeVelocidad(g, 0, 0, CINTA, ALTO_CINTAS, d);
-  cintaDeAltitud(g, ANCHO - VSI - CINTA, 0, CINTA, ALTO_CINTAS, d);
-  variometro(g, ANCHO - VSI, 0, VSI, ALTO_CINTAS, d);
-  cintaDeRumbo(g, x0, ALTO_CINTAS, anchoAct, RUMBO_ABAJO, d);
-  radioaltimetro(g, x0 + anchoAct / 2, ALTO_CINTAS - 34, d);
+  /*
+   * **El de cristal lleva la rosa dentro del horizonte, y no la cinta.**
+   *
+   * Es la pantalla de vuelo de un cristal de aviación general: el horizonte
+   * con su rosa de rumbos en el tercio de abajo, y el mapa en la otra
+   * pantalla. Así es el cuadro plano de este avión —`pantallaDeActitud` con
+   * `rosa`— y aquí dentro llevaba la cinta de rumbo de los de línea: el mismo
+   * avión con dos pantallas de vuelo distintas.
+   */
+  const conRosa = d.cuadro.familia === "cristal";
+  const alto = conRosa ? ALTO - 24 : ALTO_CINTAS;
+  horizonteDe(g, x0, 0, anchoAct, alto, d);
+  cintaDeVelocidad(g, 0, 0, CINTA, alto, d);
+  cintaDeAltitud(g, ANCHO - VSI - CINTA, 0, CINTA, alto, d);
+  variometro(g, ANCHO - VSI, 0, VSI, alto, d);
+  if (conRosa) {
+    const rr = Math.min(anchoAct / 2 - 10, 76);
+    pintarRosa(g, x0 + anchoAct / 2, alto - rr - 10, rr, magnetico(d), true);
+  } else {
+    cintaDeRumbo(g, x0, ALTO_CINTAS, anchoAct, RUMBO_ABAJO, d);
+  }
+  radioaltimetro(g, x0 + anchoAct / 2, alto - 34, d);
+  // El Mach, en el peldaño de arriba y a partir de 0,40, como en el cuadro
+  // plano: por debajo no dice nada que no diga ya la velocidad.
+  if (d.mach != null && d.mach >= 0.4 && d.peldano >= 4)
+    escribir(
+      g,
+      `M ${d.mach.toFixed(2).slice(1)}`,
+      CINTA / 2,
+      ALTO - 10,
+      "500 14px " + FUENTE,
+      PALETA.auxiliar,
+    );
   g.restore();
+}
+
+/**
+ * La rosa de rumbos: gira la carta, no el avión, porque lo que se mueve es el
+ * mundo. **La misma en la pantalla de navegación y dentro del horizonte** del
+ * de cristal, como en el cuadro plano: ver `rosaDeRumbo` en `ui/cristal.ts`.
+ */
+function pintarRosa(
+  g: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  grados: number,
+  conAvion: boolean,
+): void {
+  g.save();
+  g.translate(cx, cy);
+  g.rotate((-grados * Math.PI) / 180);
+  g.fillStyle = "rgba(0, 0, 0, 0.35)";
+  g.beginPath();
+  g.arc(0, 0, r, 0, Math.PI * 2);
+  g.fill();
+  const letra = Math.max(11, Math.round(r * 0.12));
+  for (let a = 0; a < 360; a += 5) {
+    const rad = (a * Math.PI) / 180;
+    const larga = a % 10 === 0;
+    const r1 = r - (larga ? r * 0.08 : r * 0.047);
+    g.strokeStyle = TINTA;
+    g.lineWidth = larga ? 2 : 1.2;
+    g.beginPath();
+    g.moveTo(Math.sin(rad) * r1, -Math.cos(rad) * r1);
+    g.lineTo(Math.sin(rad) * r, -Math.cos(rad) * r);
+    g.stroke();
+    if (a % 30 === 0) {
+      const texto =
+        a === 0
+          ? "N"
+          : a === 90
+            ? "E"
+            : a === 180
+              ? "S"
+              : a === 270
+                ? "W"
+                : String(a / 10);
+      g.save();
+      g.translate(Math.sin(rad) * r * 0.81, -Math.cos(rad) * r * 0.81);
+      g.rotate((grados * Math.PI) / 180);
+      escribir(g, texto, 0, 0, `500 ${letra}px ` + FUENTE, TINTA);
+      g.restore();
+    }
+  }
+  g.restore();
+
+  // La línea de fe, arriba, que es contra la que se lee la carta.
+  g.strokeStyle = SIMBOLO;
+  g.lineWidth = 2.5;
+  g.beginPath();
+  g.moveTo(cx, cy - r - 6);
+  g.lineTo(cx, cy - r + 8);
+  g.stroke();
+
+  if (!conAvion) return;
+  // El avioncito, quieto en el centro y mirando siempre arriba.
+  g.lineWidth = 3;
+  g.lineCap = "round";
+  g.beginPath();
+  g.moveTo(cx, cy - 12);
+  g.lineTo(cx, cy + 12);
+  g.moveTo(cx - 10, cy + 4);
+  g.lineTo(cx + 10, cy + 4);
+  g.moveTo(cx - 5, cy + 12);
+  g.lineTo(cx + 5, cy + 12);
+  g.stroke();
+  g.lineCap = "butt";
 }
 
 /**
@@ -857,16 +974,18 @@ function cintaDeVelocidad(
   g.clip();
   const medio = y + h / 2;
 
-  // Las bandas de color de la ficha, en el borde de dentro.
-  const banda = (desde: number, hasta: number, color: string) => {
-    const y1 = medio + (kt - hasta * c.asiMax) * POR_NUDO;
-    const y2 = medio + (kt - desde * c.asiMax) * POR_NUDO;
-    g.fillStyle = color;
-    g.fillRect(x + w - 5, y1, 5, y2 - y1);
-  };
-  banda(c.arcos.verde[0], c.arcos.verde[1], PALETA.normal);
-  banda(c.arcos.ambar[0], c.arcos.ambar[1], PALETA.precaucion);
-  banda(c.arcos.rojo[0], c.arcos.rojo[1], PALETA.limite);
+  /*
+   * Las bandas de color de la ficha, en el borde de dentro: **las mismas** que
+   * la cinta del cuadro plano y que los arcos de la esfera, de la misma
+   * cuenta. El blanco de los flaps por dentro del verde, que se solapan.
+   */
+  for (const b of bandasDeVelocidad(c)) {
+    const y1 = medio + (kt - b.hasta * c.asiMax) * POR_NUDO;
+    const y2 = medio + (kt - b.desde * c.asiMax) * POR_NUDO;
+    g.fillStyle = COLOR_DE_ARCO[b.color];
+    if (b.color === "blanco") g.fillRect(x + w - 10, y1, 4, y2 - y1);
+    else g.fillRect(x + w - 5, y1, 5, y2 - y1);
+  }
 
   for (const m of marcasDeCinta({
     valor: kt,
@@ -1108,6 +1227,16 @@ function variometro(
   g.lineTo(x + w, medio - f * ampl);
   g.stroke();
   escribir(g, "VS", x + w / 2, y + 10, "500 10px " + FUENTE, TENUE);
+  // Y el fondo de la franja, en miles, al pie: la misma cifra que lleva la del
+  // cuadro plano. Sin ella la franja dice «subo» pero no cuánto es el tope.
+  escribir(
+    g,
+    String(Math.round(d.cuadro.vsiMax / 1000)),
+    x + w / 2,
+    y + h - 8,
+    "500 10px " + FUENTE,
+    TENUE,
+  );
 }
 
 /** La cinta de rumbo al pie del horizonte: treinta grados a cada lado. */
@@ -1230,9 +1359,20 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   g.fillRect(0, 0, ANCHO, ALTO);
 
   const grados = magnetico(d);
-  const cx = ANCHO / 2;
+  /*
+   * **Y el de cristal lleva a la izquierda la franja de motor**, que es donde
+   * la lleva el cuadro plano —`franjaDeMotor` en `ui/cristal.ts`— y donde va
+   * en un cristal de aviación general de verdad: el par de cada motor, los
+   * flaps, el depósito y el tren, al lado del mapa. Aquí no había nada de eso:
+   * el par iba en dos relojes redondos fuera de las pantallas, y el depósito y
+   * las luces del tren no estaban en ninguna parte.
+   */
+  const izquierda = d.cuadro.familia === "cristal" ? FRANJA + 8 : 0;
+  if (izquierda) pintarFranja(g, d, FRANJA, ALTO);
+  const anchoNav = ANCHO - izquierda;
+  const cx = izquierda + anchoNav / 2;
   const cy = ALTO * 0.54;
-  const r = Math.min(ANCHO / 2 - 30, cy - 34, ALTO - cy - 26);
+  const r = Math.min(anchoNav / 2 - 30, cy - 34, ALTO - cy - 26);
 
   /*
    * **La carta gira con el rumbo verdadero, no con el magnético.**
@@ -1248,50 +1388,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
    */
   pintarLaCarta(g, d, cx, cy, r);
 
-  g.save();
-  g.translate(cx, cy);
-  g.rotate((-grados * Math.PI) / 180);
-  g.fillStyle = "rgba(0, 0, 0, 0.35)";
-  g.beginPath();
-  g.arc(0, 0, r, 0, Math.PI * 2);
-  g.fill();
-  for (let a = 0; a < 360; a += 5) {
-    const rad = (a * Math.PI) / 180;
-    const larga = a % 10 === 0;
-    const r1 = r - (larga ? 12 : 7);
-    g.strokeStyle = TINTA;
-    g.lineWidth = larga ? 2 : 1.2;
-    g.beginPath();
-    g.moveTo(Math.sin(rad) * r1, -Math.cos(rad) * r1);
-    g.lineTo(Math.sin(rad) * r, -Math.cos(rad) * r);
-    g.stroke();
-    if (a % 30 === 0) {
-      const letra =
-        a === 0
-          ? "N"
-          : a === 90
-            ? "E"
-            : a === 180
-              ? "S"
-              : a === 270
-                ? "W"
-                : String(a / 10);
-      g.save();
-      g.translate(Math.sin(rad) * (r - 28), -Math.cos(rad) * (r - 28));
-      g.rotate((grados * Math.PI) / 180);
-      escribir(g, letra, 0, 0, "500 17px " + FUENTE, TINTA);
-      g.restore();
-    }
-  }
-  g.restore();
-
-  // La línea de fe, arriba, que es contra la que se lee la carta.
-  g.strokeStyle = SIMBOLO;
-  g.lineWidth = 2.5;
-  g.beginPath();
-  g.moveTo(cx, cy - r - 8);
-  g.lineTo(cx, cy - r + 10);
-  g.stroke();
+  pintarRosa(g, cx, cy, r, grados, false);
 
   // El avión, quieto en el centro y mirando siempre arriba.
   g.strokeStyle = SIMBOLO;
@@ -1321,7 +1418,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
   escribir(
     g,
     `GS ${Math.round(d.sobreElSuelo * NUDOS)}`,
-    12,
+    izquierda + 12,
     22,
     "500 15px " + FUENTE,
     PALETA.auxiliar,
@@ -1412,7 +1509,7 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     escribir(
       g,
       `${String(Math.round(d.viento.desde)).padStart(3, "0")}/${Math.round(d.viento.nudos)}`,
-      12,
+      izquierda + 12,
       ALTO - 14,
       "500 14px " + FUENTE,
       PALETA.auxiliar,
@@ -1420,6 +1517,129 @@ function pintarRumbo(g: CanvasRenderingContext2D, d: DatosDeCabina): void {
     );
   }
   g.restore();
+}
+
+/** Lo que mide la franja de motor del de cristal, en el lienzo de 384 de alto. */
+const FRANJA = Math.round((128 * ALTO) / 416);
+
+/**
+ * La franja de motor del de cristal: **la del cuadro plano, con pincel**.
+ *
+ * Las mismas piezas en el mismo sitio y en proporción —el cuadro plano la
+ * dibuja en 128 por 416 y aquí se escala al alto del lienzo—: una barra de par
+ * por motor con su cifra, la regla de flaps de pie, el depósito de pie y las
+ * luces del tren abajo. Ver `franjaDeMotor` en `ui/cristal.ts`.
+ */
+function pintarFranja(
+  g: CanvasRenderingContext2D,
+  d: DatosDeCabina,
+  ancho: number,
+  alto: number,
+): void {
+  const k = alto / 416;
+  g.fillStyle = "#111418";
+  g.fillRect(0, 0, ancho, alto);
+  escribir(g, d.rotuloDeMotor, ancho / 2, 16 * k, "500 13px " + FUENTE, TENUE);
+  const n = Math.max(1, d.motores.length);
+  const anchoBarra = 22 * k;
+  const paso = ancho / (n + 1);
+  const altoBarra = alto * 0.5;
+  const arriba = 24 * k;
+  for (let i = 0; i < n; i++) {
+    const bx = paso * (i + 0.5) + (paso - anchoBarra) / 4;
+    const f = clamp01(agujas[i] ?? 0);
+    ventana(g, bx, arriba, anchoBarra, altoBarra);
+    g.fillStyle = f > 0.95 ? PALETA.precaucion : PALETA.normal;
+    g.fillRect(bx, arriba + altoBarra * (1 - f), anchoBarra, altoBarra * f);
+    // El último cinco por ciento, en ámbar: la escala de `cuadro.ts`.
+    g.fillStyle = PALETA.precaucion;
+    g.fillRect(bx, arriba, anchoBarra, altoBarra * 0.05);
+    escribir(
+      g,
+      String(Math.round(f * 100)),
+      bx + anchoBarra / 2,
+      arriba + altoBarra + 16 * k,
+      "600 17px " + FUENTE,
+      TINTA,
+    );
+  }
+  const y = arriba + altoBarra + 46 * k;
+  if (d.cuadro.flaps.length > 1)
+    reglaDeFlapsDePie(g, 16 * k, y, 22 * k, alto - y - 34 * k, d.flaps, d.cuadro.flaps);
+  reglaDeCombustibleDePie(g, 78 * k, y, 22 * k, alto - y - 56 * k, d.combustible);
+  lucesDeTren(g, 12 * k, alto - 22, d.patas, d.tren);
+}
+
+/** La regla de flaps de pie: la de `reglaDeFlaps` en `ui/cristal.ts` vertical. */
+function reglaDeFlapsDePie(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  flaps: number,
+  grados: readonly number[],
+): void {
+  escribir(g, "FLAP", x + w / 2, y - 8, "500 11px " + FUENTE, TENUE);
+  ventana(g, x, y, w, h);
+  const ultima = Math.max(1, grados.length - 1);
+  const tope = grados[ultima] || 1;
+  for (let k = 0; k <= ultima; k++) {
+    const yy = y + ((grados[k] ?? 0) / tope) * h;
+    g.strokeStyle = TINTA;
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(x, yy);
+    g.lineTo(x + w, yy);
+    g.stroke();
+    escribir(g, String(grados[k] ?? 0), x + w + 4, yy, "500 11px " + FUENTE, TENUE, "left");
+  }
+  const py = y + clamp01(enLaMuesca(grados, flaps) / tope) * h;
+  g.fillStyle = TINTA;
+  g.beginPath();
+  g.moveTo(x - 4, py);
+  g.lineTo(x - 13, py - 6);
+  g.lineTo(x - 13, py + 6);
+  g.closePath();
+  g.fill();
+}
+
+/** El depósito de pie: se vacía por arriba, como uno de verdad. */
+function reglaDeCombustibleDePie(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  deposito: DatosDeCabina["combustible"],
+): void {
+  escribir(g, "FUEL", x + w / 2, y - 8, "500 11px " + FUENTE, TENUE);
+  ventana(g, x, y, w, h);
+  if (!deposito) return;
+  const parte = (kg: number) => clamp01(kg / Math.max(1, deposito.cabe));
+  g.save();
+  g.globalAlpha = 0.28;
+  g.fillStyle = PALETA.precaucion;
+  g.fillRect(x, y + h * (1 - parte(deposito.reserva)), w, h * parte(deposito.reserva));
+  g.restore();
+  g.fillStyle =
+    deposito.estado === "poco"
+      ? PALETA.limite
+      : deposito.estado === "reserva"
+        ? PALETA.precaucion
+        : PALETA.normal;
+  g.fillRect(x, y + h * (1 - parte(deposito.kilos)), w, h * parte(deposito.kilos));
+  const raya = y + h * (1 - parte(deposito.reserva));
+  g.strokeStyle = PALETA.precaucion;
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(x - 3, raya);
+  g.lineTo(x + w + 3, raya);
+  g.stroke();
+  // La cifra y la unidad por separado, como en el EICAS: la cifra se ve
+  // desde el primer peldaño y la unidad con las letras.
+  escribir(g, String(Math.round(deposito.kilos)), x + w / 2, y + h + 12, "600 13px " + FUENTE, PALETA.auxiliar);
+  escribir(g, "KG", x + w / 2, y + h + 26, "500 11px " + FUENTE, TENUE);
 }
 
 /**
@@ -1709,9 +1929,15 @@ function reglaDeFlaps(
   ventana(g, x, y, w, h);
   // Con los grados de este avión: los de un reactor no son los de una
   // avioneta. Ver `Cuadro.flaps`.
+  /*
+   * Y cada muesca **donde cae de verdad**, en proporción a sus grados, igual
+   * que la regla del cuadro plano y el reloj de las avionetas. Ver
+   * `escalaDeFlaps` en `ui/cuadro.ts`.
+   */
   const ultima = Math.max(1, grados.length - 1);
+  const tope = grados[ultima] || 1;
   for (let k = 0; k <= ultima; k++) {
-    const xx = x + (k / ultima) * w;
+    const xx = x + ((grados[k] ?? 0) / tope) * w;
     g.strokeStyle = TINTA;
     g.lineWidth = 1.5;
     g.beginPath();
@@ -1720,7 +1946,7 @@ function reglaDeFlaps(
     g.stroke();
     escribir(g, String(grados[k] ?? k * 10), xx, y + h + 12, "500 11px " + FUENTE, TENUE);
   }
-  const px = x + clamp01(flaps) * w;
+  const px = x + clamp01(enLaMuesca(grados, flaps) / tope) * w;
   g.fillStyle = TINTA;
   g.beginPath();
   g.moveTo(px, y - 3);

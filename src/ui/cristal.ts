@@ -35,7 +35,13 @@ import {
   MARCA_CON_SU_APARATO,
   MARCA_ROTULO,
 } from "./familia";
-import type { Cuadro } from "./cuadro";
+import {
+  bandasDeVelocidad,
+  rotuloDeMotor,
+  type Cuadro,
+  type Escala,
+} from "./cuadro";
+import { relojSvg } from "./esfera-svg";
 import { ANCLA_DE_ACTITUD, patasDe } from "./familia";
 
 /** Píxeles por nudo en la cinta de velocidad. */
@@ -247,11 +253,17 @@ function cintaDeVelocidad(
    * dentro. Son las velocidades **de este avión** —dónde empieza a volar y
    * dónde deja de ser buena idea—, no un adorno repetido de un avión a otro.
    */
+  /*
+   * El blanco de los flaps va **por dentro** del verde, como en la esfera:
+   * los dos se solapan —de la pérdida limpia a la de flaps— y puestos en la
+   * misma franja uno tapaba al otro.
+   */
   const banda = (
     desde: number,
     hasta: number,
     clase: string,
-  ) => `<rect x="${w - 5}" y="${-hasta * c.asiMax * POR_NUDO}" width="5"
+  ) => `<rect x="${clase.endsWith("blanco") ? w - 10 : w - 5}" y="${-hasta * c.asiMax * POR_NUDO}"
+      width="${clase.endsWith("blanco") ? 4 : 5}"
       height="${(hasta - desde) * c.asiMax * POR_NUDO}" class="${clase}" />`;
   return `
     <g transform="translate(${x} ${y})">
@@ -260,9 +272,9 @@ function cintaDeVelocidad(
       <g clip-path="url(#${yo}-ias)">
         <g data-tira="ias" data-medio="${h / 2}" data-porunidad="${POR_NUDO}"
              transform="translate(0 ${h / 2})">
-          ${banda(c.arcos.verde[0], c.arcos.verde[1], "cr__banda cr__banda--verde")}
-          ${banda(c.arcos.ambar[0], c.arcos.ambar[1], "cr__banda cr__banda--ambar")}
-          ${banda(c.arcos.rojo[0], c.arcos.rojo[1], "cr__banda cr__banda--roja")}
+          ${bandasDeVelocidad(c)
+            .map((b) => banda(b.desde, b.hasta, `cr__banda cr__banda--${b.color}`))
+            .join("")}
           ${tira}
           <g data-bug="v1" data-desde="4">${bug(w)}</g>
           <g data-bug="vr" data-desde="4">${bug(w)}</g>
@@ -543,7 +555,7 @@ function carta(cx: number, cy: number, r: number): string {
       pantalla.
     -->
     <clipPath id="${recorte}"><circle cx="0" cy="0" r="${r}" /></clipPath>
-    <g data-carta="grupo" transform="translate(${cx} ${cy})" clip-path="url(#${recorte})">
+    <g data-carta="grupo" data-radio="${r}" transform="translate(${cx} ${cy})" clip-path="url(#${recorte})">
       <!--
         El radar meteorológico, debajo de todo lo demás: la tormenta es el
         fondo sobre el que se decide, y la pista y los tráficos tienen que
@@ -769,10 +781,18 @@ export function reglaDeCombustible(
         <g class="cr__reserva">${fondo}</g>
         <g class="cr__deposito">${barra}</g>
         <g class="cr__reserva-raya">${raya}</g>
+        <!--
+          La cifra y la unidad por separado, como en la cabina: la cifra es la
+          medida y sale desde el primer peldaño; «KG» es una palabra y espera a
+          las letras. Juntas, el primer peldaño enseñaba una palabra en inglés.
+        -->
         <text data-combustible="cifra"
-              x="${tumbada ? w : w / 2}" y="${tumbada ? -6 : h + 16}"
+              x="${tumbada ? w - 24 : w / 2}" y="${tumbada ? -6 : h + 16}"
               ${MARCA_CIFRA} class="cr__aux"
               text-anchor="${tumbada ? "end" : "middle"}"></text>
+        <text x="${tumbada ? w : w / 2}" y="${tumbada ? -6 : h + 30}"
+              ${MARCA_ROTULO} class="cr__rotulo"
+              text-anchor="${tumbada ? "end" : "middle"}">KG</text>
       </g>
     </g>
   `;
@@ -822,11 +842,29 @@ export function pantallaDeMotores(
     <text x="${ancho / 2}" y="20" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
     ${mandoDeMotor(12, cy + r + 46, hueco, n)}
+    ${aireYCabina(ancho, cy + r + 78)}
     ${reglaDeCombustible(40, alto - 156, ancho - 80, 16)}
     ${c.flaps.length > 1 ? reglaDeFlaps(40, alto - 96, ancho - 80, 26, c.flaps) : ""}
     ${lucesDeTren(14, yTren, patas)}
     <text data-cristal="reversa" x="${ancho - 14}" y="${yTren + 13}"
           ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
+  `;
+}
+
+/**
+ * **La temperatura de fuera y la altura de la cabina**, debajo del mando.
+ *
+ * Las llevaba el EICAS de la cabina —«no veo temperatura exterior, ni
+ * presurización de cabina»— y el del cuadro plano no: el mismo avión con dos
+ * pantallas de motores distintas. Los rótulos en inglés de cabina, como en la
+ * de dentro. Ver `pintarMotores` en `world/pantallas-cabina.ts`.
+ */
+function aireYCabina(ancho: number, y: number): string {
+  return `
+    <text x="${ancho * 0.28}" y="${y}" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="end">OAT</text>
+    <text data-cristal="oat" x="${ancho * 0.31}" y="${y}" ${MARCA_ROTULO} class="cr__aire"></text>
+    <text x="${ancho * 0.72}" y="${y}" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="end">CAB ALT</text>
+    <text data-cristal="cabina" x="${ancho * 0.75}" y="${y}" ${MARCA_CIFRA} class="cr__aire"></text>
   `;
 }
 
@@ -920,10 +958,17 @@ export function reglaDeFlaps(
   const tumbada = w > h;
   const largo = tumbada ? w : h;
   const ultima = Math.max(1, grados.length - 1);
+  /*
+   * **Cada muesca donde cae de verdad**, en proporción a sus grados: el
+   * veinticinco del bimotor más cerca del cuarenta que del diez. Iban
+   * repartidas a partes iguales, y el reloj de la cabina las ponía en otro
+   * sitio. Es la escala de `escalaDeFlaps`, la misma en las dos vistas.
+   */
+  const tope = grados[ultima] || 1;
   let detentes = "";
   for (let k = 0; k <= ultima; k++) {
-    const d = (k / ultima) * largo;
     const cifra = grados[k] ?? k * 10;
+    const d = (cifra / tope) * largo;
     detentes += tumbada
       ? `<line x1="${d}" y1="0" x2="${d}" y2="${h}" class="cr__marca" />` +
         `<text x="${d}" y="${h + 15}" ${MARCA_CIFRA} class="cr__rotulo" text-anchor="middle">${cifra}</text>`
@@ -988,29 +1033,70 @@ export function lucesDeTren(x: number, y: number, patas: number): string {
 }
 
 /**
- * La columna de motor de los de pistón: relojes, que es lo que llevan.
+ * La columna de motor de los de pistón: **los mismos relojes que la cabina**.
  *
- * Un tacómetro de verdad no tiene lectura digital, y aquí tampoco hace falta:
- * lo que enseña es si la aguja está en el verde. En el bimotor van dos lado a
- * lado y **la posición es la etiqueta** — el de la izquierda es el motor
- * izquierdo—, que es la forma de rotular que entiende alguien que no lee.
+ * El tacómetro de cada motor, el indicador de combustible y el de flaps, con
+ * la escala de `cuadro.ts` y dibujados como los de dentro —ver `relojSvg`—.
+ * Aquí había un tanto por ciento donde dentro había vueltas, una regla de
+ * flaps donde dentro había una esfera y un depósito que dentro no existía:
+ * «los paneles de los aviones no coinciden en diferentes vistas».
+ *
+ * En el bimotor van dos tacómetros lado a lado y **la posición es la
+ * etiqueta** — el de la izquierda es el motor izquierdo—, que es la forma de
+ * rotular que entiende alguien que no lee.
+ *
+ * Y debajo de los tacómetros, la barra del mando, que no es un instrumento: es
+ * dónde está la palanca, que en la cabina se ve y aquí no.
  */
 export function columnaDeMotor(ancho: number, alto: number, c: Cuadro): string {
   const n = c.motores;
   const paso = ancho / n;
-  const r = Math.min(paso / 2 - 12, 92);
-  const cy = 34 + r;
+  const r = Math.min(paso / 2 - 10, 92);
+  const cy = 14 + r;
   let diales = "";
   for (let i = 0; i < n; i++) {
-    diales += dialDeMotor(paso * (i + 0.5), cy, r, i);
+    diales += relojSvg(
+      `motor-${i}`,
+      c.motor,
+      rotuloDeMotor(c, i),
+      `data-motor-aguja="${i}"`,
+      `data-motor-cifra="${i}"`,
+      { x: paso * (i + 0.5), y: cy, radio: r },
+    );
   }
+  const yMando = cy + r + 30;
+  /*
+   * Los de abajo, en fila: el depósito y, si los lleva, los flaps. Del tamaño
+   * que quepa a lo ancho, y centrados en lo que queda de alto.
+   */
+  const abajo: Array<[string, Escala, string]> = [
+    ["fuel", c.combustible, c.combustible.rotulo],
+    ...(c.escalaDeFlaps
+      ? [["flaps", c.escalaDeFlaps, c.escalaDeFlaps.rotulo] as [string, Escala, string]]
+      : []),
+  ];
+  const y0 = yMando + 20;
+  const r2 = Math.min(
+    (ancho - 16 * (abajo.length + 1)) / (2 * abajo.length),
+    (alto - y0 - 8) / 2,
+    62,
+  );
+  const cy2 = y0 + (alto - y0) / 2;
+  const hueco = (ancho - abajo.length * 2 * r2) / (abajo.length + 1);
+  const relojes = abajo
+    .map(([que, e, nombre], k) =>
+      relojSvg(que, e, nombre, `data-${que}-aguja`, `data-${que}-cifra`, {
+        x: hueco + r2 + k * (2 * r2 + hueco),
+        y: cy2,
+        radio: r2,
+      }),
+    )
+    .join("");
   return `
     <rect data-fondo="motor" width="${ancho}" height="${alto}" rx="4" class="cr__franja" />
-    <text x="${ancho / 2}" y="22" ${MARCA_ROTULO} class="cr__rotulo" text-anchor="middle">${c.rotulo}</text>
     ${diales}
-    ${mandoDeMotor(16, cy + r + 46, ancho - 32, n)}
-    ${reglaDeCombustible(34, alto - 118, ancho - 68, 16)}
-    ${c.flaps.length > 1 ? reglaDeFlaps(34, alto - 74, ancho - 68, 26, c.flaps) : ""}
+    ${mandoDeMotor(16, yMando, ancho - 32, n)}
+    ${relojes}
     <text data-cristal="reversa" x="${ancho - 12}" y="${alto - 14}"
           ${MARCA_CON_SU_APARATO} class="cr__reversa" text-anchor="end" visibility="hidden">REV</text>
   `;
